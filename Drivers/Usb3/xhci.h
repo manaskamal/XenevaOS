@@ -286,15 +286,6 @@ typedef struct _xhci_ex_cap_protocol_ {
 #pragma pack(pop)
 
 #pragma pack(push,1)
-typedef struct _xhci_port_reg_ {
-	uint32_t port_sc;
-	uint32_t port_pmsc;
-	uint32_t port_link_info;
-	uint32_t port_hardware_LMP_ctl;
-}xhci_port_regs_t;
-#pragma pack(pop)
-
-#pragma pack(push,1)
 typedef struct _xhci_noop_trb_ {
 	uint32_t rsvdZ[3];
 	uint32_t cycleBit : 1;

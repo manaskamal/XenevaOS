@@ -6,11 +6,11 @@ INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
 CONST	SEGMENT
-$SG3545	DB	'Kernel Panic!! ', 0aH, 00H
+$SG3546	DB	'Kernel Panic!! ', 0aH, 00H
 	ORG $+7
-$SG3546	DB	'Root process returned null ', 0aH, 00H
+$SG3547	DB	'Root process returned null ', 0aH, 00H
 	ORG $+3
-$SG3567	DB	'Process cleaned ', 0dH, 0aH, 00H
+$SG3568	DB	'Process cleaned ', 0dH, 0aH, 00H
 CONST	ENDS
 PUBLIC	?AuProcessClean@@YAXPEAU_au_proc_@@0@Z		; AuProcessClean
 PUBLIC	?FreeUserStack@@YAXPEA_K@Z			; FreeUserStack
@@ -505,12 +505,12 @@ $LN14@AuProcessC:
 
 ; 140  : 		AuTextOut("Kernel Panic!! \n");
 
-	lea	rcx, OFFSET FLAT:$SG3545
+	lea	rcx, OFFSET FLAT:$SG3546
 	call	AuTextOut
 
 ; 141  : 		AuTextOut("Root process returned null \n");
 
-	lea	rcx, OFFSET FLAT:$SG3546
+	lea	rcx, OFFSET FLAT:$SG3547
 	call	AuTextOut
 $LN11@AuProcessC:
 
@@ -662,7 +662,7 @@ $LN5@AuProcessC:
 
 ; 171  : 	SeTextOut("Process cleaned \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG3567
+	lea	rcx, OFFSET FLAT:$SG3568
 	call	SeTextOut
 
 ; 172  : }

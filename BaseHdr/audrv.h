@@ -81,7 +81,21 @@ typedef struct _aurora_device_ {
 */
 extern void AuDrvMngrInitialize(KERNEL_BOOT_INFO *info);
 
+/*
+* AuRegisterDevice -- register a new device to
+* aurora system
+* @param dev -- Pointer to device to add
+*/
+AU_EXTERN AU_EXPORT void AuRegisterDevice(AuDevice* dev);
 
+/*
+* AuCheckDevice -- checks an aurora device if it's
+* already present
+* @param classC -- class code of the device to check
+* @param subclassC -- sub class code of the device to check
+* @param progIF -- programming interface of the device
+*/
+AU_EXTERN AU_EXPORT bool AuCheckDevice(uint16_t classC, uint16_t subclassC, uint8_t progIF);
 
 
 

@@ -26,13 +26,13 @@ _BSS	SEGMENT
 ?_idle_lock@@3PEAU_spinlock_@@EA DQ 01H DUP (?)		; _idle_lock
 _BSS	ENDS
 CONST	SEGMENT
-$SG3581	DB	'FRAME USER KERN ESP -> %x ', 0aH, 00H
+$SG3583	DB	'FRAME USER KERN ESP -> %x ', 0aH, 00H
 	ORG $+4
-$SG3590	DB	'_idle id -> %d  ', 0dH, 0aH, 00H
+$SG3592	DB	'_idle id -> %d  ', 0dH, 0aH, 00H
 	ORG $+1
-$SG3599	DB	'Idle', 00H
+$SG3601	DB	'Idle', 00H
 	ORG $+7
-$SG3642	DB	'CR3 -> %x ', 0dH, 0aH, 00H
+$SG3644	DB	'CR3 -> %x ', 0dH, 0aH, 00H
 CONST	ENDS
 PUBLIC	?AuSchedulerStart@@YAXXZ			; AuSchedulerStart
 PUBLIC	?AuSchedulerInitialise@@YAXXZ			; AuSchedulerInitialise
@@ -45,6 +45,7 @@ PUBLIC	AuBlockThread
 PUBLIC	AuUnblockThread
 PUBLIC	?AuThreadMoveToTrash@@YAXPEAU_au_thread_@@@Z	; AuThreadMoveToTrash
 PUBLIC	?AuThreadCleanTrash@@YAXPEAU_au_thread_@@@Z	; AuThreadCleanTrash
+PUBLIC	AuForceScheduler
 PUBLIC	?AuMapKStack@@YA_KPEA_K@Z			; AuMapKStack
 PUBLIC	?AuThreadInsert@@YAXPEAU_au_thread_@@@Z		; AuThreadInsert
 PUBLIC	?AuThreadDelete@@YAXPEAU_au_thread_@@@Z		; AuThreadDelete
@@ -68,6 +69,7 @@ EXTRN	x64_fxrstor:PROC
 EXTRN	x64_ldmxcsr:PROC
 EXTRN	x64_set_kstack:PROC
 EXTRN	x64_get_kstack:PROC
+EXTRN	x64_force_sched:PROC
 EXTRN	AuInterruptEnd:PROC
 EXTRN	AuCreateSpinlock:PROC
 EXTRN	strncpy:PROC
@@ -119,6 +121,9 @@ $pdata$?AuThreadMoveToTrash@@YAXPEAU_au_thread_@@@Z DD imagerel $LN11
 $pdata$?AuThreadCleanTrash@@YAXPEAU_au_thread_@@@Z DD imagerel $LN7
 	DD	imagerel $LN7+100
 	DD	imagerel $unwind$?AuThreadCleanTrash@@YAXPEAU_au_thread_@@@Z
+$pdata$AuForceScheduler DD imagerel $LN3
+	DD	imagerel $LN3+14
+	DD	imagerel $unwind$AuForceScheduler
 $pdata$?AuMapKStack@@YA_KPEA_K@Z DD imagerel $LN6
 	DD	imagerel $LN6+121
 	DD	imagerel $unwind$?AuMapKStack@@YA_KPEA_K@Z
@@ -156,6 +161,8 @@ $unwind$?AuThreadMoveToTrash@@YAXPEAU_au_thread_@@@Z DD 010901H
 	DD	06209H
 $unwind$?AuThreadCleanTrash@@YAXPEAU_au_thread_@@@Z DD 010901H
 	DD	06209H
+$unwind$AuForceScheduler DD 010401H
+	DD	04204H
 $unwind$?AuMapKStack@@YA_KPEA_K@Z DD 010901H
 	DD	08209H
 $unwind$?AuIdleThread@@YAX_K@Z DD 010901H
@@ -181,7 +188,7 @@ $LN3:
 
 	call	x64_read_cr3
 	mov	rdx, rax
-	lea	rcx, OFFSET FLAT:$SG3642
+	lea	rcx, OFFSET FLAT:$SG3644
 	call	SeTextOut
 
 ; 419  : }
@@ -455,7 +462,7 @@ $LN5:
 	call	?AuPerCPUGetCpuID@@YAEXZ		; AuPerCPUGetCpuID
 	movzx	eax, al
 	mov	edx, eax
-	lea	rcx, OFFSET FLAT:$SG3590
+	lea	rcx, OFFSET FLAT:$SG3592
 	call	SeTextOut
 $LN2@AuIdleThre:
 
@@ -851,6 +858,26 @@ $LN1@AuMapKStac:
 	add	rsp, 72					; 00000048H
 	ret	0
 ?AuMapKStack@@YA_KPEA_K@Z ENDP				; AuMapKStack
+_TEXT	ENDS
+; Function compile flags: /Odtpy
+; File e:\xeneva project\aurora\kernel\hal\x86_64_sched.cpp
+_TEXT	SEGMENT
+AuForceScheduler PROC
+
+; 502  : AU_EXTERN AU_EXPORT void AuForceScheduler() {
+
+$LN3:
+	sub	rsp, 40					; 00000028H
+
+; 503  : 	x64_force_sched();
+
+	call	x64_force_sched
+
+; 504  : }
+
+	add	rsp, 40					; 00000028H
+	ret	0
+AuForceScheduler ENDP
 _TEXT	ENDS
 ; Function compile flags: /Odtpy
 ; File e:\xeneva project\aurora\kernel\hal\x86_64_sched.cpp
@@ -1473,7 +1500,7 @@ $LN3:
 
 	mov	rax, QWORD PTR t$[rsp]
 	mov	rdx, QWORD PTR [rax+200]
-	lea	rcx, OFFSET FLAT:$SG3581
+	lea	rcx, OFFSET FLAT:$SG3583
 	call	AuTextOut
 
 ; 246  : 	t->user_stack = stack;
@@ -1919,7 +1946,7 @@ $LN3:
 	add	rax, 4096				; 00001000H
 	mov	rcx, rax
 	call	P2V
-	lea	r9, OFFSET FLAT:$SG3599
+	lea	r9, OFFSET FLAT:$SG3601
 	mov	rcx, QWORD PTR tv69[rsp]
 	mov	r8, rcx
 	mov	rdx, rax

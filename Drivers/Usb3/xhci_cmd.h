@@ -31,6 +31,7 @@
 #define __XHCI_CMD_H__
 
 #include <stdint.h>
+#include "usb3.h"
 
 /* Standard XHCI defined Transfer/Command/Event
 * TRB type values

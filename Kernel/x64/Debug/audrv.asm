@@ -16,18 +16,20 @@ driver_class_unique_id DD 01H DUP (?)
 driver_load_base DQ 01H DUP (?)
 _BSS	ENDS
 CONST	SEGMENT
-$SG4233	DB	'Drivername -> %s ', 0dH, 0aH, 00H
-$SG4268	DB	'/', 00H
+$SG4241	DB	'Drivername -> %s ', 0dH, 0aH, 00H
+$SG4276	DB	'/', 00H
 	ORG $+2
-$SG4254	DB	'AuDriverMain', 00H
+$SG4262	DB	'AuDriverMain', 00H
 	ORG $+3
-$SG4257	DB	'AuDriverUnload', 00H
+$SG4265	DB	'AuDriverUnload', 00H
 	ORG $+1
-$SG4263	DB	'[Aurora]: Initializing drivers, please wait... ', 0aH, 00H
+$SG4271	DB	'[Aurora]: Initializing drivers, please wait... ', 0aH, 00H
 	ORG $+7
-$SG4270	DB	'/audrv.cnf', 00H
+$SG4278	DB	'/audrv.cnf', 00H
 CONST	ENDS
 PUBLIC	?AuDrvMngrInitialize@@YAXPEAU_KERNEL_BOOT_INFO_@@@Z ; AuDrvMngrInitialize
+PUBLIC	AuRegisterDevice
+PUBLIC	AuCheckDevice
 PUBLIC	?AuRequestDriverId@@YAIXZ			; AuRequestDriverId
 PUBLIC	?AuDecreaseDriverCount@@YAXXZ			; AuDecreaseDriverCount
 PUBLIC	?AuIncreaseDriverCount@@YAXXZ			; AuIncreaseDriverCount
@@ -61,6 +63,9 @@ pdata	SEGMENT
 $pdata$?AuDrvMngrInitialize@@YAXPEAU_KERNEL_BOOT_INFO_@@@Z DD imagerel $LN21
 	DD	imagerel $LN21+750
 	DD	imagerel $unwind$?AuDrvMngrInitialize@@YAXPEAU_KERNEL_BOOT_INFO_@@@Z
+$pdata$AuCheckDevice DD imagerel $LN7
+	DD	imagerel $LN7+143
+	DD	imagerel $unwind$AuCheckDevice
 $pdata$?AuRequestDriverId@@YAIXZ DD imagerel $LN3
 	DD	imagerel $LN3+35
 	DD	imagerel $unwind$?AuRequestDriverId@@YAIXZ
@@ -80,6 +85,8 @@ pdata	ENDS
 xdata	SEGMENT
 $unwind$?AuDrvMngrInitialize@@YAXPEAU_KERNEL_BOOT_INFO_@@@Z DD 020c01H
 	DD	015010cH
+$unwind$AuCheckDevice DD 011301H
+	DD	02213H
 $unwind$?AuRequestDriverId@@YAIXZ DD 010401H
 	DD	02204H
 $unwind$?AuGetConfEntry@@YAPEADIIPEAEH@Z DD 011601H
@@ -221,14 +228,14 @@ $LN1@AuDriverLo:
 ; 227  : 
 ; 228  : 	void* entry_addr = AuGetProcAddress((void*)driver_load_base, "AuDriverMain");
 
-	lea	rdx, OFFSET FLAT:$SG4254
+	lea	rdx, OFFSET FLAT:$SG4262
 	mov	rcx, QWORD PTR driver_load_base
 	call	?AuGetProcAddress@@YAPEAXPEAXPEBD@Z	; AuGetProcAddress
 	mov	QWORD PTR entry_addr$[rsp], rax
 
 ; 229  : 	void* unload_addr = AuGetProcAddress((void*)driver_load_base, "AuDriverUnload");
 
-	lea	rdx, OFFSET FLAT:$SG4257
+	lea	rdx, OFFSET FLAT:$SG4265
 	mov	rcx, QWORD PTR driver_load_base
 	call	?AuGetProcAddress@@YAPEAXPEAXPEBD@Z	; AuGetProcAddress
 	mov	QWORD PTR unload_addr$[rsp], rax
@@ -411,7 +418,7 @@ $LN2@AuGetDrive:
 ; 193  : 	SeTextOut("Drivername -> %s \r\n", drivername);
 
 	lea	rdx, QWORD PTR drivername$[rsp]
-	lea	rcx, OFFSET FLAT:$SG4233
+	lea	rcx, OFFSET FLAT:$SG4241
 	call	SeTextOut
 
 ; 194  : 
@@ -904,6 +911,112 @@ _TEXT	ENDS
 ; Function compile flags: /Odtpy
 ; File e:\xeneva project\aurora\kernel\audrv.cpp
 _TEXT	SEGMENT
+i$1 = 0
+classC$ = 32
+subclassC$ = 40
+progIF$ = 48
+AuCheckDevice PROC
+
+; 315  : AU_EXTERN AU_EXPORT bool AuCheckDevice(uint16_t classC, uint16_t subclassC, uint8_t progIF) {
+
+$LN7:
+	mov	BYTE PTR [rsp+24], r8b
+	mov	WORD PTR [rsp+16], dx
+	mov	WORD PTR [rsp+8], cx
+	sub	rsp, 24
+
+; 316  : 	for (int i = 0; i < _dev_count_; i++){
+
+	mov	DWORD PTR i$1[rsp], 0
+	jmp	SHORT $LN4@AuCheckDev
+$LN3@AuCheckDev:
+	mov	eax, DWORD PTR i$1[rsp]
+	inc	eax
+	mov	DWORD PTR i$1[rsp], eax
+$LN4@AuCheckDev:
+	mov	eax, DWORD PTR _dev_count_
+	cmp	DWORD PTR i$1[rsp], eax
+	jge	SHORT $LN2@AuCheckDev
+
+; 317  : 		if (au_devices[i]->classCode == classC &&
+; 318  : 			au_devices[i]->subClassCode == subclassC &&
+; 319  : 			au_devices[i]->progIf == progIF)
+
+	movsxd	rax, DWORD PTR i$1[rsp]
+	lea	rcx, OFFSET FLAT:?au_devices@@3PAPEAU_aurora_device_@@A ; au_devices
+	mov	rax, QWORD PTR [rcx+rax*8]
+	movzx	eax, WORD PTR [rax]
+	movzx	ecx, WORD PTR classC$[rsp]
+	cmp	eax, ecx
+	jne	SHORT $LN1@AuCheckDev
+	movsxd	rax, DWORD PTR i$1[rsp]
+	lea	rcx, OFFSET FLAT:?au_devices@@3PAPEAU_aurora_device_@@A ; au_devices
+	mov	rax, QWORD PTR [rcx+rax*8]
+	movzx	eax, WORD PTR [rax+2]
+	movzx	ecx, WORD PTR subclassC$[rsp]
+	cmp	eax, ecx
+	jne	SHORT $LN1@AuCheckDev
+	movsxd	rax, DWORD PTR i$1[rsp]
+	lea	rcx, OFFSET FLAT:?au_devices@@3PAPEAU_aurora_device_@@A ; au_devices
+	mov	rax, QWORD PTR [rcx+rax*8]
+	movzx	eax, BYTE PTR [rax+4]
+	movzx	ecx, BYTE PTR progIF$[rsp]
+	cmp	eax, ecx
+	jne	SHORT $LN1@AuCheckDev
+
+; 320  : 			return true;
+
+	mov	al, 1
+	jmp	SHORT $LN5@AuCheckDev
+$LN1@AuCheckDev:
+
+; 321  : 	}
+
+	jmp	SHORT $LN3@AuCheckDev
+$LN2@AuCheckDev:
+
+; 322  : 	return false;
+
+	xor	al, al
+$LN5@AuCheckDev:
+
+; 323  : }
+
+	add	rsp, 24
+	ret	0
+AuCheckDevice ENDP
+_TEXT	ENDS
+; Function compile flags: /Odtpy
+; File e:\xeneva project\aurora\kernel\audrv.cpp
+_TEXT	SEGMENT
+dev$ = 8
+AuRegisterDevice PROC
+
+; 303  : AU_EXTERN AU_EXPORT void AuRegisterDevice(AuDevice* dev) {
+
+	mov	QWORD PTR [rsp+8], rcx
+
+; 304  : 	au_devices[_dev_count_] = dev;
+
+	movsxd	rax, DWORD PTR _dev_count_
+	lea	rcx, OFFSET FLAT:?au_devices@@3PAPEAU_aurora_device_@@A ; au_devices
+	mov	rdx, QWORD PTR dev$[rsp]
+	mov	QWORD PTR [rcx+rax*8], rdx
+
+; 305  : 	_dev_count_++;
+
+	mov	eax, DWORD PTR _dev_count_
+	inc	eax
+	mov	DWORD PTR _dev_count_, eax
+
+; 306  : }
+
+	ret	0
+AuRegisterDevice ENDP
+_TEXT	ENDS
+; Function compile flags: /Odtpy
+; File e:\xeneva project\aurora\kernel\audrv.cpp
+_TEXT	SEGMENT
 dev$1 = 48
 func$2 = 52
 bus$3 = 56
@@ -946,7 +1059,7 @@ $LN21:
 ; 250  : 
 ; 251  : 	printf("[Aurora]: Initializing drivers, please wait... \n");
 
-	lea	rcx, OFFSET FLAT:$SG4263
+	lea	rcx, OFFSET FLAT:$SG4271
 	call	printf
 
 ; 252  : 	/* Load the conf data */
@@ -966,13 +1079,13 @@ $LN21:
 
 ; 255  : 	AuVFSNode* fsys = AuVFSFind("/");
 
-	lea	rcx, OFFSET FLAT:$SG4268
+	lea	rcx, OFFSET FLAT:$SG4276
 	call	AuVFSFind
 	mov	QWORD PTR fsys$[rsp], rax
 
 ; 256  : 	AuVFSNode* file = AuVFSOpen("/audrv.cnf");
 
-	lea	rcx, OFFSET FLAT:$SG4270
+	lea	rcx, OFFSET FLAT:$SG4278
 	call	AuVFSOpen
 	mov	QWORD PTR file$[rsp], rax
 

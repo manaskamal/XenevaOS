@@ -494,3 +494,11 @@ void AuThreadCleanTrash(AuThread* t) {
 		}
 	}
 }
+
+/*
+ * AuForceScheduler -- force the scheduler
+ * to switch next thread
+ */
+AU_EXTERN AU_EXPORT void AuForceScheduler() {
+	x64_force_sched();
+}

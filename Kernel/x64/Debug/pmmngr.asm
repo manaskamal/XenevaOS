@@ -26,7 +26,7 @@ _BSS	SEGMENT
 ?RamBitmap@@3VBitmap@@A DB 010H DUP (?)			; RamBitmap
 _BSS	ENDS
 CONST	SEGMENT
-$SG3492	DB	'Kernel Panic!!! No more physical memory ', 0aH, 00H
+$SG3493	DB	'Kernel Panic!!! No more physical memory ', 0aH, 00H
 CONST	ENDS
 PUBLIC	?AuPmmngrInitialize@@YAXPEAU_KERNEL_BOOT_INFO_@@@Z ; AuPmmngrInitialize
 PUBLIC	AuPmmngrAlloc
@@ -909,7 +909,7 @@ $LN4@AuPmmngrAl:
 
 ; 217  : 	AuTextOut("Kernel Panic!!! No more physical memory \n");
 
-	lea	rcx, OFFSET FLAT:$SG3492
+	lea	rcx, OFFSET FLAT:$SG3493
 	call	AuTextOut
 $LN2@AuPmmngrAl:
 

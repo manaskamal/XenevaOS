@@ -294,3 +294,31 @@ void AuDrvMngrInitialize(KERNEL_BOOT_INFO *info) {
 
 	kfree(file);
 }
+
+/*
+ * AuRegisterDevice -- register a new device to 
+ * aurora system
+ * @param dev -- Pointer to device to add
+ */
+AU_EXTERN AU_EXPORT void AuRegisterDevice(AuDevice* dev) {
+	au_devices[_dev_count_] = dev;
+	_dev_count_++;
+}
+
+/*
+ * AuCheckDevice -- checks an aurora device if it's 
+ * already present
+ * @param classC -- class code of the device to check
+ * @param subclassC -- sub class code of the device to check
+ * @param progIF -- programming interface of the device
+ */
+AU_EXTERN AU_EXPORT bool AuCheckDevice(uint16_t classC, uint16_t subclassC, uint8_t progIF) {
+	for (int i = 0; i < _dev_count_; i++){
+		if (au_devices[i]->classCode == classC &&
+			au_devices[i]->subClassCode == subclassC &&
+			au_devices[i]->progIf == progIF)
+			return true;
+	}
+	return false;
+}
+

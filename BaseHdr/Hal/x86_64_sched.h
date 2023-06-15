@@ -199,4 +199,10 @@ extern void AuThreadMoveToTrash(AuThread* t);
 */
 extern void AuThreadCleanTrash(AuThread* t);
 
+/*
+* AuForceScheduler -- force the scheduler
+* to switch next thread
+*/
+AU_EXTERN AU_EXPORT void AuForceScheduler();
+
 #endif

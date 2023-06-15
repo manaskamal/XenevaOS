@@ -34,6 +34,7 @@
 #include <Mm\vmmngr.h>
 #include <Mm\kmalloc.h>
 #include <aucon.h>
+#include <Hal\serial.h>
 #include <string.h>
 #include <_null.h>
 
@@ -293,12 +294,13 @@ void XHCIProtocolInit(USBDevice *dev) {
 void XHCIEventRingInit(USBDevice *dev) {
 	uint64_t e_ring_seg_table = (uint64_t)AuPmmngrAlloc();
 	uint64_t* event_ring_seg_table_v = (uint64_t*)AuMapMMIO(e_ring_seg_table, 1);
-	memset(event_ring_seg_table_v, 0, 4096);
+	memset(event_ring_seg_table_v, 0, PAGE_SIZE);
 
 	uint64_t event_ring_seg = (uint64_t)AuPmmngrAlloc();
 	uint64_t* event_ring_seg_v = (uint64_t*)AuMapMMIO(event_ring_seg, 1);
-	memset(event_ring_seg_v, 0, 4096);
+	memset(event_ring_seg_v, 0, PAGE_SIZE);
 	dev->event_ring_segment = event_ring_seg_v;
+	dev->event_ring_seg_phys = (uint64_t*)event_ring_seg;
 
 	xhci_erst_t *erst = (xhci_erst_t*)e_ring_seg_table;
 	erst->event_ring_segment_lo = event_ring_seg & UINT32_MAX;
@@ -532,7 +534,7 @@ void XHCIPortInitialize(USBDevice *dev, unsigned int port) {
 
 		/* Here we need to pass this notification to, Aurora
 		* that device is disconnected */
-		AuTextOut("Device disconnected at port -> %d, slot -> %d \n", port, slot_id);
+		SeTextOut("Device disconnected at port -> %d, slot -> %d \r\n", port, slot_id);
 		this_port->port_sc |= this_port->port_sc;
 	}
 
@@ -580,20 +582,21 @@ void XHCIPortInitialize(USBDevice *dev, unsigned int port) {
 
 		usb_dev_desc_t *dev_desc = (usb_dev_desc_t*)buffer;
 		if (dev_desc->bDeviceClass == 0x09) {
-			AuTextOut("[USB]: USB Hub, speed: %s, wPacketSz -> %d \n", xhci_get_port_speed(port_speed), dev_desc->bMaxPacketSize0);
+			SeTextOut("[USB]: USB Hub, speed: %s, wPacketSz -> %d \r\n", XHCIGetPortSpeed(port_speed), dev_desc->bMaxPacketSize0);
 
 		}
 		else {
-			AuTextOut("[USB]: Device Vendor id -> %x, Product Id -> %x, speed -> %s \n", dev_desc->idVendor, dev_desc->idProduct,
+			SeTextOut("[USB]: Device Vendor id -> %x, Product Id -> %x, speed -> %s \r\n", dev_desc->idVendor, dev_desc->idProduct,
 				XHCIGetPortSpeed(port_speed));
 		}
 
-		/*uint64_t* string_buf = (uint64_t*)p2v((uint64_t)AuPmmngrAlloc());
-		memset(string_buf, 0, 4096);
+		/* print the usb device name */
+		uint64_t* string_buf = (uint64_t*)P2V((uint64_t)AuPmmngrAlloc());
+		memset(string_buf, 0, PAGE_SIZE);
 
-		usb_get_string_desc(dev,slot,slot_id,v2p((uint64_t)string_buf),dev_desc->iManufacturer);
+		USBGetStringDesc(dev,slot,slot_id,V2P((uint64_t)string_buf),dev_desc->iManufacturer);
 		t_idx = -1;
-		t_idx = xhci_poll_event(dev,TRB_EVENT_TRANSFER);
+		t_idx = XHCIPollEvent(dev,TRB_EVENT_TRANSFER);
 		if (t_idx != -1) {
 		xhci_event_trb_t *evt = (xhci_event_trb_t*)dev->event_ring_segment;
 		xhci_trb_t *trb = (xhci_trb_t*)evt;
@@ -601,8 +604,10 @@ void XHCIPortInitialize(USBDevice *dev, unsigned int port) {
 
 		uint16_t* string = (uint16_t*)string_buf;
 		for (int l = 0; l < 10; l++)
-		printf ("%c", string[l]);
-		printf ("\n");*/
+		SeTextOut("%c", string[l]);
+		SeTextOut("\r\n");
+
+		AuPmmngrFree((void*)V2P((size_t)string_buf));
 		AuPmmngrFree((void*)V2P((size_t)buffer));
 	}
 }
@@ -615,6 +620,7 @@ void XHCIStartDefaultPorts(USBDevice *dev) {
 	for (unsigned int i = 1; i <= dev->num_ports; i++) {
 		xhci_port_regs_t *this_port = &dev->ports[i - 1];
 		if ((this_port->port_sc & 1)) {
+			AuTextOut("Starting port -> %d \n", i);
 			XHCIPortInitialize(dev, i);
 		}
 	}

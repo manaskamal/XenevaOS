@@ -12,8 +12,10 @@ PUBLIC	AuHalMaskIRQ
 PUBLIC	AuInterruptEnd
 PUBLIC	AuHalFlushCache
 PUBLIC	AuDisableInterrupt
+PUBLIC	AuEnableInterrupt
 EXTRN	?x86_64_cpu_initialize@@YAXE@Z:PROC		; x86_64_cpu_initialize
 EXTRN	x64_cli:PROC
+EXTRN	x64_sti:PROC
 EXTRN	cache_flush:PROC
 EXTRN	?x86_64_hal_initialise@@YAXPEAU_KERNEL_BOOT_INFO_@@@Z:PROC ; x86_64_hal_initialise
 EXTRN	?IOAPICMaskIRQ@@YAXE_N@Z:PROC			; IOAPICMaskIRQ
@@ -42,6 +44,9 @@ $pdata$AuHalFlushCache DD imagerel $LN3
 $pdata$AuDisableInterrupt DD imagerel $LN3
 	DD	imagerel $LN3+14
 	DD	imagerel $unwind$AuDisableInterrupt
+$pdata$AuEnableInterrupt DD imagerel $LN3
+	DD	imagerel $LN3+14
+	DD	imagerel $unwind$AuEnableInterrupt
 pdata	ENDS
 xdata	SEGMENT
 $unwind$AuHalInitialise DD 010901H
@@ -58,7 +63,29 @@ $unwind$AuHalFlushCache DD 010401H
 	DD	04204H
 $unwind$AuDisableInterrupt DD 010401H
 	DD	04204H
+$unwind$AuEnableInterrupt DD 010401H
+	DD	04204H
 xdata	ENDS
+; Function compile flags: /Odtpy
+; File e:\xeneva project\aurora\kernel\hal\hal.cpp
+_TEXT	SEGMENT
+AuEnableInterrupt PROC
+
+; 106  : AU_EXTERN AU_EXPORT void AuEnableInterrupt() {
+
+$LN3:
+	sub	rsp, 40					; 00000028H
+
+; 107  : 	x64_sti();
+
+	call	x64_sti
+
+; 108  : }
+
+	add	rsp, 40					; 00000028H
+	ret	0
+AuEnableInterrupt ENDP
+_TEXT	ENDS
 ; Function compile flags: /Odtpy
 ; File e:\xeneva project\aurora\kernel\hal\hal.cpp
 _TEXT	SEGMENT

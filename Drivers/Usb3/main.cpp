@@ -33,6 +33,7 @@
 #include <Hal\x86_64_hal.h>
 #include <Hal\apic.h>
 #include <Hal\hal.h>
+#include <Hal\serial.h>
 #include <Hal\x86_64_lowlevel.h>
 #include <Hal\x86_64_sched.h>
 #include <Mm\kmalloc.h>
@@ -46,6 +47,96 @@
 USBDevice* usb_device;
 uint8_t usb_thread_msg;
 uint8_t port_num;
+
+/* usb thread msg codes */
+#define USB_THREAD_MSG_PORT_CHANGE 10
+
+/* Main USB thread, which is responsible for
+ * handling device connects/disconnects events
+ * starting the specific changed port
+ */
+void AuUSB3Thread(uint64_t value) {
+	while (1) {
+		if (usb_thread_msg == USB_THREAD_MSG_PORT_CHANGE) {
+			XHCIPortInitialize(usb_device, port_num);
+			usb_thread_msg = NULL;
+		}
+		AuBlockThread(AuGetCurrentThread());
+		AuForceScheduler();
+	}
+}
+
+
+void AuUSBInterrupt(size_t v, void* p) {
+	uint32_t status = 0;
+	/* clear the USB status bit */
+	status = usb_device->op_regs->op_usbsts;
+	/* acknowledge the controller */
+	usb_device->op_regs->op_usbsts = status;
+
+	if (status & XHCI_USB_STS_EINT) {
+		xhci_trb_t *event = (xhci_trb_t*)usb_device->event_ring_segment;
+		xhci_event_trb_t *evt = (xhci_event_trb_t*)usb_device->event_ring_segment;
+		uint64_t erdp = (uint64_t)usb_device->event_ring_seg_phys;
+
+		while ((event[usb_device->evnt_ring_index].trb_control & (1 << 0)) == 1){
+
+			if (evt[usb_device->evnt_ring_index].trbType == TRB_EVENT_TRANSFER) {
+				usb_device->event_available = true;
+				usb_device->poll_return_trb_type = TRB_EVENT_TRANSFER;
+				usb_device->trb_event_index = usb_device->evnt_ring_index;
+				xhci_trb_t *trb = (xhci_trb_t*)&evt[usb_device->evnt_ring_index];
+			}
+
+			/* New PORT STATUS CHANGE Event */
+			if (evt[usb_device->evnt_ring_index].trbType == TRB_EVENT_PORT_STATUS_CHANGE){
+				if (usb_device->initialised) {
+					usb_thread_msg = USB_THREAD_MSG_PORT_CHANGE;
+					port_num = event[usb_device->evnt_ring_index].trb_param_1 >> 24;
+
+					/* Unblock the usb thread, if it's blocked */
+					if (usb_device->usb_thread->state == THREAD_STATE_BLOCKED)
+						AuUnblockThread(usb_device->usb_thread);
+
+				}
+			}
+
+
+
+			if (evt[usb_device->evnt_ring_index].trbType == TRB_EVENT_CMD_COMPLETION) {
+				usb_device->event_available = true;
+				usb_device->poll_return_trb_type = TRB_EVENT_CMD_COMPLETION;
+				usb_device->trb_event_index = usb_device->evnt_ring_index;
+				xhci_trb_t *trb = (xhci_trb_t*)&evt[usb_device->evnt_ring_index];
+
+			}
+
+
+			/* Update the Dequeue Pointer of interrupt 0 to recently
+			* processed event_ring_segment entry (known as TRB Entry) */
+			usb_device->rt_regs->intr_reg[0].evtRngDeqPtrLo = (erdp + sizeof(xhci_trb_t)* usb_device->evnt_ring_index) << 4 | (1 << 3);
+			usb_device->rt_regs->intr_reg[0].evtRngDeqPtrHi = (erdp + sizeof(xhci_trb_t)* usb_device->evnt_ring_index) >> 32;
+			usb_device->evnt_ring_cycle ^= 1;
+			usb_device->evnt_ring_index++;
+
+			if (usb_device->evnt_ring_index == usb_device->evnt_ring_max) {
+				usb_device->evnt_ring_index = 0;
+			}
+		}
+
+		/* Update the interrupt pending bit with value 1, so
+		* that new interrupt gets asserted with new events */
+		usb_device->rt_regs->intr_reg[0].intr_man |= (1 << 1) | 1;
+
+		/* Clear the Event Handler Busy bit again */
+		usb_device->rt_regs->intr_reg[0].evtRngDeqPtrLo |= 1 << 3;
+	}
+
+
+
+	/*End Of Interrupt to Interrupt Controller */
+	AuInterruptEnd(usb_device->irq);
+}
 
 /*
 * AuDriverMain -- Main entry for usb driver
@@ -112,7 +203,7 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 	usb_device->num_ports = (cap->cap_hcsparams1 >> 24);
 	usb_device->max_intrs = (cap->cap_hcsparams1 >> 8) & 0xffff;
 
-
+	SeTextOut("[USB]: Num Slots -> %d, Num Ports -> %d \r\n", usb_device->num_slots, usb_device->num_ports);
 	/* We need to check, if controller supports port power switch, so that
 	* individual ports can be powered on or off
 	*/
@@ -149,15 +240,17 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 
 	XHCIEventRingInit(usb_device);
 
-
-	AuEnableInterrupts();
+	/* temporarily enable interrupts, because
+	 * we need to send commands and receive
+	 * events on interrupts, then disable it
+	 */
+	AuEnableInterrupt();
 
 	/* Try Sending a No Operation Command to xHCI*/
 	XHCISendNoopCmd(usb_device);
 
 	/* Initialize all ports */
 	XHCIStartDefaultPorts(usb_device);
-	AuTextOut("[usb]: Ports initialized \n");
 
 	/* Disable all interrupts again because
 	* scheduler will enable them all */
@@ -175,11 +268,11 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 	* Here, initialize the USB thread, which is responsible for
 	* many hotplugging things
 	*/
-	AuThread *t = AuCreateKthread(AuUSBThread, p2v((uint64_t)AuPmmngrAlloc() + 4096), (uint64_t)AuGetRootPageTable(), "AuUsb", 1);
+	AuThread *t = AuCreateKthread(AuUSB3Thread, P2V((uint64_t)AuPmmngrAlloc() + 4096), (uint64_t)AuGetRootPageTable(), "AnuUsb");
 	usb_device->usb_thread = t;
 	usb_device->initialised = true;
 
-	AuDisableInterupts();
+	AuDisableInterrupt();
 
 	return 0;
 }

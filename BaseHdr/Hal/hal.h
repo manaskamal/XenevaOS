@@ -82,6 +82,11 @@ AU_EXPORT void AuHalFlushCache();
 */
 AU_EXPORT void AuDisableInterrupt();
 
+/*
+* AuEnableInterrupt -- enable interrupts
+*/
+AU_EXTERN AU_EXPORT void AuEnableInterrupt();
+
 #ifdef __cplusplus
 }
 #endif

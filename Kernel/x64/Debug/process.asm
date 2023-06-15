@@ -10,13 +10,13 @@ _BSS	SEGMENT
 ?proc_root@@3PEAU_au_proc_@@EA DQ 01H DUP (?)		; proc_root
 _BSS	ENDS
 CONST	SEGMENT
-$SG3838	DB	'_root', 00H
+$SG3839	DB	'_root', 00H
 	ORG $+2
-$SG3867	DB	'-about', 00H
+$SG3868	DB	'-about', 00H
 	ORG $+1
-$SG3868	DB	'/init.exe', 00H
+$SG3869	DB	'/init.exe', 00H
 	ORG $+6
-$SG3906	DB	'[aurora]: cannot exit root process ', 0dH, 0aH, 00H
+$SG3907	DB	'[aurora]: cannot exit root process ', 0dH, 0aH, 00H
 CONST	ENDS
 _DATA	SEGMENT
 pid	DD	01H
@@ -269,7 +269,7 @@ $LN6:
 
 	mov	rax, QWORD PTR proc$[rsp]
 	add	rax, 4
-	lea	rdx, OFFSET FLAT:$SG3838
+	lea	rdx, OFFSET FLAT:$SG3839
 	mov	rcx, rax
 	call	strcpy
 
@@ -807,7 +807,7 @@ $LN17:
 
 ; 324  : 		SeTextOut("[aurora]: cannot exit root process \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG3906
+	lea	rcx, OFFSET FLAT:$SG3907
 	call	SeTextOut
 
 ; 325  : 		return;
@@ -1235,14 +1235,14 @@ $LN3:
 	mov	eax, 8
 	imul	rax, rax, 0
 	mov	rcx, QWORD PTR argvs$[rsp]
-	lea	rdx, OFFSET FLAT:$SG3867
+	lea	rdx, OFFSET FLAT:$SG3868
 	mov	QWORD PTR [rcx+rax], rdx
 
 ; 250  : 	AuLoadExecToProcess(root_proc, "/init.exe",num_args,argvs);
 
 	mov	r9, QWORD PTR argvs$[rsp]
 	mov	r8d, DWORD PTR num_args$[rsp]
-	lea	rdx, OFFSET FLAT:$SG3868
+	lea	rdx, OFFSET FLAT:$SG3869
 	mov	rcx, QWORD PTR root_proc$[rsp]
 	call	?AuLoadExecToProcess@@YAXPEAU_au_proc_@@PEADHPEAPEAD@Z ; AuLoadExecToProcess
 

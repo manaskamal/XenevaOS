@@ -99,3 +99,10 @@ void AuHalFlushCache() {
 AU_EXTERN AU_EXPORT void AuDisableInterrupt() {
 	x64_cli();
 }
+
+/*
+ * AuEnableInterrupt -- enable interrupts
+ */
+AU_EXTERN AU_EXPORT void AuEnableInterrupt() {
+	x64_sti();
+}

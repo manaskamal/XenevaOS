@@ -58,6 +58,7 @@ typedef struct _usb_dev_ {
 	unsigned cmd_ring_max;
 	unsigned cmd_ring_cycle;
 	uint64_t* event_ring_segment;
+	uint64_t* event_ring_seg_phys;
 	unsigned evnt_ring_index;
 	unsigned evnt_ring_cycle;
 	unsigned evnt_ring_max;
@@ -286,6 +287,13 @@ extern void XHCIEventRingInit(USBDevice *dev);
 * @param dev -- Pointer to USB device structures
 */
 extern void XHCIStartDefaultPorts(USBDevice *dev);
+
+/*
+* XHCIPortInitialize -- initializes a specific port
+* @param dev -- Pointer to USB device structures
+* @param port -- number of the port
+*/
+void XHCIPortInitialize(USBDevice *dev, unsigned int port);
 
 
 #endif
