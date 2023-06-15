@@ -1,0 +1,18 @@
+﻿Build started 09-03-2023 ৰাতিপু 9:59:03.
+     1>Project "E:\Xeneva Project\Aurora\Process\Init\Init.vcxproj" on node 2 (Rebuild target(s)).
+     1>_NASM:
+         _asmfunc.asm
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmpf2d8ee5ddac146e5995a2cb92dbe8fc3.cmd"
+         "C:\Program Files (x86)\Microsoft Visual Studio 11.0\VC\"nasm.exe -Xvc -f win32 -o "Debug\_asmfunc.obj"  "E:\Xeneva Project\Aurora\Process\Init\_asmfunc.asm"
+       ClCompile:
+         C:\Program Files (x86)\Microsoft Visual Studio 11.0\VC\bin\CL.exe /c /ZI /nologo /W3 /WX- /sdl /Od /Oy- /D _MBCS /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc110.pdb" /Gd /TP /analyze- /errorReport:prompt _init.cpp
+         _init.cpp
+       Link:
+         C:\Program Files (x86)\Microsoft Visual Studio 11.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"E:\Xeneva Project\Aurora\Debug\Init.exe" /INCREMENTAL /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"E:\Xeneva Project\Aurora\Debug\Init.pdb" /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"E:\Xeneva Project\Aurora\Debug\Init.lib" /MACHINE:X86 Debug\_init.obj
+         Debug\_asmfunc.obj
+     1>LINK : fatal error LNK1561: entry point must be defined
+     1>Done Building Project "E:\Xeneva Project\Aurora\Process\Init\Init.vcxproj" (Rebuild target(s)) -- FAILED.
+
+Build FAILED.
+
+Time Elapsed 00:00:00.59

@@ -1,0 +1,63 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="includes">
+      <UniqueIdentifier>{6fe930c9-11ee-4b6e-bbed-7d6f69cd532d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="includes\sys">
+      <UniqueIdentifier>{b0d59f91-89cb-403a-b413-6902b02a2a84}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <NASM Include="_callbase.asm" />
+    <NASM Include="setjmp.asm" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="includes\stdint.h">
+      <Filter>includes</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\limits.h">
+      <Filter>includes</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\_xeneva.h">
+      <Filter>includes</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\string.h">
+      <Filter>includes</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\values.h">
+      <Filter>includes</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\math.h">
+      <Filter>includes</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\float.h">
+      <Filter>includes</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\endian.h">
+      <Filter>includes</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\ctype.h">
+      <Filter>includes</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\setjmp.h">
+      <Filter>includes</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\stdarg.h">
+      <Filter>includes</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\stddef.h">
+      <Filter>includes</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\sys\mman.h">
+      <Filter>includes\sys</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\sys\_keproc.h">
+      <Filter>includes\sys</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="string.cpp" />
+    <ClCompile Include="math.cpp" />
+  </ItemGroup>
+</Project>

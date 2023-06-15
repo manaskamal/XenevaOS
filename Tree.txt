@@ -1,0 +1,7 @@
+Directory        ----    Descriptions
+1> BaseHdr       ----    All header files that will be used by all components
+2> Kernel        ----    The main kernel source code
+3> Binary        ----    All Binary executable files goes here
+4> Drivers       ----    All external driver project goes here
+5> Process       ----    All system processes goes here
+6> Acpica        ----    The acpica project

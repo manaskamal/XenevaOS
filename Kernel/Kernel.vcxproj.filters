@@ -1,0 +1,397 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Include">
+      <UniqueIdentifier>{d00ac54a-447e-4f9c-b23d-28cbc2dca532}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Hal">
+      <UniqueIdentifier>{88140365-0071-4c29-9bed-135e257afe10}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Include\Hal">
+      <UniqueIdentifier>{c86eade7-837e-4d52-8c3e-09b81763df63}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Include\Mm">
+      <UniqueIdentifier>{70741570-1aa5-48ca-8120-fe5b470d5f7d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Mm">
+      <UniqueIdentifier>{991327a8-cf87-4486-bb97-ec0486d0afed}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Fs">
+      <UniqueIdentifier>{7662808c-9aba-40de-82da-4641526ed561}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Include\Fs">
+      <UniqueIdentifier>{cf9fc569-8c9e-4c4f-a9e1-90c927fecaa6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Fs\Fat">
+      <UniqueIdentifier>{8e07048a-cb3d-4340-a4d9-58a704b0bb15}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Include\Fs\Fat">
+      <UniqueIdentifier>{e20e05ba-6e97-4071-9d4d-44da88087a15}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Include\Fs\Ntfs">
+      <UniqueIdentifier>{54bd7471-302e-4ec2-824c-a9db015ab818}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Include\Fs\Ext2">
+      <UniqueIdentifier>{604ea737-71d0-45fa-b53b-d4199175518f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Fs\Ntfs">
+      <UniqueIdentifier>{dd11249c-9216-4ef7-836c-649a36a05dbd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Fs\Ext2">
+      <UniqueIdentifier>{73128650-7ddc-4b1d-9f5c-84be0a1549d8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Include\Drivers">
+      <UniqueIdentifier>{455599cb-55b4-4929-b6d1-ca13f3fc214e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Drivers">
+      <UniqueIdentifier>{d0580a8d-1ad4-4279-bdc3-f05b57caee56}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Include\Fs\Dev">
+      <UniqueIdentifier>{af2b7050-3636-4529-869a-8139db527ff4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Fs\Dev">
+      <UniqueIdentifier>{1ad4cda2-770e-4985-81a8-a86eb966e19e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Include\Sync">
+      <UniqueIdentifier>{a1f51a63-325c-422a-ab22-8db886325e66}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sync">
+      <UniqueIdentifier>{43d9d2d1-9545-4e44-90d1-378a3f6d20f3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Serv">
+      <UniqueIdentifier>{1fbf1dc1-53f5-4dd2-bc88-1c187a3f1290}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Include\Serv">
+      <UniqueIdentifier>{4669d607-f708-480d-8b72-83fc6f04168d}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\BaseHdr\_null.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\stdint.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\stdarg.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\va_list.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\limits.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\aurora.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\aucon.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\Hal\x86_64_gdt.h">
+      <Filter>Include\Hal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\Hal\x86_64_idt.h">
+      <Filter>Include\Hal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\Hal\x86_64_cpu.h">
+      <Filter>Include\Hal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\string.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\Hal\x86_64_lowlevel.h">
+      <Filter>Include\Hal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\Mm\pmmngr.h">
+      <Filter>Include\Mm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\efi.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\Mm\vmmngr.h">
+      <Filter>Include\Mm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\Hal\x86_64_hal.h">
+      <Filter>Include\Hal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\Hal\hal.h">
+      <Filter>Include\Hal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\Hal\apic.h">
+      <Filter>Include\Hal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\Hal\ioapic.h">
+      <Filter>Include\Hal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\Hal\x86_64_exception.h">
+      <Filter>Include\Hal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\Mm\buddy.h">
+      <Filter>Include\Mm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\Mm\kmalloc.h">
+      <Filter>Include\Mm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\Hal\basicacpi.h">
+      <Filter>Include\Hal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\Fs\vfs.h">
+      <Filter>Include\Fs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\list.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\Fs\vdisk.h">
+      <Filter>Include\Fs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\Fs\_gpt.h">
+      <Filter>Include\Fs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\ahci.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\pcie.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\ahcidsk.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\Fs\Fat\Fat.h">
+      <Filter>Include\Fs\Fat</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\ctype.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\Hal\acpiosl.h">
+      <Filter>Include\Hal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\pe.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\mutex.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\Hal\x86_64_ap_init.h">
+      <Filter>Include\Hal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\Drivers\mouse.h">
+      <Filter>Include\Drivers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\Drivers\rtc.h">
+      <Filter>Include\Drivers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\Drivers\ps2kybrd.h">
+      <Filter>Include\Drivers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\Hal\x86_64_sched.h">
+      <Filter>Include\Hal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\Fs\_FsGUIDs.h">
+      <Filter>Include\Fs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\process.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\Hal\serial.h">
+      <Filter>Include\Hal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\stdio.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\Fs\Dev\devfs.h">
+      <Filter>Include\Fs\Dev</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\Fs\pipe.h">
+      <Filter>Include\Fs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\circbuf.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\Fs\Dev\devinput.h">
+      <Filter>Include\Fs\Dev</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\loader.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\audrv.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\Mm\vmarea.h">
+      <Filter>Include\Mm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\Sync\mutex.h">
+      <Filter>Include\Sync</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\Hal\pcpu.h">
+      <Filter>Include\Hal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\Sync\spinlock.h">
+      <Filter>Include\Sync</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\Serv\sysserv.h">
+      <Filter>Include\Serv</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\clean.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\Mm\shm.h">
+      <Filter>Include\Mm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\Mm\mmap.h">
+      <Filter>Include\Mm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\Fs\Fat\FatFile.h">
+      <Filter>Include\Fs\Fat</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\Fs\Fat\FatDir.h">
+      <Filter>Include\Fs\Fat</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="init.cpp" />
+    <ClCompile Include="aucon.cpp" />
+    <ClCompile Include="Hal\x86_64_gdt.cpp">
+      <Filter>Hal</Filter>
+    </ClCompile>
+    <ClCompile Include="string.cpp" />
+    <ClCompile Include="Hal\x86_64_idt.cpp">
+      <Filter>Hal</Filter>
+    </ClCompile>
+    <ClCompile Include="Mm\pmmngr.cpp">
+      <Filter>Mm</Filter>
+    </ClCompile>
+    <ClCompile Include="_CRT.cpp" />
+    <ClCompile Include="Mm\vmmngr.cpp">
+      <Filter>Mm</Filter>
+    </ClCompile>
+    <ClCompile Include="Hal\x86_64_hal.cpp">
+      <Filter>Hal</Filter>
+    </ClCompile>
+    <ClCompile Include="Hal\hal.cpp">
+      <Filter>Hal</Filter>
+    </ClCompile>
+    <ClCompile Include="Hal\apic.cpp">
+      <Filter>Hal</Filter>
+    </ClCompile>
+    <ClCompile Include="Hal\ioapic.cpp">
+      <Filter>Hal</Filter>
+    </ClCompile>
+    <ClCompile Include="Hal\x86_64_cpu.cpp">
+      <Filter>Hal</Filter>
+    </ClCompile>
+    <ClCompile Include="Hal\x86_64_exception.cpp">
+      <Filter>Hal</Filter>
+    </ClCompile>
+    <ClCompile Include="Mm\buddy.cpp">
+      <Filter>Mm</Filter>
+    </ClCompile>
+    <ClCompile Include="Mm\kmalloc.cpp">
+      <Filter>Mm</Filter>
+    </ClCompile>
+    <ClCompile Include="Hal\basicacpi.cpp">
+      <Filter>Hal</Filter>
+    </ClCompile>
+    <ClCompile Include="Fs\vfs.cpp">
+      <Filter>Fs</Filter>
+    </ClCompile>
+    <ClCompile Include="list.cpp" />
+    <ClCompile Include="Fs\vdisk.cpp">
+      <Filter>Fs</Filter>
+    </ClCompile>
+    <ClCompile Include="Fs\_gpt.cpp">
+      <Filter>Fs</Filter>
+    </ClCompile>
+    <ClCompile Include="ahci.cpp" />
+    <ClCompile Include="pcie.cpp" />
+    <ClCompile Include="ahcidsk.cpp" />
+    <ClCompile Include="Fs\Fat\Fat.cpp">
+      <Filter>Fs\Fat</Filter>
+    </ClCompile>
+    <ClCompile Include="Hal\acpiosl.cpp">
+      <Filter>Hal</Filter>
+    </ClCompile>
+    <ClCompile Include="ctype.cpp" />
+    <ClCompile Include="pe.cpp" />
+    <ClCompile Include="Hal\x86_64_ap_init.cpp">
+      <Filter>Hal</Filter>
+    </ClCompile>
+    <ClCompile Include="Drivers\mouse.cpp">
+      <Filter>Drivers</Filter>
+    </ClCompile>
+    <ClCompile Include="Drivers\rtc.cpp">
+      <Filter>Drivers</Filter>
+    </ClCompile>
+    <ClCompile Include="Hal\x86_64_sched.cpp">
+      <Filter>Hal</Filter>
+    </ClCompile>
+    <ClCompile Include="process.cpp" />
+    <ClCompile Include="Hal\serial.cpp">
+      <Filter>Hal</Filter>
+    </ClCompile>
+    <ClCompile Include="stdio.cpp" />
+    <ClCompile Include="Hal\x86_64_systable.cpp">
+      <Filter>Hal</Filter>
+    </ClCompile>
+    <ClCompile Include="Fs\Dev\devfs.cpp">
+      <Filter>Fs\Dev</Filter>
+    </ClCompile>
+    <ClCompile Include="Drivers\ps2kybrd.cpp">
+      <Filter>Drivers</Filter>
+    </ClCompile>
+    <ClCompile Include="Fs\pipe.cpp">
+      <Filter>Fs</Filter>
+    </ClCompile>
+    <ClCompile Include="circbuf.cpp" />
+    <ClCompile Include="Fs\Dev\devinput.cpp">
+      <Filter>Fs\Dev</Filter>
+    </ClCompile>
+    <ClCompile Include="loader.cpp" />
+    <ClCompile Include="audrv.cpp" />
+    <ClCompile Include="Mm\vmarea.cpp">
+      <Filter>Mm</Filter>
+    </ClCompile>
+    <ClCompile Include="Sync\mutex.cpp">
+      <Filter>Sync</Filter>
+    </ClCompile>
+    <ClCompile Include="Hal\pcpu.cpp">
+      <Filter>Hal</Filter>
+    </ClCompile>
+    <ClCompile Include="Sync\spinlock.cpp">
+      <Filter>Sync</Filter>
+    </ClCompile>
+    <ClCompile Include="Serv\thrserv.cpp">
+      <Filter>Serv</Filter>
+    </ClCompile>
+    <ClCompile Include="clean.cpp" />
+    <ClCompile Include="Mm\shm.cpp">
+      <Filter>Mm</Filter>
+    </ClCompile>
+    <ClCompile Include="Serv\mmserv.cpp">
+      <Filter>Serv</Filter>
+    </ClCompile>
+    <ClCompile Include="Serv\fileserv.cpp">
+      <Filter>Serv</Filter>
+    </ClCompile>
+    <ClCompile Include="Mm\mmap.cpp">
+      <Filter>Mm</Filter>
+    </ClCompile>
+    <ClCompile Include="Fs\Fat\FatFile.cpp">
+      <Filter>Fs\Fat</Filter>
+    </ClCompile>
+    <ClCompile Include="Fs\Fat\FatDir.cpp">
+      <Filter>Fs\Fat</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <NASM Include="__fstcpy.asm" />
+    <NASM Include="Hal\x86_64_lowlevel.asm">
+      <Filter>Hal</Filter>
+    </NASM>
+    <NASM Include="Hal\x86_64_intrs.asm">
+      <Filter>Hal</Filter>
+    </NASM>
+    <NASM Include="Hal\x86_64_switch.asm">
+      <Filter>Hal</Filter>
+    </NASM>
+  </ItemGroup>
+</Project>

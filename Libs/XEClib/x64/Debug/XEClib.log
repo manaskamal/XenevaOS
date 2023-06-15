@@ -1,0 +1,34 @@
+﻿Build started 06-06-2023 ৰাতিপু 6:56:35.
+     1>Project "E:\Xeneva Project\Aurora\Libs\XEClib\XEClib.vcxproj" on node 2 (Rebuild target(s)).
+     1>_NASM:
+         setjmp.asm
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp981b4568e5dd4b208916955cf95afd0a.cmd"
+         "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\setjmp.obj"  "E:\Xeneva Project\Aurora\Libs\XEClib\setjmp.asm"
+       _NASM:
+         _callbase.asm
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmpf63044b1a1e84dfab44080702d5f1599.cmd"
+         "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\_callbase.obj"  "E:\Xeneva Project\Aurora\Libs\XEClib\_callbase.asm"
+       ClCompile:
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /Zi /nologo /W3 /WX- /sdl- /MP /Od /D ARCH_X64 /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt math.cpp string.cpp
+     1>cl : Command line warning D9025: overriding '/sdl-' with '/GS-'
+     1>cl : Command line warning D9002: ignoring unknown option '/arch:SSE2'
+     1>cl : Command line warning D9030: '/Gm' is incompatible with multiprocessing; ignoring /MP switch
+         string.cpp
+     1>string.cpp(248): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
+     1>string.cpp(249): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
+     1>string.cpp(360): warning C4267: '=' : conversion from 'size_t' to 'int', possible loss of data
+     1>string.cpp(362): error C3861: 'malloc': identifier not found
+     1>string.cpp(410): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
+     1>string.cpp(411): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
+     1>string.cpp(428): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
+         math.cpp
+     1>math.cpp(93): warning C4305: '-=' : truncation from 'double' to 'float'
+     1>math.cpp(95): warning C4305: '+=' : truncation from 'double' to 'float'
+     1>math.cpp(233): warning C4305: '-=' : truncation from 'double' to 'float'
+     1>math.cpp(235): warning C4305: '+=' : truncation from 'double' to 'float'
+         Generating Code...
+     1>Done Building Project "E:\Xeneva Project\Aurora\Libs\XEClib\XEClib.vcxproj" (Rebuild target(s)) -- FAILED.
+
+Build FAILED.
+
+Time Elapsed 00:00:03.48

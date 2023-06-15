@@ -1,0 +1,709 @@
+﻿Build started 12-06-2023 আবেলি 7:32:20.
+     1>Project "E:\Xeneva Project\Aurora\Acpica\Acpica.vcxproj" on node 2 (Rebuild target(s)).
+     1>ClCompile:
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Acpica\include" /I"E:\Xeneva Project\Aurora\BaseHdr" /I"E:\Xeneva Project\Aurora\Acpica\include\platform" /Zi /nologo /W4 /WX- /sdl- /MP /Od /Oy- /D ACPICA_DLL /D X64 /D AUXENEVA /D __NO_SIZE_T__ /X /Gm /GS- /arch:SSE /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TC /errorReport:prompt dsargs.c dscontrol.c dsdebug.c dsfield.c dsinit.c dsmethod.c dsmthdat.c dsobject.c dsopcode.c dspkginit.c dsutils.c dswexec.c dswload.c dswload2.c dswscope.c dswstate.c evevent.c evglock.c evgpe.c evgpeblk.c evgpeinit.c evgpeutil.c evhandler.c evmisc.c evregion.c evrgnini.c evsci.c evxface.c evxfevnt.c evxfgpe.c evxfregn.c exconcat.c exconfig.c exconvrt.c excreate.c exdebug.c exdump.c exfield.c exfldio.c exmisc.c exmutex.c exnames.c exoparg1.c exoparg2.c exoparg3.c exoparg6.c exprep.c exregion.c exresnte.c exresolv.c exresop.c exserial.c exstore.c exstoren.c exstorob.c exsystem.c extrace.c exutils.c hwacpi.c hwesleep.c hwgpe.c hwpci.c hwregs.c hwsleep.c hwtimer.c hwvalid.c hwxface.c hwxfsleep.c nsaccess.c nsalloc.c nsarguments.c nsconvert.c nsdump.c nsdumpdv.c nseval.c nsinit.c nsload.c nsnames.c nsobject.c nsparse.c nspredef.c nsprepkg.c nsrepair.c nsrepair2.c nssearch.c nsutils.c nswalk.c nsxfeval.c nsxfname.c nsxfobj.c psargs.c psloop.c psobject.c psopcode.c psopinfo.c psparse.c psscope.c pstree.c psutils.c pswalk.c psxface.c rsaddr.c rscalc.c rscreate.c rsdump.c rsdumpinfo.c rsinfo.c rsio.c rsirq.c rslist.c rsmemory.c rsmisc.c rsserial.c rsutils.c rsxface.c tbdata.c tbfadt.c tbfind.c tbinstal.c tbprint.c tbutils.c tbxface.c tbxfload.c tbxfroot.c utaddress.c utalloc.c utascii.c utbuffer.c utcache.c utclib.c utcopy.c utdebug.c utdecode.c utdelete.c uterror.c uteval.c utexcep.c utglobal.c uthex.c utids.c utinit.c utlock.c utmath.c utmisc.c utmutex.c utnonansi.c utobject.c utosi.c utownerid.c utpredef.c utprint.c utresdecode.c utresrc.c utstate.c utstring.c utstrsuppt.c utstrtoul64.c uttrack.c utuuid.c utxface.c utxferror.c utxfinit.c utxfmutex.c
+     1>cl : Command line warning D9025: overriding '/sdl-' with '/GS-'
+     1>cl : Command line warning D9002: ignoring unknown option '/arch:SSE'
+     1>cl : Command line warning D9030: '/Gm' is incompatible with multiprocessing; ignoring /MP switch
+         utxfmutex.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         utxfinit.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         utxferror.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         utxface.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         utuuid.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         uttrack.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         utstrtoul64.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         utstrsuppt.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+     1>utstrsuppt.c(268): warning C4013: 'isdigit' undefined; assuming extern returning int
+     1>utstrsuppt.c(324): warning C4013: 'isxdigit' undefined; assuming extern returning int
+     1>utstrsuppt.c(397): warning C4013: 'isspace' undefined; assuming extern returning int
+     1>utstrsuppt.c(451): warning C4013: 'tolower' undefined; assuming extern returning int
+         utstring.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+     1>utstring.c(243): warning C4013: 'isprint' undefined; assuming extern returning int
+         utstate.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         utresrc.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         utresdecode.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         utprint.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+     1>utprint.c(332): warning C4013: 'isdigit' undefined; assuming extern returning int
+         utpredef.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         utownerid.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         utosi.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         utobject.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         utnonansi.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+     1>utnonansi.c(195): warning C4013: 'tolower' undefined; assuming extern returning int
+     1>utnonansi.c(231): warning C4013: 'toupper' undefined; assuming extern returning int
+         utmutex.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         utmisc.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         Generating Code...
+         Compiling...
+         utmath.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         utlock.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         utinit.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         utids.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         uthex.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+     1>uthex.c(215): warning C4013: 'isxdigit' undefined; assuming extern returning int
+         utglobal.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         utexcep.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         uteval.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         uterror.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         utdelete.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         utdecode.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         utdebug.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         utcopy.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         utclib.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         utcache.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         utbuffer.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+     1>utbuffer.c(279): warning C4013: 'isprint' undefined; assuming extern returning int
+         utascii.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+     1>utascii.c(264): warning C4013: 'isprint' undefined; assuming extern returning int
+         utalloc.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+     1>utalloc.c(190): warning C4244: 'function' : conversion from 'ACPI_SIZE' to 'uint32_t', possible loss of data
+     1>utalloc.c(515): warning C4244: 'function' : conversion from 'ACPI_SIZE' to 'uint32_t', possible loss of data
+         utaddress.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         tbxfroot.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         Generating Code...
+         Compiling...
+         tbxfload.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         tbxface.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         tbutils.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         tbprint.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+     1>tbprint.c(195): warning C4013: 'isprint' undefined; assuming extern returning int
+         tbinstal.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         tbfind.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         tbfadt.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         tbdata.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         rsxface.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         rsutils.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         rsserial.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         rsmisc.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         rsmemory.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         rslist.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         rsirq.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         rsio.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         rsinfo.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         rsdumpinfo.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         rsdump.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         rscreate.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         Generating Code...
+         Compiling...
+         rscalc.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         rsaddr.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         psxface.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         pswalk.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         psutils.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         pstree.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         psscope.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         psparse.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         psopinfo.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         psopcode.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         psobject.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         psloop.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         psargs.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         nsxfobj.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         nsxfname.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+     1>nsxfname.c(717): warning C4244: '=' : conversion from 'ACPI_SIZE' to 'UINT32', possible loss of data
+         nsxfeval.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         nswalk.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         nsutils.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+     1>nsutils.c(459): warning C4013: 'toupper' undefined; assuming extern returning int
+         nssearch.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         nsrepair2.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+     1>nsrepair2.c(751): warning C4013: 'toupper' undefined; assuming extern returning int
+         Generating Code...
+         Compiling...
+         nsrepair.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         nsprepkg.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         nspredef.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         nsparse.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         nsobject.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         nsnames.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+     1>nsnames.c(339): warning C4244: 'function' : conversion from 'ACPI_SIZE' to 'UINT32', possible loss of data
+     1>nsnames.c(512): warning C4244: 'function' : conversion from 'ACPI_SIZE' to 'UINT32', possible loss of data
+     1>nsnames.c(555): warning C4267: '=' : conversion from 'size_t' to 'UINT32', possible loss of data
+         nsload.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         nsinit.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         nseval.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         nsdumpdv.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         nsdump.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+     1>nsdump.c(234): warning C4013: 'isprint' undefined; assuming extern returning int
+         nsconvert.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         nsarguments.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         nsalloc.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         nsaccess.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         hwxfsleep.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         hwxface.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         hwvalid.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         hwtimer.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         hwsleep.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         Generating Code...
+         Compiling...
+         hwregs.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         hwpci.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         hwgpe.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         hwesleep.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         hwacpi.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         exutils.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         extrace.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         exsystem.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         exstorob.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         exstoren.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         exstore.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         exserial.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         exresop.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         exresolv.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         exresnte.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         exregion.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         exprep.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         exoparg6.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         exoparg3.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         exoparg2.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         Generating Code...
+         Compiling...
+         exoparg1.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         exnames.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         exmutex.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         exmisc.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         exfldio.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         exfield.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         exdump.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         exdebug.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         excreate.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         exconvrt.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         exconfig.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         exconcat.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         evxfregn.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         evxfgpe.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         evxfevnt.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         evxface.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         evsci.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         evrgnini.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         evregion.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         evmisc.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         Generating Code...
+         Compiling...
+         evhandler.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         evgpeutil.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         evgpeinit.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         evgpeblk.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         evgpe.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         evglock.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+     1>evglock.c(390): warning C4244: '=' : conversion from 'int' to 'BOOLEAN', possible loss of data
+     1>evglock.c(464): warning C4244: '=' : conversion from 'int' to 'BOOLEAN', possible loss of data
+         evevent.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         dswstate.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         dswscope.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         dswload2.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         dswload.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         dswexec.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         dsutils.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         dspkginit.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         dsopcode.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         dsobject.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         dsmthdat.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         dsmethod.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         dsinit.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         dsfield.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         Generating Code...
+         Compiling...
+         dsdebug.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         dscontrol.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         dsargs.c
+     1>e:\xeneva project\aurora\acpica\include\platform\acxeneva.h(202): warning C4273: 'AuHalFlushCache' : inconsistent dll linkage
+                 E:\Xeneva Project\Aurora\BaseHdr\Hal\hal.h(78) : see previous definition of 'AuHalFlushCache'
+         Generating Code...
+     1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(1186,5): warning MSB8012: TargetPath(E:\Xeneva Project\Aurora\x64\Debug\Acpica.dll) does not match the Linker's OutputFile property value (F:\acpica.dll). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
+       Link:
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\link.exe /ERRORREPORT:PROMPT /OUT:"F:\acpica.dll" /INCREMENTAL /NOLOGO /LIBPATH:"E:\Xeneva Project\Aurora\x64\Debug" Kernel.lib /NODEFAULTLIB /MANIFEST:NO /PDB:"E:\Xeneva Project\Aurora\x64\Debug\Acpica.pdb" /MAP /MAPINFO:EXPORTS /SUBSYSTEM:NATIVE /LARGEADDRESSAWARE /Driver /TLBID:1 /NOENTRY /BASE:"0xFFFFC00000500000" /DYNAMICBASE /FIXED:NO /NXCOMPAT /IMPLIB:"E:\Xeneva Project\Aurora\x64\Debug\Acpica.lib" /MACHINE:X64 /ALIGN:512 /DLL x64\Debug\dsargs.obj
+         x64\Debug\dscontrol.obj
+         x64\Debug\dsdebug.obj
+         x64\Debug\dsfield.obj
+         x64\Debug\dsinit.obj
+         x64\Debug\dsmethod.obj
+         x64\Debug\dsmthdat.obj
+         x64\Debug\dsobject.obj
+         x64\Debug\dsopcode.obj
+         x64\Debug\dspkginit.obj
+         x64\Debug\dsutils.obj
+         x64\Debug\dswexec.obj
+         x64\Debug\dswload.obj
+         x64\Debug\dswload2.obj
+         x64\Debug\dswscope.obj
+         x64\Debug\dswstate.obj
+         x64\Debug\evevent.obj
+         x64\Debug\evglock.obj
+         x64\Debug\evgpe.obj
+         x64\Debug\evgpeblk.obj
+         x64\Debug\evgpeinit.obj
+         x64\Debug\evgpeutil.obj
+         x64\Debug\evhandler.obj
+         x64\Debug\evmisc.obj
+         x64\Debug\evregion.obj
+         x64\Debug\evrgnini.obj
+         x64\Debug\evsci.obj
+         x64\Debug\evxface.obj
+         x64\Debug\evxfevnt.obj
+         x64\Debug\evxfgpe.obj
+         x64\Debug\evxfregn.obj
+         x64\Debug\exconcat.obj
+         x64\Debug\exconfig.obj
+         x64\Debug\exconvrt.obj
+         x64\Debug\excreate.obj
+         x64\Debug\exdebug.obj
+         x64\Debug\exdump.obj
+         x64\Debug\exfield.obj
+         x64\Debug\exfldio.obj
+         x64\Debug\exmisc.obj
+         x64\Debug\exmutex.obj
+         x64\Debug\exnames.obj
+         x64\Debug\exoparg1.obj
+         x64\Debug\exoparg2.obj
+         x64\Debug\exoparg3.obj
+         x64\Debug\exoparg6.obj
+         x64\Debug\exprep.obj
+         x64\Debug\exregion.obj
+         x64\Debug\exresnte.obj
+         x64\Debug\exresolv.obj
+         x64\Debug\exresop.obj
+         x64\Debug\exserial.obj
+         x64\Debug\exstore.obj
+         x64\Debug\exstoren.obj
+         x64\Debug\exstorob.obj
+         x64\Debug\exsystem.obj
+         x64\Debug\extrace.obj
+         x64\Debug\exutils.obj
+         x64\Debug\hwacpi.obj
+         x64\Debug\hwesleep.obj
+         x64\Debug\hwgpe.obj
+         x64\Debug\hwpci.obj
+         x64\Debug\hwregs.obj
+         x64\Debug\hwsleep.obj
+         x64\Debug\hwtimer.obj
+         x64\Debug\hwvalid.obj
+         x64\Debug\hwxface.obj
+         x64\Debug\hwxfsleep.obj
+         x64\Debug\nsaccess.obj
+         x64\Debug\nsalloc.obj
+         x64\Debug\nsarguments.obj
+         x64\Debug\nsconvert.obj
+         x64\Debug\nsdump.obj
+         x64\Debug\nsdumpdv.obj
+         x64\Debug\nseval.obj
+         x64\Debug\nsinit.obj
+         x64\Debug\nsload.obj
+         x64\Debug\nsnames.obj
+         x64\Debug\nsobject.obj
+         x64\Debug\nsparse.obj
+         x64\Debug\nspredef.obj
+         x64\Debug\nsprepkg.obj
+         x64\Debug\nsrepair.obj
+         x64\Debug\nsrepair2.obj
+         x64\Debug\nssearch.obj
+         x64\Debug\nsutils.obj
+         x64\Debug\nswalk.obj
+         x64\Debug\nsxfeval.obj
+         x64\Debug\nsxfname.obj
+         x64\Debug\nsxfobj.obj
+         x64\Debug\psargs.obj
+         x64\Debug\psloop.obj
+         x64\Debug\psobject.obj
+         x64\Debug\psopcode.obj
+         x64\Debug\psopinfo.obj
+         x64\Debug\psparse.obj
+         x64\Debug\psscope.obj
+         x64\Debug\pstree.obj
+         x64\Debug\psutils.obj
+         x64\Debug\pswalk.obj
+         x64\Debug\psxface.obj
+         x64\Debug\rsaddr.obj
+         x64\Debug\rscalc.obj
+         x64\Debug\rscreate.obj
+         x64\Debug\rsdump.obj
+         x64\Debug\rsdumpinfo.obj
+         x64\Debug\rsinfo.obj
+         x64\Debug\rsio.obj
+         x64\Debug\rsirq.obj
+         x64\Debug\rslist.obj
+         x64\Debug\rsmemory.obj
+         x64\Debug\rsmisc.obj
+         x64\Debug\rsserial.obj
+         x64\Debug\rsutils.obj
+         x64\Debug\rsxface.obj
+         x64\Debug\tbdata.obj
+         x64\Debug\tbfadt.obj
+         x64\Debug\tbfind.obj
+         x64\Debug\tbinstal.obj
+         x64\Debug\tbprint.obj
+         x64\Debug\tbutils.obj
+         x64\Debug\tbxface.obj
+         x64\Debug\tbxfload.obj
+         x64\Debug\tbxfroot.obj
+         x64\Debug\utaddress.obj
+         x64\Debug\utalloc.obj
+         x64\Debug\utascii.obj
+         x64\Debug\utbuffer.obj
+         x64\Debug\utcache.obj
+         x64\Debug\utclib.obj
+         x64\Debug\utcopy.obj
+         x64\Debug\utdebug.obj
+         x64\Debug\utdecode.obj
+         x64\Debug\utdelete.obj
+         x64\Debug\uterror.obj
+         x64\Debug\uteval.obj
+         x64\Debug\utexcep.obj
+         x64\Debug\utglobal.obj
+         x64\Debug\uthex.obj
+         x64\Debug\utids.obj
+         x64\Debug\utinit.obj
+         x64\Debug\utlock.obj
+         x64\Debug\utmath.obj
+         x64\Debug\utmisc.obj
+         x64\Debug\utmutex.obj
+         x64\Debug\utnonansi.obj
+         x64\Debug\utobject.obj
+         x64\Debug\utosi.obj
+         x64\Debug\utownerid.obj
+         x64\Debug\utpredef.obj
+         x64\Debug\utprint.obj
+         x64\Debug\utresdecode.obj
+         x64\Debug\utresrc.obj
+         x64\Debug\utstate.obj
+         x64\Debug\utstring.obj
+         x64\Debug\utstrsuppt.obj
+         x64\Debug\utstrtoul64.obj
+         x64\Debug\uttrack.obj
+         x64\Debug\utuuid.obj
+         x64\Debug\utxface.obj
+         x64\Debug\utxferror.obj
+         x64\Debug\utxfinit.obj
+         x64\Debug\utxfmutex.obj
+     1>LINK : warning LNK4075: ignoring '/INCREMENTAL' due to '/RELEASE' specification
+            Creating library E:\Xeneva Project\Aurora\x64\Debug\Acpica.lib and object E:\Xeneva Project\Aurora\x64\Debug\Acpica.exp
+         Acpica.vcxproj -> E:\Xeneva Project\Aurora\x64\Debug\Acpica.dll
+     1>Done Building Project "E:\Xeneva Project\Aurora\Acpica\Acpica.vcxproj" (Rebuild target(s)).
+
+Build succeeded.
+
+Time Elapsed 00:00:19.46
