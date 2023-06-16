@@ -221,6 +221,79 @@ _KeGetProcessHeapMem:
 	  syscall
 	  ret
 
+;====================================
+; _KeReadFile -- reads a file into
+; buffer
+; @param rcx -- file descriptor
+; @param rdx -- buffer address
+; @param r8 -- length to read in
+;====================================
+global _KeReadFile
+_KeReadFile:
+      xor rax,rax
+	  mov r12, 16
+	  mov r13, rcx
+	  mov r14, rdx
+	  mov r15, r8
+	  mov rdi, 0
+	  syscall
+	  ret
+
+;====================================
+; _KeWriteFile -- write a file onto
+; buffer
+; @param rcx -- file descriptor
+; @param rdx -- buffer address
+; @param r8 -- length to write out
+;====================================
+global _KeWriteFile
+_KeWriteFile:
+      xor rax,rax
+	  mov r12, 17
+	  mov r13, rcx
+	  mov r14, rdx
+	  mov r15, r8
+	  mov rdi, 0
+	  syscall
+	  ret
+
+;==================================
+; _KeCreateDir -- create a new
+; directory
+; @param rcx -- pathname
+;==================================
+global _KeCreateDir
+_KeCreateDir:
+      xor rax,rax
+	  mov r12, 18
+	  mov r13, rcx
+	  mov r14, 0
+	  mov r15, 0
+	  mov rdi, 0
+	  syscall
+	  ret
+
+
+;====================================
+; _KeRemoveFile -- remove a file
+; from file system
+; @param rcx -- filename
+;====================================
+global _KeRemoveFile
+_KeRemoveFile:
+      xor rax,rax
+	  mov r12, 19
+	  mov r13, rcx
+	  mov r14, 0
+	  mov r15, 0
+	  mov rdi, 0
+	  syscall
+	  ret
+      
+      
+
+      
+
 
 
 

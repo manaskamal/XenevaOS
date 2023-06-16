@@ -69,6 +69,22 @@ typedef struct _usb_dev_ {
 }USBDevice;
 #pragma pack(pop)
 
+/* USBMessage structure */
+#pragma pack(push,1)
+typedef struct __usb_msg__ {
+	uint8_t type;
+	uint8_t uchar1;
+	uint8_t uchar2;
+	uint8_t uchar3;
+	uint8_t uchar4;
+	uint8_t uchar5;
+	uint16_t ushort1;
+	uint16_t ushort2;
+	uint32_t dword1;
+	uint32_t dword2;
+}USBMessage;
+#pragma pack(pop)
+
 /* Standard USB Requests */
 #define USB_BM_REQUEST_INPUT  0x80
 #define USB_BM_REQUEST_STANDARD 0
@@ -293,7 +309,13 @@ extern void XHCIStartDefaultPorts(USBDevice *dev);
 * @param dev -- Pointer to USB device structures
 * @param port -- number of the port
 */
-void XHCIPortInitialize(USBDevice *dev, unsigned int port);
+extern void XHCIPortInitialize(USBDevice *dev, unsigned int port);
+
+/*
+* USBGetMainDevice -- returns the
+* main usb device structure
+*/
+extern USBDevice* USBGetMainDevice();
 
 
 #endif

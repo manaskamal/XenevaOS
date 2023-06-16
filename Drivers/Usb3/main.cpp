@@ -53,9 +53,10 @@ uint8_t port_num;
 
 /* Main USB thread, which is responsible for
  * handling device connects/disconnects events
- * starting the specific changed port
+ * starting the specific changed port,
+ * in future: it will be moved to new file
  */
-void AuUSB3Thread(uint64_t value) {
+void AnuvabUSB3Thread(uint64_t value) {
 	while (1) {
 		if (usb_thread_msg == USB_THREAD_MSG_PORT_CHANGE) {
 			XHCIPortInitialize(usb_device, port_num);
@@ -139,10 +140,22 @@ void AuUSBInterrupt(size_t v, void* p) {
 }
 
 /*
+ * AuDriverUnload -- deattach the driver from
+ * aurora system
+ */
+AU_EXTERN AU_EXPORT int AuDriverUnload() {
+	/* stop the controller */
+	/* free up all data structures that
+	 * have been allocated
+	 */
+	return 0;
+}
+
+/*
 * AuDriverMain -- Main entry for usb driver
 */
 AU_EXTERN AU_EXPORT int AuDriverMain() {
-	//printf ("Initializing USB\n");
+
 	int bus, dev, func;
 
 	uint64_t device = AuPCIEScanClassIF(0x0C, 0x03, 0x30, &bus, &dev, &func);
@@ -207,7 +220,6 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 	/* We need to check, if controller supports port power switch, so that
 	* individual ports can be powered on or off
 	*/
-	//printf ("[usb]: xhci port power control switch -> %d \n", ((cap->cap_hccparams1 >> 3) & 0xff));
 
 	usb_device->trb_event_index = -1;
 	usb_device->event_available = false;
@@ -268,11 +280,19 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 	* Here, initialize the USB thread, which is responsible for
 	* many hotplugging things
 	*/
-	AuThread *t = AuCreateKthread(AuUSB3Thread, P2V((uint64_t)AuPmmngrAlloc() + 4096), (uint64_t)AuGetRootPageTable(), "AnuUsb");
+	AuThread *t = AuCreateKthread(AnuvabUSB3Thread, P2V((uint64_t)AuPmmngrAlloc() + 4096), (uint64_t)AuGetRootPageTable(), "AnuUsb");
 	usb_device->usb_thread = t;
 	usb_device->initialised = true;
 
 	AuDisableInterrupt();
 
 	return 0;
+}
+
+/*
+ * USBGetMainDevice -- returns the 
+ * main usb device structure
+ */
+USBDevice* USBGetMainDevice() {
+	return usb_device;
 }

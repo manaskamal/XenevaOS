@@ -55,6 +55,9 @@
     <ClInclude Include="includes\sys\_keproc.h">
       <Filter>includes\sys</Filter>
     </ClInclude>
+    <ClInclude Include="includes\sys\_kefile.h">
+      <Filter>includes\sys</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="string.cpp" />
