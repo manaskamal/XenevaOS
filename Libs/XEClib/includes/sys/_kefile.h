@@ -33,6 +33,16 @@
 #include <_xeneva.h>
 #include <stdint.h>
 
-XE_EXTERN XE_EXPORT int 
+/* file open modes*/
+#define FILE_OPEN_READ_ONLY  (1<<1)
+#define FILE_OPEN_WRITE (1<<2)
+#define FILE_OPEN_CREAT (1<<3)
+
+
+XE_EXTERN XE_EXPORT int _KeOpenFile(char* pathname, int mode);
+XE_EXTERN XE_EXPORT size_t _KeReadFile(int fd, void* buffer, size_t length);
+XE_EXTERN XE_EXPORT size_t _KeWriteFile(int fd, void* buffer, size_t length);
+XE_EXTERN XE_EXPORT int _KeCreateDir(char* filename);
+XE_EXTERN XE_EXPORT int _KeRemoveFile(char* pathname);
 
 #endif

@@ -31,6 +31,7 @@
 #include <Mm\vmmngr.h>
 #include <Mm\pmmngr.h>
 #include <_null.h>
+#include <Hal\x86_64_lowlevel.h>
 #include <Hal\serial.h>
 
 /* ============================================================
@@ -84,6 +85,9 @@ uint64_t GetProcessHeapMem(size_t sz) {
 	if (sz & 0xFFF)
 		return -1;
 
+	if ((sz % PAGE_SIZE) != 0)
+		return -1;
+	
 	AuThread* thr = AuGetCurrentThread();
 	AuProcess* proc = AuProcessFindThread(thr);
 	if (!proc)

@@ -1,34 +1,56 @@
-﻿Build started 06-06-2023 ৰাতিপু 6:56:35.
+﻿Build started 18-06-2023 ৰাতিপু 9:23:57.
      1>Project "E:\Xeneva Project\Aurora\Libs\XEClib\XEClib.vcxproj" on node 2 (Rebuild target(s)).
      1>_NASM:
          setjmp.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp981b4568e5dd4b208916955cf95afd0a.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp96c331ca43274f8f9879210f74eb5b47.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\setjmp.obj"  "E:\Xeneva Project\Aurora\Libs\XEClib\setjmp.asm"
        _NASM:
          _callbase.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmpf63044b1a1e84dfab44080702d5f1599.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmpb5580ca551af453cbcf5ddb56d76965d.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\_callbase.obj"  "E:\Xeneva Project\Aurora\Libs\XEClib\_callbase.asm"
        ClCompile:
-         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /Zi /nologo /W3 /WX- /sdl- /MP /Od /D ARCH_X64 /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt math.cpp string.cpp
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /Zi /nologo /W3 /WX- /sdl- /MP /Od /D ARCH_X64 /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt math.cpp stdlib.cpp string.cpp sys\_heap.cpp
      1>cl : Command line warning D9025: overriding '/sdl-' with '/GS-'
      1>cl : Command line warning D9002: ignoring unknown option '/arch:SSE2'
      1>cl : Command line warning D9030: '/Gm' is incompatible with multiprocessing; ignoring /MP switch
+         _heap.cpp
+     1>sys\_heap.cpp(60): warning C4018: '>' : signed/unsigned mismatch
+     1>sys\_heap.cpp(250): warning C4018: '<' : signed/unsigned mismatch
+     1>sys\_heap.cpp(450): warning C4018: '<' : signed/unsigned mismatch
+     1>sys\_heap.cpp(490): warning C4244: '=' : conversion from 'unsigned __int64' to 'int', possible loss of data
+     1>sys\_heap.cpp(519): warning C4018: '>' : signed/unsigned mismatch
          string.cpp
-     1>string.cpp(248): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
      1>string.cpp(249): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
-     1>string.cpp(360): warning C4267: '=' : conversion from 'size_t' to 'int', possible loss of data
-     1>string.cpp(362): error C3861: 'malloc': identifier not found
-     1>string.cpp(410): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
+     1>string.cpp(250): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
+     1>string.cpp(361): warning C4267: '=' : conversion from 'size_t' to 'int', possible loss of data
      1>string.cpp(411): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
-     1>string.cpp(428): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
+     1>string.cpp(412): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
+     1>string.cpp(429): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
+         stdlib.cpp
+     1>E:\Xeneva Project\Aurora\Libs\XEClib\includes\ctype.h(50): warning C4005: 'isascii' : macro redefinition
+                 E:\Xeneva Project\Aurora\Libs\XEClib\includes\ctype.h(39) : see previous definition of 'isascii'
+     1>stdlib.cpp(106): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
+     1>stdlib.cpp(142): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
+     1>stdlib.cpp(349): warning C4267: 'return' : conversion from 'size_t' to 'int', possible loss of data
+     1>stdlib.cpp(408): warning C4146: unary minus operator applied to unsigned type, result still unsigned
+     1>stdlib.cpp(433): warning C4146: unary minus operator applied to unsigned type, result still unsigned
+     1>stdlib.cpp(499): warning C4146: unary minus operator applied to unsigned type, result still unsigned
          math.cpp
      1>math.cpp(93): warning C4305: '-=' : truncation from 'double' to 'float'
      1>math.cpp(95): warning C4305: '+=' : truncation from 'double' to 'float'
      1>math.cpp(233): warning C4305: '-=' : truncation from 'double' to 'float'
      1>math.cpp(235): warning C4305: '+=' : truncation from 'double' to 'float'
          Generating Code...
-     1>Done Building Project "E:\Xeneva Project\Aurora\Libs\XEClib\XEClib.vcxproj" (Rebuild target(s)) -- FAILED.
+       Lib:
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\Lib.exe /OUT:"E:\Xeneva Project\Aurora\x64\Debug\XEClib.lib" /NOLOGO /MACHINE:X64 x64\Debug\math.obj
+         x64\Debug\stdlib.obj
+         x64\Debug\string.obj
+         x64\Debug\_heap.obj
+         x64\Debug\setjmp.obj
+         x64\Debug\_callbase.obj
+         XEClib.vcxproj -> E:\Xeneva Project\Aurora\x64\Debug\XEClib.lib
+     1>Done Building Project "E:\Xeneva Project\Aurora\Libs\XEClib\XEClib.vcxproj" (Rebuild target(s)).
 
-Build FAILED.
+Build succeeded.
 
-Time Elapsed 00:00:03.48
+Time Elapsed 00:00:01.07

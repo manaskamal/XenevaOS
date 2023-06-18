@@ -50,6 +50,8 @@
 #define XE_API  XE_EXTERN
 #define XE_MAIN XE_EXPORT
 
+/* _KePrint -- kernel printing function */
+XE_EXTERN XE_EXPORT void _KePrint(const char* text, ...);
 
 
 #endif

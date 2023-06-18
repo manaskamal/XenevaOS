@@ -72,4 +72,11 @@ XE_EXTERN XE_EXPORT void* _KeObtainSharedMem(uint16_t id, void* shmaddr, int shm
 * @param key -- key to search
 */
 XE_EXTERN XE_EXPORT void _KeUnmapSharedMem(uint16_t key);
+
+/*
+ * _KeGetProcessHeapMem -- request a new memory from 
+ * process heap
+ * @param sz -- size in bytes
+ */
+XE_EXTERN XE_EXPORT uint64_t _KeGetProcessHeapMem(size_t sz);
 #endif

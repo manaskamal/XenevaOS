@@ -29,6 +29,7 @@
 
 #include <string.h>
 #include <values.h>
+#include <stdlib.h>
 
 #define MAX_STRING_LENGTH 25
 

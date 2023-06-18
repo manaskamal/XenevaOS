@@ -1,5 +1,5 @@
 extern main
-extern exit_proc
+extern _KeProcessExit
 
 section .text
 [BITS 64]
@@ -16,7 +16,7 @@ _aumain:
 	 sub rsp, 32
 	 call main
 	 add rsp, 32
-	 call exit_proc
+	 call _KeProcessExit
 
 
 	 

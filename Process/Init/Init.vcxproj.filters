@@ -4,7 +4,6 @@
     <ClCompile Include="_init.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <NASM Include="_asmfunc.asm" />
     <NASM Include="crt0.asm" />
   </ItemGroup>
 </Project>

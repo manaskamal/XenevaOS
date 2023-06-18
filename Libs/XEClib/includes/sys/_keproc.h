@@ -60,7 +60,7 @@ XE_EXTERN XE_EXPORT int _KeProcessExit();
  * _KeProcessWaitForTermination -- suspends
  * currently running process until another
  * process state changes
- * @param pid -- process id 
+ * @param pid -- process id,-1 for all 
  */
 XE_EXTERN XE_EXPORT int _KeProcessWaitForTermination(int pid);
 

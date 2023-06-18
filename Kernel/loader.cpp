@@ -108,6 +108,7 @@ void AuProcessEntUser(uint64_t rcx) {
  * @param argv -- array of argument in strings
  */
 void AuLoadExecToProcess(AuProcess* proc, char* filename, int argc,char** argv) {
+	x64_cli();
 	AuAcquireSpinlock(loader_lock);
 	AuVFSNode *fsys = AuVFSFind(filename);
 
@@ -135,9 +136,16 @@ void AuLoadExecToProcess(AuProcess* proc, char* filename, int argc,char** argv) 
 	 */
 	for (size_t i = 0; i < nt->FileHeader.NumberOfSections; ++i) {
 		size_t sect_ld_addr = _image_base_ + secthdr[i].VirtualAddress;
-		uint64_t *block = (uint64_t*)P2V((uint64_t)AuPmmngrAlloc());/*(buf + secthdr[i].PointerToRawData);*/
-		AuVFSNodeReadBlock(fsys, file, (uint64_t*)V2P((size_t)block));
-		AuMapPageEx(cr3, V2P((size_t)block), sect_ld_addr, X86_64_PAGING_USER);
+		size_t sect_sz = secthdr[i].VirtualSize;
+		int req_pages = sect_sz / PAGE_SIZE;
+		if ((sect_sz % PAGE_SIZE) != 0)
+			req_pages++;
+
+		for (int j = 0; j < req_pages; j++) {
+			uint64_t *block = (uint64_t*)P2V((uint64_t)AuPmmngrAlloc());/*(buf + secthdr[i].PointerToRawData);*/
+			AuVFSNodeReadBlock(fsys, file, (uint64_t*)V2P((size_t)block));
+			AuMapPageEx(cr3, V2P((size_t)block), sect_ld_addr + j * PAGE_SIZE, X86_64_PAGING_USER);
+		}
 	}
 
 	

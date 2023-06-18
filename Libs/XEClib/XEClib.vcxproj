@@ -141,8 +141,11 @@
     <ClInclude Include="includes\stdarg.h" />
     <ClInclude Include="includes\stddef.h" />
     <ClInclude Include="includes\stdint.h" />
+    <ClInclude Include="includes\stdlib.h" />
     <ClInclude Include="includes\string.h" />
     <ClInclude Include="includes\sys\mman.h" />
+    <ClInclude Include="includes\sys\utf.h" />
+    <ClInclude Include="includes\sys\_heap.h" />
     <ClInclude Include="includes\sys\_kefile.h" />
     <ClInclude Include="includes\sys\_keproc.h" />
     <ClInclude Include="includes\values.h" />
@@ -150,7 +153,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="math.cpp" />
+    <ClCompile Include="stdlib.cpp" />
     <ClCompile Include="string.cpp" />
+    <ClCompile Include="sys\_heap.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

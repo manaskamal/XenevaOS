@@ -41,9 +41,9 @@ global _KePrint
 _KePrint:
       mov r12, 1
 	  mov r13, rcx
-	  mov r14, 0
-	  mov r15, 0
-	  mov rdi, 0
+	  mov r14, rdx
+	  mov r15, r8
+	  mov rdi, r9
 	  syscall
 	  ret
 
@@ -216,6 +216,23 @@ _KeGetProcessHeapMem:
 	  mov r12, 15
 	  mov r13, rcx
 	  mov r14, 0
+	  mov r15, 0
+	  mov rdi, 0
+	  syscall
+	  ret
+
+;=====================================
+; _KeOpenFile -- opens a file and
+; return a file descriptor
+; @param rcx -- file name
+; @param rdx -- open mode
+;=====================================
+global _KeOpenFile
+_KeOpenFile:
+      xor rax, rax
+	  mov r12, 12
+	  mov r13, rcx
+	  mov r14, rdx
 	  mov r15, 0
 	  mov rdi, 0
 	  syscall
