@@ -47,9 +47,11 @@
 #include <Hal\x86_64_lowlevel.h>
 #include <Hal\serial.h>
 #include <Sync\spinlock.h>
+#include <Sync\mutex.h>
 #include <aucon.h>
 
 Spinlock* loader_lock;
+AuMutex* loader_mutex;
 
 /* push item on the stack */
 #define PUSH(stack, type, item) do { \
@@ -108,8 +110,9 @@ void AuProcessEntUser(uint64_t rcx) {
  * @param argv -- array of argument in strings
  */
 void AuLoadExecToProcess(AuProcess* proc, char* filename, int argc,char** argv) {
-	x64_cli();
 	AuAcquireSpinlock(loader_lock);
+	AuAcquireMutex(loader_mutex);
+
 	AuVFSNode *fsys = AuVFSFind(filename);
 
 	AuVFSNode *file = AuVFSOpen(filename);
@@ -189,9 +192,20 @@ void AuLoadExecToProcess(AuProcess* proc, char* filename, int argc,char** argv) 
 	proc->file = file;
 	proc->fsys = fsys;
 	thr->proc_slot = proc;
+	AuReleaseMutex(loader_mutex);
 	AuReleaseSpinlock(loader_lock);
 }
 
 void AuInitialiseLoader() {
+	loader_mutex = NULL;
 	loader_lock = AuCreateSpinlock(false);
+	loader_mutex = AuCreateMutex();
+}
+
+/*
+ * AuLoaderGetMutex -- returns loader 
+ * mutex
+ */
+AuMutex* AuLoaderGetMutex() {
+	return loader_mutex;
 }

@@ -34,28 +34,50 @@
  */
 
 #include <stdint.h>
+#include <stdio.h>
 #include <_xeneva.h>
 #include <sys\_keproc.h>
 #include <string.h>
 #include <sys\_heap.h>
+#include <sys\_kefile.h>
 
 
 /*
- * _aumain -- main entry point
+ * _main -- main entry point
  */
 extern "C" void main(int argc, char* argv[]) {
 	_KePrint("Hello Init \r\n");
 	int pid = _KeGetProcessID();
 
+	char* arg = "-about";
+	int count = strlen(arg);
+	char** p = (char**)malloc(1 * 6);
+	memset(p, 0, 6);
+	p[0] = "-about";
+
+	if (strcmp(p[0],"-about") == 0) 
+		_KePrint("Hello world \n");
 
 	if (pid == 1) {
 		int chid = _KeCreateProcess(pid, "Test");
-		_KeProcessLoadExec(chid, "/init.exe", 0, NULL);
+		_KeProcessLoadExec(chid, "/init.exe", 1, p);
 	}
 
-	void* addr = malloc(4096);
-	memset(addr, 0, 4096);
-	_KePrint("Addr -> %x \n", addr);
+	free(p);
+
+	FILE *fp = fopen("/arry.txt", "a");
+	int *arr = (int*)malloc(sizeof(int)* 3);
+	arr[0] = 101;
+	arr[1] = 102;
+	arr[2] = 103;
+	size_t sz = fwrite(arr, sizeof(int), 3, fp);
+
+	unsigned char* buf = (unsigned char*)malloc(sizeof(int)* 3);
+	fread(buf, sizeof(int), 3, fp);
+
+	int* arr3 = (int*)buf;
+	_KePrint("array[0] -> %d, arrya[1] -> %d, array[3] -> %d \n", arr3[0], arr3[1],
+		arr3[2]);
 
 	while (1) {
 		if (pid == 1) {

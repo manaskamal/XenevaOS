@@ -43,7 +43,7 @@
 #include <Sync/spinlock.h>
 #include <pe.h>
 #include <Drivers\rtc.h>
-
+#include <Sync/mutex.h>
 
 /*
  * FatClusterToSector32 -- Converts a cluster to sector
@@ -204,9 +204,12 @@ void FatClearCluster(AuVFSNode* node, uint32_t cluster) {
 */
 size_t FatRead(AuVFSNode* fsys, AuVFSNode *file, uint64_t* buf) {
 	FatFS* fs = (FatFS*)fsys->device;
+	AuAcquireMutex(fs->fat_mutex);
 	AuVDisk* vdisk = (AuVDisk*)fs->vdisk;
-	if (!vdisk)
+	if (!vdisk) {
+		AuReleaseMutex(fs->fat_mutex);
 		return NULL;
+	}
 
 	auto lba = FatClusterToSector32(fs, file->current);
 
@@ -216,14 +219,17 @@ size_t FatRead(AuVFSNode* fsys, AuVFSNode *file, uint64_t* buf) {
 
 	if (value >= 0x0FFFFFF8) {
 		file->eof = 1;
+		AuReleaseMutex(fs->fat_mutex);
 		return -1;
 	}
 
 	if (value == 0x0FFFFFF7) {
 		file->eof = 1;
+		AuReleaseMutex(fs->fat_mutex);
 		return -1;
 	}
 	file->current = value;
+	AuReleaseMutex(fs->fat_mutex);
 	return 4096;
 }
 
@@ -339,6 +345,11 @@ AuVFSNode* FatLocateDir(AuVFSNode* fsys, const char* dir) {
 //! @param filename -- name of the file
 //! @example -- \\EFI\\BOOT\\BOOTx64.efi
 AuVFSNode * FatOpen(AuVFSNode * fsys, char* filename) {
+	if (!fsys)
+		return NULL;
+	FatFS* _fs = (FatFS*)fsys->device;
+	AuAcquireMutex(_fs->fat_mutex);
+
 	AuVFSNode *cur_dir = NULL;
 	AuVDisk *vdisk = (AuVDisk*)fsys->device;
 	char* p = 0;
@@ -353,9 +364,10 @@ AuVFSNode * FatOpen(AuVFSNode * fsys, char* filename) {
 
 		//! found file ?
 		if (cur_dir != NULL) {
+			AuReleaseMutex(_fs->fat_mutex);
 			return cur_dir;
 		}
-
+		AuReleaseMutex(_fs->fat_mutex);
 		//! unable to find
 		return NULL;
 	}
@@ -400,12 +412,14 @@ AuVFSNode * FatOpen(AuVFSNode * fsys, char* filename) {
 
 	//! found file?
 	if (cur_dir != NULL){
+		AuReleaseMutex(_fs->fat_mutex);
 		return cur_dir;
 	}
 	//! unable to find
 	/*vfs_node_t ret;
 	ret.flags = FS_FLAG_INVALID;
 	ret.size = 0;*/
+	AuReleaseMutex(_fs->fat_mutex);
 	return NULL;
 }
 
@@ -456,6 +470,7 @@ AuVFSNode* FatInitialise(AuVDisk *vdisk, char* mountname){
 	fs->__SectorPerFAT32 = bpb->info.FAT32.sect_per_fat32;
 	fs->cluster_sz_in_bytes = fs->__SectorPerCluster * bpb->bytes_per_sector;
 	fs->__BytesPerSector = bpb->bytes_per_sector;
+	fs->fat_mutex = AuCreateMutex();
 
 	fs->__TotalClusters = bpb->large_sector_count / fs->__SectorPerCluster;
 	size_t _root_dir_sectors = ((bpb->num_dir_entries * 32) + bpb->bytes_per_sector - 1) / bpb->bytes_per_sector;

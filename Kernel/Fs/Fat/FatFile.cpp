@@ -105,6 +105,7 @@ AuVFSNode* FatCreateFile(AuVFSNode* fsys, char* filename) {
 		return NULL;
 	FatFS* _fs = (FatFS*)fsys->device;
 	
+	AuAcquireMutex(_fs->fat_mutex);
 
 	AuVFSNode* parent = FatFileGetParent(fsys, filename);
 	if (!parent)
@@ -198,6 +199,7 @@ AuVFSNode* FatCreateFile(AuVFSNode* fsys, char* filename) {
 	}
 	kfree(parent);
 	kfree(file);
+	AuReleaseMutex(_fs->fat_mutex);
 	return NULL;
 }
 
@@ -387,6 +389,8 @@ size_t FatWrite(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint32_t len
 		return 0;
 	FatFS* _fs = (FatFS*)fsys->device;
 
+	AuAcquireMutex(_fs->fat_mutex);
+
 	size_t num_cluster = length / (_fs->__BytesPerSector * _fs->__SectorPerCluster) +
 		((length % (_fs->__BytesPerSector * _fs->__SectorPerCluster) ? 1 : 0));
 
@@ -397,6 +401,8 @@ size_t FatWrite(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint32_t len
 
 	FatFileUpdateSize(fsys, file, length);
 	FatFileWriteDone(file);
+
+	AuReleaseMutex(_fs->fat_mutex);
 }
 
 /*

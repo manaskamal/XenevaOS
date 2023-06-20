@@ -15,6 +15,7 @@ EXTRN	AuReleaseSpinlock:PROC
 EXTRN	AuGetCurrentThread:PROC
 EXTRN	AuBlockThread:PROC
 EXTRN	AuUnblockThread:PROC
+EXTRN	?AuIsSchedulerInitialised@@YA_NXZ:PROC		; AuIsSchedulerInitialised
 EXTRN	initialize_list:PROC
 EXTRN	list_add:PROC
 EXTRN	list_remove:PROC
@@ -25,11 +26,11 @@ pdata	SEGMENT
 $pdata$AuCreateMutex DD imagerel $LN3
 	DD	imagerel $LN3+71
 	DD	imagerel $unwind$AuCreateMutex
-$pdata$AuAcquireMutex DD imagerel $LN5
-	DD	imagerel $LN5+127
+$pdata$AuAcquireMutex DD imagerel $LN7
+	DD	imagerel $LN7+161
 	DD	imagerel $unwind$AuAcquireMutex
-$pdata$AuReleaseMutex DD imagerel $LN8
-	DD	imagerel $LN8+143
+$pdata$AuReleaseMutex DD imagerel $LN10
+	DD	imagerel $LN10+180
 	DD	imagerel $unwind$AuReleaseMutex
 $pdata$AuDeleteMutex DD imagerel $LN3
 	DD	imagerel $LN3+38
@@ -51,24 +52,24 @@ _TEXT	SEGMENT
 mutex$ = 48
 AuDeleteMutex PROC
 
-; 92   : AU_EXTERN AU_EXPORT void AuDeleteMutex(AuMutex *mutex) {
+; 100  : AU_EXTERN AU_EXPORT void AuDeleteMutex(AuMutex *mutex) {
 
 $LN3:
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 40					; 00000028H
 
-; 93   : 	kfree(mutex->waiters);
+; 101  : 	kfree(mutex->waiters);
 
 	mov	rax, QWORD PTR mutex$[rsp]
 	mov	rcx, QWORD PTR [rax+24]
 	call	kfree
 
-; 94   : 	kfree(mutex);
+; 102  : 	kfree(mutex);
 
 	mov	rcx, QWORD PTR mutex$[rsp]
 	call	kfree
 
-; 95   : }
+; 103  : }
 
 	add	rsp, 40					; 00000028H
 	ret	0
@@ -82,37 +83,61 @@ thr_$2 = 40
 mutex$ = 64
 AuReleaseMutex PROC
 
-; 71   : AU_EXTERN AU_EXPORT int AuReleaseMutex(AuMutex *mutex) {
+; 75   : AU_EXTERN AU_EXPORT int AuReleaseMutex(AuMutex *mutex) {
 
-$LN8:
+$LN10:
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 56					; 00000038H
 
-; 72   : 	if (mutex->owner != AuGetCurrentThread())
+; 76   : 	if (!AuIsSchedulerInitialised())
+
+	call	?AuIsSchedulerInitialised@@YA_NXZ	; AuIsSchedulerInitialised
+	movzx	eax, al
+	test	eax, eax
+	jne	SHORT $LN7@AuReleaseM
+
+; 77   : 		return 0;
+
+	xor	eax, eax
+	jmp	$LN8@AuReleaseM
+$LN7@AuReleaseM:
+
+; 78   : 	if (!mutex)
+
+	cmp	QWORD PTR mutex$[rsp], 0
+	jne	SHORT $LN6@AuReleaseM
+
+; 79   : 		return -1;
+
+	mov	eax, -1
+	jmp	$LN8@AuReleaseM
+$LN6@AuReleaseM:
+
+; 80   : 	if (mutex->owner != AuGetCurrentThread())
 
 	call	AuGetCurrentThread
 	mov	rcx, QWORD PTR mutex$[rsp]
 	cmp	QWORD PTR [rcx+16], rax
 	je	SHORT $LN5@AuReleaseM
 
-; 73   : 		return -1;
+; 81   : 		return -1;
 
 	mov	eax, -1
-	jmp	SHORT $LN6@AuReleaseM
+	jmp	SHORT $LN8@AuReleaseM
 $LN5@AuReleaseM:
 
-; 74   : 
-; 75   : 	mutex->status = 0;
+; 82   : 
+; 83   : 	mutex->status = 0;
 
 	mov	rax, QWORD PTR mutex$[rsp]
 	mov	BYTE PTR [rax+8], 0
 
-; 76   : 	mutex->owner = NULL;
+; 84   : 	mutex->owner = NULL;
 
 	mov	rax, QWORD PTR mutex$[rsp]
 	mov	QWORD PTR [rax+16], 0
 
-; 77   : 	for (int i = 0; i < mutex->waiters->pointer; i++) {
+; 85   : 	for (int i = 0; i < mutex->waiters->pointer; i++) {
 
 	mov	DWORD PTR i$1[rsp], 0
 	jmp	SHORT $LN4@AuReleaseM
@@ -127,7 +152,7 @@ $LN4@AuReleaseM:
 	cmp	DWORD PTR i$1[rsp], eax
 	jae	SHORT $LN2@AuReleaseM
 
-; 78   : 		AuThread* thr_ = (AuThread*)list_remove(mutex->waiters, i);
+; 86   : 		AuThread* thr_ = (AuThread*)list_remove(mutex->waiters, i);
 
 	mov	edx, DWORD PTR i$1[rsp]
 	mov	rax, QWORD PTR mutex$[rsp]
@@ -135,34 +160,34 @@ $LN4@AuReleaseM:
 	call	list_remove
 	mov	QWORD PTR thr_$2[rsp], rax
 
-; 79   : 		if (thr_) {
+; 87   : 		if (thr_) {
 
 	cmp	QWORD PTR thr_$2[rsp], 0
 	je	SHORT $LN1@AuReleaseM
 
-; 80   : 			AuUnblockThread(thr_);
+; 88   : 			AuUnblockThread(thr_);
 
 	mov	rcx, QWORD PTR thr_$2[rsp]
 	call	AuUnblockThread
 
-; 81   : 			break;
+; 89   : 			break;
 
 	jmp	SHORT $LN2@AuReleaseM
 $LN1@AuReleaseM:
 
-; 82   : 		}
-; 83   : 	}
+; 90   : 		}
+; 91   : 	}
 
 	jmp	SHORT $LN3@AuReleaseM
 $LN2@AuReleaseM:
 
-; 84   : 
-; 85   : 	return 0;
+; 92   : 
+; 93   : 	return 0;
 
 	xor	eax, eax
-$LN6@AuReleaseM:
+$LN8@AuReleaseM:
 
-; 86   : }
+; 94   : }
 
 	add	rsp, 56					; 00000038H
 	ret	0
@@ -177,23 +202,47 @@ AuAcquireMutex PROC
 
 ; 53   : AU_EXTERN AU_EXPORT int AuAcquireMutex(AuMutex* mut) {
 
-$LN5:
+$LN7:
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 56					; 00000038H
 
-; 54   : 	AuAcquireSpinlock(mut->lock);
+; 54   : 	if (!AuIsSchedulerInitialised())
+
+	call	?AuIsSchedulerInitialised@@YA_NXZ	; AuIsSchedulerInitialised
+	movzx	eax, al
+	test	eax, eax
+	jne	SHORT $LN4@AuAcquireM
+
+; 55   : 		return 0;
+
+	xor	eax, eax
+	jmp	$LN5@AuAcquireM
+$LN4@AuAcquireM:
+
+; 56   : 	if (!mut)
+
+	cmp	QWORD PTR mut$[rsp], 0
+	jne	SHORT $LN3@AuAcquireM
+
+; 57   : 		return -1;
+
+	mov	eax, -1
+	jmp	SHORT $LN5@AuAcquireM
+$LN3@AuAcquireM:
+
+; 58   : 	AuAcquireSpinlock(mut->lock);
 
 	mov	rax, QWORD PTR mut$[rsp]
 	mov	rcx, QWORD PTR [rax]
 	call	AuAcquireSpinlock
 
-; 55   : 	AuThread* current_thr = AuGetCurrentThread();
+; 59   : 	AuThread* current_thr = AuGetCurrentThread();
 
 	call	AuGetCurrentThread
 	mov	QWORD PTR current_thr$[rsp], rax
 $LN2@AuAcquireM:
 
-; 56   : 	while (mut->status) {
+; 60   : 	while (mut->status) {
 
 	mov	rax, QWORD PTR mut$[rsp]
 	movzx	eax, BYTE PTR [rax+8]
@@ -201,49 +250,50 @@ $LN2@AuAcquireM:
 	test	eax, eax
 	je	SHORT $LN1@AuAcquireM
 
-; 57   : 		list_add(mut->waiters, current_thr);
+; 61   : 		list_add(mut->waiters, current_thr);
 
 	mov	rdx, QWORD PTR current_thr$[rsp]
 	mov	rax, QWORD PTR mut$[rsp]
 	mov	rcx, QWORD PTR [rax+24]
 	call	list_add
 
-; 58   : 		AuBlockThread(current_thr);
+; 62   : 		AuBlockThread(current_thr);
 
 	mov	rcx, QWORD PTR current_thr$[rsp]
 	call	AuBlockThread
 
-; 59   : 		x64_force_sched();
+; 63   : 		x64_force_sched();
 
 	call	x64_force_sched
 
-; 60   : 	}
+; 64   : 	}
 
 	jmp	SHORT $LN2@AuAcquireM
 $LN1@AuAcquireM:
 
-; 61   : 	mut->status = 1;
+; 65   : 	mut->status = 1;
 
 	mov	rax, QWORD PTR mut$[rsp]
 	mov	BYTE PTR [rax+8], 1
 
-; 62   : 	mut->owner = current_thr;
+; 66   : 	mut->owner = current_thr;
 
 	mov	rax, QWORD PTR mut$[rsp]
 	mov	rcx, QWORD PTR current_thr$[rsp]
 	mov	QWORD PTR [rax+16], rcx
 
-; 63   : 	AuReleaseSpinlock(mut->lock);
+; 67   : 	AuReleaseSpinlock(mut->lock);
 
 	mov	rax, QWORD PTR mut$[rsp]
 	mov	rcx, QWORD PTR [rax]
 	call	AuReleaseSpinlock
 
-; 64   : 	return 0;
+; 68   : 	return 0;
 
 	xor	eax, eax
+$LN5@AuAcquireM:
 
-; 65   : }
+; 69   : }
 
 	add	rsp, 56					; 00000038H
 	ret	0

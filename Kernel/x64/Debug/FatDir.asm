@@ -140,7 +140,7 @@ $LN9@FatRemoveD:
 	mov	DWORD PTR j$1[rsp], eax
 $LN10@FatRemoveD:
 	mov	rax, QWORD PTR _fs$[rsp]
-	movzx	eax, BYTE PTR [rax+36]
+	movzx	eax, BYTE PTR [rax+33]
 	cmp	DWORD PTR j$1[rsp], eax
 	jge	$LN8@FatRemoveD
 
@@ -401,7 +401,7 @@ $LN24@FatCreateD:
 ; 60   : 		parent_clust = _fs->__RootDirFirstCluster;
 
 	mov	rax, QWORD PTR _fs$[rsp]
-	mov	eax, DWORD PTR [rax+40]
+	mov	eax, DWORD PTR [rax+34]
 	mov	DWORD PTR parent_clust$[rsp], eax
 $LN23@FatCreateD:
 
@@ -590,7 +590,7 @@ $LN10@FatCreateD:
 	mov	DWORD PTR j$6[rsp], eax
 $LN11@FatCreateD:
 	mov	rax, QWORD PTR _fs$[rsp]
-	movzx	eax, BYTE PTR [rax+36]
+	movzx	eax, BYTE PTR [rax+33]
 	cmp	DWORD PTR j$6[rsp], eax
 	jge	$LN9@FatCreateD
 
@@ -901,7 +901,7 @@ $LN4@FatCreateD:
 ; 147  : 					if (parent_clust == _fs->__RootDirFirstCluster) {
 
 	mov	rax, QWORD PTR _fs$[rsp]
-	mov	eax, DWORD PTR [rax+40]
+	mov	eax, DWORD PTR [rax+34]
 	cmp	DWORD PTR parent_clust$[rsp], eax
 	jne	SHORT $LN3@FatCreateD
 
@@ -960,7 +960,7 @@ $LN2@FatCreateD:
 	call	V2P
 	mov	QWORD PTR tv281[rsp], rax
 	mov	rcx, QWORD PTR _fs$[rsp]
-	movzx	ecx, BYTE PTR [rcx+36]
+	movzx	ecx, BYTE PTR [rcx+33]
 	mov	DWORD PTR tv285[rsp], ecx
 	mov	edx, DWORD PTR cluster$4[rsp]
 	mov	rcx, QWORD PTR _fs$[rsp]

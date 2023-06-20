@@ -52,6 +52,7 @@ bool _x86_64_sched_enable;
 static uint16_t thread_id;
 AuThread* _idle_thr;
 Spinlock *_idle_lock;
+bool _x86_64_sched_init;
 
 extern "C" int save_context(AuThread *t, void *tss);
 extern "C" void execute_idle(AuThread* t, void* tss);
@@ -308,6 +309,7 @@ void AuSchedulerInitialise() {
 	thread_list_last = NULL;
 	trash_list = initialize_list();
 	_x86_64_sched_enable = true;
+	_x86_64_sched_init = false;
 	_idle_lock = AuCreateSpinlock(false);
 	AuThread *idle_ = AuCreateKthread(AuIdleThread, (uint64_t)P2V((uint64_t)AuPmmngrAlloc() + 4096), x64_read_cr3(), "Idle");
 	_idle_thr = idle_;
@@ -393,6 +395,7 @@ sched_end:
  * AuSchedulerStart -- start the scheduler service
  */
 void AuSchedulerStart() {
+	_x86_64_sched_init = true;
     setvect(0x40,x8664SchedulerISR);
 	AuThread* current_thread = AuPerCPUGetCurrentThread();
 	execute_idle(current_thread, x86_64_get_tss());
@@ -501,4 +504,9 @@ void AuThreadCleanTrash(AuThread* t) {
  */
 AU_EXTERN AU_EXPORT void AuForceScheduler() {
 	x64_force_sched();
+}
+
+
+bool AuIsSchedulerInitialised() {
+	return _x86_64_sched_init;
 }

@@ -134,6 +134,7 @@
   <ItemGroup>
     <ClInclude Include="includes\ctype.h" />
     <ClInclude Include="includes\endian.h" />
+    <ClInclude Include="includes\errno.h" />
     <ClInclude Include="includes\float.h" />
     <ClInclude Include="includes\limits.h" />
     <ClInclude Include="includes\math.h" />
@@ -141,6 +142,7 @@
     <ClInclude Include="includes\stdarg.h" />
     <ClInclude Include="includes\stddef.h" />
     <ClInclude Include="includes\stdint.h" />
+    <ClInclude Include="includes\stdio.h" />
     <ClInclude Include="includes\stdlib.h" />
     <ClInclude Include="includes\string.h" />
     <ClInclude Include="includes\sys\mman.h" />
@@ -152,7 +154,9 @@
     <ClInclude Include="includes\_xeneva.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="errno.cpp" />
     <ClCompile Include="math.cpp" />
+    <ClCompile Include="stdio.cpp" />
     <ClCompile Include="stdlib.cpp" />
     <ClCompile Include="string.cpp" />
     <ClCompile Include="sys\_heap.cpp" />

@@ -28,6 +28,7 @@
 **/
 
 #include <Fs\vfs.h>
+#include <Fs\Fat\Fat.h>
 #include <Mm\pmmngr.h>
 #include <Mm\vmmngr.h>
 #include <Mm\kmalloc.h>
@@ -93,7 +94,7 @@ size_t ReadFile(int fd, void* buffer, size_t length) {
 	/* every general file will contain its
 	 * file system node as device */
 	AuVFSNode* fsys = (AuVFSNode*)file->device;
-
+	
 	if (file->flags & FS_FLAG_GENERAL) {
 		size_t num_blocks = length / PAGE_SIZE + ((length % PAGE_SIZE) ? 1 : 0);;
 		if ((length % PAGE_SIZE) != 0)
@@ -193,4 +194,24 @@ int RemoveFile(char* pathname) {
 		return AuVFSRemoveDir(fsys, dir);
 	else
 		return AuVFSRemoveFile(fsys, dir);
+}
+
+/*
+ * CloseFile -- closes a general file
+ * @param fd -- file descriptor to close
+ */
+int CloseFile(int fd) {
+	if (fd == -1)
+		return 0;
+	AuThread* current_thr = AuGetCurrentThread();
+	AuProcess* current_proc = AuProcessFindThread(current_thr);
+	AuVFSNode* file = current_proc->fds[fd];
+
+	if (file->flags & FS_FLAG_FILE_SYSTEM)
+		return -1;
+	if (file->flags & FS_FLAG_GENERAL)
+		kfree(file);
+
+	current_proc->fds[fd] = 0;
+	return 0;
 }

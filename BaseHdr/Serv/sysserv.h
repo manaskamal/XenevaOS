@@ -145,4 +145,10 @@ extern int CreateDir(char* filename);
 */
 extern int RemoveFile(char* pathname);
 
+/*
+* CloseFile -- closes a general file
+* @param fd -- file descriptor to close
+*/
+extern int CloseFile(int fd);
+
 #endif

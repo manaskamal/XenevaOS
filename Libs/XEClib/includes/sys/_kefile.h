@@ -44,5 +44,6 @@ XE_EXTERN XE_EXPORT size_t _KeReadFile(int fd, void* buffer, size_t length);
 XE_EXTERN XE_EXPORT size_t _KeWriteFile(int fd, void* buffer, size_t length);
 XE_EXTERN XE_EXPORT int _KeCreateDir(char* filename);
 XE_EXTERN XE_EXPORT int _KeRemoveFile(char* pathname);
+XE_EXTERN XE_EXPORT int _KeCloseFile(int fd);
 
 #endif

@@ -10,9 +10,9 @@ _BSS	SEGMENT
 ?__ps2mouse@@3PEAU__ps2mouse__@@EA DQ 01H DUP (?)	; __ps2mouse
 _BSS	ENDS
 CONST	SEGMENT
-$SG3459	DB	'Mouse Scroll down ', 0aH, 00H
+$SG3460	DB	'Mouse Scroll down ', 0aH, 00H
 	ORG $+4
-$SG3463	DB	'Mouse Scroll up ', 0aH, 00H
+$SG3464	DB	'Mouse Scroll up ', 0aH, 00H
 CONST	ENDS
 PUBLIC	?AuPS2MouseInitialise@@YAXXZ			; AuPS2MouseInitialise
 PUBLIC	?PS2MouseWaitInput@@YAXXZ			; PS2MouseWaitInput
@@ -475,7 +475,7 @@ $LN4@PS2MouseHa:
 
 ; 176  : 		AuTextOut("Mouse Scroll down \n");
 
-	lea	rcx, OFFSET FLAT:$SG3459
+	lea	rcx, OFFSET FLAT:$SG3460
 	call	AuTextOut
 	jmp	SHORT $LN2@PS2MouseHa
 $LN3@PS2MouseHa:
@@ -491,7 +491,7 @@ $LN3@PS2MouseHa:
 
 ; 178  : 		AuTextOut("Mouse Scroll up \n");
 
-	lea	rcx, OFFSET FLAT:$SG3463
+	lea	rcx, OFFSET FLAT:$SG3464
 	call	AuTextOut
 $LN1@PS2MouseHa:
 $LN2@PS2MouseHa:

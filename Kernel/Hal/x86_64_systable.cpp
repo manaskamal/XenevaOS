@@ -90,6 +90,7 @@ static void* syscalls[AURORA_MAX_SYSCALL] = {
 	WriteFile,        //17
 	CreateDir,        //18
 	RemoveFile,       //19
+	CloseFile,        //20
 };
 
 

@@ -36,6 +36,8 @@
 #include <Mm\kmalloc.h>
 #include <aucon.h>
 #include <Hal\serial.h>
+#include <loader.h>
+#include <Sync\mutex.h>
 #include <Mm\shm.h>
 
 /*
@@ -94,6 +96,9 @@ void AuThreadFree(AuThread* t) {
 * @param proc -- Process to remove
 */
 void AuProcessClean(AuProcess* parent, AuProcess* killable) {
+	AuMutex *mut = AuLoaderGetMutex();
+	AuAcquireMutex(mut);
+
 	FreeUserStack(killable->cr3);
 	/* free up shm mappings */
 
@@ -169,4 +174,5 @@ void AuProcessClean(AuProcess* parent, AuProcess* killable) {
 	AuPmmngrFree((void*)V2P((size_t)killable->cr3));
 	kfree(killable);
 	SeTextOut("Process cleaned \r\n");
+	AuReleaseMutex(mut);
 }

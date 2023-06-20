@@ -33,7 +33,7 @@
 #include <stdint.h>
 #include <pe.h>
 #include <process.h>
-
+#include <Sync\mutex.h>
 
 /* the base address from where every executable image
  * starts
@@ -58,4 +58,10 @@ extern void AuLoadExecToProcess(AuProcess* proc, char* filename, int argc,char**
 * @param rcx -- user entry structure
 */
 extern void AuProcessEntUser(uint64_t rcx);
+
+/*
+* AuLoaderGetMutex -- returns loader
+* mutex
+*/
+extern AuMutex* AuLoaderGetMutex();
 #endif

@@ -32,6 +32,7 @@
 
 #include <stdint.h>
 #include <Fs/vdisk.h>
+#include <Sync/mutex.h>
 #include <Fs/vfs.h>
 
 #define FAT_ATTRIBUTE_MASK  0x3F
@@ -115,6 +116,7 @@ typedef struct _fat_dir_
 #define FSTYPE_FAT16  2
 #define FSTYPE_FAT32  3
 
+#pragma pack(push,1)
 typedef struct _FatFS_ {
 	FatBPB* bpb;
 	AuVDisk *vdisk;
@@ -130,7 +132,9 @@ typedef struct _FatFS_ {
 	unsigned char* __RootDirCache;
 	uint16_t __BytesPerSector;
 	size_t cluster_sz_in_bytes;
+	AuMutex *fat_mutex;
 }FatFS;
+#pragma pack(pop)
 
 /*
 * FatInitialise -- initialise the fat file system

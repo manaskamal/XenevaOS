@@ -306,6 +306,21 @@ _KeRemoveFile:
 	  mov rdi, 0
 	  syscall
 	  ret
+
+;====================================
+; _KeCloseFile -- closes a file
+; @param rcx -- file descriptor
+;====================================
+global _KeCloseFile
+_KeCloseFile:
+      xor rax, rax
+	  mov r12, 20
+	  mov r13, rcx
+	  mov r14, 0
+	  mov r15, 0
+	  mov rdi, 0
+	  syscall
+	  ret
       
       
 

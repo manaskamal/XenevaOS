@@ -51,6 +51,10 @@ AU_EXTERN AU_EXPORT AuMutex* AuCreateMutex() {
  * @param mut -- Pointer to mutex
  */
 AU_EXTERN AU_EXPORT int AuAcquireMutex(AuMutex* mut) {
+	if (!AuIsSchedulerInitialised())
+		return 0;
+	if (!mut)
+		return -1;
 	AuAcquireSpinlock(mut->lock);
 	AuThread* current_thr = AuGetCurrentThread();
 	while (mut->status) {
@@ -69,6 +73,10 @@ AU_EXTERN AU_EXPORT int AuAcquireMutex(AuMutex* mut) {
  * @param pointer to mutex
  */
 AU_EXTERN AU_EXPORT int AuReleaseMutex(AuMutex *mutex) {
+	if (!AuIsSchedulerInitialised())
+		return 0;
+	if (!mutex)
+		return -1;
 	if (mutex->owner != AuGetCurrentThread())
 		return -1;
 

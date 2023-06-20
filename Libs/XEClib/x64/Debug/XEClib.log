@@ -1,15 +1,15 @@
-﻿Build started 18-06-2023 ৰাতিপু 9:23:57.
+﻿Build started 20-06-2023 ৰাতিপু 6:59:16.
      1>Project "E:\Xeneva Project\Aurora\Libs\XEClib\XEClib.vcxproj" on node 2 (Rebuild target(s)).
      1>_NASM:
          setjmp.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp96c331ca43274f8f9879210f74eb5b47.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmpf3511bdd1e8648279bf3fdb12b761768.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\setjmp.obj"  "E:\Xeneva Project\Aurora\Libs\XEClib\setjmp.asm"
        _NASM:
          _callbase.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmpb5580ca551af453cbcf5ddb56d76965d.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmpc0f68597d4174486b1c7bf692ecbbbe6.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\_callbase.obj"  "E:\Xeneva Project\Aurora\Libs\XEClib\_callbase.asm"
        ClCompile:
-         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /Zi /nologo /W3 /WX- /sdl- /MP /Od /D ARCH_X64 /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt math.cpp stdlib.cpp string.cpp sys\_heap.cpp
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /Zi /nologo /W3 /WX- /sdl- /MP /Od /D ARCH_X64 /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt errno.cpp math.cpp stdio.cpp stdlib.cpp string.cpp sys\_heap.cpp
      1>cl : Command line warning D9025: overriding '/sdl-' with '/GS-'
      1>cl : Command line warning D9002: ignoring unknown option '/arch:SSE2'
      1>cl : Command line warning D9030: '/Gm' is incompatible with multiprocessing; ignoring /MP switch
@@ -35,14 +35,19 @@
      1>stdlib.cpp(408): warning C4146: unary minus operator applied to unsigned type, result still unsigned
      1>stdlib.cpp(433): warning C4146: unary minus operator applied to unsigned type, result still unsigned
      1>stdlib.cpp(499): warning C4146: unary minus operator applied to unsigned type, result still unsigned
+         stdio.cpp
+     1>stdio.cpp(116): warning C4244: 'return' : conversion from '__int64' to 'long', possible loss of data
          math.cpp
      1>math.cpp(93): warning C4305: '-=' : truncation from 'double' to 'float'
      1>math.cpp(95): warning C4305: '+=' : truncation from 'double' to 'float'
      1>math.cpp(233): warning C4305: '-=' : truncation from 'double' to 'float'
      1>math.cpp(235): warning C4305: '+=' : truncation from 'double' to 'float'
+         errno.cpp
          Generating Code...
        Lib:
-         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\Lib.exe /OUT:"E:\Xeneva Project\Aurora\x64\Debug\XEClib.lib" /NOLOGO /MACHINE:X64 x64\Debug\math.obj
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\Lib.exe /OUT:"E:\Xeneva Project\Aurora\x64\Debug\XEClib.lib" /NOLOGO /MACHINE:X64 x64\Debug\errno.obj
+         x64\Debug\math.obj
+         x64\Debug\stdio.obj
          x64\Debug\stdlib.obj
          x64\Debug\string.obj
          x64\Debug\_heap.obj
@@ -53,4 +58,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:01.07
+Time Elapsed 00:00:01.02

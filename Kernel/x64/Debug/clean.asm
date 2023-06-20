@@ -6,11 +6,11 @@ INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
 CONST	SEGMENT
-$SG3546	DB	'Kernel Panic!! ', 0aH, 00H
+$SG3859	DB	'Kernel Panic!! ', 0aH, 00H
 	ORG $+7
-$SG3547	DB	'Root process returned null ', 0aH, 00H
+$SG3860	DB	'Root process returned null ', 0aH, 00H
 	ORG $+3
-$SG3568	DB	'Process cleaned ', 0dH, 0aH, 00H
+$SG3881	DB	'Process cleaned ', 0dH, 0aH, 00H
 CONST	ENDS
 PUBLIC	?AuProcessClean@@YAXPEAU_au_proc_@@0@Z		; AuProcessClean
 PUBLIC	?FreeUserStack@@YAXPEA_K@Z			; FreeUserStack
@@ -30,9 +30,12 @@ EXTRN	?AuVMAreaGet@@YAPEAU_vm_area_@@PEAU_au_proc_@@_K@Z:PROC ; AuVMAreaGet
 EXTRN	kfree:PROC
 EXTRN	AuTextOut:PROC
 EXTRN	SeTextOut:PROC
+EXTRN	AuAcquireMutex:PROC
+EXTRN	AuReleaseMutex:PROC
+EXTRN	?AuLoaderGetMutex@@YAPEAU_mutex_@@XZ:PROC	; AuLoaderGetMutex
 pdata	SEGMENT
 $pdata$?AuProcessClean@@YAXPEAU_au_proc_@@0@Z DD imagerel $LN28
-	DD	imagerel $LN28+910
+	DD	imagerel $LN28+940
 	DD	imagerel $unwind$?AuProcessClean@@YAXPEAU_au_proc_@@0@Z
 $pdata$?FreeUserStack@@YAXPEA_K@Z DD imagerel $LN6
 	DD	imagerel $LN6+104
@@ -62,52 +65,52 @@ k_stack_$ = 40
 t$ = 64
 ?AuThreadFree@@YAXPEAU_au_thread_@@@Z PROC		; AuThreadFree
 
-; 78   : void AuThreadFree(AuThread* t) {
+; 80   : void AuThreadFree(AuThread* t) {
 
 $LN3:
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 56					; 00000038H
 
-; 79   : 	kfree(t->fx_state);
+; 81   : 	kfree(t->fx_state);
 
 	mov	rax, QWORD PTR t$[rsp]
 	mov	rcx, QWORD PTR [rax+272]
 	call	kfree
 
-; 80   : 
-; 81   : 	/* free up the kernel stack */
-; 82   : 	uint64_t k_stack = t->frame.rsp;
+; 82   : 
+; 83   : 	/* free up the kernel stack */
+; 84   : 	uint64_t k_stack = t->frame.rsp;
 
 	mov	rax, QWORD PTR t$[rsp]
 	mov	rax, QWORD PTR [rax+8]
 	mov	QWORD PTR k_stack$[rsp], rax
 
-; 83   : 	uint64_t k_stack_ = k_stack - PAGE_SIZE;
+; 85   : 	uint64_t k_stack_ = k_stack - PAGE_SIZE;
 
 	mov	rax, QWORD PTR k_stack$[rsp]
 	sub	rax, 4096				; 00001000H
 	mov	QWORD PTR k_stack_$[rsp], rax
 
-; 84   : 	AuPmmngrFree((void*)V2P((size_t)k_stack_));
+; 86   : 	AuPmmngrFree((void*)V2P((size_t)k_stack_));
 
 	mov	rcx, QWORD PTR k_stack_$[rsp]
 	call	V2P
 	mov	rcx, rax
 	call	AuPmmngrFree
 
-; 85   : 
-; 86   : 	kfree(t->uentry);
+; 87   : 
+; 88   : 	kfree(t->uentry);
 
 	mov	rax, QWORD PTR t$[rsp]
 	mov	rcx, QWORD PTR [rax+306]
 	call	kfree
 
-; 87   : 	kfree(t);
+; 89   : 	kfree(t);
 
 	mov	rcx, QWORD PTR t$[rsp]
 	call	kfree
 
-; 88   : }
+; 90   : }
 
 	add	rsp, 56					; 00000038H
 	ret	0
@@ -124,14 +127,14 @@ image_area$ = 64
 proc$ = 96
 ?FreeImage@@YAXPEAU_au_proc_@@@Z PROC			; FreeImage
 
-; 60   : void FreeImage(AuProcess* proc) {
+; 62   : void FreeImage(AuProcess* proc) {
 
 $LN7:
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 88					; 00000058H
 
-; 61   : 	/* Unmap the process image */
-; 62   : 	for (uint32_t i = 0; i < proc->_image_size_ / 4096 + 1; i++) {
+; 63   : 	/* Unmap the process image */
+; 64   : 	for (uint32_t i = 0; i < proc->_image_size_ / 4096 + 1; i++) {
 
 	mov	DWORD PTR i$1[rsp], 0
 	jmp	SHORT $LN4@FreeImage
@@ -152,7 +155,7 @@ $LN4@FreeImage:
 	cmp	rcx, rax
 	jae	SHORT $LN2@FreeImage
 
-; 63   : 		void* phys = AuGetPhysicalAddressEx(proc->cr3, proc->_image_base_ + i * 4096);
+; 65   : 		void* phys = AuGetPhysicalAddressEx(proc->cr3, proc->_image_base_ + i * 4096);
 
 	imul	eax, DWORD PTR i$1[rsp], 4096		; 00001000H
 	mov	eax, eax
@@ -164,30 +167,30 @@ $LN4@FreeImage:
 	call	AuGetPhysicalAddressEx
 	mov	QWORD PTR phys$3[rsp], rax
 
-; 64   : 		uint64_t physical_address = (uint64_t)V2P((uint64_t)phys);
+; 66   : 		uint64_t physical_address = (uint64_t)V2P((uint64_t)phys);
 
 	mov	rcx, QWORD PTR phys$3[rsp]
 	call	V2P
 	mov	QWORD PTR physical_address$2[rsp], rax
 
-; 65   : 		if (physical_address != 0)
+; 67   : 		if (physical_address != 0)
 
 	cmp	QWORD PTR physical_address$2[rsp], 0
 	je	SHORT $LN1@FreeImage
 
-; 66   : 			AuPmmngrFree((void*)physical_address);
+; 68   : 			AuPmmngrFree((void*)physical_address);
 
 	mov	rcx, QWORD PTR physical_address$2[rsp]
 	call	AuPmmngrFree
 $LN1@FreeImage:
 
-; 67   : 	}
+; 69   : 	}
 
 	jmp	SHORT $LN3@FreeImage
 $LN2@FreeImage:
 
-; 68   : 
-; 69   : 	AuVMArea *image_area = AuVMAreaGet(proc, proc->_image_base_);
+; 70   : 
+; 71   : 	AuVMArea *image_area = AuVMAreaGet(proc, proc->_image_base_);
 
 	mov	rax, QWORD PTR proc$[rsp]
 	mov	rdx, QWORD PTR [rax+30]
@@ -195,13 +198,13 @@ $LN2@FreeImage:
 	call	?AuVMAreaGet@@YAPEAU_vm_area_@@PEAU_au_proc_@@_K@Z ; AuVMAreaGet
 	mov	QWORD PTR image_area$[rsp], rax
 
-; 70   : 	AuRemoveVMArea(proc, image_area);
+; 72   : 	AuRemoveVMArea(proc, image_area);
 
 	mov	rdx, QWORD PTR image_area$[rsp]
 	mov	rcx, QWORD PTR proc$[rsp]
 	call	?AuRemoveVMArea@@YAXPEAU_au_proc_@@PEAU_vm_area_@@@Z ; AuRemoveVMArea
 
-; 71   : }
+; 73   : }
 
 	add	rsp, 88					; 00000058H
 	ret	0
@@ -216,20 +219,20 @@ location$ = 48
 cr3$ = 80
 ?FreeUserStack@@YAXPEA_K@Z PROC				; FreeUserStack
 
-; 45   : void FreeUserStack(uint64_t* cr3) {
+; 47   : void FreeUserStack(uint64_t* cr3) {
 
 $LN6:
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 72					; 00000048H
 
-; 46   : #define USER_STACK 0x0000700000000000 
-; 47   : 	uint64_t location = USER_STACK;
+; 48   : #define USER_STACK 0x0000700000000000 
+; 49   : 	uint64_t location = USER_STACK;
 
 	mov	rax, 123145302310912			; 0000700000000000H
 	mov	QWORD PTR location$[rsp], rax
 
-; 48   : 
-; 49   : 	for (int i = 0; i < PROCESS_USER_STACK_SZ / 4096; i++) {
+; 50   : 
+; 51   : 	for (int i = 0; i < PROCESS_USER_STACK_SZ / 4096; i++) {
 
 	mov	DWORD PTR i$1[rsp], 0
 	jmp	SHORT $LN3@FreeUserSt
@@ -241,7 +244,7 @@ $LN3@FreeUserSt:
 	cmp	DWORD PTR i$1[rsp], 64			; 00000040H
 	jge	SHORT $LN1@FreeUserSt
 
-; 50   : 		void* addr = AuGetPhysicalAddressEx(cr3, + i * 4096);
+; 52   : 		void* addr = AuGetPhysicalAddressEx(cr3, + i * 4096);
 
 	imul	eax, DWORD PTR i$1[rsp], 4096		; 00001000H
 	cdqe
@@ -250,19 +253,19 @@ $LN3@FreeUserSt:
 	call	AuGetPhysicalAddressEx
 	mov	QWORD PTR addr$2[rsp], rax
 
-; 51   : 		AuPmmngrFree((void*)V2P((size_t)addr));
+; 53   : 		AuPmmngrFree((void*)V2P((size_t)addr));
 
 	mov	rcx, QWORD PTR addr$2[rsp]
 	call	V2P
 	mov	rcx, rax
 	call	AuPmmngrFree
 
-; 52   : 	}
+; 54   : 	}
 
 	jmp	SHORT $LN2@FreeUserSt
 $LN1@FreeUserSt:
 
-; 53   : }
+; 55   : }
 
 	add	rsp, 72					; 00000048H
 	ret	0
@@ -279,39 +282,51 @@ i$5 = 48
 proc_$6 = 56
 t_$7 = 64
 root_proc$ = 72
-phys$8 = 80
-area$9 = 88
-num_pages$10 = 96
-phys$ = 104
-proc_$11 = 112
+mut$ = 80
+phys$8 = 88
+area$9 = 96
+num_pages$10 = 104
+phys$ = 112
+proc_$11 = 120
 parent$ = 144
 killable$ = 152
 ?AuProcessClean@@YAXPEAU_au_proc_@@0@Z PROC		; AuProcessClean
 
-; 96   : void AuProcessClean(AuProcess* parent, AuProcess* killable) {
+; 98   : void AuProcessClean(AuProcess* parent, AuProcess* killable) {
 
 $LN28:
 	mov	QWORD PTR [rsp+16], rdx
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 136				; 00000088H
 
-; 97   : 	FreeUserStack(killable->cr3);
+; 99   : 	AuMutex *mut = AuLoaderGetMutex();
+
+	call	?AuLoaderGetMutex@@YAPEAU_mutex_@@XZ	; AuLoaderGetMutex
+	mov	QWORD PTR mut$[rsp], rax
+
+; 100  : 	AuAcquireMutex(mut);
+
+	mov	rcx, QWORD PTR mut$[rsp]
+	call	AuAcquireMutex
+
+; 101  : 
+; 102  : 	FreeUserStack(killable->cr3);
 
 	mov	rax, QWORD PTR killable$[rsp]
 	mov	rcx, QWORD PTR [rax+14]
 	call	?FreeUserStack@@YAXPEA_K@Z		; FreeUserStack
 
-; 98   : 	/* free up shm mappings */
-; 99   : 
-; 100  : 	/* free up image base + image size*/
-; 101  : 	FreeImage(killable);
+; 103  : 	/* free up shm mappings */
+; 104  : 
+; 105  : 	/* free up image base + image size*/
+; 106  : 	FreeImage(killable);
 
 	mov	rcx, QWORD PTR killable$[rsp]
 	call	?FreeImage@@YAXPEAU_au_proc_@@@Z	; FreeImage
 
-; 102  : 
-; 103  : 	/* free up vmareas */
-; 104  : 	for (int i = 0; i < killable->vmareas->pointer; i++) {
+; 107  : 
+; 108  : 	/* free up vmareas */
+; 109  : 	for (int i = 0; i < killable->vmareas->pointer; i++) {
 
 	mov	DWORD PTR i$5[rsp], 0
 	jmp	SHORT $LN25@AuProcessC
@@ -326,7 +341,7 @@ $LN25@AuProcessC:
 	cmp	DWORD PTR i$5[rsp], eax
 	jae	SHORT $LN23@AuProcessC
 
-; 105  : 		AuVMArea* area = (AuVMArea*)list_get_at(killable->vmareas, i);
+; 110  : 		AuVMArea* area = (AuVMArea*)list_get_at(killable->vmareas, i);
 
 	mov	edx, DWORD PTR i$5[rsp]
 	mov	rax, QWORD PTR killable$[rsp]
@@ -334,37 +349,37 @@ $LN25@AuProcessC:
 	call	list_get_at
 	mov	QWORD PTR area$9[rsp], rax
 
-; 106  : 		if (!area)
+; 111  : 		if (!area)
 
 	cmp	QWORD PTR area$9[rsp], 0
 	jne	SHORT $LN22@AuProcessC
 
-; 107  : 			kfree(area);
+; 112  : 			kfree(area);
 
 	mov	rcx, QWORD PTR area$9[rsp]
 	call	kfree
 $LN22@AuProcessC:
 
-; 108  : 	}
+; 113  : 	}
 
 	jmp	SHORT $LN24@AuProcessC
 $LN23@AuProcessC:
 
-; 109  : 	kfree(killable->vmareas);
+; 114  : 	kfree(killable->vmareas);
 
 	mov	rax, QWORD PTR killable$[rsp]
 	mov	rcx, QWORD PTR [rax+1055]
 	call	kfree
 
-; 110  : 
-; 111  : 	/* free up process heap memory */
-; 112  : 	if (killable->proc_mem_heap > PROCESS_BREAK_ADDRESS) {
+; 115  : 
+; 116  : 	/* free up process heap memory */
+; 117  : 	if (killable->proc_mem_heap > PROCESS_BREAK_ADDRESS) {
 
 	mov	rax, QWORD PTR killable$[rsp]
 	cmp	QWORD PTR [rax+1079], 805306368		; 30000000H
 	jbe	$LN21@AuProcessC
 
-; 113  : 		size_t num_pages = (killable->proc_mem_heap - PROCESS_BREAK_ADDRESS) / PAGE_SIZE;
+; 118  : 		size_t num_pages = (killable->proc_mem_heap - PROCESS_BREAK_ADDRESS) / PAGE_SIZE;
 
 	mov	rax, QWORD PTR killable$[rsp]
 	mov	rax, QWORD PTR [rax+1079]
@@ -374,7 +389,7 @@ $LN23@AuProcessC:
 	div	rcx
 	mov	QWORD PTR num_pages$10[rsp], rax
 
-; 114  : 		for (int i = 0; i < num_pages; i++) {
+; 119  : 		for (int i = 0; i < num_pages; i++) {
 
 	mov	DWORD PTR i$2[rsp], 0
 	jmp	SHORT $LN20@AuProcessC
@@ -387,7 +402,7 @@ $LN20@AuProcessC:
 	cmp	rax, QWORD PTR num_pages$10[rsp]
 	jae	SHORT $LN18@AuProcessC
 
-; 115  : 			void* phys = AuGetPhysicalAddressEx(killable->cr3, PROCESS_BREAK_ADDRESS + i * PAGE_SIZE);
+; 120  : 			void* phys = AuGetPhysicalAddressEx(killable->cr3, PROCESS_BREAK_ADDRESS + i * PAGE_SIZE);
 
 	imul	eax, DWORD PTR i$2[rsp], 4096		; 00001000H
 	add	eax, 805306368				; 30000000H
@@ -398,12 +413,12 @@ $LN20@AuProcessC:
 	call	AuGetPhysicalAddressEx
 	mov	QWORD PTR phys$8[rsp], rax
 
-; 116  : 			if (phys)
+; 121  : 			if (phys)
 
 	cmp	QWORD PTR phys$8[rsp], 0
 	je	SHORT $LN17@AuProcessC
 
-; 117  : 				AuPmmngrFree((void*)V2P((uint64_t)phys));
+; 122  : 				AuPmmngrFree((void*)V2P((uint64_t)phys));
 
 	mov	rcx, QWORD PTR phys$8[rsp]
 	call	V2P
@@ -411,16 +426,16 @@ $LN20@AuProcessC:
 	call	AuPmmngrFree
 $LN17@AuProcessC:
 
-; 118  : 		}
+; 123  : 		}
 
 	jmp	SHORT $LN19@AuProcessC
 $LN18@AuProcessC:
 $LN21@AuProcessC:
 
-; 119  : 	}
-; 120  : 
-; 121  : 	/* finally free up all threads */
-; 122  : 	for (int i = 1; i < MAX_THREADS_PER_PROCESS -1 ; i++) {
+; 124  : 	}
+; 125  : 
+; 126  : 	/* finally free up all threads */
+; 127  : 	for (int i = 1; i < MAX_THREADS_PER_PROCESS -1 ; i++) {
 
 	mov	DWORD PTR i$3[rsp], 1
 	jmp	SHORT $LN16@AuProcessC
@@ -432,37 +447,37 @@ $LN16@AuProcessC:
 	cmp	DWORD PTR i$3[rsp], 59			; 0000003bH
 	jge	SHORT $LN14@AuProcessC
 
-; 123  : 		AuThread *t_ = killable->threads[i];
+; 128  : 		AuThread *t_ = killable->threads[i];
 
 	movsxd	rax, DWORD PTR i$3[rsp]
 	mov	rcx, QWORD PTR killable$[rsp]
 	mov	rax, QWORD PTR [rcx+rax*8+63]
 	mov	QWORD PTR t_$7[rsp], rax
 
-; 124  : 		if (t_) {
+; 129  : 		if (t_) {
 
 	cmp	QWORD PTR t_$7[rsp], 0
 	je	SHORT $LN13@AuProcessC
 
-; 125  : 			AuThreadCleanTrash(t_);
+; 130  : 			AuThreadCleanTrash(t_);
 
 	mov	rcx, QWORD PTR t_$7[rsp]
 	call	?AuThreadCleanTrash@@YAXPEAU_au_thread_@@@Z ; AuThreadCleanTrash
 
-; 126  : 			AuThreadFree(t_);
+; 131  : 			AuThreadFree(t_);
 
 	mov	rcx, QWORD PTR t_$7[rsp]
 	call	?AuThreadFree@@YAXPEAU_au_thread_@@@Z	; AuThreadFree
 $LN13@AuProcessC:
 
-; 127  : 		}
-; 128  : 	}
+; 132  : 		}
+; 133  : 	}
 
 	jmp	SHORT $LN15@AuProcessC
 $LN14@AuProcessC:
 
-; 129  : 
-; 130  : 	void* phys = AuGetPhysicalAddressEx(killable->cr3, 0x4000);
+; 134  : 
+; 135  : 	void* phys = AuGetPhysicalAddressEx(killable->cr3, 0x4000);
 
 	mov	edx, 16384				; 00004000H
 	mov	rax, QWORD PTR killable$[rsp]
@@ -470,60 +485,60 @@ $LN14@AuProcessC:
 	call	AuGetPhysicalAddressEx
 	mov	QWORD PTR phys$[rsp], rax
 
-; 131  : 	AuPmmngrFree((void*)P2V((size_t)phys));
+; 136  : 	AuPmmngrFree((void*)P2V((size_t)phys));
 
 	mov	rcx, QWORD PTR phys$[rsp]
 	call	P2V
 	mov	rcx, rax
 	call	AuPmmngrFree
 
-; 132  : 
-; 133  : 	/* clean the main thread externally*/
-; 134  : 	AuThreadCleanTrash(killable->main_thread);
+; 137  : 
+; 138  : 	/* clean the main thread externally*/
+; 139  : 	AuThreadCleanTrash(killable->main_thread);
 
 	mov	rax, QWORD PTR killable$[rsp]
 	mov	rcx, QWORD PTR [rax+46]
 	call	?AuThreadCleanTrash@@YAXPEAU_au_thread_@@@Z ; AuThreadCleanTrash
 
-; 135  : 	AuThreadFree(killable->main_thread);
+; 140  : 	AuThreadFree(killable->main_thread);
 
 	mov	rax, QWORD PTR killable$[rsp]
 	mov	rcx, QWORD PTR [rax+46]
 	call	?AuThreadFree@@YAXPEAU_au_thread_@@@Z	; AuThreadFree
 
-; 136  : 
-; 137  : 
-; 138  : 	AuProcess* root_proc = AuGetRootProcess();
+; 141  : 
+; 142  : 
+; 143  : 	AuProcess* root_proc = AuGetRootProcess();
 
 	call	?AuGetRootProcess@@YAPEAU_au_proc_@@XZ	; AuGetRootProcess
 	mov	QWORD PTR root_proc$[rsp], rax
 
-; 139  : 	if (!root_proc) {
+; 144  : 	if (!root_proc) {
 
 	cmp	QWORD PTR root_proc$[rsp], 0
 	jne	SHORT $LN12@AuProcessC
 
-; 140  : 		AuTextOut("Kernel Panic!! \n");
+; 145  : 		AuTextOut("Kernel Panic!! \n");
 
-	lea	rcx, OFFSET FLAT:$SG3546
+	lea	rcx, OFFSET FLAT:$SG3859
 	call	AuTextOut
 
-; 141  : 		AuTextOut("Root process returned null \n");
+; 146  : 		AuTextOut("Root process returned null \n");
 
-	lea	rcx, OFFSET FLAT:$SG3547
+	lea	rcx, OFFSET FLAT:$SG3860
 	call	AuTextOut
 $LN11@AuProcessC:
 
-; 142  : 		for (;;);
+; 147  : 		for (;;);
 
 	jmp	SHORT $LN11@AuProcessC
 $LN12@AuProcessC:
 
-; 143  : 	}
-; 144  : 	/* make all child process's orphan process 
-; 145  : 	 * it will be owned by root process
-; 146  : 	 */
-; 147  : 	for (int i = 0; i < killable->childs->pointer; i++) {
+; 148  : 	}
+; 149  : 	/* make all child process's orphan process 
+; 150  : 	 * it will be owned by root process
+; 151  : 	 */
+; 152  : 	for (int i = 0; i < killable->childs->pointer; i++) {
 
 	mov	DWORD PTR i$4[rsp], 0
 	jmp	SHORT $LN9@AuProcessC
@@ -538,7 +553,7 @@ $LN9@AuProcessC:
 	cmp	DWORD PTR i$4[rsp], eax
 	jae	SHORT $LN7@AuProcessC
 
-; 148  : 		AuProcess* proc_ = (AuProcess*)list_get_at(killable->childs, i);
+; 153  : 		AuProcess* proc_ = (AuProcess*)list_get_at(killable->childs, i);
 
 	mov	edx, DWORD PTR i$4[rsp]
 	mov	rax, QWORD PTR killable$[rsp]
@@ -546,12 +561,12 @@ $LN9@AuProcessC:
 	call	list_get_at
 	mov	QWORD PTR proc_$6[rsp], rax
 
-; 149  : 		if (proc_) {
+; 154  : 		if (proc_) {
 
 	cmp	QWORD PTR proc_$6[rsp], 0
 	je	SHORT $LN6@AuProcessC
 
-; 150  : 			proc_->state |= PROCESS_STATE_ORPHAN;
+; 155  : 			proc_->state |= PROCESS_STATE_ORPHAN;
 
 	mov	rax, QWORD PTR proc_$6[rsp]
 	movzx	eax, BYTE PTR [rax+12]
@@ -559,46 +574,46 @@ $LN9@AuProcessC:
 	mov	rcx, QWORD PTR proc_$6[rsp]
 	mov	BYTE PTR [rcx+12], al
 
-; 151  : 			proc_->parent = NULL;
+; 156  : 			proc_->parent = NULL;
 
 	mov	rax, QWORD PTR proc_$6[rsp]
 	mov	QWORD PTR [rax+1087], 0
 
-; 152  : 			AuAddProcess(root_proc, proc_);
+; 157  : 			AuAddProcess(root_proc, proc_);
 
 	mov	rdx, QWORD PTR proc_$6[rsp]
 	mov	rcx, QWORD PTR root_proc$[rsp]
 	call	?AuAddProcess@@YAXPEAU_au_proc_@@0@Z	; AuAddProcess
 
-; 153  : 			proc_->parent = root_proc;
+; 158  : 			proc_->parent = root_proc;
 
 	mov	rax, QWORD PTR proc_$6[rsp]
 	mov	rcx, QWORD PTR root_proc$[rsp]
 	mov	QWORD PTR [rax+1087], rcx
 $LN6@AuProcessC:
 
-; 154  : 		}
-; 155  : 	}
+; 159  : 		}
+; 160  : 	}
 
 	jmp	$LN8@AuProcessC
 $LN7@AuProcessC:
 
-; 156  : 
-; 157  : 	kfree(killable->childs);
+; 161  : 
+; 162  : 	kfree(killable->childs);
 
 	mov	rax, QWORD PTR killable$[rsp]
 	mov	rcx, QWORD PTR [rax+1047]
 	call	kfree
 
-; 158  : 	
-; 159  : 	/* release the process slot */
-; 160  : 	if (killable->parent) {
+; 163  : 	
+; 164  : 	/* release the process slot */
+; 165  : 	if (killable->parent) {
 
 	mov	rax, QWORD PTR killable$[rsp]
 	cmp	QWORD PTR [rax+1087], 0
 	je	$LN5@AuProcessC
 
-; 161  : 		for (int i = 0; i < killable->parent->childs->pointer; i++) {
+; 166  : 		for (int i = 0; i < killable->parent->childs->pointer; i++) {
 
 	mov	DWORD PTR i$1[rsp], 0
 	jmp	SHORT $LN4@AuProcessC
@@ -614,7 +629,7 @@ $LN4@AuProcessC:
 	cmp	DWORD PTR i$1[rsp], eax
 	jae	SHORT $LN2@AuProcessC
 
-; 162  : 			AuProcess* proc_ = (AuProcess*)list_get_at(killable->parent->childs, i);
+; 167  : 			AuProcess* proc_ = (AuProcess*)list_get_at(killable->parent->childs, i);
 
 	mov	rax, QWORD PTR killable$[rsp]
 	mov	rax, QWORD PTR [rax+1087]
@@ -623,13 +638,13 @@ $LN4@AuProcessC:
 	call	list_get_at
 	mov	QWORD PTR proc_$11[rsp], rax
 
-; 163  : 			if (proc_ == killable) {
+; 168  : 			if (proc_ == killable) {
 
 	mov	rax, QWORD PTR killable$[rsp]
 	cmp	QWORD PTR proc_$11[rsp], rax
 	jne	SHORT $LN1@AuProcessC
 
-; 164  : 				list_remove(killable->parent->childs, i);
+; 169  : 				list_remove(killable->parent->childs, i);
 
 	mov	rax, QWORD PTR killable$[rsp]
 	mov	rax, QWORD PTR [rax+1087]
@@ -638,16 +653,16 @@ $LN4@AuProcessC:
 	call	list_remove
 $LN1@AuProcessC:
 
-; 165  : 			}
-; 166  : 		}
+; 170  : 			}
+; 171  : 		}
 
 	jmp	SHORT $LN3@AuProcessC
 $LN2@AuProcessC:
 $LN5@AuProcessC:
 
-; 167  : 	}
-; 168  : 
-; 169  : 	AuPmmngrFree((void*)V2P((size_t)killable->cr3));
+; 172  : 	}
+; 173  : 
+; 174  : 	AuPmmngrFree((void*)V2P((size_t)killable->cr3));
 
 	mov	rax, QWORD PTR killable$[rsp]
 	mov	rcx, QWORD PTR [rax+14]
@@ -655,17 +670,22 @@ $LN5@AuProcessC:
 	mov	rcx, rax
 	call	AuPmmngrFree
 
-; 170  : 	kfree(killable);
+; 175  : 	kfree(killable);
 
 	mov	rcx, QWORD PTR killable$[rsp]
 	call	kfree
 
-; 171  : 	SeTextOut("Process cleaned \r\n");
+; 176  : 	SeTextOut("Process cleaned \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG3568
+	lea	rcx, OFFSET FLAT:$SG3881
 	call	SeTextOut
 
-; 172  : }
+; 177  : 	AuReleaseMutex(mut);
+
+	mov	rcx, QWORD PTR mut$[rsp]
+	call	AuReleaseMutex
+
+; 178  : }
 
 	add	rsp, 136				; 00000088H
 	ret	0

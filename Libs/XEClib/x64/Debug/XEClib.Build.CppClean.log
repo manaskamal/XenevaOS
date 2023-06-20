@@ -2,7 +2,9 @@ e:\xeneva project\aurora\libs\xeclib\x64\debug\setjmp.obj
 e:\xeneva project\aurora\libs\xeclib\x64\debug\_callbase.obj
 e:\xeneva project\aurora\libs\xeclib\x64\debug\vc120.pdb
 e:\xeneva project\aurora\libs\xeclib\x64\debug\vc120.idb
+e:\xeneva project\aurora\libs\xeclib\x64\debug\errno.obj
 e:\xeneva project\aurora\libs\xeclib\x64\debug\math.obj
+e:\xeneva project\aurora\libs\xeclib\x64\debug\stdio.obj
 e:\xeneva project\aurora\libs\xeclib\x64\debug\stdlib.obj
 e:\xeneva project\aurora\libs\xeclib\x64\debug\string.obj
 e:\xeneva project\aurora\libs\xeclib\x64\debug\_heap.obj

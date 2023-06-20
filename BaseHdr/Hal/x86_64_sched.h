@@ -205,4 +205,5 @@ extern void AuThreadCleanTrash(AuThread* t);
 */
 AU_EXTERN AU_EXPORT void AuForceScheduler();
 
+extern bool AuIsSchedulerInitialised();
 #endif
