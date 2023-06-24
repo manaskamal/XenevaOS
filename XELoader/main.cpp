@@ -27,14 +27,18 @@
 *
 **/
 
-#include "_callback.h"
-#include <string.h>
-
+#include <_xeneva.h>
+#include <sys\_keproc.h>
 /*
  * main entry point of the loader
  */
 int main(int argc, char** argv[]) {
+	int pid = _KeGetProcessID();
+	if (pid == 3){
+		int chid = _KeCreateProcess(pid, "ldr");
+		_KeProcessLoadExec(chid, "/xeldr.exe", 0, NULL);
+	}
 	while (1) {
-
+		_KeProcessExit();
 	}
 }

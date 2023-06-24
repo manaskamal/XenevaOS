@@ -246,6 +246,12 @@
     <ClInclude Include="..\BaseHdr\Fs\Fat\FatDir.h">
       <Filter>Include\Fs\Fat</Filter>
     </ClInclude>
+    <ClInclude Include="..\BaseHdr\Fs\tty.h">
+      <Filter>Include\Fs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\termios.h">
+      <Filter>Include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="init.cpp" />

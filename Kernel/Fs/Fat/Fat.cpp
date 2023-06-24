@@ -102,8 +102,9 @@ void FatToDOSFilename(const char* filename, char* fname, unsigned int fname_leng
 uint32_t FatReadFAT(AuVFSNode *node, uint32_t cluster_index) {
 	FatFS *fs = (FatFS*)node->device;
 	AuVDisk *vdisk = (AuVDisk*)fs->vdisk;
-	if (!vdisk)
+	if (!vdisk){
 		return NULL;
+	}
 
 	auto fat_offset = cluster_index * 4;
 	uint64_t fat_sector = fs->__FatBeginLBA + (fat_offset / 512);
@@ -189,7 +190,6 @@ void FatClearCluster(AuVFSNode* node, uint32_t cluster) {
 
 	uint64_t *buffer = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
 	memset(buffer, 0, PAGE_SIZE);
-	AuTextOut("Buffer ->%x \n", buffer);
 	//update_cluster (buffer,cluster);
 	uint32_t sector = FatClusterToSector32(fs, cluster);
 	AuVDiskWrite(vdisk, sector, fs->__SectorPerCluster, (uint64_t*)V2P((size_t)buffer));
@@ -204,10 +204,8 @@ void FatClearCluster(AuVFSNode* node, uint32_t cluster) {
 */
 size_t FatRead(AuVFSNode* fsys, AuVFSNode *file, uint64_t* buf) {
 	FatFS* fs = (FatFS*)fsys->device;
-	AuAcquireMutex(fs->fat_mutex);
 	AuVDisk* vdisk = (AuVDisk*)fs->vdisk;
 	if (!vdisk) {
-		AuReleaseMutex(fs->fat_mutex);
 		return NULL;
 	}
 
@@ -219,18 +217,54 @@ size_t FatRead(AuVFSNode* fsys, AuVFSNode *file, uint64_t* buf) {
 
 	if (value >= 0x0FFFFFF8) {
 		file->eof = 1;
-		AuReleaseMutex(fs->fat_mutex);
 		return -1;
 	}
 
 	if (value == 0x0FFFFFF7) {
 		file->eof = 1;
-		AuReleaseMutex(fs->fat_mutex);
 		return -1;
 	}
 	file->current = value;
-	AuReleaseMutex(fs->fat_mutex);
 	return 4096;
+}
+
+/*
+ * FatReadFile -- reads a file of some specified size in bytes
+ * @param fsys -- Pointer to file system
+ * @param file -- Pointer to file
+ * @param buffer -- Pointer to reserved memory
+ * @param length -- length to read in bytes
+ */
+size_t FatReadFile(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint32_t length) {
+	if (!fsys)
+		return 0;
+
+	if (!file)
+		return 0;
+	FatFS* fs = (FatFS*)fsys->device;
+
+	size_t read_bytes = 0;
+	size_t ret_bytes = 0;
+	uint8_t* aligned_buffer = (uint8_t*)buffer;
+
+	size_t num_blocks = length / fs->cluster_sz_in_bytes +
+		((length % fs->cluster_sz_in_bytes) ? 1 : 0);;
+	if ((length % fs->cluster_sz_in_bytes) != 0)
+		num_blocks++;
+
+	for (int i = 0; i < num_blocks; i++) {
+		if (file->eof)
+			break;
+		uint64_t* buff = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
+		memset(buff, 0, PAGE_SIZE);
+		read_bytes = FatRead(fsys, file, (uint64_t*)V2P((size_t)buff));
+		memcpy(aligned_buffer, buff, PAGE_SIZE);
+		AuPmmngrFree((void*)V2P((size_t)buff));
+		aligned_buffer += PAGE_SIZE;
+		ret_bytes += read_bytes;
+	}
+
+	return ret_bytes;
 }
 
 AuVFSNode* FatLocateSubDir(AuVFSNode* fsys,AuVFSNode* kfile, const char* filename) {
@@ -348,14 +382,12 @@ AuVFSNode * FatOpen(AuVFSNode * fsys, char* filename) {
 	if (!fsys)
 		return NULL;
 	FatFS* _fs = (FatFS*)fsys->device;
-	AuAcquireMutex(_fs->fat_mutex);
 
 	AuVFSNode *cur_dir = NULL;
 	AuVDisk *vdisk = (AuVDisk*)fsys->device;
 	char* p = 0;
 	bool  root_dir = true;
 	char* path = (char*)filename;
-
 	//! any '\'s in path ?
 	p = strchr(path, '/');
 	if (!p) {
@@ -364,10 +396,8 @@ AuVFSNode * FatOpen(AuVFSNode * fsys, char* filename) {
 
 		//! found file ?
 		if (cur_dir != NULL) {
-			AuReleaseMutex(_fs->fat_mutex);
 			return cur_dir;
 		}
-		AuReleaseMutex(_fs->fat_mutex);
 		//! unable to find
 		return NULL;
 	}
@@ -411,15 +441,12 @@ AuVFSNode * FatOpen(AuVFSNode * fsys, char* filename) {
 	}
 
 	//! found file?
-	if (cur_dir != NULL){
-		AuReleaseMutex(_fs->fat_mutex);
+	if (cur_dir != NULL)
 		return cur_dir;
-	}
 	//! unable to find
 	/*vfs_node_t ret;
 	ret.flags = FS_FLAG_INVALID;
 	ret.size = 0;*/
-	AuReleaseMutex(_fs->fat_mutex);
 	return NULL;
 }
 
@@ -438,6 +465,7 @@ size_t FatGetClusterFor(AuVFSNode* fs,AuVFSNode* file, uint64_t offset){
 		cluster = FatReadFAT(fs, cluster);
 	return cluster;
 }
+
 
 /*
 * FatInitialise -- initialise the fat file system
@@ -471,7 +499,8 @@ AuVFSNode* FatInitialise(AuVDisk *vdisk, char* mountname){
 	fs->cluster_sz_in_bytes = fs->__SectorPerCluster * bpb->bytes_per_sector;
 	fs->__BytesPerSector = bpb->bytes_per_sector;
 	fs->fat_mutex = AuCreateMutex();
-
+	fs->fat_write_mutex = AuCreateMutex();
+	fs->fat_read_mutex = AuCreateMutex();
 	fs->__TotalClusters = bpb->large_sector_count / fs->__SectorPerCluster;
 	size_t _root_dir_sectors = ((bpb->num_dir_entries * 32) + bpb->bytes_per_sector - 1) / bpb->bytes_per_sector;
 	size_t _TotalSectors = (bpb->total_sectors_short == 0) ? bpb->large_sector_count : bpb->total_sectors_short;
@@ -497,6 +526,7 @@ AuVFSNode* FatInitialise(AuVDisk *vdisk, char* mountname){
 	fsys->flags |= FS_FLAG_FILE_SYSTEM;
 	fsys->open = FatOpen;
 	fsys->device = fs;
+	fsys->read = FatReadFile;
 	fsys->read_block = FatRead;
 	fsys->remove_dir = FatRemoveDir;
 	fsys->remove_file = FatFileRemove;

@@ -6,8 +6,8 @@ INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
 CONST	SEGMENT
-$SG3237	DB	'GPT Partition with Windows Partition data ', 0aH, 00H
-$SG3238	DB	'/', 00H
+$SG3242	DB	'GPT Partition with Windows Partition data ', 0aH, 00H
+$SG3243	DB	'/', 00H
 CONST	ENDS
 PUBLIC	AuGUIDVerify
 PUBLIC	?AuGPTInitialise_FileSystem@@YAXPEAU_VDISK_@@@Z	; AuGPTInitialise_FileSystem
@@ -85,7 +85,7 @@ $LN4:
 
 ; 66   : 		AuTextOut("GPT Partition with Windows Partition data \n");
 
-	lea	rcx, OFFSET FLAT:$SG3237
+	lea	rcx, OFFSET FLAT:$SG3242
 	call	AuTextOut
 
 ; 67   : 
@@ -94,7 +94,7 @@ $LN4:
 ; 70   : 		 * it includes, for now we only support FAT file system */
 ; 71   : 		FatInitialise(vdisk, "/");
 
-	lea	rdx, OFFSET FLAT:$SG3238
+	lea	rdx, OFFSET FLAT:$SG3243
 	mov	rcx, QWORD PTR vdisk$[rsp]
 	call	?FatInitialise@@YAPEAU__VFS_NODE__@@PEAU_VDISK_@@PEAD@Z ; FatInitialise
 $LN1@AuGPTIniti:

@@ -54,16 +54,22 @@ AU_EXTERN AU_EXPORT int AuAcquireMutex(AuMutex* mut) {
 	if (!AuIsSchedulerInitialised())
 		return 0;
 	if (!mut)
-		return -1;
+		return 0;
+	x64_cli();
 	AuAcquireSpinlock(mut->lock);
 	AuThread* current_thr = AuGetCurrentThread();
+	AuProcess* current_proc = AuProcessFindThread(current_thr);
 	while (mut->status) {
 		list_add(mut->waiters, current_thr);
+		current_proc->state = 0;
+		current_proc->state |= PROCESS_STATE_BUSY_WAIT;
 		AuBlockThread(current_thr);
 		x64_force_sched();
 	}
+
 	mut->status = 1;
 	mut->owner = current_thr;
+	SeTextOut("Mutex acquired \r\n");
 	AuReleaseSpinlock(mut->lock);
 	return 0;
 }
@@ -77,19 +83,23 @@ AU_EXTERN AU_EXPORT int AuReleaseMutex(AuMutex *mutex) {
 		return 0;
 	if (!mutex)
 		return -1;
-	if (mutex->owner != AuGetCurrentThread())
+	if (mutex->owner != AuGetCurrentThread()) {
 		return -1;
-
+	}
+	AuAcquireSpinlock(mutex->lock);
 	mutex->status = 0;
 	mutex->owner = NULL;
 	for (int i = 0; i < mutex->waiters->pointer; i++) {
 		AuThread* thr_ = (AuThread*)list_remove(mutex->waiters, i);
+		AuProcess* current_proc = AuProcessFindThread(thr_);
 		if (thr_) {
+			current_proc->state = 0;
+			current_proc->state |= PROCESS_STATE_READY;
 			AuUnblockThread(thr_);
-			break;
 		}
 	}
-
+	SeTextOut("Mutex released \r\n");
+	AuReleaseSpinlock(mutex->lock);
 	return 0;
 }
 

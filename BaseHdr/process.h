@@ -33,6 +33,7 @@
 #include <stdint.h>
 #include <Fs\vfs.h>
 #include <Hal\x86_64_sched.h>
+#include <Sync\mutex.h>
 #include <list.h>
 
 #define PROCESS_USER_STACK_SZ 256*1024
@@ -40,20 +41,25 @@
 #define MAX_THREADS_PER_PROCESS  60
 #define FILE_DESC_PER_PROCESS 60
 
-#define PROCESS_STATE_NOT_READY  1
-#define PROCESS_STATE_READY      2
-#define PROCESS_STATE_SUSPENDED  3
+#define PROCESS_STATE_NOT_READY  (1<<0)
+#define PROCESS_STATE_READY      (1<<1)
+#define PROCESS_STATE_SUSPENDED  (1<<2)
 
 /* when a process exits, it's marked
  * as died */
-#define PROCESS_STATE_DIED       4 
+#define PROCESS_STATE_DIED       (1<<3) 
 
 /* when a process's parents dies, whitout
  * terminating its childs, childs are 
  * marked as zombies
  */
-#define PROCESS_STATE_ZOMBIE     5
-#define PROCESS_STATE_ORPHAN     6
+#define PROCESS_STATE_ZOMBIE     (1<<4)
+#define PROCESS_STATE_ORPHAN     (1<<5)
+
+/* process state busy wait is set when
+ * any locks set its as waiting 
+ */
+#define PROCESS_STATE_BUSY_WAIT  (1<<6)
 
 /* Exit codes for processes */
 #define PROCESS_EXIT_SUCCESS  0
@@ -183,5 +189,7 @@ extern int AuProcessGetFileDesc(AuProcess* proc);
 * process
 */
 extern void AuProcessWaitForTermination(AuProcess *proc, int pid);
+
+extern AuMutex* AuProcessGetMutex();
 
 #endif

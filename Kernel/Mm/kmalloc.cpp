@@ -40,6 +40,7 @@
 static meta_data_t *first_block;
 static meta_data_t *last_block;
 uint64_t last_mark;
+bool _debug_on;
 
 void au_free_page(void* ptr, int pages);
 void* au_request_page(int pages);
@@ -52,6 +53,7 @@ void AuHeapInitialize() {
 	last_block = NULL;
 	first_block = NULL;
 	last_mark = 0;
+	_debug_on = false;
 	void* page = au_request_page(1);
 	memset(page, 0, (1 * 4096));
 	/* setup the first meta data block */
@@ -66,7 +68,7 @@ void AuHeapInitialize() {
 	first_block = meta;
 	last_block = meta;
 	
-	last_mark = ((uint64_t)page + (1 * 4096));
+	last_mark = ((uint64_t)page + (meta->size + sizeof(meta_data_t)));
 }
 
 
@@ -76,16 +78,17 @@ void AuHeapInitialize() {
 bool au_split_block(meta_data_t* splitable, size_t req_size) {
 
 	uint8_t* meta_block_a = (uint8_t*)splitable;
-
-	uint8_t* new_block = (uint8_t*)(meta_block_a + sizeof(meta_data_t)+req_size);
-	meta_data_t* new_block_m = (meta_data_t*)new_block;
 	size_t size = splitable->size - req_size - sizeof(meta_data_t);
 
 	if (size <= sizeof(meta_data_t))
 		return 1;
 
+	uint8_t* new_block = (uint8_t*)(meta_block_a + sizeof(meta_data_t)+req_size);
+	meta_data_t* new_block_m = (meta_data_t*)new_block;
+	
+
 	uint64_t new_block_pos = (uint64_t)new_block;
-	if ((new_block_pos + req_size) > last_mark)
+	if ((new_block_pos + req_size + sizeof(meta_data_t)) > last_mark)
 		return 0;
 
 
@@ -116,9 +119,8 @@ bool au_split_block(meta_data_t* splitable, size_t req_size) {
 * @param req_size -- requested size
 */
 void au_expand_kmalloc(size_t req_size) {
-	size_t req_pages = 1;
-	if (req_size >= 4096)
-		req_pages = (req_size + sizeof(meta_data_t)) / 4096 + 1;
+	size_t req_pages = (req_size / 0x1000) + ((req_size % 0x1000) ? 1 : 0);
+	//req_pages = (req_size + sizeof(meta_data_t)) / 4096 + 1;
 
 	void* page = au_request_page(req_pages);
 	uint8_t* desc_addr = (uint8_t*)page;
@@ -165,16 +167,16 @@ void* kmalloc(unsigned int size) {
 			if (meta->size > size) {
 				if (au_split_block(meta, size)){
 					meta->magic = MAGIC_USED;
-					uint8_t* meta_addr = (uint8_t*)meta;
-					ret = ((uint8_t*)(meta_addr + sizeof(meta_data_t)));
+					size_t meta_addr = (size_t)meta;
+					ret = ((uint8_t*)meta_addr + sizeof(meta_data_t));
+					break;
 				}
-				break;
 			}
 
 			if (meta->size == size) {
 				meta->magic = MAGIC_USED;
-				uint8_t* addr = (uint8_t*)meta;
-				ret = ((uint8_t*)(addr + sizeof(meta_data_t)));
+				size_t addr = (size_t)meta;
+				ret = ((uint8_t*)addr + sizeof(meta_data_t));
 				break;
 			}
 		}
@@ -206,12 +208,20 @@ void kheap_debug() {
 void merge_next(meta_data_t *meta) {
 	if (meta->next == NULL)
 		return;
+	uint64_t addr_valid = (uint64_t)meta->next;
+	if (addr_valid < 0xFFFFE00000000000) {
+		meta->next = NULL;
+		return;
+	}
+
 	if (!meta->next->magic == MAGIC_FREE)
 		return;
-
-
+	
+	
 	if (last_block == meta->next)
 		last_block = meta;
+
+	
 
 	meta->size += meta->next->size + sizeof(meta_data_t);
 
@@ -227,8 +237,19 @@ void merge_next(meta_data_t *meta) {
 * @param meta -- current block
 */
 void merge_prev(meta_data_t* meta) {
-	if (meta->prev != NULL && meta->prev->magic == MAGIC_FREE)
-		merge_next(meta->prev);
+	if (meta->prev != NULL) {
+		uint64_t meta_prev = (uint64_t)meta->prev;
+		if (meta_prev < 0xFFFFE00000000000){
+			//this block is corrupted
+			SeTextOut("Meta found corrupted block \r\n");
+			last_block->next = meta;
+			meta->prev = last_block;
+			meta->next = NULL;
+			return;
+		}
+		if (meta->prev->magic == MAGIC_FREE)
+			merge_next(meta->prev);
+	}
 }
 
 /*
@@ -241,8 +262,9 @@ void kfree(void* ptr) {
 	meta->magic = MAGIC_FREE;
 
 	/* merge it with 3 near blocks if they are free*/
-	merge_next(meta);
+	
 	merge_prev(meta);
+	merge_next(meta);
 }
 
 /*
@@ -299,4 +321,9 @@ void* au_request_page(int pages) {
 */
 void au_free_page(void* ptr, int pages) {
 	AuFreePages((uint64_t)ptr, true, pages);
+}
+
+
+void kmalloc_debug_on(bool bit) {
+	_debug_on = bit;
 }

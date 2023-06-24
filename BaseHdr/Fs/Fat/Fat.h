@@ -133,6 +133,8 @@ typedef struct _FatFS_ {
 	uint16_t __BytesPerSector;
 	size_t cluster_sz_in_bytes;
 	AuMutex *fat_mutex;
+	AuMutex *fat_write_mutex;
+	AuMutex *fat_read_mutex;
 }FatFS;
 #pragma pack(pop)
 

@@ -46,7 +46,6 @@
  * _main -- main entry point
  */
 extern "C" void main(int argc, char* argv[]) {
-	_KePrint("Hello Init \r\n");
 	int pid = _KeGetProcessID();
 
 	char* arg = "-about";
@@ -63,8 +62,13 @@ extern "C" void main(int argc, char* argv[]) {
 		_KeProcessLoadExec(chid, "/init.exe", 1, p);
 	}
 
-	free(p);
+	if (pid == 2) {
+		int chid = _KeCreateProcess(pid, "Test2");
+		_KeProcessLoadExec(chid, "/xeldr.exe", 1, p);
+	}
 
+
+	free(p);
 	FILE *fp = fopen("/arry.txt", "a");
 	int *arr = (int*)malloc(sizeof(int)* 3);
 	arr[0] = 101;
@@ -72,19 +76,20 @@ extern "C" void main(int argc, char* argv[]) {
 	arr[2] = 103;
 	size_t sz = fwrite(arr, sizeof(int), 3, fp);
 
+
 	unsigned char* buf = (unsigned char*)malloc(sizeof(int)* 3);
 	fread(buf, sizeof(int), 3, fp);
 
 	int* arr3 = (int*)buf;
-	_KePrint("array[0] -> %d, arrya[1] -> %d, array[3] -> %d \n", arr3[0], arr3[1],
-		arr3[2]);
+	_KePrint("array[0] -> %d, arrya[1] -> %d, pid -> %d \n", arr3[0], arr3[1],
+		pid);
 
 	while (1) {
 		if (pid == 1) {
-			_KePrint("Init Waiting \n");
 			_KeProcessWaitForTermination(-1);
 		}
-		if (pid != 1)
+		if (pid != 1) {
 			_KeProcessExit();
+		}
 	}
 }

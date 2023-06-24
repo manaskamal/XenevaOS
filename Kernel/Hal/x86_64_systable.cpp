@@ -42,7 +42,7 @@
 
 /* maximum supported system calls */
 #define AURORA_MAX_SYSCALL  26
-
+#define AURORA_SYSCALL_MAGIC  0x05212004  /* actual number to remember */
 
 /* Syscall function format */
 typedef uint64_t(*syscall_func) (uint64_t param1, uint64_t param2, uint64_t param3, uint64_t

@@ -47,7 +47,7 @@
 
 static int pid = 1;
 AuProcess *proc_root = NULL;
-
+AuMutex *process_mutex;
 extern "C" int save_context(AuThread *t, void *tss);
 /*
  * AuAddProcess -- adds process to kernel data structure
@@ -242,6 +242,7 @@ AuProcess* AuCreateProcessSlot(AuProcess* parent, char* name) {
  * of aurora system
  */
 void AuStartRootProc() {
+	process_mutex = AuCreateMutex();
 	AuProcess* root_proc = AuCreateRootProc();
 	int num_args = 1;
 	char** argvs = (char**)kmalloc(6);
@@ -262,8 +263,9 @@ AuProcess* AuGetRootProcess() {
  * @param proc -- process to kill
  */
 AuProcess* AuGetKillableProcess(AuProcess* proc) {
-	if (proc->state & PROCESS_STATE_DIED || proc->state & PROCESS_STATE_ZOMBIE)
+	if (proc->state & PROCESS_STATE_DIED || proc->state & PROCESS_STATE_ZOMBIE) {
 		return proc;
+	}
 
 	AuProcess *found = NULL;
 	for (int i = 0; i < proc->childs->pointer; i++) {
@@ -291,8 +293,10 @@ void AuProcessWaitForTermination(AuProcess *proc, int pid) {
 
 		if (killable) {
 			AuProcessClean(proc, killable);
+			killable = NULL;
 		}
-		
+
+
 		if (!killable){
 			AuBlockThread(proc->main_thread);
 			proc->state = PROCESS_STATE_SUSPENDED;
@@ -324,6 +328,11 @@ void AuProcessExit(AuProcess* proc) {
 		SeTextOut("[aurora]: cannot exit root process \r\n");
 		return;
 	}
+	/*if (proc->state & PROCESS_STATE_BUSY_WAIT){
+		AuTextOut("Process %s is in busy wait \r\n", proc->name);
+		AuForceScheduler();
+		return;
+	}*/
 
 	proc->state = PROCESS_STATE_DIED;
 
@@ -332,6 +341,7 @@ void AuProcessExit(AuProcess* proc) {
 		AuThread *killable = proc->threads[i];
 		AuThreadMoveToTrash(killable);
 	}
+
 
 	/* here we free almost every possible
 	 * data, that we can free
@@ -344,10 +354,13 @@ void AuProcessExit(AuProcess* proc) {
 			kfree(file);
 		}
 	}
+
 	/*unmap all shared memory mappings */
 	AuSHMUnmapAll(proc);
 
+	kmalloc_debug_on(true);
 	kfree(proc->file);
+	kmalloc_debug_on(false);
 
 	AuThreadMoveToTrash(proc->main_thread);
 
@@ -373,5 +386,10 @@ void AuProcessExit(AuProcess* proc) {
 		proc_root->state = PROCESS_STATE_READY;
 	}
 	x64_force_sched();
+}
+
+
+AuMutex* AuProcessGetMutex(){
+	return process_mutex;
 }
 

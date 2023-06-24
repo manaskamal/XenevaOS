@@ -36,13 +36,14 @@
 #include <aurora.h>
 #include <list.h>
 
+#pragma pack(push,1)
 typedef struct _mutex_ {
 	Spinlock* lock;
 	volatile uint8_t status;
 	AuThread *owner;
 	list_t* waiters;
 }AuMutex;
-
+#pragma pack(pop)
 
 /*
 * AuCreateMutex -- create a new mutex and return

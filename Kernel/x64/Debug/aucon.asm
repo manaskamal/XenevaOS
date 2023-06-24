@@ -24,7 +24,7 @@ _BSS	SEGMENT
 ?_print_func@@3P6AXPEBDZZEA DQ 01H DUP (?)		; _print_func
 _BSS	ENDS
 CONST	SEGMENT
-$SG3015	DB	'.', 00H
+$SG3017	DB	'.', 00H
 CONST	ENDS
 PUBLIC	?AuConsoleInitialize@@YAXPEAU_KERNEL_BOOT_INFO_@@_N@Z ; AuConsoleInitialize
 PUBLIC	?AuConsolePostInitialise@@YAXPEAU_KERNEL_BOOT_INFO_@@@Z ; AuConsolePostInitialise
@@ -944,7 +944,7 @@ $LN5@AuTextOut:
 ; 261  : 			{
 ; 262  : 				AuPutS(".");
 
-	lea	rcx, OFFSET FLAT:$SG3015
+	lea	rcx, OFFSET FLAT:$SG3017
 	call	?AuPutS@@YAXPEAD@Z			; AuPutS
 
 ; 263  : 			}

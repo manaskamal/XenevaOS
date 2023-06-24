@@ -48,7 +48,6 @@
 #define KERNEL_STACK_LOCATION   0xFFFFFB0000000000
 
 
-
 /**
 * Kernel Boot information structure passed by XNLDR
 */

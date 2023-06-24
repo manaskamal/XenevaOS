@@ -29,6 +29,9 @@ EXTRN	initialize_list:PROC
 EXTRN	list_add:PROC
 EXTRN	list_remove:PROC
 EXTRN	list_get_at:PROC
+EXTRN	AuCreateSpinlock:PROC
+EXTRN	AuAcquireSpinlock:PROC
+EXTRN	AuReleaseSpinlock:PROC
 EXTRN	kmalloc:PROC
 EXTRN	kfree:PROC
 EXTRN	AuPmmngrAlloc:PROC
@@ -38,9 +41,6 @@ EXTRN	AuMapPage:PROC
 EXTRN	x64_cli:PROC
 EXTRN	flush_tlb:PROC
 EXTRN	memset:PROC
-EXTRN	AuCreateSpinlock:PROC
-EXTRN	AuAcquireSpinlock:PROC
-EXTRN	AuReleaseSpinlock:PROC
 pdata	SEGMENT
 $pdata$?AuInitialiseSHMMan@@YAXXZ DD imagerel $LN3
 	DD	imagerel $LN3+47

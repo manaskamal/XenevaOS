@@ -111,7 +111,6 @@ void AuProcessEntUser(uint64_t rcx) {
  */
 void AuLoadExecToProcess(AuProcess* proc, char* filename, int argc,char** argv) {
 	AuAcquireSpinlock(loader_lock);
-	AuAcquireMutex(loader_mutex);
 
 	AuVFSNode *fsys = AuVFSFind(filename);
 
@@ -192,7 +191,6 @@ void AuLoadExecToProcess(AuProcess* proc, char* filename, int argc,char** argv) 
 	proc->file = file;
 	proc->fsys = fsys;
 	thr->proc_slot = proc;
-	AuReleaseMutex(loader_mutex);
 	AuReleaseSpinlock(loader_lock);
 }
 

@@ -79,12 +79,10 @@ void FreeImage(AuProcess* proc) {
  */
 void AuThreadFree(AuThread* t) {
 	kfree(t->fx_state);
-
 	/* free up the kernel stack */
-	uint64_t k_stack = t->frame.rsp;
+	uint64_t k_stack = t->frame.kern_esp;
 	uint64_t k_stack_ = k_stack - PAGE_SIZE;
 	AuPmmngrFree((void*)V2P((size_t)k_stack_));
-
 	kfree(t->uentry);
 	kfree(t);
 }
@@ -96,9 +94,9 @@ void AuThreadFree(AuThread* t) {
 * @param proc -- Process to remove
 */
 void AuProcessClean(AuProcess* parent, AuProcess* killable) {
-	AuMutex *mut = AuLoaderGetMutex();
-	AuAcquireMutex(mut);
 
+	int id = killable->proc_id;
+	char* name = killable->name;
 	FreeUserStack(killable->cr3);
 	/* free up shm mappings */
 
@@ -107,8 +105,8 @@ void AuProcessClean(AuProcess* parent, AuProcess* killable) {
 
 	/* free up vmareas */
 	for (int i = 0; i < killable->vmareas->pointer; i++) {
-		AuVMArea* area = (AuVMArea*)list_get_at(killable->vmareas, i);
-		if (!area)
+		AuVMArea* area = (AuVMArea*)list_remove(killable->vmareas, i);
+		if (area)
 			kfree(area);
 	}
 	kfree(killable->vmareas);
@@ -139,20 +137,21 @@ void AuProcessClean(AuProcess* parent, AuProcess* killable) {
 	AuThreadCleanTrash(killable->main_thread);
 	AuThreadFree(killable->main_thread);
 
-
+	
 	AuProcess* root_proc = AuGetRootProcess();
 	if (!root_proc) {
 		AuTextOut("Kernel Panic!! \n");
 		AuTextOut("Root process returned null \n");
 		for (;;);
 	}
-	/* make all child process's orphan process 
-	 * it will be owned by root process
-	 */
+
+	/* make all child process's orphan process
+	* it will be owned by root process
+	*/
 	for (int i = 0; i < killable->childs->pointer; i++) {
-		AuProcess* proc_ = (AuProcess*)list_get_at(killable->childs, i);
+		AuProcess* proc_ = (AuProcess*)list_remove(killable->childs, i);
 		if (proc_) {
-			proc_->state |= PROCESS_STATE_ORPHAN;
+			proc_->state = PROCESS_STATE_ORPHAN;
 			proc_->parent = NULL;
 			AuAddProcess(root_proc, proc_);
 			proc_->parent = root_proc;
@@ -160,19 +159,23 @@ void AuProcessClean(AuProcess* parent, AuProcess* killable) {
 	}
 
 	kfree(killable->childs);
-	
+
 	/* release the process slot */
 	if (killable->parent) {
 		for (int i = 0; i < killable->parent->childs->pointer; i++) {
 			AuProcess* proc_ = (AuProcess*)list_get_at(killable->parent->childs, i);
 			if (proc_ == killable) {
+				kmalloc_debug_on(true);
 				list_remove(killable->parent->childs, i);
+				kmalloc_debug_on(false);
+				break;
 			}
 		}
 	}
 
 	AuPmmngrFree((void*)V2P((size_t)killable->cr3));
+	kmalloc_debug_on(true);
 	kfree(killable);
-	SeTextOut("Process cleaned \r\n");
-	AuReleaseMutex(mut);
+	kmalloc_debug_on(false);
+	SeTextOut("Process cleaned %s \n", name );
 }

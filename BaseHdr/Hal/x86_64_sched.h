@@ -77,6 +77,7 @@ typedef struct _frame_ {
 	bool user_;          //0xD0
 }AuThreadFrame;
 
+
 typedef struct _syscall_param_ {
 	uint64_t param1;    //0xE0
 	uint64_t param2;    //0xE8
@@ -86,6 +87,7 @@ typedef struct _syscall_param_ {
 	uint64_t param6;    //0x108
 }AuSyscallParam;
 
+#pragma pack(push,1)
 /* AuUserEntry structure */
 typedef struct _uentry_ {
 	uint64_t entrypoint;
@@ -96,6 +98,7 @@ typedef struct _uentry_ {
 	uint64_t argvaddr;
 	char** argvs;
 }AuUserEntry;
+#pragma pack(pop)
 
 #pragma pack(push,1)
 typedef struct _au_thread_ {
@@ -177,6 +180,11 @@ extern void AuKThreadCopy(AuThread* dest, AuThread* src);
 * block list
 */
 AU_EXTERN AU_EXPORT void AuBlockThread(AuThread *thread);
+
+/*
+* AuSleepThread -- sleeps a thread
+*/
+AU_EXTERN AU_EXPORT void AuSleepThread(AuThread *thread, uint64_t ms);
 
 /*
 * AuUnblockThread -- unblocks a thread and insert it to

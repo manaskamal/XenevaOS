@@ -5,6 +5,11 @@ include listing.inc
 INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
+CONST	SEGMENT
+$SG3335	DB	'Mutex acquired ', 0dH, 0aH, 00H
+	ORG $+6
+$SG3350	DB	'Mutex released ', 0dH, 0aH, 00H
+CONST	ENDS
 PUBLIC	AuCreateMutex
 PUBLIC	AuAcquireMutex
 PUBLIC	AuReleaseMutex
@@ -19,7 +24,10 @@ EXTRN	?AuIsSchedulerInitialised@@YA_NXZ:PROC		; AuIsSchedulerInitialised
 EXTRN	initialize_list:PROC
 EXTRN	list_add:PROC
 EXTRN	list_remove:PROC
+EXTRN	x64_cli:PROC
 EXTRN	x64_force_sched:PROC
+EXTRN	?AuProcessFindThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z:PROC ; AuProcessFindThread
+EXTRN	SeTextOut:PROC
 EXTRN	kmalloc:PROC
 EXTRN	kfree:PROC
 pdata	SEGMENT
@@ -27,10 +35,10 @@ $pdata$AuCreateMutex DD imagerel $LN3
 	DD	imagerel $LN3+71
 	DD	imagerel $unwind$AuCreateMutex
 $pdata$AuAcquireMutex DD imagerel $LN7
-	DD	imagerel $LN7+161
+	DD	imagerel $LN7+222
 	DD	imagerel $unwind$AuAcquireMutex
 $pdata$AuReleaseMutex DD imagerel $LN10
-	DD	imagerel $LN10+180
+	DD	imagerel $LN10+263
 	DD	imagerel $unwind$AuReleaseMutex
 $pdata$AuDeleteMutex DD imagerel $LN3
 	DD	imagerel $LN3+38
@@ -42,7 +50,7 @@ $unwind$AuCreateMutex DD 010401H
 $unwind$AuAcquireMutex DD 010901H
 	DD	06209H
 $unwind$AuReleaseMutex DD 010901H
-	DD	06209H
+	DD	08209H
 $unwind$AuDeleteMutex DD 010901H
 	DD	04209H
 xdata	ENDS
@@ -52,24 +60,24 @@ _TEXT	SEGMENT
 mutex$ = 48
 AuDeleteMutex PROC
 
-; 100  : AU_EXTERN AU_EXPORT void AuDeleteMutex(AuMutex *mutex) {
+; 110  : AU_EXTERN AU_EXPORT void AuDeleteMutex(AuMutex *mutex) {
 
 $LN3:
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 40					; 00000028H
 
-; 101  : 	kfree(mutex->waiters);
+; 111  : 	kfree(mutex->waiters);
 
 	mov	rax, QWORD PTR mutex$[rsp]
-	mov	rcx, QWORD PTR [rax+24]
+	mov	rcx, QWORD PTR [rax+17]
 	call	kfree
 
-; 102  : 	kfree(mutex);
+; 112  : 	kfree(mutex);
 
 	mov	rcx, QWORD PTR mutex$[rsp]
 	call	kfree
 
-; 103  : }
+; 113  : }
 
 	add	rsp, 40					; 00000028H
 	ret	0
@@ -79,65 +87,72 @@ _TEXT	ENDS
 ; File e:\xeneva project\aurora\kernel\sync\mutex.cpp
 _TEXT	SEGMENT
 i$1 = 32
-thr_$2 = 40
-mutex$ = 64
+current_proc$2 = 40
+thr_$3 = 48
+mutex$ = 80
 AuReleaseMutex PROC
 
-; 75   : AU_EXTERN AU_EXPORT int AuReleaseMutex(AuMutex *mutex) {
+; 81   : AU_EXTERN AU_EXPORT int AuReleaseMutex(AuMutex *mutex) {
 
 $LN10:
 	mov	QWORD PTR [rsp+8], rcx
-	sub	rsp, 56					; 00000038H
+	sub	rsp, 72					; 00000048H
 
-; 76   : 	if (!AuIsSchedulerInitialised())
+; 82   : 	if (!AuIsSchedulerInitialised())
 
 	call	?AuIsSchedulerInitialised@@YA_NXZ	; AuIsSchedulerInitialised
 	movzx	eax, al
 	test	eax, eax
 	jne	SHORT $LN7@AuReleaseM
 
-; 77   : 		return 0;
+; 83   : 		return 0;
 
 	xor	eax, eax
 	jmp	$LN8@AuReleaseM
 $LN7@AuReleaseM:
 
-; 78   : 	if (!mutex)
+; 84   : 	if (!mutex)
 
 	cmp	QWORD PTR mutex$[rsp], 0
 	jne	SHORT $LN6@AuReleaseM
 
-; 79   : 		return -1;
+; 85   : 		return -1;
 
 	mov	eax, -1
 	jmp	$LN8@AuReleaseM
 $LN6@AuReleaseM:
 
-; 80   : 	if (mutex->owner != AuGetCurrentThread())
+; 86   : 	if (mutex->owner != AuGetCurrentThread()) {
 
 	call	AuGetCurrentThread
 	mov	rcx, QWORD PTR mutex$[rsp]
-	cmp	QWORD PTR [rcx+16], rax
+	cmp	QWORD PTR [rcx+9], rax
 	je	SHORT $LN5@AuReleaseM
 
-; 81   : 		return -1;
+; 87   : 		return -1;
 
 	mov	eax, -1
-	jmp	SHORT $LN8@AuReleaseM
+	jmp	$LN8@AuReleaseM
 $LN5@AuReleaseM:
 
-; 82   : 
-; 83   : 	mutex->status = 0;
+; 88   : 	}
+; 89   : 	AuAcquireSpinlock(mutex->lock);
+
+	mov	rax, QWORD PTR mutex$[rsp]
+	mov	rcx, QWORD PTR [rax]
+	call	AuAcquireSpinlock
+
+; 90   : 	mutex->status = 0;
 
 	mov	rax, QWORD PTR mutex$[rsp]
 	mov	BYTE PTR [rax+8], 0
 
-; 84   : 	mutex->owner = NULL;
+; 91   : 	mutex->owner = NULL;
 
 	mov	rax, QWORD PTR mutex$[rsp]
-	mov	QWORD PTR [rax+16], 0
+	mov	QWORD PTR [rax+9], 0
 
-; 85   : 	for (int i = 0; i < mutex->waiters->pointer; i++) {
+; 92   : 	for (int i = 0; i < mutex->waiters->pointer; i++) {
 
 	mov	DWORD PTR i$1[rsp], 0
 	jmp	SHORT $LN4@AuReleaseM
@@ -147,49 +162,74 @@ $LN3@AuReleaseM:
 	mov	DWORD PTR i$1[rsp], eax
 $LN4@AuReleaseM:
 	mov	rax, QWORD PTR mutex$[rsp]
-	mov	rax, QWORD PTR [rax+24]
+	mov	rax, QWORD PTR [rax+17]
 	mov	eax, DWORD PTR [rax]
 	cmp	DWORD PTR i$1[rsp], eax
 	jae	SHORT $LN2@AuReleaseM
 
-; 86   : 		AuThread* thr_ = (AuThread*)list_remove(mutex->waiters, i);
+; 93   : 		AuThread* thr_ = (AuThread*)list_remove(mutex->waiters, i);
 
 	mov	edx, DWORD PTR i$1[rsp]
 	mov	rax, QWORD PTR mutex$[rsp]
-	mov	rcx, QWORD PTR [rax+24]
+	mov	rcx, QWORD PTR [rax+17]
 	call	list_remove
-	mov	QWORD PTR thr_$2[rsp], rax
+	mov	QWORD PTR thr_$3[rsp], rax
 
-; 87   : 		if (thr_) {
+; 94   : 		AuProcess* current_proc = AuProcessFindThread(thr_);
 
-	cmp	QWORD PTR thr_$2[rsp], 0
+	mov	rcx, QWORD PTR thr_$3[rsp]
+	call	?AuProcessFindThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z ; AuProcessFindThread
+	mov	QWORD PTR current_proc$2[rsp], rax
+
+; 95   : 		if (thr_) {
+
+	cmp	QWORD PTR thr_$3[rsp], 0
 	je	SHORT $LN1@AuReleaseM
 
-; 88   : 			AuUnblockThread(thr_);
+; 96   : 			current_proc->state = 0;
 
-	mov	rcx, QWORD PTR thr_$2[rsp]
+	mov	rax, QWORD PTR current_proc$2[rsp]
+	mov	BYTE PTR [rax+12], 0
+
+; 97   : 			current_proc->state |= PROCESS_STATE_READY;
+
+	mov	rax, QWORD PTR current_proc$2[rsp]
+	movzx	eax, BYTE PTR [rax+12]
+	or	eax, 2
+	mov	rcx, QWORD PTR current_proc$2[rsp]
+	mov	BYTE PTR [rcx+12], al
+
+; 98   : 			AuUnblockThread(thr_);
+
+	mov	rcx, QWORD PTR thr_$3[rsp]
 	call	AuUnblockThread
-
-; 89   : 			break;
-
-	jmp	SHORT $LN2@AuReleaseM
 $LN1@AuReleaseM:
 
-; 90   : 		}
-; 91   : 	}
+; 99   : 		}
+; 100  : 	}
 
 	jmp	SHORT $LN3@AuReleaseM
 $LN2@AuReleaseM:
 
-; 92   : 
-; 93   : 	return 0;
+; 101  : 	SeTextOut("Mutex released \r\n");
+
+	lea	rcx, OFFSET FLAT:$SG3350
+	call	SeTextOut
+
+; 102  : 	AuReleaseSpinlock(mutex->lock);
+
+	mov	rax, QWORD PTR mutex$[rsp]
+	mov	rcx, QWORD PTR [rax]
+	call	AuReleaseSpinlock
+
+; 103  : 	return 0;
 
 	xor	eax, eax
 $LN8@AuReleaseM:
 
-; 94   : }
+; 104  : }
 
-	add	rsp, 56					; 00000038H
+	add	rsp, 72					; 00000048H
 	ret	0
 AuReleaseMutex ENDP
 _TEXT	ENDS
@@ -197,6 +237,7 @@ _TEXT	ENDS
 ; File e:\xeneva project\aurora\kernel\sync\mutex.cpp
 _TEXT	SEGMENT
 current_thr$ = 32
+current_proc$ = 40
 mut$ = 64
 AuAcquireMutex PROC
 
@@ -224,25 +265,35 @@ $LN4@AuAcquireM:
 	cmp	QWORD PTR mut$[rsp], 0
 	jne	SHORT $LN3@AuAcquireM
 
-; 57   : 		return -1;
+; 57   : 		return 0;
 
-	mov	eax, -1
-	jmp	SHORT $LN5@AuAcquireM
+	xor	eax, eax
+	jmp	$LN5@AuAcquireM
 $LN3@AuAcquireM:
 
-; 58   : 	AuAcquireSpinlock(mut->lock);
+; 58   : 	x64_cli();
+
+	call	x64_cli
+
+; 59   : 	AuAcquireSpinlock(mut->lock);
 
 	mov	rax, QWORD PTR mut$[rsp]
 	mov	rcx, QWORD PTR [rax]
 	call	AuAcquireSpinlock
 
-; 59   : 	AuThread* current_thr = AuGetCurrentThread();
+; 60   : 	AuThread* current_thr = AuGetCurrentThread();
 
 	call	AuGetCurrentThread
 	mov	QWORD PTR current_thr$[rsp], rax
+
+; 61   : 	AuProcess* current_proc = AuProcessFindThread(current_thr);
+
+	mov	rcx, QWORD PTR current_thr$[rsp]
+	call	?AuProcessFindThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z ; AuProcessFindThread
+	mov	QWORD PTR current_proc$[rsp], rax
 $LN2@AuAcquireM:
 
-; 60   : 	while (mut->status) {
+; 62   : 	while (mut->status) {
 
 	mov	rax, QWORD PTR mut$[rsp]
 	movzx	eax, BYTE PTR [rax+8]
@@ -250,50 +301,69 @@ $LN2@AuAcquireM:
 	test	eax, eax
 	je	SHORT $LN1@AuAcquireM
 
-; 61   : 		list_add(mut->waiters, current_thr);
+; 63   : 		list_add(mut->waiters, current_thr);
 
 	mov	rdx, QWORD PTR current_thr$[rsp]
 	mov	rax, QWORD PTR mut$[rsp]
-	mov	rcx, QWORD PTR [rax+24]
+	mov	rcx, QWORD PTR [rax+17]
 	call	list_add
 
-; 62   : 		AuBlockThread(current_thr);
+; 64   : 		current_proc->state = 0;
+
+	mov	rax, QWORD PTR current_proc$[rsp]
+	mov	BYTE PTR [rax+12], 0
+
+; 65   : 		current_proc->state |= PROCESS_STATE_BUSY_WAIT;
+
+	mov	rax, QWORD PTR current_proc$[rsp]
+	movzx	eax, BYTE PTR [rax+12]
+	or	eax, 64					; 00000040H
+	mov	rcx, QWORD PTR current_proc$[rsp]
+	mov	BYTE PTR [rcx+12], al
+
+; 66   : 		AuBlockThread(current_thr);
 
 	mov	rcx, QWORD PTR current_thr$[rsp]
 	call	AuBlockThread
 
-; 63   : 		x64_force_sched();
+; 67   : 		x64_force_sched();
 
 	call	x64_force_sched
 
-; 64   : 	}
+; 68   : 	}
 
 	jmp	SHORT $LN2@AuAcquireM
 $LN1@AuAcquireM:
 
-; 65   : 	mut->status = 1;
+; 69   : 
+; 70   : 	mut->status = 1;
 
 	mov	rax, QWORD PTR mut$[rsp]
 	mov	BYTE PTR [rax+8], 1
 
-; 66   : 	mut->owner = current_thr;
+; 71   : 	mut->owner = current_thr;
 
 	mov	rax, QWORD PTR mut$[rsp]
 	mov	rcx, QWORD PTR current_thr$[rsp]
-	mov	QWORD PTR [rax+16], rcx
+	mov	QWORD PTR [rax+9], rcx
 
-; 67   : 	AuReleaseSpinlock(mut->lock);
+; 72   : 	SeTextOut("Mutex acquired \r\n");
+
+	lea	rcx, OFFSET FLAT:$SG3335
+	call	SeTextOut
+
+; 73   : 	AuReleaseSpinlock(mut->lock);
 
 	mov	rax, QWORD PTR mut$[rsp]
 	mov	rcx, QWORD PTR [rax]
 	call	AuReleaseSpinlock
 
-; 68   : 	return 0;
+; 74   : 	return 0;
 
 	xor	eax, eax
 $LN5@AuAcquireM:
 
-; 69   : }
+; 75   : }
 
 	add	rsp, 56					; 00000038H
 	ret	0
@@ -312,7 +382,7 @@ $LN3:
 
 ; 42   : 	AuMutex* mut = (AuMutex*)kmalloc(sizeof(AuMutex));
 
-	mov	ecx, 32					; 00000020H
+	mov	ecx, 25
 	call	kmalloc
 	mov	QWORD PTR mut$[rsp], rax
 
@@ -326,13 +396,13 @@ $LN3:
 ; 44   : 	mut->owner = NULL;
 
 	mov	rax, QWORD PTR mut$[rsp]
-	mov	QWORD PTR [rax+16], 0
+	mov	QWORD PTR [rax+9], 0
 
 ; 45   : 	mut->waiters = initialize_list();
 
 	call	initialize_list
 	mov	rcx, QWORD PTR mut$[rsp]
-	mov	QWORD PTR [rcx+24], rax
+	mov	QWORD PTR [rcx+17], rax
 
 ; 46   : 	return mut;
 

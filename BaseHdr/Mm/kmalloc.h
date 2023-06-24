@@ -38,8 +38,8 @@
 extern "C" {
 #endif
 /* Meta data magic */
-#define MAGIC_USED  0x12112002
-#define MAGIC_FREE  0x16062002
+#define MAGIC_USED  0x16062002
+#define MAGIC_FREE  0x05212023   /* the year to remember */
 
 #pragma pack(push,1)
 typedef struct _meta_data_ {
@@ -60,6 +60,7 @@ typedef struct _meta_data_ {
 	AU_EXTERN AU_EXPORT void     *kcalloc(unsigned long long, unsigned long long);		//< The standard function.
 	AU_EXTERN AU_EXPORT void      kfree(void *);					//< The standard function.
 
+	extern void kmalloc_debug_on(bool bit);
 
 #ifdef __cplusplus
 }

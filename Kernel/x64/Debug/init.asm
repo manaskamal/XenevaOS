@@ -6,13 +6,13 @@ INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
 CONST	SEGMENT
-$SG4437	DB	' _test ', 0dH, 0aH, 00H
+$SG4445	DB	' _test ', 0dH, 0aH, 00H
 	ORG $+6
-$SG4444	DB	'BootDev HID -> %x, UID -> %x, CID -> %x ', 0dH, 0aH, 00H
+$SG4452	DB	'BootDev HID -> %x, UID -> %x, CID -> %x ', 0dH, 0aH, 00H
 	ORG $+5
-$SG4445	DB	'CPU ID OF BSP -> %d ', 0dH, 0aH, 00H
+$SG4453	DB	'CPU ID OF BSP -> %d ', 0dH, 0aH, 00H
 	ORG $+1
-$SG4449	DB	'test_', 00H
+$SG4457	DB	'test_', 00H
 CONST	ENDS
 PUBLIC	?_test@@YAX_K@Z					; _test
 PUBLIC	?_AuMain@@YAXPEAU_KERNEL_BOOT_INFO_@@@Z		; _AuMain
@@ -112,7 +112,7 @@ $LN5:
 	mov	r8d, DWORD PTR [rax+174]
 	mov	rax, QWORD PTR info$[rsp]
 	mov	edx, DWORD PTR [rax+170]
-	lea	rcx, OFFSET FLAT:$SG4444
+	lea	rcx, OFFSET FLAT:$SG4452
 	call	SeTextOut
 
 ; 83   : 	AuAHCIInitialise();
@@ -173,7 +173,7 @@ $LN5:
 	call	?AuPerCPUGetCpuID@@YAEXZ		; AuPerCPUGetCpuID
 	movzx	eax, al
 	mov	edx, eax
-	lea	rcx, OFFSET FLAT:$SG4445
+	lea	rcx, OFFSET FLAT:$SG4453
 	call	SeTextOut
 
 ; 105  : 
@@ -201,7 +201,7 @@ $LN5:
 	add	rax, 4096				; 00001000H
 	mov	rcx, rax
 	call	P2V
-	lea	r9, OFFSET FLAT:$SG4449
+	lea	r9, OFFSET FLAT:$SG4457
 	mov	rcx, QWORD PTR tv83[rsp]
 	mov	r8, rcx
 	mov	rdx, rax
@@ -238,7 +238,7 @@ $LN5:
 
 ; 62   : 	SeTextOut(" _test \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG4437
+	lea	rcx, OFFSET FLAT:$SG4445
 	call	SeTextOut
 $LN2@test:
 

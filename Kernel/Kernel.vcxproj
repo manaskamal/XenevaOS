@@ -169,6 +169,7 @@
     <ClInclude Include="..\BaseHdr\Fs\Fat\FatDir.h" />
     <ClInclude Include="..\BaseHdr\Fs\Fat\FatFile.h" />
     <ClInclude Include="..\BaseHdr\Fs\pipe.h" />
+    <ClInclude Include="..\BaseHdr\Fs\tty.h" />
     <ClInclude Include="..\BaseHdr\Fs\vdisk.h" />
     <ClInclude Include="..\BaseHdr\Fs\vfs.h" />
     <ClInclude Include="..\BaseHdr\Fs\_FsGUIDs.h" />
@@ -209,6 +210,7 @@
     <ClInclude Include="..\BaseHdr\string.h" />
     <ClInclude Include="..\BaseHdr\Sync\mutex.h" />
     <ClInclude Include="..\BaseHdr\Sync\spinlock.h" />
+    <ClInclude Include="..\BaseHdr\termios.h" />
     <ClInclude Include="..\BaseHdr\va_list.h" />
     <ClInclude Include="..\BaseHdr\_null.h" />
   </ItemGroup>

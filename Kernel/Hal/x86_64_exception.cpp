@@ -152,7 +152,7 @@ void stack_fault(size_t v, void* p){
 //! exception function --- general protection fault
 //   general protection fault is responsible for displaying processor security based error
 void general_protection_fault(size_t v, void* p){
-	//x64_cli();
+	x64_cli();
 	interrupt_stack_frame *frame = (interrupt_stack_frame*)p;
 	panic("Genral Protection Fault \r\n");
 	SeTextOut("General Protection Fault \r\n");
@@ -161,6 +161,7 @@ void general_protection_fault(size_t v, void* p){
 	SeTextOut("Stack -> %x \r\n", frame->rsp);
 	SeTextOut("RFLAGS -> %x \r\n", frame->rflags);
 	SeTextOut("CS -> %x, SS -> %x \r\n", frame->cs, frame->ss);
+	SeTextOut("Current thread ->id %d \r\n", AuGetCurrentThread()->id);
 	for (;;);
 }
 

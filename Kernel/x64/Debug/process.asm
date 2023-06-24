@@ -6,17 +6,19 @@ INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
 PUBLIC	?proc_root@@3PEAU_au_proc_@@EA			; proc_root
+PUBLIC	?process_mutex@@3PEAU_mutex_@@EA		; process_mutex
 _BSS	SEGMENT
 ?proc_root@@3PEAU_au_proc_@@EA DQ 01H DUP (?)		; proc_root
+?process_mutex@@3PEAU_mutex_@@EA DQ 01H DUP (?)		; process_mutex
 _BSS	ENDS
 CONST	SEGMENT
-$SG3861	DB	'_root', 00H
+$SG3868	DB	'_root', 00H
 	ORG $+2
-$SG3890	DB	'-about', 00H
+$SG3897	DB	'-about', 00H
 	ORG $+1
-$SG3891	DB	'/init.exe', 00H
+$SG3898	DB	'/init.exe', 00H
 	ORG $+6
-$SG3929	DB	'[aurora]: cannot exit root process ', 0dH, 0aH, 00H
+$SG3936	DB	'[aurora]: cannot exit root process ', 0dH, 0aH, 00H
 CONST	ENDS
 _DATA	SEGMENT
 pid	DD	01H
@@ -31,6 +33,7 @@ PUBLIC	?AuCreateProcessSlot@@YAPEAU_au_proc_@@PEAU1@PEAD@Z ; AuCreateProcessSlot
 PUBLIC	?AuProcessExit@@YAXPEAU_au_proc_@@@Z		; AuProcessExit
 PUBLIC	?AuProcessGetFileDesc@@YAHPEAU_au_proc_@@@Z	; AuProcessGetFileDesc
 PUBLIC	?AuProcessWaitForTermination@@YAXPEAU_au_proc_@@H@Z ; AuProcessWaitForTermination
+PUBLIC	?AuProcessGetMutex@@YAPEAU_mutex_@@XZ		; AuProcessGetMutex
 PUBLIC	?AuRemoveProcess@@YAXPEAU_au_proc_@@0@Z		; AuRemoveProcess
 PUBLIC	?AuProcessFindByPID@@YAPEAU_au_proc_@@PEAU1@H@Z	; AuProcessFindByPID
 PUBLIC	?AuProcessFindByThread@@YAPEAU_au_proc_@@PEAU1@PEAU_au_thread_@@@Z ; AuProcessFindByThread
@@ -44,10 +47,12 @@ EXTRN	list_get_at:PROC
 EXTRN	AuBlockThread:PROC
 EXTRN	AuUnblockThread:PROC
 EXTRN	?AuThreadMoveToTrash@@YAXPEAU_au_thread_@@@Z:PROC ; AuThreadMoveToTrash
+EXTRN	AuCreateMutex:PROC
 EXTRN	AuMapPageEx:PROC
 EXTRN	AuCreateVirtualAddressSpace:PROC
 EXTRN	kmalloc:PROC
 EXTRN	kfree:PROC
+EXTRN	kmalloc_debug_on:PROC
 EXTRN	AuPmmngrAlloc:PROC
 EXTRN	P2V:PROC
 EXTRN	V2P:PROC
@@ -72,19 +77,19 @@ $pdata$?CreateUserStack@@YAPEA_KPEA_K@Z DD imagerel $LN6
 	DD	imagerel $LN6+146
 	DD	imagerel $unwind$?CreateUserStack@@YAPEA_KPEA_K@Z
 $pdata$?AuStartRootProc@@YAXXZ DD imagerel $LN3
-	DD	imagerel $LN3+112
+	DD	imagerel $LN3+124
 	DD	imagerel $unwind$?AuStartRootProc@@YAXXZ
 $pdata$?AuCreateProcessSlot@@YAPEAU_au_proc_@@PEAU1@PEAD@Z DD imagerel $LN6
 	DD	imagerel $LN6+333
 	DD	imagerel $unwind$?AuCreateProcessSlot@@YAPEAU_au_proc_@@PEAU1@PEAD@Z
 $pdata$?AuProcessExit@@YAXPEAU_au_proc_@@@Z DD imagerel $LN17
-	DD	imagerel $LN17+397
+	DD	imagerel $LN17+411
 	DD	imagerel $unwind$?AuProcessExit@@YAXPEAU_au_proc_@@@Z
 $pdata$?AuProcessGetFileDesc@@YAHPEAU_au_proc_@@@Z DD imagerel $LN7
 	DD	imagerel $LN7+69
 	DD	imagerel $unwind$?AuProcessGetFileDesc@@YAHPEAU_au_proc_@@@Z
 $pdata$?AuProcessWaitForTermination@@YAXPEAU_au_proc_@@H@Z DD imagerel $LN8
-	DD	imagerel $LN8+99
+	DD	imagerel $LN8+108
 	DD	imagerel $unwind$?AuProcessWaitForTermination@@YAXPEAU_au_proc_@@H@Z
 $pdata$?AuRemoveProcess@@YAXPEAU_au_proc_@@0@Z DD imagerel $LN7
 	DD	imagerel $LN7+136
@@ -146,38 +151,39 @@ proc_$2 = 48
 proc$ = 80
 ?AuGetKillableProcess@@YAPEAU_au_proc_@@PEAU1@@Z PROC	; AuGetKillableProcess
 
-; 264  : AuProcess* AuGetKillableProcess(AuProcess* proc) {
+; 265  : AuProcess* AuGetKillableProcess(AuProcess* proc) {
 
 $LN9:
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 72					; 00000048H
 
-; 265  : 	if (proc->state & PROCESS_STATE_DIED || proc->state & PROCESS_STATE_ZOMBIE)
+; 266  : 	if (proc->state & PROCESS_STATE_DIED || proc->state & PROCESS_STATE_ZOMBIE) {
 
 	mov	rax, QWORD PTR proc$[rsp]
 	movzx	eax, BYTE PTR [rax+12]
-	and	eax, 4
+	and	eax, 8
 	test	eax, eax
 	jne	SHORT $LN5@AuGetKilla
 	mov	rax, QWORD PTR proc$[rsp]
 	movzx	eax, BYTE PTR [rax+12]
-	and	eax, 5
+	and	eax, 16
 	test	eax, eax
 	je	SHORT $LN6@AuGetKilla
 $LN5@AuGetKilla:
 
-; 266  : 		return proc;
+; 267  : 		return proc;
 
 	mov	rax, QWORD PTR proc$[rsp]
 	jmp	SHORT $LN7@AuGetKilla
 $LN6@AuGetKilla:
 
-; 267  : 
-; 268  : 	AuProcess *found = NULL;
+; 268  : 	}
+; 269  : 
+; 270  : 	AuProcess *found = NULL;
 
 	mov	QWORD PTR found$[rsp], 0
 
-; 269  : 	for (int i = 0; i < proc->childs->pointer; i++) {
+; 271  : 	for (int i = 0; i < proc->childs->pointer; i++) {
 
 	mov	DWORD PTR i$1[rsp], 0
 	jmp	SHORT $LN4@AuGetKilla
@@ -192,7 +198,7 @@ $LN4@AuGetKilla:
 	cmp	DWORD PTR i$1[rsp], eax
 	jae	SHORT $LN2@AuGetKilla
 
-; 270  : 		AuProcess *proc_ = (AuProcess*)list_get_at(proc->childs, i);
+; 272  : 		AuProcess *proc_ = (AuProcess*)list_get_at(proc->childs, i);
 
 	mov	edx, DWORD PTR i$1[rsp]
 	mov	rax, QWORD PTR proc$[rsp]
@@ -200,13 +206,13 @@ $LN4@AuGetKilla:
 	call	list_get_at
 	mov	QWORD PTR proc_$2[rsp], rax
 
-; 271  : 		found = AuGetKillableProcess(proc_);
+; 273  : 		found = AuGetKillableProcess(proc_);
 
 	mov	rcx, QWORD PTR proc_$2[rsp]
 	call	?AuGetKillableProcess@@YAPEAU_au_proc_@@PEAU1@@Z ; AuGetKillableProcess
 	mov	QWORD PTR found$[rsp], rax
 
-; 272  : 		if (found) return found;
+; 274  : 		if (found) return found;
 
 	cmp	QWORD PTR found$[rsp], 0
 	je	SHORT $LN1@AuGetKilla
@@ -214,18 +220,18 @@ $LN4@AuGetKilla:
 	jmp	SHORT $LN7@AuGetKilla
 $LN1@AuGetKilla:
 
-; 273  : 	}
+; 275  : 	}
 
 	jmp	SHORT $LN3@AuGetKilla
 $LN2@AuGetKilla:
 
-; 274  : 
-; 275  : 	return NULL;
+; 276  : 
+; 277  : 	return NULL;
 
 	xor	eax, eax
 $LN7@AuGetKilla:
 
-; 276  : }
+; 278  : }
 
 	add	rsp, 72					; 00000048H
 	ret	0
@@ -269,7 +275,7 @@ $LN6:
 
 	mov	rax, QWORD PTR proc$[rsp]
 	add	rax, 4
-	lea	rdx, OFFSET FLAT:$SG3861
+	lea	rdx, OFFSET FLAT:$SG3868
 	mov	rcx, rax
 	call	strcpy
 
@@ -660,12 +666,26 @@ _TEXT	ENDS
 ; Function compile flags: /Odtpy
 ; File e:\xeneva project\aurora\kernel\process.cpp
 _TEXT	SEGMENT
+?AuProcessGetMutex@@YAPEAU_mutex_@@XZ PROC		; AuProcessGetMutex
+
+; 393  : 	return process_mutex;
+
+	mov	rax, QWORD PTR ?process_mutex@@3PEAU_mutex_@@EA ; process_mutex
+
+; 394  : }
+
+	ret	0
+?AuProcessGetMutex@@YAPEAU_mutex_@@XZ ENDP		; AuProcessGetMutex
+_TEXT	ENDS
+; Function compile flags: /Odtpy
+; File e:\xeneva project\aurora\kernel\process.cpp
+_TEXT	SEGMENT
 killable$1 = 32
 proc$ = 64
 pid$ = 72
 ?AuProcessWaitForTermination@@YAXPEAU_au_proc_@@H@Z PROC ; AuProcessWaitForTermination
 
-; 288  : void AuProcessWaitForTermination(AuProcess *proc, int pid) {
+; 290  : void AuProcessWaitForTermination(AuProcess *proc, int pid) {
 
 $LN8:
 	mov	DWORD PTR [rsp+16], edx
@@ -673,57 +693,62 @@ $LN8:
 	sub	rsp, 56					; 00000038H
 $LN5@AuProcessW:
 
-; 289  : 	do {
-; 290  : 		AuProcess *killable = AuGetKillableProcess(proc);
+; 291  : 	do {
+; 292  : 		AuProcess *killable = AuGetKillableProcess(proc);
 
 	mov	rcx, QWORD PTR proc$[rsp]
 	call	?AuGetKillableProcess@@YAPEAU_au_proc_@@PEAU1@@Z ; AuGetKillableProcess
 	mov	QWORD PTR killable$1[rsp], rax
 
-; 291  : 
-; 292  : 		if (killable) {
+; 293  : 
+; 294  : 		if (killable) {
 
 	cmp	QWORD PTR killable$1[rsp], 0
 	je	SHORT $LN2@AuProcessW
 
-; 293  : 			AuProcessClean(proc, killable);
+; 295  : 			AuProcessClean(proc, killable);
 
 	mov	rdx, QWORD PTR killable$1[rsp]
 	mov	rcx, QWORD PTR proc$[rsp]
 	call	?AuProcessClean@@YAXPEAU_au_proc_@@0@Z	; AuProcessClean
+
+; 296  : 			killable = NULL;
+
+	mov	QWORD PTR killable$1[rsp], 0
 $LN2@AuProcessW:
 
-; 294  : 		}
-; 295  : 		
-; 296  : 		if (!killable){
+; 297  : 		}
+; 298  : 
+; 299  : 
+; 300  : 		if (!killable){
 
 	cmp	QWORD PTR killable$1[rsp], 0
 	jne	SHORT $LN1@AuProcessW
 
-; 297  : 			AuBlockThread(proc->main_thread);
+; 301  : 			AuBlockThread(proc->main_thread);
 
 	mov	rax, QWORD PTR proc$[rsp]
 	mov	rcx, QWORD PTR [rax+46]
 	call	AuBlockThread
 
-; 298  : 			proc->state = PROCESS_STATE_SUSPENDED;
+; 302  : 			proc->state = PROCESS_STATE_SUSPENDED;
 
 	mov	rax, QWORD PTR proc$[rsp]
-	mov	BYTE PTR [rax+12], 3
+	mov	BYTE PTR [rax+12], 4
 
-; 299  : 			x64_force_sched();
+; 303  : 			x64_force_sched();
 
 	call	x64_force_sched
 $LN1@AuProcessW:
 
-; 300  : 		}
-; 301  : 	} while (1);
+; 304  : 		}
+; 305  : 	} while (1);
 
 	xor	eax, eax
 	cmp	eax, 1
 	jne	SHORT $LN5@AuProcessW
 
-; 302  : }
+; 306  : }
 
 	add	rsp, 56					; 00000038H
 	ret	0
@@ -736,13 +761,13 @@ i$1 = 0
 proc$ = 32
 ?AuProcessGetFileDesc@@YAHPEAU_au_proc_@@@Z PROC	; AuProcessGetFileDesc
 
-; 309  : int AuProcessGetFileDesc(AuProcess* proc) {
+; 313  : int AuProcessGetFileDesc(AuProcess* proc) {
 
 $LN7:
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 24
 
-; 310  : 	for (int i = 0; i < FILE_DESC_PER_PROCESS; i++) {
+; 314  : 	for (int i = 0; i < FILE_DESC_PER_PROCESS; i++) {
 
 	mov	DWORD PTR i$1[rsp], 0
 	jmp	SHORT $LN4@AuProcessG
@@ -754,30 +779,30 @@ $LN4@AuProcessG:
 	cmp	DWORD PTR i$1[rsp], 60			; 0000003cH
 	jge	SHORT $LN2@AuProcessG
 
-; 311  : 		if (!proc->fds[i])
+; 315  : 		if (!proc->fds[i])
 
 	movsxd	rax, DWORD PTR i$1[rsp]
 	mov	rcx, QWORD PTR proc$[rsp]
 	cmp	QWORD PTR [rcx+rax*8+543], 0
 	jne	SHORT $LN1@AuProcessG
 
-; 312  : 			return i;
+; 316  : 			return i;
 
 	mov	eax, DWORD PTR i$1[rsp]
 	jmp	SHORT $LN5@AuProcessG
 $LN1@AuProcessG:
 
-; 313  : 	}
+; 317  : 	}
 
 	jmp	SHORT $LN3@AuProcessG
 $LN2@AuProcessG:
 
-; 314  : 	return -1;
+; 318  : 	return -1;
 
 	mov	eax, -1
 $LN5@AuProcessG:
 
-; 315  : }
+; 319  : }
 
 	add	rsp, 24
 	ret	0
@@ -793,38 +818,43 @@ killable$4 = 48
 proc$ = 80
 ?AuProcessExit@@YAXPEAU_au_proc_@@@Z PROC		; AuProcessExit
 
-; 322  : void AuProcessExit(AuProcess* proc) {
+; 326  : void AuProcessExit(AuProcess* proc) {
 
 $LN17:
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 72					; 00000048H
 
-; 323  : 	if (proc == proc_root) {
+; 327  : 	if (proc == proc_root) {
 
 	mov	rax, QWORD PTR ?proc_root@@3PEAU_au_proc_@@EA ; proc_root
 	cmp	QWORD PTR proc$[rsp], rax
 	jne	SHORT $LN14@AuProcessE
 
-; 324  : 		SeTextOut("[aurora]: cannot exit root process \r\n");
+; 328  : 		SeTextOut("[aurora]: cannot exit root process \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG3929
+	lea	rcx, OFFSET FLAT:$SG3936
 	call	SeTextOut
 
-; 325  : 		return;
+; 329  : 		return;
 
 	jmp	$LN15@AuProcessE
 $LN14@AuProcessE:
 
-; 326  : 	}
-; 327  : 
-; 328  : 	proc->state = PROCESS_STATE_DIED;
+; 330  : 	}
+; 331  : 	/*if (proc->state & PROCESS_STATE_BUSY_WAIT){
+; 332  : 		AuTextOut("Process %s is in busy wait \r\n", proc->name);
+; 333  : 		AuForceScheduler();
+; 334  : 		return;
+; 335  : 	}*/
+; 336  : 
+; 337  : 	proc->state = PROCESS_STATE_DIED;
 
 	mov	rax, QWORD PTR proc$[rsp]
-	mov	BYTE PTR [rax+12], 4
+	mov	BYTE PTR [rax+12], 8
 
-; 329  : 
-; 330  : 	/* mark all the threads as blocked */
-; 331  : 	for (int i = 1; i < proc->num_thread - 1; i++) {
+; 338  : 
+; 339  : 	/* mark all the threads as blocked */
+; 340  : 	for (int i = 1; i < proc->num_thread - 1; i++) {
 
 	mov	DWORD PTR i$1[rsp], 1
 	jmp	SHORT $LN13@AuProcessE
@@ -839,28 +869,29 @@ $LN13@AuProcessE:
 	cmp	DWORD PTR i$1[rsp], eax
 	jge	SHORT $LN11@AuProcessE
 
-; 332  : 		AuThread *killable = proc->threads[i];
+; 341  : 		AuThread *killable = proc->threads[i];
 
 	movsxd	rax, DWORD PTR i$1[rsp]
 	mov	rcx, QWORD PTR proc$[rsp]
 	mov	rax, QWORD PTR [rcx+rax*8+63]
 	mov	QWORD PTR killable$4[rsp], rax
 
-; 333  : 		AuThreadMoveToTrash(killable);
+; 342  : 		AuThreadMoveToTrash(killable);
 
 	mov	rcx, QWORD PTR killable$4[rsp]
 	call	?AuThreadMoveToTrash@@YAXPEAU_au_thread_@@@Z ; AuThreadMoveToTrash
 
-; 334  : 	}
+; 343  : 	}
 
 	jmp	SHORT $LN12@AuProcessE
 $LN11@AuProcessE:
 
-; 335  : 
-; 336  : 	/* here we free almost every possible
-; 337  : 	 * data, that we can free
-; 338  : 	 */
-; 339  : 	for (int i = 0; i < FILE_DESC_PER_PROCESS; i++) {
+; 344  : 
+; 345  : 
+; 346  : 	/* here we free almost every possible
+; 347  : 	 * data, that we can free
+; 348  : 	 */
+; 349  : 	for (int i = 0; i < FILE_DESC_PER_PROCESS; i++) {
 
 	mov	DWORD PTR i$2[rsp], 0
 	jmp	SHORT $LN10@AuProcessE
@@ -872,19 +903,19 @@ $LN10@AuProcessE:
 	cmp	DWORD PTR i$2[rsp], 60			; 0000003cH
 	jge	SHORT $LN8@AuProcessE
 
-; 340  : 		AuVFSNode *file = proc->fds[i];
+; 350  : 		AuVFSNode *file = proc->fds[i];
 
 	movsxd	rax, DWORD PTR i$2[rsp]
 	mov	rcx, QWORD PTR proc$[rsp]
 	mov	rax, QWORD PTR [rcx+rax*8+543]
 	mov	QWORD PTR file$3[rsp], rax
 
-; 341  : 		if (file) {
+; 351  : 		if (file) {
 
 	cmp	QWORD PTR file$3[rsp], 0
 	je	SHORT $LN7@AuProcessE
 
-; 342  : 			if (file->flags & FS_FLAG_DEVICE || file->flags & FS_FLAG_FILE_SYSTEM)
+; 352  : 			if (file->flags & FS_FLAG_DEVICE || file->flags & FS_FLAG_FILE_SYSTEM)
 
 	mov	rax, QWORD PTR file$3[rsp]
 	movzx	eax, BYTE PTR [rax+61]
@@ -898,122 +929,133 @@ $LN10@AuProcessE:
 	je	SHORT $LN6@AuProcessE
 $LN5@AuProcessE:
 
-; 343  : 				continue;
+; 353  : 				continue;
 
 	jmp	SHORT $LN9@AuProcessE
 $LN6@AuProcessE:
 
-; 344  : 			kfree(file);
+; 354  : 			kfree(file);
 
 	mov	rcx, QWORD PTR file$3[rsp]
 	call	kfree
 $LN7@AuProcessE:
 
-; 345  : 		}
-; 346  : 	}
+; 355  : 		}
+; 356  : 	}
 
 	jmp	SHORT $LN9@AuProcessE
 $LN8@AuProcessE:
 
-; 347  : 	/*unmap all shared memory mappings */
-; 348  : 	AuSHMUnmapAll(proc);
+; 357  : 
+; 358  : 	/*unmap all shared memory mappings */
+; 359  : 	AuSHMUnmapAll(proc);
 
 	mov	rcx, QWORD PTR proc$[rsp]
 	call	?AuSHMUnmapAll@@YAXPEAU_au_proc_@@@Z	; AuSHMUnmapAll
 
-; 349  : 
-; 350  : 	kfree(proc->file);
+; 360  : 
+; 361  : 	kmalloc_debug_on(true);
+
+	mov	cl, 1
+	call	kmalloc_debug_on
+
+; 362  : 	kfree(proc->file);
 
 	mov	rax, QWORD PTR proc$[rsp]
 	mov	rcx, QWORD PTR [rax+1023]
 	call	kfree
 
-; 351  : 
-; 352  : 	AuThreadMoveToTrash(proc->main_thread);
+; 363  : 	kmalloc_debug_on(false);
+
+	xor	ecx, ecx
+	call	kmalloc_debug_on
+
+; 364  : 
+; 365  : 	AuThreadMoveToTrash(proc->main_thread);
 
 	mov	rax, QWORD PTR proc$[rsp]
 	mov	rcx, QWORD PTR [rax+46]
 	call	?AuThreadMoveToTrash@@YAXPEAU_au_thread_@@@Z ; AuThreadMoveToTrash
 
-; 353  : 
-; 354  : 	if (proc->parent) {
+; 366  : 
+; 367  : 	if (proc->parent) {
 
 	mov	rax, QWORD PTR proc$[rsp]
 	cmp	QWORD PTR [rax+1087], 0
 	je	SHORT $LN4@AuProcessE
 
-; 355  : 		if (!(proc->parent->state & PROCESS_STATE_SUSPENDED)){
+; 368  : 		if (!(proc->parent->state & PROCESS_STATE_SUSPENDED)){
 
 	mov	rax, QWORD PTR proc$[rsp]
 	mov	rax, QWORD PTR [rax+1087]
 	movzx	eax, BYTE PTR [rax+12]
-	and	eax, 3
+	and	eax, 4
 	test	eax, eax
 	jne	SHORT $LN3@AuProcessE
 
-; 356  : 			proc->state = PROCESS_STATE_ZOMBIE;
+; 369  : 			proc->state = PROCESS_STATE_ZOMBIE;
 
 	mov	rax, QWORD PTR proc$[rsp]
-	mov	BYTE PTR [rax+12], 5
+	mov	BYTE PTR [rax+12], 16
 
-; 357  : 		}
-; 358  : 		else {
+; 370  : 		}
+; 371  : 		else {
 
 	jmp	SHORT $LN2@AuProcessE
 $LN3@AuProcessE:
 
-; 359  : 			/* else make parent runnable then it will reap
-; 360  : 			 * the current process,
-; 361  : 			 * in Aurora unblocking a process means, unblocking its
-; 362  : 			 * all threads that are suspended, for now only the main
-; 363  : 			 * thread
-; 364  : 			 */
-; 365  : 			AuUnblockThread(proc->parent->main_thread);
+; 372  : 			/* else make parent runnable then it will reap
+; 373  : 			 * the current process,
+; 374  : 			 * in Aurora unblocking a process means, unblocking its
+; 375  : 			 * all threads that are suspended, for now only the main
+; 376  : 			 * thread
+; 377  : 			 */
+; 378  : 			AuUnblockThread(proc->parent->main_thread);
 
 	mov	rax, QWORD PTR proc$[rsp]
 	mov	rax, QWORD PTR [rax+1087]
 	mov	rcx, QWORD PTR [rax+46]
 	call	AuUnblockThread
 
-; 366  : 			proc->parent->state = PROCESS_STATE_READY;
+; 379  : 			proc->parent->state = PROCESS_STATE_READY;
 
 	mov	rax, QWORD PTR proc$[rsp]
 	mov	rax, QWORD PTR [rax+1087]
 	mov	BYTE PTR [rax+12], 2
 $LN2@AuProcessE:
 
-; 367  : 		}
-; 368  : 	}
-; 369  : 	else {
+; 380  : 		}
+; 381  : 	}
+; 382  : 	else {
 
 	jmp	SHORT $LN1@AuProcessE
 $LN4@AuProcessE:
 
-; 370  : 		proc->state = PROCESS_STATE_ZOMBIE;
+; 383  : 		proc->state = PROCESS_STATE_ZOMBIE;
 
 	mov	rax, QWORD PTR proc$[rsp]
-	mov	BYTE PTR [rax+12], 5
+	mov	BYTE PTR [rax+12], 16
 
-; 371  : 		/* unblock the root process */
-; 372  : 		AuUnblockThread(proc_root->main_thread);
+; 384  : 		/* unblock the root process */
+; 385  : 		AuUnblockThread(proc_root->main_thread);
 
 	mov	rax, QWORD PTR ?proc_root@@3PEAU_au_proc_@@EA ; proc_root
 	mov	rcx, QWORD PTR [rax+46]
 	call	AuUnblockThread
 
-; 373  : 		proc_root->state = PROCESS_STATE_READY;
+; 386  : 		proc_root->state = PROCESS_STATE_READY;
 
 	mov	rax, QWORD PTR ?proc_root@@3PEAU_au_proc_@@EA ; proc_root
 	mov	BYTE PTR [rax+12], 2
 $LN1@AuProcessE:
 
-; 374  : 	}
-; 375  : 	x64_force_sched();
+; 387  : 	}
+; 388  : 	x64_force_sched();
 
 	call	x64_force_sched
 $LN15@AuProcessE:
 
-; 376  : }
+; 389  : }
 
 	add	rsp, 72					; 00000048H
 	ret	0
@@ -1186,11 +1228,11 @@ _TEXT	ENDS
 _TEXT	SEGMENT
 ?AuGetRootProcess@@YAPEAU_au_proc_@@XZ PROC		; AuGetRootProcess
 
-; 257  : 	return proc_root;
+; 258  : 	return proc_root;
 
 	mov	rax, QWORD PTR ?proc_root@@3PEAU_au_proc_@@EA ; proc_root
 
-; 258  : }
+; 259  : }
 
 	ret	0
 ?AuGetRootProcess@@YAPEAU_au_proc_@@XZ ENDP		; AuGetRootProcess
@@ -1208,45 +1250,50 @@ root_proc$ = 48
 $LN3:
 	sub	rsp, 72					; 00000048H
 
-; 245  : 	AuProcess* root_proc = AuCreateRootProc();
+; 245  : 	process_mutex = AuCreateMutex();
+
+	call	AuCreateMutex
+	mov	QWORD PTR ?process_mutex@@3PEAU_mutex_@@EA, rax ; process_mutex
+
+; 246  : 	AuProcess* root_proc = AuCreateRootProc();
 
 	call	?AuCreateRootProc@@YAPEAU_au_proc_@@XZ	; AuCreateRootProc
 	mov	QWORD PTR root_proc$[rsp], rax
 
-; 246  : 	int num_args = 1;
+; 247  : 	int num_args = 1;
 
 	mov	DWORD PTR num_args$[rsp], 1
 
-; 247  : 	char** argvs = (char**)kmalloc(6);
+; 248  : 	char** argvs = (char**)kmalloc(6);
 
 	mov	ecx, 6
 	call	kmalloc
 	mov	QWORD PTR argvs$[rsp], rax
 
-; 248  : 	memset(argvs, 0, 6);
+; 249  : 	memset(argvs, 0, 6);
 
 	mov	r8d, 6
 	xor	edx, edx
 	mov	rcx, QWORD PTR argvs$[rsp]
 	call	memset
 
-; 249  : 	argvs[0] = "-about";
+; 250  : 	argvs[0] = "-about";
 
 	mov	eax, 8
 	imul	rax, rax, 0
 	mov	rcx, QWORD PTR argvs$[rsp]
-	lea	rdx, OFFSET FLAT:$SG3890
+	lea	rdx, OFFSET FLAT:$SG3897
 	mov	QWORD PTR [rcx+rax], rdx
 
-; 250  : 	AuLoadExecToProcess(root_proc, "/init.exe",num_args,argvs);
+; 251  : 	AuLoadExecToProcess(root_proc, "/init.exe",num_args,argvs);
 
 	mov	r9, QWORD PTR argvs$[rsp]
 	mov	r8d, DWORD PTR num_args$[rsp]
-	lea	rdx, OFFSET FLAT:$SG3891
+	lea	rdx, OFFSET FLAT:$SG3898
 	mov	rcx, QWORD PTR root_proc$[rsp]
 	call	?AuLoadExecToProcess@@YAXPEAU_au_proc_@@PEADHPEAPEAD@Z ; AuLoadExecToProcess
 
-; 251  : }
+; 252  : }
 
 	add	rsp, 72					; 00000048H
 	ret	0

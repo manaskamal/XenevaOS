@@ -82,34 +82,18 @@ size_t ReadFile(int fd, void* buffer, size_t length) {
 		return 0;
 	if (!length)
 		return 0;
-	
 	AuThread* current_thr = AuGetCurrentThread();
 	AuProcess* current_proc = AuProcessFindThread(current_thr);
 	AuVFSNode* file = current_proc->fds[fd];
-	uint8_t* aligned_buffer = (uint8_t*)buffer;
+	uint64_t* aligned_buffer = (uint64_t*)buffer;
 	if (!file)
 		return 0;
-	size_t read_bytes = 0;
-	size_t ret_bytes;
+	size_t ret_bytes = 0;
 	/* every general file will contain its
 	 * file system node as device */
 	AuVFSNode* fsys = (AuVFSNode*)file->device;
-	
 	if (file->flags & FS_FLAG_GENERAL) {
-		size_t num_blocks = length / PAGE_SIZE + ((length % PAGE_SIZE) ? 1 : 0);;
-		if ((length % PAGE_SIZE) != 0)
-			num_blocks++;
-		for (int i = 0; i < num_blocks; i++) {
-			if (file->eof)
-				break;
-			uint64_t* buff = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
-			memset(buff, 0, PAGE_SIZE);
-			read_bytes = AuVFSNodeReadBlock(fsys, file, (uint64_t*)V2P((size_t)buff));
-			memcpy(aligned_buffer, buff, PAGE_SIZE);
-			AuPmmngrFree((void*)V2P((size_t)buff));
-			aligned_buffer += PAGE_SIZE;
-			ret_bytes += read_bytes;
-		}
+		ret_bytes = AuVFSNodeRead(fsys, file,aligned_buffer, length);
 	}
 	else if (file->flags & FS_FLAG_DEVICE){
 		/* devfs will handle*/
@@ -117,6 +101,7 @@ size_t ReadFile(int fd, void* buffer, size_t length) {
 	else if (file->flags & FS_FLAG_PIPE) {
 		/* ofcourse, pipe subsystem will handle */
 	}
+
 	return ret_bytes;
 }
 
@@ -134,7 +119,6 @@ size_t WriteFile(int fd, void* buffer, size_t length) {
 		return 0;
 	if (!length)
 		return 0;
-
 	AuThread* current_thr = AuGetCurrentThread();
 	AuProcess* current_proc = AuProcessFindThread(current_thr);
 	AuVFSNode* file = current_proc->fds[fd];

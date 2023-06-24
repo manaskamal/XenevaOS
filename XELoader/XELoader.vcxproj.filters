@@ -1,13 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <None Include="_callback.asm" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="_callback.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="_string.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>

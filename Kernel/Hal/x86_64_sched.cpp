@@ -441,6 +441,14 @@ AU_EXTERN AU_EXPORT void AuBlockThread(AuThread *thread) {
 	AuThreadInsertBlock(thread);
 }
 
+/*
+* AuSleepThread -- sleeps a thread 
+*/
+AU_EXTERN AU_EXPORT void AuSleepThread(AuThread *thread, uint64_t ms) {
+	thread->state = THREAD_STATE_SLEEP;
+	thread->quanta = ms;
+}
+
 
 /*
  * AuUnblockThread -- unblocks a thread and insert it to
@@ -454,6 +462,7 @@ AU_EXTERN AU_EXPORT void AuUnblockThread(AuThread *t) {
 		if (thr == t) {
 			AuThreadDeleteBlock(thr);
 			found_ = true;
+			break;
 		}
 	}
 	if (found_)
