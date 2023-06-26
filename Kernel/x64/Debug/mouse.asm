@@ -10,9 +10,9 @@ _BSS	SEGMENT
 ?__ps2mouse@@3PEAU__ps2mouse__@@EA DQ 01H DUP (?)	; __ps2mouse
 _BSS	ENDS
 CONST	SEGMENT
-$SG3504	DB	'Mouse Scroll down ', 0aH, 00H
+$SG3780	DB	'Mouse Scroll down ', 0aH, 00H
 	ORG $+4
-$SG3508	DB	'Mouse Scroll up ', 0aH, 00H
+$SG3784	DB	'Mouse Scroll up ', 0aH, 00H
 CONST	ENDS
 PUBLIC	?AuPS2MouseInitialise@@YAXXZ			; AuPS2MouseInitialise
 PUBLIC	?PS2MouseWaitInput@@YAXXZ			; PS2MouseWaitInput
@@ -78,21 +78,21 @@ v$ = 128
 p$ = 136
 ?PS2MouseHandler@@YAX_KPEAX@Z PROC			; PS2MouseHandler
 
-; 107  : void PS2MouseHandler(size_t v, void* p) {
+; 109  : void PS2MouseHandler(size_t v, void* p) {
 
 $LN29:
 	mov	QWORD PTR [rsp+16], rdx
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 120				; 00000078H
 
-; 108  : 	uint8_t status = x64_inportb(MOUSE_STATUS);
+; 110  : 	uint8_t status = x64_inportb(MOUSE_STATUS);
 
 	mov	cx, 100					; 00000064H
 	call	x64_inportb
 	mov	BYTE PTR status$[rsp], al
 $LN26@PS2MouseHa:
 
-; 109  : 	while ((status & MOUSE_BBIT) && (status & MOUSE_F_BIT)) {
+; 111  : 	while ((status & MOUSE_BBIT) && (status & MOUSE_F_BIT)) {
 
 	movzx	eax, BYTE PTR status$[rsp]
 	and	eax, 1
@@ -103,13 +103,13 @@ $LN26@PS2MouseHa:
 	test	eax, eax
 	je	$LN25@PS2MouseHa
 
-; 110  : 		int8_t mouse_in = x64_inportb(MOUSE_PORT);
+; 112  : 		int8_t mouse_in = x64_inportb(MOUSE_PORT);
 
 	mov	cx, 96					; 00000060H
 	call	x64_inportb
 	mov	BYTE PTR mouse_in$1[rsp], al
 
-; 111  : 		switch (__ps2mouse->mouse_cycle) {
+; 113  : 		switch (__ps2mouse->mouse_cycle) {
 
 	mov	rax, QWORD PTR ?__ps2mouse@@3PEAU__ps2mouse__@@EA ; __ps2mouse
 	movzx	eax, BYTE PTR [rax]
@@ -127,8 +127,8 @@ $LN26@PS2MouseHa:
 	jmp	$LN23@PS2MouseHa
 $LN22@PS2MouseHa:
 
-; 112  : 		case 0:
-; 113  : 			__ps2mouse->mouse_byte[0] = mouse_in;
+; 114  : 		case 0:
+; 115  : 			__ps2mouse->mouse_byte[0] = mouse_in;
 
 	mov	eax, 1
 	imul	rax, rax, 0
@@ -136,7 +136,7 @@ $LN22@PS2MouseHa:
 	movzx	edx, BYTE PTR mouse_in$1[rsp]
 	mov	BYTE PTR [rcx+rax+1], dl
 
-; 114  : 			if (!(mouse_in & MOUSE_V_BIT)) break;
+; 116  : 			if (!(mouse_in & MOUSE_V_BIT)) break;
 
 	movsx	eax, BYTE PTR mouse_in$1[rsp]
 	and	eax, 8
@@ -145,7 +145,7 @@ $LN22@PS2MouseHa:
 	jmp	$LN23@PS2MouseHa
 $LN21@PS2MouseHa:
 
-; 115  : 			++__ps2mouse->mouse_cycle;
+; 117  : 			++__ps2mouse->mouse_cycle;
 
 	mov	rax, QWORD PTR ?__ps2mouse@@3PEAU__ps2mouse__@@EA ; __ps2mouse
 	movzx	eax, BYTE PTR [rax]
@@ -153,13 +153,13 @@ $LN21@PS2MouseHa:
 	mov	rcx, QWORD PTR ?__ps2mouse@@3PEAU__ps2mouse__@@EA ; __ps2mouse
 	mov	BYTE PTR [rcx], al
 
-; 116  : 			break;
+; 118  : 			break;
 
 	jmp	$LN23@PS2MouseHa
 $LN20@PS2MouseHa:
 
-; 117  : 		case 1:
-; 118  : 			__ps2mouse->mouse_byte[1] = mouse_in;
+; 119  : 		case 1:
+; 120  : 			__ps2mouse->mouse_byte[1] = mouse_in;
 
 	mov	eax, 1
 	imul	rax, rax, 1
@@ -167,7 +167,7 @@ $LN20@PS2MouseHa:
 	movzx	edx, BYTE PTR mouse_in$1[rsp]
 	mov	BYTE PTR [rcx+rax+1], dl
 
-; 119  : 			++__ps2mouse->mouse_cycle;
+; 121  : 			++__ps2mouse->mouse_cycle;
 
 	mov	rax, QWORD PTR ?__ps2mouse@@3PEAU__ps2mouse__@@EA ; __ps2mouse
 	movzx	eax, BYTE PTR [rax]
@@ -175,13 +175,13 @@ $LN20@PS2MouseHa:
 	mov	rcx, QWORD PTR ?__ps2mouse@@3PEAU__ps2mouse__@@EA ; __ps2mouse
 	mov	BYTE PTR [rcx], al
 
-; 120  : 			break;
+; 122  : 			break;
 
 	jmp	SHORT $LN23@PS2MouseHa
 $LN19@PS2MouseHa:
 
-; 121  : 		case 2:
-; 122  : 			__ps2mouse->mouse_byte[2] = mouse_in;
+; 123  : 		case 2:
+; 124  : 			__ps2mouse->mouse_byte[2] = mouse_in;
 
 	mov	eax, 1
 	imul	rax, rax, 2
@@ -189,14 +189,14 @@ $LN19@PS2MouseHa:
 	movzx	edx, BYTE PTR mouse_in$1[rsp]
 	mov	BYTE PTR [rcx+rax+1], dl
 
-; 123  : 			goto finish_packet;
+; 125  : 			goto finish_packet;
 
 	jmp	SHORT $LN18@PS2MouseHa
 	jmp	SHORT $finish_packet$30
 $LN17@PS2MouseHa:
 
-; 124  : 		case 3:
-; 125  : 			__ps2mouse->mouse_byte[3] = mouse_in;
+; 126  : 		case 3:
+; 127  : 			__ps2mouse->mouse_byte[3] = mouse_in;
 
 	mov	eax, 1
 	imul	rax, rax, 3
@@ -204,14 +204,14 @@ $LN17@PS2MouseHa:
 	movzx	edx, BYTE PTR mouse_in$1[rsp]
 	mov	BYTE PTR [rcx+rax+1], dl
 
-; 126  : 			goto finish_packet;
+; 128  : 			goto finish_packet;
 
 	jmp	SHORT $LN16@PS2MouseHa
 	jmp	SHORT $finish_packet$30
 $LN15@PS2MouseHa:
 
-; 127  : 		case 4:
-; 128  : 			__ps2mouse->mouse_byte[4] = mouse_in;
+; 129  : 		case 4:
+; 130  : 			__ps2mouse->mouse_byte[4] = mouse_in;
 
 	mov	eax, 1
 	imul	rax, rax, 4
@@ -219,15 +219,15 @@ $LN15@PS2MouseHa:
 	movzx	edx, BYTE PTR mouse_in$1[rsp]
 	mov	BYTE PTR [rcx+rax+1], dl
 
-; 129  : 			goto finish_packet;
+; 131  : 			goto finish_packet;
 
 	jmp	SHORT $LN14@PS2MouseHa
 	jmp	SHORT $finish_packet$30
 $LN23@PS2MouseHa:
 
-; 130  : 		}
-; 131  : 
-; 132  : 		goto read_next;
+; 132  : 		}
+; 133  : 
+; 134  : 		goto read_next;
 
 	jmp	$LN13@PS2MouseHa
 	jmp	$read_next$31
@@ -236,15 +236,15 @@ $LN16@PS2MouseHa:
 $LN18@PS2MouseHa:
 $finish_packet$30:
 
-; 133  : 
-; 134  : finish_packet:
-; 135  : 	__ps2mouse->mouse_cycle = 0;
+; 135  : 
+; 136  : finish_packet:
+; 137  : 	__ps2mouse->mouse_cycle = 0;
 
 	mov	rax, QWORD PTR ?__ps2mouse@@3PEAU__ps2mouse__@@EA ; __ps2mouse
 	mov	BYTE PTR [rax], 0
 
-; 136  : 
-; 137  : 	int x = __ps2mouse->mouse_byte[1];
+; 138  : 
+; 139  : 	int x = __ps2mouse->mouse_byte[1];
 
 	mov	eax, 1
 	imul	rax, rax, 1
@@ -252,7 +252,7 @@ $finish_packet$30:
 	movzx	eax, BYTE PTR [rcx+rax+1]
 	mov	DWORD PTR x$2[rsp], eax
 
-; 138  : 	int y = __ps2mouse->mouse_byte[2];
+; 140  : 	int y = __ps2mouse->mouse_byte[2];
 
 	mov	eax, 1
 	imul	rax, rax, 2
@@ -260,7 +260,7 @@ $finish_packet$30:
 	movzx	eax, BYTE PTR [rcx+rax+1]
 	mov	DWORD PTR y$3[rsp], eax
 
-; 139  : 	if (x && __ps2mouse->mouse_byte[0] & (1 << 4))
+; 141  : 	if (x && __ps2mouse->mouse_byte[0] & (1 << 4))
 
 	cmp	DWORD PTR x$2[rsp], 0
 	je	SHORT $LN12@PS2MouseHa
@@ -272,15 +272,15 @@ $finish_packet$30:
 	test	eax, eax
 	je	SHORT $LN12@PS2MouseHa
 
-; 140  : 		x = x - 0x100;
+; 142  : 		x = x - 0x100;
 
 	mov	eax, DWORD PTR x$2[rsp]
 	sub	eax, 256				; 00000100H
 	mov	DWORD PTR x$2[rsp], eax
 $LN12@PS2MouseHa:
 
-; 141  : 
-; 142  : 	if (y && __ps2mouse->mouse_byte[0] & (1 << 5))
+; 143  : 
+; 144  : 	if (y && __ps2mouse->mouse_byte[0] & (1 << 5))
 
 	cmp	DWORD PTR y$3[rsp], 0
 	je	SHORT $LN11@PS2MouseHa
@@ -292,27 +292,27 @@ $LN12@PS2MouseHa:
 	test	eax, eax
 	je	SHORT $LN11@PS2MouseHa
 
-; 143  : 		y = y - 0x100;
+; 145  : 		y = y - 0x100;
 
 	mov	eax, DWORD PTR y$3[rsp]
 	sub	eax, 256				; 00000100H
 	mov	DWORD PTR y$3[rsp], eax
 $LN11@PS2MouseHa:
 
-; 144  : 
-; 145  : 	__ps2mouse->mouse_x_diff = x;
+; 146  : 
+; 147  : 	__ps2mouse->mouse_x_diff = x;
 
 	mov	rax, QWORD PTR ?__ps2mouse@@3PEAU__ps2mouse__@@EA ; __ps2mouse
 	mov	ecx, DWORD PTR x$2[rsp]
 	mov	DWORD PTR [rax+16], ecx
 
-; 146  : 	__ps2mouse->mouse_y_diff = y;
+; 148  : 	__ps2mouse->mouse_y_diff = y;
 
 	mov	rax, QWORD PTR ?__ps2mouse@@3PEAU__ps2mouse__@@EA ; __ps2mouse
 	mov	ecx, DWORD PTR y$3[rsp]
 	mov	DWORD PTR [rax+20], ecx
 
-; 147  : 	__ps2mouse->mouse_x += __ps2mouse->mouse_x_diff;
+; 149  : 	__ps2mouse->mouse_x += __ps2mouse->mouse_x_diff;
 
 	mov	rax, QWORD PTR ?__ps2mouse@@3PEAU__ps2mouse__@@EA ; __ps2mouse
 	mov	eax, DWORD PTR [rax+8]
@@ -321,7 +321,7 @@ $LN11@PS2MouseHa:
 	mov	rcx, QWORD PTR ?__ps2mouse@@3PEAU__ps2mouse__@@EA ; __ps2mouse
 	mov	DWORD PTR [rcx+8], eax
 
-; 148  : 	__ps2mouse->mouse_y -= __ps2mouse->mouse_y_diff;
+; 150  : 	__ps2mouse->mouse_y -= __ps2mouse->mouse_y_diff;
 
 	mov	rax, QWORD PTR ?__ps2mouse@@3PEAU__ps2mouse__@@EA ; __ps2mouse
 	mov	rcx, QWORD PTR ?__ps2mouse@@3PEAU__ps2mouse__@@EA ; __ps2mouse
@@ -331,40 +331,40 @@ $LN11@PS2MouseHa:
 	mov	rcx, QWORD PTR ?__ps2mouse@@3PEAU__ps2mouse__@@EA ; __ps2mouse
 	mov	DWORD PTR [rcx+12], eax
 
-; 149  : 
-; 150  : 	if (__ps2mouse->mouse_x < 0)
+; 151  : 
+; 152  : 	if (__ps2mouse->mouse_x < 0)
 
 	mov	rax, QWORD PTR ?__ps2mouse@@3PEAU__ps2mouse__@@EA ; __ps2mouse
 	cmp	DWORD PTR [rax+8], 0
 	jge	SHORT $LN10@PS2MouseHa
 
-; 151  : 		__ps2mouse->mouse_x = 0;
+; 153  : 		__ps2mouse->mouse_x = 0;
 
 	mov	rax, QWORD PTR ?__ps2mouse@@3PEAU__ps2mouse__@@EA ; __ps2mouse
 	mov	DWORD PTR [rax+8], 0
 $LN10@PS2MouseHa:
 
-; 152  : 
-; 153  : 	if (__ps2mouse->mouse_y < 0)
+; 154  : 
+; 155  : 	if (__ps2mouse->mouse_y < 0)
 
 	mov	rax, QWORD PTR ?__ps2mouse@@3PEAU__ps2mouse__@@EA ; __ps2mouse
 	cmp	DWORD PTR [rax+12], 0
 	jge	SHORT $LN9@PS2MouseHa
 
-; 154  : 		__ps2mouse->mouse_y = 0;
+; 156  : 		__ps2mouse->mouse_y = 0;
 
 	mov	rax, QWORD PTR ?__ps2mouse@@3PEAU__ps2mouse__@@EA ; __ps2mouse
 	mov	DWORD PTR [rax+12], 0
 $LN9@PS2MouseHa:
 
-; 155  : 
-; 156  : 	__ps2mouse->mouse_butt_state = 0;
+; 157  : 
+; 158  : 	__ps2mouse->mouse_butt_state = 0;
 
 	mov	rax, QWORD PTR ?__ps2mouse@@3PEAU__ps2mouse__@@EA ; __ps2mouse
 	mov	DWORD PTR [rax+32], 0
 
-; 157  : 
-; 158  : 	if (__ps2mouse->mouse_byte[0] & 0x01) {    //0x01 for PS/2
+; 159  : 
+; 160  : 	if (__ps2mouse->mouse_byte[0] & 0x01) {    //0x01 for PS/2
 
 	mov	eax, 1
 	imul	rax, rax, 0
@@ -374,14 +374,14 @@ $LN9@PS2MouseHa:
 	test	eax, eax
 	je	SHORT $LN8@PS2MouseHa
 
-; 159  : 		__ps2mouse->curr_button[0] = 1;
+; 161  : 		__ps2mouse->curr_button[0] = 1;
 
 	mov	eax, 1
 	imul	rax, rax, 0
 	mov	rcx, QWORD PTR ?__ps2mouse@@3PEAU__ps2mouse__@@EA ; __ps2mouse
 	mov	BYTE PTR [rcx+rax+27], 1
 
-; 160  : 		__ps2mouse->mouse_butt_state |= LEFT_CLICK;
+; 162  : 		__ps2mouse->mouse_butt_state |= LEFT_CLICK;
 
 	mov	rax, QWORD PTR ?__ps2mouse@@3PEAU__ps2mouse__@@EA ; __ps2mouse
 	mov	eax, DWORD PTR [rax+32]
@@ -389,13 +389,13 @@ $LN9@PS2MouseHa:
 	mov	rcx, QWORD PTR ?__ps2mouse@@3PEAU__ps2mouse__@@EA ; __ps2mouse
 	mov	DWORD PTR [rcx+32], eax
 
-; 161  : 	}
-; 162  : 	else
+; 163  : 	}
+; 164  : 	else
 
 	jmp	SHORT $LN7@PS2MouseHa
 $LN8@PS2MouseHa:
 
-; 163  : 		__ps2mouse->curr_button[0] = 0;
+; 165  : 		__ps2mouse->curr_button[0] = 0;
 
 	mov	eax, 1
 	imul	rax, rax, 0
@@ -403,8 +403,8 @@ $LN8@PS2MouseHa:
 	mov	BYTE PTR [rcx+rax+27], 0
 $LN7@PS2MouseHa:
 
-; 164  : 
-; 165  : 	if (__ps2mouse->mouse_byte[0] & 0x02) {
+; 166  : 
+; 167  : 	if (__ps2mouse->mouse_byte[0] & 0x02) {
 
 	mov	eax, 1
 	imul	rax, rax, 0
@@ -414,14 +414,14 @@ $LN7@PS2MouseHa:
 	test	eax, eax
 	je	SHORT $LN6@PS2MouseHa
 
-; 166  : 		__ps2mouse->curr_button[2] = 1;
+; 168  : 		__ps2mouse->curr_button[2] = 1;
 
 	mov	eax, 1
 	imul	rax, rax, 2
 	mov	rcx, QWORD PTR ?__ps2mouse@@3PEAU__ps2mouse__@@EA ; __ps2mouse
 	mov	BYTE PTR [rcx+rax+27], 1
 
-; 167  : 		__ps2mouse->mouse_butt_state |= RIGHT_CLICK;
+; 169  : 		__ps2mouse->mouse_butt_state |= RIGHT_CLICK;
 
 	mov	rax, QWORD PTR ?__ps2mouse@@3PEAU__ps2mouse__@@EA ; __ps2mouse
 	mov	eax, DWORD PTR [rax+32]
@@ -429,13 +429,13 @@ $LN7@PS2MouseHa:
 	mov	rcx, QWORD PTR ?__ps2mouse@@3PEAU__ps2mouse__@@EA ; __ps2mouse
 	mov	DWORD PTR [rcx+32], eax
 
-; 168  : 	}
-; 169  : 	else
+; 170  : 	}
+; 171  : 	else
 
 	jmp	SHORT $LN5@PS2MouseHa
 $LN6@PS2MouseHa:
 
-; 170  : 		__ps2mouse->curr_button[2] = 0;
+; 172  : 		__ps2mouse->curr_button[2] = 0;
 
 	mov	eax, 1
 	imul	rax, rax, 2
@@ -443,8 +443,8 @@ $LN6@PS2MouseHa:
 	mov	BYTE PTR [rcx+rax+27], 0
 $LN5@PS2MouseHa:
 
-; 171  : 
-; 172  : 	if (__ps2mouse->mouse_byte[0] & 0x04)
+; 173  : 
+; 174  : 	if (__ps2mouse->mouse_byte[0] & 0x04)
 
 	mov	eax, 1
 	imul	rax, rax, 0
@@ -454,7 +454,7 @@ $LN5@PS2MouseHa:
 	test	eax, eax
 	je	SHORT $LN4@PS2MouseHa
 
-; 173  : 		__ps2mouse->mouse_button |= MOUSE_MIDDLE_CLICK;
+; 175  : 		__ps2mouse->mouse_button |= MOUSE_MIDDLE_CLICK;
 
 	mov	rax, QWORD PTR ?__ps2mouse@@3PEAU__ps2mouse__@@EA ; __ps2mouse
 	mov	eax, DWORD PTR [rax+36]
@@ -463,8 +463,8 @@ $LN5@PS2MouseHa:
 	mov	DWORD PTR [rcx+36], eax
 $LN4@PS2MouseHa:
 
-; 174  : 
-; 175  : 	if ((int8_t)__ps2mouse->mouse_byte[3] > 0)
+; 176  : 
+; 177  : 	if ((int8_t)__ps2mouse->mouse_byte[3] > 0)
 
 	mov	eax, 1
 	imul	rax, rax, 3
@@ -473,14 +473,14 @@ $LN4@PS2MouseHa:
 	test	eax, eax
 	jle	SHORT $LN3@PS2MouseHa
 
-; 176  : 		AuTextOut("Mouse Scroll down \n");
+; 178  : 		AuTextOut("Mouse Scroll down \n");
 
-	lea	rcx, OFFSET FLAT:$SG3504
+	lea	rcx, OFFSET FLAT:$SG3780
 	call	AuTextOut
 	jmp	SHORT $LN2@PS2MouseHa
 $LN3@PS2MouseHa:
 
-; 177  : 	else if ((int8_t)__ps2mouse->mouse_byte[3] < 0)
+; 179  : 	else if ((int8_t)__ps2mouse->mouse_byte[3] < 0)
 
 	mov	eax, 1
 	imul	rax, rax, 3
@@ -489,51 +489,51 @@ $LN3@PS2MouseHa:
 	test	eax, eax
 	jge	SHORT $LN1@PS2MouseHa
 
-; 178  : 		AuTextOut("Mouse Scroll up \n");
+; 180  : 		AuTextOut("Mouse Scroll up \n");
 
-	lea	rcx, OFFSET FLAT:$SG3508
+	lea	rcx, OFFSET FLAT:$SG3784
 	call	AuTextOut
 $LN1@PS2MouseHa:
 $LN2@PS2MouseHa:
 
-; 179  : 
-; 180  : 	AuInputMessage newmsg;
-; 181  : 	newmsg.type = AU_INPUT_MOUSE;
+; 181  : 
+; 182  : 	AuInputMessage newmsg;
+; 183  : 	newmsg.type = AU_INPUT_MOUSE;
 
 	mov	BYTE PTR newmsg$4[rsp], 1
 
-; 182  : 	newmsg.xpos = __ps2mouse->mouse_x;
+; 184  : 	newmsg.xpos = __ps2mouse->mouse_x;
 
 	mov	rax, QWORD PTR ?__ps2mouse@@3PEAU__ps2mouse__@@EA ; __ps2mouse
 	mov	eax, DWORD PTR [rax+8]
 	mov	DWORD PTR newmsg$4[rsp+4], eax
 
-; 183  : 	newmsg.ypos = __ps2mouse->mouse_y;
+; 185  : 	newmsg.ypos = __ps2mouse->mouse_y;
 
 	mov	rax, QWORD PTR ?__ps2mouse@@3PEAU__ps2mouse__@@EA ; __ps2mouse
 	mov	eax, DWORD PTR [rax+12]
 	mov	DWORD PTR newmsg$4[rsp+8], eax
 
-; 184  : 	newmsg.button_state = __ps2mouse->mouse_butt_state;
+; 186  : 	newmsg.button_state = __ps2mouse->mouse_butt_state;
 
 	mov	rax, QWORD PTR ?__ps2mouse@@3PEAU__ps2mouse__@@EA ; __ps2mouse
 	movzx	eax, BYTE PTR [rax+32]
 	mov	BYTE PTR newmsg$4[rsp+12], al
 
-; 185  : 
-; 186  : 	AuInputMessage oldmsg;
-; 187  : 	AuDevReadMice(&oldmsg);
+; 187  : 
+; 188  : 	AuInputMessage oldmsg;
+; 189  : 	AuDevReadMice(&oldmsg);
 
 	lea	rcx, QWORD PTR oldmsg$5[rsp]
 	call	AuDevReadMice
 
-; 188  : 
-; 189  : 	AuDevWriteMice(&newmsg);
+; 190  : 
+; 191  : 	AuDevWriteMice(&newmsg);
 
 	lea	rcx, QWORD PTR newmsg$4[rsp]
 	call	AuDevWriteMice
 
-; 190  : 	memcpy(__ps2mouse->prev_button, __ps2mouse->curr_button, 3);
+; 192  : 	memcpy(__ps2mouse->prev_button, __ps2mouse->curr_button, 3);
 
 	mov	rax, QWORD PTR ?__ps2mouse@@3PEAU__ps2mouse__@@EA ; __ps2mouse
 	add	rax, 27
@@ -543,7 +543,7 @@ $LN2@PS2MouseHa:
 	mov	rdx, rax
 	call	memcpy
 
-; 191  : 	memset(__ps2mouse->curr_button, 0x00, 3);
+; 193  : 	memset(__ps2mouse->curr_button, 0x00, 3);
 
 	mov	rax, QWORD PTR ?__ps2mouse@@3PEAU__ps2mouse__@@EA ; __ps2mouse
 	add	rax, 27
@@ -554,23 +554,23 @@ $LN2@PS2MouseHa:
 $LN13@PS2MouseHa:
 $read_next$31:
 
-; 192  : 
-; 193  : read_next:
-; 194  : 	break;
+; 194  : 
+; 195  : read_next:
+; 196  : 	break;
 
 	jmp	SHORT $LN25@PS2MouseHa
 
-; 195  : }
+; 197  : }
 
 	jmp	$LN26@PS2MouseHa
 $LN25@PS2MouseHa:
 
-; 196  : 	AuInterruptEnd(12);
+; 198  : 	AuInterruptEnd(12);
 
 	mov	cl, 12
 	call	AuInterruptEnd
 
-; 197  : }
+; 199  : }
 
 	add	rsp, 120				; 00000078H
 	ret	0
@@ -581,21 +581,21 @@ _TEXT	ENDS
 _TEXT	SEGMENT
 ?AuPS2MouseRead@@YAEXZ PROC				; AuPS2MouseRead
 
-; 102  : uint8_t AuPS2MouseRead() {
+; 104  : uint8_t AuPS2MouseRead() {
 
 $LN3:
 	sub	rsp, 40					; 00000028H
 
-; 103  : 	PS2MouseWaitOutput();
+; 105  : 	PS2MouseWaitOutput();
 
 	call	?PS2MouseWaitOutput@@YAXXZ		; PS2MouseWaitOutput
 
-; 104  : 	return x64_inportb(0x60);
+; 106  : 	return x64_inportb(0x60);
 
 	mov	cx, 96					; 00000060H
 	call	x64_inportb
 
-; 105  : }
+; 107  : }
 
 	add	rsp, 40					; 00000028H
 	ret	0
@@ -607,42 +607,42 @@ _TEXT	SEGMENT
 write$ = 48
 ?AuPS2MouseWrite@@YAEE@Z PROC				; AuPS2MouseWrite
 
-; 93   : uint8_t AuPS2MouseWrite(uint8_t write) {
+; 95   : uint8_t AuPS2MouseWrite(uint8_t write) {
 
 $LN3:
 	mov	BYTE PTR [rsp+8], cl
 	sub	rsp, 40					; 00000028H
 
-; 94   : 	PS2MouseWaitInput();
+; 96   : 	PS2MouseWaitInput();
 
 	call	?PS2MouseWaitInput@@YAXXZ		; PS2MouseWaitInput
 
-; 95   : 	x64_outportb(0x64, 0xD4);
+; 97   : 	x64_outportb(0x64, 0xD4);
 
 	mov	dl, 212					; 000000d4H
 	mov	cx, 100					; 00000064H
 	call	x64_outportb
 
-; 96   : 	PS2MouseWaitInput();
+; 98   : 	PS2MouseWaitInput();
 
 	call	?PS2MouseWaitInput@@YAXXZ		; PS2MouseWaitInput
 
-; 97   : 	x64_outportb(0x60, write);
+; 99   : 	x64_outportb(0x60, write);
 
 	movzx	edx, BYTE PTR write$[rsp]
 	mov	cx, 96					; 00000060H
 	call	x64_outportb
 
-; 98   : 	PS2MouseWaitOutput();
+; 100  : 	PS2MouseWaitOutput();
 
 	call	?PS2MouseWaitOutput@@YAXXZ		; PS2MouseWaitOutput
 
-; 99   : 	return x64_inportb(0x60);
+; 101  : 	return x64_inportb(0x60);
 
 	mov	cx, 96					; 00000060H
 	call	x64_inportb
 
-; 100  : }
+; 102  : }
 
 	add	rsp, 40					; 00000028H
 	ret	0
@@ -654,17 +654,17 @@ _TEXT	SEGMENT
 _timer_out$ = 32
 ?PS2MouseWaitOutput@@YAXXZ PROC				; PS2MouseWaitOutput
 
-; 81   : void PS2MouseWaitOutput() {
+; 83   : void PS2MouseWaitOutput() {
 
 $LN6:
 	sub	rsp, 56					; 00000038H
 
-; 82   : 	uint32_t _timer_out = 100000;
+; 84   : 	uint32_t _timer_out = 100000;
 
 	mov	DWORD PTR _timer_out$[rsp], 100000	; 000186a0H
 $LN3@PS2MouseWa:
 
-; 83   : 	while (--_timer_out) {
+; 85   : 	while (--_timer_out) {
 
 	mov	eax, DWORD PTR _timer_out$[rsp]
 	dec	eax
@@ -672,7 +672,7 @@ $LN3@PS2MouseWa:
 	cmp	DWORD PTR _timer_out$[rsp], 0
 	je	SHORT $LN2@PS2MouseWa
 
-; 84   : 		if (x64_inportb(0x64) & (1<<0))
+; 86   : 		if (x64_inportb(0x64) & (1<<0))
 
 	mov	cx, 100					; 00000064H
 	call	x64_inportb
@@ -681,18 +681,18 @@ $LN3@PS2MouseWa:
 	test	eax, eax
 	je	SHORT $LN1@PS2MouseWa
 
-; 85   : 			return;
+; 87   : 			return;
 
 	jmp	SHORT $LN4@PS2MouseWa
 $LN1@PS2MouseWa:
 
-; 86   : 	}
+; 88   : 	}
 
 	jmp	SHORT $LN3@PS2MouseWa
 $LN2@PS2MouseWa:
 $LN4@PS2MouseWa:
 
-; 87   : }
+; 89   : }
 
 	add	rsp, 56					; 00000038H
 	ret	0
@@ -704,17 +704,17 @@ _TEXT	SEGMENT
 time_out$ = 32
 ?PS2MouseWaitInput@@YAXXZ PROC				; PS2MouseWaitInput
 
-; 70   : void PS2MouseWaitInput() {
+; 72   : void PS2MouseWaitInput() {
 
 $LN6:
 	sub	rsp, 56					; 00000038H
 
-; 71   : 	uint64_t time_out = 100000UL;
+; 73   : 	uint64_t time_out = 100000UL;
 
 	mov	QWORD PTR time_out$[rsp], 100000	; 000186a0H
 $LN3@PS2MouseWa:
 
-; 72   : 	while (--time_out){
+; 74   : 	while (--time_out){
 
 	mov	rax, QWORD PTR time_out$[rsp]
 	dec	rax
@@ -722,7 +722,7 @@ $LN3@PS2MouseWa:
 	cmp	QWORD PTR time_out$[rsp], 0
 	je	SHORT $LN2@PS2MouseWa
 
-; 73   : 		if (!(x64_inportb(0x64) & (1 << 1))) return;
+; 75   : 		if (!(x64_inportb(0x64) & (1 << 1))) return;
 
 	mov	cx, 100					; 00000064H
 	call	x64_inportb
@@ -733,13 +733,13 @@ $LN3@PS2MouseWa:
 	jmp	SHORT $LN4@PS2MouseWa
 $LN1@PS2MouseWa:
 
-; 74   : 	}
+; 76   : 	}
 
 	jmp	SHORT $LN3@PS2MouseWa
 $LN2@PS2MouseWa:
 $LN4@PS2MouseWa:
 
-; 75   : }
+; 77   : }
 
 	add	rsp, 56					; 00000038H
 	ret	0
@@ -751,54 +751,54 @@ _TEXT	SEGMENT
 status$ = 32
 ?AuPS2MouseInitialise@@YAXXZ PROC			; AuPS2MouseInitialise
 
-; 202  : void AuPS2MouseInitialise() {
+; 204  : void AuPS2MouseInitialise() {
 
 $LN3:
 	sub	rsp, 56					; 00000038H
 
-; 203  : 	__ps2mouse = (PS2Mouse*)kmalloc(sizeof(PS2Mouse));
+; 205  : 	__ps2mouse = (PS2Mouse*)kmalloc(sizeof(PS2Mouse));
 
 	mov	ecx, 40					; 00000028H
 	call	kmalloc
 	mov	QWORD PTR ?__ps2mouse@@3PEAU__ps2mouse__@@EA, rax ; __ps2mouse
 
-; 204  : 	memset(__ps2mouse, 0, sizeof(PS2Mouse));
+; 206  : 	memset(__ps2mouse, 0, sizeof(PS2Mouse));
 
 	mov	r8d, 40					; 00000028H
 	xor	edx, edx
 	mov	rcx, QWORD PTR ?__ps2mouse@@3PEAU__ps2mouse__@@EA ; __ps2mouse
 	call	memset
 
-; 205  : 
-; 206  : 	uint8_t status;
 ; 207  : 
-; 208  : 	PS2MouseWaitInput();
+; 208  : 	uint8_t status;
+; 209  : 
+; 210  : 	PS2MouseWaitInput();
 
 	call	?PS2MouseWaitInput@@YAXXZ		; PS2MouseWaitInput
 
-; 209  : 	x64_outportb(0x64, 0xA8);
+; 211  : 	x64_outportb(0x64, 0xA8);
 
 	mov	dl, 168					; 000000a8H
 	mov	cx, 100					; 00000064H
 	call	x64_outportb
 
-; 210  : 
-; 211  : 	PS2MouseWaitInput();
+; 212  : 
+; 213  : 	PS2MouseWaitInput();
 
 	call	?PS2MouseWaitInput@@YAXXZ		; PS2MouseWaitInput
 
-; 212  : 	x64_outportb(0x64, 0x20);
+; 214  : 	x64_outportb(0x64, 0x20);
 
 	mov	dl, 32					; 00000020H
 	mov	cx, 100					; 00000064H
 	call	x64_outportb
 
-; 213  : 
-; 214  : 	PS2MouseWaitInput();
+; 215  : 
+; 216  : 	PS2MouseWaitInput();
 
 	call	?PS2MouseWaitInput@@YAXXZ		; PS2MouseWaitInput
 
-; 215  : 	status = (x64_inportb(0x60) | 2);
+; 217  : 	status = (x64_inportb(0x60) | 2);
 
 	mov	cx, 96					; 00000060H
 	call	x64_inportb
@@ -806,78 +806,68 @@ $LN3:
 	or	eax, 2
 	mov	BYTE PTR status$[rsp], al
 
-; 216  : 
-; 217  : 	PS2MouseWaitInput();
+; 218  : 
+; 219  : 	PS2MouseWaitInput();
 
 	call	?PS2MouseWaitInput@@YAXXZ		; PS2MouseWaitInput
 
-; 218  : 	x64_outportb(0x64, 0x60);
+; 220  : 	x64_outportb(0x64, 0x60);
 
 	mov	dl, 96					; 00000060H
 	mov	cx, 100					; 00000064H
 	call	x64_outportb
 
-; 219  : 
-; 220  : 	PS2MouseWaitInput();
+; 221  : 
+; 222  : 	PS2MouseWaitInput();
 
 	call	?PS2MouseWaitInput@@YAXXZ		; PS2MouseWaitInput
 
-; 221  : 	x64_outportb(0x60, status);
+; 223  : 	x64_outportb(0x60, status);
 
 	movzx	edx, BYTE PTR status$[rsp]
 	mov	cx, 96					; 00000060H
 	call	x64_outportb
 
-; 222  : 
-; 223  : 	AuPS2MouseWrite(0xF6);
+; 224  : 
+; 225  : 	AuPS2MouseWrite(0xF6);
 
 	mov	cl, 246					; 000000f6H
 	call	?AuPS2MouseWrite@@YAEE@Z		; AuPS2MouseWrite
 
-; 224  : 	AuPS2MouseRead();
+; 226  : 	AuPS2MouseRead();
 
 	call	?AuPS2MouseRead@@YAEXZ			; AuPS2MouseRead
 
-; 225  : 
-; 226  : 	AuPS2MouseWrite(0xF4);
+; 227  : 
+; 228  : 	AuPS2MouseWrite(0xF4);
 
 	mov	cl, 244					; 000000f4H
 	call	?AuPS2MouseWrite@@YAEE@Z		; AuPS2MouseWrite
 
-; 227  : 	AuPS2MouseRead();
+; 229  : 	AuPS2MouseRead();
 
 	call	?AuPS2MouseRead@@YAEXZ			; AuPS2MouseRead
 
-; 228  : 
-; 229  : 	/* Enable the scroll wheel */
-; 230  : 	AuPS2MouseWrite(MOUSE_DEVICE_ID);
+; 230  : 
+; 231  : 	/* Enable the scroll wheel */
+; 232  : 	AuPS2MouseWrite(MOUSE_DEVICE_ID);
 
 	mov	cl, 242					; 000000f2H
 	call	?AuPS2MouseWrite@@YAEE@Z		; AuPS2MouseWrite
 
-; 231  : 	status = AuPS2MouseRead();
+; 233  : 	status = AuPS2MouseRead();
 
 	call	?AuPS2MouseRead@@YAEXZ			; AuPS2MouseRead
 	mov	BYTE PTR status$[rsp], al
-
-; 232  : 	AuPS2MouseWrite(MOUSE_SAMPLE_RATE);
-
-	mov	cl, 243					; 000000f3H
-	call	?AuPS2MouseWrite@@YAEE@Z		; AuPS2MouseWrite
-
-; 233  : 	AuPS2MouseWrite(200);
-
-	mov	cl, 200					; 000000c8H
-	call	?AuPS2MouseWrite@@YAEE@Z		; AuPS2MouseWrite
 
 ; 234  : 	AuPS2MouseWrite(MOUSE_SAMPLE_RATE);
 
 	mov	cl, 243					; 000000f3H
 	call	?AuPS2MouseWrite@@YAEE@Z		; AuPS2MouseWrite
 
-; 235  : 	AuPS2MouseWrite(100);
+; 235  : 	AuPS2MouseWrite(200);
 
-	mov	cl, 100					; 00000064H
+	mov	cl, 200					; 000000c8H
 	call	?AuPS2MouseWrite@@YAEE@Z		; AuPS2MouseWrite
 
 ; 236  : 	AuPS2MouseWrite(MOUSE_SAMPLE_RATE);
@@ -885,23 +875,33 @@ $LN3:
 	mov	cl, 243					; 000000f3H
 	call	?AuPS2MouseWrite@@YAEE@Z		; AuPS2MouseWrite
 
-; 237  : 	AuPS2MouseWrite(80);
+; 237  : 	AuPS2MouseWrite(100);
+
+	mov	cl, 100					; 00000064H
+	call	?AuPS2MouseWrite@@YAEE@Z		; AuPS2MouseWrite
+
+; 238  : 	AuPS2MouseWrite(MOUSE_SAMPLE_RATE);
+
+	mov	cl, 243					; 000000f3H
+	call	?AuPS2MouseWrite@@YAEE@Z		; AuPS2MouseWrite
+
+; 239  : 	AuPS2MouseWrite(80);
 
 	mov	cl, 80					; 00000050H
 	call	?AuPS2MouseWrite@@YAEE@Z		; AuPS2MouseWrite
 
-; 238  : 	AuPS2MouseWrite(MOUSE_DEVICE_ID);
+; 240  : 	AuPS2MouseWrite(MOUSE_DEVICE_ID);
 
 	mov	cl, 242					; 000000f2H
 	call	?AuPS2MouseWrite@@YAEE@Z		; AuPS2MouseWrite
 
-; 239  : 	status = AuPS2MouseRead();
+; 241  : 	status = AuPS2MouseRead();
 
 	call	?AuPS2MouseRead@@YAEXZ			; AuPS2MouseRead
 	mov	BYTE PTR status$[rsp], al
 
-; 240  : 
-; 241  : 	AuHalRegisterIRQ(34, PS2MouseHandler, 12, false);  //34
+; 242  : 
+; 243  : 	AuHalRegisterIRQ(34, PS2MouseHandler, 12, false);  //34
 
 	xor	r9d, r9d
 	mov	r8b, 12
@@ -909,7 +909,7 @@ $LN3:
 	mov	ecx, 34					; 00000022H
 	call	AuHalRegisterIRQ
 
-; 242  : }
+; 244  : }
 
 	add	rsp, 56					; 00000038H
 	ret	0

@@ -64,4 +64,6 @@ extern void AuProcessEntUser(uint64_t rcx);
 * mutex
 */
 extern AuMutex* AuLoaderGetMutex();
+
+extern bool AuIsLoaderBusy();
 #endif

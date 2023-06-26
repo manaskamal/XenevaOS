@@ -46,7 +46,9 @@
 
 
 static int pid = 1;
-AuProcess *proc_root = NULL;
+AuProcess *proc_first;
+AuProcess *proc_last;
+AuProcess *root_proc;
 AuMutex *process_mutex;
 extern "C" int save_context(AuThread *t, void *tss);
 /*
@@ -55,10 +57,19 @@ extern "C" int save_context(AuThread *t, void *tss);
  * @param proc -- process to add
  */
 void AuAddProcess(AuProcess* parent, AuProcess *proc) {
-	if (!proc_root)
-		proc_root = proc;
-	else
-		list_add(parent->childs, proc);
+	proc->next = NULL;
+	proc->prev = NULL;
+
+	if (proc_first == NULL) {
+		proc_last = proc;
+		proc_first = proc;
+	}
+	else {
+		proc_last->next = proc;
+		proc->prev = proc_last;
+	}
+	proc_last = proc;
+	proc->parent = parent;
 }
 
 /*
@@ -68,10 +79,21 @@ void AuAddProcess(AuProcess* parent, AuProcess *proc) {
  * @param proc -- process to remove
  */
 void AuRemoveProcess(AuProcess* parent, AuProcess* proc) {
-	for (int i = 0; i < parent->childs->pointer; i++) {
-		AuProcess* proc_ = (AuProcess*)list_get_at(parent->childs, i);
-		if (proc_ = proc)
-			list_remove(parent->childs, i);
+	if (proc_first == NULL)
+		return;
+
+	if (proc == proc_first) {
+		proc_first = proc_first->next;
+	}
+	else {
+		proc->prev->next = proc->next;
+	}
+
+	if (proc == proc_last) {
+		proc_last = proc->prev;
+	}
+	else {
+		proc->next->prev = proc->prev;
 	}
 	kfree(proc);
 }
@@ -82,16 +104,10 @@ void AuRemoveProcess(AuProcess* parent, AuProcess* proc) {
  * @param pid -- process id to find
  */
 AuProcess* AuProcessFindByPID(AuProcess* proc, int pid) {
-	if (proc->proc_id == pid) {
-		return proc;
+	for (AuProcess *proc_ = proc_first; proc_ != NULL; proc_ = proc_->next) {
+		if (proc_->proc_id == pid)
+			return proc_;
 	}
-	AuProcess *found = NULL;
-	for (int i = 0; i < proc->childs->pointer; i++) {
-		AuProcess *proc_ = (AuProcess*)list_get_at(proc->childs, i);
-		found = AuProcessFindByPID(proc_, pid);
-		if (found) return found;
-	}
-	
 	return NULL;
 }
 
@@ -101,14 +117,10 @@ AuProcess* AuProcessFindByPID(AuProcess* proc, int pid) {
 * @param thread -- thread to find
 */
 AuProcess* AuProcessFindByThread(AuProcess* proc, AuThread* thread) {
-	if (proc->main_thread == thread) {
-		return proc;
-	}
-	AuProcess *found = NULL;
-	for (int i = 0; i < proc->childs->pointer; i++) {
-		AuProcess *proc_ = (AuProcess*)list_get_at(proc->childs, i);
-		found = AuProcessFindByThread(proc_, thread);
-		if (found) return found;
+	for (AuProcess *proc_ = proc_first; proc_ != NULL; proc_ = proc_->next) {
+		if (proc_->main_thread == thread) {
+			return proc_;
+		}
 	}
 
 	return NULL;
@@ -120,8 +132,11 @@ AuProcess* AuProcessFindByThread(AuProcess* proc, AuThread* thread) {
  * @param pid -- process id of the process
  */
 AuProcess *AuProcessFindPID(int pid) {
-	AuProcess *proc_ = AuProcessFindByPID(proc_root, pid);
-	return proc_;
+	for (AuProcess *proc_ = proc_first; proc_ != NULL; proc_ = proc_->next) {
+		if (proc_->proc_id == pid)
+			return proc_;
+	}
+	return NULL;
 }
 
 /*
@@ -130,8 +145,13 @@ AuProcess *AuProcessFindPID(int pid) {
  * @param thread -- pointer to  main thread
  */
 AuProcess *AuProcessFindThread(AuThread* thread) {
-	AuProcess* proc_ = AuProcessFindByThread(proc_root, thread);
-	return proc_;
+	for (AuProcess *proc_ = proc_first; proc_ != NULL; proc_ = proc_->next) {
+		if (proc_->main_thread == thread) {
+			return proc_;
+		}
+	}
+
+	return NULL;
 }
 
 /*
@@ -179,7 +199,7 @@ AuProcess* AuCreateRootProc() {
 	proc->state = PROCESS_STATE_NOT_READY;
 	proc->cr3 = cr3;
 	proc->_main_stack_ = main_thr_stack;
-	proc->childs = initialize_list();
+	//proc->childs = initialize_list();
 	proc->vmareas = initialize_list();
 	proc->shmmaps = initialize_list();
 	proc->shm_break = USER_SHARED_MEM_START;
@@ -215,7 +235,6 @@ AuProcess* AuCreateProcessSlot(AuProcess* parent, char* name) {
 	proc->state = PROCESS_STATE_NOT_READY;
 	proc->cr3 = cr3;
 	proc->_main_stack_ = main_thr_stack;
-	proc->childs = initialize_list();
 
 	proc->vmareas = initialize_list();
 	proc->shmmaps = initialize_list();
@@ -233,7 +252,6 @@ AuProcess* AuCreateProcessSlot(AuProcess* parent, char* name) {
 	* scheduling that thread
 	*/
 	AuAddProcess(parent, proc);
-	proc->parent = parent;
 	return proc;
 }
 
@@ -242,8 +260,11 @@ AuProcess* AuCreateProcessSlot(AuProcess* parent, char* name) {
  * of aurora system
  */
 void AuStartRootProc() {
+	proc_first = NULL;
+	proc_last = NULL;
+	pid = 1;
 	process_mutex = AuCreateMutex();
-	AuProcess* root_proc = AuCreateRootProc();
+	root_proc = AuCreateRootProc();
 	int num_args = 1;
 	char** argvs = (char**)kmalloc(6);
 	memset(argvs, 0, 6);
@@ -255,23 +276,17 @@ void AuStartRootProc() {
  * AuGetRootProcess -- returns the root process
  */
 AuProcess* AuGetRootProcess() {
-	return proc_root;
+	return root_proc;
 }
 
 /*
  * AuGetKillableProcess -- returns a killable process
  * @param proc -- process to kill
  */
-AuProcess* AuGetKillableProcess(AuProcess* proc) {
-	if (proc->state & PROCESS_STATE_DIED || proc->state & PROCESS_STATE_ZOMBIE) {
-		return proc;
-	}
-
-	AuProcess *found = NULL;
-	for (int i = 0; i < proc->childs->pointer; i++) {
-		AuProcess *proc_ = (AuProcess*)list_get_at(proc->childs, i);
-		found = AuGetKillableProcess(proc_);
-		if (found) return found;
+AuProcess* AuGetKillableProcess() {
+	for (AuProcess* proc_ = proc_first; proc_ != NULL; proc_ = proc_->next) {
+		if (proc_->state & PROCESS_STATE_DIED)
+			return proc_;
 	}
 
 	return NULL;
@@ -289,16 +304,17 @@ AuProcess* AuGetKillableProcess(AuProcess* proc) {
  */
 void AuProcessWaitForTermination(AuProcess *proc, int pid) {
 	do {
-		AuProcess *killable = AuGetKillableProcess(proc);
+		AuProcess *killable = AuGetKillableProcess();
 
 		if (killable) {
-			AuProcessClean(proc, killable);
+			AuProcessClean(0, killable);
 			killable = NULL;
 		}
 
 
 		if (!killable){
-			AuBlockThread(proc->main_thread);
+			//AuBlockThread(proc->main_thread);
+			AuSleepThread(proc->main_thread, 1000);
 			proc->state = PROCESS_STATE_SUSPENDED;
 			x64_force_sched();
 		}
@@ -324,7 +340,7 @@ int AuProcessGetFileDesc(AuProcess* proc) {
  * @param proc -- process to exit 
  */
 void AuProcessExit(AuProcess* proc) {
-	if (proc == proc_root) {
+	if (proc == root_proc) {
 		SeTextOut("[aurora]: cannot exit root process \r\n");
 		return;
 	}
@@ -358,33 +374,36 @@ void AuProcessExit(AuProcess* proc) {
 	/*unmap all shared memory mappings */
 	AuSHMUnmapAll(proc);
 
-	kmalloc_debug_on(true);
+	/*kmalloc_debug_on(true);
+	SeTextOut("Freeing proc file of %s \r\n", proc->name);
 	kfree(proc->file);
-	kmalloc_debug_on(false);
+	kmalloc_debug_on(false);*/
 
 	AuThreadMoveToTrash(proc->main_thread);
 
-	if (proc->parent) {
-		if (!(proc->parent->state & PROCESS_STATE_SUSPENDED)){
-			proc->state = PROCESS_STATE_ZOMBIE;
-		}
-		else {
-			/* else make parent runnable then it will reap
-			 * the current process,
-			 * in Aurora unblocking a process means, unblocking its
-			 * all threads that are suspended, for now only the main
-			 * thread
-			 */
-			AuUnblockThread(proc->parent->main_thread);
-			proc->parent->state = PROCESS_STATE_READY;
-		}
-	}
-	else {
-		proc->state = PROCESS_STATE_ZOMBIE;
-		/* unblock the root process */
-		AuUnblockThread(proc_root->main_thread);
-		proc_root->state = PROCESS_STATE_READY;
-	}
+	kfree(proc->file);
+
+	//if (proc->parent) {
+	//	if (!(proc->parent->state & PROCESS_STATE_SUSPENDED)){
+	//		proc->state = PROCESS_STATE_ZOMBIE;
+	//	}
+	//	else {
+	//		/* else make parent runnable then it will reap
+	//		 * the current process,
+	//		 * in Aurora unblocking a process means, unblocking its
+	//		 * all threads that are suspended, for now only the main
+	//		 * thread
+	//		 */
+	//		AuUnblockThread(proc->parent->main_thread);
+	//		proc->parent->state = PROCESS_STATE_READY;
+	//	}
+	//}
+	//else {
+	//	proc->state = PROCESS_STATE_ZOMBIE;
+	//	/* unblock the root process */
+	//	AuUnblockThread(proc_root->main_thread);
+	//	proc_root->state = PROCESS_STATE_READY;
+	//}
 	x64_force_sched();
 }
 

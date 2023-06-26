@@ -101,7 +101,6 @@ static void* syscalls[AURORA_MAX_SYSCALL] = {
 //! @param d -- arg4 passed in r15 register
 extern "C" uint64_t x64_syscall_handler(int a) {
 	AuThread* current_thr = AuGetCurrentThread();
-	AuProcess *proc = (AuProcess*)current_thr->proc_slot;
 	uint64_t ret_code = 0;
 
 	if (a > AURORA_MAX_SYSCALL)

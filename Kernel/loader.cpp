@@ -52,6 +52,7 @@
 
 Spinlock* loader_lock;
 AuMutex* loader_mutex;
+bool is_loader_busy;
 
 /* push item on the stack */
 #define PUSH(stack, type, item) do { \
@@ -92,7 +93,8 @@ void AuProcessEntUser(uint64_t rcx) {
 		argvs[i] = (char*)ent->rsp;
 	}
 
-	kfree(ent->argvs);
+	if (ent->argvs)
+		kfree(ent->argvs);
 
 	PUSH(ent->rsp, size_t, (size_t)ent->argvaddr);
 	PUSH(ent->rsp, size_t, ent->num_args);
@@ -131,7 +133,6 @@ void AuLoadExecToProcess(AuProcess* proc, char* filename, int argc,char** argv) 
 	uint64_t* cr3 = proc->cr3;
 
 	AuMapPageEx(cr3, V2P((size_t)buf), _image_base_, X86_64_PAGING_USER);
-	proc->last_load_addr = _image_base_;
 
 	/* this should be memory mapped, i.e, sections should be
 	 * memory mapped
@@ -155,7 +156,7 @@ void AuLoadExecToProcess(AuProcess* proc, char* filename, int argc,char** argv) 
 	AuVMArea* textarea = AuVMAreaCreate(_image_base_, VIRT_ADDR_ALIGN(_image_base_ + nt->OptionalHeader.SizeOfImage),
 		VM_PRESENT | VM_EXEC,0, VM_TYPE_TEXT);
 	textarea->len = textarea->end - textarea->start;
-	textarea->file = file;
+	textarea->file = 0;
 	AuInsertVMArea(proc, textarea);
 
 
@@ -169,16 +170,18 @@ void AuLoadExecToProcess(AuProcess* proc, char* filename, int argc,char** argv) 
 	entry->rsp = stack;
 
 	int num_args = argc;
-	
-	/* Allocate a memory for passing arguments */
-	char* args = (char*)P2V((size_t)AuPmmngrAlloc());
-	AuMapPageEx(proc->cr3, (size_t)V2P((size_t)args), 0x4000, X86_64_PAGING_USER);
-	entry->argvaddr = 0x4000;	
+	uint64_t argvaddr = 0;
+	if (num_args) {
+		/* Allocate a memory for passing arguments */
+		char* args = (char*)P2V((size_t)AuPmmngrAlloc());
+		AuMapPageEx(proc->cr3, (size_t)V2P((size_t)args), 0x4000, X86_64_PAGING_USER);
+		argvaddr = 0x4000;
+	}
+	entry->argvaddr = argvaddr;	
 	entry->num_args = num_args;
 	entry->argvs = argv;
-	
 
-	AuThread *thr = AuCreateKthread(AuProcessEntUser, P2V((uint64_t)AuPmmngrAlloc() + 4096), V2P((uint64_t)cr3), proc->name);
+	AuThread *thr = AuCreateKthread(AuProcessEntUser, P2V((uint64_t)AuPmmngrAlloc() + 4095), V2P((uint64_t)cr3), proc->name);
 	thr->frame.rcx = (uint64_t)entry;
 
 	thr->uentry = entry;
@@ -190,7 +193,6 @@ void AuLoadExecToProcess(AuProcess* proc, char* filename, int argc,char** argv) 
 	proc->state = PROCESS_STATE_READY;
 	proc->file = file;
 	proc->fsys = fsys;
-	thr->proc_slot = proc;
 	AuReleaseSpinlock(loader_lock);
 }
 
@@ -198,6 +200,7 @@ void AuInitialiseLoader() {
 	loader_mutex = NULL;
 	loader_lock = AuCreateSpinlock(false);
 	loader_mutex = AuCreateMutex();
+	is_loader_busy = false;
 }
 
 /*
@@ -206,4 +209,8 @@ void AuInitialiseLoader() {
  */
 AuMutex* AuLoaderGetMutex() {
 	return loader_mutex;
+}
+
+bool AuIsLoaderBusy() {
+	return is_loader_busy;
 }

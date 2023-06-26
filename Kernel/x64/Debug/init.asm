@@ -6,13 +6,13 @@ INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
 CONST	SEGMENT
-$SG4445	DB	' _test ', 0dH, 0aH, 00H
+$SG4448	DB	' _test ', 0dH, 0aH, 00H
 	ORG $+6
-$SG4452	DB	'BootDev HID -> %x, UID -> %x, CID -> %x ', 0dH, 0aH, 00H
+$SG4455	DB	'BootDev HID -> %x, UID -> %x, CID -> %x ', 0dH, 0aH, 00H
 	ORG $+5
-$SG4453	DB	'CPU ID OF BSP -> %d ', 0dH, 0aH, 00H
+$SG4456	DB	'CPU ID OF BSP -> %d ', 0dH, 0aH, 00H
 	ORG $+1
-$SG4457	DB	'test_', 00H
+$SG4460	DB	'test_', 00H
 CONST	ENDS
 PUBLIC	?_test@@YAX_K@Z					; _test
 PUBLIC	?_AuMain@@YAXPEAU_KERNEL_BOOT_INFO_@@@Z		; _AuMain
@@ -112,7 +112,7 @@ $LN5:
 	mov	r8d, DWORD PTR [rax+174]
 	mov	rax, QWORD PTR info$[rsp]
 	mov	edx, DWORD PTR [rax+170]
-	lea	rcx, OFFSET FLAT:$SG4452
+	lea	rcx, OFFSET FLAT:$SG4455
 	call	SeTextOut
 
 ; 83   : 	AuAHCIInitialise();
@@ -173,7 +173,7 @@ $LN5:
 	call	?AuPerCPUGetCpuID@@YAEXZ		; AuPerCPUGetCpuID
 	movzx	eax, al
 	mov	edx, eax
-	lea	rcx, OFFSET FLAT:$SG4453
+	lea	rcx, OFFSET FLAT:$SG4456
 	call	SeTextOut
 
 ; 105  : 
@@ -188,12 +188,13 @@ $LN5:
 	call	?AuVmmngrBootFree@@YAXXZ		; AuVmmngrBootFree
 
 ; 110  : 
-; 111  : 	/* Process initialisation begins here */
-; 112  : 	AuStartRootProc();
+; 111  : 
+; 112  : 	/* Process initialisation begins here */
+; 113  : 	AuStartRootProc();
 
 	call	?AuStartRootProc@@YAXXZ			; AuStartRootProc
 
-; 113  : 	AuThread *t = AuCreateKthread(_test, (uint64_t)P2V((uint64_t)AuPmmngrAlloc() + 4096), x64_read_cr3(), "test_");
+; 114  : 	AuThread *t = AuCreateKthread(_test, (uint64_t)P2V((uint64_t)AuPmmngrAlloc() + 4096), x64_read_cr3(), "test_");
 
 	call	x64_read_cr3
 	mov	QWORD PTR tv83[rsp], rax
@@ -201,7 +202,7 @@ $LN5:
 	add	rax, 4096				; 00001000H
 	mov	rcx, rax
 	call	P2V
-	lea	r9, OFFSET FLAT:$SG4457
+	lea	r9, OFFSET FLAT:$SG4460
 	mov	rcx, QWORD PTR tv83[rsp]
 	mov	r8, rcx
 	mov	rdx, rax
@@ -209,16 +210,16 @@ $LN5:
 	call	AuCreateKthread
 	mov	QWORD PTR t$[rsp], rax
 
-; 114  : 	AuSchedulerStart();
+; 115  : 	AuSchedulerStart();
 
 	call	?AuSchedulerStart@@YAXXZ		; AuSchedulerStart
 $LN2@AuMain:
 
-; 115  : 	for (;;);
+; 116  : 	for (;;);
 
 	jmp	SHORT $LN2@AuMain
 
-; 116  : }
+; 117  : }
 
 	add	rsp, 56					; 00000038H
 	ret	0
@@ -238,7 +239,7 @@ $LN5:
 
 ; 62   : 	SeTextOut(" _test \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG4445
+	lea	rcx, OFFSET FLAT:$SG4448
 	call	SeTextOut
 $LN2@test:
 

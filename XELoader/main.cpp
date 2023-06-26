@@ -34,8 +34,15 @@
  */
 int main(int argc, char** argv[]) {
 	int pid = _KeGetProcessID();
-	if (pid == 3){
-		int chid = _KeCreateProcess(pid, "ldr");
+	_KePrint("XELoader %d \n", pid);
+
+	if (pid == 3) {
+		int chid = _KeCreateProcess(0, "tst");
+		_KeProcessLoadExec(chid, "/xeldr.exe", 0, NULL);
+	}
+
+	if (pid == 4) {
+		int chid = _KeCreateProcess(0, "tst4");
 		_KeProcessLoadExec(chid, "/xeldr.exe", 0, NULL);
 	}
 	while (1) {

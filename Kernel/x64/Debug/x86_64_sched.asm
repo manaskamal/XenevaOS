@@ -28,13 +28,13 @@ _BSS	SEGMENT
 ?_x86_64_sched_init@@3_NA DB 01H DUP (?)		; _x86_64_sched_init
 _BSS	ENDS
 CONST	SEGMENT
-$SG3611	DB	'FRAME USER KERN ESP -> %x ', 0aH, 00H
+$SG3613	DB	'FRAME USER KERN ESP -> %x ', 0aH, 00H
 	ORG $+4
-$SG3620	DB	'_idle id -> %d  ', 0dH, 0aH, 00H
+$SG3622	DB	'_idle id -> %d  ', 0dH, 0aH, 00H
 	ORG $+1
-$SG3629	DB	'Idle', 00H
+$SG3631	DB	'Idle', 00H
 	ORG $+7
-$SG3672	DB	'CR3 -> %x ', 0dH, 0aH, 00H
+$SG3674	DB	'CR3 -> %x ', 0dH, 0aH, 00H
 CONST	ENDS
 PUBLIC	?AuSchedulerStart@@YAXXZ			; AuSchedulerStart
 PUBLIC	?AuSchedulerInitialise@@YAXXZ			; AuSchedulerInitialise
@@ -194,7 +194,7 @@ $LN3:
 
 	call	x64_read_cr3
 	mov	rdx, rax
-	lea	rcx, OFFSET FLAT:$SG3672
+	lea	rcx, OFFSET FLAT:$SG3674
 	call	SeTextOut
 
 ; 422  : }
@@ -414,7 +414,7 @@ $LN3@AuNextThre:
 ; 340  : 		thread = thread->next;
 
 	mov	rax, QWORD PTR thread$[rsp]
-	mov	rax, QWORD PTR [rax+314]
+	mov	rax, QWORD PTR [rax+306]
 	mov	QWORD PTR thread$[rsp], rax
 
 ; 341  : 		if (thread == NULL) {
@@ -468,7 +468,7 @@ $LN5:
 	call	?AuPerCPUGetCpuID@@YAEXZ		; AuPerCPUGetCpuID
 	movzx	eax, al
 	mov	edx, eax
-	lea	rcx, OFFSET FLAT:$SG3620
+	lea	rcx, OFFSET FLAT:$SG3622
 	call	SeTextOut
 $LN2@AuIdleThre:
 
@@ -520,7 +520,7 @@ $LN5@AuThreadDe:
 ; 136  : 		blocked_thr_head = blocked_thr_head->next;
 
 	mov	rax, QWORD PTR ?blocked_thr_head@@3PEAU_au_thread_@@EA ; blocked_thr_head
-	mov	rax, QWORD PTR [rax+314]
+	mov	rax, QWORD PTR [rax+306]
 	mov	QWORD PTR ?blocked_thr_head@@3PEAU_au_thread_@@EA, rax ; blocked_thr_head
 
 ; 137  : 	}
@@ -532,10 +532,10 @@ $LN4@AuThreadDe:
 ; 139  : 		thread->prev->next = thread->next;
 
 	mov	rax, QWORD PTR thread$[rsp]
-	mov	rax, QWORD PTR [rax+322]
+	mov	rax, QWORD PTR [rax+314]
 	mov	rcx, QWORD PTR thread$[rsp]
-	mov	rcx, QWORD PTR [rcx+314]
-	mov	QWORD PTR [rax+314], rcx
+	mov	rcx, QWORD PTR [rcx+306]
+	mov	QWORD PTR [rax+306], rcx
 $LN3@AuThreadDe:
 
 ; 140  : 	}
@@ -549,7 +549,7 @@ $LN3@AuThreadDe:
 ; 143  : 		blocked_thr_last = thread->prev;
 
 	mov	rax, QWORD PTR thread$[rsp]
-	mov	rax, QWORD PTR [rax+322]
+	mov	rax, QWORD PTR [rax+314]
 	mov	QWORD PTR ?blocked_thr_last@@3PEAU_au_thread_@@EA, rax ; blocked_thr_last
 
 ; 144  : 	}
@@ -561,10 +561,10 @@ $LN2@AuThreadDe:
 ; 146  : 		thread->next->prev = thread->prev;
 
 	mov	rax, QWORD PTR thread$[rsp]
-	mov	rax, QWORD PTR [rax+314]
+	mov	rax, QWORD PTR [rax+306]
 	mov	rcx, QWORD PTR thread$[rsp]
-	mov	rcx, QWORD PTR [rcx+322]
-	mov	QWORD PTR [rax+322], rcx
+	mov	rcx, QWORD PTR [rcx+314]
+	mov	QWORD PTR [rax+314], rcx
 $LN1@AuThreadDe:
 $LN6@AuThreadDe:
 
@@ -587,12 +587,12 @@ new_task$ = 8
 ; 112  : 	new_task->next = NULL;
 
 	mov	rax, QWORD PTR new_task$[rsp]
-	mov	QWORD PTR [rax+314], 0
+	mov	QWORD PTR [rax+306], 0
 
 ; 113  : 	new_task->prev = NULL;
 
 	mov	rax, QWORD PTR new_task$[rsp]
-	mov	QWORD PTR [rax+322], 0
+	mov	QWORD PTR [rax+314], 0
 
 ; 114  : 
 ; 115  : 	if (blocked_thr_head == NULL) {
@@ -620,13 +620,13 @@ $LN2@AuThreadIn:
 
 	mov	rax, QWORD PTR ?blocked_thr_last@@3PEAU_au_thread_@@EA ; blocked_thr_last
 	mov	rcx, QWORD PTR new_task$[rsp]
-	mov	QWORD PTR [rax+314], rcx
+	mov	QWORD PTR [rax+306], rcx
 
 ; 121  : 		new_task->prev = blocked_thr_last;
 
 	mov	rax, QWORD PTR new_task$[rsp]
 	mov	rcx, QWORD PTR ?blocked_thr_last@@3PEAU_au_thread_@@EA ; blocked_thr_last
-	mov	QWORD PTR [rax+322], rcx
+	mov	QWORD PTR [rax+314], rcx
 $LN1@AuThreadIn:
 
 ; 122  : 	}
@@ -671,7 +671,7 @@ $LN5@AuThreadDe:
 ; 86   : 		thread_list_head = thread_list_head->next;
 
 	mov	rax, QWORD PTR ?thread_list_head@@3PEAU_au_thread_@@EA ; thread_list_head
-	mov	rax, QWORD PTR [rax+314]
+	mov	rax, QWORD PTR [rax+306]
 	mov	QWORD PTR ?thread_list_head@@3PEAU_au_thread_@@EA, rax ; thread_list_head
 
 ; 87   : 	}
@@ -683,10 +683,10 @@ $LN4@AuThreadDe:
 ; 89   : 		thread->prev->next = thread->next;
 
 	mov	rax, QWORD PTR thread$[rsp]
-	mov	rax, QWORD PTR [rax+322]
+	mov	rax, QWORD PTR [rax+314]
 	mov	rcx, QWORD PTR thread$[rsp]
-	mov	rcx, QWORD PTR [rcx+314]
-	mov	QWORD PTR [rax+314], rcx
+	mov	rcx, QWORD PTR [rcx+306]
+	mov	QWORD PTR [rax+306], rcx
 $LN3@AuThreadDe:
 
 ; 90   : 	}
@@ -700,7 +700,7 @@ $LN3@AuThreadDe:
 ; 93   : 		thread_list_last = thread->prev;
 
 	mov	rax, QWORD PTR thread$[rsp]
-	mov	rax, QWORD PTR [rax+322]
+	mov	rax, QWORD PTR [rax+314]
 	mov	QWORD PTR ?thread_list_last@@3PEAU_au_thread_@@EA, rax ; thread_list_last
 
 ; 94   : 	}
@@ -712,10 +712,10 @@ $LN2@AuThreadDe:
 ; 96   : 		thread->next->prev = thread->prev;
 
 	mov	rax, QWORD PTR thread$[rsp]
-	mov	rax, QWORD PTR [rax+314]
+	mov	rax, QWORD PTR [rax+306]
 	mov	rcx, QWORD PTR thread$[rsp]
-	mov	rcx, QWORD PTR [rcx+322]
-	mov	QWORD PTR [rax+322], rcx
+	mov	rcx, QWORD PTR [rcx+314]
+	mov	QWORD PTR [rax+314], rcx
 $LN1@AuThreadDe:
 $LN6@AuThreadDe:
 
@@ -744,12 +744,12 @@ new_task$ = 8
 ; 62   : 	new_task->next = NULL;
 
 	mov	rax, QWORD PTR new_task$[rsp]
-	mov	QWORD PTR [rax+314], 0
+	mov	QWORD PTR [rax+306], 0
 
 ; 63   : 	new_task->prev = NULL;
 
 	mov	rax, QWORD PTR new_task$[rsp]
-	mov	QWORD PTR [rax+322], 0
+	mov	QWORD PTR [rax+314], 0
 
 ; 64   : 
 ; 65   : 	if (thread_list_head == NULL) {
@@ -777,13 +777,13 @@ $LN2@AuThreadIn:
 
 	mov	rax, QWORD PTR ?thread_list_last@@3PEAU_au_thread_@@EA ; thread_list_last
 	mov	rcx, QWORD PTR new_task$[rsp]
-	mov	QWORD PTR [rax+314], rcx
+	mov	QWORD PTR [rax+306], rcx
 
 ; 71   : 		new_task->prev = thread_list_last;
 
 	mov	rax, QWORD PTR new_task$[rsp]
 	mov	rcx, QWORD PTR ?thread_list_last@@3PEAU_au_thread_@@EA ; thread_list_last
-	mov	QWORD PTR [rax+322], rcx
+	mov	QWORD PTR [rax+314], rcx
 $LN1@AuThreadIn:
 
 ; 72   : 	}
@@ -987,7 +987,7 @@ $LN11:
 	jmp	SHORT $LN8@AuThreadMo
 $LN7@AuThreadMo:
 	mov	rax, QWORD PTR ready_queue_$1[rsp]
-	mov	rax, QWORD PTR [rax+314]
+	mov	rax, QWORD PTR [rax+306]
 	mov	QWORD PTR ready_queue_$1[rsp], rax
 $LN8@AuThreadMo:
 	cmp	QWORD PTR ready_queue_$1[rsp], 0
@@ -1019,7 +1019,7 @@ $LN6@AuThreadMo:
 	jmp	SHORT $LN4@AuThreadMo
 $LN3@AuThreadMo:
 	mov	rax, QWORD PTR block_queue_$2[rsp]
-	mov	rax, QWORD PTR [rax+314]
+	mov	rax, QWORD PTR [rax+306]
 	mov	QWORD PTR block_queue_$2[rsp], rax
 $LN4@AuThreadMo:
 	cmp	QWORD PTR block_queue_$2[rsp], 0
@@ -1086,7 +1086,7 @@ $LN8:
 	jmp	SHORT $LN5@AuUnblockT
 $LN4@AuUnblockT:
 	mov	rax, QWORD PTR thr$1[rsp]
-	mov	rax, QWORD PTR [rax+314]
+	mov	rax, QWORD PTR [rax+306]
 	mov	QWORD PTR thr$1[rsp], rax
 $LN5@AuUnblockT:
 	cmp	QWORD PTR thr$1[rsp], 0
@@ -1410,13 +1410,13 @@ $LN3:
 
 ; 220  : 	AuThread *t = (AuThread*)kmalloc(sizeof(AuThread));
 
-	mov	ecx, 330				; 0000014aH
+	mov	ecx, 322				; 00000142H
 	call	kmalloc
 	mov	QWORD PTR t$[rsp], rax
 
 ; 221  : 	memset(t, 0, sizeof(AuThread));
 
-	mov	r8d, 330				; 0000014aH
+	mov	r8d, 322				; 00000142H
 	xor	edx, edx
 	mov	rcx, QWORD PTR t$[rsp]
 	call	memset
@@ -1552,7 +1552,7 @@ $LN3:
 
 	mov	rax, QWORD PTR t$[rsp]
 	mov	rdx, QWORD PTR [rax+200]
-	lea	rcx, OFFSET FLAT:$SG3611
+	lea	rcx, OFFSET FLAT:$SG3613
 	call	AuTextOut
 
 ; 247  : 	t->user_stack = stack;
@@ -1673,13 +1673,13 @@ $LN3:
 
 ; 161  : 	AuThread *t = (AuThread*)kmalloc(sizeof(AuThread));
 
-	mov	ecx, 330				; 0000014aH
+	mov	ecx, 322				; 00000142H
 	call	kmalloc
 	mov	QWORD PTR t$[rsp], rax
 
 ; 162  : 	memset(t, 0, sizeof(AuThread));
 
-	mov	r8d, 330				; 0000014aH
+	mov	r8d, 322				; 00000142H
 	xor	edx, edx
 	mov	rcx, QWORD PTR t$[rsp]
 	call	memset
@@ -1864,7 +1864,7 @@ $LN3:
 ; 197  : 	t->uentry = NULL; 
 
 	mov	rax, QWORD PTR t$[rsp]
-	mov	QWORD PTR [rax+306], 0
+	mov	QWORD PTR [rax+298], 0
 
 ; 198  : 	memset(t->name, 0, 8);
 
@@ -2002,7 +2002,7 @@ $LN3:
 	add	rax, 4096				; 00001000H
 	mov	rcx, rax
 	call	P2V
-	lea	r9, OFFSET FLAT:$SG3629
+	lea	r9, OFFSET FLAT:$SG3631
 	mov	rcx, QWORD PTR tv69[rsp]
 	mov	r8, rcx
 	mov	rdx, rax

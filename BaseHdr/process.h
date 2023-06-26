@@ -100,9 +100,6 @@ typedef struct _au_proc_ {
 	/*loader related data*/
 	AuVFSNode *file;
 	AuVFSNode *fsys;
-	uint64_t last_load_addr;
-
-	list_t * childs;
 
 	/* memory account */
 	list_t* vmareas;
@@ -112,6 +109,8 @@ typedef struct _au_proc_ {
 
 	/* data structure */
 	struct _au_proc_ *parent;
+	struct _au_proc_ *next;
+	struct _au_proc_ *prev;
 }AuProcess;
 #pragma pack(pop)
 
@@ -121,6 +120,14 @@ typedef struct _au_proc_ {
 * @param proc -- process to add
 */
 extern void AuAddProcess(AuProcess* parent, AuProcess *proc);
+
+/*
+* AuRemoveProcess -- removes a process from the process
+* data structure
+* @param parent -- pointer to the parent process
+* @param proc -- process to remove
+*/
+extern void AuRemoveProcess(AuProcess* parent, AuProcess* proc);
 
 
 /*

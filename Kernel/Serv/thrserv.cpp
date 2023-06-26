@@ -35,6 +35,7 @@
 #include <loader.h>
 #include <Mm/kmalloc.h>
 #include <_null.h>
+#include <aucon.h>
 
 /*
  * PauseThread -- pause the currently running
@@ -99,10 +100,7 @@ int ProcessWaitForTermination(int pid) {
  * @param name -- name of the current process slot
  */
 int CreateProcess(int parent_id, char *name) {
-	AuProcess *parent = AuProcessFindPID(parent_id);
-	if (!parent)
-		return -1;
-	AuProcess* slot = AuCreateProcessSlot(parent, name);
+	AuProcess* slot = AuCreateProcessSlot(0, name);
 	if (!slot)
 		return -1;
 	return slot->proc_id;
@@ -114,9 +112,11 @@ int CreateProcess(int parent_id, char *name) {
  */
 int ProcessLoadExec(int proc_id, char* filename,int argc, char** argv) {
 	AuProcess* proc = AuProcessFindPID(proc_id);
-	if (!proc)
+	if (!proc) {
+		AuTextOut("No process found \n");
 		return -1;
-
+	}
+	
 	/* prepare stuffs for passing arguments */
 	int char_cnt = 0;
 	for (int i = 0; i < argc; i++) {
@@ -124,10 +124,15 @@ int ProcessLoadExec(int proc_id, char* filename,int argc, char** argv) {
 		char_cnt += l;
 	}
 
-	char** allocated_argv = (char**)kmalloc(char_cnt);
-	memset(allocated_argv, 0, char_cnt);
-	for (int i = 0; i < argc; i++)
-		allocated_argv[i] = argv[i];
+	
+	char** allocated_argv = 0;
+	if (char_cnt > 0) {
+		allocated_argv = (char**)kmalloc(char_cnt);
+		memset(allocated_argv, 0, char_cnt);
+		for (int i = 0; i < argc; i++)
+			allocated_argv[i] = argv[i];
+	}
 
 	AuLoadExecToProcess(proc, filename, argc,allocated_argv);
+	//SeTextOut("process launched -> %s \r\n", proc->file->filename);
 }

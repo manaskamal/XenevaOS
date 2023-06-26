@@ -35,6 +35,7 @@
 #include <Mm/pmmngr.h>
 #include <aucon.h>
 #include <Sync/spinlock.h>
+#include <Hal/x86_64_lowlevel.h>
 #include <Hal\serial.h>
 
 static meta_data_t *first_block;
@@ -71,6 +72,17 @@ void AuHeapInitialize() {
 	last_mark = ((uint64_t)page + (meta->size + sizeof(meta_data_t)));
 }
 
+/*
+ * next_power_of_two -- converts a odd value to
+ * its next even value
+ * @param val -- value to convert
+ */
+int next_power_of_two(unsigned int val) {
+	int i = 0;
+	for (--val; val > 0; val >>= 1)
+		i++;
+	return 1 << i;
+}
 
 /*
 * au_split_block -- split block into two block
@@ -123,6 +135,8 @@ void au_expand_kmalloc(size_t req_size) {
 	//req_pages = (req_size + sizeof(meta_data_t)) / 4096 + 1;
 
 	void* page = au_request_page(req_pages);
+
+	SeTextOut("New Page requested -> %x \r\n", page);
 	uint8_t* desc_addr = (uint8_t*)page;
 	/* setup the first meta data block */
 	meta_data_t *meta = (meta_data_t*)desc_addr;
@@ -161,6 +175,10 @@ void au_expand_kmalloc(size_t req_size) {
 void* kmalloc(unsigned int size) {
 	meta_data_t *meta = first_block;
 	uint8_t* ret = 0;
+
+	/*if ((size % 2) != 0) 
+		size = next_power_of_two(size);*/
+
 	/* now search begins */
 	while (meta){
 		if (meta->magic == MAGIC_FREE) {
@@ -196,7 +214,7 @@ void* kmalloc(unsigned int size) {
 
 void kheap_debug() {
 	for (meta_data_t *block = first_block; block != NULL; block = block->next) {
-		AuTextOut("Prev -> %x || Current -> %x | Next -> %x \r\n", block->prev, block, block->next);
+		SeTextOut("Prev -> %x || Current -> %x | Next -> %x \r\n", block->prev, block, block->next);
 	}
 }
 
@@ -241,10 +259,12 @@ void merge_prev(meta_data_t* meta) {
 		uint64_t meta_prev = (uint64_t)meta->prev;
 		if (meta_prev < 0xFFFFE00000000000){
 			//this block is corrupted
-			SeTextOut("Meta found corrupted block \r\n");
+			SeTextOut("Meta found corrupted block %x \r\n", meta->prev);
 			last_block->next = meta;
 			meta->prev = last_block;
 			meta->next = NULL;
+			/*kheap_debug();
+			for (;;);*/
 			return;
 		}
 		if (meta->prev->magic == MAGIC_FREE)
@@ -257,14 +277,16 @@ void merge_prev(meta_data_t* meta) {
 * @param ptr -- pointer to the address block to free
 */
 void kfree(void* ptr) {
+	if (!ptr)
+		return;
 	uint8_t* actual_addr = (uint8_t*)ptr;
 	meta_data_t *meta = (meta_data_t*)(actual_addr - sizeof(meta_data_t));
 	meta->magic = MAGIC_FREE;
 
 	/* merge it with 3 near blocks if they are free*/
-	
-	merge_prev(meta);
 	merge_next(meta);
+	merge_prev(meta);
+	
 }
 
 /*

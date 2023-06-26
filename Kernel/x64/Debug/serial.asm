@@ -6,7 +6,7 @@ INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
 CONST	SEGMENT
-$SG3536	DB	'.', 00H
+$SG3538	DB	'.', 00H
 CONST	ENDS
 PUBLIC	?AuInitialiseSerial@@YAXXZ			; AuInitialiseSerial
 PUBLIC	SeTextOut
@@ -498,7 +498,7 @@ $LN5@SeTextOut:
 ; 140  : 			{
 ; 141  : 				DebugSerial(".");
 
-	lea	rcx, OFFSET FLAT:$SG3536
+	lea	rcx, OFFSET FLAT:$SG3538
 	call	?DebugSerial@@YAXPEAD@Z			; DebugSerial
 
 ; 142  : 			}

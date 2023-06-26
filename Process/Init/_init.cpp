@@ -54,8 +54,10 @@ extern "C" void main(int argc, char* argv[]) {
 	memset(p, 0, 6);
 	p[0] = "-about";
 
-	if (strcmp(p[0],"-about") == 0) 
+	if (strcmp(p[0], "-about") == 0)
 		_KePrint("Hello world \n");
+	else
+		_KePrint("Init run \n");
 
 	if (pid == 1) {
 		int chid = _KeCreateProcess(pid, "Test");
@@ -64,7 +66,7 @@ extern "C" void main(int argc, char* argv[]) {
 
 	if (pid == 2) {
 		int chid = _KeCreateProcess(pid, "Test2");
-		_KeProcessLoadExec(chid, "/xeldr.exe", 1, p);
+		_KeProcessLoadExec(chid, "/xeldr.exe", 0, 0);
 	}
 
 
@@ -84,6 +86,10 @@ extern "C" void main(int argc, char* argv[]) {
 	_KePrint("array[0] -> %d, arrya[1] -> %d, pid -> %d \n", arr3[0], arr3[1],
 		pid);
 
+	/*for (int i = 0; i < 8; i++) {
+		int chid = _KeCreateProcess(pid, "Test2");
+		_KeProcessLoadExec(chid, "/xeldr.exe", 1, p);
+	}*/
 	while (1) {
 		if (pid == 1) {
 			_KeProcessWaitForTermination(-1);

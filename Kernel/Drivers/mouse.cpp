@@ -39,6 +39,8 @@
 #include <Fs/Dev/devfs.h>
 #include <_null.h>
 #include <Hal/serial.h>
+#include <loader.h>
+#include <process.h>
 
 #define MOUSE_PORT   0x60
 #define MOUSE_STATUS 0x64

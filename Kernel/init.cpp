@@ -108,6 +108,7 @@ void _AuMain(KERNEL_BOOT_INFO *info) {
 	/* make the kernel standalone*/
 	AuVmmngrBootFree();
 
+
 	/* Process initialisation begins here */
 	AuStartRootProc();
 	AuThread *t = AuCreateKthread(_test, (uint64_t)P2V((uint64_t)AuPmmngrAlloc() + 4096), x64_read_cr3(), "test_");

@@ -33,10 +33,11 @@
 #include <stdint.h>
 #include <aurora.h>
 
+#pragma pack(push,1)
 typedef struct _spinlock_ {
 	size_t value;
 }Spinlock;
-
+#pragma pack(pop)
 
 /*
 * AuCreateSpinlock -- creates a new spinlock and return

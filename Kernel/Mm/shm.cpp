@@ -174,7 +174,6 @@ size_t AuSHMProcBreak(AuProcess* proc, size_t num_frames) {
  * @parma shmflg -- flags
  */
 void* AuSHMObtainMem(AuProcess* proc, uint16_t id, void* shmaddr, int shmflg) {
-	x64_cli();
 	AuAcquireSpinlock(shmlock);
 	AuSHM* mem = NULL;
 
