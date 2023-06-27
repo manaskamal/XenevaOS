@@ -40,6 +40,7 @@
 #include <_null.h>
 #include <Hal/x86_64_idt.h>
 #include <loader.h>
+#include <Mm/kmalloc.h>
 #include <Hal/serial.h>
 
 void panic(const char* msg, ...) {

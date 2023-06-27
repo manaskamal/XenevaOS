@@ -302,7 +302,7 @@ AuVFSNode* FatLocateSubDir(AuVFSNode* fsys,AuVFSNode* kfile, const char* filenam
 						file->flags |= FS_FLAG_GENERAL;
 
 					AuPmmngrFree((void*)V2P((size_t)buf));
-					//kfree(kfile);
+					kfree(kfile);
 					return file;
 				}
 
@@ -313,6 +313,8 @@ AuVFSNode* FatLocateSubDir(AuVFSNode* fsys,AuVFSNode* kfile, const char* filenam
 
 	AuPmmngrFree((void*)V2P((size_t)buf));
 	kfree(file);
+	if (kfile)
+		kfree(kfile);
 	return NULL;
 }
 

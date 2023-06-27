@@ -258,7 +258,7 @@ $LN19@AuProcessE:
 $LN22@AuProcessE:
 
 ; 95   : 
-; 96   : 	if (ent->argvs)
+; 96   : 	if (ent->argvs){
 
 	mov	rax, QWORD PTR ent$[rsp]
 	cmp	QWORD PTR [rax+48], 0
@@ -272,8 +272,9 @@ $LN22@AuProcessE:
 $LN13@AuProcessE:
 $LN12@AuProcessE:
 
-; 98   : 
-; 99   : 	PUSH(ent->rsp, size_t, (size_t)ent->argvaddr);
+; 98   : 	}
+; 99   : 
+; 100  : 	PUSH(ent->rsp, size_t, (size_t)ent->argvaddr);
 
 	mov	rax, QWORD PTR ent$[rsp]
 	mov	rax, QWORD PTR [rax+8]
@@ -303,7 +304,7 @@ $LN8@AuProcessE:
 	jne	SHORT $LN12@AuProcessE
 $LN7@AuProcessE:
 
-; 100  : 	PUSH(ent->rsp, size_t, ent->num_args);
+; 101  : 	PUSH(ent->rsp, size_t, ent->num_args);
 
 	mov	rax, QWORD PTR ent$[rsp]
 	mov	rax, QWORD PTR [rax+8]
@@ -332,7 +333,7 @@ $LN3@AuProcessE:
 	test	eax, eax
 	jne	SHORT $LN7@AuProcessE
 
-; 101  : 	x64_enter_user(ent->rsp, ent->entrypoint, ent->cs, ent->ss);
+; 102  : 	x64_enter_user(ent->rsp, ent->entrypoint, ent->cs, ent->ss);
 
 	mov	rax, QWORD PTR ent$[rsp]
 	mov	r9, QWORD PTR [rax+24]
@@ -345,18 +346,18 @@ $LN3@AuProcessE:
 	call	x64_enter_user
 $LN2@AuProcessE:
 
-; 102  : 	while (1) {
+; 103  : 	while (1) {
 
 	xor	eax, eax
 	cmp	eax, 1
 	je	SHORT $LN1@AuProcessE
 
-; 103  : 	}
+; 104  : 	}
 
 	jmp	SHORT $LN2@AuProcessE
 $LN1@AuProcessE:
 
-; 104  : }
+; 105  : }
 
 	add	rsp, 72					; 00000048H
 	ret	0
@@ -397,7 +398,7 @@ argc$ = 288
 argv$ = 296
 ?AuLoadExecToProcess@@YAXPEAU_au_proc_@@PEADHPEAPEAD@Z PROC ; AuLoadExecToProcess
 
-; 114  : void AuLoadExecToProcess(AuProcess* proc, char* filename, int argc,char** argv) {
+; 115  : void AuLoadExecToProcess(AuProcess* proc, char* filename, int argc,char** argv) {
 
 $LN11:
 	mov	QWORD PTR [rsp+32], r9
@@ -406,12 +407,11 @@ $LN11:
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 264				; 00000108H
 
-; 115  : 	AuAcquireSpinlock(loader_lock);
+; 116  : 	AuAcquireSpinlock(loader_lock);
 
 	mov	rcx, QWORD PTR ?loader_lock@@3PEAU_spinlock_@@EA ; loader_lock
 	call	AuAcquireSpinlock
 
-; 116  : 
 ; 117  : 	AuVFSNode *fsys = AuVFSFind(filename);
 
 	mov	rcx, QWORD PTR filename$[rsp]

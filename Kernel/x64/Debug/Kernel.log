@@ -1,8 +1,8 @@
-﻿Build started 27-06-2023 ৰাতিপু 12:00:56.
+﻿Build started 27-06-2023 আবেলি 12:47:29.
      1>Project "E:\Xeneva Project\Aurora\Kernel\Kernel.vcxproj" on node 2 (Rebuild target(s)).
      1>_NASM:
          Hal\x86_64_intrs.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp16b3fb443b1b45669300ffaacc393844.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp6ed624fa9d104efe8b343b8f6f79711f.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\x86_64_intrs.obj"  "E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm"
      1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(158): warning : signed dword immediate exceeds bounds [-w+number-overflow]
      1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(158): warning : dword data exceeds bounds [-w+number-overflow]
@@ -502,17 +502,17 @@
      1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
        _NASM:
          Hal\x86_64_lowlevel.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp851c7081c39045ef9211bddae4df9ede.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp6c8234ddb5584912a08ba529ecb7b922.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\x86_64_lowlevel.obj"  "E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_lowlevel.asm"
        _NASM:
          Hal\x86_64_switch.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp2cf937f5c91246e28351e4dd0df93140.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp098bcd60309042a598dcd750ead98315.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\x86_64_switch.obj"  "E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_switch.asm"
      1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_switch.asm(32): warning : multi-line macro `extern' exists, but not taking 0 parameters [-w+macro-params-multi]
      1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_switch.asm(32): warning : label alone on a line without a colon might be in error [-w+label-orphan]
        _NASM:
          __fstcpy.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp209d1c72e6974d67b4b7d27153b5bd94.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp33ea98ea55e143468cdf691239edd114.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\__fstcpy.obj"  "E:\Xeneva Project\Aurora\Kernel\__fstcpy.asm"
        ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I..\BaseHdr /I"E:\Xeneva Project\Aurora\Acpica\include" /I"E:\Xeneva Project\Aurora\Acpica" /ZI /nologo /W0 /WX- /Od /Oy /D ARCH_X64 /D __AU_KERNEL__ /D X64 /D AUXENEVA /D ACPICA_DLL_MBCS /X /Gm /GS- /arch:SSE /fp:precise /Zc:wchar_t /Zc:forScope /GR- /FAs /Fa"x64\Debug\\" /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt ahci.cpp ahcidsk.cpp aucon.cpp audrv.cpp circbuf.cpp clean.cpp ctype.cpp Drivers\mouse.cpp Drivers\ps2kybrd.cpp Drivers\rtc.cpp Fs\Dev\devfs.cpp Fs\Dev\devinput.cpp Fs\Fat\Fat.cpp Fs\Fat\FatDir.cpp Fs\Fat\FatFile.cpp Fs\pipe.cpp Fs\vdisk.cpp Fs\vfs.cpp Fs\_gpt.cpp Hal\acpiosl.cpp Hal\apic.cpp Hal\basicacpi.cpp Hal\hal.cpp Hal\ioapic.cpp Hal\pcpu.cpp Hal\serial.cpp Hal\x86_64_ap_init.cpp Hal\x86_64_cpu.cpp Hal\x86_64_exception.cpp Hal\x86_64_gdt.cpp Hal\x86_64_hal.cpp Hal\x86_64_idt.cpp Hal\x86_64_sched.cpp Hal\x86_64_systable.cpp init.cpp list.cpp loader.cpp Mm\buddy.cpp Mm\kmalloc.cpp Mm\mmap.cpp Mm\pmmngr.cpp Mm\shm.cpp Mm\vmarea.cpp Mm\vmmngr.cpp pcie.cpp pe.cpp process.cpp Serv\fileserv.cpp Serv\mmserv.cpp Serv\thrserv.cpp stdio.cpp string.cpp Sync\mutex.cpp Sync\spinlock.cpp _CRT.cpp
@@ -649,4 +649,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:04.23
+Time Elapsed 00:00:03.83

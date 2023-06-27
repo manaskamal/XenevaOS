@@ -94,8 +94,6 @@ void AuThreadFree(AuThread* t) {
 * @param proc -- Process to remove
 */
 void AuProcessClean(AuProcess* parent, AuProcess* killable) {
-	if (!killable)
-		return;
 
 	int id = killable->proc_id;
 	char* name = killable->name;
@@ -128,6 +126,7 @@ void AuProcessClean(AuProcess* parent, AuProcess* killable) {
 	for (int i = 1; i < MAX_THREADS_PER_PROCESS -1 ; i++) {
 		AuThread *t_ = killable->threads[i];
 		if (t_) {
+			AuTextOut("cleaning thread -> %x \n", t_);
 			AuThreadCleanTrash(t_);
 			AuThreadFree(t_);
 		}
@@ -145,43 +144,7 @@ void AuProcessClean(AuProcess* parent, AuProcess* killable) {
 	AuThreadCleanTrash(killable->main_thread);
 	AuThreadFree(killable->main_thread);
 
-	
-	AuProcess* root_proc = AuGetRootProcess();
-	if (!root_proc) {
-		AuTextOut("Kernel Panic!! \n");
-		AuTextOut("Root process returned null \n");
-		for (;;);
-	}
-
-	///* make all child process's orphan process
-	//* it will be owned by root process
-	//*/
-	//for (int i = 0; i < killable->childs->pointer; i++) {
-	//	AuProcess* proc_ = (AuProcess*)list_remove(killable->childs, i);
-	//	if (proc_) {
-	//		proc_->state = PROCESS_STATE_ORPHAN;
-	//		proc_->parent = NULL;
-	//		AuAddProcess(root_proc, proc_);
-	//		proc_->parent = root_proc;
-	//	}
-	//}
-
-	//kfree(killable->childs);
-
 	/* release the process slot */
-	if (killable->parent) {
-		/*for (int i = 0; i < killable->parent->childs->pointer; i++) {
-			AuProcess* proc_ = (AuProcess*)list_get_at(killable->parent->childs, i);
-			if (proc_ == killable) {
-				kmalloc_debug_on(true);
-				list_remove(killable->parent->childs, i);
-				kmalloc_debug_on(false);
-				break;
-			}
-		}*/
-		// here we need to notify the parent that this
-		// this process is died
-	}
 
 	AuPmmngrFree((void*)V2P((size_t)killable->cr3));
 	AuRemoveProcess(0, killable);

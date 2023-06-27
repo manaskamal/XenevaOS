@@ -86,10 +86,6 @@ extern "C" void main(int argc, char* argv[]) {
 	_KePrint("array[0] -> %d, arrya[1] -> %d, pid -> %d \n", arr3[0], arr3[1],
 		pid);
 
-	/*for (int i = 0; i < 8; i++) {
-		int chid = _KeCreateProcess(pid, "Test2");
-		_KeProcessLoadExec(chid, "/xeldr.exe", 1, p);
-	}*/
 	while (1) {
 		if (pid == 1) {
 			_KeProcessWaitForTermination(-1);

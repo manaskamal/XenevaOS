@@ -46,7 +46,8 @@ AuThread* thread_list_head;
 AuThread* thread_list_last;
 AuThread* blocked_thr_head;
 AuThread* blocked_thr_last;
-list_t*   trash_list;
+AuThread* trash_thr_head;
+AuThread* trash_thr_last;
 
 bool _x86_64_sched_enable;
 static uint16_t thread_id;
@@ -141,6 +142,50 @@ void AuThreadDeleteBlock(AuThread* thread) {
 
 	if (thread == blocked_thr_last) {
 		blocked_thr_last = thread->prev;
+	}
+	else {
+		thread->next->prev = thread->prev;
+	}
+}
+
+
+/**
+* Insert a thread to trash list
+* @param new_task -- new thread address
+*/
+void AuThreadInsertTrash(AuThread* new_task) {
+	new_task->next = NULL;
+	new_task->prev = NULL;
+
+	if (trash_thr_head == NULL) {
+		trash_thr_last = new_task;
+		trash_thr_head = new_task;
+	}
+	else {
+		trash_thr_last->next = new_task;
+		new_task->prev = trash_thr_last;
+	}
+	trash_thr_last = new_task;
+}
+
+/**
+* AuThreadDeleteTrash -- remove a thread from thread list
+* @param thread -- thread address to remove
+*/
+void AuThreadDeleteTrash(AuThread* thread) {
+
+	if (trash_thr_head == NULL)
+		return;
+
+	if (thread == trash_thr_head) {
+		trash_thr_head = trash_thr_head->next;
+	}
+	else {
+		thread->prev->next = thread->next;
+	}
+
+	if (thread == trash_thr_last) {
+		trash_thr_last = thread->prev;
 	}
 	else {
 		thread->next->prev = thread->prev;
@@ -307,7 +352,10 @@ void AuSchedulerInitialise() {
 	thread_id = 0;
 	thread_list_head = NULL;
 	thread_list_last = NULL;
-	trash_list = initialize_list();
+	blocked_thr_head = NULL;
+	blocked_thr_last = NULL;
+	trash_thr_head = NULL;
+	trash_thr_last = NULL;
 	_x86_64_sched_enable = true;
 	_x86_64_sched_init = false;
 	_idle_lock = AuCreateSpinlock(false);
@@ -490,7 +538,7 @@ void AuThreadMoveToTrash(AuThread* t) {
 	}
 
 	/* insert it in the trash list */
-	list_add(trash_list, t);
+	AuThreadInsertTrash(t);
 }
 
 /*
@@ -499,12 +547,7 @@ void AuThreadMoveToTrash(AuThread* t) {
  * @param t -- > thread to remove
  */
 void AuThreadCleanTrash(AuThread* t) {
-	for (int i = 0; i < trash_list->pointer; i++) {
-		AuThread* thr_ = (AuThread*)list_get_at(trash_list, i);
-		if (thr_ == t) {
-			list_remove(trash_list, i);
-		}
-	}
+	AuThreadDeleteTrash(t);
 }
 
 /*

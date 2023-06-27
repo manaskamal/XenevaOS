@@ -6,11 +6,11 @@ INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
 CONST	SEGMENT
-$SG3410	DB	'mmap: len -> %d, fd -> %d, off -> %d ', 0aH, 00H
+$SG3411	DB	'mmap: len -> %d, fd -> %d, off -> %d ', 0aH, 00H
 	ORG $+1
-$SG3420	DB	'/', 00H
+$SG3421	DB	'/', 00H
 	ORG $+6
-$SG3423	DB	'mmap: file_block_start -> %x ', 0aH, 00H
+$SG3424	DB	'mmap: file_block_start -> %x ', 0aH, 00H
 CONST	ENDS
 PUBLIC	?CreateMemMapping@@YAPEAXPEAX_KHHH1@Z		; CreateMemMapping
 PUBLIC	?UnmapMemMapping@@YAXPEAX_K@Z			; UnmapMemMapping
@@ -249,7 +249,7 @@ $LN11@CreateMemM:
 	mov	r9, QWORD PTR offset$[rsp]
 	mov	r8d, DWORD PTR fd$[rsp]
 	mov	rdx, QWORD PTR len$[rsp]
-	lea	rcx, OFFSET FLAT:$SG3410
+	lea	rcx, OFFSET FLAT:$SG3411
 	call	AuTextOut
 
 ; 62   : 	if (fd != -1) 
@@ -324,7 +324,7 @@ $LN15@CreateMemM:
 
 ; 75   : 		fsys = AuVFSFind("/");
 
-	lea	rcx, OFFSET FLAT:$SG3420
+	lea	rcx, OFFSET FLAT:$SG3421
 	call	AuVFSFind
 	mov	QWORD PTR fsys$[rsp], rax
 
@@ -360,7 +360,7 @@ $LN6@CreateMemM:
 ; 80   : 			AuTextOut("mmap: file_block_start -> %x \n", file_block_start);
 
 	mov	rdx, QWORD PTR file_block_start$2[rsp]
-	lea	rcx, OFFSET FLAT:$SG3423
+	lea	rcx, OFFSET FLAT:$SG3424
 	call	AuTextOut
 
 ; 81   : 			file->current = file_block_start;

@@ -93,8 +93,9 @@ void AuProcessEntUser(uint64_t rcx) {
 		argvs[i] = (char*)ent->rsp;
 	}
 
-	if (ent->argvs)
+	if (ent->argvs){
 		kfree(ent->argvs);
+	}
 
 	PUSH(ent->rsp, size_t, (size_t)ent->argvaddr);
 	PUSH(ent->rsp, size_t, ent->num_args);
@@ -113,7 +114,6 @@ void AuProcessEntUser(uint64_t rcx) {
  */
 void AuLoadExecToProcess(AuProcess* proc, char* filename, int argc,char** argv) {
 	AuAcquireSpinlock(loader_lock);
-
 	AuVFSNode *fsys = AuVFSFind(filename);
 
 	AuVFSNode *file = AuVFSOpen(filename);

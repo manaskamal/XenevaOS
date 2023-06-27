@@ -87,7 +87,7 @@ int next_power_of_two(unsigned int val) {
 /*
 * au_split_block -- split block into two block
 */
-bool au_split_block(meta_data_t* splitable, size_t req_size) {
+int au_split_block(meta_data_t* splitable, size_t req_size) {
 
 	uint8_t* meta_block_a = (uint8_t*)splitable;
 	size_t size = splitable->size - req_size - sizeof(meta_data_t);
@@ -100,9 +100,10 @@ bool au_split_block(meta_data_t* splitable, size_t req_size) {
 	
 
 	uint64_t new_block_pos = (uint64_t)new_block;
-	if ((new_block_pos + req_size + sizeof(meta_data_t)) > last_mark)
-		return 0;
-
+	if ((new_block_pos) >= last_mark) {
+		SeTextOut("Aramse last mark \r\n");
+		return 1;
+	}
 
 	//new_block->free = true;
 	new_block_m->magic = MAGIC_FREE;
@@ -122,7 +123,6 @@ bool au_split_block(meta_data_t* splitable, size_t req_size) {
 	if (last_block == splitable)
 		last_block = new_block_m;
 
-
 	return 1;
 }
 
@@ -131,12 +131,11 @@ bool au_split_block(meta_data_t* splitable, size_t req_size) {
 * @param req_size -- requested size
 */
 void au_expand_kmalloc(size_t req_size) {
-	size_t req_pages = (req_size / 0x1000) + ((req_size % 0x1000) ? 1 : 0);
+	size_t req_pages = ((req_size + sizeof(meta_data_t)) / 0x1000) + 
+		(((req_size + sizeof(meta_data_t)) % 0x1000) ? 1 : 0);
 	//req_pages = (req_size + sizeof(meta_data_t)) / 4096 + 1;
-
 	void* page = au_request_page(req_pages);
 
-	SeTextOut("New Page requested -> %x \r\n", page);
 	uint8_t* desc_addr = (uint8_t*)page;
 	/* setup the first meta data block */
 	meta_data_t *meta = (meta_data_t*)desc_addr;
@@ -185,15 +184,17 @@ void* kmalloc(unsigned int size) {
 			if (meta->size > size) {
 				if (au_split_block(meta, size)){
 					meta->magic = MAGIC_USED;
-					size_t meta_addr = (size_t)meta;
+					uint8_t* meta_addr = (uint8_t*)meta;
 					ret = ((uint8_t*)meta_addr + sizeof(meta_data_t));
 					break;
 				}
+				else if (au_split_block(meta, size) == -1)
+					break;
 			}
 
 			if (meta->size == size) {
 				meta->magic = MAGIC_USED;
-				size_t addr = (size_t)meta;
+				uint8_t* addr = (uint8_t*)meta;
 				ret = ((uint8_t*)addr + sizeof(meta_data_t));
 				break;
 			}
@@ -227,7 +228,9 @@ void merge_next(meta_data_t *meta) {
 	if (meta->next == NULL)
 		return;
 	uint64_t addr_valid = (uint64_t)meta->next;
+	//AuTextOut("merge next -> %x \n", meta->next);
 	if (addr_valid < 0xFFFFE00000000000) {
+		SeTextOut("Meta merge next corrupted %x , curr -> %x \r\n",addr_valid, meta);
 		meta->next = NULL;
 		return;
 	}
@@ -277,10 +280,14 @@ void merge_prev(meta_data_t* meta) {
 * @param ptr -- pointer to the address block to free
 */
 void kfree(void* ptr) {
-	if (!ptr)
+	if (!ptr) 
 		return;
 	uint8_t* actual_addr = (uint8_t*)ptr;
 	meta_data_t *meta = (meta_data_t*)(actual_addr - sizeof(meta_data_t));
+	if (meta->magic != MAGIC_USED) {
+		AuTextOut("meta kfree corruption -> %x, meta -> %x \n", meta->magic, meta);
+		return;
+	}
 	meta->magic = MAGIC_FREE;
 
 	/* merge it with 3 near blocks if they are free*/

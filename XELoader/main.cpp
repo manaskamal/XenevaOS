@@ -29,6 +29,8 @@
 
 #include <_xeneva.h>
 #include <sys\_keproc.h>
+#include <stdlib.h>
+#include <string.h>
 /*
  * main entry point of the loader
  */
@@ -36,14 +38,15 @@ int main(int argc, char** argv[]) {
 	int pid = _KeGetProcessID();
 	_KePrint("XELoader %d \n", pid);
 
-	if (pid == 3) {
-		int chid = _KeCreateProcess(0, "tst");
-		_KeProcessLoadExec(chid, "/xeldr.exe", 0, NULL);
-	}
+	char* arg = "-about";
+	int count = strlen(arg);
+	char** p = (char**)malloc(1 * 6);
+	memset(p, 0, 6);
+	p[0] = "-about";
 
-	if (pid == 4) {
-		int chid = _KeCreateProcess(0, "tst4");
-		_KeProcessLoadExec(chid, "/xeldr.exe", 0, NULL);
+	if (pid == 3) {
+		int child = _KeCreateProcess(0, "tst3");
+		_KeProcessLoadExec(child, "/init.exe", 0, NULL);
 	}
 	while (1) {
 		_KeProcessExit();

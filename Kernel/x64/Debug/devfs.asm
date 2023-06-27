@@ -6,27 +6,27 @@ INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
 CONST	SEGMENT
-$SG2926	DB	'dev', 00H
-$SG3012	DB	00H
-$SG3034	DB	00H
+$SG2927	DB	'dev', 00H
+$SG3013	DB	00H
+$SG3035	DB	00H
 	ORG $+2
-$SG3004	DB	'Listing Directory -> %s ', 0dH, 0aH, 00H
+$SG3005	DB	'Listing Directory -> %s ', 0dH, 0aH, 00H
 	ORG $+1
-$SG3014	DB	'Device', 00H
+$SG3015	DB	'Device', 00H
 	ORG $+5
-$SG3017	DB	'Directory', 00H
+$SG3018	DB	'Directory', 00H
 	ORG $+6
-$SG3019	DB	'Unknown', 00H
-$SG3020	DB	'File ->  %s mode - %s ', 0dH, 0aH, 00H
+$SG3020	DB	'Unknown', 00H
+$SG3021	DB	'File ->  %s mode - %s ', 0dH, 0aH, 00H
 	ORG $+3
-$SG3036	DB	'Device', 00H
+$SG3037	DB	'Device', 00H
 	ORG $+5
-$SG3026	DB	'Listing device fs ', 0dH, 0aH, 00H
+$SG3027	DB	'Listing device fs ', 0dH, 0aH, 00H
 	ORG $+3
-$SG3039	DB	'Directory', 00H
+$SG3040	DB	'Directory', 00H
 	ORG $+6
-$SG3041	DB	'Unknown', 00H
-$SG3042	DB	'%s mode - %s ', 0dH, 0aH, 00H
+$SG3042	DB	'Unknown', 00H
+$SG3043	DB	'%s mode - %s ', 0dH, 0aH, 00H
 CONST	ENDS
 PUBLIC	?AuDeviceFsInitialize@@YAXXZ			; AuDeviceFsInitialize
 PUBLIC	?AuDevFSCreateFile@@YAHPEAU__VFS_NODE__@@PEADE@Z ; AuDevFSCreateFile
@@ -115,7 +115,7 @@ $LN10:
 
 	mov	rax, QWORD PTR dir$[rsp]
 	mov	rdx, rax
-	lea	rcx, OFFSET FLAT:$SG3004
+	lea	rcx, OFFSET FLAT:$SG3005
 	call	SeTextOut
 
 ; 166  : 	for (int i = 0; i < entries->childs->pointer; i++) {
@@ -143,7 +143,7 @@ $LN7@AuDevFSLis:
 
 ; 168  : 		char* mode = "";
 
-	lea	rax, OFFSET FLAT:$SG3012
+	lea	rax, OFFSET FLAT:$SG3013
 	mov	QWORD PTR mode$2[rsp], rax
 
 ; 169  : 		if (node_->flags & FS_FLAG_DEVICE)
@@ -156,7 +156,7 @@ $LN7@AuDevFSLis:
 
 ; 170  : 			mode = "Device";
 
-	lea	rax, OFFSET FLAT:$SG3014
+	lea	rax, OFFSET FLAT:$SG3015
 	mov	QWORD PTR mode$2[rsp], rax
 	jmp	SHORT $LN3@AuDevFSLis
 $LN4@AuDevFSLis:
@@ -171,7 +171,7 @@ $LN4@AuDevFSLis:
 
 ; 172  : 			mode = "Directory";
 
-	lea	rax, OFFSET FLAT:$SG3017
+	lea	rax, OFFSET FLAT:$SG3018
 	mov	QWORD PTR mode$2[rsp], rax
 
 ; 173  : 		else
@@ -181,7 +181,7 @@ $LN2@AuDevFSLis:
 
 ; 174  : 			mode = "Unknown";
 
-	lea	rax, OFFSET FLAT:$SG3019
+	lea	rax, OFFSET FLAT:$SG3020
 	mov	QWORD PTR mode$2[rsp], rax
 $LN1@AuDevFSLis:
 $LN3@AuDevFSLis:
@@ -191,7 +191,7 @@ $LN3@AuDevFSLis:
 	mov	rax, QWORD PTR node_$3[rsp]
 	mov	r8, QWORD PTR mode$2[rsp]
 	mov	rdx, rax
-	lea	rcx, OFFSET FLAT:$SG3020
+	lea	rcx, OFFSET FLAT:$SG3021
 	call	SeTextOut
 
 ; 176  : 	}
@@ -529,7 +529,7 @@ $LN11:
 
 ; 181  : 	SeTextOut("Listing device fs \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG3026
+	lea	rcx, OFFSET FLAT:$SG3027
 	call	SeTextOut
 
 ; 182  : 	for (int i = 0; i < entries->childs->pointer; i++) {
@@ -557,7 +557,7 @@ $LN8@AuDevFSLis:
 
 ; 184  : 		char* mode = "";
 
-	lea	rax, OFFSET FLAT:$SG3034
+	lea	rax, OFFSET FLAT:$SG3035
 	mov	QWORD PTR mode$3[rsp], rax
 
 ; 185  : 		if (node_->flags & FS_FLAG_DEVICE)
@@ -570,7 +570,7 @@ $LN8@AuDevFSLis:
 
 ; 186  : 			mode = "Device";
 
-	lea	rax, OFFSET FLAT:$SG3036
+	lea	rax, OFFSET FLAT:$SG3037
 	mov	QWORD PTR mode$3[rsp], rax
 	jmp	SHORT $LN4@AuDevFSLis
 $LN5@AuDevFSLis:
@@ -585,7 +585,7 @@ $LN5@AuDevFSLis:
 
 ; 188  : 			mode = "Directory";
 
-	lea	rax, OFFSET FLAT:$SG3039
+	lea	rax, OFFSET FLAT:$SG3040
 	mov	QWORD PTR mode$3[rsp], rax
 
 ; 189  : 		else
@@ -595,7 +595,7 @@ $LN3@AuDevFSLis:
 
 ; 190  : 			mode = "Unknown";
 
-	lea	rax, OFFSET FLAT:$SG3041
+	lea	rax, OFFSET FLAT:$SG3042
 	mov	QWORD PTR mode$3[rsp], rax
 $LN2@AuDevFSLis:
 $LN4@AuDevFSLis:
@@ -605,7 +605,7 @@ $LN4@AuDevFSLis:
 	mov	rax, QWORD PTR node_$2[rsp]
 	mov	r8, QWORD PTR mode$3[rsp]
 	mov	rdx, rax
-	lea	rcx, OFFSET FLAT:$SG3042
+	lea	rcx, OFFSET FLAT:$SG3043
 	call	SeTextOut
 
 ; 192  : 		if (node_->flags & FS_FLAG_DIRECTORY)
@@ -1442,7 +1442,7 @@ $LN3:
 ; 49   : 	strcpy(node->filename, "dev");
 
 	mov	rax, QWORD PTR node$[rsp]
-	lea	rdx, OFFSET FLAT:$SG2926
+	lea	rdx, OFFSET FLAT:$SG2927
 	mov	rcx, rax
 	call	strcpy
 

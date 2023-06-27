@@ -344,18 +344,15 @@ void AuProcessExit(AuProcess* proc) {
 		SeTextOut("[aurora]: cannot exit root process \r\n");
 		return;
 	}
-	/*if (proc->state & PROCESS_STATE_BUSY_WAIT){
-		AuTextOut("Process %s is in busy wait \r\n", proc->name);
-		AuForceScheduler();
-		return;
-	}*/
+	kmalloc_debug_on(true);
 
 	proc->state = PROCESS_STATE_DIED;
 
 	/* mark all the threads as blocked */
 	for (int i = 1; i < proc->num_thread - 1; i++) {
 		AuThread *killable = proc->threads[i];
-		AuThreadMoveToTrash(killable);
+		if (killable)
+			AuThreadMoveToTrash(killable);
 	}
 
 
@@ -367,43 +364,21 @@ void AuProcessExit(AuProcess* proc) {
 		if (file) {
 			if (file->flags & FS_FLAG_DEVICE || file->flags & FS_FLAG_FILE_SYSTEM)
 				continue;
-			kfree(file);
+			if (file->flags & FS_FLAG_GENERAL)  {
+				kfree(file);
+			}
 		}
 	}
+
 
 	/*unmap all shared memory mappings */
 	AuSHMUnmapAll(proc);
 
-	/*kmalloc_debug_on(true);
-	SeTextOut("Freeing proc file of %s \r\n", proc->name);
 	kfree(proc->file);
-	kmalloc_debug_on(false);*/
 
 	AuThreadMoveToTrash(proc->main_thread);
-
-	kfree(proc->file);
-
-	//if (proc->parent) {
-	//	if (!(proc->parent->state & PROCESS_STATE_SUSPENDED)){
-	//		proc->state = PROCESS_STATE_ZOMBIE;
-	//	}
-	//	else {
-	//		/* else make parent runnable then it will reap
-	//		 * the current process,
-	//		 * in Aurora unblocking a process means, unblocking its
-	//		 * all threads that are suspended, for now only the main
-	//		 * thread
-	//		 */
-	//		AuUnblockThread(proc->parent->main_thread);
-	//		proc->parent->state = PROCESS_STATE_READY;
-	//	}
-	//}
-	//else {
-	//	proc->state = PROCESS_STATE_ZOMBIE;
-	//	/* unblock the root process */
-	//	AuUnblockThread(proc_root->main_thread);
-	//	proc_root->state = PROCESS_STATE_READY;
-	//}
+	
+	kmalloc_debug_on(false);
 	x64_force_sched();
 }
 
