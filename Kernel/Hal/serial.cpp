@@ -33,6 +33,10 @@
 #include <Hal\x86_64_hal.h>
 #include <stdio.h>
 
+/*
+ * this kernel module is only used for debug purpose
+ */
+
 #define SERIAL_PORT 0x3f8
 
 void SerialInterruptHandler(size_t v, void* p) {

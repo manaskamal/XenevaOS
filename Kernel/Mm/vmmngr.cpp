@@ -459,7 +459,7 @@ void* AuGetPhysicalAddressEx(uint64_t* cr3, uint64_t virt_addr){
  * address form
  */
 uint64_t* AuCreateVirtualAddressSpace() {
-	uint64_t* root_cr3 = (uint64_t*)P2V((size_t)x64_read_cr3());
+	uint64_t* root_cr3 = (uint64_t*)P2V((size_t)_RootPaging);
 	uint64_t* new_cr3 = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
 	memset(new_cr3, 0, PAGE_SIZE);
 

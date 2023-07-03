@@ -204,6 +204,7 @@
     <ClInclude Include="..\BaseHdr\pe.h" />
     <ClInclude Include="..\BaseHdr\process.h" />
     <ClInclude Include="..\BaseHdr\Serv\sysserv.h" />
+    <ClInclude Include="..\BaseHdr\Sound\sound.h" />
     <ClInclude Include="..\BaseHdr\stdarg.h" />
     <ClInclude Include="..\BaseHdr\stdint.h" />
     <ClInclude Include="..\BaseHdr\stdio.h" />
@@ -231,6 +232,7 @@
     <ClCompile Include="Fs\Fat\FatDir.cpp" />
     <ClCompile Include="Fs\Fat\FatFile.cpp" />
     <ClCompile Include="Fs\pipe.cpp" />
+    <ClCompile Include="Fs\tty.cpp" />
     <ClCompile Include="Fs\vdisk.cpp" />
     <ClCompile Include="Fs\vfs.cpp" />
     <ClCompile Include="Fs\_gpt.cpp" />
@@ -265,6 +267,7 @@
     <ClCompile Include="Serv\fileserv.cpp" />
     <ClCompile Include="Serv\mmserv.cpp" />
     <ClCompile Include="Serv\thrserv.cpp" />
+    <ClCompile Include="Sound\sound.cpp" />
     <ClCompile Include="stdio.cpp" />
     <ClCompile Include="string.cpp" />
     <ClCompile Include="Sync\mutex.cpp" />

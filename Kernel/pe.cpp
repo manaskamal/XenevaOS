@@ -146,3 +146,23 @@ void AuKernelLinkImports(void* image) {
 		}
 	}
 }
+
+/*
+ * AuPEFileIsDynamicallyLinked -- checks if the current
+ * binary image is dynamically linked
+ * @param image -- pointer to image address
+ */
+bool AuPEFileIsDynamicallyLinked(void* image) {
+	uint8_t *imageAligned = (uint8_t*)image;
+	PIMAGE_DOS_HEADER dos_header = (PIMAGE_DOS_HEADER)imageAligned;
+	PIMAGE_NT_HEADERS nt_headers = raw_offset<PIMAGE_NT_HEADERS>(dos_header, dos_header->e_lfanew);
+	
+	if (IMAGE_DATA_DIRECTORY_IMPORT + 1 > nt_headers->OptionalHeader.NumberOfRvaAndSizes)
+		return false;
+	IMAGE_DATA_DIRECTORY* datadir = &nt_headers->OptionalHeader.DataDirectory[IMAGE_DATA_DIRECTORY_IMPORT];
+	if (datadir->VirtualAddress == 0 || datadir->Size == 0)
+		return false;
+	
+	PIMAGE_IMPORT_DIRECTORY importdir = raw_offset<PIMAGE_IMPORT_DIRECTORY>(imageAligned, datadir->VirtualAddress);
+	return true;
+}

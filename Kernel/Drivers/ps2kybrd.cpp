@@ -43,6 +43,7 @@
 void AuPS2KybrdHandler(size_t v, void* p) {
 	if (x64_inportb(0x64) & 1) {
 		int code = x64_inportb(0x60);
+		SeTextOut("Key Pressed \r\n");
 	}
 	AuInterruptEnd(1);
 }

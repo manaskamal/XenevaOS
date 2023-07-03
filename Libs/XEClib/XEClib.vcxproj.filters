@@ -76,6 +76,9 @@
     <ClInclude Include="includes\stdio.h">
       <Filter>includes</Filter>
     </ClInclude>
+    <ClInclude Include="includes\sys\iocodes.h">
+      <Filter>includes\sys</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="string.cpp" />

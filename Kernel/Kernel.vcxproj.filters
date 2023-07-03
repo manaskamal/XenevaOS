@@ -64,6 +64,12 @@
     <Filter Include="Include\Serv">
       <UniqueIdentifier>{4669d607-f708-480d-8b72-83fc6f04168d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Sound">
+      <UniqueIdentifier>{c53f5ca0-d90c-4eda-b15c-fe771f91c6e8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Include\Sound">
+      <UniqueIdentifier>{e22f034d-94e9-4ebd-ac2a-2016ca8c74a9}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\BaseHdr\_null.h">
@@ -252,6 +258,9 @@
     <ClInclude Include="..\BaseHdr\termios.h">
       <Filter>Include</Filter>
     </ClInclude>
+    <ClInclude Include="..\BaseHdr\Sound\sound.h">
+      <Filter>Include\Sound</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="init.cpp" />
@@ -386,6 +395,12 @@
     </ClCompile>
     <ClCompile Include="Fs\Fat\FatDir.cpp">
       <Filter>Fs\Fat</Filter>
+    </ClCompile>
+    <ClCompile Include="Fs\tty.cpp">
+      <Filter>Fs</Filter>
+    </ClCompile>
+    <ClCompile Include="Sound\sound.cpp">
+      <Filter>Sound</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

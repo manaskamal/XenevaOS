@@ -166,7 +166,7 @@ AuVFSNode* AuCreatePipe(char* name, size_t sz) {
 	pipe->size = sz;
 
 	strcpy(node->filename, name);
-	node->flags |= FS_FLAG_GENERAL | FS_FLAG_DEVICE | FS_FLAG_PIPE;
+	node->flags |= FS_FLAG_DEVICE | FS_FLAG_PIPE;
 	node->size = sz;
 	node->device = pipe;
 	node->read = AuPipeRead;

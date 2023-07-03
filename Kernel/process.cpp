@@ -43,6 +43,7 @@
 #include <clean.h>
 #include <Mm\shm.h>
 #include <Sync\spinlock.h>
+#include <Sound\sound.h>
 
 
 static int pid = 1;
@@ -266,9 +267,12 @@ void AuStartRootProc() {
 	process_mutex = AuCreateMutex();
 	root_proc = AuCreateRootProc();
 	int num_args = 1;
-	char** argvs = (char**)kmalloc(6);
-	memset(argvs, 0, 6);
-	argvs[0] = "-about";
+	char* about_str = "-about";
+	char* about = (char*)kmalloc(strlen(about_str));
+	strcpy(about, about_str);
+	char** argvs = (char**)kmalloc(num_args);
+	memset(argvs, 0, num_args);
+	argvs[0] = about;
 	AuLoadExecToProcess(root_proc, "/init.exe",num_args,argvs);
 }
 
@@ -344,9 +348,12 @@ void AuProcessExit(AuProcess* proc) {
 		SeTextOut("[aurora]: cannot exit root process \r\n");
 		return;
 	}
+
 	kmalloc_debug_on(true);
 
 	proc->state = PROCESS_STATE_DIED;
+
+	AuSoundRemoveDSP(proc->main_thread->id);
 
 	/* mark all the threads as blocked */
 	for (int i = 1; i < proc->num_thread - 1; i++) {
@@ -370,7 +377,6 @@ void AuProcessExit(AuProcess* proc) {
 		}
 	}
 
-
 	/*unmap all shared memory mappings */
 	AuSHMUnmapAll(proc);
 
@@ -379,6 +385,7 @@ void AuProcessExit(AuProcess* proc) {
 	AuThreadMoveToTrash(proc->main_thread);
 	
 	kmalloc_debug_on(false);
+
 	x64_force_sched();
 }
 

@@ -33,17 +33,21 @@
 #include <stdint.h>
 #include <aurora.h>
 
+#pragma pack(push,1)
 typedef struct _data_ {
 	_data_ *next;
 	_data_ *prev;
 	void* data;
 }dataentry;
+#pragma pack(pop)
 
 
+#pragma pack(push,1)
 typedef struct _list_ {
 	unsigned int pointer;
 	dataentry *entry_current;
 }list_t;
+#pragma pack(pop)
 
 AU_EXTERN AU_EXPORT list_t* initialize_list();
 AU_EXTERN AU_EXPORT void list_add(list_t* list, void* data);

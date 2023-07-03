@@ -145,6 +145,7 @@
     <ClInclude Include="includes\stdio.h" />
     <ClInclude Include="includes\stdlib.h" />
     <ClInclude Include="includes\string.h" />
+    <ClInclude Include="includes\sys\iocodes.h" />
     <ClInclude Include="includes\sys\mman.h" />
     <ClInclude Include="includes\sys\utf.h" />
     <ClInclude Include="includes\sys\_heap.h" />

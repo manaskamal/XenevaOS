@@ -7,4 +7,7 @@
     <NASM Include="fastcpy.asm" />
     <NASM Include="crt0.asm" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="pe_.h" />
+  </ItemGroup>
 </Project>

@@ -43,7 +43,7 @@ struct _VDISK_;
 typedef int(*vdisk_read) (_VDISK_ *disk, uint64_t lba, uint32_t count ,uint64_t* buffer);
 typedef int(*vdisk_write) (_VDISK_ *disk, uint64_t lba, uint32_t count, uint64_t *buffer);
 
-
+#pragma pack(push,1)
 /*  vdisk structures */
 typedef struct _VDISK_ {
 	char diskname[40];
@@ -73,6 +73,7 @@ typedef struct _VDISK_ {
 	 * needs to be added like eject
 	 */
 }AuVDisk;
+#pragma pack(pop)
 
 /*
 * AuVDiskInitialise -- initialise the vdisk

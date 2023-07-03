@@ -29,25 +29,55 @@
 
 #include <_xeneva.h>
 #include <sys\_keproc.h>
+#include <sys\_kefile.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys\mman.h>
+#include <sys\iocodes.h>
+
 /*
- * main entry point of the loader
+ * XELdrStartProc -- starts a new process
+ * @param filename -- path and name of the
+ * process
  */
-int main(int argc, char** argv[]) {
+void XELdrStartProc(char* filename) {
+	int fd = _KeOpenFile(filename, FILE_OPEN_READ_ONLY);
+
+	XEFileStatus *stat = (XEFileStatus*)malloc(sizeof(XEFileStatus));
+	memset(stat, 0, sizeof(XEFileStatus));
+
+	_KeFileStat(fd, stat);
+
+	free(stat);
+	_KePrint("Opening process of size %d KiB \n", (stat->size / 1024));
+	_KeCloseFile(fd);
+	
+}
+
+/*
+ * main entry point of the loader, it accepts
+ * three commands "-about", "-f", and filename
+ * in 3rd argument
+ */
+int main(int argc, char* argv[]) {
 	int pid = _KeGetProcessID();
-	_KePrint("XELoader %d \n", pid);
 
-	char* arg = "-about";
-	int count = strlen(arg);
-	char** p = (char**)malloc(1 * 6);
-	memset(p, 0, 6);
-	p[0] = "-about";
+	//if (strcmp(argv[0], "-h") == 0) {
+	//	_KePrint("XELoadr v1.0 \n");
+	//	_KePrint("Copyright (C) Manas Kamal Choudhury 2020-2023\n");
+	//}
 
-	if (pid == 3) {
-		int child = _KeCreateProcess(0, "tst3");
-		_KeProcessLoadExec(child, "/init.exe", 0, NULL);
-	}
+	//if (strcmp(argv[1], "-f") == 0) {
+	//	//a file is given
+	//	
+	//}
+	/*char* filename = argv[0];
+	_KePrint("%s \n", filename);
+	XELdrStartProc(filename);*/
+
+	/*void* buff = malloc(4096);
+	memset(buff, 0, 4096);*/
+
 	while (1) {
 		_KeProcessExit();
 	}

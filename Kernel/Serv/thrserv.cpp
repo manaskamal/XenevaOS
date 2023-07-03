@@ -123,7 +123,6 @@ int ProcessLoadExec(int proc_id, char* filename,int argc, char** argv) {
 		size_t l = strlen(argv[i]);
 		char_cnt += l;
 	}
-
 	
 	char** allocated_argv = 0;
 	if (char_cnt > 0) {

@@ -25,6 +25,9 @@
     <NASM Include="crt0.asm" />
     <NASM Include="fastcpy.asm" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="pe_.h" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{FD948B35-2AB4-4AB3-88EF-7CC30E4A7B56}</ProjectGuid>
     <RootNamespace>XELoader</RootNamespace>

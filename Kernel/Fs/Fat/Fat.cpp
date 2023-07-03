@@ -384,7 +384,6 @@ AuVFSNode * FatOpen(AuVFSNode * fsys, char* filename) {
 	if (!fsys)
 		return NULL;
 	FatFS* _fs = (FatFS*)fsys->device;
-
 	AuVFSNode *cur_dir = NULL;
 	AuVDisk *vdisk = (AuVDisk*)fsys->device;
 	char* p = 0;
@@ -443,12 +442,9 @@ AuVFSNode * FatOpen(AuVFSNode * fsys, char* filename) {
 	}
 
 	//! found file?
-	if (cur_dir != NULL)
+	if (cur_dir)
 		return cur_dir;
 	//! unable to find
-	/*vfs_node_t ret;
-	ret.flags = FS_FLAG_INVALID;
-	ret.size = 0;*/
 	return NULL;
 }
 

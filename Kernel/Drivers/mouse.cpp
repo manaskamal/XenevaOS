@@ -166,6 +166,7 @@ finish_packet:
 
 	if (__ps2mouse->mouse_byte[0] & 0x02) {
 		__ps2mouse->curr_button[2] = 1;
+		SeTextOut("Right clicked \r\n");
 		__ps2mouse->mouse_butt_state |= RIGHT_CLICK;
 	}
 	else

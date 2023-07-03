@@ -39,6 +39,7 @@
 #include <Mm/vmmngr.h>
 #include <Mm/pmmngr.h>
 #include <Mm/kmalloc.h>
+#include <Sound\sound.h>
 
 HDAudio* _hdaudio;
 uint16_t rirbrp = 0;
@@ -317,7 +318,7 @@ void HDAHandler(size_t v, void* p) {
 			uint32_t pos = dma[4] & 0xffffffff;
 			pos /= BUFFER_SIZE;
 			pos %= BDL_SIZE;
-			//AuSoundRequestNext((uint64_t*)(_hdaudio->sample_buffer + pos * BUFFER_SIZE));
+			AuSoundGetBlock((uint64_t*)(_hdaudio->sample_buffer + pos * BUFFER_SIZE));
 		}
 
 	}
@@ -451,7 +452,17 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 	HDAPathInitOutput();
 	HDASetVolume(127);
 
-	//HDAudioStartOutput();
+	AuSound *sound = (AuSound*)kmalloc(sizeof(AuSound));
+	memset(sound, 0, sizeof(AuSound));
+	strcpy(sound->name, "intelhda");
+	sound->read = 0;
+	sound->set_vol = HDASetVolume;
+	sound->start_output = HDAudioStartOutput;
+	sound->stop_output = HDAudioStopOutput;
+	sound->write = 0;
+	AuSoundSetCard(sound);
+
+	HDAudioStartOutput();
 	SeTextOut("[driver]: intel hda audio initialized vendor: %x device: %x \r\n",dev_vendid, dev_devid);
 }
 

@@ -138,6 +138,12 @@ size_t WriteFile(int fd, void* buffer, size_t length) {
 		AuVFSNodeWrite(fsys, file, buff, length);
 		AuPmmngrFree((void*)V2P((size_t)buff));
 	}
+
+	if (file->flags & FS_FLAG_DEVICE) {
+		if (file->write) {
+			file->write(fsys, file, (uint64_t*)buffer, length);
+		}
+	}
 }
 
 /*
@@ -197,5 +203,52 @@ int CloseFile(int fd) {
 		kfree(file);
 
 	current_proc->fds[fd] = 0;
+	return 0;
+}
+
+/*
+ * FileIoControl -- controls the file through I/O code
+ * @param fd -- file descriptor
+ * @param code -- code to pass
+ * @param arg -- argument to pass
+ */
+int FileIoControl(int fd, int code, void* arg) {
+	if (fd == -1)
+		return -1;
+	AuThread* current_thr = AuGetCurrentThread();
+	AuProcess* current_proc = AuProcessFindThread(current_thr);
+	AuVFSNode* file = current_proc->fds[fd];
+
+	if (!file)
+		return -1;
+
+	AuVFSNodeIOControl(file, code, arg);
+
+	return 0;
+}
+
+/*
+ * FileStat -- writes information related
+ * to file
+ * @param fd -- file descriptor
+ * @param buf -- Pointer to file structure
+ */
+int FileStat(int fd, void* buf) {
+	if (fd == -1)
+		return -1;
+	AuThread* current_thr = AuGetCurrentThread();
+	AuProcess* current_proc = AuProcessFindThread(current_thr);
+	AuVFSNode* file = current_proc->fds[fd];
+	if (!file)
+		return -1;
+
+	AuFileStatus *status = (AuFileStatus*)buf;
+	status->current_block = file->current;
+	status->size = file->size;
+	status->filemode = file->flags;
+	status->eof = file->eof;
+	status->start_block = file->first_block;
+	status->user_id = 0;
+	status->group_id = 0;
 	return 0;
 }

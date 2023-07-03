@@ -38,6 +38,7 @@
 #include <Hal\serial.h>
 #include <loader.h>
 #include <Sync\mutex.h>
+#include <Sound\sound.h>
 #include <Mm\shm.h>
 
 /*
@@ -94,7 +95,6 @@ void AuThreadFree(AuThread* t) {
 * @param proc -- Process to remove
 */
 void AuProcessClean(AuProcess* parent, AuProcess* killable) {
-
 	int id = killable->proc_id;
 	char* name = killable->name;
 	FreeUserStack(killable->cr3);

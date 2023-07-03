@@ -45,7 +45,6 @@
 #define  THREAD_LEVEL_KERNEL 1
 #define  THREAD_LEVEL_USER 2
 
-#pragma pack(push,8)
 typedef struct _frame_ {
 	uint64_t ss;       //0x00
 	uint64_t rsp;      //0x08
@@ -76,7 +75,6 @@ typedef struct _frame_ {
 	uint64_t kern_esp;   //0xC8     [0x10]
 	bool user_;          //0xD0
 }AuThreadFrame;
-#pragma pack(pop)
 
 
 typedef struct _syscall_param_ {
@@ -87,6 +85,7 @@ typedef struct _syscall_param_ {
 	uint64_t param5;    //0x100
 	uint64_t param6;    //0x108
 }AuSyscallParam;
+
 
 /* AuUserEntry structure */
 typedef struct _uentry_ {

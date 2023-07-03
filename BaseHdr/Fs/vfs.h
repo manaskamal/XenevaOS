@@ -96,10 +96,32 @@ typedef struct __VFS_NODE__ {
 }AuVFSNode;
 #pragma pack(pop)
 
+#pragma pack(push,1)
 typedef struct _AuFileStatus_ {
 	uint8_t filemode; //mode of the file
 	size_t size;  //size in bytes
+	uint32_t current_block;
+	uint32_t start_block;
+	uint32_t user_id; //for future use
+	uint32_t group_id; //for future use
+	uint32_t num_links;
+	uint8_t eof;
 }AuFileStatus;
+#pragma pack(pop)
+
+#pragma pack(push,1)
+typedef struct _FileControl_ {
+	int syscall_magic;
+	uint8_t uchar_1;
+	uint8_t uchar_2;
+	uint16_t ushort_1;
+	uint16_t ushort_2;
+	uint32_t uint_1;
+	uint32_t uint_2;
+	uint64_t ulong_1;
+	uint64_t ulong_2;
+}AuFileIOControl;
+#pragma pack(pop)
 
 /*
  * AuVFSContainer -- is a container
@@ -131,7 +153,7 @@ AU_EXTERN AU_EXPORT AuVFSNode* AuVFSOpen(char* path);
 * @param code -- code to pass
 * @param arg -- extra arguments
 */
-AU_EXTERN AU_EXPORT void AuVFSNodeIOControl(AuVFSNode* node, int code, void* arg);
+AU_EXTERN AU_EXPORT int AuVFSNodeIOControl(AuVFSNode* node, int code, void* arg);
 
 /*
 * AuVFSAddFileSystem -- adds a file system to the

@@ -271,4 +271,11 @@ extern void AuPEPrintExports(void *image);
 * @param image -- dll image
 */
 extern void AuKernelLinkImports(void* image);
+
+/*
+* AuPEFileIsDynamicallyLinked -- checks if the current
+* binary image is dynamically linked
+* @param image -- pointer to image address
+*/
+extern bool AuPEFileIsDynamicallyLinked(void* image);
 #endif

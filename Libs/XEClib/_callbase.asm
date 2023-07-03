@@ -146,8 +146,8 @@ _KeProcessLoadExec:
       mov r12, 8
 	  mov r13, rcx
 	  mov r14, rdx
-	  mov r15, 0
-	  mov rdi, 0
+	  mov r15, r8
+	  mov rdi, r9
 	  syscall
 	  ret
 
@@ -321,6 +321,33 @@ _KeCloseFile:
 	  mov rdi, 0
 	  syscall
 	  ret
+
+global _KeFileIoControl
+_KeFileIoControl:
+      xor rax, rax
+	  mov r12, 21
+	  mov r13, rcx
+	  mov r14, rdx
+	  mov r15, r8
+	  mov rdi, 0
+	  syscall
+	  ret
+
+;;===============================
+;; _KeFileStat -- writes the status
+;; of a file to a buffer
+;;===============================
+global _KeFileStat
+_KeFileStat:
+      xor rax, rax
+	  mov r12, 22
+	  mov r13, rcx
+	  mov r14, rdx
+	  mov r15, 0
+	  mov rdi, 0
+	  syscall
+	  ret
+      
       
       
 

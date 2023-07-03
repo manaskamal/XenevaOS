@@ -40,9 +40,6 @@
 #include <Serv/sysserv.h>
 #include <Mm\mmap.h>
 
-/* maximum supported system calls */
-#define AURORA_MAX_SYSCALL  26
-#define AURORA_SYSCALL_MAGIC  0x05212004  /* actual number to remember */
 
 /* Syscall function format */
 typedef uint64_t(*syscall_func) (uint64_t param1, uint64_t param2, uint64_t param3, uint64_t
@@ -91,6 +88,8 @@ static void* syscalls[AURORA_MAX_SYSCALL] = {
 	CreateDir,        //18
 	RemoveFile,       //19
 	CloseFile,        //20
+	FileIoControl,    //21
+	FileStat,         //22
 };
 
 
@@ -100,6 +99,8 @@ static void* syscalls[AURORA_MAX_SYSCALL] = {
 //! @param c -- arg3 passed in r14 register
 //! @param d -- arg4 passed in r15 register
 extern "C" uint64_t x64_syscall_handler(int a) {
+	x64_cli();
+
 	AuThread* current_thr = AuGetCurrentThread();
 	uint64_t ret_code = 0;
 

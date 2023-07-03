@@ -33,6 +33,7 @@
 #include <_null.h>
 #include <aucon.h>
 #include <string.h>
+#include <Hal/serial.h>
 
 AuVFSContainer* __RootContainer;
 AuVFSNode* __RootFS;
@@ -162,7 +163,6 @@ AU_EXTERN AU_EXPORT AuVFSNode* AuVFSOpen(char* path){
 		if (fs->open)
 			Returnable = fs->open(fs,next);
 	}
-
 	return Returnable;
 }
 
@@ -172,9 +172,9 @@ AU_EXTERN AU_EXPORT AuVFSNode* AuVFSOpen(char* path){
  * @param code -- code to pass
  * @param arg -- extra arguments
  */
-AU_EXTERN AU_EXPORT void AuVFSNodeIOControl(AuVFSNode* node, int code, void* arg) {
+AU_EXTERN AU_EXPORT int AuVFSNodeIOControl(AuVFSNode* node, int code, void* arg) {
 	if (node->iocontrol)
-		node->iocontrol(node, code, arg);
+		return node->iocontrol(node, code, arg);
 }
 
 /*

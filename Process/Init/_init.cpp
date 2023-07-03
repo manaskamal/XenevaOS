@@ -40,7 +40,7 @@
 #include <string.h>
 #include <sys\_heap.h>
 #include <sys\_kefile.h>
-
+#include <sys\iocodes.h>
 
 /*
  * _main -- main entry point
@@ -48,50 +48,17 @@
 extern "C" void main(int argc, char* argv[]) {
 	int pid = _KeGetProcessID();
 
-	char* arg = "-about";
-	int count = strlen(arg);
-	char** p = (char**)malloc(1 * 6);
-	memset(p, 0, 6);
-	p[0] = "-about";
-
-	if (strcmp(p[0], "-about") == 0)
-		_KePrint("Hello world \n");
-	else
-		_KePrint("Init run \n");
-
-	if (pid == 1) {
-		int chid = _KeCreateProcess(pid, "Test");
-		_KeProcessLoadExec(chid, "/init.exe", 1, p);
-	}
-
-	if (pid == 2) {
-		int chid = _KeCreateProcess(pid, "Test2");
-		_KeProcessLoadExec(chid, "/xeldr.exe", 0, 0);
-	}
+	_KePrint("init -> %x \n", argv);
+	if (strcmp(argv[0], "-about") == 0)
+		_KePrint("Xeneva v1.0 !! Copyright (C) Manas Kamal Choudhury 2020-2023 \n");
 
 
-	free(p);
-	FILE *fp = fopen("/arry.txt", "a");
-	int *arr = (int*)malloc(sizeof(int)* 3);
-	arr[0] = 101;
-	arr[1] = 102;
-	arr[2] = 103;
-	size_t sz = fwrite(arr, sizeof(int), 3, fp);
-
-
-	unsigned char* buf = (unsigned char*)malloc(sizeof(int)* 3);
-	fread(buf, sizeof(int), 3, fp);
-
-	int* arr3 = (int*)buf;
-	_KePrint("array[0] -> %d, arrya[1] -> %d, pid -> %d \n", arr3[0], arr3[1],
-		pid);
+	int child = _KeCreateProcess(0, "ldr");
+	_KeProcessLoadExec(child, "/usb.dll", 0, NULL);
 
 	while (1) {
 		if (pid == 1) {
 			_KeProcessWaitForTermination(-1);
-		}
-		if (pid != 1) {
-			_KeProcessExit();
 		}
 	}
 }

@@ -57,13 +57,8 @@
 #include <loader.h>
 #include <Fs\Fat\FatFile.h>
 #include <Fs\Fat\FatDir.h>
+#include <Sound\sound.h>
 
-void _test(uint64_t t) {
-	SeTextOut(" _test \r\n");
-	while (1) {
-		//
-	}
-}
 
 
 /**========================================
@@ -92,6 +87,9 @@ void _AuMain(KERNEL_BOOT_INFO *info) {
 	/* initialise the shared mem man */
 	AuInitialiseSHMMan();
 
+	/* initialise sound service */
+	AuSoundInitialise();
+
 	x64_cli();
 	AuSchedulerInitialise();
 	
@@ -101,8 +99,6 @@ void _AuMain(KERNEL_BOOT_INFO *info) {
 	/* initialise all application processors*/
 	AuHalPostInitialise();
 
-	SeTextOut("CPU ID OF BSP -> %d \r\n", AuPerCPUGetCpuID());
-
 	AuInitialiseLoader();
 
 	/* make the kernel standalone*/
@@ -111,7 +107,6 @@ void _AuMain(KERNEL_BOOT_INFO *info) {
 
 	/* Process initialisation begins here */
 	AuStartRootProc();
-	AuThread *t = AuCreateKthread(_test, (uint64_t)P2V((uint64_t)AuPmmngrAlloc() + 4096), x64_read_cr3(), "test_");
 	AuSchedulerStart();
 	for (;;);
 }

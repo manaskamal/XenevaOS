@@ -35,6 +35,10 @@
 #include <aurora.h>
 
 
+/* maximum supported system calls */
+#define AURORA_MAX_SYSCALL  26
+#define AURORA_SYSCALL_MAGIC  0x05212004  /* actual number to remember */
+
 /* ==========================================
  *  Threading
  * ==========================================
@@ -150,5 +154,21 @@ extern int RemoveFile(char* pathname);
 * @param fd -- file descriptor to close
 */
 extern int CloseFile(int fd);
+
+/*
+* FileIoControl -- controls the file through I/O code
+* @param fd -- file descriptor
+* @param code -- code to pass
+* @param arg -- argument to pass
+*/
+extern int FileIoControl(int fd, int code, void* arg);
+
+/*
+* FileStat -- writes information related
+* to file
+* @param fd -- file descriptor
+* @param buf -- Pointer to file structure
+*/
+extern int FileStat(int fd, void* buf);
 
 #endif

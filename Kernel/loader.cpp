@@ -80,7 +80,8 @@ while (stack & (sizeof(type)-1))stack--; \
 */
 void AuProcessEntUser(uint64_t rcx) {
 	x64_cli();
-	AuUserEntry* ent = (AuUserEntry*)rcx;
+	AuThread* t = AuGetCurrentThread();
+	AuUserEntry* ent = t->uentry;
 	/* do all arguments passing stuff, arguments
 	 * are passed as strings to stack
 	 */
@@ -91,9 +92,14 @@ void AuProcessEntUser(uint64_t rcx) {
 			PUSH(ent->rsp, char, str[j]);
 		}
 		argvs[i] = (char*)ent->rsp;
+		
 	}
 
 	if (ent->argvs){
+		for (int i = 0; i < ent->num_args; i++) {
+			uint64_t addr = (uint64_t)ent->argvs[i];
+			kfree(ent->argvs[i]);
+		}
 		kfree(ent->argvs);
 	}
 
@@ -114,8 +120,16 @@ void AuProcessEntUser(uint64_t rcx) {
  */
 void AuLoadExecToProcess(AuProcess* proc, char* filename, int argc,char** argv) {
 	AuAcquireSpinlock(loader_lock);
+	/* verify the filename, it can only be '.exe' file no '.dll' or other */
+	char* v_ = strchr(filename, '.');
+	if (v_)
+		v_++;
+	if (strcmp(v_, "exe") != 0) {
+		SeTextOut("[aurora]: non-executable process \r\n");
+		return;
+	}
 	AuVFSNode *fsys = AuVFSFind(filename);
-
+	
 	AuVFSNode *file = AuVFSOpen(filename);
 
 	uint64_t* buf = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
@@ -132,7 +146,31 @@ void AuLoadExecToProcess(AuProcess* proc, char* filename, int argc,char** argv) 
 
 	uint64_t* cr3 = proc->cr3;
 
+	/* check if the binary is dynamically linked */
+	if (AuPEFileIsDynamicallyLinked(buf)) {
+		/* free the current file*/
+		kfree(file);
+		AuPmmngrFree((void*)V2P((sizeof(buf))));
+
+		/* now load XELoader process, which'll further
+		 * link this dynamic process with its shared
+		 * libraries
+		 */
+		int num_args_ = 1;
+		int string_len = strlen(filename);
+		char* file__ = (char*)kmalloc(string_len);
+		strcpy(file__, filename);
+		char** argvs = (char**)kmalloc(num_args_);
+		memset(argvs, 0, num_args_);
+		argvs[0] = file__;
+		AuReleaseSpinlock(loader_lock);
+
+		/* load the loader */
+		return AuLoadExecToProcess(proc, "/xeldr.exe", num_args_, argvs);
+	}
+
 	AuMapPageEx(cr3, V2P((size_t)buf), _image_base_, X86_64_PAGING_USER);
+
 
 	/* this should be memory mapped, i.e, sections should be
 	 * memory mapped
@@ -174,15 +212,19 @@ void AuLoadExecToProcess(AuProcess* proc, char* filename, int argc,char** argv) 
 	if (num_args) {
 		/* Allocate a memory for passing arguments */
 		char* args = (char*)P2V((size_t)AuPmmngrAlloc());
-		AuMapPageEx(proc->cr3, (size_t)V2P((size_t)args), 0x4000, X86_64_PAGING_USER);
-		argvaddr = 0x4000;
+		memset(args, 0, PAGE_SIZE);
+		if (!AuMapPageEx(proc->cr3, (size_t)V2P((size_t)args), 0x4000, X86_64_PAGING_USER)){
+			AuTextOut("Arguments address already mapped \n");
+			argvaddr = 0;
+		}
+		else{
+			argvaddr = 0x4000;
+		}
 	}
 	entry->argvaddr = argvaddr;	
 	entry->num_args = num_args;
 	entry->argvs = argv;
-
-	AuThread *thr = AuCreateKthread(AuProcessEntUser, P2V((uint64_t)AuPmmngrAlloc() + 4095), V2P((uint64_t)cr3), proc->name);
-	thr->frame.rcx = (uint64_t)entry;
+	AuThread *thr = AuCreateKthread(AuProcessEntUser, P2V((uint64_t)AuPmmngrAlloc() + 4096), V2P((uint64_t)cr3), proc->name);
 
 	thr->uentry = entry;
 	proc->main_thread = thr;
