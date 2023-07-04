@@ -280,7 +280,7 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 	* Here, initialize the USB thread, which is responsible for
 	* many hotplugging things
 	*/
-	AuThread *t = AuCreateKthread(AnuvabUSB3Thread, P2V((uint64_t)AuPmmngrAlloc() + 4096), (uint64_t)AuGetRootPageTable(), "AnuUsb");
+	AuThread *t = AuCreateKthread(AnuvabUSB3Thread, P2V((uint64_t)AuPmmngrAlloc() + 4096), (uint64_t)AuGetRootPageTable(), "AnubhavUsb");
 	usb_device->usb_thread = t;
 	usb_device->initialised = true;
 

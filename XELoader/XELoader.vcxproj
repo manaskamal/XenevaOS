@@ -20,6 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="pe_.cpp" />
   </ItemGroup>
   <ItemGroup>
     <NASM Include="crt0.asm" />

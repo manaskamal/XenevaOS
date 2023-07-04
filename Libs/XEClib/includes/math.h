@@ -46,21 +46,21 @@
 #define M_SQRT2     1.41421356237309504880 // sqrt(2)
 #define M_SQRT1_2   0.70710678118654752440 // 1/sqrt(2)
 
-XE_EXTERN XE_EXPORT double ceil(double);
-XE_EXTERN XE_EXPORT double cos(double);
-XE_EXTERN XE_EXPORT float cosf(float);
-XE_EXTERN XE_EXPORT double fabs(double);
-XE_EXTERN XE_EXPORT float fabsf(float);
-XE_EXTERN XE_EXPORT double floor(double);
-XE_EXTERN XE_EXPORT float floorf(float);
-XE_EXTERN XE_EXPORT double fmod(double, double);
-XE_EXTERN XE_EXPORT double modf(double, double *);
-XE_EXTERN XE_EXPORT double pow(double, double);
-XE_EXTERN XE_EXPORT double sin(double);
-XE_EXTERN XE_EXPORT float sinf(float);
-XE_EXTERN XE_EXPORT double sqrt(double);
-XE_EXTERN XE_EXPORT float sqrtf(float x);
-XE_EXTERN XE_EXPORT double tan(double);
-XE_EXTERN XE_EXPORT float tanf(float);
+XE_EXTERN XE_LIB double ceil(double);
+XE_EXTERN XE_LIB double cos(double);
+XE_EXTERN XE_LIB float cosf(float);
+XE_EXTERN XE_LIB double fabs(double);
+XE_EXTERN XE_LIB float fabsf(float);
+XE_EXTERN XE_LIB double floor(double);
+XE_EXTERN XE_LIB float floorf(float);
+XE_EXTERN XE_LIB double fmod(double, double);
+XE_EXTERN XE_LIB double modf(double, double *);
+XE_EXTERN XE_LIB double pow(double, double);
+XE_EXTERN XE_LIB double sin(double);
+XE_EXTERN XE_LIB float sinf(float);
+XE_EXTERN XE_LIB double sqrt(double);
+XE_EXTERN XE_LIB float sqrtf(float x);
+XE_EXTERN XE_LIB double tan(double);
+XE_EXTERN XE_LIB float tanf(float);
 
 #endif

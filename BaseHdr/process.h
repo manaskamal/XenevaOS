@@ -79,7 +79,7 @@ typedef void(*entry) (void*);
 #pragma pack(push,1)
 typedef struct _au_proc_ {
 	int proc_id;
-	char name[8];
+	char name[16];
 	uint8_t state;
 	uint8_t type_flags;
 
@@ -106,9 +106,9 @@ typedef struct _au_proc_ {
 	list_t* shmmaps;
 	size_t shm_break;
 	size_t proc_mem_heap;
+	size_t proc_mmap_len;
 
 	/* data structure */
-	struct _au_proc_ *parent;
 	struct _au_proc_ *next;
 	struct _au_proc_ *prev;
 }AuProcess;

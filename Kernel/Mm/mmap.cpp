@@ -58,7 +58,6 @@ void* CreateMemMapping(void* address, size_t len, int prot, int flags, int fd,
 	AuProcess* proc = AuProcessFindThread(curr_thr);
 	AuVFSNode *file = NULL;
 	AuVFSNode* fsys = NULL;
-	AuTextOut("mmap: len -> %d, fd -> %d, off -> %d \n", len, fd, offset);
 	if (fd != -1) 
 		file = proc->fds[fd];
 	
@@ -77,7 +76,6 @@ void* CreateMemMapping(void* address, size_t len, int prot, int flags, int fd,
 			return 0;
 		if (!(file->flags & FS_FLAG_DEVICE)) {
 			file_block_start = AuVFSGetBlockFor(fsys, file, offset);
-			AuTextOut("mmap: file_block_start -> %x \n", file_block_start);
 			file->current = file_block_start;
 		}
 	}
@@ -89,6 +87,7 @@ void* CreateMemMapping(void* address, size_t len, int prot, int flags, int fd,
 		AuMapPage(phys, lookup_addr + i * PAGE_SIZE, X86_64_PAGING_USER);
 	}
 
+	proc->proc_mmap_len += len;
 	return (void*)lookup_addr;
 }
 
@@ -109,7 +108,10 @@ void UnmapMemMapping(void* address, size_t len) {
 	for (int i = 0; i < len / PAGE_SIZE; i++) {
 		AuVPage* page = AuVmmngrGetPage(addr + i * PAGE_SIZE, VIRT_GETPAGE_ONLY_RET, VIRT_GETPAGE_ONLY_RET);
 		uint64_t phys = page->bits.page << PAGE_SHIFT;
-		AuPmmngrFree((void*)phys);
+		if (phys) {
+			SeTextOut("[aurora]:mmap freeing phys_addr -> %x , virt_addr -> %x\r\n", phys, (addr + i * PAGE_SIZE));
+			AuPmmngrFree((void*)phys);
+		}
 		page->bits.page = 0;
 		page->bits.present = 0;
 	}

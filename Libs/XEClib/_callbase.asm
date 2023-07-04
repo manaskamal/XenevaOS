@@ -31,6 +31,8 @@
 section .text
 [BITS 64]
 
+%define YES_DYNAMIC 0
+
 ;;----------------------------------
 ;; _KePrint is a demo call to kernel
 ;; using kernel print interface to
@@ -38,6 +40,9 @@ section .text
 ;; @param rcx -- the text to pass
 ;;----------------------------------
 global _KePrint
+%ifdef YES_DYNAMIC
+export _KePrint
+%endif
 _KePrint:
       mov r12, 1
 	  mov r13, rcx
@@ -52,6 +57,9 @@ _KePrint:
 ;; currently running thread
 ;;----------------------------
 global _KePauseThread
+%ifdef YES_DYNAMIC
+export _KePauseThread
+%endif
 _KePauseThread:
       mov r12, 2
 	  mov r13, 0
@@ -67,6 +75,9 @@ _KePauseThread:
 ;; of currently running thread
 ;;---------------------------------
 global _KeGetThreadID
+%ifdef YES_DYNAMIC
+export _KeGetThreadID
+%endif
 _KeGetThreadID:
       mov r12, 3
 	  mov r13, 0
@@ -82,6 +93,9 @@ _KeGetThreadID:
 ;; current process id 
 ;;--------------------------------
 global _KeGetProcessID
+%ifdef YES_DYNAMIC
+export _KeGetProcessID
+%endif
 _KeGetProcessID:
       mov r12, 4
 	  mov r13, 0
@@ -96,6 +110,9 @@ _KeGetProcessID:
 ;; running process
 ;;----------------------------------------
 global _KeProcessExit
+%ifdef YES_DYNAMIC
+export _KeProcessExit
+%endif
 _KeProcessExit:
       mov r12, 5
 	  mov r13, 0
@@ -114,6 +131,9 @@ _KeProcessExit:
 ;;=========================================
 
 global _KeProcessWaitForTermination
+%ifdef YES_DYNAMIC
+export _KeProcessWaitForTermination
+%endif
 _KeProcessWaitForTermination:
       mov r12, 6
 	  mov r13, rcx
@@ -132,6 +152,9 @@ _KeProcessWaitForTermination:
 ;; slot
 ;;========================================
 global _KeCreateProcess
+%ifdef YES_DYNAMIC
+export _KeCreateProcess
+%endif
 _KeCreateProcess:
       mov r12, 7
 	  mov r13, rcx
@@ -142,6 +165,9 @@ _KeCreateProcess:
 	  ret
 
 global _KeProcessLoadExec
+%ifdef YES_DYNAMIC
+export _KeProcessLoadExec
+%endif
 _KeProcessLoadExec:
       mov r12, 8
 	  mov r13, rcx
@@ -152,6 +178,9 @@ _KeProcessLoadExec:
 	  ret
 
 global _KeCreateSharedMem
+%ifdef YES_DYNAMIC
+export _KeCreateSharedMem
+%endif
 _KeCreateSharedMem:
       mov r12, 9
 	  mov r13, rcx
@@ -162,6 +191,9 @@ _KeCreateSharedMem:
 	  ret
 
 global _KeObtainSharedMem
+%ifdef YES_DYNAMIC
+export _KeObtainSharedMem
+%endif
 _KeObtainSharedMem:
       mov r12, 10
 	  mov r13, rcx
@@ -172,6 +204,9 @@ _KeObtainSharedMem:
 	  ret
 
 global _KeUnmapSharedMem
+%ifdef YES_DYNAMIC
+export _KeUnmapSharedMem
+%endif
 _KeUnmapSharedMem:
       mov r12, 11
 	  mov r13, rcx
@@ -182,6 +217,9 @@ _KeUnmapSharedMem:
 	  ret
 
 global _KeMemMap
+%ifdef YES_DYNAMIC
+export _KeMemMap
+%endif
 _KeMemMap:
       xor rax, rax
 	  mov r12, 13
@@ -193,6 +231,9 @@ _KeMemMap:
 	  ret
 
 global _KeMemUnmap
+%ifdef YES_DYNAMIC
+export _KeMemUnmap
+%endif
 _KeMemUnmap:
       xor rax,rax
 	  mov r12, 14
@@ -211,6 +252,9 @@ _KeMemUnmap:
 ; multiplied by PAGE_SIZE
 ;====================================
 global _KeGetProcessHeapMem
+%ifdef YES_DYNAMIC
+export _KeGetProcessHeapMem
+%endif
 _KeGetProcessHeapMem:
       xor rax,rax
 	  mov r12, 15
@@ -228,6 +272,9 @@ _KeGetProcessHeapMem:
 ; @param rdx -- open mode
 ;=====================================
 global _KeOpenFile
+%ifdef YES_DYNAMIC
+export _KeOpenFile
+%endif
 _KeOpenFile:
       xor rax, rax
 	  mov r12, 12
@@ -246,6 +293,9 @@ _KeOpenFile:
 ; @param r8 -- length to read in
 ;====================================
 global _KeReadFile
+%ifdef YES_DYNAMIC
+export _KeReadFile
+%endif
 _KeReadFile:
       xor rax,rax
 	  mov r12, 16
@@ -264,6 +314,9 @@ _KeReadFile:
 ; @param r8 -- length to write out
 ;====================================
 global _KeWriteFile
+%ifdef YES_DYNAMIC
+export _KeWriteFile
+%endif
 _KeWriteFile:
       xor rax,rax
 	  mov r12, 17
@@ -280,6 +333,9 @@ _KeWriteFile:
 ; @param rcx -- pathname
 ;==================================
 global _KeCreateDir
+%ifdef YES_DYNAMIC
+export _KeCreateDir
+%endif
 _KeCreateDir:
       xor rax,rax
 	  mov r12, 18
@@ -297,6 +353,9 @@ _KeCreateDir:
 ; @param rcx -- filename
 ;====================================
 global _KeRemoveFile
+%ifdef YES_DYNAMIC
+export _KeRemoveFile
+%endif
 _KeRemoveFile:
       xor rax,rax
 	  mov r12, 19
@@ -312,6 +371,9 @@ _KeRemoveFile:
 ; @param rcx -- file descriptor
 ;====================================
 global _KeCloseFile
+%ifdef YES_DYNAMIC
+export _KeCloseFile
+%endif
 _KeCloseFile:
       xor rax, rax
 	  mov r12, 20
@@ -323,6 +385,9 @@ _KeCloseFile:
 	  ret
 
 global _KeFileIoControl
+%ifdef YES_DYNAMIC
+export _KeFileIoControl
+%endif
 _KeFileIoControl:
       xor rax, rax
 	  mov r12, 21
@@ -338,6 +403,9 @@ _KeFileIoControl:
 ;; of a file to a buffer
 ;;===============================
 global _KeFileStat
+%ifdef YES_DYNAMIC
+export _KeFileStat
+%endif
 _KeFileStat:
       xor rax, rax
 	  mov r12, 22

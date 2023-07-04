@@ -30,6 +30,7 @@
 #include <process.h>
 #include <aucon.h>
 #include <Mm\vmmngr.h>
+#include <Mm\mmap.h>
 #include <Mm\kmalloc.h>
 #include <pe.h>
 #include <Mm\pmmngr.h>
@@ -70,7 +71,7 @@ void AuAddProcess(AuProcess* parent, AuProcess *proc) {
 		proc->prev = proc_last;
 	}
 	proc_last = proc;
-	proc->parent = parent;
+	//proc->parent = parent;
 }
 
 /*
@@ -191,6 +192,7 @@ AuProcess* AuCreateRootProc() {
 	memset(proc, 0, sizeof(AuProcess));
 
 	proc->proc_id = AuAllocateProcessID();
+	memset(proc->name, 0, 16);
 	strcpy(proc->name, "_root");
 
 	/* create empty virtual address space */
@@ -200,11 +202,12 @@ AuProcess* AuCreateRootProc() {
 	proc->state = PROCESS_STATE_NOT_READY;
 	proc->cr3 = cr3;
 	proc->_main_stack_ = main_thr_stack;
-	//proc->childs = initialize_list();
+	
 	proc->vmareas = initialize_list();
 	proc->shmmaps = initialize_list();
 	proc->shm_break = USER_SHARED_MEM_START;
 	proc->proc_mem_heap = PROCESS_BREAK_ADDRESS;
+	proc->proc_mmap_len = 0;
 	for (int i = 0; i < FILE_DESC_PER_PROCESS; i++)
 		proc->fds[i] = 0;
 
@@ -227,6 +230,7 @@ AuProcess* AuCreateProcessSlot(AuProcess* parent, char* name) {
 	memset(proc, 0, sizeof(AuProcess));
 
 	proc->proc_id = AuAllocateProcessID();
+	memset(proc->name, 0, 16);
 	strcpy(proc->name, name);
 
 	/* create empty virtual address space */
@@ -241,6 +245,7 @@ AuProcess* AuCreateProcessSlot(AuProcess* parent, char* name) {
 	proc->shmmaps = initialize_list();
 	proc->shm_break = USER_SHARED_MEM_START;
 	proc->proc_mem_heap = PROCESS_BREAK_ADDRESS;
+	proc->proc_mmap_len = 0;
 
 	for (int i = 0; i < FILE_DESC_PER_PROCESS; i++)
 		proc->fds[i] = 0;
@@ -376,6 +381,8 @@ void AuProcessExit(AuProcess* proc) {
 			}
 		}
 	}
+
+	UnmapMemMapping((void*)PROCESS_MMAP_ADDRESS, proc->proc_mmap_len);
 
 	/*unmap all shared memory mappings */
 	AuSHMUnmapAll(proc);

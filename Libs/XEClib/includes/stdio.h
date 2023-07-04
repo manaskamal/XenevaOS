@@ -56,8 +56,8 @@ XE_EXTERN{
 #define stderr FILE*
 
 
-	XE_EXPORT int fprintf(FILE, const char*, ...);
-	XE_EXPORT int printf(const char*, ...);
+	XE_LIB int fprintf(FILE, const char*, ...);
+	XE_LIB int printf(const char*, ...);
 
 	/*
 	* fopen -- opens the file specified by name and associates a
@@ -65,7 +65,7 @@ XE_EXTERN{
 	* @param name -- file name
 	* @param mode -- file mode
 	*/
-	XE_EXPORT FILE* fopen(const char* name, const char* mode);
+	XE_LIB FILE* fopen(const char* name, const char* mode);
 	/*
 	* fread -- reads data from the given stream
 	* into the array pointed to by ptr
@@ -77,7 +77,7 @@ XE_EXTERN{
 	* with a size of size bytes
 	* @param stream -- pointer to a FILE object
 	*/
-	XE_EXPORT size_t fread(void* ptr, size_t size, size_t nmemb, FILE* stream);
+	XE_LIB size_t fread(void* ptr, size_t size, size_t nmemb, FILE* stream);
 
 	/*
 	* fwrite -- writes up to count items,
@@ -91,7 +91,7 @@ XE_EXTERN{
 	* with a size of size bytes
 	* @param stream -- pointer to a FILE object
 	*/
-	XE_EXPORT size_t fwrite(void* ptr, size_t sz, size_t nmemb, FILE* stream);
+	XE_LIB size_t fwrite(void* ptr, size_t sz, size_t nmemb, FILE* stream);
 
 	/*
 	* ftell -- returns the current file position of the
@@ -99,7 +99,7 @@ XE_EXTERN{
 	* the file
 	* @param fp -- pointer to FILE structure
 	*/
-	XE_EXPORT long ftell(FILE* fp);
+	XE_LIB long ftell(FILE* fp);
 
 	/*
 	* fseek -- moves or changes the position of
@@ -110,7 +110,7 @@ XE_EXTERN{
 	* @param offset -- offset in bytes
 	* @param pos -- position mode
 	*/
-	XE_EXPORT int fseek(FILE* fp, long int offset, int pos);
+	XE_LIB int fseek(FILE* fp, long int offset, int pos);
 
 	/*
 	* fgetc -- reads a single character from the
@@ -118,16 +118,16 @@ XE_EXTERN{
 	* and increases the file pointer.
 	* @param fp -- pointer to FILE structure
 	*/
-	XE_EXPORT int fgetc(FILE *fp);
+	XE_LIB int fgetc(FILE *fp);
 
 	/*
 	* fclose -- closes a file
 	* @param fp -- pointer to FILE structure
 	*/
-	XE_EXPORT int fclose(FILE* fp);
+	XE_LIB int fclose(FILE* fp);
 
-	XE_EXPORT int vfprintf(FILE* stream, const char* format, va_list arg);
-	XE_EXPORT int sprintf(char* str, const char* string);
+	XE_LIB int vfprintf(FILE* stream, const char* format, va_list arg);
+	XE_LIB int sprintf(char* str, const char* string);
 
 #ifdef __cplusplus
 }

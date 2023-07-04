@@ -171,7 +171,6 @@ void AuLoadExecToProcess(AuProcess* proc, char* filename, int argc,char** argv) 
 
 	AuMapPageEx(cr3, V2P((size_t)buf), _image_base_, X86_64_PAGING_USER);
 
-
 	/* this should be memory mapped, i.e, sections should be
 	 * memory mapped
 	 */

@@ -42,8 +42,8 @@ typedef struct __jmp_buf_tag {
 #ifdef __cplusplus
 XE_EXTERN{
 #endif
-	XE_EXPORT int setjmp(jmp_buf);
-	XE_EXPORT void longjmp(jmp_buf, int);
+	XE_LIB int setjmp(jmp_buf);
+	XE_LIB void longjmp(jmp_buf, int);
 #ifdef __cplusplus
 }
 #endif

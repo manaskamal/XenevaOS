@@ -73,12 +73,12 @@ typedef struct _XEFileControl_ {
 }XEFileIOControl;
 #pragma pack(pop)
 
-XE_EXTERN XE_EXPORT int _KeOpenFile(char* pathname, int mode);
-XE_EXTERN XE_EXPORT size_t _KeReadFile(int fd, void* buffer, size_t length);
-XE_EXTERN XE_EXPORT size_t _KeWriteFile(int fd, void* buffer, size_t length);
-XE_EXTERN XE_EXPORT int _KeCreateDir(char* filename);
-XE_EXTERN XE_EXPORT int _KeRemoveFile(char* pathname);
-XE_EXTERN XE_EXPORT int _KeCloseFile(int fd);
-XE_EXTERN XE_EXPORT int _KeFileIoControl(int fd, int code, void* arg);
-XE_EXTERN XE_EXPORT int _KeFileStat(int fd, void* buf);
+XE_EXTERN XE_LIB int _KeOpenFile(char* pathname, int mode);
+XE_EXTERN XE_LIB size_t _KeReadFile(int fd, void* buffer, size_t length);
+XE_EXTERN XE_LIB size_t _KeWriteFile(int fd, void* buffer, size_t length);
+XE_EXTERN XE_LIB int _KeCreateDir(char* filename);
+XE_EXTERN XE_LIB int _KeRemoveFile(char* pathname);
+XE_EXTERN XE_LIB int _KeCloseFile(int fd);
+XE_EXTERN XE_LIB int _KeFileIoControl(int fd, int code, void* arg);
+XE_EXTERN XE_LIB int _KeFileStat(int fd, void* buf);
 #endif

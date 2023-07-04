@@ -239,7 +239,7 @@ typedef struct _bdl_ {
 }HDABDLEntry;
 #pragma pack(pop)
 
-
+#pragma pack(push,1)
 typedef struct _hd_audio_ {
 	uint64_t mmio;
 	uint32_t* corb;
@@ -254,6 +254,7 @@ typedef struct _hd_audio_ {
 	uintptr_t output_ptr;
 	uint64_t dma_pos_buff;
 }HDAudio;
+#pragma pack(pop)
 
 /*
 * _aud_inb_ -- reads a value from mmio register in byte

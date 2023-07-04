@@ -68,6 +68,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <TargetExt>.lib</TargetExt>
+    <GenerateManifest>false</GenerateManifest>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -86,7 +87,7 @@
       <SDLCheck>false</SDLCheck>
       <AdditionalIncludeDirectories>E:\Xeneva Project\Aurora\Libs\XEClib\includes</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <PreprocessorDefinitions>ARCH_X64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>ARCH_X64; YES_DYNAMIC;DYNAMIC_EXPORTER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <IgnoreStandardIncludePath>true</IgnoreStandardIncludePath>
       <ExceptionHandling>false</ExceptionHandling>
       <BasicRuntimeChecks />
@@ -96,7 +97,25 @@
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
     </ClCompile>
     <Link>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <OutputFile>F:\XEClib.dll</OutputFile>
+      <AdditionalDependencies />
+      <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
+      <EnableUAC>false</EnableUAC>
+      <GenerateMapFile>true</GenerateMapFile>
+      <MapExports>true</MapExports>
+      <SubSystem>Native</SubSystem>
+      <StackReserveSize>
+      </StackReserveSize>
+      <StackCommitSize>0x10000</StackCommitSize>
+      <LargeAddressAware>true</LargeAddressAware>
+      <Driver>Driver</Driver>
+      <OptimizeReferences>false</OptimizeReferences>
+      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+      <RandomizedBaseAddress />
+      <FixedBaseAddress>false</FixedBaseAddress>
+      <AdditionalOptions>/filealign:4096 %(AdditionalOptions)</AdditionalOptions>
+      <BaseAddress>0x0000000000600000</BaseAddress>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -161,6 +180,7 @@
     <ClCompile Include="stdlib.cpp" />
     <ClCompile Include="string.cpp" />
     <ClCompile Include="sys\_heap.cpp" />
+    <ClCompile Include="sys\_xeneva.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

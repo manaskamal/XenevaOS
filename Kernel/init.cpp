@@ -104,7 +104,7 @@ void _AuMain(KERNEL_BOOT_INFO *info) {
 	/* make the kernel standalone*/
 	AuVmmngrBootFree();
 
-
+	AuTextOut("Thread siz -> %d, proc sz -> %d \n", sizeof(AuThread), sizeof(AuProcess));
 	/* Process initialisation begins here */
 	AuStartRootProc();
 	AuSchedulerStart();

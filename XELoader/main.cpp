@@ -34,24 +34,44 @@
 #include <string.h>
 #include <sys\mman.h>
 #include <sys\iocodes.h>
+#include "pe_.h"
 
 /*
  * XELdrStartProc -- starts a new process
  * @param filename -- path and name of the
  * process
  */
-void XELdrStartProc(char* filename) {
-	int fd = _KeOpenFile(filename, FILE_OPEN_READ_ONLY);
+int XELdrStartProc(char* filename) {
+	int file = _KeOpenFile(filename, FILE_OPEN_READ_ONLY);
 
 	XEFileStatus *stat = (XEFileStatus*)malloc(sizeof(XEFileStatus));
 	memset(stat, 0, sizeof(XEFileStatus));
 
-	_KeFileStat(fd, stat);
+	_KeFileStat(file, stat);
+
+	uint64_t* buffer = (uint64_t*)_KeMemMap(NULL,4096, 0, 0, -1, 0);
+	memset(buffer, 0, 4096);
+
+	uint64_t* first_ptr = buffer;
+
+	_KeReadFile(file, buffer, 4096);
+	IMAGE_DOS_HEADER *dos_ = (IMAGE_DOS_HEADER*)buffer;
+	_KePrint("dos signature -> %x, first_ptr -> %x \n", dos_->e_magic, first_ptr);
+
+	while (stat->eof != 1) {
+		buffer = (uint64_t*)_KeMemMap(NULL, 4096, 0, 0, -1, 0);
+		_KeReadFile(file, buffer, 4096);
+		memset(stat, 0, sizeof(XEFileStatus));
+		_KeFileStat(file, stat);
+	}
+
+	uint8_t* aligned_buff = (uint8_t*)first_ptr;
+	XELdrLinkPE(aligned_buff, NULL);
 
 	free(stat);
 	_KePrint("Opening process of size %d KiB \n", (stat->size / 1024));
-	_KeCloseFile(fd);
-	
+	_KeCloseFile(file);
+	return 0;
 }
 
 /*
@@ -62,21 +82,12 @@ void XELdrStartProc(char* filename) {
 int main(int argc, char* argv[]) {
 	int pid = _KeGetProcessID();
 
-	//if (strcmp(argv[0], "-h") == 0) {
-	//	_KePrint("XELoadr v1.0 \n");
-	//	_KePrint("Copyright (C) Manas Kamal Choudhury 2020-2023\n");
-	//}
+	/* simply exit*/
+	if (!argv)
+		_KeProcessExit();
 
-	//if (strcmp(argv[1], "-f") == 0) {
-	//	//a file is given
-	//	
-	//}
-	/*char* filename = argv[0];
-	_KePrint("%s \n", filename);
-	XELdrStartProc(filename);*/
-
-	/*void* buff = malloc(4096);
-	memset(buff, 0, 4096);*/
+	char* filename = argv[0];
+	XELdrStartProc(filename);
 
 	while (1) {
 		_KeProcessExit();

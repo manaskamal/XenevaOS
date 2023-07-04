@@ -37,24 +37,24 @@
  * _KePauseThread -- pause currently running 
  * thread
  */
-XE_EXTERN XE_EXPORT int _KePauseThread();
+XE_EXTERN XE_LIB int _KePauseThread();
 
 /*
  * _KeGetThreadID -- get currently running
  * thread id
  */
-XE_EXTERN XE_EXPORT uint16_t _KeGetThreadID();
+XE_EXTERN XE_LIB uint16_t _KeGetThreadID();
 
 /*
  * _KeGetProcessID -- get currently running
  *  process id
  */
-XE_EXTERN XE_EXPORT int _KeGetProcessID();
+XE_EXTERN XE_LIB int _KeGetProcessID();
 
 /*
  * _KeProcessExit -- exits current process
  */
-XE_EXTERN XE_EXPORT int _KeProcessExit();
+XE_EXTERN XE_LIB int _KeProcessExit();
 
 /*
  * _KeProcessWaitForTermination -- suspends
@@ -62,7 +62,7 @@ XE_EXTERN XE_EXPORT int _KeProcessExit();
  * process state changes
  * @param pid -- process id,-1 for all 
  */
-XE_EXTERN XE_EXPORT int _KeProcessWaitForTermination(int pid);
+XE_EXTERN XE_LIB int _KeProcessWaitForTermination(int pid);
 
 /*
  * _KeCreateProcess -- create a new process
@@ -72,7 +72,7 @@ XE_EXTERN XE_EXPORT int _KeProcessWaitForTermination(int pid);
  * @ret -- process id of newly create process
  * slot
  */
-XE_EXTERN XE_EXPORT int _KeCreateProcess(int parent_id, char* name);
+XE_EXTERN XE_LIB int _KeCreateProcess(int parent_id, char* name);
 
 /*
  * _KeProcessLoadExec -- loads an executable to a
@@ -83,13 +83,13 @@ XE_EXTERN XE_EXPORT int _KeCreateProcess(int parent_id, char* name);
  * @param argv -- argument array to pass
  *
  */
-XE_EXTERN XE_EXPORT int _KeProcessLoadExec(int proc_id, char* filename, int argc, char** argv);
+XE_EXTERN XE_LIB int _KeProcessLoadExec(int proc_id, char* filename, int argc, char** argv);
 
 /*
 * _KeGetProcessHeapMem -- Grabs some memory from
 * heap memory of current process slot
 * @param sz -- size that is needed, should be page-aligned
 */
-XE_EXTERN XE_EXPORT uint64_t _KeGetProcessHeapMem(size_t sz);
+XE_EXTERN XE_LIB uint64_t _KeGetProcessHeapMem(size_t sz);
 
 #endif

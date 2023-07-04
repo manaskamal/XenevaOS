@@ -69,7 +69,7 @@ XE_EXTERN {
 	* \return 0 if the lock was acquired successfully. Anything else is
 	* failure.
 	*/
-	XE_EXPORT int liballoc_lock();
+	XE_LIB int liballoc_lock();
 
 	/** This function unlocks what was previously locked by the liballoc_lock
 	* function.  If it disabled interrupts, it enables interrupts. If it
@@ -77,7 +77,7 @@ XE_EXTERN {
 	*
 	* \return 0 if the lock was successfully released.
 	*/
-	XE_EXPORT int liballoc_unlock();
+	XE_LIB int liballoc_unlock();
 
 	/** This is the hook into the local system which allocates pages. It
 	* accepts an integer parameter which is the number of pages
@@ -86,7 +86,7 @@ XE_EXTERN {
 	* \return NULL if the pages were not allocated.
 	* \return A pointer to the allocated memory.
 	*/
-	XE_EXPORT void* liballoc_alloc(int);
+	XE_LIB void* liballoc_alloc(int);
 
 	/** This frees previously allocated memory. The void* parameter passed
 	* to the function is the exact same value returned from a previous
@@ -96,12 +96,12 @@ XE_EXTERN {
 	*
 	* \return 0 if the memory was successfully freed.
 	*/
-	XE_EXPORT int liballoc_free(void*, int);
+	XE_LIB int liballoc_free(void*, int);
 
-	XE_EXPORT void     *malloc(unsigned int);				//< The standard function.
-    XE_EXPORT void     *realloc(void *, unsigned int);		//< The standard function.
-	XE_EXPORT void     *calloc(unsigned long long, unsigned long long);		//< The standard function.
-	XE_EXPORT void      free(void *);					//< The standard function.
+	XE_LIB void     *malloc(unsigned int);				//< The standard function.
+	XE_LIB void     *realloc(void *, unsigned int);		//< The standard function.
+	XE_LIB void     *calloc(unsigned long long, unsigned long long);		//< The standard function.
+	XE_LIB void      free(void *);					//< The standard function.
 
 
 #ifdef __cplusplus

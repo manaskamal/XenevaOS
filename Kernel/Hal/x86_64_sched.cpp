@@ -201,7 +201,7 @@ void AuThreadDeleteTrash(AuThread* thread) {
 *  @param name -- name of the thread
 *  @param priority -- (currently unused) thread's priority
 **/
-AuThread* AuCreateKthread(void(*entry) (uint64_t), uint64_t stack, uint64_t cr3, char name[8])
+AuThread* AuCreateKthread(void(*entry) (uint64_t), uint64_t stack, uint64_t cr3, char *name)
 {
 	AuThread *t = (AuThread*)kmalloc(sizeof(AuThread));
 	memset(t, 0, sizeof(AuThread));
@@ -240,8 +240,8 @@ AuThread* AuCreateKthread(void(*entry) (uint64_t), uint64_t stack, uint64_t cr3,
 
 	/* process will fill uentry */
 	t->uentry = NULL; 
-	memset(t->name, 0, 8);
-	strncpy(t->name, name, 8);
+	memset(t->name, 0,16);
+	strcpy(t->name, name);
 	t->id = thread_id++;
 	t->fx_state = (uint8_t*)kmalloc(512);
 	
@@ -260,7 +260,7 @@ AuThread* AuCreateKthread(void(*entry) (uint64_t), uint64_t stack, uint64_t cr3,
 *  @param name -- name of the thread
 *  @param priority -- (currently unused) thread's priority
 */
-AuThread* AuCreateUthread(void(*entry) (void*), uint64_t stack, uint64_t cr3, char name[8])
+AuThread* AuCreateUthread(void(*entry) (void*), uint64_t stack, uint64_t cr3, char *name)
 {
 	AuThread *t = (AuThread*)kmalloc(sizeof(AuThread));
 	memset(t, 0, sizeof(AuThread));

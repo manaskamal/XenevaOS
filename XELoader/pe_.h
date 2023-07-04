@@ -246,4 +246,10 @@ static const enum PeMachineType   MACHINE_NATIVE = IMAGE_FILE_MACHINE_I386;
 #define IMAGE_IMPORT_LOOKUP_TABLE_FLAG  IMAGE_IMPORT_LOOKUP_TABLE_FLAG_PE32
 
 
+/*
+* XELdrLinkPE -- Links a dll library to its executable
+* @param image -- dll image
+* @param exporter -- executable image
+*/
+extern void XELdrLinkPE(void* exec, void* dll);
 #endif

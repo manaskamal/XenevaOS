@@ -52,10 +52,8 @@ extern "C" void main(int argc, char* argv[]) {
 	if (strcmp(argv[0], "-about") == 0)
 		_KePrint("Xeneva v1.0 !! Copyright (C) Manas Kamal Choudhury 2020-2023 \n");
 
-
-	int child = _KeCreateProcess(0, "ldr");
-	_KeProcessLoadExec(child, "/usb.dll", 0, NULL);
-
+	int child = _KeCreateProcess(0, "deodhai");
+	_KeProcessLoadExec(child, "/deodhai.exe", 0, NULL);
 	while (1) {
 		if (pid == 1) {
 			_KeProcessWaitForTermination(-1);

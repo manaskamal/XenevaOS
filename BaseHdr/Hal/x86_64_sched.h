@@ -76,7 +76,7 @@ typedef struct _frame_ {
 	bool user_;          //0xD0
 }AuThreadFrame;
 
-
+#pragma pack(push,1)
 typedef struct _syscall_param_ {
 	uint64_t param1;    //0xE0
 	uint64_t param2;    //0xE8
@@ -85,8 +85,10 @@ typedef struct _syscall_param_ {
 	uint64_t param5;    //0x100
 	uint64_t param6;    //0x108
 }AuSyscallParam;
+#pragma pack(pop)
 
 
+#pragma pack(push,1)
 /* AuUserEntry structure */
 typedef struct _uentry_ {
 	uint64_t entrypoint;
@@ -97,6 +99,8 @@ typedef struct _uentry_ {
 	uint64_t argvaddr;
 	char** argvs;
 }AuUserEntry;
+#pragma pack(pop)
+
 
 #pragma pack(push,1)
 typedef struct _au_thread_ {
@@ -107,7 +111,7 @@ typedef struct _au_thread_ {
 	AuSyscallParam syscall_param;  //0xE0
 	uint8_t *fx_state;
 	uint32_t mxcsr;
-	char name[8];
+	char name[16];
 	uint8_t state;
 	uint16_t id;
 	uint16_t quanta;
@@ -146,7 +150,7 @@ extern void AuSchedulerInitAp();
 *  @param name -- name of the thread
 *  @param priority -- (currently unused) thread's priority
 **/
-AU_EXTERN AU_EXPORT AuThread* AuCreateKthread(void(*entry) (uint64_t), uint64_t stack, uint64_t cr3, char name[8]);
+AU_EXTERN AU_EXPORT AuThread* AuCreateKthread(void(*entry) (uint64_t), uint64_t stack, uint64_t cr3, char *name);
 /**
 *  Creates a user mode thread
 *  @param entry -- Entry point address
@@ -155,7 +159,7 @@ AU_EXTERN AU_EXPORT AuThread* AuCreateKthread(void(*entry) (uint64_t), uint64_t 
 *  @param name -- name of the thread
 *  @param priority -- (currently unused) thread's priority
 */
-extern AuThread* AuCreateUthread(void(*entry) (void*), uint64_t stack, uint64_t cr3, char name[8]);
+extern AuThread* AuCreateUthread(void(*entry) (void*), uint64_t stack, uint64_t cr3, char *name);
 
 /*
 * AuGetCurrentThread -- gets the running thread

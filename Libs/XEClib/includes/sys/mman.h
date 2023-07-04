@@ -42,14 +42,14 @@
 * @param filedesc -- file descriptor to map
 * @param offset -- offset from where to begin, it should be multiple of PAGE_SIZE
 */
-XE_EXTERN XE_EXPORT void* _KeMemMap(void* address, size_t length, int protect, int flags, int filedesc, uint64_t offset);
+XE_EXTERN XE_LIB void* _KeMemMap(void* address, size_t length, int protect, int flags, int filedesc, uint64_t offset);
 
 /*
  * _KeMemUnmap -- unmaps a memory segment
  * @param address -- starting address of mapped address range
  * @param len -- length of the address mapped range
  */
-XE_EXTERN XE_EXPORT void _KeMemUnmap(void* address, size_t len);
+XE_EXTERN XE_LIB void _KeMemUnmap(void* address, size_t len);
 
 /*
 * _KeCreateSharedMem -- create a shared memory chunk
@@ -57,7 +57,7 @@ XE_EXTERN XE_EXPORT void _KeMemUnmap(void* address, size_t len);
 * @param sz -- memory size
 * @param flags -- shared memory flags
 */
-XE_EXTERN XE_EXPORT int _KeCreateSharedMem(uint16_t key, size_t sz, uint8_t flags);
+XE_EXTERN XE_LIB int _KeCreateSharedMem(uint16_t key, size_t sz, uint8_t flags);
 
 /*
 * _KeObtainSharedMem -- obtain a shared memory
@@ -65,18 +65,18 @@ XE_EXTERN XE_EXPORT int _KeCreateSharedMem(uint16_t key, size_t sz, uint8_t flag
 * @param shmaddr -- user specified address
 * @param shmflg -- flags to use for protection
 */
-XE_EXTERN XE_EXPORT void* _KeObtainSharedMem(uint16_t id, void* shmaddr, int shmflg);
+XE_EXTERN XE_LIB void* _KeObtainSharedMem(uint16_t id, void* shmaddr, int shmflg);
 
 /*
 * _KeUnmapSharedMem -- unmap shared memory segment
 * @param key -- key to search
 */
-XE_EXTERN XE_EXPORT void _KeUnmapSharedMem(uint16_t key);
+XE_EXTERN XE_LIB void _KeUnmapSharedMem(uint16_t key);
 
 /*
  * _KeGetProcessHeapMem -- request a new memory from 
  * process heap
  * @param sz -- size in bytes
  */
-XE_EXTERN XE_EXPORT uint64_t _KeGetProcessHeapMem(size_t sz);
+XE_EXTERN XE_LIB uint64_t _KeGetProcessHeapMem(size_t sz);
 #endif

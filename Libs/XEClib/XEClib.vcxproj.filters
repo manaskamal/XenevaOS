@@ -89,5 +89,8 @@
     <ClCompile Include="stdlib.cpp" />
     <ClCompile Include="errno.cpp" />
     <ClCompile Include="stdio.cpp" />
+    <ClCompile Include="sys\_xeneva.cpp">
+      <Filter>sys</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
