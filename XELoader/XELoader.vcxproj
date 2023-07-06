@@ -21,6 +21,7 @@
   <ItemGroup>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="pe_.cpp" />
+    <ClCompile Include="XELdrObject.cpp" />
   </ItemGroup>
   <ItemGroup>
     <NASM Include="crt0.asm" />
@@ -28,6 +29,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pe_.h" />
+    <ClInclude Include="XELdrObject.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{FD948B35-2AB4-4AB3-88EF-7CC30E4A7B56}</ProjectGuid>

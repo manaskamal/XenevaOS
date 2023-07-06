@@ -29,10 +29,15 @@
 
 #include <_xeneva.h>
 #include <sys\_keproc.h>
+#include <sys\_kefile.h>
+#include <stdlib.h>
+#include <sys\iocodes.h>
+#include <string.h>
+#include <chitralekha.h>
 
 int main(int argc, char* arv[]) {
 	_KePrint("Deodhai v1.0 running \n");
-
+	ChPrintLibName();
 	while (1) {
 		_KeProcessExit();
 	}

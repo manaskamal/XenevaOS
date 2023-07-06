@@ -108,10 +108,9 @@ void UnmapMemMapping(void* address, size_t len) {
 	for (int i = 0; i < len / PAGE_SIZE; i++) {
 		AuVPage* page = AuVmmngrGetPage(addr + i * PAGE_SIZE, VIRT_GETPAGE_ONLY_RET, VIRT_GETPAGE_ONLY_RET);
 		uint64_t phys = page->bits.page << PAGE_SHIFT;
-		if (phys) {
-			SeTextOut("[aurora]:mmap freeing phys_addr -> %x , virt_addr -> %x\r\n", phys, (addr + i * PAGE_SIZE));
+		if (phys) 
 			AuPmmngrFree((void*)phys);
-		}
+
 		page->bits.page = 0;
 		page->bits.present = 0;
 	}

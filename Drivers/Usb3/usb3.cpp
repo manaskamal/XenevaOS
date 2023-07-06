@@ -588,6 +588,7 @@ void XHCIPortInitialize(USBDevice *dev, unsigned int port) {
 		else {
 			SeTextOut("[USB]: Device Vendor id -> %x, Product Id -> %x, speed -> %s \r\n", dev_desc->idVendor, dev_desc->idProduct,
 				XHCIGetPortSpeed(port_speed));
+			SeTextOut("wPacket Size -> %d bytes \r\n", dev_desc->bMaxPacketSize0);
 		}
 
 		/* print the usb device name */
@@ -606,6 +607,10 @@ void XHCIPortInitialize(USBDevice *dev, unsigned int port) {
 		for (int l = 0; l < 10; l++)
 		SeTextOut("%c", string[l]);
 		SeTextOut("\r\n");
+
+		/* need to send Evaluate Context Command, needs updating
+		 * the max_packet_size
+		 */
 
 		AuPmmngrFree((void*)V2P((size_t)string_buf));
 		AuPmmngrFree((void*)V2P((size_t)buffer));

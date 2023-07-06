@@ -83,7 +83,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>false</SDLCheck>
-      <AdditionalIncludeDirectories>E:\Xeneva Project\Aurora\Libs\XEClib\includes;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>E:\Xeneva Project\Aurora\Libs\XEClib\includes;E:\Xeneva Project\Aurora\Libs\Chitralekha;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>ARCH_X64;YES_DYNAMIC; DYNAMIC_IMPORTER ;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <IgnoreStandardIncludePath>true</IgnoreStandardIncludePath>
       <ExceptionHandling>false</ExceptionHandling>
@@ -98,7 +98,7 @@
       </GenerateDebugInformation>
       <OutputFile>F:\deodhai.exe</OutputFile>
       <AdditionalLibraryDirectories>E:\Xeneva Project\Aurora\x64\Debug;E:\Xeneva Project\Aurora\Libs\XECrt;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>XEClib.lib; xecrt.lib;</AdditionalDependencies>
+      <AdditionalDependencies>XEClib.lib; xecrt.lib; Chitralekha.lib;</AdditionalDependencies>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
       <EnableUAC>false</EnableUAC>
       <GenerateMapFile>true</GenerateMapFile>

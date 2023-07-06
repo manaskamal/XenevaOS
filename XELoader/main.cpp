@@ -35,13 +35,59 @@
 #include <sys\mman.h>
 #include <sys\iocodes.h>
 #include "pe_.h"
+#include "XELdrObject.h"
 
+/*
+ * XELdrLoadObject -- loads an object
+ * @param obj
+ */
+int XELdrLoadObject(XELoaderObject *obj){
+	int file = _KeOpenFile(obj->objname, FILE_OPEN_READ_ONLY);
+
+
+	XEFileStatus *stat = (XEFileStatus*)malloc(sizeof(XEFileStatus));
+	memset(stat, 0, sizeof(XEFileStatus));
+
+	_KeFileStat(file, stat);
+
+	uint64_t* buffer = (uint64_t*)_KeMemMap(NULL, 4096, 0, 0, -1, 0);
+	memset(buffer, 0, 4096);
+
+	uint64_t* first_ptr = buffer;
+	uint64_t _image_load_base_ = (uint64_t)first_ptr;
+
+	_KeReadFile(file, buffer, 4096);
+	IMAGE_DOS_HEADER *dos_ = (IMAGE_DOS_HEADER*)buffer;
+	PIMAGE_NT_HEADERS nt = raw_offset<PIMAGE_NT_HEADERS>(dos_, dos_->e_lfanew);
+	PSECTION_HEADER secthdr = raw_offset<PSECTION_HEADER>(&nt->OptionalHeader, nt->FileHeader.SizeOfOptionaHeader);
+
+	intptr_t original_base = nt->OptionalHeader.ImageBase;
+
+	for (size_t i = 0; i < nt->FileHeader.NumberOfSections; ++i) {
+		size_t sect_ld_addr = _image_load_base_ + secthdr[i].VirtualAddress;
+		size_t sect_sz = secthdr[i].VirtualSize;
+		int req_pages = sect_sz / 4096;
+		if ((sect_sz % 4096) != 0)
+			req_pages++;
+
+		for (int j = 0; j < req_pages; j++) {
+			uint64_t *block = (uint64_t*)_KeMemMap(NULL, 4096, 0, 0, -1, 0);
+			_KeReadFile(file, block, 4096);
+		}
+	}
+
+	obj->load_addr = _image_load_base_;
+	obj->loaded = true;
+	_KeCloseFile(file);
+	free(stat);
+	return 0;
+}
 /*
  * XELdrStartProc -- starts a new process
  * @param filename -- path and name of the
  * process
  */
-int XELdrStartProc(char* filename) {
+int XELdrStartProc(char* filename, XELoaderObject *obj) {
 	int file = _KeOpenFile(filename, FILE_OPEN_READ_ONLY);
 
 	XEFileStatus *stat = (XEFileStatus*)malloc(sizeof(XEFileStatus));
@@ -53,27 +99,44 @@ int XELdrStartProc(char* filename) {
 	memset(buffer, 0, 4096);
 
 	uint64_t* first_ptr = buffer;
+	uint64_t _image_load_base_ = (uint64_t)first_ptr;
 
 	_KeReadFile(file, buffer, 4096);
 	IMAGE_DOS_HEADER *dos_ = (IMAGE_DOS_HEADER*)buffer;
-	_KePrint("dos signature -> %x, first_ptr -> %x \n", dos_->e_magic, first_ptr);
+	PIMAGE_NT_HEADERS nt = raw_offset<PIMAGE_NT_HEADERS>(dos_, dos_->e_lfanew);
+	PSECTION_HEADER secthdr = raw_offset<PSECTION_HEADER>(&nt->OptionalHeader, nt->FileHeader.SizeOfOptionaHeader);
 
-	while (stat->eof != 1) {
-		buffer = (uint64_t*)_KeMemMap(NULL, 4096, 0, 0, -1, 0);
-		_KeReadFile(file, buffer, 4096);
-		memset(stat, 0, sizeof(XEFileStatus));
-		_KeFileStat(file, stat);
+	intptr_t original_base = nt->OptionalHeader.ImageBase;
+	intptr_t new_addr = _image_load_base_;
+	intptr_t diff = new_addr - original_base;
+
+	for (size_t i = 0; i < nt->FileHeader.NumberOfSections; ++i) {
+		size_t sect_ld_addr = _image_load_base_ + secthdr[i].VirtualAddress;
+		size_t sect_sz = secthdr[i].VirtualSize;
+		int req_pages = sect_sz / 4096;
+		if ((sect_sz % 4096) != 0)
+			req_pages++;
+
+		for (int j = 0; j < req_pages; j++) {
+			uint64_t *block = (uint64_t*)_KeMemMap(NULL, 4096, 0, 0, -1, 0);
+			_KeReadFile(file, block, 4096);
+		}
 	}
-
+	
 	uint8_t* aligned_buff = (uint8_t*)first_ptr;
-	XELdrLinkPE(aligned_buff, NULL);
+	XELdrRelocatePE(aligned_buff, nt, diff);
 
+	XELdrCreatePEObjects(aligned_buff);
+
+	obj->load_addr = _image_load_base_;
+	obj->loaded = true;
+	obj->entry_addr = _image_load_base_ + nt->OptionalHeader.AddressOfEntryPoint;
 	free(stat);
-	_KePrint("Opening process of size %d KiB \n", (stat->size / 1024));
 	_KeCloseFile(file);
 	return 0;
 }
 
+typedef int(*entrypoint) (int, char*[]);
 /*
  * main entry point of the loader, it accepts
  * three commands "-about", "-f", and filename
@@ -86,9 +149,26 @@ int main(int argc, char* argv[]) {
 	if (!argv)
 		_KeProcessExit();
 
-	char* filename = argv[0];
-	XELdrStartProc(filename);
+	XELdrInitObjectList();
 
+	/* load the main object */
+	char* filename = argv[0];
+	XELoaderObject* mainobj = XELdrCreateObj(filename);
+	XELdrStartProc(mainobj->objname, mainobj);
+
+	XELdrLoadAllObject();
+
+	/* links all dependencies of libraries*/
+	XELdrLinkDepObject(mainobj);
+
+	/* now link all objects from the list
+	 * to main object
+	 */
+	XELdrLinkAllObject(mainobj);
+
+	entrypoint e = (entrypoint)mainobj->entry_addr;
+	e(0, NULL);
+	
 	while (1) {
 		_KeProcessExit();
 	}

@@ -343,6 +343,21 @@ int AuProcessGetFileDesc(AuProcess* proc) {
 	return -1;
 }
 
+/*
+ * AuProcessHeapMemDestroy -- destroys the heap area of process
+ * @param proc -- Pointer to process
+ */
+void AuProcessHeapMemDestroy(AuProcess* proc) {
+	size_t proc_mem_diff = proc->proc_mem_heap - PROCESS_BREAK_ADDRESS;
+	for (int i = 0; i < proc_mem_diff / 4096; i++) {
+		AuVPage* page = AuVmmngrGetPage(PROCESS_BREAK_ADDRESS + i * PAGE_SIZE, VIRT_GETPAGE_ONLY_RET, VIRT_GETPAGE_ONLY_RET);
+		uint64_t phys = page->bits.page << PAGE_SHIFT;
+		if (phys) 
+			AuPmmngrFree((void*)phys);
+		page->bits.page = 0;
+		page->bits.present = 0;
+	}
+}
 
 /* AuProcessExit -- marks a process
  * as killable
@@ -386,6 +401,8 @@ void AuProcessExit(AuProcess* proc) {
 
 	/*unmap all shared memory mappings */
 	AuSHMUnmapAll(proc);
+
+	AuProcessHeapMemDestroy(proc);
 
 	kfree(proc->file);
 

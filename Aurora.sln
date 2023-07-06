@@ -21,6 +21,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Deodhai", "Process\Deodhai\
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "XECrt", "Libs\XECrt\XECrt.vcxproj", "{7E566DB6-F1A9-4C46-B769-79915CB9B182}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Chitralekha", "Libs\Chitralekha\Chitralekha.vcxproj", "{13366E8F-2DBF-4E21-A7A7-52D8B788F4BC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Mixed Platforms = Debug|Mixed Platforms
@@ -125,6 +127,16 @@ Global
 		{7E566DB6-F1A9-4C46-B769-79915CB9B182}.Release|Win32.ActiveCfg = Release|Win32
 		{7E566DB6-F1A9-4C46-B769-79915CB9B182}.Release|Win32.Build.0 = Release|Win32
 		{7E566DB6-F1A9-4C46-B769-79915CB9B182}.Release|x64.ActiveCfg = Release|Win32
+		{13366E8F-2DBF-4E21-A7A7-52D8B788F4BC}.Debug|Mixed Platforms.ActiveCfg = Debug|Win32
+		{13366E8F-2DBF-4E21-A7A7-52D8B788F4BC}.Debug|Mixed Platforms.Build.0 = Debug|Win32
+		{13366E8F-2DBF-4E21-A7A7-52D8B788F4BC}.Debug|Win32.ActiveCfg = Debug|Win32
+		{13366E8F-2DBF-4E21-A7A7-52D8B788F4BC}.Debug|Win32.Build.0 = Debug|Win32
+		{13366E8F-2DBF-4E21-A7A7-52D8B788F4BC}.Debug|x64.ActiveCfg = Debug|x64
+		{13366E8F-2DBF-4E21-A7A7-52D8B788F4BC}.Release|Mixed Platforms.ActiveCfg = Release|Win32
+		{13366E8F-2DBF-4E21-A7A7-52D8B788F4BC}.Release|Mixed Platforms.Build.0 = Release|Win32
+		{13366E8F-2DBF-4E21-A7A7-52D8B788F4BC}.Release|Win32.ActiveCfg = Release|Win32
+		{13366E8F-2DBF-4E21-A7A7-52D8B788F4BC}.Release|Win32.Build.0 = Release|Win32
+		{13366E8F-2DBF-4E21-A7A7-52D8B788F4BC}.Release|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

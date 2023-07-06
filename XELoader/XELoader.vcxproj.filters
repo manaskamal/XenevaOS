@@ -3,6 +3,7 @@
   <ItemGroup>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="pe_.cpp" />
+    <ClCompile Include="XELdrObject.cpp" />
   </ItemGroup>
   <ItemGroup>
     <NASM Include="fastcpy.asm" />
@@ -10,5 +11,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pe_.h" />
+    <ClInclude Include="XELdrObject.h" />
   </ItemGroup>
 </Project>

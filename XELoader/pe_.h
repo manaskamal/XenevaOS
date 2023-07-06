@@ -32,6 +32,7 @@
 
 
 #include <stdint.h>
+#include "XELdrObject.h"
 
 #pragma pack(push, 1)
 
@@ -198,6 +199,7 @@ typedef struct _IMAGE_SECTION_HEADER {
 
 #define IMAGE_DATA_DIRECTORY_EXPORT 0
 #define IMAGE_DATA_DIRECTORY_IMPORT 1
+#define IMAGE_DATA_DIRECTORY_RELOC  5
 
 typedef struct _IMAGE_EXPORT_DIRECTORY {
 	uint32_t Characteristics;
@@ -230,6 +232,17 @@ typedef struct _IMAGE_IMPORT_HINT_TABLE {
 }IMAGE_IMPORT_HINT_TABLE, *PIMAGE_IMPORT_HINT_TABLE;
 
 
+typedef struct _IMAGE_RELOCATION_ENTRY_ {
+	uint16_t offset : 12;
+	uint16_t type : 4;
+}IMAGE_RELOCATION_ENTRY, *PIMAGE_RELOCATION_ENTRY;
+
+typedef struct _IMAGE_RELOCATION_BLOCK_ {
+	uint32_t PageRVA;
+	uint32_t BlockSize;
+	IMAGE_RELOCATION_ENTRY entries[0];
+}IMAGE_RELOCATION_BLOCK, *PIMAGE_RELOCATION_BLOCK;
+
 #define IMAGE_IMPORT_LOOKUP_TABLE_FLAG_PE32 0x80000000
 typedef uint32_t IMAGE_IMPORT_LOOKUP_TABLE_PE32, *PIMAGE_IMPORT_LOOKUP_TABLE_PE32;
 
@@ -247,9 +260,32 @@ static const enum PeMachineType   MACHINE_NATIVE = IMAGE_FILE_MACHINE_I386;
 
 
 /*
+* XELdrRelocatePE -- relocates the image from its actual
+* base address
+* @param image -- pointer to executable image
+* @param nt -- nt headers
+* @param diff -- difference from its original
+*/
+extern void XELdrRelocatePE(void* image, PIMAGE_NT_HEADERS nt, int diff);
+
+/*
 * XELdrLinkPE -- Links a dll library to its executable
 * @param image -- dll image
 * @param exporter -- executable image
 */
-extern void XELdrLinkPE(void* exec, void* dll);
+extern void XELdrLinkPE(void* exec);
+
+/*
+* XELdrCreatePEObjects -- load all required objects
+* @param image -- dll image
+* @param exporter -- executable image
+*/
+extern void XELdrCreatePEObjects(void* exec);
+
+/*
+* XELdrLinkDependencyPE -- link all dependencies except
+* the main object
+* @param obj -- obj to point
+*/
+extern void XELdrLinkDependencyPE(XELoaderObject* obj);
 #endif
