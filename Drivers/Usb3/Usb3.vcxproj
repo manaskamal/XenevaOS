@@ -148,15 +148,22 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="classes\hid.h" />
+    <ClInclude Include="classes\hub.h" />
     <ClInclude Include="usb3.h" />
     <ClInclude Include="xhci.h" />
     <ClInclude Include="xhci_cmd.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="classes\hid.cpp" />
+    <ClCompile Include="classes\hub.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="usb3.cpp" />
     <ClCompile Include="usbstd.cpp" />
     <ClCompile Include="xhci_cmd.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="todo.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

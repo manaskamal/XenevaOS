@@ -162,7 +162,7 @@ void general_protection_fault(size_t v, void* p){
 	SeTextOut("Stack -> %x \r\n", frame->rsp);
 	SeTextOut("RFLAGS -> %x \r\n", frame->rflags);
 	SeTextOut("CS -> %x, SS -> %x \r\n", frame->cs, frame->ss);
-	SeTextOut("Current thread ->id %d \r\n", AuGetCurrentThread()->id);
+	SeTextOut("Current thread ->id %d , %s\r\n", AuGetCurrentThread()->id, AuGetCurrentThread()->name);
 	for (;;);
 }
 

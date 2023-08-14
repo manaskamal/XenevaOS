@@ -51,12 +51,14 @@
 
 #define AURORA_MAX_DRIVERS  256
 
+
 typedef int(*au_drv_entry)();
 typedef int(*au_drv_unload)();
 
+#pragma pack(push,1)
 typedef struct _aurora_driver_ {
 	uint8_t id;
-	uint8_t class_type;
+	uint8_t drv_type;
 	char name[32];
 	bool present;
 	uint64_t base;
@@ -64,7 +66,9 @@ typedef struct _aurora_driver_ {
 	au_drv_entry entry;
 	au_drv_unload unload;
 }AuDriver;
+#pragma pack(pop)
 
+#pragma pack(push,1)
 typedef struct _aurora_device_ {
 	uint16_t classCode;
 	uint16_t subClassCode;
@@ -73,7 +77,7 @@ typedef struct _aurora_device_ {
 	uint8_t aurora_dev_class;
 	uint8_t aurora_driver_class;
 }AuDevice;
-
+#pragma pack(pop)
 
 /*
 * AuDrvMngrInitialize -- Initialize the driver manager

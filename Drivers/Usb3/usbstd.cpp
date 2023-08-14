@@ -30,6 +30,7 @@
 #include "usb3.h"
 #include "aucon.h"
 #include "xhci_cmd.h"
+#include <_null.h>
 
 /*
 * USBGetDeviceDesc -- sends USB_GET_DESCRIPTOR request to specific device
@@ -63,8 +64,44 @@ void USBGetStringDesc(USBDevice *dev, XHCISlot *slot, uint8_t slot_id, uint64_t 
 	pack.request_type = USB_BM_REQUEST_INPUT | USB_BM_REQUEST_STANDARD | USB_BM_REQUEST_DEVICE;
 	pack.request = USB_BREQUEST_GET_DESCRIPTOR;
 	pack.value = USB_DESCRIPTOR_WVALUE(USB_DESCRIPTOR_STRING, id);
-	pack.index = 0;
+	pack.index = 0x0409;
 	pack.length = 256;
 
 	XHCISendControlCmd(dev, slot, slot_id, &pack, buffer, 256);
+}
+
+/*
+ * USBGetConfigDesc -- get configuration descriptor
+ * @param dev -- Pointer to usb device structure
+ * @param slot -- Pointer to usb slot data structure
+ * @param slot_id -- Slot id of the device
+ * @param buffer -- address of the buffer where device descriptor will be written
+ */
+void USBGetConfigDesc(USBDevice* dev, XHCISlot* slot, uint8_t slot_id, uint64_t buffer, uint16_t len, uint8_t id) {
+	USB_REQUEST_PACKET pack;
+	pack.request_type = USB_BM_REQUEST_INPUT | USB_BM_REQUEST_STANDARD | USB_BM_REQUEST_DEVICE;
+	pack.request = USB_BREQUEST_GET_DESCRIPTOR;
+	pack.value = USB_DESCRIPTOR_WVALUE(USB_DESCRIPTOR_CONFIGURATION, id);
+	pack.index = 0;
+	pack.length = len;
+
+	XHCISendControlCmd(dev, slot, slot_id, &pack, buffer, len);
+}
+
+/*
+* USBGetConfigDesc -- get configuration descriptor
+* @param dev -- Pointer to usb device structure
+* @param slot -- Pointer to usb slot data structure
+* @param slot_id -- Slot id of the device
+* @param configval -- config value returned in configuration descriptor
+*/
+void USBSetConfigDesc(USBDevice* dev, XHCISlot* slot, uint8_t slot_id, uint8_t configval) {
+	USB_REQUEST_PACKET pack;
+	pack.request_type = USB_BM_REQUEST_OUTPUT | USB_BM_REQUEST_STANDARD | USB_BM_REQUEST_DEVICE;
+	pack.request = USB_BREQUEST_SET_CONFIGURATION;
+	pack.value = USB_DESCRIPTOR_WVALUE(0, configval);
+	pack.index = 0;
+	pack.length = 0;
+
+	XHCISendControlCmd(dev, slot, slot_id, &pack, NULL, 0);
 }

@@ -48,7 +48,7 @@
 extern "C" void main(int argc, char* argv[]) {
 	int pid = _KeGetProcessID();
 
-	_KePrint("init -> %x \n", argv);
+	_KePrint("init -> %x , id -> %d \n", argv, pid);
 	if (strcmp(argv[0], "-about") == 0)
 		_KePrint("Xeneva v1.0 !! Copyright (C) Manas Kamal Choudhury 2020-2023 \n");
 

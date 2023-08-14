@@ -74,15 +74,25 @@ void AuUSBInterrupt(size_t v, void* p) {
 	status = usb_device->op_regs->op_usbsts;
 	/* acknowledge the controller */
 	usb_device->op_regs->op_usbsts = status;
-
+	
 	if (status & XHCI_USB_STS_EINT) {
 		xhci_trb_t *event = (xhci_trb_t*)usb_device->event_ring_segment;
 		xhci_event_trb_t *evt = (xhci_event_trb_t*)usb_device->event_ring_segment;
 		uint64_t erdp = (uint64_t)usb_device->event_ring_seg_phys;
 
 		while ((event[usb_device->evnt_ring_index].trb_control & (1 << 0)) == 1){
-
+			
 			if (evt[usb_device->evnt_ring_index].trbType == TRB_EVENT_TRANSFER) {
+				uint8_t endpoint_id = (event[usb_device->evnt_ring_index].trb_control >> 16) & 0x1f;
+				uint8_t comp_code = (event[usb_device->evnt_ring_index].trb_status >> 24) & 0xff;
+				uint8_t slot_id = (event[usb_device->evnt_ring_index].trb_control >> 24) & 0xff;
+				uint64_t data = (event[usb_device->evnt_ring_index].trb_param_1 | event[usb_device->evnt_ring_index].trb_param_2);
+				if (endpoint_id >= 2) {
+					XHCISlot *slot = XHCIGetSlotByID(usb_device, slot_id);
+					XHCIEndpoint *ep = XHCISlotGetEP_DCI(slot, endpoint_id);
+					if (ep->callback)
+						ep->callback(usb_device, slot, ep);
+				}
 				usb_device->event_available = true;
 				usb_device->poll_return_trb_type = TRB_EVENT_TRANSFER;
 				usb_device->trb_event_index = usb_device->evnt_ring_index;
@@ -109,21 +119,30 @@ void AuUSBInterrupt(size_t v, void* p) {
 				usb_device->poll_return_trb_type = TRB_EVENT_CMD_COMPLETION;
 				usb_device->trb_event_index = usb_device->evnt_ring_index;
 				xhci_trb_t *trb = (xhci_trb_t*)&evt[usb_device->evnt_ring_index];
+			}
+
+			if (evt[usb_device->evnt_ring_index].trbType == TRB_EVENT_DEVICE_NOTIFICATION) {
+				SeTextOut("Found Device notification \r\n");
+				usb_device->event_available = true;
+				usb_device->poll_return_trb_type = TRB_EVENT_CMD_COMPLETION;
+				usb_device->trb_event_index = usb_device->evnt_ring_index;
+				xhci_trb_t *trb = (xhci_trb_t*)&evt[usb_device->evnt_ring_index];
 
 			}
 
-
-			/* Update the Dequeue Pointer of interrupt 0 to recently
-			* processed event_ring_segment entry (known as TRB Entry) */
-			usb_device->rt_regs->intr_reg[0].evtRngDeqPtrLo = (erdp + sizeof(xhci_trb_t)* usb_device->evnt_ring_index) << 4 | (1 << 3);
-			usb_device->rt_regs->intr_reg[0].evtRngDeqPtrHi = (erdp + sizeof(xhci_trb_t)* usb_device->evnt_ring_index) >> 32;
 			usb_device->evnt_ring_cycle ^= 1;
 			usb_device->evnt_ring_index++;
 
 			if (usb_device->evnt_ring_index == usb_device->evnt_ring_max) {
 				usb_device->evnt_ring_index = 0;
 			}
+
 		}
+
+		/* Update the Dequeue Pointer of interrupt 0 to recently
+		* processed event_ring_segment entry (known as TRB Entry) */
+		usb_device->rt_regs->intr_reg[0].evtRngDeqPtrLo = (erdp + sizeof(xhci_trb_t)* usb_device->evnt_ring_index) << 4 | (1 << 3);
+		usb_device->rt_regs->intr_reg[0].evtRngDeqPtrHi = (erdp + sizeof(xhci_trb_t)* usb_device->evnt_ring_index) >> 32;
 
 		/* Update the interrupt pending bit with value 1, so
 		* that new interrupt gets asserted with new events */
@@ -284,6 +303,7 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 	usb_device->usb_thread = t;
 	usb_device->initialised = true;
 
+	for (;;);
 	AuDisableInterrupt();
 
 	return 0;

@@ -4,11 +4,31 @@
     <ClInclude Include="xhci_cmd.h" />
     <ClInclude Include="usb3.h" />
     <ClInclude Include="xhci.h" />
+    <ClInclude Include="classes\hub.h">
+      <Filter>classes</Filter>
+    </ClInclude>
+    <ClInclude Include="classes\hid.h">
+      <Filter>classes</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="usb3.cpp" />
     <ClCompile Include="xhci_cmd.cpp" />
     <ClCompile Include="usbstd.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="classes\hub.cpp">
+      <Filter>classes</Filter>
+    </ClCompile>
+    <ClCompile Include="classes\hid.cpp">
+      <Filter>classes</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="classes">
+      <UniqueIdentifier>{50a8f79a-fbdb-4307-8cd8-91c636c4cf05}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="todo.txt" />
   </ItemGroup>
 </Project>

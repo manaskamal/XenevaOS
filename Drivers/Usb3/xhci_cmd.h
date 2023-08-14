@@ -117,8 +117,12 @@ void XHCICreateStatusTRB(XHCISlot* slot, bool in_direction);
 * @param input_ctx_ptr -- address of input context
 * @param slot_id -- slot id number
 */
-void XHCISendAddressDevice(USBDevice* dev, uint8_t bsr, uint64_t input_ctx_ptr, uint8_t slot_id);
+void XHCISendAddressDevice(USBDevice* dev, XHCISlot *slot, uint8_t bsr, uint64_t input_ctx_ptr, uint8_t slot_id);
 
+#define CTL_TRANSFER_TRT_NO_DATA 0
+#define CTL_TRANSFER_TRT_RESV  1
+#define CTL_TRANSFER_TRT_OUT_DATA 2
+#define CTL_TRANSFER_TRT_IN_DATA 3
 /*
 * XHCISendControlCmd -- Sends control commands to xhci
 * @param dev -- pointer to usb device structure
@@ -127,8 +131,36 @@ void XHCISendAddressDevice(USBDevice* dev, uint8_t bsr, uint64_t input_ctx_ptr, 
 * @param buffer_addr -- input buffer address
 * @param len -- length of the buffer
 */
-void XHCISendControlCmd(USBDevice* dev, XHCISlot* slot, uint8_t slot_id, const USB_REQUEST_PACKET *request, uint64_t buffer_addr, const size_t len);
+void XHCISendControlCmd(USBDevice* dev, XHCISlot* slot, uint8_t slot_id, const USB_REQUEST_PACKET *request, uint64_t buffer_addr, const size_t len,
+	uint8_t trt = CTL_TRANSFER_TRT_IN_DATA);
+/*
+* XHCISendControlCmdEndp -- Sends control commands to xhci
+* @param dev -- pointer to usb device structure
+* @param slot_id -- slot number
+* @param request -- USB request packet structure
+* @param buffer_addr -- input buffer address
+* @param len -- length of the buffer
+* @param endpnum -- Endpoint number
+*/
+void XHCISendControlCmdEndp(USBDevice* dev, XHCISlot* slot, uint8_t slot_id, const USB_REQUEST_PACKET *request, uint64_t buffer_addr, const size_t len,
+	uint32_t endpnum);
 
+/*
+* XHCISendNormalTRB -- sends a normal trb
+*/
+void XHCISendNormalTRB(USBDevice* dev, XHCISlot *slot, uint64_t data_buffer, uint16_t data_len, XHCIEndpoint* ep);
+/*
+* XHCIEvaluateContextCmd -- evaluate context command
+* @param dev -- Pointer to usb device
+* @param input_ctx_ptr -- input context physical address
+* @param slot_id -- slot number
+*/
+void XHCIEvaluateContextCmd(USBDevice* dev, uint64_t input_ctx_ptr, uint8_t slot_id);
+
+/*
+* XHIConfigureEndpoint -- configure the endpoint
+*/
+void XHCIConfigureEndpoint(USBDevice* dev, uint64_t input_ctx_ptr, uint8_t slot_id);
 
 
 #endif

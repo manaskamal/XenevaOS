@@ -322,3 +322,5 @@ AU_EXTERN AU_EXPORT bool AuCheckDevice(uint16_t classC, uint16_t subclassC, uint
 	return false;
 }
 
+//AU_EXTERN AU_EXPORT AuDriver* AuGetDriver
+

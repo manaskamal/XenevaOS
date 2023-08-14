@@ -85,7 +85,7 @@ AU_EXPORT void AuDisableInterrupt();
 /*
 * AuEnableInterrupt -- enable interrupts
 */
-AU_EXTERN AU_EXPORT void AuEnableInterrupt();
+AU_EXPORT void AuEnableInterrupt();
 
 #ifdef __cplusplus
 }

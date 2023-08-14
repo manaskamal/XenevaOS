@@ -1,5 +1,656 @@
-﻿Build started 06-07-2023 ৰাতিপু 7:44:51.
+﻿Build started 21-07-2023 ৰাতিপু 10:46:57.
+     1>Project "E:\Xeneva Project\Aurora\Kernel\Kernel.vcxproj" on node 2 (Rebuild target(s)).
+     1>_NASM:
+         Hal\x86_64_intrs.asm
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmpbc9a26d2d5e64686b599041aac392ef0.cmd"
+         "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\x86_64_intrs.obj"  "E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm"
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(158): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(158): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(159): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(159): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(160): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(160): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(161): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(161): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(162): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(162): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(163): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(163): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(164): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(164): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(165): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(165): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(167): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(167): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(173): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(173): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(174): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(174): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(176): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(176): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(177): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(177): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(178): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(178): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(179): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(179): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(179): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(179): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(179): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(179): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(179): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(179): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(179): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(179): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(179): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(179): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(179): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(179): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(179): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(179): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(179): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(179): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(181): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(181): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : signed dword immediate exceeds bounds [-w+number-overflow]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
+       _NASM:
+         Hal\x86_64_lowlevel.asm
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmpe2a563af477a4848a02d476583ece130.cmd"
+         "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\x86_64_lowlevel.obj"  "E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_lowlevel.asm"
+       _NASM:
+         Hal\x86_64_switch.asm
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp8d680a42dbfc44b1be4e58b367cfa626.cmd"
+         "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\x86_64_switch.obj"  "E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_switch.asm"
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_switch.asm(32): warning : multi-line macro `extern' exists, but not taking 0 parameters [-w+macro-params-multi]
+     1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_switch.asm(32): warning : label alone on a line without a colon might be in error [-w+label-orphan]
+       _NASM:
+         __fstcpy.asm
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp6f095a15249643b5b91526e504b027c6.cmd"
+         "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\__fstcpy.obj"  "E:\Xeneva Project\Aurora\Kernel\__fstcpy.asm"
+       ClCompile:
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I..\BaseHdr /I"E:\Xeneva Project\Aurora\Acpica\include" /I"E:\Xeneva Project\Aurora\Acpica" /ZI /nologo /W0 /WX- /Od /Oy /D ARCH_X64 /D __AU_KERNEL__ /D X64 /D AUXENEVA /D ACPICA_DLL_MBCS /X /Gm /GS- /arch:SSE /fp:precise /Zc:wchar_t /Zc:forScope /GR- /FAs /Fa"x64\Debug\\" /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt ahci.cpp ahcidsk.cpp aucon.cpp audrv.cpp circbuf.cpp clean.cpp ctype.cpp Drivers\mouse.cpp Drivers\ps2kybrd.cpp Drivers\rtc.cpp Fs\Dev\devfs.cpp Fs\Dev\devinput.cpp Fs\Fat\Fat.cpp Fs\Fat\FatDir.cpp Fs\Fat\FatFile.cpp Fs\pipe.cpp Fs\tty.cpp Fs\vdisk.cpp Fs\vfs.cpp Fs\_gpt.cpp Hal\acpiosl.cpp Hal\apic.cpp Hal\basicacpi.cpp Hal\hal.cpp Hal\ioapic.cpp Hal\pcpu.cpp Hal\serial.cpp Hal\x86_64_ap_init.cpp Hal\x86_64_cpu.cpp Hal\x86_64_exception.cpp Hal\x86_64_gdt.cpp Hal\x86_64_hal.cpp Hal\x86_64_idt.cpp Hal\x86_64_sched.cpp Hal\x86_64_systable.cpp init.cpp list.cpp loader.cpp Mm\buddy.cpp Mm\kmalloc.cpp Mm\mmap.cpp Mm\pmmngr.cpp Mm\shm.cpp Mm\vmarea.cpp Mm\vmmngr.cpp pcie.cpp pe.cpp process.cpp Serv\fileserv.cpp Serv\mmserv.cpp Serv\thrserv.cpp Sound\sound.cpp stdio.cpp string.cpp Sync\mutex.cpp Sync\spinlock.cpp _CRT.cpp
+     1>cl : Command line warning D9038: /ZI is not supported on this platform; enabling /Zi instead
+     1>cl : Command line warning D9007: '/Gm' requires '/Zi'; option ignored
+     1>cl : Command line warning D9002: ignoring unknown option '/arch:SSE'
+         ahci.cpp
+         ahcidsk.cpp
+         aucon.cpp
+         audrv.cpp
+         circbuf.cpp
+         clean.cpp
+         ctype.cpp
+         mouse.cpp
+         ps2kybrd.cpp
+         rtc.cpp
+         devfs.cpp
+         devinput.cpp
+         Fat.cpp
+         FatDir.cpp
+         FatFile.cpp
+         pipe.cpp
+         tty.cpp
+         vdisk.cpp
+         vfs.cpp
+         _gpt.cpp
+         Generating Code...
+         Compiling...
+         acpiosl.cpp
+         apic.cpp
+         basicacpi.cpp
+         hal.cpp
+         ioapic.cpp
+         pcpu.cpp
+         serial.cpp
+         x86_64_ap_init.cpp
+         x86_64_cpu.cpp
+         x86_64_exception.cpp
+         x86_64_gdt.cpp
+         x86_64_hal.cpp
+         x86_64_idt.cpp
+         x86_64_sched.cpp
+         x86_64_systable.cpp
+         init.cpp
+         list.cpp
+         loader.cpp
+         buddy.cpp
+         kmalloc.cpp
+         Generating Code...
+         Compiling...
+         mmap.cpp
+         pmmngr.cpp
+         shm.cpp
+         vmarea.cpp
+         vmmngr.cpp
+         pcie.cpp
+         pe.cpp
+         process.cpp
+         fileserv.cpp
+         mmserv.cpp
+         thrserv.cpp
+         sound.cpp
+         stdio.cpp
+         string.cpp
+         mutex.cpp
+         spinlock.cpp
+         _CRT.cpp
+         Generating Code...
+     1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(1186,5): warning MSB8012: TargetPath(E:\Xeneva Project\Aurora\x64\Debug\Kernel.exe) does not match the Linker's OutputFile property value (F:\EFI\XENEVA\xnkrnl.exe). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
+     1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(1188,5): warning MSB8012: TargetName(Kernel) does not match the Linker's OutputFile property value (xnkrnl). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
+       Link:
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\link.exe /ERRORREPORT:PROMPT /OUT:"F:\EFI\XENEVA\xnkrnl.exe" /VERSION:"1.0" /INCREMENTAL /NOLOGO /LIBPATH:"E:\Xeneva Project\Aurora\x64\Debug" Acpica.lib /NODEFAULTLIB /MANIFEST:NO /PDB:"E:\Xeneva Project\Aurora\x64\Debug\Kernel.pdb" /MAP /MAPINFO:EXPORTS /SUBSYSTEM:NATIVE /STACK:"0x100000" /LARGEADDRESSAWARE /Driver /OPT:NOREF /LTCG /TLBID:1 /ENTRY:"_AuMain" /BASE:"0xFFFFC00000000000" /FIXED:NO /IMPLIB:"E:\Xeneva Project\Aurora\x64\Debug\Kernel.lib" /MACHINE:X64 /filealign:0x1000 x64\Debug\ahci.obj
+         x64\Debug\ahcidsk.obj
+         x64\Debug\aucon.obj
+         x64\Debug\audrv.obj
+         x64\Debug\circbuf.obj
+         x64\Debug\clean.obj
+         x64\Debug\ctype.obj
+         x64\Debug\mouse.obj
+         x64\Debug\ps2kybrd.obj
+         x64\Debug\rtc.obj
+         x64\Debug\devfs.obj
+         x64\Debug\devinput.obj
+         x64\Debug\Fat.obj
+         x64\Debug\FatDir.obj
+         x64\Debug\FatFile.obj
+         x64\Debug\pipe.obj
+         x64\Debug\tty.obj
+         x64\Debug\vdisk.obj
+         x64\Debug\vfs.obj
+         x64\Debug\_gpt.obj
+         x64\Debug\acpiosl.obj
+         x64\Debug\apic.obj
+         x64\Debug\basicacpi.obj
+         x64\Debug\hal.obj
+         x64\Debug\ioapic.obj
+         x64\Debug\pcpu.obj
+         x64\Debug\serial.obj
+         x64\Debug\x86_64_ap_init.obj
+         x64\Debug\x86_64_cpu.obj
+         x64\Debug\x86_64_exception.obj
+         x64\Debug\x86_64_gdt.obj
+         x64\Debug\x86_64_hal.obj
+         x64\Debug\x86_64_idt.obj
+         x64\Debug\x86_64_sched.obj
+         x64\Debug\x86_64_systable.obj
+         x64\Debug\init.obj
+         x64\Debug\list.obj
+         x64\Debug\loader.obj
+         x64\Debug\buddy.obj
+         x64\Debug\kmalloc.obj
+         x64\Debug\mmap.obj
+         x64\Debug\pmmngr.obj
+         x64\Debug\shm.obj
+         x64\Debug\vmarea.obj
+         x64\Debug\vmmngr.obj
+         x64\Debug\pcie.obj
+         x64\Debug\pe.obj
+         x64\Debug\process.obj
+         x64\Debug\fileserv.obj
+         x64\Debug\mmserv.obj
+         x64\Debug\thrserv.obj
+         x64\Debug\sound.obj
+         x64\Debug\stdio.obj
+         x64\Debug\string.obj
+         x64\Debug\mutex.obj
+         x64\Debug\spinlock.obj
+         x64\Debug\_CRT.obj
+         x64\Debug\x86_64_intrs.obj
+         x64\Debug\x86_64_lowlevel.obj
+         x64\Debug\x86_64_switch.obj
+         x64\Debug\__fstcpy.obj
+     1>LINK : warning LNK4075: ignoring '/INCREMENTAL' due to '/LTCG' specification
+            Creating library E:\Xeneva Project\Aurora\x64\Debug\Kernel.lib and object E:\Xeneva Project\Aurora\x64\Debug\Kernel.exp
+         LINK : /LTCG specified but no code generation required; remove /LTCG from the link command line to improve linker performance
+         Kernel.vcxproj -> E:\Xeneva Project\Aurora\x64\Debug\Kernel.exe
+     1>Done Building Project "E:\Xeneva Project\Aurora\Kernel\Kernel.vcxproj" (Rebuild target(s)).
 
 Build succeeded.
 
-Time Elapsed 00:00:00.00
+Time Elapsed 00:00:03.66

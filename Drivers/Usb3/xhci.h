@@ -31,6 +31,7 @@
 #define __XHCI_H__
 
 #include <stdint.h>
+#include <list.h>
 
 #define XHCI_USB_CMD_INTE  (1<<2) //Interrupter enable
 #define XHCI_USB_CMD_HSEE  (1<<3) // Host System Error enable
@@ -90,6 +91,8 @@
 #define USB_HIGH_SPEED       3
 #define USB_SUPER_SPEED      4
 #define USB_SUPER_SPEED_PLUS 5
+
+typedef void(*endpoint_callback)(void* dev, void* slot,void* Endp);
 
 #pragma pack(push,1)
 typedef struct _xhci_cap_regs_ {
@@ -177,16 +180,42 @@ typedef struct _xhci_port_reg_ {
 #pragma pack(pop)
 
 #pragma pack(push,1)
+typedef struct _endp_ {
+	xhci_trb_t* cmd_ring;
+	uint8_t endpoint_num;
+	uint8_t endpoint_type;
+	uint8_t interval;
+	uint8_t max_packet_sz;
+	unsigned cmd_ring_index;
+	unsigned cmd_ring_max;
+	unsigned cmd_ring_cycle;
+	uint8_t dci;
+	uint32_t offset;
+	uint32_t dc_offset;
+	uint8_t ep_type;
+	uint8_t dir;
+	endpoint_callback callback;
+}XHCIEndpoint;
+#pragma pack(pop)
+
+#pragma pack(push,1)
 typedef struct _xhci_slot_ {
 	uint8_t slot_id;
 	uint8_t root_hub_port_num;
+	uint8_t port_speed;
 	uint64_t cmd_ring_base;
 	uint64_t input_context_phys;
 	uint64_t output_context_phys;
+	uint8_t classC;
+	uint8_t subClassC;
+	uint8_t prot;
 	xhci_trb_t* cmd_ring;
 	unsigned cmd_ring_index;
 	unsigned cmd_ring_max;
 	unsigned cmd_ring_cycle;
+	uint64_t descriptor_buff;
+	uint16_t interface_val;
+	list_t *endpoints;
 }XHCISlot;
 #pragma pack(pop)
 
@@ -302,5 +331,18 @@ typedef struct _xhci_erst_ {
 	uint32_t ring_seg_size;
 	uint32_t rerserved;
 }xhci_erst_t;
+#pragma pack(pop)
+
+#pragma pack(push,1)
+typedef struct _xhci_input_ctx_ {
+	uint32_t drop_ctx_flags;
+	uint32_t add_ctx_flags;
+	uint32_t rsvd1;
+	uint32_t rsvd2;
+	uint32_t rsvd3;
+	uint32_t rsvd4;
+	uint32_t rsvd5;
+	uint32_t paramlast;
+}XHCIInputContext;
 #pragma pack(pop)
 #endif

@@ -86,6 +86,7 @@ typedef struct __usb_msg__ {
 #pragma pack(pop)
 
 /* Standard USB Requests */
+#define USB_BM_REQUEST_OUTPUT 0
 #define USB_BM_REQUEST_INPUT  0x80
 #define USB_BM_REQUEST_STANDARD 0
 #define USB_BM_REQUEST_CLASS  0x20
@@ -93,6 +94,7 @@ typedef struct __usb_msg__ {
 #define USB_BM_REQUEST_DEVICE  0
 #define USB_BM_REQUEST_INTERFACE 1
 #define USB_BM_REQUEST_ENDPOINT 2
+#define USB_BM_REQUEST_OTHER 3
 #define USB_BM_REQUEST_VENDORSPEC  0x1F
 
 #define USB_BREQUEST_GET_STATUS  0
@@ -111,6 +113,7 @@ typedef struct __usb_msg__ {
 #define USB_DESCRIPTOR_STRING  3
 #define USB_DESCRIPTOR_INTERFACE 4
 #define USB_DESCRIPTOR_ENDPOINT  5
+#define USB_DESCRIPTOR_SUPERSPEED_ENDP_CMP 48
 
 #define USB_DESCRIPTOR_WVALUE(type,index) ((type << 8) | index)
 
@@ -135,7 +138,13 @@ typedef struct __usb_msg__ {
 #define USB_WIRELESS_CONTROLLER_DEV_CLASS 0xE0
 #define USB_MISCELLANEOUS_DEV_CLASS 0xEF
 
+/* transfer type defined in endpoint descriptor*/
+#define ENDPOINT_TRANSFER_TYPE_CONTROL 0
+#define ENDPOINT_TRANSFER_TYPE_ISOCH 1
+#define ENDPOINT_TRANSFER_TYPE_BULK  2
+#define ENDPOINT_TRANSFER_TYPE_INT   3
 
+#pragma pack(push,1)
 struct USB_REQUEST_PACKET {
 	uint8_t request_type;
 	uint8_t request;
@@ -143,6 +152,8 @@ struct USB_REQUEST_PACKET {
 	uint16_t index;
 	uint16_t length;
 };
+#pragma pack(pop)
+
 #pragma pack(push,1)
 typedef struct _dev_desc_ {
 	uint8_t bLength;
@@ -190,6 +201,44 @@ typedef struct _qualifier_desc_ {
 }usb_qualifier_desc_t;
 #pragma pack(pop)
 
+#pragma pack(push,1)
+typedef struct _config_desc_ {
+	uint8_t bLength;
+	uint8_t bDescriptorType;
+	uint16_t wTotalLength;
+	uint8_t bNumInterfaces;
+	uint8_t bConfigurationValue;
+	uint8_t iConfiguration;
+	uint8_t bmAttributes;
+	uint8_t bMaxPower;
+}usb_config_desc_t;
+#pragma pack(pop)
+
+#pragma pack(push,1)
+typedef struct _string_desc_ {
+	uint8_t bLength;
+	uint8_t bDescriptorType;
+	//..string value
+}usb_string_desc_t;
+#pragma pack(pop)
+
+#pragma pack(push,1)
+typedef struct _endpoint_desc_ {
+	uint8_t bLength;
+	uint8_t bDescriptorType;
+	uint8_t bEndpointAddress;
+	uint8_t bmAttributes;
+	uint16_t wMaxPacketSize;
+	uint8_t bInterval;
+}usb_endpoint_desc_t;
+#pragma pack(pop)
+
+#pragma pack(push,1)
+typedef struct _usb_desc_ {
+	uint8_t bLength;
+	uint8_t bDescriptorType;
+}usb_descriptor_t;
+#pragma pack(pop)
 /*
 * USBGetDeviceDesc -- sends USB_GET_DESCRIPTOR request to specific device
 * @param dev -- Pointer to usb device structure
@@ -209,6 +258,24 @@ extern void USBGetDeviceDesc(USBDevice *dev, XHCISlot *slot, uint8_t slot_id, ui
 * @param id-- type of the string needs to be requested
 */
 extern void USBGetStringDesc(USBDevice *dev, XHCISlot *slot, uint8_t slot_id, uint64_t buffer, uint16_t id);
+
+/*
+* USBGetConfigDesc -- get configuration descriptor
+* @param dev -- Pointer to usb device structure
+* @param slot -- Pointer to usb slot data structure
+* @param slot_id -- Slot id of the device
+* @param buffer -- address of the buffer where device descriptor will be written
+*/
+void USBGetConfigDesc(USBDevice* dev, XHCISlot* slot, uint8_t slot_id, uint64_t buffer, uint16_t len, uint8_t id);
+
+/*
+* USBGetConfigDesc -- get configuration descriptor
+* @param dev -- Pointer to usb device structure
+* @param slot -- Pointer to usb slot data structure
+* @param slot_id -- Slot id of the device
+* @param configval -- config value returned in configuration descriptor
+*/
+void USBSetConfigDesc(USBDevice* dev, XHCISlot* slot, uint8_t slot_id, uint8_t configval);
 
 /*
 * XHCIPollEvent -- waits for an event to occur on interrupts
@@ -238,6 +305,17 @@ extern void XHCISendCommand(USBDevice *dev, uint32_t param1, uint32_t param2, ui
 * @param ctrl -- control field of trb structure
 */
 extern void XHCISendCommandSlot(XHCISlot* slot, uint32_t param1, uint32_t param2, uint32_t status, uint32_t ctrl);
+
+/*
+* XHCISendCommandEndpoint -- sends command to endpoint trb
+* @param slot -- pointer to slot data structure
+* @param endp_num -- endpoint number
+* @param param1 -- first parameter of trb structure
+* @param param2 -- 2nd parameter of trb structure
+* @param status -- status field of trb structure
+* @param ctrl -- control field of trb structure
+*/
+void XHCISendCommandEndpoint(XHCISlot* slot, uint8_t endp_num, uint32_t param1, uint32_t param2, uint32_t status, uint32_t ctrl);
 
 /*
 * XHCIRingDoorbell -- rings the host doorbell
@@ -312,10 +390,28 @@ extern void XHCIStartDefaultPorts(USBDevice *dev);
 extern void XHCIPortInitialize(USBDevice *dev, unsigned int port);
 
 /*
+* XHCIGetSlotByID -- returns a slot from slot list
+* @param dev -- Pointer to USB device
+* @param slot_id -- slot id
+*/
+extern XHCISlot* XHCIGetSlotByID(USBDevice* dev, uint8_t slot_id);
+
+
+/*
+* XHCISlotGetEP_DCI -- returns an endpoint by its endpoint number
+*/
+extern XHCIEndpoint *XHCISlotGetEP_DCI(XHCISlot* slot, uint8_t endp_num);
+
+/*
 * USBGetMainDevice -- returns the
 * main usb device structure
 */
 extern USBDevice* USBGetMainDevice();
 
+/*
+* XHCISlotGetEP -- returns an endpoint by its endpoint number
+*/
+extern XHCIEndpoint *XHCISlotGetEP(XHCISlot* slot, uint8_t endp_num);
 
+extern usb_descriptor_t* USBGetDescriptor(XHCISlot* slot, uint8_t type);
 #endif

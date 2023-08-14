@@ -1,0 +1,6 @@
+[TODO]: Separate HOST Controller code, USB Standard Code and Class Driver codes
+[TODO]: Handle things according to port speed FS, HS and LS devices
+[TODO]: HID Class Driver
+[TODO]: Mass Storage Class Driver
+[TODO]: USB Hub Class Driver
+[TODO]: USB Bluetooth 
