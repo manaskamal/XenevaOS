@@ -216,4 +216,9 @@ extern "C++" {
 
 #define RAW_OFFSET(type, x, offset)  (type)((size_t)x + offset)
 
+#define DIV_ROUND_UP(x, y) \
+	((x + y - 1) / y)
+
+#define ALIGN_UP(x, y) (DIV_ROUND_UP(x,y)*y)
+
 #endif

@@ -119,6 +119,12 @@ void XHCICommandRingInit(USBDevice *dev) {
 	dev->cmd_ring_max = 64;
 	dev->cmd_ring_cycle = 1;
 	dev->cmd_ring_phys = cmd_ring_phys;
+
+	/* insert a link trb at the last of cmd ring */
+	dev->cmd_ring[dev->cmd_ring_max].trb_param_1 = cmd_ring_phys & UINT32_MAX;
+	dev->cmd_ring[dev->cmd_ring_max].trb_param_2 = (cmd_ring_phys >> 32) & UINT32_MAX;
+	dev->cmd_ring[dev->cmd_ring_max].trb_status = 0;
+	dev->cmd_ring[dev->cmd_ring_max].trb_control = TRB_TRANSFER_LINK << 10 | (1 << 5);
 }
 
 /*
@@ -389,11 +395,12 @@ void XHCISendCommand(USBDevice *dev, uint32_t param1, uint32_t param2, uint32_t 
 
 	dev->cmd_ring_index++;
 
-	if (dev->cmd_ring_index >= 63) {
-		dev->cmd_ring[dev->cmd_ring_index].trb_control ^= 1;
+	if (dev->cmd_ring_index >= 64) {
+		dev->cmd_ring[dev->cmd_ring_index].trb_control |= dev->cmd_ring_cycle;
 		if (dev->cmd_ring[dev->cmd_ring_index].trb_control & (1 << 1)) {
 			dev->cmd_ring_cycle ^= 1;
 		}
+		SeTextOut("*****Sending last command *******\r\n");
 		dev->cmd_ring_index = 0;
 	}
 }
@@ -442,23 +449,27 @@ void XHCISendCommandEndpoint(XHCISlot* slot, uint8_t endp_num, uint32_t param1, 
 	if (!ep) 
 		return;
 	
+	SeTextOut("Input ctrl-> %x , prev -> %x \r\n", ctrl, ep->cmd_ring[ep->cmd_ring_index].trb_control);
 	ctrl &= ~1;
-	ctrl |= ep->cmd_ring_cycle;
+	ctrl |= ep->cmd_ring_cycle & 0x1;
 	ep->cmd_ring[ep->cmd_ring_index].trb_param_1 = param1;
 	ep->cmd_ring[ep->cmd_ring_index].trb_param_2 = param2;
 	ep->cmd_ring[ep->cmd_ring_index].trb_status = status;
 	ep->cmd_ring[ep->cmd_ring_index].trb_control = ctrl;
-	SeTextOut("ep -> %d\r\n", ep->cmd_ring_index);
+	
+	SeTextOut("Inserted cmd on index -> %d , ctrl -> %x , pcs -> %x\r\n", ep->cmd_ring_index, ep->cmd_ring[ep->cmd_ring_index].trb_control,
+		V2P((size_t)&ep->cmd_ring[ep->cmd_ring_index]));
 	ep->cmd_ring_index++;
 
-	if (ep->cmd_ring_index >= 63) {
-		ep->cmd_ring[ep->cmd_ring_index].trb_control ^= 1;
+	SeTextOut("CMD trb size -> %d bytes \r\n", sizeof(xhci_trb_t));
+	if (ep->cmd_ring_index >= 64) {
+		ep->cmd_ring[ep->cmd_ring_index].trb_control |= ep->cmd_ring_cycle;
 		if (ep->cmd_ring[ep->cmd_ring_index].trb_control & (1 << 1)) {
 			ep->cmd_ring_cycle ^= 1;
 		}
+		SeTextOut("EP REACHED MAX %d \r\n", ep->cmd_ring_index);
 		ep->cmd_ring_index = 0;
 	}
-	SeTextOut("EP Next cmd ring -> %x \r\n", ep->cmd_ring_index);
 }
 
 
@@ -839,6 +850,13 @@ void XHCIPortInitialize(USBDevice *dev, unsigned int port) {
 			ep->dc_offset = dc_addr;
 			ep->dir = dir;
 			ep->callback = NULL;
+
+			/* insert a link trb at the last of cmd ring */
+			ep->cmd_ring[ep->cmd_ring_max].trb_param_1 = V2P(cmd_ring) & UINT32_MAX;
+			ep->cmd_ring[ep->cmd_ring_max].trb_param_2 = (V2P(cmd_ring) >> 32) & UINT32_MAX;
+			ep->cmd_ring[ep->cmd_ring_max].trb_status = 0;
+			ep->cmd_ring[ep->cmd_ring_max].trb_control = TRB_TRANSFER_LINK << 10 | (1 << 5);
+
 			list_add(slot->endpoints, ep);
 
 			if (lasti < dci) lasti = dci;
