@@ -4,3 +4,5 @@
 [TODO]: Mass Storage Class Driver
 [TODO]: USB Hub Class Driver
 [TODO]: USB Bluetooth 
+[FIXME]: USB HID Interrupts dont work after scheduler is initialised
+[FIXME]: VMware workstation fails at scheduler and processes after default port initialisation, causing GPF

@@ -110,6 +110,7 @@ void AuProcessEntUser(uint64_t rcx) {
 	}
 }
 
+extern bool _vfs_debug_on;
 /*
  * AuLoadExecToProcess -- loads an executable to the 
  * process
@@ -120,6 +121,7 @@ void AuProcessEntUser(uint64_t rcx) {
  */
 void AuLoadExecToProcess(AuProcess* proc, char* filename, int argc,char** argv) {
 	AuAcquireSpinlock(loader_lock);
+	
 	/* verify the filename, it can only be '.exe' file no '.dll' or other */
 	char* v_ = strchr(filename, '.');
 	if (v_)
@@ -128,12 +130,14 @@ void AuLoadExecToProcess(AuProcess* proc, char* filename, int argc,char** argv) 
 		SeTextOut("[aurora]: non-executable process \r\n");
 		return;
 	}
-	AuVFSNode *fsys = AuVFSFind(filename);
-	
+	AuVFSNode *fsys = AuVFSFind(filename);	
+	_vfs_debug_on = true;
 	AuVFSNode *file = AuVFSOpen(filename);
-
+	
 	uint64_t* buf = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
 	memset(buf, 0, 4096);
+	
+	
 
 	size_t read_bytes = AuVFSNodeReadBlock(fsys, file, (uint64_t*)V2P((uint64_t)buf));
 	

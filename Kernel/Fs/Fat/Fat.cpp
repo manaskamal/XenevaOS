@@ -45,6 +45,8 @@
 #include <Drivers\rtc.h>
 #include <Sync/mutex.h>
 
+extern bool _vfs_debug_on;
+
 /*
  * FatClusterToSector32 -- Converts a cluster to sector
  * @param cluster -- cluster number
@@ -318,7 +320,10 @@ AuVFSNode* FatLocateSubDir(AuVFSNode* fsys,AuVFSNode* kfile, const char* filenam
 	return NULL;
 }
 
+
 AuVFSNode* FatLocateDir(AuVFSNode* fsys, const char* dir) {
+	if (_vfs_debug_on)
+		SeTextOut("[FatLocateDir]: Getting file pointer for path -> %s \r\n", dir);
 	AuVFSNode* file = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
 	memset(file, 0, sizeof(AuVFSNode));
 
@@ -376,7 +381,6 @@ AuVFSNode* FatLocateDir(AuVFSNode* fsys, const char* dir) {
 }
 
 
-
 //! Opens a file 
 //! @param filename -- name of the file
 //! @example -- \\EFI\\BOOT\\BOOTx64.efi
@@ -389,9 +393,11 @@ AuVFSNode * FatOpen(AuVFSNode * fsys, char* filename) {
 	char* p = 0;
 	bool  root_dir = true;
 	char* path = (char*)filename;
+	
 	//! any '\'s in path ?
 	p = strchr(path, '/');
 	if (!p) {
+
 		//! nope, must be in root directory, search it
 		cur_dir = FatLocateDir(fsys,path);
 
@@ -420,6 +426,7 @@ AuVFSNode * FatOpen(AuVFSNode * fsys, char* filename) {
 			pathname[i] = p[i];
 		}
 		pathname[i] = 0; //null terminate
+
 		//! open subdirectory or file
 		if (root_dir) {
 			//! search root dir -- open pathname

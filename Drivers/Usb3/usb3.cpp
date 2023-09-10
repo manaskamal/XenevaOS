@@ -274,15 +274,17 @@ XHCISlot* XHCICreateDeviceCtx(USBDevice* dev, uint8_t slot_num, uint8_t port_spe
 	slot->root_hub_port_num = root_port_num;
 	slot->input_context_phys = V2P(input_ctx);
 	slot->output_context_phys = V2P(output_ctx);
+
+	/* insert a link trb at the last of cmd ring */
+	slot->cmd_ring[slot->cmd_ring_max].trb_param_1 = V2P(slot->cmd_ring_base) & UINT32_MAX;
+	slot->cmd_ring[slot->cmd_ring_max].trb_param_2 = (V2P(slot->cmd_ring_base) >> 32) & UINT32_MAX;
+	slot->cmd_ring[slot->cmd_ring_max].trb_status = 0;
+	slot->cmd_ring[slot->cmd_ring_max].trb_control = TRB_TRANSFER_LINK << 10 | (1 << 5) | (slot->cmd_ring_cycle & 0x1);
 	XHCIAddSlot(dev, slot);
 
 	/* Here we need an function, which will issues commands to this slot */
 	XHCISendAddressDevice(dev,slot, 0, V2P(input_ctx), slot_num);
-
 	int idx = XHCIPollEvent(dev, TRB_EVENT_CMD_COMPLETION);
-
-	for (int i = 0; i < 100 * 1000; i++)
-		;
 
 	return slot;
 }
@@ -425,8 +427,8 @@ void XHCISendCommandSlot(XHCISlot* slot, uint32_t param1, uint32_t param2, uint3
 
 	slot->cmd_ring_index++;
 
-	if (slot->cmd_ring_index >= 63) {
-		slot->cmd_ring[slot->cmd_ring_index].trb_control ^= 1;
+	if (slot->cmd_ring_index >= 64) {
+		slot->cmd_ring[slot->cmd_ring_index].trb_control |= slot->cmd_ring_cycle;
 		if (slot->cmd_ring[slot->cmd_ring_index].trb_control & (1 << 1)) {
 			slot->cmd_ring_cycle ^= 1;
 		}
@@ -449,7 +451,6 @@ void XHCISendCommandEndpoint(XHCISlot* slot, uint8_t endp_num, uint32_t param1, 
 	if (!ep) 
 		return;
 	
-	SeTextOut("Input ctrl-> %x , prev -> %x \r\n", ctrl, ep->cmd_ring[ep->cmd_ring_index].trb_control);
 	ctrl &= ~1;
 	ctrl |= ep->cmd_ring_cycle & 0x1;
 	ep->cmd_ring[ep->cmd_ring_index].trb_param_1 = param1;
@@ -457,17 +458,17 @@ void XHCISendCommandEndpoint(XHCISlot* slot, uint8_t endp_num, uint32_t param1, 
 	ep->cmd_ring[ep->cmd_ring_index].trb_status = status;
 	ep->cmd_ring[ep->cmd_ring_index].trb_control = ctrl;
 	
-	SeTextOut("Inserted cmd on index -> %d , ctrl -> %x , pcs -> %x\r\n", ep->cmd_ring_index, ep->cmd_ring[ep->cmd_ring_index].trb_control,
-		V2P((size_t)&ep->cmd_ring[ep->cmd_ring_index]));
 	ep->cmd_ring_index++;
 
-	SeTextOut("CMD trb size -> %d bytes \r\n", sizeof(xhci_trb_t));
 	if (ep->cmd_ring_index >= 64) {
 		ep->cmd_ring[ep->cmd_ring_index].trb_control |= ep->cmd_ring_cycle;
 		if (ep->cmd_ring[ep->cmd_ring_index].trb_control & (1 << 1)) {
-			ep->cmd_ring_cycle ^= 1;
+			if (ep->cmd_ring_cycle)
+				ep->cmd_ring_cycle = 0;
+			else
+				ep->cmd_ring_cycle = 1;
 		}
-		SeTextOut("EP REACHED MAX %d \r\n", ep->cmd_ring_index);
+		
 		ep->cmd_ring_index = 0;
 	}
 }
@@ -511,7 +512,7 @@ void XHCISendCommandMultiple(USBDevice* dev, xhci_trb_t* trb, int num_count) {
 
 		dev->cmd_ring_index++;
 
-		if (dev->cmd_ring_index >= 63) {
+		if (dev->cmd_ring_index >= 64) {
 			dev->cmd_ring[dev->cmd_ring_index].trb_control ^= 1;
 			if (dev->cmd_ring[dev->cmd_ring_index].trb_control & (1 << 1)) {
 				dev->cmd_ring_cycle ^= 1;
@@ -691,13 +692,10 @@ void XHCIPortInitialize(USBDevice *dev, unsigned int port) {
 		/* send evaluate context command for reflecting those changes */
 		XHCIEvaluateContextCmd(dev, slot->input_context_phys, slot->slot_id);
 		t_idx = XHCIPollEvent(dev, TRB_EVENT_CMD_COMPLETION);
-		if (t_idx != -1) {
-			xhci_event_trb_t *evt = (xhci_event_trb_t*)dev->event_ring_segment;
-			xhci_trb_t *trb = (xhci_trb_t*)evt;
-		}
 
 		/* Now we have fully operational endpoint 0 pipe */
 
+		AuAcquireSpinlock(dev->usb_lock);
 		/* Get the product (device) name using string descriptor */
 		uint64_t* string_buf = (uint64_t*)P2V((uint64_t)AuPmmngrAlloc());
 		memset(string_buf, 0, PAGE_SIZE);
@@ -705,18 +703,16 @@ void XHCIPortInitialize(USBDevice *dev, unsigned int port) {
 		USBGetStringDesc(dev,slot,slot_id,V2P((uint64_t)string_buf),dev_desc->iProduct);
 		t_idx = -1;
 		t_idx = XHCIPollEvent(dev,TRB_EVENT_TRANSFER);
-		if (t_idx != -1) {
-			xhci_event_trb_t *evt = (xhci_event_trb_t*)dev->event_ring_segment;
-			xhci_trb_t *trb = (xhci_trb_t*)evt;
-		}
+	
 		usb_string_desc_t* str_desc = (usb_string_desc_t*)string_buf;
 		uint8_t* string_buf_ptr = ((uint8_t*)str_desc + 2);
 		uint16_t* string = (uint16_t*)string_buf_ptr;
 		for (int l = 0; l < str_desc->bLength; l++){
 			AuTextOut("%c", string[l]);
 		}
-		AuTextOut("\n Speed = %s \n", XHCIGetPortSpeed(port_speed));
+		AuTextOut("\n");
 
+		AuReleaseSpinlock(dev->usb_lock);
 		/* The main step: get the 0th config descriptor which contain the
 		 * config value for set_config command */
 		USBGetConfigDesc(dev, slot, slot_id, V2P((size_t)buffer), 9, 0);
@@ -780,10 +776,8 @@ void XHCIPortInitialize(USBDevice *dev, unsigned int port) {
 			uint8_t dir = (endp->bEndpointAddress >> 7) & 0xf;
 			uint16_t max_packet_sz = endp->wMaxPacketSize & 0x7FF;
 			uint8_t max_burst_sz = (endp->wMaxPacketSize & 0x1800) >> 11;
-			AuTextOut("MAX BURST SZ -> %d \n", max_burst_sz);
 			uint8_t transfer_type = endp->bmAttributes & 0x3;
 			uint8_t interval = endp->bInterval;
-			AuTextOut("Interval -> %d , speed -> %s \n", interval, XHCIGetPortSpeed(port_speed));
 			uint16_t ici = ((endp_num * 2) + 1) + dir;
 			uint16_t dci = ((endp_num * 2) + dir);
 			if (transfer_type == ENDPOINT_TRANSFER_TYPE_CONTROL){
@@ -826,7 +820,6 @@ void XHCIPortInitialize(USBDevice *dev, unsigned int port) {
 			*raw_offset<volatile uint32_t*>(input_ctx_virt, 0x4) |= (1 << dci);
 
 			auto max_esit = max_packet_sz * (max_burst_sz + 1);
-			AuTextOut("Max esit %d, interval -> %d \n", max_esit, interval);
 			*raw_offset<volatile uint32_t*>(input_ctx_virt, addr + 0) = USB_ENDPOINT_CTX_DWORD0(max_esit >> 16, interval, 0, 0, 0, 0);
 			*raw_offset<volatile uint32_t*>(input_ctx_virt, addr + 0x04) = USB_ENDPOINT_CTX_DWORD1(max_packet_sz, max_burst_sz, 1, ep_type, cerr);
 			uint64_t cmd_ring = (uint64_t)P2V((uint64_t)AuPmmngrAlloc());
@@ -855,7 +848,7 @@ void XHCIPortInitialize(USBDevice *dev, unsigned int port) {
 			ep->cmd_ring[ep->cmd_ring_max].trb_param_1 = V2P(cmd_ring) & UINT32_MAX;
 			ep->cmd_ring[ep->cmd_ring_max].trb_param_2 = (V2P(cmd_ring) >> 32) & UINT32_MAX;
 			ep->cmd_ring[ep->cmd_ring_max].trb_status = 0;
-			ep->cmd_ring[ep->cmd_ring_max].trb_control = TRB_TRANSFER_LINK << 10 | (1 << 5);
+			ep->cmd_ring[ep->cmd_ring_max].trb_control = TRB_TRANSFER_LINK << 10 | (1 << 5) | (ep->cmd_ring_cycle & 0x1);
 
 			list_add(slot->endpoints, ep);
 
@@ -870,7 +863,6 @@ void XHCIPortInitialize(USBDevice *dev, unsigned int port) {
 			endp = raw_offset<usb_endpoint_desc_t*>(endp, endp->bLength);
 		}
 
-		AuTextOut("Last ici -> %d \n", lasti);
 		*raw_offset<volatile uint32_t*>(input_ctx_virt, 0x4) |= (1 << 0);
 		*raw_offset<volatile uint32_t*>(input_ctx_virt, 0x20 + 0) = (lasti & 0x1f) << 27;
 
@@ -905,6 +897,7 @@ void XHCIPortInitialize(USBDevice *dev, unsigned int port) {
 
 		AuPmmngrFree((void*)V2P((size_t)string_buf));
 		AuPmmngrFree((void*)V2P((size_t)buffer));
+		AuReleaseSpinlock(dev->usb_lock);
 	}
 }
 

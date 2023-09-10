@@ -57,6 +57,7 @@ uint8_t port_num;
  * in future: it will be moved to new file
  */
 void AnuvabUSB3Thread(uint64_t value) {
+	/* Initialize all ports */
 	while (1) {
 		if (usb_thread_msg == USB_THREAD_MSG_PORT_CHANGE) {
 			XHCIPortInitialize(usb_device, port_num);
@@ -69,6 +70,8 @@ void AnuvabUSB3Thread(uint64_t value) {
 
 
 void AuUSBInterrupt(size_t v, void* p) {
+	AuDisableInterrupt();
+
 	uint32_t status = 0;
 	/* clear the USB status bit */
 	status = usb_device->op_regs->op_usbsts;
@@ -93,10 +96,12 @@ void AuUSBInterrupt(size_t v, void* p) {
 					if (ep->callback)
 						ep->callback(usb_device, slot, ep);
 				}
-				usb_device->event_available = true;
-				usb_device->poll_return_trb_type = TRB_EVENT_TRANSFER;
-				usb_device->trb_event_index = usb_device->evnt_ring_index;
-				xhci_trb_t *trb = (xhci_trb_t*)&evt[usb_device->evnt_ring_index];
+				else {
+					usb_device->event_available = true;
+					usb_device->poll_return_trb_type = TRB_EVENT_TRANSFER;
+					usb_device->trb_event_index = usb_device->evnt_ring_index;
+					xhci_trb_t *trb = (xhci_trb_t*)&evt[usb_device->evnt_ring_index];
+				}
 			}
 
 			/* New PORT STATUS CHANGE Event */
@@ -152,8 +157,7 @@ void AuUSBInterrupt(size_t v, void* p) {
 		usb_device->rt_regs->intr_reg[0].evtRngDeqPtrLo |= 1 << 3;
 	}
 
-
-
+	AuEnableInterrupt();
 	/*End Of Interrupt to Interrupt Controller */
 	AuInterruptEnd(usb_device->irq);
 }
@@ -192,6 +196,7 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 	usb_device = (USBDevice*)kmalloc(sizeof(USBDevice));
 	usb_device->initialised = false;
 	usb_device->usb_thread = NULL;
+	usb_device->usb_lock = AuCreateSpinlock(false);
 
 	uint64_t command = AuPCIERead(device, PCI_COMMAND, bus, dev, func);
 	command |= (1 << 10);
@@ -279,9 +284,12 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 
 	/* Try Sending a No Operation Command to xHCI*/
 	XHCISendNoopCmd(usb_device);
+	
+	AuTextOut("Starting default ports \n");
 
-	/* Initialize all ports */
 	XHCIStartDefaultPorts(usb_device);
+
+	AuTextOut("Default Port started sizeof(AuDevice) -> %d \n", sizeof(AuDevice));
 
 	/* Disable all interrupts again because
 	* scheduler will enable them all */
@@ -302,8 +310,6 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 	AuThread *t = AuCreateKthread(AnuvabUSB3Thread, P2V((uint64_t)AuPmmngrAlloc() + 4096), (uint64_t)AuGetRootPageTable(), "AnubhavUsb");
 	usb_device->usb_thread = t;
 	usb_device->initialised = true;
-
-	for (;;);
 	AuDisableInterrupt();
 
 	return 0;

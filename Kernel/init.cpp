@@ -95,15 +95,14 @@ void _AuMain(KERNEL_BOOT_INFO *info) {
 	
 	/*initialise aurora driver manager*/
 	AuDrvMngrInitialize(info);
-
+	
 	/* initialise all application processors*/
 	AuHalPostInitialise();
-
+	
 	AuInitialiseLoader();
-
+	
 	/* make the kernel standalone*/
 	AuVmmngrBootFree();
-
 	/* Process initialisation begins here */
 	AuStartRootProc();
 	AuSchedulerStart();

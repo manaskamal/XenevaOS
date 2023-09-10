@@ -97,30 +97,31 @@ $LN11:
 	call	?AuProcessFindPID@@YAPEAU_au_proc_@@H@Z	; AuProcessFindPID
 	mov	QWORD PTR proc$[rsp], rax
 
-; 115  : 	if (!proc) {
+; 115  : 	
+; 116  : 	if (!proc) {
 
 	cmp	QWORD PTR proc$[rsp], 0
 	jne	SHORT $LN8@ProcessLoa
 
-; 116  : 		AuTextOut("No process found \n");
+; 117  : 		AuTextOut("No process found \n");
 
 	lea	rcx, OFFSET FLAT:$SG3586
 	call	AuTextOut
 
-; 117  : 		return -1;
+; 118  : 		return -1;
 
 	mov	eax, -1
 	jmp	$LN9@ProcessLoa
 $LN8@ProcessLoa:
 
-; 118  : 	}
-; 119  : 	
-; 120  : 	/* prepare stuffs for passing arguments */
-; 121  : 	int char_cnt = 0;
+; 119  : 	}
+; 120  : 	
+; 121  : 	/* prepare stuffs for passing arguments */
+; 122  : 	int char_cnt = 0;
 
 	mov	DWORD PTR char_cnt$[rsp], 0
 
-; 122  : 	for (int i = 0; i < argc; i++) {
+; 123  : 	for (int i = 0; i < argc; i++) {
 
 	mov	DWORD PTR i$2[rsp], 0
 	jmp	SHORT $LN7@ProcessLoa
@@ -133,7 +134,7 @@ $LN7@ProcessLoa:
 	cmp	DWORD PTR i$2[rsp], eax
 	jge	SHORT $LN5@ProcessLoa
 
-; 123  : 		size_t l = strlen(argv[i]);
+; 124  : 		size_t l = strlen(argv[i]);
 
 	movsxd	rax, DWORD PTR i$2[rsp]
 	mov	rcx, QWORD PTR argv$[rsp]
@@ -141,41 +142,41 @@ $LN7@ProcessLoa:
 	call	strlen
 	mov	QWORD PTR l$3[rsp], rax
 
-; 124  : 		char_cnt += l;
+; 125  : 		char_cnt += l;
 
 	movsxd	rax, DWORD PTR char_cnt$[rsp]
 	add	rax, QWORD PTR l$3[rsp]
 	mov	DWORD PTR char_cnt$[rsp], eax
 
-; 125  : 	}
+; 126  : 	}
 
 	jmp	SHORT $LN6@ProcessLoa
 $LN5@ProcessLoa:
 
-; 126  : 	
-; 127  : 	char** allocated_argv = 0;
+; 127  : 	
+; 128  : 	char** allocated_argv = 0;
 
 	mov	QWORD PTR allocated_argv$[rsp], 0
 
-; 128  : 	if (char_cnt > 0) {
+; 129  : 	if (char_cnt > 0) {
 
 	cmp	DWORD PTR char_cnt$[rsp], 0
 	jle	SHORT $LN4@ProcessLoa
 
-; 129  : 		allocated_argv = (char**)kmalloc(char_cnt);
+; 130  : 		allocated_argv = (char**)kmalloc(char_cnt);
 
 	mov	ecx, DWORD PTR char_cnt$[rsp]
 	call	kmalloc
 	mov	QWORD PTR allocated_argv$[rsp], rax
 
-; 130  : 		memset(allocated_argv, 0, char_cnt);
+; 131  : 		memset(allocated_argv, 0, char_cnt);
 
 	mov	r8d, DWORD PTR char_cnt$[rsp]
 	xor	edx, edx
 	mov	rcx, QWORD PTR allocated_argv$[rsp]
 	call	memset
 
-; 131  : 		for (int i = 0; i < argc; i++)
+; 132  : 		for (int i = 0; i < argc; i++)
 
 	mov	DWORD PTR i$1[rsp], 0
 	jmp	SHORT $LN3@ProcessLoa
@@ -188,7 +189,7 @@ $LN3@ProcessLoa:
 	cmp	DWORD PTR i$1[rsp], eax
 	jge	SHORT $LN1@ProcessLoa
 
-; 132  : 			allocated_argv[i] = argv[i];
+; 133  : 			allocated_argv[i] = argv[i];
 
 	movsxd	rax, DWORD PTR i$1[rsp]
 	movsxd	rcx, DWORD PTR i$1[rsp]
@@ -200,9 +201,9 @@ $LN3@ProcessLoa:
 $LN1@ProcessLoa:
 $LN4@ProcessLoa:
 
-; 133  : 	}
-; 134  : 
-; 135  : 	AuLoadExecToProcess(proc, filename, argc,allocated_argv);
+; 134  : 	}
+; 135  : 	
+; 136  : 	AuLoadExecToProcess(proc, filename, argc,allocated_argv);
 
 	mov	r9, QWORD PTR allocated_argv$[rsp]
 	mov	r8d, DWORD PTR argc$[rsp]
@@ -211,7 +212,6 @@ $LN4@ProcessLoa:
 	call	?AuLoadExecToProcess@@YAXPEAU_au_proc_@@PEADHPEAPEAD@Z ; AuLoadExecToProcess
 $LN9@ProcessLoa:
 
-; 136  : 	//SeTextOut("process launched -> %s \r\n", proc->file->filename);
 ; 137  : }
 
 	add	rsp, 88					; 00000058H

@@ -37,6 +37,7 @@
 
 AuVFSContainer* __RootContainer;
 AuVFSNode* __RootFS;
+bool _vfs_debug_on;
 
 /*
  * AuVFSInitialise -- initialise the virtual
@@ -47,7 +48,7 @@ void AuVFSInitialise() {
 	_root->childs = initialize_list();
 	__RootContainer = _root;
 	__RootFS = NULL;
-
+	_vfs_debug_on = false;
 	/* initialise the device file system */
 	AuDeviceFsInitialize();
 	/* here we need to mount the
@@ -141,6 +142,7 @@ AU_EXTERN AU_EXPORT AuVFSNode* AuVFSOpen(char* path){
 
 		if (fs->open)
 			Returnable = fs->open(fs, path);
+
 	}
 	else {
 		char* next = strchr(path, '/');

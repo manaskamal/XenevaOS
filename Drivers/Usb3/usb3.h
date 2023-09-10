@@ -34,6 +34,7 @@
 #include "xhci.h"
 #include <Hal\x86_64_sched.h>
 #include <list.h>
+#include <Sync\spinlock.h>
 
 #pragma pack(push,1)
 typedef struct _usb_dev_ {
@@ -66,6 +67,7 @@ typedef struct _usb_dev_ {
 	bool event_available;
 	int poll_return_trb_type;
 	int trb_event_index;
+	Spinlock *usb_lock;
 }USBDevice;
 #pragma pack(pop)
 

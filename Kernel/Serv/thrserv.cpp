@@ -112,6 +112,7 @@ int CreateProcess(int parent_id, char *name) {
  */
 int ProcessLoadExec(int proc_id, char* filename,int argc, char** argv) {
 	AuProcess* proc = AuProcessFindPID(proc_id);
+	
 	if (!proc) {
 		AuTextOut("No process found \n");
 		return -1;
@@ -131,7 +132,6 @@ int ProcessLoadExec(int proc_id, char* filename,int argc, char** argv) {
 		for (int i = 0; i < argc; i++)
 			allocated_argv[i] = argv[i];
 	}
-
+	
 	AuLoadExecToProcess(proc, filename, argc,allocated_argv);
-	//SeTextOut("process launched -> %s \r\n", proc->file->filename);
 }

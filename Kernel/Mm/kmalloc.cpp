@@ -37,11 +37,13 @@
 #include <Sync/spinlock.h>
 #include <Hal/x86_64_lowlevel.h>
 #include <Hal\serial.h>
+#include <Fs\vfs.h>
 
 static meta_data_t *first_block;
 static meta_data_t *last_block;
 uint64_t last_mark;
 bool _debug_on;
+extern bool _vfs_debug_on;
 
 void au_free_page(void* ptr, int pages);
 void* au_request_page(int pages);
@@ -84,6 +86,11 @@ int next_power_of_two(unsigned int val) {
 	return 1 << i;
 }
 
+size_t align24(size_t val) {
+	size_t alignment = 24;
+	return (val + alignment-1) & ~(alignment - 1);
+}
+
 /*
 * au_split_block -- split block into two block
 */
@@ -92,20 +99,23 @@ int au_split_block(meta_data_t* splitable, size_t req_size) {
 	uint8_t* meta_block_a = (uint8_t*)splitable;
 	size_t size = splitable->size - req_size - sizeof(meta_data_t);
 
+
 	if (size <= sizeof(meta_data_t))
 		return 1;
 
-	uint8_t* new_block = (uint8_t*)(meta_block_a + sizeof(meta_data_t)+req_size);
+
+	uint8_t* new_block = (uint8_t*)((size_t)splitable + sizeof(meta_data_t) + req_size);
+
 	meta_data_t* new_block_m = (meta_data_t*)new_block;
 	
 
 	uint64_t new_block_pos = (uint64_t)new_block;
 	if ((new_block_pos) >= last_mark) {
 		SeTextOut("Aramse last mark \r\n");
-		return 1;
+		for (;;);
+		return 0;
 	}
 
-	//new_block->free = true;
 	new_block_m->magic = MAGIC_FREE;
 	new_block_m->prev = splitable;
 	new_block_m->next = splitable->next;
@@ -131,6 +141,11 @@ int au_split_block(meta_data_t* splitable, size_t req_size) {
 * @param req_size -- requested size
 */
 void au_expand_kmalloc(size_t req_size) {
+
+	/*if ((req_size % 2) != 0)
+		req_size = next_power_of_two(req_size);*/
+
+	
 	size_t req_pages = ((req_size + sizeof(meta_data_t)) / 0x1000) + 
 		(((req_size + sizeof(meta_data_t)) % 0x1000) ? 1 : 0);
 	//req_pages = (req_size + sizeof(meta_data_t)) / 4096 + 1;
@@ -146,8 +161,13 @@ void au_expand_kmalloc(size_t req_size) {
 	meta->magic = MAGIC_FREE;
 	
 	/* meta->size holds only the usable area size for user */
-	meta->size = (req_pages * 4096) - sizeof(meta_data_t);
+	meta->size = (req_pages * PAGE_SIZE) - sizeof(meta_data_t);
 	meta->prev = last_block;
+	
+	if (!meta->prev) {
+		AuTextOut("Corrupted Heap Area !! Kernel stucked \n");
+		for (;;);
+	}
 	last_block->next = meta;
 	last_block = meta;
 
@@ -173,10 +193,17 @@ void au_expand_kmalloc(size_t req_size) {
 */
 void* kmalloc(unsigned int size) {
 	meta_data_t *meta = first_block;
-	uint8_t* ret = 0;
+	void* ret = 0;
 
-	/*if ((size % 2) != 0) 
-		size = next_power_of_two(size);*/
+	int sz = size;
+
+	if (size < 24)
+		size = 24;
+
+	if ((size % 24) != 0) 
+		size = align24(size);
+
+	SeTextOut("Requested sz -> %d , aligned -> %d \r\n", sz, size);
 
 	/* now search begins */
 	while (meta){
@@ -185,11 +212,9 @@ void* kmalloc(unsigned int size) {
 				if (au_split_block(meta, size)){
 					meta->magic = MAGIC_USED;
 					uint8_t* meta_addr = (uint8_t*)meta;
-					ret = ((uint8_t*)meta_addr + sizeof(meta_data_t));
+					ret = (void*)((size_t)meta + sizeof(meta_data_t));
 					break;
 				}
-				else if (au_split_block(meta, size) == -1)
-					break;
 			}
 
 			if (meta->size == size) {
@@ -204,6 +229,8 @@ void* kmalloc(unsigned int size) {
 	}
 
 	if (ret) {
+	//	meta_data_t *meta = (meta_data_t*)(ret - sizeof(meta_data_t));
+		SeTextOut("Returning malloc mem -> %x \r\n", ret);
 		return ret;
 	}
 	else{
@@ -334,11 +361,12 @@ void* kcalloc(size_t n_item, size_t size) {
 void* au_request_page(int pages) {
 	uint64_t* page = AuGetFreePage(0, false);
 	uint64_t page_ = (uint64_t)page;
-
+	
 	for (size_t i = 0; i < pages; i++) {
 		void* p = AuPmmngrAlloc();
 		AuMapPage((uint64_t)p, page_ + i * 4096, 0);
 	}
+	
 	return page;
 }
 

@@ -206,9 +206,9 @@ void XHCISendNormalTRB(USBDevice* dev,XHCISlot *slot, uint64_t data_buffer, uint
 		size_t cnt = PAGE_SIZE - ((data_buffer + pos) & (PAGE_SIZE - 1));
 		bool last = cnt >= data_len - pos;
 		if (last) cnt = data_len - pos;
-		size_t phys = V2P((size_t)AuGetPhysicalAddressEx(AuGetRootPageTable(), data_buffer));
+		size_t phys = V2P((size_t)AuGetPhysicalAddressEx((uint64_t*)P2V((size_t)AuGetRootPageTable()), data_buffer));
 		size_t curlength = ALIGN_UP(phys, PAGE_SIZE) - phys;
-		SeTextOut("PHYS -> %x, cnt -> %d \r\n", phys, cnt);
+		//SeTextOut("PHYS -> %x, cnt -> %d \r\n", phys, cnt);
 		
 		size_t remaining_pack = (data_len - pos + ep->max_packet_sz - 1) / ep->max_packet_sz;
 		

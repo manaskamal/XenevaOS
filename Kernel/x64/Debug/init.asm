@@ -149,39 +149,38 @@ $LN5:
 	mov	rcx, QWORD PTR info$[rsp]
 	call	?AuDrvMngrInitialize@@YAXPEAU_KERNEL_BOOT_INFO_@@@Z ; AuDrvMngrInitialize
 
-; 98   : 
+; 98   : 	
 ; 99   : 	/* initialise all application processors*/
 ; 100  : 	AuHalPostInitialise();
 
 	call	AuHalPostInitialise
 
-; 101  : 
+; 101  : 	
 ; 102  : 	AuInitialiseLoader();
 
 	call	?AuInitialiseLoader@@YAXXZ		; AuInitialiseLoader
 
-; 103  : 
+; 103  : 	
 ; 104  : 	/* make the kernel standalone*/
 ; 105  : 	AuVmmngrBootFree();
 
 	call	?AuVmmngrBootFree@@YAXXZ		; AuVmmngrBootFree
 
-; 106  : 
-; 107  : 	/* Process initialisation begins here */
-; 108  : 	AuStartRootProc();
+; 106  : 	/* Process initialisation begins here */
+; 107  : 	AuStartRootProc();
 
 	call	?AuStartRootProc@@YAXXZ			; AuStartRootProc
 
-; 109  : 	AuSchedulerStart();
+; 108  : 	AuSchedulerStart();
 
 	call	?AuSchedulerStart@@YAXXZ		; AuSchedulerStart
 $LN2@AuMain:
 
-; 110  : 	for (;;);
+; 109  : 	for (;;);
 
 	jmp	SHORT $LN2@AuMain
 
-; 111  : }
+; 110  : }
 
 	add	rsp, 40					; 00000028H
 	ret	0
