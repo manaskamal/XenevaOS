@@ -243,6 +243,7 @@ AuThread* AuCreateKthread(void(*entry) (uint64_t), uint64_t stack, uint64_t cr3,
 	memset(t->name, 0,16);
 	strcpy(t->name, name);
 	t->id = thread_id++;
+
 	t->fx_state = (uint8_t*)kmalloc(512);
 	
 	memset(t->fx_state, 0, 512);

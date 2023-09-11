@@ -23,6 +23,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "XECrt", "Libs\XECrt\XECrt.v
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Chitralekha", "Libs\Chitralekha\Chitralekha.vcxproj", "{13366E8F-2DBF-4E21-A7A7-52D8B788F4BC}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "E1000", "Drivers\E1000\E1000.vcxproj", "{60C723A8-AED4-4689-B960-F0091B16466F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Mixed Platforms = Debug|Mixed Platforms
@@ -137,6 +139,16 @@ Global
 		{13366E8F-2DBF-4E21-A7A7-52D8B788F4BC}.Release|Win32.ActiveCfg = Release|Win32
 		{13366E8F-2DBF-4E21-A7A7-52D8B788F4BC}.Release|Win32.Build.0 = Release|Win32
 		{13366E8F-2DBF-4E21-A7A7-52D8B788F4BC}.Release|x64.ActiveCfg = Release|Win32
+		{60C723A8-AED4-4689-B960-F0091B16466F}.Debug|Mixed Platforms.ActiveCfg = Debug|Win32
+		{60C723A8-AED4-4689-B960-F0091B16466F}.Debug|Mixed Platforms.Build.0 = Debug|Win32
+		{60C723A8-AED4-4689-B960-F0091B16466F}.Debug|Win32.ActiveCfg = Debug|Win32
+		{60C723A8-AED4-4689-B960-F0091B16466F}.Debug|Win32.Build.0 = Debug|Win32
+		{60C723A8-AED4-4689-B960-F0091B16466F}.Debug|x64.ActiveCfg = Debug|x64
+		{60C723A8-AED4-4689-B960-F0091B16466F}.Release|Mixed Platforms.ActiveCfg = Release|Win32
+		{60C723A8-AED4-4689-B960-F0091B16466F}.Release|Mixed Platforms.Build.0 = Release|Win32
+		{60C723A8-AED4-4689-B960-F0091B16466F}.Release|Win32.ActiveCfg = Release|Win32
+		{60C723A8-AED4-4689-B960-F0091B16466F}.Release|Win32.Build.0 = Release|Win32
+		{60C723A8-AED4-4689-B960-F0091B16466F}.Release|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

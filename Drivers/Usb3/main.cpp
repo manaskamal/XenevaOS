@@ -70,8 +70,7 @@ void AnuvabUSB3Thread(uint64_t value) {
 
 
 void AuUSBInterrupt(size_t v, void* p) {
-	AuDisableInterrupt();
-
+	
 	uint32_t status = 0;
 	/* clear the USB status bit */
 	status = usb_device->op_regs->op_usbsts;
@@ -157,7 +156,6 @@ void AuUSBInterrupt(size_t v, void* p) {
 		usb_device->rt_regs->intr_reg[0].evtRngDeqPtrLo |= 1 << 3;
 	}
 
-	AuEnableInterrupt();
 	/*End Of Interrupt to Interrupt Controller */
 	AuInterruptEnd(usb_device->irq);
 }

@@ -70,8 +70,6 @@ void GetReport(USBDevice* dev, XHCISlot* slot, uint64_t buffer, uint16_t report_
 }
 
 
-size_t c = 0;
-
 void HIDCallback(void* dev_, void* slot_, void* ep_) {
 	USBDevice* dev = (USBDevice*)dev_;
 	XHCISlot* slot = (XHCISlot*)slot_;
@@ -153,12 +151,7 @@ void USBHidInitialise(USBDevice* dev, XHCISlot* slot, uint8_t classC, uint8_t su
 
 	SeTextOut("EP Max packt -> %d ,mm - %d \r\n", ep_->max_packet_sz, ep_->cmd_ring_max);
 	XHCISendNormalTRB(dev, slot, mouse_data, ep_->max_packet_sz,ep_);
-	/*t_idx = -1;
-	t_idx = XHCIPollEvent(dev, TRB_EVENT_TRANSFER);
-	if (t_idx != -1) {
-		xhci_event_trb_t *evt = (xhci_event_trb_t*)dev->event_ring_segment;
-		xhci_trb_t *trb = (xhci_trb_t*)evt;
-	}*/
+	
 	AuTextOut("Normal trb sent \n");
 	AuPmmngrFree((void*)buff);
 }
