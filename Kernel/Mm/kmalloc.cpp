@@ -106,13 +106,19 @@ int au_split_block(meta_data_t* splitable, size_t req_size) {
 
 	uint8_t* new_block = (uint8_t*)((size_t)splitable + sizeof(meta_data_t) + req_size);
 
+	
 	meta_data_t* new_block_m = (meta_data_t*)new_block;
 	
-
 	uint64_t new_block_pos = (uint64_t)new_block;
+	
 	if ((new_block_pos) >= last_mark) {
 		SeTextOut("Aramse last mark \r\n");
 		for (;;);
+		return 0;
+	}
+
+	if ((new_block_pos + sizeof(meta_data_t)) >= last_mark){
+		SeTextOut("Aramse Last mark \r\n");
 		return 0;
 	}
 
@@ -203,7 +209,7 @@ void* kmalloc(unsigned int size) {
 	if ((size % 24) != 0) 
 		size = align24(size);
 
-	SeTextOut("Requested sz -> %d , aligned -> %d \r\n", sz, size);
+	//SeTextOut("Requested sz -> %d , aligned -> %d \r\n", sz, size);
 
 	/* now search begins */
 	while (meta){
@@ -230,7 +236,7 @@ void* kmalloc(unsigned int size) {
 
 	if (ret) {
 	//	meta_data_t *meta = (meta_data_t*)(ret - sizeof(meta_data_t));
-		SeTextOut("Returning malloc mem -> %x \r\n", ret);
+		//SeTextOut("Returning malloc mem -> %x \r\n", ret);
 		return ret;
 	}
 	else{
@@ -309,6 +315,9 @@ void merge_prev(meta_data_t* meta) {
 void kfree(void* ptr) {
 	if (!ptr) 
 		return;
+	if (((size_t)ptr % PAGE_SIZE) == 0)
+		SeTextOut("KFREE: Ptr is page-aligned \r\n");
+
 	uint8_t* actual_addr = (uint8_t*)ptr;
 	meta_data_t *meta = (meta_data_t*)(actual_addr - sizeof(meta_data_t));
 	if (meta->magic != MAGIC_USED) {
