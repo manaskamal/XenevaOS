@@ -36,6 +36,8 @@
 #include <aucon.h>
 #include <string.h>
 #include <aurora.h>
+#include <Hal\x86_64_sched.h>
+#include <Hal\serial.h>
 
 #pragma pack(push,1)
 typedef struct _e1000_nic_ {
@@ -129,6 +131,31 @@ void E1000WriteMAC(E1000NIC* dev) {
 	E1000WriteCmd(dev, E1000_REG_RXADDR + 4, high);
 }
 
+void E1000ReadMAC(E1000NIC* dev) {
+	if (dev->has_eeprom) {
+		uint32_t t;
+		t = E1000EEPROMRead(dev, 0);
+		dev->mac[0] = t & 0xFF;
+		dev->mac[1] = t >> 8;
+		t = E1000EEPROMRead(dev, 1);
+		dev->mac[2] = t & 0xff;
+		dev->mac[3] = t >> 8;
+		t = E1000EEPROMRead(dev, 2);
+		dev->mac[4] = t & 0xff;
+		dev->mac[5] = t >> 8;
+	}
+	else {
+		uint32_t mac_addr_low = *(uint32_t*)(dev->mmio_addr + E1000_REG_RXADDR);
+		uint32_t mac_addr_high = *(uint32_t*)(dev->mmio_addr + E1000_REG_RXADDR + 4);
+		dev->mac[0] = (mac_addr_low >> 0) & 0xff;
+		dev->mac[1] = (mac_addr_low >> 8) & 0xff;
+		dev->mac[2] = (mac_addr_low >> 16) & 0xff;
+		dev->mac[3] = (mac_addr_low >> 24) & 0xff;
+		dev->mac[4] = (mac_addr_high >> 0) & 0xff;
+		dev->mac[5] = (mac_addr_high >> 8) & 0xff;
+	}
+}
+
 void E1000DisableInterrupt(E1000NIC *dev) {
 	E1000WriteCmd(dev, E1000_REG_IMC, 0xFFFFFFFF);
 	E1000WriteCmd(dev, E1000_REG_ICR, 0xFFFFFFFF);
@@ -175,6 +202,9 @@ void E1000InitTX(E1000NIC *dev) {
 	E1000WriteCmd(dev, E1000_REG_TCTRL, tctl);
 }
 
+/*
+ *E1000SendPacket -- sends a packet 
+ */
 void E1000SendPacket(E1000NIC* dev, uint8_t* payload, size_t payload_sz) {
 	int tx_tail = E1000ReadCmd(dev, E1000_REG_TXDESCTAIL);
 	int tx_head = E1000ReadCmd(dev, E1000_REG_TXDESCHEAD);
@@ -191,6 +221,44 @@ void E1000SendPacket(E1000NIC* dev, uint8_t* payload, size_t payload_sz) {
 	E1000ReadCmd(dev, E1000_REG_STATUS);
 }
 
+
+/* E1000Thread -- no interrupt handling supported then
+ * e1000 driver handle everything inside e1000 thread
+ */
+void E1000Thread(uint64_t val) {
+	while (1) {
+		uint32_t status = E1000ReadCmd(e1000_nic, E1000_REG_ICR);
+		if (status & ICR_LSC) 
+			e1000_nic->link_status = E1000ReadCmd(e1000_nic, E1000_REG_STATUS) & (1 << 1);
+
+		if (status & ICR_RXT0) {
+			int head = E1000ReadCmd(e1000_nic, E1000_REG_RXDESCHEAD);
+
+			while ((e1000_nic->rx[e1000_nic->rx_index].status & 0x01)) {
+				int i = e1000_nic->rx_index;
+				SeTextOut("E1000: Packet received \r\n");
+				//handle ethernet packet
+				e1000_nic->rx[i].status = 0;
+				if (++e1000_nic->rx_index == E1000_NUM_RX_DESC)
+					e1000_nic->rx_index = 0;
+
+				if (e1000_nic->rx_index == head) {
+					head = E1000ReadCmd(e1000_nic, E1000_REG_RXDESCHEAD);
+					if (e1000_nic->rx_index == head) break;
+				}
+
+				E1000WriteCmd(e1000_nic, E1000_REG_RXDESCTAIL, e1000_nic->rx_index);
+				E1000ReadCmd(e1000_nic, E1000_REG_STATUS);
+				
+			}
+		}
+
+		E1000WriteCmd(e1000_nic, E1000_REG_ICR, status);
+		AuSleepThread(AuGetCurrentThread(), 2000);
+		AuForceScheduler();
+	}
+}
+
 /*
 * AuDriverUnload -- Frees and clear up everthing from the
 * driver
@@ -199,6 +267,7 @@ AU_EXTERN AU_EXPORT int AuDriverUnload() {
 	return 0;
 }
 
+/* AuDriverMain -- main entry point of the driver */
 
 AU_EXTERN AU_EXPORT int AuDriverMain() {
 	AuTextOut("Starting e1000 driver \n");
@@ -214,5 +283,100 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 	e1000_nic = (E1000NIC*)kmalloc(sizeof(E1000NIC));
 	memset(e1000_nic, 0, sizeof(E1000NIC));
 
+	if (AuPCIEAllocMSI(device, 40, bus, dev_, func)) {
+		AuTextOut("e1000 don't support MSI/MSI-X, starting up nic thread...\n");
+		nic_thread_required = true;
+	}
+
+	e1000_nic->rx_phys = (uint64_t)P2V((size_t)AuPmmngrAlloc());
+	e1000_nic->rx = (e1000_rx_desc*)e1000_nic->rx_phys;
+	e1000_nic->tx_phys = (uint64_t)P2V((size_t)AuPmmngrAlloc());
+	e1000_nic->tx = (e1000_tx_desc*)e1000_nic->tx_phys;
+
+	memset(e1000_nic->rx, 0, sizeof(e1000_rx_desc)* 512);
+	memset(e1000_nic->tx, 0, sizeof(e1000_tx_desc)* 512);
+
+	for (int i = 0; i < 512; i++) {
+		e1000_nic->rx[i].addr = (uint64_t)AuPmmngrAlloc();
+		e1000_nic->rx_virt[i] = (uint8_t*)AuMapMMIO(e1000_nic->rx[i].addr, 1);
+		e1000_nic->rx[i].status = 0;
+	}
+
+	for (int i = 0; i < E1000_NUM_TX_DESC; ++i) {
+		e1000_nic->tx[i].addr = (uint64_t)AuPmmngrAlloc();
+		e1000_nic->tx_virt[i] = (uint8_t*)AuMapMMIO(e1000_nic->tx[i].addr, 1);
+		memset(e1000_nic->tx_virt[i], 0, PAGE_SIZE);
+		e1000_nic->tx[i].status = 0;
+		e1000_nic->tx[i].cmd = (1 << 0);
+	}
+
+	uint64_t mmio = AuPCIERead(device, PCI_BAR0, bus, dev_, func);
+	e1000_nic->mmio_addr = (uint64_t)AuMapMMIO(mmio, 6);
+
+	E1000EEPROMDetect(e1000_nic);
+	E1000ReadMAC(e1000_nic);
+
+	AuTextOut("NIC MAC:");
+	for (int i = 0; i < 6; i++)
+		AuTextOut("%x:", e1000_nic->mac[i]);
+
+	AuTextOut("\n");
+
+	E1000WriteMAC(e1000_nic);
+	e1000_nic->irq = 0;
+
+	E1000DisableInterrupt(e1000_nic);
+
+	/* turn off receive + transmit */
+	E1000WriteCmd(e1000_nic, E1000_REG_RCTRL, 0);
+	E1000WriteCmd(e1000_nic, E1000_REG_TCTRL, TCTL_PSP);
+	E1000ReadCmd(e1000_nic, E1000_REG_STATUS);
+
+	/* reset all */
+	uint32_t ctrl = E1000ReadCmd(e1000_nic, E1000_REG_CTRL);
+	ctrl |= CTRL_RST;
+	E1000WriteCmd(e1000_nic, E1000_REG_CTRL, ctrl);
+
+	for (int i = 0; i < 100000; i++)
+		;
+
+	/* turn interrupt off again */
+	E1000DisableInterrupt(e1000_nic);
+
+	E1000WriteCmd(e1000_nic, 0x0028, 0x002c8001);
+	E1000WriteCmd(e1000_nic, 0x002c, 0x0100);
+	E1000WriteCmd(e1000_nic, 0x0030, 0x8808);
+	E1000WriteCmd(e1000_nic, 0x0170, 0xFFFF);
+
+	/* link up */
+	uint32_t status = E1000ReadCmd(e1000_nic, E1000_REG_CTRL);
+	status |= CTRL_SLU;
+	status |= (2 << 8);
+	status &= ~CTRL_LRST;
+	status &= ~CTRL_PHY_RST;
+	E1000WriteCmd(e1000_nic, E1000_REG_CTRL, status);
+
+	/* clear statistical counters */
+	for (int i = 0; i < 128; ++i) 
+		E1000WriteCmd(e1000_nic, 0x5200 + i * 4, 0);
+
+	for (int i = 0; i < 64; ++i)
+		E1000ReadCmd(e1000_nic, 0x4000 + i * 4);
+
+	E1000InitRX(e1000_nic);
+	E1000InitTX(e1000_nic);
+
+	E1000WriteCmd(e1000_nic, E1000_REG_RDTR, 0);
+	E1000WriteCmd(e1000_nic, E1000_REG_ITR, 500);
+	E1000ReadCmd(e1000_nic, E1000_REG_STATUS);
+
+	e1000_nic->link_status = (E1000ReadCmd(e1000_nic, E1000_REG_STATUS) & (1 << 1));
+
+	E1000WriteCmd(e1000_nic, E1000_REG_IMS, INTS);
+
+	AuThread* nic_thr = AuCreateKthread(E1000Thread, (uint64_t)P2V((size_t)AuPmmngrAlloc() + PAGE_SIZE),
+		(uint64_t)AuGetRootPageTable(), "E1000Thr");
+
+	
 	return 1;
 }
