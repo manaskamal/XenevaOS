@@ -87,8 +87,13 @@ int next_power_of_two(unsigned int val) {
 }
 
 size_t align24(size_t val) {
-	size_t alignment = 24;
-	return (val + alignment-1) & ~(alignment - 1);
+	size_t alignment = 8;
+	if (val & (alignment - 1)) {
+		return (val | alignment - 1) + 1;
+	}
+	else{
+		return val;
+	}
 }
 
 /*
@@ -113,7 +118,7 @@ int au_split_block(meta_data_t* splitable, size_t req_size) {
 	
 	if ((new_block_pos) >= last_mark) {
 		SeTextOut("Aramse last mark \r\n");
-		for (;;);
+		//for (;;);
 		return 0;
 	}
 
@@ -206,8 +211,7 @@ void* kmalloc(unsigned int size) {
 	if (size < 24)
 		size = 24;
 
-	if ((size % 24) != 0) 
-		size = align24(size);
+	size = align24(sz);
 
 	//SeTextOut("Requested sz -> %d , aligned -> %d \r\n", sz, size);
 
@@ -374,6 +378,11 @@ void* au_request_page(int pages) {
 	for (size_t i = 0; i < pages; i++) {
 		void* p = AuPmmngrAlloc();
 		AuMapPage((uint64_t)p, page_ + i * 4096, 0);
+	}
+
+	if ((page_ % PAGE_SIZE) != 0){
+		SeTextOut("Request page not aligned to page boundary \r\n");
+		for (;;);
 	}
 	
 	return page;

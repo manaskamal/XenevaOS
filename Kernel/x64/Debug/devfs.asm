@@ -30,10 +30,10 @@ $SG3066	DB	'%s mode - %s ', 0dH, 0aH, 00H
 CONST	ENDS
 PUBLIC	?AuDeviceFsInitialize@@YAXXZ			; AuDeviceFsInitialize
 PUBLIC	?AuDevFSCreateFile@@YAHPEAU__VFS_NODE__@@PEADE@Z ; AuDevFSCreateFile
-PUBLIC	?AuDevFSAddFile@@YAHPEAU__VFS_NODE__@@PEAD0@Z	; AuDevFSAddFile
+PUBLIC	AuDevFSAddFile
 PUBLIC	?AuDevFSOpen@@YAPEAU__VFS_NODE__@@PEAU1@PEAD@Z	; AuDevFSOpen
 PUBLIC	?AuDevFSList@@YAXPEAU__VFS_NODE__@@@Z		; AuDevFSList
-PUBLIC	?AuDevFSRemoveFile@@YAHPEAU__VFS_NODE__@@PEAD@Z	; AuDevFSRemoveFile
+PUBLIC	AuDevFSRemoveFile
 PUBLIC	?AuDevFSListDir@@YAXPEAU__VFS_NODE__@@0@Z	; AuDevFSListDir
 EXTRN	initialize_list:PROC
 EXTRN	list_add:PROC
@@ -55,18 +55,18 @@ $pdata$?AuDeviceFsInitialize@@YAXXZ DD imagerel $LN3
 $pdata$?AuDevFSCreateFile@@YAHPEAU__VFS_NODE__@@PEADE@Z DD imagerel $LN20
 	DD	imagerel $LN20+569
 	DD	imagerel $unwind$?AuDevFSCreateFile@@YAHPEAU__VFS_NODE__@@PEADE@Z
-$pdata$?AuDevFSAddFile@@YAHPEAU__VFS_NODE__@@PEAD0@Z DD imagerel $LN18
+$pdata$AuDevFSAddFile DD imagerel $LN18
 	DD	imagerel $LN18+410
-	DD	imagerel $unwind$?AuDevFSAddFile@@YAHPEAU__VFS_NODE__@@PEAD0@Z
+	DD	imagerel $unwind$AuDevFSAddFile
 $pdata$?AuDevFSOpen@@YAPEAU__VFS_NODE__@@PEAU1@PEAD@Z DD imagerel $LN21
 	DD	imagerel $LN21+420
 	DD	imagerel $unwind$?AuDevFSOpen@@YAPEAU__VFS_NODE__@@PEAU1@PEAD@Z
 $pdata$?AuDevFSList@@YAXPEAU__VFS_NODE__@@@Z DD imagerel $LN11
 	DD	imagerel $LN11+247
 	DD	imagerel $unwind$?AuDevFSList@@YAXPEAU__VFS_NODE__@@@Z
-$pdata$?AuDevFSRemoveFile@@YAHPEAU__VFS_NODE__@@PEAD@Z DD imagerel $LN22
+$pdata$AuDevFSRemoveFile DD imagerel $LN22
 	DD	imagerel $LN22+544
-	DD	imagerel $unwind$?AuDevFSRemoveFile@@YAHPEAU__VFS_NODE__@@PEAD@Z
+	DD	imagerel $unwind$AuDevFSRemoveFile
 $pdata$?AuDevFSListDir@@YAXPEAU__VFS_NODE__@@0@Z DD imagerel $LN10
 	DD	imagerel $LN10+229
 	DD	imagerel $unwind$?AuDevFSListDir@@YAXPEAU__VFS_NODE__@@0@Z
@@ -76,13 +76,13 @@ $unwind$?AuDeviceFsInitialize@@YAXXZ DD 010401H
 	DD	06204H
 $unwind$?AuDevFSCreateFile@@YAHPEAU__VFS_NODE__@@PEADE@Z DD 011301H
 	DD	0e213H
-$unwind$?AuDevFSAddFile@@YAHPEAU__VFS_NODE__@@PEAD0@Z DD 011301H
+$unwind$AuDevFSAddFile DD 011301H
 	DD	0c213H
 $unwind$?AuDevFSOpen@@YAPEAU__VFS_NODE__@@PEAU1@PEAD@Z DD 010e01H
 	DD	0c20eH
 $unwind$?AuDevFSList@@YAXPEAU__VFS_NODE__@@@Z DD 010901H
 	DD	08209H
-$unwind$?AuDevFSRemoveFile@@YAHPEAU__VFS_NODE__@@PEAD@Z DD 010e01H
+$unwind$AuDevFSRemoveFile DD 010e01H
 	DD	0e20eH
 $unwind$?AuDevFSListDir@@YAXPEAU__VFS_NODE__@@0@Z DD 010e01H
 	DD	0820eH
@@ -219,7 +219,7 @@ entries$ = 88
 pathname$4 = 96
 fs$ = 128
 path$ = 136
-?AuDevFSRemoveFile@@YAHPEAU__VFS_NODE__@@PEAD@Z PROC	; AuDevFSRemoveFile
+AuDevFSRemoveFile PROC
 
 ; 249  : int AuDevFSRemoveFile(AuVFSNode* fs,char* path) {
 
@@ -503,7 +503,7 @@ $LN20@AuDevFSRem:
 
 	add	rsp, 120				; 00000078H
 	ret	0
-?AuDevFSRemoveFile@@YAHPEAU__VFS_NODE__@@PEAD@Z ENDP	; AuDevFSRemoveFile
+AuDevFSRemoveFile ENDP
 _TEXT	ENDS
 ; Function compile flags: /Odtpy
 ; File e:\xeneva project\aurora\kernel\fs\dev\devfs.cpp
@@ -888,7 +888,7 @@ pathname$ = 72
 fs$ = 112
 path$ = 120
 file$ = 128
-?AuDevFSAddFile@@YAHPEAU__VFS_NODE__@@PEAD0@Z PROC	; AuDevFSAddFile
+AuDevFSAddFile PROC
 
 ; 124  : int AuDevFSAddFile(AuVFSNode* fs, char* path, AuVFSNode* file) {
 
@@ -1098,7 +1098,7 @@ $LN16@AuDevFSAdd:
 
 	add	rsp, 104				; 00000068H
 	ret	0
-?AuDevFSAddFile@@YAHPEAU__VFS_NODE__@@PEAD0@Z ENDP	; AuDevFSAddFile
+AuDevFSAddFile ENDP
 _TEXT	ENDS
 ; Function compile flags: /Odtpy
 ; File e:\xeneva project\aurora\kernel\fs\dev\devfs.cpp

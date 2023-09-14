@@ -60,7 +60,7 @@ extern int AuDevFSCreateFile(AuVFSNode* fs, char* path, uint8_t mode);
 * @param path -- path of the file
 * @param file -- file to add to dev fs
 */
-extern int AuDevFSAddFile(AuVFSNode* fs, char* path, AuVFSNode* file);
+AU_EXTERN AU_EXPORT int AuDevFSAddFile(AuVFSNode* fs, char* path, AuVFSNode* file);
 /*
 * AuDevFSOpen -- open a device file and return to the
 * caller
@@ -78,5 +78,5 @@ extern void AuDevFSList(AuVFSNode* fs);
 * @param fs -- pointer to the file system
 * @param path -- path of the file
 */
-extern int AuDevFSRemoveFile(AuVFSNode* fs, char* path);
+AU_EXTERN AU_EXPORT int AuDevFSRemoveFile(AuVFSNode* fs, char* path);
 #endif

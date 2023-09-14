@@ -107,6 +107,12 @@ e:\xeneva project\aurora\kernel\x64\debug\pe.obj
 e:\xeneva project\aurora\kernel\x64\debug\pe.asm
 e:\xeneva project\aurora\kernel\x64\debug\pcie.obj
 e:\xeneva project\aurora\kernel\x64\debug\pcie.asm
+e:\xeneva project\aurora\kernel\x64\debug\ethernet.obj
+e:\xeneva project\aurora\kernel\x64\debug\ethernet.asm
+e:\xeneva project\aurora\kernel\x64\debug\aunet.obj
+e:\xeneva project\aurora\kernel\x64\debug\aunet.asm
+e:\xeneva project\aurora\kernel\x64\debug\arp.obj
+e:\xeneva project\aurora\kernel\x64\debug\arp.asm
 e:\xeneva project\aurora\kernel\x64\debug\vmmngr.obj
 e:\xeneva project\aurora\kernel\x64\debug\vmmngr.asm
 e:\xeneva project\aurora\kernel\x64\debug\vmarea.obj

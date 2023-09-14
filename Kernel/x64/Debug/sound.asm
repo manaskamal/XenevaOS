@@ -55,7 +55,7 @@ EXTRN	AuPmmngrFree:PROC
 EXTRN	P2V:PROC
 EXTRN	V2P:PROC
 EXTRN	AuVFSFind:PROC
-EXTRN	?AuDevFSAddFile@@YAHPEAU__VFS_NODE__@@PEAD0@Z:PROC ; AuDevFSAddFile
+EXTRN	AuDevFSAddFile:PROC
 EXTRN	strcpy:PROC
 EXTRN	memset:PROC
 pdata	SEGMENT
@@ -1130,7 +1130,7 @@ $LN3:
 	mov	r8, QWORD PTR dsp$[rsp]
 	lea	rdx, OFFSET FLAT:$SG3423
 	mov	rcx, QWORD PTR fsys$[rsp]
-	call	?AuDevFSAddFile@@YAHPEAU__VFS_NODE__@@PEAD0@Z ; AuDevFSAddFile
+	call	AuDevFSAddFile
 
 ; 268  : 
 ; 269  : 	dsp_first = NULL;

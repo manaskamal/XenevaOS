@@ -70,6 +70,12 @@
     <Filter Include="Include\Sound">
       <UniqueIdentifier>{e22f034d-94e9-4ebd-ac2a-2016ca8c74a9}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Net">
+      <UniqueIdentifier>{2406bd81-e711-4ee9-bfb5-0c392de768fc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Include\Net">
+      <UniqueIdentifier>{43b1ea13-c751-4668-82b8-7fa2dac32b83}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\BaseHdr\_null.h">
@@ -261,6 +267,15 @@
     <ClInclude Include="..\BaseHdr\Sound\sound.h">
       <Filter>Include\Sound</Filter>
     </ClInclude>
+    <ClInclude Include="..\BaseHdr\Net\arp.h">
+      <Filter>Include\Net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\Net\ethernet.h">
+      <Filter>Include\Net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\Net\aunet.h">
+      <Filter>Include\Net</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="init.cpp" />
@@ -401,6 +416,15 @@
     </ClCompile>
     <ClCompile Include="Sound\sound.cpp">
       <Filter>Sound</Filter>
+    </ClCompile>
+    <ClCompile Include="Net\arp.cpp">
+      <Filter>Net</Filter>
+    </ClCompile>
+    <ClCompile Include="Net\aunet.cpp">
+      <Filter>Net</Filter>
+    </ClCompile>
+    <ClCompile Include="Net\ethernet.cpp">
+      <Filter>Net</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

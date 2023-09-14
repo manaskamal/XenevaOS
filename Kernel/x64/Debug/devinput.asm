@@ -30,7 +30,7 @@ EXTRN	AuVFSNodeRead:PROC
 EXTRN	AuVFSNodeWrite:PROC
 EXTRN	?AuPipeUnread@@YA_KPEAU_pipe_@@@Z:PROC		; AuPipeUnread
 EXTRN	?AuCreatePipe@@YAPEAU__VFS_NODE__@@PEAD_K@Z:PROC ; AuCreatePipe
-EXTRN	?AuDevFSAddFile@@YAHPEAU__VFS_NODE__@@PEAD0@Z:PROC ; AuDevFSAddFile
+EXTRN	AuDevFSAddFile:PROC
 pdata	SEGMENT
 $pdata$?AuDevInputInitialise@@YAXXZ DD imagerel $LN3
 	DD	imagerel $LN3+122
@@ -149,7 +149,7 @@ $LN3:
 	mov	r8, QWORD PTR ?mice_@@3PEAU__VFS_NODE__@@EA ; mice_
 	lea	rdx, OFFSET FLAT:$SG2909
 	mov	rcx, QWORD PTR devfs$[rsp]
-	call	?AuDevFSAddFile@@YAHPEAU__VFS_NODE__@@PEAD0@Z ; AuDevFSAddFile
+	call	AuDevFSAddFile
 
 ; 67   : 	
 ; 68   : 	kybrd_ = AuCreatePipe("kybrd", sizeof(AuInputMessage)* NUM_KEYBOARD_PACKETS);
@@ -164,7 +164,7 @@ $LN3:
 	mov	r8, QWORD PTR ?kybrd_@@3PEAU__VFS_NODE__@@EA ; kybrd_
 	lea	rdx, OFFSET FLAT:$SG2912
 	mov	rcx, QWORD PTR devfs$[rsp]
-	call	?AuDevFSAddFile@@YAHPEAU__VFS_NODE__@@PEAD0@Z ; AuDevFSAddFile
+	call	AuDevFSAddFile
 
 ; 70   : }
 

@@ -200,6 +200,9 @@
     <ClInclude Include="..\BaseHdr\Mm\vmarea.h" />
     <ClInclude Include="..\BaseHdr\Mm\vmmngr.h" />
     <ClInclude Include="..\BaseHdr\mutex.h" />
+    <ClInclude Include="..\BaseHdr\Net\arp.h" />
+    <ClInclude Include="..\BaseHdr\Net\aunet.h" />
+    <ClInclude Include="..\BaseHdr\Net\ethernet.h" />
     <ClInclude Include="..\BaseHdr\pcie.h" />
     <ClInclude Include="..\BaseHdr\pe.h" />
     <ClInclude Include="..\BaseHdr\process.h" />
@@ -261,6 +264,9 @@
     <ClCompile Include="Mm\shm.cpp" />
     <ClCompile Include="Mm\vmarea.cpp" />
     <ClCompile Include="Mm\vmmngr.cpp" />
+    <ClCompile Include="Net\arp.cpp" />
+    <ClCompile Include="Net\aunet.cpp" />
+    <ClCompile Include="Net\ethernet.cpp" />
     <ClCompile Include="pcie.cpp" />
     <ClCompile Include="pe.cpp" />
     <ClCompile Include="process.cpp" />

@@ -38,6 +38,9 @@
 #include <aurora.h>
 #include <Hal\x86_64_sched.h>
 #include <Hal\serial.h>
+#include <audrv.h>
+#include <Net\aunet.h>
+#include <Fs\Dev\devfs.h>
 
 #pragma pack(push,1)
 typedef struct _e1000_nic_ {
@@ -267,6 +270,17 @@ AU_EXTERN AU_EXPORT int AuDriverUnload() {
 	return 0;
 }
 
+size_t E1000WriteFile(AuVFSNode* node, AuVFSNode* file, uint64_t* buffer, uint32_t len) {
+	AuTextOut("E1000 Writing file \r\n");
+	uint8_t* aligned_buf = (uint8_t*)buffer;
+	E1000SendPacket(e1000_nic, aligned_buf, len);
+	return len;
+}
+
+int E1000IOCtl(AuVFSNode* file, int code, void* arg) {
+	return 1;
+}
+
 /* AuDriverMain -- main entry point of the driver */
 
 AU_EXTERN AU_EXPORT int AuDriverMain() {
@@ -377,6 +391,34 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 	AuThread* nic_thr = AuCreateKthread(E1000Thread, (uint64_t)P2V((size_t)AuPmmngrAlloc() + PAGE_SIZE),
 		(uint64_t)AuGetRootPageTable(), "E1000Thr");
 
-	
+
+	AuDevice *audev = (AuDevice*)kmalloc(sizeof(AuDevice));
+	audev->classCode = 0x02;
+	audev->subClassCode = 0x00;
+	audev->progIf = 0;
+	audev->initialized = true;
+	audev->aurora_dev_class = DEVICE_CLASS_ETHERNET;
+	audev->aurora_driver_class = DRIVER_CLASS_NETWORK;
+	AuRegisterDevice(audev);
+
+	AuVFSNode* fsys = AuVFSFind("/dev");
+	AuVFSNode* file = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
+	memset(file, 0, sizeof(AuVFSNode));
+	strcpy(file->filename, "e1000");
+	file->flags = FS_FLAG_DEVICE;
+	file->device = fsys;
+	file->read = 0;
+	file->write = E1000WriteFile;
+	file->iocontrol = E1000IOCtl;
+	AuDevFSAddFile(fsys, "/", file);
+
+	AuTextOut("E1000 Write ptr -> %x \r\n", file->write);
+	AuNetAdapter* adapt = AuAllocNetworkAdapter();
+	memcpy(adapt->mac, e1000_nic->mac, 6);
+	strcpy(adapt->name, "ethnet");
+	adapt->hwFile = file;
+	adapt->type = AUNET_HWTYPE_ETHERNET;
+
+
 	return 1;
 }

@@ -58,7 +58,8 @@
 #include <Fs\Fat\FatFile.h>
 #include <Fs\Fat\FatDir.h>
 #include <Sound\sound.h>
-
+#include <Net\aunet.h>
+#include <Net\arp.h>
 
 
 /**========================================
@@ -90,6 +91,9 @@ void _AuMain(KERNEL_BOOT_INFO *info) {
 	/* initialise sound service */
 	AuSoundInitialise();
 
+	/* initialise pre network service*/
+	AuInitialiseNet();
+
 	x64_cli();
 	AuSchedulerInitialise();
 	
@@ -100,7 +104,11 @@ void _AuMain(KERNEL_BOOT_INFO *info) {
 	AuHalPostInitialise();
 	
 	AuInitialiseLoader();
-	
+
+	AuTextOut("Requesting MAC \n");
+	AuARPRequestMAC();
+	AuTextOut("MAC Requested \n");
+
 	/* make the kernel standalone*/
 	AuVmmngrBootFree();
 	/* Process initialisation begins here */
