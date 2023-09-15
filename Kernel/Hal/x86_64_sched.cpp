@@ -245,8 +245,14 @@ AuThread* AuCreateKthread(void(*entry) (uint64_t), uint64_t stack, uint64_t cr3,
 	t->id = thread_id++;
 
 	t->fx_state = (uint8_t*)kmalloc(512);
+
+	/* align the fx_state memory to 16-byte boundary */
+	size_t fx_addr = (size_t)t->fx_state;
+	if ((size_t)t->fx_state & (16 - 1)) 
+		t->fx_state = (uint8_t*)(fx_addr | 16 - 1) + 1;
 	
 	memset(t->fx_state, 0, 512);
+
 	t->mxcsr = 0x1f80;
 	AuThreadInsert(t);
 	return t;

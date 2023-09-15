@@ -51,10 +51,10 @@ void AuARPRequestMAC() {
 
 	uint8_t* mac = netadapt->mac;
 	memcpy(arp.srcMac, mac, 6);
-	arp.srcIP[0] = 192;
-	arp.srcIP[1] = 168;
-	arp.srcIP[2] = 0;
-	arp.srcIP[3] = 0;
+	arp.srcIP[0] = 10; //192.168.0.0
+	arp.srcIP[1] = 0;
+	arp.srcIP[2] = 2;
+	arp.srcIP[3] = 14;
 
 	memset(arp.destMac, 0xff, 6);
 	memset(arp.destIP, 0xff, 4);

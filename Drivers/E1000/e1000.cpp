@@ -214,7 +214,7 @@ void E1000SendPacket(E1000NIC* dev, uint8_t* payload, size_t payload_sz) {
 
 	memcpy(dev->tx_virt[dev->tx_index], payload, payload_sz);
 	dev->tx[dev->tx_index].length = payload_sz;
-	dev->tx[dev->tx_index].cmd = CMD_EOP | CMD_IFCS | CMD_RS;
+	dev->tx[dev->tx_index].cmd = CMD_EOP | CMD_IFCS | CMD_RS | CMD_RPS;
 	dev->tx[dev->tx_index].status = 0;
 
 	if (++dev->tx_index == E1000_NUM_TX_DESC)

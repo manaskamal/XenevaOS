@@ -90,29 +90,29 @@ $LN1@AuARPReque:
 	lea	rcx, QWORD PTR arp$[rsp+8]
 	call	memcpy
 
-; 54   : 	arp.srcIP[0] = 192;
+; 54   : 	arp.srcIP[0] = 10; //192.168.0.0
 
 	mov	eax, 1
 	imul	rax, rax, 0
-	mov	BYTE PTR arp$[rsp+rax+14], 192		; 000000c0H
+	mov	BYTE PTR arp$[rsp+rax+14], 10
 
-; 55   : 	arp.srcIP[1] = 168;
+; 55   : 	arp.srcIP[1] = 0;
 
 	mov	eax, 1
 	imul	rax, rax, 1
-	mov	BYTE PTR arp$[rsp+rax+14], 168		; 000000a8H
+	mov	BYTE PTR arp$[rsp+rax+14], 0
 
-; 56   : 	arp.srcIP[2] = 0;
+; 56   : 	arp.srcIP[2] = 2;
 
 	mov	eax, 1
 	imul	rax, rax, 2
-	mov	BYTE PTR arp$[rsp+rax+14], 0
+	mov	BYTE PTR arp$[rsp+rax+14], 2
 
-; 57   : 	arp.srcIP[3] = 0;
+; 57   : 	arp.srcIP[3] = 14;
 
 	mov	eax, 1
 	imul	rax, rax, 3
-	mov	BYTE PTR arp$[rsp+rax+14], 0
+	mov	BYTE PTR arp$[rsp+rax+14], 14
 
 ; 58   : 
 ; 59   : 	memset(arp.destMac, 0xff, 6);
