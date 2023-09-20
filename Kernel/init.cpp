@@ -46,6 +46,7 @@
 #include <Mm\buddy.h>
 #include <ahci.h>
 #include <Fs\vfs.h>
+#include <Fs\tty.h>
 #include <Drivers\mouse.h>
 #include <Drivers\ps2kybrd.h>
 #include <Drivers\rtc.h>
@@ -85,6 +86,9 @@ void _AuMain(KERNEL_BOOT_INFO *info) {
 	AuRTCInitialize();
 	AuPS2KybrdInitialize();
 
+	/*initialise kernel tty */
+	AuTTYInitialise();
+
 	/* initialise the shared mem man */
 	AuInitialiseSHMMan();
 
@@ -105,9 +109,9 @@ void _AuMain(KERNEL_BOOT_INFO *info) {
 	
 	AuInitialiseLoader();
 
-	AuTextOut("Requesting MAC \n");
+	/*AuTextOut("Requesting MAC \n");
 	AuARPRequestMAC();
-	AuTextOut("MAC Requested \n");
+	AuTextOut("MAC Requested \n");*/
 
 	/* make the kernel standalone*/
 	AuVmmngrBootFree();

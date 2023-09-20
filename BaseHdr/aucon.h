@@ -32,6 +32,17 @@
 
 #include <aurora.h>
 
+#define SCREEN_SETMODE    200
+#define SCREEN_GETWIDTH   201
+#define SCREEN_GETHEIGHT  202
+#define SCREEN_GETBPP     203
+#define SCREEN_SETBPP     204
+#define SCREEN_UPDATE     205
+#define SCREEN_GET_SCANLINE  206
+#define SCREEN_GET_PITCH     207
+#define SCREEN_REG_MNGR      208
+#define SCREEN_GET_FB     209
+
 typedef struct _aucon_ {
 	uint32_t width;
 	uint32_t height;

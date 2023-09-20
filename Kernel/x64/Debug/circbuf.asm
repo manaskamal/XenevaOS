@@ -403,7 +403,7 @@ $LN3:
 
 ; 72   : 	CircBuffer *cbuf = (CircBuffer*)kmalloc(sizeof(CircBuffer));
 
-	mov	ecx, 33					; 00000021H
+	mov	ecx, 40					; 00000028H
 	call	kmalloc
 	mov	QWORD PTR cbuf$[rsp], rax
 

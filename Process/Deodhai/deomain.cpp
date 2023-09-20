@@ -38,7 +38,33 @@
 int main(int argc, char* arv[]) {
 	_KePrint("Deodhai v1.0 running \n");
 	ChPrintLibName();
+	ChCanvas* canv = ChCreateCanvas(100, 100);
+	_KePrint("Canvas screen_w -> %d, screen_h -> %d \n", canv->screenWidth, canv->screenHeight);
+	_KePrint("Canvas pitch -> %d \n", canv->pitch);
+	_KePrint("Canvas reqW-> %d , reqH -> %d \n", canv->canvasWidth, canv->canvasHeight);
+	_KePrint("Playing sound -- Muruli.wav \n");
+
+	int snd = _KeOpenFile("/dev/sound", FILE_OPEN_WRITE);
+	XEFileIOControl ioctl;
+	memset(&ioctl, 0, sizeof(XEFileIOControl));
+	ioctl.uint_1 = 10;
+	ioctl.syscall_magic = AURORA_SYSCALL_MAGIC;
+	_KeFileIoControl(snd, SOUND_REGISTER_SNDPLR, &ioctl);
+	
+	int song = _KeOpenFile("/snd.wav", FILE_OPEN_READ_ONLY);
+	void* songbuf = malloc(4096);
+	memset(songbuf, 0, 4096);
+	_KeReadFile(song, songbuf, 4096);
+	XEFileStatus fs;
+	_KeFileStat(song, &fs);
+
 	while (1) {
-		_KeProcessExit();
+		_KeWriteFile(snd, songbuf, 4096);
+		_KeReadFile(song, songbuf, 4096);
+		_KeFileStat(song, &fs);
+		if (fs.eof) {
+			_KeCloseFile(song);
+			_KeProcessExit();
+		}
 	}
 }

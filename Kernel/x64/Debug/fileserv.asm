@@ -5,6 +5,9 @@ include listing.inc
 INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
+CONST	SEGMENT
+$SG3827	DB	'File Closed -> %s %x ', 0dH, 0aH, 00H
+CONST	ENDS
 PUBLIC	?OpenFile@@YAHPEADH@Z				; OpenFile
 PUBLIC	?ReadFile@@YA_KHPEAX_K@Z			; ReadFile
 PUBLIC	?WriteFile@@YA_KHPEAX_K@Z			; WriteFile
@@ -32,6 +35,7 @@ EXTRN	?AuProcessFindThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z:PROC ; AuProces
 EXTRN	?AuProcessGetFileDesc@@YAHPEAU_au_proc_@@@Z:PROC ; AuProcessGetFileDesc
 EXTRN	memset:PROC
 EXTRN	memcpy:PROC
+EXTRN	SeTextOut:PROC
 pdata	SEGMENT
 $pdata$?OpenFile@@YAHPEADH@Z DD imagerel $LN9
 	DD	imagerel $LN9+202
@@ -49,10 +53,10 @@ $pdata$?RemoveFile@@YAHPEAD@Z DD imagerel $LN6
 	DD	imagerel $LN6+108
 	DD	imagerel $unwind$?RemoveFile@@YAHPEAD@Z
 $pdata$?CloseFile@@YAHH@Z DD imagerel $LN6
-	DD	imagerel $LN6+145
+	DD	imagerel $LN6+173
 	DD	imagerel $unwind$?CloseFile@@YAHH@Z
 $pdata$?FileIoControl@@YAHHHPEAX@Z DD imagerel $LN5
-	DD	imagerel $LN5+120
+	DD	imagerel $LN5+134
 	DD	imagerel $unwind$?FileIoControl@@YAHHHPEAX@Z
 $pdata$?FileStat@@YAHHPEAX@Z DD imagerel $LN5
 	DD	imagerel $LN5+216
@@ -199,9 +203,10 @@ _TEXT	ENDS
 ; Function compile flags: /Odtpy
 ; File e:\xeneva project\aurora\kernel\serv\fileserv.cpp
 _TEXT	SEGMENT
-file$ = 32
-current_thr$ = 40
-current_proc$ = 48
+ret$ = 32
+file$ = 40
+current_thr$ = 48
+current_proc$ = 56
 fd$ = 80
 code$ = 88
 arg$ = 96
@@ -257,17 +262,21 @@ $LN2@FileIoCont:
 $LN1@FileIoCont:
 
 ; 224  : 
-; 225  : 	AuVFSNodeIOControl(file, code, arg);
+; 225  : 	int ret = 0;
+
+	mov	DWORD PTR ret$[rsp], 0
+
+; 226  : 	ret = AuVFSNodeIOControl(file, code, arg);
 
 	mov	r8, QWORD PTR arg$[rsp]
 	mov	edx, DWORD PTR code$[rsp]
 	mov	rcx, QWORD PTR file$[rsp]
 	call	AuVFSNodeIOControl
+	mov	DWORD PTR ret$[rsp], eax
 
-; 226  : 
-; 227  : 	return 0;
+; 227  : 	return ret;
 
-	xor	eax, eax
+	mov	eax, DWORD PTR ret$[rsp]
 $LN3@FileIoCont:
 
 ; 228  : }
@@ -299,7 +308,7 @@ $LN6:
 ; 195  : 		return 0;
 
 	xor	eax, eax
-	jmp	SHORT $LN4@CloseFile
+	jmp	$LN4@CloseFile
 $LN3@CloseFile:
 
 ; 196  : 	AuThread* current_thr = AuGetCurrentThread();
@@ -320,7 +329,14 @@ $LN3@CloseFile:
 	mov	rax, QWORD PTR [rcx+rax*8+551]
 	mov	QWORD PTR file$[rsp], rax
 
-; 199  : 
+; 199  : 	SeTextOut("File Closed -> %s %x \r\n", file->filename, file);
+
+	mov	rax, QWORD PTR file$[rsp]
+	mov	r8, QWORD PTR file$[rsp]
+	mov	rdx, rax
+	lea	rcx, OFFSET FLAT:$SG3827
+	call	SeTextOut
+
 ; 200  : 	if (file->flags & FS_FLAG_FILE_SYSTEM)
 
 	mov	rax, QWORD PTR file$[rsp]

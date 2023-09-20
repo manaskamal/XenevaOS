@@ -30,13 +30,13 @@ _BSS	SEGMENT
 ?_x86_64_sched_init@@3_NA DB 01H DUP (?)		; _x86_64_sched_init
 _BSS	ENDS
 CONST	SEGMENT
-$SG3656	DB	'FRAME USER KERN ESP -> %x ', 0aH, 00H
+$SG3658	DB	'FRAME USER KERN ESP -> %x ', 0aH, 00H
 	ORG $+4
-$SG3665	DB	'_idle id -> %d  ', 0dH, 0aH, 00H
+$SG3667	DB	'_idle id -> %d  ', 0dH, 0aH, 00H
 	ORG $+1
-$SG3674	DB	'Idle', 00H
+$SG3676	DB	'Idle', 00H
 	ORG $+7
-$SG3717	DB	'CR3 -> %x ', 0dH, 0aH, 00H
+$SG3719	DB	'CR3 -> %x ', 0dH, 0aH, 00H
 CONST	ENDS
 PUBLIC	?AuSchedulerStart@@YAXXZ			; AuSchedulerStart
 PUBLIC	?AuSchedulerInitialise@@YAXXZ			; AuSchedulerInitialise
@@ -50,6 +50,7 @@ PUBLIC	AuSleepThread
 PUBLIC	AuUnblockThread
 PUBLIC	?AuThreadMoveToTrash@@YAXPEAU_au_thread_@@@Z	; AuThreadMoveToTrash
 PUBLIC	?AuThreadCleanTrash@@YAXPEAU_au_thread_@@@Z	; AuThreadCleanTrash
+PUBLIC	AuThreadFindByID
 PUBLIC	AuForceScheduler
 PUBLIC	?AuIsSchedulerInitialised@@YA_NXZ		; AuIsSchedulerInitialised
 PUBLIC	?AuMapKStack@@YA_KPEA_K@Z			; AuMapKStack
@@ -128,6 +129,9 @@ $pdata$?AuThreadMoveToTrash@@YAXPEAU_au_thread_@@@Z DD imagerel $LN11
 $pdata$?AuThreadCleanTrash@@YAXPEAU_au_thread_@@@Z DD imagerel $LN3
 	DD	imagerel $LN3+24
 	DD	imagerel $unwind$?AuThreadCleanTrash@@YAXPEAU_au_thread_@@@Z
+$pdata$AuThreadFindByID DD imagerel $LN7
+	DD	imagerel $LN7+77
+	DD	imagerel $unwind$AuThreadFindByID
 $pdata$AuForceScheduler DD imagerel $LN3
 	DD	imagerel $LN3+14
 	DD	imagerel $unwind$AuForceScheduler
@@ -168,6 +172,8 @@ $unwind$?AuThreadMoveToTrash@@YAXPEAU_au_thread_@@@Z DD 010901H
 	DD	06209H
 $unwind$?AuThreadCleanTrash@@YAXPEAU_au_thread_@@@Z DD 010901H
 	DD	04209H
+$unwind$AuThreadFindByID DD 010901H
+	DD	02209H
 $unwind$AuForceScheduler DD 010401H
 	DD	04204H
 $unwind$?AuMapKStack@@YA_KPEA_K@Z DD 010901H
@@ -195,7 +201,7 @@ $LN3:
 
 	call	x64_read_cr3
 	mov	rdx, rax
-	lea	rcx, OFFSET FLAT:$SG3717
+	lea	rcx, OFFSET FLAT:$SG3719
 	call	SeTextOut
 
 ; 477  : }
@@ -469,7 +475,7 @@ $LN5:
 	call	?AuPerCPUGetCpuID@@YAEXZ		; AuPerCPUGetCpuID
 	movzx	eax, al
 	mov	edx, eax
-	lea	rcx, OFFSET FLAT:$SG3665
+	lea	rcx, OFFSET FLAT:$SG3667
 	call	SeTextOut
 $LN2@AuIdleThre:
 
@@ -1022,11 +1028,11 @@ _TEXT	ENDS
 _TEXT	SEGMENT
 ?AuIsSchedulerInitialised@@YA_NXZ PROC			; AuIsSchedulerInitialised
 
-; 570  : 	return _x86_64_sched_init;
+; 582  : 	return _x86_64_sched_init;
 
 	movzx	eax, BYTE PTR ?_x86_64_sched_init@@3_NA	; _x86_64_sched_init
 
-; 571  : }
+; 583  : }
 
 	ret	0
 ?AuIsSchedulerInitialised@@YA_NXZ ENDP			; AuIsSchedulerInitialised
@@ -1036,20 +1042,72 @@ _TEXT	ENDS
 _TEXT	SEGMENT
 AuForceScheduler PROC
 
-; 564  : AU_EXTERN AU_EXPORT void AuForceScheduler() {
+; 576  : AU_EXTERN AU_EXPORT void AuForceScheduler() {
 
 $LN3:
 	sub	rsp, 40					; 00000028H
 
-; 565  : 	x64_force_sched();
+; 577  : 	x64_force_sched();
 
 	call	x64_force_sched
 
-; 566  : }
+; 578  : }
 
 	add	rsp, 40					; 00000028H
 	ret	0
 AuForceScheduler ENDP
+_TEXT	ENDS
+; Function compile flags: /Odtpy
+; File e:\xeneva project\aurora\kernel\hal\x86_64_sched.cpp
+_TEXT	SEGMENT
+ready_queue_$1 = 0
+id$ = 32
+AuThreadFindByID PROC
+
+; 565  : AuThread* AuThreadFindByID(uint16_t id) {
+
+$LN7:
+	mov	WORD PTR [rsp+8], cx
+	sub	rsp, 24
+
+; 566  : 	for (AuThread* ready_queue_ = thread_list_head; ready_queue_ != NULL; ready_queue_ = ready_queue_->next) {
+
+	mov	rax, QWORD PTR ?thread_list_head@@3PEAU_au_thread_@@EA ; thread_list_head
+	mov	QWORD PTR ready_queue_$1[rsp], rax
+	jmp	SHORT $LN4@AuThreadFi
+$LN3@AuThreadFi:
+	mov	rax, QWORD PTR ready_queue_$1[rsp]
+	mov	rax, QWORD PTR [rax+314]
+	mov	QWORD PTR ready_queue_$1[rsp], rax
+$LN4@AuThreadFi:
+	cmp	QWORD PTR ready_queue_$1[rsp], 0
+	je	SHORT $LN2@AuThreadFi
+
+; 567  : 		if (ready_queue_->id == id)
+
+	mov	rax, QWORD PTR ready_queue_$1[rsp]
+	movzx	eax, WORD PTR [rax+301]
+	movzx	ecx, WORD PTR id$[rsp]
+	cmp	eax, ecx
+	jne	SHORT $LN1@AuThreadFi
+
+; 568  : 			return ready_queue_;
+
+	mov	rax, QWORD PTR ready_queue_$1[rsp]
+	jmp	SHORT $LN5@AuThreadFi
+$LN1@AuThreadFi:
+
+; 569  : 	}
+
+	jmp	SHORT $LN3@AuThreadFi
+$LN2@AuThreadFi:
+$LN5@AuThreadFi:
+
+; 570  : }
+
+	add	rsp, 24
+	ret	0
+AuThreadFindByID ENDP
 _TEXT	ENDS
 ; Function compile flags: /Odtpy
 ; File e:\xeneva project\aurora\kernel\hal\x86_64_sched.cpp
@@ -1666,7 +1724,7 @@ $LN3:
 
 	mov	rax, QWORD PTR t$[rsp]
 	mov	rdx, QWORD PTR [rax+200]
-	lea	rcx, OFFSET FLAT:$SG3656
+	lea	rcx, OFFSET FLAT:$SG3658
 	call	AuTextOut
 
 ; 299  : 	t->user_stack = stack;
@@ -2154,7 +2212,7 @@ $LN3:
 	add	rax, 4096				; 00001000H
 	mov	rcx, rax
 	call	P2V
-	lea	r9, OFFSET FLAT:$SG3674
+	lea	r9, OFFSET FLAT:$SG3676
 	mov	rcx, QWORD PTR tv68[rsp]
 	mov	r8, rcx
 	mov	rdx, rax

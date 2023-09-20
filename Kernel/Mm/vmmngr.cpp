@@ -400,8 +400,8 @@ void AuFreePages(uint64_t virt_addr, bool free_physical, size_t s){
 		}
 
 		if (free_physical && page != 0)
-			AuPmmngrFree(page);
-
+			AuPmmngrFree((void*)V2P((size_t)page));
+		
 		virt_addr = virt_addr + i * 4096;
 	}
 

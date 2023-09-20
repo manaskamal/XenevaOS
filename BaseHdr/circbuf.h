@@ -32,7 +32,7 @@
 
 #include <stdint.h>
 
-#pragma pack(push,1)
+
 typedef struct _circ_buf_ {
 	uint8_t* buffer;
 	size_t head;
@@ -40,7 +40,7 @@ typedef struct _circ_buf_ {
 	size_t max;
 	bool full;
 }CircBuffer;
-#pragma pack(pop)
+
 
 /*
 * AuAdvancePointer -- advances the pointer

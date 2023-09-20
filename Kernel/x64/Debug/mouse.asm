@@ -10,11 +10,11 @@ _BSS	SEGMENT
 ?__ps2mouse@@3PEAU__ps2mouse__@@EA DQ 01H DUP (?)	; __ps2mouse
 _BSS	ENDS
 CONST	SEGMENT
-$SG3802	DB	'Right clicked ', 0dH, 0aH, 00H
+$SG3804	DB	'Right clicked ', 0dH, 0aH, 00H
 	ORG $+7
-$SG3807	DB	'Mouse Scroll down ', 0aH, 00H
+$SG3809	DB	'Mouse Scroll down ', 0aH, 00H
 	ORG $+4
-$SG3811	DB	'Mouse Scroll up ', 0aH, 00H
+$SG3813	DB	'Mouse Scroll up ', 0aH, 00H
 CONST	ENDS
 PUBLIC	?AuPS2MouseInitialise@@YAXXZ			; AuPS2MouseInitialise
 PUBLIC	?PS2MouseWaitInput@@YAXXZ			; PS2MouseWaitInput
@@ -426,7 +426,7 @@ $LN7@PS2MouseHa:
 
 ; 169  : 		SeTextOut("Right clicked \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG3802
+	lea	rcx, OFFSET FLAT:$SG3804
 	call	SeTextOut
 
 ; 170  : 		__ps2mouse->mouse_butt_state |= RIGHT_CLICK;
@@ -483,7 +483,7 @@ $LN4@PS2MouseHa:
 
 ; 179  : 		AuTextOut("Mouse Scroll down \n");
 
-	lea	rcx, OFFSET FLAT:$SG3807
+	lea	rcx, OFFSET FLAT:$SG3809
 	call	AuTextOut
 	jmp	SHORT $LN2@PS2MouseHa
 $LN3@PS2MouseHa:
@@ -499,7 +499,7 @@ $LN3@PS2MouseHa:
 
 ; 181  : 		AuTextOut("Mouse Scroll up \n");
 
-	lea	rcx, OFFSET FLAT:$SG3811
+	lea	rcx, OFFSET FLAT:$SG3813
 	call	AuTextOut
 $LN1@PS2MouseHa:
 $LN2@PS2MouseHa:

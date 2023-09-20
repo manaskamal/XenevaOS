@@ -35,6 +35,9 @@
 #include <string.h>
 #include <va_list.h>
 #include <stdio.h>
+#include <Fs\vfs.h>
+#include <Serv\sysserv.h>
+#include <Fs\Dev\devfs.h>
 
 uint8_t *font_data;
 uint32_t console_x;
@@ -74,6 +77,53 @@ void AuConsoleInitialize(PKERNEL_BOOT_INFO info, bool early) {
 	aucon = NULL;
 }
 
+/*
+ * AuConsoleIoControl -- io control of console file
+ */
+int AuConsoleIoControl(AuVFSNode* node, int code, void* args) {
+	int ret = 0;
+	AuFileIOControl *ioctl = (AuFileIOControl*)args;
+	if (ioctl->syscall_magic != AURORA_SYSCALL_MAGIC)
+		return 0;
+
+	if (!aucon)
+		return 0;
+	
+	switch (code) {
+	case SCREEN_GETWIDTH:{
+							 uint32_t width = aucon->width;
+							 ioctl->uint_1 = width;
+							 break;
+	}
+	case SCREEN_GETHEIGHT:{
+							  uint32_t height = aucon->height;
+							  ioctl->uint_1 = height;
+							  break;
+	}
+	case SCREEN_GETBPP:{
+						   uint32_t bpp = aucon->bpp;
+						   ioctl->uint_1 = bpp;
+						   break;
+	}
+	case SCREEN_GET_SCANLINE: {
+								  uint16_t scanline = aucon->scanline;
+								  ioctl->ushort_1 = scanline;
+								  break;
+	}
+	case SCREEN_GET_PITCH:{
+							  uint32_t pitch = aucon->pitch;
+							  ioctl->uint_1 = pitch;
+							  break;
+	}
+
+	case SCREEN_REG_MNGR:{
+							 return 1;
+							 break;
+	}
+	}
+	return ret;
+}
+
 /* 
  * AuConsolePostInitialise -- initialise the post console process
  * @param info -- pointer to kernel boot info structure
@@ -107,6 +157,17 @@ void AuConsolePostInitialise(PKERNEL_BOOT_INFO info) {
 			aucon->buffer[w + h * info->X_Resolution] = 0x00000000;
 		}
 	}
+
+	AuVFSNode* fsys = AuVFSFind("/dev");
+	AuVFSNode* file = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
+	memset(file, 0, sizeof(AuVFSNode));
+	strcpy(file->filename, "graph");
+	file->flags = FS_FLAG_DEVICE;
+	file->device = fsys;
+	file->read = 0;
+	file->write = 0;
+	file->iocontrol = AuConsoleIoControl;
+	AuDevFSAddFile(fsys, "/", file);
 }
 
 //! Put a character to console output

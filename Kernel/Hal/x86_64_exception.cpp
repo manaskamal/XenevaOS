@@ -186,8 +186,10 @@ void page_fault(size_t vector, void* param){
 	AuProcess *proc = NULL;
 	if (thr) {
 		proc = AuProcessFindThread(thr);
-		if (proc)
+		if (proc) {
 			SeTextOut("Process pid -> %d \r\n", proc->proc_id);
+			SeTextOut("Process name -> %s \r\n", proc->name);
+		}
 	}
 	
 	uint64_t vaddr_ = (uint64_t)vaddr;

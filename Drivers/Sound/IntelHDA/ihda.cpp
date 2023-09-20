@@ -39,6 +39,7 @@
 #include <Mm/vmmngr.h>
 #include <Mm/pmmngr.h>
 #include <Mm/kmalloc.h>
+#include <aucon.h>
 #include <Sound\sound.h>
 
 HDAudio* _hdaudio;
@@ -139,6 +140,12 @@ void SetupCORB() {
 	/* Set CORB Base Address */
 	corb_base = (uint64_t)V2P((size_t)_hdaudio->corb);
 
+	if ((corb_base % 128) != 0) {
+		AuTextOut("CORB-Base is not aligned to 128 byte boundary \n");
+		printf("CORB-Base is not aligned to 128 byte boundary \n");
+		for (;;);
+	}
+
 	_aud_outl_(CORBLBASE, corb_base);
 	_aud_outl_(CORBUBASE, corb_base >> 32);
 
@@ -184,6 +191,9 @@ void SetupRIRB() {
 
 	/* Set RIRB Base address */
 	rirb_base = (uint64_t)V2P((size_t)_hdaudio->rirb);
+
+	if ((rirb_base % 128) != 0)
+		printf("RirbBase is not aligned to 128 byte \n");
 	printf("rirb base -> %x \n", rirb_base);
 	_aud_outl_(RIRBLBASE, rirb_base);
 	_aud_outl_(RIRBUBASE, rirb_base >> 32);

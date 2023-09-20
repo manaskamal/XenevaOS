@@ -76,6 +76,12 @@
     <Filter Include="Include\Net">
       <UniqueIdentifier>{43b1ea13-c751-4668-82b8-7fa2dac32b83}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Mm\liballoc">
+      <UniqueIdentifier>{e76a0b36-802a-4a17-969f-ca7cc41b0f77}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Include\Mm\liballoc">
+      <UniqueIdentifier>{e5300510-bef4-46b7-a325-3e04142cb5e6}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\BaseHdr\_null.h">
@@ -276,6 +282,9 @@
     <ClInclude Include="..\BaseHdr\Net\aunet.h">
       <Filter>Include\Net</Filter>
     </ClInclude>
+    <ClInclude Include="..\BaseHdr\Mm\liballoc\liballoc.h">
+      <Filter>Include\Mm\liballoc</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="init.cpp" />
@@ -425,6 +434,9 @@
     </ClCompile>
     <ClCompile Include="Net\ethernet.cpp">
       <Filter>Net</Filter>
+    </ClCompile>
+    <ClCompile Include="Mm\liballoc\liballoc.cpp">
+      <Filter>Mm\liballoc</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

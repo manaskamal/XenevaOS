@@ -6,13 +6,13 @@ INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
 CONST	SEGMENT
-$SG3492	DB	'Key Pressed ', 0dH, 0aH, 00H
+$SG3494	DB	'Key Pressed ', 0dH, 0aH, 00H
 	ORG $+1
-$SG3496	DB	'/dev', 00H
+$SG3498	DB	'/dev', 00H
 	ORG $+3
-$SG3497	DB	'/ps2kybrd', 00H
+$SG3499	DB	'/ps2kybrd', 00H
 	ORG $+6
-$SG3499	DB	'/dev/ps2kybrd', 00H
+$SG3501	DB	'/dev/ps2kybrd', 00H
 CONST	ENDS
 PUBLIC	?AuPS2KybrdHandler@@YAX_KPEAX@Z			; AuPS2KybrdHandler
 PUBLIC	?AuPS2KybrdInitialize@@YAXXZ			; AuPS2KybrdInitialize
@@ -61,20 +61,20 @@ $LN3:
 ; 58   : 	/* start the registration process */
 ; 59   : 	AuVFSNode* fs = AuVFSFind("/dev");
 
-	lea	rcx, OFFSET FLAT:$SG3496
+	lea	rcx, OFFSET FLAT:$SG3498
 	call	AuVFSFind
 	mov	QWORD PTR fs$[rsp], rax
 
 ; 60   : 	AuDevFSCreateFile(fs, "/ps2kybrd", FS_FLAG_DEVICE);
 
 	mov	r8b, 8
-	lea	rdx, OFFSET FLAT:$SG3497
+	lea	rdx, OFFSET FLAT:$SG3499
 	mov	rcx, QWORD PTR fs$[rsp]
 	call	?AuDevFSCreateFile@@YAHPEAU__VFS_NODE__@@PEADE@Z ; AuDevFSCreateFile
 
 ; 61   : 	AuVFSNode* kybrd = AuDevFSOpen(fs, "/dev/ps2kybrd");
 
-	lea	rdx, OFFSET FLAT:$SG3499
+	lea	rdx, OFFSET FLAT:$SG3501
 	mov	rcx, QWORD PTR fs$[rsp]
 	call	?AuDevFSOpen@@YAPEAU__VFS_NODE__@@PEAU1@PEAD@Z ; AuDevFSOpen
 	mov	QWORD PTR kybrd$[rsp], rax
@@ -118,7 +118,7 @@ $LN4:
 
 ; 46   : 		SeTextOut("Key Pressed \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG3492
+	lea	rcx, OFFSET FLAT:$SG3494
 	call	SeTextOut
 $LN1@AuPS2Kybrd:
 

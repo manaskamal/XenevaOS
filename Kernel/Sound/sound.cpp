@@ -147,7 +147,7 @@ void AuSoundGetBlock(uint64_t *buffer) {
 		hw_buffer[i] /= 2;
 
 	for (AuDSP *dsp = dsp_first; dsp != NULL; dsp = dsp->next) {
-		if (dsp->SndThread)
+		if (dsp->SndThread) 
 			AuUnblockThread(dsp->SndThread);
 	}
 
@@ -172,11 +172,11 @@ size_t AuSoundWrite(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint32_t
 		AuBlockThread(dsp->SndThread);
 		AuForceScheduler();	
 	}
-	for (int i = 0; i < SND_BUFF_SZ; i++)
+	for (int i = 0; i < SND_BUFF_SZ; i++) {
 		AuCircBufPut(dsp->buffer, aligned_buf[i]);
+	}
 
 	AuSleepThread(t, dsp->sleep_time);
-	dsp->available = false;
 	AuForceScheduler();
 
 	return SND_BUFF_SZ;
@@ -231,6 +231,7 @@ int AuSoundIOControl(AuVFSNode* node, int code, void* arg) {
 									dsp->sleep_time = _ioctl->uint_1;
 									dsp->available = true;
 									AuSoundAddDSP(dsp);
+									AuTextOut("dsp created -> %x \r\n", dsp);
 									break;
 	}
 	case SOUND_READ_AVAIL: {
@@ -289,9 +290,11 @@ void AuSoundInitialise() {
 void AuSoundRemoveDSP(uint16_t id) {
 	AuDSP* dsp_ = AuSoundGetDSP(id);
 	if (dsp_) {
-		AuRemoveDSP(dsp_);
 		AuPmmngrFree((void*)V2P((size_t)dsp_->buffer->buffer));
+		AuTextOut("Circ Buf dsp addr -> %x \n", dsp_->buffer);
 		AuCircBufFree(dsp_->buffer);
+		AuRemoveDSP(dsp_);
 		kfree(dsp_);
+		AuTextOut("DSP Removed %x sizeof(dsp) -> %d bytes \n", dsp_, sizeof(AuDSP));
 	}
 }

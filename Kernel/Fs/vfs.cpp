@@ -175,8 +175,11 @@ AU_EXTERN AU_EXPORT AuVFSNode* AuVFSOpen(char* path){
  * @param arg -- extra arguments
  */
 AU_EXTERN AU_EXPORT int AuVFSNodeIOControl(AuVFSNode* node, int code, void* arg) {
-	if (node->iocontrol)
-		return node->iocontrol(node, code, arg);
+	if (node->iocontrol){
+		int val = node->iocontrol(node, code, arg);
+		return val;
+	}
+	return 0;
 }
 
 /*

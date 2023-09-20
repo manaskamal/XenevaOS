@@ -36,7 +36,6 @@
 #include <Hal\x86_64_sched.h>
 #include <aurora.h>
 
-
 #pragma pack(push,1)
 typedef struct __au_dsp__ {
 	CircBuffer *buffer;

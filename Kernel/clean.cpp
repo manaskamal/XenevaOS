@@ -96,7 +96,7 @@ void AuThreadFree(AuThread* t) {
 */
 void AuProcessClean(AuProcess* parent, AuProcess* killable) {
 	int id = killable->proc_id;
-	char* name = killable->name;
+	
 	FreeUserStack(killable->cr3);
 	/* free up shm mappings */
 
@@ -114,6 +114,8 @@ void AuProcessClean(AuProcess* parent, AuProcess* killable) {
 	/* free up process heap memory */
 	if (killable->proc_mem_heap > PROCESS_BREAK_ADDRESS) {
 		size_t num_pages = (killable->proc_mem_heap - PROCESS_BREAK_ADDRESS) / PAGE_SIZE;
+		if ((num_pages % PAGE_SIZE) != 0)
+			num_pages++;
 		for (int i = 0; i < num_pages; i++) {
 			void* phys = AuGetPhysicalAddressEx(killable->cr3, PROCESS_BREAK_ADDRESS + i * PAGE_SIZE);
 			if (phys)
@@ -148,5 +150,5 @@ void AuProcessClean(AuProcess* parent, AuProcess* killable) {
 
 	AuPmmngrFree((void*)V2P((size_t)killable->cr3));
 	AuRemoveProcess(0, killable);
-	SeTextOut("Process cleaned %s \r\n", name );
+	SeTextOut("Process cleaned \r\n");
 }

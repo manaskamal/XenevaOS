@@ -196,7 +196,7 @@ int CloseFile(int fd) {
 	AuThread* current_thr = AuGetCurrentThread();
 	AuProcess* current_proc = AuProcessFindThread(current_thr);
 	AuVFSNode* file = current_proc->fds[fd];
-
+	SeTextOut("File Closed -> %s %x \r\n", file->filename, file);
 	if (file->flags & FS_FLAG_FILE_SYSTEM)
 		return -1;
 	if (file->flags & FS_FLAG_GENERAL)
@@ -222,9 +222,9 @@ int FileIoControl(int fd, int code, void* arg) {
 	if (!file)
 		return -1;
 
-	AuVFSNodeIOControl(file, code, arg);
-
-	return 0;
+	int ret = 0;
+	ret = AuVFSNodeIOControl(file, code, arg);
+	return ret;
 }
 
 /*

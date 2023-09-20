@@ -53,6 +53,9 @@
 #define XE_LIB XE_EXPORT
 
 
+#define AURORA_SYSCALL_MAGIC  0x05212004
+
+
 
 /* _KePrint -- kernel printing function */
 XE_EXTERN XE_LIB void _KePrint(const char* text, ...);

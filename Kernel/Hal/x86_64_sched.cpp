@@ -558,6 +558,18 @@ void AuThreadCleanTrash(AuThread* t) {
 }
 
 /*
+ * AuThreadFindByID -- finds a thread by its id from
+ * ready queue
+ * @param id -- id of the thread
+ */
+AuThread* AuThreadFindByID(uint16_t id) {
+	for (AuThread* ready_queue_ = thread_list_head; ready_queue_ != NULL; ready_queue_ = ready_queue_->next) {
+		if (ready_queue_->id == id)
+			return ready_queue_;
+	}
+}
+
+/*
  * AuForceScheduler -- force the scheduler
  * to switch next thread
  */

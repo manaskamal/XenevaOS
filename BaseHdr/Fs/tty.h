@@ -34,6 +34,12 @@
 #include <termios.h>
 #include <circbuf.h>
 
+#define TIOCGWINSZ   0x5401
+#define TIOCSWINSZ   0x5402
+#define TIOCFLUSH    0x5403
+#define TIOCGATTR    0x5404
+#define TIOSPGRP     0x5405
+
 typedef struct _win_size_ {
 	uint16_t ws_row;
 	uint16_t ws_col;
@@ -57,4 +63,8 @@ typedef struct __tty__ {
 	__tty__ *prev;
 }TTY;
 
+/*
+* AuTTYInitialise -- initialize the TTY kernel resource
+*/
+extern void AuTTYInitialise();
 #endif

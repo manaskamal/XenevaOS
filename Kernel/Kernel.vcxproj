@@ -88,7 +88,7 @@
       <AdditionalIncludeDirectories>..\BaseHdr;E:\Xeneva Project\Aurora\Acpica\include;E:\Xeneva Project\Aurora\Acpica;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <OmitFramePointers>true</OmitFramePointers>
-      <PreprocessorDefinitions>ARCH_X64;__AU_KERNEL__;X64;AUXENEVA; ACPICA_DLL%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>ARCH_X64;__AU_KERNEL__;X64;AUXENEVA;_USE_LIBALLOC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <IgnoreStandardIncludePath>true</IgnoreStandardIncludePath>
       <ExceptionHandling>false</ExceptionHandling>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
@@ -194,6 +194,7 @@
     <ClInclude Include="..\BaseHdr\loader.h" />
     <ClInclude Include="..\BaseHdr\Mm\buddy.h" />
     <ClInclude Include="..\BaseHdr\Mm\kmalloc.h" />
+    <ClInclude Include="..\BaseHdr\Mm\liballoc\liballoc.h" />
     <ClInclude Include="..\BaseHdr\Mm\mmap.h" />
     <ClInclude Include="..\BaseHdr\Mm\pmmngr.h" />
     <ClInclude Include="..\BaseHdr\Mm\shm.h" />
@@ -259,6 +260,7 @@
     <ClCompile Include="loader.cpp" />
     <ClCompile Include="Mm\buddy.cpp" />
     <ClCompile Include="Mm\kmalloc.cpp" />
+    <ClCompile Include="Mm\liballoc\liballoc.cpp" />
     <ClCompile Include="Mm\mmap.cpp" />
     <ClCompile Include="Mm\pmmngr.cpp" />
     <ClCompile Include="Mm\shm.cpp" />

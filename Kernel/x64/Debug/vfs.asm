@@ -46,7 +46,7 @@ $pdata$AuVFSOpen DD imagerel $LN16
 	DD	imagerel $LN16+381
 	DD	imagerel $unwind$AuVFSOpen
 $pdata$AuVFSNodeIOControl DD imagerel $LN4
-	DD	imagerel $LN4+63
+	DD	imagerel $LN4+75
 	DD	imagerel $unwind$AuVFSNodeIOControl
 $pdata$AuVFSAddFileSystem DD imagerel $LN7
 	DD	imagerel $LN7+112
@@ -91,7 +91,7 @@ $unwind$?AuVFSInitialise@@YAXXZ DD 010401H
 $unwind$AuVFSOpen DD 010901H
 	DD	0c209H
 $unwind$AuVFSNodeIOControl DD 011201H
-	DD	04212H
+	DD	06212H
 $unwind$AuVFSAddFileSystem DD 010901H
 	DD	06209H
 $unwind$AuVFSFind DD 010901H
@@ -126,17 +126,17 @@ _node$2 = 40
 node$ = 64
 AuVFSRemoveFileSystem PROC
 
-; 305  : AU_EXTERN AU_EXPORT int AuVFSRemoveFileSystem(AuVFSNode* node) {
+; 308  : AU_EXTERN AU_EXPORT int AuVFSRemoveFileSystem(AuVFSNode* node) {
 
 $LN9:
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 56					; 00000038H
 
-; 306  : 	int index = 0;
+; 309  : 	int index = 0;
 
 	mov	DWORD PTR index$[rsp], 0
 
-; 307  : 	for (int i = 0; i < __RootContainer->childs->pointer; i++) {
+; 310  : 	for (int i = 0; i < __RootContainer->childs->pointer; i++) {
 
 	mov	DWORD PTR i$1[rsp], 0
 	jmp	SHORT $LN6@AuVFSRemov
@@ -151,7 +151,7 @@ $LN6@AuVFSRemov:
 	cmp	DWORD PTR i$1[rsp], eax
 	jae	SHORT $LN4@AuVFSRemov
 
-; 308  : 		AuVFSNode *_node = (AuVFSNode*)list_get_at(__RootContainer->childs, i);
+; 311  : 		AuVFSNode *_node = (AuVFSNode*)list_get_at(__RootContainer->childs, i);
 
 	mov	edx, DWORD PTR i$1[rsp]
 	mov	rax, QWORD PTR ?__RootContainer@@3PEAU__VFS_Container__@@EA ; __RootContainer
@@ -159,42 +159,42 @@ $LN6@AuVFSRemov:
 	call	list_get_at
 	mov	QWORD PTR _node$2[rsp], rax
 
-; 309  : 		if (_node == node){
+; 312  : 		if (_node == node){
 
 	mov	rax, QWORD PTR node$[rsp]
 	cmp	QWORD PTR _node$2[rsp], rax
 	jne	SHORT $LN3@AuVFSRemov
 
-; 310  : 			index = i;
+; 313  : 			index = i;
 
 	mov	eax, DWORD PTR i$1[rsp]
 	mov	DWORD PTR index$[rsp], eax
 
-; 311  : 			break;
+; 314  : 			break;
 
 	jmp	SHORT $LN4@AuVFSRemov
 $LN3@AuVFSRemov:
 
-; 312  : 		}
-; 313  : 	}
+; 315  : 		}
+; 316  : 	}
 
 	jmp	SHORT $LN5@AuVFSRemov
 $LN4@AuVFSRemov:
 
-; 314  : 	list_remove(__RootContainer->childs, index);
+; 317  : 	list_remove(__RootContainer->childs, index);
 
 	mov	edx, DWORD PTR index$[rsp]
 	mov	rax, QWORD PTR ?__RootContainer@@3PEAU__VFS_Container__@@EA ; __RootContainer
 	mov	rcx, QWORD PTR [rax]
 	call	list_remove
 
-; 315  : 	if (node->close)
+; 318  : 	if (node->close)
 
 	mov	rax, QWORD PTR node$[rsp]
 	cmp	QWORD PTR [rax+127], 0
 	je	SHORT $LN2@AuVFSRemov
 
-; 316  : 		return node->close(node, NULL);
+; 319  : 		return node->close(node, NULL);
 
 	xor	edx, edx
 	mov	rcx, QWORD PTR node$[rsp]
@@ -202,25 +202,25 @@ $LN4@AuVFSRemov:
 	call	QWORD PTR [rax+127]
 	jmp	SHORT $LN7@AuVFSRemov
 
-; 317  : 	else {
+; 320  : 	else {
 
 	jmp	SHORT $LN1@AuVFSRemov
 $LN2@AuVFSRemov:
 
-; 318  : 		kfree(node);
+; 321  : 		kfree(node);
 
 	mov	rcx, QWORD PTR node$[rsp]
 	call	kfree
 
-; 319  : 		return 0;
+; 322  : 		return 0;
 
 	xor	eax, eax
 $LN1@AuVFSRemov:
 $LN7@AuVFSRemov:
 
-; 320  : 	}
-; 321  : 
-; 322  : }
+; 323  : 	}
+; 324  : 
+; 325  : }
 
 	add	rsp, 56					; 00000038H
 	ret	0
@@ -234,7 +234,7 @@ file$ = 56
 offset$ = 64
 AuVFSGetBlockFor PROC
 
-; 331  : AU_EXTERN AU_EXPORT size_t AuVFSGetBlockFor(AuVFSNode* node, AuVFSNode* file, uint64_t offset) {
+; 334  : AU_EXTERN AU_EXPORT size_t AuVFSGetBlockFor(AuVFSNode* node, AuVFSNode* file, uint64_t offset) {
 
 $LN5:
 	mov	QWORD PTR [rsp+24], r8
@@ -242,18 +242,18 @@ $LN5:
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 40					; 00000028H
 
-; 332  : 	if (node){
+; 335  : 	if (node){
 
 	cmp	QWORD PTR node$[rsp], 0
 	je	SHORT $LN2@AuVFSGetBl
 
-; 333  : 		if (node->get_blockfor)
+; 336  : 		if (node->get_blockfor)
 
 	mov	rax, QWORD PTR node$[rsp]
 	cmp	QWORD PTR [rax+143], 0
 	je	SHORT $LN1@AuVFSGetBl
 
-; 334  : 			return node->get_blockfor(node, file, offset);
+; 337  : 			return node->get_blockfor(node, file, offset);
 
 	mov	r8, QWORD PTR offset$[rsp]
 	mov	rdx, QWORD PTR file$[rsp]
@@ -264,13 +264,13 @@ $LN5:
 $LN1@AuVFSGetBl:
 $LN2@AuVFSGetBl:
 
-; 335  : 	}
-; 336  : 	return -1;
+; 338  : 	}
+; 339  : 	return -1;
 
 	mov	rax, -1
 $LN3@AuVFSGetBl:
 
-; 337  : }
+; 340  : }
 
 	add	rsp, 40					; 00000028H
 	ret	0
@@ -283,20 +283,20 @@ node$ = 48
 file$ = 56
 AuVFSNodeClose PROC
 
-; 296  : AU_EXTERN AU_EXPORT void AuVFSNodeClose(AuVFSNode* node, AuVFSNode* file) {
+; 299  : AU_EXTERN AU_EXPORT void AuVFSNodeClose(AuVFSNode* node, AuVFSNode* file) {
 
 $LN4:
 	mov	QWORD PTR [rsp+16], rdx
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 40					; 00000028H
 
-; 297  : 	if (node->close)
+; 300  : 	if (node->close)
 
 	mov	rax, QWORD PTR node$[rsp]
 	cmp	QWORD PTR [rax+127], 0
 	je	SHORT $LN1@AuVFSNodeC
 
-; 298  : 		node->close(node, file);
+; 301  : 		node->close(node, file);
 
 	mov	rdx, QWORD PTR file$[rsp]
 	mov	rcx, QWORD PTR node$[rsp]
@@ -304,7 +304,7 @@ $LN4:
 	call	QWORD PTR [rax+127]
 $LN1@AuVFSNodeC:
 
-; 299  : }
+; 302  : }
 
 	add	rsp, 40					; 00000028H
 	ret	0
@@ -319,7 +319,7 @@ buffer$ = 64
 length$ = 72
 AuVFSNodeWrite PROC
 
-; 204  : AU_EXTERN AU_EXPORT void AuVFSNodeWrite(AuVFSNode* node, AuVFSNode * file, uint64_t *buffer, uint32_t length) {
+; 207  : AU_EXTERN AU_EXPORT void AuVFSNodeWrite(AuVFSNode* node, AuVFSNode * file, uint64_t *buffer, uint32_t length) {
 
 $LN5:
 	mov	DWORD PTR [rsp+32], r9d
@@ -328,23 +328,23 @@ $LN5:
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 40					; 00000028H
 
-; 205  : 	if (!node)
+; 208  : 	if (!node)
 
 	cmp	QWORD PTR node$[rsp], 0
 	jne	SHORT $LN2@AuVFSNodeW
 
-; 206  : 		return;
+; 209  : 		return;
 
 	jmp	SHORT $LN3@AuVFSNodeW
 $LN2@AuVFSNodeW:
 
-; 207  : 	if (node->write)
+; 210  : 	if (node->write)
 
 	mov	rax, QWORD PTR node$[rsp]
 	cmp	QWORD PTR [rax+87], 0
 	je	SHORT $LN1@AuVFSNodeW
 
-; 208  : 		node->write(node, file, buffer, length);
+; 211  : 		node->write(node, file, buffer, length);
 
 	mov	r9d, DWORD PTR length$[rsp]
 	mov	r8, QWORD PTR buffer$[rsp]
@@ -355,7 +355,7 @@ $LN2@AuVFSNodeW:
 $LN1@AuVFSNodeW:
 $LN3@AuVFSNodeW:
 
-; 209  : }
+; 212  : }
 
 	add	rsp, 40					; 00000028H
 	ret	0
@@ -368,36 +368,36 @@ fsys$ = 48
 file$ = 56
 ?AuVFSRemoveDir@@YAHPEAU__VFS_NODE__@@0@Z PROC		; AuVFSRemoveDir
 
-; 279  : int AuVFSRemoveDir(AuVFSNode* fsys, AuVFSNode* file) {
+; 282  : int AuVFSRemoveDir(AuVFSNode* fsys, AuVFSNode* file) {
 
 $LN8:
 	mov	QWORD PTR [rsp+16], rdx
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 40					; 00000028H
 
-; 280  : 	if (!fsys)
+; 283  : 	if (!fsys)
 
 	cmp	QWORD PTR fsys$[rsp], 0
 	jne	SHORT $LN5@AuVFSRemov
 
-; 281  : 		return -1;
+; 284  : 		return -1;
 
 	mov	eax, -1
 	jmp	SHORT $LN6@AuVFSRemov
 $LN5@AuVFSRemov:
 
-; 282  : 	if (!file)
+; 285  : 	if (!file)
 
 	cmp	QWORD PTR file$[rsp], 0
 	jne	SHORT $LN4@AuVFSRemov
 
-; 283  : 		return -1;
+; 286  : 		return -1;
 
 	mov	eax, -1
 	jmp	SHORT $LN6@AuVFSRemov
 $LN4@AuVFSRemov:
 
-; 284  : 	if ((file->flags & FS_FLAG_DEVICE) || (file->flags & FS_FLAG_FILE_SYSTEM))
+; 287  : 	if ((file->flags & FS_FLAG_DEVICE) || (file->flags & FS_FLAG_FILE_SYSTEM))
 
 	mov	rax, QWORD PTR file$[rsp]
 	movzx	eax, BYTE PTR [rax+61]
@@ -411,13 +411,13 @@ $LN4@AuVFSRemov:
 	je	SHORT $LN3@AuVFSRemov
 $LN2@AuVFSRemov:
 
-; 285  : 		return -1;
+; 288  : 		return -1;
 
 	mov	eax, -1
 	jmp	SHORT $LN6@AuVFSRemov
 $LN3@AuVFSRemov:
 
-; 286  : 	if (fsys->remove_dir && (file->flags & FS_FLAG_DIRECTORY))
+; 289  : 	if (fsys->remove_dir && (file->flags & FS_FLAG_DIRECTORY))
 
 	mov	rax, QWORD PTR fsys$[rsp]
 	cmp	QWORD PTR [rax+111], 0
@@ -428,7 +428,7 @@ $LN3@AuVFSRemov:
 	test	eax, eax
 	je	SHORT $LN1@AuVFSRemov
 
-; 287  : 		return fsys->remove_dir(fsys, file);
+; 290  : 		return fsys->remove_dir(fsys, file);
 
 	mov	rdx, QWORD PTR file$[rsp]
 	mov	rcx, QWORD PTR fsys$[rsp]
@@ -437,7 +437,7 @@ $LN3@AuVFSRemov:
 $LN1@AuVFSRemov:
 $LN6@AuVFSRemov:
 
-; 288  : }
+; 291  : }
 
 	add	rsp, 40					; 00000028H
 	ret	0
@@ -451,36 +451,36 @@ fsys$ = 64
 file$ = 72
 ?AuVFSRemoveFile@@YAHPEAU__VFS_NODE__@@0@Z PROC		; AuVFSRemoveFile
 
-; 259  : int AuVFSRemoveFile(AuVFSNode* fsys, AuVFSNode* file) {
+; 262  : int AuVFSRemoveFile(AuVFSNode* fsys, AuVFSNode* file) {
 
 $LN9:
 	mov	QWORD PTR [rsp+16], rdx
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 56					; 00000038H
 
-; 260  : 	if (!fsys)
+; 263  : 	if (!fsys)
 
 	cmp	QWORD PTR fsys$[rsp], 0
 	jne	SHORT $LN6@AuVFSRemov
 
-; 261  : 		return -1;
+; 264  : 		return -1;
 
 	mov	eax, -1
 	jmp	SHORT $LN7@AuVFSRemov
 $LN6@AuVFSRemov:
 
-; 262  : 	if (!file)
+; 265  : 	if (!file)
 
 	cmp	QWORD PTR file$[rsp], 0
 	jne	SHORT $LN5@AuVFSRemov
 
-; 263  : 		return -1;
+; 266  : 		return -1;
 
 	mov	eax, -1
 	jmp	SHORT $LN7@AuVFSRemov
 $LN5@AuVFSRemov:
 
-; 264  : 	if (!(file->flags & FS_FLAG_GENERAL))
+; 267  : 	if (!(file->flags & FS_FLAG_GENERAL))
 
 	mov	rax, QWORD PTR file$[rsp]
 	movzx	eax, BYTE PTR [rax+61]
@@ -488,13 +488,13 @@ $LN5@AuVFSRemov:
 	test	eax, eax
 	jne	SHORT $LN4@AuVFSRemov
 
-; 265  : 		return -1;
+; 268  : 		return -1;
 
 	mov	eax, -1
 	jmp	SHORT $LN7@AuVFSRemov
 $LN4@AuVFSRemov:
 
-; 266  : 	if ((file->flags & FS_FLAG_DEVICE) || (file->flags & FS_FLAG_FILE_SYSTEM))
+; 269  : 	if ((file->flags & FS_FLAG_DEVICE) || (file->flags & FS_FLAG_FILE_SYSTEM))
 
 	mov	rax, QWORD PTR file$[rsp]
 	movzx	eax, BYTE PTR [rax+61]
@@ -508,23 +508,23 @@ $LN4@AuVFSRemov:
 	je	SHORT $LN3@AuVFSRemov
 $LN2@AuVFSRemov:
 
-; 267  : 		return -1;
+; 270  : 		return -1;
 
 	mov	eax, -1
 	jmp	SHORT $LN7@AuVFSRemov
 $LN3@AuVFSRemov:
 
-; 268  : 	int ret = -1;
+; 271  : 	int ret = -1;
 
 	mov	DWORD PTR ret$[rsp], -1
 
-; 269  : 	if (fsys->remove_file) 
+; 272  : 	if (fsys->remove_file) 
 
 	mov	rax, QWORD PTR fsys$[rsp]
 	cmp	QWORD PTR [rax+119], 0
 	je	SHORT $LN1@AuVFSRemov
 
-; 270  : 		ret = fsys->remove_file(fsys, file);
+; 273  : 		ret = fsys->remove_file(fsys, file);
 
 	mov	rdx, QWORD PTR file$[rsp]
 	mov	rcx, QWORD PTR fsys$[rsp]
@@ -534,7 +534,7 @@ $LN3@AuVFSRemov:
 $LN1@AuVFSRemov:
 $LN7@AuVFSRemov:
 
-; 271  : }
+; 274  : }
 
 	add	rsp, 56					; 00000038H
 	ret	0
@@ -548,35 +548,35 @@ fsys$ = 64
 filename$ = 72
 AuVFSCreateFile PROC
 
-; 245  : AU_EXTERN AU_EXPORT AuVFSNode* AuVFSCreateFile(AuVFSNode* fsys, char* filename){
+; 248  : AU_EXTERN AU_EXPORT AuVFSNode* AuVFSCreateFile(AuVFSNode* fsys, char* filename){
 
 $LN5:
 	mov	QWORD PTR [rsp+16], rdx
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 56					; 00000038H
 
-; 246  : 	if (!fsys)
+; 249  : 	if (!fsys)
 
 	cmp	QWORD PTR fsys$[rsp], 0
 	jne	SHORT $LN2@AuVFSCreat
 
-; 247  : 		return NULL;
+; 250  : 		return NULL;
 
 	xor	eax, eax
 	jmp	SHORT $LN3@AuVFSCreat
 $LN2@AuVFSCreat:
 
-; 248  : 	AuVFSNode* ret = NULL;
+; 251  : 	AuVFSNode* ret = NULL;
 
 	mov	QWORD PTR ret$[rsp], 0
 
-; 249  : 	if (fsys->create_file)
+; 252  : 	if (fsys->create_file)
 
 	mov	rax, QWORD PTR fsys$[rsp]
 	cmp	QWORD PTR [rax+103], 0
 	je	SHORT $LN1@AuVFSCreat
 
-; 250  : 		ret = fsys->create_file(fsys, filename);
+; 253  : 		ret = fsys->create_file(fsys, filename);
 
 	mov	rdx, QWORD PTR filename$[rsp]
 	mov	rcx, QWORD PTR fsys$[rsp]
@@ -585,12 +585,12 @@ $LN2@AuVFSCreat:
 	mov	QWORD PTR ret$[rsp], rax
 $LN1@AuVFSCreat:
 
-; 251  : 	return ret;
+; 254  : 	return ret;
 
 	mov	rax, QWORD PTR ret$[rsp]
 $LN3@AuVFSCreat:
 
-; 252  : }
+; 255  : }
 
 	add	rsp, 56					; 00000038H
 	ret	0
@@ -604,35 +604,35 @@ fsys$ = 64
 dirname$ = 72
 AuVFSCreateDir PROC
 
-; 231  : AU_EXTERN AU_EXPORT AuVFSNode* AuVFSCreateDir(AuVFSNode* fsys, char* dirname) {
+; 234  : AU_EXTERN AU_EXPORT AuVFSNode* AuVFSCreateDir(AuVFSNode* fsys, char* dirname) {
 
 $LN5:
 	mov	QWORD PTR [rsp+16], rdx
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 56					; 00000038H
 
-; 232  : 	if (!fsys)
+; 235  : 	if (!fsys)
 
 	cmp	QWORD PTR fsys$[rsp], 0
 	jne	SHORT $LN2@AuVFSCreat
 
-; 233  : 		return NULL;
+; 236  : 		return NULL;
 
 	xor	eax, eax
 	jmp	SHORT $LN3@AuVFSCreat
 $LN2@AuVFSCreat:
 
-; 234  : 	AuVFSNode* ret = NULL;
+; 237  : 	AuVFSNode* ret = NULL;
 
 	mov	QWORD PTR ret$[rsp], 0
 
-; 235  : 	if (fsys->create_dir)
+; 238  : 	if (fsys->create_dir)
 
 	mov	rax, QWORD PTR fsys$[rsp]
 	cmp	QWORD PTR [rax+95], 0
 	je	SHORT $LN1@AuVFSCreat
 
-; 236  : 		ret = fsys->create_dir(fsys, dirname);
+; 239  : 		ret = fsys->create_dir(fsys, dirname);
 
 	mov	rdx, QWORD PTR dirname$[rsp]
 	mov	rcx, QWORD PTR fsys$[rsp]
@@ -641,12 +641,12 @@ $LN2@AuVFSCreat:
 	mov	QWORD PTR ret$[rsp], rax
 $LN1@AuVFSCreat:
 
-; 237  : 	return ret;
+; 240  : 	return ret;
 
 	mov	rax, QWORD PTR ret$[rsp]
 $LN3@AuVFSCreat:
 
-; 238  : }
+; 241  : }
 
 	add	rsp, 56					; 00000038H
 	ret	0
@@ -661,7 +661,7 @@ file$ = 72
 buffer$ = 80
 AuVFSNodeReadBlock PROC
 
-; 217  : AU_EXTERN AU_EXPORT size_t AuVFSNodeReadBlock(AuVFSNode* node, AuVFSNode* file, uint64_t *buffer) {
+; 220  : AU_EXTERN AU_EXPORT size_t AuVFSNodeReadBlock(AuVFSNode* node, AuVFSNode* file, uint64_t *buffer) {
 
 $LN5:
 	mov	QWORD PTR [rsp+24], r8
@@ -669,28 +669,28 @@ $LN5:
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 56					; 00000038H
 
-; 218  : 	size_t read_bytes = 0;
+; 221  : 	size_t read_bytes = 0;
 
 	mov	QWORD PTR read_bytes$[rsp], 0
 
-; 219  : 	if (!node)
+; 222  : 	if (!node)
 
 	cmp	QWORD PTR node$[rsp], 0
 	jne	SHORT $LN2@AuVFSNodeR
 
-; 220  : 		return read_bytes;
+; 223  : 		return read_bytes;
 
 	mov	rax, QWORD PTR read_bytes$[rsp]
 	jmp	SHORT $LN3@AuVFSNodeR
 $LN2@AuVFSNodeR:
 
-; 221  : 	if (node->read_block)
+; 224  : 	if (node->read_block)
 
 	mov	rax, QWORD PTR node$[rsp]
 	cmp	QWORD PTR [rax+135], 0
 	je	SHORT $LN1@AuVFSNodeR
 
-; 222  : 		read_bytes = node->read_block(node, file, buffer);
+; 225  : 		read_bytes = node->read_block(node, file, buffer);
 
 	mov	r8, QWORD PTR buffer$[rsp]
 	mov	rdx, QWORD PTR file$[rsp]
@@ -700,12 +700,12 @@ $LN2@AuVFSNodeR:
 	mov	QWORD PTR read_bytes$[rsp], rax
 $LN1@AuVFSNodeR:
 
-; 223  : 	return read_bytes;
+; 226  : 	return read_bytes;
 
 	mov	rax, QWORD PTR read_bytes$[rsp]
 $LN3@AuVFSNodeR:
 
-; 224  : }
+; 227  : }
 
 	add	rsp, 56					; 00000038H
 	ret	0
@@ -720,7 +720,7 @@ buffer$ = 64
 length$ = 72
 AuVFSNodeRead PROC
 
-; 189  : AU_EXTERN AU_EXPORT size_t AuVFSNodeRead(AuVFSNode* node, AuVFSNode* file, uint64_t* buffer, uint32_t length) {
+; 192  : AU_EXTERN AU_EXPORT size_t AuVFSNodeRead(AuVFSNode* node, AuVFSNode* file, uint64_t* buffer, uint32_t length) {
 
 $LN5:
 	mov	DWORD PTR [rsp+32], r9d
@@ -729,18 +729,18 @@ $LN5:
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 40					; 00000028H
 
-; 190  : 	if (node) 
+; 193  : 	if (node) 
 
 	cmp	QWORD PTR node$[rsp], 0
 	je	SHORT $LN2@AuVFSNodeR
 
-; 191  : 	if (node->read)
+; 194  : 	if (node->read)
 
 	mov	rax, QWORD PTR node$[rsp]
 	cmp	QWORD PTR [rax+79], 0
 	je	SHORT $LN1@AuVFSNodeR
 
-; 192  : 		return node->read(node, file, buffer, length);
+; 195  : 		return node->read(node, file, buffer, length);
 
 	mov	r9d, DWORD PTR length$[rsp]
 	mov	r8, QWORD PTR buffer$[rsp]
@@ -752,13 +752,13 @@ $LN5:
 $LN1@AuVFSNodeR:
 $LN2@AuVFSNodeR:
 
-; 193  : 
-; 194  : 	return -1;
+; 196  : 
+; 197  : 	return -1;
 
 	mov	rax, -1
 $LN3@AuVFSNodeR:
 
-; 195  : }
+; 198  : }
 
 	add	rsp, 40					; 00000028H
 	ret	0
@@ -1039,9 +1039,10 @@ _TEXT	ENDS
 ; Function compile flags: /Odtpy
 ; File e:\xeneva project\aurora\kernel\fs\vfs.cpp
 _TEXT	SEGMENT
-node$ = 48
-code$ = 56
-arg$ = 64
+val$1 = 32
+node$ = 64
+code$ = 72
+arg$ = 80
 AuVFSNodeIOControl PROC
 
 ; 177  : AU_EXTERN AU_EXPORT int AuVFSNodeIOControl(AuVFSNode* node, int code, void* arg) {
@@ -1050,26 +1051,38 @@ $LN4:
 	mov	QWORD PTR [rsp+24], r8
 	mov	DWORD PTR [rsp+16], edx
 	mov	QWORD PTR [rsp+8], rcx
-	sub	rsp, 40					; 00000028H
+	sub	rsp, 56					; 00000038H
 
-; 178  : 	if (node->iocontrol)
+; 178  : 	if (node->iocontrol){
 
 	mov	rax, QWORD PTR node$[rsp]
 	cmp	QWORD PTR [rax+151], 0
 	je	SHORT $LN1@AuVFSNodeI
 
-; 179  : 		return node->iocontrol(node, code, arg);
+; 179  : 		int val = node->iocontrol(node, code, arg);
 
 	mov	r8, QWORD PTR arg$[rsp]
 	mov	edx, DWORD PTR code$[rsp]
 	mov	rcx, QWORD PTR node$[rsp]
 	mov	rax, QWORD PTR node$[rsp]
 	call	QWORD PTR [rax+151]
+	mov	DWORD PTR val$1[rsp], eax
+
+; 180  : 		return val;
+
+	mov	eax, DWORD PTR val$1[rsp]
+	jmp	SHORT $LN2@AuVFSNodeI
 $LN1@AuVFSNodeI:
 
-; 180  : }
+; 181  : 	}
+; 182  : 	return 0;
 
-	add	rsp, 40					; 00000028H
+	xor	eax, eax
+$LN2@AuVFSNodeI:
+
+; 183  : }
+
+	add	rsp, 56					; 00000038H
 	ret	0
 AuVFSNodeIOControl ENDP
 _TEXT	ENDS

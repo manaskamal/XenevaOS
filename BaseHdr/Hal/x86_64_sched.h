@@ -209,6 +209,13 @@ extern void AuThreadMoveToTrash(AuThread* t);
 extern void AuThreadCleanTrash(AuThread* t);
 
 /*
+* AuThreadFindByID -- finds a thread by its id from
+* ready queue
+* @param id -- id of the thread
+*/
+AU_EXTERN AU_EXPORT AuThread* AuThreadFindByID(uint16_t id);
+
+/*
 * AuForceScheduler -- force the scheduler
 * to switch next thread
 */

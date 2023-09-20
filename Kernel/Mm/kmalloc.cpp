@@ -33,6 +33,7 @@
 #include <_null.h>
 #include <Mm/vmmngr.h>
 #include <Mm/pmmngr.h>
+#include <Mm/liballoc/liballoc.h>
 #include <aucon.h>
 #include <Sync/spinlock.h>
 #include <Hal/x86_64_lowlevel.h>
@@ -53,6 +54,7 @@ void* au_request_page(int pages);
 * kernel malloc library with four pages (16KiB)
 */
 void AuHeapInitialize() {
+#ifndef _USE_LIBALLOC
 	last_block = NULL;
 	first_block = NULL;
 	last_mark = 0;
@@ -72,6 +74,7 @@ void AuHeapInitialize() {
 	last_block = meta;
 	
 	last_mark = ((uint64_t)page + (meta->size + sizeof(meta_data_t)));
+#endif
 }
 
 /*
@@ -156,6 +159,7 @@ void au_expand_kmalloc(size_t req_size) {
 	/*if ((req_size % 2) != 0)
 		req_size = next_power_of_two(req_size);*/
 
+	req_size = align24(req_size);
 	
 	size_t req_pages = ((req_size + sizeof(meta_data_t)) / 0x1000) + 
 		(((req_size + sizeof(meta_data_t)) % 0x1000) ? 1 : 0);
@@ -203,6 +207,9 @@ void au_expand_kmalloc(size_t req_size) {
 * @param size -- size in bytes
 */
 void* kmalloc(unsigned int size) {
+#ifdef _USE_LIBALLOC
+	return port_malloc(size);
+#else
 	meta_data_t *meta = first_block;
 	void* ret = 0;
 
@@ -222,7 +229,7 @@ void* kmalloc(unsigned int size) {
 				if (au_split_block(meta, size)){
 					meta->magic = MAGIC_USED;
 					uint8_t* meta_addr = (uint8_t*)meta;
-					ret = (void*)((size_t)meta + sizeof(meta_data_t));
+					ret = ((uint8_t*)meta_addr + sizeof(meta_data_t));
 					break;
 				}
 			}
@@ -230,6 +237,7 @@ void* kmalloc(unsigned int size) {
 			if (meta->size == size) {
 				meta->magic = MAGIC_USED;
 				uint8_t* addr = (uint8_t*)meta;
+				SeTextOut("Accurate memory found returning -> %x \r\n", addr);
 				ret = ((uint8_t*)addr + sizeof(meta_data_t));
 				break;
 			}
@@ -240,7 +248,6 @@ void* kmalloc(unsigned int size) {
 
 	if (ret) {
 	//	meta_data_t *meta = (meta_data_t*)(ret - sizeof(meta_data_t));
-		//SeTextOut("Returning malloc mem -> %x \r\n", ret);
 		return ret;
 	}
 	else{
@@ -248,6 +255,7 @@ void* kmalloc(unsigned int size) {
 
 	}
 	return kmalloc(size);
+#endif
 }
 
 void kheap_debug() {
@@ -276,12 +284,15 @@ void merge_next(meta_data_t *meta) {
 		return;
 	
 	
-	if (last_block == meta->next)
+	if (last_block == meta->next){
 		last_block = meta;
+		last_mark = (size_t)(last_block + last_block->size + sizeof(meta_data_t));
+	}
 
 	
 
 	meta->size += meta->next->size + sizeof(meta_data_t);
+	SeTextOut("Meta merge_next sz -> %d \r\n", meta->size);
 
 	if (meta->next->next != NULL)
 		meta->next->next->prev = meta;
@@ -307,8 +318,25 @@ void merge_prev(meta_data_t* meta) {
 			for (;;);*/
 			return;
 		}
-		if (meta->prev->magic == MAGIC_FREE)
-			merge_next(meta->prev);
+		if (meta->prev->magic == MAGIC_FREE){
+			SeTextOut("Meta->prev->sz = %d , meta sz -> %d \r\n", meta->prev->size, meta->size);
+			meta->prev->size += meta->size + sizeof(meta_data_t);
+			SeTextOut("Meta->prev->sz after = %d \r\n", meta->prev->size);
+			if (last_block == meta){
+				last_block = meta->prev;
+				SeTextOut("Last block sz -> %d \r\n", last_block->size);
+				last_mark = (size_t)(last_block + last_block->size + sizeof(meta_data_t));
+				for (;;);
+			}
+
+			SeTextOut("Meta prev sz -> %d \r\n", meta->prev->size);
+			meta->prev->next = meta->next;
+			if (meta->prev->next)
+				meta->prev->next->prev = meta->prev;
+			
+			//merge_next(meta->prev);
+		}
+			
 	}
 }
 
@@ -317,15 +345,19 @@ void merge_prev(meta_data_t* meta) {
 * @param ptr -- pointer to the address block to free
 */
 void kfree(void* ptr) {
+#ifdef _USE_LIBALLOC
+	return port_free(ptr);
+#else
 	if (!ptr) 
 		return;
-	if (((size_t)ptr % PAGE_SIZE) == 0)
-		SeTextOut("KFREE: Ptr is page-aligned \r\n");
+	if (((size_t)ptr % PAGE_SIZE) != 0)
+		SeTextOut("KFREE: Ptr is not page-aligned \r\n");
 
 	uint8_t* actual_addr = (uint8_t*)ptr;
 	meta_data_t *meta = (meta_data_t*)(actual_addr - sizeof(meta_data_t));
 	if (meta->magic != MAGIC_USED) {
-		AuTextOut("meta kfree corruption -> %x, meta -> %x \n", meta->magic, meta);
+		AuTextOut("meta kfree corruption -> %x, meta -> %x , ptr -> %x\n", meta->magic, meta, ptr);
+		AuTextOut("Other meta field sz -> %d , next-> %x, prev -> %x \n", meta->size, meta->next, meta->prev);
 		return;
 	}
 	meta->magic = MAGIC_FREE;
@@ -333,7 +365,7 @@ void kfree(void* ptr) {
 	/* merge it with 3 near blocks if they are free*/
 	merge_next(meta);
 	merge_prev(meta);
-	
+#endif
 }
 
 /*
@@ -342,6 +374,9 @@ void kfree(void* ptr) {
 * @param new_size -- size of the new block
 */
 void* krealloc(void* ptr, unsigned int new_size) {
+#ifdef _USE_LIBALLOC
+	return port_realloc(ptr, new_size);
+#else
 	void* result = kmalloc(new_size);
 	if (ptr) {
 		/* here we can check the size difference
@@ -352,6 +387,7 @@ void* krealloc(void* ptr, unsigned int new_size) {
 
 	kfree(ptr);
 	return result;
+#endif
 }
 
 /*
@@ -360,12 +396,16 @@ void* krealloc(void* ptr, unsigned int new_size) {
 * @param size -- size of each items
 */
 void* kcalloc(size_t n_item, size_t size) {
+#ifdef _USE_LIBALLOC
+	return port_calloc(n_item, size);
+#else
 	size_t total = n_item * size;
 
 	void* ptr = kmalloc(total);
 	if (ptr)
 		memset(ptr, 0, total);
 	return ptr;
+#endif
 }
 /*
 * au_request_page -- request contiguous 4k virtual pages

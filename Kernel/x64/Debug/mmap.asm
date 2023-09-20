@@ -6,7 +6,7 @@ INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
 CONST	SEGMENT
-$SG3443	DB	'/', 00H
+$SG3445	DB	'/', 00H
 CONST	ENDS
 PUBLIC	?CreateMemMapping@@YAPEAXPEAX_KHHH1@Z		; CreateMemMapping
 PUBLIC	?UnmapMemMapping@@YAXPEAX_K@Z			; UnmapMemMapping
@@ -318,7 +318,7 @@ $LN15@CreateMemM:
 
 ; 74   : 		fsys = AuVFSFind("/");
 
-	lea	rcx, OFFSET FLAT:$SG3443
+	lea	rcx, OFFSET FLAT:$SG3445
 	call	AuVFSFind
 	mov	QWORD PTR fsys$[rsp], rax
 

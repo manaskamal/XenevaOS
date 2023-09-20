@@ -6,7 +6,7 @@ INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
 CONST	SEGMENT
-$SG3586	DB	'No process found ', 0aH, 00H
+$SG3588	DB	'No process found ', 0aH, 00H
 CONST	ENDS
 PUBLIC	?PauseThread@@YAHXZ				; PauseThread
 PUBLIC	?GetThreadID@@YAGXZ				; GetThreadID
@@ -105,7 +105,7 @@ $LN11:
 
 ; 117  : 		AuTextOut("No process found \n");
 
-	lea	rcx, OFFSET FLAT:$SG3586
+	lea	rcx, OFFSET FLAT:$SG3588
 	call	AuTextOut
 
 ; 118  : 		return -1;

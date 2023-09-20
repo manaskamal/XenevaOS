@@ -364,6 +364,7 @@ void AuProcessHeapMemDestroy(AuProcess* proc) {
  * @param proc -- process to exit 
  */
 void AuProcessExit(AuProcess* proc) {
+	x64_cli();
 	if (proc == root_proc) {
 		SeTextOut("[aurora]: cannot exit root process \r\n");
 		return;
@@ -389,9 +390,11 @@ void AuProcessExit(AuProcess* proc) {
 	for (int i = 0; i < FILE_DESC_PER_PROCESS; i++) {
 		AuVFSNode *file = proc->fds[i];
 		if (file) {
+			SeTextOut("Closing file -> %s , address -> %x \r\n", file->filename, file);
 			if (file->flags & FS_FLAG_DEVICE || file->flags & FS_FLAG_FILE_SYSTEM)
 				continue;
 			if (file->flags & FS_FLAG_GENERAL)  {
+				
 				kfree(file);
 			}
 		}

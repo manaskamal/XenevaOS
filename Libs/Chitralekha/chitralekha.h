@@ -33,6 +33,24 @@
 #include <stdint.h>
 #include <_xeneva.h>
 
+typedef struct _ChCanvas_ {
+	uint32_t screenWidth;
+	uint32_t screenHeight;
+	uint32_t bpp;
+	uint16_t scanline;
+	uint32_t pitch;
+	uint32_t canvasWidth;
+	uint32_t canvasHeight;
+	uint32_t* buffer;
+}ChCanvas;
+
 XE_EXTERN XE_LIB int ChPrintLibName();
+
+/*
+* ChCreateCanvas -- creates a new canvas
+* @param reqW -- requested width of the canvas
+* @param reqH -- requested height of the canvas
+*/
+XE_EXTERN XE_LIB ChCanvas* ChCreateCanvas(int reqW, int reqH);
 
 #endif

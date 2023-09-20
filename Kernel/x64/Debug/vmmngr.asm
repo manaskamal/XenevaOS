@@ -61,7 +61,7 @@ $pdata$AuGetFreePage DD imagerel $LN15
 	DD	imagerel $LN15+412
 	DD	imagerel $unwind$AuGetFreePage
 $pdata$AuFreePages DD imagerel $LN8
-	DD	imagerel $LN8+369
+	DD	imagerel $LN8+377
 	DD	imagerel $unwind$AuFreePages
 $pdata$AuGetPhysicalAddress DD imagerel $LN5
 	DD	imagerel $LN5+205
@@ -1197,13 +1197,15 @@ $LN2@AuFreePage:
 	cmp	QWORD PTR page$3[rsp], 0
 	je	SHORT $LN1@AuFreePage
 
-; 403  : 			AuPmmngrFree(page);
+; 403  : 			AuPmmngrFree((void*)V2P((size_t)page));
 
 	mov	rcx, QWORD PTR page$3[rsp]
+	call	V2P
+	mov	rcx, rax
 	call	AuPmmngrFree
 $LN1@AuFreePage:
 
-; 404  : 
+; 404  : 		
 ; 405  : 		virt_addr = virt_addr + i * 4096;
 
 	imul	eax, DWORD PTR i$1[rsp], 4096		; 00001000H
