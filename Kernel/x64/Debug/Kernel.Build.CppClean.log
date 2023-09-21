@@ -3,8 +3,6 @@ e:\xeneva project\aurora\kernel\x64\debug\x86_64_lowlevel.obj
 e:\xeneva project\aurora\kernel\x64\debug\x86_64_switch.obj
 e:\xeneva project\aurora\kernel\x64\debug\__fstcpy.obj
 e:\xeneva project\aurora\kernel\x64\debug\vc120.pdb
-e:\xeneva project\aurora\kernel\x64\debug\_gpt.obj
-e:\xeneva project\aurora\kernel\x64\debug\_gpt.asm
 e:\xeneva project\aurora\kernel\x64\debug\vfs.obj
 e:\xeneva project\aurora\kernel\x64\debug\vfs.asm
 e:\xeneva project\aurora\kernel\x64\debug\vdisk.obj
@@ -27,6 +25,8 @@ e:\xeneva project\aurora\kernel\x64\debug\rtc.obj
 e:\xeneva project\aurora\kernel\x64\debug\rtc.asm
 e:\xeneva project\aurora\kernel\x64\debug\ps2kybrd.obj
 e:\xeneva project\aurora\kernel\x64\debug\ps2kybrd.asm
+e:\xeneva project\aurora\kernel\x64\debug\nvme.obj
+e:\xeneva project\aurora\kernel\x64\debug\nvme.asm
 e:\xeneva project\aurora\kernel\x64\debug\mouse.obj
 e:\xeneva project\aurora\kernel\x64\debug\mouse.asm
 e:\xeneva project\aurora\kernel\x64\debug\ctype.obj
@@ -43,10 +43,6 @@ e:\xeneva project\aurora\kernel\x64\debug\ahcidsk.obj
 e:\xeneva project\aurora\kernel\x64\debug\ahcidsk.asm
 e:\xeneva project\aurora\kernel\x64\debug\ahci.obj
 e:\xeneva project\aurora\kernel\x64\debug\ahci.asm
-e:\xeneva project\aurora\kernel\x64\debug\kmalloc.obj
-e:\xeneva project\aurora\kernel\x64\debug\kmalloc.asm
-e:\xeneva project\aurora\kernel\x64\debug\buddy.obj
-e:\xeneva project\aurora\kernel\x64\debug\buddy.asm
 e:\xeneva project\aurora\kernel\x64\debug\loader.obj
 e:\xeneva project\aurora\kernel\x64\debug\loader.asm
 e:\xeneva project\aurora\kernel\x64\debug\list.obj
@@ -55,6 +51,8 @@ e:\xeneva project\aurora\kernel\x64\debug\init.obj
 e:\xeneva project\aurora\kernel\x64\debug\init.asm
 e:\xeneva project\aurora\kernel\x64\debug\x86_64_systable.obj
 e:\xeneva project\aurora\kernel\x64\debug\x86_64_systable.asm
+e:\xeneva project\aurora\kernel\x64\debug\x86_64_signal.obj
+e:\xeneva project\aurora\kernel\x64\debug\x86_64_signal.asm
 e:\xeneva project\aurora\kernel\x64\debug\x86_64_sched.obj
 e:\xeneva project\aurora\kernel\x64\debug\x86_64_sched.asm
 e:\xeneva project\aurora\kernel\x64\debug\x86_64_idt.obj
@@ -83,10 +81,8 @@ e:\xeneva project\aurora\kernel\x64\debug\apic.obj
 e:\xeneva project\aurora\kernel\x64\debug\apic.asm
 e:\xeneva project\aurora\kernel\x64\debug\acpiosl.obj
 e:\xeneva project\aurora\kernel\x64\debug\acpiosl.asm
-e:\xeneva project\aurora\kernel\x64\debug\spinlock.obj
-e:\xeneva project\aurora\kernel\x64\debug\spinlock.asm
-e:\xeneva project\aurora\kernel\x64\debug\mutex.obj
-e:\xeneva project\aurora\kernel\x64\debug\mutex.asm
+e:\xeneva project\aurora\kernel\x64\debug\_gpt.obj
+e:\xeneva project\aurora\kernel\x64\debug\_gpt.asm
 e:\xeneva project\aurora\kernel\x64\debug\string.obj
 e:\xeneva project\aurora\kernel\x64\debug\string.asm
 e:\xeneva project\aurora\kernel\x64\debug\stdio.obj
@@ -123,8 +119,16 @@ e:\xeneva project\aurora\kernel\x64\debug\mmap.obj
 e:\xeneva project\aurora\kernel\x64\debug\mmap.asm
 e:\xeneva project\aurora\kernel\x64\debug\liballoc.obj
 e:\xeneva project\aurora\kernel\x64\debug\liballoc.asm
+e:\xeneva project\aurora\kernel\x64\debug\kmalloc.obj
+e:\xeneva project\aurora\kernel\x64\debug\kmalloc.asm
+e:\xeneva project\aurora\kernel\x64\debug\buddy.obj
+e:\xeneva project\aurora\kernel\x64\debug\buddy.asm
 e:\xeneva project\aurora\kernel\x64\debug\_crt.obj
 e:\xeneva project\aurora\kernel\x64\debug\_crt.asm
+e:\xeneva project\aurora\kernel\x64\debug\spinlock.obj
+e:\xeneva project\aurora\kernel\x64\debug\spinlock.asm
+e:\xeneva project\aurora\kernel\x64\debug\mutex.obj
+e:\xeneva project\aurora\kernel\x64\debug\mutex.asm
 e:\xeneva project\aurora\x64\debug\kernel.lib
 e:\xeneva project\aurora\x64\debug\kernel.exp
 f:\efi\xeneva\xnkrnl.exe

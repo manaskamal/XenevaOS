@@ -115,6 +115,11 @@ int AuConsoleIoControl(AuVFSNode* node, int code, void* args) {
 							  ioctl->uint_1 = pitch;
 							  break;
 	}
+	case SCREEN_GET_FB:{
+						   uint64_t buffaddr = (uint64_t)aucon->buffer;
+						   ioctl->ulong_1 = buffaddr;
+						   break;
+	}
 
 	case SCREEN_REG_MNGR:{
 							 return 1;

@@ -160,6 +160,7 @@
     <ClInclude Include="..\BaseHdr\clean.h" />
     <ClInclude Include="..\BaseHdr\ctype.h" />
     <ClInclude Include="..\BaseHdr\Drivers\mouse.h" />
+    <ClInclude Include="..\BaseHdr\Drivers\nvme.h" />
     <ClInclude Include="..\BaseHdr\Drivers\ps2kybrd.h" />
     <ClInclude Include="..\BaseHdr\Drivers\rtc.h" />
     <ClInclude Include="..\BaseHdr\efi.h" />
@@ -189,6 +190,7 @@
     <ClInclude Include="..\BaseHdr\Hal\x86_64_idt.h" />
     <ClInclude Include="..\BaseHdr\Hal\x86_64_lowlevel.h" />
     <ClInclude Include="..\BaseHdr\Hal\x86_64_sched.h" />
+    <ClInclude Include="..\BaseHdr\Hal\x86_64_signal.h" />
     <ClInclude Include="..\BaseHdr\limits.h" />
     <ClInclude Include="..\BaseHdr\list.h" />
     <ClInclude Include="..\BaseHdr\loader.h" />
@@ -228,6 +230,7 @@
     <ClCompile Include="clean.cpp" />
     <ClCompile Include="ctype.cpp" />
     <ClCompile Include="Drivers\mouse.cpp" />
+    <ClCompile Include="Drivers\nvme.cpp" />
     <ClCompile Include="Drivers\ps2kybrd.cpp" />
     <ClCompile Include="Drivers\rtc.cpp" />
     <ClCompile Include="Fs\Dev\devfs.cpp" />
@@ -254,6 +257,7 @@
     <ClCompile Include="Hal\x86_64_hal.cpp" />
     <ClCompile Include="Hal\x86_64_idt.cpp" />
     <ClCompile Include="Hal\x86_64_sched.cpp" />
+    <ClCompile Include="Hal\x86_64_signal.cpp" />
     <ClCompile Include="Hal\x86_64_systable.cpp" />
     <ClCompile Include="init.cpp" />
     <ClCompile Include="list.cpp" />

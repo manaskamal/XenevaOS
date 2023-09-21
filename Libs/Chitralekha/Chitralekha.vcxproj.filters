@@ -2,8 +2,13 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClInclude Include="chitralekha.h" />
+    <ClInclude Include="_fastcpy.h" />
+    <ClInclude Include="color.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="chitralekha.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <NASM Include="_fastcpy.asm" />
   </ItemGroup>
 </Project>

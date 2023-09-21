@@ -40,12 +40,13 @@
 #include <Hal\serial.h>
 #include <Fs\vfs.h>
 
+#ifndef _USE_LIBALLOC
 static meta_data_t *first_block;
 static meta_data_t *last_block;
 uint64_t last_mark;
 bool _debug_on;
 extern bool _vfs_debug_on;
-
+#endif
 void au_free_page(void* ptr, int pages);
 void* au_request_page(int pages);
 
@@ -103,7 +104,7 @@ size_t align24(size_t val) {
 * au_split_block -- split block into two block
 */
 int au_split_block(meta_data_t* splitable, size_t req_size) {
-
+#ifndef _USE_LIBALLOC
 	uint8_t* meta_block_a = (uint8_t*)splitable;
 	size_t size = splitable->size - req_size - sizeof(meta_data_t);
 
@@ -146,6 +147,7 @@ int au_split_block(meta_data_t* splitable, size_t req_size) {
 
 	if (last_block == splitable)
 		last_block = new_block_m;
+#endif
 
 	return 1;
 }
@@ -155,7 +157,7 @@ int au_split_block(meta_data_t* splitable, size_t req_size) {
 * @param req_size -- requested size
 */
 void au_expand_kmalloc(size_t req_size) {
-
+#ifndef _USE_LIBALLOC
 	/*if ((req_size % 2) != 0)
 		req_size = next_power_of_two(req_size);*/
 
@@ -199,7 +201,7 @@ void au_expand_kmalloc(size_t req_size) {
 
 	uint64_t lm = (uint64_t)page;
 	last_mark = (uint64_t)(lm + (req_pages * 4096));
-
+#endif
 }
 
 /*
@@ -259,9 +261,11 @@ void* kmalloc(unsigned int size) {
 }
 
 void kheap_debug() {
+#ifndef _USE_LIBALLOC
 	for (meta_data_t *block = first_block; block != NULL; block = block->next) {
 		SeTextOut("Prev -> %x || Current -> %x | Next -> %x \r\n", block->prev, block, block->next);
 	}
+#endif
 }
 
 /*
@@ -270,6 +274,7 @@ void kheap_debug() {
 * @param meta -- current meta block
 */
 void merge_next(meta_data_t *meta) {
+#ifndef _USE_LIBALLOC
 	if (meta->next == NULL)
 		return;
 	uint64_t addr_valid = (uint64_t)meta->next;
@@ -298,6 +303,7 @@ void merge_next(meta_data_t *meta) {
 		meta->next->next->prev = meta;
 
 	meta->next = meta->next->next;
+#endif
 }
 
 /*
@@ -306,6 +312,7 @@ void merge_next(meta_data_t *meta) {
 * @param meta -- current block
 */
 void merge_prev(meta_data_t* meta) {
+#ifndef _USE_LIBALLOC
 	if (meta->prev != NULL) {
 		uint64_t meta_prev = (uint64_t)meta->prev;
 		if (meta_prev < 0xFFFFE00000000000){
@@ -338,6 +345,7 @@ void merge_prev(meta_data_t* meta) {
 		}
 			
 	}
+#endif
 }
 
 /*
@@ -440,5 +448,7 @@ void au_free_page(void* ptr, int pages) {
 
 
 void kmalloc_debug_on(bool bit) {
+#ifndef _USE_LIBALLOC
 	_debug_on = bit;
+#endif
 }

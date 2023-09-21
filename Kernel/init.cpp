@@ -109,10 +109,6 @@ void _AuMain(KERNEL_BOOT_INFO *info) {
 	
 	AuInitialiseLoader();
 
-	/*AuTextOut("Requesting MAC \n");
-	AuARPRequestMAC();
-	AuTextOut("MAC Requested \n");*/
-
 	/* make the kernel standalone*/
 	AuVmmngrBootFree();
 	/* Process initialisation begins here */

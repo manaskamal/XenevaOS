@@ -34,6 +34,7 @@
 #include <sys\iocodes.h>
 #include <stdlib.h>
 #include <string.h>
+#include "_fastcpy.h"
 
 int ChPrintLibName() {
 	_KePrint("Chitralekha Graphics Library v1.0 \n");
@@ -68,5 +69,94 @@ ChCanvas* ChCreateCanvas(int reqW, int reqH) {
 	canvas->canvasHeight = reqH;
 	canvas->canvasWidth = reqW;
 	canvas->buffer = 0;
+	canvas->bufferSz = 0;
+	ret = _KeFileIoControl(graphFd, SCREEN_GET_FB, &ioctl);
+	canvas->framebuff = (uint32_t*)ioctl.ulong_1;
+
 	return canvas;
+}
+
+/*
+ * ChAllocateBuffer -- allocates buffers for graphics 
+ * @param canvas -- Pointer to canvas
+ */
+int ChAllocateBuffer(ChCanvas* canvas) {
+	if (!canvas)
+		return 0;
+	int reqW = canvas->canvasWidth;
+	int reqH = canvas->canvasHeight;
+
+	size_t sz = reqW * reqH * 4;
+	void* addr = _KeMemMap(NULL, sz, 0, 0, 0, 0);
+	if (!addr)
+		return 0;
+	canvas->buffer = (uint32_t*)addr;
+	canvas->bufferSz = sz;
+	return 1;
+}
+
+/*
+ * ChDeAllocateBuffer -- de-allocates buffers from
+ * canvas
+ * @param canvas -- pointer to canvas structure
+ */
+int ChDeAllocateBuffer(ChCanvas* canvas) {
+	if (!canvas)
+		return 0;
+	size_t sz = canvas->bufferSz;
+	_KeMemUnmap(canvas->buffer, sz);
+	return 1;
+}
+
+/*
+ * ChCanvasScreenUpdate -- updates screen buffer with canvas buffer
+ * contents
+ * @param canvas -- Pointer to canvas
+ * @param x -- x position
+ * @param y -- y position
+ * @param w -- width of the canvas
+ * @param h -- height of the canvas
+ */
+void ChCanvasScreenUpdate(ChCanvas* canvas, uint32_t x, uint32_t y, uint32_t w, uint32_t h) {
+	uint32_t* fb = canvas->framebuff;
+
+	for (int i = 0; i < h; i++)
+		_fastcpy(fb + (y + i) * canvas->screenWidth + x, 
+		canvas->buffer + (y + i) * canvas->canvasWidth + x, w * 4);
+}
+
+/*
+ * ChDrawPixel -- draws a pixel to canvas buffer
+ * @param canvas -- pointer to canvas
+ * @param x -- x position
+ * @param y -- y position
+ * @param color -- color of the pixel
+ */
+void ChDrawPixel(ChCanvas* canvas, uint32_t x, uint32_t y, uint32_t color) {
+	unsigned int *lfb = canvas->buffer;
+	lfb[y * canvas->canvasWidth + x] = color;
+}
+
+/*
+ * ChGetPixel -- retuns a pixel from canvas
+ * @param canvas -- Pointer to canvas structure
+ * @param x -- x position
+ * @param y -- y position
+ */
+uint32_t ChGetPixel(ChCanvas* canvas, uint32_t x, uint32_t y) {
+	unsigned int *lfb = canvas->buffer;
+	return lfb[x + y * canvas->canvasWidth];
+}
+
+/*
+ * ChCanvasFill -- fill the canvas with specific color
+ * @param canvas -- pointer to canvas structure
+ * @param w -- width to fill
+ * @param h -- height to fill
+ * @param color -- color to be filled with
+ */
+void ChCanvasFill(ChCanvas* canvas, uint32_t w, uint32_t h, uint32_t color) {
+	for (int i = 0; i < w; i++)
+	for (int j = 0; j < h; j++)
+		ChDrawPixel(canvas, 0 + i, 0 + j, color);
 }

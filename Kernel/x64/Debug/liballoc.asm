@@ -116,32 +116,32 @@ tag$ = 40
 size$ = 64
 ?allocate_new_tag@@YAPEAUboundary_tag@@I@Z PROC		; allocate_new_tag
 
-; 242  : {
+; 270  : {
 
 	mov	DWORD PTR [rsp+8], ecx
 	sub	rsp, 56					; 00000038H
 
-; 243  : 	unsigned int pages;
-; 244  : 	unsigned int usage;
-; 245  : 	struct boundary_tag *tag;
-; 246  : 
-; 247  : 	// This is how much space is required.
-; 248  : 	usage = size + sizeof(struct boundary_tag);
+; 271  : 	unsigned int pages;
+; 272  : 	unsigned int usage;
+; 273  : 	struct boundary_tag *tag;
+; 274  : 
+; 275  : 	// This is how much space is required.
+; 276  : 	usage = size + sizeof(struct boundary_tag);
 
 	mov	eax, DWORD PTR size$[rsp]
 	add	rax, 48					; 00000030H
 	mov	DWORD PTR usage$[rsp], eax
 
-; 249  : 
-; 250  : 	// Perfect amount of space
-; 251  : 	pages = usage / l_pageSize;
+; 277  : 
+; 278  : 	// Perfect amount of space
+; 279  : 	pages = usage / l_pageSize;
 
 	xor	edx, edx
 	mov	eax, DWORD PTR usage$[rsp]
 	div	DWORD PTR l_pageSize
 	mov	DWORD PTR pages$[rsp], eax
 
-; 252  : 	if ((usage % l_pageSize) != 0) pages += 1;
+; 280  : 	if ((usage % l_pageSize) != 0) pages += 1;
 
 	xor	edx, edx
 	mov	eax, DWORD PTR usage$[rsp]
@@ -154,9 +154,9 @@ size$ = 64
 	mov	DWORD PTR pages$[rsp], eax
 $LN3@allocate_n:
 
-; 253  : 
-; 254  : 	// Make sure it's >= the minimum size.
-; 255  : 	if (pages < l_pageCount) pages = l_pageCount;
+; 281  : 
+; 282  : 	// Make sure it's >= the minimum size.
+; 283  : 	if (pages < l_pageCount) pages = l_pageCount;
 
 	mov	eax, DWORD PTR l_pageCount
 	cmp	DWORD PTR pages$[rsp], eax
@@ -165,15 +165,15 @@ $LN3@allocate_n:
 	mov	DWORD PTR pages$[rsp], eax
 $LN2@allocate_n:
 
-; 256  : 
-; 257  : 	tag = (struct boundary_tag*)liballoc_alloc(pages);
+; 284  : 
+; 285  : 	tag = (struct boundary_tag*)liballoc_alloc(pages);
 
 	mov	ecx, DWORD PTR pages$[rsp]
 	call	liballoc_alloc
 	mov	QWORD PTR tag$[rsp], rax
 
-; 258  : 
-; 259  : 	if (tag == NULL) return NULL;	// uh oh, we ran out of memory.
+; 286  : 
+; 287  : 	if (tag == NULL) return NULL;	// uh oh, we ran out of memory.
 
 	cmp	QWORD PTR tag$[rsp], 0
 	jne	SHORT $LN1@allocate_n
@@ -181,67 +181,67 @@ $LN2@allocate_n:
 	jmp	SHORT $LN4@allocate_n
 $LN1@allocate_n:
 
-; 260  : 
-; 261  : 	tag->magic = LIBALLOC_MAGIC;
+; 288  : 
+; 289  : 	tag->magic = LIBALLOC_MAGIC;
 
 	mov	rax, QWORD PTR tag$[rsp]
 	mov	DWORD PTR [rax], -1073626914		; c001c0deH
 
-; 262  : 	tag->size = size;
+; 290  : 	tag->size = size;
 
 	mov	rax, QWORD PTR tag$[rsp]
 	mov	ecx, DWORD PTR size$[rsp]
 	mov	DWORD PTR [rax+4], ecx
 
-; 263  : 	tag->real_size = pages * l_pageSize;
+; 291  : 	tag->real_size = pages * l_pageSize;
 
 	mov	eax, DWORD PTR pages$[rsp]
 	imul	eax, DWORD PTR l_pageSize
 	mov	rcx, QWORD PTR tag$[rsp]
 	mov	DWORD PTR [rcx+8], eax
 
-; 264  : 	tag->index = -1;
+; 292  : 	tag->index = -1;
 
 	mov	rax, QWORD PTR tag$[rsp]
 	mov	DWORD PTR [rax+12], -1
 
-; 265  : 
-; 266  : 	tag->next = NULL;
+; 293  : 
+; 294  : 	tag->next = NULL;
 
 	mov	rax, QWORD PTR tag$[rsp]
 	mov	QWORD PTR [rax+32], 0
 
-; 267  : 	tag->prev = NULL;
+; 295  : 	tag->prev = NULL;
 
 	mov	rax, QWORD PTR tag$[rsp]
 	mov	QWORD PTR [rax+40], 0
 
-; 268  : 	tag->split_left = NULL;
+; 296  : 	tag->split_left = NULL;
 
 	mov	rax, QWORD PTR tag$[rsp]
 	mov	QWORD PTR [rax+16], 0
 
-; 269  : 	tag->split_right = NULL;
+; 297  : 	tag->split_right = NULL;
 
 	mov	rax, QWORD PTR tag$[rsp]
 	mov	QWORD PTR [rax+24], 0
 
-; 270  : 
-; 271  : 
-; 272  : #ifdef DEBUG
-; 273  : 	printf("Resource allocated %x of %i pages (%i bytes) for %i size.\n", tag, pages, pages * l_pageSize, size);
-; 274  : 
-; 275  : 	l_allocated += pages * l_pageSize;
-; 276  : 
-; 277  : 	printf("Total memory usage = %i KB\n", (int)((l_allocated / (1024))));
-; 278  : #endif
-; 279  : 
-; 280  : 	return tag;
+; 298  : 
+; 299  : 
+; 300  : #ifdef DEBUG
+; 301  : 	printf("Resource allocated %x of %i pages (%i bytes) for %i size.\n", tag, pages, pages * l_pageSize, size);
+; 302  : 
+; 303  : 	l_allocated += pages * l_pageSize;
+; 304  : 
+; 305  : 	printf("Total memory usage = %i KB\n", (int)((l_allocated / (1024))));
+; 306  : #endif
+; 307  : 
+; 308  : 	return tag;
 
 	mov	rax, QWORD PTR tag$[rsp]
 $LN4@allocate_n:
 
-; 281  : }
+; 309  : }
 
 	add	rsp, 56					; 00000038H
 	ret	0
@@ -255,12 +255,12 @@ new_tag$ = 40
 tag$ = 64
 ?split_tag@@YAPEAUboundary_tag@@PEAU1@@Z PROC		; split_tag
 
-; 213  : {
+; 241  : {
 
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 56					; 00000038H
 
-; 214  : 	unsigned int remainder = tag->real_size - sizeof(struct boundary_tag) - tag->size;
+; 242  : 	unsigned int remainder = tag->real_size - sizeof(struct boundary_tag) - tag->size;
 
 	mov	rax, QWORD PTR tag$[rsp]
 	mov	eax, DWORD PTR [rax+8]
@@ -270,8 +270,8 @@ tag$ = 64
 	sub	rax, rcx
 	mov	DWORD PTR remainder$[rsp], eax
 
-; 215  : 	struct boundary_tag *new_tag =
-; 216  : 		(struct boundary_tag*)((size_t)tag + sizeof(struct boundary_tag) + tag->size);
+; 243  : 	struct boundary_tag *new_tag =
+; 244  : 		(struct boundary_tag*)((size_t)tag + sizeof(struct boundary_tag) + tag->size);
 
 	mov	rax, QWORD PTR tag$[rsp]
 	mov	eax, DWORD PTR [rax+4]
@@ -279,44 +279,44 @@ tag$ = 64
 	lea	rax, QWORD PTR [rcx+rax+48]
 	mov	QWORD PTR new_tag$[rsp], rax
 
-; 217  : 	new_tag->magic = LIBALLOC_MAGIC;
+; 245  : 	new_tag->magic = LIBALLOC_MAGIC;
 
 	mov	rax, QWORD PTR new_tag$[rsp]
 	mov	DWORD PTR [rax], -1073626914		; c001c0deH
 
-; 218  : 	new_tag->real_size = remainder;
+; 246  : 	new_tag->real_size = remainder;
 
 	mov	rax, QWORD PTR new_tag$[rsp]
 	mov	ecx, DWORD PTR remainder$[rsp]
 	mov	DWORD PTR [rax+8], ecx
 
-; 219  : 
-; 220  : 	new_tag->next = NULL;
+; 247  : 
+; 248  : 	new_tag->next = NULL;
 
 	mov	rax, QWORD PTR new_tag$[rsp]
 	mov	QWORD PTR [rax+32], 0
 
-; 221  : 	new_tag->prev = NULL;
+; 249  : 	new_tag->prev = NULL;
 
 	mov	rax, QWORD PTR new_tag$[rsp]
 	mov	QWORD PTR [rax+40], 0
 
-; 222  : 
-; 223  : 	new_tag->split_left = tag;
+; 250  : 
+; 251  : 	new_tag->split_left = tag;
 
 	mov	rax, QWORD PTR new_tag$[rsp]
 	mov	rcx, QWORD PTR tag$[rsp]
 	mov	QWORD PTR [rax+16], rcx
 
-; 224  : 	new_tag->split_right = tag->split_right;
+; 252  : 	new_tag->split_right = tag->split_right;
 
 	mov	rax, QWORD PTR new_tag$[rsp]
 	mov	rcx, QWORD PTR tag$[rsp]
 	mov	rcx, QWORD PTR [rcx+24]
 	mov	QWORD PTR [rax+24], rcx
 
-; 225  : 
-; 226  : 	if (new_tag->split_right != NULL) new_tag->split_right->split_left = new_tag;
+; 253  : 
+; 254  : 	if (new_tag->split_right != NULL) new_tag->split_right->split_left = new_tag;
 
 	mov	rax, QWORD PTR new_tag$[rsp]
 	cmp	QWORD PTR [rax+24], 0
@@ -327,14 +327,14 @@ tag$ = 64
 	mov	QWORD PTR [rax+16], rcx
 $LN1@split_tag:
 
-; 227  : 	tag->split_right = new_tag;
+; 255  : 	tag->split_right = new_tag;
 
 	mov	rax, QWORD PTR tag$[rsp]
 	mov	rcx, QWORD PTR new_tag$[rsp]
 	mov	QWORD PTR [rax+24], rcx
 
-; 228  : 
-; 229  : 	tag->real_size -= new_tag->real_size;
+; 256  : 
+; 257  : 	tag->real_size -= new_tag->real_size;
 
 	mov	rax, QWORD PTR tag$[rsp]
 	mov	rcx, QWORD PTR new_tag$[rsp]
@@ -344,18 +344,18 @@ $LN1@split_tag:
 	mov	rcx, QWORD PTR tag$[rsp]
 	mov	DWORD PTR [rcx+8], eax
 
-; 230  : 	insert_tag(new_tag, -1);
+; 258  : 	insert_tag(new_tag, -1);
 
 	mov	edx, -1
 	mov	rcx, QWORD PTR new_tag$[rsp]
 	call	?insert_tag@@YAXPEAUboundary_tag@@H@Z	; insert_tag
 
-; 231  : 
-; 232  : 	return new_tag;
+; 259  : 
+; 260  : 	return new_tag;
 
 	mov	rax, QWORD PTR new_tag$[rsp]
 
-; 233  : }
+; 261  : }
 
 	add	rsp, 56					; 00000038H
 	ret	0
@@ -368,25 +368,25 @@ right$ = 32
 tag$ = 64
 ?absorb_right@@YAPEAUboundary_tag@@PEAU1@@Z PROC	; absorb_right
 
-; 198  : {
+; 226  : {
 
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 56					; 00000038H
 
-; 199  : 	struct boundary_tag *right = tag->split_right;
+; 227  : 	struct boundary_tag *right = tag->split_right;
 
 	mov	rax, QWORD PTR tag$[rsp]
 	mov	rax, QWORD PTR [rax+24]
 	mov	QWORD PTR right$[rsp], rax
 
-; 200  : 
-; 201  : 	remove_tag(right);		// Remove right from free pages.
+; 228  : 
+; 229  : 	remove_tag(right);		// Remove right from free pages.
 
 	mov	rcx, QWORD PTR right$[rsp]
 	call	?remove_tag@@YAXPEAUboundary_tag@@@Z	; remove_tag
 
-; 202  : 
-; 203  : 	tag->real_size += right->real_size;
+; 230  : 
+; 231  : 	tag->real_size += right->real_size;
 
 	mov	rax, QWORD PTR tag$[rsp]
 	mov	eax, DWORD PTR [rax+8]
@@ -395,21 +395,21 @@ tag$ = 64
 	mov	rcx, QWORD PTR tag$[rsp]
 	mov	DWORD PTR [rcx+8], eax
 
-; 204  : 
-; 205  : 	tag->split_right = right->split_right;
+; 232  : 
+; 233  : 	tag->split_right = right->split_right;
 
 	mov	rax, QWORD PTR tag$[rsp]
 	mov	rcx, QWORD PTR right$[rsp]
 	mov	rcx, QWORD PTR [rcx+24]
 	mov	QWORD PTR [rax+24], rcx
 
-; 206  : 	if (right->split_right != NULL)
+; 234  : 	if (right->split_right != NULL)
 
 	mov	rax, QWORD PTR right$[rsp]
 	cmp	QWORD PTR [rax+24], 0
 	je	SHORT $LN1@absorb_rig
 
-; 207  : 		right->split_right->split_left = tag;
+; 235  : 		right->split_right->split_left = tag;
 
 	mov	rax, QWORD PTR right$[rsp]
 	mov	rax, QWORD PTR [rax+24]
@@ -417,12 +417,12 @@ tag$ = 64
 	mov	QWORD PTR [rax+16], rcx
 $LN1@absorb_rig:
 
-; 208  : 
-; 209  : 	return tag;
+; 236  : 
+; 237  : 	return tag;
 
 	mov	rax, QWORD PTR tag$[rsp]
 
-; 210  : }
+; 238  : }
 
 	add	rsp, 56					; 00000038H
 	ret	0
@@ -435,19 +435,19 @@ left$ = 0
 tag$ = 32
 ?melt_left@@YAPEAUboundary_tag@@PEAU1@@Z PROC		; melt_left
 
-; 185  : {
+; 213  : {
 
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 24
 
-; 186  : 	struct boundary_tag *left = tag->split_left;
+; 214  : 	struct boundary_tag *left = tag->split_left;
 
 	mov	rax, QWORD PTR tag$[rsp]
 	mov	rax, QWORD PTR [rax+16]
 	mov	QWORD PTR left$[rsp], rax
 
-; 187  : 
-; 188  : 	left->real_size += tag->real_size;
+; 215  : 
+; 216  : 	left->real_size += tag->real_size;
 
 	mov	rax, QWORD PTR left$[rsp]
 	mov	eax, DWORD PTR [rax+8]
@@ -456,15 +456,15 @@ tag$ = 32
 	mov	rcx, QWORD PTR left$[rsp]
 	mov	DWORD PTR [rcx+8], eax
 
-; 189  : 	left->split_right = tag->split_right;
+; 217  : 	left->split_right = tag->split_right;
 
 	mov	rax, QWORD PTR left$[rsp]
 	mov	rcx, QWORD PTR tag$[rsp]
 	mov	rcx, QWORD PTR [rcx+24]
 	mov	QWORD PTR [rax+24], rcx
 
-; 190  : 
-; 191  : 	if (tag->split_right != NULL) tag->split_right->split_left = left;
+; 218  : 
+; 219  : 	if (tag->split_right != NULL) tag->split_right->split_left = left;
 
 	mov	rax, QWORD PTR tag$[rsp]
 	cmp	QWORD PTR [rax+24], 0
@@ -475,12 +475,12 @@ tag$ = 32
 	mov	QWORD PTR [rax+16], rcx
 $LN1@melt_left:
 
-; 192  : 
-; 193  : 	return left;
+; 220  : 
+; 221  : 	return left;
 
 	mov	rax, QWORD PTR left$[rsp]
 
-; 194  : }
+; 222  : }
 
 	add	rsp, 24
 	ret	0
@@ -492,11 +492,11 @@ _TEXT	SEGMENT
 tag$ = 8
 ?remove_tag@@YAXPEAUboundary_tag@@@Z PROC		; remove_tag
 
-; 172  : {
+; 200  : {
 
 	mov	QWORD PTR [rsp+8], rcx
 
-; 173  : 	if (l_freePages[tag->index] == tag) l_freePages[tag->index] = tag->next;
+; 201  : 	if (l_freePages[tag->index] == tag) l_freePages[tag->index] = tag->next;
 
 	mov	rax, QWORD PTR tag$[rsp]
 	movsxd	rax, DWORD PTR [rax+12]
@@ -512,8 +512,8 @@ tag$ = 8
 	mov	QWORD PTR [rcx+rax*8], rdx
 $LN3@remove_tag:
 
-; 174  : 
-; 175  : 	if (tag->prev != NULL) tag->prev->next = tag->next;
+; 202  : 
+; 203  : 	if (tag->prev != NULL) tag->prev->next = tag->next;
 
 	mov	rax, QWORD PTR tag$[rsp]
 	cmp	QWORD PTR [rax+40], 0
@@ -525,7 +525,7 @@ $LN3@remove_tag:
 	mov	QWORD PTR [rax+32], rcx
 $LN2@remove_tag:
 
-; 176  : 	if (tag->next != NULL) tag->next->prev = tag->prev;
+; 204  : 	if (tag->next != NULL) tag->next->prev = tag->prev;
 
 	mov	rax, QWORD PTR tag$[rsp]
 	cmp	QWORD PTR [rax+32], 0
@@ -537,23 +537,23 @@ $LN2@remove_tag:
 	mov	QWORD PTR [rax+40], rcx
 $LN1@remove_tag:
 
-; 177  : 
-; 178  : 	tag->next = NULL;
+; 205  : 
+; 206  : 	tag->next = NULL;
 
 	mov	rax, QWORD PTR tag$[rsp]
 	mov	QWORD PTR [rax+32], 0
 
-; 179  : 	tag->prev = NULL;
+; 207  : 	tag->prev = NULL;
 
 	mov	rax, QWORD PTR tag$[rsp]
 	mov	QWORD PTR [rax+40], 0
 
-; 180  : 	tag->index = -1;
+; 208  : 	tag->index = -1;
 
 	mov	rax, QWORD PTR tag$[rsp]
 	mov	DWORD PTR [rax+12], -1
 
-; 181  : }
+; 209  : }
 
 	ret	0
 ?remove_tag@@YAXPEAUboundary_tag@@@Z ENDP		; remove_tag
@@ -566,24 +566,24 @@ tag$ = 64
 index$ = 72
 ?insert_tag@@YAXPEAUboundary_tag@@H@Z PROC		; insert_tag
 
-; 148  : {
+; 176  : {
 
 	mov	DWORD PTR [rsp+16], edx
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 56					; 00000038H
 
-; 149  : 	int realIndex = 0;
+; 177  : 	int realIndex = 0;
 
 	mov	DWORD PTR realIndex$[rsp], 0
 
-; 150  : 
-; 151  : 	if (index < 0)
+; 178  : 
+; 179  : 	if (index < 0)
 
 	cmp	DWORD PTR index$[rsp], 0
 	jge	SHORT $LN4@insert_tag
 
-; 152  : 	{
-; 153  : 		realIndex = getexp(tag->real_size - sizeof(struct boundary_tag));
+; 180  : 	{
+; 181  : 		realIndex = getexp(tag->real_size - sizeof(struct boundary_tag));
 
 	mov	rax, QWORD PTR tag$[rsp]
 	mov	eax, DWORD PTR [rax+8]
@@ -592,43 +592,43 @@ index$ = 72
 	call	?getexp@@YAHI@Z				; getexp
 	mov	DWORD PTR realIndex$[rsp], eax
 
-; 154  : 
-; 155  : 		if (realIndex < MINEXP) realIndex = MINEXP;
+; 182  : 
+; 183  : 		if (realIndex < MINEXP) realIndex = MINEXP;
 
 	cmp	DWORD PTR realIndex$[rsp], 8
 	jge	SHORT $LN3@insert_tag
 	mov	DWORD PTR realIndex$[rsp], 8
 $LN3@insert_tag:
 
-; 156  : 	}
-; 157  : 	else
+; 184  : 	}
+; 185  : 	else
 
 	jmp	SHORT $LN2@insert_tag
 $LN4@insert_tag:
 
-; 158  : 		realIndex = index;
+; 186  : 		realIndex = index;
 
 	mov	eax, DWORD PTR index$[rsp]
 	mov	DWORD PTR realIndex$[rsp], eax
 $LN2@insert_tag:
 
-; 159  : 
-; 160  : 	tag->index = realIndex;
+; 187  : 
+; 188  : 	tag->index = realIndex;
 
 	mov	rax, QWORD PTR tag$[rsp]
 	mov	ecx, DWORD PTR realIndex$[rsp]
 	mov	DWORD PTR [rax+12], ecx
 
-; 161  : 
-; 162  : 	if (l_freePages[realIndex] != NULL)
+; 189  : 
+; 190  : 	if (l_freePages[realIndex] != NULL)
 
 	movsxd	rax, DWORD PTR realIndex$[rsp]
 	lea	rcx, OFFSET FLAT:?l_freePages@@3PAPEAUboundary_tag@@A ; l_freePages
 	cmp	QWORD PTR [rcx+rax*8], 0
 	je	SHORT $LN1@insert_tag
 
-; 163  : 	{
-; 164  : 		l_freePages[realIndex]->prev = tag;
+; 191  : 	{
+; 192  : 		l_freePages[realIndex]->prev = tag;
 
 	movsxd	rax, DWORD PTR realIndex$[rsp]
 	lea	rcx, OFFSET FLAT:?l_freePages@@3PAPEAUboundary_tag@@A ; l_freePages
@@ -636,7 +636,7 @@ $LN2@insert_tag:
 	mov	rcx, QWORD PTR tag$[rsp]
 	mov	QWORD PTR [rax+40], rcx
 
-; 165  : 		tag->next = l_freePages[realIndex];
+; 193  : 		tag->next = l_freePages[realIndex];
 
 	movsxd	rax, DWORD PTR realIndex$[rsp]
 	lea	rcx, OFFSET FLAT:?l_freePages@@3PAPEAUboundary_tag@@A ; l_freePages
@@ -645,16 +645,16 @@ $LN2@insert_tag:
 	mov	QWORD PTR [rdx+32], rax
 $LN1@insert_tag:
 
-; 166  : 	}
-; 167  : 
-; 168  : 	l_freePages[realIndex] = tag;
+; 194  : 	}
+; 195  : 
+; 196  : 	l_freePages[realIndex] = tag;
 
 	movsxd	rax, DWORD PTR realIndex$[rsp]
 	lea	rcx, OFFSET FLAT:?l_freePages@@3PAPEAUboundary_tag@@A ; l_freePages
 	mov	rdx, QWORD PTR tag$[rsp]
 	mov	QWORD PTR [rcx+rax*8], rdx
 
-; 169  : }
+; 197  : }
 
 	add	rsp, 56					; 00000038H
 	ret	0
@@ -672,34 +672,34 @@ s2$ = 56
 n$ = 64
 ?liballoc_memcpy@@YAPEAXPEAXPEBX_K@Z PROC		; liballoc_memcpy
 
-; 87   : {
+; 115  : {
 
 	mov	QWORD PTR [rsp+24], r8
 	mov	QWORD PTR [rsp+16], rdx
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 40					; 00000028H
 
-; 88   : 	char *cdest;
-; 89   : 	char *csrc;
-; 90   : 	unsigned int *ldest = (unsigned int*)s1;
+; 116  : 	char *cdest;
+; 117  : 	char *csrc;
+; 118  : 	unsigned int *ldest = (unsigned int*)s1;
 
 	mov	rax, QWORD PTR s1$[rsp]
 	mov	QWORD PTR ldest$[rsp], rax
 
-; 91   : 	unsigned int *lsrc = (unsigned int*)s2;
+; 119  : 	unsigned int *lsrc = (unsigned int*)s2;
 
 	mov	rax, QWORD PTR s2$[rsp]
 	mov	QWORD PTR lsrc$[rsp], rax
 $LN4@liballoc_m:
 
-; 92   : 
-; 93   : 	while (n >= sizeof(unsigned int))
+; 120  : 
+; 121  : 	while (n >= sizeof(unsigned int))
 
 	cmp	QWORD PTR n$[rsp], 4
 	jb	SHORT $LN3@liballoc_m
 
-; 94   : 	{
-; 95   : 		*ldest++ = *lsrc++;
+; 122  : 	{
+; 123  : 		*ldest++ = *lsrc++;
 
 	mov	rax, QWORD PTR ldest$[rsp]
 	mov	rcx, QWORD PTR lsrc$[rsp]
@@ -712,37 +712,37 @@ $LN4@liballoc_m:
 	add	rax, 4
 	mov	QWORD PTR lsrc$[rsp], rax
 
-; 96   : 		n -= sizeof(unsigned int);
+; 124  : 		n -= sizeof(unsigned int);
 
 	mov	rax, QWORD PTR n$[rsp]
 	sub	rax, 4
 	mov	QWORD PTR n$[rsp], rax
 
-; 97   : 	}
+; 125  : 	}
 
 	jmp	SHORT $LN4@liballoc_m
 $LN3@liballoc_m:
 
-; 98   : 
-; 99   : 	cdest = (char*)ldest;
+; 126  : 
+; 127  : 	cdest = (char*)ldest;
 
 	mov	rax, QWORD PTR ldest$[rsp]
 	mov	QWORD PTR cdest$[rsp], rax
 
-; 100  : 	csrc = (char*)lsrc;
+; 128  : 	csrc = (char*)lsrc;
 
 	mov	rax, QWORD PTR lsrc$[rsp]
 	mov	QWORD PTR csrc$[rsp], rax
 $LN2@liballoc_m:
 
-; 101  : 
-; 102  : 	while (n > 0)
+; 129  : 
+; 130  : 	while (n > 0)
 
 	cmp	QWORD PTR n$[rsp], 0
 	jbe	SHORT $LN1@liballoc_m
 
-; 103  : 	{
-; 104  : 		*cdest++ = *csrc++;
+; 131  : 	{
+; 132  : 		*cdest++ = *csrc++;
 
 	mov	rax, QWORD PTR cdest$[rsp]
 	mov	rcx, QWORD PTR csrc$[rsp]
@@ -755,23 +755,23 @@ $LN2@liballoc_m:
 	inc	rax
 	mov	QWORD PTR csrc$[rsp], rax
 
-; 105  : 		n -= 1;
+; 133  : 		n -= 1;
 
 	mov	rax, QWORD PTR n$[rsp]
 	dec	rax
 	mov	QWORD PTR n$[rsp], rax
 
-; 106  : 	}
+; 134  : 	}
 
 	jmp	SHORT $LN2@liballoc_m
 $LN1@liballoc_m:
 
-; 107  : 
-; 108  : 	return s1;
+; 135  : 
+; 136  : 	return s1;
 
 	mov	rax, QWORD PTR s1$[rsp]
 
-; 109  : }
+; 137  : }
 
 	add	rsp, 40					; 00000028H
 	ret	0
@@ -786,15 +786,15 @@ c$ = 40
 n$ = 48
 ?liballoc_memset@@YAPEAXPEAXH_K@Z PROC			; liballoc_memset
 
-; 78   : {
+; 106  : {
 
 	mov	QWORD PTR [rsp+24], r8
 	mov	DWORD PTR [rsp+16], edx
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 24
 
-; 79   : 	int i;
-; 80   : 	for (i = 0; i < n; i++)
+; 107  : 	int i;
+; 108  : 	for (i = 0; i < n; i++)
 
 	mov	DWORD PTR i$[rsp], 0
 	jmp	SHORT $LN3@liballoc_m
@@ -807,7 +807,7 @@ $LN3@liballoc_m:
 	cmp	rax, QWORD PTR n$[rsp]
 	jae	SHORT $LN1@liballoc_m
 
-; 81   : 		((char*)s)[i] = c;
+; 109  : 		((char*)s)[i] = c;
 
 	movsxd	rax, DWORD PTR i$[rsp]
 	mov	rcx, QWORD PTR s$[rsp]
@@ -816,12 +816,12 @@ $LN3@liballoc_m:
 	jmp	SHORT $LN2@liballoc_m
 $LN1@liballoc_m:
 
-; 82   : 
-; 83   : 	return s;
+; 110  : 
+; 111  : 	return s;
 
 	mov	rax, QWORD PTR s$[rsp]
 
-; 84   : }
+; 112  : }
 
 	add	rsp, 24
 	ret	0
@@ -835,42 +835,42 @@ tv72 = 4
 size$ = 32
 ?getexp@@YAHI@Z PROC					; getexp
 
-; 51   : {
+; 79   : {
 
 	mov	DWORD PTR [rsp+8], ecx
 	sub	rsp, 24
 
-; 52   : 	if (size < (1 << MINEXP))
+; 80   : 	if (size < (1 << MINEXP))
 
 	cmp	DWORD PTR size$[rsp], 256		; 00000100H
 	jae	SHORT $LN4@getexp
 
-; 53   : 	{
-; 54   : #ifdef DEBUG
-; 55   : 		printf("getexp returns -1 for %i less than MINEXP\n", size);
-; 56   : #endif
-; 57   : 		return -1;	// Smaller than the quantum.
+; 81   : 	{
+; 82   : #ifdef DEBUG
+; 83   : 		printf("getexp returns -1 for %i less than MINEXP\n", size);
+; 84   : #endif
+; 85   : 		return -1;	// Smaller than the quantum.
 
 	mov	eax, -1
 	jmp	SHORT $LN5@getexp
 $LN4@getexp:
 
-; 58   : 	}
-; 59   : 
-; 60   : 
-; 61   : 	int shift = MINEXP;
+; 86   : 	}
+; 87   : 
+; 88   : 
+; 89   : 	int shift = MINEXP;
 
 	mov	DWORD PTR shift$[rsp], 8
 $LN3@getexp:
 
-; 62   : 
-; 63   : 	while (shift < MAXEXP)
+; 90   : 
+; 91   : 	while (shift < MAXEXP)
 
 	cmp	DWORD PTR shift$[rsp], 32		; 00000020H
 	jge	SHORT $LN2@getexp
 
-; 64   : 	{
-; 65   : 		if ((1 << shift) > size) break;
+; 92   : 	{
+; 93   : 		if ((1 << shift) > size) break;
 
 	mov	eax, DWORD PTR shift$[rsp]
 	mov	ecx, 1
@@ -883,29 +883,29 @@ $LN3@getexp:
 	jmp	SHORT $LN2@getexp
 $LN1@getexp:
 
-; 66   : 		shift += 1;
+; 94   : 		shift += 1;
 
 	mov	eax, DWORD PTR shift$[rsp]
 	inc	eax
 	mov	DWORD PTR shift$[rsp], eax
 
-; 67   : 	}
+; 95   : 	}
 
 	jmp	SHORT $LN3@getexp
 $LN2@getexp:
 
-; 68   : 
-; 69   : #ifdef DEBUG
-; 70   : 	printf("getexp returns %i (%i bytes) for %i size\n", shift - 1, (1 << (shift - 1)), size);
-; 71   : #endif
-; 72   : 
-; 73   : 	return shift - 1;
+; 96   : 
+; 97   : #ifdef DEBUG
+; 98   : 	printf("getexp returns %i (%i bytes) for %i size\n", shift - 1, (1 << (shift - 1)), size);
+; 99   : #endif
+; 100  : 
+; 101  : 	return shift - 1;
 
 	mov	eax, DWORD PTR shift$[rsp]
 	dec	eax
 $LN5@getexp:
 
-; 74   : }
+; 102  : }
 
 	add	rsp, 24
 	ret	0
@@ -920,64 +920,64 @@ tag$ = 40
 ptr$ = 64
 port_free PROC
 
-; 397  : {
+; 425  : {
 
 $LN14:
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 56					; 00000038H
 
-; 398  : 	int index;
-; 399  : 	struct boundary_tag *tag;
-; 400  : 
-; 401  : 	if (ptr == NULL) return;
+; 426  : 	int index;
+; 427  : 	struct boundary_tag *tag;
+; 428  : 
+; 429  : 	if (ptr == NULL) return;
 
 	cmp	QWORD PTR ptr$[rsp], 0
 	jne	SHORT $LN11@port_free
 	jmp	$LN12@port_free
 $LN11@port_free:
 
-; 402  : 
-; 403  : 	liballoc_lock();
+; 430  : 
+; 431  : 	liballoc_lock();
 
 	call	liballoc_lock
 
-; 404  : 
-; 405  : 
-; 406  : 	tag = (struct boundary_tag*)((size_t)ptr - sizeof(boundary_tag));
+; 432  : 
+; 433  : 
+; 434  : 	tag = (struct boundary_tag*)((size_t)ptr - sizeof(boundary_tag));
 
 	mov	rax, QWORD PTR ptr$[rsp]
 	sub	rax, 48					; 00000030H
 	mov	QWORD PTR tag$[rsp], rax
 
-; 407  : 
-; 408  : 	if (tag->magic != LIBALLOC_MAGIC)
+; 435  : 
+; 436  : 	if (tag->magic != LIBALLOC_MAGIC)
 
 	mov	rax, QWORD PTR tag$[rsp]
 	cmp	DWORD PTR [rax], -1073626914		; c001c0deH
 	je	SHORT $LN10@port_free
 
-; 409  : 	{
-; 410  : 		liballoc_unlock();		// release the lock
+; 437  : 	{
+; 438  : 		liballoc_unlock();		// release the lock
 
 	call	liballoc_unlock
 
-; 411  : 		return;
+; 439  : 		return;
 
 	jmp	$LN12@port_free
 $LN10@port_free:
 $LN9@port_free:
 
-; 412  : 	}
-; 413  : 
-; 414  : 
-; 415  : 
-; 416  : #ifdef DEBUG
-; 417  : 	l_inuse -= tag->size;
-; 418  : 	printf("free: %x, %i, %i\n", ptr, (int)l_inuse / 1024, (int)l_allocated / 1024);
-; 419  : #endif
-; 420  : 
-; 421  : 	// MELT LEFT...
-; 422  : 	while ((tag->split_left != NULL) && (tag->split_left->index >= 0))
+; 440  : 	}
+; 441  : 
+; 442  : 
+; 443  : 
+; 444  : #ifdef DEBUG
+; 445  : 	l_inuse -= tag->size;
+; 446  : 	printf("free: %x, %i, %i\n", ptr, (int)l_inuse / 1024, (int)l_allocated / 1024);
+; 447  : #endif
+; 448  : 
+; 449  : 	// MELT LEFT...
+; 450  : 	while ((tag->split_left != NULL) && (tag->split_left->index >= 0))
 
 	mov	rax, QWORD PTR tag$[rsp]
 	cmp	QWORD PTR [rax+16], 0
@@ -987,30 +987,30 @@ $LN9@port_free:
 	cmp	DWORD PTR [rax+12], 0
 	jl	SHORT $LN8@port_free
 
-; 423  : 	{
-; 424  : #ifdef DEBUG
-; 425  : 		printf("Melting tag left into available memory. Left was %i, becomes %i (%i)\n", tag->split_left->real_size, tag->split_left->real_size + tag->real_size, tag->split_left->real_size);
-; 426  : #endif
-; 427  : 		tag = melt_left(tag);
+; 451  : 	{
+; 452  : #ifdef DEBUG
+; 453  : 		printf("Melting tag left into available memory. Left was %i, becomes %i (%i)\n", tag->split_left->real_size, tag->split_left->real_size + tag->real_size, tag->split_left->real_size);
+; 454  : #endif
+; 455  : 		tag = melt_left(tag);
 
 	mov	rcx, QWORD PTR tag$[rsp]
 	call	?melt_left@@YAPEAUboundary_tag@@PEAU1@@Z ; melt_left
 	mov	QWORD PTR tag$[rsp], rax
 
-; 428  : 		remove_tag(tag);
+; 456  : 		remove_tag(tag);
 
 	mov	rcx, QWORD PTR tag$[rsp]
 	call	?remove_tag@@YAXPEAUboundary_tag@@@Z	; remove_tag
 
-; 429  : 	}
+; 457  : 	}
 
 	jmp	SHORT $LN9@port_free
 $LN8@port_free:
 $LN7@port_free:
 
-; 430  : 
-; 431  : 	// MELT RIGHT...
-; 432  : 	while ((tag->split_right != NULL) && (tag->split_right->index >= 0))
+; 458  : 
+; 459  : 	// MELT RIGHT...
+; 460  : 	while ((tag->split_right != NULL) && (tag->split_right->index >= 0))
 
 	mov	rax, QWORD PTR tag$[rsp]
 	cmp	QWORD PTR [rax+24], 0
@@ -1020,25 +1020,25 @@ $LN7@port_free:
 	cmp	DWORD PTR [rax+12], 0
 	jl	SHORT $LN6@port_free
 
-; 433  : 	{
-; 434  : #ifdef DEBUG
-; 435  : 		printf("Melting tag right into available memory. This was was %i, becomes %i (%i)\n", tag->real_size, tag->split_right->real_size + tag->real_size, tag->split_right->real_size);
-; 436  : #endif
-; 437  : 		tag = absorb_right(tag);
+; 461  : 	{
+; 462  : #ifdef DEBUG
+; 463  : 		printf("Melting tag right into available memory. This was was %i, becomes %i (%i)\n", tag->real_size, tag->split_right->real_size + tag->real_size, tag->split_right->real_size);
+; 464  : #endif
+; 465  : 		tag = absorb_right(tag);
 
 	mov	rcx, QWORD PTR tag$[rsp]
 	call	?absorb_right@@YAPEAUboundary_tag@@PEAU1@@Z ; absorb_right
 	mov	QWORD PTR tag$[rsp], rax
 
-; 438  : 	}
+; 466  : 	}
 
 	jmp	SHORT $LN7@port_free
 $LN6@port_free:
 
-; 439  : 
-; 440  : 
-; 441  : 	// Where is it going back to?
-; 442  : 	index = getexp(tag->real_size - sizeof(struct boundary_tag));
+; 467  : 
+; 468  : 
+; 469  : 	// Where is it going back to?
+; 470  : 	index = getexp(tag->real_size - sizeof(struct boundary_tag));
 
 	mov	rax, QWORD PTR tag$[rsp]
 	mov	eax, DWORD PTR [rax+8]
@@ -1047,16 +1047,16 @@ $LN6@port_free:
 	call	?getexp@@YAHI@Z				; getexp
 	mov	DWORD PTR index$[rsp], eax
 
-; 443  : 	if (index < MINEXP) index = MINEXP;
+; 471  : 	if (index < MINEXP) index = MINEXP;
 
 	cmp	DWORD PTR index$[rsp], 8
 	jge	SHORT $LN5@port_free
 	mov	DWORD PTR index$[rsp], 8
 $LN5@port_free:
 
-; 444  : 
-; 445  : 	// A whole, empty block?
-; 446  : 	if ((tag->split_left == NULL) && (tag->split_right == NULL))
+; 472  : 
+; 473  : 	// A whole, empty block?
+; 474  : 	if ((tag->split_left == NULL) && (tag->split_right == NULL))
 
 	mov	rax, QWORD PTR tag$[rsp]
 	cmp	QWORD PTR [rax+16], 0
@@ -1065,18 +1065,18 @@ $LN5@port_free:
 	cmp	QWORD PTR [rax+24], 0
 	jne	$LN4@port_free
 
-; 447  : 	{
-; 448  : 
-; 449  : 		if (l_completePages[index] == MAXCOMPLETE)
+; 475  : 	{
+; 476  : 
+; 477  : 		if (l_completePages[index] == MAXCOMPLETE)
 
 	movsxd	rax, DWORD PTR index$[rsp]
 	lea	rcx, OFFSET FLAT:?l_completePages@@3PAHA ; l_completePages
 	cmp	DWORD PTR [rcx+rax*4], 5
 	jne	SHORT $LN3@port_free
 
-; 450  : 		{
-; 451  : 			// Too many standing by to keep. Free this one.
-; 452  : 			unsigned int pages = tag->real_size / l_pageSize;
+; 478  : 		{
+; 479  : 			// Too many standing by to keep. Free this one.
+; 480  : 			unsigned int pages = tag->real_size / l_pageSize;
 
 	xor	edx, edx
 	mov	rax, QWORD PTR tag$[rsp]
@@ -1084,8 +1084,8 @@ $LN5@port_free:
 	div	DWORD PTR l_pageSize
 	mov	DWORD PTR pages$1[rsp], eax
 
-; 453  : 
-; 454  : 			if ((tag->real_size % l_pageSize) != 0) pages += 1;
+; 481  : 
+; 482  : 			if ((tag->real_size % l_pageSize) != 0) pages += 1;
 
 	xor	edx, edx
 	mov	rax, QWORD PTR tag$[rsp]
@@ -1099,7 +1099,7 @@ $LN5@port_free:
 	mov	DWORD PTR pages$1[rsp], eax
 $LN2@port_free:
 
-; 455  : 			if (pages < l_pageCount) pages = l_pageCount;
+; 483  : 			if (pages < l_pageCount) pages = l_pageCount;
 
 	mov	eax, DWORD PTR l_pageCount
 	cmp	DWORD PTR pages$1[rsp], eax
@@ -1108,33 +1108,33 @@ $LN2@port_free:
 	mov	DWORD PTR pages$1[rsp], eax
 $LN1@port_free:
 
-; 456  : 
-; 457  : 			liballoc_free(tag, pages);
+; 484  : 
+; 485  : 			liballoc_free(tag, pages);
 
 	mov	edx, DWORD PTR pages$1[rsp]
 	mov	rcx, QWORD PTR tag$[rsp]
 	call	liballoc_free
 
-; 458  : 
-; 459  : #ifdef DEBUG
-; 460  : 			l_allocated -= pages * l_pageSize;
-; 461  : 			printf("Resource freeing %x of %i pages\n", tag, pages);
-; 462  : 			dump_array();
-; 463  : #endif
-; 464  : 
-; 465  : 			liballoc_unlock();
+; 486  : 
+; 487  : #ifdef DEBUG
+; 488  : 			l_allocated -= pages * l_pageSize;
+; 489  : 			printf("Resource freeing %x of %i pages\n", tag, pages);
+; 490  : 			dump_array();
+; 491  : #endif
+; 492  : 
+; 493  : 			liballoc_unlock();
 
 	call	liballoc_unlock
 
-; 466  : 			return;
+; 494  : 			return;
 
 	jmp	SHORT $LN12@port_free
 $LN3@port_free:
 
-; 467  : 		}
-; 468  : 
-; 469  : 
-; 470  : 		l_completePages[index] += 1;	// Increase the count of complete pages.
+; 495  : 		}
+; 496  : 
+; 497  : 
+; 498  : 		l_completePages[index] += 1;	// Increase the count of complete pages.
 
 	movsxd	rax, DWORD PTR index$[rsp]
 	lea	rcx, OFFSET FLAT:?l_completePages@@3PAHA ; l_completePages
@@ -1145,30 +1145,30 @@ $LN3@port_free:
 	mov	DWORD PTR [rdx+rcx*4], eax
 $LN4@port_free:
 
-; 471  : 	}
-; 472  : 
-; 473  : 
-; 474  : 	// ..........
-; 475  : 
-; 476  : 
-; 477  : 	insert_tag(tag, index);
+; 499  : 	}
+; 500  : 
+; 501  : 
+; 502  : 	// ..........
+; 503  : 
+; 504  : 
+; 505  : 	insert_tag(tag, index);
 
 	mov	edx, DWORD PTR index$[rsp]
 	mov	rcx, QWORD PTR tag$[rsp]
 	call	?insert_tag@@YAXPEAUboundary_tag@@H@Z	; insert_tag
 
-; 478  : 
-; 479  : #ifdef DEBUG
-; 480  : 	printf("Returning tag with %i bytes (requested %i bytes), which has exponent: %i\n", tag->real_size, tag->size, index);
-; 481  : 	dump_array();
-; 482  : #endif
-; 483  : 
-; 484  : 	liballoc_unlock();
+; 506  : 
+; 507  : #ifdef DEBUG
+; 508  : 	printf("Returning tag with %i bytes (requested %i bytes), which has exponent: %i\n", tag->real_size, tag->size, index);
+; 509  : 	dump_array();
+; 510  : #endif
+; 511  : 
+; 512  : 	liballoc_unlock();
 
 	call	liballoc_unlock
 $LN12@port_free:
 
-; 485  : }
+; 513  : }
 
 	add	rsp, 56					; 00000038H
 	ret	0
@@ -1183,31 +1183,31 @@ nobj$ = 64
 size$ = 72
 port_calloc PROC
 
-; 491  : {
+; 519  : {
 
 $LN3:
 	mov	QWORD PTR [rsp+16], rdx
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 56					; 00000038H
 
-; 492  : 	int real_size;
-; 493  : 	void *p;
-; 494  : 
-; 495  : 	real_size = nobj * size;
+; 520  : 	int real_size;
+; 521  : 	void *p;
+; 522  : 
+; 523  : 	real_size = nobj * size;
 
 	mov	rax, QWORD PTR nobj$[rsp]
 	imul	rax, QWORD PTR size$[rsp]
 	mov	DWORD PTR real_size$[rsp], eax
 
-; 496  : 
-; 497  : 	p = port_malloc(real_size);
+; 524  : 
+; 525  : 	p = port_malloc(real_size);
 
 	mov	ecx, DWORD PTR real_size$[rsp]
 	call	port_malloc
 	mov	QWORD PTR p$[rsp], rax
 
-; 498  : 
-; 499  : 	liballoc_memset(p, 0, real_size);
+; 526  : 
+; 527  : 	liballoc_memset(p, 0, real_size);
 
 	movsxd	rax, DWORD PTR real_size$[rsp]
 	mov	r8, rax
@@ -1215,12 +1215,12 @@ $LN3:
 	mov	rcx, QWORD PTR p$[rsp]
 	call	?liballoc_memset@@YAPEAXPEAXH_K@Z	; liballoc_memset
 
-; 500  : 
-; 501  : 	return p;
+; 528  : 
+; 529  : 	return p;
 
 	mov	rax, QWORD PTR p$[rsp]
 
-; 502  : }
+; 530  : }
 
 	add	rsp, 56					; 00000038H
 	ret	0
@@ -1236,36 +1236,36 @@ p$ = 80
 size$ = 88
 port_realloc PROC
 
-; 507  : {
+; 535  : {
 
 $LN8:
 	mov	DWORD PTR [rsp+16], edx
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 72					; 00000048H
 
-; 508  : 	void *ptr;
-; 509  : 	struct boundary_tag *tag;
-; 510  : 	int real_size;
-; 511  : 
-; 512  : 	if (size == 0)
+; 536  : 	void *ptr;
+; 537  : 	struct boundary_tag *tag;
+; 538  : 	int real_size;
+; 539  : 
+; 540  : 	if (size == 0)
 
 	cmp	DWORD PTR size$[rsp], 0
 	jne	SHORT $LN5@port_reall
 
-; 513  : 	{
-; 514  : 		port_free(p);
+; 541  : 	{
+; 542  : 		port_free(p);
 
 	mov	rcx, QWORD PTR p$[rsp]
 	call	port_free
 
-; 515  : 		return NULL;
+; 543  : 		return NULL;
 
 	xor	eax, eax
 	jmp	$LN6@port_reall
 $LN5@port_reall:
 
-; 516  : 	}
-; 517  : 	if (p == NULL) return port_malloc(size);
+; 544  : 	}
+; 545  : 	if (p == NULL) return port_malloc(size);
 
 	cmp	QWORD PTR p$[rsp], 0
 	jne	SHORT $LN4@port_reall
@@ -1274,8 +1274,8 @@ $LN5@port_reall:
 	jmp	$LN6@port_reall
 $LN4@port_reall:
 
-; 518  : 
-; 519  : 	if (liballoc_lock != NULL) liballoc_lock();		// lockit
+; 546  : 
+; 547  : 	if (liballoc_lock != NULL) liballoc_lock();		// lockit
 
 	lea	rax, OFFSET FLAT:liballoc_lock
 	test	rax, rax
@@ -1283,19 +1283,19 @@ $LN4@port_reall:
 	call	liballoc_lock
 $LN3@port_reall:
 
-; 520  : 	tag = (boundary_tag*)((size_t)p - sizeof(boundary_tag));
+; 548  : 	tag = (boundary_tag*)((size_t)p - sizeof(boundary_tag));
 
 	mov	rax, QWORD PTR p$[rsp]
 	sub	rax, 48					; 00000030H
 	mov	QWORD PTR tag$[rsp], rax
 
-; 521  : 	real_size = tag->size;
+; 549  : 	real_size = tag->size;
 
 	mov	rax, QWORD PTR tag$[rsp]
 	mov	eax, DWORD PTR [rax+4]
 	mov	DWORD PTR real_size$[rsp], eax
 
-; 522  : 	if (liballoc_unlock != NULL) liballoc_unlock();
+; 550  : 	if (liballoc_unlock != NULL) liballoc_unlock();
 
 	lea	rax, OFFSET FLAT:liballoc_unlock
 	test	rax, rax
@@ -1303,8 +1303,8 @@ $LN3@port_reall:
 	call	liballoc_unlock
 $LN2@port_reall:
 
-; 523  : 
-; 524  : 	if (real_size > size) real_size = size;
+; 551  : 
+; 552  : 	if (real_size > size) real_size = size;
 
 	mov	eax, DWORD PTR size$[rsp]
 	cmp	DWORD PTR real_size$[rsp], eax
@@ -1313,14 +1313,14 @@ $LN2@port_reall:
 	mov	DWORD PTR real_size$[rsp], eax
 $LN1@port_reall:
 
-; 525  : 
-; 526  : 	ptr = port_malloc(size);
+; 553  : 
+; 554  : 	ptr = port_malloc(size);
 
 	mov	ecx, DWORD PTR size$[rsp]
 	call	port_malloc
 	mov	QWORD PTR ptr$[rsp], rax
 
-; 527  : 	liballoc_memcpy(ptr, p, real_size);
+; 555  : 	liballoc_memcpy(ptr, p, real_size);
 
 	movsxd	rax, DWORD PTR real_size$[rsp]
 	mov	r8, rax
@@ -1328,17 +1328,17 @@ $LN1@port_reall:
 	mov	rcx, QWORD PTR ptr$[rsp]
 	call	?liballoc_memcpy@@YAPEAXPEAXPEBX_K@Z	; liballoc_memcpy
 
-; 528  : 	port_free(p);
+; 556  : 	port_free(p);
 
 	mov	rcx, QWORD PTR p$[rsp]
 	call	port_free
 
-; 529  : 	return ptr;
+; 557  : 	return ptr;
 
 	mov	rax, QWORD PTR ptr$[rsp]
 $LN6@port_reall:
 
-; 530  : }
+; 558  : }
 
 	add	rsp, 72					; 00000048H
 	ret	0
@@ -1357,34 +1357,34 @@ test$ = 72
 size$ = 96
 port_malloc PROC
 
-; 286  : {
+; 314  : {
 
 $LN17:
 	mov	DWORD PTR [rsp+8], ecx
 	sub	rsp, 88					; 00000058H
 
-; 287  : 	int index;
-; 288  : 	void *ptr;
-; 289  : 	struct boundary_tag *tag = NULL;
+; 315  : 	int index;
+; 316  : 	void *ptr;
+; 317  : 	struct boundary_tag *tag = NULL;
 
 	mov	QWORD PTR tag$[rsp], 0
 
-; 290  : 
-; 291  : 	liballoc_lock();
+; 318  : 
+; 319  : 	liballoc_lock();
 
 	call	liballoc_lock
 
-; 292  : 
-; 293  : 	if (l_initialized == 0)
+; 320  : 
+; 321  : 	if (l_initialized == 0)
 
 	cmp	DWORD PTR l_initialized, 0
 	jne	SHORT $LN14@port_mallo
 
-; 294  : 	{
-; 295  : #ifdef DEBUG
-; 296  : 		printf("%s\n", "liballoc initializing.");
-; 297  : #endif
-; 298  : 		for (index = 0; index < MAXEXP; index++)
+; 322  : 	{
+; 323  : #ifdef DEBUG
+; 324  : 		printf("%s\n", "liballoc initializing.");
+; 325  : #endif
+; 326  : 		for (index = 0; index < MAXEXP; index++)
 
 	mov	DWORD PTR index$[rsp], 0
 	jmp	SHORT $LN13@port_mallo
@@ -1396,49 +1396,49 @@ $LN13@port_mallo:
 	cmp	DWORD PTR index$[rsp], 32		; 00000020H
 	jge	SHORT $LN11@port_mallo
 
-; 299  : 		{
-; 300  : 			l_freePages[index] = NULL;
+; 327  : 		{
+; 328  : 			l_freePages[index] = NULL;
 
 	movsxd	rax, DWORD PTR index$[rsp]
 	lea	rcx, OFFSET FLAT:?l_freePages@@3PAPEAUboundary_tag@@A ; l_freePages
 	mov	QWORD PTR [rcx+rax*8], 0
 
-; 301  : 			l_completePages[index] = 0;
+; 329  : 			l_completePages[index] = 0;
 
 	movsxd	rax, DWORD PTR index$[rsp]
 	lea	rcx, OFFSET FLAT:?l_completePages@@3PAHA ; l_completePages
 	mov	DWORD PTR [rcx+rax*4], 0
 
-; 302  : 		}
+; 330  : 		}
 
 	jmp	SHORT $LN12@port_mallo
 $LN11@port_mallo:
 
-; 303  : 		l_initialized = 1;
+; 331  : 		l_initialized = 1;
 
 	mov	DWORD PTR l_initialized, 1
 $LN14@port_mallo:
 
-; 304  : 	}
-; 305  : 
-; 306  : 	index = getexp(size) + MODE;
+; 332  : 	}
+; 333  : 
+; 334  : 	index = getexp(size) + MODE;
 
 	mov	ecx, DWORD PTR size$[rsp]
 	call	?getexp@@YAHI@Z				; getexp
 	mov	DWORD PTR index$[rsp], eax
 
-; 307  : 
-; 308  : 	if (index < MINEXP) index = MINEXP;
+; 335  : 
+; 336  : 	if (index < MINEXP) index = MINEXP;
 
 	cmp	DWORD PTR index$[rsp], 8
 	jge	SHORT $LN10@port_mallo
 	mov	DWORD PTR index$[rsp], 8
 $LN10@port_mallo:
 
-; 309  : 
-; 310  : 
-; 311  : 	// Find one big enough.
-; 312  : 	tag = l_freePages[index];				// Start at the front of the list.
+; 337  : 
+; 338  : 
+; 339  : 	// Find one big enough.
+; 340  : 	tag = l_freePages[index];				// Start at the front of the list.
 
 	movsxd	rax, DWORD PTR index$[rsp]
 	lea	rcx, OFFSET FLAT:?l_freePages@@3PAPEAUboundary_tag@@A ; l_freePages
@@ -1446,15 +1446,15 @@ $LN10@port_mallo:
 	mov	QWORD PTR tag$[rsp], rax
 $LN9@port_mallo:
 
-; 313  : 	while (tag != NULL)
+; 341  : 	while (tag != NULL)
 
 	cmp	QWORD PTR tag$[rsp], 0
 	je	SHORT $LN8@port_mallo
 
-; 314  : 	{
-; 315  : 		// If there's enough space in this tag.
-; 316  : 		if ((tag->real_size - sizeof(struct boundary_tag))
-; 317  : 			>= (size + sizeof(struct boundary_tag)))
+; 342  : 	{
+; 343  : 		// If there's enough space in this tag.
+; 344  : 		if ((tag->real_size - sizeof(struct boundary_tag))
+; 345  : 			>= (size + sizeof(struct boundary_tag)))
 
 	mov	rax, QWORD PTR tag$[rsp]
 	mov	eax, DWORD PTR [rax+8]
@@ -1464,38 +1464,38 @@ $LN9@port_mallo:
 	cmp	rax, rcx
 	jb	SHORT $LN7@port_mallo
 
-; 318  : 		{
-; 319  : #ifdef DEBUG
-; 320  : 			printf("Tag search found %i >= %i\n", (tag->real_size - sizeof(struct boundary_tag)), (size + sizeof(struct boundary_tag)));
-; 321  : #endif
-; 322  : 			break;
+; 346  : 		{
+; 347  : #ifdef DEBUG
+; 348  : 			printf("Tag search found %i >= %i\n", (tag->real_size - sizeof(struct boundary_tag)), (size + sizeof(struct boundary_tag)));
+; 349  : #endif
+; 350  : 			break;
 
 	jmp	SHORT $LN8@port_mallo
 $LN7@port_mallo:
 
-; 323  : 		}
-; 324  : 
-; 325  : 		tag = tag->next;
+; 351  : 		}
+; 352  : 
+; 353  : 		tag = tag->next;
 
 	mov	rax, QWORD PTR tag$[rsp]
 	mov	rax, QWORD PTR [rax+32]
 	mov	QWORD PTR tag$[rsp], rax
 
-; 326  : 	}
+; 354  : 	}
 
 	jmp	SHORT $LN9@port_mallo
 $LN8@port_mallo:
 
-; 327  : 
-; 328  : 
-; 329  : 	// No page found. Make one.
-; 330  : 	if (tag == NULL)
+; 355  : 
+; 356  : 
+; 357  : 	// No page found. Make one.
+; 358  : 	if (tag == NULL)
 
 	cmp	QWORD PTR tag$[rsp], 0
 	jne	SHORT $LN6@port_mallo
 
-; 331  : 	{
-; 332  : 		if ((tag = allocate_new_tag(size)) == NULL)
+; 359  : 	{
+; 360  : 		if ((tag = allocate_new_tag(size)) == NULL)
 
 	mov	ecx, DWORD PTR size$[rsp]
 	call	?allocate_new_tag@@YAPEAUboundary_tag@@I@Z ; allocate_new_tag
@@ -1503,19 +1503,19 @@ $LN8@port_mallo:
 	cmp	QWORD PTR tag$[rsp], 0
 	jne	SHORT $LN5@port_mallo
 
-; 333  : 		{
-; 334  : 			liballoc_unlock();
+; 361  : 		{
+; 362  : 			liballoc_unlock();
 
 	call	liballoc_unlock
 
-; 335  : 			return NULL;
+; 363  : 			return NULL;
 
 	xor	eax, eax
 	jmp	$LN15@port_mallo
 $LN5@port_mallo:
 
-; 336  : 		}
-; 337  : 		index = getexp(tag->real_size - sizeof(struct boundary_tag));
+; 364  : 		}
+; 365  : 		index = getexp(tag->real_size - sizeof(struct boundary_tag));
 
 	mov	rax, QWORD PTR tag$[rsp]
 	mov	eax, DWORD PTR [rax+8]
@@ -1524,20 +1524,20 @@ $LN5@port_mallo:
 	call	?getexp@@YAHI@Z				; getexp
 	mov	DWORD PTR index$[rsp], eax
 
-; 338  : 	}
-; 339  : 	else
+; 366  : 	}
+; 367  : 	else
 
 	jmp	SHORT $LN4@port_mallo
 $LN6@port_mallo:
 
-; 340  : 	{
-; 341  : 		remove_tag(tag);
+; 368  : 	{
+; 369  : 		remove_tag(tag);
 
 	mov	rcx, QWORD PTR tag$[rsp]
 	call	?remove_tag@@YAXPEAUboundary_tag@@@Z	; remove_tag
 
-; 342  : 
-; 343  : 		if ((tag->split_left == NULL) && (tag->split_right == NULL))
+; 370  : 
+; 371  : 		if ((tag->split_left == NULL) && (tag->split_right == NULL))
 
 	mov	rax, QWORD PTR tag$[rsp]
 	cmp	QWORD PTR [rax+16], 0
@@ -1546,7 +1546,7 @@ $LN6@port_mallo:
 	cmp	QWORD PTR [rax+24], 0
 	jne	SHORT $LN3@port_mallo
 
-; 344  : 			l_completePages[index] -= 1;
+; 372  : 			l_completePages[index] -= 1;
 
 	movsxd	rax, DWORD PTR index$[rsp]
 	lea	rcx, OFFSET FLAT:?l_completePages@@3PAHA ; l_completePages
@@ -1558,22 +1558,22 @@ $LN6@port_mallo:
 $LN3@port_mallo:
 $LN4@port_mallo:
 
-; 345  : 	}
-; 346  : 
-; 347  : 	// We have a free page.  Remove it from the free pages list.
-; 348  : 	tag->size = size;
+; 373  : 	}
+; 374  : 
+; 375  : 	// We have a free page.  Remove it from the free pages list.
+; 376  : 	tag->size = size;
 
 	mov	rax, QWORD PTR tag$[rsp]
 	mov	ecx, DWORD PTR size$[rsp]
 	mov	DWORD PTR [rax+4], ecx
 
-; 349  : 
-; 350  : 	// Removed... see if we can re-use the excess space.
-; 351  : 
-; 352  : #ifdef DEBUG
-; 353  : 	printf("Found tag with %i bytes available (requested %i bytes, leaving %i), which has exponent: %i (%i bytes)\n", tag->real_size - sizeof(struct boundary_tag), size, tag->real_size - size - sizeof(struct boundary_tag), index, 1 << index);
-; 354  : #endif
-; 355  : 	unsigned int remainder = tag->real_size - size - sizeof(boundary_tag)* 2; // Support a new tag + remainder
+; 377  : 
+; 378  : 	// Removed... see if we can re-use the excess space.
+; 379  : 
+; 380  : #ifdef DEBUG
+; 381  : 	printf("Found tag with %i bytes available (requested %i bytes, leaving %i), which has exponent: %i (%i bytes)\n", tag->real_size - sizeof(struct boundary_tag), size, tag->real_size - size - sizeof(struct boundary_tag), index, 1 << index);
+; 382  : #endif
+; 383  : 	unsigned int remainder = tag->real_size - size - sizeof(boundary_tag)* 2; // Support a new tag + remainder
 
 	mov	rax, QWORD PTR tag$[rsp]
 	mov	ecx, DWORD PTR size$[rsp]
@@ -1583,82 +1583,82 @@ $LN4@port_mallo:
 	sub	rax, 96					; 00000060H
 	mov	DWORD PTR remainder$[rsp], eax
 
-; 356  : 
-; 357  : 
-; 358  : 	if (remainder > 0 /*&& ( (tag->real_size - remainder) >= (1<<MINEXP))*/)
+; 384  : 
+; 385  : 
+; 386  : 	if (remainder > 0 /*&& ( (tag->real_size - remainder) >= (1<<MINEXP))*/)
 
 	cmp	DWORD PTR remainder$[rsp], 0
 	jbe	SHORT $LN2@port_mallo
 
-; 359  : 	{
-; 360  : 		int childIndex = getexp(remainder);
+; 387  : 	{
+; 388  : 		int childIndex = getexp(remainder);
 
 	mov	ecx, DWORD PTR remainder$[rsp]
 	call	?getexp@@YAHI@Z				; getexp
 	mov	DWORD PTR childIndex$1[rsp], eax
 
-; 361  : 
-; 362  : 		if (childIndex >= 0)
+; 389  : 
+; 390  : 		if (childIndex >= 0)
 
 	cmp	DWORD PTR childIndex$1[rsp], 0
 	jl	SHORT $LN1@port_mallo
 
-; 363  : 		{
-; 364  : #ifdef DEBUG
-; 365  : 			printf("Seems to be splittable: %i >= 2^%i .. %i\n", remainder, childIndex, (1 << childIndex));
-; 366  : #endif
-; 367  : 			boundary_tag *new_tag = split_tag(tag);
+; 391  : 		{
+; 392  : #ifdef DEBUG
+; 393  : 			printf("Seems to be splittable: %i >= 2^%i .. %i\n", remainder, childIndex, (1 << childIndex));
+; 394  : #endif
+; 395  : 			boundary_tag *new_tag = split_tag(tag);
 
 	mov	rcx, QWORD PTR tag$[rsp]
 	call	?split_tag@@YAPEAUboundary_tag@@PEAU1@@Z ; split_tag
 	mov	QWORD PTR new_tag$2[rsp], rax
 
-; 368  : 
-; 369  : 			new_tag = new_tag;	// Get around the compiler warning about unused variables.
+; 396  : 
+; 397  : 			new_tag = new_tag;	// Get around the compiler warning about unused variables.
 
 	mov	rax, QWORD PTR new_tag$2[rsp]
 	mov	QWORD PTR new_tag$2[rsp], rax
 $LN1@port_mallo:
 $LN2@port_mallo:
 
-; 370  : #ifdef DEBUG
-; 371  : 			printf("Old tag has become %i bytes, new tag is now %i bytes (%i exp)\n", tag->real_size, new_tag->real_size, new_tag->index);
-; 372  : #endif
-; 373  : 		}
-; 374  : 	}
-; 375  : 
-; 376  : 
-; 377  : 	ptr = (void*)((size_t)tag + sizeof(struct boundary_tag));
+; 398  : #ifdef DEBUG
+; 399  : 			printf("Old tag has become %i bytes, new tag is now %i bytes (%i exp)\n", tag->real_size, new_tag->real_size, new_tag->index);
+; 400  : #endif
+; 401  : 		}
+; 402  : 	}
+; 403  : 
+; 404  : 
+; 405  : 	ptr = (void*)((size_t)tag + sizeof(struct boundary_tag));
 
 	mov	rax, QWORD PTR tag$[rsp]
 	add	rax, 48					; 00000030H
 	mov	QWORD PTR ptr$[rsp], rax
 
-; 378  : 
-; 379  : 	boundary_tag *test = (boundary_tag*)((size_t)ptr - sizeof(boundary_tag));
+; 406  : 
+; 407  : 	boundary_tag *test = (boundary_tag*)((size_t)ptr - sizeof(boundary_tag));
 
 	mov	rax, QWORD PTR ptr$[rsp]
 	sub	rax, 48					; 00000030H
 	mov	QWORD PTR test$[rsp], rax
 
-; 380  : 
-; 381  : #ifdef DEBUG
-; 382  : 	l_inuse += size;
-; 383  : 	printf("malloc: %x,  %i, %i\n", ptr, (int)l_inuse / 1024, (int)l_allocated / 1024);
-; 384  : 	dump_array();
-; 385  : #endif
-; 386  : 
-; 387  : 
-; 388  : 	liballoc_unlock();
+; 408  : 
+; 409  : #ifdef DEBUG
+; 410  : 	l_inuse += size;
+; 411  : 	printf("malloc: %x,  %i, %i\n", ptr, (int)l_inuse / 1024, (int)l_allocated / 1024);
+; 412  : 	dump_array();
+; 413  : #endif
+; 414  : 
+; 415  : 
+; 416  : 	liballoc_unlock();
 
 	call	liballoc_unlock
 
-; 389  : 	return ptr;
+; 417  : 	return ptr;
 
 	mov	rax, QWORD PTR ptr$[rsp]
 $LN15@port_mallo:
 
-; 390  : }
+; 418  : }
 
 	add	rsp, 88					; 00000058H
 	ret	0
@@ -1671,14 +1671,14 @@ ptr$ = 48
 pages$ = 56
 liballoc_free PROC
 
-; 560  : int liballoc_free(void* ptr, int pages) {
+; 588  : int liballoc_free(void* ptr, int pages) {
 
 $LN3:
 	mov	DWORD PTR [rsp+16], edx
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 40					; 00000028H
 
-; 561  : 	AuFreePages((uint64_t)ptr, true, pages);
+; 589  : 	AuFreePages((uint64_t)ptr, true, pages);
 
 	movsxd	rax, DWORD PTR pages$[rsp]
 	mov	r8, rax
@@ -1686,11 +1686,11 @@ $LN3:
 	mov	rcx, QWORD PTR ptr$[rsp]
 	call	AuFreePages
 
-; 562  : 	return 0;
+; 590  : 	return 0;
 
 	xor	eax, eax
 
-; 563  : }
+; 591  : }
 
 	add	rsp, 40					; 00000028H
 	ret	0
@@ -1707,32 +1707,32 @@ size$ = 64
 pages$ = 96
 liballoc_alloc PROC
 
-; 542  : void* liballoc_alloc(int pages) {
+; 570  : void* liballoc_alloc(int pages) {
 
 $LN9:
 	mov	DWORD PTR [rsp+8], ecx
 	sub	rsp, 88					; 00000058H
 
-; 543  : 	size_t size = pages * 4096;
+; 571  : 	size_t size = pages * 4096;
 
 	imul	eax, DWORD PTR pages$[rsp], 4096	; 00001000H
 	cdqe
 	mov	QWORD PTR size$[rsp], rax
 
-; 544  : 	uint64_t* page = AuGetFreePage(0, false);
+; 572  : 	uint64_t* page = AuGetFreePage(0, false);
 
 	xor	edx, edx
 	xor	ecx, ecx
 	call	AuGetFreePage
 	mov	QWORD PTR page$[rsp], rax
 
-; 545  : 	uint64_t page_ = (uint64_t)page;
+; 573  : 	uint64_t page_ = (uint64_t)page;
 
 	mov	rax, QWORD PTR page$[rsp]
 	mov	QWORD PTR page_$[rsp], rax
 
-; 546  : 
-; 547  : 	for (size_t i = 0; i < pages; i++) {
+; 574  : 
+; 575  : 	for (size_t i = 0; i < pages; i++) {
 
 	mov	QWORD PTR i$1[rsp], 0
 	jmp	SHORT $LN6@liballoc_a
@@ -1745,12 +1745,12 @@ $LN6@liballoc_a:
 	cmp	QWORD PTR i$1[rsp], rax
 	jae	SHORT $LN4@liballoc_a
 
-; 548  : 		void* p = AuPmmngrAlloc();
+; 576  : 		void* p = AuPmmngrAlloc();
 
 	call	AuPmmngrAlloc
 	mov	QWORD PTR p$2[rsp], rax
 
-; 549  : 		AuMapPage((uint64_t)p, page_ + i * 4096, 0);
+; 577  : 		AuMapPage((uint64_t)p, page_ + i * 4096, 0);
 
 	imul	rax, QWORD PTR i$1[rsp], 4096		; 00001000H
 	mov	rcx, QWORD PTR page_$[rsp]
@@ -1761,12 +1761,12 @@ $LN6@liballoc_a:
 	mov	rcx, QWORD PTR p$2[rsp]
 	call	AuMapPage
 
-; 550  : 	}
+; 578  : 	}
 
 	jmp	SHORT $LN5@liballoc_a
 $LN4@liballoc_a:
 
-; 551  : 	memset(page, 0, pages*PAGE_SIZE);
+; 579  : 	memset(page, 0, pages*PAGE_SIZE);
 
 	imul	eax, DWORD PTR pages$[rsp], 4096	; 00001000H
 	mov	r8d, eax
@@ -1774,7 +1774,7 @@ $LN4@liballoc_a:
 	mov	rcx, QWORD PTR page$[rsp]
 	call	memset
 
-; 552  : 	if ((page_ % PAGE_SIZE) != 0){
+; 580  : 	if ((page_ % PAGE_SIZE) != 0){
 
 	xor	edx, edx
 	mov	rax, QWORD PTR page_$[rsp]
@@ -1784,24 +1784,24 @@ $LN4@liballoc_a:
 	test	rax, rax
 	je	SHORT $LN3@liballoc_a
 
-; 553  : 		SeTextOut("Request page not aligned to page boundary \r\n");
+; 581  : 		SeTextOut("Request page not aligned to page boundary \r\n");
 
 	lea	rcx, OFFSET FLAT:$SG2989
 	call	SeTextOut
 $LN2@liballoc_a:
 
-; 554  : 		for (;;);
+; 582  : 		for (;;);
 
 	jmp	SHORT $LN2@liballoc_a
 $LN3@liballoc_a:
 
-; 555  : 	}
-; 556  : 
-; 557  : 	return page;
+; 583  : 	}
+; 584  : 
+; 585  : 	return page;
 
 	mov	rax, QWORD PTR page$[rsp]
 
-; 558  : }
+; 586  : }
 
 	add	rsp, 88					; 00000058H
 	ret	0
@@ -1812,11 +1812,11 @@ _TEXT	ENDS
 _TEXT	SEGMENT
 liballoc_unlock PROC
 
-; 539  : 	return 0;
+; 567  : 	return 0;
 
 	xor	eax, eax
 
-; 540  : }
+; 568  : }
 
 	ret	0
 liballoc_unlock ENDP
@@ -1826,11 +1826,11 @@ _TEXT	ENDS
 _TEXT	SEGMENT
 liballoc_lock PROC
 
-; 534  : 	return 0;
+; 562  : 	return 0;
 
 	xor	eax, eax
 
-; 535  : }
+; 563  : }
 
 	ret	0
 liballoc_lock ENDP

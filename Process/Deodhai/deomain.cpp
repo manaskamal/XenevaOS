@@ -38,11 +38,15 @@
 int main(int argc, char* arv[]) {
 	_KePrint("Deodhai v1.0 running \n");
 	ChPrintLibName();
+
 	ChCanvas* canv = ChCreateCanvas(100, 100);
 	_KePrint("Canvas screen_w -> %d, screen_h -> %d \n", canv->screenWidth, canv->screenHeight);
 	_KePrint("Canvas pitch -> %d \n", canv->pitch);
 	_KePrint("Canvas reqW-> %d , reqH -> %d \n", canv->canvasWidth, canv->canvasHeight);
-	_KePrint("Playing sound -- Muruli.wav \n");
+
+	ChAllocateBuffer(canv);
+	ChCanvasFill(canv, canv->canvasWidth, canv->canvasHeight, WHITE);
+	ChCanvasScreenUpdate(canv, 0, 0, canv->canvasWidth, canv->canvasHeight);
 
 	int snd = _KeOpenFile("/dev/sound", FILE_OPEN_WRITE);
 	XEFileIOControl ioctl;

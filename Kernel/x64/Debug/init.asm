@@ -175,30 +175,26 @@ $LN5:
 	call	?AuInitialiseLoader@@YAXXZ		; AuInitialiseLoader
 
 ; 111  : 
-; 112  : 	/*AuTextOut("Requesting MAC \n");
-; 113  : 	AuARPRequestMAC();
-; 114  : 	AuTextOut("MAC Requested \n");*/
-; 115  : 
-; 116  : 	/* make the kernel standalone*/
-; 117  : 	AuVmmngrBootFree();
+; 112  : 	/* make the kernel standalone*/
+; 113  : 	AuVmmngrBootFree();
 
 	call	?AuVmmngrBootFree@@YAXXZ		; AuVmmngrBootFree
 
-; 118  : 	/* Process initialisation begins here */
-; 119  : 	AuStartRootProc();
+; 114  : 	/* Process initialisation begins here */
+; 115  : 	AuStartRootProc();
 
 	call	?AuStartRootProc@@YAXXZ			; AuStartRootProc
 
-; 120  : 	AuSchedulerStart();
+; 116  : 	AuSchedulerStart();
 
 	call	?AuSchedulerStart@@YAXXZ		; AuSchedulerStart
 $LN2@AuMain:
 
-; 121  : 	for (;;);
+; 117  : 	for (;;);
 
 	jmp	SHORT $LN2@AuMain
 
-; 122  : }
+; 118  : }
 
 	add	rsp, 40					; 00000028H
 	ret	0

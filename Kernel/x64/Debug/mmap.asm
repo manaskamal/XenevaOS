@@ -93,8 +93,7 @@ $LN9@UnmapMemMa:
 	mov	rax, QWORD PTR address$[rsp]
 	mov	QWORD PTR addr$[rsp], rax
 
-; 107  : 
-; 108  : 	for (int i = 0; i < len / PAGE_SIZE; i++) {
+; 107  : 	for (int i = 0; i < len / PAGE_SIZE; i++) {
 
 	mov	DWORD PTR i$1[rsp], 0
 	jmp	SHORT $LN4@UnmapMemMa
@@ -113,7 +112,7 @@ $LN4@UnmapMemMa:
 	cmp	rcx, rax
 	jae	$LN2@UnmapMemMa
 
-; 109  : 		AuVPage* page = AuVmmngrGetPage(addr + i * PAGE_SIZE, VIRT_GETPAGE_ONLY_RET, VIRT_GETPAGE_ONLY_RET);
+; 108  : 		AuVPage* page = AuVmmngrGetPage(addr + i * PAGE_SIZE, VIRT_GETPAGE_ONLY_RET, VIRT_GETPAGE_ONLY_RET);
 
 	imul	eax, DWORD PTR i$1[rsp], 4096		; 00001000H
 	cdqe
@@ -126,7 +125,7 @@ $LN4@UnmapMemMa:
 	call	AuVmmngrGetPage
 	mov	QWORD PTR page$2[rsp], rax
 
-; 110  : 		uint64_t phys = page->bits.page << PAGE_SHIFT;
+; 109  : 		uint64_t phys = page->bits.page << PAGE_SHIFT;
 
 	mov	rax, QWORD PTR page$2[rsp]
 	mov	rax, QWORD PTR [rax]
@@ -135,19 +134,19 @@ $LN4@UnmapMemMa:
 	shl	rax, 12
 	mov	QWORD PTR phys$3[rsp], rax
 
-; 111  : 		if (phys) 
+; 110  : 		if (phys) 
 
 	cmp	QWORD PTR phys$3[rsp], 0
 	je	SHORT $LN1@UnmapMemMa
 
-; 112  : 			AuPmmngrFree((void*)phys);
+; 111  : 			AuPmmngrFree((void*)phys);
 
 	mov	rcx, QWORD PTR phys$3[rsp]
 	call	AuPmmngrFree
 $LN1@UnmapMemMa:
 
-; 113  : 
-; 114  : 		page->bits.page = 0;
+; 112  : 
+; 113  : 		page->bits.page = 0;
 
 	mov	rax, QWORD PTR page$2[rsp]
 	mov	rcx, -1099511623681			; ffffff0000000fffH
@@ -156,7 +155,7 @@ $LN1@UnmapMemMa:
 	mov	rcx, QWORD PTR page$2[rsp]
 	mov	QWORD PTR [rcx], rax
 
-; 115  : 		page->bits.present = 0;
+; 114  : 		page->bits.present = 0;
 
 	mov	rax, QWORD PTR page$2[rsp]
 	mov	rax, QWORD PTR [rax]
@@ -164,14 +163,14 @@ $LN1@UnmapMemMa:
 	mov	rcx, QWORD PTR page$2[rsp]
 	mov	QWORD PTR [rcx], rax
 
-; 116  : 	}
+; 115  : 	}
 
 	jmp	$LN3@UnmapMemMa
 $LN2@UnmapMemMa:
 $LN6@UnmapMemMa:
 
-; 117  : 
-; 118  : }
+; 116  : 
+; 117  : }
 
 	add	rsp, 88					; 00000058H
 	ret	0

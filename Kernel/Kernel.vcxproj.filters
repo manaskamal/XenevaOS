@@ -285,6 +285,12 @@
     <ClInclude Include="..\BaseHdr\Mm\liballoc\liballoc.h">
       <Filter>Include\Mm\liballoc</Filter>
     </ClInclude>
+    <ClInclude Include="..\BaseHdr\Hal\x86_64_signal.h">
+      <Filter>Include\Hal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\Drivers\nvme.h">
+      <Filter>Include\Drivers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="init.cpp" />
@@ -437,6 +443,12 @@
     </ClCompile>
     <ClCompile Include="Mm\liballoc\liballoc.cpp">
       <Filter>Mm\liballoc</Filter>
+    </ClCompile>
+    <ClCompile Include="Hal\x86_64_signal.cpp">
+      <Filter>Hal</Filter>
+    </ClCompile>
+    <ClCompile Include="Drivers\nvme.cpp">
+      <Filter>Drivers</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

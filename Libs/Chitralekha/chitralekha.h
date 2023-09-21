@@ -32,6 +32,7 @@
 
 #include <stdint.h>
 #include <_xeneva.h>
+#include "color.h"
 
 typedef struct _ChCanvas_ {
 	uint32_t screenWidth;
@@ -42,6 +43,8 @@ typedef struct _ChCanvas_ {
 	uint32_t canvasWidth;
 	uint32_t canvasHeight;
 	uint32_t* buffer;
+	size_t   bufferSz;
+	uint32_t* framebuff;
 }ChCanvas;
 
 XE_EXTERN XE_LIB int ChPrintLibName();
@@ -52,5 +55,55 @@ XE_EXTERN XE_LIB int ChPrintLibName();
 * @param reqH -- requested height of the canvas
 */
 XE_EXTERN XE_LIB ChCanvas* ChCreateCanvas(int reqW, int reqH);
+
+/*
+* ChAllocateBuffer -- allocates buffers for graphics
+* @param canvas -- Pointer to canvas
+*/
+XE_EXTERN XE_LIB int ChAllocateBuffer(ChCanvas* canvas);
+
+/*
+* ChDeAllocateBuffer -- de-allocates buffers from
+* canvas
+* @param canvas -- pointer to canvas structure
+*/
+XE_EXTERN XE_LIB int ChDeAllocateBuffer(ChCanvas* canvas);
+
+/*
+* ChCanvasScreenUpdate -- updates screen buffer with canvas buffer
+* contents
+* @param canvas -- Pointer to canvas
+* @param x -- x position
+* @param y -- y position
+* @param w -- width of the canvas
+* @param h -- height of the canvas
+*/
+XE_EXTERN XE_LIB void ChCanvasScreenUpdate(ChCanvas* canvas, uint32_t x, uint32_t y, uint32_t w, uint32_t h);
+
+/*
+* ChDrawPixel -- draws a pixel to canvas buffer
+* @param canvas -- pointer to canvas
+* @param x -- x position
+* @param y -- y position
+* @param color -- color of the pixel
+*/
+XE_EXTERN XE_LIB void ChDrawPixel(ChCanvas* canvas, uint32_t x, uint32_t y, uint32_t color);
+
+/*
+* ChGetPixel -- retuns a pixel from canvas
+* @param canvas -- Pointer to canvas structure
+* @param x -- x position
+* @param y -- y position
+*/
+XE_EXTERN XE_LIB uint32_t ChGetPixel(ChCanvas* canvas, uint32_t x, uint32_t y);
+
+/*
+* ChCanvasFill -- fill the canvas with specific color
+* @param canvas -- pointer to canvas structure
+* @param w -- width to fill
+* @param h -- height to fill
+* @param color -- color to be filled with
+*/
+XE_EXTERN XE_LIB void ChCanvasFill(ChCanvas* canvas, uint32_t w, uint32_t h, uint32_t color);
 
 #endif

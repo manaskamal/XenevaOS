@@ -41,6 +41,7 @@
 #define FS_FLAG_INVALID    (1<<5)
 #define FS_FLAG_FILE_SYSTEM (1<<6)
 #define FS_FLAG_PIPE        (1<<7)
+#define FS_FLAG_TTY         (1<<8)
 
 #define FS_STATUS_FOUND  0x1
 #define FS_STATUS_NF     0x0

@@ -33,6 +33,10 @@
 #include <_null.h>
 #include <Mm\kmalloc.h>
 #include <string.h>
+#include <stdio.h>
+#include <Hal\x86_64_sched.h>
+#include <process.h>
+#include <Hal\x86_64_signal.h>
 
 size_t master_count = 0;
 size_t slave_count = 0;
@@ -79,7 +83,40 @@ void AuTTYWriteMaster(TTY* tty, uint8_t c) {
 	AuCircBufPut(tty->masterbuf, c);
 }
 
+/* AuTTYProcessLine -- Line Discipline layer*/
 void AuTTYProcessLine(TTY* tty, uint8_t c) {
+	if (tty->term.c_lflag & ISIG) {
+		int sig = -1;
+		if (c == tty->term.c_cc[VINTR])
+			sig = SIGINT;
+		else if (c == tty->term.c_cc[VQUIT])
+			sig = SIGQUIT;
+		else if (c == tty->term.c_cc[VSUSP])
+			sig = SIGTSTP;
+
+		if (sig != -1) {
+			if (tty->term.c_lflag & ECHO) {
+				AuTTYWriteMaster(tty, '^');
+				AuTTYWriteMaster(tty, ('@' + c) % 128);
+				AuTTYWriteMaster(tty, '\n');
+			}
+			//clear_input_buf
+			//if foreground process group or process exist
+				//send signal to foreground process, the sig number
+			return;
+		}
+	}
+
+	if (tty->term.c_iflag & ISTRIP)
+		c &= 0x7f;
+
+	if ((tty->term.c_iflag & IGNCR) && c == '\r')
+		return;
+
+	if ((tty->term.c_iflag & INLCR) && c == '\n')
+		c = '\r';
+	else if ((tty->term.c_iflag & ICRNL) && c == '\r')
+		c = '\n';
 
 }
 
@@ -104,6 +141,9 @@ size_t AuTTYMasterRead(AuVFSNode* fs, AuVFSNode* file, uint64_t* buffer, uint32_
 	return bytes_to_ret;
 }
 
+/*
+ * AuTTYMasterWrite -- writing to master goes to slave buffer
+ */
 size_t AuTTYMasterWrite(AuVFSNode* fs, AuVFSNode* file, uint64_t* buffer, uint32_t len) {
 	uint8_t* aligned_buf = (uint8_t*)buffer;
 	TTY* type = (TTY*)file->device;
@@ -111,7 +151,7 @@ size_t AuTTYMasterWrite(AuVFSNode* fs, AuVFSNode* file, uint64_t* buffer, uint32
 		return 0;
 
 	for (int i = 0; i < len; i++) {
-		AuCircBufPut(type->slavebuf, buffer[i]);
+		AuCircBufPut(type->slavebuf, aligned_buf[i]);
 	}
 }
 
@@ -127,6 +167,9 @@ size_t AuTTYSlaveRead(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint32
 	return 1;
 }
 
+/*
+ * AuTTYSlaveWrite --- writing to slave goes to master buffer
+ */
 size_t AuTTYSlaveWrite(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint32_t len) {
 	uint8_t* aligned_buf = (uint8_t*)buffer;
 	TTY* tty = (TTY*)file->device;
@@ -144,13 +187,14 @@ size_t AuTTYSlaveWrite(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint3
 	}
 }
 
-int AuTTYSlaveClose(AuVFSNode* file) {
-	AuVFSNode* fs = AuVFSFind("/dev");
-	if (!fs)
+int AuTTYSlaveClose(AuVFSNode* fs, AuVFSNode* file) {
+	AuVFSNode* _fs = AuVFSFind("/dev");
+	if (!_fs)
 		return 0;
+	
 }
 
-int AuTTYMasterClose(AuVFSNode* file) {
+int AuTTYMasterClose(AuVFSNode* fs, AuVFSNode* file) {
 	return 0;
 }
 
@@ -178,6 +222,13 @@ int AuTTYIoControl(AuVFSNode* file, int code, void* arg) {
 	}
 
 	case TIOSPGRP: {
+					   AuThread* currthr = AuGetCurrentThread();
+					   if (!currthr)
+						   return 0;
+					   AuProcess* proc = AuProcessFindThread(currthr);
+					   if (!proc)
+						   return 0;
+					   tty->slave_pid = proc->proc_id;
 					   break;
 	}
 	}
@@ -185,8 +236,72 @@ int AuTTYIoControl(AuVFSNode* file, int code, void* arg) {
 	return 1;
 }
 
+/*
+ * AuTTYCreateMaster -- create a master tty end
+ * and mount it to device directory
+ * @param tty -- pointer to tty device
+ */
+AuVFSNode* AuTTYCreateMaster(TTY* tty) {
+	AuVFSNode* fs = AuVFSFind("/dev");
 
+	AuVFSNode* node = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
+	memset(node, 0, sizeof(AuVFSNode));
+	char name[5];
+	strcpy(name, "ttym");
+	sztoa(master_count, name + 4, 10);
+	strcpy(node->filename, name);
+
+	node->size = 512;
+	node->flags = FS_FLAG_GENERAL | FS_FLAG_TTY;
+	node->device = tty;
+	node->read = AuTTYMasterRead;
+	node->write = AuTTYMasterWrite;
+	node->close = AuTTYMasterClose;
+	node->iocontrol = AuTTYIoControl;
+
+	AuDevFSAddFile(fs, "/dev/tty", node);
+	master_count++;
+	return node;
+}
+
+/*
+* AuTTYCreateSlave -- create a slave tty end
+* and mount it to device directory
+* @param tty -- pointer to tty device
+*/
+AuVFSNode* AuTTYCreateSlave(TTY* tty) {
+	AuVFSNode* fs = AuVFSFind("/dev");
+
+	AuVFSNode* node = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
+	memset(node, 0, sizeof(AuVFSNode));
+	char name[5];
+	strcpy(name, "ttys");
+	sztoa(slave_count, name + 4, 10);
+	strcpy(node->filename, name);
+
+	node->size = 512;
+	node->flags = FS_FLAG_GENERAL | FS_FLAG_TTY;
+	node->device = tty;
+	node->read = AuTTYSlaveRead;
+	node->write = AuTTYSlaveWrite;
+	node->close = AuTTYSlaveClose;
+	node->iocontrol = AuTTYIoControl;
+
+	AuDevFSAddFile(fs, "/dev/tty", node);
+	slave_count++;
+	return node;
+}
+
+/*
+ * AuTTYCreate -- create tty for process
+ */
 int AuTTYCreate(int* master_fx, int* slave_fd) {
+
+	AuThread* thr = AuGetCurrentThread();
+	AuProcess* proc = AuProcessFindThread(thr);
+	if (!proc)
+		return -1;
+
 	TTY* tty = (TTY*)kmalloc(sizeof(TTY));
 	memset(tty, 0, sizeof(TTY));
 
@@ -213,6 +328,21 @@ int AuTTYCreate(int* master_fx, int* slave_fd) {
 	tty->term.c_cc[VEOL] = 0;
 	tty->term.c_cc[VERASE] = 0x7f;
 
+	AuVFSNode* master = AuTTYCreateMaster(tty);
+	AuVFSNode* slave = AuTTYCreateSlave(tty);
+
+	int fd = AuProcessGetFileDesc(proc);
+	if (fd == -1)
+		return 0;
+	proc->fds[fd] = master;
+	*master_fx = fd;
+
+	fd = AuProcessGetFileDesc(proc);
+	if (fd == -1)
+		return 0;
+	proc->fds[fd] = slave;
+	*slave_fd = fd;
+
 	return 1;
 }
 
@@ -224,5 +354,8 @@ void AuTTYInitialise() {
 	last = NULL;
 	master_count = 0;
 	slave_count = 0;
+	/* create a directory for tty's */
+	AuVFSNode* fs = AuVFSFind("/dev");
+	AuDevFSCreateFile(fs, "/dev/tty", FS_FLAG_DIRECTORY);
 }
 
