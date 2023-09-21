@@ -231,7 +231,6 @@ int AuSoundIOControl(AuVFSNode* node, int code, void* arg) {
 									dsp->sleep_time = _ioctl->uint_1;
 									dsp->available = true;
 									AuSoundAddDSP(dsp);
-									AuTextOut("dsp created -> %x \r\n", dsp);
 									break;
 	}
 	case SOUND_READ_AVAIL: {
@@ -291,10 +290,8 @@ void AuSoundRemoveDSP(uint16_t id) {
 	AuDSP* dsp_ = AuSoundGetDSP(id);
 	if (dsp_) {
 		AuPmmngrFree((void*)V2P((size_t)dsp_->buffer->buffer));
-		AuTextOut("Circ Buf dsp addr -> %x \n", dsp_->buffer);
 		AuCircBufFree(dsp_->buffer);
 		AuRemoveDSP(dsp_);
 		kfree(dsp_);
-		AuTextOut("DSP Removed %x sizeof(dsp) -> %d bytes \n", dsp_, sizeof(AuDSP));
 	}
 }

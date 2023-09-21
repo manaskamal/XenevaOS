@@ -425,7 +425,7 @@ $LN2@AuAPICInit:
 	call	setvect
 
 ; 172  : 
-; 173  : 	WriteAPICRegister(LAPIC_REGISTER_TMRDIV, 0x3);
+; 173  : 	WriteAPICRegister(LAPIC_REGISTER_TMRDIV,0x3); 
 
 	mov	edx, 3
 	mov	cx, 62					; 0000003eH
@@ -447,9 +447,9 @@ $LN2@AuAPICInit:
 
 	call	?IOWait@@YAXXZ				; IOWait
 
-; 177  : 	WriteAPICRegister(LAPIC_REGISTER_TMRINITCNT, 1000);
+; 177  : 	WriteAPICRegister(LAPIC_REGISTER_TMRINITCNT, 123456);
 
-	mov	edx, 1000				; 000003e8H
+	mov	edx, 123456				; 0001e240H
 	mov	cx, 56					; 00000038H
 	call	?WriteAPICRegister@@YAXG_K@Z		; WriteAPICRegister
 

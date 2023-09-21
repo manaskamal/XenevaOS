@@ -15,8 +15,11 @@ PUBLIC	?ProcessExit@@YAHXZ				; ProcessExit
 PUBLIC	?ProcessWaitForTermination@@YAHH@Z		; ProcessWaitForTermination
 PUBLIC	?CreateProcess@@YAHHPEAD@Z			; CreateProcess
 PUBLIC	?ProcessLoadExec@@YAHHPEADHPEAPEAD@Z		; ProcessLoadExec
+PUBLIC	?ProcessSleep@@YAH_K@Z				; ProcessSleep
 EXTRN	AuGetCurrentThread:PROC
 EXTRN	AuBlockThread:PROC
+EXTRN	AuSleepThread:PROC
+EXTRN	AuForceScheduler:PROC
 EXTRN	x64_force_sched:PROC
 EXTRN	?AuProcessFindPID@@YAPEAU_au_proc_@@H@Z:PROC	; AuProcessFindPID
 EXTRN	?AuProcessFindThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z:PROC ; AuProcessFindThread
@@ -50,6 +53,9 @@ $pdata$?CreateProcess@@YAHHPEAD@Z DD imagerel $LN4
 $pdata$?ProcessLoadExec@@YAHHPEADHPEAPEAD@Z DD imagerel $LN11
 	DD	imagerel $LN11+282
 	DD	imagerel $unwind$?ProcessLoadExec@@YAHHPEADHPEAPEAD@Z
+$pdata$?ProcessSleep@@YAH_K@Z DD imagerel $LN4
+	DD	imagerel $LN4+56
+	DD	imagerel $unwind$?ProcessSleep@@YAH_K@Z
 pdata	ENDS
 xdata	SEGMENT
 $unwind$?PauseThread@@YAHXZ DD 010401H
@@ -66,7 +72,55 @@ $unwind$?CreateProcess@@YAHHPEAD@Z DD 010d01H
 	DD	0620dH
 $unwind$?ProcessLoadExec@@YAHHPEADHPEAPEAD@Z DD 011701H
 	DD	0a217H
+$unwind$?ProcessSleep@@YAH_K@Z DD 010901H
+	DD	06209H
 xdata	ENDS
+; Function compile flags: /Odtpy
+; File e:\xeneva project\aurora\kernel\serv\thrserv.cpp
+_TEXT	SEGMENT
+current_thr$ = 32
+ms$ = 64
+?ProcessSleep@@YAH_K@Z PROC				; ProcessSleep
+
+; 144  : int ProcessSleep(uint64_t ms) {
+
+$LN4:
+	mov	QWORD PTR [rsp+8], rcx
+	sub	rsp, 56					; 00000038H
+
+; 145  : 	AuThread* current_thr = AuGetCurrentThread();
+
+	call	AuGetCurrentThread
+	mov	QWORD PTR current_thr$[rsp], rax
+
+; 146  : 	if (!current_thr)
+
+	cmp	QWORD PTR current_thr$[rsp], 0
+	jne	SHORT $LN1@ProcessSle
+
+; 147  : 		return 0;
+
+	xor	eax, eax
+	jmp	SHORT $LN2@ProcessSle
+$LN1@ProcessSle:
+
+; 148  : 	AuSleepThread(current_thr, ms);
+
+	mov	rdx, QWORD PTR ms$[rsp]
+	mov	rcx, QWORD PTR current_thr$[rsp]
+	call	AuSleepThread
+
+; 149  : 	AuForceScheduler();
+
+	call	AuForceScheduler
+$LN2@ProcessSle:
+
+; 150  : }
+
+	add	rsp, 56					; 00000038H
+	ret	0
+?ProcessSleep@@YAH_K@Z ENDP				; ProcessSleep
+_TEXT	ENDS
 ; Function compile flags: /Odtpy
 ; File e:\xeneva project\aurora\kernel\serv\thrserv.cpp
 _TEXT	SEGMENT
@@ -142,7 +196,7 @@ $LN7@ProcessLoa:
 	call	strlen
 	mov	QWORD PTR l$3[rsp], rax
 
-; 125  : 		char_cnt += l;
+; 125  : 		char_cnt += l; 
 
 	movsxd	rax, DWORD PTR char_cnt$[rsp]
 	add	rax, QWORD PTR l$3[rsp]

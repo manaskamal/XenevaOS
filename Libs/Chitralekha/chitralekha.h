@@ -35,6 +35,7 @@
 #include "color.h"
 
 typedef struct _ChCanvas_ {
+	int graphics_fd;
 	uint32_t screenWidth;
 	uint32_t screenHeight;
 	uint32_t bpp;

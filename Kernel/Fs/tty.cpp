@@ -110,6 +110,7 @@ void AuTTYProcessLine(TTY* tty, uint8_t c) {
 	if (tty->term.c_iflag & ISTRIP)
 		c &= 0x7f;
 
+	/* ignore CR*/
 	if ((tty->term.c_iflag & IGNCR) && c == '\r')
 		return;
 
@@ -118,6 +119,12 @@ void AuTTYProcessLine(TTY* tty, uint8_t c) {
 	else if ((tty->term.c_iflag & ICRNL) && c == '\r')
 		c = '\n';
 
+	/* handle canonical mode */
+	if (tty->term.c_lflag & ICANON) {
+		if (c == tty->term.c_cc[VERASE]) {
+			/* erase the last character */
+		}
+	}
 }
 
 

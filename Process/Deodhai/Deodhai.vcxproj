@@ -146,6 +146,11 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="deomain.cpp" />
+    <ClCompile Include="dirty.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="deodhai.h" />
+    <ClInclude Include="dirty.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

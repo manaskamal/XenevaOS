@@ -92,4 +92,12 @@ XE_EXTERN XE_LIB int _KeProcessLoadExec(int proc_id, char* filename, int argc, c
 */
 XE_EXTERN XE_LIB uint64_t _KeGetProcessHeapMem(size_t sz);
 
+
+/*
+ * _KeProcessSleep -- put the current process main thread
+ *  to sleep mode
+ * @param ms -- millisecond to sleep
+ */
+XE_EXTERN XE_LIB int _KeProcessSleep(uint64_t ms);
+
 #endif

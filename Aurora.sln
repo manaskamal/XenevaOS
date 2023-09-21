@@ -25,6 +25,11 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Chitralekha", "Libs\Chitral
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "E1000", "Drivers\E1000\E1000.vcxproj", "{60C723A8-AED4-4689-B960-F0091B16466F}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{9B3819FC-B327-4C42-A93D-E842CC5E498A}"
+	ProjectSection(SolutionItems) = preProject
+		soundapp_demo.txt = soundapp_demo.txt
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Mixed Platforms = Debug|Mixed Platforms

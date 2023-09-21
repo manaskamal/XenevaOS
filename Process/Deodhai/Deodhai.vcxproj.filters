@@ -2,5 +2,10 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="deomain.cpp" />
+    <ClCompile Include="dirty.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="deodhai.h" />
+    <ClInclude Include="dirty.h" />
   </ItemGroup>
 </Project>

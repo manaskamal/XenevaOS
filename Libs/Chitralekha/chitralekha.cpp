@@ -70,6 +70,7 @@ ChCanvas* ChCreateCanvas(int reqW, int reqH) {
 	canvas->canvasWidth = reqW;
 	canvas->buffer = 0;
 	canvas->bufferSz = 0;
+	canvas->graphics_fd = graphFd;
 	ret = _KeFileIoControl(graphFd, SCREEN_GET_FB, &ioctl);
 	canvas->framebuff = (uint32_t*)ioctl.ulong_1;
 

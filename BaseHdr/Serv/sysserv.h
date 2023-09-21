@@ -87,6 +87,12 @@ extern int CreateProcess(int parent_id, char *name);
 extern int ProcessLoadExec(int proc_id, char* filename, int argc, char** argv);
 
 /*
+* ProcessSleep -- put the current thread to sleep and process
+* to busy wait state
+* @param ms -- millisecond
+*/
+extern int ProcessSleep(uint64_t ms);
+/*
 * CreateSharedMem -- create a shared memory chunk
 * @param key -- key to use
 * @param sz -- memory size

@@ -122,7 +122,7 @@ int ProcessLoadExec(int proc_id, char* filename,int argc, char** argv) {
 	int char_cnt = 0;
 	for (int i = 0; i < argc; i++) {
 		size_t l = strlen(argv[i]);
-		char_cnt += l;
+		char_cnt += l; 
 	}
 	
 	char** allocated_argv = 0;
@@ -134,4 +134,17 @@ int ProcessLoadExec(int proc_id, char* filename,int argc, char** argv) {
 	}
 	
 	AuLoadExecToProcess(proc, filename, argc,allocated_argv);
+}
+
+/*
+ * ProcessSleep -- put the current thread to sleep and process 
+ * to busy wait state
+ * @param ms -- millisecond 
+ */
+int ProcessSleep(uint64_t ms) {
+	AuThread* current_thr = AuGetCurrentThread();
+	if (!current_thr)
+		return 0;
+	AuSleepThread(current_thr, ms);
+	AuForceScheduler();
 }

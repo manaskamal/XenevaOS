@@ -177,6 +177,19 @@ _KeProcessLoadExec:
 	  syscall
 	  ret
 
+global _KeProcessSleep
+%ifdef YES_DYNAMIC
+export _KeProcessSleep
+%endif
+_KeProcessSleep:
+      mov r12, 23
+	  mov r13, rcx
+	  mov r14, 0
+	  mov r15, 0
+	  mov rdi, 0
+	  syscall
+	  ret
+
 global _KeCreateSharedMem
 %ifdef YES_DYNAMIC
 export _KeCreateSharedMem

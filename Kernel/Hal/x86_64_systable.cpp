@@ -90,6 +90,7 @@ static void* syscalls[AURORA_MAX_SYSCALL] = {
 	CloseFile,        //20
 	FileIoControl,    //21
 	FileStat,         //22
+	ProcessSleep,     //23
 };
 
 
