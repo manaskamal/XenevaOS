@@ -145,10 +145,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="cursor.cpp" />
     <ClCompile Include="deomain.cpp" />
     <ClCompile Include="dirty.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="cursor.h" />
     <ClInclude Include="deodhai.h" />
     <ClInclude Include="dirty.h" />
   </ItemGroup>

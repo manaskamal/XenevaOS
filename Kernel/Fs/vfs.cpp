@@ -190,10 +190,10 @@ AU_EXTERN AU_EXPORT int AuVFSNodeIOControl(AuVFSNode* node, int code, void* arg)
  * @param length -- length of the file
  */
 AU_EXTERN AU_EXPORT size_t AuVFSNodeRead(AuVFSNode* node, AuVFSNode* file, uint64_t* buffer, uint32_t length) {
-	if (node) 
-	if (node->read)
-		return node->read(node, file, buffer, length);
-
+	if (node) {
+		if (node->read)
+			return node->read(node, file, buffer, length);
+	}
 	return -1;
 }
 

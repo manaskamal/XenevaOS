@@ -88,7 +88,7 @@ int ChAllocateBuffer(ChCanvas* canvas) {
 	int reqH = canvas->canvasHeight;
 
 	size_t sz = reqW * reqH * 4;
-	void* addr = _KeMemMap(NULL, sz, 0, 0, 0, 0);
+	void* addr = _KeMemMap(NULL, sz, 0, 0, MEMMAP_NO_FILEDESC, 0);
 	if (!addr)
 		return 0;
 	canvas->buffer = (uint32_t*)addr;

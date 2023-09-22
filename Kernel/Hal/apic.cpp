@@ -174,7 +174,7 @@ void AuAPICInitialise(bool bsp) {
 	size_t timer_reg = (1 << 17) | timer_vect;
 	WriteAPICRegister(LAPIC_REGISTER_LVT_TIMER, timer_reg);
 	IOWait();
-	WriteAPICRegister(LAPIC_REGISTER_TMRINITCNT, 123456);
+	WriteAPICRegister(LAPIC_REGISTER_TMRINITCNT,1000);  //123456
 
 	x64_outportb(PIC1_DATA, 0xFF);
 	IOWait();

@@ -30,7 +30,6 @@ EXTRN	kmalloc:PROC
 EXTRN	memset:PROC
 EXTRN	memcpy:PROC
 EXTRN	AuTextOut:PROC
-EXTRN	AuDevReadMice:PROC
 EXTRN	AuDevWriteMice:PROC
 EXTRN	SeTextOut:PROC
 pdata	SEGMENT
@@ -50,7 +49,7 @@ $pdata$?AuPS2MouseRead@@YAEXZ DD imagerel $LN3
 	DD	imagerel $LN3+23
 	DD	imagerel $unwind$?AuPS2MouseRead@@YAEXZ
 $pdata$?PS2MouseHandler@@YAX_KPEAX@Z DD imagerel $LN29
-	DD	imagerel $LN29+1144
+	DD	imagerel $LN29+1134
 	DD	imagerel $unwind$?PS2MouseHandler@@YAX_KPEAX@Z
 pdata	ENDS
 xdata	SEGMENT
@@ -65,7 +64,7 @@ $unwind$?AuPS2MouseWrite@@YAEE@Z DD 010801H
 $unwind$?AuPS2MouseRead@@YAEXZ DD 010401H
 	DD	04204H
 $unwind$?PS2MouseHandler@@YAX_KPEAX@Z DD 010e01H
-	DD	0e20eH
+	DD	0a20eH
 xdata	ENDS
 ; Function compile flags: /Odtpy
 ; File e:\xeneva project\aurora\kernel\drivers\mouse.cpp
@@ -76,9 +75,8 @@ tv76 = 36
 x$2 = 40
 y$3 = 44
 newmsg$4 = 48
-oldmsg$5 = 80
-v$ = 128
-p$ = 136
+v$ = 96
+p$ = 104
 ?PS2MouseHandler@@YAX_KPEAX@Z PROC			; PS2MouseHandler
 
 ; 109  : void PS2MouseHandler(size_t v, void* p) {
@@ -86,7 +84,7 @@ p$ = 136
 $LN29:
 	mov	QWORD PTR [rsp+16], rdx
 	mov	QWORD PTR [rsp+8], rcx
-	sub	rsp, 120				; 00000078H
+	sub	rsp, 88					; 00000058H
 
 ; 110  : 	uint8_t status = x64_inportb(MOUSE_STATUS);
 
@@ -529,12 +527,8 @@ $LN2@PS2MouseHa:
 	mov	BYTE PTR newmsg$4[rsp+12], al
 
 ; 188  : 
-; 189  : 	AuInputMessage oldmsg;
-; 190  : 	AuDevReadMice(&oldmsg);
-
-	lea	rcx, QWORD PTR oldmsg$5[rsp]
-	call	AuDevReadMice
-
+; 189  : 	/*AuInputMessage oldmsg;
+; 190  : 	AuDevReadMice(&oldmsg);*/
 ; 191  : 
 ; 192  : 	AuDevWriteMice(&newmsg);
 
@@ -580,7 +574,7 @@ $LN25@PS2MouseHa:
 
 ; 200  : }
 
-	add	rsp, 120				; 00000078H
+	add	rsp, 88					; 00000058H
 	ret	0
 ?PS2MouseHandler@@YAX_KPEAX@Z ENDP			; PS2MouseHandler
 _TEXT	ENDS

@@ -3,9 +3,11 @@
   <ItemGroup>
     <ClCompile Include="deomain.cpp" />
     <ClCompile Include="dirty.cpp" />
+    <ClCompile Include="cursor.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="deodhai.h" />
     <ClInclude Include="dirty.h" />
+    <ClInclude Include="cursor.h" />
   </ItemGroup>
 </Project>

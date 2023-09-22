@@ -101,10 +101,10 @@ $pdata$?AuTTYIoControl@@YAHPEAU__VFS_NODE__@@HPEAX@Z DD imagerel $LN11
 	DD	imagerel $LN11+339
 	DD	imagerel $unwind$?AuTTYIoControl@@YAHPEAU__VFS_NODE__@@HPEAX@Z
 $pdata$?AuTTYCreateMaster@@YAPEAU__VFS_NODE__@@PEAU__tty__@@@Z DD imagerel $LN3
-	DD	imagerel $LN3+271
+	DD	imagerel $LN3+279
 	DD	imagerel $unwind$?AuTTYCreateMaster@@YAPEAU__VFS_NODE__@@PEAU__tty__@@@Z
 $pdata$?AuTTYCreateSlave@@YAPEAU__VFS_NODE__@@PEAU__tty__@@@Z DD imagerel $LN3
-	DD	imagerel $LN3+271
+	DD	imagerel $LN3+279
 	DD	imagerel $unwind$?AuTTYCreateSlave@@YAPEAU__VFS_NODE__@@PEAU__tty__@@@Z
 $pdata$?AuTTYCreate@@YAHPEAH0@Z DD imagerel $LN6
 	DD	imagerel $LN6+533
@@ -426,13 +426,13 @@ $LN3:
 ; 281  : 
 ; 282  : 	AuVFSNode* node = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
 
-	mov	ecx, 159				; 0000009fH
+	mov	ecx, 160				; 000000a0H
 	call	kmalloc
 	mov	QWORD PTR node$[rsp], rax
 
 ; 283  : 	memset(node, 0, sizeof(AuVFSNode));
 
-	mov	r8d, 159				; 0000009fH
+	mov	r8d, 160				; 000000a0H
 	xor	edx, edx
 	mov	rcx, QWORD PTR node$[rsp]
 	call	memset
@@ -467,38 +467,39 @@ $LN3:
 
 ; 290  : 	node->flags = FS_FLAG_GENERAL | FS_FLAG_TTY;
 
-	mov	rax, QWORD PTR node$[rsp]
-	mov	BYTE PTR [rax+61], 4
+	mov	eax, 260				; 00000104H
+	mov	rcx, QWORD PTR node$[rsp]
+	mov	WORD PTR [rcx+61], ax
 
 ; 291  : 	node->device = tty;
 
 	mov	rax, QWORD PTR node$[rsp]
 	mov	rcx, QWORD PTR tty$[rsp]
-	mov	QWORD PTR [rax+63], rcx
+	mov	QWORD PTR [rax+64], rcx
 
 ; 292  : 	node->read = AuTTYSlaveRead;
 
 	mov	rax, QWORD PTR node$[rsp]
 	lea	rcx, OFFSET FLAT:?AuTTYSlaveRead@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z ; AuTTYSlaveRead
-	mov	QWORD PTR [rax+79], rcx
+	mov	QWORD PTR [rax+80], rcx
 
 ; 293  : 	node->write = AuTTYSlaveWrite;
 
 	mov	rax, QWORD PTR node$[rsp]
 	lea	rcx, OFFSET FLAT:?AuTTYSlaveWrite@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z ; AuTTYSlaveWrite
-	mov	QWORD PTR [rax+87], rcx
+	mov	QWORD PTR [rax+88], rcx
 
 ; 294  : 	node->close = AuTTYSlaveClose;
 
 	mov	rax, QWORD PTR node$[rsp]
 	lea	rcx, OFFSET FLAT:?AuTTYSlaveClose@@YAHPEAU__VFS_NODE__@@0@Z ; AuTTYSlaveClose
-	mov	QWORD PTR [rax+127], rcx
+	mov	QWORD PTR [rax+128], rcx
 
 ; 295  : 	node->iocontrol = AuTTYIoControl;
 
 	mov	rax, QWORD PTR node$[rsp]
 	lea	rcx, OFFSET FLAT:?AuTTYIoControl@@YAHPEAU__VFS_NODE__@@HPEAX@Z ; AuTTYIoControl
-	mov	QWORD PTR [rax+151], rcx
+	mov	QWORD PTR [rax+152], rcx
 
 ; 296  : 
 ; 297  : 	AuDevFSAddFile(fs, "/dev/tty", node);
@@ -548,13 +549,13 @@ $LN3:
 ; 253  : 
 ; 254  : 	AuVFSNode* node = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
 
-	mov	ecx, 159				; 0000009fH
+	mov	ecx, 160				; 000000a0H
 	call	kmalloc
 	mov	QWORD PTR node$[rsp], rax
 
 ; 255  : 	memset(node, 0, sizeof(AuVFSNode));
 
-	mov	r8d, 159				; 0000009fH
+	mov	r8d, 160				; 000000a0H
 	xor	edx, edx
 	mov	rcx, QWORD PTR node$[rsp]
 	call	memset
@@ -589,38 +590,39 @@ $LN3:
 
 ; 262  : 	node->flags = FS_FLAG_GENERAL | FS_FLAG_TTY;
 
-	mov	rax, QWORD PTR node$[rsp]
-	mov	BYTE PTR [rax+61], 4
+	mov	eax, 260				; 00000104H
+	mov	rcx, QWORD PTR node$[rsp]
+	mov	WORD PTR [rcx+61], ax
 
 ; 263  : 	node->device = tty;
 
 	mov	rax, QWORD PTR node$[rsp]
 	mov	rcx, QWORD PTR tty$[rsp]
-	mov	QWORD PTR [rax+63], rcx
+	mov	QWORD PTR [rax+64], rcx
 
 ; 264  : 	node->read = AuTTYMasterRead;
 
 	mov	rax, QWORD PTR node$[rsp]
 	lea	rcx, OFFSET FLAT:?AuTTYMasterRead@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z ; AuTTYMasterRead
-	mov	QWORD PTR [rax+79], rcx
+	mov	QWORD PTR [rax+80], rcx
 
 ; 265  : 	node->write = AuTTYMasterWrite;
 
 	mov	rax, QWORD PTR node$[rsp]
 	lea	rcx, OFFSET FLAT:?AuTTYMasterWrite@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z ; AuTTYMasterWrite
-	mov	QWORD PTR [rax+87], rcx
+	mov	QWORD PTR [rax+88], rcx
 
 ; 266  : 	node->close = AuTTYMasterClose;
 
 	mov	rax, QWORD PTR node$[rsp]
 	lea	rcx, OFFSET FLAT:?AuTTYMasterClose@@YAHPEAU__VFS_NODE__@@0@Z ; AuTTYMasterClose
-	mov	QWORD PTR [rax+127], rcx
+	mov	QWORD PTR [rax+128], rcx
 
 ; 267  : 	node->iocontrol = AuTTYIoControl;
 
 	mov	rax, QWORD PTR node$[rsp]
 	lea	rcx, OFFSET FLAT:?AuTTYIoControl@@YAHPEAU__VFS_NODE__@@HPEAX@Z ; AuTTYIoControl
-	mov	QWORD PTR [rax+151], rcx
+	mov	QWORD PTR [rax+152], rcx
 
 ; 268  : 
 ; 269  : 	AuDevFSAddFile(fs, "/dev/tty", node);
@@ -671,7 +673,7 @@ $LN11:
 ; 209  : 	TTY* tty = (TTY*)file->device;
 
 	mov	rax, QWORD PTR file$[rsp]
-	mov	rax, QWORD PTR [rax+63]
+	mov	rax, QWORD PTR [rax+64]
 	mov	QWORD PTR tty$[rsp], rax
 
 ; 210  : 	if (!tty)
@@ -925,7 +927,7 @@ $LN9:
 ; 182  : 	TTY* tty = (TTY*)file->device;
 
 	mov	rax, QWORD PTR file$[rsp]
-	mov	rax, QWORD PTR [rax+63]
+	mov	rax, QWORD PTR [rax+64]
 	mov	QWORD PTR tty$[rsp], rax
 
 ; 183  : 	if (!tty)
@@ -1037,7 +1039,7 @@ $LN7:
 ; 167  : 	TTY* tty = (TTY*)file->device;
 
 	mov	rax, QWORD PTR file$[rsp]
-	mov	rax, QWORD PTR [rax+63]
+	mov	rax, QWORD PTR [rax+64]
 	mov	QWORD PTR tty$[rsp], rax
 
 ; 168  : 	if (!tty)
@@ -1119,7 +1121,7 @@ $LN7:
 ; 156  : 	TTY* type = (TTY*)file->device;
 
 	mov	rax, QWORD PTR file$[rsp]
-	mov	rax, QWORD PTR [rax+63]
+	mov	rax, QWORD PTR [rax+64]
 	mov	QWORD PTR type$[rsp], rax
 
 ; 157  : 	if (!type)
@@ -1193,7 +1195,7 @@ $LN8:
 ; 132  : 	TTY* type = (TTY*)file->device;
 
 	mov	rax, QWORD PTR file$[rsp]
-	mov	rax, QWORD PTR [rax+63]
+	mov	rax, QWORD PTR [rax+64]
 	mov	QWORD PTR type$[rsp], rax
 
 ; 133  : 	if (!type)

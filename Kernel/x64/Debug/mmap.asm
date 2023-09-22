@@ -337,7 +337,7 @@ $LN6@CreateMemM:
 ; 77   : 		if (!(file->flags & FS_FLAG_DEVICE)) {
 
 	mov	rax, QWORD PTR file$[rsp]
-	movzx	eax, BYTE PTR [rax+61]
+	movzx	eax, WORD PTR [rax+61]
 	and	eax, 8
 	test	eax, eax
 	jne	SHORT $LN5@CreateMemM

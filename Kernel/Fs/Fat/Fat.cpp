@@ -251,12 +251,9 @@ size_t FatReadFile(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint32_t 
 
 	size_t num_blocks = length / fs->cluster_sz_in_bytes +
 		((length % fs->cluster_sz_in_bytes) ? 1 : 0);;
-	if ((length % fs->cluster_sz_in_bytes) != 0)
-		num_blocks++;
+	
 
 	for (int i = 0; i < num_blocks; i++) {
-		if (file->eof)
-			break;
 		uint64_t* buff = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
 		memset(buff, 0, PAGE_SIZE);
 		read_bytes = FatRead(fsys, file, (uint64_t*)V2P((size_t)buff));

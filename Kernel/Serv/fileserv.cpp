@@ -38,6 +38,7 @@
 #include <aucon.h>
 #include <_null.h>
 #include <Hal\x86_64_hal.h>
+#include <Fs\pipe.h>
 
 /*
  * OpenFile -- opens a file for user process
@@ -89,17 +90,22 @@ size_t ReadFile(int fd, void* buffer, size_t length) {
 	if (!file)
 		return 0;
 	size_t ret_bytes = 0;
+	
 	/* every general file will contain its
 	 * file system node as device */
 	AuVFSNode* fsys = (AuVFSNode*)file->device;
 	if (file->flags & FS_FLAG_GENERAL) {
 		ret_bytes = AuVFSNodeRead(fsys, file,aligned_buffer, length);
 	}
-	else if (file->flags & FS_FLAG_DEVICE){
+	if (file->flags & FS_FLAG_DEVICE){
 		/* devfs will handle*/
+		if (file->read)
+			ret_bytes = file->read(file, file, (uint64_t*)buffer, length);
 	}
-	else if (file->flags & FS_FLAG_PIPE) {
+	if ((file->flags & FS_FLAG_PIPE)) {
 		/* ofcourse, pipe subsystem will handle */
+		if (file->read)
+			ret_bytes = file->read(file, file, (uint64_t*)buffer, length);
 	}
 
 	return ret_bytes;

@@ -204,23 +204,27 @@ void XELdrLinkPE(void* exec) {
 void XELdrCreatePEObjects(void* exec) {
 	PIMAGE_DOS_HEADER dos_header = (PIMAGE_DOS_HEADER)exec;
 	PIMAGE_NT_HEADERS nt_headers = raw_offset<PIMAGE_NT_HEADERS>(dos_header, dos_header->e_lfanew);
+
 	if (IMAGE_DATA_DIRECTORY_IMPORT + 1 > nt_headers->OptionalHeader.NumberOfRvaAndSizes)
 		return;
 
+	
 	IMAGE_DATA_DIRECTORY& datadir = nt_headers->OptionalHeader.DataDirectory[IMAGE_DATA_DIRECTORY_IMPORT];
 	if (datadir.VirtualAddress == 0 || datadir.Size == 0) {
 		return;
 	}
-
+	
 	PIMAGE_IMPORT_DIRECTORY importdir = raw_offset<PIMAGE_IMPORT_DIRECTORY>(exec, datadir.VirtualAddress);
+	_KePrint("loading dependency %x \n", importdir->TimeDateStamp);
 	for (size_t n = 0; importdir[n].ThunkTableRva; ++n) {
-		const char* func = raw_offset<const char*>(exec, importdir[n].NameRva);
 		
+		const char* func = raw_offset<const char*>(exec, importdir[n].NameRva);
 		if (!XELdrCheckObject(func)) {
 			int flen = strlen(func);
 			char *separator = (char*)malloc(flen + 1);
 			strcpy(separator, "/");
 			char *fname = strcat(separator, func);
+			_KePrint("Creating object -> %s \n", fname);
 			XELoaderObject* obj = XELdrCreateObj(fname);
 			free(separator);
 		}

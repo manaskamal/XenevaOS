@@ -32,6 +32,8 @@
 #include <Fs\pipe.h>
 #include <_null.h>
 #include <Fs\dev\devfs.h>
+#include <string.h>
+#include <Mm\kmalloc.h>
 
 AuVFSNode* mice_;
 AuVFSNode* kybrd_;
@@ -42,9 +44,9 @@ AuVFSNode* kybrd_;
  * @para, inputmsg -- Pointer to the buffer
  */
 void AuDevReadMice(AuInputMessage* inputmsg) {
-	AuPipe *pipe = (AuPipe*)mice_->device;
-	while (AuPipeUnread(pipe) > (int)(32 * sizeof(AuInputMessage)))
-		AuVFSNodeRead(mice_, NULL, (uint64_t*)inputmsg, sizeof(AuInputMessage));
+	if (!mice_)
+		return;
+	memcpy(inputmsg, mice_->device, sizeof(AuInputMessage));
 }
 
 /*
@@ -52,7 +54,43 @@ void AuDevReadMice(AuInputMessage* inputmsg) {
  * @param outmsg -- packet to write
  */
 void AuDevWriteMice(AuInputMessage* outmsg) {
-	AuVFSNodeWrite(mice_, NULL, (uint64_t*)outmsg, sizeof(AuInputMessage));
+	if (!mice_)
+		return;
+	memcpy(mice_->device, outmsg, sizeof(AuInputMessage));
+}
+
+/*
+* AuPipeWrite -- write to pipe
+* @param fs -- Pointer to the file system node
+* @param file -- Pointer to the file, here we don't need it
+* @param buffer -- Pointer to buffer where to put the data
+* @param length -- length to read
+*/
+size_t AuDevInputMiceWrite(AuVFSNode *fs, AuVFSNode *file, uint64_t* buffer, uint32_t length){
+	if (!file)
+		return 0;
+	if (!buffer)
+		return 0;
+	void* mice_buf = file->device;
+	memcpy(mice_buf, buffer, sizeof(AuInputMessage));
+	return (sizeof(AuInputMessage));
+}
+
+/*
+* AuPipeRead -- reads from pipe
+* @param fs -- Pointer to the file system node
+* @param file -- Pointer to the file, here we don't need it
+* @param buffer -- Pointer to buffer where to put the data
+* @param length -- length to read
+*/
+size_t AuDevInputMiceRead(AuVFSNode *fs, AuVFSNode *file, uint64_t* buffer, uint32_t length){
+	if (!file)
+		return 0;
+	if (!buffer)
+		return 0;
+	void* mice_buf = file->device;
+	memcpy(buffer, mice_buf, sizeof(AuInputMessage));
+	return (sizeof(AuInputMessage));
 }
 
 /*
@@ -62,7 +100,20 @@ void AuDevWriteMice(AuInputMessage* outmsg) {
 void AuDevInputInitialise() {
 	AuVFSNode* devfs = AuVFSFind("/dev");
 
-	mice_ = AuCreatePipe("mice", sizeof(AuInputMessage)* NUM_MOUSE_PACKETS);
+	void* mice_input_buf = (void*)kmalloc(sizeof(AuInputMessage));
+	memset(mice_input_buf, 0, sizeof(AuInputMessage));
+	/* avoiding using pipe for latency issue */
+	AuVFSNode* node = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
+	memset(node, 0, sizeof(AuVFSNode));
+	strcpy(node->filename, "mice");
+	node->flags |= FS_FLAG_DEVICE;
+	node->device = mice_input_buf;
+	node->read = AuDevInputMiceRead;
+	node->write = AuDevInputMiceWrite;
+	node->open = 0;
+	node->close = 0;
+	node->iocontrol = NULL;
+	mice_ = node;
 	AuDevFSAddFile(devfs, "/", mice_);
 	
 	kybrd_ = AuCreatePipe("kybrd", sizeof(AuInputMessage)* NUM_KEYBOARD_PACKETS);

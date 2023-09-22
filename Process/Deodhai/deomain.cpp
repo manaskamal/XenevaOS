@@ -37,47 +37,12 @@
 #include <chitralekha.h>
 #include <stdlib.h>
 #include "deodhai.h"
+#include "cursor.h"
 
 Cursor *arrow;
+int mouse_fd;
+int kybrd_fd;
 
-Cursor* CursorOpen(char* path, uint8_t type) {
-	Cursor* cur = (Cursor*)malloc(sizeof(Cursor));
-	memset(cur, 0, sizeof(Cursor));
-	cur->cursorBack = (uint32_t*)malloc(8192);
-
-	int fd = _KeOpenFile(path, FILE_OPEN_READ_ONLY);
-	XEFileStatus stat;
-	_KeFileStat(fd, &stat);
-
-	cur->fileBuffer = (uint8_t*)_KeMemMap(NULL, stat.size, 0, 0, 0, 0);
-	cur->type = type;
-	cur->cursorFD = fd;
-	cur->cursorFileSize = stat.size;
-	return cur;
-}
-
-/* CursorRead -- read the cursor file */
-void CursorRead(Cursor* cur) {
-	if (!cur)
-		return;
-	_KeReadFile(cur->cursorFD, cur->fileBuffer, cur->cursorFileSize);
-
-	uint8_t* buffer = (uint8_t*)cur->fileBuffer;
-
-	BMP* bmp = (BMP*)buffer;
-	unsigned int offset = bmp->off_bits;
-
-	BMPInfo* info = (BMPInfo*)(buffer + sizeof(BMP));
-	int width = info->biWidth;
-	int height = info->biHeight;
-	int bpp = info->biBitCount;
-
-	void* image_bytes = (void*)(buffer + offset);
-	cur->imageData = (uint8_t*)image_bytes;
-	cur->width = width;
-	cur->height = height;
-	cur->bpp = bpp;
-}
 
 /*
  * main -- deodhai compositor
@@ -137,10 +102,21 @@ int main(int argc, char* arv[]) {
 
 	arrow = CursorOpen("/pointer.bmp", CURSOR_TYPE_POINTER);
 	CursorRead(arrow);
-	_KePrint("Cursor w -> %d, h -> %d \n", arrow->width, arrow->height);
+	
+
+	mouse_fd = _KeOpenFile("/dev/mice", FILE_OPEN_READ_ONLY);
+	AuInputMessage *mice_input = (AuInputMessage*)malloc(sizeof(AuInputMessage));
+	memset(mice_input, 0, sizeof(AuInputMessage));
 
 	while (1) {
-
+		if (sleepable) {
+			_KeReadFile(mouse_fd, mice_input, sizeof(AuInputMessage));
+		}
+		if (mice_input->type == AU_INPUT_MOUSE) {
+			CursorDraw(canv, arrow, mice_input->xpos, mice_input->ypos);
+			ChCanvasScreenUpdate(canv, mice_input->xpos, mice_input->ypos, 24, 24);
+			memset(mice_input, 0, sizeof(AuInputMessage));
+		}
 		if (!sound_finished) {
 			_KeWriteFile(snd, songbuf, 4096);
 			_KeReadFile(song, songbuf, 4096);
@@ -149,6 +125,10 @@ int main(int argc, char* arv[]) {
 				_KeCloseFile(song);
 				sleepable = true;
 				sound_finished = true;
+
+				/* for now */
+				CursorDraw(canv, arrow, screen_w / 2 - 24/2, screen_h / 2 - 24/2);
+				ChCanvasScreenUpdate(canv, screen_w / 2 - 24 / 2, screen_h / 2 - 24/2, 24, 24);
 			}
 		}
 		if (sleepable) {

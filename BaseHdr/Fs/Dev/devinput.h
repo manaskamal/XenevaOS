@@ -42,7 +42,7 @@
 #define AU_INPUT_MOUSE  1
 #define AU_INPUT_KEYBOARD 2
 
-#define NUM_MOUSE_PACKETS    512
+#define NUM_MOUSE_PACKETS    20
 #define NUM_KEYBOARD_PACKETS 512
 
 typedef struct _au_input_msg_ {

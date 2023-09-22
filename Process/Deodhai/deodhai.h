@@ -32,8 +32,7 @@
 
 #include <stdint.h>
 
-#define CURSOR_TYPE_POINTER  1
-#define CURSOR_TYPE_LOADING  2
+
 
 typedef struct _rect_ {
 	int x;
@@ -66,16 +65,21 @@ typedef struct _info_ {
 }BMPInfo;
 #pragma pack(pop)
 
-typedef struct _cursor_ {
+#define AU_INPUT_MOUSE  1
+#define AU_INPUT_KEYBOARD 2
+
+/* Copied from kernel*/
+typedef struct _au_input_msg_ {
 	uint8_t type;
-	uint8_t* imageData;
-	int width;
-	int height;
-	int bpp;
-	int cursorFD;
-	uint8_t* fileBuffer;
-	uint32_t* cursorBack;
-	size_t cursorFileSize;
-}Cursor;
+	int32_t xpos;
+	int32_t ypos;
+	uint8_t button_state;
+	uint32_t code;
+	uint32_t code1;
+	uint32_t code3;
+	uint32_t code4;
+}AuInputMessage;
+
+
 
 #endif

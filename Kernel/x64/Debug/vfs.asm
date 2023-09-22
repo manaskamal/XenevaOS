@@ -76,13 +76,13 @@ $pdata$AuVFSNodeWrite DD imagerel $LN5
 	DD	imagerel $LN5+79
 	DD	imagerel $unwind$AuVFSNodeWrite
 $pdata$AuVFSNodeClose DD imagerel $LN4
-	DD	imagerel $LN4+49
+	DD	imagerel $LN4+55
 	DD	imagerel $unwind$AuVFSNodeClose
 $pdata$AuVFSGetBlockFor DD imagerel $LN5
 	DD	imagerel $LN5+82
 	DD	imagerel $unwind$AuVFSGetBlockFor
 $pdata$AuVFSRemoveFileSystem DD imagerel $LN9
-	DD	imagerel $LN9+170
+	DD	imagerel $LN9+176
 	DD	imagerel $unwind$AuVFSRemoveFileSystem
 pdata	ENDS
 xdata	SEGMENT
@@ -191,7 +191,7 @@ $LN4@AuVFSRemov:
 ; 318  : 	if (node->close)
 
 	mov	rax, QWORD PTR node$[rsp]
-	cmp	QWORD PTR [rax+127], 0
+	cmp	QWORD PTR [rax+128], 0
 	je	SHORT $LN2@AuVFSRemov
 
 ; 319  : 		return node->close(node, NULL);
@@ -199,7 +199,7 @@ $LN4@AuVFSRemov:
 	xor	edx, edx
 	mov	rcx, QWORD PTR node$[rsp]
 	mov	rax, QWORD PTR node$[rsp]
-	call	QWORD PTR [rax+127]
+	call	QWORD PTR [rax+128]
 	jmp	SHORT $LN7@AuVFSRemov
 
 ; 320  : 	else {
@@ -250,7 +250,7 @@ $LN5:
 ; 336  : 		if (node->get_blockfor)
 
 	mov	rax, QWORD PTR node$[rsp]
-	cmp	QWORD PTR [rax+143], 0
+	cmp	QWORD PTR [rax+144], 0
 	je	SHORT $LN1@AuVFSGetBl
 
 ; 337  : 			return node->get_blockfor(node, file, offset);
@@ -259,7 +259,7 @@ $LN5:
 	mov	rdx, QWORD PTR file$[rsp]
 	mov	rcx, QWORD PTR node$[rsp]
 	mov	rax, QWORD PTR node$[rsp]
-	call	QWORD PTR [rax+143]
+	call	QWORD PTR [rax+144]
 	jmp	SHORT $LN3@AuVFSGetBl
 $LN1@AuVFSGetBl:
 $LN2@AuVFSGetBl:
@@ -293,7 +293,7 @@ $LN4:
 ; 300  : 	if (node->close)
 
 	mov	rax, QWORD PTR node$[rsp]
-	cmp	QWORD PTR [rax+127], 0
+	cmp	QWORD PTR [rax+128], 0
 	je	SHORT $LN1@AuVFSNodeC
 
 ; 301  : 		node->close(node, file);
@@ -301,7 +301,7 @@ $LN4:
 	mov	rdx, QWORD PTR file$[rsp]
 	mov	rcx, QWORD PTR node$[rsp]
 	mov	rax, QWORD PTR node$[rsp]
-	call	QWORD PTR [rax+127]
+	call	QWORD PTR [rax+128]
 $LN1@AuVFSNodeC:
 
 ; 302  : }
@@ -341,7 +341,7 @@ $LN2@AuVFSNodeW:
 ; 210  : 	if (node->write)
 
 	mov	rax, QWORD PTR node$[rsp]
-	cmp	QWORD PTR [rax+87], 0
+	cmp	QWORD PTR [rax+88], 0
 	je	SHORT $LN1@AuVFSNodeW
 
 ; 211  : 		node->write(node, file, buffer, length);
@@ -351,7 +351,7 @@ $LN2@AuVFSNodeW:
 	mov	rdx, QWORD PTR file$[rsp]
 	mov	rcx, QWORD PTR node$[rsp]
 	mov	rax, QWORD PTR node$[rsp]
-	call	QWORD PTR [rax+87]
+	call	QWORD PTR [rax+88]
 $LN1@AuVFSNodeW:
 $LN3@AuVFSNodeW:
 
@@ -400,12 +400,12 @@ $LN4@AuVFSRemov:
 ; 287  : 	if ((file->flags & FS_FLAG_DEVICE) || (file->flags & FS_FLAG_FILE_SYSTEM))
 
 	mov	rax, QWORD PTR file$[rsp]
-	movzx	eax, BYTE PTR [rax+61]
+	movzx	eax, WORD PTR [rax+61]
 	and	eax, 8
 	test	eax, eax
 	jne	SHORT $LN2@AuVFSRemov
 	mov	rax, QWORD PTR file$[rsp]
-	movzx	eax, BYTE PTR [rax+61]
+	movzx	eax, WORD PTR [rax+61]
 	and	eax, 64					; 00000040H
 	test	eax, eax
 	je	SHORT $LN3@AuVFSRemov
@@ -420,10 +420,10 @@ $LN3@AuVFSRemov:
 ; 289  : 	if (fsys->remove_dir && (file->flags & FS_FLAG_DIRECTORY))
 
 	mov	rax, QWORD PTR fsys$[rsp]
-	cmp	QWORD PTR [rax+111], 0
+	cmp	QWORD PTR [rax+112], 0
 	je	SHORT $LN1@AuVFSRemov
 	mov	rax, QWORD PTR file$[rsp]
-	movzx	eax, BYTE PTR [rax+61]
+	movzx	eax, WORD PTR [rax+61]
 	and	eax, 2
 	test	eax, eax
 	je	SHORT $LN1@AuVFSRemov
@@ -433,7 +433,7 @@ $LN3@AuVFSRemov:
 	mov	rdx, QWORD PTR file$[rsp]
 	mov	rcx, QWORD PTR fsys$[rsp]
 	mov	rax, QWORD PTR fsys$[rsp]
-	call	QWORD PTR [rax+111]
+	call	QWORD PTR [rax+112]
 $LN1@AuVFSRemov:
 $LN6@AuVFSRemov:
 
@@ -483,7 +483,7 @@ $LN5@AuVFSRemov:
 ; 267  : 	if (!(file->flags & FS_FLAG_GENERAL))
 
 	mov	rax, QWORD PTR file$[rsp]
-	movzx	eax, BYTE PTR [rax+61]
+	movzx	eax, WORD PTR [rax+61]
 	and	eax, 4
 	test	eax, eax
 	jne	SHORT $LN4@AuVFSRemov
@@ -497,12 +497,12 @@ $LN4@AuVFSRemov:
 ; 269  : 	if ((file->flags & FS_FLAG_DEVICE) || (file->flags & FS_FLAG_FILE_SYSTEM))
 
 	mov	rax, QWORD PTR file$[rsp]
-	movzx	eax, BYTE PTR [rax+61]
+	movzx	eax, WORD PTR [rax+61]
 	and	eax, 8
 	test	eax, eax
 	jne	SHORT $LN2@AuVFSRemov
 	mov	rax, QWORD PTR file$[rsp]
-	movzx	eax, BYTE PTR [rax+61]
+	movzx	eax, WORD PTR [rax+61]
 	and	eax, 64					; 00000040H
 	test	eax, eax
 	je	SHORT $LN3@AuVFSRemov
@@ -521,7 +521,7 @@ $LN3@AuVFSRemov:
 ; 272  : 	if (fsys->remove_file) 
 
 	mov	rax, QWORD PTR fsys$[rsp]
-	cmp	QWORD PTR [rax+119], 0
+	cmp	QWORD PTR [rax+120], 0
 	je	SHORT $LN1@AuVFSRemov
 
 ; 273  : 		ret = fsys->remove_file(fsys, file);
@@ -529,7 +529,7 @@ $LN3@AuVFSRemov:
 	mov	rdx, QWORD PTR file$[rsp]
 	mov	rcx, QWORD PTR fsys$[rsp]
 	mov	rax, QWORD PTR fsys$[rsp]
-	call	QWORD PTR [rax+119]
+	call	QWORD PTR [rax+120]
 	mov	DWORD PTR ret$[rsp], eax
 $LN1@AuVFSRemov:
 $LN7@AuVFSRemov:
@@ -573,7 +573,7 @@ $LN2@AuVFSCreat:
 ; 252  : 	if (fsys->create_file)
 
 	mov	rax, QWORD PTR fsys$[rsp]
-	cmp	QWORD PTR [rax+103], 0
+	cmp	QWORD PTR [rax+104], 0
 	je	SHORT $LN1@AuVFSCreat
 
 ; 253  : 		ret = fsys->create_file(fsys, filename);
@@ -581,7 +581,7 @@ $LN2@AuVFSCreat:
 	mov	rdx, QWORD PTR filename$[rsp]
 	mov	rcx, QWORD PTR fsys$[rsp]
 	mov	rax, QWORD PTR fsys$[rsp]
-	call	QWORD PTR [rax+103]
+	call	QWORD PTR [rax+104]
 	mov	QWORD PTR ret$[rsp], rax
 $LN1@AuVFSCreat:
 
@@ -629,7 +629,7 @@ $LN2@AuVFSCreat:
 ; 238  : 	if (fsys->create_dir)
 
 	mov	rax, QWORD PTR fsys$[rsp]
-	cmp	QWORD PTR [rax+95], 0
+	cmp	QWORD PTR [rax+96], 0
 	je	SHORT $LN1@AuVFSCreat
 
 ; 239  : 		ret = fsys->create_dir(fsys, dirname);
@@ -637,7 +637,7 @@ $LN2@AuVFSCreat:
 	mov	rdx, QWORD PTR dirname$[rsp]
 	mov	rcx, QWORD PTR fsys$[rsp]
 	mov	rax, QWORD PTR fsys$[rsp]
-	call	QWORD PTR [rax+95]
+	call	QWORD PTR [rax+96]
 	mov	QWORD PTR ret$[rsp], rax
 $LN1@AuVFSCreat:
 
@@ -687,7 +687,7 @@ $LN2@AuVFSNodeR:
 ; 224  : 	if (node->read_block)
 
 	mov	rax, QWORD PTR node$[rsp]
-	cmp	QWORD PTR [rax+135], 0
+	cmp	QWORD PTR [rax+136], 0
 	je	SHORT $LN1@AuVFSNodeR
 
 ; 225  : 		read_bytes = node->read_block(node, file, buffer);
@@ -696,7 +696,7 @@ $LN2@AuVFSNodeR:
 	mov	rdx, QWORD PTR file$[rsp]
 	mov	rcx, QWORD PTR node$[rsp]
 	mov	rax, QWORD PTR node$[rsp]
-	call	QWORD PTR [rax+135]
+	call	QWORD PTR [rax+136]
 	mov	QWORD PTR read_bytes$[rsp], rax
 $LN1@AuVFSNodeR:
 
@@ -729,30 +729,30 @@ $LN5:
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 40					; 00000028H
 
-; 193  : 	if (node) 
+; 193  : 	if (node) {
 
 	cmp	QWORD PTR node$[rsp], 0
 	je	SHORT $LN2@AuVFSNodeR
 
-; 194  : 	if (node->read)
+; 194  : 		if (node->read)
 
 	mov	rax, QWORD PTR node$[rsp]
-	cmp	QWORD PTR [rax+79], 0
+	cmp	QWORD PTR [rax+80], 0
 	je	SHORT $LN1@AuVFSNodeR
 
-; 195  : 		return node->read(node, file, buffer, length);
+; 195  : 			return node->read(node, file, buffer, length);
 
 	mov	r9d, DWORD PTR length$[rsp]
 	mov	r8, QWORD PTR buffer$[rsp]
 	mov	rdx, QWORD PTR file$[rsp]
 	mov	rcx, QWORD PTR node$[rsp]
 	mov	rax, QWORD PTR node$[rsp]
-	call	QWORD PTR [rax+79]
+	call	QWORD PTR [rax+80]
 	jmp	SHORT $LN3@AuVFSNodeR
 $LN1@AuVFSNodeR:
 $LN2@AuVFSNodeR:
 
-; 196  : 
+; 196  : 	}
 ; 197  : 	return -1;
 
 	mov	rax, -1
@@ -894,7 +894,7 @@ $LN5@AuVFSFind:
 	test	eax, eax
 	jne	SHORT $LN2@AuVFSFind
 	mov	rax, QWORD PTR node$2[rsp]
-	movzx	eax, BYTE PTR [rax+61]
+	movzx	eax, WORD PTR [rax+61]
 	and	eax, 64					; 00000040H
 	test	eax, eax
 	je	SHORT $LN2@AuVFSFind
@@ -1056,7 +1056,7 @@ $LN4:
 ; 178  : 	if (node->iocontrol){
 
 	mov	rax, QWORD PTR node$[rsp]
-	cmp	QWORD PTR [rax+151], 0
+	cmp	QWORD PTR [rax+152], 0
 	je	SHORT $LN1@AuVFSNodeI
 
 ; 179  : 		int val = node->iocontrol(node, code, arg);
@@ -1065,7 +1065,7 @@ $LN4:
 	mov	edx, DWORD PTR code$[rsp]
 	mov	rcx, QWORD PTR node$[rsp]
 	mov	rax, QWORD PTR node$[rsp]
-	call	QWORD PTR [rax+151]
+	call	QWORD PTR [rax+152]
 	mov	DWORD PTR val$1[rsp], eax
 
 ; 180  : 		return val;
@@ -1157,7 +1157,7 @@ $LN11@AuVFSOpen:
 ; 143  : 		if (fs->open)
 
 	mov	rax, QWORD PTR fs$[rsp]
-	cmp	QWORD PTR [rax+71], 0
+	cmp	QWORD PTR [rax+72], 0
 	je	SHORT $LN10@AuVFSOpen
 
 ; 144  : 			Returnable = fs->open(fs, path);
@@ -1165,7 +1165,7 @@ $LN11@AuVFSOpen:
 	mov	rdx, QWORD PTR path$[rsp]
 	mov	rcx, QWORD PTR fs$[rsp]
 	mov	rax, QWORD PTR fs$[rsp]
-	call	QWORD PTR [rax+71]
+	call	QWORD PTR [rax+72]
 	mov	QWORD PTR Returnable$[rsp], rax
 $LN10@AuVFSOpen:
 
@@ -1274,7 +1274,7 @@ $LN2@AuVFSOpen:
 ; 165  : 		if (fs->open)
 
 	mov	rax, QWORD PTR fs$[rsp]
-	cmp	QWORD PTR [rax+71], 0
+	cmp	QWORD PTR [rax+72], 0
 	je	SHORT $LN1@AuVFSOpen
 
 ; 166  : 			Returnable = fs->open(fs,next);
@@ -1282,7 +1282,7 @@ $LN2@AuVFSOpen:
 	mov	rdx, QWORD PTR next$2[rsp]
 	mov	rcx, QWORD PTR fs$[rsp]
 	mov	rax, QWORD PTR fs$[rsp]
-	call	QWORD PTR [rax+71]
+	call	QWORD PTR [rax+72]
 	mov	QWORD PTR Returnable$[rsp], rax
 $LN1@AuVFSOpen:
 $LN9@AuVFSOpen:

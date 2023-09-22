@@ -37,6 +37,12 @@
 #include "pe_.h"
 #include "XELdrObject.h"
 
+void XECopyMem(void* dest, void* src, size_t len) {
+	uint8_t* dstp = (uint8_t*)dest;
+	uint8_t* srcp = (uint8_t*)src;
+	while (len--)
+		*dstp++ = *srcp++;
+}
 /*
  * XELdrLoadObject -- loads an object
  * @param obj
@@ -69,7 +75,6 @@ int XELdrLoadObject(XELoaderObject *obj){
 		int req_pages = sect_sz / 4096;
 		if ((sect_sz % 4096) != 0)
 			req_pages++;
-
 		for (int j = 0; j < req_pages; j++) {
 			uint64_t *block = (uint64_t*)_KeMemMap(NULL, 4096, 0, 0, -1, 0);
 			_KeReadFile(file, block, 4096);
@@ -116,11 +121,14 @@ int XELdrStartProc(char* filename, XELoaderObject *obj) {
 		int req_pages = sect_sz / 4096;
 		if ((sect_sz % 4096) != 0)
 			req_pages++;
-
+		uint64_t* block = 0;
 		for (int j = 0; j < req_pages; j++) {
-			uint64_t *block = (uint64_t*)_KeMemMap(NULL, 4096, 0, 0, -1, 0);
-			_KeReadFile(file, block, 4096);
+			uint64_t* alloc = (uint64_t*)_KeMemMap(NULL, 4096, 0, 0, -1, 0);
+			if (!block)
+				block = alloc;
 		}
+		_KeReadFile(file, block, sect_sz);
+
 	}
 	
 	uint8_t* aligned_buff = (uint8_t*)first_ptr;
@@ -133,6 +141,7 @@ int XELdrStartProc(char* filename, XELoaderObject *obj) {
 	obj->entry_addr = _image_load_base_ + nt->OptionalHeader.AddressOfEntryPoint;
 	free(stat);
 	_KeCloseFile(file);
+	_KePrint("Finished loading %s \n", filename);
 	return 0;
 }
 
@@ -154,6 +163,7 @@ int main(int argc, char* argv[]) {
 	/* load the main object */
 	char* filename = argv[0];
 	XELoaderObject* mainobj = XELdrCreateObj(filename);
+
 	XELdrStartProc(mainobj->objname, mainobj);
 
 	XELdrLoadAllObject();

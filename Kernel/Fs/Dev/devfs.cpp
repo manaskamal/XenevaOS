@@ -186,6 +186,8 @@ void AuDevFSList(AuVFSNode* fs) {
 			mode = "Device";
 		else if (node_->flags & FS_FLAG_DIRECTORY)
 			mode = "Directory";
+		else if (node_->flags & FS_FLAG_PIPE)
+			mode = "Pipe";
 		else
 			mode = "Unknown";
 		SeTextOut("\%s mode - %s \r\n", node_->filename, mode);

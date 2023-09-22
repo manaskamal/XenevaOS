@@ -78,7 +78,7 @@ typedef struct __VFS_NODE__ {
 	uint32_t parent_block;
 	uint64_t first_block;
 	uint64_t current;
-	uint8_t  flags;
+	uint16_t  flags;
 	uint8_t status;
 	void* device;
 

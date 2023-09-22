@@ -892,12 +892,12 @@ $LN7@AuProcessE:
 ; 394  : 			if (file->flags & FS_FLAG_DEVICE || file->flags & FS_FLAG_FILE_SYSTEM)
 
 	mov	rax, QWORD PTR file$3[rsp]
-	movzx	eax, BYTE PTR [rax+61]
+	movzx	eax, WORD PTR [rax+61]
 	and	eax, 8
 	test	eax, eax
 	jne	SHORT $LN2@AuProcessE
 	mov	rax, QWORD PTR file$3[rsp]
-	movzx	eax, BYTE PTR [rax+61]
+	movzx	eax, WORD PTR [rax+61]
 	and	eax, 64					; 00000040H
 	test	eax, eax
 	je	SHORT $LN3@AuProcessE
@@ -911,7 +911,7 @@ $LN3@AuProcessE:
 ; 396  : 			if (file->flags & FS_FLAG_GENERAL)  {
 
 	mov	rax, QWORD PTR file$3[rsp]
-	movzx	eax, BYTE PTR [rax+61]
+	movzx	eax, WORD PTR [rax+61]
 	and	eax, 4
 	test	eax, eax
 	je	SHORT $LN1@AuProcessE

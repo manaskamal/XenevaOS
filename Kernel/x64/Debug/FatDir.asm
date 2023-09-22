@@ -31,7 +31,7 @@ EXTRN	memset:PROC
 EXTRN	memcpy:PROC
 pdata	SEGMENT
 $pdata$?FatCreateDir@@YAPEAU__VFS_NODE__@@PEAU1@PEAD@Z DD imagerel $LN28
-	DD	imagerel $LN28+1920
+	DD	imagerel $LN28+1921
 	DD	imagerel $unwind$?FatCreateDir@@YAPEAU__VFS_NODE__@@PEAU1@PEAD@Z
 $pdata$?FatRemoveDir@@YAHPEAU__VFS_NODE__@@0@Z DD imagerel $LN17
 	DD	imagerel $LN17+503
@@ -92,7 +92,7 @@ $LN13@FatRemoveD:
 ; 203  : 	FatFS* _fs = (FatFS*)fsys->device;
 
 	mov	rax, QWORD PTR fsys$[rsp]
-	mov	rax, QWORD PTR [rax+63]
+	mov	rax, QWORD PTR [rax+64]
 	mov	QWORD PTR _fs$[rsp], rax
 
 ; 204  : 
@@ -358,7 +358,7 @@ $LN25@FatCreateD:
 ; 49   : 	FatFS* _fs = (FatFS*)fsys->device;
 
 	mov	rax, QWORD PTR fsys$[rsp]
-	mov	rax, QWORD PTR [rax+63]
+	mov	rax, QWORD PTR [rax+64]
 	mov	QWORD PTR _fs$[rsp], rax
 
 ; 50   : 
@@ -408,13 +408,13 @@ $LN23@FatCreateD:
 ; 61   : 
 ; 62   : 	AuVFSNode* file = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
 
-	mov	ecx, 159				; 0000009fH
+	mov	ecx, 160				; 000000a0H
 	call	kmalloc
 	mov	QWORD PTR file$[rsp], rax
 
 ; 63   : 	memset(file, 0, sizeof(AuVFSNode));
 
-	mov	r8d, 159				; 0000009fH
+	mov	r8d, 160				; 000000a0H
 	xor	edx, edx
 	mov	rcx, QWORD PTR file$[rsp]
 	call	memset
@@ -1041,7 +1041,7 @@ $LN2@FatCreateD:
 
 	mov	rax, QWORD PTR file$[rsp]
 	mov	rcx, QWORD PTR fsys$[rsp]
-	mov	QWORD PTR [rax+63], rcx
+	mov	QWORD PTR [rax+64], rcx
 
 ; 171  : 					file->first_block = file->current;
 
@@ -1059,10 +1059,10 @@ $LN2@FatCreateD:
 ; 173  : 					file->flags |= FS_FLAG_DIRECTORY;
 
 	mov	rax, QWORD PTR file$[rsp]
-	movzx	eax, BYTE PTR [rax+61]
+	movzx	eax, WORD PTR [rax+61]
 	or	eax, 2
 	mov	rcx, QWORD PTR file$[rsp]
-	mov	BYTE PTR [rcx+61], al
+	mov	WORD PTR [rcx+61], ax
 
 ; 174  : 					kfree(parent);
 

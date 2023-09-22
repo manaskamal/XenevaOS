@@ -22,10 +22,10 @@ EXTRN	strcpy:PROC
 EXTRN	memset:PROC
 pdata	SEGMENT
 $pdata$?AuCreatePipe@@YAPEAU__VFS_NODE__@@PEAD_K@Z DD imagerel $LN3
-	DD	imagerel $LN3+295
+	DD	imagerel $LN3+290
 	DD	imagerel $unwind$?AuCreatePipe@@YAPEAU__VFS_NODE__@@PEAD_K@Z
-$pdata$?AuPipeRead@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z DD imagerel $LN8
-	DD	imagerel $LN8+186
+$pdata$?AuPipeRead@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z DD imagerel $LN9
+	DD	imagerel $LN9+190
 	DD	imagerel $unwind$?AuPipeRead@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z
 $pdata$?AuPipeWrite@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z DD imagerel $LN8
 	DD	imagerel $LN8+189
@@ -57,20 +57,20 @@ fs$ = 64
 file$ = 72
 ?AuPipeClose@@YAHPEAU__VFS_NODE__@@0@Z PROC		; AuPipeClose
 
-; 139  : int AuPipeClose(AuVFSNode* fs, AuVFSNode* file) {
+; 143  : int AuPipeClose(AuVFSNode* fs, AuVFSNode* file) {
 
 $LN4:
 	mov	QWORD PTR [rsp+16], rdx
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 56					; 00000038H
 
-; 140  : 	AuPipe* pipe = (AuPipe*)fs->device;
+; 144  : 	AuPipe* pipe = (AuPipe*)fs->device;
 
 	mov	rax, QWORD PTR fs$[rsp]
-	mov	rax, QWORD PTR [rax+63]
+	mov	rax, QWORD PTR [rax+64]
 	mov	QWORD PTR pipe$[rsp], rax
 
-; 141  : 	pipe->refcount--;
+; 145  : 	pipe->refcount--;
 
 	mov	rax, QWORD PTR pipe$[rsp]
 	mov	rax, QWORD PTR [rax+32]
@@ -78,47 +78,47 @@ $LN4:
 	mov	rcx, QWORD PTR pipe$[rsp]
 	mov	QWORD PTR [rcx+32], rax
 
-; 142  : 	if (pipe->refcount == 0) {
+; 146  : 	if (pipe->refcount == 0) {
 
 	mov	rax, QWORD PTR pipe$[rsp]
 	cmp	QWORD PTR [rax+32], 0
 	jne	SHORT $LN1@AuPipeClos
 
-; 143  : 		kfree(pipe->buffer);
+; 147  : 		kfree(pipe->buffer);
 
 	mov	rax, QWORD PTR pipe$[rsp]
 	mov	rcx, QWORD PTR [rax]
 	call	kfree
 
-; 144  : 		kfree(pipe->readers_wait_queue);
+; 148  : 		kfree(pipe->readers_wait_queue);
 
 	mov	rax, QWORD PTR pipe$[rsp]
 	mov	rcx, QWORD PTR [rax+40]
 	call	kfree
 
-; 145  : 		kfree(pipe->writers_wait_queue);
+; 149  : 		kfree(pipe->writers_wait_queue);
 
 	mov	rax, QWORD PTR pipe$[rsp]
 	mov	rcx, QWORD PTR [rax+48]
 	call	kfree
 
-; 146  : 		kfree(pipe);
+; 150  : 		kfree(pipe);
 
 	mov	rcx, QWORD PTR pipe$[rsp]
 	call	kfree
 
-; 147  : 		fs->device = NULL;
+; 151  : 		fs->device = NULL;
 
 	mov	rax, QWORD PTR fs$[rsp]
-	mov	QWORD PTR [rax+63], 0
+	mov	QWORD PTR [rax+64], 0
 $LN1@AuPipeClos:
 
-; 148  : 	}
-; 149  : 	return 1;
+; 152  : 	}
+; 153  : 	return 1;
 
 	mov	eax, 1
 
-; 150  : }
+; 154  : }
 
 	add	rsp, 56					; 00000038H
 	ret	0
@@ -132,20 +132,20 @@ node$ = 32
 path$ = 40
 ?AuPipeOpen@@YAPEAU__VFS_NODE__@@PEAU1@PEAD@Z PROC	; AuPipeOpen
 
-; 128  : AuVFSNode* AuPipeOpen(AuVFSNode *node, char* path){
+; 132  : AuVFSNode* AuPipeOpen(AuVFSNode *node, char* path){
 
 $LN3:
 	mov	QWORD PTR [rsp+16], rdx
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 24
 
-; 129  : 	AuPipe* pipe = (AuPipe*)node->device;
+; 133  : 	AuPipe* pipe = (AuPipe*)node->device;
 
 	mov	rax, QWORD PTR node$[rsp]
-	mov	rax, QWORD PTR [rax+63]
+	mov	rax, QWORD PTR [rax+64]
 	mov	QWORD PTR pipe$[rsp], rax
 
-; 130  : 	pipe->refcount++;
+; 134  : 	pipe->refcount++;
 
 	mov	rax, QWORD PTR pipe$[rsp]
 	mov	rax, QWORD PTR [rax+32]
@@ -153,11 +153,11 @@ $LN3:
 	mov	rcx, QWORD PTR pipe$[rsp]
 	mov	QWORD PTR [rcx+32], rax
 
-; 131  : 	return node;
+; 135  : 	return node;
 
 	mov	rax, QWORD PTR node$[rsp]
 
-; 132  : }
+; 136  : }
 
 	add	rsp, 24
 	ret	0
@@ -175,7 +175,7 @@ buffer$ = 96
 length$ = 104
 ?AuPipeWrite@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z PROC	; AuPipeWrite
 
-; 110  : size_t AuPipeWrite(AuVFSNode *fs, AuVFSNode *file, uint64_t* buffer, uint32_t length) {
+; 114  : size_t AuPipeWrite(AuVFSNode *fs, AuVFSNode *file, uint64_t* buffer, uint32_t length) {
 
 $LN8:
 	mov	DWORD PTR [rsp+32], r9d
@@ -184,30 +184,30 @@ $LN8:
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 72					; 00000048H
 
-; 111  : 	uint8_t* aligned_buff = (uint8_t*)buffer;
+; 115  : 	uint8_t* aligned_buff = (uint8_t*)buffer;
 
 	mov	rax, QWORD PTR buffer$[rsp]
 	mov	QWORD PTR aligned_buff$[rsp], rax
 
-; 112  : 	AuPipe* pipe = (AuPipe*)fs->device;
+; 116  : 	AuPipe* pipe = (AuPipe*)fs->device;
 
 	mov	rax, QWORD PTR fs$[rsp]
-	mov	rax, QWORD PTR [rax+63]
+	mov	rax, QWORD PTR [rax+64]
 	mov	QWORD PTR pipe$[rsp], rax
 
-; 113  : 
-; 114  : 	size_t written = 0;
+; 117  : 
+; 118  : 	size_t written = 0;
 
 	mov	QWORD PTR written$[rsp], 0
 $LN5@AuPipeWrit:
 
-; 115  : 	while (written < length) {
+; 119  : 	while (written < length) {
 
 	mov	eax, DWORD PTR length$[rsp]
 	cmp	QWORD PTR written$[rsp], rax
 	jae	SHORT $LN4@AuPipeWrit
 
-; 116  : 		if (AuPipeGetAvailableBytes(pipe) > length) {
+; 120  : 		if (AuPipeGetAvailableBytes(pipe) > length) {
 
 	mov	rcx, QWORD PTR pipe$[rsp]
 	call	?AuPipeGetAvailableBytes@@YA_KPEAU_pipe_@@@Z ; AuPipeGetAvailableBytes
@@ -216,7 +216,7 @@ $LN5@AuPipeWrit:
 	jbe	SHORT $LN3@AuPipeWrit
 $LN2@AuPipeWrit:
 
-; 117  : 			while (AuPipeGetAvailableBytes(pipe) > 0 && written < length) {
+; 121  : 			while (AuPipeGetAvailableBytes(pipe) > 0 && written < length) {
 
 	mov	rcx, QWORD PTR pipe$[rsp]
 	call	?AuPipeGetAvailableBytes@@YA_KPEAU_pipe_@@@Z ; AuPipeGetAvailableBytes
@@ -226,7 +226,7 @@ $LN2@AuPipeWrit:
 	cmp	QWORD PTR written$[rsp], rax
 	jae	SHORT $LN1@AuPipeWrit
 
-; 118  : 				pipe->buffer[pipe->write_ptr] = aligned_buff[written];
+; 122  : 				pipe->buffer[pipe->write_ptr] = aligned_buff[written];
 
 	mov	rax, QWORD PTR pipe$[rsp]
 	mov	rax, QWORD PTR [rax+8]
@@ -239,35 +239,35 @@ $LN2@AuPipeWrit:
 	movzx	edx, BYTE PTR [rdx]
 	mov	BYTE PTR [rcx+rax], dl
 
-; 119  : 				AuPipeIncrementWrite(pipe);
+; 123  : 				AuPipeIncrementWrite(pipe);
 
 	mov	rcx, QWORD PTR pipe$[rsp]
 	call	?AuPipeIncrementWrite@@YAXPEAU_pipe_@@@Z ; AuPipeIncrementWrite
 
-; 120  : 				written++;
+; 124  : 				written++;
 
 	mov	rax, QWORD PTR written$[rsp]
 	inc	rax
 	mov	QWORD PTR written$[rsp], rax
 
-; 121  : 			}
+; 125  : 			}
 
 	jmp	SHORT $LN2@AuPipeWrit
 $LN1@AuPipeWrit:
 $LN3@AuPipeWrit:
 
-; 122  : 		}
-; 123  : 	}
+; 126  : 		}
+; 127  : 	}
 
 	jmp	SHORT $LN5@AuPipeWrit
 $LN4@AuPipeWrit:
 
-; 124  : 	
-; 125  : 	return written;
+; 128  : 	
+; 129  : 	return written;
 
 	mov	rax, QWORD PTR written$[rsp]
 
-; 126  : }
+; 130  : }
 
 	add	rsp, 72					; 00000048H
 	ret	0
@@ -285,57 +285,57 @@ buffer$ = 96
 length$ = 104
 ?AuPipeRead@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z PROC	; AuPipeRead
 
-; 85   : size_t AuPipeRead(AuVFSNode *fs, AuVFSNode *file, uint64_t* buffer, uint32_t length) {
+; 86   : size_t AuPipeRead(AuVFSNode *fs, AuVFSNode *file, uint64_t* buffer, uint32_t length) {
 
-$LN8:
+$LN9:
 	mov	DWORD PTR [rsp+32], r9d
 	mov	QWORD PTR [rsp+24], r8
 	mov	QWORD PTR [rsp+16], rdx
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 72					; 00000048H
 
-; 86   : 	uint8_t* aligned_buff = (uint8_t*)buffer;
+; 87   : 	uint8_t* aligned_buff = (uint8_t*)buffer;
 
 	mov	rax, QWORD PTR buffer$[rsp]
 	mov	QWORD PTR aligned_buff$[rsp], rax
 
-; 87   : 	AuPipe *pipe = (AuPipe*)fs->device;
+; 88   : 	AuPipe *pipe = (AuPipe*)fs->device;
 
 	mov	rax, QWORD PTR fs$[rsp]
-	mov	rax, QWORD PTR [rax+63]
+	mov	rax, QWORD PTR [rax+64]
 	mov	QWORD PTR pipe$[rsp], rax
 
-; 88   : 
-; 89   : 	size_t collected = 0;
+; 89   : 
+; 90   : 	size_t collected = 0;
 
 	mov	QWORD PTR collected$[rsp], 0
-$LN5@AuPipeRead:
+$LN6@AuPipeRead:
 
-; 90   : 	while (collected == 0) {
+; 91   : 	while (collected == 0) {
 
 	cmp	QWORD PTR collected$[rsp], 0
-	jne	SHORT $LN4@AuPipeRead
+	jne	SHORT $LN5@AuPipeRead
 
-; 91   : 		if (AuPipeUnread(pipe) >= length) {
+; 92   : 		if (AuPipeUnread(pipe) >= length) {
 
 	mov	rcx, QWORD PTR pipe$[rsp]
 	call	?AuPipeUnread@@YA_KPEAU_pipe_@@@Z	; AuPipeUnread
 	mov	ecx, DWORD PTR length$[rsp]
 	cmp	rax, rcx
-	jb	SHORT $LN3@AuPipeRead
-$LN2@AuPipeRead:
+	jb	SHORT $LN4@AuPipeRead
+$LN3@AuPipeRead:
 
-; 92   : 			while (AuPipeUnread(pipe) > 0 && collected < length) {
+; 93   : 			while (AuPipeUnread(pipe) > 0 && collected < length) {
 
 	mov	rcx, QWORD PTR pipe$[rsp]
 	call	?AuPipeUnread@@YA_KPEAU_pipe_@@@Z	; AuPipeUnread
 	test	rax, rax
-	jbe	SHORT $LN1@AuPipeRead
+	jbe	SHORT $LN2@AuPipeRead
 	mov	eax, DWORD PTR length$[rsp]
 	cmp	QWORD PTR collected$[rsp], rax
-	jae	SHORT $LN1@AuPipeRead
+	jae	SHORT $LN2@AuPipeRead
 
-; 93   : 				aligned_buff[collected] = pipe->buffer[pipe->read_ptr];
+; 94   : 				aligned_buff[collected] = pipe->buffer[pipe->read_ptr];
 
 	mov	rax, QWORD PTR pipe$[rsp]
 	mov	rax, QWORD PTR [rax+16]
@@ -348,35 +348,45 @@ $LN2@AuPipeRead:
 	movzx	eax, BYTE PTR [rcx+rax]
 	mov	BYTE PTR [rdx], al
 
-; 94   : 				AuPipeIncrementRead(pipe);
+; 95   : 				AuPipeIncrementRead(pipe);
 
 	mov	rcx, QWORD PTR pipe$[rsp]
 	call	?AuPipeIncrementRead@@YAXPEAU_pipe_@@@Z	; AuPipeIncrementRead
 
-; 95   : 				collected++;
+; 96   : 				collected++;
 
 	mov	rax, QWORD PTR collected$[rsp]
 	inc	rax
 	mov	QWORD PTR collected$[rsp], rax
 
-; 96   : 			}
+; 97   : 			}
 
-	jmp	SHORT $LN2@AuPipeRead
-$LN1@AuPipeRead:
-$LN3@AuPipeRead:
+	jmp	SHORT $LN3@AuPipeRead
+$LN2@AuPipeRead:
 
-; 97   : 		}
-; 98   : 	}
+; 98   : 			
+; 99   : 		}
+; 100  : 		else 
 
-	jmp	SHORT $LN5@AuPipeRead
+	jmp	SHORT $LN1@AuPipeRead
 $LN4@AuPipeRead:
 
-; 99   : 
-; 100  : 	return collected;
+; 101  : 			break;
+
+	jmp	SHORT $LN5@AuPipeRead
+$LN1@AuPipeRead:
+
+; 102  : 	}
+
+	jmp	SHORT $LN6@AuPipeRead
+$LN5@AuPipeRead:
+
+; 103  : 
+; 104  : 	return collected;
 
 	mov	rax, QWORD PTR collected$[rsp]
 
-; 101  : }
+; 105  : }
 
 	add	rsp, 72					; 00000048H
 	ret	0
@@ -389,12 +399,12 @@ pipe$ = 8
 amount$ = 16
 ?AuPipeIncrementWriteAmount@@YAXPEAU_pipe_@@_K@Z PROC	; AuPipeIncrementWriteAmount
 
-; 74   : void AuPipeIncrementWriteAmount(AuPipe* pipe, size_t amount) {
+; 75   : void AuPipeIncrementWriteAmount(AuPipe* pipe, size_t amount) {
 
 	mov	QWORD PTR [rsp+16], rdx
 	mov	QWORD PTR [rsp+8], rcx
 
-; 75   : 	pipe->write_ptr = (pipe->write_ptr + amount) & pipe->size;
+; 76   : 	pipe->write_ptr = (pipe->write_ptr + amount) & pipe->size;
 
 	mov	rax, QWORD PTR pipe$[rsp]
 	mov	rax, QWORD PTR [rax+8]
@@ -404,7 +414,7 @@ amount$ = 16
 	mov	rcx, QWORD PTR pipe$[rsp]
 	mov	QWORD PTR [rcx+8], rax
 
-; 76   : }
+; 77   : }
 
 	ret	0
 ?AuPipeIncrementWriteAmount@@YAXPEAU_pipe_@@_K@Z ENDP	; AuPipeIncrementWriteAmount
@@ -415,11 +425,11 @@ _TEXT	SEGMENT
 pipe$ = 8
 ?AuPipeIncrementWrite@@YAXPEAU_pipe_@@@Z PROC		; AuPipeIncrementWrite
 
-; 62   : void AuPipeIncrementWrite(AuPipe* pipe) {
+; 63   : void AuPipeIncrementWrite(AuPipe* pipe) {
 
 	mov	QWORD PTR [rsp+8], rcx
 
-; 63   : 	pipe->write_ptr++;
+; 64   : 	pipe->write_ptr++;
 
 	mov	rax, QWORD PTR pipe$[rsp]
 	mov	rax, QWORD PTR [rax+8]
@@ -427,7 +437,7 @@ pipe$ = 8
 	mov	rcx, QWORD PTR pipe$[rsp]
 	mov	QWORD PTR [rcx+8], rax
 
-; 64   : 	if (pipe->write_ptr == pipe->size)
+; 65   : 	if (pipe->write_ptr == pipe->size)
 
 	mov	rax, QWORD PTR pipe$[rsp]
 	mov	rcx, QWORD PTR pipe$[rsp]
@@ -435,13 +445,13 @@ pipe$ = 8
 	cmp	QWORD PTR [rax+8], rcx
 	jne	SHORT $LN1@AuPipeIncr
 
-; 65   : 		pipe->write_ptr = 0;
+; 66   : 		pipe->write_ptr = 0;
 
 	mov	rax, QWORD PTR pipe$[rsp]
 	mov	QWORD PTR [rax+8], 0
 $LN1@AuPipeIncr:
 
-; 66   : }
+; 67   : }
 
 	ret	0
 ?AuPipeIncrementWrite@@YAXPEAU_pipe_@@@Z ENDP		; AuPipeIncrementWrite
@@ -452,11 +462,11 @@ _TEXT	SEGMENT
 pipe$ = 8
 ?AuPipeIncrementRead@@YAXPEAU_pipe_@@@Z PROC		; AuPipeIncrementRead
 
-; 56   : void AuPipeIncrementRead(AuPipe* pipe) {
+; 57   : void AuPipeIncrementRead(AuPipe* pipe) {
 
 	mov	QWORD PTR [rsp+8], rcx
 
-; 57   : 	pipe->read_ptr++;
+; 58   : 	pipe->read_ptr++;
 
 	mov	rax, QWORD PTR pipe$[rsp]
 	mov	rax, QWORD PTR [rax+16]
@@ -464,7 +474,7 @@ pipe$ = 8
 	mov	rcx, QWORD PTR pipe$[rsp]
 	mov	QWORD PTR [rcx+16], rax
 
-; 58   : 	if (pipe->read_ptr == pipe->size)
+; 59   : 	if (pipe->read_ptr == pipe->size)
 
 	mov	rax, QWORD PTR pipe$[rsp]
 	mov	rcx, QWORD PTR pipe$[rsp]
@@ -472,13 +482,13 @@ pipe$ = 8
 	cmp	QWORD PTR [rax+16], rcx
 	jne	SHORT $LN1@AuPipeIncr
 
-; 59   : 		pipe->read_ptr = 0;
+; 60   : 		pipe->read_ptr = 0;
 
 	mov	rax, QWORD PTR pipe$[rsp]
 	mov	QWORD PTR [rax+16], 0
 $LN1@AuPipeIncr:
 
-; 60   : }
+; 61   : }
 
 	ret	0
 ?AuPipeIncrementRead@@YAXPEAU_pipe_@@@Z ENDP		; AuPipeIncrementRead
@@ -489,11 +499,11 @@ _TEXT	SEGMENT
 pipe$ = 8
 ?AuPipeGetAvailableBytes@@YA_KPEAU_pipe_@@@Z PROC	; AuPipeGetAvailableBytes
 
-; 45   : size_t AuPipeGetAvailableBytes(AuPipe *pipe) {
+; 46   : size_t AuPipeGetAvailableBytes(AuPipe *pipe) {
 
 	mov	QWORD PTR [rsp+8], rcx
 
-; 46   : 	if (pipe->read_ptr == pipe->write_ptr) 
+; 47   : 	if (pipe->read_ptr == pipe->write_ptr) 
 
 	mov	rax, QWORD PTR pipe$[rsp]
 	mov	rcx, QWORD PTR pipe$[rsp]
@@ -501,7 +511,7 @@ pipe$ = 8
 	cmp	QWORD PTR [rax+16], rcx
 	jne	SHORT $LN3@AuPipeGetA
 
-; 47   : 		return pipe->size - 1;
+; 48   : 		return pipe->size - 1;
 
 	mov	rax, QWORD PTR pipe$[rsp]
 	mov	rax, QWORD PTR [rax+24]
@@ -509,8 +519,8 @@ pipe$ = 8
 	jmp	SHORT $LN4@AuPipeGetA
 $LN3@AuPipeGetA:
 
-; 48   : 
-; 49   : 	if (pipe->read_ptr > pipe->write_ptr)
+; 49   : 
+; 50   : 	if (pipe->read_ptr > pipe->write_ptr)
 
 	mov	rax, QWORD PTR pipe$[rsp]
 	mov	rcx, QWORD PTR pipe$[rsp]
@@ -518,7 +528,7 @@ $LN3@AuPipeGetA:
 	cmp	QWORD PTR [rax+16], rcx
 	jbe	SHORT $LN2@AuPipeGetA
 
-; 50   : 		return pipe->read_ptr - pipe->write_ptr - 1;
+; 51   : 		return pipe->read_ptr - pipe->write_ptr - 1;
 
 	mov	rax, QWORD PTR pipe$[rsp]
 	mov	rcx, QWORD PTR pipe$[rsp]
@@ -528,12 +538,12 @@ $LN3@AuPipeGetA:
 	dec	rax
 	jmp	SHORT $LN4@AuPipeGetA
 
-; 51   : 	else
+; 52   : 	else
 
 	jmp	SHORT $LN1@AuPipeGetA
 $LN2@AuPipeGetA:
 
-; 52   : 		return (pipe->size - pipe->write_ptr) + pipe->read_ptr - 1;
+; 53   : 		return (pipe->size - pipe->write_ptr) + pipe->read_ptr - 1;
 
 	mov	rax, QWORD PTR pipe$[rsp]
 	mov	rcx, QWORD PTR pipe$[rsp]
@@ -546,7 +556,7 @@ $LN2@AuPipeGetA:
 $LN1@AuPipeGetA:
 $LN4@AuPipeGetA:
 
-; 53   : }
+; 54   : }
 
 	ret	0
 ?AuPipeGetAvailableBytes@@YA_KPEAU_pipe_@@@Z ENDP	; AuPipeGetAvailableBytes
@@ -560,128 +570,126 @@ name$ = 64
 sz$ = 72
 ?AuCreatePipe@@YAPEAU__VFS_NODE__@@PEAD_K@Z PROC	; AuCreatePipe
 
-; 157  : AuVFSNode* AuCreatePipe(char* name, size_t sz) {
+; 161  : AuVFSNode* AuCreatePipe(char* name, size_t sz) {
 
 $LN3:
 	mov	QWORD PTR [rsp+16], rdx
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 56					; 00000038H
 
-; 158  : 	AuVFSNode* node = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
+; 162  : 	AuVFSNode* node = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
 
-	mov	ecx, 159				; 0000009fH
+	mov	ecx, 160				; 000000a0H
 	call	kmalloc
 	mov	QWORD PTR node$[rsp], rax
 
-; 159  : 	AuPipe *pipe = (AuPipe*)kmalloc(sizeof(AuPipe));
+; 163  : 	AuPipe *pipe = (AuPipe*)kmalloc(sizeof(AuPipe));
 
 	mov	ecx, 56					; 00000038H
 	call	kmalloc
 	mov	QWORD PTR pipe$[rsp], rax
 
-; 160  : 	memset(node, 0, sizeof(AuVFSNode));
+; 164  : 	memset(node, 0, sizeof(AuVFSNode));
 
-	mov	r8d, 159				; 0000009fH
+	mov	r8d, 160				; 000000a0H
 	xor	edx, edx
 	mov	rcx, QWORD PTR node$[rsp]
 	call	memset
 
-; 161  : 	memset(pipe, 0, sizeof(AuPipe));
+; 165  : 	memset(pipe, 0, sizeof(AuPipe));
 
 	mov	r8d, 56					; 00000038H
 	xor	edx, edx
 	mov	rcx, QWORD PTR pipe$[rsp]
 	call	memset
 
-; 162  : 
-; 163  : 	pipe->buffer = (uint8_t*)kmalloc(sz);
+; 166  : 
+; 167  : 	pipe->buffer = (uint8_t*)kmalloc(sz);
 
 	mov	ecx, DWORD PTR sz$[rsp]
 	call	kmalloc
 	mov	rcx, QWORD PTR pipe$[rsp]
 	mov	QWORD PTR [rcx], rax
 
-; 164  : 	pipe->readers_wait_queue = initialize_list();
+; 168  : 	pipe->readers_wait_queue = initialize_list();
 
 	call	initialize_list
 	mov	rcx, QWORD PTR pipe$[rsp]
 	mov	QWORD PTR [rcx+40], rax
 
-; 165  : 	pipe->writers_wait_queue = initialize_list();
+; 169  : 	pipe->writers_wait_queue = initialize_list();
 
 	call	initialize_list
 	mov	rcx, QWORD PTR pipe$[rsp]
 	mov	QWORD PTR [rcx+48], rax
 
-; 166  : 	pipe->size = sz;
+; 170  : 	pipe->size = sz;
 
 	mov	rax, QWORD PTR pipe$[rsp]
 	mov	rcx, QWORD PTR sz$[rsp]
 	mov	QWORD PTR [rax+24], rcx
 
-; 167  : 
-; 168  : 	strcpy(node->filename, name);
+; 171  : 
+; 172  : 	strcpy(node->filename, name);
 
 	mov	rax, QWORD PTR node$[rsp]
 	mov	rdx, QWORD PTR name$[rsp]
 	mov	rcx, rax
 	call	strcpy
 
-; 169  : 	node->flags |= FS_FLAG_DEVICE | FS_FLAG_PIPE;
+; 173  : 	node->flags = FS_FLAG_DEVICE | FS_FLAG_PIPE;
 
-	mov	rax, QWORD PTR node$[rsp]
-	movzx	eax, BYTE PTR [rax+61]
-	or	eax, 136				; 00000088H
+	mov	eax, 136				; 00000088H
 	mov	rcx, QWORD PTR node$[rsp]
-	mov	BYTE PTR [rcx+61], al
+	mov	WORD PTR [rcx+61], ax
 
-; 170  : 	node->size = sz;
+; 174  : 	node->size = sz;
 
 	mov	rax, QWORD PTR node$[rsp]
 	mov	ecx, DWORD PTR sz$[rsp]
 	mov	DWORD PTR [rax+32], ecx
 
-; 171  : 	node->device = pipe;
+; 175  : 	node->device = pipe;
 
 	mov	rax, QWORD PTR node$[rsp]
 	mov	rcx, QWORD PTR pipe$[rsp]
-	mov	QWORD PTR [rax+63], rcx
+	mov	QWORD PTR [rax+64], rcx
 
-; 172  : 	node->read = AuPipeRead;
+; 176  : 	node->read = AuPipeRead;
 
 	mov	rax, QWORD PTR node$[rsp]
 	lea	rcx, OFFSET FLAT:?AuPipeRead@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z ; AuPipeRead
-	mov	QWORD PTR [rax+79], rcx
+	mov	QWORD PTR [rax+80], rcx
 
-; 173  : 	node->write = AuPipeWrite;
+; 177  : 	node->write = AuPipeWrite;
 
 	mov	rax, QWORD PTR node$[rsp]
 	lea	rcx, OFFSET FLAT:?AuPipeWrite@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z ; AuPipeWrite
-	mov	QWORD PTR [rax+87], rcx
+	mov	QWORD PTR [rax+88], rcx
 
-; 174  : 	node->open = AuPipeOpen;
+; 178  : 	node->open = AuPipeOpen;
 
 	mov	rax, QWORD PTR node$[rsp]
 	lea	rcx, OFFSET FLAT:?AuPipeOpen@@YAPEAU__VFS_NODE__@@PEAU1@PEAD@Z ; AuPipeOpen
-	mov	QWORD PTR [rax+71], rcx
+	mov	QWORD PTR [rax+72], rcx
 
-; 175  : 	node->close = AuPipeClose;
+; 179  : 	node->close = AuPipeClose;
 
 	mov	rax, QWORD PTR node$[rsp]
 	lea	rcx, OFFSET FLAT:?AuPipeClose@@YAHPEAU__VFS_NODE__@@0@Z ; AuPipeClose
-	mov	QWORD PTR [rax+127], rcx
+	mov	QWORD PTR [rax+128], rcx
 
-; 176  : 	node->iocontrol = NULL;
-
-	mov	rax, QWORD PTR node$[rsp]
-	mov	QWORD PTR [rax+151], 0
-
-; 177  : 	
-; 178  : 	return node;
+; 180  : 	node->iocontrol = NULL;
 
 	mov	rax, QWORD PTR node$[rsp]
+	mov	QWORD PTR [rax+152], 0
 
-; 179  : }
+; 181  : 	
+; 182  : 	return node;
+
+	mov	rax, QWORD PTR node$[rsp]
+
+; 183  : }
 
 	add	rsp, 56					; 00000038H
 	ret	0
@@ -693,11 +701,11 @@ _TEXT	SEGMENT
 pipe$ = 8
 ?AuPipeUnread@@YA_KPEAU_pipe_@@@Z PROC			; AuPipeUnread
 
-; 36   : size_t AuPipeUnread(AuPipe* pipe) {
+; 37   : size_t AuPipeUnread(AuPipe* pipe) {
 
 	mov	QWORD PTR [rsp+8], rcx
 
-; 37   : 	if (pipe->read_ptr == pipe->write_ptr)
+; 38   : 	if (pipe->read_ptr == pipe->write_ptr)
 
 	mov	rax, QWORD PTR pipe$[rsp]
 	mov	rcx, QWORD PTR pipe$[rsp]
@@ -705,13 +713,13 @@ pipe$ = 8
 	cmp	QWORD PTR [rax+16], rcx
 	jne	SHORT $LN3@AuPipeUnre
 
-; 38   : 		return 0; //0 bytes difference
+; 39   : 		return 0; //0 bytes difference
 
 	xor	eax, eax
 	jmp	SHORT $LN4@AuPipeUnre
 $LN3@AuPipeUnre:
 
-; 39   : 	if (pipe->read_ptr > pipe->write_ptr)
+; 40   : 	if (pipe->read_ptr > pipe->write_ptr)
 
 	mov	rax, QWORD PTR pipe$[rsp]
 	mov	rcx, QWORD PTR pipe$[rsp]
@@ -719,7 +727,7 @@ $LN3@AuPipeUnre:
 	cmp	QWORD PTR [rax+16], rcx
 	jbe	SHORT $LN2@AuPipeUnre
 
-; 40   : 		return (pipe->size - pipe->read_ptr) + pipe->write_ptr;
+; 41   : 		return (pipe->size - pipe->read_ptr) + pipe->write_ptr;
 
 	mov	rax, QWORD PTR pipe$[rsp]
 	mov	rcx, QWORD PTR pipe$[rsp]
@@ -730,12 +738,12 @@ $LN3@AuPipeUnre:
 	add	rax, QWORD PTR [rcx+8]
 	jmp	SHORT $LN4@AuPipeUnre
 
-; 41   : 	else
+; 42   : 	else
 
 	jmp	SHORT $LN1@AuPipeUnre
 $LN2@AuPipeUnre:
 
-; 42   : 		return (pipe->write_ptr - pipe->read_ptr);
+; 43   : 		return (pipe->write_ptr - pipe->read_ptr);
 
 	mov	rax, QWORD PTR pipe$[rsp]
 	mov	rcx, QWORD PTR pipe$[rsp]
@@ -745,7 +753,7 @@ $LN2@AuPipeUnre:
 $LN1@AuPipeUnre:
 $LN4@AuPipeUnre:
 
-; 43   : }
+; 44   : }
 
 	ret	0
 ?AuPipeUnread@@YA_KPEAU_pipe_@@@Z ENDP			; AuPipeUnread

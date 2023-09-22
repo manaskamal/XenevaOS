@@ -33,6 +33,7 @@
 #include <stdint.h>
 #include <_xeneva.h>
 
+#define MEMMAP_NO_FILEDESC -1
 /**
 * _KeMemMap -- memory map
 * @param address -- starting address

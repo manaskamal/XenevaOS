@@ -32,6 +32,7 @@
 #include <Fs\vfs.h>
 #include <_null.h>
 #include <string.h>
+#include <Hal\serial.h>
 
 size_t AuPipeUnread(AuPipe* pipe) {
 	if (pipe->read_ptr == pipe->write_ptr)
@@ -94,7 +95,10 @@ size_t AuPipeRead(AuVFSNode *fs, AuVFSNode *file, uint64_t* buffer, uint32_t len
 				AuPipeIncrementRead(pipe);
 				collected++;
 			}
+			
 		}
+		else 
+			break;
 	}
 
 	return collected;
@@ -166,7 +170,7 @@ AuVFSNode* AuCreatePipe(char* name, size_t sz) {
 	pipe->size = sz;
 
 	strcpy(node->filename, name);
-	node->flags |= FS_FLAG_DEVICE | FS_FLAG_PIPE;
+	node->flags = FS_FLAG_DEVICE | FS_FLAG_PIPE;
 	node->size = sz;
 	node->device = pipe;
 	node->read = AuPipeRead;

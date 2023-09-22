@@ -44,10 +44,10 @@ EXTRN	memcpy:PROC
 EXTRN	SeTextOut:PROC
 pdata	SEGMENT
 $pdata$?FatFileGetParent@@YAPEAU__VFS_NODE__@@PEAU1@PEBD@Z DD imagerel $LN17
-	DD	imagerel $LN17+484
+	DD	imagerel $LN17+485
 	DD	imagerel $unwind$?FatFileGetParent@@YAPEAU__VFS_NODE__@@PEAU1@PEBD@Z
 $pdata$?FatCreateFile@@YAPEAU__VFS_NODE__@@PEAU1@PEAD@Z DD imagerel $LN26
-	DD	imagerel $LN26+1294
+	DD	imagerel $LN26+1295
 	DD	imagerel $unwind$?FatCreateFile@@YAPEAU__VFS_NODE__@@PEAU1@PEAD@Z
 $pdata$?FatFileUpdateSize@@YAXPEAU__VFS_NODE__@@0_K@Z DD imagerel $LN15
 	DD	imagerel $LN15+592
@@ -280,7 +280,7 @@ $LN12@FatFileCle:
 ; 414  : 	FatFS* _fs = (FatFS*)fsys->device;
 
 	mov	rax, QWORD PTR fsys$[rsp]
-	mov	rax, QWORD PTR [rax+63]
+	mov	rax, QWORD PTR [rax+64]
 	mov	QWORD PTR _fs$[rsp], rax
 
 ; 415  : 
@@ -566,7 +566,7 @@ $LN4@FatWrite:
 ; 387  : 	FatFS* _fs = (FatFS*)fsys->device;
 
 	mov	rax, QWORD PTR fsys$[rsp]
-	mov	rax, QWORD PTR [rax+63]
+	mov	rax, QWORD PTR [rax+64]
 	mov	QWORD PTR _fs$[rsp], rax
 
 ; 388  : 
@@ -737,7 +737,7 @@ $LN6@FatFileWri:
 ; 328  : 	FatFS* _fs = (FatFS*)fsys->device;
 
 	mov	rax, QWORD PTR fsys$[rsp]
-	mov	rax, QWORD PTR [rax+63]
+	mov	rax, QWORD PTR [rax+64]
 	mov	QWORD PTR _fs$[rsp], rax
 
 ; 329  : 
@@ -992,7 +992,7 @@ $LN11@FatFileUpd:
 ; 270  : 	FatFS *_fs = (FatFS*)fsys->device;
 
 	mov	rax, QWORD PTR fsys$[rsp]
-	mov	rax, QWORD PTR [rax+63]
+	mov	rax, QWORD PTR [rax+64]
 	mov	QWORD PTR _fs$[rsp], rax
 
 ; 271  : 
@@ -1295,7 +1295,7 @@ $LN11@FatFileUpd:
 ; 216  : 	FatFS *_fs = (FatFS*)fsys->device;
 
 	mov	rax, QWORD PTR fsys$[rsp]
-	mov	rax, QWORD PTR [rax+63]
+	mov	rax, QWORD PTR [rax+64]
 	mov	QWORD PTR _fs$[rsp], rax
 
 ; 217  : 
@@ -1562,7 +1562,7 @@ $LN23@FatCreateF:
 ; 106  : 	FatFS* _fs = (FatFS*)fsys->device;
 
 	mov	rax, QWORD PTR fsys$[rsp]
-	mov	rax, QWORD PTR [rax+63]
+	mov	rax, QWORD PTR [rax+64]
 	mov	QWORD PTR _fs$[rsp], rax
 
 ; 107  : 
@@ -1606,13 +1606,13 @@ $LN21@FatCreateF:
 ; 115  : 
 ; 116  : 	AuVFSNode* file = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
 
-	mov	ecx, 159				; 0000009fH
+	mov	ecx, 160				; 000000a0H
 	call	kmalloc
 	mov	QWORD PTR file$[rsp], rax
 
 ; 117  : 	memset(file, 0, sizeof(AuVFSNode));
 
-	mov	r8d, 159				; 0000009fH
+	mov	r8d, 160				; 000000a0H
 	xor	edx, edx
 	mov	rcx, QWORD PTR file$[rsp]
 	call	memset
@@ -2011,20 +2011,20 @@ $LN2@FatCreateF:
 
 	mov	rax, QWORD PTR file$[rsp]
 	mov	rcx, QWORD PTR fsys$[rsp]
-	mov	QWORD PTR [rax+63], rcx
+	mov	QWORD PTR [rax+64], rcx
 
 ; 181  : 					file->flags |= FS_FLAG_GENERAL;
 
 	mov	rax, QWORD PTR file$[rsp]
-	movzx	eax, BYTE PTR [rax+61]
+	movzx	eax, WORD PTR [rax+61]
 	or	eax, 4
 	mov	rcx, QWORD PTR file$[rsp]
-	mov	BYTE PTR [rcx+61], al
+	mov	WORD PTR [rcx+61], ax
 
 ; 182  : 					file->status = FS_STATUS_FOUND;
 
 	mov	rax, QWORD PTR file$[rsp]
-	mov	BYTE PTR [rax+62], 1
+	mov	BYTE PTR [rax+63], 1
 
 ; 183  : 
 ; 184  : 					kfree(parent);
@@ -2138,7 +2138,7 @@ $LN14@FatFileGet:
 ; 50   : 	FatFS* _fs = (FatFS*)fsys->device;
 
 	mov	rax, QWORD PTR fsys$[rsp]
-	mov	rax, QWORD PTR [rax+63]
+	mov	rax, QWORD PTR [rax+64]
 	mov	QWORD PTR _fs$[rsp], rax
 
 ; 51   : 	AuVFSNode* parent = NULL;
@@ -2324,13 +2324,13 @@ $LN12@FatFileGet:
 
 ; 87   : 		retfile = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
 
-	mov	ecx, 159				; 0000009fH
+	mov	ecx, 160				; 000000a0H
 	call	kmalloc
 	mov	QWORD PTR retfile$[rsp], rax
 
 ; 88   : 		memset(retfile, 0, sizeof(AuVFSNode));
 
-	mov	r8d, 159				; 0000009fH
+	mov	r8d, 160				; 000000a0H
 	xor	edx, edx
 	mov	rcx, QWORD PTR retfile$[rsp]
 	call	memset
@@ -2352,10 +2352,10 @@ $LN12@FatFileGet:
 ; 91   : 		retfile->flags |= FS_FLAG_DIRECTORY;
 
 	mov	rax, QWORD PTR retfile$[rsp]
-	movzx	eax, BYTE PTR [rax+61]
+	movzx	eax, WORD PTR [rax+61]
 	or	eax, 2
 	mov	rcx, QWORD PTR retfile$[rsp]
-	mov	BYTE PTR [rcx+61], al
+	mov	WORD PTR [rcx+61], ax
 $LN1@FatFileGet:
 
 ; 92   : 	}

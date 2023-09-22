@@ -60,7 +60,7 @@ EXTRN	strcpy:PROC
 EXTRN	memset:PROC
 pdata	SEGMENT
 $pdata$?AuSoundInitialise@@YAXXZ DD imagerel $LN3
-	DD	imagerel $LN3+341
+	DD	imagerel $LN3+346
 	DD	imagerel $unwind$?AuSoundInitialise@@YAXXZ
 $pdata$AuSoundGetBlock DD imagerel $LN26
 	DD	imagerel $LN26+510
@@ -1076,13 +1076,13 @@ $LN3:
 
 ; 259  : 	AuVFSNode *dsp = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
 
-	mov	ecx, 159				; 0000009fH
+	mov	ecx, 160				; 000000a0H
 	call	kmalloc
 	mov	QWORD PTR dsp$[rsp], rax
 
 ; 260  : 	memset(dsp, 0, sizeof(AuVFSNode));
 
-	mov	r8d, 159				; 0000009fH
+	mov	r8d, 160				; 000000a0H
 	xor	edx, edx
 	mov	rcx, QWORD PTR dsp$[rsp]
 	call	memset
@@ -1096,32 +1096,33 @@ $LN3:
 
 ; 262  : 	dsp->flags =  FS_FLAG_DEVICE;
 
-	mov	rax, QWORD PTR dsp$[rsp]
-	mov	BYTE PTR [rax+61], 8
+	mov	eax, 8
+	mov	rcx, QWORD PTR dsp$[rsp]
+	mov	WORD PTR [rcx+61], ax
 
 ; 263  : 	dsp->device = fsys;
 
 	mov	rax, QWORD PTR dsp$[rsp]
 	mov	rcx, QWORD PTR fsys$[rsp]
-	mov	QWORD PTR [rax+63], rcx
+	mov	QWORD PTR [rax+64], rcx
 
 ; 264  : 	dsp->read = AuSoundRead;
 
 	mov	rax, QWORD PTR dsp$[rsp]
 	lea	rcx, OFFSET FLAT:?AuSoundRead@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z ; AuSoundRead
-	mov	QWORD PTR [rax+79], rcx
+	mov	QWORD PTR [rax+80], rcx
 
 ; 265  : 	dsp->write = AuSoundWrite;
 
 	mov	rax, QWORD PTR dsp$[rsp]
 	lea	rcx, OFFSET FLAT:?AuSoundWrite@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z ; AuSoundWrite
-	mov	QWORD PTR [rax+87], rcx
+	mov	QWORD PTR [rax+88], rcx
 
 ; 266  : 	dsp->iocontrol = AuSoundIOControl;
 
 	mov	rax, QWORD PTR dsp$[rsp]
 	lea	rcx, OFFSET FLAT:?AuSoundIOControl@@YAHPEAU__VFS_NODE__@@HPEAX@Z ; AuSoundIOControl
-	mov	QWORD PTR [rax+151], rcx
+	mov	QWORD PTR [rax+152], rcx
 
 ; 267  : 	AuDevFSAddFile(fsys, "/", dsp);
 

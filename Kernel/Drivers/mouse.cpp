@@ -186,8 +186,8 @@ finish_packet:
 	newmsg.ypos = __ps2mouse->mouse_y;
 	newmsg.button_state = __ps2mouse->mouse_butt_state;
 
-	AuInputMessage oldmsg;
-	AuDevReadMice(&oldmsg);
+	/*AuInputMessage oldmsg;
+	AuDevReadMice(&oldmsg);*/
 
 	AuDevWriteMice(&newmsg);
 	memcpy(__ps2mouse->prev_button, __ps2mouse->curr_button, 3);

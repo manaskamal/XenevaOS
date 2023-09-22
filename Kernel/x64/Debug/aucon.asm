@@ -55,7 +55,7 @@ EXTRN	__ImageBase:BYTE
 EXTRN	_fltused:DWORD
 pdata	SEGMENT
 $pdata$?AuConsolePostInitialise@@YAXPEAU_KERNEL_BOOT_INFO_@@@Z DD imagerel $LN12
-	DD	imagerel $LN12+691
+	DD	imagerel $LN12+696
 	DD	imagerel $unwind$?AuConsolePostInitialise@@YAXPEAU_KERNEL_BOOT_INFO_@@@Z
 $pdata$AuTextOut DD imagerel $LN26
 	DD	imagerel $LN26+887
@@ -1488,13 +1488,13 @@ $LN4@AuConsoleP:
 
 ; 167  : 	AuVFSNode* file = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
 
-	mov	ecx, 159				; 0000009fH
+	mov	ecx, 160				; 000000a0H
 	call	kmalloc
 	mov	QWORD PTR file$[rsp], rax
 
 ; 168  : 	memset(file, 0, sizeof(AuVFSNode));
 
-	mov	r8d, 159				; 0000009fH
+	mov	r8d, 160				; 000000a0H
 	xor	edx, edx
 	mov	rcx, QWORD PTR file$[rsp]
 	call	memset
@@ -1508,30 +1508,31 @@ $LN4@AuConsoleP:
 
 ; 170  : 	file->flags = FS_FLAG_DEVICE;
 
-	mov	rax, QWORD PTR file$[rsp]
-	mov	BYTE PTR [rax+61], 8
+	mov	eax, 8
+	mov	rcx, QWORD PTR file$[rsp]
+	mov	WORD PTR [rcx+61], ax
 
 ; 171  : 	file->device = fsys;
 
 	mov	rax, QWORD PTR file$[rsp]
 	mov	rcx, QWORD PTR fsys$[rsp]
-	mov	QWORD PTR [rax+63], rcx
+	mov	QWORD PTR [rax+64], rcx
 
 ; 172  : 	file->read = 0;
 
 	mov	rax, QWORD PTR file$[rsp]
-	mov	QWORD PTR [rax+79], 0
+	mov	QWORD PTR [rax+80], 0
 
 ; 173  : 	file->write = 0;
 
 	mov	rax, QWORD PTR file$[rsp]
-	mov	QWORD PTR [rax+87], 0
+	mov	QWORD PTR [rax+88], 0
 
 ; 174  : 	file->iocontrol = AuConsoleIoControl;
 
 	mov	rax, QWORD PTR file$[rsp]
 	lea	rcx, OFFSET FLAT:?AuConsoleIoControl@@YAHPEAU__VFS_NODE__@@HPEAX@Z ; AuConsoleIoControl
-	mov	QWORD PTR [rax+151], rcx
+	mov	QWORD PTR [rax+152], rcx
 
 ; 175  : 	AuDevFSAddFile(fsys, "/", file);
 
