@@ -36,6 +36,7 @@
 #include <Mm/vmmngr.h>
 #include <Mm/kmalloc.h>
 #include <Hal/basicacpi.h>
+#include <Hal/x86_64_pic.h>
 
 /*
  * x86_64_hal_initialise -- initialise the x86_64 hardware
@@ -46,15 +47,19 @@ void x86_64_hal_initialise(KERNEL_BOOT_INFO *info) {
 
 	x86_64_hal_init_gdt();
 	x86_64_idt_init();
+	x64_sti();
+	AuInitialisePIC();
 
 	x86_64_exception_init();
-
+	
 	AuAPICInitialise(true);
 
 	x86_64_enable_syscall_ext();
 	x86_64_init_user(64);
 	x86_64_hal_cpu_feature_enable();
-
+	
+	
+   
 	AuACPIInitialise(info->acpi_table_pointer);
 
 	x86_64_initialise_syscall();

@@ -188,3 +188,9 @@ global x64_force_sched
 x64_force_sched:
     int 0x40
 	ret
+
+global SigRet
+SigRet:
+    mov r12, 24
+	syscall
+	ret

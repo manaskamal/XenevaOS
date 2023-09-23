@@ -32,6 +32,7 @@
 #include <Hal/Hal.h>
 #include <Hal/x86_64_cpu.h>
 #include <Hal/x86_64_lowlevel.h>
+#include <Hal/x86_64_signal.h>
 #include <Sync/spinlock.h>
 #include <Hal/serial.h>
 #include <Mm/kmalloc.h>
@@ -421,6 +422,12 @@ void x8664SchedulerISR(size_t v, void* param) {
 		current_thread->frame.cr3 = x64_read_cr3();
 
 		current_thread->frame.kern_esp = x64_get_kstack(ktss);
+
+		/* check for any signal */
+		if (AuCheckSignal(current_thread, frame)) {
+			Signal* sig = AuGetSignal(current_thread);
+			AuPrepareSignal(current_thread, frame, sig);
+		}
 
 		if (x86_64_is_cpu_fxsave_supported())
 			x64_fxsave(current_thread->fx_state);

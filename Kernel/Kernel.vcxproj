@@ -189,8 +189,10 @@
     <ClInclude Include="..\BaseHdr\Hal\x86_64_hal.h" />
     <ClInclude Include="..\BaseHdr\Hal\x86_64_idt.h" />
     <ClInclude Include="..\BaseHdr\Hal\x86_64_lowlevel.h" />
+    <ClInclude Include="..\BaseHdr\Hal\x86_64_pic.h" />
     <ClInclude Include="..\BaseHdr\Hal\x86_64_sched.h" />
     <ClInclude Include="..\BaseHdr\Hal\x86_64_signal.h" />
+    <ClInclude Include="..\BaseHdr\Ipc\signal.h" />
     <ClInclude Include="..\BaseHdr\limits.h" />
     <ClInclude Include="..\BaseHdr\list.h" />
     <ClInclude Include="..\BaseHdr\loader.h" />
@@ -256,6 +258,7 @@
     <ClCompile Include="Hal\x86_64_gdt.cpp" />
     <ClCompile Include="Hal\x86_64_hal.cpp" />
     <ClCompile Include="Hal\x86_64_idt.cpp" />
+    <ClCompile Include="Hal\x86_64_pic.cpp" />
     <ClCompile Include="Hal\x86_64_sched.cpp" />
     <ClCompile Include="Hal\x86_64_signal.cpp" />
     <ClCompile Include="Hal\x86_64_systable.cpp" />

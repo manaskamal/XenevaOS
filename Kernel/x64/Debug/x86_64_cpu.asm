@@ -37,7 +37,7 @@ EXTRN	x64_read_cr4:PROC
 EXTRN	x64_write_cr0:PROC
 EXTRN	x64_write_cr4:PROC
 EXTRN	x64_sgdt:PROC
-EXTRN	?ReadAPICRegister@@YA_KG@Z:PROC			; ReadAPICRegister
+EXTRN	?ReadAPICRegister@@YA_JG@Z:PROC			; ReadAPICRegister
 EXTRN	?WriteAPICRegister@@YAXG_K@Z:PROC		; WriteAPICRegister
 EXTRN	?X2APICSupported@@YA_NXZ:PROC			; X2APICSupported
 EXTRN	?x86_64_ap_init@@YAXPEAX@Z:PROC			; x86_64_ap_init
@@ -109,7 +109,7 @@ $LN5:
 ; 186  : 	return (ReadAPICRegister(LAPIC_REGISTER_ICR) & (1 << 12)) != 0;
 
 	mov	cx, 48					; 00000030H
-	call	?ReadAPICRegister@@YA_KG@Z		; ReadAPICRegister
+	call	?ReadAPICRegister@@YA_JG@Z		; ReadAPICRegister
 	and	rax, 4096				; 00001000H
 	test	rax, rax
 	je	SHORT $LN3@ICRBusy

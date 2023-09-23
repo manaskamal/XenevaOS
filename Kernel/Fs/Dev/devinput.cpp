@@ -34,6 +34,9 @@
 #include <Fs\dev\devfs.h>
 #include <string.h>
 #include <Mm\kmalloc.h>
+#include <aurora.h>
+#include <Serv\sysserv.h>
+#include <Drivers\mouse.h>
 
 AuVFSNode* mice_;
 AuVFSNode* kybrd_;
@@ -47,6 +50,7 @@ void AuDevReadMice(AuInputMessage* inputmsg) {
 	if (!mice_)
 		return;
 	memcpy(inputmsg, mice_->device, sizeof(AuInputMessage));
+	memset(mice_->device, 0, sizeof(AuInputMessage));
 }
 
 /*
@@ -90,7 +94,33 @@ size_t AuDevInputMiceRead(AuVFSNode *fs, AuVFSNode *file, uint64_t* buffer, uint
 		return 0;
 	void* mice_buf = file->device;
 	memcpy(buffer, mice_buf, sizeof(AuInputMessage));
+	memset(mice_buf, 0, sizeof(AuInputMessage));
 	return (sizeof(AuInputMessage));
+}
+
+/*
+ * AuDevMouseIoControl -- controls the mouse device by command
+ * @param file -- Pointer to mouse file
+ * @param code -- code to pass as command
+ * @param arg -- pointer to AuFileIoControl structure
+ */
+int AuDevMouseIoControl(AuVFSNode* file, int code, void* arg) {
+	if (!file)
+		return 0;
+	AuFileIOControl *ioctl = (AuFileIOControl*)arg;
+	if (ioctl->syscall_magic != AURORA_SYSCALL_MAGIC)
+		return 0;
+
+	switch (code)
+	{
+	case MOUSE_IOCODE_SETPOS:
+		AuPS2MouseSetPos(ioctl->uint_1, ioctl->uint_2);
+		break;
+	default:
+		break;
+	}
+
+	return 1;
 }
 
 /*
@@ -100,7 +130,7 @@ size_t AuDevInputMiceRead(AuVFSNode *fs, AuVFSNode *file, uint64_t* buffer, uint
 void AuDevInputInitialise() {
 	AuVFSNode* devfs = AuVFSFind("/dev");
 
-	void* mice_input_buf = (void*)kmalloc(sizeof(AuInputMessage));
+	void* mice_input_buf = kmalloc(sizeof(AuInputMessage));
 	memset(mice_input_buf, 0, sizeof(AuInputMessage));
 	/* avoiding using pipe for latency issue */
 	AuVFSNode* node = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
@@ -112,7 +142,7 @@ void AuDevInputInitialise() {
 	node->write = AuDevInputMiceWrite;
 	node->open = 0;
 	node->close = 0;
-	node->iocontrol = NULL;
+	node->iocontrol = AuDevMouseIoControl;
 	mice_ = node;
 	AuDevFSAddFile(devfs, "/", mice_);
 	

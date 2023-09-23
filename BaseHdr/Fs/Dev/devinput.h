@@ -42,9 +42,13 @@
 #define AU_INPUT_MOUSE  1
 #define AU_INPUT_KEYBOARD 2
 
+#define MOUSE_IOCODE_SETPOS  10
+
+
 #define NUM_MOUSE_PACKETS    20
 #define NUM_KEYBOARD_PACKETS 512
 
+#pragma pack(push,1)
 typedef struct _au_input_msg_ {
 	uint8_t type;
 	int32_t xpos;
@@ -55,6 +59,7 @@ typedef struct _au_input_msg_ {
 	uint32_t code3;
 	uint32_t code4;
 }AuInputMessage;
+#pragma pack(pop)
 
 /*
 * AuDevInputInitialise -- mounts to pipe

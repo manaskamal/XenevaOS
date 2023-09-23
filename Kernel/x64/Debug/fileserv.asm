@@ -6,7 +6,7 @@ INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
 CONST	SEGMENT
-$SG3850	DB	'File Closed -> %s %x ', 0dH, 0aH, 00H
+$SG3867	DB	'File Closed -> %s %x ', 0dH, 0aH, 00H
 CONST	ENDS
 PUBLIC	?OpenFile@@YAHPEADH@Z				; OpenFile
 PUBLIC	?ReadFile@@YA_KHPEAX_K@Z			; ReadFile
@@ -334,7 +334,7 @@ $LN3@CloseFile:
 	mov	rax, QWORD PTR file$[rsp]
 	mov	r8, QWORD PTR file$[rsp]
 	mov	rdx, rax
-	lea	rcx, OFFSET FLAT:$SG3850
+	lea	rcx, OFFSET FLAT:$SG3867
 	call	SeTextOut
 
 ; 206  : 	if (file->flags & FS_FLAG_FILE_SYSTEM)

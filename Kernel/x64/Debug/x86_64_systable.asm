@@ -6,7 +6,7 @@ INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
 PUBLIC	?null_call@@YA_K_K00000@Z			; null_call
-EXTRN	AuTextOut:PROC
+EXTRN	SeTextOut:PROC
 EXTRN	?PauseThread@@YAHXZ:PROC			; PauseThread
 EXTRN	?GetThreadID@@YAGXZ:PROC			; GetThreadID
 EXTRN	?GetProcessID@@YAHXZ:PROC			; GetProcessID
@@ -15,6 +15,8 @@ EXTRN	?ProcessWaitForTermination@@YAHH@Z:PROC		; ProcessWaitForTermination
 EXTRN	?CreateProcess@@YAHHPEAD@Z:PROC			; CreateProcess
 EXTRN	?ProcessLoadExec@@YAHHPEADHPEAPEAD@Z:PROC	; ProcessLoadExec
 EXTRN	?ProcessSleep@@YAH_K@Z:PROC			; ProcessSleep
+EXTRN	?SignalReturn@@YAXH@Z:PROC			; SignalReturn
+EXTRN	?SetSignal@@YAHHP6AXH@Z@Z:PROC			; SetSignal
 EXTRN	?CreateSharedMem@@YAHG_KE@Z:PROC		; CreateSharedMem
 EXTRN	?ObtainSharedMem@@YAPEAXGPEAXH@Z:PROC		; ObtainSharedMem
 EXTRN	?UnmapSharedMem@@YAXG@Z:PROC			; UnmapSharedMem
@@ -31,7 +33,7 @@ EXTRN	?CreateMemMapping@@YAPEAXPEAX_KHHH1@Z:PROC	; CreateMemMapping
 EXTRN	?UnmapMemMapping@@YAXPEAX_K@Z:PROC		; UnmapMemMapping
 _DATA	SEGMENT
 syscalls DQ	FLAT:?null_call@@YA_K_K00000@Z
-	DQ	FLAT:AuTextOut
+	DQ	FLAT:SeTextOut
 	DQ	FLAT:?PauseThread@@YAHXZ
 	DQ	FLAT:?GetThreadID@@YAGXZ
 	DQ	FLAT:?GetProcessID@@YAHXZ
@@ -54,13 +56,15 @@ syscalls DQ	FLAT:?null_call@@YA_K_K00000@Z
 	DQ	FLAT:?FileIoControl@@YAHHHPEAX@Z
 	DQ	FLAT:?FileStat@@YAHHPEAX@Z
 	DQ	FLAT:?ProcessSleep@@YAH_K@Z
-	ORG $+16
+	DQ	FLAT:?SignalReturn@@YAXH@Z
+	DQ	FLAT:?SetSignal@@YAHHP6AXH@Z@Z
 _DATA	ENDS
 CONST	SEGMENT
-$SG3892	DB	'%s', 0aH, 00H
+$SG3941	DB	'%s', 0aH, 00H
 CONST	ENDS
 PUBLIC	?KePrintMsg@@YA_K_K00000@Z			; KePrintMsg
 PUBLIC	x64_syscall_handler
+EXTRN	AuTextOut:PROC
 EXTRN	AuGetCurrentThread:PROC
 EXTRN	x64_cli:PROC
 pdata	SEGMENT
@@ -86,60 +90,60 @@ ret_code$ = 64
 a$ = 96
 x64_syscall_handler PROC
 
-; 102  : extern "C" uint64_t x64_syscall_handler(int a) {
+; 104  : extern "C" uint64_t x64_syscall_handler(int a) {
 
 $LN5:
 	mov	DWORD PTR [rsp+8], ecx
 	sub	rsp, 88					; 00000058H
 
-; 103  : 	x64_cli();
+; 105  : 	x64_cli();
 
 	call	x64_cli
 
-; 104  : 
-; 105  : 	AuThread* current_thr = AuGetCurrentThread();
+; 106  : 
+; 107  : 	AuThread* current_thr = AuGetCurrentThread();
 
 	call	AuGetCurrentThread
 	mov	QWORD PTR current_thr$[rsp], rax
 
-; 106  : 	uint64_t ret_code = 0;
+; 108  : 	uint64_t ret_code = 0;
 
 	mov	QWORD PTR ret_code$[rsp], 0
 
-; 107  : 
-; 108  : 	if (a > AURORA_MAX_SYSCALL)
+; 109  : 
+; 110  : 	if (a > AURORA_MAX_SYSCALL)
 
 	cmp	DWORD PTR a$[rsp], 26
 	jle	SHORT $LN2@x64_syscal
 
-; 109  : 		return -1;
+; 111  : 		return -1;
 
 	mov	rax, -1
 	jmp	$LN3@x64_syscal
 $LN2@x64_syscal:
 
-; 110  : 
-; 111  : 	syscall_func func = (syscall_func)syscalls[a];
+; 112  : 
+; 113  : 	syscall_func func = (syscall_func)syscalls[a];
 
 	movsxd	rax, DWORD PTR a$[rsp]
 	lea	rcx, OFFSET FLAT:syscalls
 	mov	rax, QWORD PTR [rcx+rax*8]
 	mov	QWORD PTR func$[rsp], rax
 
-; 112  : 	if (!func)
+; 114  : 	if (!func)
 
 	cmp	QWORD PTR func$[rsp], 0
 	jne	SHORT $LN1@x64_syscal
 
-; 113  : 		return 0;
+; 115  : 		return 0;
 
 	xor	eax, eax
 	jmp	SHORT $LN3@x64_syscal
 $LN1@x64_syscal:
 
-; 114  : 
-; 115  : 	ret_code = func(current_thr->syscall_param.param1, current_thr->syscall_param.param2, current_thr->syscall_param.param3,
-; 116  : 			current_thr->syscall_param.param4, current_thr->syscall_param.param5, current_thr->syscall_param.param6);
+; 116  : 
+; 117  : 	ret_code = func(current_thr->syscall_param.param1, current_thr->syscall_param.param2, current_thr->syscall_param.param3,
+; 118  : 			current_thr->syscall_param.param4, current_thr->syscall_param.param5, current_thr->syscall_param.param6);
 
 	mov	rax, QWORD PTR current_thr$[rsp]
 	mov	rax, QWORD PTR [rax+264]
@@ -158,13 +162,13 @@ $LN1@x64_syscal:
 	call	QWORD PTR func$[rsp]
 	mov	QWORD PTR ret_code$[rsp], rax
 
-; 117  : 
-; 118  : 	return ret_code;
+; 119  : 
+; 120  : 	return ret_code;
 
 	mov	rax, QWORD PTR ret_code$[rsp]
 $LN3@x64_syscal:
 
-; 119  : }
+; 121  : }
 
 	add	rsp, 88					; 00000058H
 	ret	0
@@ -226,7 +230,7 @@ $LN3:
 ; 56   : 	AuTextOut("%s\n",text);
 
 	mov	rdx, QWORD PTR text$[rsp]
-	lea	rcx, OFFSET FLAT:$SG3892
+	lea	rcx, OFFSET FLAT:$SG3941
 	call	AuTextOut
 
 ; 57   : 	return 0;

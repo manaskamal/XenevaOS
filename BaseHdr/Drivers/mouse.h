@@ -36,6 +36,7 @@
 
 #include <stdint.h>
 
+#pragma pack(push,1)
 typedef struct __ps2mouse__ {
 	uint8_t mouse_cycle;
 	uint8_t mouse_byte[4];
@@ -48,9 +49,18 @@ typedef struct __ps2mouse__ {
 	uint32_t mouse_butt_state;
 	volatile int32_t mouse_button;
 }PS2Mouse;
+#pragma pack(pop)
 
 /*
 * AuPS2MouseInitialise -- initialise the ps2 mouse system
 */
 extern void AuPS2MouseInitialise();
+
+/*
+* AuPS2MouseSetPos -- set custom mouse position
+* rather than default (0,0) position
+* @param x -- x position
+* @param y -- y position
+*/
+extern void AuPS2MouseSetPos(int32_t x, int32_t y);
 #endif

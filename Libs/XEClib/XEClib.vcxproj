@@ -170,6 +170,7 @@
     <ClInclude Include="includes\sys\_heap.h" />
     <ClInclude Include="includes\sys\_kefile.h" />
     <ClInclude Include="includes\sys\_keproc.h" />
+    <ClInclude Include="includes\sys\_kesignal.h" />
     <ClInclude Include="includes\values.h" />
     <ClInclude Include="includes\_xeneva.h" />
   </ItemGroup>

@@ -32,6 +32,7 @@
 
 #include <stdint.h>
 #include <aurora.h>
+#include <Ipc\signal.h>
 
 #define  THREAD_STATE_READY     1
 #define  THREAD_STATE_BLOCKED   3
@@ -101,6 +102,12 @@ typedef struct _uentry_ {
 }AuUserEntry;
 #pragma pack(pop)
 
+#pragma pack(push,1)
+typedef struct _signal_queue_ {
+	void* Signal;
+	_signal_queue_* link;
+}SignalQueue;
+#pragma pack(pop)
 
 #pragma pack(push,1)
 typedef struct _au_thread_ {
@@ -116,6 +123,11 @@ typedef struct _au_thread_ {
 	uint16_t id;
 	uint16_t quanta;
 	uint8_t priviledge;
+
+	AuSigHandler singals[39];
+	SignalQueue* signalQueue;
+	uint8_t pendingSigCount;
+	void* returnableSignal;
 	/* if this thread is backend of
 	 * any user thread, uentry should
 	 * be filled */

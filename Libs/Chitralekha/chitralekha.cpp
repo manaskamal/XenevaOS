@@ -87,7 +87,7 @@ int ChAllocateBuffer(ChCanvas* canvas) {
 	int reqW = canvas->canvasWidth;
 	int reqH = canvas->canvasHeight;
 
-	size_t sz = reqW * reqH * 4;
+	size_t sz = reqW * reqH * (canvas->bpp / 8);
 	void* addr = _KeMemMap(NULL, sz, 0, 0, MEMMAP_NO_FILEDESC, 0);
 	if (!addr)
 		return 0;
@@ -146,7 +146,7 @@ void ChDrawPixel(ChCanvas* canvas, uint32_t x, uint32_t y, uint32_t color) {
  */
 uint32_t ChGetPixel(ChCanvas* canvas, uint32_t x, uint32_t y) {
 	unsigned int *lfb = canvas->buffer;
-	return lfb[x + y * canvas->canvasWidth];
+	return lfb[y * canvas->canvasWidth + x];
 }
 
 /*

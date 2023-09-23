@@ -180,7 +180,9 @@ finish_packet:
 	else if ((int8_t)__ps2mouse->mouse_byte[3] < 0)
 		AuTextOut("Mouse Scroll up \n");
 
+
 	AuInputMessage newmsg;
+	memset(&newmsg, 0, sizeof(AuInputMessage));
 	newmsg.type = AU_INPUT_MOUSE;
 	newmsg.xpos = __ps2mouse->mouse_x;
 	newmsg.ypos = __ps2mouse->mouse_y;
@@ -197,6 +199,20 @@ read_next:
 	break;
 }
 	AuInterruptEnd(12);
+}
+
+
+/*
+ * AuPS2MouseSetPos -- set custom mouse position
+ * rather than default (0,0) position
+ * @param x -- x position
+ * @param y -- y position
+ */
+void AuPS2MouseSetPos(int32_t x, int32_t y) {
+	if (!__ps2mouse)
+		return;
+	__ps2mouse->mouse_x = x;
+	__ps2mouse->mouse_y = y;
 }
 
 /*
@@ -240,6 +256,9 @@ void AuPS2MouseInitialise() {
 	AuPS2MouseWrite(80);
 	AuPS2MouseWrite(MOUSE_DEVICE_ID);
 	status = AuPS2MouseRead();
+	
+	__ps2mouse->mouse_x = 0;
+	__ps2mouse->mouse_y = 0;
 
 	AuHalRegisterIRQ(34, PS2MouseHandler, 12, false);  //34
 }

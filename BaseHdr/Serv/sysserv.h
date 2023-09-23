@@ -33,7 +33,7 @@
 #include <stdint.h>
 #include <stdarg.h>
 #include <aurora.h>
-
+#include <Hal\x86_64_signal.h>
 
 /* maximum supported system calls */
 #define AURORA_MAX_SYSCALL  26
@@ -92,6 +92,18 @@ extern int ProcessLoadExec(int proc_id, char* filename, int argc, char** argv);
 * @param ms -- millisecond
 */
 extern int ProcessSleep(uint64_t ms);
+
+/*
+* SignalReturn -- returns from a signal handler
+*/
+extern void SignalReturn(int num);
+
+/*
+* SetSignal -- register a signal handler
+* @param signo -- signal number
+* @param handler -- handler to register
+*/
+extern int SetSignal(int signo, AuSigHandler handler);
 /*
 * CreateSharedMem -- create a shared memory chunk
 * @param key -- key to use

@@ -33,10 +33,9 @@
 #include "deodhai.h"
 #include <chitralekha.h>
 
-typedef struct _dirty_rect_ {
-	Rect *rect;
-	_dirty_rect_ *link;
-}DirtyRect;
+
+
+extern void InitialiseDirtyClipList();
 
 /*
 * AddDirtyClip -- add a dirty clip rectangle

@@ -30,6 +30,7 @@
 #include <Hal\hal.h>
 #include <Hal\x86_64_cpu.h>
 #include <Hal\x86_64_hal.h>
+#include <Hal\x86_64_signal.h>
 #include <fs\vfs.h>
 #include <Mm\kmalloc.h>
 #include <fs\dev\devfs.h>
@@ -43,7 +44,13 @@
 void AuPS2KybrdHandler(size_t v, void* p) {
 	if (x64_inportb(0x64) & 1) {
 		int code = x64_inportb(0x60);
+		/* for testing purpose lets send 
+		 * a signal to deodhai thread which is
+		 * in thread id 4, in a hacky way
+		 */
 		SeTextOut("Key Pressed \r\n");
+		if (code == 0x2e)  //KEY_C
+			AuSendSignal(4, SIGINT);
 	}
 	AuInterruptEnd(1);
 }

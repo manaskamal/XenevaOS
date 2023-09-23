@@ -15,20 +15,20 @@ _BSS	SEGMENT
 ?root_proc@@3PEAU_au_proc_@@EA DQ 01H DUP (?)		; root_proc
 ?process_mutex@@3PEAU_mutex_@@EA DQ 01H DUP (?)		; process_mutex
 _BSS	ENDS
-CONST	SEGMENT
-$SG3996	DB	'_root', 00H
-	ORG $+2
-$SG4023	DB	'-about', 00H
-	ORG $+1
-$SG4028	DB	'/init.exe', 00H
-	ORG $+6
-$SG4072	DB	'[aurora]: cannot exit root process ', 0dH, 0aH, 00H
-	ORG $+2
-$SG4085	DB	'Closing file -> %s , address -> %x ', 0dH, 0aH, 00H
-CONST	ENDS
 _DATA	SEGMENT
 pid	DD	01H
 _DATA	ENDS
+CONST	SEGMENT
+$SG4102	DB	'Closing file -> %s , address -> %x ', 0dH, 0aH, 00H
+	ORG $+2
+$SG4013	DB	'_root', 00H
+	ORG $+2
+$SG4040	DB	'-about', 00H
+	ORG $+1
+$SG4045	DB	'/init.exe', 00H
+	ORG $+6
+$SG4089	DB	'[aurora]: cannot exit root process ', 0dH, 0aH, 00H
+CONST	ENDS
 PUBLIC	?AuAddProcess@@YAXPEAU_au_proc_@@0@Z		; AuAddProcess
 PUBLIC	?AuRemoveProcess@@YAXPEAU_au_proc_@@0@Z		; AuRemoveProcess
 PUBLIC	?AuProcessFindPID@@YAPEAU_au_proc_@@H@Z		; AuProcessFindPID
@@ -355,7 +355,7 @@ $LN6:
 
 	mov	rax, QWORD PTR proc$[rsp]
 	add	rax, 4
-	lea	rdx, OFFSET FLAT:$SG3996
+	lea	rdx, OFFSET FLAT:$SG4013
 	mov	rcx, rax
 	call	strcpy
 
@@ -783,7 +783,7 @@ $LN15:
 
 ; 369  : 		SeTextOut("[aurora]: cannot exit root process \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG4072
+	lea	rcx, OFFSET FLAT:$SG4089
 	call	SeTextOut
 
 ; 370  : 		return;
@@ -886,7 +886,7 @@ $LN7@AuProcessE:
 	mov	rax, QWORD PTR file$3[rsp]
 	mov	r8, QWORD PTR file$3[rsp]
 	mov	rdx, rax
-	lea	rcx, OFFSET FLAT:$SG4085
+	lea	rcx, OFFSET FLAT:$SG4102
 	call	SeTextOut
 
 ; 394  : 			if (file->flags & FS_FLAG_DEVICE || file->flags & FS_FLAG_FILE_SYSTEM)
@@ -1204,7 +1204,7 @@ $LN3:
 
 ; 275  : 	char* about_str = "-about";
 
-	lea	rax, OFFSET FLAT:$SG4023
+	lea	rax, OFFSET FLAT:$SG4040
 	mov	QWORD PTR about_str$[rsp], rax
 
 ; 276  : 	char* about = (char*)kmalloc(strlen(about_str));
@@ -1246,7 +1246,7 @@ $LN3:
 
 	mov	r9, QWORD PTR argvs$[rsp]
 	mov	r8d, DWORD PTR num_args$[rsp]
-	lea	rdx, OFFSET FLAT:$SG4028
+	lea	rdx, OFFSET FLAT:$SG4045
 	mov	rcx, QWORD PTR ?root_proc@@3PEAU_au_proc_@@EA ; root_proc
 	call	?AuLoadExecToProcess@@YAXPEAU_au_proc_@@PEADHPEAPEAD@Z ; AuLoadExecToProcess
 

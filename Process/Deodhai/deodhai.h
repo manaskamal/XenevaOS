@@ -33,13 +33,14 @@
 #include <stdint.h>
 
 
-
+#pragma pack(push,1)
 typedef struct _rect_ {
-	int x;
-	int y;
-	int w;
-	int h;
+	uint32_t x;
+	uint32_t y;
+	uint32_t w;
+	uint32_t h;
 }Rect;
+#pragma pack(pop)
 
 #pragma pack(push,1)
 typedef struct _bmp_ {
@@ -68,6 +69,7 @@ typedef struct _info_ {
 #define AU_INPUT_MOUSE  1
 #define AU_INPUT_KEYBOARD 2
 
+#pragma pack(push,1)
 /* Copied from kernel*/
 typedef struct _au_input_msg_ {
 	uint8_t type;
@@ -79,7 +81,7 @@ typedef struct _au_input_msg_ {
 	uint32_t code3;
 	uint32_t code4;
 }AuInputMessage;
-
+#pragma pack(pop)
 
 
 #endif

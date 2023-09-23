@@ -1,4 +1,4 @@
-﻿Build started 22-09-2023 আবেলি 12:46:12.
+﻿Build started 23-09-2023 আবেলি 4:44:24.
      1>Project "E:\Xeneva Project\Aurora\Drivers\Sound\IntelHDA\IntelHDA.vcxproj" on node 2 (Rebuild target(s)).
      1>ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\BaseHdr" /Zi /nologo /W3 /WX- /Od /Oy /D ARCH_X64 /D USE_APIC /D _WINDLL /D _MBCS /X /Gm /GS- /arch:SSE /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt codec.cpp ihda.cpp sigmatel.cpp stream.cpp widget.cpp
@@ -50,10 +50,10 @@
                  E:\Xeneva Project\Aurora\BaseHdr\va_list.h(56) : see previous definition of 'va_start'
      1>ihda.cpp(149): warning C4244: 'argument' : conversion from 'uint64_t' to 'uint32_t', possible loss of data
      1>ihda.cpp(198): warning C4244: 'argument' : conversion from 'uint64_t' to 'uint32_t', possible loss of data
-     1>ihda.cpp(344): warning C4101: 'codec' : unreferenced local variable
-     1>ihda.cpp(404): warning C4244: '=' : conversion from 'uint64_t' to 'uint8_t', possible loss of data
-     1>ihda.cpp(413): warning C4244: 'argument' : conversion from 'uint64_t' to 'uint32_t', possible loss of data
-     1>ihda.cpp(418): warning C4554: '&' : check operator precedence for possible error; use parentheses to clarify precedence
+     1>ihda.cpp(347): warning C4101: 'codec' : unreferenced local variable
+     1>ihda.cpp(407): warning C4244: '=' : conversion from 'uint64_t' to 'uint8_t', possible loss of data
+     1>ihda.cpp(416): warning C4244: 'argument' : conversion from 'uint64_t' to 'uint32_t', possible loss of data
+     1>ihda.cpp(421): warning C4554: '&' : check operator precedence for possible error; use parentheses to clarify precedence
          codec.cpp
      1>E:\Xeneva Project\Aurora\BaseHdr\stdarg.h(54): warning C4005: 'va_start' : macro redefinition
                  E:\Xeneva Project\Aurora\BaseHdr\va_list.h(56) : see previous definition of 'va_start'
@@ -68,7 +68,7 @@
                  codec.cpp(179) : definition of 'i' used
      1>codec.cpp(179): warning C4101: 'j' : unreferenced local variable
          Generating Code...
-     1>e:\xeneva project\aurora\drivers\sound\intelhda\ihda.cpp(477): warning C4715: 'AuDriverMain' : not all control paths return a value
+     1>e:\xeneva project\aurora\drivers\sound\intelhda\ihda.cpp(480): warning C4715: 'AuDriverMain' : not all control paths return a value
      1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(1186,5): warning MSB8012: TargetPath(E:\Xeneva Project\Aurora\x64\Debug\IntelHDA.dll) does not match the Linker's OutputFile property value (F:\hda.dll). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
      1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(1188,5): warning MSB8012: TargetName(IntelHDA) does not match the Linker's OutputFile property value (hda). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
        Link:
@@ -85,4 +85,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:01.37
+Time Elapsed 00:00:08.48

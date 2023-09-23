@@ -29,11 +29,21 @@
 
 #include "dirty.h"
 #include <stdlib.h>
+#include <string.h>
 
-DirtyRect *_top = NULL;
 static uint32_t _dirty_count = 0;
 Rect dirtyRect[512];
 
+
+void InitialiseDirtyClipList() {
+	for (int i = 0; i < 512; i++) {
+		dirtyRect[i].x = 0;
+		dirtyRect[i].y = 0;
+		dirtyRect[i].w = 0;
+		dirtyRect[i].h = 0;
+	}
+	_dirty_count = 0;
+}
 /*
  * AddDirtyClip -- add a dirty clip rectangle
  * @param x -- x position
@@ -42,6 +52,8 @@ Rect dirtyRect[512];
  * @param h -- height of the rect
  */
 void AddDirtyClip(int x, int y, int w, int h) {
+	if (_dirty_count >= 512)
+		_dirty_count = 0;
 	dirtyRect[_dirty_count].x = x;
 	dirtyRect[_dirty_count].y = y;
 	dirtyRect[_dirty_count].w = w;
@@ -55,9 +67,9 @@ void AddDirtyClip(int x, int y, int w, int h) {
  * @param canvas -- pointer to canvas
  */
 void DirtyScreenUpdate(ChCanvas* canvas) {
-	for (int i = 0; i < _dirty_count; i++)
+	for (int i = 0; i < _dirty_count; i++) {
 		ChCanvasScreenUpdate(canvas, dirtyRect[i].x, dirtyRect[i].y, dirtyRect[i].w, dirtyRect[i].h);
-
+	}
 	_dirty_count = 0;
 }
 

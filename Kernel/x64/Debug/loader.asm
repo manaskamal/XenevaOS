@@ -14,13 +14,13 @@ _BSS	SEGMENT
 ?is_loader_busy@@3_NA DB 01H DUP (?)			; is_loader_busy
 _BSS	ENDS
 CONST	SEGMENT
-$SG3817	DB	'exe', 00H
+$SG3834	DB	'exe', 00H
 	ORG $+4
-$SG3818	DB	'[aurora]: non-executable process ', 0dH, 0aH, 00H
+$SG3835	DB	'[aurora]: non-executable process ', 0dH, 0aH, 00H
 	ORG $+4
-$SG3857	DB	'/xeldr.exe', 00H
+$SG3874	DB	'/xeldr.exe', 00H
 	ORG $+5
-$SG3892	DB	'Arguments address already mapped ', 0aH, 00H
+$SG3909	DB	'Arguments address already mapped ', 0aH, 00H
 CONST	ENDS
 PUBLIC	?AuInitialiseLoader@@YAXXZ			; AuInitialiseLoader
 PUBLIC	?AuLoadExecToProcess@@YAXPEAU_au_proc_@@PEADHPEAPEAD@Z ; AuLoadExecToProcess
@@ -187,7 +187,7 @@ $LN30:
 ; 84   : 	AuUserEntry* ent = t->uentry;
 
 	mov	rax, QWORD PTR t$[rsp]
-	mov	rax, QWORD PTR [rax+306]
+	mov	rax, QWORD PTR [rax+635]
 	mov	QWORD PTR ent$[rsp], rax
 
 ; 85   : 	/* do all arguments passing stuff, arguments
@@ -503,7 +503,7 @@ $LN13@AuLoadExec:
 
 ; 129  : 	if (strcmp(v_, "exe") != 0) {
 
-	lea	rdx, OFFSET FLAT:$SG3817
+	lea	rdx, OFFSET FLAT:$SG3834
 	mov	rcx, QWORD PTR v_$[rsp]
 	call	strcmp
 	test	eax, eax
@@ -511,7 +511,7 @@ $LN13@AuLoadExec:
 
 ; 130  : 		SeTextOut("[aurora]: non-executable process \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG3818
+	lea	rcx, OFFSET FLAT:$SG3835
 	call	SeTextOut
 
 ; 131  : 		return;
@@ -693,7 +693,7 @@ $LN12@AuLoadExec:
 
 	mov	r9, QWORD PTR argvs$6[rsp]
 	mov	r8d, DWORD PTR num_args_$3[rsp]
-	lea	rdx, OFFSET FLAT:$SG3857
+	lea	rdx, OFFSET FLAT:$SG3874
 	mov	rcx, QWORD PTR proc$[rsp]
 	call	?AuLoadExecToProcess@@YAXPEAU_au_proc_@@PEADHPEAPEAD@Z ; AuLoadExecToProcess
 	jmp	$LN14@AuLoadExec
@@ -953,7 +953,7 @@ $LN8@AuLoadExec:
 
 ; 220  : 			AuTextOut("Arguments address already mapped \n");
 
-	lea	rcx, OFFSET FLAT:$SG3892
+	lea	rcx, OFFSET FLAT:$SG3909
 	call	AuTextOut
 
 ; 221  : 			argvaddr = 0;
@@ -1018,7 +1018,7 @@ $LN3@AuLoadExec:
 
 	mov	rax, QWORD PTR thr$[rsp]
 	mov	rcx, QWORD PTR entry$[rsp]
-	mov	QWORD PTR [rax+306], rcx
+	mov	QWORD PTR [rax+635], rcx
 
 ; 233  : 	proc->main_thread = thr;
 

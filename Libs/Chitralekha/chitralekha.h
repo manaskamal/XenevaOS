@@ -34,6 +34,7 @@
 #include <_xeneva.h>
 #include "color.h"
 
+
 typedef struct _ChCanvas_ {
 	int graphics_fd;
 	uint32_t screenWidth;

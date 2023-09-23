@@ -36,7 +36,7 @@
 #define CURSOR_TYPE_POINTER  1
 #define CURSOR_TYPE_LOADING  2
 
-
+#pragma pack(push,1)
 typedef struct _cursor_ {
 	uint8_t type;
 	uint8_t* imageData;
@@ -44,11 +44,15 @@ typedef struct _cursor_ {
 	int height;
 	int bpp;
 	int cursorFD;
+	unsigned int xpos;
+	unsigned int ypos;
+	unsigned int oldXPos;
+	unsigned int oldYPos;
 	uint8_t* fileBuffer;
 	uint32_t* cursorBack;
 	size_t cursorFileSize;
 }Cursor;
-
+#pragma pack(pop)
 
 /*
 * CursorOpen -- open a cursor from file

@@ -41,6 +41,7 @@
 #include <Hal/x86_64_idt.h>
 #include <loader.h>
 #include <Mm/kmalloc.h>
+#include <Hal/x86_64_signal.h>
 #include <Hal/serial.h>
 
 void panic(const char* msg, ...) {
@@ -180,9 +181,25 @@ void page_fault(size_t vector, void* param){
 	int resv = frame->error & 0x8;
 	int id = frame->error & 0x10;
 
-	panic("Page Fault !! \r\n");
 	
 	AuThread* thr = AuGetCurrentThread();
+	
+	/* check for signal */
+	if (thr) {
+		if (thr->returnableSignal) {
+			Signal* sig = (Signal*)thr->returnableSignal;
+			x86_64_cpu_regs_t* ctx = (x86_64_cpu_regs_t*)(thr->frame.kern_esp - sizeof(x86_64_cpu_regs_t));
+			memcpy(ctx, sig->signalStack, sizeof(x86_64_cpu_regs_t));
+			memcpy(&thr->frame, sig->signalState, sizeof(AuThreadFrame));
+			kfree(sig->signalState);
+			kfree(sig->signalStack);
+			kfree(sig);
+			thr->returnableSignal = NULL;
+			return;
+		}
+	}
+	
+	panic("Page Fault !! \r\n");
 	AuProcess *proc = NULL;
 	if (thr) {
 		proc = AuProcessFindThread(thr);
@@ -192,6 +209,7 @@ void page_fault(size_t vector, void* param){
 		}
 	}
 	
+
 	uint64_t vaddr_ = (uint64_t)vaddr;
 	uint64_t vaddr_aligned = VIRT_ADDR_ALIGN(vaddr_);
 	bool _mapped = false;

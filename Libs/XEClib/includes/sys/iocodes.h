@@ -48,3 +48,5 @@
 #define SCREEN_GET_PITCH     207
 #define SCREEN_REG_MNGR      208
 #define SCREEN_GET_FB     209
+
+#define MOUSE_IOCODE_SETPOS  10

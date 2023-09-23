@@ -29,6 +29,7 @@
 
 #include <stdint.h>
 #include <Hal/x86_64_sched.h>
+#include <Hal/x86_64_signal.h>
 #include <Hal/x86_64_lowlevel.h>
 #include <process.h>
 #include <Hal/serial.h>
@@ -147,4 +148,24 @@ int ProcessSleep(uint64_t ms) {
 		return 0;
 	AuSleepThread(current_thr, ms);
 	AuForceScheduler();
+}
+
+/*
+ * SignalReturn -- returns from a signal handler
+ */
+void SignalReturn(int num) {
+	SeTextOut("Signal Return \r\n");
+	/* just make a page fault */
+}
+
+/*
+ * SetSignal -- register a signal handler
+ * @param signo -- signal number
+ * @param handler -- handler to register
+ */
+int SetSignal(int signo, AuSigHandler handler){
+	AuThread* thr = AuGetCurrentThread();
+	if (!thr)
+		return 0;
+	thr->singals[signo] = handler;
 }

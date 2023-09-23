@@ -43,8 +43,6 @@ e:\xeneva project\aurora\kernel\x64\debug\ahcidsk.obj
 e:\xeneva project\aurora\kernel\x64\debug\ahcidsk.asm
 e:\xeneva project\aurora\kernel\x64\debug\ahci.obj
 e:\xeneva project\aurora\kernel\x64\debug\ahci.asm
-e:\xeneva project\aurora\kernel\x64\debug\loader.obj
-e:\xeneva project\aurora\kernel\x64\debug\loader.asm
 e:\xeneva project\aurora\kernel\x64\debug\list.obj
 e:\xeneva project\aurora\kernel\x64\debug\list.asm
 e:\xeneva project\aurora\kernel\x64\debug\init.obj
@@ -55,6 +53,8 @@ e:\xeneva project\aurora\kernel\x64\debug\x86_64_signal.obj
 e:\xeneva project\aurora\kernel\x64\debug\x86_64_signal.asm
 e:\xeneva project\aurora\kernel\x64\debug\x86_64_sched.obj
 e:\xeneva project\aurora\kernel\x64\debug\x86_64_sched.asm
+e:\xeneva project\aurora\kernel\x64\debug\x86_64_pic.obj
+e:\xeneva project\aurora\kernel\x64\debug\x86_64_pic.asm
 e:\xeneva project\aurora\kernel\x64\debug\x86_64_idt.obj
 e:\xeneva project\aurora\kernel\x64\debug\x86_64_idt.asm
 e:\xeneva project\aurora\kernel\x64\debug\x86_64_hal.obj
@@ -83,8 +83,6 @@ e:\xeneva project\aurora\kernel\x64\debug\acpiosl.obj
 e:\xeneva project\aurora\kernel\x64\debug\acpiosl.asm
 e:\xeneva project\aurora\kernel\x64\debug\_gpt.obj
 e:\xeneva project\aurora\kernel\x64\debug\_gpt.asm
-e:\xeneva project\aurora\kernel\x64\debug\string.obj
-e:\xeneva project\aurora\kernel\x64\debug\string.asm
 e:\xeneva project\aurora\kernel\x64\debug\stdio.obj
 e:\xeneva project\aurora\kernel\x64\debug\stdio.asm
 e:\xeneva project\aurora\kernel\x64\debug\sound.obj
@@ -123,12 +121,16 @@ e:\xeneva project\aurora\kernel\x64\debug\kmalloc.obj
 e:\xeneva project\aurora\kernel\x64\debug\kmalloc.asm
 e:\xeneva project\aurora\kernel\x64\debug\buddy.obj
 e:\xeneva project\aurora\kernel\x64\debug\buddy.asm
+e:\xeneva project\aurora\kernel\x64\debug\loader.obj
+e:\xeneva project\aurora\kernel\x64\debug\loader.asm
 e:\xeneva project\aurora\kernel\x64\debug\_crt.obj
 e:\xeneva project\aurora\kernel\x64\debug\_crt.asm
 e:\xeneva project\aurora\kernel\x64\debug\spinlock.obj
 e:\xeneva project\aurora\kernel\x64\debug\spinlock.asm
 e:\xeneva project\aurora\kernel\x64\debug\mutex.obj
 e:\xeneva project\aurora\kernel\x64\debug\mutex.asm
+e:\xeneva project\aurora\kernel\x64\debug\string.obj
+e:\xeneva project\aurora\kernel\x64\debug\string.asm
 e:\xeneva project\aurora\x64\debug\kernel.lib
 e:\xeneva project\aurora\x64\debug\kernel.exp
 f:\efi\xeneva\xnkrnl.exe

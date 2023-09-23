@@ -6,8 +6,8 @@ INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
 CONST	SEGMENT
-$SG3978	DB	'cleaning thread -> %x ', 0aH, 00H
-$SG3987	DB	'Process cleaned ', 0dH, 0aH, 00H
+$SG3995	DB	'cleaning thread -> %x ', 0aH, 00H
+$SG4004	DB	'Process cleaned ', 0dH, 0aH, 00H
 CONST	ENDS
 PUBLIC	?AuProcessClean@@YAXPEAU_au_proc_@@0@Z		; AuProcessClean
 PUBLIC	?FreeUserStack@@YAXPEA_K@Z			; FreeUserStack
@@ -92,7 +92,7 @@ $LN3:
 ; 87   : 	kfree(t->uentry);
 
 	mov	rax, QWORD PTR t$[rsp]
-	mov	rcx, QWORD PTR [rax+306]
+	mov	rcx, QWORD PTR [rax+635]
 	call	kfree
 
 ; 88   : 	kfree(t);
@@ -462,7 +462,7 @@ $LN6@AuProcessC:
 ; 131  : 			AuTextOut("cleaning thread -> %x \n", t_);
 
 	mov	rdx, QWORD PTR t_$5[rsp]
-	lea	rcx, OFFSET FLAT:$SG3978
+	lea	rcx, OFFSET FLAT:$SG3995
 	call	AuTextOut
 
 ; 132  : 			AuThreadCleanTrash(t_);
@@ -487,7 +487,7 @@ $LN4@AuProcessC:
 
 	mov	rax, QWORD PTR killable$[rsp]
 	mov	rax, QWORD PTR [rax+54]
-	mov	rax, QWORD PTR [rax+306]
+	mov	rax, QWORD PTR [rax+635]
 	mov	QWORD PTR uentry$[rsp], rax
 
 ; 138  : 	if (uentry->argvaddr != 0) {
@@ -553,7 +553,7 @@ $LN2@AuProcessC:
 
 ; 153  : 	SeTextOut("Process cleaned \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG3987
+	lea	rcx, OFFSET FLAT:$SG4004
 	call	SeTextOut
 
 ; 154  : }

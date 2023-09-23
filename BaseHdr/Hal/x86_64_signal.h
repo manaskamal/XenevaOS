@@ -30,45 +30,53 @@
 #ifndef __X86_64_SIGNAL_H__
 #define __X86_64_SIGNAL_H__
 
-#define SIGHUP  1
-#define SIGINT  2
-#define SIGQUIT 3
-#define SIGILL  4
-#define SIGTRAP 5
-#define SIGABRT 6
-#define SIGEMT  7
-#define SIGFPE  8
-#define SIGKILL 9
-#define SIGBUS  10
-#define SIGSEGV 11
-#define SIGSYS  12
-#define SIGPIPE 13
-#define SIGALRM 14
-#define SIGTERM 15
-#define SIGUSR1 16
-#define SIGUSR2 17
-#define SIGCHLD 18
-#define SIGPWR  19
-#define SIGWINCH  20
-#define SIGURG    21
-#define SIGPOLL   22
-#define SIGSTOP   23
-#define SIGTSTP   24
-#define SIGCONT   25
-#define SIGTTIN   26
-#define SIGTTOUT   27
-#define SIGVTALRM  28
-#define SIGPROF   29
-#define SIGXCPU   30
-#define SIGXFSZ   31
-#define SIGWAITING 32
-#define SIGDIAF    33
-#define SIGHATE    34
-#define SIGWINEVENT 35
-#define SIGCAT  36
-#define SIGTTOU 37
+#include <Hal\x86_64_cpu.h>
+#include <Hal\x86_64_sched.h>
 
-#define NUMSIGNALS 38
-#define NSIG NUMSIGNALS
 
+
+#pragma pack(push,1)
+typedef struct _signal_ {
+	int signum;
+	x86_64_cpu_regs_t *signalStack;
+	AuThread* signalState;
+}Signal;
+#pragma pack(pop)
+
+/*
+* AuAllocateSignal -- allocate a new signal to the
+* destination thread
+* @param dest_thread -- destination thread
+* @param signum -- signal number
+*/
+extern void AuAllocateSignal(AuThread* dest_thread, int signum);
+
+/*
+* AuCheckSignal -- checks for pending signal
+* @param curr_thr -- pointer to thread structure
+* @param frame -- interrupt stack frame
+*/
+extern bool AuCheckSignal(AuThread* curr_thr, interrupt_stack_frame *frame);
+
+/*
+* AuGetSignal -- returns a signal from the queue
+* if there is present one
+* @param curr_thr -- Pointer to thread structure
+*/
+extern Signal *AuGetSignal(AuThread* curr_thr);
+
+/*
+* AuPrepareSignal -- prepare a thread to enter a signal handler
+* @param thr -- Pointer to the thread
+* @param frame -- interrupt stack frame
+* @param signal -- pointer to signal
+*/
+extern void AuPrepareSignal(AuThread* thr, interrupt_stack_frame* frame, Signal* signal);
+
+/*
+* AuSendSignal -- send a signal to a specific thread
+* @param tid -- thread id
+* @param signo -- signal number
+*/
+extern void AuSendSignal(uint16_t tid, int signo);
 #endif

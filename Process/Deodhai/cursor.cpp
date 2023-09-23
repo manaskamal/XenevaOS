@@ -88,14 +88,14 @@ void CursorRead(Cursor* cur) {
  * @param y -- Y position
  */
 void CursorDraw(ChCanvas* canv, Cursor* cur, unsigned int x, unsigned int y) {
-	int width = cur->width;
-	int height = cur->height;
-	int j = 0;
+	uint32_t width = cur->width;
+	uint32_t height = cur->height;
+	uint32_t j = 0;
 
 	uint8_t* image = cur->imageData;
 	for (int i = 0; i < height; i++) {
 		char* image_row = (char*)image + (height - i - 1) * (width * 4);
-		int h = height - 1 - i;
+		uint32_t h = height - 1 - i;
 		j = 0;
 		for (int k = 0; k < width; k++) {
 			uint32_t b = image_row[j++] & 0xff;

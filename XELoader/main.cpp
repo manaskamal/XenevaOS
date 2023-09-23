@@ -176,6 +176,8 @@ int main(int argc, char* argv[]) {
 	 */
 	XELdrLinkAllObject(mainobj);
 
+	
+
 	entrypoint e = (entrypoint)mainobj->entry_addr;
 	e(0, NULL);
 	

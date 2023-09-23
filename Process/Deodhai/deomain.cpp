@@ -36,19 +36,55 @@
 #include <string.h>
 #include <chitralekha.h>
 #include <stdlib.h>
+#include <sys\_kesignal.h>
 #include "deodhai.h"
 #include "cursor.h"
+#include "dirty.h"
 
 Cursor *arrow;
 int mouse_fd;
 int kybrd_fd;
+uint32_t* CursorBack;
 
+
+void CursorStoreBack(ChCanvas* canv,Cursor* cur,unsigned x, unsigned y) {
+	for (int w = 0; w < 24; w++)
+	for (int h = 0; h < 24; h++)
+		cur->cursorBack[h * 24 + w] = ChGetPixel(canv, x + w, y + h);
+}
+
+void CursorDrawBack(ChCanvas* canv,Cursor* cur, unsigned x, unsigned y) {
+	for (int w = 0; w < 24; w++)
+	for (int h = 0; h < 24; h++)
+		ChDrawPixel(canv, x + w, y + h, cur->cursorBack[h * 24 + w]);
+}
+
+void ComposeFrame(ChCanvas *canvas) {
+	CursorDrawBack(canvas,arrow,arrow->oldXPos, arrow->oldYPos);
+	AddDirtyClip(arrow->oldXPos, arrow->oldYPos, 24, 24);
+	
+	CursorStoreBack(canvas, arrow,arrow->xpos, arrow->ypos);
+	
+	CursorDraw(canvas, arrow, arrow->xpos, arrow->ypos);
+	AddDirtyClip(arrow->xpos, arrow->ypos, 24, 24);
+
+	DirtyScreenUpdate(canvas);
+	arrow->oldXPos = arrow->xpos;
+	arrow->oldYPos = arrow->ypos;
+}
+
+
+void SignalHandler(int no) {
+	_KePrint("Deodhai !! signal handler \n");
+}
 
 /*
  * main -- deodhai compositor
  */
 int main(int argc, char* arv[]) {
-	_KePrint("Deodhai v1.0 running \n");
+	int pid = _KeGetThreadID();
+
+	_KePrint("Deodhai v1.0 running %d\r\n", pid);
 	ChPrintLibName();
 
 	/* first of all get screen width and screen height */
@@ -99,23 +135,38 @@ int main(int argc, char* arv[]) {
 	bool sleepable = false;
 	bool sound_finished = false;
 
+	InitialiseDirtyClipList();
 
 	arrow = CursorOpen("/pointer.bmp", CURSOR_TYPE_POINTER);
 	CursorRead(arrow);
-	
+
+	_KeSetSignal(SIGINT, SignalHandler);
 
 	mouse_fd = _KeOpenFile("/dev/mice", FILE_OPEN_READ_ONLY);
-	AuInputMessage *mice_input = (AuInputMessage*)malloc(sizeof(AuInputMessage));
-	memset(mice_input, 0, sizeof(AuInputMessage));
-
+	AuInputMessage mice_input;
+	memset(&mice_input, 0, sizeof(AuInputMessage));
 	while (1) {
 		if (sleepable) {
-			_KeReadFile(mouse_fd, mice_input, sizeof(AuInputMessage));
+			_KeReadFile(mouse_fd, &mice_input, sizeof(AuInputMessage));
+			ComposeFrame(canv);
 		}
-		if (mice_input->type == AU_INPUT_MOUSE) {
-			CursorDraw(canv, arrow, mice_input->xpos, mice_input->ypos);
-			ChCanvasScreenUpdate(canv, mice_input->xpos, mice_input->ypos, 24, 24);
-			memset(mice_input, 0, sizeof(AuInputMessage));
+		if (mice_input.type == AU_INPUT_MOUSE) {
+			arrow->xpos = mice_input.xpos;
+			arrow->ypos = mice_input.ypos;
+
+			/* ensure clipping within the screen */
+			if (arrow->xpos <= 0)
+				arrow->xpos = 0;
+			if (arrow->ypos <= 0)
+				arrow->ypos = 0;
+
+
+			if (arrow->xpos + arrow->width >= screen_w)
+				arrow->xpos = screen_w - arrow->width;
+			if (arrow->ypos + arrow->height >= screen_h)
+				arrow->ypos = screen_h - arrow->height;
+			
+			memset(&mice_input, 0, sizeof(AuInputMessage));
 		}
 		if (!sound_finished) {
 			_KeWriteFile(snd, songbuf, 4096);
@@ -126,9 +177,12 @@ int main(int argc, char* arv[]) {
 				sleepable = true;
 				sound_finished = true;
 
-				/* for now */
-				CursorDraw(canv, arrow, screen_w / 2 - 24/2, screen_h / 2 - 24/2);
-				ChCanvasScreenUpdate(canv, screen_w / 2 - 24 / 2, screen_h / 2 - 24/2, 24, 24);
+				ioctl.uint_1 = screen_w / 2 - 24 / 2;
+				ioctl.uint_2 = screen_h / 2 - 24 / 2;
+				mice_input.xpos = ioctl.uint_1;
+				mice_input.ypos = ioctl.uint_2;
+				CursorStoreBack(canv, arrow, mice_input.xpos, mice_input.ypos);
+				_KeFileIoControl(mouse_fd, MOUSE_IOCODE_SETPOS, &ioctl);
 			}
 		}
 		if (sleepable) {

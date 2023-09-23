@@ -317,6 +317,7 @@ void HDAReset() {
  * HDAHandler -- high definition audio handler
  */
 void HDAHandler(size_t v, void* p) {
+	AuDisableInterrupt();
 	uint32_t isr = _aud_inl_(INTSTS);
 	uint8_t sts = _aud_inb_(REG_O0_STS);
 
@@ -334,7 +335,9 @@ void HDAHandler(size_t v, void* p) {
 	}
 
 	_aud_outb_(REG_O0_STS, sts);
+	AuEnableInterrupt();
 	AuInterruptEnd(_hdaudio->irq);
+
 }
 
 /*

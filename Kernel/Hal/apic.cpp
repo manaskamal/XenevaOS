@@ -32,8 +32,10 @@
 #include <Hal/x86_64_cpu.h>
 #include <Hal/x86_64_idt.h>
 #include <Hal/x86_64_lowlevel.h>
+#include <Hal/serial.h>
 #include <Mm/vmmngr.h>
 #include <aucon.h>
+#include <Hal/x86_64_pic.h>
 
 
 static bool __x2apic = false;
@@ -43,7 +45,7 @@ static void* _apic = nullptr;
 * ReadAPICRegister -- reads a register of apic
 * @param reg -- register to read
 */
-uint64_t ReadAPICRegister(uint16_t reg) {
+int64_t ReadAPICRegister(uint16_t reg) {
 	if (__x2apic) {
 		size_t msr = IA32_X2APIC_REGISTER_BASE_MSR + reg;
 		return x64_read_msr(msr);
@@ -127,6 +129,8 @@ void APICSpuriousInterrupt(size_t p, void* param){
 #define ICW4_BUF_MASTER 0x0C
 #define ICW4_SFNM  0x10
 
+#define APIC_DISABLE 0x10000
+
 static int apic_timer_count = 0;
 
 void ApicTimerInterrupt(size_t p, void* param) {
@@ -152,7 +156,7 @@ void AuAPICInitialise(bool bsp) {
 			apic_base |= IA32_APIC_BASE_MSR_X2APIC;
 		}
 		else {
-			_apic = (void*)AuMapMMIO(apic_base, 2);
+			_apic = (void*)AuMapMMIO(apic_base, 4);
 		}
 
 		apic_base |= IA32_APIC_BASE_MSR_ENABLE;
@@ -167,14 +171,17 @@ void AuAPICInitialise(bool bsp) {
 	WriteAPICRegister(LAPIC_REGISTER_SVR, ReadAPICRegister(LAPIC_REGISTER_SVR) |
 		IA32_APIC_SVR_ENABLE | 0xFF);
 
+	/* timing calculation little bit hacky for now, 
+	 * in future perfect calculation should be done
+	 * using external timer like tsc or pit
+	 */
 	size_t timer_vect = 0x40;
 	setvect(timer_vect, ApicTimerInterrupt);
-
-	WriteAPICRegister(LAPIC_REGISTER_TMRDIV,0x3); 
+	WriteAPICRegister(LAPIC_REGISTER_TMRDIV,0x6); 
 	size_t timer_reg = (1 << 17) | timer_vect;
 	WriteAPICRegister(LAPIC_REGISTER_LVT_TIMER, timer_reg);
 	IOWait();
-	WriteAPICRegister(LAPIC_REGISTER_TMRINITCNT,1000);  //123456
+	WriteAPICRegister(LAPIC_REGISTER_TMRINITCNT,123456);  //123456
 
 	x64_outportb(PIC1_DATA, 0xFF);
 	IOWait();

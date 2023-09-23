@@ -82,6 +82,9 @@
     <Filter Include="Include\Mm\liballoc">
       <UniqueIdentifier>{e5300510-bef4-46b7-a325-3e04142cb5e6}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Include\Ipc">
+      <UniqueIdentifier>{fdeb456d-5d30-4876-842d-290542ce8894}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\BaseHdr\_null.h">
@@ -291,6 +294,12 @@
     <ClInclude Include="..\BaseHdr\Drivers\nvme.h">
       <Filter>Include\Drivers</Filter>
     </ClInclude>
+    <ClInclude Include="..\BaseHdr\Hal\x86_64_pic.h">
+      <Filter>Include\Hal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\Ipc\signal.h">
+      <Filter>Include\Ipc</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="init.cpp" />
@@ -449,6 +458,9 @@
     </ClCompile>
     <ClCompile Include="Drivers\nvme.cpp">
       <Filter>Drivers</Filter>
+    </ClCompile>
+    <ClCompile Include="Hal\x86_64_pic.cpp">
+      <Filter>Hal</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

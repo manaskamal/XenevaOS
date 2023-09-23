@@ -1,13 +1,17 @@
-﻿Build started 22-09-2023 আবেলি 9:05:28.
+﻿Build started 23-09-2023 আবেলি 10:13:29.
      1>Project "E:\Xeneva Project\Aurora\Process\Deodhai\Deodhai.vcxproj" on node 2 (Rebuild target(s)).
      1>ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /I"E:\Xeneva Project\Aurora\Libs\Chitralekha" /Zi /nologo /W3 /WX- /sdl- /Od /D ARCH_X64 /D YES_DYNAMIC /D DYNAMIC_IMPORTER /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt cursor.cpp deomain.cpp dirty.cpp
      1>cl : Command line warning D9025: overriding '/sdl-' with '/GS-'
      1>cl : Command line warning D9002: ignoring unknown option '/arch:SSE2'
          dirty.cpp
-     1>dirty.cpp(58): warning C4018: '<' : signed/unsigned mismatch
+     1>dirty.cpp(70): warning C4018: '<' : signed/unsigned mismatch
          deomain.cpp
+     1>deomain.cpp(164): warning C4018: '>=' : signed/unsigned mismatch
+     1>deomain.cpp(166): warning C4018: '>=' : signed/unsigned mismatch
          cursor.cpp
+     1>cursor.cpp(96): warning C4018: '<' : signed/unsigned mismatch
+     1>cursor.cpp(100): warning C4018: '<' : signed/unsigned mismatch
          Generating Code...
      1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(1186,5): warning MSB8012: TargetPath(E:\Xeneva Project\Aurora\x64\Debug\Deodhai.exe) does not match the Linker's OutputFile property value (F:\deodhai.exe). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
        Link:
@@ -21,4 +25,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:00.64
+Time Elapsed 00:00:00.67

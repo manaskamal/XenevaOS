@@ -190,6 +190,25 @@ _KeProcessSleep:
 	  syscall
 	  ret
 
+
+;;===============================
+;; _KeSetSignal -- Register a signal
+;; handler
+;;===============================
+global _KeSetSignal
+%ifdef YES_DYNAMIC
+export _KeSetSignal
+%endif
+_KeSetSignal:
+      xor rax, rax
+	  mov r12, 25
+	  mov r13, rcx
+	  mov r14, rdx
+	  mov r15, 0
+	  mov rdi, 0
+	  syscall
+	  ret
+
 global _KeCreateSharedMem
 %ifdef YES_DYNAMIC
 export _KeCreateSharedMem

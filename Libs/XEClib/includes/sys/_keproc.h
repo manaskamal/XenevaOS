@@ -32,6 +32,7 @@
 
 #include <stdint.h>
 #include <_xeneva.h>
+#include <sys\_kesignal.h>
 
 /*
  * _KePauseThread -- pause currently running 
@@ -99,5 +100,13 @@ XE_EXTERN XE_LIB uint64_t _KeGetProcessHeapMem(size_t sz);
  * @param ms -- millisecond to sleep
  */
 XE_EXTERN XE_LIB int _KeProcessSleep(uint64_t ms);
+
+/*
+ * _KeSetSignal -- register a new signal handler for this 
+ * process
+ * @param signo -- signal number
+ * @param handler -- handler function
+ */
+XE_EXTERN XE_LIB int _KeSetSignal(int signo, XESigHandler handler);
 
 #endif

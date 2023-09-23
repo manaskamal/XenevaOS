@@ -26,3 +26,112 @@
 * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *
 **/
+
+#include <Hal\x86_64_signal.h>
+#include <Hal\x86_64_gdt.h>
+#include <Mm\kmalloc.h>
+#include <Mm\vmmngr.h>
+#include <Mm\pmmngr.h>
+#include <string.h>
+#include <_null.h>
+
+extern "C" void SigRet();
+
+/*
+ * AuAllocateSignal -- allocate a new signal to the
+ * destination thread
+ * @param dest_thread -- destination thread
+ * @param signum -- signal number
+ */
+void AuAllocateSignal(AuThread* dest_thread, int signum) {
+	Signal *signal = (Signal*)kmalloc(sizeof(Signal));
+	memset(signal, 0, sizeof(Signal));
+	signal->signum = signum;
+	signal->signalStack = (x86_64_cpu_regs_t*)kmalloc(sizeof(x86_64_cpu_regs_t));
+	signal->signalState = (AuThread*)kmalloc(sizeof(AuThread));
+
+	SignalQueue* queue = (SignalQueue*)kmalloc(sizeof(SignalQueue));
+	memset(queue, 0, sizeof(SignalQueue));
+	queue->Signal = signal;
+	queue->link = dest_thread->signalQueue;
+	dest_thread->signalQueue = queue;
+	dest_thread->pendingSigCount++;
+}
+
+/*
+ * AuCheckSignal -- checks for pending signal
+ * @param curr_thr -- pointer to thread structure
+ * @param frame -- interrupt stack frame
+ */
+bool AuCheckSignal(AuThread* curr_thr, interrupt_stack_frame *frame) {
+	if (!curr_thr->signalQueue)
+		return false;
+	if (curr_thr->pendingSigCount > 0 && frame->cs == SEGVAL(GDT_ENTRY_USER_CODE, 3))
+		return true;
+	return false;
+}
+
+/*
+ * AuGetSignal -- returns a signal from the queue
+ * if there is present one
+ * @param curr_thr -- Pointer to thread structure
+ */
+Signal *AuGetSignal(AuThread* curr_thr) {
+	if (!curr_thr->signalQueue)
+		return NULL;
+	Signal* sig;
+	SignalQueue* temp;
+	temp = curr_thr->signalQueue;
+	curr_thr->signalQueue = curr_thr->signalQueue->link;
+	temp->link = NULL;
+	sig = (Signal*)temp->Signal;
+	kfree(temp);
+	curr_thr->pendingSigCount--;
+
+	curr_thr->returnableSignal = sig;
+	if (!sig)
+		return NULL;
+	return sig;
+}
+
+/*
+ * AuPrepareSignal -- prepare a thread to enter a signal handler
+ * @param thr -- Pointer to the thread
+ * @param frame -- interrupt stack frame
+ * @param signal -- pointer to signal
+ */
+void AuPrepareSignal(AuThread* thr, interrupt_stack_frame* frame, Signal* signal) {
+	x86_64_cpu_regs_t* ctx = (x86_64_cpu_regs_t*)(thr->frame.kern_esp - sizeof(x86_64_cpu_regs_t));
+	uint64_t* rsp_ = (uint64_t*)thr->uentry->rsp;
+
+	memcpy(signal->signalStack, ctx, sizeof(x86_64_cpu_regs_t));
+
+	rsp_ -= 8;
+	for (int i = 0; i < 2; i++)
+		AuMapPage((uint64_t)AuPmmngrAlloc(), 0x700000 + i * 4096, X86_64_PAGING_USER);
+	memcpy((void*)0x700000, &SigRet, 8192);
+	*rsp_ = 0x700000;
+	memcpy(signal->signalState, &thr->frame, sizeof(AuThreadFrame));
+
+	frame->rsp = (uint64_t)rsp_;
+	thr->frame.rbp = (uint64_t)rsp_;
+	thr->frame.rcx = 10;
+	thr->frame.rip = (uint64_t)thr->singals[signal->signum];
+	thr->frame.rsp = frame->rsp;
+	frame->rip = thr->frame.rip;
+	frame->rflags = 0x286;
+	thr->frame.rflags = 0x286;
+	thr->returnableSignal = signal;
+}
+
+/*
+ * AuSendSignal -- send a signal to a specific thread
+ * @param tid -- thread id
+ * @param signo -- signal number
+ */
+void AuSendSignal(uint16_t tid, int signo) {
+	AuThread* thr = AuThreadFindByID(tid);
+	if (!thr)
+		return;
+	AuAllocateSignal(thr, signo);
+}
