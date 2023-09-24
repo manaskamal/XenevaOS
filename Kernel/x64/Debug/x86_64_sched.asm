@@ -30,13 +30,13 @@ _BSS	SEGMENT
 ?_x86_64_sched_init@@3_NA DB 01H DUP (?)		; _x86_64_sched_init
 _BSS	ENDS
 CONST	SEGMENT
-$SG3702	DB	'FRAME USER KERN ESP -> %x ', 0aH, 00H
+$SG3706	DB	'FRAME USER KERN ESP -> %x ', 0aH, 00H
 	ORG $+4
-$SG3711	DB	'_idle id -> %d  ', 0dH, 0aH, 00H
+$SG3715	DB	'_idle id -> %d  ', 0dH, 0aH, 00H
 	ORG $+1
-$SG3720	DB	'Idle', 00H
+$SG3724	DB	'Idle', 00H
 	ORG $+7
-$SG3765	DB	'CR3 -> %x ', 0dH, 0aH, 00H
+$SG3769	DB	'CR3 -> %x ', 0dH, 0aH, 00H
 CONST	ENDS
 PUBLIC	?AuSchedulerStart@@YAXXZ			; AuSchedulerStart
 PUBLIC	?AuSchedulerInitialise@@YAXXZ			; AuSchedulerInitialise
@@ -51,6 +51,7 @@ PUBLIC	AuUnblockThread
 PUBLIC	?AuThreadMoveToTrash@@YAXPEAU_au_thread_@@@Z	; AuThreadMoveToTrash
 PUBLIC	?AuThreadCleanTrash@@YAXPEAU_au_thread_@@@Z	; AuThreadCleanTrash
 PUBLIC	AuThreadFindByID
+PUBLIC	AuThreadFindByIDBlockList
 PUBLIC	AuForceScheduler
 PUBLIC	?AuIsSchedulerInitialised@@YA_NXZ		; AuIsSchedulerInitialised
 PUBLIC	?AuMapKStack@@YA_KPEA_K@Z			; AuMapKStack
@@ -133,8 +134,11 @@ $pdata$?AuThreadCleanTrash@@YAXPEAU_au_thread_@@@Z DD imagerel $LN3
 	DD	imagerel $LN3+24
 	DD	imagerel $unwind$?AuThreadCleanTrash@@YAXPEAU_au_thread_@@@Z
 $pdata$AuThreadFindByID DD imagerel $LN7
-	DD	imagerel $LN7+77
+	DD	imagerel $LN7+79
 	DD	imagerel $unwind$AuThreadFindByID
+$pdata$AuThreadFindByIDBlockList DD imagerel $LN7
+	DD	imagerel $LN7+79
+	DD	imagerel $unwind$AuThreadFindByIDBlockList
 $pdata$AuForceScheduler DD imagerel $LN3
 	DD	imagerel $LN3+14
 	DD	imagerel $unwind$AuForceScheduler
@@ -177,6 +181,8 @@ $unwind$?AuThreadCleanTrash@@YAXPEAU_au_thread_@@@Z DD 010901H
 	DD	04209H
 $unwind$AuThreadFindByID DD 010901H
 	DD	02209H
+$unwind$AuThreadFindByIDBlockList DD 010901H
+	DD	02209H
 $unwind$AuForceScheduler DD 010401H
 	DD	04204H
 $unwind$?AuMapKStack@@YA_KPEA_K@Z DD 010901H
@@ -204,7 +210,7 @@ $LN3:
 
 	call	x64_read_cr3
 	mov	rdx, rax
-	lea	rcx, OFFSET FLAT:$SG3765
+	lea	rcx, OFFSET FLAT:$SG3769
 	call	SeTextOut
 
 ; 484  : }
@@ -505,7 +511,7 @@ $LN5:
 	call	?AuPerCPUGetCpuID@@YAEXZ		; AuPerCPUGetCpuID
 	movzx	eax, al
 	mov	edx, eax
-	lea	rcx, OFFSET FLAT:$SG3711
+	lea	rcx, OFFSET FLAT:$SG3715
 	call	SeTextOut
 $LN2@AuIdleThre:
 
@@ -1058,11 +1064,11 @@ _TEXT	ENDS
 _TEXT	SEGMENT
 ?AuIsSchedulerInitialised@@YA_NXZ PROC			; AuIsSchedulerInitialised
 
-; 589  : 	return _x86_64_sched_init;
+; 603  : 	return _x86_64_sched_init;
 
 	movzx	eax, BYTE PTR ?_x86_64_sched_init@@3_NA	; _x86_64_sched_init
 
-; 590  : }
+; 604  : }
 
 	ret	0
 ?AuIsSchedulerInitialised@@YA_NXZ ENDP			; AuIsSchedulerInitialised
@@ -1072,20 +1078,76 @@ _TEXT	ENDS
 _TEXT	SEGMENT
 AuForceScheduler PROC
 
-; 583  : AU_EXTERN AU_EXPORT void AuForceScheduler() {
+; 597  : AU_EXTERN AU_EXPORT void AuForceScheduler() {
 
 $LN3:
 	sub	rsp, 40					; 00000028H
 
-; 584  : 	x64_force_sched();
+; 598  : 	x64_force_sched();
 
 	call	x64_force_sched
 
-; 585  : }
+; 599  : }
 
 	add	rsp, 40					; 00000028H
 	ret	0
 AuForceScheduler ENDP
+_TEXT	ENDS
+; Function compile flags: /Odtpy
+; File e:\xeneva project\aurora\kernel\hal\x86_64_sched.cpp
+_TEXT	SEGMENT
+block_queue$1 = 0
+id$ = 32
+AuThreadFindByIDBlockList PROC
+
+; 585  : AuThread* AuThreadFindByIDBlockList(uint16_t id){
+
+$LN7:
+	mov	WORD PTR [rsp+8], cx
+	sub	rsp, 24
+
+; 586  : 	for (AuThread* block_queue = blocked_thr_head; block_queue != NULL; block_queue = block_queue->next){
+
+	mov	rax, QWORD PTR ?blocked_thr_head@@3PEAU_au_thread_@@EA ; blocked_thr_head
+	mov	QWORD PTR block_queue$1[rsp], rax
+	jmp	SHORT $LN4@AuThreadFi
+$LN3@AuThreadFi:
+	mov	rax, QWORD PTR block_queue$1[rsp]
+	mov	rax, QWORD PTR [rax+643]
+	mov	QWORD PTR block_queue$1[rsp], rax
+$LN4@AuThreadFi:
+	cmp	QWORD PTR block_queue$1[rsp], 0
+	je	SHORT $LN2@AuThreadFi
+
+; 587  : 		if (block_queue->id == id)
+
+	mov	rax, QWORD PTR block_queue$1[rsp]
+	movzx	eax, WORD PTR [rax+301]
+	movzx	ecx, WORD PTR id$[rsp]
+	cmp	eax, ecx
+	jne	SHORT $LN1@AuThreadFi
+
+; 588  : 			return block_queue;
+
+	mov	rax, QWORD PTR block_queue$1[rsp]
+	jmp	SHORT $LN5@AuThreadFi
+$LN1@AuThreadFi:
+
+; 589  : 	}
+
+	jmp	SHORT $LN3@AuThreadFi
+$LN2@AuThreadFi:
+
+; 590  : 	return NULL;
+
+	xor	eax, eax
+$LN5@AuThreadFi:
+
+; 591  : }
+
+	add	rsp, 24
+	ret	0
+AuThreadFindByIDBlockList ENDP
 _TEXT	ENDS
 ; Function compile flags: /Odtpy
 ; File e:\xeneva project\aurora\kernel\hal\x86_64_sched.cpp
@@ -1131,9 +1193,13 @@ $LN1@AuThreadFi:
 
 	jmp	SHORT $LN3@AuThreadFi
 $LN2@AuThreadFi:
+
+; 577  : 	return NULL;
+
+	xor	eax, eax
 $LN5@AuThreadFi:
 
-; 577  : }
+; 578  : }
 
 	add	rsp, 24
 	ret	0
@@ -1754,7 +1820,7 @@ $LN3:
 
 	mov	rax, QWORD PTR t$[rsp]
 	mov	rdx, QWORD PTR [rax+200]
-	lea	rcx, OFFSET FLAT:$SG3702
+	lea	rcx, OFFSET FLAT:$SG3706
 	call	AuTextOut
 
 ; 300  : 	t->user_stack = stack;
@@ -2242,7 +2308,7 @@ $LN3:
 	add	rax, 4096				; 00001000H
 	mov	rcx, rax
 	call	P2V
-	lea	r9, OFFSET FLAT:$SG3720
+	lea	r9, OFFSET FLAT:$SG3724
 	mov	rcx, QWORD PTR tv68[rsp]
 	mov	r8, rcx
 	mov	rdx, rax

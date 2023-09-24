@@ -574,6 +574,20 @@ AuThread* AuThreadFindByID(uint16_t id) {
 		if (ready_queue_->id == id)
 			return ready_queue_;
 	}
+	return NULL;
+}
+
+/*
+ * AuThreadFindByIDBlockList -- finds a thread by its id from
+ * the block queue
+ * @param id -- id of the thread
+ */
+AuThread* AuThreadFindByIDBlockList(uint16_t id){
+	for (AuThread* block_queue = blocked_thr_head; block_queue != NULL; block_queue = block_queue->next){
+		if (block_queue->id == id)
+			return block_queue;
+	}
+	return NULL;
 }
 
 /*

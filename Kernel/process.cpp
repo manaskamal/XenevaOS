@@ -45,6 +45,7 @@
 #include <Mm\shm.h>
 #include <Sync\spinlock.h>
 #include <Sound\sound.h>
+#include <Hal\x86_64_signal.h>
 
 
 static int pid = 1;
@@ -376,11 +377,16 @@ void AuProcessExit(AuProcess* proc) {
 
 	AuSoundRemoveDSP(proc->main_thread->id);
 
+	AuSignalRemoveAll(proc->main_thread);
+
+
 	/* mark all the threads as blocked */
 	for (int i = 1; i < proc->num_thread - 1; i++) {
 		AuThread *killable = proc->threads[i];
-		if (killable)
+		if (killable) {
+			AuSignalRemoveAll(killable);
 			AuThreadMoveToTrash(killable);
+		}
 	}
 
 

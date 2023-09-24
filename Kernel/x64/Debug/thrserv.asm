@@ -6,9 +6,9 @@ INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
 CONST	SEGMENT
-$SG3730	DB	'No process found ', 0aH, 00H
+$SG3734	DB	'No process found ', 0aH, 00H
 	ORG $+5
-$SG3752	DB	'Signal Return ', 0dH, 0aH, 00H
+$SG3756	DB	'Signal Return ', 0dH, 0aH, 00H
 CONST	ENDS
 PUBLIC	?PauseThread@@YAHXZ				; PauseThread
 PUBLIC	?GetThreadID@@YAGXZ				; GetThreadID
@@ -149,7 +149,7 @@ $LN3:
 
 ; 157  : 	SeTextOut("Signal Return \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG3752
+	lea	rcx, OFFSET FLAT:$SG3756
 	call	SeTextOut
 
 ; 158  : 	/* just make a page fault */
@@ -243,7 +243,7 @@ $LN11:
 
 ; 118  : 		AuTextOut("No process found \n");
 
-	lea	rcx, OFFSET FLAT:$SG3730
+	lea	rcx, OFFSET FLAT:$SG3734
 	call	AuTextOut
 
 ; 119  : 		return -1;

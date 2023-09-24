@@ -132,6 +132,36 @@ void AuPrepareSignal(AuThread* thr, interrupt_stack_frame* frame, Signal* signal
 void AuSendSignal(uint16_t tid, int signo) {
 	AuThread* thr = AuThreadFindByID(tid);
 	if (!thr)
+		thr = AuThreadFindByIDBlockList(tid);
+		
+	if (!thr)
 		return;
+	/* unblock the thread for signal handling */
+	AuUnblockThread(thr);
+
+	if (thr->state == THREAD_STATE_SLEEP)
+		thr->state = THREAD_STATE_READY;
+
 	AuAllocateSignal(thr, signo);
+
+}
+
+
+/*
+ * AuSignalRemoveAll -- remove all signal forcefully
+ * @param thr -- thread to look for signals
+ */
+void AuSignalRemoveAll(AuThread* thr) {
+	if (thr->pendingSigCount < 0)
+		return;
+
+	while (thr->pendingSigCount) {
+		Signal * sig = AuGetSignal(thr);
+		if (!sig)
+			break;  //there might be bug in pendingSigCount
+		kfree(sig->signalStack);
+		kfree(sig->signalState);
+		kfree(sig);
+		thr->pendingSigCount--;
+	}
 }

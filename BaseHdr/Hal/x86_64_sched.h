@@ -228,6 +228,13 @@ extern void AuThreadCleanTrash(AuThread* t);
 AU_EXTERN AU_EXPORT AuThread* AuThreadFindByID(uint16_t id);
 
 /*
+* AuThreadFindByIDBlockList -- finds a thread by its id from
+* the block queue
+* @param id -- id of the thread
+*/
+AU_EXTERN AU_EXPORT AuThread* AuThreadFindByIDBlockList(uint16_t id);
+
+/*
 * AuForceScheduler -- force the scheduler
 * to switch next thread
 */

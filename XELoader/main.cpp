@@ -34,6 +34,7 @@
 #include <string.h>
 #include <sys\mman.h>
 #include <sys\iocodes.h>
+#include <sys\_kesignal.h>
 #include "pe_.h"
 #include "XELdrObject.h"
 
@@ -145,6 +146,15 @@ int XELdrStartProc(char* filename, XELoaderObject *obj) {
 	return 0;
 }
 
+/*
+ * DefaultSignalHandler -- default signal handler
+ * for all signals
+ */
+void DefaultSignalHandler(int signo) {
+	_KePrint("Default Signal Handler for signum-> %d \r\n", signo);
+	_KeProcessExit();
+}
+
 typedef int(*entrypoint) (int, char*[]);
 /*
  * main entry point of the loader, it accepts
@@ -176,7 +186,12 @@ int main(int argc, char* argv[]) {
 	 */
 	XELdrLinkAllObject(mainobj);
 
-	
+	/* register the default signal handler to
+	 * all signal
+	 */
+	for (int i = 0; i < NUMSIGNALS; i++)
+		_KeSetSignal(i + 1, DefaultSignalHandler);
+
 
 	entrypoint e = (entrypoint)mainobj->entry_addr;
 	e(0, NULL);

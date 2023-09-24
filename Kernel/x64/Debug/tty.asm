@@ -16,23 +16,23 @@ _BSS	SEGMENT
 ?last@@3PEAU__tty__@@EA DQ 01H DUP (?)			; last
 _BSS	ENDS
 CONST	SEGMENT
-$SG3505	DB	'/dev', 00H
+$SG3509	DB	'/dev', 00H
 	ORG $+3
-$SG3538	DB	'/dev', 00H
+$SG3542	DB	'/dev', 00H
 	ORG $+3
-$SG3544	DB	'ttym', 00H
+$SG3548	DB	'ttym', 00H
 	ORG $+3
-$SG3545	DB	'/dev/tty', 00H
+$SG3549	DB	'/dev/tty', 00H
 	ORG $+3
-$SG3550	DB	'/dev', 00H
+$SG3554	DB	'/dev', 00H
 	ORG $+3
-$SG3556	DB	'ttys', 00H
+$SG3560	DB	'ttys', 00H
 	ORG $+7
-$SG3557	DB	'/dev/tty', 00H
+$SG3561	DB	'/dev/tty', 00H
 	ORG $+3
-$SG3581	DB	'/dev', 00H
+$SG3585	DB	'/dev', 00H
 	ORG $+7
-$SG3582	DB	'/dev/tty', 00H
+$SG3586	DB	'/dev/tty', 00H
 CONST	ENDS
 PUBLIC	?AuTTYInitialise@@YAXXZ				; AuTTYInitialise
 PUBLIC	?AuTTYInsert@@YAXPEAU__tty__@@@Z		; AuTTYInsert
@@ -419,7 +419,7 @@ $LN3:
 
 ; 280  : 	AuVFSNode* fs = AuVFSFind("/dev");
 
-	lea	rcx, OFFSET FLAT:$SG3550
+	lea	rcx, OFFSET FLAT:$SG3554
 	call	AuVFSFind
 	mov	QWORD PTR fs$[rsp], rax
 
@@ -440,7 +440,7 @@ $LN3:
 ; 284  : 	char name[5];
 ; 285  : 	strcpy(name, "ttys");
 
-	lea	rdx, OFFSET FLAT:$SG3556
+	lea	rdx, OFFSET FLAT:$SG3560
 	lea	rcx, QWORD PTR name$[rsp]
 	call	strcpy
 
@@ -505,7 +505,7 @@ $LN3:
 ; 297  : 	AuDevFSAddFile(fs, "/dev/tty", node);
 
 	mov	r8, QWORD PTR node$[rsp]
-	lea	rdx, OFFSET FLAT:$SG3557
+	lea	rdx, OFFSET FLAT:$SG3561
 	mov	rcx, QWORD PTR fs$[rsp]
 	call	AuDevFSAddFile
 
@@ -542,7 +542,7 @@ $LN3:
 
 ; 252  : 	AuVFSNode* fs = AuVFSFind("/dev");
 
-	lea	rcx, OFFSET FLAT:$SG3538
+	lea	rcx, OFFSET FLAT:$SG3542
 	call	AuVFSFind
 	mov	QWORD PTR fs$[rsp], rax
 
@@ -563,7 +563,7 @@ $LN3:
 ; 256  : 	char name[5];
 ; 257  : 	strcpy(name, "ttym");
 
-	lea	rdx, OFFSET FLAT:$SG3544
+	lea	rdx, OFFSET FLAT:$SG3548
 	lea	rcx, QWORD PTR name$[rsp]
 	call	strcpy
 
@@ -628,7 +628,7 @@ $LN3:
 ; 269  : 	AuDevFSAddFile(fs, "/dev/tty", node);
 
 	mov	r8, QWORD PTR node$[rsp]
-	lea	rdx, OFFSET FLAT:$SG3545
+	lea	rdx, OFFSET FLAT:$SG3549
 	mov	rcx, QWORD PTR fs$[rsp]
 	call	AuDevFSAddFile
 
@@ -877,7 +877,7 @@ $LN4:
 
 ; 198  : 	AuVFSNode* _fs = AuVFSFind("/dev");
 
-	lea	rcx, OFFSET FLAT:$SG3505
+	lea	rcx, OFFSET FLAT:$SG3509
 	call	AuVFSFind
 	mov	QWORD PTR _fs$[rsp], rax
 
@@ -1753,14 +1753,14 @@ $LN3:
 ; 364  : 	/* create a directory for tty's */
 ; 365  : 	AuVFSNode* fs = AuVFSFind("/dev");
 
-	lea	rcx, OFFSET FLAT:$SG3581
+	lea	rcx, OFFSET FLAT:$SG3585
 	call	AuVFSFind
 	mov	QWORD PTR fs$[rsp], rax
 
 ; 366  : 	AuDevFSCreateFile(fs, "/dev/tty", FS_FLAG_DIRECTORY);
 
 	mov	r8b, 2
-	lea	rdx, OFFSET FLAT:$SG3582
+	lea	rdx, OFFSET FLAT:$SG3586
 	mov	rcx, QWORD PTR fs$[rsp]
 	call	?AuDevFSCreateFile@@YAHPEAU__VFS_NODE__@@PEADE@Z ; AuDevFSCreateFile
 

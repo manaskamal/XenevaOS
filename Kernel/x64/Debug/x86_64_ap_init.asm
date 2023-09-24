@@ -6,9 +6,9 @@ INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
 CONST	SEGMENT
-$SG3497	DB	'ap init ', 0dH, 0aH, 00H
+$SG3499	DB	'ap init ', 0dH, 0aH, 00H
 	ORG $+5
-$SG3498	DB	'CPU ID -> %d, TSS -> %x ', 0dH, 0aH, 00H
+$SG3500	DB	'CPU ID -> %d, TSS -> %x ', 0dH, 0aH, 00H
 CONST	ENDS
 PUBLIC	?x86_64_ap_init@@YAXPEAX@Z			; x86_64_ap_init
 EXTRN	?x86_64_hal_init_gdt_ap@@YAXXZ:PROC		; x86_64_hal_init_gdt_ap
@@ -54,7 +54,7 @@ $LN5:
 
 ; 47   : 	SeTextOut("ap init \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG3497
+	lea	rcx, OFFSET FLAT:$SG3499
 	call	SeTextOut
 
 ; 48   : 
@@ -115,7 +115,7 @@ $LN5:
 	mov	rcx, QWORD PTR tv68[rsp]
 	mov	r8, rcx
 	mov	edx, eax
-	lea	rcx, OFFSET FLAT:$SG3498
+	lea	rcx, OFFSET FLAT:$SG3500
 	call	SeTextOut
 
 ; 68   : 	x86_64_set_ap_start_bit(true);

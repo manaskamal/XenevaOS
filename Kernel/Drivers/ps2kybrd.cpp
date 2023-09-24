@@ -48,9 +48,7 @@ void AuPS2KybrdHandler(size_t v, void* p) {
 		 * a signal to deodhai thread which is
 		 * in thread id 4, in a hacky way
 		 */
-		SeTextOut("Key Pressed \r\n");
-		if (code == 0x2e)  //KEY_C
-			AuSendSignal(4, SIGINT);
+		SeTextOut("Key Pressed %x \r\n", code);
 	}
 	AuInterruptEnd(1);
 }

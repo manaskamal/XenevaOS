@@ -185,21 +185,22 @@ void page_fault(size_t vector, void* param){
 	AuThread* thr = AuGetCurrentThread();
 	
 	/* check for signal */
-	if (thr) {
-		if (thr->returnableSignal) {
-			Signal* sig = (Signal*)thr->returnableSignal;
-			x86_64_cpu_regs_t* ctx = (x86_64_cpu_regs_t*)(thr->frame.kern_esp - sizeof(x86_64_cpu_regs_t));
-			memcpy(ctx, sig->signalStack, sizeof(x86_64_cpu_regs_t));
-			memcpy(&thr->frame, sig->signalState, sizeof(AuThreadFrame));
-			kfree(sig->signalState);
-			kfree(sig->signalStack);
-			kfree(sig);
-			thr->returnableSignal = NULL;
-			return;
-		}
+	if (!thr) {
+		goto skip;
 	}
-	
-	panic("Page Fault !! \r\n");
+	if (thr->returnableSignal) {
+		SeTextOut("Thr has returnable signal \r\n");
+		Signal* sig = (Signal*)thr->returnableSignal;
+		x86_64_cpu_regs_t* ctx = (x86_64_cpu_regs_t*)(thr->frame.kern_esp - sizeof(x86_64_cpu_regs_t));
+		memcpy(ctx, sig->signalStack, sizeof(x86_64_cpu_regs_t));
+		memcpy(&thr->frame, sig->signalState, sizeof(AuThreadFrame));
+		kfree(sig->signalState);
+		kfree(sig->signalStack);
+		kfree(sig);
+		thr->returnableSignal = NULL;
+		return;
+	}
+
 	AuProcess *proc = NULL;
 	if (thr) {
 		proc = AuProcessFindThread(thr);
@@ -209,7 +210,8 @@ void page_fault(size_t vector, void* param){
 		}
 	}
 	
-
+skip:
+	panic("Page Fault !! \r\n");
 	uint64_t vaddr_ = (uint64_t)vaddr;
 	uint64_t vaddr_aligned = VIRT_ADDR_ALIGN(vaddr_);
 	bool _mapped = false;

@@ -10,7 +10,10 @@ PUBLIC	?AuCheckSignal@@YA_NPEAU_au_thread_@@PEAUinterrupt_stack_frame@@@Z ; AuCh
 PUBLIC	?AuGetSignal@@YAPEAU_signal_@@PEAU_au_thread_@@@Z ; AuGetSignal
 PUBLIC	?AuPrepareSignal@@YAXPEAU_au_thread_@@PEAUinterrupt_stack_frame@@PEAU_signal_@@@Z ; AuPrepareSignal
 PUBLIC	?AuSendSignal@@YAXGH@Z				; AuSendSignal
+PUBLIC	?AuSignalRemoveAll@@YAXPEAU_au_thread_@@@Z	; AuSignalRemoveAll
+EXTRN	AuUnblockThread:PROC
 EXTRN	AuThreadFindByID:PROC
+EXTRN	AuThreadFindByIDBlockList:PROC
 EXTRN	kmalloc:PROC
 EXTRN	kfree:PROC
 EXTRN	AuMapPage:PROC
@@ -28,9 +31,12 @@ $pdata$?AuGetSignal@@YAPEAU_signal_@@PEAU_au_thread_@@@Z DD imagerel $LN5
 $pdata$?AuPrepareSignal@@YAXPEAU_au_thread_@@PEAUinterrupt_stack_frame@@PEAU_signal_@@@Z DD imagerel $LN6
 	DD	imagerel $LN6+393
 	DD	imagerel $unwind$?AuPrepareSignal@@YAXPEAU_au_thread_@@PEAUinterrupt_stack_frame@@PEAU_signal_@@@Z
-$pdata$?AuSendSignal@@YAXGH@Z DD imagerel $LN4
-	DD	imagerel $LN4+57
+$pdata$?AuSendSignal@@YAXGH@Z DD imagerel $LN6
+	DD	imagerel $LN6+119
 	DD	imagerel $unwind$?AuSendSignal@@YAXGH@Z
+$pdata$?AuSignalRemoveAll@@YAXPEAU_au_thread_@@@Z DD imagerel $LN7
+	DD	imagerel $LN7+138
+	DD	imagerel $unwind$?AuSignalRemoveAll@@YAXPEAU_au_thread_@@@Z
 pdata	ENDS
 xdata	SEGMENT
 $unwind$?AuAllocateSignal@@YAXPEAU_au_thread_@@H@Z DD 010d01H
@@ -41,7 +47,96 @@ $unwind$?AuPrepareSignal@@YAXPEAU_au_thread_@@PEAUinterrupt_stack_frame@@PEAU_si
 	DD	08213H
 $unwind$?AuSendSignal@@YAXGH@Z DD 010d01H
 	DD	0620dH
+$unwind$?AuSignalRemoveAll@@YAXPEAU_au_thread_@@@Z DD 010901H
+	DD	06209H
 xdata	ENDS
+; Function compile flags: /Odtpy
+; File e:\xeneva project\aurora\kernel\hal\x86_64_signal.cpp
+_TEXT	SEGMENT
+sig$1 = 32
+thr$ = 64
+?AuSignalRemoveAll@@YAXPEAU_au_thread_@@@Z PROC		; AuSignalRemoveAll
+
+; 154  : void AuSignalRemoveAll(AuThread* thr) {
+
+$LN7:
+	mov	QWORD PTR [rsp+8], rcx
+	sub	rsp, 56					; 00000038H
+
+; 155  : 	if (thr->pendingSigCount < 0)
+
+	mov	rax, QWORD PTR thr$[rsp]
+	movzx	eax, BYTE PTR [rax+626]
+	test	eax, eax
+	jge	SHORT $LN4@AuSignalRe
+
+; 156  : 		return;
+
+	jmp	SHORT $LN5@AuSignalRe
+$LN4@AuSignalRe:
+$LN3@AuSignalRe:
+
+; 157  : 
+; 158  : 	while (thr->pendingSigCount) {
+
+	mov	rax, QWORD PTR thr$[rsp]
+	movzx	eax, BYTE PTR [rax+626]
+	test	eax, eax
+	je	SHORT $LN2@AuSignalRe
+
+; 159  : 		Signal * sig = AuGetSignal(thr);
+
+	mov	rcx, QWORD PTR thr$[rsp]
+	call	?AuGetSignal@@YAPEAU_signal_@@PEAU_au_thread_@@@Z ; AuGetSignal
+	mov	QWORD PTR sig$1[rsp], rax
+
+; 160  : 		if (!sig)
+
+	cmp	QWORD PTR sig$1[rsp], 0
+	jne	SHORT $LN1@AuSignalRe
+
+; 161  : 			break;  //there might be bug in pendingSigCount
+
+	jmp	SHORT $LN2@AuSignalRe
+$LN1@AuSignalRe:
+
+; 162  : 		kfree(sig->signalStack);
+
+	mov	rax, QWORD PTR sig$1[rsp]
+	mov	rcx, QWORD PTR [rax+4]
+	call	kfree
+
+; 163  : 		kfree(sig->signalState);
+
+	mov	rax, QWORD PTR sig$1[rsp]
+	mov	rcx, QWORD PTR [rax+12]
+	call	kfree
+
+; 164  : 		kfree(sig);
+
+	mov	rcx, QWORD PTR sig$1[rsp]
+	call	kfree
+
+; 165  : 		thr->pendingSigCount--;
+
+	mov	rax, QWORD PTR thr$[rsp]
+	movzx	eax, BYTE PTR [rax+626]
+	dec	al
+	mov	rcx, QWORD PTR thr$[rsp]
+	mov	BYTE PTR [rcx+626], al
+
+; 166  : 	}
+
+	jmp	SHORT $LN3@AuSignalRe
+$LN2@AuSignalRe:
+$LN5@AuSignalRe:
+
+; 167  : }
+
+	add	rsp, 56					; 00000038H
+	ret	0
+?AuSignalRemoveAll@@YAXPEAU_au_thread_@@@Z ENDP		; AuSignalRemoveAll
+_TEXT	ENDS
 ; Function compile flags: /Odtpy
 ; File e:\xeneva project\aurora\kernel\hal\x86_64_signal.cpp
 _TEXT	SEGMENT
@@ -52,7 +147,7 @@ signo$ = 72
 
 ; 132  : void AuSendSignal(uint16_t tid, int signo) {
 
-$LN4:
+$LN6:
 	mov	DWORD PTR [rsp+16], edx
 	mov	WORD PTR [rsp+8], cx
 	sub	rsp, 56					; 00000038H
@@ -66,21 +161,56 @@ $LN4:
 ; 134  : 	if (!thr)
 
 	cmp	QWORD PTR thr$[rsp], 0
+	jne	SHORT $LN3@AuSendSign
+
+; 135  : 		thr = AuThreadFindByIDBlockList(tid);
+
+	movzx	ecx, WORD PTR tid$[rsp]
+	call	AuThreadFindByIDBlockList
+	mov	QWORD PTR thr$[rsp], rax
+$LN3@AuSendSign:
+
+; 136  : 		
+; 137  : 	if (!thr)
+
+	cmp	QWORD PTR thr$[rsp], 0
+	jne	SHORT $LN2@AuSendSign
+
+; 138  : 		return;
+
+	jmp	SHORT $LN4@AuSendSign
+$LN2@AuSendSign:
+
+; 139  : 	/* unblock the thread for signal handling */
+; 140  : 	AuUnblockThread(thr);
+
+	mov	rcx, QWORD PTR thr$[rsp]
+	call	AuUnblockThread
+
+; 141  : 
+; 142  : 	if (thr->state == THREAD_STATE_SLEEP)
+
+	mov	rax, QWORD PTR thr$[rsp]
+	movzx	eax, BYTE PTR [rax+300]
+	cmp	eax, 4
 	jne	SHORT $LN1@AuSendSign
 
-; 135  : 		return;
+; 143  : 		thr->state = THREAD_STATE_READY;
 
-	jmp	SHORT $LN2@AuSendSign
+	mov	rax, QWORD PTR thr$[rsp]
+	mov	BYTE PTR [rax+300], 1
 $LN1@AuSendSign:
 
-; 136  : 	AuAllocateSignal(thr, signo);
+; 144  : 
+; 145  : 	AuAllocateSignal(thr, signo);
 
 	mov	edx, DWORD PTR signo$[rsp]
 	mov	rcx, QWORD PTR thr$[rsp]
 	call	?AuAllocateSignal@@YAXPEAU_au_thread_@@H@Z ; AuAllocateSignal
-$LN2@AuSendSign:
+$LN4@AuSendSign:
 
-; 137  : }
+; 146  : 
+; 147  : }
 
 	add	rsp, 56					; 00000038H
 	ret	0

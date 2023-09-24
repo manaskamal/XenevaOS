@@ -1,12 +1,12 @@
-﻿Build started 23-09-2023 আবেলি 1:52:01.
+﻿Build started 24-09-2023 ৰাতিপু 9:12:54.
      1>Project "E:\Xeneva Project\Aurora\XELoader\XELoader.vcxproj" on node 2 (Rebuild target(s)).
      1>_NASM:
          crt0.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp959bcc635f8a481498575a1553d6fff4.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmpa9c80f1c7c104a80b57f8324a94930c4.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\crt0.obj"  "E:\Xeneva Project\Aurora\XELoader\crt0.asm"
        _NASM:
          fastcpy.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp39fe9bdc6bdf483ea2e54b2744492a5d.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp5cf2819c2c6f47408e7bd157b48773a3.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\fastcpy.obj"  "E:\Xeneva Project\Aurora\XELoader\fastcpy.asm"
        ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /Zi /nologo /W3 /WX- /sdl /Od /D ARCH_X64 /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt main.cpp pe_.cpp XELdrObject.cpp
@@ -28,11 +28,11 @@
          main.cpp
      1>e:\xeneva project\aurora\xeloader\pe_.h(243): warning C4200: nonstandard extension used : zero-sized array in struct/union
                  Cannot generate copy-ctor or copy-assignment operator when UDT contains a zero-sized array
-     1>main.cpp(70): warning C4244: 'initializing' : conversion from 'uint64_t' to 'intptr_t', possible loss of data
-     1>main.cpp(75): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
-     1>main.cpp(114): warning C4244: 'initializing' : conversion from 'uint64_t' to 'intptr_t', possible loss of data
+     1>main.cpp(71): warning C4244: 'initializing' : conversion from 'uint64_t' to 'intptr_t', possible loss of data
+     1>main.cpp(76): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
      1>main.cpp(115): warning C4244: 'initializing' : conversion from 'uint64_t' to 'intptr_t', possible loss of data
-     1>main.cpp(121): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
+     1>main.cpp(116): warning C4244: 'initializing' : conversion from 'uint64_t' to 'intptr_t', possible loss of data
+     1>main.cpp(122): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
          Generating Code...
      1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(1186,5): warning MSB8012: TargetPath(E:\Xeneva Project\Aurora\x64\Debug\XELoader.exe) does not match the Linker's OutputFile property value (F:\xeldr.exe). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
      1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(1188,5): warning MSB8012: TargetName(XELoader) does not match the Linker's OutputFile property value (xeldr). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
@@ -50,4 +50,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:01.44
+Time Elapsed 00:00:00.85

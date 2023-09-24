@@ -79,4 +79,10 @@ extern void AuPrepareSignal(AuThread* thr, interrupt_stack_frame* frame, Signal*
 * @param signo -- signal number
 */
 extern void AuSendSignal(uint16_t tid, int signo);
+
+/*
+* AuSignalRemoveAll -- remove all signal forcefully
+* @param thr -- thread to look for signals
+*/
+extern void AuSignalRemoveAll(AuThread* thr);
 #endif

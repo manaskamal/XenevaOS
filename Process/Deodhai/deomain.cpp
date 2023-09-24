@@ -74,10 +74,6 @@ void ComposeFrame(ChCanvas *canvas) {
 }
 
 
-void SignalHandler(int no) {
-	_KePrint("Deodhai !! signal handler \n");
-}
-
 /*
  * main -- deodhai compositor
  */
@@ -139,8 +135,6 @@ int main(int argc, char* arv[]) {
 
 	arrow = CursorOpen("/pointer.bmp", CURSOR_TYPE_POINTER);
 	CursorRead(arrow);
-
-	_KeSetSignal(SIGINT, SignalHandler);
 
 	mouse_fd = _KeOpenFile("/dev/mice", FILE_OPEN_READ_ONLY);
 	AuInputMessage mice_input;

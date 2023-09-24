@@ -6,13 +6,13 @@ INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
 CONST	SEGMENT
-$SG3538	DB	'Key Pressed ', 0dH, 0aH, 00H
-	ORG $+1
-$SG3543	DB	'/dev', 00H
-	ORG $+3
-$SG3544	DB	'/ps2kybrd', 00H
+$SG3542	DB	'Key Pressed %x ', 0dH, 0aH, 00H
+	ORG $+2
+$SG3546	DB	'/dev', 00H
+	ORG $+7
+$SG3547	DB	'/ps2kybrd', 00H
 	ORG $+6
-$SG3546	DB	'/dev/ps2kybrd', 00H
+$SG3549	DB	'/dev/ps2kybrd', 00H
 CONST	ENDS
 PUBLIC	?AuPS2KybrdHandler@@YAX_KPEAX@Z			; AuPS2KybrdHandler
 PUBLIC	?AuPS2KybrdInitialize@@YAXXZ			; AuPS2KybrdInitialize
@@ -20,13 +20,12 @@ EXTRN	AuHalRegisterIRQ:PROC
 EXTRN	AuInterruptEnd:PROC
 EXTRN	AuVFSFind:PROC
 EXTRN	x64_inportb:PROC
-EXTRN	?AuSendSignal@@YAXGH@Z:PROC			; AuSendSignal
 EXTRN	?AuDevFSCreateFile@@YAHPEAU__VFS_NODE__@@PEADE@Z:PROC ; AuDevFSCreateFile
 EXTRN	?AuDevFSOpen@@YAPEAU__VFS_NODE__@@PEAU1@PEAD@Z:PROC ; AuDevFSOpen
 EXTRN	SeTextOut:PROC
 pdata	SEGMENT
-$pdata$?AuPS2KybrdHandler@@YAX_KPEAX@Z DD imagerel $LN5
-	DD	imagerel $LN5+94
+$pdata$?AuPS2KybrdHandler@@YAX_KPEAX@Z DD imagerel $LN4
+	DD	imagerel $LN4+77
 	DD	imagerel $unwind$?AuPS2KybrdHandler@@YAX_KPEAX@Z
 $pdata$?AuPS2KybrdInitialize@@YAXXZ DD imagerel $LN3
 	DD	imagerel $LN3+91
@@ -45,12 +44,12 @@ fs$ = 32
 kybrd$ = 40
 ?AuPS2KybrdInitialize@@YAXXZ PROC			; AuPS2KybrdInitialize
 
-; 62   : void AuPS2KybrdInitialize() {
+; 60   : void AuPS2KybrdInitialize() {
 
 $LN3:
 	sub	rsp, 56					; 00000038H
 
-; 63   : 	AuHalRegisterIRQ(1, AuPS2KybrdHandler, 1, false);
+; 61   : 	AuHalRegisterIRQ(1, AuPS2KybrdHandler, 1, false);
 
 	xor	r9d, r9d
 	mov	r8b, 1
@@ -58,29 +57,29 @@ $LN3:
 	mov	ecx, 1
 	call	AuHalRegisterIRQ
 
-; 64   : 
-; 65   : 	/* start the registration process */
-; 66   : 	AuVFSNode* fs = AuVFSFind("/dev");
+; 62   : 
+; 63   : 	/* start the registration process */
+; 64   : 	AuVFSNode* fs = AuVFSFind("/dev");
 
-	lea	rcx, OFFSET FLAT:$SG3543
+	lea	rcx, OFFSET FLAT:$SG3546
 	call	AuVFSFind
 	mov	QWORD PTR fs$[rsp], rax
 
-; 67   : 	AuDevFSCreateFile(fs, "/ps2kybrd", FS_FLAG_DEVICE);
+; 65   : 	AuDevFSCreateFile(fs, "/ps2kybrd", FS_FLAG_DEVICE);
 
 	mov	r8b, 8
-	lea	rdx, OFFSET FLAT:$SG3544
+	lea	rdx, OFFSET FLAT:$SG3547
 	mov	rcx, QWORD PTR fs$[rsp]
 	call	?AuDevFSCreateFile@@YAHPEAU__VFS_NODE__@@PEADE@Z ; AuDevFSCreateFile
 
-; 68   : 	AuVFSNode* kybrd = AuDevFSOpen(fs, "/dev/ps2kybrd");
+; 66   : 	AuVFSNode* kybrd = AuDevFSOpen(fs, "/dev/ps2kybrd");
 
-	lea	rdx, OFFSET FLAT:$SG3546
+	lea	rdx, OFFSET FLAT:$SG3549
 	mov	rcx, QWORD PTR fs$[rsp]
 	call	?AuDevFSOpen@@YAPEAU__VFS_NODE__@@PEAU1@PEAD@Z ; AuDevFSOpen
 	mov	QWORD PTR kybrd$[rsp], rax
 
-; 69   : }
+; 67   : }
 
 	add	rsp, 56					; 00000038H
 	ret	0
@@ -96,7 +95,7 @@ p$ = 72
 
 ; 44   : void AuPS2KybrdHandler(size_t v, void* p) {
 
-$LN5:
+$LN4:
 	mov	QWORD PTR [rsp+16], rdx
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 56					; 00000038H
@@ -108,7 +107,7 @@ $LN5:
 	movzx	eax, al
 	and	eax, 1
 	test	eax, eax
-	je	SHORT $LN2@AuPS2Kybrd
+	je	SHORT $LN1@AuPS2Kybrd
 
 ; 46   : 		int code = x64_inportb(0x60);
 
@@ -121,31 +120,20 @@ $LN5:
 ; 48   : 		 * a signal to deodhai thread which is
 ; 49   : 		 * in thread id 4, in a hacky way
 ; 50   : 		 */
-; 51   : 		SeTextOut("Key Pressed \r\n");
+; 51   : 		SeTextOut("Key Pressed %x \r\n", code);
 
-	lea	rcx, OFFSET FLAT:$SG3538
+	mov	edx, DWORD PTR code$1[rsp]
+	lea	rcx, OFFSET FLAT:$SG3542
 	call	SeTextOut
-
-; 52   : 		if (code == 0x2e)  //KEY_C
-
-	cmp	DWORD PTR code$1[rsp], 46		; 0000002eH
-	jne	SHORT $LN1@AuPS2Kybrd
-
-; 53   : 			AuSendSignal(4, SIGINT);
-
-	mov	edx, 2
-	mov	cx, 4
-	call	?AuSendSignal@@YAXGH@Z			; AuSendSignal
 $LN1@AuPS2Kybrd:
-$LN2@AuPS2Kybrd:
 
-; 54   : 	}
-; 55   : 	AuInterruptEnd(1);
+; 52   : 	}
+; 53   : 	AuInterruptEnd(1);
 
 	mov	cl, 1
 	call	AuInterruptEnd
 
-; 56   : }
+; 54   : }
 
 	add	rsp, 56					; 00000038H
 	ret	0
