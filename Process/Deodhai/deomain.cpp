@@ -59,6 +59,9 @@ void CursorDrawBack(ChCanvas* canv,Cursor* cur, unsigned x, unsigned y) {
 		ChDrawPixel(canv, x + w, y + h, cur->cursorBack[h * 24 + w]);
 }
 
+/* ComposeFrame -- composes a single frame 
+ * @param canvas -- Pointer to canvas data structure
+ */
 void ComposeFrame(ChCanvas *canvas) {
 	CursorDrawBack(canvas,arrow,arrow->oldXPos, arrow->oldYPos);
 	AddDirtyClip(arrow->oldXPos, arrow->oldYPos, 24, 24);
@@ -139,7 +142,13 @@ int main(int argc, char* arv[]) {
 	mouse_fd = _KeOpenFile("/dev/mice", FILE_OPEN_READ_ONLY);
 	AuInputMessage mice_input;
 	memset(&mice_input, 0, sizeof(AuInputMessage));
+
+	uint64_t frame_tick = 0;
+	uint64_t diff_tick = 0;
 	while (1) {
+		
+		frame_tick = _KeGetSystemTimerTick();
+
 		if (sleepable) {
 			_KeReadFile(mouse_fd, &mice_input, sizeof(AuInputMessage));
 			ComposeFrame(canv);
@@ -179,10 +188,16 @@ int main(int argc, char* arv[]) {
 				_KeFileIoControl(mouse_fd, MOUSE_IOCODE_SETPOS, &ioctl);
 			}
 		}
+		diff_tick = _KeGetSystemTimerTick();
+		uint64_t delta = diff_tick - frame_tick;
 		if (sleepable) {
 			/* i think, sleeping time must be based on 10ms,
 			 * so 16ms would be 10ms + 6 */
-			_KeProcessSleep(6);
+			if (delta < 1000 / 60) {
+				_KeProcessSleep(1000/ 60 - delta);
+			}
+			
+			
 		}
 	}
 }

@@ -169,3 +169,11 @@ int SetSignal(int signo, AuSigHandler handler){
 		return 0;
 	thr->singals[signo] = handler;
 }
+
+/*
+ * GetSystemTimerTick -- returns the current system
+ * tick
+ */
+size_t GetSystemTimerTick() {
+	return AuGetSystemTimerTick();
+}

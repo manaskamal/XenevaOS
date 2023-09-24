@@ -109,4 +109,10 @@ XE_EXTERN XE_LIB int _KeProcessSleep(uint64_t ms);
  */
 XE_EXTERN XE_LIB int _KeSetSignal(int signo, XESigHandler handler);
 
+/*
+ * _KeGetSystemTimerTick -- returns the current system
+ * timer tick
+ */
+XE_EXTERN XE_LIB size_t _KeGetSystemTimerTick();
+
 #endif

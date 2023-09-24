@@ -12,15 +12,15 @@ _BSS	SEGMENT
 ?kybrd_@@3PEAU__VFS_NODE__@@EA DQ 01H DUP (?)		; kybrd_
 _BSS	ENDS
 CONST	SEGMENT
-$SG3458	DB	'/dev', 00H
+$SG3460	DB	'/dev', 00H
 	ORG $+3
-$SG3466	DB	'mice', 00H
+$SG3468	DB	'mice', 00H
 	ORG $+3
-$SG3467	DB	'/', 00H
+$SG3469	DB	'/', 00H
 	ORG $+2
-$SG3469	DB	'kybrd', 00H
+$SG3471	DB	'kybrd', 00H
 	ORG $+2
-$SG3470	DB	'/', 00H
+$SG3472	DB	'/', 00H
 CONST	ENDS
 PUBLIC	?AuDevInputInitialise@@YAXXZ			; AuDevInputInitialise
 PUBLIC	AuDevReadMice
@@ -387,7 +387,7 @@ $LN3:
 
 ; 131  : 	AuVFSNode* devfs = AuVFSFind("/dev");
 
-	lea	rcx, OFFSET FLAT:$SG3458
+	lea	rcx, OFFSET FLAT:$SG3460
 	call	AuVFSFind
 	mov	QWORD PTR devfs$[rsp], rax
 
@@ -422,7 +422,7 @@ $LN3:
 ; 138  : 	strcpy(node->filename, "mice");
 
 	mov	rax, QWORD PTR node$[rsp]
-	lea	rdx, OFFSET FLAT:$SG3466
+	lea	rdx, OFFSET FLAT:$SG3468
 	mov	rcx, rax
 	call	strcpy
 
@@ -476,7 +476,7 @@ $LN3:
 ; 147  : 	AuDevFSAddFile(devfs, "/", mice_);
 
 	mov	r8, QWORD PTR ?mice_@@3PEAU__VFS_NODE__@@EA ; mice_
-	lea	rdx, OFFSET FLAT:$SG3467
+	lea	rdx, OFFSET FLAT:$SG3469
 	mov	rcx, QWORD PTR devfs$[rsp]
 	call	AuDevFSAddFile
 
@@ -484,14 +484,14 @@ $LN3:
 ; 149  : 	kybrd_ = AuCreatePipe("kybrd", sizeof(AuInputMessage)* NUM_KEYBOARD_PACKETS);
 
 	mov	edx, 13312				; 00003400H
-	lea	rcx, OFFSET FLAT:$SG3469
+	lea	rcx, OFFSET FLAT:$SG3471
 	call	?AuCreatePipe@@YAPEAU__VFS_NODE__@@PEAD_K@Z ; AuCreatePipe
 	mov	QWORD PTR ?kybrd_@@3PEAU__VFS_NODE__@@EA, rax ; kybrd_
 
 ; 150  : 	AuDevFSAddFile(devfs, "/", kybrd_);
 
 	mov	r8, QWORD PTR ?kybrd_@@3PEAU__VFS_NODE__@@EA ; kybrd_
-	lea	rdx, OFFSET FLAT:$SG3470
+	lea	rdx, OFFSET FLAT:$SG3472
 	mov	rcx, QWORD PTR devfs$[rsp]
 	call	AuDevFSAddFile
 

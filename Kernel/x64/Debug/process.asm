@@ -19,15 +19,15 @@ _DATA	SEGMENT
 pid	DD	01H
 _DATA	ENDS
 CONST	SEGMENT
-$SG4121	DB	'[aurora]: cannot exit root process ', 0dH, 0aH, 00H
+$SG4122	DB	'[aurora]: cannot exit root process ', 0dH, 0aH, 00H
 	ORG $+2
-$SG4134	DB	'Closing file -> %s , address -> %x ', 0dH, 0aH, 00H
+$SG4135	DB	'Closing file -> %s , address -> %x ', 0dH, 0aH, 00H
 	ORG $+2
-$SG4045	DB	'_root', 00H
+$SG4046	DB	'_root', 00H
 	ORG $+2
-$SG4072	DB	'-about', 00H
+$SG4073	DB	'-about', 00H
 	ORG $+1
-$SG4077	DB	'/init.exe', 00H
+$SG4078	DB	'/init.exe', 00H
 CONST	ENDS
 PUBLIC	?AuAddProcess@@YAXPEAU_au_proc_@@0@Z		; AuAddProcess
 PUBLIC	?AuRemoveProcess@@YAXPEAU_au_proc_@@0@Z		; AuRemoveProcess
@@ -356,7 +356,7 @@ $LN6:
 
 	mov	rax, QWORD PTR proc$[rsp]
 	add	rax, 4
-	lea	rdx, OFFSET FLAT:$SG4045
+	lea	rdx, OFFSET FLAT:$SG4046
 	mov	rcx, rax
 	call	strcpy
 
@@ -784,7 +784,7 @@ $LN15:
 
 ; 370  : 		SeTextOut("[aurora]: cannot exit root process \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG4121
+	lea	rcx, OFFSET FLAT:$SG4122
 	call	SeTextOut
 
 ; 371  : 		return;
@@ -901,7 +901,7 @@ $LN7@AuProcessE:
 	mov	rax, QWORD PTR file$3[rsp]
 	mov	r8, QWORD PTR file$3[rsp]
 	mov	rdx, rax
-	lea	rcx, OFFSET FLAT:$SG4134
+	lea	rcx, OFFSET FLAT:$SG4135
 	call	SeTextOut
 
 ; 400  : 			if (file->flags & FS_FLAG_DEVICE || file->flags & FS_FLAG_FILE_SYSTEM)
@@ -1219,7 +1219,7 @@ $LN3:
 
 ; 276  : 	char* about_str = "-about";
 
-	lea	rax, OFFSET FLAT:$SG4072
+	lea	rax, OFFSET FLAT:$SG4073
 	mov	QWORD PTR about_str$[rsp], rax
 
 ; 277  : 	char* about = (char*)kmalloc(strlen(about_str));
@@ -1261,7 +1261,7 @@ $LN3:
 
 	mov	r9, QWORD PTR argvs$[rsp]
 	mov	r8d, DWORD PTR num_args$[rsp]
-	lea	rdx, OFFSET FLAT:$SG4077
+	lea	rdx, OFFSET FLAT:$SG4078
 	mov	rcx, QWORD PTR ?root_proc@@3PEAU_au_proc_@@EA ; root_proc
 	call	?AuLoadExecToProcess@@YAXPEAU_au_proc_@@PEADHPEAPEAD@Z ; AuLoadExecToProcess
 

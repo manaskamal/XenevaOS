@@ -55,6 +55,7 @@ static uint16_t thread_id;
 AuThread* _idle_thr;
 Spinlock *_idle_lock;
 bool _x86_64_sched_init;
+static uint64_t scheduler_tick;
 
 extern "C" int save_context(AuThread *t, void *tss);
 extern "C" void execute_idle(AuThread* t, void* tss);
@@ -366,6 +367,7 @@ void AuSchedulerInitialise() {
 	trash_thr_last = NULL;
 	_x86_64_sched_enable = true;
 	_x86_64_sched_init = false;
+	scheduler_tick = 0;
 	_idle_lock = AuCreateSpinlock(false);
 	AuThread *idle_ = AuCreateKthread(AuIdleThread, (uint64_t)P2V((uint64_t)AuPmmngrAlloc() + 4096), x64_read_cr3(), "Idle");
 	_idle_thr = idle_;
@@ -432,7 +434,7 @@ void x8664SchedulerISR(size_t v, void* param) {
 		if (x86_64_is_cpu_fxsave_supported())
 			x64_fxsave(current_thread->fx_state);
 
-		
+		scheduler_tick++;
 		AuNextThread();
 		current_thread = AuPerCPUGetCurrentThread();
 		
@@ -601,4 +603,12 @@ AU_EXTERN AU_EXPORT void AuForceScheduler() {
 
 bool AuIsSchedulerInitialised() {
 	return _x86_64_sched_init;
+}
+
+/*
+ * AuGetSystemTimerTick -- returns the
+ * current timer tick value
+ */
+uint64_t AuGetSystemTimerTick() {
+	return scheduler_tick;
 }

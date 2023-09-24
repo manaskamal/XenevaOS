@@ -192,6 +192,7 @@
     <ClInclude Include="..\BaseHdr\Hal\x86_64_pic.h" />
     <ClInclude Include="..\BaseHdr\Hal\x86_64_sched.h" />
     <ClInclude Include="..\BaseHdr\Hal\x86_64_signal.h" />
+    <ClInclude Include="..\BaseHdr\Ipc\postbox.h" />
     <ClInclude Include="..\BaseHdr\Ipc\signal.h" />
     <ClInclude Include="..\BaseHdr\limits.h" />
     <ClInclude Include="..\BaseHdr\list.h" />
@@ -263,6 +264,7 @@
     <ClCompile Include="Hal\x86_64_signal.cpp" />
     <ClCompile Include="Hal\x86_64_systable.cpp" />
     <ClCompile Include="init.cpp" />
+    <ClCompile Include="Ipc\postbox.cpp" />
     <ClCompile Include="list.cpp" />
     <ClCompile Include="loader.cpp" />
     <ClCompile Include="Mm\buddy.cpp" />

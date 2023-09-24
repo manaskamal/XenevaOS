@@ -1,5 +1,6 @@
-﻿Build started 24-09-2023 আবেলি 2:04:24.
+﻿Build started 24-09-2023 আবেলি 6:54:43.
      1>Project "E:\Xeneva Project\Aurora\Process\Deodhai\Deodhai.vcxproj" on node 2 (Rebuild target(s)).
+     1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppClean.targets(76,5): warning : The process cannot access the file 'e:\xeneva project\aurora\process\deodhai\x64\debug\vc120.pdb' because it is being used by another process.
      1>ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /I"E:\Xeneva Project\Aurora\Libs\Chitralekha" /Zi /nologo /W3 /WX- /sdl- /Od /D ARCH_X64 /D YES_DYNAMIC /D DYNAMIC_IMPORTER /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt cursor.cpp deomain.cpp dirty.cpp
      1>cl : Command line warning D9025: overriding '/sdl-' with '/GS-'
@@ -7,8 +8,8 @@
          dirty.cpp
      1>dirty.cpp(70): warning C4018: '<' : signed/unsigned mismatch
          deomain.cpp
-     1>deomain.cpp(158): warning C4018: '>=' : signed/unsigned mismatch
-     1>deomain.cpp(160): warning C4018: '>=' : signed/unsigned mismatch
+     1>deomain.cpp(167): warning C4018: '>=' : signed/unsigned mismatch
+     1>deomain.cpp(169): warning C4018: '>=' : signed/unsigned mismatch
          cursor.cpp
      1>cursor.cpp(96): warning C4018: '<' : signed/unsigned mismatch
      1>cursor.cpp(100): warning C4018: '<' : signed/unsigned mismatch
@@ -25,4 +26,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:01.20
+Time Elapsed 00:00:00.86

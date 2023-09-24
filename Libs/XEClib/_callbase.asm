@@ -447,6 +447,25 @@ _KeFileStat:
 	  mov rdi, 0
 	  syscall
 	  ret
+
+;;===============================
+;; _KeGetSystemTimerTick -- get the
+;; current timer tick value from
+;; kernel
+;;===============================
+global _KeGetSystemTimerTick
+%ifdef YES_DYNAMIC
+export _KeGetSystemTimerTick
+%endif
+_KeGetSystemTimerTick:
+      xor rax, rax
+	  mov r12, 26
+	  mov r13, 0
+	  mov r14, 0
+	  mov r15, 0
+	  mov rdi, 0
+	  syscall
+	  ret
       
       
       

@@ -93,6 +93,7 @@ static void* syscalls[AURORA_MAX_SYSCALL] = {
 	ProcessSleep,     //23
 	SignalReturn,     //24
 	SetSignal,        //25
+	GetSystemTimerTick, //26
 };
 
 

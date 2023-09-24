@@ -85,6 +85,9 @@
     <Filter Include="Include\Ipc">
       <UniqueIdentifier>{fdeb456d-5d30-4876-842d-290542ce8894}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Ipc">
+      <UniqueIdentifier>{5c56ee04-bddb-467a-9b01-576434cd21b0}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\BaseHdr\_null.h">
@@ -300,6 +303,9 @@
     <ClInclude Include="..\BaseHdr\Ipc\signal.h">
       <Filter>Include\Ipc</Filter>
     </ClInclude>
+    <ClInclude Include="..\BaseHdr\Ipc\postbox.h">
+      <Filter>Include\Ipc</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="init.cpp" />
@@ -461,6 +467,9 @@
     </ClCompile>
     <ClCompile Include="Hal\x86_64_pic.cpp">
       <Filter>Hal</Filter>
+    </ClCompile>
+    <ClCompile Include="Ipc\postbox.cpp">
+      <Filter>Ipc</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

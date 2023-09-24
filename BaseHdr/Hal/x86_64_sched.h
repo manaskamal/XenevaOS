@@ -241,4 +241,10 @@ AU_EXTERN AU_EXPORT AuThread* AuThreadFindByIDBlockList(uint16_t id);
 AU_EXTERN AU_EXPORT void AuForceScheduler();
 
 extern bool AuIsSchedulerInitialised();
+
+/*
+* AuGetSystemTimerTick -- returns the
+* current timer tick value
+*/
+AU_EXTERN AU_EXPORT uint64_t AuGetSystemTimerTick();
 #endif

@@ -6,10 +6,10 @@ INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
 CONST	SEGMENT
-$SG3945	DB	'[FatLocateDir]: Getting file pointer for path -> %s ', 0dH
+$SG3946	DB	'[FatLocateDir]: Getting file pointer for path -> %s ', 0dH
 	DB	0aH, 00H
 	ORG $+1
-$SG4039	DB	'%c', 00H
+$SG4040	DB	'%c', 00H
 CONST	ENDS
 PUBLIC	?FatInitialise@@YAPEAU__VFS_NODE__@@PEAU_VDISK_@@PEAD@Z ; FatInitialise
 PUBLIC	?FatClusterToSector32@@YA_KPEAU_FatFS_@@_K@Z	; FatClusterToSector32
@@ -1103,7 +1103,7 @@ $LN14:
 ; 323  : 		SeTextOut("[FatLocateDir]: Getting file pointer for path -> %s \r\n", dir);
 
 	mov	rdx, QWORD PTR dir$[rsp]
-	lea	rcx, OFFSET FLAT:$SG3945
+	lea	rcx, OFFSET FLAT:$SG3946
 	call	SeTextOut
 $LN11@FatLocateD:
 
@@ -2364,7 +2364,7 @@ $LN9@FatInitial:
 	mov	rcx, QWORD PTR bpb$[rsp]
 	movsx	eax, BYTE PTR [rcx+rax+3]
 	mov	edx, eax
-	lea	rcx, OFFSET FLAT:$SG4039
+	lea	rcx, OFFSET FLAT:$SG4040
 	call	AuTextOut
 
 ; 492  : 		fs->oemid[i] = bpb->oemid[i];

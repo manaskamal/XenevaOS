@@ -95,6 +95,7 @@ uint64_t GetProcessHeapMem(size_t sz) {
 	if (!proc)
 		return -1;
 	uint64_t start_addr = proc->proc_mem_heap;
+
 	for (int i = 0; i < sz / PAGE_SIZE; i++) {
 		void* phys = AuPmmngrAlloc();
 		AuMapPage((size_t)phys, start_addr + i * PAGE_SIZE, X86_64_PAGING_USER);

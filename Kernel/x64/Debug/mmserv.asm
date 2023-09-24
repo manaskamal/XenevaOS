@@ -118,7 +118,8 @@ $LN4@GetProcess:
 	mov	rax, QWORD PTR [rax+1071]
 	mov	QWORD PTR start_addr$[rsp], rax
 
-; 98   : 	for (int i = 0; i < sz / PAGE_SIZE; i++) {
+; 98   : 
+; 99   : 	for (int i = 0; i < sz / PAGE_SIZE; i++) {
 
 	mov	DWORD PTR i$1[rsp], 0
 	jmp	SHORT $LN3@GetProcess
@@ -137,12 +138,12 @@ $LN3@GetProcess:
 	cmp	rcx, rax
 	jae	SHORT $LN1@GetProcess
 
-; 99   : 		void* phys = AuPmmngrAlloc();
+; 100  : 		void* phys = AuPmmngrAlloc();
 
 	call	AuPmmngrAlloc
 	mov	QWORD PTR phys$2[rsp], rax
 
-; 100  : 		AuMapPage((size_t)phys, start_addr + i * PAGE_SIZE, X86_64_PAGING_USER);
+; 101  : 		AuMapPage((size_t)phys, start_addr + i * PAGE_SIZE, X86_64_PAGING_USER);
 
 	imul	eax, DWORD PTR i$1[rsp], 4096		; 00001000H
 	cdqe
@@ -154,12 +155,12 @@ $LN3@GetProcess:
 	mov	rcx, QWORD PTR phys$2[rsp]
 	call	AuMapPage
 
-; 101  : 	}
+; 102  : 	}
 
 	jmp	SHORT $LN2@GetProcess
 $LN1@GetProcess:
 
-; 102  : 	proc->proc_mem_heap += sz;
+; 103  : 	proc->proc_mem_heap += sz;
 
 	mov	rax, QWORD PTR proc$[rsp]
 	mov	rax, QWORD PTR [rax+1071]
@@ -167,12 +168,12 @@ $LN1@GetProcess:
 	mov	rcx, QWORD PTR proc$[rsp]
 	mov	QWORD PTR [rcx+1071], rax
 
-; 103  : 	return start_addr;
+; 104  : 	return start_addr;
 
 	mov	rax, QWORD PTR start_addr$[rsp]
 $LN7@GetProcess:
 
-; 104  : }
+; 105  : }
 
 	add	rsp, 88					; 00000058H
 	ret	0

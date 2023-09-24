@@ -6,9 +6,9 @@ INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
 CONST	SEGMENT
-$SG3735	DB	'No process found ', 0aH, 00H
+$SG3736	DB	'No process found ', 0aH, 00H
 	ORG $+5
-$SG3757	DB	'Signal Return ', 0dH, 0aH, 00H
+$SG3758	DB	'Signal Return ', 0dH, 0aH, 00H
 CONST	ENDS
 PUBLIC	?PauseThread@@YAHXZ				; PauseThread
 PUBLIC	?GetThreadID@@YAGXZ				; GetThreadID
@@ -20,10 +20,12 @@ PUBLIC	?ProcessLoadExec@@YAHHPEADHPEAPEAD@Z		; ProcessLoadExec
 PUBLIC	?ProcessSleep@@YAH_K@Z				; ProcessSleep
 PUBLIC	?SignalReturn@@YAXH@Z				; SignalReturn
 PUBLIC	?SetSignal@@YAHHP6AXH@Z@Z			; SetSignal
+PUBLIC	?GetSystemTimerTick@@YA_KXZ			; GetSystemTimerTick
 EXTRN	AuGetCurrentThread:PROC
 EXTRN	AuBlockThread:PROC
 EXTRN	AuSleepThread:PROC
 EXTRN	AuForceScheduler:PROC
+EXTRN	AuGetSystemTimerTick:PROC
 EXTRN	?AuProcessFindPID@@YAPEAU_au_proc_@@H@Z:PROC	; AuProcessFindPID
 EXTRN	?AuProcessFindThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z:PROC ; AuProcessFindThread
 EXTRN	?AuCreateProcessSlot@@YAPEAU_au_proc_@@PEAU1@PEAD@Z:PROC ; AuCreateProcessSlot
@@ -67,6 +69,9 @@ $pdata$?SignalReturn@@YAXH@Z DD imagerel $LN3
 $pdata$?SetSignal@@YAHHP6AXH@Z@Z DD imagerel $LN4
 	DD	imagerel $LN4+63
 	DD	imagerel $unwind$?SetSignal@@YAHHP6AXH@Z@Z
+$pdata$?GetSystemTimerTick@@YA_KXZ DD imagerel $LN3
+	DD	imagerel $LN3+14
+	DD	imagerel $unwind$?GetSystemTimerTick@@YA_KXZ
 pdata	ENDS
 xdata	SEGMENT
 $unwind$?PauseThread@@YAHXZ DD 010401H
@@ -89,7 +94,29 @@ $unwind$?SignalReturn@@YAXH@Z DD 010801H
 	DD	04208H
 $unwind$?SetSignal@@YAHHP6AXH@Z@Z DD 010d01H
 	DD	0620dH
+$unwind$?GetSystemTimerTick@@YA_KXZ DD 010401H
+	DD	04204H
 xdata	ENDS
+; Function compile flags: /Odtpy
+; File e:\xeneva project\aurora\kernel\serv\thrserv.cpp
+_TEXT	SEGMENT
+?GetSystemTimerTick@@YA_KXZ PROC			; GetSystemTimerTick
+
+; 177  : size_t GetSystemTimerTick() {
+
+$LN3:
+	sub	rsp, 40					; 00000028H
+
+; 178  : 	return AuGetSystemTimerTick();
+
+	call	AuGetSystemTimerTick
+
+; 179  : }
+
+	add	rsp, 40					; 00000028H
+	ret	0
+?GetSystemTimerTick@@YA_KXZ ENDP			; GetSystemTimerTick
+_TEXT	ENDS
 ; Function compile flags: /Odtpy
 ; File e:\xeneva project\aurora\kernel\serv\thrserv.cpp
 _TEXT	SEGMENT
@@ -149,7 +176,7 @@ $LN3:
 
 ; 157  : 	SeTextOut("Signal Return \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG3757
+	lea	rcx, OFFSET FLAT:$SG3758
 	call	SeTextOut
 
 ; 158  : 	/* just make a page fault */
@@ -243,7 +270,7 @@ $LN11:
 
 ; 118  : 		AuTextOut("No process found \n");
 
-	lea	rcx, OFFSET FLAT:$SG3735
+	lea	rcx, OFFSET FLAT:$SG3736
 	call	AuTextOut
 
 ; 119  : 		return -1;
