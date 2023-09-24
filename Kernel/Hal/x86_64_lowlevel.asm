@@ -474,7 +474,7 @@ global x64_rdtsc
 x64_rdtsc:
      mov rbx, rdx
      rdtsc
-	 mov [rcx], edx
+	 mov [rcx], edx ;;high order bit
 	 mov [rbx], eax
 	 ret 
 

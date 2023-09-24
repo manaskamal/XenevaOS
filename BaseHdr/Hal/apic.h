@@ -66,7 +66,7 @@
  * ReadAPICRegister -- reads a register of apic
  * @param reg -- register to read
  */
-extern int64_t ReadAPICRegister(uint16_t reg);
+extern uint64_t ReadAPICRegister(uint16_t reg);
 
 /*
  * WriteAPICRegister -- writes a value to a register

@@ -268,3 +268,14 @@ void x86_64_initialise_syscall() {
 	x64_write_msr(IA32_SFMASK, IA32_EFLAGS_INTR | IA32_EFLAGS_DIRF);
 	x64_write_msr(IA32_CSTAR, (size_t)&x64_syscall_entry_compat);
 }
+
+/*
+ * cpu_read_tsc -- read the tsc count
+ */
+uint64_t cpu_read_tsc(){
+	uint32_t hi = 0;
+	uint32_t lo = 0;
+	x64_rdtsc(&hi, &lo);
+	uint64_t count = (((uint64_t)hi << 32UL) | (uint64_t)lo);
+	return count;
+}

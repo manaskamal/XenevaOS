@@ -180,7 +180,9 @@ int main(int argc, char* arv[]) {
 			}
 		}
 		if (sleepable) {
-			_KeProcessSleep(16);
+			/* i think, sleeping time must be based on 10ms,
+			 * so 16ms would be 10ms + 6 */
+			_KeProcessSleep(6);
 		}
 	}
 }

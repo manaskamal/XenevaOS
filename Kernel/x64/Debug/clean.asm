@@ -6,8 +6,8 @@ INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
 CONST	SEGMENT
-$SG3997	DB	'cleaning thread -> %x ', 0aH, 00H
-$SG4006	DB	'Process cleaned ', 0dH, 0aH, 00H
+$SG3998	DB	'cleaning thread -> %x ', 0aH, 00H
+$SG4007	DB	'Process cleaned ', 0dH, 0aH, 00H
 CONST	ENDS
 PUBLIC	?AuProcessClean@@YAXPEAU_au_proc_@@0@Z		; AuProcessClean
 PUBLIC	?FreeUserStack@@YAXPEA_K@Z			; FreeUserStack
@@ -462,7 +462,7 @@ $LN6@AuProcessC:
 ; 131  : 			AuTextOut("cleaning thread -> %x \n", t_);
 
 	mov	rdx, QWORD PTR t_$5[rsp]
-	lea	rcx, OFFSET FLAT:$SG3997
+	lea	rcx, OFFSET FLAT:$SG3998
 	call	AuTextOut
 
 ; 132  : 			AuThreadCleanTrash(t_);
@@ -553,7 +553,7 @@ $LN2@AuProcessC:
 
 ; 153  : 	SeTextOut("Process cleaned \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG4006
+	lea	rcx, OFFSET FLAT:$SG4007
 	call	SeTextOut
 
 ; 154  : }

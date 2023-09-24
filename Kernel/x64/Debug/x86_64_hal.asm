@@ -22,10 +22,9 @@ EXTRN	?AuPerCPUSetCpuID@@YAXE@Z:PROC			; AuPerCPUSetCpuID
 EXTRN	?AuPerCPUSetKernelTSS@@YAXPEAU_tss@@@Z:PROC	; AuPerCPUSetKernelTSS
 EXTRN	kmalloc:PROC
 EXTRN	?AuACPIInitialise@@YAXPEAX@Z:PROC		; AuACPIInitialise
-EXTRN	?AuInitialisePIC@@YAXXZ:PROC			; AuInitialisePIC
 pdata	SEGMENT
 $pdata$?x86_64_hal_initialise@@YAXPEAU_KERNEL_BOOT_INFO_@@@Z DD imagerel $LN3
-	DD	imagerel $LN3+174
+	DD	imagerel $LN3+164
 	DD	imagerel $unwind$?x86_64_hal_initialise@@YAXPEAU_KERNEL_BOOT_INFO_@@@Z
 pdata	ENDS
 xdata	SEGMENT
@@ -58,99 +57,91 @@ $LN3:
 
 	call	?x86_64_idt_init@@YAXXZ			; x86_64_idt_init
 
-; 50   : 	x64_sti();
-
-	call	x64_sti
-
-; 51   : 	AuInitialisePIC();
-
-	call	?AuInitialisePIC@@YAXXZ			; AuInitialisePIC
-
-; 52   : 
-; 53   : 	x86_64_exception_init();
+; 50   : 	
+; 51   : 	x86_64_exception_init();
 
 	call	?x86_64_exception_init@@YAXXZ		; x86_64_exception_init
 
-; 54   : 	
-; 55   : 	AuAPICInitialise(true);
+; 52   : 	
+; 53   : 	AuAPICInitialise(true);
 
 	mov	cl, 1
 	call	?AuAPICInitialise@@YAX_N@Z		; AuAPICInitialise
 
-; 56   : 
-; 57   : 	x86_64_enable_syscall_ext();
+; 54   : 
+; 55   : 	x86_64_enable_syscall_ext();
 
 	call	?x86_64_enable_syscall_ext@@YAXXZ	; x86_64_enable_syscall_ext
 
-; 58   : 	x86_64_init_user(64);
+; 56   : 	x86_64_init_user(64);
 
 	mov	ecx, 64					; 00000040H
 	call	?x86_64_init_user@@YAX_K@Z		; x86_64_init_user
 
-; 59   : 	x86_64_hal_cpu_feature_enable();
+; 57   : 	x86_64_hal_cpu_feature_enable();
 
 	call	?x86_64_hal_cpu_feature_enable@@YAXXZ	; x86_64_hal_cpu_feature_enable
 
-; 60   : 	
-; 61   : 	
-; 62   :    
-; 63   : 	AuACPIInitialise(info->acpi_table_pointer);
+; 58   : 	
+; 59   : 	
+; 60   :    
+; 61   : 	AuACPIInitialise(info->acpi_table_pointer);
 
 	mov	rax, QWORD PTR info$[rsp]
 	mov	rcx, QWORD PTR [rax+82]
 	call	?AuACPIInitialise@@YAXPEAX@Z		; AuACPIInitialise
 
-; 64   : 
-; 65   : 	x86_64_initialise_syscall();
+; 62   : 
+; 63   : 	x86_64_initialise_syscall();
 
 	call	?x86_64_initialise_syscall@@YAXXZ	; x86_64_initialise_syscall
 
-; 66   : 
-; 67   : 	CPUStruc *cpu = (CPUStruc*)kmalloc(sizeof(CPUStruc));
+; 64   : 
+; 65   : 	CPUStruc *cpu = (CPUStruc*)kmalloc(sizeof(CPUStruc));
 
 	mov	ecx, 17
 	call	kmalloc
 	mov	QWORD PTR cpu$[rsp], rax
 
-; 68   : 	cpu->cpu_id = 0;
+; 66   : 	cpu->cpu_id = 0;
 
 	mov	rax, QWORD PTR cpu$[rsp]
 	mov	BYTE PTR [rax], 0
 
-; 69   : 	cpu->au_current_thread = 0;
+; 67   : 	cpu->au_current_thread = 0;
 
 	mov	rax, QWORD PTR cpu$[rsp]
 	mov	QWORD PTR [rax+1], 0
 
-; 70   : 	cpu->kernel_tss = NULL;
+; 68   : 	cpu->kernel_tss = NULL;
 
 	mov	rax, QWORD PTR cpu$[rsp]
 	mov	QWORD PTR [rax+9], 0
 
-; 71   : 	AuCreatePerCPU(cpu);
+; 69   : 	AuCreatePerCPU(cpu);
 
 	mov	rcx, QWORD PTR cpu$[rsp]
 	call	?AuCreatePerCPU@@YAXPEAX@Z		; AuCreatePerCPU
 
-; 72   : 	AuPerCPUSetCpuID(0);
+; 70   : 	AuPerCPUSetCpuID(0);
 
 	xor	ecx, ecx
 	call	?AuPerCPUSetCpuID@@YAXE@Z		; AuPerCPUSetCpuID
 
-; 73   : 	AuPerCPUSetKernelTSS(x86_64_get_tss());
+; 71   : 	AuPerCPUSetKernelTSS(x86_64_get_tss());
 
 	call	?x86_64_get_tss@@YAPEAU_tss@@XZ		; x86_64_get_tss
 	mov	rcx, rax
 	call	?AuPerCPUSetKernelTSS@@YAXPEAU_tss@@@Z	; AuPerCPUSetKernelTSS
 
-; 74   : 	/* acpica needs problem fixing */
-; 75   : 	//AuInitialiseACPISubsys(info);
-; 76   : 
-; 77   : 	x64_sti();
+; 72   : 	/* acpica needs problem fixing */
+; 73   : 	//AuInitialiseACPISubsys(info);
+; 74   : 
+; 75   : 	x64_sti();
 
 	call	x64_sti
 
-; 78   : }
+; 76   : }
 
 	add	rsp, 56					; 00000038H
 	ret	0

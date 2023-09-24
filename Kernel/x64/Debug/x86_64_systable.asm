@@ -60,7 +60,7 @@ syscalls DQ	FLAT:?null_call@@YA_K_K00000@Z
 	DQ	FLAT:?SetSignal@@YAHHP6AXH@Z@Z
 _DATA	ENDS
 CONST	SEGMENT
-$SG3945	DB	'%s', 0aH, 00H
+$SG3946	DB	'%s', 0aH, 00H
 CONST	ENDS
 PUBLIC	?KePrintMsg@@YA_K_K00000@Z			; KePrintMsg
 PUBLIC	x64_syscall_handler
@@ -230,7 +230,7 @@ $LN3:
 ; 56   : 	AuTextOut("%s\n",text);
 
 	mov	rdx, QWORD PTR text$[rsp]
-	lea	rcx, OFFSET FLAT:$SG3945
+	lea	rcx, OFFSET FLAT:$SG3946
 	call	AuTextOut
 
 ; 57   : 	return 0;

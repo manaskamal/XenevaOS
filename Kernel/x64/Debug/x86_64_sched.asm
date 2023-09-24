@@ -30,13 +30,13 @@ _BSS	SEGMENT
 ?_x86_64_sched_init@@3_NA DB 01H DUP (?)		; _x86_64_sched_init
 _BSS	ENDS
 CONST	SEGMENT
-$SG3706	DB	'FRAME USER KERN ESP -> %x ', 0aH, 00H
+$SG3707	DB	'FRAME USER KERN ESP -> %x ', 0aH, 00H
 	ORG $+4
-$SG3715	DB	'_idle id -> %d  ', 0dH, 0aH, 00H
+$SG3716	DB	'_idle id -> %d  ', 0dH, 0aH, 00H
 	ORG $+1
-$SG3724	DB	'Idle', 00H
+$SG3725	DB	'Idle', 00H
 	ORG $+7
-$SG3769	DB	'CR3 -> %x ', 0dH, 0aH, 00H
+$SG3770	DB	'CR3 -> %x ', 0dH, 0aH, 00H
 CONST	ENDS
 PUBLIC	?AuSchedulerStart@@YAXXZ			; AuSchedulerStart
 PUBLIC	?AuSchedulerInitialise@@YAXXZ			; AuSchedulerInitialise
@@ -210,7 +210,7 @@ $LN3:
 
 	call	x64_read_cr3
 	mov	rdx, rax
-	lea	rcx, OFFSET FLAT:$SG3769
+	lea	rcx, OFFSET FLAT:$SG3770
 	call	SeTextOut
 
 ; 484  : }
@@ -511,7 +511,7 @@ $LN5:
 	call	?AuPerCPUGetCpuID@@YAEXZ		; AuPerCPUGetCpuID
 	movzx	eax, al
 	mov	edx, eax
-	lea	rcx, OFFSET FLAT:$SG3715
+	lea	rcx, OFFSET FLAT:$SG3716
 	call	SeTextOut
 $LN2@AuIdleThre:
 
@@ -1820,7 +1820,7 @@ $LN3:
 
 	mov	rax, QWORD PTR t$[rsp]
 	mov	rdx, QWORD PTR [rax+200]
-	lea	rcx, OFFSET FLAT:$SG3706
+	lea	rcx, OFFSET FLAT:$SG3707
 	call	AuTextOut
 
 ; 300  : 	t->user_stack = stack;
@@ -2308,7 +2308,7 @@ $LN3:
 	add	rax, 4096				; 00001000H
 	mov	rcx, rax
 	call	P2V
-	lea	r9, OFFSET FLAT:$SG3724
+	lea	r9, OFFSET FLAT:$SG3725
 	mov	rcx, QWORD PTR tv68[rsp]
 	mov	r8, rcx
 	mov	rdx, rax

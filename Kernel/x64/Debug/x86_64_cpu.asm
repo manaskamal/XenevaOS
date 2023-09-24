@@ -25,6 +25,7 @@ PUBLIC	?x86_64_cpu_msi_address@@YA_KPEA_K_KIEE@Z	; x86_64_cpu_msi_address
 PUBLIC	?x86_64_cpu_initialize@@YAXE@Z			; x86_64_cpu_initialize
 PUBLIC	?x86_64_set_ap_start_bit@@YAX_N@Z		; x86_64_set_ap_start_bit
 PUBLIC	?x86_64_initialise_syscall@@YAXXZ		; x86_64_initialise_syscall
+PUBLIC	?cpu_read_tsc@@YA_KXZ				; cpu_read_tsc
 PUBLIC	?_ICRDest@@YA_KI@Z				; _ICRDest
 PUBLIC	?_ICRBusy@@YA_NXZ				; _ICRBusy
 EXTRN	?AuPerCPUSetKernelTSS@@YAXPEAU_tss@@@Z:PROC	; AuPerCPUSetKernelTSS
@@ -37,7 +38,8 @@ EXTRN	x64_read_cr4:PROC
 EXTRN	x64_write_cr0:PROC
 EXTRN	x64_write_cr4:PROC
 EXTRN	x64_sgdt:PROC
-EXTRN	?ReadAPICRegister@@YA_JG@Z:PROC			; ReadAPICRegister
+EXTRN	x64_rdtsc:PROC
+EXTRN	?ReadAPICRegister@@YA_KG@Z:PROC			; ReadAPICRegister
 EXTRN	?WriteAPICRegister@@YAXG_K@Z:PROC		; WriteAPICRegister
 EXTRN	?X2APICSupported@@YA_NXZ:PROC			; X2APICSupported
 EXTRN	?x86_64_ap_init@@YAXPEAX@Z:PROC			; x86_64_ap_init
@@ -68,6 +70,9 @@ $pdata$?x86_64_cpu_initialize@@YAXE@Z DD imagerel $LN23
 $pdata$?x86_64_initialise_syscall@@YAXXZ DD imagerel $LN3
 	DD	imagerel $LN3+110
 	DD	imagerel $unwind$?x86_64_initialise_syscall@@YAXXZ
+$pdata$?cpu_read_tsc@@YA_KXZ DD imagerel $LN3
+	DD	imagerel $LN3+65
+	DD	imagerel $unwind$?cpu_read_tsc@@YA_KXZ
 $pdata$?_ICRDest@@YA_KI@Z DD imagerel $LN5
 	DD	imagerel $LN5+45
 	DD	imagerel $unwind$?_ICRDest@@YA_KI@Z
@@ -90,6 +95,8 @@ $unwind$?x86_64_cpu_initialize@@YAXE@Z DD 010801H
 	DD	0e208H
 $unwind$?x86_64_initialise_syscall@@YAXXZ DD 010401H
 	DD	06204H
+$unwind$?cpu_read_tsc@@YA_KXZ DD 010401H
+	DD	06204H
 $unwind$?_ICRDest@@YA_KI@Z DD 010801H
 	DD	04208H
 $unwind$?_ICRBusy@@YA_NXZ DD 010401H
@@ -109,7 +116,7 @@ $LN5:
 ; 186  : 	return (ReadAPICRegister(LAPIC_REGISTER_ICR) & (1 << 12)) != 0;
 
 	mov	cx, 48					; 00000030H
-	call	?ReadAPICRegister@@YA_JG@Z		; ReadAPICRegister
+	call	?ReadAPICRegister@@YA_KG@Z		; ReadAPICRegister
 	and	rax, 4096				; 00001000H
 	test	rax, rax
 	je	SHORT $LN3@ICRBusy
@@ -168,6 +175,51 @@ $LN3@ICRDest:
 	add	rsp, 40					; 00000028H
 	ret	0
 ?_ICRDest@@YA_KI@Z ENDP					; _ICRDest
+_TEXT	ENDS
+; Function compile flags: /Odtpy
+; File e:\xeneva project\aurora\kernel\hal\x86_64_cpu.cpp
+_TEXT	SEGMENT
+hi$ = 32
+lo$ = 36
+count$ = 40
+?cpu_read_tsc@@YA_KXZ PROC				; cpu_read_tsc
+
+; 275  : uint64_t cpu_read_tsc(){
+
+$LN3:
+	sub	rsp, 56					; 00000038H
+
+; 276  : 	uint32_t hi = 0;
+
+	mov	DWORD PTR hi$[rsp], 0
+
+; 277  : 	uint32_t lo = 0;
+
+	mov	DWORD PTR lo$[rsp], 0
+
+; 278  : 	x64_rdtsc(&hi, &lo);
+
+	lea	rdx, QWORD PTR lo$[rsp]
+	lea	rcx, QWORD PTR hi$[rsp]
+	call	x64_rdtsc
+
+; 279  : 	uint64_t count = (((uint64_t)hi << 32UL) | (uint64_t)lo);
+
+	mov	eax, DWORD PTR hi$[rsp]
+	shl	rax, 32					; 00000020H
+	mov	ecx, DWORD PTR lo$[rsp]
+	or	rax, rcx
+	mov	QWORD PTR count$[rsp], rax
+
+; 280  : 	return count;
+
+	mov	rax, QWORD PTR count$[rsp]
+
+; 281  : }
+
+	add	rsp, 56					; 00000038H
+	ret	0
+?cpu_read_tsc@@YA_KXZ ENDP				; cpu_read_tsc
 _TEXT	ENDS
 ; Function compile flags: /Odtpy
 ; File e:\xeneva project\aurora\kernel\hal\x86_64_cpu.cpp

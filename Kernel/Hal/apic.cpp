@@ -45,7 +45,7 @@ static void* _apic = nullptr;
 * ReadAPICRegister -- reads a register of apic
 * @param reg -- register to read
 */
-int64_t ReadAPICRegister(uint16_t reg) {
+uint64_t ReadAPICRegister(uint16_t reg) {
 	if (__x2apic) {
 		size_t msr = IA32_X2APIC_REGISTER_BASE_MSR + reg;
 		return x64_read_msr(msr);
@@ -171,17 +171,24 @@ void AuAPICInitialise(bool bsp) {
 	WriteAPICRegister(LAPIC_REGISTER_SVR, ReadAPICRegister(LAPIC_REGISTER_SVR) |
 		IA32_APIC_SVR_ENABLE | 0xFF);
 
-	/* timing calculation little bit hacky for now, 
-	 * in future perfect calculation should be done
-	 * using external timer like tsc or pit
-	 */
+
+	WriteAPICRegister(LAPIC_TIMER_DIV, 0x6);
+
+	uint64_t before = cpu_read_tsc();
+	WriteAPICRegister(LAPIC_REGISTER_TMRINITCNT,1000000 ); 
+	while (ReadAPICRegister(LAPIC_REGISTER_TMRCURRCNT));
+	uint64_t after = cpu_read_tsc();
+
+	uint64_t ms = (after - before) / 3500;
+	uint64_t target = 10000000000UL / ms;
+
 	size_t timer_vect = 0x40;
 	setvect(timer_vect, ApicTimerInterrupt);
 	WriteAPICRegister(LAPIC_REGISTER_TMRDIV,0x6); 
 	size_t timer_reg = (1 << 17) | timer_vect;
 	WriteAPICRegister(LAPIC_REGISTER_LVT_TIMER, timer_reg);
 	IOWait();
-	WriteAPICRegister(LAPIC_REGISTER_TMRINITCNT,123456);  //123456
+	WriteAPICRegister(LAPIC_REGISTER_TMRINITCNT,(target/100));  //123456
 
 	x64_outportb(PIC1_DATA, 0xFF);
 	IOWait();

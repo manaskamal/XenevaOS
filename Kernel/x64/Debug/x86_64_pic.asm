@@ -9,9 +9,9 @@ _BSS	SEGMENT
 pic_counter DQ	01H DUP (?)
 _BSS	ENDS
 CONST	SEGMENT
-$SG3437	DB	'iNITIALISING PIC ', 0aH, 00H
+$SG3438	DB	'iNITIALISING PIC ', 0aH, 00H
 	ORG $+5
-$SG3475	DB	'PIC/PIT initialised ', 0aH, 00H
+$SG3476	DB	'PIC/PIT initialised ', 0aH, 00H
 CONST	ENDS
 PUBLIC	?AuInitialisePIC@@YAXXZ				; AuInitialisePIC
 PUBLIC	?AuPICSetMask@@YAXE@Z				; AuPICSetMask
@@ -349,7 +349,7 @@ $LN27:
 
 ; 88   : 	AuTextOut("iNITIALISING PIC \n");
 
-	lea	rcx, OFFSET FLAT:$SG3437
+	lea	rcx, OFFSET FLAT:$SG3438
 	call	AuTextOut
 
 ; 89   : 	uint8_t base0 = 0x20;
@@ -604,7 +604,7 @@ $LN1@AuInitiali:
 
 ; 128  : 	AuTextOut("PIC/PIT initialised \n");
 
-	lea	rcx, OFFSET FLAT:$SG3475
+	lea	rcx, OFFSET FLAT:$SG3476
 	call	AuTextOut
 
 ; 129  : 	pic_counter = 0;

@@ -6,7 +6,7 @@ INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
 CONST	SEGMENT
-$SG3455	DB	'*** [x64_idt] x64_default_handler: Unhandled Exception *'
+$SG3456	DB	'*** [x64_idt] x64_default_handler: Unhandled Exception *'
 	DB	'** ', 0aH, 00H
 CONST	ENDS
 PUBLIC	?x86_64_idt_init@@YAXXZ				; x86_64_idt_init
@@ -120,7 +120,7 @@ $LN5:
 
 ; 68   : 	AuTextOut("*** [x64_idt] x64_default_handler: Unhandled Exception *** \n");
 
-	lea	rcx, OFFSET FLAT:$SG3455
+	lea	rcx, OFFSET FLAT:$SG3456
 	call	AuTextOut
 $LN2@default_ir:
 

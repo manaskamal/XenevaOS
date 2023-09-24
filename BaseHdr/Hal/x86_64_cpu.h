@@ -189,4 +189,9 @@ extern void x86_64_set_ap_start_bit(bool value);
 */
 extern void x86_64_initialise_syscall();
 
+/*
+* cpu_read_tsc -- read the tsc count
+*/
+extern uint64_t cpu_read_tsc();
+
 #endif
