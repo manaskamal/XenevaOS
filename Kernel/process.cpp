@@ -46,6 +46,7 @@
 #include <Sync\spinlock.h>
 #include <Sound\sound.h>
 #include <Hal\x86_64_signal.h>
+#include <Ipc\postbox.h>
 
 
 static int pid = 1;
@@ -375,10 +376,15 @@ void AuProcessExit(AuProcess* proc) {
 
 	proc->state = PROCESS_STATE_DIED;
 
+	/* free-up all allocated kernel resources */
+
 	AuSoundRemoveDSP(proc->main_thread->id);
 
+	/* close allocated signals */
 	AuSignalRemoveAll(proc->main_thread);
 
+	/* remove allocated postbox*/
+	PostBoxDestroyByID(proc->main_thread->id);
 
 	/* mark all the threads as blocked */
 	for (int i = 1; i < proc->num_thread - 1; i++) {
@@ -400,7 +406,6 @@ void AuProcessExit(AuProcess* proc) {
 			if (file->flags & FS_FLAG_DEVICE || file->flags & FS_FLAG_FILE_SYSTEM)
 				continue;
 			if (file->flags & FS_FLAG_GENERAL)  {
-				
 				kfree(file);
 			}
 		}

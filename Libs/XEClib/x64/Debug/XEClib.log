@@ -1,15 +1,15 @@
-﻿Build started 24-09-2023 আবেলি 6:47:53.
+﻿Build started 25-09-2023 আবেলি 4:33:49.
      1>Project "E:\Xeneva Project\Aurora\Libs\XEClib\XEClib.vcxproj" on node 2 (Rebuild target(s)).
      1>_NASM:
          setjmp.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp6a5c9257dce746a9901d29697a6c8b10.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmpe323d74526c743f49c55c4e216cb7b4c.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\setjmp.obj"  "E:\Xeneva Project\Aurora\Libs\XEClib\setjmp.asm"
        _NASM:
          _callbase.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp992bcd65650d4f24b79d87c32f4c3a7c.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmpa067dd0f37e94164917bd30f54faceb8.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\_callbase.obj"  "E:\Xeneva Project\Aurora\Libs\XEClib\_callbase.asm"
        ClCompile:
-         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /Zi /nologo /W3 /WX- /sdl- /MP /Od /D ARCH_X64 /D YES_DYNAMIC /D DYNAMIC_EXPORTER /D _WINDLL /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt errno.cpp math.cpp stdio.cpp stdlib.cpp string.cpp sys\_heap.cpp sys\_xeneva.cpp
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes\c++" /Zi /nologo /W3 /WX- /sdl- /MP /Od /D ARCH_X64 /D YES_DYNAMIC /D DYNAMIC_EXPORTER /D _WINDLL /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt c++\ios.cpp c++\iostream.cpp c++\istream.cpp c++\memory.cpp c++\ostream.cpp c++\_string.cpp errno.cpp math.cpp qsort.cpp stdio.cpp stdlib.cpp string.cpp sys\_heap.cpp sys\_xeneva.cpp
      1>cl : Command line warning D9025: overriding '/sdl-' with '/GS-'
      1>cl : Command line warning D9002: ignoring unknown option '/arch:SSE2'
      1>cl : Command line warning D9030: '/Gm' is incompatible with multiprocessing; ignoring /MP switch
@@ -40,17 +40,54 @@
      1>stdlib.cpp(499): warning C4146: unary minus operator applied to unsigned type, result still unsigned
          stdio.cpp
      1>stdio.cpp(116): warning C4244: 'return' : conversion from '__int64' to 'long', possible loss of data
+         qsort.cpp
+     1>qsort.cpp(83): warning C4267: 'argument' : conversion from 'size_t' to 'ssize_t', possible loss of data
          math.cpp
      1>math.cpp(93): warning C4305: '-=' : truncation from 'double' to 'float'
      1>math.cpp(95): warning C4305: '+=' : truncation from 'double' to 'float'
      1>math.cpp(233): warning C4305: '-=' : truncation from 'double' to 'float'
      1>math.cpp(235): warning C4305: '+=' : truncation from 'double' to 'float'
          errno.cpp
+         _string.cpp
+         ostream.cpp
+         memory.cpp
+         istream.cpp
+     1>E:\Xeneva Project\Aurora\Libs\XEClib\includes\ctype.h(50): warning C4005: 'isascii' : macro redefinition
+                 E:\Xeneva Project\Aurora\Libs\XEClib\includes\ctype.h(39) : see previous definition of 'isascii'
+         iostream.cpp
+         ios.cpp
+     1>E:\Xeneva Project\Aurora\Libs\XEClib\includes\c++\istream(71): warning C4661: 'std::basic_ios<char,std::char_traits<charT>>::basic_ios(std::basic_streambuf<charT,std::char_traits<charT>> *)' : no suitable definition provided for explicit template instantiation request
+                 with
+                 [
+                     charT=char
+                 ]
+                 E:\Xeneva Project\Aurora\Libs\XEClib\includes\c++\istream(67) : see declaration of 'std::basic_ios<char,std::char_traits<charT>>::basic_ios'
+                 with
+                 [
+                     charT=char
+                 ]
+     1>c++\ios.cpp(70): warning C4661: 'std::basic_ios<char,std::char_traits<charT>>::basic_ios(std::basic_streambuf<charT,std::char_traits<charT>> *)' : no suitable definition provided for explicit template instantiation request
+                 with
+                 [
+                     charT=char
+                 ]
+                 E:\Xeneva Project\Aurora\Libs\XEClib\includes\c++\istream(67) : see declaration of 'std::basic_ios<char,std::char_traits<charT>>::basic_ios'
+                 with
+                 [
+                     charT=char
+                 ]
          Generating Code...
      1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(1186,5): warning MSB8012: TargetPath(E:\Xeneva Project\Aurora\x64\Debug\XEClib.dll) does not match the Linker's OutputFile property value (F:\XEClib.dll). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
        Link:
-         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\link.exe /ERRORREPORT:PROMPT /OUT:"F:\XEClib.dll" /INCREMENTAL /NOLOGO /NODEFAULTLIB /MANIFEST:NO /PDB:"E:\Xeneva Project\Aurora\x64\Debug\XEClib.pdb" /MAP /MAPINFO:EXPORTS /SUBSYSTEM:NATIVE /LARGEADDRESSAWARE /Driver /OPT:NOREF /LTCG /TLBID:1 /BASE:"0x0000000000600000" /FIXED:NO /NXCOMPAT /IMPLIB:"E:\Xeneva Project\Aurora\x64\Debug\XEClib.lib" /MACHINE:X64 /filealign:4096 /DLL x64\Debug\errno.obj
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\link.exe /ERRORREPORT:PROMPT /OUT:"F:\XEClib.dll" /INCREMENTAL /NOLOGO /NODEFAULTLIB /MANIFEST:NO /PDB:"E:\Xeneva Project\Aurora\x64\Debug\XEClib.pdb" /MAP /MAPINFO:EXPORTS /SUBSYSTEM:NATIVE /LARGEADDRESSAWARE /Driver /OPT:NOREF /LTCG /TLBID:1 /BASE:"0x0000000000600000" /FIXED:NO /NXCOMPAT /IMPLIB:"E:\Xeneva Project\Aurora\x64\Debug\XEClib.lib" /MACHINE:X64 /filealign:4096 /DLL x64\Debug\ios.obj
+         x64\Debug\iostream.obj
+         x64\Debug\istream.obj
+         x64\Debug\memory.obj
+         x64\Debug\ostream.obj
+         x64\Debug\_string.obj
+         x64\Debug\errno.obj
          x64\Debug\math.obj
+         x64\Debug\qsort.obj
          x64\Debug\stdio.obj
          x64\Debug\stdlib.obj
          x64\Debug\string.obj
@@ -61,9 +98,10 @@
      1>LINK : warning LNK4075: ignoring '/INCREMENTAL' due to '/LTCG' specification
             Creating library E:\Xeneva Project\Aurora\x64\Debug\XEClib.lib and object E:\Xeneva Project\Aurora\x64\Debug\XEClib.exp
          LINK : /LTCG specified but no code generation required; remove /LTCG from the link command line to improve linker performance
+     1>iostream.obj : warning LNK4210: .CRT section exists; there may be unhandled static initializers or terminators
          XEClib.vcxproj -> E:\Xeneva Project\Aurora\x64\Debug\XEClib.dll
      1>Done Building Project "E:\Xeneva Project\Aurora\Libs\XEClib\XEClib.vcxproj" (Rebuild target(s)).
 
 Build succeeded.
 
-Time Elapsed 00:00:02.16
+Time Elapsed 00:00:02.63

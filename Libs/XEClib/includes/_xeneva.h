@@ -33,8 +33,8 @@
 #include <stdint.h>
 
 /* if, YES_DYNAMIC is set to 1, everything will
- * be exported as dynamic library
- */
+* be exported as dynamic library
+*/
 
 #ifdef YES_DYNAMIC
 #define XE_EXPORT __declspec(dllexport)
@@ -55,10 +55,16 @@
 
 #define AURORA_SYSCALL_MAGIC  0x05212004
 
+#ifdef __cplusplus
+XE_EXTERN{
+#endif
 
+	/* _KePrint -- kernel printing function */
+	XE_LIB void _KePrint(const char* text,...);
 
-/* _KePrint -- kernel printing function */
-XE_EXTERN XE_LIB void _KePrint(const char* text, ...);
+#ifdef __cplusplus
+}
+#endif
 
 
 #endif

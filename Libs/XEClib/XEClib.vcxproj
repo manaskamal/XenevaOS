@@ -85,7 +85,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>false</SDLCheck>
-      <AdditionalIncludeDirectories>E:\Xeneva Project\Aurora\Libs\XEClib\includes</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>E:\Xeneva Project\Aurora\Libs\XEClib\includes;E:\Xeneva Project\Aurora\Libs\XEClib\includes\c++</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <PreprocessorDefinitions>ARCH_X64; YES_DYNAMIC; DYNAMIC_EXPORTER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <IgnoreStandardIncludePath>true</IgnoreStandardIncludePath>
@@ -151,6 +151,18 @@
     <NASM Include="_callbase.asm" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="includes\c++\cctype" />
+    <ClInclude Include="includes\c++\cmath" />
+    <ClInclude Include="includes\c++\cstddef" />
+    <ClInclude Include="includes\c++\cstdlib" />
+    <ClInclude Include="includes\c++\ios" />
+    <ClInclude Include="includes\c++\iostream" />
+    <ClInclude Include="includes\c++\istream" />
+    <ClInclude Include="includes\c++\iterator" />
+    <ClInclude Include="includes\c++\memory" />
+    <ClInclude Include="includes\c++\ostream" />
+    <ClInclude Include="includes\c++\streambuf" />
+    <ClInclude Include="includes\c++\string" />
     <ClInclude Include="includes\ctype.h" />
     <ClInclude Include="includes\endian.h" />
     <ClInclude Include="includes\errno.h" />
@@ -158,6 +170,7 @@
     <ClInclude Include="includes\limits.h" />
     <ClInclude Include="includes\math.h" />
     <ClInclude Include="includes\setjmp.h" />
+    <ClInclude Include="includes\size_t.h" />
     <ClInclude Include="includes\stdarg.h" />
     <ClInclude Include="includes\stddef.h" />
     <ClInclude Include="includes\stdint.h" />
@@ -166,17 +179,26 @@
     <ClInclude Include="includes\string.h" />
     <ClInclude Include="includes\sys\iocodes.h" />
     <ClInclude Include="includes\sys\mman.h" />
+    <ClInclude Include="includes\sys\types.h" />
     <ClInclude Include="includes\sys\utf.h" />
     <ClInclude Include="includes\sys\_heap.h" />
     <ClInclude Include="includes\sys\_kefile.h" />
+    <ClInclude Include="includes\sys\_keipcpostbox.h" />
     <ClInclude Include="includes\sys\_keproc.h" />
     <ClInclude Include="includes\sys\_kesignal.h" />
     <ClInclude Include="includes\values.h" />
     <ClInclude Include="includes\_xeneva.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="c++\ios.cpp" />
+    <ClCompile Include="c++\iostream.cpp" />
+    <ClCompile Include="c++\istream.cpp" />
+    <ClCompile Include="c++\memory.cpp" />
+    <ClCompile Include="c++\ostream.cpp" />
+    <ClCompile Include="c++\_string.cpp" />
     <ClCompile Include="errno.cpp" />
     <ClCompile Include="math.cpp" />
+    <ClCompile Include="qsort.cpp" />
     <ClCompile Include="stdio.cpp" />
     <ClCompile Include="stdlib.cpp" />
     <ClCompile Include="string.cpp" />

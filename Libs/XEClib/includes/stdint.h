@@ -30,6 +30,8 @@
 #ifndef __STDINT_H__
 #define __STDINT_H__
 
+#include <size_t.h>
+
 #define __need_wint_t
 #define __need_wchar_t
 
@@ -209,6 +211,7 @@ extern "C++" {
 #else
 #define RAW_OFFSET(type, x, offset)  (type)((size_t)x + offset)
 #endif
+
 
 #define NULL  0
 #endif

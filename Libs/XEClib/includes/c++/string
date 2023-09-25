@@ -1,0 +1,119 @@
+/**
+* BSD 2-Clause License
+*
+* Copyright (c) 2022-2023, Manas Kamal Choudhury
+* All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification, are permitted provided that the following conditions are met:
+*
+* 1. Redistributions of source code must retain the above copyright notice, this
+*    list of conditions and the following disclaimer.
+*
+* 2. Redistributions in binary form must reproduce the above copyright notice,
+*    this list of conditions and the following disclaimer in the documentation
+*    and/or other materials provided with the distribution.
+*
+* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+* AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+* IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+* DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+* FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+* DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+* SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+* CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+* OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+* OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*
+**/
+
+#ifndef _STRING_HPP
+#define _STRING_HPP
+
+#include <iterator>
+#include <memory>
+
+extern "C" {
+#include <sys/types.h>
+}
+
+namespace std {
+
+	template <class charT>
+	struct char_traits
+	{
+		typedef charT	char_type;
+		typedef int		int_type;
+		typedef off_t	off_type;
+		typedef off_t	pos_type;
+		typedef int		state_type;
+	};
+
+	template <class charT,
+	class traits = char_traits<charT>,
+	class Alloc = allocator<charT> >
+	class basic_string
+	{
+	public:
+		typedef traits							traits_type;
+		typedef Alloc							allocator_type;
+		typedef typename
+			traits_type::char_type				value_type;
+		typedef typename
+			allocator_type::reference			reference;
+		typedef typename
+			allocator_type::const_reference		const_reference;
+		typedef typename
+			allocator_type::pointer				pointer;
+		typedef typename
+			allocator_type::const_pointer		const_pointer;
+		typedef typename
+			allocator_type::difference_type		difference_type;
+		typedef typename
+			allocator_type::size_type			size_type;
+
+		typedef std::iterator<random_access_iterator_tag, charT> iterator;
+		typedef const std::iterator<random_access_iterator_tag, charT>
+			const_iterator;
+		typedef std::reverse_iterator<iterator> reverse_iterator;
+		typedef const std::reverse_iterator<const_iterator>
+			const_reverse_iterator;
+
+		// Const/dest
+		explicit basic_string(const allocator_type& a = allocator_type());
+		basic_string(const charT *s, const allocator_type& a =
+			allocator_type());
+
+		// Member functions
+		const charT *c_str() const;
+		size_type length() const;
+		basic_string& operator=(const basic_string&);
+		basic_string& operator=(const charT *);
+		basic_string& operator=(charT);
+		size_type size() const;
+
+	private:
+		const allocator_type _alloc;
+		charT *_data;
+		size_type _dataLen;
+	};
+
+	typedef basic_string<char> string;
+
+	// String operators for iostreams
+
+	template <class charT, class traits> class basic_istream;
+
+	template <class charT, class traits>
+	basic_istream<charT, traits>& operator>>(basic_istream<charT, traits>&,
+		basic_string<charT>&);
+
+	template <class charT, class traits> class basic_ostream;
+
+	template <class charT, class traits>
+	basic_ostream<charT, traits>& operator<<(basic_ostream<charT, traits>&,
+		const basic_string<charT>&);
+}
+
+#endif
+

@@ -61,6 +61,7 @@
 #include <Sound\sound.h>
 #include <Net\aunet.h>
 #include <Net\arp.h>
+#include <Ipc\postbox.h>
 
 
 /**========================================
@@ -94,6 +95,9 @@ void _AuMain(KERNEL_BOOT_INFO *info) {
 
 	/* initialise sound service */
 	AuSoundInitialise();
+
+	/* initialise PostBoxIPCManager */
+	AuIPCPostBoxInitialise();
 
 	/* initialise pre network service*/
 	AuInitialiseNet();

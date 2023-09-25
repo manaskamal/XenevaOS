@@ -127,7 +127,7 @@ XE_EXTERN{
 	XE_LIB int fclose(FILE* fp);
 
 	XE_LIB int vfprintf(FILE* stream, const char* format, va_list arg);
-	XE_LIB int sprintf(char* str, const char* string);
+	XE_LIB int sprintf(char* str, const char* string, ...);
 
 #ifdef __cplusplus
 }

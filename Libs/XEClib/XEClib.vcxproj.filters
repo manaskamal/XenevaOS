@@ -10,6 +10,12 @@
     <Filter Include="sys">
       <UniqueIdentifier>{82fe4b06-ca6f-41a5-ad03-0bfa15085830}</UniqueIdentifier>
     </Filter>
+    <Filter Include="includes\c++">
+      <UniqueIdentifier>{8b5cffae-2125-4393-90d1-c4cf87b5b1f1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="c++">
+      <UniqueIdentifier>{f50df6ec-929a-4a32-81e7-6731f876efbc}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <NASM Include="_callbase.asm" />
@@ -82,6 +88,51 @@
     <ClInclude Include="includes\sys\_kesignal.h">
       <Filter>includes\sys</Filter>
     </ClInclude>
+    <ClInclude Include="includes\sys\_keipcpostbox.h">
+      <Filter>includes\sys</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\c++\cctype">
+      <Filter>includes\c++</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\c++\cmath">
+      <Filter>includes\c++</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\c++\cstddef">
+      <Filter>includes\c++</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\c++\cstdlib">
+      <Filter>includes\c++</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\c++\ios">
+      <Filter>includes\c++</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\c++\iostream">
+      <Filter>includes\c++</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\c++\istream">
+      <Filter>includes\c++</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\c++\iterator">
+      <Filter>includes\c++</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\c++\memory">
+      <Filter>includes\c++</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\c++\ostream">
+      <Filter>includes\c++</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\c++\streambuf">
+      <Filter>includes\c++</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\c++\string">
+      <Filter>includes\c++</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\sys\types.h">
+      <Filter>includes\sys</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\size_t.h">
+      <Filter>includes</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="string.cpp" />
@@ -95,5 +146,24 @@
     <ClCompile Include="sys\_xeneva.cpp">
       <Filter>sys</Filter>
     </ClCompile>
+    <ClCompile Include="c++\iostream.cpp">
+      <Filter>c++</Filter>
+    </ClCompile>
+    <ClCompile Include="c++\istream.cpp">
+      <Filter>c++</Filter>
+    </ClCompile>
+    <ClCompile Include="c++\memory.cpp">
+      <Filter>c++</Filter>
+    </ClCompile>
+    <ClCompile Include="c++\ostream.cpp">
+      <Filter>c++</Filter>
+    </ClCompile>
+    <ClCompile Include="c++\_string.cpp">
+      <Filter>c++</Filter>
+    </ClCompile>
+    <ClCompile Include="c++\ios.cpp">
+      <Filter>c++</Filter>
+    </ClCompile>
+    <ClCompile Include="qsort.cpp" />
   </ItemGroup>
 </Project>

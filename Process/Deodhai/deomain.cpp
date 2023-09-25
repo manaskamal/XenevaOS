@@ -33,6 +33,7 @@
 #include <sys\mman.h>
 #include <stdlib.h>
 #include <sys\iocodes.h>
+#include <sys\_keipcpostbox.h>
 #include <string.h>
 #include <chitralekha.h>
 #include <stdlib.h>
@@ -44,6 +45,7 @@
 Cursor *arrow;
 int mouse_fd;
 int kybrd_fd;
+int postbox_fd;
 uint32_t* CursorBack;
 
 
@@ -139,14 +141,21 @@ int main(int argc, char* arv[]) {
 	arrow = CursorOpen("/pointer.bmp", CURSOR_TYPE_POINTER);
 	CursorRead(arrow);
 
+	/* Open all required device file */
 	mouse_fd = _KeOpenFile("/dev/mice", FILE_OPEN_READ_ONLY);
 	AuInputMessage mice_input;
 	memset(&mice_input, 0, sizeof(AuInputMessage));
+	postbox_fd = _KeOpenFile("/dev/postbox", FILE_OPEN_READ_ONLY);
+
+
+	_KeFileIoControl(postbox_fd, POSTBOX_CREATE_ROOT, NULL);
+	PostEvent event;
 
 	uint64_t frame_tick = 0;
 	uint64_t diff_tick = 0;
 	while (1) {
 		
+		_KeFileIoControl(postbox_fd, POSTBOX_GET_EVENT_ROOT, &event);
 		frame_tick = _KeGetSystemTimerTick();
 
 		if (sleepable) {

@@ -31,6 +31,7 @@
 #define __POSTBOX_H__
 
 #include <stdint.h>
+#include <Hal\x86_64_sched.h>
 
 #define POSTBOX_CREATE  401
 #define POSTBOX_DESTROY 402
@@ -48,8 +49,8 @@
  */
 typedef struct _post_event_ {
 	uint8_t type;
-	uint8_t to_id;
-	uint8_t from_id;
+	uint16_t to_id;
+	uint16_t from_id;
 	uint32_t dword;
 	uint32_t dword2;
 	uint32_t dword3;
@@ -78,4 +79,41 @@ typedef struct _postbox_ {
 	struct _postbox_* prev;
 }PostBox;
 #pragma pack(pop)
+
+/*
+* AuIPCPostBoxInitialise -- initialise
+* the post box ipc manager
+*/
+extern void AuIPCPostBoxInitialise();
+
+/*
+* PostBoxPutEvent -- put an event to a specific post box
+* @param event -- Event to put
+*/
+extern void PostBoxPutEvent(PostEvent* event);
+
+/*
+ * PostBoxGetEvent -- get an event from post box and copy it to a
+ * memory area
+ * @param event -- pointer to a memory area
+ * @param root -- is this post box is root
+ * @param curr_thread -- Pointer to current thread
+ */
+extern int PostBoxGetEvent(PostEvent* event, bool root, AuThread* curr_thread);
+
+/*
+* PostBoxCreate -- creates a postbox
+* @param root -- is this post box root ?
+* @param tid -- thread id
+*/
+extern void PostBoxCreate(bool root, uint16_t tid);
+
+/*
+* PostBoxDestroyByID -- destroys a post box identified by
+* an id
+* @param id -- id of the postbox
+*/
+extern void PostBoxDestroyByID(uint16_t id);
+
+
 #endif
