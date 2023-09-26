@@ -62,6 +62,13 @@ typedef struct _shm_mapping_ {
 extern void AuInitialiseSHMMan();
 
 /*
+* AuGetSHMSeg -- searches and return a
+* shm segment by its key
+* @param key -- key to search
+*/
+extern AuSHM * AuGetSHMByID(uint16_t id);
+
+/*
 * AuCreateSHM -- create a new shared memory segment
 * @param proc -- Creator process
 * @param key  --  unique key to use

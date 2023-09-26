@@ -175,6 +175,7 @@
     <ClInclude Include="..\BaseHdr\Fs\vfs.h" />
     <ClInclude Include="..\BaseHdr\Fs\_FsGUIDs.h" />
     <ClInclude Include="..\BaseHdr\Fs\_gpt.h" />
+    <ClInclude Include="..\BaseHdr\ftmngr.h" />
     <ClInclude Include="..\BaseHdr\Hal\acpiosl.h" />
     <ClInclude Include="..\BaseHdr\Hal\apic.h" />
     <ClInclude Include="..\BaseHdr\Hal\basicacpi.h" />
@@ -246,6 +247,7 @@
     <ClCompile Include="Fs\vdisk.cpp" />
     <ClCompile Include="Fs\vfs.cpp" />
     <ClCompile Include="Fs\_gpt.cpp" />
+    <ClCompile Include="ftmngr.cpp" />
     <ClCompile Include="Hal\acpiosl.cpp" />
     <ClCompile Include="Hal\apic.cpp" />
     <ClCompile Include="Hal\basicacpi.cpp" />

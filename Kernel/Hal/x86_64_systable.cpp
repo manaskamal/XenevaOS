@@ -38,6 +38,7 @@
 #include <Hal\serial.h>
 #include <Sync\mutex.h>
 #include <Serv/sysserv.h>
+#include <ftmngr.h>
 #include <Mm\mmap.h>
 
 
@@ -94,6 +95,8 @@ static void* syscalls[AURORA_MAX_SYSCALL] = {
 	SignalReturn,     //24
 	SetSignal,        //25
 	GetSystemTimerTick, //26
+	AuFTMngrGetFontID, //27
+	AuFTMngrGetNumFonts, //28
 };
 
 

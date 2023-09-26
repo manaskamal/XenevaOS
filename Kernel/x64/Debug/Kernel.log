@@ -1,8 +1,8 @@
-﻿Build started 25-09-2023 আবেলি 2:57:22.
+﻿Build started 26-09-2023 আবেলি 7:15:33.
      1>Project "E:\Xeneva Project\Aurora\Kernel\Kernel.vcxproj" on node 2 (Rebuild target(s)).
      1>_NASM:
          Hal\x86_64_intrs.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmpe6a3d15d4de241e987be7f8453082eee.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmpe2faa7a6d7a04f0e82370ec9a1e76e28.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\x86_64_intrs.obj"  "E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm"
      1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(158): warning : signed dword immediate exceeds bounds [-w+number-overflow]
      1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(158): warning : dword data exceeds bounds [-w+number-overflow]
@@ -502,20 +502,20 @@
      1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
        _NASM:
          Hal\x86_64_lowlevel.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp8e157ce07fa5473b8309de67d7a49c8a.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp0082ca3c83da4eae80590760878911f5.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\x86_64_lowlevel.obj"  "E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_lowlevel.asm"
        _NASM:
          Hal\x86_64_switch.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp999298b4971040188c44c9639f9a4cd2.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp89d38c40a39045fa9c33c86efdd24328.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\x86_64_switch.obj"  "E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_switch.asm"
      1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_switch.asm(32): warning : multi-line macro `extern' exists, but not taking 0 parameters [-w+macro-params-multi]
      1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_switch.asm(32): warning : label alone on a line without a colon might be in error [-w+label-orphan]
        _NASM:
          __fstcpy.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmpb0a47ceb504d471086cdd70ae9f7e8ef.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp3524f80882d34965929567a9825e20c5.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\__fstcpy.obj"  "E:\Xeneva Project\Aurora\Kernel\__fstcpy.asm"
        ClCompile:
-         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I..\BaseHdr /I"E:\Xeneva Project\Aurora\Acpica\include" /I"E:\Xeneva Project\Aurora\Acpica" /ZI /nologo /W0 /WX- /Od /Oy /D ARCH_X64 /D __AU_KERNEL__ /D X64 /D AUXENEVA /D _USE_LIBALLOC /D _MBCS /X /Gm /GS- /arch:SSE /fp:precise /Zc:wchar_t /Zc:forScope /GR- /FAs /Fa"x64\Debug\\" /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt ahci.cpp ahcidsk.cpp aucon.cpp audrv.cpp circbuf.cpp clean.cpp ctype.cpp Drivers\mouse.cpp Drivers\nvme.cpp Drivers\ps2kybrd.cpp Drivers\rtc.cpp Fs\Dev\devfs.cpp Fs\Dev\devinput.cpp Fs\Fat\Fat.cpp Fs\Fat\FatDir.cpp Fs\Fat\FatFile.cpp Fs\pipe.cpp Fs\tty.cpp Fs\vdisk.cpp Fs\vfs.cpp Fs\_gpt.cpp Hal\acpiosl.cpp Hal\apic.cpp Hal\basicacpi.cpp Hal\hal.cpp Hal\ioapic.cpp Hal\pcpu.cpp Hal\serial.cpp Hal\x86_64_ap_init.cpp Hal\x86_64_cpu.cpp Hal\x86_64_exception.cpp Hal\x86_64_gdt.cpp Hal\x86_64_hal.cpp Hal\x86_64_idt.cpp Hal\x86_64_pic.cpp Hal\x86_64_sched.cpp Hal\x86_64_signal.cpp Hal\x86_64_systable.cpp init.cpp Ipc\postbox.cpp list.cpp loader.cpp Mm\buddy.cpp Mm\kmalloc.cpp Mm\liballoc\liballoc.cpp Mm\mmap.cpp Mm\pmmngr.cpp Mm\shm.cpp Mm\vmarea.cpp Mm\vmmngr.cpp Net\arp.cpp Net\aunet.cpp Net\ethernet.cpp pcie.cpp pe.cpp process.cpp Serv\fileserv.cpp Serv\mmserv.cpp Serv\thrserv.cpp Sound\sound.cpp stdio.cpp string.cpp Sync\mutex.cpp Sync\spinlock.cpp _CRT.cpp
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I..\BaseHdr /I"E:\Xeneva Project\Aurora\Acpica\include" /I"E:\Xeneva Project\Aurora\Acpica" /ZI /nologo /W0 /WX- /Od /Oy /D ARCH_X64 /D __AU_KERNEL__ /D X64 /D AUXENEVA /D _USE_LIBALLOC /D _MBCS /X /Gm /GS- /arch:SSE /fp:precise /Zc:wchar_t /Zc:forScope /GR- /FAs /Fa"x64\Debug\\" /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt ahci.cpp ahcidsk.cpp aucon.cpp audrv.cpp circbuf.cpp clean.cpp ctype.cpp Drivers\mouse.cpp Drivers\nvme.cpp Drivers\ps2kybrd.cpp Drivers\rtc.cpp Fs\Dev\devfs.cpp Fs\Dev\devinput.cpp Fs\Fat\Fat.cpp Fs\Fat\FatDir.cpp Fs\Fat\FatFile.cpp Fs\pipe.cpp Fs\tty.cpp Fs\vdisk.cpp Fs\vfs.cpp Fs\_gpt.cpp ftmngr.cpp Hal\acpiosl.cpp Hal\apic.cpp Hal\basicacpi.cpp Hal\hal.cpp Hal\ioapic.cpp Hal\pcpu.cpp Hal\serial.cpp Hal\x86_64_ap_init.cpp Hal\x86_64_cpu.cpp Hal\x86_64_exception.cpp Hal\x86_64_gdt.cpp Hal\x86_64_hal.cpp Hal\x86_64_idt.cpp Hal\x86_64_pic.cpp Hal\x86_64_sched.cpp Hal\x86_64_signal.cpp Hal\x86_64_systable.cpp init.cpp Ipc\postbox.cpp list.cpp loader.cpp Mm\buddy.cpp Mm\kmalloc.cpp Mm\liballoc\liballoc.cpp Mm\mmap.cpp Mm\pmmngr.cpp Mm\shm.cpp Mm\vmarea.cpp Mm\vmmngr.cpp Net\arp.cpp Net\aunet.cpp Net\ethernet.cpp pcie.cpp pe.cpp process.cpp Serv\fileserv.cpp Serv\mmserv.cpp Serv\thrserv.cpp Sound\sound.cpp stdio.cpp string.cpp Sync\mutex.cpp Sync\spinlock.cpp _CRT.cpp
      1>cl : Command line warning D9038: /ZI is not supported on this platform; enabling /Zi instead
      1>cl : Command line warning D9007: '/Gm' requires '/Zi'; option ignored
      1>cl : Command line warning D9002: ignoring unknown option '/arch:SSE'
@@ -542,6 +542,7 @@
          Generating Code...
          Compiling...
          _gpt.cpp
+         ftmngr.cpp
          acpiosl.cpp
          apic.cpp
          basicacpi.cpp
@@ -560,9 +561,9 @@
          x86_64_signal.cpp
          x86_64_systable.cpp
          init.cpp
-         postbox.cpp
          Generating Code...
          Compiling...
+         postbox.cpp
          list.cpp
          loader.cpp
          buddy.cpp
@@ -582,9 +583,9 @@
          fileserv.cpp
          mmserv.cpp
          thrserv.cpp
-         sound.cpp
          Generating Code...
          Compiling...
+         sound.cpp
          stdio.cpp
          string.cpp
          mutex.cpp
@@ -615,6 +616,7 @@
          x64\Debug\vdisk.obj
          x64\Debug\vfs.obj
          x64\Debug\_gpt.obj
+         x64\Debug\ftmngr.obj
          x64\Debug\acpiosl.obj
          x64\Debug\apic.obj
          x64\Debug\basicacpi.obj
@@ -671,4 +673,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:05.44
+Time Elapsed 00:00:04.97

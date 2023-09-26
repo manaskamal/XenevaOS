@@ -62,6 +62,7 @@
 #include <Net\aunet.h>
 #include <Net\arp.h>
 #include <Ipc\postbox.h>
+#include <ftmngr.h>
 
 
 /**========================================
@@ -107,6 +108,9 @@ void _AuMain(KERNEL_BOOT_INFO *info) {
 	
 	/*initialise aurora driver manager*/
 	AuDrvMngrInitialize(info);
+
+	/* intiialise all system fonts */
+	FontManagerInitialise();
 	
 	/* initialise all application processors*/
 	AuHalPostInitialise();

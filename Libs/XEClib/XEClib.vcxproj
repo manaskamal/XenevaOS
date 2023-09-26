@@ -183,6 +183,7 @@
     <ClInclude Include="includes\sys\utf.h" />
     <ClInclude Include="includes\sys\_heap.h" />
     <ClInclude Include="includes\sys\_kefile.h" />
+    <ClInclude Include="includes\sys\_keftmngr.h" />
     <ClInclude Include="includes\sys\_keipcpostbox.h" />
     <ClInclude Include="includes\sys\_keproc.h" />
     <ClInclude Include="includes\sys\_kesignal.h" />

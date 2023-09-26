@@ -99,7 +99,6 @@ AuSHM * AuGetSHMByID(uint16_t id) {
  * @param flags -- security flags
  */
 int AuCreateSHM(AuProcess* proc, uint16_t key, size_t sz, uint8_t flags) {
-	x64_cli();
 	AuSHM* shm = NULL;
 	AuAcquireSpinlock(shmlock);
 	/*  search if it's already created */
@@ -113,8 +112,10 @@ int AuCreateSHM(AuProcess* proc, uint16_t key, size_t sz, uint8_t flags) {
 		shm->num_frames = (sz / 0x1000) + ((sz % 0x1000) ? 1 : 0);
 		shm->link_count = 1;
 		shm->frames = (uint64_t*)kmalloc(sizeof(uint64_t)* shm->num_frames);
-		for (int i = 0; i < shm->num_frames; i++) 
+		for (int i = 0; i < shm->num_frames; i++)  {
 			shm->frames[i] = (uint64_t)AuPmmngrAlloc();
+			SeTextOut("frame allocated -> %x \r\n", shm->frames[i]);
+		}
 
 		list_add(shm_list, shm);
 	}

@@ -306,6 +306,9 @@
     <ClInclude Include="..\BaseHdr\Ipc\postbox.h">
       <Filter>Include\Ipc</Filter>
     </ClInclude>
+    <ClInclude Include="..\BaseHdr\ftmngr.h">
+      <Filter>Include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="init.cpp" />
@@ -471,6 +474,7 @@
     <ClCompile Include="Ipc\postbox.cpp">
       <Filter>Ipc</Filter>
     </ClCompile>
+    <ClCompile Include="ftmngr.cpp" />
   </ItemGroup>
   <ItemGroup>
     <NASM Include="__fstcpy.asm" />

@@ -466,6 +466,42 @@ _KeGetSystemTimerTick:
 	  mov rdi, 0
 	  syscall
 	  ret
+
+;;===============================
+;; _KeGetFontID -- get a system 
+;; font id
+;;===============================
+global _KeGetFontID
+%ifdef YES_DYNAMIC
+export _KeGetFontID
+%endif
+_KeGetFontID:
+      xor rax, rax
+	  mov r12, 27
+	  mov r13, rcx
+	  mov r14, 0
+	  mov r15, 0
+	  mov rdi, 0
+	  syscall
+	  ret
+
+;;===============================
+;; _KeGetNumFonts -- get total 
+;; number of fonts installed
+;;===============================
+global _KeGetNumFonts
+%ifdef YES_DYNAMIC
+export _KeGetNumFonts
+%endif
+_KeGetNumFonts:
+      xor rax, rax
+	  mov r12, 28
+	  mov r13, 0
+	  mov r14, 0
+	  mov r15, 0
+	  mov rdi, 0
+	  syscall
+	  ret
       
       
       
