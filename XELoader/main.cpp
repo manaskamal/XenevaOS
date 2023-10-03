@@ -33,6 +33,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys\mman.h>
+#include <stdint.h>
 #include <sys\iocodes.h>
 #include <sys\_kesignal.h>
 #include "pe_.h"
@@ -44,43 +45,79 @@ void XECopyMem(void* dest, void* src, size_t len) {
 	while (len--)
 		*dstp++ = *srcp++;
 }
+
+extern bool _debug_buf;
 /*
  * XELdrLoadObject -- loads an object
  * @param obj
  */
 int XELdrLoadObject(XELoaderObject *obj){
 	int file = _KeOpenFile(obj->objname, FILE_OPEN_READ_ONLY);
+	if (file == -1)
+		return 0;
 
 
 	XEFileStatus *stat = (XEFileStatus*)malloc(sizeof(XEFileStatus));
 	memset(stat, 0, sizeof(XEFileStatus));
-
 	_KeFileStat(file, stat);
 
 	uint64_t* buffer = (uint64_t*)_KeMemMap(NULL, 4096, 0, 0, -1, 0);
 	memset(buffer, 0, 4096);
 
+	int countbytes = 4096;
+
 	uint64_t* first_ptr = buffer;
 	uint64_t _image_load_base_ = (uint64_t)first_ptr;
 
-	_KeReadFile(file, buffer, 4096);
+	size_t ret_bytes = 0;
+
+	ret_bytes = _KeReadFile(file, buffer, 4096);
 	IMAGE_DOS_HEADER *dos_ = (IMAGE_DOS_HEADER*)buffer;
 	PIMAGE_NT_HEADERS nt = raw_offset<PIMAGE_NT_HEADERS>(dos_, dos_->e_lfanew);
 	PSECTION_HEADER secthdr = raw_offset<PSECTION_HEADER>(&nt->OptionalHeader, nt->FileHeader.SizeOfOptionaHeader);
-
 	intptr_t original_base = nt->OptionalHeader.ImageBase;
 
-	for (size_t i = 0; i < nt->FileHeader.NumberOfSections; ++i) {
-		size_t sect_ld_addr = _image_load_base_ + secthdr[i].VirtualAddress;
-		size_t sect_sz = secthdr[i].VirtualSize;
-		int req_pages = sect_sz / 4096;
-		if ((sect_sz % 4096) != 0)
-			req_pages++;
-		for (int j = 0; j < req_pages; j++) {
-			uint64_t *block = (uint64_t*)_KeMemMap(NULL, 4096, 0, 0, -1, 0);
+	if (nt->OptionalHeader.FileAlignment == 512) {
+		while (!stat->eof) {
+			uint64_t* block = (uint64_t*)_KeMemMap(NULL, 4096, 0, 0, -1, 0);
 			_KeReadFile(file, block, 4096);
+			_KeFileStat(file, stat);
 		}
 	}
+	else {
+		for (size_t i = 0; i < nt->FileHeader.NumberOfSections; ++i) {
+			size_t sect_ld_addr = _image_load_base_ + secthdr[i].VirtualAddress;
+			size_t sect_sz = secthdr[i].VirtualSize;
+			int req_pages = sect_sz / 4096 +
+				((sect_sz % 4096) ? 1 : 0);
+			uint64_t* block = 0;
+			for (int j = 0; j < req_pages; j++) {
+				uint64_t* alloc = (uint64_t*)_KeMemMap(NULL, 4096, 0, 0, -1, 0);
+				memset(alloc, 0, 4096);
+				if (!block)
+					block = alloc;
+				countbytes += 4096;
+				int bytes = _KeReadFile(file, alloc, 4096);
+				ret_bytes += bytes;
+			}
+			
+			if (secthdr[i].VirtualSize > secthdr[i].SizeOfRawData)
+				memset(raw_offset<void*>(block, secthdr[i].SizeOfRawData), 0, secthdr[i].VirtualSize - secthdr[i].SizeOfRawData);
+			_KeFileStat(file, stat);
+		}
+	}
+	_KeFileStat(file, stat);
+	while (!stat->eof) {
+		uint64_t* alloc = (uint64_t*)_KeMemMap(NULL, 4096, 0, 0, -1, 0);
+		memset(alloc, 0, 4096);
+		int bytes =_KeReadFile(file, alloc, 4096);
+		ret_bytes += bytes;
+		countbytes += 4096;
+		_KeFileStat(file, stat);
+	}
+	uint8_t* aligned_buf = (uint8_t*)first_ptr;
+
+	XELdrCreatePEObjects(first_ptr);
 
 	obj->load_addr = _image_load_base_;
 	obj->loaded = true;
@@ -99,7 +136,8 @@ int XELdrStartProc(char* filename, XELoaderObject *obj) {
 	XEFileStatus *stat = (XEFileStatus*)malloc(sizeof(XEFileStatus));
 	memset(stat, 0, sizeof(XEFileStatus));
 
-	_KeFileStat(file, stat);
+	int ret_bytes = 0;
+	ret_bytes = _KeFileStat(file, stat);
 
 	uint64_t* buffer = (uint64_t*)_KeMemMap(NULL,4096, 0, 0, -1, 0);
 	memset(buffer, 0, 4096);
@@ -116,20 +154,29 @@ int XELdrStartProc(char* filename, XELoaderObject *obj) {
 	intptr_t new_addr = _image_load_base_;
 	intptr_t diff = new_addr - original_base;
 
-	for (size_t i = 0; i < nt->FileHeader.NumberOfSections; ++i) {
-		size_t sect_ld_addr = _image_load_base_ + secthdr[i].VirtualAddress;
-		size_t sect_sz = secthdr[i].VirtualSize;
-		int req_pages = sect_sz / 4096;
-		if ((sect_sz % 4096) != 0)
-			req_pages++;
-		uint64_t* block = 0;
-		for (int j = 0; j < req_pages; j++) {
-			uint64_t* alloc = (uint64_t*)_KeMemMap(NULL, 4096, 0, 0, -1, 0);
-			if (!block)
-				block = alloc;
+	if (nt->OptionalHeader.FileAlignment == 512) {
+		while (!stat->eof) {
+			uint64_t* block = (uint64_t*)_KeMemMap(NULL, 4096, 0, 0, -1, 0);
+			_KeReadFile(file, block, 4096);
+			_KeFileStat(file, stat);
 		}
-		_KeReadFile(file, block, sect_sz);
-
+	}
+	else {
+		for (size_t i = 0; i < nt->FileHeader.NumberOfSections; ++i) {
+			size_t sect_ld_addr = _image_load_base_ + secthdr[i].VirtualAddress;
+			size_t sect_sz = secthdr[i].VirtualSize;
+			int req_pages = sect_sz / 4096 +
+				((sect_sz % 4096) ? 1 : 0);
+			uint64_t* block = 0;
+			for (int j = 0; j < req_pages; j++) {
+				uint64_t* alloc = (uint64_t*)_KeMemMap(NULL, 4096, 0, 0, -1, 0);
+				if (!block)
+					block = alloc;
+				int bytes = _KeReadFile(file, alloc, 4096);
+			}
+			if (secthdr[i].VirtualSize > secthdr[i].SizeOfRawData)
+				memset(raw_offset<void*>(block, secthdr[i].SizeOfRawData), 0, secthdr[i].VirtualSize - secthdr[i].SizeOfRawData);
+		}
 	}
 	
 	uint8_t* aligned_buff = (uint8_t*)first_ptr;
@@ -142,7 +189,7 @@ int XELdrStartProc(char* filename, XELoaderObject *obj) {
 	obj->entry_addr = _image_load_base_ + nt->OptionalHeader.AddressOfEntryPoint;
 	free(stat);
 	_KeCloseFile(file);
-	_KePrint("Finished loading %s \n", filename);
+	_KePrint("Finished loading %s %d bytes %d KiB\r\n", filename, ret_bytes, (ret_bytes / 1024));
 	return 0;
 }
 
@@ -175,9 +222,9 @@ int main(int argc, char* argv[]) {
 	XELoaderObject* mainobj = XELdrCreateObj(filename);
 
 	XELdrStartProc(mainobj->objname, mainobj);
-
 	XELdrLoadAllObject();
 
+	_KePrint("Linking dependencies \r\n");
 	/* links all dependencies of libraries*/
 	XELdrLinkDepObject(mainobj);
 
@@ -192,7 +239,7 @@ int main(int argc, char* argv[]) {
 	for (int i = 0; i < NUMSIGNALS; i++)
 		_KeSetSignal(i + 1, DefaultSignalHandler);
 
-
+	
 	entrypoint e = (entrypoint)mainobj->entry_addr;
 	e(0, NULL);
 	

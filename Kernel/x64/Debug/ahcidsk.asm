@@ -38,7 +38,7 @@ $pdata$?AuAHCIDiskFindSlot@@YAIPEAU_hba_port_@@@Z DD imagerel $LN7
 	DD	imagerel $LN7+87
 	DD	imagerel $unwind$?AuAHCIDiskFindSlot@@YAIPEAU_hba_port_@@@Z
 $pdata$?AuAHCIDiskRead@@YAXPEAU_hba_port_@@_KIPEA_K@Z DD imagerel $LN11
-	DD	imagerel $LN11+731
+	DD	imagerel $LN11+739
 	DD	imagerel $unwind$?AuAHCIDiskRead@@YAXPEAU_hba_port_@@_KIPEA_K@Z
 $pdata$?AuAHCIDiskWrite@@YAXPEAU_hba_port_@@_KIPEA_K@Z DD imagerel $LN10
 	DD	imagerel $LN10+756
@@ -894,8 +894,8 @@ cmd_slot$ = 40
 tbl$ = 48
 cmd_list$ = 56
 spin$ = 64
-tv282 = 68
-tv277 = 72
+tv285 = 68
+tv280 = 72
 buffer_while$ = 80
 i$ = 88
 port$ = 112
@@ -988,10 +988,12 @@ $LN11:
 	mov	rdx, QWORD PTR tbl$[rsp]
 	mov	DWORD PTR [rdx+rcx+128], eax
 
-; 90   : 	tbl->prdt[0].dbau = buffer_while >> 32;
+; 90   : 	tbl->prdt[0].dbau = (buffer_while >> 32) & UINT32_MAX;
 
 	mov	rax, QWORD PTR buffer_while$[rsp]
 	shr	rax, 32					; 00000020H
+	mov	ecx, -1					; ffffffffH
+	and	rax, rcx
 	mov	ecx, 16
 	imul	rcx, rcx, 0
 	mov	rdx, QWORD PTR tbl$[rsp]
@@ -1143,9 +1145,9 @@ $LN7@AuAHCIDisk:
 
 	mov	eax, DWORD PTR cmd_slot$[rsp]
 	mov	ecx, 1
-	mov	DWORD PTR tv277[rsp], ecx
+	mov	DWORD PTR tv280[rsp], ecx
 	movzx	ecx, al
-	mov	eax, DWORD PTR tv277[rsp]
+	mov	eax, DWORD PTR tv280[rsp]
 	shl	eax, cl
 	mov	rcx, QWORD PTR port$[rsp]
 	mov	DWORD PTR [rcx+56], eax
@@ -1161,9 +1163,9 @@ $LN6@AuAHCIDisk:
 
 	mov	eax, DWORD PTR cmd_slot$[rsp]
 	mov	ecx, 1
-	mov	DWORD PTR tv282[rsp], ecx
+	mov	DWORD PTR tv285[rsp], ecx
 	movzx	ecx, al
-	mov	eax, DWORD PTR tv282[rsp]
+	mov	eax, DWORD PTR tv285[rsp]
 	shl	eax, cl
 	mov	rcx, QWORD PTR port$[rsp]
 	mov	ecx, DWORD PTR [rcx+56]

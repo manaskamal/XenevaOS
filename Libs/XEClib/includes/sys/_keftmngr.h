@@ -44,4 +44,10 @@ XE_EXTERN XE_LIB int _KeGetFontID(char* fontname);
  * of fonts installed on the system
  */
 XE_EXTERN XE_LIB int _KeGetNumFonts();
+
+/*
+ * _KeGetFontSize -- returns the size
+ * of font by its name
+ */
+XE_EXTERN XE_LIB int _KeGetFontSize(char* fontname);
 #endif

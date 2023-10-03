@@ -85,7 +85,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>false</SDLCheck>
-      <AdditionalIncludeDirectories>E:\Xeneva Project\Aurora\Libs\XEClib\includes;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>E:\Xeneva Project\Aurora\Libs\XEClib\includes;E:\os_dev\freetype2-master\freetype2-master\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>ARCH_X64;YES_DYNAMIC; DYNAMIC_EXPORTER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <IgnoreStandardIncludePath>true</IgnoreStandardIncludePath>
       <ExceptionHandling>false</ExceptionHandling>
@@ -100,7 +100,7 @@
       </GenerateDebugInformation>
       <OutputFile>F:\chlkha.dll</OutputFile>
       <AdditionalLibraryDirectories>E:\Xeneva Project\Aurora\x64\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>XEClib.lib; </AdditionalDependencies>
+      <AdditionalDependencies>XEClib.lib; ftype.lib;</AdditionalDependencies>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
       <EnableUAC>false</EnableUAC>
       <GenerateMapFile>true</GenerateMapFile>
@@ -115,7 +115,7 @@
       </RandomizedBaseAddress>
       <FixedBaseAddress>true</FixedBaseAddress>
       <DataExecutionPrevention>true</DataExecutionPrevention>
-      <AdditionalOptions>/filealign:4096 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/ALIGN:512 %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -149,10 +149,12 @@
   <ItemGroup>
     <ClInclude Include="chitralekha.h" />
     <ClInclude Include="color.h" />
+    <ClInclude Include="font.h" />
     <ClInclude Include="_fastcpy.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="chitralekha.cpp" />
+    <ClCompile Include="font.cpp" />
   </ItemGroup>
   <ItemGroup>
     <NASM Include="_fastcpy.asm">

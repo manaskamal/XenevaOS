@@ -87,7 +87,7 @@ void AuAHCIDiskRead(HBA_PORT* port, uint64_t lba, uint32_t count, uint64_t *buff
 
 	int i = 0;
 	tbl->prdt[0].data_base_address = buffer_while & UINT32_MAX;
-	tbl->prdt[0].dbau = buffer_while >> 32;
+	tbl->prdt[0].dbau = (buffer_while >> 32) & UINT32_MAX;
 	tbl->prdt[0].data_byte_count = 512 * count - 1;
 	tbl->prdt[0].i = 1;
 

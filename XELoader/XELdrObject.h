@@ -99,4 +99,6 @@ extern XELoaderObject* XELdrGetObject(const char* name);
 * @param mainobj -- main object
 */
 extern void XELdrLinkDepObject(XELoaderObject *mainobj);
+
+extern void XELdrPrintAllObject();
 #endif

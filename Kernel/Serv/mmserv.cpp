@@ -83,12 +83,15 @@ void UnmapSharedMem(uint16_t key) {
  * process heap
  */
 uint64_t GetProcessHeapMem(size_t sz) {
+	x64_cli();
 	/* check if size is page aligned */
-	if (sz & 0xFFF)
+	if (sz & 0xFFF) {
 		return -1;
+	}
 
-	if ((sz % PAGE_SIZE) != 0)
+	if ((sz % PAGE_SIZE) != 0){
 		return -1;
+	}
 	
 	AuThread* thr = AuGetCurrentThread();
 	AuProcess* proc = AuProcessFindThread(thr);

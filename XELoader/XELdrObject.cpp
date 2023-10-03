@@ -177,3 +177,9 @@ void XELdrLinkDepObject(XELoaderObject *mainobj) {
 		XELdrLinkDependencyPE(obj_);
 	}
 }
+
+void XELdrPrintAllObject() {
+	_KePrint("Displaying all loadable objects \r\n");
+	for (XELoaderObject *obj_ = obj_first; obj_ != NULL; obj_ = obj_->next) 
+		_KePrint("Object -> %s \r\n", obj_->objname);
+}

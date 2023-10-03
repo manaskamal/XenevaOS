@@ -42,6 +42,7 @@
 typedef struct _font_seg_ {
 	char fontname[32];
 	AuSHM* sharedSeg;
+	uint32_t fontFileSz;
 	struct _font_seg_ *next;
 	struct _font_seg_ *prev;
 }FontSeg;
@@ -63,5 +64,11 @@ extern int AuFTMngrGetFontID(char* fontname);
 * system fonts installed
 */
 extern int AuFTMngrGetNumFonts();
+
+/*
+* AuFTMngrGetFontSize -- returns font size
+* @param fontname -- name of the font
+*/
+extern int AuFTMngrGetFontSize(char* fontname);
 
 #endif

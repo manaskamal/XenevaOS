@@ -41,6 +41,7 @@
 #include "deodhai.h"
 #include "cursor.h"
 #include "dirty.h"
+#include <font.h>
 
 Cursor *arrow;
 int mouse_fd;

@@ -69,7 +69,7 @@ uint64_t null_call(uint64_t param1, uint64_t param2, uint64_t param3, uint64_t
 /* syscall entries */
 static void* syscalls[AURORA_MAX_SYSCALL] = {
 	null_call,        //0
-	SeTextOut,       //1
+	AuTextOut,       //1
 	PauseThread,      //2
 	GetThreadID,      //3
 	GetProcessID,     //4
@@ -97,6 +97,7 @@ static void* syscalls[AURORA_MAX_SYSCALL] = {
 	GetSystemTimerTick, //26
 	AuFTMngrGetFontID, //27
 	AuFTMngrGetNumFonts, //28
+	AuFTMngrGetFontSize, //29
 };
 
 

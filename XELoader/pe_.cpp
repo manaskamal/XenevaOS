@@ -87,7 +87,7 @@ void XELdrRelocatePE(void* image, PIMAGE_NT_HEADERS nt, int diff) {
 	if (data_dir.VirtualAddress == 0 || data_dir.Size == 0)
 		return;
 
-	_KePrint("Relocating executable \n");
+	_KePrint("Relocating executable \r\n");
 	PIMAGE_RELOCATION_BLOCK reloc_table = raw_offset<PIMAGE_RELOCATION_BLOCK>(image, data_dir.VirtualAddress);
 	PIMAGE_RELOCATION_BLOCK cur_block = reloc_table;
 
@@ -128,25 +128,28 @@ void XELdrRelocatePE(void* image, PIMAGE_NT_HEADERS nt, int diff) {
 
 }
 
+bool _proc_debug = false;
 /*
 * AuGetProcAddress -- get procedure address in a dll image
 * @param image -- dll image
 * @param procname -- procedure name
 */
 void* XELdrGetProcAddress(void *image, const char* procname){
-
 	PIMAGE_DOS_HEADER dos_header = (PIMAGE_DOS_HEADER)image;
 	PIMAGE_NT_HEADERS ntHeaders = raw_offset<PIMAGE_NT_HEADERS>(dos_header, dos_header->e_lfanew);
+	
 	if (IMAGE_DATA_DIRECTORY_EXPORT + 1 > ntHeaders->OptionalHeader.NumberOfRvaAndSizes)
 		return NULL;
 	IMAGE_DATA_DIRECTORY& datadir = ntHeaders->OptionalHeader.DataDirectory[IMAGE_DATA_DIRECTORY_EXPORT];
+	
 	if (datadir.VirtualAddress == 0 || datadir.Size == 0)
 		return NULL;
+
 	PIMAGE_EXPORT_DIRECTORY exportdir = raw_offset<PIMAGE_EXPORT_DIRECTORY>(image, datadir.VirtualAddress);
 	uint32_t* FuntionNameAddressArray = raw_offset<uint32_t*>(image, exportdir->AddressOfNames);
 	uint16_t* FunctionOrdinalAddressArray = raw_offset<uint16_t*>(image, exportdir->AddressOfNameOrdinal);
 	uint32_t* FunctionAddressArray = raw_offset<uint32_t*>(image, exportdir->AddressOfFunctions);
-
+	
 	for (int i = 0; i < exportdir->NumberOfNames; i++) {
 
 		char* function_name = raw_offset<char*>(image, FuntionNameAddressArray[i]);
@@ -183,7 +186,6 @@ void XELdrLinkPE(void* exec) {
 		if (!dep_obj)
 			return;
 		void* dll_dep = (void*)dep_obj->load_addr;
-
 		PIMAGE_IMPORT_LOOKUP_TABLE_PE32P iat = raw_offset<PIMAGE_IMPORT_LOOKUP_TABLE_PE32P>(exec, importdir[n].ThunkTableRva);
 		while (*iat) {
 			PIMAGE_IMPORT_HINT_TABLE hint = raw_offset<PIMAGE_IMPORT_HINT_TABLE>(exec, *iat);
@@ -195,7 +197,7 @@ void XELdrLinkPE(void* exec) {
 	}
 }
 
-
+bool _debug_buf = false;
 /*
 * XELdrCreatePEObjects -- load all required objects
 * @param image -- dll image
@@ -215,16 +217,14 @@ void XELdrCreatePEObjects(void* exec) {
 	}
 	
 	PIMAGE_IMPORT_DIRECTORY importdir = raw_offset<PIMAGE_IMPORT_DIRECTORY>(exec, datadir.VirtualAddress);
-	_KePrint("loading dependency %x \n", importdir->TimeDateStamp);
+	
 	for (size_t n = 0; importdir[n].ThunkTableRva; ++n) {
-		
 		const char* func = raw_offset<const char*>(exec, importdir[n].NameRva);
 		if (!XELdrCheckObject(func)) {
 			int flen = strlen(func);
 			char *separator = (char*)malloc(flen + 1);
 			strcpy(separator, "/");
 			char *fname = strcat(separator, func);
-			_KePrint("Creating object -> %s \n", fname);
 			XELoaderObject* obj = XELdrCreateObj(fname);
 			free(separator);
 		}
@@ -262,12 +262,12 @@ void XELdrLinkDependencyPE(XELoaderObject* obj) {
 	for (size_t n = 0; importdir[n].ThunkTableRva; ++n) {
 		const char* func = raw_offset<const char*>(exec, importdir[n].NameRva);
 		XELoaderObject* dep_obj = XELdrGetObject(func);
-		if (!dep_obj)
+		if (!dep_obj){
 			return;
+		}
 
 		XELdrLinkDependencyPE(dep_obj);
 		void* dll_dep = (void*)dep_obj->load_addr;
-
 		PIMAGE_IMPORT_LOOKUP_TABLE_PE32P iat = raw_offset<PIMAGE_IMPORT_LOOKUP_TABLE_PE32P>(exec, importdir[n].ThunkTableRva);
 		while (*iat) {
 			PIMAGE_IMPORT_HINT_TABLE hint = raw_offset<PIMAGE_IMPORT_HINT_TABLE>(exec, *iat);

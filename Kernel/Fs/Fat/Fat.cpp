@@ -113,7 +113,7 @@ uint32_t FatReadFAT(AuVFSNode *node, uint32_t cluster_index) {
 	size_t ent_offset = fat_offset % 512;
 	uint64_t *BuffArea = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
 	memset(BuffArea, 0, 4096);
-	AuVDiskRead(vdisk, fat_sector, 1, (uint64_t*)V2P((size_t)BuffArea));
+	AuVDiskRead(vdisk, fat_sector, 4096/512, (uint64_t*)V2P((size_t)BuffArea));
 	unsigned char* buf = (unsigned char*)BuffArea;
 	uint32_t value = *(uint32_t*)&buf[ent_offset];
 	AuPmmngrFree((void*)V2P((size_t)BuffArea));
@@ -211,23 +211,23 @@ size_t FatRead(AuVFSNode* fsys, AuVFSNode *file, uint64_t* buf) {
 		return NULL;
 	}
 
+	
 	auto lba = FatClusterToSector32(fs, file->current);
-
-	AuVDiskRead(vdisk, lba, 8, buf);
+	AuVDiskRead(vdisk, lba, fs->__SectorPerCluster, buf);
 
 	uint32_t value = FatReadFAT(fsys,file->current);
-
+	
 	if (value >= 0x0FFFFFF8) {
 		file->eof = 1;
-		return -1;
+		return fs->__SectorPerCluster * 512;
 	}
 
 	if (value == 0x0FFFFFF7) {
 		file->eof = 1;
-		return -1;
+		return fs->__SectorPerCluster * 512;
 	}
 	file->current = value;
-	return 4096;
+	return fs->__SectorPerCluster * 512;
 }
 
 /*
@@ -243,24 +243,26 @@ size_t FatReadFile(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint32_t 
 
 	if (!file)
 		return 0;
+
 	FatFS* fs = (FatFS*)fsys->device;
 
-	size_t read_bytes = 0;
+	int64 read_bytes = 0;
 	size_t ret_bytes = 0;
 	uint8_t* aligned_buffer = (uint8_t*)buffer;
 
 	size_t num_blocks = length / fs->cluster_sz_in_bytes +
-		((length % fs->cluster_sz_in_bytes) ? 1 : 0);;
-	
+		((length % fs->cluster_sz_in_bytes) ? 1 : 0);
 
 	for (int i = 0; i < num_blocks; i++) {
 		uint64_t* buff = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
 		memset(buff, 0, PAGE_SIZE);
 		read_bytes = FatRead(fsys, file, (uint64_t*)V2P((size_t)buff));
-		memcpy(aligned_buffer, buff, PAGE_SIZE);
+		memcpy(aligned_buffer, buff, read_bytes);
 		AuPmmngrFree((void*)V2P((size_t)buff));
-		aligned_buffer += PAGE_SIZE;
+		aligned_buffer += read_bytes;
 		ret_bytes += read_bytes;
+		if (file->eof)
+			break;
 	}
 
 	return ret_bytes;
@@ -350,6 +352,7 @@ AuVFSNode* FatLocateDir(AuVFSNode* fsys, const char* dir) {
 			memcpy(name, dirent->filename, 11);
 			name[11] = 0;
 			if (strcmp(dos_file_name, name) == 0) {
+				
 				strcpy(file->filename, dir);
 				file->current = dirent->first_cluster;
 				file->size = dirent->file_size;

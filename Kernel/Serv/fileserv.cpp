@@ -46,6 +46,7 @@
  * @param mode -- mode of the file
  */
 int OpenFile(char* filename, int mode) {
+	x64_cli();
 	AuThread* current_thr = AuGetCurrentThread();
 	AuProcess* current_proc = AuProcessFindThread(current_thr);
 
@@ -77,6 +78,7 @@ int OpenFile(char* filename, int mode) {
  * @param length -- length in bytes
  */
 size_t ReadFile(int fd, void* buffer, size_t length) {
+	x64_cli();
 	if (fd == -1)
 		return 0;
 	if (!buffer)
@@ -119,6 +121,7 @@ size_t ReadFile(int fd, void* buffer, size_t length) {
  * @param length -- length in bytes
  */
 size_t WriteFile(int fd, void* buffer, size_t length) {
+	x64_cli();
 	if (fd == -1)
 		return 0;
 	if (!buffer)

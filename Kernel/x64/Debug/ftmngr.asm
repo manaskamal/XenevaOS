@@ -20,17 +20,20 @@ _BSS	SEGMENT
 ?totalSysFonts@@3HA DD 01H DUP (?)			; totalSysFonts
 _BSS	ENDS
 CONST	SEGMENT
-$SG3388	DB	'/', 00H
+$SG3392	DB	'/', 00H
 	ORG $+6
-$SG3413	DB	'[aurora]: Loading system fonts ', 0aH, 00H
+$SG3401	DB	'Finished reading -> %s retbytes -> %d ', 0dH, 0aH, 00H
 	ORG $+3
-$SG3415	DB	'/', 00H
+$SG3421	DB	'/', 00H
 	ORG $+2
-$SG3417	DB	'/ftlst.cnf', 00H
+$SG3419	DB	'[aurora]: Loading system fonts ', 0aH, 00H
+	ORG $+7
+$SG3423	DB	'/ftlst.cnf', 00H
 CONST	ENDS
 PUBLIC	?FontManagerInitialise@@YAXXZ			; FontManagerInitialise
 PUBLIC	?AuFTMngrGetFontID@@YAHPEAD@Z			; AuFTMngrGetFontID
 PUBLIC	?AuFTMngrGetNumFonts@@YAHXZ			; AuFTMngrGetNumFonts
+PUBLIC	?AuFTMngrGetFontSize@@YAHPEAD@Z			; AuFTMngrGetFontSize
 PUBLIC	?FontManagerAddSegment@@YAXPEAU_font_seg_@@@Z	; FontManagerAddSegment
 PUBLIC	?FontManagerRemoveSegment@@YAXPEAU_font_seg_@@@Z ; FontManagerRemoveSegment
 PUBLIC	?FontManagerGetKey@@YAGXZ			; FontManagerGetKey
@@ -49,6 +52,7 @@ EXTRN	?AuGetSHMByID@@YAPEAU_shm_@@G@Z:PROC		; AuGetSHMByID
 EXTRN	?AuCreateSHM@@YAHPEAU_au_proc_@@G_KE@Z:PROC	; AuCreateSHM
 EXTRN	AuPmmngrAlloc:PROC
 EXTRN	P2V:PROC
+EXTRN	SeTextOut:PROC
 EXTRN	AuTextOut:PROC
 EXTRN	kmalloc:PROC
 EXTRN	kfree:PROC
@@ -60,17 +64,20 @@ $pdata$?FontManagerInitialise@@YAXXZ DD imagerel $LN9
 $pdata$?AuFTMngrGetFontID@@YAHPEAD@Z DD imagerel $LN7
 	DD	imagerel $LN7+94
 	DD	imagerel $unwind$?AuFTMngrGetFontID@@YAHPEAD@Z
+$pdata$?AuFTMngrGetFontSize@@YAHPEAD@Z DD imagerel $LN7
+	DD	imagerel $LN7+89
+	DD	imagerel $unwind$?AuFTMngrGetFontSize@@YAHPEAD@Z
 $pdata$?FontManagerGetKey@@YAGXZ DD imagerel $LN3
 	DD	imagerel $LN3+41
 	DD	imagerel $unwind$?FontManagerGetKey@@YAGXZ
 $pdata$?FontManagerAllocateSegment@@YAPEAU_font_seg_@@PEAU__VFS_NODE__@@PEAD@Z DD imagerel $LN4
-	DD	imagerel $LN4+162
+	DD	imagerel $LN4+206
 	DD	imagerel $unwind$?FontManagerAllocateSegment@@YAPEAU_font_seg_@@PEAU__VFS_NODE__@@PEAD@Z
 $pdata$?FontManagerOpenFontFile@@YAPEAU__VFS_NODE__@@PEAD@Z DD imagerel $LN4
 	DD	imagerel $LN4+39
 	DD	imagerel $unwind$?FontManagerOpenFontFile@@YAPEAU__VFS_NODE__@@PEAD@Z
 $pdata$?FontManagerIterateFontList@@YAXPEAE@Z DD imagerel $LN14
-	DD	imagerel $LN14+481
+	DD	imagerel $LN14+554
 	DD	imagerel $unwind$?FontManagerIterateFontList@@YAXPEAE@Z
 $pdata$?FontManagerGetFontCount@@YAHPEAE@Z DD imagerel $LN9
 	DD	imagerel $LN9+180
@@ -81,6 +88,8 @@ $unwind$?FontManagerInitialise@@YAXXZ DD 010401H
 	DD	0a204H
 $unwind$?AuFTMngrGetFontID@@YAHPEAD@Z DD 010901H
 	DD	06209H
+$unwind$?AuFTMngrGetFontSize@@YAHPEAD@Z DD 010901H
+	DD	06209H
 $unwind$?FontManagerGetKey@@YAGXZ DD 010401H
 	DD	02204H
 $unwind$?FontManagerAllocateSegment@@YAPEAU_font_seg_@@PEAU__VFS_NODE__@@PEAD@Z DD 010e01H
@@ -88,7 +97,7 @@ $unwind$?FontManagerAllocateSegment@@YAPEAU_font_seg_@@PEAU__VFS_NODE__@@PEAD@Z 
 $unwind$?FontManagerOpenFontFile@@YAPEAU__VFS_NODE__@@PEAD@Z DD 010901H
 	DD	06209H
 $unwind$?FontManagerIterateFontList@@YAXPEAE@Z DD 020c01H
-	DD	015010cH
+	DD	017010cH
 $unwind$?FontManagerGetFontCount@@YAHPEAE@Z DD 010901H
 	DD	08209H
 xdata	ENDS
@@ -103,54 +112,54 @@ fbuf$ = 56
 fontlst$ = 80
 ?FontManagerGetFontCount@@YAHPEAE@Z PROC		; FontManagerGetFontCount
 
-; 183  : int FontManagerGetFontCount(uint8_t* fontlst) {
+; 186  : int FontManagerGetFontCount(uint8_t* fontlst) {
 
 $LN9:
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 72					; 00000048H
 
-; 184  : 	char* fbuf = (char*)fontlst;
+; 187  : 	char* fbuf = (char*)fontlst;
 
 	mov	rax, QWORD PTR fontlst$[rsp]
 	mov	QWORD PTR fbuf$[rsp], rax
 
-; 185  : 	char* p = strchr(fbuf,'(');
+; 188  : 	char* p = strchr(fbuf,'(');
 
 	mov	edx, 40					; 00000028H
 	mov	rcx, QWORD PTR fbuf$[rsp]
 	call	strchr
 	mov	QWORD PTR p$[rsp], rax
 
-; 186  : 	if (p){
+; 189  : 	if (p){
 
 	cmp	QWORD PTR p$[rsp], 0
 	je	SHORT $LN6@FontManage
 
-; 187  : 		p++;
+; 190  : 		p++;
 
 	mov	rax, QWORD PTR p$[rsp]
 	inc	rax
 	mov	QWORD PTR p$[rsp], rax
 
-; 188  : 	}
-; 189  : 	else {
+; 191  : 	}
+; 192  : 	else {
 
 	jmp	SHORT $LN5@FontManage
 $LN6@FontManage:
 
-; 190  : 		return 0;
+; 193  : 		return 0;
 
 	xor	eax, eax
 	jmp	SHORT $LN7@FontManage
 $LN5@FontManage:
 
-; 191  : 	}
-; 192  : 	char num[3];
-; 193  : 	int i = 0;
+; 194  : 	}
+; 195  : 	char num[3];
+; 196  : 	int i = 0;
 
 	mov	DWORD PTR i$[rsp], 0
 
-; 194  : 	for (i = 0; i < 3; i++) {
+; 197  : 	for (i = 0; i < 3; i++) {
 
 	mov	DWORD PTR i$[rsp], 0
 	jmp	SHORT $LN4@FontManage
@@ -162,7 +171,7 @@ $LN4@FontManage:
 	cmp	DWORD PTR i$[rsp], 3
 	jge	SHORT $LN2@FontManage
 
-; 195  : 		if (p[i] == ')')
+; 198  : 		if (p[i] == ')')
 
 	movsxd	rax, DWORD PTR i$[rsp]
 	mov	rcx, QWORD PTR p$[rsp]
@@ -170,12 +179,12 @@ $LN4@FontManage:
 	cmp	eax, 41					; 00000029H
 	jne	SHORT $LN1@FontManage
 
-; 196  : 			break;
+; 199  : 			break;
 
 	jmp	SHORT $LN2@FontManage
 $LN1@FontManage:
 
-; 197  : 		num[i] = p[i];
+; 200  : 		num[i] = p[i];
 
 	movsxd	rax, DWORD PTR i$[rsp]
 	movsxd	rcx, DWORD PTR i$[rsp]
@@ -183,28 +192,28 @@ $LN1@FontManage:
 	movzx	eax, BYTE PTR [rdx+rax]
 	mov	BYTE PTR num$[rsp+rcx], al
 
-; 198  : 	}
+; 201  : 	}
 
 	jmp	SHORT $LN3@FontManage
 $LN2@FontManage:
 
-; 199  : 	num[i] = 0;
+; 202  : 	num[i] = 0;
 
 	movsxd	rax, DWORD PTR i$[rsp]
 	mov	BYTE PTR num$[rsp+rax], 0
 
-; 200  : 	int number = atoi(num);
+; 203  : 	int number = atoi(num);
 
 	lea	rcx, QWORD PTR num$[rsp]
 	call	?atoi@@YAHPEBD@Z			; atoi
 	mov	DWORD PTR number$[rsp], eax
 
-; 201  : 	return number;
+; 204  : 	return number;
 
 	mov	eax, DWORD PTR number$[rsp]
 $LN7@FontManage:
 
-; 202  : }
+; 205  : }
 
 	add	rsp, 72					; 00000048H
 	ret	0
@@ -217,70 +226,72 @@ i$ = 32
 fbuf$ = 40
 p$ = 48
 fontfile$ = 56
-seg$1 = 64
-fs$ = 72
-firstFrame$2 = 80
-filename$ = 88
-fontname$ = 120
-fontlst$ = 176
+tv156 = 64
+seg$1 = 72
+ret$2 = 80
+firstFrame$3 = 88
+fs$ = 96
+filename$ = 104
+fontname$ = 136
+fontlst$ = 192
 ?FontManagerIterateFontList@@YAXPEAE@Z PROC		; FontManagerIterateFontList
 
-; 132  : void FontManagerIterateFontList(uint8_t* fontlst) {
+; 134  : void FontManagerIterateFontList(uint8_t* fontlst) {
 
 $LN14:
 	mov	QWORD PTR [rsp+8], rcx
-	sub	rsp, 168				; 000000a8H
+	sub	rsp, 184				; 000000b8H
 
-; 133  : 	char* fbuf = (char*)fontlst;
+; 135  : 	char* fbuf = (char*)fontlst;
 
 	mov	rax, QWORD PTR fontlst$[rsp]
 	mov	QWORD PTR fbuf$[rsp], rax
 $search$15:
 
-; 134  : search:
-; 135  : 	char* p = strchr(fbuf, '[');
+; 136  : search:
+; 137  : 	char* p = strchr(fbuf, '[');
 
 	mov	edx, 91					; 0000005bH
 	mov	rcx, QWORD PTR fbuf$[rsp]
 	call	strchr
 	mov	QWORD PTR p$[rsp], rax
 
-; 136  : 	if (p){
+; 138  : 	if (p){
 
 	cmp	QWORD PTR p$[rsp], 0
 	je	SHORT $LN11@FontManage
 
-; 137  : 		p++;
+; 139  : 		p++;
 
 	mov	rax, QWORD PTR p$[rsp]
 	inc	rax
 	mov	QWORD PTR p$[rsp], rax
 
-; 138  : 		fbuf++;
+; 140  : 		fbuf++;
 
 	mov	rax, QWORD PTR fbuf$[rsp]
 	inc	rax
 	mov	QWORD PTR fbuf$[rsp], rax
 
-; 139  : 	}
-; 140  : 	else{
+; 141  : 	}
+; 142  : 	else{
 
 	jmp	SHORT $LN10@FontManage
 $LN11@FontManage:
 
-; 141  : 		return;
+; 143  : 		return;
 
 	jmp	$LN12@FontManage
 $LN10@FontManage:
 
-; 142  : 	}
-; 143  : 
-; 144  : 	char fontname[32];
-; 145  : 	int i = 0;
+; 144  : 	}
+; 145  : 
+; 146  : 	char fontname[32];
+; 147  : 	int i = 0;
 
 	mov	DWORD PTR i$[rsp], 0
 
-; 146  : 	for (i = 0; i < 32; i++) {
+; 148  : 	for (i = 0; i < 32; i++) {
 
 	mov	DWORD PTR i$[rsp], 0
 	jmp	SHORT $LN9@FontManage
@@ -292,7 +303,7 @@ $LN9@FontManage:
 	cmp	DWORD PTR i$[rsp], 32			; 00000020H
 	jge	SHORT $LN7@FontManage
 
-; 147  : 		if (p[i] == ']'){
+; 149  : 		if (p[i] == ']'){
 
 	movsxd	rax, DWORD PTR i$[rsp]
 	mov	rcx, QWORD PTR p$[rsp]
@@ -300,7 +311,7 @@ $LN9@FontManage:
 	cmp	eax, 93					; 0000005dH
 	jne	SHORT $LN6@FontManage
 
-; 148  : 			fbuf = p + i;
+; 150  : 			fbuf = p + i;
 
 	movsxd	rax, DWORD PTR i$[rsp]
 	mov	rcx, QWORD PTR p$[rsp]
@@ -308,19 +319,19 @@ $LN9@FontManage:
 	mov	rax, rcx
 	mov	QWORD PTR fbuf$[rsp], rax
 
-; 149  : 			fbuf++;
+; 151  : 			fbuf++;
 
 	mov	rax, QWORD PTR fbuf$[rsp]
 	inc	rax
 	mov	QWORD PTR fbuf$[rsp], rax
 
-; 150  : 			break;
+; 152  : 			break;
 
 	jmp	SHORT $LN7@FontManage
 $LN6@FontManage:
 
-; 151  : 		}
-; 152  : 		fontname[i] = p[i];
+; 153  : 		}
+; 154  : 		fontname[i] = p[i];
 
 	movsxd	rax, DWORD PTR i$[rsp]
 	movsxd	rcx, DWORD PTR i$[rsp]
@@ -328,30 +339,30 @@ $LN6@FontManage:
 	movzx	eax, BYTE PTR [rdx+rax]
 	mov	BYTE PTR fontname$[rsp+rcx], al
 
-; 153  : 		fbuf++;
+; 155  : 		fbuf++;
 
 	mov	rax, QWORD PTR fbuf$[rsp]
 	inc	rax
 	mov	QWORD PTR fbuf$[rsp], rax
 
-; 154  : 	}
+; 156  : 	}
 
 	jmp	SHORT $LN8@FontManage
 $LN7@FontManage:
 
-; 155  : 	fontname[i] = 0;
+; 157  : 	fontname[i] = 0;
 
 	movsxd	rax, DWORD PTR i$[rsp]
 	mov	BYTE PTR fontname$[rsp+rax], 0
 
-; 156  : 
-; 157  : 	p = fbuf;
+; 158  : 
+; 159  : 	p = fbuf;
 
 	mov	rax, QWORD PTR fbuf$[rsp]
 	mov	QWORD PTR p$[rsp], rax
 
-; 158  : 	char filename[32];
-; 159  : 	for (i = 0; i < 32; i++) {
+; 160  : 	char filename[32];
+; 161  : 	for (i = 0; i < 32; i++) {
 
 	mov	DWORD PTR i$[rsp], 0
 	jmp	SHORT $LN5@FontManage
@@ -363,7 +374,7 @@ $LN5@FontManage:
 	cmp	DWORD PTR i$[rsp], 32			; 00000020H
 	jge	SHORT $LN3@FontManage
 
-; 160  : 		if (p[i] == '|')
+; 162  : 		if (p[i] == '|')
 
 	movsxd	rax, DWORD PTR i$[rsp]
 	mov	rcx, QWORD PTR p$[rsp]
@@ -371,12 +382,12 @@ $LN5@FontManage:
 	cmp	eax, 124				; 0000007cH
 	jne	SHORT $LN2@FontManage
 
-; 161  : 			break;
+; 163  : 			break;
 
 	jmp	SHORT $LN3@FontManage
 $LN2@FontManage:
 
-; 162  : 		filename[i] = p[i];
+; 164  : 		filename[i] = p[i];
 
 	movsxd	rax, DWORD PTR i$[rsp]
 	movsxd	rcx, DWORD PTR i$[rsp]
@@ -384,48 +395,48 @@ $LN2@FontManage:
 	movzx	eax, BYTE PTR [rdx+rax]
 	mov	BYTE PTR filename$[rsp+rcx], al
 
-; 163  : 		fbuf++;
+; 165  : 		fbuf++;
 
 	mov	rax, QWORD PTR fbuf$[rsp]
 	inc	rax
 	mov	QWORD PTR fbuf$[rsp], rax
 
-; 164  : 	}
+; 166  : 	}
 
 	jmp	SHORT $LN4@FontManage
 $LN3@FontManage:
 
-; 165  : 	filename[i] = 0;
+; 167  : 	filename[i] = 0;
 
 	movsxd	rax, DWORD PTR i$[rsp]
 	mov	BYTE PTR filename$[rsp+rax], 0
 
-; 166  : 
-; 167  : 	AuVFSNode* fs = AuVFSFind("/");
+; 168  : 
+; 169  : 	AuVFSNode* fs = AuVFSFind("/");
 
-	lea	rcx, OFFSET FLAT:$SG3388
+	lea	rcx, OFFSET FLAT:$SG3392
 	call	AuVFSFind
 	mov	QWORD PTR fs$[rsp], rax
 
-; 168  : 	AuVFSNode* fontfile = FontManagerOpenFontFile(filename);
+; 170  : 	AuVFSNode* fontfile = FontManagerOpenFontFile(filename);
 
 	lea	rcx, QWORD PTR filename$[rsp]
 	call	?FontManagerOpenFontFile@@YAPEAU__VFS_NODE__@@PEAD@Z ; FontManagerOpenFontFile
 	mov	QWORD PTR fontfile$[rsp], rax
 
-; 169  : 	if (fontfile) {
+; 171  : 	if (fontfile) {
 
 	cmp	QWORD PTR fontfile$[rsp], 0
-	je	SHORT $LN1@FontManage
+	je	$LN1@FontManage
 
-; 170  : 		FontSeg* seg = FontManagerAllocateSegment(fontfile, fontname);
+; 172  : 		FontSeg* seg = FontManagerAllocateSegment(fontfile, fontname);
 
 	lea	rdx, QWORD PTR fontname$[rsp]
 	mov	rcx, QWORD PTR fontfile$[rsp]
 	call	?FontManagerAllocateSegment@@YAPEAU_font_seg_@@PEAU__VFS_NODE__@@PEAD@Z ; FontManagerAllocateSegment
 	mov	QWORD PTR seg$1[rsp], rax
 
-; 171  : 		uint64_t* firstFrame = (uint64_t*)seg->sharedSeg->frames[0];
+; 173  : 		uint64_t* firstFrame = (uint64_t*)seg->sharedSeg->frames[0];
 
 	mov	rax, QWORD PTR seg$1[rsp]
 	mov	rax, QWORD PTR [rax+32]
@@ -433,35 +444,52 @@ $LN3@FontManage:
 	imul	rcx, rcx, 0
 	mov	rax, QWORD PTR [rax+8]
 	mov	rax, QWORD PTR [rcx+rax]
-	mov	QWORD PTR firstFrame$2[rsp], rax
+	mov	QWORD PTR firstFrame$3[rsp], rax
 
-; 172  : 		AuVFSNodeRead(fs, fontfile, (uint64_t*)P2V((size_t)firstFrame), fontfile->size);
+; 174  : 		size_t ret = AuVFSNodeRead(fs, fontfile, (uint64_t*)P2V((size_t)firstFrame), ALIGN_UP(fontfile->size, 4096));
 
-	mov	rcx, QWORD PTR firstFrame$2[rsp]
+	mov	rax, QWORD PTR fontfile$[rsp]
+	mov	eax, DWORD PTR [rax+32]
+	add	eax, 4095				; 00000fffH
+	xor	edx, edx
+	mov	ecx, 4096				; 00001000H
+	div	ecx
+	imul	eax, eax, 4096				; 00001000H
+	mov	DWORD PTR tv156[rsp], eax
+	mov	rcx, QWORD PTR firstFrame$3[rsp]
 	call	P2V
-	mov	rcx, QWORD PTR fontfile$[rsp]
-	mov	r9d, DWORD PTR [rcx+32]
+	mov	ecx, DWORD PTR tv156[rsp]
+	mov	r9d, ecx
 	mov	r8, rax
 	mov	rdx, QWORD PTR fontfile$[rsp]
 	mov	rcx, QWORD PTR fs$[rsp]
 	call	AuVFSNodeRead
+	mov	QWORD PTR ret$2[rsp], rax
 
-; 173  : 		kfree(fontfile);
+; 175  : 		SeTextOut("Finished reading -> %s retbytes -> %d \r\n", fontfile->filename, ret);
+
+	mov	rax, QWORD PTR fontfile$[rsp]
+	mov	r8, QWORD PTR ret$2[rsp]
+	mov	rdx, rax
+	lea	rcx, OFFSET FLAT:$SG3401
+	call	SeTextOut
+
+; 176  : 		kfree(fontfile);
 
 	mov	rcx, QWORD PTR fontfile$[rsp]
 	call	kfree
 $LN1@FontManage:
 
-; 174  : 	}
-; 175  : 	goto search;
+; 177  : 	}
+; 178  : 	goto search;
 
 	jmp	$search$15
 $LN12@FontManage:
 
-; 176  : 	
-; 177  : }
+; 179  : 	
+; 180  : }
 
-	add	rsp, 168				; 000000a8H
+	add	rsp, 184				; 000000b8H
 	ret	0
 ?FontManagerIterateFontList@@YAXPEAE@Z ENDP		; FontManagerIterateFontList
 _TEXT	ENDS
@@ -472,29 +500,29 @@ font$ = 32
 filename$ = 64
 ?FontManagerOpenFontFile@@YAPEAU__VFS_NODE__@@PEAD@Z PROC ; FontManagerOpenFontFile
 
-; 121  : AuVFSNode* FontManagerOpenFontFile(char* filename) {
+; 123  : AuVFSNode* FontManagerOpenFontFile(char* filename) {
 
 $LN4:
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 56					; 00000038H
 
-; 122  : 	AuVFSNode* font = AuVFSOpen(filename);
+; 124  : 	AuVFSNode* font = AuVFSOpen(filename);
 
 	mov	rcx, QWORD PTR filename$[rsp]
 	call	AuVFSOpen
 	mov	QWORD PTR font$[rsp], rax
 
-; 123  : 	if (!font)
+; 125  : 	if (!font)
 
 	cmp	QWORD PTR font$[rsp], 0
 	jne	SHORT $LN1@FontManage
 
-; 124  : 		return NULL;
+; 126  : 		return NULL;
 
 	xor	eax, eax
 $LN1@FontManage:
 
-; 125  : }
+; 127  : }
 
 	add	rsp, 56					; 00000038H
 	ret	0
@@ -503,9 +531,10 @@ _TEXT	ENDS
 ; Function compile flags: /Odtpy
 ; File e:\xeneva project\aurora\kernel\ftmngr.cpp
 _TEXT	SEGMENT
-id$ = 32
+alignedSz$ = 32
+id$ = 36
 seg$ = 40
-tv76 = 48
+tv80 = 48
 fontfile$ = 80
 fontname$ = 88
 ?FontManagerAllocateSegment@@YAPEAU_font_seg_@@PEAU__VFS_NODE__@@PEAD@Z PROC ; FontManagerAllocateSegment
@@ -530,13 +559,13 @@ $LN1@FontManage:
 
 ; 108  : 	FontSeg* seg = (FontSeg*)kmalloc(sizeof(FontSeg));
 
-	mov	ecx, 56					; 00000038H
+	mov	ecx, 60					; 0000003cH
 	call	kmalloc
 	mov	QWORD PTR seg$[rsp], rax
 
 ; 109  : 	memset(seg, 0, sizeof(FontSeg));
 
-	mov	r8d, 56					; 00000038H
+	mov	r8d, 60					; 0000003cH
 	xor	edx, edx
 	mov	rcx, QWORD PTR seg$[rsp]
 	call	memset
@@ -548,38 +577,55 @@ $LN1@FontManage:
 	mov	rcx, rax
 	call	strcpy
 
-; 111  : 	int id = AuCreateSHM(NULL, FontManagerGetKey(), fontfile->size, 0);
+; 111  : 	uint32_t alignedSz = ALIGN_UP(fontfile->size, 4096);
 
 	mov	rax, QWORD PTR fontfile$[rsp]
 	mov	eax, DWORD PTR [rax+32]
-	mov	QWORD PTR tv76[rsp], rax
+	add	eax, 4095				; 00000fffH
+	xor	edx, edx
+	mov	ecx, 4096				; 00001000H
+	div	ecx
+	imul	eax, eax, 4096				; 00001000H
+	mov	DWORD PTR alignedSz$[rsp], eax
+
+; 112  : 	int id = AuCreateSHM(NULL, FontManagerGetKey(), alignedSz, 0);
+
+	mov	eax, DWORD PTR alignedSz$[rsp]
+	mov	QWORD PTR tv80[rsp], rax
 	call	?FontManagerGetKey@@YAGXZ		; FontManagerGetKey
 	xor	r9d, r9d
-	mov	rcx, QWORD PTR tv76[rsp]
+	mov	rcx, QWORD PTR tv80[rsp]
 	mov	r8, rcx
 	movzx	edx, ax
 	xor	ecx, ecx
 	call	?AuCreateSHM@@YAHPEAU_au_proc_@@G_KE@Z	; AuCreateSHM
 	mov	DWORD PTR id$[rsp], eax
 
-; 112  : 	seg->sharedSeg = AuGetSHMByID(id);
+; 113  : 	seg->sharedSeg = AuGetSHMByID(id);
 
 	movzx	ecx, WORD PTR id$[rsp]
 	call	?AuGetSHMByID@@YAPEAU_shm_@@G@Z		; AuGetSHMByID
 	mov	rcx, QWORD PTR seg$[rsp]
 	mov	QWORD PTR [rcx+32], rax
 
-; 113  : 	FontManagerAddSegment(seg);
+; 114  : 	seg->fontFileSz = fontfile->size;
+
+	mov	rax, QWORD PTR seg$[rsp]
+	mov	rcx, QWORD PTR fontfile$[rsp]
+	mov	ecx, DWORD PTR [rcx+32]
+	mov	DWORD PTR [rax+40], ecx
+
+; 115  : 	FontManagerAddSegment(seg);
 
 	mov	rcx, QWORD PTR seg$[rsp]
 	call	?FontManagerAddSegment@@YAXPEAU_font_seg_@@@Z ; FontManagerAddSegment
 
-; 114  : 	return seg;
+; 116  : 	return seg;
 
 	mov	rax, QWORD PTR seg$[rsp]
 $LN2@FontManage:
 
-; 115  : }
+; 117  : }
 
 	add	rsp, 72					; 00000048H
 	ret	0
@@ -647,7 +693,7 @@ $LN5@FontManage:
 ; 75   : 		firstSeg = firstSeg->next;
 
 	mov	rax, QWORD PTR ?firstSeg@@3PEAU_font_seg_@@EA ; firstSeg
-	mov	rax, QWORD PTR [rax+40]
+	mov	rax, QWORD PTR [rax+44]
 	mov	QWORD PTR ?firstSeg@@3PEAU_font_seg_@@EA, rax ; firstSeg
 
 ; 76   : 	}
@@ -659,10 +705,10 @@ $LN4@FontManage:
 ; 78   : 		seg->prev->next = seg->next;
 
 	mov	rax, QWORD PTR seg$[rsp]
-	mov	rax, QWORD PTR [rax+48]
+	mov	rax, QWORD PTR [rax+52]
 	mov	rcx, QWORD PTR seg$[rsp]
-	mov	rcx, QWORD PTR [rcx+40]
-	mov	QWORD PTR [rax+40], rcx
+	mov	rcx, QWORD PTR [rcx+44]
+	mov	QWORD PTR [rax+44], rcx
 $LN3@FontManage:
 
 ; 79   : 	}
@@ -676,7 +722,7 @@ $LN3@FontManage:
 ; 82   : 		lastSeg = seg->prev;
 
 	mov	rax, QWORD PTR seg$[rsp]
-	mov	rax, QWORD PTR [rax+48]
+	mov	rax, QWORD PTR [rax+52]
 	mov	QWORD PTR ?lastSeg@@3PEAU_font_seg_@@EA, rax ; lastSeg
 
 ; 83   : 	}
@@ -688,10 +734,10 @@ $LN2@FontManage:
 ; 85   : 		seg->next->prev = seg->prev;
 
 	mov	rax, QWORD PTR seg$[rsp]
-	mov	rax, QWORD PTR [rax+40]
+	mov	rax, QWORD PTR [rax+44]
 	mov	rcx, QWORD PTR seg$[rsp]
-	mov	rcx, QWORD PTR [rcx+48]
-	mov	QWORD PTR [rax+48], rcx
+	mov	rcx, QWORD PTR [rcx+52]
+	mov	QWORD PTR [rax+52], rcx
 $LN1@FontManage:
 $LN6@FontManage:
 
@@ -714,12 +760,12 @@ seg$ = 8
 ; 53   : 	seg->next = NULL;
 
 	mov	rax, QWORD PTR seg$[rsp]
-	mov	QWORD PTR [rax+40], 0
+	mov	QWORD PTR [rax+44], 0
 
 ; 54   : 	seg->prev = NULL;
 
 	mov	rax, QWORD PTR seg$[rsp]
-	mov	QWORD PTR [rax+48], 0
+	mov	QWORD PTR [rax+52], 0
 
 ; 55   : 	if (firstSeg == NULL) {
 
@@ -746,13 +792,13 @@ $LN2@FontManage:
 
 	mov	rax, QWORD PTR ?lastSeg@@3PEAU_font_seg_@@EA ; lastSeg
 	mov	rcx, QWORD PTR seg$[rsp]
-	mov	QWORD PTR [rax+40], rcx
+	mov	QWORD PTR [rax+44], rcx
 
 ; 61   : 		seg->prev = lastSeg;
 
 	mov	rax, QWORD PTR seg$[rsp]
 	mov	rcx, QWORD PTR ?lastSeg@@3PEAU_font_seg_@@EA ; lastSeg
-	mov	QWORD PTR [rax+48], rcx
+	mov	QWORD PTR [rax+52], rcx
 $LN1@FontManage:
 
 ; 62   : 	}
@@ -769,13 +815,72 @@ _TEXT	ENDS
 ; Function compile flags: /Odtpy
 ; File e:\xeneva project\aurora\kernel\ftmngr.cpp
 _TEXT	SEGMENT
+seg$1 = 32
+fontname$ = 64
+?AuFTMngrGetFontSize@@YAHPEAD@Z PROC			; AuFTMngrGetFontSize
+
+; 255  : int AuFTMngrGetFontSize(char* fontname) {
+
+$LN7:
+	mov	QWORD PTR [rsp+8], rcx
+	sub	rsp, 56					; 00000038H
+
+; 256  : 	for (FontSeg* seg = firstSeg; seg != NULL; seg = seg->next) {
+
+	mov	rax, QWORD PTR ?firstSeg@@3PEAU_font_seg_@@EA ; firstSeg
+	mov	QWORD PTR seg$1[rsp], rax
+	jmp	SHORT $LN4@AuFTMngrGe
+$LN3@AuFTMngrGe:
+	mov	rax, QWORD PTR seg$1[rsp]
+	mov	rax, QWORD PTR [rax+44]
+	mov	QWORD PTR seg$1[rsp], rax
+$LN4@AuFTMngrGe:
+	cmp	QWORD PTR seg$1[rsp], 0
+	je	SHORT $LN2@AuFTMngrGe
+
+; 257  : 		if (strcmp(fontname, seg->fontname) == 0) {
+
+	mov	rax, QWORD PTR seg$1[rsp]
+	mov	rdx, rax
+	mov	rcx, QWORD PTR fontname$[rsp]
+	call	strcmp
+	test	eax, eax
+	jne	SHORT $LN1@AuFTMngrGe
+
+; 258  : 			return seg->fontFileSz;
+
+	mov	rax, QWORD PTR seg$1[rsp]
+	mov	eax, DWORD PTR [rax+40]
+	jmp	SHORT $LN5@AuFTMngrGe
+$LN1@AuFTMngrGe:
+
+; 259  : 		}
+; 260  : 	}
+
+	jmp	SHORT $LN3@AuFTMngrGe
+$LN2@AuFTMngrGe:
+
+; 261  : 	return -1;
+
+	mov	eax, -1
+$LN5@AuFTMngrGe:
+
+; 262  : }
+
+	add	rsp, 56					; 00000038H
+	ret	0
+?AuFTMngrGetFontSize@@YAHPEAD@Z ENDP			; AuFTMngrGetFontSize
+_TEXT	ENDS
+; Function compile flags: /Odtpy
+; File e:\xeneva project\aurora\kernel\ftmngr.cpp
+_TEXT	SEGMENT
 ?AuFTMngrGetNumFonts@@YAHXZ PROC			; AuFTMngrGetNumFonts
 
-; 253  : 	return totalSysFonts;
+; 269  : 	return totalSysFonts;
 
 	mov	eax, DWORD PTR ?totalSysFonts@@3HA	; totalSysFonts
 
-; 254  : }
+; 270  : }
 
 	ret	0
 ?AuFTMngrGetNumFonts@@YAHXZ ENDP			; AuFTMngrGetNumFonts
@@ -787,26 +892,26 @@ seg$1 = 32
 fontname$ = 64
 ?AuFTMngrGetFontID@@YAHPEAD@Z PROC			; AuFTMngrGetFontID
 
-; 239  : int AuFTMngrGetFontID(char* fontname) {
+; 242  : int AuFTMngrGetFontID(char* fontname) {
 
 $LN7:
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 56					; 00000038H
 
-; 240  : 	for (FontSeg* seg = firstSeg; seg != NULL; seg = seg->next) {
+; 243  : 	for (FontSeg* seg = firstSeg; seg != NULL; seg = seg->next) {
 
 	mov	rax, QWORD PTR ?firstSeg@@3PEAU_font_seg_@@EA ; firstSeg
 	mov	QWORD PTR seg$1[rsp], rax
 	jmp	SHORT $LN4@AuFTMngrGe
 $LN3@AuFTMngrGe:
 	mov	rax, QWORD PTR seg$1[rsp]
-	mov	rax, QWORD PTR [rax+40]
+	mov	rax, QWORD PTR [rax+44]
 	mov	QWORD PTR seg$1[rsp], rax
 $LN4@AuFTMngrGe:
 	cmp	QWORD PTR seg$1[rsp], 0
 	je	SHORT $LN2@AuFTMngrGe
 
-; 241  : 		if (strcmp(fontname, seg->fontname) == 0) {
+; 244  : 		if (strcmp(fontname, seg->fontname) == 0) {
 
 	mov	rax, QWORD PTR seg$1[rsp]
 	mov	rdx, rax
@@ -815,7 +920,7 @@ $LN4@AuFTMngrGe:
 	test	eax, eax
 	jne	SHORT $LN1@AuFTMngrGe
 
-; 242  : 			return seg->sharedSeg->id;
+; 245  : 			return seg->sharedSeg->id;
 
 	mov	rax, QWORD PTR seg$1[rsp]
 	mov	rax, QWORD PTR [rax+32]
@@ -823,18 +928,18 @@ $LN4@AuFTMngrGe:
 	jmp	SHORT $LN5@AuFTMngrGe
 $LN1@AuFTMngrGe:
 
-; 243  : 		}
-; 244  : 	}
+; 246  : 		}
+; 247  : 	}
 
 	jmp	SHORT $LN3@AuFTMngrGe
 $LN2@AuFTMngrGe:
 
-; 245  : 	return -1;
+; 248  : 	return -1;
 
 	mov	eax, -1
 $LN5@AuFTMngrGe:
 
-; 246  : }
+; 249  : }
 
 	add	rsp, 56					; 00000038H
 	ret	0
@@ -851,52 +956,52 @@ addr$2 = 56
 fs$ = 64
 ?FontManagerInitialise@@YAXXZ PROC			; FontManagerInitialise
 
-; 208  : void FontManagerInitialise() {
+; 211  : void FontManagerInitialise() {
 
 $LN9:
 	sub	rsp, 88					; 00000058H
 
-; 209  : 	AuTextOut("[aurora]: Loading system fonts \n");
+; 212  : 	AuTextOut("[aurora]: Loading system fonts \n");
 
-	lea	rcx, OFFSET FLAT:$SG3413
+	lea	rcx, OFFSET FLAT:$SG3419
 	call	AuTextOut
 
-; 210  : 	firstSeg = NULL;
+; 213  : 	firstSeg = NULL;
 
 	mov	QWORD PTR ?firstSeg@@3PEAU_font_seg_@@EA, 0 ; firstSeg
 
-; 211  : 	lastSeg = NULL;
+; 214  : 	lastSeg = NULL;
 
 	mov	QWORD PTR ?lastSeg@@3PEAU_font_seg_@@EA, 0 ; lastSeg
 
-; 212  : 	fontKey = FONTMGR_KEY;
+; 215  : 	fontKey = FONTMGR_KEY;
 
 	mov	eax, 4660				; 00001234H
 	mov	WORD PTR ?fontKey@@3GA, ax		; fontKey
 
-; 213  : 	AuVFSNode* fs = AuVFSFind("/");
+; 216  : 	AuVFSNode* fs = AuVFSFind("/");
 
-	lea	rcx, OFFSET FLAT:$SG3415
+	lea	rcx, OFFSET FLAT:$SG3421
 	call	AuVFSFind
 	mov	QWORD PTR fs$[rsp], rax
 
-; 214  : 	AuVFSNode* fontconf = AuVFSOpen("/ftlst.cnf");
+; 217  : 	AuVFSNode* fontconf = AuVFSOpen("/ftlst.cnf");
 
-	lea	rcx, OFFSET FLAT:$SG3417
+	lea	rcx, OFFSET FLAT:$SG3423
 	call	AuVFSOpen
 	mov	QWORD PTR fontconf$[rsp], rax
 
-; 215  : 	if (!fontconf)
+; 218  : 	if (!fontconf)
 
 	cmp	QWORD PTR fontconf$[rsp], 0
 	jne	SHORT $LN6@FontManage
 
-; 216  : 		return;
+; 219  : 		return;
 
 	jmp	$LN7@FontManage
 $LN6@FontManage:
 
-; 217  : 	int num_pages = fontconf->size / PAGE_SIZE;
+; 220  : 	int num_pages = fontconf->size / PAGE_SIZE;
 
 	xor	edx, edx
 	mov	rax, QWORD PTR fontconf$[rsp]
@@ -905,7 +1010,7 @@ $LN6@FontManage:
 	div	ecx
 	mov	DWORD PTR num_pages$[rsp], eax
 
-; 218  : 	if ((num_pages % PAGE_SIZE) != 0)
+; 221  : 	if ((num_pages % PAGE_SIZE) != 0)
 
 	mov	eax, DWORD PTR num_pages$[rsp]
 	cdq
@@ -916,19 +1021,19 @@ $LN6@FontManage:
 	test	eax, eax
 	je	SHORT $LN5@FontManage
 
-; 219  : 		num_pages++;
+; 222  : 		num_pages++;
 
 	mov	eax, DWORD PTR num_pages$[rsp]
 	inc	eax
 	mov	DWORD PTR num_pages$[rsp], eax
 $LN5@FontManage:
 
-; 220  : 
-; 221  : 	uint64_t* first_addr = NULL;
+; 223  : 
+; 224  : 	uint64_t* first_addr = NULL;
 
 	mov	QWORD PTR first_addr$[rsp], 0
 
-; 222  : 	for (int i = 0; i < num_pages; i++) {
+; 225  : 	for (int i = 0; i < num_pages; i++) {
 
 	mov	DWORD PTR i$1[rsp], 0
 	jmp	SHORT $LN4@FontManage
@@ -941,30 +1046,30 @@ $LN4@FontManage:
 	cmp	DWORD PTR i$1[rsp], eax
 	jge	SHORT $LN2@FontManage
 
-; 223  : 		uint64_t* addr = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
+; 226  : 		uint64_t* addr = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
 
 	call	AuPmmngrAlloc
 	mov	rcx, rax
 	call	P2V
 	mov	QWORD PTR addr$2[rsp], rax
 
-; 224  : 		if (!first_addr)
+; 227  : 		if (!first_addr)
 
 	cmp	QWORD PTR first_addr$[rsp], 0
 	jne	SHORT $LN1@FontManage
 
-; 225  : 			first_addr = addr;
+; 228  : 			first_addr = addr;
 
 	mov	rax, QWORD PTR addr$2[rsp]
 	mov	QWORD PTR first_addr$[rsp], rax
 $LN1@FontManage:
 
-; 226  : 	}
+; 229  : 	}
 
 	jmp	SHORT $LN3@FontManage
 $LN2@FontManage:
 
-; 227  : 	memset(first_addr, 0, fontconf->size);
+; 230  : 	memset(first_addr, 0, fontconf->size);
 
 	mov	rax, QWORD PTR fontconf$[rsp]
 	mov	r8d, DWORD PTR [rax+32]
@@ -972,7 +1077,7 @@ $LN2@FontManage:
 	mov	rcx, QWORD PTR first_addr$[rsp]
 	call	memset
 
-; 228  : 	AuVFSNodeRead(fs, fontconf, first_addr, fontconf->size);
+; 231  : 	AuVFSNodeRead(fs, fontconf, first_addr, fontconf->size);
 
 	mov	rax, QWORD PTR fontconf$[rsp]
 	mov	r9d, DWORD PTR [rax+32]
@@ -981,28 +1086,28 @@ $LN2@FontManage:
 	mov	rcx, QWORD PTR fs$[rsp]
 	call	AuVFSNodeRead
 
-; 229  : 	totalSysFonts = 0;
+; 232  : 	totalSysFonts = 0;
 
 	mov	DWORD PTR ?totalSysFonts@@3HA, 0	; totalSysFonts
 
-; 230  : 	font_conf_data = (uint8_t*)first_addr;
+; 233  : 	font_conf_data = (uint8_t*)first_addr;
 
 	mov	rax, QWORD PTR first_addr$[rsp]
 	mov	QWORD PTR ?font_conf_data@@3PEAEEA, rax	; font_conf_data
 
-; 231  : 	totalSysFonts = FontManagerGetFontCount(font_conf_data);
+; 234  : 	totalSysFonts = FontManagerGetFontCount(font_conf_data);
 
 	mov	rcx, QWORD PTR ?font_conf_data@@3PEAEEA	; font_conf_data
 	call	?FontManagerGetFontCount@@YAHPEAE@Z	; FontManagerGetFontCount
 	mov	DWORD PTR ?totalSysFonts@@3HA, eax	; totalSysFonts
 
-; 232  : 	FontManagerIterateFontList(font_conf_data);
+; 235  : 	FontManagerIterateFontList(font_conf_data);
 
 	mov	rcx, QWORD PTR ?font_conf_data@@3PEAEEA	; font_conf_data
 	call	?FontManagerIterateFontList@@YAXPEAE@Z	; FontManagerIterateFontList
 $LN7@FontManage:
 
-; 233  : }
+; 236  : }
 
 	add	rsp, 88					; 00000058H
 	ret	0

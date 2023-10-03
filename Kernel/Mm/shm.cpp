@@ -114,7 +114,6 @@ int AuCreateSHM(AuProcess* proc, uint16_t key, size_t sz, uint8_t flags) {
 		shm->frames = (uint64_t*)kmalloc(sizeof(uint64_t)* shm->num_frames);
 		for (int i = 0; i < shm->num_frames; i++)  {
 			shm->frames[i] = (uint64_t)AuPmmngrAlloc();
-			SeTextOut("frame allocated -> %x \r\n", shm->frames[i]);
 		}
 
 		list_add(shm_list, shm);

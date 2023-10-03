@@ -108,8 +108,10 @@ FontSeg* FontManagerAllocateSegment(AuVFSNode* fontfile, char* fontname) {
 	FontSeg* seg = (FontSeg*)kmalloc(sizeof(FontSeg));
 	memset(seg, 0, sizeof(FontSeg));
 	strcpy(seg->fontname, fontname);
-	int id = AuCreateSHM(NULL, FontManagerGetKey(), fontfile->size, 0);
+	uint32_t alignedSz = ALIGN_UP(fontfile->size, 4096);
+	int id = AuCreateSHM(NULL, FontManagerGetKey(), alignedSz, 0);
 	seg->sharedSeg = AuGetSHMByID(id);
+	seg->fontFileSz = fontfile->size;
 	FontManagerAddSegment(seg);
 	return seg;
 }
@@ -169,7 +171,8 @@ search:
 	if (fontfile) {
 		FontSeg* seg = FontManagerAllocateSegment(fontfile, fontname);
 		uint64_t* firstFrame = (uint64_t*)seg->sharedSeg->frames[0];
-		AuVFSNodeRead(fs, fontfile, (uint64_t*)P2V((size_t)firstFrame), fontfile->size);
+		size_t ret = AuVFSNodeRead(fs, fontfile, (uint64_t*)P2V((size_t)firstFrame), ALIGN_UP(fontfile->size, 4096));
+		SeTextOut("Finished reading -> %s retbytes -> %d \r\n", fontfile->filename, ret);
 		kfree(fontfile);
 	}
 	goto search;
@@ -240,6 +243,19 @@ int AuFTMngrGetFontID(char* fontname) {
 	for (FontSeg* seg = firstSeg; seg != NULL; seg = seg->next) {
 		if (strcmp(fontname, seg->fontname) == 0) {
 			return seg->sharedSeg->id;
+		}
+	}
+	return -1;
+}
+
+/*
+ * AuFTMngrGetFontSize -- returns font size
+ * @param fontname -- name of the font
+ */
+int AuFTMngrGetFontSize(char* fontname) {
+	for (FontSeg* seg = firstSeg; seg != NULL; seg = seg->next) {
+		if (strcmp(fontname, seg->fontname) == 0) {
+			return seg->fontFileSz;
 		}
 	}
 	return -1;

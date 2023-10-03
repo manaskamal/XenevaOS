@@ -4,9 +4,11 @@
     <ClInclude Include="chitralekha.h" />
     <ClInclude Include="_fastcpy.h" />
     <ClInclude Include="color.h" />
+    <ClInclude Include="font.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="chitralekha.cpp" />
+    <ClCompile Include="font.cpp" />
   </ItemGroup>
   <ItemGroup>
     <NASM Include="_fastcpy.asm" />

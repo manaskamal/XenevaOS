@@ -503,6 +503,23 @@ _KeGetNumFonts:
 	  syscall
 	  ret
       
+;;===============================
+;; _KeGetFontSize -- get font size
+;; by its name
+;;===============================
+global _KeGetFontSize
+%ifdef YES_DYNAMIC
+export _KeGetFontSize
+%endif
+_KeGetFontSize:
+      xor rax, rax
+	  mov r12, 29
+	  mov r13, rcx
+	  mov r14, 0
+	  mov r15, 0
+	  mov rdi, 0
+	  syscall
+	  ret
       
       
 
