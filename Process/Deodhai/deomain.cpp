@@ -142,6 +142,8 @@ int main(int argc, char* arv[]) {
 	arrow = CursorOpen("/pointer.bmp", CURSOR_TYPE_POINTER);
 	CursorRead(arrow);
 
+	ChFont* font = ChInitialiseFont(FORTE);
+
 	/* Open all required device file */
 	mouse_fd = _KeOpenFile("/dev/mice", FILE_OPEN_READ_ONLY);
 	AuInputMessage mice_input;

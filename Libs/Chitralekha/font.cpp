@@ -31,6 +31,7 @@
 #include <sys\mman.h>
 #include <sys\_kefile.h>
 #include <stdlib.h>
+#include "ttf.h"
 #include <sys\_keftmngr.h>
 
 /* 
@@ -55,6 +56,9 @@ ChFont *ChInitialiseFont(char* fontname) {
 	font->buffer = (uint8_t*)buff;
 	font->fileSz = fileSz;
 	font->fontSz = 32;
+
+	/* start decoding true type font */
+	TTFLoadFont(font->buffer);
 	return font;
 }
 

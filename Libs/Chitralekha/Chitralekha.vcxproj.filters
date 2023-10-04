@@ -5,10 +5,12 @@
     <ClInclude Include="_fastcpy.h" />
     <ClInclude Include="color.h" />
     <ClInclude Include="font.h" />
+    <ClInclude Include="ttf.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="chitralekha.cpp" />
     <ClCompile Include="font.cpp" />
+    <ClCompile Include="ttf.cpp" />
   </ItemGroup>
   <ItemGroup>
     <NASM Include="_fastcpy.asm" />
