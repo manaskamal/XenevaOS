@@ -150,6 +150,8 @@
     <ClInclude Include="chitralekha.h" />
     <ClInclude Include="color.h" />
     <ClInclude Include="font.h" />
+    <ClInclude Include="image.h" />
+    <ClInclude Include="nanojpg.h" />
     <ClInclude Include="ttf.h" />
     <ClInclude Include="_fastcpy.h" />
   </ItemGroup>

@@ -16,7 +16,6 @@ EXTRN	?AuAPICInitialise@@YAX_N@Z:PROC			; AuAPICInitialise
 EXTRN	?x86_64_idt_init_ap@@YAXXZ:PROC			; x86_64_idt_init_ap
 EXTRN	x64_cli:PROC
 EXTRN	x64_pause:PROC
-EXTRN	?AuSchedulerInitAp@@YAXXZ:PROC			; AuSchedulerInitAp
 EXTRN	?x86_64_enable_syscall_ext@@YAXXZ:PROC		; x86_64_enable_syscall_ext
 EXTRN	?x86_64_init_user_ap@@YAX_K@Z:PROC		; x86_64_init_user_ap
 EXTRN	?x86_64_hal_cpu_feature_enable@@YAXXZ:PROC	; x86_64_hal_cpu_feature_enable
@@ -28,7 +27,7 @@ EXTRN	?AuPerCPUGetKernelTSS@@YAPEAU_tss@@XZ:PROC	; AuPerCPUGetKernelTSS
 EXTRN	SeTextOut:PROC
 pdata	SEGMENT
 $pdata$?x86_64_ap_init@@YAXPEAX@Z DD imagerel $LN5
-	DD	imagerel $LN5+142
+	DD	imagerel $LN5+137
 	DD	imagerel $unwind$?x86_64_ap_init@@YAXPEAX@Z
 pdata	ENDS
 xdata	SEGMENT
@@ -102,10 +101,7 @@ $LN5:
 ; 63   : 	/* till here, almost cpu initialisation done,
 ; 64   : 	 * now just start the scheduler
 ; 65   : 	 */
-; 66   : 	AuSchedulerInitAp();
-
-	call	?AuSchedulerInitAp@@YAXXZ		; AuSchedulerInitAp
-
+; 66   : 	//AuSchedulerInitAp();
 ; 67   : 	SeTextOut("CPU ID -> %d, TSS -> %x \r\n", AuPerCPUGetCpuID(), AuPerCPUGetKernelTSS());
 
 	call	?AuPerCPUGetKernelTSS@@YAPEAU_tss@@XZ	; AuPerCPUGetKernelTSS

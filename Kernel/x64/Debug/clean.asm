@@ -30,7 +30,7 @@ $pdata$?AuProcessClean@@YAXPEAU_au_proc_@@0@Z DD imagerel $LN19
 	DD	imagerel $LN19+644
 	DD	imagerel $unwind$?AuProcessClean@@YAXPEAU_au_proc_@@0@Z
 $pdata$?FreeUserStack@@YAXPEA_K@Z DD imagerel $LN6
-	DD	imagerel $LN6+104
+	DD	imagerel $LN6+107
 	DD	imagerel $unwind$?FreeUserStack@@YAXPEA_K@Z
 $pdata$?FreeImage@@YAXPEAU_au_proc_@@@Z DD imagerel $LN7
 	DD	imagerel $LN7+190
@@ -231,7 +231,7 @@ $LN2@FreeUserSt:
 	inc	eax
 	mov	DWORD PTR i$1[rsp], eax
 $LN3@FreeUserSt:
-	cmp	DWORD PTR i$1[rsp], 64			; 00000040H
+	cmp	DWORD PTR i$1[rsp], 128			; 00000080H
 	jge	SHORT $LN1@FreeUserSt
 
 ; 53   : 		void* addr = AuGetPhysicalAddressEx(cr3, + i * 4096);

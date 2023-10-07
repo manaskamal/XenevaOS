@@ -32,6 +32,7 @@
 
 #include <stdint.h>
 #include <_xeneva.h>
+#include "font.h"
 
 /* ttf table tags */
 #define TTF_TABLE_CMAP  'cmap' //character to glyph mapping
@@ -44,7 +45,37 @@
 #define TTF_TABLE_NAME  'name' //naming
 #define TTF_TABLE_POST  'post' //PostScript
 
+/* true type --data type definitions*/
+typedef int16_t shortFrac;
+typedef int16_t Fixed;
+typedef int16_t FWord;
+typedef uint16_t uFWord;
+typedef int16_t F2Dot14;
+typedef uint64_t longDateTime;
 
+#pragma pack(push,1)
+typedef struct _ttftable_ {
+	unsigned char* base;
+	unsigned int len;
+}TTFTable;
+#pragma pack(pop)
+
+typedef struct _ttf_ {
+	unsigned char* base;
+	TTFTable cmap;
+	TTFTable glyf;
+	TTFTable head;
+	TTFTable hhea;
+	TTFTable hmtx;
+	TTFTable loca;
+	TTFTable maxp;
+	TTFTable name;
+	TTFTable post;
+	uint16_t unitsPerEm;
+	unsigned char* cmapStart;
+
+}TTFont;
+#pragma pack(pop)
 
 #pragma pack(push,1)
 typedef struct _off_sub_ {
@@ -61,11 +92,48 @@ typedef struct _table_dir_ {
 	uint32_t offset;
 	uint32_t length;
 }TTFTableDirectory;
+
+typedef struct _head_tbl_ {
+	Fixed version;
+	Fixed fontRevision;
+	uint32_t checkSumAdjustment;
+	uint32_t magicNumber;
+	uint16_t flags;
+	uint16_t unitsPerEm;
+	longDateTime created;
+	longDateTime modified;
+	FWord xMin;
+	FWord yMin;
+	FWord xMax;
+	FWord yMax;
+	uint16_t macStyle;
+	uint16_t lowestRecPPEM;
+	int16_t fontDirectionHint;
+	int16_t indexToLocFormat;
+	int16_t glyphDataFormat;
+}TTFHead;
+
+typedef struct _ttf_cmap_ {
+	uint16_t version;
+	uint16_t numberSubtable;
+}TTFCmap;
+
+typedef struct _ttf_cmap_sub_ {
+	uint16_t platformID;
+	uint16_t platformSpecificID;
+	uint32_t offset;
+}TTFCmapSubtable;
+
+typedef struct _cmap_format_ {
+	uint16_t format;
+	uint16_t len;
+	uint16_t language;
+}TTFCmapFormat;
 #pragma pack(pop)
 
 /*
 * TTFLoadFont -- load and start decoding ttf font
 * @param buffer -- pointer to font file buffer
 */
-void TTFLoadFont(unsigned char* buffer);
+TTFont* TTFLoadFont(unsigned char* buffer);
 #endif

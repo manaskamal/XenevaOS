@@ -6,6 +6,8 @@
     <ClInclude Include="color.h" />
     <ClInclude Include="font.h" />
     <ClInclude Include="ttf.h" />
+    <ClInclude Include="nanojpg.h" />
+    <ClInclude Include="image.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="chitralekha.cpp" />

@@ -1,18 +1,61 @@
-﻿Build started 04-10-2023 ৰাতিপু 8:50:21.
+﻿Build started 07-10-2023 আবেলি 5:24:11.
      1>Project "E:\Xeneva Project\Aurora\Process\Deodhai\Deodhai.vcxproj" on node 2 (Rebuild target(s)).
      1>ClCompile:
-         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /I"E:\Xeneva Project\Aurora\Libs\Chitralekha" /I"E:\os_dev\freetype2-master\freetype2-master\include" /Zi /nologo /W3 /WX- /sdl- /Od /D ARCH_X64 /D YES_DYNAMIC /D DYNAMIC_IMPORTER /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt cursor.cpp deomain.cpp dirty.cpp
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /I"E:\Xeneva Project\Aurora\Libs\Chitralekha" /I"E:\os_dev\freetype2-master\freetype2-master\include" /Zi /nologo /W4 /WX- /sdl- /MP /Od /Oy /D ARCH_X64 /D YES_DYNAMIC /D DYNAMIC_IMPORTER /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt cursor.cpp deomain.cpp dirty.cpp
      1>cl : Command line warning D9025: overriding '/sdl-' with '/GS-'
      1>cl : Command line warning D9002: ignoring unknown option '/arch:SSE2'
+     1>cl : Command line warning D9030: '/Gm' is incompatible with multiprocessing; ignoring /MP switch
          dirty.cpp
      1>dirty.cpp(70): warning C4018: '<' : signed/unsigned mismatch
          deomain.cpp
-     1>deomain.cpp(179): warning C4018: '>=' : signed/unsigned mismatch
-     1>deomain.cpp(181): warning C4018: '>=' : signed/unsigned mismatch
+     1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(302): warning C4127: conditional expression is constant
+     1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(304): warning C4127: conditional expression is constant
+     1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(317): warning C4127: conditional expression is constant
+     1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(318): warning C4127: conditional expression is constant
+     1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(328): warning C4127: conditional expression is constant
+     1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(330): warning C4127: conditional expression is constant
+     1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(333): warning C4127: conditional expression is constant
+     1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(334): warning C4127: conditional expression is constant
+     1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(335): warning C4127: conditional expression is constant
+     1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(336): warning C4127: conditional expression is constant
+     1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(337): warning C4127: conditional expression is constant
+     1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(352): warning C4127: conditional expression is constant
+     1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(353): warning C4127: conditional expression is constant
+     1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(357): warning C4127: conditional expression is constant
+     1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(369): warning C4127: conditional expression is constant
+     1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(370): warning C4127: conditional expression is constant
+     1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(381): warning C4127: conditional expression is constant
+     1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(383): warning C4127: conditional expression is constant
+     1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(399): warning C4127: conditional expression is constant
+     1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(408): warning C4127: conditional expression is constant
+     1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(415): warning C4127: conditional expression is constant
+     1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(420): warning C4127: conditional expression is constant
+     1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(449): warning C4127: conditional expression is constant
+     1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(451): warning C4127: conditional expression is constant
+     1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(465): warning C4127: conditional expression is constant
+     1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(466): warning C4127: conditional expression is constant
+     1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(469): warning C4127: conditional expression is constant
+     1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(470): warning C4127: conditional expression is constant
+     1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(475): warning C4127: conditional expression is constant
+     1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(489): warning C4127: conditional expression is constant
+     1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(523): warning C4127: conditional expression is constant
+     1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(551): warning C4127: conditional expression is constant
+     1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(585): warning C4127: conditional expression is constant
+     1>deomain.cpp(113): warning C4267: 'argument' : conversion from 'size_t' to 'uint32_t', possible loss of data
+     1>deomain.cpp(220): warning C4127: conditional expression is constant
+     1>deomain.cpp(240): warning C4018: '>=' : signed/unsigned mismatch
+     1>deomain.cpp(242): warning C4018: '>=' : signed/unsigned mismatch
+     1>deomain.cpp(144): warning C4100: 'arv' : unreferenced formal parameter
+     1>deomain.cpp(144): warning C4100: 'argc' : unreferenced formal parameter
+     1>deomain.cpp(205): warning C4189: 'font' : local variable is initialized but not referenced
          cursor.cpp
      1>cursor.cpp(96): warning C4018: '<' : signed/unsigned mismatch
      1>cursor.cpp(100): warning C4018: '<' : signed/unsigned mismatch
+     1>cursor.cpp(98): warning C4189: 'h' : local variable is initialized but not referenced
          Generating Code...
+     1>e:\xeneva project\aurora\libs\chitralekha\nanojpg.h(333): warning C4706: assignment within conditional expression
+     1>e:\xeneva project\aurora\libs\chitralekha\nanojpg.h(335): warning C4706: assignment within conditional expression
+     1>e:\xeneva project\aurora\libs\chitralekha\nanojpg.h(353): warning C4706: assignment within conditional expression
      1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(1186,5): warning MSB8012: TargetPath(E:\Xeneva Project\Aurora\x64\Debug\Deodhai.exe) does not match the Linker's OutputFile property value (F:\deodhai.exe). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
        Link:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\link.exe /ERRORREPORT:PROMPT /OUT:"F:\deodhai.exe" /INCREMENTAL /NOLOGO /LIBPATH:"E:\Xeneva Project\Aurora\x64\Debug" /LIBPATH:"E:\Xeneva Project\Aurora\Libs\XECrt" XEClib.lib xecrt.lib Chitralekha.lib ftype.lib /NODEFAULTLIB /MANIFEST:NO /PDB:"E:\Xeneva Project\Aurora\x64\Debug\Deodhai.pdb" /MAP /MAPINFO:EXPORTS /SUBSYSTEM:NATIVE /LARGEADDRESSAWARE /Driver /OPT:NOREF /LTCG /TLBID:1 /ENTRY:"_xemain" /BASE:"0x0000000000600000" /FIXED:NO /IMPLIB:"E:\Xeneva Project\Aurora\x64\Debug\Deodhai.lib" /MACHINE:X64 /ALIGN:512 x64\Debug\cursor.obj
@@ -26,4 +69,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:00.76
+Time Elapsed 00:00:00.85

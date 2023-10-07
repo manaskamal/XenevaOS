@@ -211,7 +211,6 @@ size_t FatRead(AuVFSNode* fsys, AuVFSNode *file, uint64_t* buf) {
 		return NULL;
 	}
 
-	
 	auto lba = FatClusterToSector32(fs, file->current);
 	AuVDiskRead(vdisk, lba, fs->__SectorPerCluster, buf);
 
@@ -246,23 +245,24 @@ size_t FatReadFile(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint32_t 
 
 	FatFS* fs = (FatFS*)fsys->device;
 
-	int64 read_bytes = 0;
+	uint64_t read_bytes = 0;
 	size_t ret_bytes = 0;
 	uint8_t* aligned_buffer = (uint8_t*)buffer;
 
 	size_t num_blocks = length / fs->cluster_sz_in_bytes +
 		((length % fs->cluster_sz_in_bytes) ? 1 : 0);
 
+
 	for (int i = 0; i < num_blocks; i++) {
+		if (file->eof)
+			break;
 		uint64_t* buff = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
 		memset(buff, 0, PAGE_SIZE);
 		read_bytes = FatRead(fsys, file, (uint64_t*)V2P((size_t)buff));
-		memcpy(aligned_buffer, buff, read_bytes);
+		memcpy(aligned_buffer, buff, PAGE_SIZE);
 		AuPmmngrFree((void*)V2P((size_t)buff));
-		aligned_buffer += read_bytes;
+		aligned_buffer += PAGE_SIZE;
 		ret_bytes += read_bytes;
-		if (file->eof)
-			break;
 	}
 
 	return ret_bytes;

@@ -55,6 +55,18 @@ static bool __IsAHCI64Bit;
 void* HBABar = NULL;
 
 void AHCIInterruptHandler(size_t v, void* p){
+	HBA_MEM* hba = (HBA_MEM*)HBABar;
+	uint32_t is = hba->is;
+	for (int i = 0; i < 32; i++) {
+		if ((hba->is & hba->pi & (1 << i))) {
+			uint32_t port_is = hba->port[i].is;
+			hba->port[i].is = port_is;
+			break;
+		}
+	}
+
+	hba->is = is;
+	AuInterruptEnd(0);
 }
 
 /*

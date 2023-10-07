@@ -27,6 +27,7 @@
 *
 **/
 
+#include <sys/utf.h>
 #include "ttf.h"
 
 /*
@@ -57,47 +58,138 @@ uint16_t TTFSwap16(uint16_t value) {
 	int result = ((left_most_byte & 0xff) << 8 | left_middle_byte & 0xff);
 	return result;
 }
+
+/* 
+ * UTF8toUnicode -- converts utf-8 character to
+ * unicode codepoint
+ * @param c -- one byte character
+ */
+uint32_t UTF8toUnicode(uint8_t c) {
+	uint32_t mask;
+	if (c > 0x7f) {
+		mask = (c <= 0x00EFBFBF) ? 0x000F0000 : 0x003F0000;
+		c = ((c & 0x07000000) >> 6) |
+			((c & mask) >> 4) |
+			((c & 0x00003F00) >> 2) |
+			(c & 0x0000003F);
+	}
+	return c;
+}
+
+/*
+ * TTFGetGlyph -- returns the glyph index for the given
+ * codepoint
+ * @param font -- Pointer to true type font
+ * @param codepoint -- Unicode code point
+ */
+uint32_t TTFGetGlyph(TTFont *font,uint32_t codepoint) {
+	uint32_t glyph;
+	TTFCmapFormat* format = (TTFCmapFormat*)font->cmapStart;
+	uint16_t format_ = TTFSwap16(format->format);
+	
+	/* handle cmap format 4*/
+	if (format_ == 4) {
+
+	}
+	else if (format_ == 12) { /* handle cmap format 12 */
+
+	}
+
+	/* more formats to go */
+	return glyph;
+}
 /*
  * TTFLoadFont -- load and start decoding ttf font
  * @param buffer -- pointer to font file buffer
  */
-void TTFLoadFont(unsigned char* buffer) {
+TTFont* TTFLoadFont(unsigned char* buffer) {
 	TTFOffsetSubtable * offtable = (TTFOffsetSubtable*)buffer;
 	TTFTableDirectory* tabledir = (TTFTableDirectory*)(buffer + sizeof(TTFOffsetSubtable));
 	uint16_t numTable = TTFSwap16(offtable->numTables);
+
+	TTFont* font = (TTFont*)malloc(sizeof(TTFont));
+	font->base = buffer;
 	for (int i = 0; i < numTable; i++) {
 		uint32_t tag = TTFSwap32(tabledir[i].tag);
+		uint32_t offset = TTFSwap32(tabledir[i].offset);
+		uint32_t len = TTFSwap32(tabledir[i].length);
 		switch (tag)
 		{
 		case TTF_TABLE_CMAP:
-			_KePrint("CMAP table found \r\n");
+			font->cmap.base = buffer + offset;
+			font->cmap.len = len;
 			break;
 		case TTF_TABLE_GLYF:
-			_KePrint("Glyf table found \r\n");
+			font->glyf.base = buffer + offset;
+			font->glyf.len = len;
 			break;
 		case TTF_TABLE_HEAD:
-			_KePrint("Head table found \r\n");
+			font->head.base = buffer + offset;
+			font->head.len = len;
 			break;
 		case TTF_TABLE_HHEA:
-			_KePrint("HHea table found \r\n");
+			font->hhea.base = buffer + offset;
+			font->hhea.len = len;
 			break;
 		case TTF_TABLE_HMTX:
-			_KePrint("HMTX table found \r\n");
+			font->hmtx.base = buffer + offset;
+			font->hmtx.len = len;
 			break;
 		case TTF_TABLE_LOCA:
-			_KePrint("Loca table found \r\n");
+			font->loca.base = buffer + offset;
+			font->loca.len = len;
 			break;
 		case TTF_TABLE_MAXP:
-			_KePrint("Maxp table found \r\n");
+			font->maxp.base = buffer + offset;
+			font->maxp.len = len;
 			break;
 		case TTF_TABLE_NAME:
-			_KePrint("Name table found \r\n");
+			font->name.base = buffer + offset;
+			font->name.len = len;
 			break;
 		case TTF_TABLE_POST:
-			_KePrint("PostScript table found \r\n");
+			font->post.base = buffer + offset;
+			font->post.len = len;
 			break;
 		default:
 			break;
 		}
 	}
+
+	TTFHead* head = (TTFHead*)font->head.base;
+	font->unitsPerEm = TTFSwap16(head->unitsPerEm);
+	
+	TTFCmap *cmap = (TTFCmap*)font->cmap.base;
+	_KePrint("CMAP Version -> %d \r\n", cmap->version);
+	_KePrint("Num subtable -> %d \r\n", TTFSwap16(cmap->numberSubtable));
+
+	TTFCmapSubtable* sub = (TTFCmapSubtable*)(font->cmap.base + sizeof(TTFCmap));
+
+	uint32_t best = 0;
+	int best_score = 0;
+	for (int i = 0; i < TTFSwap16(cmap->numberSubtable); i++){
+		uint16_t platformID = TTFSwap16(sub[i].platformID);
+		uint16_t platformSpecificID = TTFSwap16(sub[i].platformSpecificID);
+		uint32_t offset = TTFSwap32(sub[i].offset);
+		_KePrint("CMAP Sub Platform ID -> %d , %d \r\n", platformID, platformSpecificID);
+
+		if ((platformID == 3 || platformID == 0) && platformSpecificID == 10){
+			best = offset;
+			best_score = 4;
+		}
+		else if (platformID == 0 && platformSpecificID == 4){
+			best = offset;
+			best_score = 4;
+		}
+		else if (((platformID == 0 && platformSpecificID == 3) || (platformID == 3 && platformSpecificID == 1)) && best_score < 2) {
+			best = offset;
+			best_score = 2;
+		}
+	}
+
+	TTFCmapFormat* cmap_format = (TTFCmapFormat*)(font->cmap.base + best);
+	font->cmapStart = (unsigned char*)cmap_format;
+	_KePrint("Loca type -> %d \r\n", TTFSwap16(head->indexToLocFormat));
+	TTFGetGlyph(font, 'c');
+	return font;
 }

@@ -5,6 +5,11 @@ include listing.inc
 INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
+CONST	SEGMENT
+$SG3447	DB	'Returning error heap mem ', 0dH, 0aH, 00H
+	ORG $+4
+$SG3452	DB	'Returning error heap mem ', 0dH, 0aH, 00H
+CONST	ENDS
 PUBLIC	?CreateSharedMem@@YAHG_KE@Z			; CreateSharedMem
 PUBLIC	?ObtainSharedMem@@YAPEAXGPEAXH@Z		; ObtainSharedMem
 PUBLIC	?UnmapSharedMem@@YAXG@Z				; UnmapSharedMem
@@ -17,6 +22,7 @@ EXTRN	?AuSHMUnmap@@YAXGPEAU_au_proc_@@@Z:PROC		; AuSHMUnmap
 EXTRN	AuMapPage:PROC
 EXTRN	AuPmmngrAlloc:PROC
 EXTRN	x64_cli:PROC
+EXTRN	SeTextOut:PROC
 pdata	SEGMENT
 $pdata$?CreateSharedMem@@YAHG_KE@Z DD imagerel $LN4
 	DD	imagerel $LN4+98
@@ -27,8 +33,8 @@ $pdata$?ObtainSharedMem@@YAPEAXGPEAXH@Z DD imagerel $LN3
 $pdata$?UnmapSharedMem@@YAXG@Z DD imagerel $LN3
 	DD	imagerel $LN3+54
 	DD	imagerel $unwind$?UnmapSharedMem@@YAXG@Z
-$pdata$?GetProcessHeapMem@@YA_K_K@Z DD imagerel $LN9
-	DD	imagerel $LN9+282
+$pdata$?GetProcessHeapMem@@YA_K_K@Z DD imagerel $LN13
+	DD	imagerel $LN13+310
 	DD	imagerel $unwind$?GetProcessHeapMem@@YA_K_K@Z
 pdata	ENDS
 xdata	SEGMENT
@@ -48,14 +54,14 @@ i$1 = 32
 proc$ = 40
 start_addr$ = 48
 thr$ = 56
-tv74 = 64
+tv76 = 64
 phys$2 = 72
 sz$ = 96
 ?GetProcessHeapMem@@YA_K_K@Z PROC			; GetProcessHeapMem
 
 ; 85   : uint64_t GetProcessHeapMem(size_t sz) {
 
-$LN9:
+$LN13:
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 88					; 00000058H
 
@@ -69,17 +75,27 @@ $LN9:
 	mov	rax, QWORD PTR sz$[rsp]
 	and	rax, 4095				; 00000fffH
 	test	rax, rax
-	je	SHORT $LN6@GetProcess
+	je	SHORT $LN10@GetProcess
 
-; 89   : 		return -1;
+; 89   : 		SeTextOut("Returning error heap mem \r\n");
+
+	lea	rcx, OFFSET FLAT:$SG3447
+	call	SeTextOut
+$LN9@GetProcess:
+
+; 90   : 		for (;;);
+
+	jmp	SHORT $LN9@GetProcess
+
+; 91   : 		return -1;
 
 	mov	rax, -1
-	jmp	$LN7@GetProcess
-$LN6@GetProcess:
+	jmp	$LN11@GetProcess
+$LN10@GetProcess:
 
-; 90   : 	}
-; 91   : 
-; 92   : 	if ((sz % PAGE_SIZE) != 0){
+; 92   : 	}
+; 93   : 
+; 94   : 	if ((sz % PAGE_SIZE) != 0){
 
 	xor	edx, edx
 	mov	rax, QWORD PTR sz$[rsp]
@@ -87,46 +103,56 @@ $LN6@GetProcess:
 	div	rcx
 	mov	rax, rdx
 	test	rax, rax
-	je	SHORT $LN5@GetProcess
+	je	SHORT $LN7@GetProcess
 
-; 93   : 		return -1;
+; 95   : 		SeTextOut("Returning error heap mem \r\n");
+
+	lea	rcx, OFFSET FLAT:$SG3452
+	call	SeTextOut
+$LN6@GetProcess:
+
+; 96   : 		for (;;);
+
+	jmp	SHORT $LN6@GetProcess
+
+; 97   : 		return -1;
 
 	mov	rax, -1
-	jmp	$LN7@GetProcess
-$LN5@GetProcess:
+	jmp	$LN11@GetProcess
+$LN7@GetProcess:
 
-; 94   : 	}
-; 95   : 	
-; 96   : 	AuThread* thr = AuGetCurrentThread();
+; 98   : 	}
+; 99   : 	
+; 100  : 	AuThread* thr = AuGetCurrentThread();
 
 	call	AuGetCurrentThread
 	mov	QWORD PTR thr$[rsp], rax
 
-; 97   : 	AuProcess* proc = AuProcessFindThread(thr);
+; 101  : 	AuProcess* proc = AuProcessFindThread(thr);
 
 	mov	rcx, QWORD PTR thr$[rsp]
 	call	?AuProcessFindThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z ; AuProcessFindThread
 	mov	QWORD PTR proc$[rsp], rax
 
-; 98   : 	if (!proc)
+; 102  : 	if (!proc)
 
 	cmp	QWORD PTR proc$[rsp], 0
 	jne	SHORT $LN4@GetProcess
 
-; 99   : 		return -1;
+; 103  : 		return -1;
 
 	mov	rax, -1
-	jmp	$LN7@GetProcess
+	jmp	$LN11@GetProcess
 $LN4@GetProcess:
 
-; 100  : 	uint64_t start_addr = proc->proc_mem_heap;
+; 104  : 	uint64_t start_addr = proc->proc_mem_heap;
 
 	mov	rax, QWORD PTR proc$[rsp]
 	mov	rax, QWORD PTR [rax+1071]
 	mov	QWORD PTR start_addr$[rsp], rax
 
-; 101  : 
-; 102  : 	for (int i = 0; i < sz / PAGE_SIZE; i++) {
+; 105  : 
+; 106  : 	for (int i = 0; i < sz / PAGE_SIZE; i++) {
 
 	mov	DWORD PTR i$1[rsp], 0
 	jmp	SHORT $LN3@GetProcess
@@ -136,21 +162,21 @@ $LN2@GetProcess:
 	mov	DWORD PTR i$1[rsp], eax
 $LN3@GetProcess:
 	movsxd	rax, DWORD PTR i$1[rsp]
-	mov	QWORD PTR tv74[rsp], rax
+	mov	QWORD PTR tv76[rsp], rax
 	xor	edx, edx
 	mov	rax, QWORD PTR sz$[rsp]
 	mov	ecx, 4096				; 00001000H
 	div	rcx
-	mov	rcx, QWORD PTR tv74[rsp]
+	mov	rcx, QWORD PTR tv76[rsp]
 	cmp	rcx, rax
 	jae	SHORT $LN1@GetProcess
 
-; 103  : 		void* phys = AuPmmngrAlloc();
+; 107  : 		void* phys = AuPmmngrAlloc();
 
 	call	AuPmmngrAlloc
 	mov	QWORD PTR phys$2[rsp], rax
 
-; 104  : 		AuMapPage((size_t)phys, start_addr + i * PAGE_SIZE, X86_64_PAGING_USER);
+; 108  : 		AuMapPage((size_t)phys, start_addr + i * PAGE_SIZE, X86_64_PAGING_USER);
 
 	imul	eax, DWORD PTR i$1[rsp], 4096		; 00001000H
 	cdqe
@@ -162,12 +188,12 @@ $LN3@GetProcess:
 	mov	rcx, QWORD PTR phys$2[rsp]
 	call	AuMapPage
 
-; 105  : 	}
+; 109  : 	}
 
 	jmp	SHORT $LN2@GetProcess
 $LN1@GetProcess:
 
-; 106  : 	proc->proc_mem_heap += sz;
+; 110  : 	proc->proc_mem_heap += sz;
 
 	mov	rax, QWORD PTR proc$[rsp]
 	mov	rax, QWORD PTR [rax+1071]
@@ -175,12 +201,12 @@ $LN1@GetProcess:
 	mov	rcx, QWORD PTR proc$[rsp]
 	mov	QWORD PTR [rcx+1071], rax
 
-; 107  : 	return start_addr;
+; 111  : 	return start_addr;
 
 	mov	rax, QWORD PTR start_addr$[rsp]
-$LN7@GetProcess:
+$LN11@GetProcess:
 
-; 108  : }
+; 112  : }
 
 	add	rsp, 88					; 00000058H
 	ret	0

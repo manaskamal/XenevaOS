@@ -63,7 +63,7 @@ void x86_64_ap_init(void* cpu) {
 	/* till here, almost cpu initialisation done,
 	 * now just start the scheduler
 	 */
-	AuSchedulerInitAp();
+	//AuSchedulerInitAp();
 	SeTextOut("CPU ID -> %d, TSS -> %x \r\n", AuPerCPUGetCpuID(), AuPerCPUGetKernelTSS());
 	x86_64_set_ap_start_bit(true);
 	for (;;){

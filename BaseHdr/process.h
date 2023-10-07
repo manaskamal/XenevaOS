@@ -36,7 +36,7 @@
 #include <Sync\mutex.h>
 #include <list.h>
 
-#define PROCESS_USER_STACK_SZ 256*1024
+#define PROCESS_USER_STACK_SZ 512*1024
 
 #define MAX_THREADS_PER_PROCESS  60
 #define FILE_DESC_PER_PROCESS 60

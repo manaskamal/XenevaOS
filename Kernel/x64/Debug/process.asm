@@ -85,7 +85,7 @@ $pdata$?AuProcessFindThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z DD imagerel $L
 	DD	imagerel $LN7+74
 	DD	imagerel $unwind$?AuProcessFindThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z
 $pdata$?CreateUserStack@@YAPEA_KPEA_K@Z DD imagerel $LN6
-	DD	imagerel $LN6+146
+	DD	imagerel $LN6+149
 	DD	imagerel $unwind$?CreateUserStack@@YAPEA_KPEA_K@Z
 $pdata$?AuStartRootProc@@YAXXZ DD imagerel $LN3
 	DD	imagerel $LN3+205
@@ -1314,7 +1314,7 @@ $LN2@CreateUser:
 	inc	eax
 	mov	DWORD PTR i$1[rsp], eax
 $LN3@CreateUser:
-	cmp	DWORD PTR i$1[rsp], 64			; 00000040H
+	cmp	DWORD PTR i$1[rsp], 128			; 00000080H
 	jge	SHORT $LN1@CreateUser
 
 ; 171  : 		uint64_t* blk = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
@@ -1349,7 +1349,7 @@ $LN1@CreateUser:
 ; 174  : 
 ; 175  : 	return (uint64_t*)(USER_STACK + (PROCESS_USER_STACK_SZ));
 
-	mov	rax, 123145302573056			; 0000700000040000H
+	mov	rax, 123145302835200			; 0000700000080000H
 
 ; 176  : }
 

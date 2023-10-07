@@ -40,6 +40,7 @@
 #include <sys\_kesignal.h>
 #include "deodhai.h"
 #include "cursor.h"
+#include "nanojpg.h"
 #include "dirty.h"
 #include <font.h>
 
@@ -79,6 +80,63 @@ void ComposeFrame(ChCanvas *canvas) {
 	arrow->oldYPos = arrow->ypos;
 }
 
+#pragma pack(push,1)
+typedef struct _jpegh_ {
+	char soi[2];
+	char app0[2];
+	char len[2];
+	char identifier[5];
+	char version[2];
+	char units;
+	char xdens[2];
+	char ydens[2];
+	char xthumb;
+	char ythumb;
+}JFIhead;
+#pragma pack(pop)
+
+/* DrawWallpaper for getting jpeg image as wallpaper
+ * fully jpeg encoder is needed, i use synfig studio 
+ * for jpeg encoder
+ */
+void DrawWallpaper(ChCanvas *canv, char* filename) {
+	int image = _KeOpenFile(filename, FILE_OPEN_READ_ONLY);
+	XEFileStatus stat;
+	memset(&stat, 0, sizeof(XEFileStatus));
+	_KeFileStat(image, &stat);
+	void* data_ = _KeMemMap(NULL, stat.size, 0, 0, -1, 0);
+	memset(data_, 0, ALIGN_UP(stat.size, 4096));
+	_KeReadFile(image, data_, ALIGN_UP(stat.size,4096));
+
+	uint8_t* data1 = (uint8_t*)data_;
+	
+	Jpeg::Decoder *decor = new Jpeg::Decoder((uint8_t*)data1, ALIGN_UP(stat.size, 4096), malloc, free);
+	if (decor->GetResult() != Jpeg::Decoder::OK) {
+		_KePrint("Decoder error \n");
+		for (;;);
+		return;
+	}
+	int w = decor->GetWidth();
+	int h = decor->GetHeight();
+
+	uint8_t* data = decor->GetImage();
+	unsigned x = 0;
+	unsigned y = 0;
+	for (int i = 0; i < h; i++) {
+		for (int k = 0; k < w; k++) {
+			int j = k + i * w;
+			uint8_t r = data[j * 3];
+			uint8_t g = data[j * 3 + 1];
+			uint8_t b = data[j * 3 + 2];
+			uint32_t rgba = ((r << 16) | (g << 8) | (b)) & 0x00ffffff; 
+			rgba = rgba | 0xff000000;
+			ChDrawPixel(canv,x + k, y + i, rgba);
+			j++;
+		}
+	}
+
+}
+
 
 /*
  * main -- deodhai compositor
@@ -109,6 +167,7 @@ int main(int argc, char* arv[]) {
 	ret = _KeFileIoControl(canv->graphics_fd, SCREEN_GETHEIGHT, &graphctl);
 	screen_h = graphctl.uint_1;
 
+
 	/* now modify the canvas size with screen size */
 	canv->canvasWidth = screen_w;
 	canv->canvasHeight = screen_h;
@@ -117,6 +176,7 @@ int main(int argc, char* arv[]) {
 	 * and fill it with light-black color */
 	ChAllocateBuffer(canv);
 	ChCanvasFill(canv, canv->canvasWidth, canv->canvasHeight, LIGHTBLACK);
+	DrawWallpaper(canv, "/assam.jpg");
 	ChCanvasScreenUpdate(canv, 0, 0, canv->canvasWidth, canv->canvasHeight);
 
 	/* just for impression, play the startup sound */
@@ -142,13 +202,14 @@ int main(int argc, char* arv[]) {
 	arrow = CursorOpen("/pointer.bmp", CURSOR_TYPE_POINTER);
 	CursorRead(arrow);
 
-	ChFont* font = ChInitialiseFont(FORTE);
+	ChFont* font = ChInitialiseFont(ROBOTO_LIGHT);
 
 	/* Open all required device file */
 	mouse_fd = _KeOpenFile("/dev/mice", FILE_OPEN_READ_ONLY);
 	AuInputMessage mice_input;
 	memset(&mice_input, 0, sizeof(AuInputMessage));
 	postbox_fd = _KeOpenFile("/dev/postbox", FILE_OPEN_READ_ONLY);
+
 
 
 	_KeFileIoControl(postbox_fd, POSTBOX_CREATE_ROOT, NULL);
