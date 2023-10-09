@@ -127,7 +127,7 @@
       <FixedBaseAddress>false</FixedBaseAddress>
       <DataExecutionPrevention />
       <AdditionalOptions>/filealign:4096 %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalLibraryDirectories>E:\Xeneva Project\Aurora\x64\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>E:\Xeneva Project\Aurora\XELoader</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">

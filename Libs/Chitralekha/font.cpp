@@ -33,6 +33,9 @@
 #include <stdlib.h>
 #include "ttf.h"
 #include <sys\_keftmngr.h>
+#include <ft2build.h>
+#include FT_FREETYPE_H
+
 
 /* 
  * ChInitialiseFont -- initialise a font by a name

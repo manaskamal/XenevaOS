@@ -254,8 +254,6 @@ size_t FatReadFile(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint32_t 
 
 
 	for (int i = 0; i < num_blocks; i++) {
-		if (file->eof)
-			break;
 		uint64_t* buff = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
 		memset(buff, 0, PAGE_SIZE);
 		read_bytes = FatRead(fsys, file, (uint64_t*)V2P((size_t)buff));
@@ -263,6 +261,8 @@ size_t FatReadFile(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint32_t 
 		AuPmmngrFree((void*)V2P((size_t)buff));
 		aligned_buffer += PAGE_SIZE;
 		ret_bytes += read_bytes;
+		if (file->eof)
+			break;
 	}
 
 	return ret_bytes;

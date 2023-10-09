@@ -149,9 +149,8 @@ void* XELdrGetProcAddress(void *image, const char* procname){
 	uint32_t* FuntionNameAddressArray = raw_offset<uint32_t*>(image, exportdir->AddressOfNames);
 	uint16_t* FunctionOrdinalAddressArray = raw_offset<uint16_t*>(image, exportdir->AddressOfNameOrdinal);
 	uint32_t* FunctionAddressArray = raw_offset<uint32_t*>(image, exportdir->AddressOfFunctions);
-	
-	for (int i = 0; i < exportdir->NumberOfNames; i++) {
 
+	for (int i = 0; i < exportdir->NumberOfNames; i++) {
 		char* function_name = raw_offset<char*>(image, FuntionNameAddressArray[i]);
 		if (strcmp(function_name, procname) == 0) {
 			uint16_t ordinal = FunctionOrdinalAddressArray[i];
@@ -210,14 +209,12 @@ void XELdrCreatePEObjects(void* exec) {
 	if (IMAGE_DATA_DIRECTORY_IMPORT + 1 > nt_headers->OptionalHeader.NumberOfRvaAndSizes)
 		return;
 
-	
 	IMAGE_DATA_DIRECTORY& datadir = nt_headers->OptionalHeader.DataDirectory[IMAGE_DATA_DIRECTORY_IMPORT];
 	if (datadir.VirtualAddress == 0 || datadir.Size == 0) {
 		return;
 	}
 	
 	PIMAGE_IMPORT_DIRECTORY importdir = raw_offset<PIMAGE_IMPORT_DIRECTORY>(exec, datadir.VirtualAddress);
-	
 	for (size_t n = 0; importdir[n].ThunkTableRva; ++n) {
 		const char* func = raw_offset<const char*>(exec, importdir[n].NameRva);
 		if (!XELdrCheckObject(func)) {

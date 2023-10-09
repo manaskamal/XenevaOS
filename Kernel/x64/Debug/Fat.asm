@@ -93,7 +93,7 @@ $pdata$?FatRead@@YA_KPEAU__VFS_NODE__@@0PEA_K@Z DD imagerel $LN6
 	DD	imagerel $LN6+251
 	DD	imagerel $unwind$?FatRead@@YA_KPEAU__VFS_NODE__@@0PEA_K@Z
 $pdata$?FatReadFile@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z DD imagerel $LN11
-	DD	imagerel $LN11+388
+	DD	imagerel $LN11+385
 	DD	imagerel $unwind$?FatReadFile@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z
 $pdata$?FatOpen@@YAPEAU__VFS_NODE__@@PEAU1@PEAD@Z DD imagerel $LN18
 	DD	imagerel $LN18+442
@@ -596,33 +596,21 @@ $LN4@FatReadFil:
 	cmp	rax, QWORD PTR num_blocks$[rsp]
 	jae	$LN2@FatReadFil
 
-; 257  : 		if (file->eof)
-
-	mov	rax, QWORD PTR file$[rsp]
-	movzx	eax, BYTE PTR [rax+36]
-	test	eax, eax
-	je	SHORT $LN1@FatReadFil
-
-; 258  : 			break;
-
-	jmp	$LN2@FatReadFil
-$LN1@FatReadFil:
-
-; 259  : 		uint64_t* buff = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
+; 257  : 		uint64_t* buff = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
 
 	call	AuPmmngrAlloc
 	mov	rcx, rax
 	call	P2V
 	mov	QWORD PTR buff$2[rsp], rax
 
-; 260  : 		memset(buff, 0, PAGE_SIZE);
+; 258  : 		memset(buff, 0, PAGE_SIZE);
 
 	mov	r8d, 4096				; 00001000H
 	xor	edx, edx
 	mov	rcx, QWORD PTR buff$2[rsp]
 	call	memset
 
-; 261  : 		read_bytes = FatRead(fsys, file, (uint64_t*)V2P((size_t)buff));
+; 259  : 		read_bytes = FatRead(fsys, file, (uint64_t*)V2P((size_t)buff));
 
 	mov	rcx, QWORD PTR buff$2[rsp]
 	call	V2P
@@ -632,33 +620,45 @@ $LN1@FatReadFil:
 	call	?FatRead@@YA_KPEAU__VFS_NODE__@@0PEA_K@Z ; FatRead
 	mov	QWORD PTR read_bytes$[rsp], rax
 
-; 262  : 		memcpy(aligned_buffer, buff, PAGE_SIZE);
+; 260  : 		memcpy(aligned_buffer, buff, PAGE_SIZE);
 
 	mov	r8d, 4096				; 00001000H
 	mov	rdx, QWORD PTR buff$2[rsp]
 	mov	rcx, QWORD PTR aligned_buffer$[rsp]
 	call	memcpy
 
-; 263  : 		AuPmmngrFree((void*)V2P((size_t)buff));
+; 261  : 		AuPmmngrFree((void*)V2P((size_t)buff));
 
 	mov	rcx, QWORD PTR buff$2[rsp]
 	call	V2P
 	mov	rcx, rax
 	call	AuPmmngrFree
 
-; 264  : 		aligned_buffer += PAGE_SIZE;
+; 262  : 		aligned_buffer += PAGE_SIZE;
 
 	mov	rax, QWORD PTR aligned_buffer$[rsp]
 	add	rax, 4096				; 00001000H
 	mov	QWORD PTR aligned_buffer$[rsp], rax
 
-; 265  : 		ret_bytes += read_bytes;
+; 263  : 		ret_bytes += read_bytes;
 
 	mov	rax, QWORD PTR read_bytes$[rsp]
 	mov	rcx, QWORD PTR ret_bytes$[rsp]
 	add	rcx, rax
 	mov	rax, rcx
 	mov	QWORD PTR ret_bytes$[rsp], rax
+
+; 264  : 		if (file->eof)
+
+	mov	rax, QWORD PTR file$[rsp]
+	movzx	eax, BYTE PTR [rax+36]
+	test	eax, eax
+	je	SHORT $LN1@FatReadFil
+
+; 265  : 			break;
+
+	jmp	SHORT $LN2@FatReadFil
+$LN1@FatReadFil:
 
 ; 266  : 	}
 

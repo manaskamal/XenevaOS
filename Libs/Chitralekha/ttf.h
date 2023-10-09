@@ -113,6 +113,7 @@ typedef struct _head_tbl_ {
 	int16_t glyphDataFormat;
 }TTFHead;
 
+/* CMAP Tables */
 typedef struct _ttf_cmap_ {
 	uint16_t version;
 	uint16_t numberSubtable;
@@ -129,6 +130,31 @@ typedef struct _cmap_format_ {
 	uint16_t len;
 	uint16_t language;
 }TTFCmapFormat;
+
+typedef struct _cmap_format12_ {
+	uint16_t format;
+	uint16_t reserved;
+	uint32_t len;
+	uint32_t language;
+	uint32_t nGroups;
+}TTFCmapFormat12;
+
+typedef struct _cmap_format12_grp_ {
+	uint32_t startCharCode;
+	uint32_t endCharCode;
+	uint32_t startGlyphCode;
+}TTFCmapFormat12Group;
+
+typedef struct _cmap_format4_ {
+	uint16_t format;
+	uint16_t len;
+	uint16_t language;
+	uint16_t segCountX2;
+	uint16_t searchRange;
+	uint16_t entrySelector;
+	uint16_t rangeShift;
+}TTFCmapFormat4;
+
 #pragma pack(pop)
 
 /*

@@ -1,4 +1,4 @@
-﻿Build started 07-10-2023 আবেলি 5:24:11.
+﻿Build started 09-10-2023 আবেলি 1:50:41.
      1>Project "E:\Xeneva Project\Aurora\Process\Deodhai\Deodhai.vcxproj" on node 2 (Rebuild target(s)).
      1>ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /I"E:\Xeneva Project\Aurora\Libs\Chitralekha" /I"E:\os_dev\freetype2-master\freetype2-master\include" /Zi /nologo /W4 /WX- /sdl- /MP /Od /Oy /D ARCH_X64 /D YES_DYNAMIC /D DYNAMIC_IMPORTER /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt cursor.cpp deomain.cpp dirty.cpp
@@ -62,11 +62,10 @@
          x64\Debug\deomain.obj
          x64\Debug\dirty.obj
      1>LINK : warning LNK4075: ignoring '/INCREMENTAL' due to '/LTCG' specification
-            Creating library E:\Xeneva Project\Aurora\x64\Debug\Deodhai.lib and object E:\Xeneva Project\Aurora\x64\Debug\Deodhai.exp
          LINK : /LTCG specified but no code generation required; remove /LTCG from the link command line to improve linker performance
          Deodhai.vcxproj -> E:\Xeneva Project\Aurora\x64\Debug\Deodhai.exe
      1>Done Building Project "E:\Xeneva Project\Aurora\Process\Deodhai\Deodhai.vcxproj" (Rebuild target(s)).
 
 Build succeeded.
 
-Time Elapsed 00:00:00.85
+Time Elapsed 00:00:00.83

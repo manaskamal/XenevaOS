@@ -99,7 +99,7 @@
       <GenerateDebugInformation>
       </GenerateDebugInformation>
       <OutputFile>F:\chlkha.dll</OutputFile>
-      <AdditionalLibraryDirectories>E:\Xeneva Project\Aurora\x64\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>E:\Xeneva Project\Aurora\x64\Debug;E:\os_dev\freetype2-master\freetype2-master\objs</AdditionalLibraryDirectories>
       <AdditionalDependencies>XEClib.lib; ftype.lib;</AdditionalDependencies>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
       <EnableUAC>false</EnableUAC>

@@ -1,12 +1,12 @@
-﻿Build started 02-10-2023 আবেলি 10:01:29.
+﻿Build started 09-10-2023 ৰাতিপু 8:30:33.
      1>Project "E:\Xeneva Project\Aurora\XELoader\XELoader.vcxproj" on node 2 (Rebuild target(s)).
      1>_NASM:
          crt0.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp64f500ff509f4c0384c4554e5642e3e0.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp007b36572de146abae194618c64a4996.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\crt0.obj"  "E:\Xeneva Project\Aurora\XELoader\crt0.asm"
        _NASM:
          fastcpy.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmpc4ba750249104120bd5e08894fe44f28.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmpbad8a97a07e64d5991ab534986847eeb.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\fastcpy.obj"  "E:\Xeneva Project\Aurora\XELoader\fastcpy.asm"
        ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /Zi /nologo /W3 /WX- /sdl /Od /D ARCH_X64 /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt main.cpp pe_.cpp XELdrObject.cpp
@@ -21,26 +21,26 @@
                  Cannot generate copy-ctor or copy-assignment operator when UDT contains a zero-sized array
      1>pe_.cpp(94): warning C4018: '<' : signed/unsigned mismatch
      1>pe_.cpp(153): warning C4018: '<' : signed/unsigned mismatch
-     1>pe_.cpp(191): warning C4244: 'argument' : conversion from 'unsigned __int64' to 'const intptr_t', possible loss of data
-     1>pe_.cpp(224): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
-     1>pe_.cpp(234): warning C4244: 'argument' : conversion from 'unsigned __int64' to 'const intptr_t', possible loss of data
-     1>pe_.cpp(273): warning C4244: 'argument' : conversion from 'unsigned __int64' to 'const intptr_t', possible loss of data
+     1>pe_.cpp(190): warning C4244: 'argument' : conversion from 'unsigned __int64' to 'const intptr_t', possible loss of data
+     1>pe_.cpp(221): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
+     1>pe_.cpp(231): warning C4244: 'argument' : conversion from 'unsigned __int64' to 'const intptr_t', possible loss of data
+     1>pe_.cpp(270): warning C4244: 'argument' : conversion from 'unsigned __int64' to 'const intptr_t', possible loss of data
          main.cpp
      1>e:\xeneva project\aurora\xeloader\pe_.h(243): warning C4200: nonstandard extension used : zero-sized array in struct/union
                  Cannot generate copy-ctor or copy-assignment operator when UDT contains a zero-sized array
      1>main.cpp(78): warning C4244: 'initializing' : conversion from 'uint64_t' to 'intptr_t', possible loss of data
-     1>main.cpp(92): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
-     1>main.cpp(100): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
-     1>main.cpp(113): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
-     1>main.cpp(153): warning C4244: 'initializing' : conversion from 'uint64_t' to 'intptr_t', possible loss of data
-     1>main.cpp(154): warning C4244: 'initializing' : conversion from 'uint64_t' to 'intptr_t', possible loss of data
-     1>main.cpp(169): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
-     1>main.cpp(175): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
+     1>main.cpp(91): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
+     1>main.cpp(99): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
+     1>main.cpp(136): warning C4267: '=' : conversion from 'size_t' to 'int', possible loss of data
+     1>main.cpp(141): warning C4244: 'initializing' : conversion from 'uint64_t' to 'intptr_t', possible loss of data
+     1>main.cpp(142): warning C4244: 'initializing' : conversion from 'uint64_t' to 'intptr_t', possible loss of data
+     1>main.cpp(158): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
+     1>main.cpp(164): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
          Generating Code...
      1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(1186,5): warning MSB8012: TargetPath(E:\Xeneva Project\Aurora\x64\Debug\XELoader.exe) does not match the Linker's OutputFile property value (F:\xeldr.exe). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
      1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(1188,5): warning MSB8012: TargetName(XELoader) does not match the Linker's OutputFile property value (xeldr). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
        Link:
-         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\link.exe /ERRORREPORT:PROMPT /OUT:"F:\xeldr.exe" /INCREMENTAL /NOLOGO /LIBPATH:"E:\Xeneva Project\Aurora\x64\Debug" XEClib.lib /NODEFAULTLIB /MANIFEST:NO /PDB:"E:\Xeneva Project\Aurora\x64\Debug\XELoader.pdb" /MAP /MAPINFO:EXPORTS /SUBSYSTEM:NATIVE /LARGEADDRESSAWARE /Driver /OPT:NOREF /LTCG /TLBID:1 /ENTRY:"_aumain" /BASE:"0x0000000000600000" /FIXED:NO /IMPLIB:"E:\Xeneva Project\Aurora\x64\Debug\XELoader.lib" /MACHINE:X64 /filealign:4096 x64\Debug\main.obj
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\link.exe /ERRORREPORT:PROMPT /OUT:"F:\xeldr.exe" /INCREMENTAL /NOLOGO /LIBPATH:"E:\Xeneva Project\Aurora\XELoader" XEClib.lib /NODEFAULTLIB /MANIFEST:NO /PDB:"E:\Xeneva Project\Aurora\x64\Debug\XELoader.pdb" /MAP /MAPINFO:EXPORTS /SUBSYSTEM:NATIVE /LARGEADDRESSAWARE /Driver /OPT:NOREF /LTCG /TLBID:1 /ENTRY:"_aumain" /BASE:"0x0000000000600000" /FIXED:NO /IMPLIB:"E:\Xeneva Project\Aurora\x64\Debug\XELoader.lib" /MACHINE:X64 /filealign:4096 x64\Debug\main.obj
          x64\Debug\pe_.obj
          x64\Debug\XELdrObject.obj
          x64\Debug\crt0.obj
@@ -53,4 +53,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:00.95
+Time Elapsed 00:00:01.45
