@@ -47,7 +47,7 @@
 
 /* true type --data type definitions*/
 typedef int16_t shortFrac;
-typedef int16_t Fixed;
+typedef int32_t Fixed;
 typedef int16_t FWord;
 typedef uint16_t uFWord;
 typedef int16_t F2Dot14;
@@ -73,7 +73,7 @@ typedef struct _ttf_ {
 	TTFTable post;
 	uint16_t unitsPerEm;
 	unsigned char* cmapStart;
-
+	uint16_t loca_type;
 }TTFont;
 #pragma pack(pop)
 
@@ -85,14 +85,18 @@ typedef struct _off_sub_ {
 	uint16_t entrySelector;
 	uint16_t rangeShift;
 }TTFOffsetSubtable;
+#pragma pack(pop)
 
+#pragma pack(push,1)
 typedef struct _table_dir_ {
 	uint32_t tag;
 	uint32_t checksum;
 	uint32_t offset;
 	uint32_t length;
 }TTFTableDirectory;
+#pragma pack(pop)
 
+#pragma pack(push,1)
 typedef struct _head_tbl_ {
 	Fixed version;
 	Fixed fontRevision;
@@ -112,25 +116,33 @@ typedef struct _head_tbl_ {
 	int16_t indexToLocFormat;
 	int16_t glyphDataFormat;
 }TTFHead;
+#pragma pack(pop)
 
+#pragma pack(push,1)
 /* CMAP Tables */
 typedef struct _ttf_cmap_ {
 	uint16_t version;
 	uint16_t numberSubtable;
 }TTFCmap;
+#pragma pack(pop)
 
+#pragma pack(push,1)
 typedef struct _ttf_cmap_sub_ {
 	uint16_t platformID;
 	uint16_t platformSpecificID;
 	uint32_t offset;
 }TTFCmapSubtable;
+#pragma pack(pop)
 
+#pragma pack(push,1)
 typedef struct _cmap_format_ {
 	uint16_t format;
 	uint16_t len;
 	uint16_t language;
 }TTFCmapFormat;
+#pragma pack(pop)
 
+#pragma pack(push,1)
 typedef struct _cmap_format12_ {
 	uint16_t format;
 	uint16_t reserved;
@@ -138,13 +150,17 @@ typedef struct _cmap_format12_ {
 	uint32_t language;
 	uint32_t nGroups;
 }TTFCmapFormat12;
+#pragma pack(pop)
 
+#pragma pack(push,1)
 typedef struct _cmap_format12_grp_ {
 	uint32_t startCharCode;
 	uint32_t endCharCode;
 	uint32_t startGlyphCode;
 }TTFCmapFormat12Group;
+#pragma pack(pop)
 
+#pragma pack(push,1)
 typedef struct _cmap_format4_ {
 	uint16_t format;
 	uint16_t len;
@@ -152,8 +168,37 @@ typedef struct _cmap_format4_ {
 	uint16_t segCountX2;
 	uint16_t searchRange;
 	uint16_t entrySelector;
-	uint16_t rangeShift;
+	//uint16_t rangeShift;
 }TTFCmapFormat4;
+#pragma pack(pop)
+
+#pragma pack(push,1)
+typedef struct _maxp_ {
+	Fixed version;
+	uint16_t numGlyphs;
+	uint16_t maxPoints;
+	uint16_t maxContours;
+	uint16_t maxComponentPoints;
+	uint16_t maxComponentContours;
+	uint16_t maxZones;
+	uint16_t maxTwilightPoints;
+	uint16_t maxStorage;
+	uint16_t maxFunctionDefs;
+	uint16_t maxInstructionDefs;
+	uint16_t maxStackElements;
+	uint16_t maxSizeOfInstructions;
+	uint16_t maxComponentElements;
+	uint16_t maxComponentDepth;
+}TTFMaxp;
+
+
+typedef struct _glyph_desc_ {
+	int16_t numContours;
+	FWord xMin;
+	FWord yMin;
+	FWord xMax;
+	FWord yMax;
+}TTFGlyphDesc;
 
 #pragma pack(pop)
 

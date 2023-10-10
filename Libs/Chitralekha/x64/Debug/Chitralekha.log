@@ -1,8 +1,8 @@
-﻿Build started 09-10-2023 আবেলি 1:55:17.
+﻿Build started 10-10-2023 ৰাতিপু 10:30:37.
      1>Project "E:\Xeneva Project\Aurora\Libs\Chitralekha\Chitralekha.vcxproj" on node 2 (Rebuild target(s)).
      1>_NASM:
          _fastcpy.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp9640278f3ad8476ea7f095c11c35edd2.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp577c74eba86248bd97b0e40547235424.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\_fastcpy.obj"  "E:\Xeneva Project\Aurora\Libs\Chitralekha\_fastcpy.asm"
        ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /I"E:\os_dev\freetype2-master\freetype2-master\include" /Zi /nologo /W3 /WX- /sdl- /Od /D ARCH_X64 /D YES_DYNAMIC /D DYNAMIC_EXPORTER /D _WINDLL /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt chitralekha.cpp font.cpp ttf.cpp
@@ -10,7 +10,7 @@
      1>cl : Command line warning D9002: ignoring unknown option '/arch:SSE2'
          ttf.cpp
      1>e:\xeneva project\aurora\libs\chitralekha\ttf.h(78): warning C4161: #pragma pack(pop...) : more pops than pushes
-     1>ttf.cpp(132): warning C4018: '<' : signed/unsigned mismatch
+     1>ttf.cpp(133): warning C4018: '<' : signed/unsigned mismatch
          font.cpp
      1>e:\xeneva project\aurora\libs\chitralekha\ttf.h(78): warning C4161: #pragma pack(pop...) : more pops than pushes
          chitralekha.cpp
@@ -18,7 +18,7 @@
      1>chitralekha.cpp(160): warning C4018: '<' : signed/unsigned mismatch
      1>chitralekha.cpp(161): warning C4018: '<' : signed/unsigned mismatch
          Generating Code...
-     1>e:\xeneva project\aurora\libs\chitralekha\ttf.cpp(144): warning C4700: uninitialized local variable 'glyph' used
+     1>e:\xeneva project\aurora\libs\chitralekha\ttf.cpp(145): warning C4700: uninitialized local variable 'glyph' used
      1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(1186,5): warning MSB8012: TargetPath(E:\Xeneva Project\Aurora\x64\Debug\Chitralekha.dll) does not match the Linker's OutputFile property value (F:\chlkha.dll). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
      1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(1188,5): warning MSB8012: TargetName(Chitralekha) does not match the Linker's OutputFile property value (chlkha). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
        Link:
@@ -34,4 +34,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:01.01
+Time Elapsed 00:00:01.22

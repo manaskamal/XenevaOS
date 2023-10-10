@@ -35,6 +35,7 @@
 #include <Hal/serial.h>
 #include <Sync/spinlock.h>
 #include <list.h>
+#include <aucon.h>
 #include <_null.h>
 #include <string.h>
 

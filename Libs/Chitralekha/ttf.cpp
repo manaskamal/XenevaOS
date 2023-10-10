@@ -89,12 +89,15 @@ uint32_t TTFGetGlyph(TTFont *font,uint32_t codepoint) {
 	
 	/* handle cmap format 4*/
 	if (format_ == 4) {
+		if (codepoint > 0xFFFF)
+			return 0;
 		TTFCmapFormat4 * format4 = (TTFCmapFormat4*)font->cmapStart;
 		uint16_t numSeg = TTFSwap16(format4->segCountX2) / 2;
-		uint16_t segx2 = numSeg * 2;
+		uint16_t segx2 = numSeg *2;
 		uint16_t* endcode_ = (uint16_t*)(font->cmapStart + sizeof(TTFCmapFormat4));
 		uint16_t* startCode_ = (uint16_t*)(font->cmapStart + sizeof(TTFCmapFormat4)+
 			segx2 + 2);
+		uint16_t* reservedPad = (uint16_t*)(font->cmapStart + sizeof(TTFCmapFormat4) + segx2);
 		uint16_t* idDelta_ = (uint16_t*)(font->cmapStart + sizeof(TTFCmapFormat4)+
 			segx2 + 2 + segx2);
 		uint16_t* idRangeOffset_ = (uint16_t*)(font->cmapStart + sizeof(TTFCmapFormat4)+
@@ -110,7 +113,7 @@ uint32_t TTFGetGlyph(TTFont *font,uint32_t codepoint) {
 					_KePrint("start code is greater than code point %d \n", codepoint);
 					return 0;
 				}
-				uint16_t idDelta = TTFSwap16(idDelta_[i]);
+				int16_t idDelta = TTFSwap16(idDelta_[i]);
 				uint16_t idRangeOffset = TTFSwap16(idRangeOffset_[i]);
 				if (idRangeOffset == 0)
 					return idDelta + codepoint;
@@ -126,7 +129,6 @@ uint32_t TTFGetGlyph(TTFont *font,uint32_t codepoint) {
 	else if (format_ == 12) { /* handle cmap format 12 */
 		TTFCmapFormat12* format12 = (TTFCmapFormat12*)font->cmapStart;
 		uint32_t ngrps = TTFSwap32(format12->nGroups);
-		_KePrint("Format12 ngroups -> %d \n", ngrps);
 		TTFCmapFormat12Group *grp = (TTFCmapFormat12Group*)(font->cmapStart + sizeof(TTFCmapFormat12));
 		for (int i = 0; i < ngrps; i++) {
 			uint32_t startChar = grp[i].startCharCode;
@@ -142,6 +144,26 @@ uint32_t TTFGetGlyph(TTFont *font,uint32_t codepoint) {
 	/* more formats to go */
 	return glyph;
 }
+
+
+void TTFDrawGlyph(TTFont *font, uint32_t glyph) {
+	uint32_t glyph_offset = 0;
+	if (font->loca_type == 0) {
+		uint16_t* loca = (uint16_t*)font->loca.base;
+		glyph_offset = TTFSwap16(loca[glyph]) * 2;
+	}
+	else {
+		uint32_t* longTable = (uint32_t*)font->loca.base;
+		glyph_offset = longTable[2];
+	}
+
+	_KePrint("Glyph offset -> %d \n", glyph_offset);
+
+	TTFGlyphDesc* glyfdesc = (TTFGlyphDesc*)(font->glyf.base + glyph_offset);
+	_KePrint("NumContours -> %d \r\n", TTFSwap16(glyfdesc->numContours));
+	_KePrint("xMax - %d xMin - %d \n", TTFSwap16(glyfdesc->xMax), TTFSwap16(glyfdesc->xMin));
+	_KePrint("yMax - %d, yMin -> %x \n", TTFSwap16(glyfdesc->yMax), TTFSwap16(glyfdesc->yMin));
+}
 /*
  * TTFLoadFont -- load and start decoding ttf font
  * @param buffer -- pointer to font file buffer
@@ -150,10 +172,10 @@ TTFont* TTFLoadFont(unsigned char* buffer) {
 	TTFOffsetSubtable * offtable = (TTFOffsetSubtable*)buffer;
 	TTFTableDirectory* tabledir = (TTFTableDirectory*)(buffer + sizeof(TTFOffsetSubtable));
 	uint16_t numTable = TTFSwap16(offtable->numTables);
-
 	TTFont* font = (TTFont*)malloc(sizeof(TTFont));
+	memset(font, 0, sizeof(TTFont));
 	font->base = buffer;
-	for (int i = 0; i < numTable; i++) {
+	for (int i = 0; i < numTable; ++i) {
 		uint32_t tag = TTFSwap32(tabledir[i].tag);
 		uint32_t offset = TTFSwap32(tabledir[i].offset);
 		uint32_t len = TTFSwap32(tabledir[i].length);
@@ -167,7 +189,7 @@ TTFont* TTFLoadFont(unsigned char* buffer) {
 			font->glyf.base = buffer + offset;
 			font->glyf.len = len;
 			break;
-		case TTF_TABLE_HEAD:
+		case 0x68656164:
 			font->head.base = buffer + offset;
 			font->head.len = len;
 			break;
@@ -180,10 +202,12 @@ TTFont* TTFLoadFont(unsigned char* buffer) {
 			font->hmtx.len = len;
 			break;
 		case TTF_TABLE_LOCA:
+			_KePrint("Loca off -> %d base -> %x , sz -> %x \r\n", offset, (buffer + offset), (buffer + offset + len));
 			font->loca.base = buffer + offset;
 			font->loca.len = len;
 			break;
 		case TTF_TABLE_MAXP:
+			_KePrint("Maxp off -> %d base -> %x \r\n", offset, (buffer + offset));
 			font->maxp.base = buffer + offset;
 			font->maxp.len = len;
 			break;
@@ -202,7 +226,6 @@ TTFont* TTFLoadFont(unsigned char* buffer) {
 
 	TTFHead* head = (TTFHead*)font->head.base;
 	font->unitsPerEm = TTFSwap16(head->unitsPerEm);
-	
 	TTFCmap *cmap = (TTFCmap*)font->cmap.base;
 
 	TTFCmapSubtable* sub = (TTFCmapSubtable*)(font->cmap.base + sizeof(TTFCmap));
@@ -231,8 +254,11 @@ TTFont* TTFLoadFont(unsigned char* buffer) {
 
 	TTFCmapFormat* cmap_format = (TTFCmapFormat*)(font->cmap.base + best);
 	font->cmapStart = (unsigned char*)cmap_format;
-	_KePrint("Loca type -> %d \r\n", TTFSwap16(head->indexToLocFormat));
-	uint32_t glyph = TTFGetGlyph(font, 'M');
-	_KePrint("Glyph code for 'M' -> %d %x\r\n", glyph, glyph);
+	int16_t* locatype = (int16_t*)(font->head.base + 50);
+	font->loca_type = TTFSwap16(head->indexToLocFormat);
+	uint32_t glyph = TTFGetGlyph(font, '8');
+	TTFMaxp* maxp = (TTFMaxp*)font->maxp.base;
+	_KePrint("Glyph code for '8' -> %d %x\r\n", glyph, glyph);
+	TTFDrawGlyph(font, glyph);
 	return font;
 }

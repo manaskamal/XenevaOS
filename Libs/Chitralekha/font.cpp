@@ -60,6 +60,7 @@ ChFont *ChInitialiseFont(char* fontname) {
 	font->fileSz = fileSz;
 	font->fontSz = 32;
 
+	_KePrint("Font buff start -> %x, end -> %x \r\n", font->buffer, (font->buffer + fileSz));
 	/* start decoding true type font */
 	TTFLoadFont(font->buffer);
 	return font;
