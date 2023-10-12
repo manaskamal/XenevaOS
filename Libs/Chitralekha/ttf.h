@@ -74,6 +74,7 @@ typedef struct _ttf_ {
 	uint16_t unitsPerEm;
 	unsigned char* cmapStart;
 	uint16_t loca_type;
+	unsigned char* memptr;
 }TTFont;
 #pragma pack(pop)
 
@@ -201,6 +202,8 @@ typedef struct _glyph_desc_ {
 }TTFGlyphDesc;
 
 #pragma pack(pop)
+
+
 
 /*
 * TTFLoadFont -- load and start decoding ttf font

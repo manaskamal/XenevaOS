@@ -30,6 +30,32 @@
 #include <sys/utf.h>
 #include "ttf.h"
 
+/* simple glyf flags definitions*/
+#define GLYF_FLAG_ONCURVE            (1<<0)
+#define GLYF_FLAG_XSHORT_VECT        (1<<1)
+#define GLYF_FLAG_YSHORT_VECT        (1<<2)
+#define GLYF_FLAG_REPEAT             (1<<3)
+#define GLYF_FLAG_POSITIVE_XSHORT_VECT  (1<<4)
+#define GLYF_FLAG_POSITIVE_YSHORT_VECT  (1<<5)
+
+/* compound glyf flags definitions */
+#define ARG_1_AND_2_ARE_WORDS  (1<<0)
+#define ARGS_ARE_XY_VALUES     (1<<1)
+#define ROUND_XY_TO_GRID       (1<<2)
+#define WE_HAVE_A_SCALE        (1<<3)
+#define MORE_COMPONENTS        (1<<5)
+#define WE_HAVE_AN_X_AND_Y_SCALE  (1<<6)
+#define WE_HAVE_A_TWO_BY_TWO      (1<<7)
+#define WE_HAVE_INSTRUCTIONS      (1<<8)
+#define USE_MY_METRICS            (1<<9)
+#define OVERLAP_COMPUND           (1<<10)
+
+
+typedef struct _ttf_vertices_ {
+	uint8_t flags;
+	int x;
+	int y;
+}TTFVertices;
 /*
  * TTFSwap -- swap endianness
  * @param value -- value to swap
@@ -57,6 +83,19 @@ uint16_t TTFSwap16(uint16_t value) {
 	int left_middle_byte = (value & 0x0000ff00) >> 8;
 	int result = ((left_most_byte & 0xff) << 8 | left_middle_byte & 0xff);
 	return result;
+}
+
+
+uint8_t TTF_READ_8(TTFont *f) {
+	return *(f->memptr++);
+}
+
+
+uint16_t TTF_READ_16(TTFont*f) {
+	int a = TTF_READ_8(f);
+	int b = TTF_READ_8(f);
+	if (a < 0 || b < 0) return 0;
+	return (((a & 0xff) << 8 )|( b & 0xff));
 }
 
 /* 
@@ -145,6 +184,87 @@ uint32_t TTFGetGlyph(TTFont *font,uint32_t codepoint) {
 	return glyph;
 }
 
+/*
+ * TTFDrawSimpleGlyf -- parse the simple glyf table and get all points of the glyf
+ * @param font -- Pointer to true type font
+ * @param glyphOffset -- offset of the glyph from glyph base address
+ */
+void TTFDrawSimpleGlyf( TTFont* font, uint32_t glyphOffset) {
+	TTFGlyphDesc* glyfdesc = (TTFGlyphDesc*)(font->glyf.base + glyphOffset);
+	int16_t numContours = TTFSwap16(glyfdesc->numContours);
+	uint16_t* endPointsContours = (uint16_t*)(font->glyf.base + glyphOffset + sizeof(TTFGlyphDesc));
+	uint16_t* intLen = (uint16_t*)(font->glyf.base + glyphOffset + sizeof(TTFGlyphDesc)+numContours * 2);
+	uint16_t instructionLen = TTFSwap16(*intLen);
+	uint8_t* instructions = (uint8_t*)(font->glyf.base + glyphOffset + sizeof(TTFGlyphDesc)+numContours * 2 + 2);
+	uint8_t *flags = (uint8_t*)(font->glyf.base + glyphOffset + sizeof(TTFGlyphDesc)+numContours * 2 + 2 +
+		instructionLen);
+
+	uint16_t endPoint = TTFSwap16(endPointsContours[numContours-1]);
+
+	uint8_t* buffer_tag = flags; // we will increament this
+	font->memptr = buffer_tag;
+	
+	int last_x = 0;
+	int last_y = 0;
+
+	/* read all flags */
+	TTFVertices* vert = (TTFVertices*)malloc(sizeof(TTFVertices)* endPoint + 1);
+	memset(vert, 0, sizeof(TTFVertices)* endPoint + 1);
+	for (int i = 0; i < endPoint + 1;) {
+		uint8_t flag = TTF_READ_8(font);
+		vert[i].flags = flag;
+		if (flag & GLYF_FLAG_REPEAT) {
+			uint8_t repeatval = TTF_READ_8(font);
+			while (repeatval) {
+				vert[i].flags = flag;
+				repeatval--;
+				i++;
+			}
+		}
+	}
+
+
+	/* read all X-Coords */
+	for (int i = 0; i < endPoint + 1; i++) {
+		uint8_t flag = vert[i].flags;
+		if (flag & GLYF_FLAG_ONCURVE){
+			if (flag & GLYF_FLAG_POSITIVE_XSHORT_VECT) 
+				vert[i].x = last_x + TTF_READ_8(font);
+			else {
+				vert[i].x = last_x - TTF_READ_8(font);
+			}
+		}
+		else {
+			if (flag & GLYF_FLAG_POSITIVE_XSHORT_VECT)
+				vert[i].x = last_x;
+			else {
+				int16_t diff = TTF_READ_16(font);
+				vert[i].x = last_x + diff;
+			}
+		}
+		last_x = vert[i].x;
+	}
+
+	/* Y coord */
+	for (int i = 0; i < endPoint + 1; i++) {
+		uint8_t flag = vert[i].flags;
+		if (flag & GLYF_FLAG_ONCURVE) {
+			if (flag & GLYF_FLAG_POSITIVE_YSHORT_VECT)
+				vert[i].y = last_y + TTF_READ_8(font);
+			else
+				vert[i].y = last_y - TTF_READ_8(font);
+		}
+		else {
+			if (flag & GLYF_FLAG_POSITIVE_YSHORT_VECT)
+				vert[i].y = last_y;
+			else {
+				int16_t diff = TTF_READ_16(font);
+				vert[i].y = last_y + diff;
+			}
+		}
+		last_y = vert[i].y;
+	}
+}
 
 void TTFDrawGlyph(TTFont *font, uint32_t glyph) {
 	uint32_t glyph_offset = 0;
@@ -157,12 +277,14 @@ void TTFDrawGlyph(TTFont *font, uint32_t glyph) {
 		glyph_offset = longTable[2];
 	}
 
-	_KePrint("Glyph offset -> %d \n", glyph_offset);
-
 	TTFGlyphDesc* glyfdesc = (TTFGlyphDesc*)(font->glyf.base + glyph_offset);
-	_KePrint("NumContours -> %d \r\n", TTFSwap16(glyfdesc->numContours));
-	_KePrint("xMax - %d xMin - %d \n", TTFSwap16(glyfdesc->xMax), TTFSwap16(glyfdesc->xMin));
-	_KePrint("yMax - %d, yMin -> %x \n", TTFSwap16(glyfdesc->yMax), TTFSwap16(glyfdesc->yMin));
+
+	int16_t numContours = TTFSwap16(glyfdesc->numContours);
+	if (numContours >= 0)
+		TTFDrawSimpleGlyf(font, glyph_offset);
+	//else
+	   //draw compund glyf
+	
 }
 /*
  * TTFLoadFont -- load and start decoding ttf font
@@ -189,7 +311,7 @@ TTFont* TTFLoadFont(unsigned char* buffer) {
 			font->glyf.base = buffer + offset;
 			font->glyf.len = len;
 			break;
-		case 0x68656164:
+		case TTF_TABLE_HEAD:
 			font->head.base = buffer + offset;
 			font->head.len = len;
 			break;
@@ -202,12 +324,10 @@ TTFont* TTFLoadFont(unsigned char* buffer) {
 			font->hmtx.len = len;
 			break;
 		case TTF_TABLE_LOCA:
-			_KePrint("Loca off -> %d base -> %x , sz -> %x \r\n", offset, (buffer + offset), (buffer + offset + len));
 			font->loca.base = buffer + offset;
 			font->loca.len = len;
 			break;
 		case TTF_TABLE_MAXP:
-			_KePrint("Maxp off -> %d base -> %x \r\n", offset, (buffer + offset));
 			font->maxp.base = buffer + offset;
 			font->maxp.len = len;
 			break;
@@ -236,7 +356,6 @@ TTFont* TTFLoadFont(unsigned char* buffer) {
 		uint16_t platformID = TTFSwap16(sub[i].platformID);
 		uint16_t platformSpecificID = TTFSwap16(sub[i].platformSpecificID);
 		uint32_t offset = TTFSwap32(sub[i].offset);
-		_KePrint("CMAP Sub Platform ID -> %d , %d \r\n", platformID, platformSpecificID);
 
 		if ((platformID == 3 || platformID == 0) && platformSpecificID == 10){
 			best = offset;
@@ -258,7 +377,6 @@ TTFont* TTFLoadFont(unsigned char* buffer) {
 	font->loca_type = TTFSwap16(head->indexToLocFormat);
 	uint32_t glyph = TTFGetGlyph(font, '8');
 	TTFMaxp* maxp = (TTFMaxp*)font->maxp.base;
-	_KePrint("Glyph code for '8' -> %d %x\r\n", glyph, glyph);
 	TTFDrawGlyph(font, glyph);
 	return font;
 }
