@@ -86,7 +86,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>false</SDLCheck>
       <AdditionalIncludeDirectories>E:\Xeneva Project\Aurora\Libs\XEClib\includes;E:\os_dev\freetype2-master\freetype2-master\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>ARCH_X64;YES_DYNAMIC; DYNAMIC_EXPORTER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>ARCH_X64;YES_DYNAMIC; DYNAMIC_EXPORTER; _USE_FREETYPE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <IgnoreStandardIncludePath>true</IgnoreStandardIncludePath>
       <ExceptionHandling>false</ExceptionHandling>
       <BasicRuntimeChecks />
@@ -99,8 +99,8 @@
       <GenerateDebugInformation>
       </GenerateDebugInformation>
       <OutputFile>F:\chlkha.dll</OutputFile>
-      <AdditionalLibraryDirectories>E:\Xeneva Project\Aurora\x64\Debug;E:\os_dev\freetype2-master\freetype2-master\objs</AdditionalLibraryDirectories>
-      <AdditionalDependencies>XEClib.lib; ftype.lib;</AdditionalDependencies>
+      <AdditionalLibraryDirectories>E:\Xeneva Project\Aurora\x64\Debug;E:\os_dev\freetype2-master\freetype2-master\objs;E:\Xeneva Project\Aurora\Libs\XECrt</AdditionalLibraryDirectories>
+      <AdditionalDependencies>XEClib.lib; ftype.lib;xecrt.lib;</AdditionalDependencies>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
       <EnableUAC>false</EnableUAC>
       <GenerateMapFile>true</GenerateMapFile>
@@ -149,6 +149,7 @@
   <ItemGroup>
     <ClInclude Include="chitralekha.h" />
     <ClInclude Include="color.h" />
+    <ClInclude Include="draw.h" />
     <ClInclude Include="font.h" />
     <ClInclude Include="image.h" />
     <ClInclude Include="nanojpg.h" />
@@ -157,6 +158,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="chitralekha.cpp" />
+    <ClCompile Include="draw.cpp" />
     <ClCompile Include="font.cpp" />
     <ClCompile Include="ttf.cpp" />
   </ItemGroup>

@@ -35,6 +35,8 @@
 #include <freetype\ftglyph.h>
 #include <_xeneva.h>
 #include "chitralekha.h"
+#include <ft2build.h>
+#include FT_FREETYPE_H
 
 /* pre-defined system fonts */
 #define ROBOTO_LIGHT  "Roboto-Light"
@@ -44,20 +46,25 @@
 #define CALIBRI       "Calibri"
 #define FORTE         "Forte"
 
-#pragma pack(push,1)
+
 typedef struct _ch_font_ {
 	int fileSz;
 	uint8_t* buffer;
 	uint32_t fontSz;
+#ifdef _USE_FREETYPE
+	FT_Library lib;
+	FT_Face face;
+	FT_GlyphSlot slot;
+#endif
 }ChFont;
-#pragma pack(pop)
+
 
 
 /*
 * ChInitialiseFont -- initialise a font by a name
 * @param fontname -- name of the font
 */
-XE_EXTERN XE_LIB ChFont *ChInitialiseFont(char* fontname);
+XE_EXTERN XE_LIB ChFont *ChInitialiseFont(ChCanvas* canv,char* fontname);
 
 /*
 * ChFontDrawText -- draws a text using desired font

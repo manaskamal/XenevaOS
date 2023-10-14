@@ -116,6 +116,16 @@ uint32_t UTF8toUnicode(uint8_t c) {
 }
 
 /*
+ * TTFSetFontSize -- scale font for output on display device
+ * @param font -- Pointer to font object
+ * @param pointSz -- size of the point
+ */
+void TTFSetFontSize(TTFont * font, float pointSz) {
+	pointSz *= 4.0 / 3.0;
+	font->scale = pointSz / font->unitsPerEm;//(pointSz * ChGetScreenDPI(font->canv) * 0.3937 / 72 * font->unitsPerEm);
+}
+
+/*
  * TTFGetGlyph -- returns the glyph index for the given
  * codepoint
  * @param font -- Pointer to true type font
@@ -189,7 +199,7 @@ uint32_t TTFGetGlyph(TTFont *font,uint32_t codepoint) {
  * @param font -- Pointer to true type font
  * @param glyphOffset -- offset of the glyph from glyph base address
  */
-void TTFDrawSimpleGlyf( TTFont* font, uint32_t glyphOffset) {
+void TTFDrawSimpleGlyf( TTFont* font, uint32_t glyphOffset, float xoff, float yoff) {
 	TTFGlyphDesc* glyfdesc = (TTFGlyphDesc*)(font->glyf.base + glyphOffset);
 	int16_t numContours = TTFSwap16(glyfdesc->numContours);
 	uint16_t* endPointsContours = (uint16_t*)(font->glyf.base + glyphOffset + sizeof(TTFGlyphDesc));
@@ -264,9 +274,21 @@ void TTFDrawSimpleGlyf( TTFont* font, uint32_t glyphOffset) {
 		}
 		last_y = vert[i].y;
 	}
+
+	font->memptr = (font->glyf.base + glyphOffset + 10);
+	//int next_end = TTFSwap16(endPointsContours[0]);
+	//int next_end1 = TTFSwap16(endPointsContours[1]);
+	//_KePrint("Next end -> %d %d\n", next_end, next_end1);
+
+	//for (int i = 0; i < endPoint + 1; i++) {
+	//	float x = ((float)vert[i].x * font->scale + xoff);
+	//	float y = (-(float)vert[i].y * font->scale + yoff);
+	//	_KePrint("x -> %f, y -> %f \n", x, y);
+	//	/*ChDrawPixel(font->canv, x, y, WHITE);*/
+	//}
 }
 
-void TTFDrawGlyph(TTFont *font, uint32_t glyph) {
+void TTFDrawGlyph(TTFont *font, uint32_t glyph, int xOff, int yOff) {
 	uint32_t glyph_offset = 0;
 	if (font->loca_type == 0) {
 		uint16_t* loca = (uint16_t*)font->loca.base;
@@ -281,7 +303,7 @@ void TTFDrawGlyph(TTFont *font, uint32_t glyph) {
 
 	int16_t numContours = TTFSwap16(glyfdesc->numContours);
 	if (numContours >= 0)
-		TTFDrawSimpleGlyf(font, glyph_offset);
+		TTFDrawSimpleGlyf(font, glyph_offset, xOff,yOff);
 	//else
 	   //draw compund glyf
 	
@@ -290,12 +312,13 @@ void TTFDrawGlyph(TTFont *font, uint32_t glyph) {
  * TTFLoadFont -- load and start decoding ttf font
  * @param buffer -- pointer to font file buffer
  */
-TTFont* TTFLoadFont(unsigned char* buffer) {
+TTFont* TTFLoadFont(ChCanvas* canv, unsigned char* buffer) {
 	TTFOffsetSubtable * offtable = (TTFOffsetSubtable*)buffer;
 	TTFTableDirectory* tabledir = (TTFTableDirectory*)(buffer + sizeof(TTFOffsetSubtable));
 	uint16_t numTable = TTFSwap16(offtable->numTables);
 	TTFont* font = (TTFont*)malloc(sizeof(TTFont));
 	memset(font, 0, sizeof(TTFont));
+	font->canv = canv;
 	font->base = buffer;
 	for (int i = 0; i < numTable; ++i) {
 		uint32_t tag = TTFSwap32(tabledir[i].tag);
@@ -375,8 +398,9 @@ TTFont* TTFLoadFont(unsigned char* buffer) {
 	font->cmapStart = (unsigned char*)cmap_format;
 	int16_t* locatype = (int16_t*)(font->head.base + 50);
 	font->loca_type = TTFSwap16(head->indexToLocFormat);
-	uint32_t glyph = TTFGetGlyph(font, '8');
+	uint32_t glyph = TTFGetGlyph(font, 'I');
 	TTFMaxp* maxp = (TTFMaxp*)font->maxp.base;
-	TTFDrawGlyph(font, glyph);
+	TTFSetFontSize(font, 10);
+	TTFDrawGlyph(font, glyph, 100,100);
 	return font;
 }

@@ -226,6 +226,35 @@ typedef struct _IMAGE_IMPORT_DIRECTORY {
 	uint32_t ThunkTableRva;
 }IMAGE_IMPORT_DIRECTORY, *PIMAGE_IMPORT_DIRECTORY;
 
+
+typedef struct _IMAGE_RESOURCE_DIRECTORY_ENTRY_ {
+	union {
+		struct {
+			uint32_t NameOffset : 31;
+			uint32_t NameIsString : 1;
+		};
+		uint32_t Name;
+		uint16_t Id;
+	};
+	union {
+		uint32_t OffsetToData;
+		struct {
+			uint32_t OffsetToDirectory : 31;
+			uint32_t DataIsDirectory : 1;
+		};
+	};
+}IMAGE_RESOURCE_DIRECTORY_ENTRY, *PIMAGE_RESOURCE_DIRECTORY_ENTRY;
+
+typedef struct _IMAGE_RESOURCE_DIRECTORY_ {
+	uint32_t Characteristics;
+	uint32_t TimeDateStamp;
+	uint16_t MajorVersion;
+	uint16_t MinorVersion;
+	uint16_t NumberOfNamedEntries;
+	uint16_t NumberOfIdEntries;
+	IMAGE_RESOURCE_DIRECTORY_ENTRY DirectoryEntries[1];
+}IMAGE_RESOURCE_DIRECTORY, *PIMAGE_RESOURCE_DIRECTORY;
+
 typedef struct _IMAGE_IMPORT_HINT_TABLE {
 	uint16_t Hint;
 	char name[2];
@@ -288,4 +317,6 @@ extern void XELdrCreatePEObjects(void* exec);
 * @param obj -- obj to point
 */
 extern void XELdrLinkDependencyPE(XELoaderObject* obj);
+
+extern void XELdrLoadResourceDirectory(void *image);
 #endif

@@ -41,7 +41,7 @@
  * ChInitialiseFont -- initialise a font by a name
  * @param fontname -- name of the font
  */
-ChFont *ChInitialiseFont(char* fontname) {
+ChFont *ChInitialiseFont(ChCanvas *canv,char* fontname) {
 	int id = _KeGetFontID(fontname);
 	_KePrint("Font ID for fontname ->%s %d \r\n", fontname, id);
 	if (id == 0)
@@ -60,9 +60,15 @@ ChFont *ChInitialiseFont(char* fontname) {
 	font->fileSz = fileSz;
 	font->fontSz = 32;
 
-	_KePrint("Font buff start -> %x, end -> %x \r\n", font->buffer, (font->buffer + fileSz));
+#ifdef _USE_FREETYPE
+	FT_Error err = 0;
+	err = FT_Init_FreeType(&font->lib);
+	err = FT_New_Memory_Face(font->lib, font->buffer, font->fileSz, 0, &font->face);
+	err = FT_Set_Pixel_Sizes(font->face, 0, 32);
+	font->slot = font->face->glyph;
+#endif
 	/* start decoding true type font */
-	TTFLoadFont(font->buffer);
+	//TTFLoadFont(canv,font->buffer);
 	return font;
 }
 
@@ -77,4 +83,39 @@ ChFont *ChInitialiseFont(char* fontname) {
  * @param color -- color of the font
  */
 void ChFontDrawText(ChCanvas *canv, ChFont* font, char* string, int penx, int peny, uint32_t sz, uint32_t color){
+#ifdef _USE_FREETYPE
+	int w = font->face->glyph->metrics.width;
+	int h = font->face->glyph->metrics.height;
+	FT_Bool use_kerning = FT_HAS_KERNING(font->face);
+	uint32_t prev = 0;
+	FT_UInt glyfIndx;
+	FT_Error err = 0;
+	while (*string) {
+		glyfIndx = FT_Get_Char_Index(font->face, *string);
+		err = FT_Load_Glyph(font->face, glyfIndx, FT_LOAD_RENDER);
+		if (err)
+			continue;
+
+		if (use_kerning && prev && glyfIndx) {
+			FT_Vector delta;
+			FT_Get_Kerning(font->face, prev, glyfIndx, FT_KERNING_DEFAULT, &delta);
+			penx += delta.x >> 6;
+		}
+
+		int x_v = penx + font->face->glyph->bitmap_left;
+		int y_v = peny - font->face->glyph->bitmap_top;
+
+		for (int i = x_v, p = 0; i < x_v + font->face->glyph->bitmap.width; i++, p++) {
+			for (int j = y_v, q = 0; j < y_v + font->face->glyph->bitmap.rows; j++, q++) {
+				if (font->face->glyph->bitmap.buffer[q * font->face->glyph->bitmap.width + p] > 0)
+					canv->buffer[i + j * canv->canvasWidth] = color;
+			}
+		}
+
+		penx += font->face->glyph->advance.x >> 6;
+		peny += font->face->glyph->advance.y >> 6;
+		prev = glyfIndx;
+		string++;
+	}
+#endif
 }

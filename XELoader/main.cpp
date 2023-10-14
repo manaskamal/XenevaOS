@@ -74,8 +74,12 @@ int XELdrLoadObject(XELoaderObject *obj){
 	ret_bytes = _KeReadFile(file, buffer, 4096);
 	IMAGE_DOS_HEADER *dos_ = (IMAGE_DOS_HEADER*)buffer;
 	PIMAGE_NT_HEADERS nt = raw_offset<PIMAGE_NT_HEADERS>(dos_, dos_->e_lfanew);
-	PSECTION_HEADER secthdr = raw_offset<PSECTION_HEADER>(&nt->OptionalHeader, nt->FileHeader.SizeOfOptionaHeader);
+
 	intptr_t original_base = nt->OptionalHeader.ImageBase;
+	intptr_t new_addr = _image_load_base_;
+	intptr_t diff = new_addr - original_base;
+
+	PSECTION_HEADER secthdr = raw_offset<PSECTION_HEADER>(&nt->OptionalHeader, nt->FileHeader.SizeOfOptionaHeader);
 
 	/*if (nt->OptionalHeader.FileAlignment == 512) {
 		while (!stat->eof) {
@@ -104,7 +108,12 @@ int XELdrLoadObject(XELoaderObject *obj){
 			memset(raw_offset<void*>(block, secthdr[i].SizeOfRawData), 0, secthdr[i].VirtualSize - secthdr[i].SizeOfRawData);
 	}
 
+
 	uint8_t* aligned_buf = (uint8_t*)first_ptr;
+
+
+	
+	XELdrRelocatePE(aligned_buf, nt, diff);
 
 	XELdrCreatePEObjects(first_ptr);
 	obj->load_addr = _image_load_base_;

@@ -33,6 +33,7 @@
 #include <stdint.h>
 #include <_xeneva.h>
 #include "font.h"
+#include "chitralekha.h"
 
 /* ttf table tags */
 #define TTF_TABLE_CMAP  'cmap' //character to glyph mapping
@@ -75,6 +76,8 @@ typedef struct _ttf_ {
 	unsigned char* cmapStart;
 	uint16_t loca_type;
 	unsigned char* memptr;
+	float scale;
+	ChCanvas* canv;
 }TTFont;
 #pragma pack(pop)
 
@@ -209,5 +212,12 @@ typedef struct _glyph_desc_ {
 * TTFLoadFont -- load and start decoding ttf font
 * @param buffer -- pointer to font file buffer
 */
-TTFont* TTFLoadFont(unsigned char* buffer);
+TTFont* TTFLoadFont(ChCanvas* canv,unsigned char* buffer);
+
+/*
+* TTFSetFontSize -- scale font for output on display device
+* @param font -- Pointer to font object
+* @param pointSz -- size of the point
+*/
+void TTFSetFontSize(TTFont * font, float pointSz);
 #endif

@@ -87,7 +87,6 @@ void XELdrRelocatePE(void* image, PIMAGE_NT_HEADERS nt, int diff) {
 	if (data_dir.VirtualAddress == 0 || data_dir.Size == 0)
 		return;
 
-	_KePrint("Relocating executable \r\n");
 	PIMAGE_RELOCATION_BLOCK reloc_table = raw_offset<PIMAGE_RELOCATION_BLOCK>(image, data_dir.VirtualAddress);
 	PIMAGE_RELOCATION_BLOCK cur_block = reloc_table;
 
@@ -102,18 +101,22 @@ void XELdrRelocatePE(void* image, PIMAGE_NT_HEADERS nt, int diff) {
 				break;
 			case IMAGE_REL_BASED_HIGH:
 				*reinterpret_cast<uint16_t*>(relocitem) += (diff >> 16) & UINT16_MAX;
+				_KePrint("Relocating executable %x\r\n", *reinterpret_cast<uint16_t*>(relocitem));
 				break;
 			case IMAGE_REL_BASED_LOW:
 				*reinterpret_cast<uint16_t*>(relocitem) += (diff & UINT16_MAX);
+				_KePrint("Relocating executable low %x\r\n", *reinterpret_cast<uint16_t*>(relocitem));
 				break;
 			case IMAGE_REL_BASED_HIGHLOW:
 				*reinterpret_cast<uint32_t*>(relocitem) += (diff & UINT32_MAX);
+				_KePrint("Relocating executable highlow %x\r\n", *reinterpret_cast<uint32_t*>(relocitem));
 				break;
 			case IMAGE_REL_BASED_HIGHADJ:
 				return;
 				break;
 			case IMAGE_REL_BASED_DIR64:
-				*reinterpret_cast<uint64_t*>(relocitem) += (diff & UINT64_MAX);
+				*reinterpret_cast<uint64_t*>(relocitem) += (diff & UINT32_MAX);
+				//_KePrint("Relocating executable dir64 %x\r\n", *reinterpret_cast<uint64_t*>(relocitem));
 				break;
 			default:
 				return;
@@ -125,7 +128,7 @@ void XELdrRelocatePE(void* image, PIMAGE_NT_HEADERS nt, int diff) {
 		uint32_t next_off = DIV_ROUND_UP(cur_block->BlockSize, 4) * 4;
 		cur_block = raw_offset<PIMAGE_RELOCATION_BLOCK>(cur_block, next_off);
 	}
-
+	//for (;;);
 }
 
 bool _proc_debug = false;
@@ -213,7 +216,10 @@ void XELdrCreatePEObjects(void* exec) {
 	if (datadir.VirtualAddress == 0 || datadir.Size == 0) {
 		return;
 	}
-	
+	if (_debug_buf){
+		_KePrint("Inside pe import dir %x \r\n", exec);
+	}
+
 	PIMAGE_IMPORT_DIRECTORY importdir = raw_offset<PIMAGE_IMPORT_DIRECTORY>(exec, datadir.VirtualAddress);
 	for (size_t n = 0; importdir[n].ThunkTableRva; ++n) {
 		const char* func = raw_offset<const char*>(exec, importdir[n].NameRva);
@@ -230,6 +236,8 @@ void XELdrCreatePEObjects(void* exec) {
 		while (*iat) {
 			PIMAGE_IMPORT_HINT_TABLE hint = raw_offset<PIMAGE_IMPORT_HINT_TABLE>(exec, *iat);
 			const char* fname = hint->name;
+			if (_debug_buf)
+				_KePrint("iat -> %x %s \r\n", *iat, fname);
 			++iat;
 		}
 	}
@@ -275,4 +283,25 @@ void XELdrLinkDependencyPE(XELoaderObject* obj) {
 		}
 	}
 	obj->linked = true;
+}
+
+void XELdrLoadResourceDirectory(void *image) {
+	PIMAGE_DOS_HEADER dos_header = (PIMAGE_DOS_HEADER)image;
+	PIMAGE_NT_HEADERS nt_headers = raw_offset<PIMAGE_NT_HEADERS>(dos_header, dos_header->e_lfanew);
+
+	IMAGE_DATA_DIRECTORY& datadir = nt_headers->OptionalHeader.DataDirectory[2];
+	if (datadir.VirtualAddress == 0 || datadir.Size == 0) {
+		return;
+	}
+
+	PIMAGE_RESOURCE_DIRECTORY resdir = (PIMAGE_RESOURCE_DIRECTORY)(datadir.VirtualAddress + (uint64_t)image);
+	IMAGE_RESOURCE_DIRECTORY_ENTRY *lpResEntry = resdir->DirectoryEntries;
+
+	int entries = resdir->NumberOfIdEntries + resdir->NumberOfNamedEntries;
+
+	while (entries-- != 0) {
+		_KePrint("res id -> %d \n", lpResEntry->Id);
+		lpResEntry++;
+	}
+	
 }

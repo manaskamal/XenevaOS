@@ -108,4 +108,25 @@ XE_EXTERN XE_LIB uint32_t ChGetPixel(ChCanvas* canvas, uint32_t x, uint32_t y);
 */
 XE_EXTERN XE_LIB void ChCanvasFill(ChCanvas* canvas, uint32_t w, uint32_t h, uint32_t color);
 
+/*
+* ChGetScreenDiagonal -- get screen diagonal using
+* pythagorean theorem in centimetre
+* @param canv -- Pointer to canvas
+*/
+XE_EXTERN XE_LIB float ChGetScreenDiagonal(ChCanvas* canv);
+
+/*
+* ChGetScreenDPI -- converts screen resolution into
+* dot-per-inch in centimetre
+* @param canv -- Pointer to canvas
+*/
+XE_EXTERN XE_LIB float ChGetScreenDPI(ChCanvas* canv);
+
+/*
+* ChGetScreenAspectRatio -- returns the aspect ration of the
+* screen
+* @param canv -- Pointer to canvas
+*/
+XE_EXTERN XE_LIB int ChGetScreenAspectRatio(ChCanvas* canv);
+
 #endif

@@ -34,7 +34,10 @@
 #include <sys\iocodes.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 #include "_fastcpy.h"
+
+extern "C" int _fltused = 1;
 
 int ChPrintLibName() {
 	_KePrint("Chitralekha Graphics Library v1.0 \n");
@@ -160,4 +163,35 @@ void ChCanvasFill(ChCanvas* canvas, uint32_t w, uint32_t h, uint32_t color) {
 	for (int i = 0; i < w; i++)
 	for (int j = 0; j < h; j++)
 		ChDrawPixel(canvas, 0 + i, 0 + j, color);
+}
+
+
+/*
+ * ChGetScreenDiagonal -- get screen diagonal using
+ * pythagorean theorem in centimetre 
+ * @param canv -- Pointer to canvas
+ */
+float ChGetScreenDiagonal(ChCanvas* canv) {
+	float diagonal = sqrtf(canv->screenWidth * canv->screenWidth + canv->screenHeight * canv->screenHeight);
+	return diagonal;
+}
+
+/*
+ * ChGetScreenDPI -- converts screen resolution into 
+ * dot-per-inch in centimetre
+ * @param canv -- Pointer to canvas
+ */
+float ChGetScreenDPI(ChCanvas* canv) {
+	float dpi = sqrtf(canv->screenWidth * canv->screenWidth + canv->screenHeight * canv->screenHeight) / ChGetScreenDiagonal(canv);
+	return dpi;
+}
+
+/*
+ * ChGetScreenAspectRatio -- returns the aspect ration of the
+ * screen
+ * @param canv -- Pointer to canvas
+ */
+int ChGetScreenAspectRatio(ChCanvas* canv) {
+	int ar = canv->screenWidth / canv->screenHeight;
+	return ar;
 }

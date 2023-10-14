@@ -8,11 +8,13 @@
     <ClInclude Include="ttf.h" />
     <ClInclude Include="nanojpg.h" />
     <ClInclude Include="image.h" />
+    <ClInclude Include="draw.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="chitralekha.cpp" />
     <ClCompile Include="font.cpp" />
     <ClCompile Include="ttf.cpp" />
+    <ClCompile Include="draw.cpp" />
   </ItemGroup>
   <ItemGroup>
     <NASM Include="_fastcpy.asm" />

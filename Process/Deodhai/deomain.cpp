@@ -202,8 +202,11 @@ int main(int argc, char* arv[]) {
 	arrow = CursorOpen("/pointer.bmp", CURSOR_TYPE_POINTER);
 	CursorRead(arrow);
 
-	ChFont* font = ChInitialiseFont(ROBOTO_LIGHT);
+	ChFont* font = ChInitialiseFont(canv,FORTE);
+	ChFontDrawText(canv, font, "Hengdange Xahokh Aani dibo", screen_w / 2, screen_h / 2, 32, WHITE);
 
+	ChFont* font2 = ChInitialiseFont(canv, CALIBRI);
+	ChFontDrawText(canv, font2, "Hengdange Xahokh Aani dibo", screen_w / 2, screen_h / 2 + 100, 32, WHITE);
 	/* Open all required device file */
 	mouse_fd = _KeOpenFile("/dev/mice", FILE_OPEN_READ_ONLY);
 	AuInputMessage mice_input;
