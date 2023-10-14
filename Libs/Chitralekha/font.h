@@ -67,6 +67,13 @@ typedef struct _ch_font_ {
 XE_EXTERN XE_LIB ChFont *ChInitialiseFont(ChCanvas* canv,char* fontname);
 
 /*
+* ChFontSetSize -- set a font size
+* @param font -- Pointer to font
+* @param size -- size of the font
+*/
+XE_EXTERN XE_LIB void ChFontSetSize(ChFont* font, int size);
+
+/*
 * ChFontDrawText -- draws a text using desired font
 * @param canv -- Pointer to canvas
 * @param font -- Pointer to font
@@ -77,5 +84,21 @@ XE_EXTERN XE_LIB ChFont *ChInitialiseFont(ChCanvas* canv,char* fontname);
 * @param color -- color of the font
 */
 XE_EXTERN XE_LIB void ChFontDrawText(ChCanvas *canv, ChFont* font, char* string, int penx, int peny, uint32_t sz, uint32_t color);
+
+/*
+* ChFontGetWidth -- return the total width of font in
+* pixel size
+* @param font -- Pointer to font
+* @param string -- total string
+*/
+XE_EXTERN XE_LIB int ChFontGetWidth(ChFont* font, char* string);
+
+/*
+* ChFontGetHeight -- return the total height of font
+* in pixel size
+* @param font -- Pointer to font
+* @param string -- total string
+*/
+XE_EXTERN XE_LIB int ChFontGetHeight(ChFont* font, char* string);
 
 #endif

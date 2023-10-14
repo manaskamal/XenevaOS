@@ -43,7 +43,6 @@
  */
 ChFont *ChInitialiseFont(ChCanvas *canv,char* fontname) {
 	int id = _KeGetFontID(fontname);
-	_KePrint("Font ID for fontname ->%s %d \r\n", fontname, id);
 	if (id == 0)
 		return NULL;
 	void* buff = _KeObtainSharedMem(id, NULL, 0);
@@ -58,7 +57,7 @@ ChFont *ChInitialiseFont(ChCanvas *canv,char* fontname) {
 	memset(font, 0, sizeof(ChFont));
 	font->buffer = (uint8_t*)buff;
 	font->fileSz = fileSz;
-	font->fontSz = 32;
+	font->fontSz = 32 / 72.f * 96;
 
 #ifdef _USE_FREETYPE
 	FT_Error err = 0;
@@ -70,6 +69,16 @@ ChFont *ChInitialiseFont(ChCanvas *canv,char* fontname) {
 	/* start decoding true type font */
 	//TTFLoadFont(canv,font->buffer);
 	return font;
+}
+
+/*
+ * ChFontSetSize -- set a font size
+ * @param font -- Pointer to font
+ * @param size -- size of the font
+ */
+void ChFontSetSize(ChFont* font, int size) {
+	font->fontSz = size / 72.f * 96;
+	FT_Set_Pixel_Sizes(font->face, 0, font->fontSz);
 }
 
 /*
@@ -107,8 +116,13 @@ void ChFontDrawText(ChCanvas *canv, ChFont* font, char* string, int penx, int pe
 
 		for (int i = x_v, p = 0; i < x_v + font->face->glyph->bitmap.width; i++, p++) {
 			for (int j = y_v, q = 0; j < y_v + font->face->glyph->bitmap.rows; j++, q++) {
-				if (font->face->glyph->bitmap.buffer[q * font->face->glyph->bitmap.width + p] > 0)
-					canv->buffer[i + j * canv->canvasWidth] = color;
+				if (font->face->glyph->bitmap.buffer[q * font->face->glyph->bitmap.width + p] > 0){
+					double val = font->face->glyph->bitmap.buffer[q * font->face->glyph->bitmap.width + p] * 1.0 / 255;
+					canv->buffer[i + j * canv->canvasWidth] = ChColorAlphaBlend(canv->buffer[i + j * canv->canvasWidth],
+						color, val);
+				}
+				else if (font->face->glyph->bitmap.buffer[q * font->face->glyph->bitmap.width] == 255)
+					_KePrint("255 bitmap found \n");
 			}
 		}
 
@@ -118,4 +132,45 @@ void ChFontDrawText(ChCanvas *canv, ChFont* font, char* string, int penx, int pe
 		string++;
 	}
 #endif
+}
+
+/*
+ * ChFontGetWidth -- return the total width of font in
+ * pixel size
+ * @param font -- Pointer to font
+ * @param string -- total string
+ */
+int ChFontGetWidth(ChFont* font,char* string) {
+	size_t penx = 0;
+	int string_width = 0;
+	FT_Error err = 0;
+	while (*string) {
+		err = FT_Load_Char(font->face, *string, FT_LOAD_ADVANCE_ONLY);
+		if (err)
+			continue;
+		penx += font->face->glyph->advance.x >> 6;
+		string++;
+
+	}
+	return penx;
+}
+
+/*
+ * ChFontGetHeight -- return the total height of font
+ * in pixel size
+ * @param font -- Pointer to font
+ * @param string -- total string
+ */
+int ChFontGetHeight(ChFont* font, char* string) {
+	size_t peny = 0;
+	int string_width = 0;
+	FT_Error err = 0;
+	while (*string) {
+		err = FT_Load_Char(font->face, *string, FT_LOAD_ADVANCE_ONLY);
+		if (err)
+			continue;
+		peny += font->face->glyph->advance.y >> 6;
+		string++;
+	}
+	return peny;
 }

@@ -202,11 +202,13 @@ int main(int argc, char* arv[]) {
 	arrow = CursorOpen("/pointer.bmp", CURSOR_TYPE_POINTER);
 	CursorRead(arrow);
 
-	ChFont* font = ChInitialiseFont(canv,FORTE);
-	ChFontDrawText(canv, font, "Hengdange Xahokh Aani dibo", screen_w / 2, screen_h / 2, 32, WHITE);
+	CursorStoreBack(canv, arrow, 0, 0);
 
-	ChFont* font2 = ChInitialiseFont(canv, CALIBRI);
-	ChFontDrawText(canv, font2, "Hengdange Xahokh Aani dibo", screen_w / 2, screen_h / 2 + 100, 32, WHITE);
+	ChFont* font = ChInitialiseFont(canv,CORBEL);
+	ChFontSetSize(font, 40);
+	ChFontDrawText(canv, font, "Xeneva", screen_w / 2 - ChFontGetWidth(font, "Xeneva") / 2, 
+		screen_h / 2 - ChFontGetHeight(font,"Xeneva") / 2, 32, WHITE);
+
 	/* Open all required device file */
 	mouse_fd = _KeOpenFile("/dev/mice", FILE_OPEN_READ_ONLY);
 	AuInputMessage mice_input;
@@ -255,13 +257,6 @@ int main(int argc, char* arv[]) {
 				_KeCloseFile(song);
 				sleepable = true;
 				sound_finished = true;
-
-				ioctl.uint_1 = screen_w / 2 - 24 / 2;
-				ioctl.uint_2 = screen_h / 2 - 24 / 2;
-				mice_input.xpos = ioctl.uint_1;
-				mice_input.ypos = ioctl.uint_2;
-				CursorStoreBack(canv, arrow, mice_input.xpos, mice_input.ypos);
-				_KeFileIoControl(mouse_fd, MOUSE_IOCODE_SETPOS, &ioctl);
 			}
 		}
 		diff_tick = _KeGetSystemTimerTick();

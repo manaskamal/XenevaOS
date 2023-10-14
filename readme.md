@@ -16,6 +16,9 @@ with hybrid design and the entire operating system is known as _'Xeneva'_.
 7. Intel High Definition Audio
 8. Multiprocessor support (muliprocessor scheduler not ready !!)
 9. Application loader and dynamic library (shared library)
+10. Freetype2 as font rendering engine
+12. Compositing Window Manager called "Deodhai"
+13. Graphics Library known as "Chitralekha"
 
 _And many more coming soon_
 

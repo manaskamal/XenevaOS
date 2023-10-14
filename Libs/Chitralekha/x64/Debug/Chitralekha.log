@@ -1,11 +1,11 @@
-﻿Build started 14-10-2023 ৰাতিপু 11:13:58.
+﻿Build started 14-10-2023 আবেলি 5:58:28.
      1>Project "E:\Xeneva Project\Aurora\Libs\Chitralekha\Chitralekha.vcxproj" on node 2 (Rebuild target(s)).
      1>_NASM:
          _fastcpy.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmpe0ea38b49127433d97a52a9bff86df92.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp9e0ab03f247648d3b4216e3ece9a35a9.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\_fastcpy.obj"  "E:\Xeneva Project\Aurora\Libs\Chitralekha\_fastcpy.asm"
        ClCompile:
-         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /I"E:\os_dev\freetype2-master\freetype2-master\include" /Zi /nologo /W3 /WX- /sdl- /Od /D ARCH_X64 /D YES_DYNAMIC /D DYNAMIC_EXPORTER /D _USE_FREETYPE /D _WINDLL /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt chitralekha.cpp draw.cpp font.cpp ttf.cpp
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /I"E:\os_dev\freetype2-master\freetype2-master\include" /Zi /nologo /W3 /WX- /sdl- /Od /D ARCH_X64 /D YES_DYNAMIC /D DYNAMIC_EXPORTER /D _USE_FREETYPE /D _WINDLL /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt chitralekha.cpp color.cpp draw.cpp font.cpp ttf.cpp
      1>cl : Command line warning D9025: overriding '/sdl-' with '/GS-'
      1>cl : Command line warning D9002: ignoring unknown option '/arch:SSE2'
          ttf.cpp
@@ -15,11 +15,16 @@
      1>ttf.cpp(306): warning C4244: 'argument' : conversion from 'int' to 'float', possible loss of data
          font.cpp
      1>e:\xeneva project\aurora\libs\chitralekha\ttf.h(82): warning C4161: #pragma pack(pop...) : more pops than pushes
-     1>font.cpp(108): warning C4018: '<' : signed/unsigned mismatch
-     1>font.cpp(109): warning C4018: '<' : signed/unsigned mismatch
+     1>font.cpp(60): warning C4244: '=' : conversion from 'float' to 'uint32_t', possible loss of data
+     1>font.cpp(80): warning C4244: '=' : conversion from 'float' to 'uint32_t', possible loss of data
+     1>font.cpp(117): warning C4018: '<' : signed/unsigned mismatch
+     1>font.cpp(118): warning C4018: '<' : signed/unsigned mismatch
+     1>font.cpp(155): warning C4267: 'return' : conversion from 'size_t' to 'int', possible loss of data
+     1>font.cpp(175): warning C4267: 'return' : conversion from 'size_t' to 'int', possible loss of data
          draw.cpp
      1>draw.cpp(41): warning C4018: '<' : signed/unsigned mismatch
      1>draw.cpp(42): warning C4018: '<' : signed/unsigned mismatch
+         color.cpp
          chitralekha.cpp
      1>chitralekha.cpp(127): warning C4018: '<' : signed/unsigned mismatch
      1>chitralekha.cpp(163): warning C4018: '<' : signed/unsigned mismatch
@@ -32,6 +37,7 @@
      1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(1188,5): warning MSB8012: TargetName(Chitralekha) does not match the Linker's OutputFile property value (chlkha). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
        Link:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\link.exe /ERRORREPORT:PROMPT /OUT:"F:\chlkha.dll" /INCREMENTAL /NOLOGO /LIBPATH:"E:\Xeneva Project\Aurora\x64\Debug" /LIBPATH:"E:\os_dev\freetype2-master\freetype2-master\objs" /LIBPATH:"E:\Xeneva Project\Aurora\Libs\XECrt" XEClib.lib ftype.lib xecrt.lib /NODEFAULTLIB /MANIFEST:NO /PDB:"E:\Xeneva Project\Aurora\x64\Debug\Chitralekha.pdb" /MAP /MAPINFO:EXPORTS /SUBSYSTEM:NATIVE /LARGEADDRESSAWARE /Driver /OPT:NOREF /LTCG /TLBID:1 /BASE:"0x0000000000600000" /FIXED /NXCOMPAT /IMPLIB:"E:\Xeneva Project\Aurora\x64\Debug\Chitralekha.lib" /MACHINE:X64 /ALIGN:512 /DLL x64\Debug\chitralekha.obj
+         x64\Debug\color.obj
          x64\Debug\draw.obj
          x64\Debug\font.obj
          x64\Debug\ttf.obj
@@ -44,4 +50,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:03.84
+Time Elapsed 00:00:02.87

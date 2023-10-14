@@ -158,6 +158,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="chitralekha.cpp" />
+    <ClCompile Include="color.cpp" />
     <ClCompile Include="draw.cpp" />
     <ClCompile Include="font.cpp" />
     <ClCompile Include="ttf.cpp" />

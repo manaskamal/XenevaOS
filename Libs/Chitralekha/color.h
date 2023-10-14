@@ -30,6 +30,9 @@
 #ifndef __COLOR_H__
 #define __COLOR_H__
 
+#include <stdint.h>
+#include <_xeneva.h>
+
 //! Color codes
 #define WHITE   0xFFFFFFFF
 #define SILVER  0xFFC0C0C0
@@ -76,5 +79,25 @@
 #define TITLEBAR_DARK  0xFF2F2F2F
 #define LIGHTBLACK    0xFF3E3E3E
 
+#define SET_ALPHA(color,alpha) (((color << 8) >> 8) | ((alpha << 24) & 0xff000000))
+
+#define _RED(color)  ((color & 0x00FF0000) / 0x10000)
+#define _GRE(color)  ((color & 0x0000FF00) / 0x100)
+#define _BLU(color)  ((color & 0x000000FF) / 0x1)
+#define _ALP(color)  ((color & 0xFF000000) / 0x1000000)
+
+#define GET_ALPHA(color)  ((color >> 24) & 0x000000FF)
+#define GET_RED(color)  ((color >> 16) & 0x000000FF)
+#define GET_GREEN(color) ((color >> 8) & 0x000000FF)
+#define GET_BLUE(color)  ((color >> 0) & 0x000000FF)
+
+
+/*
+ * ChColorAlphaBlend -- blend two color
+ * @param color1 -- color 1
+ * @param color2 -- color 2
+ * @param opacity -- opacity of alpha
+ */
+XE_EXTERN XE_LIB  uint32_t ChColorAlphaBlend(uint32_t oldColor, uint32_t color2, double opacity);
 
 #endif
