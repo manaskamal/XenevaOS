@@ -28,6 +28,10 @@
 **/
 
 #include "draw.h"
+#include <stdlib.h>
+#include <math.h>
+
+#define sign(x) ((x < 0) ? -1 : ((x > 0) ? 1 : 0))
 
 /*
  * ChDrawRect -- draw a rectangle 
@@ -65,4 +69,138 @@ void ChDrawVerticalLine(ChCanvas* canv, unsigned x, unsigned y, unsigned len, ui
 */
 void ChDrawHorizontalLine(ChCanvas* canv, unsigned x, unsigned y, unsigned len, uint32_t col) {
 	ChDrawRect(canv, x, y, len, 1, col);
+}
+
+/*
+ * ChDrawRectUnfilled -- draws a unfilled only outlined rectangle
+ * @param canv -- Pointer to canvas
+ * @param x -- X coordinate
+ * @param y -- Y coordinate
+ * @param w -- Width of the rect
+ * @param h -- Height of the rect
+ */
+void ChDrawRectUnfilled(ChCanvas* canv, unsigned x, unsigned y, unsigned w, unsigned h, uint32_t color) {
+	ChDrawHorizontalLine(canv, x, y, w, color);
+	ChDrawVerticalLine(canv, x, y + 1, h - 2, color);
+	ChDrawHorizontalLine(canv, x, y + h - 1, w, color);
+	ChDrawVerticalLine(canv, x + w - 1, y + 1, h - 2, color);
+}
+
+/*
+ * ChDrawFilledCircle -- draws a filled circle
+ * @param canv -- Pointer to canvas
+ * @param x -- X coordinate
+ * @param y -- Y coordinate
+ * @param radius -- radius of the circle
+ * @param fill_col -- color to use while filling
+ */
+void ChDrawFilledCircle(ChCanvas* canv, int x, int y, int radius, uint32_t fill_col) {
+	ChDrawVerticalLine(canv, x, y - radius, 2 * radius + 1, fill_col);
+	int f = 1 - radius;
+	int ddF_x = 1;
+	int ddF_y = -2 * radius;
+	int i = 0;
+	int j = radius;
+
+	while (i < j) {
+		if (f >= 0) {
+			j--;
+			ddF_y += 2;
+			f += ddF_y;
+		}
+		i++;
+		ddF_x += 2;
+		f += ddF_x;
+
+		ChDrawVerticalLine(canv, x + i, y - j, 2 * j + 1, fill_col);
+		ChDrawVerticalLine(canv, x + j, y - i, 2 * i + 1, fill_col);
+		ChDrawVerticalLine(canv, x - i, y - j, 2 * j + 1, fill_col);
+		ChDrawVerticalLine(canv, x - j, y - i, 2 * i + 1, fill_col);
+	}
+}
+
+/*
+ * ChDrawLine -- draws a line
+ * @param canv -- Pointer to canvas
+ * @param x1 -- X coord of point one
+ * @param y1 -- Y coord of point one
+ * @param x2 -- X coord of point two
+ * @param y2 -- Y coord of point two
+ * @param color -- color to use
+ */
+void ChDrawLine(ChCanvas* canv, int x1, int y1, int x2, int y2, uint32_t color) {
+	int dx = x2 - x1;
+	int dy = y2 - y1;
+	int dxabs = abs(dx);
+	int dyabs = abs(dy);
+	int sdx = sign(dx);
+	int sdy = sign(dy);
+	int x = 0;
+	int y = 0;
+	int px = x1;
+	int py = y1;
+
+	ChDrawPixel(canv, px, py, color);
+	if (dxabs >= dyabs) {
+		for (int i = 0; i < dxabs; i++) {
+			y += dyabs;
+			if (y >= dxabs) {
+				y -= dxabs;
+				py += sdy;
+			}
+			px += sdx;
+			ChDrawPixel(canv, px, py, color);
+		}
+	}
+	else {
+		for (int i = 0; i < dyabs; i++) {
+			x += dxabs;
+			if (x >= dyabs){
+				x -= dyabs;
+				px += sdx;
+			}
+			py += sdy;
+			ChDrawPixel(canv, px, py, color);
+		}
+	}
+}
+
+/*
+ * ChDrawCircleUnfilled -- Draws a circle without filling its internal
+ * @param canvas -- Pointer to canvas
+ * @param x -- X coord of the circle
+ * @param y -- Y coord of the circle
+ * @param radius -- radius of the circle
+ * @param color -- outline color
+ */
+void ChDrawCircleUnfilled(ChCanvas * canvas, int x, int y, int radius, uint32_t color) {
+	int f = 1 - radius;
+	int ddF_x = 1;
+	int ddF_y = -2 * radius;
+	int i = 0;
+	int j = radius;
+
+	ChDrawPixel(canvas, x, y + radius, color);
+	ChDrawPixel(canvas, x, y - radius, color);
+	ChDrawPixel(canvas, x + radius, y, color);
+	ChDrawPixel(canvas, x - radius, y, color);
+
+	while (i < j) {
+		if (f >= 0) {
+			j--;
+			ddF_y += 2;
+			f += ddF_y;
+		}
+		i++;
+		ddF_x += 2;
+		f += ddF_x;
+		ChDrawPixel(canvas, x + i, y + j, color);
+		ChDrawPixel(canvas, x - i, y + j, color);
+		ChDrawPixel(canvas, x + i, y - j, color);
+		ChDrawPixel(canvas, x - i, y - j, color);
+		ChDrawPixel(canvas, x + j, y + i, color);
+		ChDrawPixel(canvas, x - j, y + i, color);
+		ChDrawPixel(canvas, x + j, y - i, color);
+		ChDrawPixel(canvas, x - j, y - i, color);
+	}
 }

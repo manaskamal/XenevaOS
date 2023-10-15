@@ -4,10 +4,22 @@
     <ClCompile Include="deomain.cpp" />
     <ClCompile Include="dirty.cpp" />
     <ClCompile Include="cursor.cpp" />
+    <ClCompile Include="window.cpp" />
+    <ClCompile Include="backdirty.cpp" />
+    <ClCompile Include="clip.cpp" />
+    <ClCompile Include="rect.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="deodhai.h" />
     <ClInclude Include="dirty.h" />
     <ClInclude Include="cursor.h" />
+    <ClInclude Include="window.h" />
+    <ClInclude Include="backdirty.h" />
+    <ClInclude Include="_fastcpy.h" />
+    <ClInclude Include="clip.h" />
+    <ClInclude Include="rect.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <NASM Include="_fastcpy.asm" />
   </ItemGroup>
 </Project>

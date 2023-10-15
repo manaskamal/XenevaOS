@@ -45,7 +45,9 @@ ChFont *ChInitialiseFont(ChCanvas *canv,char* fontname) {
 	int id = _KeGetFontID(fontname);
 	if (id == 0)
 		return NULL;
-	void* buff = _KeObtainSharedMem(id, NULL, 0);
+	int _font_id = (id >> 16) & UINT16_MAX;
+	int _font_key = id & UINT16_MAX;
+	void* buff = _KeObtainSharedMem(_font_id, NULL, 0);
 	if (!buff)
 		return NULL;
 
@@ -58,7 +60,7 @@ ChFont *ChInitialiseFont(ChCanvas *canv,char* fontname) {
 	font->buffer = (uint8_t*)buff;
 	font->fileSz = fileSz;
 	font->fontSz = 32 / 72.f * 96;
-
+	font->key = _font_key;
 #ifdef _USE_FREETYPE
 	FT_Error err = 0;
 	err = FT_Init_FreeType(&font->lib);
@@ -173,4 +175,16 @@ int ChFontGetHeight(ChFont* font, char* string) {
 		string++;
 	}
 	return peny;
+}
+
+/*
+ * ChFontClose -- closes an opened font
+ * @param font -- Pointer to font
+ */
+int ChFontClose(ChFont* font) {
+	FT_Done_Face(font->face);
+	FT_Done_FreeType(font->lib);
+	_KeUnmapSharedMem(font->key);
+	free(font);
+	return 0;
 }

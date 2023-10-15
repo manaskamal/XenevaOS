@@ -46,11 +46,14 @@
 #define CALIBRI       "Calibri"
 #define FORTE         "Forte"
 
+/* default font for xeneva */
+#define XENEVA_DEFAULT_FONT  CORBEL
 
 typedef struct _ch_font_ {
 	int fileSz;
 	uint8_t* buffer;
 	uint32_t fontSz;
+	uint16_t key;
 #ifdef _USE_FREETYPE
 	FT_Library lib;
 	FT_Face face;
@@ -100,5 +103,11 @@ XE_EXTERN XE_LIB int ChFontGetWidth(ChFont* font, char* string);
 * @param string -- total string
 */
 XE_EXTERN XE_LIB int ChFontGetHeight(ChFont* font, char* string);
+
+/*
+* ChFontClose -- closes an opened font
+* @param font -- Pointer to font
+*/
+XE_EXTERN XE_LIB int ChFontClose(ChFont* font);
 
 #endif

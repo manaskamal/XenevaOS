@@ -55,7 +55,6 @@ int XELdrLoadObject(XELoaderObject *obj){
 	int file = _KeOpenFile(obj->objname, FILE_OPEN_READ_ONLY);
 	if (file == -1)
 		return 0;
-	_KePrint("Loading obj -> %s \r\n", obj->objname);
 
 	XEFileStatus *stat = (XEFileStatus*)malloc(sizeof(XEFileStatus));
 	memset(stat, 0, sizeof(XEFileStatus));
@@ -221,7 +220,6 @@ int main(int argc, char* argv[]) {
 	XELdrStartProc(mainobj->objname, mainobj);
 	XELdrLoadAllObject();
 
-	_KePrint("Linking dependencies \r\n");
 	/* links all dependencies of libraries*/
 	XELdrLinkDepObject(mainobj);
 

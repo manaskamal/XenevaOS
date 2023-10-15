@@ -1,12 +1,12 @@
-﻿Build started 14-10-2023 ৰাতিপু 10:57:40.
+﻿Build started 15-10-2023 আবেলি 8:54:49.
      1>Project "E:\Xeneva Project\Aurora\XELoader\XELoader.vcxproj" on node 2 (Rebuild target(s)).
      1>_NASM:
          crt0.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp6859180ad46a4aad8fd99469cd00174a.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmpcb3ec813966e4c7dbbe98726f979d18e.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\crt0.obj"  "E:\Xeneva Project\Aurora\XELoader\crt0.asm"
        _NASM:
          fastcpy.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmpb4a538a6cb4c4fb28c517b0888d0cda1.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp31737614ef9d4df194940866b095da32.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\fastcpy.obj"  "E:\Xeneva Project\Aurora\XELoader\fastcpy.asm"
        ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /Zi /nologo /W3 /WX- /sdl /Od /D ARCH_X64 /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt main.cpp pe_.cpp XELdrObject.cpp
@@ -20,23 +20,23 @@
      1>e:\xeneva project\aurora\xeloader\pe_.h(272): warning C4200: nonstandard extension used : zero-sized array in struct/union
                  Cannot generate copy-ctor or copy-assignment operator when UDT contains a zero-sized array
      1>pe_.cpp(93): warning C4018: '<' : signed/unsigned mismatch
-     1>pe_.cpp(156): warning C4018: '<' : signed/unsigned mismatch
-     1>pe_.cpp(193): warning C4244: 'argument' : conversion from 'unsigned __int64' to 'const intptr_t', possible loss of data
-     1>pe_.cpp(227): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
-     1>pe_.cpp(237): warning C4244: 'argument' : conversion from 'unsigned __int64' to 'const intptr_t', possible loss of data
-     1>pe_.cpp(278): warning C4244: 'argument' : conversion from 'unsigned __int64' to 'const intptr_t', possible loss of data
+     1>pe_.cpp(153): warning C4018: '<' : signed/unsigned mismatch
+     1>pe_.cpp(190): warning C4244: 'argument' : conversion from 'unsigned __int64' to 'const intptr_t', possible loss of data
+     1>pe_.cpp(224): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
+     1>pe_.cpp(234): warning C4244: 'argument' : conversion from 'unsigned __int64' to 'const intptr_t', possible loss of data
+     1>pe_.cpp(275): warning C4244: 'argument' : conversion from 'unsigned __int64' to 'const intptr_t', possible loss of data
          main.cpp
      1>e:\xeneva project\aurora\xeloader\pe_.h(272): warning C4200: nonstandard extension used : zero-sized array in struct/union
                  Cannot generate copy-ctor or copy-assignment operator when UDT contains a zero-sized array
+     1>main.cpp(77): warning C4244: 'initializing' : conversion from 'uint64_t' to 'intptr_t', possible loss of data
      1>main.cpp(78): warning C4244: 'initializing' : conversion from 'uint64_t' to 'intptr_t', possible loss of data
-     1>main.cpp(79): warning C4244: 'initializing' : conversion from 'uint64_t' to 'intptr_t', possible loss of data
-     1>main.cpp(95): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
-     1>main.cpp(103): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
-     1>main.cpp(145): warning C4267: '=' : conversion from 'size_t' to 'int', possible loss of data
+     1>main.cpp(94): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
+     1>main.cpp(102): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
+     1>main.cpp(144): warning C4267: '=' : conversion from 'size_t' to 'int', possible loss of data
+     1>main.cpp(149): warning C4244: 'initializing' : conversion from 'uint64_t' to 'intptr_t', possible loss of data
      1>main.cpp(150): warning C4244: 'initializing' : conversion from 'uint64_t' to 'intptr_t', possible loss of data
-     1>main.cpp(151): warning C4244: 'initializing' : conversion from 'uint64_t' to 'intptr_t', possible loss of data
-     1>main.cpp(167): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
-     1>main.cpp(173): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
+     1>main.cpp(166): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
+     1>main.cpp(172): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
          Generating Code...
      1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(1186,5): warning MSB8012: TargetPath(E:\Xeneva Project\Aurora\x64\Debug\XELoader.exe) does not match the Linker's OutputFile property value (F:\xeldr.exe). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
      1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(1188,5): warning MSB8012: TargetName(XELoader) does not match the Linker's OutputFile property value (xeldr). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
@@ -54,4 +54,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:01.12
+Time Elapsed 00:00:16.45

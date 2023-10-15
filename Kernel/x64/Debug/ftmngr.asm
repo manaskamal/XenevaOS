@@ -62,7 +62,7 @@ $pdata$?FontManagerInitialise@@YAXXZ DD imagerel $LN9
 	DD	imagerel $LN9+336
 	DD	imagerel $unwind$?FontManagerInitialise@@YAXXZ
 $pdata$?AuFTMngrGetFontID@@YAHPEAD@Z DD imagerel $LN7
-	DD	imagerel $LN7+94
+	DD	imagerel $LN7+133
 	DD	imagerel $unwind$?AuFTMngrGetFontID@@YAHPEAD@Z
 $pdata$?AuFTMngrGetFontSize@@YAHPEAD@Z DD imagerel $LN7
 	DD	imagerel $LN7+89
@@ -819,13 +819,13 @@ seg$1 = 32
 fontname$ = 64
 ?AuFTMngrGetFontSize@@YAHPEAD@Z PROC			; AuFTMngrGetFontSize
 
-; 255  : int AuFTMngrGetFontSize(char* fontname) {
+; 257  : int AuFTMngrGetFontSize(char* fontname) {
 
 $LN7:
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 56					; 00000038H
 
-; 256  : 	for (FontSeg* seg = firstSeg; seg != NULL; seg = seg->next) {
+; 258  : 	for (FontSeg* seg = firstSeg; seg != NULL; seg = seg->next) {
 
 	mov	rax, QWORD PTR ?firstSeg@@3PEAU_font_seg_@@EA ; firstSeg
 	mov	QWORD PTR seg$1[rsp], rax
@@ -838,7 +838,7 @@ $LN4@AuFTMngrGe:
 	cmp	QWORD PTR seg$1[rsp], 0
 	je	SHORT $LN2@AuFTMngrGe
 
-; 257  : 		if (strcmp(fontname, seg->fontname) == 0) {
+; 259  : 		if (strcmp(fontname, seg->fontname) == 0) {
 
 	mov	rax, QWORD PTR seg$1[rsp]
 	mov	rdx, rax
@@ -847,25 +847,25 @@ $LN4@AuFTMngrGe:
 	test	eax, eax
 	jne	SHORT $LN1@AuFTMngrGe
 
-; 258  : 			return seg->fontFileSz;
+; 260  : 			return seg->fontFileSz;
 
 	mov	rax, QWORD PTR seg$1[rsp]
 	mov	eax, DWORD PTR [rax+40]
 	jmp	SHORT $LN5@AuFTMngrGe
 $LN1@AuFTMngrGe:
 
-; 259  : 		}
-; 260  : 	}
+; 261  : 		}
+; 262  : 	}
 
 	jmp	SHORT $LN3@AuFTMngrGe
 $LN2@AuFTMngrGe:
 
-; 261  : 	return -1;
+; 263  : 	return -1;
 
 	mov	eax, -1
 $LN5@AuFTMngrGe:
 
-; 262  : }
+; 264  : }
 
 	add	rsp, 56					; 00000038H
 	ret	0
@@ -876,11 +876,11 @@ _TEXT	ENDS
 _TEXT	SEGMENT
 ?AuFTMngrGetNumFonts@@YAHXZ PROC			; AuFTMngrGetNumFonts
 
-; 269  : 	return totalSysFonts;
+; 271  : 	return totalSysFonts;
 
 	mov	eax, DWORD PTR ?totalSysFonts@@3HA	; totalSysFonts
 
-; 270  : }
+; 272  : }
 
 	ret	0
 ?AuFTMngrGetNumFonts@@YAHXZ ENDP			; AuFTMngrGetNumFonts
@@ -888,7 +888,8 @@ _TEXT	ENDS
 ; Function compile flags: /Odtpy
 ; File e:\xeneva project\aurora\kernel\ftmngr.cpp
 _TEXT	SEGMENT
-seg$1 = 32
+font_id$ = 32
+seg$1 = 40
 fontname$ = 64
 ?AuFTMngrGetFontID@@YAHPEAD@Z PROC			; AuFTMngrGetFontID
 
@@ -898,7 +899,11 @@ $LN7:
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 56					; 00000038H
 
-; 243  : 	for (FontSeg* seg = firstSeg; seg != NULL; seg = seg->next) {
+; 243  : 	int font_id = 0;
+
+	mov	DWORD PTR font_id$[rsp], 0
+
+; 244  : 	for (FontSeg* seg = firstSeg; seg != NULL; seg = seg->next) {
 
 	mov	rax, QWORD PTR ?firstSeg@@3PEAU_font_seg_@@EA ; firstSeg
 	mov	QWORD PTR seg$1[rsp], rax
@@ -911,7 +916,7 @@ $LN4@AuFTMngrGe:
 	cmp	QWORD PTR seg$1[rsp], 0
 	je	SHORT $LN2@AuFTMngrGe
 
-; 244  : 		if (strcmp(fontname, seg->fontname) == 0) {
+; 245  : 		if (strcmp(fontname, seg->fontname) == 0) {
 
 	mov	rax, QWORD PTR seg$1[rsp]
 	mov	rdx, rax
@@ -920,26 +925,37 @@ $LN4@AuFTMngrGe:
 	test	eax, eax
 	jne	SHORT $LN1@AuFTMngrGe
 
-; 245  : 			return seg->sharedSeg->id;
+; 246  : 			font_id =  (seg->sharedSeg->id << 16) | seg->sharedSeg->key & UINT16_MAX;
 
 	mov	rax, QWORD PTR seg$1[rsp]
 	mov	rax, QWORD PTR [rax+32]
 	movzx	eax, WORD PTR [rax+2]
+	shl	eax, 16
+	mov	rcx, QWORD PTR seg$1[rsp]
+	mov	rcx, QWORD PTR [rcx+32]
+	movzx	ecx, WORD PTR [rcx]
+	and	ecx, 65535				; 0000ffffH
+	or	eax, ecx
+	mov	DWORD PTR font_id$[rsp], eax
+
+; 247  : 			return font_id;
+
+	mov	eax, DWORD PTR font_id$[rsp]
 	jmp	SHORT $LN5@AuFTMngrGe
 $LN1@AuFTMngrGe:
 
-; 246  : 		}
-; 247  : 	}
+; 248  : 		}
+; 249  : 	}
 
 	jmp	SHORT $LN3@AuFTMngrGe
 $LN2@AuFTMngrGe:
 
-; 248  : 	return -1;
+; 250  : 	return -1;
 
 	mov	eax, -1
 $LN5@AuFTMngrGe:
 
-; 249  : }
+; 251  : }
 
 	add	rsp, 56					; 00000038H
 	ret	0

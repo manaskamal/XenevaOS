@@ -153,7 +153,6 @@ void XELdrLoadAllObject() {
 	for (XELoaderObject *obj_ = obj_first; obj_ != NULL; obj_ = obj_->next) {
 		if (obj_->loaded == false)
 			XELdrLoadObject(obj_);
-		_KePrint("Objname -> %s, loadAddr -> %x \r\n", obj_->objname, obj_->load_addr);
 	}
 }
 
@@ -179,7 +178,6 @@ void XELdrLinkDepObject(XELoaderObject *mainobj) {
 }
 
 void XELdrPrintAllObject() {
-	_KePrint("Displaying all loadable objects \r\n");
 	for (XELoaderObject *obj_ = obj_first; obj_ != NULL; obj_ = obj_->next) 
 		_KePrint("Object -> %s \r\n", obj_->objname);
 }

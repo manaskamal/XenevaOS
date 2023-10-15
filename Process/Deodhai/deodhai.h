@@ -33,6 +33,10 @@
 #include <stdint.h>
 
 
+#define DEODHAI_MESSAGE_CREATEWIN  50
+
+#define DEODHAI_REPLY_WINCREATED 150
+
 #pragma pack(push,1)
 typedef struct _rect_ {
 	uint32_t x;

@@ -51,6 +51,7 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\nasm.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
@@ -147,16 +148,33 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="backdirty.cpp" />
+    <ClCompile Include="clip.cpp" />
     <ClCompile Include="cursor.cpp" />
     <ClCompile Include="deomain.cpp" />
     <ClCompile Include="dirty.cpp" />
+    <ClCompile Include="rect.cpp" />
+    <ClCompile Include="window.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="backdirty.h" />
+    <ClInclude Include="clip.h" />
     <ClInclude Include="cursor.h" />
     <ClInclude Include="deodhai.h" />
     <ClInclude Include="dirty.h" />
+    <ClInclude Include="rect.h" />
+    <ClInclude Include="window.h" />
+    <ClInclude Include="_fastcpy.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <NASM Include="_fastcpy.asm">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</DeploymentContent>
+      <FileType>Document</FileType>
+    </NASM>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\nasm.targets" />
   </ImportGroup>
 </Project>

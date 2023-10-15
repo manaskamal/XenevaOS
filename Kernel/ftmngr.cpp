@@ -240,9 +240,11 @@ void FontManagerInitialise() {
  * some system call
  */
 int AuFTMngrGetFontID(char* fontname) {
+	int font_id = 0;
 	for (FontSeg* seg = firstSeg; seg != NULL; seg = seg->next) {
 		if (strcmp(fontname, seg->fontname) == 0) {
-			return seg->sharedSeg->id;
+			font_id =  (seg->sharedSeg->id << 16) | seg->sharedSeg->key & UINT16_MAX;
+			return font_id;
 		}
 	}
 	return -1;
