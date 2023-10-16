@@ -37,6 +37,7 @@
 #include <aurora.h>
 #include <Serv\sysserv.h>
 #include <Drivers\mouse.h>
+#include <Hal\serial.h>
 
 AuVFSNode* mice_;
 AuVFSNode* kybrd_;
@@ -105,9 +106,12 @@ size_t AuDevInputMiceRead(AuVFSNode *fs, AuVFSNode *file, uint64_t* buffer, uint
  * @param arg -- pointer to AuFileIoControl structure
  */
 int AuDevMouseIoControl(AuVFSNode* file, int code, void* arg) {
+	SeTextOut("Mouse ioCtl \r\n");
 	if (!file)
 		return 0;
 	AuFileIOControl *ioctl = (AuFileIOControl*)arg;
+	if (!arg)
+		return 0;
 	if (ioctl->syscall_magic != AURORA_SYSCALL_MAGIC)
 		return 0;
 

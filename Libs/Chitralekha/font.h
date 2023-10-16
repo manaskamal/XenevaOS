@@ -67,7 +67,7 @@ typedef struct _ch_font_ {
 * ChInitialiseFont -- initialise a font by a name
 * @param fontname -- name of the font
 */
-XE_EXTERN XE_LIB ChFont *ChInitialiseFont(ChCanvas* canv,char* fontname);
+XE_EXTERN XE_LIB ChFont *ChInitialiseFont(char* fontname);
 
 /*
 * ChFontSetSize -- set a font size

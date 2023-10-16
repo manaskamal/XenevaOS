@@ -9,6 +9,12 @@
     <ClInclude Include="nanojpg.h" />
     <ClInclude Include="image.h" />
     <ClInclude Include="draw.h" />
+    <ClInclude Include="widgets\base.h">
+      <Filter>widgets</Filter>
+    </ClInclude>
+    <ClInclude Include="widgets\window.h">
+      <Filter>widgets</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="chitralekha.cpp" />
@@ -16,8 +22,25 @@
     <ClCompile Include="ttf.cpp" />
     <ClCompile Include="draw.cpp" />
     <ClCompile Include="color.cpp" />
+    <ClCompile Include="widgets\base.cpp">
+      <Filter>widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="widgets\window.cpp">
+      <Filter>widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="widgets\defaultwindow.cpp">
+      <Filter>widgets\styles</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <NASM Include="_fastcpy.asm" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="widgets">
+      <UniqueIdentifier>{bcfa2074-8cf4-44a2-bb4a-d90f36a1db6e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="widgets\styles">
+      <UniqueIdentifier>{b5b17953-d019-44d0-8c19-c77d99ba6938}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
 </Project>

@@ -228,6 +228,8 @@ int main(int argc, char* argv[]) {
 	 */
 	XELdrLinkAllObject(mainobj);
 
+	XELdrClearObjectList();
+
 	/* register the default signal handler to
 	 * all signal
 	 */

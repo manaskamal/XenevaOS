@@ -34,6 +34,7 @@
 #include "ttf.h"
 #include <sys\_keftmngr.h>
 #include <ft2build.h>
+#include "color.h"
 #include FT_FREETYPE_H
 
 
@@ -41,7 +42,7 @@
  * ChInitialiseFont -- initialise a font by a name
  * @param fontname -- name of the font
  */
-ChFont *ChInitialiseFont(ChCanvas *canv,char* fontname) {
+ChFont *ChInitialiseFont(char* fontname) {
 	int id = _KeGetFontID(fontname);
 	if (id == 0)
 		return NULL;

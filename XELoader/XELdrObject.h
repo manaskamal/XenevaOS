@@ -101,4 +101,9 @@ extern XELoaderObject* XELdrGetObject(const char* name);
 extern void XELdrLinkDepObject(XELoaderObject *mainobj);
 
 extern void XELdrPrintAllObject();
+
+/*
+* clear the object list
+*/
+extern void XELdrClearObjectList();
 #endif

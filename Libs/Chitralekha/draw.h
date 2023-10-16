@@ -34,6 +34,13 @@
 #include "color.h"
 #include <_xeneva.h>
 
+typedef struct _rect_ {
+	int x;
+	int y;
+	int w;
+	int h;
+}ChRect;
+
 /*
 * ChDrawRect -- draw a rectangle
 * @param canvas -- Pointer to canvas

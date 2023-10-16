@@ -42,6 +42,7 @@
 #include "cursor.h"
 #include "nanojpg.h"
 #include "dirty.h"
+#include "color.h"
 #include <font.h>
 #include "window.h"
 #include "_fastcpy.h"
@@ -431,6 +432,42 @@ void ComposeFrame(ChCanvas *canvas) {
 	arrow->oldYPos = arrow->ypos;
 }
 
+/*
+ * DeodhaiSendMouseEvent -- send mouse event to desired window
+ * @param win -- Pointer to window
+ * @param x -- Mouse x location
+ * @param y -- Mouse y location
+ * @param button -- Mouse button state
+ */
+void DeodhaiSendMouseEvent(Window* win, int x, int y, int button){
+	PostEvent e;
+	memset(&e, 0, sizeof(PostEvent));
+	e.type = DEODHAI_REPLY_MOUSE_EVENT;
+	e.dword = x;
+	e.dword2 = y;
+	e.dword3 = button;
+	e.to_id = win->ownerId;
+	e.from_id = POSTBOX_ROOT_ID;
+	_KeFileIoControl(postbox_fd, POSTBOX_PUT_EVENT, &e);
+}
+
+/*
+ * DeodhaiBroadcastMouse -- broadcast mouse event to all window
+ * @param mouse_x -- mouse x location
+ * @param mouse_y -- mouse y location
+ * @param button -- mouse button state
+ */
+void DeodhaiBroadcastMouse(int mouse_x, int mouse_y, int button) {
+	for (Window* win = rootWin; win != NULL; win = win->next){
+		WinSharedInfo* info = (WinSharedInfo*)win->sharedInfo;
+		if (mouse_x >= info->x && (mouse_x < (info->x + info->width)) &&
+			mouse_y >= info->y && (mouse_y < (info->y + info->height))) {
+				//broadcast the mouse message to this window
+				DeodhaiSendMouseEvent(win, mouse_x, mouse_y, button);
+			}
+	}
+}
+
 #pragma pack(push,1)
 typedef struct _jpegh_ {
 	char soi[2];
@@ -532,7 +569,7 @@ int main(int argc, char* arv[]) {
 	surfaceBuffer = (uint32_t*)_KeMemMap(NULL, canv->screenWidth * canv->screenHeight * 4, 0, 0, MEMMAP_NO_FILEDESC, 0);
 	for (int i = 0; i < screen_w; i++)
 	for (int j = 0; j < screen_h; j++)
-		surfaceBuffer[j * canv->canvasWidth + i] = LIGHTBLACK;
+		surfaceBuffer[j * canv->canvasWidth + i] = 0xFF938585;
 
 	DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
 	
@@ -593,6 +630,9 @@ int main(int argc, char* arv[]) {
 			int button = mice_input.button_state;
 
 			DeodhaiWindowCheckDraggable(mice_input.xpos, mice_input.ypos, button);
+
+			if (_window_broadcast_mouse_) 
+				DeodhaiBroadcastMouse(mice_input.xpos, mice_input.ypos, button);
 			
 			/* ensure clipping within the screen */
 			if (arrow->xpos <= 0)
@@ -619,15 +659,9 @@ int main(int argc, char* arv[]) {
 			Window* win = DeodhaiCreateWindow(x, y, w, h, flags, event.from_id, "Test");
 			focusedWin = win;
 
-			WinSharedInfo *shinfo = (WinSharedInfo*)win->sharedInfo;
-			shinfo->rect[shinfo->rect_count].x = 0;
-			shinfo->rect[shinfo->rect_count].y = 0;
-			shinfo->rect[shinfo->rect_count].w = w;
-			shinfo->rect[shinfo->rect_count].h = h;
-			shinfo->rect_count++;
-			shinfo->dirty = true;
 
 			PostEvent e;
+			memset(&e, 0, sizeof(PostEvent));
 			e.type = DEODHAI_REPLY_WINCREATED;
 			e.dword = win->shWinKey;
 			e.dword2 = win->backBufferKey;

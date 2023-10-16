@@ -32,7 +32,6 @@
 
 #include <stdint.h>
 #include <_xeneva.h>
-#include "color.h"
 
 
 typedef struct _ChCanvas_ {

@@ -204,3 +204,56 @@ void ChDrawCircleUnfilled(ChCanvas * canvas, int x, int y, int radius, uint32_t 
 		ChDrawPixel(canvas, x - j, y - i, color);
 	}
 }
+
+
+/**
+* acrylic_box_blur -- Adds box blur filter to a given image using 3x3 matrix kernel
+* @param canvas -- current canvas where to draw
+* @param input -- input image buffer
+* @param output -- output image buffer
+* @param cx -- current x position to focus
+* @param cy -- current y position to focus
+* @param w -- box boundary width
+* @param h -- box boundary height
+*/
+void ChDrawBoxBlur(ChCanvas * canv, uint32_t* inputBuf, uint32_t* outputBuf, int cx, int cy, int w, int h) {
+
+	for (int j = 0; j < h; j++){
+		for (int i = 0; i < w; i++) {
+
+			int redTotal = 0;
+			int greenTotal = 0;
+			int blueTotal = 0;
+			int alphaTotal = 0;
+
+			for (int row = -1; row <= 1; row++) {
+				for (int col = -1; col <= 1; col++) {
+					int currentX = cx + i + col;
+					int currentY = cy + j + row;
+
+					if (currentX >= 0 && currentX < canv->canvasWidth &&
+						currentY >= 0 && currentY < canv->canvasHeight) {
+						uint32_t color = inputBuf[(currentY * canv->canvasWidth + currentX)];
+
+						uint8_t red = GET_RED(color);
+						uint8_t green = GET_GREEN(color);
+						uint8_t blue = GET_BLUE(color);
+						uint8_t alpha = GET_ALPHA(color);
+
+						redTotal += red;
+						greenTotal += green;
+						blueTotal += blue;
+						alphaTotal += alpha;
+					}
+				}
+			}
+
+			uint8_t red = redTotal / 9;
+			uint8_t green = greenTotal / 9;
+			uint8_t blue = blueTotal / 9;
+			uint8_t alpha = alphaTotal / 9;
+
+			outputBuf[(cy + j) * canv->canvasWidth + (cx + i)] = make_col_a(red, green, blue, alpha);
+		}
+	}
+}

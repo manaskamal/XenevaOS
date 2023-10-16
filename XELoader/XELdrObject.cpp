@@ -181,3 +181,12 @@ void XELdrPrintAllObject() {
 	for (XELoaderObject *obj_ = obj_first; obj_ != NULL; obj_ = obj_->next) 
 		_KePrint("Object -> %s \r\n", obj_->objname);
 }
+
+/*
+ * clear the object list
+ */
+void XELdrClearObjectList() {
+	for (XELoaderObject* obj_ = obj_first; obj_ != NULL; obj_ = obj_->next) {
+		XELdrDestroyObject(obj_);
+	}
+}

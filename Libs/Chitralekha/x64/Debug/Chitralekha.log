@@ -1,13 +1,17 @@
-﻿Build started 14-10-2023 আবেলি 9:04:03.
+﻿Build started 16-10-2023 আবেলি 7:17:50.
      1>Project "E:\Xeneva Project\Aurora\Libs\Chitralekha\Chitralekha.vcxproj" on node 2 (Rebuild target(s)).
      1>_NASM:
          _fastcpy.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp4d8896c483e94e9b90a762ba0343bc4f.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp682ff9f9a4c7432abdfa1dd248aa461e.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\_fastcpy.obj"  "E:\Xeneva Project\Aurora\Libs\Chitralekha\_fastcpy.asm"
        ClCompile:
-         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /I"E:\os_dev\freetype2-master\freetype2-master\include" /Zi /nologo /W3 /WX- /sdl- /Od /D ARCH_X64 /D YES_DYNAMIC /D DYNAMIC_EXPORTER /D _USE_FREETYPE /D _WINDLL /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt chitralekha.cpp color.cpp draw.cpp font.cpp ttf.cpp
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /I"E:\os_dev\freetype2-master\freetype2-master\include" /Zi /nologo /W3 /WX- /sdl- /Od /D ARCH_X64 /D YES_DYNAMIC /D DYNAMIC_EXPORTER /D _USE_FREETYPE /D _WINDLL /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt chitralekha.cpp color.cpp draw.cpp font.cpp ttf.cpp widgets\base.cpp widgets\defaultwindow.cpp widgets\window.cpp
      1>cl : Command line warning D9025: overriding '/sdl-' with '/GS-'
      1>cl : Command line warning D9002: ignoring unknown option '/arch:SSE2'
+         window.cpp
+     1>widgets\window.cpp(109): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
+         defaultwindow.cpp
+         base.cpp
          ttf.cpp
      1>e:\xeneva project\aurora\libs\chitralekha\ttf.h(82): warning C4161: #pragma pack(pop...) : more pops than pushes
      1>ttf.cpp(124): warning C4305: '*=' : truncation from 'double' to 'float'
@@ -15,15 +19,17 @@
      1>ttf.cpp(306): warning C4244: 'argument' : conversion from 'int' to 'float', possible loss of data
          font.cpp
      1>e:\xeneva project\aurora\libs\chitralekha\ttf.h(82): warning C4161: #pragma pack(pop...) : more pops than pushes
-     1>font.cpp(62): warning C4244: '=' : conversion from 'float' to 'uint32_t', possible loss of data
-     1>font.cpp(82): warning C4244: '=' : conversion from 'float' to 'uint32_t', possible loss of data
-     1>font.cpp(119): warning C4018: '<' : signed/unsigned mismatch
+     1>font.cpp(63): warning C4244: '=' : conversion from 'float' to 'uint32_t', possible loss of data
+     1>font.cpp(83): warning C4244: '=' : conversion from 'float' to 'uint32_t', possible loss of data
      1>font.cpp(120): warning C4018: '<' : signed/unsigned mismatch
-     1>font.cpp(157): warning C4267: 'return' : conversion from 'size_t' to 'int', possible loss of data
-     1>font.cpp(177): warning C4267: 'return' : conversion from 'size_t' to 'int', possible loss of data
+     1>font.cpp(121): warning C4018: '<' : signed/unsigned mismatch
+     1>font.cpp(158): warning C4267: 'return' : conversion from 'size_t' to 'int', possible loss of data
+     1>font.cpp(178): warning C4267: 'return' : conversion from 'size_t' to 'int', possible loss of data
          draw.cpp
      1>draw.cpp(45): warning C4018: '<' : signed/unsigned mismatch
      1>draw.cpp(46): warning C4018: '<' : signed/unsigned mismatch
+     1>draw.cpp(234): warning C4018: '<' : signed/unsigned mismatch
+     1>draw.cpp(235): warning C4018: '<' : signed/unsigned mismatch
          color.cpp
          chitralekha.cpp
      1>chitralekha.cpp(127): warning C4018: '<' : signed/unsigned mismatch
@@ -41,6 +47,9 @@
          x64\Debug\draw.obj
          x64\Debug\font.obj
          x64\Debug\ttf.obj
+         x64\Debug\base.obj
+         x64\Debug\defaultwindow.obj
+         x64\Debug\window.obj
          x64\Debug\_fastcpy.obj
      1>LINK : warning LNK4075: ignoring '/INCREMENTAL' due to '/LTCG' specification
             Creating library E:\Xeneva Project\Aurora\x64\Debug\Chitralekha.lib and object E:\Xeneva Project\Aurora\x64\Debug\Chitralekha.exp
@@ -50,4 +59,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:01.00
+Time Elapsed 00:00:02.13
