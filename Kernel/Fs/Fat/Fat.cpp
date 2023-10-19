@@ -321,8 +321,6 @@ AuVFSNode* FatLocateSubDir(AuVFSNode* fsys,AuVFSNode* kfile, const char* filenam
 
 
 AuVFSNode* FatLocateDir(AuVFSNode* fsys, const char* dir) {
-	if (_vfs_debug_on)
-		SeTextOut("[FatLocateDir]: Getting file pointer for path -> %s \r\n", dir);
 	AuVFSNode* file = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
 	memset(file, 0, sizeof(AuVFSNode));
 

@@ -38,6 +38,8 @@
 #include <Serv\sysserv.h>
 #include <Drivers\mouse.h>
 #include <Hal\serial.h>
+#include <Hal\x86_64_hal.h>
+
 
 AuVFSNode* mice_;
 AuVFSNode* kybrd_;
@@ -72,6 +74,7 @@ void AuDevWriteMice(AuInputMessage* outmsg) {
 * @param length -- length to read
 */
 size_t AuDevInputMiceWrite(AuVFSNode *fs, AuVFSNode *file, uint64_t* buffer, uint32_t length){
+	x64_cli();
 	if (!file)
 		return 0;
 	if (!buffer)
@@ -89,6 +92,7 @@ size_t AuDevInputMiceWrite(AuVFSNode *fs, AuVFSNode *file, uint64_t* buffer, uin
 * @param length -- length to read
 */
 size_t AuDevInputMiceRead(AuVFSNode *fs, AuVFSNode *file, uint64_t* buffer, uint32_t length){
+	x64_cli();
 	if (!file)
 		return 0;
 	if (!buffer)

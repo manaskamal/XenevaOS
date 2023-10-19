@@ -98,6 +98,7 @@ static void* syscalls[AURORA_MAX_SYSCALL] = {
 	AuFTMngrGetFontID, //27
 	AuFTMngrGetNumFonts, //28
 	AuFTMngrGetFontSize, //29
+	MemMapDirty, //30
 };
 
 

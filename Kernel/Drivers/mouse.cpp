@@ -107,6 +107,7 @@ uint8_t AuPS2MouseRead() {
 }
 
 void PS2MouseHandler(size_t v, void* p) {
+	AuDisableInterrupt();
 	uint8_t status = x64_inportb(MOUSE_STATUS);
 	while ((status & MOUSE_BBIT) && (status & MOUSE_F_BIT)) {
 		int8_t mouse_in = x64_inportb(MOUSE_PORT);
@@ -198,6 +199,7 @@ finish_packet:
 read_next:
 	break;
 }
+	AuEnableInterrupt();
 	AuInterruptEnd(12);
 }
 

@@ -38,6 +38,12 @@
 #include <process.h>
 
 /*
+* SharedMemMapListInitialise -- initialise
+* the shared memory map list
+*/
+extern void SharedMemMapListInitialise();
+
+/*
 * CreateMemMapping -- Create a memory mapping of just memory, file or device
 * @param address -- address from where mapping start, if null, kernel will
 * find by its own
@@ -50,6 +56,14 @@
 extern void* CreateMemMapping(void* address, size_t len, int prot, int flags, int fd,
 	uint64_t offset);
 
+/*
+* MemMapDirty -- dirty update previously allocated memory map
+* @param startingVaddr -- starting address
+* @param len -- length in bytes
+* @param flags -- memory map flags
+* @param prot -- protection flags
+*/
+extern void MemMapDirty(void* startingVaddr, size_t len, int flags, int prot);
 /*
 * UnmapMemMapping -- unmaps a memory mapping
 * @param address -- address from where mapping starts

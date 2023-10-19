@@ -46,6 +46,7 @@ AuSound *_Registered_dev;
 
 AuDSP* dsp_first;
 AuDSP* dsp_last;
+uint8_t* mixbuf;
 
 bool _audio_started_;
 bool _audio_stopped_;
@@ -118,21 +119,26 @@ AuDSP* AuSoundGetDSP(uint16_t id) {
  * system -- called by sound card
  */
 void AuSoundGetBlock(uint64_t *buffer) {
+
 	if (dsp_first == NULL)
+		return;
+	
+	if (mixbuf == NULL)
 		return;
 
 	int16_t* hw_buffer = (int16_t*)buffer;
 
 	for (int i = 0; i < SND_BUFF_SZ / sizeof(int16_t); i++)
 		hw_buffer[i] = 0;
-
-	uint8_t* buff = (uint8_t*)P2V((size_t)AuPmmngrAlloc());
-
+	
 	for (AuDSP* dsp = dsp_first; dsp != NULL; dsp = dsp->next) {
-		for (int i = 0; i < SND_BUFF_SZ; i++)
-			AuCircBufGet(dsp->buffer, buff);
+		uint8_t* mixing_zone = mixbuf;
+		for (int i = 0; i < SND_BUFF_SZ; i++){
+			AuCircBufGet(dsp->buffer, mixing_zone);
+			mixing_zone++;
+		}
 
-		int16_t *data_16 = (int16_t*)buff;
+		int16_t *data_16 = (int16_t*)mixbuf;
 
 		for (int i = 0; i < SND_BUFF_SZ / sizeof(int16_t); i++)
 			data_16[i] /= 2;
@@ -140,7 +146,6 @@ void AuSoundGetBlock(uint64_t *buffer) {
 		for (int i = 0; i < SND_BUFF_SZ / sizeof(int16_t); i++){
 			hw_buffer[i] += data_16[i];
 		}
-
 	}
 
 	for (int i = 0; i < SND_BUFF_SZ / sizeof(int16_t); i++)
@@ -151,7 +156,6 @@ void AuSoundGetBlock(uint64_t *buffer) {
 			AuUnblockThread(dsp->SndThread);
 	}
 
-	AuPmmngrFree((void*)V2P((size_t)buff));
 }
 
 
@@ -225,6 +229,7 @@ int AuSoundIOControl(AuVFSNode* node, int code, void* arg) {
 									AuDSP* dsp = (AuDSP*)kmalloc(sizeof(AuDSP));
 									memset(dsp, 0, sizeof(AuDSP));
 									uint8_t* buffer = (uint8_t*)P2V((size_t)AuPmmngrAlloc());
+									memset(buffer, 0, PAGE_SIZE);
 									dsp->buffer = AuCircBufInitialise(buffer, SND_BUFF_SZ);
 									dsp->_dsp_id = thr->id;
 									dsp->SndThread = thr;
@@ -270,6 +275,8 @@ void AuSoundInitialise() {
 	dsp_last = NULL;
 	_audio_started_ = false;
 	_audio_stopped_ = false;
+	mixbuf = (uint8_t*)P2V((uint64_t)AuPmmngrAlloc());
+	memset(mixbuf, 0, PAGE_SIZE);
 
 	AuDSP* dsp_ = (AuDSP*)kmalloc(sizeof(AuDSP));
 	memset(dsp_, 0, sizeof(AuDSP));

@@ -86,15 +86,14 @@ uint64_t GetProcessHeapMem(size_t sz) {
 	x64_cli();
 	/* check if size is page aligned */
 	if (sz & 0xFFF) {
-		SeTextOut("Returning error heap mem \r\n");
-		for (;;);
-		return -1;
+		SeTextOut("Returning error heap mem -> %d \r\n", sz);
+		//return -1;
+		sz = PAGE_ALIGN(sz);
 	}
 
 	if ((sz % PAGE_SIZE) != 0){
-		SeTextOut("Returning error heap mem \r\n");
-		for (;;);
-		return -1;
+		SeTextOut("Returning error heap mem -> %d \r\n", sz);
+		sz = PAGE_ALIGN(sz);
 	}
 	
 	AuThread* thr = AuGetCurrentThread();

@@ -520,6 +520,21 @@ _KeGetFontSize:
 	  mov rdi, 0
 	  syscall
 	  ret
+
+
+global _KeMemMapDirty
+%ifdef YES_DYNAMIC
+export _KeMemMapDirty
+%endif
+_KeMemMapDirty:
+      xor rax, rax
+	  mov r12, 30
+	  mov r13, rcx
+	  mov r14, rdx
+	  mov r15, r8
+	  mov rdi, r9
+	  syscall
+	  ret
       
       
 

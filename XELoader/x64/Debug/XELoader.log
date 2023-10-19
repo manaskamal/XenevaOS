@@ -1,12 +1,12 @@
-﻿Build started 16-10-2023 আবেলি 6:38:22.
+﻿Build started 19-10-2023 আবেলি 6:45:52.
      1>Project "E:\Xeneva Project\Aurora\XELoader\XELoader.vcxproj" on node 2 (Rebuild target(s)).
      1>_NASM:
          crt0.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmpec56f8c1034c4ab5b1a27b552ce87ee1.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp8724249fd7114cf9a4159357638d7f68.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\crt0.obj"  "E:\Xeneva Project\Aurora\XELoader\crt0.asm"
        _NASM:
          fastcpy.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp221c6dc0e8164b3985ebf58def93225a.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp95ecdcdc62154cf8945e1879ba117494.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\fastcpy.obj"  "E:\Xeneva Project\Aurora\XELoader\fastcpy.asm"
        ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /Zi /nologo /W3 /WX- /sdl /Od /D ARCH_X64 /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt main.cpp pe_.cpp XELdrObject.cpp
@@ -28,15 +28,15 @@
          main.cpp
      1>e:\xeneva project\aurora\xeloader\pe_.h(272): warning C4200: nonstandard extension used : zero-sized array in struct/union
                  Cannot generate copy-ctor or copy-assignment operator when UDT contains a zero-sized array
-     1>main.cpp(77): warning C4244: 'initializing' : conversion from 'uint64_t' to 'intptr_t', possible loss of data
-     1>main.cpp(78): warning C4244: 'initializing' : conversion from 'uint64_t' to 'intptr_t', possible loss of data
-     1>main.cpp(94): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
-     1>main.cpp(102): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
-     1>main.cpp(144): warning C4267: '=' : conversion from 'size_t' to 'int', possible loss of data
-     1>main.cpp(149): warning C4244: 'initializing' : conversion from 'uint64_t' to 'intptr_t', possible loss of data
-     1>main.cpp(150): warning C4244: 'initializing' : conversion from 'uint64_t' to 'intptr_t', possible loss of data
-     1>main.cpp(166): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
-     1>main.cpp(172): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
+     1>main.cpp(79): warning C4244: 'initializing' : conversion from 'uint64_t' to 'intptr_t', possible loss of data
+     1>main.cpp(80): warning C4244: 'initializing' : conversion from 'uint64_t' to 'intptr_t', possible loss of data
+     1>main.cpp(96): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
+     1>main.cpp(104): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
+     1>main.cpp(148): warning C4267: '=' : conversion from 'size_t' to 'int', possible loss of data
+     1>main.cpp(153): warning C4244: 'initializing' : conversion from 'uint64_t' to 'intptr_t', possible loss of data
+     1>main.cpp(154): warning C4244: 'initializing' : conversion from 'uint64_t' to 'intptr_t', possible loss of data
+     1>main.cpp(170): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
+     1>main.cpp(176): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
          Generating Code...
      1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(1186,5): warning MSB8012: TargetPath(E:\Xeneva Project\Aurora\x64\Debug\XELoader.exe) does not match the Linker's OutputFile property value (F:\xeldr.exe). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
      1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(1188,5): warning MSB8012: TargetName(XELoader) does not match the Linker's OutputFile property value (xeldr). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
@@ -54,4 +54,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:29.28
+Time Elapsed 00:00:01.41

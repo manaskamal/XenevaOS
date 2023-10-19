@@ -1,4 +1,4 @@
-﻿Build started 07-10-2023 আবেলি 1:05:46.
+﻿Build started 19-10-2023 আবেলি 6:54:46.
      1>Project "E:\Xeneva Project\Aurora\Drivers\Sound\IntelHDA\IntelHDA.vcxproj" on node 2 (Rebuild target(s)).
      1>ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\BaseHdr" /Zi /nologo /W3 /WX- /Od /Oy /D ARCH_X64 /D USE_APIC /D _WINDLL /D _MBCS /X /Gm /GS- /arch:SSE /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt codec.cpp ihda.cpp sigmatel.cpp stream.cpp widget.cpp
@@ -22,16 +22,16 @@
                  E:\Xeneva Project\Aurora\BaseHdr\va_list.h(56) : see previous definition of 'va_start'
      1>stream.cpp(46): warning C4305: 'argument' : truncation from 'int' to 'uint8_t'
      1>stream.cpp(46): warning C4309: 'argument' : truncation of constant value
-     1>stream.cpp(76): warning C4305: 'argument' : truncation from 'int' to 'uint8_t'
-     1>stream.cpp(76): warning C4309: 'argument' : truncation of constant value
      1>stream.cpp(77): warning C4305: 'argument' : truncation from 'int' to 'uint8_t'
      1>stream.cpp(77): warning C4309: 'argument' : truncation of constant value
-     1>stream.cpp(82): warning C4244: 'argument' : conversion from 'uint64_t' to 'uint32_t', possible loss of data
-     1>stream.cpp(95): warning C4305: 'argument' : truncation from 'int' to 'uint8_t'
-     1>stream.cpp(95): warning C4309: 'argument' : truncation of constant value
-     1>stream.cpp(98): warning C4244: 'argument' : conversion from 'uint64_t' to 'uint32_t', possible loss of data
-     1>stream.cpp(153): warning C4244: 'argument' : conversion from 'uint64_t' to 'uint32_t', possible loss of data
-     1>stream.cpp(169): warning C4244: 'argument' : conversion from 'uint64_t' to 'uint32_t', possible loss of data
+     1>stream.cpp(78): warning C4305: 'argument' : truncation from 'int' to 'uint8_t'
+     1>stream.cpp(78): warning C4309: 'argument' : truncation of constant value
+     1>stream.cpp(83): warning C4244: 'argument' : conversion from 'uint64_t' to 'uint32_t', possible loss of data
+     1>stream.cpp(96): warning C4305: 'argument' : truncation from 'int' to 'uint8_t'
+     1>stream.cpp(96): warning C4309: 'argument' : truncation of constant value
+     1>stream.cpp(99): warning C4244: 'argument' : conversion from 'uint64_t' to 'uint32_t', possible loss of data
+     1>stream.cpp(154): warning C4244: 'argument' : conversion from 'uint64_t' to 'uint32_t', possible loss of data
+     1>stream.cpp(170): warning C4244: 'argument' : conversion from 'uint64_t' to 'uint32_t', possible loss of data
          sigmatel.cpp
      1>E:\Xeneva Project\Aurora\BaseHdr\stdarg.h(54): warning C4005: 'va_start' : macro redefinition
                  E:\Xeneva Project\Aurora\BaseHdr\va_list.h(56) : see previous definition of 'va_start'
@@ -85,4 +85,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:01.60
+Time Elapsed 00:00:01.09

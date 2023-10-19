@@ -37,6 +37,7 @@ typedef struct _XELDR_OBJ_ {
     char* objname;
 	bool loaded;
 	bool linked;
+	uint32_t len;
 	size_t load_addr;
 	size_t entry_addr;
 	_XELDR_OBJ_ *next;

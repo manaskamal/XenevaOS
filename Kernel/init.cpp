@@ -42,6 +42,7 @@
 #include <Hal\serial.h>
 #include <Hal\pcpu.h>
 #include <Mm\kmalloc.h>
+#include <Mm\mmap.h>
 #include <string.h>
 #include <Mm\buddy.h>
 #include <ahci.h>
@@ -93,6 +94,8 @@ void _AuMain(KERNEL_BOOT_INFO *info) {
 
 	/* initialise the shared mem man */
 	AuInitialiseSHMMan();
+
+	SharedMemMapListInitialise();
 
 	/* initialise sound service */
 	AuSoundInitialise();

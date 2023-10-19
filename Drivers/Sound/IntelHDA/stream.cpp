@@ -73,6 +73,7 @@ void HDAInitOutput() {
 	}
 	bdl[j - 1].flags = 1;
 
+
 	_aud_outb_(REG_O0_CTLU, (1 << 4) | (1 << 19));
 	_aud_outb_(REG_O0_CTLL, (1 << 16));
 

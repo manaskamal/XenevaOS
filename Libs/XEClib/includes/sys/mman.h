@@ -34,6 +34,18 @@
 #include <_xeneva.h>
 
 #define MEMMAP_NO_FILEDESC -1
+
+/* memmap -- flags */
+#define PROTECTION_FLAG_READONLY  1<<0
+#define PROTECTION_FLAG_WRITE 1<<1
+#define PROTECTION_FLAG_NO_EXEC  1<<2
+#define PROTECTION_FLAG_NO_CACHE 1<<3
+
+#define MEMMAP_FLAG_SHARED 1<<0
+#define MEMMAP_FLAG_COW  1<<1
+#define MEMMAP_FLAG_PRIVATE  1<<2
+#define MEMMAP_FLAG_DISCARD_FILE_READ 1<<3
+
 /**
 * _KeMemMap -- memory map
 * @param address -- starting address
@@ -80,4 +92,13 @@ XE_EXTERN XE_LIB void _KeUnmapSharedMem(uint16_t key);
  * @param sz -- size in bytes
  */
 XE_EXTERN XE_LIB uint64_t _KeGetProcessHeapMem(size_t sz);
+
+/*
+* _KeMemMapDirty -- dirty update previously allocated memory map
+* @param startAddr -- starting address
+* @param len -- length in bytes
+* @param flags -- memory map flags
+* @param prot -- protection flags
+*/
+XE_EXTERN XE_LIB void _KeMemMapDirty(void* startAddr, size_t len, int flags, int prot);
 #endif

@@ -63,6 +63,8 @@ int XELdrLoadObject(XELoaderObject *obj){
 	uint64_t* buffer = (uint64_t*)_KeMemMap(NULL, 4096, 0, 0, -1, 0);
 	memset(buffer, 0, 4096);
 
+	obj->len += 4096;
+
 	int countbytes = 4096;
 
 	uint64_t* first_ptr = buffer;
@@ -101,6 +103,7 @@ int XELdrLoadObject(XELoaderObject *obj){
 			countbytes += 4096;
 			int bytes = _KeReadFile(file, alloc, 4096);
 			ret_bytes += bytes;
+			obj->len += 4096;
 		}
 
 		if (secthdr[i].VirtualSize > secthdr[i].SizeOfRawData)
@@ -137,6 +140,7 @@ int XELdrStartProc(char* filename, XELoaderObject *obj) {
 
 	uint64_t* buffer = (uint64_t*)_KeMemMap(NULL,4096, 0, 0, -1, 0);
 	memset(buffer, 0, 4096);
+	obj->len += 4096;
 
 	uint64_t* first_ptr = buffer;
 	uint64_t _image_load_base_ = (uint64_t)first_ptr;
@@ -171,6 +175,7 @@ int XELdrStartProc(char* filename, XELoaderObject *obj) {
 					block = alloc;
 				int bytes = _KeReadFile(file, alloc, 4096);
 				ret_bytes += bytes;
+				obj->len += 4096;
 			}
 			if (secthdr[i].VirtualSize > secthdr[i].SizeOfRawData)
 				memset(raw_offset<void*>(block, secthdr[i].SizeOfRawData), 0, secthdr[i].VirtualSize - secthdr[i].SizeOfRawData);
@@ -227,6 +232,7 @@ int main(int argc, char* argv[]) {
 	 * to main object
 	 */
 	XELdrLinkAllObject(mainobj);
+
 
 	XELdrClearObjectList();
 

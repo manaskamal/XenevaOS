@@ -34,6 +34,76 @@
 #include <Hal\x86_64_lowlevel.h>
 #include <_null.h>
 
+
+#define PROTECTION_FLAG_READONLY  1<<0
+#define PROTECTION_FLAG_WRITE 1<<1
+#define PROTECTION_FLAG_NO_EXEC  1<<2
+#define PROTECTION_FLAG_NO_CACHE 1<<3
+
+#define MEMMAP_FLAG_SHARED 1<<0
+#define MEMMAP_FLAG_COW  1<<1
+#define MEMMAP_FLAG_PRIVATE  1<<2
+#define MEMMAP_FLAG_DISCARD_FILE_READ 1<<3
+
+
+#pragma pack(push,1)
+/* shared memory map object */
+typedef struct _sh_memap_object_ {
+	char* objectName;
+	uint8_t flags;
+	uint8_t prot_flags;
+	uint64_t beginPhysicalAddr;
+	uint64_t len;  //length in bytes
+	uint16_t linkCount;
+	uint16_t ownerProc;
+}AuSharedMmapObject;
+#pragma pack(pop)
+
+list_t* shmmaplist;
+
+/*
+ * SharedMemMapListInitialise -- initialise
+ * the shared memory map list
+ */
+void SharedMemMapListInitialise() {
+	shmmaplist = initialize_list();
+}
+
+/*
+ * AuCreateSharedMmapObject -- create a global object
+ */
+AuSharedMmapObject* AuCreateSharedMmapObject(char* name) {
+	AuSharedMmapObject* obj = (AuSharedMmapObject*)kmalloc(sizeof(AuSharedMmapObject));
+	memset(obj, 0, sizeof(AuSharedMmapObject));
+	obj->objectName = (char*)kmalloc(strlen(name));
+	strcpy(obj->objectName, name);
+	obj->linkCount += 1;
+	return obj;
+}
+
+void AuAddSharedMmapObject(AuSharedMmapObject* obj) {
+	list_add(shmmaplist, obj);
+}
+
+void AuRemoveSharedMmapObject(AuSharedMmapObject* obj) {
+	for (int i = 0; i < shmmaplist->pointer; i++){
+		AuSharedMmapObject* obj_ = (AuSharedMmapObject*)list_get_at(shmmaplist, i);
+		if (obj_ == obj)
+			list_remove(shmmaplist, i);
+	}
+	kfree(obj->objectName);
+	kfree(obj);
+}
+
+AuSharedMmapObject* AuSharedMmapObjectFindByName(char* name) {
+	for (int i = 0; i < shmmaplist->pointer; i++){
+		AuSharedMmapObject* obj_ = (AuSharedMmapObject*)list_get_at(shmmaplist, i);
+		if (strcmp(obj_->objectName, name) == 0)
+			return obj_;
+	}
+	return NULL;
+}
+
 /*
  * CreateMemMapping -- Create a memory mapping of just memory, file or device
  * @param address -- address from where mapping start, if null, kernel will
@@ -58,6 +128,11 @@ void* CreateMemMapping(void* address, size_t len, int prot, int flags, int fd,
 	AuProcess* proc = AuProcessFindThread(curr_thr);
 	AuVFSNode *file = NULL;
 	AuVFSNode* fsys = NULL;
+	uint64_t startingPhysAddr = NULL;
+	bool shobj_len_increase = false;
+	bool shobj_new_create = false;
+
+	AuSharedMmapObject* shobj = NULL;
 	if (fd != -1) 
 		file = proc->fds[fd];
 	
@@ -69,6 +144,7 @@ void* CreateMemMapping(void* address, size_t len, int prot, int flags, int fd,
 
 	len = PAGE_ALIGN(len); //simply align the length
 
+
 	if (file) {
 		uint64_t file_block_start = 0;
 		fsys = AuVFSFind("/");
@@ -78,17 +154,113 @@ void* CreateMemMapping(void* address, size_t len, int prot, int flags, int fd,
 			file_block_start = AuVFSGetBlockFor(fsys, file, offset);
 			file->current = file_block_start;
 		}
+
+		if (flags & MEMMAP_FLAG_SHARED) {
+			shobj = AuSharedMmapObjectFindByName(file->filename);
+			/* no shobject found with specified name, so we create
+			 * new one */
+			if (!shobj) {
+				shobj = AuCreateSharedMmapObject(file->filename);
+				shobj->flags = flags;
+				shobj->len = 0;
+				shobj->prot_flags = prot;
+				shobj->ownerProc = proc->proc_id;
+				AuAddSharedMmapObject(shobj);
+				shobj_new_create = true;
+			}
+			/* okay, already there is an shared object with this
+			 * particular name, so check further
+			 */
+			if (shobj) {
+				/* firstly, check if the owner process is accessing,
+				 * then simply we work on the shared object
+				 */
+				if (shobj->ownerProc == proc->proc_id) {
+					shobj_len_increase = true;
+				}
+				else {
+					/* we need to map that object here*/
+					startingPhysAddr = shobj->beginPhysicalAddr;
+				}
+			}
+		}
 	}
 
+	
+
 	for (int i = 0; i < len / PAGE_SIZE; i++) {
-		uint64_t phys = (uint64_t)AuPmmngrAlloc();
-		if (file)
+		uint64_t phys = 0;
+		if (startingPhysAddr && (flags & MEMMAP_FLAG_SHARED))
+			phys = startingPhysAddr + i * PAGE_SIZE;
+		else
+			phys = (uint64_t)AuPmmngrAlloc();
+
+		if (startingPhysAddr == 0 && shobj_new_create)
+			startingPhysAddr = phys;
+
+		if (file && !(flags & MEMMAP_FLAG_DISCARD_FILE_READ)){
+			SeTextOut("mmap reading file \r\n");
 			AuVFSNodeReadBlock(fsys, file, (uint64_t*)phys);
+		}
 		AuMapPage(phys, lookup_addr + i * PAGE_SIZE, X86_64_PAGING_USER);
+		AuVPage *page = AuVmmngrGetPage(lookup_addr + i * PAGE_SIZE, NULL, VIRT_GETPAGE_ONLY_RET);
+
+		/* check for  protection flag */
+		if (prot & PROTECTION_FLAG_READONLY)
+			page->bits.writable = 0;
+		if (prot & PROTECTION_FLAG_NO_EXEC)
+			page->bits.nx = 1;
+		if (prot & PROTECTION_FLAG_NO_CACHE)
+			page->bits.cache_disable = 1;
+		if (prot & PROTECTION_FLAG_READONLY && prot & PROTECTION_FLAG_WRITE)
+			page->bits.writable = 0;
+
+		if (flags & MEMMAP_FLAG_COW)
+			page->bits.cow = 1;
+	}
+
+	/* shared bit should be handled differently */
+	if (flags & MEMMAP_FLAG_SHARED && shobj) {
+		if (shobj_new_create){
+			shobj->beginPhysicalAddr = startingPhysAddr;
+			shobj->len = len;
+			SeTextOut("SHOBJ newly created -> %s \r\n", shobj->objectName);
+		}
+		if (shobj_len_increase)
+			shobj->len += len;
 	}
 
 	proc->proc_mmap_len += len;
 	return (void*)lookup_addr;
+}
+
+/*
+ * MemMapDirty -- dirty update previously allocated memory map
+ * @param startingVaddr -- starting address
+ * @param len -- length in bytes
+ * @param flags -- memory map flags
+ * @param prot -- protection flags
+ */
+void MemMapDirty(void* startingVaddr, size_t len, int flags, int prot) {
+	x64_cli();
+	len = PAGE_ALIGN(len); //simply align the length
+	uint64_t startAddr = (uint64_t)startingVaddr;
+	for (int i = 0; i < len / PAGE_SIZE; i++) {
+		AuVPage *page = AuVmmngrGetPage(startAddr + i * PAGE_SIZE, NULL, VIRT_GETPAGE_ONLY_RET);
+
+		/* check for  protection flag */
+		if (prot & PROTECTION_FLAG_READONLY)
+			page->bits.writable = 0;
+		if (prot & PROTECTION_FLAG_NO_EXEC)
+			page->bits.nx = 1;
+		if (prot & PROTECTION_FLAG_NO_CACHE)
+			page->bits.cache_disable = 1;
+		if (prot & PROTECTION_FLAG_READONLY && prot & PROTECTION_FLAG_WRITE)
+			page->bits.writable = 0;
+
+		if (flags & MEMMAP_FLAG_COW)
+			page->bits.cow = 1;
+	}
 }
 
 
