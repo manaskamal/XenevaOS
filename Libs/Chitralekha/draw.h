@@ -34,13 +34,14 @@
 #include "color.h"
 #include <_xeneva.h>
 
+#pragma pack(push,1)
 typedef struct _rect_ {
-	int x;
-	int y;
-	int w;
-	int h;
+	uint32_t x;
+	uint32_t y;
+	uint32_t w;
+	uint32_t h;
 }ChRect;
-
+#pragma pack(pop)
 /*
 * ChDrawRect -- draw a rectangle
 * @param canvas -- Pointer to canvas

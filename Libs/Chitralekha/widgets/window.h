@@ -39,6 +39,7 @@
 #define CHITRALEKHA_DEFAULT_WIN_WIDTH  400
 #define CHITRALEKHA_DEFAULT_WIN_HEIGHT 300
 
+#pragma pack(push,1)
 typedef struct _ChSharedWin_ {
 	ChRect rect[256];
 	uint32_t rect_count;
@@ -49,7 +50,7 @@ typedef struct _ChSharedWin_ {
 	uint32_t height;
 	bool alpha;
 }ChSharedWinInfo;
-
+#pragma pack(pop)
 
 typedef struct _chwin_ {
 	uint8_t flags;

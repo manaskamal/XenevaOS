@@ -80,6 +80,7 @@ int XELdrLoadObject(XELoaderObject *obj){
 	intptr_t new_addr = _image_load_base_;
 	intptr_t diff = new_addr - original_base;
 
+
 	PSECTION_HEADER secthdr = raw_offset<PSECTION_HEADER>(&nt->OptionalHeader, nt->FileHeader.SizeOfOptionaHeader);
 
 	/*if (nt->OptionalHeader.FileAlignment == 512) {
@@ -232,7 +233,6 @@ int main(int argc, char* argv[]) {
 	 * to main object
 	 */
 	XELdrLinkAllObject(mainobj);
-
 
 	XELdrClearObjectList();
 

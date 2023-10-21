@@ -1,8 +1,8 @@
-﻿Build started 16-10-2023 আবেলি 7:09:19.
+﻿Build started 21-10-2023 ৰাতিপু 9:36:08.
      1>Project "E:\Xeneva Project\Aurora\Process\Deodhai\Deodhai.vcxproj" on node 2 (Rebuild target(s)).
      1>_NASM:
          _fastcpy.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp859ea49992884d21ab50f47d4a71b799.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp4eeaae3ce558461e83d06bedb3bd1b76.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\_fastcpy.obj"  "E:\Xeneva Project\Aurora\Process\Deodhai\_fastcpy.asm"
        ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /I"E:\Xeneva Project\Aurora\Libs\Chitralekha" /I"E:\os_dev\freetype2-master\freetype2-master\include" /Zi /nologo /W4 /WX- /sdl- /MP /Od /Oy /D ARCH_X64 /D YES_DYNAMIC /D DYNAMIC_IMPORTER /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt backdirty.cpp clip.cpp cursor.cpp deomain.cpp dirty.cpp rect.cpp window.cpp
@@ -56,27 +56,27 @@
      1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(523): warning C4127: conditional expression is constant
      1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(551): warning C4127: conditional expression is constant
      1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(585): warning C4127: conditional expression is constant
-     1>deomain.cpp(119): warning C4189: 'lfb' : local variable is initialized but not referenced
-     1>deomain.cpp(190): warning C4018: '<' : signed/unsigned mismatch
-     1>deomain.cpp(191): warning C4018: '<' : signed/unsigned mismatch
-     1>deomain.cpp(207): warning C4189: 'winInfo' : local variable is initialized but not referenced
-     1>deomain.cpp(246): warning C4018: '<' : signed/unsigned mismatch
-     1>deomain.cpp(263): warning C4018: '<' : signed/unsigned mismatch
-     1>deomain.cpp(275): warning C4018: '>=' : signed/unsigned mismatch
+     1>deomain.cpp(121): warning C4189: 'lfb' : local variable is initialized but not referenced
+     1>deomain.cpp(192): warning C4018: '<' : signed/unsigned mismatch
+     1>deomain.cpp(193): warning C4018: '<' : signed/unsigned mismatch
+     1>deomain.cpp(209): warning C4189: 'winInfo' : local variable is initialized but not referenced
+     1>deomain.cpp(251): warning C4018: '<' : signed/unsigned mismatch
+     1>deomain.cpp(266): warning C4018: '<' : signed/unsigned mismatch
      1>deomain.cpp(278): warning C4018: '>=' : signed/unsigned mismatch
-     1>deomain.cpp(324): warning C4018: '>=' : signed/unsigned mismatch
-     1>deomain.cpp(326): warning C4018: '>=' : signed/unsigned mismatch
-     1>deomain.cpp(409): warning C4018: '>=' : signed/unsigned mismatch
-     1>deomain.cpp(411): warning C4018: '>=' : signed/unsigned mismatch
-     1>deomain.cpp(463): warning C4018: '<' : signed/unsigned mismatch
-     1>deomain.cpp(464): warning C4018: '<' : signed/unsigned mismatch
-     1>deomain.cpp(501): warning C4267: 'argument' : conversion from 'size_t' to 'uint32_t', possible loss of data
-     1>deomain.cpp(618): warning C4127: conditional expression is constant
-     1>deomain.cpp(644): warning C4018: '>=' : signed/unsigned mismatch
-     1>deomain.cpp(646): warning C4018: '>=' : signed/unsigned mismatch
-     1>deomain.cpp(657): warning C4244: 'initializing' : conversion from 'uint32_t' to 'uint8_t', possible loss of data
-     1>deomain.cpp(532): warning C4100: 'arv' : unreferenced formal parameter
-     1>deomain.cpp(532): warning C4100: 'argc' : unreferenced formal parameter
+     1>deomain.cpp(281): warning C4018: '>=' : signed/unsigned mismatch
+     1>deomain.cpp(327): warning C4018: '>=' : signed/unsigned mismatch
+     1>deomain.cpp(329): warning C4018: '>=' : signed/unsigned mismatch
+     1>deomain.cpp(414): warning C4018: '>=' : signed/unsigned mismatch
+     1>deomain.cpp(416): warning C4018: '>=' : signed/unsigned mismatch
+     1>deomain.cpp(476): warning C4018: '<' : signed/unsigned mismatch
+     1>deomain.cpp(477): warning C4018: '<' : signed/unsigned mismatch
+     1>deomain.cpp(514): warning C4267: 'argument' : conversion from 'size_t' to 'uint32_t', possible loss of data
+     1>deomain.cpp(614): warning C4127: conditional expression is constant
+     1>deomain.cpp(639): warning C4018: '>=' : signed/unsigned mismatch
+     1>deomain.cpp(641): warning C4018: '>=' : signed/unsigned mismatch
+     1>deomain.cpp(654): warning C4244: 'initializing' : conversion from 'uint32_t' to 'uint8_t', possible loss of data
+     1>deomain.cpp(545): warning C4100: 'arv' : unreferenced formal parameter
+     1>deomain.cpp(545): warning C4100: 'argc' : unreferenced formal parameter
          cursor.cpp
      1>cursor.cpp(96): warning C4018: '<' : signed/unsigned mismatch
      1>cursor.cpp(100): warning C4018: '<' : signed/unsigned mismatch
@@ -91,7 +91,7 @@
      1>e:\xeneva project\aurora\libs\chitralekha\nanojpg.h(353): warning C4706: assignment within conditional expression
      1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(1186,5): warning MSB8012: TargetPath(E:\Xeneva Project\Aurora\x64\Debug\Deodhai.exe) does not match the Linker's OutputFile property value (F:\deodhai.exe). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
        Link:
-         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\link.exe /ERRORREPORT:PROMPT /OUT:"F:\deodhai.exe" /INCREMENTAL /NOLOGO /LIBPATH:"E:\Xeneva Project\Aurora\x64\Debug" /LIBPATH:"E:\Xeneva Project\Aurora\Libs\XECrt" XEClib.lib xecrt.lib Chitralekha.lib ftype.lib /NODEFAULTLIB /MANIFEST:NO /PDB:"E:\Xeneva Project\Aurora\x64\Debug\Deodhai.pdb" /MAP /MAPINFO:EXPORTS /SUBSYSTEM:NATIVE /LARGEADDRESSAWARE /Driver /OPT:NOREF /LTCG /TLBID:1 /ENTRY:"_xemain" /BASE:"0x0000000000600000" /FIXED:NO /IMPLIB:"E:\Xeneva Project\Aurora\x64\Debug\Deodhai.lib" /MACHINE:X64 /ALIGN:512 x64\Debug\backdirty.obj
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\link.exe /ERRORREPORT:PROMPT /OUT:"F:\deodhai.exe" /INCREMENTAL /NOLOGO /LIBPATH:"E:\Xeneva Project\Aurora\x64\Debug" /LIBPATH:"E:\Xeneva Project\Aurora\Libs\XECrt" XEClib.lib xecrt.lib Chitralekha.lib ftype.lib /NODEFAULTLIB /MANIFEST:NO /PDB:"E:\Xeneva Project\Aurora\x64\Debug\Deodhai.pdb" /MAP /MAPINFO:EXPORTS /SUBSYSTEM:NATIVE /LARGEADDRESSAWARE /Driver /OPT:NOREF /LTCG /TLBID:1 /ENTRY:"_xemain" /BASE:"0x00000000c0000000" /FIXED:NO /IMPLIB:"E:\Xeneva Project\Aurora\x64\Debug\Deodhai.lib" /MACHINE:X64 /ALIGN:512 x64\Debug\backdirty.obj
          x64\Debug\clip.obj
          x64\Debug\cursor.obj
          x64\Debug\deomain.obj
@@ -106,4 +106,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:01.29
+Time Elapsed 00:00:01.69

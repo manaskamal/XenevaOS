@@ -25,8 +25,8 @@ PUBLIC	?AuPS2MouseRead@@YAEXZ				; AuPS2MouseRead
 PUBLIC	?PS2MouseHandler@@YAX_KPEAX@Z			; PS2MouseHandler
 EXTRN	AuHalRegisterIRQ:PROC
 EXTRN	AuInterruptEnd:PROC
-EXTRN	AuDisableInterrupt:PROC
-EXTRN	AuEnableInterrupt:PROC
+EXTRN	x64_cli:PROC
+EXTRN	x64_sti:PROC
 EXTRN	x64_inportb:PROC
 EXTRN	x64_outportb:PROC
 EXTRN	kmalloc:PROC
@@ -89,9 +89,9 @@ $LN29:
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 88					; 00000058H
 
-; 110  : 	AuDisableInterrupt();
+; 110  : 	x64_cli();
 
-	call	AuDisableInterrupt
+	call	x64_cli
 
 ; 111  : 	uint8_t status = x64_inportb(MOUSE_STATUS);
 
@@ -582,9 +582,9 @@ $read_next$31:
 	jmp	$LN26@PS2MouseHa
 $LN25@PS2MouseHa:
 
-; 202  : 	AuEnableInterrupt();
+; 202  : 	x64_sti();
 
-	call	AuEnableInterrupt
+	call	x64_sti
 
 ; 203  : 	AuInterruptEnd(12);
 

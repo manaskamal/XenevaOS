@@ -38,6 +38,7 @@
 #define WINDOW_FLAG_ALWAYS_ON_TOP  (1<<2)
 #define WINDOW_FLAG_NON_RESIZABLE  (1<<3)
 
+#pragma pack(push,1)
 typedef struct _win_info_ {
 	Rect rect[256];
 	uint32_t rect_count;
@@ -48,6 +49,7 @@ typedef struct _win_info_ {
 	uint32_t height;
 	bool alpha;
 }WinSharedInfo;
+#pragma pack(pop)
 
 typedef struct _win_ {
 	uint8_t flags;

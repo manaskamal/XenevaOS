@@ -52,7 +52,7 @@ void InitialiseDirtyClipList() {
  * @param h -- height of the rect
  */
 void AddDirtyClip(int x, int y, int w, int h) {
-	if (_dirty_count >= 512)
+	if (_dirty_count >= 511)
 		_dirty_count = 0;
 	dirtyRect[_dirty_count].x = x;
 	dirtyRect[_dirty_count].y = y;

@@ -179,7 +179,7 @@ void XELdrLinkDepObject(XELoaderObject *mainobj) {
 
 void XELdrPrintAllObject() {
 	for (XELoaderObject *obj_ = obj_first; obj_ != NULL; obj_ = obj_->next) 
-		_KePrint("Object -> %s \r\n", obj_->objname);
+		_KePrint("Object -> %s load_addr -> %x \r\n", obj_->objname, obj_->load_addr);
 }
 
 /*

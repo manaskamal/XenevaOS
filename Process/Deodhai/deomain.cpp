@@ -57,6 +57,7 @@ int lastMouseButton;
 uint32_t* CursorBack;
 bool _window_update_all_;
 bool _window_broadcast_mouse_;
+bool _cursor_update_;
 Window* focusedWin;
 Window* focusedLast;
 Window* topWin;
@@ -72,6 +73,7 @@ uint32_t* surfaceBuffer;
  */
 void DeodhaiInitialiseData() {
 	_window_update_all_ = false;
+	_cursor_update_ = false;
 	_window_broadcast_mouse_ = false;
 	focusedWin = focusedLast = topWin = dragWin = NULL;
 	reszWin = rootWin = lastWin = NULL;
@@ -237,8 +239,11 @@ void CursorDrawBack(ChCanvas* canv,Cursor* cur, unsigned x, unsigned y) {
  * @param canvas -- Pointer to canvas data structure
  */
 void ComposeFrame(ChCanvas *canvas) {
-	CursorDrawBack(canvas,arrow,arrow->oldXPos, arrow->oldYPos);
-	AddDirtyClip(arrow->oldXPos, arrow->oldYPos, 24, 24);
+
+	if (_cursor_update_){
+		CursorDrawBack(canvas, arrow, arrow->oldXPos, arrow->oldYPos);
+		AddDirtyClip(arrow->oldXPos, arrow->oldYPos, 24, 24);
+	}
 	
 	/* here we redraw all dirty surface area*/
 	if (BackDirtyGetDirtyCount() > 0) {
@@ -253,8 +258,6 @@ void ComposeFrame(ChCanvas *canvas) {
 
 	for (Window* win = rootWin; win != NULL; win = win->next) {
 		WinSharedInfo* info = (WinSharedInfo*)win->sharedInfo;
-		if (win != NULL)
-			_window_update_all_ = true;
 
 		/*
 		 * Check for small area updates !! not entire window 
@@ -335,6 +338,8 @@ void ComposeFrame(ChCanvas *canvas) {
 				}
 				clipCount = 0;
 			}
+			info->rect_count = 0;
+			info->dirty = 0;
 		}
 
 
@@ -417,19 +422,27 @@ void ComposeFrame(ChCanvas *canvas) {
 
 			if (focusedWin == win)
 				AddDirtyClip(winx, winy, width, height);
-			info->rect_count = 0;
-			info->dirty = 0;
 		}
 	}
-	CursorStoreBack(canvas, arrow,arrow->xpos, arrow->ypos);
-	
-	CursorDraw(canvas, arrow, arrow->xpos, arrow->ypos);
-	AddDirtyClip(arrow->xpos, arrow->ypos, 24, 24);
+
+	if (_cursor_update_){
+		CursorStoreBack(canvas, arrow, arrow->xpos, arrow->ypos);
+
+		CursorDraw(canvas, arrow, arrow->xpos, arrow->ypos);
+		AddDirtyClip(arrow->xpos, arrow->ypos, 24, 24);
+	}
 
 	/* finally present all updates to framebuffer */
 	DirtyScreenUpdate(canvas);
-	arrow->oldXPos = arrow->xpos;
-	arrow->oldYPos = arrow->ypos;
+
+	if (_window_update_all_)
+		_window_update_all_ = false;
+
+	if (_cursor_update_) {
+		arrow->oldXPos = arrow->xpos;
+		arrow->oldYPos = arrow->ypos;
+		_cursor_update_ = false;
+	}
 }
 
 /*
@@ -572,26 +585,8 @@ int main(int argc, char* arv[]) {
 		surfaceBuffer[j * canv->canvasWidth + i] = 0xFF938585;
 
 	DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
-	
+	DrawWallpaper(canv, "/assam.jpg");
 	ChCanvasScreenUpdate(canv, 0, 0, canv->canvasWidth, canv->canvasHeight);
-
-	/* just for impression, play the startup sound */
-	int snd = _KeOpenFile("/dev/sound", FILE_OPEN_WRITE);
-	XEFileIOControl ioctl;
-	memset(&ioctl, 0, sizeof(XEFileIOControl));
-	ioctl.uint_1 = 10;
-	ioctl.syscall_magic = AURORA_SYSCALL_MAGIC;
-	_KeFileIoControl(snd, SOUND_REGISTER_SNDPLR, &ioctl);
-	
-	int song = _KeOpenFile("/snd.wav", FILE_OPEN_READ_ONLY);
-	void* songbuf = malloc(4096);
-	memset(songbuf, 0, 4096);
-	_KeReadFile(song, songbuf, 4096);
-	XEFileStatus fs;
-	_KeFileStat(song, &fs);
-
-	bool sleepable = false;
-	bool sound_finished = false;
 
 	InitialiseDirtyClipList();
 
@@ -599,6 +594,7 @@ int main(int argc, char* arv[]) {
 	CursorRead(arrow);
 
 	CursorStoreBack(canv, arrow, 0, 0);
+	_cursor_update_ = true;
 
 	/* Open all required device file */
 	mouse_fd = _KeOpenFile("/dev/mice", FILE_OPEN_READ_ONLY);
@@ -620,10 +616,9 @@ int main(int argc, char* arv[]) {
 		_KeFileIoControl(postbox_fd, POSTBOX_GET_EVENT_ROOT, &event);
 		frame_tick = _KeGetSystemTimerTick();
 
-		if (sleepable) {
-			_KeReadFile(mouse_fd, &mice_input, sizeof(AuInputMessage));
-			ComposeFrame(canv);
-		}
+		_KeReadFile(mouse_fd, &mice_input, sizeof(AuInputMessage));
+		ComposeFrame(canv);
+		
 		if (mice_input.type == AU_INPUT_MOUSE) {
 			arrow->xpos = mice_input.xpos;
 			arrow->ypos = mice_input.ypos;
@@ -646,6 +641,8 @@ int main(int argc, char* arv[]) {
 			if (arrow->ypos + arrow->height >= screen_h)
 				arrow->ypos = screen_h - arrow->height;
 			
+			_cursor_update_ = true;
+
 			memset(&mice_input, 0, sizeof(AuInputMessage));
 		}
 
@@ -671,26 +668,14 @@ int main(int argc, char* arv[]) {
 			memset(&event, 0, sizeof(PostEvent));
 
 		}
-		if (!sound_finished) {
-			_KeWriteFile(snd, songbuf, 4096);
-			_KeReadFile(song, songbuf, 4096);
-			_KeFileStat(song, &fs);
-			if (fs.eof) {
-				_KeCloseFile(song);
-				sleepable = true;
-				sound_finished = true;
-			}
-		}
+		
 		diff_tick = _KeGetSystemTimerTick();
 		uint64_t delta = diff_tick - frame_tick;
-		if (sleepable) {
-			/* i think, sleeping time must be based on 10ms,
-			 * so 16ms would be 10ms + 6 */
-			if (delta < 1000 / 60) {
-				_KeProcessSleep(1000/ 60 - delta);
-			}
-			
-			
+		/* i think, sleeping time must be based on 10ms,
+		 * so 16ms would be 10ms + 6 */
+		if (delta < 1000 / 60) {
+			_KeProcessSleep(1000/ 60 - delta);
 		}
+			
 	}
 }

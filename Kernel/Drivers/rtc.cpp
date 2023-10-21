@@ -82,11 +82,13 @@ void AuRTCReadDateTime() {
 }
 
 void AuRTCClockUpdate(size_t v, void* p) {
-	
+	AuDisableInterrupt();
+
 	bool ready = AuRTCGetRegister(0x0C) & 0x10;
 	if (ready)
 		AuRTCReadDateTime();
 
+	AuEnableInterrupt();
 	AuInterruptEnd(8);
 }
 

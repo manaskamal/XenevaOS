@@ -505,7 +505,7 @@ $LN2@AuAPICInit:
 
 	call	?IOWait@@YAXXZ				; IOWait
 
-; 191  : 	WriteAPICRegister(LAPIC_REGISTER_TMRINITCNT,(target/100));  //123456
+; 191  : 	WriteAPICRegister(LAPIC_REGISTER_TMRINITCNT,(target / 100));  //123456  //
 
 	xor	edx, edx
 	mov	rax, QWORD PTR target$[rsp]

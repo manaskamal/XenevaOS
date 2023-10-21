@@ -36,6 +36,7 @@
 #include <Hal\x86_64_sched.h>
 #include <Fs\vfs.h>
 #include <Fs\dev\devfs.h>
+#include <Hal\x86_64_hal.h>
 #include <Hal\serial.h>
 
 /*
@@ -177,7 +178,6 @@ void PostBoxPutEvent(PostEvent* event) {
  */
 int PostBoxGetEvent(PostEvent* event, bool root, AuThread* curr_thread) {
 	int ret_code = POSTBOX_NO_EVENT;
-
 	uint16_t owner_id = 0;
 	if (root)
 		owner_id = POSTBOX_ROOT_ID;
@@ -207,6 +207,7 @@ int PostBoxGetEvent(PostEvent* event, bool root, AuThread* curr_thread) {
  * @param arg -- extra data
  */
 int PostBoxIOControl(AuVFSNode* file, int code, void* arg) {
+	x64_cli();
 	int ret_code = 1;
 	AuThread* curr_thr = AuGetCurrentThread();
 	if (!curr_thr)

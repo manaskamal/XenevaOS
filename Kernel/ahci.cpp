@@ -55,6 +55,7 @@ static bool __IsAHCI64Bit;
 void* HBABar = NULL;
 
 void AHCIInterruptHandler(size_t v, void* p){
+	AuDisableInterrupt();
 	HBA_MEM* hba = (HBA_MEM*)HBABar;
 	uint32_t is = hba->is;
 	for (int i = 0; i < 32; i++) {
@@ -66,6 +67,7 @@ void AHCIInterruptHandler(size_t v, void* p){
 	}
 
 	hba->is = is;
+	AuEnableInterrupt();
 	AuInterruptEnd(0);
 }
 

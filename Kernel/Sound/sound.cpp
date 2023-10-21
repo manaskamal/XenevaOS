@@ -133,6 +133,7 @@ void AuSoundGetBlock(uint64_t *buffer) {
 	
 	for (AuDSP* dsp = dsp_first; dsp != NULL; dsp = dsp->next) {
 		uint8_t* mixing_zone = mixbuf;
+		memset(mixing_zone, 0, SND_BUFF_SZ);
 		for (int i = 0; i < SND_BUFF_SZ; i++){
 			AuCircBufGet(dsp->buffer, mixing_zone);
 			mixing_zone++;
@@ -148,8 +149,8 @@ void AuSoundGetBlock(uint64_t *buffer) {
 		}
 	}
 
-	for (int i = 0; i < SND_BUFF_SZ / sizeof(int16_t); i++)
-		hw_buffer[i] /= 2;
+	/*for (int i = 0; i < SND_BUFF_SZ / sizeof(int16_t); i++)
+		hw_buffer[i] /= 2;*/
 
 	for (AuDSP *dsp = dsp_first; dsp != NULL; dsp = dsp->next) {
 		if (dsp->SndThread) 

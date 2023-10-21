@@ -33,7 +33,7 @@
 #include <stdint.h>
 #include <_xeneva.h>
 
-
+#pragma pack(push,1)
 typedef struct _ChCanvas_ {
 	int graphics_fd;
 	uint32_t screenWidth;
@@ -47,6 +47,7 @@ typedef struct _ChCanvas_ {
 	size_t   bufferSz;
 	uint32_t* framebuff;
 }ChCanvas;
+#pragma pack(pop)
 
 XE_EXTERN XE_LIB int ChPrintLibName();
 

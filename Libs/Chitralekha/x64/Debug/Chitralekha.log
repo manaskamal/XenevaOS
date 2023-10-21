@@ -1,8 +1,8 @@
-﻿Build started 16-10-2023 আবেলি 7:17:50.
+﻿Build started 21-10-2023 ৰাতিপু 8:27:33.
      1>Project "E:\Xeneva Project\Aurora\Libs\Chitralekha\Chitralekha.vcxproj" on node 2 (Rebuild target(s)).
      1>_NASM:
          _fastcpy.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp682ff9f9a4c7432abdfa1dd248aa461e.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmpfddffb158ec742f294550db8f7c6a8f1.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\_fastcpy.obj"  "E:\Xeneva Project\Aurora\Libs\Chitralekha\_fastcpy.asm"
        ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /I"E:\os_dev\freetype2-master\freetype2-master\include" /Zi /nologo /W3 /WX- /sdl- /Od /D ARCH_X64 /D YES_DYNAMIC /D DYNAMIC_EXPORTER /D _USE_FREETYPE /D _WINDLL /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt chitralekha.cpp color.cpp draw.cpp font.cpp ttf.cpp widgets\base.cpp widgets\defaultwindow.cpp widgets\window.cpp
@@ -59,4 +59,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:02.13
+Time Elapsed 00:00:02.34

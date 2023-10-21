@@ -26,6 +26,8 @@ EXTRN	x64_inportb:PROC
 EXTRN	x64_outportb:PROC
 EXTRN	AuHalRegisterIRQ:PROC
 EXTRN	AuInterruptEnd:PROC
+EXTRN	AuDisableInterrupt:PROC
+EXTRN	AuEnableInterrupt:PROC
 EXTRN	kmalloc:PROC
 EXTRN	memset:PROC
 pdata	SEGMENT
@@ -45,7 +47,7 @@ $pdata$?AuRTCReadDateTime@@YAXXZ DD imagerel $LN6
 	DD	imagerel $LN6+555
 	DD	imagerel $unwind$?AuRTCReadDateTime@@YAXXZ
 $pdata$?AuRTCClockUpdate@@YAX_KPEAX@Z DD imagerel $LN6
-	DD	imagerel $LN6+81
+	DD	imagerel $LN6+91
 	DD	imagerel $unwind$?AuRTCClockUpdate@@YAX_KPEAX@Z
 pdata	ENDS
 xdata	SEGMENT
@@ -78,8 +80,12 @@ $LN6:
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 56					; 00000038H
 
-; 85   : 	
-; 86   : 	bool ready = AuRTCGetRegister(0x0C) & 0x10;
+; 85   : 	AuDisableInterrupt();
+
+	call	AuDisableInterrupt
+
+; 86   : 
+; 87   : 	bool ready = AuRTCGetRegister(0x0C) & 0x10;
 
 	mov	ecx, 12
 	call	?AuRTCGetRegister@@YAEH@Z		; AuRTCGetRegister
@@ -95,24 +101,28 @@ $LN5@AuRTCClock:
 	movzx	eax, BYTE PTR tv69[rsp]
 	mov	BYTE PTR ready$[rsp], al
 
-; 87   : 	if (ready)
+; 88   : 	if (ready)
 
 	movzx	eax, BYTE PTR ready$[rsp]
 	test	eax, eax
 	je	SHORT $LN1@AuRTCClock
 
-; 88   : 		AuRTCReadDateTime();
+; 89   : 		AuRTCReadDateTime();
 
 	call	?AuRTCReadDateTime@@YAXXZ		; AuRTCReadDateTime
 $LN1@AuRTCClock:
 
-; 89   : 
-; 90   : 	AuInterruptEnd(8);
+; 90   : 
+; 91   : 	AuEnableInterrupt();
+
+	call	AuEnableInterrupt
+
+; 92   : 	AuInterruptEnd(8);
 
 	mov	cl, 8
 	call	AuInterruptEnd
 
-; 91   : }
+; 93   : }
 
 	add	rsp, 56					; 00000038H
 	ret	0
@@ -438,12 +448,12 @@ _TEXT	ENDS
 _TEXT	SEGMENT
 AuRTCGetMonth PROC
 
-; 169  : 	return __rtc->month;
+; 171  : 	return __rtc->month;
 
 	mov	rax, QWORD PTR ?__rtc@@3PEAU__rtc__@@EA	; __rtc
 	movzx	eax, BYTE PTR [rax+3]
 
-; 170  : }
+; 172  : }
 
 	ret	0
 AuRTCGetMonth ENDP
@@ -453,12 +463,12 @@ _TEXT	ENDS
 _TEXT	SEGMENT
 AuRTCGetHour PROC
 
-; 161  : 	return __rtc->hour;
+; 163  : 	return __rtc->hour;
 
 	mov	rax, QWORD PTR ?__rtc@@3PEAU__rtc__@@EA	; __rtc
 	movzx	eax, BYTE PTR [rax+5]
 
-; 162  : }
+; 164  : }
 
 	ret	0
 AuRTCGetHour ENDP
@@ -468,12 +478,12 @@ _TEXT	ENDS
 _TEXT	SEGMENT
 AuRTCGetDay PROC
 
-; 153  : 	return __rtc->day;
+; 155  : 	return __rtc->day;
 
 	mov	rax, QWORD PTR ?__rtc@@3PEAU__rtc__@@EA	; __rtc
 	movzx	eax, BYTE PTR [rax+4]
 
-; 154  : }
+; 156  : }
 
 	ret	0
 AuRTCGetDay ENDP
@@ -483,12 +493,12 @@ _TEXT	ENDS
 _TEXT	SEGMENT
 AuRTCGetSecond PROC
 
-; 145  : 	return __rtc->second;
+; 147  : 	return __rtc->second;
 
 	mov	rax, QWORD PTR ?__rtc@@3PEAU__rtc__@@EA	; __rtc
 	movzx	eax, BYTE PTR [rax+7]
 
-; 146  : }
+; 148  : }
 
 	ret	0
 AuRTCGetSecond ENDP
@@ -498,12 +508,12 @@ _TEXT	ENDS
 _TEXT	SEGMENT
 AuRTCGetMinutes PROC
 
-; 137  : 	return __rtc->minute;
+; 139  : 	return __rtc->minute;
 
 	mov	rax, QWORD PTR ?__rtc@@3PEAU__rtc__@@EA	; __rtc
 	movzx	eax, BYTE PTR [rax+6]
 
-; 138  : }
+; 140  : }
 
 	ret	0
 AuRTCGetMinutes ENDP
@@ -513,12 +523,12 @@ _TEXT	ENDS
 _TEXT	SEGMENT
 AuRTCGetCentury PROC
 
-; 129  : 	return __rtc->century;
+; 131  : 	return __rtc->century;
 
 	mov	rax, QWORD PTR ?__rtc@@3PEAU__rtc__@@EA	; __rtc
 	movzx	eax, BYTE PTR [rax+1]
 
-; 130  : }
+; 132  : }
 
 	ret	0
 AuRTCGetCentury ENDP
@@ -528,12 +538,12 @@ _TEXT	ENDS
 _TEXT	SEGMENT
 AuRTCGetYear PROC
 
-; 121  : 	return __rtc->year;
+; 123  : 	return __rtc->year;
 
 	mov	rax, QWORD PTR ?__rtc@@3PEAU__rtc__@@EA	; __rtc
 	movzx	eax, BYTE PTR [rax+2]
 
-; 122  : }
+; 124  : }
 
 	ret	0
 AuRTCGetYear ENDP
@@ -545,56 +555,56 @@ status$ = 32
 tv87 = 36
 ?AuRTCInitialize@@YAXXZ PROC				; AuRTCInitialize
 
-; 96   : void AuRTCInitialize() {
+; 98   : void AuRTCInitialize() {
 
 $LN5:
 	sub	rsp, 56					; 00000038H
 
-; 97   : 	__rtc = (AuRTC*)kmalloc(sizeof(AuRTC));
+; 99   : 	__rtc = (AuRTC*)kmalloc(sizeof(AuRTC));
 
 	mov	ecx, 8
 	call	kmalloc
 	mov	QWORD PTR ?__rtc@@3PEAU__rtc__@@EA, rax	; __rtc
 
-; 98   : 	memset(__rtc, 0, sizeof(AuRTC));
+; 100  : 	memset(__rtc, 0, sizeof(AuRTC));
 
 	mov	r8d, 8
 	xor	edx, edx
 	mov	rcx, QWORD PTR ?__rtc@@3PEAU__rtc__@@EA	; __rtc
 	call	memset
 
-; 99   : 
-; 100  : 	uint8_t status = AuRTCGetRegister(0x0b);
+; 101  : 
+; 102  : 	uint8_t status = AuRTCGetRegister(0x0b);
 
 	mov	ecx, 11
 	call	?AuRTCGetRegister@@YAEH@Z		; AuRTCGetRegister
 	mov	BYTE PTR status$[rsp], al
 
-; 101  : 	status |= 0x02;
+; 103  : 	status |= 0x02;
 
 	movzx	eax, BYTE PTR status$[rsp]
 	or	eax, 2
 	mov	BYTE PTR status$[rsp], al
 
-; 102  : 	status |= 0x10;
+; 104  : 	status |= 0x10;
 
 	movzx	eax, BYTE PTR status$[rsp]
 	or	eax, 16
 	mov	BYTE PTR status$[rsp], al
 
-; 103  : 	status &= ~0x20;
+; 105  : 	status &= ~0x20;
 
 	movzx	eax, BYTE PTR status$[rsp]
 	and	eax, -33				; ffffffffffffffdfH
 	mov	BYTE PTR status$[rsp], al
 
-; 104  : 	status &= ~0x40;
+; 106  : 	status &= ~0x40;
 
 	movzx	eax, BYTE PTR status$[rsp]
 	and	eax, -65				; ffffffffffffffbfH
 	mov	BYTE PTR status$[rsp], al
 
-; 105  : 	__rtc->bcd = !(status & 0x04);
+; 107  : 	__rtc->bcd = !(status & 0x04);
 
 	movzx	eax, BYTE PTR status$[rsp]
 	and	eax, 4
@@ -609,31 +619,31 @@ $LN4@AuRTCIniti:
 	movzx	ecx, BYTE PTR tv87[rsp]
 	mov	BYTE PTR [rax], cl
 
-; 106  : 
-; 107  : 	x64_outportb(0x70, 0x0B);
+; 108  : 
+; 109  : 	x64_outportb(0x70, 0x0B);
 
 	mov	dl, 11
 	mov	cx, 112					; 00000070H
 	call	x64_outportb
 
-; 108  : 	x64_outportb(0x71, status);
+; 110  : 	x64_outportb(0x71, status);
 
 	movzx	edx, BYTE PTR status$[rsp]
 	mov	cx, 113					; 00000071H
 	call	x64_outportb
 
-; 109  : 
-; 110  : 	AuRTCGetRegister(0x0C);
+; 111  : 
+; 112  : 	AuRTCGetRegister(0x0C);
 
 	mov	ecx, 12
 	call	?AuRTCGetRegister@@YAEH@Z		; AuRTCGetRegister
 
-; 111  : 	AuRTCReadDateTime();
+; 113  : 	AuRTCReadDateTime();
 
 	call	?AuRTCReadDateTime@@YAXXZ		; AuRTCReadDateTime
 
-; 112  : 
-; 113  : 	AuHalRegisterIRQ(8, AuRTCClockUpdate, 8, false);
+; 114  : 
+; 115  : 	AuHalRegisterIRQ(8, AuRTCClockUpdate, 8, false);
 
 	xor	r9d, r9d
 	mov	r8b, 8
@@ -641,7 +651,7 @@ $LN4@AuRTCIniti:
 	mov	ecx, 8
 	call	AuHalRegisterIRQ
 
-; 114  : }
+; 116  : }
 
 	add	rsp, 56					; 00000038H
 	ret	0

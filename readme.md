@@ -22,6 +22,10 @@ with hybrid design and the entire operating system is known as _'Xeneva'_.
 
 _And many more coming soon_
 
+## Screenshot:
+
+![alt text](https://github.com/manaskamal/XenevaOS/blob/master/FirstLook.jpg?raw=true)
+
 # Building the project
 
 The project is build on Windows environment. It requires Microsoft 
