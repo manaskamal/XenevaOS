@@ -27,6 +27,14 @@
 *
 **/
 
+/*
+ * Fat.cpp -- contains only Open functionalities
+ * FatDir.cpp -- contains Fat directory creations
+ * FatFile.cpp -- contains Fat file creations only with 
+ * short file name entries
+ */
+
+
 #include <Fs/Fat/Fat.h>
 #include <Fs/Fat/FatFile.h>
 #include <Fs/Fat/FatDir.h>
@@ -177,6 +185,22 @@ void FatAllocCluster(AuVFSNode* fsys, int position, uint32_t n_value) {
 	uint32_t value2 = *(uint32_t*)&buf[ent_offset];
 	AuVDiskWrite(vdisk, fat_sector, 1, (uint64_t*)V2P((size_t)buffer));
 	AuPmmngrFree((void*)V2P((size_t)buffer));
+}
+
+/*
+ * FatCalculateCheckSum -- calculates checksum value
+ * for use in long file name
+ * @param fname -- short file name 
+ */
+uint8_t FatCalculateCheckSum(uint8_t* fname) {
+	short fnameLen;
+	uint8_t sum = 0;
+
+	for (fnameLen = 11; fnameLen != 0; fnameLen--){
+		sum = ((sum & 1) ? 0x80 : 0) + (sum >> 1) + *fname++;
+	}
+
+	return sum;
 }
 
 
@@ -381,7 +405,7 @@ AuVFSNode* FatLocateDir(AuVFSNode* fsys, const char* dir) {
 
 //! Opens a file 
 //! @param filename -- name of the file
-//! @example -- \\EFI\\BOOT\\BOOTx64.efi
+//! @example -- /EFI/BOOT/BOOTx64.efi
 AuVFSNode * FatOpen(AuVFSNode * fsys, char* filename) {
 	if (!fsys)
 		return NULL;

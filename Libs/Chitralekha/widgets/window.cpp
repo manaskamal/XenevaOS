@@ -33,7 +33,12 @@
 #include <sys\_keproc.h>
 #include <sys\mman.h>
 
+#define WINDOW_DEFAULT_TITLEBAR_HEIGHT  26
+
 extern void ChDefaultWinPaint(ChWindow* win);
+extern void ChWindowPaintCloseButton(ChWindow* win, ChWinGlobalControl* button);
+extern void ChWindowPaintMaximButton(ChWindow* win, ChWinGlobalControl* button);
+extern void ChWindowPaintMinimButton(ChWindow* win, ChWinGlobalControl* button);
 
 /*
  * ChRequestWindow -- the base of window creation, it request window manager
@@ -84,6 +89,27 @@ void ChRequestWindow(ChitralekhaApp* app, int x, int y, int w, int h, char* titl
 }
 
 /*
+ * ChCreateGlobalButton -- create global control button of windows
+ * @param win -- Pointer to window
+ * @param x -- X position within the window titlebar
+ * @param y -- Y position within the window titlebar
+ * @param w -- width of the rectangular bound
+ * @param h -- height of the rectangular bound
+ */
+XE_EXTERN XE_EXPORT ChWinGlobalControl* ChCreateGlobalButton(ChWindow* win, int x, int y, int w, int h, uint8_t type) {
+	ChWinGlobalControl* glbl = (ChWinGlobalControl*)malloc(sizeof(ChWinGlobalControl));
+	glbl->x = x;
+	glbl->y = y;
+	glbl->w = w;
+	glbl->h = h;
+	glbl->clicked = false;
+	glbl->hover = false;
+	glbl->type = type;
+	list_add(win->GlobalControls, glbl);
+	return glbl;
+}
+
+/*
  * ChCreateWindow -- create a new chitralekha window
  * @param app -- pointer to Chitralekha app
  * @param attrib -- window attributes
@@ -115,7 +141,23 @@ XE_EXTERN XE_EXPORT ChWindow* ChCreateWindow(ChitralekhaApp *app, uint8_t attrib
 	win->info->height = h;
 	win->info->rect_count = 0;
 	win->color = WHITE;
+	win->GlobalControls = initialize_list();
 	win->ChWinPaint = ChDefaultWinPaint;
+
+	ChWinGlobalControl* close = ChCreateGlobalButton(win, win->info->width - 25,
+		WINDOW_DEFAULT_TITLEBAR_HEIGHT / 2 - 20 / 2, 20, 20, WINDOW_GLOBAL_CONTROL_CLOSE);
+	close->ChGlobalButtonPaint = ChWindowPaintCloseButton;
+	close->outlineColor = 0xFF868686;
+
+	ChWinGlobalControl* maxim = ChCreateGlobalButton(win, win->info->width - 25 - 20,
+		WINDOW_DEFAULT_TITLEBAR_HEIGHT / 2 - 20 / 2, 20, 20, WINDOW_GLOBAL_CONTROL_MAXIMIZE);
+	maxim->ChGlobalButtonPaint = ChWindowPaintMaximButton;
+	maxim->outlineColor = 0xFF868686;
+
+	ChWinGlobalControl* minim = ChCreateGlobalButton(win, win->info->width - 25 - 20*2,
+		WINDOW_DEFAULT_TITLEBAR_HEIGHT / 2 - 20 / 2, 20, 20, WINDOW_GLOBAL_CONTROL_MAXIMIZE);
+	minim->ChGlobalButtonPaint = ChWindowPaintMinimButton;
+	minim->outlineColor = 0xFF868686;
 	return win;
 }
 

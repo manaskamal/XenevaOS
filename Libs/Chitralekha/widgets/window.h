@@ -35,9 +35,15 @@
 #include "..\color.h"
 #include "..\draw.h"
 #include "base.h"
+#include "list.h"
 
 #define CHITRALEKHA_DEFAULT_WIN_WIDTH  400
 #define CHITRALEKHA_DEFAULT_WIN_HEIGHT 300
+
+#define WINDOW_GLOBAL_CONTROL_CLOSE 1
+#define WINDOW_GLOBAL_CONTROL_MAXIMIZE 2
+#define WINDOW_GLOBAL_CONTROL_MINIMIZE 3
+#define WINDOW_GLOBAL_CONTROL_CUSTOM 4
 
 #pragma pack(push,1)
 typedef struct _ChSharedWin_ {
@@ -61,8 +67,25 @@ typedef struct _chwin_ {
 	ChSharedWinInfo* info;
 	ChitralekhaApp* app;
 	uint32_t color;
+	list_t* GlobalControls;
 	void(*ChWinPaint)(_chwin_ *win);
 }ChWindow;
+
+typedef struct _global_ctrl_ {
+	int x;
+	int y;
+	int w;
+	int h;
+	uint8_t type;
+	bool hover;
+	bool clicked;
+	uint32_t fillColor;
+	uint32_t outlineColor;
+	uint32_t hoverOutlineColor;
+	uint32_t clickedFillColor;
+	uint32_t clickedOutlineColor;
+	void(*ChGlobalButtonPaint)(ChWindow* win, _global_ctrl_* glbl);
+}ChWinGlobalControl;
 
 
 /*

@@ -155,6 +155,7 @@
     <ClInclude Include="nanojpg.h" />
     <ClInclude Include="ttf.h" />
     <ClInclude Include="widgets\base.h" />
+    <ClInclude Include="widgets\list.h" />
     <ClInclude Include="widgets\window.h" />
     <ClInclude Include="_fastcpy.h" />
   </ItemGroup>
@@ -166,6 +167,7 @@
     <ClCompile Include="ttf.cpp" />
     <ClCompile Include="widgets\base.cpp" />
     <ClCompile Include="widgets\defaultwindow.cpp" />
+    <ClCompile Include="widgets\list.cpp" />
     <ClCompile Include="widgets\window.cpp" />
   </ItemGroup>
   <ItemGroup>

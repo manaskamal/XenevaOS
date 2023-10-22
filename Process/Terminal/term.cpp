@@ -23,7 +23,7 @@ int main(int argc, char* arv[]){
 	win->color = BLACK;
 	ChWindowPaint(win);
 
-	ChFontDrawText(win->canv, app->baseFont, "Playing Audio -- Tur Sohor.wav", 10, 40, 10, WHITE);
+	ChFontDrawText(win->canv, app->baseFont, "Shubho Mahaashtami !!", 10, 40, 10, WHITE);
 	ChWindowUpdate(win, 0, 0, win->info->width, win->info->height, 1);
 	PostEvent e;
 	memset(&e, 0, sizeof(PostEvent));

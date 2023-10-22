@@ -35,6 +35,33 @@
 #define DEFAULT_TITLEBAR_DARK  0xFF252525
 #define DEFAULT_TITLEBAR_LIGHT 0xFF454343
 
+/*
+ * ChWindowPaintCloseButton -- close button painter
+ */
+void ChWindowPaintCloseButton(ChWindow* win, ChWinGlobalControl* button){
+	//ChDrawCircleUnfilled(win->canv, button->x + button->w / 2,button->y + button->h / 2, 8, button->outlineColor);
+	/* draw the actual symbol */
+	ChDrawLine(win->canv, button->x + 7, button->y + 7, button->x + button->w - 7, button->y + button->h - 7, button->outlineColor);
+	ChDrawLine(win->canv, button->x + button->w - 7, button->y + 7, button->x + 7, button->y + button->h - 7, button->outlineColor);
+}
+
+/*
+ * ChWindowPaintMaximButton -- maximize button painter
+ */
+void ChWindowPaintMaximButton(ChWindow* win, ChWinGlobalControl* button){
+	//ChDrawCircleUnfilled(win->canv, button->x + button->w / 2, button->y + button->h / 2, 8, button->outlineColor);
+	/* draw the actual symbol */
+	ChDrawRectUnfilled(win->canv, button->x + 7, button->y + 7, 7, 7, button->outlineColor);
+	ChDrawHorizontalLine(win->canv, button->x + 7, button->y + 7 + 1, 7, button->outlineColor);
+}
+
+/* 
+ * ChWindowPaintMinimButton -- minimize button painter
+ */
+void ChWindowPaintMinimButton(ChWindow* win, ChWinGlobalControl* button) {
+	ChDrawHorizontalLine(win->canv, button->x + 7, button->y + button->h / 2, 7, button->outlineColor);
+	ChDrawHorizontalLine(win->canv, button->x + 7, button->y + button->h / 2 + 1, 7, button->outlineColor);
+}
 
 void ChWindowPaintTitlebar(ChWindow* win) {
 	ChColorDrawVerticalGradient(win->canv, 0, 0, win->info->width, 26, DEFAULT_TITLEBAR_LIGHT, DEFAULT_TITLEBAR_DARK);
@@ -44,6 +71,14 @@ void ChWindowPaintTitlebar(ChWindow* win) {
 	int font_height = ChFontGetHeight(font,win->title);
 	ChFontDrawText(win->canv,font, win->title, win->info->width / 2 - font_width / 2, 26 / 2 + 4, 16, WHITE);
 	ChDrawRectUnfilled(win->canv, 0, 0, win->info->width, 26,	LIGHTBLACK);
+
+	for (int i = 0; i < win->GlobalControls->pointer; i++) {
+		ChWinGlobalControl* global = (ChWinGlobalControl*)list_get_at(win->GlobalControls, i);
+		if (global) {
+			if (global->ChGlobalButtonPaint)
+				global->ChGlobalButtonPaint(win, global);
+		}
+	}
 }
 
 void ChDefaultWinPaint(ChWindow* win){

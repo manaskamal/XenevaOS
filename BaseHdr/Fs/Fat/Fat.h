@@ -112,6 +112,22 @@ typedef struct _fat_dir_
 }FatDir;
 #pragma pack(pop)
 
+/*
+ * Long file name entry
+ */
+#pragma pack(push,1)
+typedef struct _fat_lfn_ {
+	uint8_t order;
+	uint8_t nameOne[10];
+	uint8_t attrib;
+	uint8_t type;
+	uint8_t checkSum;
+	uint8_t nameTwo[12];
+	uint16_t FstClusterLo;
+	uint8_t nameThree[4];
+}FatLFN;
+#pragma pack(pop)
+
 #define FSTYPE_FAT12  1
 #define FSTYPE_FAT16  2
 #define FSTYPE_FAT32  3
@@ -137,6 +153,8 @@ typedef struct _FatFS_ {
 	AuMutex *fat_read_mutex;
 }FatFS;
 #pragma pack(pop)
+
+
 
 /*
 * FatInitialise -- initialise the fat file system
