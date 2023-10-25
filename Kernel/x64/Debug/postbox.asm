@@ -14,11 +14,10 @@ _BSS	SEGMENT
 ?_PostBoxRootCreated@@3_NA DB 01H DUP (?)		; _PostBoxRootCreated
 _BSS	ENDS
 CONST	SEGMENT
-$SG3628	DB	'PostBox root created ', 0dH, 0aH, 00H
-$SG3709	DB	'/dev', 00H
+$SG3708	DB	'/dev', 00H
 	ORG $+3
-$SG3714	DB	'postbox', 00H
-$SG3715	DB	'/dev', 00H
+$SG3713	DB	'postbox', 00H
+$SG3714	DB	'/dev', 00H
 CONST	ENDS
 PUBLIC	?AuIPCPostBoxInitialise@@YAXXZ			; AuIPCPostBoxInitialise
 PUBLIC	?PostBoxPutEvent@@YAXPEAU_post_event_@@@Z	; PostBoxPutEvent
@@ -47,7 +46,6 @@ EXTRN	memcpy:PROC
 EXTRN	AuVFSFind:PROC
 EXTRN	AuDevFSAddFile:PROC
 EXTRN	x64_cli:PROC
-EXTRN	SeTextOut:PROC
 EXTRN	__ImageBase:BYTE
 pdata	SEGMENT
 $pdata$?AuIPCPostBoxInitialise@@YAXXZ DD imagerel $LN3
@@ -60,13 +58,13 @@ $pdata$?PostBoxGetEvent@@YAHPEAU_post_event_@@_NPEAU_au_thread_@@@Z DD imagerel 
 	DD	imagerel $LN10+257
 	DD	imagerel $unwind$?PostBoxGetEvent@@YAHPEAU_post_event_@@_NPEAU_au_thread_@@@Z
 $pdata$?PostBoxCreate@@YAX_NG@Z DD imagerel $LN7
-	DD	imagerel $LN7+315
+	DD	imagerel $LN7+303
 	DD	imagerel $unwind$?PostBoxCreate@@YAX_NG@Z
 $pdata$?PostBoxDestroyByID@@YAXG@Z DD imagerel $LN7
 	DD	imagerel $LN7+82
 	DD	imagerel $unwind$?PostBoxDestroyByID@@YAXG@Z
 $pdata$?PostBoxAdvanceIndex@@YAXPEAU_postbox_@@@Z DD imagerel $LN6
-	DD	imagerel $LN6+134
+	DD	imagerel $LN6+137
 	DD	imagerel $unwind$?PostBoxAdvanceIndex@@YAXPEAU_postbox_@@@Z
 $pdata$?IsPostBoxEmpty@@YA_NPEAU_postbox_@@@Z DD imagerel $LN5
 	DD	imagerel $LN5+65
@@ -112,7 +110,7 @@ code$ = 104
 arg$ = 112
 ?PostBoxIOControl@@YAHPEAU__VFS_NODE__@@HPEAX@Z PROC	; PostBoxIOControl
 
-; 209  : int PostBoxIOControl(AuVFSNode* file, int code, void* arg) {
+; 208  : int PostBoxIOControl(AuVFSNode* file, int code, void* arg) {
 
 $LN13:
 	mov	QWORD PTR [rsp+24], r8
@@ -120,31 +118,31 @@ $LN13:
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 88					; 00000058H
 
-; 210  : 	x64_cli();
+; 209  : 	x64_cli();
 
 	call	x64_cli
 
-; 211  : 	int ret_code = 1;
+; 210  : 	int ret_code = 1;
 
 	mov	DWORD PTR ret_code$[rsp], 1
 
-; 212  : 	AuThread* curr_thr = AuGetCurrentThread();
+; 211  : 	AuThread* curr_thr = AuGetCurrentThread();
 
 	call	AuGetCurrentThread
 	mov	QWORD PTR curr_thr$[rsp], rax
 
-; 213  : 	if (!curr_thr)
+; 212  : 	if (!curr_thr)
 
 	cmp	QWORD PTR curr_thr$[rsp], 0
 	jne	SHORT $LN9@PostBoxIOC
 
-; 214  : 		return 0;
+; 213  : 		return 0;
 
 	xor	eax, eax
 	jmp	$LN10@PostBoxIOC
 $LN9@PostBoxIOC:
 
-; 215  : 	switch (code) {
+; 214  : 	switch (code) {
 
 	mov	eax, DWORD PTR code$[rsp]
 	mov	DWORD PTR tv66[rsp], eax
@@ -160,73 +158,73 @@ $LN9@PostBoxIOC:
 	jmp	rax
 $LN6@PostBoxIOC:
 
-; 216  : 	case POSTBOX_CREATE: {
-; 217  : 							
-; 218  : 							 PostBoxCreate(false, curr_thr->id);
+; 215  : 	case POSTBOX_CREATE: {
+; 216  : 							
+; 217  : 							 PostBoxCreate(false, curr_thr->id);
 
 	mov	rax, QWORD PTR curr_thr$[rsp]
 	movzx	edx, WORD PTR [rax+301]
 	xor	ecx, ecx
 	call	?PostBoxCreate@@YAX_NG@Z		; PostBoxCreate
 
-; 219  : 							 break;
+; 218  : 							 break;
 
 	jmp	SHORT $LN7@PostBoxIOC
 $LN5@PostBoxIOC:
 
-; 220  : 	}
-; 221  : 	case POSTBOX_CREATE_ROOT: {
-; 222  : 								  PostBoxCreate(true, curr_thr->id);
+; 219  : 	}
+; 220  : 	case POSTBOX_CREATE_ROOT: {
+; 221  : 								  PostBoxCreate(true, curr_thr->id);
 
 	mov	rax, QWORD PTR curr_thr$[rsp]
 	movzx	edx, WORD PTR [rax+301]
 	mov	cl, 1
 	call	?PostBoxCreate@@YAX_NG@Z		; PostBoxCreate
 
-; 223  : 								  break;
+; 222  : 								  break;
 
 	jmp	SHORT $LN7@PostBoxIOC
 $LN4@PostBoxIOC:
 
-; 224  : 	}
-; 225  : 	case POSTBOX_DESTROY: {
-; 226  : 							  PostBoxDestroyByID(curr_thr->id);
+; 223  : 	}
+; 224  : 	case POSTBOX_DESTROY: {
+; 225  : 							  PostBoxDestroyByID(curr_thr->id);
 
 	mov	rax, QWORD PTR curr_thr$[rsp]
 	movzx	ecx, WORD PTR [rax+301]
 	call	?PostBoxDestroyByID@@YAXG@Z		; PostBoxDestroyByID
 
-; 227  : 							  break;
+; 226  : 							  break;
 
 	jmp	SHORT $LN7@PostBoxIOC
 $LN3@PostBoxIOC:
 
-; 228  : 	}
-; 229  : 	case POSTBOX_PUT_EVENT: {
-; 230  : 								PostEvent* event = (PostEvent*)arg;
+; 227  : 	}
+; 228  : 	case POSTBOX_PUT_EVENT: {
+; 229  : 								PostEvent* event = (PostEvent*)arg;
 
 	mov	rax, QWORD PTR arg$[rsp]
 	mov	QWORD PTR event$1[rsp], rax
 
-; 231  : 								PostBoxPutEvent(event);
+; 230  : 								PostBoxPutEvent(event);
 
 	mov	rcx, QWORD PTR event$1[rsp]
 	call	?PostBoxPutEvent@@YAXPEAU_post_event_@@@Z ; PostBoxPutEvent
 
-; 232  : 								break;
+; 231  : 								break;
 
 	jmp	SHORT $LN7@PostBoxIOC
 $LN2@PostBoxIOC:
 
-; 233  : 	}
-; 234  : 
-; 235  : 	case POSTBOX_GET_EVENT: {
-; 236  : 								PostEvent* e = (PostEvent*)arg;
+; 232  : 	}
+; 233  : 
+; 234  : 	case POSTBOX_GET_EVENT: {
+; 235  : 								PostEvent* e = (PostEvent*)arg;
 
 	mov	rax, QWORD PTR arg$[rsp]
 	mov	QWORD PTR e$2[rsp], rax
 
-; 237  : 								ret_code = PostBoxGetEvent(e, false, curr_thr);
+; 236  : 								ret_code = PostBoxGetEvent(e, false, curr_thr);
 
 	mov	r8, QWORD PTR curr_thr$[rsp]
 	xor	edx, edx
@@ -234,19 +232,19 @@ $LN2@PostBoxIOC:
 	call	?PostBoxGetEvent@@YAHPEAU_post_event_@@_NPEAU_au_thread_@@@Z ; PostBoxGetEvent
 	mov	DWORD PTR ret_code$[rsp], eax
 
-; 238  : 								break;
+; 237  : 								break;
 
 	jmp	SHORT $LN7@PostBoxIOC
 $LN1@PostBoxIOC:
 
-; 239  : 	}
-; 240  : 	case POSTBOX_GET_EVENT_ROOT: {
-; 241  : 									 PostEvent* e = (PostEvent*)arg;
+; 238  : 	}
+; 239  : 	case POSTBOX_GET_EVENT_ROOT: {
+; 240  : 									 PostEvent* e = (PostEvent*)arg;
 
 	mov	rax, QWORD PTR arg$[rsp]
 	mov	QWORD PTR e$3[rsp], rax
 
-; 242  : 									 ret_code = PostBoxGetEvent(e, true, curr_thr);
+; 241  : 									 ret_code = PostBoxGetEvent(e, true, curr_thr);
 
 	mov	r8, QWORD PTR curr_thr$[rsp]
 	mov	dl, 1
@@ -255,6 +253,7 @@ $LN1@PostBoxIOC:
 	mov	DWORD PTR ret_code$[rsp], eax
 $LN7@PostBoxIOC:
 
+; 242  : 									 break;
 ; 243  : 	}
 ; 244  : 	}
 ; 245  : 
@@ -282,41 +281,41 @@ _TEXT	SEGMENT
 box$ = 48
 ?PostBoxDestroy@@YAXPEAU_postbox_@@@Z PROC		; PostBoxDestroy
 
-; 112  : void PostBoxDestroy(PostBox* box) {
+; 111  : void PostBoxDestroy(PostBox* box) {
 
 $LN8:
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 40					; 00000028H
 
-; 113  : 	if (firstBox == NULL)
+; 112  : 	if (firstBox == NULL)
 
 	cmp	QWORD PTR ?firstBox@@3PEAU_postbox_@@EA, 0 ; firstBox
 	jne	SHORT $LN5@PostBoxDes
 
-; 114  : 		return;
+; 113  : 		return;
 
 	jmp	$LN6@PostBoxDes
 $LN5@PostBoxDes:
 
-; 115  : 
-; 116  : 	if (box == firstBox)
+; 114  : 
+; 115  : 	if (box == firstBox)
 
 	mov	rax, QWORD PTR ?firstBox@@3PEAU_postbox_@@EA ; firstBox
 	cmp	QWORD PTR box$[rsp], rax
 	jne	SHORT $LN4@PostBoxDes
 
-; 117  : 		firstBox = firstBox->next;
+; 116  : 		firstBox = firstBox->next;
 
 	mov	rax, QWORD PTR ?firstBox@@3PEAU_postbox_@@EA ; firstBox
 	mov	rax, QWORD PTR [rax+21]
 	mov	QWORD PTR ?firstBox@@3PEAU_postbox_@@EA, rax ; firstBox
 
-; 118  : 	else
+; 117  : 	else
 
 	jmp	SHORT $LN3@PostBoxDes
 $LN4@PostBoxDes:
 
-; 119  : 		box->prev->next = box->next;
+; 118  : 		box->prev->next = box->next;
 
 	mov	rax, QWORD PTR box$[rsp]
 	mov	rax, QWORD PTR [rax+29]
@@ -325,26 +324,26 @@ $LN4@PostBoxDes:
 	mov	QWORD PTR [rax+21], rcx
 $LN3@PostBoxDes:
 
-; 120  : 
-; 121  : 	if (box == lastBox) {
+; 119  : 
+; 120  : 	if (box == lastBox) {
 
 	mov	rax, QWORD PTR ?lastBox@@3PEAU_postbox_@@EA ; lastBox
 	cmp	QWORD PTR box$[rsp], rax
 	jne	SHORT $LN2@PostBoxDes
 
-; 122  : 		lastBox = box->prev;
+; 121  : 		lastBox = box->prev;
 
 	mov	rax, QWORD PTR box$[rsp]
 	mov	rax, QWORD PTR [rax+29]
 	mov	QWORD PTR ?lastBox@@3PEAU_postbox_@@EA, rax ; lastBox
 
-; 123  : 	}
-; 124  : 	else {
+; 122  : 	}
+; 123  : 	else {
 
 	jmp	SHORT $LN1@PostBoxDes
 $LN2@PostBoxDes:
 
-; 125  : 		box->next->prev = box->prev;
+; 124  : 		box->next->prev = box->prev;
 
 	mov	rax, QWORD PTR box$[rsp]
 	mov	rax, QWORD PTR [rax+21]
@@ -353,9 +352,9 @@ $LN2@PostBoxDes:
 	mov	QWORD PTR [rax+29], rcx
 $LN1@PostBoxDes:
 
-; 126  : 	}
-; 127  : 
-; 128  : 	AuPmmngrFree((void*)V2P((size_t)box->address));
+; 125  : 	}
+; 126  : 
+; 127  : 	AuPmmngrFree((void*)V2P((size_t)box->address));
 
 	mov	rax, QWORD PTR box$[rsp]
 	mov	rcx, QWORD PTR [rax]
@@ -363,13 +362,13 @@ $LN1@PostBoxDes:
 	mov	rcx, rax
 	call	AuPmmngrFree
 
-; 129  : 	kfree(box);
+; 128  : 	kfree(box);
 
 	mov	rcx, QWORD PTR box$[rsp]
 	call	kfree
 $LN6@PostBoxDes:
 
-; 130  : }
+; 129  : }
 
 	add	rsp, 40					; 00000028H
 	ret	0
@@ -500,14 +499,16 @@ $LN6:
 $LN1@PostBoxAdv:
 
 ; 55   : 
-; 56   : 	box->headIdx = (box->headIdx + 1) & box->size;
+; 56   : 	box->headIdx = (box->headIdx + 1) % box->size;
 
 	mov	rax, QWORD PTR box$[rsp]
 	mov	eax, DWORD PTR [rax+10]
 	inc	eax
 	mov	rcx, QWORD PTR box$[rsp]
 	movzx	ecx, WORD PTR [rcx+19]
-	and	eax, ecx
+	cdq
+	idiv	ecx
+	mov	eax, edx
 	mov	rcx, QWORD PTR box$[rsp]
 	mov	DWORD PTR [rcx+10], eax
 
@@ -540,13 +541,13 @@ box$1 = 32
 id$ = 64
 ?PostBoxDestroyByID@@YAXG@Z PROC			; PostBoxDestroyByID
 
-; 137  : void PostBoxDestroyByID(uint16_t id) {
+; 136  : void PostBoxDestroyByID(uint16_t id) {
 
 $LN7:
 	mov	WORD PTR [rsp+8], cx
 	sub	rsp, 56					; 00000038H
 
-; 138  : 	for (PostBox* box = firstBox; box != NULL; box = box->next) {
+; 137  : 	for (PostBox* box = firstBox; box != NULL; box = box->next) {
 
 	mov	rax, QWORD PTR ?firstBox@@3PEAU_postbox_@@EA ; firstBox
 	mov	QWORD PTR box$1[rsp], rax
@@ -559,7 +560,7 @@ $LN4@PostBoxDes:
 	cmp	QWORD PTR box$1[rsp], 0
 	je	SHORT $LN2@PostBoxDes
 
-; 139  : 		if (box->ownerID == id){
+; 138  : 		if (box->ownerID == id){
 
 	mov	rax, QWORD PTR box$1[rsp]
 	movzx	eax, WORD PTR [rax+8]
@@ -567,24 +568,24 @@ $LN4@PostBoxDes:
 	cmp	eax, ecx
 	jne	SHORT $LN1@PostBoxDes
 
-; 140  : 			PostBoxDestroy(box);
+; 139  : 			PostBoxDestroy(box);
 
 	mov	rcx, QWORD PTR box$1[rsp]
 	call	?PostBoxDestroy@@YAXPEAU_postbox_@@@Z	; PostBoxDestroy
 
-; 141  : 			break;
+; 140  : 			break;
 
 	jmp	SHORT $LN2@PostBoxDes
 $LN1@PostBoxDes:
 
-; 142  : 		}
-; 143  : 	}
+; 141  : 		}
+; 142  : 	}
 
 	jmp	SHORT $LN3@PostBoxDes
 $LN2@PostBoxDes:
 
-; 144  : 	return;
-; 145  : }
+; 143  : 	return;
+; 144  : }
 
 	add	rsp, 56					; 00000038H
 	ret	0
@@ -644,110 +645,105 @@ $LN7:
 	test	eax, eax
 	jne	SHORT $LN4@PostBoxCre
 
-; 85   : 		SeTextOut("PostBox root created \r\n");
-
-	lea	rcx, OFFSET FLAT:$SG3628
-	call	SeTextOut
-
-; 86   : 		box->ownerID = POSTBOX_ROOT_ID;
+; 85   : 		box->ownerID = POSTBOX_ROOT_ID;
 
 	mov	eax, 1
 	mov	rcx, QWORD PTR box$[rsp]
 	mov	WORD PTR [rcx+8], ax
 
-; 87   : 		_PostBoxRootCreated = true;
+; 86   : 		_PostBoxRootCreated = true;
 
 	mov	BYTE PTR ?_PostBoxRootCreated@@3_NA, 1	; _PostBoxRootCreated
 
-; 88   : 	}
-; 89   : 	else {
+; 87   : 	}
+; 88   : 	else {
 
 	jmp	SHORT $LN3@PostBoxCre
 $LN4@PostBoxCre:
 
-; 90   : 		box->ownerID = tid;
+; 89   : 		box->ownerID = tid;
 
 	mov	rax, QWORD PTR box$[rsp]
 	movzx	ecx, WORD PTR tid$[rsp]
 	mov	WORD PTR [rax+8], cx
 $LN3@PostBoxCre:
 
-; 91   : 	}
-; 92   : 
-; 93   : 	box->next = NULL;
+; 90   : 	}
+; 91   : 
+; 92   : 	box->next = NULL;
 
 	mov	rax, QWORD PTR box$[rsp]
 	mov	QWORD PTR [rax+21], 0
 
-; 94   : 	box->prev = NULL;
+; 93   : 	box->prev = NULL;
 
 	mov	rax, QWORD PTR box$[rsp]
 	mov	QWORD PTR [rax+29], 0
 
-; 95   : 	box->headIdx = 0;
+; 94   : 	box->headIdx = 0;
 
 	mov	rax, QWORD PTR box$[rsp]
 	mov	DWORD PTR [rax+10], 0
 
-; 96   : 	box->tailIdx = 0;
+; 95   : 	box->tailIdx = 0;
 
 	mov	rax, QWORD PTR box$[rsp]
 	mov	DWORD PTR [rax+14], 0
 
-; 97   : 	box->full = false;
+; 96   : 	box->full = false;
 
 	mov	rax, QWORD PTR box$[rsp]
 	mov	BYTE PTR [rax+18], 0
 
-; 98   : 
-; 99   : 	box->size = PAGE_SIZE / sizeof(PostEvent);
+; 97   : 
+; 98   : 	box->size = PAGE_SIZE / sizeof(PostEvent);
 
 	mov	eax, 24
 	mov	rcx, QWORD PTR box$[rsp]
 	mov	WORD PTR [rcx+19], ax
 
-; 100  : 
-; 101  : 	if (firstBox == NULL) {
+; 99   : 
+; 100  : 	if (firstBox == NULL) {
 
 	cmp	QWORD PTR ?firstBox@@3PEAU_postbox_@@EA, 0 ; firstBox
 	jne	SHORT $LN2@PostBoxCre
 
-; 102  : 		firstBox = box;
+; 101  : 		firstBox = box;
 
 	mov	rax, QWORD PTR box$[rsp]
 	mov	QWORD PTR ?firstBox@@3PEAU_postbox_@@EA, rax ; firstBox
 
-; 103  : 		lastBox = box;
+; 102  : 		lastBox = box;
 
 	mov	rax, QWORD PTR box$[rsp]
 	mov	QWORD PTR ?lastBox@@3PEAU_postbox_@@EA, rax ; lastBox
 
-; 104  : 	}
-; 105  : 	else{
+; 103  : 	}
+; 104  : 	else{
 
 	jmp	SHORT $LN1@PostBoxCre
 $LN2@PostBoxCre:
 
-; 106  : 		lastBox->next = box;
+; 105  : 		lastBox->next = box;
 
 	mov	rax, QWORD PTR ?lastBox@@3PEAU_postbox_@@EA ; lastBox
 	mov	rcx, QWORD PTR box$[rsp]
 	mov	QWORD PTR [rax+21], rcx
 
-; 107  : 		box->prev = lastBox;
+; 106  : 		box->prev = lastBox;
 
 	mov	rax, QWORD PTR box$[rsp]
 	mov	rcx, QWORD PTR ?lastBox@@3PEAU_postbox_@@EA ; lastBox
 	mov	QWORD PTR [rax+29], rcx
 
-; 108  : 		lastBox = box;
+; 107  : 		lastBox = box;
 
 	mov	rax, QWORD PTR box$[rsp]
 	mov	QWORD PTR ?lastBox@@3PEAU_postbox_@@EA, rax ; lastBox
 $LN1@PostBoxCre:
 
-; 109  : 	}
-; 110  : }
+; 108  : 	}
+; 109  : }
 
 	add	rsp, 56					; 00000038H
 	ret	0
@@ -764,7 +760,7 @@ root$ = 72
 curr_thread$ = 80
 ?PostBoxGetEvent@@YAHPEAU_post_event_@@_NPEAU_au_thread_@@@Z PROC ; PostBoxGetEvent
 
-; 179  : int PostBoxGetEvent(PostEvent* event, bool root, AuThread* curr_thread) {
+; 178  : int PostBoxGetEvent(PostEvent* event, bool root, AuThread* curr_thread) {
 
 $LN10:
 	mov	QWORD PTR [rsp+24], r8
@@ -772,40 +768,40 @@ $LN10:
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 56					; 00000038H
 
-; 180  : 	int ret_code = POSTBOX_NO_EVENT;
+; 179  : 	int ret_code = POSTBOX_NO_EVENT;
 
 	mov	DWORD PTR ret_code$[rsp], -1
 
-; 181  : 	uint16_t owner_id = 0;
+; 180  : 	uint16_t owner_id = 0;
 
 	xor	eax, eax
 	mov	WORD PTR owner_id$[rsp], ax
 
-; 182  : 	if (root)
+; 181  : 	if (root)
 
 	movzx	eax, BYTE PTR root$[rsp]
 	test	eax, eax
 	je	SHORT $LN7@PostBoxGet
 
-; 183  : 		owner_id = POSTBOX_ROOT_ID;
+; 182  : 		owner_id = POSTBOX_ROOT_ID;
 
 	mov	eax, 1
 	mov	WORD PTR owner_id$[rsp], ax
 
-; 184  : 	else
+; 183  : 	else
 
 	jmp	SHORT $LN6@PostBoxGet
 $LN7@PostBoxGet:
 
-; 185  : 		owner_id = curr_thread->id;
+; 184  : 		owner_id = curr_thread->id;
 
 	mov	rax, QWORD PTR curr_thread$[rsp]
 	movzx	eax, WORD PTR [rax+301]
 	mov	WORD PTR owner_id$[rsp], ax
 $LN6@PostBoxGet:
 
-; 186  : 
-; 187  : 	for (PostBox* box = firstBox; box != NULL; box = box->next) {
+; 185  : 
+; 186  : 	for (PostBox* box = firstBox; box != NULL; box = box->next) {
 
 	mov	rax, QWORD PTR ?firstBox@@3PEAU_postbox_@@EA ; firstBox
 	mov	QWORD PTR box$1[rsp], rax
@@ -818,7 +814,7 @@ $LN5@PostBoxGet:
 	cmp	QWORD PTR box$1[rsp], 0
 	je	$LN3@PostBoxGet
 
-; 188  : 		if (box->ownerID == owner_id) {
+; 187  : 		if (box->ownerID == owner_id) {
 
 	mov	rax, QWORD PTR box$1[rsp]
 	movzx	eax, WORD PTR [rax+8]
@@ -826,7 +822,7 @@ $LN5@PostBoxGet:
 	cmp	eax, ecx
 	jne	SHORT $LN2@PostBoxGet
 
-; 189  : 			if (!IsPostBoxEmpty(box)) {
+; 188  : 			if (!IsPostBoxEmpty(box)) {
 
 	mov	rcx, QWORD PTR box$1[rsp]
 	call	?IsPostBoxEmpty@@YA_NPEAU_postbox_@@@Z	; IsPostBoxEmpty
@@ -834,7 +830,7 @@ $LN5@PostBoxGet:
 	test	eax, eax
 	jne	SHORT $LN1@PostBoxGet
 
-; 190  : 				memcpy(event, &box->address[box->tailIdx], sizeof(PostEvent));
+; 189  : 				memcpy(event, &box->address[box->tailIdx], sizeof(PostEvent));
 
 	mov	rax, QWORD PTR box$1[rsp]
 	movsxd	rax, DWORD PTR [rax+14]
@@ -846,7 +842,7 @@ $LN5@PostBoxGet:
 	mov	rcx, QWORD PTR event$[rsp]
 	call	memcpy
 
-; 191  : 				memset(&box->address[box->tailIdx], 0, sizeof(PostEvent));
+; 190  : 				memset(&box->address[box->tailIdx], 0, sizeof(PostEvent));
 
 	mov	rax, QWORD PTR box$1[rsp]
 	movsxd	rax, DWORD PTR [rax+14]
@@ -858,34 +854,34 @@ $LN5@PostBoxGet:
 	mov	rcx, rax
 	call	memset
 
-; 192  : 				PostBoxRetreat(box);
+; 191  : 				PostBoxRetreat(box);
 
 	mov	rcx, QWORD PTR box$1[rsp]
 	call	?PostBoxRetreat@@YAXPEAU_postbox_@@@Z	; PostBoxRetreat
 
-; 193  : 				ret_code = 1;
+; 192  : 				ret_code = 1;
 
 	mov	DWORD PTR ret_code$[rsp], 1
 $LN1@PostBoxGet:
 
-; 194  : 			}
-; 195  : 			break;
+; 193  : 			}
+; 194  : 			break;
 
 	jmp	SHORT $LN3@PostBoxGet
 $LN2@PostBoxGet:
 
-; 196  : 		}
-; 197  : 	}
+; 195  : 		}
+; 196  : 	}
 
 	jmp	$LN4@PostBoxGet
 $LN3@PostBoxGet:
 
-; 198  : 
-; 199  : 	return ret_code;
+; 197  : 
+; 198  : 	return ret_code;
 
 	mov	eax, DWORD PTR ret_code$[rsp]
 
-; 200  : }
+; 199  : }
 
 	add	rsp, 56					; 00000038H
 	ret	0
@@ -900,19 +896,19 @@ thread$ = 48
 event$ = 80
 ?PostBoxPutEvent@@YAXPEAU_post_event_@@@Z PROC		; PostBoxPutEvent
 
-; 151  : void PostBoxPutEvent(PostEvent* event) {
+; 150  : void PostBoxPutEvent(PostEvent* event) {
 
 $LN10:
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 72					; 00000048H
 
-; 152  : 	uint16_t owner_id = event->to_id;
+; 151  : 	uint16_t owner_id = event->to_id;
 
 	mov	rax, QWORD PTR event$[rsp]
 	movzx	eax, WORD PTR [rax+1]
 	mov	WORD PTR owner_id$[rsp], ax
 
-; 153  : 	for (PostBox* box = firstBox; box != NULL; box = box->next) {
+; 152  : 	for (PostBox* box = firstBox; box != NULL; box = box->next) {
 
 	mov	rax, QWORD PTR ?firstBox@@3PEAU_postbox_@@EA ; firstBox
 	mov	QWORD PTR box$1[rsp], rax
@@ -925,7 +921,7 @@ $LN7@PostBoxPut:
 	cmp	QWORD PTR box$1[rsp], 0
 	je	SHORT $LN5@PostBoxPut
 
-; 154  : 		if (box->ownerID == owner_id){
+; 153  : 		if (box->ownerID == owner_id){
 
 	mov	rax, QWORD PTR box$1[rsp]
 	movzx	eax, WORD PTR [rax+8]
@@ -933,7 +929,7 @@ $LN7@PostBoxPut:
 	cmp	eax, ecx
 	jne	SHORT $LN4@PostBoxPut
 
-; 155  : 			if (!IsPostBoxFull(box)) {
+; 154  : 			if (!IsPostBoxFull(box)) {
 
 	mov	rcx, QWORD PTR box$1[rsp]
 	call	?IsPostBoxFull@@YA_NPEAU_postbox_@@@Z	; IsPostBoxFull
@@ -941,7 +937,7 @@ $LN7@PostBoxPut:
 	test	eax, eax
 	jne	SHORT $LN3@PostBoxPut
 
-; 156  : 				memcpy(&box->address[box->headIdx], event, sizeof(PostEvent));
+; 155  : 				memcpy(&box->address[box->headIdx], event, sizeof(PostEvent));
 
 	mov	rax, QWORD PTR box$1[rsp]
 	movsxd	rax, DWORD PTR [rax+10]
@@ -953,44 +949,44 @@ $LN7@PostBoxPut:
 	mov	rcx, rax
 	call	memcpy
 
-; 157  : 				PostBoxAdvanceIndex(box);
+; 156  : 				PostBoxAdvanceIndex(box);
 
 	mov	rcx, QWORD PTR box$1[rsp]
 	call	?PostBoxAdvanceIndex@@YAXPEAU_postbox_@@@Z ; PostBoxAdvanceIndex
 $LN3@PostBoxPut:
 
-; 158  : 			}
-; 159  : 			break;
+; 157  : 			}
+; 158  : 			break;
 
 	jmp	SHORT $LN5@PostBoxPut
 $LN4@PostBoxPut:
 
-; 160  : 		}
-; 161  : 	}
+; 159  : 		}
+; 160  : 	}
 
 	jmp	SHORT $LN6@PostBoxPut
 $LN5@PostBoxPut:
 
-; 162  : 
-; 163  : 	AuThread* thread = AuThreadFindByID(owner_id);
+; 161  : 
+; 162  : 	AuThread* thread = AuThreadFindByID(owner_id);
 
 	movzx	ecx, WORD PTR owner_id$[rsp]
 	call	AuThreadFindByID
 	mov	QWORD PTR thread$[rsp], rax
 
-; 164  : 	if (!thread)
+; 163  : 	if (!thread)
 
 	cmp	QWORD PTR thread$[rsp], 0
 	jne	SHORT $LN2@PostBoxPut
 
-; 165  : 		thread = AuThreadFindByIDBlockList(owner_id);
+; 164  : 		thread = AuThreadFindByIDBlockList(owner_id);
 
 	movzx	ecx, WORD PTR owner_id$[rsp]
 	call	AuThreadFindByIDBlockList
 	mov	QWORD PTR thread$[rsp], rax
 $LN2@PostBoxPut:
 
-; 166  : 	if (thread != NULL && thread->state == THREAD_STATE_BLOCKED)
+; 165  : 	if (thread != NULL && thread->state == THREAD_STATE_BLOCKED)
 
 	cmp	QWORD PTR thread$[rsp], 0
 	je	SHORT $LN1@PostBoxPut
@@ -999,15 +995,15 @@ $LN2@PostBoxPut:
 	cmp	eax, 3
 	jne	SHORT $LN1@PostBoxPut
 
-; 167  : 		AuUnblockThread(thread);
+; 166  : 		AuUnblockThread(thread);
 
 	mov	rcx, QWORD PTR thread$[rsp]
 	call	AuUnblockThread
 $LN1@PostBoxPut:
 
-; 168  : 
-; 169  : 	return;
-; 170  : }
+; 167  : 
+; 168  : 	return;
+; 169  : }
 
 	add	rsp, 72					; 00000048H
 	ret	0
@@ -1037,7 +1033,7 @@ $LN3:
 ; 257  : 	/* create the postbox file */
 ; 258  : 	AuVFSNode* dev = AuVFSFind("/dev");
 
-	lea	rcx, OFFSET FLAT:$SG3709
+	lea	rcx, OFFSET FLAT:$SG3708
 	call	AuVFSFind
 	mov	QWORD PTR dev$[rsp], rax
 
@@ -1057,7 +1053,7 @@ $LN3:
 ; 261  : 	strcpy(node->filename, "postbox");
 
 	mov	rax, QWORD PTR node$[rsp]
-	lea	rdx, OFFSET FLAT:$SG3714
+	lea	rdx, OFFSET FLAT:$SG3713
 	mov	rcx, rax
 	call	strcpy
 
@@ -1076,7 +1072,7 @@ $LN3:
 ; 264  : 	AuDevFSAddFile(dev,"/dev",  node);
 
 	mov	r8, QWORD PTR node$[rsp]
-	lea	rdx, OFFSET FLAT:$SG3715
+	lea	rdx, OFFSET FLAT:$SG3714
 	mov	rcx, QWORD PTR dev$[rsp]
 	call	AuDevFSAddFile
 

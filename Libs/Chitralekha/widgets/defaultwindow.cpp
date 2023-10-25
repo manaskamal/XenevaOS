@@ -41,8 +41,18 @@
 void ChWindowPaintCloseButton(ChWindow* win, ChWinGlobalControl* button){
 	//ChDrawCircleUnfilled(win->canv, button->x + button->w / 2,button->y + button->h / 2, 8, button->outlineColor);
 	/* draw the actual symbol */
-	ChDrawLine(win->canv, button->x + 7, button->y + 7, button->x + button->w - 7, button->y + button->h - 7, button->outlineColor);
-	ChDrawLine(win->canv, button->x + button->w - 7, button->y + 7, button->x + 7, button->y + button->h - 7, button->outlineColor);
+	uint32_t outline_col = button->outlineColor;
+	if (button->hover){
+		outline_col = button->hoverOutlineColor;
+	}
+
+	if (button->clicked) {
+		outline_col = button->clickedOutlineColor;
+		button->clicked = false;
+	}
+
+	ChDrawLine(win->canv, button->x + 7, button->y + 7, button->x + button->w - 7, button->y + button->h - 7, outline_col);
+	ChDrawLine(win->canv, button->x + button->w - 7, button->y + 7, button->x + 7, button->y + button->h - 7, outline_col);
 }
 
 /*
@@ -51,16 +61,38 @@ void ChWindowPaintCloseButton(ChWindow* win, ChWinGlobalControl* button){
 void ChWindowPaintMaximButton(ChWindow* win, ChWinGlobalControl* button){
 	//ChDrawCircleUnfilled(win->canv, button->x + button->w / 2, button->y + button->h / 2, 8, button->outlineColor);
 	/* draw the actual symbol */
-	ChDrawRectUnfilled(win->canv, button->x + 7, button->y + 7, 7, 7, button->outlineColor);
-	ChDrawHorizontalLine(win->canv, button->x + 7, button->y + 7 + 1, 7, button->outlineColor);
+	uint32_t outline_col = button->outlineColor;
+	if (button->hover){
+		outline_col = button->hoverOutlineColor;
+	}
+
+	if (button->clicked) {
+		outline_col = button->clickedOutlineColor;
+		button->clicked = false;
+	}
+
+
+	ChDrawRectUnfilled(win->canv, button->x + 7, button->y + 7, 7, 7, outline_col);
+	ChDrawHorizontalLine(win->canv, button->x + 7, button->y + 7 + 1, 7, outline_col);
 }
 
 /* 
  * ChWindowPaintMinimButton -- minimize button painter
  */
 void ChWindowPaintMinimButton(ChWindow* win, ChWinGlobalControl* button) {
-	ChDrawHorizontalLine(win->canv, button->x + 7, button->y + button->h / 2, 7, button->outlineColor);
-	ChDrawHorizontalLine(win->canv, button->x + 7, button->y + button->h / 2 + 1, 7, button->outlineColor);
+	uint32_t outline_col = button->outlineColor;
+	if (button->hover){
+		outline_col = button->hoverOutlineColor;
+	}
+
+	if (button->clicked) {
+		outline_col = button->clickedOutlineColor;
+		button->clicked = false;
+	}
+
+
+	ChDrawHorizontalLine(win->canv, button->x + 7, button->y + button->h / 2, 7, outline_col);
+	ChDrawHorizontalLine(win->canv, button->x + 7, button->y + button->h / 2 + 1, 7, outline_col);
 }
 
 void ChWindowPaintTitlebar(ChWindow* win) {
@@ -84,5 +116,5 @@ void ChWindowPaintTitlebar(ChWindow* win) {
 void ChDefaultWinPaint(ChWindow* win){
 	ChDrawRect(win->canv, 0, 0, win->info->width, win->info->height,win->color);
 	ChWindowPaintTitlebar(win);
-	ChWindowUpdate(win, 0, 0, win->info->width, win->info->height, 1);
+	ChWindowUpdate(win, 0, 0, win->info->width, win->info->height, 1,0);
 }

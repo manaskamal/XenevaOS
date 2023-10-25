@@ -50,6 +50,7 @@ typedef struct _ChSharedWin_ {
 	ChRect rect[256];
 	uint32_t rect_count;
 	bool dirty;
+	bool updateEntireWindow;
 	int x;
 	int y;
 	uint32_t width;
@@ -85,6 +86,7 @@ typedef struct _global_ctrl_ {
 	uint32_t clickedFillColor;
 	uint32_t clickedOutlineColor;
 	void(*ChGlobalButtonPaint)(ChWindow* win, _global_ctrl_* glbl);
+	void(*ChGlobalMouseEvent) (ChWindow* win, _global_ctrl_* glbl, int x, int y, int button);
 }ChWinGlobalControl;
 
 
@@ -113,7 +115,18 @@ XE_EXTERN XE_EXPORT void ChWindowPaint(ChWindow* win);
 * @param y -- y position of the dirty area
 * @param w - width of the dirty area
 * @param h -- height of the dirty area
+* @param updateEntireWin -- update entire window
+* @param dirty -- dirty specifies small areas of the window
 */
-XE_EXTERN XE_EXPORT void ChWindowUpdate(ChWindow* win, int x, int y, int w, int h, bool dirty);
+XE_EXTERN XE_EXPORT void ChWindowUpdate(ChWindow* win, int x, int y, int w, int h,bool updateEntireWin, bool dirty);
+
+/*
+* ChWindowHandleMouse -- handle mouse event
+* @param win -- Pointer to window
+* @param x -- X coord of the mouse
+* @param y -- Y coord of the mouse
+* @param button -- button state of the mouse
+*/
+XE_EXTERN XE_EXPORT void ChWindowHandleMouse(ChWindow* win, int x, int y, int button);
 
 #endif

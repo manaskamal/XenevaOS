@@ -136,6 +136,19 @@ Window* DeodhaiCreateWindow(int x, int y, int w, int h, uint8_t flags, uint16_t 
 	return win;
 }
 
+/* DeodhaiWindowMakeTop -- brings a window to front
+ * @param win -- window to brin front
+ */
+void DeodhaiWindowMakeTop(Window* win) {
+	if (win->flags & WINDOW_FLAG_STATIC)
+		return;
+	if (rootWin == win && lastWin == win)
+		return;
+
+	DeodhaiRemoveWindow(win);
+	DeodhaiAddWindow(win);
+}
+
 /*
  * DeodhaiWindowSetFocused -- cast focus to a new window
  */
@@ -147,6 +160,7 @@ void DeodhaiWindowSetFocused(Window* win, bool notify) {
 	if (notify) {
 		/* notify this to broadcast channel */
 	}
+	DeodhaiWindowMakeTop(win);
 }
 
 /*
@@ -283,30 +297,35 @@ void ComposeFrame(ChCanvas *canvas) {
 
 				Rect r1;
 				Rect r2;
-				r1.x = r_x;
-				r1.y = r_y;
+				r1.x = info->x + r_x;
+				r1.y = info->y + r_y;
 				r1.w = r_w;
 				r1.h = r_h;
-
+				bool overlap = false;
 				Rect clipRect[512];
 				int clipCount = 0;
 				Window* clipWin = NULL;
 				WinSharedInfo* clipInfo = NULL;
-				for (clipWin = rootWin; clipWin != NULL; clipWin = clipWin->next) {
-					clipInfo = (WinSharedInfo*)clipWin->sharedInfo;
-					if (clipWin == win)
-						continue;
-					r2.x = clipInfo->x;
-					r2.y = clipInfo->y;
-					r2.w = clipInfo->width;
-					r2.h = clipInfo->height;
 
-					if (ClipCheckIntersect(&r1, &r2))
-						ClipCalculateRect(&r1, &r2, clipRect, &clipCount);
+				if (focusedWin != win) {
+					for (clipWin = rootWin; clipWin != NULL; clipWin = clipWin->next) {
+						clipInfo = (WinSharedInfo*)clipWin->sharedInfo;
+						if (clipWin == win)
+							continue;
+						r2.x = clipInfo->x;
+						r2.y = clipInfo->y;
+						r2.w = clipInfo->width;
+						r2.h = clipInfo->height;
 
+						if (ClipCheckIntersect(&r1, &r2)){
+							overlap = true;
+							ClipCalculateRect(&r1, &r2, clipRect, &clipCount);
+						}
+
+					}
 				}
 
-				if (clipCount == 0) {
+				if (clipCount == 0 && !overlap ) {
 					for (int i = 0; i < r_h; i++) {
 						_fastcpy(canvas->buffer + (info->y + r_y + i) * canvas->canvasWidth + info->x + r_x,
 							win->backBuffer + (r_y + i) * info->width + r_x, r_w * 4);
@@ -315,11 +334,11 @@ void ComposeFrame(ChCanvas *canvas) {
 				}
 
 				for (int k = 0; k < clipCount; k++) {
-					int k_x = clipRect[k].x;
-					int k_y = clipRect[k].y;
-					int k_w = clipRect[k].w;
-					int k_h = clipRect[k].h;
-
+					int k_x = clipRect[k].x;  
+					int k_y = clipRect[k].y;   
+					int k_w = clipRect[k].w;  
+					int k_h = clipRect[k].h;  
+					
 					if (k_x < 0)
 						k_x = 0;
 					if (k_y < 0)
@@ -329,12 +348,21 @@ void ComposeFrame(ChCanvas *canvas) {
 					if ((k_y + k_h) >= canvas->screenHeight)
 						k_h = canvas->screenHeight - k_y;
 
+					int offset_x = info->x + r_x;
+
+					int diffx = k_x - offset_x;
+					int update_r_x = r_x + diffx;
+
+					int offset_y = info->y + r_y;
+					int diffy = k_y - offset_y;
+					int update_r_y = r_y + diffy;
+
 					for (int j = 0; j < k_h; j++) {
-						_fastcpy(canvas->buffer + (info->y + k_y + j) * canvas->canvasWidth + info->x + k_x,
-							win->backBuffer + (k_y + j) * info->width + k_x, k_w * 4);
+						_fastcpy(canvas->buffer + (k_y + j) * canvas->canvasWidth + k_x,
+							win->backBuffer + (update_r_y + j) * info->width + update_r_x, k_w * 4);
 					}
 
-					AddDirtyClip(k_x, k_y, k_w, k_h);
+					AddDirtyClip(k_x,k_y, k_w, k_h);
 				}
 				clipCount = 0;
 			}
@@ -345,10 +373,9 @@ void ComposeFrame(ChCanvas *canvas) {
 
 		/* If no small areas, update entire window */
 
-		if (win != NULL && _window_update_all_ || (info->rect_count == 0 && info->dirty == 1)) {
+		if (win != NULL && _window_update_all_ || (info->rect_count == 0 && info->updateEntireWindow == 1)) {
 			int winx = 0;
 			int winy = 0;
-
 			winx = info->x;
 			winy = info->y;
 
@@ -422,6 +449,8 @@ void ComposeFrame(ChCanvas *canvas) {
 
 			if (focusedWin == win)
 				AddDirtyClip(winx, winy, width, height);
+
+			info->updateEntireWindow = 0;
 		}
 	}
 
@@ -606,11 +635,16 @@ int main(int argc, char* arv[]) {
 	int proc_id = _KeCreateProcess(0, "terminal");
 	_KeProcessLoadExec(proc_id, "/term.exe", 0, NULL);
 
+	int proc_id2 = _KeCreateProcess(0, "term");
+	_KeProcessLoadExec(proc_id2, "/term.exe", 0, NULL);
+
 	_KeFileIoControl(postbox_fd, POSTBOX_CREATE_ROOT, NULL);
 	PostEvent event;
 
 	uint64_t frame_tick = 0;
 	uint64_t diff_tick = 0;
+	int winx = 0;
+	int winy = 0;
 	while (1) {
 		
 		_KeFileIoControl(postbox_fd, POSTBOX_GET_EVENT_ROOT, &event);
@@ -652,8 +686,11 @@ int main(int argc, char* arv[]) {
 			int w = event.dword3;
 			int h = event.dword4;
 			uint8_t flags = event.dword5;
-
-			Window* win = DeodhaiCreateWindow(x, y, w, h, flags, event.from_id, "Test");
+			if (winx == 0 && winy == 0) {
+				winx = x;
+				winy = y;
+			}
+			Window* win = DeodhaiCreateWindow(winx, winy, w, h, flags, event.from_id, "Test");
 			focusedWin = win;
 
 
@@ -665,6 +702,8 @@ int main(int argc, char* arv[]) {
 			e.to_id = event.from_id;
 			_KeFileIoControl(postbox_fd, POSTBOX_PUT_EVENT, &e);
 			_window_update_all_ = true;
+			winx += 10;
+			winy += 10;
 			memset(&event, 0, sizeof(PostEvent));
 
 		}

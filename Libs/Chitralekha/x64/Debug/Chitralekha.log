@@ -1,18 +1,19 @@
-﻿Build started 22-10-2023 ৰাতিপু 8:21:45.
+﻿Build started 25-10-2023 আবেলি 9:24:59.
      1>Project "E:\Xeneva Project\Aurora\Libs\Chitralekha\Chitralekha.vcxproj" on node 2 (Rebuild target(s)).
      1>_NASM:
          _fastcpy.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp237ae0d8e22549f6ae7b519568c16d43.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmpffc82df3ace04008ab13c55275c2e773.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\_fastcpy.obj"  "E:\Xeneva Project\Aurora\Libs\Chitralekha\_fastcpy.asm"
        ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /I"E:\os_dev\freetype2-master\freetype2-master\include" /Zi /nologo /W3 /WX- /sdl- /Od /D ARCH_X64 /D YES_DYNAMIC /D DYNAMIC_EXPORTER /D _USE_FREETYPE /D _WINDLL /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt chitralekha.cpp color.cpp draw.cpp font.cpp ttf.cpp widgets\base.cpp widgets\defaultwindow.cpp widgets\list.cpp widgets\window.cpp
      1>cl : Command line warning D9025: overriding '/sdl-' with '/GS-'
      1>cl : Command line warning D9002: ignoring unknown option '/arch:SSE2'
          window.cpp
-     1>widgets\window.cpp(135): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
+     1>widgets\window.cpp(146): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
+     1>widgets\window.cpp(232): warning C4018: '<' : signed/unsigned mismatch
          list.cpp
          defaultwindow.cpp
-     1>widgets\defaultwindow.cpp(75): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\defaultwindow.cpp(107): warning C4018: '<' : signed/unsigned mismatch
          base.cpp
          ttf.cpp
      1>e:\xeneva project\aurora\libs\chitralekha\ttf.h(82): warning C4161: #pragma pack(pop...) : more pops than pushes
@@ -62,4 +63,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:01.33
+Time Elapsed 00:00:01.69

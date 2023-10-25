@@ -88,6 +88,17 @@ void ChRequestWindow(ChitralekhaApp* app, int x, int y, int w, int h, char* titl
 	}
 }
 
+
+void ChGlobalCtlMouseHandler(ChWindow* win, ChWinGlobalControl* global, int x, int y, int button){
+	/* handle painting */
+	if (global->ChGlobalButtonPaint) {
+		global->ChGlobalButtonPaint(win, global);
+		ChWindowUpdate(win, global->x, global->y, global->w, global->h,false, true);
+	}
+
+	/* handle action event */
+}
+
 /*
  * ChCreateGlobalButton -- create global control button of windows
  * @param win -- Pointer to window
@@ -147,17 +158,26 @@ XE_EXTERN XE_EXPORT ChWindow* ChCreateWindow(ChitralekhaApp *app, uint8_t attrib
 	ChWinGlobalControl* close = ChCreateGlobalButton(win, win->info->width - 25,
 		WINDOW_DEFAULT_TITLEBAR_HEIGHT / 2 - 20 / 2, 20, 20, WINDOW_GLOBAL_CONTROL_CLOSE);
 	close->ChGlobalButtonPaint = ChWindowPaintCloseButton;
+	close->ChGlobalMouseEvent = ChGlobalCtlMouseHandler;
 	close->outlineColor = 0xFF868686;
+	close->hoverOutlineColor = 0xFFAF2E17;
+	close->clickedOutlineColor = 0xFF63291F;
 
 	ChWinGlobalControl* maxim = ChCreateGlobalButton(win, win->info->width - 25 - 20,
 		WINDOW_DEFAULT_TITLEBAR_HEIGHT / 2 - 20 / 2, 20, 20, WINDOW_GLOBAL_CONTROL_MAXIMIZE);
 	maxim->ChGlobalButtonPaint = ChWindowPaintMaximButton;
 	maxim->outlineColor = 0xFF868686;
+	maxim->hoverOutlineColor = 0xFFAFA3A3;
+	maxim->clickedOutlineColor = 0xFF444444;
+	maxim->ChGlobalMouseEvent = ChGlobalCtlMouseHandler;
 
 	ChWinGlobalControl* minim = ChCreateGlobalButton(win, win->info->width - 25 - 20*2,
 		WINDOW_DEFAULT_TITLEBAR_HEIGHT / 2 - 20 / 2, 20, 20, WINDOW_GLOBAL_CONTROL_MAXIMIZE);
 	minim->ChGlobalButtonPaint = ChWindowPaintMinimButton;
 	minim->outlineColor = 0xFF868686;
+	minim->hoverOutlineColor = 0xFFAFA3A3;
+	minim->clickedOutlineColor = 0xFF444444;
+	minim->ChGlobalMouseEvent = ChGlobalCtlMouseHandler;
 	return win;
 }
 
@@ -169,18 +189,22 @@ XE_EXTERN XE_EXPORT ChWindow* ChCreateWindow(ChitralekhaApp *app, uint8_t attrib
  * @param w - width of the dirty area
  * @param h -- height of the dirty area
  */
-XE_EXTERN XE_EXPORT void ChWindowUpdate(ChWindow* win, int x, int y, int w, int h, bool dirty) {
+XE_EXTERN XE_EXPORT void ChWindowUpdate(ChWindow* win, int x, int y, int w, int h,bool updateEntireWin, bool dirty) {
 	uint32_t *lfb = win->buffer;
 	uint32_t* canvaddr = win->canv->buffer;
 	
 	for (int i = 0; i < h; i++)
 		_fastcpy(lfb + (y + i) * win->info->width + x, canvaddr + (y + i) * win->info->width + x, w * 4);
 
+	win->info->updateEntireWindow = updateEntireWin;
+
 	if (dirty) {
 		win->info->rect[win->info->rect_count].x = x;
 		win->info->rect[win->info->rect_count].y = y;
 		win->info->rect[win->info->rect_count].w = w;
 		win->info->rect[win->info->rect_count].h = h;
+		win->info->rect_count++;
+		win->info->dirty = 1;
 	}
 }
 
@@ -191,5 +215,38 @@ XE_EXTERN XE_EXPORT void ChWindowUpdate(ChWindow* win, int x, int y, int w, int 
 XE_EXTERN XE_EXPORT void ChWindowPaint(ChWindow* win) {
 	if (win->ChWinPaint){
 		win->ChWinPaint(win);
+	}
+}
+
+
+/*
+ * ChWindowHandleMouse -- handle mouse event 
+ * @param win -- Pointer to window
+ * @param x -- X coord of the mouse
+ * @param y -- Y coord of the mouse
+ * @param button -- button state of the mouse
+ */
+XE_EXTERN XE_EXPORT void ChWindowHandleMouse(ChWindow* win, int x, int y, int button) {
+	/* first check the title bar bound */
+	if (y > win->info->y && y < win->info->y + WINDOW_DEFAULT_TITLEBAR_HEIGHT) {
+		for (int i = 0; i < win->GlobalControls->pointer; i++) {
+			ChWinGlobalControl* globalCtrl = (ChWinGlobalControl*)list_get_at(win->GlobalControls, i);
+			if (x > win->info->x + globalCtrl->x  && x < (win->info->x + globalCtrl->x + globalCtrl->w) &&
+				(y > win->info->y + globalCtrl->y && y < (win->info->y + globalCtrl->y + globalCtrl->h))){
+				globalCtrl->hover = true;
+				if (button)
+					globalCtrl->clicked = true;
+				if (globalCtrl->ChGlobalMouseEvent)
+					globalCtrl->ChGlobalMouseEvent(win, globalCtrl, x, y, button);
+			}
+			else {
+				if (globalCtrl->hover) {
+					globalCtrl->hover = false;
+					globalCtrl->clicked = false;
+					if (globalCtrl->ChGlobalMouseEvent)
+						globalCtrl->ChGlobalMouseEvent(win, globalCtrl, x, y, button);
+				}
+			}
+		}
 	}
 }

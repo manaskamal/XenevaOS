@@ -53,7 +53,7 @@ void PostBoxAdvanceIndex(PostBox* box) {
 	if (box->full)
 		box->tailIdx = (box->tailIdx + 1) % box->size;
 
-	box->headIdx = (box->headIdx + 1) & box->size;
+	box->headIdx = (box->headIdx + 1) % box->size;
 	box->full = (box->headIdx == box->tailIdx);
 }
 
@@ -82,7 +82,6 @@ void PostBoxCreate(bool root, uint16_t tid) {
 	memset(box->address, 0, PAGE_SIZE);
 
 	if (root &&  !_PostBoxRootCreated){
-		SeTextOut("PostBox root created \r\n");
 		box->ownerID = POSTBOX_ROOT_ID;
 		_PostBoxRootCreated = true;
 	}
@@ -240,6 +239,7 @@ int PostBoxIOControl(AuVFSNode* file, int code, void* arg) {
 	case POSTBOX_GET_EVENT_ROOT: {
 									 PostEvent* e = (PostEvent*)arg;
 									 ret_code = PostBoxGetEvent(e, true, curr_thr);
+									 break;
 	}
 	}
 

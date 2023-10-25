@@ -62,92 +62,87 @@ bool ClipCheckIntersect(Rect *r1, Rect *r2) {
 * @param count -- number of rectangles stored in the list
 */
 void ClipCalculateRect(Rect *sub_rect, Rect* cut_rect, Rect *list, int *count) {
-	int s_top = sub_rect->y;
-	int s_left = sub_rect->x;
-	int s_bottom = sub_rect->y + sub_rect->h;
-	int s_right = sub_rect->x + sub_rect->w;
-
-	int c_top = cut_rect->y;
-	int c_left = cut_rect->x;
-	int c_bottom = cut_rect->y + cut_rect->h;
-	int c_right = cut_rect->x + cut_rect->w;
 
 	int r_count = 0;
 
 	if (RectGetLeft(cut_rect) >= RectGetLeft(sub_rect) &&
 		RectGetLeft(cut_rect) <= RectGetRight(sub_rect)) {
 		Rect r;
-		RectSetTop(&r, RectGetTop(sub_rect));
-		RectSetLeft(&r, RectGetLeft(sub_rect));
-		RectSetBottom(&r, RectGetBottom(sub_rect));
-		RectSetRight(&r, RectGetLeft(cut_rect));
+		memcpy(&r, sub_rect, sizeof(Rect));
+		int top = RectSetTop(&r, RectGetTop(sub_rect));
+		int left = RectSetLeft(&r, RectGetLeft(sub_rect));
+		int bottom = RectSetBottom(&r, RectGetBottom(sub_rect));
+		int right = RectSetRight(&r, RectGetLeft(cut_rect));
 
-
-		list[r_count].x = r.x;
-		list[r_count].y = r.y;
-		list[r_count].w = r.w;
-		list[r_count].h = r.h;
+		list[r_count].x = left; 
+		list[r_count].y = top;  
+		list[r_count].w = right - left; 
+		list[r_count].h = bottom - top;
 		r_count++;
 
-		RectSetLeft(sub_rect,RectGetLeft(cut_rect));
+		int n_l = RectSetLeft(sub_rect,RectGetLeft(cut_rect));
+		sub_rect->x = n_l;
 	}
 
 	if (RectGetTop(cut_rect) >= RectGetTop(sub_rect) &&
 		RectGetTop(cut_rect) <= RectGetBottom(sub_rect)) {
 
 		Rect r;
-		RectSetTop(&r, RectGetTop(sub_rect));
-		RectSetLeft(&r, RectGetLeft(sub_rect));
-		RectSetBottom(&r, RectGetTop(cut_rect));
-		RectSetRight(&r,RectGetRight(sub_rect));
+		memcpy(&r, sub_rect, sizeof(Rect));
+		int top =  RectSetTop(&r, RectGetTop(sub_rect));
+		int left = RectSetLeft(&r, RectGetLeft(sub_rect));
+		int bottom = RectSetBottom(&r, RectGetTop(cut_rect));
+		int right = RectSetRight(&r,RectGetRight(sub_rect));
 
-		RectSetTop(sub_rect, RectGetTop(cut_rect));
-
-		list[r_count].x = r.x;
-		list[r_count].y = r.y;
-		list[r_count].w = r.w;
-		list[r_count].h = r.h;
+		
+		list[r_count].x = left;
+		list[r_count].y = top; 
+		list[r_count].w = right - left; 
+		list[r_count].h = bottom - top; 
 		r_count++;
-		s_top = c_top;
+		int n_t =  RectSetTop(sub_rect, RectGetTop(cut_rect));
+		sub_rect->y = n_t;
 	}
 
 	if (RectGetRight(cut_rect) >= RectGetLeft(sub_rect)
 		&& RectGetRight(cut_rect) < RectGetRight(sub_rect)) {
 
 		Rect r;
-		RectSetTop(&r, RectGetTop(sub_rect));
-		RectSetLeft(&r, RectGetLeft(cut_rect));
-		RectSetBottom(&r, RectGetBottom(sub_rect));
-		RectSetRight(&r, RectGetRight(sub_rect));
+		memcpy(&r, sub_rect, sizeof(Rect));
+		int top = RectSetTop(&r, RectGetTop(sub_rect));
+		int left = RectSetLeft(&r, RectGetRight(cut_rect));
+		int bottom = RectSetBottom(&r, RectGetBottom(sub_rect));
+		int right = RectSetRight(&r, RectGetRight(sub_rect));
 
-		RectSetRight(sub_rect, RectGetRight(cut_rect));
 
-
-		list[r_count].x = r.x;
-		list[r_count].y = r.y;
-		list[r_count].w = r.w;
-		list[r_count].h = r.h;
+		list[r_count].x = left; 
+		list[r_count].y = top;
+		list[r_count].w = right - left; 
+		list[r_count].h = bottom - top; 
 		r_count++;
-		s_right = c_right;
+		
+		RectSetRight(sub_rect, RectGetRight(cut_rect));
 	}
 
 	if (RectGetBottom(cut_rect) >= RectGetTop(sub_rect)
 		&& RectGetBottom(cut_rect) <= RectGetBottom(sub_rect)) {
 		Rect r;
-		RectSetTop(&r, RectGetBottom(cut_rect));
-		RectSetLeft(&r, RectGetLeft(sub_rect));
-		RectSetBottom(&r, RectGetBottom(sub_rect));
-		RectSetRight(&r, RectGetRight(sub_rect));
+		memcpy(&r, sub_rect, sizeof(Rect));
+		int top = RectSetTop(&r, RectGetBottom(cut_rect));
+		int left = RectSetLeft(&r, RectGetLeft(sub_rect));
+		int bottom = RectSetBottom(&r, RectGetBottom(sub_rect));
+		int right = RectSetRight(&r, RectGetRight(sub_rect));
 
-		RectSetBottom(sub_rect, RectGetBottom(cut_rect));
 
-		list[r_count].x = r.x;
-		list[r_count].y = r.y;
-		list[r_count].w = r.w;
-		list[r_count].h = r.h;
+
+		list[r_count].x = left;
+		list[r_count].y = top; 
+		list[r_count].w = right - left; 
+		list[r_count].h = bottom - top; 
 		r_count++;
-		s_bottom = c_bottom;
+		RectSetBottom(sub_rect, RectGetBottom(cut_rect));
 	}
+
 
 	*count = r_count;
 }

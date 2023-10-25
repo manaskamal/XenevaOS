@@ -43,6 +43,7 @@ typedef struct _win_info_ {
 	Rect rect[256];
 	uint32_t rect_count;
 	bool dirty;
+	bool updateEntireWindow;
 	int x;
 	int y;
 	uint32_t width;
