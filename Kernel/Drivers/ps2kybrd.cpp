@@ -37,6 +37,7 @@
 #include <string.h>
 #include <Hal\serial.h>
 #include <aucon.h>
+#include <Fs\Dev\devinput.h>
 
 /*
  * AuPS2KybrdHandler -- ps2 keyboad handler
@@ -48,7 +49,12 @@ void AuPS2KybrdHandler(size_t v, void* p) {
 		 * a signal to deodhai thread which is
 		 * in thread id 4, in a hacky way
 		 */
-		SeTextOut("Key Pressed %x \r\n", code);
+		AuInputMessage msg;
+		memset(&msg, 0, sizeof(AuInputMessage));
+		msg.type = AU_INPUT_KEYBOARD;
+		msg.code = code;
+		AuDevWriteKybrd(&msg);
+		
 	}
 	AuInterruptEnd(1);
 }

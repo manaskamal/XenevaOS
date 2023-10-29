@@ -37,6 +37,8 @@
 #include <Hal\x86_64_sched.h>
 #include <process.h>
 #include <Hal\x86_64_signal.h>
+#include <Hal\x86_64_hal.h>
+#include <aucon.h>
 
 size_t master_count = 0;
 size_t slave_count = 0;
@@ -300,9 +302,15 @@ AuVFSNode* AuTTYCreateSlave(TTY* tty) {
 }
 
 /*
- * AuTTYCreate -- create tty for process
+ * AuTTYCreate -- create tty syscall for process
+ * @param master_fd -- Pointer to memory area
+ * where to store master file descriptor
+ * @param slave_fd -- Pointer to memory area
+ * where to store slave file descriptor
+ *
  */
-int AuTTYCreate(int* master_fx, int* slave_fd) {
+int AuTTYCreate(int* master_fd, int* slave_fd) {
+	x64_cli();
 
 	AuThread* thr = AuGetCurrentThread();
 	AuProcess* proc = AuProcessFindThread(thr);
@@ -342,7 +350,7 @@ int AuTTYCreate(int* master_fx, int* slave_fd) {
 	if (fd == -1)
 		return 0;
 	proc->fds[fd] = master;
-	*master_fx = fd;
+	*master_fd = fd;
 
 	fd = AuProcessGetFileDesc(proc);
 	if (fd == -1)

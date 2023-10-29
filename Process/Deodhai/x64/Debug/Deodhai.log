@@ -1,8 +1,8 @@
-﻿Build started 25-10-2023 আবেলি 10:41:40.
+﻿Build started 29-10-2023 আবেলি 3:57:46.
      1>Project "E:\Xeneva Project\Aurora\Process\Deodhai\Deodhai.vcxproj" on node 2 (Rebuild target(s)).
      1>_NASM:
          _fastcpy.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp03d0c22a70b34d66bc6afae1f36af793.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp481e3ef497ee4859853bb2cbb2149185.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\_fastcpy.obj"  "E:\Xeneva Project\Aurora\Process\Deodhai\_fastcpy.asm"
        ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /I"E:\Xeneva Project\Aurora\Libs\Chitralekha" /I"E:\os_dev\freetype2-master\freetype2-master\include" /Zi /nologo /W4 /WX- /sdl- /MP /Od /Oy /D ARCH_X64 /D YES_DYNAMIC /D DYNAMIC_IMPORTER /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt backdirty.cpp clip.cpp cursor.cpp deomain.cpp dirty.cpp rect.cpp window.cpp
@@ -64,19 +64,19 @@
      1>deomain.cpp(280): warning C4018: '<' : signed/unsigned mismatch
      1>deomain.cpp(292): warning C4018: '>=' : signed/unsigned mismatch
      1>deomain.cpp(295): warning C4018: '>=' : signed/unsigned mismatch
-     1>deomain.cpp(346): warning C4018: '>=' : signed/unsigned mismatch
-     1>deomain.cpp(348): warning C4018: '>=' : signed/unsigned mismatch
-     1>deomain.cpp(441): warning C4018: '>=' : signed/unsigned mismatch
-     1>deomain.cpp(443): warning C4018: '>=' : signed/unsigned mismatch
-     1>deomain.cpp(505): warning C4018: '<' : signed/unsigned mismatch
-     1>deomain.cpp(506): warning C4018: '<' : signed/unsigned mismatch
-     1>deomain.cpp(543): warning C4267: 'argument' : conversion from 'size_t' to 'uint32_t', possible loss of data
-     1>deomain.cpp(648): warning C4127: conditional expression is constant
-     1>deomain.cpp(673): warning C4018: '>=' : signed/unsigned mismatch
-     1>deomain.cpp(675): warning C4018: '>=' : signed/unsigned mismatch
-     1>deomain.cpp(688): warning C4244: 'initializing' : conversion from 'uint32_t' to 'uint8_t', possible loss of data
-     1>deomain.cpp(574): warning C4100: 'arv' : unreferenced formal parameter
-     1>deomain.cpp(574): warning C4100: 'argc' : unreferenced formal parameter
+     1>deomain.cpp(349): warning C4018: '>=' : signed/unsigned mismatch
+     1>deomain.cpp(351): warning C4018: '>=' : signed/unsigned mismatch
+     1>deomain.cpp(444): warning C4018: '>=' : signed/unsigned mismatch
+     1>deomain.cpp(446): warning C4018: '>=' : signed/unsigned mismatch
+     1>deomain.cpp(508): warning C4018: '<' : signed/unsigned mismatch
+     1>deomain.cpp(509): warning C4018: '<' : signed/unsigned mismatch
+     1>deomain.cpp(563): warning C4267: 'argument' : conversion from 'size_t' to 'uint32_t', possible loss of data
+     1>deomain.cpp(666): warning C4127: conditional expression is constant
+     1>deomain.cpp(692): warning C4018: '>=' : signed/unsigned mismatch
+     1>deomain.cpp(694): warning C4018: '>=' : signed/unsigned mismatch
+     1>deomain.cpp(712): warning C4244: 'initializing' : conversion from 'uint32_t' to 'uint8_t', possible loss of data
+     1>deomain.cpp(594): warning C4100: 'arv' : unreferenced formal parameter
+     1>deomain.cpp(594): warning C4100: 'argc' : unreferenced formal parameter
          cursor.cpp
      1>cursor.cpp(96): warning C4018: '<' : signed/unsigned mismatch
      1>cursor.cpp(100): warning C4018: '<' : signed/unsigned mismatch
@@ -104,4 +104,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:01.50
+Time Elapsed 00:00:01.22

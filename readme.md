@@ -24,7 +24,7 @@ _And many more coming soon_
 
 ## Screenshot:
 
-![alt text](https://github.com/manaskamal/XenevaOS/blob/master/FirstLook.jpg?raw=true)
+![alt text](https://github.com/manaskamal/XenevaOS/blob/master/FirstLook.png?raw=true)
 
 # Building the project
 

@@ -67,6 +67,28 @@ void AuDevWriteMice(AuInputMessage* outmsg) {
 }
 
 /*
+* AuDevReadkybrd -- reads packets from pipe
+* to buffer
+* @para, inputmsg -- Pointer to the buffer
+*/
+void AuDevReadKybrd(AuInputMessage* inputmsg) {
+	if (!kybrd_)
+		return;
+	memcpy(inputmsg, kybrd_->device, sizeof(AuInputMessage));
+	memset(kybrd_->device, 0, sizeof(AuInputMessage));
+}
+
+/*
+* AuDevWritekybrd -- writes a packet to pipe
+* @param outmsg -- packet to write
+*/
+void AuDevWriteKybrd(AuInputMessage* outmsg) {
+	if (!kybrd_)
+		return;
+	memcpy(kybrd_->device, outmsg, sizeof(AuInputMessage));
+}
+
+/*
 * AuPipeWrite -- write to pipe
 * @param fs -- Pointer to the file system node
 * @param file -- Pointer to the file, here we don't need it
@@ -100,6 +122,43 @@ size_t AuDevInputMiceRead(AuVFSNode *fs, AuVFSNode *file, uint64_t* buffer, uint
 	void* mice_buf = file->device;
 	memcpy(buffer, mice_buf, sizeof(AuInputMessage));
 	memset(mice_buf, 0, sizeof(AuInputMessage));
+	return (sizeof(AuInputMessage));
+}
+
+/*
+* AuPipeWrite -- write to pipe
+* @param fs -- Pointer to the file system node
+* @param file -- Pointer to the file, here we don't need it
+* @param buffer -- Pointer to buffer where to put the data
+* @param length -- length to read
+*/
+size_t AuDevInputKybrdWrite(AuVFSNode *fs, AuVFSNode *file, uint64_t* buffer, uint32_t length){
+	x64_cli();
+	if (!file)
+		return 0;
+	if (!buffer)
+		return 0;
+	void* key_buf = file->device;
+	memcpy(key_buf, buffer, sizeof(AuInputMessage));
+	return (sizeof(AuInputMessage));
+}
+
+/*
+* AuPipeRead -- reads from pipe
+* @param fs -- Pointer to the file system node
+* @param file -- Pointer to the file, here we don't need it
+* @param buffer -- Pointer to buffer where to put the data
+* @param length -- length to read
+*/
+size_t AuDevInputKybrdRead(AuVFSNode *fs, AuVFSNode *file, uint64_t* buffer, uint32_t length){
+	x64_cli();
+	if (!file)
+		return 0;
+	if (!buffer)
+		return 0;
+	void* key_buf = file->device;
+	memcpy(buffer, key_buf, sizeof(AuInputMessage));
+	memset(key_buf, 0, sizeof(AuInputMessage));
 	return (sizeof(AuInputMessage));
 }
 
@@ -153,7 +212,16 @@ void AuDevInputInitialise() {
 	node->iocontrol = AuDevMouseIoControl;
 	mice_ = node;
 	AuDevFSAddFile(devfs, "/", mice_);
+
+	void* keybuf = kmalloc(sizeof(AuInputMessage));
+	memset(keybuf, 0, sizeof(AuInputMessage));
 	
-	kybrd_ = AuCreatePipe("kybrd", sizeof(AuInputMessage)* NUM_KEYBOARD_PACKETS);
+	kybrd_ = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
+	memset(kybrd_, 0, sizeof(AuVFSNode));
+	strcpy(kybrd_->filename, "kybrd");
+	kybrd_->flags |= FS_FLAG_DEVICE;
+	kybrd_->device = keybuf;
+	kybrd_->read = AuDevInputKybrdRead;
+	kybrd_->write = AuDevInputKybrdWrite;
 	AuDevFSAddFile(devfs, "/", kybrd_);
 }

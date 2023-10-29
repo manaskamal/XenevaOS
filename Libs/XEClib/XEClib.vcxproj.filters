@@ -136,6 +136,12 @@
     <ClInclude Include="includes\sys\_keftmngr.h">
       <Filter>includes\sys</Filter>
     </ClInclude>
+    <ClInclude Include="includes\sys\_keycode.h">
+      <Filter>includes\sys</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\sys\_ketty.h">
+      <Filter>includes\sys</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="string.cpp" />

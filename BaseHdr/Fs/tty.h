@@ -64,6 +64,16 @@ typedef struct __tty__ {
 }TTY;
 
 /*
+ * AuTTYCreate -- create tty syscall for process
+ * @param master_fd -- Pointer to memory area
+ * where to store master file descriptor
+ * @param slave_fd -- Pointer to memory area
+ * where to store slave file descriptor
+ *
+ */
+extern int AuTTYCreate(int* master_fd, int* slave_fd);
+
+/*
 * AuTTYInitialise -- initialize the TTY kernel resource
 */
 extern void AuTTYInitialise();

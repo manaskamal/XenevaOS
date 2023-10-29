@@ -62,6 +62,7 @@ ChFont *ChInitialiseFont(char* fontname) {
 	font->fileSz = fileSz;
 	font->fontSz = 32 / 72.f * 96;
 	font->key = _font_key;
+	font->kern = 0;
 #ifdef _USE_FREETYPE
 	FT_Error err = 0;
 	err = FT_Init_FreeType(&font->lib);
@@ -125,7 +126,7 @@ void ChFontDrawText(ChCanvas *canv, ChFont* font, char* string, int penx, int pe
 						color, val);
 				}
 				else if (font->face->glyph->bitmap.buffer[q * font->face->glyph->bitmap.width] == 255)
-					_KePrint("255 bitmap found \n");
+					canv->buffer[i + j * canv->canvasWidth] = color;
 			}
 		}
 
@@ -138,12 +139,59 @@ void ChFontDrawText(ChCanvas *canv, ChFont* font, char* string, int penx, int pe
 }
 
 /*
+* ChFontDrawChar -- draws a character using desired font
+* @param canv -- Pointer to canvas
+* @param font -- Pointer to font
+* @param string -- string to draw
+* @param penx -- x coordinate
+* @param peny -- y coordinate
+* @param sz -- font size
+* @param color -- color of the font
+*/
+void ChFontDrawChar(ChCanvas *canv, ChFont* font, char c, int penx, int peny, uint32_t sz, uint32_t color){
+#ifdef _USE_FREETYPE
+	int w = font->face->glyph->metrics.width;
+	int h = font->face->glyph->metrics.height;
+	FT_Bool use_kerning = FT_HAS_KERNING(font->face);
+	FT_UInt glyfIndx;
+	FT_Error err = 0;
+	glyfIndx = FT_Get_Char_Index(font->face, c);
+	err = FT_Load_Glyph(font->face, glyfIndx, FT_LOAD_RENDER);
+	if (err)
+		return;
+
+	if (use_kerning && font->kern && glyfIndx) {
+		FT_Vector delta;
+		FT_Get_Kerning(font->face, font->kern, glyfIndx, FT_KERNING_DEFAULT, &delta);
+		penx += delta.x >> 6;
+	}
+
+	int x_v = penx + font->face->glyph->bitmap_left;
+	int y_v = peny - font->face->glyph->bitmap_top;
+
+	for (int i = x_v, p = 0; i < x_v + font->face->glyph->bitmap.width; i++, p++) {
+		for (int j = y_v, q = 0; j < y_v + font->face->glyph->bitmap.rows; j++, q++) {
+			if (font->face->glyph->bitmap.buffer[q * font->face->glyph->bitmap.width + p] > 0){
+				double val = font->face->glyph->bitmap.buffer[q * font->face->glyph->bitmap.width + p] * 1.0 / 255;
+				canv->buffer[i + j * canv->canvasWidth] = ChColorAlphaBlend(canv->buffer[i + j * canv->canvasWidth],
+					color, val);
+			}
+			else if (font->face->glyph->bitmap.buffer[q * font->face->glyph->bitmap.width] == 255)
+				canv->buffer[i + j * canv->canvasWidth] = color;
+		}
+	}
+	font->kern = glyfIndx;
+#endif
+}
+
+/*
  * ChFontGetWidth -- return the total width of font in
  * pixel size
  * @param font -- Pointer to font
  * @param string -- total string
  */
 int ChFontGetWidth(ChFont* font,char* string) {
+	size_t font_width = 0;
 	size_t penx = 0;
 	int string_width = 0;
 	FT_Error err = 0;
@@ -155,7 +203,37 @@ int ChFontGetWidth(ChFont* font,char* string) {
 		string++;
 
 	}
-	return penx;
+	font_width = penx;
+	if (font_width == 0) {
+		int bbox_xmax = FT_MulFix(font->face->bbox.xMax, font->face->size->metrics.x_scale) >> 6;
+		int bbox_xmin = FT_MulFix(font->face->bbox.xMin, font->face->size->metrics.x_scale) >> 6;
+		font_width = bbox_xmax - bbox_xmin;
+	}
+	return font_width;
+}
+
+/*
+* ChFontGetWidthChar -- return the total width of font in
+* pixel size of one character
+* @param font -- Pointer to font
+* @param c -- character
+*/
+int ChFontGetWidthChar(ChFont* font, char c) {
+	size_t font_width = 0;
+	size_t penx = 0;
+	int string_width = 0;
+	FT_Error err = 0;
+	err = FT_Load_Char(font->face, c, FT_LOAD_ADVANCE_ONLY);
+	if (err)
+		return 0;
+	penx += font->face->glyph->advance.x >> 6;
+	font_width = penx;
+	if (font_width == 0) {
+		int bbox_xmax = FT_MulFix(font->face->bbox.xMax, font->face->size->metrics.x_scale) >> 6;
+		int bbox_xmin = FT_MulFix(font->face->bbox.xMin, font->face->size->metrics.x_scale) >> 6;
+		font_width = bbox_xmax - bbox_xmin;
+	}
+	return font_width;
 }
 
 /*
@@ -165,8 +243,8 @@ int ChFontGetWidth(ChFont* font,char* string) {
  * @param string -- total string
  */
 int ChFontGetHeight(ChFont* font, char* string) {
+	size_t font_height = 0;
 	size_t peny = 0;
-	int string_width = 0;
 	FT_Error err = 0;
 	while (*string) {
 		err = FT_Load_Char(font->face, *string, FT_LOAD_ADVANCE_ONLY);
@@ -175,7 +253,37 @@ int ChFontGetHeight(ChFont* font, char* string) {
 		peny += font->face->glyph->advance.y >> 6;
 		string++;
 	}
-	return peny;
+	font_height =  peny;
+	if (font_height == 0) {
+		int bbox_ymax = FT_MulFix(font->face->bbox.yMax, font->face->size->metrics.y_scale) >> 6;
+		int bbox_ymin = FT_MulFix(font->face->bbox.yMin, font->face->size->metrics.y_scale) >> 6;
+		font_height = bbox_ymax - bbox_ymin;
+	}
+	return font_height;
+}
+
+/*
+* ChFontGetHeightChar -- return the total width of font in
+* pixel size of one character
+* @param font -- Pointer to font
+* @param c -- character
+*/
+int ChFontGetHeightChar(ChFont* font, char c) {
+	size_t font_h = 0;
+	size_t peny = 0;
+	int string_width = 0;
+	FT_Error err = 0;
+	err = FT_Load_Char(font->face, c, FT_LOAD_ADVANCE_ONLY);
+	if (err)
+		return 0;
+	peny += font->face->glyph->advance.y >> 6;
+	font_h = peny;
+	if (font_h == 0) {
+		int bbox_ymax = FT_MulFix(font->face->bbox.yMax, font->face->size->metrics.y_scale) >> 6;
+		int bbox_ymin = FT_MulFix(font->face->bbox.yMin, font->face->size->metrics.y_scale) >> 6;
+		font_h = bbox_ymax - bbox_ymin;
+	}
+	return font_h;
 }
 
 /*

@@ -151,6 +151,7 @@ XE_EXTERN XE_EXPORT ChWindow* ChCreateWindow(ChitralekhaApp *app, uint8_t attrib
 	win->info->width = w;
 	win->info->height = h;
 	win->info->rect_count = 0;
+	win->info->updateEntireWindow = 0;
 	win->color = WHITE;
 	win->GlobalControls = initialize_list();
 	win->ChWinPaint = ChDefaultWinPaint;

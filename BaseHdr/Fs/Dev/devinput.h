@@ -80,4 +80,16 @@ AU_EXTERN AU_EXPORT void AuDevReadMice(AuInputMessage* inputmsg);
 */
 AU_EXTERN AU_EXPORT void AuDevWriteMice(AuInputMessage* outmsg);
 
+/*
+* AuDevReadkybrd -- reads packets from pipe
+* to buffer
+* @para, inputmsg -- Pointer to the buffer
+*/
+AU_EXTERN AU_EXPORT void AuDevReadKybrd(AuInputMessage* inputmsg);
+/*
+* AuDevWritekybrd -- writes a packet to pipe
+* @param outmsg -- packet to write
+*/
+AU_EXTERN AU_EXPORT void AuDevWriteKybrd(AuInputMessage* outmsg);
+
 #endif

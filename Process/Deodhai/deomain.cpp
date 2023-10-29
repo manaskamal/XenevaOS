@@ -295,6 +295,9 @@ void ComposeFrame(ChCanvas *canvas) {
 				if ((info->y + r_y + r_h) >= canvas->canvasHeight)
 					r_h = canvas->canvasHeight - (info->y + r_y);
 
+				/* from here, we check if the small rectangle is
+				 * covered by a window or another rectangle */
+
 				Rect r1;
 				Rect r2;
 				r1.x = info->x + r_x;
@@ -510,6 +513,23 @@ void DeodhaiBroadcastMouse(int mouse_x, int mouse_y, int button) {
 	}
 }
 
+/*
+ * DeodhaiBrodcastKey -- sends key event
+ * to focused window
+ * @param code -- key code
+ */
+void DeodhaiBroadcastKey(int code) {
+	if (!focusedWin)
+		return;
+	PostEvent e;
+	memset(&e, 0, sizeof(PostEvent));
+	e.type = DEODHAI_REPLY_KEY_EVENT;
+	e.dword = code;
+	e.to_id = focusedWin->ownerId;
+	e.from_id = POSTBOX_ROOT_ID;
+	_KeFileIoControl(postbox_fd, POSTBOX_PUT_EVENT, &e);
+}
+
 #pragma pack(push,1)
 typedef struct _jpegh_ {
 	char soi[2];
@@ -614,7 +634,7 @@ int main(int argc, char* arv[]) {
 		surfaceBuffer[j * canv->canvasWidth + i] = 0xFF938585;
 
 	DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
-
+	DrawWallpaper(canv, "/assam.jpg");
 	ChCanvasScreenUpdate(canv, 0, 0, canv->canvasWidth, canv->canvasHeight);
 
 	InitialiseDirtyClipList();
@@ -627,30 +647,29 @@ int main(int argc, char* arv[]) {
 
 	/* Open all required device file */
 	mouse_fd = _KeOpenFile("/dev/mice", FILE_OPEN_READ_ONLY);
+	kybrd_fd = _KeOpenFile("/dev/kybrd", FILE_OPEN_READ_ONLY);
 	AuInputMessage mice_input;
+	AuInputMessage kybrd_input;
 	memset(&mice_input, 0, sizeof(AuInputMessage));
+	memset(&kybrd_input, 0, sizeof(AuInputMessage));
 	postbox_fd = _KeOpenFile("/dev/postbox", FILE_OPEN_READ_ONLY);
 
 
 	int proc_id = _KeCreateProcess(0, "terminal");
 	_KeProcessLoadExec(proc_id, "/term.exe", 0, NULL);
 
-	int proc_id2 = _KeCreateProcess(0, "term");
-	_KeProcessLoadExec(proc_id2, "/term.exe", 0, NULL);
-
 	_KeFileIoControl(postbox_fd, POSTBOX_CREATE_ROOT, NULL);
 	PostEvent event;
 
 	uint64_t frame_tick = 0;
 	uint64_t diff_tick = 0;
-	int winx = 0;
-	int winy = 0;
 	while (1) {
 		
 		_KeFileIoControl(postbox_fd, POSTBOX_GET_EVENT_ROOT, &event);
 		frame_tick = _KeGetSystemTimerTick();
 
 		_KeReadFile(mouse_fd, &mice_input, sizeof(AuInputMessage));
+		_KeReadFile(kybrd_fd, &kybrd_input, sizeof(AuInputMessage));
 		ComposeFrame(canv);
 		
 		if (mice_input.type == AU_INPUT_MOUSE) {
@@ -680,17 +699,19 @@ int main(int argc, char* arv[]) {
 			memset(&mice_input, 0, sizeof(AuInputMessage));
 		}
 
+		if (kybrd_input.type == AU_INPUT_KEYBOARD) {
+			DeodhaiBroadcastKey(kybrd_input.code);
+			memset(&kybrd_input, 0, sizeof(AuInputMessage));
+		}
+
 		if (event.type == DEODHAI_MESSAGE_CREATEWIN) {
 			int x = event.dword;
 			int y = event.dword2;
 			int w = event.dword3;
 			int h = event.dword4;
 			uint8_t flags = event.dword5;
-			if (winx == 0 && winy == 0) {
-				winx = x;
-				winy = y;
-			}
-			Window* win = DeodhaiCreateWindow(winx, winy, w, h, flags, event.from_id, "Test");
+	
+			Window* win = DeodhaiCreateWindow(x, y, w, h, flags, event.from_id, "Test");
 			focusedWin = win;
 
 
@@ -702,8 +723,6 @@ int main(int argc, char* arv[]) {
 			e.to_id = event.from_id;
 			_KeFileIoControl(postbox_fd, POSTBOX_PUT_EVENT, &e);
 			_window_update_all_ = true;
-			winx += 10;
-			winy += 10;
 			memset(&event, 0, sizeof(PostEvent));
 
 		}

@@ -6,29 +6,28 @@ INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
 CONST	SEGMENT
-$SG2950	DB	'dev', 00H
-$SG3036	DB	00H
-$SG3058	DB	00H
+$SG3072	DB	'Unknown', 00H
+$SG3073	DB	'%s mode - %s ', 0dH, 0aH, 00H
+$SG2954	DB	'dev', 00H
+$SG3040	DB	00H
+$SG3062	DB	00H
 	ORG $+2
-$SG3028	DB	'Listing Directory -> %s ', 0dH, 0aH, 00H
+$SG3032	DB	'Listing Directory -> %s ', 0dH, 0aH, 00H
 	ORG $+1
-$SG3038	DB	'Device', 00H
+$SG3042	DB	'Device', 00H
 	ORG $+5
-$SG3041	DB	'Directory', 00H
+$SG3045	DB	'Directory', 00H
 	ORG $+6
-$SG3043	DB	'Unknown', 00H
-$SG3044	DB	'File ->  %s mode - %s ', 0dH, 0aH, 00H
+$SG3047	DB	'Unknown', 00H
+$SG3048	DB	'File ->  %s mode - %s ', 0dH, 0aH, 00H
 	ORG $+7
-$SG3050	DB	'Listing device fs ', 0dH, 0aH, 00H
+$SG3054	DB	'Listing device fs ', 0dH, 0aH, 00H
 	ORG $+3
-$SG3060	DB	'Device', 00H
+$SG3064	DB	'Device', 00H
 	ORG $+1
-$SG3063	DB	'Directory', 00H
+$SG3067	DB	'Directory', 00H
 	ORG $+2
-$SG3066	DB	'Pipe', 00H
-	ORG $+7
-$SG3068	DB	'Unknown', 00H
-$SG3069	DB	'%s mode - %s ', 0dH, 0aH, 00H
+$SG3070	DB	'Pipe', 00H
 CONST	ENDS
 PUBLIC	?AuDeviceFsInitialize@@YAXXZ			; AuDeviceFsInitialize
 PUBLIC	?AuDevFSCreateFile@@YAHPEAU__VFS_NODE__@@PEADE@Z ; AuDevFSCreateFile
@@ -117,7 +116,7 @@ $LN10:
 
 	mov	rax, QWORD PTR dir$[rsp]
 	mov	rdx, rax
-	lea	rcx, OFFSET FLAT:$SG3028
+	lea	rcx, OFFSET FLAT:$SG3032
 	call	SeTextOut
 
 ; 166  : 	for (int i = 0; i < entries->childs->pointer; i++) {
@@ -145,7 +144,7 @@ $LN7@AuDevFSLis:
 
 ; 168  : 		char* mode = "";
 
-	lea	rax, OFFSET FLAT:$SG3036
+	lea	rax, OFFSET FLAT:$SG3040
 	mov	QWORD PTR mode$2[rsp], rax
 
 ; 169  : 		if (node_->flags & FS_FLAG_DEVICE)
@@ -158,7 +157,7 @@ $LN7@AuDevFSLis:
 
 ; 170  : 			mode = "Device";
 
-	lea	rax, OFFSET FLAT:$SG3038
+	lea	rax, OFFSET FLAT:$SG3042
 	mov	QWORD PTR mode$2[rsp], rax
 	jmp	SHORT $LN3@AuDevFSLis
 $LN4@AuDevFSLis:
@@ -173,7 +172,7 @@ $LN4@AuDevFSLis:
 
 ; 172  : 			mode = "Directory";
 
-	lea	rax, OFFSET FLAT:$SG3041
+	lea	rax, OFFSET FLAT:$SG3045
 	mov	QWORD PTR mode$2[rsp], rax
 
 ; 173  : 		else
@@ -183,7 +182,7 @@ $LN2@AuDevFSLis:
 
 ; 174  : 			mode = "Unknown";
 
-	lea	rax, OFFSET FLAT:$SG3043
+	lea	rax, OFFSET FLAT:$SG3047
 	mov	QWORD PTR mode$2[rsp], rax
 $LN1@AuDevFSLis:
 $LN3@AuDevFSLis:
@@ -193,7 +192,7 @@ $LN3@AuDevFSLis:
 	mov	rax, QWORD PTR node_$3[rsp]
 	mov	r8, QWORD PTR mode$2[rsp]
 	mov	rdx, rax
-	lea	rcx, OFFSET FLAT:$SG3044
+	lea	rcx, OFFSET FLAT:$SG3048
 	call	SeTextOut
 
 ; 176  : 	}
@@ -531,7 +530,7 @@ $LN13:
 
 ; 181  : 	SeTextOut("Listing device fs \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG3050
+	lea	rcx, OFFSET FLAT:$SG3054
 	call	SeTextOut
 
 ; 182  : 	for (int i = 0; i < entries->childs->pointer; i++) {
@@ -559,7 +558,7 @@ $LN10@AuDevFSLis:
 
 ; 184  : 		char* mode = "";
 
-	lea	rax, OFFSET FLAT:$SG3058
+	lea	rax, OFFSET FLAT:$SG3062
 	mov	QWORD PTR mode$3[rsp], rax
 
 ; 185  : 		if (node_->flags & FS_FLAG_DEVICE)
@@ -572,7 +571,7 @@ $LN10@AuDevFSLis:
 
 ; 186  : 			mode = "Device";
 
-	lea	rax, OFFSET FLAT:$SG3060
+	lea	rax, OFFSET FLAT:$SG3064
 	mov	QWORD PTR mode$3[rsp], rax
 	jmp	SHORT $LN6@AuDevFSLis
 $LN7@AuDevFSLis:
@@ -587,7 +586,7 @@ $LN7@AuDevFSLis:
 
 ; 188  : 			mode = "Directory";
 
-	lea	rax, OFFSET FLAT:$SG3063
+	lea	rax, OFFSET FLAT:$SG3067
 	mov	QWORD PTR mode$3[rsp], rax
 	jmp	SHORT $LN4@AuDevFSLis
 $LN5@AuDevFSLis:
@@ -602,7 +601,7 @@ $LN5@AuDevFSLis:
 
 ; 190  : 			mode = "Pipe";
 
-	lea	rax, OFFSET FLAT:$SG3066
+	lea	rax, OFFSET FLAT:$SG3070
 	mov	QWORD PTR mode$3[rsp], rax
 
 ; 191  : 		else
@@ -612,7 +611,7 @@ $LN3@AuDevFSLis:
 
 ; 192  : 			mode = "Unknown";
 
-	lea	rax, OFFSET FLAT:$SG3068
+	lea	rax, OFFSET FLAT:$SG3072
 	mov	QWORD PTR mode$3[rsp], rax
 $LN2@AuDevFSLis:
 $LN4@AuDevFSLis:
@@ -623,7 +622,7 @@ $LN6@AuDevFSLis:
 	mov	rax, QWORD PTR node_$2[rsp]
 	mov	r8, QWORD PTR mode$3[rsp]
 	mov	rdx, rax
-	lea	rcx, OFFSET FLAT:$SG3069
+	lea	rcx, OFFSET FLAT:$SG3073
 	call	SeTextOut
 
 ; 194  : 		if (node_->flags & FS_FLAG_DIRECTORY)
@@ -1461,7 +1460,7 @@ $LN3:
 ; 49   : 	strcpy(node->filename, "dev");
 
 	mov	rax, QWORD PTR node$[rsp]
-	lea	rdx, OFFSET FLAT:$SG2950
+	lea	rdx, OFFSET FLAT:$SG2954
 	mov	rcx, rax
 	call	strcpy
 

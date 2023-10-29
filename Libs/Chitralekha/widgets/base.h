@@ -36,9 +36,11 @@
 #include <_xeneva.h>
 
 #define DEODHAI_MESSAGE_CREATEWIN  50
+#define DEODHAI_MESSAGE_WINDESTROY 51
 
 #define DEODHAI_REPLY_WINCREATED 150
 #define DEODHAI_REPLY_MOUSE_EVENT 151
+#define DEODHAI_REPLY_KEY_EVENT   152
 
 typedef struct _ChApp_ {
 	int postboxfd;

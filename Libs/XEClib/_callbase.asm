@@ -535,6 +535,20 @@ _KeMemMapDirty:
 	  mov rdi, r9
 	  syscall
 	  ret
+
+global _KeCreateTTY
+%ifdef YES_DYNAMIC
+export _KeCreateTTY
+%endif
+_KeCreateTTY:
+      xor rax, rax
+	  mov r12, 31
+	  mov r13, rcx
+	  mov r14, rdx
+	  mov r15, 0
+	  mov rdi, 0
+	  syscall
+	  ret
       
       
 

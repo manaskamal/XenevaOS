@@ -39,6 +39,7 @@
 #include <Sync\mutex.h>
 #include <Serv/sysserv.h>
 #include <ftmngr.h>
+#include <Fs\tty.h>
 #include <Mm\mmap.h>
 
 
@@ -99,6 +100,7 @@ static void* syscalls[AURORA_MAX_SYSCALL] = {
 	AuFTMngrGetNumFonts, //28
 	AuFTMngrGetFontSize, //29
 	MemMapDirty, //30
+	AuTTYCreate, //31
 };
 
 

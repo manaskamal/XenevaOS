@@ -3,4 +3,8 @@
   <ItemGroup>
     <ClCompile Include="term.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="term.h" />
+    <ClInclude Include="arrayfont.h" />
+  </ItemGroup>
 </Project>
