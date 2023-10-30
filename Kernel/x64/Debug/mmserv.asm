@@ -6,9 +6,9 @@ INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
 CONST	SEGMENT
-$SG3447	DB	'Returning error heap mem -> %d ', 0dH, 0aH, 00H
+$SG3457	DB	'Returning error heap mem -> %d ', 0dH, 0aH, 00H
 	ORG $+6
-$SG3449	DB	'Returning error heap mem -> %d ', 0dH, 0aH, 00H
+$SG3459	DB	'Returning error heap mem -> %d ', 0dH, 0aH, 00H
 CONST	ENDS
 PUBLIC	?CreateSharedMem@@YAHG_KE@Z			; CreateSharedMem
 PUBLIC	?ObtainSharedMem@@YAPEAXGPEAXH@Z		; ObtainSharedMem
@@ -82,7 +82,7 @@ $LN13:
 ; 89   : 		SeTextOut("Returning error heap mem -> %d \r\n", sz);
 
 	mov	rdx, QWORD PTR sz$[rsp]
-	lea	rcx, OFFSET FLAT:$SG3447
+	lea	rcx, OFFSET FLAT:$SG3457
 	call	SeTextOut
 
 ; 90   : 		//return -1;
@@ -120,7 +120,7 @@ $LN6@GetProcess:
 ; 95   : 		SeTextOut("Returning error heap mem -> %d \r\n", sz);
 
 	mov	rdx, QWORD PTR sz$[rsp]
-	lea	rcx, OFFSET FLAT:$SG3449
+	lea	rcx, OFFSET FLAT:$SG3459
 	call	SeTextOut
 
 ; 96   : 		sz = PAGE_ALIGN(sz);
@@ -169,7 +169,7 @@ $LN4@GetProcess:
 ; 103  : 	uint64_t start_addr = proc->proc_mem_heap;
 
 	mov	rax, QWORD PTR proc$[rsp]
-	mov	rax, QWORD PTR [rax+1071]
+	mov	rax, QWORD PTR [rax+1087]
 	mov	QWORD PTR start_addr$[rsp], rax
 
 ; 104  : 
@@ -217,10 +217,10 @@ $LN1@GetProcess:
 ; 109  : 	proc->proc_mem_heap += sz;
 
 	mov	rax, QWORD PTR proc$[rsp]
-	mov	rax, QWORD PTR [rax+1071]
+	mov	rax, QWORD PTR [rax+1087]
 	add	rax, QWORD PTR sz$[rsp]
 	mov	rcx, QWORD PTR proc$[rsp]
-	mov	QWORD PTR [rcx+1071], rax
+	mov	QWORD PTR [rcx+1087], rax
 
 ; 110  : 	return start_addr;
 

@@ -211,6 +211,14 @@ void TerminalHandleMessage(PostEvent *e) {
 	}
 }
 
+
+void TerminalThread() {
+	while (1) {
+		_KePrint("Term Thread ");
+		_KePauseThread();
+	}
+}
+
 /*
 * main -- terminal emulator
 */
@@ -255,6 +263,10 @@ int main(int argc, char* arv[]){
 	TerminalPrintString("HP@LAPTOP-UCFKK4J9-", GREEN, BLACK);
 	TerminalPrintString("/:$", LIGHTSILVER, BLACK);
 	TerminalDrawAllCells();
+
+	
+	_KeCreateThread(TerminalThread, "tthr");
+	_KePrint("thread created \n");
 	PostEvent e;
 	memset(&e, 0, sizeof(PostEvent));
 	while (1) {

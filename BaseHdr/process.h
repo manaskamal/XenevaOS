@@ -88,6 +88,8 @@ typedef struct _au_proc_ {
 	uint64_t _image_size_;
 	uint64_t _image_base_;
 	uint64_t _main_stack_;
+	size_t _user_stack_index_;
+	size_t _kstack_index_;
 
 	/* threading section */
 	AuThread* main_thread;
@@ -131,6 +133,20 @@ extern void AuRemoveProcess(AuProcess* parent, AuProcess* proc);
 
 
 /*
+* Allocate kernel stack
+* @param cr3 -- root page map level, it should be
+* converted to linear virtual address
+*/
+extern uint64_t CreateKernelStack(AuProcess* proc, uint64_t *cr3);
+/*
+* KernelStackFree -- frees up an allocated stack
+* @param proc -- Pointer to process
+* @param ptr -- Starting address of the stack
+* @param cr3 -- page root level mapping
+*/
+extern void KernelStackFree(AuProcess* proc, void* ptr, uint64_t *cr3);
+
+/*
 * AuProcessFindPID -- finds a process by its pid
 * @param pid -- process id to find
 */
@@ -145,10 +161,11 @@ extern AuProcess *AuProcessFindThread(AuThread* thread);
 
 /*
 * CreateUserStack -- creates new user stack
+* @param proc -- Pointer to process
 * @param cr3 -- pointer to the address space where to
 * map
 */
-extern uint64_t* CreateUserStack(uint64_t* cr3);
+extern uint64_t* CreateUserStack(AuProcess* proc,uint64_t* cr3);
 
 /*
 * AuStartRootProc -- starts the very first process
@@ -198,5 +215,15 @@ extern int AuProcessGetFileDesc(AuProcess* proc);
 extern void AuProcessWaitForTermination(AuProcess *proc, int pid);
 
 extern AuMutex* AuProcessGetMutex();
+
+/**
+*  Creates a user mode thread
+*  @param entry -- Entry point address
+*  @param stack -- Stack address
+*  @param cr3 -- the top most page map level address
+*  @param name -- name of the thread
+*  @param priority -- (currently unused) thread's priority
+*/
+extern int AuCreateUserthread(AuProcess* proc, void(*entry) (void*), char *name);
 
 #endif

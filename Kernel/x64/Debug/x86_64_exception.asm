@@ -6,125 +6,125 @@ INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
 CONST	SEGMENT
-$SG4100	DB	0aH, 'Alignment Check Fault at address ', 00H
+$SG4102	DB	0aH, 'FPU Fault', 00H
 	ORG $+5
-$SG4108	DB	0aH, 'Machine Check Abort', 00H
+$SG4110	DB	0aH, 'Alignment Check Fault at address ', 00H
+	ORG $+5
+$SG4118	DB	0aH, 'Machine Check Abort', 00H
 	ORG $+3
-$SG4118	DB	0aH, ' SIMD FPU Faul ', 0dH, 0aH, 't', 00H
+$SG4128	DB	0aH, ' SIMD FPU Faul ', 0dH, 0aH, 't', 00H
 	ORG $+4
-$SG4119	DB	0aH, '__CPU Informations__ ', 0aH, 00H
-$SG4120	DB	' RIP -> %x ', 0aH, 00H
+$SG4129	DB	0aH, '__CPU Informations__ ', 0aH, 00H
+$SG4130	DB	' RIP -> %x ', 0aH, 00H
 	ORG $+3
-$SG4121	DB	' RSP -> %x ', 0aH, 00H
+$SG4131	DB	' RSP -> %x ', 0aH, 00H
 	ORG $+3
-$SG4122	DB	' RFLAGS -> %x ', 0aH, 00H
-$SG4123	DB	' MXCSR bit  -- ', 00H
-$SG3888	DB	0dH, 0aH, ' ***ARCH x86_64 : Kernel Panic!!! *** ', 0dH, 0aH
+$SG4132	DB	' RFLAGS -> %x ', 0aH, 00H
+$SG4133	DB	' MXCSR bit  -- ', 00H
+$SG3898	DB	0dH, 0aH, ' ***ARCH x86_64 : Kernel Panic!!! *** ', 0dH, 0aH
 	DB	00H
 	ORG $+5
-$SG3889	DB	'[Aurora Kernel]: We are sorry to say that, a processor i'
+$SG3899	DB	'[Aurora Kernel]: We are sorry to say that, a processor i'
 	DB	'nvalid exception has occured ', 0dH, 0aH, 00H
-$SG3891	DB	'[Aurora Kernel]: Below is the code of exception ', 0dH, 0aH
+$SG3901	DB	'[Aurora Kernel]: Below is the code of exception ', 0dH, 0aH
 	DB	00H
 	ORG $+5
-$SG3890	DB	'[Aurora Kernel]: please inform it to the master of the k'
+$SG3900	DB	'[Aurora Kernel]: please inform it to the master of the k'
 	DB	'ernel ', 0dH, 0aH, 00H
 	ORG $+3
-$SG3893	DB	' %s ', 0dH, 0aH, 00H
+$SG3903	DB	' %s ', 0dH, 0aH, 00H
 	ORG $+5
-$SG3892	DB	'[Aurora Kernel]: Current Processor id -> %d ', 0dH, 0aH, 00H
+$SG3902	DB	'[Aurora Kernel]: Current Processor id -> %d ', 0dH, 0aH, 00H
 	ORG $+1
-$SG3900	DB	0aH, 'Divide by 0', 00H
+$SG3910	DB	0aH, 'Divide by 0', 00H
 	ORG $+3
-$SG3901	DB	'Divide by 0 ', 0dH, 0aH, 00H
+$SG3911	DB	'Divide by 0 ', 0dH, 0aH, 00H
 	ORG $+1
-$SG3902	DB	'__PROCESSOR_DATA__ ', 0dH, 0aH, 00H
+$SG3912	DB	'__PROCESSOR_DATA__ ', 0dH, 0aH, 00H
 	ORG $+2
-$SG3903	DB	'RIP -> %x ', 0dH, 0aH, 00H
+$SG3913	DB	'RIP -> %x ', 0dH, 0aH, 00H
 	ORG $+3
-$SG3904	DB	'RSP -> %x ', 0dH, 0aH, 00H
+$SG3914	DB	'RSP -> %x ', 0dH, 0aH, 00H
 	ORG $+3
-$SG3905	DB	'RFLAGS -> %x ', 0dH, 0aH, 00H
-$SG3915	DB	0aH, 'Single Step Trap', 00H
+$SG3915	DB	'RFLAGS -> %x ', 0dH, 0aH, 00H
+$SG3925	DB	0aH, 'Single Step Trap', 00H
 	ORG $+6
-$SG3923	DB	0aH, 'NMI [Non-Muskable-Interrupt] Trap', 00H
+$SG3933	DB	0aH, 'NMI [Non-Muskable-Interrupt] Trap', 00H
 	ORG $+5
-$SG3931	DB	0aH, 'Breakpoint Trap', 00H
+$SG3941	DB	0aH, 'Breakpoint Trap', 00H
 	ORG $+7
-$SG3939	DB	0aH, 'Overflow Trap', 00H
+$SG3949	DB	0aH, 'Overflow Trap', 00H
 	ORG $+1
-$SG3947	DB	0aH, 'Bound Check Fault', 00H
+$SG3957	DB	0aH, 'Bound Check Fault', 00H
 	ORG $+5
-$SG3957	DB	'Invalid Opcode Fault ', 0dH, 0aH, 00H
-$SG3958	DB	'Invalid Opcode Fault ', 0dH, 0aH, 00H
-$SG3959	DB	'__PROCESSOR TRACE__ ', 0dH, 0aH, 00H
+$SG3967	DB	'Invalid Opcode Fault ', 0dH, 0aH, 00H
+$SG3968	DB	'Invalid Opcode Fault ', 0dH, 0aH, 00H
+$SG3969	DB	'__PROCESSOR TRACE__ ', 0dH, 0aH, 00H
 	ORG $+1
-$SG3960	DB	'RIP -> %x', 0aH, 00H
+$SG3970	DB	'RIP -> %x', 0aH, 00H
 	ORG $+5
-$SG3961	DB	'Stack -> %x', 0aH, 00H
+$SG3971	DB	'Stack -> %x', 0aH, 00H
 	ORG $+3
-$SG3962	DB	'RFLAGS -> %x', 0aH, 00H
+$SG3972	DB	'RFLAGS -> %x', 0aH, 00H
 	ORG $+2
-$SG3963	DB	'CS -> %x', 0aH, 00H
+$SG3973	DB	'CS -> %x', 0aH, 00H
 	ORG $+6
-$SG3964	DB	'SS -> %x', 0aH, 00H
+$SG3974	DB	'SS -> %x', 0aH, 00H
 	ORG $+6
-$SG3972	DB	0aH, 'No Device Fault', 00H
+$SG3982	DB	0aH, 'No Device Fault', 00H
 	ORG $+7
-$SG3980	DB	0aH, 'Double Fault Abort', 00H
+$SG3990	DB	0aH, 'Double Fault Abort', 00H
 	ORG $+4
-$SG3988	DB	0aH, 'Invalid TSS Fault ', 00H
+$SG3998	DB	0aH, 'Invalid TSS Fault ', 00H
 	ORG $+4
-$SG3996	DB	0aH, 'No Segment Fault', 00H
+$SG4006	DB	0aH, 'No Segment Fault', 00H
 	ORG $+6
-$SG4004	DB	0aH, 'Stack Fault at ', 00H
+$SG4014	DB	0aH, 'Stack Fault at ', 00H
 	ORG $+7
-$SG4014	DB	'Genral Protection Fault ', 0dH, 0aH, 00H
+$SG4024	DB	'Genral Protection Fault ', 0dH, 0aH, 00H
 	ORG $+5
-$SG4015	DB	'General Protection Fault ', 0dH, 0aH, 00H
+$SG4025	DB	'General Protection Fault ', 0dH, 0aH, 00H
 	ORG $+4
-$SG4016	DB	'__PROCESSOR TRACE__ ', 0dH, 0aH, 00H
+$SG4026	DB	'__PROCESSOR TRACE__ ', 0dH, 0aH, 00H
 	ORG $+1
-$SG4017	DB	'RIP -> %x ', 0dH, 0aH, 00H
+$SG4027	DB	'RIP -> %x ', 0dH, 0aH, 00H
 	ORG $+3
-$SG4018	DB	'Stack -> %x ', 0dH, 0aH, 00H
+$SG4028	DB	'Stack -> %x ', 0dH, 0aH, 00H
 	ORG $+1
-$SG4019	DB	'RFLAGS -> %x ', 0dH, 0aH, 00H
-$SG4020	DB	'CS -> %x, SS -> %x ', 0dH, 0aH, 00H
+$SG4029	DB	'RFLAGS -> %x ', 0dH, 0aH, 00H
+$SG4030	DB	'CS -> %x, SS -> %x ', 0dH, 0aH, 00H
 	ORG $+2
-$SG4021	DB	'Current thread ->id %d , %s', 0dH, 0aH, 00H
+$SG4031	DB	'Current thread ->id %d , %s', 0dH, 0aH, 00H
 	ORG $+2
-$SG4043	DB	'Thr has returnable signal ', 0dH, 0aH, 00H
+$SG4053	DB	'Thr has returnable signal ', 0dH, 0aH, 00H
 	ORG $+3
-$SG4054	DB	'Process pid -> %d ', 0dH, 0aH, 00H
+$SG4064	DB	'Process pid -> %d ', 0dH, 0aH, 00H
 	ORG $+3
-$SG4055	DB	'Process name -> %s ', 0dH, 0aH, 00H
+$SG4065	DB	'Process name -> %s ', 0dH, 0aH, 00H
 	ORG $+2
-$SG4056	DB	'Page Fault !! ', 0dH, 0aH, 00H
+$SG4066	DB	'Page Fault !! ', 0dH, 0aH, 00H
 	ORG $+7
-$SG4062	DB	'Page Not Present ', 0dH, 0aH, 00H
+$SG4072	DB	'Page Not Present ', 0dH, 0aH, 00H
 	ORG $+4
-$SG4065	DB	'Read/Write ', 0dH, 0aH, 00H
+$SG4075	DB	'Read/Write ', 0dH, 0aH, 00H
 	ORG $+2
-$SG4068	DB	'VPage rw -> %d , user -> %d ', 0dH, 0aH, 00H
+$SG4078	DB	'VPage rw -> %d , user -> %d ', 0dH, 0aH, 00H
 	ORG $+1
-$SG4069	DB	'VPage phys1-> %x, phys2-> %x ', 0dH, 0aH, 00H
-$SG4072	DB	'User bit not set ', 0dH, 0aH, 00H
+$SG4079	DB	'VPage phys1-> %x, phys2-> %x ', 0dH, 0aH, 00H
+$SG4082	DB	'User bit not set ', 0dH, 0aH, 00H
 	ORG $+4
-$SG4075	DB	'Reserved page ', 0dH, 0aH, 00H
+$SG4085	DB	'Reserved page ', 0dH, 0aH, 00H
 	ORG $+7
-$SG4078	DB	'Invalid page ', 0dH, 0aH, 00H
-$SG4079	DB	'Virtual Address -> %x ', 0dH, 0aH, 00H
+$SG4088	DB	'Invalid page ', 0dH, 0aH, 00H
+$SG4089	DB	'Virtual Address -> %x ', 0dH, 0aH, 00H
 	ORG $+7
-$SG4080	DB	'Virtual Address aligned -> %x ', 0dH, 0aH, 00H
+$SG4090	DB	'Virtual Address aligned -> %x ', 0dH, 0aH, 00H
 	ORG $+7
-$SG4081	DB	'RSP -> %x ', 0dH, 0aH, 00H
+$SG4091	DB	'RSP -> %x ', 0dH, 0aH, 00H
 	ORG $+3
-$SG4082	DB	'RIP -> %x ', 0dH, 0aH, 00H
+$SG4092	DB	'RIP -> %x ', 0dH, 0aH, 00H
 	ORG $+3
-$SG4083	DB	'CS -> %x, SS -> %x ', 0dH, 0aH, 00H
-	ORG $+2
-$SG4092	DB	0aH, 'FPU Fault', 00H
+$SG4093	DB	'CS -> %x, SS -> %x ', 0dH, 0aH, 00H
 CONST	ENDS
 PUBLIC	?x86_64_exception_init@@YAXXZ			; x86_64_exception_init
 PUBLIC	?panic@@YAXPEBDZZ				; panic
@@ -287,38 +287,38 @@ $LN5:
 
 ; 272  : 	panic("\n SIMD FPU Faul \r\nt");
 
-	lea	rcx, OFFSET FLAT:$SG4118
+	lea	rcx, OFFSET FLAT:$SG4128
 	call	?panic@@YAXPEBDZZ			; panic
 
 ; 273  : 	SeTextOut("\n__CPU Informations__ \n");
 
-	lea	rcx, OFFSET FLAT:$SG4119
+	lea	rcx, OFFSET FLAT:$SG4129
 	call	SeTextOut
 
 ; 274  : 	SeTextOut(" RIP -> %x \n", frame->rip);
 
 	mov	rax, QWORD PTR frame$[rsp]
 	mov	rdx, QWORD PTR [rax+16]
-	lea	rcx, OFFSET FLAT:$SG4120
+	lea	rcx, OFFSET FLAT:$SG4130
 	call	SeTextOut
 
 ; 275  : 	SeTextOut(" RSP -> %x \n", frame->rsp);
 
 	mov	rax, QWORD PTR frame$[rsp]
 	mov	rdx, QWORD PTR [rax+40]
-	lea	rcx, OFFSET FLAT:$SG4121
+	lea	rcx, OFFSET FLAT:$SG4131
 	call	SeTextOut
 
 ; 276  : 	SeTextOut(" RFLAGS -> %x \n", frame->rflags);
 
 	mov	rax, QWORD PTR frame$[rsp]
 	mov	rdx, QWORD PTR [rax+32]
-	lea	rcx, OFFSET FLAT:$SG4122
+	lea	rcx, OFFSET FLAT:$SG4132
 	call	SeTextOut
 
 ; 277  : 	SeTextOut(" MXCSR bit  -- ");
 
-	lea	rcx, OFFSET FLAT:$SG4123
+	lea	rcx, OFFSET FLAT:$SG4133
 	call	SeTextOut
 $LN2@simd_fpu_f:
 
@@ -352,7 +352,7 @@ $LN5:
 
 ; 264  : 	panic("\nMachine Check Abort");
 
-	lea	rcx, OFFSET FLAT:$SG4108
+	lea	rcx, OFFSET FLAT:$SG4118
 	call	?panic@@YAXPEBDZZ			; panic
 $LN2@machine_ch:
 
@@ -386,7 +386,7 @@ $LN5:
 
 ; 257  : 	panic("\nAlignment Check Fault at address ");
 
-	lea	rcx, OFFSET FLAT:$SG4100
+	lea	rcx, OFFSET FLAT:$SG4110
 	call	?panic@@YAXPEBDZZ			; panic
 $LN2@alignment_:
 
@@ -420,7 +420,7 @@ $LN5:
 
 ; 249  : 	panic("\nFPU Fault");
 
-	lea	rcx, OFFSET FLAT:$SG4092
+	lea	rcx, OFFSET FLAT:$SG4102
 	call	?panic@@YAXPEBDZZ			; panic
 $LN2@fpu_fault:
 
@@ -552,7 +552,7 @@ $LN17@page_fault:
 
 ; 192  : 		SeTextOut("Thr has returnable signal \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG4043
+	lea	rcx, OFFSET FLAT:$SG4053
 	call	SeTextOut
 
 ; 193  : 		Signal* sig = (Signal*)thr->returnableSignal;
@@ -638,7 +638,7 @@ $LN15@page_fault:
 
 	mov	rax, QWORD PTR proc$[rsp]
 	mov	edx, DWORD PTR [rax]
-	lea	rcx, OFFSET FLAT:$SG4054
+	lea	rcx, OFFSET FLAT:$SG4064
 	call	SeTextOut
 
 ; 209  : 			SeTextOut("Process name -> %s \r\n", proc->name);
@@ -646,7 +646,7 @@ $LN15@page_fault:
 	mov	rax, QWORD PTR proc$[rsp]
 	add	rax, 4
 	mov	rdx, rax
-	lea	rcx, OFFSET FLAT:$SG4055
+	lea	rcx, OFFSET FLAT:$SG4065
 	call	SeTextOut
 $LN13@page_fault:
 $LN14@page_fault:
@@ -659,7 +659,7 @@ $skip$23:
 ; 213  : skip:
 ; 214  : 	panic("Page Fault !! \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG4056
+	lea	rcx, OFFSET FLAT:$SG4066
 	call	?panic@@YAXPEBDZZ			; panic
 
 ; 215  : 	uint64_t vaddr_ = (uint64_t)vaddr;
@@ -684,7 +684,7 @@ $skip$23:
 
 ; 219  : 		SeTextOut("Page Not Present \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG4062
+	lea	rcx, OFFSET FLAT:$SG4072
 	call	SeTextOut
 	jmp	$LN11@page_fault
 $LN12@page_fault:
@@ -697,7 +697,7 @@ $LN12@page_fault:
 
 ; 222  : 		SeTextOut("Read/Write \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG4065
+	lea	rcx, OFFSET FLAT:$SG4075
 	call	SeTextOut
 
 ; 223  : 		void* phys = AuGetPhysicalAddress(vaddr_aligned);
@@ -726,7 +726,7 @@ $LN12@page_fault:
 	and	rcx, 1
 	mov	r8, rax
 	mov	rdx, rcx
-	lea	rcx, OFFSET FLAT:$SG4068
+	lea	rcx, OFFSET FLAT:$SG4078
 	call	SeTextOut
 
 ; 226  : 		SeTextOut("VPage phys1-> %x, phys2-> %x \r\n", phys, (vpage->bits.page << PAGE_SHIFT));
@@ -738,7 +738,7 @@ $LN12@page_fault:
 	shl	rax, 12
 	mov	r8, rax
 	mov	rdx, QWORD PTR phys$4[rsp]
-	lea	rcx, OFFSET FLAT:$SG4069
+	lea	rcx, OFFSET FLAT:$SG4079
 	call	SeTextOut
 	jmp	SHORT $LN9@page_fault
 $LN10@page_fault:
@@ -751,7 +751,7 @@ $LN10@page_fault:
 
 ; 229  : 		SeTextOut("User bit not set \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG4072
+	lea	rcx, OFFSET FLAT:$SG4082
 	call	SeTextOut
 	jmp	SHORT $LN7@page_fault
 $LN8@page_fault:
@@ -763,7 +763,7 @@ $LN8@page_fault:
 
 ; 231  : 		SeTextOut("Reserved page \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG4075
+	lea	rcx, OFFSET FLAT:$SG4085
 	call	SeTextOut
 	jmp	SHORT $LN5@page_fault
 $LN6@page_fault:
@@ -775,7 +775,7 @@ $LN6@page_fault:
 
 ; 233  : 		SeTextOut("Invalid page \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG4078
+	lea	rcx, OFFSET FLAT:$SG4088
 	call	SeTextOut
 $LN4@page_fault:
 $LN5@page_fault:
@@ -787,27 +787,27 @@ $LN11@page_fault:
 ; 235  : 	SeTextOut("Virtual Address -> %x \r\n", vaddr_);
 
 	mov	rdx, QWORD PTR vaddr_$[rsp]
-	lea	rcx, OFFSET FLAT:$SG4079
+	lea	rcx, OFFSET FLAT:$SG4089
 	call	SeTextOut
 
 ; 236  : 	SeTextOut("Virtual Address aligned -> %x \r\n", vaddr_aligned);
 
 	mov	rdx, QWORD PTR vaddr_aligned$[rsp]
-	lea	rcx, OFFSET FLAT:$SG4080
+	lea	rcx, OFFSET FLAT:$SG4090
 	call	SeTextOut
 
 ; 237  : 	SeTextOut("RSP -> %x \r\n", frame->rsp);
 
 	mov	rax, QWORD PTR frame$[rsp]
 	mov	rdx, QWORD PTR [rax+40]
-	lea	rcx, OFFSET FLAT:$SG4081
+	lea	rcx, OFFSET FLAT:$SG4091
 	call	SeTextOut
 
 ; 238  : 	SeTextOut("RIP -> %x \r\n", frame->rip);
 
 	mov	rax, QWORD PTR frame$[rsp]
 	mov	rdx, QWORD PTR [rax+16]
-	lea	rcx, OFFSET FLAT:$SG4082
+	lea	rcx, OFFSET FLAT:$SG4092
 	call	SeTextOut
 
 ; 239  : 	SeTextOut("CS -> %x, SS -> %x \r\n", frame->cs, frame->ss);
@@ -816,7 +816,7 @@ $LN11@page_fault:
 	mov	r8, QWORD PTR [rax+48]
 	mov	rax, QWORD PTR frame$[rsp]
 	mov	rdx, QWORD PTR [rax+24]
-	lea	rcx, OFFSET FLAT:$SG4083
+	lea	rcx, OFFSET FLAT:$SG4093
 	call	SeTextOut
 
 ; 240  : 	if (!_mapped) {
@@ -866,38 +866,38 @@ $LN5:
 
 ; 159  : 	panic("Genral Protection Fault \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG4014
+	lea	rcx, OFFSET FLAT:$SG4024
 	call	?panic@@YAXPEBDZZ			; panic
 
 ; 160  : 	SeTextOut("General Protection Fault \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG4015
+	lea	rcx, OFFSET FLAT:$SG4025
 	call	SeTextOut
 
 ; 161  : 	SeTextOut("__PROCESSOR TRACE__ \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG4016
+	lea	rcx, OFFSET FLAT:$SG4026
 	call	SeTextOut
 
 ; 162  : 	SeTextOut("RIP -> %x \r\n", frame->rip);
 
 	mov	rax, QWORD PTR frame$[rsp]
 	mov	rdx, QWORD PTR [rax+16]
-	lea	rcx, OFFSET FLAT:$SG4017
+	lea	rcx, OFFSET FLAT:$SG4027
 	call	SeTextOut
 
 ; 163  : 	SeTextOut("Stack -> %x \r\n", frame->rsp);
 
 	mov	rax, QWORD PTR frame$[rsp]
 	mov	rdx, QWORD PTR [rax+40]
-	lea	rcx, OFFSET FLAT:$SG4018
+	lea	rcx, OFFSET FLAT:$SG4028
 	call	SeTextOut
 
 ; 164  : 	SeTextOut("RFLAGS -> %x \r\n", frame->rflags);
 
 	mov	rax, QWORD PTR frame$[rsp]
 	mov	rdx, QWORD PTR [rax+32]
-	lea	rcx, OFFSET FLAT:$SG4019
+	lea	rcx, OFFSET FLAT:$SG4029
 	call	SeTextOut
 
 ; 165  : 	SeTextOut("CS -> %x, SS -> %x \r\n", frame->cs, frame->ss);
@@ -906,7 +906,7 @@ $LN5:
 	mov	r8, QWORD PTR [rax+48]
 	mov	rax, QWORD PTR frame$[rsp]
 	mov	rdx, QWORD PTR [rax+24]
-	lea	rcx, OFFSET FLAT:$SG4020
+	lea	rcx, OFFSET FLAT:$SG4030
 	call	SeTextOut
 
 ; 166  : 	SeTextOut("Current thread ->id %d , %s\r\n", AuGetCurrentThread()->id, AuGetCurrentThread()->name);
@@ -919,7 +919,7 @@ $LN5:
 	mov	rcx, QWORD PTR tv82[rsp]
 	mov	r8, rcx
 	mov	edx, eax
-	lea	rcx, OFFSET FLAT:$SG4021
+	lea	rcx, OFFSET FLAT:$SG4031
 	call	SeTextOut
 $LN2@general_pr:
 
@@ -953,7 +953,7 @@ $LN5:
 
 ; 150  : 	panic("\nStack Fault at ");
 
-	lea	rcx, OFFSET FLAT:$SG4004
+	lea	rcx, OFFSET FLAT:$SG4014
 	call	?panic@@YAXPEBDZZ			; panic
 $LN2@stack_faul:
 
@@ -987,7 +987,7 @@ $LN5:
 
 ; 143  : 	panic("\nNo Segment Fault");
 
-	lea	rcx, OFFSET FLAT:$SG3996
+	lea	rcx, OFFSET FLAT:$SG4006
 	call	?panic@@YAXPEBDZZ			; panic
 $LN2@no_segment:
 
@@ -1021,7 +1021,7 @@ $LN5:
 
 ; 136  : 	panic("\nInvalid TSS Fault ");
 
-	lea	rcx, OFFSET FLAT:$SG3988
+	lea	rcx, OFFSET FLAT:$SG3998
 	call	?panic@@YAXPEBDZZ			; panic
 $LN2@invalid_ts:
 
@@ -1055,7 +1055,7 @@ $LN5:
 
 ; 129  : 	panic("\nDouble Fault Abort");
 
-	lea	rcx, OFFSET FLAT:$SG3980
+	lea	rcx, OFFSET FLAT:$SG3990
 	call	?panic@@YAXPEBDZZ			; panic
 $LN2@double_fau:
 
@@ -1089,7 +1089,7 @@ $LN5:
 
 ; 122  : 	panic("\nNo Device Fault");
 
-	lea	rcx, OFFSET FLAT:$SG3972
+	lea	rcx, OFFSET FLAT:$SG3982
 	call	?panic@@YAXPEBDZZ			; panic
 $LN2@no_device_:
 
@@ -1129,52 +1129,52 @@ $LN5:
 
 ; 108  : 	panic("Invalid Opcode Fault \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG3957
+	lea	rcx, OFFSET FLAT:$SG3967
 	call	?panic@@YAXPEBDZZ			; panic
 
 ; 109  : 	SeTextOut("Invalid Opcode Fault \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG3958
+	lea	rcx, OFFSET FLAT:$SG3968
 	call	SeTextOut
 
 ; 110  : 	SeTextOut("__PROCESSOR TRACE__ \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG3959
+	lea	rcx, OFFSET FLAT:$SG3969
 	call	SeTextOut
 
 ; 111  : 	SeTextOut("RIP -> %x\n", frame->rip);
 
 	mov	rax, QWORD PTR frame$[rsp]
 	mov	rdx, QWORD PTR [rax+16]
-	lea	rcx, OFFSET FLAT:$SG3960
+	lea	rcx, OFFSET FLAT:$SG3970
 	call	SeTextOut
 
 ; 112  : 	SeTextOut("Stack -> %x\n", frame->rsp);
 
 	mov	rax, QWORD PTR frame$[rsp]
 	mov	rdx, QWORD PTR [rax+40]
-	lea	rcx, OFFSET FLAT:$SG3961
+	lea	rcx, OFFSET FLAT:$SG3971
 	call	SeTextOut
 
 ; 113  : 	SeTextOut("RFLAGS -> %x\n", frame->rflags);
 
 	mov	rax, QWORD PTR frame$[rsp]
 	mov	rdx, QWORD PTR [rax+32]
-	lea	rcx, OFFSET FLAT:$SG3962
+	lea	rcx, OFFSET FLAT:$SG3972
 	call	SeTextOut
 
 ; 114  : 	SeTextOut("CS -> %x\n", frame->cs);
 
 	mov	rax, QWORD PTR frame$[rsp]
 	mov	rdx, QWORD PTR [rax+24]
-	lea	rcx, OFFSET FLAT:$SG3963
+	lea	rcx, OFFSET FLAT:$SG3973
 	call	SeTextOut
 
 ; 115  : 	SeTextOut("SS -> %x\n", frame->ss);
 
 	mov	rax, QWORD PTR frame$[rsp]
 	mov	rdx, QWORD PTR [rax+48]
-	lea	rcx, OFFSET FLAT:$SG3964
+	lea	rcx, OFFSET FLAT:$SG3974
 	call	SeTextOut
 $LN2@invalid_op:
 
@@ -1208,7 +1208,7 @@ $LN5:
 
 ; 100  : 	panic("\nBound Check Fault");
 
-	lea	rcx, OFFSET FLAT:$SG3947
+	lea	rcx, OFFSET FLAT:$SG3957
 	call	?panic@@YAXPEBDZZ			; panic
 $LN2@bounds_che:
 
@@ -1242,7 +1242,7 @@ $LN5:
 
 ; 93   : 	panic("\nOverflow Trap");
 
-	lea	rcx, OFFSET FLAT:$SG3939
+	lea	rcx, OFFSET FLAT:$SG3949
 	call	?panic@@YAXPEBDZZ			; panic
 $LN2@overflow_t:
 
@@ -1276,7 +1276,7 @@ $LN5:
 
 ; 86   : 	panic("\nBreakpoint Trap");
 
-	lea	rcx, OFFSET FLAT:$SG3931
+	lea	rcx, OFFSET FLAT:$SG3941
 	call	?panic@@YAXPEBDZZ			; panic
 $LN2@breakpoint:
 
@@ -1310,7 +1310,7 @@ $LN5:
 
 ; 78   : 	panic("\nNMI [Non-Muskable-Interrupt] Trap");
 
-	lea	rcx, OFFSET FLAT:$SG3923
+	lea	rcx, OFFSET FLAT:$SG3933
 	call	?panic@@YAXPEBDZZ			; panic
 $LN2@nmi_trap:
 
@@ -1351,7 +1351,7 @@ $LN5:
 
 ; 72   : 	panic("\nSingle Step Trap");
 
-	lea	rcx, OFFSET FLAT:$SG3915
+	lea	rcx, OFFSET FLAT:$SG3925
 	call	?panic@@YAXPEBDZZ			; panic
 $LN2@single_ste:
 
@@ -1391,38 +1391,38 @@ $LN5:
 
 ; 59   : 	panic("\nDivide by 0");
 
-	lea	rcx, OFFSET FLAT:$SG3900
+	lea	rcx, OFFSET FLAT:$SG3910
 	call	?panic@@YAXPEBDZZ			; panic
 
 ; 60   : 	SeTextOut("Divide by 0 \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG3901
+	lea	rcx, OFFSET FLAT:$SG3911
 	call	SeTextOut
 
 ; 61   : 	SeTextOut("__PROCESSOR_DATA__ \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG3902
+	lea	rcx, OFFSET FLAT:$SG3912
 	call	SeTextOut
 
 ; 62   : 	SeTextOut("RIP -> %x \r\n", frame->rip);
 
 	mov	rax, QWORD PTR frame$[rsp]
 	mov	rdx, QWORD PTR [rax+16]
-	lea	rcx, OFFSET FLAT:$SG3903
+	lea	rcx, OFFSET FLAT:$SG3913
 	call	SeTextOut
 
 ; 63   : 	SeTextOut("RSP -> %x \r\n", frame->rsp);
 
 	mov	rax, QWORD PTR frame$[rsp]
 	mov	rdx, QWORD PTR [rax+40]
-	lea	rcx, OFFSET FLAT:$SG3904
+	lea	rcx, OFFSET FLAT:$SG3914
 	call	SeTextOut
 
 ; 64   : 	SeTextOut("RFLAGS -> %x \r\n", frame->rflags);
 
 	mov	rax, QWORD PTR frame$[rsp]
 	mov	rdx, QWORD PTR [rax+32]
-	lea	rcx, OFFSET FLAT:$SG3905
+	lea	rcx, OFFSET FLAT:$SG3915
 	call	SeTextOut
 $LN2@divide_by_:
 
@@ -1454,22 +1454,22 @@ $LN3:
 
 ; 48   : 	SeTextOut("\r\n ***ARCH x86_64 : Kernel Panic!!! *** \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG3888
+	lea	rcx, OFFSET FLAT:$SG3898
 	call	SeTextOut
 
 ; 49   : 	SeTextOut("[Aurora Kernel]: We are sorry to say that, a processor invalid exception has occured \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG3889
+	lea	rcx, OFFSET FLAT:$SG3899
 	call	SeTextOut
 
 ; 50   : 	SeTextOut("[Aurora Kernel]: please inform it to the master of the kernel \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG3890
+	lea	rcx, OFFSET FLAT:$SG3900
 	call	SeTextOut
 
 ; 51   : 	SeTextOut("[Aurora Kernel]: Below is the code of exception \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG3891
+	lea	rcx, OFFSET FLAT:$SG3901
 	call	SeTextOut
 
 ; 52   : 	SeTextOut("[Aurora Kernel]: Current Processor id -> %d \r\n", AuPerCPUGetCpuID());
@@ -1477,13 +1477,13 @@ $LN3:
 	call	?AuPerCPUGetCpuID@@YAEXZ		; AuPerCPUGetCpuID
 	movzx	eax, al
 	mov	edx, eax
-	lea	rcx, OFFSET FLAT:$SG3892
+	lea	rcx, OFFSET FLAT:$SG3902
 	call	SeTextOut
 
 ; 53   : 	SeTextOut(" %s \r\n", msg);
 
 	mov	rdx, QWORD PTR msg$[rsp]
-	lea	rcx, OFFSET FLAT:$SG3893
+	lea	rcx, OFFSET FLAT:$SG3903
 	call	SeTextOut
 
 ; 54   : }

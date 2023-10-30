@@ -549,6 +549,20 @@ _KeCreateTTY:
 	  mov rdi, 0
 	  syscall
 	  ret
+
+global _KeCreateThread
+%ifdef YES_DYNAMIC
+export _KeCreateThread
+%endif
+_KeCreateThread:
+      xor rax, rax
+	  mov r12, 32
+	  mov r13, rcx
+	  mov r14, rdx
+	  mov r15, 0
+	  mov rdi, 0
+	  syscall
+	  ret
       
       
 

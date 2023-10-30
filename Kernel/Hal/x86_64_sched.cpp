@@ -261,60 +261,6 @@ AuThread* AuCreateKthread(void(*entry) (uint64_t), uint64_t stack, uint64_t cr3,
 }
 
 
-/**
-*  Creates a user mode thread
-*  @param entry -- Entry point address
-*  @param stack -- Stack address
-*  @param cr3 -- the top most page map level address
-*  @param name -- name of the thread
-*  @param priority -- (currently unused) thread's priority
-*/
-AuThread* AuCreateUthread(void(*entry) (void*), uint64_t stack, uint64_t cr3, char *name)
-{
-	AuThread *t = (AuThread*)kmalloc(sizeof(AuThread));
-	memset(t, 0, sizeof(AuThread));
-	t->frame.r15 = 0;
-	t->frame.r14 = 0;
-	t->frame.r13 = 0;
-	t->frame.r12 = 0;
-	t->frame.r11 = 0;
-	t->frame.r10 = 0;
-	t->frame.r9 = 0;
-	t->frame.r8 = 0;
-	t->frame.rbp = stack;
-	t->frame.rdi = 0;
-	t->frame.rsi = 0;
-	t->frame.rdx = 0;
-	t->frame.rcx = 0;
-	t->frame.rbx = 0;
-	t->frame.rax = 0;
-	t->frame.rip = (uint64_t)entry;
-	t->frame.cs = SEGVAL(GDT_ENTRY_USER_CODE, 3);
-	t->frame.rflags = 0x202;
-	t->frame.rsp = stack;
-	t->frame.ss = SEGVAL(GDT_ENTRY_USER_DATA, 3);
-	t->frame.ds = t->frame.es = t->frame.fs = t->frame.gs = SEGVAL(GDT_ENTRY_USER_DATA, 3);
-	uint64_t k_esp = AuMapKStack((uint64_t*)cr3);
-	/** Kernel stack is important for syscall or interruption in the system **/
-	t->frame.kern_esp = k_esp;
-	AuTextOut("FRAME USER KERN ESP -> %x \n", t->frame.kern_esp);
-	t->user_stack = stack;
-	t->frame.cr3 = V2P(cr3);
-	t->frame.user_ = 1;
-	memset(t->name, 0, 8);
-	strncpy(t->name, name, 8);
-	t->id = thread_id++;
-	t->quanta = 0;
-
-	t->fx_state = (uint8_t*)kmalloc(512);
-	memset(t->fx_state, 0, 512);
-	t->mxcsr = 0x1f80;
-	t->priviledge = THREAD_LEVEL_USER;
-	t->state = THREAD_STATE_READY;
-	AuThreadInsert(t);
-	return 0;
-}
-
 /*
  * AuKThreadCopy -- copies the context of dest
  * thread to source thread
@@ -465,21 +411,7 @@ void AuSchedulerStart() {
 	execute_idle(current_thread, x86_64_get_tss());
 }
 
-/*
- * Allocate kernel stack
- * @param cr3 -- root page map level, it should be 
- * converted to linear virtual address
- */
-uint64_t AuMapKStack(uint64_t *cr3) {
-	uint64_t location = KERNEL_STACK_LOCATION;
 
-	for (int i = 0; i < 8192 / 4096; i++) {
-		void* p = AuPmmngrAlloc();
-		AuMapPageEx(cr3, (uint64_t)p, location + i * 4096, 0);
-	}
-
-	return (location + 8192);
-}
 
 extern "C" void AuPrintStack() {
 	SeTextOut("CR3 -> %x \r\n", x64_read_cr3());

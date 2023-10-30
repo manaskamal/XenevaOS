@@ -36,7 +36,7 @@
 #include <Hal\x86_64_signal.h>
 
 /* maximum supported system calls */
-#define AURORA_MAX_SYSCALL  32
+#define AURORA_MAX_SYSCALL  33
 #define AURORA_SYSCALL_MAGIC  0x05212004  /* actual number to remember */
 
 /* ==========================================
@@ -194,5 +194,10 @@ extern int FileStat(int fd, void* buf);
 * tick
 */
 extern size_t GetSystemTimerTick();
+
+/*
+* CreateUserThread -- creates an user mode thread
+*/
+extern int CreateUserThread(void(*entry) (void*), char *name);
 
 #endif

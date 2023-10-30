@@ -115,4 +115,10 @@ XE_EXTERN XE_LIB int _KeSetSignal(int signo, XESigHandler handler);
  */
 XE_EXTERN XE_LIB size_t _KeGetSystemTimerTick();
 
+/*
+ * _KeCreateThread -- creates a new thread 
+ * inside current process slot
+ */
+XE_EXTERN XE_LIB int _KeCreateThread(void(*entry) (), char *name);
+
 #endif

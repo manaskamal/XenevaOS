@@ -160,22 +160,61 @@ AuProcess *AuProcessFindThread(AuThread* thread) {
 
 /*
  * CreateUserStack -- creates new user stack
+ * @param proc -- Pointer to process slot
  * @param cr3 -- pointer to the address space where to
  * map
  */
-uint64_t* CreateUserStack(uint64_t* cr3) {
+uint64_t* CreateUserStack(AuProcess *proc, uint64_t* cr3) {
 #define USER_STACK 0x0000700000000000 
 	uint64_t location = USER_STACK;
-
+	location += proc->_user_stack_index_;
+	
 	for (int i = 0; i < PROCESS_USER_STACK_SZ / 4096; i++) {
 		uint64_t* blk = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
 		AuMapPageEx(cr3, V2P((size_t)blk), location + i * PAGE_SIZE, X86_64_PAGING_USER);
 	}
 
+	proc->_user_stack_index_ += PROCESS_USER_STACK_SZ;
 	return (uint64_t*)(USER_STACK + (PROCESS_USER_STACK_SZ));
 }
 
 
+/*
+* Allocate kernel stack
+* @param cr3 -- root page map level, it should be
+* converted to linear virtual address
+*/
+uint64_t CreateKernelStack(AuProcess* proc, uint64_t *cr3) {
+	uint64_t location = KERNEL_STACK_LOCATION;
+	location += proc->_kstack_index_;
+
+	for (int i = 0; i < 8192 / 4096; i++) {
+		void* p = AuPmmngrAlloc();
+		AuMapPageEx(cr3, (uint64_t)p, location + i * PAGE_SIZE, 0);
+	}
+
+	proc->_kstack_index_ += 8192;
+	return (location + 8192);
+}
+
+/*
+ * KernelStackFree -- frees up an allocated stack
+ * @param proc -- Pointer to process
+ * @param ptr -- Starting address of the stack
+ * @param cr3 -- page root level mapping
+ */
+void KernelStackFree(AuProcess* proc,void* ptr, uint64_t *cr3) {
+	uint64_t location = (uint64_t)ptr;
+	for (int i = 0; i < 8192 / 4096; i++) {
+		AuVPage* page = AuVmmngrGetPage(location + i * PAGE_SIZE, VIRT_GETPAGE_ONLY_RET, VIRT_GETPAGE_ONLY_RET);
+		uint64_t phys = page->bits.page << PAGE_SHIFT;
+		if (phys) {
+			AuPmmngrFree((void*)phys);
+		}
+		page->bits.page = 0;
+	}
+	proc->_kstack_index_ -= 8192;
+}
 /*
  * AuAllocateProcessID -- allocates a new
  * pid and return
@@ -200,7 +239,7 @@ AuProcess* AuCreateRootProc() {
 	/* create empty virtual address space */
 	uint64_t* cr3 = AuCreateVirtualAddressSpace();
 	/* create the process main thread stack */
-	uint64_t  main_thr_stack = (uint64_t)CreateUserStack(cr3);
+	uint64_t  main_thr_stack = (uint64_t)CreateUserStack(proc,cr3);
 	proc->state = PROCESS_STATE_NOT_READY;
 	proc->cr3 = cr3;
 	proc->_main_stack_ = main_thr_stack;
@@ -238,7 +277,7 @@ AuProcess* AuCreateProcessSlot(AuProcess* parent, char* name) {
 	/* create empty virtual address space */
 	uint64_t* cr3 = AuCreateVirtualAddressSpace();
 	/* create the process main thread stack */
-	uint64_t  main_thr_stack = (uint64_t)CreateUserStack(cr3);
+	uint64_t  main_thr_stack = (uint64_t)CreateUserStack(proc,cr3);
 	proc->state = PROCESS_STATE_NOT_READY;
 	proc->cr3 = cr3;
 	proc->_main_stack_ = main_thr_stack;
@@ -431,4 +470,36 @@ void AuProcessExit(AuProcess* proc) {
 AuMutex* AuProcessGetMutex(){
 	return process_mutex;
 }
+
+
+
+
+/**
+*  Creates a user mode thread
+*  @param entry -- Entry point address
+*  @param stack -- Stack address
+*  @param cr3 -- the top most page map level address
+*  @param name -- name of the thread
+*  @param priority -- (currently unused) thread's priority
+*/
+int AuCreateUserthread(AuProcess* proc, void(*entry) (void*), char *name)
+{
+	AuThread* thr = AuCreateKthread(AuProcessEntUser, CreateKernelStack(proc, proc->cr3), V2P((size_t)proc->cr3), name);
+	thr->frame.rsp -= 32;
+	thr->priviledge |= THREAD_LEVEL_USER | THREAD_LEVEL_SUBTHREAD | ~THREAD_LEVEL_MAIN_THREAD;
+	AuUserEntry *uentry = (AuUserEntry*)kmalloc(sizeof(AuUserEntry));
+	memset(uentry, 0, sizeof(AuUserEntry));
+	uentry->argvaddr = 0;
+	uentry->entrypoint = (uint64_t)entry;
+	uentry->argvs = 0;
+	uentry->cs = SEGVAL(GDT_ENTRY_USER_CODE, 3);
+	uentry->ss = SEGVAL(GDT_ENTRY_USER_DATA, 3);
+	uentry->num_args = 0;
+	uentry->rsp = (uint64_t)CreateUserStack(proc, proc->cr3);
+	thr->uentry = uentry;
+	proc->threads[proc->num_thread] = thr;
+	proc->num_thread++;
+	return 1;
+}
+
 

@@ -20,15 +20,15 @@ _BSS	SEGMENT
 ?totalSysFonts@@3HA DD 01H DUP (?)			; totalSysFonts
 _BSS	ENDS
 CONST	SEGMENT
-$SG3392	DB	'/', 00H
+$SG3402	DB	'/', 00H
 	ORG $+6
-$SG3401	DB	'Finished reading -> %s retbytes -> %d ', 0dH, 0aH, 00H
+$SG3411	DB	'Finished reading -> %s retbytes -> %d ', 0dH, 0aH, 00H
 	ORG $+3
-$SG3421	DB	'/', 00H
+$SG3431	DB	'/', 00H
 	ORG $+2
-$SG3419	DB	'[aurora]: Loading system fonts ', 0aH, 00H
+$SG3429	DB	'[aurora]: Loading system fonts ', 0aH, 00H
 	ORG $+7
-$SG3423	DB	'/ftlst.cnf', 00H
+$SG3433	DB	'/ftlst.cnf', 00H
 CONST	ENDS
 PUBLIC	?FontManagerInitialise@@YAXXZ			; FontManagerInitialise
 PUBLIC	?AuFTMngrGetFontID@@YAHPEAD@Z			; AuFTMngrGetFontID
@@ -414,7 +414,7 @@ $LN3@FontManage:
 ; 168  : 
 ; 169  : 	AuVFSNode* fs = AuVFSFind("/");
 
-	lea	rcx, OFFSET FLAT:$SG3392
+	lea	rcx, OFFSET FLAT:$SG3402
 	call	AuVFSFind
 	mov	QWORD PTR fs$[rsp], rax
 
@@ -471,7 +471,7 @@ $LN3@FontManage:
 	mov	rax, QWORD PTR fontfile$[rsp]
 	mov	r8, QWORD PTR ret$2[rsp]
 	mov	rdx, rax
-	lea	rcx, OFFSET FLAT:$SG3401
+	lea	rcx, OFFSET FLAT:$SG3411
 	call	SeTextOut
 
 ; 176  : 		kfree(fontfile);
@@ -979,7 +979,7 @@ $LN9:
 
 ; 212  : 	AuTextOut("[aurora]: Loading system fonts \n");
 
-	lea	rcx, OFFSET FLAT:$SG3419
+	lea	rcx, OFFSET FLAT:$SG3429
 	call	AuTextOut
 
 ; 213  : 	firstSeg = NULL;
@@ -997,13 +997,13 @@ $LN9:
 
 ; 216  : 	AuVFSNode* fs = AuVFSFind("/");
 
-	lea	rcx, OFFSET FLAT:$SG3421
+	lea	rcx, OFFSET FLAT:$SG3431
 	call	AuVFSFind
 	mov	QWORD PTR fs$[rsp], rax
 
 ; 217  : 	AuVFSNode* fontconf = AuVFSOpen("/ftlst.cnf");
 
-	lea	rcx, OFFSET FLAT:$SG3423
+	lea	rcx, OFFSET FLAT:$SG3433
 	call	AuVFSOpen
 	mov	QWORD PTR fontconf$[rsp], rax
 

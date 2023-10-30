@@ -121,7 +121,7 @@ $LN2@FileStat:
 
 	movsxd	rax, DWORD PTR fd$[rsp]
 	mov	rcx, QWORD PTR current_proc$[rsp]
-	mov	rax, QWORD PTR [rcx+rax*8+551]
+	mov	rax, QWORD PTR [rcx+rax*8+567]
 	mov	QWORD PTR file$[rsp], rax
 
 ; 250  : 	if (!file)
@@ -243,7 +243,7 @@ $LN2@FileIoCont:
 
 	movsxd	rax, DWORD PTR fd$[rsp]
 	mov	rcx, QWORD PTR current_proc$[rsp]
-	mov	rax, QWORD PTR [rcx+rax*8+551]
+	mov	rax, QWORD PTR [rcx+rax*8+567]
 	mov	QWORD PTR file$[rsp], rax
 
 ; 229  : 
@@ -323,7 +323,7 @@ $LN3@CloseFile:
 
 	movsxd	rax, DWORD PTR fd$[rsp]
 	mov	rcx, QWORD PTR current_proc$[rsp]
-	mov	rax, QWORD PTR [rcx+rax*8+551]
+	mov	rax, QWORD PTR [rcx+rax*8+567]
 	mov	QWORD PTR file$[rsp], rax
 
 ; 208  : 	if (file->flags & FS_FLAG_FILE_SYSTEM)
@@ -359,7 +359,7 @@ $LN1@CloseFile:
 
 	movsxd	rax, DWORD PTR fd$[rsp]
 	mov	rcx, QWORD PTR current_proc$[rsp]
-	mov	QWORD PTR [rcx+rax*8+551], 0
+	mov	QWORD PTR [rcx+rax*8+567], 0
 
 ; 214  : 	return 0;
 
@@ -611,7 +611,7 @@ $LN5@WriteFile:
 
 	movsxd	rax, DWORD PTR fd$[rsp]
 	mov	rcx, QWORD PTR current_proc$[rsp]
-	mov	rax, QWORD PTR [rcx+rax*8+551]
+	mov	rax, QWORD PTR [rcx+rax*8+567]
 	mov	QWORD PTR file$[rsp], rax
 
 ; 134  : 	uint8_t* aligned_buffer = (uint8_t*)buffer;
@@ -799,7 +799,7 @@ $LN7@ReadFile:
 
 	movsxd	rax, DWORD PTR fd$[rsp]
 	mov	rcx, QWORD PTR current_proc$[rsp]
-	mov	rax, QWORD PTR [rcx+rax*8+551]
+	mov	rax, QWORD PTR [rcx+rax*8+567]
 	mov	QWORD PTR file$[rsp], rax
 
 ; 91   : 	uint64_t* aligned_buffer = (uint64_t*)buffer;
@@ -1039,7 +1039,7 @@ $LN1@OpenFile:
 	movsxd	rax, DWORD PTR fd$[rsp]
 	mov	rcx, QWORD PTR current_proc$[rsp]
 	mov	rdx, QWORD PTR file$[rsp]
-	mov	QWORD PTR [rcx+rax*8+551], rdx
+	mov	QWORD PTR [rcx+rax*8+567], rdx
 
 ; 71   : 	return fd;
 

@@ -43,8 +43,10 @@
 //! THREAD_LEVEL_KERNEL -- This bit is set when the thread given is kernel mode
 //! THREAD_LEVEL_USER -- This bit is set when the thread given is user mode
 
-#define  THREAD_LEVEL_KERNEL 1
-#define  THREAD_LEVEL_USER 2
+#define  THREAD_LEVEL_KERNEL (1<<0)
+#define  THREAD_LEVEL_USER (1<<1)
+#define  THREAD_LEVEL_SUBTHREAD (1<<2)
+#define  THREAD_LEVEL_MAIN_THREAD (1<<3)
 
 typedef struct _frame_ {
 	uint64_t ss;       //0x00
@@ -99,6 +101,7 @@ typedef struct _uentry_ {
 	int num_args;
 	uint64_t argvaddr;
 	char** argvs;
+	uint64_t stackBase;
 }AuUserEntry;
 #pragma pack(pop)
 
@@ -163,15 +166,7 @@ extern void AuSchedulerInitAp();
 *  @param priority -- (currently unused) thread's priority
 **/
 AU_EXTERN AU_EXPORT AuThread* AuCreateKthread(void(*entry) (uint64_t), uint64_t stack, uint64_t cr3, char *name);
-/**
-*  Creates a user mode thread
-*  @param entry -- Entry point address
-*  @param stack -- Stack address
-*  @param cr3 -- the top most page map level address
-*  @param name -- name of the thread
-*  @param priority -- (currently unused) thread's priority
-*/
-extern AuThread* AuCreateUthread(void(*entry) (void*), uint64_t stack, uint64_t cr3, char *name);
+
 
 /*
 * AuGetCurrentThread -- gets the running thread

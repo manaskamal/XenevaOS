@@ -112,16 +112,16 @@ $LN3:
 ; 164  : 	size_t start_addr = proc->shm_break;
 
 	mov	rax, QWORD PTR proc$[rsp]
-	mov	rax, QWORD PTR [rax+1063]
+	mov	rax, QWORD PTR [rax+1079]
 	mov	QWORD PTR start_addr$[rsp], rax
 
 ; 165  : 	proc->shm_break = (proc->shm_break + num_frames * PAGE_SIZE);
 
 	imul	rax, QWORD PTR num_frames$[rsp], 4096	; 00001000H
 	mov	rcx, QWORD PTR proc$[rsp]
-	add	rax, QWORD PTR [rcx+1063]
+	add	rax, QWORD PTR [rcx+1079]
 	mov	rcx, QWORD PTR proc$[rsp]
-	mov	QWORD PTR [rcx+1063], rax
+	mov	QWORD PTR [rcx+1079], rax
 
 ; 166  : 	return start_addr;
 
@@ -405,7 +405,7 @@ $LN5@AuSHMUnmap:
 	mov	DWORD PTR i$1[rsp], eax
 $LN6@AuSHMUnmap:
 	mov	rax, QWORD PTR proc$[rsp]
-	mov	rax, QWORD PTR [rax+1055]
+	mov	rax, QWORD PTR [rax+1071]
 	mov	eax, DWORD PTR [rax]
 	cmp	DWORD PTR i$1[rsp], eax
 	jae	$LN4@AuSHMUnmap
@@ -414,7 +414,7 @@ $LN6@AuSHMUnmap:
 
 	mov	edx, DWORD PTR i$1[rsp]
 	mov	rax, QWORD PTR proc$[rsp]
-	mov	rcx, QWORD PTR [rax+1055]
+	mov	rcx, QWORD PTR [rax+1071]
 	call	list_remove
 	mov	QWORD PTR mapping$3[rsp], rax
 
@@ -501,7 +501,7 @@ $LN4@AuSHMUnmap:
 ; 316  : 	kfree(proc->shmmaps);
 
 	mov	rax, QWORD PTR proc$[rsp]
-	mov	rcx, QWORD PTR [rax+1055]
+	mov	rcx, QWORD PTR [rax+1071]
 	call	kfree
 
 ; 317  : 	AuReleaseSpinlock(shmlock);
@@ -584,7 +584,7 @@ $LN7@AuSHMUnmap:
 	mov	DWORD PTR i$1[rsp], eax
 $LN8@AuSHMUnmap:
 	mov	rax, QWORD PTR proc$[rsp]
-	mov	rax, QWORD PTR [rax+1055]
+	mov	rax, QWORD PTR [rax+1071]
 	mov	eax, DWORD PTR [rax]
 	cmp	DWORD PTR i$1[rsp], eax
 	jae	SHORT $LN6@AuSHMUnmap
@@ -593,7 +593,7 @@ $LN8@AuSHMUnmap:
 
 	mov	edx, DWORD PTR i$1[rsp]
 	mov	rax, QWORD PTR proc$[rsp]
-	mov	rcx, QWORD PTR [rax+1055]
+	mov	rcx, QWORD PTR [rax+1071]
 	call	list_get_at
 	mov	QWORD PTR maps$4[rsp], rax
 
@@ -707,7 +707,7 @@ $LN1@AuSHMUnmap:
 
 	mov	edx, DWORD PTR index$[rsp]
 	mov	rax, QWORD PTR proc$[rsp]
-	mov	rcx, QWORD PTR [rax+1055]
+	mov	rcx, QWORD PTR [rax+1071]
 	call	list_remove
 
 ; 290  : 	kfree(mapping);
@@ -843,7 +843,7 @@ $LN17@AuSHMObtai:
 	mov	DWORD PTR i$3[rsp], eax
 $LN18@AuSHMObtai:
 	mov	rax, QWORD PTR proc$[rsp]
-	mov	rax, QWORD PTR [rax+1055]
+	mov	rax, QWORD PTR [rax+1071]
 	mov	eax, DWORD PTR [rax]
 	cmp	DWORD PTR i$3[rsp], eax
 	jae	$LN16@AuSHMObtai
@@ -852,7 +852,7 @@ $LN18@AuSHMObtai:
 
 	mov	edx, DWORD PTR i$3[rsp]
 	mov	rax, QWORD PTR proc$[rsp]
-	mov	rcx, QWORD PTR [rax+1055]
+	mov	rcx, QWORD PTR [rax+1071]
 	call	list_get_at
 	mov	QWORD PTR maps$5[rsp], rax
 
@@ -946,7 +946,7 @@ $LN11@AuSHMObtai:
 
 	mov	rdx, QWORD PTR mappings$[rsp]
 	mov	rax, QWORD PTR proc$[rsp]
-	mov	rcx, QWORD PTR [rax+1055]
+	mov	rcx, QWORD PTR [rax+1071]
 	call	list_add
 
 ; 212  : 			AuReleaseSpinlock(shmlock);
@@ -991,14 +991,14 @@ $LN16@AuSHMObtai:
 
 	mov	rax, QWORD PTR proc$[rsp]
 	mov	rcx, QWORD PTR start_addr$6[rsp]
-	cmp	QWORD PTR [rax+1063], rcx
+	cmp	QWORD PTR [rax+1079], rcx
 	jbe	$LN9@AuSHMObtai
 
 ; 221  : 			size_t gap = proc->shm_break - start_addr;
 
 	mov	rax, QWORD PTR proc$[rsp]
 	mov	rcx, QWORD PTR start_addr$6[rsp]
-	mov	rax, QWORD PTR [rax+1063]
+	mov	rax, QWORD PTR [rax+1079]
 	sub	rax, rcx
 	mov	QWORD PTR gap$9[rsp], rax
 
@@ -1073,7 +1073,7 @@ $LN5@AuSHMObtai:
 
 	mov	rdx, QWORD PTR mappings$[rsp]
 	mov	rax, QWORD PTR proc$[rsp]
-	mov	rcx, QWORD PTR [rax+1055]
+	mov	rcx, QWORD PTR [rax+1071]
 	call	list_add
 
 ; 231  : 				AuReleaseSpinlock(shmlock);
@@ -1168,7 +1168,7 @@ $LN2@AuSHMObtai:
 
 	mov	rdx, QWORD PTR mappings$[rsp]
 	mov	rax, QWORD PTR proc$[rsp]
-	mov	rcx, QWORD PTR [rax+1055]
+	mov	rcx, QWORD PTR [rax+1071]
 	call	list_add
 
 ; 249  : 	AuReleaseSpinlock(shmlock);

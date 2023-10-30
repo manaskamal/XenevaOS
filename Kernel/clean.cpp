@@ -45,9 +45,8 @@
 * FreeUserStack -- free up allocated user stack
 * @param cr3 -- Pointer to page mapping governor
 */
-void FreeUserStack(uint64_t* cr3) {
-#define USER_STACK 0x0000700000000000 
-	uint64_t location = USER_STACK;
+void FreeUserStack(uint64_t* cr3, void* ptr) {
+	uint64_t location = (uint64_t)ptr;
 
 	for (int i = 0; i < PROCESS_USER_STACK_SZ / 4096; i++) {
 		void* addr = AuGetPhysicalAddressEx(cr3, + i * 4096);
@@ -78,12 +77,28 @@ void FreeImage(AuProcess* proc) {
  * the given thread and free up the thread
  * @param t -- thread to free
  */
-void AuThreadFree(AuThread* t) {
+void AuThreadFree(AuProcess* proc,AuThread* t) {
 	kfree(t->fx_state);
 	/* free up the kernel stack */
-	uint64_t k_stack = t->frame.kern_esp;
-	uint64_t k_stack_ = k_stack - PAGE_SIZE;
-	AuPmmngrFree((void*)V2P((size_t)k_stack_));
+
+	/* if the thread is main thread, the kernel
+	 * stack is directly allocated over physical
+	 * memory
+	 */
+	if (t->priviledge & THREAD_LEVEL_MAIN_THREAD){
+		uint64_t k_stack = t->frame.kern_esp;
+		uint64_t k_stack_ = k_stack - PAGE_SIZE;
+		AuPmmngrFree((void*)V2P((size_t)k_stack_));
+	}
+	/* if its a sub thread, kstack is allocated over
+	 * virtual memory with an index so free it
+	 */
+	if (t->priviledge & THREAD_LEVEL_SUBTHREAD) {
+		uint64_t k_stack = t->frame.kern_esp;
+		uint64_t k_stack_ = k_stack - 8192;
+		KernelStackFree(proc, (void*)k_stack_, proc->cr3);
+		
+	}
 	kfree(t->uentry);
 	kfree(t);
 }
@@ -97,7 +112,8 @@ void AuThreadFree(AuThread* t) {
 void AuProcessClean(AuProcess* parent, AuProcess* killable) {
 	int id = killable->proc_id;
 	
-	FreeUserStack(killable->cr3);
+	uint64_t stack_ = killable->_main_stack_ - PROCESS_USER_STACK_SZ;
+	FreeUserStack(killable->cr3,(void*)stack_);
 	/* free up shm mappings */
 
 	/* free up image base + image size*/
@@ -130,7 +146,14 @@ void AuProcessClean(AuProcess* parent, AuProcess* killable) {
 		if (t_) {
 			AuTextOut("cleaning thread -> %x \n", t_);
 			AuThreadCleanTrash(t_);
-			AuThreadFree(t_);
+			AuUserEntry* entry = t_->uentry;
+			if (entry) {
+				uint64_t stack = entry->stackBase;
+				uint64_t stack_ = stack - PROCESS_USER_STACK_SZ;
+				FreeUserStack(killable->cr3, (void*)stack_);
+				killable->_user_stack_index_ -= PROCESS_USER_STACK_SZ;
+			}
+			AuThreadFree(killable, t_);
 		}
 	}
 
@@ -144,7 +167,7 @@ void AuProcessClean(AuProcess* parent, AuProcess* killable) {
 
 	/* clean the main thread externally*/
 	AuThreadCleanTrash(killable->main_thread);
-	AuThreadFree(killable->main_thread);
+	AuThreadFree(killable, killable->main_thread);
 
 	/* release the process slot */
 

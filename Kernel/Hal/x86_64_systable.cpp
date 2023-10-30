@@ -101,6 +101,7 @@ static void* syscalls[AURORA_MAX_SYSCALL] = {
 	AuFTMngrGetFontSize, //29
 	MemMapDirty, //30
 	AuTTYCreate, //31
+	CreateUserThread, //32
 };
 
 

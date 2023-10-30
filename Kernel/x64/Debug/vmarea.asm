@@ -65,7 +65,7 @@ $LN3@AuVMAreaGe:
 	mov	DWORD PTR i$1[rsp], eax
 $LN4@AuVMAreaGe:
 	mov	rax, QWORD PTR proc$[rsp]
-	mov	rax, QWORD PTR [rax+1047]
+	mov	rax, QWORD PTR [rax+1063]
 	mov	eax, DWORD PTR [rax]
 	cmp	DWORD PTR i$1[rsp], eax
 	jae	SHORT $LN2@AuVMAreaGe
@@ -74,7 +74,7 @@ $LN4@AuVMAreaGe:
 
 	mov	edx, DWORD PTR i$1[rsp]
 	mov	rax, QWORD PTR proc$[rsp]
-	mov	rcx, QWORD PTR [rax+1047]
+	mov	rcx, QWORD PTR [rax+1063]
 	call	list_get_at
 	mov	QWORD PTR area_$2[rsp], rax
 
@@ -215,7 +215,7 @@ $LN3@AuRemoveVM:
 	mov	DWORD PTR i$1[rsp], eax
 $LN4@AuRemoveVM:
 	mov	rax, QWORD PTR proc$[rsp]
-	mov	rax, QWORD PTR [rax+1047]
+	mov	rax, QWORD PTR [rax+1063]
 	mov	eax, DWORD PTR [rax]
 	cmp	DWORD PTR i$1[rsp], eax
 	jae	SHORT $LN2@AuRemoveVM
@@ -224,7 +224,7 @@ $LN4@AuRemoveVM:
 
 	mov	edx, DWORD PTR i$1[rsp]
 	mov	rax, QWORD PTR proc$[rsp]
-	mov	rcx, QWORD PTR [rax+1047]
+	mov	rcx, QWORD PTR [rax+1063]
 	call	list_get_at
 	mov	QWORD PTR area_$2[rsp], rax
 
@@ -238,7 +238,7 @@ $LN4@AuRemoveVM:
 
 	mov	edx, DWORD PTR i$1[rsp]
 	mov	rax, QWORD PTR proc$[rsp]
-	mov	rcx, QWORD PTR [rax+1047]
+	mov	rcx, QWORD PTR [rax+1063]
 	call	list_remove
 $LN1@AuRemoveVM:
 
@@ -276,7 +276,7 @@ $LN3:
 
 	mov	rdx, QWORD PTR area$[rsp]
 	mov	rax, QWORD PTR proc$[rsp]
-	mov	rcx, QWORD PTR [rax+1047]
+	mov	rcx, QWORD PTR [rax+1063]
 	call	list_add
 
 ; 41   : }

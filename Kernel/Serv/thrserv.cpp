@@ -177,3 +177,16 @@ int SetSignal(int signo, AuSigHandler handler){
 size_t GetSystemTimerTick() {
 	return AuGetSystemTimerTick();
 }
+
+/*
+ * CreateUserThread -- creates an user mode thread
+ */
+int CreateUserThread(void(*entry) (void*), char *name){
+	x64_cli();
+	AuThread* thr = AuGetCurrentThread();
+	if (!thr)
+		return 0;
+	AuProcess* proc = AuProcessFindThread(thr);
+	int success = AuCreateUserthread(proc, entry, name);
+	return success;
+}

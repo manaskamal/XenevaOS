@@ -30,19 +30,16 @@ _BSS	SEGMENT
 ?_x86_64_sched_init@@3_NA DB 01H DUP (?)		; _x86_64_sched_init
 _BSS	ENDS
 CONST	SEGMENT
-$SG3709	DB	'FRAME USER KERN ESP -> %x ', 0aH, 00H
-	ORG $+4
-$SG3718	DB	'_idle id -> %d  ', 0dH, 0aH, 00H
+$SG3712	DB	'_idle id -> %d  ', 0dH, 0aH, 00H
 	ORG $+1
-$SG3727	DB	'Idle', 00H
+$SG3721	DB	'Idle', 00H
 	ORG $+7
-$SG3772	DB	'CR3 -> %x ', 0dH, 0aH, 00H
+$SG3756	DB	'CR3 -> %x ', 0dH, 0aH, 00H
 CONST	ENDS
 PUBLIC	?AuSchedulerStart@@YAXXZ			; AuSchedulerStart
 PUBLIC	?AuSchedulerInitialise@@YAXXZ			; AuSchedulerInitialise
 PUBLIC	?AuSchedulerInitAp@@YAXXZ			; AuSchedulerInitAp
 PUBLIC	AuCreateKthread
-PUBLIC	?AuCreateUthread@@YAPEAU_au_thread_@@P6AXPEAX@Z_K2PEAD@Z ; AuCreateUthread
 PUBLIC	AuGetCurrentThread
 PUBLIC	?AuKThreadCopy@@YAXPEAU_au_thread_@@0@Z		; AuKThreadCopy
 PUBLIC	AuBlockThread
@@ -55,7 +52,6 @@ PUBLIC	AuThreadFindByIDBlockList
 PUBLIC	AuForceScheduler
 PUBLIC	?AuIsSchedulerInitialised@@YA_NXZ		; AuIsSchedulerInitialised
 PUBLIC	AuGetSystemTimerTick
-PUBLIC	?AuMapKStack@@YA_KPEA_K@Z			; AuMapKStack
 PUBLIC	?AuThreadInsert@@YAXPEAU_au_thread_@@@Z		; AuThreadInsert
 PUBLIC	?AuThreadDelete@@YAXPEAU_au_thread_@@@Z		; AuThreadDelete
 PUBLIC	?AuThreadInsertBlock@@YAXPEAU_au_thread_@@@Z	; AuThreadInsertBlock
@@ -83,19 +79,15 @@ EXTRN	?AuCheckSignal@@YA_NPEAU_au_thread_@@PEAUinterrupt_stack_frame@@@Z:PROC ; 
 EXTRN	?AuGetSignal@@YAPEAU_signal_@@PEAU_au_thread_@@@Z:PROC ; AuGetSignal
 EXTRN	?AuPrepareSignal@@YAXPEAU_au_thread_@@PEAUinterrupt_stack_frame@@PEAU_signal_@@@Z:PROC ; AuPrepareSignal
 EXTRN	strcpy:PROC
-EXTRN	strncpy:PROC
 EXTRN	memset:PROC
 EXTRN	SeTextOut:PROC
 EXTRN	kmalloc:PROC
-EXTRN	AuMapPageEx:PROC
 EXTRN	?AuPerCPUGetCpuID@@YAEXZ:PROC			; AuPerCPUGetCpuID
 EXTRN	?AuPerCPUSetCurrentThread@@YAXPEAX@Z:PROC	; AuPerCPUSetCurrentThread
 EXTRN	?AuPerCPUGetCurrentThread@@YAPEAU_au_thread_@@XZ:PROC ; AuPerCPUGetCurrentThread
 EXTRN	?AuPerCPUGetKernelTSS@@YAPEAU_tss@@XZ:PROC	; AuPerCPUGetKernelTSS
 EXTRN	AuPmmngrAlloc:PROC
 EXTRN	P2V:PROC
-EXTRN	V2P:PROC
-EXTRN	AuTextOut:PROC
 EXTRN	save_context:PROC
 EXTRN	execute_idle:PROC
 _BSS	SEGMENT
@@ -119,9 +111,6 @@ $pdata$?AuSchedulerInitAp@@YAXXZ DD imagerel $LN3
 $pdata$AuCreateKthread DD imagerel $LN4
 	DD	imagerel $LN4+839
 	DD	imagerel $unwind$AuCreateKthread
-$pdata$?AuCreateUthread@@YAPEAU_au_thread_@@P6AXPEAX@Z_K2PEAD@Z DD imagerel $LN3
-	DD	imagerel $LN3+712
-	DD	imagerel $unwind$?AuCreateUthread@@YAPEAU_au_thread_@@P6AXPEAX@Z_K2PEAD@Z
 $pdata$AuGetCurrentThread DD imagerel $LN3
 	DD	imagerel $LN3+14
 	DD	imagerel $unwind$AuGetCurrentThread
@@ -146,9 +135,6 @@ $pdata$AuThreadFindByIDBlockList DD imagerel $LN7
 $pdata$AuForceScheduler DD imagerel $LN3
 	DD	imagerel $LN3+14
 	DD	imagerel $unwind$AuForceScheduler
-$pdata$?AuMapKStack@@YA_KPEA_K@Z DD imagerel $LN6
-	DD	imagerel $LN6+121
-	DD	imagerel $unwind$?AuMapKStack@@YA_KPEA_K@Z
 $pdata$?AuIdleThread@@YAX_K@Z DD imagerel $LN5
 	DD	imagerel $LN5+45
 	DD	imagerel $unwind$?AuIdleThread@@YAX_K@Z
@@ -171,8 +157,6 @@ $unwind$?AuSchedulerInitAp@@YAXXZ DD 010401H
 	DD	04204H
 $unwind$AuCreateKthread DD 011801H
 	DD	06218H
-$unwind$?AuCreateUthread@@YAPEAU_au_thread_@@P6AXPEAX@Z_K2PEAD@Z DD 011801H
-	DD	06218H
 $unwind$AuGetCurrentThread DD 010401H
 	DD	04204H
 $unwind$AuBlockThread DD 010901H
@@ -189,8 +173,6 @@ $unwind$AuThreadFindByIDBlockList DD 010901H
 	DD	02209H
 $unwind$AuForceScheduler DD 010401H
 	DD	04204H
-$unwind$?AuMapKStack@@YA_KPEA_K@Z DD 010901H
-	DD	08209H
 $unwind$?AuIdleThread@@YAX_K@Z DD 010901H
 	DD	04209H
 $unwind$?AuNextThread@@YAXXZ DD 010401H
@@ -205,19 +187,19 @@ xdata	ENDS
 _TEXT	SEGMENT
 AuPrintStack PROC
 
-; 484  : extern "C" void AuPrintStack() {
+; 416  : extern "C" void AuPrintStack() {
 
 $LN3:
 	sub	rsp, 40					; 00000028H
 
-; 485  : 	SeTextOut("CR3 -> %x \r\n", x64_read_cr3());
+; 417  : 	SeTextOut("CR3 -> %x \r\n", x64_read_cr3());
 
 	call	x64_read_cr3
 	mov	rdx, rax
-	lea	rcx, OFFSET FLAT:$SG3772
+	lea	rcx, OFFSET FLAT:$SG3756
 	call	SeTextOut
 
-; 486  : }
+; 418  : }
 
 	add	rsp, 40					; 00000028H
 	ret	0
@@ -234,47 +216,47 @@ v$ = 80
 param$ = 88
 ?x8664SchedulerISR@@YAX_KPEAX@Z PROC			; x8664SchedulerISR
 
-; 414  : void x8664SchedulerISR(size_t v, void* param) {
+; 360  : void x8664SchedulerISR(size_t v, void* param) {
 
 $LN9:
 	mov	QWORD PTR [rsp+16], rdx
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 72					; 00000048H
 
-; 415  : 	x64_cli();
+; 361  : 	x64_cli();
 
 	call	x64_cli
 
-; 416  : 	interrupt_stack_frame *frame = (interrupt_stack_frame*)param;
+; 362  : 	interrupt_stack_frame *frame = (interrupt_stack_frame*)param;
 
 	mov	rax, QWORD PTR param$[rsp]
 	mov	QWORD PTR frame$[rsp], rax
 
-; 417  : 
-; 418  : 	if (_x86_64_sched_enable == false)
+; 363  : 
+; 364  : 	if (_x86_64_sched_enable == false)
 
 	movzx	eax, BYTE PTR ?_x86_64_sched_enable@@3_NA ; _x86_64_sched_enable
 	test	eax, eax
 	jne	SHORT $LN6@x8664Sched
 
-; 419  : 		goto sched_end;
+; 365  : 		goto sched_end;
 
 	jmp	$LN5@x8664Sched
 	jmp	$sched_end$10
 $LN6@x8664Sched:
 
-; 420  : 
-; 421  : 	TSS *ktss = AuPerCPUGetKernelTSS();
+; 366  : 
+; 367  : 	TSS *ktss = AuPerCPUGetKernelTSS();
 
 	call	?AuPerCPUGetKernelTSS@@YAPEAU_tss@@XZ	; AuPerCPUGetKernelTSS
 	mov	QWORD PTR ktss$[rsp], rax
 
-; 422  : 	AuThread* current_thread = AuPerCPUGetCurrentThread();
+; 368  : 	AuThread* current_thread = AuPerCPUGetCurrentThread();
 
 	call	?AuPerCPUGetCurrentThread@@YAPEAU_au_thread_@@XZ ; AuPerCPUGetCurrentThread
 	mov	QWORD PTR current_thread$[rsp], rax
 
-; 423  : 	if (save_context(current_thread, ktss) == 0) {
+; 369  : 	if (save_context(current_thread, ktss) == 0) {
 
 	mov	rdx, QWORD PTR ktss$[rsp]
 	mov	rcx, QWORD PTR current_thread$[rsp]
@@ -282,23 +264,23 @@ $LN6@x8664Sched:
 	test	eax, eax
 	jne	$LN4@x8664Sched
 
-; 424  : 		current_thread->frame.cr3 = x64_read_cr3();
+; 370  : 		current_thread->frame.cr3 = x64_read_cr3();
 
 	call	x64_read_cr3
 	mov	rcx, QWORD PTR current_thread$[rsp]
 	mov	QWORD PTR [rcx+192], rax
 
-; 425  : 
-; 426  : 		current_thread->frame.kern_esp = x64_get_kstack(ktss);
+; 371  : 
+; 372  : 		current_thread->frame.kern_esp = x64_get_kstack(ktss);
 
 	mov	rcx, QWORD PTR ktss$[rsp]
 	call	x64_get_kstack
 	mov	rcx, QWORD PTR current_thread$[rsp]
 	mov	QWORD PTR [rcx+200], rax
 
-; 427  : 
-; 428  : 		/* check for any signal */
-; 429  : 		if (AuCheckSignal(current_thread, frame)) {
+; 373  : 
+; 374  : 		/* check for any signal */
+; 375  : 		if (AuCheckSignal(current_thread, frame)) {
 
 	mov	rdx, QWORD PTR frame$[rsp]
 	mov	rcx, QWORD PTR current_thread$[rsp]
@@ -307,13 +289,13 @@ $LN6@x8664Sched:
 	test	eax, eax
 	je	SHORT $LN3@x8664Sched
 
-; 430  : 			Signal* sig = AuGetSignal(current_thread);
+; 376  : 			Signal* sig = AuGetSignal(current_thread);
 
 	mov	rcx, QWORD PTR current_thread$[rsp]
 	call	?AuGetSignal@@YAPEAU_signal_@@PEAU_au_thread_@@@Z ; AuGetSignal
 	mov	QWORD PTR sig$1[rsp], rax
 
-; 431  : 			AuPrepareSignal(current_thread, frame, sig);
+; 377  : 			AuPrepareSignal(current_thread, frame, sig);
 
 	mov	r8, QWORD PTR sig$1[rsp]
 	mov	rdx, QWORD PTR frame$[rsp]
@@ -321,77 +303,77 @@ $LN6@x8664Sched:
 	call	?AuPrepareSignal@@YAXPEAU_au_thread_@@PEAUinterrupt_stack_frame@@PEAU_signal_@@@Z ; AuPrepareSignal
 $LN3@x8664Sched:
 
-; 432  : 		}
-; 433  : 
-; 434  : 		if (x86_64_is_cpu_fxsave_supported())
+; 378  : 		}
+; 379  : 
+; 380  : 		if (x86_64_is_cpu_fxsave_supported())
 
 	call	?x86_64_is_cpu_fxsave_supported@@YA_NXZ	; x86_64_is_cpu_fxsave_supported
 	movzx	eax, al
 	test	eax, eax
 	je	SHORT $LN2@x8664Sched
 
-; 435  : 			x64_fxsave(current_thread->fx_state);
+; 381  : 			x64_fxsave(current_thread->fx_state);
 
 	mov	rax, QWORD PTR current_thread$[rsp]
 	mov	rcx, QWORD PTR [rax+272]
 	call	x64_fxsave
 $LN2@x8664Sched:
 
-; 436  : 
-; 437  : 		scheduler_tick++;
+; 382  : 
+; 383  : 		scheduler_tick++;
 
 	mov	rax, QWORD PTR scheduler_tick
 	inc	rax
 	mov	QWORD PTR scheduler_tick, rax
 
-; 438  : 		AuNextThread();
+; 384  : 		AuNextThread();
 
 	call	?AuNextThread@@YAXXZ			; AuNextThread
 
-; 439  : 		current_thread = AuPerCPUGetCurrentThread();
+; 385  : 		current_thread = AuPerCPUGetCurrentThread();
 
 	call	?AuPerCPUGetCurrentThread@@YAPEAU_au_thread_@@XZ ; AuPerCPUGetCurrentThread
 	mov	QWORD PTR current_thread$[rsp], rax
 
-; 440  : 		
-; 441  : 		AuInterruptEnd(0);
+; 386  : 		
+; 387  : 		AuInterruptEnd(0);
 
 	xor	ecx, ecx
 	call	AuInterruptEnd
 
-; 442  : 		
-; 443  : 		if (x86_64_is_cpu_fxsave_supported())
+; 388  : 		
+; 389  : 		if (x86_64_is_cpu_fxsave_supported())
 
 	call	?x86_64_is_cpu_fxsave_supported@@YA_NXZ	; x86_64_is_cpu_fxsave_supported
 	movzx	eax, al
 	test	eax, eax
 	je	SHORT $LN1@x8664Sched
 
-; 444  : 			x64_fxrstor(current_thread->fx_state);
+; 390  : 			x64_fxrstor(current_thread->fx_state);
 
 	mov	rax, QWORD PTR current_thread$[rsp]
 	mov	rcx, QWORD PTR [rax+272]
 	call	x64_fxrstor
 $LN1@x8664Sched:
 
-; 445  : 
-; 446  : 		x64_set_kstack(ktss, current_thread->frame.kern_esp);
+; 391  : 
+; 392  : 		x64_set_kstack(ktss, current_thread->frame.kern_esp);
 
 	mov	rax, QWORD PTR current_thread$[rsp]
 	mov	rdx, QWORD PTR [rax+200]
 	mov	rcx, QWORD PTR ktss$[rsp]
 	call	x64_set_kstack
 
-; 447  : 
-; 448  : 		x64_ldmxcsr(&current_thread->mxcsr);
+; 393  : 
+; 394  : 		x64_ldmxcsr(&current_thread->mxcsr);
 
 	mov	rax, QWORD PTR current_thread$[rsp]
 	add	rax, 280				; 00000118H
 	mov	rcx, rax
 	call	x64_ldmxcsr
 
-; 449  : 
-; 450  : 		execute_idle(current_thread, ktss);
+; 395  : 
+; 396  : 		execute_idle(current_thread, ktss);
 
 	mov	rdx, QWORD PTR ktss$[rsp]
 	mov	rcx, QWORD PTR current_thread$[rsp]
@@ -400,15 +382,15 @@ $LN4@x8664Sched:
 $LN5@x8664Sched:
 $sched_end$10:
 
-; 451  : 	}
-; 452  : 
-; 453  : sched_end:
-; 454  : 	AuInterruptEnd(0);
+; 397  : 	}
+; 398  : 
+; 399  : sched_end:
+; 400  : 	AuInterruptEnd(0);
 
 	xor	ecx, ecx
 	call	AuInterruptEnd
 
-; 455  : }
+; 401  : }
 
 	add	rsp, 72					; 00000048H
 	ret	0
@@ -420,40 +402,40 @@ _TEXT	SEGMENT
 thread$ = 32
 ?AuNextThread@@YAXXZ PROC				; AuNextThread
 
-; 389  : void AuNextThread() {
+; 335  : void AuNextThread() {
 
 $LN9:
 	sub	rsp, 56					; 00000038H
 
-; 390  : 	AuThread* thread = AuPerCPUGetCurrentThread();
+; 336  : 	AuThread* thread = AuPerCPUGetCurrentThread();
 
 	call	?AuPerCPUGetCurrentThread@@YAPEAU_au_thread_@@XZ ; AuPerCPUGetCurrentThread
 	mov	QWORD PTR thread$[rsp], rax
 $LN6@AuNextThre:
 
-; 391  : 	do {
-; 392  : 		if (thread->state == THREAD_STATE_SLEEP) {
+; 337  : 	do {
+; 338  : 		if (thread->state == THREAD_STATE_SLEEP) {
 
 	mov	rax, QWORD PTR thread$[rsp]
 	movzx	eax, BYTE PTR [rax+300]
 	cmp	eax, 4
 	jne	SHORT $LN3@AuNextThre
 
-; 393  : 			if (thread->quanta == 0) {
+; 339  : 			if (thread->quanta == 0) {
 
 	mov	rax, QWORD PTR thread$[rsp]
 	movzx	eax, WORD PTR [rax+303]
 	test	eax, eax
 	jne	SHORT $LN2@AuNextThre
 
-; 394  : 				thread->state = THREAD_STATE_READY;
+; 340  : 				thread->state = THREAD_STATE_READY;
 
 	mov	rax, QWORD PTR thread$[rsp]
 	mov	BYTE PTR [rax+300], 1
 $LN2@AuNextThre:
 
-; 395  : 			}
-; 396  : 			thread->quanta--;
+; 341  : 			}
+; 342  : 			thread->quanta--;
 
 	mov	rax, QWORD PTR thread$[rsp]
 	movzx	eax, WORD PTR [rax+303]
@@ -462,26 +444,26 @@ $LN2@AuNextThre:
 	mov	WORD PTR [rcx+303], ax
 $LN3@AuNextThre:
 
-; 397  : 		}
-; 398  : 		thread = thread->next;
+; 343  : 		}
+; 344  : 		thread = thread->next;
 
 	mov	rax, QWORD PTR thread$[rsp]
 	mov	rax, QWORD PTR [rax+643]
 	mov	QWORD PTR thread$[rsp], rax
 
-; 399  : 		if (thread == NULL) {
+; 345  : 		if (thread == NULL) {
 
 	cmp	QWORD PTR thread$[rsp], 0
 	jne	SHORT $LN1@AuNextThre
 
-; 400  : 			thread = thread_list_head;
+; 346  : 			thread = thread_list_head;
 
 	mov	rax, QWORD PTR ?thread_list_head@@3PEAU_au_thread_@@EA ; thread_list_head
 	mov	QWORD PTR thread$[rsp], rax
 $LN1@AuNextThre:
 
-; 401  : 		}
-; 402  : 	} while (thread->state != THREAD_STATE_READY);
+; 347  : 		}
+; 348  : 	} while (thread->state != THREAD_STATE_READY);
 
 	mov	rax, QWORD PTR thread$[rsp]
 	movzx	eax, BYTE PTR [rax+300]
@@ -489,15 +471,15 @@ $LN1@AuNextThre:
 	jne	SHORT $LN6@AuNextThre
 $end$10:
 
-; 403  : 
-; 404  : end:
-; 405  : 	//current_thread = thread;
-; 406  : 	AuPerCPUSetCurrentThread(thread);
+; 349  : 
+; 350  : end:
+; 351  : 	//current_thread = thread;
+; 352  : 	AuPerCPUSetCurrentThread(thread);
 
 	mov	rcx, QWORD PTR thread$[rsp]
 	call	?AuPerCPUSetCurrentThread@@YAXPEAX@Z	; AuPerCPUSetCurrentThread
 
-; 407  : }
+; 353  : }
 
 	add	rsp, 56					; 00000038H
 	ret	0
@@ -509,33 +491,33 @@ _TEXT	SEGMENT
 t$ = 48
 ?AuIdleThread@@YAX_K@Z PROC				; AuIdleThread
 
-; 350  : void AuIdleThread(uint64_t t) {
+; 296  : void AuIdleThread(uint64_t t) {
 
 $LN5:
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 40					; 00000028H
 
-; 351  : 	SeTextOut("_idle id -> %d  \r\n", AuPerCPUGetCpuID());
+; 297  : 	SeTextOut("_idle id -> %d  \r\n", AuPerCPUGetCpuID());
 
 	call	?AuPerCPUGetCpuID@@YAEXZ		; AuPerCPUGetCpuID
 	movzx	eax, al
 	mov	edx, eax
-	lea	rcx, OFFSET FLAT:$SG3718
+	lea	rcx, OFFSET FLAT:$SG3712
 	call	SeTextOut
 $LN2@AuIdleThre:
 
-; 352  : 	while (1) {
+; 298  : 	while (1) {
 
 	xor	eax, eax
 	cmp	eax, 1
 	je	SHORT $LN1@AuIdleThre
 
-; 353  : 	}
+; 299  : 	}
 
 	jmp	SHORT $LN2@AuIdleThre
 $LN1@AuIdleThre:
 
-; 354  : }
+; 300  : }
 
 	add	rsp, 40					; 00000028H
 	ret	0
@@ -1003,81 +985,13 @@ _TEXT	ENDS
 ; Function compile flags: /Odtpy
 ; File e:\xeneva project\aurora\kernel\hal\x86_64_sched.cpp
 _TEXT	SEGMENT
-i$1 = 32
-location$ = 40
-p$2 = 48
-cr3$ = 80
-?AuMapKStack@@YA_KPEA_K@Z PROC				; AuMapKStack
-
-; 473  : uint64_t AuMapKStack(uint64_t *cr3) {
-
-$LN6:
-	mov	QWORD PTR [rsp+8], rcx
-	sub	rsp, 72					; 00000048H
-
-; 474  : 	uint64_t location = KERNEL_STACK_LOCATION;
-
-	mov	rax, -5497558138880			; fffffb0000000000H
-	mov	QWORD PTR location$[rsp], rax
-
-; 475  : 
-; 476  : 	for (int i = 0; i < 8192 / 4096; i++) {
-
-	mov	DWORD PTR i$1[rsp], 0
-	jmp	SHORT $LN3@AuMapKStac
-$LN2@AuMapKStac:
-	mov	eax, DWORD PTR i$1[rsp]
-	inc	eax
-	mov	DWORD PTR i$1[rsp], eax
-$LN3@AuMapKStac:
-	cmp	DWORD PTR i$1[rsp], 2
-	jge	SHORT $LN1@AuMapKStac
-
-; 477  : 		void* p = AuPmmngrAlloc();
-
-	call	AuPmmngrAlloc
-	mov	QWORD PTR p$2[rsp], rax
-
-; 478  : 		AuMapPageEx(cr3, (uint64_t)p, location + i * 4096, 0);
-
-	imul	eax, DWORD PTR i$1[rsp], 4096		; 00001000H
-	cdqe
-	mov	rcx, QWORD PTR location$[rsp]
-	add	rcx, rax
-	mov	rax, rcx
-	xor	r9d, r9d
-	mov	r8, rax
-	mov	rdx, QWORD PTR p$2[rsp]
-	mov	rcx, QWORD PTR cr3$[rsp]
-	call	AuMapPageEx
-
-; 479  : 	}
-
-	jmp	SHORT $LN2@AuMapKStac
-$LN1@AuMapKStac:
-
-; 480  : 
-; 481  : 	return (location + 8192);
-
-	mov	rax, QWORD PTR location$[rsp]
-	add	rax, 8192				; 00002000H
-
-; 482  : }
-
-	add	rsp, 72					; 00000048H
-	ret	0
-?AuMapKStack@@YA_KPEA_K@Z ENDP				; AuMapKStack
-_TEXT	ENDS
-; Function compile flags: /Odtpy
-; File e:\xeneva project\aurora\kernel\hal\x86_64_sched.cpp
-_TEXT	SEGMENT
 AuGetSystemTimerTick PROC
 
-; 613  : 	return scheduler_tick;
+; 545  : 	return scheduler_tick;
 
 	mov	rax, QWORD PTR scheduler_tick
 
-; 614  : }
+; 546  : }
 
 	ret	0
 AuGetSystemTimerTick ENDP
@@ -1087,11 +1001,11 @@ _TEXT	ENDS
 _TEXT	SEGMENT
 ?AuIsSchedulerInitialised@@YA_NXZ PROC			; AuIsSchedulerInitialised
 
-; 605  : 	return _x86_64_sched_init;
+; 537  : 	return _x86_64_sched_init;
 
 	movzx	eax, BYTE PTR ?_x86_64_sched_init@@3_NA	; _x86_64_sched_init
 
-; 606  : }
+; 538  : }
 
 	ret	0
 ?AuIsSchedulerInitialised@@YA_NXZ ENDP			; AuIsSchedulerInitialised
@@ -1101,16 +1015,16 @@ _TEXT	ENDS
 _TEXT	SEGMENT
 AuForceScheduler PROC
 
-; 599  : AU_EXTERN AU_EXPORT void AuForceScheduler() {
+; 531  : AU_EXTERN AU_EXPORT void AuForceScheduler() {
 
 $LN3:
 	sub	rsp, 40					; 00000028H
 
-; 600  : 	x64_force_sched();
+; 532  : 	x64_force_sched();
 
 	call	x64_force_sched
 
-; 601  : }
+; 533  : }
 
 	add	rsp, 40					; 00000028H
 	ret	0
@@ -1123,13 +1037,13 @@ block_queue$1 = 0
 id$ = 32
 AuThreadFindByIDBlockList PROC
 
-; 587  : AuThread* AuThreadFindByIDBlockList(uint16_t id){
+; 519  : AuThread* AuThreadFindByIDBlockList(uint16_t id){
 
 $LN7:
 	mov	WORD PTR [rsp+8], cx
 	sub	rsp, 24
 
-; 588  : 	for (AuThread* block_queue = blocked_thr_head; block_queue != NULL; block_queue = block_queue->next){
+; 520  : 	for (AuThread* block_queue = blocked_thr_head; block_queue != NULL; block_queue = block_queue->next){
 
 	mov	rax, QWORD PTR ?blocked_thr_head@@3PEAU_au_thread_@@EA ; blocked_thr_head
 	mov	QWORD PTR block_queue$1[rsp], rax
@@ -1142,7 +1056,7 @@ $LN4@AuThreadFi:
 	cmp	QWORD PTR block_queue$1[rsp], 0
 	je	SHORT $LN2@AuThreadFi
 
-; 589  : 		if (block_queue->id == id)
+; 521  : 		if (block_queue->id == id)
 
 	mov	rax, QWORD PTR block_queue$1[rsp]
 	movzx	eax, WORD PTR [rax+301]
@@ -1150,23 +1064,23 @@ $LN4@AuThreadFi:
 	cmp	eax, ecx
 	jne	SHORT $LN1@AuThreadFi
 
-; 590  : 			return block_queue;
+; 522  : 			return block_queue;
 
 	mov	rax, QWORD PTR block_queue$1[rsp]
 	jmp	SHORT $LN5@AuThreadFi
 $LN1@AuThreadFi:
 
-; 591  : 	}
+; 523  : 	}
 
 	jmp	SHORT $LN3@AuThreadFi
 $LN2@AuThreadFi:
 
-; 592  : 	return NULL;
+; 524  : 	return NULL;
 
 	xor	eax, eax
 $LN5@AuThreadFi:
 
-; 593  : }
+; 525  : }
 
 	add	rsp, 24
 	ret	0
@@ -1179,13 +1093,13 @@ ready_queue_$1 = 0
 id$ = 32
 AuThreadFindByID PROC
 
-; 574  : AuThread* AuThreadFindByID(uint16_t id) {
+; 506  : AuThread* AuThreadFindByID(uint16_t id) {
 
 $LN7:
 	mov	WORD PTR [rsp+8], cx
 	sub	rsp, 24
 
-; 575  : 	for (AuThread* ready_queue_ = thread_list_head; ready_queue_ != NULL; ready_queue_ = ready_queue_->next) {
+; 507  : 	for (AuThread* ready_queue_ = thread_list_head; ready_queue_ != NULL; ready_queue_ = ready_queue_->next) {
 
 	mov	rax, QWORD PTR ?thread_list_head@@3PEAU_au_thread_@@EA ; thread_list_head
 	mov	QWORD PTR ready_queue_$1[rsp], rax
@@ -1198,7 +1112,7 @@ $LN4@AuThreadFi:
 	cmp	QWORD PTR ready_queue_$1[rsp], 0
 	je	SHORT $LN2@AuThreadFi
 
-; 576  : 		if (ready_queue_->id == id)
+; 508  : 		if (ready_queue_->id == id)
 
 	mov	rax, QWORD PTR ready_queue_$1[rsp]
 	movzx	eax, WORD PTR [rax+301]
@@ -1206,23 +1120,23 @@ $LN4@AuThreadFi:
 	cmp	eax, ecx
 	jne	SHORT $LN1@AuThreadFi
 
-; 577  : 			return ready_queue_;
+; 509  : 			return ready_queue_;
 
 	mov	rax, QWORD PTR ready_queue_$1[rsp]
 	jmp	SHORT $LN5@AuThreadFi
 $LN1@AuThreadFi:
 
-; 578  : 	}
+; 510  : 	}
 
 	jmp	SHORT $LN3@AuThreadFi
 $LN2@AuThreadFi:
 
-; 579  : 	return NULL;
+; 511  : 	return NULL;
 
 	xor	eax, eax
 $LN5@AuThreadFi:
 
-; 580  : }
+; 512  : }
 
 	add	rsp, 24
 	ret	0
@@ -1234,18 +1148,18 @@ _TEXT	SEGMENT
 t$ = 48
 ?AuThreadCleanTrash@@YAXPEAU_au_thread_@@@Z PROC	; AuThreadCleanTrash
 
-; 565  : void AuThreadCleanTrash(AuThread* t) {
+; 497  : void AuThreadCleanTrash(AuThread* t) {
 
 $LN3:
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 40					; 00000028H
 
-; 566  : 	AuThreadDeleteTrash(t);
+; 498  : 	AuThreadDeleteTrash(t);
 
 	mov	rcx, QWORD PTR t$[rsp]
 	call	?AuThreadDeleteTrash@@YAXPEAU_au_thread_@@@Z ; AuThreadDeleteTrash
 
-; 567  : }
+; 499  : }
 
 	add	rsp, 40					; 00000028H
 	ret	0
@@ -1259,20 +1173,20 @@ block_queue_$2 = 40
 t$ = 64
 ?AuThreadMoveToTrash@@YAXPEAU_au_thread_@@@Z PROC	; AuThreadMoveToTrash
 
-; 541  : void AuThreadMoveToTrash(AuThread* t) {
+; 473  : void AuThreadMoveToTrash(AuThread* t) {
 
 $LN11:
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 56					; 00000038H
 
-; 542  : 	t->state = THREAD_STATE_KILLABLE;
+; 474  : 	t->state = THREAD_STATE_KILLABLE;
 
 	mov	rax, QWORD PTR t$[rsp]
 	mov	BYTE PTR [rax+300], 5
 
-; 543  : 
-; 544  : 	/* search the thread in ready queue*/
-; 545  : 	for (AuThread* ready_queue_ = thread_list_head; ready_queue_ != NULL; ready_queue_ = ready_queue_->next) {
+; 475  : 
+; 476  : 	/* search the thread in ready queue*/
+; 477  : 	for (AuThread* ready_queue_ = thread_list_head; ready_queue_ != NULL; ready_queue_ = ready_queue_->next) {
 
 	mov	rax, QWORD PTR ?thread_list_head@@3PEAU_au_thread_@@EA ; thread_list_head
 	mov	QWORD PTR ready_queue_$1[rsp], rax
@@ -1285,26 +1199,26 @@ $LN8@AuThreadMo:
 	cmp	QWORD PTR ready_queue_$1[rsp], 0
 	je	SHORT $LN6@AuThreadMo
 
-; 546  : 		if (ready_queue_ == t) 
+; 478  : 		if (ready_queue_ == t) 
 
 	mov	rax, QWORD PTR t$[rsp]
 	cmp	QWORD PTR ready_queue_$1[rsp], rax
 	jne	SHORT $LN5@AuThreadMo
 
-; 547  : 			AuThreadDelete(t);
+; 479  : 			AuThreadDelete(t);
 
 	mov	rcx, QWORD PTR t$[rsp]
 	call	?AuThreadDelete@@YAXPEAU_au_thread_@@@Z	; AuThreadDelete
 $LN5@AuThreadMo:
 
-; 548  : 	}
+; 480  : 	}
 
 	jmp	SHORT $LN7@AuThreadMo
 $LN6@AuThreadMo:
 
-; 549  : 
-; 550  : 	/* search the thread in block queue*/
-; 551  : 	for (AuThread* block_queue_ = blocked_thr_head; block_queue_ != NULL; block_queue_ = block_queue_->next) {
+; 481  : 
+; 482  : 	/* search the thread in block queue*/
+; 483  : 	for (AuThread* block_queue_ = blocked_thr_head; block_queue_ != NULL; block_queue_ = block_queue_->next) {
 
 	mov	rax, QWORD PTR ?blocked_thr_head@@3PEAU_au_thread_@@EA ; blocked_thr_head
 	mov	QWORD PTR block_queue_$2[rsp], rax
@@ -1317,31 +1231,31 @@ $LN4@AuThreadMo:
 	cmp	QWORD PTR block_queue_$2[rsp], 0
 	je	SHORT $LN2@AuThreadMo
 
-; 552  : 		if (block_queue_ == t)
+; 484  : 		if (block_queue_ == t)
 
 	mov	rax, QWORD PTR t$[rsp]
 	cmp	QWORD PTR block_queue_$2[rsp], rax
 	jne	SHORT $LN1@AuThreadMo
 
-; 553  : 			AuThreadDeleteBlock(t);
+; 485  : 			AuThreadDeleteBlock(t);
 
 	mov	rcx, QWORD PTR t$[rsp]
 	call	?AuThreadDeleteBlock@@YAXPEAU_au_thread_@@@Z ; AuThreadDeleteBlock
 $LN1@AuThreadMo:
 
-; 554  : 	}
+; 486  : 	}
 
 	jmp	SHORT $LN3@AuThreadMo
 $LN2@AuThreadMo:
 
-; 555  : 
-; 556  : 	/* insert it in the trash list */
-; 557  : 	AuThreadInsertTrash(t);
+; 487  : 
+; 488  : 	/* insert it in the trash list */
+; 489  : 	AuThreadInsertTrash(t);
 
 	mov	rcx, QWORD PTR t$[rsp]
 	call	?AuThreadInsertTrash@@YAXPEAU_au_thread_@@@Z ; AuThreadInsertTrash
 
-; 558  : }
+; 490  : }
 
 	add	rsp, 56					; 00000038H
 	ret	0
@@ -1355,22 +1269,22 @@ thr$1 = 40
 t$ = 64
 AuUnblockThread PROC
 
-; 522  : AU_EXTERN AU_EXPORT void AuUnblockThread(AuThread *t) {
+; 454  : AU_EXTERN AU_EXPORT void AuUnblockThread(AuThread *t) {
 
 $LN8:
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 56					; 00000038H
 
-; 523  : 	t->state = THREAD_STATE_READY;
+; 455  : 	t->state = THREAD_STATE_READY;
 
 	mov	rax, QWORD PTR t$[rsp]
 	mov	BYTE PTR [rax+300], 1
 
-; 524  : 	bool found_ = false;
+; 456  : 	bool found_ = false;
 
 	mov	BYTE PTR found_$[rsp], 0
 
-; 525  : 	for (AuThread *thr = blocked_thr_head; thr != NULL; thr = thr->next) {
+; 457  : 	for (AuThread *thr = blocked_thr_head; thr != NULL; thr = thr->next) {
 
 	mov	rax, QWORD PTR ?blocked_thr_head@@3PEAU_au_thread_@@EA ; blocked_thr_head
 	mov	QWORD PTR thr$1[rsp], rax
@@ -1383,45 +1297,45 @@ $LN5@AuUnblockT:
 	cmp	QWORD PTR thr$1[rsp], 0
 	je	SHORT $LN3@AuUnblockT
 
-; 526  : 		if (thr == t) {
+; 458  : 		if (thr == t) {
 
 	mov	rax, QWORD PTR t$[rsp]
 	cmp	QWORD PTR thr$1[rsp], rax
 	jne	SHORT $LN2@AuUnblockT
 
-; 527  : 			AuThreadDeleteBlock(thr);
+; 459  : 			AuThreadDeleteBlock(thr);
 
 	mov	rcx, QWORD PTR thr$1[rsp]
 	call	?AuThreadDeleteBlock@@YAXPEAU_au_thread_@@@Z ; AuThreadDeleteBlock
 
-; 528  : 			found_ = true;
+; 460  : 			found_ = true;
 
 	mov	BYTE PTR found_$[rsp], 1
 
-; 529  : 			break;
+; 461  : 			break;
 
 	jmp	SHORT $LN3@AuUnblockT
 $LN2@AuUnblockT:
 
-; 530  : 		}
-; 531  : 	}
+; 462  : 		}
+; 463  : 	}
 
 	jmp	SHORT $LN4@AuUnblockT
 $LN3@AuUnblockT:
 
-; 532  : 	if (found_)
+; 464  : 	if (found_)
 
 	movzx	eax, BYTE PTR found_$[rsp]
 	test	eax, eax
 	je	SHORT $LN1@AuUnblockT
 
-; 533  : 		AuThreadInsert(t);
+; 465  : 		AuThreadInsert(t);
 
 	mov	rcx, QWORD PTR t$[rsp]
 	call	?AuThreadInsert@@YAXPEAU_au_thread_@@@Z	; AuThreadInsert
 $LN1@AuUnblockT:
 
-; 534  : }
+; 466  : }
 
 	add	rsp, 56					; 00000038H
 	ret	0
@@ -1434,23 +1348,23 @@ thread$ = 8
 ms$ = 16
 AuSleepThread PROC
 
-; 511  : AU_EXTERN AU_EXPORT void AuSleepThread(AuThread *thread, uint64_t ms) {
+; 443  : AU_EXTERN AU_EXPORT void AuSleepThread(AuThread *thread, uint64_t ms) {
 
 	mov	QWORD PTR [rsp+16], rdx
 	mov	QWORD PTR [rsp+8], rcx
 
-; 512  : 	thread->state = THREAD_STATE_SLEEP;
+; 444  : 	thread->state = THREAD_STATE_SLEEP;
 
 	mov	rax, QWORD PTR thread$[rsp]
 	mov	BYTE PTR [rax+300], 4
 
-; 513  : 	thread->quanta = ms;
+; 445  : 	thread->quanta = ms;
 
 	mov	rax, QWORD PTR thread$[rsp]
 	movzx	ecx, WORD PTR ms$[rsp]
 	mov	WORD PTR [rax+303], cx
 
-; 514  : }
+; 446  : }
 
 	ret	0
 AuSleepThread ENDP
@@ -1461,28 +1375,28 @@ _TEXT	SEGMENT
 thread$ = 48
 AuBlockThread PROC
 
-; 502  : AU_EXTERN AU_EXPORT void AuBlockThread(AuThread *thread) {
+; 434  : AU_EXTERN AU_EXPORT void AuBlockThread(AuThread *thread) {
 
 $LN3:
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 40					; 00000028H
 
-; 503  : 	thread->state = THREAD_STATE_BLOCKED;
+; 435  : 	thread->state = THREAD_STATE_BLOCKED;
 
 	mov	rax, QWORD PTR thread$[rsp]
 	mov	BYTE PTR [rax+300], 3
 
-; 504  : 	AuThreadDelete(thread);
+; 436  : 	AuThreadDelete(thread);
 
 	mov	rcx, QWORD PTR thread$[rsp]
 	call	?AuThreadDelete@@YAXPEAU_au_thread_@@@Z	; AuThreadDelete
 
-; 505  : 	AuThreadInsertBlock(thread);
+; 437  : 	AuThreadInsertBlock(thread);
 
 	mov	rcx, QWORD PTR thread$[rsp]
 	call	?AuThreadInsertBlock@@YAXPEAU_au_thread_@@@Z ; AuThreadInsertBlock
 
-; 506  : }
+; 438  : }
 
 	add	rsp, 40					; 00000028H
 	ret	0
@@ -1495,166 +1409,166 @@ dest$ = 8
 src$ = 16
 ?AuKThreadCopy@@YAXPEAU_au_thread_@@0@Z PROC		; AuKThreadCopy
 
-; 324  : void AuKThreadCopy(AuThread* dest, AuThread* src) {
+; 270  : void AuKThreadCopy(AuThread* dest, AuThread* src) {
 
 	mov	QWORD PTR [rsp+16], rdx
 	mov	QWORD PTR [rsp+8], rcx
 
-; 325  : 	dest->frame.r15 = src->frame.r15;
+; 271  : 	dest->frame.r15 = src->frame.r15;
 
 	mov	rax, QWORD PTR dest$[rsp]
 	mov	rcx, QWORD PTR src$[rsp]
 	mov	rcx, QWORD PTR [rcx+152]
 	mov	QWORD PTR [rax+152], rcx
 
-; 326  : 	dest->frame.r14 = src->frame.r14;
+; 272  : 	dest->frame.r14 = src->frame.r14;
 
 	mov	rax, QWORD PTR dest$[rsp]
 	mov	rcx, QWORD PTR src$[rsp]
 	mov	rcx, QWORD PTR [rcx+144]
 	mov	QWORD PTR [rax+144], rcx
 
-; 327  : 	dest->frame.r13 = src->frame.r13;
+; 273  : 	dest->frame.r13 = src->frame.r13;
 
 	mov	rax, QWORD PTR dest$[rsp]
 	mov	rcx, QWORD PTR src$[rsp]
 	mov	rcx, QWORD PTR [rcx+136]
 	mov	QWORD PTR [rax+136], rcx
 
-; 328  : 	dest->frame.r12 = src->frame.r12;
+; 274  : 	dest->frame.r12 = src->frame.r12;
 
 	mov	rax, QWORD PTR dest$[rsp]
 	mov	rcx, QWORD PTR src$[rsp]
 	mov	rcx, QWORD PTR [rcx+128]
 	mov	QWORD PTR [rax+128], rcx
 
-; 329  : 	dest->frame.r11 = src->frame.r11;
+; 275  : 	dest->frame.r11 = src->frame.r11;
 
 	mov	rax, QWORD PTR dest$[rsp]
 	mov	rcx, QWORD PTR src$[rsp]
 	mov	rcx, QWORD PTR [rcx+120]
 	mov	QWORD PTR [rax+120], rcx
 
-; 330  : 	dest->frame.r10 = src->frame.r10;
+; 276  : 	dest->frame.r10 = src->frame.r10;
 
 	mov	rax, QWORD PTR dest$[rsp]
 	mov	rcx, QWORD PTR src$[rsp]
 	mov	rcx, QWORD PTR [rcx+112]
 	mov	QWORD PTR [rax+112], rcx
 
-; 331  : 	dest->frame.r9 = src->frame.r9;
+; 277  : 	dest->frame.r9 = src->frame.r9;
 
 	mov	rax, QWORD PTR dest$[rsp]
 	mov	rcx, QWORD PTR src$[rsp]
 	mov	rcx, QWORD PTR [rcx+104]
 	mov	QWORD PTR [rax+104], rcx
 
-; 332  : 	dest->frame.r8 = src->frame.r8;
+; 278  : 	dest->frame.r8 = src->frame.r8;
 
 	mov	rax, QWORD PTR dest$[rsp]
 	mov	rcx, QWORD PTR src$[rsp]
 	mov	rcx, QWORD PTR [rcx+96]
 	mov	QWORD PTR [rax+96], rcx
 
-; 333  : 	dest->frame.rdi = src->frame.rdi;
+; 279  : 	dest->frame.rdi = src->frame.rdi;
 
 	mov	rax, QWORD PTR dest$[rsp]
 	mov	rcx, QWORD PTR src$[rsp]
 	mov	rcx, QWORD PTR [rcx+80]
 	mov	QWORD PTR [rax+80], rcx
 
-; 334  : 	dest->frame.rsi = src->frame.rsi;
+; 280  : 	dest->frame.rsi = src->frame.rsi;
 
 	mov	rax, QWORD PTR dest$[rsp]
 	mov	rcx, QWORD PTR src$[rsp]
 	mov	rcx, QWORD PTR [rcx+72]
 	mov	QWORD PTR [rax+72], rcx
 
-; 335  : 	dest->frame.rdx = src->frame.rdx;
+; 281  : 	dest->frame.rdx = src->frame.rdx;
 
 	mov	rax, QWORD PTR dest$[rsp]
 	mov	rcx, QWORD PTR src$[rsp]
 	mov	rcx, QWORD PTR [rcx+64]
 	mov	QWORD PTR [rax+64], rcx
 
-; 336  : 	dest->frame.rcx = src->frame.rcx;
+; 282  : 	dest->frame.rcx = src->frame.rcx;
 
 	mov	rax, QWORD PTR dest$[rsp]
 	mov	rcx, QWORD PTR src$[rsp]
 	mov	rcx, QWORD PTR [rcx+56]
 	mov	QWORD PTR [rax+56], rcx
 
-; 337  : 	dest->frame.rbx = src->frame.rbx;
+; 283  : 	dest->frame.rbx = src->frame.rbx;
 
 	mov	rax, QWORD PTR dest$[rsp]
 	mov	rcx, QWORD PTR src$[rsp]
 	mov	rcx, QWORD PTR [rcx+48]
 	mov	QWORD PTR [rax+48], rcx
 
-; 338  : 	dest->frame.rax = src->frame.rax;
+; 284  : 	dest->frame.rax = src->frame.rax;
 
 	mov	rax, QWORD PTR dest$[rsp]
 	mov	rcx, QWORD PTR src$[rsp]
 	mov	rcx, QWORD PTR [rcx+40]
 	mov	QWORD PTR [rax+40], rcx
 
-; 339  : 	dest->frame.rip = src->frame.rip;
+; 285  : 	dest->frame.rip = src->frame.rip;
 
 	mov	rax, QWORD PTR dest$[rsp]
 	mov	rcx, QWORD PTR src$[rsp]
 	mov	rcx, QWORD PTR [rcx+32]
 	mov	QWORD PTR [rax+32], rcx
 
-; 340  : 	dest->frame.cs = src->frame.cs;
+; 286  : 	dest->frame.cs = src->frame.cs;
 
 	mov	rax, QWORD PTR dest$[rsp]
 	mov	rcx, QWORD PTR src$[rsp]
 	mov	rcx, QWORD PTR [rcx+24]
 	mov	QWORD PTR [rax+24], rcx
 
-; 341  : 	dest->frame.rflags = src->frame.rflags;
+; 287  : 	dest->frame.rflags = src->frame.rflags;
 
 	mov	rax, QWORD PTR dest$[rsp]
 	mov	rcx, QWORD PTR src$[rsp]
 	mov	rcx, QWORD PTR [rcx+16]
 	mov	QWORD PTR [rax+16], rcx
 
-; 342  : 	dest->frame.ss = src->frame.ss;
+; 288  : 	dest->frame.ss = src->frame.ss;
 
 	mov	rax, QWORD PTR dest$[rsp]
 	mov	rcx, QWORD PTR src$[rsp]
 	mov	rcx, QWORD PTR [rcx]
 	mov	QWORD PTR [rax], rcx
 
-; 343  : 	dest->frame.ds = src->frame.ds;
+; 289  : 	dest->frame.ds = src->frame.ds;
 
 	mov	rax, QWORD PTR dest$[rsp]
 	mov	rcx, QWORD PTR src$[rsp]
 	mov	rcx, QWORD PTR [rcx+160]
 	mov	QWORD PTR [rax+160], rcx
 
-; 344  : 	dest->frame.es = src->frame.es;
+; 290  : 	dest->frame.es = src->frame.es;
 
 	mov	rax, QWORD PTR dest$[rsp]
 	mov	rcx, QWORD PTR src$[rsp]
 	mov	rcx, QWORD PTR [rcx+168]
 	mov	QWORD PTR [rax+168], rcx
 
-; 345  : 	dest->frame.fs = src->frame.fs;
+; 291  : 	dest->frame.fs = src->frame.fs;
 
 	mov	rax, QWORD PTR dest$[rsp]
 	mov	rcx, QWORD PTR src$[rsp]
 	mov	rcx, QWORD PTR [rcx+176]
 	mov	QWORD PTR [rax+176], rcx
 
-; 346  : 	dest->frame.gs = src->frame.gs;
+; 292  : 	dest->frame.gs = src->frame.gs;
 
 	mov	rax, QWORD PTR dest$[rsp]
 	mov	rcx, QWORD PTR src$[rsp]
 	mov	rcx, QWORD PTR [rcx+184]
 	mov	QWORD PTR [rax+184], rcx
 
-; 347  : }
+; 293  : }
 
 	ret	0
 ?AuKThreadCopy@@YAXPEAU_au_thread_@@0@Z ENDP		; AuKThreadCopy
@@ -1664,284 +1578,20 @@ _TEXT	ENDS
 _TEXT	SEGMENT
 AuGetCurrentThread PROC
 
-; 493  : AuThread* AuGetCurrentThread() {
+; 425  : AuThread* AuGetCurrentThread() {
 
 $LN3:
 	sub	rsp, 40					; 00000028H
 
-; 494  : 	return AuPerCPUGetCurrentThread();
+; 426  : 	return AuPerCPUGetCurrentThread();
 
 	call	?AuPerCPUGetCurrentThread@@YAPEAU_au_thread_@@XZ ; AuPerCPUGetCurrentThread
 
-; 495  : }
+; 427  : }
 
 	add	rsp, 40					; 00000028H
 	ret	0
 AuGetCurrentThread ENDP
-_TEXT	ENDS
-; Function compile flags: /Odtpy
-; File e:\xeneva project\aurora\kernel\hal\x86_64_sched.cpp
-_TEXT	SEGMENT
-t$ = 32
-k_esp$ = 40
-entry$ = 64
-stack$ = 72
-cr3$ = 80
-name$ = 88
-?AuCreateUthread@@YAPEAU_au_thread_@@P6AXPEAX@Z_K2PEAD@Z PROC ; AuCreateUthread
-
-; 273  : {
-
-$LN3:
-	mov	QWORD PTR [rsp+32], r9
-	mov	QWORD PTR [rsp+24], r8
-	mov	QWORD PTR [rsp+16], rdx
-	mov	QWORD PTR [rsp+8], rcx
-	sub	rsp, 56					; 00000038H
-
-; 274  : 	AuThread *t = (AuThread*)kmalloc(sizeof(AuThread));
-
-	mov	ecx, 659				; 00000293H
-	call	kmalloc
-	mov	QWORD PTR t$[rsp], rax
-
-; 275  : 	memset(t, 0, sizeof(AuThread));
-
-	mov	r8d, 659				; 00000293H
-	xor	edx, edx
-	mov	rcx, QWORD PTR t$[rsp]
-	call	memset
-
-; 276  : 	t->frame.r15 = 0;
-
-	mov	rax, QWORD PTR t$[rsp]
-	mov	QWORD PTR [rax+152], 0
-
-; 277  : 	t->frame.r14 = 0;
-
-	mov	rax, QWORD PTR t$[rsp]
-	mov	QWORD PTR [rax+144], 0
-
-; 278  : 	t->frame.r13 = 0;
-
-	mov	rax, QWORD PTR t$[rsp]
-	mov	QWORD PTR [rax+136], 0
-
-; 279  : 	t->frame.r12 = 0;
-
-	mov	rax, QWORD PTR t$[rsp]
-	mov	QWORD PTR [rax+128], 0
-
-; 280  : 	t->frame.r11 = 0;
-
-	mov	rax, QWORD PTR t$[rsp]
-	mov	QWORD PTR [rax+120], 0
-
-; 281  : 	t->frame.r10 = 0;
-
-	mov	rax, QWORD PTR t$[rsp]
-	mov	QWORD PTR [rax+112], 0
-
-; 282  : 	t->frame.r9 = 0;
-
-	mov	rax, QWORD PTR t$[rsp]
-	mov	QWORD PTR [rax+104], 0
-
-; 283  : 	t->frame.r8 = 0;
-
-	mov	rax, QWORD PTR t$[rsp]
-	mov	QWORD PTR [rax+96], 0
-
-; 284  : 	t->frame.rbp = stack;
-
-	mov	rax, QWORD PTR t$[rsp]
-	mov	rcx, QWORD PTR stack$[rsp]
-	mov	QWORD PTR [rax+88], rcx
-
-; 285  : 	t->frame.rdi = 0;
-
-	mov	rax, QWORD PTR t$[rsp]
-	mov	QWORD PTR [rax+80], 0
-
-; 286  : 	t->frame.rsi = 0;
-
-	mov	rax, QWORD PTR t$[rsp]
-	mov	QWORD PTR [rax+72], 0
-
-; 287  : 	t->frame.rdx = 0;
-
-	mov	rax, QWORD PTR t$[rsp]
-	mov	QWORD PTR [rax+64], 0
-
-; 288  : 	t->frame.rcx = 0;
-
-	mov	rax, QWORD PTR t$[rsp]
-	mov	QWORD PTR [rax+56], 0
-
-; 289  : 	t->frame.rbx = 0;
-
-	mov	rax, QWORD PTR t$[rsp]
-	mov	QWORD PTR [rax+48], 0
-
-; 290  : 	t->frame.rax = 0;
-
-	mov	rax, QWORD PTR t$[rsp]
-	mov	QWORD PTR [rax+40], 0
-
-; 291  : 	t->frame.rip = (uint64_t)entry;
-
-	mov	rax, QWORD PTR t$[rsp]
-	mov	rcx, QWORD PTR entry$[rsp]
-	mov	QWORD PTR [rax+32], rcx
-
-; 292  : 	t->frame.cs = SEGVAL(GDT_ENTRY_USER_CODE, 3);
-
-	mov	rax, QWORD PTR t$[rsp]
-	mov	QWORD PTR [rax+24], 43			; 0000002bH
-
-; 293  : 	t->frame.rflags = 0x202;
-
-	mov	rax, QWORD PTR t$[rsp]
-	mov	QWORD PTR [rax+16], 514			; 00000202H
-
-; 294  : 	t->frame.rsp = stack;
-
-	mov	rax, QWORD PTR t$[rsp]
-	mov	rcx, QWORD PTR stack$[rsp]
-	mov	QWORD PTR [rax+8], rcx
-
-; 295  : 	t->frame.ss = SEGVAL(GDT_ENTRY_USER_DATA, 3);
-
-	mov	rax, QWORD PTR t$[rsp]
-	mov	QWORD PTR [rax], 35			; 00000023H
-
-; 296  : 	t->frame.ds = t->frame.es = t->frame.fs = t->frame.gs = SEGVAL(GDT_ENTRY_USER_DATA, 3);
-
-	mov	rax, QWORD PTR t$[rsp]
-	mov	QWORD PTR [rax+184], 35			; 00000023H
-	mov	rax, QWORD PTR t$[rsp]
-	mov	QWORD PTR [rax+176], 35			; 00000023H
-	mov	rax, QWORD PTR t$[rsp]
-	mov	QWORD PTR [rax+168], 35			; 00000023H
-	mov	rax, QWORD PTR t$[rsp]
-	mov	QWORD PTR [rax+160], 35			; 00000023H
-
-; 297  : 	uint64_t k_esp = AuMapKStack((uint64_t*)cr3);
-
-	mov	rcx, QWORD PTR cr3$[rsp]
-	call	?AuMapKStack@@YA_KPEA_K@Z		; AuMapKStack
-	mov	QWORD PTR k_esp$[rsp], rax
-
-; 298  : 	/** Kernel stack is important for syscall or interruption in the system **/
-; 299  : 	t->frame.kern_esp = k_esp;
-
-	mov	rax, QWORD PTR t$[rsp]
-	mov	rcx, QWORD PTR k_esp$[rsp]
-	mov	QWORD PTR [rax+200], rcx
-
-; 300  : 	AuTextOut("FRAME USER KERN ESP -> %x \n", t->frame.kern_esp);
-
-	mov	rax, QWORD PTR t$[rsp]
-	mov	rdx, QWORD PTR [rax+200]
-	lea	rcx, OFFSET FLAT:$SG3709
-	call	AuTextOut
-
-; 301  : 	t->user_stack = stack;
-
-	mov	rax, QWORD PTR t$[rsp]
-	mov	rcx, QWORD PTR stack$[rsp]
-	mov	QWORD PTR [rax+216], rcx
-
-; 302  : 	t->frame.cr3 = V2P(cr3);
-
-	mov	rcx, QWORD PTR cr3$[rsp]
-	call	V2P
-	mov	rcx, QWORD PTR t$[rsp]
-	mov	QWORD PTR [rcx+192], rax
-
-; 303  : 	t->frame.user_ = 1;
-
-	mov	rax, QWORD PTR t$[rsp]
-	mov	BYTE PTR [rax+208], 1
-
-; 304  : 	memset(t->name, 0, 8);
-
-	mov	rax, QWORD PTR t$[rsp]
-	add	rax, 284				; 0000011cH
-	mov	r8d, 8
-	xor	edx, edx
-	mov	rcx, rax
-	call	memset
-
-; 305  : 	strncpy(t->name, name, 8);
-
-	mov	rax, QWORD PTR t$[rsp]
-	add	rax, 284				; 0000011cH
-	mov	r8d, 8
-	mov	rdx, QWORD PTR name$[rsp]
-	mov	rcx, rax
-	call	strncpy
-
-; 306  : 	t->id = thread_id++;
-
-	mov	rax, QWORD PTR t$[rsp]
-	movzx	ecx, WORD PTR thread_id
-	mov	WORD PTR [rax+301], cx
-	movzx	eax, WORD PTR thread_id
-	inc	ax
-	mov	WORD PTR thread_id, ax
-
-; 307  : 	t->quanta = 0;
-
-	xor	eax, eax
-	mov	rcx, QWORD PTR t$[rsp]
-	mov	WORD PTR [rcx+303], ax
-
-; 308  : 
-; 309  : 	t->fx_state = (uint8_t*)kmalloc(512);
-
-	mov	ecx, 512				; 00000200H
-	call	kmalloc
-	mov	rcx, QWORD PTR t$[rsp]
-	mov	QWORD PTR [rcx+272], rax
-
-; 310  : 	memset(t->fx_state, 0, 512);
-
-	mov	r8d, 512				; 00000200H
-	xor	edx, edx
-	mov	rax, QWORD PTR t$[rsp]
-	mov	rcx, QWORD PTR [rax+272]
-	call	memset
-
-; 311  : 	t->mxcsr = 0x1f80;
-
-	mov	rax, QWORD PTR t$[rsp]
-	mov	DWORD PTR [rax+280], 8064		; 00001f80H
-
-; 312  : 	t->priviledge = THREAD_LEVEL_USER;
-
-	mov	rax, QWORD PTR t$[rsp]
-	mov	BYTE PTR [rax+305], 2
-
-; 313  : 	t->state = THREAD_STATE_READY;
-
-	mov	rax, QWORD PTR t$[rsp]
-	mov	BYTE PTR [rax+300], 1
-
-; 314  : 	AuThreadInsert(t);
-
-	mov	rcx, QWORD PTR t$[rsp]
-	call	?AuThreadInsert@@YAXPEAU_au_thread_@@@Z	; AuThreadInsert
-
-; 315  : 	return 0;
-
-	xor	eax, eax
-
-; 316  : }
-
-	add	rsp, 56					; 00000038H
-	ret	0
-?AuCreateUthread@@YAPEAU_au_thread_@@P6AXPEAX@Z_K2PEAD@Z ENDP ; AuCreateUthread
 _TEXT	ENDS
 ; Function compile flags: /Odtpy
 ; File e:\xeneva project\aurora\kernel\hal\x86_64_sched.cpp
@@ -2252,17 +1902,17 @@ _TEXT	ENDS
 _TEXT	SEGMENT
 ?AuSchedulerInitAp@@YAXXZ PROC				; AuSchedulerInitAp
 
-; 381  : void AuSchedulerInitAp() {
+; 327  : void AuSchedulerInitAp() {
 
 $LN3:
 	sub	rsp, 40					; 00000028H
 
-; 382  : 	AuPerCPUSetCurrentThread(_idle_thr);
+; 328  : 	AuPerCPUSetCurrentThread(_idle_thr);
 
 	mov	rcx, QWORD PTR ?_idle_thr@@3PEAU_au_thread_@@EA ; _idle_thr
 	call	?AuPerCPUSetCurrentThread@@YAXPEAX@Z	; AuPerCPUSetCurrentThread
 
-; 383  : }
+; 329  : }
 
 	add	rsp, 40					; 00000028H
 	ret	0
@@ -2275,59 +1925,59 @@ idle_$ = 32
 tv68 = 40
 ?AuSchedulerInitialise@@YAXXZ PROC			; AuSchedulerInitialise
 
-; 360  : void AuSchedulerInitialise() {
+; 306  : void AuSchedulerInitialise() {
 
 $LN3:
 	sub	rsp, 56					; 00000038H
 
-; 361  : 	thread_id = 0;
+; 307  : 	thread_id = 0;
 
 	xor	eax, eax
 	mov	WORD PTR thread_id, ax
 
-; 362  : 	thread_list_head = NULL;
+; 308  : 	thread_list_head = NULL;
 
 	mov	QWORD PTR ?thread_list_head@@3PEAU_au_thread_@@EA, 0 ; thread_list_head
 
-; 363  : 	thread_list_last = NULL;
+; 309  : 	thread_list_last = NULL;
 
 	mov	QWORD PTR ?thread_list_last@@3PEAU_au_thread_@@EA, 0 ; thread_list_last
 
-; 364  : 	blocked_thr_head = NULL;
+; 310  : 	blocked_thr_head = NULL;
 
 	mov	QWORD PTR ?blocked_thr_head@@3PEAU_au_thread_@@EA, 0 ; blocked_thr_head
 
-; 365  : 	blocked_thr_last = NULL;
+; 311  : 	blocked_thr_last = NULL;
 
 	mov	QWORD PTR ?blocked_thr_last@@3PEAU_au_thread_@@EA, 0 ; blocked_thr_last
 
-; 366  : 	trash_thr_head = NULL;
+; 312  : 	trash_thr_head = NULL;
 
 	mov	QWORD PTR ?trash_thr_head@@3PEAU_au_thread_@@EA, 0 ; trash_thr_head
 
-; 367  : 	trash_thr_last = NULL;
+; 313  : 	trash_thr_last = NULL;
 
 	mov	QWORD PTR ?trash_thr_last@@3PEAU_au_thread_@@EA, 0 ; trash_thr_last
 
-; 368  : 	_x86_64_sched_enable = true;
+; 314  : 	_x86_64_sched_enable = true;
 
 	mov	BYTE PTR ?_x86_64_sched_enable@@3_NA, 1	; _x86_64_sched_enable
 
-; 369  : 	_x86_64_sched_init = false;
+; 315  : 	_x86_64_sched_init = false;
 
 	mov	BYTE PTR ?_x86_64_sched_init@@3_NA, 0	; _x86_64_sched_init
 
-; 370  : 	scheduler_tick = 0;
+; 316  : 	scheduler_tick = 0;
 
 	mov	QWORD PTR scheduler_tick, 0
 
-; 371  : 	_idle_lock = AuCreateSpinlock(false);
+; 317  : 	_idle_lock = AuCreateSpinlock(false);
 
 	xor	ecx, ecx
 	call	AuCreateSpinlock
 	mov	QWORD PTR ?_idle_lock@@3PEAU_spinlock_@@EA, rax ; _idle_lock
 
-; 372  : 	AuThread *idle_ = AuCreateKthread(AuIdleThread, (uint64_t)P2V((uint64_t)AuPmmngrAlloc() + 4096), x64_read_cr3(), "Idle");
+; 318  : 	AuThread *idle_ = AuCreateKthread(AuIdleThread, (uint64_t)P2V((uint64_t)AuPmmngrAlloc() + 4096), x64_read_cr3(), "Idle");
 
 	call	x64_read_cr3
 	mov	QWORD PTR tv68[rsp], rax
@@ -2335,7 +1985,7 @@ $LN3:
 	add	rax, 4096				; 00001000H
 	mov	rcx, rax
 	call	P2V
-	lea	r9, OFFSET FLAT:$SG3727
+	lea	r9, OFFSET FLAT:$SG3721
 	mov	rcx, QWORD PTR tv68[rsp]
 	mov	r8, rcx
 	mov	rdx, rax
@@ -2343,17 +1993,17 @@ $LN3:
 	call	AuCreateKthread
 	mov	QWORD PTR idle_$[rsp], rax
 
-; 373  : 	_idle_thr = idle_;
+; 319  : 	_idle_thr = idle_;
 
 	mov	rax, QWORD PTR idle_$[rsp]
 	mov	QWORD PTR ?_idle_thr@@3PEAU_au_thread_@@EA, rax ; _idle_thr
 
-; 374  : 	AuPerCPUSetCurrentThread(idle_);
+; 320  : 	AuPerCPUSetCurrentThread(idle_);
 
 	mov	rcx, QWORD PTR idle_$[rsp]
 	call	?AuPerCPUSetCurrentThread@@YAXPEAX@Z	; AuPerCPUSetCurrentThread
 
-; 375  : }
+; 321  : }
 
 	add	rsp, 56					; 00000038H
 	ret	0
@@ -2365,34 +2015,34 @@ _TEXT	SEGMENT
 current_thread$ = 32
 ?AuSchedulerStart@@YAXXZ PROC				; AuSchedulerStart
 
-; 461  : void AuSchedulerStart() {
+; 407  : void AuSchedulerStart() {
 
 $LN3:
 	sub	rsp, 56					; 00000038H
 
-; 462  : 	_x86_64_sched_init = true;
+; 408  : 	_x86_64_sched_init = true;
 
 	mov	BYTE PTR ?_x86_64_sched_init@@3_NA, 1	; _x86_64_sched_init
 
-; 463  :     setvect(0x40,x8664SchedulerISR);
+; 409  :     setvect(0x40,x8664SchedulerISR);
 
 	lea	rdx, OFFSET FLAT:?x8664SchedulerISR@@YAX_KPEAX@Z ; x8664SchedulerISR
 	mov	ecx, 64					; 00000040H
 	call	setvect
 
-; 464  : 	AuThread* current_thread = AuPerCPUGetCurrentThread();
+; 410  : 	AuThread* current_thread = AuPerCPUGetCurrentThread();
 
 	call	?AuPerCPUGetCurrentThread@@YAPEAU_au_thread_@@XZ ; AuPerCPUGetCurrentThread
 	mov	QWORD PTR current_thread$[rsp], rax
 
-; 465  : 	execute_idle(current_thread, x86_64_get_tss());
+; 411  : 	execute_idle(current_thread, x86_64_get_tss());
 
 	call	?x86_64_get_tss@@YAPEAU_tss@@XZ		; x86_64_get_tss
 	mov	rdx, rax
 	mov	rcx, QWORD PTR current_thread$[rsp]
 	call	execute_idle
 
-; 466  : }
+; 412  : }
 
 	add	rsp, 56					; 00000038H
 	ret	0

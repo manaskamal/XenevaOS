@@ -6,9 +6,9 @@ INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
 CONST	SEGMENT
-$SG3736	DB	'No process found ', 0aH, 00H
+$SG3746	DB	'No process found ', 0aH, 00H
 	ORG $+5
-$SG3758	DB	'Signal Return ', 0dH, 0aH, 00H
+$SG3768	DB	'Signal Return ', 0dH, 0aH, 00H
 CONST	ENDS
 PUBLIC	?PauseThread@@YAHXZ				; PauseThread
 PUBLIC	?GetThreadID@@YAGXZ				; GetThreadID
@@ -21,6 +21,7 @@ PUBLIC	?ProcessSleep@@YAH_K@Z				; ProcessSleep
 PUBLIC	?SignalReturn@@YAXH@Z				; SignalReturn
 PUBLIC	?SetSignal@@YAHHP6AXH@Z@Z			; SetSignal
 PUBLIC	?GetSystemTimerTick@@YA_KXZ			; GetSystemTimerTick
+PUBLIC	?CreateUserThread@@YAHP6AXPEAX@ZPEAD@Z		; CreateUserThread
 EXTRN	AuGetCurrentThread:PROC
 EXTRN	AuBlockThread:PROC
 EXTRN	AuSleepThread:PROC
@@ -31,6 +32,8 @@ EXTRN	?AuProcessFindThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z:PROC ; AuProces
 EXTRN	?AuCreateProcessSlot@@YAPEAU_au_proc_@@PEAU1@PEAD@Z:PROC ; AuCreateProcessSlot
 EXTRN	?AuProcessExit@@YAXPEAU_au_proc_@@@Z:PROC	; AuProcessExit
 EXTRN	?AuProcessWaitForTermination@@YAXPEAU_au_proc_@@H@Z:PROC ; AuProcessWaitForTermination
+EXTRN	?AuCreateUserthread@@YAHPEAU_au_proc_@@P6AXPEAX@ZPEAD@Z:PROC ; AuCreateUserthread
+EXTRN	x64_cli:PROC
 EXTRN	x64_force_sched:PROC
 EXTRN	strlen:PROC
 EXTRN	memset:PROC
@@ -72,6 +75,9 @@ $pdata$?SetSignal@@YAHHP6AXH@Z@Z DD imagerel $LN4
 $pdata$?GetSystemTimerTick@@YA_KXZ DD imagerel $LN3
 	DD	imagerel $LN3+14
 	DD	imagerel $unwind$?GetSystemTimerTick@@YA_KXZ
+$pdata$?CreateUserThread@@YAHP6AXPEAX@ZPEAD@Z DD imagerel $LN4
+	DD	imagerel $LN4+89
+	DD	imagerel $unwind$?CreateUserThread@@YAHP6AXPEAX@ZPEAD@Z
 pdata	ENDS
 xdata	SEGMENT
 $unwind$?PauseThread@@YAHXZ DD 010401H
@@ -96,7 +102,71 @@ $unwind$?SetSignal@@YAHHP6AXH@Z@Z DD 010d01H
 	DD	0620dH
 $unwind$?GetSystemTimerTick@@YA_KXZ DD 010401H
 	DD	04204H
+$unwind$?CreateUserThread@@YAHP6AXPEAX@ZPEAD@Z DD 010e01H
+	DD	0820eH
 xdata	ENDS
+; Function compile flags: /Odtpy
+; File e:\xeneva project\aurora\kernel\serv\thrserv.cpp
+_TEXT	SEGMENT
+success$ = 32
+thr$ = 40
+proc$ = 48
+entry$ = 80
+name$ = 88
+?CreateUserThread@@YAHP6AXPEAX@ZPEAD@Z PROC		; CreateUserThread
+
+; 184  : int CreateUserThread(void(*entry) (void*), char *name){
+
+$LN4:
+	mov	QWORD PTR [rsp+16], rdx
+	mov	QWORD PTR [rsp+8], rcx
+	sub	rsp, 72					; 00000048H
+
+; 185  : 	x64_cli();
+
+	call	x64_cli
+
+; 186  : 	AuThread* thr = AuGetCurrentThread();
+
+	call	AuGetCurrentThread
+	mov	QWORD PTR thr$[rsp], rax
+
+; 187  : 	if (!thr)
+
+	cmp	QWORD PTR thr$[rsp], 0
+	jne	SHORT $LN1@CreateUser
+
+; 188  : 		return 0;
+
+	xor	eax, eax
+	jmp	SHORT $LN2@CreateUser
+$LN1@CreateUser:
+
+; 189  : 	AuProcess* proc = AuProcessFindThread(thr);
+
+	mov	rcx, QWORD PTR thr$[rsp]
+	call	?AuProcessFindThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z ; AuProcessFindThread
+	mov	QWORD PTR proc$[rsp], rax
+
+; 190  : 	int success = AuCreateUserthread(proc, entry, name);
+
+	mov	r8, QWORD PTR name$[rsp]
+	mov	rdx, QWORD PTR entry$[rsp]
+	mov	rcx, QWORD PTR proc$[rsp]
+	call	?AuCreateUserthread@@YAHPEAU_au_proc_@@P6AXPEAX@ZPEAD@Z ; AuCreateUserthread
+	mov	DWORD PTR success$[rsp], eax
+
+; 191  : 	return success;
+
+	mov	eax, DWORD PTR success$[rsp]
+$LN2@CreateUser:
+
+; 192  : }
+
+	add	rsp, 72					; 00000048H
+	ret	0
+?CreateUserThread@@YAHP6AXPEAX@ZPEAD@Z ENDP		; CreateUserThread
+_TEXT	ENDS
 ; Function compile flags: /Odtpy
 ; File e:\xeneva project\aurora\kernel\serv\thrserv.cpp
 _TEXT	SEGMENT
@@ -176,7 +246,7 @@ $LN3:
 
 ; 157  : 	SeTextOut("Signal Return \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG3758
+	lea	rcx, OFFSET FLAT:$SG3768
 	call	SeTextOut
 
 ; 158  : 	/* just make a page fault */
@@ -270,7 +340,7 @@ $LN11:
 
 ; 118  : 		AuTextOut("No process found \n");
 
-	lea	rcx, OFFSET FLAT:$SG3736
+	lea	rcx, OFFSET FLAT:$SG3746
 	call	AuTextOut
 
 ; 119  : 		return -1;
