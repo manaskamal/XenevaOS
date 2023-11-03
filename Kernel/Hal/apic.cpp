@@ -33,6 +33,7 @@
 #include <Hal/x86_64_idt.h>
 #include <Hal/x86_64_lowlevel.h>
 #include <Hal/serial.h>
+#include <Hal/clock.h>
 #include <Mm/vmmngr.h>
 #include <aucon.h>
 #include <Hal/x86_64_pic.h>
@@ -172,28 +173,32 @@ void AuAPICInitialise(bool bsp) {
 		IA32_APIC_SVR_ENABLE | 0xFF);
 
 
-	WriteAPICRegister(LAPIC_TIMER_DIV, 0x6);
+	/* here i thought to use pit for timer tuning, but
+	 * apic stops working here when interrupt is enabled for
+	 * pic
+	 */
 
+	WriteAPICRegister(LAPIC_TIMER_DIV, 0x6);
 	uint64_t before = cpu_read_tsc();
-	WriteAPICRegister(LAPIC_REGISTER_TMRINITCNT,1000000 ); 
+	WriteAPICRegister(LAPIC_REGISTER_TMRINITCNT, 1000000); //10000000000UL 
 	while (ReadAPICRegister(LAPIC_REGISTER_TMRCURRCNT));
 	uint64_t after = cpu_read_tsc();
 
+
 	uint64_t ms = (after - before) / 3500;
 	uint64_t target = 10000000000UL / ms;
-
 	size_t timer_vect = 0x40;
 	setvect(timer_vect, ApicTimerInterrupt);
-	WriteAPICRegister(LAPIC_REGISTER_TMRDIV,0x6); 
+	WriteAPICRegister(LAPIC_REGISTER_TMRDIV,0x6);   //bit 0,1 and 3
 	size_t timer_reg = (1 << 17) | timer_vect;
 	WriteAPICRegister(LAPIC_REGISTER_LVT_TIMER, timer_reg);
 	IOWait();
-	WriteAPICRegister(LAPIC_REGISTER_TMRINITCNT,(target / 100));  //123456  //
-
+	WriteAPICRegister(LAPIC_REGISTER_TMRINITCNT, target);  //123456  //(target / 100) //target/100
+	
 	x64_outportb(PIC1_DATA, 0xFF);
 	IOWait();
 	x64_outportb(PIC2_DATA, 0xFF);
-
+	//for (;;);
 	/* initialise IOAPIC here*/
 	if (bsp)
 		IOAPICInitialise((void*)0xFEC00000);

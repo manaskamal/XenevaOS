@@ -33,6 +33,7 @@
 #include <Hal/x86_64_cpu.h>
 #include <Hal/x86_64_lowlevel.h>
 #include <Hal/x86_64_signal.h>
+#include <Hal/x86_64_pic.h>
 #include <Sync/spinlock.h>
 #include <Hal/serial.h>
 #include <Mm/kmalloc.h>
@@ -224,7 +225,7 @@ AuThread* AuCreateKthread(void(*entry) (uint64_t), uint64_t stack, uint64_t cr3,
 	t->frame.rax = 0;
 	t->frame.rip = (uint64_t)entry;
 	t->frame.cs = 0x08;
-	t->frame.rflags = 0x202;
+	t->frame.rflags = 0x286;
 	t->frame.rsp = stack;
 	t->frame.ss = 0x10;
 	t->frame.kern_esp = stack;
@@ -234,7 +235,7 @@ AuThread* AuCreateKthread(void(*entry) (uint64_t), uint64_t stack, uint64_t cr3,
 	t->priviledge = THREAD_LEVEL_KERNEL;
 	t->state = THREAD_STATE_READY;
 	t->frame.ds = t->frame.es = t->frame.fs = t->frame.gs = SEGVAL(GDT_ENTRY_KERNEL_DATA, 0);
-	t->frame.user_ = 0;
+	//t->frame.user_ = 0;
 
 	t->syscall_param.param1 = t->syscall_param.param2 = 0;
 	t->syscall_param.param3 = t->syscall_param.param4 = 0;
@@ -296,6 +297,8 @@ void AuKThreadCopy(AuThread* dest, AuThread* src) {
 void AuIdleThread(uint64_t t) {
 	SeTextOut("_idle id -> %d  \r\n", AuPerCPUGetCpuID());
 	while (1) {
+		SeTextOut("IDLE \r\n");
+		x64_hlt();
 	}
 }
 
@@ -334,6 +337,7 @@ void AuSchedulerInitAp() {
  */
 void AuNextThread() {
 	AuThread* thread = AuPerCPUGetCurrentThread();
+	bool _run_idle = false;
 	do {
 		if (thread->state == THREAD_STATE_SLEEP) {
 			if (thread->quanta == 0) {
@@ -345,9 +349,19 @@ void AuNextThread() {
 		if (thread == NULL) {
 			thread = thread_list_head;
 		}
+
+		if (thread == _idle_thr)
+			thread = thread->next;
+
+		if (!thread){
+			_run_idle = true;
+			break;
+		}
 	} while (thread->state != THREAD_STATE_READY);
 
 end:
+	if (_run_idle)
+		thread = _idle_thr;
 	//current_thread = thread;
 	AuPerCPUSetCurrentThread(thread);
 }
@@ -406,7 +420,7 @@ sched_end:
  */
 void AuSchedulerStart() {
 	_x86_64_sched_init = true;
-    setvect(0x40,x8664SchedulerISR);
+	setvect(0x40, x8664SchedulerISR);  //0x40
 	AuThread* current_thread = AuPerCPUGetCurrentThread();
 	execute_idle(current_thread, x86_64_get_tss());
 }

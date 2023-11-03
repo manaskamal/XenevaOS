@@ -109,7 +109,7 @@ $LN10:
 ; 164  : 	AuVFSContainer* entries = (AuVFSContainer*)dir->device;
 
 	mov	rax, QWORD PTR dir$[rsp]
-	mov	rax, QWORD PTR [rax+64]
+	mov	rax, QWORD PTR [rax+72]
 	mov	QWORD PTR entries$[rsp], rax
 
 ; 165  : 	SeTextOut("Listing Directory -> %s \r\n", dir->filename);
@@ -150,7 +150,7 @@ $LN7@AuDevFSLis:
 ; 169  : 		if (node_->flags & FS_FLAG_DEVICE)
 
 	mov	rax, QWORD PTR node_$3[rsp]
-	movzx	eax, WORD PTR [rax+61]
+	movzx	eax, WORD PTR [rax+64]
 	and	eax, 8
 	test	eax, eax
 	je	SHORT $LN4@AuDevFSLis
@@ -165,7 +165,7 @@ $LN4@AuDevFSLis:
 ; 171  : 		else if (node_->flags & FS_FLAG_DIRECTORY)
 
 	mov	rax, QWORD PTR node_$3[rsp]
-	movzx	eax, WORD PTR [rax+61]
+	movzx	eax, WORD PTR [rax+64]
 	and	eax, 2
 	test	eax, eax
 	je	SHORT $LN2@AuDevFSLis
@@ -232,7 +232,7 @@ $LN22:
 ; 252  : 	AuVFSContainer* entries = (AuVFSContainer*)fs->device;
 
 	mov	rax, QWORD PTR fs$[rsp]
-	mov	rax, QWORD PTR [rax+64]
+	mov	rax, QWORD PTR [rax+72]
 	mov	QWORD PTR entries$[rsp], rax
 
 ; 253  : 	/* now verify the path and add the directory to the list */
@@ -362,7 +362,7 @@ $LN11@AuDevFSRem:
 ; 274  : 				if (node_->flags & FS_FLAG_DIRECTORY)
 
 	mov	rax, QWORD PTR node_$3[rsp]
-	movzx	eax, WORD PTR [rax+61]
+	movzx	eax, WORD PTR [rax+64]
 	and	eax, 2
 	test	eax, eax
 	je	SHORT $LN7@AuDevFSRem
@@ -370,7 +370,7 @@ $LN11@AuDevFSRem:
 ; 275  : 					first_list = (AuVFSContainer*)node_->device;
 
 	mov	rax, QWORD PTR node_$3[rsp]
-	mov	rax, QWORD PTR [rax+64]
+	mov	rax, QWORD PTR [rax+72]
 	mov	QWORD PTR first_list$[rsp], rax
 	jmp	SHORT $LN6@AuDevFSRem
 $LN7@AuDevFSRem:
@@ -378,7 +378,7 @@ $LN7@AuDevFSRem:
 ; 276  : 				else if (node_->flags & FS_FLAG_DEVICE) {
 
 	mov	rax, QWORD PTR node_$3[rsp]
-	movzx	eax, WORD PTR [rax+61]
+	movzx	eax, WORD PTR [rax+64]
 	and	eax, 8
 	test	eax, eax
 	je	SHORT $LN5@AuDevFSRem
@@ -437,7 +437,7 @@ $LN17@AuDevFSRem:
 	cmp	QWORD PTR node_to_rem$[rsp], 0
 	je	SHORT $LN3@AuDevFSRem
 	mov	rax, QWORD PTR node_to_rem$[rsp]
-	movzx	eax, WORD PTR [rax+61]
+	movzx	eax, WORD PTR [rax+64]
 	and	eax, 2
 	test	eax, eax
 	je	SHORT $LN3@AuDevFSRem
@@ -454,7 +454,7 @@ $LN3@AuDevFSRem:
 	cmp	QWORD PTR node_to_rem$[rsp], 0
 	je	SHORT $LN2@AuDevFSRem
 	mov	rax, QWORD PTR node_to_rem$[rsp]
-	movzx	eax, WORD PTR [rax+61]
+	movzx	eax, WORD PTR [rax+64]
 	and	eax, 8
 	test	eax, eax
 	je	SHORT $LN2@AuDevFSRem
@@ -471,7 +471,7 @@ $LN3@AuDevFSRem:
 ; 296  : 		if (node_to_rem->close)
 
 	mov	rax, QWORD PTR node_to_rem$[rsp]
-	cmp	QWORD PTR [rax+128], 0
+	cmp	QWORD PTR [rax+136], 0
 	je	SHORT $LN1@AuDevFSRem
 
 ; 297  : 			node_to_rem->close(node_to_rem, NULL);
@@ -479,7 +479,7 @@ $LN3@AuDevFSRem:
 	xor	edx, edx
 	mov	rcx, QWORD PTR node_to_rem$[rsp]
 	mov	rax, QWORD PTR node_to_rem$[rsp]
-	call	QWORD PTR [rax+128]
+	call	QWORD PTR [rax+136]
 $LN1@AuDevFSRem:
 
 ; 298  : 		kfree(node_to_rem);
@@ -525,7 +525,7 @@ $LN13:
 ; 180  : 	AuVFSContainer* entries = (AuVFSContainer*)fs->device;
 
 	mov	rax, QWORD PTR fs$[rsp]
-	mov	rax, QWORD PTR [rax+64]
+	mov	rax, QWORD PTR [rax+72]
 	mov	QWORD PTR entries$[rsp], rax
 
 ; 181  : 	SeTextOut("Listing device fs \r\n");
@@ -564,7 +564,7 @@ $LN10@AuDevFSLis:
 ; 185  : 		if (node_->flags & FS_FLAG_DEVICE)
 
 	mov	rax, QWORD PTR node_$2[rsp]
-	movzx	eax, WORD PTR [rax+61]
+	movzx	eax, WORD PTR [rax+64]
 	and	eax, 8
 	test	eax, eax
 	je	SHORT $LN7@AuDevFSLis
@@ -579,7 +579,7 @@ $LN7@AuDevFSLis:
 ; 187  : 		else if (node_->flags & FS_FLAG_DIRECTORY)
 
 	mov	rax, QWORD PTR node_$2[rsp]
-	movzx	eax, WORD PTR [rax+61]
+	movzx	eax, WORD PTR [rax+64]
 	and	eax, 2
 	test	eax, eax
 	je	SHORT $LN5@AuDevFSLis
@@ -594,7 +594,7 @@ $LN5@AuDevFSLis:
 ; 189  : 		else if (node_->flags & FS_FLAG_PIPE)
 
 	mov	rax, QWORD PTR node_$2[rsp]
-	movzx	eax, WORD PTR [rax+61]
+	movzx	eax, WORD PTR [rax+64]
 	and	eax, 128				; 00000080H
 	test	eax, eax
 	je	SHORT $LN3@AuDevFSLis
@@ -628,7 +628,7 @@ $LN6@AuDevFSLis:
 ; 194  : 		if (node_->flags & FS_FLAG_DIRECTORY)
 
 	mov	rax, QWORD PTR node_$2[rsp]
-	movzx	eax, WORD PTR [rax+61]
+	movzx	eax, WORD PTR [rax+64]
 	and	eax, 2
 	test	eax, eax
 	je	SHORT $LN1@AuDevFSLis
@@ -676,7 +676,7 @@ $LN21:
 ; 206  : 	AuVFSContainer* entries = (AuVFSContainer*)fs->device;
 
 	mov	rax, QWORD PTR fs$[rsp]
-	mov	rax, QWORD PTR [rax+64]
+	mov	rax, QWORD PTR [rax+72]
 	mov	QWORD PTR entries$[rsp], rax
 
 ; 207  : 	/* now verify the path and add the directory to the list */
@@ -802,7 +802,7 @@ $LN10@AuDevFSOpe:
 ; 227  : 				if (node_->flags & FS_FLAG_DIRECTORY)
 
 	mov	rax, QWORD PTR node_$3[rsp]
-	movzx	eax, WORD PTR [rax+61]
+	movzx	eax, WORD PTR [rax+64]
 	and	eax, 2
 	test	eax, eax
 	je	SHORT $LN6@AuDevFSOpe
@@ -810,7 +810,7 @@ $LN10@AuDevFSOpe:
 ; 228  : 					first_list = (AuVFSContainer*)node_->device;
 
 	mov	rax, QWORD PTR node_$3[rsp]
-	mov	rax, QWORD PTR [rax+64]
+	mov	rax, QWORD PTR [rax+72]
 	mov	QWORD PTR first_list$[rsp], rax
 	jmp	SHORT $LN5@AuDevFSOpe
 $LN6@AuDevFSOpe:
@@ -818,7 +818,7 @@ $LN6@AuDevFSOpe:
 ; 229  : 				else if (node_->flags & FS_FLAG_DEVICE)
 
 	mov	rax, QWORD PTR node_$3[rsp]
-	movzx	eax, WORD PTR [rax+61]
+	movzx	eax, WORD PTR [rax+64]
 	and	eax, 8
 	test	eax, eax
 	je	SHORT $LN4@AuDevFSOpe
@@ -918,7 +918,7 @@ $LN18:
 ; 125  : 	AuVFSContainer* entries = (AuVFSContainer*)fs->device;
 
 	mov	rax, QWORD PTR fs$[rsp]
-	mov	rax, QWORD PTR [rax+64]
+	mov	rax, QWORD PTR [rax+72]
 	mov	QWORD PTR entries$[rsp], rax
 
 ; 126  : 	if (!entries)
@@ -1051,7 +1051,7 @@ $LN6@AuDevFSAdd:
 ; 147  : 				if (node_->flags & FS_FLAG_DIRECTORY)
 
 	mov	rax, QWORD PTR node_$3[rsp]
-	movzx	eax, WORD PTR [rax+61]
+	movzx	eax, WORD PTR [rax+64]
 	and	eax, 2
 	test	eax, eax
 	je	SHORT $LN2@AuDevFSAdd
@@ -1059,7 +1059,7 @@ $LN6@AuDevFSAdd:
 ; 148  : 					first_list = (AuVFSContainer*)node_->device;
 
 	mov	rax, QWORD PTR node_$3[rsp]
-	mov	rax, QWORD PTR [rax+64]
+	mov	rax, QWORD PTR [rax+72]
 	mov	QWORD PTR first_list$[rsp], rax
 $LN2@AuDevFSAdd:
 $LN3@AuDevFSAdd:
@@ -1145,7 +1145,7 @@ $LN20:
 ; 66   : 	AuVFSContainer* entries = (AuVFSContainer*)fs->device;
 
 	mov	rax, QWORD PTR fs$[rsp]
-	mov	rax, QWORD PTR [rax+64]
+	mov	rax, QWORD PTR [rax+72]
 	mov	QWORD PTR entries$[rsp], rax
 
 ; 67   : 	if (!entries)
@@ -1162,13 +1162,13 @@ $LN17@AuDevFSCre:
 ; 69   : 
 ; 70   : 	AuVFSNode* file = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
 
-	mov	ecx, 160				; 000000a0H
+	mov	ecx, 168				; 000000a8H
 	call	kmalloc
 	mov	QWORD PTR file$[rsp], rax
 
 ; 71   : 	memset(file, 0, sizeof(AuVFSNode));
 
-	mov	r8d, 160				; 000000a0H
+	mov	r8d, 168				; 000000a8H
 	xor	edx, edx
 	mov	rcx, QWORD PTR file$[rsp]
 	call	memset
@@ -1196,16 +1196,16 @@ $LN17@AuDevFSCre:
 ; 76   : 		file->flags |= FS_FLAG_DIRECTORY;
 
 	mov	rax, QWORD PTR file$[rsp]
-	movzx	eax, WORD PTR [rax+61]
+	movzx	eax, WORD PTR [rax+64]
 	or	eax, 2
 	mov	rcx, QWORD PTR file$[rsp]
-	mov	WORD PTR [rcx+61], ax
+	mov	WORD PTR [rcx+64], ax
 
 ; 77   : 		file->device = list;
 
 	mov	rax, QWORD PTR file$[rsp]
 	mov	rcx, QWORD PTR list$4[rsp]
-	mov	QWORD PTR [rax+64], rcx
+	mov	QWORD PTR [rax+72], rcx
 
 ; 78   : 	}
 ; 79   : 	else {
@@ -1217,13 +1217,13 @@ $LN16@AuDevFSCre:
 
 	mov	eax, 12
 	mov	rcx, QWORD PTR file$[rsp]
-	mov	WORD PTR [rcx+61], ax
+	mov	WORD PTR [rcx+64], ax
 
 ; 81   : 		file->device = fs;
 
 	mov	rax, QWORD PTR file$[rsp]
 	mov	rcx, QWORD PTR fs$[rsp]
-	mov	QWORD PTR [rax+64], rcx
+	mov	QWORD PTR [rax+72], rcx
 $LN15@AuDevFSCre:
 
 ; 82   : 	}
@@ -1347,7 +1347,7 @@ $LN6@AuDevFSCre:
 ; 103  : 				if (node_->flags & FS_FLAG_DIRECTORY)
 
 	mov	rax, QWORD PTR node_$3[rsp]
-	movzx	eax, WORD PTR [rax+61]
+	movzx	eax, WORD PTR [rax+64]
 	and	eax, 2
 	test	eax, eax
 	je	SHORT $LN2@AuDevFSCre
@@ -1355,7 +1355,7 @@ $LN6@AuDevFSCre:
 ; 104  : 					first_list = (AuVFSContainer*)node_->device;
 
 	mov	rax, QWORD PTR node_$3[rsp]
-	mov	rax, QWORD PTR [rax+64]
+	mov	rax, QWORD PTR [rax+72]
 	mov	QWORD PTR first_list$[rsp], rax
 $LN2@AuDevFSCre:
 $LN3@AuDevFSCre:
@@ -1446,13 +1446,13 @@ $LN3:
 ; 46   : 
 ; 47   : 	AuVFSNode *node = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
 
-	mov	ecx, 160				; 000000a0H
+	mov	ecx, 168				; 000000a8H
 	call	kmalloc
 	mov	QWORD PTR node$[rsp], rax
 
 ; 48   : 	memset(node, 0, sizeof(AuVFSNode));
 
-	mov	r8d, 160				; 000000a0H
+	mov	r8d, 168				; 000000a8H
 	xor	edx, edx
 	mov	rcx, QWORD PTR node$[rsp]
 	call	memset
@@ -1468,21 +1468,21 @@ $LN3:
 
 	mov	rax, QWORD PTR node$[rsp]
 	mov	rcx, QWORD PTR entries$[rsp]
-	mov	QWORD PTR [rax+64], rcx
+	mov	QWORD PTR [rax+72], rcx
 
 ; 51   : 	node->flags |= FS_FLAG_FILE_SYSTEM;
 
 	mov	rax, QWORD PTR node$[rsp]
-	movzx	eax, WORD PTR [rax+61]
+	movzx	eax, WORD PTR [rax+64]
 	or	eax, 64					; 00000040H
 	mov	rcx, QWORD PTR node$[rsp]
-	mov	WORD PTR [rcx+61], ax
+	mov	WORD PTR [rcx+64], ax
 
 ; 52   : 	node->open = AuDevFSOpen;
 
 	mov	rax, QWORD PTR node$[rsp]
 	lea	rcx, OFFSET FLAT:?AuDevFSOpen@@YAPEAU__VFS_NODE__@@PEAU1@PEAD@Z ; AuDevFSOpen
-	mov	QWORD PTR [rax+72], rcx
+	mov	QWORD PTR [rax+80], rcx
 
 ; 53   : 	AuVFSAddFileSystem(node);
 

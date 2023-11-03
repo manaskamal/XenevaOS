@@ -49,7 +49,7 @@ void x86_64_hal_initialise(KERNEL_BOOT_INFO *info) {
 	x86_64_idt_init();
 	
 	x86_64_exception_init();
-	
+
 	AuAPICInitialise(true);
 
 	x86_64_enable_syscall_ext();

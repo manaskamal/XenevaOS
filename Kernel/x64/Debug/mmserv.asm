@@ -6,9 +6,7 @@ INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
 CONST	SEGMENT
-$SG3457	DB	'Returning error heap mem -> %d ', 0dH, 0aH, 00H
-	ORG $+6
-$SG3459	DB	'Returning error heap mem -> %d ', 0dH, 0aH, 00H
+$SG3468	DB	'Returning error heap mem -> %d ', 0dH, 0aH, 00H
 CONST	ENDS
 PUBLIC	?CreateSharedMem@@YAHG_KE@Z			; CreateSharedMem
 PUBLIC	?ObtainSharedMem@@YAPEAXGPEAXH@Z		; ObtainSharedMem
@@ -16,25 +14,26 @@ PUBLIC	?UnmapSharedMem@@YAXG@Z				; UnmapSharedMem
 PUBLIC	?GetProcessHeapMem@@YA_K_K@Z			; GetProcessHeapMem
 EXTRN	AuGetCurrentThread:PROC
 EXTRN	?AuProcessFindThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z:PROC ; AuProcessFindThread
+EXTRN	?AuProcessFindSubThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z:PROC ; AuProcessFindSubThread
 EXTRN	?AuCreateSHM@@YAHPEAU_au_proc_@@G_KE@Z:PROC	; AuCreateSHM
 EXTRN	?AuSHMObtainMem@@YAPEAXPEAU_au_proc_@@GPEAXH@Z:PROC ; AuSHMObtainMem
 EXTRN	?AuSHMUnmap@@YAXGPEAU_au_proc_@@@Z:PROC		; AuSHMUnmap
 EXTRN	AuMapPage:PROC
 EXTRN	AuPmmngrAlloc:PROC
+EXTRN	AuTextOut:PROC
 EXTRN	x64_cli:PROC
-EXTRN	SeTextOut:PROC
 pdata	SEGMENT
-$pdata$?CreateSharedMem@@YAHG_KE@Z DD imagerel $LN4
-	DD	imagerel $LN4+98
+$pdata$?CreateSharedMem@@YAHG_KE@Z DD imagerel $LN6
+	DD	imagerel $LN6+136
 	DD	imagerel $unwind$?CreateSharedMem@@YAHG_KE@Z
-$pdata$?ObtainSharedMem@@YAPEAXGPEAXH@Z DD imagerel $LN3
-	DD	imagerel $LN3+74
+$pdata$?ObtainSharedMem@@YAPEAXGPEAXH@Z DD imagerel $LN6
+	DD	imagerel $LN6+121
 	DD	imagerel $unwind$?ObtainSharedMem@@YAPEAXGPEAXH@Z
-$pdata$?UnmapSharedMem@@YAXG@Z DD imagerel $LN3
-	DD	imagerel $LN3+54
+$pdata$?UnmapSharedMem@@YAXG@Z DD imagerel $LN6
+	DD	imagerel $LN6+102
 	DD	imagerel $unwind$?UnmapSharedMem@@YAXG@Z
-$pdata$?GetProcessHeapMem@@YA_K_K@Z DD imagerel $LN13
-	DD	imagerel $LN13+412
+$pdata$?GetProcessHeapMem@@YA_K_K@Z DD imagerel $LN12
+	DD	imagerel $LN12+374
 	DD	imagerel $unwind$?GetProcessHeapMem@@YA_K_K@Z
 pdata	ENDS
 xdata	SEGMENT
@@ -52,62 +51,26 @@ xdata	ENDS
 _TEXT	SEGMENT
 i$1 = 32
 proc$ = 40
-tv72 = 48
-tv81 = 56
+thr$ = 48
+tv72 = 56
 start_addr$ = 64
-thr$ = 72
-tv88 = 80
-phys$2 = 88
+tv83 = 72
+phys$2 = 80
 sz$ = 112
 ?GetProcessHeapMem@@YA_K_K@Z PROC			; GetProcessHeapMem
 
-; 85   : uint64_t GetProcessHeapMem(size_t sz) {
+; 106  : uint64_t GetProcessHeapMem(size_t sz) {
 
-$LN13:
+$LN12:
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 104				; 00000068H
 
-; 86   : 	x64_cli();
+; 107  : 	x64_cli();
 
 	call	x64_cli
 
-; 87   : 	/* check if size is page aligned */
-; 88   : 	if (sz & 0xFFF) {
-
-	mov	rax, QWORD PTR sz$[rsp]
-	and	rax, 4095				; 00000fffH
-	test	rax, rax
-	je	SHORT $LN6@GetProcess
-
-; 89   : 		SeTextOut("Returning error heap mem -> %d \r\n", sz);
-
-	mov	rdx, QWORD PTR sz$[rsp]
-	lea	rcx, OFFSET FLAT:$SG3457
-	call	SeTextOut
-
-; 90   : 		//return -1;
-; 91   : 		sz = PAGE_ALIGN(sz);
-
-	mov	rax, QWORD PTR sz$[rsp]
-	and	rax, 4095				; 00000fffH
-	test	rax, rax
-	je	SHORT $LN9@GetProcess
-	mov	rax, QWORD PTR sz$[rsp]
-	add	rax, 4096				; 00001000H
-	and	rax, -4096				; fffffffffffff000H
-	mov	QWORD PTR tv72[rsp], rax
-	jmp	SHORT $LN10@GetProcess
-$LN9@GetProcess:
-	mov	rax, QWORD PTR sz$[rsp]
-	mov	QWORD PTR tv72[rsp], rax
-$LN10@GetProcess:
-	mov	rax, QWORD PTR tv72[rsp]
-	mov	QWORD PTR sz$[rsp], rax
-$LN6@GetProcess:
-
-; 92   : 	}
-; 93   : 
-; 94   : 	if ((sz % PAGE_SIZE) != 0){
+; 108  : 	/* check if size is page aligned */
+; 109  : 	if ((sz % PAGE_SIZE) != 0){
 
 	xor	edx, edx
 	mov	rax, QWORD PTR sz$[rsp]
@@ -115,65 +78,95 @@ $LN6@GetProcess:
 	div	rcx
 	mov	rax, rdx
 	test	rax, rax
-	je	SHORT $LN5@GetProcess
+	je	SHORT $LN7@GetProcess
 
-; 95   : 		SeTextOut("Returning error heap mem -> %d \r\n", sz);
+; 110  : 		AuTextOut("Returning error heap mem -> %d \r\n", sz);
 
 	mov	rdx, QWORD PTR sz$[rsp]
-	lea	rcx, OFFSET FLAT:$SG3459
-	call	SeTextOut
+	lea	rcx, OFFSET FLAT:$SG3468
+	call	AuTextOut
 
-; 96   : 		sz = PAGE_ALIGN(sz);
+; 111  : 		return -1;
+
+	mov	rax, -1
+	jmp	$LN8@GetProcess
+
+; 112  : 		sz = PAGE_ALIGN(sz);
 
 	mov	rax, QWORD PTR sz$[rsp]
 	and	rax, 4095				; 00000fffH
 	test	rax, rax
-	je	SHORT $LN11@GetProcess
+	je	SHORT $LN10@GetProcess
 	mov	rax, QWORD PTR sz$[rsp]
 	add	rax, 4096				; 00001000H
 	and	rax, -4096				; fffffffffffff000H
-	mov	QWORD PTR tv81[rsp], rax
-	jmp	SHORT $LN12@GetProcess
-$LN11@GetProcess:
+	mov	QWORD PTR tv72[rsp], rax
+	jmp	SHORT $LN11@GetProcess
+$LN10@GetProcess:
 	mov	rax, QWORD PTR sz$[rsp]
-	mov	QWORD PTR tv81[rsp], rax
-$LN12@GetProcess:
-	mov	rax, QWORD PTR tv81[rsp]
+	mov	QWORD PTR tv72[rsp], rax
+$LN11@GetProcess:
+	mov	rax, QWORD PTR tv72[rsp]
 	mov	QWORD PTR sz$[rsp], rax
-$LN5@GetProcess:
+$LN7@GetProcess:
 
-; 97   : 	}
-; 98   : 	
-; 99   : 	AuThread* thr = AuGetCurrentThread();
+; 113  : 	}
+; 114  : 	
+; 115  : 	AuThread* thr = AuGetCurrentThread();
 
 	call	AuGetCurrentThread
 	mov	QWORD PTR thr$[rsp], rax
 
-; 100  : 	AuProcess* proc = AuProcessFindThread(thr);
+; 116  : 	if (!thr)
+
+	cmp	QWORD PTR thr$[rsp], 0
+	jne	SHORT $LN6@GetProcess
+
+; 117  : 		return -1;
+
+	mov	rax, -1
+	jmp	$LN8@GetProcess
+$LN6@GetProcess:
+
+; 118  : 	AuProcess* proc = AuProcessFindThread(thr);
 
 	mov	rcx, QWORD PTR thr$[rsp]
 	call	?AuProcessFindThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z ; AuProcessFindThread
 	mov	QWORD PTR proc$[rsp], rax
 
-; 101  : 	if (!proc)
+; 119  : 	if (!proc){
+
+	cmp	QWORD PTR proc$[rsp], 0
+	jne	SHORT $LN5@GetProcess
+
+; 120  : 		proc = AuProcessFindSubThread(thr);
+
+	mov	rcx, QWORD PTR thr$[rsp]
+	call	?AuProcessFindSubThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z ; AuProcessFindSubThread
+	mov	QWORD PTR proc$[rsp], rax
+
+; 121  : 		if (!proc) {
 
 	cmp	QWORD PTR proc$[rsp], 0
 	jne	SHORT $LN4@GetProcess
 
-; 102  : 		return -1;
+; 122  : 			return -1;
 
 	mov	rax, -1
-	jmp	$LN7@GetProcess
+	jmp	$LN8@GetProcess
 $LN4@GetProcess:
+$LN5@GetProcess:
 
-; 103  : 	uint64_t start_addr = proc->proc_mem_heap;
+; 123  : 		}
+; 124  : 	}
+; 125  : 	uint64_t start_addr = proc->proc_mem_heap;
 
 	mov	rax, QWORD PTR proc$[rsp]
-	mov	rax, QWORD PTR [rax+1087]
+	mov	rax, QWORD PTR [rax+1096]
 	mov	QWORD PTR start_addr$[rsp], rax
 
-; 104  : 
-; 105  : 	for (int i = 0; i < sz / PAGE_SIZE; i++) {
+; 126  : 
+; 127  : 	for (int i = 0; i < sz / PAGE_SIZE; i++) {
 
 	mov	DWORD PTR i$1[rsp], 0
 	jmp	SHORT $LN3@GetProcess
@@ -183,21 +176,21 @@ $LN2@GetProcess:
 	mov	DWORD PTR i$1[rsp], eax
 $LN3@GetProcess:
 	movsxd	rax, DWORD PTR i$1[rsp]
-	mov	QWORD PTR tv88[rsp], rax
+	mov	QWORD PTR tv83[rsp], rax
 	xor	edx, edx
 	mov	rax, QWORD PTR sz$[rsp]
 	mov	ecx, 4096				; 00001000H
 	div	rcx
-	mov	rcx, QWORD PTR tv88[rsp]
+	mov	rcx, QWORD PTR tv83[rsp]
 	cmp	rcx, rax
 	jae	SHORT $LN1@GetProcess
 
-; 106  : 		void* phys = AuPmmngrAlloc();
+; 128  : 		void* phys = AuPmmngrAlloc();
 
 	call	AuPmmngrAlloc
 	mov	QWORD PTR phys$2[rsp], rax
 
-; 107  : 		AuMapPage((size_t)phys, start_addr + i * PAGE_SIZE, X86_64_PAGING_USER);
+; 129  : 		AuMapPage((size_t)phys, start_addr + i * PAGE_SIZE, X86_64_PAGING_USER);
 
 	imul	eax, DWORD PTR i$1[rsp], 4096		; 00001000H
 	cdqe
@@ -209,25 +202,25 @@ $LN3@GetProcess:
 	mov	rcx, QWORD PTR phys$2[rsp]
 	call	AuMapPage
 
-; 108  : 	}
+; 130  : 	}
 
 	jmp	SHORT $LN2@GetProcess
 $LN1@GetProcess:
 
-; 109  : 	proc->proc_mem_heap += sz;
+; 131  : 	proc->proc_mem_heap += sz;
 
 	mov	rax, QWORD PTR proc$[rsp]
-	mov	rax, QWORD PTR [rax+1087]
+	mov	rax, QWORD PTR [rax+1096]
 	add	rax, QWORD PTR sz$[rsp]
 	mov	rcx, QWORD PTR proc$[rsp]
-	mov	QWORD PTR [rcx+1087], rax
+	mov	QWORD PTR [rcx+1096], rax
 
-; 110  : 	return start_addr;
+; 132  : 	return start_addr;
 
 	mov	rax, QWORD PTR start_addr$[rsp]
-$LN7@GetProcess:
+$LN8@GetProcess:
 
-; 111  : }
+; 133  : }
 
 	add	rsp, 104				; 00000068H
 	ret	0
@@ -236,35 +229,73 @@ _TEXT	ENDS
 ; Function compile flags: /Odtpy
 ; File e:\xeneva project\aurora\kernel\serv\mmserv.cpp
 _TEXT	SEGMENT
-thr$ = 32
-proc$ = 40
+proc$ = 32
+thr$ = 40
 key$ = 64
 ?UnmapSharedMem@@YAXG@Z PROC				; UnmapSharedMem
 
-; 74   : void UnmapSharedMem(uint16_t key) {
+; 87   : void UnmapSharedMem(uint16_t key) {
 
-$LN3:
+$LN6:
 	mov	WORD PTR [rsp+8], cx
 	sub	rsp, 56					; 00000038H
 
-; 75   : 	AuThread* thr = AuGetCurrentThread();
+; 88   : 	x64_cli();
+
+	call	x64_cli
+
+; 89   : 	AuThread* thr = AuGetCurrentThread();
 
 	call	AuGetCurrentThread
 	mov	QWORD PTR thr$[rsp], rax
 
-; 76   : 	AuProcess* proc = AuProcessFindThread(thr);
+; 90   : 	if (!thr)  //some serious memory problem
+
+	cmp	QWORD PTR thr$[rsp], 0
+	jne	SHORT $LN3@UnmapShare
+
+; 91   : 		return;
+
+	jmp	SHORT $LN4@UnmapShare
+$LN3@UnmapShare:
+
+; 92   : 	AuProcess* proc = AuProcessFindThread(thr);
 
 	mov	rcx, QWORD PTR thr$[rsp]
 	call	?AuProcessFindThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z ; AuProcessFindThread
 	mov	QWORD PTR proc$[rsp], rax
 
-; 77   : 	AuSHMUnmap(key, proc);
+; 93   : 	if (!proc) {
+
+	cmp	QWORD PTR proc$[rsp], 0
+	jne	SHORT $LN2@UnmapShare
+
+; 94   : 		proc = AuProcessFindSubThread(thr);
+
+	mov	rcx, QWORD PTR thr$[rsp]
+	call	?AuProcessFindSubThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z ; AuProcessFindSubThread
+	mov	QWORD PTR proc$[rsp], rax
+
+; 95   : 		if (!proc)
+
+	cmp	QWORD PTR proc$[rsp], 0
+	jne	SHORT $LN1@UnmapShare
+
+; 96   : 			return;
+
+	jmp	SHORT $LN4@UnmapShare
+$LN1@UnmapShare:
+$LN2@UnmapShare:
+
+; 97   : 	}
+; 98   : 	AuSHMUnmap(key, proc);
 
 	mov	rdx, QWORD PTR proc$[rsp]
 	movzx	ecx, WORD PTR key$[rsp]
 	call	?AuSHMUnmap@@YAXGPEAU_au_proc_@@@Z	; AuSHMUnmap
+$LN4@UnmapShare:
 
-; 78   : }
+; 99   : }
 
 	add	rsp, 56					; 00000038H
 	ret	0
@@ -273,41 +304,77 @@ _TEXT	ENDS
 ; Function compile flags: /Odtpy
 ; File e:\xeneva project\aurora\kernel\serv\mmserv.cpp
 _TEXT	SEGMENT
-thr$ = 32
-proc$ = 40
+proc$ = 32
+thr$ = 40
 id$ = 64
 shmaddr$ = 72
 shmflg$ = 80
 ?ObtainSharedMem@@YAPEAXGPEAXH@Z PROC			; ObtainSharedMem
 
-; 64   : void* ObtainSharedMem(uint16_t id, void* shmaddr, int shmflg) {
+; 70   : void* ObtainSharedMem(uint16_t id, void* shmaddr, int shmflg) {
 
-$LN3:
+$LN6:
 	mov	DWORD PTR [rsp+24], r8d
 	mov	QWORD PTR [rsp+16], rdx
 	mov	WORD PTR [rsp+8], cx
 	sub	rsp, 56					; 00000038H
 
-; 65   : 	AuThread* thr = AuGetCurrentThread();
+; 71   : 	AuThread* thr = AuGetCurrentThread();
 
 	call	AuGetCurrentThread
 	mov	QWORD PTR thr$[rsp], rax
 
-; 66   : 	AuProcess* proc = AuProcessFindThread(thr);
+; 72   : 	if (!thr)
+
+	cmp	QWORD PTR thr$[rsp], 0
+	jne	SHORT $LN3@ObtainShar
+
+; 73   : 		return 0;
+
+	xor	eax, eax
+	jmp	SHORT $LN4@ObtainShar
+$LN3@ObtainShar:
+
+; 74   : 	AuProcess* proc = AuProcessFindThread(thr);
 
 	mov	rcx, QWORD PTR thr$[rsp]
 	call	?AuProcessFindThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z ; AuProcessFindThread
 	mov	QWORD PTR proc$[rsp], rax
 
-; 67   : 	return AuSHMObtainMem(proc,id, shmaddr, shmflg);
+; 75   : 	if (!proc) {
+
+	cmp	QWORD PTR proc$[rsp], 0
+	jne	SHORT $LN2@ObtainShar
+
+; 76   : 		proc = AuProcessFindSubThread(thr);
+
+	mov	rcx, QWORD PTR thr$[rsp]
+	call	?AuProcessFindSubThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z ; AuProcessFindSubThread
+	mov	QWORD PTR proc$[rsp], rax
+
+; 77   : 		if (!proc)
+
+	cmp	QWORD PTR proc$[rsp], 0
+	jne	SHORT $LN1@ObtainShar
+
+; 78   : 			return NULL;
+
+	xor	eax, eax
+	jmp	SHORT $LN4@ObtainShar
+$LN1@ObtainShar:
+$LN2@ObtainShar:
+
+; 79   : 	}
+; 80   : 	return AuSHMObtainMem(proc,id, shmaddr, shmflg);
 
 	mov	r9d, DWORD PTR shmflg$[rsp]
 	mov	r8, QWORD PTR shmaddr$[rsp]
 	movzx	edx, WORD PTR id$[rsp]
 	mov	rcx, QWORD PTR proc$[rsp]
 	call	?AuSHMObtainMem@@YAPEAXPEAU_au_proc_@@GPEAXH@Z ; AuSHMObtainMem
+$LN4@ObtainShar:
 
-; 68   : }
+; 81   : }
 
 	add	rsp, 56					; 00000038H
 	ret	0
@@ -326,7 +393,7 @@ flags$ = 96
 
 ; 49   : int CreateSharedMem(uint16_t key, size_t sz, uint8_t flags){
 
-$LN4:
+$LN6:
 	mov	BYTE PTR [rsp+24], r8b
 	mov	QWORD PTR [rsp+16], rdx
 	mov	WORD PTR [rsp+8], cx
@@ -337,24 +404,49 @@ $LN4:
 	call	AuGetCurrentThread
 	mov	QWORD PTR thr$[rsp], rax
 
-; 51   : 	AuProcess* proc = AuProcessFindThread(thr);
+; 51   : 	if (!thr)
+
+	cmp	QWORD PTR thr$[rsp], 0
+	jne	SHORT $LN3@CreateShar
+
+; 52   : 		return -1;
+
+	mov	eax, -1
+	jmp	SHORT $LN4@CreateShar
+$LN3@CreateShar:
+
+; 53   : 	AuProcess* proc = AuProcessFindThread(thr);
 
 	mov	rcx, QWORD PTR thr$[rsp]
 	call	?AuProcessFindThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z ; AuProcessFindThread
 	mov	QWORD PTR proc$[rsp], rax
 
-; 52   : 	if (!proc)
+; 54   : 	if (!proc){
+
+	cmp	QWORD PTR proc$[rsp], 0
+	jne	SHORT $LN2@CreateShar
+
+; 55   : 		proc = AuProcessFindSubThread(thr);
+
+	mov	rcx, QWORD PTR thr$[rsp]
+	call	?AuProcessFindSubThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z ; AuProcessFindSubThread
+	mov	QWORD PTR proc$[rsp], rax
+
+; 56   : 		if (!proc){
 
 	cmp	QWORD PTR proc$[rsp], 0
 	jne	SHORT $LN1@CreateShar
 
-; 53   : 		return -1;
+; 57   : 			return -1;
 
 	mov	eax, -1
-	jmp	SHORT $LN2@CreateShar
+	jmp	SHORT $LN4@CreateShar
 $LN1@CreateShar:
+$LN2@CreateShar:
 
-; 54   : 	int id = AuCreateSHM(proc, key, sz, flags);
+; 58   : 		}
+; 59   : 	}
+; 60   : 	int id = AuCreateSHM(proc, key, sz, flags);
 
 	movzx	r9d, BYTE PTR flags$[rsp]
 	mov	r8, QWORD PTR sz$[rsp]
@@ -363,12 +455,12 @@ $LN1@CreateShar:
 	call	?AuCreateSHM@@YAHPEAU_au_proc_@@G_KE@Z	; AuCreateSHM
 	mov	DWORD PTR id$[rsp], eax
 
-; 55   : 	return id;
+; 61   : 	return id;
 
 	mov	eax, DWORD PTR id$[rsp]
-$LN2@CreateShar:
+$LN4@CreateShar:
 
-; 56   : }
+; 62   : }
 
 	add	rsp, 72					; 00000048H
 	ret	0

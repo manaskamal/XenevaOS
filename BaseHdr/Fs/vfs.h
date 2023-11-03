@@ -69,7 +69,7 @@ typedef int(*close_callback) (__VFS_NODE__ *node,__VFS_NODE__ *file);
 typedef int(*iocontrol_callback) (__VFS_NODE__ *file, int code, void *arg);
 typedef size_t(*fs_getblockfor) (__VFS_NODE__* fs, __VFS_NODE__* file, uint64_t offset);
 
-#pragma pack(push,1)
+
 typedef struct __VFS_NODE__ {
 	char filename[32];
 	uint32_t size;
@@ -95,7 +95,7 @@ typedef struct __VFS_NODE__ {
 	fs_getblockfor get_blockfor;
 	iocontrol_callback iocontrol;
 }AuVFSNode;
-#pragma pack(pop)
+
 
 #pragma pack(push,1)
 typedef struct _AuFileStatus_ {

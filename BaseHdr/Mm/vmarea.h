@@ -50,7 +50,7 @@
 #define VM_TYPE_HEAP     4
 #define VM_TYPE_RESOURCE 5
 
-#pragma pack(push,1)
+
 /* AuVMArea -- virtual memory mapping area */
 typedef struct _vm_area_ {
 	size_t start;
@@ -60,7 +60,6 @@ typedef struct _vm_area_ {
 	uint8_t type;
 	AuVFSNode* file;
 }AuVMArea;
-#pragma pack(pop)
 
 /*
 * AuInsertVMArea -- insert a memory segment to the given process

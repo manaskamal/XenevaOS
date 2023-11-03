@@ -62,7 +62,7 @@ $LN3:
 
 	call	?x86_64_exception_init@@YAXXZ		; x86_64_exception_init
 
-; 52   : 	
+; 52   : 
 ; 53   : 	AuAPICInitialise(true);
 
 	mov	cl, 1

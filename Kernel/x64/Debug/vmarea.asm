@@ -65,7 +65,7 @@ $LN3@AuVMAreaGe:
 	mov	DWORD PTR i$1[rsp], eax
 $LN4@AuVMAreaGe:
 	mov	rax, QWORD PTR proc$[rsp]
-	mov	rax, QWORD PTR [rax+1063]
+	mov	rax, QWORD PTR [rax+1072]
 	mov	eax, DWORD PTR [rax]
 	cmp	DWORD PTR i$1[rsp], eax
 	jae	SHORT $LN2@AuVMAreaGe
@@ -74,7 +74,7 @@ $LN4@AuVMAreaGe:
 
 	mov	edx, DWORD PTR i$1[rsp]
 	mov	rax, QWORD PTR proc$[rsp]
-	mov	rcx, QWORD PTR [rax+1063]
+	mov	rcx, QWORD PTR [rax+1072]
 	call	list_get_at
 	mov	QWORD PTR area_$2[rsp], rax
 
@@ -133,13 +133,13 @@ $LN3:
 
 ; 68   : 	AuVMArea *area = (AuVMArea*)kmalloc(sizeof(AuVMArea));
 
-	mov	ecx, 34					; 00000022H
+	mov	ecx, 40					; 00000028H
 	call	kmalloc
 	mov	QWORD PTR area$[rsp], rax
 
 ; 69   : 	memset(area, 0, sizeof(AuVMArea));
 
-	mov	r8d, 34					; 00000022H
+	mov	r8d, 40					; 00000028H
 	xor	edx, edx
 	mov	rcx, QWORD PTR area$[rsp]
 	call	memset
@@ -177,7 +177,7 @@ $LN3:
 ; 75   : 	area->file = NULL;
 
 	mov	rax, QWORD PTR area$[rsp]
-	mov	QWORD PTR [rax+26], 0
+	mov	QWORD PTR [rax+32], 0
 
 ; 76   : 	return area;
 
@@ -215,7 +215,7 @@ $LN3@AuRemoveVM:
 	mov	DWORD PTR i$1[rsp], eax
 $LN4@AuRemoveVM:
 	mov	rax, QWORD PTR proc$[rsp]
-	mov	rax, QWORD PTR [rax+1063]
+	mov	rax, QWORD PTR [rax+1072]
 	mov	eax, DWORD PTR [rax]
 	cmp	DWORD PTR i$1[rsp], eax
 	jae	SHORT $LN2@AuRemoveVM
@@ -224,7 +224,7 @@ $LN4@AuRemoveVM:
 
 	mov	edx, DWORD PTR i$1[rsp]
 	mov	rax, QWORD PTR proc$[rsp]
-	mov	rcx, QWORD PTR [rax+1063]
+	mov	rcx, QWORD PTR [rax+1072]
 	call	list_get_at
 	mov	QWORD PTR area_$2[rsp], rax
 
@@ -238,7 +238,7 @@ $LN4@AuRemoveVM:
 
 	mov	edx, DWORD PTR i$1[rsp]
 	mov	rax, QWORD PTR proc$[rsp]
-	mov	rcx, QWORD PTR [rax+1063]
+	mov	rcx, QWORD PTR [rax+1072]
 	call	list_remove
 $LN1@AuRemoveVM:
 
@@ -276,7 +276,7 @@ $LN3:
 
 	mov	rdx, QWORD PTR area$[rsp]
 	mov	rax, QWORD PTR proc$[rsp]
-	mov	rcx, QWORD PTR [rax+1063]
+	mov	rcx, QWORD PTR [rax+1072]
 	call	list_add
 
 ; 41   : }

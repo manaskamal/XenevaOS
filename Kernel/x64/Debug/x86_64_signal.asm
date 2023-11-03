@@ -566,7 +566,7 @@ $LN3:
 
 ; 51   : 	signal->signalState = (AuThread*)kmalloc(sizeof(AuThread));
 
-	mov	ecx, 659				; 00000293H
+	mov	ecx, 667				; 0000029bH
 	call	kmalloc
 	mov	rcx, QWORD PTR signal$[rsp]
 	mov	QWORD PTR [rcx+12], rax

@@ -134,9 +134,9 @@ void AuAHCIInitialise() {
 	HBABar = MMIO;
 	hba->ghc = 1;
 
-	APICTimerSleep(100);
+	APICTimerSleep(1);
 	hba->ghc = (1 << 31);
-	APICTimerSleep(100);
+	APICTimerSleep(1);
 
 	uint32_t version_major = hba->vs >> 16 & 0xff;
 	uint32_t version_minor = hba->vs & 0xff;

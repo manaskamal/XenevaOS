@@ -309,6 +309,9 @@
     <ClInclude Include="..\BaseHdr\ftmngr.h">
       <Filter>Include</Filter>
     </ClInclude>
+    <ClInclude Include="..\BaseHdr\Hal\clock.h">
+      <Filter>Include\Hal</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="init.cpp" />
@@ -475,6 +478,9 @@
       <Filter>Ipc</Filter>
     </ClCompile>
     <ClCompile Include="ftmngr.cpp" />
+    <ClCompile Include="Hal\clock.cpp">
+      <Filter>Hal</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <NASM Include="__fstcpy.asm" />

@@ -16,23 +16,23 @@ _BSS	SEGMENT
 ?last@@3PEAU__tty__@@EA DQ 01H DUP (?)			; last
 _BSS	ENDS
 CONST	SEGMENT
-$SG3759	DB	'/dev', 00H
+$SG3762	DB	'/dev', 00H
 	ORG $+3
-$SG3792	DB	'/dev', 00H
+$SG3795	DB	'/dev', 00H
 	ORG $+3
-$SG3798	DB	'ttym', 00H
+$SG3801	DB	'ttym', 00H
 	ORG $+3
-$SG3799	DB	'/dev/tty', 00H
+$SG3802	DB	'/dev/tty', 00H
 	ORG $+3
-$SG3804	DB	'/dev', 00H
+$SG3807	DB	'/dev', 00H
 	ORG $+3
-$SG3810	DB	'ttys', 00H
+$SG3813	DB	'ttys', 00H
 	ORG $+7
-$SG3811	DB	'/dev/tty', 00H
+$SG3814	DB	'/dev/tty', 00H
 	ORG $+3
-$SG3835	DB	'/dev', 00H
+$SG3838	DB	'/dev', 00H
 	ORG $+7
-$SG3836	DB	'/dev/tty', 00H
+$SG3839	DB	'/dev/tty', 00H
 CONST	ENDS
 PUBLIC	?AuTTYCreate@@YAHPEAH0@Z			; AuTTYCreate
 PUBLIC	?AuTTYInitialise@@YAXXZ				; AuTTYInitialise
@@ -158,20 +158,20 @@ $LN3:
 
 ; 282  : 	AuVFSNode* fs = AuVFSFind("/dev");
 
-	lea	rcx, OFFSET FLAT:$SG3804
+	lea	rcx, OFFSET FLAT:$SG3807
 	call	AuVFSFind
 	mov	QWORD PTR fs$[rsp], rax
 
 ; 283  : 
 ; 284  : 	AuVFSNode* node = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
 
-	mov	ecx, 160				; 000000a0H
+	mov	ecx, 168				; 000000a8H
 	call	kmalloc
 	mov	QWORD PTR node$[rsp], rax
 
 ; 285  : 	memset(node, 0, sizeof(AuVFSNode));
 
-	mov	r8d, 160				; 000000a0H
+	mov	r8d, 168				; 000000a8H
 	xor	edx, edx
 	mov	rcx, QWORD PTR node$[rsp]
 	call	memset
@@ -179,7 +179,7 @@ $LN3:
 ; 286  : 	char name[5];
 ; 287  : 	strcpy(name, "ttys");
 
-	lea	rdx, OFFSET FLAT:$SG3810
+	lea	rdx, OFFSET FLAT:$SG3813
 	lea	rcx, QWORD PTR name$[rsp]
 	call	strcpy
 
@@ -208,43 +208,43 @@ $LN3:
 
 	mov	eax, 260				; 00000104H
 	mov	rcx, QWORD PTR node$[rsp]
-	mov	WORD PTR [rcx+61], ax
+	mov	WORD PTR [rcx+64], ax
 
 ; 293  : 	node->device = tty;
 
 	mov	rax, QWORD PTR node$[rsp]
 	mov	rcx, QWORD PTR tty$[rsp]
-	mov	QWORD PTR [rax+64], rcx
+	mov	QWORD PTR [rax+72], rcx
 
 ; 294  : 	node->read = AuTTYSlaveRead;
 
 	mov	rax, QWORD PTR node$[rsp]
 	lea	rcx, OFFSET FLAT:?AuTTYSlaveRead@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z ; AuTTYSlaveRead
-	mov	QWORD PTR [rax+80], rcx
+	mov	QWORD PTR [rax+88], rcx
 
 ; 295  : 	node->write = AuTTYSlaveWrite;
 
 	mov	rax, QWORD PTR node$[rsp]
 	lea	rcx, OFFSET FLAT:?AuTTYSlaveWrite@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z ; AuTTYSlaveWrite
-	mov	QWORD PTR [rax+88], rcx
+	mov	QWORD PTR [rax+96], rcx
 
 ; 296  : 	node->close = AuTTYSlaveClose;
 
 	mov	rax, QWORD PTR node$[rsp]
 	lea	rcx, OFFSET FLAT:?AuTTYSlaveClose@@YAHPEAU__VFS_NODE__@@0@Z ; AuTTYSlaveClose
-	mov	QWORD PTR [rax+128], rcx
+	mov	QWORD PTR [rax+136], rcx
 
 ; 297  : 	node->iocontrol = AuTTYIoControl;
 
 	mov	rax, QWORD PTR node$[rsp]
 	lea	rcx, OFFSET FLAT:?AuTTYIoControl@@YAHPEAU__VFS_NODE__@@HPEAX@Z ; AuTTYIoControl
-	mov	QWORD PTR [rax+152], rcx
+	mov	QWORD PTR [rax+160], rcx
 
 ; 298  : 
 ; 299  : 	AuDevFSAddFile(fs, "/dev/tty", node);
 
 	mov	r8, QWORD PTR node$[rsp]
-	lea	rdx, OFFSET FLAT:$SG3811
+	lea	rdx, OFFSET FLAT:$SG3814
 	mov	rcx, QWORD PTR fs$[rsp]
 	call	AuDevFSAddFile
 
@@ -281,20 +281,20 @@ $LN3:
 
 ; 254  : 	AuVFSNode* fs = AuVFSFind("/dev");
 
-	lea	rcx, OFFSET FLAT:$SG3792
+	lea	rcx, OFFSET FLAT:$SG3795
 	call	AuVFSFind
 	mov	QWORD PTR fs$[rsp], rax
 
 ; 255  : 
 ; 256  : 	AuVFSNode* node = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
 
-	mov	ecx, 160				; 000000a0H
+	mov	ecx, 168				; 000000a8H
 	call	kmalloc
 	mov	QWORD PTR node$[rsp], rax
 
 ; 257  : 	memset(node, 0, sizeof(AuVFSNode));
 
-	mov	r8d, 160				; 000000a0H
+	mov	r8d, 168				; 000000a8H
 	xor	edx, edx
 	mov	rcx, QWORD PTR node$[rsp]
 	call	memset
@@ -302,7 +302,7 @@ $LN3:
 ; 258  : 	char name[5];
 ; 259  : 	strcpy(name, "ttym");
 
-	lea	rdx, OFFSET FLAT:$SG3798
+	lea	rdx, OFFSET FLAT:$SG3801
 	lea	rcx, QWORD PTR name$[rsp]
 	call	strcpy
 
@@ -331,43 +331,43 @@ $LN3:
 
 	mov	eax, 260				; 00000104H
 	mov	rcx, QWORD PTR node$[rsp]
-	mov	WORD PTR [rcx+61], ax
+	mov	WORD PTR [rcx+64], ax
 
 ; 265  : 	node->device = tty;
 
 	mov	rax, QWORD PTR node$[rsp]
 	mov	rcx, QWORD PTR tty$[rsp]
-	mov	QWORD PTR [rax+64], rcx
+	mov	QWORD PTR [rax+72], rcx
 
 ; 266  : 	node->read = AuTTYMasterRead;
 
 	mov	rax, QWORD PTR node$[rsp]
 	lea	rcx, OFFSET FLAT:?AuTTYMasterRead@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z ; AuTTYMasterRead
-	mov	QWORD PTR [rax+80], rcx
+	mov	QWORD PTR [rax+88], rcx
 
 ; 267  : 	node->write = AuTTYMasterWrite;
 
 	mov	rax, QWORD PTR node$[rsp]
 	lea	rcx, OFFSET FLAT:?AuTTYMasterWrite@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z ; AuTTYMasterWrite
-	mov	QWORD PTR [rax+88], rcx
+	mov	QWORD PTR [rax+96], rcx
 
 ; 268  : 	node->close = AuTTYMasterClose;
 
 	mov	rax, QWORD PTR node$[rsp]
 	lea	rcx, OFFSET FLAT:?AuTTYMasterClose@@YAHPEAU__VFS_NODE__@@0@Z ; AuTTYMasterClose
-	mov	QWORD PTR [rax+128], rcx
+	mov	QWORD PTR [rax+136], rcx
 
 ; 269  : 	node->iocontrol = AuTTYIoControl;
 
 	mov	rax, QWORD PTR node$[rsp]
 	lea	rcx, OFFSET FLAT:?AuTTYIoControl@@YAHPEAU__VFS_NODE__@@HPEAX@Z ; AuTTYIoControl
-	mov	QWORD PTR [rax+152], rcx
+	mov	QWORD PTR [rax+160], rcx
 
 ; 270  : 
 ; 271  : 	AuDevFSAddFile(fs, "/dev/tty", node);
 
 	mov	r8, QWORD PTR node$[rsp]
-	lea	rdx, OFFSET FLAT:$SG3799
+	lea	rdx, OFFSET FLAT:$SG3802
 	mov	rcx, QWORD PTR fs$[rsp]
 	call	AuDevFSAddFile
 
@@ -412,7 +412,7 @@ $LN11:
 ; 211  : 	TTY* tty = (TTY*)file->device;
 
 	mov	rax, QWORD PTR file$[rsp]
-	mov	rax, QWORD PTR [rax+64]
+	mov	rax, QWORD PTR [rax+72]
 	mov	QWORD PTR tty$[rsp], rax
 
 ; 212  : 	if (!tty)
@@ -616,7 +616,7 @@ $LN4:
 
 ; 200  : 	AuVFSNode* _fs = AuVFSFind("/dev");
 
-	lea	rcx, OFFSET FLAT:$SG3759
+	lea	rcx, OFFSET FLAT:$SG3762
 	call	AuVFSFind
 	mov	QWORD PTR _fs$[rsp], rax
 
@@ -666,7 +666,7 @@ $LN9:
 ; 184  : 	TTY* tty = (TTY*)file->device;
 
 	mov	rax, QWORD PTR file$[rsp]
-	mov	rax, QWORD PTR [rax+64]
+	mov	rax, QWORD PTR [rax+72]
 	mov	QWORD PTR tty$[rsp], rax
 
 ; 185  : 	if (!tty)
@@ -778,7 +778,7 @@ $LN7:
 ; 169  : 	TTY* tty = (TTY*)file->device;
 
 	mov	rax, QWORD PTR file$[rsp]
-	mov	rax, QWORD PTR [rax+64]
+	mov	rax, QWORD PTR [rax+72]
 	mov	QWORD PTR tty$[rsp], rax
 
 ; 170  : 	if (!tty)
@@ -860,7 +860,7 @@ $LN7:
 ; 158  : 	TTY* type = (TTY*)file->device;
 
 	mov	rax, QWORD PTR file$[rsp]
-	mov	rax, QWORD PTR [rax+64]
+	mov	rax, QWORD PTR [rax+72]
 	mov	QWORD PTR type$[rsp], rax
 
 ; 159  : 	if (!type)
@@ -934,7 +934,7 @@ $LN8:
 ; 134  : 	TTY* type = (TTY*)file->device;
 
 	mov	rax, QWORD PTR file$[rsp]
-	mov	rax, QWORD PTR [rax+64]
+	mov	rax, QWORD PTR [rax+72]
 	mov	QWORD PTR type$[rsp], rax
 
 ; 135  : 	if (!type)
@@ -1492,14 +1492,14 @@ $LN3:
 ; 372  : 	/* create a directory for tty's */
 ; 373  : 	AuVFSNode* fs = AuVFSFind("/dev");
 
-	lea	rcx, OFFSET FLAT:$SG3835
+	lea	rcx, OFFSET FLAT:$SG3838
 	call	AuVFSFind
 	mov	QWORD PTR fs$[rsp], rax
 
 ; 374  : 	AuDevFSCreateFile(fs, "/dev/tty", FS_FLAG_DIRECTORY);
 
 	mov	r8b, 2
-	lea	rdx, OFFSET FLAT:$SG3836
+	lea	rdx, OFFSET FLAT:$SG3839
 	mov	rcx, QWORD PTR fs$[rsp]
 	call	?AuDevFSCreateFile@@YAHPEAU__VFS_NODE__@@PEADE@Z ; AuDevFSCreateFile
 
@@ -1724,7 +1724,7 @@ $LN2@AuTTYCreat:
 	movsxd	rax, DWORD PTR fd$[rsp]
 	mov	rcx, QWORD PTR proc$[rsp]
 	mov	rdx, QWORD PTR master$[rsp]
-	mov	QWORD PTR [rcx+rax*8+567], rdx
+	mov	QWORD PTR [rcx+rax*8+576], rdx
 
 ; 353  : 	*master_fd = fd;
 
@@ -1755,7 +1755,7 @@ $LN1@AuTTYCreat:
 	movsxd	rax, DWORD PTR fd$[rsp]
 	mov	rcx, QWORD PTR proc$[rsp]
 	mov	rdx, QWORD PTR slave$[rsp]
-	mov	QWORD PTR [rcx+rax*8+567], rdx
+	mov	QWORD PTR [rcx+rax*8+576], rdx
 
 ; 359  : 	*slave_fd = fd;
 

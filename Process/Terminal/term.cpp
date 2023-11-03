@@ -205,17 +205,63 @@ void TerminalHandleMessage(PostEvent *e) {
 		break;
 	case DEODHAI_REPLY_KEY_EVENT:
 		int code = e->dword;
-		char c = kbdus[code];
 		memset(e, 0, sizeof(PostEvent));
 		break;
 	}
 }
 
+int demo_num = 0;
 
 void TerminalThread() {
+	/* open the sound device-file, it is in /dev directory */
+	int snd = _KeOpenFile("/dev/sound", FILE_OPEN_WRITE);
+
+	/* allocate an ioctl structure where required information
+	* will be putted */
+	XEFileIOControl ioctl;
+	memset(&ioctl, 0, sizeof(XEFileIOControl));
+
+	/* uint_1 holds the millisecond to sleep after
+	* one frame playback */
+	ioctl.uint_1 = 0;
+
+	/* most important aurora_syscall_magic number, without
+	* this, iocontrol system call will not work */
+	ioctl.syscall_magic = AURORA_SYSCALL_MAGIC;
+
+	/* register the app to sound layer, as it will create
+	* a private dsp-box for this app */
+	_KeFileIoControl(snd, SOUND_REGISTER_SNDPLR, &ioctl);
+
+	/* now open your sound file, note that here demo is playing
+	* a raw wave file with 48kHZ-16bit format, to play mp3 or
+	* other format, one needs another conversion layer of samples */
+
+	int song = _KeOpenFile("/song.wav", FILE_OPEN_READ_ONLY);
+	void* songbuf = malloc(4096);
+	memset(songbuf, 0, 4096);
+	_KeReadFile(song, songbuf, 4096);
+	XEFileStatus fs;
+	_KeFileStat(song, &fs);
+	bool _finished = false;
 	while (1) {
-		_KePrint("Term Thread ");
-		_KePauseThread();
+		/* with each frame read the sound, write it
+		* to sound device, the sound device will automatically
+		* put the app to sleep for smooth playback for some
+		* milli-seconds
+		*/
+		_KeFileStat(song, &fs);
+		/* after we finish playing the sound, we exit */
+		if (fs.eof) {
+			_finished = true;
+			_KePauseThread();
+		}
+
+		if (!_finished) {
+			_KeWriteFile(snd, songbuf, 4096);
+			_KeReadFile(song, songbuf, 4096);
+		}
+		
 	}
 }
 
@@ -264,9 +310,8 @@ int main(int argc, char* arv[]){
 	TerminalPrintString("/:$", LIGHTSILVER, BLACK);
 	TerminalDrawAllCells();
 
-	
-	_KeCreateThread(TerminalThread, "tthr");
-	_KePrint("thread created \n");
+	demo_num = 10;
+	int thread_idx = _KeCreateThread(TerminalThread, "tthr");
 	PostEvent e;
 	memset(&e, 0, sizeof(PostEvent));
 	while (1) {

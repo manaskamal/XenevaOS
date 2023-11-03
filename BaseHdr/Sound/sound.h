@@ -48,7 +48,7 @@ typedef struct __au_dsp__ {
 }AuDSP;
 #pragma pack(pop)
 
-#pragma pack(push,1)
+
 typedef struct _SoundDev_ {
 	char name[32];
 	void(*write) (uint8_t* buffer, size_t length);
@@ -57,7 +57,6 @@ typedef struct _SoundDev_ {
 	void(*start_output)();
 	void(*set_vol)(uint8_t vol);
 }AuSound;
-#pragma pack(pop)
 
 
 /*

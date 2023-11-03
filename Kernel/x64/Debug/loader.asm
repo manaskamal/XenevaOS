@@ -14,13 +14,13 @@ _BSS	SEGMENT
 ?is_loader_busy@@3_NA DB 01H DUP (?)			; is_loader_busy
 _BSS	ENDS
 CONST	SEGMENT
-$SG3847	DB	'exe', 00H
+$SG3850	DB	'exe', 00H
 	ORG $+4
-$SG3848	DB	'[aurora]: non-executable process ', 0dH, 0aH, 00H
+$SG3851	DB	'[aurora]: non-executable process ', 0dH, 0aH, 00H
 	ORG $+4
-$SG3887	DB	'/xeldr.exe', 00H
+$SG3890	DB	'/xeldr.exe', 00H
 	ORG $+5
-$SG3922	DB	'Arguments address already mapped ', 0aH, 00H
+$SG3925	DB	'Arguments address already mapped ', 0aH, 00H
 CONST	ENDS
 PUBLIC	?AuInitialiseLoader@@YAXXZ			; AuInitialiseLoader
 PUBLIC	?AuLoadExecToProcess@@YAXPEAU_au_proc_@@PEADHPEAPEAD@Z ; AuLoadExecToProcess
@@ -63,7 +63,7 @@ $pdata$?AuInitialiseLoader@@YAXXZ DD imagerel $LN3
 	DD	imagerel $LN3+53
 	DD	imagerel $unwind$?AuInitialiseLoader@@YAXXZ
 $pdata$?AuLoadExecToProcess@@YAXPEAU_au_proc_@@PEADHPEAPEAD@Z DD imagerel $LN16
-	DD	imagerel $LN16+1781
+	DD	imagerel $LN16+1792
 	DD	imagerel $unwind$?AuLoadExecToProcess@@YAXPEAU_au_proc_@@PEADHPEAPEAD@Z
 $pdata$?AuProcessEntUser@@YAX_K@Z DD imagerel $LN30
 	DD	imagerel $LN30+614
@@ -132,11 +132,11 @@ _TEXT	ENDS
 _TEXT	SEGMENT
 ?AuIsLoaderBusy@@YA_NXZ PROC				; AuIsLoaderBusy
 
-; 261  : 	return is_loader_busy;
+; 262  : 	return is_loader_busy;
 
 	movzx	eax, BYTE PTR ?is_loader_busy@@3_NA	; is_loader_busy
 
-; 262  : }
+; 263  : }
 
 	ret	0
 ?AuIsLoaderBusy@@YA_NXZ ENDP				; AuIsLoaderBusy
@@ -146,11 +146,11 @@ _TEXT	ENDS
 _TEXT	SEGMENT
 ?AuLoaderGetMutex@@YAPEAU_mutex_@@XZ PROC		; AuLoaderGetMutex
 
-; 257  : 	return loader_mutex;
+; 258  : 	return loader_mutex;
 
 	mov	rax, QWORD PTR ?loader_mutex@@3PEAU_mutex_@@EA ; loader_mutex
 
-; 258  : }
+; 259  : }
 
 	ret	0
 ?AuLoaderGetMutex@@YAPEAU_mutex_@@XZ ENDP		; AuLoaderGetMutex
@@ -429,18 +429,18 @@ _TEXT	ENDS
 ; Function compile flags: /Odtpy
 ; File e:\xeneva project\aurora\kernel\loader.cpp
 _TEXT	SEGMENT
-entry$ = 48
-j$1 = 56
-req_pages$2 = 60
-num_args_$3 = 64
-nt$ = 72
-thr$ = 80
-textarea$ = 88
-num_args$ = 96
+j$1 = 48
+entry$ = 56
+thr$ = 64
+num_args_$2 = 72
+req_pages$3 = 76
+nt$ = 80
+buf$ = 88
+textarea$ = 96
 _image_base_$ = 104
 i$4 = 112
 file$ = 120
-buf$ = 128
+num_args$ = 128
 v_$ = 136
 argvaddr$ = 144
 string_len$5 = 152
@@ -503,7 +503,7 @@ $LN13@AuLoadExec:
 
 ; 129  : 	if (strcmp(v_, "exe") != 0) {
 
-	lea	rdx, OFFSET FLAT:$SG3847
+	lea	rdx, OFFSET FLAT:$SG3850
 	mov	rcx, QWORD PTR v_$[rsp]
 	call	strcmp
 	test	eax, eax
@@ -511,7 +511,7 @@ $LN13@AuLoadExec:
 
 ; 130  : 		SeTextOut("[aurora]: non-executable process \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG3848
+	lea	rcx, OFFSET FLAT:$SG3851
 	call	SeTextOut
 
 ; 131  : 		return;
@@ -608,7 +608,7 @@ $LN12@AuLoadExec:
 ; 151  : 	uint64_t* cr3 = proc->cr3;
 
 	mov	rax, QWORD PTR proc$[rsp]
-	mov	rax, QWORD PTR [rax+22]
+	mov	rax, QWORD PTR [rax+24]
 	mov	QWORD PTR cr3$[rsp], rax
 
 ; 152  : 
@@ -641,7 +641,7 @@ $LN12@AuLoadExec:
 ; 162  : 		 */
 ; 163  : 		int num_args_ = 1;
 
-	mov	DWORD PTR num_args_$3[rsp], 1
+	mov	DWORD PTR num_args_$2[rsp], 1
 
 ; 164  : 		int string_len = strlen(filename);
 
@@ -663,13 +663,13 @@ $LN12@AuLoadExec:
 
 ; 167  : 		char** argvs = (char**)kmalloc(num_args_);
 
-	mov	ecx, DWORD PTR num_args_$3[rsp]
+	mov	ecx, DWORD PTR num_args_$2[rsp]
 	call	kmalloc
 	mov	QWORD PTR argvs$6[rsp], rax
 
 ; 168  : 		memset(argvs, 0, num_args_);
 
-	mov	r8d, DWORD PTR num_args_$3[rsp]
+	mov	r8d, DWORD PTR num_args_$2[rsp]
 	xor	edx, edx
 	mov	rcx, QWORD PTR argvs$6[rsp]
 	call	memset
@@ -692,8 +692,8 @@ $LN12@AuLoadExec:
 ; 173  : 		return AuLoadExecToProcess(proc, "/xeldr.exe", num_args_, argvs);
 
 	mov	r9, QWORD PTR argvs$6[rsp]
-	mov	r8d, DWORD PTR num_args_$3[rsp]
-	lea	rdx, OFFSET FLAT:$SG3887
+	mov	r8d, DWORD PTR num_args_$2[rsp]
+	lea	rdx, OFFSET FLAT:$SG3890
 	mov	rcx, QWORD PTR proc$[rsp]
 	call	?AuLoadExecToProcess@@YAXPEAU_au_proc_@@PEADHPEAPEAD@Z ; AuLoadExecToProcess
 	jmp	$LN14@AuLoadExec
@@ -752,7 +752,7 @@ $LN10@AuLoadExec:
 	mov	rax, QWORD PTR sect_sz$10[rsp]
 	mov	ecx, 4096				; 00001000H
 	div	rcx
-	mov	DWORD PTR req_pages$2[rsp], eax
+	mov	DWORD PTR req_pages$3[rsp], eax
 
 ; 185  : 		if ((sect_sz % PAGE_SIZE) != 0)
 
@@ -766,9 +766,9 @@ $LN10@AuLoadExec:
 
 ; 186  : 			req_pages++;
 
-	mov	eax, DWORD PTR req_pages$2[rsp]
+	mov	eax, DWORD PTR req_pages$3[rsp]
 	inc	eax
-	mov	DWORD PTR req_pages$2[rsp], eax
+	mov	DWORD PTR req_pages$3[rsp], eax
 $LN7@AuLoadExec:
 
 ; 187  : 
@@ -781,7 +781,7 @@ $LN5@AuLoadExec:
 	inc	eax
 	mov	DWORD PTR j$1[rsp], eax
 $LN6@AuLoadExec:
-	mov	eax, DWORD PTR req_pages$2[rsp]
+	mov	eax, DWORD PTR req_pages$3[rsp]
 	cmp	DWORD PTR j$1[rsp], eax
 	jge	$LN4@AuLoadExec
 
@@ -861,7 +861,7 @@ $LN8@AuLoadExec:
 ; 200  : 	textarea->file = 0;
 
 	mov	rax, QWORD PTR textarea$[rsp]
-	mov	QWORD PTR [rax+26], 0
+	mov	QWORD PTR [rax+32], 0
 
 ; 201  : 	AuInsertVMArea(proc, textarea);
 
@@ -874,7 +874,7 @@ $LN8@AuLoadExec:
 ; 204  : 	uint64_t stack = proc->_main_stack_;
 
 	mov	rax, QWORD PTR proc$[rsp]
-	mov	rax, QWORD PTR [rax+46]
+	mov	rax, QWORD PTR [rax+48]
 	mov	QWORD PTR stack$[rsp], rax
 
 ; 205  : 
@@ -950,7 +950,7 @@ $LN8@AuLoadExec:
 	mov	r8d, 16384				; 00004000H
 	mov	rdx, rax
 	mov	rax, QWORD PTR proc$[rsp]
-	mov	rcx, QWORD PTR [rax+22]
+	mov	rcx, QWORD PTR [rax+24]
 	call	AuMapPageEx
 	movzx	eax, al
 	test	eax, eax
@@ -958,7 +958,7 @@ $LN8@AuLoadExec:
 
 ; 220  : 			AuTextOut("Arguments address already mapped \n");
 
-	lea	rcx, OFFSET FLAT:$SG3922
+	lea	rcx, OFFSET FLAT:$SG3925
 	call	AuTextOut
 
 ; 221  : 			argvaddr = 0;
@@ -1044,31 +1044,31 @@ $LN3@AuLoadExec:
 
 	mov	rax, QWORD PTR proc$[rsp]
 	mov	rcx, QWORD PTR thr$[rsp]
-	mov	QWORD PTR [rax+70], rcx
+	mov	QWORD PTR [rax+72], rcx
 
 ; 235  : 	proc->num_thread = 1;
 
 	mov	rax, QWORD PTR proc$[rsp]
-	mov	BYTE PTR [rax+78], 1
+	mov	BYTE PTR [rax+80], 1
 
 ; 236  : 	proc->entry_point = ent;
 
 	mov	rax, QWORD PTR proc$[rsp]
 	mov	rcx, QWORD PTR ent$[rsp]
-	mov	QWORD PTR [rax+79], rcx
+	mov	QWORD PTR [rax+88], rcx
 
 ; 237  : 	proc->_image_base_ = _image_base_;
 
 	mov	rax, QWORD PTR proc$[rsp]
 	mov	rcx, QWORD PTR _image_base_$[rsp]
-	mov	QWORD PTR [rax+38], rcx
+	mov	QWORD PTR [rax+40], rcx
 
 ; 238  : 	proc->_image_size_ = file->size;
 
 	mov	rax, QWORD PTR file$[rsp]
 	mov	eax, DWORD PTR [rax+32]
 	mov	rcx, QWORD PTR proc$[rsp]
-	mov	QWORD PTR [rcx+30], rax
+	mov	QWORD PTR [rcx+32], rax
 
 ; 239  : 	proc->state = PROCESS_STATE_READY;
 
@@ -1079,21 +1079,27 @@ $LN3@AuLoadExec:
 
 	mov	rax, QWORD PTR proc$[rsp]
 	mov	rcx, QWORD PTR file$[rsp]
-	mov	QWORD PTR [rax+1047], rcx
+	mov	QWORD PTR [rax+1056], rcx
 
 ; 241  : 	proc->fsys = fsys;
 
 	mov	rax, QWORD PTR proc$[rsp]
 	mov	rcx, QWORD PTR fsys$[rsp]
-	mov	QWORD PTR [rax+1055], rcx
+	mov	QWORD PTR [rax+1064], rcx
 
-; 242  : 	AuReleaseSpinlock(loader_lock);
+; 242  : 	thr->procSlot = proc;
+
+	mov	rax, QWORD PTR thr$[rsp]
+	mov	rcx, QWORD PTR proc$[rsp]
+	mov	QWORD PTR [rax+643], rcx
+
+; 243  : 	AuReleaseSpinlock(loader_lock);
 
 	mov	rcx, QWORD PTR ?loader_lock@@3PEAU_spinlock_@@EA ; loader_lock
 	call	AuReleaseSpinlock
 $LN14@AuLoadExec:
 
-; 243  : }
+; 244  : }
 
 	add	rsp, 296				; 00000128H
 	ret	0
@@ -1104,31 +1110,31 @@ _TEXT	ENDS
 _TEXT	SEGMENT
 ?AuInitialiseLoader@@YAXXZ PROC				; AuInitialiseLoader
 
-; 245  : void AuInitialiseLoader() {
+; 246  : void AuInitialiseLoader() {
 
 $LN3:
 	sub	rsp, 40					; 00000028H
 
-; 246  : 	loader_mutex = NULL;
+; 247  : 	loader_mutex = NULL;
 
 	mov	QWORD PTR ?loader_mutex@@3PEAU_mutex_@@EA, 0 ; loader_mutex
 
-; 247  : 	loader_lock = AuCreateSpinlock(false);
+; 248  : 	loader_lock = AuCreateSpinlock(false);
 
 	xor	ecx, ecx
 	call	AuCreateSpinlock
 	mov	QWORD PTR ?loader_lock@@3PEAU_spinlock_@@EA, rax ; loader_lock
 
-; 248  : 	loader_mutex = AuCreateMutex();
+; 249  : 	loader_mutex = AuCreateMutex();
 
 	call	AuCreateMutex
 	mov	QWORD PTR ?loader_mutex@@3PEAU_mutex_@@EA, rax ; loader_mutex
 
-; 249  : 	is_loader_busy = false;
+; 250  : 	is_loader_busy = false;
 
 	mov	BYTE PTR ?is_loader_busy@@3_NA, 0	; is_loader_busy
 
-; 250  : }
+; 251  : }
 
 	add	rsp, 40					; 00000028H
 	ret	0

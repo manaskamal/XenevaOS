@@ -16,16 +16,16 @@ driver_class_unique_id DD 01H DUP (?)
 driver_load_base DQ 01H DUP (?)
 _BSS	ENDS
 CONST	SEGMENT
-$SG4347	DB	'Drivername -> %s ', 0dH, 0aH, 00H
-$SG4382	DB	'/', 00H
+$SG4350	DB	'Drivername -> %s ', 0dH, 0aH, 00H
+$SG4385	DB	'/', 00H
 	ORG $+2
-$SG4368	DB	'AuDriverMain', 00H
+$SG4371	DB	'AuDriverMain', 00H
 	ORG $+3
-$SG4371	DB	'AuDriverUnload', 00H
+$SG4374	DB	'AuDriverUnload', 00H
 	ORG $+1
-$SG4377	DB	'[Aurora]: Initializing drivers, please wait... ', 0aH, 00H
+$SG4380	DB	'[Aurora]: Initializing drivers, please wait... ', 0aH, 00H
 	ORG $+7
-$SG4384	DB	'/audrv.cnf', 00H
+$SG4387	DB	'/audrv.cnf', 00H
 CONST	ENDS
 PUBLIC	?AuDrvMngrInitialize@@YAXPEAU_KERNEL_BOOT_INFO_@@@Z ; AuDrvMngrInitialize
 PUBLIC	AuRegisterDevice
@@ -228,14 +228,14 @@ $LN1@AuDriverLo:
 ; 227  : 
 ; 228  : 	void* entry_addr = AuGetProcAddress((void*)driver_load_base, "AuDriverMain");
 
-	lea	rdx, OFFSET FLAT:$SG4368
+	lea	rdx, OFFSET FLAT:$SG4371
 	mov	rcx, QWORD PTR driver_load_base
 	call	?AuGetProcAddress@@YAPEAXPEAXPEBD@Z	; AuGetProcAddress
 	mov	QWORD PTR entry_addr$[rsp], rax
 
 ; 229  : 	void* unload_addr = AuGetProcAddress((void*)driver_load_base, "AuDriverUnload");
 
-	lea	rdx, OFFSET FLAT:$SG4371
+	lea	rdx, OFFSET FLAT:$SG4374
 	mov	rcx, QWORD PTR driver_load_base
 	call	?AuGetProcAddress@@YAPEAXPEAXPEBD@Z	; AuGetProcAddress
 	mov	QWORD PTR unload_addr$[rsp], rax
@@ -418,7 +418,7 @@ $LN2@AuGetDrive:
 ; 193  : 	SeTextOut("Drivername -> %s \r\n", drivername);
 
 	lea	rdx, QWORD PTR drivername$[rsp]
-	lea	rcx, OFFSET FLAT:$SG4347
+	lea	rcx, OFFSET FLAT:$SG4350
 	call	SeTextOut
 
 ; 194  : 
@@ -1059,7 +1059,7 @@ $LN21:
 ; 250  : 
 ; 251  : 	printf("[Aurora]: Initializing drivers, please wait... \n");
 
-	lea	rcx, OFFSET FLAT:$SG4377
+	lea	rcx, OFFSET FLAT:$SG4380
 	call	printf
 
 ; 252  : 	/* Load the conf data */
@@ -1079,13 +1079,13 @@ $LN21:
 
 ; 255  : 	AuVFSNode* fsys = AuVFSFind("/");
 
-	lea	rcx, OFFSET FLAT:$SG4382
+	lea	rcx, OFFSET FLAT:$SG4385
 	call	AuVFSFind
 	mov	QWORD PTR fsys$[rsp], rax
 
 ; 256  : 	AuVFSNode* file = AuVFSOpen("/audrv.cnf");
 
-	lea	rcx, OFFSET FLAT:$SG4384
+	lea	rcx, OFFSET FLAT:$SG4387
 	call	AuVFSOpen
 	mov	QWORD PTR file$[rsp], rax
 

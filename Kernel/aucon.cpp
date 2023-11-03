@@ -145,7 +145,6 @@ void AuConsolePostInitialise(PKERNEL_BOOT_INFO info) {
 
 	for (int i = 0; i < info->fb_size / PAGE_SIZE; i++)
 		AuMapPage((uint64_t)info->graphics_framebuffer + i * PAGE_SIZE, 0xFFFFD00000200000 + i * 4096, X86_64_PAGING_USER);
-
 	early_ = false;
 	aucon->buffer = (uint32_t*)0xFFFFD00000200000;
 	aucon->width = info->X_Resolution;

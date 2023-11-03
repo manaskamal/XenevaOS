@@ -48,9 +48,15 @@
  */
 int CreateSharedMem(uint16_t key, size_t sz, uint8_t flags){
 	AuThread* thr = AuGetCurrentThread();
-	AuProcess* proc = AuProcessFindThread(thr);
-	if (!proc)
+	if (!thr)
 		return -1;
+	AuProcess* proc = AuProcessFindThread(thr);
+	if (!proc){
+		proc = AuProcessFindSubThread(thr);
+		if (!proc){
+			return -1;
+		}
+	}
 	int id = AuCreateSHM(proc, key, sz, flags);
 	return id;
 }
@@ -63,7 +69,14 @@ int CreateSharedMem(uint16_t key, size_t sz, uint8_t flags){
  */
 void* ObtainSharedMem(uint16_t id, void* shmaddr, int shmflg) {
 	AuThread* thr = AuGetCurrentThread();
+	if (!thr)
+		return 0;
 	AuProcess* proc = AuProcessFindThread(thr);
+	if (!proc) {
+		proc = AuProcessFindSubThread(thr);
+		if (!proc)
+			return NULL;
+	}
 	return AuSHMObtainMem(proc,id, shmaddr, shmflg);
 }
 
@@ -72,8 +85,16 @@ void* ObtainSharedMem(uint16_t id, void* shmaddr, int shmflg) {
  * @param key -- key to search
  */
 void UnmapSharedMem(uint16_t key) {
+	x64_cli();
 	AuThread* thr = AuGetCurrentThread();
+	if (!thr)  //some serious memory problem
+		return;
 	AuProcess* proc = AuProcessFindThread(thr);
+	if (!proc) {
+		proc = AuProcessFindSubThread(thr);
+		if (!proc)
+			return;
+	}
 	AuSHMUnmap(key, proc);
 }
 
@@ -85,21 +106,22 @@ void UnmapSharedMem(uint16_t key) {
 uint64_t GetProcessHeapMem(size_t sz) {
 	x64_cli();
 	/* check if size is page aligned */
-	if (sz & 0xFFF) {
-		SeTextOut("Returning error heap mem -> %d \r\n", sz);
-		//return -1;
-		sz = PAGE_ALIGN(sz);
-	}
-
 	if ((sz % PAGE_SIZE) != 0){
-		SeTextOut("Returning error heap mem -> %d \r\n", sz);
+		AuTextOut("Returning error heap mem -> %d \r\n", sz);
+		return -1;
 		sz = PAGE_ALIGN(sz);
 	}
 	
 	AuThread* thr = AuGetCurrentThread();
-	AuProcess* proc = AuProcessFindThread(thr);
-	if (!proc)
+	if (!thr)
 		return -1;
+	AuProcess* proc = AuProcessFindThread(thr);
+	if (!proc){
+		proc = AuProcessFindSubThread(thr);
+		if (!proc) {
+			return -1;
+		}
+	}
 	uint64_t start_addr = proc->proc_mem_heap;
 
 	for (int i = 0; i < sz / PAGE_SIZE; i++) {

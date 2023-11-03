@@ -71,7 +71,7 @@
 **/
 
 void _AuMain(KERNEL_BOOT_INFO *info) {
-	AuConsoleInitialize(info, true);
+	AuConsoleInitialize(info, true);	
 	AuPmmngrInitialize(info);
 	AuVmmngrInitialize();
 	AuHeapInitialize();
@@ -79,9 +79,9 @@ void _AuMain(KERNEL_BOOT_INFO *info) {
 	AuHalInitialise(info);
 	AuInitialiseSerial();
 	AuVFSInitialise();
-	SeTextOut("BootDev HID -> %x, UID -> %x, CID -> %x \r\n", info->hid, info->uid, info->cid);
+	AuTextOut("BootDev HID -> %x, UID -> %x, CID -> %x \r\n", info->hid, info->uid, info->cid);
 	AuAHCIInitialise();
-	
+
 	AuConsolePostInitialise(info);
 	/* Here initialize all legacy bus system
 	 * like ps2.... using AuLegacyBusInitialize() */

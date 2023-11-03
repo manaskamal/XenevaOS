@@ -92,14 +92,14 @@ $LN13@FatRemoveD:
 ; 203  : 	FatFS* _fs = (FatFS*)fsys->device;
 
 	mov	rax, QWORD PTR fsys$[rsp]
-	mov	rax, QWORD PTR [rax+64]
+	mov	rax, QWORD PTR [rax+72]
 	mov	QWORD PTR _fs$[rsp], rax
 
 ; 204  : 
 ; 205  : 	uint32_t dir_clust = file->current;
 
 	mov	rax, QWORD PTR file$[rsp]
-	mov	eax, DWORD PTR [rax+53]
+	mov	eax, DWORD PTR [rax+56]
 	mov	DWORD PTR dir_clust$[rsp], eax
 
 ; 206  : 
@@ -358,7 +358,7 @@ $LN25@FatCreateD:
 ; 49   : 	FatFS* _fs = (FatFS*)fsys->device;
 
 	mov	rax, QWORD PTR fsys$[rsp]
-	mov	rax, QWORD PTR [rax+64]
+	mov	rax, QWORD PTR [rax+72]
 	mov	QWORD PTR _fs$[rsp], rax
 
 ; 50   : 
@@ -389,7 +389,7 @@ $LN24@FatCreateD:
 ; 57   : 	parent_clust = parent->current;
 
 	mov	rax, QWORD PTR parent$[rsp]
-	mov	eax, DWORD PTR [rax+53]
+	mov	eax, DWORD PTR [rax+56]
 	mov	DWORD PTR parent_clust$[rsp], eax
 
 ; 58   : 
@@ -408,13 +408,13 @@ $LN23@FatCreateD:
 ; 61   : 
 ; 62   : 	AuVFSNode* file = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
 
-	mov	ecx, 160				; 000000a0H
+	mov	ecx, 168				; 000000a8H
 	call	kmalloc
 	mov	QWORD PTR file$[rsp], rax
 
 ; 63   : 	memset(file, 0, sizeof(AuVFSNode));
 
-	mov	r8d, 160				; 000000a0H
+	mov	r8d, 168				; 000000a8H
 	xor	edx, edx
 	mov	rcx, QWORD PTR file$[rsp]
 	call	memset
@@ -1029,40 +1029,40 @@ $LN2@FatCreateD:
 ; 168  : 					file->pos = 0;
 
 	mov	rax, QWORD PTR file$[rsp]
-	mov	DWORD PTR [rax+37], 0
+	mov	DWORD PTR [rax+40], 0
 
 ; 169  : 					file->current = cluster;
 
 	mov	eax, DWORD PTR cluster$4[rsp]
 	mov	rcx, QWORD PTR file$[rsp]
-	mov	QWORD PTR [rcx+53], rax
+	mov	QWORD PTR [rcx+56], rax
 
 ; 170  : 					file->device = fsys;
 
 	mov	rax, QWORD PTR file$[rsp]
 	mov	rcx, QWORD PTR fsys$[rsp]
-	mov	QWORD PTR [rax+64], rcx
+	mov	QWORD PTR [rax+72], rcx
 
 ; 171  : 					file->first_block = file->current;
 
 	mov	rax, QWORD PTR file$[rsp]
 	mov	rcx, QWORD PTR file$[rsp]
-	mov	rcx, QWORD PTR [rcx+53]
-	mov	QWORD PTR [rax+45], rcx
+	mov	rcx, QWORD PTR [rcx+56]
+	mov	QWORD PTR [rax+48], rcx
 
 ; 172  : 					file->parent_block = parent_clust;
 
 	mov	rax, QWORD PTR file$[rsp]
 	mov	ecx, DWORD PTR parent_clust$[rsp]
-	mov	DWORD PTR [rax+41], ecx
+	mov	DWORD PTR [rax+44], ecx
 
 ; 173  : 					file->flags |= FS_FLAG_DIRECTORY;
 
 	mov	rax, QWORD PTR file$[rsp]
-	movzx	eax, WORD PTR [rax+61]
+	movzx	eax, WORD PTR [rax+64]
 	or	eax, 2
 	mov	rcx, QWORD PTR file$[rsp]
-	mov	WORD PTR [rcx+61], ax
+	mov	WORD PTR [rcx+64], ax
 
 ; 174  : 					kfree(parent);
 

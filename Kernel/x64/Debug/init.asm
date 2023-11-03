@@ -6,11 +6,12 @@ INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
 CONST	SEGMENT
-$SG4798	DB	'BootDev HID -> %x, UID -> %x, CID -> %x ', 0dH, 0aH, 00H
+$SG4801	DB	'BootDev HID -> %x, UID -> %x, CID -> %x ', 0dH, 0aH, 00H
 CONST	ENDS
 PUBLIC	?_AuMain@@YAXPEAU_KERNEL_BOOT_INFO_@@@Z		; _AuMain
 EXTRN	?AuConsoleInitialize@@YAXPEAU_KERNEL_BOOT_INFO_@@_N@Z:PROC ; AuConsoleInitialize
 EXTRN	?AuConsolePostInitialise@@YAXPEAU_KERNEL_BOOT_INFO_@@@Z:PROC ; AuConsolePostInitialise
+EXTRN	AuTextOut:PROC
 EXTRN	?AuPmmngrInitialize@@YAXPEAU_KERNEL_BOOT_INFO_@@@Z:PROC ; AuPmmngrInitialize
 EXTRN	?AuVmmngrInitialize@@YAXXZ:PROC			; AuVmmngrInitialize
 EXTRN	?AuVmmngrBootFree@@YAXXZ:PROC			; AuVmmngrBootFree
@@ -23,7 +24,6 @@ EXTRN	AuHalInitialise:PROC
 EXTRN	AuHalPostInitialise:PROC
 EXTRN	x64_cli:PROC
 EXTRN	?AuInitialiseSerial@@YAXXZ:PROC			; AuInitialiseSerial
-EXTRN	SeTextOut:PROC
 EXTRN	AuHeapInitialize:PROC
 EXTRN	?SharedMemMapListInitialise@@YAXXZ:PROC		; SharedMemMapListInitialise
 EXTRN	?AuAHCIInitialise@@YAXXZ:PROC			; AuAHCIInitialise
@@ -58,7 +58,7 @@ $LN5:
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 40					; 00000028H
 
-; 74   : 	AuConsoleInitialize(info, true);
+; 74   : 	AuConsoleInitialize(info, true);	
 
 	mov	dl, 1
 	mov	rcx, QWORD PTR info$[rsp]
@@ -91,7 +91,7 @@ $LN5:
 
 	call	?AuVFSInitialise@@YAXXZ			; AuVFSInitialise
 
-; 82   : 	SeTextOut("BootDev HID -> %x, UID -> %x, CID -> %x \r\n", info->hid, info->uid, info->cid);
+; 82   : 	AuTextOut("BootDev HID -> %x, UID -> %x, CID -> %x \r\n", info->hid, info->uid, info->cid);
 
 	mov	rax, QWORD PTR info$[rsp]
 	mov	r9d, DWORD PTR [rax+178]
@@ -99,14 +99,14 @@ $LN5:
 	mov	r8d, DWORD PTR [rax+174]
 	mov	rax, QWORD PTR info$[rsp]
 	mov	edx, DWORD PTR [rax+170]
-	lea	rcx, OFFSET FLAT:$SG4798
-	call	SeTextOut
+	lea	rcx, OFFSET FLAT:$SG4801
+	call	AuTextOut
 
 ; 83   : 	AuAHCIInitialise();
 
 	call	?AuAHCIInitialise@@YAXXZ		; AuAHCIInitialise
 
-; 84   : 	
+; 84   : 
 ; 85   : 	AuConsolePostInitialise(info);
 
 	mov	rcx, QWORD PTR info$[rsp]

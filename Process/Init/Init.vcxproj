@@ -114,7 +114,7 @@
       <DataExecutionPrevention />
       <EntryPointSymbol>_aumain</EntryPointSymbol>
       <AdditionalOptions>/FILEALIGN:4096 %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalLibraryDirectories>E:\Xeneva Project\Aurora\x64\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>E:\Xeneva Project\Aurora\XELoader;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">

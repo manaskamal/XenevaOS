@@ -40,6 +40,7 @@
 #include <string.h>
 #include <aucon.h>
 #include <Hal\serial.h>
+#include <Hal\x86_64_hal.h>
 
 
 AuSound *_Registered_dev;
@@ -167,6 +168,7 @@ size_t AuSoundRead(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint32_t 
 }
 
 size_t AuSoundWrite(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint32_t length) {
+	x64_cli();
 	if (!_Registered_dev)
 		return 0;
 	AuThread* t = AuGetCurrentThread();

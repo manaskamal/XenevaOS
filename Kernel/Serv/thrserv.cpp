@@ -65,14 +65,21 @@ uint16_t GetThreadID() {
  */
 int GetProcessID() {
 	AuThread * current_thr = AuGetCurrentThread();
-	AuProcess* proc = AuProcessFindThread(current_thr);
-	if (!proc)
+	if (!current_thr)
 		return -1;
+	AuProcess* proc = AuProcessFindThread(current_thr);
+	if (!proc){
+		proc = AuProcessFindSubThread(current_thr);
+		if (!proc){
+			return -1;
+		}
+	}
 	return proc->proc_id;
 }
 
 /*
- * ProcessExit -- marks a process as died
+ * ProcessExit -- marks a process as died, only available
+ * from the main thread of the process
  */
 int ProcessExit() {
 	AuThread* current_thr = AuGetCurrentThread();
@@ -180,6 +187,8 @@ size_t GetSystemTimerTick() {
 
 /*
  * CreateUserThread -- creates an user mode thread
+ * @return idx -- the thread index within 
+ * the process
  */
 int CreateUserThread(void(*entry) (void*), char *name){
 	x64_cli();
@@ -187,6 +196,30 @@ int CreateUserThread(void(*entry) (void*), char *name){
 	if (!thr)
 		return 0;
 	AuProcess* proc = AuProcessFindThread(thr);
-	int success = AuCreateUserthread(proc, entry, name);
-	return success;
+	if (!proc) {
+		proc = AuProcessFindSubThread(thr);
+		if (!proc)
+			return 0;
+	}
+	int idx = AuCreateUserthread(proc, entry, name);
+	return idx;
+}
+
+/*
+ * CloseUserThread -- terminates a created thread
+ * @param thread_idx -- thread index within 
+ * the process
+ * @note -- this system call is only supported
+ * from the main thread or else system behavior 
+ * will worse
+ */
+int CloseUserThread(int thread_idx) {
+	x64_cli();
+	AuThread* thr = AuGetCurrentThread();
+	if (!thr)
+		return 0;
+	AuProcess* proc = AuProcessFindThread(thr);
+
+	/* under development*/
+	return 0; //NOT IMPLEMENTED
 }

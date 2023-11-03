@@ -30,6 +30,17 @@
 #include <Hal\x86_64_pic.h>
 #include <aucon.h>
 #include <Hal\x86_64_hal.h>
+#include <Hal\serial.h>
+
+#define COUNTER_2_DATAPORT 0x42
+#define COUNTER_2_CONTROLPORT 0x61
+#define COMMAND_REGISTER 0x43
+
+#define SIXTEEN_BIT_BINARY 0x00
+#define FOUR_DIGIT_BCD  0x01
+#define MODE0 0x00
+#define MODE1 0x02
+
 
 void AuPICInterruptEOI(unsigned int intno) {
 	if (intno > 16)
@@ -85,7 +96,6 @@ void AuPITSleepMS(uint32_t ms) {
 }
 
 void AuInitialisePIC() {
-	AuTextOut("iNITIALISING PIC \n");
 	uint8_t base0 = 0x20;
 	uint8_t base1 = 0x28;
 
@@ -125,7 +135,22 @@ void AuInitialisePIC() {
 	x64_outportb(0x40, divisor);
 	x64_outportb(0x40, divisor >> 8);
 	setvect(32 + 0, AuPITHandler);
-	AuTextOut("PIC/PIT initialised \n");
 	pic_counter = 0;
 	AuPICClearMask(0);
+}
+
+void AuPITOneShotMode() {
+	x64_outportb(COUNTER_2_CONTROLPORT, (x64_inportb(COUNTER_2_CONTROLPORT) & 0xFD) | 1);
+	x64_outportb(COMMAND_REGISTER, 0x80 | 0x30 | 0x00 | SIXTEEN_BIT_BINARY);
+	uint32_t val = 1193182 / 20;
+	x64_outportb(COUNTER_2_DATAPORT, val & 0xff); //vall >> 8 & 0xff
+	x64_outportb(COUNTER_2_DATAPORT, (val >> 8) & 0xff);
+	x64_outportb(COUNTER_2_CONTROLPORT, val);
+	x64_outportb(COUNTER_2_CONTROLPORT, val | 1);
+
+}
+
+void AuPitOneShotWait() {
+	while (!(x64_inportb(COUNTER_2_CONTROLPORT) & (1 << 5)));
+
 }

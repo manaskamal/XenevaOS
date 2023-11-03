@@ -76,7 +76,7 @@
 
 typedef void(*entry) (void*);
 
-#pragma pack(push,1)
+
 typedef struct _au_proc_ {
 	int proc_id;
 	char name[16];
@@ -114,7 +114,6 @@ typedef struct _au_proc_ {
 	struct _au_proc_ *next;
 	struct _au_proc_ *prev;
 }AuProcess;
-#pragma pack(pop)
 
 /*
 * AuAddProcess -- adds process to kernel data structure
@@ -158,6 +157,14 @@ extern AuProcess* AuProcessFindPID(int pid);
 * @param thread -- pointer to  main thread
 */
 extern AuProcess *AuProcessFindThread(AuThread* thread);
+
+/*
+* AuProcessFindSubThread -- find a process from its
+* sub threads which contain a pointer to its process
+* slot
+* @param thread -- Pointer to sub thread
+*/
+extern AuProcess* AuProcessFindSubThread(AuThread* thread);
 
 /*
 * CreateUserStack -- creates new user stack

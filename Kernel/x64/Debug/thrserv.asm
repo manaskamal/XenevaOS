@@ -6,9 +6,9 @@ INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
 CONST	SEGMENT
-$SG3746	DB	'No process found ', 0aH, 00H
+$SG3751	DB	'No process found ', 0aH, 00H
 	ORG $+5
-$SG3768	DB	'Signal Return ', 0dH, 0aH, 00H
+$SG3773	DB	'Signal Return ', 0dH, 0aH, 00H
 CONST	ENDS
 PUBLIC	?PauseThread@@YAHXZ				; PauseThread
 PUBLIC	?GetThreadID@@YAGXZ				; GetThreadID
@@ -22,6 +22,7 @@ PUBLIC	?SignalReturn@@YAXH@Z				; SignalReturn
 PUBLIC	?SetSignal@@YAHHP6AXH@Z@Z			; SetSignal
 PUBLIC	?GetSystemTimerTick@@YA_KXZ			; GetSystemTimerTick
 PUBLIC	?CreateUserThread@@YAHP6AXPEAX@ZPEAD@Z		; CreateUserThread
+PUBLIC	?CloseUserThread@@YAHH@Z			; CloseUserThread
 EXTRN	AuGetCurrentThread:PROC
 EXTRN	AuBlockThread:PROC
 EXTRN	AuSleepThread:PROC
@@ -29,6 +30,7 @@ EXTRN	AuForceScheduler:PROC
 EXTRN	AuGetSystemTimerTick:PROC
 EXTRN	?AuProcessFindPID@@YAPEAU_au_proc_@@H@Z:PROC	; AuProcessFindPID
 EXTRN	?AuProcessFindThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z:PROC ; AuProcessFindThread
+EXTRN	?AuProcessFindSubThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z:PROC ; AuProcessFindSubThread
 EXTRN	?AuCreateProcessSlot@@YAPEAU_au_proc_@@PEAU1@PEAD@Z:PROC ; AuCreateProcessSlot
 EXTRN	?AuProcessExit@@YAXPEAU_au_proc_@@@Z:PROC	; AuProcessExit
 EXTRN	?AuProcessWaitForTermination@@YAXPEAU_au_proc_@@H@Z:PROC ; AuProcessWaitForTermination
@@ -48,8 +50,8 @@ $pdata$?PauseThread@@YAHXZ DD imagerel $LN3
 $pdata$?GetThreadID@@YAGXZ DD imagerel $LN4
 	DD	imagerel $LN4+46
 	DD	imagerel $unwind$?GetThreadID@@YAGXZ
-$pdata$?GetProcessID@@YAHXZ DD imagerel $LN4
-	DD	imagerel $LN4+56
+$pdata$?GetProcessID@@YAHXZ DD imagerel $LN6
+	DD	imagerel $LN6+94
 	DD	imagerel $unwind$?GetProcessID@@YAHXZ
 $pdata$?ProcessExit@@YAHXZ DD imagerel $LN4
 	DD	imagerel $LN4+61
@@ -75,9 +77,12 @@ $pdata$?SetSignal@@YAHHP6AXH@Z@Z DD imagerel $LN4
 $pdata$?GetSystemTimerTick@@YA_KXZ DD imagerel $LN3
 	DD	imagerel $LN3+14
 	DD	imagerel $unwind$?GetSystemTimerTick@@YA_KXZ
-$pdata$?CreateUserThread@@YAHP6AXPEAX@ZPEAD@Z DD imagerel $LN4
-	DD	imagerel $LN4+89
+$pdata$?CreateUserThread@@YAHP6AXPEAX@ZPEAD@Z DD imagerel $LN6
+	DD	imagerel $LN6+124
 	DD	imagerel $unwind$?CreateUserThread@@YAHP6AXPEAX@ZPEAD@Z
+$pdata$?CloseUserThread@@YAHH@Z DD imagerel $LN4
+	DD	imagerel $LN4+57
+	DD	imagerel $unwind$?CloseUserThread@@YAHH@Z
 pdata	ENDS
 xdata	SEGMENT
 $unwind$?PauseThread@@YAHXZ DD 010401H
@@ -104,64 +109,143 @@ $unwind$?GetSystemTimerTick@@YA_KXZ DD 010401H
 	DD	04204H
 $unwind$?CreateUserThread@@YAHP6AXPEAX@ZPEAD@Z DD 010e01H
 	DD	0820eH
+$unwind$?CloseUserThread@@YAHH@Z DD 010801H
+	DD	06208H
 xdata	ENDS
 ; Function compile flags: /Odtpy
 ; File e:\xeneva project\aurora\kernel\serv\thrserv.cpp
 _TEXT	SEGMENT
-success$ = 32
-thr$ = 40
-proc$ = 48
-entry$ = 80
-name$ = 88
-?CreateUserThread@@YAHP6AXPEAX@ZPEAD@Z PROC		; CreateUserThread
+thr$ = 32
+proc$ = 40
+thread_idx$ = 64
+?CloseUserThread@@YAHH@Z PROC				; CloseUserThread
 
-; 184  : int CreateUserThread(void(*entry) (void*), char *name){
+; 216  : int CloseUserThread(int thread_idx) {
 
 $LN4:
-	mov	QWORD PTR [rsp+16], rdx
-	mov	QWORD PTR [rsp+8], rcx
-	sub	rsp, 72					; 00000048H
+	mov	DWORD PTR [rsp+8], ecx
+	sub	rsp, 56					; 00000038H
 
-; 185  : 	x64_cli();
+; 217  : 	x64_cli();
 
 	call	x64_cli
 
-; 186  : 	AuThread* thr = AuGetCurrentThread();
+; 218  : 	AuThread* thr = AuGetCurrentThread();
 
 	call	AuGetCurrentThread
 	mov	QWORD PTR thr$[rsp], rax
 
-; 187  : 	if (!thr)
+; 219  : 	if (!thr)
 
 	cmp	QWORD PTR thr$[rsp], 0
-	jne	SHORT $LN1@CreateUser
+	jne	SHORT $LN1@CloseUserT
 
-; 188  : 		return 0;
+; 220  : 		return 0;
 
 	xor	eax, eax
-	jmp	SHORT $LN2@CreateUser
-$LN1@CreateUser:
+	jmp	SHORT $LN2@CloseUserT
+$LN1@CloseUserT:
 
-; 189  : 	AuProcess* proc = AuProcessFindThread(thr);
+; 221  : 	AuProcess* proc = AuProcessFindThread(thr);
 
 	mov	rcx, QWORD PTR thr$[rsp]
 	call	?AuProcessFindThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z ; AuProcessFindThread
 	mov	QWORD PTR proc$[rsp], rax
 
-; 190  : 	int success = AuCreateUserthread(proc, entry, name);
+; 222  : 
+; 223  : 	/* under development*/
+; 224  : 	return 0; //NOT IMPLEMENTED
+
+	xor	eax, eax
+$LN2@CloseUserT:
+
+; 225  : }
+
+	add	rsp, 56					; 00000038H
+	ret	0
+?CloseUserThread@@YAHH@Z ENDP				; CloseUserThread
+_TEXT	ENDS
+; Function compile flags: /Odtpy
+; File e:\xeneva project\aurora\kernel\serv\thrserv.cpp
+_TEXT	SEGMENT
+idx$ = 32
+proc$ = 40
+thr$ = 48
+entry$ = 80
+name$ = 88
+?CreateUserThread@@YAHP6AXPEAX@ZPEAD@Z PROC		; CreateUserThread
+
+; 193  : int CreateUserThread(void(*entry) (void*), char *name){
+
+$LN6:
+	mov	QWORD PTR [rsp+16], rdx
+	mov	QWORD PTR [rsp+8], rcx
+	sub	rsp, 72					; 00000048H
+
+; 194  : 	x64_cli();
+
+	call	x64_cli
+
+; 195  : 	AuThread* thr = AuGetCurrentThread();
+
+	call	AuGetCurrentThread
+	mov	QWORD PTR thr$[rsp], rax
+
+; 196  : 	if (!thr)
+
+	cmp	QWORD PTR thr$[rsp], 0
+	jne	SHORT $LN3@CreateUser
+
+; 197  : 		return 0;
+
+	xor	eax, eax
+	jmp	SHORT $LN4@CreateUser
+$LN3@CreateUser:
+
+; 198  : 	AuProcess* proc = AuProcessFindThread(thr);
+
+	mov	rcx, QWORD PTR thr$[rsp]
+	call	?AuProcessFindThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z ; AuProcessFindThread
+	mov	QWORD PTR proc$[rsp], rax
+
+; 199  : 	if (!proc) {
+
+	cmp	QWORD PTR proc$[rsp], 0
+	jne	SHORT $LN2@CreateUser
+
+; 200  : 		proc = AuProcessFindSubThread(thr);
+
+	mov	rcx, QWORD PTR thr$[rsp]
+	call	?AuProcessFindSubThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z ; AuProcessFindSubThread
+	mov	QWORD PTR proc$[rsp], rax
+
+; 201  : 		if (!proc)
+
+	cmp	QWORD PTR proc$[rsp], 0
+	jne	SHORT $LN1@CreateUser
+
+; 202  : 			return 0;
+
+	xor	eax, eax
+	jmp	SHORT $LN4@CreateUser
+$LN1@CreateUser:
+$LN2@CreateUser:
+
+; 203  : 	}
+; 204  : 	int idx = AuCreateUserthread(proc, entry, name);
 
 	mov	r8, QWORD PTR name$[rsp]
 	mov	rdx, QWORD PTR entry$[rsp]
 	mov	rcx, QWORD PTR proc$[rsp]
 	call	?AuCreateUserthread@@YAHPEAU_au_proc_@@P6AXPEAX@ZPEAD@Z ; AuCreateUserthread
-	mov	DWORD PTR success$[rsp], eax
+	mov	DWORD PTR idx$[rsp], eax
 
-; 191  : 	return success;
+; 205  : 	return idx;
 
-	mov	eax, DWORD PTR success$[rsp]
-$LN2@CreateUser:
+	mov	eax, DWORD PTR idx$[rsp]
+$LN4@CreateUser:
 
-; 192  : }
+; 206  : }
 
 	add	rsp, 72					; 00000048H
 	ret	0
@@ -172,16 +256,16 @@ _TEXT	ENDS
 _TEXT	SEGMENT
 ?GetSystemTimerTick@@YA_KXZ PROC			; GetSystemTimerTick
 
-; 177  : size_t GetSystemTimerTick() {
+; 184  : size_t GetSystemTimerTick() {
 
 $LN3:
 	sub	rsp, 40					; 00000028H
 
-; 178  : 	return AuGetSystemTimerTick();
+; 185  : 	return AuGetSystemTimerTick();
 
 	call	AuGetSystemTimerTick
 
-; 179  : }
+; 186  : }
 
 	add	rsp, 40					; 00000028H
 	ret	0
@@ -195,30 +279,30 @@ signo$ = 64
 handler$ = 72
 ?SetSignal@@YAHHP6AXH@Z@Z PROC				; SetSignal
 
-; 166  : int SetSignal(int signo, AuSigHandler handler){
+; 173  : int SetSignal(int signo, AuSigHandler handler){
 
 $LN4:
 	mov	QWORD PTR [rsp+16], rdx
 	mov	DWORD PTR [rsp+8], ecx
 	sub	rsp, 56					; 00000038H
 
-; 167  : 	AuThread* thr = AuGetCurrentThread();
+; 174  : 	AuThread* thr = AuGetCurrentThread();
 
 	call	AuGetCurrentThread
 	mov	QWORD PTR thr$[rsp], rax
 
-; 168  : 	if (!thr)
+; 175  : 	if (!thr)
 
 	cmp	QWORD PTR thr$[rsp], 0
 	jne	SHORT $LN1@SetSignal
 
-; 169  : 		return 0;
+; 176  : 		return 0;
 
 	xor	eax, eax
 	jmp	SHORT $LN2@SetSignal
 $LN1@SetSignal:
 
-; 170  : 	thr->singals[signo] = handler;
+; 177  : 	thr->singals[signo] = handler;
 
 	movsxd	rax, DWORD PTR signo$[rsp]
 	mov	rcx, QWORD PTR thr$[rsp]
@@ -226,7 +310,7 @@ $LN1@SetSignal:
 	mov	QWORD PTR [rcx+rax*8+306], rdx
 $LN2@SetSignal:
 
-; 171  : }
+; 178  : }
 
 	add	rsp, 56					; 00000038H
 	ret	0
@@ -238,19 +322,19 @@ _TEXT	SEGMENT
 num$ = 48
 ?SignalReturn@@YAXH@Z PROC				; SignalReturn
 
-; 156  : void SignalReturn(int num) {
+; 163  : void SignalReturn(int num) {
 
 $LN3:
 	mov	DWORD PTR [rsp+8], ecx
 	sub	rsp, 40					; 00000028H
 
-; 157  : 	SeTextOut("Signal Return \r\n");
+; 164  : 	SeTextOut("Signal Return \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG3768
+	lea	rcx, OFFSET FLAT:$SG3773
 	call	SeTextOut
 
-; 158  : 	/* just make a page fault */
-; 159  : }
+; 165  : 	/* just make a page fault */
+; 166  : }
 
 	add	rsp, 40					; 00000028H
 	ret	0
@@ -263,40 +347,40 @@ current_thr$ = 32
 ms$ = 64
 ?ProcessSleep@@YAH_K@Z PROC				; ProcessSleep
 
-; 145  : int ProcessSleep(uint64_t ms) {
+; 152  : int ProcessSleep(uint64_t ms) {
 
 $LN4:
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 56					; 00000038H
 
-; 146  : 	AuThread* current_thr = AuGetCurrentThread();
+; 153  : 	AuThread* current_thr = AuGetCurrentThread();
 
 	call	AuGetCurrentThread
 	mov	QWORD PTR current_thr$[rsp], rax
 
-; 147  : 	if (!current_thr)
+; 154  : 	if (!current_thr)
 
 	cmp	QWORD PTR current_thr$[rsp], 0
 	jne	SHORT $LN1@ProcessSle
 
-; 148  : 		return 0;
+; 155  : 		return 0;
 
 	xor	eax, eax
 	jmp	SHORT $LN2@ProcessSle
 $LN1@ProcessSle:
 
-; 149  : 	AuSleepThread(current_thr, ms);
+; 156  : 	AuSleepThread(current_thr, ms);
 
 	mov	rdx, QWORD PTR ms$[rsp]
 	mov	rcx, QWORD PTR current_thr$[rsp]
 	call	AuSleepThread
 
-; 150  : 	AuForceScheduler();
+; 157  : 	AuForceScheduler();
 
 	call	AuForceScheduler
 $LN2@ProcessSle:
 
-; 151  : }
+; 158  : }
 
 	add	rsp, 56					; 00000038H
 	ret	0
@@ -317,7 +401,7 @@ argc$ = 112
 argv$ = 120
 ?ProcessLoadExec@@YAHHPEADHPEAPEAD@Z PROC		; ProcessLoadExec
 
-; 114  : int ProcessLoadExec(int proc_id, char* filename,int argc, char** argv) {
+; 121  : int ProcessLoadExec(int proc_id, char* filename,int argc, char** argv) {
 
 $LN11:
 	mov	QWORD PTR [rsp+32], r9
@@ -326,37 +410,37 @@ $LN11:
 	mov	DWORD PTR [rsp+8], ecx
 	sub	rsp, 88					; 00000058H
 
-; 115  : 	AuProcess* proc = AuProcessFindPID(proc_id);
+; 122  : 	AuProcess* proc = AuProcessFindPID(proc_id);
 
 	mov	ecx, DWORD PTR proc_id$[rsp]
 	call	?AuProcessFindPID@@YAPEAU_au_proc_@@H@Z	; AuProcessFindPID
 	mov	QWORD PTR proc$[rsp], rax
 
-; 116  : 	
-; 117  : 	if (!proc) {
+; 123  : 	
+; 124  : 	if (!proc) {
 
 	cmp	QWORD PTR proc$[rsp], 0
 	jne	SHORT $LN8@ProcessLoa
 
-; 118  : 		AuTextOut("No process found \n");
+; 125  : 		AuTextOut("No process found \n");
 
-	lea	rcx, OFFSET FLAT:$SG3746
+	lea	rcx, OFFSET FLAT:$SG3751
 	call	AuTextOut
 
-; 119  : 		return -1;
+; 126  : 		return -1;
 
 	mov	eax, -1
 	jmp	$LN9@ProcessLoa
 $LN8@ProcessLoa:
 
-; 120  : 	}
-; 121  : 	
-; 122  : 	/* prepare stuffs for passing arguments */
-; 123  : 	int char_cnt = 0;
+; 127  : 	}
+; 128  : 	
+; 129  : 	/* prepare stuffs for passing arguments */
+; 130  : 	int char_cnt = 0;
 
 	mov	DWORD PTR char_cnt$[rsp], 0
 
-; 124  : 	for (int i = 0; i < argc; i++) {
+; 131  : 	for (int i = 0; i < argc; i++) {
 
 	mov	DWORD PTR i$2[rsp], 0
 	jmp	SHORT $LN7@ProcessLoa
@@ -369,7 +453,7 @@ $LN7@ProcessLoa:
 	cmp	DWORD PTR i$2[rsp], eax
 	jge	SHORT $LN5@ProcessLoa
 
-; 125  : 		size_t l = strlen(argv[i]);
+; 132  : 		size_t l = strlen(argv[i]);
 
 	movsxd	rax, DWORD PTR i$2[rsp]
 	mov	rcx, QWORD PTR argv$[rsp]
@@ -377,41 +461,41 @@ $LN7@ProcessLoa:
 	call	strlen
 	mov	QWORD PTR l$3[rsp], rax
 
-; 126  : 		char_cnt += l; 
+; 133  : 		char_cnt += l; 
 
 	movsxd	rax, DWORD PTR char_cnt$[rsp]
 	add	rax, QWORD PTR l$3[rsp]
 	mov	DWORD PTR char_cnt$[rsp], eax
 
-; 127  : 	}
+; 134  : 	}
 
 	jmp	SHORT $LN6@ProcessLoa
 $LN5@ProcessLoa:
 
-; 128  : 	
-; 129  : 	char** allocated_argv = 0;
+; 135  : 	
+; 136  : 	char** allocated_argv = 0;
 
 	mov	QWORD PTR allocated_argv$[rsp], 0
 
-; 130  : 	if (char_cnt > 0) {
+; 137  : 	if (char_cnt > 0) {
 
 	cmp	DWORD PTR char_cnt$[rsp], 0
 	jle	SHORT $LN4@ProcessLoa
 
-; 131  : 		allocated_argv = (char**)kmalloc(char_cnt);
+; 138  : 		allocated_argv = (char**)kmalloc(char_cnt);
 
 	mov	ecx, DWORD PTR char_cnt$[rsp]
 	call	kmalloc
 	mov	QWORD PTR allocated_argv$[rsp], rax
 
-; 132  : 		memset(allocated_argv, 0, char_cnt);
+; 139  : 		memset(allocated_argv, 0, char_cnt);
 
 	mov	r8d, DWORD PTR char_cnt$[rsp]
 	xor	edx, edx
 	mov	rcx, QWORD PTR allocated_argv$[rsp]
 	call	memset
 
-; 133  : 		for (int i = 0; i < argc; i++)
+; 140  : 		for (int i = 0; i < argc; i++)
 
 	mov	DWORD PTR i$1[rsp], 0
 	jmp	SHORT $LN3@ProcessLoa
@@ -424,7 +508,7 @@ $LN3@ProcessLoa:
 	cmp	DWORD PTR i$1[rsp], eax
 	jge	SHORT $LN1@ProcessLoa
 
-; 134  : 			allocated_argv[i] = argv[i];
+; 141  : 			allocated_argv[i] = argv[i];
 
 	movsxd	rax, DWORD PTR i$1[rsp]
 	movsxd	rcx, DWORD PTR i$1[rsp]
@@ -436,9 +520,9 @@ $LN3@ProcessLoa:
 $LN1@ProcessLoa:
 $LN4@ProcessLoa:
 
-; 135  : 	}
-; 136  : 	
-; 137  : 	AuLoadExecToProcess(proc, filename, argc,allocated_argv);
+; 142  : 	}
+; 143  : 	
+; 144  : 	AuLoadExecToProcess(proc, filename, argc,allocated_argv);
 
 	mov	r9, QWORD PTR allocated_argv$[rsp]
 	mov	r8d, DWORD PTR argc$[rsp]
@@ -447,7 +531,7 @@ $LN4@ProcessLoa:
 	call	?AuLoadExecToProcess@@YAXPEAU_au_proc_@@PEADHPEAPEAD@Z ; AuLoadExecToProcess
 $LN9@ProcessLoa:
 
-; 138  : }
+; 145  : }
 
 	add	rsp, 88					; 00000058H
 	ret	0
@@ -461,38 +545,38 @@ parent_id$ = 64
 name$ = 72
 ?CreateProcess@@YAHHPEAD@Z PROC				; CreateProcess
 
-; 103  : int CreateProcess(int parent_id, char *name) {
+; 110  : int CreateProcess(int parent_id, char *name) {
 
 $LN4:
 	mov	QWORD PTR [rsp+16], rdx
 	mov	DWORD PTR [rsp+8], ecx
 	sub	rsp, 56					; 00000038H
 
-; 104  : 	AuProcess* slot = AuCreateProcessSlot(0, name);
+; 111  : 	AuProcess* slot = AuCreateProcessSlot(0, name);
 
 	mov	rdx, QWORD PTR name$[rsp]
 	xor	ecx, ecx
 	call	?AuCreateProcessSlot@@YAPEAU_au_proc_@@PEAU1@PEAD@Z ; AuCreateProcessSlot
 	mov	QWORD PTR slot$[rsp], rax
 
-; 105  : 	if (!slot)
+; 112  : 	if (!slot)
 
 	cmp	QWORD PTR slot$[rsp], 0
 	jne	SHORT $LN1@CreateProc
 
-; 106  : 		return -1;
+; 113  : 		return -1;
 
 	mov	eax, -1
 	jmp	SHORT $LN2@CreateProc
 $LN1@CreateProc:
 
-; 107  : 	return slot->proc_id;
+; 114  : 	return slot->proc_id;
 
 	mov	rax, QWORD PTR slot$[rsp]
 	mov	eax, DWORD PTR [rax]
 $LN2@CreateProc:
 
-; 108  : }
+; 115  : }
 
 	add	rsp, 56					; 00000038H
 	ret	0
@@ -506,34 +590,34 @@ proc$ = 40
 pid$ = 64
 ?ProcessWaitForTermination@@YAHH@Z PROC			; ProcessWaitForTermination
 
-; 91   : int ProcessWaitForTermination(int pid) {
+; 98   : int ProcessWaitForTermination(int pid) {
 
 $LN3:
 	mov	DWORD PTR [rsp+8], ecx
 	sub	rsp, 56					; 00000038H
 
-; 92   : 	AuThread* current_thr = AuGetCurrentThread();
+; 99   : 	AuThread* current_thr = AuGetCurrentThread();
 
 	call	AuGetCurrentThread
 	mov	QWORD PTR current_thr$[rsp], rax
 
-; 93   : 	AuProcess* proc = AuProcessFindThread(current_thr);
+; 100  : 	AuProcess* proc = AuProcessFindThread(current_thr);
 
 	mov	rcx, QWORD PTR current_thr$[rsp]
 	call	?AuProcessFindThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z ; AuProcessFindThread
 	mov	QWORD PTR proc$[rsp], rax
 
-; 94   : 	AuProcessWaitForTermination(proc, pid);
+; 101  : 	AuProcessWaitForTermination(proc, pid);
 
 	mov	edx, DWORD PTR pid$[rsp]
 	mov	rcx, QWORD PTR proc$[rsp]
 	call	?AuProcessWaitForTermination@@YAXPEAU_au_proc_@@H@Z ; AuProcessWaitForTermination
 
-; 95   : 	return 0;
+; 102  : 	return 0;
 
 	xor	eax, eax
 
-; 96   : }
+; 103  : }
 
 	add	rsp, 56					; 00000038H
 	ret	0
@@ -546,44 +630,44 @@ proc$ = 32
 current_thr$ = 40
 ?ProcessExit@@YAHXZ PROC				; ProcessExit
 
-; 77   : int ProcessExit() {
+; 84   : int ProcessExit() {
 
 $LN4:
 	sub	rsp, 56					; 00000038H
 
-; 78   : 	AuThread* current_thr = AuGetCurrentThread();
+; 85   : 	AuThread* current_thr = AuGetCurrentThread();
 
 	call	AuGetCurrentThread
 	mov	QWORD PTR current_thr$[rsp], rax
 
-; 79   : 	AuProcess* proc = AuProcessFindThread(current_thr);
+; 86   : 	AuProcess* proc = AuProcessFindThread(current_thr);
 
 	mov	rcx, QWORD PTR current_thr$[rsp]
 	call	?AuProcessFindThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z ; AuProcessFindThread
 	mov	QWORD PTR proc$[rsp], rax
 
-; 80   : 	if (!proc)
+; 87   : 	if (!proc)
 
 	cmp	QWORD PTR proc$[rsp], 0
 	jne	SHORT $LN1@ProcessExi
 
-; 81   : 		return 1;
+; 88   : 		return 1;
 
 	mov	eax, 1
 	jmp	SHORT $LN2@ProcessExi
 $LN1@ProcessExi:
 
-; 82   : 	AuProcessExit(proc);
+; 89   : 	AuProcessExit(proc);
 
 	mov	rcx, QWORD PTR proc$[rsp]
 	call	?AuProcessExit@@YAXPEAU_au_proc_@@@Z	; AuProcessExit
 
-; 83   : 	return 0;
+; 90   : 	return 0;
 
 	xor	eax, eax
 $LN2@ProcessExi:
 
-; 84   : }
+; 91   : }
 
 	add	rsp, 56					; 00000038H
 	ret	0
@@ -598,7 +682,7 @@ current_thr$ = 40
 
 ; 66   : int GetProcessID() {
 
-$LN4:
+$LN6:
 	sub	rsp, 56					; 00000038H
 
 ; 67   : 	AuThread * current_thr = AuGetCurrentThread();
@@ -606,30 +690,55 @@ $LN4:
 	call	AuGetCurrentThread
 	mov	QWORD PTR current_thr$[rsp], rax
 
-; 68   : 	AuProcess* proc = AuProcessFindThread(current_thr);
+; 68   : 	if (!current_thr)
+
+	cmp	QWORD PTR current_thr$[rsp], 0
+	jne	SHORT $LN3@GetProcess
+
+; 69   : 		return -1;
+
+	mov	eax, -1
+	jmp	SHORT $LN4@GetProcess
+$LN3@GetProcess:
+
+; 70   : 	AuProcess* proc = AuProcessFindThread(current_thr);
 
 	mov	rcx, QWORD PTR current_thr$[rsp]
 	call	?AuProcessFindThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z ; AuProcessFindThread
 	mov	QWORD PTR proc$[rsp], rax
 
-; 69   : 	if (!proc)
+; 71   : 	if (!proc){
+
+	cmp	QWORD PTR proc$[rsp], 0
+	jne	SHORT $LN2@GetProcess
+
+; 72   : 		proc = AuProcessFindSubThread(current_thr);
+
+	mov	rcx, QWORD PTR current_thr$[rsp]
+	call	?AuProcessFindSubThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z ; AuProcessFindSubThread
+	mov	QWORD PTR proc$[rsp], rax
+
+; 73   : 		if (!proc){
 
 	cmp	QWORD PTR proc$[rsp], 0
 	jne	SHORT $LN1@GetProcess
 
-; 70   : 		return -1;
+; 74   : 			return -1;
 
 	mov	eax, -1
-	jmp	SHORT $LN2@GetProcess
+	jmp	SHORT $LN4@GetProcess
 $LN1@GetProcess:
+$LN2@GetProcess:
 
-; 71   : 	return proc->proc_id;
+; 75   : 		}
+; 76   : 	}
+; 77   : 	return proc->proc_id;
 
 	mov	rax, QWORD PTR proc$[rsp]
 	mov	eax, DWORD PTR [rax]
-$LN2@GetProcess:
+$LN4@GetProcess:
 
-; 72   : }
+; 78   : }
 
 	add	rsp, 56					; 00000038H
 	ret	0

@@ -33,7 +33,7 @@
 #include <stdint.h>
 #include <aurora.h>
 
-#pragma pack(push)
+
 typedef struct __rtc__ {
 	bool bcd;
 	uint8_t century;
@@ -44,7 +44,6 @@ typedef struct __rtc__ {
 	uint8_t minute;
 	uint8_t second;
 }AuRTC;
-#pragma pack(pop)
 
 /*
 * AuRTCInitialize -- initialize rtc clock

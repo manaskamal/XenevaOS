@@ -371,6 +371,7 @@ void ComposeFrame(ChCanvas *canvas) {
 			}
 			info->rect_count = 0;
 			info->dirty = 0;
+			info->updateEntireWindow = 0;
 		}
 
 
@@ -634,8 +635,8 @@ int main(int argc, char* arv[]) {
 		surfaceBuffer[j * canv->canvasWidth + i] = 0xFF938585;
 
 	DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
-	DrawWallpaper(canv, "/assam.jpg");
 	ChCanvasScreenUpdate(canv, 0, 0, canv->canvasWidth, canv->canvasHeight);
+
 
 	InitialiseDirtyClipList();
 
@@ -713,8 +714,7 @@ int main(int argc, char* arv[]) {
 	
 			Window* win = DeodhaiCreateWindow(x, y, w, h, flags, event.from_id, "Test");
 			focusedWin = win;
-
-
+			
 			PostEvent e;
 			memset(&e, 0, sizeof(PostEvent));
 			e.type = DEODHAI_REPLY_WINCREATED;

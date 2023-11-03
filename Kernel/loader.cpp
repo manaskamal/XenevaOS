@@ -239,6 +239,7 @@ void AuLoadExecToProcess(AuProcess* proc, char* filename, int argc,char** argv) 
 	proc->state = PROCESS_STATE_READY;
 	proc->file = file;
 	proc->fsys = fsys;
+	thr->procSlot = proc;
 	AuReleaseSpinlock(loader_lock);
 }
 

@@ -135,6 +135,7 @@ typedef struct _au_thread_ {
 	 * any user thread, uentry should
 	 * be filled */
 	AuUserEntry *uentry;
+	void* procSlot;
 	_au_thread_ *next;
 	_au_thread_ *prev;
 }AuThread;

@@ -48,7 +48,14 @@
 int OpenFile(char* filename, int mode) {
 	x64_cli();
 	AuThread* current_thr = AuGetCurrentThread();
+	if (!current_thr)
+		return 0;
 	AuProcess* current_proc = AuProcessFindThread(current_thr);
+	if (!current_proc) {
+		current_proc = AuProcessFindSubThread(current_thr);
+		if (!current_proc)
+			return 0;
+	}
 
 	AuVFSNode *fsys = AuVFSFind(filename);
 	AuVFSNode* file = AuVFSOpen(filename);
@@ -86,7 +93,14 @@ size_t ReadFile(int fd, void* buffer, size_t length) {
 	if (!length)
 		return 0;
 	AuThread* current_thr = AuGetCurrentThread();
+	if (!current_thr)
+		return 0;
 	AuProcess* current_proc = AuProcessFindThread(current_thr);
+	if (!current_proc){
+		current_proc = AuProcessFindSubThread(current_thr);
+		if (!current_proc)
+			return 0;
+	}
 	AuVFSNode* file = current_proc->fds[fd];
 	uint64_t* aligned_buffer = (uint64_t*)buffer;
 	if (!file)
@@ -129,7 +143,14 @@ size_t WriteFile(int fd, void* buffer, size_t length) {
 	if (!length)
 		return 0;
 	AuThread* current_thr = AuGetCurrentThread();
+	if (!current_thr)
+		return 0;
 	AuProcess* current_proc = AuProcessFindThread(current_thr);
+	if (!current_proc) {
+		current_proc = AuProcessFindSubThread(current_thr);
+		if (!current_proc) 
+			return 0;
+	}
 	AuVFSNode* file = current_proc->fds[fd];
 	uint8_t* aligned_buffer = (uint8_t*)buffer;
 
@@ -160,8 +181,17 @@ size_t WriteFile(int fd, void* buffer, size_t length) {
  * @param filename -- name of the directory
  */
 int CreateDir(char* filename) {
+	x64_cli();
 	AuThread* current_thr = AuGetCurrentThread();
+	if (!current_thr){
+		return 0;
+	}
 	AuProcess* current_proc = AuProcessFindThread(current_thr);
+	if (!current_proc) {
+		current_proc = AuProcessFindSubThread(current_thr);
+		if (!current_proc)
+			return 0;
+	}
 
 	AuVFSNode *fsys = AuVFSFind(filename);
 	AuVFSNode* dirfile = NULL;
@@ -203,7 +233,15 @@ int CloseFile(int fd) {
 	if (fd == -1)
 		return 0;
 	AuThread* current_thr = AuGetCurrentThread();
+	if (!current_thr)
+		return 0;
 	AuProcess* current_proc = AuProcessFindThread(current_thr);
+	if (!current_proc) {
+		current_proc = AuProcessFindSubThread(current_thr);
+		if (!current_proc)
+			return 0;
+	}
+
 	AuVFSNode* file = current_proc->fds[fd];
 	if (file->flags & FS_FLAG_FILE_SYSTEM)
 		return -1;
@@ -221,10 +259,18 @@ int CloseFile(int fd) {
  * @param arg -- argument to pass
  */
 int FileIoControl(int fd, int code, void* arg) {
+	x64_cli();
 	if (fd == -1)
 		return -1;
 	AuThread* current_thr = AuGetCurrentThread();
+	if (!current_thr)
+		return 0;
 	AuProcess* current_proc = AuProcessFindThread(current_thr);
+	if (!current_proc) {
+		current_proc = AuProcessFindSubThread(current_thr);
+		if (!current_proc)
+			return 0;
+	}
 	AuVFSNode* file = current_proc->fds[fd];
 
 	if (!file)
@@ -242,10 +288,19 @@ int FileIoControl(int fd, int code, void* arg) {
  * @param buf -- Pointer to file structure
  */
 int FileStat(int fd, void* buf) {
+	x64_cli();
 	if (fd == -1)
 		return -1;
 	AuThread* current_thr = AuGetCurrentThread();
+	if (!current_thr){
+		return 0;
+	}
 	AuProcess* current_proc = AuProcessFindThread(current_thr);
+	if (!current_proc) {
+		current_proc = AuProcessFindSubThread(current_thr);
+		if (!current_proc)
+			return 0;
+	}
 	AuVFSNode* file = current_proc->fds[fd];
 	if (!file)
 		return -1;

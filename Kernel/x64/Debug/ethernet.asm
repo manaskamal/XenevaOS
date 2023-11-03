@@ -212,14 +212,14 @@ $LN2@AuEthernet:
 
 	mov	rax, QWORD PTR netadapt$[rsp]
 	mov	rax, QWORD PTR [rax+14]
-	cmp	QWORD PTR [rax+88], 0
+	cmp	QWORD PTR [rax+96], 0
 	je	SHORT $LN1@AuEthernet
 
 ; 70   : 		SeTextOut("HWFile writing %x \r\n",netadapt->hwFile->write );
 
 	mov	rax, QWORD PTR netadapt$[rsp]
 	mov	rax, QWORD PTR [rax+14]
-	mov	rdx, QWORD PTR [rax+88]
+	mov	rdx, QWORD PTR [rax+96]
 	lea	rcx, OFFSET FLAT:$SG2988
 	call	SeTextOut
 
@@ -233,7 +233,7 @@ $LN2@AuEthernet:
 	mov	rdx, QWORD PTR [rcx+14]
 	mov	rcx, QWORD PTR netadapt$[rsp]
 	mov	rcx, QWORD PTR [rcx+14]
-	call	QWORD PTR [rax+88]
+	call	QWORD PTR [rax+96]
 $LN1@AuEthernet:
 
 ; 72   : 	}

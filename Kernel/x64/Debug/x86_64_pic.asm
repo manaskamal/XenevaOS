@@ -8,18 +8,14 @@ INCLUDELIB OLDNAMES
 _BSS	SEGMENT
 pic_counter DQ	01H DUP (?)
 _BSS	ENDS
-CONST	SEGMENT
-$SG3449	DB	'iNITIALISING PIC ', 0aH, 00H
-	ORG $+5
-$SG3487	DB	'PIC/PIT initialised ', 0aH, 00H
-CONST	ENDS
 PUBLIC	?AuInitialisePIC@@YAXXZ				; AuInitialisePIC
 PUBLIC	?AuPICSetMask@@YAXE@Z				; AuPICSetMask
 PUBLIC	?AuPICClearMask@@YAXE@Z				; AuPICClearMask
 PUBLIC	?AuPITSleepMS@@YAXI@Z				; AuPITSleepMS
 PUBLIC	?AuPICInterruptEOI@@YAXI@Z			; AuPICInterruptEOI
+PUBLIC	?AuPITOneShotMode@@YAXXZ			; AuPITOneShotMode
+PUBLIC	?AuPitOneShotWait@@YAXXZ			; AuPitOneShotWait
 PUBLIC	?AuPITHandler@@YAX_KPEAX@Z			; AuPITHandler
-EXTRN	AuTextOut:PROC
 EXTRN	setvect:PROC
 EXTRN	x64_inportb:PROC
 EXTRN	x64_outportb:PROC
@@ -33,7 +29,7 @@ _BSS	SEGMENT
 _BSS	ENDS
 pdata	SEGMENT
 $pdata$?AuInitialisePIC@@YAXXZ DD imagerel $LN27
-	DD	imagerel $LN27+534
+	DD	imagerel $LN27+510
 	DD	imagerel $unwind$?AuInitialisePIC@@YAXXZ
 $pdata$?AuPICSetMask@@YAXE@Z DD imagerel $LN5
 	DD	imagerel $LN5+105
@@ -44,6 +40,12 @@ $pdata$?AuPICClearMask@@YAXE@Z DD imagerel $LN5
 $pdata$?AuPICInterruptEOI@@YAXI@Z DD imagerel $LN5
 	DD	imagerel $LN5+51
 	DD	imagerel $unwind$?AuPICInterruptEOI@@YAXI@Z
+$pdata$?AuPITOneShotMode@@YAXXZ DD imagerel $LN3
+	DD	imagerel $LN3+138
+	DD	imagerel $unwind$?AuPITOneShotMode@@YAXXZ
+$pdata$?AuPitOneShotWait@@YAXXZ DD imagerel $LN5
+	DD	imagerel $LN5+30
+	DD	imagerel $unwind$?AuPitOneShotWait@@YAXXZ
 $pdata$?AuPITHandler@@YAX_KPEAX@Z DD imagerel $LN3
 	DD	imagerel $LN3+43
 	DD	imagerel $unwind$?AuPITHandler@@YAX_KPEAX@Z
@@ -57,6 +59,10 @@ $unwind$?AuPICClearMask@@YAXE@Z DD 010801H
 	DD	06208H
 $unwind$?AuPICInterruptEOI@@YAXI@Z DD 010801H
 	DD	04208H
+$unwind$?AuPITOneShotMode@@YAXXZ DD 010401H
+	DD	06204H
+$unwind$?AuPitOneShotWait@@YAXXZ DD 010401H
+	DD	04204H
 $unwind$?AuPITHandler@@YAX_KPEAX@Z DD 010e01H
 	DD	0420eH
 xdata	ENDS
@@ -67,25 +73,25 @@ v$ = 48
 param$ = 56
 ?AuPITHandler@@YAX_KPEAX@Z PROC				; AuPITHandler
 
-; 46   : void AuPITHandler(size_t v, void* param) {
+; 57   : void AuPITHandler(size_t v, void* param) {
 
 $LN3:
 	mov	QWORD PTR [rsp+16], rdx
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 40					; 00000028H
 
-; 47   : 	pic_counter++;
+; 58   : 	pic_counter++;
 
 	mov	rax, QWORD PTR pic_counter
 	inc	rax
 	mov	QWORD PTR pic_counter, rax
 
-; 48   : 	AuPICInterruptEOI(0);
+; 59   : 	AuPICInterruptEOI(0);
 
 	xor	ecx, ecx
 	call	?AuPICInterruptEOI@@YAXI@Z		; AuPICInterruptEOI
 
-; 49   : }
+; 60   : }
 
 	add	rsp, 40					; 00000028H
 	ret	0
@@ -94,47 +100,146 @@ _TEXT	ENDS
 ; Function compile flags: /Odtpy
 ; File e:\xeneva project\aurora\kernel\hal\x86_64_pic.cpp
 _TEXT	SEGMENT
+?AuPitOneShotWait@@YAXXZ PROC				; AuPitOneShotWait
+
+; 153  : void AuPitOneShotWait() {
+
+$LN5:
+	sub	rsp, 40					; 00000028H
+$LN2@AuPitOneSh:
+
+; 154  : 	while (!(x64_inportb(COUNTER_2_CONTROLPORT) & (1 << 5)));
+
+	mov	cx, 97					; 00000061H
+	call	x64_inportb
+	movzx	eax, al
+	and	eax, 32					; 00000020H
+	test	eax, eax
+	jne	SHORT $LN1@AuPitOneSh
+	jmp	SHORT $LN2@AuPitOneSh
+$LN1@AuPitOneSh:
+
+; 155  : 
+; 156  : }
+
+	add	rsp, 40					; 00000028H
+	ret	0
+?AuPitOneShotWait@@YAXXZ ENDP				; AuPitOneShotWait
+_TEXT	ENDS
+; Function compile flags: /Odtpy
+; File e:\xeneva project\aurora\kernel\hal\x86_64_pic.cpp
+_TEXT	SEGMENT
+val$ = 32
+?AuPITOneShotMode@@YAXXZ PROC				; AuPITOneShotMode
+
+; 142  : void AuPITOneShotMode() {
+
+$LN3:
+	sub	rsp, 56					; 00000038H
+
+; 143  : 	x64_outportb(COUNTER_2_CONTROLPORT, (x64_inportb(COUNTER_2_CONTROLPORT) & 0xFD) | 1);
+
+	mov	cx, 97					; 00000061H
+	call	x64_inportb
+	movzx	eax, al
+	and	eax, 253				; 000000fdH
+	or	eax, 1
+	movzx	edx, al
+	mov	cx, 97					; 00000061H
+	call	x64_outportb
+
+; 144  : 	x64_outportb(COMMAND_REGISTER, 0x80 | 0x30 | 0x00 | SIXTEEN_BIT_BINARY);
+
+	mov	dl, 176					; 000000b0H
+	mov	cx, 67					; 00000043H
+	call	x64_outportb
+
+; 145  : 	uint32_t val = 1193182 / 20;
+
+	mov	DWORD PTR val$[rsp], 59659		; 0000e90bH
+
+; 146  : 	x64_outportb(COUNTER_2_DATAPORT, val & 0xff); //vall >> 8 & 0xff
+
+	mov	eax, DWORD PTR val$[rsp]
+	and	eax, 255				; 000000ffH
+	movzx	edx, al
+	mov	cx, 66					; 00000042H
+	call	x64_outportb
+
+; 147  : 	x64_outportb(COUNTER_2_DATAPORT, (val >> 8) & 0xff);
+
+	mov	eax, DWORD PTR val$[rsp]
+	shr	eax, 8
+	and	eax, 255				; 000000ffH
+	movzx	edx, al
+	mov	cx, 66					; 00000042H
+	call	x64_outportb
+
+; 148  : 	x64_outportb(COUNTER_2_CONTROLPORT, val);
+
+	movzx	edx, BYTE PTR val$[rsp]
+	mov	cx, 97					; 00000061H
+	call	x64_outportb
+
+; 149  : 	x64_outportb(COUNTER_2_CONTROLPORT, val | 1);
+
+	mov	eax, DWORD PTR val$[rsp]
+	or	eax, 1
+	movzx	edx, al
+	mov	cx, 97					; 00000061H
+	call	x64_outportb
+
+; 150  : 
+; 151  : }
+
+	add	rsp, 56					; 00000038H
+	ret	0
+?AuPITOneShotMode@@YAXXZ ENDP				; AuPITOneShotMode
+_TEXT	ENDS
+; Function compile flags: /Odtpy
+; File e:\xeneva project\aurora\kernel\hal\x86_64_pic.cpp
+_TEXT	SEGMENT
 intno$ = 48
 ?AuPICInterruptEOI@@YAXI@Z PROC				; AuPICInterruptEOI
 
-; 34   : void AuPICInterruptEOI(unsigned int intno) {
+; 45   : void AuPICInterruptEOI(unsigned int intno) {
 
 $LN5:
 	mov	DWORD PTR [rsp+8], ecx
 	sub	rsp, 40					; 00000028H
 
-; 35   : 	if (intno > 16)
+; 46   : 	if (intno > 16)
 
 	cmp	DWORD PTR intno$[rsp], 16
 	jbe	SHORT $LN2@AuPICInter
 
-; 36   : 		return;
+; 47   : 		return;
 
 	jmp	SHORT $LN3@AuPICInter
 $LN2@AuPICInter:
 
-; 37   : 
-; 38   : 	if (intno >= 8)
+; 48   : 
+; 49   : 	if (intno >= 8)
 
 	cmp	DWORD PTR intno$[rsp], 8
 	jb	SHORT $LN1@AuPICInter
 
-; 39   : 		x64_outportb(PIC2_COMMAND, PIC_EOI);
+; 50   : 		x64_outportb(PIC2_COMMAND, PIC_EOI);
 
 	mov	dl, 32					; 00000020H
 	mov	cx, 160					; 000000a0H
 	call	x64_outportb
 $LN1@AuPICInter:
 
-; 40   : 
-; 41   : 	x64_outportb(PIC1_COMMAND, PIC_EOI);
+; 51   : 
+; 52   : 	x64_outportb(PIC1_COMMAND, PIC_EOI);
 
 	mov	dl, 32					; 00000020H
 	mov	cx, 32					; 00000020H
 	call	x64_outportb
 $LN3@AuPICInter:
 
-; 42   : }
+; 53   : }
 
 	add	rsp, 40					; 00000028H
 	ret	0
@@ -146,11 +251,11 @@ _TEXT	SEGMENT
 ms$ = 8
 ?AuPITSleepMS@@YAXI@Z PROC				; AuPITSleepMS
 
-; 81   : void AuPITSleepMS(uint32_t ms) {
+; 92   : void AuPITSleepMS(uint32_t ms) {
 
 	mov	DWORD PTR [rsp+8], ecx
 
-; 82   : 	static int ticks = ms + pic_counter;
+; 93   : 	static int ticks = ms + pic_counter;
 
 	mov	eax, DWORD PTR ?$S1@?1??AuPITSleepMS@@YAXI@Z@4IA
 	and	eax, 1
@@ -165,18 +270,18 @@ ms$ = 8
 $LN3@AuPITSleep:
 $LN2@AuPITSleep:
 
-; 83   : 	while (ticks > pic_counter)
+; 94   : 	while (ticks > pic_counter)
 
 	movsxd	rax, DWORD PTR ?ticks@?1??AuPITSleepMS@@YAXI@Z@4HA
 	cmp	rax, QWORD PTR pic_counter
 	jbe	SHORT $LN1@AuPITSleep
 
-; 84   : 		;
+; 95   : 		;
 
 	jmp	SHORT $LN2@AuPITSleep
 $LN1@AuPITSleep:
 
-; 85   : }
+; 96   : }
 
 	ret	0
 ?AuPITSleepMS@@YAXI@Z ENDP				; AuPITSleepMS
@@ -189,46 +294,46 @@ port$ = 36
 irq$ = 64
 ?AuPICClearMask@@YAXE@Z PROC				; AuPICClearMask
 
-; 66   : void AuPICClearMask(uint8_t irq) {
+; 77   : void AuPICClearMask(uint8_t irq) {
 
 $LN5:
 	mov	BYTE PTR [rsp+8], cl
 	sub	rsp, 56					; 00000038H
 
-; 67   : 	uint16_t port;
-; 68   : 	uint8_t value;
-; 69   : 
-; 70   : 	if (irq < 8)
+; 78   : 	uint16_t port;
+; 79   : 	uint8_t value;
+; 80   : 
+; 81   : 	if (irq < 8)
 
 	movzx	eax, BYTE PTR irq$[rsp]
 	cmp	eax, 8
 	jge	SHORT $LN2@AuPICClear
 
-; 71   : 		port = PIC1_DATA;
+; 82   : 		port = PIC1_DATA;
 
 	mov	eax, 33					; 00000021H
 	mov	WORD PTR port$[rsp], ax
 
-; 72   : 	else {
+; 83   : 	else {
 
 	jmp	SHORT $LN1@AuPICClear
 $LN2@AuPICClear:
 
-; 73   : 		port = PIC2_DATA;
+; 84   : 		port = PIC2_DATA;
 
 	mov	eax, 161				; 000000a1H
 	mov	WORD PTR port$[rsp], ax
 
-; 74   : 		irq -= 8;
+; 85   : 		irq -= 8;
 
 	movzx	eax, BYTE PTR irq$[rsp]
 	sub	eax, 8
 	mov	BYTE PTR irq$[rsp], al
 $LN1@AuPICClear:
 
-; 75   : 	}
-; 76   : 
-; 77   : 	value = x64_inportb(port) & ~(1 << irq);
+; 86   : 	}
+; 87   : 
+; 88   : 	value = x64_inportb(port) & ~(1 << irq);
 
 	movzx	ecx, WORD PTR port$[rsp]
 	call	x64_inportb
@@ -241,13 +346,13 @@ $LN1@AuPICClear:
 	and	eax, ecx
 	mov	BYTE PTR value$[rsp], al
 
-; 78   : 	x64_outportb(port, value);
+; 89   : 	x64_outportb(port, value);
 
 	movzx	edx, BYTE PTR value$[rsp]
 	movzx	ecx, WORD PTR port$[rsp]
 	call	x64_outportb
 
-; 79   : }
+; 90   : }
 
 	add	rsp, 56					; 00000038H
 	ret	0
@@ -261,46 +366,46 @@ port$ = 36
 irq$ = 64
 ?AuPICSetMask@@YAXE@Z PROC				; AuPICSetMask
 
-; 51   : void AuPICSetMask(uint8_t irq) {
+; 62   : void AuPICSetMask(uint8_t irq) {
 
 $LN5:
 	mov	BYTE PTR [rsp+8], cl
 	sub	rsp, 56					; 00000038H
 
-; 52   : 	uint16_t port;
-; 53   : 	uint8_t value;
-; 54   : 
-; 55   : 	if (irq < 8)
+; 63   : 	uint16_t port;
+; 64   : 	uint8_t value;
+; 65   : 
+; 66   : 	if (irq < 8)
 
 	movzx	eax, BYTE PTR irq$[rsp]
 	cmp	eax, 8
 	jge	SHORT $LN2@AuPICSetMa
 
-; 56   : 		port = PIC1_DATA;
+; 67   : 		port = PIC1_DATA;
 
 	mov	eax, 33					; 00000021H
 	mov	WORD PTR port$[rsp], ax
 
-; 57   : 	else{
+; 68   : 	else{
 
 	jmp	SHORT $LN1@AuPICSetMa
 $LN2@AuPICSetMa:
 
-; 58   : 		port = PIC2_DATA;
+; 69   : 		port = PIC2_DATA;
 
 	mov	eax, 161				; 000000a1H
 	mov	WORD PTR port$[rsp], ax
 
-; 59   : 		irq -= 8;
+; 70   : 		irq -= 8;
 
 	movzx	eax, BYTE PTR irq$[rsp]
 	sub	eax, 8
 	mov	BYTE PTR irq$[rsp], al
 $LN1@AuPICSetMa:
 
-; 60   : 	}
-; 61   : 
-; 62   : 	value = x64_inportb(port) | (1 << irq);
+; 71   : 	}
+; 72   : 
+; 73   : 	value = x64_inportb(port) | (1 << irq);
 
 	movzx	ecx, WORD PTR port$[rsp]
 	call	x64_inportb
@@ -312,13 +417,13 @@ $LN1@AuPICSetMa:
 	or	eax, ecx
 	mov	BYTE PTR value$[rsp], al
 
-; 63   : 	x64_outportb(port, value);
+; 74   : 	x64_outportb(port, value);
 
 	movzx	edx, BYTE PTR value$[rsp]
 	movzx	ecx, WORD PTR port$[rsp]
 	call	x64_outportb
 
-; 64   : }
+; 75   : }
 
 	add	rsp, 56					; 00000038H
 	ret	0
@@ -342,46 +447,41 @@ i$8 = 64
 divisor$ = 68
 ?AuInitialisePIC@@YAXXZ PROC				; AuInitialisePIC
 
-; 87   : void AuInitialisePIC() {
+; 98   : void AuInitialisePIC() {
 
 $LN27:
 	sub	rsp, 88					; 00000058H
 
-; 88   : 	AuTextOut("iNITIALISING PIC \n");
-
-	lea	rcx, OFFSET FLAT:$SG3449
-	call	AuTextOut
-
-; 89   : 	uint8_t base0 = 0x20;
+; 99   : 	uint8_t base0 = 0x20;
 
 	mov	BYTE PTR base0$[rsp], 32		; 00000020H
 
-; 90   : 	uint8_t base1 = 0x28;
+; 100  : 	uint8_t base1 = 0x28;
 
 	mov	BYTE PTR base1$[rsp], 40		; 00000028H
 
-; 91   : 
-; 92   : 	unsigned char a1, a2;
-; 93   : 	a1 = x64_inportb(PIC1_DATA);
+; 101  : 
+; 102  : 	unsigned char a1, a2;
+; 103  : 	a1 = x64_inportb(PIC1_DATA);
 
 	mov	cx, 33					; 00000021H
 	call	x64_inportb
 	mov	BYTE PTR a1$[rsp], al
 
-; 94   : 	a2 = x64_inportb(PIC2_DATA);
+; 104  : 	a2 = x64_inportb(PIC2_DATA);
 
 	mov	cx, 161					; 000000a1H
 	call	x64_inportb
 	mov	BYTE PTR a2$[rsp], al
 
-; 95   : 
-; 96   : 	x64_outportb(PIC1_COMMAND, ICW1_INIT | ICW1_ICW4);
+; 105  : 
+; 106  : 	x64_outportb(PIC1_COMMAND, ICW1_INIT | ICW1_ICW4);
 
 	mov	dl, 17
 	mov	cx, 32					; 00000020H
 	call	x64_outportb
 
-; 97   : 	for (int i = 0; i < 1000; i++)
+; 107  : 	for (int i = 0; i < 1000; i++)
 
 	mov	DWORD PTR i$4[rsp], 0
 	jmp	SHORT $LN24@AuInitiali
@@ -393,18 +493,18 @@ $LN24@AuInitiali:
 	cmp	DWORD PTR i$4[rsp], 1000		; 000003e8H
 	jge	SHORT $LN22@AuInitiali
 
-; 98   : 		;
+; 108  : 		;
 
 	jmp	SHORT $LN23@AuInitiali
 $LN22@AuInitiali:
 
-; 99   : 	x64_outportb(PIC2_COMMAND, ICW1_INIT | ICW1_ICW4);
+; 109  : 	x64_outportb(PIC2_COMMAND, ICW1_INIT | ICW1_ICW4);
 
 	mov	dl, 17
 	mov	cx, 160					; 000000a0H
 	call	x64_outportb
 
-; 100  : 	for (int i = 0; i < 1000; i++)
+; 110  : 	for (int i = 0; i < 1000; i++)
 
 	mov	DWORD PTR i$6[rsp], 0
 	jmp	SHORT $LN21@AuInitiali
@@ -416,18 +516,18 @@ $LN21@AuInitiali:
 	cmp	DWORD PTR i$6[rsp], 1000		; 000003e8H
 	jge	SHORT $LN19@AuInitiali
 
-; 101  : 		;
+; 111  : 		;
 
 	jmp	SHORT $LN20@AuInitiali
 $LN19@AuInitiali:
 
-; 102  : 	x64_outportb(PIC1_DATA, base0);
+; 112  : 	x64_outportb(PIC1_DATA, base0);
 
 	movzx	edx, BYTE PTR base0$[rsp]
 	mov	cx, 33					; 00000021H
 	call	x64_outportb
 
-; 103  : 	for (int i = 0; i < 1000; i++)
+; 113  : 	for (int i = 0; i < 1000; i++)
 
 	mov	DWORD PTR i$1[rsp], 0
 	jmp	SHORT $LN18@AuInitiali
@@ -439,18 +539,18 @@ $LN18@AuInitiali:
 	cmp	DWORD PTR i$1[rsp], 1000		; 000003e8H
 	jge	SHORT $LN16@AuInitiali
 
-; 104  : 		;
+; 114  : 		;
 
 	jmp	SHORT $LN17@AuInitiali
 $LN16@AuInitiali:
 
-; 105  : 	x64_outportb(PIC2_DATA, base1);
+; 115  : 	x64_outportb(PIC2_DATA, base1);
 
 	movzx	edx, BYTE PTR base1$[rsp]
 	mov	cx, 161					; 000000a1H
 	call	x64_outportb
 
-; 106  : 	for (int i = 0; i < 1000; i++)
+; 116  : 	for (int i = 0; i < 1000; i++)
 
 	mov	DWORD PTR i$8[rsp], 0
 	jmp	SHORT $LN15@AuInitiali
@@ -462,18 +562,18 @@ $LN15@AuInitiali:
 	cmp	DWORD PTR i$8[rsp], 1000		; 000003e8H
 	jge	SHORT $LN13@AuInitiali
 
-; 107  : 		;
+; 117  : 		;
 
 	jmp	SHORT $LN14@AuInitiali
 $LN13@AuInitiali:
 
-; 108  : 	x64_outportb(PIC1_DATA, 4);
+; 118  : 	x64_outportb(PIC1_DATA, 4);
 
 	mov	dl, 4
 	mov	cx, 33					; 00000021H
 	call	x64_outportb
 
-; 109  : 	for (int i = 0; i < 1000; i++)
+; 119  : 	for (int i = 0; i < 1000; i++)
 
 	mov	DWORD PTR i$2[rsp], 0
 	jmp	SHORT $LN12@AuInitiali
@@ -485,18 +585,18 @@ $LN12@AuInitiali:
 	cmp	DWORD PTR i$2[rsp], 1000		; 000003e8H
 	jge	SHORT $LN10@AuInitiali
 
-; 110  : 		;
+; 120  : 		;
 
 	jmp	SHORT $LN11@AuInitiali
 $LN10@AuInitiali:
 
-; 111  : 	x64_outportb(PIC2_DATA, 2);
+; 121  : 	x64_outportb(PIC2_DATA, 2);
 
 	mov	dl, 2
 	mov	cx, 161					; 000000a1H
 	call	x64_outportb
 
-; 112  : 	for (int i = 0; i < 1000; i++)
+; 122  : 	for (int i = 0; i < 1000; i++)
 
 	mov	DWORD PTR i$3[rsp], 0
 	jmp	SHORT $LN9@AuInitiali
@@ -508,18 +608,18 @@ $LN9@AuInitiali:
 	cmp	DWORD PTR i$3[rsp], 1000		; 000003e8H
 	jge	SHORT $LN7@AuInitiali
 
-; 113  : 		;
+; 123  : 		;
 
 	jmp	SHORT $LN8@AuInitiali
 $LN7@AuInitiali:
 
-; 114  : 	x64_outportb(PIC1_DATA, ICW4_8086);
+; 124  : 	x64_outportb(PIC1_DATA, ICW4_8086);
 
 	mov	dl, 1
 	mov	cx, 33					; 00000021H
 	call	x64_outportb
 
-; 115  : 	for (int i = 0; i < 1000; i++)
+; 125  : 	for (int i = 0; i < 1000; i++)
 
 	mov	DWORD PTR i$5[rsp], 0
 	jmp	SHORT $LN6@AuInitiali
@@ -531,18 +631,18 @@ $LN6@AuInitiali:
 	cmp	DWORD PTR i$5[rsp], 1000		; 000003e8H
 	jge	SHORT $LN4@AuInitiali
 
-; 116  : 		;
+; 126  : 		;
 
 	jmp	SHORT $LN5@AuInitiali
 $LN4@AuInitiali:
 
-; 117  : 	x64_outportb(PIC2_DATA, ICW4_8086);
+; 127  : 	x64_outportb(PIC2_DATA, ICW4_8086);
 
 	mov	dl, 1
 	mov	cx, 161					; 000000a1H
 	call	x64_outportb
 
-; 118  : 	for (int i = 0; i < 1000; i++)
+; 128  : 	for (int i = 0; i < 1000; i++)
 
 	mov	DWORD PTR i$7[rsp], 0
 	jmp	SHORT $LN3@AuInitiali
@@ -554,41 +654,41 @@ $LN3@AuInitiali:
 	cmp	DWORD PTR i$7[rsp], 1000		; 000003e8H
 	jge	SHORT $LN1@AuInitiali
 
-; 119  : 		;
+; 129  : 		;
 
 	jmp	SHORT $LN2@AuInitiali
 $LN1@AuInitiali:
 
-; 120  : 	x64_outportb(PIC1_DATA, a1);
+; 130  : 	x64_outportb(PIC1_DATA, a1);
 
 	movzx	edx, BYTE PTR a1$[rsp]
 	mov	cx, 33					; 00000021H
 	call	x64_outportb
 
-; 121  : 	x64_outportb(PIC2_DATA, a2);
+; 131  : 	x64_outportb(PIC2_DATA, a2);
 
 	movzx	edx, BYTE PTR a2$[rsp]
 	mov	cx, 161					; 000000a1H
 	call	x64_outportb
 
-; 122  : 
-; 123  : 	unsigned int divisor = 1193181 / 100;
+; 132  : 
+; 133  : 	unsigned int divisor = 1193181 / 100;
 
 	mov	DWORD PTR divisor$[rsp], 11931		; 00002e9bH
 
-; 124  : 	x64_outportb(0x43, 0x00 | 0x06 | 0x30 | 0x00);
+; 134  : 	x64_outportb(0x43, 0x00 | 0x06 | 0x30 | 0x00);
 
 	mov	dl, 54					; 00000036H
 	mov	cx, 67					; 00000043H
 	call	x64_outportb
 
-; 125  : 	x64_outportb(0x40, divisor);
+; 135  : 	x64_outportb(0x40, divisor);
 
 	movzx	edx, BYTE PTR divisor$[rsp]
 	mov	cx, 64					; 00000040H
 	call	x64_outportb
 
-; 126  : 	x64_outportb(0x40, divisor >> 8);
+; 136  : 	x64_outportb(0x40, divisor >> 8);
 
 	mov	eax, DWORD PTR divisor$[rsp]
 	shr	eax, 8
@@ -596,27 +696,22 @@ $LN1@AuInitiali:
 	mov	cx, 64					; 00000040H
 	call	x64_outportb
 
-; 127  : 	setvect(32 + 0, AuPITHandler);
+; 137  : 	setvect(32 + 0, AuPITHandler);
 
 	lea	rdx, OFFSET FLAT:?AuPITHandler@@YAX_KPEAX@Z ; AuPITHandler
 	mov	ecx, 32					; 00000020H
 	call	setvect
 
-; 128  : 	AuTextOut("PIC/PIT initialised \n");
-
-	lea	rcx, OFFSET FLAT:$SG3487
-	call	AuTextOut
-
-; 129  : 	pic_counter = 0;
+; 138  : 	pic_counter = 0;
 
 	mov	QWORD PTR pic_counter, 0
 
-; 130  : 	AuPICClearMask(0);
+; 139  : 	AuPICClearMask(0);
 
 	xor	ecx, ecx
 	call	?AuPICClearMask@@YAXE@Z			; AuPICClearMask
 
-; 131  : }
+; 140  : }
 
 	add	rsp, 88					; 00000058H
 	ret	0

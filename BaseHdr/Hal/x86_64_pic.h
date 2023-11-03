@@ -57,5 +57,8 @@ void AuInitialisePIC();
 void AuPICSetMask(uint8_t irq);
 void AuPICClearMask(uint8_t irq);
 void AuPITSleepMS(uint32_t ms);
+void AuPICInterruptEOI(unsigned int intno);
+void AuPITOneShotMode();
+void AuPitOneShotWait();
 
 #endif

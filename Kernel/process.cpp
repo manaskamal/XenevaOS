@@ -159,6 +159,17 @@ AuProcess *AuProcessFindThread(AuThread* thread) {
 }
 
 /*
+ * AuProcessFindSubThread -- find a process from its 
+ * sub threads which contain a pointer to its process
+ * slot
+ * @param thread -- Pointer to sub thread
+ */
+AuProcess* AuProcessFindSubThread(AuThread* thread) {
+	AuProcess* proc = (AuProcess*)thread->procSlot;
+	return proc;
+}
+
+/*
  * CreateUserStack -- creates new user stack
  * @param proc -- Pointer to process slot
  * @param cr3 -- pointer to the address space where to
@@ -363,8 +374,8 @@ void AuProcessWaitForTermination(AuProcess *proc, int pid) {
 
 
 		if (!killable){
-			//AuBlockThread(proc->main_thread);
-			AuSleepThread(proc->main_thread, 1000);
+			AuBlockThread(proc->main_thread);
+			AuSleepThread(proc->main_thread, 10000);
 			proc->state = PROCESS_STATE_SUSPENDED;
 			x64_force_sched();
 		}
@@ -487,6 +498,7 @@ int AuCreateUserthread(AuProcess* proc, void(*entry) (void*), char *name)
 	AuThread* thr = AuCreateKthread(AuProcessEntUser, CreateKernelStack(proc, proc->cr3), V2P((size_t)proc->cr3), name);
 	thr->frame.rsp -= 32;
 	thr->priviledge |= THREAD_LEVEL_USER | THREAD_LEVEL_SUBTHREAD | ~THREAD_LEVEL_MAIN_THREAD;
+	thr->procSlot = proc;
 	AuUserEntry *uentry = (AuUserEntry*)kmalloc(sizeof(AuUserEntry));
 	memset(uentry, 0, sizeof(AuUserEntry));
 	uentry->argvaddr = 0;
@@ -497,9 +509,10 @@ int AuCreateUserthread(AuProcess* proc, void(*entry) (void*), char *name)
 	uentry->num_args = 0;
 	uentry->rsp = (uint64_t)CreateUserStack(proc, proc->cr3);
 	thr->uentry = uentry;
+	int thread_indx = proc->num_thread;
 	proc->threads[proc->num_thread] = thr;
 	proc->num_thread++;
-	return 1;
+	return thread_indx;
 }
 
 

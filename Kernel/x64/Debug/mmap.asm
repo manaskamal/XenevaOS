@@ -10,11 +10,11 @@ _BSS	SEGMENT
 ?shmmaplist@@3PEAU_list_@@EA DQ 01H DUP (?)		; shmmaplist
 _BSS	ENDS
 CONST	SEGMENT
-$SG3534	DB	'/', 00H
+$SG3537	DB	'/', 00H
 	ORG $+6
-$SG3552	DB	'mmap reading file ', 0dH, 0aH, 00H
+$SG3555	DB	'mmap reading file ', 0dH, 0aH, 00H
 	ORG $+3
-$SG3562	DB	'SHOBJ newly created -> %s ', 0dH, 0aH, 00H
+$SG3565	DB	'SHOBJ newly created -> %s ', 0dH, 0aH, 00H
 CONST	ENDS
 PUBLIC	?SharedMemMapListInitialise@@YAXXZ		; SharedMemMapListInitialise
 PUBLIC	?CreateMemMapping@@YAPEAXPEAX_KHHH1@Z		; CreateMemMapping
@@ -732,7 +732,7 @@ $LN27@CreateMemM:
 
 	movsxd	rax, DWORD PTR fd$[rsp]
 	mov	rcx, QWORD PTR proc$[rsp]
-	mov	rax, QWORD PTR [rcx+rax*8+567]
+	mov	rax, QWORD PTR [rcx+rax*8+576]
 	mov	QWORD PTR file$[rsp], rax
 $LN26@CreateMemM:
 
@@ -796,7 +796,7 @@ $LN31@CreateMemM:
 
 ; 150  : 		fsys = AuVFSFind("/");
 
-	lea	rcx, OFFSET FLAT:$SG3534
+	lea	rcx, OFFSET FLAT:$SG3537
 	call	AuVFSFind
 	mov	QWORD PTR fsys$[rsp], rax
 
@@ -816,7 +816,7 @@ $LN22@CreateMemM:
 ; 153  : 		if (!(file->flags & FS_FLAG_DEVICE)) {
 
 	mov	rax, QWORD PTR file$[rsp]
-	movzx	eax, WORD PTR [rax+61]
+	movzx	eax, WORD PTR [rax+64]
 	and	eax, 8
 	test	eax, eax
 	jne	SHORT $LN21@CreateMemM
@@ -833,7 +833,7 @@ $LN22@CreateMemM:
 
 	mov	rax, QWORD PTR file$[rsp]
 	mov	rcx, QWORD PTR file_block_start$4[rsp]
-	mov	QWORD PTR [rax+53], rcx
+	mov	QWORD PTR [rax+56], rcx
 $LN21@CreateMemM:
 
 ; 156  : 		}
@@ -1027,7 +1027,7 @@ $LN10@CreateMemM:
 
 ; 202  : 			SeTextOut("mmap reading file \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG3552
+	lea	rcx, OFFSET FLAT:$SG3555
 	call	SeTextOut
 
 ; 203  : 			AuVFSNodeReadBlock(fsys, file, (uint64_t*)phys);
@@ -1190,7 +1190,7 @@ $LN13@CreateMemM:
 
 	mov	rax, QWORD PTR shobj$[rsp]
 	mov	rdx, QWORD PTR [rax]
-	lea	rcx, OFFSET FLAT:$SG3562
+	lea	rcx, OFFSET FLAT:$SG3565
 	call	SeTextOut
 $LN2@CreateMemM:
 
@@ -1216,10 +1216,10 @@ $LN3@CreateMemM:
 ; 233  : 	proc->proc_mmap_len += len;
 
 	mov	rax, QWORD PTR proc$[rsp]
-	mov	rax, QWORD PTR [rax+1095]
+	mov	rax, QWORD PTR [rax+1104]
 	add	rax, QWORD PTR len$[rsp]
 	mov	rcx, QWORD PTR proc$[rsp]
-	mov	QWORD PTR [rcx+1095], rax
+	mov	QWORD PTR [rcx+1104], rax
 
 ; 234  : 	return (void*)lookup_addr;
 
