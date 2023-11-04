@@ -62,6 +62,7 @@ bool _audio_stopped_;
 #define SOUND_MUTE_ENABLE     108
 #define SOUND_MUTE_DISABLE    109
 #define SOUND_READ_AVAIL      110
+#define SOUND_UNREGISTER_SNDPLR 111
 
 #define SND_BUFF_SZ  PAGE_SIZE
 /*
@@ -252,6 +253,11 @@ int AuSoundIOControl(AuVFSNode* node, int code, void* arg) {
 								   return -1;
 							   _Registered_dev->set_vol(_ioctl->uchar_1);
 							   break;
+	}
+	case SOUND_UNREGISTER_SNDPLR:{
+									 AuSoundRemoveDSP(thr->id);
+									 break;
+
 	}
 	default:
 		break;

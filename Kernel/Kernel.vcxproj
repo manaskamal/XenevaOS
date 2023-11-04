@@ -179,7 +179,6 @@
     <ClInclude Include="..\BaseHdr\Hal\acpiosl.h" />
     <ClInclude Include="..\BaseHdr\Hal\apic.h" />
     <ClInclude Include="..\BaseHdr\Hal\basicacpi.h" />
-    <ClInclude Include="..\BaseHdr\Hal\clock.h" />
     <ClInclude Include="..\BaseHdr\Hal\hal.h" />
     <ClInclude Include="..\BaseHdr\Hal\ioapic.h" />
     <ClInclude Include="..\BaseHdr\Hal\pcpu.h" />
@@ -252,7 +251,6 @@
     <ClCompile Include="Hal\acpiosl.cpp" />
     <ClCompile Include="Hal\apic.cpp" />
     <ClCompile Include="Hal\basicacpi.cpp" />
-    <ClCompile Include="Hal\clock.cpp" />
     <ClCompile Include="Hal\hal.cpp" />
     <ClCompile Include="Hal\ioapic.cpp" />
     <ClCompile Include="Hal\pcpu.cpp" />

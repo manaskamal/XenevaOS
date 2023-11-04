@@ -43,6 +43,7 @@
  * thread
  */
 int PauseThread() {
+	x64_cli();
 	AuThread * current_thr = AuGetCurrentThread();
 	AuBlockThread(current_thr);
 	x64_force_sched();

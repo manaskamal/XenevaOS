@@ -51,59 +51,7 @@ int cursor_x;
 int cursor_y;
 int last_cursor_y;
 int last_cursor_x;
-
-#pragma pack(push,1)
-typedef struct _psf_ {
-	uint32_t magic;
-	uint32_t version;
-	uint32_t headerSize;
-	uint32_t flags;
-	uint32_t numGlyph;
-	uint32_t bytesPerGlyph;
-	uint32_t height;
-	uint32_t width;
-	uint8_t glyphs;
-}PSF2;
-#pragma pack(pop)
-
-char kbdus[128] = {
-	0, 27, '1', '2', '3', '4', '5', '6', '7', '8', /* 9 */
-	'9', '0', '-', '=', '\b',   /* Backspace */
-	'\t',           /* Tab */
-	'q', 'w', 'e', 'r', /* 19 */
-	't', 'y', 'u', 'i', 'o', 'p', '[', ']', '\n',       /* Enter key */
-	0,          /* 29   - Control */
-	'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';',   /* 39 */
-	'\'', '`', 0,     /* Left shift */
-	'\\', 'z', 'x', 'c', 'v', 'b', 'n',         /* 49 */
-	'm', ',', '.', '/', 0,                    /* Right shift */
-	'*',
-	0,  /* Alt */
-	' ',    /* Space bar */
-	0,  /* Caps lock */
-	0,  /* 59 - F1 key ... > */
-	0, 0, 0, 0, 0, 0, 0, 0,
-	0,  /* < ... F10 */
-	0,  /* 69 - Num lock*/
-	0,  /* Scroll Lock */
-	0,  /* Home key */
-	0,  /* Up Arrow */
-	0,  /* Page Up */
-	'-',
-	0,  /* Left Arrow */
-	0,
-	0,  /* Right Arrow */
-	'+',
-	0,  /* 79 - End key*/
-	0,  /* Down Arrow */
-	0,  /* Page Down */
-	0,  /* Insert Key */
-	0,  /* Delete Key */
-	0, 0, 0,
-	0,  /* F11 Key */
-	0,  /* F12 Key */
-	0,  /* All other keys are undefined */
-};
+bool dirty = false;
 
 /*
  * TerminalDrawArrayFont -- draw bitmap fonts using defined array
@@ -210,9 +158,10 @@ void TerminalHandleMessage(PostEvent *e) {
 	}
 }
 
-int demo_num = 0;
 
 void TerminalThread() {
+	TerminalPrintString("\nTerminal Thread(1) - Ekadantaya Vakratundaya.wav", WHITE, BLACK);
+	TerminalDrawAllCells();
 	/* open the sound device-file, it is in /dev directory */
 	int snd = _KeOpenFile("/dev/sound", FILE_OPEN_WRITE);
 
@@ -254,6 +203,9 @@ void TerminalThread() {
 		/* after we finish playing the sound, we exit */
 		if (fs.eof) {
 			_finished = true;
+			TerminalPrintString("\nFinished Playing", WHITE, BLACK);
+			TerminalDrawAllCells();
+			_KeFileIoControl(snd, SOUND_UNREGISTER_SNDPLR, &ioctl);
 			_KePauseThread();
 		}
 
@@ -261,7 +213,7 @@ void TerminalThread() {
 			_KeWriteFile(snd, songbuf, 4096);
 			_KeReadFile(song, songbuf, 4096);
 		}
-		
+
 	}
 }
 
@@ -290,7 +242,6 @@ int main(int argc, char* arv[]){
 	last_cursor_x = ws_col - 2;
 
 	master_fd = slave_fd = 0;
-
 	/* create the terminal */
 	int success = 0;
 	success = _KeCreateTTY(&master_fd, &slave_fd);
@@ -309,8 +260,6 @@ int main(int argc, char* arv[]){
 	TerminalPrintString("HP@LAPTOP-UCFKK4J9-", GREEN, BLACK);
 	TerminalPrintString("/:$", LIGHTSILVER, BLACK);
 	TerminalDrawAllCells();
-
-	demo_num = 10;
 	int thread_idx = _KeCreateThread(TerminalThread, "tthr");
 	PostEvent e;
 	memset(&e, 0, sizeof(PostEvent));
@@ -319,6 +268,5 @@ int main(int argc, char* arv[]){
 		TerminalHandleMessage(&e);
 		if (err == POSTBOX_NO_EVENT)
 			_KePauseThread();
-
 	}
 }

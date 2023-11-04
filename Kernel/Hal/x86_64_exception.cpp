@@ -204,6 +204,7 @@ void page_fault(size_t vector, void* param){
 	AuProcess *proc = NULL;
 	if (thr) {
 		proc = AuProcessFindThread(thr);
+		SeTextOut("Thread name -> %s \r\n", thr->name);
 		if (proc) {
 			SeTextOut("Process pid -> %d \r\n", proc->proc_id);
 			SeTextOut("Process name -> %s \r\n", proc->name);
