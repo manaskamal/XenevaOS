@@ -101,4 +101,12 @@ XE_EXTERN XE_LIB uint64_t _KeGetProcessHeapMem(size_t sz);
 * @param prot -- protection flags
 */
 XE_EXTERN XE_LIB void _KeMemMapDirty(void* startAddr, size_t len, int flags, int prot);
+
+/*
+* _KeProcessHeapUnmap -- unmaps previosly allocated
+* heap memory
+* @param ptr -- Pointer to freeable address
+* @param sz -- size in bytes to unallocate
+*/
+XE_EXTERN XE_LIB int _KeProcessHeapUnmap(void* ptr, size_t sz);
 #endif

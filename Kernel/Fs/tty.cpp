@@ -38,6 +38,7 @@
 #include <process.h>
 #include <Hal\x86_64_signal.h>
 #include <Hal\x86_64_hal.h>
+#include <Hal\serial.h>
 #include <aucon.h>
 
 size_t master_count = 0;
@@ -131,6 +132,7 @@ void AuTTYProcessLine(TTY* tty, uint8_t c) {
 
 
 size_t AuTTYMasterRead(AuVFSNode* fs, AuVFSNode* file, uint64_t* buffer, uint32_t len) {
+	x64_cli();
 	TTY* type = (TTY*)file->device;
 	if (!type)
 		return 0;
@@ -146,6 +148,12 @@ size_t AuTTYMasterRead(AuVFSNode* fs, AuVFSNode* file, uint64_t* buffer, uint32_
 		bytes_to_ret++;
 	}
 
+	if (type->blockedSlaveId >0) {
+		AuThread* thr = AuThreadFindByIDBlockList(type->blockedSlaveId);
+		if (thr)
+			AuUnblockThread(thr);
+	}
+
 	type->master_written = 0;
 	return bytes_to_ret;
 }
@@ -154,6 +162,7 @@ size_t AuTTYMasterRead(AuVFSNode* fs, AuVFSNode* file, uint64_t* buffer, uint32_
  * AuTTYMasterWrite -- writing to master goes to slave buffer
  */
 size_t AuTTYMasterWrite(AuVFSNode* fs, AuVFSNode* file, uint64_t* buffer, uint32_t len) {
+	x64_cli();
 	uint8_t* aligned_buf = (uint8_t*)buffer;
 	TTY* type = (TTY*)file->device;
 	if (!type)
@@ -165,6 +174,7 @@ size_t AuTTYMasterWrite(AuVFSNode* fs, AuVFSNode* file, uint64_t* buffer, uint32
 }
 
 size_t AuTTYSlaveRead(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint32_t len) {
+	x64_cli();
 	uint8_t* aligned_buf = (uint8_t*)buffer;
 	TTY* tty = (TTY*)file->device;
 	if (!tty)
@@ -180,13 +190,19 @@ size_t AuTTYSlaveRead(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint32
  * AuTTYSlaveWrite --- writing to slave goes to master buffer
  */
 size_t AuTTYSlaveWrite(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint32_t len) {
+	x64_cli();
+	AuThread* curr_th = AuGetCurrentThread();
 	uint8_t* aligned_buf = (uint8_t*)buffer;
 	TTY* tty = (TTY*)file->device;
 	if (!tty)
 		return 0;
 	if (len > 512)
 		len = 512;
+
 	if (CircBufFull(tty->masterbuf)) {
+		AuBlockThread(curr_th);
+		tty->blockedSlaveId = curr_th->id;
+		x64_force_sched();
 		return 0;
 	}
 

@@ -57,6 +57,7 @@ typedef struct _win_ {
 	uint16_t ownerId;
 	uint32_t* backBuffer;
 	uint32_t* sharedInfo;
+	uint32_t* shadowBuffer;
 	uint16_t shWinKey;
 	uint16_t backBufferKey;
 	int dragX;

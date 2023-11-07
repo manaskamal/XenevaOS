@@ -184,3 +184,15 @@ int sprintf(char* str, const char* string, ...) {
 	// not implemented
 	return 0;
 }
+
+int printf(const char* format, ...) {
+	va_list list;
+	va_start(list, format);
+	char output[512];
+	memset(&output, '\0', 512);
+	int len = vsprintf(output, format, list);
+	va_end(list);
+	output[strlen(output)] = 0;
+	_KeWriteFile(XENEVA_STDOUT, output, strlen(output)-1);
+	return len;
+}

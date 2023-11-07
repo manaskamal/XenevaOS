@@ -147,6 +147,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="boxblur.h" />
     <ClInclude Include="chitralekha.h" />
     <ClInclude Include="color.h" />
     <ClInclude Include="draw.h" />
@@ -160,6 +161,7 @@
     <ClInclude Include="_fastcpy.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="boxblur.cpp" />
     <ClCompile Include="chitralekha.cpp" />
     <ClCompile Include="color.cpp" />
     <ClCompile Include="draw.cpp" />

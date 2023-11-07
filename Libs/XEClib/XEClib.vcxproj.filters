@@ -174,5 +174,8 @@
       <Filter>c++</Filter>
     </ClCompile>
     <ClCompile Include="qsort.cpp" />
+    <ClCompile Include="sys\_xeprint.cpp">
+      <Filter>sys</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

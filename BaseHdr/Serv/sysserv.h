@@ -36,7 +36,7 @@
 #include <Hal\x86_64_signal.h>
 
 /* maximum supported system calls */
-#define AURORA_MAX_SYSCALL  33
+#define AURORA_MAX_SYSCALL  35
 #define AURORA_SYSCALL_MAGIC  0x05212004  /* actual number to remember */
 
 /* ==========================================
@@ -199,5 +199,22 @@ extern size_t GetSystemTimerTick();
 * CreateUserThread -- creates an user mode thread
 */
 extern int CreateUserThread(void(*entry) (void*), char *name);
+
+/*
+* SetFileToProcess -- copies a file from one process
+* to other
+* @param fileno -- file number of the current process
+* @param dest_fdidx -- destination process file index
+* @param proc_id -- destination process id
+*/
+extern int SetFileToProcess(int fileno, int dest_fdidx, int proc_id);
+
+/*
+* ProcessHeapUnmap -- unmaps previosly allocated
+* heap memory
+* @param ptr -- Pointer to freeable address
+* @param sz -- size in bytes to unallocate
+*/
+extern int ProcessHeapUnmap(void* ptr, size_t sz);
 
 #endif

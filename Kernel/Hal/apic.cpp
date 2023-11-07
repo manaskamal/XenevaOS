@@ -33,7 +33,6 @@
 #include <Hal/x86_64_idt.h>
 #include <Hal/x86_64_lowlevel.h>
 #include <Hal/serial.h>
-#include <Hal/clock.h>
 #include <Mm/vmmngr.h>
 #include <aucon.h>
 #include <Hal/x86_64_pic.h>
@@ -185,7 +184,7 @@ void AuAPICInitialise(bool bsp) {
 	uint64_t after = cpu_read_tsc();
 
 
-	uint64_t ms = (after - before) / 3500;
+	uint64_t ms = (after - before) / 1190;
 	uint64_t target = 10000000000UL / ms;
 	size_t timer_vect = 0x40;
 	setvect(timer_vect, ApicTimerInterrupt);

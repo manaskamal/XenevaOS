@@ -115,6 +115,7 @@ global syscall_entry
 syscall_entry:
      ;RCX : return address
 	 ;R11 : FLAGS
+	 cli
 	 
 	 mov rdx, rsp         ;we save the user stack
 	 mov r9, [gs:1]             ;[rel current_thread]
@@ -134,7 +135,7 @@ syscall_entry:
 	 ;align the stack
 	 and sp, 0xFFF0
 	 ;kernel
-	 sti
+	 ;sti
 
 	 sub rsp, 40
 	 mov rcx, r12
@@ -153,7 +154,7 @@ syscall_entry:
 
 	 add rsp, 40
 	 ;return 
-	 cli
+	 ;cli
 
 	 mov rsp, rbp
 	 pop rbp

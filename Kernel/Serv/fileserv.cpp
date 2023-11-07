@@ -110,13 +110,18 @@ size_t ReadFile(int fd, void* buffer, size_t length) {
 	/* every general file will contain its
 	 * file system node as device */
 	AuVFSNode* fsys = (AuVFSNode*)file->device;
-	if (file->flags & FS_FLAG_GENERAL) {
+	if (file->flags & FS_FLAG_GENERAL && !(file->flags & FS_FLAG_TTY)) {
 		ret_bytes = AuVFSNodeRead(fsys, file,aligned_buffer, length);
 	}
 	if (file->flags & FS_FLAG_DEVICE){
 		/* devfs will handle*/
 		if (file->read)
 			ret_bytes = file->read(file, file, (uint64_t*)buffer, length);
+	}
+
+	if (file->flags & FS_FLAG_TTY) {
+		if (file->read)
+			ret_bytes = file->read(file, file, (uint64_t*)aligned_buffer, length);
 	}
 	if ((file->flags & FS_FLAG_PIPE)) {
 		/* ofcourse, pipe subsystem will handle */
@@ -153,7 +158,6 @@ size_t WriteFile(int fd, void* buffer, size_t length) {
 	}
 	AuVFSNode* file = current_proc->fds[fd];
 	uint8_t* aligned_buffer = (uint8_t*)buffer;
-
 	if (!file)
 		return 0;
 	size_t write_bytes = 0;
@@ -161,12 +165,17 @@ size_t WriteFile(int fd, void* buffer, size_t length) {
 	/* every general file will contain its
 	* file system node as device */
 	AuVFSNode* fsys = (AuVFSNode*)file->device;
-	if (file->flags & FS_FLAG_GENERAL) {
+
+	if (file->flags & FS_FLAG_GENERAL && (!file->flags & FS_FLAG_TTY)) {
 		uint64_t* buff = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
 		memset(buff, 0, PAGE_SIZE);
 		memcpy(buff,aligned_buffer, PAGE_SIZE);
 		AuVFSNodeWrite(fsys, file, buff, length);
 		AuPmmngrFree((void*)V2P((size_t)buff));
+	}
+
+	if (file->flags & FS_FLAG_TTY) {
+		AuVFSNodeWrite(file, file, (uint64_t*)aligned_buffer, length);
 	}
 
 	if (file->flags & FS_FLAG_DEVICE) {

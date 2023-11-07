@@ -102,6 +102,8 @@ static void* syscalls[AURORA_MAX_SYSCALL] = {
 	MemMapDirty, //30
 	AuTTYCreate, //31
 	CreateUserThread, //32
+	SetFileToProcess, //33
+	ProcessHeapUnmap, //34
 };
 
 

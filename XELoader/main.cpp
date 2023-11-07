@@ -80,7 +80,6 @@ int XELdrLoadObject(XELoaderObject *obj){
 	intptr_t new_addr = _image_load_base_;
 	intptr_t diff = new_addr - original_base;
 
-
 	PSECTION_HEADER secthdr = raw_offset<PSECTION_HEADER>(&nt->OptionalHeader, nt->FileHeader.SizeOfOptionaHeader);
 
 	/*if (nt->OptionalHeader.FileAlignment == 512) {
@@ -234,15 +233,18 @@ int main(int argc, char* argv[]) {
 	 */
 	XELdrLinkAllObject(mainobj);
 
+	uint64_t entry_addr = mainobj->entry_addr;
+	
 	XELdrClearObjectList();
-
+	
+	
 	/* register the default signal handler to
 	 * all signal
 	 */
 	for (int i = 0; i < NUMSIGNALS; i++)
 		_KeSetSignal(i + 1, DefaultSignalHandler);
 
-	entrypoint e = (entrypoint)mainobj->entry_addr;
+	entrypoint e = (entrypoint)entry_addr;
 	e(0, NULL);
 	
 	while (1) {

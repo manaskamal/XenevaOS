@@ -35,6 +35,8 @@
 #include <widgets\window.h>
 #include "term.h"
 #include "arrayfont.h"
+#include <sys\mman.h>
+#include "esccode.h"
 #include <sys\_ketty.h>
 
 ChWindow* win;
@@ -52,6 +54,9 @@ int cursor_y;
 int last_cursor_y;
 int last_cursor_x;
 bool dirty = false;
+bool _escape_seq = false;
+bool _seq_csi = false;
+bool _cursor_blink = 0;
 
 /*
  * TerminalDrawArrayFont -- draw bitmap fonts using defined array
@@ -94,14 +99,22 @@ void TerminalSetCellData(int x, int y, uint8_t c, uint32_t bg, uint32_t fg) {
  */
 void TerminalDrawCell(int x, int y, bool dirty) {
 	int y_offset = 26;
-	TermCell* cell = (TermCell*)&term_buffer[y * ws_col + x];
-	ChDrawRect(win->canv, x * cell_width,y_offset + y * cell_height, cell_width, cell_height, cell->cellBgCol);
-	int f_w = ChFontGetWidthChar(consolas, cell->c);
-	int f_h = ChFontGetHeightChar(consolas, cell->c);
-	ChFontDrawChar(win->canv, consolas, cell->c, x * cell_width,y_offset + y * cell_height + f_h/2 + 1,
+
+	TermCell* cell = (TermCell*)&term_buffer[(y* ws_col + x)];
+	/*int f_w = ChFontGetWidthChar(consolas, cell->c);
+	int f_h = ChFontGetHeightChar(consolas, cell->c);*/
+
+	if ((x* cell_width + cell_width) >= win->info->width) 
+		return;
+
+	if ((y*cell_height + cell_height) >= win->info->height)
+		return;
+	ChDrawRect(win->canv, x * cell_width, y_offset + y * cell_height, cell_width, cell_height, cell->cellBgCol);
+	ChFontDrawChar(win->canv, consolas, cell->c,x * cell_width,y_offset + y * cell_height + cell_height / 2,
 		0, cell->cellFgCol);
+	/*TerminalDrawArrayFont(win->canv, x * cell_width, y_offset + y * cell_height + 12 / 2, cell->c, cell->cellFgCol);*/
 	if (dirty)
-		ChWindowUpdate(win, x * cell_width,y_offset + y * cell_height, cell_width, cell_height, 0, 1);
+		ChWindowUpdate(win,x * cell_width, y_offset + y * cell_height, cell_width, cell_height, 0, 1);
 }
 
 /*
@@ -113,21 +126,56 @@ void TerminalDrawAllCells() {
 			TerminalDrawCell(x,y, 0);
 		}
 	}
-	ChWindowUpdate(win, 0, 0, win->info->width, win->info->height, 1, 0);
+	ChWindowUpdate(win, 0, 26, win->info->width, win->info->height - 26, 1, 0);
+}
+
+
+/* TerminalDrawCursor -- draws the cursor */
+void TerminalDrawCursor() {
+	TermCell* cell = (TermCell*)&term_buffer[cursor_y * ws_col + cursor_x];
+	int y_offset = 26;
+	ChDrawHorizontalLine(win->canv, cursor_x * cell_width,y_offset + cursor_y * cell_height + cell_height - 1, cell_width,GRAY);
+	ChDrawHorizontalLine(win->canv, cursor_x * cell_width,y_offset + cursor_y * cell_height + cell_height - 2, cell_width,GRAY);
+	//ChWindowUpdate(win, cursor_x * cell_width,y_offset + cursor_y * cell_height + cell_height - 2, cell_width, 2, 0, 1);
+	ChWindowUpdate(win, 0, 26, win->info->width, win->info->height - 26, 1, 0);
+}
+
+void ProcessControlSequence(char ch) {
+
+}
+
+void TerminalScroll() {
+
+	/* scroll the screen one line up */
+	for (int c_y = 1; c_y < ws_row; c_y++) {
+		for (int c_x = 0; c_x < ws_col; c_x++) {
+			TermCell* destCell = (TermCell*)&term_buffer[(c_y - 1) * ws_col + c_x];
+			TermCell* srcCell = (TermCell*)&term_buffer[c_y * ws_col + c_x];
+			memcpy(destCell, srcCell, sizeof(TermCell));
+		}
+	}
+
+	/* clear the last line */
+	for (int c_x = 0; c_x < ws_col; c_x++) {
+		TermCell* destCell = (TermCell*)&term_buffer[ws_row  * ws_col + c_x];
+		memset(destCell, 0, sizeof(TermCell));
+	}
 }
 
 void TerminalPrintChar(char c, uint32_t fgcolor, uint32_t bgcolor) {
 	if (c == '\n'){
 		cursor_y++;
 		cursor_x = 0;
-		if (cursor_y == ws_row - 2){
+		if (cursor_y >= ws_row){
 			//need for scrolling 
+			TerminalScroll();
+			cursor_y--;
 		}
 	}
 	else {
 		TerminalSetCellData(cursor_x, cursor_y, c, bgcolor, fgcolor);
 		cursor_x++;
-		if (cursor_x == ws_col - 2){
+		if (cursor_x == ws_col){
 			cursor_x = 0;
 			cursor_y++;
 		}
@@ -138,6 +186,41 @@ void TerminalPrintString(char* string, uint32_t fgcolor, uint32_t bgcolor) {
 	while (*string) {
 		TerminalPrintChar(*string, fgcolor, bgcolor);
 		*string++;
+	}
+}
+
+/*
+* TerminalProcessLine -- emulates terminals
+*/
+void TerminalProcessLine(char ch) {
+	if (_escape_seq) {
+		if (ch == SEQUENCE_CSI)
+			_seq_csi = true;
+
+		if (_seq_csi)
+			ProcessControlSequence(ch);
+
+	}
+	else {
+		/* process default state */
+		if (ch == ASCII_ESC_CHAR) {
+			_escape_seq = true;
+			return;
+		}
+		if (ch == ASCII_ESC_OCTAL){
+			_escape_seq = true;
+			return;
+		}
+		if (ch == ASCII_ESC_HEX) {
+			_escape_seq = true;
+			return;
+		}
+		if (ch == ASCII_ESC_DECIMAL) {
+			_escape_seq = true;
+			return;
+		}
+
+		TerminalPrintChar(ch,WHITE,BLACK);
 	}
 }
 /*
@@ -153,6 +236,9 @@ void TerminalHandleMessage(PostEvent *e) {
 		break;
 	case DEODHAI_REPLY_KEY_EVENT:
 		int code = e->dword;
+		if (code < 80)  /* key pressend event*/
+			printf("KeyPressed %d\n", code);
+		/* else its a key release event */
 		memset(e, 0, sizeof(PostEvent));
 		break;
 	}
@@ -160,60 +246,37 @@ void TerminalHandleMessage(PostEvent *e) {
 
 
 void TerminalThread() {
-	TerminalPrintString("\nTerminal Thread(1) - Ekadantaya Vakratundaya.wav", WHITE, BLACK);
-	TerminalDrawAllCells();
-	/* open the sound device-file, it is in /dev directory */
-	int snd = _KeOpenFile("/dev/sound", FILE_OPEN_WRITE);
-
-	/* allocate an ioctl structure where required information
-	* will be putted */
-	XEFileIOControl ioctl;
-	memset(&ioctl, 0, sizeof(XEFileIOControl));
-
-	/* uint_1 holds the millisecond to sleep after
-	* one frame playback */
-	ioctl.uint_1 = 0;
-
-	/* most important aurora_syscall_magic number, without
-	* this, iocontrol system call will not work */
-	ioctl.syscall_magic = AURORA_SYSCALL_MAGIC;
-
-	/* register the app to sound layer, as it will create
-	* a private dsp-box for this app */
-	_KeFileIoControl(snd, SOUND_REGISTER_SNDPLR, &ioctl);
-
-	/* now open your sound file, note that here demo is playing
-	* a raw wave file with 48kHZ-16bit format, to play mp3 or
-	* other format, one needs another conversion layer of samples */
-
-	int song = _KeOpenFile("/song.wav", FILE_OPEN_READ_ONLY);
-	void* songbuf = malloc(4096);
-	memset(songbuf, 0, 4096);
-	_KeReadFile(song, songbuf, 4096);
-	XEFileStatus fs;
-	_KeFileStat(song, &fs);
-	bool _finished = false;
+	char buf[512];
+	memset(&buf, 0, 512);
+	int bytes_read = 0;
 	while (1) {
-		/* with each frame read the sound, write it
-		* to sound device, the sound device will automatically
-		* put the app to sleep for smooth playback for some
-		* milli-seconds
-		*/
-		_KeFileStat(song, &fs);
-		/* after we finish playing the sound, we exit */
-		if (fs.eof) {
-			_finished = true;
-			TerminalPrintString("\nFinished Playing", WHITE, BLACK);
+		bytes_read = _KeReadFile(master_fd, buf, 512);
+
+		if (bytes_read >= 512) {
+			bytes_read = 512;
+		}
+
+		for (int i = 0; i < bytes_read; i++){
+			TerminalProcessLine(buf[i]);
+		}
+
+		if (_escape_seq) {
+			_escape_seq = false;
+			_seq_csi = false;
+		}
+	
+
+		/* now bytes_read tells the terminal
+		 * is dirty, so we need redraw of all 
+		 * cells 
+		 */
+		if (bytes_read > 0) {
 			TerminalDrawAllCells();
-			_KeFileIoControl(snd, SOUND_UNREGISTER_SNDPLR, &ioctl);
-			_KePauseThread();
+			TerminalDrawCursor();
+			bytes_read = 0;
 		}
 
-		if (!_finished) {
-			_KeWriteFile(snd, songbuf, 4096);
-			_KeReadFile(song, songbuf, 4096);
-		}
-
+		_KeProcessSleep(100000000); //
 	}
 }
 
@@ -221,25 +284,25 @@ void TerminalThread() {
 * main -- terminal emulator
 */
 int main(int argc, char* arv[]){
-
 	app = ChitralekhaStartApp(argc, arv);
-	win = ChCreateWindow(app, (1 << 0), "Xeneva Terminal", 350, 300, 550, 400);
+	win = ChCreateWindow(app, (1 << 0), "Xeneva Terminal", 600, 300, 550, 400);
 	win->color = BLACK;
 	ChWindowPaint(win);
 	consolas = ChInitialiseFont(CONSOLAS);
 	ChFontSetSize(consolas, 12);
 	int term_w = win->info->width;
-	int term_h = win->info->height - 26; // - 26 for titlebar height
+	int term_h = win->info->height - 26; // -26 for titlebar height
 	int f_w = ChFontGetWidthChar(consolas,'M');
 	int f_h = ChFontGetHeightChar(consolas, 'A');
-	cell_width = f_w + 2;
-	cell_height = f_h + 2;
+	cell_width = f_w;
+	cell_height = f_h;
 	ws_col = term_w / cell_width;
 	ws_row = term_h / cell_height;
 	cursor_x = 0;
 	cursor_y = 0;
 	last_cursor_y = ws_row - 2;
 	last_cursor_x = ws_col - 2;
+	_cursor_blink = 0;
 
 	master_fd = slave_fd = 0;
 	/* create the terminal */
@@ -256,11 +319,30 @@ int main(int argc, char* arv[]){
 	term_buffer = (TermCell*)malloc(ws_col * ws_row * sizeof(TermCell));
 	memset(term_buffer, 0x0, ws_col * ws_row * sizeof(TermCell));
 
+	
 	TerminalPrintString("Copyright (C) Manas Kamal Choudhury 2023\n", GRAY, BLACK);
 	TerminalPrintString("HP@LAPTOP-UCFKK4J9-", GREEN, BLACK);
 	TerminalPrintString("/:$", LIGHTSILVER, BLACK);
+	TerminalSetCellData(ws_col - 2, ws_row - 2, 'H', BLACK, WHITE);
 	TerminalDrawAllCells();
-	int thread_idx = _KeCreateThread(TerminalThread, "tthr");
+	int thread_idx = _KeCreateThread(TerminalThread, "asyncthr");
+
+	int term_id = _KeGetProcessID();
+	/* try loading the shell process */
+	int shell_id = _KeCreateProcess(0, "xesh");
+
+	_KeSetFileToProcess(slave_fd, 0, shell_id);
+	_KeSetFileToProcess(slave_fd, 1, shell_id);
+	_KeSetFileToProcess(slave_fd, 2, shell_id);
+
+	_KeSetFileToProcess(slave_fd, 0, term_id);
+	_KeSetFileToProcess(slave_fd, 1, term_id);
+	_KeSetFileToProcess(slave_fd, 2, term_id);
+
+	_KeProcessLoadExec(shell_id, "/xesh.exe", 0, 0);
+
+	int c_x = 0, c_y = 1;
+	printf("Terminal Buffer %x \n", &term_buffer[c_y * ws_col + c_x]);
 	PostEvent e;
 	memset(&e, 0, sizeof(PostEvent));
 	while (1) {

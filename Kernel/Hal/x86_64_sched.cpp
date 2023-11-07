@@ -362,6 +362,7 @@ void AuNextThread() {
 end:
 	if (_run_idle)
 		thread = _idle_thr;
+
 	//current_thread = thread;
 	AuPerCPUSetCurrentThread(thread);
 }

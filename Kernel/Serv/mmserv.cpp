@@ -122,14 +122,62 @@ uint64_t GetProcessHeapMem(size_t sz) {
 			return -1;
 		}
 	}
-	uint64_t start_addr = proc->proc_mem_heap;
+
+	uint64_t start_addr = (uint64_t)AuGetFreePage(false, (void*)proc->proc_mem_heap);
 
 	for (int i = 0; i < sz / PAGE_SIZE; i++) {
+		/*AuVPage* vpage = AuVmmngrGetPage(start_addr + i * PAGE_SIZE, VIRT_GETPAGE_ONLY_RET, VIRT_GETPAGE_ONLY_RET);
+		if (vpage->bits.page != 0)
+			continue;*/
 		void* phys = AuPmmngrAlloc();
-		AuMapPage((size_t)phys, start_addr + i * PAGE_SIZE, X86_64_PAGING_USER);
+		if (!AuMapPage((size_t)phys, start_addr + i * PAGE_SIZE, X86_64_PAGING_USER)) {
+			SeTextOut("Failed to map %x \r\n", (start_addr + i * PAGE_SIZE));
+		}
 	}
+	//SeTextOut("Mapped \r\n");
 	proc->proc_mem_heap += sz;
 	return start_addr;
+}
+
+/*
+ * ProcessHeapUnmap -- unmaps previosly allocated
+ * heap memory 
+ * @param ptr -- Pointer to freeable address
+ * @param sz -- size in bytes to unallocate
+ */
+int ProcessHeapUnmap(void* ptr, size_t sz) {
+	x64_cli();
+	/* check if size is page aligned */
+	if ((sz % PAGE_SIZE) != 0){
+		AuTextOut("Returning error heap unmap -> %d \r\n", sz);
+		return -1;
+		sz = PAGE_ALIGN(sz);
+	}
+
+	AuThread* thr = AuGetCurrentThread();
+	if (!thr)
+		return -1;
+	AuProcess* proc = AuProcessFindThread(thr);
+	if (!proc){
+		proc = AuProcessFindSubThread(thr);
+		if (!proc) {
+			return -1;
+		}
+	}
+	uint64_t start_addr = (uint64_t)ptr;
+	for (int i = 0; i < sz / PAGE_SIZE; i++) {
+		AuVPage* page_ = AuVmmngrGetPage(start_addr + i * PAGE_SIZE, VIRT_GETPAGE_ONLY_RET, VIRT_GETPAGE_ONLY_RET);
+		uint64_t phys_page = page_->bits.page << PAGE_SHIFT;
+		if (phys_page){
+			AuPmmngrFree((void*)phys_page);
+			page_->bits.page = 0;
+			page_->bits.present = 0;
+			page_->raw = 0;
+		}
+	}
+	/*if (start_addr < proc->proc_mem_heap)*/
+	proc->proc_mem_heap = start_addr;
+	return 0;
 }
 
 

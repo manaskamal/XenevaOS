@@ -28,7 +28,7 @@ EXTRN	AuTextOut:PROC
 EXTRN	SeTextOut:PROC
 pdata	SEGMENT
 $pdata$?AuProcessClean@@YAXPEAU_au_proc_@@0@Z DD imagerel $LN20
-	DD	imagerel $LN20+818
+	DD	imagerel $LN20+839
 	DD	imagerel $unwind$?AuProcessClean@@YAXPEAU_au_proc_@@0@Z
 $pdata$?FreeUserStack@@YAXPEA_KPEAX@Z DD imagerel $LN6
 	DD	imagerel $LN6+107
@@ -425,14 +425,16 @@ $LN15@AuProcessC:
 ; 131  : 	if (killable->proc_mem_heap > PROCESS_BREAK_ADDRESS) {
 
 	mov	rax, QWORD PTR killable$[rsp]
-	cmp	QWORD PTR [rax+1096], 805306368		; 30000000H
+	mov	rcx, 12884901888			; 0000000300000000H
+	cmp	QWORD PTR [rax+1096], rcx
 	jbe	$LN13@AuProcessC
 
 ; 132  : 		size_t num_pages = (killable->proc_mem_heap - PROCESS_BREAK_ADDRESS) / PAGE_SIZE;
 
 	mov	rax, QWORD PTR killable$[rsp]
 	mov	rax, QWORD PTR [rax+1096]
-	sub	rax, 805306368				; 30000000H
+	mov	rcx, 12884901888			; 0000000300000000H
+	sub	rax, rcx
 	xor	edx, edx
 	mov	ecx, 4096				; 00001000H
 	div	rcx
@@ -471,8 +473,9 @@ $LN11@AuProcessC:
 ; 136  : 			void* phys = AuGetPhysicalAddressEx(killable->cr3, PROCESS_BREAK_ADDRESS + i * PAGE_SIZE);
 
 	imul	eax, DWORD PTR i$3[rsp], 4096		; 00001000H
-	add	eax, 805306368				; 30000000H
 	cdqe
+	mov	rcx, 12884901888			; 0000000300000000H
+	add	rax, rcx
 	mov	rdx, rax
 	mov	rax, QWORD PTR killable$[rsp]
 	mov	rcx, QWORD PTR [rax+24]

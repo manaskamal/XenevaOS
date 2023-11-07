@@ -286,7 +286,6 @@ int vsprintf(char *str, const char *format, va_list ap) {
 
 	size_t loc = 0;
 	size_t i;
-
 	for (i = 0; i <= strlen(format); i++, loc++) {
 
 		switch (format[i]) {

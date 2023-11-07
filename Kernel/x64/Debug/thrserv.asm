@@ -23,6 +23,7 @@ PUBLIC	?SetSignal@@YAHHP6AXH@Z@Z			; SetSignal
 PUBLIC	?GetSystemTimerTick@@YA_KXZ			; GetSystemTimerTick
 PUBLIC	?CreateUserThread@@YAHP6AXPEAX@ZPEAD@Z		; CreateUserThread
 PUBLIC	?CloseUserThread@@YAHH@Z			; CloseUserThread
+PUBLIC	?SetFileToProcess@@YAHHHH@Z			; SetFileToProcess
 EXTRN	AuGetCurrentThread:PROC
 EXTRN	AuBlockThread:PROC
 EXTRN	AuSleepThread:PROC
@@ -83,6 +84,9 @@ $pdata$?CreateUserThread@@YAHP6AXPEAX@ZPEAD@Z DD imagerel $LN6
 $pdata$?CloseUserThread@@YAHH@Z DD imagerel $LN4
 	DD	imagerel $LN4+57
 	DD	imagerel $unwind$?CloseUserThread@@YAHH@Z
+$pdata$?SetFileToProcess@@YAHHHH@Z DD imagerel $LN10
+	DD	imagerel $LN10+238
+	DD	imagerel $unwind$?SetFileToProcess@@YAHHHH@Z
 pdata	ENDS
 xdata	SEGMENT
 $unwind$?PauseThread@@YAHXZ DD 010401H
@@ -111,7 +115,173 @@ $unwind$?CreateUserThread@@YAHP6AXPEAX@ZPEAD@Z DD 010e01H
 	DD	0820eH
 $unwind$?CloseUserThread@@YAHH@Z DD 010801H
 	DD	06208H
+$unwind$?SetFileToProcess@@YAHHHH@Z DD 011101H
+	DD	0a211H
 xdata	ENDS
+; Function compile flags: /Odtpy
+; File e:\xeneva project\aurora\kernel\serv\thrserv.cpp
+_TEXT	SEGMENT
+proc$ = 32
+thr$ = 40
+destproc$ = 48
+file$ = 56
+destfile$ = 64
+fileno$ = 96
+dest_fdidx$ = 104
+proc_id$ = 112
+?SetFileToProcess@@YAHHHH@Z PROC			; SetFileToProcess
+
+; 235  : int SetFileToProcess(int fileno, int dest_fdidx, int proc_id) {
+
+$LN10:
+	mov	DWORD PTR [rsp+24], r8d
+	mov	DWORD PTR [rsp+16], edx
+	mov	DWORD PTR [rsp+8], ecx
+	sub	rsp, 88					; 00000058H
+
+; 236  : 	x64_cli();
+
+	call	x64_cli
+
+; 237  : 	AuThread* thr = AuGetCurrentThread();
+
+	call	AuGetCurrentThread
+	mov	QWORD PTR thr$[rsp], rax
+
+; 238  : 	if (!thr)
+
+	cmp	QWORD PTR thr$[rsp], 0
+	jne	SHORT $LN7@SetFileToP
+
+; 239  : 		return 0;
+
+	xor	eax, eax
+	jmp	$LN8@SetFileToP
+$LN7@SetFileToP:
+
+; 240  : 	/* file check if current thread's process is
+; 241  : 	 * found by checking twice, first by
+; 242  : 	 * main thread checkup second by sub thread
+; 243  : 	 * checkup
+; 244  : 	 */
+; 245  : 	AuProcess* proc = AuProcessFindThread(thr);
+
+	mov	rcx, QWORD PTR thr$[rsp]
+	call	?AuProcessFindThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z ; AuProcessFindThread
+	mov	QWORD PTR proc$[rsp], rax
+
+; 246  : 	if (!proc) {
+
+	cmp	QWORD PTR proc$[rsp], 0
+	jne	SHORT $LN6@SetFileToP
+
+; 247  : 		proc = AuProcessFindSubThread(thr);
+
+	mov	rcx, QWORD PTR thr$[rsp]
+	call	?AuProcessFindSubThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z ; AuProcessFindSubThread
+	mov	QWORD PTR proc$[rsp], rax
+
+; 248  : 		if (!proc)
+
+	cmp	QWORD PTR proc$[rsp], 0
+	jne	SHORT $LN5@SetFileToP
+
+; 249  : 			return -1;
+
+	mov	eax, -1
+	jmp	$LN8@SetFileToP
+$LN5@SetFileToP:
+$LN6@SetFileToP:
+
+; 250  : 	}
+; 251  : 
+; 252  : 	/* now try getting the destination process by its
+; 253  : 	* process id
+; 254  : 	*/
+; 255  : 	AuProcess* destproc = AuProcessFindPID(proc_id);
+
+	mov	ecx, DWORD PTR proc_id$[rsp]
+	call	?AuProcessFindPID@@YAPEAU_au_proc_@@H@Z	; AuProcessFindPID
+	mov	QWORD PTR destproc$[rsp], rax
+
+; 256  : 	if (!destproc)
+
+	cmp	QWORD PTR destproc$[rsp], 0
+	jne	SHORT $LN4@SetFileToP
+
+; 257  : 		return -1;
+
+	mov	eax, -1
+	jmp	SHORT $LN8@SetFileToP
+$LN4@SetFileToP:
+
+; 258  : 
+; 259  : 	/* now try getting the file from current process
+; 260  : 	 * file entry
+; 261  : 	 */
+; 262  : 	AuVFSNode* file = proc->fds[fileno];
+
+	movsxd	rax, DWORD PTR fileno$[rsp]
+	mov	rcx, QWORD PTR proc$[rsp]
+	mov	rax, QWORD PTR [rcx+rax*8+576]
+	mov	QWORD PTR file$[rsp], rax
+
+; 263  : 	if (!file)
+
+	cmp	QWORD PTR file$[rsp], 0
+	jne	SHORT $LN3@SetFileToP
+
+; 264  : 		return -1;
+
+	mov	eax, -1
+	jmp	SHORT $LN8@SetFileToP
+$LN3@SetFileToP:
+
+; 265  : 
+; 266  : 	AuVFSNode *destfile = destproc->fds[dest_fdidx];
+
+	movsxd	rax, DWORD PTR dest_fdidx$[rsp]
+	mov	rcx, QWORD PTR destproc$[rsp]
+	mov	rax, QWORD PTR [rcx+rax*8+576]
+	mov	QWORD PTR destfile$[rsp], rax
+
+; 267  : 	if (destfile)
+
+	cmp	QWORD PTR destfile$[rsp], 0
+	je	SHORT $LN2@SetFileToP
+
+; 268  : 		return -1;
+
+	mov	eax, -1
+	jmp	SHORT $LN8@SetFileToP
+
+; 269  : 	else {
+
+	jmp	SHORT $LN1@SetFileToP
+$LN2@SetFileToP:
+
+; 270  : 		/* now we have no file entry in destination
+; 271  : 		 * process's file index, so make entry
+; 272  : 		 * of current process's file targeted by
+; 273  : 		 * fileno to destination processes file
+; 274  : 		 * entry 
+; 275  : 		 */
+; 276  : 		destproc->fds[dest_fdidx] = file;
+
+	movsxd	rax, DWORD PTR dest_fdidx$[rsp]
+	mov	rcx, QWORD PTR destproc$[rsp]
+	mov	rdx, QWORD PTR file$[rsp]
+	mov	QWORD PTR [rcx+rax*8+576], rdx
+$LN1@SetFileToP:
+$LN8@SetFileToP:
+
+; 277  : 	}
+; 278  : }
+
+	add	rsp, 88					; 00000058H
+	ret	0
+?SetFileToProcess@@YAHHHH@Z ENDP			; SetFileToProcess
+_TEXT	ENDS
 ; Function compile flags: /Odtpy
 ; File e:\xeneva project\aurora\kernel\serv\thrserv.cpp
 _TEXT	SEGMENT

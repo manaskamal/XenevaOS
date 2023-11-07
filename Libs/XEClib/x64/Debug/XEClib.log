@@ -1,18 +1,21 @@
-﻿Build started 02-11-2023 আবেলি 10:11:46.
+﻿Build started 07-11-2023 আবেলি 9:08:35.
      1>Project "E:\Xeneva Project\Aurora\Libs\XEClib\XEClib.vcxproj" on node 2 (Rebuild target(s)).
      1>_NASM:
          setjmp.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp81e24de82f294a30b47fe54fde7789ab.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmpb3fc1fe3e4b34347ae7942b00dcf3a51.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\setjmp.obj"  "E:\Xeneva Project\Aurora\Libs\XEClib\setjmp.asm"
        _NASM:
          _callbase.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp769e0ec895c245db82c2002d25266343.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmpd1a4f84145594fb1959f3cbce9cbd959.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\_callbase.obj"  "E:\Xeneva Project\Aurora\Libs\XEClib\_callbase.asm"
        ClCompile:
-         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes\c++" /Zi /nologo /W3 /WX- /sdl- /MP /Od /D ARCH_X64 /D YES_DYNAMIC /D DYNAMIC_EXPORTER /D _WINDLL /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt c++\ios.cpp c++\iostream.cpp c++\istream.cpp c++\memory.cpp c++\ostream.cpp c++\_string.cpp errno.cpp math.cpp qsort.cpp stdio.cpp stdlib.cpp string.cpp sys\_heap.cpp sys\_xeneva.cpp
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes\c++" /Zi /nologo /W3 /WX- /sdl- /MP /Od /D ARCH_X64 /D YES_DYNAMIC /D DYNAMIC_EXPORTER /D _WINDLL /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt c++\ios.cpp c++\iostream.cpp c++\istream.cpp c++\memory.cpp c++\ostream.cpp c++\_string.cpp errno.cpp math.cpp qsort.cpp stdio.cpp stdlib.cpp string.cpp sys\_heap.cpp sys\_xeneva.cpp sys\_xeprint.cpp
      1>cl : Command line warning D9025: overriding '/sdl-' with '/GS-'
      1>cl : Command line warning D9002: ignoring unknown option '/arch:SSE2'
      1>cl : Command line warning D9030: '/Gm' is incompatible with multiprocessing; ignoring /MP switch
+         _xeprint.cpp
+     1>E:\Xeneva Project\Aurora\Libs\XEClib\includes\ctype.h(50): warning C4005: 'isascii' : macro redefinition
+                 E:\Xeneva Project\Aurora\Libs\XEClib\includes\ctype.h(39) : see previous definition of 'isascii'
          _xeneva.cpp
      1>sys\_xeneva.cpp(35): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
      1>sys\_xeneva.cpp(39): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
@@ -34,10 +37,10 @@
                  E:\Xeneva Project\Aurora\Libs\XEClib\includes\ctype.h(39) : see previous definition of 'isascii'
      1>stdlib.cpp(106): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
      1>stdlib.cpp(142): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
-     1>stdlib.cpp(349): warning C4267: 'return' : conversion from 'size_t' to 'int', possible loss of data
-     1>stdlib.cpp(408): warning C4146: unary minus operator applied to unsigned type, result still unsigned
-     1>stdlib.cpp(433): warning C4146: unary minus operator applied to unsigned type, result still unsigned
-     1>stdlib.cpp(499): warning C4146: unary minus operator applied to unsigned type, result still unsigned
+     1>stdlib.cpp(348): warning C4267: 'return' : conversion from 'size_t' to 'int', possible loss of data
+     1>stdlib.cpp(407): warning C4146: unary minus operator applied to unsigned type, result still unsigned
+     1>stdlib.cpp(432): warning C4146: unary minus operator applied to unsigned type, result still unsigned
+     1>stdlib.cpp(498): warning C4146: unary minus operator applied to unsigned type, result still unsigned
          stdio.cpp
      1>stdio.cpp(116): warning C4244: 'return' : conversion from '__int64' to 'long', possible loss of data
          qsort.cpp
@@ -93,6 +96,7 @@
          x64\Debug\string.obj
          x64\Debug\_heap.obj
          x64\Debug\_xeneva.obj
+         x64\Debug\_xeprint.obj
          x64\Debug\setjmp.obj
          x64\Debug\_callbase.obj
      1>LINK : warning LNK4075: ignoring '/INCREMENTAL' due to '/LTCG' specification
@@ -104,4 +108,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:01.77
+Time Elapsed 00:00:01.81

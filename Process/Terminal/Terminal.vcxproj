@@ -110,7 +110,7 @@
       <OptimizeReferences>false</OptimizeReferences>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       <EntryPointSymbol>_xemain</EntryPointSymbol>
-      <BaseAddress>0x0000000000600000</BaseAddress>
+      <BaseAddress>0x00000000C0000000</BaseAddress>
       <RandomizedBaseAddress />
       <FixedBaseAddress>false</FixedBaseAddress>
       <DataExecutionPrevention />
@@ -150,6 +150,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="arrayfont.h" />
+    <ClInclude Include="esccode.h" />
     <ClInclude Include="term.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

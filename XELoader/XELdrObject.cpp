@@ -72,7 +72,6 @@ void XELdrRemoveObject(XELoaderObject* obj) {
 	else {
 		obj->next->prev = obj->prev;
 	}
-	free(obj);
 }
 
 

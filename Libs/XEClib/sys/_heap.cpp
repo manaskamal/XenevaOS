@@ -546,7 +546,7 @@ void* liballoc_alloc(int pages) {
 }
 
 int liballoc_free(void* ptr, int pages) {
-	//sys_munmap (ptr,pages * 4096);
+	_KeProcessHeapUnmap(ptr, pages * 4096);
 	return 0;
 }
 

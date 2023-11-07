@@ -383,11 +383,12 @@ void AuProcessWaitForTermination(AuProcess *proc, int pid) {
 
 /*
  * AuProcessGetFileDesc -- returns a empty file descriptor
- * from process slot
+ * from process slot, 0, 1 & 2 are reserved for terminal
+ * output
  * @param proc -- pointer to process slot
  */
 int AuProcessGetFileDesc(AuProcess* proc) {
-	for (int i = 0; i < FILE_DESC_PER_PROCESS; i++) {
+	for (int i = 3; i < FILE_DESC_PER_PROCESS; i++) {
 		if (!proc->fds[i])
 			return i;
 	}

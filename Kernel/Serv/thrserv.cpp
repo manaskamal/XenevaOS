@@ -224,3 +224,55 @@ int CloseUserThread(int thread_idx) {
 	/* under development*/
 	return 0; //NOT IMPLEMENTED
 }
+
+/*
+ * SetFileToProcess -- copies a file from one process
+ * to other
+ * @param fileno -- file number of the current process
+ * @param dest_fdidx -- destination process file index
+ * @param proc_id -- destination process id
+ */
+int SetFileToProcess(int fileno, int dest_fdidx, int proc_id) {
+	x64_cli();
+	AuThread* thr = AuGetCurrentThread();
+	if (!thr)
+		return 0;
+	/* file check if current thread's process is
+	 * found by checking twice, first by
+	 * main thread checkup second by sub thread
+	 * checkup
+	 */
+	AuProcess* proc = AuProcessFindThread(thr);
+	if (!proc) {
+		proc = AuProcessFindSubThread(thr);
+		if (!proc)
+			return -1;
+	}
+
+	/* now try getting the destination process by its
+	* process id
+	*/
+	AuProcess* destproc = AuProcessFindPID(proc_id);
+	if (!destproc)
+		return -1;
+
+	/* now try getting the file from current process
+	 * file entry
+	 */
+	AuVFSNode* file = proc->fds[fileno];
+	if (!file)
+		return -1;
+
+	AuVFSNode *destfile = destproc->fds[dest_fdidx];
+	if (destfile)
+		return -1;
+	else {
+		/* now we have no file entry in destination
+		 * process's file index, so make entry
+		 * of current process's file targeted by
+		 * fileno to destination processes file
+		 * entry 
+		 */
+		destproc->fds[dest_fdidx] = file;
+	}
+}

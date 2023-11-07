@@ -563,6 +563,35 @@ _KeCreateThread:
 	  mov rdi, 0
 	  syscall
 	  ret
+
+global _KeSetFileToProcess
+%ifdef YES_DYNAMIC
+export _KeSetFileToProcess
+%endif
+_KeSetFileToProcess:
+      xor rax, rax
+	  mov r12, 33
+	  mov r13, rcx
+	  mov r14, rdx
+	  mov r15, r8
+	  mov rdi, 0
+	  syscall
+	  ret
+
+global _KeProcessHeapUnmap
+%ifdef YES_DYNAMIC
+export _KeProcessHeapUnmap
+%endif
+_KeProcessHeapUnmap:
+      xor rax, rax
+	  mov r12, 34
+	  mov r13, rcx
+	  mov r14, rdx
+	  mov r15, 0
+	  mov rdi, 0
+	  syscall
+	  ret
+
       
       
 

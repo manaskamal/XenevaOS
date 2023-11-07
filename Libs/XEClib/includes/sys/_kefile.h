@@ -46,6 +46,10 @@
 #define FILE_FILE_SYSTEM (1<<6)
 #define FILE_PIPE        (1<<7)
 
+#define XENEVA_STDIN 0
+#define XENEVA_STDOUT 1
+#define XENEVA_STDERR 2
+
 #pragma pack(push,1)
 typedef struct _XEFileStatus_ {
 	uint8_t filemode; //mode of the file

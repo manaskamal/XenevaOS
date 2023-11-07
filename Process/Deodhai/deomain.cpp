@@ -48,6 +48,7 @@
 #include "_fastcpy.h"
 #include "clip.h"
 #include "backdirty.h"
+#include <boxblur.h>
 
 Cursor *arrow;
 int mouse_fd;
@@ -432,6 +433,7 @@ void ComposeFrame(ChCanvas *canvas) {
 					win->backBuffer + (0 + i) * info->width + 0, width * 4);
 			}
 
+
 			for (int k = 0; k < clipCount; k++) {
 				int k_x = clip[k].x;
 				int k_y = clip[k].y;
@@ -610,10 +612,12 @@ int main(int argc, char* arv[]) {
 	int screen_w = 0;
 	int screen_h = 0;
 	
+	_KePrint("Creating canvas \r\n");
 	/* create a demo canvas just for getting the graphics
 	 * file descriptor 
 	 */
 	ChCanvas* canv = ChCreateCanvas(100, 100);
+	
 	canvas = canv;
 	ret = _KeFileIoControl(canv->graphics_fd, SCREEN_GETWIDTH, &graphctl);
 	screen_w = graphctl.uint_1;
@@ -627,7 +631,6 @@ int main(int argc, char* arv[]) {
 	/* now allocate a back buffer with respected canvas size
 	 * and fill it with light-black color */
 	ChAllocateBuffer(canv);
-
 	/* allocate a surface buffer */
 	surfaceBuffer = (uint32_t*)_KeMemMap(NULL, canv->screenWidth * canv->screenHeight * 4, 0, 0, MEMMAP_NO_FILEDESC, 0);
 	for (int i = 0; i < screen_w; i++)
@@ -635,6 +638,7 @@ int main(int argc, char* arv[]) {
 		surfaceBuffer[j * canv->canvasWidth + i] = 0xFF938585;
 
 	DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
+	_KePrint("Canvas created \r\n");
 	ChCanvasScreenUpdate(canv, 0, 0, canv->canvasWidth, canv->canvasHeight);
 
 
@@ -654,7 +658,6 @@ int main(int argc, char* arv[]) {
 	memset(&mice_input, 0, sizeof(AuInputMessage));
 	memset(&kybrd_input, 0, sizeof(AuInputMessage));
 	postbox_fd = _KeOpenFile("/dev/postbox", FILE_OPEN_READ_ONLY);
-
 
 	int proc_id = _KeCreateProcess(0, "terminal");
 	_KeProcessLoadExec(proc_id, "/term.exe", 0, NULL);

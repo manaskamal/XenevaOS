@@ -121,4 +121,13 @@ XE_EXTERN XE_LIB size_t _KeGetSystemTimerTick();
  */
 XE_EXTERN XE_LIB int _KeCreateThread(void(*entry) (), char *name);
 
+/*
+* _KeSetFileToProcess -- copies a file from one process
+* to other
+* @param fileno -- file number of the current process
+* @param dest_fdidx -- destination process file index
+* @param proc_id -- destination process id
+*/
+XE_EXTERN XE_LIB int _KeSetFileToProcess(int fileno, int dest_fidx, int proc_id);
+
 #endif

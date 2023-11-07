@@ -1,11 +1,11 @@
-﻿Build started 02-11-2023 আবেলি 8:53:59.
+﻿Build started 07-11-2023 আবেলি 9:27:03.
      1>Project "E:\Xeneva Project\Aurora\Libs\Chitralekha\Chitralekha.vcxproj" on node 2 (Rebuild target(s)).
      1>_NASM:
          _fastcpy.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp332e7723399b4e24bff3c45df733c11d.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmpa21294b6f3674097a521fa861c3ca8a0.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\_fastcpy.obj"  "E:\Xeneva Project\Aurora\Libs\Chitralekha\_fastcpy.asm"
        ClCompile:
-         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /I"E:\os_dev\freetype2-master\freetype2-master\include" /Zi /nologo /W3 /WX- /sdl- /Od /D ARCH_X64 /D YES_DYNAMIC /D DYNAMIC_EXPORTER /D _USE_FREETYPE /D _WINDLL /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt chitralekha.cpp color.cpp draw.cpp font.cpp ttf.cpp widgets\base.cpp widgets\defaultwindow.cpp widgets\list.cpp widgets\window.cpp
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /I"E:\os_dev\freetype2-master\freetype2-master\include" /Zi /nologo /W3 /WX- /sdl- /Od /D ARCH_X64 /D YES_DYNAMIC /D DYNAMIC_EXPORTER /D _USE_FREETYPE /D _WINDLL /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt boxblur.cpp chitralekha.cpp color.cpp draw.cpp font.cpp ttf.cpp widgets\base.cpp widgets\defaultwindow.cpp widgets\list.cpp widgets\window.cpp
      1>cl : Command line warning D9025: overriding '/sdl-' with '/GS-'
      1>cl : Command line warning D9002: ignoring unknown option '/arch:SSE2'
          window.cpp
@@ -26,12 +26,15 @@
      1>font.cpp(84): warning C4244: '=' : conversion from 'float' to 'uint32_t', possible loss of data
      1>font.cpp(121): warning C4018: '<' : signed/unsigned mismatch
      1>font.cpp(122): warning C4018: '<' : signed/unsigned mismatch
-     1>font.cpp(172): warning C4018: '<' : signed/unsigned mismatch
-     1>font.cpp(173): warning C4018: '<' : signed/unsigned mismatch
-     1>font.cpp(212): warning C4267: 'return' : conversion from 'size_t' to 'int', possible loss of data
-     1>font.cpp(236): warning C4267: 'return' : conversion from 'size_t' to 'int', possible loss of data
-     1>font.cpp(262): warning C4267: 'return' : conversion from 'size_t' to 'int', possible loss of data
-     1>font.cpp(286): warning C4267: 'return' : conversion from 'size_t' to 'int', possible loss of data
+     1>font.cpp(153): warning C4018: '>=' : signed/unsigned mismatch
+     1>font.cpp(155): warning C4018: '>=' : signed/unsigned mismatch
+     1>font.cpp(178): warning C4018: '<' : signed/unsigned mismatch
+     1>font.cpp(179): warning C4018: '<' : signed/unsigned mismatch
+     1>font.cpp(180): warning C4018: '>=' : signed/unsigned mismatch
+     1>font.cpp(220): warning C4267: 'return' : conversion from 'size_t' to 'int', possible loss of data
+     1>font.cpp(244): warning C4267: 'return' : conversion from 'size_t' to 'int', possible loss of data
+     1>font.cpp(270): warning C4267: 'return' : conversion from 'size_t' to 'int', possible loss of data
+     1>font.cpp(294): warning C4267: 'return' : conversion from 'size_t' to 'int', possible loss of data
          draw.cpp
      1>draw.cpp(45): warning C4018: '<' : signed/unsigned mismatch
      1>draw.cpp(46): warning C4018: '<' : signed/unsigned mismatch
@@ -44,12 +47,16 @@
      1>chitralekha.cpp(164): warning C4018: '<' : signed/unsigned mismatch
      1>chitralekha.cpp(175): warning C4244: 'argument' : conversion from 'uint32_t' to 'float', possible loss of data
      1>chitralekha.cpp(185): warning C4244: 'argument' : conversion from 'uint32_t' to 'float', possible loss of data
+         boxblur.cpp
+     1>boxblur.cpp(56): warning C4018: '<' : signed/unsigned mismatch
+     1>boxblur.cpp(57): warning C4018: '<' : signed/unsigned mismatch
          Generating Code...
      1>e:\xeneva project\aurora\libs\chitralekha\ttf.cpp(194): warning C4700: uninitialized local variable 'glyph' used
      1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(1186,5): warning MSB8012: TargetPath(E:\Xeneva Project\Aurora\x64\Debug\Chitralekha.dll) does not match the Linker's OutputFile property value (F:\chlkha.dll). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
      1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(1188,5): warning MSB8012: TargetName(Chitralekha) does not match the Linker's OutputFile property value (chlkha). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
        Link:
-         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\link.exe /ERRORREPORT:PROMPT /OUT:"F:\chlkha.dll" /INCREMENTAL /NOLOGO /LIBPATH:"E:\Xeneva Project\Aurora\x64\Debug" /LIBPATH:"E:\os_dev\freetype2-master\freetype2-master\objs" /LIBPATH:"E:\Xeneva Project\Aurora\Libs\XECrt" XEClib.lib ftype.lib xecrt.lib /NODEFAULTLIB /MANIFEST:NO /PDB:"E:\Xeneva Project\Aurora\x64\Debug\Chitralekha.pdb" /MAP /MAPINFO:EXPORTS /SUBSYSTEM:NATIVE /LARGEADDRESSAWARE /Driver /OPT:NOREF /LTCG /TLBID:1 /BASE:"0x0000000000600000" /FIXED /NXCOMPAT /IMPLIB:"E:\Xeneva Project\Aurora\x64\Debug\Chitralekha.lib" /MACHINE:X64 /ALIGN:512 /DLL x64\Debug\chitralekha.obj
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\link.exe /ERRORREPORT:PROMPT /OUT:"F:\chlkha.dll" /INCREMENTAL /NOLOGO /LIBPATH:"E:\Xeneva Project\Aurora\x64\Debug" /LIBPATH:"E:\os_dev\freetype2-master\freetype2-master\objs" /LIBPATH:"E:\Xeneva Project\Aurora\Libs\XECrt" XEClib.lib ftype.lib xecrt.lib /NODEFAULTLIB /MANIFEST:NO /PDB:"E:\Xeneva Project\Aurora\x64\Debug\Chitralekha.pdb" /MAP /MAPINFO:EXPORTS /SUBSYSTEM:NATIVE /LARGEADDRESSAWARE /Driver /OPT:NOREF /LTCG /TLBID:1 /BASE:"0x0000000000600000" /FIXED /NXCOMPAT /IMPLIB:"E:\Xeneva Project\Aurora\x64\Debug\Chitralekha.lib" /MACHINE:X64 /ALIGN:512 /DLL x64\Debug\boxblur.obj
+         x64\Debug\chitralekha.obj
          x64\Debug\color.obj
          x64\Debug\draw.obj
          x64\Debug\font.obj
@@ -67,4 +74,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:01.33
+Time Elapsed 00:00:01.90

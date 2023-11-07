@@ -59,6 +59,7 @@ typedef struct __tty__ {
 	int slave_written;
 	uint16_t master_pid;
 	uint16_t slave_pid;
+	uint16_t blockedSlaveId;
 	__tty__ *next;
 	__tty__ *prev;
 }TTY;

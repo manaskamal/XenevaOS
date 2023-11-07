@@ -6,5 +6,6 @@
   <ItemGroup>
     <ClInclude Include="term.h" />
     <ClInclude Include="arrayfont.h" />
+    <ClInclude Include="esccode.h" />
   </ItemGroup>
 </Project>

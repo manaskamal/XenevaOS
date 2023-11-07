@@ -18,6 +18,7 @@
     <ClInclude Include="widgets\list.h">
       <Filter>widgets</Filter>
     </ClInclude>
+    <ClInclude Include="boxblur.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="chitralekha.cpp" />
@@ -37,6 +38,7 @@
     <ClCompile Include="widgets\list.cpp">
       <Filter>widgets</Filter>
     </ClCompile>
+    <ClCompile Include="boxblur.cpp" />
   </ItemGroup>
   <ItemGroup>
     <NASM Include="_fastcpy.asm" />

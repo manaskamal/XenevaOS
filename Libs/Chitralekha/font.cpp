@@ -150,6 +150,11 @@ void ChFontDrawText(ChCanvas *canv, ChFont* font, char* string, int penx, int pe
 */
 void ChFontDrawChar(ChCanvas *canv, ChFont* font, char c, int penx, int peny, uint32_t sz, uint32_t color){
 #ifdef _USE_FREETYPE
+	if (penx >= canv->canvasWidth)
+		return;
+	if (peny >= canv->canvasHeight)
+		return;
+
 	int w = font->face->glyph->metrics.width;
 	int h = font->face->glyph->metrics.height;
 	FT_Bool use_kerning = FT_HAS_KERNING(font->face);
@@ -168,9 +173,12 @@ void ChFontDrawChar(ChCanvas *canv, ChFont* font, char c, int penx, int peny, ui
 
 	int x_v = penx + font->face->glyph->bitmap_left;
 	int y_v = peny - font->face->glyph->bitmap_top;
-
-	for (int i = x_v, p = 0; i < x_v + font->face->glyph->bitmap.width; i++, p++) {
-		for (int j = y_v, q = 0; j < y_v + font->face->glyph->bitmap.rows; j++, q++) {
+	int b_w = font->face->glyph->bitmap.width;
+	
+	for (int j = y_v, q = 0; j < y_v + font->face->glyph->bitmap.rows; j++, q++) {
+		for (int i = x_v, p = 0; i < x_v + font->face->glyph->bitmap.width; i++, p++) {
+			if (i < 0 || j < 0 || i >= canv->canvasWidth || j >= canv->canvasHeight)
+				continue;
 			if (font->face->glyph->bitmap.buffer[q * font->face->glyph->bitmap.width + p] > 0){
 				double val = font->face->glyph->bitmap.buffer[q * font->face->glyph->bitmap.width + p] * 1.0 / 255;
 				canv->buffer[i + j * canv->canvasWidth] = ChColorAlphaBlend(canv->buffer[i + j * canv->canvasWidth],
