@@ -79,6 +79,8 @@
 #define MENUCLICKBLUE 0xFF6A7298
 #define TITLEBAR_DARK  0xFF2F2F2F
 #define LIGHTBLACK    0xFF3E3E3E
+#define MAGENTA       0xFFFF00FF
+#define CYAN          0xFF00FFFF
 
 #define SET_ALPHA(color,alpha) (((color << 8) >> 8) | ((alpha << 24) & 0xff000000))
 

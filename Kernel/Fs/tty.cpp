@@ -140,8 +140,9 @@ size_t AuTTYMasterRead(AuVFSNode* fs, AuVFSNode* file, uint64_t* buffer, uint32_
 	size_t bytes_to_ret = 0;
 	uint8_t* aligned_buf = (uint8_t*)buffer;
 
-	if (CircBufEmpty(type->masterbuf))
+	if (CircBufEmpty(type->masterbuf)) {
 		return bytes_to_ret;
+	}
 
 	for (int i = 0; i < type->master_written; i++) {
 		AuCircBufGet(type->masterbuf, &aligned_buf[i]);
@@ -150,8 +151,11 @@ size_t AuTTYMasterRead(AuVFSNode* fs, AuVFSNode* file, uint64_t* buffer, uint32_
 
 	if (type->blockedSlaveId >0) {
 		AuThread* thr = AuThreadFindByIDBlockList(type->blockedSlaveId);
-		if (thr)
+		if (thr) {
+			AuTextOut("Master unblocking thread -> %d %s\n", type->blockedSlaveId, thr->name);
 			AuUnblockThread(thr);
+		}
+		type->blockedSlaveId = 0;
 	}
 
 	type->master_written = 0;

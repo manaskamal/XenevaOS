@@ -57,7 +57,9 @@ bool dirty = false;
 bool _escape_seq = false;
 bool _seq_csi = false;
 bool _cursor_blink = 0;
-
+char* escBuf;
+uint32_t backColor;
+uint32_t fgColor;
 /*
  * TerminalDrawArrayFont -- draw bitmap fonts using defined array
  * @param canv -- Pointer to canvas 
@@ -101,8 +103,8 @@ void TerminalDrawCell(int x, int y, bool dirty) {
 	int y_offset = 26;
 
 	TermCell* cell = (TermCell*)&term_buffer[(y* ws_col + x)];
-	/*int f_w = ChFontGetWidthChar(consolas, cell->c);
-	int f_h = ChFontGetHeightChar(consolas, cell->c);*/
+	int f_w = ChFontGetWidthChar(consolas, cell->c);
+	int f_h = ChFontGetHeightChar(consolas, cell->c);
 
 	if ((x* cell_width + cell_width) >= win->info->width) 
 		return;
@@ -110,7 +112,7 @@ void TerminalDrawCell(int x, int y, bool dirty) {
 	if ((y*cell_height + cell_height) >= win->info->height)
 		return;
 	ChDrawRect(win->canv, x * cell_width, y_offset + y * cell_height, cell_width, cell_height, cell->cellBgCol);
-	ChFontDrawChar(win->canv, consolas, cell->c,x * cell_width,y_offset + y * cell_height + cell_height / 2,
+	ChFontDrawChar(win->canv, consolas, cell->c,x * cell_width,y_offset + y * cell_height + cell_height - f_h / 2,
 		0, cell->cellFgCol);
 	/*TerminalDrawArrayFont(win->canv, x * cell_width, y_offset + y * cell_height + 12 / 2, cell->c, cell->cellFgCol);*/
 	if (dirty)
@@ -140,10 +142,9 @@ void TerminalDrawCursor() {
 	ChWindowUpdate(win, 0, 26, win->info->width, win->info->height - 26, 1, 0);
 }
 
-void ProcessControlSequence(char ch) {
-
-}
-
+/* TerminalScroll -- scrolls the current terminal 
+ * one line up
+ */
 void TerminalScroll() {
 
 	/* scroll the screen one line up */
@@ -162,26 +163,62 @@ void TerminalScroll() {
 	}
 }
 
+/* TerminalClearScreen -- clears entire screen area of
+ * terminal
+ */
+void TerminalClearScreen() {
+	for (int x = 0; x < ws_col; x++) {
+		for (int y = 0; y < ws_row; y++){
+			TerminalSetCellData(x, y, 0, BLACK, WHITE);
+		}
+	}
+	cursor_x = 0;
+	cursor_y = 0;
+}
+
+/*
+ * TerminalPrintChar -- print a single character
+ * @param char c -- character to print
+ * @param fgcolor -- Foreground color
+ * @param bgcolor -- Background color
+ */
 void TerminalPrintChar(char c, uint32_t fgcolor, uint32_t bgcolor) {
 	if (c == '\n'){
+		fgColor = WHITE;
+		backColor = BLACK;
 		cursor_y++;
 		cursor_x = 0;
 		if (cursor_y >= ws_row){
-			//need for scrolling 
 			TerminalScroll();
 			cursor_y--;
 		}
 	}
+	else if (c == '\r') {
+		cursor_x = 0;
+	}
+	else if (c == '\b') {
+		cursor_x--;
+		if (cursor_x <= 0) {
+			cursor_y--;
+			cursor_x = ws_col - 1;
+		}
+		return;
+	}
 	else {
 		TerminalSetCellData(cursor_x, cursor_y, c, bgcolor, fgcolor);
 		cursor_x++;
-		if (cursor_x == ws_col){
+		if (cursor_x == ws_col - 1){
 			cursor_x = 0;
 			cursor_y++;
 		}
 	}
 }
 
+/* TerminalPrintString -- prints sequences of characters
+ * @param string -- string to print
+ * @param fgcolor -- foreground color
+ * @param bgcolor -- background color
+ */
 void TerminalPrintString(char* string, uint32_t fgcolor, uint32_t bgcolor) {
 	while (*string) {
 		TerminalPrintChar(*string, fgcolor, bgcolor);
@@ -189,17 +226,195 @@ void TerminalPrintString(char* string, uint32_t fgcolor, uint32_t bgcolor) {
 	}
 }
 
+/* ProcessControlSequence -- the main emulation function 
+ * of ANSI Terminal
+ * @param ch -- Character to emulate
+ */
+void ProcessControlSequence(char ch) {
+	/* Emulates graphics rendition */
+	if (ch == CSI_SET_GRAPHICS_RENDITION) {
+		for (int i = 0; i < 256; i++) {
+			if (escBuf[i] == 'm') {
+				escBuf[i] = 0;
+				break;
+			}
+		}
+		int colorCode = atoi(escBuf);
+		switch (colorCode)
+		{
+		case CSI_SET_BG_BLACK:
+			backColor = BLACK;
+			break;
+		case CSI_SET_BG_BLUE:
+			backColor = BLUE;
+			break;
+		case CSI_SET_BG_BROWN:
+			backColor = BROWN;
+			break;
+		case CSI_SET_BG_CYAN :
+			backColor = CYAN;
+			break;
+		case CSI_SET_BG_DEFAULT:
+			backColor = BLACK;
+			break;
+		case CSI_SET_BG_GREEN:
+			backColor = GREEN;
+			break;
+		case CSI_SET_BG_MAGENTA:
+			backColor = MAGENTA;
+			break;
+		case CSI_SET_BG_RED:
+			backColor = RED;
+			break;
+		case CSI_SET_BG_WHITE:
+			backColor = WHITE;
+			break;
+		case CSI_SET_FG_BLUE:
+			fgColor = BLUE;
+			break;
+		case CSI_SET_FG_BROWN:
+			fgColor = BROWN;
+			break;
+		case CSI_SET_FG_CYAN:
+			fgColor = CYAN;
+			break;
+		case CSI_SET_FG_BLACK:
+			fgColor = BLACK;
+			break;
+		case CSI_SET_FG_GREEN:
+			fgColor = GREEN;
+			break;
+		case CSI_SET_FG_MAGENTA:
+			fgColor = MAGENTA;
+			break;
+		case CSI_SET_FG_RED:
+			fgColor = RED;
+			break;
+		case CSI_SET_FG_WHITE:
+			fgColor = WHITE;
+			break;
+		case CSI_SET_FG_DEFAULT:
+			fgColor = WHITE;
+			break;
+		}
+		_escape_seq = false;
+		_seq_csi = false;
+		memset(escBuf, 0, 256);
+		return;
+	}
+
+	/* emulates cursor attributes */
+	if (ch == CSI_CURSOR_UP) {
+		for (int i = 0; i < 256; i++) {
+			if (escBuf[i] == CSI_CURSOR_UP) {
+				escBuf[i] = 0;
+				break;
+			}
+		}
+		int count = atoi(escBuf);
+		cursor_y -= count;
+		if (cursor_y <= 0)
+			cursor_y = 0;
+		_escape_seq = false;
+		_seq_csi = false;
+		memset(escBuf, 0, 256);
+		return;
+	}
+	if (ch == CSI_CURSOR_BACKWARD){
+		for (int i = 0; i < 256; i++) {
+			if (escBuf[i] == CSI_CURSOR_BACKWARD) {
+				escBuf[i] = 0;
+				break;
+			}
+		}
+		int count = atoi(escBuf);
+		cursor_x -= count;
+		if (cursor_x <= 0)
+			cursor_x = 0;
+		_escape_seq = false;
+		_seq_csi = false;
+		memset(escBuf, 0, 256);
+		return;
+	}
+	if (ch == CSI_CURSOR_FORWARD) {
+		for (int i = 0; i < 256; i++) {
+			if (escBuf[i] == CSI_CURSOR_FORWARD) {
+				escBuf[i] = 0;
+				break;
+			}
+		}
+		int count = atoi(escBuf);
+		cursor_x += count;
+		if (cursor_x == ws_col - 1){
+			cursor_x = 0;
+			cursor_y++;
+		}
+		_escape_seq = false;
+		_seq_csi = false;
+		memset(escBuf, 0, 256);
+		return;
+	}
+	if (ch == CSI_CURSOR_DOWN) {
+		for (int i = 0; i < 256; i++) {
+			if (escBuf[i] == CSI_CURSOR_DOWN) {
+				escBuf[i] = 0;
+				break;
+			}
+		}
+		int count = atoi(escBuf);
+		cursor_y += count;
+		if (cursor_y >= ws_row)
+			cursor_y--;
+		_escape_seq = false;
+		_seq_csi = false;
+		memset(escBuf, 0, 256);
+		return;
+	}
+	/* emulate erase text non line mode */
+	if (ch == CSI_ERASE_TEXT_NONLINE) {
+		for (int i = 0; i < 256; i++) {
+			if (escBuf[i] == CSI_ERASE_TEXT_NONLINE) {
+				escBuf[i] = 0;
+				break;
+			}
+		}
+		int value = atoi(escBuf);
+		switch (value) {
+		case 2:
+			/* erase entire screen*/
+			TerminalClearScreen();
+			break;
+		case 1:
+			//erase upward
+			break;
+		}
+		if (value == 0){
+			/* erase downward */
+		}
+		_escape_seq = false;
+		_seq_csi = false;
+		memset(escBuf, 0, 256);
+		return;
+	}
+}
+
 /*
-* TerminalProcessLine -- emulates terminals
-*/
+ * TerminalProcessLine -- emulates terminals
+ * @param ch -- character to process
+ */
 void TerminalProcessLine(char ch) {
 	if (_escape_seq) {
-		if (ch == SEQUENCE_CSI)
+		if (ch == SEQUENCE_CSI) {
 			_seq_csi = true;
+			return;
+		}
 
-		if (_seq_csi)
+		if (_seq_csi) {
+			char s[] = { ch, 0 };
+			strncat(escBuf, s, 2);
 			ProcessControlSequence(ch);
-
+			return;
+		}
 	}
 	else {
 		/* process default state */
@@ -220,7 +435,7 @@ void TerminalProcessLine(char ch) {
 			return;
 		}
 
-		TerminalPrintChar(ch,WHITE,BLACK);
+		TerminalPrintChar(ch,fgColor,backColor);
 	}
 }
 /*
@@ -244,7 +459,10 @@ void TerminalHandleMessage(PostEvent *e) {
 	}
 }
 
-
+/*
+ * TerminalThread -- terminal thread to handle
+ * asynchronous reads
+ */
 void TerminalThread() {
 	char buf[512];
 	memset(&buf, 0, 512);
@@ -259,11 +477,6 @@ void TerminalThread() {
 		for (int i = 0; i < bytes_read; i++){
 			TerminalProcessLine(buf[i]);
 		}
-
-		if (_escape_seq) {
-			_escape_seq = false;
-			_seq_csi = false;
-		}
 	
 
 		/* now bytes_read tells the terminal
@@ -276,7 +489,7 @@ void TerminalThread() {
 			bytes_read = 0;
 		}
 
-		_KeProcessSleep(100000000); //
+		_KeProcessSleep(100000000); 
 	}
 }
 
@@ -285,7 +498,7 @@ void TerminalThread() {
 */
 int main(int argc, char* arv[]){
 	app = ChitralekhaStartApp(argc, arv);
-	win = ChCreateWindow(app, (1 << 0), "Xeneva Terminal", 600, 300, 550, 400);
+	win = ChCreateWindow(app, (1 << 0), "Xeneva Terminal", 300, 300, 550, 400);
 	win->color = BLACK;
 	ChWindowPaint(win);
 	consolas = ChInitialiseFont(CONSOLAS);
@@ -303,6 +516,10 @@ int main(int argc, char* arv[]){
 	last_cursor_y = ws_row - 2;
 	last_cursor_x = ws_col - 2;
 	_cursor_blink = 0;
+	escBuf = (char*)malloc(256);
+	memset(escBuf, 0, 256);
+	backColor = BLACK;
+	fgColor = WHITE;
 
 	master_fd = slave_fd = 0;
 	/* create the terminal */
@@ -323,7 +540,6 @@ int main(int argc, char* arv[]){
 	TerminalPrintString("Copyright (C) Manas Kamal Choudhury 2023\n", GRAY, BLACK);
 	TerminalPrintString("HP@LAPTOP-UCFKK4J9-", GREEN, BLACK);
 	TerminalPrintString("/:$", LIGHTSILVER, BLACK);
-	TerminalSetCellData(ws_col - 2, ws_row - 2, 'H', BLACK, WHITE);
 	TerminalDrawAllCells();
 	int thread_idx = _KeCreateThread(TerminalThread, "asyncthr");
 

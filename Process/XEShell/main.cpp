@@ -38,6 +38,10 @@
 int main(int argc, char* arv[]){
 	printf("Xeneva Shell v1.0 \n");
 	printf("Copyright (C) Manas Kamal Choudhury 2023\n");
+	printf("^[44m^[30mHello World\n");
+	printf("^[42m^[37mXeneva is an operating system\n");
+	printf("^[42m^[37mMade in North-East India,Assam\n");
+	printf("^[J");
 	while (1){
 		_KePauseThread();
 	}

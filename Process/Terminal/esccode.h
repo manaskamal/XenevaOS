@@ -53,4 +53,31 @@
 #define CSI_DL  'M' //Delete n Lines
 #define CSI_SCROLL_UP 'S' //Scroll Up
 #define CSI_SCROLL_DOWN 'T' //Scroll Down
+
+#define CSI_SET_GRAPHICS_RENDITION 'm'
+
+/* color attributes */
+#define CSI_SET_FG_BLACK 30
+#define CSI_SET_FG_RED 31
+#define CSI_SET_FG_GREEN 32
+#define CSI_SET_FG_BROWN 33
+#define CSI_SET_FG_BLUE 34
+#define CSI_SET_FG_MAGENTA 35
+#define CSI_SET_FG_CYAN 36
+#define CSI_SET_FG_WHITE 37
+#define CSI_SET_FG_DEFAULT 39
+
+#define CSI_SET_BG_BLACK 40
+#define CSI_SET_BG_RED 41
+#define CSI_SET_BG_GREEN 42
+#define CSI_SET_BG_BROWN 43
+#define CSI_SET_BG_BLUE 44
+#define CSI_SET_BG_MAGENTA 45
+#define CSI_SET_BG_CYAN 46
+#define CSI_SET_BG_WHITE 47
+#define CSI_SET_BG_DEFAULT 49
+
+#define CSI_ERASE_TEXT_NONLINE 'J'
+#define CSI_ERASE_TEXT_LINE 'K'
+
 #endif
