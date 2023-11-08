@@ -19,6 +19,7 @@ with hybrid design and the entire operating system is known as _'Xeneva'_.
 10. Freetype2 as font rendering engine
 12. Compositing Window Manager called "Deodhai"
 13. Graphics Library known as "Chitralekha"
+13. Xeneva Terminal with basic ANSI/VT100 escape sequence support
 
 _And many more coming soon_
 
