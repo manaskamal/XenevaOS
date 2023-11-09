@@ -36,7 +36,7 @@
 #include <Hal\x86_64_signal.h>
 
 /* maximum supported system calls */
-#define AURORA_MAX_SYSCALL  35
+#define AURORA_MAX_SYSCALL  37
 #define AURORA_SYSCALL_MAGIC  0x05212004  /* actual number to remember */
 
 /* ==========================================
@@ -216,5 +216,19 @@ extern int SetFileToProcess(int fileno, int dest_fdidx, int proc_id);
 * @param sz -- size in bytes to unallocate
 */
 extern int ProcessHeapUnmap(void* ptr, size_t sz);
+
+/*
+* SendSignal -- sends a signal to desired process
+* note here pid means thread id
+* @param pid -- thread id
+* @param signo -- signal number
+*/
+extern int SendSignal(int pid, int signo);
+
+/*
+* GetCurrentTime -- get current time
+* @param ptr -- pointer to time struct
+*/
+extern int GetCurrentTime(void* ptr);
 
 #endif

@@ -112,16 +112,16 @@ $LN3:
 ; 164  : 	size_t start_addr = proc->shm_break;
 
 	mov	rax, QWORD PTR proc$[rsp]
-	mov	rax, QWORD PTR [rax+1088]
+	mov	rax, QWORD PTR [rax+1096]
 	mov	QWORD PTR start_addr$[rsp], rax
 
 ; 165  : 	proc->shm_break = (proc->shm_break + num_frames * PAGE_SIZE);
 
 	imul	rax, QWORD PTR num_frames$[rsp], 4096	; 00001000H
 	mov	rcx, QWORD PTR proc$[rsp]
-	add	rax, QWORD PTR [rcx+1088]
+	add	rax, QWORD PTR [rcx+1096]
 	mov	rcx, QWORD PTR proc$[rsp]
-	mov	QWORD PTR [rcx+1088], rax
+	mov	QWORD PTR [rcx+1096], rax
 
 ; 166  : 	return start_addr;
 
@@ -991,14 +991,14 @@ $LN16@AuSHMObtai:
 
 	mov	rax, QWORD PTR proc$[rsp]
 	mov	rcx, QWORD PTR start_addr$6[rsp]
-	cmp	QWORD PTR [rax+1088], rcx
+	cmp	QWORD PTR [rax+1096], rcx
 	jbe	$LN9@AuSHMObtai
 
 ; 221  : 			size_t gap = proc->shm_break - start_addr;
 
 	mov	rax, QWORD PTR proc$[rsp]
 	mov	rcx, QWORD PTR start_addr$6[rsp]
-	mov	rax, QWORD PTR [rax+1088]
+	mov	rax, QWORD PTR [rax+1096]
 	sub	rax, rcx
 	mov	QWORD PTR gap$9[rsp], rax
 

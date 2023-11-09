@@ -6,8 +6,8 @@ INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
 CONST	SEGMENT
-$SG4024	DB	'cleaning thread -> %x ', 0aH, 00H
-$SG4038	DB	'Process cleaned ', 0dH, 0aH, 00H
+$SG4026	DB	'cleaning thread -> %x ', 0aH, 00H
+$SG4040	DB	'Process cleaned ', 0dH, 0aH, 00H
 CONST	ENDS
 PUBLIC	?AuProcessClean@@YAXPEAU_au_proc_@@0@Z		; AuProcessClean
 PUBLIC	?FreeUserStack@@YAXPEA_KPEAX@Z			; FreeUserStack
@@ -426,13 +426,13 @@ $LN15@AuProcessC:
 
 	mov	rax, QWORD PTR killable$[rsp]
 	mov	rcx, 12884901888			; 0000000300000000H
-	cmp	QWORD PTR [rax+1096], rcx
+	cmp	QWORD PTR [rax+1104], rcx
 	jbe	$LN13@AuProcessC
 
 ; 132  : 		size_t num_pages = (killable->proc_mem_heap - PROCESS_BREAK_ADDRESS) / PAGE_SIZE;
 
 	mov	rax, QWORD PTR killable$[rsp]
-	mov	rax, QWORD PTR [rax+1096]
+	mov	rax, QWORD PTR [rax+1104]
 	mov	rcx, 12884901888			; 0000000300000000H
 	sub	rax, rcx
 	xor	edx, edx
@@ -532,7 +532,7 @@ $LN7@AuProcessC:
 ; 147  : 			AuTextOut("cleaning thread -> %x \n", t_);
 
 	mov	rdx, QWORD PTR t_$4[rsp]
-	lea	rcx, OFFSET FLAT:$SG4024
+	lea	rcx, OFFSET FLAT:$SG4026
 	call	AuTextOut
 
 ; 148  : 			AuThreadCleanTrash(t_);
@@ -665,7 +665,7 @@ $LN2@AuProcessC:
 
 ; 176  : 	SeTextOut("Process cleaned \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG4038
+	lea	rcx, OFFSET FLAT:$SG4040
 	call	SeTextOut
 
 ; 177  : }

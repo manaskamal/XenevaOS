@@ -16,25 +16,23 @@ _BSS	SEGMENT
 ?last@@3PEAU__tty__@@EA DQ 01H DUP (?)			; last
 _BSS	ENDS
 CONST	SEGMENT
-$SG3722	DB	'Master unblocking thread -> %d %s', 0aH, 00H
-	ORG $+1
-$SG3776	DB	'/dev', 00H
+$SG3774	DB	'/dev', 00H
 	ORG $+3
-$SG3809	DB	'/dev', 00H
+$SG3807	DB	'/dev', 00H
 	ORG $+3
-$SG3815	DB	'ttym', 00H
+$SG3813	DB	'ttym', 00H
+	ORG $+3
+$SG3814	DB	'/dev/tty', 00H
+	ORG $+3
+$SG3819	DB	'/dev', 00H
+	ORG $+3
+$SG3825	DB	'ttys', 00H
 	ORG $+7
-$SG3816	DB	'/dev/tty', 00H
+$SG3826	DB	'/dev/tty', 00H
 	ORG $+3
-$SG3821	DB	'/dev', 00H
-	ORG $+3
-$SG3827	DB	'ttys', 00H
+$SG3850	DB	'/dev', 00H
 	ORG $+7
-$SG3828	DB	'/dev/tty', 00H
-	ORG $+3
-$SG3852	DB	'/dev', 00H
-	ORG $+7
-$SG3853	DB	'/dev/tty', 00H
+$SG3851	DB	'/dev/tty', 00H
 CONST	ENDS
 PUBLIC	?AuTTYCreate@@YAHPEAH0@Z			; AuTTYCreate
 PUBLIC	?AuTTYInitialise@@YAXXZ				; AuTTYInitialise
@@ -66,14 +64,11 @@ EXTRN	strcpy:PROC
 EXTRN	memset:PROC
 EXTRN	?sztoa@@YAPEAD_KPEADH@Z:PROC			; sztoa
 EXTRN	AuGetCurrentThread:PROC
-EXTRN	AuBlockThread:PROC
-EXTRN	AuUnblockThread:PROC
-EXTRN	AuThreadFindByIDBlockList:PROC
+EXTRN	AuSleepThread:PROC
+EXTRN	AuForceScheduler:PROC
 EXTRN	?AuProcessFindThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z:PROC ; AuProcessFindThread
 EXTRN	?AuProcessGetFileDesc@@YAHPEAU_au_proc_@@@Z:PROC ; AuProcessGetFileDesc
 EXTRN	x64_cli:PROC
-EXTRN	x64_force_sched:PROC
-EXTRN	AuTextOut:PROC
 pdata	SEGMENT
 $pdata$?AuTTYCreate@@YAHPEAH0@Z DD imagerel $LN6
 	DD	imagerel $LN6+538
@@ -93,8 +88,8 @@ $pdata$?AuTTYWriteMaster@@YAXPEAU__tty__@@E@Z DD imagerel $LN3
 $pdata$?AuTTYProcessLine@@YAXPEAU__tty__@@E@Z DD imagerel $LN18
 	DD	imagerel $LN18+399
 	DD	imagerel $unwind$?AuTTYProcessLine@@YAXPEAU__tty__@@E@Z
-$pdata$?AuTTYMasterRead@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z DD imagerel $LN10
-	DD	imagerel $LN10+310
+$pdata$?AuTTYMasterRead@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z DD imagerel $LN8
+	DD	imagerel $LN8+209
 	DD	imagerel $unwind$?AuTTYMasterRead@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z
 $pdata$?AuTTYMasterWrite@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z DD imagerel $LN7
 	DD	imagerel $LN7+130
@@ -103,7 +98,7 @@ $pdata$?AuTTYSlaveRead@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z DD imagerel $LN7
 	DD	imagerel $LN7+140
 	DD	imagerel $unwind$?AuTTYSlaveRead@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z
 $pdata$?AuTTYSlaveWrite@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z DD imagerel $LN9
-	DD	imagerel $LN9+240
+	DD	imagerel $LN9+254
 	DD	imagerel $unwind$?AuTTYSlaveWrite@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z
 $pdata$?AuTTYSlaveClose@@YAHPEAU__VFS_NODE__@@0@Z DD imagerel $LN4
 	DD	imagerel $LN4+46
@@ -112,10 +107,10 @@ $pdata$?AuTTYIoControl@@YAHPEAU__VFS_NODE__@@HPEAX@Z DD imagerel $LN11
 	DD	imagerel $LN11+339
 	DD	imagerel $unwind$?AuTTYIoControl@@YAHPEAU__VFS_NODE__@@HPEAX@Z
 $pdata$?AuTTYCreateMaster@@YAPEAU__VFS_NODE__@@PEAU__tty__@@@Z DD imagerel $LN3
-	DD	imagerel $LN3+279
+	DD	imagerel $LN3+290
 	DD	imagerel $unwind$?AuTTYCreateMaster@@YAPEAU__VFS_NODE__@@PEAU__tty__@@@Z
 $pdata$?AuTTYCreateSlave@@YAPEAU__VFS_NODE__@@PEAU__tty__@@@Z DD imagerel $LN3
-	DD	imagerel $LN3+279
+	DD	imagerel $LN3+290
 	DD	imagerel $unwind$?AuTTYCreateSlave@@YAPEAU__VFS_NODE__@@PEAU__tty__@@@Z
 pdata	ENDS
 xdata	SEGMENT
@@ -132,7 +127,7 @@ $unwind$?AuTTYWriteMaster@@YAXPEAU__tty__@@E@Z DD 010d01H
 $unwind$?AuTTYProcessLine@@YAXPEAU__tty__@@E@Z DD 010d01H
 	DD	0620dH
 $unwind$?AuTTYMasterRead@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z DD 011801H
-	DD	0a218H
+	DD	08218H
 $unwind$?AuTTYMasterWrite@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z DD 011801H
 	DD	08218H
 $unwind$?AuTTYSlaveRead@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z DD 011801H
@@ -157,40 +152,40 @@ fs$ = 48
 tty$ = 80
 ?AuTTYCreateSlave@@YAPEAU__VFS_NODE__@@PEAU__tty__@@@Z PROC ; AuTTYCreateSlave
 
-; 301  : AuVFSNode* AuTTYCreateSlave(TTY* tty) {
+; 298  : AuVFSNode* AuTTYCreateSlave(TTY* tty) {
 
 $LN3:
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 72					; 00000048H
 
-; 302  : 	AuVFSNode* fs = AuVFSFind("/dev");
+; 299  : 	AuVFSNode* fs = AuVFSFind("/dev");
 
-	lea	rcx, OFFSET FLAT:$SG3821
+	lea	rcx, OFFSET FLAT:$SG3819
 	call	AuVFSFind
 	mov	QWORD PTR fs$[rsp], rax
 
-; 303  : 
-; 304  : 	AuVFSNode* node = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
+; 300  : 
+; 301  : 	AuVFSNode* node = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
 
-	mov	ecx, 168				; 000000a8H
+	mov	ecx, 176				; 000000b0H
 	call	kmalloc
 	mov	QWORD PTR node$[rsp], rax
 
-; 305  : 	memset(node, 0, sizeof(AuVFSNode));
+; 302  : 	memset(node, 0, sizeof(AuVFSNode));
 
-	mov	r8d, 168				; 000000a8H
+	mov	r8d, 176				; 000000b0H
 	xor	edx, edx
 	mov	rcx, QWORD PTR node$[rsp]
 	call	memset
 
-; 306  : 	char name[5];
-; 307  : 	strcpy(name, "ttys");
+; 303  : 	char name[5];
+; 304  : 	strcpy(name, "ttys");
 
-	lea	rdx, OFFSET FLAT:$SG3827
+	lea	rdx, OFFSET FLAT:$SG3825
 	lea	rcx, QWORD PTR name$[rsp]
 	call	strcpy
 
-; 308  : 	sztoa(slave_count, name + 4, 10);
+; 305  : 	sztoa(slave_count, name + 4, 10);
 
 	lea	rax, QWORD PTR name$[rsp+4]
 	mov	r8d, 10
@@ -198,74 +193,80 @@ $LN3:
 	mov	rcx, QWORD PTR ?slave_count@@3_KA	; slave_count
 	call	?sztoa@@YAPEAD_KPEADH@Z			; sztoa
 
-; 309  : 	strcpy(node->filename, name);
+; 306  : 	strcpy(node->filename, name);
 
 	mov	rax, QWORD PTR node$[rsp]
 	lea	rdx, QWORD PTR name$[rsp]
 	mov	rcx, rax
 	call	strcpy
 
-; 310  : 
-; 311  : 	node->size = 512;
+; 307  : 
+; 308  : 	node->size = 512;
 
 	mov	rax, QWORD PTR node$[rsp]
 	mov	DWORD PTR [rax+32], 512			; 00000200H
 
-; 312  : 	node->flags = FS_FLAG_GENERAL | FS_FLAG_TTY;
+; 309  : 	node->flags = FS_FLAG_GENERAL | FS_FLAG_TTY;
 
 	mov	eax, 260				; 00000104H
 	mov	rcx, QWORD PTR node$[rsp]
 	mov	WORD PTR [rcx+64], ax
 
-; 313  : 	node->device = tty;
+; 310  : 	node->device = tty;
 
 	mov	rax, QWORD PTR node$[rsp]
 	mov	rcx, QWORD PTR tty$[rsp]
 	mov	QWORD PTR [rax+72], rcx
 
-; 314  : 	node->read = AuTTYSlaveRead;
+; 311  : 	node->read = AuTTYSlaveRead;
 
 	mov	rax, QWORD PTR node$[rsp]
 	lea	rcx, OFFSET FLAT:?AuTTYSlaveRead@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z ; AuTTYSlaveRead
-	mov	QWORD PTR [rax+88], rcx
+	mov	QWORD PTR [rax+96], rcx
 
-; 315  : 	node->write = AuTTYSlaveWrite;
+; 312  : 	node->write = AuTTYSlaveWrite;
 
 	mov	rax, QWORD PTR node$[rsp]
 	lea	rcx, OFFSET FLAT:?AuTTYSlaveWrite@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z ; AuTTYSlaveWrite
-	mov	QWORD PTR [rax+96], rcx
+	mov	QWORD PTR [rax+104], rcx
 
-; 316  : 	node->close = AuTTYSlaveClose;
+; 313  : 	node->close = AuTTYSlaveClose;
 
 	mov	rax, QWORD PTR node$[rsp]
 	lea	rcx, OFFSET FLAT:?AuTTYSlaveClose@@YAHPEAU__VFS_NODE__@@0@Z ; AuTTYSlaveClose
-	mov	QWORD PTR [rax+136], rcx
+	mov	QWORD PTR [rax+144], rcx
 
-; 317  : 	node->iocontrol = AuTTYIoControl;
+; 314  : 	node->iocontrol = AuTTYIoControl;
 
 	mov	rax, QWORD PTR node$[rsp]
 	lea	rcx, OFFSET FLAT:?AuTTYIoControl@@YAHPEAU__VFS_NODE__@@HPEAX@Z ; AuTTYIoControl
-	mov	QWORD PTR [rax+160], rcx
+	mov	QWORD PTR [rax+168], rcx
 
-; 318  : 
-; 319  : 	AuDevFSAddFile(fs, "/dev/tty", node);
+; 315  : 	node->fileCopyCount = 0;
+
+	xor	eax, eax
+	mov	rcx, QWORD PTR node$[rsp]
+	mov	WORD PTR [rcx+80], ax
+
+; 316  : 
+; 317  : 	AuDevFSAddFile(fs, "/dev/tty", node);
 
 	mov	r8, QWORD PTR node$[rsp]
-	lea	rdx, OFFSET FLAT:$SG3828
+	lea	rdx, OFFSET FLAT:$SG3826
 	mov	rcx, QWORD PTR fs$[rsp]
 	call	AuDevFSAddFile
 
-; 320  : 	slave_count++;
+; 318  : 	slave_count++;
 
 	mov	rax, QWORD PTR ?slave_count@@3_KA	; slave_count
 	inc	rax
 	mov	QWORD PTR ?slave_count@@3_KA, rax	; slave_count
 
-; 321  : 	return node;
+; 319  : 	return node;
 
 	mov	rax, QWORD PTR node$[rsp]
 
-; 322  : }
+; 320  : }
 
 	add	rsp, 72					; 00000048H
 	ret	0
@@ -280,40 +281,40 @@ fs$ = 48
 tty$ = 80
 ?AuTTYCreateMaster@@YAPEAU__VFS_NODE__@@PEAU__tty__@@@Z PROC ; AuTTYCreateMaster
 
-; 273  : AuVFSNode* AuTTYCreateMaster(TTY* tty) {
+; 269  : AuVFSNode* AuTTYCreateMaster(TTY* tty) {
 
 $LN3:
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 72					; 00000048H
 
-; 274  : 	AuVFSNode* fs = AuVFSFind("/dev");
+; 270  : 	AuVFSNode* fs = AuVFSFind("/dev");
 
-	lea	rcx, OFFSET FLAT:$SG3809
+	lea	rcx, OFFSET FLAT:$SG3807
 	call	AuVFSFind
 	mov	QWORD PTR fs$[rsp], rax
 
-; 275  : 
-; 276  : 	AuVFSNode* node = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
+; 271  : 
+; 272  : 	AuVFSNode* node = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
 
-	mov	ecx, 168				; 000000a8H
+	mov	ecx, 176				; 000000b0H
 	call	kmalloc
 	mov	QWORD PTR node$[rsp], rax
 
-; 277  : 	memset(node, 0, sizeof(AuVFSNode));
+; 273  : 	memset(node, 0, sizeof(AuVFSNode));
 
-	mov	r8d, 168				; 000000a8H
+	mov	r8d, 176				; 000000b0H
 	xor	edx, edx
 	mov	rcx, QWORD PTR node$[rsp]
 	call	memset
 
-; 278  : 	char name[5];
-; 279  : 	strcpy(name, "ttym");
+; 274  : 	char name[5];
+; 275  : 	strcpy(name, "ttym");
 
-	lea	rdx, OFFSET FLAT:$SG3815
+	lea	rdx, OFFSET FLAT:$SG3813
 	lea	rcx, QWORD PTR name$[rsp]
 	call	strcpy
 
-; 280  : 	sztoa(master_count, name + 4, 10);
+; 276  : 	sztoa(master_count, name + 4, 10);
 
 	lea	rax, QWORD PTR name$[rsp+4]
 	mov	r8d, 10
@@ -321,74 +322,80 @@ $LN3:
 	mov	rcx, QWORD PTR ?master_count@@3_KA	; master_count
 	call	?sztoa@@YAPEAD_KPEADH@Z			; sztoa
 
-; 281  : 	strcpy(node->filename, name);
+; 277  : 	strcpy(node->filename, name);
 
 	mov	rax, QWORD PTR node$[rsp]
 	lea	rdx, QWORD PTR name$[rsp]
 	mov	rcx, rax
 	call	strcpy
 
-; 282  : 
-; 283  : 	node->size = 512;
+; 278  : 
+; 279  : 	node->size = 512;
 
 	mov	rax, QWORD PTR node$[rsp]
 	mov	DWORD PTR [rax+32], 512			; 00000200H
 
-; 284  : 	node->flags = FS_FLAG_GENERAL | FS_FLAG_TTY;
+; 280  : 	node->flags = FS_FLAG_GENERAL | FS_FLAG_TTY;
 
 	mov	eax, 260				; 00000104H
 	mov	rcx, QWORD PTR node$[rsp]
 	mov	WORD PTR [rcx+64], ax
 
-; 285  : 	node->device = tty;
+; 281  : 	node->device = tty;
 
 	mov	rax, QWORD PTR node$[rsp]
 	mov	rcx, QWORD PTR tty$[rsp]
 	mov	QWORD PTR [rax+72], rcx
 
-; 286  : 	node->read = AuTTYMasterRead;
+; 282  : 	node->read = AuTTYMasterRead;
 
 	mov	rax, QWORD PTR node$[rsp]
 	lea	rcx, OFFSET FLAT:?AuTTYMasterRead@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z ; AuTTYMasterRead
-	mov	QWORD PTR [rax+88], rcx
+	mov	QWORD PTR [rax+96], rcx
 
-; 287  : 	node->write = AuTTYMasterWrite;
+; 283  : 	node->write = AuTTYMasterWrite;
 
 	mov	rax, QWORD PTR node$[rsp]
 	lea	rcx, OFFSET FLAT:?AuTTYMasterWrite@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z ; AuTTYMasterWrite
-	mov	QWORD PTR [rax+96], rcx
+	mov	QWORD PTR [rax+104], rcx
 
-; 288  : 	node->close = AuTTYMasterClose;
+; 284  : 	node->close = AuTTYMasterClose;
 
 	mov	rax, QWORD PTR node$[rsp]
 	lea	rcx, OFFSET FLAT:?AuTTYMasterClose@@YAHPEAU__VFS_NODE__@@0@Z ; AuTTYMasterClose
-	mov	QWORD PTR [rax+136], rcx
+	mov	QWORD PTR [rax+144], rcx
 
-; 289  : 	node->iocontrol = AuTTYIoControl;
+; 285  : 	node->iocontrol = AuTTYIoControl;
 
 	mov	rax, QWORD PTR node$[rsp]
 	lea	rcx, OFFSET FLAT:?AuTTYIoControl@@YAHPEAU__VFS_NODE__@@HPEAX@Z ; AuTTYIoControl
-	mov	QWORD PTR [rax+160], rcx
+	mov	QWORD PTR [rax+168], rcx
 
-; 290  : 
-; 291  : 	AuDevFSAddFile(fs, "/dev/tty", node);
+; 286  : 	node->fileCopyCount = 0;
+
+	xor	eax, eax
+	mov	rcx, QWORD PTR node$[rsp]
+	mov	WORD PTR [rcx+80], ax
+
+; 287  : 
+; 288  : 	AuDevFSAddFile(fs, "/dev/tty", node);
 
 	mov	r8, QWORD PTR node$[rsp]
-	lea	rdx, OFFSET FLAT:$SG3816
+	lea	rdx, OFFSET FLAT:$SG3814
 	mov	rcx, QWORD PTR fs$[rsp]
 	call	AuDevFSAddFile
 
-; 292  : 	master_count++;
+; 289  : 	master_count++;
 
 	mov	rax, QWORD PTR ?master_count@@3_KA	; master_count
 	inc	rax
 	mov	QWORD PTR ?master_count@@3_KA, rax	; master_count
 
-; 293  : 	return node;
+; 290  : 	return node;
 
 	mov	rax, QWORD PTR node$[rsp]
 
-; 294  : }
+; 291  : }
 
 	add	rsp, 72					; 00000048H
 	ret	0
@@ -408,7 +415,7 @@ code$ = 104
 arg$ = 112
 ?AuTTYIoControl@@YAHPEAU__VFS_NODE__@@HPEAX@Z PROC	; AuTTYIoControl
 
-; 230  : int AuTTYIoControl(AuVFSNode* file, int code, void* arg) {
+; 226  : int AuTTYIoControl(AuVFSNode* file, int code, void* arg) {
 
 $LN11:
 	mov	QWORD PTR [rsp+24], r8
@@ -416,25 +423,25 @@ $LN11:
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 88					; 00000058H
 
-; 231  : 	TTY* tty = (TTY*)file->device;
+; 227  : 	TTY* tty = (TTY*)file->device;
 
 	mov	rax, QWORD PTR file$[rsp]
 	mov	rax, QWORD PTR [rax+72]
 	mov	QWORD PTR tty$[rsp], rax
 
-; 232  : 	if (!tty)
+; 228  : 	if (!tty)
 
 	cmp	QWORD PTR tty$[rsp], 0
 	jne	SHORT $LN8@AuTTYIoCon
 
-; 233  : 		return 0;
+; 229  : 		return 0;
 
 	xor	eax, eax
 	jmp	$LN9@AuTTYIoCon
 $LN8@AuTTYIoCon:
 
-; 234  : 
-; 235  : 	switch (code) {
+; 230  : 
+; 231  : 	switch (code) {
 
 	mov	eax, DWORD PTR code$[rsp]
 	mov	DWORD PTR tv66[rsp], eax
@@ -447,122 +454,122 @@ $LN8@AuTTYIoCon:
 	jmp	$LN6@AuTTYIoCon
 $LN5@AuTTYIoCon:
 
-; 236  : 	case TIOCSWINSZ: {
-; 237  : 						 WinSize *sz = (WinSize*)arg;
+; 232  : 	case TIOCSWINSZ: {
+; 233  : 						 WinSize *sz = (WinSize*)arg;
 
 	mov	rax, QWORD PTR arg$[rsp]
 	mov	QWORD PTR sz$1[rsp], rax
 
-; 238  : 						 tty->size.ws_col = sz->ws_col;
+; 234  : 						 tty->size.ws_col = sz->ws_col;
 
 	mov	rax, QWORD PTR tty$[rsp]
 	mov	rcx, QWORD PTR sz$1[rsp]
 	movzx	ecx, WORD PTR [rcx+2]
 	mov	WORD PTR [rax+4], cx
 
-; 239  : 						 tty->size.ws_row = sz->ws_row;
+; 235  : 						 tty->size.ws_row = sz->ws_row;
 
 	mov	rax, QWORD PTR tty$[rsp]
 	mov	rcx, QWORD PTR sz$1[rsp]
 	movzx	ecx, WORD PTR [rcx]
 	mov	WORD PTR [rax+2], cx
 
-; 240  : 						 tty->size.ws_xpixel = sz->ws_xpixel;
+; 236  : 						 tty->size.ws_xpixel = sz->ws_xpixel;
 
 	mov	rax, QWORD PTR tty$[rsp]
 	mov	rcx, QWORD PTR sz$1[rsp]
 	movzx	ecx, WORD PTR [rcx+4]
 	mov	WORD PTR [rax+6], cx
 
-; 241  : 						 tty->size.ws_ypixel = sz->ws_ypixel;
+; 237  : 						 tty->size.ws_ypixel = sz->ws_ypixel;
 
 	mov	rax, QWORD PTR tty$[rsp]
 	mov	rcx, QWORD PTR sz$1[rsp]
 	movzx	ecx, WORD PTR [rcx+6]
 	mov	WORD PTR [rax+8], cx
 
-; 242  : 						 break;
+; 238  : 						 break;
 
 	jmp	$LN6@AuTTYIoCon
 $LN4@AuTTYIoCon:
 
-; 243  : 	}
-; 244  : 	case TIOCGWINSZ: {
-; 245  : 						 WinSize* sz = (WinSize*)arg;
+; 239  : 	}
+; 240  : 	case TIOCGWINSZ: {
+; 241  : 						 WinSize* sz = (WinSize*)arg;
 
 	mov	rax, QWORD PTR arg$[rsp]
 	mov	QWORD PTR sz$2[rsp], rax
 
-; 246  : 						 sz->ws_col = tty->size.ws_col;
+; 242  : 						 sz->ws_col = tty->size.ws_col;
 
 	mov	rax, QWORD PTR sz$2[rsp]
 	mov	rcx, QWORD PTR tty$[rsp]
 	movzx	ecx, WORD PTR [rcx+4]
 	mov	WORD PTR [rax+2], cx
 
-; 247  : 						 sz->ws_row = tty->size.ws_row;
+; 243  : 						 sz->ws_row = tty->size.ws_row;
 
 	mov	rax, QWORD PTR sz$2[rsp]
 	mov	rcx, QWORD PTR tty$[rsp]
 	movzx	ecx, WORD PTR [rcx+2]
 	mov	WORD PTR [rax], cx
 
-; 248  : 						 sz->ws_xpixel = tty->size.ws_xpixel;
+; 244  : 						 sz->ws_xpixel = tty->size.ws_xpixel;
 
 	mov	rax, QWORD PTR sz$2[rsp]
 	mov	rcx, QWORD PTR tty$[rsp]
 	movzx	ecx, WORD PTR [rcx+6]
 	mov	WORD PTR [rax+4], cx
 
-; 249  : 						 sz->ws_ypixel = tty->size.ws_ypixel;
+; 245  : 						 sz->ws_ypixel = tty->size.ws_ypixel;
 
 	mov	rax, QWORD PTR sz$2[rsp]
 	mov	rcx, QWORD PTR tty$[rsp]
 	movzx	ecx, WORD PTR [rcx+8]
 	mov	WORD PTR [rax+6], cx
 
-; 250  : 						 break;
+; 246  : 						 break;
 
 	jmp	SHORT $LN6@AuTTYIoCon
 $LN3@AuTTYIoCon:
 
-; 251  : 	}
-; 252  : 
-; 253  : 	case TIOSPGRP: {
-; 254  : 					   AuThread* currthr = AuGetCurrentThread();
+; 247  : 	}
+; 248  : 
+; 249  : 	case TIOSPGRP: {
+; 250  : 					   AuThread* currthr = AuGetCurrentThread();
 
 	call	AuGetCurrentThread
 	mov	QWORD PTR currthr$3[rsp], rax
 
-; 255  : 					   if (!currthr)
+; 251  : 					   if (!currthr)
 
 	cmp	QWORD PTR currthr$3[rsp], 0
 	jne	SHORT $LN2@AuTTYIoCon
 
-; 256  : 						   return 0;
+; 252  : 						   return 0;
 
 	xor	eax, eax
 	jmp	SHORT $LN9@AuTTYIoCon
 $LN2@AuTTYIoCon:
 
-; 257  : 					   AuProcess* proc = AuProcessFindThread(currthr);
+; 253  : 					   AuProcess* proc = AuProcessFindThread(currthr);
 
 	mov	rcx, QWORD PTR currthr$3[rsp]
 	call	?AuProcessFindThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z ; AuProcessFindThread
 	mov	QWORD PTR proc$4[rsp], rax
 
-; 258  : 					   if (!proc)
+; 254  : 					   if (!proc)
 
 	cmp	QWORD PTR proc$4[rsp], 0
 	jne	SHORT $LN1@AuTTYIoCon
 
-; 259  : 						   return 0;
+; 255  : 						   return 0;
 
 	xor	eax, eax
 	jmp	SHORT $LN9@AuTTYIoCon
 $LN1@AuTTYIoCon:
 
-; 260  : 					   tty->slave_pid = proc->proc_id;
+; 256  : 					   tty->slave_pid = proc->proc_id;
 
 	mov	rax, QWORD PTR tty$[rsp]
 	mov	rcx, QWORD PTR proc$4[rsp]
@@ -570,16 +577,16 @@ $LN1@AuTTYIoCon:
 	mov	WORD PTR [rax+114], cx
 $LN6@AuTTYIoCon:
 
-; 261  : 					   break;
-; 262  : 	}
-; 263  : 	}
-; 264  : 
-; 265  : 	return 1;
+; 257  : 					   break;
+; 258  : 	}
+; 259  : 	}
+; 260  : 
+; 261  : 	return 1;
 
 	mov	eax, 1
 $LN9@AuTTYIoCon:
 
-; 266  : }
+; 262  : }
 
 	add	rsp, 88					; 00000058H
 	ret	0
@@ -592,16 +599,16 @@ fs$ = 8
 file$ = 16
 ?AuTTYMasterClose@@YAHPEAU__VFS_NODE__@@0@Z PROC	; AuTTYMasterClose
 
-; 226  : int AuTTYMasterClose(AuVFSNode* fs, AuVFSNode* file) {
+; 222  : int AuTTYMasterClose(AuVFSNode* fs, AuVFSNode* file) {
 
 	mov	QWORD PTR [rsp+16], rdx
 	mov	QWORD PTR [rsp+8], rcx
 
-; 227  : 	return 0;
+; 223  : 	return 0;
 
 	xor	eax, eax
 
-; 228  : }
+; 224  : }
 
 	ret	0
 ?AuTTYMasterClose@@YAHPEAU__VFS_NODE__@@0@Z ENDP	; AuTTYMasterClose
@@ -614,31 +621,31 @@ fs$ = 64
 file$ = 72
 ?AuTTYSlaveClose@@YAHPEAU__VFS_NODE__@@0@Z PROC		; AuTTYSlaveClose
 
-; 219  : int AuTTYSlaveClose(AuVFSNode* fs, AuVFSNode* file) {
+; 215  : int AuTTYSlaveClose(AuVFSNode* fs, AuVFSNode* file) {
 
 $LN4:
 	mov	QWORD PTR [rsp+16], rdx
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 56					; 00000038H
 
-; 220  : 	AuVFSNode* _fs = AuVFSFind("/dev");
+; 216  : 	AuVFSNode* _fs = AuVFSFind("/dev");
 
-	lea	rcx, OFFSET FLAT:$SG3776
+	lea	rcx, OFFSET FLAT:$SG3774
 	call	AuVFSFind
 	mov	QWORD PTR _fs$[rsp], rax
 
-; 221  : 	if (!_fs)
+; 217  : 	if (!_fs)
 
 	cmp	QWORD PTR _fs$[rsp], 0
 	jne	SHORT $LN1@AuTTYSlave
 
-; 222  : 		return 0;
+; 218  : 		return 0;
 
 	xor	eax, eax
 $LN1@AuTTYSlave:
 
-; 223  : 	
-; 224  : }
+; 219  : 	
+; 220  : }
 
 	add	rsp, 56					; 00000038H
 	ret	0
@@ -657,7 +664,7 @@ buffer$ = 96
 len$ = 104
 ?AuTTYSlaveWrite@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z PROC	; AuTTYSlaveWrite
 
-; 196  : size_t AuTTYSlaveWrite(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint32_t len) {
+; 187  : size_t AuTTYSlaveWrite(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint32_t len) {
 
 $LN9:
 	mov	DWORD PTR [rsp+32], r9d
@@ -666,49 +673,49 @@ $LN9:
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 72					; 00000048H
 
-; 197  : 	x64_cli();
+; 188  : 	x64_cli();
 
 	call	x64_cli
 
-; 198  : 	AuThread* curr_th = AuGetCurrentThread();
+; 189  : 	AuThread* curr_th = AuGetCurrentThread();
 
 	call	AuGetCurrentThread
 	mov	QWORD PTR curr_th$[rsp], rax
 
-; 199  : 	uint8_t* aligned_buf = (uint8_t*)buffer;
+; 190  : 	uint8_t* aligned_buf = (uint8_t*)buffer;
 
 	mov	rax, QWORD PTR buffer$[rsp]
 	mov	QWORD PTR aligned_buf$[rsp], rax
 
-; 200  : 	TTY* tty = (TTY*)file->device;
+; 191  : 	TTY* tty = (TTY*)file->device;
 
 	mov	rax, QWORD PTR file$[rsp]
 	mov	rax, QWORD PTR [rax+72]
 	mov	QWORD PTR tty$[rsp], rax
 
-; 201  : 	if (!tty)
+; 192  : 	if (!tty)
 
 	cmp	QWORD PTR tty$[rsp], 0
 	jne	SHORT $LN6@AuTTYSlave
 
-; 202  : 		return 0;
+; 193  : 		return 0;
 
 	xor	eax, eax
 	jmp	$LN7@AuTTYSlave
 $LN6@AuTTYSlave:
 
-; 203  : 	if (len > 512)
+; 194  : 	if (len > 512)
 
 	cmp	DWORD PTR len$[rsp], 512		; 00000200H
 	jbe	SHORT $LN5@AuTTYSlave
 
-; 204  : 		len = 512;
+; 195  : 		len = 512;
 
 	mov	DWORD PTR len$[rsp], 512		; 00000200H
 $LN5@AuTTYSlave:
 
-; 205  : 
-; 206  : 	if (CircBufFull(tty->masterbuf)) {
+; 196  : 
+; 197  : 	if (CircBufFull(tty->masterbuf)) {
 
 	mov	rax, QWORD PTR tty$[rsp]
 	mov	rcx, QWORD PTR [rax+72]
@@ -717,31 +724,25 @@ $LN5@AuTTYSlave:
 	test	eax, eax
 	je	SHORT $LN4@AuTTYSlave
 
-; 207  : 		AuBlockThread(curr_th);
+; 198  : 		AuSleepThread(curr_th, 1000000000000);
 
+	mov	rdx, 1000000000000			; 000000e8d4a51000H
 	mov	rcx, QWORD PTR curr_th$[rsp]
-	call	AuBlockThread
+	call	AuSleepThread
 
-; 208  : 		tty->blockedSlaveId = curr_th->id;
+; 199  : 		AuForceScheduler();
 
-	mov	rax, QWORD PTR tty$[rsp]
-	mov	rcx, QWORD PTR curr_th$[rsp]
-	movzx	ecx, WORD PTR [rcx+301]
-	mov	WORD PTR [rax+116], cx
+	call	AuForceScheduler
 
-; 209  : 		x64_force_sched();
-
-	call	x64_force_sched
-
-; 210  : 		return 0;
+; 200  : 		return 0;
 
 	xor	eax, eax
 	jmp	SHORT $LN7@AuTTYSlave
 $LN4@AuTTYSlave:
 
-; 211  : 	}
-; 212  : 
-; 213  : 	for (int i = 0; i < len; i++) {
+; 201  : 	}
+; 202  : 
+; 203  : 	for (int i = 0; i < len; i++) {
 
 	mov	DWORD PTR i$1[rsp], 0
 	jmp	SHORT $LN3@AuTTYSlave
@@ -754,7 +755,7 @@ $LN3@AuTTYSlave:
 	cmp	DWORD PTR i$1[rsp], eax
 	jae	SHORT $LN1@AuTTYSlave
 
-; 214  : 		AuCircBufPut(tty->masterbuf, aligned_buf[i]);
+; 204  : 		AuCircBufPut(tty->masterbuf, aligned_buf[i]);
 
 	movsxd	rax, DWORD PTR i$1[rsp]
 	mov	rcx, QWORD PTR aligned_buf$[rsp]
@@ -763,7 +764,7 @@ $LN3@AuTTYSlave:
 	mov	rcx, QWORD PTR [rax+72]
 	call	?AuCircBufPut@@YAHPEAU_circ_buf_@@E@Z	; AuCircBufPut
 
-; 215  : 		tty->master_written++;
+; 205  : 		tty->master_written++;
 
 	mov	rax, QWORD PTR tty$[rsp]
 	mov	eax, DWORD PTR [rax+104]
@@ -771,13 +772,27 @@ $LN3@AuTTYSlave:
 	mov	rcx, QWORD PTR tty$[rsp]
 	mov	DWORD PTR [rcx+104], eax
 
-; 216  : 	}
+; 206  : 	}
 
 	jmp	SHORT $LN2@AuTTYSlave
 $LN1@AuTTYSlave:
+
+; 207  : 
+; 208  : 	/* little bit slow down the slave process,
+; 209  : 	 * it's too fast 
+; 210  : 	 */
+; 211  : 	AuSleepThread(curr_th, 1000000000000);
+
+	mov	rdx, 1000000000000			; 000000e8d4a51000H
+	mov	rcx, QWORD PTR curr_th$[rsp]
+	call	AuSleepThread
+
+; 212  : 	AuForceScheduler();
+
+	call	AuForceScheduler
 $LN7@AuTTYSlave:
 
-; 217  : }
+; 213  : }
 
 	add	rsp, 72					; 00000048H
 	ret	0
@@ -795,7 +810,7 @@ buffer$ = 96
 len$ = 104
 ?AuTTYSlaveRead@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z PROC	; AuTTYSlaveRead
 
-; 180  : size_t AuTTYSlaveRead(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint32_t len) {
+; 171  : size_t AuTTYSlaveRead(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint32_t len) {
 
 $LN7:
 	mov	DWORD PTR [rsp+32], r9d
@@ -804,34 +819,34 @@ $LN7:
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 72					; 00000048H
 
-; 181  : 	x64_cli();
+; 172  : 	x64_cli();
 
 	call	x64_cli
 
-; 182  : 	uint8_t* aligned_buf = (uint8_t*)buffer;
+; 173  : 	uint8_t* aligned_buf = (uint8_t*)buffer;
 
 	mov	rax, QWORD PTR buffer$[rsp]
 	mov	QWORD PTR aligned_buf$[rsp], rax
 
-; 183  : 	TTY* tty = (TTY*)file->device;
+; 174  : 	TTY* tty = (TTY*)file->device;
 
 	mov	rax, QWORD PTR file$[rsp]
 	mov	rax, QWORD PTR [rax+72]
 	mov	QWORD PTR tty$[rsp], rax
 
-; 184  : 	if (!tty)
+; 175  : 	if (!tty)
 
 	cmp	QWORD PTR tty$[rsp], 0
 	jne	SHORT $LN4@AuTTYSlave
 
-; 185  : 		return 0;
+; 176  : 		return 0;
 
 	xor	eax, eax
 	jmp	SHORT $LN5@AuTTYSlave
 $LN4@AuTTYSlave:
 
-; 186  : 
-; 187  : 	for (int i = 0; i < len; i++)
+; 177  : 
+; 178  : 	for (int i = 0; i < len; i++)
 
 	mov	DWORD PTR i$1[rsp], 0
 	jmp	SHORT $LN3@AuTTYSlave
@@ -844,7 +859,7 @@ $LN3@AuTTYSlave:
 	cmp	DWORD PTR i$1[rsp], eax
 	jae	SHORT $LN1@AuTTYSlave
 
-; 188  : 		AuCircBufGet(tty->slavebuf, &aligned_buf[i]);
+; 179  : 		AuCircBufGet(tty->slavebuf, &aligned_buf[i]);
 
 	movsxd	rax, DWORD PTR i$1[rsp]
 	mov	rcx, QWORD PTR aligned_buf$[rsp]
@@ -857,13 +872,13 @@ $LN3@AuTTYSlave:
 	jmp	SHORT $LN2@AuTTYSlave
 $LN1@AuTTYSlave:
 
-; 189  : 
-; 190  : 	return 1;
+; 180  : 
+; 181  : 	return 1;
 
 	mov	eax, 1
 $LN5@AuTTYSlave:
 
-; 191  : }
+; 182  : }
 
 	add	rsp, 72					; 00000048H
 	ret	0
@@ -881,7 +896,7 @@ buffer$ = 96
 len$ = 104
 ?AuTTYMasterWrite@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z PROC	; AuTTYMasterWrite
 
-; 168  : size_t AuTTYMasterWrite(AuVFSNode* fs, AuVFSNode* file, uint64_t* buffer, uint32_t len) {
+; 159  : size_t AuTTYMasterWrite(AuVFSNode* fs, AuVFSNode* file, uint64_t* buffer, uint32_t len) {
 
 $LN7:
 	mov	DWORD PTR [rsp+32], r9d
@@ -890,34 +905,34 @@ $LN7:
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 72					; 00000048H
 
-; 169  : 	x64_cli();
+; 160  : 	x64_cli();
 
 	call	x64_cli
 
-; 170  : 	uint8_t* aligned_buf = (uint8_t*)buffer;
+; 161  : 	uint8_t* aligned_buf = (uint8_t*)buffer;
 
 	mov	rax, QWORD PTR buffer$[rsp]
 	mov	QWORD PTR aligned_buf$[rsp], rax
 
-; 171  : 	TTY* type = (TTY*)file->device;
+; 162  : 	TTY* type = (TTY*)file->device;
 
 	mov	rax, QWORD PTR file$[rsp]
 	mov	rax, QWORD PTR [rax+72]
 	mov	QWORD PTR type$[rsp], rax
 
-; 172  : 	if (!type)
+; 163  : 	if (!type)
 
 	cmp	QWORD PTR type$[rsp], 0
 	jne	SHORT $LN4@AuTTYMaste
 
-; 173  : 		return 0;
+; 164  : 		return 0;
 
 	xor	eax, eax
 	jmp	SHORT $LN5@AuTTYMaste
 $LN4@AuTTYMaste:
 
-; 174  : 
-; 175  : 	for (int i = 0; i < len; i++) {
+; 165  : 
+; 166  : 	for (int i = 0; i < len; i++) {
 
 	mov	DWORD PTR i$1[rsp], 0
 	jmp	SHORT $LN3@AuTTYMaste
@@ -930,7 +945,7 @@ $LN3@AuTTYMaste:
 	cmp	DWORD PTR i$1[rsp], eax
 	jae	SHORT $LN1@AuTTYMaste
 
-; 176  : 		AuCircBufPut(type->slavebuf, aligned_buf[i]);
+; 167  : 		AuCircBufPut(type->slavebuf, aligned_buf[i]);
 
 	movsxd	rax, DWORD PTR i$1[rsp]
 	mov	rcx, QWORD PTR aligned_buf$[rsp]
@@ -939,13 +954,13 @@ $LN3@AuTTYMaste:
 	mov	rcx, QWORD PTR [rax+80]
 	call	?AuCircBufPut@@YAHPEAU_circ_buf_@@E@Z	; AuCircBufPut
 
-; 177  : 	}
+; 168  : 	}
 
 	jmp	SHORT $LN2@AuTTYMaste
 $LN1@AuTTYMaste:
 $LN5@AuTTYMaste:
 
-; 178  : }
+; 169  : }
 
 	add	rsp, 72					; 00000048H
 	ret	0
@@ -957,22 +972,21 @@ _TEXT	SEGMENT
 i$1 = 32
 type$ = 40
 bytes_to_ret$ = 48
-thr$2 = 56
-aligned_buf$ = 64
-fs$ = 96
-file$ = 104
-buffer$ = 112
-len$ = 120
+aligned_buf$ = 56
+fs$ = 80
+file$ = 88
+buffer$ = 96
+len$ = 104
 ?AuTTYMasterRead@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z PROC	; AuTTYMasterRead
 
 ; 134  : size_t AuTTYMasterRead(AuVFSNode* fs, AuVFSNode* file, uint64_t* buffer, uint32_t len) {
 
-$LN10:
+$LN8:
 	mov	DWORD PTR [rsp+32], r9d
 	mov	QWORD PTR [rsp+24], r8
 	mov	QWORD PTR [rsp+16], rdx
 	mov	QWORD PTR [rsp+8], rcx
-	sub	rsp, 88					; 00000058H
+	sub	rsp, 72					; 00000048H
 
 ; 135  : 	x64_cli();
 
@@ -987,13 +1001,13 @@ $LN10:
 ; 137  : 	if (!type)
 
 	cmp	QWORD PTR type$[rsp], 0
-	jne	SHORT $LN7@AuTTYMaste
+	jne	SHORT $LN5@AuTTYMaste
 
 ; 138  : 		return 0;
 
 	xor	eax, eax
-	jmp	$LN8@AuTTYMaste
-$LN7@AuTTYMaste:
+	jmp	$LN6@AuTTYMaste
+$LN5@AuTTYMaste:
 
 ; 139  : 
 ; 140  : 	size_t bytes_to_ret = 0;
@@ -1013,29 +1027,29 @@ $LN7@AuTTYMaste:
 	call	?CircBufEmpty@@YA_NPEAU_circ_buf_@@@Z	; CircBufEmpty
 	movzx	eax, al
 	test	eax, eax
-	je	SHORT $LN6@AuTTYMaste
+	je	SHORT $LN4@AuTTYMaste
 
 ; 144  : 		return bytes_to_ret;
 
 	mov	rax, QWORD PTR bytes_to_ret$[rsp]
-	jmp	$LN8@AuTTYMaste
-$LN6@AuTTYMaste:
+	jmp	SHORT $LN6@AuTTYMaste
+$LN4@AuTTYMaste:
 
 ; 145  : 	}
 ; 146  : 
 ; 147  : 	for (int i = 0; i < type->master_written; i++) {
 
 	mov	DWORD PTR i$1[rsp], 0
-	jmp	SHORT $LN5@AuTTYMaste
-$LN4@AuTTYMaste:
+	jmp	SHORT $LN3@AuTTYMaste
+$LN2@AuTTYMaste:
 	mov	eax, DWORD PTR i$1[rsp]
 	inc	eax
 	mov	DWORD PTR i$1[rsp], eax
-$LN5@AuTTYMaste:
+$LN3@AuTTYMaste:
 	mov	rax, QWORD PTR type$[rsp]
 	mov	eax, DWORD PTR [rax+104]
 	cmp	DWORD PTR i$1[rsp], eax
-	jge	SHORT $LN3@AuTTYMaste
+	jge	SHORT $LN1@AuTTYMaste
 
 ; 148  : 		AuCircBufGet(type->masterbuf, &aligned_buf[i]);
 
@@ -1056,69 +1070,23 @@ $LN5@AuTTYMaste:
 
 ; 150  : 	}
 
-	jmp	SHORT $LN4@AuTTYMaste
-$LN3@AuTTYMaste:
-
-; 151  : 
-; 152  : 	if (type->blockedSlaveId >0) {
-
-	mov	rax, QWORD PTR type$[rsp]
-	movzx	eax, WORD PTR [rax+116]
-	test	eax, eax
-	jle	SHORT $LN2@AuTTYMaste
-
-; 153  : 		AuThread* thr = AuThreadFindByIDBlockList(type->blockedSlaveId);
-
-	mov	rax, QWORD PTR type$[rsp]
-	movzx	ecx, WORD PTR [rax+116]
-	call	AuThreadFindByIDBlockList
-	mov	QWORD PTR thr$2[rsp], rax
-
-; 154  : 		if (thr) {
-
-	cmp	QWORD PTR thr$2[rsp], 0
-	je	SHORT $LN1@AuTTYMaste
-
-; 155  : 			AuTextOut("Master unblocking thread -> %d %s\n", type->blockedSlaveId, thr->name);
-
-	mov	rax, QWORD PTR thr$2[rsp]
-	add	rax, 284				; 0000011cH
-	mov	rcx, QWORD PTR type$[rsp]
-	movzx	ecx, WORD PTR [rcx+116]
-	mov	r8, rax
-	mov	edx, ecx
-	lea	rcx, OFFSET FLAT:$SG3722
-	call	AuTextOut
-
-; 156  : 			AuUnblockThread(thr);
-
-	mov	rcx, QWORD PTR thr$2[rsp]
-	call	AuUnblockThread
+	jmp	SHORT $LN2@AuTTYMaste
 $LN1@AuTTYMaste:
 
-; 157  : 		}
-; 158  : 		type->blockedSlaveId = 0;
-
-	xor	eax, eax
-	mov	rcx, QWORD PTR type$[rsp]
-	mov	WORD PTR [rcx+116], ax
-$LN2@AuTTYMaste:
-
-; 159  : 	}
-; 160  : 
-; 161  : 	type->master_written = 0;
+; 151  : 
+; 152  : 	type->master_written = 0;
 
 	mov	rax, QWORD PTR type$[rsp]
 	mov	DWORD PTR [rax+104], 0
 
-; 162  : 	return bytes_to_ret;
+; 153  : 	return bytes_to_ret;
 
 	mov	rax, QWORD PTR bytes_to_ret$[rsp]
-$LN8@AuTTYMaste:
+$LN6@AuTTYMaste:
 
-; 163  : }
+; 154  : }
 
-	add	rsp, 88					; 00000058H
+	add	rsp, 72					; 00000048H
 	ret	0
 ?AuTTYMasterRead@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z ENDP	; AuTTYMasterRead
 _TEXT	ENDS
@@ -1562,42 +1530,42 @@ _TEXT	SEGMENT
 fs$ = 32
 ?AuTTYInitialise@@YAXXZ PROC				; AuTTYInitialise
 
-; 387  : void AuTTYInitialise() {
+; 385  : void AuTTYInitialise() {
 
 $LN3:
 	sub	rsp, 56					; 00000038H
 
-; 388  : 	root = NULL;
+; 386  : 	root = NULL;
 
 	mov	QWORD PTR ?root@@3PEAU__tty__@@EA, 0	; root
 
-; 389  : 	last = NULL;
+; 387  : 	last = NULL;
 
 	mov	QWORD PTR ?last@@3PEAU__tty__@@EA, 0	; last
 
-; 390  : 	master_count = 0;
+; 388  : 	master_count = 0;
 
 	mov	QWORD PTR ?master_count@@3_KA, 0	; master_count
 
-; 391  : 	slave_count = 0;
+; 389  : 	slave_count = 0;
 
 	mov	QWORD PTR ?slave_count@@3_KA, 0		; slave_count
 
-; 392  : 	/* create a directory for tty's */
-; 393  : 	AuVFSNode* fs = AuVFSFind("/dev");
+; 390  : 	/* create a directory for tty's */
+; 391  : 	AuVFSNode* fs = AuVFSFind("/dev");
 
-	lea	rcx, OFFSET FLAT:$SG3852
+	lea	rcx, OFFSET FLAT:$SG3850
 	call	AuVFSFind
 	mov	QWORD PTR fs$[rsp], rax
 
-; 394  : 	AuDevFSCreateFile(fs, "/dev/tty", FS_FLAG_DIRECTORY);
+; 392  : 	AuDevFSCreateFile(fs, "/dev/tty", FS_FLAG_DIRECTORY);
 
 	mov	r8b, 2
-	lea	rdx, OFFSET FLAT:$SG3853
+	lea	rdx, OFFSET FLAT:$SG3851
 	mov	rcx, QWORD PTR fs$[rsp]
 	call	?AuDevFSCreateFile@@YAHPEAU__VFS_NODE__@@PEADE@Z ; AuDevFSCreateFile
 
-; 395  : }
+; 393  : }
 
 	add	rsp, 56					; 00000038H
 	ret	0
@@ -1618,83 +1586,83 @@ master_fd$ = 112
 slave_fd$ = 120
 ?AuTTYCreate@@YAHPEAH0@Z PROC				; AuTTYCreate
 
-; 332  : int AuTTYCreate(int* master_fd, int* slave_fd) {
+; 330  : int AuTTYCreate(int* master_fd, int* slave_fd) {
 
 $LN6:
 	mov	QWORD PTR [rsp+16], rdx
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 104				; 00000068H
 
-; 333  : 	x64_cli();
+; 331  : 	x64_cli();
 
 	call	x64_cli
 
-; 334  : 
-; 335  : 	AuThread* thr = AuGetCurrentThread();
+; 332  : 
+; 333  : 	AuThread* thr = AuGetCurrentThread();
 
 	call	AuGetCurrentThread
 	mov	QWORD PTR thr$[rsp], rax
 
-; 336  : 	AuProcess* proc = AuProcessFindThread(thr);
+; 334  : 	AuProcess* proc = AuProcessFindThread(thr);
 
 	mov	rcx, QWORD PTR thr$[rsp]
 	call	?AuProcessFindThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z ; AuProcessFindThread
 	mov	QWORD PTR proc$[rsp], rax
 
-; 337  : 	if (!proc)
+; 335  : 	if (!proc)
 
 	cmp	QWORD PTR proc$[rsp], 0
 	jne	SHORT $LN3@AuTTYCreat
 
-; 338  : 		return -1;
+; 336  : 		return -1;
 
 	mov	eax, -1
 	jmp	$LN4@AuTTYCreat
 $LN3@AuTTYCreat:
 
-; 339  : 
-; 340  : 	TTY* tty = (TTY*)kmalloc(sizeof(TTY));
+; 337  : 
+; 338  : 	TTY* tty = (TTY*)kmalloc(sizeof(TTY));
 
 	mov	ecx, 136				; 00000088H
 	call	kmalloc
 	mov	QWORD PTR tty$[rsp], rax
 
-; 341  : 	memset(tty, 0, sizeof(TTY));
+; 339  : 	memset(tty, 0, sizeof(TTY));
 
 	mov	r8d, 136				; 00000088H
 	xor	edx, edx
 	mov	rcx, QWORD PTR tty$[rsp]
 	call	memset
 
-; 342  : 
-; 343  : 	void* inbuffer = kmalloc(512);
+; 340  : 
+; 341  : 	void* inbuffer = kmalloc(512);
 
 	mov	ecx, 512				; 00000200H
 	call	kmalloc
 	mov	QWORD PTR inbuffer$[rsp], rax
 
-; 344  : 	memset(inbuffer, 0, 512);
+; 342  : 	memset(inbuffer, 0, 512);
 
 	mov	r8d, 512				; 00000200H
 	xor	edx, edx
 	mov	rcx, QWORD PTR inbuffer$[rsp]
 	call	memset
 
-; 345  : 	void* outbuffer = kmalloc(512);
+; 343  : 	void* outbuffer = kmalloc(512);
 
 	mov	ecx, 512				; 00000200H
 	call	kmalloc
 	mov	QWORD PTR outbuffer$[rsp], rax
 
-; 346  : 	memset(outbuffer, 0, 512);
+; 344  : 	memset(outbuffer, 0, 512);
 
 	mov	r8d, 512				; 00000200H
 	xor	edx, edx
 	mov	rcx, QWORD PTR outbuffer$[rsp]
 	call	memset
 
-; 347  : 
-; 348  : 	tty->masterbuf = AuCircBufInitialise((uint8_t*)inbuffer, 512);
+; 345  : 
+; 346  : 	tty->masterbuf = AuCircBufInitialise((uint8_t*)inbuffer, 512);
 
 	mov	edx, 512				; 00000200H
 	mov	rcx, QWORD PTR inbuffer$[rsp]
@@ -1702,7 +1670,7 @@ $LN3@AuTTYCreat:
 	mov	rcx, QWORD PTR tty$[rsp]
 	mov	QWORD PTR [rcx+72], rax
 
-; 349  : 	tty->slavebuf = AuCircBufInitialise((uint8_t*)outbuffer, 512);
+; 347  : 	tty->slavebuf = AuCircBufInitialise((uint8_t*)outbuffer, 512);
 
 	mov	edx, 512				; 00000200H
 	mov	rcx, QWORD PTR outbuffer$[rsp]
@@ -1710,160 +1678,160 @@ $LN3@AuTTYCreat:
 	mov	rcx, QWORD PTR tty$[rsp]
 	mov	QWORD PTR [rcx+80], rax
 
-; 350  : 
-; 351  : 	tty->id = slave_count;
+; 348  : 
+; 349  : 	tty->id = slave_count;
 
 	mov	rax, QWORD PTR tty$[rsp]
 	movzx	ecx, BYTE PTR ?slave_count@@3_KA
 	mov	BYTE PTR [rax], cl
 
-; 352  : 	tty->master_written = 0;
+; 350  : 	tty->master_written = 0;
 
 	mov	rax, QWORD PTR tty$[rsp]
 	mov	DWORD PTR [rax+104], 0
 
-; 353  : 	tty->slave_written = 0;
+; 351  : 	tty->slave_written = 0;
 
 	mov	rax, QWORD PTR tty$[rsp]
 	mov	DWORD PTR [rax+108], 0
 
-; 354  : 
-; 355  : 	tty->masterbuf_ptr = inbuffer;
+; 352  : 
+; 353  : 	tty->masterbuf_ptr = inbuffer;
 
 	mov	rax, QWORD PTR tty$[rsp]
 	mov	rcx, QWORD PTR inbuffer$[rsp]
 	mov	QWORD PTR [rax+88], rcx
 
-; 356  : 	tty->slavebuf_ptr = outbuffer;
+; 354  : 	tty->slavebuf_ptr = outbuffer;
 
 	mov	rax, QWORD PTR tty$[rsp]
 	mov	rcx, QWORD PTR outbuffer$[rsp]
 	mov	QWORD PTR [rax+96], rcx
 
-; 357  : 
-; 358  : 	tty->term.c_iflag = ICRNL | BRKINT;
+; 355  : 
+; 356  : 	tty->term.c_iflag = ICRNL | BRKINT;
 
 	mov	rax, QWORD PTR tty$[rsp]
 	mov	DWORD PTR [rax+12], 258			; 00000102H
 
-; 359  : 	tty->term.c_oflag = ONLCR | OPOST;
+; 357  : 	tty->term.c_oflag = ONLCR | OPOST;
 
 	mov	rax, QWORD PTR tty$[rsp]
 	mov	DWORD PTR [rax+16], 5
 
-; 360  : 	tty->term.c_iflag = ECHO | ECHOE | ECHOK | ICANON | ISIG | IEXTEN;
+; 358  : 	tty->term.c_iflag = ECHO | ECHOE | ECHOK | ICANON | ISIG | IEXTEN;
 
 	mov	rax, QWORD PTR tty$[rsp]
 	mov	DWORD PTR [rax+12], 32827		; 0000803bH
 
-; 361  : 	tty->term.c_cflag = CREAD | CS8;
+; 359  : 	tty->term.c_cflag = CREAD | CS8;
 
 	mov	rax, QWORD PTR tty$[rsp]
 	mov	DWORD PTR [rax+20], 176			; 000000b0H
 
-; 362  : 	tty->term.c_cc[VEOF] = 4;
+; 360  : 	tty->term.c_cc[VEOF] = 4;
 
 	mov	eax, 1
 	imul	rax, rax, 4
 	mov	rcx, QWORD PTR tty$[rsp]
 	mov	BYTE PTR [rcx+rax+29], 4
 
-; 363  : 	tty->term.c_cc[VEOL] = 0;
+; 361  : 	tty->term.c_cc[VEOL] = 0;
 
 	mov	eax, 1
 	imul	rax, rax, 11
 	mov	rcx, QWORD PTR tty$[rsp]
 	mov	BYTE PTR [rcx+rax+29], 0
 
-; 364  : 	tty->term.c_cc[VERASE] = 0x7f;
+; 362  : 	tty->term.c_cc[VERASE] = 0x7f;
 
 	mov	eax, 1
 	imul	rax, rax, 2
 	mov	rcx, QWORD PTR tty$[rsp]
 	mov	BYTE PTR [rcx+rax+29], 127		; 0000007fH
 
-; 365  : 
-; 366  : 	AuVFSNode* master = AuTTYCreateMaster(tty);
+; 363  : 
+; 364  : 	AuVFSNode* master = AuTTYCreateMaster(tty);
 
 	mov	rcx, QWORD PTR tty$[rsp]
 	call	?AuTTYCreateMaster@@YAPEAU__VFS_NODE__@@PEAU__tty__@@@Z ; AuTTYCreateMaster
 	mov	QWORD PTR master$[rsp], rax
 
-; 367  : 	AuVFSNode* slave = AuTTYCreateSlave(tty);
+; 365  : 	AuVFSNode* slave = AuTTYCreateSlave(tty);
 
 	mov	rcx, QWORD PTR tty$[rsp]
 	call	?AuTTYCreateSlave@@YAPEAU__VFS_NODE__@@PEAU__tty__@@@Z ; AuTTYCreateSlave
 	mov	QWORD PTR slave$[rsp], rax
 
-; 368  : 
-; 369  : 	int fd = AuProcessGetFileDesc(proc);
+; 366  : 
+; 367  : 	int fd = AuProcessGetFileDesc(proc);
 
 	mov	rcx, QWORD PTR proc$[rsp]
 	call	?AuProcessGetFileDesc@@YAHPEAU_au_proc_@@@Z ; AuProcessGetFileDesc
 	mov	DWORD PTR fd$[rsp], eax
 
-; 370  : 	if (fd == -1)
+; 368  : 	if (fd == -1)
 
 	cmp	DWORD PTR fd$[rsp], -1
 	jne	SHORT $LN2@AuTTYCreat
 
-; 371  : 		return 0;
+; 369  : 		return 0;
 
 	xor	eax, eax
 	jmp	SHORT $LN4@AuTTYCreat
 $LN2@AuTTYCreat:
 
-; 372  : 	proc->fds[fd] = master;
+; 370  : 	proc->fds[fd] = master;
 
 	movsxd	rax, DWORD PTR fd$[rsp]
 	mov	rcx, QWORD PTR proc$[rsp]
 	mov	rdx, QWORD PTR master$[rsp]
 	mov	QWORD PTR [rcx+rax*8+576], rdx
 
-; 373  : 	*master_fd = fd;
+; 371  : 	*master_fd = fd;
 
 	mov	rax, QWORD PTR master_fd$[rsp]
 	mov	ecx, DWORD PTR fd$[rsp]
 	mov	DWORD PTR [rax], ecx
 
-; 374  : 
-; 375  : 	fd = AuProcessGetFileDesc(proc);
+; 372  : 
+; 373  : 	fd = AuProcessGetFileDesc(proc);
 
 	mov	rcx, QWORD PTR proc$[rsp]
 	call	?AuProcessGetFileDesc@@YAHPEAU_au_proc_@@@Z ; AuProcessGetFileDesc
 	mov	DWORD PTR fd$[rsp], eax
 
-; 376  : 	if (fd == -1)
+; 374  : 	if (fd == -1)
 
 	cmp	DWORD PTR fd$[rsp], -1
 	jne	SHORT $LN1@AuTTYCreat
 
-; 377  : 		return 0;
+; 375  : 		return 0;
 
 	xor	eax, eax
 	jmp	SHORT $LN4@AuTTYCreat
 $LN1@AuTTYCreat:
 
-; 378  : 	proc->fds[fd] = slave;
+; 376  : 	proc->fds[fd] = slave;
 
 	movsxd	rax, DWORD PTR fd$[rsp]
 	mov	rcx, QWORD PTR proc$[rsp]
 	mov	rdx, QWORD PTR slave$[rsp]
 	mov	QWORD PTR [rcx+rax*8+576], rdx
 
-; 379  : 	*slave_fd = fd;
+; 377  : 	*slave_fd = fd;
 
 	mov	rax, QWORD PTR slave_fd$[rsp]
 	mov	ecx, DWORD PTR fd$[rsp]
 	mov	DWORD PTR [rax], ecx
 
-; 380  : 
-; 381  : 	return 1;
+; 378  : 
+; 379  : 	return 1;
 
 	mov	eax, 1
 $LN4@AuTTYCreat:
 
-; 382  : }
+; 380  : }
 
 	add	rsp, 104				; 00000068H
 	ret	0

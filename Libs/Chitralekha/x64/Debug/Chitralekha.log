@@ -1,11 +1,11 @@
-﻿Build started 07-11-2023 আবেলি 9:27:03.
+﻿Build started 09-11-2023 আবেলি 8:43:09.
      1>Project "E:\Xeneva Project\Aurora\Libs\Chitralekha\Chitralekha.vcxproj" on node 2 (Rebuild target(s)).
      1>_NASM:
          _fastcpy.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmpa21294b6f3674097a521fa861c3ca8a0.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp815d90dc9c6a4dfe8a680ad7363b1477.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\_fastcpy.obj"  "E:\Xeneva Project\Aurora\Libs\Chitralekha\_fastcpy.asm"
        ClCompile:
-         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /I"E:\os_dev\freetype2-master\freetype2-master\include" /Zi /nologo /W3 /WX- /sdl- /Od /D ARCH_X64 /D YES_DYNAMIC /D DYNAMIC_EXPORTER /D _USE_FREETYPE /D _WINDLL /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt boxblur.cpp chitralekha.cpp color.cpp draw.cpp font.cpp ttf.cpp widgets\base.cpp widgets\defaultwindow.cpp widgets\list.cpp widgets\window.cpp
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /I"E:\os_dev\freetype2-master\freetype2-master\include" /Zi /nologo /W3 /WX- /sdl- /Od /D ARCH_X64 /D YES_DYNAMIC /D DYNAMIC_EXPORTER /D _USE_FREETYPE /D _WINDLL /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt boxblur.cpp chitralekha.cpp color.cpp draw.cpp font.cpp keycode.cpp ttf.cpp widgets\base.cpp widgets\defaultwindow.cpp widgets\list.cpp widgets\window.cpp
      1>cl : Command line warning D9025: overriding '/sdl-' with '/GS-'
      1>cl : Command line warning D9002: ignoring unknown option '/arch:SSE2'
          window.cpp
@@ -20,6 +20,9 @@
      1>ttf.cpp(124): warning C4305: '*=' : truncation from 'double' to 'float'
      1>ttf.cpp(182): warning C4018: '<' : signed/unsigned mismatch
      1>ttf.cpp(306): warning C4244: 'argument' : conversion from 'int' to 'float', possible loss of data
+         keycode.cpp
+     1>E:\Xeneva Project\Aurora\Libs\XEClib\includes\ctype.h(50): warning C4005: 'isascii' : macro redefinition
+                 E:\Xeneva Project\Aurora\Libs\XEClib\includes\ctype.h(39) : see previous definition of 'isascii'
          font.cpp
      1>e:\xeneva project\aurora\libs\chitralekha\ttf.h(82): warning C4161: #pragma pack(pop...) : more pops than pushes
      1>font.cpp(63): warning C4244: '=' : conversion from 'float' to 'uint32_t', possible loss of data
@@ -60,6 +63,7 @@
          x64\Debug\color.obj
          x64\Debug\draw.obj
          x64\Debug\font.obj
+         x64\Debug\keycode.obj
          x64\Debug\ttf.obj
          x64\Debug\base.obj
          x64\Debug\defaultwindow.obj
@@ -74,4 +78,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:01.90
+Time Elapsed 00:00:06.15

@@ -104,6 +104,8 @@ static void* syscalls[AURORA_MAX_SYSCALL] = {
 	CreateUserThread, //32
 	SetFileToProcess, //33
 	ProcessHeapUnmap, //34
+	SendSignal, //35
+	GetCurrentTime, //36
 };
 
 

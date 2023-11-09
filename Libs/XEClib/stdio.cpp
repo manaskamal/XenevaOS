@@ -196,3 +196,13 @@ int printf(const char* format, ...) {
 	_KeWriteFile(XENEVA_STDOUT, output, strlen(output)-1);
 	return len;
 }
+
+/* getchar -- read a single character
+ * from stdin
+ */
+int getchar() {
+	char buf[1];
+	memset(buf, 0, 1);
+	int read_bytes = _KeReadFile(XENEVA_STDIN, buf, 1);
+	return buf[0];
+}

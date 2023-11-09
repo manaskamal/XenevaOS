@@ -39,12 +39,14 @@
 #include <aucon.h>
 #include <Fs\Dev\devinput.h>
 
+
 /*
  * AuPS2KybrdHandler -- ps2 keyboad handler
  */
 void AuPS2KybrdHandler(size_t v, void* p) {
 	if (x64_inportb(0x64) & 1) {
 		int code = x64_inportb(0x60);
+
 		/* for testing purpose lets send 
 		 * a signal to deodhai thread which is
 		 * in thread id 4, in a hacky way
@@ -66,6 +68,7 @@ void AuPS2KybrdHandler(size_t v, void* p) {
 void AuPS2KybrdInitialize() {
 	AuHalRegisterIRQ(1, AuPS2KybrdHandler, 1, false);
 
+	x64_outportb(0xF0, 1);
 	/* start the registration process */
 	AuVFSNode* fs = AuVFSFind("/dev");
 	AuDevFSCreateFile(fs, "/ps2kybrd", FS_FLAG_DEVICE);

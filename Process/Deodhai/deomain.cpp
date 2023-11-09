@@ -424,7 +424,7 @@ void ComposeFrame(ChCanvas *canvas) {
 				r2.h = clipInfo->height;
 
 				if (ClipCheckIntersect(&r1, &r2)) {
-					ClipCalculateRect(&r2, &r1, clip, &clipCount);
+					ClipCalculateRect(&r1, &r2, clip, &clipCount);
 				}
 			}
 
@@ -638,7 +638,7 @@ int main(int argc, char* arv[]) {
 		surfaceBuffer[j * canv->canvasWidth + i] = 0xFF938585;
 
 	DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
-	_KePrint("Canvas created \r\n");
+	DrawWallpaper(canv, "/assam.jpg");
 	ChCanvasScreenUpdate(canv, 0, 0, canv->canvasWidth, canv->canvasHeight);
 
 

@@ -31,7 +31,7 @@
 #include <sys\_kefile.h>
 #include <sys\_keproc.h>
 #include "..\font.h"
-
+#include "..\keycode.h"
 
 ChitralekhaApp* baseapp;
 
@@ -51,6 +51,8 @@ ChitralekhaApp* ChitralekhaStartApp(int argc, char* argv[]) {
 	baseapp = app;
 	uint16_t thr_id = _KeGetThreadID();
 	app->currentID = thr_id;
+
+	ChitralekhaKeyInitialise();
 	return app;
 }
 

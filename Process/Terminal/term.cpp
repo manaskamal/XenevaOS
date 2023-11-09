@@ -31,8 +31,10 @@
 #include <sys\_keproc.h>
 #include <sys\_kefile.h>
 #include <sys\iocodes.h>
+#include <ctype.h>
 #include <chitralekha.h>
 #include <widgets\window.h>
+#include <keycode.h>
 #include "term.h"
 #include "arrayfont.h"
 #include <sys\mman.h>
@@ -58,6 +60,7 @@ bool _escape_seq = false;
 bool _seq_csi = false;
 bool _cursor_blink = 0;
 char* escBuf;
+int shell_id;
 uint32_t backColor;
 uint32_t fgColor;
 /*
@@ -167,6 +170,8 @@ void TerminalScroll() {
  * terminal
  */
 void TerminalClearScreen() {
+	last_cursor_x = cursor_x;
+	last_cursor_y = cursor_y;
 	for (int x = 0; x < ws_col; x++) {
 		for (int y = 0; y < ws_row; y++){
 			TerminalSetCellData(x, y, 0, BLACK, WHITE);
@@ -186,9 +191,11 @@ void TerminalPrintChar(char c, uint32_t fgcolor, uint32_t bgcolor) {
 	if (c == '\n'){
 		fgColor = WHITE;
 		backColor = BLACK;
+		last_cursor_y = cursor_y;
+		last_cursor_x = cursor_x;
 		cursor_y++;
 		cursor_x = 0;
-		if (cursor_y >= ws_row){
+		if (cursor_y >= ws_row - 1){
 			TerminalScroll();
 			cursor_y--;
 		}
@@ -198,18 +205,26 @@ void TerminalPrintChar(char c, uint32_t fgcolor, uint32_t bgcolor) {
 	}
 	else if (c == '\b') {
 		cursor_x--;
-		if (cursor_x <= 0) {
+		if (cursor_x < 0) {
 			cursor_y--;
 			cursor_x = ws_col - 1;
 		}
+		TerminalSetCellData(cursor_x, cursor_y, 0, backColor, fgColor);
 		return;
 	}
 	else {
 		TerminalSetCellData(cursor_x, cursor_y, c, bgcolor, fgcolor);
+		last_cursor_x = cursor_x;
+		last_cursor_y = cursor_y;
 		cursor_x++;
 		if (cursor_x == ws_col - 1){
 			cursor_x = 0;
 			cursor_y++;
+		}
+
+		if (cursor_y >= ws_row - 1) {
+			TerminalScroll();
+			cursor_y--;
 		}
 	}
 }
@@ -385,11 +400,11 @@ void ProcessControlSequence(char ch) {
 			TerminalClearScreen();
 			break;
 		case 1:
-			//erase upward
+			//erase upward, not implemented
 			break;
 		}
 		if (value == 0){
-			/* erase downward */
+			/* erase downward, not implemented */
 		}
 		_escape_seq = false;
 		_seq_csi = false;
@@ -451,8 +466,21 @@ void TerminalHandleMessage(PostEvent *e) {
 		break;
 	case DEODHAI_REPLY_KEY_EVENT:
 		int code = e->dword;
-		if (code < 80)  /* key pressend event*/
-			printf("KeyPressed %d\n", code);
+		ChitralekhaProcessKey(code);
+		char rawkey = ChitralekhaGetKeyPress(code);
+		char c = ChitralekhaKeyToASCII(code);
+		if (rawkey == KEY_RETURN) 
+			c = '\n';
+
+		if (ChitralekhaKeyGetCTRL()) {
+			if (c == KEY_C) {
+				if (shell_id > 0)
+					printf("Signal is buggy right now, needs fixing \n");
+					//_KeSendSignal(shell_id, SIGINT);
+			}
+		}
+
+		_KeWriteFile(master_fd, &c, 1);
 		/* else its a key release event */
 		memset(e, 0, sizeof(PostEvent));
 		break;
@@ -513,8 +541,8 @@ int main(int argc, char* arv[]){
 	ws_row = term_h / cell_height;
 	cursor_x = 0;
 	cursor_y = 0;
-	last_cursor_y = ws_row - 2;
-	last_cursor_x = ws_col - 2;
+	last_cursor_y = cursor_y;
+	last_cursor_x = cursor_x;
 	_cursor_blink = 0;
 	escBuf = (char*)malloc(256);
 	memset(escBuf, 0, 256);
@@ -545,7 +573,7 @@ int main(int argc, char* arv[]){
 
 	int term_id = _KeGetProcessID();
 	/* try loading the shell process */
-	int shell_id = _KeCreateProcess(0, "xesh");
+	shell_id = _KeCreateProcess(0, "xesh");
 
 	_KeSetFileToProcess(slave_fd, 0, shell_id);
 	_KeSetFileToProcess(slave_fd, 1, shell_id);

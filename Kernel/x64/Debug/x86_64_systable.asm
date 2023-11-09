@@ -36,6 +36,8 @@ EXTRN	?GetSystemTimerTick@@YA_KXZ:PROC		; GetSystemTimerTick
 EXTRN	?CreateUserThread@@YAHP6AXPEAX@ZPEAD@Z:PROC	; CreateUserThread
 EXTRN	?SetFileToProcess@@YAHHHH@Z:PROC		; SetFileToProcess
 EXTRN	?ProcessHeapUnmap@@YAHPEAX_K@Z:PROC		; ProcessHeapUnmap
+EXTRN	?SendSignal@@YAHHH@Z:PROC			; SendSignal
+EXTRN	?GetCurrentTime@@YAHPEAX@Z:PROC			; GetCurrentTime
 EXTRN	?AuFTMngrGetFontID@@YAHPEAD@Z:PROC		; AuFTMngrGetFontID
 EXTRN	?AuFTMngrGetNumFonts@@YAHXZ:PROC		; AuFTMngrGetNumFonts
 EXTRN	?AuFTMngrGetFontSize@@YAHPEAD@Z:PROC		; AuFTMngrGetFontSize
@@ -76,9 +78,11 @@ syscalls DQ	FLAT:?null_call@@YA_K_K00000@Z
 	DQ	FLAT:?CreateUserThread@@YAHP6AXPEAX@ZPEAD@Z
 	DQ	FLAT:?SetFileToProcess@@YAHHHH@Z
 	DQ	FLAT:?ProcessHeapUnmap@@YAHPEAX_K@Z
+	DQ	FLAT:?SendSignal@@YAHHH@Z
+	DQ	FLAT:?GetCurrentTime@@YAHPEAX@Z
 _DATA	ENDS
 CONST	SEGMENT
-$SG4142	DB	'%s', 0aH, 00H
+$SG4149	DB	'%s', 0aH, 00H
 CONST	ENDS
 PUBLIC	?KePrintMsg@@YA_K_K00000@Z			; KePrintMsg
 PUBLIC	x64_syscall_handler
@@ -107,60 +111,60 @@ ret_code$ = 64
 a$ = 96
 x64_syscall_handler PROC
 
-; 115  : extern "C" uint64_t x64_syscall_handler(int a) {
+; 117  : extern "C" uint64_t x64_syscall_handler(int a) {
 
 $LN5:
 	mov	DWORD PTR [rsp+8], ecx
 	sub	rsp, 88					; 00000058H
 
-; 116  : 	x64_cli();
+; 118  : 	x64_cli();
 
 	call	x64_cli
 
-; 117  : 
-; 118  : 	AuThread* current_thr = AuGetCurrentThread();
+; 119  : 
+; 120  : 	AuThread* current_thr = AuGetCurrentThread();
 
 	call	AuGetCurrentThread
 	mov	QWORD PTR current_thr$[rsp], rax
 
-; 119  : 	uint64_t ret_code = 0;
+; 121  : 	uint64_t ret_code = 0;
 
 	mov	QWORD PTR ret_code$[rsp], 0
 
-; 120  : 
-; 121  : 	if (a > AURORA_MAX_SYSCALL)
+; 122  : 
+; 123  : 	if (a > AURORA_MAX_SYSCALL)
 
-	cmp	DWORD PTR a$[rsp], 35			; 00000023H
+	cmp	DWORD PTR a$[rsp], 37			; 00000025H
 	jle	SHORT $LN2@x64_syscal
 
-; 122  : 		return -1;
+; 124  : 		return -1;
 
 	mov	rax, -1
 	jmp	$LN3@x64_syscal
 $LN2@x64_syscal:
 
-; 123  : 
-; 124  : 	syscall_func func = (syscall_func)syscalls[a];
+; 125  : 
+; 126  : 	syscall_func func = (syscall_func)syscalls[a];
 
 	movsxd	rax, DWORD PTR a$[rsp]
 	lea	rcx, OFFSET FLAT:syscalls
 	mov	rax, QWORD PTR [rcx+rax*8]
 	mov	QWORD PTR func$[rsp], rax
 
-; 125  : 	if (!func)
+; 127  : 	if (!func)
 
 	cmp	QWORD PTR func$[rsp], 0
 	jne	SHORT $LN1@x64_syscal
 
-; 126  : 		return 0;
+; 128  : 		return 0;
 
 	xor	eax, eax
 	jmp	SHORT $LN3@x64_syscal
 $LN1@x64_syscal:
 
-; 127  : 
-; 128  : 	ret_code = func(current_thr->syscall_param.param1, current_thr->syscall_param.param2, current_thr->syscall_param.param3,
-; 129  : 			current_thr->syscall_param.param4, current_thr->syscall_param.param5, current_thr->syscall_param.param6);
+; 129  : 
+; 130  : 	ret_code = func(current_thr->syscall_param.param1, current_thr->syscall_param.param2, current_thr->syscall_param.param3,
+; 131  : 			current_thr->syscall_param.param4, current_thr->syscall_param.param5, current_thr->syscall_param.param6);
 
 	mov	rax, QWORD PTR current_thr$[rsp]
 	mov	rax, QWORD PTR [rax+264]
@@ -179,13 +183,13 @@ $LN1@x64_syscal:
 	call	QWORD PTR func$[rsp]
 	mov	QWORD PTR ret_code$[rsp], rax
 
-; 130  : 
-; 131  : 	return ret_code;
+; 132  : 
+; 133  : 	return ret_code;
 
 	mov	rax, QWORD PTR ret_code$[rsp]
 $LN3@x64_syscal:
 
-; 132  : }
+; 134  : }
 
 	add	rsp, 88					; 00000058H
 	ret	0
@@ -247,7 +251,7 @@ $LN3:
 ; 58   : 	AuTextOut("%s\n",text);
 
 	mov	rdx, QWORD PTR text$[rsp]
-	lea	rcx, OFFSET FLAT:$SG4142
+	lea	rcx, OFFSET FLAT:$SG4149
 	call	AuTextOut
 
 ; 59   : 	return 0;

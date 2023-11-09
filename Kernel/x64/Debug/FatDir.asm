@@ -408,13 +408,13 @@ $LN23@FatCreateD:
 ; 61   : 
 ; 62   : 	AuVFSNode* file = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
 
-	mov	ecx, 168				; 000000a8H
+	mov	ecx, 176				; 000000b0H
 	call	kmalloc
 	mov	QWORD PTR file$[rsp], rax
 
 ; 63   : 	memset(file, 0, sizeof(AuVFSNode));
 
-	mov	r8d, 168				; 000000a8H
+	mov	r8d, 176				; 000000b0H
 	xor	edx, edx
 	mov	rcx, QWORD PTR file$[rsp]
 	call	memset

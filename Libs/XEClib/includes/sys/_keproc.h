@@ -130,4 +130,11 @@ XE_EXTERN XE_LIB int _KeCreateThread(void(*entry) (), char *name);
 */
 XE_EXTERN XE_LIB int _KeSetFileToProcess(int fileno, int dest_fidx, int proc_id);
 
+/*
+ * _KeSendSignal -- send a signal to desired process
+ * @param pid -- thread id
+ * @param signum -- signal number
+ */
+XE_EXTERN XE_LIB int _KeSendSignal(int pid, int signum);
+
 #endif

@@ -50,7 +50,7 @@ extern void AuInitialiseLoader();
 * @param argc -- number of arguments
 * @param argv -- array of argument in strings
 */
-extern void AuLoadExecToProcess(AuProcess* proc, char* filename, int argc,char** argv);
+extern int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc,char** argv);
 
 /*
 * AuProcessEntUser -- main kernel thread call

@@ -6,7 +6,7 @@ INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
 CONST	SEGMENT
-$SG4059	DB	'%c', 00H
+$SG4060	DB	'%c', 00H
 CONST	ENDS
 PUBLIC	?FatInitialise@@YAPEAU__VFS_NODE__@@PEAU_VDISK_@@PEAD@Z ; FatInitialise
 PUBLIC	?FatClusterToSector32@@YA_KPEAU_FatFS_@@_K@Z	; FatClusterToSector32
@@ -56,7 +56,7 @@ EXTRN	AuRTCGetHour:PROC
 EXTRN	AuRTCGetMonth:PROC
 pdata	SEGMENT
 $pdata$?FatInitialise@@YAPEAU__VFS_NODE__@@PEAU_VDISK_@@PEAD@Z DD imagerel $LN16
-	DD	imagerel $LN16+1100
+	DD	imagerel $LN16+1103
 	DD	imagerel $unwind$?FatInitialise@@YAPEAU__VFS_NODE__@@PEAU_VDISK_@@PEAD@Z
 $pdata$?FatToDOSFilename@@YAXPEBDPEADI@Z DD imagerel $LN19
 	DD	imagerel $LN19+382
@@ -911,13 +911,13 @@ $LN13:
 
 ; 296  : 	AuVFSNode* file = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
 
-	mov	ecx, 168				; 000000a8H
+	mov	ecx, 176				; 000000b0H
 	call	kmalloc
 	mov	QWORD PTR file$[rsp], rax
 
 ; 297  : 	memset(file, 0, sizeof(AuVFSNode));
 
-	mov	r8d, 168				; 000000a8H
+	mov	r8d, 176				; 000000b0H
 	xor	edx, edx
 	mov	rcx, QWORD PTR file$[rsp]
 	call	memset
@@ -1195,13 +1195,13 @@ $LN13:
 
 ; 348  : 	AuVFSNode* file = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
 
-	mov	ecx, 168				; 000000a8H
+	mov	ecx, 176				; 000000b0H
 	call	kmalloc
 	mov	QWORD PTR file$[rsp], rax
 
 ; 349  : 	memset(file, 0, sizeof(AuVFSNode));
 
-	mov	r8d, 168				; 000000a8H
+	mov	r8d, 176				; 000000b0H
 	xor	edx, edx
 	mov	rcx, QWORD PTR file$[rsp]
 	call	memset
@@ -1381,7 +1381,7 @@ $LN6@FatLocateD:
 ; 383  : 				file->close = 0;
 
 	mov	rax, QWORD PTR file$[rsp]
-	mov	QWORD PTR [rax+136], 0
+	mov	QWORD PTR [rax+144], 0
 
 ; 384  : 				file->first_block = file->current;
 
@@ -2451,7 +2451,7 @@ $LN9@FatInitial:
 	mov	rcx, QWORD PTR bpb$[rsp]
 	movsx	eax, BYTE PTR [rcx+rax+3]
 	mov	edx, eax
-	lea	rcx, OFFSET FLAT:$SG4059
+	lea	rcx, OFFSET FLAT:$SG4060
 	call	AuTextOut
 
 ; 517  : 		fs->oemid[i] = bpb->oemid[i];
@@ -2708,13 +2708,13 @@ $LN1@FatInitial:
 ; 549  : 
 ; 550  : 	AuVFSNode* fsys = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
 
-	mov	ecx, 168				; 000000a8H
+	mov	ecx, 176				; 000000b0H
 	call	kmalloc
 	mov	QWORD PTR fsys$[rsp], rax
 
 ; 551  : 	memset(fsys, 0, sizeof(AuVFSNode));
 
-	mov	r8d, 168				; 000000a8H
+	mov	r8d, 176				; 000000b0H
 	xor	edx, edx
 	mov	rcx, QWORD PTR fsys$[rsp]
 	call	memset
@@ -2738,7 +2738,7 @@ $LN1@FatInitial:
 
 	mov	rax, QWORD PTR fsys$[rsp]
 	lea	rcx, OFFSET FLAT:?FatOpen@@YAPEAU__VFS_NODE__@@PEAU1@PEAD@Z ; FatOpen
-	mov	QWORD PTR [rax+80], rcx
+	mov	QWORD PTR [rax+88], rcx
 
 ; 555  : 	fsys->device = fs;
 
@@ -2750,49 +2750,49 @@ $LN1@FatInitial:
 
 	mov	rax, QWORD PTR fsys$[rsp]
 	lea	rcx, OFFSET FLAT:?FatReadFile@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z ; FatReadFile
-	mov	QWORD PTR [rax+88], rcx
+	mov	QWORD PTR [rax+96], rcx
 
 ; 557  : 	fsys->read_block = FatRead;
 
 	mov	rax, QWORD PTR fsys$[rsp]
 	lea	rcx, OFFSET FLAT:?FatRead@@YA_KPEAU__VFS_NODE__@@0PEA_K@Z ; FatRead
-	mov	QWORD PTR [rax+144], rcx
+	mov	QWORD PTR [rax+152], rcx
 
 ; 558  : 	fsys->remove_dir = FatRemoveDir;
 
 	mov	rax, QWORD PTR fsys$[rsp]
 	lea	rcx, OFFSET FLAT:?FatRemoveDir@@YAHPEAU__VFS_NODE__@@0@Z ; FatRemoveDir
-	mov	QWORD PTR [rax+120], rcx
+	mov	QWORD PTR [rax+128], rcx
 
 ; 559  : 	fsys->remove_file = FatFileRemove;
 
 	mov	rax, QWORD PTR fsys$[rsp]
 	lea	rcx, OFFSET FLAT:?FatFileRemove@@YAHPEAU__VFS_NODE__@@0@Z ; FatFileRemove
-	mov	QWORD PTR [rax+128], rcx
+	mov	QWORD PTR [rax+136], rcx
 
 ; 560  : 	fsys->write = FatWrite;
 
 	mov	rax, QWORD PTR fsys$[rsp]
 	lea	rcx, OFFSET FLAT:?FatWrite@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z ; FatWrite
-	mov	QWORD PTR [rax+96], rcx
+	mov	QWORD PTR [rax+104], rcx
 
 ; 561  : 	fsys->create_dir = FatCreateDir;
 
 	mov	rax, QWORD PTR fsys$[rsp]
 	lea	rcx, OFFSET FLAT:?FatCreateDir@@YAPEAU__VFS_NODE__@@PEAU1@PEAD@Z ; FatCreateDir
-	mov	QWORD PTR [rax+104], rcx
+	mov	QWORD PTR [rax+112], rcx
 
 ; 562  : 	fsys->create_file = FatCreateFile;
 
 	mov	rax, QWORD PTR fsys$[rsp]
 	lea	rcx, OFFSET FLAT:?FatCreateFile@@YAPEAU__VFS_NODE__@@PEAU1@PEAD@Z ; FatCreateFile
-	mov	QWORD PTR [rax+112], rcx
+	mov	QWORD PTR [rax+120], rcx
 
 ; 563  : 	fsys->get_blockfor = FatGetClusterFor;
 
 	mov	rax, QWORD PTR fsys$[rsp]
 	lea	rcx, OFFSET FLAT:?FatGetClusterFor@@YA_KPEAU__VFS_NODE__@@0_K@Z ; FatGetClusterFor
-	mov	QWORD PTR [rax+152], rcx
+	mov	QWORD PTR [rax+160], rcx
 
 ; 564  : 	AuVFSAddFileSystem(fsys);
 

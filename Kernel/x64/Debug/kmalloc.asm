@@ -6,7 +6,7 @@ INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
 CONST	SEGMENT
-$SG3254	DB	'Request page not aligned to page boundary ', 0dH, 0aH, 00H
+$SG3255	DB	'Request page not aligned to page boundary ', 0dH, 0aH, 00H
 CONST	ENDS
 PUBLIC	AuHeapInitialize
 PUBLIC	kmalloc
@@ -483,7 +483,7 @@ $LN4@au_request:
 
 ; 432  : 		SeTextOut("Request page not aligned to page boundary \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG3254
+	lea	rcx, OFFSET FLAT:$SG3255
 	call	SeTextOut
 $LN2@au_request:
 

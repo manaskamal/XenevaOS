@@ -222,6 +222,7 @@
     <ClInclude Include="..\BaseHdr\Sync\mutex.h" />
     <ClInclude Include="..\BaseHdr\Sync\spinlock.h" />
     <ClInclude Include="..\BaseHdr\termios.h" />
+    <ClInclude Include="..\BaseHdr\time.h" />
     <ClInclude Include="..\BaseHdr\va_list.h" />
     <ClInclude Include="..\BaseHdr\_null.h" />
   </ItemGroup>
@@ -291,6 +292,7 @@
     <ClCompile Include="string.cpp" />
     <ClCompile Include="Sync\mutex.cpp" />
     <ClCompile Include="Sync\spinlock.cpp" />
+    <ClCompile Include="time.cpp" />
     <ClCompile Include="_CRT.cpp" />
   </ItemGroup>
   <ItemGroup>

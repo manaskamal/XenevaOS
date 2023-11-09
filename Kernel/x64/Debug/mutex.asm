@@ -6,9 +6,9 @@ INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
 CONST	SEGMENT
-$SG3397	DB	'Mutex acquired ', 0dH, 0aH, 00H
+$SG3399	DB	'Mutex acquired ', 0dH, 0aH, 00H
 	ORG $+6
-$SG3412	DB	'Mutex released ', 0dH, 0aH, 00H
+$SG3414	DB	'Mutex released ', 0dH, 0aH, 00H
 CONST	ENDS
 PUBLIC	AuCreateMutex
 PUBLIC	AuAcquireMutex
@@ -213,7 +213,7 @@ $LN2@AuReleaseM:
 
 ; 101  : 	SeTextOut("Mutex released \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG3412
+	lea	rcx, OFFSET FLAT:$SG3414
 	call	SeTextOut
 
 ; 102  : 	AuReleaseSpinlock(mutex->lock);
@@ -349,7 +349,7 @@ $LN1@AuAcquireM:
 
 ; 72   : 	SeTextOut("Mutex acquired \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG3397
+	lea	rcx, OFFSET FLAT:$SG3399
 	call	SeTextOut
 
 ; 73   : 	AuReleaseSpinlock(mut->lock);

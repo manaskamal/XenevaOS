@@ -107,6 +107,7 @@ typedef struct _au_proc_ {
 	/* memory account */
 	list_t* vmareas;
 	list_t* shmmaps;
+	list_t* waitlist;
 	size_t shm_break;
 	size_t proc_mem_heap;
 	size_t proc_mmap_len;

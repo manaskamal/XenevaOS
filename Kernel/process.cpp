@@ -259,6 +259,7 @@ AuProcess* AuCreateRootProc() {
 	proc->shm_break = USER_SHARED_MEM_START;
 	proc->proc_mem_heap = PROCESS_BREAK_ADDRESS;
 	proc->proc_mmap_len = 0;
+	proc->waitlist = initialize_list();
 	for (int i = 0; i < FILE_DESC_PER_PROCESS; i++)
 		proc->fds[i] = 0;
 
@@ -297,7 +298,7 @@ AuProcess* AuCreateProcessSlot(AuProcess* parent, char* name) {
 	proc->shm_break = USER_SHARED_MEM_START;
 	proc->proc_mem_heap = PROCESS_BREAK_ADDRESS;
 	proc->proc_mmap_len = 0;
-
+	proc->waitlist = initialize_list();
 	for (int i = 0; i < FILE_DESC_PER_PROCESS; i++)
 		proc->fds[i] = 0;
 
@@ -363,22 +364,33 @@ AuProcess* AuGetKillableProcess() {
  * process
  */
 void AuProcessWaitForTermination(AuProcess *proc, int pid) {
-	do {
-		AuProcess *killable = AuGetKillableProcess();
+	if (pid == -1) {
+		do {
+			AuProcess *killable = AuGetKillableProcess();
 
-		if (killable) {
-			AuProcessClean(0, killable);
-			killable = NULL;
-		}
+			if (killable) {
+				AuProcessClean(0, killable);
+				killable = NULL;
+			}
 
 
-		if (!killable){
-			AuBlockThread(proc->main_thread);
-			AuSleepThread(proc->main_thread, 10000);
-			proc->state = PROCESS_STATE_SUSPENDED;
-			x64_force_sched();
-		}
-	} while (1);
+			if (!killable){
+				AuBlockThread(proc->main_thread);
+				AuSleepThread(proc->main_thread, 10000);
+				proc->state = PROCESS_STATE_SUSPENDED;
+				x64_force_sched();
+			}
+		} while (1);
+	}
+	else {
+		AuProcess* proc = AuProcessFindByPID(0,pid);
+		if (!proc)
+			return;
+		AuThread* thr = AuGetCurrentThread();
+		AuBlockThread(thr);
+		list_add(proc->waitlist, thr);
+		AuForceScheduler();
+	}
 }
 
 /*
@@ -456,10 +468,22 @@ void AuProcessExit(AuProcess* proc) {
 			if (file->flags & FS_FLAG_DEVICE || file->flags & FS_FLAG_FILE_SYSTEM)
 				continue;
 			if (file->flags & FS_FLAG_GENERAL)  {
-				kfree(file);
+				if (file->fileCopyCount <= 0)
+					kfree(file);
+				else
+					file->fileCopyCount -= 1;
 			}
 		}
 	}
+
+	for (int i = 0; i < proc->waitlist->pointer; i++) {
+		AuThread* thr = (AuThread*)list_remove(proc->waitlist, i);
+		if (thr) {
+			AuUnblockThread(thr);
+		}
+	}
+
+	kfree(proc->waitlist);
 
 	UnmapMemMapping((void*)PROCESS_MMAP_ADDRESS, proc->proc_mmap_len);
 
@@ -468,7 +492,8 @@ void AuProcessExit(AuProcess* proc) {
 
 	AuProcessHeapMemDestroy(proc);
 
-	kfree(proc->file);
+	if (proc->file)
+		kfree(proc->file);
 
 	AuThreadMoveToTrash(proc->main_thread);
 	
@@ -515,5 +540,6 @@ int AuCreateUserthread(AuProcess* proc, void(*entry) (void*), char *name)
 	proc->num_thread++;
 	return thread_indx;
 }
+
 
 

@@ -12,17 +12,17 @@ _BSS	SEGMENT
 ?kybrd_@@3PEAU__VFS_NODE__@@EA DQ 01H DUP (?)		; kybrd_
 _BSS	ENDS
 CONST	SEGMENT
-$SG3722	DB	'Mouse ioCtl ', 0dH, 0aH, 00H
+$SG3729	DB	'Mouse ioCtl ', 0dH, 0aH, 00H
 	ORG $+1
-$SG3737	DB	'/dev', 00H
+$SG3744	DB	'/dev', 00H
 	ORG $+3
-$SG3745	DB	'mice', 00H
+$SG3752	DB	'mice', 00H
 	ORG $+3
-$SG3746	DB	'/', 00H
+$SG3753	DB	'/', 00H
 	ORG $+2
-$SG3753	DB	'kybrd', 00H
+$SG3760	DB	'kybrd', 00H
 	ORG $+2
-$SG3754	DB	'/', 00H
+$SG3761	DB	'/', 00H
 CONST	ENDS
 PUBLIC	?AuDevInputInitialise@@YAXXZ			; AuDevInputInitialise
 PUBLIC	AuDevReadMice
@@ -117,7 +117,7 @@ $LN10:
 
 ; 172  : 	SeTextOut("Mouse ioCtl \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG3722
+	lea	rcx, OFFSET FLAT:$SG3729
 	call	SeTextOut
 
 ; 173  : 	if (!file)
@@ -666,7 +666,7 @@ $LN3:
 
 ; 198  : 	AuVFSNode* devfs = AuVFSFind("/dev");
 
-	lea	rcx, OFFSET FLAT:$SG3737
+	lea	rcx, OFFSET FLAT:$SG3744
 	call	AuVFSFind
 	mov	QWORD PTR devfs$[rsp], rax
 
@@ -687,13 +687,13 @@ $LN3:
 ; 202  : 	/* avoiding using pipe for latency issue */
 ; 203  : 	AuVFSNode* node = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
 
-	mov	ecx, 168				; 000000a8H
+	mov	ecx, 176				; 000000b0H
 	call	kmalloc
 	mov	QWORD PTR node$[rsp], rax
 
 ; 204  : 	memset(node, 0, sizeof(AuVFSNode));
 
-	mov	r8d, 168				; 000000a8H
+	mov	r8d, 176				; 000000b0H
 	xor	edx, edx
 	mov	rcx, QWORD PTR node$[rsp]
 	call	memset
@@ -701,7 +701,7 @@ $LN3:
 ; 205  : 	strcpy(node->filename, "mice");
 
 	mov	rax, QWORD PTR node$[rsp]
-	lea	rdx, OFFSET FLAT:$SG3745
+	lea	rdx, OFFSET FLAT:$SG3752
 	mov	rcx, rax
 	call	strcpy
 
@@ -723,29 +723,29 @@ $LN3:
 
 	mov	rax, QWORD PTR node$[rsp]
 	lea	rcx, OFFSET FLAT:?AuDevInputMiceRead@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z ; AuDevInputMiceRead
-	mov	QWORD PTR [rax+88], rcx
+	mov	QWORD PTR [rax+96], rcx
 
 ; 209  : 	node->write = AuDevInputMiceWrite;
 
 	mov	rax, QWORD PTR node$[rsp]
 	lea	rcx, OFFSET FLAT:?AuDevInputMiceWrite@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z ; AuDevInputMiceWrite
-	mov	QWORD PTR [rax+96], rcx
+	mov	QWORD PTR [rax+104], rcx
 
 ; 210  : 	node->open = 0;
 
 	mov	rax, QWORD PTR node$[rsp]
-	mov	QWORD PTR [rax+80], 0
+	mov	QWORD PTR [rax+88], 0
 
 ; 211  : 	node->close = 0;
 
 	mov	rax, QWORD PTR node$[rsp]
-	mov	QWORD PTR [rax+136], 0
+	mov	QWORD PTR [rax+144], 0
 
 ; 212  : 	node->iocontrol = AuDevMouseIoControl;
 
 	mov	rax, QWORD PTR node$[rsp]
 	lea	rcx, OFFSET FLAT:?AuDevMouseIoControl@@YAHPEAU__VFS_NODE__@@HPEAX@Z ; AuDevMouseIoControl
-	mov	QWORD PTR [rax+160], rcx
+	mov	QWORD PTR [rax+168], rcx
 
 ; 213  : 	mice_ = node;
 
@@ -755,7 +755,7 @@ $LN3:
 ; 214  : 	AuDevFSAddFile(devfs, "/", mice_);
 
 	mov	r8, QWORD PTR ?mice_@@3PEAU__VFS_NODE__@@EA ; mice_
-	lea	rdx, OFFSET FLAT:$SG3746
+	lea	rdx, OFFSET FLAT:$SG3753
 	mov	rcx, QWORD PTR devfs$[rsp]
 	call	AuDevFSAddFile
 
@@ -776,13 +776,13 @@ $LN3:
 ; 218  : 	
 ; 219  : 	kybrd_ = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
 
-	mov	ecx, 168				; 000000a8H
+	mov	ecx, 176				; 000000b0H
 	call	kmalloc
 	mov	QWORD PTR ?kybrd_@@3PEAU__VFS_NODE__@@EA, rax ; kybrd_
 
 ; 220  : 	memset(kybrd_, 0, sizeof(AuVFSNode));
 
-	mov	r8d, 168				; 000000a8H
+	mov	r8d, 176				; 000000b0H
 	xor	edx, edx
 	mov	rcx, QWORD PTR ?kybrd_@@3PEAU__VFS_NODE__@@EA ; kybrd_
 	call	memset
@@ -790,7 +790,7 @@ $LN3:
 ; 221  : 	strcpy(kybrd_->filename, "kybrd");
 
 	mov	rax, QWORD PTR ?kybrd_@@3PEAU__VFS_NODE__@@EA ; kybrd_
-	lea	rdx, OFFSET FLAT:$SG3753
+	lea	rdx, OFFSET FLAT:$SG3760
 	mov	rcx, rax
 	call	strcpy
 
@@ -812,18 +812,18 @@ $LN3:
 
 	mov	rax, QWORD PTR ?kybrd_@@3PEAU__VFS_NODE__@@EA ; kybrd_
 	lea	rcx, OFFSET FLAT:?AuDevInputKybrdRead@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z ; AuDevInputKybrdRead
-	mov	QWORD PTR [rax+88], rcx
+	mov	QWORD PTR [rax+96], rcx
 
 ; 225  : 	kybrd_->write = AuDevInputKybrdWrite;
 
 	mov	rax, QWORD PTR ?kybrd_@@3PEAU__VFS_NODE__@@EA ; kybrd_
 	lea	rcx, OFFSET FLAT:?AuDevInputKybrdWrite@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z ; AuDevInputKybrdWrite
-	mov	QWORD PTR [rax+96], rcx
+	mov	QWORD PTR [rax+104], rcx
 
 ; 226  : 	AuDevFSAddFile(devfs, "/", kybrd_);
 
 	mov	r8, QWORD PTR ?kybrd_@@3PEAU__VFS_NODE__@@EA ; kybrd_
-	lea	rdx, OFFSET FLAT:$SG3754
+	lea	rdx, OFFSET FLAT:$SG3761
 	mov	rcx, QWORD PTR devfs$[rsp]
 	call	AuDevFSAddFile
 

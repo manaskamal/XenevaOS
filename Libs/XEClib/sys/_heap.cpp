@@ -536,11 +536,6 @@ int liballoc_unlock() {
 
 void* liballoc_alloc(int pages) {
 	size_t size = pages * 4096;
-	if (pages != 16) {
-		_KePrint("Liballoc pages -> %d, size-> %d \r\n", pages, size);
-		size = 16 * 4096;
-	}
-
 	char* p = (char*)_KeGetProcessHeapMem(size);
 	return p;
 }

@@ -153,6 +153,7 @@
     <ClInclude Include="draw.h" />
     <ClInclude Include="font.h" />
     <ClInclude Include="image.h" />
+    <ClInclude Include="keycode.h" />
     <ClInclude Include="nanojpg.h" />
     <ClInclude Include="ttf.h" />
     <ClInclude Include="widgets\base.h" />
@@ -166,6 +167,7 @@
     <ClCompile Include="color.cpp" />
     <ClCompile Include="draw.cpp" />
     <ClCompile Include="font.cpp" />
+    <ClCompile Include="keycode.cpp" />
     <ClCompile Include="ttf.cpp" />
     <ClCompile Include="widgets\base.cpp" />
     <ClCompile Include="widgets\defaultwindow.cpp" />

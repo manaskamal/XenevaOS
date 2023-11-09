@@ -149,15 +149,6 @@ size_t AuTTYMasterRead(AuVFSNode* fs, AuVFSNode* file, uint64_t* buffer, uint32_
 		bytes_to_ret++;
 	}
 
-	if (type->blockedSlaveId >0) {
-		AuThread* thr = AuThreadFindByIDBlockList(type->blockedSlaveId);
-		if (thr) {
-			AuTextOut("Master unblocking thread -> %d %s\n", type->blockedSlaveId, thr->name);
-			AuUnblockThread(thr);
-		}
-		type->blockedSlaveId = 0;
-	}
-
 	type->master_written = 0;
 	return bytes_to_ret;
 }
@@ -204,9 +195,8 @@ size_t AuTTYSlaveWrite(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint3
 		len = 512;
 
 	if (CircBufFull(tty->masterbuf)) {
-		AuBlockThread(curr_th);
-		tty->blockedSlaveId = curr_th->id;
-		x64_force_sched();
+		AuSleepThread(curr_th, 1000000000000);
+		AuForceScheduler();
 		return 0;
 	}
 
@@ -214,6 +204,12 @@ size_t AuTTYSlaveWrite(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint3
 		AuCircBufPut(tty->masterbuf, aligned_buf[i]);
 		tty->master_written++;
 	}
+
+	/* little bit slow down the slave process,
+	 * it's too fast 
+	 */
+	AuSleepThread(curr_th, 1000000000000);
+	AuForceScheduler();
 }
 
 int AuTTYSlaveClose(AuVFSNode* fs, AuVFSNode* file) {
@@ -287,6 +283,7 @@ AuVFSNode* AuTTYCreateMaster(TTY* tty) {
 	node->write = AuTTYMasterWrite;
 	node->close = AuTTYMasterClose;
 	node->iocontrol = AuTTYIoControl;
+	node->fileCopyCount = 0;
 
 	AuDevFSAddFile(fs, "/dev/tty", node);
 	master_count++;
@@ -315,6 +312,7 @@ AuVFSNode* AuTTYCreateSlave(TTY* tty) {
 	node->write = AuTTYSlaveWrite;
 	node->close = AuTTYSlaveClose;
 	node->iocontrol = AuTTYIoControl;
+	node->fileCopyCount = 0;
 
 	AuDevFSAddFile(fs, "/dev/tty", node);
 	slave_count++;

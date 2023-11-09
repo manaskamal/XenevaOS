@@ -6,11 +6,11 @@ INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
 CONST	SEGMENT
-$SG3468	DB	'Returning error heap mem -> %d ', 0dH, 0aH, 00H
+$SG3470	DB	'Returning error heap mem -> %d ', 0dH, 0aH, 00H
 	ORG $+6
-$SG3484	DB	'Failed to map %x ', 0dH, 0aH, 00H
+$SG3486	DB	'Failed to map %x ', 0dH, 0aH, 00H
 	ORG $+4
-$SG3490	DB	'Returning error heap unmap -> %d ', 0dH, 0aH, 00H
+$SG3492	DB	'Returning error heap unmap -> %d ', 0dH, 0aH, 00H
 CONST	ENDS
 PUBLIC	?CreateSharedMem@@YAHG_KE@Z			; CreateSharedMem
 PUBLIC	?ObtainSharedMem@@YAPEAXGPEAXH@Z		; ObtainSharedMem
@@ -100,7 +100,7 @@ $LN13:
 ; 152  : 		AuTextOut("Returning error heap unmap -> %d \r\n", sz);
 
 	mov	rdx, QWORD PTR sz$[rsp]
-	lea	rcx, OFFSET FLAT:$SG3490
+	lea	rcx, OFFSET FLAT:$SG3492
 	call	AuTextOut
 
 ; 153  : 		return -1;
@@ -266,7 +266,7 @@ $LN2@ProcessHea:
 
 	mov	rax, QWORD PTR proc$[rsp]
 	mov	rcx, QWORD PTR start_addr$[rsp]
-	mov	QWORD PTR [rax+1096], rcx
+	mov	QWORD PTR [rax+1104], rcx
 
 ; 180  : 	return 0;
 
@@ -316,7 +316,7 @@ $LN13:
 ; 110  : 		AuTextOut("Returning error heap mem -> %d \r\n", sz);
 
 	mov	rdx, QWORD PTR sz$[rsp]
-	lea	rcx, OFFSET FLAT:$SG3468
+	lea	rcx, OFFSET FLAT:$SG3470
 	call	AuTextOut
 
 ; 111  : 		return -1;
@@ -396,7 +396,7 @@ $LN6@GetProcess:
 ; 126  : 	uint64_t start_addr = (uint64_t)AuGetFreePage(false, (void*)proc->proc_mem_heap);
 
 	mov	rax, QWORD PTR proc$[rsp]
-	mov	rdx, QWORD PTR [rax+1096]
+	mov	rdx, QWORD PTR [rax+1104]
 	xor	ecx, ecx
 	call	AuGetFreePage
 	mov	QWORD PTR start_addr$[rsp], rax
@@ -452,7 +452,7 @@ $LN4@GetProcess:
 	add	rcx, rax
 	mov	rax, rcx
 	mov	rdx, rax
-	lea	rcx, OFFSET FLAT:$SG3484
+	lea	rcx, OFFSET FLAT:$SG3486
 	call	SeTextOut
 $LN1@GetProcess:
 
@@ -466,10 +466,10 @@ $LN2@GetProcess:
 ; 138  : 	proc->proc_mem_heap += sz;
 
 	mov	rax, QWORD PTR proc$[rsp]
-	mov	rax, QWORD PTR [rax+1096]
+	mov	rax, QWORD PTR [rax+1104]
 	add	rax, QWORD PTR sz$[rsp]
 	mov	rcx, QWORD PTR proc$[rsp]
-	mov	QWORD PTR [rcx+1096], rax
+	mov	QWORD PTR [rcx+1104], rax
 
 ; 139  : 	return start_addr;
 

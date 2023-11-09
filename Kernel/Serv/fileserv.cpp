@@ -49,12 +49,12 @@ int OpenFile(char* filename, int mode) {
 	x64_cli();
 	AuThread* current_thr = AuGetCurrentThread();
 	if (!current_thr)
-		return 0;
+		return -1;
 	AuProcess* current_proc = AuProcessFindThread(current_thr);
 	if (!current_proc) {
 		current_proc = AuProcessFindSubThread(current_thr);
 		if (!current_proc)
-			return 0;
+			return -1;
 	}
 
 	AuVFSNode *fsys = AuVFSFind(filename);

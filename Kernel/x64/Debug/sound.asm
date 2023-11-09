@@ -22,11 +22,11 @@ _BSS	SEGMENT
 ?_audio_stopped_@@3_NA DB 01H DUP (?)			; _audio_stopped_
 _BSS	ENDS
 CONST	SEGMENT
-$SG3900	DB	'/dev', 00H
+$SG3907	DB	'/dev', 00H
 	ORG $+3
-$SG3905	DB	'sound', 00H
+$SG3912	DB	'sound', 00H
 	ORG $+2
-$SG3906	DB	'/', 00H
+$SG3913	DB	'/', 00H
 CONST	ENDS
 PUBLIC	?AuSoundInitialise@@YAXXZ			; AuSoundInitialise
 PUBLIC	AuSoundSetCard
@@ -1091,19 +1091,19 @@ $LN3:
 
 ; 272  : 	AuVFSNode* fsys = AuVFSFind("/dev");
 
-	lea	rcx, OFFSET FLAT:$SG3900
+	lea	rcx, OFFSET FLAT:$SG3907
 	call	AuVFSFind
 	mov	QWORD PTR fsys$[rsp], rax
 
 ; 273  : 	AuVFSNode *dsp = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
 
-	mov	ecx, 168				; 000000a8H
+	mov	ecx, 176				; 000000b0H
 	call	kmalloc
 	mov	QWORD PTR dsp$[rsp], rax
 
 ; 274  : 	memset(dsp, 0, sizeof(AuVFSNode));
 
-	mov	r8d, 168				; 000000a8H
+	mov	r8d, 176				; 000000b0H
 	xor	edx, edx
 	mov	rcx, QWORD PTR dsp$[rsp]
 	call	memset
@@ -1111,7 +1111,7 @@ $LN3:
 ; 275  : 	strcpy(dsp->filename, "sound");
 
 	mov	rax, QWORD PTR dsp$[rsp]
-	lea	rdx, OFFSET FLAT:$SG3905
+	lea	rdx, OFFSET FLAT:$SG3912
 	mov	rcx, rax
 	call	strcpy
 
@@ -1131,24 +1131,24 @@ $LN3:
 
 	mov	rax, QWORD PTR dsp$[rsp]
 	lea	rcx, OFFSET FLAT:?AuSoundRead@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z ; AuSoundRead
-	mov	QWORD PTR [rax+88], rcx
+	mov	QWORD PTR [rax+96], rcx
 
 ; 279  : 	dsp->write = AuSoundWrite;
 
 	mov	rax, QWORD PTR dsp$[rsp]
 	lea	rcx, OFFSET FLAT:?AuSoundWrite@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z ; AuSoundWrite
-	mov	QWORD PTR [rax+96], rcx
+	mov	QWORD PTR [rax+104], rcx
 
 ; 280  : 	dsp->iocontrol = AuSoundIOControl;
 
 	mov	rax, QWORD PTR dsp$[rsp]
 	lea	rcx, OFFSET FLAT:?AuSoundIOControl@@YAHPEAU__VFS_NODE__@@HPEAX@Z ; AuSoundIOControl
-	mov	QWORD PTR [rax+160], rcx
+	mov	QWORD PTR [rax+168], rcx
 
 ; 281  : 	AuDevFSAddFile(fsys, "/", dsp);
 
 	mov	r8, QWORD PTR dsp$[rsp]
-	lea	rdx, OFFSET FLAT:$SG3906
+	lea	rdx, OFFSET FLAT:$SG3913
 	mov	rcx, QWORD PTR fsys$[rsp]
 	call	AuDevFSAddFile
 

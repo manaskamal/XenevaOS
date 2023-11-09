@@ -119,7 +119,7 @@ extern bool _vfs_debug_on;
  * @param argc -- number of arguments
  * @param argv -- array of argument in strings
  */
-void AuLoadExecToProcess(AuProcess* proc, char* filename, int argc,char** argv) {
+int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc,char** argv) {
 	AuAcquireSpinlock(loader_lock);
 	
 	/* verify the filename, it can only be '.exe' file no '.dll' or other */
@@ -128,12 +128,17 @@ void AuLoadExecToProcess(AuProcess* proc, char* filename, int argc,char** argv) 
 		v_++;
 	if (strcmp(v_, "exe") != 0) {
 		SeTextOut("[aurora]: non-executable process \r\n");
-		return;
+		return -1;
 	}
 	AuVFSNode *fsys = AuVFSFind(filename);	
 	_vfs_debug_on = true;
 	AuVFSNode *file = AuVFSOpen(filename);
 	
+	if (!file) {
+		SeTextOut("No File found -> %s \r\n", filename);
+		return -1;
+	}
+
 	uint64_t* buf = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
 	memset(buf, 0, 4096);
 	
@@ -241,6 +246,7 @@ void AuLoadExecToProcess(AuProcess* proc, char* filename, int argc,char** argv) 
 	proc->fsys = fsys;
 	thr->procSlot = proc;
 	AuReleaseSpinlock(loader_lock);
+	return 0;
 }
 
 void AuInitialiseLoader() {

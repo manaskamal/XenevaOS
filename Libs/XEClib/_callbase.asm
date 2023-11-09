@@ -592,6 +592,34 @@ _KeProcessHeapUnmap:
 	  syscall
 	  ret
 
+global _KeSendSignal
+%ifdef YES_DYNAMIC
+export _KeSendSignal
+%endif
+_KeSendSignal:
+      xor rax, rax
+	  mov r12, 35
+	  mov r13, rcx
+	  mov r14, rdx
+	  mov r15, 0
+	  mov rdi, 0
+	  syscall
+	  ret
+
+global _KeGetCurrentTime
+%ifdef YES_DYNAMIC
+export _KeGetCurrentTime
+%endif
+_KeGetCurrentTime:
+     xor rax, rax
+	 mov r12, 36
+	 mov r13, rcx
+	 mov r14, 0
+	 mov r15, 0
+	 mov rdi, 0
+	 syscall
+	 ret
+
       
       
 

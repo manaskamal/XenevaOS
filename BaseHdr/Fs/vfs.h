@@ -81,7 +81,7 @@ typedef struct __VFS_NODE__ {
 	uint16_t  flags;
 	uint8_t status;
 	void* device;
-
+	uint16_t fileCopyCount; //important for tty files
 	/* callback specific */
 	open_callback open;
 	read_callback read;

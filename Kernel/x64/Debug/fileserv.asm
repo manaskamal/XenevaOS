@@ -36,7 +36,7 @@ EXTRN	memcpy:PROC
 EXTRN	x64_cli:PROC
 pdata	SEGMENT
 $pdata$?OpenFile@@YAHPEADH@Z DD imagerel $LN12
-	DD	imagerel $LN12+260
+	DD	imagerel $LN12+266
 	DD	imagerel $unwind$?OpenFile@@YAHPEADH@Z
 $pdata$?ReadFile@@YA_KHPEAX_K@Z DD imagerel $LN17
 	DD	imagerel $LN17+477
@@ -926,7 +926,7 @@ $LN3@WriteFile:
 ; 182  : 		if (file->write) {
 
 	mov	rax, QWORD PTR file$[rsp]
-	cmp	QWORD PTR [rax+96], 0
+	cmp	QWORD PTR [rax+104], 0
 	je	SHORT $LN1@WriteFile
 
 ; 183  : 			file->write(fsys, file, (uint64_t*)buffer, length);
@@ -936,7 +936,7 @@ $LN3@WriteFile:
 	mov	rdx, QWORD PTR file$[rsp]
 	mov	rcx, QWORD PTR fsys$[rsp]
 	mov	rax, QWORD PTR file$[rsp]
-	call	QWORD PTR [rax+96]
+	call	QWORD PTR [rax+104]
 $LN1@WriteFile:
 $LN2@WriteFile:
 $LN12@WriteFile:
@@ -1126,7 +1126,7 @@ $LN7@ReadFile:
 ; 118  : 		if (file->read)
 
 	mov	rax, QWORD PTR file$[rsp]
-	cmp	QWORD PTR [rax+88], 0
+	cmp	QWORD PTR [rax+96], 0
 	je	SHORT $LN5@ReadFile
 
 ; 119  : 			ret_bytes = file->read(file, file, (uint64_t*)buffer, length);
@@ -1136,7 +1136,7 @@ $LN7@ReadFile:
 	mov	rdx, QWORD PTR file$[rsp]
 	mov	rcx, QWORD PTR file$[rsp]
 	mov	rax, QWORD PTR file$[rsp]
-	call	QWORD PTR [rax+88]
+	call	QWORD PTR [rax+96]
 	mov	QWORD PTR ret_bytes$[rsp], rax
 $LN5@ReadFile:
 $LN6@ReadFile:
@@ -1154,7 +1154,7 @@ $LN6@ReadFile:
 ; 123  : 		if (file->read)
 
 	mov	rax, QWORD PTR file$[rsp]
-	cmp	QWORD PTR [rax+88], 0
+	cmp	QWORD PTR [rax+96], 0
 	je	SHORT $LN3@ReadFile
 
 ; 124  : 			ret_bytes = file->read(file, file, (uint64_t*)aligned_buffer, length);
@@ -1164,7 +1164,7 @@ $LN6@ReadFile:
 	mov	rdx, QWORD PTR file$[rsp]
 	mov	rcx, QWORD PTR file$[rsp]
 	mov	rax, QWORD PTR file$[rsp]
-	call	QWORD PTR [rax+88]
+	call	QWORD PTR [rax+96]
 	mov	QWORD PTR ret_bytes$[rsp], rax
 $LN3@ReadFile:
 $LN4@ReadFile:
@@ -1182,7 +1182,7 @@ $LN4@ReadFile:
 ; 128  : 		if (file->read)
 
 	mov	rax, QWORD PTR file$[rsp]
-	cmp	QWORD PTR [rax+88], 0
+	cmp	QWORD PTR [rax+96], 0
 	je	SHORT $LN1@ReadFile
 
 ; 129  : 			ret_bytes = file->read(file, file, (uint64_t*)buffer, length);
@@ -1192,7 +1192,7 @@ $LN4@ReadFile:
 	mov	rdx, QWORD PTR file$[rsp]
 	mov	rcx, QWORD PTR file$[rsp]
 	mov	rax, QWORD PTR file$[rsp]
-	call	QWORD PTR [rax+88]
+	call	QWORD PTR [rax+96]
 	mov	QWORD PTR ret_bytes$[rsp], rax
 $LN1@ReadFile:
 $LN2@ReadFile:
@@ -1243,9 +1243,9 @@ $LN12:
 	cmp	QWORD PTR current_thr$[rsp], 0
 	jne	SHORT $LN9@OpenFile
 
-; 52   : 		return 0;
+; 52   : 		return -1;
 
-	xor	eax, eax
+	mov	eax, -1
 	jmp	$LN10@OpenFile
 $LN9@OpenFile:
 
@@ -1271,9 +1271,9 @@ $LN9@OpenFile:
 	cmp	QWORD PTR current_proc$[rsp], 0
 	jne	SHORT $LN7@OpenFile
 
-; 57   : 			return 0;
+; 57   : 			return -1;
 
-	xor	eax, eax
+	mov	eax, -1
 	jmp	$LN10@OpenFile
 $LN7@OpenFile:
 $LN8@OpenFile:

@@ -6,13 +6,13 @@ INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
 CONST	SEGMENT
-$SG3487	DB	'[AHCI]:Port Hung', 0aH, 00H
+$SG3488	DB	'[AHCI]:Port Hung', 0aH, 00H
 	ORG $+6
-$SG3493	DB	'[AHCI]: Port error ', 0dH, 0aH, 00H
+$SG3494	DB	'[AHCI]: Port error ', 0dH, 0aH, 00H
 	ORG $+2
-$SG3522	DB	'[AHCI]:Port Hung', 0aH, 00H
+$SG3523	DB	'[AHCI]:Port Hung', 0aH, 00H
 	ORG $+6
-$SG3557	DB	'ahci Port Supports cold presence %d', 0aH, 00H
+$SG3558	DB	'ahci Port Supports cold presence %d', 0aH, 00H
 CONST	ENDS
 PUBLIC	?AuAHCIDiskInitialise@@YAXPEAU_hba_port_@@@Z	; AuAHCIDiskInitialise
 PUBLIC	?AuAHCIStopCmd@@YAXPEAU_hba_port_@@@Z		; AuAHCIStopCmd
@@ -496,7 +496,7 @@ $LN5@AuAHCIDisk:
 
 ; 237  : 		AuTextOut("[AHCI]:Port Hung\n");
 
-	lea	rcx, OFFSET FLAT:$SG3522
+	lea	rcx, OFFSET FLAT:$SG3523
 	call	AuTextOut
 $LN4@AuAHCIDisk:
 
@@ -813,7 +813,7 @@ $LN6@AuAHCIDisk:
 
 ; 171  : 		AuTextOut("[AHCI]:Port Hung\n");
 
-	lea	rcx, OFFSET FLAT:$SG3487
+	lea	rcx, OFFSET FLAT:$SG3488
 	call	AuTextOut
 $LN5@AuAHCIDisk:
 
@@ -866,7 +866,7 @@ $LN2@AuAHCIDisk:
 
 ; 178  : 			AuTextOut("[AHCI]: Port error \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG3493
+	lea	rcx, OFFSET FLAT:$SG3494
 	call	AuTextOut
 
 ; 179  : 			break;
@@ -1530,7 +1530,7 @@ $LN12:
 
 	movzx	eax, BYTE PTR cold_presence$[rsp]
 	mov	edx, eax
-	lea	rcx, OFFSET FLAT:$SG3557
+	lea	rcx, OFFSET FLAT:$SG3558
 	call	AuTextOut
 $LN9@AuAHCIDisk:
 

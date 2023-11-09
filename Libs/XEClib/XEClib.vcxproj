@@ -187,6 +187,7 @@
     <ClInclude Include="includes\sys\_keipcpostbox.h" />
     <ClInclude Include="includes\sys\_keproc.h" />
     <ClInclude Include="includes\sys\_kesignal.h" />
+    <ClInclude Include="includes\sys\_ketime.h" />
     <ClInclude Include="includes\sys\_ketty.h" />
     <ClInclude Include="includes\sys\_keycode.h" />
     <ClInclude Include="includes\values.h" />

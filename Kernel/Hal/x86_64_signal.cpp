@@ -33,6 +33,8 @@
 #include <Mm\vmmngr.h>
 #include <Mm\pmmngr.h>
 #include <string.h>
+#include <aucon.h>
+#include <Hal\serial.h>
 #include <_null.h>
 
 extern "C" void SigRet();
@@ -115,8 +117,9 @@ void AuPrepareSignal(AuThread* thr, interrupt_stack_frame* frame, Signal* signal
 
 	frame->rsp = (uint64_t)rsp_;
 	thr->frame.rbp = (uint64_t)rsp_;
-	thr->frame.rcx = 10;
+	thr->frame.rcx = signal->signum;
 	thr->frame.rip = (uint64_t)thr->singals[signal->signum];
+	SeTextOut("%s thr->frame->rip -> %x \r\n",thr->name, thr->frame.rip);
 	thr->frame.rsp = frame->rsp;
 	frame->rip = thr->frame.rip;
 	frame->rflags = 0x286;
@@ -131,13 +134,20 @@ void AuPrepareSignal(AuThread* thr, interrupt_stack_frame* frame, Signal* signal
  */
 void AuSendSignal(uint16_t tid, int signo) {
 	AuThread* thr = AuThreadFindByID(tid);
-	if (!thr)
+	bool blocked = false;
+	if (!thr){
 		thr = AuThreadFindByIDBlockList(tid);
+		if (thr)
+			blocked = true;
+	}
 		
 	if (!thr)
 		return;
+	AuTextOut("Sending signal to thread - >%s \r\n", thr->name);
 	/* unblock the thread for signal handling */
-	AuUnblockThread(thr);
+
+	if (blocked)
+		AuUnblockThread(thr);
 
 	if (thr->state == THREAD_STATE_SLEEP)
 		thr->state = THREAD_STATE_READY;

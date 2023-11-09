@@ -36,6 +36,7 @@
 #include <loader.h>
 #include <Mm/kmalloc.h>
 #include <_null.h>
+#include <time.h>
 #include <aucon.h>
 
 /*
@@ -120,8 +121,9 @@ int CreateProcess(int parent_id, char *name) {
  * process slot
  */
 int ProcessLoadExec(int proc_id, char* filename,int argc, char** argv) {
+	x64_cli();
 	AuProcess* proc = AuProcessFindPID(proc_id);
-	
+	//SeTextOut("Loading process -> %s \r\n", filename);
 	if (!proc) {
 		AuTextOut("No process found \n");
 		return -1;
@@ -142,7 +144,12 @@ int ProcessLoadExec(int proc_id, char* filename,int argc, char** argv) {
 			allocated_argv[i] = argv[i];
 	}
 	
-	AuLoadExecToProcess(proc, filename, argc,allocated_argv);
+	int status = AuLoadExecToProcess(proc, filename, argc,allocated_argv);
+	if (status == -1) {
+		SeTextOut("Process launched failed %s\r\n", filename);
+		AuProcessExit(proc);
+		return -1;
+	}
 }
 
 /*
@@ -175,6 +182,7 @@ int SetSignal(int signo, AuSigHandler handler){
 	AuThread* thr = AuGetCurrentThread();
 	if (!thr)
 		return 0;
+	SeTextOut("%s Signal hander %x setting to -> %d \r\n",thr->name, handler, signo);
 	thr->singals[signo] = handler;
 }
 
@@ -274,5 +282,35 @@ int SetFileToProcess(int fileno, int dest_fdidx, int proc_id) {
 		 * entry 
 		 */
 		destproc->fds[dest_fdidx] = file;
+		file->fileCopyCount += 1;
 	}
+}
+
+/*
+ * SendSignal -- sends a signal to desired process
+ * note here pid means thread id
+ * @param pid -- process id
+ * @param signo -- signal number
+ */
+int SendSignal(int pid,int signo) {
+	x64_cli();
+	AuProcess* proc = AuProcessFindPID(pid);
+	if (!proc)
+		return -1;
+
+	AuThread* mainthr = proc->main_thread;
+	if (!mainthr)
+		return -1;
+	AuSendSignal(mainthr->id, signo);
+	return 0;
+}
+
+/*
+ * GetCurrentTime -- get current time
+ * @param ptr -- pointer to time struct
+ */
+int GetCurrentTime(void* ptr) {
+	x64_cli();
+	AuGetCurrentTime((AuTime*)ptr);
+	return 1;
 }
