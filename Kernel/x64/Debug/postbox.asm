@@ -14,10 +14,10 @@ _BSS	SEGMENT
 ?_PostBoxRootCreated@@3_NA DB 01H DUP (?)		; _PostBoxRootCreated
 _BSS	ENDS
 CONST	SEGMENT
-$SG3723	DB	'/dev', 00H
+$SG3747	DB	'/dev', 00H
 	ORG $+3
-$SG3728	DB	'postbox', 00H
-$SG3729	DB	'/dev', 00H
+$SG3752	DB	'postbox', 00H
+$SG3753	DB	'/dev', 00H
 CONST	ENDS
 PUBLIC	?AuIPCPostBoxInitialise@@YAXXZ			; AuIPCPostBoxInitialise
 PUBLIC	?PostBoxPutEvent@@YAXPEAU_post_event_@@@Z	; PostBoxPutEvent
@@ -1033,19 +1033,19 @@ $LN3:
 ; 257  : 	/* create the postbox file */
 ; 258  : 	AuVFSNode* dev = AuVFSFind("/dev");
 
-	lea	rcx, OFFSET FLAT:$SG3723
+	lea	rcx, OFFSET FLAT:$SG3747
 	call	AuVFSFind
 	mov	QWORD PTR dev$[rsp], rax
 
 ; 259  : 	AuVFSNode* node = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
 
-	mov	ecx, 176				; 000000b0H
+	mov	ecx, 192				; 000000c0H
 	call	kmalloc
 	mov	QWORD PTR node$[rsp], rax
 
 ; 260  : 	memset(node, 0, sizeof(AuVFSNode));
 
-	mov	r8d, 176				; 000000b0H
+	mov	r8d, 192				; 000000c0H
 	xor	edx, edx
 	mov	rcx, QWORD PTR node$[rsp]
 	call	memset
@@ -1053,7 +1053,7 @@ $LN3:
 ; 261  : 	strcpy(node->filename, "postbox");
 
 	mov	rax, QWORD PTR node$[rsp]
-	lea	rdx, OFFSET FLAT:$SG3728
+	lea	rdx, OFFSET FLAT:$SG3752
 	mov	rcx, rax
 	call	strcpy
 
@@ -1067,12 +1067,12 @@ $LN3:
 
 	mov	rax, QWORD PTR node$[rsp]
 	lea	rcx, OFFSET FLAT:?PostBoxIOControl@@YAHPEAU__VFS_NODE__@@HPEAX@Z ; PostBoxIOControl
-	mov	QWORD PTR [rax+168], rcx
+	mov	QWORD PTR [rax+184], rcx
 
 ; 264  : 	AuDevFSAddFile(dev,"/dev",  node);
 
 	mov	r8, QWORD PTR node$[rsp]
-	lea	rdx, OFFSET FLAT:$SG3729
+	lea	rdx, OFFSET FLAT:$SG3753
 	mov	rcx, QWORD PTR dev$[rsp]
 	call	AuDevFSAddFile
 

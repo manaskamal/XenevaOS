@@ -207,6 +207,11 @@ extern void FatClearCluster(AuVFSNode* node, uint32_t cluster);
 */
 extern uint32_t FatReadFAT(AuVFSNode *node, uint32_t cluster_index);
 
+//! Opens a file 
+//! @param filename -- name of the file
+//! @example -- /EFI/BOOT/BOOTx64.efi
+extern AuVFSNode * FatOpen(AuVFSNode * fsys, char* filename);
+
 /*
 * FatFormatDate -- returns fat formated date stamp
 */
@@ -221,5 +226,11 @@ extern uint16_t FatFormatTime();
 AuVFSNode* FatLocateDir(AuVFSNode* fsys, const char* dir);
 
 AuVFSNode* FatLocateSubDir(AuVFSNode* fsys, AuVFSNode* kfile, const char* filename);
+
+/*
+* FatFromDosToFilename -- converts fat directoy entry filename
+* to human readable filename
+*/
+extern void FatFromDosToFilename(char* filename, char* dirfname);
 
 #endif

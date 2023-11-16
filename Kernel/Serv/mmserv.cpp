@@ -47,6 +47,7 @@
  * @param flags -- shared memory flags
  */
 int CreateSharedMem(uint16_t key, size_t sz, uint8_t flags){
+	x64_cli();
 	AuThread* thr = AuGetCurrentThread();
 	if (!thr)
 		return -1;
@@ -57,6 +58,7 @@ int CreateSharedMem(uint16_t key, size_t sz, uint8_t flags){
 			return -1;
 		}
 	}
+	SeTextOut("Creating shared mem for thr -> %s \r\n", thr->name);
 	int id = AuCreateSHM(proc, key, sz, flags);
 	return id;
 }
@@ -68,6 +70,7 @@ int CreateSharedMem(uint16_t key, size_t sz, uint8_t flags){
  * @param shmflg -- flags to use for protection
  */
 void* ObtainSharedMem(uint16_t id, void* shmaddr, int shmflg) {
+	x64_cli();
 	AuThread* thr = AuGetCurrentThread();
 	if (!thr)
 		return 0;

@@ -35,11 +35,20 @@
 
 #define DEODHAI_MESSAGE_CREATEWIN  50
 #define DEODHAI_MESSAGE_WINDESTROY 51
+#define DEODHAI_MESSAGE_BROADCAST_ICON 52
+#define DEODHAI_MESSAGE_WINDOW_BRING_FRONT 53
+#define DEODHAI_MESSAGE_WINDOW_HIDE 54
+#define DEODHAI_MESSAGE_GETWINDOW 55
 
 #define DEODHAI_REPLY_WINCREATED  150
 #define DEODHAI_REPLY_MOUSE_EVENT 151
 #define DEODHAI_REPLY_KEY_EVENT   152
+#define DEODHAI_REPLY_WINDOW_ID   153
 
+#define DEODHAI_BROADCAST_WINCREATED 170
+#define DEODHAI_BROADCAST_WINDESTROYED 171
+#define DEODHAI_BROADCAST_ICON 172
+#define DEODHAI_BROADCAST_FOCUS_CHANGED 173
 #pragma pack(push,1)
 typedef struct _rect_ {
 	uint32_t x;
@@ -90,5 +99,8 @@ typedef struct _au_input_msg_ {
 }AuInputMessage;
 #pragma pack(pop)
 
-
+/*
+* DeodhaiAllocateNewHandle -- get a new window handle
+*/
+extern uint32_t DeodhaiAllocateNewHandle();
 #endif

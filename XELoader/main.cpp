@@ -199,7 +199,6 @@ int XELdrStartProc(char* filename, XELoaderObject *obj) {
  * for all signals
  */
 void DefaultSignalHandler(int signo) {
-	_KePrint("Default Signal Handler for signum-> %d \r\n", signo);
 	_KeProcessExit();
 }
 

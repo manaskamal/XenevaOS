@@ -38,6 +38,7 @@
 #include <_null.h>
 
 extern "C" void SigRet();
+extern "C" bool _signal_debug = false;
 
 /*
  * AuAllocateSignal -- allocate a new signal to the
@@ -46,18 +47,21 @@ extern "C" void SigRet();
  * @param signum -- signal number
  */
 void AuAllocateSignal(AuThread* dest_thread, int signum) {
+	if (dest_thread->signalQueue)
+		return;
 	Signal *signal = (Signal*)kmalloc(sizeof(Signal));
 	memset(signal, 0, sizeof(Signal));
 	signal->signum = signum;
 	signal->signalStack = (x86_64_cpu_regs_t*)kmalloc(sizeof(x86_64_cpu_regs_t));
-	signal->signalState = (AuThread*)kmalloc(sizeof(AuThread));
-
+	signal->signalState = (AuThreadFrame*)kmalloc(sizeof(AuThreadFrame));
 	SignalQueue* queue = (SignalQueue*)kmalloc(sizeof(SignalQueue));
 	memset(queue, 0, sizeof(SignalQueue));
 	queue->Signal = signal;
 	queue->link = dest_thread->signalQueue;
 	dest_thread->signalQueue = queue;
-	dest_thread->pendingSigCount++;
+	dest_thread->pendingSigCount += 1;
+	signal->threadState = dest_thread->state;
+
 }
 
 /*
@@ -68,7 +72,7 @@ void AuAllocateSignal(AuThread* dest_thread, int signum) {
 bool AuCheckSignal(AuThread* curr_thr, interrupt_stack_frame *frame) {
 	if (!curr_thr->signalQueue)
 		return false;
-	if (curr_thr->pendingSigCount > 0 && frame->cs == SEGVAL(GDT_ENTRY_USER_CODE, 3))
+	if (curr_thr->pendingSigCount > 0 && frame->cs == SEGVAL(GDT_ENTRY_USER_CODE,3))
 		return true;
 	return false;
 }
@@ -104,26 +108,28 @@ Signal *AuGetSignal(AuThread* curr_thr) {
  */
 void AuPrepareSignal(AuThread* thr, interrupt_stack_frame* frame, Signal* signal) {
 	x86_64_cpu_regs_t* ctx = (x86_64_cpu_regs_t*)(thr->frame.kern_esp - sizeof(x86_64_cpu_regs_t));
-	uint64_t* rsp_ = (uint64_t*)thr->uentry->rsp;
-
 	memcpy(signal->signalStack, ctx, sizeof(x86_64_cpu_regs_t));
-
-	rsp_ -= 8;
+	memcpy(signal->signalState, &thr->frame, sizeof(AuThreadFrame));
+	uint64_t rsp_val = (uint64_t)frame->rsp;
+	rsp_val -= 8;
+	rsp_val &= 0xFFFFFFFFFFFFFFF0;
+	uint64_t* rsp_ = (uint64_t*)rsp_val;
 	for (int i = 0; i < 2; i++)
 		AuMapPage((uint64_t)AuPmmngrAlloc(), 0x700000 + i * 4096, X86_64_PAGING_USER);
 	memcpy((void*)0x700000, &SigRet, 8192);
 	*rsp_ = 0x700000;
-	memcpy(signal->signalState, &thr->frame, sizeof(AuThreadFrame));
 
-	frame->rsp = (uint64_t)rsp_;
 	thr->frame.rbp = (uint64_t)rsp_;
 	thr->frame.rcx = signal->signum;
 	thr->frame.rip = (uint64_t)thr->singals[signal->signum];
-	SeTextOut("%s thr->frame->rip -> %x \r\n",thr->name, thr->frame.rip);
-	thr->frame.rsp = frame->rsp;
+	thr->frame.rsp = (uint64_t)frame->rsp;
+	thr->frame.rflags = 0x286;
+	
+	frame->rsp = (uint64_t)rsp_;
 	frame->rip = thr->frame.rip;
 	frame->rflags = 0x286;
-	thr->frame.rflags = 0x286;
+	frame->cs = SEGVAL(GDT_ENTRY_USER_CODE, 3);
+	frame->ss = SEGVAL(GDT_ENTRY_USER_DATA, 3);
 	thr->returnableSignal = signal;
 }
 
@@ -143,17 +149,13 @@ void AuSendSignal(uint16_t tid, int signo) {
 		
 	if (!thr)
 		return;
-	AuTextOut("Sending signal to thread - >%s \r\n", thr->name);
-	/* unblock the thread for signal handling */
-
-	if (blocked)
-		AuUnblockThread(thr);
-
-	if (thr->state == THREAD_STATE_SLEEP)
-		thr->state = THREAD_STATE_READY;
 
 	AuAllocateSignal(thr, signo);
 
+	/* unblock the thread for signal handling */
+	if (blocked) {
+		AuUnblockThread(thr);
+	}
 }
 
 
@@ -173,5 +175,11 @@ void AuSignalRemoveAll(AuThread* thr) {
 		kfree(sig->signalState);
 		kfree(sig);
 		thr->pendingSigCount--;
+	}
+}
+
+extern "C" void AuSignalDebug(uint64_t rcx) {
+	if (_signal_debug) {
+		SeTextOut("signal ret stack -> %x \r\n", rcx);
 	}
 }

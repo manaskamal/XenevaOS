@@ -240,8 +240,8 @@ void AuAHCIDiskIdentify(HBA_PORT *port, uint64_t lba, uint32_t count, uint64_t *
 	while (1) {
 		if ((port->ci & (1 << command_slot)) == 0)
 			break;
-		/*if (port->is & (1<<30))
-		break;*/
+		if (port->is & (1 << 30))
+			break;
 	}
 }
 

@@ -156,6 +156,7 @@
     <ClInclude Include="..\BaseHdr\aucon.h" />
     <ClInclude Include="..\BaseHdr\audrv.h" />
     <ClInclude Include="..\BaseHdr\aurora.h" />
+    <ClInclude Include="..\BaseHdr\autimer.h" />
     <ClInclude Include="..\BaseHdr\circbuf.h" />
     <ClInclude Include="..\BaseHdr\clean.h" />
     <ClInclude Include="..\BaseHdr\ctype.h" />
@@ -231,6 +232,7 @@
     <ClCompile Include="ahcidsk.cpp" />
     <ClCompile Include="aucon.cpp" />
     <ClCompile Include="audrv.cpp" />
+    <ClCompile Include="autimer.cpp" />
     <ClCompile Include="circbuf.cpp" />
     <ClCompile Include="clean.cpp" />
     <ClCompile Include="ctype.cpp" />
@@ -287,6 +289,7 @@
     <ClCompile Include="Serv\fileserv.cpp" />
     <ClCompile Include="Serv\mmserv.cpp" />
     <ClCompile Include="Serv\thrserv.cpp" />
+    <ClCompile Include="Serv\timerserv.cpp" />
     <ClCompile Include="Sound\sound.cpp" />
     <ClCompile Include="stdio.cpp" />
     <ClCompile Include="string.cpp" />

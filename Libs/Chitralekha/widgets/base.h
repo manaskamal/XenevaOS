@@ -35,12 +35,26 @@
 #include "..\font.h"
 #include <_xeneva.h>
 
+/* commands to deodhai */
 #define DEODHAI_MESSAGE_CREATEWIN  50
-#define DEODHAI_MESSAGE_WINDESTROY 51
+#define DEODHAI_MESSAGE_WINDESTROY 
+#define DEODHAI_MESSAGE_BROADCAST_ICON 52
+#define DEODHAI_MESSAGE_WINDOW_BRING_FRONT 53
+#define DEODHAI_MESSAGE_WINDOW_HIDE 54
+#define DEODHAI_MESSAGE_GETWINDOW 55
 
 #define DEODHAI_REPLY_WINCREATED 150
 #define DEODHAI_REPLY_MOUSE_EVENT 151
 #define DEODHAI_REPLY_KEY_EVENT   152
+#define DEODHAI_REPLY_WINDOW_ID   153
+
+/* deodhai broadcast definitions, reply from
+ * deodhai */
+#define DEODHAI_BROADCAST_WINCREATED  170
+#define DEODHAI_BROADCAST_WINDESTROYED 171
+#define DEODHAI_BROADCAST_ICON 172
+#define DEODHAI_BROADCAST_FOCUS_CHANGED 173
+
 
 typedef struct _ChApp_ {
 	int postboxfd;
@@ -50,6 +64,7 @@ typedef struct _ChApp_ {
 	void* shwinbuf;
 	int buffer_width;
 	int buffer_height;
+	uint32_t windowHandle;
 	ChFont* baseFont;
 	uint16_t currentID;
 }ChitralekhaApp;
@@ -58,6 +73,11 @@ typedef struct _ChApp_ {
 * ChitralekhaStartApp -- start an application instance
 */
 XE_EXTERN XE_LIB ChitralekhaApp* ChitralekhaStartApp(int argc, char* argv[]);
+
+/*
+* ChitralekhaStartApp -- start an application instance
+*/
+XE_EXTERN XE_LIB ChitralekhaApp* ChitralekhaStartSubApp(ChitralekhaApp* parent);
 
 /*
 * ChitralekhaGetApp -- return running application instance

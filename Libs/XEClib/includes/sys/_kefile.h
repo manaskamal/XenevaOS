@@ -77,6 +77,17 @@ typedef struct _XEFileControl_ {
 }XEFileIOControl;
 #pragma pack(pop)
 
+#pragma pack(push,1)
+typedef struct _XEDirectoryEnty_ {
+	char filename[32];
+	int index;
+	int size;
+	int date;
+	int time;
+	uint8_t flags;
+}XEDirectoryEntry;
+#pragma pack(pop)
+
 XE_EXTERN XE_LIB int _KeOpenFile(char* pathname, int mode);
 XE_EXTERN XE_LIB size_t _KeReadFile(int fd, void* buffer, size_t length);
 XE_EXTERN XE_LIB size_t _KeWriteFile(int fd, void* buffer, size_t length);
@@ -85,4 +96,6 @@ XE_EXTERN XE_LIB int _KeRemoveFile(char* pathname);
 XE_EXTERN XE_LIB int _KeCloseFile(int fd);
 XE_EXTERN XE_LIB int _KeFileIoControl(int fd, int code, void* arg);
 XE_EXTERN XE_LIB int _KeFileStat(int fd, void* buf);
+XE_EXTERN XE_LIB int _KeOpenDir(char* filename);
+XE_EXTERN XE_LIB int _KeReadDir(int dirfd, void* dirent);
 #endif

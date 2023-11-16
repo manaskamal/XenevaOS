@@ -6,7 +6,7 @@ INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
 CONST	SEGMENT
-$SG2952	DB	'ARP Setuped ', 0aH, 00H
+$SG2975	DB	'ARP Setuped ', 0aH, 00H
 CONST	ENDS
 PUBLIC	?AuARPRequestMAC@@YAXXZ				; AuARPRequestMAC
 EXTRN	?AuEthernetSend@@YAXPEAX_KGPEAE@Z:PROC		; AuEthernetSend
@@ -131,7 +131,7 @@ $LN1@AuARPReque:
 
 ; 61   : 	AuTextOut("ARP Setuped \n");
 
-	lea	rcx, OFFSET FLAT:$SG2952
+	lea	rcx, OFFSET FLAT:$SG2975
 	call	AuTextOut
 
 ; 62   : 	

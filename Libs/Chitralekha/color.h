@@ -130,4 +130,16 @@ extern uint32_t make_col_a(uint8_t red, uint8_t green, uint8_t blue, uint8_t a);
 */
 XE_EXTERN XE_LIB void ChColorDrawHorizontalGradient(ChCanvas *canv, int x, int y, int w, int h, uint32_t color1, uint32_t color2);
 
+/*
+* ChColorDrawVerticalGradient -- draws vertical linear gradient
+* @param canv -- Pointer to canvas
+* @param x -- X coord of the rect
+* @param y -- Y coord of the rect
+* @param w -- Width of the rect
+* @param h -- Height of the rect
+* @param color1 -- starting color
+* @param color2 -- end color
+*/
+XE_EXTERN XE_LIB void ChColorDrawVerticalGradient(ChCanvas *canv, int x, int y, int w, int h, uint32_t color1, uint32_t color2);
+
 #endif

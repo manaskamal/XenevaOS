@@ -13,6 +13,8 @@ PUBLIC	?RemoveFile@@YAHPEAD@Z				; RemoveFile
 PUBLIC	?CloseFile@@YAHH@Z				; CloseFile
 PUBLIC	?FileIoControl@@YAHHHPEAX@Z			; FileIoControl
 PUBLIC	?FileStat@@YAHHPEAX@Z				; FileStat
+PUBLIC	?OpenDir@@YAHPEAD@Z				; OpenDir
+PUBLIC	?ReadDir@@YAHHPEAX@Z				; ReadDir
 EXTRN	AuVFSOpen:PROC
 EXTRN	AuVFSNodeIOControl:PROC
 EXTRN	AuVFSFind:PROC
@@ -59,6 +61,12 @@ $pdata$?FileIoControl@@YAHHHPEAX@Z DD imagerel $LN8
 $pdata$?FileStat@@YAHHPEAX@Z DD imagerel $LN8
 	DD	imagerel $LN8+274
 	DD	imagerel $unwind$?FileStat@@YAHHPEAX@Z
+$pdata$?OpenDir@@YAHPEAD@Z DD imagerel $LN10
+	DD	imagerel $LN10+247
+	DD	imagerel $unwind$?OpenDir@@YAHPEAD@Z
+$pdata$?ReadDir@@YAHHPEAX@Z DD imagerel $LN11
+	DD	imagerel $LN11+251
+	DD	imagerel $unwind$?ReadDir@@YAHHPEAX@Z
 pdata	ENDS
 xdata	SEGMENT
 $unwind$?OpenFile@@YAHPEADH@Z DD 010d01H
@@ -77,7 +85,322 @@ $unwind$?FileIoControl@@YAHHHPEAX@Z DD 011101H
 	DD	08211H
 $unwind$?FileStat@@YAHHPEAX@Z DD 010d01H
 	DD	0820dH
+$unwind$?OpenDir@@YAHPEAD@Z DD 010901H
+	DD	0a209H
+$unwind$?ReadDir@@YAHHPEAX@Z DD 010d01H
+	DD	0a20dH
 xdata	ENDS
+; Function compile flags: /Odtpy
+; File e:\xeneva project\aurora\kernel\serv\fileserv.cpp
+_TEXT	SEGMENT
+current_proc$ = 32
+fsys$ = 40
+current_thr$ = 48
+dirfile$ = 56
+dire_$ = 64
+dirfd$ = 96
+dirent$ = 104
+?ReadDir@@YAHHPEAX@Z PROC				; ReadDir
+
+; 368  : int ReadDir(int dirfd, void* dirent) {
+
+$LN11:
+	mov	QWORD PTR [rsp+16], rdx
+	mov	DWORD PTR [rsp+8], ecx
+	sub	rsp, 88					; 00000058H
+
+; 369  : 	x64_cli();
+
+	call	x64_cli
+
+; 370  : 	if (!dirent)
+
+	cmp	QWORD PTR dirent$[rsp], 0
+	jne	SHORT $LN8@ReadDir
+
+; 371  : 		return -1;
+
+	mov	eax, -1
+	jmp	$LN9@ReadDir
+$LN8@ReadDir:
+
+; 372  : 	if (dirfd == -1)
+
+	cmp	DWORD PTR dirfd$[rsp], -1
+	jne	SHORT $LN7@ReadDir
+
+; 373  : 		return -1;
+
+	mov	eax, -1
+	jmp	$LN9@ReadDir
+$LN7@ReadDir:
+
+; 374  : 
+; 375  : 	AuThread* current_thr = AuGetCurrentThread();
+
+	call	AuGetCurrentThread
+	mov	QWORD PTR current_thr$[rsp], rax
+
+; 376  : 	if (!current_thr){
+
+	cmp	QWORD PTR current_thr$[rsp], 0
+	jne	SHORT $LN6@ReadDir
+
+; 377  : 		return 0;
+
+	xor	eax, eax
+	jmp	$LN9@ReadDir
+$LN6@ReadDir:
+
+; 378  : 	}
+; 379  : 	AuProcess* current_proc = AuProcessFindThread(current_thr);
+
+	mov	rcx, QWORD PTR current_thr$[rsp]
+	call	?AuProcessFindThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z ; AuProcessFindThread
+	mov	QWORD PTR current_proc$[rsp], rax
+
+; 380  : 	if (!current_proc) {
+
+	cmp	QWORD PTR current_proc$[rsp], 0
+	jne	SHORT $LN5@ReadDir
+
+; 381  : 		current_proc = AuProcessFindSubThread(current_thr);
+
+	mov	rcx, QWORD PTR current_thr$[rsp]
+	call	?AuProcessFindSubThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z ; AuProcessFindSubThread
+	mov	QWORD PTR current_proc$[rsp], rax
+
+; 382  : 		if (!current_proc)
+
+	cmp	QWORD PTR current_proc$[rsp], 0
+	jne	SHORT $LN4@ReadDir
+
+; 383  : 			return 0;
+
+	xor	eax, eax
+	jmp	SHORT $LN9@ReadDir
+$LN4@ReadDir:
+$LN5@ReadDir:
+
+; 384  : 	}
+; 385  : 
+; 386  : 	AuDirectoryEntry* dire_ = (AuDirectoryEntry*)dirent;
+
+	mov	rax, QWORD PTR dirent$[rsp]
+	mov	QWORD PTR dire_$[rsp], rax
+
+; 387  : 
+; 388  : 	AuVFSNode* dirfile = current_proc->fds[dirfd];
+
+	movsxd	rax, DWORD PTR dirfd$[rsp]
+	mov	rcx, QWORD PTR current_proc$[rsp]
+	mov	rax, QWORD PTR [rcx+rax*8+576]
+	mov	QWORD PTR dirfile$[rsp], rax
+
+; 389  : 	if (!dirfile)
+
+	cmp	QWORD PTR dirfile$[rsp], 0
+	jne	SHORT $LN3@ReadDir
+
+; 390  : 		return -1;
+
+	mov	eax, -1
+	jmp	SHORT $LN9@ReadDir
+$LN3@ReadDir:
+
+; 391  : 	AuVFSNode* fsys = (AuVFSNode*)dirfile->device;
+
+	mov	rax, QWORD PTR dirfile$[rsp]
+	mov	rax, QWORD PTR [rax+72]
+	mov	QWORD PTR fsys$[rsp], rax
+
+; 392  : 	if (!fsys)
+
+	cmp	QWORD PTR fsys$[rsp], 0
+	jne	SHORT $LN2@ReadDir
+
+; 393  : 		return -1;
+
+	mov	eax, -1
+	jmp	SHORT $LN9@ReadDir
+$LN2@ReadDir:
+
+; 394  : 	if (fsys->read_dir)
+
+	mov	rax, QWORD PTR fsys$[rsp]
+	cmp	QWORD PTR [rax+168], 0
+	je	SHORT $LN1@ReadDir
+
+; 395  : 		return fsys->read_dir(fsys, dirfile, dire_);
+
+	mov	r8, QWORD PTR dire_$[rsp]
+	mov	rdx, QWORD PTR dirfile$[rsp]
+	mov	rcx, QWORD PTR fsys$[rsp]
+	mov	rax, QWORD PTR fsys$[rsp]
+	call	QWORD PTR [rax+168]
+$LN1@ReadDir:
+$LN9@ReadDir:
+
+; 396  : }
+
+	add	rsp, 88					; 00000058H
+	ret	0
+?ReadDir@@YAHHPEAX@Z ENDP				; ReadDir
+_TEXT	ENDS
+; Function compile flags: /Odtpy
+; File e:\xeneva project\aurora\kernel\serv\fileserv.cpp
+_TEXT	SEGMENT
+fd$ = 32
+current_proc$ = 40
+fsys$ = 48
+current_thr$ = 56
+dirfile$ = 64
+filename$ = 96
+?OpenDir@@YAHPEAD@Z PROC				; OpenDir
+
+; 332  : int OpenDir(char* filename) {
+
+$LN10:
+	mov	QWORD PTR [rsp+8], rcx
+	sub	rsp, 88					; 00000058H
+
+; 333  : 	x64_cli();
+
+	call	x64_cli
+
+; 334  : 	AuThread* current_thr = AuGetCurrentThread();
+
+	call	AuGetCurrentThread
+	mov	QWORD PTR current_thr$[rsp], rax
+
+; 335  : 	if (!current_thr){
+
+	cmp	QWORD PTR current_thr$[rsp], 0
+	jne	SHORT $LN7@OpenDir
+
+; 336  : 		return -1;
+
+	mov	eax, -1
+	jmp	$LN8@OpenDir
+$LN7@OpenDir:
+
+; 337  : 	}
+; 338  : 	AuProcess* current_proc = AuProcessFindThread(current_thr);
+
+	mov	rcx, QWORD PTR current_thr$[rsp]
+	call	?AuProcessFindThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z ; AuProcessFindThread
+	mov	QWORD PTR current_proc$[rsp], rax
+
+; 339  : 	if (!current_proc) {
+
+	cmp	QWORD PTR current_proc$[rsp], 0
+	jne	SHORT $LN6@OpenDir
+
+; 340  : 		current_proc = AuProcessFindSubThread(current_thr);
+
+	mov	rcx, QWORD PTR current_thr$[rsp]
+	call	?AuProcessFindSubThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z ; AuProcessFindSubThread
+	mov	QWORD PTR current_proc$[rsp], rax
+
+; 341  : 		if (!current_proc)
+
+	cmp	QWORD PTR current_proc$[rsp], 0
+	jne	SHORT $LN5@OpenDir
+
+; 342  : 			return -1;
+
+	mov	eax, -1
+	jmp	$LN8@OpenDir
+$LN5@OpenDir:
+$LN6@OpenDir:
+
+; 343  : 	}
+; 344  : 
+; 345  : 	AuVFSNode *fsys = AuVFSFind(filename);
+
+	mov	rcx, QWORD PTR filename$[rsp]
+	call	AuVFSFind
+	mov	QWORD PTR fsys$[rsp], rax
+
+; 346  : 	AuVFSNode* dirfile = NULL;
+
+	mov	QWORD PTR dirfile$[rsp], 0
+
+; 347  : 	if (!fsys)
+
+	cmp	QWORD PTR fsys$[rsp], 0
+	jne	SHORT $LN4@OpenDir
+
+; 348  : 		return -1;
+
+	mov	eax, -1
+	jmp	SHORT $LN8@OpenDir
+$LN4@OpenDir:
+
+; 349  : 	if (fsys->opendir)
+
+	mov	rax, QWORD PTR fsys$[rsp]
+	cmp	QWORD PTR [rax+96], 0
+	je	SHORT $LN3@OpenDir
+
+; 350  : 		dirfile = fsys->opendir(fsys, filename);
+
+	mov	rdx, QWORD PTR filename$[rsp]
+	mov	rcx, QWORD PTR fsys$[rsp]
+	mov	rax, QWORD PTR fsys$[rsp]
+	call	QWORD PTR [rax+96]
+	mov	QWORD PTR dirfile$[rsp], rax
+$LN3@OpenDir:
+
+; 351  : 
+; 352  : 	if (!dirfile)
+
+	cmp	QWORD PTR dirfile$[rsp], 0
+	jne	SHORT $LN2@OpenDir
+
+; 353  : 		return -1;
+
+	mov	eax, -1
+	jmp	SHORT $LN8@OpenDir
+$LN2@OpenDir:
+
+; 354  : 
+; 355  : 	int fd = AuProcessGetFileDesc(current_proc);
+
+	mov	rcx, QWORD PTR current_proc$[rsp]
+	call	?AuProcessGetFileDesc@@YAHPEAU_au_proc_@@@Z ; AuProcessGetFileDesc
+	mov	DWORD PTR fd$[rsp], eax
+
+; 356  : 	if (fd == -1)
+
+	cmp	DWORD PTR fd$[rsp], -1
+	jne	SHORT $LN1@OpenDir
+
+; 357  : 		return -1;
+
+	mov	eax, -1
+	jmp	SHORT $LN8@OpenDir
+$LN1@OpenDir:
+
+; 358  : 
+; 359  : 	current_proc->fds[fd] = dirfile;
+
+	movsxd	rax, DWORD PTR fd$[rsp]
+	mov	rcx, QWORD PTR current_proc$[rsp]
+	mov	rdx, QWORD PTR dirfile$[rsp]
+	mov	QWORD PTR [rcx+rax*8+576], rdx
+
+; 360  : 	return fd;
+
+	mov	eax, DWORD PTR fd$[rsp]
+$LN8@OpenDir:
+
+; 361  : }
+
+	add	rsp, 88					; 00000058H
+	ret	0
+?OpenDir@@YAHPEAD@Z ENDP				; OpenDir
+_TEXT	ENDS
 ; Function compile flags: /Odtpy
 ; File e:\xeneva project\aurora\kernel\serv\fileserv.cpp
 _TEXT	SEGMENT
@@ -926,7 +1249,7 @@ $LN3@WriteFile:
 ; 182  : 		if (file->write) {
 
 	mov	rax, QWORD PTR file$[rsp]
-	cmp	QWORD PTR [rax+104], 0
+	cmp	QWORD PTR [rax+112], 0
 	je	SHORT $LN1@WriteFile
 
 ; 183  : 			file->write(fsys, file, (uint64_t*)buffer, length);
@@ -936,7 +1259,7 @@ $LN3@WriteFile:
 	mov	rdx, QWORD PTR file$[rsp]
 	mov	rcx, QWORD PTR fsys$[rsp]
 	mov	rax, QWORD PTR file$[rsp]
-	call	QWORD PTR [rax+104]
+	call	QWORD PTR [rax+112]
 $LN1@WriteFile:
 $LN2@WriteFile:
 $LN12@WriteFile:
@@ -1126,7 +1449,7 @@ $LN7@ReadFile:
 ; 118  : 		if (file->read)
 
 	mov	rax, QWORD PTR file$[rsp]
-	cmp	QWORD PTR [rax+96], 0
+	cmp	QWORD PTR [rax+104], 0
 	je	SHORT $LN5@ReadFile
 
 ; 119  : 			ret_bytes = file->read(file, file, (uint64_t*)buffer, length);
@@ -1136,7 +1459,7 @@ $LN7@ReadFile:
 	mov	rdx, QWORD PTR file$[rsp]
 	mov	rcx, QWORD PTR file$[rsp]
 	mov	rax, QWORD PTR file$[rsp]
-	call	QWORD PTR [rax+96]
+	call	QWORD PTR [rax+104]
 	mov	QWORD PTR ret_bytes$[rsp], rax
 $LN5@ReadFile:
 $LN6@ReadFile:
@@ -1154,7 +1477,7 @@ $LN6@ReadFile:
 ; 123  : 		if (file->read)
 
 	mov	rax, QWORD PTR file$[rsp]
-	cmp	QWORD PTR [rax+96], 0
+	cmp	QWORD PTR [rax+104], 0
 	je	SHORT $LN3@ReadFile
 
 ; 124  : 			ret_bytes = file->read(file, file, (uint64_t*)aligned_buffer, length);
@@ -1164,7 +1487,7 @@ $LN6@ReadFile:
 	mov	rdx, QWORD PTR file$[rsp]
 	mov	rcx, QWORD PTR file$[rsp]
 	mov	rax, QWORD PTR file$[rsp]
-	call	QWORD PTR [rax+96]
+	call	QWORD PTR [rax+104]
 	mov	QWORD PTR ret_bytes$[rsp], rax
 $LN3@ReadFile:
 $LN4@ReadFile:
@@ -1182,7 +1505,7 @@ $LN4@ReadFile:
 ; 128  : 		if (file->read)
 
 	mov	rax, QWORD PTR file$[rsp]
-	cmp	QWORD PTR [rax+96], 0
+	cmp	QWORD PTR [rax+104], 0
 	je	SHORT $LN1@ReadFile
 
 ; 129  : 			ret_bytes = file->read(file, file, (uint64_t*)buffer, length);
@@ -1192,7 +1515,7 @@ $LN4@ReadFile:
 	mov	rdx, QWORD PTR file$[rsp]
 	mov	rcx, QWORD PTR file$[rsp]
 	mov	rax, QWORD PTR file$[rsp]
-	call	QWORD PTR [rax+96]
+	call	QWORD PTR [rax+104]
 	mov	QWORD PTR ret_bytes$[rsp], rax
 $LN1@ReadFile:
 $LN2@ReadFile:

@@ -312,6 +312,9 @@
     <ClInclude Include="..\BaseHdr\time.h">
       <Filter>Include</Filter>
     </ClInclude>
+    <ClInclude Include="..\BaseHdr\autimer.h">
+      <Filter>Include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="init.cpp" />
@@ -479,6 +482,10 @@
     </ClCompile>
     <ClCompile Include="ftmngr.cpp" />
     <ClCompile Include="time.cpp" />
+    <ClCompile Include="autimer.cpp" />
+    <ClCompile Include="Serv\timerserv.cpp">
+      <Filter>Serv</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <NASM Include="__fstcpy.asm" />

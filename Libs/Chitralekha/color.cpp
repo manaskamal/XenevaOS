@@ -148,3 +148,4 @@ void ChColorDrawHorizontalGradient(ChCanvas *canv, int x, int y, int w, int h, u
 		ChDrawRect(canv, x + j, y, 1, h, col);
 	}
 }
+

@@ -27,10 +27,11 @@
 ;
 ;;
 
-BITS 64
+[BITS 64]
 
 section .text
 
+extern AuSignalDebug
 
 save_interrupt_registers:
 pop rax
@@ -122,7 +123,7 @@ x64_interrupt_handler_%2:
 	push rcx
 	push rcx
 	
-	;call save_fpu_registers
+	call save_fpu_registers
 
     ;Now we pass the stack interrupt stack and vector
     mov rcx, %2
@@ -134,8 +135,7 @@ x64_interrupt_handler_%2:
     call interrupt_dispatcher
     add rsp, 32
 
-	;call restore_fpu_registers
-
+	call restore_fpu_registers
 
 	pop rcx
 	mov rsp, rcx

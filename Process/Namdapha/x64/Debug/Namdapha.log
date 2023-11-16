@@ -1,0 +1,51 @@
+﻿Build started 16-11-2023 আবেলি 4:02:59.
+     1>Project "E:\Xeneva Project\Aurora\Process\Namdapha\Namdapha.vcxproj" on node 2 (Rebuild target(s)).
+     1>ClCompile:
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /I"E:\Xeneva Project\Aurora\Libs\Chitralekha" /I"E:\os_dev\freetype2-master\freetype2-master\include" /Zi /nologo /W4 /WX- /sdl- /MP /Od /Oy /D ARCH_X64 /D YES_DYNAMIC /D DYNAMIC_IMPORTER /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt gomenu.cpp namdapha.cpp NamdaphaButton.cpp nmGoButton.cpp
+     1>cl : Command line warning D9025: overriding '/sdl-' with '/GS-'
+     1>cl : Command line warning D9002: ignoring unknown option '/arch:SSE2'
+     1>cl : Command line warning D9030: '/Gm' is incompatible with multiprocessing; ignoring /MP switch
+         nmGoButton.cpp
+         NamdaphaButton.cpp
+     1>NamdaphaButton.cpp(108): warning C4189: 'color' : local variable is initialized but not referenced
+     1>NamdaphaButton.cpp(123): warning C4100: 'win' : unreferenced formal parameter
+     1>NamdaphaButton.cpp(147): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
+     1>NamdaphaButton.cpp(169): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
+     1>NamdaphaButton.cpp(174): warning C4267: '=' : conversion from 'size_t' to 'uint32_t', possible loss of data
+     1>NamdaphaButton.cpp(217): warning C4018: '<' : signed/unsigned mismatch
+     1>NamdaphaButton.cpp(221): warning C4018: '<' : signed/unsigned mismatch
+     1>NamdaphaButton.cpp(219): warning C4189: 'h' : local variable is initialized but not referenced
+         namdapha.cpp
+     1>namdapha.cpp(99): warning C4189: 'font_h' : local variable is initialized but not referenced
+     1>namdapha.cpp(113): warning C4018: '<' : signed/unsigned mismatch
+     1>namdapha.cpp(112): warning C4100: 'scroll' : unreferenced formal parameter
+     1>namdapha.cpp(133): warning C4100: 'win' : unreferenced formal parameter
+     1>namdapha.cpp(133): warning C4100: 'button' : unreferenced formal parameter
+     1>namdapha.cpp(140): warning C4018: '<' : signed/unsigned mismatch
+     1>namdapha.cpp(197): warning C4018: '<' : signed/unsigned mismatch
+     1>namdapha.cpp(217): warning C4018: '<' : signed/unsigned mismatch
+     1>namdapha.cpp(222): warning C4244: '=' : conversion from 'uint32_t' to 'uint16_t', possible loss of data
+     1>namdapha.cpp(234): warning C4018: '<' : signed/unsigned mismatch
+     1>namdapha.cpp(244): warning C4018: '<' : signed/unsigned mismatch
+     1>namdapha.cpp(268): warning C4018: '<' : signed/unsigned mismatch
+     1>namdapha.cpp(211): warning C4189: 'code' : local variable is initialized but not referenced
+     1>namdapha.cpp(338): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
+     1>namdapha.cpp(356): warning C4127: conditional expression is constant
+         gomenu.cpp
+     1>gomenu.cpp(48): warning C4127: conditional expression is constant
+         Generating Code...
+     1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(1186,5): warning MSB8012: TargetPath(E:\Xeneva Project\Aurora\x64\Debug\Namdapha.exe) does not match the Linker's OutputFile property value (F:\nmdapha.exe). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
+     1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(1188,5): warning MSB8012: TargetName(Namdapha) does not match the Linker's OutputFile property value (nmdapha). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
+       Link:
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\link.exe /ERRORREPORT:PROMPT /OUT:"F:\nmdapha.exe" /INCREMENTAL /NOLOGO /LIBPATH:"E:\Xeneva Project\Aurora\x64\Debug" /LIBPATH:"E:\Xeneva Project\Aurora\Libs\XECrt" XEClib.lib xecrt.lib Chitralekha.lib ftype.lib /NODEFAULTLIB /MANIFEST:NO /PDB:"E:\Xeneva Project\Aurora\x64\Debug\Namdapha.pdb" /MAP /MAPINFO:EXPORTS /SUBSYSTEM:NATIVE /LARGEADDRESSAWARE /Driver /OPT:NOREF /LTCG /TLBID:1 /ENTRY:"_xemain" /BASE:"0x0000000000600000" /FIXED:NO /IMPLIB:"E:\Xeneva Project\Aurora\x64\Debug\Namdapha.lib" /MACHINE:X64 /ALIGN:512 x64\Debug\gomenu.obj
+         x64\Debug\namdapha.obj
+         x64\Debug\NamdaphaButton.obj
+         x64\Debug\nmGoButton.obj
+     1>LINK : warning LNK4075: ignoring '/INCREMENTAL' due to '/LTCG' specification
+         LINK : /LTCG specified but no code generation required; remove /LTCG from the link command line to improve linker performance
+         Namdapha.vcxproj -> E:\Xeneva Project\Aurora\x64\Debug\Namdapha.exe
+     1>Done Building Project "E:\Xeneva Project\Aurora\Process\Namdapha\Namdapha.vcxproj" (Rebuild target(s)).
+
+Build succeeded.
+
+Time Elapsed 00:00:01.20

@@ -1,8 +1,8 @@
-﻿Build started 09-11-2023 আবেলি 9:57:01.
+﻿Build started 16-11-2023 আবেলি 8:53:03.
      1>Project "E:\Xeneva Project\Aurora\Process\Deodhai\Deodhai.vcxproj" on node 2 (Rebuild target(s)).
      1>_NASM:
          _fastcpy.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp794b78cb82914744afacc9920d37a949.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp45f3952acda04a1ebb6d9c7268f27734.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\_fastcpy.obj"  "E:\Xeneva Project\Aurora\Process\Deodhai\_fastcpy.asm"
        ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /I"E:\Xeneva Project\Aurora\Libs\Chitralekha" /I"E:\os_dev\freetype2-master\freetype2-master\include" /Zi /nologo /W4 /WX- /sdl- /MP /Od /Oy /D ARCH_X64 /D YES_DYNAMIC /D DYNAMIC_IMPORTER /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt backdirty.cpp clip.cpp cursor.cpp deomain.cpp dirty.cpp rect.cpp window.cpp
@@ -10,15 +10,15 @@
      1>cl : Command line warning D9002: ignoring unknown option '/arch:SSE2'
      1>cl : Command line warning D9030: '/Gm' is incompatible with multiprocessing; ignoring /MP switch
          window.cpp
-     1>window.cpp(46): warning C4244: 'argument' : conversion from 'uint32_t' to 'uint16_t', possible loss of data
-     1>window.cpp(47): warning C4244: 'argument' : conversion from 'int' to 'uint16_t', possible loss of data
-     1>window.cpp(48): warning C4244: '=' : conversion from 'uint32_t' to 'uint16_t', possible loss of data
-     1>window.cpp(54): warning C4244: 'argument' : conversion from 'uint32_t' to 'uint16_t', possible loss of data
-     1>window.cpp(55): warning C4244: 'argument' : conversion from 'int' to 'uint16_t', possible loss of data
-     1>window.cpp(56): warning C4244: '=' : conversion from 'uint32_t' to 'uint16_t', possible loss of data
-     1>window.cpp(82): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
-     1>window.cpp(71): warning C4100: 'y' : unreferenced formal parameter
-     1>window.cpp(71): warning C4100: 'x' : unreferenced formal parameter
+     1>window.cpp(47): warning C4244: 'argument' : conversion from 'uint32_t' to 'uint16_t', possible loss of data
+     1>window.cpp(48): warning C4244: 'argument' : conversion from 'int' to 'uint16_t', possible loss of data
+     1>window.cpp(49): warning C4244: '=' : conversion from 'uint32_t' to 'uint16_t', possible loss of data
+     1>window.cpp(55): warning C4244: 'argument' : conversion from 'uint32_t' to 'uint16_t', possible loss of data
+     1>window.cpp(56): warning C4244: 'argument' : conversion from 'int' to 'uint16_t', possible loss of data
+     1>window.cpp(57): warning C4244: '=' : conversion from 'uint32_t' to 'uint16_t', possible loss of data
+     1>window.cpp(83): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
+     1>window.cpp(72): warning C4100: 'y' : unreferenced formal parameter
+     1>window.cpp(72): warning C4100: 'x' : unreferenced formal parameter
          rect.cpp
          dirty.cpp
      1>dirty.cpp(70): warning C4018: '<' : signed/unsigned mismatch
@@ -56,27 +56,39 @@
      1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(523): warning C4127: conditional expression is constant
      1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(551): warning C4127: conditional expression is constant
      1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(585): warning C4127: conditional expression is constant
-     1>deomain.cpp(122): warning C4189: 'lfb' : local variable is initialized but not referenced
-     1>deomain.cpp(207): warning C4018: '<' : signed/unsigned mismatch
-     1>deomain.cpp(208): warning C4018: '<' : signed/unsigned mismatch
-     1>deomain.cpp(224): warning C4189: 'winInfo' : local variable is initialized but not referenced
-     1>deomain.cpp(266): warning C4018: '<' : signed/unsigned mismatch
-     1>deomain.cpp(281): warning C4018: '<' : signed/unsigned mismatch
-     1>deomain.cpp(293): warning C4018: '>=' : signed/unsigned mismatch
-     1>deomain.cpp(296): warning C4018: '>=' : signed/unsigned mismatch
-     1>deomain.cpp(350): warning C4018: '>=' : signed/unsigned mismatch
-     1>deomain.cpp(352): warning C4018: '>=' : signed/unsigned mismatch
-     1>deomain.cpp(447): warning C4018: '>=' : signed/unsigned mismatch
-     1>deomain.cpp(449): warning C4018: '>=' : signed/unsigned mismatch
-     1>deomain.cpp(511): warning C4018: '<' : signed/unsigned mismatch
-     1>deomain.cpp(512): warning C4018: '<' : signed/unsigned mismatch
-     1>deomain.cpp(566): warning C4267: 'argument' : conversion from 'size_t' to 'uint32_t', possible loss of data
-     1>deomain.cpp(670): warning C4127: conditional expression is constant
-     1>deomain.cpp(696): warning C4018: '>=' : signed/unsigned mismatch
-     1>deomain.cpp(698): warning C4018: '>=' : signed/unsigned mismatch
-     1>deomain.cpp(716): warning C4244: 'initializing' : conversion from 'uint32_t' to 'uint8_t', possible loss of data
-     1>deomain.cpp(597): warning C4100: 'arv' : unreferenced formal parameter
-     1>deomain.cpp(597): warning C4100: 'argc' : unreferenced formal parameter
+     1>deomain.cpp(171): warning C4189: 'lfb' : local variable is initialized but not referenced
+     1>deomain.cpp(312): warning C4018: '<' : signed/unsigned mismatch
+     1>deomain.cpp(313): warning C4018: '<' : signed/unsigned mismatch
+     1>deomain.cpp(329): warning C4189: 'winInfo' : local variable is initialized but not referenced
+     1>deomain.cpp(375): warning C4018: '<' : signed/unsigned mismatch
+     1>deomain.cpp(391): warning C4018: '<' : signed/unsigned mismatch
+     1>deomain.cpp(403): warning C4018: '>=' : signed/unsigned mismatch
+     1>deomain.cpp(406): warning C4018: '>=' : signed/unsigned mismatch
+     1>deomain.cpp(478): warning C4018: '>=' : signed/unsigned mismatch
+     1>deomain.cpp(480): warning C4018: '>=' : signed/unsigned mismatch
+     1>deomain.cpp(593): warning C4018: '>=' : signed/unsigned mismatch
+     1>deomain.cpp(595): warning C4018: '>=' : signed/unsigned mismatch
+     1>deomain.cpp(618): warning C4018: '<' : signed/unsigned mismatch
+     1>deomain.cpp(630): warning C4018: '>=' : signed/unsigned mismatch
+     1>deomain.cpp(633): warning C4018: '>=' : signed/unsigned mismatch
+     1>deomain.cpp(697): warning C4018: '>=' : signed/unsigned mismatch
+     1>deomain.cpp(699): warning C4018: '>=' : signed/unsigned mismatch
+     1>deomain.cpp(807): warning C4018: '>=' : signed/unsigned mismatch
+     1>deomain.cpp(809): warning C4018: '>=' : signed/unsigned mismatch
+     1>deomain.cpp(880): warning C4018: '<' : signed/unsigned mismatch
+     1>deomain.cpp(881): warning C4018: '<' : signed/unsigned mismatch
+     1>deomain.cpp(892): warning C4018: '<' : signed/unsigned mismatch
+     1>deomain.cpp(893): warning C4018: '<' : signed/unsigned mismatch
+     1>deomain.cpp(949): warning C4267: 'argument' : conversion from 'size_t' to 'uint32_t', possible loss of data
+     1>deomain.cpp(1051): warning C4127: conditional expression is constant
+     1>deomain.cpp(1077): warning C4018: '>=' : signed/unsigned mismatch
+     1>deomain.cpp(1079): warning C4018: '>=' : signed/unsigned mismatch
+     1>deomain.cpp(1098): warning C4244: 'initializing' : conversion from 'uint32_t' to 'uint8_t', possible loss of data
+     1>deomain.cpp(1134): warning C4244: 'initializing' : conversion from 'uint32_t' to 'uint16_t', possible loss of data
+     1>deomain.cpp(1160): warning C4244: 'initializing' : conversion from 'uint32_t' to 'uint16_t', possible loss of data
+     1>deomain.cpp(980): warning C4100: 'arv' : unreferenced formal parameter
+     1>deomain.cpp(980): warning C4100: 'argc' : unreferenced formal parameter
+     1>deomain.cpp(1134): warning C4189: 'ownerId' : local variable is initialized but not referenced
          cursor.cpp
      1>cursor.cpp(96): warning C4018: '<' : signed/unsigned mismatch
      1>cursor.cpp(100): warning C4018: '<' : signed/unsigned mismatch
@@ -89,7 +101,7 @@
      1>e:\xeneva project\aurora\libs\chitralekha\nanojpg.h(353): warning C4706: assignment within conditional expression
      1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(1186,5): warning MSB8012: TargetPath(E:\Xeneva Project\Aurora\x64\Debug\Deodhai.exe) does not match the Linker's OutputFile property value (F:\deodhai.exe). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
        Link:
-         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\link.exe /ERRORREPORT:PROMPT /OUT:"F:\deodhai.exe" /INCREMENTAL /NOLOGO /LIBPATH:"E:\Xeneva Project\Aurora\x64\Debug" /LIBPATH:"E:\Xeneva Project\Aurora\Libs\XECrt" XEClib.lib xecrt.lib Chitralekha.lib ftype.lib /NODEFAULTLIB /MANIFEST:NO /PDB:"E:\Xeneva Project\Aurora\x64\Debug\Deodhai.pdb" /MAP /MAPINFO:EXPORTS /SUBSYSTEM:NATIVE /LARGEADDRESSAWARE /Driver /OPT:NOREF /LTCG /TLBID:1 /ENTRY:"_xemain" /BASE:"0x00000000c0000000" /FIXED:NO /IMPLIB:"E:\Xeneva Project\Aurora\x64\Debug\Deodhai.lib" /MACHINE:X64 /ALIGN:512 x64\Debug\backdirty.obj
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\link.exe /ERRORREPORT:PROMPT /OUT:"F:\deodhai.exe" /INCREMENTAL /NOLOGO /LIBPATH:"E:\Xeneva Project\Aurora\x64\Debug" /LIBPATH:"E:\Xeneva Project\Aurora\Libs\XECrt" XEClib.lib xecrt.lib Chitralekha.lib ftype.lib /NODEFAULTLIB /MANIFEST:NO /PDB:"E:\Xeneva Project\Aurora\x64\Debug\Deodhai.pdb" /MAP /MAPINFO:EXPORTS /SUBSYSTEM:NATIVE /LARGEADDRESSAWARE /Driver /OPT:NOREF /LTCG /TLBID:1 /ENTRY:"_xemain" /BASE:"0x0000000000600000" /FIXED:NO /IMPLIB:"E:\Xeneva Project\Aurora\x64\Debug\Deodhai.lib" /MACHINE:X64 /ALIGN:512 x64\Debug\backdirty.obj
          x64\Debug\clip.obj
          x64\Debug\cursor.obj
          x64\Debug\deomain.obj
@@ -104,4 +116,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:03.70
+Time Elapsed 00:00:02.54

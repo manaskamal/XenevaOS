@@ -40,11 +40,25 @@ int index;
 bool _process_needed;
 bool _draw_shell_curdir;
 bool _spawnable_process;
-
+int job;
+bool _sig_handled = false;
 
 void XEShellSigInterrupt(int signo) {
-	printf("Shell Interrupted \n");
+	/* signal is little buggy so, so it won't
+	 * work for now
+	 */
+	printf("Signal is buggy, won't work properly");
+	_draw_shell_curdir = true;
+	if (job > 0) {
+		_KeSendSignal(job, signo);
+		job = 0;
+	}
+	/* here is the bug, we need a system call to 
+	 * handle it properly
+	 */
+	_KeProcessSleep(100000);
 }
+
 /*Write the current directory string
  * for now, only root directory is
  * current directory '/'
@@ -76,8 +90,10 @@ void XEShellSpawn(char* string) {
 		_KeSetFileToProcess(XENEVA_STDOUT, XENEVA_STDOUT, proc_id);
 		_KeSetFileToProcess(XENEVA_STDERR, XENEVA_STDERR, proc_id);
 		int status = _KeProcessLoadExec(proc_id, filename, 0, 0);
+		job = proc_id;
 		_KeProcessWaitForTermination(proc_id);
 		_KeCloseFile(file);
+		job = 0;
 	}
 }
 
@@ -115,6 +131,27 @@ void XEShellReadLine() {
 	cmdBuf[index] = '\0';
 }
 
+void XEShellLS() {
+	int dirfd = _KeOpenDir("/");
+	XEDirectoryEntry* dirent = (XEDirectoryEntry*)malloc(sizeof(XEDirectoryEntry));
+	memset(dirent, 0, sizeof(XEDirectoryEntry));
+
+	while (1) {
+		if (dirent->index == -1)
+			break;
+		int code = _KeReadDir(dirfd, dirent);
+		if (code != -1) {
+			if (dirent->flags & FILE_DIRECTORY){
+				printf("\033[36m %s\n", dirent->filename);
+			}
+			else{
+				printf("%s \n", dirent->filename);
+			}
+		}
+		memset(dirent->filename, 0, 32);
+	}
+}
+
 /*
  *XEShellProcessLine -- processes a line by looking
  * the cmdBuf 
@@ -150,11 +187,24 @@ void XEShellProcessLine() {
 		if (strcmp(cmdBuf, "time") == 0) {
 			printf("\nCurrent time is : ");
 			XETime time;
+			memset(&time, 0, sizeof(XETime));
 			_KeGetCurrentTime(&time);
-			printf("\%d:", (time.hour-12));
-			printf("%d\n", time.minute);
+			uint8_t hour = time.hour;
+			char* pmam = "AM";
+			if (hour > 12) {
+				hour -= 12;
+				pmam = "PM";
+			}
+			printf("\%d:", hour);
+			printf("%d ", time.minute);
+			printf("%s\n", pmam);
 			_spawnable_process = false;
 		} 
+
+		if (strcmp(cmdBuf, "ls") == 0){
+			XEShellLS();
+			_spawnable_process = false;
+		}
 
 		if (_spawnable_process)
 			XEShellSpawn(cmdBuf);
@@ -166,6 +216,7 @@ void XEShellProcessLine() {
 		_spawnable_process = true;
 	}
 }
+
 /*
 * main -- terminal emulator
 */
@@ -175,16 +226,19 @@ int main(int argc, char* arv[]){
 	printf("\033[44m^[30mHello World\n");
 	printf("\033[42m^[37mXeneva is an operating system\n");
 	printf("^[42m^[37mMade in North-East India,Assam\n");
+	printf("SignalHandler address -> %x \n", XEShellSigInterrupt);
 	_KeSetSignal(SIGINT, XEShellSigInterrupt);
 	cmdBuf = (char*)malloc(1024);
 	memset(cmdBuf, 0, 1024);
 	_process_needed = true;
 	_spawnable_process = true;
+	_sig_handled = false;
+	job = 0;
 	index = 0;
 	while (1){
 		XEShellWriteCurrentDir();
 		XEShellReadLine();
 		XEShellProcessLine();
-		_KeProcessSleep(1000000000000);
+		_KeProcessSleep(100000000000);
 	}
 }

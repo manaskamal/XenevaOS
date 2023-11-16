@@ -29,6 +29,9 @@
 
 #include <stdint.h>
 
+#ifndef __KE_IPC_POSTBOX_H__
+#define __KE_IPC_POSTBOX_H__
+
 #define POSTBOX_CREATE  401
 #define POSTBOX_DESTROY 402
 #define POSTBOX_PUT_EVENT  403
@@ -38,7 +41,6 @@
 
 #define POSTBOX_NO_EVENT  -1
 #define POSTBOX_ROOT_ID    1
-
 
 
 #pragma pack(push,1)
@@ -64,3 +66,5 @@ typedef struct _post_event_ {
 	char charValue3[100];
 }PostEvent;
 #pragma pack(pop)
+
+#endif

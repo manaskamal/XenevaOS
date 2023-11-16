@@ -5,8 +5,19 @@ include listing.inc
 INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
+CONST	SEGMENT
+$SG3569	DB	'Ret filename ->%s ', 0dH, 0aH, 00H
+	ORG $+3
+$SG3571	DB	'FS Flag dir ', 0dH, 0aH, 00H
+	ORG $+1
+$SG3573	DB	'freeing ret ', 0dH, 0aH, 00H
+	ORG $+1
+$SG3578	DB	'/', 00H
+CONST	ENDS
 PUBLIC	?FatCreateDir@@YAPEAU__VFS_NODE__@@PEAU1@PEAD@Z	; FatCreateDir
 PUBLIC	?FatRemoveDir@@YAHPEAU__VFS_NODE__@@0@Z		; FatRemoveDir
+PUBLIC	?FatOpenDir@@YAPEAU__VFS_NODE__@@PEAU1@PEAD@Z	; FatOpenDir
+PUBLIC	?FatDirectoryRead@@YAHPEAU__VFS_NODE__@@0PEAU_AuDirectoryEnty_@@@Z ; FatDirectoryRead
 EXTRN	AuVDiskRead:PROC
 EXTRN	AuVDiskWrite:PROC
 EXTRN	?FatClusterToSector32@@YA_KPEAU_FatFS_@@_K@Z:PROC ; FatClusterToSector32
@@ -15,8 +26,10 @@ EXTRN	?FatFindFreeCluster@@YAIPEAU__VFS_NODE__@@@Z:PROC ; FatFindFreeCluster
 EXTRN	?FatAllocCluster@@YAXPEAU__VFS_NODE__@@HI@Z:PROC ; FatAllocCluster
 EXTRN	?FatClearCluster@@YAXPEAU__VFS_NODE__@@I@Z:PROC	; FatClearCluster
 EXTRN	?FatReadFAT@@YAIPEAU__VFS_NODE__@@I@Z:PROC	; FatReadFAT
+EXTRN	?FatOpen@@YAPEAU__VFS_NODE__@@PEAU1@PEAD@Z:PROC	; FatOpen
 EXTRN	?FatFormatDate@@YAGXZ:PROC			; FatFormatDate
 EXTRN	?FatFormatTime@@YAGXZ:PROC			; FatFormatTime
+EXTRN	?FatFromDosToFilename@@YAXPEAD0@Z:PROC		; FatFromDosToFilename
 EXTRN	?FatFileGetParent@@YAPEAU__VFS_NODE__@@PEAU1@PEBD@Z:PROC ; FatFileGetParent
 EXTRN	?FatFileRemove@@YAHPEAU__VFS_NODE__@@0@Z:PROC	; FatFileRemove
 EXTRN	kmalloc:PROC
@@ -29,6 +42,7 @@ EXTRN	strcpy:PROC
 EXTRN	strchr:PROC
 EXTRN	memset:PROC
 EXTRN	memcpy:PROC
+EXTRN	SeTextOut:PROC
 pdata	SEGMENT
 $pdata$?FatCreateDir@@YAPEAU__VFS_NODE__@@PEAU1@PEAD@Z DD imagerel $LN28
 	DD	imagerel $LN28+1921
@@ -36,13 +50,588 @@ $pdata$?FatCreateDir@@YAPEAU__VFS_NODE__@@PEAU1@PEAD@Z DD imagerel $LN28
 $pdata$?FatRemoveDir@@YAHPEAU__VFS_NODE__@@0@Z DD imagerel $LN17
 	DD	imagerel $LN17+503
 	DD	imagerel $unwind$?FatRemoveDir@@YAHPEAU__VFS_NODE__@@0@Z
+$pdata$?FatOpenDir@@YAPEAU__VFS_NODE__@@PEAU1@PEAD@Z DD imagerel $LN9
+	DD	imagerel $LN9+441
+	DD	imagerel $unwind$?FatOpenDir@@YAPEAU__VFS_NODE__@@PEAU1@PEAD@Z
+$pdata$?FatDirectoryRead@@YAHPEAU__VFS_NODE__@@0PEAU_AuDirectoryEnty_@@@Z DD imagerel $LN11
+	DD	imagerel $LN11+815
+	DD	imagerel $unwind$?FatDirectoryRead@@YAHPEAU__VFS_NODE__@@0PEAU_AuDirectoryEnty_@@@Z
 pdata	ENDS
 xdata	SEGMENT
 $unwind$?FatCreateDir@@YAPEAU__VFS_NODE__@@PEAU1@PEAD@Z DD 021101H
 	DD	01b0111H
 $unwind$?FatRemoveDir@@YAHPEAU__VFS_NODE__@@0@Z DD 010e01H
 	DD	0c20eH
+$unwind$?FatOpenDir@@YAPEAU__VFS_NODE__@@PEAU1@PEAD@Z DD 010e01H
+	DD	0620eH
+$unwind$?FatDirectoryRead@@YAHPEAU__VFS_NODE__@@0PEAU_AuDirectoryEnty_@@@Z DD 021601H
+	DD	0110116H
 xdata	ENDS
+; Function compile flags: /Odtpy
+; File e:\xeneva project\aurora\kernel\fs\fat\fatdir.cpp
+_TEXT	SEGMENT
+dir_$ = 32
+buf$ = 40
+index$ = 48
+fatfs$ = 56
+tv92 = 64
+aligned_buf$ = 72
+tv88 = 80
+vdisk$ = 88
+name$ = 96
+filename$ = 112
+fs$ = 144
+dir$ = 152
+dirent$ = 160
+?FatDirectoryRead@@YAHPEAU__VFS_NODE__@@0PEAU_AuDirectoryEnty_@@@Z PROC ; FatDirectoryRead
+
+; 295  : int FatDirectoryRead(AuVFSNode* fs, AuVFSNode* dir, AuDirectoryEntry* dirent) {
+
+$LN11:
+	mov	QWORD PTR [rsp+24], r8
+	mov	QWORD PTR [rsp+16], rdx
+	mov	QWORD PTR [rsp+8], rcx
+	sub	rsp, 136				; 00000088H
+
+; 296  : 	if (!dirent)
+
+	cmp	QWORD PTR dirent$[rsp], 0
+	jne	SHORT $LN8@FatDirecto
+
+; 297  : 		return -1;
+
+	mov	eax, -1
+	jmp	$LN9@FatDirecto
+$LN8@FatDirecto:
+
+; 298  : 	if (!dir)
+
+	cmp	QWORD PTR dir$[rsp], 0
+	jne	SHORT $LN7@FatDirecto
+
+; 299  : 		return -1;
+
+	mov	eax, -1
+	jmp	$LN9@FatDirecto
+$LN7@FatDirecto:
+
+; 300  : 	memset(dirent->filename, 0, 32);
+
+	mov	rax, QWORD PTR dirent$[rsp]
+	mov	r8d, 32					; 00000020H
+	xor	edx, edx
+	mov	rcx, rax
+	call	memset
+
+; 301  : 	int index = dirent->index;
+
+	mov	rax, QWORD PTR dirent$[rsp]
+	mov	eax, DWORD PTR [rax+32]
+	mov	DWORD PTR index$[rsp], eax
+
+; 302  : 	FatFS* fatfs = (FatFS*)fs->device;
+
+	mov	rax, QWORD PTR fs$[rsp]
+	mov	rax, QWORD PTR [rax+72]
+	mov	QWORD PTR fatfs$[rsp], rax
+
+; 303  : 	AuVDisk* vdisk = (AuVDisk*)fatfs->vdisk;
+
+	mov	rax, QWORD PTR fatfs$[rsp]
+	mov	rax, QWORD PTR [rax+8]
+	mov	QWORD PTR vdisk$[rsp], rax
+
+; 304  : 
+; 305  : 	uint64_t* buf = (uint64_t*)P2V((uint64_t)AuPmmngrAlloc());
+
+	call	AuPmmngrAlloc
+	mov	rcx, rax
+	call	P2V
+	mov	QWORD PTR buf$[rsp], rax
+
+; 306  : 	memset(buf, 0, PAGE_SIZE);
+
+	mov	r8d, 4096				; 00001000H
+	xor	edx, edx
+	mov	rcx, QWORD PTR buf$[rsp]
+	call	memset
+
+; 307  : 		
+; 308  : 	if ((index / 16) > fatfs->__SectorPerCluster) {
+
+	mov	eax, DWORD PTR index$[rsp]
+	cdq
+	and	edx, 15
+	add	eax, edx
+	sar	eax, 4
+	mov	rcx, QWORD PTR fatfs$[rsp]
+	movzx	ecx, BYTE PTR [rcx+33]
+	cmp	eax, ecx
+	jle	SHORT $LN6@FatDirecto
+
+; 309  : 		dirent->index = -1;
+
+	mov	rax, QWORD PTR dirent$[rsp]
+	mov	DWORD PTR [rax+32], -1
+
+; 310  : 		AuPmmngrFree((void*)V2P((size_t)buf));
+
+	mov	rcx, QWORD PTR buf$[rsp]
+	call	V2P
+	mov	rcx, rax
+	call	AuPmmngrFree
+
+; 311  : 		return -1;
+
+	mov	eax, -1
+	jmp	$LN9@FatDirecto
+$LN6@FatDirecto:
+
+; 312  : 	}
+; 313  : 
+; 314  : 
+; 315  : 	uint8_t* aligned_buf = (uint8_t*)buf;
+
+	mov	rax, QWORD PTR buf$[rsp]
+	mov	QWORD PTR aligned_buf$[rsp], rax
+
+; 316  : 	AuVDiskRead(vdisk, FatClusterToSector32(fatfs, dir->first_block) + index/16, 1, (uint64_t*)V2P((uint64_t)buf));
+
+	mov	rcx, QWORD PTR buf$[rsp]
+	call	V2P
+	mov	QWORD PTR tv88[rsp], rax
+	mov	rcx, QWORD PTR dir$[rsp]
+	mov	rdx, QWORD PTR [rcx+48]
+	mov	rcx, QWORD PTR fatfs$[rsp]
+	call	?FatClusterToSector32@@YA_KPEAU_FatFS_@@_K@Z ; FatClusterToSector32
+	mov	QWORD PTR tv92[rsp], rax
+	mov	eax, DWORD PTR index$[rsp]
+	cdq
+	and	edx, 15
+	add	eax, edx
+	sar	eax, 4
+	cdqe
+	mov	rcx, QWORD PTR tv92[rsp]
+	add	rcx, rax
+	mov	rax, rcx
+	mov	rcx, QWORD PTR tv88[rsp]
+	mov	r9, rcx
+	mov	r8d, 1
+	mov	rdx, rax
+	mov	rcx, QWORD PTR vdisk$[rsp]
+	call	AuVDiskRead
+
+; 317  : 	FatDir* dir_ = (FatDir*)(aligned_buf + ((index % 16) * sizeof(FatDir)));
+
+	mov	eax, DWORD PTR index$[rsp]
+	cdq
+	and	edx, 15
+	add	eax, edx
+	and	eax, 15
+	sub	eax, edx
+	cdqe
+	imul	rax, rax, 32				; 00000020H
+	mov	rcx, QWORD PTR aligned_buf$[rsp]
+	add	rcx, rax
+	mov	rax, rcx
+	mov	QWORD PTR dir_$[rsp], rax
+
+; 318  : 
+; 319  : 	if (dir_->filename[0] == 0x00){
+
+	mov	eax, 1
+	imul	rax, rax, 0
+	mov	rcx, QWORD PTR dir_$[rsp]
+	movzx	eax, BYTE PTR [rcx+rax]
+	test	eax, eax
+	jne	SHORT $LN5@FatDirecto
+
+; 320  : 		dirent->index = -1;
+
+	mov	rax, QWORD PTR dirent$[rsp]
+	mov	DWORD PTR [rax+32], -1
+
+; 321  : 		AuPmmngrFree((void*)V2P((size_t)buf));
+
+	mov	rcx, QWORD PTR buf$[rsp]
+	call	V2P
+	mov	rcx, rax
+	call	AuPmmngrFree
+
+; 322  : 		return -1;
+
+	mov	eax, -1
+	jmp	$LN9@FatDirecto
+$LN5@FatDirecto:
+
+; 323  : 	}
+; 324  : 
+; 325  : 	if (dir_->filename[0] == 0xE5 || 
+; 326  : 		dir_->filename[0] == 0x05 ||
+; 327  : 		dir_->filename[0] == 0xFF) {
+
+	mov	eax, 1
+	imul	rax, rax, 0
+	mov	rcx, QWORD PTR dir_$[rsp]
+	movzx	eax, BYTE PTR [rcx+rax]
+	cmp	eax, 229				; 000000e5H
+	je	SHORT $LN3@FatDirecto
+	mov	eax, 1
+	imul	rax, rax, 0
+	mov	rcx, QWORD PTR dir_$[rsp]
+	movzx	eax, BYTE PTR [rcx+rax]
+	cmp	eax, 5
+	je	SHORT $LN3@FatDirecto
+	mov	eax, 1
+	imul	rax, rax, 0
+	mov	rcx, QWORD PTR dir_$[rsp]
+	movzx	eax, BYTE PTR [rcx+rax]
+	cmp	eax, 255				; 000000ffH
+	jne	SHORT $LN4@FatDirecto
+$LN3@FatDirecto:
+
+; 328  : 		AuPmmngrFree((void*)V2P((size_t)buf));
+
+	mov	rcx, QWORD PTR buf$[rsp]
+	call	V2P
+	mov	rcx, rax
+	call	AuPmmngrFree
+
+; 329  : 		dirent->index += 1;
+
+	mov	rax, QWORD PTR dirent$[rsp]
+	mov	eax, DWORD PTR [rax+32]
+	inc	eax
+	mov	rcx, QWORD PTR dirent$[rsp]
+	mov	DWORD PTR [rcx+32], eax
+
+; 330  : 		return -1;
+
+	mov	eax, -1
+	jmp	$LN9@FatDirecto
+$LN4@FatDirecto:
+
+; 331  : 	}
+; 332  : 	char filename[11];
+; 333  : 	char name[11];
+; 334  : 	memcpy(name, dir_->filename, 11);
+
+	mov	rax, QWORD PTR dir_$[rsp]
+	mov	r8d, 11
+	mov	rdx, rax
+	lea	rcx, QWORD PTR name$[rsp]
+	call	memcpy
+
+; 335  : 	name[11] = 0;
+
+	mov	eax, 1
+	imul	rax, rax, 11
+	mov	BYTE PTR name$[rsp+rax], 0
+
+; 336  : 	FatFromDosToFilename(filename, (char*)dir_->filename);
+
+	mov	rax, QWORD PTR dir_$[rsp]
+	mov	rdx, rax
+	lea	rcx, QWORD PTR filename$[rsp]
+	call	?FatFromDosToFilename@@YAXPEAD0@Z	; FatFromDosToFilename
+
+; 337  : 	strcpy(dirent->filename,filename);
+
+	mov	rax, QWORD PTR dirent$[rsp]
+	lea	rdx, QWORD PTR filename$[rsp]
+	mov	rcx, rax
+	call	strcpy
+
+; 338  : 	dirent->size = dir_->file_size;
+
+	mov	rax, QWORD PTR dirent$[rsp]
+	mov	rcx, QWORD PTR dir_$[rsp]
+	mov	ecx, DWORD PTR [rcx+28]
+	mov	DWORD PTR [rax+36], ecx
+
+; 339  : 	dirent->time = dir_->time_created;
+
+	mov	rax, QWORD PTR dir_$[rsp]
+	movzx	eax, WORD PTR [rax+14]
+	mov	rcx, QWORD PTR dirent$[rsp]
+	mov	DWORD PTR [rcx+44], eax
+
+; 340  : 	dirent->date = dir_->date_created;
+
+	mov	rax, QWORD PTR dir_$[rsp]
+	movzx	eax, WORD PTR [rax+16]
+	mov	rcx, QWORD PTR dirent$[rsp]
+	mov	DWORD PTR [rcx+40], eax
+
+; 341  : 	if (dir_->attrib & 0x10)
+
+	mov	rax, QWORD PTR dir_$[rsp]
+	movzx	eax, BYTE PTR [rax+11]
+	and	eax, 16
+	test	eax, eax
+	je	SHORT $LN2@FatDirecto
+
+; 342  : 		dirent->flags |= FS_FLAG_DIRECTORY;
+
+	mov	rax, QWORD PTR dirent$[rsp]
+	movzx	eax, BYTE PTR [rax+48]
+	or	eax, 2
+	mov	rcx, QWORD PTR dirent$[rsp]
+	mov	BYTE PTR [rcx+48], al
+
+; 343  : 	else
+
+	jmp	SHORT $LN1@FatDirecto
+$LN2@FatDirecto:
+
+; 344  : 		dirent->flags = FS_FLAG_GENERAL;
+
+	mov	rax, QWORD PTR dirent$[rsp]
+	mov	BYTE PTR [rax+48], 4
+$LN1@FatDirecto:
+
+; 345  : 	AuPmmngrFree((void*)V2P((size_t)buf));
+
+	mov	rcx, QWORD PTR buf$[rsp]
+	call	V2P
+	mov	rcx, rax
+	call	AuPmmngrFree
+
+; 346  : 	dirent->index += 1;
+
+	mov	rax, QWORD PTR dirent$[rsp]
+	mov	eax, DWORD PTR [rax+32]
+	inc	eax
+	mov	rcx, QWORD PTR dirent$[rsp]
+	mov	DWORD PTR [rcx+32], eax
+
+; 347  : 	return 0;
+
+	xor	eax, eax
+$LN9@FatDirecto:
+
+; 348  : }
+
+	add	rsp, 136				; 00000088H
+	ret	0
+?FatDirectoryRead@@YAHPEAU__VFS_NODE__@@0PEAU_AuDirectoryEnty_@@@Z ENDP ; FatDirectoryRead
+_TEXT	ENDS
+; Function compile flags: /Odtpy
+; File e:\xeneva project\aurora\kernel\fs\fat\fatdir.cpp
+_TEXT	SEGMENT
+ret$ = 32
+fatfs$ = 40
+fs$ = 64
+path$ = 72
+?FatOpenDir@@YAPEAU__VFS_NODE__@@PEAU1@PEAD@Z PROC	; FatOpenDir
+
+; 252  : AuVFSNode* FatOpenDir(AuVFSNode* fs, char *path) {
+
+$LN9:
+	mov	QWORD PTR [rsp+16], rdx
+	mov	QWORD PTR [rsp+8], rcx
+	sub	rsp, 56					; 00000038H
+
+; 253  : 	AuVFSNode* ret = NULL;
+
+	mov	QWORD PTR ret$[rsp], 0
+
+; 254  : 	if (!fs)
+
+	cmp	QWORD PTR fs$[rsp], 0
+	jne	SHORT $LN6@FatOpenDir
+
+; 255  : 		return ret;
+
+	mov	rax, QWORD PTR ret$[rsp]
+	jmp	$LN7@FatOpenDir
+$LN6@FatOpenDir:
+
+; 256  : 	FatFS* fatfs = (FatFS*)fs->device;
+
+	mov	rax, QWORD PTR fs$[rsp]
+	mov	rax, QWORD PTR [rax+72]
+	mov	QWORD PTR fatfs$[rsp], rax
+
+; 257  : 	if (!fatfs)
+
+	cmp	QWORD PTR fatfs$[rsp], 0
+	jne	SHORT $LN5@FatOpenDir
+
+; 258  : 		return ret;
+
+	mov	rax, QWORD PTR ret$[rsp]
+	jmp	$LN7@FatOpenDir
+$LN5@FatOpenDir:
+
+; 259  : 	ret = FatOpen(fs, path);
+
+	mov	rdx, QWORD PTR path$[rsp]
+	mov	rcx, QWORD PTR fs$[rsp]
+	call	?FatOpen@@YAPEAU__VFS_NODE__@@PEAU1@PEAD@Z ; FatOpen
+	mov	QWORD PTR ret$[rsp], rax
+
+; 260  : 	if (ret) {
+
+	cmp	QWORD PTR ret$[rsp], 0
+	je	SHORT $LN4@FatOpenDir
+
+; 261  : 		SeTextOut("Ret filename ->%s \r\n", ret->filename);
+
+	mov	rax, QWORD PTR ret$[rsp]
+	mov	rdx, rax
+	lea	rcx, OFFSET FLAT:$SG3569
+	call	SeTextOut
+
+; 262  : 		if (ret->flags & FS_FLAG_DIRECTORY)
+
+	mov	rax, QWORD PTR ret$[rsp]
+	movzx	eax, WORD PTR [rax+64]
+	and	eax, 2
+	test	eax, eax
+	je	SHORT $LN3@FatOpenDir
+
+; 263  : 			SeTextOut("FS Flag dir \r\n");
+
+	lea	rcx, OFFSET FLAT:$SG3571
+	call	SeTextOut
+$LN3@FatOpenDir:
+$LN4@FatOpenDir:
+
+; 264  : 	}
+; 265  : 	if (ret && !(ret->flags & FS_FLAG_DIRECTORY)) {
+
+	cmp	QWORD PTR ret$[rsp], 0
+	je	SHORT $LN2@FatOpenDir
+	mov	rax, QWORD PTR ret$[rsp]
+	movzx	eax, WORD PTR [rax+64]
+	and	eax, 2
+	test	eax, eax
+	jne	SHORT $LN2@FatOpenDir
+
+; 266  : 		SeTextOut("freeing ret \r\n");
+
+	lea	rcx, OFFSET FLAT:$SG3573
+	call	SeTextOut
+
+; 267  : 		kfree(ret);
+
+	mov	rcx, QWORD PTR ret$[rsp]
+	call	kfree
+
+; 268  : 		return NULL;
+
+	xor	eax, eax
+	jmp	$LN7@FatOpenDir
+$LN2@FatOpenDir:
+
+; 269  : 	}
+; 270  : 	if (!ret) {
+
+	cmp	QWORD PTR ret$[rsp], 0
+	jne	$LN1@FatOpenDir
+
+; 271  : 		ret = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
+
+	mov	ecx, 192				; 000000c0H
+	call	kmalloc
+	mov	QWORD PTR ret$[rsp], rax
+
+; 272  : 		memset(ret, 0, sizeof(AuVFSNode));
+
+	mov	r8d, 192				; 000000c0H
+	xor	edx, edx
+	mov	rcx, QWORD PTR ret$[rsp]
+	call	memset
+
+; 273  : 		strcpy(ret->filename, "/");
+
+	mov	rax, QWORD PTR ret$[rsp]
+	lea	rdx, OFFSET FLAT:$SG3578
+	mov	rcx, rax
+	call	strcpy
+
+; 274  : 		ret->current = fatfs->__RootDirFirstCluster;
+
+	mov	rax, QWORD PTR fatfs$[rsp]
+	mov	eax, DWORD PTR [rax+34]
+	mov	rcx, QWORD PTR ret$[rsp]
+	mov	QWORD PTR [rcx+56], rax
+
+; 275  : 		ret->size = 0; //variable
+
+	mov	rax, QWORD PTR ret$[rsp]
+	mov	DWORD PTR [rax+32], 0
+
+; 276  : 		ret->eof = 0;
+
+	mov	rax, QWORD PTR ret$[rsp]
+	mov	BYTE PTR [rax+36], 0
+
+; 277  : 		ret->status = FS_STATUS_FOUND;
+
+	mov	rax, QWORD PTR ret$[rsp]
+	mov	BYTE PTR [rax+66], 1
+
+; 278  : 		ret->close = 0;
+
+	mov	rax, QWORD PTR ret$[rsp]
+	mov	QWORD PTR [rax+152], 0
+
+; 279  : 		ret->first_block = fatfs->__RootDirFirstCluster;
+
+	mov	rax, QWORD PTR fatfs$[rsp]
+	mov	eax, DWORD PTR [rax+34]
+	mov	rcx, QWORD PTR ret$[rsp]
+	mov	QWORD PTR [rcx+48], rax
+
+; 280  : 		ret->pos = 0;
+
+	mov	rax, QWORD PTR ret$[rsp]
+	mov	DWORD PTR [rax+40], 0
+
+; 281  : 		ret->device = fs;
+
+	mov	rax, QWORD PTR ret$[rsp]
+	mov	rcx, QWORD PTR fs$[rsp]
+	mov	QWORD PTR [rax+72], rcx
+
+; 282  : 		ret->parent_block = fatfs->__RootDirFirstCluster;
+
+	mov	rax, QWORD PTR ret$[rsp]
+	mov	rcx, QWORD PTR fatfs$[rsp]
+	mov	ecx, DWORD PTR [rcx+34]
+	mov	DWORD PTR [rax+44], ecx
+
+; 283  : 		ret->flags |= FS_FLAG_DIRECTORY;
+
+	mov	rax, QWORD PTR ret$[rsp]
+	movzx	eax, WORD PTR [rax+64]
+	or	eax, 2
+	mov	rcx, QWORD PTR ret$[rsp]
+	mov	WORD PTR [rcx+64], ax
+
+; 284  : 		ret->flags |= FS_FLAG_GENERAL;
+
+	mov	rax, QWORD PTR ret$[rsp]
+	movzx	eax, WORD PTR [rax+64]
+	or	eax, 4
+	mov	rcx, QWORD PTR ret$[rsp]
+	mov	WORD PTR [rcx+64], ax
+$LN1@FatOpenDir:
+
+; 285  : 	}
+; 286  : 	return ret;
+
+	mov	rax, QWORD PTR ret$[rsp]
+$LN7@FatOpenDir:
+
+; 287  : }
+
+	add	rsp, 56					; 00000038H
+	ret	0
+?FatOpenDir@@YAPEAU__VFS_NODE__@@PEAU1@PEAD@Z ENDP	; FatOpenDir
+_TEXT	ENDS
 ; Function compile flags: /Odtpy
 ; File e:\xeneva project\aurora\kernel\fs\fat\fatdir.cpp
 _TEXT	SEGMENT
@@ -59,63 +648,63 @@ fsys$ = 112
 file$ = 120
 ?FatRemoveDir@@YAHPEAU__VFS_NODE__@@0@Z PROC		; FatRemoveDir
 
-; 197  : int FatRemoveDir(AuVFSNode* fsys, AuVFSNode* file) {
+; 198  : int FatRemoveDir(AuVFSNode* fsys, AuVFSNode* file) {
 
 $LN17:
 	mov	QWORD PTR [rsp+16], rdx
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 104				; 00000068H
 
-; 198  : 	if (!fsys)
+; 199  : 	if (!fsys)
 
 	cmp	QWORD PTR fsys$[rsp], 0
 	jne	SHORT $LN14@FatRemoveD
 
-; 199  : 		return -1;
+; 200  : 		return -1;
 
 	mov	eax, -1
 	jmp	$LN15@FatRemoveD
 $LN14@FatRemoveD:
 
-; 200  : 	if (!file)
+; 201  : 	if (!file)
 
 	cmp	QWORD PTR file$[rsp], 0
 	jne	SHORT $LN13@FatRemoveD
 
-; 201  : 		return -1;
+; 202  : 		return -1;
 
 	mov	eax, -1
 	jmp	$LN15@FatRemoveD
 $LN13@FatRemoveD:
 
-; 202  : 
-; 203  : 	FatFS* _fs = (FatFS*)fsys->device;
+; 203  : 
+; 204  : 	FatFS* _fs = (FatFS*)fsys->device;
 
 	mov	rax, QWORD PTR fsys$[rsp]
 	mov	rax, QWORD PTR [rax+72]
 	mov	QWORD PTR _fs$[rsp], rax
 
-; 204  : 
-; 205  : 	uint32_t dir_clust = file->current;
+; 205  : 
+; 206  : 	uint32_t dir_clust = file->current;
 
 	mov	rax, QWORD PTR file$[rsp]
 	mov	eax, DWORD PTR [rax+56]
 	mov	DWORD PTR dir_clust$[rsp], eax
 
-; 206  : 
-; 207  : 	bool _is_empty = true;
+; 207  : 
+; 208  : 	bool _is_empty = true;
 
 	mov	BYTE PTR _is_empty$[rsp], 1
 
-; 208  : 
-; 209  : 	uint64_t* buff = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
+; 209  : 
+; 210  : 	uint64_t* buff = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
 
 	call	AuPmmngrAlloc
 	mov	rcx, rax
 	call	P2V
 	mov	QWORD PTR buff$[rsp], rax
 
-; 210  : 	memset(buff, 0, PAGE_SIZE);
+; 211  : 	memset(buff, 0, PAGE_SIZE);
 
 	mov	r8d, 4096				; 00001000H
 	xor	edx, edx
@@ -123,14 +712,14 @@ $LN13@FatRemoveD:
 	call	memset
 $LN12@FatRemoveD:
 
-; 211  : 	/* verify, if the directory is empty*/
-; 212  : 	while (1) {
+; 212  : 	/* verify, if the directory is empty*/
+; 213  : 	while (1) {
 
 	xor	eax, eax
 	cmp	eax, 1
 	je	$LN11@FatRemoveD
 
-; 213  : 		for (int j = 0; j < _fs->__SectorPerCluster; j++) {
+; 214  : 		for (int j = 0; j < _fs->__SectorPerCluster; j++) {
 
 	mov	DWORD PTR j$1[rsp], 0
 	jmp	SHORT $LN10@FatRemoveD
@@ -144,14 +733,14 @@ $LN10@FatRemoveD:
 	cmp	DWORD PTR j$1[rsp], eax
 	jge	$LN8@FatRemoveD
 
-; 214  : 			memset(buff, 0, PAGE_SIZE);
+; 215  : 			memset(buff, 0, PAGE_SIZE);
 
 	mov	r8d, 4096				; 00001000H
 	xor	edx, edx
 	mov	rcx, QWORD PTR buff$[rsp]
 	call	memset
 
-; 215  : 			AuVDiskRead(_fs->vdisk, FatClusterToSector32(_fs, dir_clust) + j, 1, (uint64_t*)V2P((size_t)buff));
+; 216  : 			AuVDiskRead(_fs->vdisk, FatClusterToSector32(_fs, dir_clust) + j, 1, (uint64_t*)V2P((size_t)buff));
 
 	mov	rcx, QWORD PTR buff$[rsp]
 	call	V2P
@@ -170,13 +759,13 @@ $LN10@FatRemoveD:
 	mov	rcx, QWORD PTR [rax+8]
 	call	AuVDiskRead
 
-; 216  : 
-; 217  : 			FatDir *dirent = (FatDir*)buff;
+; 217  : 
+; 218  : 			FatDir *dirent = (FatDir*)buff;
 
 	mov	rax, QWORD PTR buff$[rsp]
 	mov	QWORD PTR dirent$3[rsp], rax
 
-; 218  : 			for (int i = 0; i < 16; i++) {
+; 219  : 			for (int i = 0; i < 16; i++) {
 
 	mov	DWORD PTR i$2[rsp], 0
 	jmp	SHORT $LN7@FatRemoveD
@@ -188,8 +777,8 @@ $LN7@FatRemoveD:
 	cmp	DWORD PTR i$2[rsp], 16
 	jge	$LN5@FatRemoveD
 
-; 219  : 				char name[11];
-; 220  : 				memcpy(name, dirent->filename, 11);
+; 220  : 				char name[11];
+; 221  : 				memcpy(name, dirent->filename, 11);
 
 	mov	rax, QWORD PTR dirent$3[rsp]
 	mov	r8d, 11
@@ -197,14 +786,14 @@ $LN7@FatRemoveD:
 	lea	rcx, QWORD PTR name$4[rsp]
 	call	memcpy
 
-; 221  : 				name[11] = 0;
+; 222  : 				name[11] = 0;
 
 	mov	eax, 1
 	imul	rax, rax, 11
 	mov	BYTE PTR name$4[rsp+rax], 0
 
-; 222  : 
-; 223  : 				if (dirent->filename[0] != 0x00 || dirent->filename[0] != 0xE5) {
+; 223  : 
+; 224  : 				if (dirent->filename[0] != 0x00 || dirent->filename[0] != 0xE5) {
 
 	mov	eax, 1
 	imul	rax, rax, 0
@@ -220,89 +809,89 @@ $LN7@FatRemoveD:
 	je	SHORT $LN4@FatRemoveD
 $LN3@FatRemoveD:
 
-; 224  : 					AuPmmngrFree((void*)V2P((size_t)buff));
+; 225  : 					AuPmmngrFree((void*)V2P((size_t)buff));
 
 	mov	rcx, QWORD PTR buff$[rsp]
 	call	V2P
 	mov	rcx, rax
 	call	AuPmmngrFree
 
-; 225  : 					_is_empty = false;
+; 226  : 					_is_empty = false;
 
 	mov	BYTE PTR _is_empty$[rsp], 0
 
-; 226  : 					break;
+; 227  : 					break;
 
 	jmp	SHORT $LN5@FatRemoveD
 $LN4@FatRemoveD:
 
-; 227  : 				}
-; 228  : 				dirent++;
+; 228  : 				}
+; 229  : 				dirent++;
 
 	mov	rax, QWORD PTR dirent$3[rsp]
 	add	rax, 32					; 00000020H
 	mov	QWORD PTR dirent$3[rsp], rax
 
-; 229  : 			}
+; 230  : 			}
 
 	jmp	$LN6@FatRemoveD
 $LN5@FatRemoveD:
 
-; 230  : 		}
+; 231  : 		}
 
 	jmp	$LN9@FatRemoveD
 $LN8@FatRemoveD:
 
-; 231  : 
-; 232  : 		dir_clust = FatReadFAT(fsys, dir_clust);
+; 232  : 
+; 233  : 		dir_clust = FatReadFAT(fsys, dir_clust);
 
 	mov	edx, DWORD PTR dir_clust$[rsp]
 	mov	rcx, QWORD PTR fsys$[rsp]
 	call	?FatReadFAT@@YAIPEAU__VFS_NODE__@@I@Z	; FatReadFAT
 	mov	DWORD PTR dir_clust$[rsp], eax
 
-; 233  : 		if (dir_clust == (FAT_EOC_MARK & 0x0FFFFFFF))
+; 234  : 		if (dir_clust == (FAT_EOC_MARK & 0x0FFFFFFF))
 
 	cmp	DWORD PTR dir_clust$[rsp], 268435448	; 0ffffff8H
 	jne	SHORT $LN2@FatRemoveD
 
-; 234  : 			break;
+; 235  : 			break;
 
 	jmp	SHORT $LN11@FatRemoveD
 $LN2@FatRemoveD:
 
-; 235  : 	}
+; 236  : 	}
 
 	jmp	$LN12@FatRemoveD
 $LN11@FatRemoveD:
 
-; 236  : 
-; 237  : 	if (_is_empty) {
+; 237  : 
+; 238  : 	if (_is_empty) {
 
 	movzx	eax, BYTE PTR _is_empty$[rsp]
 	test	eax, eax
 	je	SHORT $LN1@FatRemoveD
 
-; 238  : 		FatFileRemove(fsys, file);
+; 239  : 		FatFileRemove(fsys, file);
 
 	mov	rdx, QWORD PTR file$[rsp]
 	mov	rcx, QWORD PTR fsys$[rsp]
 	call	?FatFileRemove@@YAHPEAU__VFS_NODE__@@0@Z ; FatFileRemove
 
-; 239  : 		return 0;
+; 240  : 		return 0;
 
 	xor	eax, eax
 	jmp	SHORT $LN15@FatRemoveD
 $LN1@FatRemoveD:
 
-; 240  : 	}
-; 241  : 
-; 242  : 	return -1;
+; 241  : 	}
+; 242  : 
+; 243  : 	return -1;
 
 	mov	eax, -1
 $LN15@FatRemoveD:
 
-; 243  : }
+; 244  : }
 
 	add	rsp, 104				; 00000068H
 	ret	0
@@ -336,134 +925,134 @@ fsys$ = 224
 filename$ = 232
 ?FatCreateDir@@YAPEAU__VFS_NODE__@@PEAU1@PEAD@Z PROC	; FatCreateDir
 
-; 45   : AuVFSNode* FatCreateDir(AuVFSNode* fsys,char* filename) {
+; 46   : AuVFSNode* FatCreateDir(AuVFSNode* fsys,char* filename) {
 
 $LN28:
 	mov	QWORD PTR [rsp+16], rdx
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 216				; 000000d8H
 
-; 46   : 	if (!fsys)
+; 47   : 	if (!fsys)
 
 	cmp	QWORD PTR fsys$[rsp], 0
 	jne	SHORT $LN25@FatCreateD
 
-; 47   : 		return NULL;
+; 48   : 		return NULL;
 
 	xor	eax, eax
 	jmp	$LN26@FatCreateD
 $LN25@FatCreateD:
 
-; 48   : 
-; 49   : 	FatFS* _fs = (FatFS*)fsys->device;
+; 49   : 
+; 50   : 	FatFS* _fs = (FatFS*)fsys->device;
 
 	mov	rax, QWORD PTR fsys$[rsp]
 	mov	rax, QWORD PTR [rax+72]
 	mov	QWORD PTR _fs$[rsp], rax
 
-; 50   : 
-; 51   : 	uint32_t parent_clust = 0;
+; 51   : 
+; 52   : 	uint32_t parent_clust = 0;
 
 	mov	DWORD PTR parent_clust$[rsp], 0
 
-; 52   : 
-; 53   : 	AuVFSNode* parent = FatFileGetParent(fsys, filename);
+; 53   : 
+; 54   : 	AuVFSNode* parent = FatFileGetParent(fsys, filename);
 
 	mov	rdx, QWORD PTR filename$[rsp]
 	mov	rcx, QWORD PTR fsys$[rsp]
 	call	?FatFileGetParent@@YAPEAU__VFS_NODE__@@PEAU1@PEBD@Z ; FatFileGetParent
 	mov	QWORD PTR parent$[rsp], rax
 
-; 54   : 	if (!parent)
+; 55   : 	if (!parent)
 
 	cmp	QWORD PTR parent$[rsp], 0
 	jne	SHORT $LN24@FatCreateD
 
-; 55   : 		return NULL;
+; 56   : 		return NULL;
 
 	xor	eax, eax
 	jmp	$LN26@FatCreateD
 $LN24@FatCreateD:
 
-; 56   : 
-; 57   : 	parent_clust = parent->current;
+; 57   : 
+; 58   : 	parent_clust = parent->current;
 
 	mov	rax, QWORD PTR parent$[rsp]
 	mov	eax, DWORD PTR [rax+56]
 	mov	DWORD PTR parent_clust$[rsp], eax
 
-; 58   : 
-; 59   : 	if (!parent_clust)
+; 59   : 
+; 60   : 	if (!parent_clust)
 
 	cmp	DWORD PTR parent_clust$[rsp], 0
 	jne	SHORT $LN23@FatCreateD
 
-; 60   : 		parent_clust = _fs->__RootDirFirstCluster;
+; 61   : 		parent_clust = _fs->__RootDirFirstCluster;
 
 	mov	rax, QWORD PTR _fs$[rsp]
 	mov	eax, DWORD PTR [rax+34]
 	mov	DWORD PTR parent_clust$[rsp], eax
 $LN23@FatCreateD:
 
-; 61   : 
-; 62   : 	AuVFSNode* file = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
+; 62   : 
+; 63   : 	AuVFSNode* file = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
 
-	mov	ecx, 176				; 000000b0H
+	mov	ecx, 192				; 000000c0H
 	call	kmalloc
 	mov	QWORD PTR file$[rsp], rax
 
-; 63   : 	memset(file, 0, sizeof(AuVFSNode));
+; 64   : 	memset(file, 0, sizeof(AuVFSNode));
 
-	mov	r8d, 176				; 000000b0H
+	mov	r8d, 192				; 000000c0H
 	xor	edx, edx
 	mov	rcx, QWORD PTR file$[rsp]
 	call	memset
 
-; 64   : 
-; 65   : 	uint64_t* buff = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
+; 65   : 
+; 66   : 	uint64_t* buff = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
 
 	call	AuPmmngrAlloc
 	mov	rcx, rax
 	call	P2V
 	mov	QWORD PTR buff$[rsp], rax
 
-; 66   : 	memset(buff, 0, PAGE_SIZE);
+; 67   : 	memset(buff, 0, PAGE_SIZE);
 
 	mov	r8d, 4096				; 00001000H
 	xor	edx, edx
 	mov	rcx, QWORD PTR buff$[rsp]
 	call	memset
 
-; 67   : 
-; 68   : 	/* now extract only the filename from
-; 69   : 	 * entire path */
-; 70   : 	char* path = (char*)filename;
+; 68   : 
+; 69   : 	/* now extract only the filename from
+; 70   : 	 * entire path */
+; 71   : 	char* path = (char*)filename;
 
 	mov	rax, QWORD PTR filename$[rsp]
 	mov	QWORD PTR path$[rsp], rax
 
-; 71   : 	char* p = strchr(path, '/');
+; 72   : 	char* p = strchr(path, '/');
 
 	mov	edx, 47					; 0000002fH
 	mov	rcx, QWORD PTR path$[rsp]
 	call	strchr
 	mov	QWORD PTR p$[rsp], rax
 
-; 72   : 	if (p)
+; 73   : 	if (p)
 
 	cmp	QWORD PTR p$[rsp], 0
 	je	SHORT $LN22@FatCreateD
 
-; 73   : 		p++;
+; 74   : 		p++;
 
 	mov	rax, QWORD PTR p$[rsp]
 	inc	rax
 	mov	QWORD PTR p$[rsp], rax
 $LN22@FatCreateD:
 
-; 74   : 
-; 75   : 	char extract[16];
-; 76   : 	memset(extract, 0, 16);
+; 75   : 
+; 76   : 	char extract[16];
+; 77   : 	memset(extract, 0, 16);
 
 	mov	r8d, 16
 	xor	edx, edx
@@ -471,16 +1060,16 @@ $LN22@FatCreateD:
 	call	memset
 $LN21@FatCreateD:
 
-; 77   : 	while (p) {
+; 78   : 	while (p) {
 
 	cmp	QWORD PTR p$[rsp], 0
 	je	$LN20@FatCreateD
 
-; 78   : 		int i = 0;
+; 79   : 		int i = 0;
 
 	mov	DWORD PTR i$2[rsp], 0
 
-; 79   : 		for (i = 0; i < 16; i++) {
+; 80   : 		for (i = 0; i < 16; i++) {
 
 	mov	DWORD PTR i$2[rsp], 0
 	jmp	SHORT $LN19@FatCreateD
@@ -492,7 +1081,7 @@ $LN19@FatCreateD:
 	cmp	DWORD PTR i$2[rsp], 16
 	jge	SHORT $LN17@FatCreateD
 
-; 80   : 			if (p[i] == '/' || p[i] == '\0')
+; 81   : 			if (p[i] == '/' || p[i] == '\0')
 
 	movsxd	rax, DWORD PTR i$2[rsp]
 	mov	rcx, QWORD PTR p$[rsp]
@@ -506,12 +1095,12 @@ $LN19@FatCreateD:
 	jne	SHORT $LN16@FatCreateD
 $LN15@FatCreateD:
 
-; 81   : 				break;
+; 82   : 				break;
 
 	jmp	SHORT $LN17@FatCreateD
 $LN16@FatCreateD:
 
-; 82   : 			extract[i] = p[i];
+; 83   : 			extract[i] = p[i];
 
 	movsxd	rax, DWORD PTR i$2[rsp]
 	movsxd	rcx, DWORD PTR i$2[rsp]
@@ -519,12 +1108,12 @@ $LN16@FatCreateD:
 	movzx	eax, BYTE PTR [rdx+rax]
 	mov	BYTE PTR extract$[rsp+rcx], al
 
-; 83   : 		}
+; 84   : 		}
 
 	jmp	SHORT $LN18@FatCreateD
 $LN17@FatCreateD:
 
-; 84   : 		p = strchr(p + 1, '/');
+; 85   : 		p = strchr(p + 1, '/');
 
 	mov	rax, QWORD PTR p$[rsp]
 	inc	rax
@@ -533,54 +1122,54 @@ $LN17@FatCreateD:
 	call	strchr
 	mov	QWORD PTR p$[rsp], rax
 
-; 85   : 		if (p)
+; 86   : 		if (p)
 
 	cmp	QWORD PTR p$[rsp], 0
 	je	SHORT $LN14@FatCreateD
 
-; 86   : 			p++;
+; 87   : 			p++;
 
 	mov	rax, QWORD PTR p$[rsp]
 	inc	rax
 	mov	QWORD PTR p$[rsp], rax
 $LN14@FatCreateD:
 
-; 87   : 	}
+; 88   : 	}
 
 	jmp	$LN21@FatCreateD
 $LN20@FatCreateD:
 
-; 88   : 
-; 89   : 	char fname[11];
-; 90   : 	memset(fname, 0, 11);
+; 89   : 
+; 90   : 	char fname[11];
+; 91   : 	memset(fname, 0, 11);
 
 	mov	r8d, 11
 	xor	edx, edx
 	lea	rcx, QWORD PTR fname$[rsp]
 	call	memset
 
-; 91   : 	FatToDOSFilename(extract, fname, 11);
+; 92   : 	FatToDOSFilename(extract, fname, 11);
 
 	mov	r8d, 11
 	lea	rdx, QWORD PTR fname$[rsp]
 	lea	rcx, QWORD PTR extract$[rsp]
 	call	?FatToDOSFilename@@YAXPEBDPEADI@Z	; FatToDOSFilename
 
-; 92   : 	fname[11] = 0;
+; 93   : 	fname[11] = 0;
 
 	mov	eax, 1
 	imul	rax, rax, 11
 	mov	BYTE PTR fname$[rsp+rax], 0
 $LN13@FatCreateD:
 
-; 93   : 
-; 94   : 	while (1) {
+; 94   : 
+; 95   : 	while (1) {
 
 	xor	eax, eax
 	cmp	eax, 1
 	je	$LN12@FatCreateD
 
-; 95   : 		for (int j = 0; j < _fs->__SectorPerCluster; j++) {
+; 96   : 		for (int j = 0; j < _fs->__SectorPerCluster; j++) {
 
 	mov	DWORD PTR j$6[rsp], 0
 	jmp	SHORT $LN11@FatCreateD
@@ -594,14 +1183,14 @@ $LN11@FatCreateD:
 	cmp	DWORD PTR j$6[rsp], eax
 	jge	$LN9@FatCreateD
 
-; 96   : 			memset(buff, 0, PAGE_SIZE);
+; 97   : 			memset(buff, 0, PAGE_SIZE);
 
 	mov	r8d, 4096				; 00001000H
 	xor	edx, edx
 	mov	rcx, QWORD PTR buff$[rsp]
 	call	memset
 
-; 97   : 			AuVDiskRead(_fs->vdisk, FatClusterToSector32(_fs, parent_clust) + j, 1, (uint64_t*)V2P((size_t)buff));
+; 98   : 			AuVDiskRead(_fs->vdisk, FatClusterToSector32(_fs, parent_clust) + j, 1, (uint64_t*)V2P((size_t)buff));
 
 	mov	rcx, QWORD PTR buff$[rsp]
 	call	V2P
@@ -620,13 +1209,13 @@ $LN11@FatCreateD:
 	mov	rcx, QWORD PTR [rax+8]
 	call	AuVDiskRead
 
-; 98   : 
-; 99   : 			FatDir *dirent = (FatDir*)buff;
+; 99   : 
+; 100  : 			FatDir *dirent = (FatDir*)buff;
 
 	mov	rax, QWORD PTR buff$[rsp]
 	mov	QWORD PTR dirent$1[rsp], rax
 
-; 100  : 			for (int i = 0; i < 16; i++) {
+; 101  : 			for (int i = 0; i < 16; i++) {
 
 	mov	DWORD PTR i$7[rsp], 0
 	jmp	SHORT $LN8@FatCreateD
@@ -638,7 +1227,7 @@ $LN8@FatCreateD:
 	cmp	DWORD PTR i$7[rsp], 16
 	jge	$LN6@FatCreateD
 
-; 101  : 				if (dirent->filename[0] == 0x00 || dirent->filename[0] == 0xE5) {
+; 102  : 				if (dirent->filename[0] == 0x00 || dirent->filename[0] == 0xE5) {
 
 	mov	eax, 1
 	imul	rax, rax, 0
@@ -654,9 +1243,9 @@ $LN8@FatCreateD:
 	jne	$LN5@FatCreateD
 $LN4@FatCreateD:
 
-; 102  : 
-; 103  : 					/* fill this direntry*/
-; 104  : 					memcpy(dirent->filename, fname, 11);
+; 103  : 
+; 104  : 					/* fill this direntry*/
+; 105  : 					memcpy(dirent->filename, fname, 11);
 
 	mov	rax, QWORD PTR dirent$1[rsp]
 	mov	r8d, 11
@@ -664,41 +1253,41 @@ $LN4@FatCreateD:
 	mov	rcx, rax
 	call	memcpy
 
-; 105  : 
-; 106  : 					/* allocate a new cluster for dir*/
-; 107  : 					uint32_t cluster = FatFindFreeCluster(fsys);
+; 106  : 
+; 107  : 					/* allocate a new cluster for dir*/
+; 108  : 					uint32_t cluster = FatFindFreeCluster(fsys);
 
 	mov	rcx, QWORD PTR fsys$[rsp]
 	call	?FatFindFreeCluster@@YAIPEAU__VFS_NODE__@@@Z ; FatFindFreeCluster
 	mov	DWORD PTR cluster$4[rsp], eax
 
-; 108  : 					FatAllocCluster(fsys, cluster, FAT_EOC_MARK);
+; 109  : 					FatAllocCluster(fsys, cluster, FAT_EOC_MARK);
 
 	mov	r8d, -8					; fffffff8H
 	mov	edx, DWORD PTR cluster$4[rsp]
 	mov	rcx, QWORD PTR fsys$[rsp]
 	call	?FatAllocCluster@@YAXPEAU__VFS_NODE__@@HI@Z ; FatAllocCluster
 
-; 109  : 					FatClearCluster(fsys, cluster);
+; 110  : 					FatClearCluster(fsys, cluster);
 
 	mov	edx, DWORD PTR cluster$4[rsp]
 	mov	rcx, QWORD PTR fsys$[rsp]
 	call	?FatClearCluster@@YAXPEAU__VFS_NODE__@@I@Z ; FatClearCluster
 
-; 110  : 
-; 111  : 					dirent->attrib = FAT_ATTRIBUTE_DIRECTORY;
+; 111  : 
+; 112  : 					dirent->attrib = FAT_ATTRIBUTE_DIRECTORY;
 
 	mov	rax, QWORD PTR dirent$1[rsp]
 	mov	BYTE PTR [rax+11], 16
 
-; 112  : 					dirent->first_cluster = cluster & 0x0000FFFF;
+; 113  : 					dirent->first_cluster = cluster & 0x0000FFFF;
 
 	mov	eax, DWORD PTR cluster$4[rsp]
 	and	eax, 65535				; 0000ffffH
 	mov	rcx, QWORD PTR dirent$1[rsp]
 	mov	WORD PTR [rcx+26], ax
 
-; 113  : 					dirent->first_cluster_hi_bytes = (cluster & 0x0FFF0000) >> 16;
+; 114  : 					dirent->first_cluster_hi_bytes = (cluster & 0x0FFF0000) >> 16;
 
 	mov	eax, DWORD PTR cluster$4[rsp]
 	and	eax, 268369920				; 0fff0000H
@@ -706,78 +1295,78 @@ $LN4@FatCreateD:
 	mov	rcx, QWORD PTR dirent$1[rsp]
 	mov	WORD PTR [rcx+20], ax
 
-; 114  : 					dirent->date_created = FatFormatDate();
+; 115  : 					dirent->date_created = FatFormatDate();
 
 	call	?FatFormatDate@@YAGXZ			; FatFormatDate
 	mov	rcx, QWORD PTR dirent$1[rsp]
 	mov	WORD PTR [rcx+16], ax
 
-; 115  : 					dirent->time_created = FatFormatTime();
+; 116  : 					dirent->time_created = FatFormatTime();
 
 	call	?FatFormatTime@@YAGXZ			; FatFormatTime
 	mov	rcx, QWORD PTR dirent$1[rsp]
 	mov	WORD PTR [rcx+14], ax
 
-; 116  : 					dirent->last_wrt_date = dirent->date_created;
+; 117  : 					dirent->last_wrt_date = dirent->date_created;
 
 	mov	rax, QWORD PTR dirent$1[rsp]
 	mov	rcx, QWORD PTR dirent$1[rsp]
 	movzx	ecx, WORD PTR [rcx+16]
 	mov	WORD PTR [rax+24], cx
 
-; 117  : 					dirent->last_wrt_time = dirent->last_wrt_time;
+; 118  : 					dirent->last_wrt_time = dirent->last_wrt_time;
 
 	mov	rax, QWORD PTR dirent$1[rsp]
 	movzx	ecx, WORD PTR [rax+22]
 	mov	WORD PTR [rax+22], cx
 
-; 118  : 					dirent->date_last_accessed = 0;
+; 119  : 					dirent->date_last_accessed = 0;
 
 	xor	eax, eax
 	mov	rcx, QWORD PTR dirent$1[rsp]
 	mov	WORD PTR [rcx+18], ax
 
-; 119  : 					dirent->file_size = 0;
+; 120  : 					dirent->file_size = 0;
 
 	mov	rax, QWORD PTR dirent$1[rsp]
 	mov	DWORD PTR [rax+28], 0
 
-; 120  : 
-; 121  : 					uint64_t* entrybuf = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
+; 121  : 
+; 122  : 					uint64_t* entrybuf = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
 
 	call	AuPmmngrAlloc
 	mov	rcx, rax
 	call	P2V
 	mov	QWORD PTR entrybuf$8[rsp], rax
 
-; 122  : 					memset(entrybuf, 0, PAGE_SIZE);
+; 123  : 					memset(entrybuf, 0, PAGE_SIZE);
 
 	mov	r8d, 4096				; 00001000H
 	xor	edx, edx
 	mov	rcx, QWORD PTR entrybuf$8[rsp]
 	call	memset
 
-; 123  : 
-; 124  : 					FatDir* dot_entry = (FatDir*)entrybuf;
+; 124  : 
+; 125  : 					FatDir* dot_entry = (FatDir*)entrybuf;
 
 	mov	rax, QWORD PTR entrybuf$8[rsp]
 	mov	QWORD PTR dot_entry$5[rsp], rax
 
-; 125  : 					memset(dot_entry, 0, sizeof(FatDir));
+; 126  : 					memset(dot_entry, 0, sizeof(FatDir));
 
 	mov	r8d, 32					; 00000020H
 	xor	edx, edx
 	mov	rcx, QWORD PTR dot_entry$5[rsp]
 	call	memset
 
-; 126  : 					dot_entry->filename[0] = '.';
+; 127  : 					dot_entry->filename[0] = '.';
 
 	mov	eax, 1
 	imul	rax, rax, 0
 	mov	rcx, QWORD PTR dot_entry$5[rsp]
 	mov	BYTE PTR [rcx+rax], 46			; 0000002eH
 
-; 127  : 					memset(dot_entry->filename + 1, 0x20, 10);
+; 128  : 					memset(dot_entry->filename + 1, 0x20, 10);
 
 	mov	rax, QWORD PTR dot_entry$5[rsp]
 	inc	rax
@@ -786,175 +1375,175 @@ $LN4@FatCreateD:
 	mov	rcx, rax
 	call	memset
 
-; 128  : 					dot_entry->attrib = FAT_ATTRIBUTE_DIRECTORY;
+; 129  : 					dot_entry->attrib = FAT_ATTRIBUTE_DIRECTORY;
 
 	mov	rax, QWORD PTR dot_entry$5[rsp]
 	mov	BYTE PTR [rax+11], 16
 
-; 129  : 					dot_entry->date_created = dirent->date_created;
+; 130  : 					dot_entry->date_created = dirent->date_created;
 
 	mov	rax, QWORD PTR dot_entry$5[rsp]
 	mov	rcx, QWORD PTR dirent$1[rsp]
 	movzx	ecx, WORD PTR [rcx+16]
 	mov	WORD PTR [rax+16], cx
 
-; 130  : 					dot_entry->time_created = dirent->time_created;
+; 131  : 					dot_entry->time_created = dirent->time_created;
 
 	mov	rax, QWORD PTR dot_entry$5[rsp]
 	mov	rcx, QWORD PTR dirent$1[rsp]
 	movzx	ecx, WORD PTR [rcx+14]
 	mov	WORD PTR [rax+14], cx
 
-; 131  : 					dot_entry->file_size = 0;
+; 132  : 					dot_entry->file_size = 0;
 
 	mov	rax, QWORD PTR dot_entry$5[rsp]
 	mov	DWORD PTR [rax+28], 0
 
-; 132  : 					dot_entry->first_cluster = dirent->first_cluster;
+; 133  : 					dot_entry->first_cluster = dirent->first_cluster;
 
 	mov	rax, QWORD PTR dot_entry$5[rsp]
 	mov	rcx, QWORD PTR dirent$1[rsp]
 	movzx	ecx, WORD PTR [rcx+26]
 	mov	WORD PTR [rax+26], cx
 
-; 133  : 					dot_entry->first_cluster_hi_bytes = dirent->first_cluster_hi_bytes;
+; 134  : 					dot_entry->first_cluster_hi_bytes = dirent->first_cluster_hi_bytes;
 
 	mov	rax, QWORD PTR dot_entry$5[rsp]
 	mov	rcx, QWORD PTR dirent$1[rsp]
 	movzx	ecx, WORD PTR [rcx+20]
 	mov	WORD PTR [rax+20], cx
 
-; 134  : 					dot_entry->last_wrt_date = dirent->last_wrt_date;
+; 135  : 					dot_entry->last_wrt_date = dirent->last_wrt_date;
 
 	mov	rax, QWORD PTR dot_entry$5[rsp]
 	mov	rcx, QWORD PTR dirent$1[rsp]
 	movzx	ecx, WORD PTR [rcx+24]
 	mov	WORD PTR [rax+24], cx
 
-; 135  : 					dot_entry->last_wrt_time = dirent->last_wrt_time;
+; 136  : 					dot_entry->last_wrt_time = dirent->last_wrt_time;
 
 	mov	rax, QWORD PTR dot_entry$5[rsp]
 	mov	rcx, QWORD PTR dirent$1[rsp]
 	movzx	ecx, WORD PTR [rcx+22]
 	mov	WORD PTR [rax+22], cx
 
-; 136  : 
-; 137  : 					FatDir* dotdot = (FatDir*)(entrybuf + sizeof(FatDir));
+; 137  : 
+; 138  : 					FatDir* dotdot = (FatDir*)(entrybuf + sizeof(FatDir));
 
 	mov	rax, QWORD PTR entrybuf$8[rsp]
 	add	rax, 256				; 00000100H
 	mov	QWORD PTR dotdot$3[rsp], rax
 
-; 138  : 					memset(dotdot, 0, sizeof(FatDir));
+; 139  : 					memset(dotdot, 0, sizeof(FatDir));
 
 	mov	r8d, 32					; 00000020H
 	xor	edx, edx
 	mov	rcx, QWORD PTR dotdot$3[rsp]
 	call	memset
 
-; 139  : 					dotdot->filename[0] = '.';
+; 140  : 					dotdot->filename[0] = '.';
 
 	mov	eax, 1
 	imul	rax, rax, 0
 	mov	rcx, QWORD PTR dotdot$3[rsp]
 	mov	BYTE PTR [rcx+rax], 46			; 0000002eH
 
-; 140  : 					dotdot->filename[1] = '.';
+; 141  : 					dotdot->filename[1] = '.';
 
 	mov	eax, 1
 	imul	rax, rax, 1
 	mov	rcx, QWORD PTR dotdot$3[rsp]
 	mov	BYTE PTR [rcx+rax], 46			; 0000002eH
 
-; 141  : 					dotdot->attrib = FAT_ATTRIBUTE_DIRECTORY;
+; 142  : 					dotdot->attrib = FAT_ATTRIBUTE_DIRECTORY;
 
 	mov	rax, QWORD PTR dotdot$3[rsp]
 	mov	BYTE PTR [rax+11], 16
 
-; 142  : 					dotdot->date_created = dirent->date_created;
+; 143  : 					dotdot->date_created = dirent->date_created;
 
 	mov	rax, QWORD PTR dotdot$3[rsp]
 	mov	rcx, QWORD PTR dirent$1[rsp]
 	movzx	ecx, WORD PTR [rcx+16]
 	mov	WORD PTR [rax+16], cx
 
-; 143  : 					dotdot->time_created = dirent->time_created;
+; 144  : 					dotdot->time_created = dirent->time_created;
 
 	mov	rax, QWORD PTR dotdot$3[rsp]
 	mov	rcx, QWORD PTR dirent$1[rsp]
 	movzx	ecx, WORD PTR [rcx+14]
 	mov	WORD PTR [rax+14], cx
 
-; 144  : 					dotdot->date_last_accessed = dirent->date_last_accessed;
+; 145  : 					dotdot->date_last_accessed = dirent->date_last_accessed;
 
 	mov	rax, QWORD PTR dotdot$3[rsp]
 	mov	rcx, QWORD PTR dirent$1[rsp]
 	movzx	ecx, WORD PTR [rcx+18]
 	mov	WORD PTR [rax+18], cx
 
-; 145  : 					dotdot->file_size = 0;
+; 146  : 					dotdot->file_size = 0;
 
 	mov	rax, QWORD PTR dotdot$3[rsp]
 	mov	DWORD PTR [rax+28], 0
 
-; 146  : 
-; 147  : 					if (parent_clust == _fs->__RootDirFirstCluster) {
+; 147  : 
+; 148  : 					if (parent_clust == _fs->__RootDirFirstCluster) {
 
 	mov	rax, QWORD PTR _fs$[rsp]
 	mov	eax, DWORD PTR [rax+34]
 	cmp	DWORD PTR parent_clust$[rsp], eax
 	jne	SHORT $LN3@FatCreateD
 
-; 148  : 						dotdot->first_cluster = 0 & 0x0000FFFF;
+; 149  : 						dotdot->first_cluster = 0 & 0x0000FFFF;
 
 	xor	eax, eax
 	mov	rcx, QWORD PTR dotdot$3[rsp]
 	mov	WORD PTR [rcx+26], ax
 
-; 149  : 						dotdot->first_cluster_hi_bytes = (0 & 0x0FFF0000) >> 16;
+; 150  : 						dotdot->first_cluster_hi_bytes = (0 & 0x0FFF0000) >> 16;
 
 	xor	eax, eax
 	mov	rcx, QWORD PTR dotdot$3[rsp]
 	mov	WORD PTR [rcx+20], ax
 
-; 150  : 					}
-; 151  : 					else {
+; 151  : 					}
+; 152  : 					else {
 
 	jmp	SHORT $LN2@FatCreateD
 $LN3@FatCreateD:
 
-; 152  : 						dotdot->first_cluster = parent_clust & 0x0000FFFF;
+; 153  : 						dotdot->first_cluster = parent_clust & 0x0000FFFF;
 
 	mov	eax, DWORD PTR parent_clust$[rsp]
 	and	eax, 65535				; 0000ffffH
 	mov	rcx, QWORD PTR dotdot$3[rsp]
 	mov	WORD PTR [rcx+26], ax
 
-; 153  : 						dotdot->first_cluster_hi_bytes = (0 & 0x0FFF0000) >> 16;
+; 154  : 						dotdot->first_cluster_hi_bytes = (0 & 0x0FFF0000) >> 16;
 
 	xor	eax, eax
 	mov	rcx, QWORD PTR dotdot$3[rsp]
 	mov	WORD PTR [rcx+20], ax
 $LN2@FatCreateD:
 
-; 154  : 					}
-; 155  : 
-; 156  : 					dotdot->last_wrt_date = dirent->last_wrt_date;
+; 155  : 					}
+; 156  : 
+; 157  : 					dotdot->last_wrt_date = dirent->last_wrt_date;
 
 	mov	rax, QWORD PTR dotdot$3[rsp]
 	mov	rcx, QWORD PTR dirent$1[rsp]
 	movzx	ecx, WORD PTR [rcx+24]
 	mov	WORD PTR [rax+24], cx
 
-; 157  : 					dotdot->last_wrt_time = dirent->last_wrt_time;
+; 158  : 					dotdot->last_wrt_time = dirent->last_wrt_time;
 
 	mov	rax, QWORD PTR dotdot$3[rsp]
 	mov	rcx, QWORD PTR dirent$1[rsp]
 	movzx	ecx, WORD PTR [rcx+22]
 	mov	WORD PTR [rax+22], cx
 
-; 158  : 
-; 159  : 					AuVDiskWrite(_fs->vdisk, FatClusterToSector32(_fs, cluster), _fs->__SectorPerCluster, (uint64_t*)V2P((size_t)entrybuf));
+; 159  : 
+; 160  : 					AuVDiskWrite(_fs->vdisk, FatClusterToSector32(_fs, cluster), _fs->__SectorPerCluster, (uint64_t*)V2P((size_t)entrybuf));
 
 	mov	rcx, QWORD PTR entrybuf$8[rsp]
 	call	V2P
@@ -974,7 +1563,7 @@ $LN2@FatCreateD:
 	mov	rcx, QWORD PTR [rax+8]
 	call	AuVDiskWrite
 
-; 160  : 					AuVDiskWrite(_fs->vdisk, FatClusterToSector32(_fs, parent_clust) + j, 1, (uint64_t*)V2P((size_t)buff));
+; 161  : 					AuVDiskWrite(_fs->vdisk, FatClusterToSector32(_fs, parent_clust) + j, 1, (uint64_t*)V2P((size_t)buff));
 
 	mov	rcx, QWORD PTR buff$[rsp]
 	call	V2P
@@ -993,70 +1582,70 @@ $LN2@FatCreateD:
 	mov	rcx, QWORD PTR [rax+8]
 	call	AuVDiskWrite
 
-; 161  : 
-; 162  : 					AuPmmngrFree((void*)V2P((size_t)entrybuf));
+; 162  : 
+; 163  : 					AuPmmngrFree((void*)V2P((size_t)entrybuf));
 
 	mov	rcx, QWORD PTR entrybuf$8[rsp]
 	call	V2P
 	mov	rcx, rax
 	call	AuPmmngrFree
 
-; 163  : 					AuPmmngrFree((void*)V2P((size_t)buff));
+; 164  : 					AuPmmngrFree((void*)V2P((size_t)buff));
 
 	mov	rcx, QWORD PTR buff$[rsp]
 	call	V2P
 	mov	rcx, rax
 	call	AuPmmngrFree
 
-; 164  : 
-; 165  : 					strcpy(file->filename, extract);
+; 165  : 
+; 166  : 					strcpy(file->filename, extract);
 
 	mov	rax, QWORD PTR file$[rsp]
 	lea	rdx, QWORD PTR extract$[rsp]
 	mov	rcx, rax
 	call	strcpy
 
-; 166  : 					file->size = 0;
+; 167  : 					file->size = 0;
 
 	mov	rax, QWORD PTR file$[rsp]
 	mov	DWORD PTR [rax+32], 0
 
-; 167  : 					file->eof = 0;
+; 168  : 					file->eof = 0;
 
 	mov	rax, QWORD PTR file$[rsp]
 	mov	BYTE PTR [rax+36], 0
 
-; 168  : 					file->pos = 0;
+; 169  : 					file->pos = 0;
 
 	mov	rax, QWORD PTR file$[rsp]
 	mov	DWORD PTR [rax+40], 0
 
-; 169  : 					file->current = cluster;
+; 170  : 					file->current = cluster;
 
 	mov	eax, DWORD PTR cluster$4[rsp]
 	mov	rcx, QWORD PTR file$[rsp]
 	mov	QWORD PTR [rcx+56], rax
 
-; 170  : 					file->device = fsys;
+; 171  : 					file->device = fsys;
 
 	mov	rax, QWORD PTR file$[rsp]
 	mov	rcx, QWORD PTR fsys$[rsp]
 	mov	QWORD PTR [rax+72], rcx
 
-; 171  : 					file->first_block = file->current;
+; 172  : 					file->first_block = file->current;
 
 	mov	rax, QWORD PTR file$[rsp]
 	mov	rcx, QWORD PTR file$[rsp]
 	mov	rcx, QWORD PTR [rcx+56]
 	mov	QWORD PTR [rax+48], rcx
 
-; 172  : 					file->parent_block = parent_clust;
+; 173  : 					file->parent_block = parent_clust;
 
 	mov	rax, QWORD PTR file$[rsp]
 	mov	ecx, DWORD PTR parent_clust$[rsp]
 	mov	DWORD PTR [rax+44], ecx
 
-; 173  : 					file->flags |= FS_FLAG_DIRECTORY;
+; 174  : 					file->flags |= FS_FLAG_DIRECTORY;
 
 	mov	rax, QWORD PTR file$[rsp]
 	movzx	eax, WORD PTR [rax+64]
@@ -1064,81 +1653,81 @@ $LN2@FatCreateD:
 	mov	rcx, QWORD PTR file$[rsp]
 	mov	WORD PTR [rcx+64], ax
 
-; 174  : 					kfree(parent);
+; 175  : 					kfree(parent);
 
 	mov	rcx, QWORD PTR parent$[rsp]
 	call	kfree
 
-; 175  : 					return file;
+; 176  : 					return file;
 
 	mov	rax, QWORD PTR file$[rsp]
 	jmp	SHORT $LN26@FatCreateD
 $LN5@FatCreateD:
 
-; 176  : 				}
-; 177  : 				dirent++;
+; 177  : 				}
+; 178  : 				dirent++;
 
 	mov	rax, QWORD PTR dirent$1[rsp]
 	add	rax, 32					; 00000020H
 	mov	QWORD PTR dirent$1[rsp], rax
 
-; 178  : 			}
+; 179  : 			}
 
 	jmp	$LN7@FatCreateD
 $LN6@FatCreateD:
 
-; 179  : 		}
+; 180  : 		}
 
 	jmp	$LN10@FatCreateD
 $LN9@FatCreateD:
 
-; 180  : 
-; 181  : 		parent_clust = FatReadFAT(fsys, parent_clust);
+; 181  : 
+; 182  : 		parent_clust = FatReadFAT(fsys, parent_clust);
 
 	mov	edx, DWORD PTR parent_clust$[rsp]
 	mov	rcx, QWORD PTR fsys$[rsp]
 	call	?FatReadFAT@@YAIPEAU__VFS_NODE__@@I@Z	; FatReadFAT
 	mov	DWORD PTR parent_clust$[rsp], eax
 
-; 182  : 		if (parent_clust == (FAT_EOC_MARK & 0x0FFFFFFF))
+; 183  : 		if (parent_clust == (FAT_EOC_MARK & 0x0FFFFFFF))
 
 	cmp	DWORD PTR parent_clust$[rsp], 268435448	; 0ffffff8H
 	jne	SHORT $LN1@FatCreateD
 
-; 183  : 			break;
+; 184  : 			break;
 
 	jmp	SHORT $LN12@FatCreateD
 $LN1@FatCreateD:
 
-; 184  : 	}
+; 185  : 	}
 
 	jmp	$LN13@FatCreateD
 $LN12@FatCreateD:
 
-; 185  : 
-; 186  : 	AuPmmngrFree((void*)V2P((size_t)buff));
+; 186  : 
+; 187  : 	AuPmmngrFree((void*)V2P((size_t)buff));
 
 	mov	rcx, QWORD PTR buff$[rsp]
 	call	V2P
 	mov	rcx, rax
 	call	AuPmmngrFree
 
-; 187  : 	kfree(parent);
+; 188  : 	kfree(parent);
 
 	mov	rcx, QWORD PTR parent$[rsp]
 	call	kfree
 
-; 188  : 	kfree(file);
+; 189  : 	kfree(file);
 
 	mov	rcx, QWORD PTR file$[rsp]
 	call	kfree
 
-; 189  : 	return NULL;
+; 190  : 	return NULL;
 
 	xor	eax, eax
 $LN26@FatCreateD:
 
-; 190  : }
+; 191  : }
 
 	add	rsp, 216				; 000000d8H
 	ret	0

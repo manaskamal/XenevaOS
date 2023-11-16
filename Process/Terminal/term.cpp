@@ -475,8 +475,11 @@ void TerminalHandleMessage(PostEvent *e) {
 		if (ChitralekhaKeyGetCTRL()) {
 			if (c == KEY_C) {
 				if (shell_id > 0)
-					printf("Signal is buggy right now, needs fixing \n");
-					//_KeSendSignal(shell_id, SIGINT);
+					_KeSendSignal(shell_id, SIGINT);
+				c = '\n';
+			}
+			if (c == KEY_H) {
+				ChWindowHide(win);
 			}
 		}
 
@@ -527,6 +530,9 @@ void TerminalThread() {
 int main(int argc, char* arv[]){
 	app = ChitralekhaStartApp(argc, arv);
 	win = ChCreateWindow(app, (1 << 0), "Xeneva Terminal", 300, 300, 550, 400);
+	ChWindowBroadcastIcon(app, "/term.bmp");
+	win->info->alpha = true;
+	win->info->alphaValue = 0.7;
 	win->color = BLACK;
 	ChWindowPaint(win);
 	consolas = ChInitialiseFont(CONSOLAS);
@@ -585,8 +591,6 @@ int main(int argc, char* arv[]){
 
 	_KeProcessLoadExec(shell_id, "/xesh.exe", 0, 0);
 
-	int c_x = 0, c_y = 1;
-	printf("Terminal Buffer %x \n", &term_buffer[c_y * ws_col + c_x]);
 	PostEvent e;
 	memset(&e, 0, sizeof(PostEvent));
 	while (1) {

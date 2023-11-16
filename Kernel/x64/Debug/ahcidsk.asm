@@ -6,13 +6,13 @@ INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
 CONST	SEGMENT
-$SG3488	DB	'[AHCI]:Port Hung', 0aH, 00H
+$SG3511	DB	'[AHCI]:Port Hung', 0aH, 00H
 	ORG $+6
-$SG3494	DB	'[AHCI]: Port error ', 0dH, 0aH, 00H
+$SG3517	DB	'[AHCI]: Port error ', 0dH, 0aH, 00H
 	ORG $+2
-$SG3523	DB	'[AHCI]:Port Hung', 0aH, 00H
+$SG3546	DB	'[AHCI]:Port Hung', 0aH, 00H
 	ORG $+6
-$SG3558	DB	'ahci Port Supports cold presence %d', 0aH, 00H
+$SG3582	DB	'ahci Port Supports cold presence %d', 0aH, 00H
 CONST	ENDS
 PUBLIC	?AuAHCIDiskInitialise@@YAXPEAU_hba_port_@@@Z	; AuAHCIDiskInitialise
 PUBLIC	?AuAHCIStopCmd@@YAXPEAU_hba_port_@@@Z		; AuAHCIStopCmd
@@ -43,8 +43,8 @@ $pdata$?AuAHCIDiskRead@@YAXPEAU_hba_port_@@_KIPEA_K@Z DD imagerel $LN11
 $pdata$?AuAHCIDiskWrite@@YAXPEAU_hba_port_@@_KIPEA_K@Z DD imagerel $LN10
 	DD	imagerel $LN10+756
 	DD	imagerel $unwind$?AuAHCIDiskWrite@@YAXPEAU_hba_port_@@_KIPEA_K@Z
-$pdata$?AuAHCIDiskIdentify@@YAXPEAU_hba_port_@@_KIPEA_K@Z DD imagerel $LN12
-	DD	imagerel $LN12+995
+$pdata$?AuAHCIDiskIdentify@@YAXPEAU_hba_port_@@_KIPEA_K@Z DD imagerel $LN13
+	DD	imagerel $LN13+1014
 	DD	imagerel $unwind$?AuAHCIDiskIdentify@@YAXPEAU_hba_port_@@_KIPEA_K@Z
 $pdata$?AuAHCIVDiskRead@@YAHPEAU_VDISK_@@_KIPEA_K@Z DD imagerel $LN3
 	DD	imagerel $LN3+72
@@ -165,8 +165,8 @@ spin$ = 56
 command_slot$ = 60
 cmd_list$ = 64
 buffer_whole$ = 72
-tv346 = 80
-tv341 = 84
+tv349 = 80
+tv344 = 84
 port$ = 112
 lba$ = 120
 count$ = 128
@@ -175,7 +175,7 @@ buffer$ = 136
 
 ; 193  : void AuAHCIDiskIdentify(HBA_PORT *port, uint64_t lba, uint32_t count, uint64_t *buffer) {
 
-$LN12:
+$LN13:
 	mov	QWORD PTR [rsp+32], r9
 	mov	DWORD PTR [rsp+24], r8d
 	mov	QWORD PTR [rsp+16], rdx
@@ -248,16 +248,16 @@ $LN12:
 ; 206  : 	for (i = 0; i < cmd_list->prdtl; i++){
 
 	mov	DWORD PTR i$[rsp], 0
-	jmp	SHORT $LN9@AuAHCIDisk
-$LN8@AuAHCIDisk:
+	jmp	SHORT $LN10@AuAHCIDisk
+$LN9@AuAHCIDisk:
 	mov	eax, DWORD PTR i$[rsp]
 	inc	eax
 	mov	DWORD PTR i$[rsp], eax
-$LN9@AuAHCIDisk:
+$LN10@AuAHCIDisk:
 	mov	rax, QWORD PTR cmd_list$[rsp]
 	movzx	eax, WORD PTR [rax+2]
 	cmp	DWORD PTR i$[rsp], eax
-	jge	$LN7@AuAHCIDisk
+	jge	$LN8@AuAHCIDisk
 
 ; 207  : 		tbl->prdt[i].data_base_address = buffer_whole & 0xffffffff;
 
@@ -323,8 +323,8 @@ $LN9@AuAHCIDisk:
 
 ; 213  : 	}
 
-	jmp	$LN8@AuAHCIDisk
-$LN7@AuAHCIDisk:
+	jmp	$LN9@AuAHCIDisk
+$LN8@AuAHCIDisk:
 
 ; 214  : 	tbl->prdt[i].data_base_address = buffer_whole & 0xffffffff;
 
@@ -465,7 +465,7 @@ $LN7@AuAHCIDisk:
 	and	eax, 255				; 000000ffH
 	mov	rcx, QWORD PTR fis$[rsp]
 	mov	BYTE PTR [rcx+13], al
-$LN6@AuAHCIDisk:
+$LN7@AuAHCIDisk:
 
 ; 232  : 
 ; 233  : 	while ((port->tfd & (ATA_SR_BSY | ATA_SR_DRQ)) && spin < 1000000) {
@@ -474,9 +474,9 @@ $LN6@AuAHCIDisk:
 	mov	eax, DWORD PTR [rax+32]
 	and	eax, 136				; 00000088H
 	test	eax, eax
-	je	SHORT $LN5@AuAHCIDisk
+	je	SHORT $LN6@AuAHCIDisk
 	cmp	DWORD PTR spin$[rsp], 1000000		; 000f4240H
-	jge	SHORT $LN5@AuAHCIDisk
+	jge	SHORT $LN6@AuAHCIDisk
 
 ; 234  : 		spin++;
 
@@ -486,65 +486,76 @@ $LN6@AuAHCIDisk:
 
 ; 235  : 	}
 
-	jmp	SHORT $LN6@AuAHCIDisk
-$LN5@AuAHCIDisk:
+	jmp	SHORT $LN7@AuAHCIDisk
+$LN6@AuAHCIDisk:
 
 ; 236  : 	if (spin == 1000000)
 
 	cmp	DWORD PTR spin$[rsp], 1000000		; 000f4240H
-	jne	SHORT $LN4@AuAHCIDisk
+	jne	SHORT $LN5@AuAHCIDisk
 
 ; 237  : 		AuTextOut("[AHCI]:Port Hung\n");
 
-	lea	rcx, OFFSET FLAT:$SG3523
+	lea	rcx, OFFSET FLAT:$SG3546
 	call	AuTextOut
-$LN4@AuAHCIDisk:
+$LN5@AuAHCIDisk:
 
 ; 238  : 
 ; 239  : 	port->ci = 1 << command_slot;
 
 	mov	eax, DWORD PTR command_slot$[rsp]
 	mov	ecx, 1
-	mov	DWORD PTR tv341[rsp], ecx
+	mov	DWORD PTR tv344[rsp], ecx
 	movzx	ecx, al
-	mov	eax, DWORD PTR tv341[rsp]
+	mov	eax, DWORD PTR tv344[rsp]
 	shl	eax, cl
 	mov	rcx, QWORD PTR port$[rsp]
 	mov	DWORD PTR [rcx+56], eax
-$LN3@AuAHCIDisk:
+$LN4@AuAHCIDisk:
 
 ; 240  : 	while (1) {
 
 	xor	eax, eax
 	cmp	eax, 1
-	je	SHORT $LN2@AuAHCIDisk
+	je	SHORT $LN3@AuAHCIDisk
 
 ; 241  : 		if ((port->ci & (1 << command_slot)) == 0)
 
 	mov	eax, DWORD PTR command_slot$[rsp]
 	mov	ecx, 1
-	mov	DWORD PTR tv346[rsp], ecx
+	mov	DWORD PTR tv349[rsp], ecx
 	movzx	ecx, al
-	mov	eax, DWORD PTR tv346[rsp]
+	mov	eax, DWORD PTR tv349[rsp]
 	shl	eax, cl
 	mov	rcx, QWORD PTR port$[rsp]
 	mov	ecx, DWORD PTR [rcx+56]
 	and	ecx, eax
 	mov	eax, ecx
 	test	eax, eax
-	jne	SHORT $LN1@AuAHCIDisk
+	jne	SHORT $LN2@AuAHCIDisk
 
 ; 242  : 			break;
 
-	jmp	SHORT $LN2@AuAHCIDisk
-$LN1@AuAHCIDisk:
-
-; 243  : 		/*if (port->is & (1<<30))
-; 244  : 		break;*/
-; 245  : 	}
-
 	jmp	SHORT $LN3@AuAHCIDisk
 $LN2@AuAHCIDisk:
+
+; 243  : 		if (port->is & (1 << 30))
+
+	mov	rax, QWORD PTR port$[rsp]
+	mov	eax, DWORD PTR [rax+16]
+	and	eax, 1073741824				; 40000000H
+	test	eax, eax
+	je	SHORT $LN1@AuAHCIDisk
+
+; 244  : 			break;
+
+	jmp	SHORT $LN3@AuAHCIDisk
+$LN1@AuAHCIDisk:
+
+; 245  : 	}
+
+	jmp	SHORT $LN4@AuAHCIDisk
+$LN3@AuAHCIDisk:
 
 ; 246  : }
 
@@ -813,7 +824,7 @@ $LN6@AuAHCIDisk:
 
 ; 171  : 		AuTextOut("[AHCI]:Port Hung\n");
 
-	lea	rcx, OFFSET FLAT:$SG3488
+	lea	rcx, OFFSET FLAT:$SG3511
 	call	AuTextOut
 $LN5@AuAHCIDisk:
 
@@ -866,7 +877,7 @@ $LN2@AuAHCIDisk:
 
 ; 178  : 			AuTextOut("[AHCI]: Port error \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG3494
+	lea	rcx, OFFSET FLAT:$SG3517
 	call	AuTextOut
 
 ; 179  : 			break;
@@ -1530,7 +1541,7 @@ $LN12:
 
 	movzx	eax, BYTE PTR cold_presence$[rsp]
 	mov	edx, eax
-	lea	rcx, OFFSET FLAT:$SG3558
+	lea	rcx, OFFSET FLAT:$SG3582
 	call	AuTextOut
 $LN9@AuAHCIDisk:
 

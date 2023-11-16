@@ -105,6 +105,33 @@ void FatToDOSFilename(const char* filename, char* fname, unsigned int fname_leng
 }
 
 /*
+ * FatFromDosToFilename -- converts fat directoy entry filename
+ * to human readable filename
+ */
+void FatFromDosToFilename(char* filename, char* dirfname) {
+	memset(filename, 0, 11);
+	int index = 0;
+	for (int i = 0; i < 8; i++) {
+		if (dirfname[i] != 0x20 && dirfname[i] > 0x20) {
+			filename[i] = dirfname[i];
+			index++;
+		}
+	}
+	int extension = index;
+	filename[index] = '.';
+	index++;
+	bool _contain_ext = false;
+	for (int i = 0; i < 3; i++) {
+		if (dirfname[8 + i] != 0x20) {
+			_contain_ext = true;
+			filename[index + i] = dirfname[8 + i];
+		}
+	}
+	if (!_contain_ext)
+		filename[extension] = '\0';
+}
+
+/*
  * FatReadFAT -- read the file allocation table
  * @param vdisk -- pointer to vdisk
  * @param cluster_index -- index of the cluster
@@ -321,8 +348,8 @@ AuVFSNode* FatLocateSubDir(AuVFSNode* fsys,AuVFSNode* kfile, const char* filenam
 					file->first_block = file->current;
 					file->device = fsys;
 					file->parent_block = kfile->current;
-					if (pkDir->attrib == 0x10)
-						file->flags = FS_FLAG_DIRECTORY;
+					if (pkDir->attrib & 0x10)
+						file->flags |= FS_FLAG_DIRECTORY;
 					else
 						file->flags |= FS_FLAG_GENERAL;
 
@@ -385,7 +412,7 @@ AuVFSNode* FatLocateDir(AuVFSNode* fsys, const char* dir) {
 				file->pos = 0;
 				file->device = fsys;
 				file->parent_block = fs->__RootDirFirstCluster;
-				if (dirent->attrib == 0x10)
+				if (dirent->attrib & 0x10)
 					file->flags |= FS_FLAG_DIRECTORY;
 				else
 					file->flags |= FS_FLAG_GENERAL;
@@ -494,6 +521,8 @@ size_t FatGetClusterFor(AuVFSNode* fs,AuVFSNode* file, uint64_t offset){
 }
 
 
+
+
 /*
 * FatInitialise -- initialise the fat file system
 * @param vdisk -- Pointer to vdisk structure
@@ -561,6 +590,8 @@ AuVFSNode* FatInitialise(AuVDisk *vdisk, char* mountname){
 	fsys->create_dir = FatCreateDir;
 	fsys->create_file = FatCreateFile;
 	fsys->get_blockfor = FatGetClusterFor;
+	fsys->opendir = FatOpenDir;
+	fsys->read_dir = FatDirectoryRead;
 	AuVFSAddFileSystem(fsys);
 	AuVFSRegisterRoot(fsys);
 

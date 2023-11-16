@@ -30,6 +30,7 @@
 #include <Hal/x86_64_exception.h>
 #include <Hal/x86_64_sched.h>
 #include <Hal/x86_64_cpu.h>
+#include <Hal/x86_64_gdt.h>
 #include <Hal/pcpu.h>
 #include <process.h>
 #include <Hal/x86_64_lowlevel.h>
@@ -42,6 +43,7 @@
 #include <loader.h>
 #include <Mm/kmalloc.h>
 #include <Hal/x86_64_signal.h>
+#include <Serv/sysserv.h>
 #include <Hal/serial.h>
 
 void panic(const char* msg, ...) {
@@ -167,6 +169,8 @@ void general_protection_fault(size_t v, void* p){
 	for (;;);
 }
 
+extern "C" bool _signal_debug;
+extern "C" bool syscall_debug;
 //! Most important for good performance is page fault! whenever any memory related errors occurs
 //! it get fired and new page swapping process should be allocated
 
@@ -189,15 +193,16 @@ void page_fault(size_t vector, void* param){
 		goto skip;
 	}
 	if (thr->returnableSignal) {
-		SeTextOut("Thr has returnable signal \r\n");
 		Signal* sig = (Signal*)thr->returnableSignal;
 		x86_64_cpu_regs_t* ctx = (x86_64_cpu_regs_t*)(thr->frame.kern_esp - sizeof(x86_64_cpu_regs_t));
+		x86_64_cpu_regs_t* srcCtx = (x86_64_cpu_regs_t*)sig->signalStack;
 		memcpy(ctx, sig->signalStack, sizeof(x86_64_cpu_regs_t));
 		memcpy(&thr->frame, sig->signalState, sizeof(AuThreadFrame));
-		kfree(sig->signalState);
 		kfree(sig->signalStack);
 		kfree(sig);
 		thr->returnableSignal = NULL;
+		thr->pendingSigCount = 0;
+		thr->signalQueue = 0;
 		return;
 	}
 

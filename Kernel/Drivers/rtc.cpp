@@ -32,6 +32,7 @@
 #include <Hal/hal.h>
 #include <Mm/kmalloc.h>
 #include <string.h>
+#include <autimer.h>
 
 #define CMOS_ADDR 0x70
 #define CMOS_DATA 0x71
@@ -88,6 +89,8 @@ void AuRTCClockUpdate(size_t v, void* p) {
 	if (ready)
 		AuRTCReadDateTime();
 
+	AuTimerFire(__rtc->second, __rtc->minute, __rtc->hour);
+	
 	AuEnableInterrupt();
 	AuInterruptEnd(8);
 }

@@ -333,3 +333,28 @@ bool ChitralekhaKeyGetAlt() {
 bool ChitralekhaKeyGetShift() {
 	return chkey->_shift;
 }
+
+/*
+ * ChitralekhaKeySetCtrl -- forcefully modify the ctrl bit
+ * @param bit -- bit to set 0,1
+ */
+void ChitralekhaKeySetCtrl(bool bit) {
+	chkey->_ctrl = bit;
+}
+
+/*
+ * ChitralekhaKeySetAlt - forcefully modify the alt bit
+ * @param bit -- bit to set 0,1
+ */
+void ChitralekhaKeySetAlt(bool bit) {
+	chkey->_ctrl = bit;
+}
+
+/*
+ * ChitralekhaKeySetShift -- forcefully modify the shift
+ * bit
+ * @param bit -- bit to set 0,1
+ */
+void ChitralekhaKeySetShift(bool bit) {
+	chkey->_shift = bit;
+}

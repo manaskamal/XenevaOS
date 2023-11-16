@@ -45,6 +45,13 @@
 #define WINDOW_GLOBAL_CONTROL_MINIMIZE 3
 #define WINDOW_GLOBAL_CONTROL_CUSTOM 4
 
+#define WINDOW_FLAG_MOVABLE (1<<0)
+#define WINDOW_FLAG_STATIC  (1<<1)
+#define WINDOW_FLAG_ALWAYS_ON_TOP  (1<<2)
+#define WINDOW_FLAG_NON_RESIZABLE  (1<<3)
+#define WINDOW_FLAG_BROADCAST_LISTENER (1<<4)
+#define WINDOW_FLAG_ANIMATED (1<<5)
+
 #pragma pack(push,1)
 typedef struct _ChSharedWin_ {
 	ChRect rect[256];
@@ -56,6 +63,8 @@ typedef struct _ChSharedWin_ {
 	uint32_t width;
 	uint32_t height;
 	bool alpha;
+	bool hide;
+	double alphaValue;
 }ChSharedWinInfo;
 #pragma pack(pop)
 
@@ -67,6 +76,7 @@ typedef struct _chwin_ {
 	char* title;
 	ChSharedWinInfo* info;
 	ChitralekhaApp* app;
+	uint32_t handle;
 	uint32_t color;
 	list_t* GlobalControls;
 	void(*ChWinPaint)(_chwin_ *win);
@@ -103,6 +113,15 @@ typedef struct _global_ctrl_ {
 XE_EXTERN XE_EXPORT ChWindow* ChCreateWindow(ChitralekhaApp *app, uint8_t attrib, char* title, int x, int y, int w, int h);
 
 /*
+* ChWindowBroadcastIcon -- broadcast icon information to
+* broadcast listener
+* @param app -- pointer to chitralekha application
+* @param iconfile -- path of the icon file, supported formats
+* are : 32bit- bmp file
+*/
+XE_EXTERN XE_EXPORT void ChWindowBroadcastIcon(ChitralekhaApp* app, char* iconfile);
+
+/*
 * ChWindowPaint -- paint the entire window
 * @param win -- Pointer to window
 */
@@ -120,6 +139,21 @@ XE_EXTERN XE_EXPORT void ChWindowPaint(ChWindow* win);
 */
 XE_EXTERN XE_EXPORT void ChWindowUpdate(ChWindow* win, int x, int y, int w, int h,bool updateEntireWin, bool dirty);
 
+
+/*
+* ChWindowHide -- hide the window
+* basically it sends command to deodhai
+* @param win -- Pointer to window structure
+*/
+XE_EXTERN XE_EXPORT void ChWindowHide(ChWindow* win);
+
+/*
+* ChGetWindowHandle -- get a specific window handle from
+* the system looking by its name
+* @param app -- Pointer to application instance
+* @param title -- desired window title
+*/
+XE_EXTERN XE_EXPORT uint32_t ChGetWindowHandle(ChitralekhaApp* app, char* title);
 /*
 * ChWindowHandleMouse -- handle mouse event
 * @param win -- Pointer to window

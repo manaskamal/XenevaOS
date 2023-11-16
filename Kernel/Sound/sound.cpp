@@ -151,12 +151,12 @@ void AuSoundGetBlock(uint64_t *buffer) {
 		}
 	}
 
-	/*for (int i = 0; i < SND_BUFF_SZ / sizeof(int16_t); i++)
-		hw_buffer[i] /= 2;*/
-
 	for (AuDSP *dsp = dsp_first; dsp != NULL; dsp = dsp->next) {
-		if (dsp->SndThread) 
+		if (dsp->SndThread) {
+			if (dsp->SndThread->pendingSigCount > 0)
+				return;
 			AuUnblockThread(dsp->SndThread);
+		}
 	}
 
 }
@@ -177,15 +177,14 @@ size_t AuSoundWrite(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint32_t
 	uint8_t *aligned_buf = (uint8_t*)buffer;
 	
 	if (CircBufFull(dsp->buffer)){
+		if (dsp->SndThread->pendingSigCount > 0)
+			return 0;
 		AuBlockThread(dsp->SndThread);
 		AuForceScheduler();	
 	}
 	for (int i = 0; i < SND_BUFF_SZ; i++) {
 		AuCircBufPut(dsp->buffer, aligned_buf[i]);
 	}
-
-	AuSleepThread(t, dsp->sleep_time);
-	AuForceScheduler();
 
 	return SND_BUFF_SZ;
 }

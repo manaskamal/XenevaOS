@@ -145,6 +145,9 @@
     <ClInclude Include="includes\sys\_ketime.h">
       <Filter>includes\sys</Filter>
     </ClInclude>
+    <ClInclude Include="includes\sys\_ketimer.h">
+      <Filter>includes\sys</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="string.cpp" />

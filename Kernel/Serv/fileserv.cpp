@@ -324,3 +324,73 @@ int FileStat(int fd, void* buf) {
 	status->group_id = 0;
 	return 0;
 }
+
+/*
+ * OpenDir -- opens a directory
+ * @param filename -- name of the directory
+ */
+int OpenDir(char* filename) {
+	x64_cli();
+	AuThread* current_thr = AuGetCurrentThread();
+	if (!current_thr){
+		return -1;
+	}
+	AuProcess* current_proc = AuProcessFindThread(current_thr);
+	if (!current_proc) {
+		current_proc = AuProcessFindSubThread(current_thr);
+		if (!current_proc)
+			return -1;
+	}
+
+	AuVFSNode *fsys = AuVFSFind(filename);
+	AuVFSNode* dirfile = NULL;
+	if (!fsys)
+		return -1;
+	if (fsys->opendir)
+		dirfile = fsys->opendir(fsys, filename);
+
+	if (!dirfile)
+		return -1;
+
+	int fd = AuProcessGetFileDesc(current_proc);
+	if (fd == -1)
+		return -1;
+
+	current_proc->fds[fd] = dirfile;
+	return fd;
+}
+
+/*
+ * ReadDir -- reads a directory entry
+ * @param dirfd -- directory file descriptor
+ * @param dirent -- aurora directory entry struct
+ */
+int ReadDir(int dirfd, void* dirent) {
+	x64_cli();
+	if (!dirent)
+		return -1;
+	if (dirfd == -1)
+		return -1;
+
+	AuThread* current_thr = AuGetCurrentThread();
+	if (!current_thr){
+		return 0;
+	}
+	AuProcess* current_proc = AuProcessFindThread(current_thr);
+	if (!current_proc) {
+		current_proc = AuProcessFindSubThread(current_thr);
+		if (!current_proc)
+			return 0;
+	}
+
+	AuDirectoryEntry* dire_ = (AuDirectoryEntry*)dirent;
+
+	AuVFSNode* dirfile = current_proc->fds[dirfd];
+	if (!dirfile)
+		return -1;
+	AuVFSNode* fsys = (AuVFSNode*)dirfile->device;
+	if (!fsys)
+		return -1;
+	if (fsys->read_dir)
+		return fsys->read_dir(fsys, dirfile, dire_);
+}

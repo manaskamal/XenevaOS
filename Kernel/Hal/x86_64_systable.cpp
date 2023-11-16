@@ -37,6 +37,7 @@
 #include <process.h>
 #include <Hal\serial.h>
 #include <Sync\mutex.h>
+#include <Hal\x86_64_signal.h>
 #include <Serv/sysserv.h>
 #include <ftmngr.h>
 #include <Fs\tty.h>
@@ -106,8 +107,13 @@ static void* syscalls[AURORA_MAX_SYSCALL] = {
 	ProcessHeapUnmap, //34
 	SendSignal, //35
 	GetCurrentTime, //36
+	OpenDir, //37
+	ReadDir, //38
+	CreateTimer, //39
+	StartTimer, //40
+	StopTimer,  //41
+	DestroyTimer, //42
 };
-
 
 //! System Call Handler Functions
 //! @param a -- arg1 passed in r12 register
@@ -116,13 +122,12 @@ static void* syscalls[AURORA_MAX_SYSCALL] = {
 //! @param d -- arg4 passed in r15 register
 extern "C" uint64_t x64_syscall_handler(int a) {
 	x64_cli();
-
 	AuThread* current_thr = AuGetCurrentThread();
 	uint64_t ret_code = 0;
 
 	if (a > AURORA_MAX_SYSCALL)
 		return -1;
-
+	
 	syscall_func func = (syscall_func)syscalls[a];
 	if (!func)
 		return 0;

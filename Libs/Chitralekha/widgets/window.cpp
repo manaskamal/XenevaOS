@@ -50,24 +50,27 @@ extern void ChWindowPaintMinimButton(ChWindow* win, ChWinGlobalControl* button);
  * @param h -- Height of the window
  * @param title -- title of the window
  */
-void ChRequestWindow(ChitralekhaApp* app, int x, int y, int w, int h, char* title) {
+void ChRequestWindow(ChitralekhaApp* app, int x, int y, int w, int h, char* title, uint8_t attrib) {
 	PostEvent e;
 	e.type = DEODHAI_MESSAGE_CREATEWIN;
 	e.dword = x;
 	e.dword2 = y;
 	e.dword3 = w;
 	e.dword4 = h;
-	e.dword5 = (1 << 0);
+	e.dword5 = attrib;
 	e.to_id = POSTBOX_ROOT_ID;
+	strcpy(e.charValue3, title);
 	e.from_id = app->currentID;
 	_KeFileIoControl(app->postboxfd, POSTBOX_PUT_EVENT, &e);
 	memset(&e, 0, sizeof(PostEvent));
 	while (1) {
 		int err = _KeFileIoControl(app->postboxfd, POSTBOX_GET_EVENT, &e);
-		if (e.type != 0) {
-			if (e.type == DEODHAI_REPLY_WINCREATED){
+		if (e.type == DEODHAI_REPLY_WINCREATED){
 				uint16_t shkey = e.dword;
-				uint16_t buffKey = e.dword2;
+				uint32_t buffKey = e.dword2;
+				if (buffKey < 100)
+					_KePrint("Chitralekha: buffer key problem \n");
+				uint32_t handle = e.dword3;
 				uint16_t shid = _KeCreateSharedMem(shkey, 0, 0);
 				uint16_t backid = _KeCreateSharedMem(buffKey, NULL, 0);
 				void* sharedwinaddr = _KeObtainSharedMem(shid, NULL, 0);
@@ -78,10 +81,10 @@ void ChRequestWindow(ChitralekhaApp* app, int x, int y, int w, int h, char* titl
 				app->buffer_height = h;
 				app->fb = backbuff;
 				app->shwinbuf = sharedwinaddr;
+				app->windowHandle = handle;
 				memset(&e, 0, sizeof(PostEvent));
 				break;
 			}
-		}
 
 		if (err == -1)
 			_KePauseThread();
@@ -132,7 +135,7 @@ XE_EXTERN XE_EXPORT ChWinGlobalControl* ChCreateGlobalButton(ChWindow* win, int 
  */
 XE_EXTERN XE_EXPORT ChWindow* ChCreateWindow(ChitralekhaApp *app, uint8_t attrib, char* title, int x, int y, int w, int h) {
 	/* request a new window fomr window manager */
-	ChRequestWindow(app, x, y, w, h, title);
+	ChRequestWindow(app, x, y, w, h, title,attrib);
 	ChWindow* win = (ChWindow*)malloc(sizeof(ChWindow));
 	memset(win, 0, sizeof(ChWindow));
 	ChCanvas* canv = ChCreateCanvas(w, h);
@@ -155,7 +158,7 @@ XE_EXTERN XE_EXPORT ChWindow* ChCreateWindow(ChitralekhaApp *app, uint8_t attrib
 	win->color = WHITE;
 	win->GlobalControls = initialize_list();
 	win->ChWinPaint = ChDefaultWinPaint;
-
+	win->handle = app->windowHandle;
 	ChWinGlobalControl* close = ChCreateGlobalButton(win, win->info->width - 25,
 		WINDOW_DEFAULT_TITLEBAR_HEIGHT / 2 - 20 / 2, 20, 20, WINDOW_GLOBAL_CONTROL_CLOSE);
 	close->ChGlobalButtonPaint = ChWindowPaintCloseButton;
@@ -183,6 +186,24 @@ XE_EXTERN XE_EXPORT ChWindow* ChCreateWindow(ChitralekhaApp *app, uint8_t attrib
 }
 
 /*
+ * ChWindowBroadcastIcon -- broadcast icon information to 
+ * broadcast listener
+ * @param app -- pointer to chitralekha application
+ * @param iconfile -- path of the icon file, supported formats
+ * are : 32bit- bmp file 
+ */
+XE_EXTERN XE_EXPORT void ChWindowBroadcastIcon(ChitralekhaApp* app, char* iconfile) {
+	PostEvent e;
+	memset(&e, 0, sizeof(PostEvent));
+	e.type = DEODHAI_MESSAGE_BROADCAST_ICON;
+	e.dword = app->windowHandle;
+	e.to_id = POSTBOX_ROOT_ID;
+	e.from_id = app->currentID;
+	strcpy(e.charValue3, iconfile);
+	_KeFileIoControl(app->postboxfd, POSTBOX_PUT_EVENT, &e);
+}
+
+/*
  * ChWindowUpdate -- update a portion or whole window
  * @param win -- Pointer to window
  * @param x -- x position of the dirty area
@@ -193,7 +214,6 @@ XE_EXTERN XE_EXPORT ChWindow* ChCreateWindow(ChitralekhaApp *app, uint8_t attrib
 XE_EXTERN XE_EXPORT void ChWindowUpdate(ChWindow* win, int x, int y, int w, int h,bool updateEntireWin, bool dirty) {
 	uint32_t *lfb = win->buffer;
 	uint32_t* canvaddr = win->canv->buffer;
-	
 	for (int i = 0; i < h; i++)
 		_fastcpy(lfb + (y + i) * win->info->width + x, canvaddr + (y + i) * win->info->width + x, w * 4);
 
@@ -219,6 +239,49 @@ XE_EXTERN XE_EXPORT void ChWindowPaint(ChWindow* win) {
 	}
 }
 
+/*
+ * ChWindowHide -- hide the window
+ * basically it sends command to deodhai
+ * @param win -- Pointer to window structure
+ */
+XE_EXTERN XE_EXPORT void ChWindowHide(ChWindow* win) {
+	PostEvent e;
+	e.type = DEODHAI_MESSAGE_WINDOW_HIDE;
+	e.dword = win->app->currentID;
+	e.dword2 = win->handle;
+	e.to_id = POSTBOX_ROOT_ID;
+	_KeFileIoControl(win->app->postboxfd, POSTBOX_PUT_EVENT, &e);
+}
+
+
+/*
+ * ChGetWindowHandle -- get a specific window handle from
+ * the system looking by its name
+ * @param app -- Pointer to application instance
+ * @param title -- desired window title
+ */
+XE_EXTERN XE_EXPORT uint32_t ChGetWindowHandle(ChitralekhaApp* app, char* title) {
+	uint32_t handle = 0;
+	PostEvent e;
+	e.type = DEODHAI_MESSAGE_GETWINDOW;
+	e.to_id = POSTBOX_ROOT_ID;
+	e.from_id = app->currentID;
+	strcpy(e.charValue3, title);
+	_KeFileIoControl(app->postboxfd, POSTBOX_PUT_EVENT, &e);
+	memset(&e, 0, sizeof(PostEvent));
+	while (1) {
+		int err = _KeFileIoControl(app->postboxfd, POSTBOX_GET_EVENT, &e);
+		if (e.type == DEODHAI_REPLY_WINDOW_ID) {
+			handle = e.dword2;
+			memset(&e, 0, sizeof(PostEvent));
+			break;
+		}
+		if (err == POSTBOX_NO_EVENT)
+			_KePauseThread();
+	}
+
+	return handle;
+}
 
 /*
  * ChWindowHandleMouse -- handle mouse event 

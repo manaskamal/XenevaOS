@@ -1,16 +1,16 @@
-﻿Build started 09-11-2023 আবেলি 8:43:09.
+﻿Build started 16-11-2023 আবেলি 5:30:58.
      1>Project "E:\Xeneva Project\Aurora\Libs\Chitralekha\Chitralekha.vcxproj" on node 2 (Rebuild target(s)).
      1>_NASM:
          _fastcpy.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp815d90dc9c6a4dfe8a680ad7363b1477.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp6ae39b932c2b495e9e635458424e1255.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\_fastcpy.obj"  "E:\Xeneva Project\Aurora\Libs\Chitralekha\_fastcpy.asm"
        ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /I"E:\os_dev\freetype2-master\freetype2-master\include" /Zi /nologo /W3 /WX- /sdl- /Od /D ARCH_X64 /D YES_DYNAMIC /D DYNAMIC_EXPORTER /D _USE_FREETYPE /D _WINDLL /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt boxblur.cpp chitralekha.cpp color.cpp draw.cpp font.cpp keycode.cpp ttf.cpp widgets\base.cpp widgets\defaultwindow.cpp widgets\list.cpp widgets\window.cpp
      1>cl : Command line warning D9025: overriding '/sdl-' with '/GS-'
      1>cl : Command line warning D9002: ignoring unknown option '/arch:SSE2'
          window.cpp
-     1>widgets\window.cpp(146): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
-     1>widgets\window.cpp(233): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\window.cpp(149): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
+     1>widgets\window.cpp(296): warning C4018: '<' : signed/unsigned mismatch
          list.cpp
          defaultwindow.cpp
      1>widgets\defaultwindow.cpp(107): warning C4018: '<' : signed/unsigned mismatch
@@ -78,4 +78,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:06.15
+Time Elapsed 00:00:02.08

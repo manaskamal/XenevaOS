@@ -620,6 +620,93 @@ _KeGetCurrentTime:
 	 syscall
 	 ret
 
+global _KeOpenDir
+%ifdef YES_DYNAMIC
+export _KeOpenDir
+%endif
+_KeOpenDir:
+     xor rax,rax
+	 mov r12, 37
+	 mov r13, rcx
+	 mov r14, 0
+	 mov r15, 0
+	 mov rdi, 0
+	 syscall
+	 ret
+
+global _KeReadDir
+%ifdef YES_DYNAMIC
+export _KeReadDir
+%endif
+_KeReadDir:
+     xor rax, rax
+	 mov r12, 38
+	 mov r13, rcx
+	 mov r14, rdx
+	 mov r15, 0
+	 mov rdi, 0
+	 syscall
+	 ret
+
+global _KeCreateTimer
+%ifdef YES_DYNAMIC
+export _KeCreateTimer
+%endif
+_KeCreateTimer:
+     xor rax, rax
+	 mov r12, 39
+	 mov r13, rcx
+	 mov r14, rdx
+	 mov r15, r8
+	 mov rdi, 0
+	 syscall
+	 ret
+
+global _KeStartTimer
+%ifdef YES_DYNAMIC
+export _KeStartTimer
+%endif
+_KeStartTimer:
+     xor rax, rax
+	 mov r12, 40
+	 mov r13, rcx
+	 mov r14, 0
+	 mov r15, 0
+	 mov rdi, 0
+	 syscall
+	 ret
+
+global _KeStopTimer
+%ifdef YES_DYNAMIC
+export _KeStopTimer
+%endif
+_KeStopTimer
+     xor rax, rax
+	 mov r12, 41
+	 mov r13, rcx
+	 mov r14, 0
+	 mov r15, 0
+	 mov rdi, 0
+	 syscall
+	 ret
+
+global _KeDestroyTimer
+%ifdef YES_DYNAMIC
+export _KeDestroyTimer
+%endif
+_KeDestroyTimer
+     xor rax, rax
+	 mov r12, 42
+	 mov r13, rcx
+	 mov r14, 0
+	 mov r15, 0
+	 mov rdi, 0
+	 syscall
+	 ret
+
+
+
+
       
       
 

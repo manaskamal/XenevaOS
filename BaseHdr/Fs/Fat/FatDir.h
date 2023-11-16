@@ -53,4 +53,18 @@ extern AuVFSNode* FatCreateDir(AuVFSNode* fsys, char* filename);
 */
 extern int FatRemoveDir(AuVFSNode* fsys, AuVFSNode* file);
 
+/*
+* FatOpenDir -- opens a directory
+* @param fs -- Pointer to file system node
+* @param path -- path of the directory
+*/
+extern AuVFSNode* FatOpenDir(AuVFSNode* fs, char *path);
+
+/*
+* FatDirectoyRead -- read a fat directory entry
+* @param fs -- File system node
+* @param dir -- Directory file
+* @param dirent -- Aurora Directory Entry
+*/
+extern int FatDirectoryRead(AuVFSNode* fs, AuVFSNode* dir, AuDirectoryEntry* dirent);
 #endif

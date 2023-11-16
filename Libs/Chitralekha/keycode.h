@@ -231,4 +231,23 @@ XE_EXTERN XE_LIB bool ChitralekhaKeyGetAlt();
 * bit
 */
 XE_EXTERN XE_LIB bool ChitralekhaKeyGetShift();
+
+/*
+* ChitralekhaKeySetCtrl -- forcefully modify the ctrl bit
+* @param bit -- bit to set 0,1
+*/
+XE_EXTERN XE_LIB void ChitralekhaKeySetCtrl(bool bit);
+
+/*
+* ChitralekhaKeySetAlt - forcefully modify the alt bit
+* @param bit -- bit to set 0,1
+*/
+XE_EXTERN XE_LIB void ChitralekhaKeySetAlt(bool bit);
+
+/*
+* ChitralekhaKeySetShift -- forcefully modify the shift
+* bit
+* @param bit -- bit to set 0,1
+*/
+XE_EXTERN XE_LIB void ChitralekhaKeySetShift(bool bit);
 #endif

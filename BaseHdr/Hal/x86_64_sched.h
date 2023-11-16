@@ -48,6 +48,7 @@
 #define  THREAD_LEVEL_SUBTHREAD (1<<2)
 #define  THREAD_LEVEL_MAIN_THREAD (1<<3)
 
+
 typedef struct _frame_ {
 	uint64_t ss;       //0x00
 	uint64_t rsp;      //0x08
@@ -78,6 +79,7 @@ typedef struct _frame_ {
 	uint64_t kern_esp;   //0xC8     [0x10]
 	bool user_;          //0xD0
 }AuThreadFrame;
+
 
 #pragma pack(push,1)
 typedef struct _syscall_param_ {
@@ -126,7 +128,6 @@ typedef struct _au_thread_ {
 	uint16_t id;
 	uint16_t quanta;
 	uint8_t priviledge;
-
 	AuSigHandler singals[39];
 	SignalQueue* signalQueue;
 	uint8_t pendingSigCount;

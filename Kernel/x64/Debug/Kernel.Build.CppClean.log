@@ -3,8 +3,6 @@ e:\xeneva project\aurora\kernel\x64\debug\x86_64_lowlevel.obj
 e:\xeneva project\aurora\kernel\x64\debug\x86_64_switch.obj
 e:\xeneva project\aurora\kernel\x64\debug\__fstcpy.obj
 e:\xeneva project\aurora\kernel\x64\debug\vc120.pdb
-e:\xeneva project\aurora\kernel\x64\debug\vfs.obj
-e:\xeneva project\aurora\kernel\x64\debug\vfs.asm
 e:\xeneva project\aurora\kernel\x64\debug\vdisk.obj
 e:\xeneva project\aurora\kernel\x64\debug\vdisk.asm
 e:\xeneva project\aurora\kernel\x64\debug\tty.obj
@@ -35,6 +33,8 @@ e:\xeneva project\aurora\kernel\x64\debug\clean.obj
 e:\xeneva project\aurora\kernel\x64\debug\clean.asm
 e:\xeneva project\aurora\kernel\x64\debug\circbuf.obj
 e:\xeneva project\aurora\kernel\x64\debug\circbuf.asm
+e:\xeneva project\aurora\kernel\x64\debug\autimer.obj
+e:\xeneva project\aurora\kernel\x64\debug\autimer.asm
 e:\xeneva project\aurora\kernel\x64\debug\audrv.obj
 e:\xeneva project\aurora\kernel\x64\debug\audrv.asm
 e:\xeneva project\aurora\kernel\x64\debug\aucon.obj
@@ -43,8 +43,6 @@ e:\xeneva project\aurora\kernel\x64\debug\ahcidsk.obj
 e:\xeneva project\aurora\kernel\x64\debug\ahcidsk.asm
 e:\xeneva project\aurora\kernel\x64\debug\ahci.obj
 e:\xeneva project\aurora\kernel\x64\debug\ahci.asm
-e:\xeneva project\aurora\kernel\x64\debug\init.obj
-e:\xeneva project\aurora\kernel\x64\debug\init.asm
 e:\xeneva project\aurora\kernel\x64\debug\x86_64_systable.obj
 e:\xeneva project\aurora\kernel\x64\debug\x86_64_systable.asm
 e:\xeneva project\aurora\kernel\x64\debug\x86_64_signal.obj
@@ -83,8 +81,8 @@ e:\xeneva project\aurora\kernel\x64\debug\ftmngr.obj
 e:\xeneva project\aurora\kernel\x64\debug\ftmngr.asm
 e:\xeneva project\aurora\kernel\x64\debug\_gpt.obj
 e:\xeneva project\aurora\kernel\x64\debug\_gpt.asm
-e:\xeneva project\aurora\kernel\x64\debug\thrserv.obj
-e:\xeneva project\aurora\kernel\x64\debug\thrserv.asm
+e:\xeneva project\aurora\kernel\x64\debug\vfs.obj
+e:\xeneva project\aurora\kernel\x64\debug\vfs.asm
 e:\xeneva project\aurora\kernel\x64\debug\mmserv.obj
 e:\xeneva project\aurora\kernel\x64\debug\mmserv.asm
 e:\xeneva project\aurora\kernel\x64\debug\fileserv.obj
@@ -123,8 +121,12 @@ e:\xeneva project\aurora\kernel\x64\debug\list.obj
 e:\xeneva project\aurora\kernel\x64\debug\list.asm
 e:\xeneva project\aurora\kernel\x64\debug\postbox.obj
 e:\xeneva project\aurora\kernel\x64\debug\postbox.asm
+e:\xeneva project\aurora\kernel\x64\debug\init.obj
+e:\xeneva project\aurora\kernel\x64\debug\init.asm
 e:\xeneva project\aurora\kernel\x64\debug\_crt.obj
 e:\xeneva project\aurora\kernel\x64\debug\_crt.asm
+e:\xeneva project\aurora\kernel\x64\debug\time.obj
+e:\xeneva project\aurora\kernel\x64\debug\time.asm
 e:\xeneva project\aurora\kernel\x64\debug\spinlock.obj
 e:\xeneva project\aurora\kernel\x64\debug\spinlock.asm
 e:\xeneva project\aurora\kernel\x64\debug\mutex.obj
@@ -135,6 +137,10 @@ e:\xeneva project\aurora\kernel\x64\debug\stdio.obj
 e:\xeneva project\aurora\kernel\x64\debug\stdio.asm
 e:\xeneva project\aurora\kernel\x64\debug\sound.obj
 e:\xeneva project\aurora\kernel\x64\debug\sound.asm
+e:\xeneva project\aurora\kernel\x64\debug\timerserv.obj
+e:\xeneva project\aurora\kernel\x64\debug\timerserv.asm
+e:\xeneva project\aurora\kernel\x64\debug\thrserv.obj
+e:\xeneva project\aurora\kernel\x64\debug\thrserv.asm
 e:\xeneva project\aurora\x64\debug\kernel.lib
 e:\xeneva project\aurora\x64\debug\kernel.exp
 f:\efi\xeneva\xnkrnl.exe

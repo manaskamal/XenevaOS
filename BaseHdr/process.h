@@ -204,7 +204,7 @@ extern AuProcess* AuProcessFork(AuProcess* parent);
 * as killable
 * @param proc -- process to exit
 */
-extern void AuProcessExit(AuProcess* proc);
+extern void AuProcessExit(AuProcess* proc, bool schedulable);
 
 /*
 * AuProcessGetFileDesc -- returns a empty file descriptor

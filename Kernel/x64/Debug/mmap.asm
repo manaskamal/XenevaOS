@@ -10,11 +10,11 @@ _BSS	SEGMENT
 ?shmmaplist@@3PEAU_list_@@EA DQ 01H DUP (?)		; shmmaplist
 _BSS	ENDS
 CONST	SEGMENT
-$SG3539	DB	'/', 00H
+$SG3563	DB	'/', 00H
 	ORG $+6
-$SG3557	DB	'mmap reading file ', 0dH, 0aH, 00H
+$SG3581	DB	'mmap reading file ', 0dH, 0aH, 00H
 	ORG $+3
-$SG3567	DB	'SHOBJ newly created -> %s ', 0dH, 0aH, 00H
+$SG3591	DB	'SHOBJ newly created -> %s ', 0dH, 0aH, 00H
 CONST	ENDS
 PUBLIC	?SharedMemMapListInitialise@@YAXXZ		; SharedMemMapListInitialise
 PUBLIC	?CreateMemMapping@@YAPEAXPEAX_KHHH1@Z		; CreateMemMapping
@@ -796,7 +796,7 @@ $LN31@CreateMemM:
 
 ; 150  : 		fsys = AuVFSFind("/");
 
-	lea	rcx, OFFSET FLAT:$SG3539
+	lea	rcx, OFFSET FLAT:$SG3563
 	call	AuVFSFind
 	mov	QWORD PTR fsys$[rsp], rax
 
@@ -1027,7 +1027,7 @@ $LN10@CreateMemM:
 
 ; 202  : 			SeTextOut("mmap reading file \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG3557
+	lea	rcx, OFFSET FLAT:$SG3581
 	call	SeTextOut
 
 ; 203  : 			AuVFSNodeReadBlock(fsys, file, (uint64_t*)phys);
@@ -1190,7 +1190,7 @@ $LN13@CreateMemM:
 
 	mov	rax, QWORD PTR shobj$[rsp]
 	mov	rdx, QWORD PTR [rax]
-	lea	rcx, OFFSET FLAT:$SG3567
+	lea	rcx, OFFSET FLAT:$SG3591
 	call	SeTextOut
 $LN2@CreateMemM:
 

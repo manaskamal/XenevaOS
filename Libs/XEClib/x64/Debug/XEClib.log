@@ -1,13 +1,15 @@
-﻿Build started 09-11-2023 আবেলি 9:59:11.
+﻿Build started 14-11-2023 ৰাতিপু 8:48:08.
      1>Project "E:\Xeneva Project\Aurora\Libs\XEClib\XEClib.vcxproj" on node 2 (Rebuild target(s)).
      1>_NASM:
          setjmp.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp520f117c9c6c4db390e7070feee6852a.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp7c57406d01d64a67b1b7608c0fa34c24.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\setjmp.obj"  "E:\Xeneva Project\Aurora\Libs\XEClib\setjmp.asm"
        _NASM:
          _callbase.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp56dda41036a944bdbd96925b0efb9d2d.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp45d81404b2b64493951290d072be5d92.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\_callbase.obj"  "E:\Xeneva Project\Aurora\Libs\XEClib\_callbase.asm"
+     1>E:\Xeneva Project\Aurora\Libs\XEClib\_callbase.asm(683): warning : label alone on a line without a colon might be in error [-w+label-orphan]
+     1>E:\Xeneva Project\Aurora\Libs\XEClib\_callbase.asm(697): warning : label alone on a line without a colon might be in error [-w+label-orphan]
        ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes\c++" /Zi /nologo /W3 /WX- /sdl- /MP /Od /D ARCH_X64 /D YES_DYNAMIC /D DYNAMIC_EXPORTER /D _WINDLL /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt c++\ios.cpp c++\iostream.cpp c++\istream.cpp c++\memory.cpp c++\ostream.cpp c++\_string.cpp errno.cpp math.cpp qsort.cpp stdio.cpp stdlib.cpp string.cpp sys\_heap.cpp sys\_xeneva.cpp sys\_xeprint.cpp
      1>cl : Command line warning D9025: overriding '/sdl-' with '/GS-'
@@ -109,4 +111,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:03.07
+Time Elapsed 00:00:03.40

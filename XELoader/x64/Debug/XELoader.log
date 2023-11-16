@@ -1,12 +1,12 @@
-﻿Build started 07-11-2023 আবেলি 9:23:32.
+﻿Build started 10-11-2023 আবেলি 6:34:03.
      1>Project "E:\Xeneva Project\Aurora\XELoader\XELoader.vcxproj" on node 2 (Rebuild target(s)).
      1>_NASM:
          crt0.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp96899290fe5b4b42b11f9ad62adca789.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmpfd54ac6aac5a44a18920a10345e47451.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\crt0.obj"  "E:\Xeneva Project\Aurora\XELoader\crt0.asm"
        _NASM:
          fastcpy.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmpe20db521ac1d42dfb20229f12db16eae.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp470575cd7d79426c8200bcb2f6229cf5.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\fastcpy.obj"  "E:\Xeneva Project\Aurora\XELoader\fastcpy.asm"
        ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /Zi /nologo /W3 /WX- /sdl /Od /D ARCH_X64 /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt main.cpp pe_.cpp XELdrObject.cpp
@@ -54,4 +54,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:01.33
+Time Elapsed 00:00:02.96

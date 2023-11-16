@@ -28,6 +28,7 @@
 **/
 
 #include <Fs\Fat\FatDir.h>
+#include <Fs\Fat\Fat.h>
 #include <Mm\kmalloc.h>
 #include <Mm\pmmngr.h>
 #include <Mm\vmmngr.h>
@@ -240,4 +241,108 @@ int FatRemoveDir(AuVFSNode* fsys, AuVFSNode* file) {
 	}
 
 	return -1;
+}
+
+
+/*
+* FatOpenDir -- opens a directory
+* @param fs -- Pointer to file system node
+* @param path -- path of the directory
+*/
+AuVFSNode* FatOpenDir(AuVFSNode* fs, char *path) {
+	AuVFSNode* ret = NULL;
+	if (!fs)
+		return ret;
+	FatFS* fatfs = (FatFS*)fs->device;
+	if (!fatfs)
+		return ret;
+	ret = FatOpen(fs, path);
+	if (ret) {
+		SeTextOut("Ret filename ->%s \r\n", ret->filename);
+		if (ret->flags & FS_FLAG_DIRECTORY)
+			SeTextOut("FS Flag dir \r\n");
+	}
+	if (ret && !(ret->flags & FS_FLAG_DIRECTORY)) {
+		SeTextOut("freeing ret \r\n");
+		kfree(ret);
+		return NULL;
+	}
+	if (!ret) {
+		ret = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
+		memset(ret, 0, sizeof(AuVFSNode));
+		strcpy(ret->filename, "/");
+		ret->current = fatfs->__RootDirFirstCluster;
+		ret->size = 0; //variable
+		ret->eof = 0;
+		ret->status = FS_STATUS_FOUND;
+		ret->close = 0;
+		ret->first_block = fatfs->__RootDirFirstCluster;
+		ret->pos = 0;
+		ret->device = fs;
+		ret->parent_block = fatfs->__RootDirFirstCluster;
+		ret->flags |= FS_FLAG_DIRECTORY;
+		ret->flags |= FS_FLAG_GENERAL;
+	}
+	return ret;
+}
+
+/*
+ * FatDirectoyRead -- read a fat directory entry
+ * @param fs -- File system node
+ * @param dir -- Directory file
+ * @param dirent -- Aurora Directory Entry
+ */
+int FatDirectoryRead(AuVFSNode* fs, AuVFSNode* dir, AuDirectoryEntry* dirent) {
+	if (!dirent)
+		return -1;
+	if (!dir)
+		return -1;
+	memset(dirent->filename, 0, 32);
+	int index = dirent->index;
+	FatFS* fatfs = (FatFS*)fs->device;
+	AuVDisk* vdisk = (AuVDisk*)fatfs->vdisk;
+
+	uint64_t* buf = (uint64_t*)P2V((uint64_t)AuPmmngrAlloc());
+	memset(buf, 0, PAGE_SIZE);
+		
+	if ((index / 16) > fatfs->__SectorPerCluster) {
+		dirent->index = -1;
+		AuPmmngrFree((void*)V2P((size_t)buf));
+		return -1;
+	}
+
+
+	uint8_t* aligned_buf = (uint8_t*)buf;
+	AuVDiskRead(vdisk, FatClusterToSector32(fatfs, dir->first_block) + index/16, 1, (uint64_t*)V2P((uint64_t)buf));
+	FatDir* dir_ = (FatDir*)(aligned_buf + ((index % 16) * sizeof(FatDir)));
+
+	if (dir_->filename[0] == 0x00){
+		dirent->index = -1;
+		AuPmmngrFree((void*)V2P((size_t)buf));
+		return -1;
+	}
+
+	if (dir_->filename[0] == 0xE5 || 
+		dir_->filename[0] == 0x05 ||
+		dir_->filename[0] == 0xFF) {
+		AuPmmngrFree((void*)V2P((size_t)buf));
+		dirent->index += 1;
+		return -1;
+	}
+	char filename[11];
+	char name[11];
+	memcpy(name, dir_->filename, 11);
+	name[11] = 0;
+	FatFromDosToFilename(filename, (char*)dir_->filename);
+	strcpy(dirent->filename,filename);
+	dirent->size = dir_->file_size;
+	dirent->time = dir_->time_created;
+	dirent->date = dir_->date_created;
+	if (dir_->attrib & 0x10)
+		dirent->flags |= FS_FLAG_DIRECTORY;
+	else
+		dirent->flags = FS_FLAG_GENERAL;
+	AuPmmngrFree((void*)V2P((size_t)buf));
+	dirent->index += 1;
+	return 0;
 }

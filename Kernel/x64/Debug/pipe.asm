@@ -579,7 +579,7 @@ $LN3:
 
 ; 162  : 	AuVFSNode* node = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
 
-	mov	ecx, 176				; 000000b0H
+	mov	ecx, 192				; 000000c0H
 	call	kmalloc
 	mov	QWORD PTR node$[rsp], rax
 
@@ -591,7 +591,7 @@ $LN3:
 
 ; 164  : 	memset(node, 0, sizeof(AuVFSNode));
 
-	mov	r8d, 176				; 000000b0H
+	mov	r8d, 192				; 000000c0H
 	xor	edx, edx
 	mov	rcx, QWORD PTR node$[rsp]
 	call	memset
@@ -659,13 +659,13 @@ $LN3:
 
 	mov	rax, QWORD PTR node$[rsp]
 	lea	rcx, OFFSET FLAT:?AuPipeRead@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z ; AuPipeRead
-	mov	QWORD PTR [rax+96], rcx
+	mov	QWORD PTR [rax+104], rcx
 
 ; 177  : 	node->write = AuPipeWrite;
 
 	mov	rax, QWORD PTR node$[rsp]
 	lea	rcx, OFFSET FLAT:?AuPipeWrite@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z ; AuPipeWrite
-	mov	QWORD PTR [rax+104], rcx
+	mov	QWORD PTR [rax+112], rcx
 
 ; 178  : 	node->open = AuPipeOpen;
 
@@ -677,12 +677,12 @@ $LN3:
 
 	mov	rax, QWORD PTR node$[rsp]
 	lea	rcx, OFFSET FLAT:?AuPipeClose@@YAHPEAU__VFS_NODE__@@0@Z ; AuPipeClose
-	mov	QWORD PTR [rax+144], rcx
+	mov	QWORD PTR [rax+152], rcx
 
 ; 180  : 	node->iocontrol = NULL;
 
 	mov	rax, QWORD PTR node$[rsp]
-	mov	QWORD PTR [rax+168], 0
+	mov	QWORD PTR [rax+184], 0
 
 ; 181  : 	
 ; 182  : 	return node;

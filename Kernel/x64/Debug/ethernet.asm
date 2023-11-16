@@ -6,13 +6,13 @@ INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
 CONST	SEGMENT
-$SG2970	DB	'Ethernet ARP : Packet received ', 0dH, 0aH, 00H
+$SG2993	DB	'Ethernet ARP : Packet received ', 0dH, 0aH, 00H
 	ORG $+6
-$SG2972	DB	'Ethernet IPv4: Packet received ', 0dH, 0aH, 00H
+$SG2995	DB	'Ethernet IPv4: Packet received ', 0dH, 0aH, 00H
 	ORG $+6
-$SG2986	DB	'Ethernet setuped %d %s', 0dH, 0aH, 00H
+$SG3009	DB	'Ethernet setuped %d %s', 0dH, 0aH, 00H
 	ORG $+7
-$SG2989	DB	'HWFile writing %x ', 0dH, 0aH, 00H
+$SG3012	DB	'HWFile writing %x ', 0dH, 0aH, 00H
 CONST	ENDS
 PUBLIC	?AuEthernetSend@@YAXPEAX_KGPEAE@Z		; AuEthernetSend
 PUBLIC	AuEthernetHandle
@@ -72,7 +72,7 @@ $LN2@AuEthernet:
 ; 39   : 	case ETHERNET_TYPE_ARP:
 ; 40   : 		SeTextOut("Ethernet ARP : Packet received \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG2970
+	lea	rcx, OFFSET FLAT:$SG2993
 	call	SeTextOut
 
 ; 41   : 		break;
@@ -83,7 +83,7 @@ $LN1@AuEthernet:
 ; 42   : 	case ETHERNET_TYPE_IPV4:
 ; 43   : 		SeTextOut("Ethernet IPv4: Packet received \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG2972
+	lea	rcx, OFFSET FLAT:$SG2995
 	call	SeTextOut
 $LN3@AuEthernet:
 
@@ -194,7 +194,7 @@ $LN3@AuEthernet:
 	movzx	ecx, BYTE PTR [rcx+22]
 	mov	r8, rax
 	mov	edx, ecx
-	lea	rcx, OFFSET FLAT:$SG2986
+	lea	rcx, OFFSET FLAT:$SG3009
 	call	AuTextOut
 
 ; 67   : 	if (!netadapt->hwFile)
@@ -212,15 +212,15 @@ $LN2@AuEthernet:
 
 	mov	rax, QWORD PTR netadapt$[rsp]
 	mov	rax, QWORD PTR [rax+14]
-	cmp	QWORD PTR [rax+104], 0
+	cmp	QWORD PTR [rax+112], 0
 	je	SHORT $LN1@AuEthernet
 
 ; 70   : 		SeTextOut("HWFile writing %x \r\n",netadapt->hwFile->write );
 
 	mov	rax, QWORD PTR netadapt$[rsp]
 	mov	rax, QWORD PTR [rax+14]
-	mov	rdx, QWORD PTR [rax+104]
-	lea	rcx, OFFSET FLAT:$SG2989
+	mov	rdx, QWORD PTR [rax+112]
+	lea	rcx, OFFSET FLAT:$SG3012
 	call	SeTextOut
 
 ; 71   : 		netadapt->hwFile->write(netadapt->hwFile, netadapt->hwFile, (uint64_t*)pacl, totalSz);
@@ -233,7 +233,7 @@ $LN2@AuEthernet:
 	mov	rdx, QWORD PTR [rcx+14]
 	mov	rcx, QWORD PTR netadapt$[rsp]
 	mov	rcx, QWORD PTR [rcx+14]
-	call	QWORD PTR [rax+104]
+	call	QWORD PTR [rax+112]
 $LN1@AuEthernet:
 
 ; 72   : 	}

@@ -55,10 +55,13 @@ int mouse_fd;
 int kybrd_fd;
 int postbox_fd;
 int lastMouseButton;
+uint32_t winHandles;
 uint32_t* CursorBack;
 bool _window_update_all_;
 bool _window_broadcast_mouse_;
 bool _cursor_update_;
+bool _cursor_drawback_;
+bool _always_on_top_update;
 Window* focusedWin;
 Window* focusedLast;
 Window* topWin;
@@ -66,6 +69,8 @@ Window* dragWin;
 Window* reszWin;
 Window* rootWin;
 Window* lastWin;
+Window* alwaysOnTop;
+Window* alwaysOnTopLast;
 ChCanvas* canvas;
 uint32_t* surfaceBuffer;
 
@@ -80,8 +85,19 @@ void DeodhaiInitialiseData() {
 	reszWin = rootWin = lastWin = NULL;
 	canvas = NULL;
 	lastMouseButton = 0;
+	alwaysOnTop = NULL;
+	alwaysOnTopLast = NULL;
+	winHandles = 0;
 }
 
+/*
+ * DeodhaiAllocateNewHandle -- get a new window handle
+ */
+uint32_t DeodhaiAllocateNewHandle() {
+	uint32_t handle = winHandles;
+	winHandles += 1;
+	return handle;
+}
 /*
  * DeodhaiAddWindow -- add a window to window list
  * @param win -- Pointer to window
@@ -116,6 +132,39 @@ void DeodhaiRemoveWindow(Window* win) {
 }
 
 /*
+* DeodhaiAddWindow -- add a window to window list
+* @param win -- Pointer to window
+*/
+void DeodhaiAddWindowAlwaysOnTop(Window* win) {
+	win->next = NULL;
+	win->prev = NULL;
+	if (alwaysOnTop == NULL) {
+		alwaysOnTop = win;
+		alwaysOnTopLast = win;
+	}
+	else {
+		alwaysOnTopLast->next = win;
+		win->prev = alwaysOnTopLast;
+		alwaysOnTopLast = win;
+	}
+}
+
+void DeodhaiRemoveWindowAlwaysOnTop(Window* win) {
+	if (alwaysOnTop == NULL)
+		return;
+
+	if (win == alwaysOnTop)
+		alwaysOnTop = alwaysOnTop->next;
+	else
+		win->prev->next = win->next;
+
+	if (win == alwaysOnTopLast)
+		alwaysOnTopLast = win->prev;
+	else
+		win->next->prev = win->prev;
+}
+
+/*
  * DeodhaiBackSurfaceUpdate -- update the back surface
  */
 void DeodhaiBackSurfaceUpdate(ChCanvas* canv, int x, int y, int w, int h) {
@@ -133,8 +182,35 @@ void DeodhaiBackSurfaceUpdate(ChCanvas* canv, int x, int y, int w, int h) {
  */
 Window* DeodhaiCreateWindow(int x, int y, int w, int h, uint8_t flags, uint16_t ownerId, char* title) {
 	Window* win = CreateWindow(x, y, w, h, flags, ownerId, title);
-	DeodhaiAddWindow(win);
+	if (flags & WINDOW_FLAG_ALWAYS_ON_TOP){
+		DeodhaiAddWindowAlwaysOnTop(win);
+	}else
+		DeodhaiAddWindow(win);
 	return win;
+}
+
+/*
+* DeodhaiBrodcastMessage -- broadcast a message to every window
+* @param e -- PostEvent to broadcast
+*/
+void DeodhaiBroadcastMessage(PostEvent *e, Window* skippablewin){
+	for (Window* win = rootWin; win != NULL; win = win->next) {
+		if (skippablewin && win == skippablewin)
+			continue;
+		if (win->flags & WINDOW_FLAG_BROADCAST_LISTENER){
+			e->to_id = win->ownerId;
+			_KeFileIoControl(postbox_fd, POSTBOX_PUT_EVENT, e);
+		}
+	}
+
+	for (Window* win = alwaysOnTop; win != NULL; win = win->next) {
+		if (skippablewin && win == skippablewin)
+			continue;
+		if (win->flags & WINDOW_FLAG_BROADCAST_LISTENER){
+			e->to_id = win->ownerId;
+			_KeFileIoControl(postbox_fd, POSTBOX_PUT_EVENT, e);
+		}
+	}
 }
 
 /* DeodhaiWindowMakeTop -- brings a window to front
@@ -157,10 +233,20 @@ void DeodhaiWindowSetFocused(Window* win, bool notify) {
 	if (focusedWin == win)
 		return;
 	focusedWin = win;
+	WinSharedInfo* info = (WinSharedInfo*)focusedWin->sharedInfo;
+	if (info->hide){
+		info->hide = false;
+		_window_update_all_ = true;
+		_always_on_top_update = true;
+	}
 
 	if (notify) {
-		/* notify this to broadcast channel */
+		PostEvent e;
+		e.type = DEODHAI_BROADCAST_FOCUS_CHANGED;
+		e.dword = focusedWin->ownerId;
+		DeodhaiBroadcastMessage(&e, NULL);
 	}
+
 	DeodhaiWindowMakeTop(win);
 }
 
@@ -171,7 +257,7 @@ void DeodhaiWindowSetFocused(Window* win, bool notify) {
  * @param y -- new y position
  */
 void DeodhaiWindowMove(Window* win, int x, int y) {
-	if (win->flags & WINDOW_FLAG_STATIC)
+	if (win->flags & WINDOW_FLAG_STATIC && !(win->flags & WINDOW_FLAG_ALWAYS_ON_TOP))
 		return;
 
 	if (focusedWin != win)
@@ -193,8 +279,27 @@ void DeodhaiWindowMove(Window* win, int x, int y) {
 	info->x = x;
 	info->y = y;
 	_window_update_all_ = true;
+	_always_on_top_update = true;
 }
 
+/*
+ * DeodhaiWindowHide -- hides a window
+ * @param win -- Pointer to window to hide
+ */
+void DeodhaiWindowHide(Window* win) {
+	WinSharedInfo *info = (WinSharedInfo*)win->sharedInfo;
+	BackDirtyAdd(info->x, info->y, info->width, info->height);
+	if (info->hide) {
+		info->hide = false;
+	}else
+		info->hide = true;
+
+	if (focusedWin == win)
+		focusedWin = NULL;
+
+	_window_update_all_ = true;
+	_always_on_top_update = true;
+}
 /*
  * DeodhaiWindowCheckDraggable -- check for draggable windows
  * @param x -- mouse x pos
@@ -255,9 +360,13 @@ void CursorDrawBack(ChCanvas* canv,Cursor* cur, unsigned x, unsigned y) {
  */
 void ComposeFrame(ChCanvas *canvas) {
 
-	if (_cursor_update_){
+	if (_cursor_update_ || _cursor_drawback_){
 		CursorDrawBack(canvas, arrow, arrow->oldXPos, arrow->oldYPos);
 		AddDirtyClip(arrow->oldXPos, arrow->oldYPos, 24, 24);
+		if (_cursor_drawback_)
+			_cursor_update_ = true;
+		_cursor_drawback_ = false;
+
 	}
 	
 	/* here we redraw all dirty surface area*/
@@ -273,7 +382,8 @@ void ComposeFrame(ChCanvas *canvas) {
 
 	for (Window* win = rootWin; win != NULL; win = win->next) {
 		WinSharedInfo* info = (WinSharedInfo*)win->sharedInfo;
-
+		if (info->hide)
+			continue;
 		/*
 		 * Check for small area updates !! not entire window 
 		 */
@@ -312,6 +422,8 @@ void ComposeFrame(ChCanvas *canvas) {
 				WinSharedInfo* clipInfo = NULL;
 
 				if (focusedWin != win) {
+
+					/* first check for normal windows */
 					for (clipWin = rootWin; clipWin != NULL; clipWin = clipWin->next) {
 						clipInfo = (WinSharedInfo*)clipWin->sharedInfo;
 						if (clipWin == win)
@@ -326,6 +438,22 @@ void ComposeFrame(ChCanvas *canvas) {
 							ClipCalculateRect(&r1, &r2, clipRect, &clipCount);
 						}
 
+					}
+
+					/* check for always on top windows */
+					for (clipWin = alwaysOnTop; clipWin != NULL; clipWin = clipWin->next) {
+						clipInfo = (WinSharedInfo*)clipWin->sharedInfo;
+						if (clipWin == win)
+							continue;
+						r2.x = clipInfo->x;
+						r2.y = clipInfo->y;
+						r2.w = clipInfo->width;
+						r2.h = clipInfo->height;
+
+						if (ClipCheckIntersect(&r1, &r2)){
+							overlap = true;
+							ClipCalculateRect(&r1, &r2, clipRect, &clipCount);
+						}
 					}
 				}
 
@@ -372,6 +500,8 @@ void ComposeFrame(ChCanvas *canvas) {
 			}
 			info->rect_count = 0;
 			info->dirty = 0;
+			_cursor_update_ = true;
+			_cursor_drawback_ = true;
 			info->updateEntireWindow = 0;
 		}
 
@@ -414,7 +544,23 @@ void ComposeFrame(ChCanvas *canvas) {
 			int clipCount = 0;
 			Window* clipWin = NULL;
 			WinSharedInfo* clipInfo = NULL;
+
+
 			for (clipWin = rootWin; clipWin != NULL; clipWin = clipWin->next) {
+				clipInfo = (WinSharedInfo*)clipWin->sharedInfo;
+				if (clipWin == win)
+					continue;
+				r2.x = clipInfo->x;
+				r2.y = clipInfo->y;
+				r2.w = clipInfo->width;
+				r2.h = clipInfo->height;
+
+				if (ClipCheckIntersect(&r1, &r2)) {
+					ClipCalculateRect(&r1, &r2, clip, &clipCount);
+				}
+			}
+			/* always on top list */
+			for (clipWin = alwaysOnTop; clipWin != NULL; clipWin = clipWin->next) {
 				clipInfo = (WinSharedInfo*)clipWin->sharedInfo;
 				if (clipWin == win)
 					continue;
@@ -453,12 +599,227 @@ void ComposeFrame(ChCanvas *canvas) {
 				clipCount = 0;
 			}
 
-			if (focusedWin == win)
-				AddDirtyClip(winx, winy, width, height);
-
+			AddDirtyClip(winx, winy, width, height);
 			info->updateEntireWindow = 0;
 		}
 	}
+
+	/* //------- Always on Top Windows follow, another data structure ----------// */
+	/* // ----------------------------------------------------------------------// */
+
+	for (Window* win = alwaysOnTop; win != NULL; win = win->next) {
+		WinSharedInfo* info = (WinSharedInfo*)win->sharedInfo;
+		if (info->hide)
+			continue;
+		/*
+		* Check for small area updates !! not entire window
+		*/
+		if (info->rect_count > 0) {
+			for (int k = 0; k < info->rect_count; k++) {
+				int r_x = info->rect[k].x;
+				int r_y = info->rect[k].y;
+				int r_w = info->rect[k].w;
+				int r_h = info->rect[k].h;
+
+				if (r_x < 0)
+					r_x = 0;
+
+				if (r_y < 0)
+					r_y = 0;
+
+				if ((info->x + r_x + r_w) >= canvas->canvasWidth)
+					r_w = canvas->canvasWidth - (info->x + r_x);
+
+				if ((info->y + r_y + r_h) >= canvas->canvasHeight)
+					r_h = canvas->canvasHeight - (info->y + r_y);
+
+				/* from here, we check if the small rectangle is
+				* covered by a window or another rectangle */
+
+				Rect r1;
+				Rect r2;
+				r1.x = info->x + r_x;
+				r1.y = info->y + r_y;
+				r1.w = r_w;
+				r1.h = r_h;
+				bool overlap = false;
+				Rect clipRect[512];
+				int clipCount = 0;
+				Window* clipWin = NULL;
+				WinSharedInfo* clipInfo = NULL;
+
+				if (info->alpha) {
+					for (int j = 0; j < r_h; j++) {
+						for (int i = 0; i < r_w; i++) {
+							*(uint32_t*)(canvas->buffer + (info->y + r_y + j) * canvas->canvasWidth + (info->x + r_x + i)) =
+								ChColorAlphaBlend(*(uint32_t*)(canvas->buffer + (info->y + r_y + j)* canvas->canvasWidth + (info->x + r_x + i)),
+								*(uint32_t*)(win->backBuffer + j * info->width + i), info->alphaValue);
+						}
+					}
+					AddDirtyClip(info->x + r_x, info->y + r_y, r_w, r_h);
+				}
+				else {
+					if (focusedWin != win) {
+						for (clipWin = alwaysOnTop; clipWin != NULL; clipWin = clipWin->next) {
+							clipInfo = (WinSharedInfo*)clipWin->sharedInfo;
+							if (clipWin == win)
+								continue;
+							r2.x = clipInfo->x;
+							r2.y = clipInfo->y;
+							r2.w = clipInfo->width;
+							r2.h = clipInfo->height;
+
+							if (ClipCheckIntersect(&r1, &r2)){
+								overlap = true;
+								ClipCalculateRect(&r1, &r2, clipRect, &clipCount);
+							}
+						}
+					}
+
+					if (clipCount == 0 && !overlap) {
+						for (int i = 0; i < r_h; i++) {
+							_fastcpy(canvas->buffer + (info->y + r_y + i) * canvas->canvasWidth + info->x + r_x,
+								win->backBuffer + (r_y + i) * info->width + r_x, r_w * 4);
+						}
+						AddDirtyClip(info->x + r_x, info->y + r_y, r_w, r_h);
+					}
+
+					for (int k = 0; k < clipCount; k++) {
+						int k_x = clipRect[k].x;
+						int k_y = clipRect[k].y;
+						int k_w = clipRect[k].w;
+						int k_h = clipRect[k].h;
+
+						if (k_x < 0)
+							k_x = 0;
+						if (k_y < 0)
+							k_y = 0;
+						if ((k_x + k_w) >= canvas->screenWidth)
+							k_w = canvas->screenWidth - k_x;
+						if ((k_y + k_h) >= canvas->screenHeight)
+							k_h = canvas->screenHeight - k_y;
+
+						int offset_x = info->x + r_x;
+
+						int diffx = k_x - offset_x;
+						int update_r_x = r_x + diffx;
+
+						int offset_y = info->y + r_y;
+						int diffy = k_y - offset_y;
+						int update_r_y = r_y + diffy;
+
+						for (int j = 0; j < k_h; j++) {
+							_fastcpy(canvas->buffer + (k_y + j) * canvas->canvasWidth + k_x,
+								win->backBuffer + (update_r_y + j) * info->width + update_r_x, k_w * 4);
+						}
+
+						AddDirtyClip(k_x, k_y, k_w, k_h);
+					}
+					clipCount = 0;
+				}
+			}
+			info->rect_count = 0;
+			info->dirty = 0;
+			info->updateEntireWindow = 0;
+		}
+
+
+		/* If no small areas, update entire window */
+
+		if (win != NULL && _always_on_top_update || (info->rect_count == 0 && info->updateEntireWindow == 1)) {
+			int winx = 0;
+			int winy = 0;
+			winx = info->x;
+			winy = info->y;
+
+			int width = info->width;
+			int height = info->height;
+
+			if (info->x < 0){
+				info->x = 5;
+				winx = info->x;
+			}
+
+			if (info->y < 0) {
+				info->y = 5;
+				winy = info->y;
+			}
+
+			if (info->x + info->width >= canvas->screenWidth)
+				width = canvas->screenWidth - info->x;
+
+			if (info->y + info->height >= canvas->screenHeight)
+				height = canvas->screenHeight - info->y;
+
+			Rect r1;
+			Rect r2;
+			r1.x = winx;
+			r1.y = winy;
+			r1.w = width;
+			r1.h = height;
+
+			Rect clip[512];
+			int clipCount = 0;
+			Window* clipWin = NULL;
+			WinSharedInfo* clipInfo = NULL;
+
+			/* alpha is only used for fade animation right now */
+			if (info->alpha) {
+				for (int j = 0; j < height; j++) {
+					for (int i = 0; i < width; i++) {
+						*(uint32_t*)(canvas->buffer + (winy + j) * canvas->canvasWidth + (winx + i)) =
+							ChColorAlphaBlend(*(uint32_t*)(canvas->buffer + (winy + j)* canvas->canvasWidth + (winx + i)),
+							*(uint32_t*)(win->backBuffer + j * info->width + i), info->alphaValue);
+					}
+				}
+			}
+			else {
+				for (clipWin = alwaysOnTop; clipWin != NULL; clipWin = clipWin->next) {
+					clipInfo = (WinSharedInfo*)clipWin->sharedInfo;
+					if (clipWin == win)
+						continue;
+					r2.x = clipInfo->x;
+					r2.y = clipInfo->y;
+					r2.w = clipInfo->width;
+					r2.h = clipInfo->height;
+
+					if (ClipCheckIntersect(&r1, &r2)) {
+						ClipCalculateRect(&r1, &r2, clip, &clipCount);
+					}
+				}
+
+				for (int i = 0; i < height; i++) {
+					_fastcpy(canvas->buffer + (winy + i) * canvas->canvasWidth + winx,
+						win->backBuffer + (0 + i) * info->width + 0, width * 4);
+				}
+
+
+				for (int k = 0; k < clipCount; k++) {
+					int k_x = clip[k].x;
+					int k_y = clip[k].y;
+					int k_w = clip[k].w;
+					int k_h = clip[k].h;
+
+					if (k_x < 0)
+						k_x = 0;
+					if (k_y < 0)
+						k_y = 0;
+					if ((k_x + k_w) >= canvas->screenWidth)
+						k_w = canvas->screenWidth - k_x;
+					if ((k_y + k_h) >= canvas->screenHeight)
+						k_h = canvas->screenHeight - k_y;
+
+					AddDirtyClip(k_x, k_y, k_w, k_h);
+					clipCount = 0;
+				}
+			}
+
+			AddDirtyClip(winx, winy, width, height);
+			if (win->animFrameCount == 0)
+				info->updateEntireWindow = 0;
+		}
+	}
+
 
 	if (_cursor_update_){
 		CursorStoreBack(canvas, arrow, arrow->xpos, arrow->ypos);
@@ -472,6 +833,9 @@ void ComposeFrame(ChCanvas *canvas) {
 
 	if (_window_update_all_)
 		_window_update_all_ = false;
+
+	if (_always_on_top_update)
+		_always_on_top_update = false;
 
 	if (_cursor_update_) {
 		arrow->oldXPos = arrow->xpos;
@@ -494,6 +858,7 @@ void DeodhaiSendMouseEvent(Window* win, int x, int y, int button){
 	e.dword = x;
 	e.dword2 = y;
 	e.dword3 = button;
+	e.dword4 = win->handle;
 	e.to_id = win->ownerId;
 	e.from_id = POSTBOX_ROOT_ID;
 	_KeFileIoControl(postbox_fd, POSTBOX_PUT_EVENT, &e);
@@ -506,15 +871,32 @@ void DeodhaiSendMouseEvent(Window* win, int x, int y, int button){
  * @param button -- mouse button state
  */
 void DeodhaiBroadcastMouse(int mouse_x, int mouse_y, int button) {
+
+	/* check for normal windows */
 	for (Window* win = rootWin; win != NULL; win = win->next){
 		WinSharedInfo* info = (WinSharedInfo*)win->sharedInfo;
+		if (info->hide)
+			continue;
 		if (mouse_x >= info->x && (mouse_x < (info->x + info->width)) &&
 			mouse_y >= info->y && (mouse_y < (info->y + info->height))) {
 				//broadcast the mouse message to this window
 				DeodhaiSendMouseEvent(win, mouse_x, mouse_y, button);
 			}
 	}
+
+	/* check for always on top windows */
+	for (Window* win = alwaysOnTop; win != NULL; win = win->next){
+		WinSharedInfo* info = (WinSharedInfo*)win->sharedInfo;
+		if (info->hide)
+			continue;
+		if (mouse_x >= info->x && (mouse_x < (info->x + info->width)) &&
+			mouse_y >= info->y && (mouse_y < (info->y + info->height))) {
+			//broadcast the mouse message to this window
+			DeodhaiSendMouseEvent(win, mouse_x, mouse_y, button);
+		}
+	}
 }
+
 
 /*
  * DeodhaiBrodcastKey -- sends key event
@@ -528,6 +910,7 @@ void DeodhaiBroadcastKey(int code) {
 	memset(&e, 0, sizeof(PostEvent));
 	e.type = DEODHAI_REPLY_KEY_EVENT;
 	e.dword = code;
+	e.dword2 = focusedWin->handle;
 	e.to_id = focusedWin->ownerId;
 	e.from_id = POSTBOX_ROOT_ID;
 	_KeFileIoControl(postbox_fd, POSTBOX_PUT_EVENT, &e);
@@ -612,7 +995,6 @@ int main(int argc, char* arv[]) {
 	int screen_w = 0;
 	int screen_h = 0;
 	
-	_KePrint("Creating canvas \r\n");
 	/* create a demo canvas just for getting the graphics
 	 * file descriptor 
 	 */
@@ -638,7 +1020,6 @@ int main(int argc, char* arv[]) {
 		surfaceBuffer[j * canv->canvasWidth + i] = 0xFF938585;
 
 	DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
-	DrawWallpaper(canv, "/assam.jpg");
 	ChCanvasScreenUpdate(canv, 0, 0, canv->canvasWidth, canv->canvasHeight);
 
 
@@ -649,7 +1030,7 @@ int main(int argc, char* arv[]) {
 
 	CursorStoreBack(canv, arrow, 0, 0);
 	_cursor_update_ = true;
-
+	_cursor_drawback_ = true;
 	/* Open all required device file */
 	mouse_fd = _KeOpenFile("/dev/mice", FILE_OPEN_READ_ONLY);
 	kybrd_fd = _KeOpenFile("/dev/kybrd", FILE_OPEN_READ_ONLY);
@@ -699,12 +1080,13 @@ int main(int argc, char* arv[]) {
 				arrow->ypos = screen_h - arrow->height;
 			
 			_cursor_update_ = true;
-
+			_cursor_drawback_ = true;
 			memset(&mice_input, 0, sizeof(AuInputMessage));
 		}
 
 		if (kybrd_input.type == AU_INPUT_KEYBOARD) {
 			DeodhaiBroadcastKey(kybrd_input.code);
+			_cursor_update_ = true;
 			memset(&kybrd_input, 0, sizeof(AuInputMessage));
 		}
 
@@ -714,20 +1096,115 @@ int main(int argc, char* arv[]) {
 			int w = event.dword3;
 			int h = event.dword4;
 			uint8_t flags = event.dword5;
-	
-			Window* win = DeodhaiCreateWindow(x, y, w, h, flags, event.from_id, "Test");
+
+			Window* win = DeodhaiCreateWindow(x, y, w, h, flags, event.from_id, event.charValue3);
 			focusedWin = win;
-			
+
 			PostEvent e;
 			memset(&e, 0, sizeof(PostEvent));
+
 			e.type = DEODHAI_REPLY_WINCREATED;
 			e.dword = win->shWinKey;
 			e.dword2 = win->backBufferKey;
+			e.dword3 = win->handle;
 			e.to_id = event.from_id;
+			
 			_KeFileIoControl(postbox_fd, POSTBOX_PUT_EVENT, &e);
-			_window_update_all_ = true;
+
+			/* broadcast it to all broadcast listener windows, about this news*/
+			memset(&e, 0, sizeof(PostEvent));
+			e.type = DEODHAI_BROADCAST_WINCREATED;
+			e.dword = win->ownerId;
+			strcpy(e.charValue3, win->title);
+			DeodhaiBroadcastMessage(&e, win);
+
+			_cursor_update_ = true;
 			memset(&event, 0, sizeof(PostEvent));
 
+		}
+
+		/* broadcast icon message */
+		if (event.type == DEODHAI_MESSAGE_BROADCAST_ICON) {
+			event.type = DEODHAI_BROADCAST_ICON;
+			DeodhaiBroadcastMessage(&event, NULL);
+			memset(&event, 0, sizeof(PostEvent));
+		}
+
+		if (event.type == DEODHAI_MESSAGE_WINDOW_HIDE) {
+			uint16_t ownerId = event.dword;
+			uint32_t handle = event.dword2;
+			Window* hideable_win = NULL;
+			for (Window* win = rootWin; win != NULL; win = win->next) {
+				if (win->handle == handle){
+					hideable_win = win;
+					break;
+				}
+			}
+
+			if (!hideable_win){
+				for (Window* win = alwaysOnTop; win != NULL; win = win->next) {
+					if (win->handle == handle) {
+						hideable_win = win;
+						break;
+					}
+				}
+			}
+
+			if (hideable_win) 
+				DeodhaiWindowHide(hideable_win);
+			memset(&event, 0, sizeof(PostEvent));
+		}
+
+		/* brings back a window to front */
+		if (event.type == DEODHAI_MESSAGE_WINDOW_BRING_FRONT) {
+			uint16_t ownerId = event.dword;
+			Window* frontableWin = NULL;
+			for (Window* win = rootWin; win != NULL; win = win->next) {
+				if (win->ownerId == ownerId){
+					frontableWin = win;
+					break;
+				}
+			}
+			DeodhaiWindowSetFocused(frontableWin, true);
+			_window_update_all_ = true;
+			_always_on_top_update = true;
+			_cursor_update_ = true;
+			memset(&event, 0, sizeof(PostEvent));
+		}
+
+		if (event.type == DEODHAI_MESSAGE_GETWINDOW) {
+			uint16_t ownerID = 0;
+			uint32_t handle = 0;
+			bool _not_found = true;
+			for (Window* win = rootWin; win != NULL; win = win->next) {
+				if (strcmp(win->title, event.charValue3) == 0) {
+					ownerID = win->ownerId;
+					handle = win->handle;
+					_not_found = false;
+					break;
+				}
+			}
+
+			if (_not_found) {
+				for (Window* win = alwaysOnTop; win != NULL; win = win->next) {
+					if (strcmp(win->title, event.charValue3) == 0) {
+						ownerID = win->ownerId;
+						handle = win->handle;
+						_not_found = false;
+						break;
+					}
+				}
+			}
+
+			PostEvent e;
+			memset(&e, 0, sizeof(PostEvent));
+			e.type = DEODHAI_REPLY_WINDOW_ID;
+			e.dword = ownerID;
+			e.dword2 = handle;
+			e.to_id = event.from_id;
+			e.from_id = POSTBOX_ROOT_ID;
+			_KeFileIoControl(postbox_fd, POSTBOX_PUT_EVENT, &e);
+			memset(&event, 0, sizeof(PostEvent));
 		}
 		
 		diff_tick = _KeGetSystemTimerTick();

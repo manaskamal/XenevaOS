@@ -36,7 +36,7 @@
 #include <Hal\x86_64_signal.h>
 
 /* maximum supported system calls */
-#define AURORA_MAX_SYSCALL  37
+#define AURORA_MAX_SYSCALL  43
 #define AURORA_SYSCALL_MAGIC  0x05212004  /* actual number to remember */
 
 /* ==========================================
@@ -231,4 +231,45 @@ extern int SendSignal(int pid, int signo);
 */
 extern int GetCurrentTime(void* ptr);
 
+/*
+* KillProcess -- forcefully kills a process
+* @param proc_id -- process id
+*/
+extern int KillProcess(int proc_id);
+
+/*
+* OpenDir -- opens a directory
+* @param filename -- name of the directory
+*/
+extern int OpenDir(char* filename);
+
+/*
+* ReadDir -- reads a directory entry
+* @param dirfd -- directory file descriptor
+* @param dirent -- aurora directory entry struct
+*/
+extern int ReadDir(int dirfd, void* dirent);
+
+
+/*
+* CreateTimer -- create timer service
+* @param maxTickLimit -- maximum tick limit
+* @param updatemode -- Timer update mode
+*/
+extern int CreateTimer(int threadID,int maxTickLimit, uint8_t updatemode);
+
+/*
+* StartTimer -- starts the timer
+*/
+extern int StartTimer(int threadID);
+
+/*
+* StopTimer -- stop the timer
+*/
+extern int StopTimer(int threadID);
+
+/*
+* DestroyTimer -- remove the timer
+*/
+extern int DestroyTimer(int threadID);
 #endif

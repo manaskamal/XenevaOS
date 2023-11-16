@@ -39,7 +39,9 @@
 typedef struct _signal_ {
 	int signum;
 	x86_64_cpu_regs_t *signalStack;
-	AuThread* signalState;
+	AuThreadFrame* signalState;
+	uint8_t threadState;
+	bool returnSyscall;
 }Signal;
 #pragma pack(pop)
 

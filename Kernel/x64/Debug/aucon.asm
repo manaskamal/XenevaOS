@@ -24,13 +24,13 @@ _BSS	SEGMENT
 ?_print_func@@3P6AXPEBDZZEA DQ 01H DUP (?)		; _print_func
 _BSS	ENDS
 CONST	SEGMENT
-$SG3585	DB	'/dev', 00H
+$SG3628	DB	'/dev', 00H
 	ORG $+3
-$SG3590	DB	'graph', 00H
+$SG3633	DB	'graph', 00H
 	ORG $+2
-$SG3591	DB	'/', 00H
+$SG3634	DB	'/', 00H
 	ORG $+2
-$SG3719	DB	'.', 00H
+$SG3762	DB	'.', 00H
 CONST	ENDS
 PUBLIC	?AuConsoleInitialize@@YAXPEAU_KERNEL_BOOT_INFO_@@_N@Z ; AuConsoleInitialize
 PUBLIC	?AuConsolePostInitialise@@YAXPEAU_KERNEL_BOOT_INFO_@@@Z ; AuConsolePostInitialise
@@ -1182,7 +1182,7 @@ $LN5@AuTextOut:
 ; 326  : 			{
 ; 327  : 				AuPutS(".");
 
-	lea	rcx, OFFSET FLAT:$SG3719
+	lea	rcx, OFFSET FLAT:$SG3762
 	call	?AuPutS@@YAXPEAD@Z			; AuPutS
 
 ; 328  : 			}
@@ -1481,19 +1481,19 @@ $LN4@AuConsoleP:
 ; 164  : 
 ; 165  : 	AuVFSNode* fsys = AuVFSFind("/dev");
 
-	lea	rcx, OFFSET FLAT:$SG3585
+	lea	rcx, OFFSET FLAT:$SG3628
 	call	AuVFSFind
 	mov	QWORD PTR fsys$[rsp], rax
 
 ; 166  : 	AuVFSNode* file = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
 
-	mov	ecx, 176				; 000000b0H
+	mov	ecx, 192				; 000000c0H
 	call	kmalloc
 	mov	QWORD PTR file$[rsp], rax
 
 ; 167  : 	memset(file, 0, sizeof(AuVFSNode));
 
-	mov	r8d, 176				; 000000b0H
+	mov	r8d, 192				; 000000c0H
 	xor	edx, edx
 	mov	rcx, QWORD PTR file$[rsp]
 	call	memset
@@ -1501,7 +1501,7 @@ $LN4@AuConsoleP:
 ; 168  : 	strcpy(file->filename, "graph");
 
 	mov	rax, QWORD PTR file$[rsp]
-	lea	rdx, OFFSET FLAT:$SG3590
+	lea	rdx, OFFSET FLAT:$SG3633
 	mov	rcx, rax
 	call	strcpy
 
@@ -1520,23 +1520,23 @@ $LN4@AuConsoleP:
 ; 171  : 	file->read = 0;
 
 	mov	rax, QWORD PTR file$[rsp]
-	mov	QWORD PTR [rax+96], 0
+	mov	QWORD PTR [rax+104], 0
 
 ; 172  : 	file->write = 0;
 
 	mov	rax, QWORD PTR file$[rsp]
-	mov	QWORD PTR [rax+104], 0
+	mov	QWORD PTR [rax+112], 0
 
 ; 173  : 	file->iocontrol = AuConsoleIoControl;
 
 	mov	rax, QWORD PTR file$[rsp]
 	lea	rcx, OFFSET FLAT:?AuConsoleIoControl@@YAHPEAU__VFS_NODE__@@HPEAX@Z ; AuConsoleIoControl
-	mov	QWORD PTR [rax+168], rcx
+	mov	QWORD PTR [rax+184], rcx
 
 ; 174  : 	AuDevFSAddFile(fsys, "/", file);
 
 	mov	r8, QWORD PTR file$[rsp]
-	lea	rdx, OFFSET FLAT:$SG3591
+	lea	rdx, OFFSET FLAT:$SG3634
 	mov	rcx, QWORD PTR fsys$[rsp]
 	call	AuDevFSAddFile
 

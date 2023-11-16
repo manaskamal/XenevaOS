@@ -41,14 +41,13 @@ ChitralekhaApp* baseapp;
 ChitralekhaApp* ChitralekhaStartApp(int argc, char* argv[]) {
 	int postboxfd = _KeOpenFile("/dev/postbox", FILE_OPEN_READ_ONLY);
 	_KeFileIoControl(postboxfd, POSTBOX_CREATE, NULL);
-	baseapp = NULL;
+
 	
 	ChFont* font = ChInitialiseFont(XENEVA_DEFAULT_FONT);
 	ChitralekhaApp* app = (ChitralekhaApp*)malloc(sizeof(ChitralekhaApp));
 	memset(app, 0, sizeof(ChitralekhaApp));
 	app->baseFont = font;
 	app->postboxfd = postboxfd;
-	baseapp = app;
 	uint16_t thr_id = _KeGetThreadID();
 	app->currentID = thr_id;
 
@@ -56,6 +55,18 @@ ChitralekhaApp* ChitralekhaStartApp(int argc, char* argv[]) {
 	return app;
 }
 
+/*
+* ChitralekhaStartApp -- start an application instance
+*/
+ChitralekhaApp* ChitralekhaStartSubApp(ChitralekhaApp* parent) {
+	ChitralekhaApp* app = (ChitralekhaApp*)malloc(sizeof(ChitralekhaApp));
+	memset(app, 0, sizeof(ChitralekhaApp));
+	app->baseFont = parent->baseFont;
+	app->postboxfd = parent->postboxfd;
+	uint16_t thr_id = parent->currentID;
+	app->currentID = thr_id;
+	return app;
+}
 /*
  * ChitralekhaGetApp -- return running application instance
  */

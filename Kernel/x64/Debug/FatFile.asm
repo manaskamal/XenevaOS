@@ -6,8 +6,8 @@ INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
 CONST	SEGMENT
-$SG3579	DB	'[FAT]: New Cluster allocated ', 0dH, 0aH, 00H
-$SG3658	DB	'EOC mark found in cluster -> %x ', 0aH, 00H
+$SG3608	DB	'[FAT]: New Cluster allocated ', 0dH, 0aH, 00H
+$SG3687	DB	'EOC mark found in cluster -> %x ', 0aH, 00H
 CONST	ENDS
 PUBLIC	?FatFileGetParent@@YAPEAU__VFS_NODE__@@PEAU1@PEBD@Z ; FatFileGetParent
 PUBLIC	?FatCreateFile@@YAPEAU__VFS_NODE__@@PEAU1@PEAD@Z ; FatCreateFile
@@ -172,7 +172,7 @@ $LN4@FatFileRem:
 ; 477  : 			SeTextOut("EOC mark found in cluster -> %x \n", cluster);
 
 	mov	edx, DWORD PTR cluster$[rsp]
-	lea	rcx, OFFSET FLAT:$SG3658
+	lea	rcx, OFFSET FLAT:$SG3687
 	call	SeTextOut
 
 ; 478  : 			FatAllocCluster(fsys, cluster, 0x00);
@@ -804,7 +804,7 @@ $LN6@FatFileWri:
 
 ; 342  : 		SeTextOut("[FAT]: New Cluster allocated \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG3579
+	lea	rcx, OFFSET FLAT:$SG3608
 	call	SeTextOut
 
 ; 343  : 		file->eof = 0;
@@ -1606,13 +1606,13 @@ $LN21@FatCreateF:
 ; 115  : 
 ; 116  : 	AuVFSNode* file = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
 
-	mov	ecx, 176				; 000000b0H
+	mov	ecx, 192				; 000000c0H
 	call	kmalloc
 	mov	QWORD PTR file$[rsp], rax
 
 ; 117  : 	memset(file, 0, sizeof(AuVFSNode));
 
-	mov	r8d, 176				; 000000b0H
+	mov	r8d, 192				; 000000c0H
 	xor	edx, edx
 	mov	rcx, QWORD PTR file$[rsp]
 	call	memset
@@ -2324,13 +2324,13 @@ $LN12@FatFileGet:
 
 ; 87   : 		retfile = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
 
-	mov	ecx, 176				; 000000b0H
+	mov	ecx, 192				; 000000c0H
 	call	kmalloc
 	mov	QWORD PTR retfile$[rsp], rax
 
 ; 88   : 		memset(retfile, 0, sizeof(AuVFSNode));
 
-	mov	r8d, 176				; 000000b0H
+	mov	r8d, 192				; 000000c0H
 	xor	edx, edx
 	mov	rcx, QWORD PTR retfile$[rsp]
 	call	memset

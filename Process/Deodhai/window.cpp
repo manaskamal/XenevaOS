@@ -28,6 +28,7 @@
 **/
 
 #include "window.h"
+#include "deodhai.h"
 #include <sys\mman.h>
 #include <stdlib.h>
 #include <string.h>
@@ -90,6 +91,7 @@ Window* CreateWindow(int x, int y, int w, int h, uint8_t flags, uint16_t ownerId
 	shwin->rect_count = 0;
 	shwin->alpha = false;
 	shwin->dirty = false;
+	win->handle = DeodhaiAllocateNewHandle();
 	return win;
 }
 

@@ -57,6 +57,17 @@
 
 struct __VFS_NODE__;
 
+#pragma pack(push,1)
+typedef struct _AuDirectoryEnty_ {
+	char filename[32];
+	int index;
+	int size;
+	int date;
+	int time;
+	uint8_t flags;
+}AuDirectoryEntry;
+#pragma pack(pop)
+
 typedef __VFS_NODE__* (*open_callback) (__VFS_NODE__ *node, char* path);
 typedef size_t(*read_callback) (__VFS_NODE__ *node,  __VFS_NODE__ *file, uint64_t* buffer, uint32_t length);
 typedef size_t(*read_block_callback) (__VFS_NODE__ *node, __VFS_NODE__ *file, uint64_t* buffer);
@@ -67,6 +78,8 @@ typedef int (*remove_dir_callback) (__VFS_NODE__* node, __VFS_NODE__ *file);
 typedef int (*remove_file_callback)(__VFS_NODE__* node, __VFS_NODE__ *file);
 typedef int(*close_callback) (__VFS_NODE__ *node,__VFS_NODE__ *file);
 typedef int(*iocontrol_callback) (__VFS_NODE__ *file, int code, void *arg);
+typedef __VFS_NODE__* (*opendir_callback) (__VFS_NODE__ *fs, char* dirname);
+typedef int(*readdir_callback)(__VFS_NODE__* fs, __VFS_NODE__* dir, AuDirectoryEntry* dirent);
 typedef size_t(*fs_getblockfor) (__VFS_NODE__* fs, __VFS_NODE__* file, uint64_t offset);
 
 
@@ -84,6 +97,7 @@ typedef struct __VFS_NODE__ {
 	uint16_t fileCopyCount; //important for tty files
 	/* callback specific */
 	open_callback open;
+	opendir_callback opendir;
 	read_callback read;
 	write_callback write;
 	create_dir_callback create_dir;
@@ -92,6 +106,7 @@ typedef struct __VFS_NODE__ {
 	remove_file_callback remove_file;
 	close_callback close;
 	read_block_callback read_block;
+	readdir_callback read_dir;
 	fs_getblockfor get_blockfor;
 	iocontrol_callback iocontrol;
 }AuVFSNode;

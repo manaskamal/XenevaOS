@@ -31,6 +31,7 @@
 #define __LIST_H__
 
 #include <stdint.h>
+#include <_xeneva.h>
 
 #pragma pack(push,1)
 typedef struct _data_ {
@@ -48,9 +49,9 @@ typedef struct _list_ {
 }list_t;
 #pragma pack(pop)
 
-extern list_t* initialize_list();
-extern void list_add(list_t* list, void* data);
-extern void* list_remove(list_t* list, unsigned int);
-extern void * list_get_at(list_t* list, unsigned int index);
+XE_EXTERN XE_EXPORT list_t* initialize_list();
+XE_EXTERN XE_EXPORT void list_add(list_t* list, void* data);
+XE_EXTERN XE_EXPORT void* list_remove(list_t* list, unsigned int);
+XE_EXTERN XE_EXPORT void * list_get_at(list_t* list, unsigned int index);
 
 #endif

@@ -37,6 +37,8 @@
 #define WINDOW_FLAG_STATIC  (1<<1)
 #define WINDOW_FLAG_ALWAYS_ON_TOP  (1<<2)
 #define WINDOW_FLAG_NON_RESIZABLE  (1<<3)
+#define WINDOW_FLAG_BROADCAST_LISTENER (1<<4)
+#define WINDOW_FLAG_ANIMATED (1<<5)
 
 #pragma pack(push,1)
 typedef struct _win_info_ {
@@ -49,6 +51,8 @@ typedef struct _win_info_ {
 	uint32_t width;
 	uint32_t height;
 	bool alpha;
+	bool hide;
+	double alphaValue;
 }WinSharedInfo;
 #pragma pack(pop)
 
@@ -60,11 +64,15 @@ typedef struct _win_ {
 	uint32_t* shadowBuffer;
 	uint16_t shWinKey;
 	uint16_t backBufferKey;
+	uint32_t handle;
 	int dragX;
 	int dragY;
 	int resz_h;
 	int resz_b;
 	bool markForClose;
+	uint8_t animFrameCount;
+	double animAlphaVal;
+	bool animdirection; 
 	char* title;
 	_win_ * next;
 	_win_ * prev;

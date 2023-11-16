@@ -1,17 +1,18 @@
-﻿Build started 09-11-2023 আবেলি 9:55:57.
+﻿Build started 12-11-2023 আবেলি 12:21:57.
      1>Project "E:\Xeneva Project\Aurora\Process\XEShell\XEShell.vcxproj" on node 2 (Rebuild target(s)).
      1>ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /I"E:\Xeneva Project\Aurora\Libs\Chitralekha" /I"E:\os_dev\freetype2-master\freetype2-master\include" /Zi /nologo /W4 /WX- /sdl- /MP /Od /Oy /D ARCH_X64 /D YES_DYNAMIC /D DYNAMIC_IMPORTER /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt main.cpp
      1>cl : Command line warning D9025: overriding '/sdl-' with '/GS-'
      1>cl : Command line warning D9002: ignoring unknown option '/arch:SSE2'
          main.cpp
-     1>main.cpp(45): warning C4100: 'signo' : unreferenced formal parameter
-     1>main.cpp(78): warning C4189: 'status' : local variable is initialized but not referenced
-     1>main.cpp(89): warning C4244: 'initializing' : conversion from 'int' to 'char', possible loss of data
-     1>main.cpp(154): warning C4129: '%' : unrecognized character escape sequence
-     1>main.cpp(184): warning C4127: conditional expression is constant
-     1>main.cpp(172): warning C4100: 'arv' : unreferenced formal parameter
-     1>main.cpp(172): warning C4100: 'argc' : unreferenced formal parameter
+     1>main.cpp(92): warning C4189: 'status' : local variable is initialized but not referenced
+     1>main.cpp(105): warning C4244: 'initializing' : conversion from 'int' to 'char', possible loss of data
+     1>main.cpp(139): warning C4127: conditional expression is constant
+     1>main.cpp(198): warning C4129: '%' : unrecognized character escape sequence
+     1>main.cpp(229): warning C4313: 'printf'  : '%x' in format string conflicts with argument 1 of type 'void (__cdecl *)(int)'
+     1>main.cpp(238): warning C4127: conditional expression is constant
+     1>main.cpp(223): warning C4100: 'arv' : unreferenced formal parameter
+     1>main.cpp(223): warning C4100: 'argc' : unreferenced formal parameter
      1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(1186,5): warning MSB8012: TargetPath(E:\Xeneva Project\Aurora\x64\Debug\XEShell.exe) does not match the Linker's OutputFile property value (F:\xesh.exe). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
      1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(1188,5): warning MSB8012: TargetName(XEShell) does not match the Linker's OutputFile property value (xesh). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
        Link:
@@ -23,4 +24,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:00.63
+Time Elapsed 00:00:00.74

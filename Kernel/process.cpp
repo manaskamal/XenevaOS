@@ -375,7 +375,6 @@ void AuProcessWaitForTermination(AuProcess *proc, int pid) {
 
 
 			if (!killable){
-				AuBlockThread(proc->main_thread);
 				AuSleepThread(proc->main_thread, 10000);
 				proc->state = PROCESS_STATE_SUSPENDED;
 				x64_force_sched();
@@ -427,7 +426,7 @@ void AuProcessHeapMemDestroy(AuProcess* proc) {
  * as killable
  * @param proc -- process to exit 
  */
-void AuProcessExit(AuProcess* proc) {
+void AuProcessExit(AuProcess* proc, bool schedulable) {
 	x64_cli();
 	if (proc == root_proc) {
 		SeTextOut("[aurora]: cannot exit root process \r\n");
@@ -498,8 +497,9 @@ void AuProcessExit(AuProcess* proc) {
 	AuThreadMoveToTrash(proc->main_thread);
 	
 	kmalloc_debug_on(false);
-
-	x64_force_sched();
+	SeTextOut("Process exited %s \r\n", proc->name);
+	if (schedulable)
+		x64_force_sched();
 }
 
 
@@ -533,6 +533,7 @@ int AuCreateUserthread(AuProcess* proc, void(*entry) (void*), char *name)
 	uentry->ss = SEGVAL(GDT_ENTRY_USER_DATA, 3);
 	uentry->num_args = 0;
 	uentry->rsp = (uint64_t)CreateUserStack(proc, proc->cr3);
+	uentry->rsp -= 32;
 	uentry->stackBase = uentry->rsp;
 	thr->uentry = uentry;
 	int thread_indx = proc->num_thread;

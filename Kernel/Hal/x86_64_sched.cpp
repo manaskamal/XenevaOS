@@ -390,6 +390,10 @@ void x8664SchedulerISR(size_t v, void* param) {
 		if (AuCheckSignal(current_thread, frame)) {
 			Signal* sig = AuGetSignal(current_thread);
 			AuPrepareSignal(current_thread, frame, sig);
+
+			/* actually, signal should be executed immediately
+			 * here, AuSignalHandle() 
+			 */
 		}
 
 		if (x86_64_is_cpu_fxsave_supported())
