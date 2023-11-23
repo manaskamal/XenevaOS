@@ -40,6 +40,8 @@
 #define WINDOW_FLAG_BROADCAST_LISTENER (1<<4)
 #define WINDOW_FLAG_ANIMATED (1<<5)
 
+#define SHADOW_SIZE 10
+
 #pragma pack(push,1)
 typedef struct _win_info_ {
 	Rect rect[256];
@@ -61,7 +63,7 @@ typedef struct _win_ {
 	uint16_t ownerId;
 	uint32_t* backBuffer;
 	uint32_t* sharedInfo;
-	uint32_t* shadowBuffer;
+	uint32_t* shadowBuffers[2];
 	uint16_t shWinKey;
 	uint16_t backBufferKey;
 	uint32_t handle;

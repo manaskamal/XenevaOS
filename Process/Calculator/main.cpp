@@ -1,0 +1,366 @@
+/**
+* BSD 2-Clause License
+*
+* Copyright (c) 2022, Manas Kamal Choudhury
+* All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification, are permitted provided that the following conditions are met:
+*
+* 1. Redistributions of source code must retain the above copyright notice, this
+*    list of conditions and the following disclaimer.
+*
+* 2. Redistributions in binary form must reproduce the above copyright notice,
+*    this list of conditions and the following disclaimer in the documentation
+*    and/or other materials provided with the distribution.
+*
+* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+* AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+* IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+* DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+* FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+* DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+* SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+* CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+* OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+* OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*
+**/
+
+#include <stdint.h>
+#include <_xeneva.h>
+#include <stdio.h>
+#include <sys\_keproc.h>
+#include <sys\_kefile.h>
+#include <sys\iocodes.h>
+#include <chitralekha.h>
+#include <widgets\base.h>
+#include <widgets\button.h>
+#include <widgets\window.h>
+#include <string.h>
+#include <stdlib.h>
+#include "calculator.h"
+
+ChitralekhaApp *app;
+ChWindow* mainWin;
+ChFont* dispFont;
+CalculatorDisplay* mainDisp;
+
+#define CALCULATOR_BACK_COLOR 0xFF353535
+#define CALC_DISPLAY_DARK 0xFF6598DE
+#define CALC_DISPLAY_LIGHT 0xFF8BADDC
+
+
+
+#define MAX_DIGIT 1024
+
+
+void CalcDisplayDraw(ChWidget* wid, ChWindow* win) {
+	CalculatorDisplay* disp = (CalculatorDisplay*)wid;
+	ChDrawRect(win->canv, wid->x,wid->y, wid->w, wid->h, WHITE);
+	ChColorDrawHorizontalGradient(win->canv, wid->x, wid->y, wid->w, wid->h, CALC_DISPLAY_DARK, CALC_DISPLAY_LIGHT);
+	ChDrawRectUnfilled(win->canv, wid->x, wid->y, wid->w, wid->h, BLACK);
+	ChDrawRectUnfilled(win->canv, wid->x +1 , wid->y + 1, wid->w - 1, wid->h - 1, BLACK);
+	ChFontSetSize(dispFont, 23);
+	char* buff = disp->inputnum;
+	bool _clear_output = false;
+	if (disp->output){
+		buff = disp->outputnum;
+		disp->output = false;
+		_clear_output = true;
+	}
+	int font_w = ChFontGetWidth(dispFont, buff);
+	ChFontDrawText(win->canv, dispFont, buff, wid->x + wid->w - font_w - 10, wid->y + wid->h / 2, 23, BLACK);
+
+	if (disp->operator_ != 0){
+		ChFontSetSize(dispFont, 13);
+		char* string = 0;
+		switch (disp->operator_) {
+		case CALC_OPERATOR_ADD:
+			string = "(+)";
+			break;
+		case CALC_OPERATOR_MULT:
+			string = "(*)";
+			break;
+		case CALC_OPERATOR_DIVIDE:
+			string = "(/)";
+			break;
+		case CALC_OPERATOR_MOD:
+			string = "(%)";
+			break;
+		case CALC_OPERATOR_SUB:
+			string = "(-)";
+			break;
+		default:
+			string = " ";
+			break;
+		}
+		int op_w = ChFontGetWidth(dispFont, string);
+		int op_h = ChFontGetHeight(dispFont, string);
+		ChFontDrawText(win->canv, dispFont, string, wid->x + wid->w - op_w - 10, wid->y + wid->h - op_h, 13, BLACK);
+	}
+	if (_clear_output)
+		memset(disp->outputnum, 0, 1024);
+}
+
+/*
+ * CalcUpdateDisplay -- update the newly modified display
+ * @param disp -- Pointer to calculator display
+ */
+void CalcUpdateDisplay(CalculatorDisplay* disp) {
+	CalcDisplayDraw((ChWidget*)disp, mainWin);
+	ChWindowUpdate(mainWin, disp->wid.x, disp->wid.y, disp->wid.w, disp->wid.h, 0, 1);
+}
+
+/*
+ * CalculatorGetMainDisplay -- returns the main display
+ */
+CalculatorDisplay* CalculatorGetMainDisplay() {
+	return mainDisp;
+}
+/*
+ * CalcCreateDisplay -- creates a calculator display
+ * @param x -- X position of the display
+ * @param y -- Y position of the display
+ * @param w -- Width of the display
+ * @param h -- Height of the display
+ */
+CalculatorDisplay* CalcCreateDisplay(int x, int y, int w, int h) {
+	CalculatorDisplay* disp = (CalculatorDisplay*)malloc(sizeof(CalculatorDisplay));
+	memset(disp, 0, sizeof(CalculatorDisplay));
+	disp->wid.x = CHITRALEKHA_WINDOW_DEFAULT_PAD_X + x;
+	disp->wid.y = CHITRALEKHA_WINDOW_DEFAULT_PAD_Y + y;
+	disp->wid.w = w;
+	disp->wid.h = h;
+	disp->wid.ChMouseEvent = 0;
+	disp->wid.ChPaintHandler = CalcDisplayDraw;
+	disp->inputnum = (char*)malloc(MAX_DIGIT);
+	memset(disp->inputnum, 0, 1024);
+	disp->outputnum = (char*)malloc(MAX_DIGIT);
+	disp->operator_ = 0;
+	disp->inputidx = 0;
+	return disp;
+}
+
+/*
+ * CalculatorProcess -- process calculator calculations
+ * @param calc -- Pointer to calculator display
+ */
+void CalculatorProcess(CalculatorDisplay* calc) {
+	int num2 = atoi(calc->inputnum);
+	calc->num2 = num2;
+	int result = 0;
+	if (calc->num1 > 0) {
+		int num1 = calc->num1;
+		switch (calc->operator_) {
+		case CALC_OPERATOR_ADD:
+			result = num1 + num2;
+			break;
+		case CALC_OPERATOR_DIVIDE:
+			result = num1 / num2;
+			break;
+		case CALC_OPERATOR_MOD:
+			result = num1 % num2;
+			break;
+		case CALC_OPERATOR_MULT:
+			result = num1 * num2;
+			break;
+		case CALC_OPERATOR_SUB:
+			result = num1 - num2;
+			break;
+		}
+	}
+	memset(calc->outputnum, 0, 1024);
+	itoa_s(result, 10, calc->outputnum);
+	calc->output = true;
+	calc->operator_ = 0;
+	CalcAllClear(calc);
+}
+
+/* CalcAddDigit -- adds a digit to the calculator
+ * processor, only one digit 
+ * @param disp -- Calculator display processor
+ * @param number -- number with one digit
+ */
+void CalcAddDigit(CalculatorDisplay* disp, int number){
+	if (number > 9)
+		return;
+	char num[1];
+	itoa_s(number, 10, num);
+	if (disp->inputidx == 1024)
+		return;
+	disp->inputnum[disp->inputidx] = num[0];
+	disp->inputidx++;
+}
+
+/*
+ * CalcRemoveDigit -- removes a digit from input buffer
+ * @param disp -- Calculator display
+ */
+void CalcRemoveDigit(CalculatorDisplay* disp) {
+	if (disp->inputidx == 0)
+		return;
+
+	int idx = disp->inputidx - 1;
+	if (idx <= 0)
+		idx = 0;
+	disp->inputnum[idx] = '\0';
+	disp->inputidx--;
+	if (disp->inputidx <= 0)
+		disp->inputidx = 0;
+}
+
+/*
+ * CalcAllClear -- clear all digits
+ * @param disp -- Pointer to calculator display
+ * processor
+ */
+void CalcAllClear(CalculatorDisplay* disp) {
+	memset(disp->inputnum, 0, 1024);
+	disp->inputidx = 0;
+}
+
+/*
+ * WindowHandleMessage -- handles incoming deodhai messages
+ * @param e -- PostBox event message structure
+ */
+void WindowHandleMessage(PostEvent *e) {
+	switch (e->type) {
+	/* handle mouse event from deodhai */
+	case DEODHAI_REPLY_MOUSE_EVENT:{
+									   ChWindowHandleMouse(mainWin, e->dword, e->dword2, e->dword3);
+									   memset(e, 0, sizeof(PostEvent));
+									   break;
+	}
+		/* handle key events from deodhai */
+	case DEODHAI_REPLY_KEY_EVENT:{
+									 int code = e->dword;
+									 memset(e, 0, sizeof(PostEvent));
+									 break;
+	}
+	}
+}
+
+void CalculatorCreateButtonGird(ChWindow* win) {
+	int y_start = mainDisp->wid.y + mainDisp->wid.h + 10;
+	int x_start = 10;
+	int grid_width = win->info->width - 10 * 2 - CHITRALEKHA_WINDOW_DEFAULT_PAD_X;
+	int pad_x = 10;
+	int pad_y = 10;
+	int num_buttons_per_row = grid_width / (70 + pad_x);
+	int butt_w = 80;
+
+	ChFontSetSize(app->baseFont, 24);
+	/* first row*/
+	ChButton *ac = ChCreateButton(x_start, y_start, butt_w, 35, "AC"); //All Clear
+	ac->base.ChActionHandler = AllClearAction;
+	ChWindowAddWidget(win, (ChWidget*)ac);
+	ChButton *back = ChCreateButton(ac->base.x + ac->base.w + pad_x, y_start,butt_w, 35, "Back");
+	back->base.ChActionHandler = BackAction;
+	ChWindowAddWidget(win, (ChWidget*)back);
+
+	ChButton *mod = ChCreateButton(back->base.x + back->base.w + pad_x, y_start, butt_w, 35, "%");
+	mod->base.ChActionHandler = ModAction;
+	ChWindowAddWidget(win, (ChWidget*)mod);
+	ChButton *div = ChCreateButton(mod->base.x + mod->base.w + pad_x, y_start, butt_w, 35, "/");
+	div->base.ChActionHandler = DivideAction;
+	ChWindowAddWidget(win, (ChWidget*)div);
+
+	/*second row */
+	y_start += mod->base.h + pad_y;
+	ChButton* seven = ChCreateButton(x_start, y_start, butt_w, 35, "7");
+	seven->base.ChActionHandler = SevenAction;
+	ChWindowAddWidget(win, (ChWidget*)seven);
+
+	ChButton* eight = ChCreateButton(seven->base.x + seven->base.w + pad_x, y_start, butt_w, 35, "8");
+	eight->base.ChActionHandler = EightAction;
+	ChWindowAddWidget(win, (ChWidget*)eight);
+
+	ChButton* nine = ChCreateButton(eight->base.x + eight->base.w + pad_x, y_start, butt_w, 35, "9");
+	nine->base.ChActionHandler = NineAction;
+	ChWindowAddWidget(win, (ChWidget*)nine);
+
+	ChButton* mult = ChCreateButton(nine->base.x + nine->base.w + pad_x, y_start, butt_w, 35, "*");
+	mult->base.ChActionHandler = MultAction;
+	ChWindowAddWidget(win, (ChWidget*)mult);
+
+	/* third row */
+	y_start += mult->base.h + pad_y;
+	ChButton* four = ChCreateButton(x_start, y_start, butt_w, 35, "4");
+	four->base.ChActionHandler = FourAction;
+	ChWindowAddWidget(win, (ChWidget*)four);
+
+	ChButton* five = ChCreateButton(four->base.x + four->base.w + pad_x, y_start, butt_w, 35, "5");
+	five->base.ChActionHandler = FiveAction;
+	ChWindowAddWidget(win, (ChWidget*)five);
+
+	ChButton* six = ChCreateButton(five->base.x + five->base.w + pad_x, y_start, butt_w, 35, "6");
+	six->base.ChActionHandler = SixAction;
+	ChWindowAddWidget(win, (ChWidget*)six);
+
+	ChButton* minus = ChCreateButton(six->base.x + six->base.w + pad_x, y_start, butt_w, 35, "-");
+	minus->base.ChActionHandler = SubAction;
+	ChWindowAddWidget(win, (ChWidget*)minus);
+
+	/* fourth row */
+	y_start += minus->base.h + pad_y;
+	ChButton* one = ChCreateButton(x_start, y_start, butt_w, 35, "1");
+	one->base.ChActionHandler = OneAction;
+	ChWindowAddWidget(win, (ChWidget*)one);
+
+	ChButton* two = ChCreateButton(one->base.x + one->base.w + pad_x, y_start, butt_w, 35, "2");
+	two->base.ChActionHandler = TwoAction;
+	ChWindowAddWidget(win, (ChWidget*)two);
+
+	ChButton* three = ChCreateButton(two->base.x + two->base.w + pad_x, y_start, butt_w, 35, "3");
+	three->base.ChActionHandler = ThreeAction;
+	ChWindowAddWidget(win, (ChWidget*)three);
+
+	ChButton* add = ChCreateButton(three->base.x + three->base.w + pad_x, y_start, butt_w, 35, "+");
+	add->base.ChActionHandler = AddAction;
+	ChWindowAddWidget(win, (ChWidget*)add);
+
+	/* fifth row */
+	y_start += add->base.h + pad_y;
+	ChButton* plusminus = ChCreateButton(x_start, y_start, butt_w, 35, "+/-");
+	ChWindowAddWidget(win, (ChWidget*)plusminus);
+	ChButton* zero = ChCreateButton(plusminus->base.x + plusminus->base.w + pad_x, y_start, butt_w, 35, "0");
+	zero->base.ChActionHandler = ZeroAction;
+	ChWindowAddWidget(win, (ChWidget*)zero);
+	ChButton* dot = ChCreateButton(zero->base.x + zero->base.w + pad_x, y_start, butt_w, 35, ".");
+	ChWindowAddWidget(win, (ChWidget*)dot);
+	ChButton* equal = ChCreateButton(dot->base.x + dot->base.w + pad_x, y_start, butt_w, 35, "=");
+	equal->base.ChActionHandler = EqualAction;
+	ChWindowAddWidget(win, (ChWidget*)equal);
+}
+
+/*
+* main -- main entry
+*/
+int main(int argc, char* argv[]){
+	app = ChitralekhaStartApp(argc, argv);
+	mainWin = ChCreateWindow(app, WINDOW_FLAG_MOVABLE, "Calculator", 400,100, 380, 
+		400);
+	mainWin->color = CALCULATOR_BACK_COLOR;
+
+	ChWindowBroadcastIcon(app, "/calc.bmp");
+
+	dispFont = ChInitialiseFont(CALIBRI);
+
+	mainDisp = CalcCreateDisplay(10,20, mainWin->info->width - 10*2 - CHITRALEKHA_WINDOW_DEFAULT_PAD_X, 75);
+	
+	CalculatorCreateButtonGird(mainWin);
+	ChWindowAddWidget(mainWin, (ChWidget*)mainDisp);
+	/* button grid */
+	ChWindowPaint(mainWin);
+
+	PostEvent e;
+	memset(&e, 0, sizeof(PostEvent));
+
+	while (1) {
+		int err = _KeFileIoControl(app->postboxfd, POSTBOX_GET_EVENT, &e);
+		WindowHandleMessage(&e);
+		if (err == POSTBOX_NO_EVENT)
+			_KePauseThread();
+	}
+}

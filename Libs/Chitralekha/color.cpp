@@ -32,11 +32,11 @@
 #include <math.h>
 #include <stdlib.h>
 
-#define AMASK 0xFF000000
-#define RBMASK 0x00FF00FF
-#define GMASK  0x0000FF00
-#define AGMASK AMASK | GMASK
-#define ONEALPHA 0x01000000
+static const int AMASK = 0xFF000000;
+static const int RBMASK = 0x00FF00FF;
+static const int GMASK = 0x0000FF00;
+static const int AGMASK = AMASK | GMASK;
+static const int ONEALPHA = 0x01000000;
 
 /*
  * ChColorAlphaBlend -- blend two color
@@ -55,6 +55,22 @@ uint32_t ChColorAlphaBlend(uint32_t oldColor, uint32_t color2, double opacity) {
 		(((int)(g * opacity + oldG * (1 - opacity)) << 8)) |
 		(((int)(r * opacity + oldR * (1 - opacity)) << 16));
 	return newColor;
+}
+
+
+uint32_t ChColorAlphaBlend2(uint32_t color1, uint32_t color2) {
+	uint32_t a = (color2 & AMASK) >> 24;
+	if (a == 0)
+		return color1;
+	else if (a == 255)
+		return color2;
+	else{
+		uint32_t na = 255 - a;
+		uint32_t rb = ((na * (color1 & RBMASK)) + (a * (color2 & RBMASK))) >> 8;
+		uint32_t ag = (na * ((color1 & AGMASK) >> 8)) + (a * (ONEALPHA | ((color2 & GMASK) >> 8)));
+
+		return ((rb & RBMASK) | (ag & AGMASK));
+	}
 }
 
 

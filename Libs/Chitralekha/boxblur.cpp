@@ -55,7 +55,7 @@ void ChBoxBlur(ChCanvas* canv, uint32_t *inputpix, uint32_t* outpix, int cx, int
 
 					if (currentX >= 0 && currentX < canv->canvasWidth &&
 						currentY >= 0 && currentY < canv->canvasHeight) {
-						uint32_t color = inputpix[(currentY * canv->canvasWidth + currentX)];
+						uint32_t color = inputpix[(currentY * w + currentX)];
 
 						uint8_t red = GET_RED(color);
 						uint8_t green = GET_GREEN(color);
@@ -75,7 +75,7 @@ void ChBoxBlur(ChCanvas* canv, uint32_t *inputpix, uint32_t* outpix, int cx, int
 			uint8_t blue = blueTotal / 9;
 			uint8_t alpha = alphaTotal / 9;
 
-			outpix[(cy + j) * canv->canvasWidth + (cx + i)] = make_col_a(red, green, blue, alpha);
+			outpix[(cy + j) * w + (cx + i)] = make_col_a(red, green, blue, alpha);
 		}
 	}
 }

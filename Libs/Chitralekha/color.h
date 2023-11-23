@@ -104,6 +104,13 @@
 XE_EXTERN XE_LIB uint32_t ChColorAlphaBlend(uint32_t oldColor, uint32_t color2, double opacity);
 
 /*
+ * ChColorAlphaBlend2 -- blend two color
+ * @param color1 -- self explanatory
+ * @param color2 -- self explanatory
+ */
+XE_EXTERN XE_LIB uint32_t ChColorAlphaBlend2(uint32_t color1, uint32_t color2);
+
+/*
 * ChColorDrawVerticalGradient -- draws vertical linear gradient
 * @param canv -- Pointer to canvas
 * @param x -- X coord of the rect

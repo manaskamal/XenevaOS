@@ -113,8 +113,21 @@ void ChWindowPaintTitlebar(ChWindow* win) {
 	}
 }
 
+/*
+ * ChWindowPaintMainActivity -- paints the main activity area
+ */
+void ChWindowPaintMainActivity(ChWindow* win) {
+	for (int i = 0; i < win->widgets->pointer; i++) {
+		ChWidget* wid = (ChWidget*)list_get_at(win->widgets, i);
+		if (wid->ChPaintHandler)
+			wid->ChPaintHandler(wid, win);
+	}
+	ChDrawRectUnfilled(win->canv, 0,0, win->info->width, win->info->height, GRAY);
+}
+
 void ChDefaultWinPaint(ChWindow* win){
 	ChDrawRect(win->canv, 0, 0, win->info->width, win->info->height,win->color);
 	ChWindowPaintTitlebar(win);
+	ChWindowPaintMainActivity(win);
 	ChWindowUpdate(win, 0, 0, win->info->width, win->info->height, 1,0);
 }

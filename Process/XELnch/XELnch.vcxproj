@@ -19,7 +19,15 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="AppGrid.cpp" />
+    <ClCompile Include="button.cpp" />
+    <ClCompile Include="lconfig.cpp" />
     <ClCompile Include="main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="appgrid.h" />
+    <ClInclude Include="button.h" />
+    <ClInclude Include="launcher.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{400E59EB-6E4C-461A-91B2-202F85F33D41}</ProjectGuid>

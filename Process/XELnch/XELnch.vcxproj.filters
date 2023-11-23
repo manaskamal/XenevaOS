@@ -2,5 +2,13 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="button.cpp" />
+    <ClCompile Include="AppGrid.cpp" />
+    <ClCompile Include="lconfig.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="button.h" />
+    <ClInclude Include="appgrid.h" />
+    <ClInclude Include="launcher.h" />
   </ItemGroup>
 </Project>

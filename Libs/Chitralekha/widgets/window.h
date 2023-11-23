@@ -39,6 +39,8 @@
 
 #define CHITRALEKHA_DEFAULT_WIN_WIDTH  400
 #define CHITRALEKHA_DEFAULT_WIN_HEIGHT 300
+#define CHITRALEKHA_WINDOW_DEFAULT_PAD_Y 26
+#define CHITRALEKHA_WINDOW_DEFAULT_PAD_X 1
 
 #define WINDOW_GLOBAL_CONTROL_CLOSE 1
 #define WINDOW_GLOBAL_CONTROL_MAXIMIZE 2
@@ -79,8 +81,26 @@ typedef struct _chwin_ {
 	uint32_t handle;
 	uint32_t color;
 	list_t* GlobalControls;
+	list_t* widgets;
 	void(*ChWinPaint)(_chwin_ *win);
 }ChWindow;
+
+typedef struct _ChWidget_{
+	int x;
+	int y;
+	int w;
+	int h;
+	int lastMouseX;
+	int lastMouseY;
+	bool clicked;
+	bool hover;
+	bool hoverPainted;
+	bool KillFocus;
+	void(*ChActionHandler)(_ChWidget_ *widget, ChWindow* win);
+	void(*ChMouseEvent)(_ChWidget_* widget, ChWindow* win, int x, int y, int button);
+	void(*ChPaintHandler)(_ChWidget_* widget, ChWindow* win);
+	void(*ChDestroy)(_ChWidget_* widget, ChWindow* win);
+}ChWidget;
 
 typedef struct _global_ctrl_ {
 	int x;
@@ -162,5 +182,13 @@ XE_EXTERN XE_EXPORT uint32_t ChGetWindowHandle(ChitralekhaApp* app, char* title)
 * @param button -- button state of the mouse
 */
 XE_EXTERN XE_EXPORT void ChWindowHandleMouse(ChWindow* win, int x, int y, int button);
+
+
+/*
+* ChWindowAddWidget -- adds a widget to window
+* @param win -- Pointer to root window
+* @param wid -- Pointer to widget needs to be added
+*/
+XE_EXTERN XE_EXPORT void ChWindowAddWidget(ChWindow* win, ChWidget* wid);
 
 #endif

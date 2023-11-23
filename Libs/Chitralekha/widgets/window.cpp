@@ -155,8 +155,10 @@ XE_EXTERN XE_EXPORT ChWindow* ChCreateWindow(ChitralekhaApp *app, uint8_t attrib
 	win->info->height = h;
 	win->info->rect_count = 0;
 	win->info->updateEntireWindow = 0;
+	win->info->hide = 0;
 	win->color = WHITE;
 	win->GlobalControls = initialize_list();
+	win->widgets = initialize_list();
 	win->ChWinPaint = ChDefaultWinPaint;
 	win->handle = app->windowHandle;
 	ChWinGlobalControl* close = ChCreateGlobalButton(win, win->info->width - 25,
@@ -313,4 +315,36 @@ XE_EXTERN XE_EXPORT void ChWindowHandleMouse(ChWindow* win, int x, int y, int bu
 			}
 		}
 	}
+
+	/* activity area */
+	if (y > win->info->y + 26 && y < (win->info->y + 26 + win->info->height - 26)) {
+		for (int i = 0; i < win->widgets->pointer; i++) {
+			ChWidget* widget = (ChWidget*)list_get_at(win->widgets, i);
+			if (x > win->info->x + widget->x  && x < (win->info->x + widget->x + widget->w) &&
+				(y > win->info->y + widget->y && y < (win->info->y + widget->y + widget->h))) {
+				widget->hover = true;
+				widget->KillFocus = false;
+				if (widget->ChMouseEvent)
+					widget->ChMouseEvent(widget, win, x, y, button);
+			}
+			else {
+				if (widget->hover) {
+					widget->hover = false;
+					widget->KillFocus = true;
+					if (widget->ChMouseEvent)
+						widget->ChMouseEvent(widget, win, x, y, button);
+				}
+			}
+		}
+	}
+}
+
+
+/*
+ * ChWindowAddWidget -- adds a widget to window
+ * @param win -- Pointer to root window
+ * @param wid -- Pointer to widget needs to be added
+ */
+XE_EXTERN XE_EXPORT void ChWindowAddWidget(ChWindow* win, ChWidget* wid) {
+	list_add(win->widgets, wid);
 }

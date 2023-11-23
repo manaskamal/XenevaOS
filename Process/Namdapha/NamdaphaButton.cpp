@@ -199,6 +199,8 @@ void NmButtonInfoRead(ButtonInfo* btninfo) {
 	btninfo->iconWidth = width;
 	btninfo->iconHeight = height;
 	btninfo->iconBpp = bpp;
+	_KeCloseFile(btninfo->iconFd);
+	btninfo->iconFd = -1;
 }
 
 /*

@@ -104,18 +104,17 @@ void TerminalSetCellData(int x, int y, uint8_t c, uint32_t bg, uint32_t fg) {
  */
 void TerminalDrawCell(int x, int y, bool dirty) {
 	int y_offset = 26;
-
 	TermCell* cell = (TermCell*)&term_buffer[(y* ws_col + x)];
 	int f_w = ChFontGetWidthChar(consolas, cell->c);
 	int f_h = ChFontGetHeightChar(consolas, cell->c);
 
-	if ((x* cell_width + cell_width) >= win->info->width) 
+	if ((CHITRALEKHA_WINDOW_DEFAULT_PAD_X + x* cell_width + cell_width) >= win->info->width) 
 		return;
 
 	if ((y*cell_height + cell_height) >= win->info->height)
 		return;
-	ChDrawRect(win->canv, x * cell_width, y_offset + y * cell_height, cell_width, cell_height, cell->cellBgCol);
-	ChFontDrawChar(win->canv, consolas, cell->c,x * cell_width,y_offset + y * cell_height + cell_height - f_h / 2,
+	ChDrawRect(win->canv,CHITRALEKHA_WINDOW_DEFAULT_PAD_X + x* cell_width, y_offset + y * cell_height, cell_width, cell_height, cell->cellBgCol);
+	ChFontDrawChar(win->canv, consolas, cell->c, CHITRALEKHA_WINDOW_DEFAULT_PAD_X + x * cell_width, y_offset + y * cell_height + cell_height - f_h / 2,
 		0, cell->cellFgCol);
 	/*TerminalDrawArrayFont(win->canv, x * cell_width, y_offset + y * cell_height + 12 / 2, cell->c, cell->cellFgCol);*/
 	if (dirty)
@@ -131,7 +130,7 @@ void TerminalDrawAllCells() {
 			TerminalDrawCell(x,y, 0);
 		}
 	}
-	ChWindowUpdate(win, 0, 26, win->info->width, win->info->height - 26, 1, 0);
+	ChWindowUpdate(win, 0, 26, win->info->width-1, win->info->height - 26, 1, 0);
 }
 
 
@@ -139,8 +138,11 @@ void TerminalDrawAllCells() {
 void TerminalDrawCursor() {
 	TermCell* cell = (TermCell*)&term_buffer[cursor_y * ws_col + cursor_x];
 	int y_offset = 26;
-	ChDrawHorizontalLine(win->canv, cursor_x * cell_width,y_offset + cursor_y * cell_height + cell_height - 1, cell_width,GRAY);
-	ChDrawHorizontalLine(win->canv, cursor_x * cell_width,y_offset + cursor_y * cell_height + cell_height - 2, cell_width,GRAY);
+
+	if ((CHITRALEKHA_WINDOW_DEFAULT_PAD_X + cursor_x * cell_width) >= win->info->width)
+		return;
+	ChDrawHorizontalLine(win->canv,CHITRALEKHA_WINDOW_DEFAULT_PAD_X + cursor_x * cell_width,y_offset + cursor_y * cell_height + cell_height - 1, cell_width,GRAY);
+	ChDrawHorizontalLine(win->canv, CHITRALEKHA_WINDOW_DEFAULT_PAD_X + cursor_x * cell_width, y_offset + cursor_y * cell_height + cell_height - 2, cell_width, GRAY);
 	//ChWindowUpdate(win, cursor_x * cell_width,y_offset + cursor_y * cell_height + cell_height - 2, cell_width, 2, 0, 1);
 	ChWindowUpdate(win, 0, 26, win->info->width, win->info->height - 26, 1, 0);
 }
@@ -537,7 +539,7 @@ int main(int argc, char* arv[]){
 	ChWindowPaint(win);
 	consolas = ChInitialiseFont(CONSOLAS);
 	ChFontSetSize(consolas, 12);
-	int term_w = win->info->width;
+	int term_w = win->info->width - 1;
 	int term_h = win->info->height - 26; // -26 for titlebar height
 	int f_w = ChFontGetWidthChar(consolas,'M');
 	int f_h = ChFontGetHeightChar(consolas, 'A');

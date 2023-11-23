@@ -31,10 +31,13 @@
 #include "deodhai.h"
 #include <sys\mman.h>
 #include <stdlib.h>
+#include <color.h>
 #include <string.h>
+#include "boxblur.h"
 
 uint16_t shared_win_key_prefix = 100;
 uint16_t back_buffer_key_prefix = 400;
+
 
 /*
  * CreateSharedWinSpace -- Create a shared window space
@@ -84,14 +87,34 @@ Window* CreateWindow(int x, int y, int w, int h, uint8_t flags, uint16_t ownerId
 	memset(win->title, 0, strlen(title));
 	strcpy(win->title, title);
 	WinSharedInfo *shwin = (WinSharedInfo*)win->sharedInfo;
-	shwin->x = 0;
-	shwin->y = 0;
+	shwin->x = x;
+	shwin->y = y;
 	shwin->width = w;
 	shwin->height = h;
 	shwin->rect_count = 0;
 	shwin->alpha = false;
 	shwin->dirty = false;
 	win->handle = DeodhaiAllocateNewHandle();
+
+	/* shadowBuffer 0 -- for left and right */
+	/*win->shadowBuffers[0] = (uint32_t*)_KeMemMap(NULL, shwin->height * SHADOW_SIZE * 4, 0, 0, MEMMAP_NO_FILEDESC, 0);
+	win->shadowBuffers[1] = (uint32_t*)_KeMemMap(NULL, shwin->width * SHADOW_SIZE * 4, 0, 0, MEMMAP_NO_FILEDESC, 0);
+
+	int shadow_alpha = 400 / (double)(SHADOW_SIZE*SHADOW_SIZE * 4);
+	int alpha = 0;
+	uint32_t* firtShadowBuff = win->shadowBuffers[0];
+	memset(win->shadowBuffers[0], WHITE, shwin->height*SHADOW_SIZE);
+
+	for (int y = 0; y < shwin->height; y++) {
+		for (int x = 8; x < SHADOW_SIZE; x++) {
+			uint32_t col = BLACK;
+			firtShadowBuff[y * SHADOW_SIZE + 8] = 0x4d000000;
+			alpha += shadow_alpha;
+		}
+	}
+
+	
+	memset(win->shadowBuffers[1], WHITE, shwin->width*SHADOW_SIZE);*/
 	return win;
 }
 

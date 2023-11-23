@@ -45,3 +45,13 @@ extern bool ClipCheckIntersect(Rect *r1, Rect *r2);
 * @param count -- number of rectangles stored in the list
 */
 extern void ClipCalculateRect(Rect *sub_rect, Rect* cut_rect, Rect *list, int *count);
+
+/*
+* ClipSubtractRect -- calculate visible rectanlges of current window
+* @param sub_rect -- subject rectangle
+* @param cut_rect -- cutting rectangle
+* @param list -- pointer to the list, where to store all
+* visible rectangles
+* @param count -- number of rectangles stored in the list
+*/
+extern void ClipSubtractRect(Rect *sub_rect, Rect* cut_rect, Rect *list, int r_count);

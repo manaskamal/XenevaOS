@@ -35,7 +35,7 @@
 #include <_xeneva.h>
 
 #pragma pack(push,1)
-typedef struct _rect_ {
+typedef struct _chrect_ {
 	uint32_t x;
 	uint32_t y;
 	uint32_t w;

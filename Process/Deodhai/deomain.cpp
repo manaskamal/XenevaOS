@@ -48,6 +48,7 @@
 #include "_fastcpy.h"
 #include "clip.h"
 #include "backdirty.h"
+#include "draw.h"
 #include <boxblur.h>
 
 Cursor *arrow;
@@ -177,6 +178,7 @@ void DeodhaiBackSurfaceUpdate(ChCanvas* canv, int x, int y, int w, int h) {
 	}
 }
 
+
 /*
  * DeodhaiCreateWindow -- create a new deodhai window
  */
@@ -251,6 +253,68 @@ void DeodhaiWindowSetFocused(Window* win, bool notify) {
 }
 
 /*
+ * DeodhaiDrawShadow -- draws box shadow around the
+ * window -- not completed
+ */
+void DeodhaiDrawShadow(ChCanvas* canv, Window* win) {
+	WinSharedInfo* info = (WinSharedInfo*)win->sharedInfo;
+
+	//Left
+	int s_x = info->x - SHADOW_SIZE;
+	int s_y = info->y + 26;
+	uint32_t* firstBuffer = win->shadowBuffers[0];
+
+	/*for (int i = 0; i < SHADOW_SIZE; i++) {
+		for (int j = 0; j < info->height - 26; j++) {
+			*(uint32_t*)(canvas->buffer + (s_y + j)* canvas->canvasWidth + (s_x + i)) =
+				ChColorAlphaBlend2(*(uint32_t*)(canvas->buffer + (s_y + j)* canvas->canvasWidth + (s_x + i)),
+				*(uint32_t*)(firstBuffer + j * SHADOW_SIZE + i));
+		}*/
+	for (int j = 0; j < info->height - 26; j++){
+		for (int i = 0; i < SHADOW_SIZE; i++) {
+			canvas->buffer[(s_y + j) * canvas->canvasWidth + (s_x + i)] =
+				firstBuffer[j * SHADOW_SIZE + i];
+		}
+	}
+
+	AddDirtyClip(s_x, s_y, SHADOW_SIZE, info->height);
+
+	// Right
+	s_x = info->x + info->width;
+	s_y = info->y + 26;
+	for (int j = 0; j < info->height - 26; j++) {
+		_fastcpy(canvas->buffer + (s_y + j) * canvas->canvasWidth + s_x,
+			win->shadowBuffers[0] + (0 + j) * SHADOW_SIZE + 0, SHADOW_SIZE * 4);
+	}
+
+	AddDirtyClip(s_x, s_y, SHADOW_SIZE, info->height);
+
+	//Bottom
+	s_x = info->x - SHADOW_SIZE;
+	s_y = info->y + info->height;
+	int s_w = info->width + SHADOW_SIZE * 2;
+	for (int j = 0; j < 6; j++) {
+		_fastcpy(canvas->buffer + (s_y + j) * canvas->canvasWidth + s_x,
+			win->shadowBuffers[1] + (0 + j) * SHADOW_SIZE + 0, s_w * 4);
+	}
+	AddDirtyClip(s_x, s_y, s_w, SHADOW_SIZE);
+	
+}
+
+/*
+ * DeodhaiRemoveShadow -- remove unfocussed winodw's 
+ * shadow
+ * @param canv -- Pointer to deodhai canvas
+ * @param win -- Pointer to unfoccused window
+ */
+void DeodhaiRemoveShadow(ChCanvas* canv, Window* win) {
+	WinSharedInfo* info = (WinSharedInfo*)win->sharedInfo;
+	int s_x = info->x - 6;
+	int s_y = info->y + 26;
+	
+	BackDirtyAdd(s_x, s_y, 6, info->height);
+}
+/*
  * DeodhaiWindowMove -- move an window to a new location
  * @param win -- Pointer to window
  * @param x -- new x position
@@ -264,10 +328,10 @@ void DeodhaiWindowMove(Window* win, int x, int y) {
 		DeodhaiWindowSetFocused(win, true);
 
 	WinSharedInfo *info = (WinSharedInfo*)win->sharedInfo;
-	int wx = info->x;
+	int wx = info->x; // -SHADOW_SIZE;
 	int wy = info->y;
-	int ww = info->width;
-	int wh = info->height;
+	int ww = info->width; // +SHADOW_SIZE * 2;
+	int wh = info->height; // +SHADOW_SIZE;
 
 	if (info->x + info->width >= canvas->screenWidth)
 		ww = canvas->screenWidth - info->x;
@@ -275,7 +339,7 @@ void DeodhaiWindowMove(Window* win, int x, int y) {
 	if (info->y + info->height >= canvas->screenHeight)
 		wh = canvas->screenHeight - info->y;
 
-	BackDirtyAdd(wx, wy, ww, wh);
+	BackDirtyAdd(wx, wy, ww, wh );
 	info->x = x;
 	info->y = y;
 	_window_update_all_ = true;
@@ -291,14 +355,52 @@ void DeodhaiWindowHide(Window* win) {
 	BackDirtyAdd(info->x, info->y, info->width, info->height);
 	if (info->hide) {
 		info->hide = false;
-	}else
+		focusedWin = win;
+	}
+	else{
 		info->hide = true;
-
-	if (focusedWin == win)
-		focusedWin = NULL;
+	}
 
 	_window_update_all_ = true;
 	_always_on_top_update = true;
+	_cursor_update_ = true;
+}
+
+
+/*
+ * DeodhaiCheckWindowPointOcclusion -- checks if given x and y of point
+ * of a window is occluded by another window , from given window to 
+ * front window of the list
+ * @param win -- Pointer to window to use for point check
+ * @param x -- x coord of the point
+ * @param y -- y coord of the point
+ */
+bool DeodhaiCheckWindowPointOcclusion(Window* win, int x, int y) {
+	bool occluded = false;
+	for (Window* check = win; check != NULL; check = check->next){
+		WinSharedInfo* info = (WinSharedInfo*)check->sharedInfo;
+		if (check == win)
+			continue;
+		if (x >= info->x && x < (info->x + info->width) &&
+			y >= info->y && y < (info->y + info->height)){
+			occluded = true;
+			break;
+		}
+	}
+
+	for (Window* check = alwaysOnTop; check != NULL; check = check->next){
+		WinSharedInfo* info = (WinSharedInfo*)check->sharedInfo;
+		if (check == win)
+			continue;
+		if (info->hide)
+			continue;
+		if (x >= info->x && x < (info->x + info->width) &&
+			y >= info->y && y < (info->y + info->height)){
+			occluded = true;
+			break;
+		}
+	}
+	return occluded;
 }
 /*
  * DeodhaiWindowCheckDraggable -- check for draggable windows
@@ -309,12 +411,15 @@ void DeodhaiWindowHide(Window* win) {
 void DeodhaiWindowCheckDraggable(int x, int y, int button) {
 	for (Window* win = lastWin; win != NULL; win = win->prev) {
 		WinSharedInfo* info = (WinSharedInfo*)win->sharedInfo;
-		if (!(x >= (info->x + 74) && x < (info->x + info->width - 74) &&
+		if (!(x >= (info->x + 10) && x < (info->x + info->width - 74) &&
 			y >= info->y && y < (info->y + info->height)))
 			continue;
 
 		if (button && !lastMouseButton) {
-			if (y >= info->y && y < (info->y + 23)) {
+			if (y >= info->y && y < (info->y + 26)) {
+				/* check if the point is occluded */
+				if (DeodhaiCheckWindowPointOcclusion(win, x, y))
+					return;
 				DeodhaiWindowSetFocused(win, true);
 				dragWin = win;
 				dragWin->dragX = x - info->x;
@@ -417,7 +522,9 @@ void ComposeFrame(ChCanvas *canvas) {
 				r1.h = r_h;
 				bool overlap = false;
 				Rect clipRect[512];
+				Rect drawble[512];
 				int clipCount = 0;
+				int drawableC = 0;
 				Window* clipWin = NULL;
 				WinSharedInfo* clipInfo = NULL;
 
@@ -440,10 +547,10 @@ void ComposeFrame(ChCanvas *canvas) {
 
 					}
 
-					/* check for always on top windows */
+					///* check for always on top windows */
 					for (clipWin = alwaysOnTop; clipWin != NULL; clipWin = clipWin->next) {
 						clipInfo = (WinSharedInfo*)clipWin->sharedInfo;
-						if (clipWin == win)
+						if (clipInfo->hide)
 							continue;
 						r2.x = clipInfo->x;
 						r2.y = clipInfo->y;
@@ -451,11 +558,35 @@ void ComposeFrame(ChCanvas *canvas) {
 						r2.h = clipInfo->height;
 
 						if (ClipCheckIntersect(&r1, &r2)){
-							overlap = true;
-							ClipCalculateRect(&r1, &r2, clipRect, &clipCount);
+							clipInfo->updateEntireWindow = 1;
+						}
+					}
+
+					for (Window* cutt = rootWin; cutt != NULL; cutt = cutt->next){
+						WinSharedInfo* cuttinfo = (WinSharedInfo*)cutt->sharedInfo;
+						if (cutt == win)
+							continue;
+						Rect cuttingr;
+						cuttingr.x = cuttinfo->x;
+						cuttingr.y = cuttinfo->y;
+						cuttingr.w = cuttinfo->width;
+						cuttingr.h = cuttinfo->height;
+						for (int m = 0; m < clipCount; m++) {
+							Rect cu;
+							cu.x = clipRect[m].x;
+							cu.y = clipRect[m].y;
+							cu.w = clipRect[m].w;
+							cu.h = clipRect[m].h;
+							if (cuttingr.x <= (cu.x + cu.w - 1) &&
+							  (cuttingr.x + cuttingr.w - 1) >= cu.x &&
+							cuttingr.y <= (cu.y + cu.h - 1) &&
+							(cuttingr.y + cuttingr.h - 1) >= cu.y){
+								ClipSubtractRect(&cu, &cuttingr, clipRect,m);
+							}
 						}
 					}
 				}
+
 
 				if (clipCount == 0 && !overlap ) {
 					for (int i = 0; i < r_h; i++) {
@@ -467,9 +598,9 @@ void ComposeFrame(ChCanvas *canvas) {
 
 				for (int k = 0; k < clipCount; k++) {
 					int k_x = clipRect[k].x;  
-					int k_y = clipRect[k].y;   
-					int k_w = clipRect[k].w;  
-					int k_h = clipRect[k].h;  
+					int k_y = clipRect[k].y;
+					int k_w = clipRect[k].w;
+					int k_h = clipRect[k].h;
 					
 					if (k_x < 0)
 						k_x = 0;
@@ -489,6 +620,7 @@ void ComposeFrame(ChCanvas *canvas) {
 					int diffy = k_y - offset_y;
 					int update_r_y = r_y + diffy;
 
+					
 					for (int j = 0; j < k_h; j++) {
 						_fastcpy(canvas->buffer + (k_y + j) * canvas->canvasWidth + k_x,
 							win->backBuffer + (update_r_y + j) * info->width + update_r_x, k_w * 4);
@@ -496,7 +628,9 @@ void ComposeFrame(ChCanvas *canvas) {
 
 					AddDirtyClip(k_x,k_y, k_w, k_h);
 				}
+
 				clipCount = 0;
+				drawableC = 0;
 			}
 			info->rect_count = 0;
 			info->dirty = 0;
@@ -545,8 +679,8 @@ void ComposeFrame(ChCanvas *canvas) {
 			Window* clipWin = NULL;
 			WinSharedInfo* clipInfo = NULL;
 
-
-			for (clipWin = rootWin; clipWin != NULL; clipWin = clipWin->next) {
+			
+			for (clipWin = win; clipWin != NULL; clipWin = clipWin->next) {
 				clipInfo = (WinSharedInfo*)clipWin->sharedInfo;
 				if (clipWin == win)
 					continue;
@@ -660,7 +794,7 @@ void ComposeFrame(ChCanvas *canvas) {
 				}
 				else {
 					if (focusedWin != win) {
-						for (clipWin = alwaysOnTop; clipWin != NULL; clipWin = clipWin->next) {
+						for (clipWin = win; clipWin != NULL; clipWin = clipWin->next) {
 							clipInfo = (WinSharedInfo*)clipWin->sharedInfo;
 							if (clipWin == win)
 								continue;
@@ -774,7 +908,7 @@ void ComposeFrame(ChCanvas *canvas) {
 				}
 			}
 			else {
-				for (clipWin = alwaysOnTop; clipWin != NULL; clipWin = clipWin->next) {
+				for (clipWin = win; clipWin != NULL; clipWin = clipWin->next) {
 					clipInfo = (WinSharedInfo*)clipWin->sharedInfo;
 					if (clipWin == win)
 						continue;
@@ -871,30 +1005,49 @@ void DeodhaiSendMouseEvent(Window* win, int x, int y, int button){
  * @param button -- mouse button state
  */
 void DeodhaiBroadcastMouse(int mouse_x, int mouse_y, int button) {
+	Window* mouseWin = NULL;
 
-	/* check for normal windows */
-	for (Window* win = rootWin; win != NULL; win = win->next){
-		WinSharedInfo* info = (WinSharedInfo*)win->sharedInfo;
-		if (info->hide)
-			continue;
-		if (mouse_x >= info->x && (mouse_x < (info->x + info->width)) &&
-			mouse_y >= info->y && (mouse_y < (info->y + info->height))) {
-				//broadcast the mouse message to this window
-				DeodhaiSendMouseEvent(win, mouse_x, mouse_y, button);
+	if (focusedWin) {
+		WinSharedInfo* info = (WinSharedInfo*)focusedWin->sharedInfo;
+		if (!info->hide){
+			if (mouse_x >= info->x && (mouse_x < (info->x + info->width)) &&
+				mouse_y >= info->y && (mouse_y < (info->y + info->height))){
+				mouseWin = focusedWin;
+				/* skip others */
+				goto broadcast;
 			}
-	}
-
-	/* check for always on top windows */
-	for (Window* win = alwaysOnTop; win != NULL; win = win->next){
-		WinSharedInfo* info = (WinSharedInfo*)win->sharedInfo;
-		if (info->hide)
-			continue;
-		if (mouse_x >= info->x && (mouse_x < (info->x + info->width)) &&
-			mouse_y >= info->y && (mouse_y < (info->y + info->height))) {
-			//broadcast the mouse message to this window
-			DeodhaiSendMouseEvent(win, mouse_x, mouse_y, button);
 		}
 	}
+	if (!mouseWin) {
+		/* check for normal windows */
+		for (Window* win = rootWin; win != NULL; win = win->next){
+			WinSharedInfo* info = (WinSharedInfo*)win->sharedInfo;
+			if (info->hide)
+				continue;
+			if (mouse_x >= info->x && (mouse_x < (info->x + info->width)) &&
+				mouse_y >= info->y && (mouse_y < (info->y + info->height))) {
+				mouseWin = win;
+				break;
+			}
+		}
+
+
+		/* check for always on top windows */
+		for (Window* win = alwaysOnTop; win != NULL; win = win->next){
+			WinSharedInfo* info = (WinSharedInfo*)win->sharedInfo;
+			if (info->hide)
+				continue;
+			if (mouse_x >= info->x && (mouse_x < (info->x + info->width)) &&
+				mouse_y >= info->y && (mouse_y < (info->y + info->height))) {
+				mouseWin = win;
+				break;
+			}
+		}
+	}
+
+broadcast:
+	if (mouseWin)
+		DeodhaiSendMouseEvent(mouseWin, mouse_x, mouse_y, button);
 }
 
 
@@ -954,7 +1107,8 @@ void DrawWallpaper(ChCanvas *canv, char* filename) {
 	}
 	int w = decor->GetWidth();
 	int h = decor->GetHeight();
-
+	uint32_t* swapable_buff = canv->buffer;
+	canv->buffer = surfaceBuffer;
 	uint8_t* data = decor->GetImage();
 	unsigned x = 0;
 	unsigned y = 0;
@@ -970,7 +1124,7 @@ void DrawWallpaper(ChCanvas *canv, char* filename) {
 			j++;
 		}
 	}
-
+	canv->buffer = swapable_buff;
 }
 
 
@@ -1020,6 +1174,8 @@ int main(int argc, char* arv[]) {
 		surfaceBuffer[j * canv->canvasWidth + i] = 0xFF938585;
 
 	DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
+	//DrawWallpaper(canv, "/bishnu.jpg");
+	//DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
 	ChCanvasScreenUpdate(canv, 0, 0, canv->canvasWidth, canv->canvasHeight);
 
 
@@ -1115,6 +1271,7 @@ int main(int argc, char* arv[]) {
 			memset(&e, 0, sizeof(PostEvent));
 			e.type = DEODHAI_BROADCAST_WINCREATED;
 			e.dword = win->ownerId;
+			e.dword2 = win->handle;
 			strcpy(e.charValue3, win->title);
 			DeodhaiBroadcastMessage(&e, win);
 

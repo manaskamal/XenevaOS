@@ -156,11 +156,12 @@ void NamdaphaHandleMessage(PostEvent *e) {
 	case TIMER_MESSAGE_CODE:{
 								XETime time;
 								_KeGetCurrentTime(&time);
+								uint8_t hour_ = time.hour;
 								char hour[2];
-								if (time.hour > 12)
-									time.hour -= 12;
-								itoa_s(time.hour, 10, hour);
-								if (time.hour < 10){
+								if (hour_ > 12)
+									hour_ -= 12;
+								itoa_s(hour_, 10, hour);
+								if (hour_ < 10){
 									hour[1] = hour[0];
 									hour[0] = '0';
 								}
@@ -222,6 +223,7 @@ void NamdaphaHandleMessage(PostEvent *e) {
 									nbutton->ownerId = e->dword;
 									nbutton->nmbuttoninfo = defaultappico;
 									nbutton->focused = true;
+									nbutton->winHandle = e->dword2;
 									list_add(button_list, nbutton);
 									NamdaphaPaint(win);
 									nbutton_y_loc += nbutton->h + NAMDAPHA_BUTTON_YPAD;
@@ -286,7 +288,7 @@ void NamdaphaHandleMessage(PostEvent *e) {
 */
 int main(int argc, char* arv[]){
 	app = ChitralekhaStartApp(argc, arv);
-	ChFontSetSize(app->baseFont, 12);
+	ChFontSetSize(app->baseFont, 13);
 	/* create a demo canvas just for getting the graphics
 	* file descriptor
 	*/

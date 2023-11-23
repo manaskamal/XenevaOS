@@ -9,28 +9,62 @@
 #include <sys\iocodes.h>
 #include <widgets\base.h>
 #include <widgets\window.h>
+#include "appgrid.h"
+#include "launcher.h"
+#include "button.h"
 
 
-#define BACKGROUND_COLOR 0xFF3A3A3A
 ChitralekhaApp *app;
 ChWindow* win;
+AppGrid* mainGrid;
 int screen_h;
 int screen_w;
 int bpp;
 int graphicsFd;
+int launcher_w, launcher_h;
 
 /* the main painting code */
 void XELauncherPaint(ChWindow* win) {
-	ChDrawRect(win->canv, 0, 0, win->info->width, win->info->height, BACKGROUND_COLOR);
+	ChDrawRect(win->canv, 0, 0, win->info->width, win->info->height, LAUNCHER_BACKGROUND_COLOR);
 	ChFontSetSize(win->app->baseFont, 32);
-	ChFontDrawText(win->canv, win->app->baseFont, "Xeneva Launcher", 30, 50, 32, WHITE);
+	ChFontDrawText(win->canv, win->app->baseFont, "Xeneva Apps", 60, 80, 32, WHITE);
+	AppGridPaint(mainGrid, win);
 	ChWindowUpdate(win, 0, 0, win->info->width, win->info->height, 1, 0);
 }
 
+
 /*
-* NamdaphaHandleMessage -- handle incoming 'Deodhai' messages
-* @param e -- Pointer to PostEvent memory location where
-* incoming messages are stored
+* NamdaphaMouseHandler -- handles mouse events
+* @param win -- Pointer to Chitralekha Window
+* @param x -- Mouse x coord
+* @param y -- Mouse y coord
+* @param button -- mouse button state
+* @param scroll -- scroll information
+*/
+void XELauncherMouseHandler(ChWindow* win, int x, int y, int button, int scroll) {
+	for (int i = 0; i < mainGrid->lbbuttonlist->pointer; i++) {
+		LaunchButton* widget = (LaunchButton*)list_get_at(mainGrid->lbbuttonlist, i);
+		if (x > win->info->x + widget->x && x < (win->info->x + widget->x + widget->w) &&
+			(y > win->info->y + widget->y && y < (win->info->y + widget->y + widget->h))) {
+			widget->hover = true;
+			widget->kill_focus = false;
+			if (widget->mouseEvent)
+				widget->mouseEvent(widget, win, x, y, button);
+		}
+		else {
+			if (widget->hover) {
+				widget->hover = false;
+				widget->kill_focus = true;
+				if (widget->mouseEvent)
+					widget->mouseEvent(widget, win, x, y, button);
+			}
+		}
+	}
+}
+
+/*
+* XenevaLauncherHandleMessage -- handle incoming messages
+*
 */
 void XenevaLauncherHandleMessage(PostEvent *e) {
 	switch (e->type) {
@@ -42,11 +76,21 @@ void XenevaLauncherHandleMessage(PostEvent *e) {
 		/* handle mouse event from deodhai */
 	case DEODHAI_REPLY_MOUSE_EVENT:{
 
-									   ChWindowHandleMouse(win, e->dword, e->dword2, e->dword3);
+									   XELauncherMouseHandler(win, e->dword, e->dword2, e->dword3,0);
 									   memset(e, 0, sizeof(PostEvent));
 									   break;
 	}
 	}
+}
+
+
+
+/*
+ * XELauncherGetAppGrid -- returns the main
+ * application grid
+ */
+AppGrid* XELauncherGetAppGrid() {
+	return mainGrid;
 }
 
 /*
@@ -76,13 +120,28 @@ int main(int argc, char* arv[]){
 
 	win = ChCreateWindow(app, WINDOW_FLAG_STATIC | WINDOW_FLAG_ALWAYS_ON_TOP | WINDOW_FLAG_ANIMATED,
 		"Xeneva Launcher", 75 + 10, 10, screen_w - 90, screen_h - 40);
+	launcher_w = screen_w - 90; 
+	launcher_h = screen_h - 40;
+
+	mainGrid = LauncherCreateAppGrid(launcher_w / 2 - APP_GRID_DEFAULT_WIDTH / 2, launcher_h / 2 - APP_GRID_DEFAULT_HEIGHT / 2,
+		launcher_w - 40, APP_GRID_DEFAULT_HEIGHT);
+
+	/* now read the launcher config file
+	 * for application entries 
+	 */
+	LauncherConfigInitialise();
+	LauncherSetupByConfigFile();
+
+
 	win->color = BLACK;
 	win->ChWinPaint = XELauncherPaint;
 	ChWindowPaint(win);
 	win->info->hide = true;
+
+
 	PostEvent e;
 	memset(&e, 0, sizeof(PostEvent));
-	printf("Xeneva launcher created \n");
+
 	while (1) {
 		int err = _KeFileIoControl(app->postboxfd, POSTBOX_GET_EVENT, &e);
 		XenevaLauncherHandleMessage(&e);

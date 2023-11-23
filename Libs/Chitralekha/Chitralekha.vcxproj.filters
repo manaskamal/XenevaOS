@@ -20,6 +20,9 @@
     </ClInclude>
     <ClInclude Include="boxblur.h" />
     <ClInclude Include="keycode.h" />
+    <ClInclude Include="widgets\button.h">
+      <Filter>widgets</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="chitralekha.cpp" />
@@ -41,6 +44,9 @@
     </ClCompile>
     <ClCompile Include="boxblur.cpp" />
     <ClCompile Include="keycode.cpp" />
+    <ClCompile Include="widgets\button.cpp">
+      <Filter>widgets</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <NASM Include="_fastcpy.asm" />
