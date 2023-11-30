@@ -278,12 +278,14 @@ void UnmapMemMapping(void* address, size_t len) {
 	uint64_t addr = (uint64_t)address;
 	for (int i = 0; i < len / PAGE_SIZE; i++) {
 		AuVPage* page = AuVmmngrGetPage(addr + i * PAGE_SIZE, VIRT_GETPAGE_ONLY_RET, VIRT_GETPAGE_ONLY_RET);
-		uint64_t phys = page->bits.page << PAGE_SHIFT;
-		if (phys) 
-			AuPmmngrFree((void*)phys);
-
-		page->bits.page = 0;
-		page->bits.present = 0;
+		if (page) {
+			uint64_t phys = page->bits.page << PAGE_SHIFT;
+			if (phys){
+				AuPmmngrFree((void*)phys);
+			}
+			page->bits.page = 0;
+			page->bits.present = 0;
+		}
 	}
 
 }

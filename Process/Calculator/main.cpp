@@ -101,6 +101,13 @@ void CalcDisplayDraw(ChWidget* wid, ChWindow* win) {
 	}
 	if (_clear_output)
 		memset(disp->outputnum, 0, 1024);
+
+	if (disp->historyIdx > 0) {
+		ChFontSetSize(dispFont, 11);
+		int hist_w = ChFontGetWidth(dispFont, disp->historyBuf);
+		int hist_h = ChFontGetHeight(dispFont, disp->historyBuf);
+		ChFontDrawText(win->canv, dispFont, disp->historyBuf, wid->x + wid->w - hist_w - 10, wid->y + 10, 13, LIGHTBLACK);
+	}
 }
 
 /*
@@ -110,6 +117,14 @@ void CalcDisplayDraw(ChWidget* wid, ChWindow* win) {
 void CalcUpdateDisplay(CalculatorDisplay* disp) {
 	CalcDisplayDraw((ChWidget*)disp, mainWin);
 	ChWindowUpdate(mainWin, disp->wid.x, disp->wid.y, disp->wid.w, disp->wid.h, 0, 1);
+}
+
+/*
+ * CalcClearOutput -- clear all output
+ * @param disp -- Pointer to calculator display
+ */
+void CalcClearOutput(CalculatorDisplay* disp) {
+	memset(disp->outputnum, 0, 1024);
 }
 
 /*
@@ -139,6 +154,8 @@ CalculatorDisplay* CalcCreateDisplay(int x, int y, int w, int h) {
 	disp->outputnum = (char*)malloc(MAX_DIGIT);
 	disp->operator_ = 0;
 	disp->inputidx = 0;
+	disp->historyBuf = (char*)malloc(MAX_DIGIT);
+	disp->historyIdx = 0;
 	return disp;
 }
 
@@ -156,9 +173,24 @@ void CalculatorProcess(CalculatorDisplay* calc) {
 		case CALC_OPERATOR_ADD:
 			result = num1 + num2;
 			break;
-		case CALC_OPERATOR_DIVIDE:
-			result = num1 / num2;
-			break;
+		case CALC_OPERATOR_DIVIDE: {
+									   if (num2 == 0) {
+										   CalcAllClear(calc);
+										   CalcClearHistory(calc);
+										   CalcClearOutput(calc);
+										   calc->output = 0;
+										   strcpy(calc->inputnum, "Can't divide by 0");
+										   calc->inputidx += strlen(calc->inputnum) - 1;
+										   CalcUpdateDisplay(calc);
+										  /* CalcAllClear(calc);
+										   CalcClearHistory(calc);
+										   CalcClearOutput(calc);*/
+										   calc->output = 0;
+										   return;
+									   }
+									   result = num1 / num2;
+									   break;
+		}
 		case CALC_OPERATOR_MOD:
 			result = num1 % num2;
 			break;
@@ -172,8 +204,13 @@ void CalculatorProcess(CalculatorDisplay* calc) {
 	}
 	memset(calc->outputnum, 0, 1024);
 	itoa_s(result, 10, calc->outputnum);
+	CalcAddToHistory(calc, calc->inputnum, 0);
+	CalcAddToHistory(calc, NULL, calc->operator_);
 	calc->output = true;
-	calc->operator_ = 0;
+	calc->num1 = result;
+	CalcClearHistory(calc);
+	CalcAddToHistory(calc, calc->inputnum, 0);
+	/*calc->operator_ = 0;*/
 	CalcAllClear(calc);
 }
 
@@ -211,6 +248,50 @@ void CalcRemoveDigit(CalculatorDisplay* disp) {
 }
 
 /*
+ * CalcAddToHistory -- add recent calculations to history
+ * @param disp -- Pointer to calculator display
+ * @param num -- numbers to add
+ * @param operator_ -- operator to add
+ */
+void CalcAddToHistory(CalculatorDisplay* disp, char* num, uint8_t operator_) {
+	if (disp->historyIdx == 1024)
+		return;
+	if (operator_ != 0){
+		char opstr[1];
+		switch (operator_)
+		{
+		case CALC_OPERATOR_ADD:
+			opstr[0] = '+';
+			break;
+		case CALC_OPERATOR_DIVIDE:
+			opstr[0] = '/';
+			break;
+		case CALC_OPERATOR_MOD:
+			opstr[0] = '%';
+			break;
+		default:
+			opstr[0] = '\0';
+			break;
+		}
+		disp->historyBuf[disp->historyIdx] = opstr[0];
+		disp->historyIdx++;
+	}
+	else {
+		int count = strlen(num) - 1;
+		strcpy(disp->historyBuf + disp->historyIdx, num);
+		disp->historyIdx += count;
+	}
+}
+
+/*
+ * CalcClearHistory -- clears recent digits history
+ * @param disp -- Pointer to calculator display
+ */
+void CalcClearHistory(CalculatorDisplay* disp) {
+	memset(disp->historyBuf, 0, 1024);
+	disp->historyIdx = 0;
+}
+/*
  * CalcAllClear -- clear all digits
  * @param disp -- Pointer to calculator display
  * processor
@@ -237,6 +318,13 @@ void WindowHandleMessage(PostEvent *e) {
 									 int code = e->dword;
 									 memset(e, 0, sizeof(PostEvent));
 									 break;
+	}
+	case DEODHAI_REPLY_FOCUS_CHANGED:{
+										 int focus_val = e->dword;
+										 int handle = e->dword2;
+										 ChWindowHandleFocus(mainWin, focus_val, handle);
+										 memset(e, 0, sizeof(PostEvent));
+										 break;
 	}
 	}
 }
@@ -334,6 +422,12 @@ void CalculatorCreateButtonGird(ChWindow* win) {
 	ChWindowAddWidget(win, (ChWidget*)equal);
 }
 
+void CalculatorClose(ChWindow* win, ChWinGlobalControl *ctl) {
+	/*ChFontClose(win->app->baseFont);
+	ChFontClose(dispFont);*/
+	ChWindowCloseWindow(win);
+}
+
 /*
 * main -- main entry
 */
@@ -342,6 +436,14 @@ int main(int argc, char* argv[]){
 	mainWin = ChCreateWindow(app, WINDOW_FLAG_MOVABLE, "Calculator", 400,100, 380, 
 		400);
 	mainWin->color = CALCULATOR_BACK_COLOR;
+	for (int i = 0; i < mainWin->GlobalControls->pointer; i++) {
+		ChWinGlobalControl *ctl = (ChWinGlobalControl*)list_get_at(mainWin->GlobalControls, i);
+		if (ctl->type == WINDOW_GLOBAL_CONTROL_CLOSE) {
+			/* change the close action event */
+			ctl->ChGlobalActionEvent = CalculatorClose;
+			break;
+		}
+	}
 
 	ChWindowBroadcastIcon(app, "/calc.bmp");
 
@@ -354,6 +456,7 @@ int main(int argc, char* argv[]){
 	/* button grid */
 	ChWindowPaint(mainWin);
 
+	
 	PostEvent e;
 	memset(&e, 0, sizeof(PostEvent));
 

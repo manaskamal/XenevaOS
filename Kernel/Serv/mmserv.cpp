@@ -170,12 +170,14 @@ int ProcessHeapUnmap(void* ptr, size_t sz) {
 	uint64_t start_addr = (uint64_t)ptr;
 	for (int i = 0; i < sz / PAGE_SIZE; i++) {
 		AuVPage* page_ = AuVmmngrGetPage(start_addr + i * PAGE_SIZE, VIRT_GETPAGE_ONLY_RET, VIRT_GETPAGE_ONLY_RET);
-		uint64_t phys_page = page_->bits.page << PAGE_SHIFT;
-		if (phys_page){
-			AuPmmngrFree((void*)phys_page);
-			page_->bits.page = 0;
-			page_->bits.present = 0;
-			page_->raw = 0;
+		if (page_) {
+			uint64_t phys_page = page_->bits.page << PAGE_SHIFT;
+			if (phys_page){
+				AuPmmngrFree((void*)phys_page);
+				page_->bits.page = 0;
+				page_->bits.present = 0;
+				page_->raw = 0;
+			}
 		}
 	}
 	/*if (start_addr < proc->proc_mem_heap)*/

@@ -20,12 +20,14 @@ with hybrid design and the entire operating system is known as _'Xeneva'_.
 12. Compositing Window Manager called "Deodhai"
 13. Graphics Library known as "Chitralekha"
 13. Xeneva Terminal with basic ANSI/VT100 escape sequence support
+14. Desktop environment called Namdapha Desktop
+
 
 _And many more coming soon_
 
 ## Screenshot:
 
-![alt text](https://github.com/manaskamal/XenevaOS/blob/master/FirstLook.png?raw=true)
+![alt text](https://github.com/manaskamal/XenevaOS/blob/master/NewDesktop2023.jpg?raw=true)
 
 # Building the project
 

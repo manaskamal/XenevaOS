@@ -39,6 +39,7 @@ extern void ChDefaultWinPaint(ChWindow* win);
 extern void ChWindowPaintCloseButton(ChWindow* win, ChWinGlobalControl* button);
 extern void ChWindowPaintMaximButton(ChWindow* win, ChWinGlobalControl* button);
 extern void ChWindowPaintMinimButton(ChWindow* win, ChWinGlobalControl* button);
+extern void ChWindowPaintTitlebar(ChWindow* win);
 
 /*
  * ChRequestWindow -- the base of window creation, it request window manager
@@ -100,6 +101,9 @@ void ChGlobalCtlMouseHandler(ChWindow* win, ChWinGlobalControl* global, int x, i
 	}
 
 	/* handle action event */
+	if (button)
+	if (global->ChGlobalActionEvent)
+		global->ChGlobalActionEvent(win, global);
 }
 
 /*
@@ -121,6 +125,11 @@ XE_EXTERN XE_EXPORT ChWinGlobalControl* ChCreateGlobalButton(ChWindow* win, int 
 	glbl->type = type;
 	list_add(win->GlobalControls, glbl);
 	return glbl;
+}
+
+void ChGlobalCloseAction(ChWindow* win, ChWinGlobalControl *ctl) {
+	//ChFontClose(win->app->baseFont);
+	ChWindowCloseWindow(win);
 }
 
 /*
@@ -168,6 +177,7 @@ XE_EXTERN XE_EXPORT ChWindow* ChCreateWindow(ChitralekhaApp *app, uint8_t attrib
 	close->outlineColor = 0xFF868686;
 	close->hoverOutlineColor = 0xFFAF2E17;
 	close->clickedOutlineColor = 0xFF63291F;
+	close->ChGlobalActionEvent = ChGlobalCloseAction;
 
 	ChWinGlobalControl* maxim = ChCreateGlobalButton(win, win->info->width - 25 - 20,
 		WINDOW_DEFAULT_TITLEBAR_HEIGHT / 2 - 20 / 2, 20, 20, WINDOW_GLOBAL_CONTROL_MAXIMIZE);
@@ -341,10 +351,55 @@ XE_EXTERN XE_EXPORT void ChWindowHandleMouse(ChWindow* win, int x, int y, int bu
 
 
 /*
+ * ChWindowHandleFocus -- handle focus changed events
+ * @param win -- Pointer to window
+ * @param focus_val -- focus bit, 1 -- focused, 0 -- not focused
+ * @param handle -- handle number of the window
+ */
+XE_EXTERN XE_EXPORT void ChWindowHandleFocus(ChWindow* win, bool focus_val, uint32_t handle) {
+	win->focused = focus_val;
+	ChWindowPaintTitlebar(win);
+	ChDrawHorizontalLine(win->canv, 0, 0, win->info->width, GRAY);
+	ChDrawVerticalLine(win->canv, 0, 0, 26, GRAY);
+	ChDrawVerticalLine(win->canv, win->info->width - 1, 0, 26, GRAY);
+	ChWindowUpdate(win, 0, 0, win->info->width, 26, 0, 1);
+}
+
+
+/*
  * ChWindowAddWidget -- adds a widget to window
  * @param win -- Pointer to root window
  * @param wid -- Pointer to widget needs to be added
  */
 XE_EXTERN XE_EXPORT void ChWindowAddWidget(ChWindow* win, ChWidget* wid) {
 	list_add(win->widgets, wid);
+}
+
+/*
+ * ChWindowCloseWindow -- clears window related data and 
+ * sends close message to deodhai
+ * @param win -- Pointer to window data
+ */
+XE_EXTERN XE_EXPORT void ChWindowCloseWindow(ChWindow* win){
+	_KeUnmapSharedMem(win->app->sharedWinkey);
+	_KeUnmapSharedMem(win->app->backbufkey);
+	free(win->title);
+	int handle = win->handle;
+	PostEvent e;
+	e.type = DEODHAI_MESSAGE_CLOSE_WINDOW;
+	e.dword = handle;
+	e.from_id = win->app->currentID;
+	e.to_id = POSTBOX_ROOT_ID;
+	_KeFileIoControl(win->app->postboxfd, POSTBOX_PUT_EVENT, &e);
+	memset(&e, 0, sizeof(PostEvent));
+	while (1) {
+		int err = _KeFileIoControl(win->app->postboxfd, POSTBOX_GET_EVENT, &e);
+		if (err == POSTBOX_NO_EVENT)
+			_KePauseThread();
+		if (e.type == DEODHAI_REPLY_WINDOW_CLOSED){
+			break;
+		}
+	}
+	free(win);
+	_KeProcessExit();
 }

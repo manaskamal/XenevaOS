@@ -47,8 +47,9 @@ typedef struct _display_widget_ {
 	char* inputnum;
 	uint16_t inputidx;
 	char* outputnum;
-	uint16_t outputidx;
 	uint8_t operator_;
+	char* historyBuf;
+	uint16_t historyIdx;
 	int num1;
 	int num2;
 	bool output;
@@ -90,6 +91,26 @@ extern void CalcAllClear(CalculatorDisplay* disp);
 * @param calc -- Pointer to calculator display
 */
 extern void CalculatorProcess(CalculatorDisplay* calc);
+
+/*
+* CalcAddToHistory -- add recent calculations to history
+* @param disp -- Pointer to calculator display
+* @param num -- numbers to add
+* @param operator_ -- operator to add
+*/
+extern void CalcAddToHistory(CalculatorDisplay* disp, char* num, uint8_t operator_);
+
+/*
+* CalcClearHistory -- clears recent digits history
+* @param disp -- Pointer to calculator display
+*/
+extern void CalcClearHistory(CalculatorDisplay* disp);
+
+/*
+* CalcClearOutput -- clear all output
+* @param disp -- Pointer to calculator display
+*/
+extern void CalcClearOutput(CalculatorDisplay* disp);
 
 void SevenAction(ChWidget* wid, ChWindow* win);
 void SixAction(ChWidget* wid, ChWindow* win);

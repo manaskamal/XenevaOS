@@ -215,6 +215,23 @@ void DeodhaiBroadcastMessage(PostEvent *e, Window* skippablewin){
 	}
 }
 
+/*
+ * DeodhaiSendFocusMessage -- send focus changed message to
+ * each and every windows
+ * @param e -- Pointer to post event message
+ */
+void DeodhaiSendFocusMessage(PostEvent *e) {
+	for (Window* win = rootWin; win != NULL; win = win->next) {
+		e->to_id = win->ownerId;
+		if (focusedWin == win)
+			e->dword = 1;
+		else
+			e->dword = 0;
+		e->dword2 = win->handle;
+		_KeFileIoControl(postbox_fd, POSTBOX_PUT_EVENT, e);
+	}
+}
+
 /* DeodhaiWindowMakeTop -- brings a window to front
  * @param win -- window to brin front
  */
@@ -247,6 +264,11 @@ void DeodhaiWindowSetFocused(Window* win, bool notify) {
 		e.type = DEODHAI_BROADCAST_FOCUS_CHANGED;
 		e.dword = focusedWin->ownerId;
 		DeodhaiBroadcastMessage(&e, NULL);
+
+		_KeProcessSleep(10000);
+
+		e.type = DEODHAI_REPLY_FOCUS_CHANGED;
+		DeodhaiSendFocusMessage(&e);
 	}
 
 	DeodhaiWindowMakeTop(win);
@@ -531,7 +553,7 @@ void ComposeFrame(ChCanvas *canvas) {
 				if (focusedWin != win) {
 
 					/* first check for normal windows */
-					for (clipWin = rootWin; clipWin != NULL; clipWin = clipWin->next) {
+					for (clipWin = win; clipWin != NULL; clipWin = clipWin->next) {
 						clipInfo = (WinSharedInfo*)clipWin->sharedInfo;
 						if (clipWin == win)
 							continue;
@@ -562,7 +584,7 @@ void ComposeFrame(ChCanvas *canvas) {
 						}
 					}
 
-					for (Window* cutt = rootWin; cutt != NULL; cutt = cutt->next){
+					for (Window* cutt = win; cutt != NULL; cutt = cutt->next){
 						WinSharedInfo* cuttinfo = (WinSharedInfo*)cutt->sharedInfo;
 						if (cutt == win)
 							continue;
@@ -1026,6 +1048,8 @@ void DeodhaiBroadcastMouse(int mouse_x, int mouse_y, int button) {
 				continue;
 			if (mouse_x >= info->x && (mouse_x < (info->x + info->width)) &&
 				mouse_y >= info->y && (mouse_y < (info->y + info->height))) {
+				if (DeodhaiCheckWindowPointOcclusion(win, mouse_x, mouse_y))
+					continue;
 				mouseWin = win;
 				break;
 			}
@@ -1069,20 +1093,26 @@ void DeodhaiBroadcastKey(int code) {
 	_KeFileIoControl(postbox_fd, POSTBOX_PUT_EVENT, &e);
 }
 
-#pragma pack(push,1)
-typedef struct _jpegh_ {
-	char soi[2];
-	char app0[2];
-	char len[2];
-	char identifier[5];
-	char version[2];
-	char units;
-	char xdens[2];
-	char ydens[2];
-	char xthumb;
-	char ythumb;
-}JFIhead;
-#pragma pack(pop)
+
+/*
+ * DeodhaiCloseWindow -- closes and cleanup an opened
+ * window
+ * @param win -- Pointer to window to be closed
+ */
+void DeodhaiCloseWindow(Window* win) {
+	int ownerId = win->ownerId;
+	WinSharedInfo* info = (WinSharedInfo*)win->sharedInfo;
+	BackDirtyAdd(info->x, info->y, info->width, info->height);
+	free(win->title);
+	_KeUnmapSharedMem(win->shWinKey);
+	_KeUnmapSharedMem(win->backBufferKey);
+	DeodhaiRemoveWindow(win);
+	free(win);
+	PostEvent e;
+	e.to_id = ownerId;
+	e.type = DEODHAI_REPLY_WINDOW_CLOSED;
+	_KeFileIoControl(postbox_fd, POSTBOX_PUT_EVENT, &e);
+}
 
 /* DrawWallpaper for getting jpeg image as wallpaper
  * fully jpeg encoder is needed, i use synfig studio 
@@ -1254,7 +1284,7 @@ int main(int argc, char* arv[]) {
 			uint8_t flags = event.dword5;
 
 			Window* win = DeodhaiCreateWindow(x, y, w, h, flags, event.from_id, event.charValue3);
-			focusedWin = win;
+			//focusedWin = win;
 
 			PostEvent e;
 			memset(&e, 0, sizeof(PostEvent));
@@ -1361,6 +1391,33 @@ int main(int argc, char* arv[]) {
 			e.to_id = event.from_id;
 			e.from_id = POSTBOX_ROOT_ID;
 			_KeFileIoControl(postbox_fd, POSTBOX_PUT_EVENT, &e);
+			memset(&event, 0, sizeof(PostEvent));
+		}
+
+		if (event.type == DEODHAI_MESSAGE_CLOSE_WINDOW) {
+			/* deodhai close window commands needs every datas
+			 * to be cleared from client side, in server side
+			 * only window related datas will get cleared, 
+			 * like, root-window, sub-windows and popup-list
+			 */
+			int handle = event.dword;
+			int ownerId = event.from_id;
+			Window* removable = NULL;
+			for (Window* win = rootWin; win != NULL; win = win->next) {
+				if (win->handle == handle && win->ownerId == ownerId) {
+					removable = win;
+					break;
+				}
+			}
+
+			if (removable) {
+				DeodhaiCloseWindow(removable);
+				focusedWin = NULL;
+				focusedLast = NULL;
+				_window_update_all_ = true;
+				_cursor_update_ = true;
+				_always_on_top_update = true;
+			}
 			memset(&event, 0, sizeof(PostEvent));
 		}
 		

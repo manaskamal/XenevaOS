@@ -466,27 +466,34 @@ void TerminalHandleMessage(PostEvent *e) {
 		ChWindowHandleMouse(win, e->dword, e->dword2, e->dword3);
 		memset(e, 0, sizeof(PostEvent));
 		break;
-	case DEODHAI_REPLY_KEY_EVENT:
-		int code = e->dword;
-		ChitralekhaProcessKey(code);
-		char rawkey = ChitralekhaGetKeyPress(code);
-		char c = ChitralekhaKeyToASCII(code);
-		if (rawkey == KEY_RETURN) 
-			c = '\n';
+	case DEODHAI_REPLY_KEY_EVENT:{
+									 int code = e->dword;
+									 ChitralekhaProcessKey(code);
+									 char rawkey = ChitralekhaGetKeyPress(code);
+									 char c = ChitralekhaKeyToASCII(code);
+									 if (rawkey == KEY_RETURN)
+										 c = '\n';
 
-		if (ChitralekhaKeyGetCTRL()) {
-			if (c == KEY_C) {
-				if (shell_id > 0)
-					_KeSendSignal(shell_id, SIGINT);
-				c = '\n';
-			}
-			if (c == KEY_H) {
-				ChWindowHide(win);
-			}
-		}
+									 if (ChitralekhaKeyGetCTRL()) {
+										 if (c == KEY_C) {
+											 if (shell_id > 0)
+												 _KeSendSignal(shell_id, SIGINT);
+											 c = '\n';
+										 }
+										 if (c == KEY_H) {
+											 ChWindowHide(win);
+										 }
+									 }
 
-		_KeWriteFile(master_fd, &c, 1);
-		/* else its a key release event */
+									 _KeWriteFile(master_fd, &c, 1);
+									 /* else its a key release event */
+									 memset(e, 0, sizeof(PostEvent));
+									 break;
+	}
+	case DEODHAI_REPLY_FOCUS_CHANGED:
+		int focus_val = e->dword;
+		int handle = e->dword2;
+		ChWindowHandleFocus(win, focus_val, handle);
 		memset(e, 0, sizeof(PostEvent));
 		break;
 	}

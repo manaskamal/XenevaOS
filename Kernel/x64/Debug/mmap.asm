@@ -10,11 +10,11 @@ _BSS	SEGMENT
 ?shmmaplist@@3PEAU_list_@@EA DQ 01H DUP (?)		; shmmaplist
 _BSS	ENDS
 CONST	SEGMENT
-$SG3563	DB	'/', 00H
+$SG3565	DB	'/', 00H
 	ORG $+6
-$SG3581	DB	'mmap reading file ', 0dH, 0aH, 00H
+$SG3583	DB	'mmap reading file ', 0dH, 0aH, 00H
 	ORG $+3
-$SG3591	DB	'SHOBJ newly created -> %s ', 0dH, 0aH, 00H
+$SG3593	DB	'SHOBJ newly created -> %s ', 0dH, 0aH, 00H
 CONST	ENDS
 PUBLIC	?SharedMemMapListInitialise@@YAXXZ		; SharedMemMapListInitialise
 PUBLIC	?CreateMemMapping@@YAPEAXPEAX_KHHH1@Z		; CreateMemMapping
@@ -56,8 +56,8 @@ $pdata$?CreateMemMapping@@YAPEAXPEAX_KHHH1@Z DD imagerel $LN32
 $pdata$?MemMapDirty@@YAXPEAX_KHH@Z DD imagerel $LN13
 	DD	imagerel $LN13+383
 	DD	imagerel $unwind$?MemMapDirty@@YAXPEAX_KHH@Z
-$pdata$?UnmapMemMapping@@YAXPEAX_K@Z DD imagerel $LN10
-	DD	imagerel $LN10+304
+$pdata$?UnmapMemMapping@@YAXPEAX_K@Z DD imagerel $LN11
+	DD	imagerel $LN11+312
 	DD	imagerel $unwind$?UnmapMemMapping@@YAXPEAX_K@Z
 $pdata$?AuCreateSharedMmapObject@@YAPEAU_sh_memap_object_@@PEAD@Z DD imagerel $LN3
 	DD	imagerel $LN3+115
@@ -325,7 +325,7 @@ len$ = 104
 
 ; 272  : void UnmapMemMapping(void* address, size_t len) {
 
-$LN10:
+$LN11:
 	mov	QWORD PTR [rsp+16], rdx
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 88					; 00000058H
@@ -337,12 +337,12 @@ $LN10:
 ; 274  : 	if (!len)
 
 	cmp	QWORD PTR len$[rsp], 0
-	jne	SHORT $LN5@UnmapMemMa
+	jne	SHORT $LN6@UnmapMemMa
 
 ; 275  : 		return;
 
-	jmp	$LN6@UnmapMemMa
-$LN5@UnmapMemMa:
+	jmp	$LN7@UnmapMemMa
+$LN6@UnmapMemMa:
 
 ; 276  : 
 ; 277  : 	len = PAGE_ALIGN(len); //simply align the length
@@ -350,16 +350,16 @@ $LN5@UnmapMemMa:
 	mov	rax, QWORD PTR len$[rsp]
 	and	rax, 4095				; 00000fffH
 	test	rax, rax
-	je	SHORT $LN8@UnmapMemMa
+	je	SHORT $LN9@UnmapMemMa
 	mov	rax, QWORD PTR len$[rsp]
 	add	rax, 4096				; 00001000H
 	and	rax, -4096				; fffffffffffff000H
 	mov	QWORD PTR tv69[rsp], rax
-	jmp	SHORT $LN9@UnmapMemMa
-$LN8@UnmapMemMa:
+	jmp	SHORT $LN10@UnmapMemMa
+$LN9@UnmapMemMa:
 	mov	rax, QWORD PTR len$[rsp]
 	mov	QWORD PTR tv69[rsp], rax
-$LN9@UnmapMemMa:
+$LN10@UnmapMemMa:
 	mov	rax, QWORD PTR tv69[rsp]
 	mov	QWORD PTR len$[rsp], rax
 
@@ -371,12 +371,12 @@ $LN9@UnmapMemMa:
 ; 279  : 	for (int i = 0; i < len / PAGE_SIZE; i++) {
 
 	mov	DWORD PTR i$1[rsp], 0
-	jmp	SHORT $LN4@UnmapMemMa
-$LN3@UnmapMemMa:
+	jmp	SHORT $LN5@UnmapMemMa
+$LN4@UnmapMemMa:
 	mov	eax, DWORD PTR i$1[rsp]
 	inc	eax
 	mov	DWORD PTR i$1[rsp], eax
-$LN4@UnmapMemMa:
+$LN5@UnmapMemMa:
 	movsxd	rax, DWORD PTR i$1[rsp]
 	mov	QWORD PTR tv71[rsp], rax
 	xor	edx, edx
@@ -385,7 +385,7 @@ $LN4@UnmapMemMa:
 	div	rcx
 	mov	rcx, QWORD PTR tv71[rsp]
 	cmp	rcx, rax
-	jae	$LN2@UnmapMemMa
+	jae	$LN3@UnmapMemMa
 
 ; 280  : 		AuVPage* page = AuVmmngrGetPage(addr + i * PAGE_SIZE, VIRT_GETPAGE_ONLY_RET, VIRT_GETPAGE_ONLY_RET);
 
@@ -400,7 +400,12 @@ $LN4@UnmapMemMa:
 	call	AuVmmngrGetPage
 	mov	QWORD PTR page$2[rsp], rax
 
-; 281  : 		uint64_t phys = page->bits.page << PAGE_SHIFT;
+; 281  : 		if (page) {
+
+	cmp	QWORD PTR page$2[rsp], 0
+	je	SHORT $LN2@UnmapMemMa
+
+; 282  : 			uint64_t phys = page->bits.page << PAGE_SHIFT;
 
 	mov	rax, QWORD PTR page$2[rsp]
 	mov	rax, QWORD PTR [rax]
@@ -409,19 +414,19 @@ $LN4@UnmapMemMa:
 	shl	rax, 12
 	mov	QWORD PTR phys$3[rsp], rax
 
-; 282  : 		if (phys) 
+; 283  : 			if (phys){
 
 	cmp	QWORD PTR phys$3[rsp], 0
 	je	SHORT $LN1@UnmapMemMa
 
-; 283  : 			AuPmmngrFree((void*)phys);
+; 284  : 				AuPmmngrFree((void*)phys);
 
 	mov	rcx, QWORD PTR phys$3[rsp]
 	call	AuPmmngrFree
 $LN1@UnmapMemMa:
 
-; 284  : 
-; 285  : 		page->bits.page = 0;
+; 285  : 			}
+; 286  : 			page->bits.page = 0;
 
 	mov	rax, QWORD PTR page$2[rsp]
 	mov	rcx, -1099511623681			; ffffff0000000fffH
@@ -430,22 +435,24 @@ $LN1@UnmapMemMa:
 	mov	rcx, QWORD PTR page$2[rsp]
 	mov	QWORD PTR [rcx], rax
 
-; 286  : 		page->bits.present = 0;
+; 287  : 			page->bits.present = 0;
 
 	mov	rax, QWORD PTR page$2[rsp]
 	mov	rax, QWORD PTR [rax]
 	and	rax, -2
 	mov	rcx, QWORD PTR page$2[rsp]
 	mov	QWORD PTR [rcx], rax
-
-; 287  : 	}
-
-	jmp	$LN3@UnmapMemMa
 $LN2@UnmapMemMa:
-$LN6@UnmapMemMa:
 
-; 288  : 
-; 289  : }
+; 288  : 		}
+; 289  : 	}
+
+	jmp	$LN4@UnmapMemMa
+$LN3@UnmapMemMa:
+$LN7@UnmapMemMa:
+
+; 290  : 
+; 291  : }
 
 	add	rsp, 88					; 00000058H
 	ret	0
@@ -796,7 +803,7 @@ $LN31@CreateMemM:
 
 ; 150  : 		fsys = AuVFSFind("/");
 
-	lea	rcx, OFFSET FLAT:$SG3563
+	lea	rcx, OFFSET FLAT:$SG3565
 	call	AuVFSFind
 	mov	QWORD PTR fsys$[rsp], rax
 
@@ -1027,7 +1034,7 @@ $LN10@CreateMemM:
 
 ; 202  : 			SeTextOut("mmap reading file \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG3581
+	lea	rcx, OFFSET FLAT:$SG3583
 	call	SeTextOut
 
 ; 203  : 			AuVFSNodeReadBlock(fsys, file, (uint64_t*)phys);
@@ -1190,7 +1197,7 @@ $LN13@CreateMemM:
 
 	mov	rax, QWORD PTR shobj$[rsp]
 	mov	rdx, QWORD PTR [rax]
-	lea	rcx, OFFSET FLAT:$SG3591
+	lea	rcx, OFFSET FLAT:$SG3593
 	call	SeTextOut
 $LN2@CreateMemM:
 

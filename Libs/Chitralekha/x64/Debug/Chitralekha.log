@@ -1,22 +1,22 @@
-﻿Build started 22-11-2023 আবেলি 8:48:14.
+﻿Build started 30-11-2023 আবেলি 12:03:01.
      1>Project "E:\Xeneva Project\Aurora\Libs\Chitralekha\Chitralekha.vcxproj" on node 2 (Rebuild target(s)).
      1>_NASM:
          _fastcpy.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmpcfa4cbd930c14038b5f2a22ef77fd15c.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmpb06115a5aa3d4abcadb1c779b0719d6f.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\_fastcpy.obj"  "E:\Xeneva Project\Aurora\Libs\Chitralekha\_fastcpy.asm"
        ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /I"E:\os_dev\freetype2-master\freetype2-master\include" /Zi /nologo /W3 /WX- /sdl- /Od /D ARCH_X64 /D YES_DYNAMIC /D DYNAMIC_EXPORTER /D _USE_FREETYPE /D _WINDLL /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt boxblur.cpp chitralekha.cpp color.cpp draw.cpp font.cpp keycode.cpp ttf.cpp widgets\base.cpp widgets\button.cpp widgets\defaultwindow.cpp widgets\list.cpp widgets\window.cpp
      1>cl : Command line warning D9025: overriding '/sdl-' with '/GS-'
      1>cl : Command line warning D9002: ignoring unknown option '/arch:SSE2'
          window.cpp
-     1>widgets\window.cpp(149): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
-     1>widgets\window.cpp(298): warning C4018: '<' : signed/unsigned mismatch
-     1>widgets\window.cpp(320): warning C4018: '<' : signed/unsigned mismatch
-     1>widgets\window.cpp(321): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\window.cpp(158): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
+     1>widgets\window.cpp(308): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\window.cpp(330): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\window.cpp(331): warning C4018: '<' : signed/unsigned mismatch
          list.cpp
          defaultwindow.cpp
-     1>widgets\defaultwindow.cpp(107): warning C4018: '<' : signed/unsigned mismatch
-     1>widgets\defaultwindow.cpp(120): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\defaultwindow.cpp(116): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\defaultwindow.cpp(129): warning C4018: '<' : signed/unsigned mismatch
          button.cpp
      1>widgets\button.cpp(140): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
          base.cpp
@@ -84,4 +84,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:02.95
+Time Elapsed 00:00:01.65

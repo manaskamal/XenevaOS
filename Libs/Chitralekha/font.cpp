@@ -299,8 +299,8 @@ int ChFontGetHeightChar(ChFont* font, char c) {
  * @param font -- Pointer to font
  */
 int ChFontClose(ChFont* font) {
-	FT_Done_Face(font->face);
-	FT_Done_FreeType(font->lib);
+	//FT_Done_Face(font->face);
+	//FT_Done_FreeType(font->lib);
 	_KeUnmapSharedMem(font->key);
 	free(font);
 	return 0;

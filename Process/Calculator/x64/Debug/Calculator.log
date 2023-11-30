@@ -1,4 +1,4 @@
-﻿Build started 23-11-2023 আবেলি 5:31:17.
+﻿Build started 30-11-2023 আবেলি 12:03:37.
      1>Project "E:\Xeneva Project\Aurora\Process\Calculator\Calculator.vcxproj" on node 2 (Rebuild target(s)).
      1>ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /I"E:\Xeneva Project\Aurora\Libs\Chitralekha" /I"E:\os_dev\freetype2-master\freetype2-master\include" /Zi /nologo /W4 /WX- /sdl- /MP /Od /Oy /D ARCH_X64 /D YES_DYNAMIC /D DYNAMIC_IMPORTER /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt actions.cpp main.cpp
@@ -6,9 +6,16 @@
      1>cl : Command line warning D9002: ignoring unknown option '/arch:SSE2'
      1>cl : Command line warning D9030: '/Gm' is incompatible with multiprocessing; ignoring /MP switch
          main.cpp
-     1>main.cpp(237): warning C4189: 'code' : local variable is initialized but not referenced
-     1>main.cpp(250): warning C4189: 'num_buttons_per_row' : local variable is initialized but not referenced
-     1>main.cpp(360): warning C4127: conditional expression is constant
+     1>main.cpp(108): warning C4189: 'hist_h' : local variable is initialized but not referenced
+     1>main.cpp(183): warning C4267: '+=' : conversion from 'size_t' to 'uint16_t', possible loss of data
+     1>main.cpp(280): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
+     1>main.cpp(282): warning C4244: '+=' : conversion from 'int' to 'uint16_t', possible loss of data
+     1>main.cpp(325): warning C4800: 'int' : forcing value to bool 'true' or 'false' (performance warning)
+     1>main.cpp(318): warning C4189: 'code' : local variable is initialized but not referenced
+     1>main.cpp(338): warning C4189: 'num_buttons_per_row' : local variable is initialized but not referenced
+     1>main.cpp(425): warning C4100: 'ctl' : unreferenced formal parameter
+     1>main.cpp(439): warning C4018: '<' : signed/unsigned mismatch
+     1>main.cpp(463): warning C4127: conditional expression is constant
          actions.cpp
      1>actions.cpp(32): warning C4100: 'win' : unreferenced formal parameter
      1>actions.cpp(32): warning C4100: 'wid' : unreferenced formal parameter
@@ -34,18 +41,23 @@
      1>actions.cpp(93): warning C4100: 'wid' : unreferenced formal parameter
      1>actions.cpp(99): warning C4100: 'win' : unreferenced formal parameter
      1>actions.cpp(99): warning C4100: 'wid' : unreferenced formal parameter
-     1>actions.cpp(105): warning C4100: 'win' : unreferenced formal parameter
-     1>actions.cpp(105): warning C4100: 'wid' : unreferenced formal parameter
-     1>actions.cpp(115): warning C4100: 'win' : unreferenced formal parameter
-     1>actions.cpp(115): warning C4100: 'wid' : unreferenced formal parameter
-     1>actions.cpp(125): warning C4100: 'win' : unreferenced formal parameter
-     1>actions.cpp(125): warning C4100: 'wid' : unreferenced formal parameter
-     1>actions.cpp(135): warning C4100: 'win' : unreferenced formal parameter
-     1>actions.cpp(135): warning C4100: 'wid' : unreferenced formal parameter
-     1>actions.cpp(146): warning C4100: 'win' : unreferenced formal parameter
-     1>actions.cpp(146): warning C4100: 'wid' : unreferenced formal parameter
-     1>actions.cpp(156): warning C4100: 'win' : unreferenced formal parameter
-     1>actions.cpp(156): warning C4100: 'wid' : unreferenced formal parameter
+     1>actions.cpp(130): warning C4267: '=' : conversion from 'size_t' to 'uint16_t', possible loss of data
+     1>actions.cpp(111): warning C4100: 'win' : unreferenced formal parameter
+     1>actions.cpp(111): warning C4100: 'wid' : unreferenced formal parameter
+     1>actions.cpp(155): warning C4267: '=' : conversion from 'size_t' to 'uint16_t', possible loss of data
+     1>actions.cpp(136): warning C4100: 'win' : unreferenced formal parameter
+     1>actions.cpp(136): warning C4100: 'wid' : unreferenced formal parameter
+     1>actions.cpp(178): warning C4267: '=' : conversion from 'size_t' to 'uint16_t', possible loss of data
+     1>actions.cpp(161): warning C4100: 'win' : unreferenced formal parameter
+     1>actions.cpp(161): warning C4100: 'wid' : unreferenced formal parameter
+     1>actions.cpp(203): warning C4267: '=' : conversion from 'size_t' to 'uint16_t', possible loss of data
+     1>actions.cpp(184): warning C4100: 'win' : unreferenced formal parameter
+     1>actions.cpp(184): warning C4100: 'wid' : unreferenced formal parameter
+     1>actions.cpp(229): warning C4267: '=' : conversion from 'size_t' to 'uint16_t', possible loss of data
+     1>actions.cpp(210): warning C4100: 'win' : unreferenced formal parameter
+     1>actions.cpp(210): warning C4100: 'wid' : unreferenced formal parameter
+     1>actions.cpp(235): warning C4100: 'win' : unreferenced formal parameter
+     1>actions.cpp(235): warning C4100: 'wid' : unreferenced formal parameter
          Generating Code...
      1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(1186,5): warning MSB8012: TargetPath(E:\Xeneva Project\Aurora\x64\Debug\Calculator.exe) does not match the Linker's OutputFile property value (F:\calc.exe). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
      1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(1188,5): warning MSB8012: TargetName(Calculator) does not match the Linker's OutputFile property value (calc). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
@@ -59,4 +71,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:00.80
+Time Elapsed 00:00:00.59

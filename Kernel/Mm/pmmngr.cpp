@@ -290,3 +290,19 @@ void AuPmmngrMoveHigher() {
 	_HigherHalf = true;
 	RamBitmap.Buffer = (uint8_t*)P2V((uint64_t)RamBitmap.Buffer);
 }
+
+/*
+ * AuPmmngrGetFreeMem -- returns the total free amount
+ * of RAM
+ */
+uint64_t AuPmmngrGetFreeMem() {
+	return _FreeMemory;
+}
+
+/*
+ * AuPmmngrGetTotalMem -- returns the total amount of
+ * RAM
+ */
+uint64_t AuPmmngrGetTotalMem() {
+	return _TotalRam;
+}

@@ -30,12 +30,12 @@ _BSS	SEGMENT
 ?_x86_64_sched_init@@3_NA DB 01H DUP (?)		; _x86_64_sched_init
 _BSS	ENDS
 CONST	SEGMENT
-$SG3755	DB	'_idle id -> %d  ', 0dH, 0aH, 00H
+$SG3757	DB	'_idle id -> %d  ', 0dH, 0aH, 00H
 	ORG $+5
-$SG3759	DB	'IDLE ', 0dH, 0aH, 00H
-$SG3765	DB	'Idle', 00H
+$SG3761	DB	'IDLE ', 0dH, 0aH, 00H
+$SG3767	DB	'Idle', 00H
 	ORG $+3
-$SG3804	DB	'CR3 -> %x ', 0dH, 0aH, 00H
+$SG3806	DB	'CR3 -> %x ', 0dH, 0aH, 00H
 CONST	ENDS
 PUBLIC	?AuSchedulerStart@@YAXXZ			; AuSchedulerStart
 PUBLIC	?AuSchedulerInitialise@@YAXXZ			; AuSchedulerInitialise
@@ -198,7 +198,7 @@ $LN3:
 
 	call	x64_read_cr3
 	mov	rdx, rax
-	lea	rcx, OFFSET FLAT:$SG3804
+	lea	rcx, OFFSET FLAT:$SG3806
 	call	SeTextOut
 
 ; 437  : }
@@ -557,7 +557,7 @@ $LN5:
 	call	?AuPerCPUGetCpuID@@YAEXZ		; AuPerCPUGetCpuID
 	movzx	eax, al
 	mov	edx, eax
-	lea	rcx, OFFSET FLAT:$SG3755
+	lea	rcx, OFFSET FLAT:$SG3757
 	call	SeTextOut
 $LN2@AuIdleThre:
 
@@ -569,7 +569,7 @@ $LN2@AuIdleThre:
 
 ; 300  : 		SeTextOut("IDLE \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG3759
+	lea	rcx, OFFSET FLAT:$SG3761
 	call	SeTextOut
 
 ; 301  : 		x64_hlt();
@@ -2045,7 +2045,7 @@ $LN3:
 	add	rax, 4096				; 00001000H
 	mov	rcx, rax
 	call	P2V
-	lea	r9, OFFSET FLAT:$SG3765
+	lea	r9, OFFSET FLAT:$SG3767
 	mov	rcx, QWORD PTR tv68[rsp]
 	mov	r8, rcx
 	mov	rdx, rax

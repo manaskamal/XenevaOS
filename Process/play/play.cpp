@@ -34,6 +34,7 @@
 #include <sys\_kefile.h>
 #include <sys\iocodes.h>
 #include <string.h>
+#include <minimp3.h>
 #include <stdlib.h>
 
 
@@ -48,6 +49,7 @@ int main(int argc, char* arv[]){
 	/* open the sound device-file, it is in /dev directory */
 	int snd = _KeOpenFile("/dev/sound", FILE_OPEN_WRITE);
 
+	
 	/* allocate an ioctl structure where required information
 	* will be putted */
 	XEFileIOControl ioctl;
@@ -69,10 +71,12 @@ int main(int argc, char* arv[]){
 	* a raw wave file with 48kHZ-16bit format, to play mp3 or
 	* other format, one needs another conversion layer of samples */
 
-	int song = _KeOpenFile("/song.wav", FILE_OPEN_READ_ONLY);
-	void* songbuf = malloc(4096);
-	memset(songbuf, 0, 4096);
-	_KeReadFile(song, songbuf, 4096);
+	int song = _KeOpenFile("/surat.wav", FILE_OPEN_READ_ONLY);
+	void* songbuf = malloc(16*1024);
+	memset(songbuf, 0, 16*1024);
+	_KeReadFile(song, songbuf, 16*1024);
+
+
 	XEFileStatus fs;
 	_KeFileStat(song, &fs);
 	bool finished = 0;
@@ -94,6 +98,5 @@ int main(int argc, char* arv[]){
 			_KeWriteFile(snd, songbuf, 4096);
 			_KeReadFile(song, songbuf, 4096);
 		}
-
 	}
 }

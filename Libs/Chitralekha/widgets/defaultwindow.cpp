@@ -34,6 +34,8 @@
 
 #define DEFAULT_TITLEBAR_DARK  0xFF252525
 #define DEFAULT_TITLEBAR_LIGHT 0xFF454343
+#define DEFAULT_TITLEBAR_FOCUS_LIGHT 0xFF576674
+#define DEFAULT_TITLEBAR_FOCUS_DARK 0xFF454F58
 
 /*
  * ChWindowPaintCloseButton -- close button painter
@@ -96,7 +98,14 @@ void ChWindowPaintMinimButton(ChWindow* win, ChWinGlobalControl* button) {
 }
 
 void ChWindowPaintTitlebar(ChWindow* win) {
-	ChColorDrawVerticalGradient(win->canv, 0, 0, win->info->width, 26, DEFAULT_TITLEBAR_LIGHT, DEFAULT_TITLEBAR_DARK);
+	uint32_t light_color = DEFAULT_TITLEBAR_LIGHT;
+	uint32_t dark_color = DEFAULT_TITLEBAR_DARK;
+	if (win->focused) {
+		light_color = DEFAULT_TITLEBAR_FOCUS_LIGHT;
+		dark_color = DEFAULT_TITLEBAR_FOCUS_DARK;
+	}
+
+	ChColorDrawVerticalGradient(win->canv, 0, 0, win->info->width, 26, light_color, dark_color);
 	ChFont* font = win->app->baseFont;
 	ChFontSetSize(win->app->baseFont, 10);
 	int font_width = ChFontGetWidth(font,win->title);

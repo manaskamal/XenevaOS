@@ -80,6 +80,7 @@ typedef struct _chwin_ {
 	ChitralekhaApp* app;
 	uint32_t handle;
 	uint32_t color;
+	bool focused;
 	list_t* GlobalControls;
 	list_t* widgets;
 	void(*ChWinPaint)(_chwin_ *win);
@@ -117,6 +118,7 @@ typedef struct _global_ctrl_ {
 	uint32_t clickedOutlineColor;
 	void(*ChGlobalButtonPaint)(ChWindow* win, _global_ctrl_* glbl);
 	void(*ChGlobalMouseEvent) (ChWindow* win, _global_ctrl_* glbl, int x, int y, int button);
+	void(*ChGlobalActionEvent)(ChWindow* win, _global_ctrl_* glbl);
 }ChWinGlobalControl;
 
 
@@ -183,6 +185,14 @@ XE_EXTERN XE_EXPORT uint32_t ChGetWindowHandle(ChitralekhaApp* app, char* title)
 */
 XE_EXTERN XE_EXPORT void ChWindowHandleMouse(ChWindow* win, int x, int y, int button);
 
+/*
+* ChWindowHandleFocus -- handle focus changed events
+* @param win -- Pointer to window
+* @param focus_val -- focus bit, 1 -- focused, 0 -- not focused
+* @param handle -- handle number of the window
+*/
+XE_EXTERN XE_EXPORT void ChWindowHandleFocus(ChWindow* win, bool focus_val, uint32_t handle);
+
 
 /*
 * ChWindowAddWidget -- adds a widget to window
@@ -190,5 +200,12 @@ XE_EXTERN XE_EXPORT void ChWindowHandleMouse(ChWindow* win, int x, int y, int bu
 * @param wid -- Pointer to widget needs to be added
 */
 XE_EXTERN XE_EXPORT void ChWindowAddWidget(ChWindow* win, ChWidget* wid);
+
+/*
+* ChWindowCloseWindow -- clears window related data and
+* sends close message to deodhai
+* @param win -- Pointer to window data
+*/
+XE_EXTERN XE_EXPORT void ChWindowCloseWindow(ChWindow* win);
 
 #endif

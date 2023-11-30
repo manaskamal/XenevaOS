@@ -154,6 +154,8 @@
     <ClInclude Include="font.h" />
     <ClInclude Include="image.h" />
     <ClInclude Include="keycode.h" />
+    <ClInclude Include="minimp3.h" />
+    <ClInclude Include="minimp3_ex.h" />
     <ClInclude Include="nanojpg.h" />
     <ClInclude Include="ttf.h" />
     <ClInclude Include="widgets\base.h" />

@@ -50,7 +50,9 @@ void FreeUserStack(uint64_t* cr3, void* ptr) {
 
 	for (int i = 0; i < PROCESS_USER_STACK_SZ / 4096; i++) {
 		void* addr = AuGetPhysicalAddressEx(cr3, + i * 4096);
-		AuPmmngrFree((void*)V2P((size_t)addr));
+		uint64_t physaddr = (uint64_t)V2P((uint64_t)addr);
+		if (physaddr != 0)
+			AuPmmngrFree((void*)physaddr);
 	}
 }
 
@@ -86,7 +88,10 @@ void AuThreadFree(AuProcess* proc,AuThread* t) {
 	 * memory
 	 */
 	if (t->priviledge & THREAD_LEVEL_MAIN_THREAD){
-		uint64_t k_stack = t->frame.kern_esp;
+		/* increase k_stack by 32 bytes because, 32 bytes
+		 * being decresed at AuLoadExecToProc function 
+		 */
+		uint64_t k_stack = t->frame.kern_esp + 32;
 		uint64_t k_stack_ = k_stack - PAGE_SIZE;
 		AuPmmngrFree((void*)V2P((size_t)k_stack_));
 	}
@@ -126,18 +131,6 @@ void AuProcessClean(AuProcess* parent, AuProcess* killable) {
 			kfree(area);
 	}
 	kfree(killable->vmareas);
-
-	/* free up process heap memory */
-	if (killable->proc_mem_heap > PROCESS_BREAK_ADDRESS) {
-		size_t num_pages = (killable->proc_mem_heap - PROCESS_BREAK_ADDRESS) / PAGE_SIZE;
-		if ((num_pages % PAGE_SIZE) != 0)
-			num_pages++;
-		for (int i = 0; i < num_pages; i++) {
-			void* phys = AuGetPhysicalAddressEx(killable->cr3, PROCESS_BREAK_ADDRESS + i * PAGE_SIZE);
-			if (phys)
-				AuPmmngrFree((void*)V2P((uint64_t)phys));
-		}
-	}
 
 
 	/* finally free up all threads */

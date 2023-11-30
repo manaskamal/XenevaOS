@@ -26,7 +26,7 @@ _BSS	SEGMENT
 ?RamBitmap@@3VBitmap@@A DB 010H DUP (?)			; RamBitmap
 _BSS	ENDS
 CONST	SEGMENT
-$SG3623	DB	'Kernel Panic!!! No more physical memory ', 0aH, 00H
+$SG3625	DB	'Kernel Panic!!! No more physical memory ', 0aH, 00H
 CONST	ENDS
 PUBLIC	?AuPmmngrInitialize@@YAXPEAU_KERNEL_BOOT_INFO_@@@Z ; AuPmmngrInitialize
 PUBLIC	AuPmmngrAlloc
@@ -36,6 +36,8 @@ PUBLIC	AuPmmngrFreeBlocks
 PUBLIC	P2V
 PUBLIC	V2P
 PUBLIC	?AuPmmngrMoveHigher@@YAXXZ			; AuPmmngrMoveHigher
+PUBLIC	?AuPmmngrGetFreeMem@@YA_KXZ			; AuPmmngrGetFreeMem
+PUBLIC	?AuPmmngrGetTotalMem@@YA_KXZ			; AuPmmngrGetTotalMem
 PUBLIC	??ABitmap@@QEAA_N_K@Z				; Bitmap::operator[]
 PUBLIC	?Set@Bitmap@@QEAA_N_K_N@Z			; Bitmap::Set
 PUBLIC	?AuPmmngrInitBitmap@@YAX_KPEAX@Z		; AuPmmngrInitBitmap
@@ -562,6 +564,34 @@ _TEXT	ENDS
 ; Function compile flags: /Odtpy
 ; File e:\xeneva project\aurora\kernel\mm\pmmngr.cpp
 _TEXT	SEGMENT
+?AuPmmngrGetTotalMem@@YA_KXZ PROC			; AuPmmngrGetTotalMem
+
+; 307  : 	return _TotalRam;
+
+	mov	rax, QWORD PTR ?_TotalRam@@3_KA		; _TotalRam
+
+; 308  : }
+
+	ret	0
+?AuPmmngrGetTotalMem@@YA_KXZ ENDP			; AuPmmngrGetTotalMem
+_TEXT	ENDS
+; Function compile flags: /Odtpy
+; File e:\xeneva project\aurora\kernel\mm\pmmngr.cpp
+_TEXT	SEGMENT
+?AuPmmngrGetFreeMem@@YA_KXZ PROC			; AuPmmngrGetFreeMem
+
+; 299  : 	return _FreeMemory;
+
+	mov	rax, QWORD PTR ?_FreeMemory@@3_KA	; _FreeMemory
+
+; 300  : }
+
+	ret	0
+?AuPmmngrGetFreeMem@@YA_KXZ ENDP			; AuPmmngrGetFreeMem
+_TEXT	ENDS
+; Function compile flags: /Odtpy
+; File e:\xeneva project\aurora\kernel\mm\pmmngr.cpp
+_TEXT	SEGMENT
 ?AuPmmngrMoveHigher@@YAXXZ PROC				; AuPmmngrMoveHigher
 
 ; 289  : void AuPmmngrMoveHigher() {
@@ -909,7 +939,7 @@ $LN4@AuPmmngrAl:
 
 ; 217  : 	AuTextOut("Kernel Panic!!! No more physical memory \n");
 
-	lea	rcx, OFFSET FLAT:$SG3623
+	lea	rcx, OFFSET FLAT:$SG3625
 	call	AuTextOut
 $LN2@AuPmmngrAl:
 

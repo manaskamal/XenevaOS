@@ -134,12 +134,16 @@ void PostBoxDestroy(PostBox* box) {
  * @param id -- id of the postbox
  */
 void PostBoxDestroyByID(uint16_t id) {
+	PostBox* destroyable = NULL;
 	for (PostBox* box = firstBox; box != NULL; box = box->next) {
 		if (box->ownerID == id){
-			PostBoxDestroy(box);
+			destroyable = box;
 			break;
 		}
 	}
+
+	if (destroyable)
+		PostBoxDestroy(destroyable);
 	return;
 }
 

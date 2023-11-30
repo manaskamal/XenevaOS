@@ -83,4 +83,15 @@ AU_EXTERN AU_EXPORT uint64_t V2P(uint64_t vaddr);
 */
 extern void AuPmmngrMoveHigher();
 
+/*
+* AuPmmngrGetFreeMem -- returns the total free amount
+* of RAM
+*/
+extern uint64_t AuPmmngrGetFreeMem();
+
+/*
+* AuPmmngrGetTotalMem -- returns the total amount of
+* RAM
+*/
+extern uint64_t AuPmmngrGetTotalMem();
 #endif

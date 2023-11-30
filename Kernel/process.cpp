@@ -411,14 +411,23 @@ int AuProcessGetFileDesc(AuProcess* proc) {
  * @param proc -- Pointer to process
  */
 void AuProcessHeapMemDestroy(AuProcess* proc) {
-	size_t proc_mem_diff = proc->proc_mem_heap - PROCESS_BREAK_ADDRESS;
+	uint64_t proc_mem_diff = proc->proc_mem_heap - PROCESS_BREAK_ADDRESS;
+	uint64_t startaddr = PROCESS_BREAK_ADDRESS;
+	if ((proc_mem_diff % PAGE_SIZE) != 0)
+		proc_mem_diff++;
 	for (int i = 0; i < proc_mem_diff / 4096; i++) {
-		AuVPage* page = AuVmmngrGetPage(PROCESS_BREAK_ADDRESS + i * PAGE_SIZE, VIRT_GETPAGE_ONLY_RET, VIRT_GETPAGE_ONLY_RET);
-		uint64_t phys = page->bits.page << PAGE_SHIFT;
-		if (phys) 
-			AuPmmngrFree((void*)phys);
-		page->bits.page = 0;
-		page->bits.present = 0;
+		AuVPage* page = AuVmmngrGetPage(startaddr + i * PAGE_SIZE, VIRT_GETPAGE_ONLY_RET, VIRT_GETPAGE_ONLY_RET);
+		if (page) {
+			uint64_t phys = page->bits.page << PAGE_SHIFT;
+			if (phys){
+#if 0
+				SeTextOut("Heap mem destroy -> %x \r\n", phys);
+#endif
+				AuPmmngrFree((void*)phys);
+			}
+			page->bits.page = 0;
+			page->bits.present = 0;
+		}
 	}
 }
 
@@ -485,11 +494,13 @@ void AuProcessExit(AuProcess* proc, bool schedulable) {
 	kfree(proc->waitlist);
 
 	UnmapMemMapping((void*)PROCESS_MMAP_ADDRESS, proc->proc_mmap_len);
-
+	
 	/*unmap all shared memory mappings */
 	AuSHMUnmapAll(proc);
 
 	AuProcessHeapMemDestroy(proc);
+
+	SeTextOut("closing process -> %s \r\n", proc->name);
 
 	if (proc->file)
 		kfree(proc->file);
@@ -498,6 +509,8 @@ void AuProcessExit(AuProcess* proc, bool schedulable) {
 	
 	kmalloc_debug_on(false);
 	SeTextOut("Process exited %s \r\n", proc->name);
+	SeTextOut("Used RAM -> %d MB \ Avail -> %d GB \r\n", ((AuPmmngrGetFreeMem() * PAGE_SIZE) / 1024 / 1024),
+		(AuPmmngrGetTotalMem() * PAGE_SIZE / 1024 / 1024 / 1024));
 	if (schedulable)
 		x64_force_sched();
 }

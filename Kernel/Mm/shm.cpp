@@ -111,7 +111,7 @@ int AuCreateSHM(AuProcess* proc, uint16_t key, size_t sz, uint8_t flags) {
 		shm->id = AuSHMGetID();
 		shm->key = key;
 		shm->num_frames = (sz / 0x1000) + ((sz % 0x1000) ? 1 : 0);
-		shm->link_count = 1;
+		shm->link_count = 0;
 		shm->frames = (uint64_t*)kmalloc(sizeof(uint64_t)* shm->num_frames);
 		for (int i = 0; i < shm->num_frames; i++)  {
 			shm->frames[i] = (uint64_t)AuPmmngrAlloc();
@@ -136,10 +136,11 @@ int AuCreateSHM(AuProcess* proc, uint16_t key, size_t sz, uint8_t flags) {
 void AuSHMDelete(AuSHM* shm) {
 	if (!shm)
 		return;
-	if (shm->link_count > 1)
+	if (shm->link_count > 0){
 		shm->link_count--;
+	}
 
-	if (shm->link_count == 1){
+	if (shm->link_count == 0){
 		for (int i = 0; i < shm->num_frames; i++) {
 			size_t phys = shm->frames[i];
 			AuPmmngrFree((void*)phys);
@@ -164,6 +165,39 @@ size_t AuSHMProcBreak(AuProcess* proc, size_t num_frames) {
 	size_t start_addr = proc->shm_break;
 	proc->shm_break = (proc->shm_break + num_frames * PAGE_SIZE);
 	return start_addr;
+}
+
+/*
+ * AuSHMProcSwap -- Swaps data between list entry
+ */
+void AuSHMProcSwap(dataentry* current, dataentry* index) {
+	void* tmp = current->data;
+	current->data = index->data;
+	index->data = tmp;
+}
+
+/*
+ * AuSHMProcOrderList -- orders current shared memory mappings
+ * @param proc -- Pointer to process slot
+ */
+void AuSHMProcOrderList(AuProcess* proc) {
+	dataentry* current = proc->shmmaps->entry_current;
+	dataentry* index = NULL;
+	for (int i = 0; i < proc->shmmaps->pointer; i++) {
+		if (current == NULL)
+			break;
+		AuSHMMappings* mappsone = (AuSHMMappings*)current->data;
+		index = current->next;
+		for (int k = 0; k < proc->shmmaps->pointer - 1; k++) {
+			if (index == NULL)
+				break;
+			AuSHMMappings* maptwo = (AuSHMMappings*)index->data;
+			if (mappsone->start_addr > maptwo->start_addr) 
+				AuSHMProcSwap(current, index);
+			index = index->next;
+		}
+		current = current->next;
+	}
 }
 
 /*
@@ -199,18 +233,49 @@ void* AuSHMObtainMem(AuProcess* proc, uint16_t id, void* shmaddr, int shmflg) {
 		AuSHMMappings *maps = (AuSHMMappings*)list_get_at(proc->shmmaps, i);
 		if (!have_mappings)
 			have_mappings = true;
-		size_t gap = maps->start_addr - last_addr; 
-		if (gap >= mem->num_frames * PAGE_SIZE){
-			for (int j = 0; j < mem->num_frames; j++) {
-				size_t phys = mem->frames[j];
-				AuMapPage(phys, last_addr + j * PAGE_SIZE, X86_64_PAGING_USER);
+		if (maps->start_addr > last_addr) {
+			size_t gap = maps->start_addr - last_addr;
+			if (gap >= mem->num_frames * PAGE_SIZE){
+				for (int j = 0; j < mem->num_frames; j++) {
+					size_t phys = mem->frames[j];
+					AuMapPage(phys, last_addr + j * PAGE_SIZE, X86_64_PAGING_USER);
+				}
+				mappings->start_addr = last_addr;
+				mappings->length = mem->num_frames * PAGE_SIZE;
+				mappings->shm = mem;
+
+				/* Here we need some sorting algorithm to sort
+				 * out mappings in ascending order, like Bubble-sort
+				 * algorithm between nodes of mappings
+				 */
+				list_add(proc->shmmaps, mappings);
+				AuReleaseSpinlock(shmlock);
+
+#if 0
+				/* just for debugging purpose */
+				for (int i = 0; i < proc->shmmaps->pointer; i++) {
+					AuSHMMappings* map = (AuSHMMappings*)list_get_at(proc->shmmaps, i);
+					SeTextOut("M -> %x \r\n", map->start_addr);
+				}
+#endif
+
+				/* Now order the list, in ascending order */
+				AuSHMProcOrderList(proc);
+
+#if 0
+				/* just for debugging purpose after sorting 
+				 * has been done 
+				 */
+				SeTextOut("After ordering \r\n");
+
+				for (int i = 0; i < proc->shmmaps->pointer; i++) {
+					AuSHMMappings* map = (AuSHMMappings*)list_get_at(proc->shmmaps, i);
+					SeTextOut("M -> %x \r\n", map->start_addr);
+				}
+#endif
+
+				return (void*)mappings->start_addr;
 			}
-			mappings->start_addr = last_addr;
-			mappings->length = mem->num_frames * PAGE_SIZE;
-			mappings->shm = mem;
-			list_add(proc->shmmaps, mappings);
-			AuReleaseSpinlock(shmlock);
-			return (void*)mappings->start_addr;
 		}
 		last_addr = maps->start_addr + maps->length;
 	}
@@ -269,27 +334,25 @@ void AuSHMUnmap(uint16_t key, AuProcess* proc) {
 	for (int i = 0; i < proc->shmmaps->pointer; i++) {
 		AuSHMMappings* maps = (AuSHMMappings*)list_get_at(proc->shmmaps, i);
 		if (maps->shm == shm){
-			index = i;
 			mapping = maps;
+			for (int i = 0; i < mapping->length / PAGE_SIZE; i++) {
+				AuVPage* vpage = AuVmmngrGetPage(mapping->start_addr + i * PAGE_SIZE, VIRT_GETPAGE_ONLY_RET, VIRT_GETPAGE_ONLY_RET);
+				if (vpage) {
+					vpage->bits.page = 0;
+					vpage->bits.present = 0;
+					flush_tlb((void*)(mapping->start_addr + i * PAGE_SIZE));
+				}
+			}
+			SeTextOut("Closing index -> %d \r\n", i);
+			list_remove(proc->shmmaps, i);
+			kfree(mapping);
+			break;
 		}
 	}
 
-	if (!mapping) {
-		AuReleaseSpinlock(shmlock);
-		return;
-	}
-
-	for (int i = 0; i < mapping->length / PAGE_SIZE; i++) {
-		AuVPage* vpage = AuVmmngrGetPage(mapping->start_addr + i * PAGE_SIZE, VIRT_GETPAGE_ONLY_RET, VIRT_GETPAGE_ONLY_RET);
-		vpage->bits.page = 0;
-		vpage->bits.present = 0;
-		flush_tlb((void*)(mapping->start_addr + i * PAGE_SIZE));
-	}
-	
-	list_remove(proc->shmmaps, index);
-	kfree(mapping);
 
 	AuSHMDelete(shm);
+	SeTextOut("%s Unmapping shm ->%d count \r\n",proc->name, shm->link_count);
 	AuReleaseSpinlock(shmlock);
 }
 
@@ -307,7 +370,7 @@ void AuSHMUnmapAll(AuProcess* proc) {
 			AuVPage* vpage = AuVmmngrGetPage(mapping->start_addr + j * PAGE_SIZE, VIRT_GETPAGE_ONLY_RET, VIRT_GETPAGE_ONLY_RET);
 			vpage->bits.page = 0;
 			vpage->bits.present = 0;
-			flush_tlb((void*)(mapping->start_addr + i * PAGE_SIZE));
+			flush_tlb((void*)(mapping->start_addr + j * PAGE_SIZE));
 		}
 		AuSHMDelete(mapping->shm);
 		kfree(mapping);

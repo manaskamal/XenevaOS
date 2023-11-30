@@ -6,13 +6,13 @@ INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
 CONST	SEGMENT
-$SG3569	DB	'Ret filename ->%s ', 0dH, 0aH, 00H
+$SG3571	DB	'Ret filename ->%s ', 0dH, 0aH, 00H
 	ORG $+3
-$SG3571	DB	'FS Flag dir ', 0dH, 0aH, 00H
+$SG3573	DB	'FS Flag dir ', 0dH, 0aH, 00H
 	ORG $+1
-$SG3573	DB	'freeing ret ', 0dH, 0aH, 00H
+$SG3575	DB	'freeing ret ', 0dH, 0aH, 00H
 	ORG $+1
-$SG3578	DB	'/', 00H
+$SG3580	DB	'/', 00H
 CONST	ENDS
 PUBLIC	?FatCreateDir@@YAPEAU__VFS_NODE__@@PEAU1@PEAD@Z	; FatCreateDir
 PUBLIC	?FatRemoveDir@@YAHPEAU__VFS_NODE__@@0@Z		; FatRemoveDir
@@ -480,7 +480,7 @@ $LN5@FatOpenDir:
 
 	mov	rax, QWORD PTR ret$[rsp]
 	mov	rdx, rax
-	lea	rcx, OFFSET FLAT:$SG3569
+	lea	rcx, OFFSET FLAT:$SG3571
 	call	SeTextOut
 
 ; 262  : 		if (ret->flags & FS_FLAG_DIRECTORY)
@@ -493,7 +493,7 @@ $LN5@FatOpenDir:
 
 ; 263  : 			SeTextOut("FS Flag dir \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG3571
+	lea	rcx, OFFSET FLAT:$SG3573
 	call	SeTextOut
 $LN3@FatOpenDir:
 $LN4@FatOpenDir:
@@ -511,7 +511,7 @@ $LN4@FatOpenDir:
 
 ; 266  : 		SeTextOut("freeing ret \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG3573
+	lea	rcx, OFFSET FLAT:$SG3575
 	call	SeTextOut
 
 ; 267  : 		kfree(ret);
@@ -547,7 +547,7 @@ $LN2@FatOpenDir:
 ; 273  : 		strcpy(ret->filename, "/");
 
 	mov	rax, QWORD PTR ret$[rsp]
-	lea	rdx, OFFSET FLAT:$SG3578
+	lea	rdx, OFFSET FLAT:$SG3580
 	mov	rcx, rax
 	call	strcpy
 

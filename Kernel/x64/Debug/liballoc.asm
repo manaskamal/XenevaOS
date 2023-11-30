@@ -13,7 +13,7 @@ _BSS	SEGMENT
 l_initialized DD 01H DUP (?)
 _BSS	ENDS
 CONST	SEGMENT
-$SG2989	DB	'Request page not aligned to page boundary ', 0dH, 0aH, 00H
+$SG2991	DB	'Request page not aligned to page boundary ', 0dH, 0aH, 00H
 CONST	ENDS
 _DATA	SEGMENT
 l_pageSize DD	01000H
@@ -1786,7 +1786,7 @@ $LN4@liballoc_a:
 
 ; 581  : 		SeTextOut("Request page not aligned to page boundary \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG2989
+	lea	rcx, OFFSET FLAT:$SG2991
 	call	SeTextOut
 $LN2@liballoc_a:
 
