@@ -139,6 +139,7 @@ uint64_t GetProcessHeapMem(size_t sz) {
 	}
 	//SeTextOut("Mapped \r\n");
 	proc->proc_mem_heap += sz;
+	proc->proc_heapmem_len += sz;
 	return start_addr;
 }
 

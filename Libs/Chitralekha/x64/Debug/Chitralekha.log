@@ -1,18 +1,25 @@
-﻿Build started 30-11-2023 আবেলি 12:03:01.
+﻿Build started 04-12-2023 আবেলি 11:00:24.
      1>Project "E:\Xeneva Project\Aurora\Libs\Chitralekha\Chitralekha.vcxproj" on node 2 (Rebuild target(s)).
      1>_NASM:
          _fastcpy.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmpb06115a5aa3d4abcadb1c779b0719d6f.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmpa46b7117930b4a7e9dfa04d25e7a430e.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\_fastcpy.obj"  "E:\Xeneva Project\Aurora\Libs\Chitralekha\_fastcpy.asm"
        ClCompile:
-         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /I"E:\os_dev\freetype2-master\freetype2-master\include" /Zi /nologo /W3 /WX- /sdl- /Od /D ARCH_X64 /D YES_DYNAMIC /D DYNAMIC_EXPORTER /D _USE_FREETYPE /D _WINDLL /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt boxblur.cpp chitralekha.cpp color.cpp draw.cpp font.cpp keycode.cpp ttf.cpp widgets\base.cpp widgets\button.cpp widgets\defaultwindow.cpp widgets\list.cpp widgets\window.cpp
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /I"E:\os_dev\freetype2-master\freetype2-master\include" /Zi /nologo /W3 /WX- /sdl- /Od /D ARCH_X64 /D YES_DYNAMIC /D DYNAMIC_EXPORTER /D _USE_FREETYPE /D _WINDLL /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt boxblur.cpp chitralekha.cpp color.cpp draw.cpp font.cpp keycode.cpp ttf.cpp widgets\base.cpp widgets\button.cpp widgets\defaultwindow.cpp widgets\list.cpp widgets\msgbox.cpp widgets\window.cpp
      1>cl : Command line warning D9025: overriding '/sdl-' with '/GS-'
      1>cl : Command line warning D9002: ignoring unknown option '/arch:SSE2'
          window.cpp
-     1>widgets\window.cpp(158): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
-     1>widgets\window.cpp(308): warning C4018: '<' : signed/unsigned mismatch
-     1>widgets\window.cpp(330): warning C4018: '<' : signed/unsigned mismatch
-     1>widgets\window.cpp(331): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\window.cpp(159): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
+     1>widgets\window.cpp(275): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\window.cpp(343): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\window.cpp(365): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\window.cpp(366): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\window.cpp(444): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\window.cpp(449): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\window.cpp(471): warning C4018: '<' : signed/unsigned mismatch
+         msgbox.cpp
+     1>widgets\msgbox.cpp(79): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
+     1>widgets\msgbox.cpp(97): warning C4018: '<' : signed/unsigned mismatch
          list.cpp
          defaultwindow.cpp
      1>widgets\defaultwindow.cpp(116): warning C4018: '<' : signed/unsigned mismatch
@@ -74,6 +81,7 @@
          x64\Debug\button.obj
          x64\Debug\defaultwindow.obj
          x64\Debug\list.obj
+         x64\Debug\msgbox.obj
          x64\Debug\window.obj
          x64\Debug\_fastcpy.obj
      1>LINK : warning LNK4075: ignoring '/INCREMENTAL' due to '/LTCG' specification
@@ -84,4 +92,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:01.65
+Time Elapsed 00:00:01.74

@@ -538,7 +538,7 @@ void TerminalThread() {
 */
 int main(int argc, char* arv[]){
 	app = ChitralekhaStartApp(argc, arv);
-	win = ChCreateWindow(app, (1 << 0), "Xeneva Terminal", 300, 300, 550, 400);
+	win = ChCreateWindow(app, (1 << 0), "Xeneva Terminal", 300, 300, 650, 450);
 	ChWindowBroadcastIcon(app, "/term.bmp");
 	win->info->alpha = true;
 	win->info->alphaValue = 0.7;
@@ -580,9 +580,6 @@ int main(int argc, char* arv[]){
 	memset(term_buffer, 0x0, ws_col * ws_row * sizeof(TermCell));
 
 	
-	TerminalPrintString("Copyright (C) Manas Kamal Choudhury 2023\n", GRAY, BLACK);
-	TerminalPrintString("HP@LAPTOP-UCFKK4J9-", GREEN, BLACK);
-	TerminalPrintString("/:$", LIGHTSILVER, BLACK);
 	TerminalDrawAllCells();
 	int thread_idx = _KeCreateThread(TerminalThread, "asyncthr");
 

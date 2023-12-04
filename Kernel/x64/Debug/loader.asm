@@ -14,15 +14,15 @@ _BSS	SEGMENT
 ?is_loader_busy@@3_NA DB 01H DUP (?)			; is_loader_busy
 _BSS	ENDS
 CONST	SEGMENT
-$SG3878	DB	'exe', 00H
+$SG3879	DB	'exe', 00H
 	ORG $+4
-$SG3879	DB	'[aurora]: non-executable process ', 0dH, 0aH, 00H
+$SG3880	DB	'[aurora]: non-executable process ', 0dH, 0aH, 00H
 	ORG $+4
-$SG3883	DB	'No File found -> %s ', 0dH, 0aH, 00H
+$SG3884	DB	'No File found -> %s ', 0dH, 0aH, 00H
 	ORG $+1
-$SG3920	DB	'/xeldr.exe', 00H
+$SG3921	DB	'/xeldr.exe', 00H
 	ORG $+5
-$SG3955	DB	'Arguments address already mapped ', 0aH, 00H
+$SG3956	DB	'Arguments address already mapped ', 0aH, 00H
 CONST	ENDS
 PUBLIC	?AuInitialiseLoader@@YAXXZ			; AuInitialiseLoader
 PUBLIC	?AuLoadExecToProcess@@YAHPEAU_au_proc_@@PEADHPEAPEAD@Z ; AuLoadExecToProcess
@@ -505,7 +505,7 @@ $LN14@AuLoadExec:
 
 ; 129  : 	if (strcmp(v_, "exe") != 0) {
 
-	lea	rdx, OFFSET FLAT:$SG3878
+	lea	rdx, OFFSET FLAT:$SG3879
 	mov	rcx, QWORD PTR v_$[rsp]
 	call	strcmp
 	test	eax, eax
@@ -513,7 +513,7 @@ $LN14@AuLoadExec:
 
 ; 130  : 		SeTextOut("[aurora]: non-executable process \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG3879
+	lea	rcx, OFFSET FLAT:$SG3880
 	call	SeTextOut
 
 ; 131  : 		return -1;
@@ -548,7 +548,7 @@ $LN13@AuLoadExec:
 ; 138  : 		SeTextOut("No File found -> %s \r\n", filename);
 
 	mov	rdx, QWORD PTR filename$[rsp]
-	lea	rcx, OFFSET FLAT:$SG3883
+	lea	rcx, OFFSET FLAT:$SG3884
 	call	SeTextOut
 
 ; 139  : 		return -1;
@@ -715,7 +715,7 @@ $LN12@AuLoadExec:
 
 	mov	r9, QWORD PTR argvs$6[rsp]
 	mov	r8d, DWORD PTR num_args_$3[rsp]
-	lea	rdx, OFFSET FLAT:$SG3920
+	lea	rdx, OFFSET FLAT:$SG3921
 	mov	rcx, QWORD PTR proc$[rsp]
 	call	?AuLoadExecToProcess@@YAHPEAU_au_proc_@@PEADHPEAPEAD@Z ; AuLoadExecToProcess
 	jmp	$LN15@AuLoadExec
@@ -980,7 +980,7 @@ $LN8@AuLoadExec:
 
 ; 225  : 			AuTextOut("Arguments address already mapped \n");
 
-	lea	rcx, OFFSET FLAT:$SG3955
+	lea	rcx, OFFSET FLAT:$SG3956
 	call	AuTextOut
 
 ; 226  : 			argvaddr = 0;

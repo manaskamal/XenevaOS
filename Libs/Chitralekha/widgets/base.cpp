@@ -65,6 +65,7 @@ ChitralekhaApp* ChitralekhaStartSubApp(ChitralekhaApp* parent) {
 	app->postboxfd = parent->postboxfd;
 	uint16_t thr_id = parent->currentID;
 	app->currentID = thr_id;
+	app->parent = parent;
 	return app;
 }
 /*

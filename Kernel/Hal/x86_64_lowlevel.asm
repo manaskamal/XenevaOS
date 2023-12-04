@@ -503,6 +503,7 @@ x64_set_rsp:
 ;;================================================
 global x64_enter_user ;; (rcx : stack, rdx: entrypoint, r8 : cs, r9 : ss)
 x64_enter_user:
+    mov rbp, rcx
     pushfq 
 	pop rax
 	or ax, (1<<9)  ;interrupt enable

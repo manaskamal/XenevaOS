@@ -274,7 +274,9 @@ void UnmapMemMapping(void* address, size_t len) {
 	if (!len)
 		return;
 
+	SeTextOut("MemUnmap len -> %d \r\n", len);
 	len = PAGE_ALIGN(len); //simply align the length
+	SeTextOut("Mem Unmap len aligned -> %d \r\n", len);
 	uint64_t addr = (uint64_t)address;
 	for (int i = 0; i < len / PAGE_SIZE; i++) {
 		AuVPage* page = AuVmmngrGetPage(addr + i * PAGE_SIZE, VIRT_GETPAGE_ONLY_RET, VIRT_GETPAGE_ONLY_RET);

@@ -30,6 +30,7 @@
 section .text
 [BITS 64]
 
+
 global setjmp
 export setjmp
 setjmp:
@@ -39,12 +40,11 @@ setjmp:
 	 mov [rcx + 24], r13
 	 mov [rcx + 32], r14
 	 mov [rcx + 40],r15
-	 pop r15
 	 mov rdx, rsp
 	 mov [rcx + 48], rdx
-	 push r15
 	 mov rdx,[rsp]
 	 mov [rcx + 56], rdx
+	 mov rax, [rcx + 56]
 	 xor eax, eax
 	 ret
 	 

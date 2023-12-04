@@ -67,6 +67,7 @@ AppGrid* LauncherCreateAppGrid(int x, int y, int w, int h) {
 }
 
 
+
 /*
  * AppGridAddButton -- adds a button to specific grid
  * @param grid -- Pointer to grid
@@ -76,6 +77,12 @@ AppGrid* LauncherCreateAppGrid(int x, int y, int w, int h) {
 void AppGridAddButton(AppGrid* grid, LaunchButton* button) {
 	button->x = grid->start_pos_x;
 	button->y = grid->start_pos_y;
+	if ((button->x + button->w) >= (grid->x + grid->w)){
+		grid->start_pos_x = grid->x + BUTTONS_PAD_X;
+		grid->start_pos_y += button->h + ROWS_PAD_Y;
+		button->x = grid->start_pos_x;
+		button->y = grid->start_pos_y;
+	}
 	grid->start_pos_x += button->w + BUTTONS_PAD_X;
 	list_add(grid->lbbuttonlist, button);
 }

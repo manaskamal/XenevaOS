@@ -1,12 +1,12 @@
-﻿Build started 14-11-2023 ৰাতিপু 8:48:08.
+﻿Build started 04-12-2023 আবেলি 7:59:34.
      1>Project "E:\Xeneva Project\Aurora\Libs\XEClib\XEClib.vcxproj" on node 2 (Rebuild target(s)).
      1>_NASM:
          setjmp.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp7c57406d01d64a67b1b7608c0fa34c24.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp8a51c530ee334a8daaf92febaba87e80.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\setjmp.obj"  "E:\Xeneva Project\Aurora\Libs\XEClib\setjmp.asm"
        _NASM:
          _callbase.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp45d81404b2b64493951290d072be5d92.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmpc12e198ab8f640b48cf13a4f616e60bc.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\_callbase.obj"  "E:\Xeneva Project\Aurora\Libs\XEClib\_callbase.asm"
      1>E:\Xeneva Project\Aurora\Libs\XEClib\_callbase.asm(683): warning : label alone on a line without a colon might be in error [-w+label-orphan]
      1>E:\Xeneva Project\Aurora\Libs\XEClib\_callbase.asm(697): warning : label alone on a line without a colon might be in error [-w+label-orphan]
@@ -111,4 +111,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:03.40
+Time Elapsed 00:00:02.03

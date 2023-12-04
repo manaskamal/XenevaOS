@@ -31,13 +31,16 @@
 
 #include <_xeneva.h>
 
-typedef long long int __jmp_buf[8];
+#define _JBLEN 9
+typedef long long jmp_buf[_JBLEN];
 
-typedef struct __jmp_buf_tag {
-	__jmp_buf __jb;
-	unsigned long __fl;
-	unsigned long __ss[128 / sizeof(long)];
-} jmp_buf;
+//#pragma pack(push,1)
+//typedef struct __jmp_buf_tag {
+//	__jmp_buf __jb;
+//	unsigned long __fl;
+//	unsigned long __ss[128 / sizeof(long)];
+//} jmp_buf;
+//#pragma pack(pop)
 
 #ifdef __cplusplus
 XE_EXTERN{

@@ -34,6 +34,7 @@
 #include <sys\mman.h>
 
 #define WINDOW_DEFAULT_TITLEBAR_HEIGHT  26
+#define WINDOW_DEFAULT_BACKGROUND 0xFFD2D2D2
 
 extern void ChDefaultWinPaint(ChWindow* win);
 extern void ChWindowPaintCloseButton(ChWindow* win, ChWinGlobalControl* button);
@@ -165,9 +166,10 @@ XE_EXTERN XE_EXPORT ChWindow* ChCreateWindow(ChitralekhaApp *app, uint8_t attrib
 	win->info->rect_count = 0;
 	win->info->updateEntireWindow = 0;
 	win->info->hide = 0;
-	win->color = WHITE;
+	win->color = WINDOW_DEFAULT_BACKGROUND;
 	win->GlobalControls = initialize_list();
 	win->widgets = initialize_list();
+	win->subwindow = initialize_list();
 	win->ChWinPaint = ChDefaultWinPaint;
 	win->handle = app->windowHandle;
 	ChWinGlobalControl* close = ChCreateGlobalButton(win, win->info->width - 25,
@@ -249,6 +251,39 @@ XE_EXTERN XE_EXPORT void ChWindowPaint(ChWindow* win) {
 	if (win->ChWinPaint){
 		win->ChWinPaint(win);
 	}
+}
+
+/*
+ * ChWindowAddSubWindow -- add sub window to parent window list
+ * @param parent -- Pointer to main window
+ * @param win -- Pointer to sub window
+ */
+XE_EXTERN XE_EXPORT void ChWindowAddSubWindow(ChWindow* parent, ChWindow* win) {
+	if (!win)
+		return;
+	list_add(parent->subwindow, win);
+	win->parent = parent;
+}
+
+/*
+ * ChGetWindowByHandle -- returns window by looking sub windows list
+ * @param mainWin -- pointer to main window
+ * @param handle -- Handle of the window
+ */
+XE_EXTERN XE_EXPORT ChWindow* ChGetWindowByHandle(ChWindow* mainWin,int handle) {
+	ChWindow* returnable = NULL;
+	for (int i = 0; i < mainWin->subwindow->pointer; i++) {
+		ChWindow* sub = (ChWindow*)list_get_at(mainWin->subwindow, i);
+		if (sub->handle == handle){
+			returnable = sub;
+			break;
+		}
+	}
+
+	if (!returnable)
+		return mainWin;
+
+	return returnable;
 }
 
 /*
@@ -376,14 +411,80 @@ XE_EXTERN XE_EXPORT void ChWindowAddWidget(ChWindow* win, ChWidget* wid) {
 }
 
 /*
+ * ChWindowRegisterJump -- register long jump address
+ * @param win -- Pointer to main window
+ */
+XE_EXTERN XE_EXPORT void ChWindowRegisterJump(ChWindow* win) {
+	setjmp(win->jump);
+}
+
+/*
+ * ChWindowSetFlags -- set window flags
+ * @param win -- Pointer to window
+ * @param flags -- flags to set
+ */
+XE_EXTERN XE_EXPORT void ChWindowSetFlags(ChWindow* win, uint8_t flags) {
+	PostEvent e;
+	e.type = DEODHAI_MESSAGE_SET_FLAGS;
+	e.dword = win->handle;
+	e.dword2 = flags;
+	e.to_id = POSTBOX_ROOT_ID;
+	e.from_id = win->app->currentID;
+	_KeFileIoControl(win->app->postboxfd, POSTBOX_PUT_EVENT, &e);
+	win->flags = flags;
+}
+
+/*
+ * ChFreeWindowResources -- free up all allocated resources
+ * including global controls, widgets.. etc
+ * @param win -- Pointer to window
+ */
+void ChFreeWindowResources(ChWindow *win) {
+	/* free up global controls*/
+	for (int i = 0; i < win->GlobalControls->pointer; i++) {
+		ChWinGlobalControl* glbl_ = (ChWinGlobalControl*)list_remove(win->GlobalControls, i);
+		free(glbl_);
+	}
+	free(win->GlobalControls);
+	for (int i = 0; i < win->widgets->pointer; i++) {
+		ChWidget* wid = (ChWidget*)list_remove(win->widgets, i);
+		if (wid->ChDestroy)
+			wid->ChDestroy(wid, win);
+	}
+	free(win->widgets);
+	ChDeAllocateBuffer(win->canv);
+	free(win->title);
+	free(win->subwindow);
+}
+/*
  * ChWindowCloseWindow -- clears window related data and 
  * sends close message to deodhai
  * @param win -- Pointer to window data
  */
 XE_EXTERN XE_EXPORT void ChWindowCloseWindow(ChWindow* win){
+	bool subWindow = false;
+	ChWindow* parent = NULL;
+	/* check if this was a sub window */
+	if (win->parent) {
+		parent = win->parent;
+		subWindow = true;
+		for (int i = 0; i < win->parent->subwindow->pointer; i++) {
+			ChWindow* win_ = (ChWindow*)list_get_at(win->parent->subwindow, i);
+			if (win_ == win) {
+				list_remove(win->parent->subwindow, i);
+				break;
+			}
+		}
+
+	}
+
+	/* free up window's shared buffers, backbuffer and 
+	 * shared window info buffer
+	 */
 	_KeUnmapSharedMem(win->app->sharedWinkey);
 	_KeUnmapSharedMem(win->app->backbufkey);
-	free(win->title);
+	
+	/* send close window command to deodhai */
 	int handle = win->handle;
 	PostEvent e;
 	e.type = DEODHAI_MESSAGE_CLOSE_WINDOW;
@@ -392,6 +493,9 @@ XE_EXTERN XE_EXPORT void ChWindowCloseWindow(ChWindow* win){
 	e.to_id = POSTBOX_ROOT_ID;
 	_KeFileIoControl(win->app->postboxfd, POSTBOX_PUT_EVENT, &e);
 	memset(&e, 0, sizeof(PostEvent));
+
+	
+	/* wait for a closed reply window */
 	while (1) {
 		int err = _KeFileIoControl(win->app->postboxfd, POSTBOX_GET_EVENT, &e);
 		if (err == POSTBOX_NO_EVENT)
@@ -400,6 +504,19 @@ XE_EXTERN XE_EXPORT void ChWindowCloseWindow(ChWindow* win){
 			break;
 		}
 	}
+	/* free up window resources */
+	ChFreeWindowResources(win);
+	free(win->app);
 	free(win);
-	_KeProcessExit();
+
+	/* just jump to post event loop of main
+	 * window */
+	if (subWindow && parent)
+		longjmp(parent->jump, 1);
+	
+	/* if this window was the main window, simply exit the
+	 * application
+	 */
+	if (!subWindow)
+		_KeProcessExit();
 }

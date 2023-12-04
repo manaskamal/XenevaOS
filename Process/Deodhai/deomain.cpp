@@ -223,12 +223,16 @@ void DeodhaiBroadcastMessage(PostEvent *e, Window* skippablewin){
 void DeodhaiSendFocusMessage(PostEvent *e) {
 	for (Window* win = rootWin; win != NULL; win = win->next) {
 		e->to_id = win->ownerId;
-		if (focusedWin == win)
+		if (focusedWin == win){
 			e->dword = 1;
-		else
+			e->dword2 = win->handle;
+		}
+		else{
 			e->dword = 0;
-		e->dword2 = win->handle;
+			e->dword2 = win->handle;
+		}
 		_KeFileIoControl(postbox_fd, POSTBOX_PUT_EVENT, e);
+		_KeProcessSleep(1000000000);
 	}
 }
 
@@ -441,6 +445,8 @@ void DeodhaiWindowCheckDraggable(int x, int y, int button) {
 			if (y >= info->y && y < (info->y + 26)) {
 				/* check if the point is occluded */
 				if (DeodhaiCheckWindowPointOcclusion(win, x, y))
+					return;
+				if (win->flags & WINDOW_FLAG_STATIC)
 					return;
 				DeodhaiWindowSetFocused(win, true);
 				dragWin = win;
@@ -673,12 +679,12 @@ void ComposeFrame(ChCanvas *canvas) {
 			int width = info->width;
 			int height = info->height;
 
-			if (info->x < 0){
+			if (info->x <= 0){
 				info->x = 5;
-				winx = info->x;
+				winx = 5; info->x;
 			}
 
-			if (info->y < 0) {
+			if (info->y <= 0) {
 				info->y = 5;
 				winy = info->y;
 			}
@@ -715,6 +721,8 @@ void ComposeFrame(ChCanvas *canvas) {
 					ClipCalculateRect(&r1, &r2, clip, &clipCount);
 				}
 			}
+
+
 			/* always on top list */
 			for (clipWin = alwaysOnTop; clipWin != NULL; clipWin = clipWin->next) {
 				clipInfo = (WinSharedInfo*)clipWin->sharedInfo;
@@ -732,9 +740,12 @@ void ComposeFrame(ChCanvas *canvas) {
 
 			for (int i = 0; i < height; i++) {
 				_fastcpy(canvas->buffer + (winy + i) * canvas->canvasWidth + winx,
-					win->backBuffer + (0 + i) * info->width + 0, width * 4);
+					win->backBuffer + (0 + i) * info->width + 0,width * 4);
 			}
 
+			if (clipCount == 0) {
+				AddDirtyClip(winx, winy, width, height);
+			}
 
 			for (int k = 0; k < clipCount; k++) {
 				int k_x = clip[k].x;
@@ -755,7 +766,6 @@ void ComposeFrame(ChCanvas *canvas) {
 				clipCount = 0;
 			}
 
-			AddDirtyClip(winx, winy, width, height);
 			info->updateEntireWindow = 0;
 		}
 	}
@@ -1050,6 +1060,8 @@ void DeodhaiBroadcastMouse(int mouse_x, int mouse_y, int button) {
 				mouse_y >= info->y && (mouse_y < (info->y + info->height))) {
 				if (DeodhaiCheckWindowPointOcclusion(win, mouse_x, mouse_y))
 					continue;
+				if (win->flags & WINDOW_FLAG_BLOCKED)
+					continue;
 				mouseWin = win;
 				break;
 			}
@@ -1101,6 +1113,7 @@ void DeodhaiBroadcastKey(int code) {
  */
 void DeodhaiCloseWindow(Window* win) {
 	int ownerId = win->ownerId;
+	int handle = win->handle;
 	WinSharedInfo* info = (WinSharedInfo*)win->sharedInfo;
 	BackDirtyAdd(info->x, info->y, info->width, info->height);
 	free(win->title);
@@ -1112,6 +1125,16 @@ void DeodhaiCloseWindow(Window* win) {
 	e.to_id = ownerId;
 	e.type = DEODHAI_REPLY_WINDOW_CLOSED;
 	_KeFileIoControl(postbox_fd, POSTBOX_PUT_EVENT, &e);
+
+	/* now broadcast this information, that a 
+	 * specific window has been destroyed
+	 */
+	memset(&e, 0, sizeof(PostEvent));
+	e.type = DEODHAI_BROADCAST_WINDESTROYED;
+	e.dword = ownerId;
+	e.dword2 = handle;
+	DeodhaiBroadcastMessage(&e, NULL);
+	_KeProcessSleep(1000000000);
 }
 
 /* DrawWallpaper for getting jpeg image as wallpaper
@@ -1201,11 +1224,9 @@ int main(int argc, char* arv[]) {
 	surfaceBuffer = (uint32_t*)_KeMemMap(NULL, canv->screenWidth * canv->screenHeight * 4, 0, 0, MEMMAP_NO_FILEDESC, 0);
 	for (int i = 0; i < screen_w; i++)
 	for (int j = 0; j < screen_h; j++)
-		surfaceBuffer[j * canv->canvasWidth + i] = 0xFF938585;
+		surfaceBuffer[j * canv->canvasWidth + i] = GRAY; //0xFF938585;
 
 	DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
-	//DrawWallpaper(canv, "/bishnu.jpg");
-	//DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
 	ChCanvasScreenUpdate(canv, 0, 0, canv->canvasWidth, canv->canvasHeight);
 
 
@@ -1417,6 +1438,21 @@ int main(int argc, char* arv[]) {
 				_window_update_all_ = true;
 				_cursor_update_ = true;
 				_always_on_top_update = true;
+			}
+			memset(&event, 0, sizeof(PostEvent));
+		}
+
+
+		if (event.type == DEODHAI_MESSAGE_SET_FLAGS) {
+			int handle = event.dword;
+			int ownerId = event.from_id;
+			int flags = event.dword2;
+			for (Window* win = rootWin; win != NULL; win = win->next) {
+				if (win->handle == handle && win->ownerId == ownerId) {
+					win->flags = flags;
+					_KePrint("Set flag msg \n");
+					break;
+				}
 			}
 			memset(&event, 0, sizeof(PostEvent));
 		}

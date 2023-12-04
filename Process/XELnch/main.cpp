@@ -26,8 +26,6 @@ int launcher_w, launcher_h;
 /* the main painting code */
 void XELauncherPaint(ChWindow* win) {
 	ChDrawRect(win->canv, 0, 0, win->info->width, win->info->height, LAUNCHER_BACKGROUND_COLOR);
-	ChFontSetSize(win->app->baseFont, 32);
-	ChFontDrawText(win->canv, win->app->baseFont, "Xeneva Apps", 60, 80, 32, WHITE);
 	AppGridPaint(mainGrid, win);
 	ChWindowUpdate(win, 0, 0, win->info->width, win->info->height, 1, 0);
 }
@@ -122,9 +120,11 @@ int main(int argc, char* arv[]){
 		"Xeneva Launcher", 75 + 10, 10, screen_w - 90, screen_h - 40);
 	launcher_w = screen_w - 90; 
 	launcher_h = screen_h - 40;
+	int grid_w = launcher_w - 100;
+	int grid_h = launcher_h - 100;
 
-	mainGrid = LauncherCreateAppGrid(launcher_w / 2 - APP_GRID_DEFAULT_WIDTH / 2, launcher_h / 2 - APP_GRID_DEFAULT_HEIGHT / 2,
-		launcher_w - 40, APP_GRID_DEFAULT_HEIGHT);
+	mainGrid = LauncherCreateAppGrid(launcher_w / 2 - grid_w / 2, launcher_h / 2 - grid_h / 2,
+		grid_w, grid_h);
 
 	/* now read the launcher config file
 	 * for application entries 

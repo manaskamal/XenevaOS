@@ -16,9 +16,11 @@ _BSS	SEGMENT
 ?shmlock@@3PEAU_spinlock_@@EA DQ 01H DUP (?)		; shmlock
 _BSS	ENDS
 CONST	SEGMENT
-$SG3808	DB	'Closing index -> %d ', 0dH, 0aH, 00H
+$SG3809	DB	'Closing index -> %d ', 0dH, 0aH, 00H
 	ORG $+1
-$SG3809	DB	'%s Unmapping shm ->%d count ', 0dH, 0aH, 00H
+$SG3810	DB	'%s Unmapping shm ->%d count ', 0dH, 0aH, 00H
+	ORG $+1
+$SG3826	DB	'Unmapping shm -> %x ', 0dH, 0aH, 00H
 CONST	ENDS
 PUBLIC	?AuInitialiseSHMMan@@YAXXZ			; AuInitialiseSHMMan
 PUBLIC	?AuGetSHMByID@@YAPEAU_shm_@@G@Z			; AuGetSHMByID
@@ -65,7 +67,7 @@ $pdata$?AuSHMUnmap@@YAXGPEAU_au_proc_@@@Z DD imagerel $LN12
 	DD	imagerel $LN12+483
 	DD	imagerel $unwind$?AuSHMUnmap@@YAXGPEAU_au_proc_@@@Z
 $pdata$?AuSHMUnmapAll@@YAXPEAU_au_proc_@@@Z DD imagerel $LN9
-	DD	imagerel $LN9+329
+	DD	imagerel $LN9+349
 	DD	imagerel $unwind$?AuSHMUnmapAll@@YAXPEAU_au_proc_@@@Z
 $pdata$?AuSHMGetID@@YAGXZ DD imagerel $LN3
 	DD	imagerel $LN3+40
@@ -687,29 +689,36 @@ $LN1@AuSHMUnmap:
 	mov	rcx, QWORD PTR [rax+16]
 	call	?AuSHMDelete@@YAXPEAU_shm_@@@Z		; AuSHMDelete
 
-; 376  : 		kfree(mapping);
+; 376  : 		SeTextOut("Unmapping shm -> %x \r\n", mapping->start_addr);
+
+	mov	rax, QWORD PTR mapping$3[rsp]
+	mov	rdx, QWORD PTR [rax]
+	lea	rcx, OFFSET FLAT:$SG3826
+	call	SeTextOut
+
+; 377  : 		kfree(mapping);
 
 	mov	rcx, QWORD PTR mapping$3[rsp]
 	call	kfree
 
-; 377  : 	}
+; 378  : 	}
 
 	jmp	$LN5@AuSHMUnmap
 $LN4@AuSHMUnmap:
 
-; 378  : 
-; 379  : 	kfree(proc->shmmaps);
+; 379  : 
+; 380  : 	kfree(proc->shmmaps);
 
 	mov	rax, QWORD PTR proc$[rsp]
 	mov	rcx, QWORD PTR [rax+1080]
 	call	kfree
 
-; 380  : 	AuReleaseSpinlock(shmlock);
+; 381  : 	AuReleaseSpinlock(shmlock);
 
 	mov	rcx, QWORD PTR ?shmlock@@3PEAU_spinlock_@@EA ; shmlock
 	call	AuReleaseSpinlock
 
-; 381  : }
+; 382  : }
 
 	add	rsp, 72					; 00000048H
 	ret	0
@@ -882,7 +891,7 @@ $LN2@AuSHMUnmap:
 ; 346  : 			SeTextOut("Closing index -> %d \r\n", i);
 
 	mov	edx, DWORD PTR i$1[rsp]
-	lea	rcx, OFFSET FLAT:$SG3808
+	lea	rcx, OFFSET FLAT:$SG3809
 	call	SeTextOut
 
 ; 347  : 			list_remove(proc->shmmaps, i);
@@ -923,7 +932,7 @@ $LN6@AuSHMUnmap:
 	add	rcx, 4
 	mov	r8d, eax
 	mov	rdx, rcx
-	lea	rcx, OFFSET FLAT:$SG3809
+	lea	rcx, OFFSET FLAT:$SG3810
 	call	SeTextOut
 
 ; 356  : 	AuReleaseSpinlock(shmlock);

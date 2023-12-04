@@ -47,6 +47,7 @@
 #include <Sound\sound.h>
 #include <Hal\x86_64_signal.h>
 #include <Ipc\postbox.h>
+#include <autimer.h>
 
 
 static int pid = 1;
@@ -216,12 +217,14 @@ uint64_t CreateKernelStack(AuProcess* proc, uint64_t *cr3) {
 void KernelStackFree(AuProcess* proc,void* ptr, uint64_t *cr3) {
 	uint64_t location = (uint64_t)ptr;
 	for (int i = 0; i < 8192 / 4096; i++) {
-		AuVPage* page = AuVmmngrGetPage(location + i * PAGE_SIZE, VIRT_GETPAGE_ONLY_RET, VIRT_GETPAGE_ONLY_RET);
-		uint64_t phys = page->bits.page << PAGE_SHIFT;
-		if (phys) {
-			AuPmmngrFree((void*)phys);
+		AuVPage* page = AuVmmngrGetPage((location + (i * PAGE_SIZE)), VIRT_GETPAGE_ONLY_RET, VIRT_GETPAGE_ONLY_RET);
+		if (page) {
+			uint64_t phys = page->bits.page << PAGE_SHIFT;
+			if (phys) {
+				AuPmmngrFree((void*)phys);
+			}
+			page->bits.page = 0;
 		}
-		page->bits.page = 0;
 	}
 	proc->_kstack_index_ -= 8192;
 }
@@ -369,7 +372,9 @@ void AuProcessWaitForTermination(AuProcess *proc, int pid) {
 			AuProcess *killable = AuGetKillableProcess();
 
 			if (killable) {
+				x64_cli();
 				AuProcessClean(0, killable);
+				x64_sti();
 				killable = NULL;
 			}
 
@@ -411,11 +416,11 @@ int AuProcessGetFileDesc(AuProcess* proc) {
  * @param proc -- Pointer to process
  */
 void AuProcessHeapMemDestroy(AuProcess* proc) {
-	uint64_t proc_mem_diff = proc->proc_mem_heap - PROCESS_BREAK_ADDRESS;
 	uint64_t startaddr = PROCESS_BREAK_ADDRESS;
-	if ((proc_mem_diff % PAGE_SIZE) != 0)
-		proc_mem_diff++;
-	for (int i = 0; i < proc_mem_diff / 4096; i++) {
+	if ((proc->proc_heapmem_len % PAGE_SIZE) != 0)
+		proc->proc_heapmem_len++;
+
+	for (int i = 0; i < proc->proc_heapmem_len / 4096; i++) {
 		AuVPage* page = AuVmmngrGetPage(startaddr + i * PAGE_SIZE, VIRT_GETPAGE_ONLY_RET, VIRT_GETPAGE_ONLY_RET);
 		if (page) {
 			uint64_t phys = page->bits.page << PAGE_SHIFT;
@@ -429,6 +434,29 @@ void AuProcessHeapMemDestroy(AuProcess* proc) {
 			page->bits.present = 0;
 		}
 	}
+}
+
+/*
+ * AuProcessFreeKeResource -- free up allocated kernel
+ * resources
+ * @param thr -- Pointer to thread which allocated 
+ * kernel resources
+ */
+void AuProcessFreeKeResource(AuThread* thr) {
+	if (!thr)
+		return;
+	/* free-up all allocated kernel resources */
+
+	AuSoundRemoveDSP(thr->id);
+
+	/* close allocated signals */
+	AuSignalRemoveAll(thr);
+
+	/* remove allocated postbox*/
+	PostBoxDestroyByID(thr->id);
+
+	/* destroy allocated timer */
+	AuTimerDestroy(thr->id);
 }
 
 /* AuProcessExit -- marks a process
@@ -446,21 +474,16 @@ void AuProcessExit(AuProcess* proc, bool schedulable) {
 
 	proc->state = PROCESS_STATE_DIED;
 
-	/* free-up all allocated kernel resources */
-
-	AuSoundRemoveDSP(proc->main_thread->id);
-
-	/* close allocated signals */
-	AuSignalRemoveAll(proc->main_thread);
-
-	/* remove allocated postbox*/
-	PostBoxDestroyByID(proc->main_thread->id);
+	AuProcessFreeKeResource(proc->main_thread);
 
 	/* mark all the threads as blocked */
-	for (int i = 1; i < proc->num_thread - 1; i++) {
+	for (int i = 1; i < proc->num_thread; i++) {
 		AuThread *killable = proc->threads[i];
 		if (killable) {
-			AuSignalRemoveAll(killable);
+			/* here we should cleanup sub postbox
+			 * sound, timer resources also
+			 */
+			AuProcessFreeKeResource(killable);
 			AuThreadMoveToTrash(killable);
 		}
 	}
@@ -508,9 +531,6 @@ void AuProcessExit(AuProcess* proc, bool schedulable) {
 	AuThreadMoveToTrash(proc->main_thread);
 	
 	kmalloc_debug_on(false);
-	SeTextOut("Process exited %s \r\n", proc->name);
-	SeTextOut("Used RAM -> %d MB \ Avail -> %d GB \r\n", ((AuPmmngrGetFreeMem() * PAGE_SIZE) / 1024 / 1024),
-		(AuPmmngrGetTotalMem() * PAGE_SIZE / 1024 / 1024 / 1024));
 	if (schedulable)
 		x64_force_sched();
 }
@@ -551,7 +571,7 @@ int AuCreateUserthread(AuProcess* proc, void(*entry) (void*), char *name)
 	thr->uentry = uentry;
 	int thread_indx = proc->num_thread;
 	proc->threads[proc->num_thread] = thr;
-	proc->num_thread++;
+	proc->num_thread += 1;
 	return thread_indx;
 }
 

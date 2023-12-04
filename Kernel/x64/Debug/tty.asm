@@ -16,23 +16,23 @@ _BSS	SEGMENT
 ?last@@3PEAU__tty__@@EA DQ 01H DUP (?)			; last
 _BSS	ENDS
 CONST	SEGMENT
-$SG3800	DB	'/dev', 00H
+$SG3801	DB	'/dev', 00H
 	ORG $+3
-$SG3833	DB	'/dev', 00H
+$SG3834	DB	'/dev', 00H
 	ORG $+3
-$SG3839	DB	'ttym', 00H
+$SG3840	DB	'ttym', 00H
 	ORG $+3
-$SG3840	DB	'/dev/tty', 00H
+$SG3841	DB	'/dev/tty', 00H
 	ORG $+3
-$SG3845	DB	'/dev', 00H
+$SG3846	DB	'/dev', 00H
 	ORG $+3
-$SG3851	DB	'ttys', 00H
+$SG3852	DB	'ttys', 00H
 	ORG $+7
-$SG3852	DB	'/dev/tty', 00H
+$SG3853	DB	'/dev/tty', 00H
 	ORG $+3
-$SG3876	DB	'/dev', 00H
+$SG3877	DB	'/dev', 00H
 	ORG $+7
-$SG3877	DB	'/dev/tty', 00H
+$SG3878	DB	'/dev/tty', 00H
 CONST	ENDS
 PUBLIC	?AuTTYCreate@@YAHPEAH0@Z			; AuTTYCreate
 PUBLIC	?AuTTYInitialise@@YAXXZ				; AuTTYInitialise
@@ -160,7 +160,7 @@ $LN3:
 
 ; 299  : 	AuVFSNode* fs = AuVFSFind("/dev");
 
-	lea	rcx, OFFSET FLAT:$SG3845
+	lea	rcx, OFFSET FLAT:$SG3846
 	call	AuVFSFind
 	mov	QWORD PTR fs$[rsp], rax
 
@@ -181,7 +181,7 @@ $LN3:
 ; 303  : 	char name[5];
 ; 304  : 	strcpy(name, "ttys");
 
-	lea	rdx, OFFSET FLAT:$SG3851
+	lea	rdx, OFFSET FLAT:$SG3852
 	lea	rcx, QWORD PTR name$[rsp]
 	call	strcpy
 
@@ -252,7 +252,7 @@ $LN3:
 ; 317  : 	AuDevFSAddFile(fs, "/dev/tty", node);
 
 	mov	r8, QWORD PTR node$[rsp]
-	lea	rdx, OFFSET FLAT:$SG3852
+	lea	rdx, OFFSET FLAT:$SG3853
 	mov	rcx, QWORD PTR fs$[rsp]
 	call	AuDevFSAddFile
 
@@ -289,7 +289,7 @@ $LN3:
 
 ; 270  : 	AuVFSNode* fs = AuVFSFind("/dev");
 
-	lea	rcx, OFFSET FLAT:$SG3833
+	lea	rcx, OFFSET FLAT:$SG3834
 	call	AuVFSFind
 	mov	QWORD PTR fs$[rsp], rax
 
@@ -310,7 +310,7 @@ $LN3:
 ; 274  : 	char name[5];
 ; 275  : 	strcpy(name, "ttym");
 
-	lea	rdx, OFFSET FLAT:$SG3839
+	lea	rdx, OFFSET FLAT:$SG3840
 	lea	rcx, QWORD PTR name$[rsp]
 	call	strcpy
 
@@ -381,7 +381,7 @@ $LN3:
 ; 288  : 	AuDevFSAddFile(fs, "/dev/tty", node);
 
 	mov	r8, QWORD PTR node$[rsp]
-	lea	rdx, OFFSET FLAT:$SG3840
+	lea	rdx, OFFSET FLAT:$SG3841
 	mov	rcx, QWORD PTR fs$[rsp]
 	call	AuDevFSAddFile
 
@@ -599,11 +599,12 @@ fs$ = 8
 file$ = 16
 ?AuTTYMasterClose@@YAHPEAU__VFS_NODE__@@0@Z PROC	; AuTTYMasterClose
 
-; 222  : int AuTTYMasterClose(AuVFSNode* fs, AuVFSNode* file) {
+; 221  : int AuTTYMasterClose(AuVFSNode* fs, AuVFSNode* file) {
 
 	mov	QWORD PTR [rsp+16], rdx
 	mov	QWORD PTR [rsp+8], rcx
 
+; 222  : 
 ; 223  : 	return 0;
 
 	xor	eax, eax
@@ -630,7 +631,7 @@ $LN4:
 
 ; 216  : 	AuVFSNode* _fs = AuVFSFind("/dev");
 
-	lea	rcx, OFFSET FLAT:$SG3800
+	lea	rcx, OFFSET FLAT:$SG3801
 	call	AuVFSFind
 	mov	QWORD PTR _fs$[rsp], rax
 
@@ -644,8 +645,7 @@ $LN4:
 	xor	eax, eax
 $LN1@AuTTYSlave:
 
-; 219  : 	
-; 220  : }
+; 219  : }
 
 	add	rsp, 56					; 00000038H
 	ret	0
@@ -1554,14 +1554,14 @@ $LN3:
 ; 390  : 	/* create a directory for tty's */
 ; 391  : 	AuVFSNode* fs = AuVFSFind("/dev");
 
-	lea	rcx, OFFSET FLAT:$SG3876
+	lea	rcx, OFFSET FLAT:$SG3877
 	call	AuVFSFind
 	mov	QWORD PTR fs$[rsp], rax
 
 ; 392  : 	AuDevFSCreateFile(fs, "/dev/tty", FS_FLAG_DIRECTORY);
 
 	mov	r8b, 2
-	lea	rdx, OFFSET FLAT:$SG3877
+	lea	rdx, OFFSET FLAT:$SG3878
 	mov	rcx, QWORD PTR fs$[rsp]
 	call	?AuDevFSCreateFile@@YAHPEAU__VFS_NODE__@@PEADE@Z ; AuDevFSCreateFile
 

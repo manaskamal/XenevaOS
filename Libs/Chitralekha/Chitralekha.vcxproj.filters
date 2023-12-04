@@ -25,6 +25,9 @@
     </ClInclude>
     <ClInclude Include="minimp3.h" />
     <ClInclude Include="minimp3_ex.h" />
+    <ClInclude Include="widgets\msgbox.h">
+      <Filter>widgets</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="chitralekha.cpp" />
@@ -47,6 +50,9 @@
     <ClCompile Include="boxblur.cpp" />
     <ClCompile Include="keycode.cpp" />
     <ClCompile Include="widgets\button.cpp">
+      <Filter>widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="widgets\msgbox.cpp">
       <Filter>widgets</Filter>
     </ClCompile>
   </ItemGroup>

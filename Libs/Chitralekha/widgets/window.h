@@ -36,6 +36,7 @@
 #include "..\draw.h"
 #include "base.h"
 #include "list.h"
+#include <setjmp.h>
 
 #define CHITRALEKHA_DEFAULT_WIN_WIDTH  400
 #define CHITRALEKHA_DEFAULT_WIN_HEIGHT 300
@@ -53,6 +54,7 @@
 #define WINDOW_FLAG_NON_RESIZABLE  (1<<3)
 #define WINDOW_FLAG_BROADCAST_LISTENER (1<<4)
 #define WINDOW_FLAG_ANIMATED (1<<5)
+#define WINDOW_FLAG_BLOCKED (1<<6)
 
 #pragma pack(push,1)
 typedef struct _ChSharedWin_ {
@@ -83,6 +85,9 @@ typedef struct _chwin_ {
 	bool focused;
 	list_t* GlobalControls;
 	list_t* widgets;
+	list_t* subwindow;
+	_chwin_* parent;
+	jmp_buf jump;
 	void(*ChWinPaint)(_chwin_ *win);
 }ChWindow;
 
@@ -133,6 +138,13 @@ typedef struct _global_ctrl_ {
 * @param h -- height of the window
 */
 XE_EXTERN XE_EXPORT ChWindow* ChCreateWindow(ChitralekhaApp *app, uint8_t attrib, char* title, int x, int y, int w, int h);
+
+/*
+* ChWindowAddSubWindow -- add sub window to parent window list
+* @param parent -- Pointer to main window
+* @param win -- Pointer to sub window
+*/
+XE_EXTERN XE_EXPORT void ChWindowAddSubWindow(ChWindow* parent, ChWindow* win);
 
 /*
 * ChWindowBroadcastIcon -- broadcast icon information to
@@ -200,6 +212,33 @@ XE_EXTERN XE_EXPORT void ChWindowHandleFocus(ChWindow* win, bool focus_val, uint
 * @param wid -- Pointer to widget needs to be added
 */
 XE_EXTERN XE_EXPORT void ChWindowAddWidget(ChWindow* win, ChWidget* wid);
+
+/*
+* ChWindowAddSubWindow -- add sub window to parent window list
+* @param parent -- Pointer to main window
+* @param win -- Pointer to sub window
+*/
+XE_EXTERN XE_EXPORT void ChWindowAddSubWindow(ChWindow* parent, ChWindow* win);
+
+/*
+* ChGetWindowByHandle -- returns window by looking sub windows list
+* @param mainWin -- pointer to main window
+* @param handle -- Handle of the window
+*/
+XE_EXTERN XE_EXPORT ChWindow* ChGetWindowByHandle(ChWindow* mainWin, int handle);
+
+/*
+* ChWindowSetFlags -- set window flags
+* @param win -- Pointer to window
+* @param flags -- flags to set
+*/
+XE_EXTERN XE_EXPORT void ChWindowSetFlags(ChWindow* win, uint8_t flags);
+
+/*
+* ChWindowRegisterJump -- register long jump address
+* @param win -- Pointer to main window
+*/
+XE_EXTERN XE_EXPORT void ChWindowRegisterJump(ChWindow* win);
 
 /*
 * ChWindowCloseWindow -- clears window related data and

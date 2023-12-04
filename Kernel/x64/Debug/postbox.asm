@@ -14,10 +14,10 @@ _BSS	SEGMENT
 ?_PostBoxRootCreated@@3_NA DB 01H DUP (?)		; _PostBoxRootCreated
 _BSS	ENDS
 CONST	SEGMENT
-$SG3751	DB	'/dev', 00H
+$SG3752	DB	'/dev', 00H
 	ORG $+3
-$SG3756	DB	'postbox', 00H
-$SG3757	DB	'/dev', 00H
+$SG3757	DB	'postbox', 00H
+$SG3758	DB	'/dev', 00H
 CONST	ENDS
 PUBLIC	?AuIPCPostBoxInitialise@@YAXXZ			; AuIPCPostBoxInitialise
 PUBLIC	?PostBoxPutEvent@@YAXPEAU_post_event_@@@Z	; PostBoxPutEvent
@@ -1050,7 +1050,7 @@ $LN3:
 ; 261  : 	/* create the postbox file */
 ; 262  : 	AuVFSNode* dev = AuVFSFind("/dev");
 
-	lea	rcx, OFFSET FLAT:$SG3751
+	lea	rcx, OFFSET FLAT:$SG3752
 	call	AuVFSFind
 	mov	QWORD PTR dev$[rsp], rax
 
@@ -1070,7 +1070,7 @@ $LN3:
 ; 265  : 	strcpy(node->filename, "postbox");
 
 	mov	rax, QWORD PTR node$[rsp]
-	lea	rdx, OFFSET FLAT:$SG3756
+	lea	rdx, OFFSET FLAT:$SG3757
 	mov	rcx, rax
 	call	strcpy
 
@@ -1089,7 +1089,7 @@ $LN3:
 ; 268  : 	AuDevFSAddFile(dev,"/dev",  node);
 
 	mov	r8, QWORD PTR node$[rsp]
-	lea	rdx, OFFSET FLAT:$SG3757
+	lea	rdx, OFFSET FLAT:$SG3758
 	mov	rcx, QWORD PTR dev$[rsp]
 	call	AuDevFSAddFile
 

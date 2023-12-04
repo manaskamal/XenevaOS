@@ -1,0 +1,38 @@
+﻿Build started 30-11-2023 আবেলি 9:06:15.
+     1>Project "E:\Xeneva Project\Aurora\Libs\Chitralekha\Chitralekha.vcxproj" on node 2 (Rebuild target(s)).
+     1>_NASM:
+         _fastcpy.asm
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmpd0a5a747ab0445d382b03dfe2f902f73.cmd"
+         "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win32 -o "Debug\_fastcpy.obj"  "E:\Xeneva Project\Aurora\Libs\Chitralekha\_fastcpy.asm"
+       ClCompile:
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /ZI /nologo /W3 /WX- /sdl /Od /Oy- /D _MBCS /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt boxblur.cpp chitralekha.cpp color.cpp draw.cpp font.cpp keycode.cpp ttf.cpp widgets\base.cpp widgets\button.cpp widgets\defaultwindow.cpp widgets\list.cpp widgets\window.cpp
+         window.cpp
+     1>e:\xeneva project\aurora\libs\chitralekha\chitralekha.h(34): fatal error C1083: Cannot open include file: '_xeneva.h': No such file or directory
+         list.cpp
+     1>e:\xeneva project\aurora\libs\chitralekha\widgets\list.h(34): fatal error C1083: Cannot open include file: '_xeneva.h': No such file or directory
+         defaultwindow.cpp
+     1>e:\xeneva project\aurora\libs\chitralekha\color.h(34): fatal error C1083: Cannot open include file: '_xeneva.h': No such file or directory
+         button.cpp
+     1>e:\xeneva project\aurora\libs\chitralekha\chitralekha.h(34): fatal error C1083: Cannot open include file: '_xeneva.h': No such file or directory
+         base.cpp
+     1>e:\xeneva project\aurora\libs\chitralekha\widgets\base.h(34): fatal error C1083: Cannot open include file: 'sys\_keipcpostbox.h': No such file or directory
+         ttf.cpp
+     1>e:\xeneva project\aurora\libs\chitralekha\ttf.cpp(30): fatal error C1083: Cannot open include file: 'sys/utf.h': No such file or directory
+         keycode.cpp
+     1>e:\xeneva project\aurora\libs\chitralekha\keycode.h(33): fatal error C1083: Cannot open include file: '_xeneva.h': No such file or directory
+         font.cpp
+     1>e:\xeneva project\aurora\libs\chitralekha\font.h(34): fatal error C1083: Cannot open include file: 'sys\_keftmngr.h': No such file or directory
+         draw.cpp
+     1>e:\xeneva project\aurora\libs\chitralekha\chitralekha.h(34): fatal error C1083: Cannot open include file: '_xeneva.h': No such file or directory
+         color.cpp
+     1>e:\xeneva project\aurora\libs\chitralekha\color.h(34): fatal error C1083: Cannot open include file: '_xeneva.h': No such file or directory
+         chitralekha.cpp
+     1>e:\xeneva project\aurora\libs\chitralekha\chitralekha.h(34): fatal error C1083: Cannot open include file: '_xeneva.h': No such file or directory
+         boxblur.cpp
+     1>e:\xeneva project\aurora\libs\chitralekha\color.h(34): fatal error C1083: Cannot open include file: '_xeneva.h': No such file or directory
+         Generating Code...
+     1>Done Building Project "E:\Xeneva Project\Aurora\Libs\Chitralekha\Chitralekha.vcxproj" (Rebuild target(s)) -- FAILED.
+
+Build FAILED.
+
+Time Elapsed 00:00:01.27

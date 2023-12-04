@@ -216,10 +216,10 @@ int AuTTYSlaveClose(AuVFSNode* fs, AuVFSNode* file) {
 	AuVFSNode* _fs = AuVFSFind("/dev");
 	if (!_fs)
 		return 0;
-	
 }
 
 int AuTTYMasterClose(AuVFSNode* fs, AuVFSNode* file) {
+
 	return 0;
 }
 

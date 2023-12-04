@@ -43,6 +43,7 @@
 #define DEODHAI_MESSAGE_WINDOW_HIDE 54
 #define DEODHAI_MESSAGE_GETWINDOW 55
 #define DEODHAI_MESSAGE_CLOSE_WINDOW 56
+#define DEODHAI_MESSAGE_SET_FLAGS 57
 
 #define DEODHAI_REPLY_WINCREATED 150
 #define DEODHAI_REPLY_MOUSE_EVENT 151
@@ -70,6 +71,7 @@ typedef struct _ChApp_ {
 	uint32_t windowHandle;
 	ChFont* baseFont;
 	uint16_t currentID;
+	_ChApp_ *parent;
 }ChitralekhaApp;
 
 /*

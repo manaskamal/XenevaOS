@@ -161,6 +161,7 @@
     <ClInclude Include="widgets\base.h" />
     <ClInclude Include="widgets\button.h" />
     <ClInclude Include="widgets\list.h" />
+    <ClInclude Include="widgets\msgbox.h" />
     <ClInclude Include="widgets\window.h" />
     <ClInclude Include="_fastcpy.h" />
   </ItemGroup>
@@ -176,6 +177,7 @@
     <ClCompile Include="widgets\button.cpp" />
     <ClCompile Include="widgets\defaultwindow.cpp" />
     <ClCompile Include="widgets\list.cpp" />
+    <ClCompile Include="widgets\msgbox.cpp" />
     <ClCompile Include="widgets\window.cpp" />
   </ItemGroup>
   <ItemGroup>

@@ -36,6 +36,7 @@
 #include <sys\_ketime.h>
 #include <chitralekha.h>
 #include <sys\iocodes.h>
+#include <sys\mman.h>
 #include "nmdapha.h"
 #include <widgets\window.h>
 
@@ -49,6 +50,7 @@ int bpp;
 int graphicsFd;
 int nbutton_x_loc;
 int nbutton_y_loc;
+int sndfd;
 char* currenttime;
 NamdaphaButton* timebutton;
 ButtonInfo* defaultappico;
@@ -98,7 +100,7 @@ void NamdaphaTimeButtonPaint(NamdaphaButton* button, ChWindow* win) {
 	int font_w = ChFontGetWidth(app->baseFont, button->title);
 	int font_h = ChFontGetHeight(app->baseFont, button->title);
 	ChFontDrawText(win->canv, app->baseFont,currenttime, button->x + button->w/2 - font_w/2,
-		button->y + button->h / 2, 12, BLACK);
+		button->y + button->h / 2, 12, WHITE);
 }
 
 /*
@@ -280,6 +282,93 @@ void NamdaphaHandleMessage(PostEvent *e) {
 											  break;
 	}
 
+	case DEODHAI_BROADCAST_WINDESTROYED: {
+											 int ownerId = e->dword;
+											 int handle = e->dword2;
+											 NamdaphaButton* destroyable = NULL;
+											 int index = 0;
+											 for (int i = 0; i < button_list->pointer; i++) {
+												 NamdaphaButton* nb = (NamdaphaButton*)list_get_at(button_list, i);
+												 if (nb->ownerId == ownerId) {
+													 destroyable = nb;
+													 list_remove(button_list, i);
+													 index = i;
+													 /* if this index is the last of the list */
+													 if (index == button_list->pointer)
+														 nbutton_y_loc = nb->y;
+													 
+													 break;
+												 }
+											 }
+
+											 if (destroyable) {
+												 int w = destroyable->w;
+												 for (int i = index; i < button_list->pointer; i++) {
+													 NamdaphaButton* nb = (NamdaphaButton*)list_get_at(button_list, i);
+													 nb->y -= w;
+													 nb->y += NAMDAPHA_BUTTON_YPAD;
+													 nbutton_y_loc = nb->y;
+												 }
+												 if (destroyable->nmbuttoninfo->usageCount > 1) {
+													 destroyable->nmbuttoninfo->usageCount -= 1;
+												 }
+												 else {
+													 _KeMemUnmap(destroyable->nmbuttoninfo->fileBuffer, destroyable->nmbuttoninfo->fileSize);
+													 free(destroyable->title);
+													 free(destroyable->nmbuttoninfo);
+													 destroyable->nmbuttoninfo = NULL;
+												 }
+												 free(destroyable->title);
+												 free(destroyable);
+											 }
+
+											 if (nbutton_y_loc <= (timebutton->y + timebutton->h)) {
+												 nbutton_y_loc = (timebutton->y + timebutton->h) + NAMDAPHA_BUTTON_YPAD;
+											 }
+
+											 NamdaphaPaint(win);
+											 memset(e, 0, sizeof(PostEvent));
+											 break;
+	}
+
+	}
+}
+
+/* Play the startup sound of NamdaphaDesktop */
+void NamdaphaPlayStartupSound() {
+	sndfd = _KeOpenFile("/dev/sound", FILE_OPEN_WRITE);
+	XEFileIOControl ioctl;
+	memset(&ioctl, 0, sizeof(XEFileIOControl));
+	ioctl.uint_1 = 0;
+
+	ioctl.syscall_magic = AURORA_SYSCALL_MAGIC;
+
+	_KeFileIoControl(sndfd, SOUND_REGISTER_SNDPLR, &ioctl);
+
+
+	int song = _KeOpenFile("/snd.wav", FILE_OPEN_READ_ONLY);
+	void* songbuf = malloc(4096);
+	memset(songbuf, 0, 4096);
+	_KeReadFile(song, songbuf, 4096);
+
+
+	XEFileStatus fs;
+	_KeFileStat(song, &fs);
+	bool finished = 0;
+	while (1) {
+		_KeFileStat(song, &fs);
+
+		if (fs.eof) {
+			finished = 1;
+			_KeCloseFile(song);
+			_KeCloseFile(sndfd);
+			break;
+		}
+
+		if (!finished) {
+			_KeWriteFile(sndfd, songbuf, 4096);
+			_KeReadFile(song, songbuf, 4096);
+		}
 	}
 }
 
@@ -352,6 +441,9 @@ int main(int argc, char* arv[]){
 
 	gomenuh = ChGetWindowHandle(app, "Xeneva Launcher");
 	gobutton->winHandle = gomenuh;
+
+	NamdaphaPlayStartupSound();
+	
 	PostEvent e;
 	memset(&e, 0, sizeof(PostEvent));
 	while (1) {

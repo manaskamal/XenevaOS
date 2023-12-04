@@ -10,7 +10,7 @@ _BSS	SEGMENT
 _signal_debug DB 01H DUP (?)
 _BSS	ENDS
 CONST	SEGMENT
-$SG3541	DB	'signal ret stack -> %x ', 0dH, 0aH, 00H
+$SG3542	DB	'signal ret stack -> %x ', 0dH, 0aH, 00H
 CONST	ENDS
 PUBLIC	?AuAllocateSignal@@YAXPEAU_au_thread_@@H@Z	; AuAllocateSignal
 PUBLIC	?AuCheckSignal@@YA_NPEAU_au_thread_@@PEAUinterrupt_stack_frame@@@Z ; AuCheckSignal
@@ -85,7 +85,7 @@ $LN4:
 ; 183  : 		SeTextOut("signal ret stack -> %x \r\n", rcx);
 
 	mov	rdx, QWORD PTR rcx$[rsp]
-	lea	rcx, OFFSET FLAT:$SG3541
+	lea	rcx, OFFSET FLAT:$SG3542
 	call	SeTextOut
 $LN1@AuSignalDe:
 

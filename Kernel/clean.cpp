@@ -102,9 +102,13 @@ void AuThreadFree(AuProcess* proc,AuThread* t) {
 		uint64_t k_stack = t->frame.kern_esp;
 		uint64_t k_stack_ = k_stack - 8192;
 		KernelStackFree(proc, (void*)k_stack_, proc->cr3);
+		SeTextOut("KStack freed %s \r\n", t->name);
 		
 	}
-	kfree(t->uentry);
+	if (t->uentry){
+		SeTextOut("T->Uentry -> %x \r\n", t->uentry);
+		kfree(t->uentry);
+	}
 	kfree(t);
 }
 
@@ -137,20 +141,24 @@ void AuProcessClean(AuProcess* parent, AuProcess* killable) {
 	for (int i = 1; i < MAX_THREADS_PER_PROCESS -1 ; i++) {
 		AuThread *t_ = killable->threads[i];
 		if (t_) {
-			AuTextOut("cleaning thread -> %x \n", t_);
+			SeTextOut("cleaning thread -> %x %s\n", t_, t_->name);
 			AuThreadCleanTrash(t_);
 			AuUserEntry* entry = t_->uentry;
 			if (entry) {
-				uint64_t stack = entry->stackBase;
+				uint64_t stack = entry->stackBase + 32;
 				uint64_t stack_ = stack - PROCESS_USER_STACK_SZ;
+				SeTextOut("Stack_ -> %x stack -> %x\r\n", stack_, stack);
 				FreeUserStack(killable->cr3, (void*)stack_);
 				killable->_user_stack_index_ -= PROCESS_USER_STACK_SZ;
 			}
+			SeTextOut("Thread user stack freed \r\n");
 			AuThreadFree(killable, t_);
+			SeTextOut("Thread freed \r\n");
 		}
 	}
 
 	AuUserEntry* uentry = killable->main_thread->uentry;
+	SeTextOut("Uenty -> %x \r\n", uentry);
 	if (uentry->argvaddr != 0) {
 		void* phys = AuGetPhysicalAddressEx(killable->cr3, 0x4000);
 		if (phys) {
@@ -166,5 +174,7 @@ void AuProcessClean(AuProcess* parent, AuProcess* killable) {
 
 	AuPmmngrFree((void*)V2P((size_t)killable->cr3));
 	AuRemoveProcess(0, killable);
+	SeTextOut("Used RAM -> %d GB \ Avail -> %d GB \r\n", ((AuPmmngrGetFreeMem() * PAGE_SIZE) / 1024 / 1024 / 1024),
+		(AuPmmngrGetTotalMem() * PAGE_SIZE / 1024 / 1024 / 1024));
 	SeTextOut("Process cleaned \r\n");
 }

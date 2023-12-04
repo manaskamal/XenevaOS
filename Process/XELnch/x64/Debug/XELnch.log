@@ -1,4 +1,4 @@
-﻿Build started 25-11-2023 আবেলি 6:45:52.
+﻿Build started 04-12-2023 আবেলি 9:49:06.
      1>Project "E:\Xeneva Project\Aurora\Process\XELnch\XELnch.vcxproj" on node 2 (Rebuild target(s)).
      1>ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /I"E:\Xeneva Project\Aurora\Libs\Chitralekha" /I"E:\os_dev\freetype2-master\freetype2-master\include" /Zi /nologo /W4 /WX- /sdl- /MP /Od /Oy /D ARCH_X64 /D YES_DYNAMIC /D DYNAMIC_IMPORTER /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt AppGrid.cpp button.cpp lconfig.cpp main.cpp
@@ -6,8 +6,8 @@
      1>cl : Command line warning D9002: ignoring unknown option '/arch:SSE2'
      1>cl : Command line warning D9030: '/Gm' is incompatible with multiprocessing; ignoring /MP switch
          main.cpp
-     1>main.cpp(45): warning C4018: '<' : signed/unsigned mismatch
-     1>main.cpp(44): warning C4100: 'scroll' : unreferenced formal parameter
+     1>main.cpp(43): warning C4018: '<' : signed/unsigned mismatch
+     1>main.cpp(42): warning C4100: 'scroll' : unreferenced formal parameter
      1>main.cpp(145): warning C4127: conditional expression is constant
          lconfig.cpp
      1>lconfig.cpp(76): warning C4127: conditional expression is constant
@@ -38,4 +38,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:01.13
+Time Elapsed 00:00:00.88

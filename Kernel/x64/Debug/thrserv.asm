@@ -6,11 +6,11 @@ INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
 CONST	SEGMENT
-$SG3797	DB	'No process found ', 0aH, 00H
+$SG3798	DB	'No process found ', 0aH, 00H
 	ORG $+5
-$SG3813	DB	'Process launched failed %s', 0dH, 0aH, 00H
+$SG3814	DB	'Process launched failed %s', 0dH, 0aH, 00H
 	ORG $+3
-$SG3823	DB	'Signal Return ', 0dH, 0aH, 00H
+$SG3824	DB	'Signal Return ', 0dH, 0aH, 00H
 CONST	ENDS
 PUBLIC	?PauseThread@@YAHXZ				; PauseThread
 PUBLIC	?GetThreadID@@YAGXZ				; GetThreadID
@@ -632,7 +632,7 @@ $LN3:
 
 ; 176  : 	SeTextOut("Signal Return \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG3823
+	lea	rcx, OFFSET FLAT:$SG3824
 	call	SeTextOut
 
 ; 177  : 	/* just make a page fault */
@@ -748,7 +748,7 @@ $LN12:
 
 ; 128  : 		AuTextOut("No process found \n");
 
-	lea	rcx, OFFSET FLAT:$SG3797
+	lea	rcx, OFFSET FLAT:$SG3798
 	call	AuTextOut
 
 ; 129  : 		return -1;
@@ -863,7 +863,7 @@ $LN5@ProcessLoa:
 ; 149  : 		SeTextOut("Process launched failed %s\r\n", filename);
 
 	mov	rdx, QWORD PTR filename$[rsp]
-	lea	rcx, OFFSET FLAT:$SG3813
+	lea	rcx, OFFSET FLAT:$SG3814
 	call	SeTextOut
 
 ; 150  : 		AuProcessExit(proc, true);

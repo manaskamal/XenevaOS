@@ -373,6 +373,7 @@ void AuSHMUnmapAll(AuProcess* proc) {
 			flush_tlb((void*)(mapping->start_addr + j * PAGE_SIZE));
 		}
 		AuSHMDelete(mapping->shm);
+		SeTextOut("Unmapping shm -> %x \r\n", mapping->start_addr);
 		kfree(mapping);
 	}
 
