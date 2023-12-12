@@ -31,6 +31,7 @@
 #define __DEODHAI_H__
 
 #include <stdint.h>
+#include <chitralekha.h>
 
 
 #define DEODHAI_MESSAGE_CREATEWIN  50
@@ -107,4 +108,5 @@ typedef struct _au_input_msg_ {
 * DeodhaiAllocateNewHandle -- get a new window handle
 */
 extern uint32_t DeodhaiAllocateNewHandle();
+extern ChCanvas* DeodhaiGetMainCanvas();
 #endif

@@ -38,6 +38,7 @@
 uint16_t shared_win_key_prefix = 100;
 uint16_t back_buffer_key_prefix = 400;
 
+#define SHADOW_COLOR 0xFF2E2929
 
 /*
  * CreateSharedWinSpace -- Create a shared window space
@@ -60,6 +61,17 @@ void* CreateNewBackBuffer(uint16_t ownerId, uint32_t sz, uint16_t *key){
 	*key = key_prefix;
 	back_buffer_key_prefix += 10;
 	return ptr;
+}
+
+void WindowShadowPutPixel(Window* win,int x, int y,int shadow_w, uint32_t color) {
+	unsigned int *lfb = win->shadowBuffers;
+	lfb[y * shadow_w + x] = color;
+}
+
+void WindowShadowFillColor(Window* win,int shadow_w,int x, int y, int w, int h, uint32_t col) {
+	for (int i = 0; i < w; i++)
+	for (int j = 0; j < h; j++)
+		WindowShadowPutPixel(win, x + i, y + j, shadow_w,col);
 }
 
 /*
@@ -96,25 +108,21 @@ Window* CreateWindow(int x, int y, int w, int h, uint8_t flags, uint16_t ownerId
 	shwin->dirty = false;
 	win->handle = DeodhaiAllocateNewHandle();
 
-	/* shadowBuffer 0 -- for left and right */
-	/*win->shadowBuffers[0] = (uint32_t*)_KeMemMap(NULL, shwin->height * SHADOW_SIZE * 4, 0, 0, MEMMAP_NO_FILEDESC, 0);
-	win->shadowBuffers[1] = (uint32_t*)_KeMemMap(NULL, shwin->width * SHADOW_SIZE * 4, 0, 0, MEMMAP_NO_FILEDESC, 0);
-
-	int shadow_alpha = 400 / (double)(SHADOW_SIZE*SHADOW_SIZE * 4);
-	int alpha = 0;
-	uint32_t* firtShadowBuff = win->shadowBuffers[0];
-	memset(win->shadowBuffers[0], WHITE, shwin->height*SHADOW_SIZE);
-
-	for (int y = 0; y < shwin->height; y++) {
-		for (int x = 8; x < SHADOW_SIZE; x++) {
-			uint32_t col = BLACK;
-			firtShadowBuff[y * SHADOW_SIZE + 8] = 0x4d000000;
-			alpha += shadow_alpha;
+	
+	win->shadowBuffers = (uint32_t*)_KeMemMap(NULL,(shwin->width + SHADOW_SIZE*2) * (shwin->height + SHADOW_SIZE*2)* 4, 0, 0, MEMMAP_NO_FILEDESC, 0);
+	for (int i = 0; i < shwin->width + SHADOW_SIZE*2; i++) {
+		for (int j = 0; j < shwin->height + SHADOW_SIZE*2; j++) {
+			win->shadowBuffers[j * (shwin->width + SHADOW_SIZE*2) + i] = 0x00000000;
 		}
 	}
 
+
+	WindowShadowFillColor(win, (shwin->width + SHADOW_SIZE * 2), 8, 10, (shwin->width + SHADOW_SIZE * 2) - 8*2, (shwin->height + SHADOW_SIZE * 2) - 8*2, SHADOW_COLOR);
+
+	for (int i = 0; i < 8; i++) 
+		ChBoxBlur(DeodhaiGetMainCanvas(), win->shadowBuffers, win->shadowBuffers, 1, 1, (shwin->width + SHADOW_SIZE*2) - 1, (shwin->height + SHADOW_SIZE*2) - 2);
+
 	
-	memset(win->shadowBuffers[1], WHITE, shwin->width*SHADOW_SIZE);*/
 	return win;
 }
 

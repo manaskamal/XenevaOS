@@ -74,7 +74,7 @@ Window* alwaysOnTop;
 Window* alwaysOnTopLast;
 ChCanvas* canvas;
 uint32_t* surfaceBuffer;
-
+bool _shadow_update;
 /*
  * DeodhaiInitialiseData -- initialise all data
  */
@@ -247,6 +247,17 @@ void DeodhaiWindowMakeTop(Window* win) {
 
 	DeodhaiRemoveWindow(win);
 	DeodhaiAddWindow(win);
+
+	/* add a back dirty rect to behind windows, because of
+	* its shadows to be undrawn
+	*/
+	for (Window* back = rootWin; back != NULL; back = back->next) {
+		WinSharedInfo* backinfo = (WinSharedInfo*)back->sharedInfo;
+		if (back == win)
+			break;
+		BackDirtyAdd((backinfo->x - SHADOW_SIZE), (backinfo->y - SHADOW_SIZE),
+			(backinfo->width + SHADOW_SIZE * 2), (backinfo->height + SHADOW_SIZE * 2));
+	}
 }
 
 /*
@@ -256,6 +267,7 @@ void DeodhaiWindowSetFocused(Window* win, bool notify) {
 	if (focusedWin == win)
 		return;
 	focusedWin = win;
+	_shadow_update = true;
 	WinSharedInfo* info = (WinSharedInfo*)focusedWin->sharedInfo;
 	if (info->hide){
 		info->hide = false;
@@ -284,47 +296,6 @@ void DeodhaiWindowSetFocused(Window* win, bool notify) {
  */
 void DeodhaiDrawShadow(ChCanvas* canv, Window* win) {
 	WinSharedInfo* info = (WinSharedInfo*)win->sharedInfo;
-
-	//Left
-	int s_x = info->x - SHADOW_SIZE;
-	int s_y = info->y + 26;
-	uint32_t* firstBuffer = win->shadowBuffers[0];
-
-	/*for (int i = 0; i < SHADOW_SIZE; i++) {
-		for (int j = 0; j < info->height - 26; j++) {
-			*(uint32_t*)(canvas->buffer + (s_y + j)* canvas->canvasWidth + (s_x + i)) =
-				ChColorAlphaBlend2(*(uint32_t*)(canvas->buffer + (s_y + j)* canvas->canvasWidth + (s_x + i)),
-				*(uint32_t*)(firstBuffer + j * SHADOW_SIZE + i));
-		}*/
-	for (int j = 0; j < info->height - 26; j++){
-		for (int i = 0; i < SHADOW_SIZE; i++) {
-			canvas->buffer[(s_y + j) * canvas->canvasWidth + (s_x + i)] =
-				firstBuffer[j * SHADOW_SIZE + i];
-		}
-	}
-
-	AddDirtyClip(s_x, s_y, SHADOW_SIZE, info->height);
-
-	// Right
-	s_x = info->x + info->width;
-	s_y = info->y + 26;
-	for (int j = 0; j < info->height - 26; j++) {
-		_fastcpy(canvas->buffer + (s_y + j) * canvas->canvasWidth + s_x,
-			win->shadowBuffers[0] + (0 + j) * SHADOW_SIZE + 0, SHADOW_SIZE * 4);
-	}
-
-	AddDirtyClip(s_x, s_y, SHADOW_SIZE, info->height);
-
-	//Bottom
-	s_x = info->x - SHADOW_SIZE;
-	s_y = info->y + info->height;
-	int s_w = info->width + SHADOW_SIZE * 2;
-	for (int j = 0; j < 6; j++) {
-		_fastcpy(canvas->buffer + (s_y + j) * canvas->canvasWidth + s_x,
-			win->shadowBuffers[1] + (0 + j) * SHADOW_SIZE + 0, s_w * 4);
-	}
-	AddDirtyClip(s_x, s_y, s_w, SHADOW_SIZE);
-	
 }
 
 /*
@@ -354,22 +325,23 @@ void DeodhaiWindowMove(Window* win, int x, int y) {
 		DeodhaiWindowSetFocused(win, true);
 
 	WinSharedInfo *info = (WinSharedInfo*)win->sharedInfo;
-	int wx = info->x; // -SHADOW_SIZE;
-	int wy = info->y;
-	int ww = info->width; // +SHADOW_SIZE * 2;
-	int wh = info->height; // +SHADOW_SIZE;
+	int wx = info->x -SHADOW_SIZE;
+	int wy = info->y - SHADOW_SIZE;
+	int ww = info->width +SHADOW_SIZE * 2;
+	int wh = info->height + SHADOW_SIZE * 2;
 
-	if (info->x + info->width >= canvas->screenWidth)
-		ww = canvas->screenWidth - info->x;
+	if ((wx + ww) >= canvas->screenWidth)
+		ww = canvas->screenWidth - info->x + SHADOW_SIZE;
 
-	if (info->y + info->height >= canvas->screenHeight)
-		wh = canvas->screenHeight - info->y;
+	if ((wy + wh) >= canvas->screenHeight)
+		wh = canvas->screenHeight - info->y + SHADOW_SIZE;
 
 	BackDirtyAdd(wx, wy, ww, wh );
 	info->x = x;
 	info->y = y;
 	_window_update_all_ = true;
 	_always_on_top_update = true;
+	_shadow_update = true;
 }
 
 /*
@@ -678,29 +650,39 @@ void ComposeFrame(ChCanvas *canvas) {
 
 			int width = info->width;
 			int height = info->height;
+			int shad_w = width + SHADOW_SIZE*2;
+			int shad_h = height + SHADOW_SIZE*2;
 
-			if (info->x <= 0){
-				info->x = 5;
-				winx = 5; info->x;
+			if ((info->x - SHADOW_SIZE) <= 0){
+				info->x = 5 + SHADOW_SIZE;
+				winx = info->x;
 			}
 
-			if (info->y <= 0) {
-				info->y = 5;
+			if ((info->y - SHADOW_SIZE) <= 0) {
+				info->y = 5 + SHADOW_SIZE;
 				winy = info->y;
 			}
 
-			if (info->x + info->width >= canvas->screenWidth)
+			if ((info->x + info->width) >= canvas->screenWidth)
 				width = canvas->screenWidth - info->x;
 
-			if (info->y + info->height >= canvas->screenHeight)
+			if ((info->y + info->height) >= canvas->screenHeight)
 				height = canvas->screenHeight - info->y;
+			
+			if (((info->x - SHADOW_SIZE) + shad_w) >= canvas->screenWidth){
+				shad_w = canvas->screenWidth - (info->x - SHADOW_SIZE);
+				
+			}
+			
+			if (((info->y - SHADOW_SIZE) + shad_h) >= canvas->screenHeight)
+				shad_h = 10; // canvas->screenHeight - info->y - SHADOW_SIZE;
 
 			Rect r1;
 			Rect r2;
-			r1.x = winx;
-			r1.y = winy;
-			r1.w = width;
-			r1.h = height;
+			r1.x = winx - SHADOW_SIZE;
+			r1.y = winy - SHADOW_SIZE;
+			r1.w = width + SHADOW_SIZE*2;
+			r1.h = height + SHADOW_SIZE*2;
 
 			Rect clip[512];
 			int clipCount = 0;
@@ -738,13 +720,26 @@ void ComposeFrame(ChCanvas *canvas) {
 				}
 			}
 
+			if (focusedWin == win) {
+				if (_shadow_update) {
+					for (int j = 0; j < shad_h; j++) {
+						for (int i = 0; i < shad_w; i++) {
+							*(uint32_t*)(canvas->buffer + ((winy - SHADOW_SIZE) + j) * canvas->canvasWidth + ((winx - SHADOW_SIZE) + i)) =
+								ChColorAlphaBlend2(*(uint32_t*)(canvas->buffer + ((winy - SHADOW_SIZE) + j)* canvas->canvasWidth + ((winx - SHADOW_SIZE) + i)),
+								*(uint32_t*)(win->shadowBuffers + j * (info->width + SHADOW_SIZE*2) + i));
+						}
+					}
+					_shadow_update = false;
+				}
+			}
+
 			for (int i = 0; i < height; i++) {
 				_fastcpy(canvas->buffer + (winy + i) * canvas->canvasWidth + winx,
 					win->backBuffer + (0 + i) * info->width + 0,width * 4);
 			}
 
 			if (clipCount == 0) {
-				AddDirtyClip(winx, winy, width, height);
+				AddDirtyClip(winx - SHADOW_SIZE, winy - SHADOW_SIZE, shad_w, shad_h);
 			}
 
 			for (int k = 0; k < clipCount; k++) {
@@ -765,7 +760,7 @@ void ComposeFrame(ChCanvas *canvas) {
 				AddDirtyClip(k_x, k_y, k_w, k_h);
 				clipCount = 0;
 			}
-
+	
 			info->updateEntireWindow = 0;
 		}
 	}
@@ -1119,6 +1114,7 @@ void DeodhaiCloseWindow(Window* win) {
 	free(win->title);
 	_KeUnmapSharedMem(win->shWinKey);
 	_KeUnmapSharedMem(win->backBufferKey);
+	_KeMemUnmap(win->shadowBuffers, (info->width + SHADOW_SIZE * 2) * (info->height + SHADOW_SIZE * 2) * 4);
 	DeodhaiRemoveWindow(win);
 	free(win);
 	PostEvent e;
@@ -1180,6 +1176,9 @@ void DrawWallpaper(ChCanvas *canv, char* filename) {
 	canv->buffer = swapable_buff;
 }
 
+ChCanvas* DeodhaiGetMainCanvas() {
+	return canvas;
+}
 
 /*
  * main -- deodhai compositor
@@ -1227,6 +1226,8 @@ int main(int argc, char* arv[]) {
 		surfaceBuffer[j * canv->canvasWidth + i] = GRAY; //0xFF938585;
 
 	DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
+	/*DrawWallpaper(canv, "/assam.jpg");
+	DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);*/
 	ChCanvasScreenUpdate(canv, 0, 0, canv->canvasWidth, canv->canvasHeight);
 
 
@@ -1450,7 +1451,6 @@ int main(int argc, char* arv[]) {
 			for (Window* win = rootWin; win != NULL; win = win->next) {
 				if (win->handle == handle && win->ownerId == ownerId) {
 					win->flags = flags;
-					_KePrint("Set flag msg \n");
 					break;
 				}
 			}

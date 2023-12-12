@@ -27,7 +27,7 @@ _And many more coming soon_
 
 ## Screenshot:
 
-![alt text](https://github.com/manaskamal/XenevaOS/blob/master/NewDesktop2023.jpg?raw=true)
+![alt text](https://github.com/manaskamal/XenevaOS/blob/master/NewDesktopDec.png?raw=true)
 
 # Building the project
 

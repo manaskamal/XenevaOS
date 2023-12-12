@@ -29,6 +29,7 @@
 
 #include "msgbox.h"
 #include <sys\_keproc.h>
+#include "button.h"
 
 #define MESSAGEBOX_WIDTH 400
 #define MESSAGEBOX_HEIGHT 150
@@ -40,7 +41,6 @@
  */
 void ChMessageBoxDestroy(ChWidget* wid, ChWindow* win) {
 	ChMessageBox* mb = (ChMessageBox*)wid;
-	_KePrint("Messagebox destroyed \n");
 	free(mb->message);
 	free(mb);
 }
@@ -56,6 +56,8 @@ void ChMessageBoxPaint(ChWidget* wid,ChWindow* win) {
 	int msgh = ChFontGetHeight(win->app->baseFont, mb->message);
 	ChFontDrawText(win->canv, win->app->baseFont, mb->message, mb->wid.w / 2 - msgw / 2,
 		mb->wid.h / 2 - msgh / 2, 12, BLACK);
+	ChDrawRect(win->canv, 0,mb->wid.y + mb->wid.h - 60, mb->wid.w, 60,0xFFC0C8CF);
+	ChDrawRectUnfilled(win->canv, 0, mb->wid.y + mb->wid.h - 60, mb->wid.w, 60, 0xFF324352);
 }
 
 void ChMessageBoxClose(ChWindow* win, ChWinGlobalControl *ctl){
@@ -65,6 +67,48 @@ void ChMessageBoxClose(ChWindow* win, ChWinGlobalControl *ctl){
 	ChWindowCloseWindow(win);
 }
 
+/*
+ * ChMessageBoxPrepareButtons -- prepare message box buttons
+ * @param win -- Pointer to message box backed window
+ * @param mb -- Pointer to message box widget
+ * @param buttons -- type of buttons
+ */
+void ChMessageBoxPrepareButtons(ChWindow* win, ChMessageBox *mb,uint8_t buttons) {
+	switch (buttons) {
+	case MSGBOX_TYPE_YESNO:{
+							   ChButton *yes = ChCreateButton(mb->wid.x + mb->wid.w - 100*2 - 10, mb->wid.y + mb->wid.h - 60,
+								   100, 30, "Yes"); //
+							   ChWindowAddWidget(win, (ChWidget*)yes);
+							   ChButton* no = ChCreateButton(mb->wid.x + mb->wid.w - 100 - 5, mb->wid.y + mb->wid.h - 60,
+								   100, 30, "No");
+							   ChWindowAddWidget(win, (ChWidget*)no);
+							   break;
+	}
+	case MSGBOX_TYPE_OKCANCEL:{
+								  ChButton *Ok = ChCreateButton(mb->wid.x + mb->wid.w - 100 * 2 - 10, mb->wid.y + mb->wid.h - 60,
+									  100, 30, "Okay"); //
+								  ChWindowAddWidget(win, (ChWidget*)Ok);
+								  ChButton* cancel = ChCreateButton(mb->wid.x + mb->wid.w - 100 - 5, mb->wid.y + mb->wid.h - 60,
+									  100, 30, "Cancel");
+								  ChWindowAddWidget(win, (ChWidget*)cancel);
+								  break;
+	}
+	case MSGBOX_TYPE_ONLYCLOSE: {
+									ChButton *Close = ChCreateButton(mb->wid.x + mb->wid.w - 100 - 5, mb->wid.y + mb->wid.h - 60,
+										100, 30, "Close");
+									ChWindowAddWidget(win, (ChWidget*)Close);
+									break;
+	}
+	case MSGBOX_TYPE_ONLYCANCEL: {
+									 ChButton* cancel = ChCreateButton(mb->wid.x + mb->wid.w - 100 - 5, mb->wid.y + mb->wid.h - 60,
+										 100, 30, "Cancel");
+									 ChWindowAddWidget(win, (ChWidget*)cancel);
+									 break;
+
+	}
+
+	}
+}
 /*
  * ChCreateMessageBox -- create a chitralekha message box
  * @param mainWin -- pointer to main window
@@ -101,8 +145,8 @@ XE_EXTERN XE_EXPORT ChMessageBox* ChCreateMessageBox(ChWindow* mainWin,char* tit
 			break;
 		}
 	}
-
 	mb->backedWindow = msgwin;
+	ChMessageBoxPrepareButtons(msgwin, mb, buttons);
 	return mb;
 }
 

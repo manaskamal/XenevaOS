@@ -81,12 +81,7 @@ void WindowHandleMessage(PostEvent *e) {
 }
 
 void ButtonClicked(ChWidget* wid, ChWindow* win) {
-	/*ChitralekhaApp* app2 = ChitralekhaStartSubApp(app);
-	win2 = ChCreateWindow(app2, WINDOW_FLAG_MOVABLE, "test", 10, 10,CHITRALEKHA_DEFAULT_WIN_WIDTH,
-		CHITRALEKHA_DEFAULT_WIN_HEIGHT);
-	ChWindowPaint(win2);
-	ChWindowAddSubWindow(mainWin, win2);*/
-	ChMessageBox* mb = ChCreateMessageBox(mainWin, "Hello", "Hello there, I am using Whatsapp !!", MSGBOX_TYPE_YESNO, MSGBOX_ICON_SUCCESS);
+	ChMessageBox* mb = ChCreateMessageBox(mainWin, "Dimpismita", "I LOVE YOU DIMPISMITA++ !!", MSGBOX_TYPE_ONLYCLOSE, MSGBOX_ICON_SUCCESS);
 	ChMessageBoxShow(mb);
 }
 
@@ -95,7 +90,7 @@ void ButtonClicked(ChWidget* wid, ChWindow* win) {
 */
 int main(int argc, char* argv[]){
 	app = ChitralekhaStartApp(argc, argv);
-	mainWin = ChCreateWindow(app, WINDOW_FLAG_MOVABLE, "Files", 400, 100, 660, 
+	mainWin = ChCreateWindow(app, WINDOW_FLAG_MOVABLE, "Files", 100, 100, 660, 
 		400);
 
 	ChWindowBroadcastIcon(app, "/file.bmp");
