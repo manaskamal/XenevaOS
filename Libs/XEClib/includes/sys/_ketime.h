@@ -33,22 +33,31 @@
 #include <stdint.h>
 #include <_xeneva.h>
 
+#ifdef __cplusplus
+XE_EXTERN{
+#endif
+
+
 #pragma pack(push,1)
-typedef struct _time_ {
-	uint8_t century;
-	uint8_t year;
-	uint8_t month;
-	uint8_t day;
-	uint8_t hour;
-	uint8_t minute;
-	uint8_t second;
-}XETime;
+	typedef struct _time_ {
+		uint8_t century;
+		uint8_t year;
+		uint8_t month;
+		uint8_t day;
+		uint8_t hour;
+		uint8_t minute;
+		uint8_t second;
+	}XETime;
 #pragma pack(pop)
 
-/*
-* _KeGetCurrentTime -- get current time
-* @param time -- pointer to time memory area
-*/
-XE_EXTERN XE_EXPORT int _KeGetCurrentTime(XETime *time);
+	/*
+	* _KeGetCurrentTime -- get current time
+	* @param time -- pointer to time memory area
+	*/
+	XE_EXPORT int _KeGetCurrentTime(XETime *time);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

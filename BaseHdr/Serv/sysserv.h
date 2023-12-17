@@ -36,7 +36,7 @@
 #include <Hal\x86_64_signal.h>
 
 /* maximum supported system calls */
-#define AURORA_MAX_SYSCALL  43
+#define AURORA_MAX_SYSCALL  44
 #define AURORA_SYSCALL_MAGIC  0x05212004  /* actual number to remember */
 
 /* ==========================================
@@ -272,4 +272,11 @@ extern int StopTimer(int threadID);
 * DestroyTimer -- remove the timer
 */
 extern int DestroyTimer(int threadID);
+
+/*
+* ProcessGetFileDesc -- Searches all process file
+* descriptor entries for
+* specific filename fd
+*/
+extern int ProcessGetFileDesc(const char* filename);
 #endif

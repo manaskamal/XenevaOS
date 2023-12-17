@@ -34,84 +34,93 @@
 #include "color.h"
 #include <_xeneva.h>
 
+
+#ifdef __cplusplus
+XE_EXTERN{
+#endif
+
 #pragma pack(push,1)
-typedef struct _chrect_ {
-	uint32_t x;
-	uint32_t y;
-	uint32_t w;
-	uint32_t h;
-}ChRect;
+	typedef struct _chrect_ {
+		uint32_t x;
+		uint32_t y;
+		uint32_t w;
+		uint32_t h;
+	}ChRect;
 #pragma pack(pop)
-/*
-* ChDrawRect -- draw a rectangle
-* @param canvas -- Pointer to canvas
-* @param x -- X coord
-* @param y -- Y coord
-* @param w -- Width of the rect
-* @param h -- Height of the rect
-*/
-XE_EXTERN XE_LIB void ChDrawRect(ChCanvas* canvas, unsigned x, unsigned y, unsigned w, unsigned h, uint32_t col);
+	/*
+	* ChDrawRect -- draw a rectangle
+	* @param canvas -- Pointer to canvas
+	* @param x -- X coord
+	* @param y -- Y coord
+	* @param w -- Width of the rect
+	* @param h -- Height of the rect
+	*/
+	XE_LIB void ChDrawRect(ChCanvas* canvas, unsigned x, unsigned y, unsigned w, unsigned h, uint32_t col);
 
-/*
-* ChDrawVerticalLine -- draws a vertical line
-* @param canv -- Pointer to canvas
-* @paam x -- X coord
-* @param y - y coord
-* @param len -- length of the line
-* @param col -- Color to use
-*/
-XE_EXTERN XE_LIB void ChDrawVerticalLine(ChCanvas* canv, unsigned x, unsigned y, unsigned len, uint32_t col);
+	/*
+	* ChDrawVerticalLine -- draws a vertical line
+	* @param canv -- Pointer to canvas
+	* @paam x -- X coord
+	* @param y - y coord
+	* @param len -- length of the line
+	* @param col -- Color to use
+	*/
+	XE_LIB void ChDrawVerticalLine(ChCanvas* canv, unsigned x, unsigned y, unsigned len, uint32_t col);
 
-/*
-* ChDrawVerticalLine -- draws a horizontal line
-* @param canv -- Pointer to canvas
-* @paam x -- X coord
-* @param y - y coord
-* @param len -- length of the line
-* @param col -- Color to use
-*/
-XE_EXTERN XE_LIB void ChDrawHorizontalLine(ChCanvas* canv, unsigned x, unsigned y, unsigned len, uint32_t col);
+	/*
+	* ChDrawVerticalLine -- draws a horizontal line
+	* @param canv -- Pointer to canvas
+	* @paam x -- X coord
+	* @param y - y coord
+	* @param len -- length of the line
+	* @param col -- Color to use
+	*/
+	XE_LIB void ChDrawHorizontalLine(ChCanvas* canv, unsigned x, unsigned y, unsigned len, uint32_t col);
 
 
-/*
-* ChDrawRectUnfilled -- draws a unfilled only outlined rectangle
-* @param canv -- Pointer to canvas
-* @param x -- X coordinate
-* @param y -- Y coordinate
-* @param w -- Width of the rect
-* @param h -- Height of the rect
-*/
-XE_EXTERN XE_LIB void ChDrawRectUnfilled(ChCanvas* canv, unsigned x, unsigned y, unsigned w, unsigned h, uint32_t color);
+	/*
+	* ChDrawRectUnfilled -- draws a unfilled only outlined rectangle
+	* @param canv -- Pointer to canvas
+	* @param x -- X coordinate
+	* @param y -- Y coordinate
+	* @param w -- Width of the rect
+	* @param h -- Height of the rect
+	*/
+	XE_LIB void ChDrawRectUnfilled(ChCanvas* canv, unsigned x, unsigned y, unsigned w, unsigned h, uint32_t color);
 
-/*
-* ChDrawFilledCircle -- draws a filled circle
-* @param canv -- Pointer to canvas
-* @param x -- X coordinate
-* @param y -- Y coordinate
-* @param radius -- radius of the circle
-* @param fill_col -- color to use while filling
-*/
-XE_EXTERN XE_LIB void ChDrawFilledCircle(ChCanvas* canv, int x, int y, int radius, uint32_t fill_col);
+	/*
+	* ChDrawFilledCircle -- draws a filled circle
+	* @param canv -- Pointer to canvas
+	* @param x -- X coordinate
+	* @param y -- Y coordinate
+	* @param radius -- radius of the circle
+	* @param fill_col -- color to use while filling
+	*/
+	XE_LIB void ChDrawFilledCircle(ChCanvas* canv, int x, int y, int radius, uint32_t fill_col);
 
-/*
-* ChDrawLine -- draws a line
-* @param canv -- Pointer to canvas
-* @param x1 -- X coord of point one
-* @param y1 -- Y coord of point one
-* @param x2 -- X coord of point two
-* @param y2 -- Y coord of point two
-* @param color -- color to use
-*/
-XE_EXTERN XE_LIB void ChDrawLine(ChCanvas* canv, int x1, int y1, int x2, int y2, uint32_t color);
+	/*
+	* ChDrawLine -- draws a line
+	* @param canv -- Pointer to canvas
+	* @param x1 -- X coord of point one
+	* @param y1 -- Y coord of point one
+	* @param x2 -- X coord of point two
+	* @param y2 -- Y coord of point two
+	* @param color -- color to use
+	*/
+	XE_LIB void ChDrawLine(ChCanvas* canv, int x1, int y1, int x2, int y2, uint32_t color);
 
-/*
-* ChDrawCircleUnfilled -- Draws a circle without filling its internal
-* @param canvas -- Pointer to canvas
-* @param x -- X coord of the circle
-* @param y -- Y coord of the circle
-* @param radius -- radius of the circle
-* @param color -- outline color
-*/
-XE_EXTERN XE_LIB void ChDrawCircleUnfilled(ChCanvas * canvas, int x, int y, int radius, uint32_t color);
+	/*
+	* ChDrawCircleUnfilled -- Draws a circle without filling its internal
+	* @param canvas -- Pointer to canvas
+	* @param x -- X coord of the circle
+	* @param y -- Y coord of the circle
+	* @param radius -- radius of the circle
+	* @param color -- outline color
+	*/
+	XE_LIB void ChDrawCircleUnfilled(ChCanvas * canvas, int x, int y, int radius, uint32_t color);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

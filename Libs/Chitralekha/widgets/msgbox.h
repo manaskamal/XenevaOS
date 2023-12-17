@@ -33,7 +33,11 @@
 #include "../chitralekha.h"
 #include "window.h"
 
-//! msg box types 
+#ifdef __cplusplus
+XE_EXTERN{
+#endif
+
+	//! msg box types 
 #define MSGBOX_TYPE_YESNO  1
 #define MSGBOX_TYPE_OKCANCEL 2
 #define MSGBOX_TYPE_ONLYCANCEL 3
@@ -44,28 +48,32 @@
 #define MSGBOX_ICON_SUCCESS 3
 #define MSGBOX_ICON_FAILED 4
 
-typedef struct _msgbox_ {
-	ChWidget wid;
-	uint8_t type;
-	char* message;
-	uint8_t icon;
-	void* backedWindow;
-}ChMessageBox;
+	typedef struct _msgbox_ {
+		ChWidget wid;
+		uint8_t type;
+		char* message;
+		uint8_t icon;
+		void* backedWindow;
+	}ChMessageBox;
 
 
-/*
-* ChCreateMessageBox -- create a chitralekha message box
-* @param mainWin -- pointer to main window
-* @param title -- title of the message box
-* @param msg -- message to show
-* @param buttons -- button type
-* @param icon -- icon to show
-*/
-XE_EXTERN XE_EXPORT ChMessageBox* ChCreateMessageBox(ChWindow* mainWin, char* title, char* msg, uint8_t buttons, uint8_t icon);
-/*
-* ChMessageBoxShow - shows the message box
-* @param mb -- Pointer to message box
-*/
-XE_EXTERN XE_EXPORT void ChMessageBoxShow(ChMessageBox* mb);
+	/*
+	* ChCreateMessageBox -- create a chitralekha message box
+	* @param mainWin -- pointer to main window
+	* @param title -- title of the message box
+	* @param msg -- message to show
+	* @param buttons -- button type
+	* @param icon -- icon to show
+	*/
+	XE_EXPORT ChMessageBox* ChCreateMessageBox(ChWindow* mainWin, char* title, char* msg, uint8_t buttons, uint8_t icon);
+	/*
+	* ChMessageBoxShow - shows the message box
+	* @param mb -- Pointer to message box
+	*/
+	XE_EXPORT void ChMessageBoxShow(ChMessageBox* mb);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

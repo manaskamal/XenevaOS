@@ -32,6 +32,11 @@
 
 #include <_xeneva.h>
 
+#ifdef __cplusplus
+XE_EXTERN{
+#endif
+
+
 #define M_E         2.7182818284590452354  // e
 #define M_LOG2E     1.4426950408889634074  // log_2 e
 #define M_LOG10E    0.43429448190325182765 // log_10 e
@@ -46,21 +51,25 @@
 #define M_SQRT2     1.41421356237309504880 // sqrt(2)
 #define M_SQRT1_2   0.70710678118654752440 // 1/sqrt(2)
 
-XE_EXTERN XE_LIB double ceil(double);
-XE_EXTERN XE_LIB double cos(double);
-XE_EXTERN XE_LIB float cosf(float);
-XE_EXTERN XE_LIB double fabs(double);
-XE_EXTERN XE_LIB float fabsf(float);
-XE_EXTERN XE_LIB double floor(double);
-XE_EXTERN XE_LIB float floorf(float);
-XE_EXTERN XE_LIB double fmod(double, double);
-XE_EXTERN XE_LIB double modf(double, double *);
-XE_EXTERN XE_LIB double pow(double, double);
-XE_EXTERN XE_LIB double sin(double);
-XE_EXTERN XE_LIB float sinf(float);
-XE_EXTERN XE_LIB double sqrt(double);
-XE_EXTERN XE_LIB float sqrtf(float x);
-XE_EXTERN XE_LIB double tan(double);
-XE_EXTERN XE_LIB float tanf(float);
+	XE_LIB double ceil(double);
+	XE_LIB double cos(double);
+	XE_LIB float cosf(float);
+	XE_LIB double fabs(double);
+	XE_LIB float fabsf(float);
+	XE_LIB double floor(double);
+	XE_LIB float floorf(float);
+	XE_LIB double fmod(double, double);
+	XE_LIB double modf(double, double *);
+	XE_LIB double pow(double, double);
+	XE_LIB double sin(double);
+	XE_LIB float sinf(float);
+	XE_LIB double sqrt(double);
+	XE_LIB float sqrtf(float x);
+	XE_LIB double tan(double);
+	XE_LIB float tanf(float);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -151,6 +151,7 @@
     <NASM Include="_callbase.asm" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="includes\assert.h" />
     <ClInclude Include="includes\c++\cctype" />
     <ClInclude Include="includes\c++\cmath" />
     <ClInclude Include="includes\c++\cstddef" />
@@ -166,6 +167,7 @@
     <ClInclude Include="includes\ctype.h" />
     <ClInclude Include="includes\endian.h" />
     <ClInclude Include="includes\errno.h" />
+    <ClInclude Include="includes\fcntl.h" />
     <ClInclude Include="includes\float.h" />
     <ClInclude Include="includes\limits.h" />
     <ClInclude Include="includes\math.h" />
@@ -179,6 +181,7 @@
     <ClInclude Include="includes\string.h" />
     <ClInclude Include="includes\sys\iocodes.h" />
     <ClInclude Include="includes\sys\mman.h" />
+    <ClInclude Include="includes\sys\stat.h" />
     <ClInclude Include="includes\sys\types.h" />
     <ClInclude Include="includes\sys\utf.h" />
     <ClInclude Include="includes\sys\_heap.h" />
@@ -191,8 +194,10 @@
     <ClInclude Include="includes\sys\_ketimer.h" />
     <ClInclude Include="includes\sys\_ketty.h" />
     <ClInclude Include="includes\sys\_keycode.h" />
+    <ClInclude Include="includes\time.h" />
     <ClInclude Include="includes\values.h" />
     <ClInclude Include="includes\_xeneva.h" />
+    <ClInclude Include="includes\_xeprint.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="c++\ios.cpp" />
@@ -204,12 +209,15 @@
     <ClCompile Include="errno.cpp" />
     <ClCompile Include="math.cpp" />
     <ClCompile Include="qsort.cpp" />
+    <ClCompile Include="stat.cpp" />
     <ClCompile Include="stdio.cpp" />
     <ClCompile Include="stdlib.cpp" />
     <ClCompile Include="string.cpp" />
     <ClCompile Include="sys\_heap.cpp" />
     <ClCompile Include="sys\_xeneva.cpp" />
     <ClCompile Include="sys\_xeprint.cpp" />
+    <ClCompile Include="time.cpp" />
+    <ClCompile Include="_xeprint.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

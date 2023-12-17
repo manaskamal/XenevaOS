@@ -30,6 +30,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <sys\_heap.h>
+#include <sys\_keproc.h>
 #include <sys\utf.h>
 #include <string.h>
 #include <stdarg.h>
@@ -57,6 +58,10 @@ int atoi(const char* s) {
 	while (isdigit(*s))
 		n = 10 * n - (*s++ - '0');
 	return neg ? n : -n;
+}
+
+double atof(const char* nptr) {
+	return strtod(nptr, NULL);
 }
 
 
@@ -240,31 +245,6 @@ char* getenv(const char* name) {
 }
 
 
-char tbuf[32];
-char bchars[] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
-
-void itoa(unsigned i, unsigned base, char* buf) {
-	int pos = 0;
-	int opos = 0;
-	int top = 0;
-
-	if (i == 0 || base > 16) {
-		buf[0] = '0';
-		buf[1] = '\0';
-		return;
-	}
-
-	while (i != 0) {
-		tbuf[pos] = bchars[i % base];
-		pos++;
-		i /= base;
-	}
-	top = pos--;
-	for (opos = 0; opos<top; pos--, opos++) {
-		buf[opos] = tbuf[pos];
-	}
-	buf[opos] = 0;
-}
 
 void itoa_s(int i, unsigned base, char* buf) {
 	if (base > 16) return;
@@ -272,81 +252,9 @@ void itoa_s(int i, unsigned base, char* buf) {
 		*buf++ = '-';
 		i *= -1;
 	}
-	itoa(i, base, buf);
+	itoa(i, buf);
 }
 
-//! writes formatted string to buffer
-int vsprintf(char *str, const char *format, va_list ap) {
-
-	if (!str)
-		return 0;
-
-	if (!format)
-		return 0;
-
-	size_t loc = 0;
-	size_t i;
-	for (i = 0; i <= strlen(format); i++, loc++) {
-
-		switch (format[i]) {
-
-		case '%':
-
-			switch (format[i + 1]) {
-
-				/*** characters ***/
-			case 'c': {
-						  char c = va_arg(ap, char);
-						  str[loc] = c;
-						  i++;
-						  break;
-			}
-
-				/*** integers ***/
-			case 'd':
-			case 'i': {
-						  int c = va_arg(ap, int);
-						  char s[32] = { 0 };
-						  itoa_s(c, 10, s);
-						  strcpy(&str[loc], s);
-						  loc += strlen(s) - 2;
-						  i++;		// go to next character
-						  break;
-			}
-
-				/*** display in hex ***/
-			case 'X':
-			case 'x': {
-						  int c = va_arg(ap, int);
-						  char s[32] = { 0 };
-						  itoa_s(c, 16, s);
-						  strcpy(&str[loc], s);
-						  i++;		// go to next character
-						  loc += strlen(s) - 2;
-						  break;
-			}
-
-				/*** strings ***/
-			case 's': {
-						  char* c = (char*)va_arg(ap, char*);
-						  char s[32] = { 0 };
-						  strcpy(s, c);
-						  strcpy(&str[loc], s);
-						  i++;		// go to next character
-						  loc += strlen(s) - 2;
-						  break;
-			}
-			}
-			break;
-
-		default:
-			str[loc] = format[i];
-			break;
-		}
-	}
-
-	return i;
-}
 
 //! converts a string to a long
 long
@@ -509,5 +417,10 @@ strtoul(const char* nptr, char** endptr, int base)
 int atexit(void(*func)(void)) {
 	func();
 	return 0;
+}
+
+void abort(void) {
+	_KeProcessExit();
+	while (1);
 }
 

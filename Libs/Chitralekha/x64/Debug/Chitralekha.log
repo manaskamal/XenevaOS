@@ -1,11 +1,11 @@
-﻿Build started 10-12-2023 আবেলি 1:50:32.
+﻿Build started 15-12-2023 আবেলি 10:56:31.
      1>Project "E:\Xeneva Project\Aurora\Libs\Chitralekha\Chitralekha.vcxproj" on node 2 (Rebuild target(s)).
      1>_NASM:
          _fastcpy.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmpae84c136d2b94ceab0293ded96b2d877.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp710a97690bd2443d9f68fa895d6582d8.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\_fastcpy.obj"  "E:\Xeneva Project\Aurora\Libs\Chitralekha\_fastcpy.asm"
        ClCompile:
-         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /I"E:\os_dev\freetype2-master\freetype2-master\include" /Zi /nologo /W3 /WX- /sdl- /Od /D ARCH_X64 /D YES_DYNAMIC /D DYNAMIC_EXPORTER /D _USE_FREETYPE /D _WINDLL /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt boxblur.cpp chitralekha.cpp color.cpp draw.cpp font.cpp keycode.cpp ttf.cpp widgets\base.cpp widgets\button.cpp widgets\defaultwindow.cpp widgets\list.cpp widgets\msgbox.cpp widgets\window.cpp
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /I"E:\os_dev\freetype2-master\freetype2-master\include" /Zi /nologo /W3 /WX- /sdl- /Od /D ARCH_X64 /D YES_DYNAMIC /D DYNAMIC_EXPORTER /D _USE_FREETYPE /D _WINDLL /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt boxblur.cpp chitralekha.cpp color.cpp draw.cpp font.cpp keycode.cpp ttf.cpp widgets\base.cpp widgets\button.cpp widgets\defaultmenu.cpp widgets\defaultwindow.cpp widgets\list.cpp widgets\menubar.cpp widgets\msgbox.cpp widgets\window.cpp
      1>cl : Command line warning D9025: overriding '/sdl-' with '/GS-'
      1>cl : Command line warning D9002: ignoring unknown option '/arch:SSE2'
          window.cpp
@@ -20,10 +20,15 @@
          msgbox.cpp
      1>widgets\msgbox.cpp(123): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
      1>widgets\msgbox.cpp(141): warning C4018: '<' : signed/unsigned mismatch
+         menubar.cpp
+     1>widgets\menubar.cpp(59): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
+     1>widgets\menubar.cpp(67): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
          list.cpp
          defaultwindow.cpp
      1>widgets\defaultwindow.cpp(116): warning C4018: '<' : signed/unsigned mismatch
      1>widgets\defaultwindow.cpp(129): warning C4018: '<' : signed/unsigned mismatch
+         defaultmenu.cpp
+     1>widgets\defaultmenu.cpp(49): warning C4018: '<' : signed/unsigned mismatch
          button.cpp
      1>widgets\button.cpp(140): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
          base.cpp
@@ -79,8 +84,10 @@
          x64\Debug\ttf.obj
          x64\Debug\base.obj
          x64\Debug\button.obj
+         x64\Debug\defaultmenu.obj
          x64\Debug\defaultwindow.obj
          x64\Debug\list.obj
+         x64\Debug\menubar.obj
          x64\Debug\msgbox.obj
          x64\Debug\window.obj
          x64\Debug\_fastcpy.obj
@@ -92,4 +99,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:03.36
+Time Elapsed 00:00:03.81

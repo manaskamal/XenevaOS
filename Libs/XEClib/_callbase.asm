@@ -31,6 +31,10 @@
 section .text
 [BITS 64]
 
+global __chkstk
+__chkstk:
+ret
+
 %define YES_DYNAMIC 0
 
 ;;----------------------------------
@@ -680,7 +684,7 @@ global _KeStopTimer
 %ifdef YES_DYNAMIC
 export _KeStopTimer
 %endif
-_KeStopTimer
+_KeStopTimer:
      xor rax, rax
 	 mov r12, 41
 	 mov r13, rcx
@@ -694,9 +698,23 @@ global _KeDestroyTimer
 %ifdef YES_DYNAMIC
 export _KeDestroyTimer
 %endif
-_KeDestroyTimer
+_KeDestroyTimer:
      xor rax, rax
 	 mov r12, 42
+	 mov r13, rcx
+	 mov r14, 0
+	 mov r15, 0
+	 mov rdi, 0
+	 syscall
+	 ret
+
+global _KeProcessGetFileDesc
+%ifdef YES_DYNAMIC
+export _KeProcessGetFileDesc
+%endif
+_KeProcessGetFileDesc:
+     xor rax, rax
+	 mov r12, 43
 	 mov r13, rcx
 	 mov r14, 0
 	 mov r15, 0

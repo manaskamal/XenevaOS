@@ -28,6 +28,9 @@
     <ClInclude Include="widgets\msgbox.h">
       <Filter>widgets</Filter>
     </ClInclude>
+    <ClInclude Include="widgets\menubar.h">
+      <Filter>widgets</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="chitralekha.cpp" />
@@ -54,6 +57,12 @@
     </ClCompile>
     <ClCompile Include="widgets\msgbox.cpp">
       <Filter>widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="widgets\menubar.cpp">
+      <Filter>widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="widgets\defaultmenu.cpp">
+      <Filter>widgets\styles</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

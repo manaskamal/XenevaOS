@@ -31,7 +31,6 @@
 #include <values.h>
 #include <stdlib.h>
 
-#define MAX_STRING_LENGTH 25
 
 void* _cdecl memset(void *targ, unsigned char val, size_t len){
 	uint8_t *t = (uint8_t*)targ;

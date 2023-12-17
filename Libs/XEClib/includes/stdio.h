@@ -51,12 +51,12 @@ XE_EXTERN{
 #define SEEK_CUR 1
 #define SEEK_END 2
 
-#define stdin FILE*
-#define stdout FILE*
-#define stderr FILE*
+#define stdin (FILE*)(1)
+#define stdout (FILE*)(1+1)
+#define stderr (FILE*)(2+1)
 
 
-	XE_LIB int fprintf(FILE, const char*, ...);
+	XE_LIB int fprintf(FILE*, const char*, ...);
 	XE_LIB int printf(const char*, ...);
 
 	/*
@@ -126,13 +126,33 @@ XE_EXTERN{
 	*/
 	XE_LIB int fclose(FILE* fp);
 
+	XE_LIB int fflush(FILE* stream);
+
+	XE_LIB int fputc(int c, FILE* stream);
+
+	XE_LIB int fputs(const char* s, FILE* stream);
+
+	XE_LIB int puts(const char *s);
+
 	XE_LIB int vfprintf(FILE* stream, const char* format, va_list arg);
+	XE_LIB int vsnprintf(char* output, size_t sz, const char* format, va_list ap);
+	XE_LIB int vsprintf(char* output, const char* format, va_list list);
+	XE_LIB int vprintf(const char* format, va_list list);
+
 	XE_LIB int sprintf(char* str, const char* string, ...);
+	XE_LIB int snprintf(char* output, size_t sz, const char* format, ...);
+
 	XE_LIB int printf(const char* format, ...);
 	/* getchar -- read a single character
 	* from stdin
 	*/
 	XE_LIB int getchar();
+
+	XE_LIB int remove(const char* pathname);
+
+	XE_LIB int rename(const char* oldpath, const char* newpath);
+
+	XE_LIB int putchar(int c);
 
 #ifdef __cplusplus
 }

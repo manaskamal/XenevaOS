@@ -35,6 +35,7 @@
 
 #define CURSOR_TYPE_POINTER  1
 #define CURSOR_TYPE_LOADING  2
+#define CURSOR_TYPE_TEXT 3
 
 
 typedef struct _cursor_ {

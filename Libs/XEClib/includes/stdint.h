@@ -218,4 +218,6 @@ extern "C++" {
 #define ALIGN_UP(x, y) (DIV_ROUND_UP(x,y)*y)
 
 #define NULL  0
+
+#define bool char
 #endif

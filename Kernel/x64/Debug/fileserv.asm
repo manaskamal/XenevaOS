@@ -15,6 +15,7 @@ PUBLIC	?FileIoControl@@YAHHHPEAX@Z			; FileIoControl
 PUBLIC	?FileStat@@YAHHPEAX@Z				; FileStat
 PUBLIC	?OpenDir@@YAHPEAD@Z				; OpenDir
 PUBLIC	?ReadDir@@YAHHPEAX@Z				; ReadDir
+PUBLIC	?ProcessGetFileDesc@@YAHPEBD@Z			; ProcessGetFileDesc
 EXTRN	AuVFSOpen:PROC
 EXTRN	AuVFSNodeIOControl:PROC
 EXTRN	AuVFSFind:PROC
@@ -33,6 +34,7 @@ EXTRN	kfree:PROC
 EXTRN	?AuProcessFindThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z:PROC ; AuProcessFindThread
 EXTRN	?AuProcessFindSubThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z:PROC ; AuProcessFindSubThread
 EXTRN	?AuProcessGetFileDesc@@YAHPEAU_au_proc_@@@Z:PROC ; AuProcessGetFileDesc
+EXTRN	strcmp:PROC
 EXTRN	memset:PROC
 EXTRN	memcpy:PROC
 EXTRN	x64_cli:PROC
@@ -67,6 +69,9 @@ $pdata$?OpenDir@@YAHPEAD@Z DD imagerel $LN10
 $pdata$?ReadDir@@YAHHPEAX@Z DD imagerel $LN11
 	DD	imagerel $LN11+251
 	DD	imagerel $unwind$?ReadDir@@YAHHPEAX@Z
+$pdata$?ProcessGetFileDesc@@YAHPEBD@Z DD imagerel $LN11
+	DD	imagerel $LN11+193
+	DD	imagerel $unwind$?ProcessGetFileDesc@@YAHPEBD@Z
 pdata	ENDS
 xdata	SEGMENT
 $unwind$?OpenFile@@YAHPEADH@Z DD 010d01H
@@ -89,7 +94,134 @@ $unwind$?OpenDir@@YAHPEAD@Z DD 010901H
 	DD	0a209H
 $unwind$?ReadDir@@YAHHPEAX@Z DD 010d01H
 	DD	0a20dH
+$unwind$?ProcessGetFileDesc@@YAHPEBD@Z DD 010901H
+	DD	08209H
 xdata	ENDS
+; Function compile flags: /Odtpy
+; File e:\xeneva project\aurora\kernel\serv\fileserv.cpp
+_TEXT	SEGMENT
+i$1 = 32
+currproc$ = 40
+thr$ = 48
+file$2 = 56
+filename$ = 80
+?ProcessGetFileDesc@@YAHPEBD@Z PROC			; ProcessGetFileDesc
+
+; 403  : int ProcessGetFileDesc(const char* filename) {
+
+$LN11:
+	mov	QWORD PTR [rsp+8], rcx
+	sub	rsp, 72					; 00000048H
+
+; 404  : 	x64_cli();
+
+	call	x64_cli
+
+; 405  : 	AuThread* thr = AuGetCurrentThread();
+
+	call	AuGetCurrentThread
+	mov	QWORD PTR thr$[rsp], rax
+
+; 406  : 	if (!thr)
+
+	cmp	QWORD PTR thr$[rsp], 0
+	jne	SHORT $LN8@ProcessGet
+
+; 407  : 		return -1;
+
+	mov	eax, -1
+	jmp	$LN9@ProcessGet
+$LN8@ProcessGet:
+
+; 408  : 	AuProcess* currproc = AuProcessFindThread(thr);
+
+	mov	rcx, QWORD PTR thr$[rsp]
+	call	?AuProcessFindThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z ; AuProcessFindThread
+	mov	QWORD PTR currproc$[rsp], rax
+
+; 409  : 	if (!currproc){
+
+	cmp	QWORD PTR currproc$[rsp], 0
+	jne	SHORT $LN7@ProcessGet
+
+; 410  : 		currproc = AuProcessFindSubThread(thr);
+
+	mov	rcx, QWORD PTR thr$[rsp]
+	call	?AuProcessFindSubThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z ; AuProcessFindSubThread
+	mov	QWORD PTR currproc$[rsp], rax
+
+; 411  : 		if (!currproc)
+
+	cmp	QWORD PTR currproc$[rsp], 0
+	jne	SHORT $LN6@ProcessGet
+
+; 412  : 			return -1;
+
+	mov	eax, -1
+	jmp	SHORT $LN9@ProcessGet
+$LN6@ProcessGet:
+$LN7@ProcessGet:
+
+; 413  : 	}
+; 414  : 	for (int i = 0; i < FILE_DESC_PER_PROCESS; i++) {
+
+	mov	DWORD PTR i$1[rsp], 0
+	jmp	SHORT $LN5@ProcessGet
+$LN4@ProcessGet:
+	mov	eax, DWORD PTR i$1[rsp]
+	inc	eax
+	mov	DWORD PTR i$1[rsp], eax
+$LN5@ProcessGet:
+	cmp	DWORD PTR i$1[rsp], 60			; 0000003cH
+	jge	SHORT $LN3@ProcessGet
+
+; 415  : 		AuVFSNode* file = currproc->fds[i];
+
+	movsxd	rax, DWORD PTR i$1[rsp]
+	mov	rcx, QWORD PTR currproc$[rsp]
+	mov	rax, QWORD PTR [rcx+rax*8+576]
+	mov	QWORD PTR file$2[rsp], rax
+
+; 416  : 		if (file) {
+
+	cmp	QWORD PTR file$2[rsp], 0
+	je	SHORT $LN2@ProcessGet
+
+; 417  : 			if (strcmp(filename, file->filename) == 0) {
+
+	mov	rax, QWORD PTR file$2[rsp]
+	mov	rdx, rax
+	mov	rcx, QWORD PTR filename$[rsp]
+	call	strcmp
+	test	eax, eax
+	jne	SHORT $LN1@ProcessGet
+
+; 418  : 				return i;
+
+	mov	eax, DWORD PTR i$1[rsp]
+	jmp	SHORT $LN9@ProcessGet
+$LN1@ProcessGet:
+$LN2@ProcessGet:
+
+; 419  : 			}
+; 420  : 		}
+; 421  : 	}
+
+	jmp	SHORT $LN4@ProcessGet
+$LN3@ProcessGet:
+
+; 422  : 
+; 423  : 	return -1;
+
+	mov	eax, -1
+$LN9@ProcessGet:
+
+; 424  : }
+
+	add	rsp, 72					; 00000048H
+	ret	0
+?ProcessGetFileDesc@@YAHPEBD@Z ENDP			; ProcessGetFileDesc
+_TEXT	ENDS
 ; Function compile flags: /Odtpy
 ; File e:\xeneva project\aurora\kernel\serv\fileserv.cpp
 _TEXT	SEGMENT

@@ -33,6 +33,8 @@
 #include <stdint.h>
 #include <_xeneva.h>
 
+#define MAX_STRING_LENGTH 4095
+
 #ifdef __cplusplus
 XE_EXTERN{
 #endif

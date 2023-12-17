@@ -32,22 +32,32 @@
 
 #include <_xeneva.h>
 
-/* font manager api */
+#ifdef __cplusplus
+XE_EXTERN{
+#endif
 
-/* _KeGetFontID -- get a font id by its name 
- * @param fontname -- name of the font
- */
-XE_EXTERN XE_LIB int _KeGetFontID(char* fontname);
 
-/*
- * _KeGetNumFonts -- returns total number
- * of fonts installed on the system
- */
-XE_EXTERN XE_LIB int _KeGetNumFonts();
+	/* font manager api */
 
-/*
- * _KeGetFontSize -- returns the size
- * of font by its name
- */
-XE_EXTERN XE_LIB int _KeGetFontSize(char* fontname);
+	/* _KeGetFontID -- get a font id by its name
+	 * @param fontname -- name of the font
+	 */
+	XE_LIB int _KeGetFontID(char* fontname);
+
+	/*
+	 * _KeGetNumFonts -- returns total number
+	 * of fonts installed on the system
+	 */
+	XE_LIB int _KeGetNumFonts();
+
+	/*
+	 * _KeGetFontSize -- returns the size
+	 * of font by its name
+	 */
+	XE_LIB int _KeGetFontSize(char* fontname);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif

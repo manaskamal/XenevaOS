@@ -11,12 +11,14 @@ e:\xeneva project\aurora\libs\xeclib\x64\debug\_string.obj
 e:\xeneva project\aurora\libs\xeclib\x64\debug\errno.obj
 e:\xeneva project\aurora\libs\xeclib\x64\debug\math.obj
 e:\xeneva project\aurora\libs\xeclib\x64\debug\qsort.obj
+e:\xeneva project\aurora\libs\xeclib\x64\debug\stat.obj
 e:\xeneva project\aurora\libs\xeclib\x64\debug\stdio.obj
 e:\xeneva project\aurora\libs\xeclib\x64\debug\stdlib.obj
 e:\xeneva project\aurora\libs\xeclib\x64\debug\string.obj
 e:\xeneva project\aurora\libs\xeclib\x64\debug\_heap.obj
 e:\xeneva project\aurora\libs\xeclib\x64\debug\_xeneva.obj
 e:\xeneva project\aurora\libs\xeclib\x64\debug\_xeprint.obj
+e:\xeneva project\aurora\libs\xeclib\x64\debug\time.obj
 f:\xeclib.dll
 f:\xeclib.map
 e:\xeneva project\aurora\x64\debug\xeclib.lib

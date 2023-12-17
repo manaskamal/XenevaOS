@@ -33,100 +33,109 @@
 #include <stdint.h>
 #include <_xeneva.h>
 
+#ifdef __cplusplus
+XE_EXTERN{
+#endif
+
+
 #pragma pack(push,1)
-typedef struct _ChCanvas_ {
-	int graphics_fd;
-	uint32_t screenWidth;
-	uint32_t screenHeight;
-	uint32_t bpp;
-	uint16_t scanline;
-	uint32_t pitch;
-	uint32_t canvasWidth;
-	uint32_t canvasHeight;
-	uint32_t* buffer;
-	size_t   bufferSz;
-	uint32_t* framebuff;
-}ChCanvas;
+	typedef struct _ChCanvas_ {
+		int graphics_fd;
+		uint32_t screenWidth;
+		uint32_t screenHeight;
+		uint32_t bpp;
+		uint16_t scanline;
+		uint32_t pitch;
+		uint32_t canvasWidth;
+		uint32_t canvasHeight;
+		uint32_t* buffer;
+		size_t   bufferSz;
+		uint32_t* framebuff;
+	}ChCanvas;
 #pragma pack(pop)
 
-XE_EXTERN XE_LIB int ChPrintLibName();
+	XE_LIB int ChPrintLibName();
 
-/*
-* ChCreateCanvas -- creates a new canvas
-* @param reqW -- requested width of the canvas
-* @param reqH -- requested height of the canvas
-*/
-XE_EXTERN XE_LIB ChCanvas* ChCreateCanvas(int reqW, int reqH);
+	/*
+	* ChCreateCanvas -- creates a new canvas
+	* @param reqW -- requested width of the canvas
+	* @param reqH -- requested height of the canvas
+	*/
+	XE_LIB ChCanvas* ChCreateCanvas(int reqW, int reqH);
 
-/*
-* ChAllocateBuffer -- allocates buffers for graphics
-* @param canvas -- Pointer to canvas
-*/
-XE_EXTERN XE_LIB int ChAllocateBuffer(ChCanvas* canvas);
+	/*
+	* ChAllocateBuffer -- allocates buffers for graphics
+	* @param canvas -- Pointer to canvas
+	*/
+	XE_LIB int ChAllocateBuffer(ChCanvas* canvas);
 
-/*
-* ChDeAllocateBuffer -- de-allocates buffers from
-* canvas
-* @param canvas -- pointer to canvas structure
-*/
-XE_EXTERN XE_LIB int ChDeAllocateBuffer(ChCanvas* canvas);
+	/*
+	* ChDeAllocateBuffer -- de-allocates buffers from
+	* canvas
+	* @param canvas -- pointer to canvas structure
+	*/
+	XE_LIB int ChDeAllocateBuffer(ChCanvas* canvas);
 
-/*
-* ChCanvasScreenUpdate -- updates screen buffer with canvas buffer
-* contents
-* @param canvas -- Pointer to canvas
-* @param x -- x position
-* @param y -- y position
-* @param w -- width of the canvas
-* @param h -- height of the canvas
-*/
-XE_EXTERN XE_LIB void ChCanvasScreenUpdate(ChCanvas* canvas, uint32_t x, uint32_t y, uint32_t w, uint32_t h);
+	/*
+	* ChCanvasScreenUpdate -- updates screen buffer with canvas buffer
+	* contents
+	* @param canvas -- Pointer to canvas
+	* @param x -- x position
+	* @param y -- y position
+	* @param w -- width of the canvas
+	* @param h -- height of the canvas
+	*/
+	XE_LIB void ChCanvasScreenUpdate(ChCanvas* canvas, uint32_t x, uint32_t y, uint32_t w, uint32_t h);
 
-/*
-* ChDrawPixel -- draws a pixel to canvas buffer
-* @param canvas -- pointer to canvas
-* @param x -- x position
-* @param y -- y position
-* @param color -- color of the pixel
-*/
-XE_EXTERN XE_LIB void ChDrawPixel(ChCanvas* canvas, uint32_t x, uint32_t y, uint32_t color);
+	/*
+	* ChDrawPixel -- draws a pixel to canvas buffer
+	* @param canvas -- pointer to canvas
+	* @param x -- x position
+	* @param y -- y position
+	* @param color -- color of the pixel
+	*/
+	XE_LIB void ChDrawPixel(ChCanvas* canvas, uint32_t x, uint32_t y, uint32_t color);
 
-/*
-* ChGetPixel -- retuns a pixel from canvas
-* @param canvas -- Pointer to canvas structure
-* @param x -- x position
-* @param y -- y position
-*/
-XE_EXTERN XE_LIB uint32_t ChGetPixel(ChCanvas* canvas, uint32_t x, uint32_t y);
+	/*
+	* ChGetPixel -- retuns a pixel from canvas
+	* @param canvas -- Pointer to canvas structure
+	* @param x -- x position
+	* @param y -- y position
+	*/
+	XE_LIB uint32_t ChGetPixel(ChCanvas* canvas, uint32_t x, uint32_t y);
 
-/*
-* ChCanvasFill -- fill the canvas with specific color
-* @param canvas -- pointer to canvas structure
-* @param w -- width to fill
-* @param h -- height to fill
-* @param color -- color to be filled with
-*/
-XE_EXTERN XE_LIB void ChCanvasFill(ChCanvas* canvas, uint32_t w, uint32_t h, uint32_t color);
+	/*
+	* ChCanvasFill -- fill the canvas with specific color
+	* @param canvas -- pointer to canvas structure
+	* @param w -- width to fill
+	* @param h -- height to fill
+	* @param color -- color to be filled with
+	*/
+	XE_LIB void ChCanvasFill(ChCanvas* canvas, uint32_t w, uint32_t h, uint32_t color);
 
-/*
-* ChGetScreenDiagonal -- get screen diagonal using
-* pythagorean theorem in centimetre
-* @param canv -- Pointer to canvas
-*/
-XE_EXTERN XE_LIB float ChGetScreenDiagonal(ChCanvas* canv);
+	/*
+	* ChGetScreenDiagonal -- get screen diagonal using
+	* pythagorean theorem in centimetre
+	* @param canv -- Pointer to canvas
+	*/
+	XE_LIB float ChGetScreenDiagonal(ChCanvas* canv);
 
-/*
-* ChGetScreenDPI -- converts screen resolution into
-* dot-per-inch in centimetre
-* @param canv -- Pointer to canvas
-*/
-XE_EXTERN XE_LIB float ChGetScreenDPI(ChCanvas* canv);
+	/*
+	* ChGetScreenDPI -- converts screen resolution into
+	* dot-per-inch in centimetre
+	* @param canv -- Pointer to canvas
+	*/
+	XE_LIB float ChGetScreenDPI(ChCanvas* canv);
 
-/*
-* ChGetScreenAspectRatio -- returns the aspect ration of the
-* screen
-* @param canv -- Pointer to canvas
-*/
-XE_EXTERN XE_LIB int ChGetScreenAspectRatio(ChCanvas* canv);
+	/*
+	* ChGetScreenAspectRatio -- returns the aspect ration of the
+	* screen
+	* @param canv -- Pointer to canvas
+	*/
+	XE_LIB int ChGetScreenAspectRatio(ChCanvas* canv);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

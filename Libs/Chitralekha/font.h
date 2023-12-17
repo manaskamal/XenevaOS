@@ -38,7 +38,11 @@
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
-/* pre-defined system fonts */
+#ifdef __cplusplus
+XE_EXTERN{
+#endif
+
+	/* pre-defined system fonts */
 #define ROBOTO_LIGHT  "Roboto-Light"
 #define ROBOTO_LIGHT_ITALIC  "Roboto-Light-Italic"
 #define ROBOTO_THIN   "Roboto-Thin"
@@ -47,97 +51,101 @@
 #define FORTE         "Forte"
 #define CONSOLAS      "Consolas"
 
-/* default font for xeneva */
+	/* default font for xeneva */
 #define XENEVA_DEFAULT_FONT  CORBEL
 
-typedef struct _ch_font_ {
-	int fileSz;
-	uint8_t* buffer;
-	uint32_t fontSz;
-	uint16_t key;
-	uint32_t kern;
+	typedef struct _ch_font_ {
+		int fileSz;
+		uint8_t* buffer;
+		uint32_t fontSz;
+		uint16_t key;
+		uint32_t kern;
 #ifdef _USE_FREETYPE
-	FT_Library lib;
-	FT_Face face;
-	FT_GlyphSlot slot;
+		FT_Library lib;
+		FT_Face face;
+		FT_GlyphSlot slot;
 #endif
-}ChFont;
+	}ChFont;
 
 
 
-/*
-* ChInitialiseFont -- initialise a font by a name
-* @param fontname -- name of the font
-*/
-XE_EXTERN XE_LIB ChFont *ChInitialiseFont(char* fontname);
+	/*
+	* ChInitialiseFont -- initialise a font by a name
+	* @param fontname -- name of the font
+	*/
+	XE_LIB ChFont *ChInitialiseFont(char* fontname);
 
-/*
-* ChFontSetSize -- set a font size
-* @param font -- Pointer to font
-* @param size -- size of the font
-*/
-XE_EXTERN XE_LIB void ChFontSetSize(ChFont* font, int size);
+	/*
+	* ChFontSetSize -- set a font size
+	* @param font -- Pointer to font
+	* @param size -- size of the font
+	*/
+	XE_LIB void ChFontSetSize(ChFont* font, int size);
 
-/*
-* ChFontDrawText -- draws a text using desired font
-* @param canv -- Pointer to canvas
-* @param font -- Pointer to font
-* @param string -- string to draw
-* @param penx -- x coordinate
-* @param peny -- y coordinate
-* @param sz -- font size
-* @param color -- color of the font
-*/
-XE_EXTERN XE_LIB void ChFontDrawText(ChCanvas *canv, ChFont* font, char* string, int penx, int peny, uint32_t sz, uint32_t color);
+	/*
+	* ChFontDrawText -- draws a text using desired font
+	* @param canv -- Pointer to canvas
+	* @param font -- Pointer to font
+	* @param string -- string to draw
+	* @param penx -- x coordinate
+	* @param peny -- y coordinate
+	* @param sz -- font size
+	* @param color -- color of the font
+	*/
+	XE_LIB void ChFontDrawText(ChCanvas *canv, ChFont* font, char* string, int penx, int peny, uint32_t sz, uint32_t color);
 
-/*
-* ChFontDrawChar -- draws a character using desired font
-* @param canv -- Pointer to canvas
-* @param font -- Pointer to font
-* @param string -- string to draw
-* @param penx -- x coordinate
-* @param peny -- y coordinate
-* @param sz -- font size
-* @param color -- color of the font
-*/
-XE_EXTERN XE_LIB void ChFontDrawChar(ChCanvas *canv, ChFont* font, char c, int penx, int peny, uint32_t sz, uint32_t color);
+	/*
+	* ChFontDrawChar -- draws a character using desired font
+	* @param canv -- Pointer to canvas
+	* @param font -- Pointer to font
+	* @param string -- string to draw
+	* @param penx -- x coordinate
+	* @param peny -- y coordinate
+	* @param sz -- font size
+	* @param color -- color of the font
+	*/
+	XE_LIB void ChFontDrawChar(ChCanvas *canv, ChFont* font, char c, int penx, int peny, uint32_t sz, uint32_t color);
 
-/*
-* ChFontGetWidth -- return the total width of font in
-* pixel size
-* @param font -- Pointer to font
-* @param string -- total string
-*/
-XE_EXTERN XE_LIB int ChFontGetWidth(ChFont* font, char* string);
+	/*
+	* ChFontGetWidth -- return the total width of font in
+	* pixel size
+	* @param font -- Pointer to font
+	* @param string -- total string
+	*/
+	XE_LIB int ChFontGetWidth(ChFont* font, char* string);
 
-/*
-* ChFontGetWidthChar -- return the total width of font in
-* pixel size of one character
-* @param font -- Pointer to font
-* @param c -- character
-*/
-XE_EXTERN XE_LIB int ChFontGetWidthChar(ChFont* font, char c);
+	/*
+	* ChFontGetWidthChar -- return the total width of font in
+	* pixel size of one character
+	* @param font -- Pointer to font
+	* @param c -- character
+	*/
+	XE_LIB int ChFontGetWidthChar(ChFont* font, char c);
 
-/*
-* ChFontGetHeight -- return the total height of font
-* in pixel size
-* @param font -- Pointer to font
-* @param string -- total string
-*/
-XE_EXTERN XE_LIB int ChFontGetHeight(ChFont* font, char* string);
+	/*
+	* ChFontGetHeight -- return the total height of font
+	* in pixel size
+	* @param font -- Pointer to font
+	* @param string -- total string
+	*/
+	XE_LIB int ChFontGetHeight(ChFont* font, char* string);
 
-/*
-* ChFontGetHeightChar -- return the total width of font in
-* pixel size of one character
-* @param font -- Pointer to font
-* @param c -- character
-*/
-XE_EXTERN XE_LIB int ChFontGetHeightChar(ChFont* font, char c);
+	/*
+	* ChFontGetHeightChar -- return the total width of font in
+	* pixel size of one character
+	* @param font -- Pointer to font
+	* @param c -- character
+	*/
+	XE_LIB int ChFontGetHeightChar(ChFont* font, char c);
 
-/*
-* ChFontClose -- closes an opened font
-* @param font -- Pointer to font
-*/
-XE_EXTERN XE_LIB int ChFontClose(ChFont* font);
+	/*
+	* ChFontClose -- closes an opened font
+	* @param font -- Pointer to font
+	*/
+	XE_LIB int ChFontClose(ChFont* font);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

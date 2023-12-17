@@ -30,7 +30,11 @@
 #ifndef __ERROR_NO_H__
 #define __ERROR_NO_H__
 
-extern int errno;
+#include <_xeneva.h>
+
+
+
+extern XE_LIB int errno;
 
 #define EPERM 1               /* Not super-user */
 #define ENOENT 2              /* No such file or directory */
@@ -155,5 +159,7 @@ extern int errno;
 #define EOWNERDEAD 142        /* Previous owner died */
 #define ESTRPIPE 143          /* Streams pipe error */
 #define EWOULDBLOCK EAGAIN    /* Operation would block */
+
+
 
 #endif

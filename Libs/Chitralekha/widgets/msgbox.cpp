@@ -130,7 +130,7 @@ XE_EXTERN XE_EXPORT ChMessageBox* ChCreateMessageBox(ChWindow* mainWin,char* tit
 	mb->wid.y = 26;
 	mb->wid.ChPaintHandler = ChMessageBoxPaint;
 	ChitralekhaApp* app = ChitralekhaStartSubApp(mainWin->app);
-	ChWindow *msgwin = ChCreateWindow(app, WINDOW_FLAG_MOVABLE, title, mainWin->info->x + mainWin->info->width / 2 - MESSAGEBOX_WIDTH / 2,
+	ChWindow *msgwin = ChCreateWindow(app, WINDOW_FLAG_MOVABLE | WINDOW_FLAG_MESSAGEBOX, title, mainWin->info->x + mainWin->info->width / 2 - MESSAGEBOX_WIDTH / 2,
 		mainWin->info->y + mainWin->info->height / 2 - MESSAGEBOX_HEIGHT / 2, MESSAGEBOX_WIDTH, MESSAGEBOX_HEIGHT);
 	mb->wid.w = MESSAGEBOX_WIDTH;
 	mb->wid.h = MESSAGEBOX_HEIGHT - 26;

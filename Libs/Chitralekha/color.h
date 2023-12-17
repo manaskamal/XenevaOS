@@ -34,7 +34,11 @@
 #include <_xeneva.h>
 #include "chitralekha.h"
 
-//! Color codes
+#ifdef __cplusplus
+XE_EXTERN{
+#endif
+
+	//! Color codes
 #define WHITE   0xFFFFFFFF
 #define SILVER  0xFFC0C0C0
 #define GRAY    0xFF808080
@@ -52,7 +56,7 @@
 #define FUCHSIA 0xFFFF00FF
 #define PURPLE  0xFF800080
 
-//! more colors are needed!!
+	//! more colors are needed!!
 #define DARKRED     0xFF8B0000
 #define BROWN       0xFFA52A2A
 #define FIREBRICK   0xFFB22222
@@ -95,58 +99,62 @@
 #define GET_BLUE(color)  ((color >> 0) & 0x000000FF)
 
 
-/*
- * ChColorAlphaBlend -- blend two color
- * @param color1 -- color 1
- * @param color2 -- color 2
- * @param opacity -- opacity of alpha
- */
-XE_EXTERN XE_LIB uint32_t ChColorAlphaBlend(uint32_t oldColor, uint32_t color2, double opacity);
+	/*
+	 * ChColorAlphaBlend -- blend two color
+	 * @param color1 -- color 1
+	 * @param color2 -- color 2
+	 * @param opacity -- opacity of alpha
+	 */
+	XE_LIB uint32_t ChColorAlphaBlend(uint32_t oldColor, uint32_t color2, double opacity);
 
-/*
- * ChColorAlphaBlend2 -- blend two color
- * @param color1 -- self explanatory
- * @param color2 -- self explanatory
- */
-XE_EXTERN XE_LIB uint32_t ChColorAlphaBlend2(uint32_t color1, uint32_t color2);
+	/*
+	 * ChColorAlphaBlend2 -- blend two color
+	 * @param color1 -- self explanatory
+	 * @param color2 -- self explanatory
+	 */
+	XE_LIB uint32_t ChColorAlphaBlend2(uint32_t color1, uint32_t color2);
 
-/*
-* ChColorDrawVerticalGradient -- draws vertical linear gradient
-* @param canv -- Pointer to canvas
-* @param x -- X coord of the rect
-* @param y -- Y coord of the rect
-* @param w -- Width of the rect
-* @param h -- Height of the rect
-* @param color1 -- starting color
-* @param color2 -- end color
-*/
-XE_EXTERN XE_LIB void ChColorDrawVerticalGradient(ChCanvas* canv, int x, int y, int w, int h, uint32_t color1, uint32_t color2);
+	/*
+	* ChColorDrawVerticalGradient -- draws vertical linear gradient
+	* @param canv -- Pointer to canvas
+	* @param x -- X coord of the rect
+	* @param y -- Y coord of the rect
+	* @param w -- Width of the rect
+	* @param h -- Height of the rect
+	* @param color1 -- starting color
+	* @param color2 -- end color
+	*/
+	XE_LIB void ChColorDrawVerticalGradient(ChCanvas* canv, int x, int y, int w, int h, uint32_t color1, uint32_t color2);
 
-extern uint32_t make_col(uint8_t red, uint8_t green, uint8_t blue);
-extern uint32_t make_col_a(uint8_t red, uint8_t green, uint8_t blue, uint8_t a);
+	extern uint32_t make_col(uint8_t red, uint8_t green, uint8_t blue);
+	extern uint32_t make_col_a(uint8_t red, uint8_t green, uint8_t blue, uint8_t a);
 
-/*
-* ChColorDrawHorizontalGradient -- draws horizontal linear gradient
-* @param canv -- Pointer to canvas
-* @param x -- X coord of the rect
-* @param y -- Y coord of the rect
-* @param w -- Width of the rect
-* @param h -- Height of the rect
-* @param color1 -- starting color
-* @param color2 -- end color
-*/
-XE_EXTERN XE_LIB void ChColorDrawHorizontalGradient(ChCanvas *canv, int x, int y, int w, int h, uint32_t color1, uint32_t color2);
+	/*
+	* ChColorDrawHorizontalGradient -- draws horizontal linear gradient
+	* @param canv -- Pointer to canvas
+	* @param x -- X coord of the rect
+	* @param y -- Y coord of the rect
+	* @param w -- Width of the rect
+	* @param h -- Height of the rect
+	* @param color1 -- starting color
+	* @param color2 -- end color
+	*/
+	XE_LIB void ChColorDrawHorizontalGradient(ChCanvas *canv, int x, int y, int w, int h, uint32_t color1, uint32_t color2);
 
-/*
-* ChColorDrawVerticalGradient -- draws vertical linear gradient
-* @param canv -- Pointer to canvas
-* @param x -- X coord of the rect
-* @param y -- Y coord of the rect
-* @param w -- Width of the rect
-* @param h -- Height of the rect
-* @param color1 -- starting color
-* @param color2 -- end color
-*/
-XE_EXTERN XE_LIB void ChColorDrawVerticalGradient(ChCanvas *canv, int x, int y, int w, int h, uint32_t color1, uint32_t color2);
+	/*
+	* ChColorDrawVerticalGradient -- draws vertical linear gradient
+	* @param canv -- Pointer to canvas
+	* @param x -- X coord of the rect
+	* @param y -- Y coord of the rect
+	* @param w -- Width of the rect
+	* @param h -- Height of the rect
+	* @param color1 -- starting color
+	* @param color2 -- end color
+	*/
+	XE_LIB void ChColorDrawVerticalGradient(ChCanvas *canv, int x, int y, int w, int h, uint32_t color1, uint32_t color2);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

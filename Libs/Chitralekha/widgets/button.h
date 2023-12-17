@@ -34,19 +34,28 @@
 #include "base.h"
 #include <_xeneva.h>
 
-typedef struct _CHButton_ {
-	ChWidget base;
-	char* title;
-}ChButton;
+#ifdef __cplusplus
+XE_EXTERN{
+#endif
 
-/*
-* ChCreateButton -- Create a button widget
-* @param x -- x coord of the widget
-* @param y -- y coord of the widget
-* @param w -- width of the button
-* @param h -- height of the button
-* @param text -- button text
-*/
-XE_EXTERN XE_EXPORT ChButton* ChCreateButton(int x, int y, int w, int h, char *text);
+
+	typedef struct _CHButton_ {
+		ChWidget base;
+		char* title;
+	}ChButton;
+
+	/*
+	* ChCreateButton -- Create a button widget
+	* @param x -- x coord of the widget
+	* @param y -- y coord of the widget
+	* @param w -- width of the button
+	* @param h -- height of the button
+	* @param text -- button text
+	*/
+	XE_EXPORT ChButton* ChCreateButton(int x, int y, int w, int h, char *text);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

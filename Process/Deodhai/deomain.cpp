@@ -51,7 +51,7 @@
 #include "draw.h"
 #include <boxblur.h>
 
-Cursor *arrow;
+Cursor *currentCursor;
 int mouse_fd;
 int kybrd_fd;
 int postbox_fd;
@@ -466,8 +466,8 @@ void CursorDrawBack(ChCanvas* canv,Cursor* cur, unsigned x, unsigned y) {
 void ComposeFrame(ChCanvas *canvas) {
 
 	if (_cursor_update_ || _cursor_drawback_){
-		CursorDrawBack(canvas, arrow, arrow->oldXPos, arrow->oldYPos);
-		AddDirtyClip(arrow->oldXPos, arrow->oldYPos, 24, 24);
+		CursorDrawBack(canvas, currentCursor, currentCursor->oldXPos, currentCursor->oldYPos);
+		AddDirtyClip(currentCursor->oldXPos, currentCursor->oldYPos, 24, 24);
 		if (_cursor_drawback_)
 			_cursor_update_ = true;
 		_cursor_drawback_ = false;
@@ -675,7 +675,7 @@ void ComposeFrame(ChCanvas *canvas) {
 			}
 			
 			if (((info->y - SHADOW_SIZE) + shad_h) >= canvas->screenHeight)
-				shad_h = 10; // canvas->screenHeight - info->y - SHADOW_SIZE;
+				shad_h = canvas->screenHeight - (info->y - SHADOW_SIZE);
 
 			Rect r1;
 			Rect r2;
@@ -983,10 +983,10 @@ void ComposeFrame(ChCanvas *canvas) {
 
 
 	if (_cursor_update_){
-		CursorStoreBack(canvas, arrow, arrow->xpos, arrow->ypos);
+		CursorStoreBack(canvas, currentCursor, currentCursor->xpos, currentCursor->ypos);
 
-		CursorDraw(canvas, arrow, arrow->xpos, arrow->ypos);
-		AddDirtyClip(arrow->xpos, arrow->ypos, 24, 24);
+		CursorDraw(canvas, currentCursor, currentCursor->xpos, currentCursor->ypos);
+		AddDirtyClip(currentCursor->xpos, currentCursor->ypos, 24, 24);
 	}
 
 	/* finally present all updates to framebuffer */
@@ -999,8 +999,8 @@ void ComposeFrame(ChCanvas *canvas) {
 		_always_on_top_update = false;
 
 	if (_cursor_update_) {
-		arrow->oldXPos = arrow->xpos;
-		arrow->oldYPos = arrow->ypos;
+		currentCursor->oldXPos = currentCursor->xpos;
+		currentCursor->oldYPos = currentCursor->ypos;
 		_cursor_update_ = false;
 	}
 }
@@ -1109,12 +1109,17 @@ void DeodhaiBroadcastKey(int code) {
 void DeodhaiCloseWindow(Window* win) {
 	int ownerId = win->ownerId;
 	int handle = win->handle;
+	uint8_t flags = win->flags;
 	WinSharedInfo* info = (WinSharedInfo*)win->sharedInfo;
-	BackDirtyAdd(info->x, info->y, info->width, info->height);
+	int width = info->width;
+	int height = info->height;
+	int x = info->x;
+	int y = info->y;
 	free(win->title);
 	_KeUnmapSharedMem(win->shWinKey);
 	_KeUnmapSharedMem(win->backBufferKey);
-	_KeMemUnmap(win->shadowBuffers, (info->width + SHADOW_SIZE * 2) * (info->height + SHADOW_SIZE * 2) * 4);
+	_KeMemUnmap(win->shadowBuffers, (width + SHADOW_SIZE * 2) * (height + SHADOW_SIZE * 2) * 4);
+	BackDirtyAdd(x - SHADOW_SIZE, y - SHADOW_SIZE, width + SHADOW_SIZE*2, height + SHADOW_SIZE*2);
 	DeodhaiRemoveWindow(win);
 	free(win);
 	PostEvent e;
@@ -1122,15 +1127,17 @@ void DeodhaiCloseWindow(Window* win) {
 	e.type = DEODHAI_REPLY_WINDOW_CLOSED;
 	_KeFileIoControl(postbox_fd, POSTBOX_PUT_EVENT, &e);
 
-	/* now broadcast this information, that a 
-	 * specific window has been destroyed
-	 */
-	memset(&e, 0, sizeof(PostEvent));
-	e.type = DEODHAI_BROADCAST_WINDESTROYED;
-	e.dword = ownerId;
-	e.dword2 = handle;
-	DeodhaiBroadcastMessage(&e, NULL);
-	_KeProcessSleep(1000000000);
+	if (!(flags & WINDOW_FLAG_MESSAGEBOX)) {
+		/* now broadcast this information, that a
+		 * specific window has been destroyed
+		 */
+		memset(&e, 0, sizeof(PostEvent));
+		e.type = DEODHAI_BROADCAST_WINDESTROYED;
+		e.dword = ownerId;
+		e.dword2 = handle;
+		DeodhaiBroadcastMessage(&e, NULL);
+		_KeProcessSleep(1000000000);
+	}
 }
 
 /* DrawWallpaper for getting jpeg image as wallpaper
@@ -1226,17 +1233,18 @@ int main(int argc, char* arv[]) {
 		surfaceBuffer[j * canv->canvasWidth + i] = GRAY; //0xFF938585;
 
 	DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
-	/*DrawWallpaper(canv, "/assam.jpg");
+	/*DrawWallpaper(canv, "/assaml.jpg");
 	DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);*/
 	ChCanvasScreenUpdate(canv, 0, 0, canv->canvasWidth, canv->canvasHeight);
 
 
 	InitialiseDirtyClipList();
 
-	arrow = CursorOpen("/pointer.bmp", CURSOR_TYPE_POINTER);
+	Cursor* arrow = CursorOpen("/pointer.bmp", CURSOR_TYPE_POINTER);
 	CursorRead(arrow);
+	currentCursor = arrow;
+	CursorStoreBack(canv, currentCursor, 0, 0);
 
-	CursorStoreBack(canv, arrow, 0, 0);
 	_cursor_update_ = true;
 	_cursor_drawback_ = true;
 	/* Open all required device file */
@@ -1266,8 +1274,8 @@ int main(int argc, char* arv[]) {
 		ComposeFrame(canv);
 		
 		if (mice_input.type == AU_INPUT_MOUSE) {
-			arrow->xpos = mice_input.xpos;
-			arrow->ypos = mice_input.ypos;
+			currentCursor->xpos = mice_input.xpos;
+			currentCursor->ypos = mice_input.ypos;
 			int button = mice_input.button_state;
 
 			DeodhaiWindowCheckDraggable(mice_input.xpos, mice_input.ypos, button);
@@ -1276,16 +1284,16 @@ int main(int argc, char* arv[]) {
 				DeodhaiBroadcastMouse(mice_input.xpos, mice_input.ypos, button);
 			
 			/* ensure clipping within the screen */
-			if (arrow->xpos <= 0)
-				arrow->xpos = 0;
-			if (arrow->ypos <= 0)
-				arrow->ypos = 0;
+			if (currentCursor->xpos <= 0)
+				currentCursor->xpos = 0;
+			if (currentCursor->ypos <= 0)
+				currentCursor->ypos = 0;
 
 
-			if (arrow->xpos + arrow->width >= screen_w)
-				arrow->xpos = screen_w - arrow->width;
-			if (arrow->ypos + arrow->height >= screen_h)
-				arrow->ypos = screen_h - arrow->height;
+			if (currentCursor->xpos + currentCursor->width >= screen_w)
+				currentCursor->xpos = screen_w - currentCursor->width;
+			if (currentCursor->ypos + currentCursor->height >= screen_h)
+				currentCursor->ypos = screen_h - currentCursor->height;
 			
 			_cursor_update_ = true;
 			_cursor_drawback_ = true;
@@ -1306,7 +1314,7 @@ int main(int argc, char* arv[]) {
 			uint8_t flags = event.dword5;
 
 			Window* win = DeodhaiCreateWindow(x, y, w, h, flags, event.from_id, event.charValue3);
-			//focusedWin = win;
+			focusedWin = win;
 
 			PostEvent e;
 			memset(&e, 0, sizeof(PostEvent));
@@ -1319,15 +1327,18 @@ int main(int argc, char* arv[]) {
 			
 			_KeFileIoControl(postbox_fd, POSTBOX_PUT_EVENT, &e);
 
-			/* broadcast it to all broadcast listener windows, about this news*/
-			memset(&e, 0, sizeof(PostEvent));
-			e.type = DEODHAI_BROADCAST_WINCREATED;
-			e.dword = win->ownerId;
-			e.dword2 = win->handle;
-			strcpy(e.charValue3, win->title);
-			DeodhaiBroadcastMessage(&e, win);
+			if (!(flags & WINDOW_FLAG_MESSAGEBOX)){
+				/* broadcast it to all broadcast listener windows, about this news*/
+				memset(&e, 0, sizeof(PostEvent));
+				e.type = DEODHAI_BROADCAST_WINCREATED;
+				e.dword = win->ownerId;
+				e.dword2 = win->handle;
+				strcpy(e.charValue3, win->title);
+				DeodhaiBroadcastMessage(&e, win);
+			}
 
 			_cursor_update_ = true;
+			_shadow_update = true;
 			memset(&event, 0, sizeof(PostEvent));
 
 		}

@@ -394,3 +394,31 @@ int ReadDir(int dirfd, void* dirent) {
 	if (fsys->read_dir)
 		return fsys->read_dir(fsys, dirfile, dire_);
 }
+
+/*
+ * ProcessGetFileDesc -- Searches all process file 
+ * descriptor entries for
+ * specific filename fd
+ */
+int ProcessGetFileDesc(const char* filename) {
+	x64_cli();
+	AuThread* thr = AuGetCurrentThread();
+	if (!thr)
+		return -1;
+	AuProcess* currproc = AuProcessFindThread(thr);
+	if (!currproc){
+		currproc = AuProcessFindSubThread(thr);
+		if (!currproc)
+			return -1;
+	}
+	for (int i = 0; i < FILE_DESC_PER_PROCESS; i++) {
+		AuVFSNode* file = currproc->fds[i];
+		if (file) {
+			if (strcmp(filename, file->filename) == 0) {
+				return i;
+			}
+		}
+	}
+
+	return -1;
+}

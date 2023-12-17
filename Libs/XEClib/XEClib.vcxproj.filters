@@ -148,6 +148,21 @@
     <ClInclude Include="includes\sys\_ketimer.h">
       <Filter>includes\sys</Filter>
     </ClInclude>
+    <ClInclude Include="includes\assert.h">
+      <Filter>includes</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\fcntl.h">
+      <Filter>includes</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\sys\stat.h">
+      <Filter>includes\sys</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\time.h">
+      <Filter>includes</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\_xeprint.h">
+      <Filter>includes</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="string.cpp" />
@@ -183,5 +198,8 @@
     <ClCompile Include="sys\_xeprint.cpp">
       <Filter>sys</Filter>
     </ClCompile>
+    <ClCompile Include="time.cpp" />
+    <ClCompile Include="stat.cpp" />
+    <ClCompile Include="_xeprint.cpp" />
   </ItemGroup>
 </Project>

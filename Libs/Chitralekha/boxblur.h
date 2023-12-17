@@ -27,18 +27,31 @@
 *
 **/
 
+#ifndef __BOX_BLUR_H__
+#define __BOX_BLUR_H__
+
 #include "color.h"
 #include "chitralekha.h"
 #include <_xeneva.h>
 
-/*
-* ChBoxBlur -- make an image blurred
-* @param canv -- Pointer to canvas
-* @param inputpix -- Input image buffer
-* @param outpix -- Output image buffer
-* @param cx -- x start
-* @param cy -- y start
-* @param w -- width of the image
-* @param h -- height of the image
-*/
-XE_EXTERN XE_LIB void ChBoxBlur(ChCanvas* canv, uint32_t *inputpix, uint32_t* outpix, int cx, int cy, int w, int h);
+#ifdef __cplusplus
+XE_EXTERN{
+#endif
+
+	/*
+	* ChBoxBlur -- make an image blurred
+	* @param canv -- Pointer to canvas
+	* @param inputpix -- Input image buffer
+	* @param outpix -- Output image buffer
+	* @param cx -- x start
+	* @param cy -- y start
+	* @param w -- width of the image
+	* @param h -- height of the image
+	*/
+	XE_LIB void ChBoxBlur(ChCanvas* canv, uint32_t *inputpix, uint32_t* outpix, int cx, int cy, int w, int h);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

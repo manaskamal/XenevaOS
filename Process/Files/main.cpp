@@ -40,6 +40,7 @@
 #include <widgets\window.h>
 #include <widgets\msgbox.h>
 #include <string.h>
+#include <widgets\menubar.h>
 #include <stdlib.h>
 
 ChitralekhaApp *app;
@@ -96,9 +97,22 @@ int main(int argc, char* argv[]){
 	ChWindowBroadcastIcon(app, "/file.bmp");
 	win2 = NULL;
 
-	ChButton* button = ChCreateButton(0, 0, 100, 75, "Click Me !");
+	ChButton* button = ChCreateButton(mainWin->info->width / 2 - 100 / 2, mainWin->info->height / 2 - 75/2, 100, 75, "Click Me !");
 	ChWindowAddWidget(mainWin,(ChWidget*)button);
 	button->base.ChActionHandler = ButtonClicked;
+
+	ChMenubar* mb = ChCreateMenubar(mainWin);
+
+	ChMenuButton *file = ChCreateMenubutton(mb, "File");
+	ChMenubarAddButton(mb, file);
+	ChMenuButton *edit = ChCreateMenubutton(mb, "Edit");
+	ChMenubarAddButton(mb, edit);
+	ChMenuButton *view = ChCreateMenubutton(mb, "View");
+	ChMenubarAddButton(mb, view);
+	ChMenuButton *help = ChCreateMenubutton(mb, "Help");
+	ChMenubarAddButton(mb, help);
+	ChWindowAddWidget(mainWin, (ChWidget*)mb);
+
 	ChWindowPaint(mainWin);
 
 	PostEvent e;

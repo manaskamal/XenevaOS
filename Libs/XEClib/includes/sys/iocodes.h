@@ -27,6 +27,9 @@
 *
 **/
 
+#ifndef __IOCODES_H__
+#define __IOCODES_H__
+
 #define SOUND_REGISTER_SNDPLR 100
 #define SOUND_START_OUTPUT    102
 #define SOUND_STOP_OUTPUT     103
@@ -58,3 +61,5 @@
 #define POSTBOX_GET_EVENT  404
 #define POSTBOX_CREATE_ROOT  405
 #define POSTBOX_GET_EVENT_ROOT  406
+
+#endif

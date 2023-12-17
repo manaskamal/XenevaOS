@@ -35,7 +35,7 @@
 #include "..\font.h"
 #include <_xeneva.h>
 
-/* commands to deodhai */
+	/* commands to deodhai */
 #define DEODHAI_MESSAGE_CREATEWIN  50
 #define DEODHAI_MESSAGE_WINDESTROY 
 #define DEODHAI_MESSAGE_BROADCAST_ICON 52
@@ -52,41 +52,49 @@
 #define DEODHAI_REPLY_FOCUS_CHANGED 154
 #define DEODHAI_REPLY_WINDOW_CLOSED 156
 
-/* deodhai broadcast definitions, reply from
- * deodhai */
+	/* deodhai broadcast definitions, reply from
+	 * deodhai */
 #define DEODHAI_BROADCAST_WINCREATED  170
 #define DEODHAI_BROADCAST_WINDESTROYED 171
 #define DEODHAI_BROADCAST_ICON 172
 #define DEODHAI_BROADCAST_FOCUS_CHANGED 173
 
 
-typedef struct _ChApp_ {
-	int postboxfd;
-	int sharedWinkey;
-	int backbufkey;
-	void* fb;
-	void* shwinbuf;
-	int buffer_width;
-	int buffer_height;
-	uint32_t windowHandle;
-	ChFont* baseFont;
-	uint16_t currentID;
-	_ChApp_ *parent;
-}ChitralekhaApp;
+	typedef struct _ChApp_ {
+		int postboxfd;
+		int sharedWinkey;
+		int backbufkey;
+		void* fb;
+		void* shwinbuf;
+		int buffer_width;
+		int buffer_height;
+		uint32_t windowHandle;
+		ChFont* baseFont;
+		uint16_t currentID;
+		struct _ChApp_ *parent;
+	}ChitralekhaApp;
 
-/*
-* ChitralekhaStartApp -- start an application instance
-*/
-XE_EXTERN XE_LIB ChitralekhaApp* ChitralekhaStartApp(int argc, char* argv[]);
+#ifdef __cplusplus
+XE_EXTERN{
+#endif
 
-/*
-* ChitralekhaStartApp -- start an application instance
-*/
-XE_EXTERN XE_LIB ChitralekhaApp* ChitralekhaStartSubApp(ChitralekhaApp* parent);
+	/*
+	* ChitralekhaStartApp -- start an application instance
+	*/
+	XE_LIB ChitralekhaApp* ChitralekhaStartApp(int argc, char* argv[]);
 
-/*
-* ChitralekhaGetApp -- return running application instance
-*/
-XE_EXTERN XE_LIB ChitralekhaApp* ChitralekhaGetApp();
+	/*
+	* ChitralekhaStartApp -- start an application instance
+	*/
+	XE_LIB ChitralekhaApp* ChitralekhaStartSubApp(ChitralekhaApp* parent);
+
+	/*
+	* ChitralekhaGetApp -- return running application instance
+	*/
+	XE_LIB ChitralekhaApp* ChitralekhaGetApp();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
