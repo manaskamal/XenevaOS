@@ -351,3 +351,12 @@ int getchar() {
 	int read_bytes = _KeReadFile(XENEVA_STDIN, buf, 1);
 	return buf[0];
 }
+
+int scanf(const char* format, ...) {
+	// not implemented
+	return 0;
+}
+
+int sscanf(const char* str, const char* format, ...) {
+	return 0;
+}

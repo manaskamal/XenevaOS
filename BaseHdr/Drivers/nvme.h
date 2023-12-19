@@ -30,4 +30,18 @@
 #ifndef __NVME_H__
 #define __NVME_H__
 
+#include <stdint.h>
+#include <aurora.h>
+
+typedef struct _nvme_dev_ {
+	uint64_t mmiobase;
+	uint8_t majorVersion;
+	uint8_t minorVersion;
+}NVMeDev;
+
+/*
+* NVMeInitialise -- start nvme storage class
+*/
+extern int NVMeInitialise();
+
 #endif

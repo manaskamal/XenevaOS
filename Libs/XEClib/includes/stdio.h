@@ -154,6 +154,9 @@ XE_EXTERN{
 
 	XE_LIB int putchar(int c);
 
+	XE_LIB int scanf(const char* format, ...);
+
+	XE_LIB int sscanf(const char* str, const char* format, ...);
 #ifdef __cplusplus
 }
 #endif

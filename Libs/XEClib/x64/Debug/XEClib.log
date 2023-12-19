@@ -1,16 +1,16 @@
-﻿Build started 17-12-2023 ৰাতিপু 11:26:12.
+﻿Build started 17-12-2023 আবেলি 9:52:27.
      1>Project "E:\Xeneva Project\Aurora\Libs\XEClib\XEClib.vcxproj" on node 2 (Rebuild target(s)).
      1>_NASM:
          setjmp.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp842d85083cac4effb14a9d4935f44eef.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp57b5098ea059467d8aae22ba1e425ede.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\setjmp.obj"  "E:\Xeneva Project\Aurora\Libs\XEClib\setjmp.asm"
        _NASM:
          _callbase.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmpe600ba0899e04d87ad227b87b571d04b.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmpba5767f459a241de8e9f38f16402a3fd.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\_callbase.obj"  "E:\Xeneva Project\Aurora\Libs\XEClib\_callbase.asm"
      1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(935,5): warning MSB8027: Two or more files with the name of _xeprint.cpp will produce outputs to the same location. This can lead to an incorrect build result.  The files involved are sys\_xeprint.cpp, _xeprint.cpp.
        ClCompile:
-         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes\c++" /Zi /nologo /W3 /WX- /sdl- /MP /Od /D ARCH_X64 /D YES_DYNAMIC /D DYNAMIC_EXPORTER /D _WINDLL /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt c++\ios.cpp c++\iostream.cpp c++\istream.cpp c++\memory.cpp c++\ostream.cpp c++\_string.cpp errno.cpp math.cpp qsort.cpp stat.cpp stdio.cpp stdlib.cpp string.cpp sys\_heap.cpp sys\_xeneva.cpp sys\_xeprint.cpp time.cpp _xeprint.cpp
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes\c++" /Zi /nologo /W3 /WX- /sdl- /MP /Od /D ARCH_X64 /D YES_DYNAMIC /D DYNAMIC_EXPORTER /D _WINDLL /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt c++\ios.cpp c++\iostream.cpp c++\istream.cpp c++\memory.cpp c++\ostream.cpp c++\_string.cpp errno.cpp math.cpp qsort.cpp stat.cpp stdio.cpp stdlib.cpp string.cpp sys\_heap.cpp sys\_xeneva.cpp sys\_xeprint.cpp time.cpp _xeinput.cpp _xeprint.cpp
      1>cl : Command line warning D9025: overriding '/sdl-' with '/GS-'
      1>cl : Command line warning D9002: ignoring unknown option '/arch:SSE2'
      1>cl : Command line warning D9030: '/Gm' is incompatible with multiprocessing; ignoring /MP switch
@@ -42,6 +42,15 @@
      1>_xeprint.cpp(765): warning C4244: 'argument' : conversion from '__int64' to 'unsigned int', possible loss of data
      1>_xeprint.cpp(767): warning C4267: '=' : conversion from 'size_t' to 'int', possible loss of data
      1>_xeprint.cpp(790): warning C4267: '=' : conversion from 'size_t' to 'int', possible loss of data
+         _xeinput.cpp
+     1>E:\Xeneva Project\Aurora\Libs\XEClib\includes\ctype.h(50): warning C4005: 'isascii' : macro redefinition
+                 E:\Xeneva Project\Aurora\Libs\XEClib\includes\ctype.h(39) : see previous definition of 'isascii'
+     1>_xeinput.cpp(47): warning C4267: '=' : conversion from 'size_t' to 'int', possible loss of data
+     1>_xeinput.cpp(54): warning C4267: '=' : conversion from 'size_t' to 'int', possible loss of data
+     1>_xeinput.cpp(162): warning C4244: 'argument' : conversion from 'unsigned __int64' to 'unsigned int', possible loss of data
+     1>_xeinput.cpp(177): warning C4244: 'argument' : conversion from 'unsigned __int64' to 'unsigned int', possible loss of data
+     1>_xeinput.cpp(208): warning C4244: 'argument' : conversion from 'unsigned __int64' to 'unsigned int', possible loss of data
+     1>_xeinput.cpp(229): warning C4244: 'argument' : conversion from 'unsigned __int64' to 'unsigned int', possible loss of data
          time.cpp
      1>time.cpp(45): warning C4172: returning address of local variable or temporary
      1>time.cpp(99): warning C4172: returning address of local variable or temporary
@@ -138,6 +147,7 @@
          x64\Debug\_xeneva.obj
          x64\Debug\_xeprint.obj
          x64\Debug\time.obj
+         x64\Debug\_xeinput.obj
          x64\Debug\_xeprint.obj
          x64\Debug\setjmp.obj
          x64\Debug\_callbase.obj
@@ -151,4 +161,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:01.95
+Time Elapsed 00:00:02.24

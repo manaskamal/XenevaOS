@@ -217,6 +217,7 @@
     <ClCompile Include="sys\_xeneva.cpp" />
     <ClCompile Include="sys\_xeprint.cpp" />
     <ClCompile Include="time.cpp" />
+    <ClCompile Include="_xeinput.cpp" />
     <ClCompile Include="_xeprint.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

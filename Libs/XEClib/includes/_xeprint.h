@@ -48,7 +48,7 @@ XE_EXTERN{
 	XE_LIB double strtod(const char *nptr, char **endptr);
 	XE_LIB float strtof(const char *nptr, char **endptr);
 	int _xeprint(char* output, int outputlen, const char* format, va_list list);
-
+	int _xeinput(const char *input, const char *format, va_list list);
 #ifdef __cplusplus
 }
 #endif

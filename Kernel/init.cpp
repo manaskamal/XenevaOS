@@ -51,6 +51,7 @@
 #include <Drivers\mouse.h>
 #include <Drivers\ps2kybrd.h>
 #include <Drivers\rtc.h>
+#include <Drivers\nvme.h>
 #include <Hal\x86_64_sched.h>
 #include <process.h>
 #include <Fs\Dev\devfs.h>
@@ -82,6 +83,7 @@ void _AuMain(KERNEL_BOOT_INFO *info) {
 	AuVFSInitialise();
 	AuTextOut("BootDev HID -> %x, UID -> %x, CID -> %x \r\n", info->hid, info->uid, info->cid);
 	AuAHCIInitialise();
+	NVMeInitialise();
 
 	AuConsolePostInitialise(info);
 	/* Here initialize all legacy bus system

@@ -6,7 +6,7 @@ INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
 CONST	SEGMENT
-$SG5007	DB	'BootDev HID -> %x, UID -> %x, CID -> %x ', 0dH, 0aH, 00H
+$SG5020	DB	'BootDev HID -> %x, UID -> %x, CID -> %x ', 0dH, 0aH, 00H
 CONST	ENDS
 PUBLIC	?_AuMain@@YAXPEAU_KERNEL_BOOT_INFO_@@@Z		; _AuMain
 EXTRN	?AuConsoleInitialize@@YAXPEAU_KERNEL_BOOT_INFO_@@_N@Z:PROC ; AuConsoleInitialize
@@ -31,6 +31,7 @@ EXTRN	?AuTTYInitialise@@YAXXZ:PROC			; AuTTYInitialise
 EXTRN	?AuPS2MouseInitialise@@YAXXZ:PROC		; AuPS2MouseInitialise
 EXTRN	?AuPS2KybrdInitialize@@YAXXZ:PROC		; AuPS2KybrdInitialize
 EXTRN	?AuRTCInitialize@@YAXXZ:PROC			; AuRTCInitialize
+EXTRN	?NVMeInitialise@@YAHXZ:PROC			; NVMeInitialise
 EXTRN	?AuDrvMngrInitialize@@YAXPEAU_KERNEL_BOOT_INFO_@@@Z:PROC ; AuDrvMngrInitialize
 EXTRN	?AuInitialiseLoader@@YAXXZ:PROC			; AuInitialiseLoader
 EXTRN	?AuSoundInitialise@@YAXXZ:PROC			; AuSoundInitialise
@@ -40,7 +41,7 @@ EXTRN	?AuTimerDataInitialise@@YAXXZ:PROC		; AuTimerDataInitialise
 EXTRN	?FontManagerInitialise@@YAXXZ:PROC		; FontManagerInitialise
 pdata	SEGMENT
 $pdata$?_AuMain@@YAXPEAU_KERNEL_BOOT_INFO_@@@Z DD imagerel $LN5
-	DD	imagerel $LN5+230
+	DD	imagerel $LN5+235
 	DD	imagerel $unwind$?_AuMain@@YAXPEAU_KERNEL_BOOT_INFO_@@@Z
 pdata	ENDS
 xdata	SEGMENT
@@ -53,46 +54,46 @@ _TEXT	SEGMENT
 info$ = 48
 ?_AuMain@@YAXPEAU_KERNEL_BOOT_INFO_@@@Z PROC		; _AuMain
 
-; 74   : void _AuMain(KERNEL_BOOT_INFO *info) {
+; 75   : void _AuMain(KERNEL_BOOT_INFO *info) {
 
 $LN5:
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 40					; 00000028H
 
-; 75   : 	AuConsoleInitialize(info, true);	
+; 76   : 	AuConsoleInitialize(info, true);	
 
 	mov	dl, 1
 	mov	rcx, QWORD PTR info$[rsp]
 	call	?AuConsoleInitialize@@YAXPEAU_KERNEL_BOOT_INFO_@@_N@Z ; AuConsoleInitialize
 
-; 76   : 	AuPmmngrInitialize(info);
+; 77   : 	AuPmmngrInitialize(info);
 
 	mov	rcx, QWORD PTR info$[rsp]
 	call	?AuPmmngrInitialize@@YAXPEAU_KERNEL_BOOT_INFO_@@@Z ; AuPmmngrInitialize
 
-; 77   : 	AuVmmngrInitialize();
+; 78   : 	AuVmmngrInitialize();
 
 	call	?AuVmmngrInitialize@@YAXXZ		; AuVmmngrInitialize
 
-; 78   : 	AuHeapInitialize();
+; 79   : 	AuHeapInitialize();
 
 	call	AuHeapInitialize
 
-; 79   : 
-; 80   : 	AuHalInitialise(info);
+; 80   : 
+; 81   : 	AuHalInitialise(info);
 
 	mov	rcx, QWORD PTR info$[rsp]
 	call	AuHalInitialise
 
-; 81   : 	AuInitialiseSerial();
+; 82   : 	AuInitialiseSerial();
 
 	call	?AuInitialiseSerial@@YAXXZ		; AuInitialiseSerial
 
-; 82   : 	AuVFSInitialise();
+; 83   : 	AuVFSInitialise();
 
 	call	?AuVFSInitialise@@YAXXZ			; AuVFSInitialise
 
-; 83   : 	AuTextOut("BootDev HID -> %x, UID -> %x, CID -> %x \r\n", info->hid, info->uid, info->cid);
+; 84   : 	AuTextOut("BootDev HID -> %x, UID -> %x, CID -> %x \r\n", info->hid, info->uid, info->cid);
 
 	mov	rax, QWORD PTR info$[rsp]
 	mov	r9d, DWORD PTR [rax+178]
@@ -100,128 +101,132 @@ $LN5:
 	mov	r8d, DWORD PTR [rax+174]
 	mov	rax, QWORD PTR info$[rsp]
 	mov	edx, DWORD PTR [rax+170]
-	lea	rcx, OFFSET FLAT:$SG5007
+	lea	rcx, OFFSET FLAT:$SG5020
 	call	AuTextOut
 
-; 84   : 	AuAHCIInitialise();
+; 85   : 	AuAHCIInitialise();
 
 	call	?AuAHCIInitialise@@YAXXZ		; AuAHCIInitialise
 
-; 85   : 
-; 86   : 	AuConsolePostInitialise(info);
+; 86   : 	NVMeInitialise();
+
+	call	?NVMeInitialise@@YAHXZ			; NVMeInitialise
+
+; 87   : 
+; 88   : 	AuConsolePostInitialise(info);
 
 	mov	rcx, QWORD PTR info$[rsp]
 	call	?AuConsolePostInitialise@@YAXPEAU_KERNEL_BOOT_INFO_@@@Z ; AuConsolePostInitialise
 
-; 87   : 	/* Here initialize all legacy bus system
-; 88   : 	 * like ps2.... using AuLegacyBusInitialize() */
-; 89   : 	AuPS2MouseInitialise();
+; 89   : 	/* Here initialize all legacy bus system
+; 90   : 	 * like ps2.... using AuLegacyBusInitialize() */
+; 91   : 	AuPS2MouseInitialise();
 
 	call	?AuPS2MouseInitialise@@YAXXZ		; AuPS2MouseInitialise
 
-; 90   : 	AuRTCInitialize();
+; 92   : 	AuRTCInitialize();
 
 	call	?AuRTCInitialize@@YAXXZ			; AuRTCInitialize
 
-; 91   : 	AuPS2KybrdInitialize();
+; 93   : 	AuPS2KybrdInitialize();
 
 	call	?AuPS2KybrdInitialize@@YAXXZ		; AuPS2KybrdInitialize
 
-; 92   : 
-; 93   : 	/*initialise kernel tty */
-; 94   : 	AuTTYInitialise();
+; 94   : 
+; 95   : 	/*initialise kernel tty */
+; 96   : 	AuTTYInitialise();
 
 	call	?AuTTYInitialise@@YAXXZ			; AuTTYInitialise
 
-; 95   : 
-; 96   : 	/* initialise the shared mem man */
-; 97   : 	AuInitialiseSHMMan();
+; 97   : 
+; 98   : 	/* initialise the shared mem man */
+; 99   : 	AuInitialiseSHMMan();
 
 	call	?AuInitialiseSHMMan@@YAXXZ		; AuInitialiseSHMMan
 
-; 98   : 
-; 99   : 	SharedMemMapListInitialise();
+; 100  : 
+; 101  : 	SharedMemMapListInitialise();
 
 	call	?SharedMemMapListInitialise@@YAXXZ	; SharedMemMapListInitialise
 
-; 100  : 
-; 101  : 	/* initialise sound service */
-; 102  : 	AuSoundInitialise();
+; 102  : 
+; 103  : 	/* initialise sound service */
+; 104  : 	AuSoundInitialise();
 
 	call	?AuSoundInitialise@@YAXXZ		; AuSoundInitialise
 
-; 103  : 
-; 104  : 	/* initialise PostBoxIPCManager */
-; 105  : 	AuIPCPostBoxInitialise();
+; 105  : 
+; 106  : 	/* initialise PostBoxIPCManager */
+; 107  : 	AuIPCPostBoxInitialise();
 
 	call	?AuIPCPostBoxInitialise@@YAXXZ		; AuIPCPostBoxInitialise
 
-; 106  : 
-; 107  : 	/* initialise aurora timer manager*/
-; 108  : 	AuTimerDataInitialise();
+; 108  : 
+; 109  : 	/* initialise aurora timer manager*/
+; 110  : 	AuTimerDataInitialise();
 
 	call	?AuTimerDataInitialise@@YAXXZ		; AuTimerDataInitialise
 
-; 109  : 
-; 110  : 	/* initialise pre network service*/
-; 111  : 	AuInitialiseNet();
+; 111  : 
+; 112  : 	/* initialise pre network service*/
+; 113  : 	AuInitialiseNet();
 
 	call	?AuInitialiseNet@@YAXXZ			; AuInitialiseNet
 
-; 112  : 
-; 113  : 	x64_cli();
+; 114  : 
+; 115  : 	x64_cli();
 
 	call	x64_cli
 
-; 114  : 	AuSchedulerInitialise();
+; 116  : 	AuSchedulerInitialise();
 
 	call	?AuSchedulerInitialise@@YAXXZ		; AuSchedulerInitialise
 
-; 115  : 	
-; 116  : 	/*initialise aurora driver manager*/
-; 117  : 	AuDrvMngrInitialize(info);
+; 117  : 	
+; 118  : 	/*initialise aurora driver manager*/
+; 119  : 	AuDrvMngrInitialize(info);
 
 	mov	rcx, QWORD PTR info$[rsp]
 	call	?AuDrvMngrInitialize@@YAXPEAU_KERNEL_BOOT_INFO_@@@Z ; AuDrvMngrInitialize
 
-; 118  : 
-; 119  : 	/* intiialise all system fonts */
-; 120  : 	FontManagerInitialise();
+; 120  : 
+; 121  : 	/* intiialise all system fonts */
+; 122  : 	FontManagerInitialise();
 
 	call	?FontManagerInitialise@@YAXXZ		; FontManagerInitialise
 
-; 121  : 	
-; 122  : 	/* initialise all application processors*/
-; 123  : 	AuHalPostInitialise();
+; 123  : 	
+; 124  : 	/* initialise all application processors*/
+; 125  : 	AuHalPostInitialise();
 
 	call	AuHalPostInitialise
 
-; 124  : 	
-; 125  : 	AuInitialiseLoader();
+; 126  : 	
+; 127  : 	AuInitialiseLoader();
 
 	call	?AuInitialiseLoader@@YAXXZ		; AuInitialiseLoader
 
-; 126  : 
-; 127  : 	/* make the kernel standalone*/
-; 128  : 	AuVmmngrBootFree();
+; 128  : 
+; 129  : 	/* make the kernel standalone*/
+; 130  : 	AuVmmngrBootFree();
 
 	call	?AuVmmngrBootFree@@YAXXZ		; AuVmmngrBootFree
 
-; 129  : 	/* Process initialisation begins here */
-; 130  : 	AuStartRootProc();
+; 131  : 	/* Process initialisation begins here */
+; 132  : 	AuStartRootProc();
 
 	call	?AuStartRootProc@@YAXXZ			; AuStartRootProc
 
-; 131  : 	AuSchedulerStart();
+; 133  : 	AuSchedulerStart();
 
 	call	?AuSchedulerStart@@YAXXZ		; AuSchedulerStart
 $LN2@AuMain:
 
-; 132  : 	for (;;);
+; 134  : 	for (;;);
 
 	jmp	SHORT $LN2@AuMain
 
-; 133  : }
+; 135  : }
 
 	add	rsp, 40					; 00000028H
 	ret	0

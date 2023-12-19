@@ -89,7 +89,7 @@ XE_EXTERN{
 // Visopsys, Copyright (C) 1998-2020 J. Andrew McLaughlin
 #define atou(string) ((unsigned) _str2num(string, 10, 0, NULL))
 #define atoull(string) _str2num(string, 10, 0, NULL)
-#define atoo(sring) ((unsigned)_str2num(string, 8, 0, NULL))
+#define atoo(string) ((unsigned)_str2num(string, 8, 0, NULL))
 #define atooll(string) _str2num(string, 8, 0, NULL)
 #define dtoa(num, string, round) _dbl2str(num, string, round)
 #define ftoa(num, string) _flt2str(num, string, round)
