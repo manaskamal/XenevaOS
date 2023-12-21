@@ -1233,8 +1233,8 @@ int main(int argc, char* arv[]) {
 		surfaceBuffer[j * canv->canvasWidth + i] = GRAY; //0xFF938585;
 
 	DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
-	/*DrawWallpaper(canv, "/assaml.jpg");
-	DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);*/
+	DrawWallpaper(canv, "/moun.jpg");
+	DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
 	ChCanvasScreenUpdate(canv, 0, 0, canv->canvasWidth, canv->canvasHeight);
 
 
@@ -1314,7 +1314,6 @@ int main(int argc, char* arv[]) {
 			uint8_t flags = event.dword5;
 
 			Window* win = DeodhaiCreateWindow(x, y, w, h, flags, event.from_id, event.charValue3);
-			focusedWin = win;
 
 			PostEvent e;
 			memset(&e, 0, sizeof(PostEvent));

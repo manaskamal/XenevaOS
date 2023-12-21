@@ -10,9 +10,13 @@ _BSS	SEGMENT
 ?nvme@@3PEAU_nvme_dev_@@EA DQ 01H DUP (?)		; nvme
 _BSS	ENDS
 CONST	SEGMENT
-$SG3273	DB	'[NVMe]: no nvme class found ', 0aH, 00H
+$SG3277	DB	'Base addr q -> %x ', 0aH, 00H
+	ORG $+4
+$SG3287	DB	'[NVMe]: no nvme class found ', 0aH, 00H
 	ORG $+2
-$SG3286	DB	'[NVMe]: device present bar0 -> %x, version %d.%d ', 0aH, 00H
+$SG3301	DB	'[NVMe]: device present bar0 -> %x, version %d.%d ', 0aH, 00H
+	ORG $+5
+$SG3302	DB	'Cap min page sz -> %d max -> %d ', 0aH, 00H
 CONST	ENDS
 PUBLIC	?NVMeInitialise@@YAHXZ				; NVMeInitialise
 PUBLIC	?NVMeOutl@@YAXHI@Z				; NVMeOutl
@@ -21,6 +25,9 @@ PUBLIC	?NVMeOutW@@YAXHG@Z				; NVMeOutW
 PUBLIC	?NVMeInW@@YAGH@Z				; NVMeInW
 PUBLIC	?NVMeOutB@@YAXHE@Z				; NVMeOutB
 PUBLIC	?NVMeInB@@YAEH@Z				; NVMeInB
+PUBLIC	?NVMeOutQ@@YAXH_K@Z				; NVMeOutQ
+PUBLIC	?NVMeInQ@@YA_KH@Z				; NVMeInQ
+PUBLIC	?NVMeResetController@@YAXXZ			; NVMeResetController
 EXTRN	AuPCIEScanClass:PROC
 EXTRN	AuPCIERead:PROC
 EXTRN	AuTextOut:PROC
@@ -29,7 +36,7 @@ EXTRN	memset:PROC
 EXTRN	kmalloc:PROC
 pdata	SEGMENT
 $pdata$?NVMeInitialise@@YAHXZ DD imagerel $LN6
-	DD	imagerel $LN6+310
+	DD	imagerel $LN6+444
 	DD	imagerel $unwind$?NVMeInitialise@@YAHXZ
 $pdata$?NVMeOutl@@YAXHI@Z DD imagerel $LN3
 	DD	imagerel $LN3+46
@@ -49,10 +56,16 @@ $pdata$?NVMeOutB@@YAXHE@Z DD imagerel $LN3
 $pdata$?NVMeInB@@YAEH@Z DD imagerel $LN3
 	DD	imagerel $LN3+39
 	DD	imagerel $unwind$?NVMeInB@@YAEH@Z
+$pdata$?NVMeOutQ@@YAXH_K@Z DD imagerel $LN3
+	DD	imagerel $LN3+88
+	DD	imagerel $unwind$?NVMeOutQ@@YAXH_K@Z
+$pdata$?NVMeInQ@@YA_KH@Z DD imagerel $LN3
+	DD	imagerel $LN3+58
+	DD	imagerel $unwind$?NVMeInQ@@YA_KH@Z
 pdata	ENDS
 xdata	SEGMENT
 $unwind$?NVMeInitialise@@YAHXZ DD 010401H
-	DD	0c204H
+	DD	0e204H
 $unwind$?NVMeOutl@@YAXHI@Z DD 010c01H
 	DD	0220cH
 $unwind$?NVMeInl@@YAIH@Z DD 010801H
@@ -65,7 +78,105 @@ $unwind$?NVMeOutB@@YAXHE@Z DD 010c01H
 	DD	0220cH
 $unwind$?NVMeInB@@YAEH@Z DD 010801H
 	DD	02208H
+$unwind$?NVMeOutQ@@YAXH_K@Z DD 010d01H
+	DD	0220dH
+$unwind$?NVMeInQ@@YA_KH@Z DD 010801H
+	DD	06208H
 xdata	ENDS
+; Function compile flags: /Odtpy
+; File e:\xeneva project\aurora\kernel\drivers\nvme.cpp
+_TEXT	SEGMENT
+?NVMeResetController@@YAXXZ PROC			; NVMeResetController
+
+; 129  : 
+; 130  : }
+
+	ret	0
+?NVMeResetController@@YAXXZ ENDP			; NVMeResetController
+_TEXT	ENDS
+; Function compile flags: /Odtpy
+; File e:\xeneva project\aurora\kernel\drivers\nvme.cpp
+_TEXT	SEGMENT
+mmio$ = 32
+reg$ = 64
+?NVMeInQ@@YA_KH@Z PROC					; NVMeInQ
+
+; 122  : uint64_t NVMeInQ(int reg) {
+
+$LN3:
+	mov	DWORD PTR [rsp+8], ecx
+	sub	rsp, 56					; 00000038H
+
+; 123  : 	volatile uint64_t* mmio = (uint64_t*)(nvme->mmiobase + reg);
+
+	movsxd	rax, DWORD PTR reg$[rsp]
+	mov	rcx, QWORD PTR ?nvme@@3PEAU_nvme_dev_@@EA ; nvme
+	add	rax, QWORD PTR [rcx]
+	mov	QWORD PTR mmio$[rsp], rax
+
+; 124  : 	AuTextOut("Base addr q -> %x \n", mmio);
+
+	mov	rdx, QWORD PTR mmio$[rsp]
+	lea	rcx, OFFSET FLAT:$SG3277
+	call	AuTextOut
+
+; 125  : 	return *mmio;
+
+	mov	rax, QWORD PTR mmio$[rsp]
+	mov	rax, QWORD PTR [rax]
+
+; 126  : }
+
+	add	rsp, 56					; 00000038H
+	ret	0
+?NVMeInQ@@YA_KH@Z ENDP					; NVMeInQ
+_TEXT	ENDS
+; Function compile flags: /Odtpy
+; File e:\xeneva project\aurora\kernel\drivers\nvme.cpp
+_TEXT	SEGMENT
+mmio$ = 0
+reg$ = 32
+value$ = 40
+?NVMeOutQ@@YAXH_K@Z PROC				; NVMeOutQ
+
+; 112  : void NVMeOutQ(int reg, uint64_t value) {
+
+$LN3:
+	mov	QWORD PTR [rsp+16], rdx
+	mov	DWORD PTR [rsp+8], ecx
+	sub	rsp, 24
+
+; 113  : 
+; 114  : 	volatile uint64_t* mmio = (uint64_t*)((nvme->mmiobase + reg) | (nvme->mmiobase + (reg + 4)) << 32);
+
+	movsxd	rax, DWORD PTR reg$[rsp]
+	mov	rcx, QWORD PTR ?nvme@@3PEAU_nvme_dev_@@EA ; nvme
+	mov	rcx, QWORD PTR [rcx]
+	add	rcx, rax
+	mov	rax, rcx
+	mov	ecx, DWORD PTR reg$[rsp]
+	add	ecx, 4
+	movsxd	rcx, ecx
+	mov	rdx, QWORD PTR ?nvme@@3PEAU_nvme_dev_@@EA ; nvme
+	mov	rdx, QWORD PTR [rdx]
+	add	rdx, rcx
+	mov	rcx, rdx
+	shl	rcx, 32					; 00000020H
+	or	rax, rcx
+	mov	QWORD PTR mmio$[rsp], rax
+
+; 115  : 	*mmio = value;
+
+	mov	rax, QWORD PTR mmio$[rsp]
+	mov	rcx, QWORD PTR value$[rsp]
+	mov	QWORD PTR [rax], rcx
+
+; 116  : }
+
+	add	rsp, 24
+	ret	0
+?NVMeOutQ@@YAXH_K@Z ENDP				; NVMeOutQ
+_TEXT	ENDS
 ; Function compile flags: /Odtpy
 ; File e:\xeneva project\aurora\kernel\drivers\nvme.cpp
 _TEXT	SEGMENT
@@ -268,24 +379,25 @@ _TEXT	SEGMENT
 major$ = 48
 minor$ = 49
 func$ = 52
-nvmeVer$ = 56
-dev$ = 60
-bus$ = 64
-device$ = 72
-nvmemmio$ = 80
-base$ = 88
+bus$ = 56
+base32$ = 64
+nvmeVer$ = 72
+dev$ = 76
+device$ = 80
+nvmemmio$ = 88
+cap$ = 96
 ?NVMeInitialise@@YAHXZ PROC				; NVMeInitialise
 
-; 109  : int NVMeInitialise() {
+; 134  : int NVMeInitialise() {
 
 $LN6:
-	sub	rsp, 104				; 00000068H
+	sub	rsp, 120				; 00000078H
 
-; 110  : 	int bus, dev, func = 0;
+; 135  : 	int bus, dev, func = 0;
 
 	mov	DWORD PTR func$[rsp], 0
 
-; 111  : 	uint64_t device = AuPCIEScanClass(0x01, 0x08, &bus, &dev, &func);
+; 136  : 	uint64_t device = AuPCIEScanClass(0x01, 0x08, &bus, &dev, &func);
 
 	lea	rax, QWORD PTR func$[rsp]
 	mov	QWORD PTR [rsp+32], rax
@@ -296,31 +408,31 @@ $LN6:
 	call	AuPCIEScanClass
 	mov	QWORD PTR device$[rsp], rax
 
-; 112  : 	if (device == UINT32_MAX) {
+; 137  : 	if (device == UINT32_MAX) {
 
 	mov	eax, -1					; ffffffffH
 	cmp	QWORD PTR device$[rsp], rax
 	jne	SHORT $LN3@NVMeInitia
 
-; 113  : 		AuTextOut("[NVMe]: no nvme class found \n");
+; 138  : 		AuTextOut("[NVMe]: no nvme class found \n");
 
-	lea	rcx, OFFSET FLAT:$SG3273
+	lea	rcx, OFFSET FLAT:$SG3287
 	call	AuTextOut
 $LN2@NVMeInitia:
 
-; 114  : 		for (;;);
+; 139  : 		for (;;);
 
 	jmp	SHORT $LN2@NVMeInitia
 
-; 115  : 		return -1;
+; 140  : 		return -1;
 
 	mov	eax, -1
 	jmp	$LN4@NVMeInitia
 $LN3@NVMeInitia:
 
-; 116  : 	}
-; 117  : 
-; 118  : 	uint64_t base = AuPCIERead(device, PCI_BAR0, bus, dev, func);
+; 141  : 	}
+; 142  : 
+; 143  : 	uint64_t base32 = AuPCIERead(device, PCI_BAR0, bus, dev, func);
 
 	mov	eax, DWORD PTR func$[rsp]
 	mov	DWORD PTR [rsp+32], eax
@@ -330,89 +442,135 @@ $LN3@NVMeInitia:
 	mov	rcx, QWORD PTR device$[rsp]
 	call	AuPCIERead
 	mov	eax, eax
-	mov	QWORD PTR base$[rsp], rax
+	mov	QWORD PTR base32$[rsp], rax
 
-; 119  : 	uint64_t nvmemmio = (uint64_t)AuMapMMIO(base, 2);
+; 144  : 	base32 &= 0xFFFFFFF0;
 
-	mov	edx, 2
-	mov	rcx, QWORD PTR base$[rsp]
+	mov	eax, -16				; fffffff0H
+	mov	rcx, QWORD PTR base32$[rsp]
+	and	rcx, rax
+	mov	rax, rcx
+	mov	QWORD PTR base32$[rsp], rax
+
+; 145  : 	base32 |= (AuPCIERead(device, PCI_BAR1, bus, dev, func) & 0xFFFFFFF0) << 32;
+
+	mov	eax, DWORD PTR func$[rsp]
+	mov	DWORD PTR [rsp+32], eax
+	mov	r9d, DWORD PTR dev$[rsp]
+	mov	r8d, DWORD PTR bus$[rsp]
+	mov	edx, 20
+	mov	rcx, QWORD PTR device$[rsp]
+	call	AuPCIERead
+	and	eax, -16				; fffffff0H
+	shl	eax, 32					; 00000020H
+	mov	eax, eax
+	mov	rcx, QWORD PTR base32$[rsp]
+	or	rcx, rax
+	mov	rax, rcx
+	mov	QWORD PTR base32$[rsp], rax
+
+; 146  : 
+; 147  : 
+; 148  : 	uint64_t nvmemmio = (uint64_t)AuMapMMIO(base32, 8);
+
+	mov	edx, 8
+	mov	rcx, QWORD PTR base32$[rsp]
 	call	AuMapMMIO
 	mov	QWORD PTR nvmemmio$[rsp], rax
 
-; 120  : 
-; 121  : 	nvme = (NVMeDev*)kmalloc(sizeof(NVMeDev));
+; 149  : 
+; 150  : 	nvme = (NVMeDev*)kmalloc(sizeof(NVMeDev));
 
 	mov	ecx, 16
 	call	kmalloc
 	mov	QWORD PTR ?nvme@@3PEAU_nvme_dev_@@EA, rax ; nvme
 
-; 122  : 	memset(nvme, 0, sizeof(NVMeDev));
+; 151  : 	memset(nvme, 0, sizeof(NVMeDev));
 
 	mov	r8d, 16
 	xor	edx, edx
 	mov	rcx, QWORD PTR ?nvme@@3PEAU_nvme_dev_@@EA ; nvme
 	call	memset
 
-; 123  : 	nvme->mmiobase = nvmemmio;
+; 152  : 	nvme->mmiobase = nvmemmio;
 
 	mov	rax, QWORD PTR ?nvme@@3PEAU_nvme_dev_@@EA ; nvme
 	mov	rcx, QWORD PTR nvmemmio$[rsp]
 	mov	QWORD PTR [rax], rcx
 
-; 124  : 
-; 125  : 
-; 126  : 	uint32_t nvmeVer = NVMeInl(NVME_REGISTER_VS);
+; 153  : 
+; 154  : 
+; 155  : 	uint32_t nvmeVer = NVMeInl(NVME_REGISTER_VS);
 
 	mov	ecx, 8
 	call	?NVMeInl@@YAIH@Z			; NVMeInl
 	mov	DWORD PTR nvmeVer$[rsp], eax
 
-; 127  : 	uint8_t minor = nvmeVer >> 8 & 0xff;
+; 156  : 	uint8_t minor = nvmeVer >> 8 & 0xff;
 
 	mov	eax, DWORD PTR nvmeVer$[rsp]
 	shr	eax, 8
 	and	eax, 255				; 000000ffH
 	mov	BYTE PTR minor$[rsp], al
 
-; 128  : 	uint8_t major = nvmeVer >> 16 & 0xff;
+; 157  : 	uint8_t major = nvmeVer >> 16 & 0xffff;
 
 	mov	eax, DWORD PTR nvmeVer$[rsp]
 	shr	eax, 16
-	and	eax, 255				; 000000ffH
+	and	eax, 65535				; 0000ffffH
 	mov	BYTE PTR major$[rsp], al
 
-; 129  : 
-; 130  : 	nvme->majorVersion = major;
+; 158  : 
+; 159  : 	nvme->majorVersion = major;
 
 	mov	rax, QWORD PTR ?nvme@@3PEAU_nvme_dev_@@EA ; nvme
 	movzx	ecx, BYTE PTR major$[rsp]
 	mov	BYTE PTR [rax+8], cl
 
-; 131  : 	nvme->minorVersion = minor;
+; 160  : 	nvme->minorVersion = minor;
 
 	mov	rax, QWORD PTR ?nvme@@3PEAU_nvme_dev_@@EA ; nvme
 	movzx	ecx, BYTE PTR minor$[rsp]
 	mov	BYTE PTR [rax+9], cl
 
-; 132  : 
-; 133  : 	AuTextOut("[NVMe]: device present bar0 -> %x, version %d.%d \n", nvmemmio, major, minor);
+; 161  : 
+; 162  : 	uint64_t cap = NVMeInQ(NVME_REGISTER_CAP);
+
+	xor	ecx, ecx
+	call	?NVMeInQ@@YA_KH@Z			; NVMeInQ
+	mov	QWORD PTR cap$[rsp], rax
+
+; 163  : 	AuTextOut("[NVMe]: device present bar0 -> %x, version %d.%d \n", nvmemmio, major, minor);
 
 	movzx	eax, BYTE PTR minor$[rsp]
 	movzx	ecx, BYTE PTR major$[rsp]
 	mov	r9d, eax
 	mov	r8d, ecx
 	mov	rdx, QWORD PTR nvmemmio$[rsp]
-	lea	rcx, OFFSET FLAT:$SG3286
+	lea	rcx, OFFSET FLAT:$SG3301
 	call	AuTextOut
 
-; 134  : 	return 0;
+; 164  : 	AuTextOut("Cap min page sz -> %d max -> %d \n", (((cap) >> 48) & 0xf), (((cap) >> 52) & 0xf));
+
+	mov	rax, QWORD PTR cap$[rsp]
+	shr	rax, 52					; 00000034H
+	and	rax, 15
+	mov	rcx, QWORD PTR cap$[rsp]
+	shr	rcx, 48					; 00000030H
+	and	rcx, 15
+	mov	r8, rax
+	mov	rdx, rcx
+	lea	rcx, OFFSET FLAT:$SG3302
+	call	AuTextOut
+
+; 165  : 	return 0;
 
 	xor	eax, eax
 $LN4@NVMeInitia:
 
-; 135  : }
+; 166  : }
 
-	add	rsp, 104				; 00000068H
+	add	rsp, 120				; 00000078H
 	ret	0
 ?NVMeInitialise@@YAHXZ ENDP				; NVMeInitialise
 _TEXT	ENDS

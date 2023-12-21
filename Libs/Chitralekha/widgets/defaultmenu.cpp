@@ -45,15 +45,22 @@ void ChDefaultMenubarPainter(ChWidget* wid, ChWindow* win) {
 		MENUBAR_COLORDARK);
 	ChFont* mainFont = win->app->baseFont;
 	ChFontSetSize(mainFont, 10);
-	int mbut_pox_x = 2;
+	int mbut_pox_x = mb->wid.x + 4;
 	for (int i = 0; i < mb->menubuttons->pointer; i++) {
 		ChMenuButton* mbut = (ChMenuButton*)list_get_at(mb->menubuttons, i);
 		int title_w = ChFontGetWidth(mainFont, mbut->title);
 		int title_h = ChFontGetHeight(mainFont, mbut->title);
-		mbut->wid.w = title_w + 10;
+		mbut->wid.w = title_w + 8;
 		mbut->wid.x = mbut_pox_x;
-		ChFontDrawText(win->canv, mainFont, mbut->title,mbut->wid.x +  (mbut->wid.x + mbut->wid.w) / 2 - title_w / 2,
-			mbut->wid.y + (mbut->wid.y + mbut->wid.h) / 2 - title_h / 2, 10, WHITE);
-		mbut_pox_x += mbut->wid.w + 2;
+		ChColorDrawVerticalGradient(win->canv, mbut->wid.x, mbut->wid.y, mbut->wid.w, mbut->wid.h, MENUBAR_COLORLIGHT,
+			MENUBAR_COLORDARK);
+		if (mbut->hover)
+			ChDrawRect(win->canv, mbut->wid.x, mbut->wid.y, mbut->wid.w, mbut->wid.h, 0xFF3F8EDA);
+
+		ChFontDrawText(win->canv, mainFont, mbut->title,mbut->wid.x + (mbut->wid.w/2)- title_w / 2,
+			mbut->wid.y + ((mbut->wid.y + mbut->wid.h)/2) - title_h / 2, 10, WHITE);
+		mbut_pox_x += mbut->wid.w + 4;
 	}
+	if (!mb->allpainted)
+		mb->allpainted = true;
 }

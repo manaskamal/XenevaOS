@@ -103,6 +103,31 @@ uint8_t NVMeInB(int reg) {
 	volatile uint8_t* mmio = (uint8_t*)(nvme->mmiobase + reg);
 	return *mmio;
 }
+
+/*
+* NVMeOutB -- writes 8 bit data to nvme register
+* @param reg -- Register
+* @param value -- data to write
+*/
+void NVMeOutQ(int reg, uint64_t value) {
+
+	volatile uint64_t* mmio = (uint64_t*)((nvme->mmiobase + reg) | (nvme->mmiobase + (reg + 4)) << 32);
+	*mmio = value;
+}
+
+/*
+* NVMeInB -- reads 8 bit data to nvme register
+* @param reg -- Register
+*/
+uint64_t NVMeInQ(int reg) {
+	volatile uint64_t* mmio = (uint64_t*)(nvme->mmiobase + reg);
+	AuTextOut("Base addr q -> %x \n", mmio);
+	return *mmio;
+}
+
+void NVMeResetController() {
+
+}
 /*
  * NVMeInitialise -- start nvme storage class
  */
@@ -115,8 +140,12 @@ int NVMeInitialise() {
 		return -1;
 	}
 
-	uint64_t base = AuPCIERead(device, PCI_BAR0, bus, dev, func);
-	uint64_t nvmemmio = (uint64_t)AuMapMMIO(base, 2);
+	uint64_t base32 = AuPCIERead(device, PCI_BAR0, bus, dev, func);
+	base32 &= 0xFFFFFFF0;
+	base32 |= (AuPCIERead(device, PCI_BAR1, bus, dev, func) & 0xFFFFFFF0) << 32;
+
+
+	uint64_t nvmemmio = (uint64_t)AuMapMMIO(base32, 8);
 
 	nvme = (NVMeDev*)kmalloc(sizeof(NVMeDev));
 	memset(nvme, 0, sizeof(NVMeDev));
@@ -125,12 +154,14 @@ int NVMeInitialise() {
 
 	uint32_t nvmeVer = NVMeInl(NVME_REGISTER_VS);
 	uint8_t minor = nvmeVer >> 8 & 0xff;
-	uint8_t major = nvmeVer >> 16 & 0xff;
+	uint8_t major = nvmeVer >> 16 & 0xffff;
 
 	nvme->majorVersion = major;
 	nvme->minorVersion = minor;
 
+	uint64_t cap = NVMeInQ(NVME_REGISTER_CAP);
 	AuTextOut("[NVMe]: device present bar0 -> %x, version %d.%d \n", nvmemmio, major, minor);
+	AuTextOut("Cap min page sz -> %d max -> %d \n", (((cap) >> 48) & 0xf), (((cap) >> 52) & 0xf));
 	return 0;
 }
 

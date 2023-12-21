@@ -82,7 +82,7 @@ void WindowHandleMessage(PostEvent *e) {
 }
 
 void ButtonClicked(ChWidget* wid, ChWindow* win) {
-	ChMessageBox* mb = ChCreateMessageBox(mainWin, "Dimpismita", "I LOVE YOU DIMPISMITA++ !!", MSGBOX_TYPE_ONLYCLOSE, MSGBOX_ICON_SUCCESS);
+	ChMessageBox* mb = ChCreateMessageBox(mainWin, "Hello Message Box", "This is a Message Box !!", MSGBOX_TYPE_ONLYCLOSE, MSGBOX_ICON_SUCCESS);
 	ChMessageBoxShow(mb);
 }
 

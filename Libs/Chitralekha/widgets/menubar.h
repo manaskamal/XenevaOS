@@ -45,12 +45,14 @@ XE_EXTERN{
 	typedef struct _menubar_ {
 		ChWidget wid;
 		list_t* menubuttons;
-		int menubutton_posx;
+		bool allpainted;
 	}ChMenubar;
 
 	typedef struct _menubutton_ {
 		ChWidget wid;
 		char* title;
+		bool hover;
+		bool clicked;
 	}ChMenuButton;
 
 	/*

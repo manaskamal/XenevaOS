@@ -32,9 +32,49 @@
 
 extern void ChDefaultMenubarPainter(ChWidget* wid, ChWindow* win);
 
+/*
+ * ChMenubarDestroy -- free up all allocated resources by menubar
+ * @param wid -- Pointer to menubar widget
+ * @param win -- Pointer to main window
+ */
 void ChMenubarDestroy(ChWidget* wid, ChWindow* win) {
 	ChMenubar* mb = (ChMenubar*)wid;
+	for (int i = 0; i < mb->menubuttons->pointer; i++) {
+		ChMenuButton *mbut = (ChMenuButton*)list_get_at(mb->menubuttons, i);
+		if (mbut->wid.ChDestroy)
+			mbut->wid.ChDestroy((ChWidget*)mbut, win);
+	}
+	free(mb->menubuttons);
 	free(mb);
+}
+
+/*
+ * ChMenubarMouseEvent -- menubar mouse event handler
+ * @param wid -- Pointer to Menubar widget
+ * @param win -- Pointer to Chitralekha Window
+ * @param x -- Mouse x
+ * @param y -- Mouse y
+ * @param button -- Mouse button state
+ */
+void ChMenubarMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, int button) {
+	ChMenubar* mb = (ChMenubar*)wid;
+	if (mb->allpainted) {
+		for (int i = 0; i < mb->menubuttons->pointer; i++) {
+			ChMenuButton* mbut = (ChMenuButton*)list_get_at(mb->menubuttons, i);
+			mbut->hover = false;
+			mbut->clicked = false;
+			if ((x >(win->info->x + mbut->wid.x) && x < (win->info->x + mbut->wid.x + mbut->wid.w)) &&
+				(y >(win->info->y + mbut->wid.y) && y < (win->info->y + mbut->wid.y + mbut->wid.h))) {
+				mbut->hover = true;
+				if (button)
+					mbut->clicked = true;
+			}
+		}
+	}
+
+	mb->wid.ChPaintHandler(wid, win);
+	ChWindowUpdate(win, wid->x,
+		wid->y, wid->w - 1, wid->h, false, true);
 }
 /*
  * ChCreateMenubar -- create a new menubar
@@ -43,34 +83,51 @@ void ChMenubarDestroy(ChWidget* wid, ChWindow* win) {
 ChMenubar* ChCreateMenubar(ChWindow* win) {
 	ChMenubar* mb = (ChMenubar*)malloc(sizeof(ChMenubar));
 	memset(mb, 0, sizeof(ChMenubar));
-	mb->wid.x = 0;
+	mb->wid.x = 1;
 	mb->wid.y = 26; 
-	mb->wid.w = win->info->width;
+	mb->wid.w = win->info->width - 1;
 	mb->wid.h = 26;
 	mb->wid.ChDestroy = ChMenubarDestroy;
-	mb->wid.ChMouseEvent = 0;
+	mb->wid.ChMouseEvent = ChMenubarMouseEvent;
 	mb->wid.ChPaintHandler = ChDefaultMenubarPainter;
 	mb->menubuttons = initialize_list();
-	mb->menubutton_posx = mb->wid.x;
+	mb->allpainted = false;
 	return mb;
 }
 
+/*
+ * ChMenubuttonDestroy -- frees up all allocated resources
+ * by menu button
+ */
+void ChMenuButtonDestroy(ChWidget* wid, ChWindow* win) {
+	ChMenuButton *mbut = (ChMenuButton*)wid;
+	free(mbut->title);
+}
+/*
+ * ChCreateMenubutton -- create a new menubar button
+ * @param mb -- Pointer to menubar
+ * @param title -- title of the button
+ */
 ChMenuButton *ChCreateMenubutton(ChMenubar* mb, char* title) {
 	int title_len = strlen(title);
 	int mbut_w = title_len + 10;
 	ChMenuButton* mbut = (ChMenuButton*)malloc(sizeof(ChMenuButton));
 	memset(mbut, 0, sizeof(ChMenuButton));
-	mbut->wid.x = mb->menubutton_posx;
+	mbut->wid.x = 0;
 	mbut->wid.y = mb->wid.y;
 	mbut->wid.w = mbut_w;
 	mbut->wid.h = mb->wid.h;
+	mbut->wid.ChDestroy = ChMenuButtonDestroy;
+	mbut->wid.ChActionHandler = 0;
 	mbut->title = (char*)malloc(strlen(title));
 	memset(mbut->title, 0, strlen(title));
 	strcpy(mbut->title, title);
 	return mbut;
 }
 
+/*
+ * ChMenubarAddButton -- add a button to menubar button list
+ */
 void ChMenubarAddButton(ChMenubar* mb, ChMenuButton *mbut) {
 	list_add(mb->menubuttons, mbut);
-	mb->menubutton_posx += mbut->wid.w + 10;
 }
