@@ -36,6 +36,7 @@
 #include "window.h"
 #include "list.h"
 #include <_xeneva.h>
+#include "menu.h"
 
 #ifdef __cplusplus
 XE_EXTERN{
@@ -53,6 +54,7 @@ XE_EXTERN{
 		char* title;
 		bool hover;
 		bool clicked;
+		ChPopupMenu* popupMenu;
 	}ChMenuButton;
 
 	/*
@@ -62,7 +64,12 @@ XE_EXTERN{
 	XE_LIB ChMenubar* ChCreateMenubar(ChWindow* win);
 	XE_LIB ChMenuButton *ChCreateMenubutton(ChMenubar* mb, char* title);
 	XE_LIB void ChMenubarAddButton(ChMenubar* mb, ChMenuButton *mbut);
-
+	/*
+	* ChMenuButtonAddMenu -- add popup menu to given menubutton
+	* @param mbutton -- Pointer to Menu Button
+	* @param popup -- Pointer to Popup Menu
+	*/
+	XE_LIB void ChMenuButtonAddMenu(ChMenuButton* mbutton, ChPopupMenu* popup);
 
 #ifdef __cplusplus
 }

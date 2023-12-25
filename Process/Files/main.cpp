@@ -42,11 +42,13 @@
 #include <string.h>
 #include <widgets\menubar.h>
 #include <stdlib.h>
+#include <widgets\menu.h>
 
 ChitralekhaApp *app;
 ChWindow* mainWin;
 ChWindow* win2;
 jmp_buf jmp;
+ChPopupMenu* pm;
 
 
 /*
@@ -82,8 +84,8 @@ void WindowHandleMessage(PostEvent *e) {
 }
 
 void ButtonClicked(ChWidget* wid, ChWindow* win) {
-	ChMessageBox* mb = ChCreateMessageBox(mainWin, "Hello Message Box", "This is a Message Box !!", MSGBOX_TYPE_ONLYCLOSE, MSGBOX_ICON_SUCCESS);
-	ChMessageBoxShow(mb);
+	//ChMessageBox* mb = ChCreateMessageBox(mainWin, "Dimpismita", "I_LOVE_YOU_SO_MUCH_DEHA++ !!", MSGBOX_TYPE_ONLYCLOSE, MSGBOX_ICON_SUCCESS);
+	//ChMessageBoxShow(mb);
 }
 
 /*
@@ -97,13 +99,15 @@ int main(int argc, char* argv[]){
 	ChWindowBroadcastIcon(app, "/file.bmp");
 	win2 = NULL;
 
+	pm = NULL;
+
 	ChButton* button = ChCreateButton(mainWin->info->width / 2 - 100 / 2, mainWin->info->height / 2 - 75/2, 100, 75, "Click Me !");
 	ChWindowAddWidget(mainWin,(ChWidget*)button);
 	button->base.ChActionHandler = ButtonClicked;
 
 	ChMenubar* mb = ChCreateMenubar(mainWin);
 
-	ChMenuButton *file = ChCreateMenubutton(mb, "File");
+	ChMenuButton *file = ChCreateMenubutton(mb, "Language");
 	ChMenubarAddButton(mb, file);
 	ChMenuButton *edit = ChCreateMenubutton(mb, "Edit");
 	ChMenubarAddButton(mb, edit);
@@ -113,7 +117,21 @@ int main(int argc, char* argv[]){
 	ChMenubarAddButton(mb, help);
 	ChWindowAddWidget(mainWin, (ChWidget*)mb);
 
+	pm = ChCreatePopupMenu(mainWin);
+	ChMenuItem* item = ChCreateMenuItem("Assamese", pm);
+	ChMenuItem* item7 = ChCreateMenuItem("Bengali", pm);
+	ChMenuItem* item2 = ChCreateMenuItem("Hindi", pm);
+	ChMenuItem* item3 = ChCreateMenuItem("English(India)", pm);
+	ChMenuItem* item4 = ChCreateMenuItem("English(United States", pm);
+	ChMenuItem* item5 = ChCreateMenuItem("Chinese(Mandarin)", pm);
+	ChMenuItem* item6 = ChCreateMenuItem("Japanese(Hyojungo)", pm);
+	ChMenuItem* item8 = ChCreateMenuItem("Manipuri", pm);
+	ChMenuItem* item9 = ChCreateMenuItem("Mizo", pm);
+	ChMenuButtonAddMenu(file, pm);
+
+
 	ChWindowPaint(mainWin);
+
 
 	PostEvent e;
 	memset(&e, 0, sizeof(PostEvent));

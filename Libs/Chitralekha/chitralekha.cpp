@@ -124,6 +124,16 @@ int ChDeAllocateBuffer(ChCanvas* canvas) {
 void ChCanvasScreenUpdate(ChCanvas* canvas, uint32_t x, uint32_t y, uint32_t w, uint32_t h) {
 	uint32_t* fb = canvas->framebuff;
 
+	if ((x + w) >= canvas->screenWidth)
+		w = canvas->screenWidth - x;
+
+	if ((y + h) >= canvas->screenHeight)
+		h = canvas->screenHeight - y;
+
+	if (x < 0)
+		x = 0;
+	if (y < 0)
+		y = 0;
 	for (int i = 0; i < h; i++)
 		_fastcpy(fb + (y + i) * canvas->screenWidth + x, 
 		canvas->buffer + (y + i) * canvas->canvasWidth + x, w * 4);

@@ -8,6 +8,7 @@
     <ClCompile Include="backdirty.cpp" />
     <ClCompile Include="clip.cpp" />
     <ClCompile Include="rect.cpp" />
+    <ClCompile Include="popup.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="deodhai.h" />
@@ -18,6 +19,7 @@
     <ClInclude Include="_fastcpy.h" />
     <ClInclude Include="clip.h" />
     <ClInclude Include="rect.h" />
+    <ClInclude Include="popup.h" />
   </ItemGroup>
   <ItemGroup>
     <NASM Include="_fastcpy.asm" />

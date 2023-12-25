@@ -153,6 +153,7 @@
     <ClCompile Include="cursor.cpp" />
     <ClCompile Include="deomain.cpp" />
     <ClCompile Include="dirty.cpp" />
+    <ClCompile Include="popup.cpp" />
     <ClCompile Include="rect.cpp" />
     <ClCompile Include="window.cpp" />
   </ItemGroup>
@@ -162,6 +163,7 @@
     <ClInclude Include="cursor.h" />
     <ClInclude Include="deodhai.h" />
     <ClInclude Include="dirty.h" />
+    <ClInclude Include="popup.h" />
     <ClInclude Include="rect.h" />
     <ClInclude Include="window.h" />
     <ClInclude Include="_fastcpy.h" />

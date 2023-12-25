@@ -58,6 +58,7 @@ void ChMenubarDestroy(ChWidget* wid, ChWindow* win) {
  */
 void ChMenubarMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, int button) {
 	ChMenubar* mb = (ChMenubar*)wid;
+	ChMenuButton* clickedButton = NULL;
 	if (mb->allpainted) {
 		for (int i = 0; i < mb->menubuttons->pointer; i++) {
 			ChMenuButton* mbut = (ChMenuButton*)list_get_at(mb->menubuttons, i);
@@ -66,9 +67,24 @@ void ChMenubarMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, int button)
 			if ((x >(win->info->x + mbut->wid.x) && x < (win->info->x + mbut->wid.x + mbut->wid.w)) &&
 				(y >(win->info->y + mbut->wid.y) && y < (win->info->y + mbut->wid.y + mbut->wid.h))) {
 				mbut->hover = true;
-				if (button)
+				if (button) {
+					clickedButton = mbut;
 					mbut->clicked = true;
+				}
 			}
+		}
+	}
+
+	if (clickedButton) {
+		ChPopupMenu* pm = clickedButton->popupMenu;
+		if (pm) {
+			if (pm->backWindow) {
+				if (pm->backWindow->hidden)
+					ChMenuShow(pm);
+				else
+					ChPopupWindowHide(pm->backWindow);
+			}
+			ChMenuShow(pm);
 		}
 	}
 
@@ -120,6 +136,7 @@ ChMenuButton *ChCreateMenubutton(ChMenubar* mb, char* title) {
 	mbut->wid.ChDestroy = ChMenuButtonDestroy;
 	mbut->wid.ChActionHandler = 0;
 	mbut->title = (char*)malloc(strlen(title));
+	mbut->popupMenu = NULL;
 	memset(mbut->title, 0, strlen(title));
 	strcpy(mbut->title, title);
 	return mbut;
@@ -130,4 +147,13 @@ ChMenuButton *ChCreateMenubutton(ChMenubar* mb, char* title) {
  */
 void ChMenubarAddButton(ChMenubar* mb, ChMenuButton *mbut) {
 	list_add(mb->menubuttons, mbut);
+}
+
+/*
+ * ChMenuButtonAddMenu -- add popup menu to given menubutton
+ * @param mbutton -- Pointer to Menu Button
+ * @param popup -- Pointer to Popup Menu
+ */
+void ChMenuButtonAddMenu(ChMenuButton* mbutton, ChPopupMenu* popup) {
+	mbutton->popupMenu = popup;
 }

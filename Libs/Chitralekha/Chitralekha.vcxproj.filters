@@ -31,6 +31,9 @@
     <ClInclude Include="widgets\menubar.h">
       <Filter>widgets</Filter>
     </ClInclude>
+    <ClInclude Include="widgets\menu.h">
+      <Filter>widgets</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="chitralekha.cpp" />
@@ -63,6 +66,9 @@
     </ClCompile>
     <ClCompile Include="widgets\defaultmenu.cpp">
       <Filter>widgets\styles</Filter>
+    </ClCompile>
+    <ClCompile Include="widgets\menu.cpp">
+      <Filter>widgets</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

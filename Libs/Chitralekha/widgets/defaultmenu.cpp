@@ -33,6 +33,7 @@
 #include "base.h"
 #include "window.h"
 #include "menubar.h"
+#include "menu.h"
 #include "../font.h"
 
 #define MENUBAR_COLORLIGHT 0xFF474545
@@ -63,4 +64,26 @@ void ChDefaultMenubarPainter(ChWidget* wid, ChWindow* win) {
 	}
 	if (!mb->allpainted)
 		mb->allpainted = true;
+}
+
+
+void ChPopupMenuPaint(ChPopupMenu* popup){
+	ChDrawRect(popup->backWindow->canv, 0, 0, popup->wid.w, popup->wid.h, MENUBAR_COLORLIGHT);
+	int menu_item_height = DEFAULT_MENU_ITEM_HEIGHT;
+	int menu_item_y = DEFAULT_MENU_ITEM_BUTTON_PADY;
+	for (int i = 0; i < popup->MenuItems->pointer; i++) {
+		ChMenuItem* mi = (ChMenuItem*)list_get_at(popup->MenuItems, i);
+		if (mi->wid.y == 0)
+			mi->wid.y = menu_item_y;
+		if (mi->wid.hover) {
+			ChColorDrawHorizontalGradient(popup->backWindow->canv, 
+				0, mi->wid.y, popup->wid.w, DEFAULT_MENU_ITEM_HEIGHT, 0xFF658096, 0xFF8CA2B4);
+		//	ChDrawRect(popup->backWindow->canv, 0, menu_item_y, popup->wid.w, DEFAULT_MENU_ITEM_HEIGHT, GREEN);
+		}
+	/*	ChDrawRect(popup->backWindow->canv, 0, menu_item_y, popup->wid.w, DEFAULT_MENU_ITEM_HEIGHT, GREEN);*/
+		ChFontDrawText(popup->backWindow->canv, popup->mainWindow->app->baseFont, mi->title, 10, menu_item_y +
+			(menu_item_height/2) + 5, 10, WHITE);
+		menu_item_y += DEFAULT_MENU_ITEM_HEIGHT + DEFAULT_MENU_ITEM_BUTTON_PADY;
+	}
+	ChDrawRectUnfilled(popup->backWindow->canv, 0, 0, popup->wid.w, popup->wid.h, SILVER);
 }

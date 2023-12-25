@@ -149,7 +149,14 @@ void no_segment_fault(size_t v, void* p){
 //! exception function -- stack_fault
 void stack_fault(size_t v, void* p){
 	x64_cli();
+	interrupt_stack_frame *frame = (interrupt_stack_frame*)p;
 	panic("\nStack Fault at ");
+	SeTextOut("__PROCESSOR TRACE__ \r\n");
+	SeTextOut("RIP -> %x \r\n", frame->rip);
+	SeTextOut("Stack -> %x \r\n", frame->rsp);
+	SeTextOut("RFLAGS -> %x \r\n", frame->rflags);
+	SeTextOut("CS -> %x, SS -> %x \r\n", frame->cs, frame->ss);
+	SeTextOut("Current thread ->id %d , %s\r\n", AuGetCurrentThread()->id, AuGetCurrentThread()->name);
 	for (;;);
 }
 

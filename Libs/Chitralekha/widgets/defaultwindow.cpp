@@ -140,3 +140,8 @@ void ChDefaultWinPaint(ChWindow* win){
 	ChWindowPaintMainActivity(win);
 	ChWindowUpdate(win, 0, 0, win->info->width, win->info->height, 1,0);
 }
+
+void ChDefaultPopupWinPaint(ChPopupWindow* popup, ChWindow* win) {
+	ChDrawRect(popup->canv, 0, 0, popup->wid.w, popup->wid.h, 0xFFD2D2D2);
+	ChDrawRectUnfilled(popup->canv, 0, 0, popup->wid.w, popup->wid.h, GRAY);
+}

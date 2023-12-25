@@ -38,7 +38,6 @@
 uint16_t shared_win_key_prefix = 100;
 uint16_t back_buffer_key_prefix = 400;
 
-#define SHADOW_COLOR 0xFF2E2929
 
 /*
  * CreateSharedWinSpace -- Create a shared window space
@@ -54,6 +53,12 @@ uint32_t* CreateSharedWinSpace(uint16_t *shkey, uint16_t ownerId) {
 	return (uint32_t*)addr;
 }
 
+/*
+ * CreateNewBackBuffer --Create a back buffer window
+ * @param ownerId -- owner id
+ * @param sz -- Size of the buffer
+ * @param key -- location where to store the buffer key
+ */
 void* CreateNewBackBuffer(uint16_t ownerId, uint32_t sz, uint16_t *key){
 	uint32_t key_prefix = back_buffer_key_prefix + ownerId;
 	int id = _KeCreateSharedMem(key_prefix, sz, 0);
@@ -107,7 +112,7 @@ Window* CreateWindow(int x, int y, int w, int h, uint8_t flags, uint16_t ownerId
 	shwin->alpha = false;
 	shwin->dirty = false;
 	win->handle = DeodhaiAllocateNewHandle();
-
+	win->popupList = initialize_list();
 	
 	win->shadowBuffers = (uint32_t*)_KeMemMap(NULL,(shwin->width + SHADOW_SIZE*2) * (shwin->height + SHADOW_SIZE*2)* 4, 0, 0, MEMMAP_NO_FILEDESC, 0);
 	for (int i = 0; i < shwin->width + SHADOW_SIZE*2; i++) {
@@ -125,4 +130,5 @@ Window* CreateWindow(int x, int y, int w, int h, uint8_t flags, uint16_t ownerId
 	
 	return win;
 }
+
 

@@ -49,7 +49,17 @@
 #include "clip.h"
 #include "backdirty.h"
 #include "draw.h"
+#include "popup.h"
 #include <boxblur.h>
+
+/******************************************
+*   DEODHAI SUPPORTED WINDOW_TYPES:
+*        1> Normal Application Window's
+*        2> Always On Top Window's
+*        3> Popup Window's
+******************************************
+*/
+
 
 Cursor *currentCursor;
 int mouse_fd;
@@ -75,6 +85,8 @@ Window* alwaysOnTopLast;
 ChCanvas* canvas;
 uint32_t* surfaceBuffer;
 bool _shadow_update;
+
+
 /*
  * DeodhaiInitialiseData -- initialise all data
  */
@@ -763,6 +775,59 @@ void ComposeFrame(ChCanvas *canvas) {
 	
 			info->updateEntireWindow = 0;
 		}
+
+		/* render all popup windows of this window */
+		for (int w = 0; w < win->popupList->pointer; w++) {
+			PopupWindow* pw = (PopupWindow*)list_get_at(win->popupList, w);
+			if (pw->shwin->dirty) {
+				int popup_x = pw->shwin->x;
+				int popup_y = pw->shwin->y;
+				int popup_w = pw->shwin->w;
+				int popup_h = pw->shwin->h;
+				int shad_w = popup_w + SHADOW_SIZE * 2;
+				int shad_h = popup_h + SHADOW_SIZE * 2;
+
+				if (pw->shadowUpdate) {
+					for (int j = 0; j < shad_h; j++) {
+						for (int i = 0; i < shad_w; i++) {
+							*(uint32_t*)(canvas->buffer + ((popup_y - SHADOW_SIZE) + j) * canvas->canvasWidth + ((popup_x - SHADOW_SIZE) + i)) =
+								ChColorAlphaBlend2(*(uint32_t*)(canvas->buffer + ((popup_y - SHADOW_SIZE) + j)* canvas->canvasWidth + ((popup_x - SHADOW_SIZE) + i)),
+								*(uint32_t*)(pw->shadowBuffers + j * (pw->shwin->w + SHADOW_SIZE * 2) + i));
+						}
+					}
+					pw->shadowUpdate = false;
+				}
+
+				if (pw->shwin->alpha) {
+					for (int j = 0; j < popup_h; j++) {
+						for (int i = 0; i < popup_w; i++) {
+							*(uint32_t*)(canvas->buffer + (popup_y + j) * canvas->canvasWidth + (popup_x + i)) =
+								ChColorAlphaBlend2(*(uint32_t*)(canvas->buffer + (popup_y + j)* canvas->canvasWidth + (popup_x + i)),
+								*(uint32_t*)(pw->buffer + j * pw->shwin->w + i));
+						}
+					}
+				}
+				else {
+					for (int i = 0; i < popup_h; i++) {
+						_fastcpy(canvas->buffer + (popup_y + i) * canvas->canvasWidth + popup_x,
+							pw->buffer + i * pw->shwin->w + 0, popup_w * 4);
+					}
+				}
+
+				AddDirtyClip(popup_x - SHADOW_SIZE , popup_y - SHADOW_SIZE, shad_w, shad_h);
+				pw->shwin->dirty = 0;
+			}
+			if (pw->shwin->hide) {
+				int px = pw->shwin->x;
+				int py = pw->shwin->y;
+				int pwidth = pw->shwin->w;
+				int pheight = pw->shwin->h;
+				pw->shwin->dirty = 0;
+				pw->shwin->hide = false;
+				pw->shadowUpdate = true;
+				info->updateEntireWindow = 1;
+			}
+		}
 	}
 
 	/* //------- Always on Top Windows follow, another data structure ----------// */
@@ -1057,6 +1122,19 @@ void DeodhaiBroadcastMouse(int mouse_x, int mouse_y, int button) {
 					continue;
 				if (win->flags & WINDOW_FLAG_BLOCKED)
 					continue;
+
+				/* PHILOSOPHY: if mouse event was sent to unfocused window
+				 * and if the mouse points goes to some kind of widget or object
+				 * it will be an hover message, if mouse left button was clicked
+				 * within than hovered object of unfocused window, make that
+				 * window focused and bring it to front and update all window
+				 * and shadow effects
+				 */
+				if (focusedWin != win && button){
+					DeodhaiWindowSetFocused(win, 1);
+					_window_update_all_ = true;
+					_shadow_update = true;
+				}
 				mouseWin = win;
 				break;
 			}
@@ -1116,6 +1194,15 @@ void DeodhaiCloseWindow(Window* win) {
 	int x = info->x;
 	int y = info->y;
 	free(win->title);
+
+	/* iterate all popup window and close them */
+	for (int i = 0; i < win->popupList->pointer; i++){
+		//close all
+		PopupWindow* popup = (PopupWindow*)list_remove(win->popupList, i);
+		PopupWindowDestroy(popup);
+	}
+
+	free(win->popupList);
 	_KeUnmapSharedMem(win->shWinKey);
 	_KeUnmapSharedMem(win->backBufferKey);
 	_KeMemUnmap(win->shadowBuffers, (width + SHADOW_SIZE * 2) * (height + SHADOW_SIZE * 2) * 4);
@@ -1233,8 +1320,8 @@ int main(int argc, char* arv[]) {
 		surfaceBuffer[j * canv->canvasWidth + i] = GRAY; //0xFF938585;
 
 	DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
-	DrawWallpaper(canv, "/moun.jpg");
-	DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
+	//DrawWallpaper(canv, "/moun.jpg");
+	//DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
 	ChCanvasScreenUpdate(canv, 0, 0, canv->canvasWidth, canv->canvasHeight);
 
 
@@ -1463,6 +1550,41 @@ int main(int argc, char* arv[]) {
 					win->flags = flags;
 					break;
 				}
+			}
+			memset(&event, 0, sizeof(PostEvent));
+		}
+
+		/*
+		 * DEODHAI_MESSAGE_CREATE_POPUP -- creates a popup
+		 * window
+		 */
+		if (event.type == DEODHAI_MESSAGE_CREATE_POPUP) {
+			int handle = event.dword;
+			int ownerId = event.from_id;
+			uint8_t type = event.dword2;
+			int x = event.dword3;
+			int y = event.dword4;
+			int w = event.dword5;
+			int h = event.dword6;
+			Window* parent = NULL;
+			for (Window* win = rootWin; win != NULL; win = win->next) {
+				if (win->handle == handle && win->ownerId == ownerId) {
+					parent = win;
+					break;
+				}
+			}
+
+			if (parent) {
+				PopupWindow* popup = CreatePopupWindow(x, y, w, h, ownerId);
+				list_add(parent->popupList, popup);
+				PostEvent e;
+				memset(&e, 0, sizeof(PostEvent));
+				e.type = DEODHAI_REPLY_WINCREATED;
+				e.dword = popup->shwinKey;
+				e.dword2 = popup->buffWinKey;
+				e.dword3 = 0;
+				e.to_id = event.from_id;
+				_KeFileIoControl(postbox_fd, POSTBOX_PUT_EVENT, &e);
 			}
 			memset(&event, 0, sizeof(PostEvent));
 		}

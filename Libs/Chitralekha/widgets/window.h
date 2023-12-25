@@ -88,6 +88,7 @@
 		list_t* GlobalControls;
 		list_t* widgets;
 		list_t* subwindow;
+		list_t* popup;
 		struct _chwin_* parent;
 		jmp_buf jump;
 		void(*ChWinPaint)(struct _chwin_ *win);
@@ -127,6 +128,33 @@
 		void(*ChGlobalMouseEvent) (ChWindow* win, struct _global_ctrl_* glbl, int x, int y, int button);
 		void(*ChGlobalActionEvent)(ChWindow* win, struct _global_ctrl_* glbl);
 	}ChWinGlobalControl;
+
+#pragma pack(push,1)
+	typedef struct _popup_sh_win_ {
+		int x;
+		int y;
+		int w;
+		int h;
+		bool dirty;
+		bool close;
+		bool hide;
+		bool popuped;
+		bool alpha;
+	}ChPopupSharedWin;
+#pragma pack(pop)
+
+
+	typedef struct _popup_win_ {
+		ChWidget wid;
+		ChPopupSharedWin* shwin;
+		uint32_t* buffer;
+		uint16_t shwinKey;
+		uint16_t buffWinKey;
+		list_t *widgets;
+		ChCanvas* canv;
+		bool hidden;
+		void(*ChPopupWindowPaint)(struct _popup_win_ *pwin, ChWindow* win);
+	}ChPopupWindow;
 
 #ifdef __cplusplus
 	XE_EXTERN{
@@ -251,6 +279,51 @@
 	* @param win -- Pointer to window data
 	*/
 	XE_LIB void ChWindowCloseWindow(ChWindow* win);
+
+	/*
+	* ChCreatePopupWindow -- *Create a popup window
+	* @param app -- Pointer to application
+	* @param win -- Pointer to Window
+	* @param x -- X coordinate
+	* @param y -- Y coordinate
+	* @param w -- Width of the window
+	* @param h -- Height of the window
+	* @param type -- type of the window
+	*/
+	XE_LIB ChPopupWindow* ChCreatePopupWindow(ChitralekhaApp *app, ChWindow* win, int x, int y, int w, int h, uint8_t type);
+
+	/*
+	* ChPopupWindowUpdate -- update the popup window
+	* @param pw -- Pointer to Chitralekha Popup Window
+	* @param x -- X location
+	* @param y -- Y location
+	* @param w -- Width of the popup window
+	* @param h -- Height of the popup window
+	*/
+	XE_LIB void ChPopupWindowUpdate(ChPopupWindow* pw, int x, int y, int w, int h);
+
+	/*
+	* ChPopupWindowShow -- show the popup window
+	* @param pw -- Pointer to Popup Window
+	* @param win -- Pointer to Chitralekha Main Window
+	*/
+	XE_LIB void ChPopupWindowShow(ChPopupWindow* pw, ChWindow* win);
+
+	/*
+	* ChPopupWindowUpdateLocation -- update the location of popup window relative to
+	* main window
+	* @param pwin -- Pointer to Popup Window
+	* @param win -- Pointer to Main Window
+	* @param x -- X location
+	* @param y -- Y location
+	*/
+	XE_LIB void ChPopupWindowUpdateLocation(ChPopupWindow* pwin, ChWindow* win, int x, int y);
+
+	/*
+	* ChPopupWindowHide -- hide the popup window
+	* @param pw -- Pointer to Popup Window
+	*/
+	XE_LIB void ChPopupWindowHide(ChPopupWindow* pw);
 
 #ifdef __cplusplus
 }

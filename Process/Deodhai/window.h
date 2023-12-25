@@ -31,6 +31,7 @@
 #define __WINDOW_H__
 
 #include <stdint.h>
+#include <widgets\list.h>
 #include "deodhai.h"
 
 #define WINDOW_FLAG_MOVABLE (1<<0)
@@ -44,6 +45,7 @@
 #define WINDOW_FLAG_DIALOGBOX (1<<8)
 
 #define SHADOW_SIZE 10
+#define SHADOW_COLOR 0xFF2E2929
 
 #pragma pack(push,1)
 typedef struct _win_info_ {
@@ -79,11 +81,26 @@ typedef struct _win_ {
 	double animAlphaVal;
 	bool animdirection; 
 	char* title;
+	list_t* popupList;
 	_win_ * next;
 	_win_ * prev;
 }Window;
 
 
+/*
+* CreateSharedWinSpace -- Create a shared window space
+* @param shkey -- location where to store the window key
+* @param ownerId -- owning process id
+*/
+extern uint32_t* CreateSharedWinSpace(uint16_t *shkey, uint16_t ownerId);
+
+/*
+* CreateNewBackBuffer --Create a back buffer window
+* @param ownerId -- owner id
+* @param sz -- Size of the buffer
+* @param key -- location where to store the buffer key
+*/
+extern void* CreateNewBackBuffer(uint16_t ownerId, uint32_t sz, uint16_t *key);
 /*
 * CreateWindow -- create a new window
 * @param x -- X position of the window
