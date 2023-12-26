@@ -81,18 +81,23 @@ void ChMenubarMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, int button)
 		if (mb->lastActiveMenu && mb->lastActiveMenu != pm){
 			if (!mb->lastActiveMenu->backWindow->hidden){
 				for (int i = 0; i < mb->lastActiveMenu->MenuItems->pointer; i++) {
+					/*
+					* Check all menu items -- if any menu item's menu is visible,
+					* hide it,
+					* [[[TODO]]] -- check all menu items -menu recursively
+					*/
 					ChMenuItem* mi = (ChMenuItem*)list_get_at(mb->lastActiveMenu->MenuItems, i);
 					if (mi->menu){
 						if (mi->menu->backWindow){
 							if (!mi->menu->backWindow->hidden){
 								ChPopupWindowHide(mi->menu->backWindow);
-								_KeProcessSleep(1000);
+								_KeProcessSleep(50);
 							}
 						}
 					}
 				}
 				ChPopupWindowHide(mb->lastActiveMenu->backWindow);
-				_KeProcessSleep(1000);
+				_KeProcessSleep(50);
 			}
 			mb->lastActiveMenu = NULL;
 		}
@@ -103,8 +108,26 @@ void ChMenubarMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, int button)
 					ChMenuShow(pm, clickedButton->wid.x, clickedButton->wid.y + 26);
 					pm->backWindow->hidden = false;
 				}
-				else
+				else {
+					/*
+					 * Check all menu items -- if any menu item's menu is visible,
+					 * hide it, 
+					 * TODO -- check all menu items -menu recursively
+					 */
+					for (int k = 0; k < pm->MenuItems->pointer; k++) {
+						ChMenuItem* mitem = (ChMenuItem*)list_get_at(pm->MenuItems, k);
+						if (mitem->menu){
+							if (mitem->menu->backWindow){
+								if (!mitem->menu->backWindow->hidden){
+									ChPopupWindowHide(mitem->menu->backWindow);
+									_KeProcessSleep(50);
+								}
+							}
+						}
+					}
 					ChPopupWindowHide(pm->backWindow);
+				}
+
 			}
 			else {
 				ChMenuShow(pm,clickedButton->wid.x, clickedButton->wid.y + 26);

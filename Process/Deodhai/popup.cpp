@@ -110,6 +110,7 @@ PopupWindow* CreatePopupWindow(int x, int y, int w, int h, uint16_t owner_id) {
  * @param win -- Pointer to popup window
  */
 void PopupWindowDestroy(PopupWindow* win) {
+	_KeMemUnmap(win->shadowBuffers, (win->shwin->w + SHADOW_SIZE * 2) * (win->shwin->h + SHADOW_SIZE * 2) * 4);
 	_KeUnmapSharedMem(win->buffWinKey);
 	_KeUnmapSharedMem(win->shwinKey);
 	free(win);

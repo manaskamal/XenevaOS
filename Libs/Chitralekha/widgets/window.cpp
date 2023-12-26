@@ -362,24 +362,42 @@ XE_EXTERN XE_EXPORT void ChWindowHandleMouse(ChWindow* win, int x, int y, int bu
 			}
 		}
 	}
-
-	/* activity area */
+	bool _delivered = false;
+	/* for popup windows */
 	if (y > win->info->y + 26 && y < (win->info->y + 26 + win->info->height - 26)) {
 		for (int i = 0; i < win->widgets->pointer; i++) {
 			ChWidget* widget = (ChWidget*)list_get_at(win->widgets, i);
-			if (x > win->info->x + widget->x  && x < (win->info->x + widget->x + widget->w) &&
-				(y > win->info->y + widget->y && y < (win->info->y + widget->y + widget->h))) {
-				widget->hover = true;
-				widget->KillFocus = false;
-				if (widget->ChMouseEvent)
-					widget->ChMouseEvent(widget, win, x, y, button);
-			}
-			else {
-				if (widget->hover) {
-					widget->hover = false;
-					widget->KillFocus = true;
+			if (widget->type & CHITRALEKHA_WIDGET_TYPE_POPUP && widget->visible == true) {
+				if (x >= win->info->x + widget->x  && x < (win->info->x + widget->x + widget->w) &&
+					(y >= win->info->y + widget->y && y < (win->info->y + widget->y + widget->h))) {
 					if (widget->ChMouseEvent)
 						widget->ChMouseEvent(widget, win, x, y, button);
+					_delivered = true;
+				}
+			}
+		}
+	}
+
+	/* no popup window received the mouse event */
+	if (!_delivered){
+		/* activity area */
+		if (y > win->info->y + 26 && y < (win->info->y + 26 + win->info->height - 26)) {
+			for (int i = 0; i < win->widgets->pointer; i++) {
+				ChWidget* widget = (ChWidget*)list_get_at(win->widgets, i);
+				if (x > win->info->x + widget->x  && x < (win->info->x + widget->x + widget->w) &&
+					(y > win->info->y + widget->y && y < (win->info->y + widget->y + widget->h))) {
+					widget->hover = true;
+					widget->KillFocus = false;
+					if (widget->ChMouseEvent)
+						widget->ChMouseEvent(widget, win, x, y, button);
+				}
+				else {
+					if (widget->hover) {
+						widget->hover = false;
+						widget->KillFocus = true;
+						if (widget->ChMouseEvent)
+							widget->ChMouseEvent(widget, win, x, y, button);
+					}
 				}
 			}
 		}
@@ -504,7 +522,7 @@ XE_EXTERN XE_EXPORT void ChWindowCloseWindow(ChWindow* win){
 		free(pw->canv);
 		free(pw);
 	}
-	
+	free(win->popup);
 	/* send close window command to deodhai */
 	int handle = win->handle;
 	PostEvent e;
@@ -581,6 +599,8 @@ XE_EXTERN XE_EXPORT ChPopupWindow* ChCreatePopupWindow(ChitralekhaApp *app,ChWin
 	popup->wid.y = y;
 	popup->wid.w = w;
 	popup->wid.h = h;
+	popup->wid.type = CHITRALEKHA_WIDGET_TYPE_POPUP;
+	popup->wid.visible = false;
 	popup->wid.ChMouseEvent = ChPopupMouseEvent;
 	popup->ChPopupWindowPaint = ChDefaultPopupWinPaint;
 	popup->widgets = initialize_list();
@@ -654,11 +674,13 @@ XE_EXTERN XE_EXPORT void ChPopupWindowShow(ChPopupWindow* pw, ChWindow* win) {
 	if (pw->hidden){
 		pw->hidden = false;
 		pw->shwin->dirty = true;
+		pw->wid.visible = true;
 	}
 	else {
 		if (pw->ChPopupWindowPaint)
 			pw->ChPopupWindowPaint(pw, win);
 		ChPopupWindowUpdate(pw, 0, 0, pw->shwin->w, pw->shwin->h);
+		pw->wid.visible = true;
 	}
 }
 
@@ -683,4 +705,5 @@ XE_EXTERN XE_EXPORT void ChPopupWindowUpdateLocation(ChPopupWindow* pwin,ChWindo
 XE_EXTERN XE_EXPORT void ChPopupWindowHide(ChPopupWindow* pw) {
 	pw->shwin->hide = true;
 	pw->hidden = true;
+	pw->wid.visible = false;
 }

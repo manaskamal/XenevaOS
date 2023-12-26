@@ -58,6 +58,9 @@
 #define WINDOW_FLAG_MESSAGEBOX (1<<7)
 #define WINDOW_FLAG_DIALOGBOX (1<<8)
 
+#define CHITRALEKHA_WIDGET_TYPE_CONTROL (1<<1)
+#define CHITRALEKHA_WIDGET_TYPE_POPUP (1<<2)
+
 #pragma pack(push,1)
 	typedef struct _ChSharedWin_ {
 		ChRect rect[256];
@@ -105,6 +108,8 @@
 		bool hover;
 		bool hoverPainted;
 		bool KillFocus;
+		bool visible;
+		uint8_t type;
 		void(*ChActionHandler)(struct _ChWidget_ *widget,ChWindow* win);
 		void(*ChMouseEvent)(struct _ChWidget_* widget,ChWindow* win, int x, int y, int button);
 		void(*ChPaintHandler)(struct _ChWidget_* widget,ChWindow* win);

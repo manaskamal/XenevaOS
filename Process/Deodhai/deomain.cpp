@@ -1600,7 +1600,7 @@ int main(int argc, char* arv[]) {
 		/* i think, sleeping time must be based on 10ms,
 		 * so 16ms would be 10ms + 6 */
 		if (delta < 1000 / 60) {
-			_KeProcessSleep(1000/ 60 - delta);
+			_KeProcessSleep((1000/ 60 - delta));
 		}
 			
 	}

@@ -39,7 +39,6 @@ void ChPopupMenuMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, int butto
 	/* immediately pass the information to menu item widgets*/
 	for (int i = 0; i < pm->MenuItems->pointer; i++){
 		ChMenuItem* mi = (ChMenuItem*)list_get_at(pm->MenuItems, i);
-		mi->wid.hover = false;
 		if (x >= (win->info->x + pm->backWindow->wid.x + pm->wid.x + mi->wid.x) &&
 			x <= (win->info->x + pm->backWindow->wid.x + pm->wid.x + mi->wid.x + mi->wid.w) &&
 			y >= (win->info->y + pm->backWindow->wid.y + pm->wid.y + mi->wid.y) &&
@@ -49,37 +48,41 @@ void ChPopupMenuMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, int butto
 			if (pm->lastActiveMenu && pm->lastActiveMenu != pm){
 				if (!pm->lastActiveMenu->backWindow->hidden){
 					ChPopupWindowHide(pm->lastActiveMenu->backWindow);
-					_KeProcessSleep(1000);
+					_KeProcessSleep(50);
 				}
 				pm->lastActiveMenu = NULL;
 			}
 			if (mi->menu){
 				if (mi->menu->backWindow) {
 					if (mi->menu->backWindow->hidden){
-						ChMenuShow(mi->menu, pm->wid.x + mi->wid.w + 10,pm->y_loc + mi->wid.y);
+						ChMenuShow(mi->menu, pm->x_loc + mi->wid.w + 2,pm->y_loc + mi->wid.y);
 						mi->menu->backWindow->hidden = false;
-						_KeProcessSleep(1000);
+						_KeProcessSleep(50);
+						
 					}
 					else{
 						ChPopupWindowHide(mi->menu->backWindow);
-						_KeProcessSleep(1000);
+						_KeProcessSleep(50);
 					}
 				}
 				else {
-					ChMenuShow(mi->menu, pm->wid.x + mi->wid.w + 10,pm->y_loc + mi->wid.y);
-					_KeProcessSleep(1000);
+					ChMenuShow(mi->menu, pm->x_loc + mi->wid.w + 2,pm->y_loc + mi->wid.y);
+					_KeProcessSleep(50);
 				}
 				pm->backWindow->shwin->popuped = true;
 				pm->lastActiveMenu = mi->menu;
 			}
 			_need_paint = true;
 		}
+		else{
+			mi->wid.hover = false;
+		}
 	}
 
 	if (_need_paint) {
 		ChPopupMenuPaint(pm);
 		ChPopupWindowUpdate(pm->backWindow, 0, 0, pm->wid.w, pm->wid.h);
-		_KeProcessSleep(10000);
+		//_KeProcessSleep(50);
 	}
 }
 
@@ -157,7 +160,8 @@ void ChMenuShow(ChPopupMenu* menu, int x, int y) {
 		menu->y_loc = y;
 		ChPopupWindowUpdateLocation(menu->backWindow, menu->mainWindow, x + 5, y);
 		ChPopupWindowUpdate(menu->backWindow, 0, 0, menu->wid.w, menu->wid.h);
-		_KeProcessSleep(10000);
+		menu->backWindow->wid.visible = true;
+		_KeProcessSleep(50);
 	}
 	else {
 		ChMenuRecalculateDimensions(menu);
@@ -168,6 +172,7 @@ void ChMenuShow(ChPopupMenu* menu, int x, int y) {
 		list_add(menu->backWindow->widgets, menu);
 		//ChPopupWindowShow(menu->backWindow, menu->mainWindow);
 		ChPopupWindowUpdate(menu->backWindow, 0, 0, menu->wid.w, menu->wid.h);
-		_KeProcessSleep(10000);
+		menu->backWindow->wid.visible = true;
+		_KeProcessSleep(50);
 	}
 }

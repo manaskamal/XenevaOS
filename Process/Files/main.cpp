@@ -84,8 +84,8 @@ void WindowHandleMessage(PostEvent *e) {
 }
 
 void ButtonClicked(ChWidget* wid, ChWindow* win) {
-	//ChMessageBox* mb = ChCreateMessageBox(mainWin, "Dimpismita", "I_LOVE_YOU_SO_MUCH_DEHA++ !!", MSGBOX_TYPE_ONLYCLOSE, MSGBOX_ICON_SUCCESS);
-	//ChMessageBoxShow(mb);
+	ChMessageBox* mb = ChCreateMessageBox(mainWin, "Dimpismita", "I_LOVE_YOU_SO_MUCH_DEHA++ !!", MSGBOX_TYPE_ONLYCLOSE, MSGBOX_ICON_SUCCESS);
+	ChMessageBoxShow(mb);
 }
 
 /*
@@ -101,7 +101,7 @@ int main(int argc, char* argv[]){
 
 	pm = NULL;
 
-	ChButton* button = ChCreateButton(mainWin->info->width / 2 - 100 / 2, mainWin->info->height / 2 - 75/2, 100, 75, "Click Me !");
+	ChButton* button = ChCreateButton(10,62, 100, 75, "Click Me !"); //mainWin->info->width / 2 - 100 / 2, mainWin->info->height / 2 - 75/2
 	ChWindowAddWidget(mainWin,(ChWidget*)button);
 	button->base.ChActionHandler = ButtonClicked;
 
