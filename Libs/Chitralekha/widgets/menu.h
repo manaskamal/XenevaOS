@@ -47,6 +47,7 @@ typedef struct _popup_menu_ {
 	list_t* MenuItems;
 	int x_loc;
 	int y_loc;
+	struct _popup_menu_ *lastActiveMenu;
 }ChPopupMenu;
 
 typedef struct _menu_item_ {
@@ -68,6 +69,6 @@ XE_EXTERN XE_EXPORT ChPopupMenu* ChCreatePopupMenu(ChWindow* mainWin);
 */
 XE_EXTERN XE_EXPORT ChMenuItem* ChCreateMenuItem(char* title, ChPopupMenu* pm);
 
-XE_EXTERN XE_EXPORT void ChMenuShow(ChPopupMenu* menu);
+XE_EXTERN XE_EXPORT void ChMenuShow(ChPopupMenu* menu, int x, int y);
 
 #endif

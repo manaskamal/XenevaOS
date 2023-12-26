@@ -816,6 +816,7 @@ void ComposeFrame(ChCanvas *canvas) {
 
 				AddDirtyClip(popup_x - SHADOW_SIZE , popup_y - SHADOW_SIZE, shad_w, shad_h);
 				pw->shwin->dirty = 0;
+				_cursor_update_ = true;
 			}
 			if (pw->shwin->hide) {
 				int px = pw->shwin->x;
@@ -826,6 +827,11 @@ void ComposeFrame(ChCanvas *canvas) {
 				pw->shwin->hide = false;
 				pw->shadowUpdate = true;
 				info->updateEntireWindow = 1;
+			}
+
+			if (pw->shwin->popuped){
+				pw->shadowUpdate = true;
+				pw->shwin->popuped = false;
 			}
 		}
 	}

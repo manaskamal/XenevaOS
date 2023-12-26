@@ -45,6 +45,33 @@ void ChPopupMenuMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, int butto
 			y >= (win->info->y + pm->backWindow->wid.y + pm->wid.y + mi->wid.y) &&
 			y <= (win->info->y + pm->backWindow->wid.y + pm->wid.y + mi->wid.y + mi->wid.h)){
 			mi->wid.hover = true;
+
+			if (pm->lastActiveMenu && pm->lastActiveMenu != pm){
+				if (!pm->lastActiveMenu->backWindow->hidden){
+					ChPopupWindowHide(pm->lastActiveMenu->backWindow);
+					_KeProcessSleep(1000);
+				}
+				pm->lastActiveMenu = NULL;
+			}
+			if (mi->menu){
+				if (mi->menu->backWindow) {
+					if (mi->menu->backWindow->hidden){
+						ChMenuShow(mi->menu, pm->wid.x + mi->wid.w + 10,pm->y_loc + mi->wid.y);
+						mi->menu->backWindow->hidden = false;
+						_KeProcessSleep(1000);
+					}
+					else{
+						ChPopupWindowHide(mi->menu->backWindow);
+						_KeProcessSleep(1000);
+					}
+				}
+				else {
+					ChMenuShow(mi->menu, pm->wid.x + mi->wid.w + 10,pm->y_loc + mi->wid.y);
+					_KeProcessSleep(1000);
+				}
+				pm->backWindow->shwin->popuped = true;
+				pm->lastActiveMenu = mi->menu;
+			}
 			_need_paint = true;
 		}
 	}
@@ -52,6 +79,7 @@ void ChPopupMenuMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, int butto
 	if (_need_paint) {
 		ChPopupMenuPaint(pm);
 		ChPopupWindowUpdate(pm->backWindow, 0, 0, pm->wid.w, pm->wid.h);
+		_KeProcessSleep(10000);
 	}
 }
 
@@ -105,7 +133,7 @@ void ChMenuRecalculateDimensions(ChPopupMenu * pm) {
 		h = DEFAULT_POPUP_MENU_HEIGHT;
 	}
 	else 
-		w += 10*2;
+		w += 20*2;
 
 
 	if (!pm->x_loc && !pm->y_loc){
@@ -121,14 +149,20 @@ void ChMenuRecalculateDimensions(ChPopupMenu * pm) {
 	}
 }
 
-void ChMenuShow(ChPopupMenu* menu) {
+void ChMenuShow(ChPopupMenu* menu, int x, int y) {
 	if (menu->backWindow) {
 		ChPopupMenuPaint(menu);
-		ChPopupWindowShow(menu->backWindow, menu->mainWindow);
+		/*ChPopupWindowShow(menu->backWindow, menu->mainWindow);*/
+		menu->x_loc = x + 5;
+		menu->y_loc = y;
+		ChPopupWindowUpdateLocation(menu->backWindow, menu->mainWindow, x + 5, y);
+		ChPopupWindowUpdate(menu->backWindow, 0, 0, menu->wid.w, menu->wid.h);
 		_KeProcessSleep(10000);
 	}
 	else {
 		ChMenuRecalculateDimensions(menu);
+		menu->x_loc = x + 5;
+		menu->y_loc = y;
 		menu->backWindow = ChCreatePopupWindow(menu->mainWindow->app, menu->mainWindow, menu->x_loc, menu->y_loc, menu->wid.w, menu->wid.h, 0);
 		ChPopupMenuPaint(menu);
 		list_add(menu->backWindow->widgets, menu);

@@ -47,6 +47,7 @@ XE_EXTERN{
 		ChWidget wid;
 		list_t* menubuttons;
 		bool allpainted;
+		ChPopupMenu* lastActiveMenu;
 	}ChMenubar;
 
 	typedef struct _menubutton_ {

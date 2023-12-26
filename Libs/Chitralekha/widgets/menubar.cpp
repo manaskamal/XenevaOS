@@ -29,6 +29,7 @@
 
 #include "menubar.h"
 #include <stdlib.h>
+#include <sys\_keproc.h>
 
 extern void ChDefaultMenubarPainter(ChWidget* wid, ChWindow* win);
 
@@ -77,14 +78,38 @@ void ChMenubarMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, int button)
 
 	if (clickedButton) {
 		ChPopupMenu* pm = clickedButton->popupMenu;
+		if (mb->lastActiveMenu && mb->lastActiveMenu != pm){
+			if (!mb->lastActiveMenu->backWindow->hidden){
+				for (int i = 0; i < mb->lastActiveMenu->MenuItems->pointer; i++) {
+					ChMenuItem* mi = (ChMenuItem*)list_get_at(mb->lastActiveMenu->MenuItems, i);
+					if (mi->menu){
+						if (mi->menu->backWindow){
+							if (!mi->menu->backWindow->hidden){
+								ChPopupWindowHide(mi->menu->backWindow);
+								_KeProcessSleep(1000);
+							}
+						}
+					}
+				}
+				ChPopupWindowHide(mb->lastActiveMenu->backWindow);
+				_KeProcessSleep(1000);
+			}
+			mb->lastActiveMenu = NULL;
+		}
+
 		if (pm) {
 			if (pm->backWindow) {
-				if (pm->backWindow->hidden)
-					ChMenuShow(pm);
+				if (pm->backWindow->hidden){
+					ChMenuShow(pm, clickedButton->wid.x, clickedButton->wid.y + 26);
+					pm->backWindow->hidden = false;
+				}
 				else
 					ChPopupWindowHide(pm->backWindow);
 			}
-			ChMenuShow(pm);
+			else {
+				ChMenuShow(pm,clickedButton->wid.x, clickedButton->wid.y + 26);
+			}
+			mb->lastActiveMenu = pm;
 		}
 	}
 

@@ -66,6 +66,11 @@ void ChDefaultMenubarPainter(ChWidget* wid, ChWindow* win) {
 		mb->allpainted = true;
 }
 
+void ChPopupMenuAppendButton(ChPopupMenu* pm, int x, int y, int w, int h) {
+	//ChDrawRect(pm->backWindow->canv, x, y, w, h, WHITE);
+	ChDrawLine(pm->backWindow->canv, x, y, x + w, y + h/2, WHITE);
+	ChDrawLine(pm->backWindow->canv, x + w, y + h/2,x, y + h, WHITE);
+}
 
 void ChPopupMenuPaint(ChPopupMenu* popup){
 	ChDrawRect(popup->backWindow->canv, 0, 0, popup->wid.w, popup->wid.h, MENUBAR_COLORLIGHT);
@@ -83,6 +88,10 @@ void ChPopupMenuPaint(ChPopupMenu* popup){
 	/*	ChDrawRect(popup->backWindow->canv, 0, menu_item_y, popup->wid.w, DEFAULT_MENU_ITEM_HEIGHT, GREEN);*/
 		ChFontDrawText(popup->backWindow->canv, popup->mainWindow->app->baseFont, mi->title, 10, menu_item_y +
 			(menu_item_height/2) + 5, 10, WHITE);
+
+		if (mi->menu)
+			ChPopupMenuAppendButton(popup, popup->wid.w - 15, menu_item_y + menu_item_height/2 - 7/2, 7,7);
+
 		menu_item_y += DEFAULT_MENU_ITEM_HEIGHT + DEFAULT_MENU_ITEM_BUTTON_PADY;
 	}
 	ChDrawRectUnfilled(popup->backWindow->canv, 0, 0, popup->wid.w, popup->wid.h, SILVER);

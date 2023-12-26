@@ -1,8 +1,8 @@
-﻿Build started 25-12-2023 আবেলি 11:09:33.
+﻿Build started 26-12-2023 আবেলি 3:36:08.
      1>Project "E:\Xeneva Project\Aurora\Libs\Chitralekha\Chitralekha.vcxproj" on node 2 (Rebuild target(s)).
      1>_NASM:
          _fastcpy.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmpad4f72d2c5104a0ca7ee30fdebab9b4e.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp2ffbd0a7c8e64067a181b20a1c50f819.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\_fastcpy.obj"  "E:\Xeneva Project\Aurora\Libs\Chitralekha\_fastcpy.asm"
        ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /I"E:\os_dev\freetype2-master\freetype2-master\include" /Zi /nologo /W3 /WX- /sdl- /Od /D ARCH_X64 /D YES_DYNAMIC /D DYNAMIC_EXPORTER /D _USE_FREETYPE /D _WINDLL /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt boxblur.cpp chitralekha.cpp color.cpp draw.cpp font.cpp keycode.cpp ttf.cpp widgets\base.cpp widgets\button.cpp widgets\defaultmenu.cpp widgets\defaultwindow.cpp widgets\list.cpp widgets\menu.cpp widgets\menubar.cpp widgets\msgbox.cpp widgets\window.cpp
@@ -24,22 +24,23 @@
      1>widgets\msgbox.cpp(123): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
      1>widgets\msgbox.cpp(141): warning C4018: '<' : signed/unsigned mismatch
          menubar.cpp
-     1>widgets\menubar.cpp(42): warning C4018: '<' : signed/unsigned mismatch
-     1>widgets\menubar.cpp(63): warning C4018: '<' : signed/unsigned mismatch
-     1>widgets\menubar.cpp(128): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
-     1>widgets\menubar.cpp(138): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
+     1>widgets\menubar.cpp(43): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\menubar.cpp(64): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\menubar.cpp(83): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\menubar.cpp(153): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
+     1>widgets\menubar.cpp(163): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
          menu.cpp
      1>widgets\menu.cpp(40): warning C4018: '<' : signed/unsigned mismatch
-     1>widgets\menu.cpp(81): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
-     1>widgets\menu.cpp(96): warning C4018: '<' : signed/unsigned mismatch
-     1>widgets\menu.cpp(118): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\menu.cpp(109): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
+     1>widgets\menu.cpp(124): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\menu.cpp(146): warning C4018: '<' : signed/unsigned mismatch
          list.cpp
          defaultwindow.cpp
      1>widgets\defaultwindow.cpp(116): warning C4018: '<' : signed/unsigned mismatch
      1>widgets\defaultwindow.cpp(129): warning C4018: '<' : signed/unsigned mismatch
          defaultmenu.cpp
      1>widgets\defaultmenu.cpp(50): warning C4018: '<' : signed/unsigned mismatch
-     1>widgets\defaultmenu.cpp(74): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\defaultmenu.cpp(79): warning C4018: '<' : signed/unsigned mismatch
          button.cpp
      1>widgets\button.cpp(140): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
          base.cpp
@@ -111,4 +112,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:02.01
+Time Elapsed 00:00:02.08
