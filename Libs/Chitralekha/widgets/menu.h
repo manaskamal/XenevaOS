@@ -71,4 +71,10 @@ XE_EXTERN XE_EXPORT ChMenuItem* ChCreateMenuItem(char* title, ChPopupMenu* pm);
 
 XE_EXTERN XE_EXPORT void ChMenuShow(ChPopupMenu* menu, int x, int y);
 
+/*
+* ChMenuHide -- Hide a popup menu and its sub menus
+* @param menu -- Pointer to popup menu
+*/
+XE_EXTERN XE_EXPORT void ChMenuHide(ChPopupMenu* menu);
+
 #endif

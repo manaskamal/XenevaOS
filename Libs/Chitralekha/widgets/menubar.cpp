@@ -133,6 +133,7 @@ void ChMenubarMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, int button)
 				ChMenuShow(pm,clickedButton->wid.x, clickedButton->wid.y + 26);
 			}
 			mb->lastActiveMenu = pm;
+			win->currentPopupMenu = pm;
 		}
 	}
 

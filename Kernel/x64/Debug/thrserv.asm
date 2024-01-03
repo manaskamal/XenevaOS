@@ -73,7 +73,7 @@ $pdata$?ProcessLoadExec@@YAHHPEADHPEAPEAD@Z DD imagerel $LN12
 	DD	imagerel $LN12+332
 	DD	imagerel $unwind$?ProcessLoadExec@@YAHHPEADHPEAPEAD@Z
 $pdata$?ProcessSleep@@YAH_K@Z DD imagerel $LN5
-	DD	imagerel $LN5+95
+	DD	imagerel $LN5+92
 	DD	imagerel $unwind$?ProcessSleep@@YAH_K@Z
 $pdata$?SignalReturn@@YAXH@Z DD imagerel $LN3
 	DD	imagerel $LN3+30
@@ -660,9 +660,9 @@ $LN5:
 
 	call	x64_cli
 
-; 162  : 	uint64_t sleep_time = ms * 1000;
+; 162  : 	uint64_t sleep_time = ms *100;
 
-	imul	rax, QWORD PTR ms$[rsp], 1000		; 000003e8H
+	imul	rax, QWORD PTR ms$[rsp], 100		; 00000064H
 	mov	QWORD PTR sleep_time$[rsp], rax
 
 ; 163  : 	AuThread* current_thr = AuGetCurrentThread();

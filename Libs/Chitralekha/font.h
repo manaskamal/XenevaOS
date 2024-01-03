@@ -50,9 +50,11 @@ XE_EXTERN{
 #define CALIBRI       "Calibri"
 #define FORTE         "Forte"
 #define CONSOLAS      "Consolas"
+#define DEVANAGARI    "Devanagari"
+#define KALPANA       "Kalpana"
 
 	/* default font for xeneva */
-#define XENEVA_DEFAULT_FONT  CORBEL
+#define XENEVA_DEFAULT_FONT  CALIBRI
 
 	typedef struct _ch_font_ {
 		int fileSz;

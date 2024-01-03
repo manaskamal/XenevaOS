@@ -1326,8 +1326,8 @@ int main(int argc, char* arv[]) {
 		surfaceBuffer[j * canv->canvasWidth + i] = GRAY; //0xFF938585;
 
 	DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
-	//DrawWallpaper(canv, "/moun.jpg");
-	//DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
+	DrawWallpaper(canv, "/moun.jpg");
+	DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
 	ChCanvasScreenUpdate(canv, 0, 0, canv->canvasWidth, canv->canvasHeight);
 
 
@@ -1520,6 +1520,7 @@ int main(int argc, char* arv[]) {
 		}
 
 		if (event.type == DEODHAI_MESSAGE_CLOSE_WINDOW) {
+			_KePrint("Close message received \n");
 			/* deodhai close window commands needs every datas
 			 * to be cleared from client side, in server side
 			 * only window related datas will get cleared, 

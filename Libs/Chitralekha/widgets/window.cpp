@@ -31,6 +31,7 @@
 #include "..\_fastcpy.h"
 #include <sys\_kefile.h>
 #include <sys\_keproc.h>
+#include "menu.h"
 #include <sys\mman.h>
 
 #define WINDOW_DEFAULT_TITLEBAR_HEIGHT  26
@@ -413,6 +414,8 @@ XE_EXTERN XE_EXPORT void ChWindowHandleMouse(ChWindow* win, int x, int y, int bu
  */
 XE_EXTERN XE_EXPORT void ChWindowHandleFocus(ChWindow* win, bool focus_val, uint32_t handle) {
 	win->focused = focus_val;
+	if (focus_val == 0) 
+		ChMenuHide((ChPopupMenu*)win->currentPopupMenu);
 	ChWindowPaintTitlebar(win);
 	ChDrawHorizontalLine(win->canv, 0, 0, win->info->width, GRAY);
 	ChDrawVerticalLine(win->canv, 0, 0, 26, GRAY);
@@ -523,6 +526,7 @@ XE_EXTERN XE_EXPORT void ChWindowCloseWindow(ChWindow* win){
 		free(pw);
 	}
 	free(win->popup);
+	_KePrint("Window closing \n");
 	/* send close window command to deodhai */
 	int handle = win->handle;
 	PostEvent e;

@@ -176,3 +176,25 @@ void ChMenuShow(ChPopupMenu* menu, int x, int y) {
 		_KeProcessSleep(50);
 	}
 }
+
+/*
+ * ChMenuHide -- Hide a popup menu and its sub menus
+ * @param menu -- Pointer to popup menu
+ */
+void ChMenuHide(ChPopupMenu* menu) {
+	if (!menu)
+		return;
+	for (int i = 0; i < menu->MenuItems->pointer; i++) {
+		ChMenuItem *item = (ChMenuItem*)list_get_at(menu->MenuItems, i);
+		if (item->menu) {
+			ChMenuHide(item->menu);
+		}
+	}
+
+	if (menu->backWindow) {
+		if (!menu->backWindow->hidden) {
+			ChPopupWindowHide(menu->backWindow);
+			_KeProcessSleep(50);
+		}
+	}
+}
