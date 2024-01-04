@@ -826,6 +826,7 @@ void ComposeFrame(ChCanvas *canvas) {
 				pw->shwin->dirty = 0;
 				pw->shwin->hide = false;
 				pw->shadowUpdate = true;
+				_cursor_update_ = true;
 				info->updateEntireWindow = 1;
 			}
 

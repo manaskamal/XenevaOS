@@ -403,6 +403,16 @@ XE_EXTERN XE_EXPORT void ChWindowHandleMouse(ChWindow* win, int x, int y, int bu
 			}
 		}
 	}
+
+	if (_delivered && button) {
+		ChMenuHide((ChPopupMenu*)win->currentPopupMenu);
+		_KeProcessSleep(20);
+		if (win->selectedMenuItem){
+			ChMenuItem* lmi = (ChMenuItem*)win->selectedMenuItem;
+			if (lmi->wid.ChActionHandler)
+				lmi->wid.ChActionHandler((ChWidget*)lmi, win);
+		}
+	}
 }
 
 

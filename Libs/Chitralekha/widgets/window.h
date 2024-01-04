@@ -94,6 +94,7 @@
 		list_t* popup;
 		struct _chwin_* parent;
 		void* currentPopupMenu; //points to currently working menu
+		void* selectedMenuItem;
 		jmp_buf jump;
 		void(*ChWinPaint)(struct _chwin_ *win);
 	}ChWindow;

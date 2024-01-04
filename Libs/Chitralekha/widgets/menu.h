@@ -47,6 +47,7 @@ typedef struct _popup_menu_ {
 	list_t* MenuItems;
 	int x_loc;
 	int y_loc;
+	void* lastSelectedMenuItem;
 	struct _popup_menu_ *lastActiveMenu;
 }ChPopupMenu;
 

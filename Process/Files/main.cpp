@@ -88,6 +88,11 @@ void ButtonClicked(ChWidget* wid, ChWindow* win) {
 	ChMessageBoxShow(mb);
 }
 
+void ManipuriClicked(ChWidget* wid, ChWindow* win) {
+	ChMessageBox* mb = ChCreateMessageBox(mainWin, "Manipuri", "Manipuri is the official language of Manipur !!", MSGBOX_TYPE_ONLYCLOSE, MSGBOX_ICON_SUCCESS);
+	ChMessageBoxShow(mb);
+}
+
 /*
 * main -- main entry
 */
@@ -136,6 +141,7 @@ int main(int argc, char* argv[]){
 	ChPopupMenu* ne = ChCreatePopupMenu(mainWin);
 	ChMenuItem* assam = ChCreateMenuItem("Assamese", ne);
 	ChMenuItem* manipuri = ChCreateMenuItem("Manipuri", ne);
+	manipuri->wid.ChActionHandler = ManipuriClicked;
 	ChMenuItem* mizo = ChCreateMenuItem("Mizo", ne);
 	ChMenuItem* khasi = ChCreateMenuItem("Khasi", ne);
 	ChMenuItem* nagamese = ChCreateMenuItem("Nagamese", ne);

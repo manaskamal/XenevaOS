@@ -36,19 +36,20 @@ extern void ChPopupMenuPaint(ChPopupMenu* popup);
 void ChPopupMenuMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, int button){
 	ChPopupMenu* pm = (ChPopupMenu*)wid;
 	bool _need_paint = false;
+	ChMenuItem *selectedItem = NULL;
 	/* immediately pass the information to menu item widgets*/
 	for (int i = 0; i < pm->MenuItems->pointer; i++){
 		ChMenuItem* mi = (ChMenuItem*)list_get_at(pm->MenuItems, i);
-		if (x >= (win->info->x + pm->backWindow->wid.x + pm->wid.x + mi->wid.x) &&
-			x <= (win->info->x + pm->backWindow->wid.x + pm->wid.x + mi->wid.x + mi->wid.w) &&
-			y >= (win->info->y + pm->backWindow->wid.y + pm->wid.y + mi->wid.y) &&
-			y <= (win->info->y + pm->backWindow->wid.y + pm->wid.y + mi->wid.y + mi->wid.h)){
+		mi->wid.hover = false;
+		if ((x >= (win->info->x + pm->backWindow->wid.x + pm->wid.x + mi->wid.x) &&
+			x <= (win->info->x + pm->backWindow->wid.x + pm->wid.x + mi->wid.x + mi->wid.w)) &&
+			(y >= (win->info->y + pm->backWindow->wid.y + pm->wid.y + mi->wid.y) &&
+			y <= (win->info->y + pm->backWindow->wid.y + pm->wid.y + mi->wid.y + mi->wid.h))){
 			mi->wid.hover = true;
-
 			if (pm->lastActiveMenu && pm->lastActiveMenu != pm){
 				if (!pm->lastActiveMenu->backWindow->hidden){
 					ChPopupWindowHide(pm->lastActiveMenu->backWindow);
-					_KeProcessSleep(50);
+					_KeProcessSleep(20);
 				}
 				pm->lastActiveMenu = NULL;
 			}
@@ -57,26 +58,30 @@ void ChPopupMenuMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, int butto
 					if (mi->menu->backWindow->hidden){
 						ChMenuShow(mi->menu, pm->x_loc + mi->wid.w + 2,pm->y_loc + mi->wid.y);
 						mi->menu->backWindow->hidden = false;
-						_KeProcessSleep(50);
+						_KeProcessSleep(20);
 						
 					}
 					else{
 						ChPopupWindowHide(mi->menu->backWindow);
-						_KeProcessSleep(50);
+						_KeProcessSleep(20);
 					}
 				}
 				else {
 					ChMenuShow(mi->menu, pm->x_loc + mi->wid.w + 2,pm->y_loc + mi->wid.y);
-					_KeProcessSleep(50);
+					//_KeProcessSleep(50);
 				}
 				pm->backWindow->shwin->popuped = true;
 				pm->lastActiveMenu = mi->menu;
 			}
+
 			_need_paint = true;
+			pm->lastSelectedMenuItem = mi;
+			break;
 		}
-		else{
-			mi->wid.hover = false;
-		}
+	}
+
+	if (button){
+		win->selectedMenuItem = pm->lastSelectedMenuItem;
 	}
 
 	if (_need_paint) {

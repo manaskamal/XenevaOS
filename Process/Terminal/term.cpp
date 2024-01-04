@@ -144,7 +144,7 @@ void TerminalDrawCursor() {
 	ChDrawHorizontalLine(win->canv,CHITRALEKHA_WINDOW_DEFAULT_PAD_X + cursor_x * cell_width,y_offset + cursor_y * cell_height + cell_height - 1, cell_width,GRAY);
 	ChDrawHorizontalLine(win->canv, CHITRALEKHA_WINDOW_DEFAULT_PAD_X + cursor_x * cell_width, y_offset + cursor_y * cell_height + cell_height - 2, cell_width, GRAY);
 	//ChWindowUpdate(win, cursor_x * cell_width,y_offset + cursor_y * cell_height + cell_height - 2, cell_width, 2, 0, 1);
-	ChWindowUpdate(win, 0, 26, win->info->width, win->info->height - 26, 1, 0);
+	//ChWindowUpdate(win, 0, 26, win->info->width, win->info->height - 26, 1, 0);
 }
 
 /* TerminalScroll -- scrolls the current terminal 

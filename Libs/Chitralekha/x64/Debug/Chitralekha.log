@@ -1,8 +1,8 @@
-﻿Build started 03-01-2024 ৰাতিপু 10:22:46.
+﻿Build started 04-01-2024 ৰাতিপু 9:48:49.
      1>Project "E:\Xeneva Project\Aurora\Libs\Chitralekha\Chitralekha.vcxproj" on node 2 (Rebuild target(s)).
      1>_NASM:
          _fastcpy.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp65eb810c353f4e3f97e0fb4ebd990c37.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmpaeb368d93c5e40e2b321125250718672.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\_fastcpy.obj"  "E:\Xeneva Project\Aurora\Libs\Chitralekha\_fastcpy.asm"
        ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /I"E:\os_dev\freetype2-master\freetype2-master\include" /Zi /nologo /W3 /WX- /sdl- /Od /D ARCH_X64 /D YES_DYNAMIC /D DYNAMIC_EXPORTER /D _USE_FREETYPE /D _WINDLL /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt boxblur.cpp chitralekha.cpp color.cpp draw.cpp font.cpp keycode.cpp ttf.cpp widgets\base.cpp widgets\button.cpp widgets\defaultmenu.cpp widgets\defaultwindow.cpp widgets\list.cpp widgets\menu.cpp widgets\menubar.cpp widgets\msgbox.cpp widgets\window.cpp
@@ -17,12 +17,12 @@
      1>widgets\window.cpp(371): warning C4805: '==' : unsafe mix of type 'char' and type 'bool' in operation
      1>widgets\window.cpp(385): warning C4018: '<' : signed/unsigned mismatch
      1>widgets\window.cpp(386): warning C4018: '<' : signed/unsigned mismatch
-     1>widgets\window.cpp(467): warning C4018: '<' : signed/unsigned mismatch
-     1>widgets\window.cpp(472): warning C4018: '<' : signed/unsigned mismatch
-     1>widgets\window.cpp(494): warning C4018: '<' : signed/unsigned mismatch
-     1>widgets\window.cpp(513): warning C4018: '<' : signed/unsigned mismatch
-     1>widgets\window.cpp(516): warning C4018: '<' : signed/unsigned mismatch
-     1>widgets\window.cpp(579): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\window.cpp(477): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\window.cpp(482): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\window.cpp(504): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\window.cpp(523): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\window.cpp(526): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\window.cpp(589): warning C4018: '<' : signed/unsigned mismatch
          msgbox.cpp
      1>widgets\msgbox.cpp(123): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
      1>widgets\msgbox.cpp(141): warning C4018: '<' : signed/unsigned mismatch
@@ -34,11 +34,11 @@
      1>widgets\menubar.cpp(177): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
      1>widgets\menubar.cpp(187): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
          menu.cpp
-     1>widgets\menu.cpp(40): warning C4018: '<' : signed/unsigned mismatch
-     1>widgets\menu.cpp(112): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
-     1>widgets\menu.cpp(127): warning C4018: '<' : signed/unsigned mismatch
-     1>widgets\menu.cpp(149): warning C4018: '<' : signed/unsigned mismatch
-     1>widgets\menu.cpp(187): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\menu.cpp(41): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\menu.cpp(117): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
+     1>widgets\menu.cpp(132): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\menu.cpp(154): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\menu.cpp(192): warning C4018: '<' : signed/unsigned mismatch
          list.cpp
          defaultwindow.cpp
      1>widgets\defaultwindow.cpp(116): warning C4018: '<' : signed/unsigned mismatch
@@ -117,4 +117,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:01.79
+Time Elapsed 00:00:02.02
