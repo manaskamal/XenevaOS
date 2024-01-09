@@ -61,7 +61,7 @@ $pdata$?AuCreateSHM@@YAHPEAU_au_proc_@@G_KE@Z DD imagerel $LN10
 	DD	imagerel $LN10+372
 	DD	imagerel $unwind$?AuCreateSHM@@YAHPEAU_au_proc_@@G_KE@Z
 $pdata$?AuSHMObtainMem@@YAPEAXPEAU_au_proc_@@GPEAXH@Z DD imagerel $LN23
-	DD	imagerel $LN23+1065
+	DD	imagerel $LN23+1091
 	DD	imagerel $unwind$?AuSHMObtainMem@@YAPEAXPEAU_au_proc_@@GPEAXH@Z
 $pdata$?AuSHMUnmap@@YAXGPEAU_au_proc_@@@Z DD imagerel $LN12
 	DD	imagerel $LN12+483
@@ -586,18 +586,18 @@ tv74 = 56
 proc$ = 80
 ?AuSHMUnmapAll@@YAXPEAU_au_proc_@@@Z PROC		; AuSHMUnmapAll
 
-; 365  : void AuSHMUnmapAll(AuProcess* proc) {
+; 369  : void AuSHMUnmapAll(AuProcess* proc) {
 
 $LN9:
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 72					; 00000048H
 
-; 366  : 	AuAcquireSpinlock(shmlock);
+; 370  : 	AuAcquireSpinlock(shmlock);
 
 	mov	rcx, QWORD PTR ?shmlock@@3PEAU_spinlock_@@EA ; shmlock
 	call	AuAcquireSpinlock
 
-; 367  : 	for (int i = 0; i < proc->shmmaps->pointer; i++) {
+; 371  : 	for (int i = 0; i < proc->shmmaps->pointer; i++) {
 
 	mov	DWORD PTR i$2[rsp], 0
 	jmp	SHORT $LN6@AuSHMUnmap
@@ -612,7 +612,7 @@ $LN6@AuSHMUnmap:
 	cmp	DWORD PTR i$2[rsp], eax
 	jae	$LN4@AuSHMUnmap
 
-; 368  : 		AuSHMMappings* mapping = (AuSHMMappings*)list_remove(proc->shmmaps, i);
+; 372  : 		AuSHMMappings* mapping = (AuSHMMappings*)list_remove(proc->shmmaps, i);
 
 	mov	edx, DWORD PTR i$2[rsp]
 	mov	rax, QWORD PTR proc$[rsp]
@@ -620,7 +620,7 @@ $LN6@AuSHMUnmap:
 	call	list_remove
 	mov	QWORD PTR mapping$3[rsp], rax
 
-; 369  : 		for (int j = 0; j < mapping->length / PAGE_SIZE; j++) {
+; 373  : 		for (int j = 0; j < mapping->length / PAGE_SIZE; j++) {
 
 	mov	DWORD PTR j$1[rsp], 0
 	jmp	SHORT $LN3@AuSHMUnmap
@@ -640,7 +640,7 @@ $LN3@AuSHMUnmap:
 	cmp	rcx, rax
 	jae	SHORT $LN1@AuSHMUnmap
 
-; 370  : 			AuVPage* vpage = AuVmmngrGetPage(mapping->start_addr + j * PAGE_SIZE, VIRT_GETPAGE_ONLY_RET, VIRT_GETPAGE_ONLY_RET);
+; 374  : 			AuVPage* vpage = AuVmmngrGetPage(mapping->start_addr + j * PAGE_SIZE, VIRT_GETPAGE_ONLY_RET, VIRT_GETPAGE_ONLY_RET);
 
 	imul	eax, DWORD PTR j$1[rsp], 4096		; 00001000H
 	cdqe
@@ -652,7 +652,7 @@ $LN3@AuSHMUnmap:
 	call	AuVmmngrGetPage
 	mov	QWORD PTR vpage$4[rsp], rax
 
-; 371  : 			vpage->bits.page = 0;
+; 375  : 			vpage->bits.page = 0;
 
 	mov	rax, QWORD PTR vpage$4[rsp]
 	mov	rcx, -1099511623681			; ffffff0000000fffH
@@ -661,7 +661,7 @@ $LN3@AuSHMUnmap:
 	mov	rcx, QWORD PTR vpage$4[rsp]
 	mov	QWORD PTR [rcx], rax
 
-; 372  : 			vpage->bits.present = 0;
+; 376  : 			vpage->bits.present = 0;
 
 	mov	rax, QWORD PTR vpage$4[rsp]
 	mov	rax, QWORD PTR [rax]
@@ -669,7 +669,7 @@ $LN3@AuSHMUnmap:
 	mov	rcx, QWORD PTR vpage$4[rsp]
 	mov	QWORD PTR [rcx], rax
 
-; 373  : 			flush_tlb((void*)(mapping->start_addr + j * PAGE_SIZE));
+; 377  : 			flush_tlb((void*)(mapping->start_addr + j * PAGE_SIZE));
 
 	imul	eax, DWORD PTR j$1[rsp], 4096		; 00001000H
 	cdqe
@@ -678,47 +678,47 @@ $LN3@AuSHMUnmap:
 	mov	rcx, rax
 	call	flush_tlb
 
-; 374  : 		}
+; 378  : 		}
 
 	jmp	$LN2@AuSHMUnmap
 $LN1@AuSHMUnmap:
 
-; 375  : 		AuSHMDelete(mapping->shm);
+; 379  : 		AuSHMDelete(mapping->shm);
 
 	mov	rax, QWORD PTR mapping$3[rsp]
 	mov	rcx, QWORD PTR [rax+16]
 	call	?AuSHMDelete@@YAXPEAU_shm_@@@Z		; AuSHMDelete
 
-; 376  : 		SeTextOut("Unmapping shm -> %x \r\n", mapping->start_addr);
+; 380  : 		SeTextOut("Unmapping shm -> %x \r\n", mapping->start_addr);
 
 	mov	rax, QWORD PTR mapping$3[rsp]
 	mov	rdx, QWORD PTR [rax]
 	lea	rcx, OFFSET FLAT:$SG3826
 	call	SeTextOut
 
-; 377  : 		kfree(mapping);
+; 381  : 		kfree(mapping);
 
 	mov	rcx, QWORD PTR mapping$3[rsp]
 	call	kfree
 
-; 378  : 	}
+; 382  : 	}
 
 	jmp	$LN5@AuSHMUnmap
 $LN4@AuSHMUnmap:
 
-; 379  : 
-; 380  : 	kfree(proc->shmmaps);
+; 383  : 
+; 384  : 	kfree(proc->shmmaps);
 
 	mov	rax, QWORD PTR proc$[rsp]
 	mov	rcx, QWORD PTR [rax+1080]
 	call	kfree
 
-; 381  : 	AuReleaseSpinlock(shmlock);
+; 385  : 	AuReleaseSpinlock(shmlock);
 
 	mov	rcx, QWORD PTR ?shmlock@@3PEAU_spinlock_@@EA ; shmlock
 	call	AuReleaseSpinlock
 
-; 382  : }
+; 386  : }
 
 	add	rsp, 72					; 00000048H
 	ret	0
@@ -739,51 +739,51 @@ key$ = 112
 proc$ = 120
 ?AuSHMUnmap@@YAXGPEAU_au_proc_@@@Z PROC			; AuSHMUnmap
 
-; 323  : void AuSHMUnmap(uint16_t key, AuProcess* proc) {
+; 327  : void AuSHMUnmap(uint16_t key, AuProcess* proc) {
 
 $LN12:
 	mov	QWORD PTR [rsp+16], rdx
 	mov	WORD PTR [rsp+8], cx
 	sub	rsp, 104				; 00000068H
 
-; 324  : 	AuAcquireSpinlock(shmlock);
+; 328  : 	AuAcquireSpinlock(shmlock);
 
 	mov	rcx, QWORD PTR ?shmlock@@3PEAU_spinlock_@@EA ; shmlock
 	call	AuAcquireSpinlock
 
-; 325  : 	AuSHM* shm = AuGetSHMSeg(key);
+; 329  : 	AuSHM* shm = AuGetSHMSeg(key);
 
 	movzx	ecx, WORD PTR key$[rsp]
 	call	?AuGetSHMSeg@@YAPEAU_shm_@@G@Z		; AuGetSHMSeg
 	mov	QWORD PTR shm$[rsp], rax
 
-; 326  : 
-; 327  : 	if (!shm) {
+; 330  : 
+; 331  : 	if (!shm) {
 
 	cmp	QWORD PTR shm$[rsp], 0
 	jne	SHORT $LN9@AuSHMUnmap
 
-; 328  : 		AuReleaseSpinlock(shmlock);
+; 332  : 		AuReleaseSpinlock(shmlock);
 
 	mov	rcx, QWORD PTR ?shmlock@@3PEAU_spinlock_@@EA ; shmlock
 	call	AuReleaseSpinlock
 
-; 329  : 		return;
+; 333  : 		return;
 
 	jmp	$LN10@AuSHMUnmap
 $LN9@AuSHMUnmap:
 
-; 330  : 	}
-; 331  : 	
-; 332  : 	AuSHMMappings* mapping = NULL;
+; 334  : 	}
+; 335  : 	
+; 336  : 	AuSHMMappings* mapping = NULL;
 
 	mov	QWORD PTR mapping$[rsp], 0
 
-; 333  : 	int index = 0;
+; 337  : 	int index = 0;
 
 	mov	DWORD PTR index$[rsp], 0
 
-; 334  : 	for (int i = 0; i < proc->shmmaps->pointer; i++) {
+; 338  : 	for (int i = 0; i < proc->shmmaps->pointer; i++) {
 
 	mov	DWORD PTR i$1[rsp], 0
 	jmp	SHORT $LN8@AuSHMUnmap
@@ -798,7 +798,7 @@ $LN8@AuSHMUnmap:
 	cmp	DWORD PTR i$1[rsp], eax
 	jae	$LN6@AuSHMUnmap
 
-; 335  : 		AuSHMMappings* maps = (AuSHMMappings*)list_get_at(proc->shmmaps, i);
+; 339  : 		AuSHMMappings* maps = (AuSHMMappings*)list_get_at(proc->shmmaps, i);
 
 	mov	edx, DWORD PTR i$1[rsp]
 	mov	rax, QWORD PTR proc$[rsp]
@@ -806,19 +806,19 @@ $LN8@AuSHMUnmap:
 	call	list_get_at
 	mov	QWORD PTR maps$4[rsp], rax
 
-; 336  : 		if (maps->shm == shm){
+; 340  : 		if (maps->shm == shm){
 
 	mov	rax, QWORD PTR maps$4[rsp]
 	mov	rcx, QWORD PTR shm$[rsp]
 	cmp	QWORD PTR [rax+16], rcx
 	jne	$LN5@AuSHMUnmap
 
-; 337  : 			mapping = maps;
+; 341  : 			mapping = maps;
 
 	mov	rax, QWORD PTR maps$4[rsp]
 	mov	QWORD PTR mapping$[rsp], rax
 
-; 338  : 			for (int i = 0; i < mapping->length / PAGE_SIZE; i++) {
+; 342  : 			for (int i = 0; i < mapping->length / PAGE_SIZE; i++) {
 
 	mov	DWORD PTR i$2[rsp], 0
 	jmp	SHORT $LN4@AuSHMUnmap
@@ -838,7 +838,7 @@ $LN4@AuSHMUnmap:
 	cmp	rcx, rax
 	jae	SHORT $LN2@AuSHMUnmap
 
-; 339  : 				AuVPage* vpage = AuVmmngrGetPage(mapping->start_addr + i * PAGE_SIZE, VIRT_GETPAGE_ONLY_RET, VIRT_GETPAGE_ONLY_RET);
+; 343  : 				AuVPage* vpage = AuVmmngrGetPage(mapping->start_addr + i * PAGE_SIZE, VIRT_GETPAGE_ONLY_RET, VIRT_GETPAGE_ONLY_RET);
 
 	imul	eax, DWORD PTR i$2[rsp], 4096		; 00001000H
 	cdqe
@@ -850,12 +850,12 @@ $LN4@AuSHMUnmap:
 	call	AuVmmngrGetPage
 	mov	QWORD PTR vpage$3[rsp], rax
 
-; 340  : 				if (vpage) {
+; 344  : 				if (vpage) {
 
 	cmp	QWORD PTR vpage$3[rsp], 0
 	je	SHORT $LN1@AuSHMUnmap
 
-; 341  : 					vpage->bits.page = 0;
+; 345  : 					vpage->bits.page = 0;
 
 	mov	rax, QWORD PTR vpage$3[rsp]
 	mov	rcx, -1099511623681			; ffffff0000000fffH
@@ -864,7 +864,7 @@ $LN4@AuSHMUnmap:
 	mov	rcx, QWORD PTR vpage$3[rsp]
 	mov	QWORD PTR [rcx], rax
 
-; 342  : 					vpage->bits.present = 0;
+; 346  : 					vpage->bits.present = 0;
 
 	mov	rax, QWORD PTR vpage$3[rsp]
 	mov	rax, QWORD PTR [rax]
@@ -872,7 +872,7 @@ $LN4@AuSHMUnmap:
 	mov	rcx, QWORD PTR vpage$3[rsp]
 	mov	QWORD PTR [rcx], rax
 
-; 343  : 					flush_tlb((void*)(mapping->start_addr + i * PAGE_SIZE));
+; 347  : 					flush_tlb((void*)(mapping->start_addr + i * PAGE_SIZE));
 
 	imul	eax, DWORD PTR i$2[rsp], 4096		; 00001000H
 	cdqe
@@ -882,49 +882,49 @@ $LN4@AuSHMUnmap:
 	call	flush_tlb
 $LN1@AuSHMUnmap:
 
-; 344  : 				}
-; 345  : 			}
+; 348  : 				}
+; 349  : 			}
 
 	jmp	$LN3@AuSHMUnmap
 $LN2@AuSHMUnmap:
 
-; 346  : 			SeTextOut("Closing index -> %d \r\n", i);
+; 350  : 			SeTextOut("Closing index -> %d \r\n", i);
 
 	mov	edx, DWORD PTR i$1[rsp]
 	lea	rcx, OFFSET FLAT:$SG3809
 	call	SeTextOut
 
-; 347  : 			list_remove(proc->shmmaps, i);
+; 351  : 			list_remove(proc->shmmaps, i);
 
 	mov	edx, DWORD PTR i$1[rsp]
 	mov	rax, QWORD PTR proc$[rsp]
 	mov	rcx, QWORD PTR [rax+1080]
 	call	list_remove
 
-; 348  : 			kfree(mapping);
+; 352  : 			kfree(mapping);
 
 	mov	rcx, QWORD PTR mapping$[rsp]
 	call	kfree
 
-; 349  : 			break;
+; 353  : 			break;
 
 	jmp	SHORT $LN6@AuSHMUnmap
 $LN5@AuSHMUnmap:
 
-; 350  : 		}
-; 351  : 	}
+; 354  : 		}
+; 355  : 	}
 
 	jmp	$LN7@AuSHMUnmap
 $LN6@AuSHMUnmap:
 
-; 352  : 
-; 353  : 
-; 354  : 	AuSHMDelete(shm);
+; 356  : 
+; 357  : 
+; 358  : 	AuSHMDelete(shm);
 
 	mov	rcx, QWORD PTR shm$[rsp]
 	call	?AuSHMDelete@@YAXPEAU_shm_@@@Z		; AuSHMDelete
 
-; 355  : 	SeTextOut("%s Unmapping shm ->%d count \r\n",proc->name, shm->link_count);
+; 359  : 	SeTextOut("%s Unmapping shm ->%d count \r\n",proc->name, shm->link_count);
 
 	mov	rax, QWORD PTR shm$[rsp]
 	movzx	eax, WORD PTR [rax+16]
@@ -935,13 +935,13 @@ $LN6@AuSHMUnmap:
 	lea	rcx, OFFSET FLAT:$SG3810
 	call	SeTextOut
 
-; 356  : 	AuReleaseSpinlock(shmlock);
+; 360  : 	AuReleaseSpinlock(shmlock);
 
 	mov	rcx, QWORD PTR ?shmlock@@3PEAU_spinlock_@@EA ; shmlock
 	call	AuReleaseSpinlock
 $LN10@AuSHMUnmap:
 
-; 357  : }
+; 361  : }
 
 	add	rsp, 104				; 00000068H
 	ret	0
@@ -1332,12 +1332,18 @@ $LN5@AuSHMObtai:
 	mov	rcx, QWORD PTR [rax+1080]
 	call	list_add
 
-; 296  : 				AuReleaseSpinlock(shmlock);
+; 296  : 				/* Now order the list, in ascending order */
+; 297  : 				AuSHMProcOrderList(proc);
+
+	mov	rcx, QWORD PTR proc$[rsp]
+	call	?AuSHMProcOrderList@@YAXPEAU_au_proc_@@@Z ; AuSHMProcOrderList
+
+; 298  : 				AuReleaseSpinlock(shmlock);
 
 	mov	rcx, QWORD PTR ?shmlock@@3PEAU_spinlock_@@EA ; shmlock
 	call	AuReleaseSpinlock
 
-; 297  : 				return (void*)mappings->start_addr;
+; 299  : 				return (void*)mappings->start_addr;
 
 	mov	rax, QWORD PTR mappings$[rsp]
 	mov	rax, QWORD PTR [rax]
@@ -1346,12 +1352,12 @@ $LN8@AuSHMObtai:
 $LN9@AuSHMObtai:
 $LN10@AuSHMObtai:
 
-; 298  : 			}
-; 299  : 		}
-; 300  : 	}
-; 301  : 
-; 302  : 	/* finally, we need to increase the shm break */
-; 303  : 	for (int i = 0; i < mem->num_frames; i++) {
+; 300  : 			}
+; 301  : 		}
+; 302  : 	}
+; 303  : 
+; 304  : 	/* finally, we need to increase the shm break */
+; 305  : 	for (int i = 0; i < mem->num_frames; i++) {
 
 	mov	DWORD PTR i$4[rsp], 0
 	jmp	SHORT $LN4@AuSHMObtai
@@ -1365,7 +1371,7 @@ $LN4@AuSHMObtai:
 	cmp	DWORD PTR i$4[rsp], eax
 	jae	SHORT $LN2@AuSHMObtai
 
-; 304  : 		uint64_t phys_addr = mem->frames[i];
+; 306  : 		uint64_t phys_addr = mem->frames[i];
 
 	movsxd	rax, DWORD PTR i$4[rsp]
 	mov	rcx, QWORD PTR mem$[rsp]
@@ -1373,40 +1379,40 @@ $LN4@AuSHMObtai:
 	mov	rax, QWORD PTR [rcx+rax*8]
 	mov	QWORD PTR phys_addr$12[rsp], rax
 
-; 305  : 		uint64_t current_virt = AuSHMProcBreak(proc, 1);
+; 307  : 		uint64_t current_virt = AuSHMProcBreak(proc, 1);
 
 	mov	edx, 1
 	mov	rcx, QWORD PTR proc$[rsp]
 	call	?AuSHMProcBreak@@YA_KPEAU_au_proc_@@_K@Z ; AuSHMProcBreak
 	mov	QWORD PTR current_virt$7[rsp], rax
 
-; 306  : 		AuMapPage((uint64_t)phys_addr, current_virt, X86_64_PAGING_USER);
+; 308  : 		AuMapPage((uint64_t)phys_addr, current_virt, X86_64_PAGING_USER);
 
 	mov	r8b, 4
 	mov	rdx, QWORD PTR current_virt$7[rsp]
 	mov	rcx, QWORD PTR phys_addr$12[rsp]
 	call	AuMapPage
 
-; 307  : 		if (mappings->start_addr == 0)
+; 309  : 		if (mappings->start_addr == 0)
 
 	mov	rax, QWORD PTR mappings$[rsp]
 	cmp	QWORD PTR [rax], 0
 	jne	SHORT $LN1@AuSHMObtai
 
-; 308  : 			mappings->start_addr = current_virt;
+; 310  : 			mappings->start_addr = current_virt;
 
 	mov	rax, QWORD PTR mappings$[rsp]
 	mov	rcx, QWORD PTR current_virt$7[rsp]
 	mov	QWORD PTR [rax], rcx
 $LN1@AuSHMObtai:
 
-; 309  : 	}
+; 311  : 	}
 
 	jmp	SHORT $LN3@AuSHMObtai
 $LN2@AuSHMObtai:
 
-; 310  : 
-; 311  : 	mappings->length = mem->num_frames * PAGE_SIZE;
+; 312  : 
+; 313  : 	mappings->length = mem->num_frames * PAGE_SIZE;
 
 	mov	rax, QWORD PTR mem$[rsp]
 	imul	eax, DWORD PTR [rax+4], 4096		; 00001000H
@@ -1414,31 +1420,37 @@ $LN2@AuSHMObtai:
 	mov	rcx, QWORD PTR mappings$[rsp]
 	mov	QWORD PTR [rcx+8], rax
 
-; 312  : 	mappings->shm = mem;
+; 314  : 	mappings->shm = mem;
 
 	mov	rax, QWORD PTR mappings$[rsp]
 	mov	rcx, QWORD PTR mem$[rsp]
 	mov	QWORD PTR [rax+16], rcx
 
-; 313  : 	list_add(proc->shmmaps, mappings);
+; 315  : 	list_add(proc->shmmaps, mappings);
 
 	mov	rdx, QWORD PTR mappings$[rsp]
 	mov	rax, QWORD PTR proc$[rsp]
 	mov	rcx, QWORD PTR [rax+1080]
 	call	list_add
 
-; 314  : 	AuReleaseSpinlock(shmlock);
+; 316  : 	/* Now order the list, in ascending order */
+; 317  : 	AuSHMProcOrderList(proc);
+
+	mov	rcx, QWORD PTR proc$[rsp]
+	call	?AuSHMProcOrderList@@YAXPEAU_au_proc_@@@Z ; AuSHMProcOrderList
+
+; 318  : 	AuReleaseSpinlock(shmlock);
 
 	mov	rcx, QWORD PTR ?shmlock@@3PEAU_spinlock_@@EA ; shmlock
 	call	AuReleaseSpinlock
 
-; 315  : 	return (void*)mappings->start_addr;
+; 319  : 	return (void*)mappings->start_addr;
 
 	mov	rax, QWORD PTR mappings$[rsp]
 	mov	rax, QWORD PTR [rax]
 $LN21@AuSHMObtai:
 
-; 316  : }
+; 320  : }
 
 	add	rsp, 152				; 00000098H
 	ret	0

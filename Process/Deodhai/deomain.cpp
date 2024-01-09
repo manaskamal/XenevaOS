@@ -1230,7 +1230,7 @@ void DeodhaiCloseWindow(Window* win) {
 		e.dword = ownerId;
 		e.dword2 = handle;
 		DeodhaiBroadcastMessage(&e, NULL);
-		_KeProcessSleep(1000000000);
+		_KeProcessSleep(100);
 	}
 }
 
@@ -1420,7 +1420,9 @@ int main(int argc, char* arv[]) {
 			
 			_KeFileIoControl(postbox_fd, POSTBOX_PUT_EVENT, &e);
 
+			_KeProcessSleep(20);
 			if (!(flags & WINDOW_FLAG_MESSAGEBOX)){
+				_KePrint("Broadcasting message \n");
 				/* broadcast it to all broadcast listener windows, about this news*/
 				memset(&e, 0, sizeof(PostEvent));
 				e.type = DEODHAI_BROADCAST_WINCREATED;
@@ -1438,8 +1440,10 @@ int main(int argc, char* arv[]) {
 
 		/* broadcast icon message */
 		if (event.type == DEODHAI_MESSAGE_BROADCAST_ICON) {
+			_KePrint("Deodhai broadcast icon %s\r\n", event.charValue3);
 			event.type = DEODHAI_BROADCAST_ICON;
 			DeodhaiBroadcastMessage(&event, NULL);
+			_KeProcessSleep(10);
 			memset(&event, 0, sizeof(PostEvent));
 		}
 
@@ -1521,7 +1525,6 @@ int main(int argc, char* arv[]) {
 		}
 
 		if (event.type == DEODHAI_MESSAGE_CLOSE_WINDOW) {
-			_KePrint("Close message received \n");
 			/* deodhai close window commands needs every datas
 			 * to be cleared from client side, in server side
 			 * only window related datas will get cleared, 

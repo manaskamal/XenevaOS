@@ -35,7 +35,7 @@
 #include <string.h>
 #include "boxblur.h"
 
-uint16_t shared_win_key_prefix = 100;
+uint16_t shared_win_key_prefix = 1000;
 uint16_t back_buffer_key_prefix = 400;
 
 
@@ -46,10 +46,10 @@ uint16_t back_buffer_key_prefix = 400;
  */
 uint32_t* CreateSharedWinSpace(uint16_t *shkey, uint16_t ownerId) {
 	uint32_t key = shared_win_key_prefix + ownerId;
-	shared_win_key_prefix++;
 	int id = _KeCreateSharedMem(key, sizeof(WinSharedInfo), 0);
 	void* addr = _KeObtainSharedMem(id, NULL, 0);
 	*shkey = key;
+	shared_win_key_prefix += 10;
 	return (uint32_t*)addr;
 }
 

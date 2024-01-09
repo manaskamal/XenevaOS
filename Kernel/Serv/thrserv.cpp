@@ -159,7 +159,7 @@ int ProcessLoadExec(int proc_id, char* filename,int argc, char** argv) {
  */
 int ProcessSleep(uint64_t ms) {
 	x64_cli();
-	uint64_t sleep_time = ms *100;
+	uint64_t sleep_time = ms * 1000;
 	AuThread* current_thr = AuGetCurrentThread();
 	if (!current_thr)
 		return 0;

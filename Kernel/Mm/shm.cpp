@@ -293,6 +293,8 @@ void* AuSHMObtainMem(AuProcess* proc, uint16_t id, void* shmaddr, int shmflg) {
 				mappings->length = mem->num_frames * PAGE_SIZE;
 				mappings->shm = mem;
 				list_add(proc->shmmaps, mappings);
+				/* Now order the list, in ascending order */
+				AuSHMProcOrderList(proc);
 				AuReleaseSpinlock(shmlock);
 				return (void*)mappings->start_addr;
 			}
@@ -311,6 +313,8 @@ void* AuSHMObtainMem(AuProcess* proc, uint16_t id, void* shmaddr, int shmflg) {
 	mappings->length = mem->num_frames * PAGE_SIZE;
 	mappings->shm = mem;
 	list_add(proc->shmmaps, mappings);
+	/* Now order the list, in ascending order */
+	AuSHMProcOrderList(proc);
 	AuReleaseSpinlock(shmlock);
 	return (void*)mappings->start_addr;
 }

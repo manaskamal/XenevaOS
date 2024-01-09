@@ -37,6 +37,9 @@
 #include <widgets\base.h>
 #include <widgets\button.h>
 #include <widgets\window.h>
+#include <widgets\menu.h>
+#include <widgets\menubar.h>
+#include <widgets\msgbox.h>
 #include <string.h>
 #include <stdlib.h>
 #include "calculator.h"
@@ -309,7 +312,9 @@ void WindowHandleMessage(PostEvent *e) {
 	switch (e->type) {
 	/* handle mouse event from deodhai */
 	case DEODHAI_REPLY_MOUSE_EVENT:{
-									   ChWindowHandleMouse(mainWin, e->dword, e->dword2, e->dword3);
+									   int handle = e->dword4;
+									   ChWindow* mouseWin = ChGetWindowByHandle(mainWin, handle);
+									   ChWindowHandleMouse(mouseWin, e->dword, e->dword2, e->dword3);
 									   memset(e, 0, sizeof(PostEvent));
 									   break;
 	}
@@ -322,7 +327,8 @@ void WindowHandleMessage(PostEvent *e) {
 	case DEODHAI_REPLY_FOCUS_CHANGED:{
 										 int focus_val = e->dword;
 										 int handle = e->dword2;
-										 ChWindowHandleFocus(mainWin, focus_val, handle);
+										 ChWindow* focWin = ChGetWindowByHandle(mainWin, handle);
+										 ChWindowHandleFocus(focWin, focus_val, handle);
 										 memset(e, 0, sizeof(PostEvent));
 										 break;
 	}
@@ -429,6 +435,17 @@ void CalculatorClose(ChWindow* win, ChWinGlobalControl *ctl) {
 }
 
 /*
+ * CalculatorAboutBox -- show the about box
+ * @param widget -- System parameter
+ * @param win -- System parameter
+ */
+void CalculatorAboutBox(ChWidget* widget, ChWindow* win){
+	ChMessageBox* mbox = ChCreateMessageBox(mainWin, "About Calculator v1.0",
+		"This program is part of Xeneva OS", MSGBOX_TYPE_ONLYCLOSE, MSGBOX_ICON_WARNING);
+	ChMessageBoxShow(mbox);
+}
+
+/*
 * main -- main entry
 */
 int main(int argc, char* argv[]){
@@ -449,7 +466,24 @@ int main(int argc, char* argv[]){
 
 	dispFont = ChInitialiseFont(CALIBRI);
 
-	mainDisp = CalcCreateDisplay(10,20, mainWin->info->width - 10*2 - CHITRALEKHA_WINDOW_DEFAULT_PAD_X, 75);
+	/* Build Menus */
+	ChMenubar* mainMenuBar = ChCreateMenubar(mainWin);
+	ChMenuButton* fileMb = ChCreateMenubutton(mainMenuBar, "File");
+	ChMenuButton* helpMb = ChCreateMenubutton(mainMenuBar, "Help");
+	ChMenubarAddButton(mainMenuBar, fileMb);
+	ChMenubarAddButton(mainMenuBar, helpMb);
+	ChWindowAddWidget(mainWin, (ChWidget*)mainMenuBar);
+
+	ChPopupMenu* fileMenu = ChCreatePopupMenu(mainWin);
+	ChMenuItem* exitmi = ChCreateMenuItem("Exit", fileMenu);
+	ChMenuButtonAddMenu(fileMb, fileMenu);
+
+	ChPopupMenu* helpMenu = ChCreatePopupMenu(mainWin);
+	ChMenuItem* aboutmi = ChCreateMenuItem("About", helpMenu);
+	aboutmi->wid.ChActionHandler = CalculatorAboutBox;
+	ChMenuButtonAddMenu(helpMb, helpMenu);
+
+	mainDisp = CalcCreateDisplay(10,40, mainWin->info->width - 10*2 - CHITRALEKHA_WINDOW_DEFAULT_PAD_X, 75);
 	
 	CalculatorCreateButtonGird(mainWin);
 	ChWindowAddWidget(mainWin, (ChWidget*)mainDisp);
@@ -460,6 +494,8 @@ int main(int argc, char* argv[]){
 	PostEvent e;
 	memset(&e, 0, sizeof(PostEvent));
 
+	/* setup the jump buffer */
+	setjmp(mainWin->jump);
 	while (1) {
 		int err = _KeFileIoControl(app->postboxfd, POSTBOX_GET_EVENT, &e);
 		WindowHandleMessage(&e);

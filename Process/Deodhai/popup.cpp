@@ -34,7 +34,7 @@
 #include <sys\mman.h>
 
 
-uint16_t shared_popup_win_key_prefix = 1000;
+uint16_t shared_popup_win_key_prefix = 10000;
 
 /*
 * CreateSharedWinSpace -- Create a shared window space

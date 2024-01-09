@@ -35,8 +35,8 @@ EXTRN	AuMapMMIO:PROC
 EXTRN	memset:PROC
 EXTRN	kmalloc:PROC
 pdata	SEGMENT
-$pdata$?NVMeInitialise@@YAHXZ DD imagerel $LN6
-	DD	imagerel $LN6+444
+$pdata$?NVMeInitialise@@YAHXZ DD imagerel $LN8
+	DD	imagerel $LN8+446
 	DD	imagerel $unwind$?NVMeInitialise@@YAHXZ
 $pdata$?NVMeOutl@@YAXHI@Z DD imagerel $LN3
 	DD	imagerel $LN3+46
@@ -390,7 +390,7 @@ cap$ = 96
 
 ; 134  : int NVMeInitialise() {
 
-$LN6:
+$LN8:
 	sub	rsp, 120				; 00000078H
 
 ; 135  : 	int bus, dev, func = 0;
@@ -412,23 +412,23 @@ $LN6:
 
 	mov	eax, -1					; ffffffffH
 	cmp	QWORD PTR device$[rsp], rax
-	jne	SHORT $LN3@NVMeInitia
+	jne	SHORT $LN5@NVMeInitia
 
 ; 138  : 		AuTextOut("[NVMe]: no nvme class found \n");
 
 	lea	rcx, OFFSET FLAT:$SG3287
 	call	AuTextOut
-$LN2@NVMeInitia:
+$LN4@NVMeInitia:
 
 ; 139  : 		for (;;);
 
-	jmp	SHORT $LN2@NVMeInitia
+	jmp	SHORT $LN4@NVMeInitia
 
 ; 140  : 		return -1;
 
 	mov	eax, -1
-	jmp	$LN4@NVMeInitia
-$LN3@NVMeInitia:
+	jmp	$LN6@NVMeInitia
+$LN5@NVMeInitia:
 
 ; 141  : 	}
 ; 142  : 
@@ -444,9 +444,9 @@ $LN3@NVMeInitia:
 	mov	eax, eax
 	mov	QWORD PTR base32$[rsp], rax
 
-; 144  : 	base32 &= 0xFFFFFFF0;
+; 144  : 	base32 &= 0xFFFFFFFC;
 
-	mov	eax, -16				; fffffff0H
+	mov	eax, -4					; fffffffcH
 	mov	rcx, QWORD PTR base32$[rsp]
 	and	rcx, rax
 	mov	rax, rcx
@@ -562,13 +562,18 @@ $LN3@NVMeInitia:
 	mov	rdx, rcx
 	lea	rcx, OFFSET FLAT:$SG3302
 	call	AuTextOut
+$LN2@NVMeInitia:
 
-; 165  : 	return 0;
+; 165  : 	for (;;);
+
+	jmp	SHORT $LN2@NVMeInitia
+
+; 166  : 	return 0;
 
 	xor	eax, eax
-$LN4@NVMeInitia:
+$LN6@NVMeInitia:
 
-; 166  : }
+; 167  : }
 
 	add	rsp, 120				; 00000078H
 	ret	0

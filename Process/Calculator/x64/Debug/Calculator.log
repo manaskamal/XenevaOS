@@ -1,4 +1,4 @@
-﻿Build started 04-01-2024 ৰাতিপু 9:48:56.
+﻿Build started 07-01-2024 ৰাতিপু 11:07:39.
      1>Project "E:\Xeneva Project\Aurora\Process\Calculator\Calculator.vcxproj" on node 2 (Rebuild target(s)).
      1>ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /I"E:\Xeneva Project\Aurora\Libs\Chitralekha" /I"E:\os_dev\freetype2-master\freetype2-master\include" /Zi /nologo /W4 /WX- /sdl- /MP /Od /Oy /D ARCH_X64 /D YES_DYNAMIC /D DYNAMIC_IMPORTER /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt actions.cpp main.cpp
@@ -6,16 +6,19 @@
      1>cl : Command line warning D9002: ignoring unknown option '/arch:SSE2'
      1>cl : Command line warning D9030: '/Gm' is incompatible with multiprocessing; ignoring /MP switch
          main.cpp
-     1>main.cpp(108): warning C4189: 'hist_h' : local variable is initialized but not referenced
-     1>main.cpp(183): warning C4267: '+=' : conversion from 'size_t' to 'uint16_t', possible loss of data
-     1>main.cpp(280): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
-     1>main.cpp(282): warning C4244: '+=' : conversion from 'int' to 'uint16_t', possible loss of data
-     1>main.cpp(325): warning C4244: 'argument' : conversion from 'int' to 'char', possible loss of data
-     1>main.cpp(318): warning C4189: 'code' : local variable is initialized but not referenced
-     1>main.cpp(338): warning C4189: 'num_buttons_per_row' : local variable is initialized but not referenced
-     1>main.cpp(425): warning C4100: 'ctl' : unreferenced formal parameter
-     1>main.cpp(439): warning C4018: '<' : signed/unsigned mismatch
-     1>main.cpp(463): warning C4127: conditional expression is constant
+     1>main.cpp(111): warning C4189: 'hist_h' : local variable is initialized but not referenced
+     1>main.cpp(186): warning C4267: '+=' : conversion from 'size_t' to 'uint16_t', possible loss of data
+     1>main.cpp(283): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
+     1>main.cpp(285): warning C4244: '+=' : conversion from 'int' to 'uint16_t', possible loss of data
+     1>main.cpp(331): warning C4244: 'argument' : conversion from 'int' to 'char', possible loss of data
+     1>main.cpp(323): warning C4189: 'code' : local variable is initialized but not referenced
+     1>main.cpp(344): warning C4189: 'num_buttons_per_row' : local variable is initialized but not referenced
+     1>main.cpp(431): warning C4100: 'ctl' : unreferenced formal parameter
+     1>main.cpp(442): warning C4100: 'win' : unreferenced formal parameter
+     1>main.cpp(442): warning C4100: 'widget' : unreferenced formal parameter
+     1>main.cpp(456): warning C4018: '<' : signed/unsigned mismatch
+     1>main.cpp(499): warning C4127: conditional expression is constant
+     1>main.cpp(478): warning C4189: 'exitmi' : local variable is initialized but not referenced
          actions.cpp
      1>actions.cpp(32): warning C4100: 'win' : unreferenced formal parameter
      1>actions.cpp(32): warning C4100: 'wid' : unreferenced formal parameter
@@ -71,4 +74,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:00.53
+Time Elapsed 00:00:00.71

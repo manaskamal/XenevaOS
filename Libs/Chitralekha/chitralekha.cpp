@@ -134,6 +134,7 @@ void ChCanvasScreenUpdate(ChCanvas* canvas, uint32_t x, uint32_t y, uint32_t w, 
 		x = 0;
 	if (y < 0)
 		y = 0;
+
 	for (int i = 0; i < h; i++)
 		_fastcpy(fb + (y + i) * canvas->screenWidth + x, 
 		canvas->buffer + (y + i) * canvas->canvasWidth + x, w * 4);

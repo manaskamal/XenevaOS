@@ -1,8 +1,8 @@
-﻿Build started 04-01-2024 ৰাতিপু 9:49:00.
+﻿Build started 09-01-2024 আবেলি 11:00:55.
      1>Project "E:\Xeneva Project\Aurora\Process\Deodhai\Deodhai.vcxproj" on node 2 (Rebuild target(s)).
      1>_NASM:
          _fastcpy.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp9dd649f0851e46afb736b131e2ee2d85.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp41991f2fcf56440980fccdee4fa80d1a.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\_fastcpy.obj"  "E:\Xeneva Project\Aurora\Process\Deodhai\_fastcpy.asm"
        ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /I"E:\Xeneva Project\Aurora\Libs\Chitralekha" /I"E:\os_dev\freetype2-master\freetype2-master\include" /Zi /nologo /W4 /WX- /sdl- /MP /Od /Oy /D ARCH_X64 /D YES_DYNAMIC /D DYNAMIC_IMPORTER /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt backdirty.cpp clip.cpp cursor.cpp deomain.cpp dirty.cpp popup.cpp rect.cpp window.cpp
@@ -10,9 +10,9 @@
      1>cl : Command line warning D9002: ignoring unknown option '/arch:SSE2'
      1>cl : Command line warning D9030: '/Gm' is incompatible with multiprocessing; ignoring /MP switch
          window.cpp
-     1>window.cpp(50): warning C4244: 'argument' : conversion from 'uint32_t' to 'uint16_t', possible loss of data
-     1>window.cpp(51): warning C4244: 'argument' : conversion from 'int' to 'uint16_t', possible loss of data
-     1>window.cpp(52): warning C4244: '=' : conversion from 'uint32_t' to 'uint16_t', possible loss of data
+     1>window.cpp(49): warning C4244: 'argument' : conversion from 'uint32_t' to 'uint16_t', possible loss of data
+     1>window.cpp(50): warning C4244: 'argument' : conversion from 'int' to 'uint16_t', possible loss of data
+     1>window.cpp(51): warning C4244: '=' : conversion from 'uint32_t' to 'uint16_t', possible loss of data
      1>window.cpp(64): warning C4244: 'argument' : conversion from 'uint32_t' to 'uint16_t', possible loss of data
      1>window.cpp(65): warning C4244: 'argument' : conversion from 'int' to 'uint16_t', possible loss of data
      1>window.cpp(66): warning C4244: '=' : conversion from 'uint32_t' to 'uint16_t', possible loss of data
@@ -109,18 +109,18 @@
      1>deomain.cpp(1387): warning C4018: '>=' : signed/unsigned mismatch
      1>deomain.cpp(1389): warning C4018: '>=' : signed/unsigned mismatch
      1>deomain.cpp(1408): warning C4244: 'initializing' : conversion from 'uint32_t' to 'uint8_t', possible loss of data
-     1>deomain.cpp(1447): warning C4244: 'initializing' : conversion from 'uint32_t' to 'uint16_t', possible loss of data
-     1>deomain.cpp(1473): warning C4244: 'initializing' : conversion from 'uint32_t' to 'uint16_t', possible loss of data
-     1>deomain.cpp(1534): warning C4389: '==' : signed/unsigned mismatch
-     1>deomain.cpp(1557): warning C4389: '==' : signed/unsigned mismatch
-     1>deomain.cpp(1558): warning C4244: '=' : conversion from 'int' to 'uint8_t', possible loss of data
-     1>deomain.cpp(1572): warning C4244: 'initializing' : conversion from 'uint32_t' to 'uint8_t', possible loss of data
-     1>deomain.cpp(1579): warning C4389: '==' : signed/unsigned mismatch
-     1>deomain.cpp(1586): warning C4244: 'argument' : conversion from 'int' to 'uint16_t', possible loss of data
+     1>deomain.cpp(1451): warning C4244: 'initializing' : conversion from 'uint32_t' to 'uint16_t', possible loss of data
+     1>deomain.cpp(1477): warning C4244: 'initializing' : conversion from 'uint32_t' to 'uint16_t', possible loss of data
+     1>deomain.cpp(1537): warning C4389: '==' : signed/unsigned mismatch
+     1>deomain.cpp(1560): warning C4389: '==' : signed/unsigned mismatch
+     1>deomain.cpp(1561): warning C4244: '=' : conversion from 'int' to 'uint8_t', possible loss of data
+     1>deomain.cpp(1575): warning C4244: 'initializing' : conversion from 'uint32_t' to 'uint8_t', possible loss of data
+     1>deomain.cpp(1582): warning C4389: '==' : signed/unsigned mismatch
+     1>deomain.cpp(1589): warning C4244: 'argument' : conversion from 'int' to 'uint16_t', possible loss of data
      1>deomain.cpp(1287): warning C4100: 'arv' : unreferenced formal parameter
      1>deomain.cpp(1287): warning C4100: 'argc' : unreferenced formal parameter
-     1>deomain.cpp(1447): warning C4189: 'ownerId' : local variable is initialized but not referenced
-     1>deomain.cpp(1572): warning C4189: 'type' : local variable is initialized but not referenced
+     1>deomain.cpp(1451): warning C4189: 'ownerId' : local variable is initialized but not referenced
+     1>deomain.cpp(1575): warning C4189: 'type' : local variable is initialized but not referenced
          cursor.cpp
      1>cursor.cpp(96): warning C4018: '<' : signed/unsigned mismatch
      1>cursor.cpp(100): warning C4018: '<' : signed/unsigned mismatch
@@ -149,4 +149,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:01.18
+Time Elapsed 00:00:05.42

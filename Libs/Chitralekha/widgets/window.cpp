@@ -536,7 +536,6 @@ XE_EXTERN XE_EXPORT void ChWindowCloseWindow(ChWindow* win){
 		free(pw);
 	}
 	free(win->popup);
-	_KePrint("Window closing \n");
 	/* send close window command to deodhai */
 	int handle = win->handle;
 	PostEvent e;

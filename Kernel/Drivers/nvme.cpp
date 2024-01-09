@@ -141,7 +141,7 @@ int NVMeInitialise() {
 	}
 
 	uint64_t base32 = AuPCIERead(device, PCI_BAR0, bus, dev, func);
-	base32 &= 0xFFFFFFF0;
+	base32 &= 0xFFFFFFFC;
 	base32 |= (AuPCIERead(device, PCI_BAR1, bus, dev, func) & 0xFFFFFFF0) << 32;
 
 
@@ -162,6 +162,7 @@ int NVMeInitialise() {
 	uint64_t cap = NVMeInQ(NVME_REGISTER_CAP);
 	AuTextOut("[NVMe]: device present bar0 -> %x, version %d.%d \n", nvmemmio, major, minor);
 	AuTextOut("Cap min page sz -> %d max -> %d \n", (((cap) >> 48) & 0xf), (((cap) >> 52) & 0xf));
+	for (;;);
 	return 0;
 }
 

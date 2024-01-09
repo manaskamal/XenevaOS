@@ -63,7 +63,7 @@ void ChMessageBoxPaint(ChWidget* wid,ChWindow* win) {
 void ChMessageBoxClose(ChWindow* win, ChWinGlobalControl *ctl){
 	uint8_t flags = WINDOW_FLAG_MOVABLE;
 	ChWindowSetFlags(win->parent, flags);
-	_KeProcessSleep(1000000000);
+	_KeProcessSleep(50);
 	ChWindowCloseWindow(win);
 }
 

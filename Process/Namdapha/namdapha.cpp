@@ -217,6 +217,7 @@ void NamdaphaHandleMessage(PostEvent *e) {
 	}
 		/* handle new window_created message */
 	case DEODHAI_BROADCAST_WINCREATED:{
+									
 									for (int i = 0; i < button_list->pointer; i++) {
 										NamdaphaButton* nb = (NamdaphaButton*)list_get_at(button_list, i);
 										nb->focused = false;
@@ -234,6 +235,7 @@ void NamdaphaHandleMessage(PostEvent *e) {
 	}
 		/* handle icon message from deodhai */
 	case DEODHAI_BROADCAST_ICON:{
+									_KePrint("Namdapha Broadcast Icon received \n");
 									NamdaphaButton* nbutton = NULL;
 									for (int i = 0; i < button_list->pointer; i++) {
 										NamdaphaButton* nb = (NamdaphaButton*)list_get_at(button_list, i);

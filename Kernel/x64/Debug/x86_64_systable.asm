@@ -10,7 +10,7 @@ EXTRN	?AuTTYCreate@@YAHPEAH0@Z:PROC			; AuTTYCreate
 EXTRN	?CreateMemMapping@@YAPEAXPEAX_KHHH1@Z:PROC	; CreateMemMapping
 EXTRN	?MemMapDirty@@YAXPEAX_KHH@Z:PROC		; MemMapDirty
 EXTRN	?UnmapMemMapping@@YAXPEAX_K@Z:PROC		; UnmapMemMapping
-EXTRN	AuTextOut:PROC
+EXTRN	SeTextOut:PROC
 EXTRN	?PauseThread@@YAHXZ:PROC			; PauseThread
 EXTRN	?GetThreadID@@YAGXZ:PROC			; GetThreadID
 EXTRN	?GetProcessID@@YAHXZ:PROC			; GetProcessID
@@ -51,7 +51,7 @@ EXTRN	?AuFTMngrGetNumFonts@@YAHXZ:PROC		; AuFTMngrGetNumFonts
 EXTRN	?AuFTMngrGetFontSize@@YAHPEAD@Z:PROC		; AuFTMngrGetFontSize
 _DATA	SEGMENT
 syscalls DQ	FLAT:?null_call@@YA_K_K00000@Z
-	DQ	FLAT:AuTextOut
+	DQ	FLAT:SeTextOut
 	DQ	FLAT:?PauseThread@@YAHXZ
 	DQ	FLAT:?GetThreadID@@YAGXZ
 	DQ	FLAT:?GetProcessID@@YAHXZ
@@ -100,6 +100,7 @@ $SG4197	DB	'%s', 0aH, 00H
 CONST	ENDS
 PUBLIC	?KePrintMsg@@YA_K_K00000@Z			; KePrintMsg
 PUBLIC	x64_syscall_handler
+EXTRN	AuTextOut:PROC
 EXTRN	AuGetCurrentThread:PROC
 EXTRN	x64_cli:PROC
 pdata	SEGMENT
