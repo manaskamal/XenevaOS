@@ -43,10 +43,10 @@ uint16_t shared_popup_win_key_prefix = 10000;
 */
 uint32_t* CreateSharedPopupWinSpace(uint16_t *shkey, uint16_t ownerId) {
 	uint32_t key = shared_popup_win_key_prefix + ownerId;
-	shared_popup_win_key_prefix++;
 	int id = _KeCreateSharedMem(key, sizeof(PopupSharedWin), 0);
 	void* addr = _KeObtainSharedMem(id, NULL, 0);
 	*shkey = key;
+	shared_popup_win_key_prefix += 10;
 	return (uint32_t*)addr;
 }
 

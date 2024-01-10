@@ -12,11 +12,13 @@ _BSS	ENDS
 CONST	SEGMENT
 $SG3277	DB	'Base addr q -> %x ', 0aH, 00H
 	ORG $+4
-$SG3287	DB	'[NVMe]: no nvme class found ', 0aH, 00H
+$SG3288	DB	'[NVMe]: no nvme class found ', 0aH, 00H
 	ORG $+2
-$SG3301	DB	'[NVMe]: device present bar0 -> %x, version %d.%d ', 0aH, 00H
+$SG3303	DB	'[NVMe]: device present bar0 -> %x, version %d.%d ', 0aH, 00H
 	ORG $+5
-$SG3302	DB	'Cap min page sz -> %d max -> %d ', 0aH, 00H
+$SG3304	DB	'Cap min page sz -> %d max -> %d ', 0aH, 00H
+	ORG $+6
+$SG3305	DB	'[NVMe]: Reset completed ', 0aH, 00H
 CONST	ENDS
 PUBLIC	?NVMeInitialise@@YAHXZ				; NVMeInitialise
 PUBLIC	?NVMeOutl@@YAXHI@Z				; NVMeOutl
@@ -29,14 +31,15 @@ PUBLIC	?NVMeOutQ@@YAXH_K@Z				; NVMeOutQ
 PUBLIC	?NVMeInQ@@YA_KH@Z				; NVMeInQ
 PUBLIC	?NVMeResetController@@YAXXZ			; NVMeResetController
 EXTRN	AuPCIEScanClass:PROC
+EXTRN	AuPCIEWrite:PROC
 EXTRN	AuPCIERead:PROC
 EXTRN	AuTextOut:PROC
 EXTRN	AuMapMMIO:PROC
 EXTRN	memset:PROC
 EXTRN	kmalloc:PROC
 pdata	SEGMENT
-$pdata$?NVMeInitialise@@YAHXZ DD imagerel $LN8
-	DD	imagerel $LN8+446
+$pdata$?NVMeInitialise@@YAHXZ DD imagerel $LN6
+	DD	imagerel $LN6+573
 	DD	imagerel $unwind$?NVMeInitialise@@YAHXZ
 $pdata$?NVMeOutl@@YAXHI@Z DD imagerel $LN3
 	DD	imagerel $LN3+46
@@ -62,6 +65,9 @@ $pdata$?NVMeOutQ@@YAXH_K@Z DD imagerel $LN3
 $pdata$?NVMeInQ@@YA_KH@Z DD imagerel $LN3
 	DD	imagerel $LN3+58
 	DD	imagerel $unwind$?NVMeInQ@@YA_KH@Z
+$pdata$?NVMeResetController@@YAXXZ DD imagerel $LN3
+	DD	imagerel $LN3+48
+	DD	imagerel $unwind$?NVMeResetController@@YAXXZ
 pdata	ENDS
 xdata	SEGMENT
 $unwind$?NVMeInitialise@@YAHXZ DD 010401H
@@ -82,15 +88,41 @@ $unwind$?NVMeOutQ@@YAXH_K@Z DD 010d01H
 	DD	0220dH
 $unwind$?NVMeInQ@@YA_KH@Z DD 010801H
 	DD	06208H
+$unwind$?NVMeResetController@@YAXXZ DD 010401H
+	DD	06204H
 xdata	ENDS
 ; Function compile flags: /Odtpy
 ; File e:\xeneva project\aurora\kernel\drivers\nvme.cpp
 _TEXT	SEGMENT
+nvmeCC$ = 32
 ?NVMeResetController@@YAXXZ PROC			; NVMeResetController
 
-; 129  : 
-; 130  : }
+; 139  : void NVMeResetController() {
 
+$LN3:
+	sub	rsp, 56					; 00000038H
+
+; 140  : 	uint32_t nvmeCC = NVMeInl(NVME_REGISTER_CC);
+
+	mov	ecx, 20
+	call	?NVMeInl@@YAIH@Z			; NVMeInl
+	mov	DWORD PTR nvmeCC$[rsp], eax
+
+; 141  : 	nvmeCC = (nvmeCC & ~(NVME_CC_EN_MASK)) | NVME_CC_DISABLE;
+
+	mov	eax, DWORD PTR nvmeCC$[rsp]
+	and	eax, -2					; fffffffeH
+	mov	DWORD PTR nvmeCC$[rsp], eax
+
+; 142  : 	NVMeOutl(NVME_REGISTER_CC, nvmeCC);
+
+	mov	edx, DWORD PTR nvmeCC$[rsp]
+	mov	ecx, 20
+	call	?NVMeOutl@@YAXHI@Z			; NVMeOutl
+
+; 143  : }
+
+	add	rsp, 56					; 00000038H
 	ret	0
 ?NVMeResetController@@YAXXZ ENDP			; NVMeResetController
 _TEXT	ENDS
@@ -101,31 +133,31 @@ mmio$ = 32
 reg$ = 64
 ?NVMeInQ@@YA_KH@Z PROC					; NVMeInQ
 
-; 122  : uint64_t NVMeInQ(int reg) {
+; 133  : uint64_t NVMeInQ(int reg) {
 
 $LN3:
 	mov	DWORD PTR [rsp+8], ecx
 	sub	rsp, 56					; 00000038H
 
-; 123  : 	volatile uint64_t* mmio = (uint64_t*)(nvme->mmiobase + reg);
+; 134  : 	volatile uint64_t* mmio = (uint64_t*)(nvme->mmiobase + reg);
 
 	movsxd	rax, DWORD PTR reg$[rsp]
 	mov	rcx, QWORD PTR ?nvme@@3PEAU_nvme_dev_@@EA ; nvme
 	add	rax, QWORD PTR [rcx]
 	mov	QWORD PTR mmio$[rsp], rax
 
-; 124  : 	AuTextOut("Base addr q -> %x \n", mmio);
+; 135  : 	AuTextOut("Base addr q -> %x \n", mmio);
 
 	mov	rdx, QWORD PTR mmio$[rsp]
 	lea	rcx, OFFSET FLAT:$SG3277
 	call	AuTextOut
 
-; 125  : 	return *mmio;
+; 136  : 	return *mmio;
 
 	mov	rax, QWORD PTR mmio$[rsp]
 	mov	rax, QWORD PTR [rax]
 
-; 126  : }
+; 137  : }
 
 	add	rsp, 56					; 00000038H
 	ret	0
@@ -139,15 +171,15 @@ reg$ = 32
 value$ = 40
 ?NVMeOutQ@@YAXH_K@Z PROC				; NVMeOutQ
 
-; 112  : void NVMeOutQ(int reg, uint64_t value) {
+; 123  : void NVMeOutQ(int reg, uint64_t value) {
 
 $LN3:
 	mov	QWORD PTR [rsp+16], rdx
 	mov	DWORD PTR [rsp+8], ecx
 	sub	rsp, 24
 
-; 113  : 
-; 114  : 	volatile uint64_t* mmio = (uint64_t*)((nvme->mmiobase + reg) | (nvme->mmiobase + (reg + 4)) << 32);
+; 124  : 
+; 125  : 	volatile uint64_t* mmio = (uint64_t*)((nvme->mmiobase + reg) | (nvme->mmiobase + (reg + 4)) << 32);
 
 	movsxd	rax, DWORD PTR reg$[rsp]
 	mov	rcx, QWORD PTR ?nvme@@3PEAU_nvme_dev_@@EA ; nvme
@@ -165,13 +197,13 @@ $LN3:
 	or	rax, rcx
 	mov	QWORD PTR mmio$[rsp], rax
 
-; 115  : 	*mmio = value;
+; 126  : 	*mmio = value;
 
 	mov	rax, QWORD PTR mmio$[rsp]
 	mov	rcx, QWORD PTR value$[rsp]
 	mov	QWORD PTR [rax], rcx
 
-; 116  : }
+; 127  : }
 
 	add	rsp, 24
 	ret	0
@@ -184,25 +216,25 @@ mmio$ = 0
 reg$ = 32
 ?NVMeInB@@YAEH@Z PROC					; NVMeInB
 
-; 102  : uint8_t NVMeInB(int reg) {
+; 113  : uint8_t NVMeInB(int reg) {
 
 $LN3:
 	mov	DWORD PTR [rsp+8], ecx
 	sub	rsp, 24
 
-; 103  : 	volatile uint8_t* mmio = (uint8_t*)(nvme->mmiobase + reg);
+; 114  : 	volatile uint8_t* mmio = (uint8_t*)(nvme->mmiobase + reg);
 
 	movsxd	rax, DWORD PTR reg$[rsp]
 	mov	rcx, QWORD PTR ?nvme@@3PEAU_nvme_dev_@@EA ; nvme
 	add	rax, QWORD PTR [rcx]
 	mov	QWORD PTR mmio$[rsp], rax
 
-; 104  : 	return *mmio;
+; 115  : 	return *mmio;
 
 	mov	rax, QWORD PTR mmio$[rsp]
 	movzx	eax, BYTE PTR [rax]
 
-; 105  : }
+; 116  : }
 
 	add	rsp, 24
 	ret	0
@@ -216,28 +248,28 @@ reg$ = 32
 value$ = 40
 ?NVMeOutB@@YAXHE@Z PROC					; NVMeOutB
 
-; 92   : void NVMeOutB(int reg, uint8_t value) {
+; 103  : void NVMeOutB(int reg, uint8_t value) {
 
 $LN3:
 	mov	BYTE PTR [rsp+16], dl
 	mov	DWORD PTR [rsp+8], ecx
 	sub	rsp, 24
 
-; 93   : 
-; 94   : 	volatile uint8_t* mmio = (uint8_t*)(nvme->mmiobase + reg);
+; 104  : 
+; 105  : 	volatile uint8_t* mmio = (uint8_t*)(nvme->mmiobase + reg);
 
 	movsxd	rax, DWORD PTR reg$[rsp]
 	mov	rcx, QWORD PTR ?nvme@@3PEAU_nvme_dev_@@EA ; nvme
 	add	rax, QWORD PTR [rcx]
 	mov	QWORD PTR mmio$[rsp], rax
 
-; 95   : 	*mmio = value;
+; 106  : 	*mmio = value;
 
 	mov	rax, QWORD PTR mmio$[rsp]
 	movzx	ecx, BYTE PTR value$[rsp]
 	mov	BYTE PTR [rax], cl
 
-; 96   : }
+; 107  : }
 
 	add	rsp, 24
 	ret	0
@@ -250,25 +282,25 @@ mmio$ = 0
 reg$ = 32
 ?NVMeInW@@YAGH@Z PROC					; NVMeInW
 
-; 82   : uint16_t NVMeInW(int reg) {
+; 93   : uint16_t NVMeInW(int reg) {
 
 $LN3:
 	mov	DWORD PTR [rsp+8], ecx
 	sub	rsp, 24
 
-; 83   : 	volatile uint16_t* mmio = (uint16_t*)(nvme->mmiobase + reg);
+; 94   : 	volatile uint16_t* mmio = (uint16_t*)(nvme->mmiobase + reg);
 
 	movsxd	rax, DWORD PTR reg$[rsp]
 	mov	rcx, QWORD PTR ?nvme@@3PEAU_nvme_dev_@@EA ; nvme
 	add	rax, QWORD PTR [rcx]
 	mov	QWORD PTR mmio$[rsp], rax
 
-; 84   : 	return *mmio;
+; 95   : 	return *mmio;
 
 	mov	rax, QWORD PTR mmio$[rsp]
 	movzx	eax, WORD PTR [rax]
 
-; 85   : }
+; 96   : }
 
 	add	rsp, 24
 	ret	0
@@ -282,27 +314,27 @@ reg$ = 32
 value$ = 40
 ?NVMeOutW@@YAXHG@Z PROC					; NVMeOutW
 
-; 73   : void NVMeOutW(int reg, uint16_t value) {
+; 84   : void NVMeOutW(int reg, uint16_t value) {
 
 $LN3:
 	mov	WORD PTR [rsp+16], dx
 	mov	DWORD PTR [rsp+8], ecx
 	sub	rsp, 24
 
-; 74   : 	volatile uint16_t* mmio = (uint16_t*)(nvme->mmiobase + reg);
+; 85   : 	volatile uint16_t* mmio = (uint16_t*)(nvme->mmiobase + reg);
 
 	movsxd	rax, DWORD PTR reg$[rsp]
 	mov	rcx, QWORD PTR ?nvme@@3PEAU_nvme_dev_@@EA ; nvme
 	add	rax, QWORD PTR [rcx]
 	mov	QWORD PTR mmio$[rsp], rax
 
-; 75   : 	*mmio = value;
+; 86   : 	*mmio = value;
 
 	mov	rax, QWORD PTR mmio$[rsp]
 	movzx	ecx, WORD PTR value$[rsp]
 	mov	WORD PTR [rax], cx
 
-; 76   : }
+; 87   : }
 
 	add	rsp, 24
 	ret	0
@@ -315,25 +347,25 @@ mmio$ = 0
 reg$ = 32
 ?NVMeInl@@YAIH@Z PROC					; NVMeInl
 
-; 63   : uint32_t NVMeInl(int reg) {
+; 74   : uint32_t NVMeInl(int reg) {
 
 $LN3:
 	mov	DWORD PTR [rsp+8], ecx
 	sub	rsp, 24
 
-; 64   : 	volatile uint32_t* mmio = (uint32_t*)(nvme->mmiobase + reg);
+; 75   : 	volatile uint32_t* mmio = (uint32_t*)(nvme->mmiobase + reg);
 
 	movsxd	rax, DWORD PTR reg$[rsp]
 	mov	rcx, QWORD PTR ?nvme@@3PEAU_nvme_dev_@@EA ; nvme
 	add	rax, QWORD PTR [rcx]
 	mov	QWORD PTR mmio$[rsp], rax
 
-; 65   : 	return *mmio;
+; 76   : 	return *mmio;
 
 	mov	rax, QWORD PTR mmio$[rsp]
 	mov	eax, DWORD PTR [rax]
 
-; 66   : }
+; 77   : }
 
 	add	rsp, 24
 	ret	0
@@ -347,27 +379,27 @@ reg$ = 32
 value$ = 40
 ?NVMeOutl@@YAXHI@Z PROC					; NVMeOutl
 
-; 54   : void NVMeOutl(int reg, uint32_t value) {
+; 65   : void NVMeOutl(int reg, uint32_t value) {
 
 $LN3:
 	mov	DWORD PTR [rsp+16], edx
 	mov	DWORD PTR [rsp+8], ecx
 	sub	rsp, 24
 
-; 55   : 	volatile uint32_t* mmio = (uint32_t*)(nvme->mmiobase + reg);
+; 66   : 	volatile uint32_t* mmio = (uint32_t*)(nvme->mmiobase + reg);
 
 	movsxd	rax, DWORD PTR reg$[rsp]
 	mov	rcx, QWORD PTR ?nvme@@3PEAU_nvme_dev_@@EA ; nvme
 	add	rax, QWORD PTR [rcx]
 	mov	QWORD PTR mmio$[rsp], rax
 
-; 56   : 	*mmio = value;
+; 67   : 	*mmio = value;
 
 	mov	rax, QWORD PTR mmio$[rsp]
 	mov	ecx, DWORD PTR value$[rsp]
 	mov	DWORD PTR [rax], ecx
 
-; 57   : }
+; 68   : }
 
 	add	rsp, 24
 	ret	0
@@ -376,28 +408,29 @@ _TEXT	ENDS
 ; Function compile flags: /Odtpy
 ; File e:\xeneva project\aurora\kernel\drivers\nvme.cpp
 _TEXT	SEGMENT
-major$ = 48
-minor$ = 49
+minor$ = 48
+major$ = 49
 func$ = 52
-bus$ = 56
-base32$ = 64
-nvmeVer$ = 72
-dev$ = 76
-device$ = 80
-nvmemmio$ = 88
-cap$ = 96
+dev$ = 56
+bus$ = 60
+nvmeVer$ = 64
+base32$ = 72
+command$ = 80
+device$ = 88
+nvmemmio$ = 96
+cap$ = 104
 ?NVMeInitialise@@YAHXZ PROC				; NVMeInitialise
 
-; 134  : int NVMeInitialise() {
+; 147  : int NVMeInitialise() {
 
-$LN8:
+$LN6:
 	sub	rsp, 120				; 00000078H
 
-; 135  : 	int bus, dev, func = 0;
+; 148  : 	int bus, dev, func = 0;
 
 	mov	DWORD PTR func$[rsp], 0
 
-; 136  : 	uint64_t device = AuPCIEScanClass(0x01, 0x08, &bus, &dev, &func);
+; 149  : 	uint64_t device = AuPCIEScanClass(0x01, 0x08, &bus, &dev, &func);
 
 	lea	rax, QWORD PTR func$[rsp]
 	mov	QWORD PTR [rsp+32], rax
@@ -408,31 +441,31 @@ $LN8:
 	call	AuPCIEScanClass
 	mov	QWORD PTR device$[rsp], rax
 
-; 137  : 	if (device == UINT32_MAX) {
+; 150  : 	if (device == UINT32_MAX) {
 
 	mov	eax, -1					; ffffffffH
 	cmp	QWORD PTR device$[rsp], rax
-	jne	SHORT $LN5@NVMeInitia
+	jne	SHORT $LN3@NVMeInitia
 
-; 138  : 		AuTextOut("[NVMe]: no nvme class found \n");
+; 151  : 		AuTextOut("[NVMe]: no nvme class found \n");
 
-	lea	rcx, OFFSET FLAT:$SG3287
+	lea	rcx, OFFSET FLAT:$SG3288
 	call	AuTextOut
-$LN4@NVMeInitia:
+$LN2@NVMeInitia:
 
-; 139  : 		for (;;);
+; 152  : 		for (;;);
 
-	jmp	SHORT $LN4@NVMeInitia
+	jmp	SHORT $LN2@NVMeInitia
 
-; 140  : 		return -1;
+; 153  : 		return -1;
 
 	mov	eax, -1
-	jmp	$LN6@NVMeInitia
-$LN5@NVMeInitia:
+	jmp	$LN4@NVMeInitia
+$LN3@NVMeInitia:
 
-; 141  : 	}
-; 142  : 
-; 143  : 	uint64_t base32 = AuPCIERead(device, PCI_BAR0, bus, dev, func);
+; 154  : 	}
+; 155  : 
+; 156  : 	uint64_t base32 = AuPCIERead(device, PCI_BAR0, bus, dev, func);
 
 	mov	eax, DWORD PTR func$[rsp]
 	mov	DWORD PTR [rsp+32], eax
@@ -444,7 +477,7 @@ $LN5@NVMeInitia:
 	mov	eax, eax
 	mov	QWORD PTR base32$[rsp], rax
 
-; 144  : 	base32 &= 0xFFFFFFFC;
+; 157  : 	base32 &= 0xFFFFFFFC;
 
 	mov	eax, -4					; fffffffcH
 	mov	rcx, QWORD PTR base32$[rsp]
@@ -452,7 +485,7 @@ $LN5@NVMeInitia:
 	mov	rax, rcx
 	mov	QWORD PTR base32$[rsp], rax
 
-; 145  : 	base32 |= (AuPCIERead(device, PCI_BAR1, bus, dev, func) & 0xFFFFFFF0) << 32;
+; 158  : 	base32 |= (AuPCIERead(device, PCI_BAR1, bus, dev, func) & 0xFFFFFFF0) << 32;
 
 	mov	eax, DWORD PTR func$[rsp]
 	mov	DWORD PTR [rsp+32], eax
@@ -469,111 +502,154 @@ $LN5@NVMeInitia:
 	mov	rax, rcx
 	mov	QWORD PTR base32$[rsp], rax
 
-; 146  : 
-; 147  : 
-; 148  : 	uint64_t nvmemmio = (uint64_t)AuMapMMIO(base32, 8);
+; 159  : 
+; 160  : 	// enable bus master and memory space
+; 161  : 	uint64_t command = AuPCIERead(device, PCI_COMMAND, bus, dev, func);
 
-	mov	edx, 8
+	mov	eax, DWORD PTR func$[rsp]
+	mov	DWORD PTR [rsp+32], eax
+	mov	r9d, DWORD PTR dev$[rsp]
+	mov	r8d, DWORD PTR bus$[rsp]
+	mov	edx, 4
+	mov	rcx, QWORD PTR device$[rsp]
+	call	AuPCIERead
+	mov	eax, eax
+	mov	QWORD PTR command$[rsp], rax
+
+; 162  : 	command |= (1 << 10);
+
+	mov	rax, QWORD PTR command$[rsp]
+	bts	rax, 10
+	mov	QWORD PTR command$[rsp], rax
+
+; 163  : 	command |= 0x6;
+
+	mov	rax, QWORD PTR command$[rsp]
+	or	rax, 6
+	mov	QWORD PTR command$[rsp], rax
+
+; 164  : 	AuPCIEWrite(device, PCI_COMMAND, command, bus, dev, func);
+
+	mov	eax, DWORD PTR func$[rsp]
+	mov	DWORD PTR [rsp+40], eax
+	mov	eax, DWORD PTR dev$[rsp]
+	mov	DWORD PTR [rsp+32], eax
+	mov	r9d, DWORD PTR bus$[rsp]
+	mov	r8d, DWORD PTR command$[rsp]
+	mov	edx, 4
+	mov	rcx, QWORD PTR device$[rsp]
+	call	AuPCIEWrite
+
+; 165  : 
+; 166  : 
+; 167  : 	uint64_t nvmemmio = (uint64_t)AuMapMMIO(base32, 2);
+
+	mov	edx, 2
 	mov	rcx, QWORD PTR base32$[rsp]
 	call	AuMapMMIO
 	mov	QWORD PTR nvmemmio$[rsp], rax
 
-; 149  : 
-; 150  : 	nvme = (NVMeDev*)kmalloc(sizeof(NVMeDev));
+; 168  : 
+; 169  : 	nvme = (NVMeDev*)kmalloc(sizeof(NVMeDev));
 
 	mov	ecx, 16
 	call	kmalloc
 	mov	QWORD PTR ?nvme@@3PEAU_nvme_dev_@@EA, rax ; nvme
 
-; 151  : 	memset(nvme, 0, sizeof(NVMeDev));
+; 170  : 	memset(nvme, 0, sizeof(NVMeDev));
 
 	mov	r8d, 16
 	xor	edx, edx
 	mov	rcx, QWORD PTR ?nvme@@3PEAU_nvme_dev_@@EA ; nvme
 	call	memset
 
-; 152  : 	nvme->mmiobase = nvmemmio;
+; 171  : 	nvme->mmiobase = nvmemmio;
 
 	mov	rax, QWORD PTR ?nvme@@3PEAU_nvme_dev_@@EA ; nvme
 	mov	rcx, QWORD PTR nvmemmio$[rsp]
 	mov	QWORD PTR [rax], rcx
 
-; 153  : 
-; 154  : 
-; 155  : 	uint32_t nvmeVer = NVMeInl(NVME_REGISTER_VS);
+; 172  : 
+; 173  : 
+; 174  : 	uint32_t nvmeVer = NVMeInl(NVME_REGISTER_VS);
 
 	mov	ecx, 8
 	call	?NVMeInl@@YAIH@Z			; NVMeInl
 	mov	DWORD PTR nvmeVer$[rsp], eax
 
-; 156  : 	uint8_t minor = nvmeVer >> 8 & 0xff;
+; 175  : 	uint8_t minor = nvmeVer >> 8 & 0xff;
 
 	mov	eax, DWORD PTR nvmeVer$[rsp]
 	shr	eax, 8
 	and	eax, 255				; 000000ffH
 	mov	BYTE PTR minor$[rsp], al
 
-; 157  : 	uint8_t major = nvmeVer >> 16 & 0xffff;
+; 176  : 	uint8_t major = nvmeVer >> 16 & 0xffff;
 
 	mov	eax, DWORD PTR nvmeVer$[rsp]
 	shr	eax, 16
 	and	eax, 65535				; 0000ffffH
 	mov	BYTE PTR major$[rsp], al
 
-; 158  : 
-; 159  : 	nvme->majorVersion = major;
+; 177  : 
+; 178  : 	nvme->majorVersion = major;
 
 	mov	rax, QWORD PTR ?nvme@@3PEAU_nvme_dev_@@EA ; nvme
 	movzx	ecx, BYTE PTR major$[rsp]
 	mov	BYTE PTR [rax+8], cl
 
-; 160  : 	nvme->minorVersion = minor;
+; 179  : 	nvme->minorVersion = minor;
 
 	mov	rax, QWORD PTR ?nvme@@3PEAU_nvme_dev_@@EA ; nvme
 	movzx	ecx, BYTE PTR minor$[rsp]
 	mov	BYTE PTR [rax+9], cl
 
-; 161  : 
-; 162  : 	uint64_t cap = NVMeInQ(NVME_REGISTER_CAP);
+; 180  : 
+; 181  : 	uint64_t cap = NVMeInQ(NVME_REGISTER_CAP);
 
 	xor	ecx, ecx
 	call	?NVMeInQ@@YA_KH@Z			; NVMeInQ
 	mov	QWORD PTR cap$[rsp], rax
 
-; 163  : 	AuTextOut("[NVMe]: device present bar0 -> %x, version %d.%d \n", nvmemmio, major, minor);
+; 182  : 	AuTextOut("[NVMe]: device present bar0 -> %x, version %d.%d \n", nvmemmio, major, minor);
 
 	movzx	eax, BYTE PTR minor$[rsp]
 	movzx	ecx, BYTE PTR major$[rsp]
 	mov	r9d, eax
 	mov	r8d, ecx
 	mov	rdx, QWORD PTR nvmemmio$[rsp]
-	lea	rcx, OFFSET FLAT:$SG3301
+	lea	rcx, OFFSET FLAT:$SG3303
 	call	AuTextOut
 
-; 164  : 	AuTextOut("Cap min page sz -> %d max -> %d \n", (((cap) >> 48) & 0xf), (((cap) >> 52) & 0xf));
+; 183  : 	AuTextOut("Cap min page sz -> %d max -> %d \n", (((cap) >> 48) & 0xf), (((cap) >> 52) & 0xff));
 
 	mov	rax, QWORD PTR cap$[rsp]
 	shr	rax, 52					; 00000034H
-	and	rax, 15
+	and	rax, 255				; 000000ffH
 	mov	rcx, QWORD PTR cap$[rsp]
 	shr	rcx, 48					; 00000030H
 	and	rcx, 15
 	mov	r8, rax
 	mov	rdx, rcx
-	lea	rcx, OFFSET FLAT:$SG3302
+	lea	rcx, OFFSET FLAT:$SG3304
 	call	AuTextOut
-$LN2@NVMeInitia:
 
-; 165  : 	for (;;);
+; 184  : 
+; 185  : 	NVMeResetController();
 
-	jmp	SHORT $LN2@NVMeInitia
+	call	?NVMeResetController@@YAXXZ		; NVMeResetController
 
-; 166  : 	return 0;
+; 186  : 	AuTextOut("[NVMe]: Reset completed \n");
+
+	lea	rcx, OFFSET FLAT:$SG3305
+	call	AuTextOut
+
+; 187  : 	return 0;
 
 	xor	eax, eax
-$LN6@NVMeInitia:
+$LN4@NVMeInitia:
 
-; 167  : }
+; 188  : }
 
 	add	rsp, 120				; 00000078H
 	ret	0

@@ -1,8 +1,8 @@
-﻿Build started 09-01-2024 আবেলি 11:34:45.
+﻿Build started 10-01-2024 ৰাতিপু 9:43:13.
      1>Project "E:\Xeneva Project\Aurora\Kernel\Kernel.vcxproj" on node 2 (Rebuild target(s)).
      1>_NASM:
          Hal\x86_64_intrs.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp9db1c44a6125461e83fa1c251a8f398c.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp7ab2f133d86c4eec8ad224248b6892a3.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\x86_64_intrs.obj"  "E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm"
      1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(158): warning : signed dword immediate exceeds bounds [-w+number-overflow]
      1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(158): warning : dword data exceeds bounds [-w+number-overflow]
@@ -502,17 +502,17 @@
      1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
        _NASM:
          Hal\x86_64_lowlevel.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmpa896be2bc71240e795050a4ed2592967.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp33d3a60e632c40c1a3161daf4c4d9b1c.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\x86_64_lowlevel.obj"  "E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_lowlevel.asm"
        _NASM:
          Hal\x86_64_switch.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp01715b83259340b280ca56e73be51be1.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmpfde80a3c4f99429ebb0936fca9be391a.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\x86_64_switch.obj"  "E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_switch.asm"
      1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_switch.asm(32): warning : multi-line macro `extern' exists, but not taking 0 parameters [-w+macro-params-multi]
      1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_switch.asm(32): warning : label alone on a line without a colon might be in error [-w+label-orphan]
        _NASM:
          __fstcpy.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp3862853bafa74046816807da6d8c22cf.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp7d212ab7a5744e839bfa7c9753eb83b5.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\__fstcpy.obj"  "E:\Xeneva Project\Aurora\Kernel\__fstcpy.asm"
        ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I..\BaseHdr /I"E:\Xeneva Project\Aurora\Acpica\include" /I"E:\Xeneva Project\Aurora\Acpica" /ZI /nologo /W0 /WX- /Od /Oy /D ARCH_X64 /D __AU_KERNEL__ /D X64 /D AUXENEVA /D _USE_LIBALLOC /D _MBCS /X /Gm /GS- /arch:SSE /fp:precise /Zc:wchar_t /Zc:forScope /GR- /FAs /Fa"x64\Debug\\" /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt ahci.cpp ahcidsk.cpp aucon.cpp audrv.cpp autimer.cpp circbuf.cpp clean.cpp ctype.cpp Drivers\mouse.cpp Drivers\nvme.cpp Drivers\ps2kybrd.cpp Drivers\rtc.cpp Fs\Dev\devfs.cpp Fs\Dev\devinput.cpp Fs\Fat\Fat.cpp Fs\Fat\FatDir.cpp Fs\Fat\FatFile.cpp Fs\pipe.cpp Fs\tty.cpp Fs\vdisk.cpp Fs\vfs.cpp Fs\_gpt.cpp ftmngr.cpp Hal\acpiosl.cpp Hal\apic.cpp Hal\basicacpi.cpp Hal\hal.cpp Hal\ioapic.cpp Hal\pcpu.cpp Hal\serial.cpp Hal\x86_64_ap_init.cpp Hal\x86_64_cpu.cpp Hal\x86_64_exception.cpp Hal\x86_64_gdt.cpp Hal\x86_64_hal.cpp Hal\x86_64_idt.cpp Hal\x86_64_pic.cpp Hal\x86_64_sched.cpp Hal\x86_64_signal.cpp Hal\x86_64_systable.cpp init.cpp Ipc\postbox.cpp list.cpp loader.cpp Mm\buddy.cpp Mm\kmalloc.cpp Mm\liballoc\liballoc.cpp Mm\mmap.cpp Mm\pmmngr.cpp Mm\shm.cpp Mm\vmarea.cpp Mm\vmmngr.cpp Net\arp.cpp Net\aunet.cpp Net\ethernet.cpp pcie.cpp pe.cpp process.cpp Serv\fileserv.cpp Serv\mmserv.cpp Serv\thrserv.cpp Serv\timerserv.cpp Sound\sound.cpp stdio.cpp string.cpp Sync\mutex.cpp Sync\spinlock.cpp time.cpp _CRT.cpp
@@ -679,4 +679,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:07.16
+Time Elapsed 00:00:06.37

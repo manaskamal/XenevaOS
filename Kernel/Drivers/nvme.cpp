@@ -44,6 +44,17 @@
 #define NVME_REGISTER_AQA 0x24 //Admin queue attributes
 #define NVME_REGISTER_ACQ 0x30 //Admin completion queue
 
+#define NVME_CC_DISABLE   0
+#define NVME_CC_EN        0x1
+#define NVME_CC_EN_MASK   0x1
+#define NVME_CC_CSNVME    0x0
+#define NVME_CC_CSS_MASK  0x70
+#define NVME_CC_MPS_MASK  0x780
+#define NVME_CC_MPS_SHIFT 7
+#define NVME_CC_AMS_ROUNDROBIN  0
+#define NVME_CC_AMS_WIGHTED     (1<<11)
+#define NVME_CC_AMS_MASK        (0x7 << 11)
+
 NVMeDev* nvme;
 
 /*
@@ -126,7 +137,9 @@ uint64_t NVMeInQ(int reg) {
 }
 
 void NVMeResetController() {
-
+	uint32_t nvmeCC = NVMeInl(NVME_REGISTER_CC);
+	nvmeCC = (nvmeCC & ~(NVME_CC_EN_MASK)) | NVME_CC_DISABLE;
+	NVMeOutl(NVME_REGISTER_CC, nvmeCC);
 }
 /*
  * NVMeInitialise -- start nvme storage class
@@ -144,8 +157,14 @@ int NVMeInitialise() {
 	base32 &= 0xFFFFFFFC;
 	base32 |= (AuPCIERead(device, PCI_BAR1, bus, dev, func) & 0xFFFFFFF0) << 32;
 
+	// enable bus master and memory space
+	uint64_t command = AuPCIERead(device, PCI_COMMAND, bus, dev, func);
+	command |= (1 << 10);
+	command |= 0x6;
+	AuPCIEWrite(device, PCI_COMMAND, command, bus, dev, func);
 
-	uint64_t nvmemmio = (uint64_t)AuMapMMIO(base32, 8);
+
+	uint64_t nvmemmio = (uint64_t)AuMapMMIO(base32, 2);
 
 	nvme = (NVMeDev*)kmalloc(sizeof(NVMeDev));
 	memset(nvme, 0, sizeof(NVMeDev));
@@ -161,8 +180,10 @@ int NVMeInitialise() {
 
 	uint64_t cap = NVMeInQ(NVME_REGISTER_CAP);
 	AuTextOut("[NVMe]: device present bar0 -> %x, version %d.%d \n", nvmemmio, major, minor);
-	AuTextOut("Cap min page sz -> %d max -> %d \n", (((cap) >> 48) & 0xf), (((cap) >> 52) & 0xf));
-	for (;;);
+	AuTextOut("Cap min page sz -> %d max -> %d \n", (((cap) >> 48) & 0xf), (((cap) >> 52) & 0xff));
+
+	NVMeResetController();
+	AuTextOut("[NVMe]: Reset completed \n");
 	return 0;
 }
 
