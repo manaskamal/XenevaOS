@@ -70,7 +70,7 @@ void AnuvabUSB3Thread(uint64_t value) {
 
 
 void AuUSBInterrupt(size_t v, void* p) {
-	
+	AuDisableInterrupt();
 	uint32_t status = 0;
 	/* clear the USB status bit */
 	status = usb_device->op_regs->op_usbsts;
@@ -78,6 +78,7 @@ void AuUSBInterrupt(size_t v, void* p) {
 	usb_device->op_regs->op_usbsts = status;
 	
 	if (status & XHCI_USB_STS_EINT) {
+		SeTextOut("USB Interrupt++\r\n");
 		xhci_trb_t *event = (xhci_trb_t*)usb_device->event_ring_segment;
 		xhci_event_trb_t *evt = (xhci_event_trb_t*)usb_device->event_ring_segment;
 		uint64_t erdp = (uint64_t)usb_device->event_ring_seg_phys;
@@ -92,10 +93,12 @@ void AuUSBInterrupt(size_t v, void* p) {
 				if (endpoint_id >= 2) {
 					XHCISlot *slot = XHCIGetSlotByID(usb_device, slot_id);
 					XHCIEndpoint *ep = XHCISlotGetEP_DCI(slot, endpoint_id);
+					//SeTextOut("EVENT IDX -> %d \r\n", usb_device->evnt_ring_index);
 					if (ep->callback)
 						ep->callback(usb_device, slot, ep);
 				}
 				else {
+					SeTextOut("TRB EVENT TRANSFERED \r\n");
 					usb_device->event_available = true;
 					usb_device->poll_return_trb_type = TRB_EVENT_TRANSFER;
 					usb_device->trb_event_index = usb_device->evnt_ring_index;
@@ -158,6 +161,7 @@ void AuUSBInterrupt(size_t v, void* p) {
 
 	/*End Of Interrupt to Interrupt Controller */
 	AuInterruptEnd(usb_device->irq);
+	AuEnableInterrupt();
 }
 
 /*
@@ -308,6 +312,8 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 	AuThread *t = AuCreateKthread(AnuvabUSB3Thread, P2V((uint64_t)AuPmmngrAlloc() + 4096), (uint64_t)AuGetRootPageTable(), "AnubhavUsb");
 	usb_device->usb_thread = t;
 	usb_device->initialised = true;
+
+	//for (;;);
 	AuDisableInterrupt();
 
 	return 0;

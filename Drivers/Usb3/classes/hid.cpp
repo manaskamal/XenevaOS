@@ -75,7 +75,7 @@ void HIDCallback(void* dev_, void* slot_, void* ep_) {
 	XHCISlot* slot = (XHCISlot*)slot_;
 	SeTextOut("HID Callback  \r\n");
 	XHCIEndpoint* ep = (XHCIEndpoint*)ep_;
-	XHCISendNormalTRB(dev, slot, mouse_data, ep->max_packet_sz, ep);
+	XHCISendNormalTRB(dev, slot, V2P(mouse_data), ep->max_packet_sz, ep);
 }
 
 /* 
@@ -127,9 +127,9 @@ void USBHidInitialise(USBDevice* dev, XHCISlot* slot, uint8_t classC, uint8_t su
 	if (!ep_->callback)
 		ep_->callback = HIDCallback;
 
-	/*uint32_t ep_val = *raw_offset<volatile uint32_t*>(slot->output_context_phys, ep_->dc_offset + 0);
-	uint8_t ep_state = ep_val & 0x7;
-	AuTextOut("EP STATE -> %d \n", ep_state);*/
+	//uint32_t ep_val = *raw_offset<volatile uint32_t*>(slot->output_context_phys, ep_->dc_offset + 0);
+	//uint8_t ep_state = ep_val & 0x7;
+	//AuTextOut("EP STATE -> %d \n", ep_state);
 
 	uint64_t buff = (uint64_t)AuPmmngrAlloc();
 
@@ -146,11 +146,11 @@ void USBHidInitialise(USBDevice* dev, XHCISlot* slot, uint8_t classC, uint8_t su
 		t_idx = XHCIPollEvent(dev, TRB_EVENT_TRANSFER);
 	}
 
-	mouse_data = (uint64_t)kmalloc(ep_->max_packet_sz);
+	mouse_data = (uint64_t)P2V((size_t)AuPmmngrAlloc());//kmalloc(ep_->max_packet_sz);
 	memset((void*)mouse_data, 0, ep_->max_packet_sz);
 
 	SeTextOut("EP Max packt -> %d ,mm - %d \r\n", ep_->max_packet_sz, ep_->cmd_ring_max);
-	XHCISendNormalTRB(dev, slot, mouse_data, ep_->max_packet_sz,ep_);
+	XHCISendNormalTRB(dev, slot, V2P(mouse_data), ep_->max_packet_sz,ep_);
 	
 	AuTextOut("Normal trb sent \n");
 	AuPmmngrFree((void*)buff);

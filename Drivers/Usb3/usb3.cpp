@@ -636,6 +636,7 @@ void XHCIPortInitialize(USBDevice *dev, unsigned int port) {
 
 		/* Enable slot command */
 		XHCIEnableSlot(dev, 0);
+		AuTextOut("Port enabled \n");
 		int idx = XHCIPollEvent(dev, TRB_EVENT_CMD_COMPLETION);
 		if (idx != -1) {
 			xhci_event_trb_t *evt = (xhci_event_trb_t*)dev->event_ring_segment;
@@ -695,14 +696,16 @@ void XHCIPortInitialize(USBDevice *dev, unsigned int port) {
 
 		/* Now we have fully operational endpoint 0 pipe */
 
-		AuAcquireSpinlock(dev->usb_lock);
 		/* Get the product (device) name using string descriptor */
 		uint64_t* string_buf = (uint64_t*)P2V((uint64_t)AuPmmngrAlloc());
 		memset(string_buf, 0, PAGE_SIZE);
 
 		USBGetStringDesc(dev,slot,slot_id,V2P((uint64_t)string_buf),dev_desc->iProduct);
 		t_idx = -1;
+		SeTextOut("Waiting for trb_transfer \r\n");
 		t_idx = XHCIPollEvent(dev,TRB_EVENT_TRANSFER);
+
+		AuTextOut("String descriptor got \n");
 	
 		usb_string_desc_t* str_desc = (usb_string_desc_t*)string_buf;
 		uint8_t* string_buf_ptr = ((uint8_t*)str_desc + 2);
@@ -712,7 +715,6 @@ void XHCIPortInitialize(USBDevice *dev, unsigned int port) {
 		}
 		AuTextOut("\n");
 
-		AuReleaseSpinlock(dev->usb_lock);
 		/* The main step: get the 0th config descriptor which contain the
 		 * config value for set_config command */
 		USBGetConfigDesc(dev, slot, slot_id, V2P((size_t)buffer), 9, 0);
@@ -857,7 +859,7 @@ void XHCIPortInitialize(USBDevice *dev, unsigned int port) {
 			/* also send configure endpoint command to xhc*/
 			XHCIConfigureEndpoint(dev, slot->input_context_phys, slot_id);
 			t_idx = -1;
-			t_idx = XHCIPollEvent(dev, TRB_EVENT_CMD_COMPLETION);
+		//	t_idx = XHCIPollEvent(dev, TRB_EVENT_CMD_COMPLETION);
 
 			/* update the required endpoints, if not created, create one */
 			endp = raw_offset<usb_endpoint_desc_t*>(endp, endp->bLength);
