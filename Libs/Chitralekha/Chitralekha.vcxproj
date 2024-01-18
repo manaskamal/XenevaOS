@@ -164,6 +164,7 @@
     <ClInclude Include="widgets\menu.h" />
     <ClInclude Include="widgets\menubar.h" />
     <ClInclude Include="widgets\msgbox.h" />
+    <ClInclude Include="widgets\view.h" />
     <ClInclude Include="widgets\window.h" />
     <ClInclude Include="_fastcpy.h" />
   </ItemGroup>
@@ -183,6 +184,7 @@
     <ClCompile Include="widgets\menu.cpp" />
     <ClCompile Include="widgets\menubar.cpp" />
     <ClCompile Include="widgets\msgbox.cpp" />
+    <ClCompile Include="widgets\view.cpp" />
     <ClCompile Include="widgets\window.cpp" />
   </ItemGroup>
   <ItemGroup>

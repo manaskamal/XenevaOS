@@ -159,5 +159,5 @@ XE_EXTERN XE_EXPORT void ChMessageBoxShow(ChMessageBox* mb) {
 	ChWindowPaint(win);
 	uint8_t flags = WINDOW_FLAG_STATIC | WINDOW_FLAG_NON_RESIZABLE | WINDOW_FLAG_BLOCKED;
 	ChWindowSetFlags(win->parent, flags);
-	_KeProcessSleep(1000000000);
+	_KeProcessSleep(1000);
 }

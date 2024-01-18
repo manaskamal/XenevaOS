@@ -34,6 +34,7 @@
 #include "ttf.h"
 #include <sys\_keftmngr.h>
 #include <ft2build.h>
+#include "draw.h"
 #include "color.h"
 #include FT_FREETYPE_H
 
@@ -69,6 +70,8 @@ ChFont *ChInitialiseFont(char* fontname) {
 	err = FT_New_Memory_Face(font->lib, font->buffer, font->fileSz, 0, &font->face);
 	err = FT_Set_Pixel_Sizes(font->face, 0, 32);
 	font->slot = font->face->glyph;
+	font->lineHeight = font->face->size->metrics.height / 64;
+	font->fontHeight = 32 / 72.f * 96;
 #endif
 	/* start decoding true type font */
 	//TTFLoadFont(canv,font->buffer);
@@ -83,6 +86,7 @@ ChFont *ChInitialiseFont(char* fontname) {
 void ChFontSetSize(ChFont* font, int size) {
 	font->fontSz = size / 72.f * 96;
 	FT_Set_Pixel_Sizes(font->face, 0, font->fontSz);
+	font->fontHeight = font->fontSz;
 }
 
 /*
@@ -118,8 +122,10 @@ void ChFontDrawText(ChCanvas *canv, ChFont* font, char* string, int penx, int pe
 		int x_v = penx + font->face->glyph->bitmap_left;
 		int y_v = peny - font->face->glyph->bitmap_top;
 
-		for (int i = x_v, p = 0; i < x_v + font->face->glyph->bitmap.width; i++, p++) {
-			for (int j = y_v, q = 0; j < y_v + font->face->glyph->bitmap.rows; j++, q++) {
+		for (int i = x_v, p = 0; i < x_v + font->face->glyph->bitmap.width &&
+			p < font->face->glyph->bitmap.width; i++, p++) {
+			for (int j = y_v, q = 0; j < y_v + font->face->glyph->bitmap.rows &&
+				q < font->face->glyph->bitmap.rows; j++, q++) {
 				if (font->face->glyph->bitmap.buffer[q * font->face->glyph->bitmap.width + p] > 0){
 					double val = font->face->glyph->bitmap.buffer[q * font->face->glyph->bitmap.width + p] * 1.0 / 255;
 					canv->buffer[i + j * canv->canvasWidth] = ChColorAlphaBlend(canv->buffer[i + j * canv->canvasWidth],
@@ -292,6 +298,89 @@ int ChFontGetHeightChar(ChFont* font, char c) {
 		font_h = bbox_ymax - bbox_ymin;
 	}
 	return font_h;
+}
+
+/*
+ * ChFontDrawTextClipped -- draws text using specific font within
+ * a clipped boundary
+ * @param canv -- Pointer to Canvas
+ * @param font -- Pointer to font to use
+ * @param string -- string to draw
+ * @param penx -- x position
+ * @param peny -- y position
+ * @param color -- color to use
+ * @param limit -- boundary of the rectangle
+ */
+int ChFontDrawTextClipped(ChCanvas *canv, ChFont* font, char* string, int penx, int peny, uint32_t color, ChRect* limit){
+#ifdef _USE_FREETYPE
+	if (!limit)
+		return 1;
+	int w = font->face->glyph->metrics.width;
+	int h = font->face->glyph->metrics.height;
+	FT_Bool use_kerning = FT_HAS_KERNING(font->face);
+	uint32_t prev = 0;
+	FT_UInt glyfIndx;
+	FT_Error err = 0;
+	while (*string) {
+		glyfIndx = FT_Get_Char_Index(font->face, *string);
+		err = FT_Load_Glyph(font->face, glyfIndx, FT_LOAD_RENDER);
+		if (err)
+			continue;
+
+		if (use_kerning && prev && glyfIndx) {
+			FT_Vector delta;
+			FT_Get_Kerning(font->face, prev, glyfIndx, FT_KERNING_DEFAULT, &delta);
+			penx += delta.x >> 6;
+		}
+
+		int x_v = penx + font->face->glyph->bitmap_left;
+		int y_v = peny - font->face->glyph->bitmap_top;
+		int draw_width = font->face->glyph->bitmap.width;
+		int draw_height = font->face->glyph->bitmap.rows;
+
+		/* here p = x and q = y*/
+		int buff_p_off = 0;
+		int buff_q_off = 0; 
+
+		/* Clip the text within clip boundary*/
+		if (limit->x > x_v){
+			buff_p_off = limit->x - x_v;
+			x_v = limit->x;
+		}
+
+		if (limit->y > y_v){
+			buff_q_off = limit->y - y_v;
+			y_v = limit->y;
+		}
+		
+		/* Check width and height for limiting drawing */
+		if (y_v + font->lineHeight > (limit->y + limit->h))
+			draw_height = (limit->y + limit->h) - y_v;
+
+		if ((x_v + font->fontSz) > (limit->x + limit->w))
+			draw_width = (limit->x + limit->w) - x_v;
+
+		for (int i = x_v, p = buff_p_off; i < x_v + draw_width && 
+			p < draw_width; i++, p++) {
+			for (int j = y_v, q = buff_q_off; j < y_v + draw_height &&
+				q < draw_height; j++, q++) {
+				if (font->face->glyph->bitmap.buffer[q * font->face->glyph->bitmap.width + p] > 0){
+					double val = font->face->glyph->bitmap.buffer[q * font->face->glyph->bitmap.width + p] * 1.0 / 255;
+					canv->buffer[i + j * canv->canvasWidth] = ChColorAlphaBlend(canv->buffer[i + j * canv->canvasWidth],
+						color, val);
+				}
+				else if (font->face->glyph->bitmap.buffer[q * font->face->glyph->bitmap.width] == 255)
+					canv->buffer[i + j * canv->canvasWidth] = color;
+			}
+		}
+
+		penx += font->face->glyph->advance.x >> 6;
+		peny += font->face->glyph->advance.y >> 6;
+		prev = glyfIndx;
+		string++;
+	}
+#endif
+	return 0;
 }
 
 /*

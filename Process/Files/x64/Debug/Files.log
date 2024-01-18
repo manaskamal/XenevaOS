@@ -1,4 +1,4 @@
-﻿Build started 07-01-2024 ৰাতিপু 11:07:09.
+﻿Build started 18-01-2024 ৰাতিপু 9:05:33.
      1>Project "E:\Xeneva Project\Aurora\Process\Files\Files.vcxproj" on node 2 (Rebuild target(s)).
      1>ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /I"E:\Xeneva Project\Aurora\Libs\Chitralekha" /I"E:\os_dev\freetype2-master\freetype2-master\include" /Zi /nologo /W4 /WX- /sdl- /MP /Od /Oy /D ARCH_X64 /D YES_DYNAMIC /D DYNAMIC_IMPORTER /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt main.cpp
@@ -11,7 +11,7 @@
      1>main.cpp(86): warning C4100: 'wid' : unreferenced formal parameter
      1>main.cpp(91): warning C4100: 'win' : unreferenced formal parameter
      1>main.cpp(91): warning C4100: 'wid' : unreferenced formal parameter
-     1>main.cpp(171): warning C4127: conditional expression is constant
+     1>main.cpp(181): warning C4127: conditional expression is constant
      1>main.cpp(156): warning C4189: 'edite1' : local variable is initialized but not referenced
      1>main.cpp(127): warning C4189: 'item7' : local variable is initialized but not referenced
      1>main.cpp(145): warning C4189: 'mizo' : local variable is initialized but not referenced
@@ -38,4 +38,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:00.57
+Time Elapsed 00:00:00.47

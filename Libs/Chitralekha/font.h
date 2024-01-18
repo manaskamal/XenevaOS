@@ -35,6 +35,7 @@
 #include <freetype\ftglyph.h>
 #include <_xeneva.h>
 #include "chitralekha.h"
+#include "draw.h"
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
@@ -62,6 +63,8 @@ XE_EXTERN{
 		uint32_t fontSz;
 		uint16_t key;
 		uint32_t kern;
+		uint32_t lineHeight;
+		uint32_t fontHeight;
 #ifdef _USE_FREETYPE
 		FT_Library lib;
 		FT_Face face;
@@ -107,6 +110,19 @@ XE_EXTERN{
 	* @param color -- color of the font
 	*/
 	XE_LIB void ChFontDrawChar(ChCanvas *canv, ChFont* font, char c, int penx, int peny, uint32_t sz, uint32_t color);
+
+	/*
+	* ChFontDrawTextClipped -- draws text using specific font within
+	* a clipped boundary
+	* @param canv -- Pointer to Canvas
+	* @param font -- Pointer to font to use
+	* @param string -- string to draw
+	* @param penx -- x position
+	* @param peny -- y position
+	* @param color -- color to use
+	* @param limit -- boundary of the rectangle
+	*/
+	XE_LIB int ChFontDrawTextClipped(ChCanvas *canv, ChFont* font, char* string, int penx, int peny, uint32_t color, ChRect* limit);
 
 	/*
 	* ChFontGetWidth -- return the total width of font in

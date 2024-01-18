@@ -1,28 +1,29 @@
-﻿Build started 09-01-2024 আবেলি 9:47:11.
+﻿Build started 18-01-2024 ৰাতিপু 9:11:22.
      1>Project "E:\Xeneva Project\Aurora\Libs\Chitralekha\Chitralekha.vcxproj" on node 2 (Rebuild target(s)).
      1>_NASM:
          _fastcpy.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmpaf4fc0c16ea546ef8e188825e98c390a.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp8df9ae8afd7a4bb99bdca52601c186b4.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\_fastcpy.obj"  "E:\Xeneva Project\Aurora\Libs\Chitralekha\_fastcpy.asm"
        ClCompile:
-         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /I"E:\os_dev\freetype2-master\freetype2-master\include" /Zi /nologo /W3 /WX- /sdl- /Od /D ARCH_X64 /D YES_DYNAMIC /D DYNAMIC_EXPORTER /D _USE_FREETYPE /D _WINDLL /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt boxblur.cpp chitralekha.cpp color.cpp draw.cpp font.cpp keycode.cpp ttf.cpp widgets\base.cpp widgets\button.cpp widgets\defaultmenu.cpp widgets\defaultwindow.cpp widgets\list.cpp widgets\menu.cpp widgets\menubar.cpp widgets\msgbox.cpp widgets\window.cpp
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /I"E:\os_dev\freetype2-master\freetype2-master\include" /Zi /nologo /W3 /WX- /sdl- /Od /D ARCH_X64 /D YES_DYNAMIC /D DYNAMIC_EXPORTER /D _USE_FREETYPE /D _WINDLL /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt boxblur.cpp chitralekha.cpp color.cpp draw.cpp font.cpp keycode.cpp ttf.cpp widgets\base.cpp widgets\button.cpp widgets\defaultmenu.cpp widgets\defaultwindow.cpp widgets\list.cpp widgets\menu.cpp widgets\menubar.cpp widgets\msgbox.cpp widgets\view.cpp widgets\window.cpp
      1>cl : Command line warning D9025: overriding '/sdl-' with '/GS-'
      1>cl : Command line warning D9002: ignoring unknown option '/arch:SSE2'
          window.cpp
      1>widgets\window.cpp(161): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
-     1>widgets\window.cpp(278): warning C4018: '<' : signed/unsigned mismatch
-     1>widgets\window.cpp(346): warning C4018: '<' : signed/unsigned mismatch
-     1>widgets\window.cpp(368): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\window.cpp(279): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\window.cpp(347): warning C4018: '<' : signed/unsigned mismatch
      1>widgets\window.cpp(369): warning C4018: '<' : signed/unsigned mismatch
-     1>widgets\window.cpp(371): warning C4805: '==' : unsafe mix of type 'char' and type 'bool' in operation
-     1>widgets\window.cpp(385): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\window.cpp(370): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\window.cpp(372): warning C4805: '==' : unsafe mix of type 'char' and type 'bool' in operation
      1>widgets\window.cpp(386): warning C4018: '<' : signed/unsigned mismatch
-     1>widgets\window.cpp(477): warning C4018: '<' : signed/unsigned mismatch
-     1>widgets\window.cpp(482): warning C4018: '<' : signed/unsigned mismatch
-     1>widgets\window.cpp(504): warning C4018: '<' : signed/unsigned mismatch
-     1>widgets\window.cpp(523): warning C4018: '<' : signed/unsigned mismatch
-     1>widgets\window.cpp(526): warning C4018: '<' : signed/unsigned mismatch
-     1>widgets\window.cpp(588): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\window.cpp(387): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\window.cpp(478): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\window.cpp(483): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\window.cpp(505): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\window.cpp(524): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\window.cpp(527): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\window.cpp(589): warning C4018: '<' : signed/unsigned mismatch
+         view.cpp
          msgbox.cpp
      1>widgets\msgbox.cpp(123): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
      1>widgets\msgbox.cpp(141): warning C4018: '<' : signed/unsigned mismatch
@@ -59,19 +60,24 @@
                  E:\Xeneva Project\Aurora\Libs\XEClib\includes\ctype.h(39) : see previous definition of 'isascii'
          font.cpp
      1>e:\xeneva project\aurora\libs\chitralekha\ttf.h(82): warning C4161: #pragma pack(pop...) : more pops than pushes
-     1>font.cpp(63): warning C4244: '=' : conversion from 'float' to 'uint32_t', possible loss of data
-     1>font.cpp(84): warning C4244: '=' : conversion from 'float' to 'uint32_t', possible loss of data
-     1>font.cpp(121): warning C4018: '<' : signed/unsigned mismatch
-     1>font.cpp(122): warning C4018: '<' : signed/unsigned mismatch
-     1>font.cpp(153): warning C4018: '>=' : signed/unsigned mismatch
-     1>font.cpp(155): warning C4018: '>=' : signed/unsigned mismatch
-     1>font.cpp(178): warning C4018: '<' : signed/unsigned mismatch
-     1>font.cpp(179): warning C4018: '<' : signed/unsigned mismatch
-     1>font.cpp(180): warning C4018: '>=' : signed/unsigned mismatch
-     1>font.cpp(220): warning C4267: 'return' : conversion from 'size_t' to 'int', possible loss of data
-     1>font.cpp(244): warning C4267: 'return' : conversion from 'size_t' to 'int', possible loss of data
-     1>font.cpp(270): warning C4267: 'return' : conversion from 'size_t' to 'int', possible loss of data
-     1>font.cpp(294): warning C4267: 'return' : conversion from 'size_t' to 'int', possible loss of data
+     1>font.cpp(64): warning C4244: '=' : conversion from 'float' to 'uint32_t', possible loss of data
+     1>font.cpp(74): warning C4244: '=' : conversion from 'float' to 'uint32_t', possible loss of data
+     1>font.cpp(87): warning C4244: '=' : conversion from 'float' to 'uint32_t', possible loss of data
+     1>font.cpp(125): warning C4018: '<' : signed/unsigned mismatch
+     1>font.cpp(126): warning C4018: '<' : signed/unsigned mismatch
+     1>font.cpp(127): warning C4018: '<' : signed/unsigned mismatch
+     1>font.cpp(128): warning C4018: '<' : signed/unsigned mismatch
+     1>font.cpp(159): warning C4018: '>=' : signed/unsigned mismatch
+     1>font.cpp(161): warning C4018: '>=' : signed/unsigned mismatch
+     1>font.cpp(184): warning C4018: '<' : signed/unsigned mismatch
+     1>font.cpp(185): warning C4018: '<' : signed/unsigned mismatch
+     1>font.cpp(186): warning C4018: '>=' : signed/unsigned mismatch
+     1>font.cpp(226): warning C4267: 'return' : conversion from 'size_t' to 'int', possible loss of data
+     1>font.cpp(250): warning C4267: 'return' : conversion from 'size_t' to 'int', possible loss of data
+     1>font.cpp(276): warning C4267: 'return' : conversion from 'size_t' to 'int', possible loss of data
+     1>font.cpp(300): warning C4267: 'return' : conversion from 'size_t' to 'int', possible loss of data
+     1>font.cpp(346): warning C4018: '>' : signed/unsigned mismatch
+     1>font.cpp(351): warning C4018: '>' : signed/unsigned mismatch
          draw.cpp
      1>draw.cpp(45): warning C4018: '<' : signed/unsigned mismatch
      1>draw.cpp(46): warning C4018: '<' : signed/unsigned mismatch
@@ -107,6 +113,7 @@
          x64\Debug\menu.obj
          x64\Debug\menubar.obj
          x64\Debug\msgbox.obj
+         x64\Debug\view.obj
          x64\Debug\window.obj
          x64\Debug\_fastcpy.obj
      1>LINK : warning LNK4075: ignoring '/INCREMENTAL' due to '/LTCG' specification
@@ -117,4 +124,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:01.81
+Time Elapsed 00:00:02.47

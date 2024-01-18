@@ -1,4 +1,4 @@
-﻿Build started 09-01-2024 আবেলি 11:03:54.
+﻿Build started 18-01-2024 ৰাতিপু 9:14:57.
      1>Project "E:\Xeneva Project\Aurora\Process\Namdapha\Namdapha.vcxproj" on node 2 (Rebuild target(s)).
      1>ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /I"E:\Xeneva Project\Aurora\Libs\Chitralekha" /I"E:\os_dev\freetype2-master\freetype2-master\include" /Zi /nologo /W4 /WX- /sdl- /MP /Od /Oy /D ARCH_X64 /D YES_DYNAMIC /D DYNAMIC_IMPORTER /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt gomenu.cpp namdapha.cpp NamdaphaButton.cpp nmGoButton.cpp
@@ -22,24 +22,23 @@
      1>namdapha.cpp(135): warning C4100: 'win' : unreferenced formal parameter
      1>namdapha.cpp(135): warning C4100: 'button' : unreferenced formal parameter
      1>namdapha.cpp(142): warning C4018: '<' : signed/unsigned mismatch
-     1>namdapha.cpp(201): warning C4018: '<' : signed/unsigned mismatch
-     1>namdapha.cpp(222): warning C4018: '<' : signed/unsigned mismatch
-     1>namdapha.cpp(227): warning C4244: '=' : conversion from 'uint32_t' to 'uint16_t', possible loss of data
-     1>namdapha.cpp(241): warning C4018: '<' : signed/unsigned mismatch
-     1>namdapha.cpp(251): warning C4018: '<' : signed/unsigned mismatch
-     1>namdapha.cpp(275): warning C4018: '<' : signed/unsigned mismatch
-     1>namdapha.cpp(293): warning C4018: '<' : signed/unsigned mismatch
-     1>namdapha.cpp(300): warning C4389: '==' : signed/unsigned mismatch
-     1>namdapha.cpp(309): warning C4018: '<' : signed/unsigned mismatch
-     1>namdapha.cpp(215): warning C4189: 'code' : local variable is initialized but not referenced
-     1>namdapha.cpp(290): warning C4189: 'handle' : local variable is initialized but not referenced
-     1>namdapha.cpp(361): warning C4127: conditional expression is constant
-     1>namdapha.cpp(432): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
-     1>namdapha.cpp(452): warning C4127: conditional expression is constant
+     1>namdapha.cpp(200): warning C4018: '<' : signed/unsigned mismatch
+     1>namdapha.cpp(221): warning C4018: '<' : signed/unsigned mismatch
+     1>namdapha.cpp(226): warning C4244: '=' : conversion from 'uint32_t' to 'uint16_t', possible loss of data
+     1>namdapha.cpp(240): warning C4018: '<' : signed/unsigned mismatch
+     1>namdapha.cpp(250): warning C4018: '<' : signed/unsigned mismatch
+     1>namdapha.cpp(274): warning C4018: '<' : signed/unsigned mismatch
+     1>namdapha.cpp(292): warning C4018: '<' : signed/unsigned mismatch
+     1>namdapha.cpp(299): warning C4389: '==' : signed/unsigned mismatch
+     1>namdapha.cpp(308): warning C4018: '<' : signed/unsigned mismatch
+     1>namdapha.cpp(214): warning C4189: 'code' : local variable is initialized but not referenced
+     1>namdapha.cpp(289): warning C4189: 'handle' : local variable is initialized but not referenced
+     1>namdapha.cpp(360): warning C4127: conditional expression is constant
+     1>namdapha.cpp(431): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
+     1>namdapha.cpp(451): warning C4127: conditional expression is constant
          gomenu.cpp
      1>gomenu.cpp(48): warning C4127: conditional expression is constant
          Generating Code...
-     1>e:\xeneva project\aurora\process\namdapha\namdapha.cpp(157): warning C4702: unreachable code
      1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(1186,5): warning MSB8012: TargetPath(E:\Xeneva Project\Aurora\x64\Debug\Namdapha.exe) does not match the Linker's OutputFile property value (F:\nmdapha.exe). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
      1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(1188,5): warning MSB8012: TargetName(Namdapha) does not match the Linker's OutputFile property value (nmdapha). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
        Link:
@@ -54,4 +53,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:01.65
+Time Elapsed 00:00:01.06

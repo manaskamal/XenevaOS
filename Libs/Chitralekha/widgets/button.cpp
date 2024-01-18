@@ -117,7 +117,7 @@ void ChButtonDefaultPainter(ChWidget* widget, ChWindow* win) {
 		widget->w, widget->h, color1, color2);
 	ChFontSetSize(win->app->baseFont,11);
 	int font_w = ChFontGetWidth(win->app->baseFont, button->title);
-	int font_h = ChFontGetHeight(win->app->baseFont, button->title);
+	int font_h = win->app->baseFont->fontHeight;//ChFontGetHeight(win->app->baseFont, button->title);
 	ChFontDrawText(win->canv, win->app->baseFont, button->title,widget->x + widget->w / 2 - font_w / 2,
 		widget->y + (widget->h / 2), 11, WHITE);
 

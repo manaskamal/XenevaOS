@@ -157,8 +157,18 @@ int main(int argc, char* argv[]){
 	ChMenuItem* edite2 = ChCreateMenuItem("cut2", edite);
 	cut->menu = edite;
 
+	
 	ChWindowPaint(mainWin);
 
+	ChRect rect;
+	rect.x = 165;
+	rect.y = 150;
+	rect.w = 50;
+	rect.h = 50;
+	ChDrawRectUnfilled(mainWin->canv, rect.x, rect.y, rect.w, rect.h, GREEN);
+	ChFontSetSize(app->baseFont, 20);
+	ChFontDrawTextClipped(mainWin->canv, app->baseFont, "Hey", 160, 200, BLACK, &rect);
+	ChWindowUpdate(mainWin,0, 0, mainWin->info->width, mainWin->info->height, 1, 0);
 
 	PostEvent e;
 	memset(&e, 0, sizeof(PostEvent));

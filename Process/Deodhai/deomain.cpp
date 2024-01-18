@@ -1482,7 +1482,10 @@ int main(int argc, char* arv[]) {
 					break;
 				}
 			}
-			DeodhaiWindowSetFocused(frontableWin, true);
+			if (frontableWin) {
+				if (!(frontableWin->flags & WINDOW_FLAG_BLOCKED))
+					DeodhaiWindowSetFocused(frontableWin, true);
+			}
 			_window_update_all_ = true;
 			_always_on_top_update = true;
 			_cursor_update_ = true;
