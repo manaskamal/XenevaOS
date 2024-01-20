@@ -1,4 +1,4 @@
-﻿Build started 18-01-2024 ৰাতিপু 9:14:45.
+﻿Build started 20-01-2024 আবেলি 12:25:43.
      1>Project "E:\Xeneva Project\Aurora\Process\Terminal\Terminal.vcxproj" on node 2 (Rebuild target(s)).
      1>ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /I"E:\Xeneva Project\Aurora\Libs\Chitralekha" /I"E:\os_dev\freetype2-master\freetype2-master\include" /Zi /nologo /W3 /WX- /sdl /Od /D ARCH_X64 /D YES_DYNAMIC /D DYNAMIC_IMPORTER /D _USE_FREETYPE /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt term.cpp
@@ -22,4 +22,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:00.63
+Time Elapsed 00:00:00.51

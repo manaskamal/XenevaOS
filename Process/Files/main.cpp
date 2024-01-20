@@ -36,6 +36,7 @@
 #include <chitralekha.h>
 #include <widgets\base.h>
 #include <widgets\button.h>
+#include <widgets\scrollpane.h>
 #include <keycode.h>
 #include <widgets\window.h>
 #include <widgets\msgbox.h>
@@ -157,10 +158,8 @@ int main(int argc, char* argv[]){
 	ChMenuItem* edite2 = ChCreateMenuItem("cut2", edite);
 	cut->menu = edite;
 
-	
-	ChWindowPaint(mainWin);
 
-	ChRect rect;
+	/*ChRect rect;
 	rect.x = 165;
 	rect.y = 150;
 	rect.w = 50;
@@ -168,7 +167,10 @@ int main(int argc, char* argv[]){
 	ChDrawRectUnfilled(mainWin->canv, rect.x, rect.y, rect.w, rect.h, GREEN);
 	ChFontSetSize(app->baseFont, 20);
 	ChFontDrawTextClipped(mainWin->canv, app->baseFont, "Hey", 160, 200, BLACK, &rect);
-	ChWindowUpdate(mainWin,0, 0, mainWin->info->width, mainWin->info->height, 1, 0);
+	ChWindowUpdate(mainWin,0, 0, mainWin->info->width, mainWin->info->height, 1, 0);*/
+	ChScrollPane *sp = ChCreateScrollPane(10, 62 + 75 + 10, mainWin->info->width - 20, 240);
+	ChWindowAddWidget(mainWin, (ChWidget*)sp);
+	ChWindowPaint(mainWin);
 
 	PostEvent e;
 	memset(&e, 0, sizeof(PostEvent));

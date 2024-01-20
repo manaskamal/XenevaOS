@@ -164,6 +164,7 @@
     <ClInclude Include="widgets\menu.h" />
     <ClInclude Include="widgets\menubar.h" />
     <ClInclude Include="widgets\msgbox.h" />
+    <ClInclude Include="widgets\scrollpane.h" />
     <ClInclude Include="widgets\view.h" />
     <ClInclude Include="widgets\window.h" />
     <ClInclude Include="_fastcpy.h" />
@@ -179,11 +180,13 @@
     <ClCompile Include="widgets\base.cpp" />
     <ClCompile Include="widgets\button.cpp" />
     <ClCompile Include="widgets\defaultmenu.cpp" />
+    <ClCompile Include="widgets\defaultscrollbar.cpp" />
     <ClCompile Include="widgets\defaultwindow.cpp" />
     <ClCompile Include="widgets\list.cpp" />
     <ClCompile Include="widgets\menu.cpp" />
     <ClCompile Include="widgets\menubar.cpp" />
     <ClCompile Include="widgets\msgbox.cpp" />
+    <ClCompile Include="widgets\scrollpane.cpp" />
     <ClCompile Include="widgets\view.cpp" />
     <ClCompile Include="widgets\window.cpp" />
   </ItemGroup>

@@ -30,4 +30,24 @@
 #ifndef __VIEW_H__
 #define __VIEW_H__
 
+#include <stdint.h>
+#include "list.h"
+#include "window.h"
+
+typedef struct _list_item_ {
+	//Geometry
+	int xPos;
+	int yPos;
+	bool selected;
+	int width;
+	int height;
+	//item string
+	char* itemText;
+}ChListItem;
+
+typedef struct _list_view_ {
+	ChWidget wid;
+	list_t* itemList;
+	bool scrollable;
+}ChListView;
 #endif

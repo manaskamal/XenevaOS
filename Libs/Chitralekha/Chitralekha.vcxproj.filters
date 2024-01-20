@@ -37,6 +37,9 @@
     <ClInclude Include="widgets\view.h">
       <Filter>widgets</Filter>
     </ClInclude>
+    <ClInclude Include="widgets\scrollpane.h">
+      <Filter>widgets</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="chitralekha.cpp" />
@@ -75,6 +78,12 @@
     </ClCompile>
     <ClCompile Include="widgets\view.cpp">
       <Filter>widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="widgets\scrollpane.cpp">
+      <Filter>widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="widgets\defaultscrollbar.cpp">
+      <Filter>widgets\styles</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
