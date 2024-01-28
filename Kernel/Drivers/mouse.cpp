@@ -123,6 +123,10 @@ void PS2MouseHandler(size_t v, void* p) {
 			break;
 		case 2:
 			__ps2mouse->mouse_byte[2] = mouse_in;
+			if (__ps2mouse->mouse_mode == MOUSE_SCROLLWHEEL){
+				++__ps2mouse->mouse_cycle;
+				break;
+			}
 			goto finish_packet;
 		case 3:
 			__ps2mouse->mouse_byte[3] = mouse_in;
@@ -134,71 +138,74 @@ void PS2MouseHandler(size_t v, void* p) {
 
 		goto read_next;
 
-finish_packet:
-	__ps2mouse->mouse_cycle = 0;
+	finish_packet:
+		__ps2mouse->mouse_cycle = 0;
 
-	int x = __ps2mouse->mouse_byte[1];
-	int y = __ps2mouse->mouse_byte[2];
-	if (x && __ps2mouse->mouse_byte[0] & (1 << 4))
-		x = x - 0x100;
+		int x = __ps2mouse->mouse_byte[1];
+		int y = __ps2mouse->mouse_byte[2];
+		if (x && __ps2mouse->mouse_byte[0] & (1 << 4))
+			x = x - 0x100;
 
-	if (y && __ps2mouse->mouse_byte[0] & (1 << 5))
-		y = y - 0x100;
+		if (y && __ps2mouse->mouse_byte[0] & (1 << 5))
+			y = y - 0x100;
 
-	__ps2mouse->mouse_x_diff = x;
-	__ps2mouse->mouse_y_diff = y;
-	__ps2mouse->mouse_x += __ps2mouse->mouse_x_diff;
-	__ps2mouse->mouse_y -= __ps2mouse->mouse_y_diff;
+		__ps2mouse->mouse_x_diff = x;
+		__ps2mouse->mouse_y_diff = y;
+		__ps2mouse->mouse_x += __ps2mouse->mouse_x_diff;
+		__ps2mouse->mouse_y -= __ps2mouse->mouse_y_diff;
 
-	if (__ps2mouse->mouse_x < 0)
-		__ps2mouse->mouse_x = 0;
+		if (__ps2mouse->mouse_x < 0)
+			__ps2mouse->mouse_x = 0;
 
-	if (__ps2mouse->mouse_y < 0)
-		__ps2mouse->mouse_y = 0;
+		if (__ps2mouse->mouse_y < 0)
+			__ps2mouse->mouse_y = 0;
 
-	__ps2mouse->mouse_butt_state = 0;
+		__ps2mouse->mouse_butt_state = 0;
 
-	if (__ps2mouse->mouse_byte[0] & 0x01) {    //0x01 for PS/2
-		__ps2mouse->curr_button[0] = 1;
-		__ps2mouse->mouse_butt_state |= LEFT_CLICK;
+		if (__ps2mouse->mouse_byte[0] & 0x01) {    //0x01 for PS/2
+			__ps2mouse->curr_button[0] = 1;
+			__ps2mouse->mouse_butt_state |= LEFT_CLICK;
+		}
+		else
+			__ps2mouse->curr_button[0] = 0;
+
+		if (__ps2mouse->mouse_byte[0] & 0x02) {
+			__ps2mouse->curr_button[2] = 1;
+			SeTextOut("Right clicked \r\n");
+			__ps2mouse->mouse_butt_state |= RIGHT_CLICK;
+		}
+		else
+			__ps2mouse->curr_button[2] = 0;
+
+		if (__ps2mouse->mouse_byte[0] & 0x04)
+			__ps2mouse->mouse_butt_state |= MOUSE_MIDDLE_CLICK;
+
+		if (__ps2mouse->mouse_byte[3]){
+			if ((int8_t)__ps2mouse->mouse_byte[3] > 0)
+				__ps2mouse->mouse_butt_state |= MOUSE_SCROLL_DOWN;
+			else if ((int8_t)__ps2mouse->mouse_byte[3] < 0)
+				__ps2mouse->mouse_butt_state |= MOUSE_SCROLL_UP;
+		}
+
+
+		AuInputMessage newmsg;
+		memset(&newmsg, 0, sizeof(AuInputMessage));
+		newmsg.type = AU_INPUT_MOUSE;
+		newmsg.xpos = __ps2mouse->mouse_x;
+		newmsg.ypos = __ps2mouse->mouse_y;
+		newmsg.button_state = __ps2mouse->mouse_butt_state;
+
+		/*AuInputMessage oldmsg;
+		AuDevReadMice(&oldmsg);*/
+
+		AuDevWriteMice(&newmsg);
+		memcpy(__ps2mouse->prev_button, __ps2mouse->curr_button, 3);
+		memset(__ps2mouse->curr_button, 0x00, 3);
+
+	read_next:
+		break;
 	}
-	else
-		__ps2mouse->curr_button[0] = 0;
 
-	if (__ps2mouse->mouse_byte[0] & 0x02) {
-		__ps2mouse->curr_button[2] = 1;
-		SeTextOut("Right clicked \r\n");
-		__ps2mouse->mouse_butt_state |= RIGHT_CLICK;
-	}
-	else
-		__ps2mouse->curr_button[2] = 0;
-
-	if (__ps2mouse->mouse_byte[0] & 0x04)
-		__ps2mouse->mouse_button |= MOUSE_MIDDLE_CLICK;
-
-	if ((int8_t)__ps2mouse->mouse_byte[3] > 0)
-		AuTextOut("Mouse Scroll down \n");
-	else if ((int8_t)__ps2mouse->mouse_byte[3] < 0)
-		AuTextOut("Mouse Scroll up \n");
-
-
-	AuInputMessage newmsg;
-	memset(&newmsg, 0, sizeof(AuInputMessage));
-	newmsg.type = AU_INPUT_MOUSE;
-	newmsg.xpos = __ps2mouse->mouse_x;
-	newmsg.ypos = __ps2mouse->mouse_y;
-	newmsg.button_state = __ps2mouse->mouse_butt_state;
-
-	/*AuInputMessage oldmsg;
-	AuDevReadMice(&oldmsg);*/
-
-	AuDevWriteMice(&newmsg);
-	memcpy(__ps2mouse->prev_button, __ps2mouse->curr_button, 3);
-	memset(__ps2mouse->curr_button, 0x00, 3);
-
-read_next:
-	break;
-}
 	x64_sti();
 	AuInterruptEnd(12);
 }
@@ -224,6 +231,7 @@ void AuPS2MouseInitialise() {
 	__ps2mouse = (PS2Mouse*)kmalloc(sizeof(PS2Mouse));
 	memset(__ps2mouse, 0, sizeof(PS2Mouse));
 
+	__ps2mouse->mouse_mode = MOUSE_DEFAULT;
 	uint8_t status;
 
 	PS2MouseWaitInput();
@@ -258,7 +266,11 @@ void AuPS2MouseInitialise() {
 	AuPS2MouseWrite(80);
 	AuPS2MouseWrite(MOUSE_DEVICE_ID);
 	status = AuPS2MouseRead();
-	
+	if (status == 3) {
+		AuTextOut("PS2 Mouse with scroll wheel \n");
+		__ps2mouse->mouse_mode = MOUSE_SCROLLWHEEL;
+	}
+
 	__ps2mouse->mouse_x = 0;
 	__ps2mouse->mouse_y = 0;
 

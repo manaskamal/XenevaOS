@@ -47,6 +47,7 @@ typedef struct __ps2mouse__ {
 	uint8_t prev_button[3];
 	uint8_t curr_button[3];
 	uint32_t mouse_butt_state;
+	uint8_t mouse_mode;
 	volatile int32_t mouse_button;
 }PS2Mouse;
 #pragma pack(pop)

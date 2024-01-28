@@ -160,6 +160,7 @@
     <ClInclude Include="ttf.h" />
     <ClInclude Include="widgets\base.h" />
     <ClInclude Include="widgets\button.h" />
+    <ClInclude Include="widgets\icon.h" />
     <ClInclude Include="widgets\list.h" />
     <ClInclude Include="widgets\menu.h" />
     <ClInclude Include="widgets\menubar.h" />
@@ -181,6 +182,7 @@
     <ClCompile Include="widgets\button.cpp" />
     <ClCompile Include="widgets\defaultmenu.cpp" />
     <ClCompile Include="widgets\defaultscrollbar.cpp" />
+    <ClCompile Include="widgets\defaultviews.cpp" />
     <ClCompile Include="widgets\defaultwindow.cpp" />
     <ClCompile Include="widgets\list.cpp" />
     <ClCompile Include="widgets\menu.cpp" />

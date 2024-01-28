@@ -38,6 +38,8 @@
 #define CHITRALEKHA_SCROLL_TYPE_HORIZONTAL 1
 #define CHITRALEKHA_SCROLL_TYPE_VERTICAL 2
 
+#define SCROLLBAR_SIZE 18
+
 typedef struct _scrollbar_ {
 	uint8_t type;
 	bool update;
@@ -72,6 +74,15 @@ typedef struct _scrollpane_{
 * @param width -- Width of the scroll pane
 * @param height -- Height of the scroll pane
 */
-XE_EXTERN XE_EXPORT ChScrollPane* ChCreateScrollPane(int x, int y, int width, int height);
+XE_EXTERN XE_LIB ChScrollPane* ChCreateScrollPane(int x, int y, int width, int height);
+
+/*
+* ChScrollUpdateVerticalScroll -- updates the vertical scroll bur thumb
+* @param sp -- Pointer to scrollpane
+* @param win -- Pointer to window
+* @param viewport -- viewport
+* @param contentsz -- content size
+*/
+XE_EXTERN XE_LIB void ChScrollUpdateVerticalScroll(ChScrollPane* sp, ChWindow* win, ChRect* viewport, int contentSz);
 
 #endif

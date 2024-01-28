@@ -33,6 +33,10 @@
 #include <stdint.h>
 #include "list.h"
 #include "window.h"
+#include "scrollpane.h"
+
+#define LIST_VIEW_ITEM_HEIGHT 30
+#define LIST_VIEW_ITEM_YPADDING 2
 
 typedef struct _list_item_ {
 	//Geometry
@@ -41,7 +45,7 @@ typedef struct _list_item_ {
 	bool selected;
 	int width;
 	int height;
-	//item string
+	//item string, icon
 	char* itemText;
 }ChListItem;
 
@@ -49,5 +53,33 @@ typedef struct _list_view_ {
 	ChWidget wid;
 	list_t* itemList;
 	bool scrollable;
+	ChScrollPane *scrollpane;
+	int numRows;
 }ChListView;
+
+
+/*
+* ChCreateListView -- create a new list view widget
+* @param x -- x location
+* @param y -- y location
+* @param w -- width of the list
+* @param h -- height of the list
+*/
+XE_EXTERN XE_LIB ChListView* ChCreateListView(int x, int y, int w, int h);
+
+/*
+* ChListViewSetScrollpane -- assigns a scrollpane to given list view
+* @param view -- Pointer to list view
+* @param pane -- Pointer to scroll pane
+*/
+XE_EXTERN XE_LIB void ChListViewSetScrollpane(ChListView* view, ChScrollPane *pane);
+
+/*
+* ChListViewAddItem -- add list item to list view
+* @param lv -- Pointer to list view
+* @param itemText -- item text
+*/
+XE_EXTERN XE_LIB void ChListViewAddItem(ChWindow* win, ChListView* lv, char* itemText);
+
+
 #endif

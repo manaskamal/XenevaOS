@@ -61,6 +61,9 @@
 #define CHITRALEKHA_WIDGET_TYPE_CONTROL (1<<1)
 #define CHITRALEKHA_WIDGET_TYPE_POPUP (1<<2)
 
+#define CHITRALEKHA_WIDGET_SCROLL_HORIZONTAL 0
+#define CHITRALEKHA_WIDGET_SCROLL_VERTICAL 1
+
 #pragma pack(push,1)
 	typedef struct _ChSharedWin_ {
 		ChRect rect[256];
@@ -114,6 +117,7 @@
 		uint8_t type;
 		void(*ChActionHandler)(struct _ChWidget_ *widget,ChWindow* win);
 		void(*ChMouseEvent)(struct _ChWidget_* widget,ChWindow* win, int x, int y, int button);
+		void(*ChScrollEvent)(struct _ChWidget_* widget, ChWindow* win, int scrollval, uint8_t scrolltype);
 		void(*ChPaintHandler)(struct _ChWidget_* widget,ChWindow* win);
 		void(*ChDestroy)(struct _ChWidget_* widget,ChWindow* win);
 	}ChWidget;

@@ -38,6 +38,36 @@ void ChDefaultScrollPanePainter(ChWidget* wid, ChWindow* win);
 void ChDefaultScrollPaneMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, int button){
 	ChScrollPane *sp = (ChScrollPane*)wid;
 
+	if (button == DEODHAI_MOUSE_MSG_SCROLL_UP) {
+		sp->vScrollBar.thumb_posy -= sp->vScrollBar.scrollAmount;
+
+		if ((sp->vScrollBar.bar_y + sp->vScrollBar.thumb_posy) <= sp->vScrollBar.bar_y)
+			sp->vScrollBar.thumb_posy = 1;// sp->vScrollBar.bar_y;
+
+		sp->vScrollBar.currentScrollValue = sp->vScrollBar.thumb_posy;
+		if (sp->wid.ChPaintHandler)
+			sp->wid.ChPaintHandler((ChWidget*)sp, win);
+		ChWindowUpdate(win, sp->vScrollBar.bar_x, sp->vScrollBar.bar_y, sp->vScrollBar.bar_w, sp->vScrollBar.bar_h, 0, 1);
+	}
+
+	if (button == DEODHAI_MOUSE_MSG_SCROLL_DOWN) {
+		sp->vScrollBar.thumb_posy += sp->vScrollBar.scrollAmount;
+
+		if ((sp->vScrollBar.bar_y + sp->vScrollBar.thumb_posy + sp->vScrollBar.thumb_height) >= sp->vScrollBar.bar_y + sp->vScrollBar.bar_h){
+			sp->vScrollBar.thumb_posy = (win->info->y + sp->vScrollBar.bar_y + sp->vScrollBar.bar_h) -
+				(win->info->y + sp->vScrollBar.bar_y + sp->vScrollBar.thumb_height) - 2;
+		}
+
+		if ((sp->vScrollBar.bar_y + sp->vScrollBar.thumb_posy) <= sp->vScrollBar.bar_y)
+			sp->vScrollBar.thumb_posy = 1;// sp->vScrollBar.bar_y;
+
+		sp->vScrollBar.currentScrollValue = sp->vScrollBar.thumb_posy;
+		if (sp->wid.ChPaintHandler)
+			sp->wid.ChPaintHandler((ChWidget*)sp, win);
+		ChWindowUpdate(win, sp->vScrollBar.bar_x, sp->vScrollBar.bar_y, sp->vScrollBar.bar_w, sp->vScrollBar.bar_h, 0, 1);
+	}
+
+
 	/* check for any scrollbar pending updates */
 	if (x >= (win->info->x + sp->hScrollBar.bar_x) &&
 		x < (win->info->x + sp->hScrollBar.bar_x + sp->hScrollBar.bar_w) &&
@@ -83,6 +113,9 @@ void ChDefaultScrollPaneMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, i
 
 			if ((sp->hScrollBar.thumb_posx <= sp->hScrollBar.bar_x))
 				sp->hScrollBar.thumb_posx = 1; // sp->hScrollBar.bar_x;
+
+			sp->hScrollBar.currentScrollValue = sp->hScrollBar.thumb_posx;
+			_KePrint("Current hscroll -> %d \r\n", sp->hScrollBar.currentScrollValue);
 		}
 
 
@@ -102,7 +135,7 @@ void ChDefaultScrollPaneMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, i
 		sp->vScrollBar.update = 1;
 		sp->vScrollBar.thumbHover = 1;
 
-		if (button) {
+		if (button && !((button == DEODHAI_MOUSE_MSG_SCROLL_DOWN) || (button == DEODHAI_MOUSE_MSG_SCROLL_UP)))  {
 			sp->vScrollBar.thumb_posy = y - (win->info->y + sp->vScrollBar.bar_y + sp->vScrollBar.thumb_height / 2);
 
 			if ((sp->vScrollBar.bar_y + sp->vScrollBar.thumb_posy + sp->vScrollBar.thumb_height) >= sp->vScrollBar.bar_y + sp->vScrollBar.bar_h){
@@ -112,6 +145,8 @@ void ChDefaultScrollPaneMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, i
 
 			if ( (sp->vScrollBar.bar_y + sp->vScrollBar.thumb_posy) <= sp->vScrollBar.bar_y)
 				sp->vScrollBar.thumb_posy = 1;// sp->vScrollBar.bar_y;
+
+			sp->vScrollBar.currentScrollValue = sp->vScrollBar.thumb_posy;
 		}
 
 
@@ -122,8 +157,6 @@ void ChDefaultScrollPaneMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, i
 
 }
 
-
-#define SCROLLBAR_SIZE 18
 /*
  * ChCreateScrollPane -- Create a new scroll pane
  * @param win -- Pointer to main Window
@@ -163,9 +196,23 @@ ChScrollPane* ChCreateScrollPane(int x, int y, int width, int height) {
 	sp->vScrollBar.type = CHITRALEKHA_SCROLL_TYPE_VERTICAL;
 	sp->vScrollBar.update = 1;
 	sp->vScrollBar.thumb_posx = 2;
-	sp->vScrollBar.thumb_posy = 45;
+	sp->vScrollBar.thumb_posy = 1;
 	sp->vScrollBar.thumb_width = sp->vScrollBar.bar_w - 4;
 	sp->vScrollBar.thumb_height = sp->vScrollBar.bar_h / 2;
 
 	return sp;
+}
+
+/*
+ * ChScrollUpdateVerticalScroll -- updates the vertical scroll bur thumb
+ * @param sp -- Pointer to scrollpane
+ * @param win -- Pointer to window
+ * @param viewport -- viewport
+ * @param contentsz -- content size
+ */
+void ChScrollUpdateVerticalScroll(ChScrollPane* sp,ChWindow* win, ChRect* viewport, int contentSz){
+	sp->vScrollBar.thumb_height = viewport->y - viewport->h / contentSz;
+	/*if (sp->wid.ChPaintHandler)
+		sp->wid.ChPaintHandler((ChWidget*)sp, win);
+	ChWindowUpdate(win, sp->vScrollBar.bar_x, sp->vScrollBar.bar_y, sp->vScrollBar.bar_w, sp->vScrollBar.bar_h, 0, 1);*/
 }

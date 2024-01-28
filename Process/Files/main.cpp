@@ -40,6 +40,7 @@
 #include <keycode.h>
 #include <widgets\window.h>
 #include <widgets\msgbox.h>
+#include <widgets\view.h>
 #include <string.h>
 #include <widgets\menubar.h>
 #include <stdlib.h>
@@ -170,6 +171,15 @@ int main(int argc, char* argv[]){
 	ChWindowUpdate(mainWin,0, 0, mainWin->info->width, mainWin->info->height, 1, 0);*/
 	ChScrollPane *sp = ChCreateScrollPane(10, 62 + 75 + 10, mainWin->info->width - 20, 240);
 	ChWindowAddWidget(mainWin, (ChWidget*)sp);
+
+	
+	ChListView* lv = ChCreateListView(10, 62 + 75 + 10, mainWin->info->width - 20, 240);
+	ChListViewSetScrollpane(lv, sp);
+	for (int i = 0; i < 11; i++){
+		ChListViewAddItem(mainWin, lv, "Hello");
+	}
+	ChWindowAddWidget(mainWin, (ChWidget*)lv);
+
 	ChWindowPaint(mainWin);
 
 	PostEvent e;

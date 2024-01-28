@@ -60,6 +60,9 @@
 #define DEODHAI_BROADCAST_ICON 172
 #define DEODHAI_BROADCAST_FOCUS_CHANGED 173
 
+#define DEODHAI_MOUSE_MSG_SCROLL_UP   0x05
+#define DEODHAI_MOUSE_MSG_SCROLL_DOWN 0x06
+
 
 	typedef struct _ChApp_ {
 		int postboxfd;
