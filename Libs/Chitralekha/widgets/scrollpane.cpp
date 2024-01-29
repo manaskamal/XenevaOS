@@ -180,7 +180,7 @@ ChScrollPane* ChCreateScrollPane(int x, int y, int width, int height) {
 	sp->hScrollBar.bar_h = SCROLLBAR_SIZE;
 	sp->hScrollBar.thumb_posx = 1;
 	sp->hScrollBar.thumb_posy = 2;
-	sp->hScrollBar.thumb_width = sp->hScrollBar.bar_w / 2;
+	sp->hScrollBar.thumb_width = 0;
 	sp->hScrollBar.thumb_height = sp->hScrollBar.bar_h - 4;
 	sp->hScrollBar.type = CHITRALEKHA_SCROLL_TYPE_HORIZONTAL;
 	sp->hScrollBar.scrollAmount = 1;
@@ -198,21 +198,27 @@ ChScrollPane* ChCreateScrollPane(int x, int y, int width, int height) {
 	sp->vScrollBar.thumb_posx = 2;
 	sp->vScrollBar.thumb_posy = 1;
 	sp->vScrollBar.thumb_width = sp->vScrollBar.bar_w - 4;
-	sp->vScrollBar.thumb_height = sp->vScrollBar.bar_h / 2;
+	sp->vScrollBar.thumb_height = 0;
 
 	return sp;
 }
 
 /*
- * ChScrollUpdateVerticalScroll -- updates the vertical scroll bur thumb
+ * ChScrollUpdateVerticalScroll -- updates the vertical scroll bar thumb
  * @param sp -- Pointer to scrollpane
- * @param win -- Pointer to window
  * @param viewport -- viewport
  * @param contentsz -- content size
  */
-void ChScrollUpdateVerticalScroll(ChScrollPane* sp,ChWindow* win, ChRect* viewport, int contentSz){
+void ChScrollUpdateVerticalScroll(ChScrollPane* sp, ChRect* viewport, int contentSz){
 	sp->vScrollBar.thumb_height = viewport->y - viewport->h / contentSz;
-	/*if (sp->wid.ChPaintHandler)
-		sp->wid.ChPaintHandler((ChWidget*)sp, win);
-	ChWindowUpdate(win, sp->vScrollBar.bar_x, sp->vScrollBar.bar_y, sp->vScrollBar.bar_w, sp->vScrollBar.bar_h, 0, 1);*/
+}
+
+/*
+ * ChScrollUpdateHorizontalScroll -- updates the horizontal scroll bar thumb
+ * @param sp -- Pointer to scrollpane
+ * @param viewport -- Pointer to viewport geometry
+ * @param contentSz -- content size
+ */
+void ChScrollUpdateHorizontalScroll(ChScrollPane* sp,ChRect* viewport, int contentSz){
+	sp->hScrollBar.thumb_width = viewport->x - viewport->w / contentSz;
 }

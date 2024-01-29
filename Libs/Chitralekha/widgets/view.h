@@ -35,7 +35,7 @@
 #include "window.h"
 #include "scrollpane.h"
 
-#define LIST_VIEW_ITEM_HEIGHT 30
+#define LIST_VIEW_ITEM_HEIGHT 22//30
 #define LIST_VIEW_ITEM_YPADDING 2
 
 typedef struct _list_item_ {

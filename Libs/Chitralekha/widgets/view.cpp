@@ -102,7 +102,7 @@ void ChListViewAddItem(ChWindow* win, ChListView* lv, char* itemText) {
 		view.w = lv->wid.w;
 		view.h = lv->wid.h;
 		if (lv->scrollpane)
-			ChScrollUpdateVerticalScroll(lv->scrollpane, win, &view, (lv->numRows*LIST_VIEW_ITEM_HEIGHT));
+			ChScrollUpdateVerticalScroll(lv->scrollpane, &view, (lv->numRows*LIST_VIEW_ITEM_HEIGHT));
 	}
 
 }

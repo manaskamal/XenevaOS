@@ -79,10 +79,17 @@ XE_EXTERN XE_LIB ChScrollPane* ChCreateScrollPane(int x, int y, int width, int h
 /*
 * ChScrollUpdateVerticalScroll -- updates the vertical scroll bur thumb
 * @param sp -- Pointer to scrollpane
-* @param win -- Pointer to window
 * @param viewport -- viewport
 * @param contentsz -- content size
 */
-XE_EXTERN XE_LIB void ChScrollUpdateVerticalScroll(ChScrollPane* sp, ChWindow* win, ChRect* viewport, int contentSz);
+XE_EXTERN XE_LIB void ChScrollUpdateVerticalScroll(ChScrollPane* sp, ChRect* viewport, int contentSz);
+
+/*
+* ChScrollUpdateHorizontalScroll -- updates the horizontal scroll bar thumb
+* @param sp -- Pointer to scrollpane
+* @param viewport -- Pointer to viewport geometry
+* @param contentSz -- content size
+*/
+XE_EXTERN XE_LIB void ChScrollUpdateHorizontalScroll(ChScrollPane* sp, ChRect* viewport, int contentSz);
 
 #endif
