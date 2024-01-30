@@ -33,7 +33,15 @@
 
 extern void ChDefaultListViewPainter(ChWidget* wid, ChWindow* win);
 
+void ChListViewMouseEvent(ChWidget* widget, ChWindow* win, int x, int y, int button) {
+	if (button == DEODHAI_MOUSE_MSG_SCROLL_UP) {
+		_KePrint("ListView Scroll up message \r\n");
+	}
 
+	if (button == DEODHAI_MOUSE_MSG_SCROLL_DOWN) {
+		_KePrint("ListView Scroll down message \r\n");
+	}
+}
 /*
  * ChCreateListView -- create a new list view widget
  * @param x -- x location
@@ -50,6 +58,7 @@ ChListView* ChCreateListView(int x, int y, int w, int h){
 	lv->wid.h = h - SCROLLBAR_SIZE;
 	lv->itemList = initialize_list();
 	lv->wid.ChPaintHandler = ChDefaultListViewPainter;
+	lv->wid.ChMouseEvent = ChListViewMouseEvent;
 	return lv;
 }
 
