@@ -64,6 +64,7 @@ typedef struct _scrollpane_{
 	ChScrollbar vScrollBar;
 	bool paintCallback;
 	int lastMouseButton;
+	ChWidget* scrollableView;
 }ChScrollPane;
 
 /*

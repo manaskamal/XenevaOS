@@ -29,6 +29,7 @@
 
 #include "scrollpane.h"
 #include <stdlib.h>
+#include <sys\_keproc.h>
 
 /*
 * ChDefaultScrollPanePainter -- default scroll pane painter
@@ -48,6 +49,12 @@ void ChDefaultScrollPaneMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, i
 		if (sp->wid.ChPaintHandler)
 			sp->wid.ChPaintHandler((ChWidget*)sp, win);
 		ChWindowUpdate(win, sp->vScrollBar.bar_x, sp->vScrollBar.bar_y, sp->vScrollBar.bar_w, sp->vScrollBar.bar_h, 0, 1);
+
+		_KeProcessSleep(30);
+
+		if (sp->scrollableView)
+			sp->scrollableView->ChScrollEvent(sp->scrollableView, win, sp->vScrollBar.thumb_posy, CHITRALEKHA_SCROLL_TYPE_VERTICAL);
+		
 	}
 
 	if (button == DEODHAI_MOUSE_MSG_SCROLL_DOWN) {
@@ -65,6 +72,11 @@ void ChDefaultScrollPaneMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, i
 		if (sp->wid.ChPaintHandler)
 			sp->wid.ChPaintHandler((ChWidget*)sp, win);
 		ChWindowUpdate(win, sp->vScrollBar.bar_x, sp->vScrollBar.bar_y, sp->vScrollBar.bar_w, sp->vScrollBar.bar_h, 0, 1);
+
+		_KeProcessSleep(30);
+
+		if (sp->scrollableView)
+			sp->scrollableView->ChScrollEvent(sp->scrollableView, win, sp->vScrollBar.thumb_posy, CHITRALEKHA_SCROLL_TYPE_VERTICAL);
 	}
 
 
@@ -102,6 +114,7 @@ void ChDefaultScrollPaneMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, i
 		y < (win->info->y + sp->hScrollBar.bar_y + sp->hScrollBar.thumb_posy + sp->hScrollBar.thumb_height)){
 		sp->hScrollBar.update = 1;
 		sp->hScrollBar.thumbHover = 1;
+		bool _scrolled = false;
 	
 		if (button) {
 			sp->hScrollBar.thumb_posx = x - (win->info->x + sp->hScrollBar.thumb_width / 2);
@@ -116,12 +129,19 @@ void ChDefaultScrollPaneMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, i
 
 			sp->hScrollBar.currentScrollValue = sp->hScrollBar.thumb_posx;
 			_KePrint("Current hscroll -> %d \r\n", sp->hScrollBar.currentScrollValue);
+			_scrolled = true;
 		}
 
 
 		if (sp->wid.ChPaintHandler)
 			sp->wid.ChPaintHandler((ChWidget*)sp, win);
 		ChWindowUpdate(win, sp->hScrollBar.bar_x, sp->hScrollBar.bar_y, sp->hScrollBar.bar_w, sp->hScrollBar.bar_h, 0, 1);
+
+		if (_scrolled){
+			_KeProcessSleep(30);
+			if (sp->scrollableView)
+				sp->scrollableView->ChScrollEvent(sp->scrollableView, win, sp->vScrollBar.thumb_posy, CHITRALEKHA_SCROLL_TYPE_HORIZONTAL);
+		}
 	}
 
 
@@ -134,6 +154,7 @@ void ChDefaultScrollPaneMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, i
 		y < (win->info->y + sp->vScrollBar.bar_y + sp->vScrollBar.thumb_posy + sp->vScrollBar.thumb_height)){
 		sp->vScrollBar.update = 1;
 		sp->vScrollBar.thumbHover = 1;
+		bool _scrolled = false;
 
 		if (button && !((button == DEODHAI_MOUSE_MSG_SCROLL_DOWN) || (button == DEODHAI_MOUSE_MSG_SCROLL_UP)))  {
 			sp->vScrollBar.thumb_posy = y - (win->info->y + sp->vScrollBar.bar_y + sp->vScrollBar.thumb_height / 2);
@@ -147,12 +168,20 @@ void ChDefaultScrollPaneMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, i
 				sp->vScrollBar.thumb_posy = 1;// sp->vScrollBar.bar_y;
 
 			sp->vScrollBar.currentScrollValue = sp->vScrollBar.thumb_posy;
+			_scrolled = true;
 		}
 
 
 		if (sp->wid.ChPaintHandler)
 			sp->wid.ChPaintHandler((ChWidget*)sp, win);
 		ChWindowUpdate(win, sp->vScrollBar.bar_x, sp->vScrollBar.bar_y, sp->vScrollBar.bar_w, sp->vScrollBar.bar_h, 0, 1);
+
+		if (_scrolled) {
+			_KeProcessSleep(30);
+			if (sp->scrollableView)
+				sp->scrollableView->ChScrollEvent(sp->scrollableView, win, sp->vScrollBar.thumb_posy, CHITRALEKHA_SCROLL_TYPE_VERTICAL);
+		}
+
 	}
 
 }

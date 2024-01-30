@@ -29,18 +29,48 @@
 
 #include "view.h"
 #include "scrollpane.h"
-
+#include "sys\_keproc.h"
 
 extern void ChDefaultListViewPainter(ChWidget* wid, ChWindow* win);
 
 void ChListViewMouseEvent(ChWidget* widget, ChWindow* win, int x, int y, int button) {
+	ChListView *lv = (ChListView*)widget;
+
+	/* this messages applies only to vertical scrollbar*/
 	if (button == DEODHAI_MOUSE_MSG_SCROLL_UP) {
-		_KePrint("ListView Scroll up message \r\n");
+		if (lv->scrollpane) {
+			lv->scrollpane->vScrollBar.thumb_posy -= lv->scrollpane->vScrollBar.scrollAmount;
+			lv->scrollpane->vScrollBar.update = 1;
+			_KePrint("ListView Scroll up message \r\n");
+			if (lv->scrollpane->wid.ChPaintHandler)
+				lv->scrollpane->wid.ChPaintHandler((ChWidget*)lv->scrollpane, win);
+			ChWindowUpdate(win, lv->scrollpane->vScrollBar.bar_x, lv->scrollpane->vScrollBar.bar_y, lv->scrollpane->vScrollBar.bar_w, 
+				lv->scrollpane->vScrollBar.bar_h, 0, 1);
+			//_KeProcessSleep(20);
+		}
+		//int index = 
 	}
 
 	if (button == DEODHAI_MOUSE_MSG_SCROLL_DOWN) {
-		_KePrint("ListView Scroll down message \r\n");
+		if (lv->scrollpane) {
+			lv->scrollpane->vScrollBar.thumb_posy += lv->scrollpane->vScrollBar.scrollAmount;
+			_KePrint("ListView Scroll down message \r\n");
+			lv->scrollpane->vScrollBar.update = 1;
+			if (lv->scrollpane->wid.ChPaintHandler)
+				lv->scrollpane->wid.ChPaintHandler((ChWidget*)lv->scrollpane, win);
+			ChWindowUpdate(win, lv->scrollpane->vScrollBar.bar_x, lv->scrollpane->vScrollBar.bar_y, lv->scrollpane->vScrollBar.bar_w,
+				lv->scrollpane->vScrollBar.bar_h, 0, 1);
+			//_KeProcessSleep(20);
+		}
 	}
+}
+
+void ChListViewScrollEvent(ChWidget* wid, ChWindow* win, int scollVal, uint8_t type) {
+	ChListView* lv = (ChListView*)wid;
+	if (type == CHITRALEKHA_SCROLL_TYPE_VERTICAL)
+		_KePrint("ListView vertical scroll message received \r\n");
+	if (type == CHITRALEKHA_SCROLL_TYPE_HORIZONTAL)
+		_KePrint("ListView horizontal scroll message received \r\n");
 }
 /*
  * ChCreateListView -- create a new list view widget
@@ -59,6 +89,7 @@ ChListView* ChCreateListView(int x, int y, int w, int h){
 	lv->itemList = initialize_list();
 	lv->wid.ChPaintHandler = ChDefaultListViewPainter;
 	lv->wid.ChMouseEvent = ChListViewMouseEvent;
+	lv->wid.ChScrollEvent = ChListViewScrollEvent;
 	return lv;
 }
 
@@ -77,6 +108,7 @@ void ChListViewSetScrollpane(ChListView* view, ChScrollPane *pane){
 	pane->vScrollBar.bar_w = SCROLLBAR_SIZE;
 	pane->vScrollBar.bar_h = view->wid.h;
 	view->scrollpane = pane;
+	pane->scrollableView = (ChWidget*)view;
 }
 
 /*
