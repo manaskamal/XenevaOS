@@ -35,13 +35,14 @@ extern void ChDefaultListViewPainter(ChWidget* wid, ChWindow* win);
 
 void ChListViewMouseEvent(ChWidget* widget, ChWindow* win, int x, int y, int button) {
 	ChListView *lv = (ChListView*)widget;
-
+	int display_idx = lv->scrollpane->vScrollBar.thumb_posy / LIST_VIEW_ITEM_HEIGHT;
 	/* this messages applies only to vertical scrollbar*/
 	if (button == DEODHAI_MOUSE_MSG_SCROLL_UP) {
 		if (lv->scrollpane) {
 			lv->scrollpane->vScrollBar.thumb_posy -= lv->scrollpane->vScrollBar.scrollAmount;
 			lv->scrollpane->vScrollBar.update = 1;
-			_KePrint("ListView Scroll up message \r\n");
+			lv->currentStartIndex = display_idx;
+			_KePrint("ListView Scroll up msg display idx -> %d \r\n", display_idx);
 			if (lv->scrollpane->wid.ChPaintHandler)
 				lv->scrollpane->wid.ChPaintHandler((ChWidget*)lv->scrollpane, win);
 			ChWindowUpdate(win, lv->scrollpane->vScrollBar.bar_x, lv->scrollpane->vScrollBar.bar_y, lv->scrollpane->vScrollBar.bar_w, 
@@ -54,7 +55,8 @@ void ChListViewMouseEvent(ChWidget* widget, ChWindow* win, int x, int y, int but
 	if (button == DEODHAI_MOUSE_MSG_SCROLL_DOWN) {
 		if (lv->scrollpane) {
 			lv->scrollpane->vScrollBar.thumb_posy += lv->scrollpane->vScrollBar.scrollAmount;
-			_KePrint("ListView Scroll down message \r\n");
+			_KePrint("ListView Scroll down msg display idx -> %d \r\n", display_idx);
+			lv->currentStartIndex = display_idx;
 			lv->scrollpane->vScrollBar.update = 1;
 			if (lv->scrollpane->wid.ChPaintHandler)
 				lv->scrollpane->wid.ChPaintHandler((ChWidget*)lv->scrollpane, win);

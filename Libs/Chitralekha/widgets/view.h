@@ -55,6 +55,7 @@ typedef struct _list_view_ {
 	bool scrollable;
 	ChScrollPane *scrollpane;
 	int numRows;
+	int currentStartIndex;
 }ChListView;
 
 
