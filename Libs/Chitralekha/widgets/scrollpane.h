@@ -53,6 +53,8 @@ typedef struct _scrollbar_ {
 	int thumb_height;
 	int thumb_dragx;
 	int thumb_dragy;
+	int thumb_lasty;
+	int thumb_lastx;
 	bool thumbHover;
 	int scrollAmount;
 	int currentScrollValue;
@@ -75,7 +77,7 @@ typedef struct _scrollpane_{
 * @param width -- Width of the scroll pane
 * @param height -- Height of the scroll pane
 */
-XE_EXTERN XE_LIB ChScrollPane* ChCreateScrollPane(int x, int y, int width, int height);
+XE_EXTERN XE_LIB ChScrollPane* ChCreateScrollPane(ChWindow* win,int x, int y, int width, int height);
 
 /*
 * ChScrollUpdateVerticalScroll -- updates the vertical scroll bur thumb

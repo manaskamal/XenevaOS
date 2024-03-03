@@ -29,6 +29,7 @@
 
 #include "scrollpane.h"
 #include "view.h"
+#include <math.h>
 #include "..\draw.h"
 #include "..\color.h"
 
@@ -44,10 +45,17 @@ void ChDefaultListViewPainter(ChWidget* wid, ChWindow* win) {
 	viewRect.w = lv->wid.w;
 	viewRect.h = lv->wid.h;
 	ChFontSetSize(win->app->baseFont, 14);
-	for (int i = 0; i < lv->itemList->pointer; i++) {
+	int nodePaddingHeight = LIST_VIEW_ITEM_HEIGHT;
+	int max_visible_items = lv->currentStartIndex + lv->wid.h / LIST_VIEW_ITEM_HEIGHT+ 2 * nodePaddingHeight;
+	
+	int ypos = lv->wid.y + win->app->baseFont->fontHeight;
+	if (lv->currentStartIndex != 0)
+		ypos = (lv->horizontalRenderY - LIST_VIEW_ITEM_HEIGHT)  + win->app->baseFont->fontHeight / 2;
+	for (int i = lv->currentStartIndex; i < lv->itemList->pointer /*&& i < max_visible_items*/; i++) {
 		ChListItem* li = (ChListItem*)list_get_at(lv->itemList, i);
 		//ChDrawRect(win->canv, lv->wid.x + li->xPos, lv->wid.y + li->yPos, li->width, li->height, BLUE);
 		ChFontDrawTextClipped(win->canv, win->app->baseFont, li->itemText, lv->wid.x + li->xPos,
-			lv->wid.y + li->yPos + (li->height/2), BLACK, &viewRect);
+			(ypos + LIST_VIEW_ITEM_HEIGHT/2 - win->app->baseFont->fontHeight/2), BLACK, &viewRect);
+		ypos += LIST_VIEW_ITEM_HEIGHT;
 	}
 }

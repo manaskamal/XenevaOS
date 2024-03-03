@@ -29,6 +29,7 @@
 
 #include "scrollpane.h"
 #include <stdlib.h>
+#include <math.h>
 #include <sys\_keproc.h>
 
 /*
@@ -127,7 +128,7 @@ void ChDefaultScrollPaneMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, i
 			if ((sp->hScrollBar.thumb_posx <= sp->hScrollBar.bar_x))
 				sp->hScrollBar.thumb_posx = 1; // sp->hScrollBar.bar_x;
 
-			sp->hScrollBar.currentScrollValue = sp->hScrollBar.thumb_posx;
+			sp->hScrollBar.currentScrollValue = sp->hScrollBar.thumb_posx * sp->hScrollBar.scrollAmount;
 			_KePrint("Current hscroll -> %d \r\n", sp->hScrollBar.currentScrollValue);
 			_scrolled = true;
 		}
@@ -167,7 +168,7 @@ void ChDefaultScrollPaneMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, i
 			if ( (sp->vScrollBar.bar_y + sp->vScrollBar.thumb_posy) <= sp->vScrollBar.bar_y)
 				sp->vScrollBar.thumb_posy = 1;// sp->vScrollBar.bar_y;
 
-			sp->vScrollBar.currentScrollValue = sp->vScrollBar.thumb_posy;
+			sp->vScrollBar.currentScrollValue = sp->vScrollBar.thumb_posy * sp->vScrollBar.scrollAmount;
 			_scrolled = true;
 		}
 
@@ -194,7 +195,7 @@ void ChDefaultScrollPaneMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, i
  * @param width -- Width of the scroll pane
  * @param height -- Height of the scroll pane
  */
-ChScrollPane* ChCreateScrollPane(int x, int y, int width, int height) {
+ChScrollPane* ChCreateScrollPane(ChWindow* win,int x, int y, int width, int height) {
 	ChScrollPane* sp = (ChScrollPane*)malloc(sizeof(ChScrollPane));
 	memset(sp, 0, sizeof(ChScrollPane));
 	sp->wid.ChPaintHandler = ChDefaultScrollPanePainter;
@@ -221,7 +222,8 @@ ChScrollPane* ChCreateScrollPane(int x, int y, int width, int height) {
 	sp->vScrollBar.bar_w = SCROLLBAR_SIZE;
 	sp->vScrollBar.bar_h = height - SCROLLBAR_SIZE;
 	sp->vScrollBar.currentScrollValue = 0;
-	sp->vScrollBar.scrollAmount = 1;
+	double scrollDisplayRange = ((double)height / win->canv->screenHeight);
+	sp->vScrollBar.scrollAmount = ceil(scrollDisplayRange);
 	sp->vScrollBar.type = CHITRALEKHA_SCROLL_TYPE_VERTICAL;
 	sp->vScrollBar.update = 1;
 	sp->vScrollBar.thumb_posx = 2;
@@ -239,7 +241,14 @@ ChScrollPane* ChCreateScrollPane(int x, int y, int width, int height) {
  * @param contentsz -- content size
  */
 void ChScrollUpdateVerticalScroll(ChScrollPane* sp, ChRect* viewport, int contentSz){
-	sp->vScrollBar.thumb_height = viewport->y - viewport->h / contentSz;
+	sp->vScrollBar.thumb_height = contentSz / viewport->h;
+	
+	double range = ((double)contentSz) / viewport->h ;
+	//double range = ((viewport->h - viewport->y) / contentSz);
+	sp->vScrollBar.scrollAmount = ceil(range);
+	sp->vScrollBar.thumb_height = (viewport->h - viewport->y)/ range;
+	if (sp->vScrollBar.thumb_height <= 0)
+		sp->vScrollBar.thumb_height = 100;
 }
 
 /*

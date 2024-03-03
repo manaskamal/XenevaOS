@@ -159,25 +159,18 @@ int main(int argc, char* argv[]){
 	ChMenuItem* edite2 = ChCreateMenuItem("cut2", edite);
 	cut->menu = edite;
 
-
-	/*ChRect rect;
-	rect.x = 165;
-	rect.y = 150;
-	rect.w = 50;
-	rect.h = 50;
-	ChDrawRectUnfilled(mainWin->canv, rect.x, rect.y, rect.w, rect.h, GREEN);
-	ChFontSetSize(app->baseFont, 20);
-	ChFontDrawTextClipped(mainWin->canv, app->baseFont, "Hey", 160, 200, BLACK, &rect);
-	ChWindowUpdate(mainWin,0, 0, mainWin->info->width, mainWin->info->height, 1, 0);*/
-	ChScrollPane *sp = ChCreateScrollPane(10, 62 + 75 + 10, mainWin->info->width - 20, 240);
-	ChWindowAddWidget(mainWin, (ChWidget*)sp);
-
-	
-	ChListView* lv = ChCreateListView(10, 62 + 75 + 10, mainWin->info->width - 20, 240);
+	ChScrollPane* sp = ChCreateScrollPane(mainWin, 10, 100, mainWin->info->width - 10, mainWin->info->height - 100);
+	ChListView* lv = ChCreateListView(10, 100, mainWin->info->width - 10, mainWin->info->height - 100);
 	ChListViewSetScrollpane(lv, sp);
-	for (int i = 0; i < 11; i++){
-		ChListViewAddItem(mainWin, lv, "Hello");
+	
+	for (int i = 0; i < 50; i++){
+		char num[2];
+		memset(num, 0, 2);
+		itoa_s(i, 10, num);
+		ChListViewAddItem(mainWin, lv, num);
 	}
+
+	ChWindowAddWidget(mainWin, (ChWidget*)sp);
 	ChWindowAddWidget(mainWin, (ChWidget*)lv);
 
 	ChWindowPaint(mainWin);

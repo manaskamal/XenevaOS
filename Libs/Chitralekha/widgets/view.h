@@ -35,7 +35,7 @@
 #include "window.h"
 #include "scrollpane.h"
 
-#define LIST_VIEW_ITEM_HEIGHT 22//30
+#define LIST_VIEW_ITEM_HEIGHT 24//30
 #define LIST_VIEW_ITEM_YPADDING 2
 
 typedef struct _list_item_ {
@@ -55,7 +55,10 @@ typedef struct _list_view_ {
 	bool scrollable;
 	ChScrollPane *scrollpane;
 	int numRows;
+	int horizontalRenderY;
+	int horizontalRenderX;
 	int currentStartIndex;
+	bool firstItemPlaced;
 }ChListView;
 
 

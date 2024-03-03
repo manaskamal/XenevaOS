@@ -29,24 +29,27 @@
 
 #include "view.h"
 #include "scrollpane.h"
+#include <math.h>
 #include "sys\_keproc.h"
 
 extern void ChDefaultListViewPainter(ChWidget* wid, ChWindow* win);
 
 void ChListViewMouseEvent(ChWidget* widget, ChWindow* win, int x, int y, int button) {
 	ChListView *lv = (ChListView*)widget;
-	int display_idx = lv->scrollpane->vScrollBar.thumb_posy / LIST_VIEW_ITEM_HEIGHT;
+	int display_idx = ((lv->scrollpane->vScrollBar.thumb_posy * lv->scrollpane->vScrollBar.scrollAmount)) / LIST_VIEW_ITEM_HEIGHT;
+	//display_idx *= lv->scrollpane->vScrollBar.scrollAmount;
+	bool _view_update = false;
 	/* this messages applies only to vertical scrollbar*/
 	if (button == DEODHAI_MOUSE_MSG_SCROLL_UP) {
 		if (lv->scrollpane) {
 			lv->scrollpane->vScrollBar.thumb_posy -= lv->scrollpane->vScrollBar.scrollAmount;
 			lv->scrollpane->vScrollBar.update = 1;
 			lv->currentStartIndex = display_idx;
-			_KePrint("ListView Scroll up msg display idx -> %d \r\n", display_idx);
 			if (lv->scrollpane->wid.ChPaintHandler)
 				lv->scrollpane->wid.ChPaintHandler((ChWidget*)lv->scrollpane, win);
 			ChWindowUpdate(win, lv->scrollpane->vScrollBar.bar_x, lv->scrollpane->vScrollBar.bar_y, lv->scrollpane->vScrollBar.bar_w, 
 				lv->scrollpane->vScrollBar.bar_h, 0, 1);
+			_view_update = true;
 			//_KeProcessSleep(20);
 		}
 		//int index = 
@@ -62,17 +65,41 @@ void ChListViewMouseEvent(ChWidget* widget, ChWindow* win, int x, int y, int but
 				lv->scrollpane->wid.ChPaintHandler((ChWidget*)lv->scrollpane, win);
 			ChWindowUpdate(win, lv->scrollpane->vScrollBar.bar_x, lv->scrollpane->vScrollBar.bar_y, lv->scrollpane->vScrollBar.bar_w,
 				lv->scrollpane->vScrollBar.bar_h, 0, 1);
+			_view_update = true;
 			//_KeProcessSleep(20);
 		}
+	}
+
+	if (_view_update){
+		if (lv->wid.ChPaintHandler)
+			lv->wid.ChPaintHandler((ChWidget*)lv, win);
+		ChWindowUpdate(win, lv->wid.x, lv->wid.y, lv->wid.w, lv->wid.h, 0, 1);
 	}
 }
 
 void ChListViewScrollEvent(ChWidget* wid, ChWindow* win, int scollVal, uint8_t type) {
 	ChListView* lv = (ChListView*)wid;
-	if (type == CHITRALEKHA_SCROLL_TYPE_VERTICAL)
-		_KePrint("ListView vertical scroll message received \r\n");
-	if (type == CHITRALEKHA_SCROLL_TYPE_HORIZONTAL)
-		_KePrint("ListView horizontal scroll message received \r\n");
+	uint32_t display_idx = ((lv->scrollpane->vScrollBar.thumb_posy * lv->scrollpane->vScrollBar.scrollAmount)) / LIST_VIEW_ITEM_HEIGHT;
+	//display_idx *= lv->scrollpane->vScrollBar.scrollAmount;
+	//display_idx = max(0, display_idx);
+	bool _view_update = false;
+	if (type == CHITRALEKHA_SCROLL_TYPE_VERTICAL){
+		lv->currentStartIndex = display_idx;
+		//lv->horizontalRenderY = (lv->wid.y - ((lv->wid.y + lv->scrollpane->vScrollBar.thumb_posy) - lv->wid.y)) + win->app->baseFont->fontHeight; //LIST_VIEW_ITEM_HEIGHT;
+		_KePrint("Horiz Rend y -> %d \r\n", lv->currentStartIndex);
+		_view_update = true;
+	}
+	
+	if (type == CHITRALEKHA_SCROLL_TYPE_HORIZONTAL){
+		lv->currentStartIndex = display_idx;
+		_view_update = true;
+	}
+
+	if (_view_update){
+		if (lv->wid.ChPaintHandler)
+			lv->wid.ChPaintHandler((ChWidget*)lv, win);
+		ChWindowUpdate(win, lv->wid.x, lv->wid.y, lv->wid.w, lv->wid.h, 0, 1);
+	}
 }
 /*
  * ChCreateListView -- create a new list view widget
@@ -89,9 +116,13 @@ ChListView* ChCreateListView(int x, int y, int w, int h){
 	lv->wid.w = w - SCROLLBAR_SIZE;
 	lv->wid.h = h - SCROLLBAR_SIZE;
 	lv->itemList = initialize_list();
+	//lv->horizontalRenderY = (lv->wid.y - LIST_VIEW_ITEM_HEIGHT) + 21;
+	lv->currentStartIndex = 0; // 
 	lv->wid.ChPaintHandler = ChDefaultListViewPainter;
 	lv->wid.ChMouseEvent = ChListViewMouseEvent;
 	lv->wid.ChScrollEvent = ChListViewScrollEvent;
+	lv->firstItemPlaced = false;
+
 	return lv;
 }
 
@@ -109,6 +140,7 @@ void ChListViewSetScrollpane(ChListView* view, ChScrollPane *pane){
 	pane->vScrollBar.bar_y = view->wid.y;
 	pane->vScrollBar.bar_w = SCROLLBAR_SIZE;
 	pane->vScrollBar.bar_h = view->wid.h;
+	view->currentStartIndex = 0;
 	view->scrollpane = pane;
 	pane->scrollableView = (ChWidget*)view;
 }
@@ -137,8 +169,8 @@ void ChListViewAddItem(ChWindow* win, ChListView* lv, char* itemText) {
 	li->height = height;
 	list_add(lv->itemList, li);
 	lv->numRows += 1;
-
-	if ((lv->numRows * LIST_VIEW_ITEM_HEIGHT) >= (lv->wid.h)) {
+	lv->horizontalRenderY = (lv->wid.y - LIST_VIEW_ITEM_HEIGHT) + win->app->baseFont->fontHeight;
+	if ((lv->numRows * LIST_VIEW_ITEM_HEIGHT) >= lv->wid.h) {
 		ChRect view;
 		view.x = lv->wid.x;
 		view.y = lv->wid.y;
@@ -147,5 +179,8 @@ void ChListViewAddItem(ChWindow* win, ChListView* lv, char* itemText) {
 		if (lv->scrollpane)
 			ChScrollUpdateVerticalScroll(lv->scrollpane, &view, (lv->numRows*LIST_VIEW_ITEM_HEIGHT));
 	}
+	/*lv->currentStartIndex = floor((lv->scrollpane->vScrollBar.thumb_posy / LIST_VIEW_ITEM_HEIGHT) - LIST_VIEW_ITEM_HEIGHT);
+	lv->currentStartIndex = max(0, lv->currentStartIndex);*/
 
 }
+
