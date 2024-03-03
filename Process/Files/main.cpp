@@ -163,12 +163,20 @@ int main(int argc, char* argv[]){
 	ChListView* lv = ChCreateListView(10, 100, mainWin->info->width - 10, mainWin->info->height - 100);
 	ChListViewSetScrollpane(lv, sp);
 	
-	for (int i = 0; i < 50; i++){
-		char num[2];
-		memset(num, 0, 2);
-		itoa_s(i, 10, num);
-		ChListViewAddItem(mainWin, lv, num);
+	int dirfd = _KeOpenDir("/");
+	XEDirectoryEntry* dirent = (XEDirectoryEntry*)malloc(sizeof(XEDirectoryEntry));
+	memset(dirent, 0, sizeof(XEDirectoryEntry));
+
+	while (1) {
+		if (dirent->index == -1)
+			break;
+		int code = _KeReadDir(dirfd, dirent);
+		if (code != -1) {
+			ChListViewAddItem(mainWin, lv, dirent->filename);
+		}
+		memset(dirent->filename, 0, 32);
 	}
+	free(dirent);
 
 	ChWindowAddWidget(mainWin, (ChWidget*)sp);
 	ChWindowAddWidget(mainWin, (ChWidget*)lv);

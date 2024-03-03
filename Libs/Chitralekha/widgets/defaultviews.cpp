@@ -51,11 +51,13 @@ void ChDefaultListViewPainter(ChWidget* wid, ChWindow* win) {
 	int ypos = lv->wid.y + win->app->baseFont->fontHeight;
 	if (lv->currentStartIndex != 0)
 		ypos = (lv->horizontalRenderY - LIST_VIEW_ITEM_HEIGHT)  + win->app->baseFont->fontHeight / 2;
-	for (int i = lv->currentStartIndex; i < lv->itemList->pointer /*&& i < max_visible_items*/; i++) {
+	for (int i = lv->currentStartIndex; i < lv->itemList->pointer && i < max_visible_items; i++) {
 		ChListItem* li = (ChListItem*)list_get_at(lv->itemList, i);
-		//ChDrawRect(win->canv, lv->wid.x + li->xPos, lv->wid.y + li->yPos, li->width, li->height, BLUE);
+		li->yPos = ypos;
+		if (li->selected)
+			ChDrawRectClipped(win->canv, lv->wid.x + li->xPos, li->yPos, li->width, li->height - 2, &viewRect, 0xFF6982B7);
 		ChFontDrawTextClipped(win->canv, win->app->baseFont, li->itemText, lv->wid.x + li->xPos,
-			(ypos + LIST_VIEW_ITEM_HEIGHT/2 - win->app->baseFont->fontHeight/2), BLACK, &viewRect);
+			(ypos + LIST_VIEW_ITEM_HEIGHT/2) + 5, BLACK, &viewRect);
 		ypos += LIST_VIEW_ITEM_HEIGHT;
 	}
 }

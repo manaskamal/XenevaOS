@@ -1,8 +1,8 @@
-﻿Build started 03-03-2024 আবেলি 12:27:23.
+﻿Build started 03-03-2024 আবেলি 5:10:54.
      1>Project "E:\Xeneva Project\Aurora\Libs\Chitralekha\Chitralekha.vcxproj" on node 2 (Rebuild target(s)).
      1>_NASM:
          _fastcpy.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmpf30330392d6f46a9872b4e3dc7b4f1a9.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp570c14e896b14c319a69ddb3359992cf.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\_fastcpy.obj"  "E:\Xeneva Project\Aurora\Libs\Chitralekha\_fastcpy.asm"
        ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /I"E:\os_dev\freetype2-master\freetype2-master\include" /Zi /nologo /W3 /WX- /sdl- /Od /D ARCH_X64 /D YES_DYNAMIC /D DYNAMIC_EXPORTER /D _USE_FREETYPE /D _WINDLL /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt boxblur.cpp chitralekha.cpp color.cpp draw.cpp font.cpp keycode.cpp ttf.cpp widgets\base.cpp widgets\button.cpp widgets\defaultmenu.cpp widgets\defaultscrollbar.cpp widgets\defaultviews.cpp widgets\defaultwindow.cpp widgets\list.cpp widgets\menu.cpp widgets\menubar.cpp widgets\msgbox.cpp widgets\scrollpane.cpp widgets\view.cpp widgets\window.cpp
@@ -24,8 +24,9 @@
      1>widgets\window.cpp(527): warning C4018: '<' : signed/unsigned mismatch
      1>widgets\window.cpp(589): warning C4018: '<' : signed/unsigned mismatch
          view.cpp
-     1>widgets\view.cpp(156): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
-     1>widgets\view.cpp(160): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\view.cpp(74): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\view.cpp(167): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
+     1>widgets\view.cpp(171): warning C4018: '<' : signed/unsigned mismatch
          scrollpane.cpp
      1>widgets\scrollpane.cpp(226): warning C4244: '=' : conversion from 'double' to 'int', possible loss of data
      1>widgets\scrollpane.cpp(248): warning C4244: '=' : conversion from 'double' to 'int', possible loss of data
@@ -91,8 +92,8 @@
          draw.cpp
      1>draw.cpp(45): warning C4018: '<' : signed/unsigned mismatch
      1>draw.cpp(46): warning C4018: '<' : signed/unsigned mismatch
-     1>draw.cpp(234): warning C4018: '<' : signed/unsigned mismatch
-     1>draw.cpp(235): warning C4018: '<' : signed/unsigned mismatch
+     1>draw.cpp(310): warning C4018: '<' : signed/unsigned mismatch
+     1>draw.cpp(311): warning C4018: '<' : signed/unsigned mismatch
          color.cpp
          chitralekha.cpp
      1>chitralekha.cpp(138): warning C4018: '<' : signed/unsigned mismatch
@@ -137,4 +138,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:02.20
+Time Elapsed 00:00:02.30

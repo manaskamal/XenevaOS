@@ -57,6 +57,19 @@ XE_EXTERN{
 	*/
 	XE_LIB void ChDrawRect(ChCanvas* canvas, unsigned x, unsigned y, unsigned w, unsigned h, uint32_t col);
 
+
+	/*
+	* ChDrawRectClipped -- draw a rectangle within clipped boundary
+	* @param canv -- Pointer to canvas
+	* @param x -- X coord
+	* @param y -- Y coord
+	* @param w -- Width of the rect
+	* @param h -- Height of the rect
+	* @param clip -- Pointer to clip rect
+	* @param col -- Color of the rectangle
+	*/
+	XE_LIB void ChDrawRectClipped(ChCanvas* canv, unsigned x, unsigned y, unsigned w, unsigned h, ChRect* clip, uint32_t col);
+
 	/*
 	* ChDrawVerticalLine -- draws a vertical line
 	* @param canv -- Pointer to canvas
@@ -87,6 +100,18 @@ XE_EXTERN{
 	* @param h -- Height of the rect
 	*/
 	XE_LIB void ChDrawRectUnfilled(ChCanvas* canv, unsigned x, unsigned y, unsigned w, unsigned h, uint32_t color);
+
+	/*
+	* ChDrawRectUnfilledClipped -- draw a unfilled rectangle within clipped boundary
+	* @param canv -- Pointer to canvas
+	* @param x -- X coord
+	* @param y -- Y coord
+	* @param w -- Width of the rect
+	* @param h -- Height of the rect
+	* @param clip -- Pointer to clip rect
+	* @param col -- Color of the rectangle
+	*/
+	XE_LIB void ChDrawRectUnfilledClipped(ChCanvas* canv, unsigned x, unsigned y, unsigned w, unsigned h, ChRect* clip, uint32_t col);
 
 	/*
 	* ChDrawFilledCircle -- draws a filled circle

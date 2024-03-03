@@ -48,6 +48,45 @@ void ChDrawRect(ChCanvas* canvas, unsigned x, unsigned y, unsigned w, unsigned h
 }
 
 /*
+ * ChDrawRectClipped -- draw a rectangle within clipped boundary
+ * @param canv -- Pointer to canvas
+ * @param x -- X coord
+ * @param y -- Y coord
+ * @param w -- Width of the rect
+ * @param h -- Height of the rect
+ * @param clip -- Pointer to clip rect
+ * @param col -- Color of the rectangle
+ */
+void ChDrawRectClipped(ChCanvas* canv, unsigned x, unsigned y, unsigned w, unsigned h, ChRect* clip, uint32_t col) {
+	int r_x = x;
+	int r_y = y;
+	int r_w = w;
+	int r_h = h;
+	
+	if (x >(clip->x + clip->w))
+		return;
+
+	if (y > (clip->y + clip->h))
+		return;
+
+	if (y <= clip->y)
+		r_y = clip->y;
+	
+
+	if (x <= clip->x)
+		r_x = clip->x;
+	
+
+	if ((x + w) > (clip->x + clip->w))
+		r_w = (clip->x + clip->w) - x;
+
+	if ((y + h) > (clip->y + clip->h))
+		r_h = (clip->y + clip->h) - y;
+
+	ChDrawRect(canv, r_x, r_y, r_w, r_h, col);
+}
+
+/*
  * ChDrawVerticalLine -- draws a vertical line
  * @param canv -- Pointer to canvas
  * @paam x -- X coord
@@ -84,6 +123,43 @@ void ChDrawRectUnfilled(ChCanvas* canv, unsigned x, unsigned y, unsigned w, unsi
 	ChDrawVerticalLine(canv, x, y + 1, h - 2, color);
 	ChDrawHorizontalLine(canv, x, y + h - 1, w, color);
 	ChDrawVerticalLine(canv, x + w - 1, y + 1, h - 2, color);
+}
+
+/*
+* ChDrawRectUnfilledClipped -- draw a unfilled rectangle within clipped boundary
+* @param canv -- Pointer to canvas
+* @param x -- X coord
+* @param y -- Y coord
+* @param w -- Width of the rect
+* @param h -- Height of the rect
+* @param clip -- Pointer to clip rect
+* @param col -- Color of the rectangle
+*/
+void ChDrawRectUnfilledClipped(ChCanvas* canv, unsigned x, unsigned y, unsigned w, unsigned h, ChRect* clip, uint32_t col) {
+	int r_x = x;
+	int r_y = y;
+	int r_w = w;
+	int r_h = h;
+
+	if (x >(clip->x + clip->w))
+		return;
+
+	if (y > (clip->y + clip->h))
+		return;
+
+	if (y <= clip->y)
+		r_y = clip->y;
+
+	if (x <= clip->x)
+		r_x = clip->x;
+
+	if ((x + w) > (clip->x + clip->w))
+		r_w = (clip->w + clip->x) - x;
+
+	if ((y + h) > (clip->y + clip->h))
+		r_h = (clip->h + clip->y) - y;
+
+	ChDrawRectUnfilled(canv, r_x, r_y, r_w, r_h, col);
 }
 
 /*

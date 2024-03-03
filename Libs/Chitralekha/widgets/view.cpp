@@ -50,7 +50,7 @@ void ChListViewMouseEvent(ChWidget* widget, ChWindow* win, int x, int y, int but
 			ChWindowUpdate(win, lv->scrollpane->vScrollBar.bar_x, lv->scrollpane->vScrollBar.bar_y, lv->scrollpane->vScrollBar.bar_w, 
 				lv->scrollpane->vScrollBar.bar_h, 0, 1);
 			_view_update = true;
-			//_KeProcessSleep(20);
+			_KeProcessSleep(10);
 		}
 		//int index = 
 	}
@@ -58,7 +58,7 @@ void ChListViewMouseEvent(ChWidget* widget, ChWindow* win, int x, int y, int but
 	if (button == DEODHAI_MOUSE_MSG_SCROLL_DOWN) {
 		if (lv->scrollpane) {
 			lv->scrollpane->vScrollBar.thumb_posy += lv->scrollpane->vScrollBar.scrollAmount;
-			_KePrint("ListView Scroll down msg display idx -> %d \r\n", display_idx);
+			//_KePrint("ListView Scroll down msg display idx -> %d \r\n", display_idx);
 			lv->currentStartIndex = display_idx;
 			lv->scrollpane->vScrollBar.update = 1;
 			if (lv->scrollpane->wid.ChPaintHandler)
@@ -66,7 +66,19 @@ void ChListViewMouseEvent(ChWidget* widget, ChWindow* win, int x, int y, int but
 			ChWindowUpdate(win, lv->scrollpane->vScrollBar.bar_x, lv->scrollpane->vScrollBar.bar_y, lv->scrollpane->vScrollBar.bar_w,
 				lv->scrollpane->vScrollBar.bar_h, 0, 1);
 			_view_update = true;
-			//_KeProcessSleep(20);
+			_KeProcessSleep(10);
+		}
+	}
+
+	if (button){
+		for (int i = 0; i < lv->itemList->pointer; i++) {
+			ChListItem *li = (ChListItem*)list_get_at(lv->itemList, i);
+			li->selected = false;
+			if (x >= (win->info->x + li->xPos) && x < (win->info->x + li->xPos + li->width) &&
+				y >= (win->info->y + li->yPos) && y < (win->info->y + li->yPos + li->height)) {
+				li->selected = true;
+				_view_update = true;
+			}
 		}
 	}
 
@@ -86,7 +98,6 @@ void ChListViewScrollEvent(ChWidget* wid, ChWindow* win, int scollVal, uint8_t t
 	if (type == CHITRALEKHA_SCROLL_TYPE_VERTICAL){
 		lv->currentStartIndex = display_idx;
 		//lv->horizontalRenderY = (lv->wid.y - ((lv->wid.y + lv->scrollpane->vScrollBar.thumb_posy) - lv->wid.y)) + win->app->baseFont->fontHeight; //LIST_VIEW_ITEM_HEIGHT;
-		_KePrint("Horiz Rend y -> %d \r\n", lv->currentStartIndex);
 		_view_update = true;
 	}
 	
