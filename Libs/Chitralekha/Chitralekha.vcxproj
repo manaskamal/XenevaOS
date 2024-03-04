@@ -147,6 +147,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="bmp.h" />
     <ClInclude Include="boxblur.h" />
     <ClInclude Include="chitralekha.h" />
     <ClInclude Include="color.h" />
@@ -184,6 +185,7 @@
     <ClCompile Include="widgets\defaultscrollbar.cpp" />
     <ClCompile Include="widgets\defaultviews.cpp" />
     <ClCompile Include="widgets\defaultwindow.cpp" />
+    <ClCompile Include="widgets\icon.cpp" />
     <ClCompile Include="widgets\list.cpp" />
     <ClCompile Include="widgets\menu.cpp" />
     <ClCompile Include="widgets\menubar.cpp" />

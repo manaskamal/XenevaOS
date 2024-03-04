@@ -144,6 +144,7 @@ XE_EXTERN{
 	*/
 	XE_LIB void ChDrawCircleUnfilled(ChCanvas * canvas, int x, int y, int radius, uint32_t color);
 
+
 #ifdef __cplusplus
 }
 #endif

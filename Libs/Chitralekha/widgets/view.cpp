@@ -161,7 +161,7 @@ void ChListViewSetScrollpane(ChListView* view, ChScrollPane *pane){
  * @param lv -- Pointer to list view
  * @param itemText -- item text
  */
-void ChListViewAddItem(ChWindow* win, ChListView* lv, char* itemText) {
+ChListItem* ChListViewAddItem(ChWindow* win, ChListView* lv, char* itemText) {
 	ChListItem* li = (ChListItem*)malloc(sizeof(ChListItem));
 	memset(li, 0, sizeof(ChListItem));
 	li->itemText = (char*)malloc(strlen(itemText - 1));
@@ -192,6 +192,20 @@ void ChListViewAddItem(ChWindow* win, ChListView* lv, char* itemText) {
 	}
 	/*lv->currentStartIndex = floor((lv->scrollpane->vScrollBar.thumb_posy / LIST_VIEW_ITEM_HEIGHT) - LIST_VIEW_ITEM_HEIGHT);
 	lv->currentStartIndex = max(0, lv->currentStartIndex);*/
+	return li;
+}
 
+/*
+ * ChListViewSetListItemIcon -- sets icon for list items
+ * @param li -- Pointer to list item
+ * @param icon -- Pointer to icon structure
+ */
+void ChListViewSetListItemIcon(ChListItem* li, ChIcon* icon) {
+	if (!li)
+		return;
+
+	if (!icon)
+		return;
+	li->icon = icon;
 }
 

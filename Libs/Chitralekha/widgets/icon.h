@@ -33,10 +33,57 @@
 #include <stdint.h>
 #include "base.h"
 #include "..\image.h"
+#include <_xeneva.h>
+#include "..\chitralekha.h"
+
+#define CHITRALEKHA_ICON_ICO 1
+#define CHITRALEKHA_ICON_BMP 2
+
 
 typedef struct _icon_ {
-	uint32_t* pixbuf;
+	uint8_t* pixbuf;
 	ChImage image;
-
+	uint8_t format;
 }ChIcon;
+
+
+/*
+* ChCreateIcon -- create a blank icon slot
+* @return icon slot
+*/
+XE_EXTERN XE_LIB ChIcon *ChCreateIcon();
+
+/*
+* ChIconOpen -- open an icon file
+* @param ico -- pointer to icon file
+* @param filename -- icon file's path
+*/
+XE_EXTERN XE_LIB void ChIconOpen(ChIcon* ico, char* filename);
+
+/*
+* ChIconRead -- read an icon file
+* @param ico -- pointer to icon structure
+*/
+XE_EXTERN XE_LIB void ChIconRead(ChIcon* ico);
+
+
+/*
+* ChDrawIcon -- draws an icon to canvas
+* @param canv -- Pointer to canvas
+* @param ico -- pointer to icon file
+* @param x -- X coord
+* @param y -- Y coord
+*/
+XE_EXTERN XE_LIB void ChDrawIcon(ChCanvas* canv, ChIcon* ico, int x, int y);
+
+/*
+* ChDrawIconClipped -- draws an icon to canvas within clipped boundary
+* @param canv -- Pointer to canvas
+* @param ico -- pointer to icon file
+* @param x -- X coord
+* @param y -- Y coord
+* @param limit -- Pointer to limit rect
+*/
+XE_EXTERN XE_LIB void ChDrawIconClipped(ChCanvas* canv, ChIcon* ico, int x, int y, ChRect *limit);
+
 #endif

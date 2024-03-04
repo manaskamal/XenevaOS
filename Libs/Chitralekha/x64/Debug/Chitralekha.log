@@ -1,11 +1,11 @@
-﻿Build started 03-03-2024 আবেলি 5:10:54.
+﻿Build started 04-03-2024 ৰাতিপু 12:24:27.
      1>Project "E:\Xeneva Project\Aurora\Libs\Chitralekha\Chitralekha.vcxproj" on node 2 (Rebuild target(s)).
      1>_NASM:
          _fastcpy.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp570c14e896b14c319a69ddb3359992cf.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp4e8000ed562743638583a05dd8af38ae.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\_fastcpy.obj"  "E:\Xeneva Project\Aurora\Libs\Chitralekha\_fastcpy.asm"
        ClCompile:
-         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /I"E:\os_dev\freetype2-master\freetype2-master\include" /Zi /nologo /W3 /WX- /sdl- /Od /D ARCH_X64 /D YES_DYNAMIC /D DYNAMIC_EXPORTER /D _USE_FREETYPE /D _WINDLL /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt boxblur.cpp chitralekha.cpp color.cpp draw.cpp font.cpp keycode.cpp ttf.cpp widgets\base.cpp widgets\button.cpp widgets\defaultmenu.cpp widgets\defaultscrollbar.cpp widgets\defaultviews.cpp widgets\defaultwindow.cpp widgets\list.cpp widgets\menu.cpp widgets\menubar.cpp widgets\msgbox.cpp widgets\scrollpane.cpp widgets\view.cpp widgets\window.cpp
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /I"E:\os_dev\freetype2-master\freetype2-master\include" /Zi /nologo /W3 /WX- /sdl- /Od /D ARCH_X64 /D YES_DYNAMIC /D DYNAMIC_EXPORTER /D _USE_FREETYPE /D _WINDLL /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt boxblur.cpp chitralekha.cpp color.cpp draw.cpp font.cpp keycode.cpp ttf.cpp widgets\base.cpp widgets\button.cpp widgets\defaultmenu.cpp widgets\defaultscrollbar.cpp widgets\defaultviews.cpp widgets\defaultwindow.cpp widgets\icon.cpp widgets\list.cpp widgets\menu.cpp widgets\menubar.cpp widgets\msgbox.cpp widgets\scrollpane.cpp widgets\view.cpp widgets\window.cpp
      1>cl : Command line warning D9025: overriding '/sdl-' with '/GS-'
      1>cl : Command line warning D9002: ignoring unknown option '/arch:SSE2'
          window.cpp
@@ -48,11 +48,21 @@
      1>widgets\menu.cpp(154): warning C4018: '<' : signed/unsigned mismatch
      1>widgets\menu.cpp(192): warning C4018: '<' : signed/unsigned mismatch
          list.cpp
+         icon.cpp
+     1>widgets\icon.cpp(65): warning C4267: '=' : conversion from 'size_t' to 'int', possible loss of data
+     1>widgets\icon.cpp(110): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\icon.cpp(114): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\icon.cpp(142): warning C4018: '>' : signed/unsigned mismatch
+     1>widgets\icon.cpp(145): warning C4018: '>' : signed/unsigned mismatch
+     1>widgets\icon.cpp(149): warning C4018: '<=' : signed/unsigned mismatch
+     1>widgets\icon.cpp(152): warning C4018: '<=' : signed/unsigned mismatch
+     1>widgets\icon.cpp(162): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\icon.cpp(166): warning C4018: '<' : signed/unsigned mismatch
          defaultwindow.cpp
      1>widgets\defaultwindow.cpp(116): warning C4018: '<' : signed/unsigned mismatch
      1>widgets\defaultwindow.cpp(129): warning C4018: '<' : signed/unsigned mismatch
          defaultviews.cpp
-     1>widgets\defaultviews.cpp(54): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\defaultviews.cpp(55): warning C4018: '<' : signed/unsigned mismatch
          defaultscrollbar.cpp
          defaultmenu.cpp
      1>widgets\defaultmenu.cpp(50): warning C4018: '<' : signed/unsigned mismatch
@@ -101,11 +111,13 @@
      1>chitralekha.cpp(175): warning C4018: '<' : signed/unsigned mismatch
      1>chitralekha.cpp(186): warning C4244: 'argument' : conversion from 'uint32_t' to 'float', possible loss of data
      1>chitralekha.cpp(196): warning C4244: 'argument' : conversion from 'uint32_t' to 'float', possible loss of data
+         Generating Code...
+     1>e:\xeneva project\aurora\libs\chitralekha\ttf.cpp(194): warning C4700: uninitialized local variable 'glyph' used
+         Compiling...
          boxblur.cpp
      1>boxblur.cpp(56): warning C4018: '<' : signed/unsigned mismatch
      1>boxblur.cpp(57): warning C4018: '<' : signed/unsigned mismatch
          Generating Code...
-     1>e:\xeneva project\aurora\libs\chitralekha\ttf.cpp(194): warning C4700: uninitialized local variable 'glyph' used
      1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(1186,5): warning MSB8012: TargetPath(E:\Xeneva Project\Aurora\x64\Debug\Chitralekha.dll) does not match the Linker's OutputFile property value (F:\chlkha.dll). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
      1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(1188,5): warning MSB8012: TargetName(Chitralekha) does not match the Linker's OutputFile property value (chlkha). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
        Link:
@@ -122,6 +134,7 @@
          x64\Debug\defaultscrollbar.obj
          x64\Debug\defaultviews.obj
          x64\Debug\defaultwindow.obj
+         x64\Debug\icon.obj
          x64\Debug\list.obj
          x64\Debug\menu.obj
          x64\Debug\menubar.obj
@@ -138,4 +151,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:02.30
+Time Elapsed 00:00:04.05

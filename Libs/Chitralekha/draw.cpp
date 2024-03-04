@@ -333,3 +333,4 @@ void ChDrawBoxBlur(ChCanvas * canv, uint32_t* inputBuf, uint32_t* outputBuf, int
 		}
 	}
 }
+

@@ -32,6 +32,7 @@
 #include <math.h>
 #include "..\draw.h"
 #include "..\color.h"
+#include "icon.h"
 
 /*
 * ChDefaultListViewPainter -- default list view painter
@@ -56,8 +57,14 @@ void ChDefaultListViewPainter(ChWidget* wid, ChWindow* win) {
 		li->yPos = ypos;
 		if (li->selected)
 			ChDrawRectClipped(win->canv, lv->wid.x + li->xPos, li->yPos, li->width, li->height - 2, &viewRect, 0xFF6982B7);
-		ChFontDrawTextClipped(win->canv, win->app->baseFont, li->itemText, lv->wid.x + li->xPos,
-			(ypos + LIST_VIEW_ITEM_HEIGHT/2) + 5, BLACK, &viewRect);
+
+		if (li->icon){
+			ChDrawIconClipped(win->canv, li->icon, lv->wid.x + li->xPos + 10, li->yPos + 2, &viewRect);
+			ChFontDrawTextClipped(win->canv, win->app->baseFont, li->itemText, lv->wid.x + li->xPos + 40,
+				(ypos + LIST_VIEW_ITEM_HEIGHT / 2) + 5, BLACK, &viewRect);
+		}else
+			ChFontDrawTextClipped(win->canv, win->app->baseFont, li->itemText, lv->wid.x + li->xPos + 10,
+			(ypos + LIST_VIEW_ITEM_HEIGHT / 2) + 5, BLACK, &viewRect);
 		ypos += LIST_VIEW_ITEM_HEIGHT;
 	}
 }

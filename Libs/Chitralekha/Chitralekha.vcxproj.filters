@@ -43,6 +43,7 @@
     <ClInclude Include="widgets\icon.h">
       <Filter>widgets</Filter>
     </ClInclude>
+    <ClInclude Include="bmp.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="chitralekha.cpp" />
@@ -90,6 +91,9 @@
     </ClCompile>
     <ClCompile Include="widgets\defaultviews.cpp">
       <Filter>widgets\styles</Filter>
+    </ClCompile>
+    <ClCompile Include="widgets\icon.cpp">
+      <Filter>widgets</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -34,6 +34,7 @@
 #include "list.h"
 #include "window.h"
 #include "scrollpane.h"
+#include "icon.h"
 
 #define LIST_VIEW_ITEM_HEIGHT 24//30
 #define LIST_VIEW_ITEM_YPADDING 2
@@ -46,6 +47,7 @@ typedef struct _list_item_ {
 	int width;
 	int height;
 	//item string, icon
+	ChIcon *icon;
 	char* itemText;
 }ChListItem;
 
@@ -83,7 +85,14 @@ XE_EXTERN XE_LIB void ChListViewSetScrollpane(ChListView* view, ChScrollPane *pa
 * @param lv -- Pointer to list view
 * @param itemText -- item text
 */
-XE_EXTERN XE_LIB void ChListViewAddItem(ChWindow* win, ChListView* lv, char* itemText);
+XE_EXTERN XE_LIB ChListItem* ChListViewAddItem(ChWindow* win, ChListView* lv, char* itemText);
+
+/*
+* ChListViewSetListItemIcon -- sets icon for list items
+* @param li -- Pointer to list item
+* @param icon -- Pointer to icon structure
+*/
+XE_EXTERN XE_LIB void ChListViewSetListItemIcon(ChListItem* li, ChIcon* icon);
 
 
 #endif

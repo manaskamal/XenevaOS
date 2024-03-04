@@ -108,9 +108,9 @@ int main(int argc, char* argv[]){
 
 	pm = NULL;
 
-	ChButton* button = ChCreateButton(10,62, 100, 75, "Click Me !"); //mainWin->info->width / 2 - 100 / 2, mainWin->info->height / 2 - 75/2
-	ChWindowAddWidget(mainWin,(ChWidget*)button);
-	button->base.ChActionHandler = ButtonClicked;
+	//ChButton* button = ChCreateButton(10,62, 100, 75, "Click Me !"); //mainWin->info->width / 2 - 100 / 2, mainWin->info->height / 2 - 75/2
+	//ChWindowAddWidget(mainWin,(ChWidget*)button);
+	//button->base.ChActionHandler = ButtonClicked;
 
 	ChMenubar* mb = ChCreateMenubar(mainWin);
 
@@ -159,20 +159,36 @@ int main(int argc, char* argv[]){
 	ChMenuItem* edite2 = ChCreateMenuItem("cut2", edite);
 	cut->menu = edite;
 
-	ChScrollPane* sp = ChCreateScrollPane(mainWin, 10, 100, mainWin->info->width - 10, mainWin->info->height - 100);
-	ChListView* lv = ChCreateListView(10, 100, mainWin->info->width - 10, mainWin->info->height - 100);
+	ChScrollPane* sp = ChCreateScrollPane(mainWin, 10, 60, mainWin->info->width - 20, mainWin->info->height - 70);
+	ChListView* lv = ChCreateListView(10, 60, mainWin->info->width - 20, mainWin->info->height - 70);
 	ChListViewSetScrollpane(lv, sp);
 	
 	int dirfd = _KeOpenDir("/");
 	XEDirectoryEntry* dirent = (XEDirectoryEntry*)malloc(sizeof(XEDirectoryEntry));
 	memset(dirent, 0, sizeof(XEDirectoryEntry));
 
+	ChIcon *dirico = ChCreateIcon();
+	ChIconOpen(dirico, "/dir.bmp");
+	ChIconRead(dirico);
+
+	ChIcon *docico = ChCreateIcon();
+	ChIconOpen(docico, "/doc.bmp");
+	ChIconRead(docico);
+	
 	while (1) {
 		if (dirent->index == -1)
 			break;
 		int code = _KeReadDir(dirfd, dirent);
 		if (code != -1) {
-			ChListViewAddItem(mainWin, lv, dirent->filename);
+			if (dirent->flags & FILE_DIRECTORY){
+				ChListItem*li =  ChListViewAddItem(mainWin, lv, dirent->filename);
+				ChListViewSetListItemIcon(li, dirico);
+			}
+			else{
+				ChListItem* fi = ChListViewAddItem(mainWin, lv, dirent->filename);
+				ChListViewSetListItemIcon(fi, docico);
+			}
+			
 		}
 		memset(dirent->filename, 0, 32);
 	}
