@@ -76,6 +76,8 @@ void ChListViewMouseEvent(ChWidget* widget, ChWindow* win, int x, int y, int but
 			li->selected = false;
 			if (x >= (win->info->x + li->xPos) && x < (win->info->x + li->xPos + li->width) &&
 				y >= (win->info->y + li->yPos) && y < (win->info->y + li->yPos + li->height)) {
+				if (button == 59)
+					_KePrint("Item action \r\n");
 				li->selected = true;
 				_view_update = true;
 			}

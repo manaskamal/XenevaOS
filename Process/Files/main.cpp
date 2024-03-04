@@ -44,6 +44,7 @@
 #include <string.h>
 #include <widgets\menubar.h>
 #include <stdlib.h>
+#include <time.h>
 #include <widgets\menu.h>
 
 ChitralekhaApp *app;
@@ -94,6 +95,7 @@ void ManipuriClicked(ChWidget* wid, ChWindow* win) {
 	ChMessageBox* mb = ChCreateMessageBox(mainWin, "Manipuri", "Manipuri is the official language of Manipur !!", MSGBOX_TYPE_ONLYCLOSE, MSGBOX_ICON_SUCCESS);
 	ChMessageBoxShow(mb);
 }
+
 
 /*
 * main -- main entry

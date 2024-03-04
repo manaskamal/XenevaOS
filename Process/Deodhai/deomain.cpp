@@ -1327,8 +1327,8 @@ int main(int argc, char* arv[]) {
 		surfaceBuffer[j * canv->canvasWidth + i] = GRAY; //0xFF938585;
 
 	DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
-	//DrawWallpaper(canv, "/assam.jpg");
-	//DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
+	/*DrawWallpaper(canv, "/assam.jpg");
+	DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);*/
 	ChCanvasScreenUpdate(canv, 0, 0, canv->canvasWidth, canv->canvasHeight);
 
 
@@ -1358,6 +1358,7 @@ int main(int argc, char* arv[]) {
 
 	uint64_t frame_tick = 0;
 	uint64_t diff_tick = 0;
+	uint64_t last_click_time = 0;
 	while (1) {
 		
 		_KeFileIoControl(postbox_fd, POSTBOX_GET_EVENT_ROOT, &event);
@@ -1374,8 +1375,26 @@ int main(int argc, char* arv[]) {
 
 			DeodhaiWindowCheckDraggable(mice_input.xpos, mice_input.ypos, button);
 
+			/*
+			 * TODO: bug fixing
+			 */
+			if (button){
+				if (!last_click_time)
+					last_click_time = _KeGetSystemTimerTick();
+				else{
+					uint64_t currclicktime = _KeGetSystemTimerTick();
+					uint64_t diff = currclicktime - last_click_time;
+					diff /= 1000;
+					if (diff <= 6 && diff > 1)
+						button = DEODHAI_MESSAGE_MOUSE_DBLCLK;
+					last_click_time = 0;
+				}
+
+			}
+
 			if (_window_broadcast_mouse_) 
 				DeodhaiBroadcastMouse(mice_input.xpos, mice_input.ypos, button);
+
 			
 			/* ensure clipping within the screen */
 			if (currentCursor->xpos <= 0)
