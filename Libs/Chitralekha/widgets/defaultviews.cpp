@@ -52,7 +52,7 @@ void ChDefaultListViewPainter(ChWidget* wid, ChWindow* win) {
 	int ypos = lv->wid.y + win->app->baseFont->fontHeight;
 	if (lv->currentStartIndex != 0)
 		ypos = (lv->horizontalRenderY - LIST_VIEW_ITEM_HEIGHT)  + win->app->baseFont->fontHeight / 2;
-	for (int i = lv->currentStartIndex; i < lv->itemList->pointer && i < max_visible_items; i++) {
+	for (int i = lv->currentStartIndex; i < lv->itemList->pointer /*&& i < max_visible_items*/; i++) {
 		ChListItem* li = (ChListItem*)list_get_at(lv->itemList, i);
 		li->yPos = ypos;
 		if (li->selected)

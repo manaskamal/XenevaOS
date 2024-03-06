@@ -52,7 +52,9 @@ ChWindow* mainWin;
 ChWindow* win2;
 jmp_buf jmp;
 ChPopupMenu* pm;
-
+ChIcon *dirico;
+ChIcon *docico;
+char* path;
 
 /*
  * WindowHandleMessage -- handles incoming deodhai messages
@@ -94,6 +96,51 @@ void ButtonClicked(ChWidget* wid, ChWindow* win) {
 void ManipuriClicked(ChWidget* wid, ChWindow* win) {
 	ChMessageBox* mb = ChCreateMessageBox(mainWin, "Manipuri", "Manipuri is the official language of Manipur !!", MSGBOX_TYPE_ONLYCLOSE, MSGBOX_ICON_SUCCESS);
 	ChMessageBoxShow(mb);
+}
+
+void DirListItemAction(ChListView* lv, ChListItem* li) {
+	int len = strlen(path)-1;
+	char *dirname = (char*)malloc(strlen(li->itemText)+len);
+	strcpy(dirname, path);
+	strcpy(dirname + len, li->itemText);
+	free(path);
+	path = (char*)malloc(strlen(dirname) + 1);
+	strcpy(path, dirname);
+	strcpy(path + (strlen(dirname)-1), "/");
+	ChListViewClear(lv);
+	
+	/* bug : needs to sleep inorder to get
+	 * the file descriptor for the desired path */
+	_KeProcessSleep(10);
+
+	int dirfd = _KeOpenDir(dirname);
+	XEDirectoryEntry* dirent = (XEDirectoryEntry*)malloc(sizeof(XEDirectoryEntry));
+	memset(dirent, 0, sizeof(XEDirectoryEntry));
+	while (1) {
+		if (dirent->index == -1)
+			break;
+		int code = _KeReadDir(dirfd, dirent);
+		if (code != -1) {
+			if (dirent->flags & FILE_DIRECTORY){
+				ChListItem*li = ChListViewAddItem(mainWin, lv, dirent->filename);
+				ChListViewSetListItemIcon(li, dirico);
+				li->ChListItemAction = DirListItemAction;
+			}
+			else{
+				ChListItem* fi = ChListViewAddItem(mainWin, lv, dirent->filename);
+				ChListViewSetListItemIcon(fi, docico);
+			}
+
+		}
+		memset(dirent->filename, 0, 32);
+	}
+	free(dirent);
+	_KeCloseFile(dirfd);
+	free(dirname);
+	ChListViewRepaint(mainWin, lv);
+	/* just jump to window event handler or
+	 * else, the app will crash */
+	longjmp(mainWin->jump, 1);
 }
 
 
@@ -169,11 +216,14 @@ int main(int argc, char* argv[]){
 	XEDirectoryEntry* dirent = (XEDirectoryEntry*)malloc(sizeof(XEDirectoryEntry));
 	memset(dirent, 0, sizeof(XEDirectoryEntry));
 
-	ChIcon *dirico = ChCreateIcon();
+	path = (char*)malloc(strlen("/"));
+	strcpy(path, "/");
+
+	dirico = ChCreateIcon();
 	ChIconOpen(dirico, "/dir.bmp");
 	ChIconRead(dirico);
 
-	ChIcon *docico = ChCreateIcon();
+	docico = ChCreateIcon();
 	ChIconOpen(docico, "/doc.bmp");
 	ChIconRead(docico);
 	
@@ -185,6 +235,7 @@ int main(int argc, char* argv[]){
 			if (dirent->flags & FILE_DIRECTORY){
 				ChListItem*li =  ChListViewAddItem(mainWin, lv, dirent->filename);
 				ChListViewSetListItemIcon(li, dirico);
+				li->ChListItemAction = DirListItemAction;
 			}
 			else{
 				ChListItem* fi = ChListViewAddItem(mainWin, lv, dirent->filename);
@@ -195,6 +246,7 @@ int main(int argc, char* argv[]){
 		memset(dirent->filename, 0, 32);
 	}
 	free(dirent);
+	//_KeCloseFile(dirfd);
 
 	ChWindowAddWidget(mainWin, (ChWidget*)sp);
 	ChWindowAddWidget(mainWin, (ChWidget*)lv);

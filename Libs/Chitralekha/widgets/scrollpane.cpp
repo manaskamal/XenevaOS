@@ -241,6 +241,12 @@ ChScrollPane* ChCreateScrollPane(ChWindow* win,int x, int y, int width, int heig
  * @param contentsz -- content size
  */
 void ChScrollUpdateVerticalScroll(ChScrollPane* sp, ChRect* viewport, int contentSz){
+
+	if (contentSz == 0){
+		sp->vScrollBar.thumb_height = 0;
+		return;
+	}
+
 	sp->vScrollBar.thumb_height = contentSz / viewport->h;
 	
 	double range = ((double)contentSz) / viewport->h ;

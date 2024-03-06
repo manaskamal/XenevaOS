@@ -1,8 +1,8 @@
-﻿Build started 04-03-2024 আবেলি 9:55:36.
+﻿Build started 05-03-2024 ৰাতিপু 12:57:07.
      1>Project "E:\Xeneva Project\Aurora\Process\Deodhai\Deodhai.vcxproj" on node 2 (Rebuild target(s)).
      1>_NASM:
          _fastcpy.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmpb8c8e81a33f54311b671892b4625a2bb.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp267c76c1fb3340e689df47cd2e702ffc.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\_fastcpy.obj"  "E:\Xeneva Project\Aurora\Process\Deodhai\_fastcpy.asm"
        ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /I"E:\Xeneva Project\Aurora\Libs\Chitralekha" /I"E:\os_dev\freetype2-master\freetype2-master\include" /Zi /nologo /W4 /WX- /sdl- /MP /Od /Oy /D ARCH_X64 /D YES_DYNAMIC /D DYNAMIC_IMPORTER /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt backdirty.cpp clip.cpp cursor.cpp deomain.cpp dirty.cpp popup.cpp rect.cpp window.cpp
@@ -149,4 +149,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:03.11
+Time Elapsed 00:00:01.67

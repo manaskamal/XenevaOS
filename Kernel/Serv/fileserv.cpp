@@ -256,6 +256,12 @@ int CloseFile(int fd) {
 		return -1;
 	if (file->flags & FS_FLAG_GENERAL)
 		kfree(file);
+	
+
+	if (file->flags & FS_FLAG_DIRECTORY){
+		SeTextOut("Closing file %s \r\n", file->filename);
+		kfree(file);
+	}
 
 	current_proc->fds[fd] = 0;
 	return 0;

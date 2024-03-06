@@ -76,8 +76,10 @@ void ChListViewMouseEvent(ChWidget* widget, ChWindow* win, int x, int y, int but
 			li->selected = false;
 			if (x >= (win->info->x + li->xPos) && x < (win->info->x + li->xPos + li->width) &&
 				y >= (win->info->y + li->yPos) && y < (win->info->y + li->yPos + li->height)) {
-				if (button == 59)
-					_KePrint("Item action \r\n");
+				if (button == DEODHAI_MESSAGE_MOUSE_DBLCLK){
+					if (li->ChListItemAction)
+						li->ChListItemAction(lv, li);
+				}
 				li->selected = true;
 				_view_update = true;
 			}
@@ -211,3 +213,43 @@ void ChListViewSetListItemIcon(ChListItem* li, ChIcon* icon) {
 	li->icon = icon;
 }
 
+/*
+ * ChListViewClear -- clears all list view items
+ * @param lv -- Pointer to list view
+ */
+void ChListViewClear(ChListView* lv) {
+	for (int i = 0; i < lv->itemList->pointer; i++) {
+		ChListItem* li = (ChListItem*)list_remove(lv->itemList, i);
+		free(li->itemText);
+		free(li);
+	}
+	memset(lv->itemList, 0, sizeof(list_t));
+	lv->numRows = 0;
+	lv->currentStartIndex = 0;
+	ChRect rect;
+	rect.x = lv->wid.x;
+	rect.y = lv->wid.y;
+	rect.w = lv->wid.w;
+	rect.h = lv->wid.h;
+	ChScrollUpdateVerticalScroll(lv->scrollpane, &rect, (lv->numRows * LIST_VIEW_ITEM_HEIGHT));
+}
+
+/*
+ * ChListViewRepaint -- repaint the entire list view
+ * @param win -- Pointer to main window
+ * @param lv -- Pointer to list view
+ */
+void ChListViewRepaint(ChWindow* win, ChListView* lv) {
+	if (lv->scrollpane->wid.ChPaintHandler)
+		lv->scrollpane->wid.ChPaintHandler((ChWidget*)lv->scrollpane, win);
+	ChWindowUpdate(win, lv->scrollpane->vScrollBar.bar_x, lv->scrollpane->vScrollBar.bar_y, lv->scrollpane->vScrollBar.bar_w,
+		lv->scrollpane->vScrollBar.bar_h, 0, 1);
+	_KeProcessSleep(10);
+	ChWindowUpdate(win, lv->scrollpane->hScrollBar.bar_x, lv->scrollpane->hScrollBar.bar_y, lv->scrollpane->hScrollBar.bar_w,
+		lv->scrollpane->hScrollBar.bar_h, 0, 1);
+	_KeProcessSleep(10);
+	if (lv->wid.ChPaintHandler)
+		lv->wid.ChPaintHandler((ChWidget*)lv, win);
+	ChWindowUpdate(win, lv->wid.x, lv->wid.y, lv->wid.w, lv->wid.h, 0, 1);
+	
+}

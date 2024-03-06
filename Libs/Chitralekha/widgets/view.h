@@ -39,18 +39,6 @@
 #define LIST_VIEW_ITEM_HEIGHT 24//30
 #define LIST_VIEW_ITEM_YPADDING 2
 
-typedef struct _list_item_ {
-	//Geometry
-	int xPos;
-	int yPos;
-	bool selected;
-	int width;
-	int height;
-	//item string, icon
-	ChIcon *icon;
-	char* itemText;
-}ChListItem;
-
 typedef struct _list_view_ {
 	ChWidget wid;
 	list_t* itemList;
@@ -62,6 +50,19 @@ typedef struct _list_view_ {
 	int currentStartIndex;
 	bool firstItemPlaced;
 }ChListView;
+
+typedef struct _list_item_ {
+	//Geometry
+	int xPos;
+	int yPos;
+	bool selected;
+	int width;
+	int height;
+	//item string, icon
+	ChIcon *icon;
+	char* itemText;
+	void(*ChListItemAction)(ChListView* lv, _list_item_ *li);
+}ChListItem;
 
 
 /*
@@ -93,6 +94,19 @@ XE_EXTERN XE_LIB ChListItem* ChListViewAddItem(ChWindow* win, ChListView* lv, ch
 * @param icon -- Pointer to icon structure
 */
 XE_EXTERN XE_LIB void ChListViewSetListItemIcon(ChListItem* li, ChIcon* icon);
+
+/*
+* ChListViewClear -- clears all list view items
+* @param lv -- Pointer to list view
+*/
+XE_EXTERN XE_LIB void ChListViewClear(ChListView* lv);
+
+/*
+* ChListViewRepaint -- repaint the entire list view
+* @param win -- Pointer to main window
+* @param lv -- Pointer to list view
+*/
+XE_EXTERN XE_LIB void ChListViewRepaint(ChWindow* win, ChListView* lv);
 
 
 #endif
