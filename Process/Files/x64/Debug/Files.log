@@ -1,38 +1,42 @@
-﻿Build started 06-03-2024 ৰাতিপু 8:29:41.
+﻿Build started 07-03-2024 ৰাতিপু 10:32:39.
      1>Project "E:\Xeneva Project\Aurora\Process\Files\Files.vcxproj" on node 2 (Rebuild target(s)).
      1>ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /I"E:\Xeneva Project\Aurora\Libs\Chitralekha" /I"E:\os_dev\freetype2-master\freetype2-master\include" /Zi /nologo /W4 /WX- /sdl- /MP /Od /Oy /D ARCH_X64 /D YES_DYNAMIC /D DYNAMIC_IMPORTER /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt main.cpp
      1>cl : Command line warning D9025: overriding '/sdl-' with '/GS-'
      1>cl : Command line warning D9002: ignoring unknown option '/arch:SSE2'
          main.cpp
-     1>main.cpp(84): warning C4244: 'argument' : conversion from 'int' to 'char', possible loss of data
-     1>main.cpp(76): warning C4189: 'c' : local variable is initialized but not referenced
-     1>main.cpp(91): warning C4100: 'win' : unreferenced formal parameter
-     1>main.cpp(91): warning C4100: 'wid' : unreferenced formal parameter
-     1>main.cpp(96): warning C4100: 'win' : unreferenced formal parameter
-     1>main.cpp(96): warning C4100: 'wid' : unreferenced formal parameter
-     1>main.cpp(102): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
-     1>main.cpp(103): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
-     1>main.cpp(107): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
-     1>main.cpp(119): warning C4127: conditional expression is constant
-     1>main.cpp(219): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
-     1>main.cpp(230): warning C4127: conditional expression is constant
-     1>main.cpp(264): warning C4127: conditional expression is constant
-     1>main.cpp(207): warning C4189: 'edite1' : local variable is initialized but not referenced
-     1>main.cpp(178): warning C4189: 'item7' : local variable is initialized but not referenced
-     1>main.cpp(196): warning C4189: 'mizo' : local variable is initialized but not referenced
-     1>main.cpp(182): warning C4189: 'item5' : local variable is initialized but not referenced
-     1>main.cpp(181): warning C4189: 'item4' : local variable is initialized but not referenced
-     1>main.cpp(197): warning C4189: 'khasi' : local variable is initialized but not referenced
-     1>main.cpp(208): warning C4189: 'edite2' : local variable is initialized but not referenced
-     1>main.cpp(203): warning C4189: 'te2' : local variable is initialized but not referenced
-     1>main.cpp(198): warning C4189: 'nagamese' : local variable is initialized but not referenced
-     1>main.cpp(193): warning C4189: 'assam' : local variable is initialized but not referenced
-     1>main.cpp(202): warning C4189: 'te1' : local variable is initialized but not referenced
-     1>main.cpp(188): warning C4189: 'copy' : local variable is initialized but not referenced
-     1>main.cpp(179): warning C4189: 'item2' : local variable is initialized but not referenced
-     1>main.cpp(189): warning C4189: 'paste' : local variable is initialized but not referenced
-     1>main.cpp(183): warning C4189: 'item6' : local variable is initialized but not referenced
+     1>main.cpp(85): warning C4244: 'argument' : conversion from 'int' to 'char', possible loss of data
+     1>main.cpp(77): warning C4189: 'c' : local variable is initialized but not referenced
+     1>main.cpp(92): warning C4100: 'win' : unreferenced formal parameter
+     1>main.cpp(92): warning C4100: 'wid' : unreferenced formal parameter
+     1>main.cpp(97): warning C4100: 'win' : unreferenced formal parameter
+     1>main.cpp(97): warning C4100: 'wid' : unreferenced formal parameter
+     1>main.cpp(103): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
+     1>main.cpp(106): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
+     1>main.cpp(112): warning C4189: 'k' : local variable is initialized but not referenced
+     1>main.cpp(139): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
+     1>main.cpp(140): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
+     1>main.cpp(144): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
+     1>main.cpp(158): warning C4127: conditional expression is constant
+     1>main.cpp(262): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
+     1>main.cpp(273): warning C4127: conditional expression is constant
+     1>main.cpp(294): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
+     1>main.cpp(313): warning C4127: conditional expression is constant
+     1>main.cpp(250): warning C4189: 'edite1' : local variable is initialized but not referenced
+     1>main.cpp(221): warning C4189: 'item7' : local variable is initialized but not referenced
+     1>main.cpp(239): warning C4189: 'mizo' : local variable is initialized but not referenced
+     1>main.cpp(225): warning C4189: 'item5' : local variable is initialized but not referenced
+     1>main.cpp(224): warning C4189: 'item4' : local variable is initialized but not referenced
+     1>main.cpp(240): warning C4189: 'khasi' : local variable is initialized but not referenced
+     1>main.cpp(251): warning C4189: 'edite2' : local variable is initialized but not referenced
+     1>main.cpp(246): warning C4189: 'te2' : local variable is initialized but not referenced
+     1>main.cpp(241): warning C4189: 'nagamese' : local variable is initialized but not referenced
+     1>main.cpp(236): warning C4189: 'assam' : local variable is initialized but not referenced
+     1>main.cpp(245): warning C4189: 'te1' : local variable is initialized but not referenced
+     1>main.cpp(231): warning C4189: 'copy' : local variable is initialized but not referenced
+     1>main.cpp(222): warning C4189: 'item2' : local variable is initialized but not referenced
+     1>main.cpp(232): warning C4189: 'paste' : local variable is initialized but not referenced
+     1>main.cpp(226): warning C4189: 'item6' : local variable is initialized but not referenced
      1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(1186,5): warning MSB8012: TargetPath(E:\Xeneva Project\Aurora\x64\Debug\Files.exe) does not match the Linker's OutputFile property value (F:\file.exe). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
      1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(1188,5): warning MSB8012: TargetName(Files) does not match the Linker's OutputFile property value (file). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
        Link:
@@ -44,4 +48,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:00.73
+Time Elapsed 00:00:00.50

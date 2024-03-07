@@ -247,6 +247,12 @@ void ChScrollUpdateVerticalScroll(ChScrollPane* sp, ChRect* viewport, int conten
 		return;
 	}
 
+	if (contentSz < (viewport->y + viewport->h)){
+		sp->vScrollBar.thumb_height = 0;
+		_KePrint("Content sz is slow \r\n");
+		return;
+	}
+
 	sp->vScrollBar.thumb_height = contentSz / viewport->h;
 	
 	double range = ((double)contentSz) / viewport->h ;

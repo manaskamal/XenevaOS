@@ -1385,7 +1385,7 @@ int main(int argc, char* arv[]) {
 					uint64_t currclicktime = _KeGetSystemTimerTick();
 					uint64_t diff = currclicktime - last_click_time;
 					diff /= 1000;
-					if (diff <= 6 && diff > 1)
+					if (diff <= 8 && diff > 1)
 						button = DEODHAI_MESSAGE_MOUSE_DBLCLK;
 					last_click_time = 0;
 				}

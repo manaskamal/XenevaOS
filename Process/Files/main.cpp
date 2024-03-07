@@ -55,6 +55,7 @@ ChPopupMenu* pm;
 ChIcon *dirico;
 ChIcon *docico;
 char* path;
+char* history;
 
 /*
  * WindowHandleMessage -- handles incoming deodhai messages
@@ -98,6 +99,42 @@ void ManipuriClicked(ChWidget* wid, ChWindow* win) {
 	ChMessageBoxShow(mb);
 }
 
+void PrintParentDir(char* pathname) {
+	int len = strlen(pathname);
+	char dir[16];
+	memset(dir, 0, 16);
+	char* subpath = (char*)malloc(strlen(pathname));
+	strcpy(subpath, pathname);
+	subpath[len - 2] = '\0';
+	bool _opened_ = false;
+	char* historypath = (char*)malloc(512);
+	memset(historypath, 0, 512);
+	int k = 0;
+	for (int i = len; i >= 0; i--) {
+		if (subpath[i] == '/' && _opened_)
+			break;
+
+
+		if (subpath[i] == '/' && !_opened_){
+			_opened_ = true;
+			continue;
+		}
+		if (_opened_)
+			dir[i] = subpath[i];
+	}
+	
+	int offset = 0;
+	for (int i = 0; i < 16; i++) {
+		if (dir[i] != '\0'){
+			dir[offset] = dir[i];
+			offset++;
+		}
+		
+	}
+	dir[offset] = '\0';
+	_KePrint("Dir %s \r\n", dir);
+	free(subpath);
+}
 void DirListItemAction(ChListView* lv, ChListItem* li) {
 	int len = strlen(path)-1;
 	char *dirname = (char*)malloc(strlen(li->itemText)+len);
@@ -106,9 +143,11 @@ void DirListItemAction(ChListView* lv, ChListItem* li) {
 	free(path);
 	path = (char*)malloc(strlen(dirname) + 1);
 	strcpy(path, dirname);
+
 	strcpy(path + (strlen(dirname)-1), "/");
 	ChListViewClear(lv);
 	
+	PrintParentDir(path);
 	/* bug : needs to sleep inorder to get
 	 * the file descriptor for the desired path */
 	_KeProcessSleep(10);
@@ -157,13 +196,17 @@ int main(int argc, char* argv[]){
 
 	pm = NULL;
 
-	//ChButton* button = ChCreateButton(10,62, 100, 75, "Click Me !"); //mainWin->info->width / 2 - 100 / 2, mainWin->info->height / 2 - 75/2
-	//ChWindowAddWidget(mainWin,(ChWidget*)button);
-	//button->base.ChActionHandler = ButtonClicked;
+	ChButton* backbut = ChCreateButton(10,34, 50, 35, "Back"); //mainWin->info->width / 2 - 100 / 2, mainWin->info->height / 2 - 75/2
+	ChWindowAddWidget(mainWin,(ChWidget*)backbut);
+	backbut->base.ChActionHandler = ButtonClicked;
+
+	ChButton* Enterbut = ChCreateButton(60 + 10, 34, 50, 35, "Enter");
+	ChWindowAddWidget(mainWin, (ChWidget*)Enterbut);
+
 
 	ChMenubar* mb = ChCreateMenubar(mainWin);
 
-	ChMenuButton *file = ChCreateMenubutton(mb, "Language");
+	ChMenuButton *file = ChCreateMenubutton(mb, "File");
 	ChMenubarAddButton(mb, file);
 	ChMenuButton *edit = ChCreateMenubutton(mb, "Edit");
 	ChMenubarAddButton(mb, edit);
@@ -208,8 +251,8 @@ int main(int argc, char* argv[]){
 	ChMenuItem* edite2 = ChCreateMenuItem("cut2", edite);
 	cut->menu = edite;
 
-	ChScrollPane* sp = ChCreateScrollPane(mainWin, 10, 60, mainWin->info->width - 20, mainWin->info->height - 70);
-	ChListView* lv = ChCreateListView(10, 60, mainWin->info->width - 20, mainWin->info->height - 70);
+	ChScrollPane* sp = ChCreateScrollPane(mainWin, 10, 100, mainWin->info->width - 20, mainWin->info->height - 120);
+	ChListView* lv = ChCreateListView(10, 100, mainWin->info->width - 20, mainWin->info->height - 120);
 	ChListViewSetScrollpane(lv, sp);
 	
 	int dirfd = _KeOpenDir("/");
@@ -246,6 +289,12 @@ int main(int argc, char* argv[]){
 		memset(dirent->filename, 0, 32);
 	}
 	free(dirent);
+
+	/* first store the root address */
+	history = (char*)malloc(strlen("/"));
+	strcpy(history, "/");
+
+
 	//_KeCloseFile(dirfd);
 
 	ChWindowAddWidget(mainWin, (ChWidget*)sp);
