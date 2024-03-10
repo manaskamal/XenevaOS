@@ -215,14 +215,15 @@ void DirListItemAction(ChListView* lv, ChListItem* li) {
 }
 
 void BackbutClicked(ChWidget* wid, ChWindow* win) {
-	_KePrint("Path -> %s \r\n", path);
 	int len = strlen(path);
 	char* subpath = (char*)malloc(strlen(path));
 	strcpy(subpath, path);
 	subpath[len - 2] = '\0';
+	int endoffset = 0;
 	for (int i = len; i >= 0; i--) {
 		if (subpath[i] == '/'){
 			subpath[i] = '\0';
+			endoffset = i;
 			break;
 		}
 		subpath[i] = '\0';
@@ -236,7 +237,6 @@ void BackbutClicked(ChWidget* wid, ChWindow* win) {
 
 	ChListViewClear(lv);
 	
-	_KePrint("Opening subpath -> %s \r\n", subpath);
 	/* bug : needs to sleep inorder to get
 	* the file descriptor for the desired path */
 	_KeProcessSleep(10);
@@ -267,10 +267,11 @@ void BackbutClicked(ChWidget* wid, ChWindow* win) {
 	_KeCloseFile(dirfd);
 	ChListViewRepaint(mainWin, lv);
 	free(path);
+	subpath[endoffset] = '/';
 	path = (char*)malloc(strlen(subpath));
 	strcpy(path, subpath);
-	free(subpath);
 	FileAddressBarRepaint(addressbar);
+	free(subpath);
 }
 
 
@@ -284,7 +285,9 @@ void ManipuriClicked(ChWidget* wid, ChWindow* win) {
  */
 void EnterClicked(ChWidget* wid, ChWindow* win) {
 	ChListItem *li = ChListViewGetSelectedItem(lv);
-
+	if (li == NULL)
+		return;
+	_KePrint("Entered item -> %s \r\n", li->itemText);
 	int len = strlen(path) - 1;
 	char *dirname = (char*)malloc(strlen(li->itemText) + len);
 	strcpy(dirname, path);
@@ -296,7 +299,6 @@ void EnterClicked(ChWidget* wid, ChWindow* win) {
 	strcpy(path + (strlen(dirname) - 1), "/");
 	ChListViewClear(lv);
 
-	PrintParentDir(path);
 	/* bug : needs to sleep inorder to get
 	* the file descriptor for the desired path */
 	_KeProcessSleep(10);

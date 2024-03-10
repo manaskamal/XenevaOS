@@ -70,16 +70,17 @@ void ChListViewMouseEvent(ChWidget* widget, ChWindow* win, int x, int y, int but
 		}
 	}
 
-	if (button){
+	if (button && ((button != DEODHAI_MOUSE_MSG_SCROLL_UP) || (button != DEODHAI_MOUSE_MSG_SCROLL_DOWN))){
 		for (int i = 0; i < lv->itemList->pointer; i++) {
 			ChListItem *li = (ChListItem*)list_get_at(lv->itemList, i);
 			li->selected = false;
-			if (x >= (win->info->x + li->xPos) && x < (win->info->x + li->xPos + li->width) &&
-				y >= (win->info->y + li->yPos) && y < (win->info->y + li->yPos + li->height)) {
+			if (x >= (win->info->x + li->xPos) && x < (win->info->x +  li->xPos + li->width) &&
+				y >= (win->info->y + li->yPos) && y < (win->info->y +  li->yPos + li->height)) {
 				if (button == DEODHAI_MESSAGE_MOUSE_DBLCLK){
 					if (li->ChListItemAction)
 						li->ChListItemAction(lv, li);
 				}
+				lv->selectedItem = li;
 				li->selected = true;
 				_view_update = true;
 			}
@@ -182,6 +183,7 @@ ChListItem* ChListViewAddItem(ChWindow* win, ChListView* lv, char* itemText) {
 	int height = LIST_VIEW_ITEM_HEIGHT;
 	li->width = width;
 	li->height = height;
+	li->selected = false;
 	list_add(lv->itemList, li);
 	lv->numRows += 1;
 	lv->horizontalRenderY = (lv->wid.y - LIST_VIEW_ITEM_HEIGHT) + win->app->baseFont->fontHeight;
@@ -226,6 +228,7 @@ void ChListViewClear(ChListView* lv) {
 	memset(lv->itemList, 0, sizeof(list_t));
 	lv->numRows = 0;
 	lv->currentStartIndex = 0;
+	lv->selectedItem = 0;
 	ChRect rect;
 	rect.x = lv->wid.x;
 	rect.y = lv->wid.y;
@@ -259,10 +262,7 @@ void ChListViewRepaint(ChWindow* win, ChListView* lv) {
  * @param lv -- Pointer to ChListView
  */
 ChListItem * ChListViewGetSelectedItem(ChListView* lv) {
-	for (int i = 0; i < lv->itemList->pointer; i++){
-		ChListItem* li = (ChListItem*)list_get_at(lv->itemList, i);
-		if (li->selected) {
-			return li;
-		}
-	}
+	if (lv->selectedItem)
+		_KePrint("[ListView]: Maximum selected item-> %s \r\n", lv->selectedItem->itemText);
+	return lv->selectedItem;
 }

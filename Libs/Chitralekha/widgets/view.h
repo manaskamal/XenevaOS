@@ -39,6 +39,9 @@
 #define LIST_VIEW_ITEM_HEIGHT 24//30
 #define LIST_VIEW_ITEM_YPADDING 2
 
+typedef struct _list_item_ ChListItem;
+
+
 typedef struct _list_view_ {
 	ChWidget wid;
 	list_t* itemList;
@@ -49,6 +52,7 @@ typedef struct _list_view_ {
 	int horizontalRenderX;
 	int currentStartIndex;
 	bool firstItemPlaced;
+	ChListItem *selectedItem;
 }ChListView;
 
 typedef struct _list_item_ {
