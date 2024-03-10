@@ -38,10 +38,17 @@ ButtonInfo* gobtn;
 void NamdaphaGoButtonPaint(NamdaphaButton* button, ChWindow* win) {
 	uint32_t button_col = GO_BUTTON_COLOR;
 	if (button->hover)
-		button_col = GO_BUTTON_HOVER;
+		button_col = GO_BUTTON_COLOR;
 	if (button->clicked)
 		button_col = GO_BUTTON_PRESSED;
-	ChDrawRect(win->canv, 10, win->info->height - 60, NAMDAPHA_WIDTH - 20, 50, button_col);
+	if (button->hover)
+		ChDrawRect(win->canv, 10, win->info->height - 60, NAMDAPHA_WIDTH - 20, 50, button_col);
+	if (button->clicked)
+		ChDrawRect(win->canv, 10, win->info->height - 60, NAMDAPHA_WIDTH - 20, 50, button_col);
+
+	if (!button->clicked && !button->hover)
+		ChColorDrawHorizontalGradient(win->canv, 0, 0, win->info->width, win->info->height, NAMDAPHA_COLOR, NAMDAPHA_COLOR_LIGHT);
+
 	NmButtonInfoDrawIcon(gobtn, win->canv, button->x + button->w / 2 - gobtn->iconWidth / 2,
 		button->y + button->h / 2 - gobtn->iconHeight / 2);
 }

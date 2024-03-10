@@ -1,8 +1,8 @@
-﻿Build started 06-03-2024 আবেলি 5:52:02.
+﻿Build started 09-03-2024 আবেলি 9:32:33.
      1>Project "E:\Xeneva Project\Aurora\Libs\Chitralekha\Chitralekha.vcxproj" on node 2 (Rebuild target(s)).
      1>_NASM:
          _fastcpy.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmpcc29de5ecc9f4dc5957fe186a30f18b7.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmpdc3916bdcb354985869ce9352019eb00.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\_fastcpy.obj"  "E:\Xeneva Project\Aurora\Libs\Chitralekha\_fastcpy.asm"
        ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /I"E:\os_dev\freetype2-master\freetype2-master\include" /Zi /nologo /W3 /WX- /sdl- /Od /D ARCH_X64 /D YES_DYNAMIC /D DYNAMIC_EXPORTER /D _USE_FREETYPE /D _WINDLL /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt boxblur.cpp chitralekha.cpp color.cpp draw.cpp font.cpp keycode.cpp ttf.cpp widgets\base.cpp widgets\button.cpp widgets\defaultmenu.cpp widgets\defaultscrollbar.cpp widgets\defaultviews.cpp widgets\defaultwindow.cpp widgets\icon.cpp widgets\list.cpp widgets\menu.cpp widgets\menubar.cpp widgets\msgbox.cpp widgets\scrollpane.cpp widgets\view.cpp widgets\window.cpp
@@ -28,11 +28,12 @@
      1>widgets\view.cpp(171): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
      1>widgets\view.cpp(175): warning C4018: '<' : signed/unsigned mismatch
      1>widgets\view.cpp(221): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\view.cpp(262): warning C4018: '<' : signed/unsigned mismatch
          scrollpane.cpp
      1>widgets\scrollpane.cpp(226): warning C4244: '=' : conversion from 'double' to 'int', possible loss of data
      1>widgets\scrollpane.cpp(250): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\scrollpane.cpp(259): warning C4244: '=' : conversion from 'double' to 'int', possible loss of data
      1>widgets\scrollpane.cpp(260): warning C4244: '=' : conversion from 'double' to 'int', possible loss of data
-     1>widgets\scrollpane.cpp(261): warning C4244: '=' : conversion from 'double' to 'int', possible loss of data
          msgbox.cpp
      1>widgets\msgbox.cpp(123): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
      1>widgets\msgbox.cpp(141): warning C4018: '<' : signed/unsigned mismatch
@@ -115,15 +116,16 @@
      1>chitralekha.cpp(196): warning C4244: 'argument' : conversion from 'uint32_t' to 'float', possible loss of data
          Generating Code...
      1>e:\xeneva project\aurora\libs\chitralekha\ttf.cpp(194): warning C4700: uninitialized local variable 'glyph' used
+     1>e:\xeneva project\aurora\libs\chitralekha\widgets\view.cpp(268): warning C4715: 'ChListViewGetSelectedItem' : not all control paths return a value
          Compiling...
          boxblur.cpp
      1>boxblur.cpp(56): warning C4018: '<' : signed/unsigned mismatch
      1>boxblur.cpp(57): warning C4018: '<' : signed/unsigned mismatch
          Generating Code...
-     1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(1186,5): warning MSB8012: TargetPath(E:\Xeneva Project\Aurora\x64\Debug\Chitralekha.dll) does not match the Linker's OutputFile property value (F:\chlkha.dll). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
+     1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(1186,5): warning MSB8012: TargetPath(E:\Xeneva Project\Aurora\x64\Debug\Chitralekha.dll) does not match the Linker's OutputFile property value (D:\chlkha.dll). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
      1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(1188,5): warning MSB8012: TargetName(Chitralekha) does not match the Linker's OutputFile property value (chlkha). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
        Link:
-         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\link.exe /ERRORREPORT:PROMPT /OUT:"F:\chlkha.dll" /INCREMENTAL /NOLOGO /LIBPATH:"E:\Xeneva Project\Aurora\x64\Debug" /LIBPATH:"E:\os_dev\freetype2-master\freetype2-master\objs" /LIBPATH:"E:\Xeneva Project\Aurora\Libs\XECrt" XEClib.lib ftype.lib xecrt.lib /NODEFAULTLIB /MANIFEST:NO /PDB:"E:\Xeneva Project\Aurora\x64\Debug\Chitralekha.pdb" /MAP /MAPINFO:EXPORTS /SUBSYSTEM:NATIVE /LARGEADDRESSAWARE /Driver /OPT:NOREF /LTCG /TLBID:1 /BASE:"0x0000000000600000" /FIXED /NXCOMPAT /IMPLIB:"E:\Xeneva Project\Aurora\x64\Debug\Chitralekha.lib" /MACHINE:X64 /ALIGN:512 /DLL x64\Debug\boxblur.obj
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\link.exe /ERRORREPORT:PROMPT /OUT:"D:\chlkha.dll" /INCREMENTAL /NOLOGO /LIBPATH:"E:\Xeneva Project\Aurora\x64\Debug" /LIBPATH:"E:\os_dev\freetype2-master\freetype2-master\objs" /LIBPATH:"E:\Xeneva Project\Aurora\Libs\XECrt" XEClib.lib ftype.lib xecrt.lib /NODEFAULTLIB /MANIFEST:NO /PDB:"E:\Xeneva Project\Aurora\x64\Debug\Chitralekha.pdb" /MAP /MAPINFO:EXPORTS /SUBSYSTEM:NATIVE /LARGEADDRESSAWARE /Driver /OPT:NOREF /LTCG /TLBID:1 /BASE:"0x0000000000600000" /FIXED /NXCOMPAT /IMPLIB:"E:\Xeneva Project\Aurora\x64\Debug\Chitralekha.lib" /MACHINE:X64 /ALIGN:512 /DLL x64\Debug\boxblur.obj
          x64\Debug\chitralekha.obj
          x64\Debug\color.obj
          x64\Debug\draw.obj
@@ -153,4 +155,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:02.05
+Time Elapsed 00:00:02.98

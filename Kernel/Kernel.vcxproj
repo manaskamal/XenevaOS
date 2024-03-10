@@ -100,7 +100,7 @@
     </ClCompile>
     <Link>
       <GenerateDebugInformation>false</GenerateDebugInformation>
-      <OutputFile>F:\EFI\XENEVA\xnkrnl.exe</OutputFile>
+      <OutputFile>D:\EFI\XENEVA\xnkrnl.exe</OutputFile>
       <Version>1.0</Version>
       <AdditionalDependencies>Acpica.lib;</AdditionalDependencies>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>

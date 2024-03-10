@@ -252,13 +252,17 @@ int CloseFile(int fd) {
 	}
 
 	AuVFSNode* file = current_proc->fds[fd];
-	if (file->flags & FS_FLAG_FILE_SYSTEM)
+	if (file->flags & FS_FLAG_FILE_SYSTEM){
+		SeTextOut("Clising fs -> %s \r\n", file->filename);
 		return -1;
+	}
 	if (file->flags & FS_FLAG_GENERAL)
 		kfree(file);
 	
 
 	if (file->flags & FS_FLAG_DIRECTORY){
+		if (strcmp(file->filename, "/") == 0)
+			return -1;
 		SeTextOut("Closing file %s \r\n", file->filename);
 		kfree(file);
 	}

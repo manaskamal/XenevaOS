@@ -85,8 +85,6 @@ e:\xeneva project\aurora\kernel\x64\debug\vfs.obj
 e:\xeneva project\aurora\kernel\x64\debug\vfs.asm
 e:\xeneva project\aurora\kernel\x64\debug\mmserv.obj
 e:\xeneva project\aurora\kernel\x64\debug\mmserv.asm
-e:\xeneva project\aurora\kernel\x64\debug\fileserv.obj
-e:\xeneva project\aurora\kernel\x64\debug\fileserv.asm
 e:\xeneva project\aurora\kernel\x64\debug\process.obj
 e:\xeneva project\aurora\kernel\x64\debug\process.asm
 e:\xeneva project\aurora\kernel\x64\debug\pe.obj
@@ -141,10 +139,6 @@ e:\xeneva project\aurora\kernel\x64\debug\timerserv.obj
 e:\xeneva project\aurora\kernel\x64\debug\timerserv.asm
 e:\xeneva project\aurora\kernel\x64\debug\thrserv.obj
 e:\xeneva project\aurora\kernel\x64\debug\thrserv.asm
-e:\xeneva project\aurora\x64\debug\kernel.lib
-e:\xeneva project\aurora\x64\debug\kernel.exp
-f:\efi\xeneva\xnkrnl.exe
-f:\efi\xeneva\xnkrnl.map
 e:\xeneva project\aurora\kernel\x64\debug\kernel.write.1.tlog
 e:\xeneva project\aurora\kernel\x64\debug\kernel.tlog\cl.command.1.tlog
 e:\xeneva project\aurora\kernel\x64\debug\kernel.tlog\cl.read.1.tlog
@@ -153,7 +147,3 @@ e:\xeneva project\aurora\kernel\x64\debug\kernel.tlog\cl.read.3.tlog
 e:\xeneva project\aurora\kernel\x64\debug\kernel.tlog\cl.read.4.tlog
 e:\xeneva project\aurora\kernel\x64\debug\kernel.tlog\cl.read.5.tlog
 e:\xeneva project\aurora\kernel\x64\debug\kernel.tlog\cl.write.1.tlog
-e:\xeneva project\aurora\kernel\x64\debug\kernel.tlog\kernel.write.1u.tlog
-e:\xeneva project\aurora\kernel\x64\debug\kernel.tlog\link.command.1.tlog
-e:\xeneva project\aurora\kernel\x64\debug\kernel.tlog\link.read.1.tlog
-e:\xeneva project\aurora\kernel\x64\debug\kernel.tlog\link.write.1.tlog

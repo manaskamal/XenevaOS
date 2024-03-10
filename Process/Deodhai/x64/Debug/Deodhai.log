@@ -1,8 +1,8 @@
-﻿Build started 07-03-2024 ৰাতিপু 10:32:33.
+﻿Build started 10-03-2024 ৰাতিপু 1:08:47.
      1>Project "E:\Xeneva Project\Aurora\Process\Deodhai\Deodhai.vcxproj" on node 2 (Rebuild target(s)).
      1>_NASM:
          _fastcpy.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmpdbf146c8a25c4f37a6c5576f46fd98a5.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmpca7da4675e0d46259d337b4db6f6cee5.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\_fastcpy.obj"  "E:\Xeneva Project\Aurora\Process\Deodhai\_fastcpy.asm"
        ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /I"E:\Xeneva Project\Aurora\Libs\Chitralekha" /I"E:\os_dev\freetype2-master\freetype2-master\include" /Zi /nologo /W4 /WX- /sdl- /MP /Od /Oy /D ARCH_X64 /D YES_DYNAMIC /D DYNAMIC_IMPORTER /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt backdirty.cpp clip.cpp cursor.cpp deomain.cpp dirty.cpp popup.cpp rect.cpp window.cpp
@@ -61,66 +61,66 @@
      1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(551): warning C4127: conditional expression is constant
      1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(585): warning C4127: conditional expression is constant
      1>deomain.cpp(184): warning C4189: 'lfb' : local variable is initialized but not referenced
-     1>deomain.cpp(309): warning C4100: 'canv' : unreferenced formal parameter
-     1>deomain.cpp(310): warning C4189: 'info' : local variable is initialized but not referenced
-     1>deomain.cpp(319): warning C4100: 'canv' : unreferenced formal parameter
-     1>deomain.cpp(345): warning C4018: '>=' : signed/unsigned mismatch
-     1>deomain.cpp(348): warning C4018: '>=' : signed/unsigned mismatch
-     1>deomain.cpp(394): warning C4018: '<' : signed/unsigned mismatch
+     1>deomain.cpp(310): warning C4100: 'canv' : unreferenced formal parameter
+     1>deomain.cpp(311): warning C4189: 'info' : local variable is initialized but not referenced
+     1>deomain.cpp(320): warning C4100: 'canv' : unreferenced formal parameter
+     1>deomain.cpp(346): warning C4018: '>=' : signed/unsigned mismatch
+     1>deomain.cpp(349): warning C4018: '>=' : signed/unsigned mismatch
      1>deomain.cpp(395): warning C4018: '<' : signed/unsigned mismatch
-     1>deomain.cpp(407): warning C4018: '<' : signed/unsigned mismatch
+     1>deomain.cpp(396): warning C4018: '<' : signed/unsigned mismatch
      1>deomain.cpp(408): warning C4018: '<' : signed/unsigned mismatch
-     1>deomain.cpp(424): warning C4018: '<' : signed/unsigned mismatch
+     1>deomain.cpp(409): warning C4018: '<' : signed/unsigned mismatch
      1>deomain.cpp(425): warning C4018: '<' : signed/unsigned mismatch
-     1>deomain.cpp(446): warning C4189: 'winInfo' : local variable is initialized but not referenced
-     1>deomain.cpp(492): warning C4018: '<' : signed/unsigned mismatch
-     1>deomain.cpp(508): warning C4018: '<' : signed/unsigned mismatch
-     1>deomain.cpp(520): warning C4018: '>=' : signed/unsigned mismatch
-     1>deomain.cpp(523): warning C4018: '>=' : signed/unsigned mismatch
-     1>deomain.cpp(621): warning C4018: '>=' : signed/unsigned mismatch
-     1>deomain.cpp(623): warning C4018: '>=' : signed/unsigned mismatch
-     1>deomain.cpp(684): warning C4018: '>=' : signed/unsigned mismatch
-     1>deomain.cpp(689): warning C4018: '>=' : signed/unsigned mismatch
-     1>deomain.cpp(767): warning C4018: '>=' : signed/unsigned mismatch
-     1>deomain.cpp(769): warning C4018: '>=' : signed/unsigned mismatch
-     1>deomain.cpp(780): warning C4018: '<' : signed/unsigned mismatch
-     1>deomain.cpp(851): warning C4018: '<' : signed/unsigned mismatch
-     1>deomain.cpp(863): warning C4018: '>=' : signed/unsigned mismatch
-     1>deomain.cpp(866): warning C4018: '>=' : signed/unsigned mismatch
-     1>deomain.cpp(930): warning C4018: '>=' : signed/unsigned mismatch
-     1>deomain.cpp(932): warning C4018: '>=' : signed/unsigned mismatch
-     1>deomain.cpp(1040): warning C4018: '>=' : signed/unsigned mismatch
-     1>deomain.cpp(1042): warning C4018: '>=' : signed/unsigned mismatch
-     1>deomain.cpp(537): warning C4101: 'drawble' : unreferenced local variable
-     1>deomain.cpp(824): warning C4189: 'pwidth' : local variable is initialized but not referenced
-     1>deomain.cpp(822): warning C4189: 'px' : local variable is initialized but not referenced
-     1>deomain.cpp(823): warning C4189: 'py' : local variable is initialized but not referenced
-     1>deomain.cpp(825): warning C4189: 'pheight' : local variable is initialized but not referenced
-     1>deomain.cpp(1112): warning C4018: '<' : signed/unsigned mismatch
+     1>deomain.cpp(426): warning C4018: '<' : signed/unsigned mismatch
+     1>deomain.cpp(447): warning C4189: 'winInfo' : local variable is initialized but not referenced
+     1>deomain.cpp(493): warning C4018: '<' : signed/unsigned mismatch
+     1>deomain.cpp(509): warning C4018: '<' : signed/unsigned mismatch
+     1>deomain.cpp(521): warning C4018: '>=' : signed/unsigned mismatch
+     1>deomain.cpp(524): warning C4018: '>=' : signed/unsigned mismatch
+     1>deomain.cpp(622): warning C4018: '>=' : signed/unsigned mismatch
+     1>deomain.cpp(624): warning C4018: '>=' : signed/unsigned mismatch
+     1>deomain.cpp(685): warning C4018: '>=' : signed/unsigned mismatch
+     1>deomain.cpp(690): warning C4018: '>=' : signed/unsigned mismatch
+     1>deomain.cpp(768): warning C4018: '>=' : signed/unsigned mismatch
+     1>deomain.cpp(770): warning C4018: '>=' : signed/unsigned mismatch
+     1>deomain.cpp(781): warning C4018: '<' : signed/unsigned mismatch
+     1>deomain.cpp(852): warning C4018: '<' : signed/unsigned mismatch
+     1>deomain.cpp(864): warning C4018: '>=' : signed/unsigned mismatch
+     1>deomain.cpp(867): warning C4018: '>=' : signed/unsigned mismatch
+     1>deomain.cpp(931): warning C4018: '>=' : signed/unsigned mismatch
+     1>deomain.cpp(933): warning C4018: '>=' : signed/unsigned mismatch
+     1>deomain.cpp(1041): warning C4018: '>=' : signed/unsigned mismatch
+     1>deomain.cpp(1043): warning C4018: '>=' : signed/unsigned mismatch
+     1>deomain.cpp(538): warning C4101: 'drawble' : unreferenced local variable
+     1>deomain.cpp(825): warning C4189: 'pwidth' : local variable is initialized but not referenced
+     1>deomain.cpp(823): warning C4189: 'px' : local variable is initialized but not referenced
+     1>deomain.cpp(824): warning C4189: 'py' : local variable is initialized but not referenced
+     1>deomain.cpp(826): warning C4189: 'pheight' : local variable is initialized but not referenced
      1>deomain.cpp(1113): warning C4018: '<' : signed/unsigned mismatch
-     1>deomain.cpp(1126): warning C4018: '<' : signed/unsigned mismatch
+     1>deomain.cpp(1114): warning C4018: '<' : signed/unsigned mismatch
      1>deomain.cpp(1127): warning C4018: '<' : signed/unsigned mismatch
-     1>deomain.cpp(1156): warning C4018: '<' : signed/unsigned mismatch
+     1>deomain.cpp(1128): warning C4018: '<' : signed/unsigned mismatch
      1>deomain.cpp(1157): warning C4018: '<' : signed/unsigned mismatch
-     1>deomain.cpp(1206): warning C4018: '<' : signed/unsigned mismatch
-     1>deomain.cpp(1220): warning C4244: '=' : conversion from 'int' to 'uint16_t', possible loss of data
-     1>deomain.cpp(1252): warning C4267: 'argument' : conversion from 'size_t' to 'uint32_t', possible loss of data
-     1>deomain.cpp(1362): warning C4127: conditional expression is constant
-     1>deomain.cpp(1406): warning C4018: '>=' : signed/unsigned mismatch
-     1>deomain.cpp(1408): warning C4018: '>=' : signed/unsigned mismatch
-     1>deomain.cpp(1427): warning C4244: 'initializing' : conversion from 'uint32_t' to 'uint8_t', possible loss of data
-     1>deomain.cpp(1470): warning C4244: 'initializing' : conversion from 'uint32_t' to 'uint16_t', possible loss of data
-     1>deomain.cpp(1496): warning C4244: 'initializing' : conversion from 'uint32_t' to 'uint16_t', possible loss of data
-     1>deomain.cpp(1559): warning C4389: '==' : signed/unsigned mismatch
-     1>deomain.cpp(1582): warning C4389: '==' : signed/unsigned mismatch
-     1>deomain.cpp(1583): warning C4244: '=' : conversion from 'int' to 'uint8_t', possible loss of data
-     1>deomain.cpp(1597): warning C4244: 'initializing' : conversion from 'uint32_t' to 'uint8_t', possible loss of data
-     1>deomain.cpp(1604): warning C4389: '==' : signed/unsigned mismatch
-     1>deomain.cpp(1611): warning C4244: 'argument' : conversion from 'int' to 'uint16_t', possible loss of data
-     1>deomain.cpp(1287): warning C4100: 'arv' : unreferenced formal parameter
-     1>deomain.cpp(1287): warning C4100: 'argc' : unreferenced formal parameter
-     1>deomain.cpp(1470): warning C4189: 'ownerId' : local variable is initialized but not referenced
-     1>deomain.cpp(1597): warning C4189: 'type' : local variable is initialized but not referenced
+     1>deomain.cpp(1158): warning C4018: '<' : signed/unsigned mismatch
+     1>deomain.cpp(1207): warning C4018: '<' : signed/unsigned mismatch
+     1>deomain.cpp(1221): warning C4244: '=' : conversion from 'int' to 'uint16_t', possible loss of data
+     1>deomain.cpp(1253): warning C4267: 'argument' : conversion from 'size_t' to 'uint32_t', possible loss of data
+     1>deomain.cpp(1363): warning C4127: conditional expression is constant
+     1>deomain.cpp(1407): warning C4018: '>=' : signed/unsigned mismatch
+     1>deomain.cpp(1409): warning C4018: '>=' : signed/unsigned mismatch
+     1>deomain.cpp(1428): warning C4244: 'initializing' : conversion from 'uint32_t' to 'uint8_t', possible loss of data
+     1>deomain.cpp(1488): warning C4244: 'initializing' : conversion from 'uint32_t' to 'uint16_t', possible loss of data
+     1>deomain.cpp(1514): warning C4244: 'initializing' : conversion from 'uint32_t' to 'uint16_t', possible loss of data
+     1>deomain.cpp(1577): warning C4389: '==' : signed/unsigned mismatch
+     1>deomain.cpp(1600): warning C4389: '==' : signed/unsigned mismatch
+     1>deomain.cpp(1601): warning C4244: '=' : conversion from 'int' to 'uint8_t', possible loss of data
+     1>deomain.cpp(1615): warning C4244: 'initializing' : conversion from 'uint32_t' to 'uint8_t', possible loss of data
+     1>deomain.cpp(1622): warning C4389: '==' : signed/unsigned mismatch
+     1>deomain.cpp(1629): warning C4244: 'argument' : conversion from 'int' to 'uint16_t', possible loss of data
+     1>deomain.cpp(1288): warning C4100: 'arv' : unreferenced formal parameter
+     1>deomain.cpp(1288): warning C4100: 'argc' : unreferenced formal parameter
+     1>deomain.cpp(1488): warning C4189: 'ownerId' : local variable is initialized but not referenced
+     1>deomain.cpp(1615): warning C4189: 'type' : local variable is initialized but not referenced
          cursor.cpp
      1>cursor.cpp(96): warning C4018: '<' : signed/unsigned mismatch
      1>cursor.cpp(100): warning C4018: '<' : signed/unsigned mismatch
@@ -131,9 +131,9 @@
      1>e:\xeneva project\aurora\libs\chitralekha\nanojpg.h(333): warning C4706: assignment within conditional expression
      1>e:\xeneva project\aurora\libs\chitralekha\nanojpg.h(335): warning C4706: assignment within conditional expression
      1>e:\xeneva project\aurora\libs\chitralekha\nanojpg.h(353): warning C4706: assignment within conditional expression
-     1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(1186,5): warning MSB8012: TargetPath(E:\Xeneva Project\Aurora\x64\Debug\Deodhai.exe) does not match the Linker's OutputFile property value (F:\deodhai.exe). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
+     1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(1186,5): warning MSB8012: TargetPath(E:\Xeneva Project\Aurora\x64\Debug\Deodhai.exe) does not match the Linker's OutputFile property value (D:\deodhai.exe). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
        Link:
-         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\link.exe /ERRORREPORT:PROMPT /OUT:"F:\deodhai.exe" /INCREMENTAL /NOLOGO /LIBPATH:"E:\Xeneva Project\Aurora\x64\Debug" /LIBPATH:"E:\Xeneva Project\Aurora\Libs\XECrt" XEClib.lib xecrt.lib Chitralekha.lib ftype.lib /NODEFAULTLIB /MANIFEST:NO /PDB:"E:\Xeneva Project\Aurora\x64\Debug\Deodhai.pdb" /MAP /MAPINFO:EXPORTS /SUBSYSTEM:NATIVE /LARGEADDRESSAWARE /Driver /OPT:NOREF /LTCG /TLBID:1 /ENTRY:"_xemain" /BASE:"0x0000000000600000" /FIXED:NO /IMPLIB:"E:\Xeneva Project\Aurora\x64\Debug\Deodhai.lib" /MACHINE:X64 /ALIGN:512 x64\Debug\backdirty.obj
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\link.exe /ERRORREPORT:PROMPT /OUT:"D:\deodhai.exe" /INCREMENTAL /NOLOGO /LIBPATH:"E:\Xeneva Project\Aurora\x64\Debug" /LIBPATH:"E:\Xeneva Project\Aurora\Libs\XECrt" XEClib.lib xecrt.lib Chitralekha.lib ftype.lib /NODEFAULTLIB /MANIFEST:NO /PDB:"E:\Xeneva Project\Aurora\x64\Debug\Deodhai.pdb" /MAP /MAPINFO:EXPORTS /SUBSYSTEM:NATIVE /LARGEADDRESSAWARE /Driver /OPT:NOREF /LTCG /TLBID:1 /ENTRY:"_xemain" /BASE:"0x0000000000600000" /FIXED:NO /IMPLIB:"E:\Xeneva Project\Aurora\x64\Debug\Deodhai.lib" /MACHINE:X64 /ALIGN:512 x64\Debug\backdirty.obj
          x64\Debug\clip.obj
          x64\Debug\cursor.obj
          x64\Debug\deomain.obj
@@ -149,4 +149,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:02.62
+Time Elapsed 00:00:02.03

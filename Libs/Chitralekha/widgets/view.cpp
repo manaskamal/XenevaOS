@@ -253,3 +253,16 @@ void ChListViewRepaint(ChWindow* win, ChListView* lv) {
 	ChWindowUpdate(win, lv->wid.x, lv->wid.y, lv->wid.w, lv->wid.h, 0, 1);
 	
 }
+
+/*
+ * ChListViewGetSelectedItem -- returns the current selected item
+ * @param lv -- Pointer to ChListView
+ */
+ChListItem * ChListViewGetSelectedItem(ChListView* lv) {
+	for (int i = 0; i < lv->itemList->pointer; i++){
+		ChListItem* li = (ChListItem*)list_get_at(lv->itemList, i);
+		if (li->selected) {
+			return li;
+		}
+	}
+}

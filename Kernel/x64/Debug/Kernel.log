@@ -1,8 +1,8 @@
-﻿Build started 05-03-2024 ৰাতিপু 1:41:21.
+﻿Build started 09-03-2024 আবেলি 9:36:37.
      1>Project "E:\Xeneva Project\Aurora\Kernel\Kernel.vcxproj" on node 2 (Rebuild target(s)).
      1>_NASM:
          Hal\x86_64_intrs.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmpc1b0b482018742948040c2d10a6f60c8.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmpcb1e567c36194194853622556cf032a1.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\x86_64_intrs.obj"  "E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm"
      1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(158): warning : signed dword immediate exceeds bounds [-w+number-overflow]
      1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(158): warning : dword data exceeds bounds [-w+number-overflow]
@@ -502,17 +502,17 @@
      1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_intrs.asm(182): warning : dword data exceeds bounds [-w+number-overflow]
        _NASM:
          Hal\x86_64_lowlevel.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp6d5849359fe347c9a9feb26e8b985897.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp0d1b5c4a9d9a4cb090a13b26ac5f3caf.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\x86_64_lowlevel.obj"  "E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_lowlevel.asm"
        _NASM:
          Hal\x86_64_switch.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp80431abfa322484d8c121955edf274b8.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmpb21c7cba73d24e009f99e1c4a481e38e.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\x86_64_switch.obj"  "E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_switch.asm"
      1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_switch.asm(32): warning : multi-line macro `extern' exists, but not taking 0 parameters [-w+macro-params-multi]
      1>E:\Xeneva Project\Aurora\Kernel\Hal\x86_64_switch.asm(32): warning : label alone on a line without a colon might be in error [-w+label-orphan]
        _NASM:
          __fstcpy.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmpbf322c20f8364639ada0c8831635362a.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp52e1f4a19a8d4281b89bb4dd2f0d174b.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\__fstcpy.obj"  "E:\Xeneva Project\Aurora\Kernel\__fstcpy.asm"
        ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I..\BaseHdr /I"E:\Xeneva Project\Aurora\Acpica\include" /I"E:\Xeneva Project\Aurora\Acpica" /ZI /nologo /W0 /WX- /Od /Oy /D ARCH_X64 /D __AU_KERNEL__ /D X64 /D AUXENEVA /D _USE_LIBALLOC /D _MBCS /X /Gm /GS- /arch:SSE /fp:precise /Zc:wchar_t /Zc:forScope /GR- /FAs /Fa"x64\Debug\\" /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt ahci.cpp ahcidsk.cpp aucon.cpp audrv.cpp autimer.cpp circbuf.cpp clean.cpp ctype.cpp Drivers\mouse.cpp Drivers\nvme.cpp Drivers\ps2kybrd.cpp Drivers\rtc.cpp Fs\Dev\devfs.cpp Fs\Dev\devinput.cpp Fs\Fat\Fat.cpp Fs\Fat\FatDir.cpp Fs\Fat\FatFile.cpp Fs\pipe.cpp Fs\tty.cpp Fs\vdisk.cpp Fs\vfs.cpp Fs\_gpt.cpp ftmngr.cpp Hal\acpiosl.cpp Hal\apic.cpp Hal\basicacpi.cpp Hal\hal.cpp Hal\ioapic.cpp Hal\pcpu.cpp Hal\serial.cpp Hal\x86_64_ap_init.cpp Hal\x86_64_cpu.cpp Hal\x86_64_exception.cpp Hal\x86_64_gdt.cpp Hal\x86_64_hal.cpp Hal\x86_64_idt.cpp Hal\x86_64_pic.cpp Hal\x86_64_sched.cpp Hal\x86_64_signal.cpp Hal\x86_64_systable.cpp init.cpp Ipc\postbox.cpp list.cpp loader.cpp Mm\buddy.cpp Mm\kmalloc.cpp Mm\liballoc\liballoc.cpp Mm\mmap.cpp Mm\pmmngr.cpp Mm\shm.cpp Mm\vmarea.cpp Mm\vmmngr.cpp Net\arp.cpp Net\aunet.cpp Net\ethernet.cpp pcie.cpp pe.cpp process.cpp Serv\fileserv.cpp Serv\mmserv.cpp Serv\thrserv.cpp Serv\timerserv.cpp Sound\sound.cpp stdio.cpp string.cpp Sync\mutex.cpp Sync\spinlock.cpp time.cpp _CRT.cpp
@@ -595,10 +595,10 @@
          time.cpp
          _CRT.cpp
          Generating Code...
-     1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(1186,5): warning MSB8012: TargetPath(E:\Xeneva Project\Aurora\x64\Debug\Kernel.exe) does not match the Linker's OutputFile property value (F:\EFI\XENEVA\xnkrnl.exe). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
+     1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(1186,5): warning MSB8012: TargetPath(E:\Xeneva Project\Aurora\x64\Debug\Kernel.exe) does not match the Linker's OutputFile property value (D:\EFI\XENEVA\xnkrnl.exe). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
      1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(1188,5): warning MSB8012: TargetName(Kernel) does not match the Linker's OutputFile property value (xnkrnl). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
        Link:
-         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\link.exe /ERRORREPORT:PROMPT /OUT:"F:\EFI\XENEVA\xnkrnl.exe" /VERSION:"1.0" /INCREMENTAL /NOLOGO /LIBPATH:"E:\Xeneva Project\Aurora\x64\Debug" Acpica.lib /NODEFAULTLIB /MANIFEST:NO /PDB:"E:\Xeneva Project\Aurora\x64\Debug\Kernel.pdb" /MAP /MAPINFO:EXPORTS /SUBSYSTEM:NATIVE /STACK:"0x100000" /LARGEADDRESSAWARE /Driver /OPT:NOREF /LTCG /TLBID:1 /ENTRY:"_AuMain" /BASE:"0xFFFFC00000000000" /FIXED:NO /IMPLIB:"E:\Xeneva Project\Aurora\x64\Debug\Kernel.lib" /MACHINE:X64 /filealign:0x1000 x64\Debug\ahci.obj
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\link.exe /ERRORREPORT:PROMPT /OUT:"D:\EFI\XENEVA\xnkrnl.exe" /VERSION:"1.0" /INCREMENTAL /NOLOGO /LIBPATH:"E:\Xeneva Project\Aurora\x64\Debug" Acpica.lib /NODEFAULTLIB /MANIFEST:NO /PDB:"E:\Xeneva Project\Aurora\x64\Debug\Kernel.pdb" /MAP /MAPINFO:EXPORTS /SUBSYSTEM:NATIVE /STACK:"0x100000" /LARGEADDRESSAWARE /Driver /OPT:NOREF /LTCG /TLBID:1 /ENTRY:"_AuMain" /BASE:"0xFFFFC00000000000" /FIXED:NO /IMPLIB:"E:\Xeneva Project\Aurora\x64\Debug\Kernel.lib" /MACHINE:X64 /filealign:0x1000 x64\Debug\ahci.obj
          x64\Debug\ahcidsk.obj
          x64\Debug\aucon.obj
          x64\Debug\audrv.obj
@@ -679,4 +679,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:06.61
+Time Elapsed 00:00:08.50

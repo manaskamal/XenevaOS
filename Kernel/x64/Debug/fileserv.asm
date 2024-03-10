@@ -6,7 +6,10 @@ INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
 CONST	SEGMENT
-$SG3958	DB	'Closing file %s ', 0dH, 0aH, 00H
+$SG3956	DB	'Clising fs -> %s ', 0dH, 0aH, 00H
+$SG3960	DB	'/', 00H
+	ORG $+2
+$SG3961	DB	'Closing file %s ', 0dH, 0aH, 00H
 CONST	ENDS
 PUBLIC	?OpenFile@@YAHPEADH@Z				; OpenFile
 PUBLIC	?ReadFile@@YA_KHPEAX_K@Z			; ReadFile
@@ -58,8 +61,8 @@ $pdata$?CreateDir@@YAHPEAD@Z DD imagerel $LN9
 $pdata$?RemoveFile@@YAHPEAD@Z DD imagerel $LN6
 	DD	imagerel $LN6+108
 	DD	imagerel $unwind$?RemoveFile@@YAHPEAD@Z
-$pdata$?CloseFile@@YAHH@Z DD imagerel $LN10
-	DD	imagerel $LN10+247
+$pdata$?CloseFile@@YAHH@Z DD imagerel $LN11
+	DD	imagerel $LN11+298
 	DD	imagerel $unwind$?CloseFile@@YAHH@Z
 $pdata$?FileIoControl@@YAHHHPEAX@Z DD imagerel $LN8
 	DD	imagerel $LN8+189
@@ -111,63 +114,63 @@ file$2 = 56
 filename$ = 80
 ?ProcessGetFileDesc@@YAHPEBD@Z PROC			; ProcessGetFileDesc
 
-; 409  : int ProcessGetFileDesc(const char* filename) {
+; 413  : int ProcessGetFileDesc(const char* filename) {
 
 $LN11:
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 72					; 00000048H
 
-; 410  : 	x64_cli();
+; 414  : 	x64_cli();
 
 	call	x64_cli
 
-; 411  : 	AuThread* thr = AuGetCurrentThread();
+; 415  : 	AuThread* thr = AuGetCurrentThread();
 
 	call	AuGetCurrentThread
 	mov	QWORD PTR thr$[rsp], rax
 
-; 412  : 	if (!thr)
+; 416  : 	if (!thr)
 
 	cmp	QWORD PTR thr$[rsp], 0
 	jne	SHORT $LN8@ProcessGet
 
-; 413  : 		return -1;
+; 417  : 		return -1;
 
 	mov	eax, -1
 	jmp	$LN9@ProcessGet
 $LN8@ProcessGet:
 
-; 414  : 	AuProcess* currproc = AuProcessFindThread(thr);
+; 418  : 	AuProcess* currproc = AuProcessFindThread(thr);
 
 	mov	rcx, QWORD PTR thr$[rsp]
 	call	?AuProcessFindThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z ; AuProcessFindThread
 	mov	QWORD PTR currproc$[rsp], rax
 
-; 415  : 	if (!currproc){
+; 419  : 	if (!currproc){
 
 	cmp	QWORD PTR currproc$[rsp], 0
 	jne	SHORT $LN7@ProcessGet
 
-; 416  : 		currproc = AuProcessFindSubThread(thr);
+; 420  : 		currproc = AuProcessFindSubThread(thr);
 
 	mov	rcx, QWORD PTR thr$[rsp]
 	call	?AuProcessFindSubThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z ; AuProcessFindSubThread
 	mov	QWORD PTR currproc$[rsp], rax
 
-; 417  : 		if (!currproc)
+; 421  : 		if (!currproc)
 
 	cmp	QWORD PTR currproc$[rsp], 0
 	jne	SHORT $LN6@ProcessGet
 
-; 418  : 			return -1;
+; 422  : 			return -1;
 
 	mov	eax, -1
 	jmp	SHORT $LN9@ProcessGet
 $LN6@ProcessGet:
 $LN7@ProcessGet:
 
-; 419  : 	}
-; 420  : 	for (int i = 0; i < FILE_DESC_PER_PROCESS; i++) {
+; 423  : 	}
+; 424  : 	for (int i = 0; i < FILE_DESC_PER_PROCESS; i++) {
 
 	mov	DWORD PTR i$1[rsp], 0
 	jmp	SHORT $LN5@ProcessGet
@@ -179,19 +182,19 @@ $LN5@ProcessGet:
 	cmp	DWORD PTR i$1[rsp], 60			; 0000003cH
 	jge	SHORT $LN3@ProcessGet
 
-; 421  : 		AuVFSNode* file = currproc->fds[i];
+; 425  : 		AuVFSNode* file = currproc->fds[i];
 
 	movsxd	rax, DWORD PTR i$1[rsp]
 	mov	rcx, QWORD PTR currproc$[rsp]
 	mov	rax, QWORD PTR [rcx+rax*8+576]
 	mov	QWORD PTR file$2[rsp], rax
 
-; 422  : 		if (file) {
+; 426  : 		if (file) {
 
 	cmp	QWORD PTR file$2[rsp], 0
 	je	SHORT $LN2@ProcessGet
 
-; 423  : 			if (strcmp(filename, file->filename) == 0) {
+; 427  : 			if (strcmp(filename, file->filename) == 0) {
 
 	mov	rax, QWORD PTR file$2[rsp]
 	mov	rdx, rax
@@ -200,27 +203,27 @@ $LN5@ProcessGet:
 	test	eax, eax
 	jne	SHORT $LN1@ProcessGet
 
-; 424  : 				return i;
+; 428  : 				return i;
 
 	mov	eax, DWORD PTR i$1[rsp]
 	jmp	SHORT $LN9@ProcessGet
 $LN1@ProcessGet:
 $LN2@ProcessGet:
 
-; 425  : 			}
-; 426  : 		}
-; 427  : 	}
+; 429  : 			}
+; 430  : 		}
+; 431  : 	}
 
 	jmp	SHORT $LN4@ProcessGet
 $LN3@ProcessGet:
 
-; 428  : 
-; 429  : 	return -1;
+; 432  : 
+; 433  : 	return -1;
 
 	mov	eax, -1
 $LN9@ProcessGet:
 
-; 430  : }
+; 434  : }
 
 	add	rsp, 72					; 00000048H
 	ret	0
@@ -238,136 +241,136 @@ dirfd$ = 96
 dirent$ = 104
 ?ReadDir@@YAHHPEAX@Z PROC				; ReadDir
 
-; 374  : int ReadDir(int dirfd, void* dirent) {
+; 378  : int ReadDir(int dirfd, void* dirent) {
 
 $LN11:
 	mov	QWORD PTR [rsp+16], rdx
 	mov	DWORD PTR [rsp+8], ecx
 	sub	rsp, 88					; 00000058H
 
-; 375  : 	x64_cli();
+; 379  : 	x64_cli();
 
 	call	x64_cli
 
-; 376  : 	if (!dirent)
+; 380  : 	if (!dirent)
 
 	cmp	QWORD PTR dirent$[rsp], 0
 	jne	SHORT $LN8@ReadDir
 
-; 377  : 		return -1;
+; 381  : 		return -1;
 
 	mov	eax, -1
 	jmp	$LN9@ReadDir
 $LN8@ReadDir:
 
-; 378  : 	if (dirfd == -1)
+; 382  : 	if (dirfd == -1)
 
 	cmp	DWORD PTR dirfd$[rsp], -1
 	jne	SHORT $LN7@ReadDir
 
-; 379  : 		return -1;
+; 383  : 		return -1;
 
 	mov	eax, -1
 	jmp	$LN9@ReadDir
 $LN7@ReadDir:
 
-; 380  : 
-; 381  : 	AuThread* current_thr = AuGetCurrentThread();
+; 384  : 
+; 385  : 	AuThread* current_thr = AuGetCurrentThread();
 
 	call	AuGetCurrentThread
 	mov	QWORD PTR current_thr$[rsp], rax
 
-; 382  : 	if (!current_thr){
+; 386  : 	if (!current_thr){
 
 	cmp	QWORD PTR current_thr$[rsp], 0
 	jne	SHORT $LN6@ReadDir
 
-; 383  : 		return 0;
+; 387  : 		return 0;
 
 	xor	eax, eax
 	jmp	$LN9@ReadDir
 $LN6@ReadDir:
 
-; 384  : 	}
-; 385  : 	AuProcess* current_proc = AuProcessFindThread(current_thr);
+; 388  : 	}
+; 389  : 	AuProcess* current_proc = AuProcessFindThread(current_thr);
 
 	mov	rcx, QWORD PTR current_thr$[rsp]
 	call	?AuProcessFindThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z ; AuProcessFindThread
 	mov	QWORD PTR current_proc$[rsp], rax
 
-; 386  : 	if (!current_proc) {
+; 390  : 	if (!current_proc) {
 
 	cmp	QWORD PTR current_proc$[rsp], 0
 	jne	SHORT $LN5@ReadDir
 
-; 387  : 		current_proc = AuProcessFindSubThread(current_thr);
+; 391  : 		current_proc = AuProcessFindSubThread(current_thr);
 
 	mov	rcx, QWORD PTR current_thr$[rsp]
 	call	?AuProcessFindSubThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z ; AuProcessFindSubThread
 	mov	QWORD PTR current_proc$[rsp], rax
 
-; 388  : 		if (!current_proc)
+; 392  : 		if (!current_proc)
 
 	cmp	QWORD PTR current_proc$[rsp], 0
 	jne	SHORT $LN4@ReadDir
 
-; 389  : 			return 0;
+; 393  : 			return 0;
 
 	xor	eax, eax
 	jmp	SHORT $LN9@ReadDir
 $LN4@ReadDir:
 $LN5@ReadDir:
 
-; 390  : 	}
-; 391  : 
-; 392  : 	AuDirectoryEntry* dire_ = (AuDirectoryEntry*)dirent;
+; 394  : 	}
+; 395  : 
+; 396  : 	AuDirectoryEntry* dire_ = (AuDirectoryEntry*)dirent;
 
 	mov	rax, QWORD PTR dirent$[rsp]
 	mov	QWORD PTR dire_$[rsp], rax
 
-; 393  : 
-; 394  : 	AuVFSNode* dirfile = current_proc->fds[dirfd];
+; 397  : 
+; 398  : 	AuVFSNode* dirfile = current_proc->fds[dirfd];
 
 	movsxd	rax, DWORD PTR dirfd$[rsp]
 	mov	rcx, QWORD PTR current_proc$[rsp]
 	mov	rax, QWORD PTR [rcx+rax*8+576]
 	mov	QWORD PTR dirfile$[rsp], rax
 
-; 395  : 	if (!dirfile)
+; 399  : 	if (!dirfile)
 
 	cmp	QWORD PTR dirfile$[rsp], 0
 	jne	SHORT $LN3@ReadDir
 
-; 396  : 		return -1;
+; 400  : 		return -1;
 
 	mov	eax, -1
 	jmp	SHORT $LN9@ReadDir
 $LN3@ReadDir:
 
-; 397  : 	AuVFSNode* fsys = (AuVFSNode*)dirfile->device;
+; 401  : 	AuVFSNode* fsys = (AuVFSNode*)dirfile->device;
 
 	mov	rax, QWORD PTR dirfile$[rsp]
 	mov	rax, QWORD PTR [rax+72]
 	mov	QWORD PTR fsys$[rsp], rax
 
-; 398  : 	if (!fsys)
+; 402  : 	if (!fsys)
 
 	cmp	QWORD PTR fsys$[rsp], 0
 	jne	SHORT $LN2@ReadDir
 
-; 399  : 		return -1;
+; 403  : 		return -1;
 
 	mov	eax, -1
 	jmp	SHORT $LN9@ReadDir
 $LN2@ReadDir:
 
-; 400  : 	if (fsys->read_dir)
+; 404  : 	if (fsys->read_dir)
 
 	mov	rax, QWORD PTR fsys$[rsp]
 	cmp	QWORD PTR [rax+168], 0
 	je	SHORT $LN1@ReadDir
 
-; 401  : 		return fsys->read_dir(fsys, dirfile, dire_);
+; 405  : 		return fsys->read_dir(fsys, dirfile, dire_);
 
 	mov	r8, QWORD PTR dire_$[rsp]
 	mov	rdx, QWORD PTR dirfile$[rsp]
@@ -377,7 +380,7 @@ $LN2@ReadDir:
 $LN1@ReadDir:
 $LN9@ReadDir:
 
-; 402  : }
+; 406  : }
 
 	add	rsp, 88					; 00000058H
 	ret	0
@@ -394,92 +397,92 @@ dirfile$ = 64
 filename$ = 96
 ?OpenDir@@YAHPEAD@Z PROC				; OpenDir
 
-; 338  : int OpenDir(char* filename) {
+; 342  : int OpenDir(char* filename) {
 
 $LN10:
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 88					; 00000058H
 
-; 339  : 	x64_cli();
+; 343  : 	x64_cli();
 
 	call	x64_cli
 
-; 340  : 	AuThread* current_thr = AuGetCurrentThread();
+; 344  : 	AuThread* current_thr = AuGetCurrentThread();
 
 	call	AuGetCurrentThread
 	mov	QWORD PTR current_thr$[rsp], rax
 
-; 341  : 	if (!current_thr){
+; 345  : 	if (!current_thr){
 
 	cmp	QWORD PTR current_thr$[rsp], 0
 	jne	SHORT $LN7@OpenDir
 
-; 342  : 		return -1;
+; 346  : 		return -1;
 
 	mov	eax, -1
 	jmp	$LN8@OpenDir
 $LN7@OpenDir:
 
-; 343  : 	}
-; 344  : 	AuProcess* current_proc = AuProcessFindThread(current_thr);
+; 347  : 	}
+; 348  : 	AuProcess* current_proc = AuProcessFindThread(current_thr);
 
 	mov	rcx, QWORD PTR current_thr$[rsp]
 	call	?AuProcessFindThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z ; AuProcessFindThread
 	mov	QWORD PTR current_proc$[rsp], rax
 
-; 345  : 	if (!current_proc) {
+; 349  : 	if (!current_proc) {
 
 	cmp	QWORD PTR current_proc$[rsp], 0
 	jne	SHORT $LN6@OpenDir
 
-; 346  : 		current_proc = AuProcessFindSubThread(current_thr);
+; 350  : 		current_proc = AuProcessFindSubThread(current_thr);
 
 	mov	rcx, QWORD PTR current_thr$[rsp]
 	call	?AuProcessFindSubThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z ; AuProcessFindSubThread
 	mov	QWORD PTR current_proc$[rsp], rax
 
-; 347  : 		if (!current_proc)
+; 351  : 		if (!current_proc)
 
 	cmp	QWORD PTR current_proc$[rsp], 0
 	jne	SHORT $LN5@OpenDir
 
-; 348  : 			return -1;
+; 352  : 			return -1;
 
 	mov	eax, -1
 	jmp	$LN8@OpenDir
 $LN5@OpenDir:
 $LN6@OpenDir:
 
-; 349  : 	}
-; 350  : 
-; 351  : 	AuVFSNode *fsys = AuVFSFind(filename);
+; 353  : 	}
+; 354  : 
+; 355  : 	AuVFSNode *fsys = AuVFSFind(filename);
 
 	mov	rcx, QWORD PTR filename$[rsp]
 	call	AuVFSFind
 	mov	QWORD PTR fsys$[rsp], rax
 
-; 352  : 	AuVFSNode* dirfile = NULL;
+; 356  : 	AuVFSNode* dirfile = NULL;
 
 	mov	QWORD PTR dirfile$[rsp], 0
 
-; 353  : 	if (!fsys)
+; 357  : 	if (!fsys)
 
 	cmp	QWORD PTR fsys$[rsp], 0
 	jne	SHORT $LN4@OpenDir
 
-; 354  : 		return -1;
+; 358  : 		return -1;
 
 	mov	eax, -1
 	jmp	SHORT $LN8@OpenDir
 $LN4@OpenDir:
 
-; 355  : 	if (fsys->opendir)
+; 359  : 	if (fsys->opendir)
 
 	mov	rax, QWORD PTR fsys$[rsp]
 	cmp	QWORD PTR [rax+96], 0
 	je	SHORT $LN3@OpenDir
 
-; 356  : 		dirfile = fsys->opendir(fsys, filename);
+; 360  : 		dirfile = fsys->opendir(fsys, filename);
 
 	mov	rdx, QWORD PTR filename$[rsp]
 	mov	rcx, QWORD PTR fsys$[rsp]
@@ -488,50 +491,50 @@ $LN4@OpenDir:
 	mov	QWORD PTR dirfile$[rsp], rax
 $LN3@OpenDir:
 
-; 357  : 
-; 358  : 	if (!dirfile)
+; 361  : 
+; 362  : 	if (!dirfile)
 
 	cmp	QWORD PTR dirfile$[rsp], 0
 	jne	SHORT $LN2@OpenDir
-
-; 359  : 		return -1;
-
-	mov	eax, -1
-	jmp	SHORT $LN8@OpenDir
-$LN2@OpenDir:
-
-; 360  : 
-; 361  : 	int fd = AuProcessGetFileDesc(current_proc);
-
-	mov	rcx, QWORD PTR current_proc$[rsp]
-	call	?AuProcessGetFileDesc@@YAHPEAU_au_proc_@@@Z ; AuProcessGetFileDesc
-	mov	DWORD PTR fd$[rsp], eax
-
-; 362  : 	if (fd == -1)
-
-	cmp	DWORD PTR fd$[rsp], -1
-	jne	SHORT $LN1@OpenDir
 
 ; 363  : 		return -1;
 
 	mov	eax, -1
 	jmp	SHORT $LN8@OpenDir
-$LN1@OpenDir:
+$LN2@OpenDir:
 
 ; 364  : 
-; 365  : 	current_proc->fds[fd] = dirfile;
+; 365  : 	int fd = AuProcessGetFileDesc(current_proc);
+
+	mov	rcx, QWORD PTR current_proc$[rsp]
+	call	?AuProcessGetFileDesc@@YAHPEAU_au_proc_@@@Z ; AuProcessGetFileDesc
+	mov	DWORD PTR fd$[rsp], eax
+
+; 366  : 	if (fd == -1)
+
+	cmp	DWORD PTR fd$[rsp], -1
+	jne	SHORT $LN1@OpenDir
+
+; 367  : 		return -1;
+
+	mov	eax, -1
+	jmp	SHORT $LN8@OpenDir
+$LN1@OpenDir:
+
+; 368  : 
+; 369  : 	current_proc->fds[fd] = dirfile;
 
 	movsxd	rax, DWORD PTR fd$[rsp]
 	mov	rcx, QWORD PTR current_proc$[rsp]
 	mov	rdx, QWORD PTR dirfile$[rsp]
 	mov	QWORD PTR [rcx+rax*8+576], rdx
 
-; 366  : 	return fd;
+; 370  : 	return fd;
 
 	mov	eax, DWORD PTR fd$[rsp]
 $LN8@OpenDir:
 
-; 367  : }
+; 371  : }
 
 	add	rsp, 88					; 00000058H
 	ret	0
@@ -548,150 +551,150 @@ fd$ = 80
 buf$ = 88
 ?FileStat@@YAHHPEAX@Z PROC				; FileStat
 
-; 305  : int FileStat(int fd, void* buf) {
+; 309  : int FileStat(int fd, void* buf) {
 
 $LN8:
 	mov	QWORD PTR [rsp+16], rdx
 	mov	DWORD PTR [rsp+8], ecx
 	sub	rsp, 72					; 00000048H
 
-; 306  : 	x64_cli();
+; 310  : 	x64_cli();
 
 	call	x64_cli
 
-; 307  : 	if (fd == -1)
+; 311  : 	if (fd == -1)
 
 	cmp	DWORD PTR fd$[rsp], -1
 	jne	SHORT $LN5@FileStat
 
-; 308  : 		return -1;
+; 312  : 		return -1;
 
 	mov	eax, -1
 	jmp	$LN6@FileStat
 $LN5@FileStat:
 
-; 309  : 	AuThread* current_thr = AuGetCurrentThread();
+; 313  : 	AuThread* current_thr = AuGetCurrentThread();
 
 	call	AuGetCurrentThread
 	mov	QWORD PTR current_thr$[rsp], rax
 
-; 310  : 	if (!current_thr){
+; 314  : 	if (!current_thr){
 
 	cmp	QWORD PTR current_thr$[rsp], 0
 	jne	SHORT $LN4@FileStat
 
-; 311  : 		return 0;
+; 315  : 		return 0;
 
 	xor	eax, eax
 	jmp	$LN6@FileStat
 $LN4@FileStat:
 
-; 312  : 	}
-; 313  : 	AuProcess* current_proc = AuProcessFindThread(current_thr);
+; 316  : 	}
+; 317  : 	AuProcess* current_proc = AuProcessFindThread(current_thr);
 
 	mov	rcx, QWORD PTR current_thr$[rsp]
 	call	?AuProcessFindThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z ; AuProcessFindThread
 	mov	QWORD PTR current_proc$[rsp], rax
 
-; 314  : 	if (!current_proc) {
+; 318  : 	if (!current_proc) {
 
 	cmp	QWORD PTR current_proc$[rsp], 0
 	jne	SHORT $LN3@FileStat
 
-; 315  : 		current_proc = AuProcessFindSubThread(current_thr);
+; 319  : 		current_proc = AuProcessFindSubThread(current_thr);
 
 	mov	rcx, QWORD PTR current_thr$[rsp]
 	call	?AuProcessFindSubThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z ; AuProcessFindSubThread
 	mov	QWORD PTR current_proc$[rsp], rax
 
-; 316  : 		if (!current_proc)
+; 320  : 		if (!current_proc)
 
 	cmp	QWORD PTR current_proc$[rsp], 0
 	jne	SHORT $LN2@FileStat
 
-; 317  : 			return 0;
+; 321  : 			return 0;
 
 	xor	eax, eax
 	jmp	$LN6@FileStat
 $LN2@FileStat:
 $LN3@FileStat:
 
-; 318  : 	}
-; 319  : 	AuVFSNode* file = current_proc->fds[fd];
+; 322  : 	}
+; 323  : 	AuVFSNode* file = current_proc->fds[fd];
 
 	movsxd	rax, DWORD PTR fd$[rsp]
 	mov	rcx, QWORD PTR current_proc$[rsp]
 	mov	rax, QWORD PTR [rcx+rax*8+576]
 	mov	QWORD PTR file$[rsp], rax
 
-; 320  : 	if (!file)
+; 324  : 	if (!file)
 
 	cmp	QWORD PTR file$[rsp], 0
 	jne	SHORT $LN1@FileStat
 
-; 321  : 		return -1;
+; 325  : 		return -1;
 
 	mov	eax, -1
 	jmp	SHORT $LN6@FileStat
 $LN1@FileStat:
 
-; 322  : 
-; 323  : 	AuFileStatus *status = (AuFileStatus*)buf;
+; 326  : 
+; 327  : 	AuFileStatus *status = (AuFileStatus*)buf;
 
 	mov	rax, QWORD PTR buf$[rsp]
 	mov	QWORD PTR status$[rsp], rax
 
-; 324  : 	status->current_block = file->current;
+; 328  : 	status->current_block = file->current;
 
 	mov	rax, QWORD PTR status$[rsp]
 	mov	rcx, QWORD PTR file$[rsp]
 	mov	ecx, DWORD PTR [rcx+56]
 	mov	DWORD PTR [rax+9], ecx
 
-; 325  : 	status->size = file->size;
+; 329  : 	status->size = file->size;
 
 	mov	rax, QWORD PTR file$[rsp]
 	mov	eax, DWORD PTR [rax+32]
 	mov	rcx, QWORD PTR status$[rsp]
 	mov	QWORD PTR [rcx+1], rax
 
-; 326  : 	status->filemode = file->flags;
+; 330  : 	status->filemode = file->flags;
 
 	mov	rax, QWORD PTR status$[rsp]
 	mov	rcx, QWORD PTR file$[rsp]
 	movzx	ecx, BYTE PTR [rcx+64]
 	mov	BYTE PTR [rax], cl
 
-; 327  : 	status->eof = file->eof;
+; 331  : 	status->eof = file->eof;
 
 	mov	rax, QWORD PTR status$[rsp]
 	mov	rcx, QWORD PTR file$[rsp]
 	movzx	ecx, BYTE PTR [rcx+36]
 	mov	BYTE PTR [rax+29], cl
 
-; 328  : 	status->start_block = file->first_block;
+; 332  : 	status->start_block = file->first_block;
 
 	mov	rax, QWORD PTR status$[rsp]
 	mov	rcx, QWORD PTR file$[rsp]
 	mov	ecx, DWORD PTR [rcx+48]
 	mov	DWORD PTR [rax+13], ecx
 
-; 329  : 	status->user_id = 0;
+; 333  : 	status->user_id = 0;
 
 	mov	rax, QWORD PTR status$[rsp]
 	mov	DWORD PTR [rax+17], 0
 
-; 330  : 	status->group_id = 0;
+; 334  : 	status->group_id = 0;
 
 	mov	rax, QWORD PTR status$[rsp]
 	mov	DWORD PTR [rax+21], 0
 
-; 331  : 	return 0;
+; 335  : 	return 0;
 
 	xor	eax, eax
 $LN6@FileStat:
 
-; 332  : }
+; 336  : }
 
 	add	rsp, 72					; 00000048H
 	ret	0
@@ -709,7 +712,7 @@ code$ = 88
 arg$ = 96
 ?FileIoControl@@YAHHHPEAX@Z PROC			; FileIoControl
 
-; 276  : int FileIoControl(int fd, int code, void* arg) {
+; 280  : int FileIoControl(int fd, int code, void* arg) {
 
 $LN8:
 	mov	QWORD PTR [rsp+24], r8
@@ -717,92 +720,92 @@ $LN8:
 	mov	DWORD PTR [rsp+8], ecx
 	sub	rsp, 72					; 00000048H
 
-; 277  : 	x64_cli();
+; 281  : 	x64_cli();
 
 	call	x64_cli
 
-; 278  : 	if (fd == -1)
+; 282  : 	if (fd == -1)
 
 	cmp	DWORD PTR fd$[rsp], -1
 	jne	SHORT $LN5@FileIoCont
 
-; 279  : 		return -1;
+; 283  : 		return -1;
 
 	mov	eax, -1
 	jmp	$LN6@FileIoCont
 $LN5@FileIoCont:
 
-; 280  : 	AuThread* current_thr = AuGetCurrentThread();
+; 284  : 	AuThread* current_thr = AuGetCurrentThread();
 
 	call	AuGetCurrentThread
 	mov	QWORD PTR current_thr$[rsp], rax
 
-; 281  : 	if (!current_thr)
+; 285  : 	if (!current_thr)
 
 	cmp	QWORD PTR current_thr$[rsp], 0
 	jne	SHORT $LN4@FileIoCont
 
-; 282  : 		return 0;
+; 286  : 		return 0;
 
 	xor	eax, eax
 	jmp	SHORT $LN6@FileIoCont
 $LN4@FileIoCont:
 
-; 283  : 	AuProcess* current_proc = AuProcessFindThread(current_thr);
+; 287  : 	AuProcess* current_proc = AuProcessFindThread(current_thr);
 
 	mov	rcx, QWORD PTR current_thr$[rsp]
 	call	?AuProcessFindThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z ; AuProcessFindThread
 	mov	QWORD PTR current_proc$[rsp], rax
 
-; 284  : 	if (!current_proc) {
+; 288  : 	if (!current_proc) {
 
 	cmp	QWORD PTR current_proc$[rsp], 0
 	jne	SHORT $LN3@FileIoCont
 
-; 285  : 		current_proc = AuProcessFindSubThread(current_thr);
+; 289  : 		current_proc = AuProcessFindSubThread(current_thr);
 
 	mov	rcx, QWORD PTR current_thr$[rsp]
 	call	?AuProcessFindSubThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z ; AuProcessFindSubThread
 	mov	QWORD PTR current_proc$[rsp], rax
 
-; 286  : 		if (!current_proc)
+; 290  : 		if (!current_proc)
 
 	cmp	QWORD PTR current_proc$[rsp], 0
 	jne	SHORT $LN2@FileIoCont
 
-; 287  : 			return 0;
+; 291  : 			return 0;
 
 	xor	eax, eax
 	jmp	SHORT $LN6@FileIoCont
 $LN2@FileIoCont:
 $LN3@FileIoCont:
 
-; 288  : 	}
-; 289  : 	AuVFSNode* file = current_proc->fds[fd];
+; 292  : 	}
+; 293  : 	AuVFSNode* file = current_proc->fds[fd];
 
 	movsxd	rax, DWORD PTR fd$[rsp]
 	mov	rcx, QWORD PTR current_proc$[rsp]
 	mov	rax, QWORD PTR [rcx+rax*8+576]
 	mov	QWORD PTR file$[rsp], rax
 
-; 290  : 
-; 291  : 	if (!file)
+; 294  : 
+; 295  : 	if (!file)
 
 	cmp	QWORD PTR file$[rsp], 0
 	jne	SHORT $LN1@FileIoCont
 
-; 292  : 		return -1;
+; 296  : 		return -1;
 
 	mov	eax, -1
 	jmp	SHORT $LN6@FileIoCont
 $LN1@FileIoCont:
 
-; 293  : 
-; 294  : 	int ret = 0;
+; 297  : 
+; 298  : 	int ret = 0;
 
 	mov	DWORD PTR ret$[rsp], 0
 
-; 295  : 	ret = AuVFSNodeIOControl(file, code, arg);
+; 299  : 	ret = AuVFSNodeIOControl(file, code, arg);
 
 	mov	r8, QWORD PTR arg$[rsp]
 	mov	edx, DWORD PTR code$[rsp]
@@ -810,12 +813,12 @@ $LN1@FileIoCont:
 	call	AuVFSNodeIOControl
 	mov	DWORD PTR ret$[rsp], eax
 
-; 296  : 	return ret;
+; 300  : 	return ret;
 
 	mov	eax, DWORD PTR ret$[rsp]
 $LN6@FileIoCont:
 
-; 297  : }
+; 301  : }
 
 	add	rsp, 72					; 00000048H
 	ret	0
@@ -832,20 +835,20 @@ fd$ = 80
 
 ; 241  : int CloseFile(int fd) {
 
-$LN10:
+$LN11:
 	mov	DWORD PTR [rsp+8], ecx
 	sub	rsp, 72					; 00000048H
 
 ; 242  : 	if (fd == -1)
 
 	cmp	DWORD PTR fd$[rsp], -1
-	jne	SHORT $LN7@CloseFile
+	jne	SHORT $LN8@CloseFile
 
 ; 243  : 		return 0;
 
 	xor	eax, eax
-	jmp	$LN8@CloseFile
-$LN7@CloseFile:
+	jmp	$LN9@CloseFile
+$LN8@CloseFile:
 
 ; 244  : 	AuThread* current_thr = AuGetCurrentThread();
 
@@ -855,13 +858,13 @@ $LN7@CloseFile:
 ; 245  : 	if (!current_thr)
 
 	cmp	QWORD PTR current_thr$[rsp], 0
-	jne	SHORT $LN6@CloseFile
+	jne	SHORT $LN7@CloseFile
 
 ; 246  : 		return 0;
 
 	xor	eax, eax
-	jmp	$LN8@CloseFile
-$LN6@CloseFile:
+	jmp	$LN9@CloseFile
+$LN7@CloseFile:
 
 ; 247  : 	AuProcess* current_proc = AuProcessFindThread(current_thr);
 
@@ -872,7 +875,7 @@ $LN6@CloseFile:
 ; 248  : 	if (!current_proc) {
 
 	cmp	QWORD PTR current_proc$[rsp], 0
-	jne	SHORT $LN5@CloseFile
+	jne	SHORT $LN6@CloseFile
 
 ; 249  : 		current_proc = AuProcessFindSubThread(current_thr);
 
@@ -883,14 +886,14 @@ $LN6@CloseFile:
 ; 250  : 		if (!current_proc)
 
 	cmp	QWORD PTR current_proc$[rsp], 0
-	jne	SHORT $LN4@CloseFile
+	jne	SHORT $LN5@CloseFile
 
 ; 251  : 			return 0;
 
 	xor	eax, eax
-	jmp	$LN8@CloseFile
-$LN4@CloseFile:
+	jmp	$LN9@CloseFile
 $LN5@CloseFile:
+$LN6@CloseFile:
 
 ; 252  : 	}
 ; 253  : 
@@ -901,71 +904,94 @@ $LN5@CloseFile:
 	mov	rax, QWORD PTR [rcx+rax*8+576]
 	mov	QWORD PTR file$[rsp], rax
 
-; 255  : 	if (file->flags & FS_FLAG_FILE_SYSTEM)
+; 255  : 	if (file->flags & FS_FLAG_FILE_SYSTEM){
 
 	mov	rax, QWORD PTR file$[rsp]
 	movzx	eax, WORD PTR [rax+64]
 	and	eax, 64					; 00000040H
 	test	eax, eax
-	je	SHORT $LN3@CloseFile
+	je	SHORT $LN4@CloseFile
 
-; 256  : 		return -1;
+; 256  : 		SeTextOut("Clising fs -> %s \r\n", file->filename);
+
+	mov	rax, QWORD PTR file$[rsp]
+	mov	rdx, rax
+	lea	rcx, OFFSET FLAT:$SG3956
+	call	SeTextOut
+
+; 257  : 		return -1;
 
 	mov	eax, -1
-	jmp	SHORT $LN8@CloseFile
-$LN3@CloseFile:
+	jmp	SHORT $LN9@CloseFile
+$LN4@CloseFile:
 
-; 257  : 	if (file->flags & FS_FLAG_GENERAL)
+; 258  : 	}
+; 259  : 	if (file->flags & FS_FLAG_GENERAL)
 
 	mov	rax, QWORD PTR file$[rsp]
 	movzx	eax, WORD PTR [rax+64]
 	and	eax, 4
 	test	eax, eax
-	je	SHORT $LN2@CloseFile
+	je	SHORT $LN3@CloseFile
 
-; 258  : 		kfree(file);
+; 260  : 		kfree(file);
 
 	mov	rcx, QWORD PTR file$[rsp]
 	call	kfree
-$LN2@CloseFile:
+$LN3@CloseFile:
 
-; 259  : 	
-; 260  : 
-; 261  : 	if (file->flags & FS_FLAG_DIRECTORY){
+; 261  : 	
+; 262  : 
+; 263  : 	if (file->flags & FS_FLAG_DIRECTORY){
 
 	mov	rax, QWORD PTR file$[rsp]
 	movzx	eax, WORD PTR [rax+64]
 	and	eax, 2
 	test	eax, eax
-	je	SHORT $LN1@CloseFile
+	je	SHORT $LN2@CloseFile
 
-; 262  : 		SeTextOut("Closing file %s \r\n", file->filename);
+; 264  : 		if (strcmp(file->filename, "/") == 0)
+
+	mov	rax, QWORD PTR file$[rsp]
+	lea	rdx, OFFSET FLAT:$SG3960
+	mov	rcx, rax
+	call	strcmp
+	test	eax, eax
+	jne	SHORT $LN1@CloseFile
+
+; 265  : 			return -1;
+
+	mov	eax, -1
+	jmp	SHORT $LN9@CloseFile
+$LN1@CloseFile:
+
+; 266  : 		SeTextOut("Closing file %s \r\n", file->filename);
 
 	mov	rax, QWORD PTR file$[rsp]
 	mov	rdx, rax
-	lea	rcx, OFFSET FLAT:$SG3958
+	lea	rcx, OFFSET FLAT:$SG3961
 	call	SeTextOut
 
-; 263  : 		kfree(file);
+; 267  : 		kfree(file);
 
 	mov	rcx, QWORD PTR file$[rsp]
 	call	kfree
-$LN1@CloseFile:
+$LN2@CloseFile:
 
-; 264  : 	}
-; 265  : 
-; 266  : 	current_proc->fds[fd] = 0;
+; 268  : 	}
+; 269  : 
+; 270  : 	current_proc->fds[fd] = 0;
 
 	movsxd	rax, DWORD PTR fd$[rsp]
 	mov	rcx, QWORD PTR current_proc$[rsp]
 	mov	QWORD PTR [rcx+rax*8+576], 0
 
-; 267  : 	return 0;
+; 271  : 	return 0;
 
 	xor	eax, eax
-$LN8@CloseFile:
+$LN9@CloseFile:
 
-; 268  : }
+; 272  : }
 
 	add	rsp, 72					; 00000048H
 	ret	0

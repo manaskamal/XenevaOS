@@ -52,11 +52,49 @@ ChWindow* mainWin;
 ChWindow* win2;
 jmp_buf jmp;
 ChPopupMenu* pm;
+ChListView* lv;
 ChIcon *dirico;
 ChIcon *docico;
 char* path;
 char* history;
 
+typedef struct _address_bar_ {
+	ChWidget base;
+}FileAddressBar;
+
+FileAddressBar *addressbar;
+
+void FileAddressBarMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, int button) {
+
+}
+
+
+void FileAddressBarPaintHandler(ChWidget* wid, ChWindow* win) {
+	FileAddressBar* bar = (FileAddressBar*)wid;
+	ChDrawRect(win->canv, bar->base.x, bar->base.y, bar->base.w, bar->base.h, WHITE);
+	ChDrawRectUnfilled(win->canv, bar->base.x, bar->base.y, bar->base.w, bar->base.h, GRAY);
+	ChFontSetSize(win->app->baseFont, 15);
+	ChFontDrawText(win->canv, win->app->baseFont,path, bar->base.x + 10, 
+		bar->base.y + 22,
+		15, BLACK);
+}
+
+void FileAddressBarRepaint(FileAddressBar* bar) {
+	bar->base.ChPaintHandler((ChWidget*)bar, mainWin);
+	ChWindowUpdate(mainWin, bar->base.x, bar->base.y, bar->base.w, bar->base.h,0,1);
+}
+
+FileAddressBar * FileCreateAddressBar(int x, int y, int w, int h) {
+	FileAddressBar *addrbar = (FileAddressBar*)malloc(sizeof(FileAddressBar));
+	memset(addrbar, 0, sizeof(FileAddressBar));
+	addrbar->base.x = CHITRALEKHA_WINDOW_DEFAULT_PAD_X + x;
+	addrbar->base.y = CHITRALEKHA_WINDOW_DEFAULT_PAD_Y + y;
+	addrbar->base.w = w;
+	addrbar->base.h = h;
+	addrbar->base.ChMouseEvent = FileAddressBarMouseEvent;
+	addrbar->base.ChPaintHandler = FileAddressBarPaintHandler;
+	return addrbar;
+}
 /*
  * WindowHandleMessage -- handles incoming deodhai messages
  * @param e -- PostBox event message structure
@@ -89,15 +127,7 @@ void WindowHandleMessage(PostEvent *e) {
 	}
 }
 
-void ButtonClicked(ChWidget* wid, ChWindow* win) {
-	ChMessageBox* mb = ChCreateMessageBox(mainWin, "Dimpismita", "I_LOVE_YOU_SO_MUCH_DEHA++ !!", MSGBOX_TYPE_ONLYCLOSE, MSGBOX_ICON_SUCCESS);
-	ChMessageBoxShow(mb);
-}
 
-void ManipuriClicked(ChWidget* wid, ChWindow* win) {
-	ChMessageBox* mb = ChCreateMessageBox(mainWin, "Manipuri", "Manipuri is the official language of Manipur !!", MSGBOX_TYPE_ONLYCLOSE, MSGBOX_ICON_SUCCESS);
-	ChMessageBoxShow(mb);
-}
 
 void PrintParentDir(char* pathname) {
 	int len = strlen(pathname);
@@ -122,34 +152,35 @@ void PrintParentDir(char* pathname) {
 		if (_opened_)
 			dir[i] = subpath[i];
 	}
-	
+
 	int offset = 0;
 	for (int i = 0; i < 16; i++) {
 		if (dir[i] != '\0'){
 			dir[offset] = dir[i];
 			offset++;
 		}
-		
+
 	}
 	dir[offset] = '\0';
 	_KePrint("Dir %s \r\n", dir);
 	free(subpath);
 }
+
 void DirListItemAction(ChListView* lv, ChListItem* li) {
-	int len = strlen(path)-1;
-	char *dirname = (char*)malloc(strlen(li->itemText)+len);
+	int len = strlen(path) - 1;
+	char *dirname = (char*)malloc(strlen(li->itemText) + len);
 	strcpy(dirname, path);
 	strcpy(dirname + len, li->itemText);
 	free(path);
 	path = (char*)malloc(strlen(dirname) + 1);
 	strcpy(path, dirname);
 
-	strcpy(path + (strlen(dirname)-1), "/");
+	strcpy(path + (strlen(dirname) - 1), "/");
 	ChListViewClear(lv);
-	
+
 	PrintParentDir(path);
 	/* bug : needs to sleep inorder to get
-	 * the file descriptor for the desired path */
+	* the file descriptor for the desired path */
 	_KeProcessSleep(10);
 
 	int dirfd = _KeOpenDir(dirname);
@@ -177,32 +208,149 @@ void DirListItemAction(ChListView* lv, ChListItem* li) {
 	_KeCloseFile(dirfd);
 	free(dirname);
 	ChListViewRepaint(mainWin, lv);
+	FileAddressBarRepaint(addressbar);
 	/* just jump to window event handler or
-	 * else, the app will crash */
+	* else, the app will crash */
 	longjmp(mainWin->jump, 1);
 }
 
+void BackbutClicked(ChWidget* wid, ChWindow* win) {
+	_KePrint("Path -> %s \r\n", path);
+	int len = strlen(path);
+	char* subpath = (char*)malloc(strlen(path));
+	strcpy(subpath, path);
+	subpath[len - 2] = '\0';
+	for (int i = len; i >= 0; i--) {
+		if (subpath[i] == '/'){
+			subpath[i] = '\0';
+			break;
+		}
+		subpath[i] = '\0';
+	}
 
+	/* if subpath is 0, then simply open up the 
+	 * root folder
+	 */
+	if ((strlen(subpath) - 1) <= 0)
+		strcpy(subpath, "/");
+
+	ChListViewClear(lv);
+	
+	_KePrint("Opening subpath -> %s \r\n", subpath);
+	/* bug : needs to sleep inorder to get
+	* the file descriptor for the desired path */
+	_KeProcessSleep(10);
+
+	int dirfd = _KeOpenDir(subpath);
+	XEDirectoryEntry* dirent = (XEDirectoryEntry*)malloc(sizeof(XEDirectoryEntry));
+	memset(dirent, 0, sizeof(XEDirectoryEntry));
+	while (1) {
+		if (dirent->index == -1)
+			break;
+		int code = _KeReadDir(dirfd, dirent);
+		if (code != -1) {
+			if (dirent->flags & FILE_DIRECTORY){
+				ChListItem*li = ChListViewAddItem(mainWin, lv, dirent->filename);
+				ChListViewSetListItemIcon(li, dirico);
+				li->ChListItemAction = DirListItemAction;
+			}
+			else{
+				ChListItem* fi = ChListViewAddItem(mainWin, lv, dirent->filename);
+				ChListViewSetListItemIcon(fi, docico);
+			}
+
+		}
+		memset(dirent->filename, 0, 32);
+	}
+	free(dirent);
+	
+	_KeCloseFile(dirfd);
+	ChListViewRepaint(mainWin, lv);
+	free(path);
+	path = (char*)malloc(strlen(subpath));
+	strcpy(path, subpath);
+	free(subpath);
+	FileAddressBarRepaint(addressbar);
+}
+
+
+void ManipuriClicked(ChWidget* wid, ChWindow* win) {
+	ChMessageBox* mb = ChCreateMessageBox(mainWin, "Manipuri", "Manipuri is the official language of Manipur !!", MSGBOX_TYPE_ONLYCLOSE, MSGBOX_ICON_SUCCESS);
+	ChMessageBoxShow(mb);
+}
+
+/*
+ * EnterClicked -- action handler for enter button
+ */
+void EnterClicked(ChWidget* wid, ChWindow* win) {
+	ChListItem *li = ChListViewGetSelectedItem(lv);
+
+	int len = strlen(path) - 1;
+	char *dirname = (char*)malloc(strlen(li->itemText) + len);
+	strcpy(dirname, path);
+	strcpy(dirname + len, li->itemText);
+	free(path);
+	path = (char*)malloc(strlen(dirname) + 1);
+	strcpy(path, dirname);
+
+	strcpy(path + (strlen(dirname) - 1), "/");
+	ChListViewClear(lv);
+
+	PrintParentDir(path);
+	/* bug : needs to sleep inorder to get
+	* the file descriptor for the desired path */
+	_KeProcessSleep(10);
+
+	int dirfd = _KeOpenDir(dirname);
+	XEDirectoryEntry* dirent = (XEDirectoryEntry*)malloc(sizeof(XEDirectoryEntry));
+	memset(dirent, 0, sizeof(XEDirectoryEntry));
+	while (1) {
+		if (dirent->index == -1)
+			break;
+		int code = _KeReadDir(dirfd, dirent);
+		if (code != -1) {
+			if (dirent->flags & FILE_DIRECTORY){
+				ChListItem*li = ChListViewAddItem(mainWin, lv, dirent->filename);
+				ChListViewSetListItemIcon(li, dirico);
+				li->ChListItemAction = DirListItemAction;
+			}
+			else{
+				ChListItem* fi = ChListViewAddItem(mainWin, lv, dirent->filename);
+				ChListViewSetListItemIcon(fi, docico);
+			}
+
+		}
+		memset(dirent->filename, 0, 32);
+	}
+	free(dirent);
+	_KeCloseFile(dirfd);
+	free(dirname);
+	ChListViewRepaint(mainWin, lv);
+	FileAddressBarRepaint(addressbar);
+}
 /*
 * main -- main entry
 */
 int main(int argc, char* argv[]){
 	app = ChitralekhaStartApp(argc, argv);
 	mainWin = ChCreateWindow(app, WINDOW_FLAG_MOVABLE, "Files", 100, 100, 660, 
-		400);
+		500);
 
-	ChWindowBroadcastIcon(app, "/file.bmp");
+	
 	win2 = NULL;
 
 	pm = NULL;
 
 	ChButton* backbut = ChCreateButton(10,34, 50, 35, "Back"); //mainWin->info->width / 2 - 100 / 2, mainWin->info->height / 2 - 75/2
 	ChWindowAddWidget(mainWin,(ChWidget*)backbut);
-	backbut->base.ChActionHandler = ButtonClicked;
+	backbut->base.ChActionHandler = BackbutClicked;
 
 	ChButton* Enterbut = ChCreateButton(60 + 10, 34, 50, 35, "Enter");
 	ChWindowAddWidget(mainWin, (ChWidget*)Enterbut);
+	Enterbut->base.ChActionHandler = EnterClicked;
 
+	addressbar = FileCreateAddressBar(130, 34, mainWin->info->width - 140, 35);
+	ChWindowAddWidget(mainWin, (ChWidget*)addressbar);
 
 	ChMenubar* mb = ChCreateMenubar(mainWin);
 
@@ -252,7 +400,7 @@ int main(int argc, char* argv[]){
 	cut->menu = edite;
 
 	ChScrollPane* sp = ChCreateScrollPane(mainWin, 10, 100, mainWin->info->width - 20, mainWin->info->height - 120);
-	ChListView* lv = ChCreateListView(10, 100, mainWin->info->width - 20, mainWin->info->height - 120);
+	lv = ChCreateListView(10, 100, mainWin->info->width - 20, mainWin->info->height - 120);
 	ChListViewSetScrollpane(lv, sp);
 	
 	int dirfd = _KeOpenDir("/");
@@ -301,6 +449,8 @@ int main(int argc, char* argv[]){
 	ChWindowAddWidget(mainWin, (ChWidget*)lv);
 
 	ChWindowPaint(mainWin);
+
+	ChWindowBroadcastIcon(app, "/file.bmp");
 
 	PostEvent e;
 	memset(&e, 0, sizeof(PostEvent));

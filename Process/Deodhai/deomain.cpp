@@ -222,6 +222,7 @@ void DeodhaiBroadcastMessage(PostEvent *e, Window* skippablewin){
 			continue;
 		if (win->flags & WINDOW_FLAG_BROADCAST_LISTENER){
 			e->to_id = win->ownerId;
+			_KePrint("Broadcasting msg to -> %d \r\n", win->ownerId);
 			_KeFileIoControl(postbox_fd, POSTBOX_PUT_EVENT, e);
 		}
 	}
@@ -1327,8 +1328,8 @@ int main(int argc, char* arv[]) {
 		surfaceBuffer[j * canv->canvasWidth + i] = GRAY; //0xFF938585;
 
 	DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
-	/*DrawWallpaper(canv, "/assam.jpg");
-	DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);*/
+	DrawWallpaper(canv, "/assam.jpg");
+	DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
 	ChCanvasScreenUpdate(canv, 0, 0, canv->canvasWidth, canv->canvasHeight);
 
 
@@ -1460,9 +1461,26 @@ int main(int argc, char* arv[]) {
 		/* broadcast icon message */
 		if (event.type == DEODHAI_MESSAGE_BROADCAST_ICON) {
 			_KePrint("Deodhai broadcast icon %s\r\n", event.charValue3);
-			event.type = DEODHAI_BROADCAST_ICON;
-			DeodhaiBroadcastMessage(&event, NULL);
-			_KeProcessSleep(10);
+			Window *skippable = NULL;
+			for (Window* win = rootWin; win != NULL; win = win->next){
+				if (win->ownerId == event.from_id){
+					skippable = win;
+					break;
+				}
+			}
+
+			for (Window* win = alwaysOnTop; win != NULL; win = win->next) {
+				if (win->ownerId == event.from_id){
+					skippable = win;
+					break;
+				}
+			}
+			PostEvent e;
+			memset(&e, 0, sizeof(PostEvent));
+			memcpy(&e, &event, sizeof(PostEvent));
+			e.type = DEODHAI_BROADCAST_ICON;
+			DeodhaiBroadcastMessage(&e, skippable);
+			//_KeProcessSleep(10);
 			memset(&event, 0, sizeof(PostEvent));
 		}
 

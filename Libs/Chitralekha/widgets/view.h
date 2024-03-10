@@ -108,5 +108,11 @@ XE_EXTERN XE_LIB void ChListViewClear(ChListView* lv);
 */
 XE_EXTERN XE_LIB void ChListViewRepaint(ChWindow* win, ChListView* lv);
 
+/*
+* ChListViewGetSelectedItem -- returns the current selected item
+* @param lv -- Pointer to ChListView
+*/
+XE_EXTERN XE_LIB ChListItem * ChListViewGetSelectedItem(ChListView* lv);
+
 
 #endif
