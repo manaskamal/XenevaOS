@@ -117,6 +117,22 @@ void ChListViewScrollEvent(ChWidget* wid, ChWindow* win, int scollVal, uint8_t t
 		ChWindowUpdate(win, lv->wid.x, lv->wid.y, lv->wid.w, lv->wid.h, 0, 1);
 	}
 }
+
+/*
+ * ChListViewDestroy -- destroy callback for list view widget
+ * @param wid -- Pointer to list view widget
+ * @param win -- Pointer to main window
+ */
+void ChListViewDestroy(ChWidget* wid, ChWindow* win){
+	ChListView* lv = (ChListView*)wid;
+	for (int i = 0; i < lv->itemList->pointer; i++) {
+		ChListItem* li = (ChListItem*)list_remove(lv->itemList, i);
+		free(li->itemText);
+		free(li);
+	}
+	free(lv);
+	_KePrint("ListView destroyed \r\n");
+}
 /*
  * ChCreateListView -- create a new list view widget
  * @param x -- x location
@@ -137,6 +153,7 @@ ChListView* ChCreateListView(int x, int y, int w, int h){
 	lv->wid.ChPaintHandler = ChDefaultListViewPainter;
 	lv->wid.ChMouseEvent = ChListViewMouseEvent;
 	lv->wid.ChScrollEvent = ChListViewScrollEvent;
+	lv->wid.ChDestroy = ChListViewDestroy;
 	lv->firstItemPlaced = false;
 
 	return lv;

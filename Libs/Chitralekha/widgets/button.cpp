@@ -90,6 +90,7 @@ void ChButtonDestroy(ChWidget *widget, ChWindow* win) {
 	ChButton* but = (ChButton*)widget;
 	free(but->title);
 	free(but);
+	_KePrint("Button destroyed \r\n");
 }
 
 /*

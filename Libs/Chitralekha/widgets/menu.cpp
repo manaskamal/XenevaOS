@@ -31,6 +31,12 @@
 #include "..\font.h"
 #include <sys\_keproc.h>
 
+/**
+ * TODO : Needs reimplementation of menu widgets
+ * it's buggy
+ *
+ */
+
 extern void ChPopupMenuPaint(ChPopupMenu* popup);
 
 void ChPopupMenuMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, int button){
@@ -41,15 +47,15 @@ void ChPopupMenuMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, int butto
 	for (int i = 0; i < pm->MenuItems->pointer; i++){
 		ChMenuItem* mi = (ChMenuItem*)list_get_at(pm->MenuItems, i);
 		mi->wid.hover = false;
-		if ((x >= (win->info->x + pm->backWindow->wid.x + pm->wid.x + mi->wid.x) &&
-			x <= (win->info->x + pm->backWindow->wid.x + pm->wid.x + mi->wid.x + mi->wid.w)) &&
-			(y >= (win->info->y + pm->backWindow->wid.y + pm->wid.y + mi->wid.y) &&
-			y <= (win->info->y + pm->backWindow->wid.y + pm->wid.y + mi->wid.y + mi->wid.h))){
+		if ((x >= (pm->backWindow->shwin->x + pm->wid.x + mi->wid.x) &&
+			x <= (pm->backWindow->shwin->x + pm->wid.x + mi->wid.x + mi->wid.w)) &&
+			(y >= (pm->backWindow->shwin->y + pm->wid.y + mi->wid.y) &&
+			y <= (pm->backWindow->shwin->y + pm->wid.y + mi->wid.y + mi->wid.h))){
 			mi->wid.hover = true;
 			if (pm->lastActiveMenu && pm->lastActiveMenu != pm){
 				if (!pm->lastActiveMenu->backWindow->hidden){
 					ChPopupWindowHide(pm->lastActiveMenu->backWindow);
-					_KeProcessSleep(20);
+					_KeProcessSleep(30);
 				}
 				pm->lastActiveMenu = NULL;
 			}
@@ -58,17 +64,17 @@ void ChPopupMenuMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, int butto
 					if (mi->menu->backWindow->hidden){
 						ChMenuShow(mi->menu, pm->x_loc + mi->wid.w + 2,pm->y_loc + mi->wid.y);
 						mi->menu->backWindow->hidden = false;
-						_KeProcessSleep(20);
+						_KeProcessSleep(30);
 						
 					}
 					else{
 						ChPopupWindowHide(mi->menu->backWindow);
-						_KeProcessSleep(20);
+						_KeProcessSleep(30);
 					}
 				}
 				else {
 					ChMenuShow(mi->menu, pm->x_loc + mi->wid.w + 2,pm->y_loc + mi->wid.y);
-					//_KeProcessSleep(50);
+					_KeProcessSleep(30);
 				}
 				pm->backWindow->shwin->popuped = true;
 				pm->lastActiveMenu = mi->menu;
@@ -87,8 +93,25 @@ void ChPopupMenuMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, int butto
 	if (_need_paint) {
 		ChPopupMenuPaint(pm);
 		ChPopupWindowUpdate(pm->backWindow, 0, 0, pm->wid.w, pm->wid.h);
-		//_KeProcessSleep(50);
+		_KeProcessSleep(30);
 	}
+}
+
+/*
+ * ChPopupMenuDestroy -- destroy handler for popup menu
+ * @param widget -- Pointer to popup menu widget
+ * @param win -- Pointer to main window
+ */
+void ChPopupMenuDestroy(ChWidget* widget, ChWindow* win) {
+	ChPopupMenu* pm = (ChPopupMenu*)widget;
+	for (int i = 0; i < pm->MenuItems->pointer; i++) {
+		ChMenuItem* mi = (ChMenuItem*)list_get_at(pm->MenuItems, i);
+		if (mi->wid.ChDestroy)
+			mi->wid.ChDestroy((ChWidget*)mi, win);
+	}
+	list_clear_all(pm->MenuItems);
+	free(pm);
+	_KePrint("Popup Menu Destroyed \r\n");
 }
 
 /*
@@ -101,9 +124,20 @@ ChPopupMenu* ChCreatePopupMenu(ChWindow* mainWin) {
 	pm->mainWindow = mainWin;
 	pm->wid.ChMouseEvent = ChPopupMenuMouseEvent;
 	pm->MenuItems = initialize_list();
+	pm->wid.ChDestroy = ChPopupMenuDestroy;
 	return pm;
 }
 
+
+void ChMenuItemDestroy(ChWidget* wid, ChWindow* win) {
+	ChMenuItem* mi = (ChMenuItem*)wid;
+	free(mi->title);
+	if (mi->menu){
+		if (mi->menu->wid.ChDestroy)
+			mi->menu->wid.ChDestroy((ChWidget*)mi->menu, win);
+	}
+	free(mi);
+}
 /*
  * ChCreateMenuItem -- create a new menu item
  * @param title -- title of the menu item
@@ -118,6 +152,7 @@ ChMenuItem* ChCreateMenuItem(char* title,ChPopupMenu* pm) {
 	strcpy(mi->title, title);
 	mi->menu = NULL;
 	list_add(pm->MenuItems, mi);
+	mi->wid.ChDestroy = ChMenuItemDestroy;
 	return mi;
 }
 

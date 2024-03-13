@@ -57,6 +57,10 @@
 #define DEODHAI_BROADCAST_ICON 172
 #define DEODHAI_BROADCAST_FOCUS_CHANGED 173
 
+#define HANDLE_TYPE_NORMAL_WINDOW 1
+#define HANDLE_TYPE_POPUP_WINDOW 2
+
+
 
 #pragma pack(push,1)
 typedef struct _rect_ {

@@ -291,6 +291,23 @@ XE_EXTERN XE_EXPORT ChWindow* ChGetWindowByHandle(ChWindow* mainWin,int handle) 
 }
 
 /*
+ * ChGetPopupWindowByHandle -- looks for popup window by its handle
+ * @param mainWin -- Pointer to main window
+ * @param handle -- Handle of the popup window
+ */
+XE_EXTERN XE_EXPORT ChPopupWindow* ChGetPopupWindowByHandle(ChWindow* mainWin, int handle){
+	ChPopupWindow* returnable = NULL;
+	for (int i = 0; i < mainWin->popup->pointer; i++) {
+		ChPopupWindow* pw = (ChPopupWindow*)list_get_at(mainWin->popup, i);
+		if (pw->handle == handle){
+			returnable = pw;
+			break;
+		}
+	}
+	return returnable;
+}
+
+/*
  * ChWindowHide -- hide the window
  * basically it sends command to deodhai
  * @param win -- Pointer to window structure
@@ -364,54 +381,56 @@ XE_EXTERN XE_EXPORT void ChWindowHandleMouse(ChWindow* win, int x, int y, int bu
 			}
 		}
 	}
-	bool _delivered = false;
-	/* for popup windows */
+
+	/* activity area */
 	if (y > win->info->y + 26 && y < (win->info->y + 26 + win->info->height - 26)) {
 		for (int i = 0; i < win->widgets->pointer; i++) {
 			ChWidget* widget = (ChWidget*)list_get_at(win->widgets, i);
-			if (widget->type & CHITRALEKHA_WIDGET_TYPE_POPUP && widget->visible == true) {
-				if (x >= win->info->x + widget->x  && x < (win->info->x + widget->x + widget->w) &&
-					(y >= win->info->y + widget->y && y < (win->info->y + widget->y + widget->h))) {
+			if (x > win->info->x + widget->x  && x < (win->info->x + widget->x + widget->w) &&
+				(y > win->info->y + widget->y && y < (win->info->y + widget->y + widget->h))) {
+				widget->hover = true;
+				widget->KillFocus = false;
+				if (widget->ChMouseEvent)
+					widget->ChMouseEvent(widget, win, x, y, button);
+			}
+			else {
+				if (widget->hover) {
+					widget->hover = false;
+					widget->KillFocus = true;
 					if (widget->ChMouseEvent)
 						widget->ChMouseEvent(widget, win, x, y, button);
-					_delivered = true;
 				}
 			}
 		}
 	}
 
-	/* no popup window received the mouse event */
-	if (!_delivered){
-		/* activity area */
-		if (y > win->info->y + 26 && y < (win->info->y + 26 + win->info->height - 26)) {
-			for (int i = 0; i < win->widgets->pointer; i++) {
-				ChWidget* widget = (ChWidget*)list_get_at(win->widgets, i);
-				if (x > win->info->x + widget->x  && x < (win->info->x + widget->x + widget->w) &&
-					(y > win->info->y + widget->y && y < (win->info->y + widget->y + widget->h))) {
-					widget->hover = true;
-					widget->KillFocus = false;
-					if (widget->ChMouseEvent)
-						widget->ChMouseEvent(widget, win, x, y, button);
-				}
-				else {
-					if (widget->hover) {
-						widget->hover = false;
-						widget->KillFocus = true;
-						if (widget->ChMouseEvent)
-							widget->ChMouseEvent(widget, win, x, y, button);
-					}
-				}
-			}
-		}
-	}
 
-	if (_delivered && button) {
+	/*if (button) {
 		ChMenuHide((ChPopupMenu*)win->currentPopupMenu);
 		_KeProcessSleep(20);
 		if (win->selectedMenuItem){
 			ChMenuItem* lmi = (ChMenuItem*)win->selectedMenuItem;
 			if (lmi->wid.ChActionHandler)
 				lmi->wid.ChActionHandler((ChWidget*)lmi, win);
+		}
+	}*/
+}
+
+/*
+ * ChPopupWindowHandleMouse -- Handle popup window's mouse event externally
+ * @param win -- Pointer to popup window
+ * @param mainWin -- Pointer to main Window
+ * @param x -- Mouse x coordinate
+ * @param y -- Mouse y coordinate
+ * @param button -- Mouse button state
+ */
+XE_EXTERN XE_EXPORT void ChPopupWindowHandleMouse(ChPopupWindow* win,ChWindow* mainWin,int x, int y, int button) {
+	for (int i = 0; i < win->widgets->pointer; i++){
+		ChWidget* pwid = (ChWidget*)list_get_at(win->widgets, i);
+		if (x >= (win->shwin->x + pwid->x) && x < (win->shwin->x + pwid->x +  pwid->w) &&
+			y >= (win->shwin->y + pwid->y) && y < (win->shwin->y + pwid->y + pwid->h)){
+			if (pwid->ChMouseEvent)
+				pwid->ChMouseEvent(pwid, mainWin, x, y, button);
 		}
 	}
 }
@@ -480,11 +499,16 @@ void ChFreeWindowResources(ChWindow *win) {
 		free(glbl_);
 	}
 	free(win->GlobalControls);
+	_KePrint("Freeing up widgets \r\n");
 	for (int i = 0; i < win->widgets->pointer; i++) {
-		ChWidget* wid = (ChWidget*)list_remove(win->widgets, i);
+		ChWidget* wid = (ChWidget*)list_get_at(win->widgets, i);
 		if (wid->ChDestroy)
 			wid->ChDestroy(wid, win);
 	}
+	_KePrint("Widgets cleared \r\n");
+	list_clear_all(win->widgets);
+
+	_KePrint("Window Resource cleared -> %d \r\n", win->widgets->pointer);
 	free(win->widgets);
 	ChDeAllocateBuffer(win->canv);
 	free(win->title);
@@ -518,17 +542,19 @@ XE_EXTERN XE_EXPORT void ChWindowCloseWindow(ChWindow* win){
 	_KeUnmapSharedMem(win->app->sharedWinkey);
 	_KeUnmapSharedMem(win->app->backbufkey);
 
+	_KePrint("Closing all popup windows \r\n");
 	/*
 	 * Close all popup window
 	 */
 	for (int i = 0; i < win->popup->pointer; i++) {
-		ChPopupWindow* pw = (ChPopupWindow*)list_remove(win->popup, i);
+		ChPopupWindow* pw = (ChPopupWindow*)list_get_at(win->popup, i);
 		/* deallocate all widgets */
 		for (int i = 0; i < pw->widgets->pointer; i++) {
 			ChWidget* wid = (ChWidget*)list_get_at(pw->widgets, i);
 			if (wid->ChDestroy)
 				wid->ChDestroy(wid, win);
 		}
+		list_clear_all(pw->widgets);
 		free(pw->widgets);
 		_KeUnmapSharedMem(pw->shwinKey);
 		_KeUnmapSharedMem(pw->buffWinKey);
@@ -536,7 +562,9 @@ XE_EXTERN XE_EXPORT void ChWindowCloseWindow(ChWindow* win){
 		free(pw->canv);
 		free(pw);
 	}
+	list_clear_all(win->popup);
 	free(win->popup);
+	_KePrint("All Popup Window closed \r\n");
 	/* send close window command to deodhai */
 	int handle = win->handle;
 	PostEvent e;
@@ -637,6 +665,7 @@ XE_EXTERN XE_EXPORT ChPopupWindow* ChCreatePopupWindow(ChitralekhaApp *app,ChWin
 		if (e.type == DEODHAI_REPLY_WINCREATED){
 			uint16_t shkey = e.dword;
 			uint32_t buffKey = e.dword2;
+			int handle = e.dword3;
 			if (buffKey < 100)
 				_KePrint("Chitralekha: buffer key problem \n");
 			uint16_t shid = _KeCreateSharedMem(shkey, 0, 0);
@@ -647,6 +676,7 @@ XE_EXTERN XE_EXPORT ChPopupWindow* ChCreatePopupWindow(ChitralekhaApp *app,ChWin
 			popup->buffer = (uint32_t*)backbuff;
 			popup->buffWinKey = buffKey;
 			popup->shwinKey = shkey;
+			popup->handle = handle;
 			memset(&e, 0, sizeof(PostEvent));
 			break;
 		}
@@ -655,7 +685,6 @@ XE_EXTERN XE_EXPORT ChPopupWindow* ChCreatePopupWindow(ChitralekhaApp *app,ChWin
 			_KePauseThread();
 	}
 	list_add(win->popup, popup);
-	list_add(win->widgets, popup);
 	return popup;
 }
 

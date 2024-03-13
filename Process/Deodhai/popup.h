@@ -59,6 +59,8 @@ typedef struct _PopupWin_ {
 	uint16_t shwinKey;
 	uint16_t buffWinKey;
 	uint32_t* shadowBuffers;
+	int handle;
+	bool hidden;
 	bool shadowUpdate;
 }PopupWindow;
 

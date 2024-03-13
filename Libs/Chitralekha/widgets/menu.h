@@ -35,6 +35,7 @@
 #include "window.h"
 #include "../widgets/list.h"
 
+
 #define DEFAULT_POPUP_MENU_WIDTH 100
 #define DEFAULT_POPUP_MENU_HEIGHT 15
 #define DEFAULT_MENU_ITEM_BUTTON_PADY 5
@@ -79,3 +80,4 @@ XE_EXTERN XE_EXPORT void ChMenuShow(ChPopupMenu* menu, int x, int y);
 XE_EXTERN XE_EXPORT void ChMenuHide(ChPopupMenu* menu);
 
 #endif
+

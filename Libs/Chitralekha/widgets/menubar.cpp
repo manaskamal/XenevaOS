@@ -40,13 +40,16 @@ extern void ChDefaultMenubarPainter(ChWidget* wid, ChWindow* win);
  */
 void ChMenubarDestroy(ChWidget* wid, ChWindow* win) {
 	ChMenubar* mb = (ChMenubar*)wid;
+	_KePrint("Destroying menubar \r\n");
 	for (int i = 0; i < mb->menubuttons->pointer; i++) {
 		ChMenuButton *mbut = (ChMenuButton*)list_get_at(mb->menubuttons, i);
 		if (mbut->wid.ChDestroy)
 			mbut->wid.ChDestroy((ChWidget*)mbut, win);
 	}
+	list_clear_all(mb->menubuttons);
 	free(mb->menubuttons);
 	free(mb);
+	_KePrint("Menubar destroyed \r\n");
 }
 
 /*
@@ -152,9 +155,9 @@ ChMenubar* ChCreateMenubar(ChWindow* win) {
 	mb->wid.y = 26; 
 	mb->wid.w = win->info->width - 1;
 	mb->wid.h = 26;
-	mb->wid.ChDestroy = ChMenubarDestroy;
 	mb->wid.ChMouseEvent = ChMenubarMouseEvent;
 	mb->wid.ChPaintHandler = ChDefaultMenubarPainter;
+	mb->wid.ChDestroy = ChMenubarDestroy;
 	mb->menubuttons = initialize_list();
 	mb->allpainted = false;
 	return mb;
@@ -166,7 +169,14 @@ ChMenubar* ChCreateMenubar(ChWindow* win) {
  */
 void ChMenuButtonDestroy(ChWidget* wid, ChWindow* win) {
 	ChMenuButton *mbut = (ChMenuButton*)wid;
+	_KePrint("Menubutton destroying \r\n");
+	/*if (mbut->popupMenu){
+		if (mbut->popupMenu->wid.ChDestroy)
+			mbut->popupMenu->wid.ChDestroy((ChWidget*)mbut->popupMenu, win);
+	}*/
+	_KePrint("Menubutton destroyed \r\n");
 	free(mbut->title);
+	free(mbut);
 }
 /*
  * ChCreateMenubutton -- create a new menubar button

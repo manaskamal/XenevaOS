@@ -105,3 +105,17 @@ void* list_remove(list_t* list, unsigned int index) {
 
 	return payload;
 }
+
+/*
+ * list_clear_all -- clear all nodes 
+ */
+void list_clear_all(list_t* list) {
+	dataentry *de = list->entry_current;
+	dataentry* current = de;
+	while (current) {
+		de = de->next;
+		free(current);
+		current = de;
+		list->pointer--;
+	}
+}

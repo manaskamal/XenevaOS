@@ -817,6 +817,7 @@ void ComposeFrame(ChCanvas *canvas) {
 
 				AddDirtyClip(popup_x - SHADOW_SIZE , popup_y - SHADOW_SIZE, shad_w, shad_h);
 				pw->shwin->dirty = 0;
+				pw->hidden = false;
 				_cursor_update_ = true;
 			}
 			if (pw->shwin->hide) {
@@ -828,6 +829,7 @@ void ComposeFrame(ChCanvas *canvas) {
 				pw->shwin->hide = false;
 				pw->shadowUpdate = true;
 				_cursor_update_ = true;
+				pw->hidden = true;
 				info->updateEntireWindow = 1;
 			}
 
@@ -1085,15 +1087,16 @@ void ComposeFrame(ChCanvas *canvas) {
  * @param y -- Mouse y location
  * @param button -- Mouse button state
  */
-void DeodhaiSendMouseEvent(Window* win, int x, int y, int button){
+void DeodhaiSendMouseEvent(int handle,int ownerId,uint8_t handleType, int x, int y, int button){
 	PostEvent e;
 	memset(&e, 0, sizeof(PostEvent));
 	e.type = DEODHAI_REPLY_MOUSE_EVENT;
 	e.dword = x;
 	e.dword2 = y;
 	e.dword3 = button;
-	e.dword4 = win->handle;
-	e.to_id = win->ownerId;
+	e.dword4 = handle;
+	e.dword5 = handleType;
+	e.to_id = ownerId;
 	e.from_id = POSTBOX_ROOT_ID;
 	_KeFileIoControl(postbox_fd, POSTBOX_PUT_EVENT, &e);
 }
@@ -1163,8 +1166,22 @@ void DeodhaiBroadcastMouse(int mouse_x, int mouse_y, int button) {
 	}
 
 broadcast:
-	if (mouseWin)
-		DeodhaiSendMouseEvent(mouseWin, mouse_x, mouse_y, button);
+	if (mouseWin){
+		int handle = mouseWin->handle;
+		uint8_t handleType = HANDLE_TYPE_NORMAL_WINDOW;
+		for (int j = 0; j < mouseWin->popupList->pointer; j++) {
+			PopupWindow* pw = (PopupWindow*)list_get_at(mouseWin->popupList, j);
+			if (pw->hidden)
+				continue;
+			if (mouse_x >= pw->shwin->x && (mouse_x < (pw->shwin->x + pw->shwin->w)) &&
+				mouse_y >= pw->shwin->y && (mouse_y < (pw->shwin->y + pw->shwin->h))){
+				handle = pw->handle;
+				handleType = HANDLE_TYPE_POPUP_WINDOW;
+				break;
+			}
+		}
+		DeodhaiSendMouseEvent(handle,mouseWin->ownerId, handleType,mouse_x, mouse_y, button);
+	}
 }
 
 
@@ -1206,9 +1223,11 @@ void DeodhaiCloseWindow(Window* win) {
 	/* iterate all popup window and close them */
 	for (int i = 0; i < win->popupList->pointer; i++){
 		//close all
-		PopupWindow* popup = (PopupWindow*)list_remove(win->popupList, i);
+		PopupWindow* popup = (PopupWindow*)list_get_at(win->popupList, i);
 		PopupWindowDestroy(popup);
 	}
+
+	list_clear_all(win->popupList);
 
 	free(win->popupList);
 	_KeUnmapSharedMem(win->shWinKey);
@@ -1633,7 +1652,7 @@ int main(int argc, char* arv[]) {
 				e.type = DEODHAI_REPLY_WINCREATED;
 				e.dword = popup->shwinKey;
 				e.dword2 = popup->buffWinKey;
-				e.dword3 = 0;
+				e.dword3 = popup->handle;
 				e.to_id = event.from_id;
 				_KeFileIoControl(postbox_fd, POSTBOX_PUT_EVENT, &e);
 			}

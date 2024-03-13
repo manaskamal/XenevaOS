@@ -187,6 +187,13 @@ void ChDefaultScrollPaneMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, i
 
 }
 
+
+void ChScrollpaneDestroy(ChWidget* wid, ChWindow* win) {
+	ChScrollPane* sp = (ChScrollPane*)wid;
+	free(sp);
+	_KePrint("Scrollpane destroyed \r\n");
+}
+
 /*
  * ChCreateScrollPane -- Create a new scroll pane
  * @param win -- Pointer to main Window
@@ -200,6 +207,7 @@ ChScrollPane* ChCreateScrollPane(ChWindow* win,int x, int y, int width, int heig
 	memset(sp, 0, sizeof(ChScrollPane));
 	sp->wid.ChPaintHandler = ChDefaultScrollPanePainter;
 	sp->wid.ChMouseEvent = ChDefaultScrollPaneMouseEvent;
+	sp->wid.ChDestroy = ChScrollpaneDestroy;
 	sp->wid.x = x;
 	sp->wid.y = y;
 	sp->wid.w = width;

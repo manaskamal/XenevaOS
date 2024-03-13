@@ -58,6 +58,7 @@ XE_EXTERN{
 	XE_EXPORT void list_add(list_t* list, void* data);
 	XE_EXPORT void* list_remove(list_t* list, unsigned int);
 	XE_EXPORT void * list_get_at(list_t* list, unsigned int index);
+	XE_EXPORT void list_clear_all(list_t* list);
 
 #ifdef __cplusplus
 }

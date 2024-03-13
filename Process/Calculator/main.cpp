@@ -466,22 +466,6 @@ int main(int argc, char* argv[]){
 
 	dispFont = ChInitialiseFont(CALIBRI);
 
-	/* Build Menus */
-	ChMenubar* mainMenuBar = ChCreateMenubar(mainWin);
-	ChMenuButton* fileMb = ChCreateMenubutton(mainMenuBar, "File");
-	ChMenuButton* helpMb = ChCreateMenubutton(mainMenuBar, "Help");
-	ChMenubarAddButton(mainMenuBar, fileMb);
-	ChMenubarAddButton(mainMenuBar, helpMb);
-	ChWindowAddWidget(mainWin, (ChWidget*)mainMenuBar);
-
-	ChPopupMenu* fileMenu = ChCreatePopupMenu(mainWin);
-	ChMenuItem* exitmi = ChCreateMenuItem("Exit", fileMenu);
-	ChMenuButtonAddMenu(fileMb, fileMenu);
-
-	ChPopupMenu* helpMenu = ChCreatePopupMenu(mainWin);
-	ChMenuItem* aboutmi = ChCreateMenuItem("About", helpMenu);
-	aboutmi->wid.ChActionHandler = CalculatorAboutBox;
-	ChMenuButtonAddMenu(helpMb, helpMenu);
 
 	mainDisp = CalcCreateDisplay(10,40, mainWin->info->width - 10*2 - CHITRALEKHA_WINDOW_DEFAULT_PAD_X, 75);
 	

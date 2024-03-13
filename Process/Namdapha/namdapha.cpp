@@ -137,8 +137,8 @@ void NamdaphaGoButtonAction(NamdaphaButton* button, ChWindow* win) {
 }
 
 void NamdaphaPaint(ChWindow* win) {
-	//ChDrawRect(win->canv, 0, 0, win->info->width, win->info->height, NAMDAPHA_COLOR);
-	ChColorDrawHorizontalGradient(win->canv, 0, 0,win->info->width, win->info->height, NAMDAPHA_COLOR, NAMDAPHA_COLOR_LIGHT);
+	ChDrawRect(win->canv, 0, 0, win->info->width, win->info->height, NAMDAPHA_COLOR);
+	//ChColorDrawHorizontalGradient(win->canv, 0, 0,win->info->width, win->info->height, NAMDAPHA_COLOR, NAMDAPHA_COLOR_LIGHT);
 	for (int i = 0; i < button_list->pointer; i++){
 		NamdaphaButton* button = (NamdaphaButton*)list_get_at(button_list, i);
 		if (button->drawNamdaphaButton)

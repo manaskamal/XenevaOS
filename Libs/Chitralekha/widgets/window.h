@@ -64,6 +64,9 @@
 #define CHITRALEKHA_WIDGET_SCROLL_HORIZONTAL 0
 #define CHITRALEKHA_WIDGET_SCROLL_VERTICAL 1
 
+#define WINDOW_HANDLE_TYPE_NORMAL 1
+#define WINDOW_HANDLE_TYPE_POPUP 2
+
 #pragma pack(push,1)
 	typedef struct _ChSharedWin_ {
 		ChRect rect[256];
@@ -162,6 +165,7 @@
 		uint16_t shwinKey;
 		uint16_t buffWinKey;
 		list_t *widgets;
+		int handle;
 		ChCanvas* canv;
 		bool hidden;
 		void(*ChPopupWindowPaint)(struct _popup_win_ *pwin, ChWindow* win);
@@ -270,6 +274,23 @@
 	* @param handle -- Handle of the window
 	*/
 	XE_LIB ChWindow* ChGetWindowByHandle(ChWindow* mainWin, int handle);
+
+	/*
+	* ChGetPopupWindowByHandle -- looks for popup window by its handle
+	* @param mainWin -- Pointer to main window
+	* @param handle -- Handle of the popup window
+	*/
+    XE_LIB ChPopupWindow* ChGetPopupWindowByHandle(ChWindow* mainWin, int handle);
+
+	/*
+	* ChPopupWindowHandleMouse -- Handle popup window's mouse event externally
+	* @param win -- Pointer to popup window
+	* @param mainWin -- Pointer to main Window
+	* @param x -- Mouse x coordinate
+	* @param y -- Mouse y coordinate
+	* @param button -- Mouse button state
+	*/
+	XE_LIB void ChPopupWindowHandleMouse(ChPopupWindow* win, ChWindow* mainWin, int x, int y, int button);
 
 	/*
 	* ChWindowSetFlags -- set window flags

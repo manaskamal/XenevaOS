@@ -84,6 +84,9 @@ void FileAddressBarRepaint(FileAddressBar* bar) {
 	ChWindowUpdate(mainWin, bar->base.x, bar->base.y, bar->base.w, bar->base.h,0,1);
 }
 
+void FileAddressBarDestroy(ChWidget* wid, ChWindow* win) {
+
+}
 FileAddressBar * FileCreateAddressBar(int x, int y, int w, int h) {
 	FileAddressBar *addrbar = (FileAddressBar*)malloc(sizeof(FileAddressBar));
 	memset(addrbar, 0, sizeof(FileAddressBar));
@@ -93,6 +96,7 @@ FileAddressBar * FileCreateAddressBar(int x, int y, int w, int h) {
 	addrbar->base.h = h;
 	addrbar->base.ChMouseEvent = FileAddressBarMouseEvent;
 	addrbar->base.ChPaintHandler = FileAddressBarPaintHandler;
+	addrbar->base.ChDestroy = FileAddressBarDestroy;
 	return addrbar;
 }
 /*
@@ -104,8 +108,14 @@ void WindowHandleMessage(PostEvent *e) {
 	/* handle mouse event from deodhai */
 	case DEODHAI_REPLY_MOUSE_EVENT:{
 									   int handle = e->dword4;
-									   ChWindow* mouseWin = ChGetWindowByHandle(mainWin,handle);
-									   ChWindowHandleMouse(mouseWin, e->dword, e->dword2, e->dword3);
+									   if (e->dword5 == WINDOW_HANDLE_TYPE_NORMAL){
+										   ChWindow* mouseWin = ChGetWindowByHandle(mainWin, handle);
+										   ChWindowHandleMouse(mouseWin, e->dword, e->dword2, e->dword3);
+									   }
+									   else if (e->dword5 == WINDOW_HANDLE_TYPE_POPUP) {
+										   ChPopupWindow* pw = ChGetPopupWindowByHandle(mainWin, handle);
+										   ChPopupWindowHandleMouse(pw, mainWin, e->dword, e->dword2, e->dword3);
+									   }
 									   memset(e, 0, sizeof(PostEvent));
 									   break;
 	}
@@ -364,7 +374,6 @@ int main(int argc, char* argv[]){
 	ChMenubarAddButton(mb, view);
 	ChMenuButton *help = ChCreateMenubutton(mb, "Help");
 	ChMenubarAddButton(mb, help);
-	ChWindowAddWidget(mainWin, (ChWidget*)mb);
 
 	pm = ChCreatePopupMenu(mainWin);
 	ChMenuItem* item = ChCreateMenuItem("NorthEast", pm);
@@ -404,7 +413,13 @@ int main(int argc, char* argv[]){
 	ChScrollPane* sp = ChCreateScrollPane(mainWin, 10, 100, mainWin->info->width - 20, mainWin->info->height - 120);
 	lv = ChCreateListView(10, 100, mainWin->info->width - 20, mainWin->info->height - 120);
 	ChListViewSetScrollpane(lv, sp);
+
+
+	ChWindowAddWidget(mainWin, (ChWidget*)mb);
+	ChWindowAddWidget(mainWin, (ChWidget*)lv);
+	ChWindowAddWidget(mainWin, (ChWidget*)sp);
 	
+
 	int dirfd = _KeOpenDir("/");
 	XEDirectoryEntry* dirent = (XEDirectoryEntry*)malloc(sizeof(XEDirectoryEntry));
 	memset(dirent, 0, sizeof(XEDirectoryEntry));
@@ -446,9 +461,6 @@ int main(int argc, char* argv[]){
 
 
 	//_KeCloseFile(dirfd);
-
-	ChWindowAddWidget(mainWin, (ChWidget*)sp);
-	ChWindowAddWidget(mainWin, (ChWidget*)lv);
 
 	ChWindowPaint(mainWin);
 

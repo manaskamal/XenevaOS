@@ -81,9 +81,9 @@ void ChPopupMenuPaint(ChPopupMenu* popup){
 		if (mi->wid.y == 0)
 			mi->wid.y = menu_item_y;
 		if (mi->wid.hover) {
-			ChColorDrawHorizontalGradient(popup->backWindow->canv, 
-				0, mi->wid.y, popup->wid.w, DEFAULT_MENU_ITEM_HEIGHT, 0xFF658096, 0xFF8CA2B4);
-		//	ChDrawRect(popup->backWindow->canv, 0, menu_item_y, popup->wid.w, DEFAULT_MENU_ITEM_HEIGHT, GREEN);
+			/*ChColorDrawHorizontalGradient(popup->backWindow->canv, 
+				0, mi->wid.y, popup->wid.w, DEFAULT_MENU_ITEM_HEIGHT, 0xFF658096, 0xFF8CA2B4);*/
+			ChDrawRect(popup->backWindow->canv, 0, menu_item_y, popup->wid.w, DEFAULT_MENU_ITEM_HEIGHT, 0xFF8CA2B4);
 		}
 	/*	ChDrawRect(popup->backWindow->canv, 0, menu_item_y, popup->wid.w, DEFAULT_MENU_ITEM_HEIGHT, GREEN);*/
 		ChFontDrawText(popup->backWindow->canv, popup->mainWindow->app->baseFont, mi->title, 10, menu_item_y +

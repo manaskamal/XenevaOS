@@ -1,8 +1,8 @@
-﻿Build started 10-03-2024 আবেলি 3:31:54.
+﻿Build started 13-03-2024 ৰাতিপু 10:39:05.
      1>Project "E:\Xeneva Project\Aurora\Libs\Chitralekha\Chitralekha.vcxproj" on node 2 (Rebuild target(s)).
      1>_NASM:
          _fastcpy.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmpbb9f086cd90e455f9c0c7252521ff57a.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp072a8d8d03614282bc1980c663dae5f2.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\_fastcpy.obj"  "E:\Xeneva Project\Aurora\Libs\Chitralekha\_fastcpy.asm"
        ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /I"E:\os_dev\freetype2-master\freetype2-master\include" /Zi /nologo /W3 /WX- /sdl- /Od /D ARCH_X64 /D YES_DYNAMIC /D DYNAMIC_EXPORTER /D _USE_FREETYPE /D _WINDLL /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt boxblur.cpp chitralekha.cpp color.cpp draw.cpp font.cpp keycode.cpp ttf.cpp widgets\base.cpp widgets\button.cpp widgets\defaultmenu.cpp widgets\defaultscrollbar.cpp widgets\defaultviews.cpp widgets\defaultwindow.cpp widgets\icon.cpp widgets\list.cpp widgets\menu.cpp widgets\menubar.cpp widgets\msgbox.cpp widgets\scrollpane.cpp widgets\view.cpp widgets\window.cpp
@@ -11,44 +11,45 @@
          window.cpp
      1>widgets\window.cpp(161): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
      1>widgets\window.cpp(279): warning C4018: '<' : signed/unsigned mismatch
-     1>widgets\window.cpp(347): warning C4018: '<' : signed/unsigned mismatch
-     1>widgets\window.cpp(369): warning C4018: '<' : signed/unsigned mismatch
-     1>widgets\window.cpp(370): warning C4018: '<' : signed/unsigned mismatch
-     1>widgets\window.cpp(372): warning C4805: '==' : unsafe mix of type 'char' and type 'bool' in operation
+     1>widgets\window.cpp(300): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\window.cpp(364): warning C4018: '<' : signed/unsigned mismatch
      1>widgets\window.cpp(386): warning C4018: '<' : signed/unsigned mismatch
      1>widgets\window.cpp(387): warning C4018: '<' : signed/unsigned mismatch
-     1>widgets\window.cpp(478): warning C4018: '<' : signed/unsigned mismatch
-     1>widgets\window.cpp(483): warning C4018: '<' : signed/unsigned mismatch
-     1>widgets\window.cpp(505): warning C4018: '<' : signed/unsigned mismatch
-     1>widgets\window.cpp(524): warning C4018: '<' : signed/unsigned mismatch
-     1>widgets\window.cpp(527): warning C4018: '<' : signed/unsigned mismatch
-     1>widgets\window.cpp(589): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\window.cpp(428): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\window.cpp(497): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\window.cpp(503): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\window.cpp(529): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\window.cpp(549): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\window.cpp(552): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\window.cpp(617): warning C4018: '<' : signed/unsigned mismatch
          view.cpp
      1>widgets\view.cpp(74): warning C4018: '<' : signed/unsigned mismatch
-     1>widgets\view.cpp(172): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
-     1>widgets\view.cpp(176): warning C4018: '<' : signed/unsigned mismatch
-     1>widgets\view.cpp(223): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\view.cpp(128): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\view.cpp(189): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
+     1>widgets\view.cpp(193): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\view.cpp(240): warning C4018: '<' : signed/unsigned mismatch
          scrollpane.cpp
-     1>widgets\scrollpane.cpp(226): warning C4244: '=' : conversion from 'double' to 'int', possible loss of data
-     1>widgets\scrollpane.cpp(250): warning C4018: '<' : signed/unsigned mismatch
-     1>widgets\scrollpane.cpp(259): warning C4244: '=' : conversion from 'double' to 'int', possible loss of data
-     1>widgets\scrollpane.cpp(260): warning C4244: '=' : conversion from 'double' to 'int', possible loss of data
+     1>widgets\scrollpane.cpp(234): warning C4244: '=' : conversion from 'double' to 'int', possible loss of data
+     1>widgets\scrollpane.cpp(258): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\scrollpane.cpp(267): warning C4244: '=' : conversion from 'double' to 'int', possible loss of data
+     1>widgets\scrollpane.cpp(268): warning C4244: '=' : conversion from 'double' to 'int', possible loss of data
          msgbox.cpp
      1>widgets\msgbox.cpp(123): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
      1>widgets\msgbox.cpp(141): warning C4018: '<' : signed/unsigned mismatch
          menubar.cpp
-     1>widgets\menubar.cpp(43): warning C4018: '<' : signed/unsigned mismatch
-     1>widgets\menubar.cpp(64): warning C4018: '<' : signed/unsigned mismatch
-     1>widgets\menubar.cpp(83): warning C4018: '<' : signed/unsigned mismatch
-     1>widgets\menubar.cpp(117): warning C4018: '<' : signed/unsigned mismatch
-     1>widgets\menubar.cpp(177): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
-     1>widgets\menubar.cpp(187): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
+     1>widgets\menubar.cpp(44): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\menubar.cpp(67): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\menubar.cpp(86): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\menubar.cpp(120): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\menubar.cpp(187): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
+     1>widgets\menubar.cpp(197): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
          menu.cpp
-     1>widgets\menu.cpp(41): warning C4018: '<' : signed/unsigned mismatch
-     1>widgets\menu.cpp(117): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
-     1>widgets\menu.cpp(132): warning C4018: '<' : signed/unsigned mismatch
-     1>widgets\menu.cpp(154): warning C4018: '<' : signed/unsigned mismatch
-     1>widgets\menu.cpp(192): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\menu.cpp(47): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\menu.cpp(107): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\menu.cpp(151): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
+     1>widgets\menu.cpp(167): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\menu.cpp(189): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\menu.cpp(227): warning C4018: '<' : signed/unsigned mismatch
          list.cpp
          icon.cpp
      1>widgets\icon.cpp(65): warning C4267: '=' : conversion from 'size_t' to 'int', possible loss of data
@@ -70,7 +71,7 @@
      1>widgets\defaultmenu.cpp(50): warning C4018: '<' : signed/unsigned mismatch
      1>widgets\defaultmenu.cpp(79): warning C4018: '<' : signed/unsigned mismatch
          button.cpp
-     1>widgets\button.cpp(140): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
+     1>widgets\button.cpp(141): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
          base.cpp
          ttf.cpp
      1>e:\xeneva project\aurora\libs\chitralekha\ttf.h(82): warning C4161: #pragma pack(pop...) : more pops than pushes
@@ -153,4 +154,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:02.30
+Time Elapsed 00:00:04.14

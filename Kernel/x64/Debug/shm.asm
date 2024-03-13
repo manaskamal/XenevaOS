@@ -706,19 +706,18 @@ $LN1@AuSHMUnmap:
 	jmp	$LN5@AuSHMUnmap
 $LN4@AuSHMUnmap:
 
-; 383  : 
-; 384  : 	kfree(proc->shmmaps);
+; 383  : 	kfree(proc->shmmaps);
 
 	mov	rax, QWORD PTR proc$[rsp]
 	mov	rcx, QWORD PTR [rax+1080]
 	call	kfree
 
-; 385  : 	AuReleaseSpinlock(shmlock);
+; 384  : 	AuReleaseSpinlock(shmlock);
 
 	mov	rcx, QWORD PTR ?shmlock@@3PEAU_spinlock_@@EA ; shmlock
 	call	AuReleaseSpinlock
 
-; 386  : }
+; 385  : }
 
 	add	rsp, 72					; 00000048H
 	ret	0

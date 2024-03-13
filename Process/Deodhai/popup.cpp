@@ -87,7 +87,7 @@ PopupWindow* CreatePopupWindow(int x, int y, int w, int h, uint16_t owner_id) {
 	popup->shwinKey = server_win_key;
 	popup->buffWinKey = buffer_key;
 	popup->shadowUpdate = true;
-
+	popup->handle = DeodhaiAllocateNewHandle();
 	popup->shadowBuffers = (uint32_t*)_KeMemMap(NULL, (popup->shwin->w + SHADOW_SIZE * 2) * (popup->shwin->h + SHADOW_SIZE * 2) * 4, 0, 0, MEMMAP_NO_FILEDESC, 0);
 	for (int i = 0; i < popup->shwin->w + SHADOW_SIZE * 2; i++) {
 		for (int j = 0; j < popup->shwin->h + SHADOW_SIZE * 2; j++) {

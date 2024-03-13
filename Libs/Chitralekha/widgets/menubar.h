@@ -42,13 +42,14 @@
 XE_EXTERN{
 #endif
 	
-
+#pragma pack(push,1)
 	typedef struct _menubar_ {
 		ChWidget wid;
 		list_t* menubuttons;
 		bool allpainted;
 		ChPopupMenu* lastActiveMenu;
 	}ChMenubar;
+#pragma pack(pop)
 
 	typedef struct _menubutton_ {
 		ChWidget wid;

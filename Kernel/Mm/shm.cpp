@@ -380,7 +380,6 @@ void AuSHMUnmapAll(AuProcess* proc) {
 		SeTextOut("Unmapping shm -> %x \r\n", mapping->start_addr);
 		kfree(mapping);
 	}
-
 	kfree(proc->shmmaps);
 	AuReleaseSpinlock(shmlock);
 }
