@@ -137,8 +137,8 @@ void NamdaphaGoButtonAction(NamdaphaButton* button, ChWindow* win) {
 }
 
 void NamdaphaPaint(ChWindow* win) {
-	ChDrawRect(win->canv, 0, 0, win->info->width, win->info->height, NAMDAPHA_COLOR);
-	//ChColorDrawHorizontalGradient(win->canv, 0, 0,win->info->width, win->info->height, NAMDAPHA_COLOR, NAMDAPHA_COLOR_LIGHT);
+	//ChDrawRect(win->canv, 0, 0, win->info->width, win->info->height, NAMDAPHA_COLOR);
+	ChColorDrawHorizontalGradient(win->canv, 0, 0,win->info->width, win->info->height, NAMDAPHA_COLOR, NAMDAPHA_COLOR_LIGHT);
 	for (int i = 0; i < button_list->pointer; i++){
 		NamdaphaButton* button = (NamdaphaButton*)list_get_at(button_list, i);
 		if (button->drawNamdaphaButton)
@@ -217,7 +217,7 @@ void NamdaphaHandleMessage(PostEvent *e) {
 	}
 		/* handle new window_created message */
 	case DEODHAI_BROADCAST_WINCREATED:{
-									
+										  _KePrint("[Namdapha]:Win Created message received \r\n");
 									for (int i = 0; i < button_list->pointer; i++) {
 										NamdaphaButton* nb = (NamdaphaButton*)list_get_at(button_list, i);
 										nb->focused = false;
@@ -230,6 +230,7 @@ void NamdaphaHandleMessage(PostEvent *e) {
 									list_add(button_list, nbutton);
 									NamdaphaPaint(win);
 									nbutton_y_loc += nbutton->h + NAMDAPHA_BUTTON_YPAD;
+									_KePrint("[Namdapha]: Win button created \r\n");
 									memset(e, 0, sizeof(PostEvent));
 									break;
 	}
@@ -315,10 +316,13 @@ void NamdaphaHandleMessage(PostEvent *e) {
 													 destroyable->nmbuttoninfo->usageCount -= 1;
 												 }
 												 else {
-													 _KeMemUnmap(destroyable->nmbuttoninfo->fileBuffer, destroyable->nmbuttoninfo->fileSize);
-													 free(destroyable->title);
-													 free(destroyable->nmbuttoninfo);
-													 destroyable->nmbuttoninfo = NULL;
+													 _KePrint("[Namdpha]: Button info destroyed -> %s \r\n", destroyable->nmbuttoninfo->filename);
+													 if (destroyable->nmbuttoninfo != defaultappico){
+														 _KeMemUnmap(destroyable->nmbuttoninfo->fileBuffer, destroyable->nmbuttoninfo->fileSize);
+														 free(destroyable->nmbuttoninfo->filename);
+														 free(destroyable->nmbuttoninfo);
+														 destroyable->nmbuttoninfo = NULL;
+													 }
 												 }
 												 free(destroyable->title);
 												 free(destroyable);

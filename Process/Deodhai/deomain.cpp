@@ -781,6 +781,7 @@ void ComposeFrame(ChCanvas *canvas) {
 		for (int w = 0; w < win->popupList->pointer; w++) {
 			PopupWindow* pw = (PopupWindow*)list_get_at(win->popupList, w);
 			if (pw->shwin->dirty) {
+				_KePrint("Drawing \r\n");
 				int popup_x = pw->shwin->x;
 				int popup_y = pw->shwin->y;
 				int popup_w = pw->shwin->w;

@@ -103,6 +103,7 @@ void ChPopupMenuMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, int butto
  * @param win -- Pointer to main window
  */
 void ChPopupMenuDestroy(ChWidget* widget, ChWindow* win) {
+	_KePrint("Popup menu destroying \r\n");
 	ChPopupMenu* pm = (ChPopupMenu*)widget;
 	for (int i = 0; i < pm->MenuItems->pointer; i++) {
 		ChMenuItem* mi = (ChMenuItem*)list_get_at(pm->MenuItems, i);
@@ -131,6 +132,7 @@ ChPopupMenu* ChCreatePopupMenu(ChWindow* mainWin) {
 
 void ChMenuItemDestroy(ChWidget* wid, ChWindow* win) {
 	ChMenuItem* mi = (ChMenuItem*)wid;
+	_KePrint("MenuItem destroying %s\r\n", mi->title);
 	free(mi->title);
 	if (mi->menu){
 		if (mi->menu->wid.ChDestroy)
@@ -201,7 +203,7 @@ void ChMenuShow(ChPopupMenu* menu, int x, int y) {
 		ChPopupWindowUpdateLocation(menu->backWindow, menu->mainWindow, x + 5, y);
 		ChPopupWindowUpdate(menu->backWindow, 0, 0, menu->wid.w, menu->wid.h);
 		menu->backWindow->wid.visible = true;
-		_KeProcessSleep(50);
+		_KeProcessSleep(30);
 	}
 	else {
 		ChMenuRecalculateDimensions(menu);
@@ -213,7 +215,7 @@ void ChMenuShow(ChPopupMenu* menu, int x, int y) {
 		//ChPopupWindowShow(menu->backWindow, menu->mainWindow);
 		ChPopupWindowUpdate(menu->backWindow, 0, 0, menu->wid.w, menu->wid.h);
 		menu->backWindow->wid.visible = true;
-		_KeProcessSleep(50);
+		_KeProcessSleep(30);
 	}
 }
 
@@ -234,7 +236,7 @@ void ChMenuHide(ChPopupMenu* menu) {
 	if (menu->backWindow) {
 		if (!menu->backWindow->hidden) {
 			ChPopupWindowHide(menu->backWindow);
-			_KeProcessSleep(50);
+			_KeProcessSleep(30);
 		}
 	}
 }

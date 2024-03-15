@@ -433,6 +433,16 @@ XE_EXTERN XE_EXPORT void ChPopupWindowHandleMouse(ChPopupWindow* win,ChWindow* m
 				pwid->ChMouseEvent(pwid, mainWin, x, y, button);
 		}
 	}
+
+	if (button) {
+		ChMenuHide((ChPopupMenu*)mainWin->currentPopupMenu);
+		_KeProcessSleep(20);
+		if (mainWin->selectedMenuItem){
+			ChMenuItem* lmi = (ChMenuItem*)mainWin->selectedMenuItem;
+			if (lmi->wid.ChActionHandler)
+				lmi->wid.ChActionHandler((ChWidget*)lmi, mainWin);
+		}
+	}
 }
 
 
@@ -542,18 +552,12 @@ XE_EXTERN XE_EXPORT void ChWindowCloseWindow(ChWindow* win){
 	_KeUnmapSharedMem(win->app->sharedWinkey);
 	_KeUnmapSharedMem(win->app->backbufkey);
 
-	_KePrint("Closing all popup windows \r\n");
 	/*
 	 * Close all popup window
 	 */
 	for (int i = 0; i < win->popup->pointer; i++) {
 		ChPopupWindow* pw = (ChPopupWindow*)list_get_at(win->popup, i);
-		/* deallocate all widgets */
-		for (int i = 0; i < pw->widgets->pointer; i++) {
-			ChWidget* wid = (ChWidget*)list_get_at(pw->widgets, i);
-			if (wid->ChDestroy)
-				wid->ChDestroy(wid, win);
-		}
+		
 		list_clear_all(pw->widgets);
 		free(pw->widgets);
 		_KeUnmapSharedMem(pw->shwinKey);
@@ -565,6 +569,10 @@ XE_EXTERN XE_EXPORT void ChWindowCloseWindow(ChWindow* win){
 	list_clear_all(win->popup);
 	free(win->popup);
 	_KePrint("All Popup Window closed \r\n");
+
+	/* free up window resources */
+	ChFreeWindowResources(win);
+
 	/* send close window command to deodhai */
 	int handle = win->handle;
 	PostEvent e;
@@ -585,8 +593,7 @@ XE_EXTERN XE_EXPORT void ChWindowCloseWindow(ChWindow* win){
 			break;
 		}
 	}
-	/* free up window resources */
-	ChFreeWindowResources(win);
+	
 	free(win->app);
 	free(win);
 
@@ -645,7 +652,6 @@ XE_EXTERN XE_EXPORT ChPopupWindow* ChCreatePopupWindow(ChitralekhaApp *app,ChWin
 	popup->wid.visible = false;
 	popup->wid.ChMouseEvent = ChPopupMouseEvent;
 	popup->ChPopupWindowPaint = ChDefaultPopupWinPaint;
-	popup->widgets = initialize_list();
 	popup->canv = ChCreateCanvas(w, h);
 	ChAllocateBuffer(popup->canv);
 	PostEvent e;
@@ -685,6 +691,7 @@ XE_EXTERN XE_EXPORT ChPopupWindow* ChCreatePopupWindow(ChitralekhaApp *app,ChWin
 			_KePauseThread();
 	}
 	list_add(win->popup, popup);
+	popup->widgets = initialize_list();
 	return popup;
 }
 

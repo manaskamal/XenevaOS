@@ -285,8 +285,8 @@ void BackbutClicked(ChWidget* wid, ChWindow* win) {
 }
 
 
-void ManipuriClicked(ChWidget* wid, ChWindow* win) {
-	ChMessageBox* mb = ChCreateMessageBox(mainWin, "Manipuri", "Manipuri is the official language of Manipur !!", MSGBOX_TYPE_ONLYCLOSE, MSGBOX_ICON_SUCCESS);
+void AboutClicked(ChWidget* wid, ChWindow* win) {
+	ChMessageBox* mb = ChCreateMessageBox(mainWin,"File Explorer v1.0", "File Explorer v1.0 for XenevaOS !!", MSGBOX_TYPE_ONLYCLOSE, MSGBOX_ICON_SUCCESS);
 	ChMessageBoxShow(mb);
 }
 
@@ -368,47 +368,18 @@ int main(int argc, char* argv[]){
 
 	ChMenuButton *file = ChCreateMenubutton(mb, "File");
 	ChMenubarAddButton(mb, file);
-	ChMenuButton *edit = ChCreateMenubutton(mb, "Edit");
+	ChMenuButton *edit = ChCreateMenubutton(mb, "Help");
 	ChMenubarAddButton(mb, edit);
-	ChMenuButton *view = ChCreateMenubutton(mb, "View");
-	ChMenubarAddButton(mb, view);
-	ChMenuButton *help = ChCreateMenubutton(mb, "Help");
-	ChMenubarAddButton(mb, help);
 
 	pm = ChCreatePopupMenu(mainWin);
-	ChMenuItem* item = ChCreateMenuItem("NorthEast", pm);
-	ChMenuItem* item7 = ChCreateMenuItem("Bengali", pm);
-	ChMenuItem* item2 = ChCreateMenuItem("Hindi", pm);
-	ChMenuItem* item3 = ChCreateMenuItem("English(India)", pm);
-	ChMenuItem* item4 = ChCreateMenuItem("English(United States", pm);
-	ChMenuItem* item5 = ChCreateMenuItem("Chinese(Mandarin)", pm);
-	ChMenuItem* item6 = ChCreateMenuItem("Japanese(Hyojungo)", pm);
+	ChMenuItem* item = ChCreateMenuItem("Exit", pm);
 	ChMenuButtonAddMenu(file, pm);
 
-	ChPopupMenu* edi = ChCreatePopupMenu(mainWin);
-	ChMenuItem* cut = ChCreateMenuItem("Cut", edi);
-	ChMenuItem* copy = ChCreateMenuItem("Copy", edi);
-	ChMenuItem* paste = ChCreateMenuItem("Paste", edi);
-	ChMenuButtonAddMenu(edit, edi);
+	ChPopupMenu* help = ChCreatePopupMenu(mainWin);
+	ChMenuItem* about = ChCreateMenuItem("About", help);
+	about->wid.ChActionHandler = AboutClicked;
+	ChMenuButtonAddMenu(edit, help);
 
-	ChPopupMenu* ne = ChCreatePopupMenu(mainWin);
-	ChMenuItem* assam = ChCreateMenuItem("Assamese", ne);
-	ChMenuItem* manipuri = ChCreateMenuItem("Manipuri", ne);
-	manipuri->wid.ChActionHandler = ManipuriClicked;
-	ChMenuItem* mizo = ChCreateMenuItem("Mizo", ne);
-	ChMenuItem* khasi = ChCreateMenuItem("Khasi", ne);
-	ChMenuItem* nagamese = ChCreateMenuItem("Nagamese", ne);
-	item->menu = ne;
-
-	ChPopupMenu* test = ChCreatePopupMenu(mainWin);
-	ChMenuItem* te1 = ChCreateMenuItem("item1", test);
-	ChMenuItem* te2 = ChCreateMenuItem("item2", test);
-	item3->menu = test;
-
-	ChPopupMenu* edite = ChCreatePopupMenu(mainWin);
-	ChMenuItem* edite1 = ChCreateMenuItem("cut1", edite);
-	ChMenuItem* edite2 = ChCreateMenuItem("cut2", edite);
-	cut->menu = edite;
 
 	ChScrollPane* sp = ChCreateScrollPane(mainWin, 10, 100, mainWin->info->width - 20, mainWin->info->height - 120);
 	lv = ChCreateListView(10, 100, mainWin->info->width - 20, mainWin->info->height - 120);

@@ -157,7 +157,7 @@
 	}ChPopupSharedWin;
 #pragma pack(pop)
 
-
+#pragma pack(push,1)
 	typedef struct _popup_win_ {
 		ChWidget wid;
 		ChPopupSharedWin* shwin;
@@ -170,6 +170,7 @@
 		bool hidden;
 		void(*ChPopupWindowPaint)(struct _popup_win_ *pwin, ChWindow* win);
 	}ChPopupWindow;
+#pragma pack(pop)
 
 #ifdef __cplusplus
 	XE_EXTERN{

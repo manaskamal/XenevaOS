@@ -1,4 +1,4 @@
-﻿Build started 13-03-2024 ৰাতিপু 10:26:25.
+﻿Build started 14-03-2024 আবেলি 10:59:09.
      1>Project "E:\Xeneva Project\Aurora\Process\Files\Files.vcxproj" on node 2 (Rebuild target(s)).
      1>ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /I"E:\Xeneva Project\Aurora\Libs\Chitralekha" /I"E:\os_dev\freetype2-master\freetype2-master\include" /Zi /nologo /W4 /WX- /sdl- /MP /Od /Oy /D ARCH_X64 /D YES_DYNAMIC /D DYNAMIC_IMPORTER /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt main.cpp
@@ -35,25 +35,11 @@
      1>main.cpp(319): warning C4127: conditional expression is constant
      1>main.cpp(296): warning C4100: 'win' : unreferenced formal parameter
      1>main.cpp(296): warning C4100: 'wid' : unreferenced formal parameter
-     1>main.cpp(427): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
-     1>main.cpp(438): warning C4127: conditional expression is constant
-     1>main.cpp(459): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
-     1>main.cpp(477): warning C4127: conditional expression is constant
-     1>main.cpp(409): warning C4189: 'edite1' : local variable is initialized but not referenced
-     1>main.cpp(380): warning C4189: 'item7' : local variable is initialized but not referenced
-     1>main.cpp(398): warning C4189: 'mizo' : local variable is initialized but not referenced
-     1>main.cpp(384): warning C4189: 'item5' : local variable is initialized but not referenced
-     1>main.cpp(383): warning C4189: 'item4' : local variable is initialized but not referenced
-     1>main.cpp(399): warning C4189: 'khasi' : local variable is initialized but not referenced
-     1>main.cpp(410): warning C4189: 'edite2' : local variable is initialized but not referenced
-     1>main.cpp(405): warning C4189: 'te2' : local variable is initialized but not referenced
-     1>main.cpp(400): warning C4189: 'nagamese' : local variable is initialized but not referenced
-     1>main.cpp(395): warning C4189: 'assam' : local variable is initialized but not referenced
-     1>main.cpp(404): warning C4189: 'te1' : local variable is initialized but not referenced
-     1>main.cpp(390): warning C4189: 'copy' : local variable is initialized but not referenced
-     1>main.cpp(381): warning C4189: 'item2' : local variable is initialized but not referenced
-     1>main.cpp(391): warning C4189: 'paste' : local variable is initialized but not referenced
-     1>main.cpp(385): warning C4189: 'item6' : local variable is initialized but not referenced
+     1>main.cpp(398): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
+     1>main.cpp(409): warning C4127: conditional expression is constant
+     1>main.cpp(430): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
+     1>main.cpp(448): warning C4127: conditional expression is constant
+     1>main.cpp(375): warning C4189: 'item' : local variable is initialized but not referenced
      1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(1186,5): warning MSB8012: TargetPath(E:\Xeneva Project\Aurora\x64\Debug\Files.exe) does not match the Linker's OutputFile property value (D:\file.exe). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
      1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(1188,5): warning MSB8012: TargetName(Files) does not match the Linker's OutputFile property value (file). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
        Link:
@@ -65,4 +51,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:00.49
+Time Elapsed 00:00:01.56

@@ -1,4 +1,4 @@
-﻿Build started 12-03-2024 আবেলি 6:05:14.
+﻿Build started 15-03-2024 ৰাতিপু 8:28:45.
      1>Project "E:\Xeneva Project\Aurora\Process\Namdapha\Namdapha.vcxproj" on node 2 (Rebuild target(s)).
      1>ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /I"E:\Xeneva Project\Aurora\Libs\Chitralekha" /I"E:\os_dev\freetype2-master\freetype2-master\include" /Zi /nologo /W4 /WX- /sdl- /MP /Od /Oy /D ARCH_X64 /D YES_DYNAMIC /D DYNAMIC_IMPORTER /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt gomenu.cpp namdapha.cpp NamdaphaButton.cpp nmGoButton.cpp
@@ -25,17 +25,17 @@
      1>namdapha.cpp(200): warning C4018: '<' : signed/unsigned mismatch
      1>namdapha.cpp(221): warning C4018: '<' : signed/unsigned mismatch
      1>namdapha.cpp(226): warning C4244: '=' : conversion from 'uint32_t' to 'uint16_t', possible loss of data
-     1>namdapha.cpp(240): warning C4018: '<' : signed/unsigned mismatch
-     1>namdapha.cpp(250): warning C4018: '<' : signed/unsigned mismatch
-     1>namdapha.cpp(274): warning C4018: '<' : signed/unsigned mismatch
-     1>namdapha.cpp(292): warning C4018: '<' : signed/unsigned mismatch
-     1>namdapha.cpp(299): warning C4389: '==' : signed/unsigned mismatch
-     1>namdapha.cpp(308): warning C4018: '<' : signed/unsigned mismatch
+     1>namdapha.cpp(241): warning C4018: '<' : signed/unsigned mismatch
+     1>namdapha.cpp(251): warning C4018: '<' : signed/unsigned mismatch
+     1>namdapha.cpp(275): warning C4018: '<' : signed/unsigned mismatch
+     1>namdapha.cpp(293): warning C4018: '<' : signed/unsigned mismatch
+     1>namdapha.cpp(300): warning C4389: '==' : signed/unsigned mismatch
+     1>namdapha.cpp(309): warning C4018: '<' : signed/unsigned mismatch
      1>namdapha.cpp(214): warning C4189: 'code' : local variable is initialized but not referenced
-     1>namdapha.cpp(289): warning C4189: 'handle' : local variable is initialized but not referenced
-     1>namdapha.cpp(360): warning C4127: conditional expression is constant
-     1>namdapha.cpp(431): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
-     1>namdapha.cpp(451): warning C4127: conditional expression is constant
+     1>namdapha.cpp(290): warning C4189: 'handle' : local variable is initialized but not referenced
+     1>namdapha.cpp(364): warning C4127: conditional expression is constant
+     1>namdapha.cpp(435): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
+     1>namdapha.cpp(455): warning C4127: conditional expression is constant
          gomenu.cpp
      1>gomenu.cpp(48): warning C4127: conditional expression is constant
          Generating Code...
@@ -53,4 +53,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:00.77
+Time Elapsed 00:00:00.88
