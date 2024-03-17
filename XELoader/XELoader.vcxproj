@@ -24,6 +24,7 @@
     <ClCompile Include="XELdrObject.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <NASM Include="argpass.asm" />
     <NASM Include="crt0.asm" />
     <NASM Include="fastcpy.asm" />
   </ItemGroup>

@@ -35,9 +35,6 @@ section .text
 [BITS 64]
 
 
-global __chkstk
-__chkstk:
-ret
 
 global _aumain
 _aumain:

@@ -194,6 +194,8 @@ int XELdrStartProc(char* filename, XELoaderObject *obj) {
 	return 0;
 }
 
+
+extern "C"  void _argpass(void* addr);
 /*
  * DefaultSignalHandler -- default signal handler
  * for all signals
@@ -202,7 +204,8 @@ void DefaultSignalHandler(int signo) {
 	_KeProcessExit();
 }
 
-typedef int(*entrypoint) (int, char*[]);
+typedef int(*entrypoint) (int argc, char*argv[]);
+
 /*
  * main entry point of the loader, it accepts
  * three commands "-about", "-f", and filename
@@ -220,6 +223,7 @@ int main(int argc, char* argv[]) {
 	/* load the main object */
 	char* filename = argv[0];
 	XELoaderObject* mainobj = XELdrCreateObj(filename);
+
 
 	XELdrStartProc(mainobj->objname, mainobj);
 	XELdrLoadAllObject();
@@ -243,8 +247,15 @@ int main(int argc, char* argv[]) {
 	for (int i = 0; i < NUMSIGNALS; i++)
 		_KeSetSignal(i + 1, DefaultSignalHandler);
 
+	for (int i = 0; i < argc - 1; i++){
+		argv[i] = argv[i + 1];
+	}
+	
 	entrypoint e = (entrypoint)entry_addr;
-	e(0, NULL);
+	/* argc - 1 because executable name occupies
+	 * 1 space in the argument array
+	 */
+	e(argc - 1, argv);
 	
 	while (1) {
 		_KeProcessExit();

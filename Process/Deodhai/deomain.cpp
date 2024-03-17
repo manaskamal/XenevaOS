@@ -1308,6 +1308,7 @@ ChCanvas* DeodhaiGetMainCanvas() {
 int main(int argc, char* arv[]) {
 	int pid = _KeGetThreadID();
 
+	_KePrint("Argc == 10 %x\r\n", argc);
 	_KePrint("Deodhai v1.0 running %d\r\n", pid);
 	ChPrintLibName();
 

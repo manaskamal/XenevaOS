@@ -46,6 +46,26 @@ int main(int argc, char* arv[]){
 	printf("A simple wave file player by Manas Kamal\n");
 	printf("Please wait...until the song get finished\n");
 
+
+	char *filename = NULL;
+	if (argc > 0){
+		if (strcmp(arv[0], "-help") == 0)
+			printf("You are asking for help? \n");
+
+		if (strcmp(arv[0], "-file") == 0){
+			if (!arv[1]){
+				printf("No file specified to play \n");
+				return -1;
+			}
+			filename = arv[1];
+		}
+	}
+
+	if (filename == NULL){
+		printf("\n No filename specified \n");
+		return -1;
+	}
+
 	/* open the sound device-file, it is in /dev directory */
 	int snd = _KeOpenFile("/dev/sound", FILE_OPEN_WRITE);
 
@@ -71,7 +91,11 @@ int main(int argc, char* arv[]){
 	* a raw wave file with 48kHZ-16bit format, to play mp3 or
 	* other format, one needs another conversion layer of samples */
 
-	int song = _KeOpenFile("/song.wav", FILE_OPEN_READ_ONLY);
+	int song = _KeOpenFile(filename, FILE_OPEN_READ_ONLY);
+	if (song == -1){
+		printf("No file found \n");
+		return -1;
+	}
 	void* songbuf = malloc(4096);
 	memset(songbuf, 0, 4096);
 	_KeReadFile(song, songbuf, 4096);

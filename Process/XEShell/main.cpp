@@ -73,11 +73,60 @@ void XEShellWriteCurrentDir() {
 
 void XEShellSpawn(char* string) {
 	if ((strlen(string)-1) > 0) {
+
+		/* allocate separate memories for each strings */
 		char filename[32];
+		char arguments[32];
+		char execname[32];
+		memset(arguments, 0, 32);
+		memset(execname, 0, 32);
+
+		/* _first_string_skipped is only for executable
+		 * name thats why we skip early character counting */
+		bool _first_string_skipped = false;
+		int argcount = 0;
+		int index = 0;
+		int j = 0;
+		int totalCharacterCount = strlen(string);
+		char** argv = (char**)malloc(10);
+
+		/* here we mainly prepare for the arguments to pass */
+		for (int i = 0; i < strlen(string); i++){
+			if (string[i] == ' ' || string[i] == '\0'){
+				index = i;
+				_KePrint("space -> %d  \r\n", _first_string_skipped);
+
+				if (_first_string_skipped) {
+					char* str = (char*)malloc(strlen(arguments));
+					memset(str, 0, strlen(arguments));
+					strcpy(str, arguments);
+					argv[argcount] = str;
+					_KePrint("[XESHELL]: Arguments %s %d\r\n", argv[argcount], _KeGetProcessID());
+					argcount += 1;
+					j = 0;
+					memset(arguments, 0, 32);
+				}
+
+				if (!_first_string_skipped)
+					_first_string_skipped = true;
+				
+				continue;
+			}
+			if (_first_string_skipped){
+				arguments[j] = string[i];
+				j++;
+			}
+
+			if (!_first_string_skipped){
+				execname[i] = string[i];
+			}
+		}
+	
 		memset(filename, 0, 32);
 		strcpy(filename, "/");
-		strcpy(filename + 1, string);
-		strcpy(filename + strlen(string), ".exe");
+		strcpy(filename + 1, execname);
+		strcpy(filename + strlen(execname), ".exe");
+	
 		/* before spawning the process, make an entry to
 		 * shell's file descriptors */
 		int file = _KeOpenFile(filename, FILE_OPEN_READ_ONLY);
@@ -90,7 +139,7 @@ void XEShellSpawn(char* string) {
 		_KeSetFileToProcess(XENEVA_STDIN, XENEVA_STDIN, proc_id);
 		_KeSetFileToProcess(XENEVA_STDOUT, XENEVA_STDOUT, proc_id);
 		_KeSetFileToProcess(XENEVA_STDERR, XENEVA_STDERR, proc_id);
-		int status = _KeProcessLoadExec(proc_id, filename, 0, 0);
+		int status = _KeProcessLoadExec(proc_id, filename, argcount, argv);
 		job = proc_id;
 		_KeProcessWaitForTermination(proc_id);
 		_KeCloseFile(file);
@@ -124,6 +173,7 @@ void XEShellReadLine() {
 			return;
 		}
 		if (c == KEY_SPACE){
+			cmdBuf[index] = ' ';
 			index++;
 			return;
 		}

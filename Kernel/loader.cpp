@@ -92,17 +92,17 @@ void AuProcessEntUser(uint64_t rcx) {
 			PUSH(ent->rsp, char, str[j]);
 		}
 		argvs[i] = (char*)ent->rsp;
-		
 	}
 
 	if (ent->argvs){
 		for (int i = 0; i < ent->num_args; i++) {
 			uint64_t addr = (uint64_t)ent->argvs[i];
-			kfree(ent->argvs[i]);
+			kfree((void*)addr);
 		}
-		kfree(ent->argvs);
+		void* address = (void*)ent->argvs;
+		kfree(address);
 	}
-
+	
 	PUSH(ent->rsp, size_t, (size_t)ent->argvaddr);
 	PUSH(ent->rsp, size_t, ent->num_args);
 	x64_enter_user(ent->rsp, ent->entrypoint, ent->cs, ent->ss);
@@ -165,13 +165,40 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc,char** argv) {
 		 * link this dynamic process with its shared
 		 * libraries
 		 */
-		int num_args_ = 1;
+		int char_cnt = 0;
+		for (int i = 0; i < argc; i++){
+			char_cnt += strlen(argv[i]);
+		}
+		/* here we allocate extra memories for each strings
+		 * because we cannot allocate it to stack, the stack
+		 * will get changed once we enter the desired thread
+		 */
+		int num_args_ = 1 + argc;
 		int string_len = strlen(filename);
 		char* file__ = (char*)kmalloc(string_len);
 		strcpy(file__, filename);
-		char** argvs = (char**)kmalloc(num_args_);
-		memset(argvs, 0, num_args_);
+
+		/* BUGG: if kmalloc allocates smaller memory below than 15 bytes,
+		 * it crashes while freeing the allocated memory, that's why we
+		 * allocate memory of size (string_len + char_cnt) * sizeof(char) for
+		 * argument array
+		 */
+		char** argvs = (char**)kmalloc((string_len + char_cnt) * sizeof(char));
+		memset(argvs, 0, (string_len + char_cnt) * sizeof(char));
 		argvs[0] = file__;
+
+		for (int i = 0; i < argc; i++){
+			char* argpass = (char*)kmalloc(strlen(argv[i]));
+			memset(argpass, 0, strlen(argv[i]));
+			strcpy(argpass, argv[i]);
+			argvs[1 + i] = argpass;
+		}
+	
+
+		if (argc > 0){
+			kfree(argv);
+		}
+
 		AuReleaseSpinlock(loader_lock);
 
 		/* load the loader */

@@ -1,3 +1,5 @@
+^argpass.asm
+E:\Xeneva Project\Aurora\XELoader\x64\Debug\argpass.obj
 ^crt0.asm
 E:\Xeneva Project\Aurora\XELoader\x64\Debug\crt0.obj
 ^fastcpy.asm

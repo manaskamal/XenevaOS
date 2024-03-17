@@ -1,12 +1,12 @@
-﻿Build started 17-12-2023 আবেলি 9:52:27.
+﻿Build started 16-03-2024 আবেলি 9:42:23.
      1>Project "E:\Xeneva Project\Aurora\Libs\XEClib\XEClib.vcxproj" on node 2 (Rebuild target(s)).
      1>_NASM:
          setjmp.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp57b5098ea059467d8aae22ba1e425ede.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmpbebe1390fbf74b44a4e7ad1f7991f991.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\setjmp.obj"  "E:\Xeneva Project\Aurora\Libs\XEClib\setjmp.asm"
        _NASM:
          _callbase.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmpba5767f459a241de8e9f38f16402a3fd.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp4317c2dbc6e04f119bc64324b3650e83.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\_callbase.obj"  "E:\Xeneva Project\Aurora\Libs\XEClib\_callbase.asm"
      1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(935,5): warning MSB8027: Two or more files with the name of _xeprint.cpp will produce outputs to the same location. This can lead to an incorrect build result.  The files involved are sys\_xeprint.cpp, _xeprint.cpp.
        ClCompile:
@@ -161,4 +161,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:02.24
+Time Elapsed 00:00:01.60

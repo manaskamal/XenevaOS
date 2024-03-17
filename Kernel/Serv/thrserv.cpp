@@ -138,12 +138,25 @@ int ProcessLoadExec(int proc_id, char* filename,int argc, char** argv) {
 	
 	char** allocated_argv = 0;
 	if (char_cnt > 0) {
-		allocated_argv = (char**)kmalloc(char_cnt);
-		memset(allocated_argv, 0, char_cnt);
-		for (int i = 0; i < argc; i++)
+		/*
+		 BUGG:kmalloc: mentioned in loader.cpp inside AuLoadExecToProcess 
+		 */
+		allocated_argv = (char**)kmalloc(char_cnt * sizeof(char));
+		memset(allocated_argv, 0, char_cnt * sizeof(char));
+		for (int i = 0; i < argc; i++){
+			/*
+			 * TRICKY: char pointers from argv[i] is already allocated
+			 * in XEShell while spawning the process in order to pass
+			 * argument, so we use those allocated user memory areas
+			 * directly inside the argument array and only this argument
+			 * array will get freed while loading the process, pointer
+			 * memory will get freed in XEShell itself
+			 */
 			allocated_argv[i] = argv[i];
+		}
 	}
-	
+	if (argc > 1)
+		SeTextOut("THRSERV: allocatedarg[1] -> %s \r\n", allocated_argv[1]);
 	int status = AuLoadExecToProcess(proc, filename, argc,allocated_argv);
 	if (status == -1) {
 		SeTextOut("Process launched failed %s\r\n", filename);

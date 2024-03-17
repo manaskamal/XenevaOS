@@ -41,8 +41,6 @@ ret
 
 global _xemain
 _xemain:
-     pop rcx
-	 pop rdx
 	 sub rsp, 32
 	 call main
 	 add rsp, 32

@@ -8,6 +8,7 @@
   <ItemGroup>
     <NASM Include="fastcpy.asm" />
     <NASM Include="crt0.asm" />
+    <NASM Include="argpass.asm" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pe_.h" />

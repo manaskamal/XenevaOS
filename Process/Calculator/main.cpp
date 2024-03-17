@@ -449,6 +449,10 @@ void CalculatorAboutBox(ChWidget* widget, ChWindow* win){
 * main -- main entry
 */
 int main(int argc, char* argv[]){
+
+	if (strcmp(argv[0], "-about") == 0)
+		printf("Calculator v1.0 for Xeneva OS \n");
+
 	app = ChitralekhaStartApp(argc, argv);
 	mainWin = ChCreateWindow(app, WINDOW_FLAG_MOVABLE, "Calculator", 400,100, 380, 
 		400);

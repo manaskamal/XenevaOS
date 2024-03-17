@@ -54,7 +54,15 @@ void WindowHandleMessage(PostEvent *e) {
 	switch (e->type) {
 	/* handle mouse event from deodhai */
 	case DEODHAI_REPLY_MOUSE_EVENT:{
-									   ChWindowHandleMouse(mainWin, e->dword, e->dword2, e->dword3);
+									   int handle = e->dword4;
+									   if (e->dword5 == WINDOW_HANDLE_TYPE_NORMAL){
+										   ChWindow* mouseWin = ChGetWindowByHandle(mainWin, handle);
+										   ChWindowHandleMouse(mouseWin, e->dword, e->dword2, e->dword3);
+									   }
+									   else if (e->dword5 == WINDOW_HANDLE_TYPE_POPUP) {
+										   ChPopupWindow* pw = ChGetPopupWindowByHandle(mainWin, handle);
+										   ChPopupWindowHandleMouse(pw, mainWin, e->dword, e->dword2, e->dword3);
+									   }
 									   memset(e, 0, sizeof(PostEvent));
 									   break;
 	}
