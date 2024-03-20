@@ -114,6 +114,7 @@ static void* syscalls[AURORA_MAX_SYSCALL] = {
 	StopTimer,  //41
 	DestroyTimer, //42
 	ProcessGetFileDesc, //43
+	FileSetOffset, //44
 };
 
 //! System Call Handler Functions

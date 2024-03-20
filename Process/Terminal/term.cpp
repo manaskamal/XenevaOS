@@ -131,6 +131,7 @@ void TerminalDrawAllCells() {
 		}
 	}
 	ChWindowUpdate(win, 0, 26, win->info->width-1, win->info->height - 26, 1, 0);
+	_KeProcessSleep(1000);
 }
 
 
@@ -529,7 +530,7 @@ void TerminalThread() {
 			bytes_read = 0;
 		}
 
-		_KeProcessSleep(100000000); 
+		_KeProcessSleep(1000); //00000
 	}
 }
 

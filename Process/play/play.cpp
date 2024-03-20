@@ -96,10 +96,10 @@ int main(int argc, char* arv[]){
 		printf("No file found \n");
 		return -1;
 	}
+
 	void* songbuf = malloc(4096);
 	memset(songbuf, 0, 4096);
 	_KeReadFile(song, songbuf, 4096);
-
 
 	XEFileStatus fs;
 	_KeFileStat(song, &fs);

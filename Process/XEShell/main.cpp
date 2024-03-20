@@ -131,7 +131,6 @@ void XEShellSpawn(char* string) {
 		 * shell's file descriptors */
 		int file = _KeOpenFile(filename, FILE_OPEN_READ_ONLY);
 		if (file == -1){
-			_KePrint("No File found \r\n");
 			printf("\n No command or program found \n");
 			return;
 		}

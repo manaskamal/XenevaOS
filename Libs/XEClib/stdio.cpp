@@ -55,14 +55,25 @@ FILE* fopen(const char* name, const char* mode) {
 	if (mode_ == 0)
 		mode_ |= FILE_OPEN_WRITE | FILE_OPEN_CREAT;
 
-	int fd = _KeOpenFile((char*)name, mode_);
+	char filename[32];
+	memset(filename, 0, 32);
+	int index = 0;
+	if (name[0] != '/'){
+		filename[index] = '/';
+		index++;
+	}
+	strcpy(filename + index, name);
+	int fd = _KeOpenFile(filename, mode_);
+	FILE* file = (FILE*)malloc(sizeof(FILE));
+	memset(file, 0, sizeof(FILE));
+	_KePrint("FOPEN opening %s %d \r\n", filename, fd);
 	if (fd == -1)
 		return NULL;
 
-	FILE* file = (FILE*)malloc(sizeof(FILE));
-	memset(file, 0, sizeof(FILE));
-
 	file->_file_num = fd;
+	XEFileStatus stat;
+	_KeFileStat(file->_file_num, &stat);
+	file->size = stat.size;
 	return file;
 }
 
@@ -78,8 +89,10 @@ FILE* fopen(const char* name, const char* mode) {
  * @param stream -- pointer to a FILE object
  */
 size_t fread(void* ptr, size_t sz, size_t nmemb, FILE* stream) {
-	stream->base = (unsigned char*)ptr;
-	stream->ptr = stream->base;
+	if (stream->base == NULL){
+		stream->base = (unsigned char*)ptr;
+		stream->ptr = stream->base;
+	}
 	size_t _length = sz * nmemb;
 	int fd = -1;
 	if (stream == stdout || stream == stderr)
@@ -88,6 +101,7 @@ size_t fread(void* ptr, size_t sz, size_t nmemb, FILE* stream) {
 		fd = XENEVA_STDIN;
 	else
 		fd = stream->_file_num;
+	_KePrint("Reading fopen fread %d\r\n", fd);
 	size_t ret_bytes = _KeReadFile(fd, ptr, _length);
 	return ret_bytes;
 }
@@ -153,7 +167,7 @@ int fputs(const char* s, FILE* stream) {
  * @param fp -- pointer to FILE structure
  */
 long ftell(FILE* fp) {
-	return (fp->pos - fp->base);
+	return fp->curr_pos;
 }
 
 /*
@@ -167,18 +181,26 @@ long ftell(FILE* fp) {
  */
 int fseek(FILE* fp, long int offset, int pos) {
 	int val = 0;
+	int newPos = 0;
 	switch (pos) {
 	case SEEK_SET:
-		fp->pos = fp->base;
+		fp->pos = fp->base + offset;
+		newPos = offset;
+		fp->curr_pos = newPos;
 		break;
 	case SEEK_CUR:
-		fp->pos = (fp->base + offset);
+		fp->pos = (fp->pos + offset);
+		newPos = (fp->curr_pos + offset);
+		fp->curr_pos = newPos;
 		break;
 	case SEEK_END:
 		fp->pos = (fp->base + fp->size - 1);
+		newPos = fp->size - 1;
+		fp->curr_pos = newPos;
 		break;
 	}
-
+	_KePrint("Seeking -> %d \r\n", offset);
+	_KeFileSetOffset(fp->_file_num, newPos);
 	return val;
 }
 
@@ -269,7 +291,7 @@ int printf(const char* format, ...) {
 	va_list list;
 	va_start(list, format);
 	char output[MAX_STRING_LENGTH + 1];
-	memset(&output, '\0', MAX_STRING_LENGTH);
+	memset(output, '\0', MAX_STRING_LENGTH);
 	int len = _xeprint(output, MAX_STRING_LENGTH, format, list);
 	va_end(list);
 	_KeWriteFile(XENEVA_STDOUT, output, strlen(output)-1);

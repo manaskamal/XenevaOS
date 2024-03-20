@@ -45,6 +45,7 @@ XE_EXTERN{
 		int _file_num;
 		int eof;
 		int size;
+		int curr_pos;
 	}FILE;
 
 #define SEEK_SET 0

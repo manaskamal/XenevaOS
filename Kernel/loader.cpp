@@ -127,6 +127,7 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc,char** argv) {
 	if (v_)
 		v_++;
 	if (strcmp(v_, "exe") != 0) {
+		AuReleaseSpinlock(loader_lock);
 		SeTextOut("[aurora]: non-executable process \r\n");
 		return -1;
 	}
@@ -136,6 +137,7 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc,char** argv) {
 	
 	if (!file) {
 		SeTextOut("No File found -> %s \r\n", filename);
+		AuReleaseSpinlock(loader_lock);
 		return -1;
 	}
 

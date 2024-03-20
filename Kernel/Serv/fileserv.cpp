@@ -79,6 +79,37 @@ int OpenFile(char* filename, int mode) {
 }
 
 /*
+ * FileSetOffset -- set a offset inorder to read the
+ * specific position of the file
+ * @param fd -- File descriptor
+ * @param offset -- offset in bytes
+ */
+int FileSetOffset(int fd, size_t offset) {
+	x64_cli();
+	AuThread* current_thr = AuGetCurrentThread();
+	if (!current_thr)
+		return -1;
+	AuProcess* current_proc = AuProcessFindThread(current_thr);
+	if (!current_proc) {
+		current_proc = AuProcessFindSubThread(current_thr);
+		if (!current_proc)
+			return -1;
+	}
+
+	AuVFSNode* file = current_proc->fds[fd];
+	if (!file)
+		return -1;
+	if (!((file->flags & FS_FLAG_FILE_SYSTEM) || (file->flags & FS_FLAG_DEVICE) || (file->flags & FS_FLAG_PIPE)
+		|| (file->flags & FS_FLAG_DIRECTORY) || (file->flags & FS_FLAG_TTY))){
+		AuVFSNode* fsys = AuVFSFind("/");
+		if (!fsys)
+			return -1;
+		size_t block = AuVFSGetBlockFor(fsys, file, offset);
+		file->current = block;
+	}
+	return 0;
+}
+/*
  * ReadFile -- reads a file into given buffer
  * @param fd -- file descriptor
  * @param buffer -- buffer where to put the data

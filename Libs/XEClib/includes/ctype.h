@@ -30,13 +30,15 @@
 #ifndef __CTYPE_H__
 #define __CTYPE_H__
 
+#include <_xeneva.h>
+
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
-#define isspace(c)      ((c) == ' ' || ((c) >= '\t' && (c) <= '\r'))
-#define isascii(c)      (((c) & ~0x7f) == 0)
+	XE_LIB int isspace(int c);
+	XE_LIB int isascii(int c);     
 #define isupper(c)      ((c) >= 'A' && (c) <= 'Z')
 #define islower(c)      ((c) >= 'a' && (c) <= 'z')
 #define isalpha(c)      (isupper(c) || islower(c))
@@ -45,9 +47,9 @@ extern "C"
 	|| ((c) >= 'A' && (c) <= 'F') \
 	|| ((c) >= 'a' && (c) <= 'f'))
 #define isprint(c)      ((c) >= ' ' && (c) <= '~')
-#define toupper(c)      ((c) - 0x20 * (((c) >= 'a') && ((c) <= 'z')))
+	XE_LIB int toupper(int c);
 #define tolower(c)      ((c) + 0x20 * (((c) >= 'A') && ((c) <= 'Z')))
-#define isascii(c)	((unsigned)(c) <= 0x7F)
+
 #define toascii(c)	((unsigned)(c) & 0x7F)
 
 #if 0

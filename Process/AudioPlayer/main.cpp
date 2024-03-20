@@ -40,6 +40,8 @@
 #include <widgets\menubar.h>
 #include <widgets\msgbox.h>
 #include <widgets\menu.h>
+#include <sys\mman.h>
+#include <nanojpg.h>
 #include <string.h>
 #include <stdlib.h>
 
@@ -88,13 +90,53 @@ void AboutClicked(ChWidget* wid, ChWindow* win) {
 	ChMessageBoxShow(mb);
 }
 
+/* DrawWallpaper -- code copied from deodhai wallpaper
+ * painter
+*/
+void DrawWallpaper(ChCanvas *canv, char* filename, int x, int y) {
+	int image = _KeOpenFile(filename, FILE_OPEN_READ_ONLY);
+	XEFileStatus stat;
+	memset(&stat, 0, sizeof(XEFileStatus));
+	_KeFileStat(image, &stat);
+	void* data_ = _KeMemMap(NULL, stat.size, 0, 0, -1, 0);
+	memset(data_, 0, ALIGN_UP(stat.size, 4096));
+	_KeReadFile(image, data_, ALIGN_UP(stat.size, 4096));
+
+	uint8_t* data1 = (uint8_t*)data_;
+
+	Jpeg::Decoder *decor = new Jpeg::Decoder((uint8_t*)data1, ALIGN_UP(stat.size, 4096), malloc, free);
+	if (decor->GetResult() != Jpeg::Decoder::OK) {
+		_KePrint("Decoder error \n");
+		for (;;);
+		return;
+	}
+	int w = decor->GetWidth();
+	int h = decor->GetHeight();
+	uint8_t* data = decor->GetImage();
+	for (int i = 0; i < h; i++) {
+		for (int k = 0; k < w; k++) {
+			int j = k + i * w;
+			uint8_t r = data[j * 3];
+			uint8_t g = data[j * 3 + 1];
+			uint8_t b = data[j * 3 + 2];
+			uint32_t rgba = ((r << 16) | (g << 8) | (b)) & 0x00ffffff;
+			rgba = rgba | 0xff000000;
+			ChDrawPixel(canv, x + k, y + i, rgba);
+			j++;
+		}
+	}
+	
+	_KeMemUnmap(data_, stat.size);
+	_KeCloseFile(image);
+}
+
 /*
 * main -- main entry
 */
 int main(int argc, char* argv[]){
 	app = ChitralekhaStartApp(argc, argv);
 	mainWin = ChCreateWindow(app, WINDOW_FLAG_MOVABLE, "Music", 100, 100, CHITRALEKHA_DEFAULT_WIN_WIDTH, 
-		CHITRALEKHA_DEFAULT_WIN_HEIGHT);
+		500);
 
 	ChMenubar* mb = ChCreateMenubar(mainWin);
 
@@ -114,7 +156,22 @@ int main(int argc, char* argv[]){
 
 	ChWindowAddWidget(mainWin,(ChWidget*)mb);
 
+	
+	ChButton *prevbutt = ChCreateButton(10, mainWin->info->height - 100, 100,65, "<<<");
+	ChWindowAddWidget(mainWin, (ChWidget*)prevbutt);
+
+	ChButton *playbutt = ChCreateButton(mainWin->info->width / 2 - 140/2, mainWin->info->height - 100, 140, 65, "Play/Pause");
+	ChWindowAddWidget(mainWin, (ChWidget*)playbutt);
+
+	ChButton *nextbutt = ChCreateButton((playbutt->base.x + playbutt->base.w) + 18, mainWin->info->height - 100, 100, 65, ">>>");
+	ChWindowAddWidget(mainWin, (ChWidget*)nextbutt);
+
 	ChWindowPaint(mainWin);
+
+	DrawWallpaper(mainWin->canv, "/musicbk.jpg", 10, 64);
+	ChWindowUpdate(mainWin, 0, 0, mainWin->info->width,
+	mainWin->info->height, 1, 0);
+	
 
 	PostEvent e;
 	memset(&e, 0, sizeof(PostEvent));

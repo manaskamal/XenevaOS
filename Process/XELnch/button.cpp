@@ -35,6 +35,7 @@
 #include <sys\iocodes.h>
 #include <sys\mman.h>
 #include <sys\_keproc.h>
+#include <widgets\msgbox.h>
 
 #define LAUNCHER_BUTTON_HOVER_DARK 0xFF658096
 #define LAUNCHER_BUTTON_HOVER_LIGHT 0xFF8CA2B4
@@ -114,7 +115,7 @@ void LaunchButtonMouseEvent(LaunchButton* wid, ChWindow* win, int x, int y, int 
  */
 void LauncherButtonDefaultAction(LaunchButton* lbutton, ChWindow *win){
 	int id = _KeCreateProcess(0, lbutton->title);
-	_KeProcessLoadExec(id, lbutton->appname, 0, 0);
+	int status = _KeProcessLoadExec(id, lbutton->appname, 0, 0);
 	_KeProcessSleep(1000000);
 	ChWindowHide(win);
 }

@@ -206,6 +206,7 @@
     <ClCompile Include="c++\memory.cpp" />
     <ClCompile Include="c++\ostream.cpp" />
     <ClCompile Include="c++\_string.cpp" />
+    <ClCompile Include="ctype.cpp" />
     <ClCompile Include="errno.cpp" />
     <ClCompile Include="math.cpp" />
     <ClCompile Include="qsort.cpp" />

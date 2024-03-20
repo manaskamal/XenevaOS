@@ -159,8 +159,11 @@ int ProcessLoadExec(int proc_id, char* filename,int argc, char** argv) {
 		SeTextOut("THRSERV: allocatedarg[1] -> %s \r\n", allocated_argv[1]);
 	int status = AuLoadExecToProcess(proc, filename, argc,allocated_argv);
 	if (status == -1) {
+		if (allocated_argv)
+			kfree(allocated_argv);
 		SeTextOut("Process launched failed %s\r\n", filename);
 		AuProcessExit(proc, true);
+		SeTextOut("Returning \r\n");
 		return -1;
 	}
 }

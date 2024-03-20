@@ -83,4 +83,7 @@ extern void LauncherSetupByConfigFile();
 extern AppGrid* XELauncherGetAppGrid();
 
 
+extern ChWindow* XELauncherGetMainWin();
+
+
 #endif

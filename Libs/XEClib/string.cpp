@@ -30,6 +30,7 @@
 #include <string.h>
 #include <values.h>
 #include <stdlib.h>
+#include <ctype.h>
 
 
 void* _cdecl memset(void *targ, unsigned char val, size_t len){
@@ -172,31 +173,13 @@ char* strchr(char* str, int character) {
 }
 
 
-int strcasecmp(const char* s1, const char *s2) {
-	int count = 0;
-	for (count = 0; count < MAX_STRING_LENGTH; count++) {
-		if ((s1[count] == '\0') && (s2[count] == '\0'))
-			return 0;
-		else if ((s1[count] >= (char)97) &&
-			(s1[count] <= (char)122) &&
-			(s2[count] == (s1[count] - (char)32))) {
-			continue;
-		}
-		else if (s1[count] != s2[count]) {
-			if (s1[count] == '\0')
-				return -1;
-			else if (s2[count] == '\0')
-				return 1;
 
-			return (s1[count] - s2[count]);
-		}
-	}
-
-	return 0;
+int strcasecmp(const char * s1, const char * s2) {
+	for (; tolower(*s1) == tolower(*s2) && *s1; s1++, s2++);
+	return *(unsigned char *)s1 - *(unsigned char *)s2;
 }
 
-
-int strncasecmp(const char *s1, const char *s2, size_t length){
+int strncasecmp(const char *s1, const char *s2, size_t length) {
 	int result = 0;
 
 	// Go through the strings, counting as we go.  If we get to the end, or

@@ -602,7 +602,7 @@ int _xeprint(char* output, int outputlen, const char* format, va_list list) {
 				inCount += 1;
 			}
 		}
-
+		
 		if (isLong) {
 			intArg = (long long)va_arg(list, unsigned);
 			intArg |= (((long long)va_arg(list, unsigned)) << 32);
@@ -614,7 +614,7 @@ int _xeprint(char* output, int outputlen, const char* format, va_list list) {
 
 		}
 		else {
-			intArg = va_arg(list, unsigned);
+			intArg = va_arg(list, long long);
 		}
 
 		switch (format[inCount]){
@@ -681,8 +681,8 @@ int _xeprint(char* output, int outputlen, const char* format, va_list list) {
 		}
 		case 's': {
 					  if (intArg) {
-						  strcpy((output + outCount), (char*)((unsigned)intArg));
-						  outCount += strlen((char*)((unsigned)intArg));
+						  strcpy((output + outCount), (char*)((uint64_t)intArg));
+						  outCount += strlen((char*)((uint64_t)intArg));
 					  }
 					  else {
 						  strncpy((output + outCount), "(NULL)", 7);

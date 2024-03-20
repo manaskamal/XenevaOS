@@ -73,8 +73,12 @@ void XenevaLauncherHandleMessage(PostEvent *e) {
 	}
 		/* handle mouse event from deodhai */
 	case DEODHAI_REPLY_MOUSE_EVENT:{
-
-									   XELauncherMouseHandler(win, e->dword, e->dword2, e->dword3,0);
+									   int handle = e->dword4;
+									   ChWindow* mouseWin = ChGetWindowByHandle(win, handle);
+									   if (mouseWin == win)
+										   XELauncherMouseHandler(mouseWin, e->dword, e->dword2, e->dword3, 0);
+									   else
+										   ChWindowHandleMouse(mouseWin, e->dword, e->dword2, e->dword3);
 									   memset(e, 0, sizeof(PostEvent));
 									   break;
 	}
@@ -89,6 +93,10 @@ void XenevaLauncherHandleMessage(PostEvent *e) {
  */
 AppGrid* XELauncherGetAppGrid() {
 	return mainGrid;
+}
+
+ChWindow* XELauncherGetMainWin() {
+	return win;
 }
 
 /*

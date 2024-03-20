@@ -34,7 +34,7 @@
 
 
 
-extern XE_LIB int errno;
+extern int errno;
 
 #define EPERM 1               /* Not super-user */
 #define ENOENT 2              /* No such file or directory */

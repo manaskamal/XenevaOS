@@ -100,7 +100,7 @@
       <AdditionalLibraryDirectories>E:\Xeneva Project\Aurora\Libs\XECrt;E:\Xeneva Project\Aurora\x64\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>xecrt.lib;XEClib.lib;Chitralekha.lib;</AdditionalDependencies>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
-      <OutputFile>D:\term.exe</OutputFile>
+      <OutputFile>F:\term.exe</OutputFile>
       <EnableUAC>false</EnableUAC>
       <GenerateMapFile>true</GenerateMapFile>
       <MapExports>true</MapExports>

@@ -202,5 +202,6 @@
     <ClCompile Include="stat.cpp" />
     <ClCompile Include="_xeprint.cpp" />
     <ClCompile Include="_xeinput.cpp" />
+    <ClCompile Include="ctype.cpp" />
   </ItemGroup>
 </Project>

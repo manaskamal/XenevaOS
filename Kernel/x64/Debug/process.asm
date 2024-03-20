@@ -119,8 +119,8 @@ $pdata$?AuStartRootProc@@YAXXZ DD imagerel $LN3
 $pdata$?AuCreateProcessSlot@@YAPEAU_au_proc_@@PEAU1@PEAD@Z DD imagerel $LN6
 	DD	imagerel $LN6+368
 	DD	imagerel $unwind$?AuCreateProcessSlot@@YAPEAU_au_proc_@@PEAU1@PEAD@Z
-$pdata$?AuProcessExit@@YAXPEAU_au_proc_@@_N@Z DD imagerel $LN23
-	DD	imagerel $LN23+592
+$pdata$?AuProcessExit@@YAXPEAU_au_proc_@@_N@Z DD imagerel $LN25
+	DD	imagerel $LN25+625
 	DD	imagerel $unwind$?AuProcessExit@@YAXPEAU_au_proc_@@_N@Z
 $pdata$?AuProcessGetFileDesc@@YAHPEAU_au_proc_@@@Z DD imagerel $LN7
 	DD	imagerel $LN7+69
@@ -766,7 +766,7 @@ entry$ = 88
 name$ = 96
 ?AuCreateUserthread@@YAHPEAU_au_proc_@@P6AXPEAX@ZPEAD@Z PROC ; AuCreateUserthread
 
-; 555  : {
+; 563  : {
 
 $LN3:
 	mov	QWORD PTR [rsp+24], r8
@@ -774,7 +774,7 @@ $LN3:
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 72					; 00000048H
 
-; 556  : 	AuThread* thr = AuCreateKthread(AuProcessEntUser, CreateKernelStack(proc, proc->cr3), V2P((size_t)proc->cr3), name);
+; 564  : 	AuThread* thr = AuCreateKthread(AuProcessEntUser, CreateKernelStack(proc, proc->cr3), V2P((size_t)proc->cr3), name);
 
 	mov	rax, QWORD PTR proc$[rsp]
 	mov	rcx, QWORD PTR [rax+24]
@@ -792,7 +792,7 @@ $LN3:
 	call	AuCreateKthread
 	mov	QWORD PTR thr$[rsp], rax
 
-; 557  : 	thr->frame.rsp -= 32;
+; 565  : 	thr->frame.rsp -= 32;
 
 	mov	rax, QWORD PTR thr$[rsp]
 	mov	rax, QWORD PTR [rax+8]
@@ -800,7 +800,7 @@ $LN3:
 	mov	rcx, QWORD PTR thr$[rsp]
 	mov	QWORD PTR [rcx+8], rax
 
-; 558  : 	thr->priviledge |= THREAD_LEVEL_USER | THREAD_LEVEL_SUBTHREAD | ~THREAD_LEVEL_MAIN_THREAD;
+; 566  : 	thr->priviledge |= THREAD_LEVEL_USER | THREAD_LEVEL_SUBTHREAD | ~THREAD_LEVEL_MAIN_THREAD;
 
 	mov	rax, QWORD PTR thr$[rsp]
 	movzx	eax, BYTE PTR [rax+305]
@@ -808,57 +808,57 @@ $LN3:
 	mov	rcx, QWORD PTR thr$[rsp]
 	mov	BYTE PTR [rcx+305], al
 
-; 559  : 	thr->procSlot = proc;
+; 567  : 	thr->procSlot = proc;
 
 	mov	rax, QWORD PTR thr$[rsp]
 	mov	rcx, QWORD PTR proc$[rsp]
 	mov	QWORD PTR [rax+643], rcx
 
-; 560  : 	AuUserEntry *uentry = (AuUserEntry*)kmalloc(sizeof(AuUserEntry));
+; 568  : 	AuUserEntry *uentry = (AuUserEntry*)kmalloc(sizeof(AuUserEntry));
 
 	mov	ecx, 60					; 0000003cH
 	call	kmalloc
 	mov	QWORD PTR uentry$[rsp], rax
 
-; 561  : 	memset(uentry, 0, sizeof(AuUserEntry));
+; 569  : 	memset(uentry, 0, sizeof(AuUserEntry));
 
 	mov	r8d, 60					; 0000003cH
 	xor	edx, edx
 	mov	rcx, QWORD PTR uentry$[rsp]
 	call	memset
 
-; 562  : 	uentry->argvaddr = 0;
+; 570  : 	uentry->argvaddr = 0;
 
 	mov	rax, QWORD PTR uentry$[rsp]
 	mov	QWORD PTR [rax+36], 0
 
-; 563  : 	uentry->entrypoint = (uint64_t)entry;
+; 571  : 	uentry->entrypoint = (uint64_t)entry;
 
 	mov	rax, QWORD PTR uentry$[rsp]
 	mov	rcx, QWORD PTR entry$[rsp]
 	mov	QWORD PTR [rax], rcx
 
-; 564  : 	uentry->argvs = 0;
+; 572  : 	uentry->argvs = 0;
 
 	mov	rax, QWORD PTR uentry$[rsp]
 	mov	QWORD PTR [rax+44], 0
 
-; 565  : 	uentry->cs = SEGVAL(GDT_ENTRY_USER_CODE, 3);
+; 573  : 	uentry->cs = SEGVAL(GDT_ENTRY_USER_CODE, 3);
 
 	mov	rax, QWORD PTR uentry$[rsp]
 	mov	QWORD PTR [rax+16], 43			; 0000002bH
 
-; 566  : 	uentry->ss = SEGVAL(GDT_ENTRY_USER_DATA, 3);
+; 574  : 	uentry->ss = SEGVAL(GDT_ENTRY_USER_DATA, 3);
 
 	mov	rax, QWORD PTR uentry$[rsp]
 	mov	QWORD PTR [rax+24], 35			; 00000023H
 
-; 567  : 	uentry->num_args = 0;
+; 575  : 	uentry->num_args = 0;
 
 	mov	rax, QWORD PTR uentry$[rsp]
 	mov	DWORD PTR [rax+32], 0
 
-; 568  : 	uentry->rsp = (uint64_t)CreateUserStack(proc, proc->cr3);
+; 576  : 	uentry->rsp = (uint64_t)CreateUserStack(proc, proc->cr3);
 
 	mov	rax, QWORD PTR proc$[rsp]
 	mov	rdx, QWORD PTR [rax+24]
@@ -867,7 +867,7 @@ $LN3:
 	mov	rcx, QWORD PTR uentry$[rsp]
 	mov	QWORD PTR [rcx+8], rax
 
-; 569  : 	uentry->rsp -= 32;
+; 577  : 	uentry->rsp -= 32;
 
 	mov	rax, QWORD PTR uentry$[rsp]
 	mov	rax, QWORD PTR [rax+8]
@@ -875,26 +875,26 @@ $LN3:
 	mov	rcx, QWORD PTR uentry$[rsp]
 	mov	QWORD PTR [rcx+8], rax
 
-; 570  : 	uentry->stackBase = uentry->rsp;
+; 578  : 	uentry->stackBase = uentry->rsp;
 
 	mov	rax, QWORD PTR uentry$[rsp]
 	mov	rcx, QWORD PTR uentry$[rsp]
 	mov	rcx, QWORD PTR [rcx+8]
 	mov	QWORD PTR [rax+52], rcx
 
-; 571  : 	thr->uentry = uentry;
+; 579  : 	thr->uentry = uentry;
 
 	mov	rax, QWORD PTR thr$[rsp]
 	mov	rcx, QWORD PTR uentry$[rsp]
 	mov	QWORD PTR [rax+635], rcx
 
-; 572  : 	int thread_indx = proc->num_thread;
+; 580  : 	int thread_indx = proc->num_thread;
 
 	mov	rax, QWORD PTR proc$[rsp]
 	movzx	eax, BYTE PTR [rax+80]
 	mov	DWORD PTR thread_indx$[rsp], eax
 
-; 573  : 	proc->threads[proc->num_thread] = thr;
+; 581  : 	proc->threads[proc->num_thread] = thr;
 
 	mov	rax, QWORD PTR proc$[rsp]
 	movzx	eax, BYTE PTR [rax+80]
@@ -902,7 +902,7 @@ $LN3:
 	mov	rdx, QWORD PTR thr$[rsp]
 	mov	QWORD PTR [rcx+rax*8+96], rdx
 
-; 574  : 	proc->num_thread += 1;
+; 582  : 	proc->num_thread += 1;
 
 	mov	rax, QWORD PTR proc$[rsp]
 	movzx	eax, BYTE PTR [rax+80]
@@ -910,11 +910,11 @@ $LN3:
 	mov	rcx, QWORD PTR proc$[rsp]
 	mov	BYTE PTR [rcx+80], al
 
-; 575  : 	return thread_indx;
+; 583  : 	return thread_indx;
 
 	mov	eax, DWORD PTR thread_indx$[rsp]
 
-; 576  : }
+; 584  : }
 
 	add	rsp, 72					; 00000048H
 	ret	0
@@ -925,11 +925,11 @@ _TEXT	ENDS
 _TEXT	SEGMENT
 ?AuProcessGetMutex@@YAPEAU_mutex_@@XZ PROC		; AuProcessGetMutex
 
-; 540  : 	return process_mutex;
+; 548  : 	return process_mutex;
 
 	mov	rax, QWORD PTR ?process_mutex@@3PEAU_mutex_@@EA ; process_mutex
 
-; 541  : }
+; 549  : }
 
 	ret	0
 ?AuProcessGetMutex@@YAPEAU_mutex_@@XZ ENDP		; AuProcessGetMutex
@@ -1130,9 +1130,10 @@ _TEXT	ENDS
 ; Function compile flags: /Odtpy
 ; File e:\xeneva project\aurora\kernel\process.cpp
 _TEXT	SEGMENT
-i$1 = 32
-i$2 = 36
-i$3 = 40
+_file_present$ = 32
+i$1 = 36
+i$2 = 40
+i$3 = 44
 file$4 = 48
 killable$5 = 56
 thr$6 = 64
@@ -1142,7 +1143,7 @@ schedulable$ = 104
 
 ; 466  : void AuProcessExit(AuProcess* proc, bool schedulable) {
 
-$LN23:
+$LN25:
 	mov	BYTE PTR [rsp+16], dl
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 88					; 00000058H
@@ -1155,7 +1156,7 @@ $LN23:
 
 	mov	rax, QWORD PTR ?root_proc@@3PEAU_au_proc_@@EA ; root_proc
 	cmp	QWORD PTR proc$[rsp], rax
-	jne	SHORT $LN20@AuProcessE
+	jne	SHORT $LN22@AuProcessE
 
 ; 469  : 		SeTextOut("[aurora]: cannot exit root process \r\n");
 
@@ -1164,8 +1165,8 @@ $LN23:
 
 ; 470  : 		return;
 
-	jmp	$LN21@AuProcessE
-$LN20@AuProcessE:
+	jmp	$LN23@AuProcessE
+$LN22@AuProcessE:
 
 ; 471  : 	}
 ; 472  : 
@@ -1192,16 +1193,16 @@ $LN20@AuProcessE:
 ; 480  : 	for (int i = 1; i < proc->num_thread; i++) {
 
 	mov	DWORD PTR i$1[rsp], 1
-	jmp	SHORT $LN19@AuProcessE
-$LN18@AuProcessE:
+	jmp	SHORT $LN21@AuProcessE
+$LN20@AuProcessE:
 	mov	eax, DWORD PTR i$1[rsp]
 	inc	eax
 	mov	DWORD PTR i$1[rsp], eax
-$LN19@AuProcessE:
+$LN21@AuProcessE:
 	mov	rax, QWORD PTR proc$[rsp]
 	movzx	eax, BYTE PTR [rax+80]
 	cmp	DWORD PTR i$1[rsp], eax
-	jge	SHORT $LN17@AuProcessE
+	jge	SHORT $LN19@AuProcessE
 
 ; 481  : 		AuThread *killable = proc->threads[i];
 
@@ -1213,7 +1214,7 @@ $LN19@AuProcessE:
 ; 482  : 		if (killable) {
 
 	cmp	QWORD PTR killable$5[rsp], 0
-	je	SHORT $LN16@AuProcessE
+	je	SHORT $LN18@AuProcessE
 
 ; 483  : 			/* here we should cleanup sub postbox
 ; 484  : 			 * sound, timer resources also
@@ -1227,13 +1228,13 @@ $LN19@AuProcessE:
 
 	mov	rcx, QWORD PTR killable$5[rsp]
 	call	?AuThreadMoveToTrash@@YAXPEAU_au_thread_@@@Z ; AuThreadMoveToTrash
-$LN16@AuProcessE:
+$LN18@AuProcessE:
 
 ; 488  : 		}
 ; 489  : 	}
 
-	jmp	SHORT $LN18@AuProcessE
-$LN17@AuProcessE:
+	jmp	SHORT $LN20@AuProcessE
+$LN19@AuProcessE:
 
 ; 490  : 
 ; 491  : 
@@ -1243,14 +1244,14 @@ $LN17@AuProcessE:
 ; 495  : 	for (int i = 0; i < FILE_DESC_PER_PROCESS; i++) {
 
 	mov	DWORD PTR i$2[rsp], 0
-	jmp	SHORT $LN15@AuProcessE
-$LN14@AuProcessE:
+	jmp	SHORT $LN17@AuProcessE
+$LN16@AuProcessE:
 	mov	eax, DWORD PTR i$2[rsp]
 	inc	eax
 	mov	DWORD PTR i$2[rsp], eax
-$LN15@AuProcessE:
+$LN17@AuProcessE:
 	cmp	DWORD PTR i$2[rsp], 60			; 0000003cH
-	jge	$LN13@AuProcessE
+	jge	$LN15@AuProcessE
 
 ; 496  : 		AuVFSNode *file = proc->fds[i];
 
@@ -1262,7 +1263,7 @@ $LN15@AuProcessE:
 ; 497  : 		if (file) {
 
 	cmp	QWORD PTR file$4[rsp], 0
-	je	SHORT $LN12@AuProcessE
+	je	SHORT $LN14@AuProcessE
 
 ; 498  : 			SeTextOut("Closing file -> %s , address -> %x \r\n", file->filename, file);
 
@@ -1278,18 +1279,18 @@ $LN15@AuProcessE:
 	movzx	eax, WORD PTR [rax+64]
 	and	eax, 8
 	test	eax, eax
-	jne	SHORT $LN10@AuProcessE
+	jne	SHORT $LN12@AuProcessE
 	mov	rax, QWORD PTR file$4[rsp]
 	movzx	eax, WORD PTR [rax+64]
 	and	eax, 64					; 00000040H
 	test	eax, eax
-	je	SHORT $LN11@AuProcessE
-$LN10@AuProcessE:
+	je	SHORT $LN13@AuProcessE
+$LN12@AuProcessE:
 
 ; 500  : 				continue;
 
-	jmp	SHORT $LN14@AuProcessE
-$LN11@AuProcessE:
+	jmp	SHORT $LN16@AuProcessE
+$LN13@AuProcessE:
 
 ; 501  : 			if (file->flags & FS_FLAG_GENERAL)  {
 
@@ -1297,14 +1298,14 @@ $LN11@AuProcessE:
 	movzx	eax, WORD PTR [rax+64]
 	and	eax, 4
 	test	eax, eax
-	je	SHORT $LN9@AuProcessE
+	je	SHORT $LN11@AuProcessE
 
 ; 502  : 				if (file->fileCopyCount <= 0)
 
 	mov	rax, QWORD PTR file$4[rsp]
 	movzx	eax, WORD PTR [rax+80]
 	test	eax, eax
-	jg	SHORT $LN8@AuProcessE
+	jg	SHORT $LN10@AuProcessE
 
 ; 503  : 					kfree(file);
 
@@ -1313,8 +1314,8 @@ $LN11@AuProcessE:
 
 ; 504  : 				else
 
-	jmp	SHORT $LN7@AuProcessE
-$LN8@AuProcessE:
+	jmp	SHORT $LN9@AuProcessE
+$LN10@AuProcessE:
 
 ; 505  : 					file->fileCopyCount -= 1;
 
@@ -1323,32 +1324,32 @@ $LN8@AuProcessE:
 	dec	eax
 	mov	rcx, QWORD PTR file$4[rsp]
 	mov	WORD PTR [rcx+80], ax
-$LN7@AuProcessE:
 $LN9@AuProcessE:
-$LN12@AuProcessE:
+$LN11@AuProcessE:
+$LN14@AuProcessE:
 
 ; 506  : 			}
 ; 507  : 		}
 ; 508  : 	}
 
-	jmp	$LN14@AuProcessE
-$LN13@AuProcessE:
+	jmp	$LN16@AuProcessE
+$LN15@AuProcessE:
 
 ; 509  : 
 ; 510  : 	for (int i = 0; i < proc->waitlist->pointer; i++) {
 
 	mov	DWORD PTR i$3[rsp], 0
-	jmp	SHORT $LN6@AuProcessE
-$LN5@AuProcessE:
+	jmp	SHORT $LN8@AuProcessE
+$LN7@AuProcessE:
 	mov	eax, DWORD PTR i$3[rsp]
 	inc	eax
 	mov	DWORD PTR i$3[rsp], eax
-$LN6@AuProcessE:
+$LN8@AuProcessE:
 	mov	rax, QWORD PTR proc$[rsp]
 	mov	rax, QWORD PTR [rax+1088]
 	mov	eax, DWORD PTR [rax]
 	cmp	DWORD PTR i$3[rsp], eax
-	jae	SHORT $LN4@AuProcessE
+	jae	SHORT $LN6@AuProcessE
 
 ; 511  : 		AuThread* thr = (AuThread*)list_remove(proc->waitlist, i);
 
@@ -1361,19 +1362,19 @@ $LN6@AuProcessE:
 ; 512  : 		if (thr) {
 
 	cmp	QWORD PTR thr$6[rsp], 0
-	je	SHORT $LN3@AuProcessE
+	je	SHORT $LN5@AuProcessE
 
 ; 513  : 			AuUnblockThread(thr);
 
 	mov	rcx, QWORD PTR thr$6[rsp]
 	call	AuUnblockThread
-$LN3@AuProcessE:
+$LN5@AuProcessE:
 
 ; 514  : 		}
 ; 515  : 	}
 
-	jmp	SHORT $LN5@AuProcessE
-$LN4@AuProcessE:
+	jmp	SHORT $LN7@AuProcessE
+$LN6@AuProcessE:
 
 ; 516  : 
 ; 517  : 	kfree(proc->waitlist);
@@ -1413,45 +1414,74 @@ $LN4@AuProcessE:
 	call	SeTextOut
 
 ; 527  : 
-; 528  : 	if (proc->file)
+; 528  : 	bool _file_present = false;
+
+	mov	BYTE PTR _file_present$[rsp], 0
+
+; 529  : 	if (proc->file){
 
 	mov	rax, QWORD PTR proc$[rsp]
 	cmp	QWORD PTR [rax+1056], 0
-	je	SHORT $LN2@AuProcessE
+	je	SHORT $LN4@AuProcessE
 
-; 529  : 		kfree(proc->file);
+; 530  : 		_file_present = true;
+
+	mov	BYTE PTR _file_present$[rsp], 1
+
+; 531  : 		kfree(proc->file);
 
 	mov	rax, QWORD PTR proc$[rsp]
 	mov	rcx, QWORD PTR [rax+1056]
 	call	kfree
-$LN2@AuProcessE:
+$LN4@AuProcessE:
 
-; 530  : 
-; 531  : 	AuThreadMoveToTrash(proc->main_thread);
+; 532  : 	}
+; 533  : 
+; 534  : 	if (!_file_present){
+
+	movzx	eax, BYTE PTR _file_present$[rsp]
+	test	eax, eax
+	jne	SHORT $LN3@AuProcessE
+
+; 535  : 		AuRemoveProcess(NULL, proc);
+
+	mov	rdx, QWORD PTR proc$[rsp]
+	xor	ecx, ecx
+	call	?AuRemoveProcess@@YAXPEAU_au_proc_@@0@Z	; AuRemoveProcess
+
+; 536  : 	}
+; 537  : 	else{
+
+	jmp	SHORT $LN2@AuProcessE
+$LN3@AuProcessE:
+
+; 538  : 		AuThreadMoveToTrash(proc->main_thread);
 
 	mov	rax, QWORD PTR proc$[rsp]
 	mov	rcx, QWORD PTR [rax+72]
 	call	?AuThreadMoveToTrash@@YAXPEAU_au_thread_@@@Z ; AuThreadMoveToTrash
+$LN2@AuProcessE:
 
-; 532  : 	
-; 533  : 	kmalloc_debug_on(false);
+; 539  : 	}
+; 540  : 	
+; 541  : 	kmalloc_debug_on(false);
 
 	xor	ecx, ecx
 	call	kmalloc_debug_on
 
-; 534  : 	if (schedulable)
+; 542  : 	if (schedulable)
 
 	movzx	eax, BYTE PTR schedulable$[rsp]
 	test	eax, eax
 	je	SHORT $LN1@AuProcessE
 
-; 535  : 		x64_force_sched();
+; 543  : 		x64_force_sched();
 
 	call	x64_force_sched
 $LN1@AuProcessE:
-$LN21@AuProcessE:
+$LN23@AuProcessE:
 
-; 536  : }
+; 544  : }
 
 	add	rsp, 88					; 00000058H
 	ret	0

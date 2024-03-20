@@ -722,6 +722,19 @@ _KeProcessGetFileDesc:
 	 syscall
 	 ret
 
+global _KeFileSetOffset
+%ifdef YES_DYNAMIC
+export _KeFileSetOffset
+%endif
+_KeFileSetOffset:
+    xor rax, rax
+	mov r12, 44
+	mov r13, rcx
+	mov r14, rdx
+	mov r15, 0
+	mov rdi, 0
+	syscall
+	ret
 
 
 

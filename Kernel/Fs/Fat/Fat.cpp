@@ -514,7 +514,7 @@ AuVFSNode * FatOpen(AuVFSNode * fsys, char* filename) {
 size_t FatGetClusterFor(AuVFSNode* fs,AuVFSNode* file, uint64_t offset){
 	FatFS *fatfs = (FatFS*)fs->device;
 	size_t index = offset / fatfs->cluster_sz_in_bytes;
-	uint32_t cluster = file->current;
+	uint32_t cluster = file->first_block;
 	for (int i = 0; i < index; i++) 
 		cluster = FatReadFAT(fs, cluster);
 	return cluster;

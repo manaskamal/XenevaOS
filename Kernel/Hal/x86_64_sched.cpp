@@ -490,6 +490,9 @@ AU_EXTERN AU_EXPORT void AuUnblockThread(AuThread *t) {
  * @param t -- Thread to move to trash
  */
 void AuThreadMoveToTrash(AuThread* t) {
+	if (!t)
+		return;
+
 	t->state = THREAD_STATE_KILLABLE;
 
 	/* search the thread in ready queue*/

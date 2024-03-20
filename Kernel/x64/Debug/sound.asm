@@ -22,11 +22,11 @@ _BSS	SEGMENT
 ?_audio_stopped_@@3_NA DB 01H DUP (?)			; _audio_stopped_
 _BSS	ENDS
 CONST	SEGMENT
-$SG3957	DB	'/dev', 00H
+$SG3960	DB	'/dev', 00H
 	ORG $+3
-$SG3962	DB	'sound', 00H
+$SG3965	DB	'sound', 00H
 	ORG $+2
-$SG3963	DB	'/', 00H
+$SG3966	DB	'/', 00H
 CONST	ENDS
 PUBLIC	?AuSoundInitialise@@YAXXZ			; AuSoundInitialise
 PUBLIC	AuSoundSetCard
@@ -1103,7 +1103,7 @@ $LN3:
 
 ; 271  : 	AuVFSNode* fsys = AuVFSFind("/dev");
 
-	lea	rcx, OFFSET FLAT:$SG3957
+	lea	rcx, OFFSET FLAT:$SG3960
 	call	AuVFSFind
 	mov	QWORD PTR fsys$[rsp], rax
 
@@ -1123,7 +1123,7 @@ $LN3:
 ; 274  : 	strcpy(dsp->filename, "sound");
 
 	mov	rax, QWORD PTR dsp$[rsp]
-	lea	rdx, OFFSET FLAT:$SG3962
+	lea	rdx, OFFSET FLAT:$SG3965
 	mov	rcx, rax
 	call	strcpy
 
@@ -1160,7 +1160,7 @@ $LN3:
 ; 280  : 	AuDevFSAddFile(fsys, "/", dsp);
 
 	mov	r8, QWORD PTR dsp$[rsp]
-	lea	rdx, OFFSET FLAT:$SG3963
+	lea	rdx, OFFSET FLAT:$SG3966
 	mov	rcx, QWORD PTR fsys$[rsp]
 	call	AuDevFSAddFile
 

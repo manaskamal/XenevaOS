@@ -175,10 +175,10 @@ $LN6:
 	div	QWORD PTR [rcx+60]
 	mov	QWORD PTR index$[rsp], rax
 
-; 517  : 	uint32_t cluster = file->current;
+; 517  : 	uint32_t cluster = file->first_block;
 
 	mov	rax, QWORD PTR file$[rsp]
-	mov	eax, DWORD PTR [rax+56]
+	mov	eax, DWORD PTR [rax+48]
 	mov	DWORD PTR cluster$[rsp], eax
 
 ; 518  : 	for (int i = 0; i < index; i++) 

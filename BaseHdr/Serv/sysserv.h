@@ -36,7 +36,7 @@
 #include <Hal\x86_64_signal.h>
 
 /* maximum supported system calls */
-#define AURORA_MAX_SYSCALL  44
+#define AURORA_MAX_SYSCALL  45
 #define AURORA_SYSCALL_MAGIC  0x05212004  /* actual number to remember */
 
 /* ==========================================
@@ -279,4 +279,12 @@ extern int DestroyTimer(int threadID);
 * specific filename fd
 */
 extern int ProcessGetFileDesc(const char* filename);
+
+/*
+* FileSetOffset -- set a offset inorder to read the
+* specific position of the file
+* @param fd -- File descriptor
+* @param offset -- offset in bytes
+*/
+extern int FileSetOffset(int fd, size_t offset);
 #endif

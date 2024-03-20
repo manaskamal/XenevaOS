@@ -1,22 +1,20 @@
-﻿Build started 16-03-2024 আবেলি 9:42:23.
+﻿Build started 20-03-2024 আবেলি 10:05:13.
      1>Project "E:\Xeneva Project\Aurora\Libs\XEClib\XEClib.vcxproj" on node 2 (Rebuild target(s)).
      1>_NASM:
          setjmp.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmpbebe1390fbf74b44a4e7ad1f7991f991.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp1d504ee6aeb742bda4c3ef2bdae5bfdd.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\setjmp.obj"  "E:\Xeneva Project\Aurora\Libs\XEClib\setjmp.asm"
        _NASM:
          _callbase.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp4317c2dbc6e04f119bc64324b3650e83.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp1e62aeda5b92436f9b456a3cad07dea1.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\_callbase.obj"  "E:\Xeneva Project\Aurora\Libs\XEClib\_callbase.asm"
      1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(935,5): warning MSB8027: Two or more files with the name of _xeprint.cpp will produce outputs to the same location. This can lead to an incorrect build result.  The files involved are sys\_xeprint.cpp, _xeprint.cpp.
        ClCompile:
-         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes\c++" /Zi /nologo /W3 /WX- /sdl- /MP /Od /D ARCH_X64 /D YES_DYNAMIC /D DYNAMIC_EXPORTER /D _WINDLL /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt c++\ios.cpp c++\iostream.cpp c++\istream.cpp c++\memory.cpp c++\ostream.cpp c++\_string.cpp errno.cpp math.cpp qsort.cpp stat.cpp stdio.cpp stdlib.cpp string.cpp sys\_heap.cpp sys\_xeneva.cpp sys\_xeprint.cpp time.cpp _xeinput.cpp _xeprint.cpp
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes\c++" /Zi /nologo /W3 /WX- /sdl- /MP /Od /D ARCH_X64 /D YES_DYNAMIC /D DYNAMIC_EXPORTER /D _WINDLL /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt c++\ios.cpp c++\iostream.cpp c++\istream.cpp c++\memory.cpp c++\ostream.cpp c++\_string.cpp ctype.cpp errno.cpp math.cpp qsort.cpp stat.cpp stdio.cpp stdlib.cpp string.cpp sys\_heap.cpp sys\_xeneva.cpp sys\_xeprint.cpp time.cpp _xeinput.cpp _xeprint.cpp
      1>cl : Command line warning D9025: overriding '/sdl-' with '/GS-'
      1>cl : Command line warning D9002: ignoring unknown option '/arch:SSE2'
      1>cl : Command line warning D9030: '/Gm' is incompatible with multiprocessing; ignoring /MP switch
          _xeprint.cpp
-     1>E:\Xeneva Project\Aurora\Libs\XEClib\includes\ctype.h(50): warning C4005: 'isascii' : macro redefinition
-                 E:\Xeneva Project\Aurora\Libs\XEClib\includes\ctype.h(39) : see previous definition of 'isascii'
      1>_xeprint.cpp(84): warning C4267: '=' : conversion from 'size_t' to 'int', possible loss of data
      1>_xeprint.cpp(205): warning C4244: '=' : conversion from 'unsigned __int64' to 'char', possible loss of data
      1>_xeprint.cpp(207): warning C4244: '=' : conversion from 'unsigned __int64' to 'char', possible loss of data
@@ -43,8 +41,6 @@
      1>_xeprint.cpp(767): warning C4267: '=' : conversion from 'size_t' to 'int', possible loss of data
      1>_xeprint.cpp(790): warning C4267: '=' : conversion from 'size_t' to 'int', possible loss of data
          _xeinput.cpp
-     1>E:\Xeneva Project\Aurora\Libs\XEClib\includes\ctype.h(50): warning C4005: 'isascii' : macro redefinition
-                 E:\Xeneva Project\Aurora\Libs\XEClib\includes\ctype.h(39) : see previous definition of 'isascii'
      1>_xeinput.cpp(47): warning C4267: '=' : conversion from 'size_t' to 'int', possible loss of data
      1>_xeinput.cpp(54): warning C4267: '=' : conversion from 'size_t' to 'int', possible loss of data
      1>_xeinput.cpp(162): warning C4244: 'argument' : conversion from 'unsigned __int64' to 'unsigned int', possible loss of data
@@ -57,8 +53,6 @@
      1>time.cpp(108): warning C4267: '=' : conversion from 'size_t' to 'clock_t', possible loss of data
      1>time.cpp(123): warning C4101: 'count' : unreferenced local variable
          _xeprint.cpp
-     1>E:\Xeneva Project\Aurora\Libs\XEClib\includes\ctype.h(50): warning C4005: 'isascii' : macro redefinition
-                 E:\Xeneva Project\Aurora\Libs\XEClib\includes\ctype.h(39) : see previous definition of 'isascii'
          _xeneva.cpp
      1>sys\_xeneva.cpp(35): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
      1>sys\_xeneva.cpp(39): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
@@ -69,26 +63,24 @@
      1>sys\_heap.cpp(490): warning C4244: '=' : conversion from 'unsigned __int64' to 'int', possible loss of data
      1>sys\_heap.cpp(519): warning C4018: '>' : signed/unsigned mismatch
          string.cpp
-     1>string.cpp(248): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
-     1>string.cpp(249): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
-     1>string.cpp(360): warning C4267: '=' : conversion from 'size_t' to 'int', possible loss of data
-     1>string.cpp(410): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
+     1>string.cpp(231): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
+     1>string.cpp(232): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
+     1>string.cpp(343): warning C4267: '=' : conversion from 'size_t' to 'int', possible loss of data
+     1>string.cpp(393): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
+     1>string.cpp(394): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
      1>string.cpp(411): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
-     1>string.cpp(428): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
          stdlib.cpp
-     1>E:\Xeneva Project\Aurora\Libs\XEClib\includes\ctype.h(50): warning C4005: 'isascii' : macro redefinition
-                 E:\Xeneva Project\Aurora\Libs\XEClib\includes\ctype.h(39) : see previous definition of 'isascii'
      1>stdlib.cpp(111): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
      1>stdlib.cpp(147): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
      1>stdlib.cpp(315): warning C4146: unary minus operator applied to unsigned type, result still unsigned
      1>stdlib.cpp(340): warning C4146: unary minus operator applied to unsigned type, result still unsigned
      1>stdlib.cpp(406): warning C4146: unary minus operator applied to unsigned type, result still unsigned
          stdio.cpp
-     1>stdio.cpp(156): warning C4244: 'return' : conversion from '__int64' to 'long', possible loss of data
-     1>stdio.cpp(263): warning C4267: 'argument' : conversion from 'size_t' to 'int', possible loss of data
-     1>stdio.cpp(301): warning C4267: 'argument' : conversion from 'size_t' to 'int', possible loss of data
-     1>stdio.cpp(321): warning C4267: '=' : conversion from 'size_t' to 'int', possible loss of data
-     1>stdio.cpp(351): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
+     1>stdio.cpp(76): warning C4267: '=' : conversion from 'size_t' to 'int', possible loss of data
+     1>stdio.cpp(285): warning C4267: 'argument' : conversion from 'size_t' to 'int', possible loss of data
+     1>stdio.cpp(323): warning C4267: 'argument' : conversion from 'size_t' to 'int', possible loss of data
+     1>stdio.cpp(343): warning C4267: '=' : conversion from 'size_t' to 'int', possible loss of data
+     1>stdio.cpp(373): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
          stat.cpp
          qsort.cpp
      1>qsort.cpp(83): warning C4267: 'argument' : conversion from 'size_t' to 'ssize_t', possible loss of data
@@ -98,12 +90,11 @@
      1>math.cpp(233): warning C4305: '-=' : truncation from 'double' to 'float'
      1>math.cpp(235): warning C4305: '+=' : truncation from 'double' to 'float'
          errno.cpp
+         ctype.cpp
          _string.cpp
          ostream.cpp
          memory.cpp
          istream.cpp
-     1>E:\Xeneva Project\Aurora\Libs\XEClib\includes\ctype.h(50): warning C4005: 'isascii' : macro redefinition
-                 E:\Xeneva Project\Aurora\Libs\XEClib\includes\ctype.h(39) : see previous definition of 'isascii'
          iostream.cpp
          ios.cpp
      1>E:\Xeneva Project\Aurora\Libs\XEClib\includes\c++\istream(71): warning C4661: 'std::basic_ios<char,std::char_traits<charT>>::basic_ios(std::basic_streambuf<charT,std::char_traits<charT>> *)' : no suitable definition provided for explicit template instantiation request
@@ -127,7 +118,7 @@
                      charT=char
                  ]
          Generating Code...
-     1>e:\xeneva project\aurora\libs\xeclib\stdio.cpp(294): warning C4715: 'vfprintf' : not all control paths return a value
+     1>e:\xeneva project\aurora\libs\xeclib\stdio.cpp(316): warning C4715: 'vfprintf' : not all control paths return a value
      1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(1186,5): warning MSB8012: TargetPath(E:\Xeneva Project\Aurora\x64\Debug\XEClib.dll) does not match the Linker's OutputFile property value (F:\XEClib.dll). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
        Link:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\link.exe /ERRORREPORT:PROMPT /OUT:"F:\XEClib.dll" /INCREMENTAL /NOLOGO /NODEFAULTLIB /MANIFEST:NO /PDB:"E:\Xeneva Project\Aurora\x64\Debug\XEClib.pdb" /MAP /MAPINFO:EXPORTS /SUBSYSTEM:NATIVE /LARGEADDRESSAWARE /Driver /OPT:NOREF /LTCG /TLBID:1 /BASE:"0x0000000000600000" /FIXED:NO /NXCOMPAT /IMPLIB:"E:\Xeneva Project\Aurora\x64\Debug\XEClib.lib" /MACHINE:X64 /ALIGN:512 /DLL x64\Debug\ios.obj
@@ -136,6 +127,7 @@
          x64\Debug\memory.obj
          x64\Debug\ostream.obj
          x64\Debug\_string.obj
+         x64\Debug\ctype.obj
          x64\Debug\errno.obj
          x64\Debug\math.obj
          x64\Debug\qsort.obj
@@ -161,4 +153,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:01.60
+Time Elapsed 00:00:02.48

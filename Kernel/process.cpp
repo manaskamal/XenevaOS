@@ -525,10 +525,18 @@ void AuProcessExit(AuProcess* proc, bool schedulable) {
 
 	SeTextOut("closing process -> %s \r\n", proc->name);
 
-	if (proc->file)
+	bool _file_present = false;
+	if (proc->file){
+		_file_present = true;
 		kfree(proc->file);
+	}
 
-	AuThreadMoveToTrash(proc->main_thread);
+	if (!_file_present){
+		AuRemoveProcess(NULL, proc);
+	}
+	else{
+		AuThreadMoveToTrash(proc->main_thread);
+	}
 	
 	kmalloc_debug_on(false);
 	if (schedulable)

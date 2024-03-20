@@ -103,7 +103,7 @@ XE_EXTERN{
 	XE_LIB int _KeFileStat(int fd, void* buf);
 	XE_LIB int _KeOpenDir(char* filename);
 	XE_LIB int _KeReadDir(int dirfd, void* dirent);
-
+	XE_LIB int _KeFileSetOffset(int fd, size_t offset);
 #ifdef __cplusplus
 }
 #endif
