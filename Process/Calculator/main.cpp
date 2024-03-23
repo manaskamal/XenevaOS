@@ -332,6 +332,9 @@ void WindowHandleMessage(PostEvent *e) {
 										 memset(e, 0, sizeof(PostEvent));
 										 break;
 	}
+	default:
+		memset(e, 0, sizeof(PostEvent));
+		break;
 	}
 }
 

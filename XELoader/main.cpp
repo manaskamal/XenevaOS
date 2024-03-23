@@ -79,6 +79,7 @@ int XELdrLoadObject(XELoaderObject *obj){
 	intptr_t original_base = nt->OptionalHeader.ImageBase;
 	intptr_t new_addr = _image_load_base_;
 	intptr_t diff = new_addr - original_base;
+	/* FORMULA to obtain real address -> new_addr - diff*/
 
 	PSECTION_HEADER secthdr = raw_offset<PSECTION_HEADER>(&nt->OptionalHeader, nt->FileHeader.SizeOfOptionaHeader);
 
@@ -247,15 +248,10 @@ int main(int argc, char* argv[]) {
 	for (int i = 0; i < NUMSIGNALS; i++)
 		_KeSetSignal(i + 1, DefaultSignalHandler);
 
-	for (int i = 0; i < argc - 1; i++){
-		argv[i] = argv[i + 1];
-	}
 	
 	entrypoint e = (entrypoint)entry_addr;
-	/* argc - 1 because executable name occupies
-	 * 1 space in the argument array
-	 */
-	e(argc - 1, argv);
+	
+	e(argc , argv);
 	
 	while (1) {
 		_KeProcessExit();

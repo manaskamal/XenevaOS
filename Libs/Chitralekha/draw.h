@@ -39,14 +39,14 @@
 XE_EXTERN{
 #endif
 
-#pragma pack(push,1)
+
 	typedef struct _chrect_ {
 		uint32_t x;
 		uint32_t y;
 		uint32_t w;
 		uint32_t h;
 	}ChRect;
-#pragma pack(pop)
+
 	/*
 	* ChDrawRect -- draw a rectangle
 	* @param canvas -- Pointer to canvas

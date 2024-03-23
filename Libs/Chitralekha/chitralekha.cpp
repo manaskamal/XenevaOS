@@ -90,7 +90,7 @@ int ChAllocateBuffer(ChCanvas* canvas) {
 	int reqW = canvas->canvasWidth;
 	int reqH = canvas->canvasHeight;
 
-	size_t sz = reqW * reqH * (canvas->bpp / 8);
+	size_t sz = (reqW * reqH * (canvas->bpp / 8) + 0x1F) & (~0x1FULL);
 	void* addr = _KeMemMap(NULL, sz, 0, 0, MEMMAP_NO_FILEDESC, 0);
 	if (!addr)
 		return 0;
@@ -124,6 +124,12 @@ int ChDeAllocateBuffer(ChCanvas* canvas) {
 void ChCanvasScreenUpdate(ChCanvas* canvas, uint32_t x, uint32_t y, uint32_t w, uint32_t h) {
 	uint32_t* fb = canvas->framebuff;
 
+	if (x >= canvas->screenWidth)
+		return;
+
+	if (y >= canvas->screenHeight)
+		return;
+
 	if ((x + w) >= canvas->screenWidth)
 		w = canvas->screenWidth - x;
 
@@ -134,6 +140,7 @@ void ChCanvasScreenUpdate(ChCanvas* canvas, uint32_t x, uint32_t y, uint32_t w, 
 		x = 0;
 	if (y < 0)
 		y = 0;
+
 
 	for (int i = 0; i < h; i++)
 		_fastcpy(fb + (y + i) * canvas->screenWidth + x, 

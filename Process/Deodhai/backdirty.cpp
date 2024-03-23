@@ -31,7 +31,7 @@
 #include <string.h>
 
 
-uint32_t _back_dirty_count;
+uint8_t _back_dirty_count;
 
 Rect _back_dirty_rect[256];
 
@@ -67,7 +67,7 @@ void BackDirtyAdd(int x, int y, int w, int h) {
  * @param h -- mem pointer where to store h
  * @param index -- index 
  */
-void BackDirtyGetRect(int *x, int *y, int *w, int *h, int index) {
+void BackDirtyGetRect(int *x, int *y, int *w, int *h, uint8_t index) {
 	*x = _back_dirty_rect[index].x;
 	*y = _back_dirty_rect[index].y;
 	*w = _back_dirty_rect[index].w;
@@ -75,7 +75,7 @@ void BackDirtyGetRect(int *x, int *y, int *w, int *h, int index) {
 }
 
 
-uint32_t BackDirtyGetDirtyCount() {
+uint8_t BackDirtyGetDirtyCount() {
 	return _back_dirty_count;
 }
 

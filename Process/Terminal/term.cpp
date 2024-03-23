@@ -59,6 +59,7 @@ bool dirty = false;
 bool _escape_seq = false;
 bool _seq_csi = false;
 bool _cursor_blink = 0;
+bool _update_terminal_ = false;
 char* escBuf;
 int shell_id;
 uint32_t backColor;
@@ -130,8 +131,8 @@ void TerminalDrawAllCells() {
 			TerminalDrawCell(x,y, 0);
 		}
 	}
-	ChWindowUpdate(win, 0, 26, win->info->width-1, win->info->height - 26, 1, 0);
-	_KeProcessSleep(1000);
+	ChWindowUpdate(win, 0, 26, win->info->width-1, win->info->height - 26, 0, 1);
+	_KeProcessSleep(100);
 }
 
 
@@ -167,6 +168,7 @@ void TerminalScroll() {
 		TermCell* destCell = (TermCell*)&term_buffer[ws_row  * ws_col + c_x];
 		memset(destCell, 0, sizeof(TermCell));
 	}
+	_update_terminal_ = true;
 }
 
 /* TerminalClearScreen -- clears entire screen area of
@@ -524,13 +526,14 @@ void TerminalThread() {
 		 * is dirty, so we need redraw of all 
 		 * cells 
 		 */
-		if (bytes_read > 0) {
+		if ((bytes_read > 0) || _update_terminal_) {
 			TerminalDrawAllCells();
 			TerminalDrawCursor();
 			bytes_read = 0;
+			_update_terminal_ = false;
 		}
 
-		_KeProcessSleep(1000); //00000
+		_KeProcessSleep(100000000); //
 	}
 }
 
@@ -544,7 +547,7 @@ int main(int argc, char* arv[]){
 	win->info->alpha = true;
 	win->info->alphaValue = 0.7;
 	win->color = BLACK;
-	ChWindowPaint(win);
+	
 	consolas = ChInitialiseFont(CONSOLAS);
 	ChFontSetSize(consolas, 12);
 	int term_w = win->info->width - 1;
@@ -564,7 +567,7 @@ int main(int argc, char* arv[]){
 	memset(escBuf, 0, 256);
 	backColor = BLACK;
 	fgColor = WHITE;
-
+	_update_terminal_ = false;
 	master_fd = slave_fd = 0;
 	/* create the terminal */
 	int success = 0;
@@ -581,8 +584,8 @@ int main(int argc, char* arv[]){
 	memset(term_buffer, 0x0, ws_col * ws_row * sizeof(TermCell));
 
 	
-	TerminalDrawAllCells();
-	int thread_idx = _KeCreateThread(TerminalThread, "asyncthr");
+	ChWindowPaint(win);
+	_KeProcessSleep(100000);
 
 	int term_id = _KeGetProcessID();
 	/* try loading the shell process */
@@ -598,6 +601,7 @@ int main(int argc, char* arv[]){
 
 	_KeProcessLoadExec(shell_id, "/xesh.exe", 0, 0);
 
+	int thread_idx = _KeCreateThread(TerminalThread, "asyncthr");
 	PostEvent e;
 	memset(&e, 0, sizeof(PostEvent));
 	while (1) {

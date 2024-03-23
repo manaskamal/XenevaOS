@@ -54,7 +54,7 @@
 
 #define DEODHAI_BROADCAST_WINCREATED 170
 #define DEODHAI_BROADCAST_WINDESTROYED 171
-#define DEODHAI_BROADCAST_ICON 172
+#define DEODHAI_BROADCAST_ICON 174
 #define DEODHAI_BROADCAST_FOCUS_CHANGED 173
 
 #define HANDLE_TYPE_NORMAL_WINDOW 1
@@ -62,14 +62,14 @@
 
 
 
-#pragma pack(push,1)
+
 typedef struct _rect_ {
 	uint32_t x;
 	uint32_t y;
 	uint32_t w;
 	uint32_t h;
 }Rect;
-#pragma pack(pop)
+
 
 #pragma pack(push,1)
 typedef struct _bmp_ {

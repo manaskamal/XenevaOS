@@ -1,8 +1,8 @@
-﻿Build started 14-03-2024 ৰাতিপু 12:10:51.
+﻿Build started 23-03-2024 আবেলি 1:31:37.
      1>Project "E:\Xeneva Project\Aurora\Libs\Chitralekha\Chitralekha.vcxproj" on node 2 (Rebuild target(s)).
      1>_NASM:
          _fastcpy.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp567dcc0f23924ba5af7c28623724638b.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp9e63734c82304c44a9b3356385830aa1.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\_fastcpy.obj"  "E:\Xeneva Project\Aurora\Libs\Chitralekha\_fastcpy.asm"
        ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /I"E:\os_dev\freetype2-master\freetype2-master\include" /Zi /nologo /W3 /WX- /sdl- /Od /D ARCH_X64 /D YES_DYNAMIC /D DYNAMIC_EXPORTER /D _USE_FREETYPE /D _WINDLL /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt boxblur.cpp chitralekha.cpp color.cpp draw.cpp font.cpp keycode.cpp ttf.cpp widgets\base.cpp widgets\button.cpp widgets\defaultmenu.cpp widgets\defaultscrollbar.cpp widgets\defaultviews.cpp widgets\defaultwindow.cpp widgets\icon.cpp widgets\list.cpp widgets\menu.cpp widgets\menubar.cpp widgets\msgbox.cpp widgets\scrollpane.cpp widgets\view.cpp widgets\window.cpp
@@ -78,8 +78,6 @@
      1>ttf.cpp(182): warning C4018: '<' : signed/unsigned mismatch
      1>ttf.cpp(306): warning C4244: 'argument' : conversion from 'int' to 'float', possible loss of data
          keycode.cpp
-     1>E:\Xeneva Project\Aurora\Libs\XEClib\includes\ctype.h(50): warning C4005: 'isascii' : macro redefinition
-                 E:\Xeneva Project\Aurora\Libs\XEClib\includes\ctype.h(39) : see previous definition of 'isascii'
          font.cpp
      1>e:\xeneva project\aurora\libs\chitralekha\ttf.h(82): warning C4161: #pragma pack(pop...) : more pops than pushes
      1>font.cpp(64): warning C4244: '=' : conversion from 'float' to 'uint32_t', possible loss of data
@@ -108,11 +106,11 @@
      1>draw.cpp(311): warning C4018: '<' : signed/unsigned mismatch
          color.cpp
          chitralekha.cpp
-     1>chitralekha.cpp(138): warning C4018: '<' : signed/unsigned mismatch
-     1>chitralekha.cpp(174): warning C4018: '<' : signed/unsigned mismatch
-     1>chitralekha.cpp(175): warning C4018: '<' : signed/unsigned mismatch
-     1>chitralekha.cpp(186): warning C4244: 'argument' : conversion from 'uint32_t' to 'float', possible loss of data
-     1>chitralekha.cpp(196): warning C4244: 'argument' : conversion from 'uint32_t' to 'float', possible loss of data
+     1>chitralekha.cpp(145): warning C4018: '<' : signed/unsigned mismatch
+     1>chitralekha.cpp(181): warning C4018: '<' : signed/unsigned mismatch
+     1>chitralekha.cpp(182): warning C4018: '<' : signed/unsigned mismatch
+     1>chitralekha.cpp(193): warning C4244: 'argument' : conversion from 'uint32_t' to 'float', possible loss of data
+     1>chitralekha.cpp(203): warning C4244: 'argument' : conversion from 'uint32_t' to 'float', possible loss of data
          Generating Code...
      1>e:\xeneva project\aurora\libs\chitralekha\ttf.cpp(194): warning C4700: uninitialized local variable 'glyph' used
          Compiling...
@@ -120,10 +118,10 @@
      1>boxblur.cpp(56): warning C4018: '<' : signed/unsigned mismatch
      1>boxblur.cpp(57): warning C4018: '<' : signed/unsigned mismatch
          Generating Code...
-     1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(1186,5): warning MSB8012: TargetPath(E:\Xeneva Project\Aurora\x64\Debug\Chitralekha.dll) does not match the Linker's OutputFile property value (D:\chlkha.dll). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
+     1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(1186,5): warning MSB8012: TargetPath(E:\Xeneva Project\Aurora\x64\Debug\Chitralekha.dll) does not match the Linker's OutputFile property value (F:\chlkha.dll). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
      1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(1188,5): warning MSB8012: TargetName(Chitralekha) does not match the Linker's OutputFile property value (chlkha). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
        Link:
-         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\link.exe /ERRORREPORT:PROMPT /OUT:"D:\chlkha.dll" /INCREMENTAL /NOLOGO /LIBPATH:"E:\Xeneva Project\Aurora\x64\Debug" /LIBPATH:"E:\os_dev\freetype2-master\freetype2-master\objs" /LIBPATH:"E:\Xeneva Project\Aurora\Libs\XECrt" XEClib.lib ftype.lib xecrt.lib /NODEFAULTLIB /MANIFEST:NO /PDB:"E:\Xeneva Project\Aurora\x64\Debug\Chitralekha.pdb" /MAP /MAPINFO:EXPORTS /SUBSYSTEM:NATIVE /LARGEADDRESSAWARE /Driver /OPT:NOREF /LTCG /TLBID:1 /BASE:"0x0000000000600000" /FIXED /NXCOMPAT /IMPLIB:"E:\Xeneva Project\Aurora\x64\Debug\Chitralekha.lib" /MACHINE:X64 /ALIGN:512 /DLL x64\Debug\boxblur.obj
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\link.exe /ERRORREPORT:PROMPT /OUT:"F:\chlkha.dll" /INCREMENTAL /NOLOGO /LIBPATH:"E:\Xeneva Project\Aurora\x64\Debug" /LIBPATH:"E:\os_dev\freetype2-master\freetype2-master\objs" /LIBPATH:"E:\Xeneva Project\Aurora\Libs\XECrt" XEClib.lib ftype.lib xecrt.lib /NODEFAULTLIB /MANIFEST:NO /PDB:"E:\Xeneva Project\Aurora\x64\Debug\Chitralekha.pdb" /MAP /MAPINFO:EXPORTS /SUBSYSTEM:NATIVE /LARGEADDRESSAWARE /Driver /OPT:NOREF /LTCG /TLBID:1 /BASE:"0x0000000000600000" /FIXED /NXCOMPAT /IMPLIB:"E:\Xeneva Project\Aurora\x64\Debug\Chitralekha.lib" /MACHINE:X64 /ALIGN:512 /DLL x64\Debug\boxblur.obj
          x64\Debug\chitralekha.obj
          x64\Debug\color.obj
          x64\Debug\draw.obj
@@ -153,4 +151,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:02.98
+Time Elapsed 00:00:03.36

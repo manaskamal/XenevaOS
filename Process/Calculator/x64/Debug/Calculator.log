@@ -1,4 +1,4 @@
-﻿Build started 17-03-2024 ৰাতিপু 10:52:04.
+﻿Build started 23-03-2024 ৰাতিপু 1:42:28.
      1>Project "E:\Xeneva Project\Aurora\Process\Calculator\Calculator.vcxproj" on node 2 (Rebuild target(s)).
      1>ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /I"E:\Xeneva Project\Aurora\Libs\Chitralekha" /I"E:\os_dev\freetype2-master\freetype2-master\include" /Zi /nologo /W4 /WX- /sdl- /MP /Od /Oy /D ARCH_X64 /D YES_DYNAMIC /D DYNAMIC_IMPORTER /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt actions.cpp main.cpp
@@ -12,12 +12,12 @@
      1>main.cpp(285): warning C4244: '+=' : conversion from 'int' to 'uint16_t', possible loss of data
      1>main.cpp(331): warning C4244: 'argument' : conversion from 'int' to 'char', possible loss of data
      1>main.cpp(323): warning C4189: 'code' : local variable is initialized but not referenced
-     1>main.cpp(344): warning C4189: 'num_buttons_per_row' : local variable is initialized but not referenced
-     1>main.cpp(431): warning C4100: 'ctl' : unreferenced formal parameter
-     1>main.cpp(442): warning C4100: 'win' : unreferenced formal parameter
-     1>main.cpp(442): warning C4100: 'widget' : unreferenced formal parameter
-     1>main.cpp(460): warning C4018: '<' : signed/unsigned mismatch
-     1>main.cpp(487): warning C4127: conditional expression is constant
+     1>main.cpp(347): warning C4189: 'num_buttons_per_row' : local variable is initialized but not referenced
+     1>main.cpp(434): warning C4100: 'ctl' : unreferenced formal parameter
+     1>main.cpp(445): warning C4100: 'win' : unreferenced formal parameter
+     1>main.cpp(445): warning C4100: 'widget' : unreferenced formal parameter
+     1>main.cpp(463): warning C4018: '<' : signed/unsigned mismatch
+     1>main.cpp(490): warning C4127: conditional expression is constant
          actions.cpp
      1>actions.cpp(32): warning C4100: 'win' : unreferenced formal parameter
      1>actions.cpp(32): warning C4100: 'wid' : unreferenced formal parameter
@@ -73,4 +73,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:00.53
+Time Elapsed 00:00:00.86

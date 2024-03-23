@@ -111,6 +111,7 @@ void NmButtonDefaultPaint(NamdaphaButton* button, ChWindow* win){
 		}
 		else{
 			ChColorDrawHorizontalGradient(win->canv, button->x, button->y, button->w, button->h, NAMDAPHA_COLOR, NAMDAPHA_COLOR_LIGHT);
+			//ChDrawRect(win->canv, button->x, button->y, button->w, button->h, BLACK);
 		}
 	}
 	if (button->nmbuttoninfo) {

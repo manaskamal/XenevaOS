@@ -39,16 +39,14 @@ extern "C"
 
 	XE_LIB int isspace(int c);
 	XE_LIB int isascii(int c);     
-#define isupper(c)      ((c) >= 'A' && (c) <= 'Z')
-#define islower(c)      ((c) >= 'a' && (c) <= 'z')
-#define isalpha(c)      (isupper(c) || islower(c))
-#define isdigit(c)      ((c) >= '0' && (c) <= '9')
-#define isxdigit(c)     (isdigit(c) \
-	|| ((c) >= 'A' && (c) <= 'F') \
-	|| ((c) >= 'a' && (c) <= 'f'))
-#define isprint(c)      ((c) >= ' ' && (c) <= '~')
+	XE_LIB int isupper(int c);
+	XE_LIB int islower(int c);
+	XE_LIB int isalpha(int c);
+	XE_LIB int isdigit(int c);
+	XE_LIB int isxdigit(int c);
+	XE_LIB int isprint(int c);
 	XE_LIB int toupper(int c);
-#define tolower(c)      ((c) + 0x20 * (((c) >= 'A') && ((c) <= 'Z')))
+	XE_LIB int tolower(int c);
 
 #define toascii(c)	((unsigned)(c) & 0x7F)
 

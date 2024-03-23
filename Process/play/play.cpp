@@ -42,22 +42,23 @@
 * main -- terminal emulator
 */
 int main(int argc, char* arv[]){
-	printf("\nWelcome to Play v1.0 \n");
-	printf("A simple wave file player by Manas Kamal\n");
-	printf("Please wait...until the song get finished\n");
-
-
+	
 	char *filename = NULL;
-	if (argc > 0){
-		if (strcmp(arv[0], "-help") == 0)
-			printf("You are asking for help? \n");
+	if (argc > 1){
+		if (strcmp(arv[1], "-help") == 0){
+			printf("\n Play v1.0 -- A simple wave file player \n");
+			printf("Copyright (C) Manas Kamal Choudhury 2024 \n");
+			printf("Available commands : '-help', '-file' \n");
+			printf("To play a file: \n");
+			printf("      play -file /<yourfilename>.wav ");
+		}
 
-		if (strcmp(arv[0], "-file") == 0){
+		if (strcmp(arv[1], "-file") == 0){
 			if (!arv[1]){
 				printf("No file specified to play \n");
 				return -1;
 			}
-			filename = arv[1];
+			filename = arv[2];
 		}
 	}
 

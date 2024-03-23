@@ -105,7 +105,7 @@ void ChWindowPaintTitlebar(ChWindow* win) {
 		dark_color = DEFAULT_TITLEBAR_FOCUS_DARK;
 	}
 
-	ChColorDrawVerticalGradient(win->canv, 0, 0, win->info->width, 26, light_color, dark_color);
+	ChDrawRect(win->canv, 0, 0, win->info->width, 26, light_color);
 	ChFont* font = win->app->baseFont;
 	ChFontSetSize(win->app->baseFont, 10);
 	int font_width = ChFontGetWidth(font,win->title);

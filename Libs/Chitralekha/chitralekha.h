@@ -38,7 +38,7 @@ XE_EXTERN{
 #endif
 
 
-#pragma pack(push,1)
+
 	typedef struct _ChCanvas_ {
 		int graphics_fd;
 		uint32_t screenWidth;
@@ -52,7 +52,7 @@ XE_EXTERN{
 		size_t   bufferSz;
 		uint32_t* framebuff;
 	}ChCanvas;
-#pragma pack(pop)
+
 
 	XE_LIB int ChPrintLibName();
 

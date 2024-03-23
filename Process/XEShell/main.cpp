@@ -89,7 +89,7 @@ void XEShellSpawn(char* string) {
 		int j = 0;
 		int totalCharacterCount = strlen(string);
 		char** argv = (char**)malloc(10);
-
+		memset(argv, 0, 10);
 		/* here we mainly prepare for the arguments to pass */
 		for (int i = 0; i < strlen(string); i++){
 			if (string[i] == ' ' || string[i] == '\0'){
@@ -139,9 +139,16 @@ void XEShellSpawn(char* string) {
 		_KeSetFileToProcess(XENEVA_STDOUT, XENEVA_STDOUT, proc_id);
 		_KeSetFileToProcess(XENEVA_STDERR, XENEVA_STDERR, proc_id);
 		int status = _KeProcessLoadExec(proc_id, filename, argcount, argv);
+
+
 		job = proc_id;
 		_KeProcessWaitForTermination(proc_id);
 		_KeCloseFile(file);
+
+		while (argcount) {
+			argv++;
+			argcount--;
+		}
 		job = 0;
 	}
 }

@@ -46,7 +46,9 @@ uint16_t back_buffer_key_prefix = 400;
  */
 uint32_t* CreateSharedWinSpace(uint16_t *shkey, uint16_t ownerId) {
 	uint32_t key = shared_win_key_prefix + ownerId;
-	int id = _KeCreateSharedMem(key, sizeof(WinSharedInfo), 0);
+	int sz = DIV_ROUND_UP(sizeof(WinSharedInfo), 4096);
+	_KePrint("Sizeof(winsharedinfo-> %d aligned -> %d\r\n", sizeof(WinSharedInfo), sz);
+	int id = _KeCreateSharedMem(key,sizeof(WinSharedInfo), 0);
 	void* addr = _KeObtainSharedMem(id, NULL, 0);
 	*shkey = key;
 	shared_win_key_prefix += 10;
@@ -95,7 +97,7 @@ Window* CreateWindow(int x, int y, int w, int h, uint8_t flags, uint16_t ownerId
 	Window* win = (Window*)malloc(sizeof(Window));
 	memset(win, 0, sizeof(Window));
 	win->flags = flags;
-	win->backBuffer = (uint32_t*)CreateNewBackBuffer(ownerId, w*h * 4, &backBufferKey);
+	win->backBuffer = (uint32_t*)CreateNewBackBuffer(ownerId, ((w*h * 4 + 0x1F) & (~0x1FULL)), &backBufferKey);
 	win->ownerId = ownerId;
 	win->backBufferKey = backBufferKey;
 	win->sharedInfo = CreateSharedWinSpace(&shKey, ownerId);
@@ -114,21 +116,25 @@ Window* CreateWindow(int x, int y, int w, int h, uint8_t flags, uint16_t ownerId
 	win->handle = DeodhaiAllocateNewHandle();
 	win->popupList = initialize_list();
 	
-	win->shadowBuffers = (uint32_t*)_KeMemMap(NULL,(shwin->width + SHADOW_SIZE*2) * (shwin->height + SHADOW_SIZE*2)* 4, 0, 0, MEMMAP_NO_FILEDESC, 0);
-	for (int i = 0; i < shwin->width + SHADOW_SIZE*2; i++) {
-		for (int j = 0; j < shwin->height + SHADOW_SIZE*2; j++) {
-			win->shadowBuffers[j * (shwin->width + SHADOW_SIZE*2) + i] = 0x00000000;
+	if (!(win->flags & WINDOW_FLAG_ALWAYS_ON_TOP)){
+		win->shadowBuffers = (uint32_t*)_KeMemMap(NULL, (((shwin->width + SHADOW_SIZE * 2) * (shwin->height + SHADOW_SIZE * 2) * 4 + 0x1F) & (~0x1FULL)),
+			0, 0, MEMMAP_NO_FILEDESC, 0);
+		for (int i = 0; i < shwin->width + SHADOW_SIZE * 2; i++) {
+			for (int j = 0; j < shwin->height + SHADOW_SIZE * 2; j++) {
+				win->shadowBuffers[j * (shwin->width + SHADOW_SIZE * 2) + i] = 0x00000000;
+			}
 		}
+
+
+		WindowShadowFillColor(win, (shwin->width + SHADOW_SIZE * 2), 8, 10, (shwin->width + SHADOW_SIZE * 2) - 8 * 2, (shwin->height + SHADOW_SIZE * 2) - 8 * 2, SHADOW_COLOR);
+
+		for (int i = 0; i < 10; i++)
+			ChBoxBlur(DeodhaiGetMainCanvas(), win->shadowBuffers, win->shadowBuffers, 1, 1, (shwin->width + SHADOW_SIZE * 2) - 1, (shwin->height + SHADOW_SIZE * 2) - 2);
 	}
-
-
-	WindowShadowFillColor(win, (shwin->width + SHADOW_SIZE * 2), 8, 10, (shwin->width + SHADOW_SIZE * 2) - 8*2, (shwin->height + SHADOW_SIZE * 2) - 8*2, SHADOW_COLOR);
-
-	for (int i = 0; i < 8; i++) 
-		ChBoxBlur(DeodhaiGetMainCanvas(), win->shadowBuffers, win->shadowBuffers, 1, 1, (shwin->width + SHADOW_SIZE*2) - 1, (shwin->height + SHADOW_SIZE*2) - 2);
-
 	
 	return win;
 }
+
+
 
 

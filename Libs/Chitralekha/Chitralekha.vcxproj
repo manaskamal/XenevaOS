@@ -98,7 +98,7 @@
     <Link>
       <GenerateDebugInformation>
       </GenerateDebugInformation>
-      <OutputFile>D:\chlkha.dll</OutputFile>
+      <OutputFile>F:\chlkha.dll</OutputFile>
       <AdditionalLibraryDirectories>E:\Xeneva Project\Aurora\x64\Debug;E:\os_dev\freetype2-master\freetype2-master\objs;E:\Xeneva Project\Aurora\Libs\XECrt</AdditionalLibraryDirectories>
       <AdditionalDependencies>XEClib.lib; ftype.lib;xecrt.lib;</AdditionalDependencies>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>

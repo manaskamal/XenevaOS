@@ -137,8 +137,10 @@ void NamdaphaGoButtonAction(NamdaphaButton* button, ChWindow* win) {
 }
 
 void NamdaphaPaint(ChWindow* win) {
-	//ChDrawRect(win->canv, 0, 0, win->info->width, win->info->height, NAMDAPHA_COLOR);
-	ChColorDrawHorizontalGradient(win->canv, 0, 0,win->info->width, win->info->height, NAMDAPHA_COLOR, NAMDAPHA_COLOR_LIGHT);
+	ChDrawRect(win->canv, 0, 0, win->info->width, win->info->height, NAMDAPHA_COLOR);
+	ChColorDrawHorizontalGradient(win->canv, 0, 0, win->info->width, win->info->height, NAMDAPHA_COLOR, NAMDAPHA_COLOR_DARK);
+	ChDrawVerticalLine(win->canv, win->info->width - 1, 0, win->info->height, NAMDAPHA_COLOR_LIGHT);
+	ChDrawVerticalLine(win->canv, win->info->width - 2, 0, win->info->height, NAMDAPHA_COLOR_LIGHT);
 	for (int i = 0; i < button_list->pointer; i++){
 		NamdaphaButton* button = (NamdaphaButton*)list_get_at(button_list, i);
 		if (button->drawNamdaphaButton)
@@ -215,25 +217,6 @@ void NamdaphaHandleMessage(PostEvent *e) {
 									 memset(e, 0, sizeof(PostEvent));
 									 break;
 	}
-		/* handle new window_created message */
-	case DEODHAI_BROADCAST_WINCREATED:{
-										  _KePrint("[Namdapha]:Win Created message received \r\n");
-									for (int i = 0; i < button_list->pointer; i++) {
-										NamdaphaButton* nb = (NamdaphaButton*)list_get_at(button_list, i);
-										nb->focused = false;
-									}
-									NamdaphaButton* nbutton = NmCreateButton(nbutton_x_loc, nbutton_y_loc, NAMDAPHA_BUTTON_WIDTH, NAMDAPHA_BUTTON_HEIGHT, e->charValue3);
-									nbutton->ownerId = e->dword;
-									nbutton->nmbuttoninfo = defaultappico;
-									nbutton->focused = true;
-									nbutton->winHandle = e->dword2;
-									list_add(button_list, nbutton);
-									NamdaphaPaint(win);
-									nbutton_y_loc += nbutton->h + NAMDAPHA_BUTTON_YPAD;
-									_KePrint("[Namdapha]: Win button created \r\n");
-									memset(e, 0, sizeof(PostEvent));
-									break;
-	}
 		/* handle icon message from deodhai */
 	case DEODHAI_BROADCAST_ICON:{
 									_KePrint("Namdapha Broadcast Icon received \n");
@@ -269,6 +252,26 @@ void NamdaphaHandleMessage(PostEvent *e) {
 										NamdaphaPaint(win);
 									}
 									memset(e, 0, sizeof(PostEvent));
+									break;
+	}
+		/* handle new window_created message */
+	case DEODHAI_BROADCAST_WINCREATED:{
+										  _KePrint("[Namdapha]:Win Created message received \r\n");
+									for (int i = 0; i < button_list->pointer; i++) {
+										NamdaphaButton* nb = (NamdaphaButton*)list_get_at(button_list, i);
+										nb->focused = false;
+									}
+									NamdaphaButton* nbutton = NmCreateButton(nbutton_x_loc, nbutton_y_loc, NAMDAPHA_BUTTON_WIDTH, NAMDAPHA_BUTTON_HEIGHT, e->charValue3);
+									nbutton->ownerId = e->dword;
+									nbutton->nmbuttoninfo = defaultappico;
+									nbutton->focused = true;
+									nbutton->winHandle = e->dword2;
+									list_add(button_list, nbutton);
+									NamdaphaPaint(win);
+									nbutton_y_loc += nbutton->h + NAMDAPHA_BUTTON_YPAD;
+									_KePrint("[Namdapha]: Win button created \r\n");
+									memset(e, 0, sizeof(PostEvent));
+									_KeProcessSleep(1000);
 									break;
 	}
 	case DEODHAI_BROADCAST_FOCUS_CHANGED: {
@@ -336,6 +339,9 @@ void NamdaphaHandleMessage(PostEvent *e) {
 											 memset(e, 0, sizeof(PostEvent));
 											 break;
 	}
+	default:
+		memset(e, 0, sizeof(PostEvent));
+		break;
 
 	}
 }
@@ -402,11 +408,11 @@ int main(int argc, char* arv[]){
 
 	free(canv);
 
-	nbutton_x_loc = 0;
+	nbutton_x_loc = NAMDAPHA_WIDTH / 2 - NAMDAPHA_BUTTON_WIDTH / 2;
 	nbutton_y_loc = 0;
 	
 	win = ChCreateWindow(app, WINDOW_FLAG_STATIC | WINDOW_FLAG_ALWAYS_ON_TOP | WINDOW_FLAG_BROADCAST_LISTENER | WINDOW_FLAG_ANIMATED, 
-		"Namdapha", 0, 0, 75, screen_h);
+		"Namdapha", 0, 0, NAMDAPHA_WIDTH, screen_h);
 	win->color = BLACK;
 	win->ChWinPaint = NamdaphaPaint;
 
@@ -447,8 +453,6 @@ int main(int argc, char* arv[]){
 
 	gomenuh = ChGetWindowHandle(app, "Xeneva Launcher");
 	gobutton->winHandle = gomenuh;
-
-	NamdaphaPlayStartupSound();
 	
 	PostEvent e;
 	memset(&e, 0, sizeof(PostEvent));

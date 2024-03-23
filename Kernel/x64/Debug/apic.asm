@@ -236,13 +236,13 @@ tick$ = 0
 ms$ = 32
 ?APICTimerSleep@@YAXI@Z PROC				; APICTimerSleep
 
-; 207  : void APICTimerSleep(uint32_t ms) {
+; 208  : void APICTimerSleep(uint32_t ms) {
 
 $LN5:
 	mov	DWORD PTR [rsp+8], ecx
 	sub	rsp, 24
 
-; 208  : 	uint32_t tick = ms + apic_timer_count;
+; 209  : 	uint32_t tick = ms + apic_timer_count;
 
 	mov	eax, DWORD PTR apic_timer_count
 	mov	ecx, DWORD PTR ms$[rsp]
@@ -251,18 +251,18 @@ $LN5:
 	mov	DWORD PTR tick$[rsp], eax
 $LN2@APICTimerS:
 
-; 209  : 	while (tick > apic_timer_count)
+; 210  : 	while (tick > apic_timer_count)
 
 	mov	eax, DWORD PTR apic_timer_count
 	cmp	DWORD PTR tick$[rsp], eax
 	jbe	SHORT $LN1@APICTimerS
 
-; 210  : 		;
+; 211  : 		;
 
 	jmp	SHORT $LN2@APICTimerS
 $LN1@APICTimerS:
 
-; 211  : }
+; 212  : }
 
 	add	rsp, 24
 	ret	0
@@ -509,44 +509,45 @@ $LN2@AuAPICInit:
 
 	call	?IOWait@@YAXXZ				; IOWait
 
-; 195  : 	WriteAPICRegister(LAPIC_REGISTER_TMRINITCNT, target);  //123456  //(target / 100) //target/100
+; 195  : 
+; 196  : 	WriteAPICRegister(LAPIC_REGISTER_TMRINITCNT, target);  //123456  //(target / 100) //target/100
 
 	mov	rdx, QWORD PTR target$[rsp]
 	mov	cx, 56					; 00000038H
 	call	?WriteAPICRegister@@YAXG_K@Z		; WriteAPICRegister
 
-; 196  : 	
-; 197  : 	x64_outportb(PIC1_DATA, 0xFF);
+; 197  : 	
+; 198  : 	x64_outportb(PIC1_DATA, 0xFF);
 
 	mov	dl, 255					; 000000ffH
 	mov	cx, 33					; 00000021H
 	call	x64_outportb
 
-; 198  : 	IOWait();
+; 199  : 	IOWait();
 
 	call	?IOWait@@YAXXZ				; IOWait
 
-; 199  : 	x64_outportb(PIC2_DATA, 0xFF);
+; 200  : 	x64_outportb(PIC2_DATA, 0xFF);
 
 	mov	dl, 255					; 000000ffH
 	mov	cx, 161					; 000000a1H
 	call	x64_outportb
 
-; 200  : 	//for (;;);
-; 201  : 	/* initialise IOAPIC here*/
-; 202  : 	if (bsp)
+; 201  : 	//for (;;);
+; 202  : 	/* initialise IOAPIC here*/
+; 203  : 	if (bsp)
 
 	movzx	eax, BYTE PTR bsp$[rsp]
 	test	eax, eax
 	je	SHORT $LN1@AuAPICInit
 
-; 203  : 		IOAPICInitialise((void*)0xFEC00000);
+; 204  : 		IOAPICInitialise((void*)0xFEC00000);
 
 	mov	ecx, -20971520				; fffffffffec00000H
 	call	?IOAPICInitialise@@YAXPEAX@Z		; IOAPICInitialise
 $LN1@AuAPICInit:
 
-; 204  : }
+; 205  : }
 
 	add	rsp, 104				; 00000068H
 	ret	0

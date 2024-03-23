@@ -47,7 +47,7 @@ void NamdaphaGoButtonPaint(NamdaphaButton* button, ChWindow* win) {
 		ChDrawRect(win->canv, 10, win->info->height - 60, NAMDAPHA_WIDTH - 20, 50, button_col);
 
 	if (!button->clicked && !button->hover)
-		ChColorDrawHorizontalGradient(win->canv, 0, 0, win->info->width, win->info->height, NAMDAPHA_COLOR, NAMDAPHA_COLOR_LIGHT);
+		ChDrawRect(win->canv, button->x, button->y, button->w, button->h, NAMDAPHA_COLOR);
 
 	NmButtonInfoDrawIcon(gobtn, win->canv, button->x + button->w / 2 - gobtn->iconWidth / 2,
 		button->y + button->h / 2 - gobtn->iconHeight / 2);
