@@ -16,23 +16,23 @@ _BSS	SEGMENT
 ?last@@3PEAU__tty__@@EA DQ 01H DUP (?)			; last
 _BSS	ENDS
 CONST	SEGMENT
-$SG3801	DB	'/dev', 00H
+$SG3833	DB	'/dev', 00H
 	ORG $+3
-$SG3834	DB	'/dev', 00H
+$SG3866	DB	'/dev', 00H
 	ORG $+3
-$SG3840	DB	'ttym', 00H
+$SG3872	DB	'ttym', 00H
 	ORG $+3
-$SG3841	DB	'/dev/tty', 00H
+$SG3873	DB	'/dev/tty', 00H
 	ORG $+3
-$SG3846	DB	'/dev', 00H
+$SG3878	DB	'/dev', 00H
 	ORG $+3
-$SG3852	DB	'ttys', 00H
+$SG3884	DB	'ttys', 00H
 	ORG $+7
-$SG3853	DB	'/dev/tty', 00H
+$SG3885	DB	'/dev/tty', 00H
 	ORG $+3
-$SG3877	DB	'/dev', 00H
+$SG3909	DB	'/dev', 00H
 	ORG $+7
-$SG3878	DB	'/dev/tty', 00H
+$SG3910	DB	'/dev/tty', 00H
 CONST	ENDS
 PUBLIC	?AuTTYCreate@@YAHPEAH0@Z			; AuTTYCreate
 PUBLIC	?AuTTYInitialise@@YAXXZ				; AuTTYInitialise
@@ -64,7 +64,6 @@ EXTRN	strcpy:PROC
 EXTRN	memset:PROC
 EXTRN	?sztoa@@YAPEAD_KPEADH@Z:PROC			; sztoa
 EXTRN	AuGetCurrentThread:PROC
-EXTRN	AuSleepThread:PROC
 EXTRN	AuForceScheduler:PROC
 EXTRN	?AuProcessFindThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z:PROC ; AuProcessFindThread
 EXTRN	?AuProcessGetFileDesc@@YAHPEAU_au_proc_@@@Z:PROC ; AuProcessGetFileDesc
@@ -98,7 +97,7 @@ $pdata$?AuTTYSlaveRead@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z DD imagerel $LN7
 	DD	imagerel $LN7+140
 	DD	imagerel $unwind$?AuTTYSlaveRead@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z
 $pdata$?AuTTYSlaveWrite@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z DD imagerel $LN9
-	DD	imagerel $LN9+254
+	DD	imagerel $LN9+214
 	DD	imagerel $unwind$?AuTTYSlaveWrite@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z
 $pdata$?AuTTYSlaveClose@@YAHPEAU__VFS_NODE__@@0@Z DD imagerel $LN4
 	DD	imagerel $LN4+46
@@ -160,7 +159,7 @@ $LN3:
 
 ; 299  : 	AuVFSNode* fs = AuVFSFind("/dev");
 
-	lea	rcx, OFFSET FLAT:$SG3846
+	lea	rcx, OFFSET FLAT:$SG3878
 	call	AuVFSFind
 	mov	QWORD PTR fs$[rsp], rax
 
@@ -181,7 +180,7 @@ $LN3:
 ; 303  : 	char name[5];
 ; 304  : 	strcpy(name, "ttys");
 
-	lea	rdx, OFFSET FLAT:$SG3852
+	lea	rdx, OFFSET FLAT:$SG3884
 	lea	rcx, QWORD PTR name$[rsp]
 	call	strcpy
 
@@ -252,7 +251,7 @@ $LN3:
 ; 317  : 	AuDevFSAddFile(fs, "/dev/tty", node);
 
 	mov	r8, QWORD PTR node$[rsp]
-	lea	rdx, OFFSET FLAT:$SG3853
+	lea	rdx, OFFSET FLAT:$SG3885
 	mov	rcx, QWORD PTR fs$[rsp]
 	call	AuDevFSAddFile
 
@@ -289,7 +288,7 @@ $LN3:
 
 ; 270  : 	AuVFSNode* fs = AuVFSFind("/dev");
 
-	lea	rcx, OFFSET FLAT:$SG3834
+	lea	rcx, OFFSET FLAT:$SG3866
 	call	AuVFSFind
 	mov	QWORD PTR fs$[rsp], rax
 
@@ -310,7 +309,7 @@ $LN3:
 ; 274  : 	char name[5];
 ; 275  : 	strcpy(name, "ttym");
 
-	lea	rdx, OFFSET FLAT:$SG3840
+	lea	rdx, OFFSET FLAT:$SG3872
 	lea	rcx, QWORD PTR name$[rsp]
 	call	strcpy
 
@@ -381,7 +380,7 @@ $LN3:
 ; 288  : 	AuDevFSAddFile(fs, "/dev/tty", node);
 
 	mov	r8, QWORD PTR node$[rsp]
-	lea	rdx, OFFSET FLAT:$SG3841
+	lea	rdx, OFFSET FLAT:$SG3873
 	mov	rcx, QWORD PTR fs$[rsp]
 	call	AuDevFSAddFile
 
@@ -631,7 +630,7 @@ $LN4:
 
 ; 216  : 	AuVFSNode* _fs = AuVFSFind("/dev");
 
-	lea	rcx, OFFSET FLAT:$SG3801
+	lea	rcx, OFFSET FLAT:$SG3833
 	call	AuVFSFind
 	mov	QWORD PTR _fs$[rsp], rax
 
@@ -656,8 +655,8 @@ _TEXT	ENDS
 _TEXT	SEGMENT
 i$1 = 32
 tty$ = 40
-curr_th$ = 48
-aligned_buf$ = 56
+aligned_buf$ = 48
+curr_th$ = 56
 fsys$ = 80
 file$ = 88
 buffer$ = 96
@@ -724,12 +723,7 @@ $LN5@AuTTYSlave:
 	test	eax, eax
 	je	SHORT $LN4@AuTTYSlave
 
-; 198  : 		AuSleepThread(curr_th, 1000000000000);
-
-	mov	rdx, 1000000000000			; 000000e8d4a51000H
-	mov	rcx, QWORD PTR curr_th$[rsp]
-	call	AuSleepThread
-
+; 198  : 		//AuSleepThread(curr_th, 1000000000000);
 ; 199  : 		AuForceScheduler();
 
 	call	AuForceScheduler
@@ -781,12 +775,7 @@ $LN1@AuTTYSlave:
 ; 208  : 	/* little bit slow down the slave process,
 ; 209  : 	 * it's too fast 
 ; 210  : 	 */
-; 211  : 	AuSleepThread(curr_th, 1000000000000);
-
-	mov	rdx, 1000000000000			; 000000e8d4a51000H
-	mov	rcx, QWORD PTR curr_th$[rsp]
-	call	AuSleepThread
-
+; 211  : 	//AuSleepThread(curr_th, 1000000000000);
 ; 212  : 	AuForceScheduler();
 
 	call	AuForceScheduler
@@ -1554,14 +1543,14 @@ $LN3:
 ; 390  : 	/* create a directory for tty's */
 ; 391  : 	AuVFSNode* fs = AuVFSFind("/dev");
 
-	lea	rcx, OFFSET FLAT:$SG3877
+	lea	rcx, OFFSET FLAT:$SG3909
 	call	AuVFSFind
 	mov	QWORD PTR fs$[rsp], rax
 
 ; 392  : 	AuDevFSCreateFile(fs, "/dev/tty", FS_FLAG_DIRECTORY);
 
 	mov	r8b, 2
-	lea	rdx, OFFSET FLAT:$SG3878
+	lea	rdx, OFFSET FLAT:$SG3910
 	mov	rcx, QWORD PTR fs$[rsp]
 	call	?AuDevFSCreateFile@@YAHPEAU__VFS_NODE__@@PEADE@Z ; AuDevFSCreateFile
 

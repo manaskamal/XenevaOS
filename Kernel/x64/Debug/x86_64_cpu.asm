@@ -7,12 +7,18 @@ INCLUDELIB OLDNAMES
 
 PUBLIC	?_tss@@3PEAU0@EA				; _tss
 PUBLIC	?_fxsave@@3_NA					; _fxsave
+PUBLIC	?cpuMhz@@3_KA					; cpuMhz
+PUBLIC	?tscBasisTiming@@3_KA				; tscBasisTiming
+PUBLIC	?bootTime@@3_KA					; bootTime
 PUBLIC	?__ApStarted@@3_NA				; __ApStarted
 _BSS	SEGMENT
 ?_tss@@3PEAU0@EA DQ 01H DUP (?)				; _tss
 ?_fxsave@@3_NA DB 01H DUP (?)				; _fxsave
-	ALIGN	4
+	ALIGN	8
 
+?cpuMhz@@3_KA DQ 01H DUP (?)				; cpuMhz
+?tscBasisTiming@@3_KA DQ 01H DUP (?)			; tscBasisTiming
+?bootTime@@3_KA DQ 01H DUP (?)				; bootTime
 ?__ApStarted@@3_NA DB 01H DUP (?)			; __ApStarted
 _BSS	ENDS
 PUBLIC	?x86_64_enable_syscall_ext@@YAXXZ		; x86_64_enable_syscall_ext
@@ -26,9 +32,20 @@ PUBLIC	?x86_64_cpu_initialize@@YAXE@Z			; x86_64_cpu_initialize
 PUBLIC	?x86_64_set_ap_start_bit@@YAX_N@Z		; x86_64_set_ap_start_bit
 PUBLIC	?x86_64_initialise_syscall@@YAXXZ		; x86_64_initialise_syscall
 PUBLIC	?cpu_read_tsc@@YA_KXZ				; cpu_read_tsc
+PUBLIC	?x86_64_measure_cpu_speed@@YAXXZ		; x86_64_measure_cpu_speed
+PUBLIC	?x86_64_cpu_get_mhz@@YA_KXZ			; x86_64_cpu_get_mhz
+PUBLIC	?x86_64_gettimeofday@@YAHPEAU_timeval_@@@Z	; x86_64_gettimeofday
 PUBLIC	?_ICRDest@@YA_KI@Z				; _ICRDest
 PUBLIC	?_ICRBusy@@YA_NXZ				; _ICRBusy
+PUBLIC	?CMOSDump@@YAXPEAG@Z				; CMOSDump
+PUBLIC	?isUpdateInProgress@@YAHXZ			; isUpdateInProgress
+PUBLIC	?secs_of_years@@YA_KH@Z				; secs_of_years
+PUBLIC	?readCMOS@@YA_KXZ				; readCMOS
+PUBLIC	?updateTicks@@YAX_KPEA_K1@Z			; updateTicks
 EXTRN	?AuPerCPUSetKernelTSS@@YAXPEAU_tss@@@Z:PROC	; AuPerCPUSetKernelTSS
+EXTRN	x64_cli:PROC
+EXTRN	x64_inportb:PROC
+EXTRN	x64_outportb:PROC
 EXTRN	x64_read_msr:PROC
 EXTRN	x64_write_msr:PROC
 EXTRN	x64_pause:PROC
@@ -46,8 +63,10 @@ EXTRN	?x86_64_ap_init@@YAXPEAX@Z:PROC			; x86_64_ap_init
 EXTRN	AuPmmngrAlloc:PROC
 EXTRN	P2V:PROC
 EXTRN	AuGetRootPageTable:PROC
+EXTRN	memcpy:PROC
 EXTRN	syscall_entry:PROC
 EXTRN	x64_syscall_entry_compat:PROC
+EXTRN	__ImageBase:BYTE
 pdata	SEGMENT
 $pdata$?x86_64_enable_syscall_ext@@YAXXZ DD imagerel $LN3
 	DD	imagerel $LN3+68
@@ -73,12 +92,33 @@ $pdata$?x86_64_initialise_syscall@@YAXXZ DD imagerel $LN3
 $pdata$?cpu_read_tsc@@YA_KXZ DD imagerel $LN3
 	DD	imagerel $LN3+65
 	DD	imagerel $unwind$?cpu_read_tsc@@YA_KXZ
+$pdata$?x86_64_measure_cpu_speed@@YAXXZ DD imagerel $LN8
+	DD	imagerel $LN8+458
+	DD	imagerel $unwind$?x86_64_measure_cpu_speed@@YAXXZ
+$pdata$?x86_64_gettimeofday@@YAHPEAU_timeval_@@@Z DD imagerel $LN3
+	DD	imagerel $LN3+95
+	DD	imagerel $unwind$?x86_64_gettimeofday@@YAHPEAU_timeval_@@@Z
 $pdata$?_ICRDest@@YA_KI@Z DD imagerel $LN5
 	DD	imagerel $LN5+45
 	DD	imagerel $unwind$?_ICRDest@@YA_KI@Z
 $pdata$?_ICRBusy@@YA_NXZ DD imagerel $LN5
 	DD	imagerel $LN5+52
 	DD	imagerel $unwind$?_ICRBusy@@YA_NXZ
+$pdata$?CMOSDump@@YAXPEAG@Z DD imagerel $LN6
+	DD	imagerel $LN6+90
+	DD	imagerel $unwind$?CMOSDump@@YAXPEAG@Z
+$pdata$?isUpdateInProgress@@YAHXZ DD imagerel $LN3
+	DD	imagerel $LN3+37
+	DD	imagerel $unwind$?isUpdateInProgress@@YAHXZ
+$pdata$?secs_of_years@@YA_KH@Z DD imagerel $LN9
+	DD	imagerel $LN9+157
+	DD	imagerel $unwind$?secs_of_years@@YA_KH@Z
+$pdata$?secs_of_month@@YA_KHH@Z DD imagerel ?secs_of_month@@YA_KHH@Z
+	DD	imagerel ?secs_of_month@@YA_KHH@Z+364
+	DD	imagerel $unwind$?secs_of_month@@YA_KHH@Z
+$pdata$?readCMOS@@YA_KXZ DD imagerel $LN15
+	DD	imagerel $LN15+777
+	DD	imagerel $unwind$?readCMOS@@YA_KXZ
 pdata	ENDS
 xdata	SEGMENT
 $unwind$?x86_64_enable_syscall_ext@@YAXXZ DD 010401H
@@ -97,23 +137,745 @@ $unwind$?x86_64_initialise_syscall@@YAXXZ DD 010401H
 	DD	06204H
 $unwind$?cpu_read_tsc@@YA_KXZ DD 010401H
 	DD	06204H
+$unwind$?x86_64_measure_cpu_speed@@YAXXZ DD 010401H
+	DD	08204H
+$unwind$?x86_64_gettimeofday@@YAHPEAU_timeval_@@@Z DD 010901H
+	DD	08209H
 $unwind$?_ICRDest@@YA_KI@Z DD 010801H
 	DD	04208H
 $unwind$?_ICRBusy@@YA_NXZ DD 010401H
 	DD	06204H
+$unwind$?CMOSDump@@YAXPEAG@Z DD 010901H
+	DD	06209H
+$unwind$?isUpdateInProgress@@YAHXZ DD 010401H
+	DD	04204H
+$unwind$?secs_of_years@@YA_KH@Z DD 010801H
+	DD	02208H
+$unwind$?secs_of_month@@YA_KHH@Z DD 010c01H
+	DD	0220cH
+$unwind$?readCMOS@@YA_KXZ DD 020701H
+	DD	04d0107H
 xdata	ENDS
+; Function compile flags: /Odtpy
+; File e:\xeneva project\aurora\kernel\hal\x86_64_cpu.cpp
+_TEXT	SEGMENT
+ticks$ = 8
+timerTick$ = 16
+timerSubticks$ = 24
+?updateTicks@@YAX_KPEA_K1@Z PROC			; updateTicks
+
+; 408  : void updateTicks(uint64_t ticks, uint64_t *timerTick, uint64_t *timerSubticks) {
+
+	mov	QWORD PTR [rsp+24], r8
+	mov	QWORD PTR [rsp+16], rdx
+	mov	QWORD PTR [rsp+8], rcx
+
+; 409  : 	*timerSubticks = ticks - tscBasisTiming;
+
+	mov	rax, QWORD PTR ?tscBasisTiming@@3_KA	; tscBasisTiming
+	mov	rcx, QWORD PTR ticks$[rsp]
+	sub	rcx, rax
+	mov	rax, rcx
+	mov	rcx, QWORD PTR timerSubticks$[rsp]
+	mov	QWORD PTR [rcx], rax
+
+; 410  : 	*timerTick = *timerSubticks / SUBSECONDS_PER_SECOND;
+
+	xor	edx, edx
+	mov	rax, QWORD PTR timerSubticks$[rsp]
+	mov	rax, QWORD PTR [rax]
+	mov	ecx, 1000000				; 000f4240H
+	div	rcx
+	mov	rcx, QWORD PTR timerTick$[rsp]
+	mov	QWORD PTR [rcx], rax
+
+; 411  : 	*timerSubticks = *timerSubticks % SUBSECONDS_PER_SECOND;
+
+	xor	edx, edx
+	mov	rax, QWORD PTR timerSubticks$[rsp]
+	mov	rax, QWORD PTR [rax]
+	mov	ecx, 1000000				; 000f4240H
+	div	rcx
+	mov	rax, rdx
+	mov	rcx, QWORD PTR timerSubticks$[rsp]
+	mov	QWORD PTR [rcx], rax
+
+; 412  : }
+
+	ret	0
+?updateTicks@@YAX_KPEA_K1@Z ENDP			; updateTicks
+_TEXT	ENDS
+; Function compile flags: /Odtpy
+; File e:\xeneva project\aurora\kernel\hal\x86_64_cpu.cpp
+_TEXT	SEGMENT
+tv170 = 32
+tv211 = 40
+tv224 = 48
+tv184 = 56
+time$ = 64
+tv147 = 72
+tv198 = 80
+values$ = 96
+old_values$ = 352
+?readCMOS@@YA_KXZ PROC					; readCMOS
+
+; 375  : uint64_t readCMOS(void) {
+
+$LN15:
+	sub	rsp, 616				; 00000268H
+$LN7@readCMOS:
+
+; 376  : 	uint16_t values[128];
+; 377  : 	uint16_t old_values[128];
+; 378  : 
+; 379  : 	while (isUpdateInProgress());
+
+	call	?isUpdateInProgress@@YAHXZ		; isUpdateInProgress
+	test	eax, eax
+	je	SHORT $LN6@readCMOS
+	jmp	SHORT $LN7@readCMOS
+$LN6@readCMOS:
+
+; 380  : 	CMOSDump(values);
+
+	lea	rcx, QWORD PTR values$[rsp]
+	call	?CMOSDump@@YAXPEAG@Z			; CMOSDump
+$LN14@readCMOS:
+$LN13@readCMOS:
+$LN12@readCMOS:
+$LN11@readCMOS:
+$LN10@readCMOS:
+$LN5@readCMOS:
+
+; 381  : 
+; 382  : 	do {
+; 383  : 		memcpy(old_values, values, 128);
+
+	mov	r8d, 128				; 00000080H
+	lea	rdx, QWORD PTR values$[rsp]
+	lea	rcx, QWORD PTR old_values$[rsp]
+	call	memcpy
+$LN2@readCMOS:
+
+; 384  : 		while (isUpdateInProgress());
+
+	call	?isUpdateInProgress@@YAHXZ		; isUpdateInProgress
+	test	eax, eax
+	je	SHORT $LN1@readCMOS
+	jmp	SHORT $LN2@readCMOS
+$LN1@readCMOS:
+
+; 385  : 		CMOSDump(values);
+
+	lea	rcx, QWORD PTR values$[rsp]
+	call	?CMOSDump@@YAXPEAG@Z			; CMOSDump
+
+; 386  : 	} while ((old_values[CMOS_SECOND] != values[CMOS_SECOND]) ||
+; 387  : 		(old_values[CMOS_MINUTE] != values[CMOS_MINUTE]) ||
+; 388  : 		(old_values[CMOS_HOUR] != values[CMOS_HOUR]) ||
+; 389  : 		(old_values[CMOS_DAY] != values[CMOS_DAY]) ||
+; 390  : 		(old_values[CMOS_MONTH] != values[CMOS_MONTH]) ||
+; 391  : 		(old_values[CMOS_YEAR] != values[CMOS_YEAR]));
+
+	mov	eax, 2
+	imul	rax, rax, 0
+	movzx	eax, WORD PTR old_values$[rsp+rax]
+	mov	ecx, 2
+	imul	rcx, rcx, 0
+	movzx	ecx, WORD PTR values$[rsp+rcx]
+	cmp	eax, ecx
+	jne	SHORT $LN5@readCMOS
+	mov	eax, 2
+	imul	rax, rax, 2
+	movzx	eax, WORD PTR old_values$[rsp+rax]
+	mov	ecx, 2
+	imul	rcx, rcx, 2
+	movzx	ecx, WORD PTR values$[rsp+rcx]
+	cmp	eax, ecx
+	jne	SHORT $LN10@readCMOS
+	mov	eax, 2
+	imul	rax, rax, 4
+	movzx	eax, WORD PTR old_values$[rsp+rax]
+	mov	ecx, 2
+	imul	rcx, rcx, 4
+	movzx	ecx, WORD PTR values$[rsp+rcx]
+	cmp	eax, ecx
+	jne	$LN11@readCMOS
+	mov	eax, 2
+	imul	rax, rax, 7
+	movzx	eax, WORD PTR old_values$[rsp+rax]
+	mov	ecx, 2
+	imul	rcx, rcx, 7
+	movzx	ecx, WORD PTR values$[rsp+rcx]
+	cmp	eax, ecx
+	jne	$LN12@readCMOS
+	mov	eax, 2
+	imul	rax, rax, 8
+	movzx	eax, WORD PTR old_values$[rsp+rax]
+	mov	ecx, 2
+	imul	rcx, rcx, 8
+	movzx	ecx, WORD PTR values$[rsp+rcx]
+	cmp	eax, ecx
+	jne	$LN13@readCMOS
+	mov	eax, 2
+	imul	rax, rax, 9
+	movzx	eax, WORD PTR old_values$[rsp+rax]
+	mov	ecx, 2
+	imul	rcx, rcx, 9
+	movzx	ecx, WORD PTR values$[rsp+rcx]
+	cmp	eax, ecx
+	jne	$LN14@readCMOS
+
+; 392  : 
+; 393  : 	/* Math Time */
+; 394  : 	uint64_t time =
+; 395  : 		secs_of_years(fromBCD(values[CMOS_YEAR]) - 1) +
+; 396  : 		secs_of_month(fromBCD(values[CMOS_MONTH]) - 1,
+; 397  : 		fromBCD(values[CMOS_YEAR])) +
+; 398  : 		(fromBCD(values[CMOS_DAY]) - 1) * 86400 +
+; 399  : 		(fromBCD(values[CMOS_HOUR])) * 3600 +
+; 400  : 		(fromBCD(values[CMOS_MINUTE])) * 60 +
+; 401  : 		fromBCD(values[CMOS_SECOND]) + 0;
+
+	mov	eax, 2
+	imul	rax, rax, 9
+	movzx	eax, WORD PTR values$[rsp+rax]
+	cdq
+	and	edx, 15
+	add	eax, edx
+	sar	eax, 4
+	imul	eax, eax, 10
+	mov	ecx, 2
+	imul	rcx, rcx, 9
+	movzx	ecx, WORD PTR values$[rsp+rcx]
+	and	ecx, 15
+	lea	eax, DWORD PTR [rax+rcx-1]
+	mov	ecx, eax
+	call	?secs_of_years@@YA_KH@Z			; secs_of_years
+	mov	QWORD PTR tv147[rsp], rax
+	mov	ecx, 2
+	imul	rcx, rcx, 9
+	movzx	ecx, WORD PTR values$[rsp+rcx]
+	mov	eax, ecx
+	cdq
+	and	edx, 15
+	add	eax, edx
+	sar	eax, 4
+	imul	eax, eax, 10
+	mov	ecx, 2
+	imul	rcx, rcx, 9
+	movzx	ecx, WORD PTR values$[rsp+rcx]
+	and	ecx, 15
+	add	eax, ecx
+	mov	DWORD PTR tv170[rsp], eax
+	mov	ecx, 2
+	imul	rcx, rcx, 8
+	movzx	ecx, WORD PTR values$[rsp+rcx]
+	mov	eax, ecx
+	cdq
+	and	edx, 15
+	add	eax, edx
+	sar	eax, 4
+	imul	eax, eax, 10
+	mov	ecx, 2
+	imul	rcx, rcx, 8
+	movzx	ecx, WORD PTR values$[rsp+rcx]
+	and	ecx, 15
+	lea	eax, DWORD PTR [rax+rcx-1]
+	mov	ecx, DWORD PTR tv170[rsp]
+	mov	edx, ecx
+	mov	ecx, eax
+	call	?secs_of_month@@YA_KHH@Z		; secs_of_month
+	mov	rcx, QWORD PTR tv147[rsp]
+	add	rcx, rax
+	mov	rax, rcx
+	mov	QWORD PTR tv184[rsp], rax
+	mov	ecx, 2
+	imul	rcx, rcx, 7
+	movzx	ecx, WORD PTR values$[rsp+rcx]
+	mov	eax, ecx
+	cdq
+	and	edx, 15
+	add	eax, edx
+	sar	eax, 4
+	imul	eax, eax, 10
+	mov	ecx, 2
+	imul	rcx, rcx, 7
+	movzx	ecx, WORD PTR values$[rsp+rcx]
+	and	ecx, 15
+	lea	eax, DWORD PTR [rax+rcx-1]
+	imul	eax, eax, 86400				; 00015180H
+	cdqe
+	mov	rcx, QWORD PTR tv184[rsp]
+	add	rcx, rax
+	mov	rax, rcx
+	mov	QWORD PTR tv198[rsp], rax
+	mov	ecx, 2
+	imul	rcx, rcx, 4
+	movzx	ecx, WORD PTR values$[rsp+rcx]
+	mov	eax, ecx
+	cdq
+	and	edx, 15
+	add	eax, edx
+	sar	eax, 4
+	imul	eax, eax, 10
+	mov	ecx, 2
+	imul	rcx, rcx, 4
+	movzx	ecx, WORD PTR values$[rsp+rcx]
+	and	ecx, 15
+	add	eax, ecx
+	imul	eax, eax, 3600				; 00000e10H
+	cdqe
+	mov	rcx, QWORD PTR tv198[rsp]
+	add	rcx, rax
+	mov	rax, rcx
+	mov	QWORD PTR tv211[rsp], rax
+	mov	ecx, 2
+	imul	rcx, rcx, 2
+	movzx	ecx, WORD PTR values$[rsp+rcx]
+	mov	eax, ecx
+	cdq
+	and	edx, 15
+	add	eax, edx
+	sar	eax, 4
+	imul	eax, eax, 10
+	mov	ecx, 2
+	imul	rcx, rcx, 2
+	movzx	ecx, WORD PTR values$[rsp+rcx]
+	and	ecx, 15
+	add	eax, ecx
+	imul	eax, eax, 60				; 0000003cH
+	cdqe
+	mov	rcx, QWORD PTR tv211[rsp]
+	add	rcx, rax
+	mov	rax, rcx
+	mov	QWORD PTR tv224[rsp], rax
+	mov	ecx, 2
+	imul	rcx, rcx, 0
+	movzx	ecx, WORD PTR values$[rsp+rcx]
+	mov	eax, ecx
+	cdq
+	and	edx, 15
+	add	eax, edx
+	sar	eax, 4
+	imul	eax, eax, 10
+	mov	ecx, 2
+	imul	rcx, rcx, 0
+	movzx	ecx, WORD PTR values$[rsp+rcx]
+	and	ecx, 15
+	add	eax, ecx
+	cdqe
+	mov	rcx, QWORD PTR tv224[rsp]
+	add	rcx, rax
+	mov	rax, rcx
+	mov	QWORD PTR time$[rsp], rax
+
+; 402  : 
+; 403  : 	return time;
+
+	mov	rax, QWORD PTR time$[rsp]
+
+; 404  : }
+
+	add	rsp, 616				; 00000268H
+	ret	0
+?readCMOS@@YA_KXZ ENDP					; readCMOS
+_TEXT	ENDS
+; Function compile flags: /Odtpy
+; File e:\xeneva project\aurora\kernel\hal\x86_64_cpu.cpp
+_TEXT	SEGMENT
+tv65 = 0
+days$ = 8
+months$ = 32
+year$ = 40
+?secs_of_month@@YA_KHH@Z PROC				; secs_of_month
+
+; 339  : static uint64_t secs_of_month(int months, int year) {
+
+	mov	DWORD PTR [rsp+16], edx
+	mov	DWORD PTR [rsp+8], ecx
+	sub	rsp, 24
+
+; 340  : 	year += 2000;
+
+	mov	eax, DWORD PTR year$[rsp]
+	add	eax, 2000				; 000007d0H
+	mov	DWORD PTR year$[rsp], eax
+
+; 341  : 
+; 342  : 	uint64_t days = 0;
+
+	mov	QWORD PTR days$[rsp], 0
+
+; 343  : 	switch (months) {
+
+	mov	eax, DWORD PTR months$[rsp]
+	mov	DWORD PTR tv65[rsp], eax
+	mov	eax, DWORD PTR tv65[rsp]
+	dec	eax
+	mov	DWORD PTR tv65[rsp], eax
+	cmp	DWORD PTR tv65[rsp], 10
+	ja	$LN1@secs_of_mo
+	movsxd	rax, DWORD PTR tv65[rsp]
+	lea	rcx, OFFSET FLAT:__ImageBase
+	mov	eax, DWORD PTR $LN19@secs_of_mo[rcx+rax*4]
+	add	rax, rcx
+	jmp	rax
+$LN14@secs_of_mo:
+
+; 344  : 	case 11:
+; 345  : 		days += 30; /* fallthrough */
+
+	mov	rax, QWORD PTR days$[rsp]
+	add	rax, 30
+	mov	QWORD PTR days$[rsp], rax
+$LN13@secs_of_mo:
+
+; 346  : 	case 10:
+; 347  : 		days += 31; /* fallthrough */
+
+	mov	rax, QWORD PTR days$[rsp]
+	add	rax, 31
+	mov	QWORD PTR days$[rsp], rax
+$LN12@secs_of_mo:
+
+; 348  : 	case 9:
+; 349  : 		days += 30; /* fallthrough */
+
+	mov	rax, QWORD PTR days$[rsp]
+	add	rax, 30
+	mov	QWORD PTR days$[rsp], rax
+$LN11@secs_of_mo:
+
+; 350  : 	case 8:
+; 351  : 		days += 31; /* fallthrough */
+
+	mov	rax, QWORD PTR days$[rsp]
+	add	rax, 31
+	mov	QWORD PTR days$[rsp], rax
+$LN10@secs_of_mo:
+
+; 352  : 	case 7:
+; 353  : 		days += 31; /* fallthrough */
+
+	mov	rax, QWORD PTR days$[rsp]
+	add	rax, 31
+	mov	QWORD PTR days$[rsp], rax
+$LN9@secs_of_mo:
+
+; 354  : 	case 6:
+; 355  : 		days += 30; /* fallthrough */
+
+	mov	rax, QWORD PTR days$[rsp]
+	add	rax, 30
+	mov	QWORD PTR days$[rsp], rax
+$LN8@secs_of_mo:
+
+; 356  : 	case 5:
+; 357  : 		days += 31; /* fallthrough */
+
+	mov	rax, QWORD PTR days$[rsp]
+	add	rax, 31
+	mov	QWORD PTR days$[rsp], rax
+$LN7@secs_of_mo:
+
+; 358  : 	case 4:
+; 359  : 		days += 30; /* fallthrough */
+
+	mov	rax, QWORD PTR days$[rsp]
+	add	rax, 30
+	mov	QWORD PTR days$[rsp], rax
+$LN6@secs_of_mo:
+
+; 360  : 	case 3:
+; 361  : 		days += 31; /* fallthrough */
+
+	mov	rax, QWORD PTR days$[rsp]
+	add	rax, 31
+	mov	QWORD PTR days$[rsp], rax
+$LN5@secs_of_mo:
+
+; 362  : 	case 2:
+; 363  : 		days += 28;
+
+	mov	rax, QWORD PTR days$[rsp]
+	add	rax, 28
+	mov	QWORD PTR days$[rsp], rax
+
+; 364  : 		if ((year % 4 == 0) && ((year % 100 != 0) || (year % 400 == 0))) {
+
+	mov	eax, DWORD PTR year$[rsp]
+	cdq
+	and	edx, 3
+	add	eax, edx
+	and	eax, 3
+	sub	eax, edx
+	test	eax, eax
+	jne	SHORT $LN4@secs_of_mo
+	mov	eax, DWORD PTR year$[rsp]
+	cdq
+	mov	ecx, 100				; 00000064H
+	idiv	ecx
+	mov	eax, edx
+	test	eax, eax
+	jne	SHORT $LN3@secs_of_mo
+	mov	eax, DWORD PTR year$[rsp]
+	cdq
+	mov	ecx, 400				; 00000190H
+	idiv	ecx
+	mov	eax, edx
+	test	eax, eax
+	jne	SHORT $LN4@secs_of_mo
+$LN3@secs_of_mo:
+
+; 365  : 			days++;
+
+	mov	rax, QWORD PTR days$[rsp]
+	inc	rax
+	mov	QWORD PTR days$[rsp], rax
+$LN4@secs_of_mo:
+$LN2@secs_of_mo:
+
+; 366  : 		} /* fallthrough */
+; 367  : 	case 1:
+; 368  : 		days += 31; /* fallthrough */
+
+	mov	rax, QWORD PTR days$[rsp]
+	add	rax, 31
+	mov	QWORD PTR days$[rsp], rax
+$LN1@secs_of_mo:
+
+; 369  : 	default:
+; 370  : 		break;
+; 371  : 	}
+; 372  : 	return days * 86400;
+
+	imul	rax, QWORD PTR days$[rsp], 86400	; 00015180H
+
+; 373  : }
+
+	add	rsp, 24
+	ret	0
+	npad	2
+$LN19@secs_of_mo:
+	DD	$LN2@secs_of_mo
+	DD	$LN5@secs_of_mo
+	DD	$LN6@secs_of_mo
+	DD	$LN7@secs_of_mo
+	DD	$LN8@secs_of_mo
+	DD	$LN9@secs_of_mo
+	DD	$LN10@secs_of_mo
+	DD	$LN11@secs_of_mo
+	DD	$LN12@secs_of_mo
+	DD	$LN13@secs_of_mo
+	DD	$LN14@secs_of_mo
+?secs_of_month@@YA_KHH@Z ENDP				; secs_of_month
+_TEXT	ENDS
+; Function compile flags: /Odtpy
+; File e:\xeneva project\aurora\kernel\hal\x86_64_cpu.cpp
+_TEXT	SEGMENT
+days$ = 0
+years$ = 32
+?secs_of_years@@YA_KH@Z PROC				; secs_of_years
+
+; 319  : uint64_t secs_of_years(int years) {
+
+$LN9:
+	mov	DWORD PTR [rsp+8], ecx
+	sub	rsp, 24
+
+; 320  : 	uint64_t days = 0;
+
+	mov	QWORD PTR days$[rsp], 0
+
+; 321  : 	years += 2000;
+
+	mov	eax, DWORD PTR years$[rsp]
+	add	eax, 2000				; 000007d0H
+	mov	DWORD PTR years$[rsp], eax
+$LN6@secs_of_ye:
+
+; 322  : 	while (years > 1969) {
+
+	cmp	DWORD PTR years$[rsp], 1969		; 000007b1H
+	jle	SHORT $LN5@secs_of_ye
+
+; 323  : 		days += 365;
+
+	mov	rax, QWORD PTR days$[rsp]
+	add	rax, 365				; 0000016dH
+	mov	QWORD PTR days$[rsp], rax
+
+; 324  : 		if (years % 4 == 0) {
+
+	mov	eax, DWORD PTR years$[rsp]
+	cdq
+	and	edx, 3
+	add	eax, edx
+	and	eax, 3
+	sub	eax, edx
+	test	eax, eax
+	jne	SHORT $LN4@secs_of_ye
+
+; 325  : 			if (years % 100 == 0) {
+
+	mov	eax, DWORD PTR years$[rsp]
+	cdq
+	mov	ecx, 100				; 00000064H
+	idiv	ecx
+	mov	eax, edx
+	test	eax, eax
+	jne	SHORT $LN3@secs_of_ye
+
+; 326  : 				if (years % 400 == 0) {
+
+	mov	eax, DWORD PTR years$[rsp]
+	cdq
+	mov	ecx, 400				; 00000190H
+	idiv	ecx
+	mov	eax, edx
+	test	eax, eax
+	jne	SHORT $LN2@secs_of_ye
+
+; 327  : 					days++;
+
+	mov	rax, QWORD PTR days$[rsp]
+	inc	rax
+	mov	QWORD PTR days$[rsp], rax
+$LN2@secs_of_ye:
+
+; 328  : 				}
+; 329  : 			}
+; 330  : 			else {
+
+	jmp	SHORT $LN1@secs_of_ye
+$LN3@secs_of_ye:
+
+; 331  : 				days++;
+
+	mov	rax, QWORD PTR days$[rsp]
+	inc	rax
+	mov	QWORD PTR days$[rsp], rax
+$LN1@secs_of_ye:
+$LN4@secs_of_ye:
+
+; 332  : 			}
+; 333  : 		}
+; 334  : 		years--;
+
+	mov	eax, DWORD PTR years$[rsp]
+	dec	eax
+	mov	DWORD PTR years$[rsp], eax
+
+; 335  : 	}
+
+	jmp	SHORT $LN6@secs_of_ye
+$LN5@secs_of_ye:
+
+; 336  : 	return days * 86400;
+
+	imul	rax, QWORD PTR days$[rsp], 86400	; 00015180H
+
+; 337  : }
+
+	add	rsp, 24
+	ret	0
+?secs_of_years@@YA_KH@Z ENDP				; secs_of_years
+_TEXT	ENDS
+; Function compile flags: /Odtpy
+; File e:\xeneva project\aurora\kernel\hal\x86_64_cpu.cpp
+_TEXT	SEGMENT
+?isUpdateInProgress@@YAHXZ PROC				; isUpdateInProgress
+
+; 314  : int isUpdateInProgress(void) {
+
+$LN3:
+	sub	rsp, 40					; 00000028H
+
+; 315  : 	x64_outportb(CMOS_ADDRESS, 0x0a);
+
+	mov	dl, 10
+	mov	cx, 112					; 00000070H
+	call	x64_outportb
+
+; 316  : 	return x64_inportb(CMOS_DATA) & 0x80;
+
+	mov	cx, 113					; 00000071H
+	call	x64_inportb
+	movzx	eax, al
+	and	eax, 128				; 00000080H
+
+; 317  : }
+
+	add	rsp, 40					; 00000028H
+	ret	0
+?isUpdateInProgress@@YAHXZ ENDP				; isUpdateInProgress
+_TEXT	ENDS
+; Function compile flags: /Odtpy
+; File e:\xeneva project\aurora\kernel\hal\x86_64_cpu.cpp
+_TEXT	SEGMENT
+i$1 = 32
+val$ = 64
+?CMOSDump@@YAXPEAG@Z PROC				; CMOSDump
+
+; 307  : void CMOSDump(uint16_t *val) {
+
+$LN6:
+	mov	QWORD PTR [rsp+8], rcx
+	sub	rsp, 56					; 00000038H
+
+; 308  : 	for (uint16_t i = 0; i < 128; ++i) {
+
+	xor	eax, eax
+	mov	WORD PTR i$1[rsp], ax
+	jmp	SHORT $LN3@CMOSDump
+$LN2@CMOSDump:
+	movzx	eax, WORD PTR i$1[rsp]
+	inc	ax
+	mov	WORD PTR i$1[rsp], ax
+$LN3@CMOSDump:
+	movzx	eax, WORD PTR i$1[rsp]
+	cmp	eax, 128				; 00000080H
+	jge	SHORT $LN1@CMOSDump
+
+; 309  : 		x64_outportb(CMOS_ADDRESS, i);
+
+	movzx	edx, BYTE PTR i$1[rsp]
+	mov	cx, 112					; 00000070H
+	call	x64_outportb
+
+; 310  : 		val[i] = x64_inportb(CMOS_DATA);
+
+	mov	cx, 113					; 00000071H
+	call	x64_inportb
+	movzx	eax, al
+	movzx	ecx, WORD PTR i$1[rsp]
+	mov	rdx, QWORD PTR val$[rsp]
+	mov	WORD PTR [rdx+rcx*2], ax
+
+; 311  : 	}
+
+	jmp	SHORT $LN2@CMOSDump
+$LN1@CMOSDump:
+
+; 312  : }
+
+	add	rsp, 56					; 00000038H
+	ret	0
+?CMOSDump@@YAXPEAG@Z ENDP				; CMOSDump
+_TEXT	ENDS
 ; Function compile flags: /Odtpy
 ; File e:\xeneva project\aurora\kernel\hal\x86_64_cpu.cpp
 _TEXT	SEGMENT
 tv68 = 32
 ?_ICRBusy@@YA_NXZ PROC					; _ICRBusy
 
-; 185  : bool _ICRBusy() {
+; 190  : bool _ICRBusy() {
 
 $LN5:
 	sub	rsp, 56					; 00000038H
 
-; 186  : 	return (ReadAPICRegister(LAPIC_REGISTER_ICR) & (1 << 12)) != 0;
+; 191  : 	return (ReadAPICRegister(LAPIC_REGISTER_ICR) & (1 << 12)) != 0;
 
 	mov	cx, 48					; 00000030H
 	call	?ReadAPICRegister@@YA_KG@Z		; ReadAPICRegister
@@ -127,7 +889,7 @@ $LN3@ICRBusy:
 $LN4@ICRBusy:
 	movzx	eax, BYTE PTR tv68[rsp]
 
-; 187  : }
+; 192  : }
 
 	add	rsp, 56					; 00000038H
 	ret	0
@@ -139,42 +901,368 @@ _TEXT	SEGMENT
 processor$ = 48
 ?_ICRDest@@YA_KI@Z PROC					; _ICRDest
 
-; 178  : uint64_t _ICRDest(uint32_t processor) {
+; 183  : uint64_t _ICRDest(uint32_t processor) {
 
 $LN5:
 	mov	DWORD PTR [rsp+8], ecx
 	sub	rsp, 40					; 00000028H
 
-; 179  : 	if (X2APICSupported())
+; 184  : 	if (X2APICSupported())
 
 	call	?X2APICSupported@@YA_NXZ		; X2APICSupported
 	movzx	eax, al
 	test	eax, eax
 	je	SHORT $LN2@ICRDest
 
-; 180  : 		return ((uint64_t)processor << 32);
+; 185  : 		return ((uint64_t)processor << 32);
 
 	mov	eax, DWORD PTR processor$[rsp]
 	shl	rax, 32					; 00000020H
 	jmp	SHORT $LN3@ICRDest
 
-; 181  : 	else
+; 186  : 	else
 
 	jmp	SHORT $LN1@ICRDest
 $LN2@ICRDest:
 
-; 182  : 		return ((uint64_t)processor << 56);
+; 187  : 		return ((uint64_t)processor << 56);
 
 	mov	eax, DWORD PTR processor$[rsp]
 	shl	rax, 56					; 00000038H
 $LN1@ICRDest:
 $LN3@ICRDest:
 
-; 183  : }
+; 188  : }
 
 	add	rsp, 40					; 00000028H
 	ret	0
 ?_ICRDest@@YA_KI@Z ENDP					; _ICRDest
+_TEXT	ENDS
+; Function compile flags: /Odtpy
+; File e:\xeneva project\aurora\kernel\hal\x86_64_cpu.cpp
+_TEXT	SEGMENT
+tsc$ = 32
+timer_ticks$ = 40
+timer_subticks$ = 48
+t$ = 80
+?x86_64_gettimeofday@@YAHPEAU_timeval_@@@Z PROC		; x86_64_gettimeofday
+
+; 467  : int x86_64_gettimeofday(timeval *t){
+
+$LN3:
+	mov	QWORD PTR [rsp+8], rcx
+	sub	rsp, 72					; 00000048H
+
+; 468  : 	uint64_t tsc = cpu_read_tsc();
+
+	call	?cpu_read_tsc@@YA_KXZ			; cpu_read_tsc
+	mov	QWORD PTR tsc$[rsp], rax
+
+; 469  : 	uint64_t timer_ticks, timer_subticks;
+; 470  : 	updateTicks(tsc / cpuMhz, &timer_ticks, &timer_subticks);
+
+	xor	edx, edx
+	mov	rax, QWORD PTR tsc$[rsp]
+	div	QWORD PTR ?cpuMhz@@3_KA			; cpuMhz
+	lea	r8, QWORD PTR timer_subticks$[rsp]
+	lea	rdx, QWORD PTR timer_ticks$[rsp]
+	mov	rcx, rax
+	call	?updateTicks@@YAX_KPEA_K1@Z		; updateTicks
+
+; 471  : 	t->tv_sec = bootTime + timer_ticks;
+
+	mov	rax, QWORD PTR timer_ticks$[rsp]
+	mov	rcx, QWORD PTR ?bootTime@@3_KA		; bootTime
+	add	rcx, rax
+	mov	rax, rcx
+	mov	rcx, QWORD PTR t$[rsp]
+	mov	DWORD PTR [rcx], eax
+
+; 472  : 	t->tv_usec = timer_subticks;
+
+	mov	rax, QWORD PTR t$[rsp]
+	mov	ecx, DWORD PTR timer_subticks$[rsp]
+	mov	DWORD PTR [rax+4], ecx
+
+; 473  : 	return 0;
+
+	xor	eax, eax
+
+; 474  : }
+
+	add	rsp, 72					; 00000048H
+	ret	0
+?x86_64_gettimeofday@@YAHPEAU_timeval_@@@Z ENDP		; x86_64_gettimeofday
+_TEXT	ENDS
+; Function compile flags: /Odtpy
+; File e:\xeneva project\aurora\kernel\hal\x86_64_cpu.cpp
+_TEXT	SEGMENT
+?x86_64_cpu_get_mhz@@YA_KXZ PROC			; x86_64_cpu_get_mhz
+
+; 464  : 	return cpuMhz;
+
+	mov	rax, QWORD PTR ?cpuMhz@@3_KA		; cpuMhz
+
+; 465  : }
+
+	ret	0
+?x86_64_cpu_get_mhz@@YA_KXZ ENDP			; x86_64_cpu_get_mhz
+_TEXT	ENDS
+; Function compile flags: /Odtpy
+; File e:\xeneva project\aurora\kernel\hal\x86_64_cpu.cpp
+_TEXT	SEGMENT
+al$ = 32
+count_lo$ = 33
+count_hi$ = 34
+etsc$ = 36
+stsc$ = 40
+cpu_hz$ = 48
+?x86_64_measure_cpu_speed@@YAXXZ PROC			; x86_64_measure_cpu_speed
+
+; 415  : void x86_64_measure_cpu_speed() {
+
+$LN8:
+	sub	rsp, 72					; 00000048H
+
+; 416  : 	x64_cli();
+
+	call	x64_cli
+
+; 417  : 	bootTime = 0;
+
+	mov	QWORD PTR ?bootTime@@3_KA, 0		; bootTime
+
+; 418  : 	bootTime = readCMOS();
+
+	call	?readCMOS@@YA_KXZ			; readCMOS
+	mov	QWORD PTR ?bootTime@@3_KA, rax		; bootTime
+
+; 419  : 	uint8_t al = x64_inportb(0x61);
+
+	mov	cx, 97					; 00000061H
+	call	x64_inportb
+	mov	BYTE PTR al$[rsp], al
+
+; 420  : 	al &= 0xDD;
+
+	movzx	eax, BYTE PTR al$[rsp]
+	and	eax, 221				; 000000ddH
+	mov	BYTE PTR al$[rsp], al
+
+; 421  : 	al |= 0x1;
+
+	movzx	eax, BYTE PTR al$[rsp]
+	or	eax, 1
+	mov	BYTE PTR al$[rsp], al
+
+; 422  : 	x64_outportb(0x61, al);
+
+	movzx	edx, BYTE PTR al$[rsp]
+	mov	cx, 97					; 00000061H
+	call	x64_outportb
+
+; 423  : 
+; 424  : 	x64_outportb(0x43, 0xB2);
+
+	mov	dl, 178					; 000000b2H
+	mov	cx, 67					; 00000043H
+	call	x64_outportb
+
+; 425  : 	x64_outportb(0x42, 0x9B);
+
+	mov	dl, 155					; 0000009bH
+	mov	cx, 66					; 00000042H
+	call	x64_outportb
+
+; 426  : 	al = x64_inportb(0x60);
+
+	mov	cx, 96					; 00000060H
+	call	x64_inportb
+	mov	BYTE PTR al$[rsp], al
+
+; 427  : 
+; 428  : 	x64_outportb(0x42, 0x2E);
+
+	mov	dl, 46					; 0000002eH
+	mov	cx, 66					; 00000042H
+	call	x64_outportb
+
+; 429  : 
+; 430  : 	al = x64_inportb(0x61);
+
+	mov	cx, 97					; 00000061H
+	call	x64_inportb
+	mov	BYTE PTR al$[rsp], al
+
+; 431  : 	al &= 0xDE;
+
+	movzx	eax, BYTE PTR al$[rsp]
+	and	eax, 222				; 000000deH
+	mov	BYTE PTR al$[rsp], al
+
+; 432  : 	x64_outportb(0x61, al);
+
+	movzx	edx, BYTE PTR al$[rsp]
+	mov	cx, 97					; 00000061H
+	call	x64_outportb
+
+; 433  : 
+; 434  : 	al |= 0x01;
+
+	movzx	eax, BYTE PTR al$[rsp]
+	or	eax, 1
+	mov	BYTE PTR al$[rsp], al
+
+; 435  : 	x64_outportb(0x61, al);
+
+	movzx	edx, BYTE PTR al$[rsp]
+	mov	cx, 97					; 00000061H
+	call	x64_outportb
+
+; 436  : 	long stsc = cpu_read_tsc();
+
+	call	?cpu_read_tsc@@YA_KXZ			; cpu_read_tsc
+	mov	DWORD PTR stsc$[rsp], eax
+
+; 437  : 	
+; 438  : 	uint8_t count_lo = x64_inportb(0x61);
+
+	mov	cx, 97					; 00000061H
+	call	x64_inportb
+	mov	BYTE PTR count_lo$[rsp], al
+
+; 439  : 	count_lo &= 0x20;
+
+	movzx	eax, BYTE PTR count_lo$[rsp]
+	and	eax, 32					; 00000020H
+	mov	BYTE PTR count_lo$[rsp], al
+$LN5@x86_64_mea:
+
+; 440  : 	while (count_lo) {
+
+	movzx	eax, BYTE PTR count_lo$[rsp]
+	test	eax, eax
+	je	SHORT $LN4@x86_64_mea
+
+; 441  : 		count_lo = x64_inportb(0x61);
+
+	mov	cx, 97					; 00000061H
+	call	x64_inportb
+	mov	BYTE PTR count_lo$[rsp], al
+
+; 442  : 		count_lo &= 0x20;
+
+	movzx	eax, BYTE PTR count_lo$[rsp]
+	and	eax, 32					; 00000020H
+	mov	BYTE PTR count_lo$[rsp], al
+
+; 443  : 	}
+
+	jmp	SHORT $LN5@x86_64_mea
+$LN4@x86_64_mea:
+
+; 444  : 
+; 445  : 	uint8_t count_hi = x64_inportb(0x61);
+
+	mov	cx, 97					; 00000061H
+	call	x64_inportb
+	mov	BYTE PTR count_hi$[rsp], al
+
+; 446  : 	count_hi &= 0x20;
+
+	movzx	eax, BYTE PTR count_hi$[rsp]
+	and	eax, 32					; 00000020H
+	mov	BYTE PTR count_hi$[rsp], al
+
+; 447  : 	long etsc = cpu_read_tsc();
+
+	call	?cpu_read_tsc@@YA_KXZ			; cpu_read_tsc
+	mov	DWORD PTR etsc$[rsp], eax
+
+; 448  : 	uint64_t cpu_hz = (etsc - stsc) / 10000;
+
+	mov	eax, DWORD PTR stsc$[rsp]
+	mov	ecx, DWORD PTR etsc$[rsp]
+	sub	ecx, eax
+	mov	eax, ecx
+	cdq
+	mov	ecx, 10000				; 00002710H
+	idiv	ecx
+	cdqe
+	mov	QWORD PTR cpu_hz$[rsp], rax
+
+; 449  : 
+; 450  : 	if (cpu_hz == 0){
+
+	cmp	QWORD PTR cpu_hz$[rsp], 0
+	jne	SHORT $LN3@x86_64_mea
+
+; 451  : 		x64_outportb(0x43, 0x04);
+
+	mov	dl, 4
+	mov	cx, 67					; 00000043H
+	call	x64_outportb
+$LN2@x86_64_mea:
+
+; 452  : 		while (count_hi == 0){
+
+	movzx	eax, BYTE PTR count_hi$[rsp]
+	test	eax, eax
+	jne	SHORT $LN1@x86_64_mea
+
+; 453  : 			count_hi = x64_inportb(0x61);
+
+	mov	cx, 97					; 00000061H
+	call	x64_inportb
+	mov	BYTE PTR count_hi$[rsp], al
+
+; 454  : 			count_hi &= 0x20;
+
+	movzx	eax, BYTE PTR count_hi$[rsp]
+	and	eax, 32					; 00000020H
+	mov	BYTE PTR count_hi$[rsp], al
+
+; 455  : 		}
+
+	jmp	SHORT $LN2@x86_64_mea
+$LN1@x86_64_mea:
+
+; 456  : 		etsc = cpu_read_tsc();
+
+	call	?cpu_read_tsc@@YA_KXZ			; cpu_read_tsc
+	mov	DWORD PTR etsc$[rsp], eax
+$LN3@x86_64_mea:
+
+; 457  : 	}
+; 458  : 	cpu_hz = (etsc - stsc) / 10000;
+
+	mov	eax, DWORD PTR stsc$[rsp]
+	mov	ecx, DWORD PTR etsc$[rsp]
+	sub	ecx, eax
+	mov	eax, ecx
+	cdq
+	mov	ecx, 10000				; 00002710H
+	idiv	ecx
+	cdqe
+	mov	QWORD PTR cpu_hz$[rsp], rax
+
+; 459  : 	cpuMhz = cpu_hz;
+
+	mov	rax, QWORD PTR cpu_hz$[rsp]
+	mov	QWORD PTR ?cpuMhz@@3_KA, rax		; cpuMhz
+
+; 460  : 	tscBasisTiming = stsc / cpuMhz;
+
+	movsxd	rax, DWORD PTR stsc$[rsp]
+	xor	edx, edx
+	div	QWORD PTR ?cpuMhz@@3_KA			; cpuMhz
+	mov	QWORD PTR ?tscBasisTiming@@3_KA, rax	; tscBasisTiming
+
+; 461  : }
+
+	add	rsp, 72					; 00000048H
+	ret	0
+?x86_64_measure_cpu_speed@@YAXXZ ENDP			; x86_64_measure_cpu_speed
 _TEXT	ENDS
 ; Function compile flags: /Odtpy
 ; File e:\xeneva project\aurora\kernel\hal\x86_64_cpu.cpp
@@ -184,26 +1272,26 @@ lo$ = 36
 count$ = 40
 ?cpu_read_tsc@@YA_KXZ PROC				; cpu_read_tsc
 
-; 275  : uint64_t cpu_read_tsc(){
+; 280  : uint64_t cpu_read_tsc(){
 
 $LN3:
 	sub	rsp, 56					; 00000038H
 
-; 276  : 	uint32_t hi = 0;
+; 281  : 	uint32_t hi = 0;
 
 	mov	DWORD PTR hi$[rsp], 0
 
-; 277  : 	uint32_t lo = 0;
+; 282  : 	uint32_t lo = 0;
 
 	mov	DWORD PTR lo$[rsp], 0
 
-; 278  : 	x64_rdtsc(&hi, &lo);
+; 283  : 	x64_rdtsc(&hi, &lo);
 
 	lea	rdx, QWORD PTR lo$[rsp]
 	lea	rcx, QWORD PTR hi$[rsp]
 	call	x64_rdtsc
 
-; 279  : 	uint64_t count = (((uint64_t)hi << 32UL) | (uint64_t)lo);
+; 284  : 	uint64_t count = (((uint64_t)hi << 32UL) | (uint64_t)lo);
 
 	mov	eax, DWORD PTR hi$[rsp]
 	shl	rax, 32					; 00000020H
@@ -211,11 +1299,11 @@ $LN3:
 	or	rax, rcx
 	mov	QWORD PTR count$[rsp], rax
 
-; 280  : 	return count;
+; 285  : 	return count;
 
 	mov	rax, QWORD PTR count$[rsp]
 
-; 281  : }
+; 286  : }
 
 	add	rsp, 56					; 00000038H
 	ret	0
@@ -228,21 +1316,21 @@ sysret_sel$ = 32
 syscall_sel$ = 40
 ?x86_64_initialise_syscall@@YAXXZ PROC			; x86_64_initialise_syscall
 
-; 262  : void x86_64_initialise_syscall() {
+; 267  : void x86_64_initialise_syscall() {
 
 $LN3:
 	sub	rsp, 56					; 00000038H
 
-; 263  : 	uint64_t syscall_sel = SEGVAL(GDT_ENTRY_KERNEL_CODE, 0);
+; 268  : 	uint64_t syscall_sel = SEGVAL(GDT_ENTRY_KERNEL_CODE, 0);
 
 	mov	QWORD PTR syscall_sel$[rsp], 8
 
-; 264  : 	uint64_t sysret_sel = SEGVAL(GDT_ENTRY_USER_CODE32, 3);
+; 269  : 	uint64_t sysret_sel = SEGVAL(GDT_ENTRY_USER_CODE32, 3);
 
 	mov	QWORD PTR sysret_sel$[rsp], 27
 
-; 265  : 
-; 266  : 	x64_write_msr(IA32_STAR, (sysret_sel << 48) | (syscall_sel << 32));
+; 270  : 
+; 271  : 	x64_write_msr(IA32_STAR, (sysret_sel << 48) | (syscall_sel << 32));
 
 	mov	rax, QWORD PTR sysret_sel$[rsp]
 	shl	rax, 48					; 00000030H
@@ -253,25 +1341,25 @@ $LN3:
 	mov	ecx, -1073741695			; c0000081H
 	call	x64_write_msr
 
-; 267  : 	x64_write_msr(IA32_LSTAR, (size_t)&syscall_entry);
+; 272  : 	x64_write_msr(IA32_LSTAR, (size_t)&syscall_entry);
 
 	lea	rdx, OFFSET FLAT:syscall_entry
 	mov	ecx, -1073741694			; c0000082H
 	call	x64_write_msr
 
-; 268  : 	x64_write_msr(IA32_SFMASK, IA32_EFLAGS_INTR | IA32_EFLAGS_DIRF);
+; 273  : 	x64_write_msr(IA32_SFMASK, IA32_EFLAGS_INTR | IA32_EFLAGS_DIRF);
 
 	mov	edx, 1536				; 00000600H
 	mov	ecx, -1073741692			; c0000084H
 	call	x64_write_msr
 
-; 269  : 	x64_write_msr(IA32_CSTAR, (size_t)&x64_syscall_entry_compat);
+; 274  : 	x64_write_msr(IA32_CSTAR, (size_t)&x64_syscall_entry_compat);
 
 	lea	rdx, OFFSET FLAT:x64_syscall_entry_compat
 	mov	ecx, -1073741693			; c0000083H
 	call	x64_write_msr
 
-; 270  : }
+; 275  : }
 
 	add	rsp, 56					; 00000038H
 	ret	0
@@ -283,16 +1371,16 @@ _TEXT	SEGMENT
 value$ = 8
 ?x86_64_set_ap_start_bit@@YAX_N@Z PROC			; x86_64_set_ap_start_bit
 
-; 252  : void x86_64_set_ap_start_bit(bool value) {
+; 257  : void x86_64_set_ap_start_bit(bool value) {
 
 	mov	BYTE PTR [rsp+8], cl
 
-; 253  : 	__ApStarted = value;
+; 258  : 	__ApStarted = value;
 
 	movzx	eax, BYTE PTR value$[rsp]
 	mov	BYTE PTR ?__ApStarted@@3_NA, al		; __ApStarted
 
-; 254  : }
+; 259  : }
 
 	ret	0
 ?x86_64_set_ap_start_bit@@YAX_N@Z ENDP			; x86_64_set_ap_start_bit
@@ -314,47 +1402,47 @@ ap_init_address$ = 104
 num_cpu$ = 128
 ?x86_64_cpu_initialize@@YAXE@Z PROC			; x86_64_cpu_initialize
 
-; 195  : void x86_64_cpu_initialize(uint8_t num_cpu) {
+; 200  : void x86_64_cpu_initialize(uint8_t num_cpu) {
 
 $LN23:
 	mov	BYTE PTR [rsp+8], cl
 	sub	rsp, 120				; 00000078H
 
-; 196  : 	if (num_cpu == 0)
+; 201  : 	if (num_cpu == 0)
 
 	movzx	eax, BYTE PTR num_cpu$[rsp]
 	test	eax, eax
 	jne	SHORT $LN20@x86_64_cpu
 
-; 197  : 		return;
+; 202  : 		return;
 
 	jmp	$LN21@x86_64_cpu
 $LN20@x86_64_cpu:
 
-; 198  : 
-; 199  : 	//! fixed address
-; 200  : 	uint64_t *apdata = (uint64_t*)0xA000;
+; 203  : 
+; 204  : 	//! fixed address
+; 205  : 	uint64_t *apdata = (uint64_t*)0xA000;
 
 	mov	QWORD PTR apdata$[rsp], 40960		; 0000a000H
 
-; 201  : 	uint64_t ap_init_address = (uint64_t)x86_64_ap_init;
+; 206  : 	uint64_t ap_init_address = (uint64_t)x86_64_ap_init;
 
 	lea	rax, OFFSET FLAT:?x86_64_ap_init@@YAXPEAX@Z ; x86_64_ap_init
 	mov	QWORD PTR ap_init_address$[rsp], rax
 
-; 202  : 	uint64_t ap_aligned_address = (uint64_t)apdata;
+; 207  : 	uint64_t ap_aligned_address = (uint64_t)apdata;
 
 	mov	rax, QWORD PTR apdata$[rsp]
 	mov	QWORD PTR ap_aligned_address$[rsp], rax
 
-; 203  : 
-; 204  : 	uint64_t *pml4 = (uint64_t*)AuGetRootPageTable();
+; 208  : 
+; 209  : 	uint64_t *pml4 = (uint64_t*)AuGetRootPageTable();
 
 	call	AuGetRootPageTable
 	mov	QWORD PTR pml4$[rsp], rax
 
-; 205  : 
-; 206  : 	for (int i = 1; i <= num_cpu; i++) {
+; 210  : 
+; 211  : 	for (int i = 1; i <= num_cpu; i++) {
 
 	mov	DWORD PTR i$1[rsp], 1
 	jmp	SHORT $LN19@x86_64_cpu
@@ -367,49 +1455,49 @@ $LN19@x86_64_cpu:
 	cmp	DWORD PTR i$1[rsp], eax
 	jg	$LN17@x86_64_cpu
 
-; 207  : 
-; 208  : 		/* In SMP Mode : no more than 8 cpus */
-; 209  : 		if (i == 8)
+; 212  : 
+; 213  : 		/* In SMP Mode : no more than 8 cpus */
+; 214  : 		if (i == 8)
 
 	cmp	DWORD PTR i$1[rsp], 8
 	jne	SHORT $LN16@x86_64_cpu
 
-; 210  : 			break;
+; 215  : 			break;
 
 	jmp	$LN17@x86_64_cpu
 $LN16@x86_64_cpu:
 
-; 211  : 	
-; 212  : 		__ApStarted = false;
+; 216  : 	
+; 217  : 		__ApStarted = false;
 
 	mov	BYTE PTR ?__ApStarted@@3_NA, 0		; __ApStarted
 
-; 213  : 
-; 214  : 
-; 215  : 		void *stack_address = AuPmmngrAlloc();
+; 218  : 
+; 219  : 
+; 220  : 		void *stack_address = AuPmmngrAlloc();
 
 	call	AuPmmngrAlloc
 	mov	QWORD PTR stack_address$7[rsp], rax
 
-; 216  : 		*(uint64_t*)(ap_aligned_address + 8) = (uint64_t)pml4;
+; 221  : 		*(uint64_t*)(ap_aligned_address + 8) = (uint64_t)pml4;
 
 	mov	rax, QWORD PTR ap_aligned_address$[rsp]
 	mov	rcx, QWORD PTR pml4$[rsp]
 	mov	QWORD PTR [rax+8], rcx
 
-; 217  : 		*(uint64_t*)(ap_aligned_address + 16) = (uint64_t)stack_address;
+; 222  : 		*(uint64_t*)(ap_aligned_address + 16) = (uint64_t)stack_address;
 
 	mov	rax, QWORD PTR ap_aligned_address$[rsp]
 	mov	rcx, QWORD PTR stack_address$7[rsp]
 	mov	QWORD PTR [rax+16], rcx
 
-; 218  : 		*(uint64_t*)(ap_aligned_address + 24) = ap_init_address;
+; 223  : 		*(uint64_t*)(ap_aligned_address + 24) = ap_init_address;
 
 	mov	rax, QWORD PTR ap_aligned_address$[rsp]
 	mov	rcx, QWORD PTR ap_init_address$[rsp]
 	mov	QWORD PTR [rax+24], rcx
 
-; 219  : 		*(uint64_t*)(ap_aligned_address + 32) = (uint64_t)P2V((size_t)AuPmmngrAlloc());
+; 224  : 		*(uint64_t*)(ap_aligned_address + 32) = (uint64_t)P2V((size_t)AuPmmngrAlloc());
 
 	call	AuPmmngrAlloc
 	mov	rcx, rax
@@ -417,43 +1505,43 @@ $LN16@x86_64_cpu:
 	mov	rcx, QWORD PTR ap_aligned_address$[rsp]
 	mov	QWORD PTR [rcx+32], rax
 
-; 220  : 		void* cpu_struc = (void*)P2V((uint64_t)AuPmmngrAlloc());
+; 225  : 		void* cpu_struc = (void*)P2V((uint64_t)AuPmmngrAlloc());
 
 	call	AuPmmngrAlloc
 	mov	rcx, rax
 	call	P2V
 	mov	QWORD PTR cpu_struc$5[rsp], rax
 
-; 221  : 		CPUStruc *cpu = (CPUStruc*)cpu_struc;
+; 226  : 		CPUStruc *cpu = (CPUStruc*)cpu_struc;
 
 	mov	rax, QWORD PTR cpu_struc$5[rsp]
 	mov	QWORD PTR cpu$4[rsp], rax
 
-; 222  : 		cpu->cpu_id = i;
+; 227  : 		cpu->cpu_id = i;
 
 	mov	rax, QWORD PTR cpu$4[rsp]
 	movzx	ecx, BYTE PTR i$1[rsp]
 	mov	BYTE PTR [rax], cl
 
-; 223  : 		cpu->au_current_thread = 0;
+; 228  : 		cpu->au_current_thread = 0;
 
 	mov	rax, QWORD PTR cpu$4[rsp]
 	mov	QWORD PTR [rax+1], 0
 
-; 224  : 		cpu->kernel_tss = 0;
+; 229  : 		cpu->kernel_tss = 0;
 
 	mov	rax, QWORD PTR cpu$4[rsp]
 	mov	QWORD PTR [rax+9], 0
 
-; 225  : 		*(uint64_t*)(ap_aligned_address + 40) = (uint64_t)cpu_struc;
+; 230  : 		*(uint64_t*)(ap_aligned_address + 40) = (uint64_t)cpu_struc;
 
 	mov	rax, QWORD PTR ap_aligned_address$[rsp]
 	mov	rcx, QWORD PTR cpu_struc$5[rsp]
 	mov	QWORD PTR [rax+40], rcx
 
-; 226  : 
-; 227  : 
-; 228  : 		WriteAPICRegister(LAPIC_REGISTER_ICR, _ICRDest(i) | 0x4500);
+; 231  : 
+; 232  : 
+; 233  : 		WriteAPICRegister(LAPIC_REGISTER_ICR, _ICRDest(i) | 0x4500);
 
 	mov	ecx, DWORD PTR i$1[rsp]
 	call	?_ICRDest@@YA_KI@Z			; _ICRDest
@@ -463,7 +1551,7 @@ $LN16@x86_64_cpu:
 	call	?WriteAPICRegister@@YAXG_K@Z		; WriteAPICRegister
 $LN15@x86_64_cpu:
 
-; 229  : 		while (_ICRBusy());
+; 234  : 		while (_ICRBusy());
 
 	call	?_ICRBusy@@YA_NXZ			; _ICRBusy
 	movzx	eax, al
@@ -472,9 +1560,9 @@ $LN15@x86_64_cpu:
 	jmp	SHORT $LN15@x86_64_cpu
 $LN14@x86_64_cpu:
 
-; 230  : 
-; 231  : 
-; 232  : 		size_t startup_ipi = _ICRDest(i) | 0x4600 | ((size_t)apdata >> 12);
+; 235  : 
+; 236  : 
+; 237  : 		size_t startup_ipi = _ICRDest(i) | 0x4600 | ((size_t)apdata >> 12);
 
 	mov	ecx, DWORD PTR i$1[rsp]
 	call	?_ICRDest@@YA_KI@Z			; _ICRDest
@@ -484,14 +1572,14 @@ $LN14@x86_64_cpu:
 	or	rax, rcx
 	mov	QWORD PTR startup_ipi$6[rsp], rax
 
-; 233  : 		WriteAPICRegister(LAPIC_REGISTER_ICR, startup_ipi);
+; 238  : 		WriteAPICRegister(LAPIC_REGISTER_ICR, startup_ipi);
 
 	mov	rdx, QWORD PTR startup_ipi$6[rsp]
 	mov	cx, 48					; 00000030H
 	call	?WriteAPICRegister@@YAXG_K@Z		; WriteAPICRegister
 $LN13@x86_64_cpu:
 
-; 234  : 		while (_ICRBusy());
+; 239  : 		while (_ICRBusy());
 
 	call	?_ICRBusy@@YA_NXZ			; _ICRBusy
 	movzx	eax, al
@@ -500,7 +1588,7 @@ $LN13@x86_64_cpu:
 	jmp	SHORT $LN13@x86_64_cpu
 $LN12@x86_64_cpu:
 
-; 235  : 		for (int i = 0; i < 10000000; i++)
+; 240  : 		for (int i = 0; i < 10000000; i++)
 
 	mov	DWORD PTR i$3[rsp], 0
 	jmp	SHORT $LN11@x86_64_cpu
@@ -512,19 +1600,19 @@ $LN11@x86_64_cpu:
 	cmp	DWORD PTR i$3[rsp], 10000000		; 00989680H
 	jge	SHORT $LN9@x86_64_cpu
 
-; 236  : 			;
+; 241  : 			;
 
 	jmp	SHORT $LN10@x86_64_cpu
 $LN9@x86_64_cpu:
 
-; 237  : 		WriteAPICRegister(LAPIC_REGISTER_ICR, startup_ipi);
+; 242  : 		WriteAPICRegister(LAPIC_REGISTER_ICR, startup_ipi);
 
 	mov	rdx, QWORD PTR startup_ipi$6[rsp]
 	mov	cx, 48					; 00000030H
 	call	?WriteAPICRegister@@YAXG_K@Z		; WriteAPICRegister
 $LN8@x86_64_cpu:
 
-; 238  : 		while (_ICRBusy());
+; 243  : 		while (_ICRBusy());
 
 	call	?_ICRBusy@@YA_NXZ			; _ICRBusy
 	movzx	eax, al
@@ -533,8 +1621,8 @@ $LN8@x86_64_cpu:
 	jmp	SHORT $LN8@x86_64_cpu
 $LN7@x86_64_cpu:
 
-; 239  : 
-; 240  : 		for (int i = 0; i < 10000000; i++)
+; 244  : 
+; 245  : 		for (int i = 0; i < 10000000; i++)
 
 	mov	DWORD PTR i$2[rsp], 0
 	jmp	SHORT $LN6@x86_64_cpu
@@ -546,30 +1634,30 @@ $LN6@x86_64_cpu:
 	cmp	DWORD PTR i$2[rsp], 10000000		; 00989680H
 	jge	SHORT $LN4@x86_64_cpu
 
-; 241  : 			;
+; 246  : 			;
 
 	jmp	SHORT $LN5@x86_64_cpu
 $LN4@x86_64_cpu:
 $LN3@x86_64_cpu:
 
-; 242  : 		do {
-; 243  : 			x64_pause();
+; 247  : 		do {
+; 248  : 			x64_pause();
 
 	call	x64_pause
 
-; 244  : 		} while (!__ApStarted);
+; 249  : 		} while (!__ApStarted);
 
 	movzx	eax, BYTE PTR ?__ApStarted@@3_NA	; __ApStarted
 	test	eax, eax
 	je	SHORT $LN3@x86_64_cpu
 
-; 245  : 	}
+; 250  : 	}
 
 	jmp	$LN18@x86_64_cpu
 $LN17@x86_64_cpu:
 $LN21@x86_64_cpu:
 
-; 246  : }
+; 251  : }
 
 	add	rsp, 120				; 00000078H
 	ret	0
@@ -587,7 +1675,7 @@ edge$ = 56
 deassert$ = 64
 ?x86_64_cpu_msi_address@@YA_KPEA_K_KIEE@Z PROC		; x86_64_cpu_msi_address
 
-; 169  : uint64_t x86_64_cpu_msi_address(uint64_t* data, size_t vector, uint32_t processor, uint8_t edge, uint8_t deassert) {
+; 174  : uint64_t x86_64_cpu_msi_address(uint64_t* data, size_t vector, uint32_t processor, uint8_t edge, uint8_t deassert) {
 
 $LN7:
 	mov	BYTE PTR [rsp+32], r9b
@@ -596,7 +1684,7 @@ $LN7:
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 24
 
-; 170  : 	*data = (vector & 0xFF) | (edge == 1 ? 0 : (1 << 15)) | (deassert == 1 ? 0 : (1 << 14));
+; 175  : 	*data = (vector & 0xFF) | (edge == 1 ? 0 : (1 << 15)) | (deassert == 1 ? 0 : (1 << 14));
 
 	movzx	eax, BYTE PTR edge$[rsp]
 	cmp	eax, 1
@@ -623,15 +1711,15 @@ $LN6@x86_64_cpu:
 	mov	rcx, QWORD PTR data$[rsp]
 	mov	QWORD PTR [rcx], rax
 
-; 171  : 	//*data = low;
-; 172  : 	return (0xFEE00000 | (processor << 12));
+; 176  : 	//*data = low;
+; 177  : 	return (0xFEE00000 | (processor << 12));
 
 	mov	eax, DWORD PTR processor$[rsp]
 	shl	eax, 12
 	or	eax, -18874368				; fee00000H
 	mov	eax, eax
 
-; 173  : }
+; 178  : }
 
 	add	rsp, 24
 	ret	0
@@ -642,11 +1730,11 @@ _TEXT	ENDS
 _TEXT	SEGMENT
 ?x86_64_is_cpu_fxsave_supported@@YA_NXZ PROC		; x86_64_is_cpu_fxsave_supported
 
-; 158  : 	return _fxsave;
+; 163  : 	return _fxsave;
 
 	movzx	eax, BYTE PTR ?_fxsave@@3_NA		; _fxsave
 
-; 159  : }
+; 164  : }
 
 	ret	0
 ?x86_64_is_cpu_fxsave_supported@@YA_NXZ ENDP		; x86_64_is_cpu_fxsave_supported
@@ -663,36 +1751,36 @@ b$ = 88
 a$ = 96
 ?x86_64_hal_cpu_feature_enable@@YAXXZ PROC		; x86_64_hal_cpu_feature_enable
 
-; 121  : void x86_64_hal_cpu_feature_enable() {
+; 126  : void x86_64_hal_cpu_feature_enable() {
 
 $LN10:
 	sub	rsp, 120				; 00000078H
 
-; 122  : 	uint64_t cr0 = x64_read_cr0();
+; 127  : 	uint64_t cr0 = x64_read_cr0();
 
 	call	x64_read_cr0
 	mov	QWORD PTR cr0$[rsp], rax
 
-; 123  : 	cr0 &= ~(1 << 2);
+; 128  : 	cr0 &= ~(1 << 2);
 
 	mov	rax, QWORD PTR cr0$[rsp]
 	and	rax, -5
 	mov	QWORD PTR cr0$[rsp], rax
 
-; 124  : 	cr0 |= (1 << 1);
+; 129  : 	cr0 |= (1 << 1);
 
 	mov	rax, QWORD PTR cr0$[rsp]
 	or	rax, 2
 	mov	QWORD PTR cr0$[rsp], rax
 
-; 125  : 	x64_write_cr0(cr0);
+; 130  : 	x64_write_cr0(cr0);
 
 	mov	rcx, QWORD PTR cr0$[rsp]
 	call	x64_write_cr0
 
-; 126  : 
-; 127  : 	size_t a, b, c, d;
-; 128  : 	x64_cpuid(1, &a, &b, &c, &d, 0);
+; 131  : 
+; 132  : 	size_t a, b, c, d;
+; 133  : 	x64_cpuid(1, &a, &b, &c, &d, 0);
 
 	mov	QWORD PTR [rsp+40], 0
 	lea	rax, QWORD PTR d$[rsp]
@@ -703,81 +1791,81 @@ $LN10:
 	mov	ecx, 1
 	call	x64_cpuid
 
-; 129  : 	if ((c & (1 << 26)) != 0) {
+; 134  : 	if ((c & (1 << 26)) != 0) {
 
 	mov	rax, QWORD PTR c$[rsp]
 	and	rax, 67108864				; 04000000H
 	test	rax, rax
 	je	SHORT $LN7@x86_64_hal
 
-; 130  : 		uint64_t cr4 = x64_read_cr4();
+; 135  : 		uint64_t cr4 = x64_read_cr4();
 
 	call	x64_read_cr4
 	mov	QWORD PTR cr4$2[rsp], rax
 
-; 131  : 		cr4 |= (1 << 18);
+; 136  : 		cr4 |= (1 << 18);
 
 	mov	rax, QWORD PTR cr4$2[rsp]
 	bts	rax, 18
 	mov	QWORD PTR cr4$2[rsp], rax
 
-; 132  : 		x64_write_cr4(cr4);
+; 137  : 		x64_write_cr4(cr4);
 
 	mov	rcx, QWORD PTR cr4$2[rsp]
 	call	x64_write_cr4
 $LN7@x86_64_hal:
 
-; 133  : 	}
-; 134  : 
-; 135  : 	if ((d & (1 << 25)) != 0) {
+; 138  : 	}
+; 139  : 
+; 140  : 	if ((d & (1 << 25)) != 0) {
 
 	mov	rax, QWORD PTR d$[rsp]
 	and	rax, 33554432				; 02000000H
 	test	rax, rax
 	je	SHORT $LN6@x86_64_hal
 
-; 136  : 		size_t cr4 = x64_read_cr4();
+; 141  : 		size_t cr4 = x64_read_cr4();
 
 	call	x64_read_cr4
 	mov	QWORD PTR cr4$1[rsp], rax
 
-; 137  : 
-; 138  : 		if ((d & (1 << 24)) != 0) {
+; 142  : 
+; 143  : 		if ((d & (1 << 24)) != 0) {
 
 	mov	rax, QWORD PTR d$[rsp]
 	and	rax, 16777216				; 01000000H
 	test	rax, rax
 	je	SHORT $LN5@x86_64_hal
 
-; 139  : 			cr4 |= (1 << 9);
+; 144  : 			cr4 |= (1 << 9);
 
 	mov	rax, QWORD PTR cr4$1[rsp]
 	bts	rax, 9
 	mov	QWORD PTR cr4$1[rsp], rax
 
-; 140  : 			_fxsave = true;
+; 145  : 			_fxsave = true;
 
 	mov	BYTE PTR ?_fxsave@@3_NA, 1		; _fxsave
 $LN5@x86_64_hal:
 
-; 141  : 		}
-; 142  : 
-; 143  : 		cr4 |= (1 << 10);
+; 146  : 		}
+; 147  : 
+; 148  : 		cr4 |= (1 << 10);
 
 	mov	rax, QWORD PTR cr4$1[rsp]
 	bts	rax, 10
 	mov	QWORD PTR cr4$1[rsp], rax
 
-; 144  : 		x64_write_cr4(cr4);
+; 149  : 		x64_write_cr4(cr4);
 
 	mov	rcx, QWORD PTR cr4$1[rsp]
 	call	x64_write_cr4
 	jmp	SHORT $LN4@x86_64_hal
 $LN6@x86_64_hal:
 
-; 145  : 	}
-; 146  : 
-; 147  : 	else if ((d & (1 << 26)) != 0) {
+; 150  : 	}
+; 151  : 
+; 152  : 	else if ((d & (1 << 26)) != 0) {
 
 	mov	rax, QWORD PTR d$[rsp]
 	and	rax, 67108864				; 04000000H
@@ -786,19 +1874,19 @@ $LN6@x86_64_hal:
 	jmp	SHORT $LN2@x86_64_hal
 $LN3@x86_64_hal:
 
-; 148  : 		//supported SSE2
-; 149  : 	}
-; 150  : 
-; 151  : 	else if ((c & (1 << 0)) != 0) {
+; 153  : 		//supported SSE2
+; 154  : 	}
+; 155  : 
+; 156  : 	else if ((c & (1 << 0)) != 0) {
 
 	mov	rax, QWORD PTR c$[rsp]
 	and	rax, 1
 $LN2@x86_64_hal:
 $LN4@x86_64_hal:
 
-; 152  : 		//supported SSE3
-; 153  : 	}
-; 154  : }
+; 157  : 		//supported SSE3
+; 158  : 	}
+; 159  : }
 
 	add	rsp, 120				; 00000078H
 	ret	0
@@ -809,11 +1897,11 @@ _TEXT	ENDS
 _TEXT	SEGMENT
 ?x86_64_get_tss@@YAPEAU_tss@@XZ PROC			; x86_64_get_tss
 
-; 115  : 	return _tss;
+; 120  : 	return _tss;
 
 	mov	rax, QWORD PTR ?_tss@@3PEAU0@EA		; _tss
 
-; 116  : }
+; 121  : }
 
 	ret	0
 ?x86_64_get_tss@@YAPEAU_tss@@XZ ENDP			; x86_64_get_tss
@@ -830,24 +1918,24 @@ peek_gdt$ = 64
 bit$ = 96
 ?x86_64_init_user_ap@@YAX_K@Z PROC			; x86_64_init_user_ap
 
-; 87   : void x86_64_init_user_ap(size_t bit) {
+; 92   : void x86_64_init_user_ap(size_t bit) {
 
 $LN8:
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 88					; 00000058H
 
-; 88   : 
-; 89   : 	uint16_t data_sel = SEGVAL(GDT_ENTRY_USER_DATA, 3);
+; 93   : 
+; 94   : 	uint16_t data_sel = SEGVAL(GDT_ENTRY_USER_DATA, 3);
 
 	mov	eax, 35					; 00000023H
 	mov	WORD PTR data_sel$[rsp], ax
 
-; 90   : 	uint16_t code_sel = 0;
+; 95   : 	uint16_t code_sel = 0;
 
 	xor	eax, eax
 	mov	WORD PTR code_sel$[rsp], ax
 
-; 91   : 	switch (bit) {
+; 96   : 	switch (bit) {
 
 	mov	rax, QWORD PTR bit$[rsp]
 	mov	QWORD PTR tv64[rsp], rax
@@ -858,43 +1946,43 @@ $LN8:
 	jmp	SHORT $LN1@x86_64_ini
 $LN3@x86_64_ini:
 
-; 92   : 	case 64:
-; 93   : 		code_sel = SEGVAL(GDT_ENTRY_USER_CODE, 3);
+; 97   : 	case 64:
+; 98   : 		code_sel = SEGVAL(GDT_ENTRY_USER_CODE, 3);
 
 	mov	eax, 43					; 0000002bH
 	mov	WORD PTR code_sel$[rsp], ax
 
-; 94   : 		break;
+; 99   : 		break;
 
 	jmp	SHORT $LN4@x86_64_ini
 $LN2@x86_64_ini:
 
-; 95   : 	case 32:
-; 96   : 		code_sel = SEGVAL(GDT_ENTRY_USER_CODE32, 3);
+; 100  : 	case 32:
+; 101  : 		code_sel = SEGVAL(GDT_ENTRY_USER_CODE32, 3);
 
 	mov	eax, 27
 	mov	WORD PTR code_sel$[rsp], ax
 
-; 97   : 		break;
+; 102  : 		break;
 
 	jmp	SHORT $LN4@x86_64_ini
 $LN1@x86_64_ini:
 
-; 98   : 	default:
-; 99   : 		return;
+; 103  : 	default:
+; 104  : 		return;
 
 	jmp	SHORT $LN6@x86_64_ini
 $LN4@x86_64_ini:
 
-; 100  : 	}
-; 101  : 
-; 102  : 	gdtr peek_gdt;
-; 103  : 	x64_sgdt(&peek_gdt);
+; 105  : 	}
+; 106  : 
+; 107  : 	gdtr peek_gdt;
+; 108  : 	x64_sgdt(&peek_gdt);
 
 	lea	rcx, QWORD PTR peek_gdt$[rsp]
 	call	x64_sgdt
 
-; 104  : 	gdt_entry& tss_entry = peek_gdt.gdtaddr[GDT_ENTRY_TSS];
+; 109  : 	gdt_entry& tss_entry = peek_gdt.gdtaddr[GDT_ENTRY_TSS];
 
 	mov	eax, 8
 	imul	rax, rax, 7
@@ -903,8 +1991,8 @@ $LN4@x86_64_ini:
 	mov	rax, rcx
 	mov	QWORD PTR tss_entry$[rsp], rax
 
-; 105  : 
-; 106  : 	TSS *tss_ = (TSS*)(tss_entry.base_low + (tss_entry.base_mid << 16) + (tss_entry.base_high << 24) + ((uint64_t)*(uint32_t*)&peek_gdt.gdtaddr[GDT_ENTRY_TSS + 1] << 32));
+; 110  : 
+; 111  : 	TSS *tss_ = (TSS*)(tss_entry.base_low + (tss_entry.base_mid << 16) + (tss_entry.base_high << 24) + ((uint64_t)*(uint32_t*)&peek_gdt.gdtaddr[GDT_ENTRY_TSS + 1] << 32));
 
 	mov	rax, QWORD PTR tss_entry$[rsp]
 	movzx	eax, WORD PTR [rax+2]
@@ -925,14 +2013,14 @@ $LN4@x86_64_ini:
 	add	rax, rcx
 	mov	QWORD PTR tss_$[rsp], rax
 
-; 107  : 
-; 108  : 	AuPerCPUSetKernelTSS(tss_);
+; 112  : 
+; 113  : 	AuPerCPUSetKernelTSS(tss_);
 
 	mov	rcx, QWORD PTR tss_$[rsp]
 	call	?AuPerCPUSetKernelTSS@@YAXPEAU_tss@@@Z	; AuPerCPUSetKernelTSS
 $LN6@x86_64_ini:
 
-; 109  : }
+; 114  : }
 
 	add	rsp, 88					; 00000058H
 	ret	0
@@ -949,23 +2037,23 @@ peek_gdt$ = 56
 bit$ = 96
 ?x86_64_init_user@@YAX_K@Z PROC				; x86_64_init_user
 
-; 59   : void x86_64_init_user(size_t bit) {
+; 64   : void x86_64_init_user(size_t bit) {
 
 $LN8:
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 88					; 00000058H
 
-; 60   : 	uint16_t data_sel = SEGVAL(GDT_ENTRY_USER_DATA, 3);
+; 65   : 	uint16_t data_sel = SEGVAL(GDT_ENTRY_USER_DATA, 3);
 
 	mov	eax, 35					; 00000023H
 	mov	WORD PTR data_sel$[rsp], ax
 
-; 61   : 	uint16_t code_sel = 0;
+; 66   : 	uint16_t code_sel = 0;
 
 	xor	eax, eax
 	mov	WORD PTR code_sel$[rsp], ax
 
-; 62   : 	switch (bit) {
+; 67   : 	switch (bit) {
 
 	mov	rax, QWORD PTR bit$[rsp]
 	mov	QWORD PTR tv64[rsp], rax
@@ -976,43 +2064,43 @@ $LN8:
 	jmp	SHORT $LN1@x86_64_ini
 $LN3@x86_64_ini:
 
-; 63   : 	case 64:
-; 64   : 		code_sel = SEGVAL(GDT_ENTRY_USER_CODE, 3);
+; 68   : 	case 64:
+; 69   : 		code_sel = SEGVAL(GDT_ENTRY_USER_CODE, 3);
 
 	mov	eax, 43					; 0000002bH
 	mov	WORD PTR code_sel$[rsp], ax
 
-; 65   : 		break;
+; 70   : 		break;
 
 	jmp	SHORT $LN4@x86_64_ini
 $LN2@x86_64_ini:
 
-; 66   : 	case 32:
-; 67   : 		code_sel = SEGVAL(GDT_ENTRY_USER_CODE32, 3);
+; 71   : 	case 32:
+; 72   : 		code_sel = SEGVAL(GDT_ENTRY_USER_CODE32, 3);
 
 	mov	eax, 27
 	mov	WORD PTR code_sel$[rsp], ax
 
-; 68   : 		break;
+; 73   : 		break;
 
 	jmp	SHORT $LN4@x86_64_ini
 $LN1@x86_64_ini:
 
-; 69   : 	default:
-; 70   : 		return;
+; 74   : 	default:
+; 75   : 		return;
 
 	jmp	SHORT $LN6@x86_64_ini
 $LN4@x86_64_ini:
 
-; 71   : 	}
-; 72   : 
-; 73   : 	gdtr peek_gdt;
-; 74   : 	x64_sgdt(&peek_gdt);
+; 76   : 	}
+; 77   : 
+; 78   : 	gdtr peek_gdt;
+; 79   : 	x64_sgdt(&peek_gdt);
 
 	lea	rcx, QWORD PTR peek_gdt$[rsp]
 	call	x64_sgdt
 
-; 75   : 	gdt_entry& tss_entry = peek_gdt.gdtaddr[GDT_ENTRY_TSS];
+; 80   : 	gdt_entry& tss_entry = peek_gdt.gdtaddr[GDT_ENTRY_TSS];
 
 	mov	eax, 8
 	imul	rax, rax, 7
@@ -1021,9 +2109,9 @@ $LN4@x86_64_ini:
 	mov	rax, rcx
 	mov	QWORD PTR tss_entry$[rsp], rax
 
-; 76   : 
-; 77   : 	_tss = (TSS*)(tss_entry.base_low + (tss_entry.base_mid << 16) + (tss_entry.base_high << 24) +
-; 78   : 		((uint64_t)*(uint32_t*)&peek_gdt.gdtaddr[GDT_ENTRY_TSS + 1] << 32));
+; 81   : 
+; 82   : 	_tss = (TSS*)(tss_entry.base_low + (tss_entry.base_mid << 16) + (tss_entry.base_high << 24) +
+; 83   : 		((uint64_t)*(uint32_t*)&peek_gdt.gdtaddr[GDT_ENTRY_TSS + 1] << 32));
 
 	mov	rax, QWORD PTR tss_entry$[rsp]
 	movzx	eax, WORD PTR [rax+2]
@@ -1045,8 +2133,8 @@ $LN4@x86_64_ini:
 	mov	QWORD PTR ?_tss@@3PEAU0@EA, rax		; _tss
 $LN6@x86_64_ini:
 
-; 79   : 
-; 80   : }
+; 84   : 
+; 85   : }
 
 	add	rsp, 88					; 00000058H
 	ret	0
@@ -1058,36 +2146,36 @@ _TEXT	SEGMENT
 efer$ = 32
 ?x86_64_enable_syscall_ext@@YAXXZ PROC			; x86_64_enable_syscall_ext
 
-; 48   : void x86_64_enable_syscall_ext() {
+; 53   : void x86_64_enable_syscall_ext() {
 
 $LN3:
 	sub	rsp, 56					; 00000038H
 
-; 49   : 	size_t efer = x64_read_msr(IA32_EFER);
+; 54   : 	size_t efer = x64_read_msr(IA32_EFER);
 
 	mov	ecx, -1073741696			; c0000080H
 	call	x64_read_msr
 	mov	QWORD PTR efer$[rsp], rax
 
-; 50   : 	efer |= (1 << 11);
+; 55   : 	efer |= (1 << 11);
 
 	mov	rax, QWORD PTR efer$[rsp]
 	bts	rax, 11
 	mov	QWORD PTR efer$[rsp], rax
 
-; 51   : 	efer |= 1;
+; 56   : 	efer |= 1;
 
 	mov	rax, QWORD PTR efer$[rsp]
 	or	rax, 1
 	mov	QWORD PTR efer$[rsp], rax
 
-; 52   : 	x64_write_msr(IA32_EFER, efer);
+; 57   : 	x64_write_msr(IA32_EFER, efer);
 
 	mov	rdx, QWORD PTR efer$[rsp]
 	mov	ecx, -1073741696			; c0000080H
 	call	x64_write_msr
 
-; 53   : }
+; 58   : }
 
 	add	rsp, 56					; 00000038H
 	ret	0

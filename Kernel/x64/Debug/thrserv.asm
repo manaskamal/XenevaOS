@@ -6,15 +6,15 @@ INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
 CONST	SEGMENT
-$SG3798	DB	'No process found ', 0aH, 00H
+$SG3812	DB	'No process found ', 0aH, 00H
 	ORG $+5
-$SG3815	DB	'THRSERV: allocatedarg[1] -> %s ', 0dH, 0aH, 00H
+$SG3829	DB	'THRSERV: allocatedarg[1] -> %s ', 0dH, 0aH, 00H
 	ORG $+6
-$SG3819	DB	'Process launched failed %s', 0dH, 0aH, 00H
+$SG3833	DB	'Process launched failed %s', 0dH, 0aH, 00H
 	ORG $+3
-$SG3820	DB	'Returning ', 0dH, 0aH, 00H
+$SG3834	DB	'Returning ', 0dH, 0aH, 00H
 	ORG $+3
-$SG3831	DB	'Signal Return ', 0dH, 0aH, 00H
+$SG3845	DB	'Signal Return ', 0dH, 0aH, 00H
 CONST	ENDS
 PUBLIC	?PauseThread@@YAHXZ				; PauseThread
 PUBLIC	?GetThreadID@@YAGXZ				; GetThreadID
@@ -44,6 +44,7 @@ EXTRN	?AuCreateProcessSlot@@YAPEAU_au_proc_@@PEAU1@PEAD@Z:PROC ; AuCreateProcess
 EXTRN	?AuProcessExit@@YAXPEAU_au_proc_@@_N@Z:PROC	; AuProcessExit
 EXTRN	?AuProcessWaitForTermination@@YAXPEAU_au_proc_@@H@Z:PROC ; AuProcessWaitForTermination
 EXTRN	?AuCreateUserthread@@YAHPEAU_au_proc_@@P6AXPEAX@ZPEAD@Z:PROC ; AuCreateUserthread
+EXTRN	AuGetCurrentTime:PROC
 EXTRN	?AuSendSignal@@YAXGH@Z:PROC			; AuSendSignal
 EXTRN	x64_cli:PROC
 EXTRN	x64_force_sched:PROC
@@ -53,7 +54,6 @@ EXTRN	SeTextOut:PROC
 EXTRN	?AuLoadExecToProcess@@YAHPEAU_au_proc_@@PEADHPEAPEAD@Z:PROC ; AuLoadExecToProcess
 EXTRN	kmalloc:PROC
 EXTRN	kfree:PROC
-EXTRN	AuGetCurrentTime:PROC
 EXTRN	AuTextOut:PROC
 pdata	SEGMENT
 $pdata$?PauseThread@@YAHXZ DD imagerel $LN3
@@ -610,7 +610,7 @@ $LN1@SetSignal:
 	movsxd	rax, DWORD PTR signo$[rsp]
 	mov	rcx, QWORD PTR thr$[rsp]
 	mov	rdx, QWORD PTR handler$[rsp]
-	mov	QWORD PTR [rcx+rax*8+306], rdx
+	mov	QWORD PTR [rcx+rax*8+312], rdx
 $LN2@SetSignal:
 
 ; 207  : }
@@ -637,7 +637,7 @@ $LN3:
 
 ; 193  : 	SeTextOut("Signal Return \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG3831
+	lea	rcx, OFFSET FLAT:$SG3845
 	call	SeTextOut
 
 ; 194  : 	/* just make a page fault */
@@ -689,7 +689,7 @@ $LN2@ProcessSle:
 ; 182  : 	if (current_thr->pendingSigCount > 0)
 
 	mov	rax, QWORD PTR current_thr$[rsp]
-	movzx	eax, BYTE PTR [rax+626]
+	movzx	eax, BYTE PTR [rax+632]
 	test	eax, eax
 	jle	SHORT $LN1@ProcessSle
 
@@ -759,7 +759,7 @@ $LN14:
 
 ; 128  : 		AuTextOut("No process found \n");
 
-	lea	rcx, OFFSET FLAT:$SG3798
+	lea	rcx, OFFSET FLAT:$SG3812
 	call	AuTextOut
 
 ; 129  : 		return -1;
@@ -881,7 +881,7 @@ $LN7@ProcessLoa:
 	imul	rax, rax, 1
 	mov	rcx, QWORD PTR allocated_argv$[rsp]
 	mov	rdx, QWORD PTR [rcx+rax]
-	lea	rcx, OFFSET FLAT:$SG3815
+	lea	rcx, OFFSET FLAT:$SG3829
 	call	SeTextOut
 $LN3@ProcessLoa:
 
@@ -913,7 +913,7 @@ $LN1@ProcessLoa:
 ; 164  : 		SeTextOut("Process launched failed %s\r\n", filename);
 
 	mov	rdx, QWORD PTR filename$[rsp]
-	lea	rcx, OFFSET FLAT:$SG3819
+	lea	rcx, OFFSET FLAT:$SG3833
 	call	SeTextOut
 
 ; 165  : 		AuProcessExit(proc, true);
@@ -924,7 +924,7 @@ $LN1@ProcessLoa:
 
 ; 166  : 		SeTextOut("Returning \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG3820
+	lea	rcx, OFFSET FLAT:$SG3834
 	call	SeTextOut
 
 ; 167  : 		return -1;

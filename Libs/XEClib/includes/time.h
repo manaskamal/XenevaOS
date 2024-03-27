@@ -72,6 +72,11 @@ XE_EXTERN{
 		int tm_isdst;	// daylight saving time (0-1)
 	};
 
+	typedef struct _time_ {
+		long tv_sec;
+		long tv_usec;
+	}timeval;
+
 	typedef unsigned clock_t;
 	typedef unsigned time_t;
 
@@ -82,6 +87,7 @@ XE_EXTERN{
 	XE_LIB struct tm *gmtime(time_t);
 	XE_LIB time_t mktime(struct tm *);
 	XE_LIB time_t time(time_t *t);
+	XE_LIB int gettimeofday(timeval *val);
 
 #ifdef __cplusplus
 }

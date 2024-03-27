@@ -195,7 +195,7 @@ size_t AuTTYSlaveWrite(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint3
 		len = 512;
 
 	if (CircBufFull(tty->masterbuf)) {
-		AuSleepThread(curr_th, 1000000000000);
+		//AuSleepThread(curr_th, 1000000000000);
 		AuForceScheduler();
 		return 0;
 	}
@@ -208,7 +208,7 @@ size_t AuTTYSlaveWrite(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint3
 	/* little bit slow down the slave process,
 	 * it's too fast 
 	 */
-	AuSleepThread(curr_th, 1000000000000);
+	//AuSleepThread(curr_th, 1000000000000);
 	AuForceScheduler();
 }
 

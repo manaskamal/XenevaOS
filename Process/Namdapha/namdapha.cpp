@@ -219,7 +219,8 @@ void NamdaphaHandleMessage(PostEvent *e) {
 	}
 		/* handle icon message from deodhai */
 	case DEODHAI_BROADCAST_ICON:{
-									_KePrint("Namdapha Broadcast Icon received \n");
+									_KePrint("Namdapha Broadcast Icon received %d \n", e->from_id);
+									_KePrint("icon name %s \r\n", e->charValue3);
 									NamdaphaButton* nbutton = NULL;
 									for (int i = 0; i < button_list->pointer; i++) {
 										NamdaphaButton* nb = (NamdaphaButton*)list_get_at(button_list, i);
@@ -228,6 +229,7 @@ void NamdaphaHandleMessage(PostEvent *e) {
 											break;
 										}
 									}
+									
 									if (nbutton) {
 										nbutton->winHandle = e->dword;
 										bool _already_icon_was_there_ = false;
@@ -245,11 +247,15 @@ void NamdaphaHandleMessage(PostEvent *e) {
 										}
 										if (!_already_icon_was_there_) {
 											ButtonInfo *info = NmCreateButtonInfo(e->charValue3);
+											_KePrint("Namdapha painted %s\r\n", e->charValue3);
+											_KePrint("ICON FD -> %d \r\n", info->iconFd);
 											NmButtonInfoRead(info);
 											nbutton->nmbuttoninfo = info;
 											info->usageCount += 1;
 										}
 										NamdaphaPaint(win);
+										
+										_KeProcessSleep(8);
 									}
 									memset(e, 0, sizeof(PostEvent));
 									break;

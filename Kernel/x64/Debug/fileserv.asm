@@ -6,12 +6,12 @@ INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
 CONST	SEGMENT
-$SG3874	DB	'/', 00H
+$SG3906	DB	'/', 00H
 	ORG $+6
-$SG3972	DB	'Clising fs -> %s ', 0dH, 0aH, 00H
-$SG3976	DB	'/', 00H
+$SG4004	DB	'Clising fs -> %s ', 0dH, 0aH, 00H
+$SG4008	DB	'/', 00H
 	ORG $+2
-$SG3977	DB	'Closing file %s ', 0dH, 0aH, 00H
+$SG4009	DB	'Closing file %s ', 0dH, 0aH, 00H
 CONST	ENDS
 PUBLIC	?OpenFile@@YAHPEADH@Z				; OpenFile
 PUBLIC	?FileSetOffset@@YAHH_K@Z			; FileSetOffset
@@ -925,7 +925,7 @@ $LN6@CloseFile:
 
 	mov	rax, QWORD PTR file$[rsp]
 	mov	rdx, rax
-	lea	rcx, OFFSET FLAT:$SG3972
+	lea	rcx, OFFSET FLAT:$SG4004
 	call	SeTextOut
 
 ; 288  : 		return -1;
@@ -962,7 +962,7 @@ $LN3@CloseFile:
 ; 295  : 		if (strcmp(file->filename, "/") == 0)
 
 	mov	rax, QWORD PTR file$[rsp]
-	lea	rdx, OFFSET FLAT:$SG3976
+	lea	rdx, OFFSET FLAT:$SG4008
 	mov	rcx, rax
 	call	strcmp
 	test	eax, eax
@@ -978,7 +978,7 @@ $LN1@CloseFile:
 
 	mov	rax, QWORD PTR file$[rsp]
 	mov	rdx, rax
-	lea	rcx, OFFSET FLAT:$SG3977
+	lea	rcx, OFFSET FLAT:$SG4009
 	call	SeTextOut
 
 ; 298  : 		kfree(file);
@@ -1847,7 +1847,7 @@ $LN3@FileSetOff:
 
 ; 104  : 		AuVFSNode* fsys = AuVFSFind("/");
 
-	lea	rcx, OFFSET FLAT:$SG3874
+	lea	rcx, OFFSET FLAT:$SG3906
 	call	AuVFSFind
 	mov	QWORD PTR fsys$1[rsp], rax
 

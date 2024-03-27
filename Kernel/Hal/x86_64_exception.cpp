@@ -178,12 +178,16 @@ void general_protection_fault(size_t v, void* p){
 
 extern "C" bool _signal_debug;
 extern "C" bool syscall_debug;
+extern "C" uint64_t x64_get_rbp();
+
 //! Most important for good performance is page fault! whenever any memory related errors occurs
 //! it get fired and new page swapping process should be allocated
 
 void page_fault(size_t vector, void* param){
 	x64_cli();
 	interrupt_stack_frame *frame = (interrupt_stack_frame*)param;
+	stack_frame *fr = (stack_frame*)param;
+
 	void* vaddr = (void*)x64_read_cr2();
 
 	int present = !(frame->error & 0x1);
@@ -251,6 +255,12 @@ skip:
 	SeTextOut("Virtual Address aligned -> %x \r\n", vaddr_aligned);
 	SeTextOut("RSP -> %x \r\n", frame->rsp);
 	SeTextOut("RIP -> %x , Actual addr -> %x \r\n", frame->rip, (real_addr + mask));
+	if (thr) {
+		x86_64_cpu_regs_t *regs = (x86_64_cpu_regs_t*)(thr->frame.kern_esp - sizeof(x86_64_cpu_regs_t));
+		SeTextOut("REGS RIP -> %x \r\n", regs->rip);
+		SeTextOut("RCX -> %d , RDX -> %d, R8 -> %d \r\n", regs->rcx, regs->rdx, regs->r8);
+		SeTextOut("R9 -> %d, RAX -> %d \r\n", regs->r9, regs->rax);
+	}
 	SeTextOut("CS -> %x, SS -> %x \r\n", frame->cs, frame->ss);
 	if (!_mapped) {
 		for (;;);

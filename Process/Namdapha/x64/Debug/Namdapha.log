@@ -1,4 +1,4 @@
-﻿Build started 23-03-2024 ৰাতিপু 1:42:34.
+﻿Build started 27-03-2024 আবেলি 11:43:08.
      1>Project "E:\Xeneva Project\Aurora\Process\Namdapha\Namdapha.vcxproj" on node 2 (Rebuild target(s)).
      1>ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /I"E:\Xeneva Project\Aurora\Libs\Chitralekha" /I"E:\os_dev\freetype2-master\freetype2-master\include" /Zi /nologo /W4 /WX- /sdl- /MP /Od /Oy /D ARCH_X64 /D YES_DYNAMIC /D DYNAMIC_IMPORTER /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt gomenu.cpp namdapha.cpp NamdaphaButton.cpp nmGoButton.cpp
@@ -23,19 +23,19 @@
      1>namdapha.cpp(135): warning C4100: 'button' : unreferenced formal parameter
      1>namdapha.cpp(144): warning C4018: '<' : signed/unsigned mismatch
      1>namdapha.cpp(202): warning C4018: '<' : signed/unsigned mismatch
-     1>namdapha.cpp(224): warning C4018: '<' : signed/unsigned mismatch
-     1>namdapha.cpp(234): warning C4018: '<' : signed/unsigned mismatch
-     1>namdapha.cpp(260): warning C4018: '<' : signed/unsigned mismatch
-     1>namdapha.cpp(265): warning C4244: '=' : conversion from 'uint32_t' to 'uint16_t', possible loss of data
-     1>namdapha.cpp(278): warning C4018: '<' : signed/unsigned mismatch
-     1>namdapha.cpp(296): warning C4018: '<' : signed/unsigned mismatch
-     1>namdapha.cpp(303): warning C4389: '==' : signed/unsigned mismatch
-     1>namdapha.cpp(312): warning C4018: '<' : signed/unsigned mismatch
+     1>namdapha.cpp(225): warning C4018: '<' : signed/unsigned mismatch
+     1>namdapha.cpp(236): warning C4018: '<' : signed/unsigned mismatch
+     1>namdapha.cpp(266): warning C4018: '<' : signed/unsigned mismatch
+     1>namdapha.cpp(271): warning C4244: '=' : conversion from 'uint32_t' to 'uint16_t', possible loss of data
+     1>namdapha.cpp(284): warning C4018: '<' : signed/unsigned mismatch
+     1>namdapha.cpp(302): warning C4018: '<' : signed/unsigned mismatch
+     1>namdapha.cpp(309): warning C4389: '==' : signed/unsigned mismatch
+     1>namdapha.cpp(318): warning C4018: '<' : signed/unsigned mismatch
      1>namdapha.cpp(216): warning C4189: 'code' : local variable is initialized but not referenced
-     1>namdapha.cpp(293): warning C4189: 'handle' : local variable is initialized but not referenced
-     1>namdapha.cpp(370): warning C4127: conditional expression is constant
-     1>namdapha.cpp(441): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
-     1>namdapha.cpp(459): warning C4127: conditional expression is constant
+     1>namdapha.cpp(299): warning C4189: 'handle' : local variable is initialized but not referenced
+     1>namdapha.cpp(376): warning C4127: conditional expression is constant
+     1>namdapha.cpp(447): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
+     1>namdapha.cpp(465): warning C4127: conditional expression is constant
          gomenu.cpp
      1>gomenu.cpp(48): warning C4127: conditional expression is constant
          Generating Code...
@@ -53,4 +53,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:01.15
+Time Elapsed 00:00:00.83

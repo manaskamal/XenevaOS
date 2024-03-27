@@ -44,6 +44,9 @@
       <Filter>widgets</Filter>
     </ClInclude>
     <ClInclude Include="bmp.h" />
+    <ClInclude Include="widgets\slider.h">
+      <Filter>widgets</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="chitralekha.cpp" />

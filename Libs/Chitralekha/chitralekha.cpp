@@ -141,10 +141,12 @@ void ChCanvasScreenUpdate(ChCanvas* canvas, uint32_t x, uint32_t y, uint32_t w, 
 	if (y < 0)
 		y = 0;
 
-
-	for (int i = 0; i < h; i++)
-		_fastcpy(fb + (y + i) * canvas->screenWidth + x, 
-		canvas->buffer + (y + i) * canvas->canvasWidth + x, w * 4);
+	for (int i = 0; i < h; i++){
+		if ((canvas->buffer + (y + i) * canvas->canvasWidth + x) >= (canvas->buffer + canvas->bufferSz))
+			_KePrint("Canvas buffer is corrupted -> %x \r\n", (canvas->buffer + (y + i) * canvas->canvasWidth + x));
+		_fastcpy(fb + (y + i) * canvas->screenWidth + x,
+			canvas->buffer + (y + i) * canvas->canvasWidth + x, w * 4);
+	}
 }
 
 /*

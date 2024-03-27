@@ -10,7 +10,7 @@ _BSS	SEGMENT
 _signal_debug DB 01H DUP (?)
 _BSS	ENDS
 CONST	SEGMENT
-$SG3542	DB	'signal ret stack -> %x ', 0dH, 0aH, 00H
+$SG3575	DB	'signal ret stack -> %x ', 0dH, 0aH, 00H
 CONST	ENDS
 PUBLIC	?AuAllocateSignal@@YAXPEAU_au_thread_@@H@Z	; AuAllocateSignal
 PUBLIC	?AuCheckSignal@@YA_NPEAU_au_thread_@@PEAUinterrupt_stack_frame@@@Z ; AuCheckSignal
@@ -40,8 +40,8 @@ $pdata$?AuGetSignal@@YAPEAU_signal_@@PEAU_au_thread_@@@Z DD imagerel $LN5
 $pdata$?AuPrepareSignal@@YAXPEAU_au_thread_@@PEAUinterrupt_stack_frame@@PEAU_signal_@@@Z DD imagerel $LN6
 	DD	imagerel $LN6+440
 	DD	imagerel $unwind$?AuPrepareSignal@@YAXPEAU_au_thread_@@PEAUinterrupt_stack_frame@@PEAU_signal_@@@Z
-$pdata$?AuSendSignal@@YAXGH@Z DD imagerel $LN7
-	DD	imagerel $LN7+117
+$pdata$?AuSendSignal@@YAXGH@Z DD imagerel $LN8
+	DD	imagerel $LN8+162
 	DD	imagerel $unwind$?AuSendSignal@@YAXGH@Z
 $pdata$?AuSignalRemoveAll@@YAXPEAU_au_thread_@@@Z DD imagerel $LN7
 	DD	imagerel $LN7+138
@@ -70,27 +70,27 @@ _TEXT	SEGMENT
 rcx$ = 48
 AuSignalDebug PROC
 
-; 181  : extern "C" void AuSignalDebug(uint64_t rcx) {
+; 186  : extern "C" void AuSignalDebug(uint64_t rcx) {
 
 $LN4:
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 40					; 00000028H
 
-; 182  : 	if (_signal_debug) {
+; 187  : 	if (_signal_debug) {
 
 	movzx	eax, BYTE PTR _signal_debug
 	test	eax, eax
 	je	SHORT $LN1@AuSignalDe
 
-; 183  : 		SeTextOut("signal ret stack -> %x \r\n", rcx);
+; 188  : 		SeTextOut("signal ret stack -> %x \r\n", rcx);
 
 	mov	rdx, QWORD PTR rcx$[rsp]
-	lea	rcx, OFFSET FLAT:$SG3542
+	lea	rcx, OFFSET FLAT:$SG3575
 	call	SeTextOut
 $LN1@AuSignalDe:
 
-; 184  : 	}
-; 185  : }
+; 189  : 	}
+; 190  : }
 
 	add	rsp, 40					; 00000028H
 	ret	0
@@ -103,81 +103,81 @@ sig$1 = 32
 thr$ = 64
 ?AuSignalRemoveAll@@YAXPEAU_au_thread_@@@Z PROC		; AuSignalRemoveAll
 
-; 166  : void AuSignalRemoveAll(AuThread* thr) {
+; 171  : void AuSignalRemoveAll(AuThread* thr) {
 
 $LN7:
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 56					; 00000038H
 
-; 167  : 	if (thr->pendingSigCount < 0)
+; 172  : 	if (thr->pendingSigCount < 0)
 
 	mov	rax, QWORD PTR thr$[rsp]
-	movzx	eax, BYTE PTR [rax+626]
+	movzx	eax, BYTE PTR [rax+632]
 	test	eax, eax
 	jge	SHORT $LN4@AuSignalRe
 
-; 168  : 		return;
+; 173  : 		return;
 
 	jmp	SHORT $LN5@AuSignalRe
 $LN4@AuSignalRe:
 $LN3@AuSignalRe:
 
-; 169  : 
-; 170  : 	while (thr->pendingSigCount) {
+; 174  : 
+; 175  : 	while (thr->pendingSigCount) {
 
 	mov	rax, QWORD PTR thr$[rsp]
-	movzx	eax, BYTE PTR [rax+626]
+	movzx	eax, BYTE PTR [rax+632]
 	test	eax, eax
 	je	SHORT $LN2@AuSignalRe
 
-; 171  : 		Signal * sig = AuGetSignal(thr);
+; 176  : 		Signal * sig = AuGetSignal(thr);
 
 	mov	rcx, QWORD PTR thr$[rsp]
 	call	?AuGetSignal@@YAPEAU_signal_@@PEAU_au_thread_@@@Z ; AuGetSignal
 	mov	QWORD PTR sig$1[rsp], rax
 
-; 172  : 		if (!sig)
+; 177  : 		if (!sig)
 
 	cmp	QWORD PTR sig$1[rsp], 0
 	jne	SHORT $LN1@AuSignalRe
 
-; 173  : 			break;  //there might be bug in pendingSigCount
+; 178  : 			break;  //there might be bug in pendingSigCount
 
 	jmp	SHORT $LN2@AuSignalRe
 $LN1@AuSignalRe:
 
-; 174  : 		kfree(sig->signalStack);
+; 179  : 		kfree(sig->signalStack);
 
 	mov	rax, QWORD PTR sig$1[rsp]
 	mov	rcx, QWORD PTR [rax+4]
 	call	kfree
 
-; 175  : 		kfree(sig->signalState);
+; 180  : 		kfree(sig->signalState);
 
 	mov	rax, QWORD PTR sig$1[rsp]
 	mov	rcx, QWORD PTR [rax+12]
 	call	kfree
 
-; 176  : 		kfree(sig);
+; 181  : 		kfree(sig);
 
 	mov	rcx, QWORD PTR sig$1[rsp]
 	call	kfree
 
-; 177  : 		thr->pendingSigCount--;
+; 182  : 		thr->pendingSigCount--;
 
 	mov	rax, QWORD PTR thr$[rsp]
-	movzx	eax, BYTE PTR [rax+626]
+	movzx	eax, BYTE PTR [rax+632]
 	dec	al
 	mov	rcx, QWORD PTR thr$[rsp]
-	mov	BYTE PTR [rcx+626], al
+	mov	BYTE PTR [rcx+632], al
 
-; 178  : 	}
+; 183  : 	}
 
 	jmp	SHORT $LN3@AuSignalRe
 $LN2@AuSignalRe:
 $LN5@AuSignalRe:
 
-; 179  : }
+; 184  : }
 
 	add	rsp, 56					; 00000038H
 	ret	0
@@ -194,7 +194,7 @@ signo$ = 72
 
 ; 141  : void AuSendSignal(uint16_t tid, int signo) {
 
-$LN7:
+$LN8:
 	mov	DWORD PTR [rsp+16], edx
 	mov	WORD PTR [rsp+8], cx
 	sub	rsp, 56					; 00000038H
@@ -212,7 +212,7 @@ $LN7:
 ; 144  : 	if (!thr){
 
 	cmp	QWORD PTR thr$[rsp], 0
-	jne	SHORT $LN4@AuSendSign
+	jne	SHORT $LN5@AuSendSign
 
 ; 145  : 		thr = AuThreadFindByIDBlockList(tid);
 
@@ -223,25 +223,25 @@ $LN7:
 ; 146  : 		if (thr)
 
 	cmp	QWORD PTR thr$[rsp], 0
-	je	SHORT $LN3@AuSendSign
+	je	SHORT $LN4@AuSendSign
 
 ; 147  : 			blocked = true;
 
 	mov	BYTE PTR blocked$[rsp], 1
-$LN3@AuSendSign:
 $LN4@AuSendSign:
+$LN5@AuSendSign:
 
 ; 148  : 	}
 ; 149  : 		
 ; 150  : 	if (!thr)
 
 	cmp	QWORD PTR thr$[rsp], 0
-	jne	SHORT $LN2@AuSendSign
+	jne	SHORT $LN3@AuSendSign
 
 ; 151  : 		return;
 
-	jmp	SHORT $LN5@AuSendSign
-$LN2@AuSendSign:
+	jmp	SHORT $LN6@AuSendSign
+$LN3@AuSendSign:
 
 ; 152  : 
 ; 153  : 	AuAllocateSignal(thr, signo);
@@ -256,17 +256,37 @@ $LN2@AuSendSign:
 
 	movzx	eax, BYTE PTR blocked$[rsp]
 	test	eax, eax
-	je	SHORT $LN1@AuSendSign
+	je	SHORT $LN2@AuSendSign
 
 ; 157  : 		AuUnblockThread(thr);
 
 	mov	rcx, QWORD PTR thr$[rsp]
 	call	AuUnblockThread
-$LN1@AuSendSign:
-$LN5@AuSendSign:
+$LN2@AuSendSign:
 
 ; 158  : 	}
-; 159  : }
+; 159  : 
+; 160  : 	if (thr->state == THREAD_STATE_SLEEP) {
+
+	mov	rax, QWORD PTR thr$[rsp]
+	movzx	eax, BYTE PTR [rax+300]
+	cmp	eax, 4
+	jne	SHORT $LN1@AuSendSign
+
+; 161  : 		thr->quanta = 0;
+
+	mov	rax, QWORD PTR thr$[rsp]
+	mov	QWORD PTR [rax+303], 0
+
+; 162  : 		thr->state = THREAD_STATE_READY;
+
+	mov	rax, QWORD PTR thr$[rsp]
+	mov	BYTE PTR [rax+300], 1
+$LN1@AuSendSign:
+$LN6@AuSendSign:
+
+; 163  : 	}
+; 164  : }
 
 	add	rsp, 56					; 00000038H
 	ret	0
@@ -399,7 +419,7 @@ $LN1@AuPrepareS:
 	movsxd	rax, DWORD PTR [rax]
 	mov	rcx, QWORD PTR thr$[rsp]
 	mov	rdx, QWORD PTR thr$[rsp]
-	mov	rax, QWORD PTR [rdx+rax*8+306]
+	mov	rax, QWORD PTR [rdx+rax*8+312]
 	mov	QWORD PTR [rcx+32], rax
 
 ; 125  : 	thr->frame.rsp = (uint64_t)frame->rsp;
@@ -447,7 +467,7 @@ $LN1@AuPrepareS:
 
 	mov	rax, QWORD PTR thr$[rsp]
 	mov	rcx, QWORD PTR signal$[rsp]
-	mov	QWORD PTR [rax+627], rcx
+	mov	QWORD PTR [rax+633], rcx
 
 ; 134  : }
 
@@ -472,7 +492,7 @@ $LN5:
 ; 86   : 	if (!curr_thr->signalQueue)
 
 	mov	rax, QWORD PTR curr_thr$[rsp]
-	cmp	QWORD PTR [rax+618], 0
+	cmp	QWORD PTR [rax+624], 0
 	jne	SHORT $LN2@AuGetSigna
 
 ; 87   : 		return NULL;
@@ -486,16 +506,16 @@ $LN2@AuGetSigna:
 ; 90   : 	temp = curr_thr->signalQueue;
 
 	mov	rax, QWORD PTR curr_thr$[rsp]
-	mov	rax, QWORD PTR [rax+618]
+	mov	rax, QWORD PTR [rax+624]
 	mov	QWORD PTR temp$[rsp], rax
 
 ; 91   : 	curr_thr->signalQueue = curr_thr->signalQueue->link;
 
 	mov	rax, QWORD PTR curr_thr$[rsp]
-	mov	rax, QWORD PTR [rax+618]
+	mov	rax, QWORD PTR [rax+624]
 	mov	rcx, QWORD PTR curr_thr$[rsp]
 	mov	rax, QWORD PTR [rax+8]
-	mov	QWORD PTR [rcx+618], rax
+	mov	QWORD PTR [rcx+624], rax
 
 ; 92   : 	temp->link = NULL;
 
@@ -516,17 +536,17 @@ $LN2@AuGetSigna:
 ; 95   : 	curr_thr->pendingSigCount--;
 
 	mov	rax, QWORD PTR curr_thr$[rsp]
-	movzx	eax, BYTE PTR [rax+626]
+	movzx	eax, BYTE PTR [rax+632]
 	dec	al
 	mov	rcx, QWORD PTR curr_thr$[rsp]
-	mov	BYTE PTR [rcx+626], al
+	mov	BYTE PTR [rcx+632], al
 
 ; 96   : 
 ; 97   : 	curr_thr->returnableSignal = sig;
 
 	mov	rax, QWORD PTR curr_thr$[rsp]
 	mov	rcx, QWORD PTR sig$[rsp]
-	mov	QWORD PTR [rax+627], rcx
+	mov	QWORD PTR [rax+633], rcx
 
 ; 98   : 	if (!sig)
 
@@ -565,7 +585,7 @@ frame$ = 16
 ; 73   : 	if (!curr_thr->signalQueue)
 
 	mov	rax, QWORD PTR curr_thr$[rsp]
-	cmp	QWORD PTR [rax+618], 0
+	cmp	QWORD PTR [rax+624], 0
 	jne	SHORT $LN2@AuCheckSig
 
 ; 74   : 		return false;
@@ -577,7 +597,7 @@ $LN2@AuCheckSig:
 ; 75   : 	if (curr_thr->pendingSigCount > 0 && frame->cs == SEGVAL(GDT_ENTRY_USER_CODE,3))
 
 	mov	rax, QWORD PTR curr_thr$[rsp]
-	movzx	eax, BYTE PTR [rax+626]
+	movzx	eax, BYTE PTR [rax+632]
 	test	eax, eax
 	jle	SHORT $LN1@AuCheckSig
 	mov	rax, QWORD PTR frame$[rsp]
@@ -619,7 +639,7 @@ $LN4:
 ; 50   : 	if (dest_thread->signalQueue)
 
 	mov	rax, QWORD PTR dest_thread$[rsp]
-	cmp	QWORD PTR [rax+618], 0
+	cmp	QWORD PTR [rax+624], 0
 	je	SHORT $LN1@AuAllocate
 
 ; 51   : 		return;
@@ -683,22 +703,22 @@ $LN1@AuAllocate:
 
 	mov	rax, QWORD PTR queue$[rsp]
 	mov	rcx, QWORD PTR dest_thread$[rsp]
-	mov	rcx, QWORD PTR [rcx+618]
+	mov	rcx, QWORD PTR [rcx+624]
 	mov	QWORD PTR [rax+8], rcx
 
 ; 61   : 	dest_thread->signalQueue = queue;
 
 	mov	rax, QWORD PTR dest_thread$[rsp]
 	mov	rcx, QWORD PTR queue$[rsp]
-	mov	QWORD PTR [rax+618], rcx
+	mov	QWORD PTR [rax+624], rcx
 
 ; 62   : 	dest_thread->pendingSigCount += 1;
 
 	mov	rax, QWORD PTR dest_thread$[rsp]
-	movzx	eax, BYTE PTR [rax+626]
+	movzx	eax, BYTE PTR [rax+632]
 	inc	eax
 	mov	rcx, QWORD PTR dest_thread$[rsp]
-	mov	BYTE PTR [rcx+626], al
+	mov	BYTE PTR [rcx+632], al
 
 ; 63   : 	signal->threadState = dest_thread->state;
 

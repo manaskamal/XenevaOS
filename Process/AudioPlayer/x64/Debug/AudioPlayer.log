@@ -1,4 +1,4 @@
-﻿Build started 23-03-2024 আবেলি 3:18:50.
+﻿Build started 27-03-2024 আবেলি 11:23:06.
      1>Project "E:\Xeneva Project\Aurora\Process\AudioPlayer\AudioPlayer.vcxproj" on node 2 (Rebuild target(s)).
      1>ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /I"E:\Xeneva Project\Aurora\Libs\Chitralekha" /I"E:\os_dev\freetype2-master\freetype2-master\include" /Zi /nologo /W4 /WX- /sdl- /MP /Od /Oy /D ARCH_X64 /D YES_DYNAMIC /D DYNAMIC_IMPORTER /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt main.cpp
@@ -38,13 +38,22 @@
      1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(523): warning C4127: conditional expression is constant
      1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(551): warning C4127: conditional expression is constant
      1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(585): warning C4127: conditional expression is constant
-     1>main.cpp(81): warning C4244: 'argument' : conversion from 'int' to 'char', possible loss of data
-     1>main.cpp(73): warning C4189: 'code' : local variable is initialized but not referenced
-     1>main.cpp(88): warning C4100: 'win' : unreferenced formal parameter
-     1>main.cpp(88): warning C4100: 'wid' : unreferenced formal parameter
-     1>main.cpp(107): warning C4267: 'argument' : conversion from 'size_t' to 'uint32_t', possible loss of data
-     1>main.cpp(182): warning C4127: conditional expression is constant
-     1>main.cpp(149): warning C4189: 'item' : local variable is initialized but not referenced
+     1>main.cpp(98): warning C4127: conditional expression is constant
+     1>main.cpp(151): warning C4244: 'argument' : conversion from 'int' to 'char', possible loss of data
+     1>main.cpp(143): warning C4189: 'code' : local variable is initialized but not referenced
+     1>main.cpp(158): warning C4100: 'win' : unreferenced formal parameter
+     1>main.cpp(158): warning C4100: 'wid' : unreferenced formal parameter
+     1>main.cpp(177): warning C4267: 'argument' : conversion from 'size_t' to 'uint32_t', possible loss of data
+     1>main.cpp(217): warning C4100: 'win' : unreferenced formal parameter
+     1>main.cpp(217): warning C4100: 'wid' : unreferenced formal parameter
+     1>main.cpp(236): warning C4100: 'win' : unreferenced formal parameter
+     1>main.cpp(236): warning C4100: 'wid' : unreferenced formal parameter
+     1>main.cpp(250): warning C4127: conditional expression is constant
+     1>main.cpp(265): warning C4100: 'mainWin' : unreferenced formal parameter
+     1>main.cpp(265): warning C4100: 'wid' : unreferenced formal parameter
+     1>main.cpp(369): warning C4127: conditional expression is constant
+     1>main.cpp(361): warning C4189: 'threadIdx' : local variable is initialized but not referenced
+     1>main.cpp(326): warning C4189: 'item' : local variable is initialized but not referenced
      1>e:\xeneva project\aurora\libs\chitralekha\nanojpg.h(333): warning C4706: assignment within conditional expression
      1>e:\xeneva project\aurora\libs\chitralekha\nanojpg.h(335): warning C4706: assignment within conditional expression
      1>e:\xeneva project\aurora\libs\chitralekha\nanojpg.h(353): warning C4706: assignment within conditional expression
@@ -59,4 +68,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:01.84
+Time Elapsed 00:00:00.69

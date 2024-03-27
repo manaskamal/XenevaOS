@@ -56,7 +56,7 @@ void XEShellSigInterrupt(int signo) {
 	/* here is the bug, we need a system call to 
 	 * handle it properly
 	 */
-	_KeProcessSleep(100000);
+	_KeProcessSleep(10);
 }
 
 /*Write the current directory string
@@ -296,6 +296,6 @@ int main(int argc, char* arv[]){
 		XEShellWriteCurrentDir();
 		XEShellReadLine();
 		XEShellProcessLine();
-		_KeProcessSleep(100000000000);
+		_KeProcessSleep(8);
 	}
 }

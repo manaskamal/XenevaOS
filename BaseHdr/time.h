@@ -45,6 +45,11 @@ typedef struct _time_ {
 }AuTime;
 #pragma pack(pop)
 
+typedef struct _timeval_{
+	long tv_sec;
+	long tv_usec;
+}timeval;
+
 /*
 * AuGetCurrentTime -- get current time
 * @param time -- pointer to time memory area

@@ -59,6 +59,9 @@ void AddDirtyClip(int x, int y, int w, int h) {
 	dirtyRect[_dirty_count].w = w;
 	dirtyRect[_dirty_count].h = h;
 	_dirty_count++;
+	//_KePrint("Dirty clip updated %d %d \r\n", dirtyRect[_dirty_count].x,
+	//	dirtyRect[_dirty_count].y);
+	//_KePrint("DC -> %d \r\n", _dirty_count);
 }
 
 /*

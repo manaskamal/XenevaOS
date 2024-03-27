@@ -343,7 +343,9 @@ void AuNextThread() {
 			if (thread->quanta == 0) {
 				thread->state = THREAD_STATE_READY;
 			}
-			thread->quanta--;
+			else{
+				thread->quanta--;
+			}
 		}
 		thread = thread->next;
 		if (thread == NULL) {

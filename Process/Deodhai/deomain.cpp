@@ -34,6 +34,7 @@
 #include <stdlib.h>
 #include <sys\iocodes.h>
 #include <sys\_keipcpostbox.h>
+#include <time.h>
 #include <string.h>
 #include <chitralekha.h>
 #include <stdlib.h>
@@ -85,7 +86,8 @@ Window* alwaysOnTopLast;
 ChCanvas* canvas;
 uint32_t* surfaceBuffer;
 bool _shadow_update;
-
+uint64_t startTime;
+uint64_t startSubTime;
 
 /*
  * DeodhaiInitialiseData -- initialise all data
@@ -184,6 +186,24 @@ void DeodhaiBackSurfaceUpdate(ChCanvas* canv, int x, int y, int w, int h) {
 	uint32_t *lfb = (uint32_t*)canv->buffer;
 	uint32_t* wallp = (uint32_t*)surfaceBuffer;
 
+
+	if (w > canv->canvasWidth)
+		w = canv->canvasWidth;
+
+	if (h > canv->canvasHeight)
+		h = canv->canvasHeight;
+
+	if (x > canv->canvasWidth)
+		return;
+
+	if (y > canv->canvasHeight)
+		return;
+
+	if (x < 0)
+		x = 0;
+	if (y < 0)
+		y = 0;
+
 	for (int j = 0; j < h; j++) {
 		_fastcpy(canv->buffer + (y + j) * canv->canvasWidth + x, wallp + (y + j) * canv->canvasWidth + x,
 			w * 4);
@@ -246,7 +266,7 @@ void DeodhaiSendFocusMessage(PostEvent *e) {
 			e->dword2 = win->handle;
 		}
 		_KeFileIoControl(postbox_fd, POSTBOX_PUT_EVENT, e);
-		_KeProcessSleep(1000000000);
+		_KeProcessSleep(8);
 	}
 }
 
@@ -295,7 +315,7 @@ void DeodhaiWindowSetFocused(Window* win, bool notify) {
 		e.dword = focusedWin->ownerId;
 		DeodhaiBroadcastMessage(&e, NULL);
 
-		_KeProcessSleep(10000);
+		_KeProcessSleep(4);
 
 		e.type = DEODHAI_REPLY_FOCUS_CHANGED;
 		DeodhaiSendFocusMessage(&e);
@@ -344,6 +364,18 @@ void DeodhaiWindowMove(Window* win, int x, int y) {
 	int ww = info->width +SHADOW_SIZE * 2;
 	int wh = info->height + SHADOW_SIZE * 2;
 
+	if (wx > canvas->screenWidth)
+		goto _skip;
+
+	if (wy > canvas->screenHeight)
+		goto _skip;
+
+	if (wx < 0)
+		wx = 0;
+
+	if (wy < 0)
+		wy = 0;
+
 	if ((wx + ww) >= canvas->screenWidth)
 		ww = canvas->screenWidth - info->x + SHADOW_SIZE;
 
@@ -351,6 +383,7 @@ void DeodhaiWindowMove(Window* win, int x, int y) {
 		wh = canvas->screenHeight - info->y + SHADOW_SIZE;
 
 	BackDirtyAdd(wx, wy, ww, wh );
+_skip:
 	info->x = x;
 	info->y = y;
 	_window_update_all_ = true;
@@ -463,15 +496,19 @@ void DeodhaiWindowCheckDraggable(int x, int y, int button) {
 }
 
 void CursorStoreBack(ChCanvas* canv,Cursor* cur,unsigned x, unsigned y) {
-	for (int w = 0; w < 24; w++)
-	for (int h = 0; h < 24; h++)
-		cur->cursorBack[h * 24 + w] = ChGetPixel(canv, x + w, y + h);
+	for (int w = 0; w < 24; w++){
+		for (int h = 0; h < 24; h++){
+			cur->cursorBack[h * 24 + w] = ChGetPixel(canv, x + w,y + h);
+		}
+	}
 }
 
 void CursorDrawBack(ChCanvas* canv,Cursor* cur, unsigned x, unsigned y) {
-	for (int w = 0; w < 24; w++)
-	for (int h = 0; h < 24; h++)
-		ChDrawPixel(canv, x + w, y + h, cur->cursorBack[h * 24 + w]);
+	for (int w = 0; w < 24; w++){
+		for (int h = 0; h < 24; h++){
+			ChDrawPixel(canv, x + w, y + h, cur->cursorBack[h * 24 + w]);
+		}
+	}
 }
 
 /* ComposeFrame -- composes a single frame 
@@ -479,16 +516,17 @@ void CursorDrawBack(ChCanvas* canv,Cursor* cur, unsigned x, unsigned y) {
  */
 void ComposeFrame(ChCanvas *canvas) {
 
-	if (_cursor_update_  || _cursor_drawback_){
+	//if (_cursor_update_  || _cursor_drawback_){
 		CursorDrawBack(canvas, currentCursor, currentCursor->oldXPos, currentCursor->oldYPos);
 		AddDirtyClip(currentCursor->oldXPos, currentCursor->oldYPos, 24, 24);
-		if (_cursor_drawback_)
+	/*	if (_cursor_drawback_)
 			_cursor_update_ = true;
 		_cursor_drawback_ = false;
 
-	}
-	
+	}*/
+
 	int _back_d_count_ = BackDirtyGetDirtyCount();
+
 	/* here we redraw all dirty surface area*/
 	if (_back_d_count_ > 0) {
 		int x, y, w, h = 0;
@@ -499,6 +537,7 @@ void ComposeFrame(ChCanvas *canvas) {
 		}
 		BackDirtyCountReset();
 	}
+
 
 	for (Window* win = rootWin; win != NULL; win = win->next) {
 		WinSharedInfo* info = (WinSharedInfo*)win->sharedInfo;
@@ -537,7 +576,6 @@ void ComposeFrame(ChCanvas *canvas) {
 				r1.h = r_h;
 				bool overlap = false;
 				Rect clipRect[512];
-				Rect drawble[512];
 				int clipCount = 0;
 				int drawableC = 0;
 				Window* clipWin = NULL;
@@ -616,11 +654,11 @@ void ComposeFrame(ChCanvas *canvas) {
 					AddDirtyClip(info->x + r_x, info->y + r_y, r_w, r_h);
 				}
 
-				for (int k = 0; k < clipCount; k++) {
-					int k_x = clipRect[k].x;  
-					int k_y = clipRect[k].y;
-					int k_w = clipRect[k].w;
-					int k_h = clipRect[k].h;
+				for (int l = 0; l < clipCount; l++) {
+					int k_x = clipRect[l].x;  
+					int k_y = clipRect[l].y;
+					int k_w = clipRect[l].w;
+					int k_h = clipRect[l].h;
 					
 					if (k_x < 0)
 						k_x = 0;
@@ -708,6 +746,7 @@ void ComposeFrame(ChCanvas *canvas) {
 			if (((info->y - SHADOW_SIZE) + shad_h) >= canvas->screenHeight)
 				shad_h = canvas->screenHeight - (info->y - SHADOW_SIZE);
 
+
 			Rect r1;
 			Rect r2;
 			r1.x = winx - SHADOW_SIZE;
@@ -716,6 +755,7 @@ void ComposeFrame(ChCanvas *canvas) {
 			r1.h = height + SHADOW_SIZE*2;
 
 			Rect clip[512];
+			memset(clip, 0, sizeof(Rect)* 512);
 			int clipCount = 0;
 			Window* clipWin = NULL;
 			WinSharedInfo* clipInfo = NULL;
@@ -750,20 +790,20 @@ void ComposeFrame(ChCanvas *canvas) {
 				}
 			}
 
-
+			
 			if (focusedWin == win) {
 				if (_shadow_update) {
 					for (int j = 0; j < shad_h; j++) {
-						for (int i = 0; i < shad_w; i++) {
-							*(uint32_t*)(canvas->buffer + ((winy - SHADOW_SIZE) + j) * canvas->canvasWidth + ((winx - SHADOW_SIZE) + i)) =
-								ChColorAlphaBlend2(*(uint32_t*)(canvas->buffer + ((winy - SHADOW_SIZE) + j)* canvas->canvasWidth + ((winx - SHADOW_SIZE) + i)),
-								*(uint32_t*)(win->shadowBuffers + j * (info->width + SHADOW_SIZE*2) + i));
+						for (int q = 0; q < shad_w; q++) {	
+							*(uint32_t*)(canvas->buffer + ((winy - SHADOW_SIZE) + j) * canvas->canvasWidth + ((winx - SHADOW_SIZE) + q)) =
+								ChColorAlphaBlend2(*(uint32_t*)(canvas->buffer + ((winy - SHADOW_SIZE) + j)* canvas->canvasWidth + ((winx - SHADOW_SIZE) + q)),
+								*(uint32_t*)(win->shadowBuffers + j * (info->width + SHADOW_SIZE*2) + q));
 						}
 					}
 					_shadow_update = false;
 				}
 			}
-		
+			
 			for (int i = 0; i < height; i++) {
 				_fastcpy(canvas->buffer + (winy + i) * canvas->canvasWidth + winx,
 					win->backBuffer + (0 + i) * info->width + 0,width * 4);
@@ -806,6 +846,7 @@ void ComposeFrame(ChCanvas *canvas) {
 				int shad_w = popup_w + SHADOW_SIZE * 2;
 				int shad_h = popup_h + SHADOW_SIZE * 2;
 
+
 				if (pw->shadowUpdate) {
 					for (int j = 0; j < shad_h; j++) {
 						for (int i = 0; i < shad_w; i++) {
@@ -816,6 +857,7 @@ void ComposeFrame(ChCanvas *canvas) {
 					}
 					pw->shadowUpdate = false;
 				}
+
 
 				if (pw->shwin->alpha) {
 					for (int j = 0; j < popup_h; j++) {
@@ -846,7 +888,6 @@ void ComposeFrame(ChCanvas *canvas) {
 				pw->shwin->dirty = 0;
 				pw->shwin->hide = false;
 				pw->shadowUpdate = true;
-				_cursor_update_ = true;
 				pw->hidden = true;
 				info->updateEntireWindow = 1;
 			}
@@ -938,11 +979,11 @@ void ComposeFrame(ChCanvas *canvas) {
 						AddDirtyClip(info->x + r_x, info->y + r_y, r_w, r_h);
 					}
 
-					for (int k = 0; k < clipCount; k++) {
-						int k_x = clipRect[k].x;
-						int k_y = clipRect[k].y;
-						int k_w = clipRect[k].w;
-						int k_h = clipRect[k].h;
+					for (int l = 0; l < clipCount; l++) {
+						int k_x = clipRect[l].x;
+						int k_y = clipRect[l].y;
+						int k_w = clipRect[l].w;
+						int k_h = clipRect[l].h;
 
 						if (k_x < 0)
 							k_x = 0;
@@ -1048,11 +1089,11 @@ void ComposeFrame(ChCanvas *canvas) {
 				}
 
 
-				for (int k = 0; k < clipCount; k++) {
-					int k_x = clip[k].x;
-					int k_y = clip[k].y;
-					int k_w = clip[k].w;
-					int k_h = clip[k].h;
+				for (int m = 0; m < clipCount; m++) {
+					int k_x = clip[m].x;
+					int k_y = clip[m].y;
+					int k_w = clip[m].w;
+					int k_h = clip[m].h;
 
 					if (k_x < 0)
 						k_x = 0;
@@ -1074,13 +1115,12 @@ void ComposeFrame(ChCanvas *canvas) {
 		}
 	}
 
-
-	if (_cursor_update_){
+	//if (_cursor_update_){
 		CursorStoreBack(canvas, currentCursor, currentCursor->xpos, currentCursor->ypos);
 
 		CursorDraw(canvas, currentCursor, currentCursor->xpos, currentCursor->ypos);
 		AddDirtyClip(currentCursor->xpos, currentCursor->ypos, 24, 24);
-	}
+	//}
 
 	/* finally present all updates to framebuffer */
 	DirtyScreenUpdate(canvas);
@@ -1091,11 +1131,11 @@ void ComposeFrame(ChCanvas *canvas) {
 	if (_always_on_top_update)
 		_always_on_top_update = false;
 
-	if (_cursor_update_) {
+	//if (_cursor_update_) {
 		currentCursor->oldXPos = currentCursor->xpos;
 		currentCursor->oldYPos = currentCursor->ypos;
-		_cursor_update_ = false;
-	}
+	//	_cursor_update_ = false;
+	//}
 }
 
 /*
@@ -1318,7 +1358,26 @@ void DrawWallpaper(ChCanvas *canv, char* filename) {
 ChCanvas* DeodhaiGetMainCanvas() {
 	return canvas;
 }
+uint64_t DeodhaiCurrentTime() {
+	timeval tm;
+	gettimeofday(&tm);
 
+	time_t sec_diff = tm.tv_sec - startTime;
+	long usec_diff = tm.tv_usec - startSubTime;
+
+	if (tm.tv_usec < startSubTime){
+		sec_diff -= 1;
+		usec_diff = (1000000 + tm.tv_usec) - startSubTime;
+	}
+
+	return (uint64_t)(sec_diff * 1000 + usec_diff / 1000);
+}
+
+uint64_t DeodhaiTimeSince(uint64_t startTime) {
+	uint64_t now = DeodhaiCurrentTime();
+	uint64_t diff = now - startTime;
+	return diff;
+}
 /*
  * main -- deodhai compositor
  */
@@ -1328,6 +1387,13 @@ int main(int argc, char* arv[]) {
 	_KePrint("Argc == 10 %x\r\n", argc);
 	_KePrint("Deodhai v1.0 running %d\r\n", pid);
 	ChPrintLibName();
+
+	startTime = 0;
+	startSubTime = 0;
+	timeval tm;
+	gettimeofday(&tm);
+	startTime = tm.tv_sec;
+	startSubTime = tm.tv_usec;
 
 	/* first of all get screen width and screen height */
 	XEFileIOControl graphctl;
@@ -1389,7 +1455,7 @@ int main(int argc, char* arv[]) {
 	memset(&kybrd_input, 0, sizeof(AuInputMessage));
 	postbox_fd = _KeOpenFile("/dev/postbox", FILE_OPEN_READ_ONLY);
 
-	int proc_id = _KeCreateProcess(0, "terminal");
+	int proc_id = _KeCreateProcess(0, "term");
 	_KeProcessLoadExec(proc_id, "/term.exe", 0, NULL);
 
 	_KeFileIoControl(postbox_fd, POSTBOX_CREATE_ROOT, NULL);
@@ -1398,14 +1464,21 @@ int main(int argc, char* arv[]) {
 	uint64_t frame_tick = 0;
 	uint64_t diff_tick = 0;
 	uint64_t last_click_time = 0;
+	uint64_t last_redraw = 0;
 	while (1) {
+
+		unsigned long frameTime = DeodhaiTimeSince(last_redraw);
+		if (frameTime > 15) {
+			ComposeFrame(canv);
+			last_redraw = DeodhaiCurrentTime();
+			frameTime = 0;
+		}
 		
 		_KeFileIoControl(postbox_fd, POSTBOX_GET_EVENT_ROOT, &event);
-		frame_tick = _KeGetSystemTimerTick();
 
 		_KeReadFile(mouse_fd, &mice_input, sizeof(AuInputMessage));
 		_KeReadFile(kybrd_fd, &kybrd_input, sizeof(AuInputMessage));
-		ComposeFrame(canv);
+		
 		
 		if (mice_input.type == AU_INPUT_MOUSE) {
 			currentCursor->xpos = mice_input.xpos;
@@ -1530,12 +1603,9 @@ int main(int argc, char* arv[]) {
 					break;
 				}
 			}
-			PostEvent e;
-			memset(&e, 0, sizeof(PostEvent));
-			memcpy(&e, &event, sizeof(PostEvent));
-			e.type = DEODHAI_BROADCAST_ICON;
-			DeodhaiBroadcastMessage(&e, skippable);
-			//_KeProcessSleep(10);
+			
+			DeodhaiBroadcastMessage(&event, skippable);
+			_KeProcessSleep(10);
 			memset(&event, 0, sizeof(PostEvent));
 		}
 
@@ -1694,14 +1764,7 @@ int main(int argc, char* arv[]) {
 			}
 			memset(&event, 0, sizeof(PostEvent));
 		}
-		
-		diff_tick = _KeGetSystemTimerTick();
-		uint64_t delta = diff_tick - frame_tick;
-		/* i think, sleeping time must be based on 10ms,
-		 * so 16ms would be 10ms + 6 */
-		if (delta < 1000 / 60) {
-			_KeProcessSleep(((1000/ 60 - delta))* 1000);
-		}
-			
+
+		_KeProcessSleep(16);
 	}
 }

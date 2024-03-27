@@ -34,6 +34,9 @@
 #include <sys\mman.h>
 #include "deodhai.h"
 
+int cur_w;
+int cur_h;
+unsigned char* imageData;
 /*
  * CursorOpen -- open a cursor from file
  * @param path -- path of the cursor
@@ -78,6 +81,9 @@ void CursorRead(Cursor* cur) {
 	cur->width = width;
 	cur->height = height;
 	cur->bpp = bpp;
+	cur_w = cur->width;
+	cur_h = cur->height;
+	imageData = cur->imageData;
 }
 
 /*
@@ -88,13 +94,13 @@ void CursorRead(Cursor* cur) {
  * @param y -- Y position
  */
 void CursorDraw(ChCanvas* canv, Cursor* cur, unsigned int x, unsigned int y) {
-	uint32_t width = cur->width;
-	uint32_t height = cur->height;
+	uint32_t width = cur_w;
+	uint32_t height = cur_h;
 	uint32_t j = 0;
 
-	uint8_t* image = cur->imageData;
+	uint8_t* image = imageData;
 	for (int i = 0; i < height; i++) {
-		char* image_row = (char*)image + (height - i - 1) * (width * 4);
+		unsigned char* image_row = (unsigned char*)(image + (height - i - 1) * (width * 4));
 		uint32_t h = height - 1 - i;
 		j = 0;
 		for (int k = 0; k < width; k++) {

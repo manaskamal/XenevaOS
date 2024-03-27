@@ -533,7 +533,7 @@ void TerminalThread() {
 			_update_terminal_ = false;
 		}
 
-		_KeProcessSleep(100000000); //
+		_KeProcessSleep(80); //
 	}
 }
 

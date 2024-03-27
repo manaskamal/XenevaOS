@@ -16,17 +16,17 @@ _BSS	SEGMENT
 ?process_mutex@@3PEAU_mutex_@@EA DQ 01H DUP (?)		; process_mutex
 _BSS	ENDS
 CONST	SEGMENT
-$SG4216	DB	'_root', 00H
+$SG4248	DB	'_root', 00H
 	ORG $+2
-$SG4243	DB	'-about', 00H
+$SG4275	DB	'-about', 00H
 	ORG $+1
-$SG4248	DB	'/init.exe', 00H
+$SG4280	DB	'/init.exe', 00H
 	ORG $+6
-$SG4304	DB	'[aurora]: cannot exit root process ', 0dH, 0aH, 00H
+$SG4336	DB	'[aurora]: cannot exit root process ', 0dH, 0aH, 00H
 	ORG $+2
-$SG4317	DB	'Closing file -> %s , address -> %x ', 0dH, 0aH, 00H
+$SG4349	DB	'Closing file -> %s , address -> %x ', 0dH, 0aH, 00H
 	ORG $+2
-$SG4331	DB	'closing process -> %s ', 0dH, 0aH, 00H
+$SG4363	DB	'closing process -> %s ', 0dH, 0aH, 00H
 CONST	ENDS
 _DATA	SEGMENT
 pid	DD	01H
@@ -492,7 +492,7 @@ $LN6:
 
 	mov	rax, QWORD PTR proc$[rsp]
 	add	rax, 4
-	lea	rdx, OFFSET FLAT:$SG4216
+	lea	rdx, OFFSET FLAT:$SG4248
 	mov	rcx, rax
 	call	strcpy
 
@@ -803,16 +803,16 @@ $LN3:
 ; 566  : 	thr->priviledge |= THREAD_LEVEL_USER | THREAD_LEVEL_SUBTHREAD | ~THREAD_LEVEL_MAIN_THREAD;
 
 	mov	rax, QWORD PTR thr$[rsp]
-	movzx	eax, BYTE PTR [rax+305]
+	movzx	eax, BYTE PTR [rax+311]
 	or	eax, -9
 	mov	rcx, QWORD PTR thr$[rsp]
-	mov	BYTE PTR [rcx+305], al
+	mov	BYTE PTR [rcx+311], al
 
 ; 567  : 	thr->procSlot = proc;
 
 	mov	rax, QWORD PTR thr$[rsp]
 	mov	rcx, QWORD PTR proc$[rsp]
-	mov	QWORD PTR [rax+643], rcx
+	mov	QWORD PTR [rax+649], rcx
 
 ; 568  : 	AuUserEntry *uentry = (AuUserEntry*)kmalloc(sizeof(AuUserEntry));
 
@@ -886,7 +886,7 @@ $LN3:
 
 	mov	rax, QWORD PTR thr$[rsp]
 	mov	rcx, QWORD PTR uentry$[rsp]
-	mov	QWORD PTR [rax+635], rcx
+	mov	QWORD PTR [rax+641], rcx
 
 ; 580  : 	int thread_indx = proc->num_thread;
 
@@ -1160,7 +1160,7 @@ $LN25:
 
 ; 469  : 		SeTextOut("[aurora]: cannot exit root process \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG4304
+	lea	rcx, OFFSET FLAT:$SG4336
 	call	SeTextOut
 
 ; 470  : 		return;
@@ -1270,7 +1270,7 @@ $LN17@AuProcessE:
 	mov	rax, QWORD PTR file$4[rsp]
 	mov	r8, QWORD PTR file$4[rsp]
 	mov	rdx, rax
-	lea	rcx, OFFSET FLAT:$SG4317
+	lea	rcx, OFFSET FLAT:$SG4349
 	call	SeTextOut
 
 ; 499  : 			if (file->flags & FS_FLAG_DEVICE || file->flags & FS_FLAG_FILE_SYSTEM)
@@ -1410,7 +1410,7 @@ $LN6@AuProcessE:
 	mov	rax, QWORD PTR proc$[rsp]
 	add	rax, 4
 	mov	rdx, rax
-	lea	rcx, OFFSET FLAT:$SG4331
+	lea	rcx, OFFSET FLAT:$SG4363
 	call	SeTextOut
 
 ; 527  : 
@@ -1714,7 +1714,7 @@ $LN3:
 
 ; 330  : 	char* about_str = "-about";
 
-	lea	rax, OFFSET FLAT:$SG4243
+	lea	rax, OFFSET FLAT:$SG4275
 	mov	QWORD PTR about_str$[rsp], rax
 
 ; 331  : 	char* about = (char*)kmalloc(strlen(about_str));
@@ -1756,7 +1756,7 @@ $LN3:
 
 	mov	r9, QWORD PTR argvs$[rsp]
 	mov	r8d, DWORD PTR num_args$[rsp]
-	lea	rdx, OFFSET FLAT:$SG4248
+	lea	rdx, OFFSET FLAT:$SG4280
 	mov	rcx, QWORD PTR ?root_proc@@3PEAU_au_proc_@@EA ; root_proc
 	call	?AuLoadExecToProcess@@YAHPEAU_au_proc_@@PEADHPEAPEAD@Z ; AuLoadExecToProcess
 
@@ -1876,7 +1876,7 @@ $LN3:
 ; 169  : 	AuProcess* proc = (AuProcess*)thread->procSlot;
 
 	mov	rax, QWORD PTR thread$[rsp]
-	mov	rax, QWORD PTR [rax+643]
+	mov	rax, QWORD PTR [rax+649]
 	mov	QWORD PTR proc$[rsp], rax
 
 ; 170  : 	return proc;

@@ -737,6 +737,21 @@ _KeFileSetOffset:
 	ret
 
 
+global gettimeofday
+%ifdef YES_DYNAMIC
+export gettimeofday
+%endif
+gettimeofday:
+    xor rax, rax
+	mov r12, 45
+	mov r13, rcx
+	mov r14, 0
+	mov r15, 0
+	mov rdi, 0
+	syscall
+	ret
+
+
 
       
       

@@ -167,6 +167,7 @@
     <ClInclude Include="widgets\menubar.h" />
     <ClInclude Include="widgets\msgbox.h" />
     <ClInclude Include="widgets\scrollpane.h" />
+    <ClInclude Include="widgets\slider.h" />
     <ClInclude Include="widgets\view.h" />
     <ClInclude Include="widgets\window.h" />
     <ClInclude Include="_fastcpy.h" />

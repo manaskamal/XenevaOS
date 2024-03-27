@@ -94,11 +94,10 @@
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <OmitFramePointers>true</OmitFramePointers>
+      <OmitFramePointers>false</OmitFramePointers>
     </ClCompile>
     <Link>
-      <GenerateDebugInformation>
-      </GenerateDebugInformation>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
       <OutputFile>F:\deodhai.exe</OutputFile>
       <AdditionalLibraryDirectories>E:\Xeneva Project\Aurora\x64\Debug;E:\Xeneva Project\Aurora\Libs\XECrt;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>XEClib.lib; xecrt.lib; Chitralekha.lib;ftype.lib;</AdditionalDependencies>

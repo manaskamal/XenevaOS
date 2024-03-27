@@ -95,7 +95,7 @@ void LaunchButtonMouseEvent(LaunchButton* wid, ChWindow* win, int x, int y, int 
 		if (wid->drawLaunchButton)
 			wid->drawLaunchButton(wid, win);
 		ChWindowUpdate(win, wid->x, wid->y, wid->w, wid->h, false, true);
-		_KeProcessSleep(100000000);
+		_KeProcessSleep(8);
 		
 		wid->hover_painted = false;
 		wid->clicked = false;
@@ -116,7 +116,7 @@ void LaunchButtonMouseEvent(LaunchButton* wid, ChWindow* win, int x, int y, int 
 void LauncherButtonDefaultAction(LaunchButton* lbutton, ChWindow *win){
 	int id = _KeCreateProcess(0, lbutton->title);
 	int status = _KeProcessLoadExec(id, lbutton->appname, 0, 0);
-	_KeProcessSleep(1000000);
+	_KeProcessSleep(20);
 	ChWindowHide(win);
 }
 

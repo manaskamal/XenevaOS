@@ -36,7 +36,7 @@
 #include <Hal\x86_64_signal.h>
 
 /* maximum supported system calls */
-#define AURORA_MAX_SYSCALL  45
+#define AURORA_MAX_SYSCALL  46
 #define AURORA_SYSCALL_MAGIC  0x05212004  /* actual number to remember */
 
 /* ==========================================
@@ -287,4 +287,12 @@ extern int ProcessGetFileDesc(const char* filename);
 * @param offset -- offset in bytes
 */
 extern int FileSetOffset(int fd, size_t offset);
+
+/*
+* GetTimeOfDay -- returns the time format 
+* in unix format
+* @param ptr -- Pointer to timeval 
+* structure
+*/
+extern int GetTimeOfDay(void* ptr);
 #endif

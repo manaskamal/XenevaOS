@@ -49,7 +49,7 @@ $pdata$AuVmmngrGetPage DD imagerel $LN10
 	DD	imagerel $LN10+776
 	DD	imagerel $unwind$AuVmmngrGetPage
 $pdata$AuMapPage DD imagerel $LN7
-	DD	imagerel $LN7+640
+	DD	imagerel $LN7+637
 	DD	imagerel $unwind$AuMapPage
 $pdata$AuMapPageEx DD imagerel $LN7
 	DD	imagerel $LN7+636
@@ -1530,12 +1530,12 @@ i3$ = 36
 i2$ = 40
 i4$ = 44
 i1$ = 48
-page$1 = 56
-page$2 = 64
-page$3 = 72
-pml2$ = 80
-pml3$ = 88
-pml1$ = 96
+pml3$ = 56
+pml2$ = 64
+pml1$ = 72
+page$1 = 80
+page$2 = 88
+page$3 = 96
 pml4i$ = 128
 phys_addr$ = 136
 virt_addr$ = 144
@@ -1622,9 +1622,9 @@ $LN7:
 	mov	rcx, rax
 	call	memset
 
-; 275  : 		flush_tlb((void*)page);
+; 275  : 		flush_tlb((void*)pml4i);
 
-	mov	rcx, QWORD PTR page$1[rsp]
+	mov	rcx, QWORD PTR pml4i$[rsp]
 	call	flush_tlb
 
 ; 276  : 		x64_mfence();
@@ -1656,12 +1656,12 @@ $LN4@AuMapPageE:
 ; 282  : 		const uint64_t page = (uint64_t)AuPmmngrAlloc();
 
 	call	AuPmmngrAlloc
-	mov	QWORD PTR page$3[rsp], rax
+	mov	QWORD PTR page$2[rsp], rax
 
 ; 283  : 		pml3[i3] = page | flags;
 
 	movzx	eax, BYTE PTR flags$[rsp]
-	mov	rcx, QWORD PTR page$3[rsp]
+	mov	rcx, QWORD PTR page$2[rsp]
 	or	rcx, rax
 	mov	rax, rcx
 	movsxd	rcx, DWORD PTR i3$[rsp]
@@ -1670,16 +1670,16 @@ $LN4@AuMapPageE:
 
 ; 284  : 		memset((void*)P2V(page), 0, 4096);
 
-	mov	rcx, QWORD PTR page$3[rsp]
+	mov	rcx, QWORD PTR page$2[rsp]
 	call	P2V
 	mov	r8d, 4096				; 00001000H
 	xor	edx, edx
 	mov	rcx, rax
 	call	memset
 
-; 285  : 		flush_tlb((void*)page);
+; 285  : 		flush_tlb((void*)pml3);
 
-	mov	rcx, QWORD PTR page$3[rsp]
+	mov	rcx, QWORD PTR pml3$[rsp]
 	call	flush_tlb
 
 ; 286  : 		x64_mfence();
@@ -1714,12 +1714,12 @@ $LN3@AuMapPageE:
 ; 295  : 		const uint64_t page = (uint64_t)AuPmmngrAlloc();
 
 	call	AuPmmngrAlloc
-	mov	QWORD PTR page$2[rsp], rax
+	mov	QWORD PTR page$3[rsp], rax
 
 ; 296  : 		pml2[i2] = page | flags;
 
 	movzx	eax, BYTE PTR flags$[rsp]
-	mov	rcx, QWORD PTR page$2[rsp]
+	mov	rcx, QWORD PTR page$3[rsp]
 	or	rcx, rax
 	mov	rax, rcx
 	movsxd	rcx, DWORD PTR i2$[rsp]
@@ -1728,16 +1728,16 @@ $LN3@AuMapPageE:
 
 ; 297  : 		memset((void*)P2V(page), 0, 4096);
 
-	mov	rcx, QWORD PTR page$2[rsp]
+	mov	rcx, QWORD PTR page$3[rsp]
 	call	P2V
 	mov	r8d, 4096				; 00001000H
 	xor	edx, edx
 	mov	rcx, rax
 	call	memset
 
-; 298  : 		flush_tlb((void*)page);
+; 298  : 		flush_tlb((void*)pml2);
 
-	mov	rcx, QWORD PTR page$2[rsp]
+	mov	rcx, QWORD PTR pml2$[rsp]
 	call	flush_tlb
 
 ; 299  : 		x64_mfence();
@@ -1790,9 +1790,9 @@ $LN1@AuMapPageE:
 	mov	rdx, QWORD PTR pml1$[rsp]
 	mov	QWORD PTR [rdx+rcx*8], rax
 
-; 311  : 	flush_tlb((void*)virt_addr);
+; 311  : 	flush_tlb((void*)pml1);
 
-	mov	rcx, QWORD PTR virt_addr$[rsp]
+	mov	rcx, QWORD PTR pml1$[rsp]
 	call	flush_tlb
 
 ; 312  : 	x64_mfence();
@@ -1818,13 +1818,13 @@ i3$ = 36
 i2$ = 40
 i4$ = 44
 i1$ = 48
-page$1 = 56
+pml4i$ = 56
 pml3$ = 64
-page$2 = 72
-page$3 = 80
-pml2$ = 88
-pml4i$ = 96
-pml1$ = 104
+pml2$ = 72
+pml1$ = 80
+page$1 = 88
+page$2 = 96
+page$3 = 104
 phys_addr$ = 128
 virt_addr$ = 136
 attrib$ = 144
@@ -1895,12 +1895,12 @@ $LN7:
 ; 208  : 		const uint64_t page = (uint64_t)AuPmmngrAlloc();
 
 	call	AuPmmngrAlloc
-	mov	QWORD PTR page$1[rsp], rax
+	mov	QWORD PTR page$2[rsp], rax
 
 ; 209  : 		pml4i[i4] = page | flags;
 
 	movzx	eax, BYTE PTR flags$[rsp]
-	mov	rcx, QWORD PTR page$1[rsp]
+	mov	rcx, QWORD PTR page$2[rsp]
 	or	rcx, rax
 	mov	rax, rcx
 	movsxd	rcx, DWORD PTR i4$[rsp]
@@ -1909,16 +1909,16 @@ $LN7:
 
 ; 210  : 		memset((void*)P2V(page), 0, 4096);
 
-	mov	rcx, QWORD PTR page$1[rsp]
+	mov	rcx, QWORD PTR page$2[rsp]
 	call	P2V
 	mov	r8d, 4096				; 00001000H
 	xor	edx, edx
 	mov	rcx, rax
 	call	memset
 
-; 211  : 		flush_tlb((void*)page);
+; 211  : 		flush_tlb((void*)pml4i);
 
-	mov	rcx, QWORD PTR page$1[rsp]
+	mov	rcx, QWORD PTR pml4i$[rsp]
 	call	flush_tlb
 
 ; 212  : 		x64_mfence();
@@ -1950,12 +1950,12 @@ $LN4@AuMapPage:
 ; 218  : 		const uint64_t page = (uint64_t)AuPmmngrAlloc();
 
 	call	AuPmmngrAlloc
-	mov	QWORD PTR page$3[rsp], rax
+	mov	QWORD PTR page$1[rsp], rax
 
 ; 219  : 		pml3[i3] = page | flags;
 
 	movzx	eax, BYTE PTR flags$[rsp]
-	mov	rcx, QWORD PTR page$3[rsp]
+	mov	rcx, QWORD PTR page$1[rsp]
 	or	rcx, rax
 	mov	rax, rcx
 	movsxd	rcx, DWORD PTR i3$[rsp]
@@ -1964,16 +1964,16 @@ $LN4@AuMapPage:
 
 ; 220  : 		memset((void*)P2V(page), 0, 4096);
 
-	mov	rcx, QWORD PTR page$3[rsp]
+	mov	rcx, QWORD PTR page$1[rsp]
 	call	P2V
 	mov	r8d, 4096				; 00001000H
 	xor	edx, edx
 	mov	rcx, rax
 	call	memset
 
-; 221  : 		flush_tlb((void*)page);
+; 221  : 		flush_tlb((void*)pml3);
 
-	mov	rcx, QWORD PTR page$3[rsp]
+	mov	rcx, QWORD PTR pml3$[rsp]
 	call	flush_tlb
 
 ; 222  : 		x64_mfence();
@@ -2008,12 +2008,12 @@ $LN3@AuMapPage:
 ; 231  : 		const uint64_t page = (uint64_t)AuPmmngrAlloc();
 
 	call	AuPmmngrAlloc
-	mov	QWORD PTR page$2[rsp], rax
+	mov	QWORD PTR page$3[rsp], rax
 
 ; 232  : 		pml2[i2] = page | flags;
 
 	movzx	eax, BYTE PTR flags$[rsp]
-	mov	rcx, QWORD PTR page$2[rsp]
+	mov	rcx, QWORD PTR page$3[rsp]
 	or	rcx, rax
 	mov	rax, rcx
 	movsxd	rcx, DWORD PTR i2$[rsp]
@@ -2022,16 +2022,16 @@ $LN3@AuMapPage:
 
 ; 233  : 		memset((void*)P2V(page), 0, 4096);
 
-	mov	rcx, QWORD PTR page$2[rsp]
+	mov	rcx, QWORD PTR page$3[rsp]
 	call	P2V
 	mov	r8d, 4096				; 00001000H
 	xor	edx, edx
 	mov	rcx, rax
 	call	memset
 
-; 234  : 		flush_tlb((void*)page);
+; 234  : 		flush_tlb((void*)pml2);
 
-	mov	rcx, QWORD PTR page$2[rsp]
+	mov	rcx, QWORD PTR pml2$[rsp]
 	call	flush_tlb
 
 ; 235  : 		x64_mfence();
@@ -2084,9 +2084,9 @@ $LN1@AuMapPage:
 	mov	rdx, QWORD PTR pml1$[rsp]
 	mov	QWORD PTR [rdx+rcx*8], rax
 
-; 247  : 	flush_tlb((void*)phys_addr);
+; 247  : 	flush_tlb((void*)pml1);
 
-	mov	rcx, QWORD PTR phys_addr$[rsp]
+	mov	rcx, QWORD PTR pml1$[rsp]
 	call	flush_tlb
 
 ; 248  : 	x64_mfence();

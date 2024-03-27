@@ -50,6 +50,8 @@ void x86_64_hal_initialise(KERNEL_BOOT_INFO *info) {
 	
 	x86_64_exception_init();
 
+	x86_64_measure_cpu_speed();
+	
 	AuAPICInitialise(true);
 
 	x86_64_enable_syscall_ext();

@@ -208,7 +208,7 @@ bool AuMapPage(uint64_t phys_addr, uint64_t virt_addr, uint8_t attrib) {
 		const uint64_t page = (uint64_t)AuPmmngrAlloc();
 		pml4i[i4] = page | flags;
 		memset((void*)P2V(page), 0, 4096);
-		flush_tlb((void*)page);
+		flush_tlb((void*)pml4i);
 		x64_mfence();
 	}
 	uint64_t* pml3 = (uint64_t*)(P2V(pml4i[i4]) & ~(4096 - 1));
@@ -218,7 +218,7 @@ bool AuMapPage(uint64_t phys_addr, uint64_t virt_addr, uint8_t attrib) {
 		const uint64_t page = (uint64_t)AuPmmngrAlloc();
 		pml3[i3] = page | flags;
 		memset((void*)P2V(page), 0, 4096);
-		flush_tlb((void*)page);
+		flush_tlb((void*)pml3);
 		x64_mfence();
 
 	}
@@ -231,7 +231,7 @@ bool AuMapPage(uint64_t phys_addr, uint64_t virt_addr, uint8_t attrib) {
 		const uint64_t page = (uint64_t)AuPmmngrAlloc();
 		pml2[i2] = page | flags;
 		memset((void*)P2V(page), 0, 4096);
-		flush_tlb((void*)page);
+		flush_tlb((void*)pml2);
 		x64_mfence();
 
 	}
@@ -244,7 +244,7 @@ bool AuMapPage(uint64_t phys_addr, uint64_t virt_addr, uint8_t attrib) {
 	}
 
 	pml1[i1] = phys_addr | flags;
-	flush_tlb((void*)phys_addr);
+	flush_tlb((void*)pml1);
 	x64_mfence();
 	return true;
 }
@@ -272,7 +272,7 @@ bool AuMapPageEx(uint64_t *pml4i, uint64_t phys_addr, uint64_t virt_addr, uint8_
 		const uint64_t page = (uint64_t)AuPmmngrAlloc();
 		pml4i[i4] = page | flags;
 		memset((void*)P2V(page), 0, 4096);
-		flush_tlb((void*)page);
+		flush_tlb((void*)pml4i);
 		x64_mfence();
 	}
 	uint64_t* pml3 = (uint64_t*)(P2V(pml4i[i4]) & ~(4096 - 1));
@@ -282,7 +282,7 @@ bool AuMapPageEx(uint64_t *pml4i, uint64_t phys_addr, uint64_t virt_addr, uint8_
 		const uint64_t page = (uint64_t)AuPmmngrAlloc();
 		pml3[i3] = page | flags;
 		memset((void*)P2V(page), 0, 4096);
-		flush_tlb((void*)page);
+		flush_tlb((void*)pml3);
 		x64_mfence();
 
 	}
@@ -295,7 +295,7 @@ bool AuMapPageEx(uint64_t *pml4i, uint64_t phys_addr, uint64_t virt_addr, uint8_
 		const uint64_t page = (uint64_t)AuPmmngrAlloc();
 		pml2[i2] = page | flags;
 		memset((void*)P2V(page), 0, 4096);
-		flush_tlb((void*)page);
+		flush_tlb((void*)pml2);
 		x64_mfence();
 
 	}
@@ -308,7 +308,7 @@ bool AuMapPageEx(uint64_t *pml4i, uint64_t phys_addr, uint64_t virt_addr, uint8_
 	}
 
 	pml1[i1] = phys_addr | flags;
-	flush_tlb((void*)virt_addr);
+	flush_tlb((void*)pml1);
 	x64_mfence();
 	return true;
 }

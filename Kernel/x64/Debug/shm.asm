@@ -16,11 +16,11 @@ _BSS	SEGMENT
 ?shmlock@@3PEAU_spinlock_@@EA DQ 01H DUP (?)		; shmlock
 _BSS	ENDS
 CONST	SEGMENT
-$SG3809	DB	'Closing index -> %d ', 0dH, 0aH, 00H
+$SG3841	DB	'Closing index -> %d ', 0dH, 0aH, 00H
 	ORG $+1
-$SG3810	DB	'%s Unmapping shm ->%d count ', 0dH, 0aH, 00H
+$SG3842	DB	'%s Unmapping shm ->%d count ', 0dH, 0aH, 00H
 	ORG $+1
-$SG3826	DB	'Unmapping shm -> %x ', 0dH, 0aH, 00H
+$SG3858	DB	'Unmapping shm -> %x ', 0dH, 0aH, 00H
 CONST	ENDS
 PUBLIC	?AuInitialiseSHMMan@@YAXXZ			; AuInitialiseSHMMan
 PUBLIC	?AuGetSHMByID@@YAPEAU_shm_@@G@Z			; AuGetSHMByID
@@ -693,7 +693,7 @@ $LN1@AuSHMUnmap:
 
 	mov	rax, QWORD PTR mapping$3[rsp]
 	mov	rdx, QWORD PTR [rax]
-	lea	rcx, OFFSET FLAT:$SG3826
+	lea	rcx, OFFSET FLAT:$SG3858
 	call	SeTextOut
 
 ; 381  : 		kfree(mapping);
@@ -890,7 +890,7 @@ $LN2@AuSHMUnmap:
 ; 350  : 			SeTextOut("Closing index -> %d \r\n", i);
 
 	mov	edx, DWORD PTR i$1[rsp]
-	lea	rcx, OFFSET FLAT:$SG3809
+	lea	rcx, OFFSET FLAT:$SG3841
 	call	SeTextOut
 
 ; 351  : 			list_remove(proc->shmmaps, i);
@@ -931,7 +931,7 @@ $LN6@AuSHMUnmap:
 	add	rcx, 4
 	mov	r8d, eax
 	mov	rdx, rcx
-	lea	rcx, OFFSET FLAT:$SG3810
+	lea	rcx, OFFSET FLAT:$SG3842
 	call	SeTextOut
 
 ; 360  : 	AuReleaseSpinlock(shmlock);

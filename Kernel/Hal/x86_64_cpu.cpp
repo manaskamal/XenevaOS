@@ -37,9 +37,14 @@
 #include <Mm/pmmngr.h>
 #include <Mm/vmmngr.h>
 #include <aucon.h>
+#include <string.h>
+#include <time.h>
 
 TSS* _tss;
 bool _fxsave = false;
+uint64_t cpuMhz;
+uint64_t tscBasisTiming;
+uint64_t bootTime;
 
 /*
  * x86_64_enable_syscall_ext -- enablse syscall 
@@ -278,4 +283,192 @@ uint64_t cpu_read_tsc(){
 	x64_rdtsc(&hi, &lo);
 	uint64_t count = (((uint64_t)hi << 32UL) | (uint64_t)lo);
 	return count;
+}
+
+
+/*
+ * inspired from Toaru operating system project by
+ * klange, http://toaruos.org 
+ */
+
+#define CMOS_ADDRESS 0x70
+#define CMOS_DATA 0x71
+#define fromBCD(val) ((val / 16) * 10 + (val & 0xf))
+
+enum{
+	CMOS_SECOND = 0,
+	CMOS_MINUTE = 2,
+	CMOS_HOUR = 4,
+	CMOS_DAY = 7,
+	CMOS_MONTH = 8,
+	CMOS_YEAR = 9
+};
+
+void CMOSDump(uint16_t *val) {
+	for (uint16_t i = 0; i < 128; ++i) {
+		x64_outportb(CMOS_ADDRESS, i);
+		val[i] = x64_inportb(CMOS_DATA);
+	}
+}
+
+int isUpdateInProgress(void) {
+	x64_outportb(CMOS_ADDRESS, 0x0a);
+	return x64_inportb(CMOS_DATA) & 0x80;
+}
+
+uint64_t secs_of_years(int years) {
+	uint64_t days = 0;
+	years += 2000;
+	while (years > 1969) {
+		days += 365;
+		if (years % 4 == 0) {
+			if (years % 100 == 0) {
+				if (years % 400 == 0) {
+					days++;
+				}
+			}
+			else {
+				days++;
+			}
+		}
+		years--;
+	}
+	return days * 86400;
+}
+
+static uint64_t secs_of_month(int months, int year) {
+	year += 2000;
+
+	uint64_t days = 0;
+	switch (months) {
+	case 11:
+		days += 30; /* fallthrough */
+	case 10:
+		days += 31; /* fallthrough */
+	case 9:
+		days += 30; /* fallthrough */
+	case 8:
+		days += 31; /* fallthrough */
+	case 7:
+		days += 31; /* fallthrough */
+	case 6:
+		days += 30; /* fallthrough */
+	case 5:
+		days += 31; /* fallthrough */
+	case 4:
+		days += 30; /* fallthrough */
+	case 3:
+		days += 31; /* fallthrough */
+	case 2:
+		days += 28;
+		if ((year % 4 == 0) && ((year % 100 != 0) || (year % 400 == 0))) {
+			days++;
+		} /* fallthrough */
+	case 1:
+		days += 31; /* fallthrough */
+	default:
+		break;
+	}
+	return days * 86400;
+}
+
+uint64_t readCMOS(void) {
+	uint16_t values[128];
+	uint16_t old_values[128];
+
+	while (isUpdateInProgress());
+	CMOSDump(values);
+
+	do {
+		memcpy(old_values, values, 128);
+		while (isUpdateInProgress());
+		CMOSDump(values);
+	} while ((old_values[CMOS_SECOND] != values[CMOS_SECOND]) ||
+		(old_values[CMOS_MINUTE] != values[CMOS_MINUTE]) ||
+		(old_values[CMOS_HOUR] != values[CMOS_HOUR]) ||
+		(old_values[CMOS_DAY] != values[CMOS_DAY]) ||
+		(old_values[CMOS_MONTH] != values[CMOS_MONTH]) ||
+		(old_values[CMOS_YEAR] != values[CMOS_YEAR]));
+
+	/* Math Time */
+	uint64_t time =
+		secs_of_years(fromBCD(values[CMOS_YEAR]) - 1) +
+		secs_of_month(fromBCD(values[CMOS_MONTH]) - 1,
+		fromBCD(values[CMOS_YEAR])) +
+		(fromBCD(values[CMOS_DAY]) - 1) * 86400 +
+		(fromBCD(values[CMOS_HOUR])) * 3600 +
+		(fromBCD(values[CMOS_MINUTE])) * 60 +
+		fromBCD(values[CMOS_SECOND]) + 0;
+
+	return time;
+}
+
+#define SUBSECONDS_PER_SECOND 1000000
+
+void updateTicks(uint64_t ticks, uint64_t *timerTick, uint64_t *timerSubticks) {
+	*timerSubticks = ticks - tscBasisTiming;
+	*timerTick = *timerSubticks / SUBSECONDS_PER_SECOND;
+	*timerSubticks = *timerSubticks % SUBSECONDS_PER_SECOND;
+}
+
+
+void x86_64_measure_cpu_speed() {
+	x64_cli();
+	bootTime = 0;
+	bootTime = readCMOS();
+	uint8_t al = x64_inportb(0x61);
+	al &= 0xDD;
+	al |= 0x1;
+	x64_outportb(0x61, al);
+
+	x64_outportb(0x43, 0xB2);
+	x64_outportb(0x42, 0x9B);
+	al = x64_inportb(0x60);
+
+	x64_outportb(0x42, 0x2E);
+
+	al = x64_inportb(0x61);
+	al &= 0xDE;
+	x64_outportb(0x61, al);
+
+	al |= 0x01;
+	x64_outportb(0x61, al);
+	long stsc = cpu_read_tsc();
+	
+	uint8_t count_lo = x64_inportb(0x61);
+	count_lo &= 0x20;
+	while (count_lo) {
+		count_lo = x64_inportb(0x61);
+		count_lo &= 0x20;
+	}
+
+	uint8_t count_hi = x64_inportb(0x61);
+	count_hi &= 0x20;
+	long etsc = cpu_read_tsc();
+	uint64_t cpu_hz = (etsc - stsc) / 10000;
+
+	if (cpu_hz == 0){
+		x64_outportb(0x43, 0x04);
+		while (count_hi == 0){
+			count_hi = x64_inportb(0x61);
+			count_hi &= 0x20;
+		}
+		etsc = cpu_read_tsc();
+	}
+	cpu_hz = (etsc - stsc) / 10000;
+	cpuMhz = cpu_hz;
+	tscBasisTiming = stsc / cpuMhz;
+}
+
+uint64_t x86_64_cpu_get_mhz() {
+	return cpuMhz;
+}
+
+int x86_64_gettimeofday(timeval *t){
+	uint64_t tsc = cpu_read_tsc();
+	uint64_t timer_ticks, timer_subticks;
+	updateTicks(tsc / cpuMhz, &timer_ticks, &timer_subticks);
+	t->tv_sec = bootTime + timer_ticks;
+	t->tv_usec = timer_subticks;
+	return 0;
 }

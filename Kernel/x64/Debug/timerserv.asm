@@ -9,10 +9,12 @@ PUBLIC	?CreateTimer@@YAHHHE@Z				; CreateTimer
 PUBLIC	?StartTimer@@YAHH@Z				; StartTimer
 PUBLIC	?StopTimer@@YAHH@Z				; StopTimer
 PUBLIC	?DestroyTimer@@YAHH@Z				; DestroyTimer
+PUBLIC	?GetTimeOfDay@@YAHPEAX@Z			; GetTimeOfDay
 EXTRN	?AuTimerCreate@@YAXGHE@Z:PROC			; AuTimerCreate
 EXTRN	?AuTimerStart@@YAXG@Z:PROC			; AuTimerStart
 EXTRN	?AuTimerStop@@YAXG@Z:PROC			; AuTimerStop
 EXTRN	?AuTimerDestroy@@YAXG@Z:PROC			; AuTimerDestroy
+EXTRN	?x86_64_gettimeofday@@YAHPEAU_timeval_@@@Z:PROC	; x86_64_gettimeofday
 EXTRN	x64_cli:PROC
 pdata	SEGMENT
 $pdata$?CreateTimer@@YAHHHE@Z DD imagerel $LN3
@@ -27,6 +29,9 @@ $pdata$?StopTimer@@YAHH@Z DD imagerel $LN3
 $pdata$?DestroyTimer@@YAHH@Z DD imagerel $LN3
 	DD	imagerel $LN3+33
 	DD	imagerel $unwind$?DestroyTimer@@YAHH@Z
+$pdata$?GetTimeOfDay@@YAHPEAX@Z DD imagerel $LN4
+	DD	imagerel $LN4+56
+	DD	imagerel $unwind$?GetTimeOfDay@@YAHPEAX@Z
 pdata	ENDS
 xdata	SEGMENT
 $unwind$?CreateTimer@@YAHHHE@Z DD 011101H
@@ -37,33 +42,84 @@ $unwind$?StopTimer@@YAHH@Z DD 010801H
 	DD	04208H
 $unwind$?DestroyTimer@@YAHH@Z DD 010801H
 	DD	04208H
+$unwind$?GetTimeOfDay@@YAHPEAX@Z DD 010901H
+	DD	06209H
 xdata	ENDS
+; Function compile flags: /Odtpy
+; File e:\xeneva project\aurora\kernel\serv\timerserv.cpp
+_TEXT	SEGMENT
+val$ = 32
+ptr$ = 64
+?GetTimeOfDay@@YAHPEAX@Z PROC				; GetTimeOfDay
+
+; 83   : int GetTimeOfDay(void* ptr) {
+
+$LN4:
+	mov	QWORD PTR [rsp+8], rcx
+	sub	rsp, 56					; 00000038H
+
+; 84   : 	x64_cli();
+
+	call	x64_cli
+
+; 85   : 	if (!ptr)
+
+	cmp	QWORD PTR ptr$[rsp], 0
+	jne	SHORT $LN1@GetTimeOfD
+
+; 86   : 		return -1;
+
+	mov	eax, -1
+	jmp	SHORT $LN2@GetTimeOfD
+$LN1@GetTimeOfD:
+
+; 87   : 	timeval *val = (timeval*)ptr;
+
+	mov	rax, QWORD PTR ptr$[rsp]
+	mov	QWORD PTR val$[rsp], rax
+
+; 88   : 	x86_64_gettimeofday(val);
+
+	mov	rcx, QWORD PTR val$[rsp]
+	call	?x86_64_gettimeofday@@YAHPEAU_timeval_@@@Z ; x86_64_gettimeofday
+
+; 89   : 	return 0;
+
+	xor	eax, eax
+$LN2@GetTimeOfD:
+
+; 90   : }
+
+	add	rsp, 56					; 00000038H
+	ret	0
+?GetTimeOfDay@@YAHPEAX@Z ENDP				; GetTimeOfDay
+_TEXT	ENDS
 ; Function compile flags: /Odtpy
 ; File e:\xeneva project\aurora\kernel\serv\timerserv.cpp
 _TEXT	SEGMENT
 threadID$ = 48
 ?DestroyTimer@@YAHH@Z PROC				; DestroyTimer
 
-; 70   : int DestroyTimer(int threadID) {
+; 71   : int DestroyTimer(int threadID) {
 
 $LN3:
 	mov	DWORD PTR [rsp+8], ecx
 	sub	rsp, 40					; 00000028H
 
-; 71   : 	x64_cli();
+; 72   : 	x64_cli();
 
 	call	x64_cli
 
-; 72   : 	AuTimerDestroy(threadID);
+; 73   : 	AuTimerDestroy(threadID);
 
 	movzx	ecx, WORD PTR threadID$[rsp]
 	call	?AuTimerDestroy@@YAXG@Z			; AuTimerDestroy
 
-; 73   : 	return 1;
+; 74   : 	return 1;
 
 	mov	eax, 1
 
-; 74   : }
+; 75   : }
 
 	add	rsp, 40					; 00000028H
 	ret	0
@@ -75,26 +131,26 @@ _TEXT	SEGMENT
 threadID$ = 48
 ?StopTimer@@YAHH@Z PROC					; StopTimer
 
-; 59   : int StopTimer(int threadID) {
+; 60   : int StopTimer(int threadID) {
 
 $LN3:
 	mov	DWORD PTR [rsp+8], ecx
 	sub	rsp, 40					; 00000028H
 
-; 60   : 	x64_cli();
+; 61   : 	x64_cli();
 
 	call	x64_cli
 
-; 61   : 	AuTimerStop(threadID);
+; 62   : 	AuTimerStop(threadID);
 
 	movzx	ecx, WORD PTR threadID$[rsp]
 	call	?AuTimerStop@@YAXG@Z			; AuTimerStop
 
-; 62   : 	return 0;
+; 63   : 	return 0;
 
 	xor	eax, eax
 
-; 63   : }
+; 64   : }
 
 	add	rsp, 40					; 00000028H
 	ret	0
@@ -106,26 +162,26 @@ _TEXT	SEGMENT
 threadID$ = 48
 ?StartTimer@@YAHH@Z PROC				; StartTimer
 
-; 50   : int StartTimer(int threadID) {
+; 51   : int StartTimer(int threadID) {
 
 $LN3:
 	mov	DWORD PTR [rsp+8], ecx
 	sub	rsp, 40					; 00000028H
 
-; 51   : 	x64_cli();
+; 52   : 	x64_cli();
 
 	call	x64_cli
 
-; 52   : 	AuTimerStart(threadID);
+; 53   : 	AuTimerStart(threadID);
 
 	movzx	ecx, WORD PTR threadID$[rsp]
 	call	?AuTimerStart@@YAXG@Z			; AuTimerStart
 
-; 53   : 	return 0;
+; 54   : 	return 0;
 
 	xor	eax, eax
 
-; 54   : }
+; 55   : }
 
 	add	rsp, 40					; 00000028H
 	ret	0
@@ -139,7 +195,7 @@ maxTickLimit$ = 56
 updatemode$ = 64
 ?CreateTimer@@YAHHHE@Z PROC				; CreateTimer
 
-; 41   : int CreateTimer(int threadID,int maxTickLimit,uint8_t updatemode) {
+; 42   : int CreateTimer(int threadID,int maxTickLimit,uint8_t updatemode) {
 
 $LN3:
 	mov	BYTE PTR [rsp+24], r8b
@@ -147,22 +203,22 @@ $LN3:
 	mov	DWORD PTR [rsp+8], ecx
 	sub	rsp, 40					; 00000028H
 
-; 42   : 	x64_cli();
+; 43   : 	x64_cli();
 
 	call	x64_cli
 
-; 43   : 	AuTimerCreate(threadID, maxTickLimit, updatemode);
+; 44   : 	AuTimerCreate(threadID, maxTickLimit, updatemode);
 
 	movzx	r8d, BYTE PTR updatemode$[rsp]
 	mov	edx, DWORD PTR maxTickLimit$[rsp]
 	movzx	ecx, WORD PTR threadID$[rsp]
 	call	?AuTimerCreate@@YAXGHE@Z		; AuTimerCreate
 
-; 44   : 	return 0;
+; 45   : 	return 0;
 
 	xor	eax, eax
 
-; 45   : }
+; 46   : }
 
 	add	rsp, 40					; 00000028H
 	ret	0

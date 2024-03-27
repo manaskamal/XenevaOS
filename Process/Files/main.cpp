@@ -348,7 +348,6 @@ int main(int argc, char* argv[]){
 	mainWin = ChCreateWindow(app, WINDOW_FLAG_MOVABLE, "Files", 100, 100, 660, 
 		500);
 
-	ChWindowBroadcastIcon(app, "/file.bmp");
 	win2 = NULL;
 
 	pm = NULL;
@@ -434,7 +433,7 @@ int main(int argc, char* argv[]){
 	//_KeCloseFile(dirfd);
 
 	ChWindowPaint(mainWin);
-
+	ChWindowBroadcastIcon(app, "/file.bmp");
 
 	PostEvent e;
 	memset(&e, 0, sizeof(PostEvent));

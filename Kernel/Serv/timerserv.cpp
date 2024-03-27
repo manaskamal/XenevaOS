@@ -30,6 +30,7 @@
 #include <autimer.h>
 #include <Hal\x86_64_hal.h>
 #include <Hal\x86_64_sched.h>
+#include <time.h>
 #include <aucon.h>
 
 /*
@@ -71,4 +72,19 @@ int DestroyTimer(int threadID) {
 	x64_cli();
 	AuTimerDestroy(threadID);
 	return 1;
+}
+
+/*
+* GetTimeOfDay -- returns the time format
+* in unix format
+* @param ptr -- Pointer to timeval
+* structure
+*/
+int GetTimeOfDay(void* ptr) {
+	x64_cli();
+	if (!ptr)
+		return -1;
+	timeval *val = (timeval*)ptr;
+	x86_64_gettimeofday(val);
+	return 0;
 }

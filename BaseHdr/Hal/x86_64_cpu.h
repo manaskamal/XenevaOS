@@ -32,6 +32,7 @@
 
 #include <stdint.h>
 #include <process.h>
+#include <time.h>
 
 #define IA32_EFER 0xC0000080
 #define IA32_STAR 0xC0000081
@@ -193,5 +194,11 @@ extern void x86_64_initialise_syscall();
 * cpu_read_tsc -- read the tsc count
 */
 extern uint64_t cpu_read_tsc();
+
+extern void x86_64_measure_cpu_speed();
+
+extern uint64_t x86_64_cpu_get_mhz();
+
+extern int x86_64_gettimeofday(timeval *t);
 
 #endif

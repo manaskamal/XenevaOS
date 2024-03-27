@@ -190,7 +190,7 @@ $LN30:
 ; 84   : 	AuUserEntry* ent = t->uentry;
 
 	mov	rax, QWORD PTR t$[rsp]
-	mov	rax, QWORD PTR [rax+635]
+	mov	rax, QWORD PTR [rax+641]
 	mov	QWORD PTR ent$[rsp], rax
 
 ; 85   : 	/* do all arguments passing stuff, arguments
@@ -1200,15 +1200,15 @@ $LN3@AuLoadExec:
 
 	mov	rax, QWORD PTR thr$[rsp]
 	mov	rcx, QWORD PTR entry$[rsp]
-	mov	QWORD PTR [rax+635], rcx
+	mov	QWORD PTR [rax+641], rcx
 
 ; 268  : 	thr->priviledge |= THREAD_LEVEL_USER | THREAD_LEVEL_MAIN_THREAD | ~THREAD_LEVEL_SUBTHREAD;
 
 	mov	rax, QWORD PTR thr$[rsp]
-	movzx	eax, BYTE PTR [rax+305]
+	movzx	eax, BYTE PTR [rax+311]
 	or	eax, -5
 	mov	rcx, QWORD PTR thr$[rsp]
-	mov	BYTE PTR [rcx+305], al
+	mov	BYTE PTR [rcx+311], al
 
 ; 269  : 	proc->main_thread = thr;
 
@@ -1261,7 +1261,7 @@ $LN3@AuLoadExec:
 
 	mov	rax, QWORD PTR thr$[rsp]
 	mov	rcx, QWORD PTR proc$[rsp]
-	mov	QWORD PTR [rax+643], rcx
+	mov	QWORD PTR [rax+649], rcx
 
 ; 278  : 	AuReleaseSpinlock(loader_lock);
 

@@ -156,6 +156,11 @@ void AuSendSignal(uint16_t tid, int signo) {
 	if (blocked) {
 		AuUnblockThread(thr);
 	}
+
+	if (thr->state == THREAD_STATE_SLEEP) {
+		thr->quanta = 0;
+		thr->state = THREAD_STATE_READY;
+	}
 }
 
 
