@@ -1,12 +1,12 @@
-﻿Build started 27-03-2024 আবেলি 11:44:52.
+﻿Build started 29-03-2024 ৰাতিপু 11:37:00.
      1>Project "E:\Xeneva Project\Aurora\Libs\XEClib\XEClib.vcxproj" on node 2 (Rebuild target(s)).
      1>_NASM:
          setjmp.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp4442308554af41e6a8c0a398f5b9a84e.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp48187ec7c523418ea0b8afe09f0f9753.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\setjmp.obj"  "E:\Xeneva Project\Aurora\Libs\XEClib\setjmp.asm"
        _NASM:
          _callbase.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp87443fcc3011489a808841cf33cda5ac.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp84bbc20e68d440efbcb91b144d346196.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\_callbase.obj"  "E:\Xeneva Project\Aurora\Libs\XEClib\_callbase.asm"
      1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(935,5): warning MSB8027: Two or more files with the name of _xeprint.cpp will produce outputs to the same location. This can lead to an incorrect build result.  The files involved are sys\_xeprint.cpp, _xeprint.cpp.
        ClCompile:
@@ -85,10 +85,10 @@
          qsort.cpp
      1>qsort.cpp(83): warning C4267: 'argument' : conversion from 'size_t' to 'ssize_t', possible loss of data
          math.cpp
-     1>math.cpp(93): warning C4305: '-=' : truncation from 'double' to 'float'
-     1>math.cpp(95): warning C4305: '+=' : truncation from 'double' to 'float'
-     1>math.cpp(233): warning C4305: '-=' : truncation from 'double' to 'float'
-     1>math.cpp(235): warning C4305: '+=' : truncation from 'double' to 'float'
+     1>math.cpp(94): warning C4305: '-=' : truncation from 'double' to 'float'
+     1>math.cpp(96): warning C4305: '+=' : truncation from 'double' to 'float'
+     1>math.cpp(234): warning C4305: '-=' : truncation from 'double' to 'float'
+     1>math.cpp(236): warning C4305: '+=' : truncation from 'double' to 'float'
          errno.cpp
          ctype.cpp
      1>ctype.cpp(50): warning C4554: '&' : check operator precedence for possible error; use parentheses to clarify precedence
@@ -154,4 +154,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:02.11
+Time Elapsed 00:00:04.37

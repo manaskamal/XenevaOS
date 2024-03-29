@@ -67,18 +67,23 @@ void ChButtonMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, int button) 
 			wid->y, wid->w, wid->h, false, true);
 	}
 
+	bool _action_required = false;
 	if (wid->clicked && wid->lastMouseX == x && wid->lastMouseY == y) {
 		if (wid->ChPaintHandler)
 			wid->ChPaintHandler(wid, win);
 		ChWindowUpdate(win,wid->x,
 			wid->y, wid->w, wid->h, false, true);
 
-		/* call the action handler */
-		if (wid->ChActionHandler)
-			wid->ChActionHandler(wid, win);
+		_action_required = true;
 
 		wid->hoverPainted = false;
 		wid->clicked = false;
+	}
+
+	if (_action_required){
+		/* call the action handler */
+		if (wid->ChActionHandler)
+			wid->ChActionHandler(wid, win);
 	}
 
 	wid->lastMouseX = x;

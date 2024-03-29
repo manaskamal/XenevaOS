@@ -21,6 +21,16 @@
   <ItemGroup>
     <ClCompile Include="main.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="libc.h" />
+    <ClCompile Include="minimp3.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+      </ExcludedFromBuild>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+      </DeploymentContent>
+    </ClCompile>
+    <ClInclude Include="minimp3.h" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{01D9EF82-5076-4E5C-95FF-C027864A8302}</ProjectGuid>
     <RootNamespace>AudioPlayer</RootNamespace>

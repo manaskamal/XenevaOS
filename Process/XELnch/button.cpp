@@ -116,7 +116,7 @@ void LaunchButtonMouseEvent(LaunchButton* wid, ChWindow* win, int x, int y, int 
 void LauncherButtonDefaultAction(LaunchButton* lbutton, ChWindow *win){
 	int id = _KeCreateProcess(0, lbutton->title);
 	int status = _KeProcessLoadExec(id, lbutton->appname, 0, 0);
-	_KeProcessSleep(20);
+	_KeProcessSleep(60);
 	ChWindowHide(win);
 }
 

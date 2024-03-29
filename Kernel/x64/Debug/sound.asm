@@ -401,7 +401,7 @@ $LN4@AuSoundWri:
 $LN5@AuSoundWri:
 
 ; 184  : 	}
-; 185  : 	for (int i = 0; i < SND_BUFF_SZ; i++) {
+; 185  : 	for (int i = 0; i < SND_BUFF_SZ; i++) { //
 
 	mov	DWORD PTR i$1[rsp], 0
 	jmp	SHORT $LN3@AuSoundWri

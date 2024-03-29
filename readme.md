@@ -33,6 +33,15 @@ _And many more coming soon_
 
 ![alt text](https://github.com/manaskamal/XenevaOS/blob/master/apptray.png?raw=true)
 
+# Installed Applications :
+
+1. Basic GUI Wave Audio player called Accent Player
+2. Basic File Navigator App
+3. A Calculator
+4. Xeneva Terminal (ANSI/VT100 support)
+5. Basic shell application called XEShell
+6  Terminal Application : play(wave player)
+
 # Building the project
 
 The project is build on Windows environment. It requires Microsoft 

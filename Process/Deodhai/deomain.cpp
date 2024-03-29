@@ -1604,8 +1604,9 @@ int main(int argc, char* arv[]) {
 				}
 			}
 			
+			event.type = 174;
 			DeodhaiBroadcastMessage(&event, skippable);
-			_KeProcessSleep(10);
+			_KeProcessSleep(20);
 			memset(&event, 0, sizeof(PostEvent));
 		}
 

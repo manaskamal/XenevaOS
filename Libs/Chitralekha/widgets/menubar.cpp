@@ -62,13 +62,20 @@ void ChMenubarDestroy(ChWidget* wid, ChWindow* win) {
  * @param button -- Mouse button state
  */
 void ChMenubarMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, int button) {
+	bool _need_repaint_ = false;
 	ChMenubar* mb = (ChMenubar*)wid;
 	ChMenuButton* clickedButton = NULL;
 	if (mb->allpainted) {
 		for (int i = 0; i < mb->menubuttons->pointer; i++) {
 			ChMenuButton* mbut = (ChMenuButton*)list_get_at(mb->menubuttons, i);
-			mbut->hover = false;
-			mbut->clicked = false;
+			if (mbut->hover){
+				mbut->hover = false;
+				_need_repaint_ = 1;
+			}
+			if (mbut->clicked){
+				mbut->clicked = false;
+				_need_repaint_ = 1;
+			}
 			if ((x >(win->info->x + mbut->wid.x) && x < (win->info->x + mbut->wid.x + mbut->wid.w)) &&
 				(y >(win->info->y + mbut->wid.y) && y < (win->info->y + mbut->wid.y + mbut->wid.h))) {
 				mbut->hover = true;
@@ -76,6 +83,7 @@ void ChMenubarMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, int button)
 					clickedButton = mbut;
 					mbut->clicked = true;
 				}
+				_need_repaint_ = 1;
 			}
 		}
 	}
@@ -141,9 +149,11 @@ void ChMenubarMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, int button)
 		}
 	}
 
-	mb->wid.ChPaintHandler(wid, win);
-	ChWindowUpdate(win, wid->x,
-		wid->y, wid->w - 1, wid->h, false, true);
+	if (_need_repaint_) {
+		mb->wid.ChPaintHandler(wid, win);
+		ChWindowUpdate(win, wid->x,
+			wid->y, wid->w - 1, wid->h, false, true);
+	}
 }
 /*
  * ChCreateMenubar -- create a new menubar

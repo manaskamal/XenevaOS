@@ -67,6 +67,7 @@ XE_EXTERN{
 	XE_LIB float sqrtf(float x);
 	XE_LIB double tan(double);
 	XE_LIB float tanf(float);
+	XE_LIB double frexp(double x, int *exp);
 
 #ifdef __cplusplus
 }

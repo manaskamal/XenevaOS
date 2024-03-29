@@ -182,7 +182,7 @@ size_t AuSoundWrite(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint32_t
 		AuBlockThread(dsp->SndThread);
 		AuForceScheduler();	
 	}
-	for (int i = 0; i < SND_BUFF_SZ; i++) {
+	for (int i = 0; i < SND_BUFF_SZ; i++) { //
 		AuCircBufPut(dsp->buffer, aligned_buf[i]);
 	}
 

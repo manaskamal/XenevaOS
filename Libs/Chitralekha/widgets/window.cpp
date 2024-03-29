@@ -532,6 +532,12 @@ void ChFreeWindowResources(ChWindow *win) {
 XE_EXTERN XE_EXPORT void ChWindowCloseWindow(ChWindow* win){
 	bool subWindow = false;
 	ChWindow* parent = NULL;
+
+	/* call the close callback before closing the window*/
+	if (win->ChCloseWin)
+		win->ChCloseWin(win);
+
+
 	/* check if this was a sub window */
 	if (win->parent) {
 		parent = win->parent;

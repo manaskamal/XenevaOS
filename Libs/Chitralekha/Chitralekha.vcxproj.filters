@@ -23,8 +23,6 @@
     <ClInclude Include="widgets\button.h">
       <Filter>widgets</Filter>
     </ClInclude>
-    <ClInclude Include="minimp3.h" />
-    <ClInclude Include="minimp3_ex.h" />
     <ClInclude Include="widgets\msgbox.h">
       <Filter>widgets</Filter>
     </ClInclude>

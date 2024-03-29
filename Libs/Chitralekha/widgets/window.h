@@ -103,6 +103,7 @@
 		void* selectedMenuItem;
 		jmp_buf jump;
 		void(*ChWinPaint)(struct _chwin_ *win);
+		void(*ChCloseWin)(struct _chwin_* win);
 	}ChWindow;
 
 	typedef struct _ChWidget_{

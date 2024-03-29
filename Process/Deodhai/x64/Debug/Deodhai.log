@@ -1,8 +1,8 @@
-﻿Build started 27-03-2024 আবেলি 11:55:55.
+﻿Build started 29-03-2024 ৰাতিপু 10:09:50.
      1>Project "E:\Xeneva Project\Aurora\Process\Deodhai\Deodhai.vcxproj" on node 2 (Rebuild target(s)).
      1>_NASM:
          _fastcpy.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp226b2857342e497a848f31436e06175a.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp767ef0af1f9f4bc8b7a36eb1707558d3.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\_fastcpy.obj"  "E:\Xeneva Project\Aurora\Process\Deodhai\_fastcpy.asm"
        ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /I"E:\Xeneva Project\Aurora\Libs\Chitralekha" /I"E:\os_dev\freetype2-master\freetype2-master\include" /Zi /nologo /W4 /WX- /sdl- /MP /Od /Oy- /D ARCH_X64 /D YES_DYNAMIC /D DYNAMIC_IMPORTER /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt backdirty.cpp clip.cpp cursor.cpp deomain.cpp dirty.cpp popup.cpp rect.cpp window.cpp
@@ -129,19 +129,19 @@
      1>deomain.cpp(1531): warning C4018: '>=' : signed/unsigned mismatch
      1>deomain.cpp(1533): warning C4018: '>=' : signed/unsigned mismatch
      1>deomain.cpp(1552): warning C4244: 'initializing' : conversion from 'uint32_t' to 'uint8_t', possible loss of data
-     1>deomain.cpp(1613): warning C4244: 'initializing' : conversion from 'uint32_t' to 'uint16_t', possible loss of data
-     1>deomain.cpp(1639): warning C4244: 'initializing' : conversion from 'uint32_t' to 'uint16_t', possible loss of data
-     1>deomain.cpp(1702): warning C4389: '==' : signed/unsigned mismatch
-     1>deomain.cpp(1725): warning C4389: '==' : signed/unsigned mismatch
-     1>deomain.cpp(1726): warning C4244: '=' : conversion from 'int' to 'uint8_t', possible loss of data
-     1>deomain.cpp(1740): warning C4244: 'initializing' : conversion from 'uint32_t' to 'uint8_t', possible loss of data
-     1>deomain.cpp(1747): warning C4389: '==' : signed/unsigned mismatch
-     1>deomain.cpp(1754): warning C4244: 'argument' : conversion from 'int' to 'uint16_t', possible loss of data
+     1>deomain.cpp(1614): warning C4244: 'initializing' : conversion from 'uint32_t' to 'uint16_t', possible loss of data
+     1>deomain.cpp(1640): warning C4244: 'initializing' : conversion from 'uint32_t' to 'uint16_t', possible loss of data
+     1>deomain.cpp(1703): warning C4389: '==' : signed/unsigned mismatch
+     1>deomain.cpp(1726): warning C4389: '==' : signed/unsigned mismatch
+     1>deomain.cpp(1727): warning C4244: '=' : conversion from 'int' to 'uint8_t', possible loss of data
+     1>deomain.cpp(1741): warning C4244: 'initializing' : conversion from 'uint32_t' to 'uint8_t', possible loss of data
+     1>deomain.cpp(1748): warning C4389: '==' : signed/unsigned mismatch
+     1>deomain.cpp(1755): warning C4244: 'argument' : conversion from 'int' to 'uint16_t', possible loss of data
      1>deomain.cpp(1384): warning C4100: 'arv' : unreferenced formal parameter
      1>deomain.cpp(1465): warning C4189: 'diff_tick' : local variable is initialized but not referenced
      1>deomain.cpp(1464): warning C4189: 'frame_tick' : local variable is initialized but not referenced
-     1>deomain.cpp(1613): warning C4189: 'ownerId' : local variable is initialized but not referenced
-     1>deomain.cpp(1740): warning C4189: 'type' : local variable is initialized but not referenced
+     1>deomain.cpp(1614): warning C4189: 'ownerId' : local variable is initialized but not referenced
+     1>deomain.cpp(1741): warning C4189: 'type' : local variable is initialized but not referenced
          cursor.cpp
      1>cursor.cpp(102): warning C4018: '<' : signed/unsigned mismatch
      1>cursor.cpp(106): warning C4018: '<' : signed/unsigned mismatch
@@ -171,4 +171,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:01.20
+Time Elapsed 00:00:04.65

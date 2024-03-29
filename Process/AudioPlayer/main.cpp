@@ -47,6 +47,7 @@
 #include <nanojpg.h>
 #include <string.h>
 #include <stdlib.h>
+#include "minimp3.h"
 
 ChitralekhaApp *app;
 ChWindow* mainWin;
@@ -63,6 +64,9 @@ int snd;
 int _file;
 bool _start_player;
 void* soundbuff;
+void* filebuff;
+static mp3_decoder_t mp3;
+static mp3_info_t info;
 
 /*
 * RegisterSound -- create a new instance of sound
@@ -113,7 +117,7 @@ void PlayerThread() {
 		}
 
 		if (!_start_player) 
-			_KeProcessSleep(10000000);
+			_KeProcessSleep(1000);
 	}
 }
 
@@ -156,7 +160,7 @@ void WindowHandleMessage(PostEvent *e) {
 }
 
 void AboutClicked(ChWidget* wid, ChWindow* win) {
-	ChMessageBox* mb = ChCreateMessageBox(mainWin, "Music Player v1.0", "Music Player v1.0 for XenevaOS !!", MSGBOX_TYPE_ONLYCLOSE, MSGBOX_ICON_SUCCESS);
+	ChMessageBox* mb = ChCreateMessageBox(mainWin, "Accent v1.0", "Accent Player v1.0 for XenevaOS !!", MSGBOX_TYPE_ONLYCLOSE, MSGBOX_ICON_SUCCESS);
 	ChMessageBoxShow(mb);
 }
 
@@ -204,7 +208,6 @@ void UpdateHomeUI() {
 	mainWin->canv = mainCanvas;
 	mainWin->widgets = mainWidgetList;
 	ChWindowUpdate(mainWin, 0, 0, mainWin->info->width, mainWin->info->height, 1, 0);
-	_KeProcessSleep(52 * 1000);
 }
 
 void UpdateBrowserUI() {
@@ -239,8 +242,8 @@ void SelectButtonActionHandler(ChWidget* wid, ChWindow* win) {
 		selectedFile = li->itemText;
 	}
 
-	_KeProcessSleep(52 * 1000);
 	UpdateHomeUI();
+	_KeProcessSleep(100);
 }
 
 void MusicPrepareLibrary(ChListView *lv) {
@@ -301,17 +304,35 @@ void PrepareBrowserUI(){
 	list_add(browserWidgetList, selectButt);
 }
 
+void AudioPlayerClose(ChWindow* win) {
+	for (int i = 0; i < browserWidgetList->pointer; i++) {
+		ChWidget* wid = (ChWidget*)list_get_at(browserWidgetList, i);
+		if (wid == (ChWidget*)mainMenubar){
+			list_remove(browserWidgetList, i);
+		}
+		else {
+			if (wid->ChDestroy)
+				wid->ChDestroy(wid, win);
+		}
+	}
+	list_clear_all(browserWidgetList);
+	free(browserWidgetList);
+	ChDeAllocateBuffer(browserCanvas);
+	free(browserCanvas);
+}
+
 /*
 * main -- main entry
 */
 int main(int argc, char* argv[]){
 	app = ChitralekhaStartApp(argc, argv);
-	mainWin = ChCreateWindow(app, WINDOW_FLAG_MOVABLE, "Music", 100, 100, CHITRALEKHA_DEFAULT_WIN_WIDTH, 
+	mainWin = ChCreateWindow(app, WINDOW_FLAG_MOVABLE, "Accent", 100, 100, CHITRALEKHA_DEFAULT_WIN_WIDTH, 
 		500);
 
 	_music_library_drawn = false;
 	_start_player = false;
 	selectedFile = NULL;
+	mainWin->ChCloseWin = AudioPlayerClose;
 
 	mainMenubar = ChCreateMenubar(mainWin);
 
@@ -355,15 +376,16 @@ int main(int argc, char* argv[]){
 	soundbuff = malloc(4096);
 	memset(soundbuff, 0, 4096);
 
+
 	/* prepare the browser UI*/
 	PrepareBrowserUI();
 
-	int threadIdx = _KeCreateThread(PlayerThread,"audio");
+	int threadIdx = _KeCreateThread(PlayerThread,"accent");
 
 	PostEvent e;
 	memset(&e, 0, sizeof(PostEvent));
 
-	//ChWindowBroadcastIcon(app, "/file.bmp");
+	ChWindowBroadcastIcon(app, "/media.bmp");
 
 	setjmp(mainWin->jump);
 	while (1) {
