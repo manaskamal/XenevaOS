@@ -486,6 +486,7 @@
     <ClCompile Include="Serv\timerserv.cpp">
       <Filter>Serv</Filter>
     </ClCompile>
+    <ClCompile Include="version.cpp" />
   </ItemGroup>
   <ItemGroup>
     <NASM Include="__fstcpy.asm" />

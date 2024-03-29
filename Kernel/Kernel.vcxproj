@@ -296,6 +296,7 @@
     <ClCompile Include="Sync\mutex.cpp" />
     <ClCompile Include="Sync\spinlock.cpp" />
     <ClCompile Include="time.cpp" />
+    <ClCompile Include="version.cpp" />
     <ClCompile Include="_CRT.cpp" />
   </ItemGroup>
   <ItemGroup>

@@ -304,6 +304,12 @@ void PrepareBrowserUI(){
 	list_add(browserWidgetList, selectButt);
 }
 
+/*
+ * AudioPlayerClose -- Close callback, which will free
+ * up all allocated resources before the application
+ * fully closes
+ * @param win -- Pointer to main Window
+ */
 void AudioPlayerClose(ChWindow* win) {
 	for (int i = 0; i < browserWidgetList->pointer; i++) {
 		ChWidget* wid = (ChWidget*)list_get_at(browserWidgetList, i);
