@@ -1,45 +1,43 @@
-﻿Build started 27-03-2024 আবেলি 11:36:24.
+﻿Build started 03-04-2024 আবেলি 9:14:52.
      1>Project "E:\Xeneva Project\Aurora\Process\Files\Files.vcxproj" on node 2 (Rebuild target(s)).
      1>ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /I"E:\Xeneva Project\Aurora\Libs\Chitralekha" /I"E:\os_dev\freetype2-master\freetype2-master\include" /Zi /nologo /W4 /WX- /sdl- /MP /Od /Oy /D ARCH_X64 /D YES_DYNAMIC /D DYNAMIC_IMPORTER /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt main.cpp
      1>cl : Command line warning D9025: overriding '/sdl-' with '/GS-'
      1>cl : Command line warning D9002: ignoring unknown option '/arch:SSE2'
          main.cpp
-     1>main.cpp(67): warning C4100: 'button' : unreferenced formal parameter
-     1>main.cpp(67): warning C4100: 'y' : unreferenced formal parameter
-     1>main.cpp(67): warning C4100: 'x' : unreferenced formal parameter
-     1>main.cpp(67): warning C4100: 'win' : unreferenced formal parameter
-     1>main.cpp(67): warning C4100: 'wid' : unreferenced formal parameter
-     1>main.cpp(87): warning C4100: 'win' : unreferenced formal parameter
-     1>main.cpp(87): warning C4100: 'wid' : unreferenced formal parameter
-     1>main.cpp(133): warning C4244: 'argument' : conversion from 'int' to 'char', possible loss of data
-     1>main.cpp(125): warning C4189: 'c' : local variable is initialized but not referenced
-     1>main.cpp(143): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
-     1>main.cpp(146): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
-     1>main.cpp(152): warning C4189: 'k' : local variable is initialized but not referenced
-     1>main.cpp(180): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
-     1>main.cpp(181): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
-     1>main.cpp(185): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
-     1>main.cpp(199): warning C4127: conditional expression is constant
-     1>main.cpp(228): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
-     1>main.cpp(229): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
-     1>main.cpp(257): warning C4127: conditional expression is constant
-     1>main.cpp(281): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
-     1>main.cpp(227): warning C4100: 'win' : unreferenced formal parameter
-     1>main.cpp(227): warning C4100: 'wid' : unreferenced formal parameter
-     1>main.cpp(288): warning C4100: 'win' : unreferenced formal parameter
-     1>main.cpp(288): warning C4100: 'wid' : unreferenced formal parameter
-     1>main.cpp(301): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
-     1>main.cpp(302): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
-     1>main.cpp(306): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
-     1>main.cpp(319): warning C4127: conditional expression is constant
-     1>main.cpp(296): warning C4100: 'win' : unreferenced formal parameter
-     1>main.cpp(296): warning C4100: 'wid' : unreferenced formal parameter
-     1>main.cpp(397): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
-     1>main.cpp(408): warning C4127: conditional expression is constant
-     1>main.cpp(429): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
-     1>main.cpp(446): warning C4127: conditional expression is constant
-     1>main.cpp(374): warning C4189: 'item' : local variable is initialized but not referenced
+     1>main.cpp(69): warning C4100: 'button' : unreferenced formal parameter
+     1>main.cpp(69): warning C4100: 'y' : unreferenced formal parameter
+     1>main.cpp(69): warning C4100: 'x' : unreferenced formal parameter
+     1>main.cpp(69): warning C4100: 'win' : unreferenced formal parameter
+     1>main.cpp(69): warning C4100: 'wid' : unreferenced formal parameter
+     1>main.cpp(88): warning C4100: 'win' : unreferenced formal parameter
+     1>main.cpp(88): warning C4100: 'wid' : unreferenced formal parameter
+     1>main.cpp(134): warning C4244: 'argument' : conversion from 'int' to 'char', possible loss of data
+     1>main.cpp(126): warning C4189: 'c' : local variable is initialized but not referenced
+     1>main.cpp(144): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
+     1>main.cpp(147): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
+     1>main.cpp(153): warning C4189: 'k' : local variable is initialized but not referenced
+     1>main.cpp(190): warning C4127: conditional expression is constant
+     1>main.cpp(211): warning C4127: conditional expression is constant
+     1>main.cpp(232): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
+     1>main.cpp(233): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
+     1>main.cpp(237): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
+     1>main.cpp(263): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
+     1>main.cpp(264): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
+     1>main.cpp(296): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
+     1>main.cpp(262): warning C4100: 'win' : unreferenced formal parameter
+     1>main.cpp(262): warning C4100: 'wid' : unreferenced formal parameter
+     1>main.cpp(303): warning C4100: 'win' : unreferenced formal parameter
+     1>main.cpp(303): warning C4100: 'wid' : unreferenced formal parameter
+     1>main.cpp(316): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
+     1>main.cpp(317): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
+     1>main.cpp(321): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
+     1>main.cpp(311): warning C4100: 'win' : unreferenced formal parameter
+     1>main.cpp(311): warning C4100: 'wid' : unreferenced formal parameter
+     1>main.cpp(390): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
+     1>main.cpp(404): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
+     1>main.cpp(420): warning C4127: conditional expression is constant
+     1>main.cpp(369): warning C4189: 'item' : local variable is initialized but not referenced
      1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(1186,5): warning MSB8012: TargetPath(E:\Xeneva Project\Aurora\x64\Debug\Files.exe) does not match the Linker's OutputFile property value (F:\file.exe). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
      1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(1188,5): warning MSB8012: TargetName(Files) does not match the Linker's OutputFile property value (file). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
        Link:
@@ -51,4 +49,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:00.55
+Time Elapsed 00:00:01.01

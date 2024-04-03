@@ -460,6 +460,8 @@ int main(int argc, char* arv[]){
 	gomenuh = ChGetWindowHandle(app, "Xeneva Launcher");
 	gobutton->winHandle = gomenuh;
 	
+	NamdaphaPlayStartupSound();
+
 	PostEvent e;
 	memset(&e, 0, sizeof(PostEvent));
 	while (1) {

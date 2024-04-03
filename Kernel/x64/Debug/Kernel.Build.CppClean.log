@@ -125,6 +125,8 @@ e:\xeneva project\aurora\kernel\x64\debug\init.obj
 e:\xeneva project\aurora\kernel\x64\debug\init.asm
 e:\xeneva project\aurora\kernel\x64\debug\_crt.obj
 e:\xeneva project\aurora\kernel\x64\debug\_crt.asm
+e:\xeneva project\aurora\kernel\x64\debug\version.obj
+e:\xeneva project\aurora\kernel\x64\debug\version.asm
 e:\xeneva project\aurora\kernel\x64\debug\time.obj
 e:\xeneva project\aurora\kernel\x64\debug\time.asm
 e:\xeneva project\aurora\kernel\x64\debug\spinlock.obj

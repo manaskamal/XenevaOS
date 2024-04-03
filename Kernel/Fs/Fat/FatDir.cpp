@@ -268,11 +268,15 @@ AuVFSNode* FatOpenDir(AuVFSNode* fs, char *path) {
 		return NULL;
 	}
 	if (!ret) {
+		/* if no returnable file found, simply return
+		 * the root directory by creating a new vfs
+		 * instance
+		 */
 		ret = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
 		memset(ret, 0, sizeof(AuVFSNode));
 		strcpy(ret->filename, "/");
 		ret->current = fatfs->__RootDirFirstCluster;
-		ret->size = 0; //variable
+		ret->size = 0;
 		ret->eof = 0;
 		ret->status = FS_STATUS_FOUND;
 		ret->close = 0;
@@ -281,7 +285,6 @@ AuVFSNode* FatOpenDir(AuVFSNode* fs, char *path) {
 		ret->device = fs;
 		ret->parent_block = fatfs->__RootDirFirstCluster;
 		ret->flags |= FS_FLAG_DIRECTORY;
-		ret->flags |= FS_FLAG_GENERAL;
 	}
 	return ret;
 }

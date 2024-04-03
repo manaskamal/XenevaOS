@@ -669,12 +669,6 @@ void ComposeFrame(ChCanvas *canvas) {
 					if ((k_y + k_h) >= canvas->screenHeight)
 						k_h = canvas->screenHeight - k_y;
 
-					if ((currentCursor->xpos >= k_x && currentCursor->xpos < (k_x + k_w)) &&
-						(currentCursor->ypos >= k_y && currentCursor->ypos < (k_y + k_h))){
-						_cursor_update_ = true;
-						_cursor_drawback_ = true;
-					}
-
 					int offset_x = info->x + r_x;
 
 					int diffx = k_x - offset_x;
@@ -889,7 +883,7 @@ void ComposeFrame(ChCanvas *canvas) {
 				pw->shwin->hide = false;
 				pw->shadowUpdate = true;
 				pw->hidden = true;
-				info->updateEntireWindow = 1;
+				//info->updateEntireWindow = 1;
 			}
 
 			if (pw->shwin->popuped){
@@ -1564,7 +1558,7 @@ int main(int argc, char* arv[]) {
 			
 			_KeFileIoControl(postbox_fd, POSTBOX_PUT_EVENT, &e);
 
-			_KeProcessSleep(20);
+			_KeProcessSleep(40);
 			if (!(flags & WINDOW_FLAG_MESSAGEBOX)){
 				_KePrint("Broadcasting message \n");
 				/* broadcast it to all broadcast listener windows, about this news*/

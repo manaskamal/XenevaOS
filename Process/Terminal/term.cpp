@@ -585,7 +585,7 @@ int main(int argc, char* arv[]){
 
 	
 	ChWindowPaint(win);
-	_KeProcessSleep(100000);
+	_KeProcessSleep(100);
 
 	int term_id = _KeGetProcessID();
 	/* try loading the shell process */

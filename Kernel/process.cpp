@@ -498,7 +498,7 @@ void AuProcessExit(AuProcess* proc, bool schedulable) {
 			SeTextOut("Closing file -> %s , address -> %x \r\n", file->filename, file);
 			if (file->flags & FS_FLAG_DEVICE || file->flags & FS_FLAG_FILE_SYSTEM)
 				continue;
-			if (file->flags & FS_FLAG_GENERAL)  {
+			if ((file->flags & FS_FLAG_GENERAL) || (file->flags & FS_FLAG_DIRECTORY)){
 				if (file->fileCopyCount <= 0)
 					kfree(file);
 				else
@@ -516,14 +516,15 @@ void AuProcessExit(AuProcess* proc, bool schedulable) {
 
 	kfree(proc->waitlist);
 
+	SeTextOut("unmapping mem \r\n");
 	UnmapMemMapping((void*)PROCESS_MMAP_ADDRESS, proc->proc_mmap_len);
 	
 	/*unmap all shared memory mappings */
 	AuSHMUnmapAll(proc);
 
+	SeTextOut("closing process -> %s \r\n", proc->name);
 	AuProcessHeapMemDestroy(proc);
 
-	SeTextOut("closing process -> %s \r\n", proc->name);
 
 	bool _file_present = false;
 	if (proc->file){

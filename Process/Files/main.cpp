@@ -64,8 +64,9 @@ typedef struct _address_bar_ {
 
 FileAddressBar *addressbar;
 
-void FileAddressBarMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, int button) {
+void DirListItemAction(ChListView* lv, ChListItem* li);
 
+void FileAddressBarMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, int button) {
 }
 
 
@@ -176,6 +177,57 @@ void PrintParentDir(char* pathname) {
 	free(subpath);
 }
 
+/*
+ * RefreshFileView -- reiterate and add file to the list view
+ * @param dirfd -- directory file descriptor
+ * @param lview -- Pointer to list view
+ */
+void RefreshFileView(int dirfd, ChListView *lview) {
+	XEDirectoryEntry* dirent = (XEDirectoryEntry*)malloc(sizeof(XEDirectoryEntry));
+	memset(dirent, 0, sizeof(XEDirectoryEntry));
+
+	/* short directories first*/
+	while (1) {
+		if (dirent->index == -1)
+			break;
+		int code = _KeReadDir(dirfd, dirent);
+		if (code != -1) {
+			if (dirent->flags & FILE_DIRECTORY){
+				if ((strcmp(dirent->filename, ".") == 0) || (strcmp(dirent->filename, "..") == 0)){
+					memset(dirent->filename, 0, 32);
+					continue;
+				}
+				ChListItem*li = ChListViewAddItem(mainWin, lview, dirent->filename);
+				ChListViewSetListItemIcon(li, dirico);
+				li->ChListItemAction = DirListItemAction;
+			}
+		}
+		memset(dirent->filename, 0, 32);
+	}
+
+	dirent->index = 0;
+
+	/* short the files next*/
+	while (1) {
+		if (dirent->index == -1)
+			break;
+		int code = _KeReadDir(dirfd, dirent);
+		if (code != -1) {
+			if (dirent->flags & FILE_GENERAL){
+				if ((strcmp(dirent->filename, ".") == 0) || (strcmp(dirent->filename, "..") == 0)){
+					memset(dirent->filename, 0, 32);
+					continue;
+				}
+				ChListItem* fi = ChListViewAddItem(mainWin, lv, dirent->filename);
+				ChListViewSetListItemIcon(fi, docico);
+			}
+		}
+		memset(dirent->filename, 0, 32);
+	}
+
+	free(dirent);
+}
+
 void DirListItemAction(ChListView* lv, ChListItem* li) {
 	int len = strlen(path) - 1;
 	char *dirname = (char*)malloc(strlen(li->itemText) + len);
@@ -194,27 +246,10 @@ void DirListItemAction(ChListView* lv, ChListItem* li) {
 	_KeProcessSleep(10);
 
 	int dirfd = _KeOpenDir(dirname);
-	XEDirectoryEntry* dirent = (XEDirectoryEntry*)malloc(sizeof(XEDirectoryEntry));
-	memset(dirent, 0, sizeof(XEDirectoryEntry));
-	while (1) {
-		if (dirent->index == -1)
-			break;
-		int code = _KeReadDir(dirfd, dirent);
-		if (code != -1) {
-			if (dirent->flags & FILE_DIRECTORY){
-				ChListItem*li = ChListViewAddItem(mainWin, lv, dirent->filename);
-				ChListViewSetListItemIcon(li, dirico);
-				li->ChListItemAction = DirListItemAction;
-			}
-			else{
-				ChListItem* fi = ChListViewAddItem(mainWin, lv, dirent->filename);
-				ChListViewSetListItemIcon(fi, docico);
-			}
 
-		}
-		memset(dirent->filename, 0, 32);
-	}
-	free(dirent);
+	/* refresh the file view */
+	RefreshFileView(dirfd, lv);
+
 	_KeCloseFile(dirfd);
 	free(dirname);
 	ChListViewRepaint(mainWin, lv);
@@ -252,27 +287,7 @@ void BackbutClicked(ChWidget* wid, ChWindow* win) {
 	_KeProcessSleep(10);
 
 	int dirfd = _KeOpenDir(subpath);
-	XEDirectoryEntry* dirent = (XEDirectoryEntry*)malloc(sizeof(XEDirectoryEntry));
-	memset(dirent, 0, sizeof(XEDirectoryEntry));
-	while (1) {
-		if (dirent->index == -1)
-			break;
-		int code = _KeReadDir(dirfd, dirent);
-		if (code != -1) {
-			if (dirent->flags & FILE_DIRECTORY){
-				ChListItem*li = ChListViewAddItem(mainWin, lv, dirent->filename);
-				ChListViewSetListItemIcon(li, dirico);
-				li->ChListItemAction = DirListItemAction;
-			}
-			else{
-				ChListItem* fi = ChListViewAddItem(mainWin, lv, dirent->filename);
-				ChListViewSetListItemIcon(fi, docico);
-			}
-
-		}
-		memset(dirent->filename, 0, 32);
-	}
-	free(dirent);
+	RefreshFileView(dirfd, lv);
 	
 	_KeCloseFile(dirfd);
 	ChListViewRepaint(mainWin, lv);
@@ -314,27 +329,7 @@ void EnterClicked(ChWidget* wid, ChWindow* win) {
 	_KeProcessSleep(10);
 
 	int dirfd = _KeOpenDir(dirname);
-	XEDirectoryEntry* dirent = (XEDirectoryEntry*)malloc(sizeof(XEDirectoryEntry));
-	memset(dirent, 0, sizeof(XEDirectoryEntry));
-	while (1) {
-		if (dirent->index == -1)
-			break;
-		int code = _KeReadDir(dirfd, dirent);
-		if (code != -1) {
-			if (dirent->flags & FILE_DIRECTORY){
-				ChListItem*li = ChListViewAddItem(mainWin, lv, dirent->filename);
-				ChListViewSetListItemIcon(li, dirico);
-				li->ChListItemAction = DirListItemAction;
-			}
-			else{
-				ChListItem* fi = ChListViewAddItem(mainWin, lv, dirent->filename);
-				ChListViewSetListItemIcon(fi, docico);
-			}
-
-		}
-		memset(dirent->filename, 0, 32);
-	}
-	free(dirent);
+	RefreshFileView(dirfd, lv);
 	_KeCloseFile(dirfd);
 	free(dirname);
 	ChListViewRepaint(mainWin, lv);
@@ -352,11 +347,11 @@ int main(int argc, char* argv[]){
 
 	pm = NULL;
 
-	ChButton* backbut = ChCreateButton(10,34, 50, 35, "Back"); //mainWin->info->width / 2 - 100 / 2, mainWin->info->height / 2 - 75/2
+	ChButton* backbut = ChCreateButton(10,34, 50, 35, "<-"); //mainWin->info->width / 2 - 100 / 2, mainWin->info->height / 2 - 75/2
 	ChWindowAddWidget(mainWin,(ChWidget*)backbut);
 	backbut->base.ChActionHandler = BackbutClicked;
 
-	ChButton* Enterbut = ChCreateButton(60 + 10, 34, 50, 35, "Enter");
+	ChButton* Enterbut = ChCreateButton(60 + 10, 34, 50, 35, "->");
 	ChWindowAddWidget(mainWin, (ChWidget*)Enterbut);
 	Enterbut->base.ChActionHandler = EnterClicked;
 
@@ -391,9 +386,7 @@ int main(int argc, char* argv[]){
 	
 
 	int dirfd = _KeOpenDir("/");
-	XEDirectoryEntry* dirent = (XEDirectoryEntry*)malloc(sizeof(XEDirectoryEntry));
-	memset(dirent, 0, sizeof(XEDirectoryEntry));
-
+	
 	path = (char*)malloc(strlen("/"));
 	strcpy(path, "/");
 
@@ -405,32 +398,13 @@ int main(int argc, char* argv[]){
 	ChIconOpen(docico, "/doc.bmp");
 	ChIconRead(docico);
 	
-	while (1) {
-		if (dirent->index == -1)
-			break;
-		int code = _KeReadDir(dirfd, dirent);
-		if (code != -1) {
-			if (dirent->flags & FILE_DIRECTORY){
-				ChListItem*li =  ChListViewAddItem(mainWin, lv, dirent->filename);
-				ChListViewSetListItemIcon(li, dirico);
-				li->ChListItemAction = DirListItemAction;
-			}
-			else{
-				ChListItem* fi = ChListViewAddItem(mainWin, lv, dirent->filename);
-				ChListViewSetListItemIcon(fi, docico);
-			}
-			
-		}
-		memset(dirent->filename, 0, 32);
-	}
-	free(dirent);
+	RefreshFileView(dirfd, lv);
 
 	/* first store the root address */
 	history = (char*)malloc(strlen("/"));
 	strcpy(history, "/");
 
-
-	//_KeCloseFile(dirfd);
+	_KeCloseFile(dirfd);
 
 	ChWindowPaint(mainWin);
 	ChWindowBroadcastIcon(app, "/file.bmp");

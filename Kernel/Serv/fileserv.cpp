@@ -75,6 +75,7 @@ int OpenFile(char* filename, int mode) {
 	if (fd == -1)
 		return -1;
 	current_proc->fds[fd] = file;
+	SeTextOut("Opening file -> %s %x \r\n", file->filename, file);
 	return fd;
 }
 
@@ -284,17 +285,16 @@ int CloseFile(int fd) {
 
 	AuVFSNode* file = current_proc->fds[fd];
 	if (file->flags & FS_FLAG_FILE_SYSTEM){
-		SeTextOut("Clising fs -> %s \r\n", file->filename);
+		SeTextOut("Closing fs -> %s \r\n", file->filename);
+		current_proc->fds[fd] = 0;
 		return -1;
 	}
-	if (file->flags & FS_FLAG_GENERAL)
+	if (file->flags & FS_FLAG_GENERAL){
 		kfree(file);
+	}
 	
 
 	if (file->flags & FS_FLAG_DIRECTORY){
-		if (strcmp(file->filename, "/") == 0)
-			return -1;
-		SeTextOut("Closing file %s \r\n", file->filename);
 		kfree(file);
 	}
 
@@ -398,6 +398,7 @@ int OpenDir(char* filename) {
 		return -1;
 
 	current_proc->fds[fd] = dirfile;
+	SeTextOut("dir opening -> %s , %x \r\n", dirfile->filename, dirfile);
 	return fd;
 }
 

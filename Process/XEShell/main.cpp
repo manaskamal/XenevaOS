@@ -43,6 +43,7 @@ bool _spawnable_process;
 int job;
 bool _sig_handled = false;
 
+
 void XEShellSigInterrupt(int signo) {
 	/* signal is little buggy so, so it won't
 	 * work for now
