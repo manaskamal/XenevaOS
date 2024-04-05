@@ -469,7 +469,7 @@ int main(int argc, char* argv[]){
 		}
 	}
 
-	ChWindowBroadcastIcon(app, "/calc.bmp");
+	ChWindowBroadcastIcon(app, "/icons/calc.bmp");
 
 	dispFont = ChInitialiseFont(CALIBRI);
 

@@ -1,8 +1,8 @@
-﻿Build started 03-04-2024 আবেলি 9:09:02.
+﻿Build started 05-04-2024 আবেলি 7:24:49.
      1>Project "E:\Xeneva Project\Aurora\Libs\Chitralekha\Chitralekha.vcxproj" on node 2 (Rebuild target(s)).
      1>_NASM:
          _fastcpy.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmpa6de6bc5fef74a5e9d1a6fdc7ed03514.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmpbb3d016abcd74c0b9c2b0ac84837b466.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\_fastcpy.obj"  "E:\Xeneva Project\Aurora\Libs\Chitralekha\_fastcpy.asm"
        ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /I"E:\os_dev\freetype2-master\freetype2-master\include" /Zi /nologo /W3 /WX- /sdl- /Od /D ARCH_X64 /D YES_DYNAMIC /D DYNAMIC_EXPORTER /D _USE_FREETYPE /D _WINDLL /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt boxblur.cpp chitralekha.cpp color.cpp draw.cpp font.cpp keycode.cpp ttf.cpp widgets\base.cpp widgets\button.cpp widgets\defaultmenu.cpp widgets\defaultscrollbar.cpp widgets\defaultviews.cpp widgets\defaultwindow.cpp widgets\icon.cpp widgets\list.cpp widgets\menu.cpp widgets\menubar.cpp widgets\msgbox.cpp widgets\scrollpane.cpp widgets\view.cpp widgets\window.cpp
@@ -33,8 +33,8 @@
      1>widgets\scrollpane.cpp(267): warning C4244: '=' : conversion from 'double' to 'int', possible loss of data
      1>widgets\scrollpane.cpp(268): warning C4244: '=' : conversion from 'double' to 'int', possible loss of data
          msgbox.cpp
-     1>widgets\msgbox.cpp(123): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
-     1>widgets\msgbox.cpp(141): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\msgbox.cpp(126): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
+     1>widgets\msgbox.cpp(151): warning C4018: '<' : signed/unsigned mismatch
          menubar.cpp
      1>widgets\menubar.cpp(44): warning C4018: '<' : signed/unsigned mismatch
      1>widgets\menubar.cpp(69): warning C4018: '<' : signed/unsigned mismatch
@@ -54,12 +54,12 @@
      1>widgets\icon.cpp(65): warning C4267: '=' : conversion from 'size_t' to 'int', possible loss of data
      1>widgets\icon.cpp(110): warning C4018: '<' : signed/unsigned mismatch
      1>widgets\icon.cpp(114): warning C4018: '<' : signed/unsigned mismatch
-     1>widgets\icon.cpp(142): warning C4018: '>' : signed/unsigned mismatch
-     1>widgets\icon.cpp(145): warning C4018: '>' : signed/unsigned mismatch
-     1>widgets\icon.cpp(149): warning C4018: '<=' : signed/unsigned mismatch
-     1>widgets\icon.cpp(152): warning C4018: '<=' : signed/unsigned mismatch
-     1>widgets\icon.cpp(162): warning C4018: '<' : signed/unsigned mismatch
-     1>widgets\icon.cpp(166): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\icon.cpp(143): warning C4018: '>' : signed/unsigned mismatch
+     1>widgets\icon.cpp(146): warning C4018: '>' : signed/unsigned mismatch
+     1>widgets\icon.cpp(150): warning C4018: '<=' : signed/unsigned mismatch
+     1>widgets\icon.cpp(153): warning C4018: '<=' : signed/unsigned mismatch
+     1>widgets\icon.cpp(163): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\icon.cpp(167): warning C4018: '<' : signed/unsigned mismatch
          defaultwindow.cpp
      1>widgets\defaultwindow.cpp(116): warning C4018: '<' : signed/unsigned mismatch
      1>widgets\defaultwindow.cpp(129): warning C4018: '<' : signed/unsigned mismatch
@@ -151,4 +151,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:02.60
+Time Elapsed 00:00:02.71

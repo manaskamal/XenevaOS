@@ -32,6 +32,7 @@
 
 #include "../chitralekha.h"
 #include "window.h"
+#include "icon.h"
 
 #ifdef __cplusplus
 XE_EXTERN{
@@ -43,10 +44,11 @@ XE_EXTERN{
 #define MSGBOX_TYPE_ONLYCANCEL 3
 #define MSGBOX_TYPE_ONLYCLOSE 4
 
-#define MSGBOX_ICON_WARNING 1
-#define MSGBOX_ICON_ERROR 2
-#define MSGBOX_ICON_SUCCESS 3
-#define MSGBOX_ICON_FAILED 4
+#define MSGBOX_ICON_WARNING CHITRALEKHA_ICON_WARNING
+#define MSGBOX_ICON_ERROR 0
+#define MSGBOX_ICON_SUCCESS CHITRALEKHA_ICON_SUCCESS
+#define MSGBOX_ICON_FAILED 0
+#define MSGBOX_ICON_INFORMATION CHITRALEKHA_ICON_INFORMATION
 
 	typedef struct _msgbox_ {
 		ChWidget wid;

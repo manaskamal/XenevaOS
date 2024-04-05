@@ -137,6 +137,7 @@ XE_EXTERN XE_LIB void ChDrawIconClipped(ChCanvas* canv, ChIcon* ico, int x, int 
 
 	uint32_t width = ico->image.width;
 	uint32_t height = ico->image.height;
+	uint32_t imageHeight = height;
 	uint32_t j = 0;
 
 	if (x > (limit->x + limit->w))
@@ -160,8 +161,8 @@ XE_EXTERN XE_LIB void ChDrawIconClipped(ChCanvas* canv, ChIcon* ico, int x, int 
 
 	uint8_t* image = ico->image.data;
 	for (int i = 0; i < height; i++) {
-		char* image_row = (char*)image + (height - i - 1) * (width * 4);
-		uint32_t h = height - 1 - i;
+		char* image_row = (char*)image + (imageHeight - i - 1) * (width * 4);
+		uint32_t h = imageHeight - 1 - i;
 		j = 0;
 		for (int k = 0; k < width; k++) {
 			uint32_t b = image_row[j++] & 0xff;
@@ -172,5 +173,43 @@ XE_EXTERN XE_LIB void ChDrawIconClipped(ChCanvas* canv, ChIcon* ico, int x, int 
 			if (rgb & 0xFF000000)
 				ChDrawPixel(canv, x + k, y + i, rgb);
 		}
+	}
+}
+
+ChIcon* warning;
+ChIcon* success;
+ChIcon* exclaim;
+ChIcon* information;
+
+/*
+ * ChInitialiseDefaultIcons -- initialise all chitralekha
+ * default icons
+ */
+void ChInitialiseDefaultIcons() {
+	success = ChCreateIcon();
+	information = ChCreateIcon();
+	ChIconOpen(success, "/icons/succi.bmp");
+	ChIconOpen(information, "/icons/infoi.bmp");
+	ChIconRead(success);
+	ChIconRead(information);
+}
+
+/*
+ * ChIconGetSystemIcon -- returns all system 
+ * icons
+ * @param iconnum -- Icon code number
+ */
+ChIcon* ChIconGetSystemIcon(uint8_t iconnum){
+	switch (iconnum) {
+	case CHITRALEKHA_ICON_WARNING:
+		return 0;
+	case CHITRALEKHA_ICON_SUCCESS:
+		return success;
+	case CHITRALEKHA_ICON_EXCLAIMATION:
+		return 0;
+	case CHITRALEKHA_ICON_INFORMATION:
+		return information;
+	default:
+		return NULL;
 	}
 }

@@ -39,6 +39,13 @@
 #define CHITRALEKHA_ICON_ICO 1
 #define CHITRALEKHA_ICON_BMP 2
 
+/*
+ * System icons codes
+ */
+#define CHITRALEKHA_ICON_WARNING 100
+#define CHITRALEKHA_ICON_SUCCESS 101
+#define CHITRALEKHA_ICON_INFORMATION 102
+#define CHITRALEKHA_ICON_EXCLAIMATION 103
 
 typedef struct _icon_ {
 	uint8_t* pixbuf;
@@ -85,5 +92,18 @@ XE_EXTERN XE_LIB void ChDrawIcon(ChCanvas* canv, ChIcon* ico, int x, int y);
 * @param limit -- Pointer to limit rect
 */
 XE_EXTERN XE_LIB void ChDrawIconClipped(ChCanvas* canv, ChIcon* ico, int x, int y, ChRect *limit);
+
+/*
+* ChInitialiseDefaultIcons -- initialise all chitralekha
+* default icons
+*/
+extern void ChInitialiseDefaultIcons();
+
+/*
+* ChIconGetSystemIcon -- returns all system
+* icons
+* @param iconnum -- Icon code number
+*/
+XE_EXTERN XE_LIB ChIcon* ChIconGetSystemIcon(uint8_t iconnum);
 
 #endif

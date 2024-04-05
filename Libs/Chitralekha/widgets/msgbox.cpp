@@ -55,8 +55,11 @@ void ChMessageBoxPaint(ChWidget* wid,ChWindow* win) {
 	int msgw = ChFontGetWidth(win->app->baseFont, mb->message);
 	int msgh = ChFontGetHeight(win->app->baseFont, mb->message);
 	ChFontDrawText(win->canv, win->app->baseFont, mb->message, mb->wid.w / 2 - msgw / 2,
-		mb->wid.h / 2 - msgh / 2, 12, BLACK);
+		mb->wid.h / 2 /*- msgh / 2*/, 12, BLACK);
 	ChDrawRect(win->canv, 0,mb->wid.y + mb->wid.h - 60, mb->wid.w, 60,0xFFC0C8CF);
+	ChIcon *icon = ChIconGetSystemIcon(mb->icon);
+	if (icon)
+		ChDrawIcon(win->canv, icon, 10, ((mb->wid.y + 60)/ 2) - 15);
 	ChDrawRectUnfilled(win->canv, 0, mb->wid.y + mb->wid.h - 60, mb->wid.w, 60, 0xFF324352);
 }
 
@@ -130,9 +133,16 @@ XE_EXTERN XE_EXPORT ChMessageBox* ChCreateMessageBox(ChWindow* mainWin,char* tit
 	mb->wid.y = 26;
 	mb->wid.ChPaintHandler = ChMessageBoxPaint;
 	ChitralekhaApp* app = ChitralekhaStartSubApp(mainWin->app);
-	ChWindow *msgwin = ChCreateWindow(app, WINDOW_FLAG_MOVABLE | WINDOW_FLAG_MESSAGEBOX, title, mainWin->info->x + mainWin->info->width / 2 - MESSAGEBOX_WIDTH / 2,
-		mainWin->info->y + mainWin->info->height / 2 - MESSAGEBOX_HEIGHT / 2, MESSAGEBOX_WIDTH, MESSAGEBOX_HEIGHT);
-	mb->wid.w = MESSAGEBOX_WIDTH;
+	ChFontSetSize(mainWin->app->baseFont, 13);
+
+	/* calculate message box width */
+	int msgboxWidth = ChFontGetWidth(mainWin->app->baseFont, msg) + 65*2;
+	if (msgboxWidth <= 100)
+		msgboxWidth = MESSAGEBOX_WIDTH;
+
+	ChWindow *msgwin = ChCreateWindow(app, WINDOW_FLAG_MOVABLE | WINDOW_FLAG_MESSAGEBOX, title, mainWin->info->x + mainWin->info->width / 2 - msgboxWidth / 2,
+		mainWin->info->y + mainWin->info->height / 2 - MESSAGEBOX_HEIGHT / 2, msgboxWidth, MESSAGEBOX_HEIGHT);
+	mb->wid.w = msgboxWidth;
 	mb->wid.h = MESSAGEBOX_HEIGHT - 26;
 	ChWindowAddSubWindow(mainWin, msgwin);
 	ChWindowAddWidget(msgwin, (ChWidget*)mb);

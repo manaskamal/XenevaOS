@@ -883,7 +883,14 @@ void ComposeFrame(ChCanvas *canvas) {
 				pw->shwin->hide = false;
 				pw->shadowUpdate = true;
 				pw->hidden = true;
-				//info->updateEntireWindow = 1;
+				/* add dirty rectagle into the window inorder to
+				 * repaint the occluded area
+				 */
+				info->rect[info->rect_count].x = max((px - SHADOW_SIZE),info->x) - min((px - SHADOW_SIZE),info->x);
+				info->rect[info->rect_count].y = max((py - SHADOW_SIZE),info->y) - min((py - SHADOW_SIZE), info->y);
+				info->rect[info->rect_count].w = pwidth + SHADOW_SIZE *2;
+				info->rect[info->rect_count].h = pheight + SHADOW_SIZE *2;
+				info->rect_count++;
 			}
 
 			if (pw->shwin->popuped){

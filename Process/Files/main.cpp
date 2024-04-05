@@ -301,7 +301,8 @@ void BackbutClicked(ChWidget* wid, ChWindow* win) {
 
 
 void AboutClicked(ChWidget* wid, ChWindow* win) {
-	ChMessageBox* mb = ChCreateMessageBox(mainWin,"File Explorer v1.0", "File Explorer v1.0 for XenevaOS !!", MSGBOX_TYPE_ONLYCLOSE, MSGBOX_ICON_SUCCESS);
+	ChMessageBox* mb = ChCreateMessageBox(mainWin,"File Explorer v1.0", "File Explorer v1.0 for XenevaOS ( RELEASING ON APRIL 14) !!",
+		MSGBOX_TYPE_ONLYCLOSE, MSGBOX_ICON_SUCCESS);
 	ChMessageBoxShow(mb);
 }
 
@@ -372,6 +373,8 @@ int main(int argc, char* argv[]){
 	ChPopupMenu* help = ChCreatePopupMenu(mainWin);
 	ChMenuItem* about = ChCreateMenuItem("About", help);
 	about->wid.ChActionHandler = AboutClicked;
+	ChMenuItem* test = ChCreateMenuItem("License", help);
+	ChMenuItem* test2 = ChCreateMenuItem("Register", help);
 	ChMenuButtonAddMenu(edit, help);
 
 
@@ -391,11 +394,11 @@ int main(int argc, char* argv[]){
 	strcpy(path, "/");
 
 	dirico = ChCreateIcon();
-	ChIconOpen(dirico, "/dir.bmp");
+	ChIconOpen(dirico, "/icons/dir.bmp");
 	ChIconRead(dirico);
 
 	docico = ChCreateIcon();
-	ChIconOpen(docico, "/doc.bmp");
+	ChIconOpen(docico, "/icons/doc.bmp");
 	ChIconRead(docico);
 	
 	RefreshFileView(dirfd, lv);
@@ -407,7 +410,7 @@ int main(int argc, char* argv[]){
 	_KeCloseFile(dirfd);
 
 	ChWindowPaint(mainWin);
-	ChWindowBroadcastIcon(app, "/file.bmp");
+	ChWindowBroadcastIcon(app, "/icons/file.bmp");
 
 	PostEvent e;
 	memset(&e, 0, sizeof(PostEvent));

@@ -439,7 +439,7 @@ int main(int argc, char* arv[]){
 	/* default application icon, if any application
 	 * fails to set an icon, this icon will appear
 	 */
-	defaultappico = NmCreateButtonInfo("/appico.bmp");
+	defaultappico = NmCreateButtonInfo("/icons/appico.bmp");
 	NmButtonInfoRead(defaultappico);
 
 

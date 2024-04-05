@@ -55,7 +55,7 @@ void NamdaphaGoButtonPaint(NamdaphaButton* button, ChWindow* win) {
 
 NamdaphaButton* NamdaphaInitialiseGoButton(ChWindow* win) {
 	NamdaphaButton* gobutton = NmCreateButton(10, win->info->height - 60, NAMDAPHA_WIDTH - 20, 50, "Go");
-	gobtn = NmCreateButtonInfo("/GoIcon.bmp");
+	gobtn = NmCreateButtonInfo("/icons/GoIcon.bmp");
 	NmButtonInfoRead(gobtn);
 	gobutton->drawNamdaphaButton = NamdaphaGoButtonPaint;
 	gobutton->nmbuttoninfo = gobtn;

@@ -32,6 +32,7 @@
 #include <sys\_keproc.h>
 #include "..\font.h"
 #include "..\keycode.h"
+#include "icon.h"
 
 ChitralekhaApp* baseapp;
 
@@ -52,6 +53,7 @@ ChitralekhaApp* ChitralekhaStartApp(int argc, char* argv[]) {
 	app->currentID = thr_id;
 
 	ChitralekhaKeyInitialise();
+	ChInitialiseDefaultIcons();
 	return app;
 }
 

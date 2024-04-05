@@ -1,4 +1,4 @@
-﻿Build started 03-04-2024 আবেলি 9:14:52.
+﻿Build started 05-04-2024 ৰাতিপু 11:02:15.
      1>Project "E:\Xeneva Project\Aurora\Process\Files\Files.vcxproj" on node 2 (Rebuild target(s)).
      1>ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /I"E:\Xeneva Project\Aurora\Libs\Chitralekha" /I"E:\os_dev\freetype2-master\freetype2-master\include" /Zi /nologo /W4 /WX- /sdl- /MP /Od /Oy /D ARCH_X64 /D YES_DYNAMIC /D DYNAMIC_IMPORTER /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt main.cpp
@@ -29,15 +29,17 @@
      1>main.cpp(262): warning C4100: 'wid' : unreferenced formal parameter
      1>main.cpp(303): warning C4100: 'win' : unreferenced formal parameter
      1>main.cpp(303): warning C4100: 'wid' : unreferenced formal parameter
-     1>main.cpp(316): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
-     1>main.cpp(317): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
-     1>main.cpp(321): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
-     1>main.cpp(311): warning C4100: 'win' : unreferenced formal parameter
-     1>main.cpp(311): warning C4100: 'wid' : unreferenced formal parameter
-     1>main.cpp(390): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
-     1>main.cpp(404): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
-     1>main.cpp(420): warning C4127: conditional expression is constant
-     1>main.cpp(369): warning C4189: 'item' : local variable is initialized but not referenced
+     1>main.cpp(317): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
+     1>main.cpp(318): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
+     1>main.cpp(322): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
+     1>main.cpp(312): warning C4100: 'win' : unreferenced formal parameter
+     1>main.cpp(312): warning C4100: 'wid' : unreferenced formal parameter
+     1>main.cpp(393): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
+     1>main.cpp(407): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
+     1>main.cpp(423): warning C4127: conditional expression is constant
+     1>main.cpp(376): warning C4189: 'test' : local variable is initialized but not referenced
+     1>main.cpp(377): warning C4189: 'test2' : local variable is initialized but not referenced
+     1>main.cpp(370): warning C4189: 'item' : local variable is initialized but not referenced
      1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(1186,5): warning MSB8012: TargetPath(E:\Xeneva Project\Aurora\x64\Debug\Files.exe) does not match the Linker's OutputFile property value (F:\file.exe). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
      1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(1188,5): warning MSB8012: TargetName(Files) does not match the Linker's OutputFile property value (file). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
        Link:
@@ -49,4 +51,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:01.01
+Time Elapsed 00:00:00.45

@@ -160,7 +160,7 @@ void WindowHandleMessage(PostEvent *e) {
 }
 
 void AboutClicked(ChWidget* wid, ChWindow* win) {
-	ChMessageBox* mb = ChCreateMessageBox(mainWin, "Accent v1.0", "Accent Player v1.0 for XenevaOS !!", MSGBOX_TYPE_ONLYCLOSE, MSGBOX_ICON_SUCCESS);
+	ChMessageBox* mb = ChCreateMessageBox(mainWin, "Accent v1.0", "Accent Player v1.0 for XenevaOS ( RELEASING ON APRIL 14 ) !!", MSGBOX_TYPE_ONLYCLOSE, MSGBOX_ICON_SUCCESS);
 	ChMessageBoxShow(mb);
 }
 
@@ -391,7 +391,7 @@ int main(int argc, char* argv[]){
 	PostEvent e;
 	memset(&e, 0, sizeof(PostEvent));
 
-	ChWindowBroadcastIcon(app, "/media.bmp");
+	ChWindowBroadcastIcon(app, "/icons/media.bmp");
 
 	setjmp(mainWin->jump);
 	while (1) {

@@ -320,6 +320,8 @@ size_t FatReadFile(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint32_t 
 }
 
 AuVFSNode* FatLocateSubDir(AuVFSNode* fsys,AuVFSNode* kfile, const char* filename) {
+	FatFS* _fs = (FatFS*)fsys->device;
+
 	AuVFSNode* file = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
 	memset(file, 0, sizeof(AuVFSNode));
 
@@ -328,17 +330,22 @@ AuVFSNode* FatLocateSubDir(AuVFSNode* fsys,AuVFSNode* kfile, const char* filenam
 	FatToDOSFilename(filename, dos_file_name, 11);
 	dos_file_name[11] = 0;
 
+	uint32_t dir_clust = kfile->current;
+
 	uint64_t* buf = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
 	if (kfile->flags != FS_FLAG_INVALID) {
-		while (!kfile->eof) {
+		while (1){
+			if (kfile->eof)
+				break;
+			memset(buf, 0, PAGE_SIZE);
 			FatRead(fsys, kfile, (uint64_t*)V2P((size_t)buf));
-
 			FatDir* pkDir = (FatDir*)buf;
 			for (unsigned int i = 0; i < 16; i++) {
 				char name[11];
 				memcpy(name, pkDir->filename, 11);
+				name[11] = '\0';
+				
 				if (strcmp(name, dos_file_name) == 0) {
-					
 					strcpy(file->filename, filename);
 					file->current = pkDir->first_cluster;
 					file->size = pkDir->file_size;

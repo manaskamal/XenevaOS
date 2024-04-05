@@ -332,6 +332,31 @@ int FatDirectoryRead(AuVFSNode* fs, AuVFSNode* dir, AuDirectoryEntry* dirent) {
 		dirent->index += 1;
 		return -1;
 	}
+
+	if (dir_->attrib & 0x02){
+		AuPmmngrFree((void*)V2P((size_t)buf));
+		dirent->index += 1;
+		return -1;
+	}
+
+	if (dir_->attrib & 0x04) {
+		AuPmmngrFree((void*)V2P((size_t)buf));
+		dirent->index += 1;
+		return -1;
+	}
+
+	if (dir_->attrib & 0x08) {
+		AuPmmngrFree((void*)V2P((size_t)buf));
+		dirent->index += 1;
+		return -1;
+	}
+
+	if (dir_->attrib & 0x01) {
+		AuPmmngrFree((void*)V2P((size_t)buf));
+		dirent->index += 1;
+		return -1;
+	}
+
 	char filename[11];
 	char name[11];
 	memcpy(name, dir_->filename, 11);
@@ -342,8 +367,8 @@ int FatDirectoryRead(AuVFSNode* fs, AuVFSNode* dir, AuDirectoryEntry* dirent) {
 	dirent->time = dir_->time_created;
 	dirent->date = dir_->date_created;
 	if (dir_->attrib & 0x10)
-		dirent->flags |= FS_FLAG_DIRECTORY;
-	else
+		dirent->flags = FS_FLAG_DIRECTORY;
+	if (dir_->attrib & 0x20)
 		dirent->flags = FS_FLAG_GENERAL;
 	AuPmmngrFree((void*)V2P((size_t)buf));
 	dirent->index += 1;

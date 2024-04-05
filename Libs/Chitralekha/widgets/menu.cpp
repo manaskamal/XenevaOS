@@ -47,10 +47,10 @@ void ChPopupMenuMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, int butto
 	for (int i = 0; i < pm->MenuItems->pointer; i++){
 		ChMenuItem* mi = (ChMenuItem*)list_get_at(pm->MenuItems, i);
 		mi->wid.hover = false;
-		if ((x >= (pm->backWindow->shwin->x + pm->wid.x + mi->wid.x) &&
-			x <= (pm->backWindow->shwin->x + pm->wid.x + mi->wid.x + mi->wid.w)) &&
-			(y >= (pm->backWindow->shwin->y + pm->wid.y + mi->wid.y) &&
-			y <= (pm->backWindow->shwin->y + pm->wid.y + mi->wid.y + mi->wid.h))){
+		if (x >= (pm->backWindow->shwin->x + pm->wid.x + mi->wid.x) &&
+			x <= (pm->backWindow->shwin->x + pm->wid.x + mi->wid.x + mi->wid.w) &&
+			y >= (pm->backWindow->shwin->y + pm->wid.y + mi->wid.y) &&
+			y <= (pm->backWindow->shwin->y + pm->wid.y + mi->wid.y + mi->wid.h)){
 			mi->wid.hover = true;
 			if (pm->lastActiveMenu && pm->lastActiveMenu != pm){
 				if (!pm->lastActiveMenu->backWindow->hidden){

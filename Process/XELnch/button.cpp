@@ -159,6 +159,7 @@ ButtonIcon* CreateLaunchButtonIcon(char* iconfile, LaunchButton* button) {
 	ButtonIcon* icon = (ButtonIcon*)malloc(sizeof(ButtonIcon));
 	memset(icon, 0, sizeof(ButtonIcon));
 	int fd = _KeOpenFile(iconfile, FILE_OPEN_READ_ONLY);
+	
 	XEFileStatus stat;
 	_KeFileStat(fd, &stat);
 

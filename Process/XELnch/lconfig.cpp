@@ -84,8 +84,10 @@ void LauncherSetupByConfigFile() {
 		char title[42];
 		memset(title, 0, 42);
 		for (int i = 0; i < 42; i++) {
-			if (p[i] == '|')
+			if (p[i] == '|'){
+				fbuf++;
 				break;
+			}
 			title[i] = p[i];
 			fbuf++;
 		}
@@ -98,8 +100,10 @@ void LauncherSetupByConfigFile() {
 		char icon[42];
 		memset(icon, 0, 42);
 		for (int i = 0; i < 42; i++) {
-			if (p[i] == '|')
+			if (p[i] == '|'){
+				fbuf++;
 				break;
+			}
 			icon[i] = p[i];
 			fbuf++;
 		}
@@ -114,8 +118,10 @@ void LauncherSetupByConfigFile() {
 		char app[42];
 		memset(app, 0, 42);
 		for (int i = 0; i < 42; i++) {
-			if (p[i] == '}')
+			if (p[i] == '}'){
+				fbuf++;
 				break;
+			}
 			if (p[i] == '>'){
 				_last_entry_ = true;
 				break;
@@ -123,11 +129,11 @@ void LauncherSetupByConfigFile() {
 			app[i] = p[i];
 			fbuf++;
 		}
-
+		
 		LaunchButton* button = CreateLaunchButton(0, 0, LAUNCH_BUTTON_W, LAUNCH_BUTTON_H, title, app);
 		ButtonIcon* ico = CreateLaunchButtonIcon(icon, button);
 		AppGridAddButton(grid, button);
-	
+		
 		if (_last_entry_)
 			break;
 	}
