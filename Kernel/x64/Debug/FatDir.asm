@@ -25,7 +25,7 @@ EXTRN	?FatToDOSFilename@@YAXPEBDPEADI@Z:PROC		; FatToDOSFilename
 EXTRN	?FatFindFreeCluster@@YAIPEAU__VFS_NODE__@@@Z:PROC ; FatFindFreeCluster
 EXTRN	?FatAllocCluster@@YAXPEAU__VFS_NODE__@@HI@Z:PROC ; FatAllocCluster
 EXTRN	?FatClearCluster@@YAXPEAU__VFS_NODE__@@I@Z:PROC	; FatClearCluster
-EXTRN	?FatReadFAT@@YAIPEAU__VFS_NODE__@@I@Z:PROC	; FatReadFAT
+EXTRN	?FatReadFAT@@YAIPEAU__VFS_NODE__@@_K@Z:PROC	; FatReadFAT
 EXTRN	?FatOpen@@YAPEAU__VFS_NODE__@@PEAU1@PEAD@Z:PROC	; FatOpen
 EXTRN	?FatFormatDate@@YAGXZ:PROC			; FatFormatDate
 EXTRN	?FatFormatTime@@YAGXZ:PROC			; FatFormatTime
@@ -45,10 +45,10 @@ EXTRN	memcpy:PROC
 EXTRN	SeTextOut:PROC
 pdata	SEGMENT
 $pdata$?FatCreateDir@@YAPEAU__VFS_NODE__@@PEAU1@PEAD@Z DD imagerel $LN28
-	DD	imagerel $LN28+1921
+	DD	imagerel $LN28+1923
 	DD	imagerel $unwind$?FatCreateDir@@YAPEAU__VFS_NODE__@@PEAU1@PEAD@Z
 $pdata$?FatRemoveDir@@YAHPEAU__VFS_NODE__@@0@Z DD imagerel $LN17
-	DD	imagerel $LN17+503
+	DD	imagerel $LN17+505
 	DD	imagerel $unwind$?FatRemoveDir@@YAHPEAU__VFS_NODE__@@0@Z
 $pdata$?FatOpenDir@@YAPEAU__VFS_NODE__@@PEAU1@PEAD@Z DD imagerel $LN9
 	DD	imagerel $LN9+420
@@ -165,7 +165,7 @@ $LN11@FatDirecto:
 	add	eax, edx
 	sar	eax, 4
 	mov	rcx, QWORD PTR fatfs$[rsp]
-	movzx	ecx, BYTE PTR [rcx+33]
+	movzx	ecx, BYTE PTR [rcx+36]
 	cmp	eax, ecx
 	jle	SHORT $LN10@FatDirecto
 
@@ -684,7 +684,7 @@ $LN2@FatOpenDir:
 ; 278  : 		ret->current = fatfs->__RootDirFirstCluster;
 
 	mov	rax, QWORD PTR fatfs$[rsp]
-	mov	eax, DWORD PTR [rax+34]
+	mov	eax, DWORD PTR [rax+40]
 	mov	rcx, QWORD PTR ret$[rsp]
 	mov	QWORD PTR [rcx+56], rax
 
@@ -711,7 +711,7 @@ $LN2@FatOpenDir:
 ; 283  : 		ret->first_block = fatfs->__RootDirFirstCluster;
 
 	mov	rax, QWORD PTR fatfs$[rsp]
-	mov	eax, DWORD PTR [rax+34]
+	mov	eax, DWORD PTR [rax+40]
 	mov	rcx, QWORD PTR ret$[rsp]
 	mov	QWORD PTR [rcx+48], rax
 
@@ -730,7 +730,7 @@ $LN2@FatOpenDir:
 
 	mov	rax, QWORD PTR ret$[rsp]
 	mov	rcx, QWORD PTR fatfs$[rsp]
-	mov	ecx, DWORD PTR [rcx+34]
+	mov	ecx, DWORD PTR [rcx+40]
 	mov	DWORD PTR [rax+44], ecx
 
 ; 287  : 		ret->flags |= FS_FLAG_DIRECTORY;
@@ -851,7 +851,7 @@ $LN9@FatRemoveD:
 	mov	DWORD PTR j$1[rsp], eax
 $LN10@FatRemoveD:
 	mov	rax, QWORD PTR _fs$[rsp]
-	movzx	eax, BYTE PTR [rax+33]
+	movzx	eax, BYTE PTR [rax+36]
 	cmp	DWORD PTR j$1[rsp], eax
 	jge	$LN8@FatRemoveD
 
@@ -967,9 +967,10 @@ $LN8@FatRemoveD:
 ; 232  : 
 ; 233  : 		dir_clust = FatReadFAT(fsys, dir_clust);
 
-	mov	edx, DWORD PTR dir_clust$[rsp]
+	mov	eax, DWORD PTR dir_clust$[rsp]
+	mov	edx, eax
 	mov	rcx, QWORD PTR fsys$[rsp]
-	call	?FatReadFAT@@YAIPEAU__VFS_NODE__@@I@Z	; FatReadFAT
+	call	?FatReadFAT@@YAIPEAU__VFS_NODE__@@_K@Z	; FatReadFAT
 	mov	DWORD PTR dir_clust$[rsp], eax
 
 ; 234  : 		if (dir_clust == (FAT_EOC_MARK & 0x0FFFFFFF))
@@ -1112,7 +1113,7 @@ $LN24@FatCreateD:
 ; 61   : 		parent_clust = _fs->__RootDirFirstCluster;
 
 	mov	rax, QWORD PTR _fs$[rsp]
-	mov	eax, DWORD PTR [rax+34]
+	mov	eax, DWORD PTR [rax+40]
 	mov	DWORD PTR parent_clust$[rsp], eax
 $LN23@FatCreateD:
 
@@ -1301,7 +1302,7 @@ $LN10@FatCreateD:
 	mov	DWORD PTR j$6[rsp], eax
 $LN11@FatCreateD:
 	mov	rax, QWORD PTR _fs$[rsp]
-	movzx	eax, BYTE PTR [rax+33]
+	movzx	eax, BYTE PTR [rax+36]
 	cmp	DWORD PTR j$6[rsp], eax
 	jge	$LN9@FatCreateD
 
@@ -1612,7 +1613,7 @@ $LN4@FatCreateD:
 ; 148  : 					if (parent_clust == _fs->__RootDirFirstCluster) {
 
 	mov	rax, QWORD PTR _fs$[rsp]
-	mov	eax, DWORD PTR [rax+34]
+	mov	eax, DWORD PTR [rax+40]
 	cmp	DWORD PTR parent_clust$[rsp], eax
 	jne	SHORT $LN3@FatCreateD
 
@@ -1671,7 +1672,7 @@ $LN2@FatCreateD:
 	call	V2P
 	mov	QWORD PTR tv281[rsp], rax
 	mov	rcx, QWORD PTR _fs$[rsp]
-	movzx	ecx, BYTE PTR [rcx+33]
+	movzx	ecx, BYTE PTR [rcx+36]
 	mov	DWORD PTR tv285[rsp], ecx
 	mov	edx, DWORD PTR cluster$4[rsp]
 	mov	rcx, QWORD PTR _fs$[rsp]
@@ -1806,9 +1807,10 @@ $LN9@FatCreateD:
 ; 181  : 
 ; 182  : 		parent_clust = FatReadFAT(fsys, parent_clust);
 
-	mov	edx, DWORD PTR parent_clust$[rsp]
+	mov	eax, DWORD PTR parent_clust$[rsp]
+	mov	edx, eax
 	mov	rcx, QWORD PTR fsys$[rsp]
-	call	?FatReadFAT@@YAIPEAU__VFS_NODE__@@I@Z	; FatReadFAT
+	call	?FatReadFAT@@YAIPEAU__VFS_NODE__@@_K@Z	; FatReadFAT
 	mov	DWORD PTR parent_clust$[rsp], eax
 
 ; 183  : 		if (parent_clust == (FAT_EOC_MARK & 0x0FFFFFFF))

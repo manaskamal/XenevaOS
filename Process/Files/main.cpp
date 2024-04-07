@@ -301,9 +301,19 @@ void BackbutClicked(ChWidget* wid, ChWindow* win) {
 
 
 void AboutClicked(ChWidget* wid, ChWindow* win) {
-	ChMessageBox* mb = ChCreateMessageBox(mainWin,"File Explorer v1.0", "File Explorer v1.0 for XenevaOS ( RELEASING ON APRIL 14) !!",
+	ChMessageBox* mb = ChCreateMessageBox(mainWin,"File Explorer v1.0", "File Explorer v1.0 for XenevaOS !!",
 		MSGBOX_TYPE_ONLYCLOSE, MSGBOX_ICON_SUCCESS);
 	ChMessageBoxShow(mb);
+}
+/*
+ * ExitItemClicked -- exit menu item action
+ * handler
+ * @param wid -- Pointer to widget
+ * @param win -- Pointer to main window
+ */
+void ExitItemClicked(ChWidget* wid, ChWindow* win) {
+	/* exit the application*/
+	ChWindowCloseWindow(mainWin);
 }
 
 /*
@@ -341,18 +351,18 @@ void EnterClicked(ChWidget* wid, ChWindow* win) {
 */
 int main(int argc, char* argv[]){
 	app = ChitralekhaStartApp(argc, argv);
-	mainWin = ChCreateWindow(app, WINDOW_FLAG_MOVABLE, "Files", 100, 100, 660, 
+	mainWin = ChCreateWindow(app, WINDOW_FLAG_MOVABLE, "Navigator", 100, 100, 660, 
 		500);
 
 	win2 = NULL;
 
 	pm = NULL;
 
-	ChButton* backbut = ChCreateButton(10,34, 50, 35, "<-"); //mainWin->info->width / 2 - 100 / 2, mainWin->info->height / 2 - 75/2
+	ChButton* backbut = ChCreateButton(10,34, 50, 35, "Back"); //mainWin->info->width / 2 - 100 / 2, mainWin->info->height / 2 - 75/2
 	ChWindowAddWidget(mainWin,(ChWidget*)backbut);
 	backbut->base.ChActionHandler = BackbutClicked;
 
-	ChButton* Enterbut = ChCreateButton(60 + 10, 34, 50, 35, "->");
+	ChButton* Enterbut = ChCreateButton(60 + 10, 34, 50, 35, "Enter");
 	ChWindowAddWidget(mainWin, (ChWidget*)Enterbut);
 	Enterbut->base.ChActionHandler = EnterClicked;
 
@@ -368,13 +378,12 @@ int main(int argc, char* argv[]){
 
 	pm = ChCreatePopupMenu(mainWin);
 	ChMenuItem* item = ChCreateMenuItem("Exit", pm);
+	item->wid.ChActionHandler = ExitItemClicked;
 	ChMenuButtonAddMenu(file, pm);
 
 	ChPopupMenu* help = ChCreatePopupMenu(mainWin);
 	ChMenuItem* about = ChCreateMenuItem("About", help);
 	about->wid.ChActionHandler = AboutClicked;
-	ChMenuItem* test = ChCreateMenuItem("License", help);
-	ChMenuItem* test2 = ChCreateMenuItem("Register", help);
 	ChMenuButtonAddMenu(edit, help);
 
 

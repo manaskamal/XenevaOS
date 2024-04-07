@@ -132,7 +132,7 @@ typedef struct _fat_lfn_ {
 #define FSTYPE_FAT16  2
 #define FSTYPE_FAT32  3
 
-#pragma pack(push,1)
+
 typedef struct _FatFS_ {
 	FatBPB* bpb;
 	AuVDisk *vdisk;
@@ -152,7 +152,6 @@ typedef struct _FatFS_ {
 	AuMutex *fat_write_mutex;
 	AuMutex *fat_read_mutex;
 }FatFS;
-#pragma pack(pop)
 
 
 
@@ -205,7 +204,7 @@ extern void FatClearCluster(AuVFSNode* node, uint32_t cluster);
 * @param vdisk -- pointer to vdisk
 * @param cluster_index -- index of the cluster
 */
-extern uint32_t FatReadFAT(AuVFSNode *node, uint32_t cluster_index);
+extern uint32_t FatReadFAT(AuVFSNode *node, uint64_t cluster_index);
 
 //! Opens a file 
 //! @param filename -- name of the file

@@ -160,8 +160,17 @@ void WindowHandleMessage(PostEvent *e) {
 }
 
 void AboutClicked(ChWidget* wid, ChWindow* win) {
-	ChMessageBox* mb = ChCreateMessageBox(mainWin, "Accent v1.0", "Accent Player v1.0 for XenevaOS ( RELEASING ON APRIL 14 ) !!", MSGBOX_TYPE_ONLYCLOSE, MSGBOX_ICON_SUCCESS);
+	ChMessageBox* mb = ChCreateMessageBox(mainWin, "Accent v1.0", "Accent Player v1.0 for XenevaOS !!", MSGBOX_TYPE_ONLYCLOSE, MSGBOX_ICON_SUCCESS);
 	ChMessageBoxShow(mb);
+}
+
+/*
+ * ExitItemClicked -- calls window close function
+ * @param wid -- Pointer to widget
+ * @param win -- Pointer to main Window
+ */
+void ExitItemClicked(ChWidget* wid, ChWindow* win) {
+	ChWindowCloseWindow(mainWin);
 }
 
 /* DrawWallpaper -- code copied from deodhai wallpaper
@@ -246,6 +255,7 @@ void SelectButtonActionHandler(ChWidget* wid, ChWindow* win) {
 	_KeProcessSleep(100);
 }
 
+
 void MusicPrepareLibrary(ChListView *lv) {
 	int dirfd = _KeOpenDir("/music");
 	XEDirectoryEntry* dirent = (XEDirectoryEntry*)malloc(sizeof(XEDirectoryEntry));
@@ -287,7 +297,7 @@ void PrepareBrowserUI(){
 	browserWidgetList = initialize_list();
 
 	musicIcon = ChCreateIcon();
-	ChIconOpen(musicIcon, "/music.bmp");
+	ChIconOpen(musicIcon, "/icons/music.bmp");
 	ChIconRead(musicIcon);
 
 	ChScrollPane* sp = ChCreateScrollPane(mainWin, 10, 64, 100, 380);
@@ -351,6 +361,7 @@ int main(int argc, char* argv[]){
 	ChMenuItem* browse = ChCreateMenuItem("Select Song...", pm);
 	browse->wid.ChActionHandler = BrowseMenuActionHandler;
 	ChMenuItem* item = ChCreateMenuItem("Exit", pm);
+	item->wid.ChActionHandler = ExitItemClicked;
 	ChMenuButtonAddMenu(file, pm);
 
 	ChPopupMenu* help = ChCreatePopupMenu(mainWin);
@@ -361,14 +372,14 @@ int main(int argc, char* argv[]){
 	ChWindowAddWidget(mainWin, (ChWidget*)mainMenubar);
 
 	
-	ChButton *prevbutt = ChCreateButton(10, mainWin->info->height - 100, 100,65, "<<<");
+	ChButton *prevbutt = ChCreateButton(10, mainWin->info->height - 100, 100,65, "Previous");
 	ChWindowAddWidget(mainWin, (ChWidget*)prevbutt);
 
 	ChButton *playbutt = ChCreateButton(mainWin->info->width / 2 - 140/2, mainWin->info->height - 100, 140, 65, "Play/Pause");
 	playbutt->base.ChActionHandler = PlayPauseButtonAction;
 	ChWindowAddWidget(mainWin, (ChWidget*)playbutt);
 
-	ChButton *nextbutt = ChCreateButton((playbutt->base.x + playbutt->base.w) + 18, mainWin->info->height - 100, 100, 65, ">>>");
+	ChButton *nextbutt = ChCreateButton((playbutt->base.x + playbutt->base.w) + 18, mainWin->info->height - 100, 100, 65, "Next");
 	ChWindowAddWidget(mainWin, (ChWidget*)nextbutt);
 
 	ChWindowPaint(mainWin);

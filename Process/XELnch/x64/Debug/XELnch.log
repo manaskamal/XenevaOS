@@ -1,4 +1,4 @@
-﻿Build started 05-04-2024 আবেলি 7:19:23.
+﻿Build started 07-04-2024 আবেলি 12:28:08.
      1>Project "E:\Xeneva Project\Aurora\Process\XELnch\XELnch.vcxproj" on node 2 (Rebuild target(s)).
      1>ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /I"E:\Xeneva Project\Aurora\Libs\Chitralekha" /I"E:\os_dev\freetype2-master\freetype2-master\include" /Zi /nologo /W4 /WX- /sdl- /MP /Od /Oy /D ARCH_X64 /D YES_DYNAMIC /D DYNAMIC_IMPORTER /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt AppGrid.cpp button.cpp lconfig.cpp main.cpp
@@ -17,15 +17,15 @@
      1>button.cpp(118): warning C4189: 'status' : local variable is initialized but not referenced
      1>button.cpp(140): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
      1>button.cpp(141): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
-     1>button.cpp(166): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
-     1>button.cpp(171): warning C4267: '=' : conversion from 'size_t' to 'uint32_t', possible loss of data
-     1>button.cpp(217): warning C4018: '<' : signed/unsigned mismatch
-     1>button.cpp(221): warning C4018: '<' : signed/unsigned mismatch
-     1>button.cpp(219): warning C4189: 'h' : local variable is initialized but not referenced
+     1>button.cpp(169): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
+     1>button.cpp(174): warning C4267: '=' : conversion from 'size_t' to 'uint32_t', possible loss of data
+     1>button.cpp(220): warning C4018: '<' : signed/unsigned mismatch
+     1>button.cpp(224): warning C4018: '<' : signed/unsigned mismatch
+     1>button.cpp(222): warning C4189: 'h' : local variable is initialized but not referenced
          AppGrid.cpp
      1>AppGrid.cpp(38): warning C4018: '<' : signed/unsigned mismatch
          Generating Code...
-     1>e:\xeneva project\aurora\process\xelnch\button.cpp(175): warning C4715: 'CreateLaunchButtonIcon' : not all control paths return a value
+     1>e:\xeneva project\aurora\process\xelnch\button.cpp(178): warning C4715: 'CreateLaunchButtonIcon' : not all control paths return a value
      1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(1186,5): warning MSB8012: TargetPath(E:\Xeneva Project\Aurora\x64\Debug\XELnch.exe) does not match the Linker's OutputFile property value (F:\xelnch.exe). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
        Link:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\link.exe /ERRORREPORT:PROMPT /OUT:"F:\xelnch.exe" /INCREMENTAL /NOLOGO /LIBPATH:"E:\Xeneva Project\Aurora\x64\Debug" /LIBPATH:"E:\Xeneva Project\Aurora\Libs\XECrt" XEClib.lib xecrt.lib Chitralekha.lib ftype.lib /NODEFAULTLIB /MANIFEST:NO /PDB:"E:\Xeneva Project\Aurora\x64\Debug\XELnch.pdb" /MAP /MAPINFO:EXPORTS /SUBSYSTEM:NATIVE /LARGEADDRESSAWARE /Driver /OPT:NOREF /LTCG /TLBID:1 /ENTRY:"_xemain" /BASE:"0x0000000000600000" /FIXED:NO /IMPLIB:"E:\Xeneva Project\Aurora\x64\Debug\XELnch.lib" /MACHINE:X64 /ALIGN:512 x64\Debug\AppGrid.obj
@@ -39,4 +39,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:01.62
+Time Elapsed 00:00:00.94
