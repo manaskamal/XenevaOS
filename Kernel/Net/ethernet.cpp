@@ -32,6 +32,7 @@
 #include <Mm\kmalloc.h>
 #include <string.h>
 #include <Hal\serial.h>
+#include <Fs\Dev\devfs.h>
 #include <aucon.h>
 
 AU_EXTERN AU_EXPORT void AuEthernetHandle(Ethernet *frame) {
@@ -63,12 +64,14 @@ void AuEthernetSend(void* data, size_t len, uint16_t type, uint8_t* dest) {
 	uint8_t *src_mac = netadapt->mac;
 	memcpy(pacl->src, src_mac, 6);
 	pacl->typeLen = htons(type);
+	memcpy(pacl->payload, data, len);
+	
 	AuTextOut("Ethernet setuped %d %s\r\n", netadapt->type, netadapt->name);
-	if (!netadapt->hwFile)
-		return;
-	if (netadapt->hwFile->write) {
-		SeTextOut("HWFile writing %x \r\n",netadapt->hwFile->write );
-		netadapt->hwFile->write(netadapt->hwFile, netadapt->hwFile, (uint64_t*)pacl, totalSz);
+	SeTextOut("HWFile -> %x %s\r\n", netadapt->NetWrite, netadapt->NetRead);
+	
+	if (netadapt->NetWrite) {
+		SeTextOut("HWFile writing %x \r\n",netadapt->NetWrite);
+		netadapt->NetWrite((uint64_t*)pacl, totalSz);
 	}
 	kfree(pacl);
 }

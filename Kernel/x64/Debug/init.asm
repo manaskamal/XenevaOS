@@ -6,7 +6,7 @@ INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
 CONST	SEGMENT
-$SG5053	DB	'BootDev HID -> %x, UID -> %x, CID -> %x ', 0dH, 0aH, 00H
+$SG5060	DB	'BootDev HID -> %x, UID -> %x, CID -> %x ', 0dH, 0aH, 00H
 CONST	ENDS
 PUBLIC	?_AuMain@@YAXPEAU_KERNEL_BOOT_INFO_@@@Z		; _AuMain
 EXTRN	?AuConsoleInitialize@@YAXPEAU_KERNEL_BOOT_INFO_@@_N@Z:PROC ; AuConsoleInitialize
@@ -36,12 +36,13 @@ EXTRN	?AuDrvMngrInitialize@@YAXPEAU_KERNEL_BOOT_INFO_@@@Z:PROC ; AuDrvMngrInitia
 EXTRN	?AuInitialiseLoader@@YAXXZ:PROC			; AuInitialiseLoader
 EXTRN	?AuSoundInitialise@@YAXXZ:PROC			; AuSoundInitialise
 EXTRN	?AuInitialiseNet@@YAXXZ:PROC			; AuInitialiseNet
+EXTRN	?AuARPRequestMAC@@YAXXZ:PROC			; AuARPRequestMAC
 EXTRN	?AuIPCPostBoxInitialise@@YAXXZ:PROC		; AuIPCPostBoxInitialise
 EXTRN	?AuTimerDataInitialise@@YAXXZ:PROC		; AuTimerDataInitialise
 EXTRN	?FontManagerInitialise@@YAXXZ:PROC		; FontManagerInitialise
 pdata	SEGMENT
 $pdata$?_AuMain@@YAXPEAU_KERNEL_BOOT_INFO_@@@Z DD imagerel $LN5
-	DD	imagerel $LN5+235
+	DD	imagerel $LN5+240
 	DD	imagerel $unwind$?_AuMain@@YAXPEAU_KERNEL_BOOT_INFO_@@@Z
 pdata	ENDS
 xdata	SEGMENT
@@ -101,7 +102,7 @@ $LN5:
 	mov	r8d, DWORD PTR [rax+174]
 	mov	rax, QWORD PTR info$[rsp]
 	mov	edx, DWORD PTR [rax+170]
-	lea	rcx, OFFSET FLAT:$SG5053
+	lea	rcx, OFFSET FLAT:$SG5060
 	call	AuTextOut
 
 ; 85   : 	AuAHCIInitialise();
@@ -212,21 +213,27 @@ $LN5:
 
 	call	?AuVmmngrBootFree@@YAXXZ		; AuVmmngrBootFree
 
-; 131  : 	/* Process initialisation begins here */
-; 132  : 	AuStartRootProc();
+; 131  : 
+; 132  : 	AuARPRequestMAC();
+
+	call	?AuARPRequestMAC@@YAXXZ			; AuARPRequestMAC
+
+; 133  : 	/* Process initialisation begins here */
+; 134  : 	AuStartRootProc();
 
 	call	?AuStartRootProc@@YAXXZ			; AuStartRootProc
 
-; 133  : 	AuSchedulerStart();
+; 135  : 
+; 136  : 	AuSchedulerStart();
 
 	call	?AuSchedulerStart@@YAXXZ		; AuSchedulerStart
 $LN2@AuMain:
 
-; 134  : 	for (;;);
+; 137  : 	for (;;);
 
 	jmp	SHORT $LN2@AuMain
 
-; 135  : }
+; 138  : }
 
 	add	rsp, 40					; 00000028H
 	ret	0

@@ -39,10 +39,11 @@
 
 #pragma pack(push,1)
 typedef struct _aunet_ {
-	uint8_t mac[6];
 	char name[8];
-	AuVFSNode *hwFile;
+	uint8_t mac[6];
 	uint8_t type;
+	size_t(*NetWrite) (uint64_t* buffer, uint32_t len);
+	size_t(*NetRead)(uint64_t* buffer, uint32_t len);
 }AuNetAdapter;
 #pragma pack(pop)
 
@@ -62,6 +63,11 @@ extern void AuInitialiseNet();
 */
 AU_EXTERN AU_EXPORT AuNetAdapter* AuAllocNetworkAdapter();
 
+/*
+* AuAddNetAdapter -- add a net adapter to the adapter
+* list
+*/
+AU_EXTERN AU_EXPORT void AuAddNetAdapter(AuNetAdapter* netadapt);
 /*
 * AuGetNetworkAdapterByType -- get a network adapter by looking
 * its type

@@ -47,8 +47,15 @@ void AuInitialiseNet() {
 AuNetAdapter* AuAllocNetworkAdapter() {
 	AuNetAdapter *netadapt = (AuNetAdapter*)kmalloc(sizeof(AuNetAdapter));
 	memset(netadapt, 0, sizeof(AuNetAdapter));
-	list_add(netadapters, netadapt);
 	return netadapt;
+}
+
+/*
+ * AuAddNetAdapter -- add a net adapter to the adapter
+ * list
+ */
+void AuAddNetAdapter(AuNetAdapter* netadapt) {
+	list_add(netadapters, netadapt);
 }
 
 /*

@@ -113,7 +113,10 @@ void E1000EEPROMDetect(E1000NIC* dev) {
 
 	for (int i = 0; i < 10000 && !dev->has_eeprom; ++i) {
 		uint32_t val = E1000ReadCmd(dev, E1000_REG_EEPROM);
-		if (val & 0x10) dev->has_eeprom = 1;
+		if (val & 0x10){
+			dev->has_eeprom = 1;
+			SeTextOut("Has EEPROM \r\n");
+		}
 	}
 }
 
@@ -166,8 +169,9 @@ void E1000DisableInterrupt(E1000NIC *dev) {
 }
 
 void E1000InitRX(E1000NIC* dev) {
-	E1000WriteCmd(dev, E1000_REG_RXDESCLO, V2P(dev->rx_phys));
-	E1000WriteCmd(dev, E1000_REG_RXDESCHI, 0);
+	uint64_t rx_phys = V2P(dev->rx_phys);
+	E1000WriteCmd(dev, E1000_REG_RXDESCLO, (rx_phys & UINT32_MAX));
+	E1000WriteCmd(dev, E1000_REG_RXDESCHI, ((rx_phys >> 32) & UINT32_MAX));
 	E1000WriteCmd(dev, E1000_REG_RXDESCLEN, E1000_NUM_RX_DESC * sizeof(e1000_rx_desc));
 	E1000WriteCmd(dev, E1000_REG_RXDESCHEAD, 0);
 	E1000WriteCmd(dev, E1000_REG_RXDESCTAIL, E1000_NUM_RX_DESC - 1);
@@ -184,12 +188,15 @@ void E1000InitRX(E1000NIC* dev) {
 }
 
 void E1000InitTX(E1000NIC *dev) {
-	E1000WriteCmd(dev, E1000_REG_TXDESCLO, V2P(dev->tx_phys));
-	E1000WriteCmd(dev, E1000_REG_TXDESCHI, 0);
+	uint64_t tx_phys = V2P(dev->tx_phys);
+	E1000WriteCmd(dev, E1000_REG_TXDESCLO, (tx_phys & UINT32_MAX));
+	E1000WriteCmd(dev, E1000_REG_TXDESCHI, ((tx_phys >> 32) & UINT32_MAX));
 	E1000WriteCmd(dev, E1000_REG_TXDESCLEN, E1000_NUM_TX_DESC * sizeof(e1000_tx_desc));
 	E1000WriteCmd(dev, E1000_REG_TXDESCHEAD, 0);
 	E1000WriteCmd(dev, E1000_REG_TXDESCTAIL, 0);
 
+	e1000_tx_desc *txde = (e1000_tx_desc*)tx_phys;
+	SeTextOut("txde=> %x, stat -> %x \r\n", txde[0].addr, dev->tx_virt[0]);
 	dev->tx_index = 0;
 	uint32_t tctl = E1000ReadCmd(dev, E1000_REG_TCTRL);
 
@@ -204,6 +211,7 @@ void E1000InitTX(E1000NIC *dev) {
 
 	E1000WriteCmd(dev, E1000_REG_TCTRL, tctl);
 }
+
 
 /*
  *E1000SendPacket -- sends a packet 
@@ -224,6 +232,15 @@ void E1000SendPacket(E1000NIC* dev, uint8_t* payload, size_t payload_sz) {
 	E1000ReadCmd(dev, E1000_REG_STATUS);
 }
 
+void E1000IRQHandler(size_t v, void* p) {
+	SeTextOut("E1000 Interrupt handler \r\n");
+	uint32_t status = E1000ReadCmd(e1000_nic, E1000_REG_ICR);
+	E1000WriteCmd(e1000_nic, E1000_REG_ICR, status);
+	if (status & ICR_LSC){
+		e1000_nic->link_status = (E1000ReadCmd(e1000_nic, E1000_REG_STATUS)& (1 << 1));
+		SeTextOut("E1000 Link Status : %d \r\n", e1000_nic->link_status);
+	}
+}
 
 /* E1000Thread -- no interrupt handling supported then
  * e1000 driver handle everything inside e1000 thread
@@ -231,15 +248,18 @@ void E1000SendPacket(E1000NIC* dev, uint8_t* payload, size_t payload_sz) {
 void E1000Thread(uint64_t val) {
 	while (1) {
 		uint32_t status = E1000ReadCmd(e1000_nic, E1000_REG_ICR);
-		if (status & ICR_LSC) 
+		
+		if (status & ICR_LSC) {
 			e1000_nic->link_status = E1000ReadCmd(e1000_nic, E1000_REG_STATUS) & (1 << 1);
+			AuTextOut("link sTATUS -> %d \r\n", e1000_nic->link_status);
+		}
 
 		if (status & ICR_RXT0) {
 			int head = E1000ReadCmd(e1000_nic, E1000_REG_RXDESCHEAD);
 
 			while ((e1000_nic->rx[e1000_nic->rx_index].status & 0x01)) {
 				int i = e1000_nic->rx_index;
-				SeTextOut("E1000: Packet received \r\n");
+				AuTextOut("E1000: Packet received \r\n");
 				//handle ethernet packet
 				e1000_nic->rx[i].status = 0;
 				if (++e1000_nic->rx_index == E1000_NUM_RX_DESC)
@@ -256,8 +276,8 @@ void E1000Thread(uint64_t val) {
 			}
 		}
 
-		E1000WriteCmd(e1000_nic, E1000_REG_ICR, status);
-		AuSleepThread(AuGetCurrentThread(), 100);
+		//E1000WriteCmd(e1000_nic, E1000_REG_ICR, status);
+		AuSleepThread(AuGetCurrentThread(), 60*1000);
 		AuForceScheduler();
 	}
 }
@@ -270,8 +290,11 @@ AU_EXTERN AU_EXPORT int AuDriverUnload() {
 	return 0;
 }
 
-size_t E1000WriteFile(AuVFSNode* node, AuVFSNode* file, uint64_t* buffer, uint32_t len) {
-	AuTextOut("E1000 Writing file \r\n");
+size_t E1000ReadFile(uint64_t* buffer, uint32_t len) {
+	return 0;
+}
+size_t E1000WriteFile(uint64_t* buffer, uint32_t len) {
+	AuTextOut("E1000 Writing file %d bytes\r\n", len);
 	uint8_t* aligned_buf = (uint8_t*)buffer;
 	E1000SendPacket(e1000_nic, aligned_buf, len);
 	return len;
@@ -284,6 +307,9 @@ int E1000IOCtl(AuVFSNode* file, int code, void* arg) {
 /* AuDriverMain -- main entry point of the driver */
 
 AU_EXTERN AU_EXPORT int AuDriverMain() {
+
+	AuDisableInterrupt();
+
 	AuTextOut("Starting e1000 driver \n");
 	int bus, dev_, func = 0;
 	bool nic_thread_required = false;
@@ -294,12 +320,21 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 		return 1;
 	}
 
+	uint64_t command = AuPCIERead(device, PCI_COMMAND, bus, dev_, func);
+	command |= (1 << 10);
+	command |= (1 << 1);
+
+	//clear the Interrupt disable
+	AuPCIEWrite(device, PCI_COMMAND, command, bus, dev_, func);
+
+
 	e1000_nic = (E1000NIC*)kmalloc(sizeof(E1000NIC));
 	memset(e1000_nic, 0, sizeof(E1000NIC));
 
 	if (AuPCIEAllocMSI(device, 40, bus, dev_, func)) {
 		AuTextOut("e1000 don't support MSI/MSI-X, starting up nic thread...\n");
 		nic_thread_required = true;
+		for (;;);
 	}
 
 	e1000_nic->rx_phys = (uint64_t)P2V((size_t)AuPmmngrAlloc());
@@ -346,12 +381,15 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 	E1000WriteCmd(e1000_nic, E1000_REG_TCTRL, TCTL_PSP);
 	E1000ReadCmd(e1000_nic, E1000_REG_STATUS);
 
+	for (int i = 0; i < 100000000; i++)
+		;
+
 	/* reset all */
 	uint32_t ctrl = E1000ReadCmd(e1000_nic, E1000_REG_CTRL);
 	ctrl |= CTRL_RST;
 	E1000WriteCmd(e1000_nic, E1000_REG_CTRL, ctrl);
 
-	for (int i = 0; i < 100000; i++)
+	for (int i = 0; i < 100000000; i++)
 		;
 
 	/* turn interrupt off again */
@@ -388,8 +426,12 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 
 	E1000WriteCmd(e1000_nic, E1000_REG_IMS, INTS);
 
-	AuThread* nic_thr = AuCreateKthread(E1000Thread, (uint64_t)P2V((size_t)AuPmmngrAlloc() + PAGE_SIZE),
-		(uint64_t)AuGetRootPageTable(), "E1000Thr");
+	bool interrupt_installed = false;
+
+	//if (!interrupt_installed) {
+		AuThread* nic_thr = AuCreateKthread(E1000Thread, (uint64_t)P2V((size_t)AuPmmngrAlloc() + PAGE_SIZE),
+			(uint64_t)AuGetRootPageTable(), "E1000Thr");
+	//}
 
 
 	AuDevice *audev = (AuDevice*)kmalloc(sizeof(AuDevice));
@@ -401,24 +443,20 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 	audev->aurora_driver_class = DRIVER_CLASS_NETWORK;
 	AuRegisterDevice(audev);
 
-	AuVFSNode* fsys = AuVFSFind("/dev");
-	AuVFSNode* file = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
-	memset(file, 0, sizeof(AuVFSNode));
-	strcpy(file->filename, "e1000");
-	file->flags = FS_FLAG_DEVICE;
-	file->device = fsys;
-	file->read = 0;
-	file->write = E1000WriteFile;
-	file->iocontrol = E1000IOCtl;
-	AuDevFSAddFile(fsys, "/", file);
 
-	AuTextOut("E1000 Write ptr -> %x \r\n", file->write);
+
 	AuNetAdapter* adapt = AuAllocNetworkAdapter();
+	strncpy(adapt->name, "ethernet",8);
 	memcpy(adapt->mac, e1000_nic->mac, 6);
-	strcpy(adapt->name, "ethnet");
-	adapt->hwFile = file;
+	adapt->NetWrite = E1000WriteFile;
+	adapt->NetRead = E1000ReadFile;
 	adapt->type = AUNET_HWTYPE_ETHERNET;
 
+	AuAddNetAdapter(adapt);
+
+	E1000WriteCmd(e1000_nic, E1000_REG_IMS, INTS);
+	for (int i = 0; i < 10000000; i++)
+		;
 
 	return 1;
 }

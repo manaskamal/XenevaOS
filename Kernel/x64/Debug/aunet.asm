@@ -11,6 +11,7 @@ _BSS	SEGMENT
 _BSS	ENDS
 PUBLIC	?AuInitialiseNet@@YAXXZ				; AuInitialiseNet
 PUBLIC	AuAllocNetworkAdapter
+PUBLIC	AuAddNetAdapter
 PUBLIC	AuGetNetworkAdapterByType
 EXTRN	initialize_list:PROC
 EXTRN	list_add:PROC
@@ -22,8 +23,11 @@ $pdata$?AuInitialiseNet@@YAXXZ DD imagerel $LN3
 	DD	imagerel $LN3+21
 	DD	imagerel $unwind$?AuInitialiseNet@@YAXXZ
 $pdata$AuAllocNetworkAdapter DD imagerel $LN3
-	DD	imagerel $LN3+64
+	DD	imagerel $LN3+47
 	DD	imagerel $unwind$AuAllocNetworkAdapter
+$pdata$AuAddNetAdapter DD imagerel $LN3
+	DD	imagerel $LN3+31
+	DD	imagerel $unwind$AuAddNetAdapter
 $pdata$AuGetNetworkAdapterByType DD imagerel $LN7
 	DD	imagerel $LN7+98
 	DD	imagerel $unwind$AuGetNetworkAdapterByType
@@ -33,6 +37,8 @@ $unwind$?AuInitialiseNet@@YAXXZ DD 010401H
 	DD	04204H
 $unwind$AuAllocNetworkAdapter DD 010401H
 	DD	06204H
+$unwind$AuAddNetAdapter DD 010901H
+	DD	04209H
 $unwind$AuGetNetworkAdapterByType DD 010801H
 	DD	06208H
 xdata	ENDS
@@ -44,13 +50,13 @@ adapter$2 = 40
 type$ = 64
 AuGetNetworkAdapterByType PROC
 
-; 58   : AuNetAdapter* AuGetNetworkAdapterByType(uint8_t type) {
+; 65   : AuNetAdapter* AuGetNetworkAdapterByType(uint8_t type) {
 
 $LN7:
 	mov	BYTE PTR [rsp+8], cl
 	sub	rsp, 56					; 00000038H
 
-; 59   : 	for (int i = 0; i < netadapters->pointer; i++) {
+; 66   : 	for (int i = 0; i < netadapters->pointer; i++) {
 
 	mov	DWORD PTR i$1[rsp], 0
 	jmp	SHORT $LN4@AuGetNetwo
@@ -64,42 +70,66 @@ $LN4@AuGetNetwo:
 	cmp	DWORD PTR i$1[rsp], eax
 	jae	SHORT $LN2@AuGetNetwo
 
-; 60   : 		AuNetAdapter* adapter = (AuNetAdapter*)list_get_at(netadapters, i);
+; 67   : 		AuNetAdapter* adapter = (AuNetAdapter*)list_get_at(netadapters, i);
 
 	mov	edx, DWORD PTR i$1[rsp]
 	mov	rcx, QWORD PTR ?netadapters@@3PEAU_list_@@EA ; netadapters
 	call	list_get_at
 	mov	QWORD PTR adapter$2[rsp], rax
 
-; 61   : 		if (adapter->type == type)
+; 68   : 		if (adapter->type == type)
 
 	mov	rax, QWORD PTR adapter$2[rsp]
-	movzx	eax, BYTE PTR [rax+22]
+	movzx	eax, BYTE PTR [rax+14]
 	movzx	ecx, BYTE PTR type$[rsp]
 	cmp	eax, ecx
 	jne	SHORT $LN1@AuGetNetwo
 
-; 62   : 			return adapter;
+; 69   : 			return adapter;
 
 	mov	rax, QWORD PTR adapter$2[rsp]
 	jmp	SHORT $LN5@AuGetNetwo
 $LN1@AuGetNetwo:
 
-; 63   : 	}
+; 70   : 	}
 
 	jmp	SHORT $LN3@AuGetNetwo
 $LN2@AuGetNetwo:
 
-; 64   : 	return NULL;
+; 71   : 	return NULL;
 
 	xor	eax, eax
 $LN5@AuGetNetwo:
 
-; 65   : }
+; 72   : }
 
 	add	rsp, 56					; 00000038H
 	ret	0
 AuGetNetworkAdapterByType ENDP
+_TEXT	ENDS
+; Function compile flags: /Odtpy
+; File e:\xeneva project\aurora\kernel\net\aunet.cpp
+_TEXT	SEGMENT
+netadapt$ = 48
+AuAddNetAdapter PROC
+
+; 57   : void AuAddNetAdapter(AuNetAdapter* netadapt) {
+
+$LN3:
+	mov	QWORD PTR [rsp+8], rcx
+	sub	rsp, 40					; 00000028H
+
+; 58   : 	list_add(netadapters, netadapt);
+
+	mov	rdx, QWORD PTR netadapt$[rsp]
+	mov	rcx, QWORD PTR ?netadapters@@3PEAU_list_@@EA ; netadapters
+	call	list_add
+
+; 59   : }
+
+	add	rsp, 40					; 00000028H
+	ret	0
+AuAddNetAdapter ENDP
 _TEXT	ENDS
 ; Function compile flags: /Odtpy
 ; File e:\xeneva project\aurora\kernel\net\aunet.cpp
@@ -114,28 +144,22 @@ $LN3:
 
 ; 48   : 	AuNetAdapter *netadapt = (AuNetAdapter*)kmalloc(sizeof(AuNetAdapter));
 
-	mov	ecx, 23
+	mov	ecx, 31
 	call	kmalloc
 	mov	QWORD PTR netadapt$[rsp], rax
 
 ; 49   : 	memset(netadapt, 0, sizeof(AuNetAdapter));
 
-	mov	r8d, 23
+	mov	r8d, 31
 	xor	edx, edx
 	mov	rcx, QWORD PTR netadapt$[rsp]
 	call	memset
 
-; 50   : 	list_add(netadapters, netadapt);
-
-	mov	rdx, QWORD PTR netadapt$[rsp]
-	mov	rcx, QWORD PTR ?netadapters@@3PEAU_list_@@EA ; netadapters
-	call	list_add
-
-; 51   : 	return netadapt;
+; 50   : 	return netadapt;
 
 	mov	rax, QWORD PTR netadapt$[rsp]
 
-; 52   : }
+; 51   : }
 
 	add	rsp, 56					; 00000038H
 	ret	0

@@ -1767,6 +1767,6 @@ int main(int argc, char* arv[]) {
 			memset(&event, 0, sizeof(PostEvent));
 		}
 
-		_KeProcessSleep(16);
+		_KeProcessSleep((16 - frameTime));
 	}
 }

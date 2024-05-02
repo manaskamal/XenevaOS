@@ -31,6 +31,7 @@
 #include <Hal\hal.h>
 #include <Hal\basicacpi.h>
 #include <Hal\x86_64_cpu.h>
+#include <aucon.h>
 
 /*
  * AuPCIEGetDevice -- gets a device address from its bus
@@ -501,6 +502,7 @@ bool AuPCIEAllocMSI(uint64_t device, size_t vector, int bus, int dev, int func) 
 
 			if ((cap_reg & 0xff) == 0x11) {
 				value = true; //MSI-X Allocated: not implemented
+				AuTextOut("MSI-X found \r\n");
 				break;
 			}
 			capptr = ((cap_reg >> 8) & 0xff);   //((cap_reg >> 8) & 0xFF) / 4;

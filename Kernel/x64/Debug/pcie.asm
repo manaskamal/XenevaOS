@@ -5,6 +5,9 @@ include listing.inc
 INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
+CONST	SEGMENT
+$SG3947	DB	'MSI-X found ', 0dH, 0aH, 00H
+CONST	ENDS
 PUBLIC	?AuPCIEGetDevice@@YA_KGHHH@Z			; AuPCIEGetDevice
 PUBLIC	AuPCIEAllocMSI
 PUBLIC	AuPCIEScanClassIF
@@ -20,13 +23,14 @@ PUBLIC	??$raw_offset@PECI_K@@YAPECI_KH@Z		; raw_offset<unsigned int volatile * _
 EXTRN	?AuACPIGetMCFG@@YAPEAUacpiMcfg@@XZ:PROC		; AuACPIGetMCFG
 EXTRN	?AuACPIPCIESupported@@YA_NXZ:PROC		; AuACPIPCIESupported
 EXTRN	?x86_64_cpu_msi_address@@YA_KPEA_K_KIEE@Z:PROC	; x86_64_cpu_msi_address
+EXTRN	AuTextOut:PROC
 EXTRN	__ImageBase:BYTE
 pdata	SEGMENT
 $pdata$?AuPCIEGetDevice@@YA_KGHHH@Z DD imagerel $LN7
 	DD	imagerel $LN7+218
 	DD	imagerel $unwind$?AuPCIEGetDevice@@YA_KGHHH@Z
 $pdata$AuPCIEAllocMSI DD imagerel $LN16
-	DD	imagerel $LN16+1057
+	DD	imagerel $LN16+1069
 	DD	imagerel $unwind$AuPCIEAllocMSI
 $pdata$AuPCIEScanClassIF DD imagerel $LN18
 	DD	imagerel $LN18+503
@@ -179,7 +183,7 @@ dev$ = 120
 func$ = 128
 AuPCIEWrite64 PROC
 
-; 325  : void AuPCIEWrite64(uint64_t device, int reg, int size, uint64_t val, int bus, int dev, int func) {
+; 326  : void AuPCIEWrite64(uint64_t device, int reg, int size, uint64_t val, int bus, int dev, int func) {
 
 $LN10:
 	mov	QWORD PTR [rsp+32], r9
@@ -188,36 +192,36 @@ $LN10:
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 72					; 00000048H
 
-; 326  : 	if (!AuACPIPCIESupported()) {
+; 327  : 	if (!AuACPIPCIESupported()) {
 
 	call	?AuACPIPCIESupported@@YA_NXZ		; AuACPIPCIESupported
 	movzx	eax, al
 	test	eax, eax
 	jne	SHORT $LN7@AuPCIEWrit
 
-; 327  : 		return; //pci_write(device,reg, val);
+; 328  : 		return; //pci_write(device,reg, val);
 
 	jmp	$LN8@AuPCIEWrit
 $LN7@AuPCIEWrit:
 
-; 328  : 	}
-; 329  : 
-; 330  : 	size_t address = 0;
+; 329  : 	}
+; 330  : 
+; 331  : 	size_t address = 0;
 
 	mov	QWORD PTR address$[rsp], 0
 
-; 331  : 	acpiMcfg *mcfg = AuACPIGetMCFG();
+; 332  : 	acpiMcfg *mcfg = AuACPIGetMCFG();
 
 	call	?AuACPIGetMCFG@@YAPEAUacpiMcfg@@XZ	; AuACPIGetMCFG
 	mov	QWORD PTR mcfg$[rsp], rax
 
-; 332  : 	acpiMcfgAlloc *allocs = mem_after<acpiMcfgAlloc*>(mcfg);
+; 333  : 	acpiMcfgAlloc *allocs = mem_after<acpiMcfgAlloc*>(mcfg);
 
 	mov	rcx, QWORD PTR mcfg$[rsp]
 	call	??$mem_after@PEAUacpiMcfgAlloc@@UacpiMcfg@@@@YAPEAUacpiMcfgAlloc@@PEAUacpiMcfg@@@Z ; mem_after<acpiMcfgAlloc * __ptr64,acpiMcfg>
 	mov	QWORD PTR allocs$[rsp], rax
 
-; 333  : 	if (allocs->startBusNum <= bus && bus <= allocs->endBusNum)
+; 334  : 	if (allocs->startBusNum <= bus && bus <= allocs->endBusNum)
 
 	mov	rax, QWORD PTR allocs$[rsp]
 	movzx	eax, BYTE PTR [rax+10]
@@ -228,7 +232,7 @@ $LN7@AuPCIEWrit:
 	cmp	DWORD PTR bus$[rsp], eax
 	jg	SHORT $LN6@AuPCIEWrit
 
-; 334  : 		address = allocs->baseAddress + ((bus - allocs->startBusNum) << 20) | (device << 15) | (func << 12) | (reg);
+; 335  : 		address = allocs->baseAddress + ((bus - allocs->startBusNum) << 20) | (device << 15) | (func << 12) | (reg);
 
 	mov	rax, QWORD PTR allocs$[rsp]
 	movzx	eax, BYTE PTR [rax+10]
@@ -253,14 +257,14 @@ $LN7@AuPCIEWrit:
 	mov	QWORD PTR address$[rsp], rax
 $LN6@AuPCIEWrit:
 
-; 335  : 
 ; 336  : 
-; 337  : 	if (size == 1){
+; 337  : 
+; 338  : 	if (size == 1){
 
 	cmp	DWORD PTR size$[rsp], 1
 	jne	SHORT $LN5@AuPCIEWrit
 
-; 338  : 		*raw_offset<volatile uint8_t*>(device, reg) = (uint8_t)val;
+; 339  : 		*raw_offset<volatile uint8_t*>(device, reg) = (uint8_t)val;
 
 	mov	edx, DWORD PTR reg$[rsp]
 	mov	rcx, QWORD PTR device$[rsp]
@@ -270,13 +274,13 @@ $LN6@AuPCIEWrit:
 	jmp	SHORT $LN4@AuPCIEWrit
 $LN5@AuPCIEWrit:
 
-; 339  : 	}
-; 340  : 	else if (size == 2) {
+; 340  : 	}
+; 341  : 	else if (size == 2) {
 
 	cmp	DWORD PTR size$[rsp], 2
 	jne	SHORT $LN3@AuPCIEWrit
 
-; 341  : 		*raw_offset<volatile uint16_t*>(device, reg) = (uint16_t)val;
+; 342  : 		*raw_offset<volatile uint16_t*>(device, reg) = (uint16_t)val;
 
 	mov	edx, DWORD PTR reg$[rsp]
 	mov	rcx, QWORD PTR device$[rsp]
@@ -286,13 +290,13 @@ $LN5@AuPCIEWrit:
 	jmp	SHORT $LN2@AuPCIEWrit
 $LN3@AuPCIEWrit:
 
-; 342  : 	}
-; 343  : 	else if (size == 4) {
+; 343  : 	}
+; 344  : 	else if (size == 4) {
 
 	cmp	DWORD PTR size$[rsp], 4
 	jne	SHORT $LN1@AuPCIEWrit
 
-; 344  : 		*raw_offset<volatile uint32_t*>(device, reg) = val;
+; 345  : 		*raw_offset<volatile uint32_t*>(device, reg) = val;
 
 	mov	edx, DWORD PTR reg$[rsp]
 	mov	rcx, QWORD PTR device$[rsp]
@@ -304,8 +308,8 @@ $LN2@AuPCIEWrit:
 $LN4@AuPCIEWrit:
 $LN8@AuPCIEWrit:
 
-; 345  : 	}
-; 346  : }
+; 346  : 	}
+; 347  : }
 
 	add	rsp, 72					; 00000048H
 	ret	0
@@ -326,7 +330,7 @@ dev$ = 112
 func$ = 120
 AuPCIERead64 PROC
 
-; 182  : uint64_t AuPCIERead64(uint64_t device, int reg, int size, int bus, int dev, int func) {
+; 183  : uint64_t AuPCIERead64(uint64_t device, int reg, int size, int bus, int dev, int func) {
 
 $LN11:
 	mov	DWORD PTR [rsp+32], r9d
@@ -335,37 +339,37 @@ $LN11:
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 72					; 00000048H
 
-; 183  : 	if (!AuACPIPCIESupported()) {
+; 184  : 	if (!AuACPIPCIESupported()) {
 
 	call	?AuACPIPCIESupported@@YA_NXZ		; AuACPIPCIESupported
 	movzx	eax, al
 	test	eax, eax
 	jne	SHORT $LN8@AuPCIERead
 
-; 184  : 		return 0;
+; 185  : 		return 0;
 
 	xor	eax, eax
 	jmp	$LN9@AuPCIERead
 $LN8@AuPCIERead:
 
-; 185  : 	}
-; 186  : 
-; 187  : 	size_t address = 0;
+; 186  : 	}
+; 187  : 
+; 188  : 	size_t address = 0;
 
 	mov	QWORD PTR address$[rsp], 0
 
-; 188  : 	acpiMcfg *mcfg = AuACPIGetMCFG();
+; 189  : 	acpiMcfg *mcfg = AuACPIGetMCFG();
 
 	call	?AuACPIGetMCFG@@YAPEAUacpiMcfg@@XZ	; AuACPIGetMCFG
 	mov	QWORD PTR mcfg$[rsp], rax
 
-; 189  : 	acpiMcfgAlloc *allocs = mem_after<acpiMcfgAlloc*>(mcfg);
+; 190  : 	acpiMcfgAlloc *allocs = mem_after<acpiMcfgAlloc*>(mcfg);
 
 	mov	rcx, QWORD PTR mcfg$[rsp]
 	call	??$mem_after@PEAUacpiMcfgAlloc@@UacpiMcfg@@@@YAPEAUacpiMcfgAlloc@@PEAUacpiMcfg@@@Z ; mem_after<acpiMcfgAlloc * __ptr64,acpiMcfg>
 	mov	QWORD PTR allocs$[rsp], rax
 
-; 190  : 	if (allocs->startBusNum <= bus && bus <= allocs->endBusNum)
+; 191  : 	if (allocs->startBusNum <= bus && bus <= allocs->endBusNum)
 
 	mov	rax, QWORD PTR allocs$[rsp]
 	movzx	eax, BYTE PTR [rax+10]
@@ -376,7 +380,7 @@ $LN8@AuPCIERead:
 	cmp	DWORD PTR bus$[rsp], eax
 	jg	SHORT $LN7@AuPCIERead
 
-; 191  : 		address = allocs->baseAddress + ((bus - allocs->startBusNum) << 20) | (device << 15) | (func << 12);
+; 192  : 		address = allocs->baseAddress + ((bus - allocs->startBusNum) << 20) | (device << 15) | (func << 12);
 
 	mov	rax, QWORD PTR allocs$[rsp]
 	movzx	eax, BYTE PTR [rax+10]
@@ -399,30 +403,30 @@ $LN8@AuPCIERead:
 	mov	QWORD PTR address$[rsp], rax
 $LN7@AuPCIERead:
 
-; 192  : 
-; 193  : 	if (address == 0)
+; 193  : 
+; 194  : 	if (address == 0)
 
 	cmp	QWORD PTR address$[rsp], 0
 	jne	SHORT $LN6@AuPCIERead
 
-; 194  : 		return 0;
+; 195  : 		return 0;
 
 	xor	eax, eax
 	jmp	$LN9@AuPCIERead
 $LN6@AuPCIERead:
 
-; 195  : 
-; 196  : 	uint64_t result = 0;
+; 196  : 
+; 197  : 	uint64_t result = 0;
 
 	mov	QWORD PTR result$[rsp], 0
 
-; 197  : 
-; 198  : 	if (size == 1){
+; 198  : 
+; 199  : 	if (size == 1){
 
 	cmp	DWORD PTR size$[rsp], 1
 	jne	SHORT $LN5@AuPCIERead
 
-; 199  : 		result = *raw_offset<volatile uint8_t*>(device, reg);
+; 200  : 		result = *raw_offset<volatile uint8_t*>(device, reg);
 
 	mov	edx, DWORD PTR reg$[rsp]
 	mov	rcx, QWORD PTR device$[rsp]
@@ -431,20 +435,20 @@ $LN6@AuPCIERead:
 	movzx	eax, al
 	mov	QWORD PTR result$[rsp], rax
 
-; 200  : 		return result;
+; 201  : 		return result;
 
 	mov	rax, QWORD PTR result$[rsp]
 	jmp	SHORT $LN9@AuPCIERead
 	jmp	SHORT $LN4@AuPCIERead
 $LN5@AuPCIERead:
 
-; 201  : 	}
-; 202  : 	else if (size == 2) {
+; 202  : 	}
+; 203  : 	else if (size == 2) {
 
 	cmp	DWORD PTR size$[rsp], 2
 	jne	SHORT $LN3@AuPCIERead
 
-; 203  : 		result = *raw_offset<volatile uint16_t*>(device, reg);
+; 204  : 		result = *raw_offset<volatile uint16_t*>(device, reg);
 
 	mov	edx, DWORD PTR reg$[rsp]
 	mov	rcx, QWORD PTR device$[rsp]
@@ -453,20 +457,20 @@ $LN5@AuPCIERead:
 	movzx	eax, ax
 	mov	QWORD PTR result$[rsp], rax
 
-; 204  : 		return result;
+; 205  : 		return result;
 
 	mov	rax, QWORD PTR result$[rsp]
 	jmp	SHORT $LN9@AuPCIERead
 	jmp	SHORT $LN2@AuPCIERead
 $LN3@AuPCIERead:
 
-; 205  : 	}
-; 206  : 	else if (size == 4) {
+; 206  : 	}
+; 207  : 	else if (size == 4) {
 
 	cmp	DWORD PTR size$[rsp], 4
 	jne	SHORT $LN1@AuPCIERead
 
-; 207  : 		result = *raw_offset<volatile uint32_t*>(device, reg);
+; 208  : 		result = *raw_offset<volatile uint32_t*>(device, reg);
 
 	mov	edx, DWORD PTR reg$[rsp]
 	mov	rcx, QWORD PTR device$[rsp]
@@ -475,7 +479,7 @@ $LN3@AuPCIERead:
 	mov	eax, eax
 	mov	QWORD PTR result$[rsp], rax
 
-; 208  : 		return result;
+; 209  : 		return result;
 
 	mov	rax, QWORD PTR result$[rsp]
 	jmp	SHORT $LN9@AuPCIERead
@@ -483,15 +487,15 @@ $LN1@AuPCIERead:
 $LN2@AuPCIERead:
 $LN4@AuPCIERead:
 
-; 209  : 	}
-; 210  : 
+; 210  : 	}
 ; 211  : 
-; 212  : 	return UINT64_MAX;
+; 212  : 
+; 213  : 	return UINT64_MAX;
 
 	mov	rax, -1
 $LN9@AuPCIERead:
 
-; 213  : }
+; 214  : }
 
 	add	rsp, 72					; 00000048H
 	ret	0
@@ -513,7 +517,7 @@ dev$ = 120
 func$ = 128
 AuPCIERead PROC
 
-; 71   : uint32_t AuPCIERead(uint64_t device, int reg, int bus, int dev, int func) {
+; 72   : uint32_t AuPCIERead(uint64_t device, int reg, int bus, int dev, int func) {
 
 $LN37:
 	mov	DWORD PTR [rsp+32], r9d
@@ -522,36 +526,36 @@ $LN37:
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 88					; 00000058H
 
-; 72   : 	if (!AuACPIPCIESupported())
+; 73   : 	if (!AuACPIPCIESupported())
 
 	call	?AuACPIPCIESupported@@YA_NXZ		; AuACPIPCIESupported
 	movzx	eax, al
 	test	eax, eax
 	jne	SHORT $LN32@AuPCIERead
 
-; 73   : 		return 0; //<- return AuPCIRead
+; 74   : 		return 0; //<- return AuPCIRead
 
 	xor	eax, eax
 	jmp	$LN33@AuPCIERead
 $LN32@AuPCIERead:
 
-; 74   : 
-; 75   : 	uint32_t address = 0;
+; 75   : 
+; 76   : 	uint32_t address = 0;
 
 	mov	DWORD PTR address$[rsp], 0
 
-; 76   : 	acpiMcfg *mcfg = AuACPIGetMCFG();
+; 77   : 	acpiMcfg *mcfg = AuACPIGetMCFG();
 
 	call	?AuACPIGetMCFG@@YAPEAUacpiMcfg@@XZ	; AuACPIGetMCFG
 	mov	QWORD PTR mcfg$[rsp], rax
 
-; 77   : 	acpiMcfgAlloc* allocs = mem_after<acpiMcfgAlloc*>(mcfg);
+; 78   : 	acpiMcfgAlloc* allocs = mem_after<acpiMcfgAlloc*>(mcfg);
 
 	mov	rcx, QWORD PTR mcfg$[rsp]
 	call	??$mem_after@PEAUacpiMcfgAlloc@@UacpiMcfg@@@@YAPEAUacpiMcfgAlloc@@PEAUacpiMcfg@@@Z ; mem_after<acpiMcfgAlloc * __ptr64,acpiMcfg>
 	mov	QWORD PTR allocs$[rsp], rax
 
-; 78   : 	if (allocs->startBusNum <= bus && bus <= allocs->endBusNum)
+; 79   : 	if (allocs->startBusNum <= bus && bus <= allocs->endBusNum)
 
 	mov	rax, QWORD PTR allocs$[rsp]
 	movzx	eax, BYTE PTR [rax+10]
@@ -562,8 +566,8 @@ $LN32@AuPCIERead:
 	cmp	DWORD PTR bus$[rsp], eax
 	jg	SHORT $LN31@AuPCIERead
 
-; 79   : 		address = allocs->baseAddress + ((bus - allocs->startBusNum) << 20) | (dev << 15) |
-; 80   : 		(func << 12);
+; 80   : 		address = allocs->baseAddress + ((bus - allocs->startBusNum) << 20) | (dev << 15) |
+; 81   : 		(func << 12);
 
 	mov	rax, QWORD PTR allocs$[rsp]
 	movzx	eax, BYTE PTR [rax+10]
@@ -587,28 +591,28 @@ $LN32@AuPCIERead:
 	mov	DWORD PTR address$[rsp], eax
 $LN31@AuPCIERead:
 
-; 81   : 
-; 82   : 	uint64_t result = 0;
+; 82   : 
+; 83   : 	uint64_t result = 0;
 
 	mov	QWORD PTR result$[rsp], 0
 
-; 83   : 	if (address == 0)
+; 84   : 	if (address == 0)
 
 	cmp	DWORD PTR address$[rsp], 0
 	jne	SHORT $LN30@AuPCIERead
 
-; 84   : 		return 0;
+; 85   : 		return 0;
 
 	xor	eax, eax
 	jmp	$LN33@AuPCIERead
 $LN30@AuPCIERead:
 
-; 85   : 
-; 86   : 	int size = 0;
+; 86   : 
+; 87   : 	int size = 0;
 
 	mov	DWORD PTR size$[rsp], 0
 
-; 87   : 	switch (reg) {
+; 88   : 	switch (reg) {
 
 	mov	eax, DWORD PTR reg$[rsp]
 	mov	DWORD PTR tv91[rsp], eax
@@ -622,231 +626,231 @@ $LN30@AuPCIERead:
 	jmp	rax
 $LN27@AuPCIERead:
 
-; 88   : 	case PCI_VENDOR_ID:
-; 89   : 		size = 2;
+; 89   : 	case PCI_VENDOR_ID:
+; 90   : 		size = 2;
 
 	mov	DWORD PTR size$[rsp], 2
 
-; 90   : 		break;
+; 91   : 		break;
 
 	jmp	$LN28@AuPCIERead
 $LN26@AuPCIERead:
 
-; 91   : 	case PCI_DEVICE_ID:
-; 92   : 		size = 2;
+; 92   : 	case PCI_DEVICE_ID:
+; 93   : 		size = 2;
 
 	mov	DWORD PTR size$[rsp], 2
 
-; 93   : 		break;
+; 94   : 		break;
 
 	jmp	$LN28@AuPCIERead
 $LN25@AuPCIERead:
 
-; 94   : 	case PCI_COMMAND:
-; 95   : 		size = 2;
+; 95   : 	case PCI_COMMAND:
+; 96   : 		size = 2;
 
 	mov	DWORD PTR size$[rsp], 2
 
-; 96   : 		break;
+; 97   : 		break;
 
 	jmp	$LN28@AuPCIERead
 $LN24@AuPCIERead:
 
-; 97   : 	case PCI_STATUS:
-; 98   : 		size = 2;
+; 98   : 	case PCI_STATUS:
+; 99   : 		size = 2;
 
 	mov	DWORD PTR size$[rsp], 2
 
-; 99   : 		break;
+; 100  : 		break;
 
 	jmp	$LN28@AuPCIERead
 $LN23@AuPCIERead:
 
-; 100  : 	case PCI_REVISION_ID:
-; 101  : 		size = 1;
+; 101  : 	case PCI_REVISION_ID:
+; 102  : 		size = 1;
 
 	mov	DWORD PTR size$[rsp], 1
 
-; 102  : 		break;
+; 103  : 		break;
 
 	jmp	$LN28@AuPCIERead
 $LN22@AuPCIERead:
 
-; 103  : 	case PCI_PROG_IF:
-; 104  : 		size = 1;
+; 104  : 	case PCI_PROG_IF:
+; 105  : 		size = 1;
 
 	mov	DWORD PTR size$[rsp], 1
 
-; 105  : 		break;
+; 106  : 		break;
 
 	jmp	$LN28@AuPCIERead
 $LN21@AuPCIERead:
 
-; 106  : 	case PCI_SUBCLASS:
-; 107  : 		size = 1;
+; 107  : 	case PCI_SUBCLASS:
+; 108  : 		size = 1;
 
 	mov	DWORD PTR size$[rsp], 1
 
-; 108  : 		break;
+; 109  : 		break;
 
 	jmp	$LN28@AuPCIERead
 $LN20@AuPCIERead:
 
-; 109  : 	case PCI_CLASS:
-; 110  : 		size = 1;
+; 110  : 	case PCI_CLASS:
+; 111  : 		size = 1;
 
 	mov	DWORD PTR size$[rsp], 1
 
-; 111  : 		break;
+; 112  : 		break;
 
 	jmp	$LN28@AuPCIERead
 $LN19@AuPCIERead:
 
-; 112  : 	case PCI_CACHE_LINE_SIZE:
-; 113  : 		size = 1;
+; 113  : 	case PCI_CACHE_LINE_SIZE:
+; 114  : 		size = 1;
 
 	mov	DWORD PTR size$[rsp], 1
 
-; 114  : 		break;
+; 115  : 		break;
 
 	jmp	$LN28@AuPCIERead
 $LN18@AuPCIERead:
 
-; 115  : 	case PCI_LATENCY_TIMER:
-; 116  : 		size = 1;
+; 116  : 	case PCI_LATENCY_TIMER:
+; 117  : 		size = 1;
 
 	mov	DWORD PTR size$[rsp], 1
 
-; 117  : 		break;
+; 118  : 		break;
 
 	jmp	SHORT $LN28@AuPCIERead
 $LN17@AuPCIERead:
 
-; 118  : 	case PCI_HEADER_TYPE:
-; 119  : 		size = 1;
+; 119  : 	case PCI_HEADER_TYPE:
+; 120  : 		size = 1;
 
 	mov	DWORD PTR size$[rsp], 1
 
-; 120  : 		break;
+; 121  : 		break;
 
 	jmp	SHORT $LN28@AuPCIERead
 $LN16@AuPCIERead:
 
-; 121  : 	case PCI_BIST:
-; 122  : 		size = 1;
+; 122  : 	case PCI_BIST:
+; 123  : 		size = 1;
 
 	mov	DWORD PTR size$[rsp], 1
 
-; 123  : 		break;
+; 124  : 		break;
 
 	jmp	SHORT $LN28@AuPCIERead
 $LN15@AuPCIERead:
 
-; 124  : 	case PCI_BAR0:
-; 125  : 		size = 4;
+; 125  : 	case PCI_BAR0:
+; 126  : 		size = 4;
 
 	mov	DWORD PTR size$[rsp], 4
 
-; 126  : 		break;
+; 127  : 		break;
 
 	jmp	SHORT $LN28@AuPCIERead
 $LN14@AuPCIERead:
 
-; 127  : 	case PCI_BAR1:
-; 128  : 		size = 4;
+; 128  : 	case PCI_BAR1:
+; 129  : 		size = 4;
 
 	mov	DWORD PTR size$[rsp], 4
 
-; 129  : 		break;
+; 130  : 		break;
 
 	jmp	SHORT $LN28@AuPCIERead
 $LN13@AuPCIERead:
 
-; 130  : 	case PCI_BAR2:
-; 131  : 		size = 4;
+; 131  : 	case PCI_BAR2:
+; 132  : 		size = 4;
 
 	mov	DWORD PTR size$[rsp], 4
 
-; 132  : 		break;
+; 133  : 		break;
 
 	jmp	SHORT $LN28@AuPCIERead
 $LN12@AuPCIERead:
 
-; 133  : 	case PCI_BAR3:
-; 134  : 		size = 4;
+; 134  : 	case PCI_BAR3:
+; 135  : 		size = 4;
 
 	mov	DWORD PTR size$[rsp], 4
 
-; 135  : 		break;
+; 136  : 		break;
 
 	jmp	SHORT $LN28@AuPCIERead
 $LN11@AuPCIERead:
 
-; 136  : 	case PCI_BAR4:
-; 137  : 		size = 4;
+; 137  : 	case PCI_BAR4:
+; 138  : 		size = 4;
 
 	mov	DWORD PTR size$[rsp], 4
 
-; 138  : 		break;
+; 139  : 		break;
 
 	jmp	SHORT $LN28@AuPCIERead
 $LN10@AuPCIERead:
 
-; 139  : 	case PCI_BAR5:
-; 140  : 		size = 4;
+; 140  : 	case PCI_BAR5:
+; 141  : 		size = 4;
 
 	mov	DWORD PTR size$[rsp], 4
 
-; 141  : 		break;
+; 142  : 		break;
 
 	jmp	SHORT $LN28@AuPCIERead
 $LN9@AuPCIERead:
 
-; 142  : 	case PCI_CAPABILITIES_PTR:
-; 143  : 		size = 1;
+; 143  : 	case PCI_CAPABILITIES_PTR:
+; 144  : 		size = 1;
 
 	mov	DWORD PTR size$[rsp], 1
 
-; 144  : 		break;
+; 145  : 		break;
 
 	jmp	SHORT $LN28@AuPCIERead
 $LN8@AuPCIERead:
 
-; 145  : 	case PCI_INTERRUPT_LINE:
-; 146  : 		size = 1;
+; 146  : 	case PCI_INTERRUPT_LINE:
+; 147  : 		size = 1;
 
 	mov	DWORD PTR size$[rsp], 1
 
-; 147  : 		break;
+; 148  : 		break;
 
 	jmp	SHORT $LN28@AuPCIERead
 $LN7@AuPCIERead:
 
-; 148  : 	case PCI_INTERRUPT_PIN:
-; 149  : 		size = 1;
+; 149  : 	case PCI_INTERRUPT_PIN:
+; 150  : 		size = 1;
 
 	mov	DWORD PTR size$[rsp], 1
 
-; 150  : 		break;
+; 151  : 		break;
 
 	jmp	SHORT $LN28@AuPCIERead
 $LN6@AuPCIERead:
 
-; 151  : 	default:
-; 152  : 		size = 1;
+; 152  : 	default:
+; 153  : 		size = 1;
 
 	mov	DWORD PTR size$[rsp], 1
 $LN28@AuPCIERead:
 
-; 153  : 		break;
-; 154  : 	}
-; 155  : 
-; 156  : 	if (size == 1){
+; 154  : 		break;
+; 155  : 	}
+; 156  : 
+; 157  : 	if (size == 1){
 
 	cmp	DWORD PTR size$[rsp], 1
 	jne	SHORT $LN5@AuPCIERead
 
-; 157  : 		result = *raw_offset<volatile uint8_t*>(device, reg);
+; 158  : 		result = *raw_offset<volatile uint8_t*>(device, reg);
 
 	mov	edx, DWORD PTR reg$[rsp]
 	mov	rcx, QWORD PTR device$[rsp]
@@ -855,20 +859,20 @@ $LN28@AuPCIERead:
 	movzx	eax, al
 	mov	QWORD PTR result$[rsp], rax
 
-; 158  : 		return result;
+; 159  : 		return result;
 
 	mov	eax, DWORD PTR result$[rsp]
 	jmp	SHORT $LN33@AuPCIERead
 	jmp	SHORT $LN4@AuPCIERead
 $LN5@AuPCIERead:
 
-; 159  : 	}
-; 160  : 	else if (size == 2) {
+; 160  : 	}
+; 161  : 	else if (size == 2) {
 
 	cmp	DWORD PTR size$[rsp], 2
 	jne	SHORT $LN3@AuPCIERead
 
-; 161  : 		result = *raw_offset<volatile uint16_t*>(device, reg);
+; 162  : 		result = *raw_offset<volatile uint16_t*>(device, reg);
 
 	mov	edx, DWORD PTR reg$[rsp]
 	mov	rcx, QWORD PTR device$[rsp]
@@ -877,20 +881,20 @@ $LN5@AuPCIERead:
 	movzx	eax, ax
 	mov	QWORD PTR result$[rsp], rax
 
-; 162  : 		return result;
+; 163  : 		return result;
 
 	mov	eax, DWORD PTR result$[rsp]
 	jmp	SHORT $LN33@AuPCIERead
 	jmp	SHORT $LN2@AuPCIERead
 $LN3@AuPCIERead:
 
-; 163  : 	}
-; 164  : 	else if (size == 4) {
+; 164  : 	}
+; 165  : 	else if (size == 4) {
 
 	cmp	DWORD PTR size$[rsp], 4
 	jne	SHORT $LN1@AuPCIERead
 
-; 165  : 		result = *raw_offset<volatile uint32_t*>(device, reg);
+; 166  : 		result = *raw_offset<volatile uint32_t*>(device, reg);
 
 	mov	edx, DWORD PTR reg$[rsp]
 	mov	rcx, QWORD PTR device$[rsp]
@@ -899,7 +903,7 @@ $LN3@AuPCIERead:
 	mov	eax, eax
 	mov	QWORD PTR result$[rsp], rax
 
-; 166  : 		return result;
+; 167  : 		return result;
 
 	mov	eax, DWORD PTR result$[rsp]
 	jmp	SHORT $LN33@AuPCIERead
@@ -907,14 +911,14 @@ $LN1@AuPCIERead:
 $LN2@AuPCIERead:
 $LN4@AuPCIERead:
 
-; 167  : 	}
-; 168  : 
-; 169  : 	return UINT32_MAX;
+; 168  : 	}
+; 169  : 
+; 170  : 	return UINT32_MAX;
 
 	mov	eax, -1					; ffffffffH
 $LN33@AuPCIERead:
 
-; 170  : }
+; 171  : }
 
 	add	rsp, 88					; 00000058H
 	ret	0
@@ -1023,7 +1027,7 @@ dev$ = 112
 func$ = 120
 AuPCIEWrite PROC
 
-; 225  : void AuPCIEWrite(uint64_t device, int reg, uint32_t val, int bus, int dev, int func) {
+; 226  : void AuPCIEWrite(uint64_t device, int reg, uint32_t val, int bus, int dev, int func) {
 
 $LN37:
 	mov	DWORD PTR [rsp+32], r9d
@@ -1032,37 +1036,37 @@ $LN37:
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 72					; 00000048H
 
-; 226  : 	if (!AuACPIPCIESupported()) {
+; 227  : 	if (!AuACPIPCIESupported()) {
 
 	call	?AuACPIPCIESupported@@YA_NXZ		; AuACPIPCIESupported
 	movzx	eax, al
 	test	eax, eax
 	jne	SHORT $LN32@AuPCIEWrit
 
-; 227  : 		return; //pci_write(device,reg, val);
+; 228  : 		return; //pci_write(device,reg, val);
 
 	jmp	$LN33@AuPCIEWrit
 $LN32@AuPCIEWrit:
 
-; 228  : 	}
-; 229  : 
-; 230  : 	size_t address = 0;
+; 229  : 	}
+; 230  : 
+; 231  : 	size_t address = 0;
 
 	mov	QWORD PTR address$[rsp], 0
 
-; 231  : 
-; 232  : 	acpiMcfg *mcfg = AuACPIGetMCFG();
+; 232  : 
+; 233  : 	acpiMcfg *mcfg = AuACPIGetMCFG();
 
 	call	?AuACPIGetMCFG@@YAPEAUacpiMcfg@@XZ	; AuACPIGetMCFG
 	mov	QWORD PTR mcfg$[rsp], rax
 
-; 233  : 	acpiMcfgAlloc *allocs = mem_after<acpiMcfgAlloc*>(mcfg);
+; 234  : 	acpiMcfgAlloc *allocs = mem_after<acpiMcfgAlloc*>(mcfg);
 
 	mov	rcx, QWORD PTR mcfg$[rsp]
 	call	??$mem_after@PEAUacpiMcfgAlloc@@UacpiMcfg@@@@YAPEAUacpiMcfgAlloc@@PEAUacpiMcfg@@@Z ; mem_after<acpiMcfgAlloc * __ptr64,acpiMcfg>
 	mov	QWORD PTR allocs$[rsp], rax
 
-; 234  : 	if (allocs->startBusNum <= bus && bus <= allocs->endBusNum)
+; 235  : 	if (allocs->startBusNum <= bus && bus <= allocs->endBusNum)
 
 	mov	rax, QWORD PTR allocs$[rsp]
 	movzx	eax, BYTE PTR [rax+10]
@@ -1073,7 +1077,7 @@ $LN32@AuPCIEWrit:
 	cmp	DWORD PTR bus$[rsp], eax
 	jg	SHORT $LN31@AuPCIEWrit
 
-; 235  : 		address = allocs->baseAddress + ((bus - allocs->startBusNum) << 20) | (device << 15) | (func << 12);
+; 236  : 		address = allocs->baseAddress + ((bus - allocs->startBusNum) << 20) | (device << 15) | (func << 12);
 
 	mov	rax, QWORD PTR allocs$[rsp]
 	movzx	eax, BYTE PTR [rax+10]
@@ -1096,29 +1100,29 @@ $LN32@AuPCIEWrit:
 	mov	QWORD PTR address$[rsp], rax
 $LN31@AuPCIEWrit:
 
-; 236  : 
 ; 237  : 
-; 238  : 	if (address == 0)
+; 238  : 
+; 239  : 	if (address == 0)
 
 	cmp	QWORD PTR address$[rsp], 0
 	jne	SHORT $LN30@AuPCIEWrit
 
-; 239  : 		return;
+; 240  : 		return;
 
 	jmp	$LN33@AuPCIEWrit
 $LN30@AuPCIEWrit:
 
-; 240  : 
-; 241  : 	reg = reg;
+; 241  : 
+; 242  : 	reg = reg;
 
 	mov	eax, DWORD PTR reg$[rsp]
 	mov	DWORD PTR reg$[rsp], eax
 
-; 242  : 	int size = 0;
+; 243  : 	int size = 0;
 
 	mov	DWORD PTR size$[rsp], 0
 
-; 243  : 	switch (reg) {
+; 244  : 	switch (reg) {
 
 	mov	eax, DWORD PTR reg$[rsp]
 	mov	DWORD PTR tv89[rsp], eax
@@ -1132,231 +1136,231 @@ $LN30@AuPCIEWrit:
 	jmp	rax
 $LN27@AuPCIEWrit:
 
-; 244  : 	case PCI_VENDOR_ID:
-; 245  : 		size = 2;
+; 245  : 	case PCI_VENDOR_ID:
+; 246  : 		size = 2;
 
 	mov	DWORD PTR size$[rsp], 2
 
-; 246  : 		break;
+; 247  : 		break;
 
 	jmp	$LN28@AuPCIEWrit
 $LN26@AuPCIEWrit:
 
-; 247  : 	case PCI_DEVICE_ID:
-; 248  : 		size = 2;
+; 248  : 	case PCI_DEVICE_ID:
+; 249  : 		size = 2;
 
 	mov	DWORD PTR size$[rsp], 2
 
-; 249  : 		break;
+; 250  : 		break;
 
 	jmp	$LN28@AuPCIEWrit
 $LN25@AuPCIEWrit:
 
-; 250  : 	case PCI_COMMAND:
-; 251  : 		size = 2;
+; 251  : 	case PCI_COMMAND:
+; 252  : 		size = 2;
 
 	mov	DWORD PTR size$[rsp], 2
 
-; 252  : 		break;
+; 253  : 		break;
 
 	jmp	$LN28@AuPCIEWrit
 $LN24@AuPCIEWrit:
 
-; 253  : 	case PCI_STATUS:
-; 254  : 		size = 2;
+; 254  : 	case PCI_STATUS:
+; 255  : 		size = 2;
 
 	mov	DWORD PTR size$[rsp], 2
 
-; 255  : 		break;
+; 256  : 		break;
 
 	jmp	$LN28@AuPCIEWrit
 $LN23@AuPCIEWrit:
 
-; 256  : 	case PCI_REVISION_ID:
-; 257  : 		size = 1;
+; 257  : 	case PCI_REVISION_ID:
+; 258  : 		size = 1;
 
 	mov	DWORD PTR size$[rsp], 1
 
-; 258  : 		break;
+; 259  : 		break;
 
 	jmp	$LN28@AuPCIEWrit
 $LN22@AuPCIEWrit:
 
-; 259  : 	case PCI_PROG_IF:
-; 260  : 		size = 1;
+; 260  : 	case PCI_PROG_IF:
+; 261  : 		size = 1;
 
 	mov	DWORD PTR size$[rsp], 1
 
-; 261  : 		break;
+; 262  : 		break;
 
 	jmp	$LN28@AuPCIEWrit
 $LN21@AuPCIEWrit:
 
-; 262  : 	case PCI_SUBCLASS:
-; 263  : 		size = 1;
+; 263  : 	case PCI_SUBCLASS:
+; 264  : 		size = 1;
 
 	mov	DWORD PTR size$[rsp], 1
 
-; 264  : 		break;
+; 265  : 		break;
 
 	jmp	$LN28@AuPCIEWrit
 $LN20@AuPCIEWrit:
 
-; 265  : 	case PCI_CLASS:
-; 266  : 		size = 1;
+; 266  : 	case PCI_CLASS:
+; 267  : 		size = 1;
 
 	mov	DWORD PTR size$[rsp], 1
 
-; 267  : 		break;
+; 268  : 		break;
 
 	jmp	$LN28@AuPCIEWrit
 $LN19@AuPCIEWrit:
 
-; 268  : 	case PCI_CACHE_LINE_SIZE:
-; 269  : 		size = 1;
+; 269  : 	case PCI_CACHE_LINE_SIZE:
+; 270  : 		size = 1;
 
 	mov	DWORD PTR size$[rsp], 1
 
-; 270  : 		break;
+; 271  : 		break;
 
 	jmp	$LN28@AuPCIEWrit
 $LN18@AuPCIEWrit:
 
-; 271  : 	case PCI_LATENCY_TIMER:
-; 272  : 		size = 1;
+; 272  : 	case PCI_LATENCY_TIMER:
+; 273  : 		size = 1;
 
 	mov	DWORD PTR size$[rsp], 1
 
-; 273  : 		break;
+; 274  : 		break;
 
 	jmp	SHORT $LN28@AuPCIEWrit
 $LN17@AuPCIEWrit:
 
-; 274  : 	case PCI_HEADER_TYPE:
-; 275  : 		size = 1;
+; 275  : 	case PCI_HEADER_TYPE:
+; 276  : 		size = 1;
 
 	mov	DWORD PTR size$[rsp], 1
 
-; 276  : 		break;
+; 277  : 		break;
 
 	jmp	SHORT $LN28@AuPCIEWrit
 $LN16@AuPCIEWrit:
 
-; 277  : 	case PCI_BIST:
-; 278  : 		size = 1;
+; 278  : 	case PCI_BIST:
+; 279  : 		size = 1;
 
 	mov	DWORD PTR size$[rsp], 1
 
-; 279  : 		break;
+; 280  : 		break;
 
 	jmp	SHORT $LN28@AuPCIEWrit
 $LN15@AuPCIEWrit:
 
-; 280  : 	case PCI_BAR0:
-; 281  : 		size = 4;
+; 281  : 	case PCI_BAR0:
+; 282  : 		size = 4;
 
 	mov	DWORD PTR size$[rsp], 4
 
-; 282  : 		break;
+; 283  : 		break;
 
 	jmp	SHORT $LN28@AuPCIEWrit
 $LN14@AuPCIEWrit:
 
-; 283  : 	case PCI_BAR1:
-; 284  : 		size = 4;
+; 284  : 	case PCI_BAR1:
+; 285  : 		size = 4;
 
 	mov	DWORD PTR size$[rsp], 4
 
-; 285  : 		break;
+; 286  : 		break;
 
 	jmp	SHORT $LN28@AuPCIEWrit
 $LN13@AuPCIEWrit:
 
-; 286  : 	case PCI_BAR2:
-; 287  : 		size = 4;
+; 287  : 	case PCI_BAR2:
+; 288  : 		size = 4;
 
 	mov	DWORD PTR size$[rsp], 4
 
-; 288  : 		break;
+; 289  : 		break;
 
 	jmp	SHORT $LN28@AuPCIEWrit
 $LN12@AuPCIEWrit:
 
-; 289  : 	case PCI_BAR3:
-; 290  : 		size = 4;
+; 290  : 	case PCI_BAR3:
+; 291  : 		size = 4;
 
 	mov	DWORD PTR size$[rsp], 4
 
-; 291  : 		break;
+; 292  : 		break;
 
 	jmp	SHORT $LN28@AuPCIEWrit
 $LN11@AuPCIEWrit:
 
-; 292  : 	case PCI_BAR4:
-; 293  : 		size = 4;
+; 293  : 	case PCI_BAR4:
+; 294  : 		size = 4;
 
 	mov	DWORD PTR size$[rsp], 4
 
-; 294  : 		break;
+; 295  : 		break;
 
 	jmp	SHORT $LN28@AuPCIEWrit
 $LN10@AuPCIEWrit:
 
-; 295  : 	case PCI_BAR5:
-; 296  : 		size = 4;
+; 296  : 	case PCI_BAR5:
+; 297  : 		size = 4;
 
 	mov	DWORD PTR size$[rsp], 4
 
-; 297  : 		break;
+; 298  : 		break;
 
 	jmp	SHORT $LN28@AuPCIEWrit
 $LN9@AuPCIEWrit:
 
-; 298  : 	case PCI_CAPABILITIES_PTR:
-; 299  : 		size = 1;
+; 299  : 	case PCI_CAPABILITIES_PTR:
+; 300  : 		size = 1;
 
 	mov	DWORD PTR size$[rsp], 1
 
-; 300  : 		break;
+; 301  : 		break;
 
 	jmp	SHORT $LN28@AuPCIEWrit
 $LN8@AuPCIEWrit:
 
-; 301  : 	case PCI_INTERRUPT_LINE:
-; 302  : 		size = 1;
+; 302  : 	case PCI_INTERRUPT_LINE:
+; 303  : 		size = 1;
 
 	mov	DWORD PTR size$[rsp], 1
 
-; 303  : 		break;
+; 304  : 		break;
 
 	jmp	SHORT $LN28@AuPCIEWrit
 $LN7@AuPCIEWrit:
 
-; 304  : 	case PCI_INTERRUPT_PIN:
-; 305  : 		size = 1;
+; 305  : 	case PCI_INTERRUPT_PIN:
+; 306  : 		size = 1;
 
 	mov	DWORD PTR size$[rsp], 1
 
-; 306  : 		break;
+; 307  : 		break;
 
 	jmp	SHORT $LN28@AuPCIEWrit
 $LN6@AuPCIEWrit:
 
-; 307  : 	default:
-; 308  : 		size = 4;
+; 308  : 	default:
+; 309  : 		size = 4;
 
 	mov	DWORD PTR size$[rsp], 4
 $LN28@AuPCIEWrit:
 
-; 309  : 		break;
-; 310  : 	}
-; 311  : 
-; 312  : 	if (size == 1){
+; 310  : 		break;
+; 311  : 	}
+; 312  : 
+; 313  : 	if (size == 1){
 
 	cmp	DWORD PTR size$[rsp], 1
 	jne	SHORT $LN5@AuPCIEWrit
 
-; 313  : 		*raw_offset<volatile uint8_t*>(device, reg) = (uint8_t)val;
+; 314  : 		*raw_offset<volatile uint8_t*>(device, reg) = (uint8_t)val;
 
 	mov	edx, DWORD PTR reg$[rsp]
 	mov	rcx, QWORD PTR device$[rsp]
@@ -1366,13 +1370,13 @@ $LN28@AuPCIEWrit:
 	jmp	SHORT $LN4@AuPCIEWrit
 $LN5@AuPCIEWrit:
 
-; 314  : 	}
-; 315  : 	else if (size == 2) {
+; 315  : 	}
+; 316  : 	else if (size == 2) {
 
 	cmp	DWORD PTR size$[rsp], 2
 	jne	SHORT $LN3@AuPCIEWrit
 
-; 316  : 		*raw_offset<volatile uint16_t*>(device, reg) = (uint16_t)val;
+; 317  : 		*raw_offset<volatile uint16_t*>(device, reg) = (uint16_t)val;
 
 	mov	edx, DWORD PTR reg$[rsp]
 	mov	rcx, QWORD PTR device$[rsp]
@@ -1382,13 +1386,13 @@ $LN5@AuPCIEWrit:
 	jmp	SHORT $LN2@AuPCIEWrit
 $LN3@AuPCIEWrit:
 
-; 317  : 	}
-; 318  : 	else if (size == 4) {
+; 318  : 	}
+; 319  : 	else if (size == 4) {
 
 	cmp	DWORD PTR size$[rsp], 4
 	jne	SHORT $LN1@AuPCIEWrit
 
-; 319  : 		*raw_offset<volatile uint32_t*>(device, reg) = (uint32_t)val;
+; 320  : 		*raw_offset<volatile uint32_t*>(device, reg) = (uint32_t)val;
 
 	mov	edx, DWORD PTR reg$[rsp]
 	mov	rcx, QWORD PTR device$[rsp]
@@ -1400,8 +1404,8 @@ $LN2@AuPCIEWrit:
 $LN4@AuPCIEWrit:
 $LN33@AuPCIEWrit:
 
-; 320  : 	}
-; 321  : }
+; 321  : 	}
+; 322  : }
 
 	add	rsp, 72					; 00000048H
 	ret	0
@@ -1512,7 +1516,7 @@ dev_$ = 136
 func_$ = 144
 AuPCIEScanClass PROC
 
-; 357  : uint64_t AuPCIEScanClass(uint8_t classCode, uint8_t subClassCode, int *bus_, int *dev_, int *func_) {
+; 358  : uint64_t AuPCIEScanClass(uint8_t classCode, uint8_t subClassCode, int *bus_, int *dev_, int *func_) {
 
 $LN19:
 	mov	QWORD PTR [rsp+32], r9
@@ -1521,63 +1525,63 @@ $LN19:
 	mov	BYTE PTR [rsp+8], cl
 	sub	rsp, 104				; 00000068H
 
-; 358  : 	if (!AuACPIPCIESupported()) {
+; 359  : 	if (!AuACPIPCIESupported()) {
 
 	call	?AuACPIPCIESupported@@YA_NXZ		; AuACPIPCIESupported
 	movzx	eax, al
 	test	eax, eax
 	jne	SHORT $LN16@AuPCIEScan
 
-; 359  : 		return 0; //pci_scan_class(classCode, subClassCode);
+; 360  : 		return 0; //pci_scan_class(classCode, subClassCode);
 
 	xor	eax, eax
 	jmp	$LN17@AuPCIEScan
 $LN16@AuPCIEScan:
 
-; 360  : 	}
-; 361  : 
-; 362  : 	acpiMcfg *mcfg = AuACPIGetMCFG();
+; 361  : 	}
+; 362  : 
+; 363  : 	acpiMcfg *mcfg = AuACPIGetMCFG();
 
 	call	?AuACPIGetMCFG@@YAPEAUacpiMcfg@@XZ	; AuACPIGetMCFG
 	mov	QWORD PTR mcfg$[rsp], rax
 
-; 363  : 	acpiMcfgAlloc *allocs = mem_after<acpiMcfgAlloc*>(mcfg);
+; 364  : 	acpiMcfgAlloc *allocs = mem_after<acpiMcfgAlloc*>(mcfg);
 
 	mov	rcx, QWORD PTR mcfg$[rsp]
 	call	??$mem_after@PEAUacpiMcfgAlloc@@UacpiMcfg@@@@YAPEAUacpiMcfgAlloc@@PEAUacpiMcfg@@@Z ; mem_after<acpiMcfgAlloc * __ptr64,acpiMcfg>
 	mov	QWORD PTR allocs$[rsp], rax
 
-; 364  : 	uint16_t pciSegment = 0;
+; 365  : 	uint16_t pciSegment = 0;
 
 	xor	eax, eax
 	mov	WORD PTR pciSegment$[rsp], ax
 
-; 365  : 	if (allocs->pciSegment <= 65535)
+; 366  : 	if (allocs->pciSegment <= 65535)
 
 	mov	rax, QWORD PTR allocs$[rsp]
 	movzx	eax, WORD PTR [rax+8]
 	cmp	eax, 65535				; 0000ffffH
 	jg	SHORT $LN15@AuPCIEScan
 
-; 366  : 		pciSegment = allocs->pciSegment;
+; 367  : 		pciSegment = allocs->pciSegment;
 
 	mov	rax, QWORD PTR allocs$[rsp]
 	movzx	eax, WORD PTR [rax+8]
 	mov	WORD PTR pciSegment$[rsp], ax
 
-; 367  : 	else
+; 368  : 	else
 
 	jmp	SHORT $LN14@AuPCIEScan
 $LN15@AuPCIEScan:
 
-; 368  : 		pciSegment = 0;
+; 369  : 		pciSegment = 0;
 
 	xor	eax, eax
 	mov	WORD PTR pciSegment$[rsp], ax
 $LN14@AuPCIEScan:
 
-; 369  : 
-; 370  : 	for (int bus = 0; bus < allocs->endBusNum; bus++){
+; 370  : 
+; 371  : 	for (int bus = 0; bus < allocs->endBusNum; bus++){
 
 	mov	DWORD PTR bus$5[rsp], 0
 	jmp	SHORT $LN13@AuPCIEScan
@@ -1591,7 +1595,7 @@ $LN13@AuPCIEScan:
 	cmp	DWORD PTR bus$5[rsp], eax
 	jge	$LN11@AuPCIEScan
 
-; 371  : 		for (int dev = 0; dev < PCI_DEVICE_PER_BUS; dev++) {
+; 372  : 		for (int dev = 0; dev < PCI_DEVICE_PER_BUS; dev++) {
 
 	mov	DWORD PTR dev$2[rsp], 0
 	jmp	SHORT $LN10@AuPCIEScan
@@ -1603,7 +1607,7 @@ $LN10@AuPCIEScan:
 	cmp	DWORD PTR dev$2[rsp], 32		; 00000020H
 	jge	$LN8@AuPCIEScan
 
-; 372  : 			for (int func = 0; func < PCI_FUNCTION_PER_DEVICE; func++) {
+; 373  : 			for (int func = 0; func < PCI_FUNCTION_PER_DEVICE; func++) {
 
 	mov	DWORD PTR func$3[rsp], 0
 	jmp	SHORT $LN7@AuPCIEScan
@@ -1615,7 +1619,7 @@ $LN7@AuPCIEScan:
 	cmp	DWORD PTR func$3[rsp], 8
 	jge	$LN5@AuPCIEScan
 
-; 373  : 				uint64_t address = AuPCIEGetDevice(pciSegment, bus, dev, func);
+; 374  : 				uint64_t address = AuPCIEGetDevice(pciSegment, bus, dev, func);
 
 	mov	r9d, DWORD PTR func$3[rsp]
 	mov	r8d, DWORD PTR dev$2[rsp]
@@ -1624,19 +1628,19 @@ $LN7@AuPCIEScan:
 	call	?AuPCIEGetDevice@@YA_KGHHH@Z		; AuPCIEGetDevice
 	mov	QWORD PTR address$6[rsp], rax
 
-; 374  : 
-; 375  : 				if (address == 0xFFFFFFFF)
+; 375  : 
+; 376  : 				if (address == 0xFFFFFFFF)
 
 	mov	eax, -1					; ffffffffH
 	cmp	QWORD PTR address$6[rsp], rax
 	jne	SHORT $LN4@AuPCIEScan
 
-; 376  : 					continue;
+; 377  : 					continue;
 
 	jmp	SHORT $LN6@AuPCIEScan
 $LN4@AuPCIEScan:
 
-; 377  : 				uint8_t class_code = AuPCIERead(address, PCI_CLASS, bus, dev, func);
+; 378  : 				uint8_t class_code = AuPCIERead(address, PCI_CLASS, bus, dev, func);
 
 	mov	eax, DWORD PTR func$3[rsp]
 	mov	DWORD PTR [rsp+32], eax
@@ -1647,7 +1651,7 @@ $LN4@AuPCIEScan:
 	call	AuPCIERead
 	mov	BYTE PTR class_code$4[rsp], al
 
-; 378  : 				uint8_t sub_ClassCode = AuPCIERead(address, PCI_SUBCLASS, bus, dev, func);
+; 379  : 				uint8_t sub_ClassCode = AuPCIERead(address, PCI_SUBCLASS, bus, dev, func);
 
 	mov	eax, DWORD PTR func$3[rsp]
 	mov	DWORD PTR [rsp+32], eax
@@ -1658,7 +1662,7 @@ $LN4@AuPCIEScan:
 	call	AuPCIERead
 	mov	BYTE PTR sub_ClassCode$1[rsp], al
 
-; 379  : 				if (classCode == 0xFF || sub_ClassCode == 0xFF)
+; 380  : 				if (classCode == 0xFF || sub_ClassCode == 0xFF)
 
 	movzx	eax, BYTE PTR classCode$[rsp]
 	cmp	eax, 255				; 000000ffH
@@ -1668,12 +1672,12 @@ $LN4@AuPCIEScan:
 	jne	SHORT $LN3@AuPCIEScan
 $LN2@AuPCIEScan:
 
-; 380  : 					continue;
+; 381  : 					continue;
 
 	jmp	$LN6@AuPCIEScan
 $LN3@AuPCIEScan:
 
-; 381  : 				if (class_code == classCode && sub_ClassCode == subClassCode) {
+; 382  : 				if (class_code == classCode && sub_ClassCode == subClassCode) {
 
 	movzx	eax, BYTE PTR class_code$4[rsp]
 	movzx	ecx, BYTE PTR classCode$[rsp]
@@ -1684,53 +1688,53 @@ $LN3@AuPCIEScan:
 	cmp	eax, ecx
 	jne	SHORT $LN1@AuPCIEScan
 
-; 382  : 					*bus_ = bus;
+; 383  : 					*bus_ = bus;
 
 	mov	rax, QWORD PTR bus_$[rsp]
 	mov	ecx, DWORD PTR bus$5[rsp]
 	mov	DWORD PTR [rax], ecx
 
-; 383  : 					*dev_ = dev;
+; 384  : 					*dev_ = dev;
 
 	mov	rax, QWORD PTR dev_$[rsp]
 	mov	ecx, DWORD PTR dev$2[rsp]
 	mov	DWORD PTR [rax], ecx
 
-; 384  : 					*func_ = func;
+; 385  : 					*func_ = func;
 
 	mov	rax, QWORD PTR func_$[rsp]
 	mov	ecx, DWORD PTR func$3[rsp]
 	mov	DWORD PTR [rax], ecx
 
-; 385  : 					return address;
+; 386  : 					return address;
 
 	mov	rax, QWORD PTR address$6[rsp]
 	jmp	SHORT $LN17@AuPCIEScan
 $LN1@AuPCIEScan:
 
-; 386  : 				}
-; 387  : 			}
+; 387  : 				}
+; 388  : 			}
 
 	jmp	$LN6@AuPCIEScan
 $LN5@AuPCIEScan:
 
-; 388  : 		}
+; 389  : 		}
 
 	jmp	$LN9@AuPCIEScan
 $LN8@AuPCIEScan:
 
-; 389  : 	}
+; 390  : 	}
 
 	jmp	$LN12@AuPCIEScan
 $LN11@AuPCIEScan:
 
-; 390  : 
-; 391  : 	return 0xFFFFFFFF;
+; 391  : 
+; 392  : 	return 0xFFFFFFFF;
 
 	mov	eax, -1					; ffffffffH
 $LN17@AuPCIEScan:
 
-; 392  : }
+; 393  : }
 
 	add	rsp, 104				; 00000068H
 	ret	0
@@ -1757,7 +1761,7 @@ dev_$ = 144
 func_$ = 152
 AuPCIEScanClassIF PROC
 
-; 404  : uint64_t AuPCIEScanClassIF(uint8_t classCode, uint8_t subClassCode, uint8_t progIf, int *bus_, int *dev_, int *func_) {
+; 405  : uint64_t AuPCIEScanClassIF(uint8_t classCode, uint8_t subClassCode, uint8_t progIf, int *bus_, int *dev_, int *func_) {
 
 $LN18:
 	mov	QWORD PTR [rsp+32], r9
@@ -1766,63 +1770,63 @@ $LN18:
 	mov	BYTE PTR [rsp+8], cl
 	sub	rsp, 104				; 00000068H
 
-; 405  : 	if (!AuACPIPCIESupported()) {
+; 406  : 	if (!AuACPIPCIESupported()) {
 
 	call	?AuACPIPCIESupported@@YA_NXZ		; AuACPIPCIESupported
 	movzx	eax, al
 	test	eax, eax
 	jne	SHORT $LN15@AuPCIEScan
 
-; 406  : 		return 0; //pci_scan_class(classCode, subClassCode);
+; 407  : 		return 0; //pci_scan_class(classCode, subClassCode);
 
 	xor	eax, eax
 	jmp	$LN16@AuPCIEScan
 $LN15@AuPCIEScan:
 
-; 407  : 	}
-; 408  : 
-; 409  : 	acpiMcfg *mcfg = AuACPIGetMCFG();
+; 408  : 	}
+; 409  : 
+; 410  : 	acpiMcfg *mcfg = AuACPIGetMCFG();
 
 	call	?AuACPIGetMCFG@@YAPEAUacpiMcfg@@XZ	; AuACPIGetMCFG
 	mov	QWORD PTR mcfg$[rsp], rax
 
-; 410  : 	acpiMcfgAlloc *allocs = mem_after<acpiMcfgAlloc*>(mcfg);
+; 411  : 	acpiMcfgAlloc *allocs = mem_after<acpiMcfgAlloc*>(mcfg);
 
 	mov	rcx, QWORD PTR mcfg$[rsp]
 	call	??$mem_after@PEAUacpiMcfgAlloc@@UacpiMcfg@@@@YAPEAUacpiMcfgAlloc@@PEAUacpiMcfg@@@Z ; mem_after<acpiMcfgAlloc * __ptr64,acpiMcfg>
 	mov	QWORD PTR allocs$[rsp], rax
 
-; 411  : 	uint16_t pciSegment = 0;
+; 412  : 	uint16_t pciSegment = 0;
 
 	xor	eax, eax
 	mov	WORD PTR pciSegment$[rsp], ax
 
-; 412  : 	if (allocs->pciSegment <= 65535)
+; 413  : 	if (allocs->pciSegment <= 65535)
 
 	mov	rax, QWORD PTR allocs$[rsp]
 	movzx	eax, WORD PTR [rax+8]
 	cmp	eax, 65535				; 0000ffffH
 	jg	SHORT $LN14@AuPCIEScan
 
-; 413  : 		pciSegment = allocs->pciSegment;
+; 414  : 		pciSegment = allocs->pciSegment;
 
 	mov	rax, QWORD PTR allocs$[rsp]
 	movzx	eax, WORD PTR [rax+8]
 	mov	WORD PTR pciSegment$[rsp], ax
 
-; 414  : 	else
+; 415  : 	else
 
 	jmp	SHORT $LN13@AuPCIEScan
 $LN14@AuPCIEScan:
 
-; 415  : 		pciSegment = 0;
+; 416  : 		pciSegment = 0;
 
 	xor	eax, eax
 	mov	WORD PTR pciSegment$[rsp], ax
 $LN13@AuPCIEScan:
 
-; 416  : 
-; 417  : 	for (int bus = 0; bus < allocs->endBusNum; bus++){
+; 417  : 
+; 418  : 	for (int bus = 0; bus < allocs->endBusNum; bus++){
 
 	mov	DWORD PTR bus$1[rsp], 0
 	jmp	SHORT $LN12@AuPCIEScan
@@ -1836,7 +1840,7 @@ $LN12@AuPCIEScan:
 	cmp	DWORD PTR bus$1[rsp], eax
 	jge	$LN10@AuPCIEScan
 
-; 418  : 		for (int dev = 0; dev < PCI_DEVICE_PER_BUS; dev++) {
+; 419  : 		for (int dev = 0; dev < PCI_DEVICE_PER_BUS; dev++) {
 
 	mov	DWORD PTR dev$2[rsp], 0
 	jmp	SHORT $LN9@AuPCIEScan
@@ -1848,7 +1852,7 @@ $LN9@AuPCIEScan:
 	cmp	DWORD PTR dev$2[rsp], 32		; 00000020H
 	jge	$LN7@AuPCIEScan
 
-; 419  : 			for (int func = 0; func < PCI_FUNCTION_PER_DEVICE; func++) {
+; 420  : 			for (int func = 0; func < PCI_FUNCTION_PER_DEVICE; func++) {
 
 	mov	DWORD PTR func$3[rsp], 0
 	jmp	SHORT $LN6@AuPCIEScan
@@ -1860,7 +1864,7 @@ $LN6@AuPCIEScan:
 	cmp	DWORD PTR func$3[rsp], 8
 	jge	$LN4@AuPCIEScan
 
-; 420  : 				uint64_t address = AuPCIEGetDevice(pciSegment, bus, dev, func);
+; 421  : 				uint64_t address = AuPCIEGetDevice(pciSegment, bus, dev, func);
 
 	mov	r9d, DWORD PTR func$3[rsp]
 	mov	r8d, DWORD PTR dev$2[rsp]
@@ -1869,19 +1873,19 @@ $LN6@AuPCIEScan:
 	call	?AuPCIEGetDevice@@YA_KGHHH@Z		; AuPCIEGetDevice
 	mov	QWORD PTR address$7[rsp], rax
 
-; 421  : 
-; 422  : 				if (address == 0xFFFFFFFF)
+; 422  : 
+; 423  : 				if (address == 0xFFFFFFFF)
 
 	mov	eax, -1					; ffffffffH
 	cmp	QWORD PTR address$7[rsp], rax
 	jne	SHORT $LN3@AuPCIEScan
 
-; 423  : 					continue;
+; 424  : 					continue;
 
 	jmp	SHORT $LN5@AuPCIEScan
 $LN3@AuPCIEScan:
 
-; 424  : 				uint8_t class_code = AuPCIERead(address, PCI_CLASS, bus, dev, func);
+; 425  : 				uint8_t class_code = AuPCIERead(address, PCI_CLASS, bus, dev, func);
 
 	mov	eax, DWORD PTR func$3[rsp]
 	mov	DWORD PTR [rsp+32], eax
@@ -1892,7 +1896,7 @@ $LN3@AuPCIEScan:
 	call	AuPCIERead
 	mov	BYTE PTR class_code$6[rsp], al
 
-; 425  : 				uint8_t sub_ClassCode = AuPCIERead(address, PCI_SUBCLASS, bus, dev, func);
+; 426  : 				uint8_t sub_ClassCode = AuPCIERead(address, PCI_SUBCLASS, bus, dev, func);
 
 	mov	eax, DWORD PTR func$3[rsp]
 	mov	DWORD PTR [rsp+32], eax
@@ -1903,7 +1907,7 @@ $LN3@AuPCIEScan:
 	call	AuPCIERead
 	mov	BYTE PTR sub_ClassCode$4[rsp], al
 
-; 426  : 				uint8_t prog_if = AuPCIERead(address, PCI_PROG_IF, bus, dev, func);
+; 427  : 				uint8_t prog_if = AuPCIERead(address, PCI_PROG_IF, bus, dev, func);
 
 	mov	eax, DWORD PTR func$3[rsp]
 	mov	DWORD PTR [rsp+32], eax
@@ -1914,18 +1918,18 @@ $LN3@AuPCIEScan:
 	call	AuPCIERead
 	mov	BYTE PTR prog_if$5[rsp], al
 
-; 427  : 				if (classCode == 0xFF)
+; 428  : 				if (classCode == 0xFF)
 
 	movzx	eax, BYTE PTR classCode$[rsp]
 	cmp	eax, 255				; 000000ffH
 	jne	SHORT $LN2@AuPCIEScan
 
-; 428  : 					continue;
+; 429  : 					continue;
 
 	jmp	$LN5@AuPCIEScan
 $LN2@AuPCIEScan:
 
-; 429  : 				if (class_code == classCode && sub_ClassCode == subClassCode && prog_if == progIf) {
+; 430  : 				if (class_code == classCode && sub_ClassCode == subClassCode && prog_if == progIf) {
 
 	movzx	eax, BYTE PTR class_code$6[rsp]
 	movzx	ecx, BYTE PTR classCode$[rsp]
@@ -1940,53 +1944,53 @@ $LN2@AuPCIEScan:
 	cmp	eax, ecx
 	jne	SHORT $LN1@AuPCIEScan
 
-; 430  : 					*bus_ = bus;
+; 431  : 					*bus_ = bus;
 
 	mov	rax, QWORD PTR bus_$[rsp]
 	mov	ecx, DWORD PTR bus$1[rsp]
 	mov	DWORD PTR [rax], ecx
 
-; 431  : 					*dev_ = dev;
+; 432  : 					*dev_ = dev;
 
 	mov	rax, QWORD PTR dev_$[rsp]
 	mov	ecx, DWORD PTR dev$2[rsp]
 	mov	DWORD PTR [rax], ecx
 
-; 432  : 					*func_ = func;
+; 433  : 					*func_ = func;
 
 	mov	rax, QWORD PTR func_$[rsp]
 	mov	ecx, DWORD PTR func$3[rsp]
 	mov	DWORD PTR [rax], ecx
 
-; 433  : 					return address;
+; 434  : 					return address;
 
 	mov	rax, QWORD PTR address$7[rsp]
 	jmp	SHORT $LN16@AuPCIEScan
 $LN1@AuPCIEScan:
 
-; 434  : 				}
-; 435  : 			}
+; 435  : 				}
+; 436  : 			}
 
 	jmp	$LN5@AuPCIEScan
 $LN4@AuPCIEScan:
 
-; 436  : 		}
+; 437  : 		}
 
 	jmp	$LN8@AuPCIEScan
 $LN7@AuPCIEScan:
 
-; 437  : 	}
+; 438  : 	}
 
 	jmp	$LN11@AuPCIEScan
 $LN10@AuPCIEScan:
 
-; 438  : 
-; 439  : 	return 0xFFFFFFFF;
+; 439  : 
+; 440  : 	return 0xFFFFFFFF;
 
 	mov	eax, -1					; ffffffffH
 $LN16@AuPCIEScan:
 
-; 440  : }
+; 441  : }
 
 	add	rsp, 104				; 00000068H
 	ret	0
@@ -2015,7 +2019,7 @@ dev$ = 168
 func$ = 176
 AuPCIEAllocMSI PROC
 
-; 453  : bool AuPCIEAllocMSI(uint64_t device, size_t vector, int bus, int dev, int func) {
+; 454  : bool AuPCIEAllocMSI(uint64_t device, size_t vector, int bus, int dev, int func) {
 
 $LN16:
 	mov	DWORD PTR [rsp+32], r9d
@@ -2024,25 +2028,25 @@ $LN16:
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 136				; 00000088H
 
-; 454  : 	if (!AuACPIPCIESupported())
+; 455  : 	if (!AuACPIPCIESupported())
 
 	call	?AuACPIPCIESupported@@YA_NXZ		; AuACPIPCIESupported
 	movzx	eax, al
 	test	eax, eax
 	jne	SHORT $LN9@AuPCIEAllo
 
-; 455  : 		return false;
+; 456  : 		return false;
 
 	xor	al, al
 	jmp	$LN10@AuPCIEAllo
 $LN9@AuPCIEAllo:
 
-; 456  : 
-; 457  : 	bool value = false;
+; 457  : 
+; 458  : 	bool value = false;
 
 	mov	BYTE PTR value$[rsp], 0
 
-; 458  : 	uint64_t status = AuPCIERead64(device, PCI_COMMAND, 4, bus, dev, func);
+; 459  : 	uint64_t status = AuPCIERead64(device, PCI_COMMAND, 4, bus, dev, func);
 
 	mov	eax, DWORD PTR func$[rsp]
 	mov	DWORD PTR [rsp+40], eax
@@ -2055,20 +2059,20 @@ $LN9@AuPCIEAllo:
 	call	AuPCIERead64
 	mov	QWORD PTR status$[rsp], rax
 
-; 459  : 	status >>= 16;
+; 460  : 	status >>= 16;
 
 	mov	rax, QWORD PTR status$[rsp]
 	shr	rax, 16
 	mov	QWORD PTR status$[rsp], rax
 
-; 460  : 	if ((status & (1 << 4)) != 0) {
+; 461  : 	if ((status & (1 << 4)) != 0) {
 
 	mov	rax, QWORD PTR status$[rsp]
 	and	rax, 16
 	test	rax, rax
 	je	$LN8@AuPCIEAllo
 
-; 461  : 		uint32_t capptr = AuPCIERead64(device, PCI_CAPABILITIES_PTR, 4, bus, dev, func);
+; 462  : 		uint32_t capptr = AuPCIERead64(device, PCI_CAPABILITIES_PTR, 4, bus, dev, func);
 
 	mov	eax, DWORD PTR func$[rsp]
 	mov	DWORD PTR [rsp+40], eax
@@ -2081,27 +2085,27 @@ $LN9@AuPCIEAllo:
 	call	AuPCIERead64
 	mov	DWORD PTR capptr$1[rsp], eax
 
-; 462  : 		capptr &= 0xFF;
+; 463  : 		capptr &= 0xFF;
 
 	mov	eax, DWORD PTR capptr$1[rsp]
 	and	eax, 255				; 000000ffH
 	mov	DWORD PTR capptr$1[rsp], eax
 
-; 463  : 		uint32_t cap_reg = 0;
+; 464  : 		uint32_t cap_reg = 0;
 
 	mov	DWORD PTR cap_reg$3[rsp], 0
 
-; 464  : 		uint32_t msi_reg = 0;
+; 465  : 		uint32_t msi_reg = 0;
 
 	mov	DWORD PTR msi_reg$6[rsp], 0
 $LN7@AuPCIEAllo:
 
-; 465  : 		while (capptr != 0) {
+; 466  : 		while (capptr != 0) {
 
 	cmp	DWORD PTR capptr$1[rsp], 0
 	je	$LN6@AuPCIEAllo
 
-; 466  : 			cap_reg = AuPCIERead64(device, capptr, 4, bus, dev, func);
+; 467  : 			cap_reg = AuPCIERead64(device, capptr, 4, bus, dev, func);
 
 	mov	eax, DWORD PTR func$[rsp]
 	mov	DWORD PTR [rsp+40], eax
@@ -2114,25 +2118,25 @@ $LN7@AuPCIEAllo:
 	call	AuPCIERead64
 	mov	DWORD PTR cap_reg$3[rsp], eax
 
-; 467  : 			if ((cap_reg & 0xff) == 0x5) {
+; 468  : 			if ((cap_reg & 0xff) == 0x5) {
 
 	mov	eax, DWORD PTR cap_reg$3[rsp]
 	and	eax, 255				; 000000ffH
 	cmp	eax, 5
 	jne	$LN5@AuPCIEAllo
 
-; 468  : 				msi_reg = cap_reg;
+; 469  : 				msi_reg = cap_reg;
 
 	mov	eax, DWORD PTR cap_reg$3[rsp]
 	mov	DWORD PTR msi_reg$6[rsp], eax
 
-; 469  : 				uint16_t msctl = msi_reg >> 16;
+; 470  : 				uint16_t msctl = msi_reg >> 16;
 
 	mov	eax, DWORD PTR msi_reg$6[rsp]
 	shr	eax, 16
 	mov	WORD PTR msctl$2[rsp], ax
 
-; 470  : 				bool bit64_cap = (msctl & (1 << 7));
+; 471  : 				bool bit64_cap = (msctl & (1 << 7));
 
 	movzx	eax, WORD PTR msctl$2[rsp]
 	and	eax, 128				; 00000080H
@@ -2146,7 +2150,7 @@ $LN13@AuPCIEAllo:
 	movzx	eax, BYTE PTR tv134[rsp]
 	mov	BYTE PTR bit64_cap$5[rsp], al
 
-; 471  : 				bool maskcap = (msctl & (1 << 8));
+; 472  : 				bool maskcap = (msctl & (1 << 8));
 
 	movzx	eax, WORD PTR msctl$2[rsp]
 	and	eax, 256				; 00000100H
@@ -2160,13 +2164,13 @@ $LN15@AuPCIEAllo:
 	movzx	eax, BYTE PTR tv138[rsp]
 	mov	BYTE PTR maskcap$4[rsp], al
 
-; 472  : 
-; 473  : 				uint64_t msi_data = 0;
+; 473  : 
+; 474  : 				uint64_t msi_data = 0;
 
 	mov	QWORD PTR msi_data$7[rsp], 0
 
-; 474  : 
-; 475  : 				uint64_t msi_addr = x86_64_cpu_msi_address(&msi_data, vector, 0, 1, 0);
+; 475  : 
+; 476  : 				uint64_t msi_addr = x86_64_cpu_msi_address(&msi_data, vector, 0, 1, 0);
 
 	mov	BYTE PTR [rsp+32], 0
 	mov	r9b, 1
@@ -2176,9 +2180,9 @@ $LN15@AuPCIEAllo:
 	call	?x86_64_cpu_msi_address@@YA_KPEA_K_KIEE@Z ; x86_64_cpu_msi_address
 	mov	QWORD PTR msi_addr$8[rsp], rax
 
-; 476  : 				
-; 477  : 
-; 478  : 				AuPCIEWrite64(device, capptr + 0x4, 4, msi_addr & UINT32_MAX, bus, dev, func);
+; 477  : 				
+; 478  : 
+; 479  : 				AuPCIEWrite64(device, capptr + 0x4, 4, msi_addr & UINT32_MAX, bus, dev, func);
 
 	mov	eax, -1					; ffffffffH
 	mov	rcx, QWORD PTR msi_addr$8[rsp]
@@ -2198,14 +2202,14 @@ $LN15@AuPCIEAllo:
 	mov	rcx, QWORD PTR device$[rsp]
 	call	AuPCIEWrite64
 
-; 479  : 
-; 480  : 				if (bit64_cap) {
+; 480  : 
+; 481  : 				if (bit64_cap) {
 
 	movzx	eax, BYTE PTR bit64_cap$5[rsp]
 	test	eax, eax
 	je	$LN4@AuPCIEAllo
 
-; 481  : 					AuPCIEWrite64(device, capptr + 0x8, 4, msi_addr >> 32, bus, dev, func);
+; 482  : 					AuPCIEWrite64(device, capptr + 0x8, 4, msi_addr >> 32, bus, dev, func);
 
 	mov	rax, QWORD PTR msi_addr$8[rsp]
 	shr	rax, 32					; 00000020H
@@ -2223,7 +2227,7 @@ $LN15@AuPCIEAllo:
 	mov	rcx, QWORD PTR device$[rsp]
 	call	AuPCIEWrite64
 
-; 482  : 					AuPCIEWrite64(device, capptr + 0xC, 2, msi_data & UINT16_MAX, bus, dev, func);
+; 483  : 					AuPCIEWrite64(device, capptr + 0xC, 2, msi_data & UINT16_MAX, bus, dev, func);
 
 	mov	rax, QWORD PTR msi_data$7[rsp]
 	and	rax, 65535				; 0000ffffH
@@ -2241,13 +2245,13 @@ $LN15@AuPCIEAllo:
 	mov	rcx, QWORD PTR device$[rsp]
 	call	AuPCIEWrite64
 
-; 483  : 				}
-; 484  : 				else
+; 484  : 				}
+; 485  : 				else
 
 	jmp	SHORT $LN3@AuPCIEAllo
 $LN4@AuPCIEAllo:
 
-; 485  : 					AuPCIEWrite64(device, capptr + 0x8, 2, msi_data & UINT16_MAX, bus, dev, func);
+; 486  : 					AuPCIEWrite64(device, capptr + 0x8, 2, msi_data & UINT16_MAX, bus, dev, func);
 
 	mov	rax, QWORD PTR msi_data$7[rsp]
 	and	rax, 65535				; 0000ffffH
@@ -2266,15 +2270,15 @@ $LN4@AuPCIEAllo:
 	call	AuPCIEWrite64
 $LN3@AuPCIEAllo:
 
-; 486  : 
 ; 487  : 
-; 488  : 				if (maskcap)
+; 488  : 
+; 489  : 				if (maskcap)
 
 	movzx	eax, BYTE PTR maskcap$4[rsp]
 	test	eax, eax
 	je	SHORT $LN2@AuPCIEAllo
 
-; 489  : 					AuPCIEWrite64(device, capptr + 0x10, 4, 0, bus, dev, func);
+; 490  : 					AuPCIEWrite64(device, capptr + 0x10, 4, 0, bus, dev, func);
 
 	mov	eax, DWORD PTR capptr$1[rsp]
 	add	eax, 16
@@ -2291,17 +2295,17 @@ $LN3@AuPCIEAllo:
 	call	AuPCIEWrite64
 $LN2@AuPCIEAllo:
 
-; 490  : 
 ; 491  : 
 ; 492  : 
-; 493  : 				msctl |= 1;
+; 493  : 
+; 494  : 				msctl |= 1;
 
 	movzx	eax, WORD PTR msctl$2[rsp]
 	or	eax, 1
 	mov	WORD PTR msctl$2[rsp], ax
 
-; 494  : 
-; 495  : 				cap_reg = msi_reg & UINT16_MAX | msctl << 16;
+; 495  : 
+; 496  : 				cap_reg = msi_reg & UINT16_MAX | msctl << 16;
 
 	mov	eax, DWORD PTR msi_reg$6[rsp]
 	and	eax, 65535				; 0000ffffH
@@ -2310,7 +2314,7 @@ $LN2@AuPCIEAllo:
 	or	eax, ecx
 	mov	DWORD PTR cap_reg$3[rsp], eax
 
-; 496  : 				AuPCIEWrite64(device, capptr, 4, cap_reg & UINT32_MAX, bus, dev, func);
+; 497  : 				AuPCIEWrite64(device, capptr, 4, cap_reg & UINT32_MAX, bus, dev, func);
 
 	mov	eax, DWORD PTR cap_reg$3[rsp]
 	mov	ecx, DWORD PTR func$[rsp]
@@ -2325,7 +2329,7 @@ $LN2@AuPCIEAllo:
 	mov	rcx, QWORD PTR device$[rsp]
 	call	AuPCIEWrite64
 
-; 497  : 				uint32_t cap_reg2 = AuPCIERead64(device, capptr, 4, bus, dev, func);
+; 498  : 				uint32_t cap_reg2 = AuPCIERead64(device, capptr, 4, bus, dev, func);
 
 	mov	eax, DWORD PTR func$[rsp]
 	mov	DWORD PTR [rsp+40], eax
@@ -2338,55 +2342,60 @@ $LN2@AuPCIEAllo:
 	call	AuPCIERead64
 	mov	DWORD PTR cap_reg2$9[rsp], eax
 
-; 498  : 				value = true; //MSI Allocated
+; 499  : 				value = true; //MSI Allocated
 
 	mov	BYTE PTR value$[rsp], 1
 
-; 499  : 				break;
+; 500  : 				break;
 
 	jmp	SHORT $LN6@AuPCIEAllo
 $LN5@AuPCIEAllo:
 
-; 500  : 			}
-; 501  : 
-; 502  : 			if ((cap_reg & 0xff) == 0x11) {
+; 501  : 			}
+; 502  : 
+; 503  : 			if ((cap_reg & 0xff) == 0x11) {
 
 	mov	eax, DWORD PTR cap_reg$3[rsp]
 	and	eax, 255				; 000000ffH
 	cmp	eax, 17
 	jne	SHORT $LN1@AuPCIEAllo
 
-; 503  : 				value = true; //MSI-X Allocated: not implemented
+; 504  : 				value = true; //MSI-X Allocated: not implemented
 
 	mov	BYTE PTR value$[rsp], 1
 
-; 504  : 				break;
+; 505  : 				AuTextOut("MSI-X found \r\n");
+
+	lea	rcx, OFFSET FLAT:$SG3947
+	call	AuTextOut
+
+; 506  : 				break;
 
 	jmp	SHORT $LN6@AuPCIEAllo
 $LN1@AuPCIEAllo:
 
-; 505  : 			}
-; 506  : 			capptr = ((cap_reg >> 8) & 0xff);   //((cap_reg >> 8) & 0xFF) / 4;
+; 507  : 			}
+; 508  : 			capptr = ((cap_reg >> 8) & 0xff);   //((cap_reg >> 8) & 0xFF) / 4;
 
 	mov	eax, DWORD PTR cap_reg$3[rsp]
 	shr	eax, 8
 	and	eax, 255				; 000000ffH
 	mov	DWORD PTR capptr$1[rsp], eax
 
-; 507  : 		}
+; 509  : 		}
 
 	jmp	$LN7@AuPCIEAllo
 $LN6@AuPCIEAllo:
 $LN8@AuPCIEAllo:
 
-; 508  : 	}
-; 509  : 
-; 510  : 	return value;
+; 510  : 	}
+; 511  : 
+; 512  : 	return value;
 
 	movzx	eax, BYTE PTR value$[rsp]
 $LN10@AuPCIEAllo:
 
-; 511  : }
+; 513  : }
 
 	add	rsp, 136				; 00000088H
 	ret	0
@@ -2404,7 +2413,7 @@ dev$ = 96
 func$ = 104
 ?AuPCIEGetDevice@@YA_KGHHH@Z PROC			; AuPCIEGetDevice
 
-; 43   : uint64_t AuPCIEGetDevice(uint16_t seg, int bus, int dev, int func) {
+; 44   : uint64_t AuPCIEGetDevice(uint16_t seg, int bus, int dev, int func) {
 
 $LN7:
 	mov	DWORD PTR [rsp+32], r9d
@@ -2413,56 +2422,56 @@ $LN7:
 	mov	WORD PTR [rsp+8], cx
 	sub	rsp, 72					; 00000048H
 
-; 44   : 	if (bus > 255)
+; 45   : 	if (bus > 255)
 
 	cmp	DWORD PTR bus$[rsp], 255		; 000000ffH
 	jle	SHORT $LN4@AuPCIEGetD
 
-; 45   : 		return 0;
+; 46   : 		return 0;
 
 	xor	eax, eax
 	jmp	$LN5@AuPCIEGetD
 $LN4@AuPCIEGetD:
 
-; 46   : 	if (dev > 31)
+; 47   : 	if (dev > 31)
 
 	cmp	DWORD PTR dev$[rsp], 31
 	jle	SHORT $LN3@AuPCIEGetD
 
-; 47   : 		return 0;
+; 48   : 		return 0;
 
 	xor	eax, eax
 	jmp	$LN5@AuPCIEGetD
 $LN3@AuPCIEGetD:
 
-; 48   : 	if (func > 7)
+; 49   : 	if (func > 7)
 
 	cmp	DWORD PTR func$[rsp], 7
 	jle	SHORT $LN2@AuPCIEGetD
 
-; 49   : 		return 0;
+; 50   : 		return 0;
 
 	xor	eax, eax
 	jmp	$LN5@AuPCIEGetD
 $LN2@AuPCIEGetD:
 
-; 50   : 
-; 51   : 	uint64_t addr = 0;
+; 51   : 
+; 52   : 	uint64_t addr = 0;
 
 	mov	QWORD PTR addr$[rsp], 0
 
-; 52   : 	acpiMcfg* mcfg = AuACPIGetMCFG();
+; 53   : 	acpiMcfg* mcfg = AuACPIGetMCFG();
 
 	call	?AuACPIGetMCFG@@YAPEAUacpiMcfg@@XZ	; AuACPIGetMCFG
 	mov	QWORD PTR mcfg$[rsp], rax
 
-; 53   : 	acpiMcfgAlloc* allocs = mem_after<acpiMcfgAlloc*>(mcfg);
+; 54   : 	acpiMcfgAlloc* allocs = mem_after<acpiMcfgAlloc*>(mcfg);
 
 	mov	rcx, QWORD PTR mcfg$[rsp]
 	call	??$mem_after@PEAUacpiMcfgAlloc@@UacpiMcfg@@@@YAPEAUacpiMcfgAlloc@@PEAUacpiMcfg@@@Z ; mem_after<acpiMcfgAlloc * __ptr64,acpiMcfg>
 	mov	QWORD PTR allocs$[rsp], rax
 
-; 54   : 	if (allocs->startBusNum <= bus && bus <= allocs->endBusNum){
+; 55   : 	if (allocs->startBusNum <= bus && bus <= allocs->endBusNum){
 
 	mov	rax, QWORD PTR allocs$[rsp]
 	movzx	eax, BYTE PTR [rax+10]
@@ -2473,8 +2482,8 @@ $LN2@AuPCIEGetD:
 	cmp	DWORD PTR bus$[rsp], eax
 	jg	SHORT $LN1@AuPCIEGetD
 
-; 55   : 		addr = allocs->baseAddress + ((bus - allocs->startBusNum) << 20) |
-; 56   : 			(dev << 15) | (func << 12);
+; 56   : 		addr = allocs->baseAddress + ((bus - allocs->startBusNum) << 20) |
+; 57   : 			(dev << 15) | (func << 12);
 
 	mov	rax, QWORD PTR allocs$[rsp]
 	movzx	eax, BYTE PTR [rax+10]
@@ -2497,20 +2506,20 @@ $LN2@AuPCIEGetD:
 	or	rax, rcx
 	mov	QWORD PTR addr$[rsp], rax
 
-; 57   : 		return addr;
+; 58   : 		return addr;
 
 	mov	rax, QWORD PTR addr$[rsp]
 	jmp	SHORT $LN5@AuPCIEGetD
 $LN1@AuPCIEGetD:
 
-; 58   : 	}
-; 59   : 
-; 60   : 	return UINT64_MAX;
+; 59   : 	}
+; 60   : 
+; 61   : 	return UINT64_MAX;
 
 	mov	rax, -1
 $LN5@AuPCIEGetD:
 
-; 61   : }
+; 62   : }
 
 	add	rsp, 72					; 00000048H
 	ret	0

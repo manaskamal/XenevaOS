@@ -128,8 +128,11 @@ void _AuMain(KERNEL_BOOT_INFO *info) {
 
 	/* make the kernel standalone*/
 	AuVmmngrBootFree();
+
+	AuARPRequestMAC();
 	/* Process initialisation begins here */
 	AuStartRootProc();
+
 	AuSchedulerStart();
 	for (;;);
 }

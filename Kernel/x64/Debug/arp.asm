@@ -6,7 +6,7 @@ INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
 CONST	SEGMENT
-$SG2975	DB	'ARP Setuped ', 0aH, 00H
+$SG2982	DB	'ARP Setuped ', 0aH, 00H
 CONST	ENDS
 PUBLIC	?AuARPRequestMAC@@YAXXZ				; AuARPRequestMAC
 EXTRN	?AuEthernetSend@@YAXPEAX_KGPEAE@Z:PROC		; AuEthernetSend
@@ -16,7 +16,7 @@ EXTRN	memcpy:PROC
 EXTRN	AuTextOut:PROC
 pdata	SEGMENT
 $pdata$?AuARPRequestMAC@@YAXXZ DD imagerel $LN4
-	DD	imagerel $LN4+234
+	DD	imagerel $LN4+238
 	DD	imagerel $unwind$?AuARPRequestMAC@@YAXXZ
 pdata	ENDS
 xdata	SEGMENT
@@ -81,6 +81,7 @@ $LN1@AuARPReque:
 ; 52   : 	uint8_t* mac = netadapt->mac;
 
 	mov	rax, QWORD PTR netadapt$[rsp]
+	add	rax, 8
 	mov	QWORD PTR mac$[rsp], rax
 
 ; 53   : 	memcpy(arp.srcMac, mac, 6);
@@ -131,7 +132,7 @@ $LN1@AuARPReque:
 
 ; 61   : 	AuTextOut("ARP Setuped \n");
 
-	lea	rcx, OFFSET FLAT:$SG2975
+	lea	rcx, OFFSET FLAT:$SG2982
 	call	AuTextOut
 
 ; 62   : 	

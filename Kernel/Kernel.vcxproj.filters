@@ -315,6 +315,21 @@
     <ClInclude Include="..\BaseHdr\autimer.h">
       <Filter>Include</Filter>
     </ClInclude>
+    <ClInclude Include="..\BaseHdr\Net\socket.h">
+      <Filter>Include\Net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\Net\tcp.h">
+      <Filter>Include\Net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\Net\udp.h">
+      <Filter>Include\Net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\Net\icmp.h">
+      <Filter>Include\Net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\Net\ipv4.h">
+      <Filter>Include\Net</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="init.cpp" />
@@ -487,6 +502,21 @@
       <Filter>Serv</Filter>
     </ClCompile>
     <ClCompile Include="version.cpp" />
+    <ClCompile Include="Net\socket.cpp">
+      <Filter>Net</Filter>
+    </ClCompile>
+    <ClCompile Include="Net\tcp.cpp">
+      <Filter>Net</Filter>
+    </ClCompile>
+    <ClCompile Include="Net\ipv4.cpp">
+      <Filter>Net</Filter>
+    </ClCompile>
+    <ClCompile Include="Net\udp.cpp">
+      <Filter>Net</Filter>
+    </ClCompile>
+    <ClCompile Include="Net\icmp.cpp">
+      <Filter>Net</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <NASM Include="__fstcpy.asm" />
