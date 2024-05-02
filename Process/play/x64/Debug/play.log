@@ -1,15 +1,11 @@
-﻿Build started 23-03-2024 আবেলি 12:28:03.
+﻿Build started 02-05-2024 আবেলি 8:52:39.
      1>Project "E:\Xeneva Project\Aurora\Process\play\play.vcxproj" on node 2 (Rebuild target(s)).
      1>ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /I"E:\Xeneva Project\Aurora\Libs\Chitralekha" /I"E:\os_dev\freetype2-master\freetype2-master\include" /Zi /nologo /W4 /WX- /sdl- /MP /Od /Oy /D ARCH_X64 /D YES_DYNAMIC /D DYNAMIC_IMPORTER /D MINIMP3_IMPLEMENTATION /D MINIMP3_ONLY_MP3 /D MINIMP3_NO_SIMD /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt play.cpp
      1>cl : Command line warning D9025: overriding '/sdl-' with '/GS-'
      1>cl : Command line warning D9002: ignoring unknown option '/arch:SSE2'
          play.cpp
-     1>E:\Xeneva Project\Aurora\Libs\Chitralekha\minimp3.h(600): warning C4244: '=' : conversion from 'uint32_t' to 'uint8_t', possible loss of data
-     1>E:\Xeneva Project\Aurora\Libs\Chitralekha\minimp3.h(640): warning C4244: '=' : conversion from 'int' to 'uint8_t', possible loss of data
-     1>E:\Xeneva Project\Aurora\Libs\Chitralekha\minimp3.h(641): warning C4244: '=' : conversion from 'int' to 'uint8_t', possible loss of data
-     1>E:\Xeneva Project\Aurora\Libs\Chitralekha\minimp3.h(1005): warning C4244: '=' : conversion from 'int' to 'uint8_t', possible loss of data
-     1>play.cpp(109): warning C4127: conditional expression is constant
+     1>play.cpp(111): warning C4127: conditional expression is constant
      1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(1186,5): warning MSB8012: TargetPath(E:\Xeneva Project\Aurora\x64\Debug\play.exe) does not match the Linker's OutputFile property value (F:\play.exe). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
        Link:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\link.exe /ERRORREPORT:PROMPT /OUT:"F:\play.exe" /INCREMENTAL /NOLOGO /LIBPATH:"E:\Xeneva Project\Aurora\x64\Debug" /LIBPATH:"E:\Xeneva Project\Aurora\Libs\XECrt" XEClib.lib xecrt.lib Chitralekha.lib ftype.lib /NODEFAULTLIB /MANIFEST:NO /PDB:"E:\Xeneva Project\Aurora\x64\Debug\play.pdb" /MAP /MAPINFO:EXPORTS /SUBSYSTEM:NATIVE /LARGEADDRESSAWARE /Driver /OPT:NOREF /LTCG /TLBID:1 /ENTRY:"_xemain" /BASE:"0x0000000000600000" /FIXED:NO /IMPLIB:"E:\Xeneva Project\Aurora\x64\Debug\play.lib" /MACHINE:X64 /ALIGN:512 x64\Debug\play.obj
@@ -20,4 +16,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:01.93
+Time Elapsed 00:00:00.49

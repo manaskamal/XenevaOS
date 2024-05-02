@@ -163,6 +163,9 @@
     <ClInclude Include="includes\_xeprint.h">
       <Filter>includes</Filter>
     </ClInclude>
+    <ClInclude Include="includes\sys\socket.h">
+      <Filter>includes\sys</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="string.cpp" />

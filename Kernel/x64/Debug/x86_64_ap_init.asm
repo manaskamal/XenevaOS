@@ -25,6 +25,7 @@ EXTRN	?AuCreatePerCPU@@YAXPEAX@Z:PROC			; AuCreatePerCPU
 EXTRN	?AuPerCPUGetCpuID@@YAEXZ:PROC			; AuPerCPUGetCpuID
 EXTRN	?AuPerCPUGetKernelTSS@@YAPEAU_tss@@XZ:PROC	; AuPerCPUGetKernelTSS
 EXTRN	SeTextOut:PROC
+EXTRN	AuTextOut:PROC
 pdata	SEGMENT
 $pdata$?x86_64_ap_init@@YAXPEAX@Z DD imagerel $LN5
 	DD	imagerel $LN5+137
@@ -102,7 +103,7 @@ $LN5:
 ; 64   : 	 * now just start the scheduler
 ; 65   : 	 */
 ; 66   : 	//AuSchedulerInitAp();
-; 67   : 	SeTextOut("CPU ID -> %d, TSS -> %x \r\n", AuPerCPUGetCpuID(), AuPerCPUGetKernelTSS());
+; 67   : 	AuTextOut("CPU ID -> %d, TSS -> %x \r\n", AuPerCPUGetCpuID(), AuPerCPUGetKernelTSS());
 
 	call	?AuPerCPUGetKernelTSS@@YAPEAU_tss@@XZ	; AuPerCPUGetKernelTSS
 	mov	QWORD PTR tv68[rsp], rax
@@ -112,7 +113,7 @@ $LN5:
 	mov	r8, rcx
 	mov	edx, eax
 	lea	rcx, OFFSET FLAT:$SG3574
-	call	SeTextOut
+	call	AuTextOut
 
 ; 68   : 	x86_64_set_ap_start_bit(true);
 

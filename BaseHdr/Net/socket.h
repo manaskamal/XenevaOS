@@ -31,6 +31,7 @@
 #define __SOCKET_H__
 
 #include <stdint.h>
+#include <fs/vfs.h>
 
 #define AF_UNSPEC 0
 #define AF_INET 1
@@ -77,5 +78,22 @@ typedef struct _msghdr_ {
 	int msg_flags;
 }msghdr;
 
+typedef struct _socket_ {
+	AuVFSNode fsnode;
+	uint64_t(*receive)(struct _socket_* sock, msghdr *msg, int flags);
+	uint64_t(*send)(struct _socket_* sock, msghdr* msg, int flags);
+	void(*close)(struct _socket_* sock);
+	uint64_t(*connect)(struct _socket_* sock, sockaddr* addr, socklen_t addrlen);
+	uint64_t(*bind)(struct _socket_* sock, sockaddr* addr, socklen_t addrlen);
+}AuSocket;
+
+/*
+* AuCreateSocket -- create a new socket for specific
+* domain
+* @param domain -- domain type -- IPV4_INET, RAW or IPV6_INET
+* @param type -- type
+* @param protocol -- protocol version
+*/
+extern int AuCreateSocket(int domain, int type, int protocol);
 
 #endif

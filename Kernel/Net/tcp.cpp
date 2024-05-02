@@ -28,10 +28,28 @@
 **/
 
 #include <net\socket.h>
-
+#include <Mm\kmalloc.h>
+#include <string.h>
+#include <Hal\x86_64_sched.h>
+#include <process.h>
+#include <Hal\serial.h>
 /*
  * CreateTCPSocket -- creates a new TCP Socket
  */
 int CreateTCPSocket() {
-	return 0;
+	int fd = -1;
+	AuThread *thread = AuGetCurrentThread();
+	if (!thread)
+		return -1;
+	AuProcess *proc = AuProcessFindThread(thread);
+	if (!proc) 
+		proc = AuProcessFindSubThread(thread);
+		if (!proc)
+			return -1;
+	AuSocket *sock = (AuSocket*)kmalloc(sizeof(AuSocket));
+	memset(sock, 0, sizeof(AuSocket));
+	fd = AuProcessGetFileDesc(proc);
+	proc->fds[fd] = (AuVFSNode*)sock;
+	SeTextOut("TCP Socket created \r\n");
+	return fd;
 }

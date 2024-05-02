@@ -29,6 +29,7 @@
 
 #include <net/socket.h>
 #include <net/ipv4.h>
+#include <Hal/x86_64_hal.h>
 
 /*
  * AuCreateSocket -- create a new socket for specific
@@ -38,6 +39,7 @@
  * @param protocol -- protocol version
  */
 int AuCreateSocket(int domain, int type, int protocol) {
+	x64_cli();
 	switch (domain) {
 	case AF_INET:
 		return CreateIPv4Socket(type, protocol);

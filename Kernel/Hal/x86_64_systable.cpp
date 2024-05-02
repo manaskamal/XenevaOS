@@ -42,6 +42,7 @@
 #include <ftmngr.h>
 #include <Fs\tty.h>
 #include <Mm\mmap.h>
+#include <net\socket.h>
 
 
 /* Syscall function format */
@@ -116,6 +117,7 @@ static void* syscalls[AURORA_MAX_SYSCALL] = {
 	ProcessGetFileDesc, //43
 	FileSetOffset, //44
 	GetTimeOfDay, //45
+	AuCreateSocket, //46
 };
 
 //! System Call Handler Functions

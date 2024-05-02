@@ -34,9 +34,8 @@
 #include <sys\_kefile.h>
 #include <sys\iocodes.h>
 #include <string.h>
-#include <minimp3.h>
 #include <stdlib.h>
-
+#include <sys\socket.h>
 
 /*
 * main -- terminal emulator
@@ -66,6 +65,9 @@ int main(int argc, char* arv[]){
 		printf("\n No filename specified \n");
 		return -1;
 	}
+
+	int sockfd = socket(AF_INET, SOCK_STREAM, 0);
+	printf("Socket created sockfd -> %d \n", sockfd);
 
 	/* open the sound device-file, it is in /dev directory */
 	int snd = _KeOpenFile("/dev/sound", FILE_OPEN_WRITE);

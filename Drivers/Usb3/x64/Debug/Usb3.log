@@ -1,4 +1,4 @@
-﻿Build started 07-04-2024 আবেলি 12:41:33.
+﻿Build started 02-05-2024 আবেলি 8:51:08.
      1>Project "E:\Xeneva Project\Aurora\Drivers\Usb3\Usb3.vcxproj" on node 2 (Rebuild target(s)).
      1>ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\BaseHdr" /Zi /nologo /W3 /WX- /Od /Oy /D ARCH_X64 /D USE_APIC /D _WINDLL /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt classes\hid.cpp classes\hub.cpp main.cpp usb3.cpp usbstd.cpp xhci_cmd.cpp
@@ -96,4 +96,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:01.25
+Time Elapsed 00:00:01.20

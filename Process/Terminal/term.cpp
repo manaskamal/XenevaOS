@@ -541,6 +541,7 @@ void TerminalThread() {
 * main -- terminal emulator
 */
 int main(int argc, char* arv[]){
+	_KePrint("Creating terminal \r\n");
 	app = ChitralekhaStartApp(argc, arv);
 	win = ChCreateWindow(app, (1 << 0), "Xeneva Terminal", 300, 300, 650, 450);
 	ChWindowBroadcastIcon(app, "/icons/term.bmp");

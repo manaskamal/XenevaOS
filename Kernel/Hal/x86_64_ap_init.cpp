@@ -64,7 +64,7 @@ void x86_64_ap_init(void* cpu) {
 	 * now just start the scheduler
 	 */
 	//AuSchedulerInitAp();
-	SeTextOut("CPU ID -> %d, TSS -> %x \r\n", AuPerCPUGetCpuID(), AuPerCPUGetKernelTSS());
+	AuTextOut("CPU ID -> %d, TSS -> %x \r\n", AuPerCPUGetCpuID(), AuPerCPUGetKernelTSS());
 	x86_64_set_ap_start_bit(true);
 	for (;;){
 		x64_pause();

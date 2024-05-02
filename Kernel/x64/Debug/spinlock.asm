@@ -12,6 +12,8 @@ early_spinlock_cnt DB 01H DUP (?)
 _BSS	ENDS
 CONST	SEGMENT
 $SG2877	DB	'[aurora kernel]: lock -> %x is corrupted ', 0dH, 0aH, 00H
+	ORG $+4
+$SG2881	DB	'Locking ', 0dH, 0aH, 00H
 CONST	ENDS
 PUBLIC	AuCreateSpinlock
 PUBLIC	AuDeleteSpinlock
@@ -30,7 +32,7 @@ $pdata$AuDeleteSpinlock DD imagerel $LN3
 	DD	imagerel $LN3+24
 	DD	imagerel $unwind$AuDeleteSpinlock
 $pdata$AuAcquireSpinlock DD imagerel $LN10
-	DD	imagerel $LN10+122
+	DD	imagerel $LN10+134
 	DD	imagerel $unwind$AuAcquireSpinlock
 $pdata$AuReleaseSpinlock DD imagerel $LN4
 	DD	imagerel $LN4+54
@@ -52,13 +54,13 @@ _TEXT	SEGMENT
 lock$ = 48
 AuReleaseSpinlock PROC
 
-; 89   : AU_EXTERN AU_EXPORT void AuReleaseSpinlock(Spinlock* lock) {
+; 90   : AU_EXTERN AU_EXPORT void AuReleaseSpinlock(Spinlock* lock) {
 
 $LN4:
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 40					; 00000028H
 
-; 90   : 	if (!x64_lock_test(&lock->value, 1, 0))
+; 91   : 	if (!x64_lock_test(&lock->value, 1, 0))
 
 	mov	rax, QWORD PTR lock$[rsp]
 	xor	r8d, r8d
@@ -69,13 +71,13 @@ $LN4:
 	test	eax, eax
 	jne	SHORT $LN1@AuReleaseS
 
-; 91   : 		lock->value = 0;
+; 92   : 		lock->value = 0;
 
 	mov	rax, QWORD PTR lock$[rsp]
 	mov	QWORD PTR [rax], 0
 $LN1@AuReleaseS:
 
-; 92   : }
+; 93   : }
 
 	add	rsp, 40					; 00000028H
 	ret	0
@@ -115,7 +117,12 @@ $LN6@AuAcquireS:
 
 ; 74   : 	}
 ; 75   : 	do {
-; 76   : 		if (x64_lock_test(&lock->value, 0, 1)) {
+; 76   : 		SeTextOut("Locking \r\n");
+
+	lea	rcx, OFFSET FLAT:$SG2881
+	call	SeTextOut
+
+; 77   : 		if (x64_lock_test(&lock->value, 0, 1)) {
 
 	mov	rax, QWORD PTR lock$[rsp]
 	mov	r8d, 1
@@ -126,23 +133,23 @@ $LN6@AuAcquireS:
 	test	eax, eax
 	je	SHORT $LN3@AuAcquireS
 
-; 77   : 			break;
+; 78   : 			break;
 
 	jmp	SHORT $LN4@AuAcquireS
 $LN3@AuAcquireS:
 
-; 78   : 		}
-; 79   : 		x64_pause();
+; 79   : 		}
+; 80   : 		x64_pause();
 
 	call	x64_pause
 
-; 80   : 		volatile size_t* lockd = &lock->value;
+; 81   : 		volatile size_t* lockd = &lock->value;
 
 	mov	rax, QWORD PTR lock$[rsp]
 	mov	QWORD PTR lockd$1[rsp], rax
 $LN2@AuAcquireS:
 
-; 81   : 		while (*lockd == 1);
+; 82   : 		while (*lockd == 1);
 
 	mov	rax, QWORD PTR lockd$1[rsp]
 	mov	rax, QWORD PTR [rax]
@@ -151,14 +158,14 @@ $LN2@AuAcquireS:
 	jmp	SHORT $LN2@AuAcquireS
 $LN1@AuAcquireS:
 
-; 82   : 	} while (1);
+; 83   : 	} while (1);
 
 	xor	eax, eax
 	cmp	eax, 1
 	jne	SHORT $LN6@AuAcquireS
 $LN4@AuAcquireS:
 
-; 83   : }
+; 84   : }
 
 	add	rsp, 56					; 00000038H
 	ret	0

@@ -36,13 +36,12 @@ EXTRN	?AuDrvMngrInitialize@@YAXPEAU_KERNEL_BOOT_INFO_@@@Z:PROC ; AuDrvMngrInitia
 EXTRN	?AuInitialiseLoader@@YAXXZ:PROC			; AuInitialiseLoader
 EXTRN	?AuSoundInitialise@@YAXXZ:PROC			; AuSoundInitialise
 EXTRN	?AuInitialiseNet@@YAXXZ:PROC			; AuInitialiseNet
-EXTRN	?AuARPRequestMAC@@YAXXZ:PROC			; AuARPRequestMAC
 EXTRN	?AuIPCPostBoxInitialise@@YAXXZ:PROC		; AuIPCPostBoxInitialise
 EXTRN	?AuTimerDataInitialise@@YAXXZ:PROC		; AuTimerDataInitialise
 EXTRN	?FontManagerInitialise@@YAXXZ:PROC		; FontManagerInitialise
 pdata	SEGMENT
 $pdata$?_AuMain@@YAXPEAU_KERNEL_BOOT_INFO_@@@Z DD imagerel $LN5
-	DD	imagerel $LN5+240
+	DD	imagerel $LN5+235
 	DD	imagerel $unwind$?_AuMain@@YAXPEAU_KERNEL_BOOT_INFO_@@@Z
 pdata	ENDS
 xdata	SEGMENT
@@ -214,26 +213,21 @@ $LN5:
 	call	?AuVmmngrBootFree@@YAXXZ		; AuVmmngrBootFree
 
 ; 131  : 
-; 132  : 	AuARPRequestMAC();
-
-	call	?AuARPRequestMAC@@YAXXZ			; AuARPRequestMAC
-
-; 133  : 	/* Process initialisation begins here */
-; 134  : 	AuStartRootProc();
+; 132  : 	/* Process initialisation begins here */
+; 133  : 	AuStartRootProc();
 
 	call	?AuStartRootProc@@YAXXZ			; AuStartRootProc
 
-; 135  : 
-; 136  : 	AuSchedulerStart();
+; 134  : 	AuSchedulerStart();
 
 	call	?AuSchedulerStart@@YAXXZ		; AuSchedulerStart
 $LN2@AuMain:
 
-; 137  : 	for (;;);
+; 135  : 	for (;;);
 
 	jmp	SHORT $LN2@AuMain
 
-; 138  : }
+; 136  : }
 
 	add	rsp, 40					; 00000028H
 	ret	0

@@ -288,11 +288,21 @@
     <ClCompile Include="Net\arp.cpp" />
     <ClCompile Include="Net\aunet.cpp" />
     <ClCompile Include="Net\ethernet.cpp" />
-    <ClCompile Include="Net\icmp.cpp" />
-    <ClCompile Include="Net\ipv4.cpp" />
-    <ClCompile Include="Net\socket.cpp" />
-    <ClCompile Include="Net\tcp.cpp" />
-    <ClCompile Include="Net\udp.cpp" />
+    <ClCompile Include="Net\icmp.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="Net\ipv4.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="Net\socket.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="Net\tcp.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="Net\udp.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="pcie.cpp" />
     <ClCompile Include="pe.cpp" />
     <ClCompile Include="process.cpp" />

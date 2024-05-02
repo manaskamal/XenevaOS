@@ -60,6 +60,7 @@ int CreateSharedMem(uint16_t key, size_t sz, uint8_t flags){
 	}
 	SeTextOut("Creating shared mem for thr -> %s \r\n", thr->name);
 	int id = AuCreateSHM(proc, key, sz, flags);
+	SeTextOut("Returning shm -> %d \r\n", id);
 	return id;
 }
 

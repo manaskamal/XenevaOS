@@ -73,6 +73,7 @@ AU_EXTERN AU_EXPORT void AuAcquireSpinlock(Spinlock* lock) {
 		lock->value = 0;
 	}
 	do {
+		SeTextOut("Locking \r\n");
 		if (x64_lock_test(&lock->value, 0, 1)) {
 			break;
 		}

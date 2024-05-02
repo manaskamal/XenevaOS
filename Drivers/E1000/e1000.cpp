@@ -276,7 +276,7 @@ void E1000Thread(uint64_t val) {
 			}
 		}
 
-		//E1000WriteCmd(e1000_nic, E1000_REG_ICR, status);
+		E1000WriteCmd(e1000_nic, E1000_REG_ICR, status);
 		AuSleepThread(AuGetCurrentThread(), 60*1000);
 		AuForceScheduler();
 	}

@@ -751,6 +751,20 @@ gettimeofday:
 	syscall
 	ret
 
+global socket
+%ifdef YES_DYNAMIC
+export socket
+%endif
+socket:
+   xor rax,rax
+   mov r12, 46
+   mov r13, rcx
+   mov r14, rdx
+   mov r15, r8
+   mov rdi, 0
+   syscall
+   ret
+
 
 
       

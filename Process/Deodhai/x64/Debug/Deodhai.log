@@ -1,8 +1,8 @@
-﻿Build started 09-04-2024 আবেলি 7:41:58.
+﻿Build started 02-05-2024 আবেলি 9:01:28.
      1>Project "E:\Xeneva Project\Aurora\Process\Deodhai\Deodhai.vcxproj" on node 2 (Rebuild target(s)).
      1>_NASM:
          _fastcpy.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp0b463f33b1834b8db371f0785987f5f0.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp301d70f0e21b43e09abd0f489cca1003.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\_fastcpy.obj"  "E:\Xeneva Project\Aurora\Process\Deodhai\_fastcpy.asm"
        ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /I"E:\Xeneva Project\Aurora\Libs\Chitralekha" /I"E:\os_dev\freetype2-master\freetype2-master\include" /Zi /nologo /W4 /WX- /sdl- /MP /Od /Oy- /D ARCH_X64 /D YES_DYNAMIC /D DYNAMIC_IMPORTER /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt backdirty.cpp clip.cpp cursor.cpp deomain.cpp dirty.cpp popup.cpp rect.cpp window.cpp
@@ -60,80 +60,80 @@
      1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(523): warning C4127: conditional expression is constant
      1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(551): warning C4127: conditional expression is constant
      1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(585): warning C4127: conditional expression is constant
-     1>deomain.cpp(190): warning C4018: '>' : signed/unsigned mismatch
-     1>deomain.cpp(193): warning C4018: '>' : signed/unsigned mismatch
-     1>deomain.cpp(196): warning C4018: '>' : signed/unsigned mismatch
-     1>deomain.cpp(199): warning C4018: '>' : signed/unsigned mismatch
-     1>deomain.cpp(186): warning C4189: 'lfb' : local variable is initialized but not referenced
-     1>deomain.cpp(331): warning C4100: 'canv' : unreferenced formal parameter
-     1>deomain.cpp(332): warning C4189: 'info' : local variable is initialized but not referenced
-     1>deomain.cpp(341): warning C4100: 'canv' : unreferenced formal parameter
-     1>deomain.cpp(367): warning C4018: '>' : signed/unsigned mismatch
-     1>deomain.cpp(370): warning C4018: '>' : signed/unsigned mismatch
-     1>deomain.cpp(379): warning C4018: '>=' : signed/unsigned mismatch
-     1>deomain.cpp(382): warning C4018: '>=' : signed/unsigned mismatch
-     1>deomain.cpp(429): warning C4018: '<' : signed/unsigned mismatch
+     1>deomain.cpp(191): warning C4018: '>' : signed/unsigned mismatch
+     1>deomain.cpp(194): warning C4018: '>' : signed/unsigned mismatch
+     1>deomain.cpp(197): warning C4018: '>' : signed/unsigned mismatch
+     1>deomain.cpp(200): warning C4018: '>' : signed/unsigned mismatch
+     1>deomain.cpp(187): warning C4189: 'lfb' : local variable is initialized but not referenced
+     1>deomain.cpp(332): warning C4100: 'canv' : unreferenced formal parameter
+     1>deomain.cpp(333): warning C4189: 'info' : local variable is initialized but not referenced
+     1>deomain.cpp(342): warning C4100: 'canv' : unreferenced formal parameter
+     1>deomain.cpp(368): warning C4018: '>' : signed/unsigned mismatch
+     1>deomain.cpp(371): warning C4018: '>' : signed/unsigned mismatch
+     1>deomain.cpp(380): warning C4018: '>=' : signed/unsigned mismatch
+     1>deomain.cpp(383): warning C4018: '>=' : signed/unsigned mismatch
      1>deomain.cpp(430): warning C4018: '<' : signed/unsigned mismatch
-     1>deomain.cpp(442): warning C4018: '<' : signed/unsigned mismatch
+     1>deomain.cpp(431): warning C4018: '<' : signed/unsigned mismatch
      1>deomain.cpp(443): warning C4018: '<' : signed/unsigned mismatch
-     1>deomain.cpp(459): warning C4018: '<' : signed/unsigned mismatch
+     1>deomain.cpp(444): warning C4018: '<' : signed/unsigned mismatch
      1>deomain.cpp(460): warning C4018: '<' : signed/unsigned mismatch
-     1>deomain.cpp(481): warning C4189: 'winInfo' : local variable is initialized but not referenced
-     1>deomain.cpp(550): warning C4018: '<' : signed/unsigned mismatch
-     1>deomain.cpp(562): warning C4018: '>=' : signed/unsigned mismatch
-     1>deomain.cpp(565): warning C4018: '>=' : signed/unsigned mismatch
-     1>deomain.cpp(645): warning C4018: '>=' : signed/unsigned mismatch
-     1>deomain.cpp(645): warning C4018: '<' : signed/unsigned mismatch
+     1>deomain.cpp(461): warning C4018: '<' : signed/unsigned mismatch
+     1>deomain.cpp(482): warning C4189: 'winInfo' : local variable is initialized but not referenced
+     1>deomain.cpp(551): warning C4018: '<' : signed/unsigned mismatch
+     1>deomain.cpp(563): warning C4018: '>=' : signed/unsigned mismatch
+     1>deomain.cpp(566): warning C4018: '>=' : signed/unsigned mismatch
      1>deomain.cpp(646): warning C4018: '>=' : signed/unsigned mismatch
      1>deomain.cpp(646): warning C4018: '<' : signed/unsigned mismatch
-     1>deomain.cpp(667): warning C4018: '>=' : signed/unsigned mismatch
-     1>deomain.cpp(669): warning C4018: '>=' : signed/unsigned mismatch
-     1>deomain.cpp(729): warning C4018: '>=' : signed/unsigned mismatch
-     1>deomain.cpp(732): warning C4018: '>=' : signed/unsigned mismatch
-     1>deomain.cpp(736): warning C4018: '>=' : signed/unsigned mismatch
-     1>deomain.cpp(740): warning C4018: '>=' : signed/unsigned mismatch
-     1>deomain.cpp(820): warning C4018: '>=' : signed/unsigned mismatch
-     1>deomain.cpp(822): warning C4018: '>=' : signed/unsigned mismatch
-     1>deomain.cpp(833): warning C4018: '<' : signed/unsigned mismatch
-     1>deomain.cpp(914): warning C4018: '<' : signed/unsigned mismatch
-     1>deomain.cpp(926): warning C4018: '>=' : signed/unsigned mismatch
-     1>deomain.cpp(929): warning C4018: '>=' : signed/unsigned mismatch
-     1>deomain.cpp(993): warning C4018: '>=' : signed/unsigned mismatch
-     1>deomain.cpp(995): warning C4018: '>=' : signed/unsigned mismatch
-     1>deomain.cpp(1103): warning C4018: '>=' : signed/unsigned mismatch
-     1>deomain.cpp(1105): warning C4018: '>=' : signed/unsigned mismatch
-     1>deomain.cpp(1158): warning C4244: '=' : conversion from 'int' to 'uint16_t', possible loss of data
-     1>deomain.cpp(1175): warning C4018: '<' : signed/unsigned mismatch
+     1>deomain.cpp(647): warning C4018: '>=' : signed/unsigned mismatch
+     1>deomain.cpp(647): warning C4018: '<' : signed/unsigned mismatch
+     1>deomain.cpp(668): warning C4018: '>=' : signed/unsigned mismatch
+     1>deomain.cpp(670): warning C4018: '>=' : signed/unsigned mismatch
+     1>deomain.cpp(730): warning C4018: '>=' : signed/unsigned mismatch
+     1>deomain.cpp(733): warning C4018: '>=' : signed/unsigned mismatch
+     1>deomain.cpp(737): warning C4018: '>=' : signed/unsigned mismatch
+     1>deomain.cpp(741): warning C4018: '>=' : signed/unsigned mismatch
+     1>deomain.cpp(821): warning C4018: '>=' : signed/unsigned mismatch
+     1>deomain.cpp(823): warning C4018: '>=' : signed/unsigned mismatch
+     1>deomain.cpp(834): warning C4018: '<' : signed/unsigned mismatch
+     1>deomain.cpp(915): warning C4018: '<' : signed/unsigned mismatch
+     1>deomain.cpp(927): warning C4018: '>=' : signed/unsigned mismatch
+     1>deomain.cpp(930): warning C4018: '>=' : signed/unsigned mismatch
+     1>deomain.cpp(994): warning C4018: '>=' : signed/unsigned mismatch
+     1>deomain.cpp(996): warning C4018: '>=' : signed/unsigned mismatch
+     1>deomain.cpp(1104): warning C4018: '>=' : signed/unsigned mismatch
+     1>deomain.cpp(1106): warning C4018: '>=' : signed/unsigned mismatch
+     1>deomain.cpp(1159): warning C4244: '=' : conversion from 'int' to 'uint16_t', possible loss of data
      1>deomain.cpp(1176): warning C4018: '<' : signed/unsigned mismatch
-     1>deomain.cpp(1189): warning C4018: '<' : signed/unsigned mismatch
+     1>deomain.cpp(1177): warning C4018: '<' : signed/unsigned mismatch
      1>deomain.cpp(1190): warning C4018: '<' : signed/unsigned mismatch
-     1>deomain.cpp(1219): warning C4018: '<' : signed/unsigned mismatch
+     1>deomain.cpp(1191): warning C4018: '<' : signed/unsigned mismatch
      1>deomain.cpp(1220): warning C4018: '<' : signed/unsigned mismatch
-     1>deomain.cpp(1231): warning C4018: '<' : signed/unsigned mismatch
-     1>deomain.cpp(1283): warning C4018: '<' : signed/unsigned mismatch
-     1>deomain.cpp(1299): warning C4244: '=' : conversion from 'int' to 'uint16_t', possible loss of data
-     1>deomain.cpp(1331): warning C4267: 'argument' : conversion from 'size_t' to 'uint32_t', possible loss of data
-     1>deomain.cpp(1366): warning C4244: 'initializing' : conversion from 'uint64_t' to 'time_t', possible loss of data
-     1>deomain.cpp(1367): warning C4244: 'initializing' : conversion from 'uint64_t' to 'long', possible loss of data
-     1>deomain.cpp(1371): warning C4244: '=' : conversion from 'uint64_t' to 'long', possible loss of data
-     1>deomain.cpp(1469): warning C4127: conditional expression is constant
-     1>deomain.cpp(1471): warning C4244: 'initializing' : conversion from 'uint64_t' to 'unsigned long', possible loss of data
-     1>deomain.cpp(1532): warning C4018: '>=' : signed/unsigned mismatch
+     1>deomain.cpp(1221): warning C4018: '<' : signed/unsigned mismatch
+     1>deomain.cpp(1232): warning C4018: '<' : signed/unsigned mismatch
+     1>deomain.cpp(1284): warning C4018: '<' : signed/unsigned mismatch
+     1>deomain.cpp(1300): warning C4244: '=' : conversion from 'int' to 'uint16_t', possible loss of data
+     1>deomain.cpp(1332): warning C4267: 'argument' : conversion from 'size_t' to 'uint32_t', possible loss of data
+     1>deomain.cpp(1367): warning C4244: 'initializing' : conversion from 'uint64_t' to 'time_t', possible loss of data
+     1>deomain.cpp(1368): warning C4244: 'initializing' : conversion from 'uint64_t' to 'long', possible loss of data
+     1>deomain.cpp(1372): warning C4244: '=' : conversion from 'uint64_t' to 'long', possible loss of data
+     1>deomain.cpp(1471): warning C4127: conditional expression is constant
+     1>deomain.cpp(1473): warning C4244: 'initializing' : conversion from 'uint64_t' to 'unsigned long', possible loss of data
      1>deomain.cpp(1534): warning C4018: '>=' : signed/unsigned mismatch
-     1>deomain.cpp(1553): warning C4244: 'initializing' : conversion from 'uint32_t' to 'uint8_t', possible loss of data
-     1>deomain.cpp(1615): warning C4244: 'initializing' : conversion from 'uint32_t' to 'uint16_t', possible loss of data
-     1>deomain.cpp(1641): warning C4244: 'initializing' : conversion from 'uint32_t' to 'uint16_t', possible loss of data
-     1>deomain.cpp(1704): warning C4389: '==' : signed/unsigned mismatch
-     1>deomain.cpp(1727): warning C4389: '==' : signed/unsigned mismatch
-     1>deomain.cpp(1728): warning C4244: '=' : conversion from 'int' to 'uint8_t', possible loss of data
-     1>deomain.cpp(1742): warning C4244: 'initializing' : conversion from 'uint32_t' to 'uint8_t', possible loss of data
-     1>deomain.cpp(1749): warning C4389: '==' : signed/unsigned mismatch
-     1>deomain.cpp(1756): warning C4244: 'argument' : conversion from 'int' to 'uint16_t', possible loss of data
-     1>deomain.cpp(1385): warning C4100: 'arv' : unreferenced formal parameter
-     1>deomain.cpp(1466): warning C4189: 'diff_tick' : local variable is initialized but not referenced
-     1>deomain.cpp(1465): warning C4189: 'frame_tick' : local variable is initialized but not referenced
-     1>deomain.cpp(1615): warning C4189: 'ownerId' : local variable is initialized but not referenced
-     1>deomain.cpp(1742): warning C4189: 'type' : local variable is initialized but not referenced
+     1>deomain.cpp(1536): warning C4018: '>=' : signed/unsigned mismatch
+     1>deomain.cpp(1555): warning C4244: 'initializing' : conversion from 'uint32_t' to 'uint8_t', possible loss of data
+     1>deomain.cpp(1617): warning C4244: 'initializing' : conversion from 'uint32_t' to 'uint16_t', possible loss of data
+     1>deomain.cpp(1643): warning C4244: 'initializing' : conversion from 'uint32_t' to 'uint16_t', possible loss of data
+     1>deomain.cpp(1706): warning C4389: '==' : signed/unsigned mismatch
+     1>deomain.cpp(1729): warning C4389: '==' : signed/unsigned mismatch
+     1>deomain.cpp(1730): warning C4244: '=' : conversion from 'int' to 'uint8_t', possible loss of data
+     1>deomain.cpp(1744): warning C4244: 'initializing' : conversion from 'uint32_t' to 'uint8_t', possible loss of data
+     1>deomain.cpp(1751): warning C4389: '==' : signed/unsigned mismatch
+     1>deomain.cpp(1758): warning C4244: 'argument' : conversion from 'int' to 'uint16_t', possible loss of data
+     1>deomain.cpp(1386): warning C4100: 'arv' : unreferenced formal parameter
+     1>deomain.cpp(1468): warning C4189: 'diff_tick' : local variable is initialized but not referenced
+     1>deomain.cpp(1467): warning C4189: 'frame_tick' : local variable is initialized but not referenced
+     1>deomain.cpp(1617): warning C4189: 'ownerId' : local variable is initialized but not referenced
+     1>deomain.cpp(1744): warning C4189: 'type' : local variable is initialized but not referenced
          cursor.cpp
      1>cursor.cpp(102): warning C4018: '<' : signed/unsigned mismatch
      1>cursor.cpp(106): warning C4018: '<' : signed/unsigned mismatch
@@ -163,4 +163,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:01.41
+Time Elapsed 00:00:01.59

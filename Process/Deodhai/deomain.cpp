@@ -51,6 +51,7 @@
 #include "backdirty.h"
 #include "draw.h"
 #include "popup.h"
+#include <sys\socket.h>
 #include <boxblur.h>
 
 /******************************************
@@ -1384,11 +1385,12 @@ uint64_t DeodhaiTimeSince(uint64_t startTime) {
  */
 int main(int argc, char* arv[]) {
 	int pid = _KeGetThreadID();
-
+	
 	_KePrint("Argc == 10 %x\r\n", argc);
 	_KePrint("Deodhai v1.0 running %d\r\n", pid);
 	ChPrintLibName();
-
+	int sockfd = socket(AF_INET, SOCK_STREAM, 0);
+	_KePrint("Socket created -> %d \r\n", sockfd);
 	startTime = 0;
 	startSubTime = 0;
 	timeval tm;
@@ -1553,7 +1555,7 @@ int main(int argc, char* arv[]) {
 			uint8_t flags = event.dword5;
 
 			Window* win = DeodhaiCreateWindow(x, y, w, h, flags, event.from_id, event.charValue3);
-
+			_KePrint("DOEDHAI window khan bonala de \r\n");
 			PostEvent e;
 			memset(&e, 0, sizeof(PostEvent));
 
@@ -1564,7 +1566,7 @@ int main(int argc, char* arv[]) {
 			e.to_id = event.from_id;
 			
 			_KeFileIoControl(postbox_fd, POSTBOX_PUT_EVENT, &e);
-
+			_KePrint("Deodhai msg to send kori disi \r\n");
 			_KeProcessSleep(40);
 			if (!(flags & WINDOW_FLAG_MESSAGEBOX)){
 				_KePrint("Broadcasting message \n");
