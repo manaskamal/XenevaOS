@@ -49,9 +49,19 @@ void ChDefaultListViewPainter(ChWidget* wid, ChWindow* win) {
 	int nodePaddingHeight = LIST_VIEW_ITEM_HEIGHT;
 	int max_visible_items = lv->currentStartIndex + lv->wid.h / LIST_VIEW_ITEM_HEIGHT+ 2 * nodePaddingHeight;
 	
-	int ypos = lv->wid.y + win->app->baseFont->fontHeight;
-	if (lv->currentStartIndex != 0)
-		ypos = (lv->horizontalRenderY - LIST_VIEW_ITEM_HEIGHT)  + win->app->baseFont->fontHeight / 2;
+	int ypos = lv->wid.y +  win->app->baseFont->fontHeight;
+	int scrollTop = lv->wid.y + win->app->baseFont->fontHeight;
+	
+	if (lv->currentStartIndex != 0){
+		ypos = (lv->horizontalRenderY - LIST_VIEW_ITEM_HEIGHT) + win->app->baseFont->fontHeight / 2;
+		scrollTop = (lv->horizontalRenderY - LIST_VIEW_ITEM_HEIGHT) + win->app->baseFont->fontHeight / 2;
+	}
+
+	int diff = ypos - lv->scrollpane->vScrollBar.currentScrollValue;
+	if ((lv->lastNodeIndex == lv->currentStartIndex))
+		ypos -= lv->scrollpane->vScrollBar.currentScrollValue % (max(scrollTop, lv->wid.y) - min(scrollTop,lv->wid.y));
+
+	
 	for (int i = lv->currentStartIndex; i < lv->itemList->pointer /*&& i < max_visible_items*/; i++) {
 		ChListItem* li = (ChListItem*)list_get_at(lv->itemList, i);
 		li->yPos = ypos;
@@ -59,7 +69,7 @@ void ChDefaultListViewPainter(ChWidget* wid, ChWindow* win) {
 			ChDrawRectClipped(win->canv, lv->wid.x + li->xPos, li->yPos, li->width, li->height - 2, &viewRect, 0xFF6982B7);
 
 		if (li->icon){
-			ChDrawIconClipped(win->canv, li->icon, lv->wid.x + li->xPos + 10, li->yPos + 2, &viewRect);
+			ChDrawIconClipped(win->canv, li->icon, lv->wid.x + li->xPos + 10, li->yPos, &viewRect);
 			ChFontDrawTextClipped(win->canv, win->app->baseFont, li->itemText, lv->wid.x + li->xPos + 40,
 				(ypos + LIST_VIEW_ITEM_HEIGHT / 2) + 5, BLACK, &viewRect);
 		}else

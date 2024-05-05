@@ -147,7 +147,6 @@ void AuPmmngrInitialize(KERNEL_BOOT_INFO *info) {
 
 	uint64_t MemMapEntries = info->mem_map_size / info->descriptor_size;
 	void* BitmapArea = 0;
-
 	/* Scan a suitable area for the bitmap */
 	for (size_t i = 0; i < MemMapEntries; i++) {
 		EFI_MEMORY_DESCRIPTOR *EfiMem = (EFI_MEMORY_DESCRIPTOR*)((uint64_t)info->map + i * info->descriptor_size);
@@ -158,7 +157,7 @@ void AuPmmngrInitialize(KERNEL_BOOT_INFO *info) {
 			}
 		}
 	}
-	
+
 	_FreeMemory = _TotalRam;
 	uint64_t BitmapSize = (_TotalRam * 4096) / 4096 / 8 + 1;
 
@@ -177,6 +176,7 @@ void AuPmmngrInitialize(KERNEL_BOOT_INFO *info) {
 			}
 		}
 	}
+
 
 	/* Lock addresses below 1MiB mark */
 	for (size_t i = 0; i < (1 * 1024 * 1024)/ 4096; i++)
@@ -198,6 +198,7 @@ void AuPmmngrInitialize(KERNEL_BOOT_INFO *info) {
 	AuPmmngrLockPage(0xA000);
 	memset(SMPAddress, 0, 4096);
 	memcpy(SMPAddress, info->apcode, 4096);
+
 
 }
 

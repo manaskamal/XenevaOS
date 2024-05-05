@@ -255,6 +255,13 @@
 	*/
 	XE_LIB void ChWindowHandleFocus(ChWindow* win, bool focus_val, uint32_t handle);
 
+	/*
+	* ChWindowGetBackgroundColor -- returns the current
+	* background color
+	* @param win -- Pointer to Chitralekha Window
+	*/
+	XE_LIB uint32_t ChWindowGetBackgroundColor(ChWindow* win);
+
 
 	/*
 	* ChWindowAddWidget -- adds a widget to window

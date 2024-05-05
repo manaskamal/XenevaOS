@@ -58,7 +58,6 @@ void x86_64_hal_initialise(KERNEL_BOOT_INFO *info) {
 	x86_64_init_user(64);
 	x86_64_hal_cpu_feature_enable();
 	
-	
    
 	AuACPIInitialise(info->acpi_table_pointer);
 

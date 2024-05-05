@@ -5,19 +5,311 @@ include listing.inc
 INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
+CONST	SEGMENT
+$SG3306	DB	'UDP Socket created ', 0dH, 0aH, 00H
+CONST	ENDS
+PUBLIC	?AuUDPReceive@@YA_KPEAU_socket_@@PEAU_msghdr_@@H@Z ; AuUDPReceive
+PUBLIC	?AuUDPSend@@YA_KPEAU_socket_@@PEAU_msghdr_@@H@Z	; AuUDPSend
+PUBLIC	?AuUDPClose@@YAXPEAU_socket_@@@Z		; AuUDPClose
+PUBLIC	?AuUDPBind@@YA_KPEAU_socket_@@PEAU_sockaddr_@@_K@Z ; AuUDPBind
+PUBLIC	?AuUDPRead@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z	; AuUDPRead
+PUBLIC	?AuUDPWrite@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z	; AuUDPWrite
 PUBLIC	?CreateUDPSocket@@YAHXZ				; CreateUDPSocket
+EXTRN	AuGetCurrentThread:PROC
+EXTRN	?AuProcessFindThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z:PROC ; AuProcessFindThread
+EXTRN	?AuProcessFindSubThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z:PROC ; AuProcessFindSubThread
+EXTRN	?AuProcessGetFileDesc@@YAHPEAU_au_proc_@@@Z:PROC ; AuProcessGetFileDesc
+EXTRN	kmalloc:PROC
+EXTRN	memset:PROC
+EXTRN	SeTextOut:PROC
+pdata	SEGMENT
+$pdata$?CreateUDPSocket@@YAHXZ DD imagerel $LN6
+	DD	imagerel $LN6+311
+	DD	imagerel $unwind$?CreateUDPSocket@@YAHXZ
+pdata	ENDS
+xdata	SEGMENT
+$unwind$?CreateUDPSocket@@YAHXZ DD 010401H
+	DD	08204H
+xdata	ENDS
 ; Function compile flags: /Odtpy
 ; File e:\xeneva project\aurora\kernel\net\udp.cpp
 _TEXT	SEGMENT
+fd$ = 32
+sock$ = 40
+proc$ = 48
+thread$ = 56
 ?CreateUDPSocket@@YAHXZ PROC				; CreateUDPSocket
 
-; 37   : 	return 0;
+; 81   : int CreateUDPSocket() {
+
+$LN6:
+	sub	rsp, 72					; 00000048H
+
+; 82   : 	int fd = -1;
+
+	mov	DWORD PTR fd$[rsp], -1
+
+; 83   : 	AuThread *thread = AuGetCurrentThread();
+
+	call	AuGetCurrentThread
+	mov	QWORD PTR thread$[rsp], rax
+
+; 84   : 	if (!thread)
+
+	cmp	QWORD PTR thread$[rsp], 0
+	jne	SHORT $LN3@CreateUDPS
+
+; 85   : 		return -1;
+
+	mov	eax, -1
+	jmp	$LN4@CreateUDPS
+$LN3@CreateUDPS:
+
+; 86   : 	AuProcess *proc = AuProcessFindThread(thread);
+
+	mov	rcx, QWORD PTR thread$[rsp]
+	call	?AuProcessFindThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z ; AuProcessFindThread
+	mov	QWORD PTR proc$[rsp], rax
+
+; 87   : 	if (!proc)
+
+	cmp	QWORD PTR proc$[rsp], 0
+	jne	SHORT $LN2@CreateUDPS
+
+; 88   : 		proc = AuProcessFindSubThread(thread);
+
+	mov	rcx, QWORD PTR thread$[rsp]
+	call	?AuProcessFindSubThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z ; AuProcessFindSubThread
+	mov	QWORD PTR proc$[rsp], rax
+$LN2@CreateUDPS:
+
+; 89   : 	if (!proc)
+
+	cmp	QWORD PTR proc$[rsp], 0
+	jne	SHORT $LN1@CreateUDPS
+
+; 90   : 		return -1;
+
+	mov	eax, -1
+	jmp	$LN4@CreateUDPS
+$LN1@CreateUDPS:
+
+; 91   : 	AuSocket *sock = (AuSocket*)kmalloc(sizeof(AuSocket));
+
+	mov	ecx, 232				; 000000e8H
+	call	kmalloc
+	mov	QWORD PTR sock$[rsp], rax
+
+; 92   : 	memset(sock, 0, sizeof(AuSocket));
+
+	mov	r8d, 232				; 000000e8H
+	xor	edx, edx
+	mov	rcx, QWORD PTR sock$[rsp]
+	call	memset
+
+; 93   : 	fd = AuProcessGetFileDesc(proc);
+
+	mov	rcx, QWORD PTR proc$[rsp]
+	call	?AuProcessGetFileDesc@@YAHPEAU_au_proc_@@@Z ; AuProcessGetFileDesc
+	mov	DWORD PTR fd$[rsp], eax
+
+; 94   : 	sock->fsnode.read = AuUDPRead;
+
+	mov	rax, QWORD PTR sock$[rsp]
+	lea	rcx, OFFSET FLAT:?AuUDPRead@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z ; AuUDPRead
+	mov	QWORD PTR [rax+104], rcx
+
+; 95   : 	sock->fsnode.write = AuUDPWrite;
+
+	mov	rax, QWORD PTR sock$[rsp]
+	lea	rcx, OFFSET FLAT:?AuUDPWrite@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z ; AuUDPWrite
+	mov	QWORD PTR [rax+112], rcx
+
+; 96   : 	sock->bind = AuUDPBind;
+
+	mov	rax, QWORD PTR sock$[rsp]
+	lea	rcx, OFFSET FLAT:?AuUDPBind@@YA_KPEAU_socket_@@PEAU_sockaddr_@@_K@Z ; AuUDPBind
+	mov	QWORD PTR [rax+224], rcx
+
+; 97   : 	sock->close = AuUDPClose;
+
+	mov	rax, QWORD PTR sock$[rsp]
+	lea	rcx, OFFSET FLAT:?AuUDPClose@@YAXPEAU_socket_@@@Z ; AuUDPClose
+	mov	QWORD PTR [rax+208], rcx
+
+; 98   : 	sock->connect = 0;
+
+	mov	rax, QWORD PTR sock$[rsp]
+	mov	QWORD PTR [rax+216], 0
+
+; 99   : 	sock->receive = AuUDPReceive;
+
+	mov	rax, QWORD PTR sock$[rsp]
+	lea	rcx, OFFSET FLAT:?AuUDPReceive@@YA_KPEAU_socket_@@PEAU_msghdr_@@H@Z ; AuUDPReceive
+	mov	QWORD PTR [rax+192], rcx
+
+; 100  : 	sock->send = AuUDPSend;
+
+	mov	rax, QWORD PTR sock$[rsp]
+	lea	rcx, OFFSET FLAT:?AuUDPSend@@YA_KPEAU_socket_@@PEAU_msghdr_@@H@Z ; AuUDPSend
+	mov	QWORD PTR [rax+200], rcx
+
+; 101  : 	proc->fds[fd] = (AuVFSNode*)sock;
+
+	movsxd	rax, DWORD PTR fd$[rsp]
+	mov	rcx, QWORD PTR proc$[rsp]
+	mov	rdx, QWORD PTR sock$[rsp]
+	mov	QWORD PTR [rcx+rax*8+576], rdx
+
+; 102  : 	SeTextOut("UDP Socket created \r\n");
+
+	lea	rcx, OFFSET FLAT:$SG3306
+	call	SeTextOut
+
+; 103  : 	return fd;
+
+	mov	eax, DWORD PTR fd$[rsp]
+$LN4@CreateUDPS:
+
+; 104  : }
+
+	add	rsp, 72					; 00000048H
+	ret	0
+?CreateUDPSocket@@YAHXZ ENDP				; CreateUDPSocket
+_TEXT	ENDS
+; Function compile flags: /Odtpy
+; File e:\xeneva project\aurora\kernel\net\udp.cpp
+_TEXT	SEGMENT
+node$ = 8
+file$ = 16
+buffer$ = 24
+len$ = 32
+?AuUDPWrite@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z PROC	; AuUDPWrite
+
+; 74   : uint64_t AuUDPWrite(AuVFSNode* node, AuVFSNode* file, uint64_t* buffer, uint32_t len) {
+
+	mov	DWORD PTR [rsp+32], r9d
+	mov	QWORD PTR [rsp+24], r8
+	mov	QWORD PTR [rsp+16], rdx
+	mov	QWORD PTR [rsp+8], rcx
+
+; 75   : 	return 0;
 
 	xor	eax, eax
 
-; 38   : }
+; 76   : }
 
 	ret	0
-?CreateUDPSocket@@YAHXZ ENDP				; CreateUDPSocket
+?AuUDPWrite@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z ENDP	; AuUDPWrite
+_TEXT	ENDS
+; Function compile flags: /Odtpy
+; File e:\xeneva project\aurora\kernel\net\udp.cpp
+_TEXT	SEGMENT
+node$ = 8
+file$ = 16
+buffer$ = 24
+len$ = 32
+?AuUDPRead@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z PROC	; AuUDPRead
+
+; 70   : uint64_t AuUDPRead(AuVFSNode* node, AuVFSNode* file, uint64_t* buffer, uint32_t len){
+
+	mov	DWORD PTR [rsp+32], r9d
+	mov	QWORD PTR [rsp+24], r8
+	mov	QWORD PTR [rsp+16], rdx
+	mov	QWORD PTR [rsp+8], rcx
+
+; 71   : 	return 0;
+
+	xor	eax, eax
+
+; 72   : }
+
+	ret	0
+?AuUDPRead@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z ENDP	; AuUDPRead
+_TEXT	ENDS
+; Function compile flags: /Odtpy
+; File e:\xeneva project\aurora\kernel\net\udp.cpp
+_TEXT	SEGMENT
+sock$ = 8
+addr$ = 16
+addrlen$ = 24
+?AuUDPBind@@YA_KPEAU_socket_@@PEAU_sockaddr_@@_K@Z PROC	; AuUDPBind
+
+; 65   : uint64_t AuUDPBind(AuSocket* sock, sockaddr* addr, socklen_t addrlen){
+
+	mov	QWORD PTR [rsp+24], r8
+	mov	QWORD PTR [rsp+16], rdx
+	mov	QWORD PTR [rsp+8], rcx
+
+; 66   : 	return 0;
+
+	xor	eax, eax
+
+; 67   : }
+
+	ret	0
+?AuUDPBind@@YA_KPEAU_socket_@@PEAU_sockaddr_@@_K@Z ENDP	; AuUDPBind
+_TEXT	ENDS
+; Function compile flags: /Odtpy
+; File e:\xeneva project\aurora\kernel\net\udp.cpp
+_TEXT	SEGMENT
+sock$ = 8
+?AuUDPClose@@YAXPEAU_socket_@@@Z PROC			; AuUDPClose
+
+; 60   : void AuUDPClose(AuSocket* sock) {
+
+	mov	QWORD PTR [rsp+8], rcx
+
+; 61   : 	return;
+; 62   : }
+
+	ret	0
+?AuUDPClose@@YAXPEAU_socket_@@@Z ENDP			; AuUDPClose
+_TEXT	ENDS
+; Function compile flags: /Odtpy
+; File e:\xeneva project\aurora\kernel\net\udp.cpp
+_TEXT	SEGMENT
+sock$ = 8
+msg$ = 16
+flags$ = 24
+?AuUDPSend@@YA_KPEAU_socket_@@PEAU_msghdr_@@H@Z PROC	; AuUDPSend
+
+; 52   : uint64_t AuUDPSend(AuSocket* sock, msghdr* msg, int flags){
+
+	mov	DWORD PTR [rsp+24], r8d
+	mov	QWORD PTR [rsp+16], rdx
+	mov	QWORD PTR [rsp+8], rcx
+
+; 53   : 	return 0;
+
+	xor	eax, eax
+
+; 54   : }
+
+	ret	0
+?AuUDPSend@@YA_KPEAU_socket_@@PEAU_msghdr_@@H@Z ENDP	; AuUDPSend
+_TEXT	ENDS
+; Function compile flags: /Odtpy
+; File e:\xeneva project\aurora\kernel\net\udp.cpp
+_TEXT	SEGMENT
+sock$ = 8
+msg$ = 16
+flags$ = 24
+?AuUDPReceive@@YA_KPEAU_socket_@@PEAU_msghdr_@@H@Z PROC	; AuUDPReceive
+
+; 42   : uint64_t AuUDPReceive(AuSocket* sock, msghdr *msg, int flags){
+
+	mov	DWORD PTR [rsp+24], r8d
+	mov	QWORD PTR [rsp+16], rdx
+	mov	QWORD PTR [rsp+8], rcx
+
+; 43   : 	return 0;
+
+	xor	eax, eax
+
+; 44   : }
+
+	ret	0
+?AuUDPReceive@@YA_KPEAU_socket_@@PEAU_msghdr_@@H@Z ENDP	; AuUDPReceive
 _TEXT	ENDS
 END

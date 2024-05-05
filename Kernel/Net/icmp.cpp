@@ -28,11 +28,79 @@
 **/
 
 #include <net\socket.h>
+#include <process.h>
+#include <Fs/vfs.h>
+#include <Mm/kmalloc.h>
+#include <string.h>
+#include <Hal/serial.h>
+
+/*
+* AuICMPReceive -- ICMP protocol receive interface
+* @param sock -- Pointer to socket
+* @param msghdr -- Message header containing every information
+* @param flags -- extra flags
+*/
+uint64_t AuICMPReceive(AuSocket* sock, msghdr *msg, int flags){
+	return 0;
+}
+
+/*
+* AuICMPSend -- ICMP protocol send interface
+* @param sock -- Pointer to socket
+* @param msghdr -- Message header containing every information
+* @param flags -- extra flags
+*/
+uint64_t AuICMPSend(AuSocket* sock, msghdr* msg, int flags){
+	return 0;
+}
+
+/*
+* AuICMPClose -- ICMP protocol close call
+* @param sock -- Pointer to socket
+*/
+void AuICMPClose(AuSocket* sock) {
+	return;
+}
+
+
+uint64_t AuICMPBind(AuSocket* sock, sockaddr* addr, socklen_t addrlen){
+	return 0;
+}
+
+
+uint64_t AuICMPRead(AuVFSNode* node, AuVFSNode* file, uint64_t* buffer, uint32_t len){
+	return 0;
+}
+
+uint64_t AuICMPWrite(AuVFSNode* node, AuVFSNode* file, uint64_t* buffer, uint32_t len) {
+	return 0;
+}
 
 /*
  * CreateICMPSocket -- create a new Internet
  * Control Message Protocol (ICMP) protocol
  */
 int CreateICMPSocket() {
+	int fd = -1;
+	AuThread *thread = AuGetCurrentThread();
+	if (!thread)
+		return -1;
+	AuProcess *proc = AuProcessFindThread(thread);
+	if (!proc)
+		proc = AuProcessFindSubThread(thread);
+	if (!proc)
+		return -1;
+	AuSocket *sock = (AuSocket*)kmalloc(sizeof(AuSocket));
+	memset(sock, 0, sizeof(AuSocket));
+	fd = AuProcessGetFileDesc(proc);
+	sock->fsnode.read = AuICMPRead;
+	sock->fsnode.write = AuICMPWrite;
+	sock->bind = AuICMPBind;
+	sock->close = AuICMPClose;
+	sock->connect = 0;
+	sock->receive = AuICMPReceive;
+	sock->send = AuICMPSend;
+	proc->fds[fd] = (AuVFSNode*)sock;
+	SeTextOut("ICMP Socket created \r\n");
 	return 0;
 }

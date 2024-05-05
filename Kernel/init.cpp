@@ -77,7 +77,7 @@ void _AuMain(KERNEL_BOOT_INFO *info) {
 	AuPmmngrInitialize(info);
 	AuVmmngrInitialize();
 	AuHeapInitialize();
-
+	
 	AuHalInitialise(info);
 	AuInitialiseSerial();
 	AuVFSInitialise();

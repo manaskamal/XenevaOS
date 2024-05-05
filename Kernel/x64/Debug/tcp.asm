@@ -6,9 +6,17 @@ INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
 CONST	SEGMENT
-$SG3276	DB	'TCP Socket created ', 0dH, 0aH, 00H
+$SG3402	DB	'TCP Socket created ', 0dH, 0aH, 00H
 CONST	ENDS
 PUBLIC	?CreateTCPSocket@@YAHXZ				; CreateTCPSocket
+PUBLIC	?CalculateTCPChecksum@@YAGPEAU_tcpcheckheader_@@PEAU_tcphead_@@PEAX_K@Z ; CalculateTCPChecksum
+PUBLIC	?AuTCPReceive@@YA_KPEAU_socket_@@PEAU_msghdr_@@H@Z ; AuTCPReceive
+PUBLIC	?AuTCPSend@@YA_KPEAU_socket_@@PEAU_msghdr_@@H@Z	; AuTCPSend
+PUBLIC	?AuTCPClose@@YAXPEAU_socket_@@@Z		; AuTCPClose
+PUBLIC	?AuTCPConnect@@YA_KPEAU_socket_@@PEAU_sockaddr_@@_K@Z ; AuTCPConnect
+PUBLIC	?AuTCPBind@@YA_KPEAU_socket_@@PEAU_sockaddr_@@_K@Z ; AuTCPBind
+PUBLIC	?AuTCPRead@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z	; AuTCPRead
+PUBLIC	?AuTCPWrite@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z	; AuTCPWrite
 EXTRN	kmalloc:PROC
 EXTRN	memset:PROC
 EXTRN	AuGetCurrentThread:PROC
@@ -18,113 +26,620 @@ EXTRN	?AuProcessGetFileDesc@@YAHPEAU_au_proc_@@@Z:PROC ; AuProcessGetFileDesc
 EXTRN	SeTextOut:PROC
 pdata	SEGMENT
 $pdata$?CreateTCPSocket@@YAHXZ DD imagerel $LN6
-	DD	imagerel $LN6+184
+	DD	imagerel $LN6+328
 	DD	imagerel $unwind$?CreateTCPSocket@@YAHXZ
+$pdata$?CalculateTCPChecksum@@YAGPEAU_tcpcheckheader_@@PEAU_tcphead_@@PEAX_K@Z DD imagerel $LN17
+	DD	imagerel $LN17+623
+	DD	imagerel $unwind$?CalculateTCPChecksum@@YAGPEAU_tcpcheckheader_@@PEAU_tcphead_@@PEAX_K@Z
 pdata	ENDS
 xdata	SEGMENT
 $unwind$?CreateTCPSocket@@YAHXZ DD 010401H
 	DD	08204H
+$unwind$?CalculateTCPChecksum@@YAGPEAU_tcpcheckheader_@@PEAU_tcphead_@@PEAX_K@Z DD 011801H
+	DD	06218H
 xdata	ENDS
 ; Function compile flags: /Odtpy
 ; File e:\xeneva project\aurora\kernel\net\tcp.cpp
 _TEXT	SEGMENT
+node$ = 8
+file$ = 16
+buffer$ = 24
+len$ = 32
+?AuTCPWrite@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z PROC	; AuTCPWrite
+
+; 157  : uint64_t AuTCPWrite(AuVFSNode* node, AuVFSNode* file, uint64_t* buffer, uint32_t len) {
+
+	mov	DWORD PTR [rsp+32], r9d
+	mov	QWORD PTR [rsp+24], r8
+	mov	QWORD PTR [rsp+16], rdx
+	mov	QWORD PTR [rsp+8], rcx
+
+; 158  : 	return 0;
+
+	xor	eax, eax
+
+; 159  : }
+
+	ret	0
+?AuTCPWrite@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z ENDP	; AuTCPWrite
+_TEXT	ENDS
+; Function compile flags: /Odtpy
+; File e:\xeneva project\aurora\kernel\net\tcp.cpp
+_TEXT	SEGMENT
+node$ = 8
+file$ = 16
+buffer$ = 24
+len$ = 32
+?AuTCPRead@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z PROC	; AuTCPRead
+
+; 153  : uint64_t AuTCPRead(AuVFSNode* node, AuVFSNode* file, uint64_t* buffer, uint32_t len){
+
+	mov	DWORD PTR [rsp+32], r9d
+	mov	QWORD PTR [rsp+24], r8
+	mov	QWORD PTR [rsp+16], rdx
+	mov	QWORD PTR [rsp+8], rcx
+
+; 154  : 	return 0;
+
+	xor	eax, eax
+
+; 155  : }
+
+	ret	0
+?AuTCPRead@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z ENDP	; AuTCPRead
+_TEXT	ENDS
+; Function compile flags: /Odtpy
+; File e:\xeneva project\aurora\kernel\net\tcp.cpp
+_TEXT	SEGMENT
+sock$ = 8
+addr$ = 16
+addrlen$ = 24
+?AuTCPBind@@YA_KPEAU_socket_@@PEAU_sockaddr_@@_K@Z PROC	; AuTCPBind
+
+; 148  : uint64_t AuTCPBind(AuSocket* sock, sockaddr* addr, socklen_t addrlen){
+
+	mov	QWORD PTR [rsp+24], r8
+	mov	QWORD PTR [rsp+16], rdx
+	mov	QWORD PTR [rsp+8], rcx
+
+; 149  : 	return 0;
+
+	xor	eax, eax
+
+; 150  : }
+
+	ret	0
+?AuTCPBind@@YA_KPEAU_socket_@@PEAU_sockaddr_@@_K@Z ENDP	; AuTCPBind
+_TEXT	ENDS
+; Function compile flags: /Odtpy
+; File e:\xeneva project\aurora\kernel\net\tcp.cpp
+_TEXT	SEGMENT
+sock$ = 8
+addr$ = 16
+addrlen$ = 24
+?AuTCPConnect@@YA_KPEAU_socket_@@PEAU_sockaddr_@@_K@Z PROC ; AuTCPConnect
+
+; 143  : uint64_t AuTCPConnect(AuSocket* sock, sockaddr* addr, socklen_t addrlen){
+
+	mov	QWORD PTR [rsp+24], r8
+	mov	QWORD PTR [rsp+16], rdx
+	mov	QWORD PTR [rsp+8], rcx
+
+; 144  : 	return 0;
+
+	xor	eax, eax
+
+; 145  : }
+
+	ret	0
+?AuTCPConnect@@YA_KPEAU_socket_@@PEAU_sockaddr_@@_K@Z ENDP ; AuTCPConnect
+_TEXT	ENDS
+; Function compile flags: /Odtpy
+; File e:\xeneva project\aurora\kernel\net\tcp.cpp
+_TEXT	SEGMENT
+sock$ = 8
+?AuTCPClose@@YAXPEAU_socket_@@@Z PROC			; AuTCPClose
+
+; 133  : void AuTCPClose(AuSocket* sock) {
+
+	mov	QWORD PTR [rsp+8], rcx
+
+; 134  : 	return;
+; 135  : }
+
+	ret	0
+?AuTCPClose@@YAXPEAU_socket_@@@Z ENDP			; AuTCPClose
+_TEXT	ENDS
+; Function compile flags: /Odtpy
+; File e:\xeneva project\aurora\kernel\net\tcp.cpp
+_TEXT	SEGMENT
+sock$ = 8
+msg$ = 16
+flags$ = 24
+?AuTCPSend@@YA_KPEAU_socket_@@PEAU_msghdr_@@H@Z PROC	; AuTCPSend
+
+; 125  : uint64_t AuTCPSend(AuSocket* sock, msghdr* msg, int flags){
+
+	mov	DWORD PTR [rsp+24], r8d
+	mov	QWORD PTR [rsp+16], rdx
+	mov	QWORD PTR [rsp+8], rcx
+
+; 126  : 	return 0;
+
+	xor	eax, eax
+
+; 127  : }
+
+	ret	0
+?AuTCPSend@@YA_KPEAU_socket_@@PEAU_msghdr_@@H@Z ENDP	; AuTCPSend
+_TEXT	ENDS
+; Function compile flags: /Odtpy
+; File e:\xeneva project\aurora\kernel\net\tcp.cpp
+_TEXT	SEGMENT
+sock$ = 8
+msg$ = 16
+flags$ = 24
+?AuTCPReceive@@YA_KPEAU_socket_@@PEAU_msghdr_@@H@Z PROC	; AuTCPReceive
+
+; 115  : uint64_t AuTCPReceive(AuSocket* sock, msghdr *msg, int flags){
+
+	mov	DWORD PTR [rsp+24], r8d
+	mov	QWORD PTR [rsp+16], rdx
+	mov	QWORD PTR [rsp+8], rcx
+
+; 116  : 	return 0;
+
+	xor	eax, eax
+
+; 117  : }
+
+	ret	0
+?AuTCPReceive@@YA_KPEAU_socket_@@PEAU_msghdr_@@H@Z ENDP	; AuTCPReceive
+_TEXT	ENDS
+; Function compile flags: /Odtpy
+; File e:\xeneva project\aurora\kernel\net\tcp.cpp
+_TEXT	SEGMENT
+sum$ = 0
+dwords$ = 4
+i$1 = 8
+i$2 = 12
+tmp$3 = 16
+i$4 = 20
+s$ = 24
+f$5 = 32
+t$6 = 40
+p$ = 64
+h$ = 72
+d$ = 80
+payloadsz$ = 88
+?CalculateTCPChecksum@@YAGPEAU_tcpcheckheader_@@PEAU_tcphead_@@PEAX_K@Z PROC ; CalculateTCPChecksum
+
+; 69   : uint16_t CalculateTCPChecksum(TCPCheckHeader* p, TCPHeader* h, void* d, size_t payloadsz) {
+
+$LN17:
+	mov	QWORD PTR [rsp+32], r9
+	mov	QWORD PTR [rsp+24], r8
+	mov	QWORD PTR [rsp+16], rdx
+	mov	QWORD PTR [rsp+8], rcx
+	sub	rsp, 56					; 00000038H
+
+; 70   : 	uint32_t sum = 0;
+
+	mov	DWORD PTR sum$[rsp], 0
+
+; 71   : 	uint16_t *s = (uint16_t*)p;
+
+	mov	rax, QWORD PTR p$[rsp]
+	mov	QWORD PTR s$[rsp], rax
+
+; 72   : 
+; 73   : 	for (int i = 0; i < 6; ++i) {
+
+	mov	DWORD PTR i$4[rsp], 0
+	jmp	SHORT $LN14@CalculateT
+$LN13@CalculateT:
+	mov	eax, DWORD PTR i$4[rsp]
+	inc	eax
+	mov	DWORD PTR i$4[rsp], eax
+$LN14@CalculateT:
+	cmp	DWORD PTR i$4[rsp], 6
+	jge	SHORT $LN12@CalculateT
+
+; 74   : 		sum += ntohs(s[i]);
+
+	movsxd	rax, DWORD PTR i$4[rsp]
+	mov	rcx, QWORD PTR s$[rsp]
+	movzx	eax, WORD PTR [rcx+rax*2]
+	and	eax, 255				; 000000ffH
+	shl	eax, 8
+	movsxd	rcx, DWORD PTR i$4[rsp]
+	mov	rdx, QWORD PTR s$[rsp]
+	movzx	ecx, WORD PTR [rdx+rcx*2]
+	and	ecx, 65280				; 0000ff00H
+	sar	ecx, 8
+	or	eax, ecx
+	mov	ecx, DWORD PTR sum$[rsp]
+	add	ecx, eax
+	mov	eax, ecx
+	mov	DWORD PTR sum$[rsp], eax
+
+; 75   : 		if (sum > 0xFFFF)
+
+	cmp	DWORD PTR sum$[rsp], 65535		; 0000ffffH
+	jbe	SHORT $LN11@CalculateT
+
+; 76   : 			sum = (sum >> 16) + (sum & 0xFFFF);
+
+	mov	eax, DWORD PTR sum$[rsp]
+	shr	eax, 16
+	mov	ecx, DWORD PTR sum$[rsp]
+	and	ecx, 65535				; 0000ffffH
+	add	eax, ecx
+	mov	DWORD PTR sum$[rsp], eax
+$LN11@CalculateT:
+
+; 77   : 	}
+
+	jmp	SHORT $LN13@CalculateT
+$LN12@CalculateT:
+
+; 78   : 
+; 79   : 	s = (uint16_t*)h;
+
+	mov	rax, QWORD PTR h$[rsp]
+	mov	QWORD PTR s$[rsp], rax
+
+; 80   : 	for (int i = 0; i < 10; ++i) {
+
+	mov	DWORD PTR i$1[rsp], 0
+	jmp	SHORT $LN10@CalculateT
+$LN9@CalculateT:
+	mov	eax, DWORD PTR i$1[rsp]
+	inc	eax
+	mov	DWORD PTR i$1[rsp], eax
+$LN10@CalculateT:
+	cmp	DWORD PTR i$1[rsp], 10
+	jge	SHORT $LN8@CalculateT
+
+; 81   : 		sum += ntohs(s[i]);
+
+	movsxd	rax, DWORD PTR i$1[rsp]
+	mov	rcx, QWORD PTR s$[rsp]
+	movzx	eax, WORD PTR [rcx+rax*2]
+	and	eax, 255				; 000000ffH
+	shl	eax, 8
+	movsxd	rcx, DWORD PTR i$1[rsp]
+	mov	rdx, QWORD PTR s$[rsp]
+	movzx	ecx, WORD PTR [rdx+rcx*2]
+	and	ecx, 65280				; 0000ff00H
+	sar	ecx, 8
+	or	eax, ecx
+	mov	ecx, DWORD PTR sum$[rsp]
+	add	ecx, eax
+	mov	eax, ecx
+	mov	DWORD PTR sum$[rsp], eax
+
+; 82   : 		if (sum > 0xFFFF) 
+
+	cmp	DWORD PTR sum$[rsp], 65535		; 0000ffffH
+	jbe	SHORT $LN7@CalculateT
+
+; 83   : 			sum = (sum >> 16) + (sum & 0xFFFF);
+
+	mov	eax, DWORD PTR sum$[rsp]
+	shr	eax, 16
+	mov	ecx, DWORD PTR sum$[rsp]
+	and	ecx, 65535				; 0000ffffH
+	add	eax, ecx
+	mov	DWORD PTR sum$[rsp], eax
+$LN7@CalculateT:
+
+; 84   : 	}
+
+	jmp	SHORT $LN9@CalculateT
+$LN8@CalculateT:
+
+; 85   : 
+; 86   : 	uint16_t dwords = payloadsz / 2;
+
+	xor	edx, edx
+	mov	rax, QWORD PTR payloadsz$[rsp]
+	mov	ecx, 2
+	div	rcx
+	mov	WORD PTR dwords$[rsp], ax
+
+; 87   : 	s = (uint16_t*)d;
+
+	mov	rax, QWORD PTR d$[rsp]
+	mov	QWORD PTR s$[rsp], rax
+
+; 88   : 	for (unsigned int i = 0; i < dwords; ++i) {
+
+	mov	DWORD PTR i$2[rsp], 0
+	jmp	SHORT $LN6@CalculateT
+$LN5@CalculateT:
+	mov	eax, DWORD PTR i$2[rsp]
+	inc	eax
+	mov	DWORD PTR i$2[rsp], eax
+$LN6@CalculateT:
+	movzx	eax, WORD PTR dwords$[rsp]
+	cmp	DWORD PTR i$2[rsp], eax
+	jae	SHORT $LN4@CalculateT
+
+; 89   : 		sum += ntohs(s[i]);
+
+	mov	eax, DWORD PTR i$2[rsp]
+	mov	rcx, QWORD PTR s$[rsp]
+	movzx	eax, WORD PTR [rcx+rax*2]
+	and	eax, 255				; 000000ffH
+	shl	eax, 8
+	mov	ecx, DWORD PTR i$2[rsp]
+	mov	rdx, QWORD PTR s$[rsp]
+	movzx	ecx, WORD PTR [rdx+rcx*2]
+	and	ecx, 65280				; 0000ff00H
+	sar	ecx, 8
+	or	eax, ecx
+	mov	ecx, DWORD PTR sum$[rsp]
+	add	ecx, eax
+	mov	eax, ecx
+	mov	DWORD PTR sum$[rsp], eax
+
+; 90   : 		if (sum > 0xFFFF) 
+
+	cmp	DWORD PTR sum$[rsp], 65535		; 0000ffffH
+	jbe	SHORT $LN3@CalculateT
+
+; 91   : 			sum = (sum >> 16) + (sum & 0xFFFFF);
+
+	mov	eax, DWORD PTR sum$[rsp]
+	shr	eax, 16
+	mov	ecx, DWORD PTR sum$[rsp]
+	and	ecx, 1048575				; 000fffffH
+	add	eax, ecx
+	mov	DWORD PTR sum$[rsp], eax
+$LN3@CalculateT:
+
+; 92   : 	}
+
+	jmp	SHORT $LN5@CalculateT
+$LN4@CalculateT:
+
+; 93   : 
+; 94   : 	if (dwords * 2 != payloadsz){
+
+	movzx	eax, WORD PTR dwords$[rsp]
+	shl	eax, 1
+	cdqe
+	cmp	rax, QWORD PTR payloadsz$[rsp]
+	je	$LN2@CalculateT
+
+; 95   : 		uint8_t* t = (uint8_t*)d;
+
+	mov	rax, QWORD PTR d$[rsp]
+	mov	QWORD PTR t$6[rsp], rax
+
+; 96   : 		uint8_t tmp[2];
+; 97   : 		tmp[0] = t[dwords * sizeof(uint16_t)];
+
+	movzx	eax, WORD PTR dwords$[rsp]
+	mov	ecx, 1
+	imul	rcx, rcx, 0
+	mov	rdx, QWORD PTR t$6[rsp]
+	movzx	eax, BYTE PTR [rdx+rax*2]
+	mov	BYTE PTR tmp$3[rsp+rcx], al
+
+; 98   : 		tmp[1] = 0;
+
+	mov	eax, 1
+	imul	rax, rax, 1
+	mov	BYTE PTR tmp$3[rsp+rax], 0
+
+; 99   : 
+; 100  : 		uint16_t* f = (uint16_t*)tmp;
+
+	lea	rax, QWORD PTR tmp$3[rsp]
+	mov	QWORD PTR f$5[rsp], rax
+
+; 101  : 
+; 102  : 		sum += ntohs(f[0]);
+
+	mov	eax, 2
+	imul	rax, rax, 0
+	mov	rcx, QWORD PTR f$5[rsp]
+	movzx	eax, WORD PTR [rcx+rax]
+	and	eax, 255				; 000000ffH
+	shl	eax, 8
+	mov	ecx, 2
+	imul	rcx, rcx, 0
+	mov	rdx, QWORD PTR f$5[rsp]
+	movzx	ecx, WORD PTR [rdx+rcx]
+	and	ecx, 65280				; 0000ff00H
+	sar	ecx, 8
+	or	eax, ecx
+	mov	ecx, DWORD PTR sum$[rsp]
+	add	ecx, eax
+	mov	eax, ecx
+	mov	DWORD PTR sum$[rsp], eax
+
+; 103  : 		if (sum > 0xFFFF)
+
+	cmp	DWORD PTR sum$[rsp], 65535		; 0000ffffH
+	jbe	SHORT $LN1@CalculateT
+
+; 104  : 			sum = (sum >> 16) + (sum & 0xFFFF);
+
+	mov	eax, DWORD PTR sum$[rsp]
+	shr	eax, 16
+	mov	ecx, DWORD PTR sum$[rsp]
+	and	ecx, 65535				; 0000ffffH
+	add	eax, ecx
+	mov	DWORD PTR sum$[rsp], eax
+$LN1@CalculateT:
+$LN2@CalculateT:
+
+; 105  : 	}
+; 106  : 
+; 107  : 	return ~(sum & 0xFFFF) & 0xFFFF;
+
+	mov	eax, DWORD PTR sum$[rsp]
+	and	eax, 65535				; 0000ffffH
+	not	eax
+	and	eax, 65535				; 0000ffffH
+
+; 108  : }
+
+	add	rsp, 56					; 00000038H
+	ret	0
+?CalculateTCPChecksum@@YAGPEAU_tcpcheckheader_@@PEAU_tcphead_@@PEAX_K@Z ENDP ; CalculateTCPChecksum
+_TEXT	ENDS
+; Function compile flags: /Odtpy
+; File e:\xeneva project\aurora\kernel\net\tcp.cpp
+_TEXT	SEGMENT
 fd$ = 32
-proc$ = 40
-thread$ = 48
-sock$ = 56
+sock$ = 40
+proc$ = 48
+thread$ = 56
 ?CreateTCPSocket@@YAHXZ PROC				; CreateTCPSocket
 
-; 39   : int CreateTCPSocket() {
+; 163  : int CreateTCPSocket() {
 
 $LN6:
 	sub	rsp, 72					; 00000048H
 
-; 40   : 	int fd = -1;
+; 164  : 	int fd = -1;
 
 	mov	DWORD PTR fd$[rsp], -1
 
-; 41   : 	AuThread *thread = AuGetCurrentThread();
+; 165  : 	AuThread *thread = AuGetCurrentThread();
 
 	call	AuGetCurrentThread
 	mov	QWORD PTR thread$[rsp], rax
 
-; 42   : 	if (!thread)
+; 166  : 	if (!thread)
 
 	cmp	QWORD PTR thread$[rsp], 0
 	jne	SHORT $LN3@CreateTCPS
 
-; 43   : 		return -1;
+; 167  : 		return -1;
 
 	mov	eax, -1
 	jmp	$LN4@CreateTCPS
 $LN3@CreateTCPS:
 
-; 44   : 	AuProcess *proc = AuProcessFindThread(thread);
+; 168  : 	AuProcess *proc = AuProcessFindThread(thread);
 
 	mov	rcx, QWORD PTR thread$[rsp]
 	call	?AuProcessFindThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z ; AuProcessFindThread
 	mov	QWORD PTR proc$[rsp], rax
 
-; 45   : 	if (!proc) 
+; 169  : 	if (!proc) 
 
 	cmp	QWORD PTR proc$[rsp], 0
 	jne	SHORT $LN2@CreateTCPS
 
-; 46   : 		proc = AuProcessFindSubThread(thread);
+; 170  : 		proc = AuProcessFindSubThread(thread);
 
 	mov	rcx, QWORD PTR thread$[rsp]
 	call	?AuProcessFindSubThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z ; AuProcessFindSubThread
 	mov	QWORD PTR proc$[rsp], rax
 $LN2@CreateTCPS:
 
-; 47   : 		if (!proc)
+; 171  : 		if (!proc)
 
 	cmp	QWORD PTR proc$[rsp], 0
 	jne	SHORT $LN1@CreateTCPS
 
-; 48   : 			return -1;
+; 172  : 			return -1;
 
 	mov	eax, -1
-	jmp	SHORT $LN4@CreateTCPS
+	jmp	$LN4@CreateTCPS
 $LN1@CreateTCPS:
 
-; 49   : 	AuSocket *sock = (AuSocket*)kmalloc(sizeof(AuSocket));
+; 173  : 	AuSocket *sock = (AuSocket*)kmalloc(sizeof(AuSocket));
 
 	mov	ecx, 232				; 000000e8H
 	call	kmalloc
 	mov	QWORD PTR sock$[rsp], rax
 
-; 50   : 	memset(sock, 0, sizeof(AuSocket));
+; 174  : 	memset(sock, 0, sizeof(AuSocket));
 
 	mov	r8d, 232				; 000000e8H
 	xor	edx, edx
 	mov	rcx, QWORD PTR sock$[rsp]
 	call	memset
 
-; 51   : 	fd = AuProcessGetFileDesc(proc);
+; 175  : 	sock->fsnode.flags = FS_FLAG_SOCKET;
+
+	mov	eax, 512				; 00000200H
+	mov	rcx, QWORD PTR sock$[rsp]
+	mov	WORD PTR [rcx+64], ax
+
+; 176  : 	sock->send = AuTCPSend;
+
+	mov	rax, QWORD PTR sock$[rsp]
+	lea	rcx, OFFSET FLAT:?AuTCPSend@@YA_KPEAU_socket_@@PEAU_msghdr_@@H@Z ; AuTCPSend
+	mov	QWORD PTR [rax+200], rcx
+
+; 177  : 	sock->receive = AuTCPReceive;
+
+	mov	rax, QWORD PTR sock$[rsp]
+	lea	rcx, OFFSET FLAT:?AuTCPReceive@@YA_KPEAU_socket_@@PEAU_msghdr_@@H@Z ; AuTCPReceive
+	mov	QWORD PTR [rax+192], rcx
+
+; 178  : 	sock->connect = AuTCPConnect;
+
+	mov	rax, QWORD PTR sock$[rsp]
+	lea	rcx, OFFSET FLAT:?AuTCPConnect@@YA_KPEAU_socket_@@PEAU_sockaddr_@@_K@Z ; AuTCPConnect
+	mov	QWORD PTR [rax+216], rcx
+
+; 179  : 	sock->bind = AuTCPBind;
+
+	mov	rax, QWORD PTR sock$[rsp]
+	lea	rcx, OFFSET FLAT:?AuTCPBind@@YA_KPEAU_socket_@@PEAU_sockaddr_@@_K@Z ; AuTCPBind
+	mov	QWORD PTR [rax+224], rcx
+
+; 180  : 	sock->close = AuTCPClose;
+
+	mov	rax, QWORD PTR sock$[rsp]
+	lea	rcx, OFFSET FLAT:?AuTCPClose@@YAXPEAU_socket_@@@Z ; AuTCPClose
+	mov	QWORD PTR [rax+208], rcx
+
+; 181  : 	sock->fsnode.read = AuTCPRead;
+
+	mov	rax, QWORD PTR sock$[rsp]
+	lea	rcx, OFFSET FLAT:?AuTCPRead@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z ; AuTCPRead
+	mov	QWORD PTR [rax+104], rcx
+
+; 182  : 	sock->fsnode.write = AuTCPWrite;
+
+	mov	rax, QWORD PTR sock$[rsp]
+	lea	rcx, OFFSET FLAT:?AuTCPWrite@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z ; AuTCPWrite
+	mov	QWORD PTR [rax+112], rcx
+
+; 183  : 	fd = AuProcessGetFileDesc(proc);
 
 	mov	rcx, QWORD PTR proc$[rsp]
 	call	?AuProcessGetFileDesc@@YAHPEAU_au_proc_@@@Z ; AuProcessGetFileDesc
 	mov	DWORD PTR fd$[rsp], eax
 
-; 52   : 	proc->fds[fd] = (AuVFSNode*)sock;
+; 184  : 	proc->fds[fd] = (AuVFSNode*)sock;
 
 	movsxd	rax, DWORD PTR fd$[rsp]
 	mov	rcx, QWORD PTR proc$[rsp]
 	mov	rdx, QWORD PTR sock$[rsp]
 	mov	QWORD PTR [rcx+rax*8+576], rdx
 
-; 53   : 	SeTextOut("TCP Socket created \r\n");
+; 185  : 	SeTextOut("TCP Socket created \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG3276
+	lea	rcx, OFFSET FLAT:$SG3402
 	call	SeTextOut
 
-; 54   : 	return fd;
+; 186  : 	return fd;
 
 	mov	eax, DWORD PTR fd$[rsp]
 $LN4@CreateTCPS:
 
-; 55   : }
+; 187  : }
 
 	add	rsp, 72					; 00000048H
 	ret	0

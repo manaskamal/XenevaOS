@@ -96,6 +96,12 @@
     <ClCompile Include="widgets\icon.cpp">
       <Filter>widgets</Filter>
     </ClCompile>
+    <ClCompile Include="widgets\slider.cpp">
+      <Filter>widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="widgets\defaultslider.cpp">
+      <Filter>widgets\styles</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <NASM Include="_fastcpy.asm" />

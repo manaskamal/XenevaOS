@@ -147,8 +147,12 @@ XE_EXTERN XE_LIB void ChDrawIconClipped(ChCanvas* canv, ChIcon* ico, int x, int 
 		return;
 
 
-	if (y <= limit->y)
+	if (y <= limit->y){
+		int diff = limit->y - y;
 		y = limit->y;
+		height -= diff;
+		imageHeight -= diff;
+	}
 
 	if (x <= limit->x)
 		x = limit->x;

@@ -51,6 +51,8 @@ typedef struct _list_view_ {
 	int horizontalRenderY;
 	int horizontalRenderX;
 	int currentStartIndex;
+	int lastNodeIndex;
+	int lastNodePosY;
 	bool firstItemPlaced;
 	ChListItem *selectedItem;
 }ChListView;

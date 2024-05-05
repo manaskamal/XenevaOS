@@ -1,36 +1,36 @@
-﻿Build started 02-05-2024 আবেলি 8:50:33.
+﻿Build started 05-05-2024 ৰাতিপু 9:22:53.
      1>Project "E:\Xeneva Project\Aurora\Libs\Chitralekha\Chitralekha.vcxproj" on node 2 (Rebuild target(s)).
      1>_NASM:
          _fastcpy.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmpeb31cdb7b31d455eaef2d6c9d63819b5.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp3ac4b18c021947e5a0311494ab91653f.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\_fastcpy.obj"  "E:\Xeneva Project\Aurora\Libs\Chitralekha\_fastcpy.asm"
        ClCompile:
-         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /I"E:\os_dev\freetype2-master\freetype2-master\include" /Zi /nologo /W3 /WX- /sdl- /Od /D ARCH_X64 /D YES_DYNAMIC /D DYNAMIC_EXPORTER /D _USE_FREETYPE /D _WINDLL /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt boxblur.cpp chitralekha.cpp color.cpp draw.cpp font.cpp keycode.cpp ttf.cpp widgets\base.cpp widgets\button.cpp widgets\defaultmenu.cpp widgets\defaultscrollbar.cpp widgets\defaultviews.cpp widgets\defaultwindow.cpp widgets\icon.cpp widgets\list.cpp widgets\menu.cpp widgets\menubar.cpp widgets\msgbox.cpp widgets\scrollpane.cpp widgets\view.cpp widgets\window.cpp
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /I"E:\os_dev\freetype2-master\freetype2-master\include" /Zi /nologo /W3 /WX- /sdl- /Od /D ARCH_X64 /D YES_DYNAMIC /D DYNAMIC_EXPORTER /D _USE_FREETYPE /D _WINDLL /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt boxblur.cpp chitralekha.cpp color.cpp draw.cpp font.cpp keycode.cpp ttf.cpp widgets\base.cpp widgets\button.cpp widgets\defaultmenu.cpp widgets\defaultscrollbar.cpp widgets\defaultslider.cpp widgets\defaultviews.cpp widgets\defaultwindow.cpp widgets\icon.cpp widgets\list.cpp widgets\menu.cpp widgets\menubar.cpp widgets\msgbox.cpp widgets\scrollpane.cpp widgets\slider.cpp widgets\view.cpp widgets\window.cpp
      1>cl : Command line warning D9025: overriding '/sdl-' with '/GS-'
      1>cl : Command line warning D9002: ignoring unknown option '/arch:SSE2'
          window.cpp
      1>widgets\window.cpp(161): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
      1>widgets\window.cpp(279): warning C4018: '<' : signed/unsigned mismatch
      1>widgets\window.cpp(300): warning C4018: '<' : signed/unsigned mismatch
-     1>widgets\window.cpp(364): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\window.cpp(363): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\window.cpp(385): warning C4018: '<' : signed/unsigned mismatch
      1>widgets\window.cpp(386): warning C4018: '<' : signed/unsigned mismatch
-     1>widgets\window.cpp(387): warning C4018: '<' : signed/unsigned mismatch
-     1>widgets\window.cpp(428): warning C4018: '<' : signed/unsigned mismatch
-     1>widgets\window.cpp(507): warning C4018: '<' : signed/unsigned mismatch
-     1>widgets\window.cpp(513): warning C4018: '<' : signed/unsigned mismatch
-     1>widgets\window.cpp(545): warning C4018: '<' : signed/unsigned mismatch
-     1>widgets\window.cpp(564): warning C4018: '<' : signed/unsigned mismatch
-     1>widgets\window.cpp(630): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\window.cpp(427): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\window.cpp(506): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\window.cpp(512): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\window.cpp(544): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\window.cpp(563): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\window.cpp(638): warning C4018: '<' : signed/unsigned mismatch
          view.cpp
-     1>widgets\view.cpp(74): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\view.cpp(73): warning C4018: '<' : signed/unsigned mismatch
      1>widgets\view.cpp(128): warning C4018: '<' : signed/unsigned mismatch
-     1>widgets\view.cpp(189): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
-     1>widgets\view.cpp(193): warning C4018: '<' : signed/unsigned mismatch
-     1>widgets\view.cpp(240): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\view.cpp(190): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
+     1>widgets\view.cpp(194): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\view.cpp(241): warning C4018: '<' : signed/unsigned mismatch
+         slider.cpp
          scrollpane.cpp
      1>widgets\scrollpane.cpp(234): warning C4244: '=' : conversion from 'double' to 'int', possible loss of data
      1>widgets\scrollpane.cpp(258): warning C4018: '<' : signed/unsigned mismatch
-     1>widgets\scrollpane.cpp(267): warning C4244: '=' : conversion from 'double' to 'int', possible loss of data
      1>widgets\scrollpane.cpp(268): warning C4244: '=' : conversion from 'double' to 'int', possible loss of data
          msgbox.cpp
      1>widgets\msgbox.cpp(126): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
@@ -57,14 +57,15 @@
      1>widgets\icon.cpp(143): warning C4018: '>' : signed/unsigned mismatch
      1>widgets\icon.cpp(146): warning C4018: '>' : signed/unsigned mismatch
      1>widgets\icon.cpp(150): warning C4018: '<=' : signed/unsigned mismatch
-     1>widgets\icon.cpp(153): warning C4018: '<=' : signed/unsigned mismatch
-     1>widgets\icon.cpp(163): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\icon.cpp(157): warning C4018: '<=' : signed/unsigned mismatch
      1>widgets\icon.cpp(167): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\icon.cpp(171): warning C4018: '<' : signed/unsigned mismatch
          defaultwindow.cpp
      1>widgets\defaultwindow.cpp(116): warning C4018: '<' : signed/unsigned mismatch
      1>widgets\defaultwindow.cpp(129): warning C4018: '<' : signed/unsigned mismatch
          defaultviews.cpp
-     1>widgets\defaultviews.cpp(55): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\defaultviews.cpp(65): warning C4018: '<' : signed/unsigned mismatch
+         defaultslider.cpp
          defaultscrollbar.cpp
          defaultmenu.cpp
      1>widgets\defaultmenu.cpp(50): warning C4018: '<' : signed/unsigned mismatch
@@ -102,8 +103,11 @@
          draw.cpp
      1>draw.cpp(45): warning C4018: '<' : signed/unsigned mismatch
      1>draw.cpp(46): warning C4018: '<' : signed/unsigned mismatch
-     1>draw.cpp(310): warning C4018: '<' : signed/unsigned mismatch
-     1>draw.cpp(311): warning C4018: '<' : signed/unsigned mismatch
+     1>draw.cpp(313): warning C4018: '<' : signed/unsigned mismatch
+     1>draw.cpp(314): warning C4018: '<' : signed/unsigned mismatch
+         Generating Code...
+     1>e:\xeneva project\aurora\libs\chitralekha\ttf.cpp(194): warning C4700: uninitialized local variable 'glyph' used
+         Compiling...
          color.cpp
          chitralekha.cpp
      1>chitralekha.cpp(144): warning C4018: '<' : signed/unsigned mismatch
@@ -111,9 +115,6 @@
      1>chitralekha.cpp(184): warning C4018: '<' : signed/unsigned mismatch
      1>chitralekha.cpp(195): warning C4244: 'argument' : conversion from 'uint32_t' to 'float', possible loss of data
      1>chitralekha.cpp(205): warning C4244: 'argument' : conversion from 'uint32_t' to 'float', possible loss of data
-         Generating Code...
-     1>e:\xeneva project\aurora\libs\chitralekha\ttf.cpp(194): warning C4700: uninitialized local variable 'glyph' used
-         Compiling...
          boxblur.cpp
      1>boxblur.cpp(56): warning C4018: '<' : signed/unsigned mismatch
      1>boxblur.cpp(57): warning C4018: '<' : signed/unsigned mismatch
@@ -132,6 +133,7 @@
          x64\Debug\button.obj
          x64\Debug\defaultmenu.obj
          x64\Debug\defaultscrollbar.obj
+         x64\Debug\defaultslider.obj
          x64\Debug\defaultviews.obj
          x64\Debug\defaultwindow.obj
          x64\Debug\icon.obj
@@ -140,6 +142,7 @@
          x64\Debug\menubar.obj
          x64\Debug\msgbox.obj
          x64\Debug\scrollpane.obj
+         x64\Debug\slider.obj
          x64\Debug\view.obj
          x64\Debug\window.obj
          x64\Debug\_fastcpy.obj
@@ -151,4 +154,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:03.53
+Time Elapsed 00:00:02.76

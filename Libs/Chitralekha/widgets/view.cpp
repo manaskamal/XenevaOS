@@ -52,7 +52,6 @@ void ChListViewMouseEvent(ChWidget* widget, ChWindow* win, int x, int y, int but
 			_view_update = true;
 			_KeProcessSleep(10);
 		}
-		//int index = 
 	}
 
 	if (button == DEODHAI_MOUSE_MSG_SCROLL_DOWN) {
@@ -97,13 +96,13 @@ void ChListViewMouseEvent(ChWidget* widget, ChWindow* win, int x, int y, int but
 void ChListViewScrollEvent(ChWidget* wid, ChWindow* win, int scollVal, uint8_t type) {
 	ChListView* lv = (ChListView*)wid;
 	uint32_t display_idx = ((lv->scrollpane->vScrollBar.thumb_posy * lv->scrollpane->vScrollBar.scrollAmount)) / LIST_VIEW_ITEM_HEIGHT;
-	//display_idx *= lv->scrollpane->vScrollBar.scrollAmount;
-	//display_idx = max(0, display_idx);
+	
 	bool _view_update = false;
 	if (type == CHITRALEKHA_SCROLL_TYPE_VERTICAL){
 		lv->currentStartIndex = display_idx;
 		//lv->horizontalRenderY = (lv->wid.y - ((lv->wid.y + lv->scrollpane->vScrollBar.thumb_posy) - lv->wid.y)) + win->app->baseFont->fontHeight; //LIST_VIEW_ITEM_HEIGHT;
 		_view_update = true;
+
 	}
 	
 	if (type == CHITRALEKHA_SCROLL_TYPE_HORIZONTAL){
@@ -115,6 +114,7 @@ void ChListViewScrollEvent(ChWidget* wid, ChWindow* win, int scollVal, uint8_t t
 		if (lv->wid.ChPaintHandler)
 			lv->wid.ChPaintHandler((ChWidget*)lv, win);
 		ChWindowUpdate(win, lv->wid.x, lv->wid.y, lv->wid.w, lv->wid.h, 0, 1);
+		lv->lastNodeIndex = lv->currentStartIndex;
 	}
 }
 
@@ -149,7 +149,8 @@ ChListView* ChCreateListView(int x, int y, int w, int h){
 	lv->wid.h = h - SCROLLBAR_SIZE;
 	lv->itemList = initialize_list();
 	//lv->horizontalRenderY = (lv->wid.y - LIST_VIEW_ITEM_HEIGHT) + 21;
-	lv->currentStartIndex = 0; // 
+	lv->currentStartIndex = 0; //
+	lv->lastNodeIndex = lv->currentStartIndex;
 	lv->wid.ChPaintHandler = ChDefaultListViewPainter;
 	lv->wid.ChMouseEvent = ChListViewMouseEvent;
 	lv->wid.ChScrollEvent = ChListViewScrollEvent;
@@ -264,10 +265,10 @@ void ChListViewRepaint(ChWindow* win, ChListView* lv) {
 		lv->scrollpane->wid.ChPaintHandler((ChWidget*)lv->scrollpane, win);
 	ChWindowUpdate(win, lv->scrollpane->vScrollBar.bar_x, lv->scrollpane->vScrollBar.bar_y, lv->scrollpane->vScrollBar.bar_w,
 		lv->scrollpane->vScrollBar.bar_h, 0, 1);
-	_KeProcessSleep(10);
+	_KeProcessSleep(30);
 	ChWindowUpdate(win, lv->scrollpane->hScrollBar.bar_x, lv->scrollpane->hScrollBar.bar_y, lv->scrollpane->hScrollBar.bar_w,
 		lv->scrollpane->hScrollBar.bar_h, 0, 1);
-	_KeProcessSleep(10);
+	_KeProcessSleep(30);
 	if (lv->wid.ChPaintHandler)
 		lv->wid.ChPaintHandler((ChWidget*)lv, win);
 	ChWindowUpdate(win, lv->wid.x, lv->wid.y, lv->wid.w, lv->wid.h, 0, 1);

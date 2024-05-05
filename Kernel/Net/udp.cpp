@@ -28,11 +28,77 @@
 **/
 
 #include <net/socket.h>
+#include <process.h>
+#include <Mm/kmalloc.h>
+#include <string.h>
+#include <Hal/serial.h>
 
+/*
+* AuUDPReceive -- UDP protocol receive interface
+* @param sock -- Pointer to socket
+* @param msghdr -- Message header containing every information
+* @param flags -- extra flags
+*/
+uint64_t AuUDPReceive(AuSocket* sock, msghdr *msg, int flags){
+	return 0;
+}
+
+/*
+* AuUDPSend -- UDP protocol send interface
+* @param sock -- Pointer to socket
+* @param msghdr -- Message header containing every information
+* @param flags -- extra flags
+*/
+uint64_t AuUDPSend(AuSocket* sock, msghdr* msg, int flags){
+	return 0;
+}
+
+/*
+* AuUDPClose -- UDP protocol close call
+* @param sock -- Pointer to socket
+*/
+void AuUDPClose(AuSocket* sock) {
+	return;
+}
+
+
+uint64_t AuUDPBind(AuSocket* sock, sockaddr* addr, socklen_t addrlen){
+	return 0;
+}
+
+
+uint64_t AuUDPRead(AuVFSNode* node, AuVFSNode* file, uint64_t* buffer, uint32_t len){
+	return 0;
+}
+
+uint64_t AuUDPWrite(AuVFSNode* node, AuVFSNode* file, uint64_t* buffer, uint32_t len) {
+	return 0;
+}
 /*
  * CreateUDPSocket -- create a new UDP
  * socket
  */
 int CreateUDPSocket() {
-	return 0;
+	int fd = -1;
+	AuThread *thread = AuGetCurrentThread();
+	if (!thread)
+		return -1;
+	AuProcess *proc = AuProcessFindThread(thread);
+	if (!proc)
+		proc = AuProcessFindSubThread(thread);
+	if (!proc)
+		return -1;
+	AuSocket *sock = (AuSocket*)kmalloc(sizeof(AuSocket));
+	memset(sock, 0, sizeof(AuSocket));
+	fd = AuProcessGetFileDesc(proc);
+	sock->fsnode.read = AuUDPRead;
+	sock->fsnode.write = AuUDPWrite;
+	sock->bind = AuUDPBind;
+	sock->close = AuUDPClose;
+	sock->connect = 0;
+	sock->receive = AuUDPReceive;
+	sock->send = AuUDPSend;
+	proc->fds[fd] = (AuVFSNode*)sock;
+	SeTextOut("UDP Socket created \r\n");
+	return fd;
 }

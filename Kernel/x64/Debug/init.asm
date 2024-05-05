@@ -79,7 +79,7 @@ $LN5:
 
 	call	AuHeapInitialize
 
-; 80   : 
+; 80   : 	
 ; 81   : 	AuHalInitialise(info);
 
 	mov	rcx, QWORD PTR info$[rsp]

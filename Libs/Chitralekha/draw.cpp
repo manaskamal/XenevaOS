@@ -69,8 +69,11 @@ void ChDrawRectClipped(ChCanvas* canv, unsigned x, unsigned y, unsigned w, unsig
 	if (y > (clip->y + clip->h))
 		return;
 
-	if (y <= clip->y)
+	if (y <= clip->y){
+		int diffy = clip->y - r_y;
 		r_y = clip->y;
+		r_h -= diffy;
+	}
 	
 
 	if (x <= clip->x)

@@ -5,19 +5,311 @@ include listing.inc
 INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
+CONST	SEGMENT
+$SG3306	DB	'ICMP Socket created ', 0dH, 0aH, 00H
+CONST	ENDS
+PUBLIC	?AuICMPReceive@@YA_KPEAU_socket_@@PEAU_msghdr_@@H@Z ; AuICMPReceive
+PUBLIC	?AuICMPSend@@YA_KPEAU_socket_@@PEAU_msghdr_@@H@Z ; AuICMPSend
+PUBLIC	?AuICMPClose@@YAXPEAU_socket_@@@Z		; AuICMPClose
+PUBLIC	?AuICMPBind@@YA_KPEAU_socket_@@PEAU_sockaddr_@@_K@Z ; AuICMPBind
+PUBLIC	?AuICMPRead@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z	; AuICMPRead
+PUBLIC	?AuICMPWrite@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z	; AuICMPWrite
 PUBLIC	?CreateICMPSocket@@YAHXZ			; CreateICMPSocket
+EXTRN	AuGetCurrentThread:PROC
+EXTRN	?AuProcessFindThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z:PROC ; AuProcessFindThread
+EXTRN	?AuProcessFindSubThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z:PROC ; AuProcessFindSubThread
+EXTRN	?AuProcessGetFileDesc@@YAHPEAU_au_proc_@@@Z:PROC ; AuProcessGetFileDesc
+EXTRN	kmalloc:PROC
+EXTRN	memset:PROC
+EXTRN	SeTextOut:PROC
+pdata	SEGMENT
+$pdata$?CreateICMPSocket@@YAHXZ DD imagerel $LN6
+	DD	imagerel $LN6+309
+	DD	imagerel $unwind$?CreateICMPSocket@@YAHXZ
+pdata	ENDS
+xdata	SEGMENT
+$unwind$?CreateICMPSocket@@YAHXZ DD 010401H
+	DD	08204H
+xdata	ENDS
 ; Function compile flags: /Odtpy
 ; File e:\xeneva project\aurora\kernel\net\icmp.cpp
 _TEXT	SEGMENT
+fd$ = 32
+sock$ = 40
+proc$ = 48
+thread$ = 56
 ?CreateICMPSocket@@YAHXZ PROC				; CreateICMPSocket
 
-; 37   : 	return 0;
+; 83   : int CreateICMPSocket() {
+
+$LN6:
+	sub	rsp, 72					; 00000048H
+
+; 84   : 	int fd = -1;
+
+	mov	DWORD PTR fd$[rsp], -1
+
+; 85   : 	AuThread *thread = AuGetCurrentThread();
+
+	call	AuGetCurrentThread
+	mov	QWORD PTR thread$[rsp], rax
+
+; 86   : 	if (!thread)
+
+	cmp	QWORD PTR thread$[rsp], 0
+	jne	SHORT $LN3@CreateICMP
+
+; 87   : 		return -1;
+
+	mov	eax, -1
+	jmp	$LN4@CreateICMP
+$LN3@CreateICMP:
+
+; 88   : 	AuProcess *proc = AuProcessFindThread(thread);
+
+	mov	rcx, QWORD PTR thread$[rsp]
+	call	?AuProcessFindThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z ; AuProcessFindThread
+	mov	QWORD PTR proc$[rsp], rax
+
+; 89   : 	if (!proc)
+
+	cmp	QWORD PTR proc$[rsp], 0
+	jne	SHORT $LN2@CreateICMP
+
+; 90   : 		proc = AuProcessFindSubThread(thread);
+
+	mov	rcx, QWORD PTR thread$[rsp]
+	call	?AuProcessFindSubThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z ; AuProcessFindSubThread
+	mov	QWORD PTR proc$[rsp], rax
+$LN2@CreateICMP:
+
+; 91   : 	if (!proc)
+
+	cmp	QWORD PTR proc$[rsp], 0
+	jne	SHORT $LN1@CreateICMP
+
+; 92   : 		return -1;
+
+	mov	eax, -1
+	jmp	$LN4@CreateICMP
+$LN1@CreateICMP:
+
+; 93   : 	AuSocket *sock = (AuSocket*)kmalloc(sizeof(AuSocket));
+
+	mov	ecx, 232				; 000000e8H
+	call	kmalloc
+	mov	QWORD PTR sock$[rsp], rax
+
+; 94   : 	memset(sock, 0, sizeof(AuSocket));
+
+	mov	r8d, 232				; 000000e8H
+	xor	edx, edx
+	mov	rcx, QWORD PTR sock$[rsp]
+	call	memset
+
+; 95   : 	fd = AuProcessGetFileDesc(proc);
+
+	mov	rcx, QWORD PTR proc$[rsp]
+	call	?AuProcessGetFileDesc@@YAHPEAU_au_proc_@@@Z ; AuProcessGetFileDesc
+	mov	DWORD PTR fd$[rsp], eax
+
+; 96   : 	sock->fsnode.read = AuICMPRead;
+
+	mov	rax, QWORD PTR sock$[rsp]
+	lea	rcx, OFFSET FLAT:?AuICMPRead@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z ; AuICMPRead
+	mov	QWORD PTR [rax+104], rcx
+
+; 97   : 	sock->fsnode.write = AuICMPWrite;
+
+	mov	rax, QWORD PTR sock$[rsp]
+	lea	rcx, OFFSET FLAT:?AuICMPWrite@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z ; AuICMPWrite
+	mov	QWORD PTR [rax+112], rcx
+
+; 98   : 	sock->bind = AuICMPBind;
+
+	mov	rax, QWORD PTR sock$[rsp]
+	lea	rcx, OFFSET FLAT:?AuICMPBind@@YA_KPEAU_socket_@@PEAU_sockaddr_@@_K@Z ; AuICMPBind
+	mov	QWORD PTR [rax+224], rcx
+
+; 99   : 	sock->close = AuICMPClose;
+
+	mov	rax, QWORD PTR sock$[rsp]
+	lea	rcx, OFFSET FLAT:?AuICMPClose@@YAXPEAU_socket_@@@Z ; AuICMPClose
+	mov	QWORD PTR [rax+208], rcx
+
+; 100  : 	sock->connect = 0;
+
+	mov	rax, QWORD PTR sock$[rsp]
+	mov	QWORD PTR [rax+216], 0
+
+; 101  : 	sock->receive = AuICMPReceive;
+
+	mov	rax, QWORD PTR sock$[rsp]
+	lea	rcx, OFFSET FLAT:?AuICMPReceive@@YA_KPEAU_socket_@@PEAU_msghdr_@@H@Z ; AuICMPReceive
+	mov	QWORD PTR [rax+192], rcx
+
+; 102  : 	sock->send = AuICMPSend;
+
+	mov	rax, QWORD PTR sock$[rsp]
+	lea	rcx, OFFSET FLAT:?AuICMPSend@@YA_KPEAU_socket_@@PEAU_msghdr_@@H@Z ; AuICMPSend
+	mov	QWORD PTR [rax+200], rcx
+
+; 103  : 	proc->fds[fd] = (AuVFSNode*)sock;
+
+	movsxd	rax, DWORD PTR fd$[rsp]
+	mov	rcx, QWORD PTR proc$[rsp]
+	mov	rdx, QWORD PTR sock$[rsp]
+	mov	QWORD PTR [rcx+rax*8+576], rdx
+
+; 104  : 	SeTextOut("ICMP Socket created \r\n");
+
+	lea	rcx, OFFSET FLAT:$SG3306
+	call	SeTextOut
+
+; 105  : 	return 0;
+
+	xor	eax, eax
+$LN4@CreateICMP:
+
+; 106  : }
+
+	add	rsp, 72					; 00000048H
+	ret	0
+?CreateICMPSocket@@YAHXZ ENDP				; CreateICMPSocket
+_TEXT	ENDS
+; Function compile flags: /Odtpy
+; File e:\xeneva project\aurora\kernel\net\icmp.cpp
+_TEXT	SEGMENT
+node$ = 8
+file$ = 16
+buffer$ = 24
+len$ = 32
+?AuICMPWrite@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z PROC	; AuICMPWrite
+
+; 75   : uint64_t AuICMPWrite(AuVFSNode* node, AuVFSNode* file, uint64_t* buffer, uint32_t len) {
+
+	mov	DWORD PTR [rsp+32], r9d
+	mov	QWORD PTR [rsp+24], r8
+	mov	QWORD PTR [rsp+16], rdx
+	mov	QWORD PTR [rsp+8], rcx
+
+; 76   : 	return 0;
 
 	xor	eax, eax
 
-; 38   : }
+; 77   : }
 
 	ret	0
-?CreateICMPSocket@@YAHXZ ENDP				; CreateICMPSocket
+?AuICMPWrite@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z ENDP	; AuICMPWrite
+_TEXT	ENDS
+; Function compile flags: /Odtpy
+; File e:\xeneva project\aurora\kernel\net\icmp.cpp
+_TEXT	SEGMENT
+node$ = 8
+file$ = 16
+buffer$ = 24
+len$ = 32
+?AuICMPRead@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z PROC	; AuICMPRead
+
+; 71   : uint64_t AuICMPRead(AuVFSNode* node, AuVFSNode* file, uint64_t* buffer, uint32_t len){
+
+	mov	DWORD PTR [rsp+32], r9d
+	mov	QWORD PTR [rsp+24], r8
+	mov	QWORD PTR [rsp+16], rdx
+	mov	QWORD PTR [rsp+8], rcx
+
+; 72   : 	return 0;
+
+	xor	eax, eax
+
+; 73   : }
+
+	ret	0
+?AuICMPRead@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z ENDP	; AuICMPRead
+_TEXT	ENDS
+; Function compile flags: /Odtpy
+; File e:\xeneva project\aurora\kernel\net\icmp.cpp
+_TEXT	SEGMENT
+sock$ = 8
+addr$ = 16
+addrlen$ = 24
+?AuICMPBind@@YA_KPEAU_socket_@@PEAU_sockaddr_@@_K@Z PROC ; AuICMPBind
+
+; 66   : uint64_t AuICMPBind(AuSocket* sock, sockaddr* addr, socklen_t addrlen){
+
+	mov	QWORD PTR [rsp+24], r8
+	mov	QWORD PTR [rsp+16], rdx
+	mov	QWORD PTR [rsp+8], rcx
+
+; 67   : 	return 0;
+
+	xor	eax, eax
+
+; 68   : }
+
+	ret	0
+?AuICMPBind@@YA_KPEAU_socket_@@PEAU_sockaddr_@@_K@Z ENDP ; AuICMPBind
+_TEXT	ENDS
+; Function compile flags: /Odtpy
+; File e:\xeneva project\aurora\kernel\net\icmp.cpp
+_TEXT	SEGMENT
+sock$ = 8
+?AuICMPClose@@YAXPEAU_socket_@@@Z PROC			; AuICMPClose
+
+; 61   : void AuICMPClose(AuSocket* sock) {
+
+	mov	QWORD PTR [rsp+8], rcx
+
+; 62   : 	return;
+; 63   : }
+
+	ret	0
+?AuICMPClose@@YAXPEAU_socket_@@@Z ENDP			; AuICMPClose
+_TEXT	ENDS
+; Function compile flags: /Odtpy
+; File e:\xeneva project\aurora\kernel\net\icmp.cpp
+_TEXT	SEGMENT
+sock$ = 8
+msg$ = 16
+flags$ = 24
+?AuICMPSend@@YA_KPEAU_socket_@@PEAU_msghdr_@@H@Z PROC	; AuICMPSend
+
+; 53   : uint64_t AuICMPSend(AuSocket* sock, msghdr* msg, int flags){
+
+	mov	DWORD PTR [rsp+24], r8d
+	mov	QWORD PTR [rsp+16], rdx
+	mov	QWORD PTR [rsp+8], rcx
+
+; 54   : 	return 0;
+
+	xor	eax, eax
+
+; 55   : }
+
+	ret	0
+?AuICMPSend@@YA_KPEAU_socket_@@PEAU_msghdr_@@H@Z ENDP	; AuICMPSend
+_TEXT	ENDS
+; Function compile flags: /Odtpy
+; File e:\xeneva project\aurora\kernel\net\icmp.cpp
+_TEXT	SEGMENT
+sock$ = 8
+msg$ = 16
+flags$ = 24
+?AuICMPReceive@@YA_KPEAU_socket_@@PEAU_msghdr_@@H@Z PROC ; AuICMPReceive
+
+; 43   : uint64_t AuICMPReceive(AuSocket* sock, msghdr *msg, int flags){
+
+	mov	DWORD PTR [rsp+24], r8d
+	mov	QWORD PTR [rsp+16], rdx
+	mov	QWORD PTR [rsp+8], rcx
+
+; 44   : 	return 0;
+
+	xor	eax, eax
+
+; 45   : }
+
+	ret	0
+?AuICMPReceive@@YA_KPEAU_socket_@@PEAU_msghdr_@@H@Z ENDP ; AuICMPReceive
 _TEXT	ENDS
 END

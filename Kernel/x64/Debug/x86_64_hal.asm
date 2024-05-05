@@ -89,65 +89,64 @@ $LN3:
 	call	?x86_64_hal_cpu_feature_enable@@YAXXZ	; x86_64_hal_cpu_feature_enable
 
 ; 60   : 	
-; 61   : 	
-; 62   :    
-; 63   : 	AuACPIInitialise(info->acpi_table_pointer);
+; 61   :    
+; 62   : 	AuACPIInitialise(info->acpi_table_pointer);
 
 	mov	rax, QWORD PTR info$[rsp]
 	mov	rcx, QWORD PTR [rax+82]
 	call	?AuACPIInitialise@@YAXPEAX@Z		; AuACPIInitialise
 
-; 64   : 
-; 65   : 	x86_64_initialise_syscall();
+; 63   : 
+; 64   : 	x86_64_initialise_syscall();
 
 	call	?x86_64_initialise_syscall@@YAXXZ	; x86_64_initialise_syscall
 
-; 66   : 
-; 67   : 	CPUStruc *cpu = (CPUStruc*)kmalloc(sizeof(CPUStruc));
+; 65   : 
+; 66   : 	CPUStruc *cpu = (CPUStruc*)kmalloc(sizeof(CPUStruc));
 
 	mov	ecx, 17
 	call	kmalloc
 	mov	QWORD PTR cpu$[rsp], rax
 
-; 68   : 	cpu->cpu_id = 0;
+; 67   : 	cpu->cpu_id = 0;
 
 	mov	rax, QWORD PTR cpu$[rsp]
 	mov	BYTE PTR [rax], 0
 
-; 69   : 	cpu->au_current_thread = 0;
+; 68   : 	cpu->au_current_thread = 0;
 
 	mov	rax, QWORD PTR cpu$[rsp]
 	mov	QWORD PTR [rax+1], 0
 
-; 70   : 	cpu->kernel_tss = NULL;
+; 69   : 	cpu->kernel_tss = NULL;
 
 	mov	rax, QWORD PTR cpu$[rsp]
 	mov	QWORD PTR [rax+9], 0
 
-; 71   : 	AuCreatePerCPU(cpu);
+; 70   : 	AuCreatePerCPU(cpu);
 
 	mov	rcx, QWORD PTR cpu$[rsp]
 	call	?AuCreatePerCPU@@YAXPEAX@Z		; AuCreatePerCPU
 
-; 72   : 	AuPerCPUSetCpuID(0);
+; 71   : 	AuPerCPUSetCpuID(0);
 
 	xor	ecx, ecx
 	call	?AuPerCPUSetCpuID@@YAXE@Z		; AuPerCPUSetCpuID
 
-; 73   : 	AuPerCPUSetKernelTSS(x86_64_get_tss());
+; 72   : 	AuPerCPUSetKernelTSS(x86_64_get_tss());
 
 	call	?x86_64_get_tss@@YAPEAU_tss@@XZ		; x86_64_get_tss
 	mov	rcx, rax
 	call	?AuPerCPUSetKernelTSS@@YAXPEAU_tss@@@Z	; AuPerCPUSetKernelTSS
 
-; 74   : 	/* acpica needs problem fixing */
-; 75   : 	//AuInitialiseACPISubsys(info);
-; 76   : 
-; 77   : 	x64_sti();
+; 73   : 	/* acpica needs problem fixing */
+; 74   : 	//AuInitialiseACPISubsys(info);
+; 75   : 
+; 76   : 	x64_sti();
 
 	call	x64_sti
 
-; 78   : }
+; 77   : }
 
 	add	rsp, 56					; 00000038H
 	ret	0

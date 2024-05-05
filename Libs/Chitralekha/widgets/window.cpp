@@ -300,11 +300,10 @@ XE_EXTERN XE_EXPORT ChPopupWindow* ChGetPopupWindowByHandle(ChWindow* mainWin, i
 	for (int i = 0; i < mainWin->popup->pointer; i++) {
 		ChPopupWindow* pw = (ChPopupWindow*)list_get_at(mainWin->popup, i);
 		if (pw->handle == handle){
-			returnable = pw;
-			break;
+			return pw;
 		}
 	}
-	return returnable;
+	return NULL;
 }
 
 /*
@@ -613,6 +612,15 @@ XE_EXTERN XE_EXPORT void ChWindowCloseWindow(ChWindow* win){
 	 */
 	if (!subWindow)
 		_KeProcessExit();
+}
+
+/*
+ * ChWindowGetBackgroundColor -- returns the current
+ * background color
+ * @param win -- Pointer to Chitralekha Window
+ */
+uint32_t ChWindowGetBackgroundColor(ChWindow* win) {
+	return win->color;
 }
 
 /*

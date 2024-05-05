@@ -39,16 +39,82 @@
 
 typedef struct _slider_ {
 	ChWidget base;
+	ChRect bound;
 	int thumbX;
 	int thumbY;
 	int lastThumbX;
 	int lastThumbY;
-	int max;
-	int min;
-	int unit;
-	int currentVal;
-	int progress;
+	float max;
+	float min;
+	float currentVal;
+	int progressPixel;
+	float stepSize;
 	uint8_t type;
 }ChSlider;
+
+/*
+* ChCreateSlider -- create a slider widget
+* @param sliderType -- type of the slider
+*/
+XE_EXTERN XE_LIB ChSlider *ChCreateSlider(uint8_t sliderType, int x, int y, int length);
+
+/*
+* ChSliderSetStepSize -- set the step size for given slider
+* @param slider -- Pointer to slider
+* @param stepSz -- step size in float
+*/
+XE_EXTERN XE_LIB void ChSliderSetStepSize(ChSlider* slider, float stepSz);
+
+/*
+* ChSliderGetStepSize -- get the current step size for
+* given slider
+* @param slider -- Pointer to slider
+*/
+XE_EXTERN XE_LIB float ChSliderGetStepSize(ChSlider* slider);
+
+/*
+* ChSliderGetCurrentValue -- returns the current value
+* from given slider
+* @param slider -- Pointer to slider
+*/
+XE_EXTERN XE_LIB float ChSliderGetCurrentValue(ChSlider* slider);
+
+/*
+* ChSliderSetValue -- set a desired value to
+* the slider
+* @param slider -- Pointer to slider
+* @param value -- progress value
+*/
+XE_EXTERN XE_LIB void ChSliderSetValue(ChSlider* slider, float value);
+
+/*
+* ChSliderSetMax -- set maximum value limit
+* @param slider -- Pointer to slider
+* @param max -- Maximum value
+*/
+XE_EXTERN XE_LIB void ChSliderSetMax(ChSlider* slider, float max);
+
+/*
+* ChSliderGetMax -- return the maximum value limit
+* @param slider -- Pointer to slider
+*/
+XE_EXTERN XE_LIB float ChSliderGetMax(ChSlider* slider);
+
+/*
+* ChSliderSetMin -- set the minimum value limit for
+* the given slider
+* @param slider -- Pointer to slider
+* @param min -- Minimum value
+*/
+XE_EXTERN XE_LIB void ChSliderSetMin(ChSlider* slider, float min);
+
+/*
+* ChSliderGetMin -- returns the minimum value
+* limit for the given slider
+* @param slider -- Pointer to slider
+*/
+XE_EXTERN XE_LIB float ChSliderGetMin(ChSlider* slider);
+
+
 
 #endif

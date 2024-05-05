@@ -37,6 +37,7 @@
 #include <widgets\base.h>
 #include <widgets\button.h>
 #include <widgets\scrollpane.h>
+#include <widgets\slider.h>
 #include <keycode.h>
 #include <widgets\window.h>
 #include <widgets\msgbox.h>
@@ -383,6 +384,9 @@ int main(int argc, char* argv[]){
 
 	ChPopupMenu* help = ChCreatePopupMenu(mainWin);
 	ChMenuItem* about = ChCreateMenuItem("About", help);
+	ChMenuItem* about1 = ChCreateMenuItem("About 1", help);
+	ChMenuItem* about2 = ChCreateMenuItem("About 2", help);
+	ChMenuItem* about3 = ChCreateMenuItem("About 3", help);
 	about->wid.ChActionHandler = AboutClicked;
 	ChMenuButtonAddMenu(edit, help);
 
