@@ -1,7 +1,7 @@
 /**
 * BSD 2-Clause License
 *
-* Copyright (c) 2022-2023, Manas Kamal Choudhury
+* Copyright (c) 2022-2024, Manas Kamal Choudhury
 * All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
@@ -27,21 +27,33 @@
 *
 **/
 
-#ifndef __NVME_H__
-#define __NVME_H__
+#include "progress.h"
+#include <stdlib.h>
+#include <string.h>
 
-#include <stdint.h>
-#include <aurora.h>
+extern void ChDefaultProgressBarPainter(ChWidget* wid, ChWindow* win);
 
-typedef struct _nvme_dev_ {
-	uint64_t mmiobase;
-	uint8_t majorVersion;
-	uint8_t minorVersion;
-}NVMeDev;
 
+void ChProgressBarDestroy(ChWidget* widget, ChWindow* win){
+	ChProgressBar* pb = (ChProgressBar*)widget;
+	free(pb);
+	_KePrint("ChProgressBar destroy \r\n");
+}
 /*
-* NVMeInitialise -- start nvme storage class
-*/
-extern int NVMeInitialise();
-
-#endif
+ * ChCreateProgressBar -- creates a progress bar
+ * @param x -- x location
+ * @param y -- y location
+ * @param w -- width of the progress bar
+ * @param h -- height of the progress bar
+ */
+ChProgressBar *ChCreateProgressBar(int x, int y, int w, int h) {
+	ChProgressBar* pb = (ChProgressBar*)malloc(sizeof(ChProgressBar));
+	memset(pb, 0, sizeof(ChProgressBar));
+	pb->base.x = x;
+	pb->base.y = 26 + y;
+	pb->base.w = w;
+	pb->base.h = h;
+	pb->base.ChDestroy = ChProgressBarDestroy;
+	pb->base.ChPaintHandler = ChDefaultProgressBarPainter;
+	return pb;
+}

@@ -45,6 +45,9 @@
     <ClInclude Include="widgets\slider.h">
       <Filter>widgets</Filter>
     </ClInclude>
+    <ClInclude Include="widgets\progress.h">
+      <Filter>widgets</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="chitralekha.cpp" />
@@ -100,6 +103,12 @@
       <Filter>widgets</Filter>
     </ClCompile>
     <ClCompile Include="widgets\defaultslider.cpp">
+      <Filter>widgets\styles</Filter>
+    </ClCompile>
+    <ClCompile Include="widgets\progress.cpp">
+      <Filter>widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="widgets\defaultprogressbar.cpp">
       <Filter>widgets\styles</Filter>
     </ClCompile>
   </ItemGroup>

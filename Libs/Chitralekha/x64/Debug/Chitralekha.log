@@ -1,11 +1,11 @@
-﻿Build started 05-05-2024 ৰাতিপু 9:22:53.
+﻿Build started 06-05-2024 ৰাতিপু 12:30:04.
      1>Project "E:\Xeneva Project\Aurora\Libs\Chitralekha\Chitralekha.vcxproj" on node 2 (Rebuild target(s)).
      1>_NASM:
          _fastcpy.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp3ac4b18c021947e5a0311494ab91653f.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp5174cdd543ed448c96e3054e43207932.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\_fastcpy.obj"  "E:\Xeneva Project\Aurora\Libs\Chitralekha\_fastcpy.asm"
        ClCompile:
-         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /I"E:\os_dev\freetype2-master\freetype2-master\include" /Zi /nologo /W3 /WX- /sdl- /Od /D ARCH_X64 /D YES_DYNAMIC /D DYNAMIC_EXPORTER /D _USE_FREETYPE /D _WINDLL /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt boxblur.cpp chitralekha.cpp color.cpp draw.cpp font.cpp keycode.cpp ttf.cpp widgets\base.cpp widgets\button.cpp widgets\defaultmenu.cpp widgets\defaultscrollbar.cpp widgets\defaultslider.cpp widgets\defaultviews.cpp widgets\defaultwindow.cpp widgets\icon.cpp widgets\list.cpp widgets\menu.cpp widgets\menubar.cpp widgets\msgbox.cpp widgets\scrollpane.cpp widgets\slider.cpp widgets\view.cpp widgets\window.cpp
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /I"E:\os_dev\freetype2-master\freetype2-master\include" /Zi /nologo /W3 /WX- /sdl- /Od /D ARCH_X64 /D YES_DYNAMIC /D DYNAMIC_EXPORTER /D _USE_FREETYPE /D _WINDLL /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt boxblur.cpp chitralekha.cpp color.cpp draw.cpp font.cpp keycode.cpp ttf.cpp widgets\base.cpp widgets\button.cpp widgets\defaultmenu.cpp widgets\defaultprogressbar.cpp widgets\defaultscrollbar.cpp widgets\defaultslider.cpp widgets\defaultviews.cpp widgets\defaultwindow.cpp widgets\icon.cpp widgets\list.cpp widgets\menu.cpp widgets\menubar.cpp widgets\msgbox.cpp widgets\progress.cpp widgets\scrollpane.cpp widgets\slider.cpp widgets\view.cpp widgets\window.cpp
      1>cl : Command line warning D9025: overriding '/sdl-' with '/GS-'
      1>cl : Command line warning D9002: ignoring unknown option '/arch:SSE2'
          window.cpp
@@ -32,6 +32,7 @@
      1>widgets\scrollpane.cpp(234): warning C4244: '=' : conversion from 'double' to 'int', possible loss of data
      1>widgets\scrollpane.cpp(258): warning C4018: '<' : signed/unsigned mismatch
      1>widgets\scrollpane.cpp(268): warning C4244: '=' : conversion from 'double' to 'int', possible loss of data
+         progress.cpp
          msgbox.cpp
      1>widgets\msgbox.cpp(126): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
      1>widgets\msgbox.cpp(151): warning C4018: '<' : signed/unsigned mismatch
@@ -67,6 +68,7 @@
      1>widgets\defaultviews.cpp(65): warning C4018: '<' : signed/unsigned mismatch
          defaultslider.cpp
          defaultscrollbar.cpp
+         defaultprogressbar.cpp
          defaultmenu.cpp
      1>widgets\defaultmenu.cpp(50): warning C4018: '<' : signed/unsigned mismatch
      1>widgets\defaultmenu.cpp(79): warning C4018: '<' : signed/unsigned mismatch
@@ -79,6 +81,9 @@
      1>ttf.cpp(182): warning C4018: '<' : signed/unsigned mismatch
      1>ttf.cpp(306): warning C4244: 'argument' : conversion from 'int' to 'float', possible loss of data
          keycode.cpp
+         Generating Code...
+     1>e:\xeneva project\aurora\libs\chitralekha\ttf.cpp(194): warning C4700: uninitialized local variable 'glyph' used
+         Compiling...
          font.cpp
      1>e:\xeneva project\aurora\libs\chitralekha\ttf.h(82): warning C4161: #pragma pack(pop...) : more pops than pushes
      1>font.cpp(64): warning C4244: '=' : conversion from 'float' to 'uint32_t', possible loss of data
@@ -105,9 +110,6 @@
      1>draw.cpp(46): warning C4018: '<' : signed/unsigned mismatch
      1>draw.cpp(313): warning C4018: '<' : signed/unsigned mismatch
      1>draw.cpp(314): warning C4018: '<' : signed/unsigned mismatch
-         Generating Code...
-     1>e:\xeneva project\aurora\libs\chitralekha\ttf.cpp(194): warning C4700: uninitialized local variable 'glyph' used
-         Compiling...
          color.cpp
          chitralekha.cpp
      1>chitralekha.cpp(144): warning C4018: '<' : signed/unsigned mismatch
@@ -132,6 +134,7 @@
          x64\Debug\base.obj
          x64\Debug\button.obj
          x64\Debug\defaultmenu.obj
+         x64\Debug\defaultprogressbar.obj
          x64\Debug\defaultscrollbar.obj
          x64\Debug\defaultslider.obj
          x64\Debug\defaultviews.obj
@@ -141,6 +144,7 @@
          x64\Debug\menu.obj
          x64\Debug\menubar.obj
          x64\Debug\msgbox.obj
+         x64\Debug\progress.obj
          x64\Debug\scrollpane.obj
          x64\Debug\slider.obj
          x64\Debug\view.obj
@@ -154,4 +158,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:02.76
+Time Elapsed 00:00:13.10

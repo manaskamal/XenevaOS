@@ -161,7 +161,6 @@
     <ClInclude Include="..\BaseHdr\clean.h" />
     <ClInclude Include="..\BaseHdr\ctype.h" />
     <ClInclude Include="..\BaseHdr\Drivers\mouse.h" />
-    <ClInclude Include="..\BaseHdr\Drivers\nvme.h" />
     <ClInclude Include="..\BaseHdr\Drivers\ps2kybrd.h" />
     <ClInclude Include="..\BaseHdr\Drivers\rtc.h" />
     <ClInclude Include="..\BaseHdr\efi.h" />
@@ -242,7 +241,6 @@
     <ClCompile Include="clean.cpp" />
     <ClCompile Include="ctype.cpp" />
     <ClCompile Include="Drivers\mouse.cpp" />
-    <ClCompile Include="Drivers\nvme.cpp" />
     <ClCompile Include="Drivers\ps2kybrd.cpp" />
     <ClCompile Include="Drivers\rtc.cpp" />
     <ClCompile Include="Fs\Dev\devfs.cpp" />

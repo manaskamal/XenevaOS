@@ -27,79 +27,61 @@
 *
 **/
 
-#include <Drivers\nvme.h>
-#include <pcie.h>
+#include <aurora.h>
 #include <aucon.h>
-#include <Mm\vmmngr.h>
-#include <Mm\pmmngr.h>
-#include <string.h>
+#include <Hal\hal.h>
+#include <Hal\serial.h>
+#include "nvme.h"
+#include <pcie.h>
 #include <Mm\kmalloc.h>
+#include <Hal\hal.h>
+#include <Mm\vmmngr.h>
 
-#define NVME_REGISTER_CAP 0x00
-#define NVME_REGISTER_VS  0x08 //version
-#define NVME_REGISTER_INTMS 0x0C //interrupt mask set
-#define NVME_REGISTER_INTMC 0x10 //interrupt mask clear
-#define NVME_REGISTER_CC 0x14  //controller configuration
-#define NVME_REGISTER_CSTS 0x1C //controller status
-#define NVME_REGISTER_AQA 0x24 //Admin queue attributes
-#define NVME_REGISTER_ACQ 0x30 //Admin completion queue
-
-#define NVME_CC_DISABLE   0
-#define NVME_CC_EN        0x1
-#define NVME_CC_EN_MASK   0x1
-#define NVME_CC_CSNVME    0x0
-#define NVME_CC_CSS_MASK  0x70
-#define NVME_CC_MPS_MASK  0x780
-#define NVME_CC_MPS_SHIFT 7
-#define NVME_CC_AMS_ROUNDROBIN  0
-#define NVME_CC_AMS_WIGHTED     (1<<11)
-#define NVME_CC_AMS_MASK        (0x7 << 11)
-
-NVMeDev* nvme;
+NVMeDev *nvme;
 
 /*
- * NVMeOutl -- write 32 bit data to nvme register
- * @param reg -- Register 
- * @param value -- value to write
- */
+* NVMeOutl -- write 32 bit data to nvme register
+* @param reg -- Register
+* @param value -- value to write
+*/
 void NVMeOutl(int reg, uint32_t value) {
 	volatile uint32_t* mmio = (uint32_t*)(nvme->mmiobase + reg);
 	*mmio = value;
 }
 
 /*
- * NVMeInl -- read a 32 bit data from nvme register
- * @param reg -- Register
- */
+* NVMeInl -- read a 32 bit data from nvme register
+* @param reg -- Register
+*/
 uint32_t NVMeInl(int reg) {
 	volatile uint32_t* mmio = (uint32_t*)(nvme->mmiobase + reg);
 	return *mmio;
 }
 
 /*
- * NVMeOutW -- write 16 bit data to nvme register
- * @param reg -- Register
- * @param value -- value to write
- */
+* NVMeOutW -- write 16 bit data to nvme register
+* @param reg -- Register
+* @param value -- value to write
+*/
 void NVMeOutW(int reg, uint16_t value) {
 	volatile uint16_t* mmio = (uint16_t*)(nvme->mmiobase + reg);
 	*mmio = value;
 }
 
 /*
- * NVMeInW -- reads 16 bit data from nvme register
- * @param reg -- Register 
- */
+* NVMeInW -- reads 16 bit data from nvme register
+* @param reg -- Register
+*/
 uint16_t NVMeInW(int reg) {
 	volatile uint16_t* mmio = (uint16_t*)(nvme->mmiobase + reg);
 	return *mmio;
 }
 
 /*
- * NVMeOutB -- writes 8 bit data to nvme register
- * @param reg -- Register 
- * @param value -- data to write
- */
+* NVMeOutB -- writes 8 bit data to nvme register
+* @param reg -- Register
+* @param value -- data to write
+*/
 void NVMeOutB(int reg, uint8_t value) {
 
 	volatile uint8_t* mmio = (uint8_t*)(nvme->mmiobase + reg);
@@ -107,9 +89,9 @@ void NVMeOutB(int reg, uint8_t value) {
 }
 
 /*
- * NVMeInB -- reads 8 bit data to nvme register
- * @param reg -- Register
- */
+* NVMeInB -- reads 8 bit data to nvme register
+* @param reg -- Register
+*/
 uint8_t NVMeInB(int reg) {
 	volatile uint8_t* mmio = (uint8_t*)(nvme->mmiobase + reg);
 	return *mmio;
@@ -142,8 +124,8 @@ void NVMeResetController() {
 	NVMeOutl(NVME_REGISTER_CC, nvmeCC);
 }
 /*
- * NVMeInitialise -- start nvme storage class
- */
+* NVMeInitialise -- start nvme storage class
+*/
 int NVMeInitialise() {
 	int bus, dev, func = 0;
 	uint64_t device = AuPCIEScanClass(0x01, 0x08, &bus, &dev, &func);
@@ -180,10 +162,44 @@ int NVMeInitialise() {
 
 	uint64_t cap = NVMeInQ(NVME_REGISTER_CAP);
 	AuTextOut("[NVMe]: device present bar0 -> %x, version %d.%d \n", nvmemmio, major, minor);
-	AuTextOut("Cap min page sz -> %d max -> %d \n", (((cap) >> 48) & 0xf), (((cap) >> 52) & 0xff));
+	AuTextOut("Cap min page sz -> %d max -> %d \n", (((cap) >> 48) & 0xfU), (((cap) >> 52) & 0xfU));
 
 	NVMeResetController();
+	uint32_t MaxMemoryPageSz = PAGE_SIZE << NVME_CAP_MPSMAX(cap);
+	uint32_t MinMemoryPageSz = PAGE_SIZE << NVME_CAP_MPSMIN(cap);
+	AuTextOut("[NVMe]: Max memory page size -> %d \n", MaxMemoryPageSz);
+	AuTextOut("[NVMe]: Min memory page size -> %d \n", MinMemoryPageSz);
+
+	uint16_t MaxQueueEntries = NVME_CAP_MQES(cap) + 1;
+	if (MaxQueueEntries <= 0)
+		MaxQueueEntries = UINT16_MAX;
+
+	AuTextOut("[NVMe]: MaxQueueEntries -%d \n", MaxQueueEntries);
+	nvme->maxQueueEntries = MaxQueueEntries;
+
 	AuTextOut("[NVMe]: Reset completed \n");
 	return 0;
 }
 
+
+
+/*
+* AuDriverUnload -- deattach the driver from
+* aurora system
+*/
+AU_EXTERN AU_EXPORT int AuDriverUnload() {
+
+	return 0;
+}
+
+
+
+/*
+* AuDriverMain -- Main entry for nvme driver
+*/
+AU_EXTERN AU_EXPORT int AuDriverMain() {
+	AuDisableInterrupt();
+	NVMeInitialise();
+	for (;;);
+	return 0;
+}

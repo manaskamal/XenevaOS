@@ -30,8 +30,21 @@
 #include <net/socket.h>
 #include <net/tcp.h>
 #include <net/icmp.h>
+#include <net/ipv4.h>
 #include <net/udp.h>
+#include <net/aunet.h>
 
+uint16_t IPv4CalculateChecksum(IPv4Header * p){
+	uint32_t sum = 0;
+	uint16_t *s = (uint16_t*)p;
+	for (int i = 0; i < 10; ++i) {
+		sum += ntohs(s[i]);
+		if (sum > 0xFFFF){
+			sum = (sum >> 16) + (sum & 0xFFFF);
+		}
+	}
+	return sum;
+}
 /*
  * CreateIPv4Socket -- create a new ipv4 socket
  * @param type -- type of the socket its Datagram or

@@ -294,9 +294,6 @@
     <ClInclude Include="..\BaseHdr\Hal\x86_64_signal.h">
       <Filter>Include\Hal</Filter>
     </ClInclude>
-    <ClInclude Include="..\BaseHdr\Drivers\nvme.h">
-      <Filter>Include\Drivers</Filter>
-    </ClInclude>
     <ClInclude Include="..\BaseHdr\Hal\x86_64_pic.h">
       <Filter>Include\Hal</Filter>
     </ClInclude>
@@ -485,9 +482,6 @@
     </ClCompile>
     <ClCompile Include="Hal\x86_64_signal.cpp">
       <Filter>Hal</Filter>
-    </ClCompile>
-    <ClCompile Include="Drivers\nvme.cpp">
-      <Filter>Drivers</Filter>
     </ClCompile>
     <ClCompile Include="Hal\x86_64_pic.cpp">
       <Filter>Hal</Filter>

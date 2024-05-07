@@ -6,6 +6,7 @@ INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
 PUBLIC	?CreateIPv4Socket@@YAHHH@Z			; CreateIPv4Socket
+PUBLIC	?IPv4CalculateChecksum@@YAGPEAU_ipv4head_@@@Z	; IPv4CalculateChecksum
 EXTRN	?CreateTCPSocket@@YAHXZ:PROC			; CreateTCPSocket
 EXTRN	?CreateICMPSocket@@YAHXZ:PROC			; CreateICMPSocket
 EXTRN	?CreateUDPSocket@@YAHXZ:PROC			; CreateUDPSocket
@@ -13,11 +14,101 @@ pdata	SEGMENT
 $pdata$?CreateIPv4Socket@@YAHHH@Z DD imagerel $LN11
 	DD	imagerel $LN11+95
 	DD	imagerel $unwind$?CreateIPv4Socket@@YAHHH@Z
+$pdata$?IPv4CalculateChecksum@@YAGPEAU_ipv4head_@@@Z DD imagerel $LN7
+	DD	imagerel $LN7+150
+	DD	imagerel $unwind$?IPv4CalculateChecksum@@YAGPEAU_ipv4head_@@@Z
 pdata	ENDS
 xdata	SEGMENT
 $unwind$?CreateIPv4Socket@@YAHHH@Z DD 010c01H
 	DD	0620cH
+$unwind$?IPv4CalculateChecksum@@YAGPEAU_ipv4head_@@@Z DD 010901H
+	DD	02209H
 xdata	ENDS
+; Function compile flags: /Odtpy
+; File e:\xeneva project\aurora\kernel\net\ipv4.cpp
+_TEXT	SEGMENT
+sum$ = 0
+i$1 = 4
+s$ = 8
+p$ = 32
+?IPv4CalculateChecksum@@YAGPEAU_ipv4head_@@@Z PROC	; IPv4CalculateChecksum
+
+; 37   : uint16_t IPv4CalculateChecksum(IPv4Header * p){
+
+$LN7:
+	mov	QWORD PTR [rsp+8], rcx
+	sub	rsp, 24
+
+; 38   : 	uint32_t sum = 0;
+
+	mov	DWORD PTR sum$[rsp], 0
+
+; 39   : 	uint16_t *s = (uint16_t*)p;
+
+	mov	rax, QWORD PTR p$[rsp]
+	mov	QWORD PTR s$[rsp], rax
+
+; 40   : 	for (int i = 0; i < 10; ++i) {
+
+	mov	DWORD PTR i$1[rsp], 0
+	jmp	SHORT $LN4@IPv4Calcul
+$LN3@IPv4Calcul:
+	mov	eax, DWORD PTR i$1[rsp]
+	inc	eax
+	mov	DWORD PTR i$1[rsp], eax
+$LN4@IPv4Calcul:
+	cmp	DWORD PTR i$1[rsp], 10
+	jge	SHORT $LN2@IPv4Calcul
+
+; 41   : 		sum += ntohs(s[i]);
+
+	movsxd	rax, DWORD PTR i$1[rsp]
+	mov	rcx, QWORD PTR s$[rsp]
+	movzx	eax, WORD PTR [rcx+rax*2]
+	and	eax, 255				; 000000ffH
+	shl	eax, 8
+	movsxd	rcx, DWORD PTR i$1[rsp]
+	mov	rdx, QWORD PTR s$[rsp]
+	movzx	ecx, WORD PTR [rdx+rcx*2]
+	and	ecx, 65280				; 0000ff00H
+	sar	ecx, 8
+	or	eax, ecx
+	mov	ecx, DWORD PTR sum$[rsp]
+	add	ecx, eax
+	mov	eax, ecx
+	mov	DWORD PTR sum$[rsp], eax
+
+; 42   : 		if (sum > 0xFFFF){
+
+	cmp	DWORD PTR sum$[rsp], 65535		; 0000ffffH
+	jbe	SHORT $LN1@IPv4Calcul
+
+; 43   : 			sum = (sum >> 16) + (sum & 0xFFFF);
+
+	mov	eax, DWORD PTR sum$[rsp]
+	shr	eax, 16
+	mov	ecx, DWORD PTR sum$[rsp]
+	and	ecx, 65535				; 0000ffffH
+	add	eax, ecx
+	mov	DWORD PTR sum$[rsp], eax
+$LN1@IPv4Calcul:
+
+; 44   : 		}
+; 45   : 	}
+
+	jmp	SHORT $LN3@IPv4Calcul
+$LN2@IPv4Calcul:
+
+; 46   : 	return sum;
+
+	movzx	eax, WORD PTR sum$[rsp]
+
+; 47   : }
+
+	add	rsp, 24
+	ret	0
+?IPv4CalculateChecksum@@YAGPEAU_ipv4head_@@@Z ENDP	; IPv4CalculateChecksum
+_TEXT	ENDS
 ; Function compile flags: /Odtpy
 ; File e:\xeneva project\aurora\kernel\net\ipv4.cpp
 _TEXT	SEGMENT
@@ -26,14 +117,14 @@ type$ = 64
 protocol$ = 72
 ?CreateIPv4Socket@@YAHHH@Z PROC				; CreateIPv4Socket
 
-; 41   : int CreateIPv4Socket(int type, int protocol) {
+; 54   : int CreateIPv4Socket(int type, int protocol) {
 
 $LN11:
 	mov	DWORD PTR [rsp+16], edx
 	mov	DWORD PTR [rsp+8], ecx
 	sub	rsp, 56					; 00000038H
 
-; 42   : 	switch (type) {
+; 55   : 	switch (type) {
 
 	mov	eax, DWORD PTR type$[rsp]
 	mov	DWORD PTR tv64[rsp], eax
@@ -44,8 +135,8 @@ $LN11:
 	jmp	SHORT $LN1@CreateIPv4
 $LN6@CreateIPv4:
 
-; 43   : 	case SOCK_DGRAM:
-; 44   : 		if (protocol == 0 || protocol == IPPROTOCOL_UDP)
+; 56   : 	case SOCK_DGRAM:
+; 57   : 		if (protocol == 0 || protocol == IPPROTOCOL_UDP)
 
 	cmp	DWORD PTR protocol$[rsp], 0
 	je	SHORT $LN4@CreateIPv4
@@ -53,44 +144,44 @@ $LN6@CreateIPv4:
 	jne	SHORT $LN5@CreateIPv4
 $LN4@CreateIPv4:
 
-; 45   : 			return CreateUDPSocket();
+; 58   : 			return CreateUDPSocket();
 
 	call	?CreateUDPSocket@@YAHXZ			; CreateUDPSocket
 	jmp	SHORT $LN9@CreateIPv4
 $LN5@CreateIPv4:
 
-; 46   : 		if (protocol == IPPROTOCOL_ICMP)
+; 59   : 		if (protocol == IPPROTOCOL_ICMP)
 
 	cmp	DWORD PTR protocol$[rsp], 1
 	jne	SHORT $LN3@CreateIPv4
 
-; 47   : 			return CreateICMPSocket();
+; 60   : 			return CreateICMPSocket();
 
 	call	?CreateICMPSocket@@YAHXZ		; CreateICMPSocket
 	jmp	SHORT $LN9@CreateIPv4
 $LN3@CreateIPv4:
 
-; 48   : 		return -1;
+; 61   : 		return -1;
 
 	mov	eax, -1
 	jmp	SHORT $LN9@CreateIPv4
 $LN2@CreateIPv4:
 
-; 49   : 	case SOCK_STREAM:
-; 50   : 		return CreateTCPSocket();
+; 62   : 	case SOCK_STREAM:
+; 63   : 		return CreateTCPSocket();
 
 	call	?CreateTCPSocket@@YAHXZ			; CreateTCPSocket
 	jmp	SHORT $LN9@CreateIPv4
 $LN1@CreateIPv4:
 
-; 51   : 	default:
-; 52   : 		return -1;
+; 64   : 	default:
+; 65   : 		return -1;
 
 	mov	eax, -1
 $LN9@CreateIPv4:
 
-; 53   : 	}
-; 54   : }
+; 66   : 	}
+; 67   : }
 
 	add	rsp, 56					; 00000038H
 	ret	0
