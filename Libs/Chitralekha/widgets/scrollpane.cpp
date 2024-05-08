@@ -158,7 +158,7 @@ void ChDefaultScrollPaneMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, i
 		bool _scrolled = false;
 
 		if (button && !((button == DEODHAI_MOUSE_MSG_SCROLL_DOWN) || (button == DEODHAI_MOUSE_MSG_SCROLL_UP)))  {
-			sp->vScrollBar.thumb_posy = y - (win->info->y + sp->vScrollBar.bar_y + sp->vScrollBar.thumb_height / 2);
+			sp->vScrollBar.thumb_posy = y - (win->info->y + sp->vScrollBar.bar_y + sp->vScrollBar.thumb_height/2);
 
 			if ((sp->vScrollBar.bar_y + sp->vScrollBar.thumb_posy + sp->vScrollBar.thumb_height) >= sp->vScrollBar.bar_y + sp->vScrollBar.bar_h){
 				sp->vScrollBar.thumb_posy = (win->info->y + sp->vScrollBar.bar_y + sp->vScrollBar.bar_h) -
@@ -168,7 +168,7 @@ void ChDefaultScrollPaneMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, i
 			if ( (sp->vScrollBar.bar_y + sp->vScrollBar.thumb_posy) <= sp->vScrollBar.bar_y)
 				sp->vScrollBar.thumb_posy = 1;// sp->vScrollBar.bar_y;
 
-			sp->vScrollBar.currentScrollValue = sp->vScrollBar.thumb_posy * sp->vScrollBar.scrollAmount;
+			sp->vScrollBar.currentScrollValue = sp->vScrollBar.thumb_posy/ sp->vScrollBar.scrollAmount;
 			_scrolled = true;
 		}
 
@@ -259,18 +259,18 @@ void ChScrollUpdateVerticalScroll(ChScrollPane* sp, ChRect* viewport, int conten
 		sp->vScrollBar.thumb_height = 0;
 		return;
 	}
-
-	sp->vScrollBar.thumb_height = (viewport->h / contentSz) * viewport->h;
-	_KePrint("Viewporth -> %d , cntnt -> %d \r\n", viewport->h, contentSz);
 	
-	double range = ((double)contentSz) / viewport->h ;
+	double range = ((double)contentSz) / (double)viewport->h ;
+
 	//double range = ((viewport->h - viewport->y) / contentSz);
 	sp->vScrollBar.scrollAmount = ceil(range);
-	//sp->vScrollBar.thumb_height = (viewport->h - viewport->y)/ range;
-	_KePrint("Thumb Height -> %d \r\n", sp->vScrollBar.thumb_height);
+	_KePrint("ScrollAmount -> %f \r\n", sp->vScrollBar.scrollAmount);
+	double viewableRatio = (double)viewport->h / (double)contentSz;
+	double thumbHeight = (double)viewport->h * viewableRatio;
+	sp->vScrollBar.thumb_height = thumbHeight;
 	if (sp->vScrollBar.thumb_height <= 0){
 		_KePrint("Thumb is less than 0 \r\n");
-		sp->vScrollBar.thumb_height = 80;
+		sp->vScrollBar.thumb_height = 30;
 	}
 }
 

@@ -38,6 +38,7 @@
 #include <widgets\button.h>
 #include <widgets\scrollpane.h>
 #include <widgets\slider.h>
+#include <widgets\progress.h>
 #include <keycode.h>
 #include <widgets\window.h>
 #include <widgets\msgbox.h>
@@ -396,9 +397,13 @@ int main(int argc, char* argv[]){
 	ChListViewSetScrollpane(lv, sp);
 
 
+	ChProgressBar *pb = ChCreateProgressBar(mainWin->info->width / 2 - 300 / 2, mainWin->info->width / 2 - 50 / 2, 300, 50,0);
+	ChProgressBarSetMax(pb, 350);
+
 	ChWindowAddWidget(mainWin, (ChWidget*)mb);
-	ChWindowAddWidget(mainWin, (ChWidget*)lv);
-	ChWindowAddWidget(mainWin, (ChWidget*)sp);
+	/*ChWindowAddWidget(mainWin, (ChWidget*)lv);
+	ChWindowAddWidget(mainWin, (ChWidget*)sp);*/
+	ChWindowAddWidget(mainWin, (ChWidget*)pb);
 	
 
 	int dirfd = _KeOpenDir("/");
@@ -414,7 +419,7 @@ int main(int argc, char* argv[]){
 	ChIconOpen(docico, "/icons/doc.bmp");
 	ChIconRead(docico);
 	
-	RefreshFileView(dirfd, lv);
+	//RefreshFileView(dirfd, lv);
 
 	/* first store the root address */
 	history = (char*)malloc(strlen("/"));
@@ -433,10 +438,14 @@ int main(int argc, char* argv[]){
 	 * the application
 	 */
 	setjmp(mainWin->jump);
+	double progress = 0;
 	while (1) {
-		int err = _KeFileIoControl(app->postboxfd, POSTBOX_GET_EVENT, &e);
+		/*int err = _KeFileIoControl(app->postboxfd, POSTBOX_GET_EVENT, &e);
 		WindowHandleMessage(&e);
 		if (err == POSTBOX_NO_EVENT)
-			_KePauseThread();
+			_KePauseThread();*/
+		ChProgressBarSetValue(pb, mainWin, progress);
+		_KeProcessSleep(5000);
+		progress += 1;
 	}
 }

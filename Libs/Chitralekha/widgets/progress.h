@@ -37,12 +37,55 @@
 
 typedef struct _progressbar_ {
 	ChWidget base;
-	int maximum;
-	int minimum;
-	int currentVal;
-	int stepSize;
+	double maximumProgress;
+	double minimumProgress;
+	double currentProgress;
+	double progressPercent;
+	int progressPixelWidth;
 }ChProgressBar;
 
 
+/*
+* ChCreateProgressBar -- creates a progress bar
+* @param x -- x location
+* @param y -- y location
+* @param w -- width of the progress bar
+* @param h -- height of the progress bar
+*/
+XE_EXTERN XE_LIB ChProgressBar *ChCreateProgressBar(int x, int y, int w, int h, double progress);
+
+/*
+* ChProgressBarSetMax -- set maximum limit of the progress
+* @param pb -- Pointer to progress bar instance
+* @param max -- Maximum limit of the progress in step
+*/
+XE_EXTERN XE_LIB void ChProgressBarSetMax(ChProgressBar* pb, int max);
+
+/*
+* ChProgressBarSetMin -- set minimum limit of the progress
+* @param pb -- Pointer to progress bar instance
+* @param min -- Minimum limit of the progress in step
+*/
+XE_EXTERN XE_LIB void ChProgressBarSetMin(ChProgressBar* pb, int min);
+
+/*
+* ChProgressBarGetMax -- get maximum limit of the progress bar
+* @param pb -- Pointer to progress bar instance
+*/
+XE_EXTERN XE_LIB int ChProgressBarGetMax(ChProgressBar* pb);
+
+/*
+* ChProgressBarGetMin -- get minimum limit of the progress bar
+* @param pb -- Pointer to progress bar
+*/
+XE_EXTERN XE_LIB int ChProgressBarGetMin(ChProgressBar* pb);
+
+/*
+* ChProgressBarSetValue -- set current progress value step
+* @param pb -- Pointer to progress bar instance
+* @param win -- Pointer to main window object
+* @param value -- current step value
+*/
+XE_EXTERN XE_LIB void ChProgressBarSetValue(ChProgressBar* pb, ChWindow* win, double value);
 
 #endif

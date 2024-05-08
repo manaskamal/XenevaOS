@@ -212,7 +212,7 @@ ChListItem* ChListViewAddItem(ChWindow* win, ChListView* lv, char* itemText) {
 		view.w = lv->wid.w;
 		view.h = lv->wid.h;
 		if (lv->scrollpane)
-			ChScrollUpdateVerticalScroll(lv->scrollpane, &view, (lv->numRows*LIST_VIEW_ITEM_HEIGHT));
+			ChScrollUpdateVerticalScroll(lv->scrollpane, &view, (lv->numRows*LIST_VIEW_ITEM_HEIGHT + LIST_VIEW_ITEM_YPADDING));
 	}
 	/*lv->currentStartIndex = floor((lv->scrollpane->vScrollBar.thumb_posy / LIST_VIEW_ITEM_HEIGHT) - LIST_VIEW_ITEM_HEIGHT);
 	lv->currentStartIndex = max(0, lv->currentStartIndex);*/

@@ -1,8 +1,8 @@
-﻿Build started 06-05-2024 ৰাতিপু 12:30:04.
+﻿Build started 08-05-2024 আবেলি 8:32:03.
      1>Project "E:\Xeneva Project\Aurora\Libs\Chitralekha\Chitralekha.vcxproj" on node 2 (Rebuild target(s)).
      1>_NASM:
          _fastcpy.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp5174cdd543ed448c96e3054e43207932.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmpd985e184cad64d21b5bb4d0a1c37d7cd.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\_fastcpy.obj"  "E:\Xeneva Project\Aurora\Libs\Chitralekha\_fastcpy.asm"
        ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /I"E:\os_dev\freetype2-master\freetype2-master\include" /Zi /nologo /W3 /WX- /sdl- /Od /D ARCH_X64 /D YES_DYNAMIC /D DYNAMIC_EXPORTER /D _USE_FREETYPE /D _WINDLL /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt boxblur.cpp chitralekha.cpp color.cpp draw.cpp font.cpp keycode.cpp ttf.cpp widgets\base.cpp widgets\button.cpp widgets\defaultmenu.cpp widgets\defaultprogressbar.cpp widgets\defaultscrollbar.cpp widgets\defaultslider.cpp widgets\defaultviews.cpp widgets\defaultwindow.cpp widgets\icon.cpp widgets\list.cpp widgets\menu.cpp widgets\menubar.cpp widgets\msgbox.cpp widgets\progress.cpp widgets\scrollpane.cpp widgets\slider.cpp widgets\view.cpp widgets\window.cpp
@@ -22,17 +22,24 @@
      1>widgets\window.cpp(563): warning C4018: '<' : signed/unsigned mismatch
      1>widgets\window.cpp(638): warning C4018: '<' : signed/unsigned mismatch
          view.cpp
+     1>widgets\view.cpp(39): warning C4244: 'initializing' : conversion from 'double' to 'int', possible loss of data
+     1>widgets\view.cpp(45): warning C4244: '-=' : conversion from 'double' to 'int', possible loss of data
+     1>widgets\view.cpp(59): warning C4244: '+=' : conversion from 'double' to 'int', possible loss of data
      1>widgets\view.cpp(73): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\view.cpp(98): warning C4244: 'initializing' : conversion from 'double' to 'uint32_t', possible loss of data
      1>widgets\view.cpp(128): warning C4018: '<' : signed/unsigned mismatch
      1>widgets\view.cpp(190): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
      1>widgets\view.cpp(194): warning C4018: '<' : signed/unsigned mismatch
      1>widgets\view.cpp(241): warning C4018: '<' : signed/unsigned mismatch
          slider.cpp
          scrollpane.cpp
-     1>widgets\scrollpane.cpp(234): warning C4244: '=' : conversion from 'double' to 'int', possible loss of data
+     1>widgets\scrollpane.cpp(44): warning C4244: '-=' : conversion from 'double' to 'int', possible loss of data
+     1>widgets\scrollpane.cpp(62): warning C4244: '+=' : conversion from 'double' to 'int', possible loss of data
      1>widgets\scrollpane.cpp(258): warning C4018: '<' : signed/unsigned mismatch
-     1>widgets\scrollpane.cpp(268): warning C4244: '=' : conversion from 'double' to 'int', possible loss of data
+     1>widgets\scrollpane.cpp(270): warning C4244: '=' : conversion from 'double' to 'int', possible loss of data
          progress.cpp
+     1>widgets\progress.cpp(91): warning C4244: 'return' : conversion from 'double' to 'int', possible loss of data
+     1>widgets\progress.cpp(99): warning C4244: 'return' : conversion from 'double' to 'int', possible loss of data
          msgbox.cpp
      1>widgets\msgbox.cpp(126): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
      1>widgets\msgbox.cpp(151): warning C4018: '<' : signed/unsigned mismatch
@@ -59,16 +66,17 @@
      1>widgets\icon.cpp(146): warning C4018: '>' : signed/unsigned mismatch
      1>widgets\icon.cpp(150): warning C4018: '<=' : signed/unsigned mismatch
      1>widgets\icon.cpp(157): warning C4018: '<=' : signed/unsigned mismatch
-     1>widgets\icon.cpp(167): warning C4018: '<' : signed/unsigned mismatch
-     1>widgets\icon.cpp(171): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\icon.cpp(173): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\icon.cpp(177): warning C4018: '<' : signed/unsigned mismatch
          defaultwindow.cpp
      1>widgets\defaultwindow.cpp(116): warning C4018: '<' : signed/unsigned mismatch
      1>widgets\defaultwindow.cpp(129): warning C4018: '<' : signed/unsigned mismatch
          defaultviews.cpp
-     1>widgets\defaultviews.cpp(65): warning C4018: '<' : signed/unsigned mismatch
+     1>widgets\defaultviews.cpp(61): warning C4018: '<' : signed/unsigned mismatch
          defaultslider.cpp
          defaultscrollbar.cpp
          defaultprogressbar.cpp
+     1>widgets\defaultprogressbar.cpp(49): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
          defaultmenu.cpp
      1>widgets\defaultmenu.cpp(50): warning C4018: '<' : signed/unsigned mismatch
      1>widgets\defaultmenu.cpp(79): warning C4018: '<' : signed/unsigned mismatch
@@ -103,8 +111,10 @@
      1>font.cpp(276): warning C4267: 'return' : conversion from 'size_t' to 'int', possible loss of data
      1>font.cpp(300): warning C4267: 'return' : conversion from 'size_t' to 'int', possible loss of data
      1>font.cpp(319): warning C4018: '>=' : signed/unsigned mismatch
-     1>font.cpp(350): warning C4018: '>' : signed/unsigned mismatch
-     1>font.cpp(355): warning C4018: '>' : signed/unsigned mismatch
+     1>font.cpp(322): warning C4018: '<=' : signed/unsigned mismatch
+     1>font.cpp(325): warning C4018: '<' : signed/unsigned mismatch
+     1>font.cpp(357): warning C4018: '>' : signed/unsigned mismatch
+     1>font.cpp(362): warning C4018: '>' : signed/unsigned mismatch
          draw.cpp
      1>draw.cpp(45): warning C4018: '<' : signed/unsigned mismatch
      1>draw.cpp(46): warning C4018: '<' : signed/unsigned mismatch
@@ -158,4 +168,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:13.10
+Time Elapsed 00:00:02.97

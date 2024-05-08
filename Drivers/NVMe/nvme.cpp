@@ -200,6 +200,5 @@ AU_EXTERN AU_EXPORT int AuDriverUnload() {
 AU_EXTERN AU_EXPORT int AuDriverMain() {
 	AuDisableInterrupt();
 	NVMeInitialise();
-	for (;;);
 	return 0;
 }

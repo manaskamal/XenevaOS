@@ -319,6 +319,13 @@ int ChFontDrawTextClipped(ChCanvas *canv, ChFont* font, char* string, int penx, 
 	if ((penx >= canv->canvasWidth) || (peny >= canv->canvasHeight) || penx >= (limit->x - limit->w) || peny >=(limit->y - limit->h))
 		return 1;
 
+	if (peny <= limit->y)
+		return 1;
+
+	if (penx < limit->x)
+		return 1;
+
+
 	int w = font->face->glyph->metrics.width;
 	int h = font->face->glyph->metrics.height;
 	FT_Bool use_kerning = FT_HAS_KERNING(font->face);

@@ -45,8 +45,9 @@ void ChProgressBarDestroy(ChWidget* widget, ChWindow* win){
  * @param y -- y location
  * @param w -- width of the progress bar
  * @param h -- height of the progress bar
+ * @param progress -- current progress step
  */
-ChProgressBar *ChCreateProgressBar(int x, int y, int w, int h) {
+ChProgressBar *ChCreateProgressBar(int x, int y, int w, int h, double progress) {
 	ChProgressBar* pb = (ChProgressBar*)malloc(sizeof(ChProgressBar));
 	memset(pb, 0, sizeof(ChProgressBar));
 	pb->base.x = x;
@@ -55,5 +56,69 @@ ChProgressBar *ChCreateProgressBar(int x, int y, int w, int h) {
 	pb->base.h = h;
 	pb->base.ChDestroy = ChProgressBarDestroy;
 	pb->base.ChPaintHandler = ChDefaultProgressBarPainter;
+	pb->minimumProgress = 0;
+	pb->maximumProgress = 100;
+	pb->currentProgress = progress;
+	double progressValue = (pb->currentProgress / pb->maximumProgress) * pb->base.w;
+	pb->progressPixelWidth =  (int)progressValue;
+	pb->progressPercent = (pb->currentProgress / pb->maximumProgress) * 100;
 	return pb;
+}
+
+/*
+ * ChProgressBarSetMax -- set maximum limit of the progress
+ * @param pb -- Pointer to progress bar instance
+ * @param max -- Maximum limit of the progress in step
+ */
+void ChProgressBarSetMax(ChProgressBar* pb, int max) {
+	pb->maximumProgress = max;
+}
+
+/*
+ * ChProgressBarSetMin -- set minimum limit of the progress
+ * @param pb -- Pointer to progress bar instance
+ * @param min -- Minimum limit of the progress in step
+ */
+void ChProgressBarSetMin(ChProgressBar* pb, int min){
+	pb->minimumProgress = min;
+}
+
+/*
+ * ChProgressBarGetMax -- get maximum limit of the progress bar
+ * @param pb -- Pointer to progress bar instance
+ */
+int ChProgressBarGetMax(ChProgressBar* pb) {
+	return pb->maximumProgress;
+}
+
+/*
+ * ChProgressBarGetMin -- get minimum limit of the progress bar
+ * @param pb -- Pointer to progress bar
+ */
+int ChProgressBarGetMin(ChProgressBar* pb) {
+	return pb->minimumProgress;
+}
+
+/*
+ * ChProgressBarSetValue -- set current progress value step
+ * @param pb -- Pointer to progress bar instance
+ * @param win -- Pointer to main window object
+ * @param value -- current step value
+ */
+void ChProgressBarSetValue(ChProgressBar* pb,ChWindow* win,double value) {
+	pb->currentProgress = value;
+	double progressValue = (pb->currentProgress / pb->maximumProgress) * pb->base.w;
+	pb->progressPixelWidth = (int)progressValue;
+
+	if (pb->currentProgress <= pb->minimumProgress)
+		pb->currentProgress = pb->minimumProgress;
+
+	if (pb->currentProgress >= pb->maximumProgress)
+		pb->currentProgress = pb->maximumProgress;
+
+	if (pb->base.ChPaintHandler)
+		pb->base.ChPaintHandler((ChWidget*)pb, win);
+
+	pb->progressPercent = (pb->currentProgress / pb->maximumProgress) * 100;
+	ChWindowUpdate(win, pb->base.x, pb->base.y, pb->base.w, pb->base.h, 0, 1);
 }
