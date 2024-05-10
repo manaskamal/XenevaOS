@@ -1,13 +1,13 @@
-﻿Build started 10-05-2024 আবেলি 12:00:06.
+﻿Build started 11-05-2024 ৰাতিপু 12:11:07.
      1>Project "E:\Xeneva Project\Aurora\Drivers\NVMe\NVMe.vcxproj" on node 2 (Rebuild target(s)).
      1>ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\BaseHdr" /Zi /nologo /W3 /WX- /Od /Oy /D ARCH_X64 /D USE_APIC /D _WINDLL /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt nvme.cpp
      1>cl : Command line warning D9002: ignoring unknown option '/arch:SSE2'
          nvme.cpp
+     1>E:\Xeneva Project\Aurora\BaseHdr\Hal\x86_64_hal.h(35): warning C4103: 'e:\xeneva project\aurora\basehdr\hal\x86_64_hal.h' : alignment changed after including header, may be due to missing #pragma pack(pop)
+     1>nvme.cpp(33): warning C4103: 'e:\xeneva project\aurora\drivers\nvme\nvme.cpp' : alignment changed after including header, may be due to missing #pragma pack(pop)
      1>E:\Xeneva Project\Aurora\BaseHdr\stdarg.h(54): warning C4005: 'va_start' : macro redefinition
                  E:\Xeneva Project\Aurora\BaseHdr\va_list.h(56) : see previous definition of 'va_start'
-     1>e:\xeneva project\aurora\drivers\nvme\nvme.h(185): warning C4091: 'typedef ' : ignored on left of '_nvme_queue_' when no variable is declared
-     1>nvme.cpp(34): warning C4103: 'e:\xeneva project\aurora\drivers\nvme\nvme.cpp' : alignment changed after including header, may be due to missing #pragma pack(pop)
      1>E:\Xeneva Project\Aurora\BaseHdr\Hal\basicacpi.h(154): warning C4200: nonstandard extension used : zero-sized array in struct/union
                  Cannot generate copy-ctor or copy-assignment operator when UDT contains a zero-sized array
      1>E:\Xeneva Project\Aurora\BaseHdr\Hal\basicacpi.h(185): warning C4200: nonstandard extension used : zero-sized array in struct/union
@@ -16,8 +16,12 @@
                  Cannot generate copy-ctor or copy-assignment operator when UDT contains a zero-sized array
      1>E:\Xeneva Project\Aurora\BaseHdr\Hal\basicacpi.h(283): warning C4200: nonstandard extension used : zero-sized array in struct/union
                  Cannot generate copy-ctor or copy-assignment operator when UDT contains a zero-sized array
-     1>nvme.cpp(179): warning C4293: '<<' : shift count negative or too big, undefined behavior
-     1>nvme.cpp(185): warning C4244: 'argument' : conversion from 'uint64_t' to 'uint32_t', possible loss of data
+     1>nvme.cpp(198): warning C4244: '=' : conversion from 'uint64_t' to 'uint16_t', possible loss of data
+     1>nvme.cpp(199): warning C4244: '=' : conversion from 'uint64_t' to 'uint16_t', possible loss of data
+     1>nvme.cpp(200): warning C4244: '=' : conversion from 'uint64_t' to 'uint16_t', possible loss of data
+     1>nvme.cpp(201): warning C4244: '=' : conversion from 'uint64_t' to 'uint16_t', possible loss of data
+     1>nvme.cpp(225): warning C4293: '<<' : shift count negative or too big, undefined behavior
+     1>nvme.cpp(231): warning C4244: 'argument' : conversion from 'uint64_t' to 'uint32_t', possible loss of data
      1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(1186,5): warning MSB8012: TargetPath(E:\Xeneva Project\Aurora\x64\Debug\NVMe.dll) does not match the Linker's OutputFile property value (F:\nvme.dll). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
        Link:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\link.exe /ERRORREPORT:PROMPT /OUT:"F:/nvme.dll" /INCREMENTAL /NOLOGO /LIBPATH:"E:\Xeneva Project\Aurora\x64\Debug" Kernel.lib /NODEFAULTLIB /MANIFEST:NO /PDB:"E:\Xeneva Project\Aurora\x64\Debug\NVMe.pdb" /MAP /MAPINFO:EXPORTS /SUBSYSTEM:NATIVE /LARGEADDRESSAWARE /Driver /OPT:NOREF /LTCG /TLBID:1 /BASE:"0xFFFFC00000400000" /FIXED:NO /NXCOMPAT /IMPLIB:"E:\Xeneva Project\Aurora\x64\Debug\NVMe.lib" /MACHINE:X64 /ALIGN:512 /DLL x64\Debug\nvme.obj
@@ -29,4 +33,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:00.49
+Time Elapsed 00:00:01.59

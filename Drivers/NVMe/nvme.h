@@ -31,6 +31,7 @@
 #define __NVME_H__
 
 #include <stdint.h>
+#include <list.h>
 #include <aurora.h>
 
 #pragma pack(push,1)
@@ -212,8 +213,23 @@ enum AdminCommands {
 
 typedef struct _nvme_queue_ {
 	uint16_t queueId;
-	uint64_t completion;
-};
+	uint64_t completionMMIOBase;
+	uint64_t submissionMMIOBase;
+	uint64_t completionPhysBase;
+	uint64_t submissionPhysBase;
+
+	NVMeCompletion* completionQueue;
+	NVMeCommand* submissionQueue;
+
+	uint32_t* nvmeCQDoorbell;
+	uint32_t* nvmeSQDoorbell;
+
+	uint16_t cq_size;
+	uint16_t sq_size;
+	uint16_t cq_count;
+	uint16_t sq_count;
+	uint16_t nextCommandId;
+}NVMeQueue;
 
 typedef struct _nvme_dev_ {
 	uint64_t mmiobase;
@@ -222,10 +238,8 @@ typedef struct _nvme_dev_ {
 	uint16_t maxQueueEntries;
 	uint32_t minPageSize;
 	uint32_t maxPageSize;
-	uint64_t adminSQMMIOBase;
-	uint64_t adminSQPhysBase;
-	uint64_t adminCQMMIOBase;
-	uint64_t adminCQPhysBase;
+	list_t* NVMeQueueList;
+	uint32_t doorbellStride;
 }NVMeDev;
 
 #define NVME_REGISTER_CAP 0x00
@@ -268,6 +282,16 @@ typedef struct _nvme_dev_ {
 
 #define NVME_CFG_DEFAULT_IOCQES (4<<20)
 #define NVME_CFG_DEFAULT_IOSQES (6<<16)
+
+#define NVME_AQA_AQS_MASK 0xfffU
+#define NVME_AQA_ACQS(x) (((x) & NVME_AQA_AQS_MASK) << 16)
+#define NVME_AQA_ASQS(x) (((x) & NVME_AQA_AQS_MASK) << 0)
+
+#define NVME_CAP_DSTRD_MASK -xfU
+#define NVME_CAP_DSTRD(x) (((x) >> 32) & NVME_CAP_DSTRD_MASK)
+
+#define NVME_NSSR_RESET_VALUE 0x4e564d65
+
 
 
 

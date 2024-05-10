@@ -501,7 +501,7 @@ bool AuPCIEAllocMSI(uint64_t device, size_t vector, int bus, int dev, int func) 
 			}
 
 			if ((cap_reg & 0xff) == 0x11) {
-				value = true; //MSI-X Allocated: not implemented
+				value = false; //MSI-X Allocated: not implemented
 				AuTextOut("MSI-X found \r\n");
 				break;
 			}

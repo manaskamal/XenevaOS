@@ -30,6 +30,7 @@
 #include <aurora.h>
 #include <aucon.h>
 #include <Hal\hal.h>
+#include <Hal\x86_64_hal.h>
 #include <Hal\serial.h>
 #include "nvme.h"
 #include <pcie.h>
@@ -162,6 +163,51 @@ void NVMeSetCommandSet(uint8_t set) {
 	config = (config & ~NVME_CFG_CSS(NVME_CFG_CSS_MASK)) | NVME_CFG_CSS(set);
 	NVMeOutl(NVME_REGISTER_CC, config);
 }
+
+void NVMeSetAdminCQSize(uint16_t sz) {
+	uint32_t aqa = NVMeInl(NVME_REGISTER_AQA);
+	aqa = (aqa & ~NVME_AQA_ACQS(NVME_AQA_AQS_MASK)) | NVME_AQA_ACQS(sz - 1);
+	NVMeOutl(NVME_REGISTER_AQA, aqa);
+}
+
+void NVMeSetAdminSQSize(uint16_t sz) {
+	uint32_t aqa = NVMeInl(NVME_REGISTER_AQA);
+	aqa = (aqa & ~NVME_AQA_ASQS(NVME_AQA_AQS_MASK)) | NVME_AQA_ASQS(sz - 1);
+	NVMeOutl(NVME_REGISTER_AQA, aqa);
+}
+
+
+uint32_t* NVMeGetSubmissionDoorbell(uint16_t queueID) {
+	return reinterpret_cast<uint32_t*>(nvme->mmiobase + 0x1000 + (2 * queueID) * (4 << nvme->doorbellStride));
+}
+
+uint32_t* NVMeGetCompletionDoorbell(uint16_t queueID) {
+	return reinterpret_cast<uint32_t*>(nvme->mmiobase + 0x1000 + (2 * queueID + 1) * (4 << nvme->doorbellStride));
+}
+
+/*
+ * NVMeCreateQueue -- create a new queue
+ * @param queueID -- queue id
+ * @param cqSize -- completion queue size
+ * @param sqSize -- submission queue size
+ */
+NVMeQueue* NVMeCreateQueue(uint16_t queueID, uint64_t cqSize, uint64_t sqSize){
+	NVMeQueue* qu = (NVMeQueue*)kmalloc(sizeof(NVMeQueue));
+	memset(qu, 0, sizeof(NVMeQueue));
+	qu->queueId = queueID;
+	qu->cq_size = cqSize;
+	qu->cq_count = cqSize / sizeof(NVMeCompletion);
+	qu->sq_size = sqSize;
+	qu->sq_count = sqSize / sizeof(NVMeCommand);
+	return qu;
+}
+
+void NVMeInterrupt(size_t vector, void* param) {
+	AuDisableInterrupt();
+	AuTextOut("NVMe Interrupt++ \n");
+}
+
+
 /*
 * NVMeInitialise -- start nvme storage class
 */
@@ -228,20 +274,55 @@ int NVMeInitialise() {
 	NVMeOutl(NVME_REGISTER_CC, config);
 
 	uint64_t adminSQ = (uint64_t)AuPmmngrAlloc();
-	//memset((void*)adminSQ, 0, PAGE_SIZE);
+	memset((void*)adminSQ, 0, PAGE_SIZE);
 	uint64_t adminCQ = (uint64_t)AuPmmngrAlloc();
-	//memset((void*)adminCQ, 0, PAGE_SIZE);
+	memset((void*)adminCQ, 0, PAGE_SIZE);
 
-	nvme->adminSQPhysBase = adminSQ;
-	nvme->adminCQPhysBase = adminCQ;
-	nvme->adminSQMMIOBase = (uint64_t)AuMapMMIO(adminSQ, 1);
-	nvme->adminCQMMIOBase = (uint64_t)AuMapMMIO(adminCQ, 1);
+	uint64_t adminSQMMIOBase = (uint64_t)AuMapMMIO(adminSQ, 1);
+	uint64_t adminCQMMIOBase = (uint64_t)AuMapMMIO(adminCQ, 1);
 	
 	NVMeOutQ(NVME_REGISTER_ASQ, (adminSQ & UINT64_MAX));
 	NVMeOutQ(NVME_REGISTER_ACQ, (adminCQ & UINT64_MAX));
 
+	NVMeSetAdminCQSize(PAGE_SIZE);
+	NVMeSetAdminSQSize(PAGE_SIZE);
 
-	AuTextOut("NVME Command size -> %d \n", sizeof(NVMeCommand));
+	config = NVMeInl(NVME_REGISTER_CC);
+	config |= ((NVME_CC_AMS_ROUNDROBIN & 0x7) << 11);
+	NVMeOutl(NVME_REGISTER_CC, config);
+
+	nvme->NVMeQueueList = initialize_list();
+	
+	/* setup the admin queue data structure */
+	NVMeQueue *adminQe = NVMeCreateQueue(0, PAGE_SIZE, PAGE_SIZE);
+	adminQe->submissionPhysBase = adminSQ;
+	adminQe->submissionMMIOBase = adminSQMMIOBase;
+	adminQe->completionPhysBase = adminCQ;
+	adminQe->completionMMIOBase = adminCQMMIOBase;
+	adminQe->submissionQueue = (NVMeCommand*)adminQe->submissionMMIOBase;
+	adminQe->completionQueue = (NVMeCompletion*)adminQe->completionMMIOBase;
+	adminQe->nvmeCQDoorbell = NVMeGetCompletionDoorbell(0);
+	adminQe->nvmeSQDoorbell = NVMeGetSubmissionDoorbell(0);
+	
+	list_add(nvme->NVMeQueueList, adminQe);
+
+	size_t vector = 77;
+	if (!AuPCIEAllocMSI(device, vector, bus, dev, func)) {
+		AuTextOut("[NVMe]: failed to allocate MSI/MSI-X interrupt \n");
+		return -1;
+	}
+	setvect(vector, NVMeInterrupt);
+
+	/* enable the controller */
+	NVMeEnable();
+
+	/* poll for the ready bit */
+	uint32_t status = NVMeInl(NVME_REGISTER_CSTS);
+	while (!(status & 0x1))
+		status = NVMeInl(NVME_REGISTER_CSTS);
+
+
+	AuTextOut("NVME Command size -> %d , completion -> %d \n", sizeof(NVMeCommand), sizeof(NVMeCompletion));
 	AuTextOut("[NVMe]: Reset completed \n");
 	return 0;
 }
@@ -265,6 +346,7 @@ AU_EXTERN AU_EXPORT int AuDriverUnload() {
 AU_EXTERN AU_EXPORT int AuDriverMain() {
 	AuDisableInterrupt();
 	NVMeInitialise();
+	AuEnableInterrupt();
 	for (;;);
 	return 0;
 }

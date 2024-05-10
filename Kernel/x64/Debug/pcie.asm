@@ -2360,9 +2360,9 @@ $LN5@AuPCIEAllo:
 	cmp	eax, 17
 	jne	SHORT $LN1@AuPCIEAllo
 
-; 504  : 				value = true; //MSI-X Allocated: not implemented
+; 504  : 				value = false; //MSI-X Allocated: not implemented
 
-	mov	BYTE PTR value$[rsp], 1
+	mov	BYTE PTR value$[rsp], 0
 
 ; 505  : 				AuTextOut("MSI-X found \r\n");
 
