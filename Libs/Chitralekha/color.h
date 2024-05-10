@@ -153,6 +153,8 @@ XE_EXTERN{
 	*/
 	XE_LIB void ChColorDrawVerticalGradient(ChCanvas *canv, int x, int y, int w, int h, uint32_t color1, uint32_t color2);
 
+	XE_LIB double clamp(double x, double upper, double lower);
+
 #ifdef __cplusplus
 }
 #endif

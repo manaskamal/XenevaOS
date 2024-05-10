@@ -36,6 +36,7 @@
 #include <Mm\kmalloc.h>
 #include <Hal\hal.h>
 #include <Mm\vmmngr.h>
+#include <Mm\pmmngr.h>
 
 NVMeDev *nvme;
 
@@ -98,13 +99,13 @@ uint8_t NVMeInB(int reg) {
 }
 
 /*
-* NVMeOutB -- writes 8 bit data to nvme register
+* NVMeOutB -- writes 64 bit data to nvme register
 * @param reg -- Register
 * @param value -- data to write
 */
 void NVMeOutQ(int reg, uint64_t value) {
 
-	volatile uint64_t* mmio = (uint64_t*)((nvme->mmiobase + reg) | (nvme->mmiobase + (reg + 4)) << 32);
+	volatile uint64_t* mmio = (uint64_t*)(nvme->mmiobase + reg); //| (nvme->mmiobase + (reg + 4)) << 32);
 	*mmio = value;
 }
 
@@ -122,6 +123,44 @@ void NVMeResetController() {
 	uint32_t nvmeCC = NVMeInl(NVME_REGISTER_CC);
 	nvmeCC = (nvmeCC & ~(NVME_CC_EN_MASK)) | NVME_CC_DISABLE;
 	NVMeOutl(NVME_REGISTER_CC, nvmeCC);
+}
+
+void NVMeDisable() {
+	uint32_t config = NVMeInl(NVME_REGISTER_CC);
+	config &= ~NVME_CFG_ENABLE;
+	NVMeOutl(NVME_REGISTER_CC, config);
+}
+
+void NVMeEnable() {
+	uint32_t config = NVMeInl(NVME_REGISTER_CC);
+	config |= NVME_CFG_ENABLE;
+	NVMeOutl(NVME_REGISTER_CC, config);
+}
+
+void NVMeSetMemoryPageSize(uint32_t size) {
+	if (size < nvme->minPageSize)
+		return;
+	if (size > nvme->maxPageSize)
+		return;
+
+	uint32_t i = 0;
+	while (!(size & 1)){
+		i++;
+		size >>= 1;
+	}
+
+	if (i < 12)
+		return;
+	uint32_t config = NVMeInl(NVME_REGISTER_CC);
+	config = (config & ~NVME_CFG_MPS(NVME_CFG_MPS_MASK)) | NVME_CFG_MPS(i - 12);
+	AuTextOut("Memory page size setuped %d \n", i);
+	NVMeOutl(NVME_REGISTER_CC, config);
+}
+
+void NVMeSetCommandSet(uint8_t set) {
+	uint32_t config = NVMeInl(NVME_REGISTER_CC);
+	config = (config & ~NVME_CFG_CSS(NVME_CFG_CSS_MASK)) | NVME_CFG_CSS(set);
+	NVMeOutl(NVME_REGISTER_CC, config);
 }
 /*
 * NVMeInitialise -- start nvme storage class
@@ -146,7 +185,7 @@ int NVMeInitialise() {
 	AuPCIEWrite(device, PCI_COMMAND, command, bus, dev, func);
 
 
-	uint64_t nvmemmio = (uint64_t)AuMapMMIO(base32, 2);
+	uint64_t nvmemmio = (uint64_t)AuMapMMIO(base32, 4);
 
 	nvme = (NVMeDev*)kmalloc(sizeof(NVMeDev));
 	memset(nvme, 0, sizeof(NVMeDev));
@@ -165,10 +204,14 @@ int NVMeInitialise() {
 	AuTextOut("Cap min page sz -> %d max -> %d \n", (((cap) >> 48) & 0xfU), (((cap) >> 52) & 0xfU));
 
 	NVMeResetController();
+
 	uint32_t MaxMemoryPageSz = PAGE_SIZE << NVME_CAP_MPSMAX(cap);
 	uint32_t MinMemoryPageSz = PAGE_SIZE << NVME_CAP_MPSMIN(cap);
 	AuTextOut("[NVMe]: Max memory page size -> %d \n", MaxMemoryPageSz);
 	AuTextOut("[NVMe]: Min memory page size -> %d \n", MinMemoryPageSz);
+
+	nvme->minPageSize = MinMemoryPageSz;
+	nvme->maxPageSize = MaxMemoryPageSz;
 
 	uint16_t MaxQueueEntries = NVME_CAP_MQES(cap) + 1;
 	if (MaxQueueEntries <= 0)
@@ -177,6 +220,28 @@ int NVMeInitialise() {
 	AuTextOut("[NVMe]: MaxQueueEntries -%d \n", MaxQueueEntries);
 	nvme->maxQueueEntries = MaxQueueEntries;
 
+	NVMeSetMemoryPageSize(PAGE_SIZE);
+	NVMeSetCommandSet(NVME_CONFIG_COMMAND_SET_NVM);
+
+	uint32_t config = NVMeInl(NVME_REGISTER_CC);
+	config |= NVME_CFG_DEFAULT_IOCQES | NVME_CFG_DEFAULT_IOSQES;
+	NVMeOutl(NVME_REGISTER_CC, config);
+
+	uint64_t adminSQ = (uint64_t)AuPmmngrAlloc();
+	//memset((void*)adminSQ, 0, PAGE_SIZE);
+	uint64_t adminCQ = (uint64_t)AuPmmngrAlloc();
+	//memset((void*)adminCQ, 0, PAGE_SIZE);
+
+	nvme->adminSQPhysBase = adminSQ;
+	nvme->adminCQPhysBase = adminCQ;
+	nvme->adminSQMMIOBase = (uint64_t)AuMapMMIO(adminSQ, 1);
+	nvme->adminCQMMIOBase = (uint64_t)AuMapMMIO(adminCQ, 1);
+	
+	NVMeOutQ(NVME_REGISTER_ASQ, (adminSQ & UINT64_MAX));
+	NVMeOutQ(NVME_REGISTER_ACQ, (adminCQ & UINT64_MAX));
+
+
+	AuTextOut("NVME Command size -> %d \n", sizeof(NVMeCommand));
 	AuTextOut("[NVMe]: Reset completed \n");
 	return 0;
 }
@@ -200,5 +265,6 @@ AU_EXTERN AU_EXPORT int AuDriverUnload() {
 AU_EXTERN AU_EXPORT int AuDriverMain() {
 	AuDisableInterrupt();
 	NVMeInitialise();
+	for (;;);
 	return 0;
 }

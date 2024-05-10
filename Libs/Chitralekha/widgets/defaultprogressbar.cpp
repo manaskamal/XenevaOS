@@ -41,7 +41,7 @@ void ChDefaultProgressBarPainter(ChWidget* wid, ChWindow* win){
 	ChDrawRect(win->canv, pb->base.x, pb->base.y, pb->base.w, pb->base.h, 0xFFB9B9B9);
 
 	//draw progress width
-	ChDrawRect(win->canv, pb->base.x, pb->base.y, pb->progressPixelWidth, pb->base.h, GREEN);
+	ChColorDrawVerticalGradient(win->canv, pb->base.x, pb->base.y, pb->progressPixelWidth, pb->base.h,0xFF2DBD11,0xFF217A10);
 
 	ChFontSetSize(win->app->baseFont, 13);
 	char num[100];

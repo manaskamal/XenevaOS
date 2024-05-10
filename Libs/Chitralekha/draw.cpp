@@ -30,6 +30,7 @@
 #include "draw.h"
 #include <stdlib.h>
 #include <math.h>
+#include <string.h>
 
 #define sign(x) ((x < 0) ? -1 : ((x > 0) ? 1 : 0))
 
@@ -333,6 +334,7 @@ void ChDrawBoxBlur(ChCanvas * canv, uint32_t* inputBuf, uint32_t* outputBuf, int
 			uint8_t alpha = alphaTotal / 9;
 
 			outputBuf[(cy + j) * canv->canvasWidth + (cx + i)] = make_col_a(red, green, blue, alpha);
+			
 		}
 	}
 }

@@ -165,3 +165,7 @@ void ChColorDrawHorizontalGradient(ChCanvas *canv, int x, int y, int w, int h, u
 	}
 }
 
+
+double clamp(double x, double upper, double lower){
+	return min(upper, max(x, lower));
+}
