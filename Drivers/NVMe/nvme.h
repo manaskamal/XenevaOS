@@ -228,6 +228,9 @@ typedef struct _nvme_queue_ {
 	uint16_t sq_size;
 	uint16_t cq_count;
 	uint16_t sq_count;
+	uint16_t sq_tail;
+	uint16_t cq_head;
+	bool completion_cycle_state;
 	uint16_t nextCommandId;
 }NVMeQueue;
 
@@ -240,6 +243,7 @@ typedef struct _nvme_dev_ {
 	uint32_t maxPageSize;
 	list_t* NVMeQueueList;
 	uint32_t doorbellStride;
+
 }NVMeDev;
 
 #define NVME_REGISTER_CAP 0x00

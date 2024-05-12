@@ -37,6 +37,7 @@
 #include <Mm\kmalloc.h>
 #include <Hal\hal.h>
 #include <Mm\vmmngr.h>
+#include <_null.h>
 #include <Mm\pmmngr.h>
 
 NVMeDev *nvme;
@@ -199,15 +200,76 @@ NVMeQueue* NVMeCreateQueue(uint16_t queueID, uint64_t cqSize, uint64_t sqSize){
 	qu->cq_count = cqSize / sizeof(NVMeCompletion);
 	qu->sq_size = sqSize;
 	qu->sq_count = sqSize / sizeof(NVMeCommand);
+	qu->nextCommandId = 0;
+	qu->completion_cycle_state = true;
 	return qu;
 }
 
 void NVMeInterrupt(size_t vector, void* param) {
 	AuDisableInterrupt();
 	AuTextOut("NVMe Interrupt++ \n");
+	AuInterruptEnd(0);
+	AuEnableInterrupt();
 }
 
+/* NVMeGetQueue -- returns a queue specified by queue id
+ * @param queueid -- NVMe Queue ID number
+ */
+NVMeQueue* NVMeGetQueue(uint16_t queueid) {
+	for (int i = 0; i < nvme->NVMeQueueList->pointer; i++) {
+		NVMeQueue* queue = (NVMeQueue*)list_get_at(nvme->NVMeQueueList, i);
+		if (queue->queueId == queueid)
+			return queue;
+	}
+	return NULL;
+}
 
+void NVMeSubmitCommand(NVMeQueue *queue, NVMeCommand* cmd, NVMeCompletion* comp) {
+	//atomic lock required 
+	cmd->commandID = queue->nextCommandId++;
+	if (queue->nextCommandId == 0xffff)
+		queue->nextCommandId = 0;
+
+	memcpy(&queue->submissionQueue[queue->sq_tail], cmd, sizeof(NVMeCommand));
+
+	AuTextOut("Submitting -> %d \n", queue->submissionQueue[queue->sq_tail].opcode);
+	queue->sq_tail++;
+	if (queue->sq_tail >= queue->sq_count)
+		queue->sq_tail = 0;
+
+	*queue->nvmeSQDoorbell = queue->sq_tail;
+
+	while (queue->completion_cycle_state == !queue->completionQueue[queue->cq_head].phaseTag)
+		;
+
+	memcpy(comp, &queue->completionQueue[queue->cq_head], sizeof(NVMeCompletion));
+
+	if (++queue->cq_head >= queue->cq_count){
+		queue->cq_head = 0;
+		queue->completion_cycle_state = !queue->completion_cycle_state;
+	}
+
+	*queue->nvmeCQDoorbell = queue->cq_head;
+	//atomic lock release
+}
+
+void NVMeIdentifyController() {
+	uint64_t controlphys = (uint64_t)AuPmmngrAlloc();
+
+	NVMeCommand iden;
+	memset(&iden,0, sizeof(NVMeCommand));
+	iden.opcode = AdminCmdIdentify;
+	iden.prp1 = controlphys & UINT64_MAX;
+	iden.identify.cns = NVMeIdentifyCommand::CNSContoller;
+
+	NVMeCompletion comp;
+	NVMeQueue* admin = NVMeGetQueue(0);
+	NVMeSubmitCommand(admin, &iden, &comp);
+
+	AuTextOut("NVMe Command successed %d \n", comp.status);
+
+
+}
 /*
 * NVMeInitialise -- start nvme storage class
 */
@@ -324,6 +386,7 @@ int NVMeInitialise() {
 
 	AuTextOut("NVME Command size -> %d , completion -> %d \n", sizeof(NVMeCommand), sizeof(NVMeCompletion));
 	AuTextOut("[NVMe]: Reset completed \n");
+
 	return 0;
 }
 
@@ -347,6 +410,7 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 	AuDisableInterrupt();
 	NVMeInitialise();
 	AuEnableInterrupt();
+	NVMeIdentifyController();
 	for (;;);
 	return 0;
 }
