@@ -205,6 +205,9 @@ NVMeQueue* NVMeCreateQueue(uint16_t queueID, uint64_t cqSize, uint64_t sqSize){
 	return qu;
 }
 
+/*
+ * NVMeInterrupt -- interrupt handler for NVMe
+ */
 void NVMeInterrupt(size_t vector, void* param) {
 	AuDisableInterrupt();
 	AuTextOut("NVMe Interrupt++ \n");
@@ -224,6 +227,13 @@ NVMeQueue* NVMeGetQueue(uint16_t queueid) {
 	return NULL;
 }
 
+
+/*
+ * NVMeSubmitCommand -- submits commands and waits for completion data
+ * @param queue -- NVMe Queue data structure
+ * @param cmd -- NVMe command
+ * @param comp -- Completion data structure
+ */
 void NVMeSubmitCommand(NVMeQueue *queue, NVMeCommand* cmd, NVMeCompletion* comp) {
 	//atomic lock required 
 	cmd->commandID = queue->nextCommandId++;
@@ -253,19 +263,28 @@ void NVMeSubmitCommand(NVMeQueue *queue, NVMeCommand* cmd, NVMeCompletion* comp)
 	//atomic lock release
 }
 
+/*
+ * NVMeIdentifyController -- identify controller command
+ */
 void NVMeIdentifyController() {
-	uint64_t controlphys = (uint64_t)AuPmmngrAlloc();
+	uint64_t* controlphys = (uint64_t*)AuPmmngrAlloc();
+	memset(controlphys, 0, PAGE_SIZE);
 
 	NVMeCommand iden;
 	memset(&iden,0, sizeof(NVMeCommand));
 	iden.opcode = AdminCmdIdentify;
-	iden.prp1 = controlphys & UINT64_MAX;
+	iden.prp1 = ((uint64_t)controlphys & UINT64_MAX);
 	iden.identify.cns = NVMeIdentifyCommand::CNSContoller;
 
 	NVMeCompletion comp;
 	NVMeQueue* admin = NVMeGetQueue(0);
 	NVMeSubmitCommand(admin, &iden, &comp);
 
+	NVMeControllerIdentity* ci = (NVMeControllerIdentity*)controlphys;
+	ci->modelNumber[39] = 0;
+	ci->serialNumber[19] = 0;
+	AuTextOut("Model Number -> %s \n", ci->modelNumber);
+	AuTextOut("Serial Number -> %s \n", ci->serialNumber);
 	AuTextOut("NVMe Command successed %d \n", comp.status);
 
 

@@ -211,6 +211,52 @@ enum AdminCommands {
 };
 
 
+typedef volatile struct _controller_identity_ {
+	uint16_t vendorID;
+	uint16_t subsystemVendorID;
+	int8_t serialNumber[20];
+	int8_t modelNumber[40];
+	int8_t firmwareRevision[8];
+	uint8_t recommendedArbitrationBurst;
+	uint8_t ieee[3];
+	uint8_t cmic;
+	uint8_t maximumDataTransferSize;
+	uint16_t controllerID;
+	uint32_t version;
+	uint32_t rtd3ResumeLatency;
+	uint32_t rtd3EntryLatency;
+	uint32_t oaes;
+	uint32_t controllerAttributes;
+	uint16_t rrls;
+	uint8_t reserved[9];
+	uint8_t controllerType;
+	uint8_t fGUID[16];
+	uint16_t crdt[3];
+	uint8_t reserved2[122];
+	uint16_t oacs;
+	uint8_t acl;
+	uint8_t aerl;
+	uint8_t firmwareUpdates;
+	uint8_t logPageAttributes;
+	uint8_t errorLogPageEntries;
+	uint8_t numberOfPowerStates;
+	uint8_t apsta;
+	uint16_t wcTemp;
+	uint16_t ccTemp;
+	uint16_t mtfa;
+	uint32_t hostMemoryBufferPreferredSize;
+	uint32_t hostMemoryBufferMinimumSize;
+	uint8_t unused[232];
+	uint8_t sqEntrySize;
+	uint8_t cqEntrySize;
+	uint16_t maxCmd;
+	uint32_t numNamespaces;
+	uint8_t unused2[248];
+	int8_t name[256];
+	uint8_t unused3[3072];
+}NVMeControllerIdentity;
+//static_assert(sizeof(NVMeControllerIdentity) == 4096,"NVMe packing error !");
+
 typedef struct _nvme_queue_ {
 	uint16_t queueId;
 	uint64_t completionMMIOBase;

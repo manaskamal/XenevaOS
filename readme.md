@@ -21,6 +21,7 @@ with hybrid design and the entire operating system is known as _'Xeneva'_.
 13. Graphics Library known as "Chitralekha"
 13. Xeneva Terminal with basic ANSI/VT100 escape sequence support
 14. Desktop environment called Namdapha Desktop
+15. Storage supports : AHCI/SATA, NVMe
 
 
 _And many more coming soon_
