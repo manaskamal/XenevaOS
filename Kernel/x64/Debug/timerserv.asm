@@ -14,8 +14,8 @@ EXTRN	?AuTimerCreate@@YAXGHE@Z:PROC			; AuTimerCreate
 EXTRN	?AuTimerStart@@YAXG@Z:PROC			; AuTimerStart
 EXTRN	?AuTimerStop@@YAXG@Z:PROC			; AuTimerStop
 EXTRN	?AuTimerDestroy@@YAXG@Z:PROC			; AuTimerDestroy
-EXTRN	?x86_64_gettimeofday@@YAHPEAU_timeval_@@@Z:PROC	; x86_64_gettimeofday
 EXTRN	x64_cli:PROC
+EXTRN	AuGetTimeOfTheDay:PROC
 pdata	SEGMENT
 $pdata$?CreateTimer@@YAHHHE@Z DD imagerel $LN3
 	DD	imagerel $LN3+49
@@ -52,43 +52,43 @@ val$ = 32
 ptr$ = 64
 ?GetTimeOfDay@@YAHPEAX@Z PROC				; GetTimeOfDay
 
-; 83   : int GetTimeOfDay(void* ptr) {
+; 84   : int GetTimeOfDay(void* ptr) {
 
 $LN4:
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 56					; 00000038H
 
-; 84   : 	x64_cli();
+; 85   : 	x64_cli();
 
 	call	x64_cli
 
-; 85   : 	if (!ptr)
+; 86   : 	if (!ptr)
 
 	cmp	QWORD PTR ptr$[rsp], 0
 	jne	SHORT $LN1@GetTimeOfD
 
-; 86   : 		return -1;
+; 87   : 		return -1;
 
 	mov	eax, -1
 	jmp	SHORT $LN2@GetTimeOfD
 $LN1@GetTimeOfD:
 
-; 87   : 	timeval *val = (timeval*)ptr;
+; 88   : 	timeval *val = (timeval*)ptr;
 
 	mov	rax, QWORD PTR ptr$[rsp]
 	mov	QWORD PTR val$[rsp], rax
 
-; 88   : 	x86_64_gettimeofday(val);
+; 89   : 	AuGetTimeOfTheDay(val);
 
 	mov	rcx, QWORD PTR val$[rsp]
-	call	?x86_64_gettimeofday@@YAHPEAU_timeval_@@@Z ; x86_64_gettimeofday
+	call	AuGetTimeOfTheDay
 
-; 89   : 	return 0;
+; 90   : 	return 0;
 
 	xor	eax, eax
 $LN2@GetTimeOfD:
 
-; 90   : }
+; 91   : }
 
 	add	rsp, 56					; 00000038H
 	ret	0
@@ -100,26 +100,26 @@ _TEXT	SEGMENT
 threadID$ = 48
 ?DestroyTimer@@YAHH@Z PROC				; DestroyTimer
 
-; 71   : int DestroyTimer(int threadID) {
+; 72   : int DestroyTimer(int threadID) {
 
 $LN3:
 	mov	DWORD PTR [rsp+8], ecx
 	sub	rsp, 40					; 00000028H
 
-; 72   : 	x64_cli();
+; 73   : 	x64_cli();
 
 	call	x64_cli
 
-; 73   : 	AuTimerDestroy(threadID);
+; 74   : 	AuTimerDestroy(threadID);
 
 	movzx	ecx, WORD PTR threadID$[rsp]
 	call	?AuTimerDestroy@@YAXG@Z			; AuTimerDestroy
 
-; 74   : 	return 1;
+; 75   : 	return 1;
 
 	mov	eax, 1
 
-; 75   : }
+; 76   : }
 
 	add	rsp, 40					; 00000028H
 	ret	0
@@ -131,26 +131,26 @@ _TEXT	SEGMENT
 threadID$ = 48
 ?StopTimer@@YAHH@Z PROC					; StopTimer
 
-; 60   : int StopTimer(int threadID) {
+; 61   : int StopTimer(int threadID) {
 
 $LN3:
 	mov	DWORD PTR [rsp+8], ecx
 	sub	rsp, 40					; 00000028H
 
-; 61   : 	x64_cli();
+; 62   : 	x64_cli();
 
 	call	x64_cli
 
-; 62   : 	AuTimerStop(threadID);
+; 63   : 	AuTimerStop(threadID);
 
 	movzx	ecx, WORD PTR threadID$[rsp]
 	call	?AuTimerStop@@YAXG@Z			; AuTimerStop
 
-; 63   : 	return 0;
+; 64   : 	return 0;
 
 	xor	eax, eax
 
-; 64   : }
+; 65   : }
 
 	add	rsp, 40					; 00000028H
 	ret	0
@@ -162,26 +162,26 @@ _TEXT	SEGMENT
 threadID$ = 48
 ?StartTimer@@YAHH@Z PROC				; StartTimer
 
-; 51   : int StartTimer(int threadID) {
+; 52   : int StartTimer(int threadID) {
 
 $LN3:
 	mov	DWORD PTR [rsp+8], ecx
 	sub	rsp, 40					; 00000028H
 
-; 52   : 	x64_cli();
+; 53   : 	x64_cli();
 
 	call	x64_cli
 
-; 53   : 	AuTimerStart(threadID);
+; 54   : 	AuTimerStart(threadID);
 
 	movzx	ecx, WORD PTR threadID$[rsp]
 	call	?AuTimerStart@@YAXG@Z			; AuTimerStart
 
-; 54   : 	return 0;
+; 55   : 	return 0;
 
 	xor	eax, eax
 
-; 55   : }
+; 56   : }
 
 	add	rsp, 40					; 00000028H
 	ret	0
@@ -195,7 +195,7 @@ maxTickLimit$ = 56
 updatemode$ = 64
 ?CreateTimer@@YAHHHE@Z PROC				; CreateTimer
 
-; 42   : int CreateTimer(int threadID,int maxTickLimit,uint8_t updatemode) {
+; 43   : int CreateTimer(int threadID,int maxTickLimit,uint8_t updatemode) {
 
 $LN3:
 	mov	BYTE PTR [rsp+24], r8b
@@ -203,22 +203,22 @@ $LN3:
 	mov	DWORD PTR [rsp+8], ecx
 	sub	rsp, 40					; 00000028H
 
-; 43   : 	x64_cli();
+; 44   : 	x64_cli();
 
 	call	x64_cli
 
-; 44   : 	AuTimerCreate(threadID, maxTickLimit, updatemode);
+; 45   : 	AuTimerCreate(threadID, maxTickLimit, updatemode);
 
 	movzx	r8d, BYTE PTR updatemode$[rsp]
 	mov	edx, DWORD PTR maxTickLimit$[rsp]
 	movzx	ecx, WORD PTR threadID$[rsp]
 	call	?AuTimerCreate@@YAXGHE@Z		; AuTimerCreate
 
-; 45   : 	return 0;
+; 46   : 	return 0;
 
 	xor	eax, eax
 
-; 46   : }
+; 47   : }
 
 	add	rsp, 40					; 00000028H
 	ret	0

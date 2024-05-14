@@ -30,6 +30,7 @@
 #include <list.h>
 #include <Mm/kmalloc.h>
 #include <aucon.h>
+#include <Hal\serial.h>
 
 list_t* initialize_list() {
 	list_t *list = (list_t*)kmalloc(sizeof(list_t));
@@ -45,7 +46,7 @@ void list_add(list_t* list, void* data) {
 	current_data->prev = nullptr;
 	current_data->data = data;
 
-
+	
 
 	if (!list->entry_current) {
 		list->entry_current = current_data;

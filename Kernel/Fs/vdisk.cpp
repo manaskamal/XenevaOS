@@ -114,6 +114,8 @@ void AuVDiskRegisterPartition(AuVDisk* vdisk){
 	/* check if it's Efi partition */
 	if (strcmp(header->sig, "EFI PART") != 0)
 		return;
+	for (int i = 0; i < 8; i++)
+		SeTextOut("%c", aligned_buf[i]);
 
 	uint64_t part_lba = header->part_table_lba;
 
@@ -171,7 +173,8 @@ void AuVDiskRegister(AuVDisk* disk) {
 		return;
 
 	VdiskArray[_index] = disk;
-	AuTextOut("Vdisk registered name -> %s \n", disk->diskname);
+	AuTextOut("Vdisk registered name -> %s, serial -> %s \n", disk->diskname,
+		disk->serialNumber);
 
 	disk->__VDiskID = _index;
 	disk->num_partition = 1;

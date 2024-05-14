@@ -43,18 +43,32 @@ struct _VDISK_;
 typedef int(*vdisk_read) (_VDISK_ *disk, uint64_t lba, uint32_t count ,uint64_t* buffer);
 typedef int(*vdisk_write) (_VDISK_ *disk, uint64_t lba, uint32_t count, uint64_t *buffer);
 
+/* will needed in future */
+typedef struct _au_partition_data_ {
+	uint64_t startingLBA;
+	uint64_t lastLBA;
+	uint64_t maxBlocks;
+	GUID part_guid;
+	GUID part_unique_guid;
+}AuPartitionData;
+
+
 #pragma pack(push,1)
 /*  vdisk structures */
 typedef struct _VDISK_ {
 	char diskname[40];
+	char serialNumber[20];
 	void* data;
 	uint64_t max_blocks;
-	uint64_t startingLBA;
-	uint64_t currentLBA;
+	uint64_t blockSize;
 	uint8_t __VDiskID;
 
-	/* partition specific*/
+	//----------------------//
+	// partition specific   //
+	//----------------------//
 	uint8_t num_partition;
+	uint64_t startingLBA;
+	uint64_t currentLBA;
 
 	/* for now only 1 partition 
 	 * is supported 
@@ -66,7 +80,9 @@ typedef struct _VDISK_ {
 	 */
 	AuVFSNode* fsys;
 	
-	/* disk specific*/
+	//----------------------//
+	//   disk specific      //
+	//=======================//
 	vdisk_read Read;
 	vdisk_write Write;
 	/* more device specific functions 

@@ -10,9 +10,9 @@ _BSS	SEGMENT
 ?__ps2mouse@@3PEAU__ps2mouse__@@EA DQ 01H DUP (?)	; __ps2mouse
 _BSS	ENDS
 CONST	SEGMENT
-$SG3906	DB	'Right clicked ', 0dH, 0aH, 00H
+$SG3908	DB	'Right clicked ', 0dH, 0aH, 00H
 	ORG $+7
-$SG3929	DB	'PS2 Mouse with scroll wheel ', 0aH, 00H
+$SG3931	DB	'PS2 Mouse with scroll wheel ', 0aH, 00H
 CONST	ENDS
 PUBLIC	?AuPS2MouseInitialise@@YAXXZ			; AuPS2MouseInitialise
 PUBLIC	?AuPS2MouseSetPos@@YAXHH@Z			; AuPS2MouseSetPos
@@ -450,7 +450,7 @@ $LN8@PS2MouseHa:
 
 ; 174  : 			SeTextOut("Right clicked \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG3906
+	lea	rcx, OFFSET FLAT:$SG3908
 	call	SeTextOut
 
 ; 175  : 			__ps2mouse->mouse_butt_state |= RIGHT_CLICK;
@@ -1011,7 +1011,7 @@ $LN4:
 
 ; 270  : 		AuTextOut("PS2 Mouse with scroll wheel \n");
 
-	lea	rcx, OFFSET FLAT:$SG3929
+	lea	rcx, OFFSET FLAT:$SG3931
 	call	AuTextOut
 
 ; 271  : 		__ps2mouse->mouse_mode = MOUSE_SCROLLWHEEL;

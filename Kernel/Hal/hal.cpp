@@ -106,3 +106,14 @@ AU_EXTERN AU_EXPORT void AuDisableInterrupt() {
 AU_EXTERN AU_EXPORT void AuEnableInterrupt() {
 	x64_sti();
 }
+
+/*
+ * AuGetTimeOfTheDay -- return current time in unix 
+ * format
+ * @param tv -- timeval structure
+ */
+AU_EXTERN AU_EXPORT int AuGetTimeOfTheDay(timeval *tv) {
+#ifdef ARCH_X64
+	return x86_64_gettimeofday(tv);
+#endif
+}

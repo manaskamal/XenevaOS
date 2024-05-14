@@ -45,15 +45,15 @@ list$ = 48
 index$ = 56
 list_get_at PROC
 
-; 65   : void * list_get_at(list_t* list, unsigned int index) {
+; 66   : void * list_get_at(list_t* list, unsigned int index) {
 
 $LN10:
 	mov	DWORD PTR [rsp+16], edx
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 40					; 00000028H
 
-; 66   : 
-; 67   : 	if (list->pointer == 0 || index >= list->pointer)
+; 67   : 
+; 68   : 	if (list->pointer == 0 || index >= list->pointer)
 
 	mov	rax, QWORD PTR list$[rsp]
 	cmp	DWORD PTR [rax], 0
@@ -64,21 +64,21 @@ $LN10:
 	jb	SHORT $LN5@list_get_a
 $LN4@list_get_a:
 
-; 68   : 		return nullptr;
+; 69   : 		return nullptr;
 
 	xor	eax, eax
 	jmp	SHORT $LN6@list_get_a
 $LN5@list_get_a:
 
-; 69   : 
-; 70   : 	dataentry * current_node = list->entry_current;
+; 70   : 
+; 71   : 	dataentry * current_node = list->entry_current;
 
 	mov	rax, QWORD PTR list$[rsp]
 	mov	rax, QWORD PTR [rax+4]
 	mov	QWORD PTR current_node$[rsp], rax
 
-; 71   : 
-; 72   : 	for (unsigned int current_index = 0; (current_index < index) && current_node; current_index++)
+; 72   : 
+; 73   : 	for (unsigned int current_index = 0; (current_index < index) && current_node; current_index++)
 
 	mov	DWORD PTR current_index$1[rsp], 0
 	jmp	SHORT $LN3@list_get_a
@@ -93,7 +93,7 @@ $LN3@list_get_a:
 	cmp	QWORD PTR current_node$[rsp], 0
 	je	SHORT $LN1@list_get_a
 
-; 73   : 		current_node = current_node->next;
+; 74   : 		current_node = current_node->next;
 
 	mov	rax, QWORD PTR current_node$[rsp]
 	mov	rax, QWORD PTR [rax]
@@ -101,8 +101,8 @@ $LN3@list_get_a:
 	jmp	SHORT $LN2@list_get_a
 $LN1@list_get_a:
 
-; 74   : 
-; 75   : 	return current_node ? current_node->data : nullptr;
+; 75   : 
+; 76   : 	return current_node ? current_node->data : nullptr;
 
 	cmp	QWORD PTR current_node$[rsp], 0
 	je	SHORT $LN8@list_get_a
@@ -116,7 +116,7 @@ $LN9@list_get_a:
 	mov	rax, QWORD PTR tv75[rsp]
 $LN6@list_get_a:
 
-; 76   : }
+; 77   : }
 
 	add	rsp, 40					; 00000028H
 	ret	0
@@ -132,17 +132,17 @@ list$ = 80
 index$ = 88
 list_remove PROC
 
-; 78   : void* list_remove(list_t* list, unsigned int index) {
+; 79   : void* list_remove(list_t* list, unsigned int index) {
 
 $LN12:
 	mov	DWORD PTR [rsp+16], edx
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 72					; 00000048H
 
-; 79   : 
-; 80   : 	void* payload;
-; 81   : 
-; 82   : 	if (list->pointer == 0 || index >= list->pointer)
+; 80   : 
+; 81   : 	void* payload;
+; 82   : 
+; 83   : 	if (list->pointer == 0 || index >= list->pointer)
 
 	mov	rax, QWORD PTR list$[rsp]
 	cmp	DWORD PTR [rax], 0
@@ -153,21 +153,21 @@ $LN12:
 	jb	SHORT $LN9@list_remov
 $LN8@list_remov:
 
-; 83   : 		return nullptr;
+; 84   : 		return nullptr;
 
 	xor	eax, eax
 	jmp	$LN10@list_remov
 $LN9@list_remov:
 
-; 84   : 
-; 85   : 	dataentry* current_node = list->entry_current;
+; 85   : 
+; 86   : 	dataentry* current_node = list->entry_current;
 
 	mov	rax, QWORD PTR list$[rsp]
 	mov	rax, QWORD PTR [rax+4]
 	mov	QWORD PTR current_node$[rsp], rax
 
-; 86   : 
-; 87   : 	for (unsigned int current_index = 0; (current_index < index) && current_node; current_index++)
+; 87   : 
+; 88   : 	for (unsigned int current_index = 0; (current_index < index) && current_node; current_index++)
 
 	mov	DWORD PTR current_index$1[rsp], 0
 	jmp	SHORT $LN7@list_remov
@@ -182,7 +182,7 @@ $LN7@list_remov:
 	cmp	QWORD PTR current_node$[rsp], 0
 	je	SHORT $LN5@list_remov
 
-; 88   : 		current_node = current_node->next;
+; 89   : 		current_node = current_node->next;
 
 	mov	rax, QWORD PTR current_node$[rsp]
 	mov	rax, QWORD PTR [rax]
@@ -190,32 +190,32 @@ $LN7@list_remov:
 	jmp	SHORT $LN6@list_remov
 $LN5@list_remov:
 
-; 89   : 
-; 90   : 	if (!current_node)
+; 90   : 
+; 91   : 	if (!current_node)
 
 	cmp	QWORD PTR current_node$[rsp], 0
 	jne	SHORT $LN4@list_remov
 
-; 91   : 		return nullptr;
+; 92   : 		return nullptr;
 
 	xor	eax, eax
 	jmp	$LN10@list_remov
 $LN4@list_remov:
 
-; 92   : 	payload = current_node->data;
+; 93   : 	payload = current_node->data;
 
 	mov	rax, QWORD PTR current_node$[rsp]
 	mov	rax, QWORD PTR [rax+16]
 	mov	QWORD PTR payload$[rsp], rax
 
-; 93   : 
-; 94   : 	if (current_node->prev)
+; 94   : 
+; 95   : 	if (current_node->prev)
 
 	mov	rax, QWORD PTR current_node$[rsp]
 	cmp	QWORD PTR [rax+8], 0
 	je	SHORT $LN3@list_remov
 
-; 95   : 		current_node->prev->next = current_node->next;
+; 96   : 		current_node->prev->next = current_node->next;
 
 	mov	rax, QWORD PTR current_node$[rsp]
 	mov	rax, QWORD PTR [rax+8]
@@ -224,14 +224,14 @@ $LN4@list_remov:
 	mov	QWORD PTR [rax], rcx
 $LN3@list_remov:
 
-; 96   : 
-; 97   : 	if (current_node->next)
+; 97   : 
+; 98   : 	if (current_node->next)
 
 	mov	rax, QWORD PTR current_node$[rsp]
 	cmp	QWORD PTR [rax], 0
 	je	SHORT $LN2@list_remov
 
-; 98   : 		current_node->next->prev = current_node->prev;
+; 99   : 		current_node->next->prev = current_node->prev;
 
 	mov	rax, QWORD PTR current_node$[rsp]
 	mov	rax, QWORD PTR [rax]
@@ -240,13 +240,13 @@ $LN3@list_remov:
 	mov	QWORD PTR [rax+8], rcx
 $LN2@list_remov:
 
-; 99   : 
-; 100  : 	if (index == 0)
+; 100  : 
+; 101  : 	if (index == 0)
 
 	cmp	DWORD PTR index$[rsp], 0
 	jne	SHORT $LN1@list_remov
 
-; 101  : 		list->entry_current = current_node->next;
+; 102  : 		list->entry_current = current_node->next;
 
 	mov	rax, QWORD PTR list$[rsp]
 	mov	rcx, QWORD PTR current_node$[rsp]
@@ -254,14 +254,14 @@ $LN2@list_remov:
 	mov	QWORD PTR [rax+4], rcx
 $LN1@list_remov:
 
-; 102  : 
-; 103  : 	kfree(current_node);
+; 103  : 
+; 104  : 	kfree(current_node);
 
 	mov	rcx, QWORD PTR current_node$[rsp]
 	call	kfree
 
-; 104  : 
-; 105  : 	list->pointer--;
+; 105  : 
+; 106  : 	list->pointer--;
 
 	mov	rax, QWORD PTR list$[rsp]
 	mov	eax, DWORD PTR [rax]
@@ -269,13 +269,13 @@ $LN1@list_remov:
 	mov	rcx, QWORD PTR list$[rsp]
 	mov	DWORD PTR [rcx], eax
 
-; 106  : 
-; 107  : 	return payload;
+; 107  : 
+; 108  : 	return payload;
 
 	mov	rax, QWORD PTR payload$[rsp]
 $LN10@list_remov:
 
-; 108  : }
+; 109  : }
 
 	add	rsp, 72					; 00000048H
 	ret	0
@@ -290,96 +290,96 @@ list$ = 64
 data$ = 72
 list_add PROC
 
-; 42   : void list_add(list_t* list, void* data) {
+; 43   : void list_add(list_t* list, void* data) {
 
 $LN7:
 	mov	QWORD PTR [rsp+16], rdx
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 56					; 00000038H
 
-; 43   : 	dataentry *current_data = (dataentry*)kmalloc(sizeof(dataentry));
+; 44   : 	dataentry *current_data = (dataentry*)kmalloc(sizeof(dataentry));
 
 	mov	ecx, 24
 	call	kmalloc
 	mov	QWORD PTR current_data$[rsp], rax
 
-; 44   : 	current_data->next = nullptr;
+; 45   : 	current_data->next = nullptr;
 
 	mov	rax, QWORD PTR current_data$[rsp]
 	mov	QWORD PTR [rax], 0
 
-; 45   : 	current_data->prev = nullptr;
+; 46   : 	current_data->prev = nullptr;
 
 	mov	rax, QWORD PTR current_data$[rsp]
 	mov	QWORD PTR [rax+8], 0
 
-; 46   : 	current_data->data = data;
+; 47   : 	current_data->data = data;
 
 	mov	rax, QWORD PTR current_data$[rsp]
 	mov	rcx, QWORD PTR data$[rsp]
 	mov	QWORD PTR [rax+16], rcx
 
-; 47   : 
 ; 48   : 
-; 49   : 
-; 50   : 	if (!list->entry_current) {
+; 49   : 	
+; 50   : 
+; 51   : 	if (!list->entry_current) {
 
 	mov	rax, QWORD PTR list$[rsp]
 	cmp	QWORD PTR [rax+4], 0
 	jne	SHORT $LN4@list_add
 
-; 51   : 		list->entry_current = current_data;
+; 52   : 		list->entry_current = current_data;
 
 	mov	rax, QWORD PTR list$[rsp]
 	mov	rcx, QWORD PTR current_data$[rsp]
 	mov	QWORD PTR [rax+4], rcx
 
-; 52   : 	}
-; 53   : 	else {
+; 53   : 	}
+; 54   : 	else {
 
 	jmp	SHORT $LN3@list_add
 $LN4@list_add:
 
-; 54   : 		dataentry * current_entry = list->entry_current;
+; 55   : 		dataentry * current_entry = list->entry_current;
 
 	mov	rax, QWORD PTR list$[rsp]
 	mov	rax, QWORD PTR [rax+4]
 	mov	QWORD PTR current_entry$1[rsp], rax
 $LN2@list_add:
 
-; 55   : 		while (current_entry->next) {
+; 56   : 		while (current_entry->next) {
 
 	mov	rax, QWORD PTR current_entry$1[rsp]
 	cmp	QWORD PTR [rax], 0
 	je	SHORT $LN1@list_add
 
-; 56   : 			current_entry = current_entry->next;
+; 57   : 			current_entry = current_entry->next;
 
 	mov	rax, QWORD PTR current_entry$1[rsp]
 	mov	rax, QWORD PTR [rax]
 	mov	QWORD PTR current_entry$1[rsp], rax
 
-; 57   : 		}
+; 58   : 		}
 
 	jmp	SHORT $LN2@list_add
 $LN1@list_add:
 
-; 58   : 		current_entry->next = current_data;
+; 59   : 		current_entry->next = current_data;
 
 	mov	rax, QWORD PTR current_entry$1[rsp]
 	mov	rcx, QWORD PTR current_data$[rsp]
 	mov	QWORD PTR [rax], rcx
 
-; 59   : 		current_data->prev = current_entry;
+; 60   : 		current_data->prev = current_entry;
 
 	mov	rax, QWORD PTR current_data$[rsp]
 	mov	rcx, QWORD PTR current_entry$1[rsp]
 	mov	QWORD PTR [rax+8], rcx
 $LN3@list_add:
 
-; 60   : 	}
-; 61   : 
-; 62   : 	list->pointer++;
+; 61   : 	}
+; 62   : 
+; 63   : 	list->pointer++;
 
 	mov	rax, QWORD PTR list$[rsp]
 	mov	eax, DWORD PTR [rax]
@@ -387,7 +387,7 @@ $LN3@list_add:
 	mov	rcx, QWORD PTR list$[rsp]
 	mov	DWORD PTR [rcx], eax
 
-; 63   : }
+; 64   : }
 
 	add	rsp, 56					; 00000038H
 	ret	0
@@ -399,32 +399,32 @@ _TEXT	SEGMENT
 list$ = 32
 initialize_list PROC
 
-; 34   : list_t* initialize_list() {
+; 35   : list_t* initialize_list() {
 
 $LN3:
 	sub	rsp, 56					; 00000038H
 
-; 35   : 	list_t *list = (list_t*)kmalloc(sizeof(list_t));
+; 36   : 	list_t *list = (list_t*)kmalloc(sizeof(list_t));
 
 	mov	ecx, 12
 	call	kmalloc
 	mov	QWORD PTR list$[rsp], rax
 
-; 36   : 	list->entry_current = nullptr;
+; 37   : 	list->entry_current = nullptr;
 
 	mov	rax, QWORD PTR list$[rsp]
 	mov	QWORD PTR [rax+4], 0
 
-; 37   : 	list->pointer = 0;
+; 38   : 	list->pointer = 0;
 
 	mov	rax, QWORD PTR list$[rsp]
 	mov	DWORD PTR [rax], 0
 
-; 38   : 	return list;
+; 39   : 	return list;
 
 	mov	rax, QWORD PTR list$[rsp]
 
-; 39   : }
+; 40   : }
 
 	add	rsp, 56					; 00000038H
 	ret	0

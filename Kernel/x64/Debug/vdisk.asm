@@ -10,24 +10,26 @@ _BSS	SEGMENT
 ?VdiskArray@@3PAPEAU_VDISK_@@A DQ 01aH DUP (?)		; VdiskArray
 _BSS	ENDS
 CONST	SEGMENT
-$SG3453	DB	'EFI PART', 00H
+$SG3468	DB	'EFI PART', 00H
 	ORG $+3
-$SG3475	DB	'%c', 00H
+$SG3473	DB	'%c', 00H
 	ORG $+1
-$SG3476	DB	0aH, 00H
+$SG3495	DB	'%c', 00H
+	ORG $+1
+$SG3496	DB	0aH, 00H
 	ORG $+2
-$SG3484	DB	'%x', 00H
-	ORG $+1
-$SG3477	DB	'VDisk partition created startLBA -> %d ', 0aH, 00H
+$SG3497	DB	'VDisk partition created startLBA -> %d ', 0aH, 00H
 	ORG $+3
-$SG3485	DB	0aH, 00H
+$SG3504	DB	'%x', 00H
+	ORG $+1
+$SG3498	DB	'vDisk partition guid : ', 00H
+$SG3499	DB	'0x%x-0x%x-0x%x-0x', 00H
 	ORG $+2
-$SG3478	DB	'vDisk partition guid : ', 00H
-$SG3479	DB	'0x%x-0x%x-0x%x-0x', 00H
+$SG3505	DB	0aH, 00H
 	ORG $+2
-$SG3486	DB	0aH, 00H
-	ORG $+2
-$SG3492	DB	'Vdisk registered name -> %s ', 0aH, 00H
+$SG3506	DB	0aH, 00H
+	ORG $+6
+$SG3512	DB	'Vdisk registered name -> %s, serial -> %s ', 0aH, 00H
 CONST	ENDS
 PUBLIC	?AuVDiskInitialise@@YAXXZ			; AuVDiskInitialise
 PUBLIC	AuVDiskGetIndex
@@ -43,6 +45,7 @@ EXTRN	kfree:PROC
 EXTRN	AuTextOut:PROC
 EXTRN	strcmp:PROC
 EXTRN	memset:PROC
+EXTRN	SeTextOut:PROC
 EXTRN	AuPmmngrAlloc:PROC
 EXTRN	AuPmmngrFree:PROC
 pdata	SEGMENT
@@ -53,22 +56,22 @@ $pdata$AuVDiskGetIndex DD imagerel $LN7
 	DD	imagerel $LN7+59
 	DD	imagerel $unwind$AuVDiskGetIndex
 $pdata$AuVDiskRegister DD imagerel $LN4
-	DD	imagerel $LN4+117
+	DD	imagerel $LN4+129
 	DD	imagerel $unwind$AuVDiskRegister
 $pdata$AuCreateVDisk DD imagerel $LN3
 	DD	imagerel $LN3+47
 	DD	imagerel $unwind$AuCreateVDisk
 $pdata$AuVDiskRead DD imagerel $LN4
-	DD	imagerel $LN4+87
+	DD	imagerel $LN4+93
 	DD	imagerel $unwind$AuVDiskRead
 $pdata$AuVDiskWrite DD imagerel $LN4
-	DD	imagerel $LN4+87
+	DD	imagerel $LN4+93
 	DD	imagerel $unwind$AuVDiskWrite
 $pdata$AuVDiskDestroy DD imagerel $LN7
 	DD	imagerel $LN7+123
 	DD	imagerel $unwind$AuVDiskDestroy
-$pdata$?AuVDiskRegisterPartition@@YAXPEAU_VDISK_@@@Z DD imagerel $LN20
-	DD	imagerel $LN20+788
+$pdata$?AuVDiskRegisterPartition@@YAXPEAU_VDISK_@@@Z DD imagerel $LN23
+	DD	imagerel $LN23+851
 	DD	imagerel $unwind$?AuVDiskRegisterPartition@@YAXPEAU_VDISK_@@@Z
 pdata	ENDS
 xdata	SEGMENT
@@ -95,19 +98,20 @@ _TEXT	SEGMENT
 m$1 = 32
 m$2 = 36
 part$3 = 40
-j$4 = 48
+i$4 = 48
 k$5 = 52
-i$6 = 56
+j$6 = 56
+i$7 = 60
 buffer$ = 64
-header$ = 72
-aligned_buf$ = 80
+aligned_buf$ = 72
+header$ = 80
 part_lba$ = 88
 vdisk$ = 112
 ?AuVDiskRegisterPartition@@YAXPEAU_VDISK_@@@Z PROC	; AuVDiskRegisterPartition
 
 ; 106  : void AuVDiskRegisterPartition(AuVDisk* vdisk){
 
-$LN20:
+$LN23:
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 104				; 00000068H
 
@@ -130,7 +134,7 @@ $LN20:
 	mov	edx, 1
 	mov	rcx, QWORD PTR vdisk$[rsp]
 	mov	rax, QWORD PTR vdisk$[rsp]
-	call	QWORD PTR [rax+114]
+	call	QWORD PTR [rax+142]
 
 ; 110  : 	uint8_t* aligned_buf = (uint8_t*)buffer;
 
@@ -148,112 +152,135 @@ $LN20:
 ; 115  : 	if (strcmp(header->sig, "EFI PART") != 0)
 
 	mov	rax, QWORD PTR header$[rsp]
-	lea	rdx, OFFSET FLAT:$SG3453
+	lea	rdx, OFFSET FLAT:$SG3468
 	mov	rcx, rax
 	call	strcmp
 	test	eax, eax
-	je	SHORT $LN17@AuVDiskReg
+	je	SHORT $LN20@AuVDiskReg
 
 ; 116  : 		return;
 
-	jmp	$LN18@AuVDiskReg
+	jmp	$LN21@AuVDiskReg
+$LN20@AuVDiskReg:
+
+; 117  : 	for (int i = 0; i < 8; i++)
+
+	mov	DWORD PTR i$4[rsp], 0
+	jmp	SHORT $LN19@AuVDiskReg
+$LN18@AuVDiskReg:
+	mov	eax, DWORD PTR i$4[rsp]
+	inc	eax
+	mov	DWORD PTR i$4[rsp], eax
+$LN19@AuVDiskReg:
+	cmp	DWORD PTR i$4[rsp], 8
+	jge	SHORT $LN17@AuVDiskReg
+
+; 118  : 		SeTextOut("%c", aligned_buf[i]);
+
+	movsxd	rax, DWORD PTR i$4[rsp]
+	mov	rcx, QWORD PTR aligned_buf$[rsp]
+	movzx	eax, BYTE PTR [rcx+rax]
+	mov	edx, eax
+	lea	rcx, OFFSET FLAT:$SG3473
+	call	SeTextOut
+	jmp	SHORT $LN18@AuVDiskReg
 $LN17@AuVDiskReg:
 
-; 117  : 
-; 118  : 	uint64_t part_lba = header->part_table_lba;
+; 119  : 
+; 120  : 	uint64_t part_lba = header->part_table_lba;
 
 	mov	rax, QWORD PTR header$[rsp]
 	mov	rax, QWORD PTR [rax+72]
 	mov	QWORD PTR part_lba$[rsp], rax
 
-; 119  : 
-; 120  : 	for (int i = 0; i < header->num_part_entries; i++) {
+; 121  : 
+; 122  : 	for (int i = 0; i < header->num_part_entries; i++) {
 
-	mov	DWORD PTR i$6[rsp], 0
+	mov	DWORD PTR i$7[rsp], 0
 	jmp	SHORT $LN16@AuVDiskReg
 $LN15@AuVDiskReg:
-	mov	eax, DWORD PTR i$6[rsp]
+	mov	eax, DWORD PTR i$7[rsp]
 	inc	eax
-	mov	DWORD PTR i$6[rsp], eax
+	mov	DWORD PTR i$7[rsp], eax
 $LN16@AuVDiskReg:
 	mov	rax, QWORD PTR header$[rsp]
 	mov	eax, DWORD PTR [rax+80]
-	cmp	DWORD PTR i$6[rsp], eax
+	cmp	DWORD PTR i$7[rsp], eax
 	jae	$LN14@AuVDiskReg
 
-; 121  : 		memset(buffer, 0, 4096);
+; 123  : 		memset(buffer, 0, 4096);
 
 	mov	r8d, 4096				; 00001000H
 	xor	edx, edx
 	mov	rcx, QWORD PTR buffer$[rsp]
 	call	memset
 
-; 122  : 		vdisk->Read(vdisk, part_lba, 1, buffer);
+; 124  : 		vdisk->Read(vdisk, part_lba, 1, buffer);
 
 	mov	r9, QWORD PTR buffer$[rsp]
 	mov	r8d, 1
 	mov	rdx, QWORD PTR part_lba$[rsp]
 	mov	rcx, QWORD PTR vdisk$[rsp]
 	mov	rax, QWORD PTR vdisk$[rsp]
-	call	QWORD PTR [rax+114]
+	call	QWORD PTR [rax+142]
 
-; 123  : 		aligned_buf = (uint8_t*)buffer;
+; 125  : 		aligned_buf = (uint8_t*)buffer;
 
 	mov	rax, QWORD PTR buffer$[rsp]
 	mov	QWORD PTR aligned_buf$[rsp], rax
 
-; 124  : 		GPTPartition* part = (GPTPartition*)aligned_buf;
+; 126  : 		GPTPartition* part = (GPTPartition*)aligned_buf;
 
 	mov	rax, QWORD PTR aligned_buf$[rsp]
 	mov	QWORD PTR part$3[rsp], rax
 
-; 125  : 		if (part->first_lba != 0) {
+; 127  : 		if (part->first_lba != 0) {
 
 	mov	rax, QWORD PTR part$3[rsp]
 	cmp	QWORD PTR [rax+32], 0
 	je	$LN13@AuVDiskReg
 
-; 126  : 			vdisk->startingLBA = part->first_lba;
+; 128  : 			vdisk->startingLBA = part->first_lba;
 
 	mov	rax, QWORD PTR vdisk$[rsp]
 	mov	rcx, QWORD PTR part$3[rsp]
 	mov	rcx, QWORD PTR [rcx+32]
-	mov	QWORD PTR [rax+56], rcx
+	mov	QWORD PTR [rax+86], rcx
 
-; 127  : 			vdisk->currentLBA = vdisk->startingLBA;
+; 129  : 			vdisk->currentLBA = vdisk->startingLBA;
 
 	mov	rax, QWORD PTR vdisk$[rsp]
 	mov	rcx, QWORD PTR vdisk$[rsp]
-	mov	rcx, QWORD PTR [rcx+56]
-	mov	QWORD PTR [rax+64], rcx
+	mov	rcx, QWORD PTR [rcx+86]
+	mov	QWORD PTR [rax+94], rcx
 
-; 128  : 			vdisk->num_partition = 1;
+; 130  : 			vdisk->num_partition = 1;
 
 	mov	rax, QWORD PTR vdisk$[rsp]
-	mov	BYTE PTR [rax+73], 1
+	mov	BYTE PTR [rax+85], 1
 
-; 129  : 			vdisk->part_guid.Data1 = part->part_guid.Data1;
+; 131  : 			vdisk->part_guid.Data1 = part->part_guid.Data1;
 
 	mov	rax, QWORD PTR vdisk$[rsp]
 	mov	rcx, QWORD PTR part$3[rsp]
 	mov	ecx, DWORD PTR [rcx]
-	mov	DWORD PTR [rax+74], ecx
+	mov	DWORD PTR [rax+102], ecx
 
-; 130  : 			vdisk->part_guid.Data2 = part->part_guid.Data2;
+; 132  : 			vdisk->part_guid.Data2 = part->part_guid.Data2;
 
 	mov	rax, QWORD PTR vdisk$[rsp]
 	mov	rcx, QWORD PTR part$3[rsp]
 	movzx	ecx, WORD PTR [rcx+4]
-	mov	WORD PTR [rax+78], cx
+	mov	WORD PTR [rax+106], cx
 
-; 131  : 			vdisk->part_guid.Data3 = part->part_guid.Data3;
+; 133  : 			vdisk->part_guid.Data3 = part->part_guid.Data3;
 
 	mov	rax, QWORD PTR vdisk$[rsp]
 	mov	rcx, QWORD PTR part$3[rsp]
 	movzx	ecx, WORD PTR [rcx+6]
-	mov	WORD PTR [rax+80], cx
+	mov	WORD PTR [rax+108], cx
 
-; 132  : 			for (int m = 0; m < 8; m++)
+; 134  : 			for (int m = 0; m < 8; m++)
 
 	mov	DWORD PTR m$2[rsp], 0
 	jmp	SHORT $LN12@AuVDiskReg
@@ -265,40 +292,40 @@ $LN12@AuVDiskReg:
 	cmp	DWORD PTR m$2[rsp], 8
 	jge	SHORT $LN10@AuVDiskReg
 
-; 133  : 				vdisk->part_guid.Data4[m] = part->part_guid.Data4[m];
+; 135  : 				vdisk->part_guid.Data4[m] = part->part_guid.Data4[m];
 
 	movsxd	rax, DWORD PTR m$2[rsp]
 	movsxd	rcx, DWORD PTR m$2[rsp]
 	mov	rdx, QWORD PTR vdisk$[rsp]
 	mov	r8, QWORD PTR part$3[rsp]
 	movzx	eax, BYTE PTR [r8+rax+8]
-	mov	BYTE PTR [rdx+rcx+82], al
+	mov	BYTE PTR [rdx+rcx+110], al
 	jmp	SHORT $LN11@AuVDiskReg
 $LN10@AuVDiskReg:
 
-; 134  : 
-; 135  : 			vdisk->part_unique_guid.Data1 = part->part_unique_guid.Data1;
+; 136  : 
+; 137  : 			vdisk->part_unique_guid.Data1 = part->part_unique_guid.Data1;
 
 	mov	rax, QWORD PTR vdisk$[rsp]
 	mov	rcx, QWORD PTR part$3[rsp]
 	mov	ecx, DWORD PTR [rcx+16]
-	mov	DWORD PTR [rax+90], ecx
+	mov	DWORD PTR [rax+118], ecx
 
-; 136  : 			vdisk->part_unique_guid.Data2 = part->part_unique_guid.Data2;
+; 138  : 			vdisk->part_unique_guid.Data2 = part->part_unique_guid.Data2;
 
 	mov	rax, QWORD PTR vdisk$[rsp]
 	mov	rcx, QWORD PTR part$3[rsp]
 	movzx	ecx, WORD PTR [rcx+20]
-	mov	WORD PTR [rax+94], cx
+	mov	WORD PTR [rax+122], cx
 
-; 137  : 			vdisk->part_unique_guid.Data3 = part->part_unique_guid.Data3;
+; 139  : 			vdisk->part_unique_guid.Data3 = part->part_unique_guid.Data3;
 
 	mov	rax, QWORD PTR vdisk$[rsp]
 	mov	rcx, QWORD PTR part$3[rsp]
 	movzx	ecx, WORD PTR [rcx+22]
-	mov	WORD PTR [rax+96], cx
+	mov	WORD PTR [rax+124], cx
 
-; 138  : 			for (int m = 0; m < 8; m++)
+; 140  : 			for (int m = 0; m < 8; m++)
 
 	mov	DWORD PTR m$1[rsp], 0
 	jmp	SHORT $LN9@AuVDiskReg
@@ -310,85 +337,85 @@ $LN9@AuVDiskReg:
 	cmp	DWORD PTR m$1[rsp], 8
 	jge	SHORT $LN7@AuVDiskReg
 
-; 139  : 				vdisk->part_unique_guid.Data4[m] = part->part_guid.Data4[m];
+; 141  : 				vdisk->part_unique_guid.Data4[m] = part->part_guid.Data4[m];
 
 	movsxd	rax, DWORD PTR m$1[rsp]
 	movsxd	rcx, DWORD PTR m$1[rsp]
 	mov	rdx, QWORD PTR vdisk$[rsp]
 	mov	r8, QWORD PTR part$3[rsp]
 	movzx	eax, BYTE PTR [r8+rax+8]
-	mov	BYTE PTR [rdx+rcx+98], al
+	mov	BYTE PTR [rdx+rcx+126], al
 	jmp	SHORT $LN8@AuVDiskReg
 $LN7@AuVDiskReg:
 
-; 140  : 
-; 141  : 			for (int j = 0; j < 70; j++)
+; 142  : 
+; 143  : 			for (int j = 0; j < 70; j++)
 
-	mov	DWORD PTR j$4[rsp], 0
+	mov	DWORD PTR j$6[rsp], 0
 	jmp	SHORT $LN6@AuVDiskReg
 $LN5@AuVDiskReg:
-	mov	eax, DWORD PTR j$4[rsp]
+	mov	eax, DWORD PTR j$6[rsp]
 	inc	eax
-	mov	DWORD PTR j$4[rsp], eax
+	mov	DWORD PTR j$6[rsp], eax
 $LN6@AuVDiskReg:
-	cmp	DWORD PTR j$4[rsp], 70			; 00000046H
+	cmp	DWORD PTR j$6[rsp], 70			; 00000046H
 	jge	SHORT $LN4@AuVDiskReg
 
-; 142  : 				AuTextOut("%c", part->part_name[j]);
+; 144  : 				AuTextOut("%c", part->part_name[j]);
 
-	movsxd	rax, DWORD PTR j$4[rsp]
+	movsxd	rax, DWORD PTR j$6[rsp]
 	mov	rcx, QWORD PTR part$3[rsp]
 	movsx	eax, BYTE PTR [rcx+rax+56]
 	mov	edx, eax
-	lea	rcx, OFFSET FLAT:$SG3475
+	lea	rcx, OFFSET FLAT:$SG3495
 	call	AuTextOut
 	jmp	SHORT $LN5@AuVDiskReg
 $LN4@AuVDiskReg:
 $LN13@AuVDiskReg:
 
-; 143  : 		}
-; 144  : 		part_lba++;
+; 145  : 		}
+; 146  : 		part_lba++;
 
 	mov	rax, QWORD PTR part_lba$[rsp]
 	inc	rax
 	mov	QWORD PTR part_lba$[rsp], rax
 
-; 145  : 	}
+; 147  : 	}
 
 	jmp	$LN15@AuVDiskReg
 $LN14@AuVDiskReg:
 
-; 146  : 	AuTextOut("\n");
+; 148  : 	AuTextOut("\n");
 
-	lea	rcx, OFFSET FLAT:$SG3476
+	lea	rcx, OFFSET FLAT:$SG3496
 	call	AuTextOut
 
-; 147  : 	AuTextOut("VDisk partition created startLBA -> %d \n", vdisk->startingLBA);
+; 149  : 	AuTextOut("VDisk partition created startLBA -> %d \n", vdisk->startingLBA);
 
 	mov	rax, QWORD PTR vdisk$[rsp]
-	mov	rdx, QWORD PTR [rax+56]
-	lea	rcx, OFFSET FLAT:$SG3477
+	mov	rdx, QWORD PTR [rax+86]
+	lea	rcx, OFFSET FLAT:$SG3497
 	call	AuTextOut
 
-; 148  : 	AuTextOut("vDisk partition guid : ");
+; 150  : 	AuTextOut("vDisk partition guid : ");
 
-	lea	rcx, OFFSET FLAT:$SG3478
+	lea	rcx, OFFSET FLAT:$SG3498
 	call	AuTextOut
 
-; 149  : 	AuTextOut("0x%x-0x%x-0x%x-0x", vdisk->part_guid.Data1, vdisk->part_guid.Data2, vdisk->part_guid.Data3);
+; 151  : 	AuTextOut("0x%x-0x%x-0x%x-0x", vdisk->part_guid.Data1, vdisk->part_guid.Data2, vdisk->part_guid.Data3);
 
 	mov	rax, QWORD PTR vdisk$[rsp]
-	movzx	eax, WORD PTR [rax+80]
+	movzx	eax, WORD PTR [rax+108]
 	mov	rcx, QWORD PTR vdisk$[rsp]
-	movzx	ecx, WORD PTR [rcx+78]
+	movzx	ecx, WORD PTR [rcx+106]
 	mov	r9d, eax
 	mov	r8d, ecx
 	mov	rax, QWORD PTR vdisk$[rsp]
-	mov	edx, DWORD PTR [rax+74]
-	lea	rcx, OFFSET FLAT:$SG3479
+	mov	edx, DWORD PTR [rax+102]
+	lea	rcx, OFFSET FLAT:$SG3499
 	call	AuTextOut
 
-; 150  : 	for (int k = 0; k < 8; k++)
+; 152  : 	for (int k = 0; k < 8; k++)
 
 	mov	DWORD PTR k$5[rsp], 0
 	jmp	SHORT $LN3@AuVDiskReg
@@ -400,44 +427,44 @@ $LN3@AuVDiskReg:
 	cmp	DWORD PTR k$5[rsp], 8
 	jge	SHORT $LN1@AuVDiskReg
 
-; 151  : 		AuTextOut("%x", vdisk->part_guid.Data4[k]);
+; 153  : 		AuTextOut("%x", vdisk->part_guid.Data4[k]);
 
 	movsxd	rax, DWORD PTR k$5[rsp]
 	mov	rcx, QWORD PTR vdisk$[rsp]
-	movzx	eax, BYTE PTR [rcx+rax+82]
+	movzx	eax, BYTE PTR [rcx+rax+110]
 	mov	edx, eax
-	lea	rcx, OFFSET FLAT:$SG3484
+	lea	rcx, OFFSET FLAT:$SG3504
 	call	AuTextOut
 	jmp	SHORT $LN2@AuVDiskReg
 $LN1@AuVDiskReg:
 
-; 152  : 
-; 153  : 	AuTextOut("\n");
+; 154  : 
+; 155  : 	AuTextOut("\n");
 
-	lea	rcx, OFFSET FLAT:$SG3485
+	lea	rcx, OFFSET FLAT:$SG3505
 	call	AuTextOut
 
-; 154  : 	/* call gpt file system verifier to load
-; 155  : 	 * the desired file system 
-; 156  : 	 */
-; 157  : 	AuGPTInitialise_FileSystem(vdisk);
+; 156  : 	/* call gpt file system verifier to load
+; 157  : 	 * the desired file system 
+; 158  : 	 */
+; 159  : 	AuGPTInitialise_FileSystem(vdisk);
 
 	mov	rcx, QWORD PTR vdisk$[rsp]
 	call	?AuGPTInitialise_FileSystem@@YAXPEAU_VDISK_@@@Z ; AuGPTInitialise_FileSystem
 
-; 158  : 
-; 159  : 	AuTextOut("\n");
+; 160  : 
+; 161  : 	AuTextOut("\n");
 
-	lea	rcx, OFFSET FLAT:$SG3486
+	lea	rcx, OFFSET FLAT:$SG3506
 	call	AuTextOut
 
-; 160  : 	AuPmmngrFree(buffer);
+; 162  : 	AuPmmngrFree(buffer);
 
 	mov	rcx, QWORD PTR buffer$[rsp]
 	call	AuPmmngrFree
-$LN18@AuVDiskReg:
+$LN21@AuVDiskReg:
 
-; 161  : }
+; 163  : }
 
 	add	rsp, 104				; 00000068H
 	ret	0
@@ -452,17 +479,17 @@ disk$2 = 40
 vdisk$ = 64
 AuVDiskDestroy PROC
 
-; 186  : void AuVDiskDestroy(AuVDisk *vdisk) {
+; 189  : void AuVDiskDestroy(AuVDisk *vdisk) {
 
 $LN7:
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 56					; 00000038H
 
-; 187  : 	uint8_t _index = 0;
+; 190  : 	uint8_t _index = 0;
 
 	mov	BYTE PTR _index$[rsp], 0
 
-; 188  : 	for (uint8_t i = 0; i < MAX_VDISK_DEVICES; i++){
+; 191  : 	for (uint8_t i = 0; i < MAX_VDISK_DEVICES; i++){
 
 	mov	BYTE PTR i$1[rsp], 0
 	jmp	SHORT $LN4@AuVDiskDes
@@ -475,48 +502,48 @@ $LN4@AuVDiskDes:
 	cmp	eax, 26
 	jge	SHORT $LN2@AuVDiskDes
 
-; 189  : 		AuVDisk *disk = VdiskArray[i];
+; 192  : 		AuVDisk *disk = VdiskArray[i];
 
 	movzx	eax, BYTE PTR i$1[rsp]
 	lea	rcx, OFFSET FLAT:?VdiskArray@@3PAPEAU_VDISK_@@A ; VdiskArray
 	mov	rax, QWORD PTR [rcx+rax*8]
 	mov	QWORD PTR disk$2[rsp], rax
 
-; 190  : 		if (disk == vdisk){
+; 193  : 		if (disk == vdisk){
 
 	mov	rax, QWORD PTR vdisk$[rsp]
 	cmp	QWORD PTR disk$2[rsp], rax
 	jne	SHORT $LN1@AuVDiskDes
 
-; 191  : 			_index = i;
+; 194  : 			_index = i;
 
 	movzx	eax, BYTE PTR i$1[rsp]
 	mov	BYTE PTR _index$[rsp], al
 
-; 192  : 			break;
+; 195  : 			break;
 
 	jmp	SHORT $LN2@AuVDiskDes
 $LN1@AuVDiskDes:
 
-; 193  : 		}
-; 194  : 	}
+; 196  : 		}
+; 197  : 	}
 
 	jmp	SHORT $LN3@AuVDiskDes
 $LN2@AuVDiskDes:
 
-; 195  : 
-; 196  : 	VdiskArray[_index] = NULL;
+; 198  : 
+; 199  : 	VdiskArray[_index] = NULL;
 
 	movzx	eax, BYTE PTR _index$[rsp]
 	lea	rcx, OFFSET FLAT:?VdiskArray@@3PAPEAU_VDISK_@@A ; VdiskArray
 	mov	QWORD PTR [rcx+rax*8], 0
 
-; 197  : 	kfree(vdisk);
+; 200  : 	kfree(vdisk);
 
 	mov	rcx, QWORD PTR vdisk$[rsp]
 	call	kfree
 
-; 198  : }
+; 201  : }
 
 	add	rsp, 56					; 00000038H
 	ret	0
@@ -543,20 +570,20 @@ $LN4:
 ; 94   : 	if (disk->Write)
 
 	mov	rax, QWORD PTR disk$[rsp]
-	cmp	QWORD PTR [rax+122], 0
+	cmp	QWORD PTR [rax+150], 0
 	je	SHORT $LN1@AuVDiskWri
 
 ; 95   : 		return disk->Write(disk, disk->startingLBA + lba, count, buffer);
 
 	mov	rax, QWORD PTR disk$[rsp]
-	mov	rax, QWORD PTR [rax+56]
+	mov	rax, QWORD PTR [rax+86]
 	add	rax, QWORD PTR lba$[rsp]
 	mov	r9, QWORD PTR buffer$[rsp]
 	mov	r8d, DWORD PTR count$[rsp]
 	mov	rdx, rax
 	mov	rcx, QWORD PTR disk$[rsp]
 	mov	rax, QWORD PTR disk$[rsp]
-	call	QWORD PTR [rax+122]
+	call	QWORD PTR [rax+150]
 	cdqe
 	jmp	SHORT $LN2@AuVDiskWri
 $LN1@AuVDiskWri:
@@ -593,20 +620,20 @@ $LN4:
 ; 80   : 	if (disk->Read) 
 
 	mov	rax, QWORD PTR disk$[rsp]
-	cmp	QWORD PTR [rax+114], 0
+	cmp	QWORD PTR [rax+142], 0
 	je	SHORT $LN1@AuVDiskRea
 
 ; 81   : 		return disk->Read(disk, disk->startingLBA + lba, count, buffer);
 
 	mov	rax, QWORD PTR disk$[rsp]
-	mov	rax, QWORD PTR [rax+56]
+	mov	rax, QWORD PTR [rax+86]
 	add	rax, QWORD PTR lba$[rsp]
 	mov	r9, QWORD PTR buffer$[rsp]
 	mov	r8d, DWORD PTR count$[rsp]
 	mov	rdx, rax
 	mov	rcx, QWORD PTR disk$[rsp]
 	mov	rax, QWORD PTR disk$[rsp]
-	call	QWORD PTR [rax+114]
+	call	QWORD PTR [rax+142]
 	cdqe
 	jmp	SHORT $LN2@AuVDiskRea
 $LN1@AuVDiskRea:
@@ -635,13 +662,13 @@ $LN3:
 
 ; 67   : 	AuVDisk* vdisk = (AuVDisk*)kmalloc(sizeof(AuVDisk));
 
-	mov	ecx, 130				; 00000082H
+	mov	ecx, 158				; 0000009eH
 	call	kmalloc
 	mov	QWORD PTR vdisk$[rsp], rax
 
 ; 68   : 	memset(vdisk, 0, sizeof(AuVDisk));
 
-	mov	r8d, 130				; 00000082H
+	mov	r8d, 158				; 0000009eH
 	xor	edx, edx
 	mov	rcx, QWORD PTR vdisk$[rsp]
 	call	memset
@@ -663,65 +690,69 @@ _index$ = 32
 disk$ = 64
 AuVDiskRegister PROC
 
-; 167  : void AuVDiskRegister(AuVDisk* disk) {
+; 169  : void AuVDiskRegister(AuVDisk* disk) {
 
 $LN4:
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 56					; 00000038H
 
-; 168  : 	uint8_t _index = AuVDiskGetIndex();
+; 170  : 	uint8_t _index = AuVDiskGetIndex();
 
 	call	AuVDiskGetIndex
 	mov	BYTE PTR _index$[rsp], al
 
-; 169  : 	/* check for last time, for any errors */
-; 170  : 	if (VdiskArray[_index])
+; 171  : 	/* check for last time, for any errors */
+; 172  : 	if (VdiskArray[_index])
 
 	movzx	eax, BYTE PTR _index$[rsp]
 	lea	rcx, OFFSET FLAT:?VdiskArray@@3PAPEAU_VDISK_@@A ; VdiskArray
 	cmp	QWORD PTR [rcx+rax*8], 0
 	je	SHORT $LN1@AuVDiskReg
 
-; 171  : 		return;
+; 173  : 		return;
 
 	jmp	SHORT $LN2@AuVDiskReg
 $LN1@AuVDiskReg:
 
-; 172  : 
-; 173  : 	VdiskArray[_index] = disk;
+; 174  : 
+; 175  : 	VdiskArray[_index] = disk;
 
 	movzx	eax, BYTE PTR _index$[rsp]
 	lea	rcx, OFFSET FLAT:?VdiskArray@@3PAPEAU_VDISK_@@A ; VdiskArray
 	mov	rdx, QWORD PTR disk$[rsp]
 	mov	QWORD PTR [rcx+rax*8], rdx
 
-; 174  : 	AuTextOut("Vdisk registered name -> %s \n", disk->diskname);
+; 176  : 	AuTextOut("Vdisk registered name -> %s, serial -> %s \n", disk->diskname,
+; 177  : 		disk->serialNumber);
 
 	mov	rax, QWORD PTR disk$[rsp]
-	mov	rdx, rax
-	lea	rcx, OFFSET FLAT:$SG3492
+	add	rax, 40					; 00000028H
+	mov	rcx, QWORD PTR disk$[rsp]
+	mov	r8, rax
+	mov	rdx, rcx
+	lea	rcx, OFFSET FLAT:$SG3512
 	call	AuTextOut
 
-; 175  : 
-; 176  : 	disk->__VDiskID = _index;
+; 178  : 
+; 179  : 	disk->__VDiskID = _index;
 
 	mov	rax, QWORD PTR disk$[rsp]
 	movzx	ecx, BYTE PTR _index$[rsp]
-	mov	BYTE PTR [rax+72], cl
+	mov	BYTE PTR [rax+84], cl
 
-; 177  : 	disk->num_partition = 1;
+; 180  : 	disk->num_partition = 1;
 
 	mov	rax, QWORD PTR disk$[rsp]
-	mov	BYTE PTR [rax+73], 1
+	mov	BYTE PTR [rax+85], 1
 
-; 178  : 	/* Register a partition and initialise the file system*/
-; 179  : 	AuVDiskRegisterPartition(disk);
+; 181  : 	/* Register a partition and initialise the file system*/
+; 182  : 	AuVDiskRegisterPartition(disk);
 
 	mov	rcx, QWORD PTR disk$[rsp]
 	call	?AuVDiskRegisterPartition@@YAXPEAU_VDISK_@@@Z ; AuVDiskRegisterPartition
 $LN2@AuVDiskReg:
 
-; 180  : }
+; 183  : }
 
 	add	rsp, 56					; 00000038H
 	ret	0

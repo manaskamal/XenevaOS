@@ -31,6 +31,7 @@
 #define __HAL_H__
 
 #include <stdint.h>
+#include <time.h>
 #include <aurora.h>
 
 #ifdef __cplusplus
@@ -86,6 +87,13 @@ AU_EXPORT void AuDisableInterrupt();
 * AuEnableInterrupt -- enable interrupts
 */
 AU_EXPORT void AuEnableInterrupt();
+
+/*
+* AuGetTimeOfTheDay -- return current time in unix
+* format
+* @param tv -- timeval structure
+*/
+AU_EXPORT int AuGetTimeOfTheDay(timeval *tv);
 
 #ifdef __cplusplus
 }

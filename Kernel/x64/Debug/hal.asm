@@ -13,7 +13,9 @@ PUBLIC	AuInterruptEnd
 PUBLIC	AuHalFlushCache
 PUBLIC	AuDisableInterrupt
 PUBLIC	AuEnableInterrupt
+PUBLIC	AuGetTimeOfTheDay
 EXTRN	?x86_64_cpu_initialize@@YAXE@Z:PROC		; x86_64_cpu_initialize
+EXTRN	?x86_64_gettimeofday@@YAHPEAU_timeval_@@@Z:PROC	; x86_64_gettimeofday
 EXTRN	x64_cli:PROC
 EXTRN	x64_sti:PROC
 EXTRN	cache_flush:PROC
@@ -47,6 +49,9 @@ $pdata$AuDisableInterrupt DD imagerel $LN3
 $pdata$AuEnableInterrupt DD imagerel $LN3
 	DD	imagerel $LN3+14
 	DD	imagerel $unwind$AuEnableInterrupt
+$pdata$AuGetTimeOfTheDay DD imagerel $LN3
+	DD	imagerel $LN3+24
+	DD	imagerel $unwind$AuGetTimeOfTheDay
 pdata	ENDS
 xdata	SEGMENT
 $unwind$AuHalInitialise DD 010901H
@@ -65,7 +70,34 @@ $unwind$AuDisableInterrupt DD 010401H
 	DD	04204H
 $unwind$AuEnableInterrupt DD 010401H
 	DD	04204H
+$unwind$AuGetTimeOfTheDay DD 010901H
+	DD	04209H
 xdata	ENDS
+; Function compile flags: /Odtpy
+; File e:\xeneva project\aurora\kernel\hal\hal.cpp
+_TEXT	SEGMENT
+tv$ = 48
+AuGetTimeOfTheDay PROC
+
+; 115  : AU_EXTERN AU_EXPORT int AuGetTimeOfTheDay(timeval *tv) {
+
+$LN3:
+	mov	QWORD PTR [rsp+8], rcx
+	sub	rsp, 40					; 00000028H
+
+; 116  : #ifdef ARCH_X64
+; 117  : 	return x86_64_gettimeofday(tv);
+
+	mov	rcx, QWORD PTR tv$[rsp]
+	call	?x86_64_gettimeofday@@YAHPEAU_timeval_@@@Z ; x86_64_gettimeofday
+
+; 118  : #endif
+; 119  : }
+
+	add	rsp, 40					; 00000028H
+	ret	0
+AuGetTimeOfTheDay ENDP
+_TEXT	ENDS
 ; Function compile flags: /Odtpy
 ; File e:\xeneva project\aurora\kernel\hal\hal.cpp
 _TEXT	SEGMENT

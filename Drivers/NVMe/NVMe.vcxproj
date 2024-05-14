@@ -145,9 +145,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="namespace.cpp" />
     <ClCompile Include="nvme.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="namespace.h" />
     <ClInclude Include="nvme.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

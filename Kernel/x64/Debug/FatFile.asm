@@ -6,8 +6,8 @@ INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
 CONST	SEGMENT
-$SG3610	DB	'[FAT]: New Cluster allocated ', 0dH, 0aH, 00H
-$SG3689	DB	'EOC mark found in cluster -> %x ', 0aH, 00H
+$SG3625	DB	'[FAT]: New Cluster allocated ', 0dH, 0aH, 00H
+$SG3704	DB	'EOC mark found in cluster -> %x ', 0aH, 00H
 CONST	ENDS
 PUBLIC	?FatFileGetParent@@YAPEAU__VFS_NODE__@@PEAU1@PEBD@Z ; FatFileGetParent
 PUBLIC	?FatCreateFile@@YAPEAU__VFS_NODE__@@PEAU1@PEAD@Z ; FatCreateFile
@@ -173,7 +173,7 @@ $LN4@FatFileRem:
 ; 477  : 			SeTextOut("EOC mark found in cluster -> %x \n", cluster);
 
 	mov	edx, DWORD PTR cluster$[rsp]
-	lea	rcx, OFFSET FLAT:$SG3689
+	lea	rcx, OFFSET FLAT:$SG3704
 	call	SeTextOut
 
 ; 478  : 			FatAllocCluster(fsys, cluster, 0x00);
@@ -806,7 +806,7 @@ $LN6@FatFileWri:
 
 ; 342  : 		SeTextOut("[FAT]: New Cluster allocated \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG3610
+	lea	rcx, OFFSET FLAT:$SG3625
 	call	SeTextOut
 
 ; 343  : 		file->eof = 0;

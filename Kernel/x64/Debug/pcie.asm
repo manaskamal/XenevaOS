@@ -6,7 +6,7 @@ INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
 CONST	SEGMENT
-$SG3947	DB	'MSI-X found ', 0dH, 0aH, 00H
+$SG3949	DB	'MSI-X found ', 0dH, 0aH, 00H
 CONST	ENDS
 PUBLIC	?AuPCIEGetDevice@@YA_KGHHH@Z			; AuPCIEGetDevice
 PUBLIC	AuPCIEAllocMSI
@@ -2366,7 +2366,7 @@ $LN5@AuPCIEAllo:
 
 ; 505  : 				AuTextOut("MSI-X found \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG3947
+	lea	rcx, OFFSET FLAT:$SG3949
 	call	AuTextOut
 
 ; 506  : 				break;

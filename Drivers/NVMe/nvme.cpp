@@ -1,7 +1,7 @@
 /**
 * BSD 2-Clause License
 *
-* Copyright (c) 2022-2023, Manas Kamal Choudhury
+* Copyright (c) 2022-2024, Manas Kamal Choudhury
 * All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
@@ -39,9 +39,9 @@
 #include <Mm\vmmngr.h>
 #include <_null.h>
 #include <Mm\pmmngr.h>
+#include "namespace.h"
 
 NVMeDev *nvme;
-
 /*
 * NVMeOutl -- write 32 bit data to nvme register
 * @param reg -- Register
@@ -210,7 +210,6 @@ NVMeQueue* NVMeCreateQueue(uint16_t queueID, uint64_t cqSize, uint64_t sqSize){
  */
 void NVMeInterrupt(size_t vector, void* param) {
 	AuDisableInterrupt();
-	AuTextOut("NVMe Interrupt++ \n");
 	AuInterruptEnd(0);
 	AuEnableInterrupt();
 }
@@ -227,6 +226,11 @@ NVMeQueue* NVMeGetQueue(uint16_t queueid) {
 	return NULL;
 }
 
+long time_diff(timeval *old, timeval *newt){
+	long seconds = newt->tv_sec - old->tv_sec;
+	long micros = newt->tv_usec - old->tv_usec;
+	return seconds * 1000000 + micros;
+}
 
 /*
  * NVMeSubmitCommand -- submits commands and waits for completion data
@@ -242,16 +246,23 @@ void NVMeSubmitCommand(NVMeQueue *queue, NVMeCommand* cmd, NVMeCompletion* comp)
 
 	memcpy(&queue->submissionQueue[queue->sq_tail], cmd, sizeof(NVMeCommand));
 
-	AuTextOut("Submitting -> %d \n", queue->submissionQueue[queue->sq_tail].opcode);
 	queue->sq_tail++;
 	if (queue->sq_tail >= queue->sq_count)
 		queue->sq_tail = 0;
 
 	*queue->nvmeSQDoorbell = queue->sq_tail;
 
-	while (queue->completion_cycle_state == !queue->completionQueue[queue->cq_head].phaseTag)
-		;
-
+	timeval old;
+	timeval newt;
+	AuGetTimeOfTheDay(&old);
+	while (queue->completion_cycle_state == !queue->completionQueue[queue->cq_head].phaseTag){
+		AuGetTimeOfTheDay(&newt);
+		long val = time_diff(&old, &newt);
+		if (val >= 500000){
+			return;
+		}
+	}
+	
 	memcpy(comp, &queue->completionQueue[queue->cq_head], sizeof(NVMeCompletion));
 
 	if (++queue->cq_head >= queue->cq_count){
@@ -264,6 +275,101 @@ void NVMeSubmitCommand(NVMeQueue *queue, NVMeCommand* cmd, NVMeCompletion* comp)
 }
 
 /*
+ * NVMeAllocateQueues -- try allocating number of queues
+ * @param num -- number of queues needed to allocate
+ */
+void NVMeAllocateQueues(uint16_t num) {
+	NVMeQueue* queue = NVMeGetQueue(0);
+
+	NVMeCommand cmd;
+	memset(&cmd, 0, sizeof(NVMeCommand));
+
+	cmd.opcode = (AdminCmdSetFeatures & UINT8_MAX);
+	cmd.setFeatures.featureID = (NVMeSetFeatureCommand::FeatureIDNumberOfQueues & UINT8_MAX);
+	cmd.setFeatures.dw11 = (num << 16) | num;
+
+	NVMeCompletion completion;
+	memset(&completion, 0, sizeof(NVMeCompletion));
+	NVMeSubmitCommand(queue, &cmd, &completion);
+
+	if (completion.status > 0)
+		AuTextOut("[NVMe]: status -> %d \n", completion.status);
+	
+	nvme->numCQEAllocated = (completion.dw0 >> 16) & 0xffff;
+	nvme->numSQEAllocated = completion.dw0 & 0xffff;
+}
+
+NVMeQueue* NVMeCreateIOQueue(){
+	NVMeQueue* queue = NULL;
+	uint64_t sqPhysBase = (uint64_t)AuPmmngrAlloc();
+	uint64_t cqPhysBase = (uint64_t)AuPmmngrAlloc();
+
+	uint16_t queueID = nvme->queueAllocatedID;
+
+	NVMeQueue *Admin = NVMeGetQueue(0);
+
+	queue = NVMeCreateQueue(queueID, nvme->maxQueueEntries, nvme->maxQueueEntries);
+	if (!queue)
+		return NULL;
+	NVMeCompletion completion;
+	NVMeCommand command;
+	memset(&completion, 0, sizeof(NVMeCompletion));
+
+	memset(&command, 0, sizeof(NVMeCommand));
+	command.opcode = (AdminCmdCreateIOCompletionQueue & UINT8_MAX);
+	command.createIOCQ.contiguous = 1;
+	command.createIOCQ.queueID = queueID;
+	command.createIOCQ.queueSize = ((queue->cq_size - 1) & UINT16_MAX);
+	command.prp1 = cqPhysBase & UINT64_MAX;
+	NVMeSubmitCommand(Admin, &command, &completion);
+
+	if (completion.status > 0) {
+		SeTextOut("[NVMe]: Creating I/O comp QUEUE status %d %x\r\n", completion.status, completion.status);
+		AuPmmngrFree((void*)cqPhysBase);
+		AuPmmngrFree((void*)sqPhysBase);
+		kfree(queue);
+		return NULL;
+		
+	}
+
+	uint64_t sqMMIOBase = (uint64_t)AuMapMMIO(sqPhysBase, 1);
+	uint64_t cqMMIOBase = (uint64_t)AuMapMMIO(cqPhysBase, 1);
+	memset((void*)sqMMIOBase, 0, PAGE_SIZE);
+	memset((void*)cqMMIOBase, 0, PAGE_SIZE);
+	list_add(nvme->NVMeQueueList, queue);
+
+	memset(&completion, 0, sizeof(NVMeCompletion));
+
+	memset(&command, 0, sizeof(NVMeCommand));
+	command.opcode = (AdminCmdCreateIOSubmissionQueue & UINT8_MAX);
+	command.createIOSQ.contiguous = 1;
+	command.createIOSQ.queueID = queueID;
+	command.createIOSQ.queueSize = ((queue->sq_size - 1) & UINT16_MAX);
+	command.createIOSQ.cqID = queueID;
+	command.prp1 = sqPhysBase & UINT64_MAX;
+
+	NVMeSubmitCommand(Admin, &command, &completion);
+
+	if (completion.status > 0){
+		AuPmmngrFree((void*)sqPhysBase);
+		SeTextOut("[NVMe]: I/O Sq creation failed %d \r\n", completion.status);
+		kfree(queue);
+		return NULL;
+	}
+
+	queue->queueId = queueID;
+	queue->completionPhysBase = cqPhysBase;
+	queue->submissionPhysBase = sqPhysBase;
+	queue->completionMMIOBase = cqMMIOBase;
+	queue->submissionMMIOBase = sqMMIOBase;
+	queue->nvmeCQDoorbell = NVMeGetCompletionDoorbell(queueID);
+	queue->nvmeSQDoorbell = NVMeGetSubmissionDoorbell(queueID);
+	queue->submissionQueue = (NVMeCommand*)queue->submissionMMIOBase;
+	queue->completionQueue = (NVMeCompletion*)queue->completionMMIOBase;
+
+	nvme->queueAllocatedID++;
+}
+/*
  * NVMeIdentifyController -- identify controller command
  */
 void NVMeIdentifyController() {
@@ -272,9 +378,9 @@ void NVMeIdentifyController() {
 
 	NVMeCommand iden;
 	memset(&iden,0, sizeof(NVMeCommand));
-	iden.opcode = AdminCmdIdentify;
+	iden.opcode = (AdminCmdIdentify & UINT8_MAX);
 	iden.prp1 = ((uint64_t)controlphys & UINT64_MAX);
-	iden.identify.cns = NVMeIdentifyCommand::CNSContoller;
+	iden.identify.cns = (NVMeIdentifyCommand::CNSContoller & UINT8_MAX);
 
 	NVMeCompletion comp;
 	NVMeQueue* admin = NVMeGetQueue(0);
@@ -283,11 +389,42 @@ void NVMeIdentifyController() {
 	NVMeControllerIdentity* ci = (NVMeControllerIdentity*)controlphys;
 	ci->modelNumber[39] = 0;
 	ci->serialNumber[19] = 0;
-	AuTextOut("Model Number -> %s \n", ci->modelNumber);
-	AuTextOut("Serial Number -> %s \n", ci->serialNumber);
-	AuTextOut("NVMe Command successed %d \n", comp.status);
+	AuTextOut("[NVMe]:Controller Max Transfer Size -> %d \n", ci->maximumDataTransferSize);
 
 
+	NVMeAllocateQueues(12);
+
+	for (unsigned i = 0; i < nvme->numCQEAllocated - 1; i++){
+		NVMeQueue* queue = NVMeCreateIOQueue();
+		if (!queue)
+			break;
+	}
+
+	for (unsigned i = 0; i < ci->numNamespaces; i++) {
+		uint64_t* physAddr = (uint64_t*)AuPmmngrAlloc();
+		memset(physAddr, 0, PAGE_SIZE);
+		
+		NVMeCommand identifyNS;
+		identifyNS.opcode = (AdminCmdIdentify & UINT8_MAX);
+		identifyNS.prp1 = ((uint64_t)physAddr & UINT64_MAX);
+		identifyNS.identify.cns = (NVMeIdentifyCommand::CNSNamespace & UINT8_MAX);
+		identifyNS.nsid = i + 1;
+
+		NVMeCompletion comp;
+		memset(&comp, 0, sizeof(NVMeCompletion));
+		NVMeSubmitCommand(admin, &identifyNS, &comp);
+
+		if (comp.status > 0) {
+			AuPmmngrFree((void*)physAddr);
+			continue;
+		}
+		NamespaceIdentity *ni = (NamespaceIdentity*)physAddr;
+		NVMeInitialiseNamespace(ci, ni, i + 1);
+
+		AuPmmngrFree((void*)physAddr);
+	}
+
+	AuPmmngrFree((void*)controlphys);
 }
 /*
 * NVMeInitialise -- start nvme storage class
@@ -327,16 +464,13 @@ int NVMeInitialise() {
 	nvme->minorVersion = minor;
 
 	uint64_t cap = NVMeInQ(NVME_REGISTER_CAP);
-	AuTextOut("[NVMe]: device present bar0 -> %x, version %d.%d \n", nvmemmio, major, minor);
-	AuTextOut("Cap min page sz -> %d max -> %d \n", (((cap) >> 48) & 0xfU), (((cap) >> 52) & 0xfU));
+	AuTextOut("[NVMe]: version %d.%d \n", major, minor);
 
 	NVMeResetController();
 
 	uint32_t MaxMemoryPageSz = PAGE_SIZE << NVME_CAP_MPSMAX(cap);
 	uint32_t MinMemoryPageSz = PAGE_SIZE << NVME_CAP_MPSMIN(cap);
-	AuTextOut("[NVMe]: Max memory page size -> %d \n", MaxMemoryPageSz);
-	AuTextOut("[NVMe]: Min memory page size -> %d \n", MinMemoryPageSz);
-
+	
 	nvme->minPageSize = MinMemoryPageSz;
 	nvme->maxPageSize = MaxMemoryPageSz;
 
@@ -344,7 +478,6 @@ int NVMeInitialise() {
 	if (MaxQueueEntries <= 0)
 		MaxQueueEntries = UINT16_MAX;
 
-	AuTextOut("[NVMe]: MaxQueueEntries -%d \n", MaxQueueEntries);
 	nvme->maxQueueEntries = MaxQueueEntries;
 
 	NVMeSetMemoryPageSize(PAGE_SIZE);
@@ -387,6 +520,10 @@ int NVMeInitialise() {
 	
 	list_add(nvme->NVMeQueueList, adminQe);
 
+	nvme->numSQEAllocated = 1;
+	nvme->numCQEAllocated = 1;
+	nvme->queueAllocatedID = 1;
+
 	size_t vector = 77;
 	if (!AuPCIEAllocMSI(device, vector, bus, dev, func)) {
 		AuTextOut("[NVMe]: failed to allocate MSI/MSI-X interrupt \n");
@@ -402,10 +539,6 @@ int NVMeInitialise() {
 	while (!(status & 0x1))
 		status = NVMeInl(NVME_REGISTER_CSTS);
 
-
-	AuTextOut("NVME Command size -> %d , completion -> %d \n", sizeof(NVMeCommand), sizeof(NVMeCompletion));
-	AuTextOut("[NVMe]: Reset completed \n");
-
 	return 0;
 }
 
@@ -420,7 +553,7 @@ AU_EXTERN AU_EXPORT int AuDriverUnload() {
 	return 0;
 }
 
-
+#define MIN(x,y) ((x > y) ? y : x)
 
 /*
 * AuDriverMain -- Main entry for nvme driver
@@ -430,6 +563,8 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 	NVMeInitialise();
 	AuEnableInterrupt();
 	NVMeIdentifyController();
+	
+	SeTextOut("Initialised \r\n");
 	for (;;);
 	return 0;
 }

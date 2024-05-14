@@ -30,6 +30,7 @@
 #include <autimer.h>
 #include <Hal\x86_64_hal.h>
 #include <Hal\x86_64_sched.h>
+#include <Hal\hal.h>
 #include <time.h>
 #include <aucon.h>
 
@@ -85,6 +86,6 @@ int GetTimeOfDay(void* ptr) {
 	if (!ptr)
 		return -1;
 	timeval *val = (timeval*)ptr;
-	x86_64_gettimeofday(val);
+	AuGetTimeOfTheDay(val);
 	return 0;
 }

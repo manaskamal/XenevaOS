@@ -1,7 +1,7 @@
 /**
 * BSD 2-Clause License
 *
-* Copyright (c) 2022-2023, Manas Kamal Choudhury
+* Copyright (c) 2022-2024, Manas Kamal Choudhury
 * All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
@@ -257,6 +257,33 @@ typedef volatile struct _controller_identity_ {
 }NVMeControllerIdentity;
 //static_assert(sizeof(NVMeControllerIdentity) == 4096,"NVMe packing error !");
 
+union NVMeLBAFormat{
+	uint32_t dw;
+#pragma pack(push,1)
+	struct {
+		uint32_t metadataSize : 16;
+		uint32_t lbaDataSize : 8;
+		uint32_t relativePerformance : 2;
+		uint32_t reserved : 6;
+	};
+#pragma pack(pop)
+};
+
+#pragma pack(push,1)
+typedef struct _namespace_id_ {
+	uint64_t namespaceSize;
+	uint64_t nsCap;
+	uint64_t nsUse;
+	uint8_t nsFeat;
+	uint8_t numLBAFormat;
+	uint8_t fmtLBASize;
+	uint8_t unused[101];
+	NVMeLBAFormat lbaFormat[16];
+	uint8_t reserved[192];
+	uint8_t vendor[3712];
+}NamespaceIdentity;
+#pragma pack(pop)
+
 typedef struct _nvme_queue_ {
 	uint16_t queueId;
 	uint64_t completionMMIOBase;
@@ -289,7 +316,9 @@ typedef struct _nvme_dev_ {
 	uint32_t maxPageSize;
 	list_t* NVMeQueueList;
 	uint32_t doorbellStride;
-
+	uint16_t numCQEAllocated;
+	uint16_t numSQEAllocated;
+	uint16_t queueAllocatedID;
 }NVMeDev;
 
 #define NVME_REGISTER_CAP 0x00
@@ -343,6 +372,17 @@ typedef struct _nvme_dev_ {
 #define NVME_NSSR_RESET_VALUE 0x4e564d65
 
 
+/* NVMeGetQueue -- returns a queue specified by queue id
+* @param queueid -- NVMe Queue ID number
+*/
+extern NVMeQueue* NVMeGetQueue(uint16_t queueid);
+/*
+* NVMeSubmitCommand -- submits commands and waits for completion data
+* @param queue -- NVMe Queue data structure
+* @param cmd -- NVMe command
+* @param comp -- Completion data structure
+*/
+extern void NVMeSubmitCommand(NVMeQueue *queue, NVMeCommand* cmd, NVMeCompletion* comp);
 
 
 #endif

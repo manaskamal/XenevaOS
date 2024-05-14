@@ -6,13 +6,13 @@ INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
 CONST	SEGMENT
-$SG3513	DB	'[AHCI]:Port Hung', 0aH, 00H
+$SG3528	DB	'[AHCI]:Port Hung', 0aH, 00H
 	ORG $+6
-$SG3519	DB	'[AHCI]: Port error ', 0dH, 0aH, 00H
+$SG3534	DB	'[AHCI]: Port error ', 0dH, 0aH, 00H
 	ORG $+2
-$SG3548	DB	'[AHCI]:Port Hung', 0aH, 00H
+$SG3563	DB	'[AHCI]:Port Hung', 0aH, 00H
 	ORG $+6
-$SG3584	DB	'ahci Port Supports cold presence %d', 0aH, 00H
+$SG3599	DB	'ahci Port Supports cold presence %d', 0aH, 00H
 CONST	ENDS
 PUBLIC	?AuAHCIDiskInitialise@@YAXPEAU_hba_port_@@@Z	; AuAHCIDiskInitialise
 PUBLIC	?AuAHCIStopCmd@@YAXPEAU_hba_port_@@@Z		; AuAHCIStopCmd
@@ -32,7 +32,7 @@ EXTRN	AuVDiskRegister:PROC
 EXTRN	AuCreateVDisk:PROC
 pdata	SEGMENT
 $pdata$?AuAHCIDiskInitialise@@YAXPEAU_hba_port_@@@Z DD imagerel $LN12
-	DD	imagerel $LN12+983
+	DD	imagerel $LN12+989
 	DD	imagerel $unwind$?AuAHCIDiskInitialise@@YAXPEAU_hba_port_@@@Z
 $pdata$?AuAHCIDiskFindSlot@@YAIPEAU_hba_port_@@@Z DD imagerel $LN7
 	DD	imagerel $LN7+87
@@ -91,7 +91,7 @@ $LN3:
 ; 256  : 	HBA_PORT* port = (HBA_PORT*)disk->data;
 
 	mov	rax, QWORD PTR disk$[rsp]
-	mov	rax, QWORD PTR [rax+40]
+	mov	rax, QWORD PTR [rax+60]
 	mov	QWORD PTR port$[rsp], rax
 
 ; 257  : 	AuAHCIDiskWrite(port, lba, count, buffer);
@@ -134,7 +134,7 @@ $LN3:
 ; 250  : 	HBA_PORT * port = (HBA_PORT*)disk->data;
 
 	mov	rax, QWORD PTR disk$[rsp]
-	mov	rax, QWORD PTR [rax+40]
+	mov	rax, QWORD PTR [rax+60]
 	mov	QWORD PTR port$[rsp], rax
 
 ; 251  : 	AuAHCIDiskRead(port, lba, count, buffer);
@@ -496,7 +496,7 @@ $LN6@AuAHCIDisk:
 
 ; 237  : 		AuTextOut("[AHCI]:Port Hung\n");
 
-	lea	rcx, OFFSET FLAT:$SG3548
+	lea	rcx, OFFSET FLAT:$SG3563
 	call	AuTextOut
 $LN5@AuAHCIDisk:
 
@@ -824,7 +824,7 @@ $LN6@AuAHCIDisk:
 
 ; 171  : 		AuTextOut("[AHCI]:Port Hung\n");
 
-	lea	rcx, OFFSET FLAT:$SG3513
+	lea	rcx, OFFSET FLAT:$SG3528
 	call	AuTextOut
 $LN5@AuAHCIDisk:
 
@@ -877,7 +877,7 @@ $LN2@AuAHCIDisk:
 
 ; 178  : 			AuTextOut("[AHCI]: Port error \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG3519
+	lea	rcx, OFFSET FLAT:$SG3534
 	call	AuTextOut
 
 ; 179  : 			break;
@@ -1541,7 +1541,7 @@ $LN12:
 
 	movzx	eax, BYTE PTR cold_presence$[rsp]
 	mov	edx, eax
-	lea	rcx, OFFSET FLAT:$SG3584
+	lea	rcx, OFFSET FLAT:$SG3599
 	call	AuTextOut
 $LN9@AuAHCIDisk:
 
@@ -1817,29 +1817,29 @@ $LN1@AuAHCIDisk:
 
 	mov	rax, QWORD PTR disk$[rsp]
 	mov	rcx, QWORD PTR port$[rsp]
-	mov	QWORD PTR [rax+40], rcx
+	mov	QWORD PTR [rax+60], rcx
 
 ; 345  : 	disk->Read = AuAHCIVDiskRead;
 
 	mov	rax, QWORD PTR disk$[rsp]
 	lea	rcx, OFFSET FLAT:?AuAHCIVDiskRead@@YAHPEAU_VDISK_@@_KIPEA_K@Z ; AuAHCIVDiskRead
-	mov	QWORD PTR [rax+114], rcx
+	mov	QWORD PTR [rax+142], rcx
 
 ; 346  : 	disk->Write = AuAHCIVDiskWrite;
 
 	mov	rax, QWORD PTR disk$[rsp]
 	lea	rcx, OFFSET FLAT:?AuAHCIVDiskWrite@@YAHPEAU_VDISK_@@_KIPEA_K@Z ; AuAHCIVDiskWrite
-	mov	QWORD PTR [rax+122], rcx
+	mov	QWORD PTR [rax+150], rcx
 
 ; 347  : 	disk->max_blocks = -1;
 
 	mov	rax, QWORD PTR disk$[rsp]
-	mov	QWORD PTR [rax+48], -1
+	mov	QWORD PTR [rax+68], -1
 
 ; 348  : 	disk->currentLBA = 0;
 
 	mov	rax, QWORD PTR disk$[rsp]
-	mov	QWORD PTR [rax+64], 0
+	mov	QWORD PTR [rax+94], 0
 
 ; 349  : 	AuVDiskRegister(disk);
 

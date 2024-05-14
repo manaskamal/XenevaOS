@@ -6,13 +6,13 @@ INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
 CONST	SEGMENT
-$SG3893	DB	'Opening file -> %s %x ', 0dH, 0aH, 00H
+$SG3908	DB	'Opening file -> %s %x ', 0dH, 0aH, 00H
 	ORG $+3
-$SG3907	DB	'/', 00H
+$SG3922	DB	'/', 00H
 	ORG $+2
-$SG4005	DB	'Closing fs -> %s ', 0dH, 0aH, 00H
+$SG4020	DB	'Closing fs -> %s ', 0dH, 0aH, 00H
 	ORG $+4
-$SG4051	DB	'dir opening -> %s , %x ', 0dH, 0aH, 00H
+$SG4066	DB	'dir opening -> %s , %x ', 0dH, 0aH, 00H
 CONST	ENDS
 PUBLIC	?OpenFile@@YAHPEADH@Z				; OpenFile
 PUBLIC	?FileSetOffset@@YAHH_K@Z			; FileSetOffset
@@ -544,7 +544,7 @@ $LN1@OpenDir:
 	mov	rax, QWORD PTR dirfile$[rsp]
 	mov	r8, QWORD PTR dirfile$[rsp]
 	mov	rdx, rax
-	lea	rcx, OFFSET FLAT:$SG4051
+	lea	rcx, OFFSET FLAT:$SG4066
 	call	SeTextOut
 
 ; 402  : 	return fd;
@@ -934,7 +934,7 @@ $LN5@CloseFile:
 
 	mov	rax, QWORD PTR file$[rsp]
 	mov	rdx, rax
-	lea	rcx, OFFSET FLAT:$SG4005
+	lea	rcx, OFFSET FLAT:$SG4020
 	call	SeTextOut
 
 ; 289  : 		current_proc->fds[fd] = 0;
@@ -1841,7 +1841,7 @@ $LN3@FileSetOff:
 
 ; 105  : 		AuVFSNode* fsys = AuVFSFind("/");
 
-	lea	rcx, OFFSET FLAT:$SG3907
+	lea	rcx, OFFSET FLAT:$SG3922
 	call	AuVFSFind
 	mov	QWORD PTR fsys$1[rsp], rax
 
@@ -2046,7 +2046,7 @@ $LN1@OpenFile:
 	mov	rax, QWORD PTR file$[rsp]
 	mov	r8, QWORD PTR file$[rsp]
 	mov	rdx, rax
-	lea	rcx, OFFSET FLAT:$SG3893
+	lea	rcx, OFFSET FLAT:$SG3908
 	call	SeTextOut
 
 ; 79   : 	return fd;
