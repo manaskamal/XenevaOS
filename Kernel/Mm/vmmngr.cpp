@@ -321,7 +321,7 @@ bool AuMapPageEx(uint64_t *pml4i, uint64_t phys_addr, uint64_t virt_addr, uint8_
 void* AuMapMMIO(uint64_t phys_addr, size_t page_count) {
 	uint64_t out = (uint64_t)_MmioBase;
 	for (size_t i = 0; i < page_count; i++)
-		AuMapPage(phys_addr + i * 4096, out + i * 4096, 0x04 | 0x08);
+		AuMapPage(phys_addr + i * 4096, out + i * 4096, 0x04 | 0x80000 | 0x200000);
 
 	uint64_t address = out;
 	_MmioBase = (uint64_t*)(address + (page_count * 4096));

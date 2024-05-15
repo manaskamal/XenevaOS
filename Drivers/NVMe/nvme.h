@@ -294,8 +294,8 @@ typedef struct _nvme_queue_ {
 	NVMeCompletion* completionQueue;
 	NVMeCommand* submissionQueue;
 
-	uint32_t* nvmeCQDoorbell;
-	uint32_t* nvmeSQDoorbell;
+	uint32_t nvmeCQDoorbell;
+	uint32_t nvmeSQDoorbell;
 
 	uint16_t cq_size;
 	uint16_t sq_size;
@@ -366,7 +366,7 @@ typedef struct _nvme_dev_ {
 #define NVME_AQA_ACQS(x) (((x) & NVME_AQA_AQS_MASK) << 16)
 #define NVME_AQA_ASQS(x) (((x) & NVME_AQA_AQS_MASK) << 0)
 
-#define NVME_CAP_DSTRD_MASK -xfU
+#define NVME_CAP_DSTRD_MASK 0xfU
 #define NVME_CAP_DSTRD(x) (((x) >> 32) & NVME_CAP_DSTRD_MASK)
 
 #define NVME_NSSR_RESET_VALUE 0x4e564d65

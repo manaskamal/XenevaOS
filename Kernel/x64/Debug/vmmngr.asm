@@ -1482,7 +1482,7 @@ $LN3@AuMapMMIO:
 	cmp	QWORD PTR i$1[rsp], rax
 	jae	SHORT $LN1@AuMapMMIO
 
-; 324  : 		AuMapPage(phys_addr + i * 4096, out + i * 4096, 0x04 | 0x08);
+; 324  : 		AuMapPage(phys_addr + i * 4096, out + i * 4096, 0x04 | 0x80000 | 0x200000);
 
 	imul	rax, QWORD PTR i$1[rsp], 4096		; 00001000H
 	mov	rcx, QWORD PTR out$[rsp]
@@ -1492,7 +1492,7 @@ $LN3@AuMapMMIO:
 	mov	rdx, QWORD PTR phys_addr$[rsp]
 	add	rdx, rcx
 	mov	rcx, rdx
-	mov	r8b, 12
+	mov	r8b, 4
 	mov	rdx, rax
 	call	AuMapPage
 	jmp	SHORT $LN2@AuMapMMIO

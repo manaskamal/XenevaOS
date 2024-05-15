@@ -168,7 +168,7 @@ int NVMeWriteBlock(AuVDisk* vdisk, uint64_t lba, uint32_t count, uint64_t* buffe
 void NVMeInitialiseNamespace(NVMeControllerIdentity* controller, NamespaceIdentity *ni, int id) {
 	uint8_t lbaFormat = ni->fmtLBASize & 0xf;
 	uint8_t lbaSize = ni->lbaFormat[lbaFormat].lbaDataSize;
-	if (lbaSize == 9) {
+	if (lbaSize >= 9) {
 		NVMeNamespace *namespace_ = (NVMeNamespace*)kmalloc(sizeof(NVMeNamespace));
 		int blockSize = (1 << lbaSize);
 		uint64_t diskSizeInBytes = (ni->namespaceSize * blockSize);

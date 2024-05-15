@@ -10,16 +10,17 @@ _BSS	SEGMENT
 ?HBABar@@3PEAXEA DQ 01H DUP (?)				; HBABar
 _BSS	ENDS
 CONST	SEGMENT
-$SG4292	DB	'ahci/sata not found ', 0aH, 00H
+$SG4290	DB	'AHCI bus -> %d, dev -> %d, func -> %d ', 0aH, 00H
+$SG4293	DB	'ahci/sata not found ', 0aH, 00H
 	ORG $+2
-$SG4302	DB	'ahci/sata version %d.%d found ', 0aH, 00H
-$SG4315	DB	'ahci sata drive found at port %d', 0aH, 00H
+$SG4303	DB	'ahci/sata version %d.%d found ', 0aH, 00H
+$SG4316	DB	'ahci sata drive found at port %d', 0aH, 00H
 	ORG $+6
-$SG4318	DB	'ahci satapi drive found at port %d', 0aH, 00H
+$SG4319	DB	'ahci satapi drive found at port %d', 0aH, 00H
 	ORG $+4
-$SG4321	DB	'ahci semb drive found at port %d', 0aH, 00H
+$SG4322	DB	'ahci semb drive found at port %d', 0aH, 00H
 	ORG $+6
-$SG4324	DB	'ahci pm drive found at port %d', 0aH, 00H
+$SG4325	DB	'ahci pm drive found at port %d', 0aH, 00H
 CONST	ENDS
 PUBLIC	?AuAHCIInitialise@@YAXXZ			; AuAHCIInitialise
 PUBLIC	?AHCIInterruptHandler@@YAX_KPEAX@Z		; AHCIInterruptHandler
@@ -41,7 +42,7 @@ __IsAHCI64Bit DB 01H DUP (?)
 _BSS	ENDS
 pdata	SEGMENT
 $pdata$?AuAHCIInitialise@@YAXXZ DD imagerel $LN17
-	DD	imagerel $LN17+1004
+	DD	imagerel $LN17+1036
 	DD	imagerel $unwind$?AuAHCIInitialise@@YAXXZ
 $pdata$?AHCIInterruptHandler@@YAX_KPEAX@Z DD imagerel $LN7
 	DD	imagerel $LN7+196
@@ -52,7 +53,7 @@ $pdata$?AuAHCICheckType@@YAHPEAU_hba_port_@@@Z DD imagerel $LN11
 pdata	ENDS
 xdata	SEGMENT
 $unwind$?AuAHCIInitialise@@YAXXZ DD 020701H
-	DD	0130107H
+	DD	0150107H
 $unwind$?AHCIInterruptHandler@@YAX_KPEAX@Z DD 010e01H
 	DD	0820eH
 $unwind$?AuAHCICheckType@@YAHPEAU_hba_port_@@@Z DD 010901H
@@ -281,29 +282,29 @@ _TEXT	ENDS
 _TEXT	SEGMENT
 i$ = 48
 AhciNotFound$ = 52
-hba$ = 56
-func$ = 64
-bus$ = 68
-dev$ = 72
-dt$1 = 76
-device$ = 80
-pi$ = 88
-support_spin$ = 92
-cmd$ = 96
-hba_phys$ = 104
-baseAddr$ = 108
-_bit$ = 112
-version_minor$ = 116
-version_major$ = 120
-MMIO$ = 128
-num_cmd_slots$ = 136
-int_line$ = 140
+func$ = 56
+hba$ = 64
+bus$ = 72
+dev$ = 76
+dt$1 = 80
+device$ = 88
+pi$ = 96
+support_spin$ = 100
+cmd$ = 104
+hba_phys$ = 112
+baseAddr$ = 116
+_bit$ = 120
+version_minor$ = 124
+version_major$ = 128
+MMIO$ = 136
+num_cmd_slots$ = 144
+int_line$ = 148
 ?AuAHCIInitialise@@YAXXZ PROC				; AuAHCIInitialise
 
 ; 104  : void AuAHCIInitialise() {
 
 $LN17:
-	sub	rsp, 152				; 00000098H
+	sub	rsp, 168				; 000000a8H
 
 ; 105  : 	int bus, dev, func = 0;
 
@@ -337,13 +338,21 @@ $LN17:
 $LN14@AuAHCIInit:
 
 ; 111  : 
-; 112  : 	if (AhciNotFound) {
+; 112  : 	AuTextOut("AHCI bus -> %d, dev -> %d, func -> %d \n", bus, dev, func);
+
+	mov	r9d, DWORD PTR func$[rsp]
+	mov	r8d, DWORD PTR dev$[rsp]
+	mov	edx, DWORD PTR bus$[rsp]
+	lea	rcx, OFFSET FLAT:$SG4290
+	call	AuTextOut
+
+; 113  : 	if (AhciNotFound) {
 
 	movzx	eax, BYTE PTR AhciNotFound$[rsp]
 	test	eax, eax
 	je	SHORT $LN13@AuAHCIInit
 
-; 113  : 		device = AuPCIEScanClass(0x01, 0x04, &bus, &dev, &func);
+; 114  : 		device = AuPCIEScanClass(0x01, 0x04, &bus, &dev, &func);
 
 	lea	rax, QWORD PTR func$[rsp]
 	mov	QWORD PTR [rsp+32], rax
@@ -354,27 +363,27 @@ $LN14@AuAHCIInit:
 	call	AuPCIEScanClass
 	mov	QWORD PTR device$[rsp], rax
 
-; 114  : 		if (device == UINT32_MAX) {
+; 115  : 		if (device == UINT32_MAX) {
 
 	mov	eax, -1					; ffffffffH
 	cmp	QWORD PTR device$[rsp], rax
 	jne	SHORT $LN12@AuAHCIInit
 
-; 115  : 			AuTextOut("ahci/sata not found \n");
+; 116  : 			AuTextOut("ahci/sata not found \n");
 
-	lea	rcx, OFFSET FLAT:$SG4292
+	lea	rcx, OFFSET FLAT:$SG4293
 	call	AuTextOut
 
-; 116  : 			return;
+; 117  : 			return;
 
 	jmp	$LN15@AuAHCIInit
 $LN12@AuAHCIInit:
 $LN13@AuAHCIInit:
 
-; 117  : 		}
-; 118  : 	}
-; 119  : 
-; 120  : 	uint32_t int_line = AuPCIERead(device, PCI_INTERRUPT_LINE, bus, dev, func);
+; 118  : 		}
+; 119  : 	}
+; 120  : 
+; 121  : 	uint32_t int_line = AuPCIERead(device, PCI_INTERRUPT_LINE, bus, dev, func);
 
 	mov	eax, DWORD PTR func$[rsp]
 	mov	DWORD PTR [rsp+32], eax
@@ -385,7 +394,7 @@ $LN13@AuAHCIInit:
 	call	AuPCIERead
 	mov	DWORD PTR int_line$[rsp], eax
 
-; 121  : 	uint32_t baseAddr = AuPCIERead(device, PCI_BAR5, bus, dev, func);
+; 122  : 	uint32_t baseAddr = AuPCIERead(device, PCI_BAR5, bus, dev, func);
 
 	mov	eax, DWORD PTR func$[rsp]
 	mov	DWORD PTR [rsp+32], eax
@@ -396,8 +405,8 @@ $LN13@AuAHCIInit:
 	call	AuPCIERead
 	mov	DWORD PTR baseAddr$[rsp], eax
 
-; 122  : 
-; 123  : 	uint64_t cmd = AuPCIERead(device, PCI_COMMAND, bus, dev, func);
+; 123  : 
+; 124  : 	uint64_t cmd = AuPCIERead(device, PCI_COMMAND, bus, dev, func);
 
 	mov	eax, DWORD PTR func$[rsp]
 	mov	DWORD PTR [rsp+32], eax
@@ -409,19 +418,19 @@ $LN13@AuAHCIInit:
 	mov	eax, eax
 	mov	QWORD PTR cmd$[rsp], rax
 
-; 124  : 	cmd |= (1 << 1);
+; 125  : 	cmd |= (1 << 1);
 
 	mov	rax, QWORD PTR cmd$[rsp]
 	or	rax, 2
 	mov	QWORD PTR cmd$[rsp], rax
 
-; 125  : 	cmd |= (1 << 10);
+; 126  : 	cmd |= (1 << 10);
 
 	mov	rax, QWORD PTR cmd$[rsp]
 	bts	rax, 10
 	mov	QWORD PTR cmd$[rsp], rax
 
-; 126  : 	AuPCIEWrite(device, PCI_COMMAND, cmd, bus, dev, func);
+; 127  : 	AuPCIEWrite(device, PCI_COMMAND, cmd, bus, dev, func);
 
 	mov	eax, DWORD PTR func$[rsp]
 	mov	DWORD PTR [rsp+40], eax
@@ -433,8 +442,8 @@ $LN13@AuAHCIInit:
 	mov	rcx, QWORD PTR device$[rsp]
 	call	AuPCIEWrite
 
-; 127  : 
-; 128  : 	AuPCIEAllocMSI(device, 36, bus, dev, func);
+; 128  : 
+; 129  : 	AuPCIEAllocMSI(device, 36, bus, dev, func);
 
 	mov	eax, DWORD PTR func$[rsp]
 	mov	DWORD PTR [rsp+32], eax
@@ -444,20 +453,20 @@ $LN13@AuAHCIInit:
 	mov	rcx, QWORD PTR device$[rsp]
 	call	AuPCIEAllocMSI
 
-; 129  : 	setvect(36, AHCIInterruptHandler);
+; 130  : 	setvect(36, AHCIInterruptHandler);
 
 	lea	rdx, OFFSET FLAT:?AHCIInterruptHandler@@YAX_KPEAX@Z ; AHCIInterruptHandler
 	mov	ecx, 36					; 00000024H
 	call	setvect
 
-; 130  : 
-; 131  : 	uint32_t hba_phys = baseAddr & 0xFFFFFFF0;
+; 131  : 
+; 132  : 	uint32_t hba_phys = baseAddr & 0xFFFFFFF0;
 
 	mov	eax, DWORD PTR baseAddr$[rsp]
 	and	eax, -16				; fffffff0H
 	mov	DWORD PTR hba_phys$[rsp], eax
 
-; 132  : 	void* MMIO = AuMapMMIO(hba_phys, 3);
+; 133  : 	void* MMIO = AuMapMMIO(hba_phys, 3);
 
 	mov	eax, DWORD PTR hba_phys$[rsp]
 	mov	edx, 3
@@ -465,39 +474,39 @@ $LN13@AuAHCIInit:
 	call	AuMapMMIO
 	mov	QWORD PTR MMIO$[rsp], rax
 
-; 133  : 	HBA_MEM* hba = (HBA_MEM*)MMIO;
+; 134  : 	HBA_MEM* hba = (HBA_MEM*)MMIO;
 
 	mov	rax, QWORD PTR MMIO$[rsp]
 	mov	QWORD PTR hba$[rsp], rax
 
-; 134  : 	HBABar = MMIO;
+; 135  : 	HBABar = MMIO;
 
 	mov	rax, QWORD PTR MMIO$[rsp]
 	mov	QWORD PTR ?HBABar@@3PEAXEA, rax		; HBABar
 
-; 135  : 	hba->ghc = 1;
+; 136  : 	hba->ghc = 1;
 
 	mov	rax, QWORD PTR hba$[rsp]
 	mov	DWORD PTR [rax+4], 1
 
-; 136  : 
-; 137  : 	APICTimerSleep(1);
+; 137  : 
+; 138  : 	APICTimerSleep(1);
 
 	mov	ecx, 1
 	call	?APICTimerSleep@@YAXI@Z			; APICTimerSleep
 
-; 138  : 	hba->ghc = (1 << 31);
+; 139  : 	hba->ghc = (1 << 31);
 
 	mov	rax, QWORD PTR hba$[rsp]
 	mov	DWORD PTR [rax+4], -2147483648		; 80000000H
 
-; 139  : 	APICTimerSleep(1);
+; 140  : 	APICTimerSleep(1);
 
 	mov	ecx, 1
 	call	?APICTimerSleep@@YAXI@Z			; APICTimerSleep
 
-; 140  : 
-; 141  : 	uint32_t version_major = hba->vs >> 16 & 0xff;
+; 141  : 
+; 142  : 	uint32_t version_major = hba->vs >> 16 & 0xff;
 
 	mov	rax, QWORD PTR hba$[rsp]
 	mov	eax, DWORD PTR [rax+16]
@@ -505,23 +514,23 @@ $LN13@AuAHCIInit:
 	and	eax, 255				; 000000ffH
 	mov	DWORD PTR version_major$[rsp], eax
 
-; 142  : 	uint32_t version_minor = hba->vs & 0xff;
+; 143  : 	uint32_t version_minor = hba->vs & 0xff;
 
 	mov	rax, QWORD PTR hba$[rsp]
 	mov	eax, DWORD PTR [rax+16]
 	and	eax, 255				; 000000ffH
 	mov	DWORD PTR version_minor$[rsp], eax
 
-; 143  : 
-; 144  : 	AuTextOut("ahci/sata version %d.%d found \n", version_major, version_minor);
+; 144  : 
+; 145  : 	AuTextOut("ahci/sata version %d.%d found \n", version_major, version_minor);
 
 	mov	r8d, DWORD PTR version_minor$[rsp]
 	mov	edx, DWORD PTR version_major$[rsp]
-	lea	rcx, OFFSET FLAT:$SG4302
+	lea	rcx, OFFSET FLAT:$SG4303
 	call	AuTextOut
 
-; 145  : 
-; 146  : 	uint32_t _bit = hba->cap >> 31 & 0xff;
+; 146  : 
+; 147  : 	uint32_t _bit = hba->cap >> 31 & 0xff;
 
 	mov	rax, QWORD PTR hba$[rsp]
 	mov	eax, DWORD PTR [rax]
@@ -529,23 +538,23 @@ $LN13@AuAHCIInit:
 	and	eax, 255				; 000000ffH
 	mov	DWORD PTR _bit$[rsp], eax
 
-; 147  : 	if (_bit)
+; 148  : 	if (_bit)
 
 	cmp	DWORD PTR _bit$[rsp], 0
 	je	SHORT $LN11@AuAHCIInit
 
-; 148  : 		__IsAHCI64Bit = true;
+; 149  : 		__IsAHCI64Bit = true;
 
 	mov	BYTE PTR __IsAHCI64Bit, 1
 $LN11@AuAHCIInit:
 
-; 149  : 
-; 150  : 	hba->is = UINT32_MAX;
+; 150  : 
+; 151  : 	hba->is = UINT32_MAX;
 
 	mov	rax, QWORD PTR hba$[rsp]
 	mov	DWORD PTR [rax+8], -1			; ffffffffH
 
-; 151  : 	hba->ghc |= 0x2;
+; 152  : 	hba->ghc |= 0x2;
 
 	mov	rax, QWORD PTR hba$[rsp]
 	mov	eax, DWORD PTR [rax+4]
@@ -553,8 +562,8 @@ $LN11@AuAHCIInit:
 	mov	rcx, QWORD PTR hba$[rsp]
 	mov	DWORD PTR [rcx+4], eax
 
-; 152  : 
-; 153  : 	uint32_t num_cmd_slots = hba->cap >> 8 & 0xff;
+; 153  : 
+; 154  : 	uint32_t num_cmd_slots = hba->cap >> 8 & 0xff;
 
 	mov	rax, QWORD PTR hba$[rsp]
 	mov	eax, DWORD PTR [rax]
@@ -562,39 +571,39 @@ $LN11@AuAHCIInit:
 	and	eax, 255				; 000000ffH
 	mov	DWORD PTR num_cmd_slots$[rsp], eax
 
-; 154  : 	uint8_t support_spin = hba->cap & (1 << 27);
+; 155  : 	uint8_t support_spin = hba->cap & (1 << 27);
 
 	mov	rax, QWORD PTR hba$[rsp]
 	mov	eax, DWORD PTR [rax]
 	and	eax, 134217728				; 08000000H
 	mov	BYTE PTR support_spin$[rsp], al
 
-; 155  : 
 ; 156  : 
-; 157  : 	uint32_t pi = hba->pi;
+; 157  : 
+; 158  : 	uint32_t pi = hba->pi;
 
 	mov	rax, QWORD PTR hba$[rsp]
 	mov	eax, DWORD PTR [rax+12]
 	mov	DWORD PTR pi$[rsp], eax
 
-; 158  : 	int i = 0;
+; 159  : 	int i = 0;
 
 	mov	DWORD PTR i$[rsp], 0
 $LN10@AuAHCIInit:
 
-; 159  : 	while (i < 32) {
+; 160  : 	while (i < 32) {
 
 	cmp	DWORD PTR i$[rsp], 32			; 00000020H
 	jge	$LN9@AuAHCIInit
 
-; 160  : 		if (pi & 1) {
+; 161  : 		if (pi & 1) {
 
 	mov	eax, DWORD PTR pi$[rsp]
 	and	eax, 1
 	test	eax, eax
 	je	$LN8@AuAHCIInit
 
-; 161  : 			int dt = AuAHCICheckType(&hba->port[i]);
+; 162  : 			int dt = AuAHCICheckType(&hba->port[i]);
 
 	movsxd	rax, DWORD PTR i$[rsp]
 	imul	rax, rax, 128				; 00000080H
@@ -604,18 +613,18 @@ $LN10@AuAHCIInit:
 	call	?AuAHCICheckType@@YAHPEAU_hba_port_@@@Z	; AuAHCICheckType
 	mov	DWORD PTR dt$1[rsp], eax
 
-; 162  : 			if (dt == AHCI_DEV_SATA) {
+; 163  : 			if (dt == AHCI_DEV_SATA) {
 
 	cmp	DWORD PTR dt$1[rsp], 1
 	jne	$LN7@AuAHCIInit
 
-; 163  : 				AuTextOut("ahci sata drive found at port %d\n", i);
+; 164  : 				AuTextOut("ahci sata drive found at port %d\n", i);
 
 	mov	edx, DWORD PTR i$[rsp]
-	lea	rcx, OFFSET FLAT:$SG4315
+	lea	rcx, OFFSET FLAT:$SG4316
 	call	AuTextOut
 
-; 164  : 				hba->port[i].sctl &= ~PX_SCTL_IPM_MASK;
+; 165  : 				hba->port[i].sctl &= ~PX_SCTL_IPM_MASK;
 
 	movsxd	rax, DWORD PTR i$[rsp]
 	imul	rax, rax, 128				; 00000080H
@@ -627,7 +636,7 @@ $LN10@AuAHCIInit:
 	mov	rdx, QWORD PTR hba$[rsp]
 	mov	DWORD PTR [rdx+rcx+300], eax
 
-; 165  : 				hba->port[i].sctl |= PX_SCTL_IPM_NONE;
+; 166  : 				hba->port[i].sctl |= PX_SCTL_IPM_NONE;
 
 	movsxd	rax, DWORD PTR i$[rsp]
 	imul	rax, rax, 128				; 00000080H
@@ -639,7 +648,7 @@ $LN10@AuAHCIInit:
 	mov	rdx, QWORD PTR hba$[rsp]
 	mov	DWORD PTR [rdx+rcx+300], eax
 
-; 166  : 				AuAHCIDiskInitialise(&hba->port[i]);
+; 167  : 				AuAHCIDiskInitialise(&hba->port[i]);
 
 	movsxd	rax, DWORD PTR i$[rsp]
 	imul	rax, rax, 128				; 00000080H
@@ -650,44 +659,44 @@ $LN10@AuAHCIInit:
 	jmp	SHORT $LN6@AuAHCIInit
 $LN7@AuAHCIInit:
 
-; 167  : 			}
-; 168  : 			else if (dt == AHCI_DEV_SATAPI) {
+; 168  : 			}
+; 169  : 			else if (dt == AHCI_DEV_SATAPI) {
 
 	cmp	DWORD PTR dt$1[rsp], 4
 	jne	SHORT $LN5@AuAHCIInit
 
-; 169  : 				AuTextOut("ahci satapi drive found at port %d\n", i);
+; 170  : 				AuTextOut("ahci satapi drive found at port %d\n", i);
 
 	mov	edx, DWORD PTR i$[rsp]
-	lea	rcx, OFFSET FLAT:$SG4318
+	lea	rcx, OFFSET FLAT:$SG4319
 	call	AuTextOut
 	jmp	SHORT $LN4@AuAHCIInit
 $LN5@AuAHCIInit:
 
-; 170  : 			}
-; 171  : 			else if (dt == AHCI_DEV_SEMB) {
+; 171  : 			}
+; 172  : 			else if (dt == AHCI_DEV_SEMB) {
 
 	cmp	DWORD PTR dt$1[rsp], 2
 	jne	SHORT $LN3@AuAHCIInit
 
-; 172  : 				AuTextOut("ahci semb drive found at port %d\n", i);
+; 173  : 				AuTextOut("ahci semb drive found at port %d\n", i);
 
 	mov	edx, DWORD PTR i$[rsp]
-	lea	rcx, OFFSET FLAT:$SG4321
+	lea	rcx, OFFSET FLAT:$SG4322
 	call	AuTextOut
 	jmp	SHORT $LN2@AuAHCIInit
 $LN3@AuAHCIInit:
 
-; 173  : 			}
-; 174  : 			else if (dt == AHCI_DEV_PM) {
+; 174  : 			}
+; 175  : 			else if (dt == AHCI_DEV_PM) {
 
 	cmp	DWORD PTR dt$1[rsp], 3
 	jne	SHORT $LN1@AuAHCIInit
 
-; 175  : 				AuTextOut("ahci pm drive found at port %d\n", i);
+; 176  : 				AuTextOut("ahci pm drive found at port %d\n", i);
 
 	mov	edx, DWORD PTR i$[rsp]
-	lea	rcx, OFFSET FLAT:$SG4324
+	lea	rcx, OFFSET FLAT:$SG4325
 	call	AuTextOut
 $LN1@AuAHCIInit:
 $LN2@AuAHCIInit:
@@ -695,29 +704,29 @@ $LN4@AuAHCIInit:
 $LN6@AuAHCIInit:
 $LN8@AuAHCIInit:
 
-; 176  : 			}
-; 177  : 		}
-; 178  : 		pi >>= 1;
+; 177  : 			}
+; 178  : 		}
+; 179  : 		pi >>= 1;
 
 	mov	eax, DWORD PTR pi$[rsp]
 	shr	eax, 1
 	mov	DWORD PTR pi$[rsp], eax
 
-; 179  : 		i++;
+; 180  : 		i++;
 
 	mov	eax, DWORD PTR i$[rsp]
 	inc	eax
 	mov	DWORD PTR i$[rsp], eax
 
-; 180  : 	}
+; 181  : 	}
 
 	jmp	$LN10@AuAHCIInit
 $LN9@AuAHCIInit:
 $LN15@AuAHCIInit:
 
-; 181  : }
+; 182  : }
 
-	add	rsp, 152				; 00000098H
+	add	rsp, 168				; 000000a8H
 	ret	0
 ?AuAHCIInitialise@@YAXXZ ENDP				; AuAHCIInitialise
 _TEXT	ENDS

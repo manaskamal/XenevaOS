@@ -109,6 +109,7 @@ void AuAHCIInitialise() {
 	if (device == UINT32_MAX)
 		AhciNotFound = true;
 
+	AuTextOut("AHCI bus -> %d, dev -> %d, func -> %d \n", bus, dev, func);
 	if (AhciNotFound) {
 		device = AuPCIEScanClass(0x01, 0x04, &bus, &dev, &func);
 		if (device == UINT32_MAX) {
