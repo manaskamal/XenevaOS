@@ -206,20 +206,21 @@ void XHCISendNormalTRB(USBDevice* dev,XHCISlot *slot, uint64_t data_buffer, uint
 		size_t cnt = PAGE_SIZE - ((data_buffer + pos) & (PAGE_SIZE - 1));
 		bool last = cnt >= data_len - pos;
 		if (last) cnt = data_len - pos;
-		size_t phys = V2P((size_t)AuGetPhysicalAddressEx((uint64_t*)P2V((size_t)AuGetRootPageTable()), data_buffer));
-		size_t curlength = ALIGN_UP(phys, PAGE_SIZE) - phys;
+		//size_t phys = V2P((size_t)AuGetPhysicalAddressEx((uint64_t*)P2V((size_t)AuGetRootPageTable()), data_buffer));
+		//size_t curlength = ALIGN_UP(phys, PAGE_SIZE) - phys;
 		//SeTextOut("PHYS -> %x, cnt -> %d \r\n", phys, cnt);
 		
 		size_t remaining_pack = (data_len - pos + ep->max_packet_sz - 1) / ep->max_packet_sz;
 		
-		uint32_t ctrl = (TRB_TRANSFER_NORMAL << 10) | (1 << 6) | (1<<1);
+		uint32_t ctrl = (TRB_TRANSFER_NORMAL << 10) | (1 << 6) | (1 << 1);
 		if (last){
 			ctrl |= (1 << 5);
 			SeTextOut("Last packet \r\n");
 		}
+		SeTextOut("Sending NORMAL TRB -> %x , %d \r\n",data_buffer, remaining_pack);
 		if (ep != 0) {
-			XHCISendCommandEndpoint(slot, ep->endpoint_num, phys & UINT32_MAX, (phys >> 32) & UINT32_MAX,
-				 cnt & UINT16_MAX,
+			XHCISendCommandEndpoint(slot, ep->endpoint_num, data_buffer & UINT32_MAX, (data_buffer >> 32) & UINT32_MAX,
+				((remaining_pack & 0xFFFF) << 17) | cnt & UINT16_MAX,
 				ctrl);
 		}
 		else {

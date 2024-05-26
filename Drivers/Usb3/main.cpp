@@ -83,8 +83,8 @@ void AuUSBInterrupt(size_t v, void* p) {
 		xhci_event_trb_t *evt = (xhci_event_trb_t*)usb_device->event_ring_segment;
 		uint64_t erdp = (uint64_t)usb_device->event_ring_seg_phys;
 
-		while ((event[usb_device->evnt_ring_index].trb_control & (1 << 0)) == 1){
-			
+		while ((event[usb_device->evnt_ring_index].trb_control & (1 << 0)) == usb_device->evnt_ring_cycle){
+			SeTextOut("Interrupt type -> %d \r\n", evt[usb_device->evnt_ring_index].trbType);
 			if (evt[usb_device->evnt_ring_index].trbType == TRB_EVENT_TRANSFER) {
 				uint8_t endpoint_id = (event[usb_device->evnt_ring_index].trb_control >> 16) & 0x1f;
 				uint8_t comp_code = (event[usb_device->evnt_ring_index].trb_status >> 24) & 0xff;
@@ -137,10 +137,10 @@ void AuUSBInterrupt(size_t v, void* p) {
 
 			}
 
-			usb_device->evnt_ring_cycle ^= 1;
 			usb_device->evnt_ring_index++;
 
 			if (usb_device->evnt_ring_index == usb_device->evnt_ring_max) {
+				usb_device->evnt_ring_cycle ^= 1;
 				usb_device->evnt_ring_index = 0;
 			}
 
@@ -312,8 +312,7 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 	AuThread *t = AuCreateKthread(AnuvabUSB3Thread, P2V((uint64_t)AuPmmngrAlloc() + 4096), (uint64_t)AuGetRootPageTable(), "AnubhavUsb");
 	usb_device->usb_thread = t;
 	usb_device->initialised = true;
-
-	//for (;;);
+	for (;;);
 	AuDisableInterrupt();
 
 	return 0;

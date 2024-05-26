@@ -1,4 +1,4 @@
-﻿Build started 02-05-2024 আবেলি 8:51:08.
+﻿Build started 26-05-2024 ৰাতিপু 9:31:57.
      1>Project "E:\Xeneva Project\Aurora\Drivers\Usb3\Usb3.vcxproj" on node 2 (Rebuild target(s)).
      1>ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\BaseHdr" /Zi /nologo /W3 /WX- /Od /Oy /D ARCH_X64 /D USE_APIC /D _WINDLL /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt classes\hid.cpp classes\hub.cpp main.cpp usb3.cpp usbstd.cpp xhci_cmd.cpp
@@ -74,9 +74,12 @@
      1>e:\xeneva project\aurora\drivers\usb3\classes\../xhci.h(306): warning C4161: #pragma pack(pop...) : more pops than pushes
      1>E:\Xeneva Project\Aurora\BaseHdr\stdarg.h(54): warning C4005: 'va_start' : macro redefinition
                  E:\Xeneva Project\Aurora\BaseHdr\va_list.h(56) : see previous definition of 'va_start'
-     1>classes\hid.cpp(112): warning C4018: '<' : signed/unsigned mismatch
-     1>classes\hid.cpp(120): warning C4018: '<' : signed/unsigned mismatch
-     1>classes\hid.cpp(137): warning C4267: 'argument' : conversion from 'size_t' to 'uint16_t', possible loss of data
+     1>classes\hid.cpp(192): warning C4267: '+=' : conversion from 'size_t' to 'uintptr_t', possible loss of data
+     1>classes\hid.cpp(217): warning C4267: 'initializing' : conversion from 'size_t' to 'uintptr_t', possible loss of data
+     1>classes\hid.cpp(367): warning C4267: '+=' : conversion from 'size_t' to 'int', possible loss of data
+     1>classes\hid.cpp(482): warning C4018: '<' : signed/unsigned mismatch
+     1>classes\hid.cpp(490): warning C4018: '<' : signed/unsigned mismatch
+     1>classes\hid.cpp(509): warning C4267: 'argument' : conversion from 'size_t' to 'uint16_t', possible loss of data
          Generating Code...
      1>e:\xeneva project\aurora\drivers\usb3\usb3.cpp(930): warning C4715: 'USBGetDescriptor' : not all control paths return a value
      1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(1186,5): warning MSB8012: TargetPath(E:\Xeneva Project\Aurora\x64\Debug\Usb3.dll) does not match the Linker's OutputFile property value (F:\usb.dll). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
@@ -96,4 +99,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:01.20
+Time Elapsed 00:00:02.08

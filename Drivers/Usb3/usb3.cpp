@@ -898,7 +898,7 @@ void XHCIPortInitialize(USBDevice *dev, unsigned int port) {
 		*/
 
 		AuPmmngrFree((void*)V2P((size_t)string_buf));
-		AuPmmngrFree((void*)V2P((size_t)buffer));
+		//AuPmmngrFree((void*)V2P((size_t)buffer));
 		AuReleaseSpinlock(dev->usb_lock);
 	}
 }
