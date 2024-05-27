@@ -106,37 +106,35 @@ bool usesPrefix;
 #define HID_ITEM_TYPE_RESERVED 3
 
 
-struct ReportGlobalState {
+struct ReportState{
+	int usageCount;
+	uint16_t usages[32];
+	uint32_t application;
 	int32_t logicalMinimum, logicalMaximum;
-	uint16_t usagePage;
-	uint8_t reportSize, reportCount;
-	uint8_t reportID;
+	uint16_t usage;
+	uint8_t bits;
+	uint8_t type;
+	uint32_t reportCount;
 };
 
-#define REPORT_ITEM_CONSTANT (1<<0)
-#define REPORT_ITEM_RELATIVE (1<<1)
-#define REPORT_ITEM_WRAP (1<<2)
-#define REPORT_ITEM_NON_LINEAR (1<<3)
-#define REPORT_ITEM_SIGNED (1<<4)
-#define REPORT_ITEM_ARRAY (1<<5)
 #define REPORT_ITEM_INPUT 1
 #define REPORT_ITEM_OUTPUT 2
 #define REPORT_ITEM_FEATURE 3
+#define REPORT_ITEM_USAGE_MOUSE 1
 
 struct ReportItem {
-	uint32_t usage, application, arrayCount;
+	uint32_t application;
 	int32_t logicalMinimum, logicalMaximum;
-
-	uint8_t reportPrefix;
+	uint16_t usage;
 	uint8_t bits;
-	uint8_t group;
-	uint8_t flags;
 	uint8_t type;
+	uint8_t reportsize;
 };
 
 #define DELIMITER_NONE 0
 #define DELIMITER_FIRST 1
 #define DELIMITER_IGNORE 2
+
 struct ReportLocalState {
 	uint32_t usages[32];
 	uint32_t usageMinimum, usageMaximum;
@@ -227,6 +225,10 @@ int32_t BitBuffer::ReadSigned(size_t count) {
 
 bool HIDParseReportDescriptor(uint8_t* report, size_t reportBytes) {
 	int position = 0;
+
+	ReportState state[32];
+	memset(&state, 0, sizeof(ReportState)*32);
+	uint8_t stateidx = 0;
 	while (position < reportBytes) {
 		uint8_t item_header = report[position];
 		size_t item_size = item_header & 0x3;
@@ -245,22 +247,40 @@ bool HIDParseReportDescriptor(uint8_t* report, size_t reportBytes) {
 		for (uintptr_t i = 0; i < item_size; i++)
 			data |= report[(position+1) + i] << (i * 8);
 
+		int32_t sdata = data;
+		
+		if (item_size && (report[position + item_size - 1] & 0x80)){
+			for (uintptr_t i = item_size; i < 4; i++)
+				sdata |= 0xff << (i * 8);
+		}
 
 		if (item_header != 0) {
 			switch (item_type){
 			case HID_ITEM_TYPE_MAIN:
 				switch (one_byte_prefix) {
 				case HID_MAIN_ITEM_TAG_INPUT:
-					AuTextOut("HID Main item tag input \n");
+					//AuTextOut("HID Main item tag input \n");
+					for (int i = 0; i < state[stateidx].reportCount; i++){
+						items[reportItemLength].application = state[stateidx].application;
+						items[reportItemLength].bits = state[stateidx].bits;
+						items[reportItemLength].logicalMaximum = state[stateidx].logicalMaximum;
+						items[reportItemLength].logicalMinimum = state[stateidx].logicalMinimum;
+						items[reportItemLength].type = REPORT_ITEM_INPUT;
+						items[reportItemLength].usage = state[stateidx].usages[i];
+						items[reportItemLength].reportsize = state[stateidx].reportCount;
+						reportItemLength++;
+					}
+					stateidx++;
 					break;
 				case HID_MAIN_ITEM_TAG_OUTPUT:
-					AuTextOut("HID Main item tag output \n");
+					//AuTextOut("HID Main item tag output \n");
+					items[reportItemLength].type = REPORT_ITEM_OUTPUT;
 					break;
 				case HID_MAIN_ITEM_TAG_COLLECTION:
-					AuTextOut("HID Main item tag collection start %x \n", data);
+				    //AuTextOut("HID Main item tag collection start %x \n", data);
 					break;
 				case HID_MAIN_ITEM_TAG_END_COLLECTION:
-					AuTextOut("HID Main item end tag collection end %x \n", data);
+					//AuTextOut("HID Main item end tag collection end %x \n", data);
 					break;
 				}
 				break;
@@ -276,43 +296,49 @@ bool HIDParseReportDescriptor(uint8_t* report, size_t reportBytes) {
 															upage = 0;
 															usage = data;
 														}
+														if (state[stateidx].application != 0)
+															stateidx++;
 
-														AuTextOut("HID Global Usage Page %x \n",data);
-
+														state[stateidx].application = data;
+														//AuTextOut("HID Global Usage Page %x \n",data);
 														break;
 				}
 				case HID_GLOBAL_ITEM_TAG_LOGICAL_MINIMUM:
-					AuTextOut("HID Global Logical Minimum \n");
+					//AuTextOut("HID Global Logical Minimum \n");
+					state[stateidx].logicalMinimum = sdata;
 					break;
 				case HID_GLOBAL_ITEM_TAG_LOGICAL_MAXIMUM:
-					AuTextOut("HID Global Logical Maximum \n");
+					//AuTextOut("HID Global Logical Maximum \n");
+					state[stateidx].logicalMaximum = sdata;
 					break;
 				case HID_GLOBAL_ITEM_TAG_PHYSICAL_MINIMUM:
-					AuTextOut("HID Global Physical Minimum \n");
+					//AuTextOut("HID Global Physical Minimum \n");
 					break;
 				case HID_GLOBAL_ITEM_TAG_PHYSICAL_MAXIMUM:
-					AuTextOut("HID Global Physical Maximum \n");
+					//AuTextOut("HID Global Physical Maximum \n");
 					break;
 				case HID_GLOBAL_ITEM_TAG_UNIT_EXPONENT:
-					AuTextOut("HID Global Unit Exponent \n");
+					//AuTextOut("HID Global Unit Exponent \n");
 					break;
 				case HID_GLOBAL_ITEM_TAG_UNIT:
-					AuTextOut("HID Global Unit \n");
+					//AuTextOut("HID Global Unit \n");
 					break;
 				case HID_GLOBAL_ITEM_TAG_REPORT_SIZE:
-					AuTextOut("HID Global Reporst Size %d \n", data);
+					//AuTextOut("HID Global Reporst Size %d \n", data);
+					state[stateidx].bits = data;
 					break;
-				case HID_GLOBAL_ITEM_TAG_REPORT_COUNT:
-					AuTextOut("HID Global Report Count \n");
-					break;
+				case HID_GLOBAL_ITEM_TAG_REPORT_COUNT:{
+														 // AuTextOut("HID Global Report Count (%d)\n", data);
+														  state[stateidx].reportCount = data;
+				}break;
 				case HID_GLOBAL_ITEM_TAG_REPORT_ID:
-					AuTextOut("HID Global Report ID \n");
+					//AuTextOut("HID Global Report ID (%d)\n", data);
 					break;
 				case HID_GLOBAL_ITEM_TAG_PUSH:
-					AuTextOut("HID Global Push \n");
+					//AuTextOut("HID Global Push \n");
 					break;
 				case HID_GLOBAL_ITEM_TAG_POP:
-					AuTextOut("HID Global Pop \n");
+					//AuTextOut("HID Global Pop \n");
 					break;
 				}
 				break;
@@ -320,35 +346,35 @@ bool HIDParseReportDescriptor(uint8_t* report, size_t reportBytes) {
 				switch (one_byte_prefix)
 				{
 				case HID_LOCAL_ITEM_TAG_USAGE:
-
-					AuTextOut("HID Local Usage %x\n", (data & 0xffff));
+					//AuTextOut("HID Local Usage %x\n", (data & 0xffff));
+					state[stateidx].usages[state[stateidx].usageCount++] = (data & 0xffff);
 					break;
 				case HID_LOCAL_ITEM_TAG_USAGE_MINIMUM:
-					AuTextOut("HID Local Minimum \n");
+					//AuTextOut("HID Local Minimum \n");
 					break;
 				case HID_LOCAL_ITEM_TAG_USAGE_MAXIMUM:
-					AuTextOut("HID Local Maximum \n");
+					//AuTextOut("HID Local Maximum \n");
 					break;
 				case HID_LOCAL_ITEM_TAG_STRING_MINIMUM:
-					AuTextOut("HID Local String Minimum \n");
+					//AuTextOut("HID Local String Minimum \n");
 					break;
 				case HID_LOCAL_ITEM_TAG_STRING_MAXIMUM:
-					AuTextOut("HID Local String Maximum \n");
+					//AuTextOut("HID Local String Maximum \n");
 					break;
 				case HID_LOCAL_ITEM_TAG_STRING_INDEX:
-					AuTextOut("HID Local String Index \n");
+					//AuTextOut("HID Local String Index \n");
 					break;
 				case HID_LOCAL_ITEM_TAG_DESIGNATOR_INDEX:
-					AuTextOut("HID Local Designator Index \n");
+					//AuTextOut("HID Local Designator Index \n");
 					break;
 				case HID_LOCAL_ITEM_TAG_DESIGNATOR_MINIMUM:
-					AuTextOut("HID Local Designator Minimum \n");
+					//AuTextOut("HID Local Designator Minimum \n");
 					break;
 				case HID_LOCAL_ITEM_TAG_DESIGNATOR_MAXIMUM:
-					AuTextOut("HID Local Designator Maximum \n");
+					//AuTextOut("HID Local Designator Maximum \n");
 					break;
 				case HID_LOCAL_ITEM_TAG_DELIMITER:
-					AuTextOut("HID Local Delimiter \n");
+					//AuTextOut("HID Local Delimiter \n");
 					break;
 				}
 				break;
@@ -367,7 +393,17 @@ bool HIDParseReportDescriptor(uint8_t* report, size_t reportBytes) {
 			position += item_size + 1;
 		}
 	}
-		for (;;);
+
+	SeTextOut("Debugging report descriptors \r\n");
+	for (int i = 0; i < reportItemLength; i++){
+		SeTextOut("***** \r\n");
+		SeTextOut("Item[%d].application = %x \r\n",i, items[i].application);
+		SeTextOut("Item[%d].usage = %x \r\n", i,items[i].usage);
+		SeTextOut("Item[%d].bits = %x \r\n",i, items[i].bits);
+		SeTextOut("Item[%d].logicalMinimum = %d \r\n", i, items[i].logicalMinimum);
+		SeTextOut("Item[%d].logicalMaximum = %x \r\n", i, items[i].logicalMaximum);
+		SeTextOut("Item[%d].type = %x \r\n",i, items[i].type);
+	}
 }
 
 void ReportReceived(BitBuffer *buffer) {
@@ -376,52 +412,6 @@ void ReportReceived(BitBuffer *buffer) {
 	if (usesPrefix)
 		prefix = buffer->ReadUnsigned(8);
 	//SeTextOut("USES PREFIX -> %d \r\n", usesPrefix);
-
-	for (uintptr_t i = 0; i < reportItemLength; i++) {
-		ReportItem item = items[i];
-		if (item.type == REPORT_ITEM_INPUT)
-			SeTextOut("Parsing item INPUT \r\n");
-		if (item.type != REPORT_ITEM_INPUT || item.reportPrefix != prefix)
-			continue;
-
-		if (item.flags & REPORT_ITEM_ARRAY){
-			buffer->Discard(item.bits * item.arrayCount);
-		}
-		else {
-			bool handled = false;
-			if (item.application == HID_APPLICATION_MOUSE) {
-				handled = true;
-				if (item.usage == HID_USAGE_X_AXIS) {
-					if (item.flags & REPORT_ITEM_SIGNED)
-						SeTextOut("XMovement signed -> %d \r\n", buffer->ReadSigned(item.bits));
-					else
-						SeTextOut("XMovement usigned -> %d \r\n", buffer->ReadUnsigned(item.bits));
-				}
-				else if (item.usage == HID_USAGE_Y_AXIS) {
-					if (item.flags & REPORT_ITEM_SIGNED){
-						SeTextOut("YMovement signed -> %d \r\n", buffer->ReadSigned(item.bits));
-					}
-					else {
-						SeTextOut("YMovement unsigned -> %d \r\n", buffer->ReadUnsigned(item.bits));
-					}
-				}
-				else if (item.usage == HID_USAGE_BUTTON_1) {
-					SeTextOut("HID Button 1  \r\n");
-				}
-				else if (item.usage == HID_USAGE_BUTTON_2){
-					SeTextOut("HID Button2 \r\n");
-				}
-				else if (item.usage == HID_USAGE_BUTTON_3) {
-					SeTextOut("HID Button 3 \r\n");
-				}
-				else{
-					handled = false;
-				}
-			}
-			if (!handled)
-				buffer->Discard(item.bits);
-		}
-	}
 }
 
 void HIDCallback(void* dev_, void* slot_, void* ep_) {
@@ -430,17 +420,10 @@ void HIDCallback(void* dev_, void* slot_, void* ep_) {
 	XHCIEndpoint* ep = (XHCIEndpoint*)ep_;
 
 	uint8_t* md = (uint8_t*)mouse_data;
-	SeTextOut("HID Callback \r\n");
-
-	for (int i = 0; i < 4095; i++) {
-		if (md[i] != 0)
-			SeTextOut("%d  -i-> %d ", md[i], i);
-	}
-	SeTextOut("\r\n");
-	BitBuffer buffer;
-	buffer.buffer = (const uint8_t*)mouse_data;
-	buffer.bytes = 4096;
-	ReportReceived(&buffer);
+	for (int i = 0; i < 8; i++)
+		AuTextOut(" %d ", md[i]);
+	AuTextOut("\n");
+	
 	memset((void*)mouse_data, 0, PAGE_SIZE);
 	XHCISendNormalTRB(dev, slot, V2P(mouse_data), ep->max_packet_sz, ep);
 }
