@@ -35,6 +35,7 @@
 #define __MOUSE_H__
 
 #include <stdint.h>
+#include <aurora.h>
 
 #pragma pack(push,1)
 typedef struct __ps2mouse__ {
@@ -64,4 +65,6 @@ extern void AuPS2MouseInitialise();
 * @param y -- y position
 */
 extern void AuPS2MouseSetPos(int32_t x, int32_t y);
+
+AU_EXTERN AU_EXPORT void AuPS2DisableMouse();
 #endif

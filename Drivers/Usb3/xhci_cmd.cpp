@@ -213,11 +213,10 @@ void XHCISendNormalTRB(USBDevice* dev,XHCISlot *slot, uint64_t data_buffer, uint
 		size_t remaining_pack = (data_len - pos + ep->max_packet_sz - 1) / ep->max_packet_sz;
 		
 		uint32_t ctrl = (TRB_TRANSFER_NORMAL << 10) | (1 << 6) | (1 << 1);
-		if (last){
+		if (last)
 			ctrl |= (1 << 5);
-			SeTextOut("Last packet \r\n");
-		}
-		SeTextOut("Sending NORMAL TRB -> %x , %d \r\n",data_buffer, remaining_pack);
+		
+		
 		if (ep != 0) {
 			XHCISendCommandEndpoint(slot, ep->endpoint_num, data_buffer & UINT32_MAX, (data_buffer >> 32) & UINT32_MAX,
 				((remaining_pack & 0xFFFF) << 17) | cnt & UINT16_MAX,

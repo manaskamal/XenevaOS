@@ -30,7 +30,9 @@ $SG3675	DB	'graph', 00H
 	ORG $+2
 $SG3676	DB	'/', 00H
 	ORG $+2
-$SG3804	DB	'.', 00H
+$SG3759	DB	'-', 00H
+	ORG $+2
+$SG3807	DB	'.', 00H
 CONST	ENDS
 PUBLIC	?AuConsoleInitialize@@YAXPEAU_KERNEL_BOOT_INFO_@@_N@Z ; AuConsoleInitialize
 PUBLIC	?AuConsolePostInitialise@@YAXPEAU_KERNEL_BOOT_INFO_@@@Z ; AuConsolePostInitialise
@@ -47,7 +49,7 @@ EXTRN	strcpy:PROC
 EXTRN	strlen:PROC
 EXTRN	memset:PROC
 EXTRN	memcpy:PROC
-EXTRN	?sztoa@@YAPEAD_KPEADH@Z:PROC			; sztoa
+EXTRN	?sztoa@@YAPEAD_JPEADH@Z:PROC			; sztoa
 EXTRN	?ftoa@@YAPEADME@Z:PROC				; ftoa
 EXTRN	AuVFSFind:PROC
 EXTRN	AuDevFSAddFile:PROC
@@ -58,7 +60,7 @@ $pdata$?AuConsolePostInitialise@@YAXPEAU_KERNEL_BOOT_INFO_@@@Z DD imagerel $LN12
 	DD	imagerel $LN12+696
 	DD	imagerel $unwind$?AuConsolePostInitialise@@YAXPEAU_KERNEL_BOOT_INFO_@@@Z
 $pdata$AuTextOut DD imagerel $LN26
-	DD	imagerel $LN26+887
+	DD	imagerel $LN26+900
 	DD	imagerel $unwind$AuTextOut
 $pdata$?AuConsoleIoControl@@YAHPEAU__VFS_NODE__@@HPEAX@Z DD imagerel $LN15
 	DD	imagerel $LN15+356
@@ -832,17 +834,17 @@ _TEXT	SEGMENT
 value$ = 8
 ?AuConsoleEarlyEnable@@YAX_N@Z PROC			; AuConsoleEarlyEnable
 
-; 352  : void AuConsoleEarlyEnable(bool value) {
+; 353  : void AuConsoleEarlyEnable(bool value) {
 
 	mov	BYTE PTR [rsp+8], cl
 
-; 353  : 	aucon->early_mode = value;
+; 354  : 	aucon->early_mode = value;
 
 	mov	rax, QWORD PTR ?aucon@@3PEAU_aucon_@@EA	; aucon
 	movzx	ecx, BYTE PTR value$[rsp]
 	mov	BYTE PTR [rax+32], cl
 
-; 354  : }
+; 355  : }
 
 	ret	0
 ?AuConsoleEarlyEnable@@YAX_N@Z ENDP			; AuConsoleEarlyEnable
@@ -1009,63 +1011,69 @@ $LN18@AuTextOut:
 
 ; 285  : 				char buffer[sizeof(size_t)* 8 + 1];
 ; 286  : 				//	size_t len
-; 287  : 				if (i < 0) {
+; 287  : 				if ((int)i < 0) {
 
-	cmp	QWORD PTR i$5[rsp], 0
-	jae	SHORT $LN14@AuTextOut
+	cmp	DWORD PTR i$5[rsp], 0
+	jge	SHORT $LN14@AuTextOut
 
-; 288  : 					i = +i;
+; 288  : 					AuPutS("-");
 
-	mov	rax, QWORD PTR i$5[rsp]
+	lea	rcx, OFFSET FLAT:$SG3759
+	call	?AuPutS@@YAXPEAD@Z			; AuPutS
+
+; 289  : 					i = ((int)i * -1);
+
+	imul	eax, DWORD PTR i$5[rsp], -1
+	cdqe
 	mov	QWORD PTR i$5[rsp], rax
 
-; 289  : 					sztoa(i, buffer, 10);
+; 290  : 					sztoa(i, buffer, 10);
 
 	mov	r8d, 10
 	lea	rdx, QWORD PTR buffer$11[rsp]
 	mov	rcx, QWORD PTR i$5[rsp]
-	call	?sztoa@@YAPEAD_KPEADH@Z			; sztoa
+	call	?sztoa@@YAPEAD_JPEADH@Z			; sztoa
 
-; 290  : 				}
-; 291  : 				else {
+; 291  : 				}
+; 292  : 				else {
 
 	jmp	SHORT $LN13@AuTextOut
 $LN14@AuTextOut:
 
-; 292  : 					sztoa(i, buffer, 10);
+; 293  : 					sztoa(i, buffer, 10);
 
 	mov	r8d, 10
 	lea	rdx, QWORD PTR buffer$11[rsp]
 	mov	rcx, QWORD PTR i$5[rsp]
-	call	?sztoa@@YAPEAD_KPEADH@Z			; sztoa
+	call	?sztoa@@YAPEAD_JPEADH@Z			; sztoa
 
-; 293  : 					size_t len = strlen(buffer);
+; 294  : 					size_t len = strlen(buffer);
 
 	lea	rcx, QWORD PTR buffer$11[rsp]
 	call	strlen
 	mov	QWORD PTR len$10[rsp], rax
 $LN13@AuTextOut:
 
-; 294  : 				}
-; 295  : 				/*	while (len++ < width)
-; 296  : 				puts("0");*/
-; 297  : 				AuPutS(buffer);
+; 295  : 				}
+; 296  : 				/*	while (len++ < width)
+; 297  : 				puts("0");*/
+; 298  : 				AuPutS(buffer);
 
 	lea	rcx, QWORD PTR buffer$11[rsp]
 	call	?AuPutS@@YAXPEAD@Z			; AuPutS
 	jmp	$LN12@AuTextOut
 $LN19@AuTextOut:
 
-; 298  : 			}
-; 299  : 			else if (*format == 'c')
+; 299  : 			}
+; 300  : 			else if (*format == 'c')
 
 	mov	rax, QWORD PTR format$[rsp]
 	movsx	eax, BYTE PTR [rax]
 	cmp	eax, 99					; 00000063H
 	jne	SHORT $LN11@AuTextOut
 
-; 300  : 			{
-; 301  : 				char c = va_arg(args, char);
+; 301  : 			{
+; 302  : 				char c = va_arg(args, char);
 
 	mov	rax, QWORD PTR args$[rsp]
 	add	rax, 4
@@ -1074,26 +1082,26 @@ $LN19@AuTextOut:
 	movzx	eax, BYTE PTR [rax-4]
 	mov	BYTE PTR c$1[rsp], al
 
-; 302  : 				//char buffer[sizeof(size_t) * 8 + 1];
-; 303  : 				//sztoa(c, buffer, 10);
-; 304  : 				//puts(buffer);
-; 305  : 				AuPutC(c);
+; 303  : 				//char buffer[sizeof(size_t) * 8 + 1];
+; 304  : 				//sztoa(c, buffer, 10);
+; 305  : 				//puts(buffer);
+; 306  : 				AuPutC(c);
 
 	movzx	ecx, BYTE PTR c$1[rsp]
 	call	?AuPutC@@YAXD@Z				; AuPutC
 	jmp	$LN10@AuTextOut
 $LN11@AuTextOut:
 
-; 306  : 			}
-; 307  : 			else if (*format == 'x')
+; 307  : 			}
+; 308  : 			else if (*format == 'x')
 
 	mov	rax, QWORD PTR format$[rsp]
 	movsx	eax, BYTE PTR [rax]
 	cmp	eax, 120				; 00000078H
 	jne	SHORT $LN9@AuTextOut
 
-; 308  : 			{
-; 309  : 				size_t x = va_arg(args, size_t);
+; 309  : 			{
+; 310  : 				size_t x = va_arg(args, size_t);
 
 	mov	rax, QWORD PTR args$[rsp]
 	add	rax, 8
@@ -1102,32 +1110,32 @@ $LN11@AuTextOut:
 	mov	rax, QWORD PTR [rax-8]
 	mov	QWORD PTR x$9[rsp], rax
 
-; 310  : 				char buffer[sizeof(size_t)* 8 + 1];
-; 311  : 				sztoa(x, buffer, 16);
+; 311  : 				char buffer[sizeof(size_t)* 8 + 1];
+; 312  : 				sztoa(x, buffer, 16);
 
 	mov	r8d, 16
 	lea	rdx, QWORD PTR buffer$12[rsp]
 	mov	rcx, QWORD PTR x$9[rsp]
-	call	?sztoa@@YAPEAD_KPEADH@Z			; sztoa
+	call	?sztoa@@YAPEAD_JPEADH@Z			; sztoa
 
-; 312  : 				//puts("0x");
-; 313  : 				AuPutS(buffer);
+; 313  : 				//puts("0x");
+; 314  : 				AuPutS(buffer);
 
 	lea	rcx, QWORD PTR buffer$12[rsp]
 	call	?AuPutS@@YAXPEAD@Z			; AuPutS
 	jmp	$LN8@AuTextOut
 $LN9@AuTextOut:
 
-; 314  : 			}
-; 315  : 			else if (*format == 's')
+; 315  : 			}
+; 316  : 			else if (*format == 's')
 
 	mov	rax, QWORD PTR format$[rsp]
 	movsx	eax, BYTE PTR [rax]
 	cmp	eax, 115				; 00000073H
 	jne	SHORT $LN7@AuTextOut
 
-; 316  : 			{
-; 317  : 				char* x = va_arg(args, char*);
+; 317  : 			{
+; 318  : 				char* x = va_arg(args, char*);
 
 	mov	rax, QWORD PTR args$[rsp]
 	add	rax, 8
@@ -1136,23 +1144,23 @@ $LN9@AuTextOut:
 	mov	rax, QWORD PTR [rax-8]
 	mov	QWORD PTR x$8[rsp], rax
 
-; 318  : 				AuPutS(x);
+; 319  : 				AuPutS(x);
 
 	mov	rcx, QWORD PTR x$8[rsp]
 	call	?AuPutS@@YAXPEAD@Z			; AuPutS
 	jmp	$LN6@AuTextOut
 $LN7@AuTextOut:
 
-; 319  : 			}
-; 320  : 			else if (*format == 'f')
+; 320  : 			}
+; 321  : 			else if (*format == 'f')
 
 	mov	rax, QWORD PTR format$[rsp]
 	movsx	eax, BYTE PTR [rax]
 	cmp	eax, 102				; 00000066H
 	jne	SHORT $LN5@AuTextOut
 
-; 321  : 			{
-; 322  : 				double x = va_arg(args, double);
+; 322  : 			{
+; 323  : 				double x = va_arg(args, double);
 
 	mov	rax, QWORD PTR args$[rsp]
 	add	rax, 8
@@ -1161,7 +1169,7 @@ $LN7@AuTextOut:
 	movsdx	xmm0, QWORD PTR [rax-8]
 	movsdx	QWORD PTR x$7[rsp], xmm0
 
-; 323  : 				AuPutS(ftoa(x, 2));
+; 324  : 				AuPutS(ftoa(x, 2));
 
 	cvtsd2ss xmm0, QWORD PTR x$7[rsp]
 	mov	dl, 2
@@ -1171,29 +1179,29 @@ $LN7@AuTextOut:
 	jmp	SHORT $LN4@AuTextOut
 $LN5@AuTextOut:
 
-; 324  : 			}
-; 325  : 			else if (*format == '%')
+; 325  : 			}
+; 326  : 			else if (*format == '%')
 
 	mov	rax, QWORD PTR format$[rsp]
 	movsx	eax, BYTE PTR [rax]
 	cmp	eax, 37					; 00000025H
 	jne	SHORT $LN3@AuTextOut
 
-; 326  : 			{
-; 327  : 				AuPutS(".");
+; 327  : 			{
+; 328  : 				AuPutS(".");
 
-	lea	rcx, OFFSET FLAT:$SG3804
+	lea	rcx, OFFSET FLAT:$SG3807
 	call	?AuPutS@@YAXPEAD@Z			; AuPutS
 
-; 328  : 			}
-; 329  : 			else
+; 329  : 			}
+; 330  : 			else
 
 	jmp	SHORT $LN2@AuTextOut
 $LN3@AuTextOut:
 
-; 330  : 			{
-; 331  : 				char buf[3];
-; 332  : 				buf[0] = '%'; buf[1] = *format; buf[2] = '\0';
+; 331  : 			{
+; 332  : 				char buf[3];
+; 333  : 				buf[0] = '%'; buf[1] = *format; buf[2] = '\0';
 
 	mov	eax, 1
 	imul	rax, rax, 0
@@ -1207,7 +1215,7 @@ $LN3@AuTextOut:
 	imul	rax, rax, 2
 	mov	BYTE PTR buf$3[rsp+rax], 0
 
-; 333  : 				AuPutS(buf);
+; 334  : 				AuPutS(buf);
 
 	lea	rcx, QWORD PTR buf$3[rsp]
 	call	?AuPutS@@YAXPEAD@Z			; AuPutS
@@ -1218,16 +1226,16 @@ $LN8@AuTextOut:
 $LN10@AuTextOut:
 $LN12@AuTextOut:
 
-; 334  : 			}
-; 335  : 		}
-; 336  : 		else
+; 335  : 			}
+; 336  : 		}
+; 337  : 		else
 
 	jmp	SHORT $LN1@AuTextOut
 $LN20@AuTextOut:
 
-; 337  : 		{
-; 338  : 			char buf[2];
-; 339  : 			buf[0] = *format; buf[1] = '\0';
+; 338  : 		{
+; 339  : 			char buf[2];
+; 340  : 			buf[0] = *format; buf[1] = '\0';
 
 	mov	eax, 1
 	imul	rax, rax, 0
@@ -1238,27 +1246,27 @@ $LN20@AuTextOut:
 	imul	rax, rax, 1
 	mov	BYTE PTR buf$2[rsp+rax], 0
 
-; 340  : 			AuPutS(buf);
+; 341  : 			AuPutS(buf);
 
 	lea	rcx, QWORD PTR buf$2[rsp]
 	call	?AuPutS@@YAXPEAD@Z			; AuPutS
 $LN1@AuTextOut:
 
-; 341  : 		}
-; 342  : 		++format;
+; 342  : 		}
+; 343  : 		++format;
 
 	mov	rax, QWORD PTR format$[rsp]
 	inc	rax
 	mov	QWORD PTR format$[rsp], rax
 
-; 343  : 	}
+; 344  : 	}
 
 	jmp	$LN22@AuTextOut
 $LN21@AuTextOut:
 $LN24@AuTextOut:
 
-; 344  : 	va_end(args);
-; 345  : }
+; 345  : 	va_end(args);
+; 346  : }
 
 	add	rsp, 280				; 00000118H
 	ret	0

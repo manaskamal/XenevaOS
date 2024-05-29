@@ -20,7 +20,7 @@ static char* chars = "0123456789ABCDEF";
 
 extern void debug_print(const char *text, ...);
 
-char* sztoa(size_t value, char* str, int base)
+char* sztoa(int64_t value, char* str, int base)
 {
 	if (base < 2 || base > 16)
 		return nullptr;

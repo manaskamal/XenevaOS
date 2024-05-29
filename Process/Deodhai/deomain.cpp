@@ -1484,9 +1484,20 @@ int main(int argc, char* arv[]) {
 		
 		
 		if (mice_input.type == AU_INPUT_MOUSE) {
-			currentCursor->xpos = mice_input.xpos;
-			currentCursor->ypos = mice_input.ypos;
+			int32_t cursor_x = mice_input.xpos;
+			int32_t cursor_y = mice_input.ypos;
+			double scale_x, scale_y;
+			if (mice_input.code4 != 0){
+				/*scaling is needed*/
+				scale_x = (double)canvas->screenWidth / (double)mice_input.code4;
+				cursor_x = cursor_x * (double)scale_x;
+				scale_y = (double)canvas->screenHeight / (double)mice_input.code4;
+				cursor_y = cursor_y * (double)scale_y;
+			}
+			currentCursor->xpos = cursor_x;
+			currentCursor->ypos = cursor_y;
 			int button = mice_input.button_state;
+
 
 			if ((currentCursor->xpos) <= 0)
 				currentCursor->xpos = 0;

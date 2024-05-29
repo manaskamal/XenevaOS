@@ -78,13 +78,15 @@ void AuUSBInterrupt(size_t v, void* p) {
 	usb_device->op_regs->op_usbsts = status;
 	
 	if (status & XHCI_USB_STS_EINT) {
-		SeTextOut("USB Interrupt++\r\n");
+		for (int l = 0; l < 10000; l++)
+			;
 		xhci_trb_t *event = (xhci_trb_t*)usb_device->event_ring_segment;
 		xhci_event_trb_t *evt = (xhci_event_trb_t*)usb_device->event_ring_segment;
 		uint64_t erdp = (uint64_t)usb_device->event_ring_seg_phys;
 
 		while ((event[usb_device->evnt_ring_index].trb_control & (1 << 0)) == usb_device->evnt_ring_cycle){
-			SeTextOut("Interrupt type -> %d \r\n", evt[usb_device->evnt_ring_index].trbType);
+			for (int l = 0; l < 10000; l++)
+				;
 			if (evt[usb_device->evnt_ring_index].trbType == TRB_EVENT_TRANSFER) {
 				uint8_t endpoint_id = (event[usb_device->evnt_ring_index].trb_control >> 16) & 0x1f;
 				uint8_t comp_code = (event[usb_device->evnt_ring_index].trb_status >> 24) & 0xff;
@@ -287,11 +289,9 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 	/* Try Sending a No Operation Command to xHCI*/
 	XHCISendNoopCmd(usb_device);
 	
-	AuTextOut("Starting default ports \n");
 
 	XHCIStartDefaultPorts(usb_device);
 
-	AuTextOut("Default Port started sizeof(AuDevice) -> %d \n", sizeof(AuDevice));
 
 	/* Disable all interrupts again because
 	* scheduler will enable them all */
@@ -312,7 +312,6 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 	AuThread *t = AuCreateKthread(AnuvabUSB3Thread, P2V((uint64_t)AuPmmngrAlloc() + 4096), (uint64_t)AuGetRootPageTable(), "AnubhavUsb");
 	usb_device->usb_thread = t;
 	usb_device->initialised = true;
-	for (;;);
 	AuDisableInterrupt();
 
 	return 0;

@@ -224,6 +224,11 @@ void AuPS2MouseSetPos(int32_t x, int32_t y) {
 	__ps2mouse->mouse_y = y;
 }
 
+void AuPS2DisableMouse() {
+	x64_outportb(0x64, 0xA7);
+	x64_outportb(0x64, 0xAD);
+}
+
 /*
  * AuPS2MouseInitialise -- initialise the ps2 mouse system
  */

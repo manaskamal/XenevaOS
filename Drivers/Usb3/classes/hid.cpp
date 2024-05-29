@@ -35,6 +35,8 @@
 #include <aucon.h>
 #include <Mm\kmalloc.h>
 #include <stdint.h>
+#include <Drivers\mouse.h>
+#include <Fs\Dev\devinput.h>
 uint64_t mouse_data;
 bool usesPrefix;
 
@@ -43,22 +45,6 @@ bool usesPrefix;
 #define HID_DESCRIPTOR_PHYSICAL 0x23
 
 
-#define HID_APPLICATION_MOUSE  0x010002
-#define HID_APPLICATION_JOYSTICK 0x010004
-#define HID_APPLICATION_KEYBOARD 0x010006
-#define HID_USAGE_X_AXIS 0x010030
-#define HID_USAGE_Y_AXIS 0x010031
-#define HID_USAGE_Z_AXIS 0x010032
-#define HID_USAGE_X_ROTATION 0x010033
-#define HID_USAGE_Y_ROTATION 0x010034
-#define HID_USAGE_Z_ROTATION 0x010035
-#define HID_USGAE_WHEEL      0x010038
-#define HID_USAGE_HAT_SWITCH 0x010039
-#define HID_USAGE_KEYCODES   0x070000
-#define HID_USAGE_BUTTON_1  0x090001
-#define HID_USAGE_BUTTON_2  0x090002
-#define HID_USAGE_BUTTON_3  0x090003
-#define HID_USAGE_BUTTON_16 0x090010
 
 /* Main item tags */
 #define HID_MAIN_ITEM_TAG_INPUT 0x80  //1000 00 nn
@@ -105,12 +91,23 @@ bool usesPrefix;
 #define HID_ITEM_TYPE_LOCAL 2
 #define HID_ITEM_TYPE_RESERVED 3
 
+#define HID_APPLICATION_GENERIC_DESKTOP_CTL 1
+#define HID_APPLICATION_KEYBOARD_KEYPAD 7
+#define HID_APPLICATION_BUTTONS 9
+#define HID_APPLICATION_LEDS 8
+
+#define HID_USAGE_X_AXIS 0x30
+#define HID_USAGE_Y_AXIS 0x31
+#define HID_USAGE_Z_AXIS 0x32
+#define HID_USAGE_WHEEL 0x38
+
 
 struct ReportState{
 	int usageCount;
 	uint16_t usages[32];
 	uint32_t application;
 	int32_t logicalMinimum, logicalMaximum;
+	int32_t physicalMinimum, physicalMaximum;
 	uint16_t usage;
 	uint8_t bits;
 	uint8_t type;
@@ -125,10 +122,14 @@ struct ReportState{
 struct ReportItem {
 	uint32_t application;
 	int32_t logicalMinimum, logicalMaximum;
+	int32_t physicalMinimum, physicalMaximum;
 	uint16_t usage;
 	uint8_t bits;
 	uint8_t type;
 	uint8_t reportsize;
+	uint8_t dataOffset;
+	bool signedBits;
+	bool relative;
 };
 
 #define DELIMITER_NONE 0
@@ -157,10 +158,11 @@ void SetIDLE(USBDevice* dev, XHCISlot* slot, uint8_t slot_id){
 	USB_REQUEST_PACKET pack;
 	pack.request_type = 0x21;
 	pack.request = 0x0A;
-	pack.value = 0;
+	pack.value = USB_DESCRIPTOR_WVALUE(1,0);
 	pack.index = slot->interface_val;
 	pack.length = 0;
 	XHCISendControlCmd(dev, slot, slot_id, &pack, 0, 0);
+	AuTextOut("IDLE Request setupped \r\n");
 }
 
 void GetReport(USBDevice* dev, XHCISlot* slot, uint64_t buffer, uint16_t report_bytes) {
@@ -190,7 +192,24 @@ void BitBuffer::Discard(size_t count) {
 	index += count;
 }
 
-uint32_t BitBuffer::ReadUnsigned(size_t count){
+uint32_t ReadUnsigned(uint8_t* buffer,size_t count, int index, int totalBytes){
+	uint32_t result = 0;
+	uint32_t bit = 0;
+
+	while (bit != count){
+		uintptr_t byte = index >> 3;
+		if (byte >= totalBytes)
+			break;
+		if (buffer[byte] & (1 << (index & 7)))
+			result |= 1 << bit;
+
+		bit++, index++;
+	}
+
+	return result;
+}
+
+uint32_t BitBuffer::ReadUnsigned(size_t count) {
 	uint32_t result = 0;
 	uint32_t bit = 0;
 
@@ -207,10 +226,11 @@ uint32_t BitBuffer::ReadUnsigned(size_t count){
 	return result;
 }
 
-int32_t BitBuffer::ReadSigned(size_t count) {
+
+int32_t ReadSigned(uint8_t* buffer, size_t count, int index, int totalBytes) {
 	if (!count)return 0;
 
-	uint32_t result = ReadUnsigned(count);
+	uint32_t result = ReadUnsigned(buffer,count, index, totalBytes);
 	if (result & (1 << (count - 1))) {
 		for (uintptr_t i = count; i < 32; i++) {
 			result |= 1 << i;
@@ -220,6 +240,28 @@ int32_t BitBuffer::ReadSigned(size_t count) {
 	return result;
 }
 
+int32_t BitBuffer::ReadSigned(size_t count) {
+	if (!count)return 0;
+	uint32_t result = ReadUnsigned(count);
+	SeTextOut("Count signed -> %d \r\n", result);
+	if (result & (1 << (count - 1))) {
+		for (uintptr_t i = count; i < 32; i++) {
+			result |= 1 << i;
+		}
+	}
+
+	return result;
+}
+/*
+* TTFSwap16 -- swaps a 16 bit value
+* @param value -- value to swap
+*/
+uint16_t HIDSwap(int32_t value) {
+	int left_most_byte = (value & 0x000000FF);
+	int left_middle_byte = (value & 0x0000ff00);
+	int result = ((left_most_byte & 0xff) << 8 | left_middle_byte & 0xff);
+	return result;
+}
 
 
 
@@ -229,13 +271,14 @@ bool HIDParseReportDescriptor(uint8_t* report, size_t reportBytes) {
 	ReportState state[32];
 	memset(&state, 0, sizeof(ReportState)*32);
 	uint8_t stateidx = 0;
+	uint8_t current_data_offset;
 	while (position < reportBytes) {
 		uint8_t item_header = report[position];
 		size_t item_size = item_header & 0x3;
 		uint8_t item_type = (item_header >> 2) & 0x3;
 		uint8_t item_tag = (item_header >> 4) & 0xf;
 		uint8_t one_byte_prefix = item_header & ~3;
-		uint32_t data = 0;
+		int32_t data = 0;
 		uint32_t usage = 0;
 		if (item_header == 0xFE) {
 			SeTextOut("[USB HID]: Long items, unused \r\n");
@@ -260,16 +303,41 @@ bool HIDParseReportDescriptor(uint8_t* report, size_t reportBytes) {
 				switch (one_byte_prefix) {
 				case HID_MAIN_ITEM_TAG_INPUT:
 					//AuTextOut("HID Main item tag input \n");
-					for (int i = 0; i < state[stateidx].reportCount; i++){
+					if (state[stateidx].usageCount > 1) {
+						for (int i = 0; i < state[stateidx].reportCount; i++){
+							items[reportItemLength].application = state[stateidx].application;
+							items[reportItemLength].bits = state[stateidx].bits;
+							items[reportItemLength].logicalMaximum = state[stateidx].logicalMaximum;
+							items[reportItemLength].logicalMinimum = state[stateidx].logicalMinimum;
+							items[reportItemLength].type = REPORT_ITEM_INPUT;
+							items[reportItemLength].usage = state[stateidx].usages[i];
+							items[reportItemLength].reportsize = 1;
+							items[reportItemLength].dataOffset = current_data_offset;
+							items[reportItemLength].physicalMinimum = state[stateidx].physicalMinimum;
+							items[reportItemLength].physicalMaximum = state[stateidx].physicalMaximum;
+							if (items[reportItemLength].logicalMinimum < 0 || items[reportItemLength].logicalMaximum < 0)
+								items[reportItemLength].signedBits = true;
+							if ((data & (1 << 2)) == 1)
+								items[reportItemLength].relative = 1;
+							reportItemLength++;
+						}
+					}
+					else {
 						items[reportItemLength].application = state[stateidx].application;
 						items[reportItemLength].bits = state[stateidx].bits;
 						items[reportItemLength].logicalMaximum = state[stateidx].logicalMaximum;
 						items[reportItemLength].logicalMinimum = state[stateidx].logicalMinimum;
 						items[reportItemLength].type = REPORT_ITEM_INPUT;
-						items[reportItemLength].usage = state[stateidx].usages[i];
+						items[reportItemLength].usage = state[stateidx].usages[state[stateidx].usageCount-1];
 						items[reportItemLength].reportsize = state[stateidx].reportCount;
+						items[reportItemLength].dataOffset = current_data_offset;
+						items[reportItemLength].physicalMinimum = state[stateidx].physicalMinimum;
+						items[reportItemLength].physicalMaximum = state[stateidx].physicalMaximum;
+						if (items[reportItemLength].logicalMinimum < 0 || items[reportItemLength].logicalMaximum < 0)
+							items[reportItemLength].signedBits = true;
 						reportItemLength++;
 					}
+					current_data_offset += (state[stateidx].bits * state[stateidx].reportCount); 
 					stateidx++;
 					break;
 				case HID_MAIN_ITEM_TAG_OUTPUT:
@@ -305,23 +373,23 @@ bool HIDParseReportDescriptor(uint8_t* report, size_t reportBytes) {
 				}
 				case HID_GLOBAL_ITEM_TAG_LOGICAL_MINIMUM:
 					//AuTextOut("HID Global Logical Minimum \n");
-					state[stateidx].logicalMinimum = sdata;
+					state[stateidx].logicalMinimum = data;
 					break;
 				case HID_GLOBAL_ITEM_TAG_LOGICAL_MAXIMUM:
-					//AuTextOut("HID Global Logical Maximum \n");
-					state[stateidx].logicalMaximum = sdata;
+					//AuTextOut("HID Global Logical Maximum %x, %d\n", HIDSwap(sdata), item_size);
+					state[stateidx].logicalMaximum = data;
 					break;
 				case HID_GLOBAL_ITEM_TAG_PHYSICAL_MINIMUM:
-					//AuTextOut("HID Global Physical Minimum \n");
+					state[stateidx].physicalMinimum = data;
 					break;
 				case HID_GLOBAL_ITEM_TAG_PHYSICAL_MAXIMUM:
-					//AuTextOut("HID Global Physical Maximum \n");
+					state[stateidx].physicalMaximum = data;
 					break;
 				case HID_GLOBAL_ITEM_TAG_UNIT_EXPONENT:
-					//AuTextOut("HID Global Unit Exponent \n");
+					
 					break;
 				case HID_GLOBAL_ITEM_TAG_UNIT:
-					//AuTextOut("HID Global Unit \n");
+					
 					break;
 				case HID_GLOBAL_ITEM_TAG_REPORT_SIZE:
 					//AuTextOut("HID Global Reporst Size %d \n", data);
@@ -346,7 +414,6 @@ bool HIDParseReportDescriptor(uint8_t* report, size_t reportBytes) {
 				switch (one_byte_prefix)
 				{
 				case HID_LOCAL_ITEM_TAG_USAGE:
-					//AuTextOut("HID Local Usage %x\n", (data & 0xffff));
 					state[stateidx].usages[state[stateidx].usageCount++] = (data & 0xffff);
 					break;
 				case HID_LOCAL_ITEM_TAG_USAGE_MINIMUM:
@@ -394,25 +461,29 @@ bool HIDParseReportDescriptor(uint8_t* report, size_t reportBytes) {
 		}
 	}
 
-	SeTextOut("Debugging report descriptors \r\n");
-	for (int i = 0; i < reportItemLength; i++){
-		SeTextOut("***** \r\n");
-		SeTextOut("Item[%d].application = %x \r\n",i, items[i].application);
-		SeTextOut("Item[%d].usage = %x \r\n", i,items[i].usage);
-		SeTextOut("Item[%d].bits = %x \r\n",i, items[i].bits);
-		SeTextOut("Item[%d].logicalMinimum = %d \r\n", i, items[i].logicalMinimum);
-		SeTextOut("Item[%d].logicalMaximum = %x \r\n", i, items[i].logicalMaximum);
-		SeTextOut("Item[%d].type = %x \r\n",i, items[i].type);
-	}
 }
 
 void ReportReceived(BitBuffer *buffer) {
-	uint8_t prefix = 0;
-
-	if (usesPrefix)
-		prefix = buffer->ReadUnsigned(8);
+	
+	
 	//SeTextOut("USES PREFIX -> %d \r\n", usesPrefix);
 }
+
+int usb_pow(int a, int b) {
+	switch (b) {
+	case 0:
+		return 1;
+		break;
+	case  1:
+		return a;
+		break;
+	default:
+		return a* usb_pow(a, b - 1);
+		break;
+	}
+}
+
+
 
 void HIDCallback(void* dev_, void* slot_, void* ep_) {
 	USBDevice* dev = (USBDevice*)dev_;
@@ -420,10 +491,83 @@ void HIDCallback(void* dev_, void* slot_, void* ep_) {
 	XHCIEndpoint* ep = (XHCIEndpoint*)ep_;
 
 	uint8_t* md = (uint8_t*)mouse_data;
-	for (int i = 0; i < 8; i++)
-		AuTextOut(" %d ", md[i]);
-	AuTextOut("\n");
+
 	
+	/* mouse information */
+	/* extract the button information */
+	uint8_t button = 0;
+	int16_t mouse_x, mouse_y = 0;
+	uint8_t byteOffset = 0;
+	int lastsz = 0;
+	AuInputMessage newmsg;
+	memset(&newmsg, 0, sizeof(AuInputMessage));
+	newmsg.type = AU_INPUT_MOUSE;
+	newmsg.xpos = 0;
+	newmsg.ypos = 0;
+	newmsg.button_state = 0;
+	
+	BitBuffer buff;
+	buff.buffer = md;
+	buff.bytes = 8;
+	buff.index = 0;
+
+	for (int i = 0; i < reportItemLength; i++) {
+		if (items[i].application == HID_APPLICATION_BUTTONS && items[i].usage == 0){
+			uint8_t buttonByte = md[byteOffset];
+		}
+		
+		if (items[i].application == HID_APPLICATION_GENERIC_DESKTOP_CTL && items[i].usage == HID_USAGE_X_AXIS){
+			if ((items[i].physicalMinimum == 0) && (items[i].physicalMaximum == 0)){
+				items[i].physicalMinimum = items[i].logicalMinimum;
+				items[i].physicalMaximum = items[i].logicalMaximum;
+			}
+
+			int resolution;
+			if (items[i].physicalMaximum == items[i].physicalMinimum){
+				resolution = 1;
+			}
+			else {
+				resolution = (items[i].logicalMaximum - items[i].logicalMinimum) /
+					((items[i].physicalMaximum - items[i].physicalMinimum) * usb_pow(10, 0));
+			}
+		
+			if (items[i].relative)
+				SeTextOut("Mouse movement is relative \r\n");
+			if (items[i].logicalMinimum < 0){
+				for (int k = (items[i].bits / 8) - 1; k >= 0; k--)
+					mouse_x |= ((((int8_t)md[byteOffset + k]) & 0xff) << (k * 8));
+			}
+			else {
+				for (int k = (items[i].bits / 8) - 1; k >= 0; k--){
+				}
+			}
+			mouse_x = md[byteOffset + 1] << 8 | md[byteOffset];
+			newmsg.xpos = mouse_x;
+			newmsg.code3 = items[i].logicalMinimum;
+			newmsg.code4 = items[i].logicalMaximum;
+		}
+
+		if (items[i].application == HID_APPLICATION_GENERIC_DESKTOP_CTL && items[i].usage == HID_USAGE_Y_AXIS){
+			mouse_y = md[byteOffset + 1] << 8 | md[byteOffset];
+			newmsg.code3 = items[i].logicalMinimum;
+			newmsg.code4 = items[i].logicalMaximum;
+			newmsg.ypos = mouse_y;
+		}
+
+		int fieldSz = (items[i].bits * items[i].reportsize) + lastsz;
+		byteOffset += fieldSz / 8;
+		if (fieldSz == 0)
+			byteOffset++;
+	
+		if (fieldSz >= 8)
+			lastsz = 0;
+		if (fieldSz < 8)
+			lastsz = fieldSz;
+
+		buff.Discard(items[i].bits);
+	}
+	
+	AuDevWriteMice(&newmsg);
 	memset((void*)mouse_data, 0, PAGE_SIZE);
 	XHCISendNormalTRB(dev, slot, V2P(mouse_data), ep->max_packet_sz, ep);
 }
@@ -438,7 +582,7 @@ void HIDCallback(void* dev_, void* slot_, void* ep_) {
  */
 void USBHidInitialise(USBDevice* dev, XHCISlot* slot, uint8_t classC, uint8_t subClassC, uint8_t prot) {
 	HIDDescriptor* hid = (HIDDescriptor*)USBGetDescriptor(slot, 0x21);
-
+	
 	size_t report_bytes = 0;
 	mouse_data = NULL;
 	usesPrefix = false;

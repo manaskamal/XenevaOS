@@ -636,7 +636,7 @@ void XHCIPortInitialize(USBDevice *dev, unsigned int port) {
 
 		/* Enable slot command */
 		XHCIEnableSlot(dev, 0);
-		AuTextOut("Port enabled \n");
+		
 		int idx = XHCIPollEvent(dev, TRB_EVENT_CMD_COMPLETION);
 		if (idx != -1) {
 			xhci_event_trb_t *evt = (xhci_event_trb_t*)dev->event_ring_segment;
@@ -703,10 +703,8 @@ void XHCIPortInitialize(USBDevice *dev, unsigned int port) {
 		USBGetStringDesc(dev,slot,slot_id,V2P((uint64_t)string_buf),dev_desc->iProduct);
 		t_idx = -1;
 		SeTextOut("Waiting for trb_transfer \r\n");
-		t_idx = XHCIPollEvent(dev,TRB_EVENT_TRANSFER);
+		//t_idx = XHCIPollEvent(dev,TRB_EVENT_TRANSFER);
 
-		AuTextOut("String descriptor got \n");
-	
 		usb_string_desc_t* str_desc = (usb_string_desc_t*)string_buf;
 		uint8_t* string_buf_ptr = ((uint8_t*)str_desc + 2);
 		uint16_t* string = (uint16_t*)string_buf_ptr;

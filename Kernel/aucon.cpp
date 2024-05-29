@@ -284,8 +284,9 @@ void AuTextOut(const char* format, ...) {
 				size_t i = va_arg(args, size_t);
 				char buffer[sizeof(size_t)* 8 + 1];
 				//	size_t len
-				if (i < 0) {
-					i = +i;
+				if ((int)i < 0) {
+					AuPutS("-");
+					i = ((int)i * -1);
 					sztoa(i, buffer, 10);
 				}
 				else {

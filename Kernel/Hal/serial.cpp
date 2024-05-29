@@ -99,11 +99,12 @@ AU_EXTERN AU_EXPORT void SeTextOut(char* format, ...) {
 						width += format[i] - '0';
 					}
 				}
-				size_t i = va_arg(args, size_t);
+				int64_t i = va_arg(args, int64_t);
 				char buffer[sizeof(size_t)* 8 + 1];
 				//	size_t len
-				if (i < 0) {
-					i = +i;
+				if ((int)i < 0) {
+					DebugSerial("-");
+					i = ((int)i * -1);
 					sztoa(i, buffer, 10);
 				}
 				else {

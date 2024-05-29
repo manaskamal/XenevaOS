@@ -6,7 +6,9 @@ INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
 CONST	SEGMENT
-$SG3658	DB	'.', 00H
+$SG3613	DB	'-', 00H
+	ORG $+2
+$SG3661	DB	'.', 00H
 CONST	ENDS
 PUBLIC	?AuInitialiseSerial@@YAXXZ			; AuInitialiseSerial
 PUBLIC	SeTextOut
@@ -18,7 +20,7 @@ EXTRN	strlen:PROC
 EXTRN	AuInterruptEnd:PROC
 EXTRN	x64_inportb:PROC
 EXTRN	x64_outportb:PROC
-EXTRN	?sztoa@@YAPEAD_KPEADH@Z:PROC			; sztoa
+EXTRN	?sztoa@@YAPEAD_JPEADH@Z:PROC			; sztoa
 EXTRN	?ftoa@@YAPEADME@Z:PROC				; ftoa
 EXTRN	_fltused:DWORD
 pdata	SEGMENT
@@ -26,7 +28,7 @@ $pdata$?AuInitialiseSerial@@YAXXZ DD imagerel $LN3
 	DD	imagerel $LN3+86
 	DD	imagerel $unwind$?AuInitialiseSerial@@YAXXZ
 $pdata$SeTextOut DD imagerel $LN25
-	DD	imagerel $LN25+857
+	DD	imagerel $LN25+870
 	DD	imagerel $unwind$SeTextOut
 $pdata$?SerialInterruptHandler@@YAX_KPEAX@Z DD imagerel $LN3
 	DD	imagerel $LN3+26
@@ -314,7 +316,7 @@ $LN15@SeTextOut:
 $LN18@SeTextOut:
 
 ; 101  : 				}
-; 102  : 				size_t i = va_arg(args, size_t);
+; 102  : 				int64_t i = va_arg(args, int64_t);
 
 	mov	rax, QWORD PTR args$[rsp]
 	add	rax, 8
@@ -325,63 +327,69 @@ $LN18@SeTextOut:
 
 ; 103  : 				char buffer[sizeof(size_t)* 8 + 1];
 ; 104  : 				//	size_t len
-; 105  : 				if (i < 0) {
+; 105  : 				if ((int)i < 0) {
 
-	cmp	QWORD PTR i$5[rsp], 0
-	jae	SHORT $LN14@SeTextOut
+	cmp	DWORD PTR i$5[rsp], 0
+	jge	SHORT $LN14@SeTextOut
 
-; 106  : 					i = +i;
+; 106  : 					DebugSerial("-");
 
-	mov	rax, QWORD PTR i$5[rsp]
+	lea	rcx, OFFSET FLAT:$SG3613
+	call	?DebugSerial@@YAXPEAD@Z			; DebugSerial
+
+; 107  : 					i = ((int)i * -1);
+
+	imul	eax, DWORD PTR i$5[rsp], -1
+	cdqe
 	mov	QWORD PTR i$5[rsp], rax
 
-; 107  : 					sztoa(i, buffer, 10);
+; 108  : 					sztoa(i, buffer, 10);
 
 	mov	r8d, 10
 	lea	rdx, QWORD PTR buffer$11[rsp]
 	mov	rcx, QWORD PTR i$5[rsp]
-	call	?sztoa@@YAPEAD_KPEADH@Z			; sztoa
+	call	?sztoa@@YAPEAD_JPEADH@Z			; sztoa
 
-; 108  : 				}
-; 109  : 				else {
+; 109  : 				}
+; 110  : 				else {
 
 	jmp	SHORT $LN13@SeTextOut
 $LN14@SeTextOut:
 
-; 110  : 					sztoa(i, buffer, 10);
+; 111  : 					sztoa(i, buffer, 10);
 
 	mov	r8d, 10
 	lea	rdx, QWORD PTR buffer$11[rsp]
 	mov	rcx, QWORD PTR i$5[rsp]
-	call	?sztoa@@YAPEAD_KPEADH@Z			; sztoa
+	call	?sztoa@@YAPEAD_JPEADH@Z			; sztoa
 
-; 111  : 					size_t len = strlen(buffer);
+; 112  : 					size_t len = strlen(buffer);
 
 	lea	rcx, QWORD PTR buffer$11[rsp]
 	call	strlen
 	mov	QWORD PTR len$10[rsp], rax
 $LN13@SeTextOut:
 
-; 112  : 				}
-; 113  : 				/*	while (len++ < width)
-; 114  : 				puts("0");*/
-; 115  : 				DebugSerial(buffer);
+; 113  : 				}
+; 114  : 				/*	while (len++ < width)
+; 115  : 				puts("0");*/
+; 116  : 				DebugSerial(buffer);
 
 	lea	rcx, QWORD PTR buffer$11[rsp]
 	call	?DebugSerial@@YAXPEAD@Z			; DebugSerial
 	jmp	$LN12@SeTextOut
 $LN19@SeTextOut:
 
-; 116  : 			}
-; 117  : 			else if (*format == 'c')
+; 117  : 			}
+; 118  : 			else if (*format == 'c')
 
 	mov	rax, QWORD PTR format$[rsp]
 	movsx	eax, BYTE PTR [rax]
 	cmp	eax, 99					; 00000063H
 	jne	SHORT $LN11@SeTextOut
 
-; 118  : 			{
-; 119  : 				char c = va_arg(args, char);
+; 119  : 			{
+; 120  : 				char c = va_arg(args, char);
 
 	mov	rax, QWORD PTR args$[rsp]
 	add	rax, 4
@@ -390,26 +398,26 @@ $LN19@SeTextOut:
 	movzx	eax, BYTE PTR [rax-4]
 	mov	BYTE PTR c$1[rsp], al
 
-; 120  : 				//char buffer[sizeof(size_t) * 8 + 1];
-; 121  : 				//sztoa(c, buffer, 10);
-; 122  : 				//puts(buffer);
-; 123  : 				WriteSerial(c);
+; 121  : 				//char buffer[sizeof(size_t) * 8 + 1];
+; 122  : 				//sztoa(c, buffer, 10);
+; 123  : 				//puts(buffer);
+; 124  : 				WriteSerial(c);
 
 	movzx	ecx, BYTE PTR c$1[rsp]
 	call	?WriteSerial@@YAXD@Z			; WriteSerial
 	jmp	$LN10@SeTextOut
 $LN11@SeTextOut:
 
-; 124  : 			}
-; 125  : 			else if (*format == 'x')
+; 125  : 			}
+; 126  : 			else if (*format == 'x')
 
 	mov	rax, QWORD PTR format$[rsp]
 	movsx	eax, BYTE PTR [rax]
 	cmp	eax, 120				; 00000078H
 	jne	SHORT $LN9@SeTextOut
 
-; 126  : 			{
-; 127  : 				size_t x = va_arg(args, size_t);
+; 127  : 			{
+; 128  : 				size_t x = va_arg(args, size_t);
 
 	mov	rax, QWORD PTR args$[rsp]
 	add	rax, 8
@@ -418,32 +426,32 @@ $LN11@SeTextOut:
 	mov	rax, QWORD PTR [rax-8]
 	mov	QWORD PTR x$9[rsp], rax
 
-; 128  : 				char buffer[sizeof(size_t)* 8 + 1];
-; 129  : 				sztoa(x, buffer, 16);
+; 129  : 				char buffer[sizeof(size_t)* 8 + 1];
+; 130  : 				sztoa(x, buffer, 16);
 
 	mov	r8d, 16
 	lea	rdx, QWORD PTR buffer$12[rsp]
 	mov	rcx, QWORD PTR x$9[rsp]
-	call	?sztoa@@YAPEAD_KPEADH@Z			; sztoa
+	call	?sztoa@@YAPEAD_JPEADH@Z			; sztoa
 
-; 130  : 				//puts("0x");
-; 131  : 				DebugSerial(buffer);
+; 131  : 				//puts("0x");
+; 132  : 				DebugSerial(buffer);
 
 	lea	rcx, QWORD PTR buffer$12[rsp]
 	call	?DebugSerial@@YAXPEAD@Z			; DebugSerial
 	jmp	$LN8@SeTextOut
 $LN9@SeTextOut:
 
-; 132  : 			}
-; 133  : 			else if (*format == 's')
+; 133  : 			}
+; 134  : 			else if (*format == 's')
 
 	mov	rax, QWORD PTR format$[rsp]
 	movsx	eax, BYTE PTR [rax]
 	cmp	eax, 115				; 00000073H
 	jne	SHORT $LN7@SeTextOut
 
-; 134  : 			{
-; 135  : 				char* x = va_arg(args, char*);
+; 135  : 			{
+; 136  : 				char* x = va_arg(args, char*);
 
 	mov	rax, QWORD PTR args$[rsp]
 	add	rax, 8
@@ -452,23 +460,23 @@ $LN9@SeTextOut:
 	mov	rax, QWORD PTR [rax-8]
 	mov	QWORD PTR x$8[rsp], rax
 
-; 136  : 				DebugSerial(x);
+; 137  : 				DebugSerial(x);
 
 	mov	rcx, QWORD PTR x$8[rsp]
 	call	?DebugSerial@@YAXPEAD@Z			; DebugSerial
 	jmp	$LN6@SeTextOut
 $LN7@SeTextOut:
 
-; 137  : 			}
-; 138  : 			else if (*format == 'f')
+; 138  : 			}
+; 139  : 			else if (*format == 'f')
 
 	mov	rax, QWORD PTR format$[rsp]
 	movsx	eax, BYTE PTR [rax]
 	cmp	eax, 102				; 00000066H
 	jne	SHORT $LN5@SeTextOut
 
-; 139  : 			{
-; 140  : 				double x = va_arg(args, double);
+; 140  : 			{
+; 141  : 				double x = va_arg(args, double);
 
 	mov	rax, QWORD PTR args$[rsp]
 	add	rax, 8
@@ -477,7 +485,7 @@ $LN7@SeTextOut:
 	movsdx	xmm0, QWORD PTR [rax-8]
 	movsdx	QWORD PTR x$7[rsp], xmm0
 
-; 141  : 				DebugSerial(ftoa(x, 2));
+; 142  : 				DebugSerial(ftoa(x, 2));
 
 	cvtsd2ss xmm0, QWORD PTR x$7[rsp]
 	mov	dl, 2
@@ -487,29 +495,29 @@ $LN7@SeTextOut:
 	jmp	SHORT $LN4@SeTextOut
 $LN5@SeTextOut:
 
-; 142  : 			}
-; 143  : 			else if (*format == '%')
+; 143  : 			}
+; 144  : 			else if (*format == '%')
 
 	mov	rax, QWORD PTR format$[rsp]
 	movsx	eax, BYTE PTR [rax]
 	cmp	eax, 37					; 00000025H
 	jne	SHORT $LN3@SeTextOut
 
-; 144  : 			{
-; 145  : 				DebugSerial(".");
+; 145  : 			{
+; 146  : 				DebugSerial(".");
 
-	lea	rcx, OFFSET FLAT:$SG3658
+	lea	rcx, OFFSET FLAT:$SG3661
 	call	?DebugSerial@@YAXPEAD@Z			; DebugSerial
 
-; 146  : 			}
-; 147  : 			else
+; 147  : 			}
+; 148  : 			else
 
 	jmp	SHORT $LN2@SeTextOut
 $LN3@SeTextOut:
 
-; 148  : 			{
-; 149  : 				char buf[3];
-; 150  : 				buf[0] = '%'; buf[1] = *format; buf[2] = '\0';
+; 149  : 			{
+; 150  : 				char buf[3];
+; 151  : 				buf[0] = '%'; buf[1] = *format; buf[2] = '\0';
 
 	mov	eax, 1
 	imul	rax, rax, 0
@@ -523,7 +531,7 @@ $LN3@SeTextOut:
 	imul	rax, rax, 2
 	mov	BYTE PTR buf$3[rsp+rax], 0
 
-; 151  : 				DebugSerial(buf);
+; 152  : 				DebugSerial(buf);
 
 	lea	rcx, QWORD PTR buf$3[rsp]
 	call	?DebugSerial@@YAXPEAD@Z			; DebugSerial
@@ -534,16 +542,16 @@ $LN8@SeTextOut:
 $LN10@SeTextOut:
 $LN12@SeTextOut:
 
-; 152  : 			}
-; 153  : 		}
-; 154  : 		else
+; 153  : 			}
+; 154  : 		}
+; 155  : 		else
 
 	jmp	SHORT $LN1@SeTextOut
 $LN20@SeTextOut:
 
-; 155  : 		{
-; 156  : 			char buf[2];
-; 157  : 			buf[0] = *format; buf[1] = '\0';
+; 156  : 		{
+; 157  : 			char buf[2];
+; 158  : 			buf[0] = *format; buf[1] = '\0';
 
 	mov	eax, 1
 	imul	rax, rax, 0
@@ -554,27 +562,27 @@ $LN20@SeTextOut:
 	imul	rax, rax, 1
 	mov	BYTE PTR buf$2[rsp+rax], 0
 
-; 158  : 			DebugSerial(buf);
+; 159  : 			DebugSerial(buf);
 
 	lea	rcx, QWORD PTR buf$2[rsp]
 	call	?DebugSerial@@YAXPEAD@Z			; DebugSerial
 $LN1@SeTextOut:
 
-; 159  : 		}
-; 160  : 		++format;
+; 160  : 		}
+; 161  : 		++format;
 
 	mov	rax, QWORD PTR format$[rsp]
 	inc	rax
 	mov	QWORD PTR format$[rsp], rax
 
-; 161  : 	}
+; 162  : 	}
 
 	jmp	$LN22@SeTextOut
 $LN21@SeTextOut:
 
-; 162  : 	va_end(args);
-; 163  : 
-; 164  : }
+; 163  : 	va_end(args);
+; 164  : 
+; 165  : }
 
 	add	rsp, 280				; 00000118H
 	ret	0

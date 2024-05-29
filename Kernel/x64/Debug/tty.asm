@@ -62,7 +62,7 @@ EXTRN	kmalloc:PROC
 EXTRN	kfree:PROC
 EXTRN	strcpy:PROC
 EXTRN	memset:PROC
-EXTRN	?sztoa@@YAPEAD_KPEADH@Z:PROC			; sztoa
+EXTRN	?sztoa@@YAPEAD_JPEADH@Z:PROC			; sztoa
 EXTRN	AuGetCurrentThread:PROC
 EXTRN	AuForceScheduler:PROC
 EXTRN	?AuProcessFindThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z:PROC ; AuProcessFindThread
@@ -190,7 +190,7 @@ $LN3:
 	mov	r8d, 10
 	mov	rdx, rax
 	mov	rcx, QWORD PTR ?slave_count@@3_KA	; slave_count
-	call	?sztoa@@YAPEAD_KPEADH@Z			; sztoa
+	call	?sztoa@@YAPEAD_JPEADH@Z			; sztoa
 
 ; 306  : 	strcpy(node->filename, name);
 
@@ -319,7 +319,7 @@ $LN3:
 	mov	r8d, 10
 	mov	rdx, rax
 	mov	rcx, QWORD PTR ?master_count@@3_KA	; master_count
-	call	?sztoa@@YAPEAD_KPEADH@Z			; sztoa
+	call	?sztoa@@YAPEAD_JPEADH@Z			; sztoa
 
 ; 277  : 	strcpy(node->filename, name);
 

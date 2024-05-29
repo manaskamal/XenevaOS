@@ -10,12 +10,13 @@ _BSS	SEGMENT
 ?__ps2mouse@@3PEAU__ps2mouse__@@EA DQ 01H DUP (?)	; __ps2mouse
 _BSS	ENDS
 CONST	SEGMENT
-$SG3908	DB	'Right clicked ', 0dH, 0aH, 00H
+$SG3909	DB	'Right clicked ', 0dH, 0aH, 00H
 	ORG $+7
-$SG3931	DB	'PS2 Mouse with scroll wheel ', 0aH, 00H
+$SG3934	DB	'PS2 Mouse with scroll wheel ', 0aH, 00H
 CONST	ENDS
 PUBLIC	?AuPS2MouseInitialise@@YAXXZ			; AuPS2MouseInitialise
 PUBLIC	?AuPS2MouseSetPos@@YAXHH@Z			; AuPS2MouseSetPos
+PUBLIC	AuPS2DisableMouse
 PUBLIC	?PS2MouseWaitInput@@YAXXZ			; PS2MouseWaitInput
 PUBLIC	?PS2MouseWaitOutput@@YAXXZ			; PS2MouseWaitOutput
 PUBLIC	?AuPS2MouseWrite@@YAEE@Z			; AuPS2MouseWrite
@@ -37,6 +38,9 @@ pdata	SEGMENT
 $pdata$?AuPS2MouseInitialise@@YAXXZ DD imagerel $LN4
 	DD	imagerel $LN4+330
 	DD	imagerel $unwind$?AuPS2MouseInitialise@@YAXXZ
+$pdata$AuPS2DisableMouse DD imagerel $LN3
+	DD	imagerel $LN3+31
+	DD	imagerel $unwind$AuPS2DisableMouse
 $pdata$?PS2MouseWaitInput@@YAXXZ DD imagerel $LN6
 	DD	imagerel $LN6+62
 	DD	imagerel $unwind$?PS2MouseWaitInput@@YAXXZ
@@ -56,6 +60,8 @@ pdata	ENDS
 xdata	SEGMENT
 $unwind$?AuPS2MouseInitialise@@YAXXZ DD 010401H
 	DD	06204H
+$unwind$AuPS2DisableMouse DD 010401H
+	DD	04204H
 $unwind$?PS2MouseWaitInput@@YAXXZ DD 010401H
 	DD	06204H
 $unwind$?PS2MouseWaitOutput@@YAXXZ DD 010401H
@@ -450,7 +456,7 @@ $LN8@PS2MouseHa:
 
 ; 174  : 			SeTextOut("Right clicked \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG3908
+	lea	rcx, OFFSET FLAT:$SG3909
 	call	SeTextOut
 
 ; 175  : 			__ps2mouse->mouse_butt_state |= RIGHT_CLICK;
@@ -806,6 +812,34 @@ _TEXT	ENDS
 ; Function compile flags: /Odtpy
 ; File e:\xeneva project\aurora\kernel\drivers\mouse.cpp
 _TEXT	SEGMENT
+AuPS2DisableMouse PROC
+
+; 227  : void AuPS2DisableMouse() {
+
+$LN3:
+	sub	rsp, 40					; 00000028H
+
+; 228  : 	x64_outportb(0x64, 0xA7);
+
+	mov	dl, 167					; 000000a7H
+	mov	cx, 100					; 00000064H
+	call	x64_outportb
+
+; 229  : 	x64_outportb(0x64, 0xAD);
+
+	mov	dl, 173					; 000000adH
+	mov	cx, 100					; 00000064H
+	call	x64_outportb
+
+; 230  : }
+
+	add	rsp, 40					; 00000028H
+	ret	0
+AuPS2DisableMouse ENDP
+_TEXT	ENDS
+; Function compile flags: /Odtpy
+; File e:\xeneva project\aurora\kernel\drivers\mouse.cpp
+_TEXT	SEGMENT
 x$ = 8
 y$ = 16
 ?AuPS2MouseSetPos@@YAXHH@Z PROC				; AuPS2MouseSetPos
@@ -849,59 +883,59 @@ _TEXT	SEGMENT
 status$ = 32
 ?AuPS2MouseInitialise@@YAXXZ PROC			; AuPS2MouseInitialise
 
-; 230  : void AuPS2MouseInitialise() {
+; 235  : void AuPS2MouseInitialise() {
 
 $LN4:
 	sub	rsp, 56					; 00000038H
 
-; 231  : 	__ps2mouse = (PS2Mouse*)kmalloc(sizeof(PS2Mouse));
+; 236  : 	__ps2mouse = (PS2Mouse*)kmalloc(sizeof(PS2Mouse));
 
 	mov	ecx, 36					; 00000024H
 	call	kmalloc
 	mov	QWORD PTR ?__ps2mouse@@3PEAU__ps2mouse__@@EA, rax ; __ps2mouse
 
-; 232  : 	memset(__ps2mouse, 0, sizeof(PS2Mouse));
+; 237  : 	memset(__ps2mouse, 0, sizeof(PS2Mouse));
 
 	mov	r8d, 36					; 00000024H
 	xor	edx, edx
 	mov	rcx, QWORD PTR ?__ps2mouse@@3PEAU__ps2mouse__@@EA ; __ps2mouse
 	call	memset
 
-; 233  : 
-; 234  : 	__ps2mouse->mouse_mode = MOUSE_DEFAULT;
+; 238  : 
+; 239  : 	__ps2mouse->mouse_mode = MOUSE_DEFAULT;
 
 	mov	rax, QWORD PTR ?__ps2mouse@@3PEAU__ps2mouse__@@EA ; __ps2mouse
 	mov	BYTE PTR [rax+31], 0
 
-; 235  : 	uint8_t status;
-; 236  : 
-; 237  : 	PS2MouseWaitInput();
+; 240  : 	uint8_t status;
+; 241  : 
+; 242  : 	PS2MouseWaitInput();
 
 	call	?PS2MouseWaitInput@@YAXXZ		; PS2MouseWaitInput
 
-; 238  : 	x64_outportb(0x64, 0xA8);
+; 243  : 	x64_outportb(0x64, 0xA8);
 
 	mov	dl, 168					; 000000a8H
 	mov	cx, 100					; 00000064H
 	call	x64_outportb
 
-; 239  : 
-; 240  : 	PS2MouseWaitInput();
+; 244  : 
+; 245  : 	PS2MouseWaitInput();
 
 	call	?PS2MouseWaitInput@@YAXXZ		; PS2MouseWaitInput
 
-; 241  : 	x64_outportb(0x64, 0x20);
+; 246  : 	x64_outportb(0x64, 0x20);
 
 	mov	dl, 32					; 00000020H
 	mov	cx, 100					; 00000064H
 	call	x64_outportb
 
-; 242  : 
-; 243  : 	PS2MouseWaitInput();
+; 247  : 
+; 248  : 	PS2MouseWaitInput();
 
 	call	?PS2MouseWaitInput@@YAXXZ		; PS2MouseWaitInput
 
-; 244  : 	status = (x64_inportb(0x60) | 2);
+; 249  : 	status = (x64_inportb(0x60) | 2);
 
 	mov	cx, 96					; 00000060H
 	call	x64_inportb
@@ -909,131 +943,131 @@ $LN4:
 	or	eax, 2
 	mov	BYTE PTR status$[rsp], al
 
-; 245  : 
-; 246  : 	PS2MouseWaitInput();
+; 250  : 
+; 251  : 	PS2MouseWaitInput();
 
 	call	?PS2MouseWaitInput@@YAXXZ		; PS2MouseWaitInput
 
-; 247  : 	x64_outportb(0x64, 0x60);
+; 252  : 	x64_outportb(0x64, 0x60);
 
 	mov	dl, 96					; 00000060H
 	mov	cx, 100					; 00000064H
 	call	x64_outportb
 
-; 248  : 
-; 249  : 	PS2MouseWaitInput();
+; 253  : 
+; 254  : 	PS2MouseWaitInput();
 
 	call	?PS2MouseWaitInput@@YAXXZ		; PS2MouseWaitInput
 
-; 250  : 	x64_outportb(0x60, status);
+; 255  : 	x64_outportb(0x60, status);
 
 	movzx	edx, BYTE PTR status$[rsp]
 	mov	cx, 96					; 00000060H
 	call	x64_outportb
 
-; 251  : 
-; 252  : 	AuPS2MouseWrite(0xF6);
+; 256  : 
+; 257  : 	AuPS2MouseWrite(0xF6);
 
 	mov	cl, 246					; 000000f6H
 	call	?AuPS2MouseWrite@@YAEE@Z		; AuPS2MouseWrite
 
-; 253  : 	AuPS2MouseRead();
+; 258  : 	AuPS2MouseRead();
 
 	call	?AuPS2MouseRead@@YAEXZ			; AuPS2MouseRead
 
-; 254  : 
-; 255  : 	AuPS2MouseWrite(0xF4);
+; 259  : 
+; 260  : 	AuPS2MouseWrite(0xF4);
 
 	mov	cl, 244					; 000000f4H
 	call	?AuPS2MouseWrite@@YAEE@Z		; AuPS2MouseWrite
 
-; 256  : 	AuPS2MouseRead();
+; 261  : 	AuPS2MouseRead();
 
 	call	?AuPS2MouseRead@@YAEXZ			; AuPS2MouseRead
 
-; 257  : 
-; 258  : 	/* Enable the scroll wheel */
-; 259  : 	AuPS2MouseWrite(MOUSE_DEVICE_ID);
+; 262  : 
+; 263  : 	/* Enable the scroll wheel */
+; 264  : 	AuPS2MouseWrite(MOUSE_DEVICE_ID);
 
 	mov	cl, 242					; 000000f2H
 	call	?AuPS2MouseWrite@@YAEE@Z		; AuPS2MouseWrite
 
-; 260  : 	status = AuPS2MouseRead();
+; 265  : 	status = AuPS2MouseRead();
 
 	call	?AuPS2MouseRead@@YAEXZ			; AuPS2MouseRead
 	mov	BYTE PTR status$[rsp], al
 
-; 261  : 	AuPS2MouseWrite(MOUSE_SAMPLE_RATE);
+; 266  : 	AuPS2MouseWrite(MOUSE_SAMPLE_RATE);
 
 	mov	cl, 243					; 000000f3H
 	call	?AuPS2MouseWrite@@YAEE@Z		; AuPS2MouseWrite
 
-; 262  : 	AuPS2MouseWrite(200);
+; 267  : 	AuPS2MouseWrite(200);
 
 	mov	cl, 200					; 000000c8H
 	call	?AuPS2MouseWrite@@YAEE@Z		; AuPS2MouseWrite
 
-; 263  : 	AuPS2MouseWrite(MOUSE_SAMPLE_RATE);
+; 268  : 	AuPS2MouseWrite(MOUSE_SAMPLE_RATE);
 
 	mov	cl, 243					; 000000f3H
 	call	?AuPS2MouseWrite@@YAEE@Z		; AuPS2MouseWrite
 
-; 264  : 	AuPS2MouseWrite(100);
+; 269  : 	AuPS2MouseWrite(100);
 
 	mov	cl, 100					; 00000064H
 	call	?AuPS2MouseWrite@@YAEE@Z		; AuPS2MouseWrite
 
-; 265  : 	AuPS2MouseWrite(MOUSE_SAMPLE_RATE);
+; 270  : 	AuPS2MouseWrite(MOUSE_SAMPLE_RATE);
 
 	mov	cl, 243					; 000000f3H
 	call	?AuPS2MouseWrite@@YAEE@Z		; AuPS2MouseWrite
 
-; 266  : 	AuPS2MouseWrite(80);
+; 271  : 	AuPS2MouseWrite(80);
 
 	mov	cl, 80					; 00000050H
 	call	?AuPS2MouseWrite@@YAEE@Z		; AuPS2MouseWrite
 
-; 267  : 	AuPS2MouseWrite(MOUSE_DEVICE_ID);
+; 272  : 	AuPS2MouseWrite(MOUSE_DEVICE_ID);
 
 	mov	cl, 242					; 000000f2H
 	call	?AuPS2MouseWrite@@YAEE@Z		; AuPS2MouseWrite
 
-; 268  : 	status = AuPS2MouseRead();
+; 273  : 	status = AuPS2MouseRead();
 
 	call	?AuPS2MouseRead@@YAEXZ			; AuPS2MouseRead
 	mov	BYTE PTR status$[rsp], al
 
-; 269  : 	if (status == 3) {
+; 274  : 	if (status == 3) {
 
 	movzx	eax, BYTE PTR status$[rsp]
 	cmp	eax, 3
 	jne	SHORT $LN1@AuPS2Mouse
 
-; 270  : 		AuTextOut("PS2 Mouse with scroll wheel \n");
+; 275  : 		AuTextOut("PS2 Mouse with scroll wheel \n");
 
-	lea	rcx, OFFSET FLAT:$SG3931
+	lea	rcx, OFFSET FLAT:$SG3934
 	call	AuTextOut
 
-; 271  : 		__ps2mouse->mouse_mode = MOUSE_SCROLLWHEEL;
+; 276  : 		__ps2mouse->mouse_mode = MOUSE_SCROLLWHEEL;
 
 	mov	rax, QWORD PTR ?__ps2mouse@@3PEAU__ps2mouse__@@EA ; __ps2mouse
 	mov	BYTE PTR [rax+31], 1
 $LN1@AuPS2Mouse:
 
-; 272  : 	}
-; 273  : 
-; 274  : 	__ps2mouse->mouse_x = 0;
+; 277  : 	}
+; 278  : 
+; 279  : 	__ps2mouse->mouse_x = 0;
 
 	mov	rax, QWORD PTR ?__ps2mouse@@3PEAU__ps2mouse__@@EA ; __ps2mouse
 	mov	DWORD PTR [rax+5], 0
 
-; 275  : 	__ps2mouse->mouse_y = 0;
+; 280  : 	__ps2mouse->mouse_y = 0;
 
 	mov	rax, QWORD PTR ?__ps2mouse@@3PEAU__ps2mouse__@@EA ; __ps2mouse
 	mov	DWORD PTR [rax+9], 0
 
-; 276  : 
-; 277  : 	AuHalRegisterIRQ(34, PS2MouseHandler, 12, false);  //34
+; 281  : 
+; 282  : 	AuHalRegisterIRQ(34, PS2MouseHandler, 12, false);  //34
 
 	xor	r9d, r9d
 	mov	r8b, 12
@@ -1041,7 +1075,7 @@ $LN1@AuPS2Mouse:
 	mov	ecx, 34					; 00000022H
 	call	AuHalRegisterIRQ
 
-; 278  : }
+; 283  : }
 
 	add	rsp, 56					; 00000038H
 	ret	0

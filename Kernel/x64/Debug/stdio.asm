@@ -22,7 +22,7 @@ r_z	DD	01f123bb5H
 r_w	DD	05491333H
 _DATA	ENDS
 PUBLIC	?atoi@@YAHPEBD@Z				; atoi
-PUBLIC	?sztoa@@YAPEAD_KPEADH@Z				; sztoa
+PUBLIC	?sztoa@@YAPEAD_JPEADH@Z				; sztoa
 PUBLIC	printf
 PUBLIC	?ftoa@@YAPEADME@Z				; ftoa
 PUBLIC	?rand@@YAHXZ					; rand
@@ -39,9 +39,9 @@ pdata	SEGMENT
 $pdata$?atoi@@YAHPEBD@Z DD imagerel $LN13
 	DD	imagerel $LN13+200
 	DD	imagerel $unwind$?atoi@@YAHPEBD@Z
-$pdata$?sztoa@@YAPEAD_KPEADH@Z DD imagerel $LN11
+$pdata$?sztoa@@YAPEAD_JPEADH@Z DD imagerel $LN11
 	DD	imagerel $LN11+275
-	DD	imagerel $unwind$?sztoa@@YAPEAD_KPEADH@Z
+	DD	imagerel $unwind$?sztoa@@YAPEAD_JPEADH@Z
 $pdata$printf DD imagerel $LN3
 	DD	imagerel $LN3+39
 	DD	imagerel $unwind$printf
@@ -66,7 +66,7 @@ CONST	ENDS
 xdata	SEGMENT
 $unwind$?atoi@@YAHPEBD@Z DD 010901H
 	DD	06209H
-$unwind$?sztoa@@YAPEAD_KPEADH@Z DD 011301H
+$unwind$?sztoa@@YAPEAD_JPEADH@Z DD 011301H
 	DD	04213H
 $unwind$printf DD 011801H
 	DD	04218H
@@ -555,7 +555,7 @@ tv74 = 24
 value$ = 48
 str$ = 56
 base$ = 64
-?sztoa@@YAPEAD_KPEADH@Z PROC				; sztoa
+?sztoa@@YAPEAD_JPEADH@Z PROC				; sztoa
 
 ; 24   : {
 
@@ -594,9 +594,9 @@ $LN6@sztoa:
 	mov	eax, DWORD PTR i$[rsp]
 	mov	QWORD PTR tv67[rsp], rax
 	movsxd	rcx, DWORD PTR base$[rsp]
-	xor	edx, edx
 	mov	rax, QWORD PTR value$[rsp]
-	div	rcx
+	cdq
+	idiv	rcx
 	mov	rax, rdx
 	mov	rcx, QWORD PTR str$[rsp]
 	mov	rdx, QWORD PTR chars
@@ -608,10 +608,10 @@ $LN6@sztoa:
 
 	movsxd	rax, DWORD PTR base$[rsp]
 	mov	QWORD PTR tv74[rsp], rax
-	xor	edx, edx
 	mov	rax, QWORD PTR value$[rsp]
+	cdq
 	mov	rcx, QWORD PTR tv74[rsp]
-	div	rcx
+	idiv	rcx
 	mov	QWORD PTR value$[rsp], rax
 
 ; 32   : 	} while (value != 0);
@@ -680,7 +680,7 @@ $LN9@sztoa:
 
 	add	rsp, 40					; 00000028H
 	ret	0
-?sztoa@@YAPEAD_KPEADH@Z ENDP				; sztoa
+?sztoa@@YAPEAD_JPEADH@Z ENDP				; sztoa
 _TEXT	ENDS
 ; Function compile flags: /Odtpy
 ; File e:\xeneva project\aurora\kernel\stdio.cpp
