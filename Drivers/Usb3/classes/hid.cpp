@@ -37,6 +37,8 @@
 #include <stdint.h>
 #include <Drivers\mouse.h>
 #include <Fs\Dev\devinput.h>
+
+
 uint64_t mouse_data;
 bool usesPrefix;
 
@@ -158,7 +160,7 @@ void SetIDLE(USBDevice* dev, XHCISlot* slot, uint8_t slot_id){
 	USB_REQUEST_PACKET pack;
 	pack.request_type = 0x21;
 	pack.request = 0x0A;
-	pack.value = USB_DESCRIPTOR_WVALUE(1,0);
+	pack.value = USB_DESCRIPTOR_WVALUE(0,0);
 	pack.index = slot->interface_val;
 	pack.length = 0;
 	XHCISendControlCmd(dev, slot, slot_id, &pack, 0, 0);
@@ -175,93 +177,11 @@ void GetReport(USBDevice* dev, XHCISlot* slot, uint64_t buffer, uint16_t report_
 	XHCISendControlCmd(dev, slot, slot->slot_id, &pack, buffer, report_bytes);
 }
 
-struct BitBuffer {
-	const uint8_t* buffer;
-	size_t bytes;
-	uintptr_t index;
 
-	void Discard(size_t count);
-	uint32_t ReadUnsigned(size_t count);
-	int32_t ReadSigned(size_t count);
-};
 
 ReportItem items[32];
 uintptr_t reportItemLength;
 
-void BitBuffer::Discard(size_t count) {
-	index += count;
-}
-
-uint32_t ReadUnsigned(uint8_t* buffer,size_t count, int index, int totalBytes){
-	uint32_t result = 0;
-	uint32_t bit = 0;
-
-	while (bit != count){
-		uintptr_t byte = index >> 3;
-		if (byte >= totalBytes)
-			break;
-		if (buffer[byte] & (1 << (index & 7)))
-			result |= 1 << bit;
-
-		bit++, index++;
-	}
-
-	return result;
-}
-
-uint32_t BitBuffer::ReadUnsigned(size_t count) {
-	uint32_t result = 0;
-	uint32_t bit = 0;
-
-	while (bit != count){
-		uintptr_t byte = index >> 3;
-		if (byte >= bytes)
-			break;
-		if (buffer[byte] & (1 << (index & 7)))
-			result |= 1 << bit;
-
-		bit++, index++;
-	}
-
-	return result;
-}
-
-
-int32_t ReadSigned(uint8_t* buffer, size_t count, int index, int totalBytes) {
-	if (!count)return 0;
-
-	uint32_t result = ReadUnsigned(buffer,count, index, totalBytes);
-	if (result & (1 << (count - 1))) {
-		for (uintptr_t i = count; i < 32; i++) {
-			result |= 1 << i;
-		}
-	}
-
-	return result;
-}
-
-int32_t BitBuffer::ReadSigned(size_t count) {
-	if (!count)return 0;
-	uint32_t result = ReadUnsigned(count);
-	SeTextOut("Count signed -> %d \r\n", result);
-	if (result & (1 << (count - 1))) {
-		for (uintptr_t i = count; i < 32; i++) {
-			result |= 1 << i;
-		}
-	}
-
-	return result;
-}
-/*
-* TTFSwap16 -- swaps a 16 bit value
-* @param value -- value to swap
-*/
-uint16_t HIDSwap(int32_t value) {
-	int left_most_byte = (value & 0x000000FF);
-	int left_middle_byte = (value & 0x0000ff00);
-	int result = ((left_most_byte & 0xff) << 8 | left_middle_byte & 0xff);
-	return result;
-}
 
 
 
@@ -463,11 +383,6 @@ bool HIDParseReportDescriptor(uint8_t* report, size_t reportBytes) {
 
 }
 
-void ReportReceived(BitBuffer *buffer) {
-	
-	
-	//SeTextOut("USES PREFIX -> %d \r\n", usesPrefix);
-}
 
 int usb_pow(int a, int b) {
 	switch (b) {
@@ -496,7 +411,7 @@ void HIDCallback(void* dev_, void* slot_, void* ep_) {
 	/* mouse information */
 	/* extract the button information */
 	uint8_t button = 0;
-	int16_t mouse_x, mouse_y = 0;
+	int32_t mouse_x, mouse_y = 0;
 	uint8_t byteOffset = 0;
 	int lastsz = 0;
 	AuInputMessage newmsg;
@@ -505,11 +420,6 @@ void HIDCallback(void* dev_, void* slot_, void* ep_) {
 	newmsg.xpos = 0;
 	newmsg.ypos = 0;
 	newmsg.button_state = 0;
-	
-	BitBuffer buff;
-	buff.buffer = md;
-	buff.bytes = 8;
-	buff.index = 0;
 
 	for (int i = 0; i < reportItemLength; i++) {
 		if (items[i].application == HID_APPLICATION_BUTTONS && items[i].usage == 0){
@@ -533,22 +443,34 @@ void HIDCallback(void* dev_, void* slot_, void* ep_) {
 		
 			if (items[i].relative)
 				SeTextOut("Mouse movement is relative \r\n");
-			if (items[i].logicalMinimum < 0){
-				for (int k = (items[i].bits / 8) - 1; k >= 0; k--)
-					mouse_x |= ((((int8_t)md[byteOffset + k]) & 0xff) << (k * 8));
-			}
-			else {
-				for (int k = (items[i].bits / 8) - 1; k >= 0; k--){
+		
+			uint32_t result = (md[byteOffset + 1] & 0xff) << 8 | md[byteOffset] & 0xff;
+
+			if (result & (1 << (items[i].bits - 1))) {
+				for (uintptr_t i = items[i].bits; i < 32; i++) {
+					result |= 1 << i;
 				}
 			}
-			mouse_x = md[byteOffset + 1] << 8 | md[byteOffset];
+			if (result > items[i].logicalMaximum)
+				SeTextOut("Result_X exeeded logical max \r\n");
+			mouse_x = (int32_t)result;
 			newmsg.xpos = mouse_x;
 			newmsg.code3 = items[i].logicalMinimum;
 			newmsg.code4 = items[i].logicalMaximum;
+			
 		}
 
 		if (items[i].application == HID_APPLICATION_GENERIC_DESKTOP_CTL && items[i].usage == HID_USAGE_Y_AXIS){
-			mouse_y = md[byteOffset + 1] << 8 | md[byteOffset];
+			uint32_t result = (md[byteOffset + 1] & 0xff) << 8 | (md[byteOffset] & 0xff);
+			if (result & (1 << (items[i].bits - 1))) {
+				for (uintptr_t i = items[i].bits; i < 32; i++) {
+					result |= 1 << i;
+				}
+			}
+			mouse_y = (int32_t)result;
+			if (mouse_y > items[i].logicalMaximum)
+				SeTextOut("MOUSE Y Exceed max \r\n");
+	
 			newmsg.code3 = items[i].logicalMinimum;
 			newmsg.code4 = items[i].logicalMaximum;
 			newmsg.ypos = mouse_y;
@@ -563,8 +485,6 @@ void HIDCallback(void* dev_, void* slot_, void* ep_) {
 			lastsz = 0;
 		if (fieldSz < 8)
 			lastsz = fieldSz;
-
-		buff.Discard(items[i].bits);
 	}
 	
 	AuDevWriteMice(&newmsg);
@@ -640,12 +560,12 @@ void USBHidInitialise(USBDevice* dev, XHCISlot* slot, uint8_t classC, uint8_t su
 
 	HIDParseReportDescriptor((uint8_t*)buff, report_bytes);
 
-	if (prot > 0) {
+	//if (prot > 0) {
 		AuTextOut("IDle setting \n");
 		SetIDLE(dev, slot, slot->slot_id);
 		t_idx = -1;
 		t_idx = XHCIPollEvent(dev, TRB_EVENT_TRANSFER);
-	}
+	//}
 
 	mouse_data = (uint64_t)P2V((uint64_t)AuPmmngrAlloc()); //kmalloc(ep_->max_packet_sz);
 	memset((void*)mouse_data, 0, ep_->max_packet_sz);

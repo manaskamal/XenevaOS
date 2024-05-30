@@ -1490,14 +1490,14 @@ int main(int argc, char* arv[]) {
 			if (mice_input.code4 != 0){
 				/*scaling is needed*/
 				scale_x = (double)canvas->screenWidth / (double)mice_input.code4;
-				cursor_x = cursor_x * (double)scale_x;
+				cursor_x = mice_input.xpos * (double)scale_x;
 				scale_y = (double)canvas->screenHeight / (double)mice_input.code4;
-				cursor_y = cursor_y * (double)scale_y;
+				cursor_y = mice_input.ypos * (double)scale_y;
 			}
 			currentCursor->xpos = cursor_x;
 			currentCursor->ypos = cursor_y;
 			int button = mice_input.button_state;
-
+			_KePrint("XPOS -> %d, YPOS -> %d \r\n", currentCursor->xpos, currentCursor->ypos);
 
 			if ((currentCursor->xpos) <= 0)
 				currentCursor->xpos = 0;

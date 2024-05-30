@@ -78,14 +78,14 @@ void AuUSBInterrupt(size_t v, void* p) {
 	usb_device->op_regs->op_usbsts = status;
 	
 	if (status & XHCI_USB_STS_EINT) {
-		for (int l = 0; l < 10000; l++)
+		for (int l = 0; l < 1000000; l++)
 			;
 		xhci_trb_t *event = (xhci_trb_t*)usb_device->event_ring_segment;
 		xhci_event_trb_t *evt = (xhci_event_trb_t*)usb_device->event_ring_segment;
 		uint64_t erdp = (uint64_t)usb_device->event_ring_seg_phys;
 
 		while ((event[usb_device->evnt_ring_index].trb_control & (1 << 0)) == usb_device->evnt_ring_cycle){
-			for (int l = 0; l < 10000; l++)
+			for (int l = 0; l < 1000000; l++)
 				;
 			if (evt[usb_device->evnt_ring_index].trbType == TRB_EVENT_TRANSFER) {
 				uint8_t endpoint_id = (event[usb_device->evnt_ring_index].trb_control >> 16) & 0x1f;
