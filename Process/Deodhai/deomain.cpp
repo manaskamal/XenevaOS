@@ -457,6 +457,7 @@ bool DeodhaiCheckWindowPointOcclusion(Window* win, int x, int y) {
 void DeodhaiWindowCheckDraggable(int x, int y, int button) {
 	for (Window* win = lastWin; win != NULL; win = win->prev) {
 		WinSharedInfo* info = (WinSharedInfo*)win->sharedInfo;
+		//_KePrint("INFO->x %d, mx -> %d \r\n", info->x, x);
 		if (!(x >= (info->x + 10) && x < (info->x + info->width - 74) &&
 			y >= info->y && y < (info->y + info->height)))
 			continue;
@@ -1484,8 +1485,8 @@ int main(int argc, char* arv[]) {
 		
 		
 		if (mice_input.type == AU_INPUT_MOUSE) {
-			int32_t cursor_x = mice_input.xpos;
-			int32_t cursor_y = mice_input.ypos;
+			uint32_t cursor_x = mice_input.xpos;
+			uint32_t cursor_y = mice_input.ypos;
 			double scale_x, scale_y;
 			if (mice_input.code4 != 0){
 				/*scaling is needed*/
@@ -1497,8 +1498,7 @@ int main(int argc, char* arv[]) {
 			currentCursor->xpos = cursor_x;
 			currentCursor->ypos = cursor_y;
 			int button = mice_input.button_state;
-			_KePrint("XPOS -> %d, YPOS -> %d \r\n", currentCursor->xpos, currentCursor->ypos);
-
+		
 			if ((currentCursor->xpos) <= 0)
 				currentCursor->xpos = 0;
 
@@ -1577,7 +1577,7 @@ int main(int argc, char* arv[]) {
 			e.to_id = event.from_id;
 			
 			_KeFileIoControl(postbox_fd, POSTBOX_PUT_EVENT, &e);
-			_KePrint("Deodhai msg to send kori disi \r\n");
+			
 			_KeProcessSleep(40);
 			if (!(flags & WINDOW_FLAG_MESSAGEBOX)){
 				_KePrint("Broadcasting message \n");

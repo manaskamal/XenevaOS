@@ -149,7 +149,7 @@ void SetProtocol(USBDevice* dev, XHCISlot* slot, uint8_t slot_id) {
 	USB_REQUEST_PACKET pack;
 	pack.request_type = 0x21;
 	pack.request = HID_SET_PROTOCOL;
-	pack.value = 1;
+	pack.value = 0;
 	pack.index = slot->interface_val;
 	pack.length = 0;
 	AuTextOut("Setting protocol interface -> %d \n", pack.index);
@@ -292,11 +292,11 @@ bool HIDParseReportDescriptor(uint8_t* report, size_t reportBytes) {
 														break;
 				}
 				case HID_GLOBAL_ITEM_TAG_LOGICAL_MINIMUM:
-					//AuTextOut("HID Global Logical Minimum \n");
+					AuTextOut("HID Global Logical Minimum %d\n", data);
 					state[stateidx].logicalMinimum = data;
 					break;
 				case HID_GLOBAL_ITEM_TAG_LOGICAL_MAXIMUM:
-					//AuTextOut("HID Global Logical Maximum %x, %d\n", HIDSwap(sdata), item_size);
+					AuTextOut("HID Global Logical Maximum %d\n", data);
 					state[stateidx].logicalMaximum = data;
 					break;
 				case HID_GLOBAL_ITEM_TAG_PHYSICAL_MINIMUM:
@@ -384,6 +384,7 @@ bool HIDParseReportDescriptor(uint8_t* report, size_t reportBytes) {
 }
 
 
+
 int usb_pow(int a, int b) {
 	switch (b) {
 	case 0:
@@ -399,7 +400,6 @@ int usb_pow(int a, int b) {
 }
 
 
-
 void HIDCallback(void* dev_, void* slot_, void* ep_) {
 	USBDevice* dev = (USBDevice*)dev_;
 	XHCISlot* slot = (XHCISlot*)slot_;
@@ -407,7 +407,6 @@ void HIDCallback(void* dev_, void* slot_, void* ep_) {
 
 	uint8_t* md = (uint8_t*)mouse_data;
 
-	
 	/* mouse information */
 	/* extract the button information */
 	uint8_t button = 0;
@@ -424,6 +423,10 @@ void HIDCallback(void* dev_, void* slot_, void* ep_) {
 	for (int i = 0; i < reportItemLength; i++) {
 		if (items[i].application == HID_APPLICATION_BUTTONS && items[i].usage == 0){
 			uint8_t buttonByte = md[byteOffset];
+			if (buttonByte == 0x1)
+				newmsg.button_state |= 1;
+			else if (buttonByte == 0x2)
+				newmsg.button_state |= 2;
 		}
 		
 		if (items[i].application == HID_APPLICATION_GENERIC_DESKTOP_CTL && items[i].usage == HID_USAGE_X_AXIS){
@@ -451,9 +454,12 @@ void HIDCallback(void* dev_, void* slot_, void* ep_) {
 					result |= 1 << i;
 				}
 			}
-			if (result > items[i].logicalMaximum)
-				SeTextOut("Result_X exeeded logical max \r\n");
-			mouse_x = (int32_t)result;
+
+			
+			int val = (((result - items[i].logicalMinimum) / resolution) +
+				items[i].physicalMinimum);
+			mouse_x = val;
+
 			newmsg.xpos = mouse_x;
 			newmsg.code3 = items[i].logicalMinimum;
 			newmsg.code4 = items[i].logicalMaximum;
@@ -467,17 +473,31 @@ void HIDCallback(void* dev_, void* slot_, void* ep_) {
 					result |= 1 << i;
 				}
 			}
-			mouse_y = (int32_t)result;
-			if (mouse_y > items[i].logicalMaximum)
-				SeTextOut("MOUSE Y Exceed max \r\n");
-	
+
+			int resolution;
+			if (items[i].physicalMaximum == items[i].physicalMinimum){
+				resolution = 1;
+			}
+			else {
+				resolution = (items[i].logicalMaximum - items[i].logicalMinimum) /
+					((items[i].physicalMaximum - items[i].physicalMinimum) * usb_pow(10, 0));
+			}
+
+			int val = (((result - items[i].logicalMinimum) / resolution) +
+				items[i].physicalMinimum);
+
+			mouse_y = val;
+			
 			newmsg.code3 = items[i].logicalMinimum;
 			newmsg.code4 = items[i].logicalMaximum;
 			newmsg.ypos = mouse_y;
+			
 		}
 
 		int fieldSz = (items[i].bits * items[i].reportsize) + lastsz;
 		byteOffset += fieldSz / 8;
+		if (byteOffset >= ep->max_packet_sz)
+			break;
 		if (fieldSz == 0)
 			byteOffset++;
 	
@@ -488,8 +508,7 @@ void HIDCallback(void* dev_, void* slot_, void* ep_) {
 	}
 	
 	AuDevWriteMice(&newmsg);
-	memset((void*)mouse_data, 0, PAGE_SIZE);
-	XHCISendNormalTRB(dev, slot, V2P(mouse_data), ep->max_packet_sz, ep);
+	XHCISendNormalTRB(dev, slot, V2P(mouse_data), 85, ep);
 }
 
 /* 

@@ -116,15 +116,18 @@ void XHCICommandRingInit(USBDevice *dev) {
 	dev->op_regs->op_crcr = cmd_ring_phys | 1;
 	dev->op_regs->op_dnctrl = 4;
 	dev->cmd_ring_index = 0;
-	dev->cmd_ring_max = 64;
+	dev->cmd_ring_max = 128;
 	dev->cmd_ring_cycle = 1;
 	dev->cmd_ring_phys = cmd_ring_phys;
+
+	SeTextOut("TRB SIZE -> %d \r\n", sizeof(xhci_trb_t));
 
 	/* insert a link trb at the last of cmd ring */
 	dev->cmd_ring[dev->cmd_ring_max].trb_param_1 = cmd_ring_phys & UINT32_MAX;
 	dev->cmd_ring[dev->cmd_ring_max].trb_param_2 = (cmd_ring_phys >> 32) & UINT32_MAX;
 	dev->cmd_ring[dev->cmd_ring_max].trb_status = 0;
 	dev->cmd_ring[dev->cmd_ring_max].trb_control = TRB_TRANSFER_LINK << 10 | (1 << 5);
+	SeTextOut("LINK TRB Inserted \r\n");
 }
 
 /*
@@ -268,7 +271,7 @@ XHCISlot* XHCICreateDeviceCtx(USBDevice* dev, uint8_t slot_num, uint8_t port_spe
 	slot->cmd_ring_base = cmd_ring;
 	slot->cmd_ring = (xhci_trb_t*)cmd_ring_virt;
 	slot->cmd_ring_index = 0;
-	slot->cmd_ring_max = 64;
+	slot->cmd_ring_max = 128;
 	slot->cmd_ring_cycle = 1;
 	slot->slot_id = slot_num;
 	slot->root_hub_port_num = root_port_num;
@@ -366,7 +369,7 @@ void XHCIEventRingInit(USBDevice *dev) {
 	dev->rt_regs->intr_reg[0].evtRngDeqPtrHi = (event_ring_seg >> 32);
 	dev->rt_regs->intr_reg[0].evtRngSegBaseLo = e_ring_seg_table;
 	dev->rt_regs->intr_reg[0].evtRngSegBaseHi = (e_ring_seg_table >> 32);
-	dev->rt_regs->intr_reg[0].intr_mod = (0 << 16) | 512;
+	dev->rt_regs->intr_reg[0].intr_mod = (0 << 16) | 500;
 	dev->op_regs->op_usbcmd = (1 << 3) | (1 << 2) | 0;
 	dev->rt_regs->intr_reg[0].intr_man |= (1 << 1) | 1;
 	dev->op_regs->op_usbcmd |= 1;
@@ -397,7 +400,7 @@ void XHCISendCommand(USBDevice *dev, uint32_t param1, uint32_t param2, uint32_t 
 
 	dev->cmd_ring_index++;
 
-	if (dev->cmd_ring_index >= 64) {
+	if (dev->cmd_ring_index >= dev->cmd_ring_max) {
 		dev->cmd_ring[dev->cmd_ring_index].trb_control |= dev->cmd_ring_cycle;
 		if (dev->cmd_ring[dev->cmd_ring_index].trb_control & (1 << 1)) {
 			dev->cmd_ring_cycle ^= 1;
@@ -427,7 +430,7 @@ void XHCISendCommandSlot(XHCISlot* slot, uint32_t param1, uint32_t param2, uint3
 
 	slot->cmd_ring_index++;
 
-	if (slot->cmd_ring_index >= 64) {
+	if (slot->cmd_ring_index >= slot->cmd_ring_max) {
 		slot->cmd_ring[slot->cmd_ring_index].trb_control |= slot->cmd_ring_cycle;
 		if (slot->cmd_ring[slot->cmd_ring_index].trb_control & (1 << 1)) {
 			slot->cmd_ring_cycle ^= 1;
@@ -460,13 +463,11 @@ void XHCISendCommandEndpoint(XHCISlot* slot, uint8_t endp_num, uint32_t param1, 
 	
 	ep->cmd_ring_index++;
 
-	if (ep->cmd_ring_index >= 64) {
+	if (ep->cmd_ring_index >= ep->cmd_ring_max) {
 		ep->cmd_ring[ep->cmd_ring_index].trb_control |= ep->cmd_ring_cycle;
 		if (ep->cmd_ring[ep->cmd_ring_index].trb_control & (1 << 1)) {
 			if (ep->cmd_ring_cycle)
-				ep->cmd_ring_cycle = 0;
-			else
-				ep->cmd_ring_cycle = 1;
+				ep->cmd_ring_cycle ^= 1;
 		}
 		
 		ep->cmd_ring_index = 0;
@@ -537,8 +538,8 @@ int XHCIPollEvent(USBDevice* usb_device, int trb_type) {
 		if (usb_device->event_available && usb_device->poll_return_trb_type == trb_type) {
 			usb_device->event_available = false;
 
-			/* here we need a delay, while using VirtualBox */
-			for (int i = 0; i < 10000000; i++)
+			///* here we need a delay, while using VirtualBox */
+			for (int i = 0; i < 100000000; i++)
 				;
 
 			int idx = usb_device->trb_event_index;
@@ -832,7 +833,7 @@ void XHCIPortInitialize(USBDevice *dev, unsigned int port) {
 			memset(ep, 0, sizeof(XHCIEndpoint));
 			ep->cmd_ring = (xhci_trb_t*)cmd_ring;
 			ep->cmd_ring_cycle = 1;
-			ep->cmd_ring_max = 64;
+			ep->cmd_ring_max = 128;
 			ep->endpoint_num = endp_num;
 			ep->endpoint_type = transfer_type;
 			ep->interval = interval;

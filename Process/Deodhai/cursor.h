@@ -45,10 +45,10 @@ typedef struct _cursor_ {
 	int height;
 	int bpp;
 	int cursorFD;
-	int xpos; 
-	int ypos;
-	int oldXPos;
-	int oldYPos;
+	uint32_t xpos; 
+	uint32_t ypos;
+	uint32_t oldXPos;
+	uint32_t oldYPos;
 	uint8_t* fileBuffer;
 	uint32_t* cursorBack;
 	size_t cursorFileSize;
