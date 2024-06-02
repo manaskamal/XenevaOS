@@ -1532,7 +1532,7 @@ int main(int argc, char* arv[]) {
 			}
 
 			if (_window_broadcast_mouse_) 
-				DeodhaiBroadcastMouse(mice_input.xpos, mice_input.ypos, button);
+				DeodhaiBroadcastMouse(currentCursor->xpos, currentCursor->ypos, button);
 
 			
 			/* ensure clipping within the screen */

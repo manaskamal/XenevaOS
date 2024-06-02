@@ -466,7 +466,6 @@ void TerminalProcessLine(char ch) {
 void TerminalHandleMessage(PostEvent *e) {
 	switch (e->type) {
 	case DEODHAI_REPLY_MOUSE_EVENT:
-		_KePrint("TERMINAL X -> %d, Y-> %d \r\n", e->dword, e->dword2);
 		ChWindowHandleMouse(win, e->dword, e->dword2, e->dword3);
 		memset(e, 0, sizeof(PostEvent));
 		break;
