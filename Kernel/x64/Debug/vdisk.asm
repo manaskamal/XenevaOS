@@ -10,26 +10,26 @@ _BSS	SEGMENT
 ?VdiskArray@@3PAPEAU_VDISK_@@A DQ 01aH DUP (?)		; VdiskArray
 _BSS	ENDS
 CONST	SEGMENT
-$SG3468	DB	'EFI PART', 00H
+$SG3470	DB	'EFI PART', 00H
 	ORG $+3
-$SG3473	DB	'%c', 00H
+$SG3475	DB	'%c', 00H
 	ORG $+1
-$SG3495	DB	'%c', 00H
+$SG3497	DB	'%c', 00H
 	ORG $+1
-$SG3496	DB	0aH, 00H
+$SG3498	DB	0aH, 00H
 	ORG $+2
-$SG3497	DB	'VDisk partition created startLBA -> %d ', 0aH, 00H
+$SG3499	DB	'VDisk partition created startLBA -> %d ', 0aH, 00H
 	ORG $+3
-$SG3504	DB	'%x', 00H
+$SG3506	DB	'%x', 00H
 	ORG $+1
-$SG3498	DB	'vDisk partition guid : ', 00H
-$SG3499	DB	'0x%x-0x%x-0x%x-0x', 00H
+$SG3500	DB	'vDisk partition guid : ', 00H
+$SG3501	DB	'0x%x-0x%x-0x%x-0x', 00H
 	ORG $+2
-$SG3505	DB	0aH, 00H
+$SG3507	DB	0aH, 00H
 	ORG $+2
-$SG3506	DB	0aH, 00H
+$SG3508	DB	0aH, 00H
 	ORG $+6
-$SG3512	DB	'Vdisk registered name -> %s, serial -> %s ', 0aH, 00H
+$SG3514	DB	'Vdisk registered name -> %s, serial -> %s ', 0aH, 00H
 CONST	ENDS
 PUBLIC	?AuVDiskInitialise@@YAXXZ			; AuVDiskInitialise
 PUBLIC	AuVDiskGetIndex
@@ -152,7 +152,7 @@ $LN23:
 ; 115  : 	if (strcmp(header->sig, "EFI PART") != 0)
 
 	mov	rax, QWORD PTR header$[rsp]
-	lea	rdx, OFFSET FLAT:$SG3468
+	lea	rdx, OFFSET FLAT:$SG3470
 	mov	rcx, rax
 	call	strcmp
 	test	eax, eax
@@ -181,7 +181,7 @@ $LN19@AuVDiskReg:
 	mov	rcx, QWORD PTR aligned_buf$[rsp]
 	movzx	eax, BYTE PTR [rcx+rax]
 	mov	edx, eax
-	lea	rcx, OFFSET FLAT:$SG3473
+	lea	rcx, OFFSET FLAT:$SG3475
 	call	SeTextOut
 	jmp	SHORT $LN18@AuVDiskReg
 $LN17@AuVDiskReg:
@@ -367,7 +367,7 @@ $LN6@AuVDiskReg:
 	mov	rcx, QWORD PTR part$3[rsp]
 	movsx	eax, BYTE PTR [rcx+rax+56]
 	mov	edx, eax
-	lea	rcx, OFFSET FLAT:$SG3495
+	lea	rcx, OFFSET FLAT:$SG3497
 	call	AuTextOut
 	jmp	SHORT $LN5@AuVDiskReg
 $LN4@AuVDiskReg:
@@ -387,19 +387,19 @@ $LN14@AuVDiskReg:
 
 ; 148  : 	AuTextOut("\n");
 
-	lea	rcx, OFFSET FLAT:$SG3496
+	lea	rcx, OFFSET FLAT:$SG3498
 	call	AuTextOut
 
 ; 149  : 	AuTextOut("VDisk partition created startLBA -> %d \n", vdisk->startingLBA);
 
 	mov	rax, QWORD PTR vdisk$[rsp]
 	mov	rdx, QWORD PTR [rax+86]
-	lea	rcx, OFFSET FLAT:$SG3497
+	lea	rcx, OFFSET FLAT:$SG3499
 	call	AuTextOut
 
 ; 150  : 	AuTextOut("vDisk partition guid : ");
 
-	lea	rcx, OFFSET FLAT:$SG3498
+	lea	rcx, OFFSET FLAT:$SG3500
 	call	AuTextOut
 
 ; 151  : 	AuTextOut("0x%x-0x%x-0x%x-0x", vdisk->part_guid.Data1, vdisk->part_guid.Data2, vdisk->part_guid.Data3);
@@ -412,7 +412,7 @@ $LN14@AuVDiskReg:
 	mov	r8d, ecx
 	mov	rax, QWORD PTR vdisk$[rsp]
 	mov	edx, DWORD PTR [rax+102]
-	lea	rcx, OFFSET FLAT:$SG3499
+	lea	rcx, OFFSET FLAT:$SG3501
 	call	AuTextOut
 
 ; 152  : 	for (int k = 0; k < 8; k++)
@@ -433,7 +433,7 @@ $LN3@AuVDiskReg:
 	mov	rcx, QWORD PTR vdisk$[rsp]
 	movzx	eax, BYTE PTR [rcx+rax+110]
 	mov	edx, eax
-	lea	rcx, OFFSET FLAT:$SG3504
+	lea	rcx, OFFSET FLAT:$SG3506
 	call	AuTextOut
 	jmp	SHORT $LN2@AuVDiskReg
 $LN1@AuVDiskReg:
@@ -441,7 +441,7 @@ $LN1@AuVDiskReg:
 ; 154  : 
 ; 155  : 	AuTextOut("\n");
 
-	lea	rcx, OFFSET FLAT:$SG3505
+	lea	rcx, OFFSET FLAT:$SG3507
 	call	AuTextOut
 
 ; 156  : 	/* call gpt file system verifier to load
@@ -455,7 +455,7 @@ $LN1@AuVDiskReg:
 ; 160  : 
 ; 161  : 	AuTextOut("\n");
 
-	lea	rcx, OFFSET FLAT:$SG3506
+	lea	rcx, OFFSET FLAT:$SG3508
 	call	AuTextOut
 
 ; 162  : 	AuPmmngrFree(buffer);
@@ -730,7 +730,7 @@ $LN1@AuVDiskReg:
 	mov	rcx, QWORD PTR disk$[rsp]
 	mov	r8, rax
 	mov	rdx, rcx
-	lea	rcx, OFFSET FLAT:$SG3512
+	lea	rcx, OFFSET FLAT:$SG3514
 	call	AuTextOut
 
 ; 178  : 

@@ -102,7 +102,7 @@ syscalls DQ	FLAT:?null_call@@YA_K_K00000@Z
 	DQ	FLAT:?AuCreateSocket@@YAHHHH@Z
 _DATA	ENDS
 CONST	SEGMENT
-$SG4319	DB	'%s', 0aH, 00H
+$SG4321	DB	'%s', 0aH, 00H
 CONST	ENDS
 PUBLIC	?KePrintMsg@@YA_K_K00000@Z			; KePrintMsg
 PUBLIC	x64_syscall_handler
@@ -271,7 +271,7 @@ $LN3:
 ; 60   : 	AuTextOut("%s\n",text);
 
 	mov	rdx, QWORD PTR text$[rsp]
-	lea	rcx, OFFSET FLAT:$SG4319
+	lea	rcx, OFFSET FLAT:$SG4321
 	call	AuTextOut
 
 ; 61   : 	return 0;

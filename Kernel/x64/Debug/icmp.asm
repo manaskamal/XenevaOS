@@ -6,7 +6,7 @@ INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
 CONST	SEGMENT
-$SG3306	DB	'ICMP Socket created ', 0dH, 0aH, 00H
+$SG3308	DB	'ICMP Socket created ', 0dH, 0aH, 00H
 CONST	ENDS
 PUBLIC	?AuICMPReceive@@YA_KPEAU_socket_@@PEAU_msghdr_@@H@Z ; AuICMPReceive
 PUBLIC	?AuICMPSend@@YA_KPEAU_socket_@@PEAU_msghdr_@@H@Z ; AuICMPSend
@@ -96,13 +96,13 @@ $LN1@CreateICMP:
 
 ; 93   : 	AuSocket *sock = (AuSocket*)kmalloc(sizeof(AuSocket));
 
-	mov	ecx, 232				; 000000e8H
+	mov	ecx, 224				; 000000e0H
 	call	kmalloc
 	mov	QWORD PTR sock$[rsp], rax
 
 ; 94   : 	memset(sock, 0, sizeof(AuSocket));
 
-	mov	r8d, 232				; 000000e8H
+	mov	r8d, 224				; 000000e0H
 	xor	edx, edx
 	mov	rcx, QWORD PTR sock$[rsp]
 	call	memset
@@ -117,42 +117,42 @@ $LN1@CreateICMP:
 
 	mov	rax, QWORD PTR sock$[rsp]
 	lea	rcx, OFFSET FLAT:?AuICMPRead@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z ; AuICMPRead
-	mov	QWORD PTR [rax+104], rcx
+	mov	QWORD PTR [rax+90], rcx
 
 ; 97   : 	sock->fsnode.write = AuICMPWrite;
 
 	mov	rax, QWORD PTR sock$[rsp]
 	lea	rcx, OFFSET FLAT:?AuICMPWrite@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z ; AuICMPWrite
-	mov	QWORD PTR [rax+112], rcx
+	mov	QWORD PTR [rax+98], rcx
 
 ; 98   : 	sock->bind = AuICMPBind;
 
 	mov	rax, QWORD PTR sock$[rsp]
 	lea	rcx, OFFSET FLAT:?AuICMPBind@@YA_KPEAU_socket_@@PEAU_sockaddr_@@_K@Z ; AuICMPBind
-	mov	QWORD PTR [rax+224], rcx
+	mov	QWORD PTR [rax+216], rcx
 
 ; 99   : 	sock->close = AuICMPClose;
 
 	mov	rax, QWORD PTR sock$[rsp]
 	lea	rcx, OFFSET FLAT:?AuICMPClose@@YAXPEAU_socket_@@@Z ; AuICMPClose
-	mov	QWORD PTR [rax+208], rcx
+	mov	QWORD PTR [rax+200], rcx
 
 ; 100  : 	sock->connect = 0;
 
 	mov	rax, QWORD PTR sock$[rsp]
-	mov	QWORD PTR [rax+216], 0
+	mov	QWORD PTR [rax+208], 0
 
 ; 101  : 	sock->receive = AuICMPReceive;
 
 	mov	rax, QWORD PTR sock$[rsp]
 	lea	rcx, OFFSET FLAT:?AuICMPReceive@@YA_KPEAU_socket_@@PEAU_msghdr_@@H@Z ; AuICMPReceive
-	mov	QWORD PTR [rax+192], rcx
+	mov	QWORD PTR [rax+184], rcx
 
 ; 102  : 	sock->send = AuICMPSend;
 
 	mov	rax, QWORD PTR sock$[rsp]
 	lea	rcx, OFFSET FLAT:?AuICMPSend@@YA_KPEAU_socket_@@PEAU_msghdr_@@H@Z ; AuICMPSend
-	mov	QWORD PTR [rax+200], rcx
+	mov	QWORD PTR [rax+192], rcx
 
 ; 103  : 	proc->fds[fd] = (AuVFSNode*)sock;
 
@@ -163,7 +163,7 @@ $LN1@CreateICMP:
 
 ; 104  : 	SeTextOut("ICMP Socket created \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG3306
+	lea	rcx, OFFSET FLAT:$SG3308
 	call	SeTextOut
 
 ; 105  : 	return 0;

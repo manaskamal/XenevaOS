@@ -41,6 +41,7 @@
 #include <audrv.h>
 #include <Net\aunet.h>
 #include <Fs\Dev\devfs.h>
+#include <Net\arp.h>
 
 #pragma pack(push,1)
 typedef struct _e1000_nic_ {
@@ -190,7 +191,7 @@ void E1000InitRX(E1000NIC* dev) {
 void E1000InitTX(E1000NIC *dev) {
 	uint64_t tx_phys = V2P(dev->tx_phys);
 	E1000WriteCmd(dev, E1000_REG_TXDESCLO, (tx_phys & UINT32_MAX));
-	E1000WriteCmd(dev, E1000_REG_TXDESCHI, ((tx_phys >> 32) & UINT32_MAX));
+	E1000WriteCmd(dev, E1000_REG_TXDESCHI, 0);
 	E1000WriteCmd(dev, E1000_REG_TXDESCLEN, E1000_NUM_TX_DESC * sizeof(e1000_tx_desc));
 	E1000WriteCmd(dev, E1000_REG_TXDESCHEAD, 0);
 	E1000WriteCmd(dev, E1000_REG_TXDESCTAIL, 0);
@@ -212,7 +213,154 @@ void E1000InitTX(E1000NIC *dev) {
 	E1000WriteCmd(dev, E1000_REG_TCTRL, tctl);
 }
 
+#pragma pack(push,1)
+__declspec(align(2)) typedef struct _ethernet_ {
+	uint8_t dest[6];
+	uint8_t src[6];
+	uint16_t typeLen;
+	uint8_t payload[];
+}Ethernet;
+#pragma pack(pop)
 
+#pragma pack(push,1)
+__declspec(align(2)) typedef struct _ipv4pack_ {
+	uint8_t version_ihl;
+	uint8_t dscp_ecn;
+	uint16_t length;
+	uint16_t ident;
+	uint16_t flags_fragment;
+	uint8_t ttl;
+	uint8_t protocol;
+	uint16_t checksum;
+	uint32_t source;
+	uint32_t destination;
+	uint8_t payload[];
+}IPV4;
+#pragma pack(pop)
+
+#pragma pack(push,1)
+__declspec(align(2))typedef struct _udp_pack_{
+	uint16_t sourcePort;
+	uint16_t destinationPort;
+	uint16_t length;
+	uint16_t checksum;
+	uint8_t payload[];
+}UDPPack;
+#pragma pack(pop)
+
+#pragma pack(push,1)
+_declspec(align(2)) typedef struct _dhcp_pack_{
+	uint8_t op;
+	uint8_t htype;
+	uint8_t hlen;
+	uint8_t hops;
+	uint32_t xid;
+	uint16_t secs;
+	uint16_t flags;
+	uint32_t ciaddr;
+	uint32_t yiaddr;
+	uint32_t siaddr;
+	uint32_t giaddr;
+	uint8_t chaddr[16];
+	uint8_t sname[64];
+	uint8_t file[128];
+	uint32_t magic;
+	uint8_t options[];
+}DHCPPack;
+
+#define IPV4_PROT_UDP 17
+#define DHCP_MAGIC 0x63825363
+
+uint16_t calculate_ipv4_checksum(IPV4* p) {
+	uint32_t sum = 0;
+	uint16_t* s = (uint16_t*)p;
+	for (int i = 0; i < 10; ++i)
+		sum += ntohs(s[i]);
+
+	if (sum > 0xFFFF)
+		sum = (sum >> 16) + (sum & 0xFFFF);
+
+	return ~(sum & 0xFFFF) & 0xFFFF;
+}
+
+void E1000SendPacket(E1000NIC* dev, uint8_t* payload, size_t payload_sz);
+
+/* For testing Purpose, impplemented DHCP discovery message */
+void fillDHCP() {
+	uint32_t totalsz = (sizeof(Ethernet)+sizeof(IPV4)+sizeof(UDPPack)+sizeof(DHCPPack)+8);
+	uint32_t xid = 0x1337;
+	DHCPPack *dpack = (DHCPPack*)kmalloc(sizeof(DHCPPack));
+	memset(dpack, 0, sizeof(DHCPPack));
+	dpack->op = 1;
+	dpack->htype = 1;
+	dpack->hlen = 6;
+	dpack->hops = 0;
+	dpack->xid = htonl(xid);
+	dpack->secs = 0;
+	dpack->flags = 0;
+	dpack->ciaddr = 0;
+	dpack->yiaddr = 0;
+	dpack->siaddr = 0;
+	dpack->giaddr = 0;
+	dpack->chaddr[0] = e1000_nic->mac[0];
+	dpack->chaddr[1] = e1000_nic->mac[1];
+	dpack->chaddr[2] = e1000_nic->mac[2];
+	dpack->chaddr[3] = e1000_nic->mac[3];
+	dpack->chaddr[4] = e1000_nic->mac[4];
+	dpack->chaddr[5] = e1000_nic->mac[5];
+	dpack->magic = htonl(DHCP_MAGIC);
+	uint8_t payload[] = { 53, 1, 1, 55, 2, 3, 6, 255, 0 };
+
+	UDPPack* udp = (UDPPack*)kmalloc(sizeof(UDPPack) + sizeof(DHCPPack));
+	memset(udp, 0, sizeof(UDPPack));
+	udp->sourcePort = htons(68);
+	udp->destinationPort = htons(67);
+	udp->length = htons((sizeof(UDPPack)+sizeof(DHCPPack)+8));
+	udp->checksum = 0;
+	memcpy(udp->payload, dpack, sizeof(DHCPPack));
+	memcpy(udp->payload + sizeof(DHCPPack), payload, 8);
+	kfree(dpack);
+
+	IPV4 *ip = (IPV4*)kmalloc((sizeof(IPV4)+sizeof(UDPPack)+sizeof(DHCPPack)));
+	ip->version_ihl = ((0x4 << 4) | (0x5 << 0));
+	ip->dscp_ecn = 0;
+	ip->length = htons(sizeof(IPV4)+sizeof(UDPPack)+sizeof(DHCPPack)+8);
+	ip->ident = htons(1);
+	ip->flags_fragment = 0;
+	ip->ttl = 0x40;
+	ip->protocol = IPV4_PROT_UDP;
+	ip->checksum = 0;
+	ip->source = htonl(0);
+	ip->destination = htonl(0xFFFFFFFF);
+	ip->checksum = htons(calculate_ipv4_checksum(ip));
+	memcpy(ip->payload, udp, sizeof(UDPPack)+sizeof(DHCPPack)+8);
+	kfree(udp);
+	Ethernet* eth = (Ethernet*)kmalloc((sizeof(Ethernet)+sizeof(DHCPPack)+sizeof(UDPPack)+sizeof(IPV4)+8));
+	AuTextOut("Ethernet size -> %d \n", sizeof(Ethernet));
+	AuTextOut("IP Size -> %d \n", sizeof(IPV4));
+	AuTextOut("UDP Size -> %d \n", sizeof(UDPPack));
+	AuTextOut("DHCP Size -> %d \n", sizeof(DHCPPack));
+	AuTextOut("TotalSz -> %d \n", totalsz);
+	eth->dest[0] = 0xFF;
+	eth->dest[1] = 0xFF;
+	eth->dest[2] = 0xFF;
+	eth->dest[3] = 0xFF;
+	eth->dest[4] = 0xFF;
+	eth->dest[5] = 0xFF;
+	eth->src[0] = e1000_nic->mac[0];
+	eth->src[1] = e1000_nic->mac[1];
+	eth->src[2] = e1000_nic->mac[2];
+	eth->src[3] = e1000_nic->mac[3];
+	eth->src[4] = e1000_nic->mac[4];
+	eth->src[5] = e1000_nic->mac[5];
+	eth->typeLen = htons(0x0800);
+	memcpy(eth->payload, ip, sizeof(IPV4)+ sizeof(UDPPack) + sizeof(DHCPPack)+8);
+
+
+
+	E1000SendPacket(e1000_nic, (uint8_t*)eth, totalsz);
+
+}
 /*
  *E1000SendPacket -- sends a packet 
  */
@@ -252,6 +400,9 @@ void E1000Thread(uint64_t val) {
 		if (status & ICR_LSC) {
 			e1000_nic->link_status = E1000ReadCmd(e1000_nic, E1000_REG_STATUS) & (1 << 1);
 			AuTextOut("link sTATUS -> %d \r\n", e1000_nic->link_status);
+			/*AuVFSNode* e1000 = AuGetNetworkAdapter("e1000");
+			AuARPRequestMAC(e1000);*/
+			fillDHCP();
 		}
 
 		if (status & ICR_RXT0) {
@@ -290,10 +441,12 @@ AU_EXTERN AU_EXPORT int AuDriverUnload() {
 	return 0;
 }
 
-size_t E1000ReadFile(uint64_t* buffer, uint32_t len) {
+AU_EXTERN AU_EXPORT size_t E1000ReadFile(AuVFSNode* node, AuVFSNode*file, uint64_t* buffer, uint32_t len) {
+	AuTextOut("E1000ReadFile \n");
 	return 0;
 }
-size_t E1000WriteFile(uint64_t* buffer, uint32_t len) {
+
+AU_EXTERN AU_EXPORT size_t E1000WriteFile(AuVFSNode* node, AuVFSNode*file, uint64_t* buffer, uint32_t len) {
 	AuTextOut("E1000 Writing file %d bytes\r\n", len);
 	uint8_t* aligned_buf = (uint8_t*)buffer;
 	E1000SendPacket(e1000_nic, aligned_buf, len);
@@ -310,7 +463,8 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 
 	AuDisableInterrupt();
 
-	AuTextOut("Starting e1000 driver \n");
+	//AuTextOut("Starting e1000 driver \n");
+
 	int bus, dev_, func = 0;
 	bool nic_thread_required = false;
 
@@ -323,7 +477,7 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 	uint64_t command = AuPCIERead(device, PCI_COMMAND, bus, dev_, func);
 	command |= (1 << 10);
 	command |= (1 << 1);
-
+	command |= (1 << 2);
 	//clear the Interrupt disable
 	AuPCIEWrite(device, PCI_COMMAND, command, bus, dev_, func);
 
@@ -428,10 +582,13 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 
 	bool interrupt_installed = false;
 
-	//if (!interrupt_installed) {
-		AuThread* nic_thr = AuCreateKthread(E1000Thread, (uint64_t)P2V((size_t)AuPmmngrAlloc() + PAGE_SIZE),
-			(uint64_t)AuGetRootPageTable(), "E1000Thr");
-	//}
+	if (AuPCIEAllocMSI(device, 78, bus, dev_, func))
+		AuTextOut("E1000 DEVICE SUPPORTS MSI/MSI-X \n");
+
+
+	AuThread* nic_thr = AuCreateKthread(E1000Thread, (uint64_t)P2V((size_t)AuPmmngrAlloc() + PAGE_SIZE),
+		(uint64_t)AuGetRootPageTable(), "E1000Thr");
+
 
 
 	AuDevice *audev = (AuDevice*)kmalloc(sizeof(AuDevice));
@@ -443,16 +600,26 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 	audev->aurora_driver_class = DRIVER_CLASS_NETWORK;
 	AuRegisterDevice(audev);
 
+	AuNetworkDevice* ndev = (AuNetworkDevice*)kmalloc(sizeof(AuNetworkDevice));
+	memset(ndev, 0, sizeof(AuNetworkDevice));
+	ndev->type = NETDEV_TYPE_ETHERNET;
+	memcpy(ndev->mac, e1000_nic->mac, 6);
+	ndev->linkStatus = e1000_nic->link_status;
 
+	AuVFSNode* adapt = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
+	memset(adapt, 0, sizeof(AuVFSNode));
+	strcpy(adapt->filename, "e1000");
+	adapt->flags = FS_FLAG_DEVICE;
+	adapt->write = E1000WriteFile;
+	adapt->read = E1000ReadFile;
+	adapt->iocontrol = E1000IOCtl;
+	adapt->device = ndev;
 
-	AuNetAdapter* adapt = AuAllocNetworkAdapter();
-	strncpy(adapt->name, "ethernet",8);
-	memcpy(adapt->mac, e1000_nic->mac, 6);
-	adapt->NetWrite = E1000WriteFile;
-	adapt->NetRead = E1000ReadFile;
-	adapt->type = AUNET_HWTYPE_ETHERNET;
+	AuTextOut("E1000 READ-> %x, WRITE -> %x \n", adapt->read, adapt->write);
+	AuTextOut("E1000 IOCTL -> %x \n", &E1000IOCtl);
+	AuAddNetAdapter(adapt, "e1000");
+	adapt->read(0, 0, 0, 0);
 
-	AuAddNetAdapter(adapt);
 
 	E1000WriteCmd(e1000_nic, E1000_REG_IMS, INTS);
 	for (int i = 0; i < 10000000; i++)

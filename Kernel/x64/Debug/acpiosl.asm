@@ -6,17 +6,17 @@ INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
 CONST	SEGMENT
-$SG8620	DB	'Freeing up ', 0aH, 00H
+$SG8622	DB	'Freeing up ', 0aH, 00H
 	ORG $+3
-$SG8731	DB	'ACPI interrupt handler called', 0aH, 00H
+$SG8733	DB	'ACPI interrupt handler called', 0aH, 00H
 	ORG $+1
-$SG8780	DB	'read mem', 0aH, 00H
+$SG8782	DB	'read mem', 0aH, 00H
 	ORG $+6
-$SG8801	DB	'Write mem', 0aH, 00H
+$SG8803	DB	'Write mem', 0aH, 00H
 	ORG $+5
-$SG8822	DB	'read port', 0aH, 00H
+$SG8824	DB	'read port', 0aH, 00H
 	ORG $+5
-$SG8836	DB	'Write port', 0aH, 00H
+$SG8838	DB	'Write port', 0aH, 00H
 CONST	ENDS
 PUBLIC	AcpiOsAcquireGlobalLock
 PUBLIC	AcpiOsReleaseGlobalLock
@@ -478,7 +478,7 @@ $LN10:
 
 ; 293  : 	AuTextOut("Write mem\n");
 
-	lea	rcx, OFFSET FLAT:$SG8801
+	lea	rcx, OFFSET FLAT:$SG8803
 	call	AuTextOut
 
 ; 294  : 	switch (Width)
@@ -583,7 +583,7 @@ $LN10:
 
 ; 266  : 	AuTextOut("read mem\n");
 
-	lea	rcx, OFFSET FLAT:$SG8780
+	lea	rcx, OFFSET FLAT:$SG8782
 	call	AuTextOut
 
 ; 267  : 	switch (Width)
@@ -692,7 +692,7 @@ $LN7:
 
 ; 340  : 	AuTextOut("Write port\n");
 
-	lea	rcx, OFFSET FLAT:$SG8836
+	lea	rcx, OFFSET FLAT:$SG8838
 	call	AuTextOut
 
 ; 341  : 	switch (Width)
@@ -761,7 +761,7 @@ $LN7:
 
 ; 320  : 	AuTextOut("read port\n");
 
-	lea	rcx, OFFSET FLAT:$SG8822
+	lea	rcx, OFFSET FLAT:$SG8824
 	call	AuTextOut
 
 ; 321  : 	switch (Width)
@@ -1175,7 +1175,7 @@ $LN3:
 
 ; 99   : 	AuTextOut("Freeing up \n");
 
-	lea	rcx, OFFSET FLAT:$SG8620
+	lea	rcx, OFFSET FLAT:$SG8622
 	call	AuTextOut
 
 ; 100  : 	return kfree(memory);

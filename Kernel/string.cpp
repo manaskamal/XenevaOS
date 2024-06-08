@@ -29,7 +29,7 @@
 
 #include <string.h>
 #include <_null.h>
-
+#include <Mm\kmalloc.h>
 
 #define MAX_STRING_LENGTH 25
 
@@ -231,4 +231,10 @@ char *strncat(char *destString, const char *sourceString, size_t maxLength)
 
 	// Return success
 	return (destString);
+}
+
+char* strdup(const char*  c) {
+	char *out = (char*)kmalloc(strlen(c) + 1);
+	memcpy(out, (void*)c, strlen(c) + 1);
+	return out;
 }

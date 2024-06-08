@@ -207,7 +207,7 @@ void x86_64_cpu_initialize(uint8_t num_cpu) {
 	uint64_t ap_aligned_address = (uint64_t)apdata;
 
 	uint64_t *pml4 = (uint64_t*)AuGetRootPageTable();
-
+	
 	for (int i = 1; i <= num_cpu; i++) {
 
 		/* In SMP Mode : no more than 8 cpus */

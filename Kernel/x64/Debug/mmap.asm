@@ -10,15 +10,15 @@ _BSS	SEGMENT
 ?shmmaplist@@3PEAU_list_@@EA DQ 01H DUP (?)		; shmmaplist
 _BSS	ENDS
 CONST	SEGMENT
-$SG3566	DB	'/', 00H
+$SG3568	DB	'/', 00H
 	ORG $+6
-$SG3584	DB	'mmap reading file ', 0dH, 0aH, 00H
+$SG3586	DB	'mmap reading file ', 0dH, 0aH, 00H
 	ORG $+3
-$SG3594	DB	'SHOBJ newly created -> %s ', 0dH, 0aH, 00H
+$SG3596	DB	'SHOBJ newly created -> %s ', 0dH, 0aH, 00H
 	ORG $+3
-$SG3620	DB	'MemUnmap len -> %d ', 0dH, 0aH, 00H
+$SG3622	DB	'MemUnmap len -> %d ', 0dH, 0aH, 00H
 	ORG $+2
-$SG3621	DB	'Mem Unmap len aligned -> %d ', 0dH, 0aH, 00H
+$SG3623	DB	'Mem Unmap len aligned -> %d ', 0dH, 0aH, 00H
 CONST	ENDS
 PUBLIC	?SharedMemMapListInitialise@@YAXXZ		; SharedMemMapListInitialise
 PUBLIC	?CreateMemMapping@@YAPEAXPEAX_KHHH1@Z		; CreateMemMapping
@@ -352,7 +352,7 @@ $LN6@UnmapMemMa:
 ; 277  : 	SeTextOut("MemUnmap len -> %d \r\n", len);
 
 	mov	rdx, QWORD PTR len$[rsp]
-	lea	rcx, OFFSET FLAT:$SG3620
+	lea	rcx, OFFSET FLAT:$SG3622
 	call	SeTextOut
 
 ; 278  : 	len = PAGE_ALIGN(len); //simply align the length
@@ -376,7 +376,7 @@ $LN10@UnmapMemMa:
 ; 279  : 	SeTextOut("Mem Unmap len aligned -> %d \r\n", len);
 
 	mov	rdx, QWORD PTR len$[rsp]
-	lea	rcx, OFFSET FLAT:$SG3621
+	lea	rcx, OFFSET FLAT:$SG3623
 	call	SeTextOut
 
 ; 280  : 	uint64_t addr = (uint64_t)address;
@@ -819,7 +819,7 @@ $LN31@CreateMemM:
 
 ; 150  : 		fsys = AuVFSFind("/");
 
-	lea	rcx, OFFSET FLAT:$SG3566
+	lea	rcx, OFFSET FLAT:$SG3568
 	call	AuVFSFind
 	mov	QWORD PTR fsys$[rsp], rax
 
@@ -839,7 +839,7 @@ $LN22@CreateMemM:
 ; 153  : 		if (!(file->flags & FS_FLAG_DEVICE)) {
 
 	mov	rax, QWORD PTR file$[rsp]
-	movzx	eax, WORD PTR [rax+64]
+	movzx	eax, WORD PTR [rax+61]
 	and	eax, 8
 	test	eax, eax
 	jne	SHORT $LN21@CreateMemM
@@ -856,7 +856,7 @@ $LN22@CreateMemM:
 
 	mov	rax, QWORD PTR file$[rsp]
 	mov	rcx, QWORD PTR file_block_start$4[rsp]
-	mov	QWORD PTR [rax+56], rcx
+	mov	QWORD PTR [rax+53], rcx
 $LN21@CreateMemM:
 
 ; 156  : 		}
@@ -1050,7 +1050,7 @@ $LN10@CreateMemM:
 
 ; 202  : 			SeTextOut("mmap reading file \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG3584
+	lea	rcx, OFFSET FLAT:$SG3586
 	call	SeTextOut
 
 ; 203  : 			AuVFSNodeReadBlock(fsys, file, (uint64_t*)phys);
@@ -1213,7 +1213,7 @@ $LN13@CreateMemM:
 
 	mov	rax, QWORD PTR shobj$[rsp]
 	mov	rdx, QWORD PTR [rax]
-	lea	rcx, OFFSET FLAT:$SG3594
+	lea	rcx, OFFSET FLAT:$SG3596
 	call	SeTextOut
 $LN2@CreateMemM:
 

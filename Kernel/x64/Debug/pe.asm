@@ -6,7 +6,7 @@ INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
 CONST	SEGMENT
-$SG3058	DB	'Fname -> %s ', 0aH, 00H
+$SG3060	DB	'Fname -> %s ', 0aH, 00H
 CONST	ENDS
 PUBLIC	?AuGetProcAddress@@YAPEAXPEAXPEBD@Z		; AuGetProcAddress
 PUBLIC	?AuKernelLinkDLL@@YAXPEAX@Z			; AuKernelLinkDLL
@@ -760,7 +760,7 @@ $LN3@AuPEPrintE:
 ; 88   : 		AuTextOut("Fname -> %s \n", function_name);
 
 	mov	rdx, QWORD PTR function_name$2[rsp]
-	lea	rcx, OFFSET FLAT:$SG3058
+	lea	rcx, OFFSET FLAT:$SG3060
 	call	AuTextOut
 
 ; 89   : 	}

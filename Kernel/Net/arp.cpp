@@ -32,34 +32,37 @@
 #include <Net\aunet.h>
 #include <string.h>
 #include <aucon.h>
+#include <Mm\kmalloc.h>
+
 
 /*
  * AuARPRequestMAC -- request a mac address from
  * server
  */
-void AuARPRequestMAC() {
-	AuNetAdapter* netadapt = AuGetNetworkAdapterByType(AUNET_HWTYPE_ETHERNET);
-	if (!netadapt)
+void AuARPRequestMAC(AuVFSNode* nic) {
+	AuNetworkDevice *ndev = (AuNetworkDevice*)nic->device;
+	if (!ndev)
 		return;
+	NetARP *arp = (NetARP*)kmalloc(sizeof(NetARP));
+	arp->hwAddressType = htons(1); //0x0100;
+	arp->hwProtocolType = htons(ETHERNET_TYPE_IPV4);
+	arp->hwAddressSize = 6;
+	arp->protocolSize = 4;
+	arp->operation = htons(1);
 
-	NetARP arp;
-	arp.hwAddressType = 0x0100;
-	arp.hwProtocolType = 0x0008;
-	arp.hwAddressSize = 6;
-	arp.protocolSize = 4;
-	arp.operation = ARP_OPERATION_REQUEST;
+	uint8_t* mac = ndev->mac;
+	memcpy(arp->srcMac, mac, 6); //192.168.0.1
+	arp->srcIP = 0xC0A80001;
 
-	uint8_t* mac = netadapt->mac;
-	memcpy(arp.srcMac, mac, 6);
-	arp.srcIP[0] = 10; //192.168.0.0
-	arp.srcIP[1] = 0;
-	arp.srcIP[2] = 2;
-	arp.srcIP[3] = 14;
-
-	memset(arp.destMac, 0xff, 6);
-	memset(arp.destIP, 0xff, 4);
-	AuTextOut("ARP Setuped \n");
+	memset(arp->destMac, 0xff, 6);//192.168.43.02
+	arp->destIP = 0xC0A82B02;
+	AuTextOut("ARP Setuped %x\n",arp->destIP);
 	
-	AuEthernetSend(&arp, sizeof(NetARP), ETHERNET_TYPE_ARP, arp.destMac);
+	if (ndev->type == NETDEV_TYPE_ETHERNET)
+		AuEthernetSend(nic,&arp, sizeof(NetARP), ETHERNET_TYPE_ARP, arp->destMac);
+	/* here we need to call different interfaces depending
+	 * on the nic node passed, ARP can be sent through different
+	 * link layer other than Ethernet
+	 */
+	kfree(arp);
 }
-

@@ -193,6 +193,7 @@
     <ClInclude Include="..\BaseHdr\Hal\x86_64_pic.h" />
     <ClInclude Include="..\BaseHdr\Hal\x86_64_sched.h" />
     <ClInclude Include="..\BaseHdr\Hal\x86_64_signal.h" />
+    <ClInclude Include="..\BaseHdr\hashmap.h" />
     <ClInclude Include="..\BaseHdr\Ipc\postbox.h" />
     <ClInclude Include="..\BaseHdr\Ipc\signal.h" />
     <ClInclude Include="..\BaseHdr\limits.h" />
@@ -232,6 +233,7 @@
     <ClInclude Include="..\BaseHdr\_null.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\BaseHdr\hashmap.cpp" />
     <ClCompile Include="ahci.cpp" />
     <ClCompile Include="ahcidsk.cpp" />
     <ClCompile Include="aucon.cpp" />

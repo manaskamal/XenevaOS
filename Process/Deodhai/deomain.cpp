@@ -1566,7 +1566,6 @@ int main(int argc, char* arv[]) {
 			uint8_t flags = event.dword5;
 
 			Window* win = DeodhaiCreateWindow(x, y, w, h, flags, event.from_id, event.charValue3);
-			_KePrint("DOEDHAI window khan bonala de \r\n");
 			PostEvent e;
 			memset(&e, 0, sizeof(PostEvent));
 

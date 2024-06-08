@@ -134,16 +134,7 @@ struct ReportItem {
 	bool relative;
 };
 
-#define DELIMITER_NONE 0
-#define DELIMITER_FIRST 1
-#define DELIMITER_IGNORE 2
 
-struct ReportLocalState {
-	uint32_t usages[32];
-	uint32_t usageMinimum, usageMaximum;
-	uint8_t usageCount;
-	uint8_t delimiterState;
-};
 
 void SetProtocol(USBDevice* dev, XHCISlot* slot, uint8_t slot_id) {
 	USB_REQUEST_PACKET pack;
@@ -152,7 +143,6 @@ void SetProtocol(USBDevice* dev, XHCISlot* slot, uint8_t slot_id) {
 	pack.value = 0;
 	pack.index = slot->interface_val;
 	pack.length = 0;
-	AuTextOut("Setting protocol interface -> %d \n", pack.index);
 	XHCISendControlCmd(dev, slot, slot_id, &pack,0,0);
 }
 
@@ -164,7 +154,6 @@ void SetIDLE(USBDevice* dev, XHCISlot* slot, uint8_t slot_id){
 	pack.index = slot->interface_val;
 	pack.length = 0;
 	XHCISendControlCmd(dev, slot, slot_id, &pack, 0, 0);
-	AuTextOut("IDLE Request setupped \r\n");
 }
 
 void GetReport(USBDevice* dev, XHCISlot* slot, uint64_t buffer, uint16_t report_bytes) {
@@ -292,11 +281,9 @@ bool HIDParseReportDescriptor(uint8_t* report, size_t reportBytes) {
 														break;
 				}
 				case HID_GLOBAL_ITEM_TAG_LOGICAL_MINIMUM:
-					AuTextOut("HID Global Logical Minimum %d\n", data);
 					state[stateidx].logicalMinimum = data;
 					break;
 				case HID_GLOBAL_ITEM_TAG_LOGICAL_MAXIMUM:
-					AuTextOut("HID Global Logical Maximum %d\n", data);
 					state[stateidx].logicalMaximum = data;
 					break;
 				case HID_GLOBAL_ITEM_TAG_PHYSICAL_MINIMUM:
@@ -553,25 +540,14 @@ void USBHidInitialise(USBDevice* dev, XHCISlot* slot, uint8_t classC, uint8_t su
 		}
 	}
 
-	for (int i = 0; i < slot->endpoints->pointer; i++) {
-		XHCIEndpoint* ep = (XHCIEndpoint*)list_get_at(slot->endpoints, i);
-		if (ep->ep_type == ENDPOINT_TRANSFER_TYPE_INT) {
-			//AuTextOut("[HID]:Interrupt endpoint %d \n", ep->dir);
-		}
-	}
-
 	if (!ep_->callback)
 		ep_->callback = HIDCallback;
 
-	//uint32_t ep_val = *raw_offset<volatile uint32_t*>(slot->output_context_phys, ep_->dc_offset + 0);
-	//uint8_t ep_state = ep_val & 0x7;
-	//AuTextOut("EP STATE -> %d \n", ep_state);
 
 	uint64_t buff = (uint64_t)AuPmmngrAlloc();
 	memset((void*)buff, 0, PAGE_SIZE);
 	uint8_t* report = (uint8_t*)buff;
 
-	SeTextOut("Getting report \r\n");
 	GetReport(dev, slot, buff, report_bytes);
 	t_idx = -1;
 	t_idx = XHCIPollEvent(dev, TRB_EVENT_TRANSFER);
@@ -579,19 +555,15 @@ void USBHidInitialise(USBDevice* dev, XHCISlot* slot, uint8_t classC, uint8_t su
 
 	HIDParseReportDescriptor((uint8_t*)buff, report_bytes);
 
-	//if (prot > 0) {
-		AuTextOut("IDle setting \n");
-		SetIDLE(dev, slot, slot->slot_id);
-		t_idx = -1;
-		t_idx = XHCIPollEvent(dev, TRB_EVENT_TRANSFER);
-	//}
+	SetIDLE(dev, slot, slot->slot_id);
+	t_idx = -1;
+	t_idx = XHCIPollEvent(dev, TRB_EVENT_TRANSFER);
 
-	mouse_data = (uint64_t)P2V((uint64_t)AuPmmngrAlloc()); //kmalloc(ep_->max_packet_sz);
+
+	mouse_data = (uint64_t)P2V((uint64_t)AuPmmngrAlloc());
 	memset((void*)mouse_data, 0, ep_->max_packet_sz);
 
-	SeTextOut("EP Max packt -> %d ,mm - %d \r\n", ep_->max_packet_sz, ep_->cmd_ring_max);
 	XHCISendNormalTRB(dev, slot, V2P(mouse_data), ep_->max_packet_sz,ep_);
 	
-	//AuTextOut("Normal trb sent \n");
 	AuPmmngrFree((void*)buff);
 }

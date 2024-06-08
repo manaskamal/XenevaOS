@@ -31,6 +31,7 @@
 #define __ARP_H__
 
 #include <stdint.h>
+#include <fs/vfs.h>
 
 #define ARP_OPERATION_REQUEST 0x0100
 #define ARP_OPERATION_RESPONSE 0x0200
@@ -43,9 +44,9 @@ typedef struct _arp_ {
 	uint8_t protocolSize;
 	uint16_t operation;
 	uint8_t srcMac[6];
-	uint8_t srcIP[4];
+	uint32_t srcIP;
 	uint8_t destMac[6];
-	uint8_t destIP[4];
+	uint32_t destIP;
 }NetARP;
 #pragma pack(pop)
 
@@ -54,6 +55,6 @@ typedef struct _arp_ {
 * AuARPRequestMAC -- request a mac address from
 * server
 */
-extern void AuARPRequestMAC();
+AU_EXTERN AU_EXPORT void AuARPRequestMAC(AuVFSNode* nic);
 
 #endif

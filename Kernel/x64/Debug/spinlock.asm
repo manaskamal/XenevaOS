@@ -11,9 +11,9 @@ _BSS	SEGMENT
 early_spinlock_cnt DB 01H DUP (?)
 _BSS	ENDS
 CONST	SEGMENT
-$SG2877	DB	'[aurora kernel]: lock -> %x is corrupted ', 0dH, 0aH, 00H
+$SG2879	DB	'[aurora kernel]: lock -> %x is corrupted ', 0dH, 0aH, 00H
 	ORG $+4
-$SG2881	DB	'Locking ', 0dH, 0aH, 00H
+$SG2883	DB	'Locking ', 0dH, 0aH, 00H
 CONST	ENDS
 PUBLIC	AuCreateSpinlock
 PUBLIC	AuDeleteSpinlock
@@ -105,7 +105,7 @@ $LN10:
 ; 72   : 		SeTextOut("[aurora kernel]: lock -> %x is corrupted \r\n", lock);
 
 	mov	rdx, QWORD PTR lock$[rsp]
-	lea	rcx, OFFSET FLAT:$SG2877
+	lea	rcx, OFFSET FLAT:$SG2879
 	call	SeTextOut
 
 ; 73   : 		lock->value = 0;
@@ -119,7 +119,7 @@ $LN6@AuAcquireS:
 ; 75   : 	do {
 ; 76   : 		SeTextOut("Locking \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG2881
+	lea	rcx, OFFSET FLAT:$SG2883
 	call	SeTextOut
 
 ; 77   : 		if (x64_lock_test(&lock->value, 0, 1)) {

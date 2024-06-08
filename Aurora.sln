@@ -58,6 +58,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AudioPlayer", "Process\Audi
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NVMe", "Drivers\NVMe\NVMe.vcxproj", "{B3D51D1A-09E7-47D9-A6A5-5E6059585D6E}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NETMngr", "Process\NETMngr\NETMngr.vcxproj", "{567DA5F4-5B2E-4993-9370-C4A4F022C928}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug Static|Mixed Platforms = Debug Static|Mixed Platforms
@@ -640,6 +642,30 @@ Global
 		{B3D51D1A-09E7-47D9-A6A5-5E6059585D6E}.Release|Win32.Build.0 = Release|Win32
 		{B3D51D1A-09E7-47D9-A6A5-5E6059585D6E}.Release|x64.ActiveCfg = Release|x64
 		{B3D51D1A-09E7-47D9-A6A5-5E6059585D6E}.Release|x64.Build.0 = Release|x64
+		{567DA5F4-5B2E-4993-9370-C4A4F022C928}.Debug Static|Mixed Platforms.ActiveCfg = Debug|Win32
+		{567DA5F4-5B2E-4993-9370-C4A4F022C928}.Debug Static|Mixed Platforms.Build.0 = Debug|Win32
+		{567DA5F4-5B2E-4993-9370-C4A4F022C928}.Debug Static|Win32.ActiveCfg = Debug|Win32
+		{567DA5F4-5B2E-4993-9370-C4A4F022C928}.Debug Static|Win32.Build.0 = Debug|Win32
+		{567DA5F4-5B2E-4993-9370-C4A4F022C928}.Debug Static|x64.ActiveCfg = Debug|x64
+		{567DA5F4-5B2E-4993-9370-C4A4F022C928}.Debug Static|x64.Build.0 = Debug|x64
+		{567DA5F4-5B2E-4993-9370-C4A4F022C928}.Debug|Mixed Platforms.ActiveCfg = Debug|x64
+		{567DA5F4-5B2E-4993-9370-C4A4F022C928}.Debug|Mixed Platforms.Build.0 = Debug|x64
+		{567DA5F4-5B2E-4993-9370-C4A4F022C928}.Debug|Win32.ActiveCfg = Debug|Win32
+		{567DA5F4-5B2E-4993-9370-C4A4F022C928}.Debug|Win32.Build.0 = Debug|Win32
+		{567DA5F4-5B2E-4993-9370-C4A4F022C928}.Debug|x64.ActiveCfg = Debug|x64
+		{567DA5F4-5B2E-4993-9370-C4A4F022C928}.Debug|x64.Build.0 = Debug|x64
+		{567DA5F4-5B2E-4993-9370-C4A4F022C928}.Release Static|Mixed Platforms.ActiveCfg = Release|Win32
+		{567DA5F4-5B2E-4993-9370-C4A4F022C928}.Release Static|Mixed Platforms.Build.0 = Release|Win32
+		{567DA5F4-5B2E-4993-9370-C4A4F022C928}.Release Static|Win32.ActiveCfg = Release|Win32
+		{567DA5F4-5B2E-4993-9370-C4A4F022C928}.Release Static|Win32.Build.0 = Release|Win32
+		{567DA5F4-5B2E-4993-9370-C4A4F022C928}.Release Static|x64.ActiveCfg = Release|x64
+		{567DA5F4-5B2E-4993-9370-C4A4F022C928}.Release Static|x64.Build.0 = Release|x64
+		{567DA5F4-5B2E-4993-9370-C4A4F022C928}.Release|Mixed Platforms.ActiveCfg = Release|Win32
+		{567DA5F4-5B2E-4993-9370-C4A4F022C928}.Release|Mixed Platforms.Build.0 = Release|Win32
+		{567DA5F4-5B2E-4993-9370-C4A4F022C928}.Release|Win32.ActiveCfg = Release|Win32
+		{567DA5F4-5B2E-4993-9370-C4A4F022C928}.Release|Win32.Build.0 = Release|Win32
+		{567DA5F4-5B2E-4993-9370-C4A4F022C928}.Release|x64.ActiveCfg = Release|x64
+		{567DA5F4-5B2E-4993-9370-C4A4F022C928}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

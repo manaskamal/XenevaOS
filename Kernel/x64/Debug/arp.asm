@@ -6,149 +6,165 @@ INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
 CONST	SEGMENT
-$SG2982	DB	'ARP Setuped ', 0aH, 00H
+$SG3013	DB	'ARP Setuped %x', 0aH, 00H
 CONST	ENDS
-PUBLIC	?AuARPRequestMAC@@YAXXZ				; AuARPRequestMAC
-EXTRN	?AuEthernetSend@@YAXPEAX_KGPEAE@Z:PROC		; AuEthernetSend
-EXTRN	AuGetNetworkAdapterByType:PROC
+PUBLIC	AuARPRequestMAC
+EXTRN	?AuEthernetSend@@YAXPEAU__VFS_NODE__@@PEAX_KGPEAE@Z:PROC ; AuEthernetSend
 EXTRN	memset:PROC
 EXTRN	memcpy:PROC
 EXTRN	AuTextOut:PROC
+EXTRN	kmalloc:PROC
+EXTRN	kfree:PROC
 pdata	SEGMENT
-$pdata$?AuARPRequestMAC@@YAXXZ DD imagerel $LN4
-	DD	imagerel $LN4+238
-	DD	imagerel $unwind$?AuARPRequestMAC@@YAXXZ
+$pdata$AuARPRequestMAC DD imagerel $LN5
+	DD	imagerel $LN5+286
+	DD	imagerel $unwind$AuARPRequestMAC
 pdata	ENDS
 xdata	SEGMENT
-$unwind$?AuARPRequestMAC@@YAXXZ DD 010401H
-	DD	0a204H
+$unwind$AuARPRequestMAC DD 010901H
+	DD	0a209H
 xdata	ENDS
 ; Function compile flags: /Odtpy
 ; File e:\xeneva project\aurora\kernel\net\arp.cpp
 _TEXT	SEGMENT
-netadapt$ = 32
-mac$ = 40
 arp$ = 48
-?AuARPRequestMAC@@YAXXZ PROC				; AuARPRequestMAC
+ndev$ = 56
+mac$ = 64
+nic$ = 96
+AuARPRequestMAC PROC
 
-; 40   : void AuARPRequestMAC() {
+; 41   : void AuARPRequestMAC(AuVFSNode* nic) {
 
-$LN4:
+$LN5:
+	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 88					; 00000058H
 
-; 41   : 	AuNetAdapter* netadapt = AuGetNetworkAdapterByType(AUNET_HWTYPE_ETHERNET);
+; 42   : 	AuNetworkDevice *ndev = (AuNetworkDevice*)nic->device;
 
-	mov	cl, 1
-	call	AuGetNetworkAdapterByType
-	mov	QWORD PTR netadapt$[rsp], rax
+	mov	rax, QWORD PTR nic$[rsp]
+	mov	rax, QWORD PTR [rax+64]
+	mov	QWORD PTR ndev$[rsp], rax
 
-; 42   : 	if (!netadapt)
+; 43   : 	if (!ndev)
 
-	cmp	QWORD PTR netadapt$[rsp], 0
-	jne	SHORT $LN1@AuARPReque
+	cmp	QWORD PTR ndev$[rsp], 0
+	jne	SHORT $LN2@AuARPReque
 
-; 43   : 		return;
+; 44   : 		return;
 
-	jmp	$LN2@AuARPReque
-$LN1@AuARPReque:
-
-; 44   : 
-; 45   : 	NetARP arp;
-; 46   : 	arp.hwAddressType = 0x0100;
-
-	mov	eax, 256				; 00000100H
-	mov	WORD PTR arp$[rsp], ax
-
-; 47   : 	arp.hwProtocolType = 0x0008;
-
-	mov	eax, 8
-	mov	WORD PTR arp$[rsp+2], ax
-
-; 48   : 	arp.hwAddressSize = 6;
-
-	mov	BYTE PTR arp$[rsp+4], 6
-
-; 49   : 	arp.protocolSize = 4;
-
-	mov	BYTE PTR arp$[rsp+5], 4
-
-; 50   : 	arp.operation = ARP_OPERATION_REQUEST;
-
-	mov	eax, 256				; 00000100H
-	mov	WORD PTR arp$[rsp+6], ax
-
-; 51   : 
-; 52   : 	uint8_t* mac = netadapt->mac;
-
-	mov	rax, QWORD PTR netadapt$[rsp]
-	add	rax, 8
-	mov	QWORD PTR mac$[rsp], rax
-
-; 53   : 	memcpy(arp.srcMac, mac, 6);
-
-	mov	r8d, 6
-	mov	rdx, QWORD PTR mac$[rsp]
-	lea	rcx, QWORD PTR arp$[rsp+8]
-	call	memcpy
-
-; 54   : 	arp.srcIP[0] = 10; //192.168.0.0
-
-	mov	eax, 1
-	imul	rax, rax, 0
-	mov	BYTE PTR arp$[rsp+rax+14], 10
-
-; 55   : 	arp.srcIP[1] = 0;
-
-	mov	eax, 1
-	imul	rax, rax, 1
-	mov	BYTE PTR arp$[rsp+rax+14], 0
-
-; 56   : 	arp.srcIP[2] = 2;
-
-	mov	eax, 1
-	imul	rax, rax, 2
-	mov	BYTE PTR arp$[rsp+rax+14], 2
-
-; 57   : 	arp.srcIP[3] = 14;
-
-	mov	eax, 1
-	imul	rax, rax, 3
-	mov	BYTE PTR arp$[rsp+rax+14], 14
-
-; 58   : 
-; 59   : 	memset(arp.destMac, 0xff, 6);
-
-	mov	r8d, 6
-	mov	dl, 255					; 000000ffH
-	lea	rcx, QWORD PTR arp$[rsp+18]
-	call	memset
-
-; 60   : 	memset(arp.destIP, 0xff, 4);
-
-	mov	r8d, 4
-	mov	dl, 255					; 000000ffH
-	lea	rcx, QWORD PTR arp$[rsp+24]
-	call	memset
-
-; 61   : 	AuTextOut("ARP Setuped \n");
-
-	lea	rcx, OFFSET FLAT:$SG2982
-	call	AuTextOut
-
-; 62   : 	
-; 63   : 	AuEthernetSend(&arp, sizeof(NetARP), ETHERNET_TYPE_ARP, arp.destMac);
-
-	lea	r9, QWORD PTR arp$[rsp+18]
-	mov	r8w, 2054				; 00000806H
-	mov	edx, 28
-	lea	rcx, QWORD PTR arp$[rsp]
-	call	?AuEthernetSend@@YAXPEAX_KGPEAE@Z	; AuEthernetSend
+	jmp	$LN3@AuARPReque
 $LN2@AuARPReque:
 
-; 64   : }
+; 45   : 	NetARP *arp = (NetARP*)kmalloc(sizeof(NetARP));
+
+	mov	ecx, 28
+	call	kmalloc
+	mov	QWORD PTR arp$[rsp], rax
+
+; 46   : 	arp->hwAddressType = htons(1); //0x0100;
+
+	mov	eax, 256				; 00000100H
+	mov	rcx, QWORD PTR arp$[rsp]
+	mov	WORD PTR [rcx], ax
+
+; 47   : 	arp->hwProtocolType = htons(ETHERNET_TYPE_IPV4);
+
+	mov	eax, 8
+	mov	rcx, QWORD PTR arp$[rsp]
+	mov	WORD PTR [rcx+2], ax
+
+; 48   : 	arp->hwAddressSize = 6;
+
+	mov	rax, QWORD PTR arp$[rsp]
+	mov	BYTE PTR [rax+4], 6
+
+; 49   : 	arp->protocolSize = 4;
+
+	mov	rax, QWORD PTR arp$[rsp]
+	mov	BYTE PTR [rax+5], 4
+
+; 50   : 	arp->operation = htons(1);
+
+	mov	eax, 256				; 00000100H
+	mov	rcx, QWORD PTR arp$[rsp]
+	mov	WORD PTR [rcx+6], ax
+
+; 51   : 
+; 52   : 	uint8_t* mac = ndev->mac;
+
+	mov	rax, QWORD PTR ndev$[rsp]
+	mov	QWORD PTR mac$[rsp], rax
+
+; 53   : 	memcpy(arp->srcMac, mac, 6); //192.168.0.1
+
+	mov	rax, QWORD PTR arp$[rsp]
+	add	rax, 8
+	mov	r8d, 6
+	mov	rdx, QWORD PTR mac$[rsp]
+	mov	rcx, rax
+	call	memcpy
+
+; 54   : 	arp->srcIP = 0xC0A80001;
+
+	mov	rax, QWORD PTR arp$[rsp]
+	mov	DWORD PTR [rax+14], -1062731775		; c0a80001H
+
+; 55   : 
+; 56   : 	memset(arp->destMac, 0xff, 6);//192.168.43.02
+
+	mov	rax, QWORD PTR arp$[rsp]
+	add	rax, 18
+	mov	r8d, 6
+	mov	dl, 255					; 000000ffH
+	mov	rcx, rax
+	call	memset
+
+; 57   : 	arp->destIP = 0xC0A82B02;
+
+	mov	rax, QWORD PTR arp$[rsp]
+	mov	DWORD PTR [rax+24], -1062720766		; c0a82b02H
+
+; 58   : 	AuTextOut("ARP Setuped %x\n",arp->destIP);
+
+	mov	rax, QWORD PTR arp$[rsp]
+	mov	edx, DWORD PTR [rax+24]
+	lea	rcx, OFFSET FLAT:$SG3013
+	call	AuTextOut
+
+; 59   : 	
+; 60   : 	if (ndev->type == NETDEV_TYPE_ETHERNET)
+
+	mov	rax, QWORD PTR ndev$[rsp]
+	movzx	eax, BYTE PTR [rax+10]
+	cmp	eax, 1
+	jne	SHORT $LN1@AuARPReque
+
+; 61   : 		AuEthernetSend(nic,&arp, sizeof(NetARP), ETHERNET_TYPE_ARP, arp->destMac);
+
+	mov	rax, QWORD PTR arp$[rsp]
+	add	rax, 18
+	mov	QWORD PTR [rsp+32], rax
+	mov	r9w, 2054				; 00000806H
+	mov	r8d, 28
+	lea	rdx, QWORD PTR arp$[rsp]
+	mov	rcx, QWORD PTR nic$[rsp]
+	call	?AuEthernetSend@@YAXPEAU__VFS_NODE__@@PEAX_KGPEAE@Z ; AuEthernetSend
+$LN1@AuARPReque:
+
+; 62   : 	/* here we need to call different interfaces depending
+; 63   : 	 * on the nic node passed, ARP can be sent through different
+; 64   : 	 * link layer other than Ethernet
+; 65   : 	 */
+; 66   : 	kfree(arp);
+
+	mov	rcx, QWORD PTR arp$[rsp]
+	call	kfree
+$LN3@AuARPReque:
+
+; 67   : }
 
 	add	rsp, 88					; 00000058H
 	ret	0
-?AuARPRequestMAC@@YAXXZ ENDP				; AuARPRequestMAC
+AuARPRequestMAC ENDP
 _TEXT	ENDS
 END

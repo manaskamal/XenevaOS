@@ -16,6 +16,8 @@ PUBLIC	strncat
 PUBLIC	memset
 PUBLIC	memcpy
 PUBLIC	memcmp
+PUBLIC	strdup
+EXTRN	kmalloc:PROC
 EXTRN	_fastcpy:PROC
 pdata	SEGMENT
 $pdata$strcmp DD imagerel $LN9
@@ -51,6 +53,9 @@ $pdata$memcpy DD imagerel $LN3
 $pdata$memcmp DD imagerel $LN9
 	DD	imagerel $LN9+156
 	DD	imagerel $unwind$memcmp
+$pdata$strdup DD imagerel $LN3
+	DD	imagerel $LN3+75
+	DD	imagerel $unwind$strdup
 pdata	ENDS
 xdata	SEGMENT
 $unwind$strcmp DD 010e01H
@@ -75,7 +80,51 @@ $unwind$memcpy DD 011301H
 	DD	04213H
 $unwind$memcmp DD 011301H
 	DD	02213H
+$unwind$strdup DD 010901H
+	DD	06209H
 xdata	ENDS
+; Function compile flags: /Odtpy
+; File e:\xeneva project\aurora\kernel\string.cpp
+_TEXT	SEGMENT
+out$ = 32
+c$ = 64
+strdup	PROC
+
+; 236  : char* strdup(const char*  c) {
+
+$LN3:
+	mov	QWORD PTR [rsp+8], rcx
+	sub	rsp, 56					; 00000038H
+
+; 237  : 	char *out = (char*)kmalloc(strlen(c) + 1);
+
+	mov	rcx, QWORD PTR c$[rsp]
+	call	strlen
+	inc	rax
+	mov	ecx, eax
+	call	kmalloc
+	mov	QWORD PTR out$[rsp], rax
+
+; 238  : 	memcpy(out, (void*)c, strlen(c) + 1);
+
+	mov	rcx, QWORD PTR c$[rsp]
+	call	strlen
+	inc	rax
+	mov	r8, rax
+	mov	rdx, QWORD PTR c$[rsp]
+	mov	rcx, QWORD PTR out$[rsp]
+	call	memcpy
+
+; 239  : 	return out;
+
+	mov	rax, QWORD PTR out$[rsp]
+
+; 240  : }
+
+	add	rsp, 56					; 00000038H
+	ret	0
+strdup	ENDP
+_TEXT	ENDS
 ; Function compile flags: /Odtpy
 ; File e:\xeneva project\aurora\kernel\string.cpp
 _TEXT	SEGMENT

@@ -6,9 +6,9 @@ INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
 CONST	SEGMENT
-$SG3613	DB	'-', 00H
+$SG3615	DB	'-', 00H
 	ORG $+2
-$SG3661	DB	'.', 00H
+$SG3663	DB	'.', 00H
 CONST	ENDS
 PUBLIC	?AuInitialiseSerial@@YAXXZ			; AuInitialiseSerial
 PUBLIC	SeTextOut
@@ -334,7 +334,7 @@ $LN18@SeTextOut:
 
 ; 106  : 					DebugSerial("-");
 
-	lea	rcx, OFFSET FLAT:$SG3613
+	lea	rcx, OFFSET FLAT:$SG3615
 	call	?DebugSerial@@YAXPEAD@Z			; DebugSerial
 
 ; 107  : 					i = ((int)i * -1);
@@ -506,7 +506,7 @@ $LN5@SeTextOut:
 ; 145  : 			{
 ; 146  : 				DebugSerial(".");
 
-	lea	rcx, OFFSET FLAT:$SG3661
+	lea	rcx, OFFSET FLAT:$SG3663
 	call	?DebugSerial@@YAXPEAD@Z			; DebugSerial
 
 ; 147  : 			}

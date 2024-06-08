@@ -1441,7 +1441,7 @@ $LN20@x86_64_cpu:
 	call	AuGetRootPageTable
 	mov	QWORD PTR pml4$[rsp], rax
 
-; 210  : 
+; 210  : 	
 ; 211  : 	for (int i = 1; i <= num_cpu; i++) {
 
 	mov	DWORD PTR i$1[rsp], 1

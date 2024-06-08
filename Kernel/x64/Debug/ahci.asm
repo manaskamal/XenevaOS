@@ -10,17 +10,17 @@ _BSS	SEGMENT
 ?HBABar@@3PEAXEA DQ 01H DUP (?)				; HBABar
 _BSS	ENDS
 CONST	SEGMENT
-$SG4290	DB	'AHCI bus -> %d, dev -> %d, func -> %d ', 0aH, 00H
-$SG4293	DB	'ahci/sata not found ', 0aH, 00H
+$SG4292	DB	'AHCI bus -> %d, dev -> %d, func -> %d ', 0aH, 00H
+$SG4295	DB	'ahci/sata not found ', 0aH, 00H
 	ORG $+2
-$SG4303	DB	'ahci/sata version %d.%d found ', 0aH, 00H
-$SG4316	DB	'ahci sata drive found at port %d', 0aH, 00H
+$SG4305	DB	'ahci/sata version %d.%d found ', 0aH, 00H
+$SG4318	DB	'ahci sata drive found at port %d', 0aH, 00H
 	ORG $+6
-$SG4319	DB	'ahci satapi drive found at port %d', 0aH, 00H
+$SG4321	DB	'ahci satapi drive found at port %d', 0aH, 00H
 	ORG $+4
-$SG4322	DB	'ahci semb drive found at port %d', 0aH, 00H
+$SG4324	DB	'ahci semb drive found at port %d', 0aH, 00H
 	ORG $+6
-$SG4325	DB	'ahci pm drive found at port %d', 0aH, 00H
+$SG4327	DB	'ahci pm drive found at port %d', 0aH, 00H
 CONST	ENDS
 PUBLIC	?AuAHCIInitialise@@YAXXZ			; AuAHCIInitialise
 PUBLIC	?AHCIInterruptHandler@@YAX_KPEAX@Z		; AHCIInterruptHandler
@@ -343,7 +343,7 @@ $LN14@AuAHCIInit:
 	mov	r9d, DWORD PTR func$[rsp]
 	mov	r8d, DWORD PTR dev$[rsp]
 	mov	edx, DWORD PTR bus$[rsp]
-	lea	rcx, OFFSET FLAT:$SG4290
+	lea	rcx, OFFSET FLAT:$SG4292
 	call	AuTextOut
 
 ; 113  : 	if (AhciNotFound) {
@@ -371,7 +371,7 @@ $LN14@AuAHCIInit:
 
 ; 116  : 			AuTextOut("ahci/sata not found \n");
 
-	lea	rcx, OFFSET FLAT:$SG4293
+	lea	rcx, OFFSET FLAT:$SG4295
 	call	AuTextOut
 
 ; 117  : 			return;
@@ -526,7 +526,7 @@ $LN13@AuAHCIInit:
 
 	mov	r8d, DWORD PTR version_minor$[rsp]
 	mov	edx, DWORD PTR version_major$[rsp]
-	lea	rcx, OFFSET FLAT:$SG4303
+	lea	rcx, OFFSET FLAT:$SG4305
 	call	AuTextOut
 
 ; 146  : 
@@ -621,7 +621,7 @@ $LN10@AuAHCIInit:
 ; 164  : 				AuTextOut("ahci sata drive found at port %d\n", i);
 
 	mov	edx, DWORD PTR i$[rsp]
-	lea	rcx, OFFSET FLAT:$SG4316
+	lea	rcx, OFFSET FLAT:$SG4318
 	call	AuTextOut
 
 ; 165  : 				hba->port[i].sctl &= ~PX_SCTL_IPM_MASK;
@@ -668,7 +668,7 @@ $LN7@AuAHCIInit:
 ; 170  : 				AuTextOut("ahci satapi drive found at port %d\n", i);
 
 	mov	edx, DWORD PTR i$[rsp]
-	lea	rcx, OFFSET FLAT:$SG4319
+	lea	rcx, OFFSET FLAT:$SG4321
 	call	AuTextOut
 	jmp	SHORT $LN4@AuAHCIInit
 $LN5@AuAHCIInit:
@@ -682,7 +682,7 @@ $LN5@AuAHCIInit:
 ; 173  : 				AuTextOut("ahci semb drive found at port %d\n", i);
 
 	mov	edx, DWORD PTR i$[rsp]
-	lea	rcx, OFFSET FLAT:$SG4322
+	lea	rcx, OFFSET FLAT:$SG4324
 	call	AuTextOut
 	jmp	SHORT $LN2@AuAHCIInit
 $LN3@AuAHCIInit:
@@ -696,7 +696,7 @@ $LN3@AuAHCIInit:
 ; 176  : 				AuTextOut("ahci pm drive found at port %d\n", i);
 
 	mov	edx, DWORD PTR i$[rsp]
-	lea	rcx, OFFSET FLAT:$SG4325
+	lea	rcx, OFFSET FLAT:$SG4327
 	call	AuTextOut
 $LN1@AuAHCIInit:
 $LN2@AuAHCIInit:

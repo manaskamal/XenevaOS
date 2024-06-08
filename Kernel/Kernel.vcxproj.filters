@@ -327,6 +327,9 @@
     <ClInclude Include="..\BaseHdr\Net\ipv4.h">
       <Filter>Include\Net</Filter>
     </ClInclude>
+    <ClInclude Include="..\BaseHdr\hashmap.h">
+      <Filter>Include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="init.cpp" />
@@ -511,6 +514,7 @@
     <ClCompile Include="Net\icmp.cpp">
       <Filter>Net</Filter>
     </ClCompile>
+    <ClCompile Include="..\BaseHdr\hashmap.cpp" />
   </ItemGroup>
   <ItemGroup>
     <NASM Include="__fstcpy.asm" />

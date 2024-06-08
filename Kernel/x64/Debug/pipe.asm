@@ -67,7 +67,7 @@ $LN4:
 ; 144  : 	AuPipe* pipe = (AuPipe*)fs->device;
 
 	mov	rax, QWORD PTR fs$[rsp]
-	mov	rax, QWORD PTR [rax+72]
+	mov	rax, QWORD PTR [rax+64]
 	mov	QWORD PTR pipe$[rsp], rax
 
 ; 145  : 	pipe->refcount--;
@@ -110,7 +110,7 @@ $LN4:
 ; 151  : 		fs->device = NULL;
 
 	mov	rax, QWORD PTR fs$[rsp]
-	mov	QWORD PTR [rax+72], 0
+	mov	QWORD PTR [rax+64], 0
 $LN1@AuPipeClos:
 
 ; 152  : 	}
@@ -142,7 +142,7 @@ $LN3:
 ; 133  : 	AuPipe* pipe = (AuPipe*)node->device;
 
 	mov	rax, QWORD PTR node$[rsp]
-	mov	rax, QWORD PTR [rax+72]
+	mov	rax, QWORD PTR [rax+64]
 	mov	QWORD PTR pipe$[rsp], rax
 
 ; 134  : 	pipe->refcount++;
@@ -192,7 +192,7 @@ $LN8:
 ; 116  : 	AuPipe* pipe = (AuPipe*)fs->device;
 
 	mov	rax, QWORD PTR fs$[rsp]
-	mov	rax, QWORD PTR [rax+72]
+	mov	rax, QWORD PTR [rax+64]
 	mov	QWORD PTR pipe$[rsp], rax
 
 ; 117  : 
@@ -302,7 +302,7 @@ $LN9:
 ; 88   : 	AuPipe *pipe = (AuPipe*)fs->device;
 
 	mov	rax, QWORD PTR fs$[rsp]
-	mov	rax, QWORD PTR [rax+72]
+	mov	rax, QWORD PTR [rax+64]
 	mov	QWORD PTR pipe$[rsp], rax
 
 ; 89   : 
@@ -579,7 +579,7 @@ $LN3:
 
 ; 162  : 	AuVFSNode* node = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
 
-	mov	ecx, 192				; 000000c0H
+	mov	ecx, 178				; 000000b2H
 	call	kmalloc
 	mov	QWORD PTR node$[rsp], rax
 
@@ -591,7 +591,7 @@ $LN3:
 
 ; 164  : 	memset(node, 0, sizeof(AuVFSNode));
 
-	mov	r8d, 192				; 000000c0H
+	mov	r8d, 178				; 000000b2H
 	xor	edx, edx
 	mov	rcx, QWORD PTR node$[rsp]
 	call	memset
@@ -641,7 +641,7 @@ $LN3:
 
 	mov	eax, 136				; 00000088H
 	mov	rcx, QWORD PTR node$[rsp]
-	mov	WORD PTR [rcx+64], ax
+	mov	WORD PTR [rcx+61], ax
 
 ; 174  : 	node->size = sz;
 
@@ -653,36 +653,36 @@ $LN3:
 
 	mov	rax, QWORD PTR node$[rsp]
 	mov	rcx, QWORD PTR pipe$[rsp]
-	mov	QWORD PTR [rax+72], rcx
+	mov	QWORD PTR [rax+64], rcx
 
 ; 176  : 	node->read = AuPipeRead;
 
 	mov	rax, QWORD PTR node$[rsp]
 	lea	rcx, OFFSET FLAT:?AuPipeRead@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z ; AuPipeRead
-	mov	QWORD PTR [rax+104], rcx
+	mov	QWORD PTR [rax+90], rcx
 
 ; 177  : 	node->write = AuPipeWrite;
 
 	mov	rax, QWORD PTR node$[rsp]
 	lea	rcx, OFFSET FLAT:?AuPipeWrite@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z ; AuPipeWrite
-	mov	QWORD PTR [rax+112], rcx
+	mov	QWORD PTR [rax+98], rcx
 
 ; 178  : 	node->open = AuPipeOpen;
 
 	mov	rax, QWORD PTR node$[rsp]
 	lea	rcx, OFFSET FLAT:?AuPipeOpen@@YAPEAU__VFS_NODE__@@PEAU1@PEAD@Z ; AuPipeOpen
-	mov	QWORD PTR [rax+88], rcx
+	mov	QWORD PTR [rax+74], rcx
 
 ; 179  : 	node->close = AuPipeClose;
 
 	mov	rax, QWORD PTR node$[rsp]
 	lea	rcx, OFFSET FLAT:?AuPipeClose@@YAHPEAU__VFS_NODE__@@0@Z ; AuPipeClose
-	mov	QWORD PTR [rax+152], rcx
+	mov	QWORD PTR [rax+138], rcx
 
 ; 180  : 	node->iocontrol = NULL;
 
 	mov	rax, QWORD PTR node$[rsp]
-	mov	QWORD PTR [rax+184], 0
+	mov	QWORD PTR [rax+170], 0
 
 ; 181  : 	
 ; 182  : 	return node;

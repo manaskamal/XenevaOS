@@ -102,6 +102,11 @@ AuSHM * AuGetSHMByID(uint16_t id) {
 int AuCreateSHM(AuProcess* proc, uint16_t key, size_t sz, uint8_t flags) {
 	AuSHM* shm = NULL;
 	AuAcquireSpinlock(shmlock);
+	if (key > UINT16_MAX){
+		AuReleaseSpinlock(shmlock);
+		SeTextOut("[SHM] Creation failed, key exceeds limitation \r\n");
+		return -1;
+	}
 	/*  search if it's already created */
 	shm = AuGetSHMSeg(key);
 	/* create a new*/

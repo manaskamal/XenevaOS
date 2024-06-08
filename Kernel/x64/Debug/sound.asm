@@ -22,11 +22,11 @@ _BSS	SEGMENT
 ?_audio_stopped_@@3_NA DB 01H DUP (?)			; _audio_stopped_
 _BSS	ENDS
 CONST	SEGMENT
-$SG3994	DB	'/dev', 00H
+$SG3996	DB	'/dev', 00H
 	ORG $+3
-$SG3999	DB	'sound', 00H
+$SG4001	DB	'sound', 00H
 	ORG $+2
-$SG4000	DB	'/', 00H
+$SG4002	DB	'/', 00H
 CONST	ENDS
 PUBLIC	?AuSoundInitialise@@YAXXZ			; AuSoundInitialise
 PUBLIC	AuSoundSetCard
@@ -1103,19 +1103,19 @@ $LN3:
 
 ; 271  : 	AuVFSNode* fsys = AuVFSFind("/dev");
 
-	lea	rcx, OFFSET FLAT:$SG3994
+	lea	rcx, OFFSET FLAT:$SG3996
 	call	AuVFSFind
 	mov	QWORD PTR fsys$[rsp], rax
 
 ; 272  : 	AuVFSNode *dsp = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
 
-	mov	ecx, 192				; 000000c0H
+	mov	ecx, 178				; 000000b2H
 	call	kmalloc
 	mov	QWORD PTR dsp$[rsp], rax
 
 ; 273  : 	memset(dsp, 0, sizeof(AuVFSNode));
 
-	mov	r8d, 192				; 000000c0H
+	mov	r8d, 178				; 000000b2H
 	xor	edx, edx
 	mov	rcx, QWORD PTR dsp$[rsp]
 	call	memset
@@ -1123,7 +1123,7 @@ $LN3:
 ; 274  : 	strcpy(dsp->filename, "sound");
 
 	mov	rax, QWORD PTR dsp$[rsp]
-	lea	rdx, OFFSET FLAT:$SG3999
+	lea	rdx, OFFSET FLAT:$SG4001
 	mov	rcx, rax
 	call	strcpy
 
@@ -1131,36 +1131,36 @@ $LN3:
 
 	mov	eax, 8
 	mov	rcx, QWORD PTR dsp$[rsp]
-	mov	WORD PTR [rcx+64], ax
+	mov	WORD PTR [rcx+61], ax
 
 ; 276  : 	dsp->device = fsys;
 
 	mov	rax, QWORD PTR dsp$[rsp]
 	mov	rcx, QWORD PTR fsys$[rsp]
-	mov	QWORD PTR [rax+72], rcx
+	mov	QWORD PTR [rax+64], rcx
 
 ; 277  : 	dsp->read = AuSoundRead;
 
 	mov	rax, QWORD PTR dsp$[rsp]
 	lea	rcx, OFFSET FLAT:?AuSoundRead@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z ; AuSoundRead
-	mov	QWORD PTR [rax+104], rcx
+	mov	QWORD PTR [rax+90], rcx
 
 ; 278  : 	dsp->write = AuSoundWrite;
 
 	mov	rax, QWORD PTR dsp$[rsp]
 	lea	rcx, OFFSET FLAT:?AuSoundWrite@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z ; AuSoundWrite
-	mov	QWORD PTR [rax+112], rcx
+	mov	QWORD PTR [rax+98], rcx
 
 ; 279  : 	dsp->iocontrol = AuSoundIOControl;
 
 	mov	rax, QWORD PTR dsp$[rsp]
 	lea	rcx, OFFSET FLAT:?AuSoundIOControl@@YAHPEAU__VFS_NODE__@@HPEAX@Z ; AuSoundIOControl
-	mov	QWORD PTR [rax+184], rcx
+	mov	QWORD PTR [rax+170], rcx
 
 ; 280  : 	AuDevFSAddFile(fsys, "/", dsp);
 
 	mov	r8, QWORD PTR dsp$[rsp]
-	lea	rdx, OFFSET FLAT:$SG4000
+	lea	rdx, OFFSET FLAT:$SG4002
 	mov	rcx, QWORD PTR fsys$[rsp]
 	call	AuDevFSAddFile
 

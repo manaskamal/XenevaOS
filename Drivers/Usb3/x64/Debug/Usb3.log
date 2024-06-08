@@ -1,4 +1,4 @@
-﻿Build started 02-06-2024 ৰাতিপু 2:56:22.
+﻿Build started 03-06-2024 ৰাতিপু 9:06:03.
      1>Project "E:\Xeneva Project\Aurora\Drivers\Usb3\Usb3.vcxproj" on node 2 (Rebuild target(s)).
      1>ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\BaseHdr" /Zi /nologo /W3 /WX- /Od /Oy /D ARCH_X64 /D USE_APIC /D _WINDLL /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt classes\hid.cpp classes\hub.cpp main.cpp usb3.cpp usbstd.cpp xhci_cmd.cpp
@@ -24,22 +24,22 @@
      1>e:\xeneva project\aurora\drivers\usb3\classes\hub.h(75): warning C4200: nonstandard extension used : zero-sized array in struct/union
                  Cannot generate copy-ctor or copy-assignment operator when UDT contains a zero-sized array
      1>usb3.cpp(89): warning C4244: '=' : conversion from 'uint64_t' to 'uint32_t', possible loss of data
-     1>usb3.cpp(169): warning C4018: '<' : signed/unsigned mismatch
-     1>usb3.cpp(186): warning C4018: '<' : signed/unsigned mismatch
-     1>usb3.cpp(201): warning C4018: '<' : signed/unsigned mismatch
-     1>usb3.cpp(214): warning C4018: '<' : signed/unsigned mismatch
-     1>usb3.cpp(225): warning C4018: '<' : signed/unsigned mismatch
-     1>usb3.cpp(368): warning C4244: '=' : conversion from 'uint64_t' to 'unsigned int', possible loss of data
-     1>usb3.cpp(370): warning C4244: '=' : conversion from 'uint64_t' to 'unsigned int', possible loss of data
-     1>usb3.cpp(824): warning C4244: 'argument' : conversion from 'uint64_t' to 'const intptr_t', possible loss of data
+     1>usb3.cpp(166): warning C4018: '<' : signed/unsigned mismatch
+     1>usb3.cpp(183): warning C4018: '<' : signed/unsigned mismatch
+     1>usb3.cpp(198): warning C4018: '<' : signed/unsigned mismatch
+     1>usb3.cpp(211): warning C4018: '<' : signed/unsigned mismatch
+     1>usb3.cpp(222): warning C4018: '<' : signed/unsigned mismatch
+     1>usb3.cpp(365): warning C4244: '=' : conversion from 'uint64_t' to 'unsigned int', possible loss of data
+     1>usb3.cpp(367): warning C4244: '=' : conversion from 'uint64_t' to 'unsigned int', possible loss of data
+     1>usb3.cpp(821): warning C4244: 'argument' : conversion from 'uint64_t' to 'const intptr_t', possible loss of data
+     1>usb3.cpp(822): warning C4244: 'argument' : conversion from 'uint64_t' to 'const intptr_t', possible loss of data
      1>usb3.cpp(825): warning C4244: 'argument' : conversion from 'uint64_t' to 'const intptr_t', possible loss of data
-     1>usb3.cpp(828): warning C4244: 'argument' : conversion from 'uint64_t' to 'const intptr_t', possible loss of data
-     1>usb3.cpp(829): warning C4244: 'argument' : conversion from 'uint64_t' to 'const intptr_t', possible loss of data
-     1>usb3.cpp(830): warning C4244: 'argument' : conversion from 'uint64_t' to 'const intptr_t', possible loss of data
-     1>usb3.cpp(840): warning C4244: '=' : conversion from 'uint16_t' to 'uint8_t', possible loss of data
-     1>usb3.cpp(841): warning C4244: '=' : conversion from 'uint16_t' to 'uint8_t', possible loss of data
-     1>usb3.cpp(842): warning C4244: '=' : conversion from 'uint64_t' to 'uint32_t', possible loss of data
-     1>usb3.cpp(844): warning C4244: '=' : conversion from 'uint64_t' to 'uint32_t', possible loss of data
+     1>usb3.cpp(826): warning C4244: 'argument' : conversion from 'uint64_t' to 'const intptr_t', possible loss of data
+     1>usb3.cpp(827): warning C4244: 'argument' : conversion from 'uint64_t' to 'const intptr_t', possible loss of data
+     1>usb3.cpp(837): warning C4244: '=' : conversion from 'uint16_t' to 'uint8_t', possible loss of data
+     1>usb3.cpp(838): warning C4244: '=' : conversion from 'uint16_t' to 'uint8_t', possible loss of data
+     1>usb3.cpp(839): warning C4244: '=' : conversion from 'uint64_t' to 'uint32_t', possible loss of data
+     1>usb3.cpp(841): warning C4244: '=' : conversion from 'uint64_t' to 'uint32_t', possible loss of data
          main.cpp
      1>e:\xeneva project\aurora\drivers\usb3\xhci.h(143): warning C4200: nonstandard extension used : zero-sized array in struct/union
                  Cannot generate copy-ctor or copy-assignment operator when UDT contains a zero-sized array
@@ -56,10 +56,10 @@
                  Cannot generate copy-ctor or copy-assignment operator when UDT contains a zero-sized array
      1>E:\Xeneva Project\Aurora\BaseHdr\Hal\basicacpi.h(283): warning C4200: nonstandard extension used : zero-sized array in struct/union
                  Cannot generate copy-ctor or copy-assignment operator when UDT contains a zero-sized array
-     1>main.cpp(153): warning C4244: '=' : conversion from 'uint64_t' to 'unsigned int', possible loss of data
-     1>main.cpp(210): warning C4244: 'argument' : conversion from 'uint64_t' to 'uint32_t', possible loss of data
-     1>main.cpp(215): warning C4293: '<<' : shift count negative or too big, undefined behavior
-     1>main.cpp(241): warning C4800: 'uint32_t' : forcing value to bool 'true' or 'false' (performance warning)
+     1>main.cpp(152): warning C4244: '=' : conversion from 'uint64_t' to 'unsigned int', possible loss of data
+     1>main.cpp(209): warning C4244: 'argument' : conversion from 'uint64_t' to 'uint32_t', possible loss of data
+     1>main.cpp(214): warning C4293: '<<' : shift count negative or too big, undefined behavior
+     1>main.cpp(240): warning C4800: 'uint32_t' : forcing value to bool 'true' or 'false' (performance warning)
          hub.cpp
      1>e:\xeneva project\aurora\drivers\usb3\xhci.h(143): warning C4200: nonstandard extension used : zero-sized array in struct/union
                  Cannot generate copy-ctor or copy-assignment operator when UDT contains a zero-sized array
@@ -74,19 +74,18 @@
      1>e:\xeneva project\aurora\drivers\usb3\classes\../xhci.h(306): warning C4161: #pragma pack(pop...) : more pops than pushes
      1>E:\Xeneva Project\Aurora\BaseHdr\stdarg.h(54): warning C4005: 'va_start' : macro redefinition
                  E:\Xeneva Project\Aurora\BaseHdr\va_list.h(56) : see previous definition of 'va_start'
-     1>classes\hid.cpp(216): warning C4267: 'initializing' : conversion from 'size_t' to 'uintptr_t', possible loss of data
-     1>classes\hid.cpp(227): warning C4018: '<' : signed/unsigned mismatch
-     1>classes\hid.cpp(380): warning C4267: '+=' : conversion from 'size_t' to 'int', possible loss of data
-     1>classes\hid.cpp(423): warning C4018: '<' : signed/unsigned mismatch
-     1>classes\hid.cpp(548): warning C4018: '<' : signed/unsigned mismatch
-     1>classes\hid.cpp(556): warning C4018: '<' : signed/unsigned mismatch
-     1>classes\hid.cpp(575): warning C4267: 'argument' : conversion from 'size_t' to 'uint16_t', possible loss of data
+     1>classes\hid.cpp(205): warning C4267: 'initializing' : conversion from 'size_t' to 'uintptr_t', possible loss of data
+     1>classes\hid.cpp(216): warning C4018: '<' : signed/unsigned mismatch
+     1>classes\hid.cpp(367): warning C4267: '+=' : conversion from 'size_t' to 'int', possible loss of data
+     1>classes\hid.cpp(410): warning C4018: '<' : signed/unsigned mismatch
+     1>classes\hid.cpp(535): warning C4018: '<' : signed/unsigned mismatch
+     1>classes\hid.cpp(551): warning C4267: 'argument' : conversion from 'size_t' to 'uint16_t', possible loss of data
          Generating Code...
-     1>e:\xeneva project\aurora\drivers\usb3\classes\hid.cpp(384): warning C4715: 'HIDParseReportDescriptor' : not all control paths return a value
-     1>e:\xeneva project\aurora\drivers\usb3\classes\hid.cpp(260): warning C4700: uninitialized local variable 'current_data_offset' used
-     1>e:\xeneva project\aurora\drivers\usb3\classes\hid.cpp(453): warning C4700: uninitialized local variable 'i' used
-     1>e:\xeneva project\aurora\drivers\usb3\classes\hid.cpp(472): warning C4700: uninitialized local variable 'i' used
-     1>e:\xeneva project\aurora\drivers\usb3\usb3.cpp(929): warning C4715: 'USBGetDescriptor' : not all control paths return a value
+     1>e:\xeneva project\aurora\drivers\usb3\classes\hid.cpp(371): warning C4715: 'HIDParseReportDescriptor' : not all control paths return a value
+     1>e:\xeneva project\aurora\drivers\usb3\classes\hid.cpp(249): warning C4700: uninitialized local variable 'current_data_offset' used
+     1>e:\xeneva project\aurora\drivers\usb3\classes\hid.cpp(440): warning C4700: uninitialized local variable 'i' used
+     1>e:\xeneva project\aurora\drivers\usb3\classes\hid.cpp(459): warning C4700: uninitialized local variable 'i' used
+     1>e:\xeneva project\aurora\drivers\usb3\usb3.cpp(926): warning C4715: 'USBGetDescriptor' : not all control paths return a value
      1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(1186,5): warning MSB8012: TargetPath(E:\Xeneva Project\Aurora\x64\Debug\Usb3.dll) does not match the Linker's OutputFile property value (F:\usb.dll). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
      1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(1188,5): warning MSB8012: TargetName(Usb3) does not match the Linker's OutputFile property value (usb). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
        Link:
@@ -104,4 +103,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:02.01
+Time Elapsed 00:00:01.10

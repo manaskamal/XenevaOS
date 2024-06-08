@@ -6,8 +6,8 @@ INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
 CONST	SEGMENT
-$SG3625	DB	'[FAT]: New Cluster allocated ', 0dH, 0aH, 00H
-$SG3704	DB	'EOC mark found in cluster -> %x ', 0aH, 00H
+$SG3627	DB	'[FAT]: New Cluster allocated ', 0dH, 0aH, 00H
+$SG3706	DB	'EOC mark found in cluster -> %x ', 0aH, 00H
 CONST	ENDS
 PUBLIC	?FatFileGetParent@@YAPEAU__VFS_NODE__@@PEAU1@PEBD@Z ; FatFileGetParent
 PUBLIC	?FatCreateFile@@YAPEAU__VFS_NODE__@@PEAU1@PEAD@Z ; FatCreateFile
@@ -129,7 +129,7 @@ $LN6@FatFileRem:
 ; 469  : 	uint32_t parent_clust = file->parent_block;
 
 	mov	rax, QWORD PTR file$[rsp]
-	mov	eax, DWORD PTR [rax+44]
+	mov	eax, DWORD PTR [rax+41]
 	mov	DWORD PTR parent_clust$[rsp], eax
 
 ; 470  : 	if (!parent_clust)
@@ -147,7 +147,7 @@ $LN5@FatFileRem:
 ; 473  : 	uint32_t cluster = file->current;
 
 	mov	rax, QWORD PTR file$[rsp]
-	mov	eax, DWORD PTR [rax+56]
+	mov	eax, DWORD PTR [rax+53]
 	mov	DWORD PTR cluster$[rsp], eax
 $LN4@FatFileRem:
 
@@ -173,7 +173,7 @@ $LN4@FatFileRem:
 ; 477  : 			SeTextOut("EOC mark found in cluster -> %x \n", cluster);
 
 	mov	edx, DWORD PTR cluster$[rsp]
-	lea	rcx, OFFSET FLAT:$SG3704
+	lea	rcx, OFFSET FLAT:$SG3706
 	call	SeTextOut
 
 ; 478  : 			FatAllocCluster(fsys, cluster, 0x00);
@@ -281,14 +281,14 @@ $LN12@FatFileCle:
 ; 414  : 	FatFS* _fs = (FatFS*)fsys->device;
 
 	mov	rax, QWORD PTR fsys$[rsp]
-	mov	rax, QWORD PTR [rax+72]
+	mov	rax, QWORD PTR [rax+64]
 	mov	QWORD PTR _fs$[rsp], rax
 
 ; 415  : 
 ; 416  : 	uint32_t dir_clust = file->parent_block;
 
 	mov	rax, QWORD PTR file$[rsp]
-	mov	eax, DWORD PTR [rax+44]
+	mov	eax, DWORD PTR [rax+41]
 	mov	DWORD PTR dir_clust$[rsp], eax
 
 ; 417  : 	if (!dir_clust)
@@ -568,7 +568,7 @@ $LN4@FatWrite:
 ; 387  : 	FatFS* _fs = (FatFS*)fsys->device;
 
 	mov	rax, QWORD PTR fsys$[rsp]
-	mov	rax, QWORD PTR [rax+72]
+	mov	rax, QWORD PTR [rax+64]
 	mov	QWORD PTR _fs$[rsp], rax
 
 ; 388  : 
@@ -682,8 +682,8 @@ file$ = 8
 
 	mov	rax, QWORD PTR file$[rsp]
 	mov	rcx, QWORD PTR file$[rsp]
-	mov	rcx, QWORD PTR [rcx+48]
-	mov	QWORD PTR [rax+56], rcx
+	mov	rcx, QWORD PTR [rcx+45]
+	mov	QWORD PTR [rax+53], rcx
 
 ; 373  : 	file->eof = 0;
 
@@ -693,7 +693,7 @@ file$ = 8
 ; 374  : 	file->pos = 0;
 
 	mov	rax, QWORD PTR file$[rsp]
-	mov	DWORD PTR [rax+40], 0
+	mov	DWORD PTR [rax+37], 0
 
 ; 375  : }
 
@@ -739,7 +739,7 @@ $LN6@FatFileWri:
 ; 328  : 	FatFS* _fs = (FatFS*)fsys->device;
 
 	mov	rax, QWORD PTR fsys$[rsp]
-	mov	rax, QWORD PTR [rax+72]
+	mov	rax, QWORD PTR [rax+64]
 	mov	QWORD PTR _fs$[rsp], rax
 
 ; 329  : 
@@ -761,7 +761,7 @@ $LN6@FatFileWri:
 ; 333  : 	uint32_t cluster = file->current;
 
 	mov	rax, QWORD PTR file$[rsp]
-	mov	eax, DWORD PTR [rax+56]
+	mov	eax, DWORD PTR [rax+53]
 	mov	DWORD PTR cluster$[rsp], eax
 
 ; 334  : 	if (file->eof){
@@ -806,7 +806,7 @@ $LN6@FatFileWri:
 
 ; 342  : 		SeTextOut("[FAT]: New Cluster allocated \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG3625
+	lea	rcx, OFFSET FLAT:$SG3627
 	call	SeTextOut
 
 ; 343  : 		file->eof = 0;
@@ -855,10 +855,10 @@ $LN3@FatFileWri:
 ; 349  : 		file->pos++;
 
 	mov	rax, QWORD PTR file$[rsp]
-	mov	eax, DWORD PTR [rax+40]
+	mov	eax, DWORD PTR [rax+37]
 	inc	eax
 	mov	rcx, QWORD PTR file$[rsp]
-	mov	DWORD PTR [rcx+40], eax
+	mov	DWORD PTR [rcx+37], eax
 $LN4@FatFileWri:
 
 ; 350  : 	}
@@ -896,14 +896,14 @@ $LN1@FatFileWri:
 
 	mov	eax, DWORD PTR cluster$[rsp]
 	mov	rcx, QWORD PTR file$[rsp]
-	mov	QWORD PTR [rcx+56], rax
+	mov	QWORD PTR [rcx+53], rax
 
 ; 358  : 	file->size = file->pos * _fs->__SectorPerCluster * _fs->__BytesPerSector;
 
 	mov	rax, QWORD PTR _fs$[rsp]
 	movzx	eax, BYTE PTR [rax+36]
 	mov	rcx, QWORD PTR file$[rsp]
-	mov	ecx, DWORD PTR [rcx+40]
+	mov	ecx, DWORD PTR [rcx+37]
 	imul	ecx, eax
 	mov	eax, ecx
 	mov	rcx, QWORD PTR _fs$[rsp]
@@ -995,14 +995,14 @@ $LN11@FatFileUpd:
 ; 270  : 	FatFS *_fs = (FatFS*)fsys->device;
 
 	mov	rax, QWORD PTR fsys$[rsp]
-	mov	rax, QWORD PTR [rax+72]
+	mov	rax, QWORD PTR [rax+64]
 	mov	QWORD PTR _fs$[rsp], rax
 
 ; 271  : 
 ; 272  : 	uint32_t dir_cluster = file->parent_block;
 
 	mov	rax, QWORD PTR file$[rsp]
-	mov	eax, DWORD PTR [rax+44]
+	mov	eax, DWORD PTR [rax+41]
 	mov	DWORD PTR dir_cluster$[rsp], eax
 
 ; 273  : 
@@ -1299,14 +1299,14 @@ $LN11@FatFileUpd:
 ; 216  : 	FatFS *_fs = (FatFS*)fsys->device;
 
 	mov	rax, QWORD PTR fsys$[rsp]
-	mov	rax, QWORD PTR [rax+72]
+	mov	rax, QWORD PTR [rax+64]
 	mov	QWORD PTR _fs$[rsp], rax
 
 ; 217  : 
 ; 218  : 	uint32_t dir_cluster = file->parent_block;
 
 	mov	rax, QWORD PTR file$[rsp]
-	mov	eax, DWORD PTR [rax+44]
+	mov	eax, DWORD PTR [rax+41]
 	mov	DWORD PTR dir_cluster$[rsp], eax
 
 ; 219  : 
@@ -1567,7 +1567,7 @@ $LN23@FatCreateF:
 ; 106  : 	FatFS* _fs = (FatFS*)fsys->device;
 
 	mov	rax, QWORD PTR fsys$[rsp]
-	mov	rax, QWORD PTR [rax+72]
+	mov	rax, QWORD PTR [rax+64]
 	mov	QWORD PTR _fs$[rsp], rax
 
 ; 107  : 
@@ -1593,7 +1593,7 @@ $LN22@FatCreateF:
 ; 112  : 	uint32_t parent_cluster = parent->current;
 
 	mov	rax, QWORD PTR parent$[rsp]
-	mov	eax, DWORD PTR [rax+56]
+	mov	eax, DWORD PTR [rax+53]
 	mov	DWORD PTR parent_cluster$[rsp], eax
 
 ; 113  : 	if (!parent_cluster)
@@ -1611,13 +1611,13 @@ $LN21@FatCreateF:
 ; 115  : 
 ; 116  : 	AuVFSNode* file = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
 
-	mov	ecx, 192				; 000000c0H
+	mov	ecx, 178				; 000000b2H
 	call	kmalloc
 	mov	QWORD PTR file$[rsp], rax
 
 ; 117  : 	memset(file, 0, sizeof(AuVFSNode));
 
-	mov	r8d, 192				; 000000c0H
+	mov	r8d, 178				; 000000b2H
 	xor	edx, edx
 	mov	rcx, QWORD PTR file$[rsp]
 	call	memset
@@ -1992,44 +1992,44 @@ $LN2@FatCreateF:
 ; 176  : 					file->pos = 0;
 
 	mov	rax, QWORD PTR file$[rsp]
-	mov	DWORD PTR [rax+40], 0
+	mov	DWORD PTR [rax+37], 0
 
 ; 177  : 					file->current = cluster;
 
 	mov	eax, DWORD PTR cluster$3[rsp]
 	mov	rcx, QWORD PTR file$[rsp]
-	mov	QWORD PTR [rcx+56], rax
+	mov	QWORD PTR [rcx+53], rax
 
 ; 178  : 					file->first_block = cluster;
 
 	mov	eax, DWORD PTR cluster$3[rsp]
 	mov	rcx, QWORD PTR file$[rsp]
-	mov	QWORD PTR [rcx+48], rax
+	mov	QWORD PTR [rcx+45], rax
 
 ; 179  : 					file->parent_block = parent_cluster;
 
 	mov	rax, QWORD PTR file$[rsp]
 	mov	ecx, DWORD PTR parent_cluster$[rsp]
-	mov	DWORD PTR [rax+44], ecx
+	mov	DWORD PTR [rax+41], ecx
 
 ; 180  : 					file->device = fsys;
 
 	mov	rax, QWORD PTR file$[rsp]
 	mov	rcx, QWORD PTR fsys$[rsp]
-	mov	QWORD PTR [rax+72], rcx
+	mov	QWORD PTR [rax+64], rcx
 
 ; 181  : 					file->flags |= FS_FLAG_GENERAL;
 
 	mov	rax, QWORD PTR file$[rsp]
-	movzx	eax, WORD PTR [rax+64]
+	movzx	eax, WORD PTR [rax+61]
 	or	eax, 4
 	mov	rcx, QWORD PTR file$[rsp]
-	mov	WORD PTR [rcx+64], ax
+	mov	WORD PTR [rcx+61], ax
 
 ; 182  : 					file->status = FS_STATUS_FOUND;
 
 	mov	rax, QWORD PTR file$[rsp]
-	mov	BYTE PTR [rax+66], 1
+	mov	BYTE PTR [rax+63], 1
 
 ; 183  : 
 ; 184  : 					kfree(parent);
@@ -2144,7 +2144,7 @@ $LN14@FatFileGet:
 ; 50   : 	FatFS* _fs = (FatFS*)fsys->device;
 
 	mov	rax, QWORD PTR fsys$[rsp]
-	mov	rax, QWORD PTR [rax+72]
+	mov	rax, QWORD PTR [rax+64]
 	mov	QWORD PTR _fs$[rsp], rax
 
 ; 51   : 	AuVFSNode* parent = NULL;
@@ -2330,13 +2330,13 @@ $LN12@FatFileGet:
 
 ; 87   : 		retfile = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
 
-	mov	ecx, 192				; 000000c0H
+	mov	ecx, 178				; 000000b2H
 	call	kmalloc
 	mov	QWORD PTR retfile$[rsp], rax
 
 ; 88   : 		memset(retfile, 0, sizeof(AuVFSNode));
 
-	mov	r8d, 192				; 000000c0H
+	mov	r8d, 178				; 000000b2H
 	xor	edx, edx
 	mov	rcx, QWORD PTR retfile$[rsp]
 	call	memset
@@ -2346,22 +2346,22 @@ $LN12@FatFileGet:
 	mov	rax, QWORD PTR _fs$[rsp]
 	mov	eax, DWORD PTR [rax+40]
 	mov	rcx, QWORD PTR retfile$[rsp]
-	mov	QWORD PTR [rcx+56], rax
+	mov	QWORD PTR [rcx+53], rax
 
 ; 90   : 		retfile->first_block = _fs->__RootDirFirstCluster;
 
 	mov	rax, QWORD PTR _fs$[rsp]
 	mov	eax, DWORD PTR [rax+40]
 	mov	rcx, QWORD PTR retfile$[rsp]
-	mov	QWORD PTR [rcx+48], rax
+	mov	QWORD PTR [rcx+45], rax
 
 ; 91   : 		retfile->flags |= FS_FLAG_DIRECTORY;
 
 	mov	rax, QWORD PTR retfile$[rsp]
-	movzx	eax, WORD PTR [rax+64]
+	movzx	eax, WORD PTR [rax+61]
 	or	eax, 2
 	mov	rcx, QWORD PTR retfile$[rsp]
-	mov	WORD PTR [rcx+64], ax
+	mov	WORD PTR [rcx+61], ax
 $LN1@FatFileGet:
 
 ; 92   : 	}

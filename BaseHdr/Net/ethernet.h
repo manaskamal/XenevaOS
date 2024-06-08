@@ -32,6 +32,7 @@
 
 #include <stdint.h>
 #include <aurora.h>
+#include <fs\vfs.h>
 
 #define ETHERNET_TYPE_IPV4  0x0800
 #define ETHERNET_TYPE_ARP   0x0806
@@ -41,7 +42,7 @@
 #define ETHERNET_TYPE_STREAM_RESV_PROTOCOL 0x22EA
 
 #pragma pack(push,1)
-typedef struct _ethernet_ {
+__declspec(align(2)) typedef struct _ethernet_ {
 	uint8_t dest[6];
 	uint8_t src[6];
 	uint16_t typeLen;
@@ -57,7 +58,7 @@ typedef struct _ethernet_ {
 * @param type -- type
 * @param dest -- destination mac address
 */
-extern void AuEthernetSend(void* data, size_t len, uint16_t type, uint8_t* dest);
+extern void AuEthernetSend(AuVFSNode* nic,void* data, size_t len, uint16_t type, uint8_t* dest);
 
 
 #endif

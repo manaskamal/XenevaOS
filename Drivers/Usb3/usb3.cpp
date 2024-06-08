@@ -120,14 +120,11 @@ void XHCICommandRingInit(USBDevice *dev) {
 	dev->cmd_ring_cycle = 1;
 	dev->cmd_ring_phys = cmd_ring_phys;
 
-	SeTextOut("TRB SIZE -> %d \r\n", sizeof(xhci_trb_t));
-
 	/* insert a link trb at the last of cmd ring */
 	dev->cmd_ring[dev->cmd_ring_max].trb_param_1 = cmd_ring_phys & UINT32_MAX;
 	dev->cmd_ring[dev->cmd_ring_max].trb_param_2 = (cmd_ring_phys >> 32) & UINT32_MAX;
 	dev->cmd_ring[dev->cmd_ring_max].trb_status = 0;
 	dev->cmd_ring[dev->cmd_ring_max].trb_control = TRB_TRANSFER_LINK << 10 | (1 << 5);
-	SeTextOut("LINK TRB Inserted \r\n");
 }
 
 /*

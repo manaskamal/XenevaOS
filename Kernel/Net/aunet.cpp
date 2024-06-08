@@ -31,44 +31,51 @@
 #include <Mm\kmalloc.h>
 #include <string.h>
 #include <_null.h>
+#include <hashmap.h>
+#include <Fs\dev\devfs.h>
 
-list_t* netadapters;
+hashmap_t* netadapters;
 
 /*
  * AuInitialiseNet -- initialise network data structures
  */
 void AuInitialiseNet() {
-	netadapters = initialize_list();
+	netadapters = AuHashmapCreate(10);
+	AuVFSNode* fs = AuVFSFind("/dev");
+	AuDevFSCreateFile(fs, "/dev/net", FS_FLAG_DIRECTORY);
 }
 
-/*
- * AuAllocNetworkAdapter -- allocate a new adapter
- */
-AuNetAdapter* AuAllocNetworkAdapter() {
-	AuNetAdapter *netadapt = (AuNetAdapter*)kmalloc(sizeof(AuNetAdapter));
-	memset(netadapt, 0, sizeof(AuNetAdapter));
-	return netadapt;
-}
 
 /*
  * AuAddNetAdapter -- add a net adapter to the adapter
  * list
  */
-void AuAddNetAdapter(AuNetAdapter* netadapt) {
-	list_add(netadapters, netadapt);
+void AuAddNetAdapter(AuVFSNode* netfs, char* name) {
+	AuHashmapSet(netadapters, name, netfs);
+
+	AuVFSNode* fs = AuVFSFind("/dev");
+	AuDevFSAddFile(fs, "/dev/net", netfs);
+
+
 }
 
 /*
- * AuGetNetworkAdapterByType -- get a network adapter by looking
- * its type
+ * AuGetNetworkAdapter -- get a network adapter 
+ * @param name -- adapter name
  */
-AuNetAdapter* AuGetNetworkAdapterByType(uint8_t type) {
-	for (int i = 0; i < netadapters->pointer; i++) {
-		AuNetAdapter* adapter = (AuNetAdapter*)list_get_at(netadapters, i);
-		if (adapter->type == type)
-			return adapter;
-	}
-	return NULL;
+AuVFSNode* AuGetNetworkAdapter(char* name) {
+	AuVFSNode* node = (AuVFSNode*)AuHashmapGet(netadapters, name);
+	return node;
+}
+
+/* AuNetworkRoute -- For now, route table is
+ * is not implemented, simply return the default
+ * network card installed in Xeneva 
+ * @param address -- Address to consider
+ */
+AuVFSNode* AuNetworkRoute(uint32_t address){
+	/*if (address == 0x0100007F)*/ /* loop device */
+	return AuGetNetworkAdapter("e1000");
 }
 
 

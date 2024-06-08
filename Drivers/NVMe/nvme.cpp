@@ -296,7 +296,7 @@ void NVMeAllocateQueues(uint16_t num) {
 	NVMeSubmitCommand(queue, &cmd, &completion);
 
 	if (completion.status > 0)
-		AuTextOut("[NVMe]: status -> %d \n", completion.status);
+		SeTextOut("[NVMe]: status -> %d \r\n", completion.status);
 	
 	nvme->numCQEAllocated = (completion.dw0 >> 16) & 0xffff;
 	nvme->numSQEAllocated = completion.dw0 & 0xffff;
@@ -310,7 +310,6 @@ NVMeQueue* NVMeCreateIOQueue(){
 	uint16_t queueID = nvme->queueAllocatedID;
 
 	NVMeQueue *Admin = NVMeGetQueue(0);
-	AuTextOut("CQ Size -> %d \n", nvme->maxQueueEntries);
 	queue = NVMeCreateQueue(queueID,( nvme->maxQueueEntries),
 		(nvme->maxQueueEntries));
 	if (!queue)
@@ -397,8 +396,7 @@ void NVMeIdentifyController() {
 	NVMeControllerIdentity* ci = (NVMeControllerIdentity*)controlphys;
 	ci->modelNumber[39] = 0;
 	ci->serialNumber[19] = 0;
-	AuTextOut("[NVMe]:Controller Max Transfer Size -> %d \n", ci->maximumDataTransferSize);
-
+	
 	
 	NVMeAllocateQueues(12);
 	
@@ -423,11 +421,9 @@ void NVMeIdentifyController() {
 		NVMeSubmitCommand(admin, &identifyNS, &comp);
 		
 		if (comp.status > 0) {
-			SeTextOut("Completion stat -> %d \r\n", comp.status);
 			AuPmmngrFree((void*)physAddr);
 			continue;
 		}
-		SeTextOut("Namespace %d \n", (i + 1));
 		NamespaceIdentity *ni = (NamespaceIdentity*)physAddr;
 		NVMeInitialiseNamespace(ci, ni, i + 1);
 

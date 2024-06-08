@@ -1,4 +1,4 @@
-﻿Build started 02-05-2024 আবেলি 8:50:17.
+﻿Build started 09-06-2024 ৰাতিপু 1:26:05.
      1>Project "E:\Xeneva Project\Aurora\Drivers\E1000\E1000.vcxproj" on node 2 (Rebuild target(s)).
      1>ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\BaseHdr" /Zi /nologo /W3 /WX- /Od /Oy /D ARCH_X64 /D USE_APIC /D _WINDLL /D _MBCS /X /Gm /GS- /arch:SSE /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt e1000.cpp
@@ -17,9 +17,17 @@
      1>E:\Xeneva Project\Aurora\BaseHdr\Hal\x86_64_hal.h(35): warning C4103: 'e:\xeneva project\aurora\basehdr\hal\x86_64_hal.h' : alignment changed after including header, may be due to missing #pragma pack(pop)
      1>E:\Xeneva Project\Aurora\BaseHdr\audrv.h(34): warning C4103: 'e:\xeneva project\aurora\basehdr\audrv.h' : alignment changed after including header, may be due to missing #pragma pack(pop)
      1>e1000.cpp(41): warning C4103: 'e:\xeneva project\aurora\drivers\e1000\e1000.cpp' : alignment changed after including header, may be due to missing #pragma pack(pop)
-     1>e1000.cpp(224): warning C4267: '=' : conversion from 'size_t' to 'volatile uint16_t', possible loss of data
-     1>e1000.cpp(317): warning C4244: 'initializing' : conversion from 'uint64_t' to 'uint32_t', possible loss of data
-     1>e1000.cpp(328): warning C4244: 'argument' : conversion from 'uint64_t' to 'uint32_t', possible loss of data
+     1>e1000.cpp(221): warning C4200: nonstandard extension used : zero-sized array in struct/union
+                 Cannot generate copy-ctor or copy-assignment operator when UDT contains a zero-sized array
+     1>e1000.cpp(237): warning C4200: nonstandard extension used : zero-sized array in struct/union
+                 Cannot generate copy-ctor or copy-assignment operator when UDT contains a zero-sized array
+     1>e1000.cpp(247): warning C4200: nonstandard extension used : zero-sized array in struct/union
+                 Cannot generate copy-ctor or copy-assignment operator when UDT contains a zero-sized array
+     1>e1000.cpp(268): warning C4200: nonstandard extension used : zero-sized array in struct/union
+                 Cannot generate copy-ctor or copy-assignment operator when UDT contains a zero-sized array
+     1>e1000.cpp(371): warning C4267: '=' : conversion from 'size_t' to 'volatile uint16_t', possible loss of data
+     1>e1000.cpp(470): warning C4244: 'initializing' : conversion from 'uint64_t' to 'uint32_t', possible loss of data
+     1>e1000.cpp(481): warning C4244: 'argument' : conversion from 'uint64_t' to 'uint32_t', possible loss of data
      1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(1186,5): warning MSB8012: TargetPath(E:\Xeneva Project\Aurora\x64\Debug\E1000.dll) does not match the Linker's OutputFile property value (F:\e1000.dll). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
        Link:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\link.exe /ERRORREPORT:PROMPT /OUT:"F:\e1000.dll" /INCREMENTAL /NOLOGO /LIBPATH:"E:\Xeneva Project\Aurora\x64\Debug" Kernel.lib /NODEFAULTLIB /MANIFEST:NO /PDB:"E:\Xeneva Project\Aurora\x64\Debug\E1000.pdb" /MAP /MAPINFO:EXPORTS /SUBSYSTEM:NATIVE /LARGEADDRESSAWARE /Driver /OPT:NOREF /LTCG /TLBID:1 /BASE:"0xFFFFC00000400000" /FIXED:NO /IMPLIB:"E:\Xeneva Project\Aurora\x64\Debug\E1000.lib" /MACHINE:X64 /ALIGN:512 /DLL x64\Debug\e1000.obj
@@ -31,4 +39,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:00.52
+Time Elapsed 00:00:01.58

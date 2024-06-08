@@ -65,8 +65,12 @@
 #include <Ipc\postbox.h>
 #include <autimer.h>
 #include <ftmngr.h>
+#include <hashmap.h>
 
-
+typedef struct _test_struct_{
+	int val;
+	int val2;
+}testStruct;
 /**========================================
 ** the main entry routine -- _AuMain
 **/
@@ -116,11 +120,11 @@ void _AuMain(KERNEL_BOOT_INFO *info) {
 	/*initialise aurora driver manager*/
 	AuDrvMngrInitialize(info);
 
-	/* intiialise all system fonts */
-	FontManagerInitialise();
-	
 	/* initialise all application processors*/
 	AuHalPostInitialise();
+
+	/* intiialise all system fonts */
+	FontManagerInitialise();
 	
 	AuInitialiseLoader();
 

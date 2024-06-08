@@ -34,18 +34,17 @@
 #include <aurora.h>
 #include <Fs\vfs.h>
 
-#define AUNET_HWTYPE_ETHERNET  1
-#define AUNET_HWTYPE_WIFI      2
+#define NETDEV_TYPE_ETHERNET 1
+
 
 #pragma pack(push,1)
-typedef struct _aunet_ {
-	char name[8];
+typedef struct _netdev_{
 	uint8_t mac[6];
+	int linkStatus;
 	uint8_t type;
-	size_t(*NetWrite) (uint64_t* buffer, uint32_t len);
-	size_t(*NetRead)(uint64_t* buffer, uint32_t len);
-}AuNetAdapter;
+}AuNetworkDevice;
 #pragma pack(pop)
+
 
 #define htonl(l)  ((((l) & 0xFF) << 24) | (((l) & 0xFF00) << 8) | (((l) & 0xFF0000) >> 8) | (((l) & 0xFF000000) >> 24))
 #define htons(s)  ((((s) & 0xFF) << 8) | (((s) & 0xFF00) >> 8))
@@ -59,19 +58,21 @@ typedef struct _aunet_ {
 extern void AuInitialiseNet();
 
 /*
-* AuAllocNetworkAdapter -- allocate a new adapter
-*/
-AU_EXTERN AU_EXPORT AuNetAdapter* AuAllocNetworkAdapter();
-
-/*
 * AuAddNetAdapter -- add a net adapter to the adapter
 * list
 */
-AU_EXTERN AU_EXPORT void AuAddNetAdapter(AuNetAdapter* netadapt);
+AU_EXTERN AU_EXPORT void AuAddNetAdapter(AuVFSNode* netfs,char* name);
 /*
-* AuGetNetworkAdapterByType -- get a network adapter by looking
-* its type
+* AuGetNetworkAdapter -- get a network adapter 
+* @param name -- adapter name
 */
-AU_EXTERN AU_EXPORT AuNetAdapter* AuGetNetworkAdapterByType(uint8_t type);
+AU_EXTERN AU_EXPORT AuVFSNode* AuGetNetworkAdapter(char* name);
+
+/* AuNetworkRoute -- For now, route table is
+* is not implemented, simply return the default
+* network card installed in Xeneva
+* @param address -- Address to consider
+*/
+extern AuVFSNode* AuNetworkRoute(uint32_t address);
 
 #endif

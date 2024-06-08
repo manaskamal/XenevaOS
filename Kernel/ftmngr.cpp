@@ -172,7 +172,6 @@ search:
 		FontSeg* seg = FontManagerAllocateSegment(fontfile, fontname);
 		uint64_t* firstFrame = (uint64_t*)seg->sharedSeg->frames[0];
 		size_t ret = AuVFSNodeRead(fs, fontfile, (uint64_t*)P2V((size_t)firstFrame), ALIGN_UP(fontfile->size, 4096));
-		SeTextOut("Finished reading -> %s retbytes -> %d \r\n", fontfile->filename, ret);
 		kfree(fontfile);
 	}
 	goto search;

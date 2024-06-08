@@ -100,7 +100,6 @@ void AuUSBInterrupt(size_t v, void* p) {
 						ep->callback(usb_device, slot, ep);
 				}
 				else {
-					SeTextOut("TRB EVENT TRANSFERED \r\n");
 					usb_device->event_available = true;
 					usb_device->poll_return_trb_type = TRB_EVENT_TRANSFER;
 					usb_device->trb_event_index = usb_device->evnt_ring_index;

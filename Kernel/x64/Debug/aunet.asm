@@ -5,184 +5,186 @@ include listing.inc
 INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
-PUBLIC	?netadapters@@3PEAU_list_@@EA			; netadapters
+PUBLIC	?netadapters@@3PEAUhashmap@@EA			; netadapters
 _BSS	SEGMENT
-?netadapters@@3PEAU_list_@@EA DQ 01H DUP (?)		; netadapters
+?netadapters@@3PEAUhashmap@@EA DQ 01H DUP (?)		; netadapters
 _BSS	ENDS
+CONST	SEGMENT
+$SG3018	DB	'/dev', 00H
+	ORG $+3
+$SG3019	DB	'/dev/net', 00H
+	ORG $+3
+$SG3025	DB	'/dev', 00H
+	ORG $+7
+$SG3026	DB	'/dev/net', 00H
+	ORG $+3
+$SG3035	DB	'e1000', 00H
+CONST	ENDS
 PUBLIC	?AuInitialiseNet@@YAXXZ				; AuInitialiseNet
-PUBLIC	AuAllocNetworkAdapter
 PUBLIC	AuAddNetAdapter
-PUBLIC	AuGetNetworkAdapterByType
-EXTRN	initialize_list:PROC
-EXTRN	list_add:PROC
-EXTRN	list_get_at:PROC
-EXTRN	kmalloc:PROC
-EXTRN	memset:PROC
+PUBLIC	AuGetNetworkAdapter
+PUBLIC	?AuNetworkRoute@@YAPEAU__VFS_NODE__@@I@Z	; AuNetworkRoute
+EXTRN	AuVFSFind:PROC
+EXTRN	AuHashmapCreate:PROC
+EXTRN	AuHashmapSet:PROC
+EXTRN	AuHashmapGet:PROC
+EXTRN	?AuDevFSCreateFile@@YAHPEAU__VFS_NODE__@@PEADE@Z:PROC ; AuDevFSCreateFile
+EXTRN	AuDevFSAddFile:PROC
 pdata	SEGMENT
 $pdata$?AuInitialiseNet@@YAXXZ DD imagerel $LN3
-	DD	imagerel $LN3+21
+	DD	imagerel $LN3+63
 	DD	imagerel $unwind$?AuInitialiseNet@@YAXXZ
-$pdata$AuAllocNetworkAdapter DD imagerel $LN3
-	DD	imagerel $LN3+47
-	DD	imagerel $unwind$AuAllocNetworkAdapter
 $pdata$AuAddNetAdapter DD imagerel $LN3
-	DD	imagerel $LN3+31
+	DD	imagerel $LN3+80
 	DD	imagerel $unwind$AuAddNetAdapter
-$pdata$AuGetNetworkAdapterByType DD imagerel $LN7
-	DD	imagerel $LN7+98
-	DD	imagerel $unwind$AuGetNetworkAdapterByType
+$pdata$AuGetNetworkAdapter DD imagerel $LN3
+	DD	imagerel $LN3+41
+	DD	imagerel $unwind$AuGetNetworkAdapter
+$pdata$?AuNetworkRoute@@YAPEAU__VFS_NODE__@@I@Z DD imagerel $LN3
+	DD	imagerel $LN3+25
+	DD	imagerel $unwind$?AuNetworkRoute@@YAPEAU__VFS_NODE__@@I@Z
 pdata	ENDS
 xdata	SEGMENT
 $unwind$?AuInitialiseNet@@YAXXZ DD 010401H
-	DD	04204H
-$unwind$AuAllocNetworkAdapter DD 010401H
 	DD	06204H
-$unwind$AuAddNetAdapter DD 010901H
-	DD	04209H
-$unwind$AuGetNetworkAdapterByType DD 010801H
-	DD	06208H
+$unwind$AuAddNetAdapter DD 010e01H
+	DD	0620eH
+$unwind$AuGetNetworkAdapter DD 010901H
+	DD	06209H
+$unwind$?AuNetworkRoute@@YAPEAU__VFS_NODE__@@I@Z DD 010801H
+	DD	04208H
 xdata	ENDS
 ; Function compile flags: /Odtpy
 ; File e:\xeneva project\aurora\kernel\net\aunet.cpp
 _TEXT	SEGMENT
-i$1 = 32
-adapter$2 = 40
-type$ = 64
-AuGetNetworkAdapterByType PROC
+address$ = 48
+?AuNetworkRoute@@YAPEAU__VFS_NODE__@@I@Z PROC		; AuNetworkRoute
 
-; 65   : AuNetAdapter* AuGetNetworkAdapterByType(uint8_t type) {
+; 76   : AuVFSNode* AuNetworkRoute(uint32_t address){
 
-$LN7:
-	mov	BYTE PTR [rsp+8], cl
-	sub	rsp, 56					; 00000038H
+$LN3:
+	mov	DWORD PTR [rsp+8], ecx
+	sub	rsp, 40					; 00000028H
 
-; 66   : 	for (int i = 0; i < netadapters->pointer; i++) {
+; 77   : 	/*if (address == 0x0100007F)*/ /* loop device */
+; 78   : 	return AuGetNetworkAdapter("e1000");
 
-	mov	DWORD PTR i$1[rsp], 0
-	jmp	SHORT $LN4@AuGetNetwo
-$LN3@AuGetNetwo:
-	mov	eax, DWORD PTR i$1[rsp]
-	inc	eax
-	mov	DWORD PTR i$1[rsp], eax
-$LN4@AuGetNetwo:
-	mov	rax, QWORD PTR ?netadapters@@3PEAU_list_@@EA ; netadapters
-	mov	eax, DWORD PTR [rax]
-	cmp	DWORD PTR i$1[rsp], eax
-	jae	SHORT $LN2@AuGetNetwo
+	lea	rcx, OFFSET FLAT:$SG3035
+	call	AuGetNetworkAdapter
 
-; 67   : 		AuNetAdapter* adapter = (AuNetAdapter*)list_get_at(netadapters, i);
+; 79   : }
 
-	mov	edx, DWORD PTR i$1[rsp]
-	mov	rcx, QWORD PTR ?netadapters@@3PEAU_list_@@EA ; netadapters
-	call	list_get_at
-	mov	QWORD PTR adapter$2[rsp], rax
-
-; 68   : 		if (adapter->type == type)
-
-	mov	rax, QWORD PTR adapter$2[rsp]
-	movzx	eax, BYTE PTR [rax+14]
-	movzx	ecx, BYTE PTR type$[rsp]
-	cmp	eax, ecx
-	jne	SHORT $LN1@AuGetNetwo
-
-; 69   : 			return adapter;
-
-	mov	rax, QWORD PTR adapter$2[rsp]
-	jmp	SHORT $LN5@AuGetNetwo
-$LN1@AuGetNetwo:
-
-; 70   : 	}
-
-	jmp	SHORT $LN3@AuGetNetwo
-$LN2@AuGetNetwo:
-
-; 71   : 	return NULL;
-
-	xor	eax, eax
-$LN5@AuGetNetwo:
-
-; 72   : }
-
-	add	rsp, 56					; 00000038H
+	add	rsp, 40					; 00000028H
 	ret	0
-AuGetNetworkAdapterByType ENDP
+?AuNetworkRoute@@YAPEAU__VFS_NODE__@@I@Z ENDP		; AuNetworkRoute
 _TEXT	ENDS
 ; Function compile flags: /Odtpy
 ; File e:\xeneva project\aurora\kernel\net\aunet.cpp
 _TEXT	SEGMENT
-netadapt$ = 48
-AuAddNetAdapter PROC
+node$ = 32
+name$ = 64
+AuGetNetworkAdapter PROC
 
-; 57   : void AuAddNetAdapter(AuNetAdapter* netadapt) {
+; 66   : AuVFSNode* AuGetNetworkAdapter(char* name) {
 
 $LN3:
 	mov	QWORD PTR [rsp+8], rcx
-	sub	rsp, 40					; 00000028H
+	sub	rsp, 56					; 00000038H
 
-; 58   : 	list_add(netadapters, netadapt);
+; 67   : 	AuVFSNode* node = (AuVFSNode*)AuHashmapGet(netadapters, name);
 
-	mov	rdx, QWORD PTR netadapt$[rsp]
-	mov	rcx, QWORD PTR ?netadapters@@3PEAU_list_@@EA ; netadapters
-	call	list_add
+	mov	rdx, QWORD PTR name$[rsp]
+	mov	rcx, QWORD PTR ?netadapters@@3PEAUhashmap@@EA ; netadapters
+	call	AuHashmapGet
+	mov	QWORD PTR node$[rsp], rax
 
-; 59   : }
+; 68   : 	return node;
 
-	add	rsp, 40					; 00000028H
+	mov	rax, QWORD PTR node$[rsp]
+
+; 69   : }
+
+	add	rsp, 56					; 00000038H
+	ret	0
+AuGetNetworkAdapter ENDP
+_TEXT	ENDS
+; Function compile flags: /Odtpy
+; File e:\xeneva project\aurora\kernel\net\aunet.cpp
+_TEXT	SEGMENT
+fs$ = 32
+netfs$ = 64
+name$ = 72
+AuAddNetAdapter PROC
+
+; 53   : void AuAddNetAdapter(AuVFSNode* netfs, char* name) {
+
+$LN3:
+	mov	QWORD PTR [rsp+16], rdx
+	mov	QWORD PTR [rsp+8], rcx
+	sub	rsp, 56					; 00000038H
+
+; 54   : 	AuHashmapSet(netadapters, name, netfs);
+
+	mov	r8, QWORD PTR netfs$[rsp]
+	mov	rdx, QWORD PTR name$[rsp]
+	mov	rcx, QWORD PTR ?netadapters@@3PEAUhashmap@@EA ; netadapters
+	call	AuHashmapSet
+
+; 55   : 
+; 56   : 	AuVFSNode* fs = AuVFSFind("/dev");
+
+	lea	rcx, OFFSET FLAT:$SG3025
+	call	AuVFSFind
+	mov	QWORD PTR fs$[rsp], rax
+
+; 57   : 	AuDevFSAddFile(fs, "/dev/net", netfs);
+
+	mov	r8, QWORD PTR netfs$[rsp]
+	lea	rdx, OFFSET FLAT:$SG3026
+	mov	rcx, QWORD PTR fs$[rsp]
+	call	AuDevFSAddFile
+
+; 58   : 
+; 59   : 
+; 60   : }
+
+	add	rsp, 56					; 00000038H
 	ret	0
 AuAddNetAdapter ENDP
 _TEXT	ENDS
 ; Function compile flags: /Odtpy
 ; File e:\xeneva project\aurora\kernel\net\aunet.cpp
 _TEXT	SEGMENT
-netadapt$ = 32
-AuAllocNetworkAdapter PROC
+fs$ = 32
+?AuInitialiseNet@@YAXXZ PROC				; AuInitialiseNet
 
-; 47   : AuNetAdapter* AuAllocNetworkAdapter() {
+; 42   : void AuInitialiseNet() {
 
 $LN3:
 	sub	rsp, 56					; 00000038H
 
-; 48   : 	AuNetAdapter *netadapt = (AuNetAdapter*)kmalloc(sizeof(AuNetAdapter));
+; 43   : 	netadapters = AuHashmapCreate(10);
 
-	mov	ecx, 31
-	call	kmalloc
-	mov	QWORD PTR netadapt$[rsp], rax
+	mov	ecx, 10
+	call	AuHashmapCreate
+	mov	QWORD PTR ?netadapters@@3PEAUhashmap@@EA, rax ; netadapters
 
-; 49   : 	memset(netadapt, 0, sizeof(AuNetAdapter));
+; 44   : 	AuVFSNode* fs = AuVFSFind("/dev");
 
-	mov	r8d, 31
-	xor	edx, edx
-	mov	rcx, QWORD PTR netadapt$[rsp]
-	call	memset
+	lea	rcx, OFFSET FLAT:$SG3018
+	call	AuVFSFind
+	mov	QWORD PTR fs$[rsp], rax
 
-; 50   : 	return netadapt;
+; 45   : 	AuDevFSCreateFile(fs, "/dev/net", FS_FLAG_DIRECTORY);
 
-	mov	rax, QWORD PTR netadapt$[rsp]
+	mov	r8b, 2
+	lea	rdx, OFFSET FLAT:$SG3019
+	mov	rcx, QWORD PTR fs$[rsp]
+	call	?AuDevFSCreateFile@@YAHPEAU__VFS_NODE__@@PEADE@Z ; AuDevFSCreateFile
 
-; 51   : }
+; 46   : }
 
 	add	rsp, 56					; 00000038H
-	ret	0
-AuAllocNetworkAdapter ENDP
-_TEXT	ENDS
-; Function compile flags: /Odtpy
-; File e:\xeneva project\aurora\kernel\net\aunet.cpp
-_TEXT	SEGMENT
-?AuInitialiseNet@@YAXXZ PROC				; AuInitialiseNet
-
-; 40   : void AuInitialiseNet() {
-
-$LN3:
-	sub	rsp, 40					; 00000028H
-
-; 41   : 	netadapters = initialize_list();
-
-	call	initialize_list
-	mov	QWORD PTR ?netadapters@@3PEAU_list_@@EA, rax ; netadapters
-
-; 42   : }
-
-	add	rsp, 40					; 00000028H
 	ret	0
 ?AuInitialiseNet@@YAXXZ ENDP				; AuInitialiseNet
 _TEXT	ENDS

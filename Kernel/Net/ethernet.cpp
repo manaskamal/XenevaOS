@@ -53,25 +53,21 @@ AU_EXTERN AU_EXPORT void AuEthernetHandle(Ethernet *frame) {
  * @param type -- type
  * @param dest -- destination mac address
  */
-void AuEthernetSend(void* data, size_t len, uint16_t type, uint8_t* dest) {
-	AuNetAdapter* netadapt = AuGetNetworkAdapterByType(AUNET_HWTYPE_ETHERNET);
-	if (!netadapt)
+void AuEthernetSend(AuVFSNode* nic,void* data, size_t len, uint16_t type, uint8_t* dest) {
+	AuNetworkDevice* ndev = (AuNetworkDevice*)nic->device;
+	if (!ndev)
 		return;
 	size_t totalSz = sizeof(Ethernet)+len;
 	Ethernet* pacl = (Ethernet*)kmalloc(totalSz);
 	memset(pacl, 0, totalSz);
 	memcpy(pacl->dest, dest, 6);
-	uint8_t *src_mac = netadapt->mac;
+	uint8_t *src_mac = ndev->mac;
 	memcpy(pacl->src, src_mac, 6);
 	pacl->typeLen = htons(type);
 	memcpy(pacl->payload, data, len);
 	
-	AuTextOut("Ethernet setuped %d %s\r\n", netadapt->type, netadapt->name);
-	SeTextOut("HWFile -> %x %s\r\n", netadapt->NetWrite, netadapt->NetRead);
-	
-	if (netadapt->NetWrite) {
-		SeTextOut("HWFile writing %x \r\n",netadapt->NetWrite);
-		netadapt->NetWrite((uint64_t*)pacl, totalSz);
-	}
+	AuTextOut("Ethernet setuped %d \r\n", ndev->type);
+
+	nic->write(nic, nic, (uint64_t*)pacl, totalSz);
 	kfree(pacl);
 }

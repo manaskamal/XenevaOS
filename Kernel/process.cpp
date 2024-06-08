@@ -180,7 +180,8 @@ uint64_t* CreateUserStack(AuProcess *proc, uint64_t* cr3) {
 #define USER_STACK 0x0000700000000000 
 	uint64_t location = USER_STACK;
 	location += proc->_user_stack_index_;
-	for (int i = 0; i < PROCESS_USER_STACK_SZ / 4096; i++) {
+	
+	for (int i = 0; i < (PROCESS_USER_STACK_SZ / 4096); i++) {
 		uint64_t* blk = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
 		AuMapPageEx(cr3, V2P((size_t)blk), location + i * PAGE_SIZE, X86_64_PAGING_USER);
 	}

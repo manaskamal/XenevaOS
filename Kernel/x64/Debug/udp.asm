@@ -6,7 +6,7 @@ INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
 CONST	SEGMENT
-$SG3306	DB	'UDP Socket created ', 0dH, 0aH, 00H
+$SG3308	DB	'UDP Socket created ', 0dH, 0aH, 00H
 CONST	ENDS
 PUBLIC	?AuUDPReceive@@YA_KPEAU_socket_@@PEAU_msghdr_@@H@Z ; AuUDPReceive
 PUBLIC	?AuUDPSend@@YA_KPEAU_socket_@@PEAU_msghdr_@@H@Z	; AuUDPSend
@@ -96,13 +96,13 @@ $LN1@CreateUDPS:
 
 ; 91   : 	AuSocket *sock = (AuSocket*)kmalloc(sizeof(AuSocket));
 
-	mov	ecx, 232				; 000000e8H
+	mov	ecx, 224				; 000000e0H
 	call	kmalloc
 	mov	QWORD PTR sock$[rsp], rax
 
 ; 92   : 	memset(sock, 0, sizeof(AuSocket));
 
-	mov	r8d, 232				; 000000e8H
+	mov	r8d, 224				; 000000e0H
 	xor	edx, edx
 	mov	rcx, QWORD PTR sock$[rsp]
 	call	memset
@@ -117,42 +117,42 @@ $LN1@CreateUDPS:
 
 	mov	rax, QWORD PTR sock$[rsp]
 	lea	rcx, OFFSET FLAT:?AuUDPRead@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z ; AuUDPRead
-	mov	QWORD PTR [rax+104], rcx
+	mov	QWORD PTR [rax+90], rcx
 
 ; 95   : 	sock->fsnode.write = AuUDPWrite;
 
 	mov	rax, QWORD PTR sock$[rsp]
 	lea	rcx, OFFSET FLAT:?AuUDPWrite@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z ; AuUDPWrite
-	mov	QWORD PTR [rax+112], rcx
+	mov	QWORD PTR [rax+98], rcx
 
 ; 96   : 	sock->bind = AuUDPBind;
 
 	mov	rax, QWORD PTR sock$[rsp]
 	lea	rcx, OFFSET FLAT:?AuUDPBind@@YA_KPEAU_socket_@@PEAU_sockaddr_@@_K@Z ; AuUDPBind
-	mov	QWORD PTR [rax+224], rcx
+	mov	QWORD PTR [rax+216], rcx
 
 ; 97   : 	sock->close = AuUDPClose;
 
 	mov	rax, QWORD PTR sock$[rsp]
 	lea	rcx, OFFSET FLAT:?AuUDPClose@@YAXPEAU_socket_@@@Z ; AuUDPClose
-	mov	QWORD PTR [rax+208], rcx
+	mov	QWORD PTR [rax+200], rcx
 
 ; 98   : 	sock->connect = 0;
 
 	mov	rax, QWORD PTR sock$[rsp]
-	mov	QWORD PTR [rax+216], 0
+	mov	QWORD PTR [rax+208], 0
 
 ; 99   : 	sock->receive = AuUDPReceive;
 
 	mov	rax, QWORD PTR sock$[rsp]
 	lea	rcx, OFFSET FLAT:?AuUDPReceive@@YA_KPEAU_socket_@@PEAU_msghdr_@@H@Z ; AuUDPReceive
-	mov	QWORD PTR [rax+192], rcx
+	mov	QWORD PTR [rax+184], rcx
 
 ; 100  : 	sock->send = AuUDPSend;
 
 	mov	rax, QWORD PTR sock$[rsp]
 	lea	rcx, OFFSET FLAT:?AuUDPSend@@YA_KPEAU_socket_@@PEAU_msghdr_@@H@Z ; AuUDPSend
-	mov	QWORD PTR [rax+200], rcx
+	mov	QWORD PTR [rax+192], rcx
 
 ; 101  : 	proc->fds[fd] = (AuVFSNode*)sock;
 
@@ -163,7 +163,7 @@ $LN1@CreateUDPS:
 
 ; 102  : 	SeTextOut("UDP Socket created \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG3306
+	lea	rcx, OFFSET FLAT:$SG3308
 	call	SeTextOut
 
 ; 103  : 	return fd;

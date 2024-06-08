@@ -6,7 +6,7 @@ INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
 CONST	SEGMENT
-$SG3402	DB	'TCP Socket created ', 0dH, 0aH, 00H
+$SG3400	DB	'TCP Socket created ', 0dH, 0aH, 00H
 CONST	ENDS
 PUBLIC	?CreateTCPSocket@@YAHXZ				; CreateTCPSocket
 PUBLIC	?CalculateTCPChecksum@@YAGPEAU_tcpcheckheader_@@PEAU_tcphead_@@PEAX_K@Z ; CalculateTCPChecksum
@@ -557,13 +557,13 @@ $LN1@CreateTCPS:
 
 ; 173  : 	AuSocket *sock = (AuSocket*)kmalloc(sizeof(AuSocket));
 
-	mov	ecx, 232				; 000000e8H
+	mov	ecx, 224				; 000000e0H
 	call	kmalloc
 	mov	QWORD PTR sock$[rsp], rax
 
 ; 174  : 	memset(sock, 0, sizeof(AuSocket));
 
-	mov	r8d, 232				; 000000e8H
+	mov	r8d, 224				; 000000e0H
 	xor	edx, edx
 	mov	rcx, QWORD PTR sock$[rsp]
 	call	memset
@@ -572,49 +572,49 @@ $LN1@CreateTCPS:
 
 	mov	eax, 512				; 00000200H
 	mov	rcx, QWORD PTR sock$[rsp]
-	mov	WORD PTR [rcx+64], ax
+	mov	WORD PTR [rcx+61], ax
 
 ; 176  : 	sock->send = AuTCPSend;
 
 	mov	rax, QWORD PTR sock$[rsp]
 	lea	rcx, OFFSET FLAT:?AuTCPSend@@YA_KPEAU_socket_@@PEAU_msghdr_@@H@Z ; AuTCPSend
-	mov	QWORD PTR [rax+200], rcx
+	mov	QWORD PTR [rax+192], rcx
 
 ; 177  : 	sock->receive = AuTCPReceive;
 
 	mov	rax, QWORD PTR sock$[rsp]
 	lea	rcx, OFFSET FLAT:?AuTCPReceive@@YA_KPEAU_socket_@@PEAU_msghdr_@@H@Z ; AuTCPReceive
-	mov	QWORD PTR [rax+192], rcx
+	mov	QWORD PTR [rax+184], rcx
 
 ; 178  : 	sock->connect = AuTCPConnect;
 
 	mov	rax, QWORD PTR sock$[rsp]
 	lea	rcx, OFFSET FLAT:?AuTCPConnect@@YA_KPEAU_socket_@@PEAU_sockaddr_@@_K@Z ; AuTCPConnect
-	mov	QWORD PTR [rax+216], rcx
+	mov	QWORD PTR [rax+208], rcx
 
 ; 179  : 	sock->bind = AuTCPBind;
 
 	mov	rax, QWORD PTR sock$[rsp]
 	lea	rcx, OFFSET FLAT:?AuTCPBind@@YA_KPEAU_socket_@@PEAU_sockaddr_@@_K@Z ; AuTCPBind
-	mov	QWORD PTR [rax+224], rcx
+	mov	QWORD PTR [rax+216], rcx
 
 ; 180  : 	sock->close = AuTCPClose;
 
 	mov	rax, QWORD PTR sock$[rsp]
 	lea	rcx, OFFSET FLAT:?AuTCPClose@@YAXPEAU_socket_@@@Z ; AuTCPClose
-	mov	QWORD PTR [rax+208], rcx
+	mov	QWORD PTR [rax+200], rcx
 
 ; 181  : 	sock->fsnode.read = AuTCPRead;
 
 	mov	rax, QWORD PTR sock$[rsp]
 	lea	rcx, OFFSET FLAT:?AuTCPRead@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z ; AuTCPRead
-	mov	QWORD PTR [rax+104], rcx
+	mov	QWORD PTR [rax+90], rcx
 
 ; 182  : 	sock->fsnode.write = AuTCPWrite;
 
 	mov	rax, QWORD PTR sock$[rsp]
 	lea	rcx, OFFSET FLAT:?AuTCPWrite@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z ; AuTCPWrite
-	mov	QWORD PTR [rax+112], rcx
+	mov	QWORD PTR [rax+98], rcx
 
 ; 183  : 	fd = AuProcessGetFileDesc(proc);
 
@@ -631,7 +631,7 @@ $LN1@CreateTCPS:
 
 ; 185  : 	SeTextOut("TCP Socket created \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG3402
+	lea	rcx, OFFSET FLAT:$SG3400
 	call	SeTextOut
 
 ; 186  : 	return fd;
