@@ -6,15 +6,15 @@ INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
 CONST	SEGMENT
-$SG3400	DB	'TCP Socket created ', 0dH, 0aH, 00H
+$SG3443	DB	'TCP Socket created ', 0dH, 0aH, 00H
 CONST	ENDS
 PUBLIC	?CreateTCPSocket@@YAHXZ				; CreateTCPSocket
 PUBLIC	?CalculateTCPChecksum@@YAGPEAU_tcpcheckheader_@@PEAU_tcphead_@@PEAX_K@Z ; CalculateTCPChecksum
-PUBLIC	?AuTCPReceive@@YA_KPEAU_socket_@@PEAU_msghdr_@@H@Z ; AuTCPReceive
-PUBLIC	?AuTCPSend@@YA_KPEAU_socket_@@PEAU_msghdr_@@H@Z	; AuTCPSend
+PUBLIC	?AuTCPReceive@@YAHPEAU_socket_@@PEAU_msghdr_@@H@Z ; AuTCPReceive
+PUBLIC	?AuTCPSend@@YAHPEAU_socket_@@PEAU_msghdr_@@H@Z	; AuTCPSend
 PUBLIC	?AuTCPClose@@YAXPEAU_socket_@@@Z		; AuTCPClose
-PUBLIC	?AuTCPConnect@@YA_KPEAU_socket_@@PEAU_sockaddr_@@_K@Z ; AuTCPConnect
-PUBLIC	?AuTCPBind@@YA_KPEAU_socket_@@PEAU_sockaddr_@@_K@Z ; AuTCPBind
+PUBLIC	?AuTCPConnect@@YAHPEAU_socket_@@PEAU_sockaddr_@@_K@Z ; AuTCPConnect
+PUBLIC	?AuTCPBind@@YAHPEAU_socket_@@PEAU_sockaddr_@@_K@Z ; AuTCPBind
 PUBLIC	?AuTCPRead@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z	; AuTCPRead
 PUBLIC	?AuTCPWrite@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z	; AuTCPWrite
 EXTRN	kmalloc:PROC
@@ -94,9 +94,9 @@ _TEXT	SEGMENT
 sock$ = 8
 addr$ = 16
 addrlen$ = 24
-?AuTCPBind@@YA_KPEAU_socket_@@PEAU_sockaddr_@@_K@Z PROC	; AuTCPBind
+?AuTCPBind@@YAHPEAU_socket_@@PEAU_sockaddr_@@_K@Z PROC	; AuTCPBind
 
-; 148  : uint64_t AuTCPBind(AuSocket* sock, sockaddr* addr, socklen_t addrlen){
+; 148  : int AuTCPBind(AuSocket* sock, sockaddr* addr, socklen_t addrlen){
 
 	mov	QWORD PTR [rsp+24], r8
 	mov	QWORD PTR [rsp+16], rdx
@@ -109,7 +109,7 @@ addrlen$ = 24
 ; 150  : }
 
 	ret	0
-?AuTCPBind@@YA_KPEAU_socket_@@PEAU_sockaddr_@@_K@Z ENDP	; AuTCPBind
+?AuTCPBind@@YAHPEAU_socket_@@PEAU_sockaddr_@@_K@Z ENDP	; AuTCPBind
 _TEXT	ENDS
 ; Function compile flags: /Odtpy
 ; File e:\xeneva project\aurora\kernel\net\tcp.cpp
@@ -117,9 +117,9 @@ _TEXT	SEGMENT
 sock$ = 8
 addr$ = 16
 addrlen$ = 24
-?AuTCPConnect@@YA_KPEAU_socket_@@PEAU_sockaddr_@@_K@Z PROC ; AuTCPConnect
+?AuTCPConnect@@YAHPEAU_socket_@@PEAU_sockaddr_@@_K@Z PROC ; AuTCPConnect
 
-; 143  : uint64_t AuTCPConnect(AuSocket* sock, sockaddr* addr, socklen_t addrlen){
+; 143  : int AuTCPConnect(AuSocket* sock, sockaddr* addr, socklen_t addrlen){
 
 	mov	QWORD PTR [rsp+24], r8
 	mov	QWORD PTR [rsp+16], rdx
@@ -132,7 +132,7 @@ addrlen$ = 24
 ; 145  : }
 
 	ret	0
-?AuTCPConnect@@YA_KPEAU_socket_@@PEAU_sockaddr_@@_K@Z ENDP ; AuTCPConnect
+?AuTCPConnect@@YAHPEAU_socket_@@PEAU_sockaddr_@@_K@Z ENDP ; AuTCPConnect
 _TEXT	ENDS
 ; Function compile flags: /Odtpy
 ; File e:\xeneva project\aurora\kernel\net\tcp.cpp
@@ -156,9 +156,9 @@ _TEXT	SEGMENT
 sock$ = 8
 msg$ = 16
 flags$ = 24
-?AuTCPSend@@YA_KPEAU_socket_@@PEAU_msghdr_@@H@Z PROC	; AuTCPSend
+?AuTCPSend@@YAHPEAU_socket_@@PEAU_msghdr_@@H@Z PROC	; AuTCPSend
 
-; 125  : uint64_t AuTCPSend(AuSocket* sock, msghdr* msg, int flags){
+; 125  : int AuTCPSend(AuSocket* sock, msghdr* msg, int flags){
 
 	mov	DWORD PTR [rsp+24], r8d
 	mov	QWORD PTR [rsp+16], rdx
@@ -171,7 +171,7 @@ flags$ = 24
 ; 127  : }
 
 	ret	0
-?AuTCPSend@@YA_KPEAU_socket_@@PEAU_msghdr_@@H@Z ENDP	; AuTCPSend
+?AuTCPSend@@YAHPEAU_socket_@@PEAU_msghdr_@@H@Z ENDP	; AuTCPSend
 _TEXT	ENDS
 ; Function compile flags: /Odtpy
 ; File e:\xeneva project\aurora\kernel\net\tcp.cpp
@@ -179,9 +179,9 @@ _TEXT	SEGMENT
 sock$ = 8
 msg$ = 16
 flags$ = 24
-?AuTCPReceive@@YA_KPEAU_socket_@@PEAU_msghdr_@@H@Z PROC	; AuTCPReceive
+?AuTCPReceive@@YAHPEAU_socket_@@PEAU_msghdr_@@H@Z PROC	; AuTCPReceive
 
-; 115  : uint64_t AuTCPReceive(AuSocket* sock, msghdr *msg, int flags){
+; 115  : int AuTCPReceive(AuSocket* sock, msghdr *msg, int flags){
 
 	mov	DWORD PTR [rsp+24], r8d
 	mov	QWORD PTR [rsp+16], rdx
@@ -194,7 +194,7 @@ flags$ = 24
 ; 117  : }
 
 	ret	0
-?AuTCPReceive@@YA_KPEAU_socket_@@PEAU_msghdr_@@H@Z ENDP	; AuTCPReceive
+?AuTCPReceive@@YAHPEAU_socket_@@PEAU_msghdr_@@H@Z ENDP	; AuTCPReceive
 _TEXT	ENDS
 ; Function compile flags: /Odtpy
 ; File e:\xeneva project\aurora\kernel\net\tcp.cpp
@@ -557,13 +557,13 @@ $LN1@CreateTCPS:
 
 ; 173  : 	AuSocket *sock = (AuSocket*)kmalloc(sizeof(AuSocket));
 
-	mov	ecx, 224				; 000000e0H
+	mov	ecx, 232				; 000000e8H
 	call	kmalloc
 	mov	QWORD PTR sock$[rsp], rax
 
 ; 174  : 	memset(sock, 0, sizeof(AuSocket));
 
-	mov	r8d, 224				; 000000e0H
+	mov	r8d, 232				; 000000e8H
 	xor	edx, edx
 	mov	rcx, QWORD PTR sock$[rsp]
 	call	memset
@@ -577,32 +577,32 @@ $LN1@CreateTCPS:
 ; 176  : 	sock->send = AuTCPSend;
 
 	mov	rax, QWORD PTR sock$[rsp]
-	lea	rcx, OFFSET FLAT:?AuTCPSend@@YA_KPEAU_socket_@@PEAU_msghdr_@@H@Z ; AuTCPSend
-	mov	QWORD PTR [rax+192], rcx
+	lea	rcx, OFFSET FLAT:?AuTCPSend@@YAHPEAU_socket_@@PEAU_msghdr_@@H@Z ; AuTCPSend
+	mov	QWORD PTR [rax+200], rcx
 
 ; 177  : 	sock->receive = AuTCPReceive;
 
 	mov	rax, QWORD PTR sock$[rsp]
-	lea	rcx, OFFSET FLAT:?AuTCPReceive@@YA_KPEAU_socket_@@PEAU_msghdr_@@H@Z ; AuTCPReceive
-	mov	QWORD PTR [rax+184], rcx
+	lea	rcx, OFFSET FLAT:?AuTCPReceive@@YAHPEAU_socket_@@PEAU_msghdr_@@H@Z ; AuTCPReceive
+	mov	QWORD PTR [rax+192], rcx
 
 ; 178  : 	sock->connect = AuTCPConnect;
 
 	mov	rax, QWORD PTR sock$[rsp]
-	lea	rcx, OFFSET FLAT:?AuTCPConnect@@YA_KPEAU_socket_@@PEAU_sockaddr_@@_K@Z ; AuTCPConnect
-	mov	QWORD PTR [rax+208], rcx
+	lea	rcx, OFFSET FLAT:?AuTCPConnect@@YAHPEAU_socket_@@PEAU_sockaddr_@@_K@Z ; AuTCPConnect
+	mov	QWORD PTR [rax+216], rcx
 
 ; 179  : 	sock->bind = AuTCPBind;
 
 	mov	rax, QWORD PTR sock$[rsp]
-	lea	rcx, OFFSET FLAT:?AuTCPBind@@YA_KPEAU_socket_@@PEAU_sockaddr_@@_K@Z ; AuTCPBind
-	mov	QWORD PTR [rax+216], rcx
+	lea	rcx, OFFSET FLAT:?AuTCPBind@@YAHPEAU_socket_@@PEAU_sockaddr_@@_K@Z ; AuTCPBind
+	mov	QWORD PTR [rax+224], rcx
 
 ; 180  : 	sock->close = AuTCPClose;
 
 	mov	rax, QWORD PTR sock$[rsp]
 	lea	rcx, OFFSET FLAT:?AuTCPClose@@YAXPEAU_socket_@@@Z ; AuTCPClose
-	mov	QWORD PTR [rax+200], rcx
+	mov	QWORD PTR [rax+208], rcx
 
 ; 181  : 	sock->fsnode.read = AuTCPRead;
 
@@ -631,7 +631,7 @@ $LN1@CreateTCPS:
 
 ; 185  : 	SeTextOut("TCP Socket created \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG3400
+	lea	rcx, OFFSET FLAT:$SG3443
 	call	SeTextOut
 
 ; 186  : 	return fd;

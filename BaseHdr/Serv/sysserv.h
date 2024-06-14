@@ -34,9 +34,10 @@
 #include <stdarg.h>
 #include <aurora.h>
 #include <Hal\x86_64_signal.h>
+#include <Net\socket.h>
 
 /* maximum supported system calls */
-#define AURORA_MAX_SYSCALL  47
+#define AURORA_MAX_SYSCALL  54
 #define AURORA_SYSCALL_MAGIC  0x05212004  /* actual number to remember */
 
 /* ==========================================
@@ -295,4 +296,16 @@ extern int FileSetOffset(int fd, size_t offset);
 * structure
 */
 extern int GetTimeOfDay(void* ptr);
+
+extern int NetSend(int sockfd, msghdr* msg, int flags);
+
+extern int NetReceive(int sockfd, msghdr *msg, int flags);
+
+extern int NetConnect(int sockfd, sockaddr* addr, socklen_t addrlen);
+
+extern int NetBind(int sockfd, sockaddr *addr, socklen_t addrlen);
+
+extern int NetAccept(int sockfd, sockaddr *addr, socklen_t * addrlen);
+
+extern int NetListen(int sockfd, int backlog);
 #endif

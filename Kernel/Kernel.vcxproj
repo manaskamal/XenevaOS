@@ -221,6 +221,7 @@
     <ClInclude Include="..\BaseHdr\process.h" />
     <ClInclude Include="..\BaseHdr\Serv\sysserv.h" />
     <ClInclude Include="..\BaseHdr\Sound\sound.h" />
+    <ClInclude Include="..\BaseHdr\stack.h" />
     <ClInclude Include="..\BaseHdr\stdarg.h" />
     <ClInclude Include="..\BaseHdr\stdint.h" />
     <ClInclude Include="..\BaseHdr\stdio.h" />
@@ -308,9 +309,11 @@
     <ClCompile Include="process.cpp" />
     <ClCompile Include="Serv\fileserv.cpp" />
     <ClCompile Include="Serv\mmserv.cpp" />
+    <ClCompile Include="Serv\netserv.cpp" />
     <ClCompile Include="Serv\thrserv.cpp" />
     <ClCompile Include="Serv\timerserv.cpp" />
     <ClCompile Include="Sound\sound.cpp" />
+    <ClCompile Include="stack.cpp" />
     <ClCompile Include="stdio.cpp" />
     <ClCompile Include="string.cpp" />
     <ClCompile Include="Sync\mutex.cpp" />

@@ -10,15 +10,15 @@ _BSS	SEGMENT
 ?netadapters@@3PEAUhashmap@@EA DQ 01H DUP (?)		; netadapters
 _BSS	ENDS
 CONST	SEGMENT
-$SG3018	DB	'/dev', 00H
+$SG3146	DB	'/dev', 00H
 	ORG $+3
-$SG3019	DB	'/dev/net', 00H
+$SG3147	DB	'/dev/net', 00H
 	ORG $+3
-$SG3025	DB	'/dev', 00H
+$SG3153	DB	'/dev', 00H
 	ORG $+7
-$SG3026	DB	'/dev/net', 00H
+$SG3154	DB	'/dev/net', 00H
 	ORG $+3
-$SG3035	DB	'e1000', 00H
+$SG3163	DB	'e1000', 00H
 CONST	ENDS
 PUBLIC	?AuInitialiseNet@@YAXXZ				; AuInitialiseNet
 PUBLIC	AuAddNetAdapter
@@ -30,9 +30,10 @@ EXTRN	AuHashmapSet:PROC
 EXTRN	AuHashmapGet:PROC
 EXTRN	?AuDevFSCreateFile@@YAHPEAU__VFS_NODE__@@PEADE@Z:PROC ; AuDevFSCreateFile
 EXTRN	AuDevFSAddFile:PROC
+EXTRN	?AuSocketInstall@@YAXXZ:PROC			; AuSocketInstall
 pdata	SEGMENT
 $pdata$?AuInitialiseNet@@YAXXZ DD imagerel $LN3
-	DD	imagerel $LN3+63
+	DD	imagerel $LN3+68
 	DD	imagerel $unwind$?AuInitialiseNet@@YAXXZ
 $pdata$AuAddNetAdapter DD imagerel $LN3
 	DD	imagerel $LN3+80
@@ -69,7 +70,7 @@ $LN3:
 ; 77   : 	/*if (address == 0x0100007F)*/ /* loop device */
 ; 78   : 	return AuGetNetworkAdapter("e1000");
 
-	lea	rcx, OFFSET FLAT:$SG3035
+	lea	rcx, OFFSET FLAT:$SG3163
 	call	AuGetNetworkAdapter
 
 ; 79   : }
@@ -116,36 +117,34 @@ netfs$ = 64
 name$ = 72
 AuAddNetAdapter PROC
 
-; 53   : void AuAddNetAdapter(AuVFSNode* netfs, char* name) {
+; 55   : void AuAddNetAdapter(AuVFSNode* netfs, char* name) {
 
 $LN3:
 	mov	QWORD PTR [rsp+16], rdx
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 56					; 00000038H
 
-; 54   : 	AuHashmapSet(netadapters, name, netfs);
+; 56   : 	AuHashmapSet(netadapters, name, netfs);
 
 	mov	r8, QWORD PTR netfs$[rsp]
 	mov	rdx, QWORD PTR name$[rsp]
 	mov	rcx, QWORD PTR ?netadapters@@3PEAUhashmap@@EA ; netadapters
 	call	AuHashmapSet
 
-; 55   : 
-; 56   : 	AuVFSNode* fs = AuVFSFind("/dev");
+; 57   : 
+; 58   : 	AuVFSNode* fs = AuVFSFind("/dev");
 
-	lea	rcx, OFFSET FLAT:$SG3025
+	lea	rcx, OFFSET FLAT:$SG3153
 	call	AuVFSFind
 	mov	QWORD PTR fs$[rsp], rax
 
-; 57   : 	AuDevFSAddFile(fs, "/dev/net", netfs);
+; 59   : 	AuDevFSAddFile(fs, "/dev/net", netfs);
 
 	mov	r8, QWORD PTR netfs$[rsp]
-	lea	rdx, OFFSET FLAT:$SG3026
+	lea	rdx, OFFSET FLAT:$SG3154
 	mov	rcx, QWORD PTR fs$[rsp]
 	call	AuDevFSAddFile
 
-; 58   : 
-; 59   : 
 ; 60   : }
 
 	add	rsp, 56					; 00000038H
@@ -158,31 +157,35 @@ _TEXT	SEGMENT
 fs$ = 32
 ?AuInitialiseNet@@YAXXZ PROC				; AuInitialiseNet
 
-; 42   : void AuInitialiseNet() {
+; 43   : void AuInitialiseNet() {
 
 $LN3:
 	sub	rsp, 56					; 00000038H
 
-; 43   : 	netadapters = AuHashmapCreate(10);
+; 44   : 	netadapters = AuHashmapCreate(10);
 
 	mov	ecx, 10
 	call	AuHashmapCreate
 	mov	QWORD PTR ?netadapters@@3PEAUhashmap@@EA, rax ; netadapters
 
-; 44   : 	AuVFSNode* fs = AuVFSFind("/dev");
+; 45   : 	AuVFSNode* fs = AuVFSFind("/dev");
 
-	lea	rcx, OFFSET FLAT:$SG3018
+	lea	rcx, OFFSET FLAT:$SG3146
 	call	AuVFSFind
 	mov	QWORD PTR fs$[rsp], rax
 
-; 45   : 	AuDevFSCreateFile(fs, "/dev/net", FS_FLAG_DIRECTORY);
+; 46   : 	AuDevFSCreateFile(fs, "/dev/net", FS_FLAG_DIRECTORY);
 
 	mov	r8b, 2
-	lea	rdx, OFFSET FLAT:$SG3019
+	lea	rdx, OFFSET FLAT:$SG3147
 	mov	rcx, QWORD PTR fs$[rsp]
 	call	?AuDevFSCreateFile@@YAHPEAU__VFS_NODE__@@PEADE@Z ; AuDevFSCreateFile
 
-; 46   : }
+; 47   : 	AuSocketInstall();
+
+	call	?AuSocketInstall@@YAXXZ			; AuSocketInstall
+
+; 48   : }
 
 	add	rsp, 56					; 00000038H
 	ret	0

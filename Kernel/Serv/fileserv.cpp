@@ -75,7 +75,8 @@ int OpenFile(char* filename, int mode) {
 	if (fd == -1)
 		return -1;
 	current_proc->fds[fd] = file;
-	SeTextOut("Opening file -> %s %x \r\n", file->filename, file);
+	SeTextOut("Opening file -> %s | %x \r\n", file->filename, file);
+	SeTextOut("e1000 ctl -> %x \r\n", file->write);
 	return fd;
 }
 

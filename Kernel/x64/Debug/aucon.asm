@@ -24,15 +24,15 @@ _BSS	SEGMENT
 ?_print_func@@3P6AXPEBDZZEA DQ 01H DUP (?)		; _print_func
 _BSS	ENDS
 CONST	SEGMENT
-$SG3672	DB	'/dev', 00H
+$SG3820	DB	'/dev', 00H
 	ORG $+3
-$SG3677	DB	'graph', 00H
+$SG3825	DB	'graph', 00H
 	ORG $+2
-$SG3678	DB	'/', 00H
+$SG3826	DB	'/', 00H
 	ORG $+2
-$SG3761	DB	'-', 00H
+$SG3909	DB	'-', 00H
 	ORG $+2
-$SG3809	DB	'.', 00H
+$SG3957	DB	'.', 00H
 CONST	ENDS
 PUBLIC	?AuConsoleInitialize@@YAXPEAU_KERNEL_BOOT_INFO_@@_N@Z ; AuConsoleInitialize
 PUBLIC	?AuConsolePostInitialise@@YAXPEAU_KERNEL_BOOT_INFO_@@@Z ; AuConsolePostInitialise
@@ -1018,7 +1018,7 @@ $LN18@AuTextOut:
 
 ; 288  : 					AuPutS("-");
 
-	lea	rcx, OFFSET FLAT:$SG3761
+	lea	rcx, OFFSET FLAT:$SG3909
 	call	?AuPutS@@YAXPEAD@Z			; AuPutS
 
 ; 289  : 					i = ((int)i * -1);
@@ -1190,7 +1190,7 @@ $LN5@AuTextOut:
 ; 327  : 			{
 ; 328  : 				AuPutS(".");
 
-	lea	rcx, OFFSET FLAT:$SG3809
+	lea	rcx, OFFSET FLAT:$SG3957
 	call	?AuPutS@@YAXPEAD@Z			; AuPutS
 
 ; 329  : 			}
@@ -1489,7 +1489,7 @@ $LN4@AuConsoleP:
 ; 164  : 
 ; 165  : 	AuVFSNode* fsys = AuVFSFind("/dev");
 
-	lea	rcx, OFFSET FLAT:$SG3672
+	lea	rcx, OFFSET FLAT:$SG3820
 	call	AuVFSFind
 	mov	QWORD PTR fsys$[rsp], rax
 
@@ -1509,7 +1509,7 @@ $LN4@AuConsoleP:
 ; 168  : 	strcpy(file->filename, "graph");
 
 	mov	rax, QWORD PTR file$[rsp]
-	lea	rdx, OFFSET FLAT:$SG3677
+	lea	rdx, OFFSET FLAT:$SG3825
 	mov	rcx, rax
 	call	strcpy
 
@@ -1544,7 +1544,7 @@ $LN4@AuConsoleP:
 ; 174  : 	AuDevFSAddFile(fsys, "/", file);
 
 	mov	r8, QWORD PTR file$[rsp]
-	lea	rdx, OFFSET FLAT:$SG3678
+	lea	rdx, OFFSET FLAT:$SG3826
 	mov	rcx, QWORD PTR fsys$[rsp]
 	call	AuDevFSAddFile
 

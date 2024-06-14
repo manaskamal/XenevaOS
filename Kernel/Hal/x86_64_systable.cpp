@@ -118,6 +118,13 @@ static void* syscalls[AURORA_MAX_SYSCALL] = {
 	FileSetOffset, //44
 	GetTimeOfDay, //45
 	AuCreateSocket, //46
+	NetConnect, //47
+	NetSend, //48
+	NetReceive, //49
+	AuSocketSetOpt, //50
+	NetBind, //51
+	NetAccept, //52
+	NetListen, //53
 };
 
 //! System Call Handler Functions

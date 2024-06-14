@@ -33,6 +33,7 @@
 #include <_null.h>
 #include <hashmap.h>
 #include <Fs\dev\devfs.h>
+#include <Net\socket.h>
 
 hashmap_t* netadapters;
 
@@ -43,6 +44,7 @@ void AuInitialiseNet() {
 	netadapters = AuHashmapCreate(10);
 	AuVFSNode* fs = AuVFSFind("/dev");
 	AuDevFSCreateFile(fs, "/dev/net", FS_FLAG_DIRECTORY);
+	AuSocketInstall();
 }
 
 
@@ -55,8 +57,6 @@ void AuAddNetAdapter(AuVFSNode* netfs, char* name) {
 
 	AuVFSNode* fs = AuVFSFind("/dev");
 	AuDevFSAddFile(fs, "/dev/net", netfs);
-
-
 }
 
 /*

@@ -112,7 +112,7 @@ uint16_t CalculateTCPChecksum(TCPCheckHeader* p, TCPHeader* h, void* d, size_t p
  * @param msghdr -- Message header containing every information
  * @param flags -- extra flags
  */
-uint64_t AuTCPReceive(AuSocket* sock, msghdr *msg, int flags){
+int AuTCPReceive(AuSocket* sock, msghdr *msg, int flags){
 	return 0;
 }
 
@@ -122,7 +122,7 @@ uint64_t AuTCPReceive(AuSocket* sock, msghdr *msg, int flags){
 * @param msghdr -- Message header containing every information
 * @param flags -- extra flags
 */
-uint64_t AuTCPSend(AuSocket* sock, msghdr* msg, int flags){
+int AuTCPSend(AuSocket* sock, msghdr* msg, int flags){
 	return 0;
 }
 
@@ -140,12 +140,12 @@ void AuTCPClose(AuSocket* sock) {
 * @param addr -- socket address information
 * @param addrlen -- address length
 */
-uint64_t AuTCPConnect(AuSocket* sock, sockaddr* addr, socklen_t addrlen){
+int AuTCPConnect(AuSocket* sock, sockaddr* addr, socklen_t addrlen){
 	return 0;
 }
 
 
-uint64_t AuTCPBind(AuSocket* sock, sockaddr* addr, socklen_t addrlen){
+int AuTCPBind(AuSocket* sock, sockaddr* addr, socklen_t addrlen){
 	return 0;
 }
 

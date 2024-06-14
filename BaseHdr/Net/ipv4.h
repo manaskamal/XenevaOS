@@ -42,6 +42,7 @@ typedef struct _ipv4head_ {
 	unsigned short headerChecksum;
 	unsigned srcAddress;
 	unsigned destAddress;
+	uint8_t payload[];
 }IPv4Header;
 #pragma pack(pop)
 
@@ -55,4 +56,6 @@ typedef struct _ipv4head_ {
 * @param protocol -- protocol number
 */
 extern int CreateIPv4Socket(int type, int protocol);
+
+extern void IPv4HandlePacket(void* data);
 #endif

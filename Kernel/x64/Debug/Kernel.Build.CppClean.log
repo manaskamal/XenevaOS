@@ -137,12 +137,16 @@ e:\xeneva project\aurora\kernel\x64\debug\string.obj
 e:\xeneva project\aurora\kernel\x64\debug\string.asm
 e:\xeneva project\aurora\kernel\x64\debug\stdio.obj
 e:\xeneva project\aurora\kernel\x64\debug\stdio.asm
+e:\xeneva project\aurora\kernel\x64\debug\stack.obj
+e:\xeneva project\aurora\kernel\x64\debug\stack.asm
 e:\xeneva project\aurora\kernel\x64\debug\sound.obj
 e:\xeneva project\aurora\kernel\x64\debug\sound.asm
 e:\xeneva project\aurora\kernel\x64\debug\timerserv.obj
 e:\xeneva project\aurora\kernel\x64\debug\timerserv.asm
 e:\xeneva project\aurora\kernel\x64\debug\thrserv.obj
 e:\xeneva project\aurora\kernel\x64\debug\thrserv.asm
+e:\xeneva project\aurora\kernel\x64\debug\netserv.obj
+e:\xeneva project\aurora\kernel\x64\debug\netserv.asm
 e:\xeneva project\aurora\kernel\x64\debug\udp.obj
 e:\xeneva project\aurora\kernel\x64\debug\udp.asm
 e:\xeneva project\aurora\kernel\x64\debug\tcp.obj

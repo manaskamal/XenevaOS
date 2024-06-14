@@ -6,12 +6,31 @@ INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
 PUBLIC	?null_call@@YA_K_K00000@Z			; null_call
+EXTRN	?OpenDir@@YAHPEAD@Z:PROC			; OpenDir
+EXTRN	?ReadDir@@YAHHPEAX@Z:PROC			; ReadDir
+EXTRN	?CreateTimer@@YAHHHE@Z:PROC			; CreateTimer
+EXTRN	?StartTimer@@YAHH@Z:PROC			; StartTimer
+EXTRN	?StopTimer@@YAHH@Z:PROC				; StopTimer
+EXTRN	?DestroyTimer@@YAHH@Z:PROC			; DestroyTimer
+EXTRN	?ProcessGetFileDesc@@YAHPEBD@Z:PROC		; ProcessGetFileDesc
+EXTRN	?FileSetOffset@@YAHH_K@Z:PROC			; FileSetOffset
+EXTRN	?GetTimeOfDay@@YAHPEAX@Z:PROC			; GetTimeOfDay
+EXTRN	?NetSend@@YAHHPEAU_msghdr_@@H@Z:PROC		; NetSend
+EXTRN	?NetReceive@@YAHHPEAU_msghdr_@@H@Z:PROC		; NetReceive
+EXTRN	?NetConnect@@YAHHPEAU_sockaddr_@@_K@Z:PROC	; NetConnect
+EXTRN	?NetBind@@YAHHPEAU_sockaddr_@@_K@Z:PROC		; NetBind
+EXTRN	?NetAccept@@YAHHPEAU_sockaddr_@@PEA_K@Z:PROC	; NetAccept
+EXTRN	?NetListen@@YAHHH@Z:PROC			; NetListen
+EXTRN	?AuFTMngrGetFontID@@YAHPEAD@Z:PROC		; AuFTMngrGetFontID
+EXTRN	?AuFTMngrGetNumFonts@@YAHXZ:PROC		; AuFTMngrGetNumFonts
+EXTRN	?AuFTMngrGetFontSize@@YAHPEAD@Z:PROC		; AuFTMngrGetFontSize
 EXTRN	?AuTTYCreate@@YAHPEAH0@Z:PROC			; AuTTYCreate
 EXTRN	?CreateMemMapping@@YAPEAXPEAX_KHHH1@Z:PROC	; CreateMemMapping
 EXTRN	?MemMapDirty@@YAXPEAX_KHH@Z:PROC		; MemMapDirty
 EXTRN	?UnmapMemMapping@@YAXPEAX_K@Z:PROC		; UnmapMemMapping
-EXTRN	?AuCreateSocket@@YAHHHH@Z:PROC			; AuCreateSocket
 EXTRN	SeTextOut:PROC
+EXTRN	?AuCreateSocket@@YAHHHH@Z:PROC			; AuCreateSocket
+EXTRN	?AuSocketSetOpt@@YAHHHHPEBX_K@Z:PROC		; AuSocketSetOpt
 EXTRN	?PauseThread@@YAHXZ:PROC			; PauseThread
 EXTRN	?GetThreadID@@YAGXZ:PROC			; GetThreadID
 EXTRN	?GetProcessID@@YAHXZ:PROC			; GetProcessID
@@ -40,18 +59,6 @@ EXTRN	?SetFileToProcess@@YAHHHH@Z:PROC		; SetFileToProcess
 EXTRN	?ProcessHeapUnmap@@YAHPEAX_K@Z:PROC		; ProcessHeapUnmap
 EXTRN	?SendSignal@@YAHHH@Z:PROC			; SendSignal
 EXTRN	?GetCurrentTime@@YAHPEAX@Z:PROC			; GetCurrentTime
-EXTRN	?OpenDir@@YAHPEAD@Z:PROC			; OpenDir
-EXTRN	?ReadDir@@YAHHPEAX@Z:PROC			; ReadDir
-EXTRN	?CreateTimer@@YAHHHE@Z:PROC			; CreateTimer
-EXTRN	?StartTimer@@YAHH@Z:PROC			; StartTimer
-EXTRN	?StopTimer@@YAHH@Z:PROC				; StopTimer
-EXTRN	?DestroyTimer@@YAHH@Z:PROC			; DestroyTimer
-EXTRN	?ProcessGetFileDesc@@YAHPEBD@Z:PROC		; ProcessGetFileDesc
-EXTRN	?FileSetOffset@@YAHH_K@Z:PROC			; FileSetOffset
-EXTRN	?GetTimeOfDay@@YAHPEAX@Z:PROC			; GetTimeOfDay
-EXTRN	?AuFTMngrGetFontID@@YAHPEAD@Z:PROC		; AuFTMngrGetFontID
-EXTRN	?AuFTMngrGetNumFonts@@YAHXZ:PROC		; AuFTMngrGetNumFonts
-EXTRN	?AuFTMngrGetFontSize@@YAHPEAD@Z:PROC		; AuFTMngrGetFontSize
 _DATA	SEGMENT
 syscalls DQ	FLAT:?null_call@@YA_K_K00000@Z
 	DQ	FLAT:SeTextOut
@@ -100,9 +107,16 @@ syscalls DQ	FLAT:?null_call@@YA_K_K00000@Z
 	DQ	FLAT:?FileSetOffset@@YAHH_K@Z
 	DQ	FLAT:?GetTimeOfDay@@YAHPEAX@Z
 	DQ	FLAT:?AuCreateSocket@@YAHHHH@Z
+	DQ	FLAT:?NetConnect@@YAHHPEAU_sockaddr_@@_K@Z
+	DQ	FLAT:?NetSend@@YAHHPEAU_msghdr_@@H@Z
+	DQ	FLAT:?NetReceive@@YAHHPEAU_msghdr_@@H@Z
+	DQ	FLAT:?AuSocketSetOpt@@YAHHHHPEBX_K@Z
+	DQ	FLAT:?NetBind@@YAHHPEAU_sockaddr_@@_K@Z
+	DQ	FLAT:?NetAccept@@YAHHPEAU_sockaddr_@@PEA_K@Z
+	DQ	FLAT:?NetListen@@YAHHH@Z
 _DATA	ENDS
 CONST	SEGMENT
-$SG4321	DB	'%s', 0aH, 00H
+$SG4384	DB	'%s', 0aH, 00H
 CONST	ENDS
 PUBLIC	?KePrintMsg@@YA_K_K00000@Z			; KePrintMsg
 PUBLIC	x64_syscall_handler
@@ -132,59 +146,59 @@ ret_code$ = 64
 a$ = 96
 x64_syscall_handler PROC
 
-; 128  : extern "C" uint64_t x64_syscall_handler(int a) {
+; 135  : extern "C" uint64_t x64_syscall_handler(int a) {
 
 $LN5:
 	mov	DWORD PTR [rsp+8], ecx
 	sub	rsp, 88					; 00000058H
 
-; 129  : 	x64_cli();
+; 136  : 	x64_cli();
 
 	call	x64_cli
 
-; 130  : 	AuThread* current_thr = AuGetCurrentThread();
+; 137  : 	AuThread* current_thr = AuGetCurrentThread();
 
 	call	AuGetCurrentThread
 	mov	QWORD PTR current_thr$[rsp], rax
 
-; 131  : 	uint64_t ret_code = 0;
+; 138  : 	uint64_t ret_code = 0;
 
 	mov	QWORD PTR ret_code$[rsp], 0
 
-; 132  : 
-; 133  : 	if (a > AURORA_MAX_SYSCALL)
+; 139  : 
+; 140  : 	if (a > AURORA_MAX_SYSCALL)
 
-	cmp	DWORD PTR a$[rsp], 47			; 0000002fH
+	cmp	DWORD PTR a$[rsp], 54			; 00000036H
 	jle	SHORT $LN2@x64_syscal
 
-; 134  : 		return -1;
+; 141  : 		return -1;
 
 	mov	rax, -1
 	jmp	$LN3@x64_syscal
 $LN2@x64_syscal:
 
-; 135  : 	
-; 136  : 	syscall_func func = (syscall_func)syscalls[a];
+; 142  : 	
+; 143  : 	syscall_func func = (syscall_func)syscalls[a];
 
 	movsxd	rax, DWORD PTR a$[rsp]
 	lea	rcx, OFFSET FLAT:syscalls
 	mov	rax, QWORD PTR [rcx+rax*8]
 	mov	QWORD PTR func$[rsp], rax
 
-; 137  : 	if (!func)
+; 144  : 	if (!func)
 
 	cmp	QWORD PTR func$[rsp], 0
 	jne	SHORT $LN1@x64_syscal
 
-; 138  : 		return 0;
+; 145  : 		return 0;
 
 	xor	eax, eax
 	jmp	SHORT $LN3@x64_syscal
 $LN1@x64_syscal:
 
-; 139  : 
-; 140  : 	ret_code = func(current_thr->syscall_param.param1, current_thr->syscall_param.param2, current_thr->syscall_param.param3,
-; 141  : 			current_thr->syscall_param.param4, current_thr->syscall_param.param5, current_thr->syscall_param.param6);
+; 146  : 
+; 147  : 	ret_code = func(current_thr->syscall_param.param1, current_thr->syscall_param.param2, current_thr->syscall_param.param3,
+; 148  : 			current_thr->syscall_param.param4, current_thr->syscall_param.param5, current_thr->syscall_param.param6);
 
 	mov	rax, QWORD PTR current_thr$[rsp]
 	mov	rax, QWORD PTR [rax+264]
@@ -203,13 +217,13 @@ $LN1@x64_syscal:
 	call	QWORD PTR func$[rsp]
 	mov	QWORD PTR ret_code$[rsp], rax
 
-; 142  : 
-; 143  : 	return ret_code;
+; 149  : 
+; 150  : 	return ret_code;
 
 	mov	rax, QWORD PTR ret_code$[rsp]
 $LN3@x64_syscal:
 
-; 144  : }
+; 151  : }
 
 	add	rsp, 88					; 00000058H
 	ret	0
@@ -271,7 +285,7 @@ $LN3:
 ; 60   : 	AuTextOut("%s\n",text);
 
 	mov	rdx, QWORD PTR text$[rsp]
-	lea	rcx, OFFSET FLAT:$SG4321
+	lea	rcx, OFFSET FLAT:$SG4384
 	call	AuTextOut
 
 ; 61   : 	return 0;

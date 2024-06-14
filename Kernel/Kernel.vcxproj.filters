@@ -330,6 +330,9 @@
     <ClInclude Include="..\BaseHdr\hashmap.h">
       <Filter>Include</Filter>
     </ClInclude>
+    <ClInclude Include="..\BaseHdr\stack.h">
+      <Filter>Include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="init.cpp" />
@@ -515,6 +518,10 @@
       <Filter>Net</Filter>
     </ClCompile>
     <ClCompile Include="..\BaseHdr\hashmap.cpp" />
+    <ClCompile Include="stack.cpp" />
+    <ClCompile Include="Serv\netserv.cpp">
+      <Filter>Serv</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <NASM Include="__fstcpy.asm" />

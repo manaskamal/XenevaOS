@@ -33,6 +33,7 @@
 #include <net/ipv4.h>
 #include <net/udp.h>
 #include <net/aunet.h>
+#include <Hal\serial.h>
 
 uint16_t IPv4CalculateChecksum(IPv4Header * p){
 	uint32_t sum = 0;
@@ -45,6 +46,32 @@ uint16_t IPv4CalculateChecksum(IPv4Header * p){
 	}
 	return sum;
 }
+
+void ip_ntoa(const uint32_t src) {
+	SeTextOut("IP -> %d.%d.%d.", ((src & 0xFF000000) >> 24),
+		((src & 0xFF0000) >> 16),
+		((src & 0xFF00) >> 8),
+		((src & 0xFF)));
+	SeTextOut("%d \r\n", (src & 0xFF));
+}
+
+void IPv4HandlePacket(void* data) {
+	char dest[16];
+	char src[16];
+	IPv4Header* pack = (IPv4Header*)data;
+	ip_ntoa(ntohl(pack->destAddress));
+	ip_ntoa(ntohl(pack->srcAddress)); 
+	switch (pack->protocol){
+	case 1:
+		break;
+	case IPV4_PROTOCOL_UDP:{
+							   uint16_t destport = ntohs(((uint16_t*)&pack->payload)[1]);
+							   SeTextOut("UDP Packet received dest port -> %d \r\n", destport);
+							   break;
+	}
+	}
+}
+
 /*
  * CreateIPv4Socket -- create a new ipv4 socket
  * @param type -- type of the socket its Datagram or

@@ -765,6 +765,106 @@ socket:
    syscall
    ret
 
+global connect
+%ifdef YES_DYNAMIC
+export connect
+%endif
+connect:
+   xor rax, rax
+   mov r12, 47
+   mov r13, rcx
+   mov r14, rdx
+   mov r15, r8
+   mov rdi, 0
+   syscall
+   ret
+
+global send
+%ifdef YES_DYNAMIC
+export send
+%endif
+send:
+   xor rax, rax
+   mov r12, 48
+   mov r13, rcx
+   mov r14, rdx
+   mov r15, r8
+   mov rdi, 0
+   syscall
+   ret
+
+global receive
+%ifdef YES_DYNAMIC
+export receive
+%endif
+receive:
+   xor rax,rax
+   mov r12, 49
+   mov r13, rcx
+   mov r14, rdx
+   mov r15, r8
+   mov rdi, 0
+   syscall
+   ret
+
+global socket_setopt
+%ifdef YES_DYNAMIC
+export socket_setopt
+%endif
+socket_setopt:
+   xor rax, rax
+   mov r12, 50
+   mov r13, rcx
+   mov r14, rdx
+   mov r15, r8
+   mov rdi, r9
+   ; rest will be passed through stack
+   syscall
+   ret
+
+global bind
+%ifdef YES_DYNAMIC
+export bind
+%endif
+bind:
+   xor rax, rax
+   mov r12, 51
+   mov r13, rcx
+   mov r14, rdx
+   mov r15, r8
+   mov rdi, 0
+   syscall
+   ret
+
+global accept
+%ifdef YES_DYNAMIC
+export accept
+%endif
+accept:
+   xor rax, rax
+   mov r12, 52
+   mov r13, rcx
+   mov r14, rdx
+   mov r15, r8
+   mov rdi, 0
+   syscall
+   ret
+
+global listen
+%ifdef YES_DYNAMIC
+export listen
+%endif
+listen:
+    xor rax, rax
+	mov r12, 53
+	mov r13, rcx
+	mov r14, rdx
+	mov r15, 0
+	mov rdi, 0
+	syscall
+	ret
+
+
 
 
       

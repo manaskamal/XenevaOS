@@ -6,12 +6,12 @@ INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
 CONST	SEGMENT
-$SG3308	DB	'ICMP Socket created ', 0dH, 0aH, 00H
+$SG3348	DB	'ICMP Socket created ', 0dH, 0aH, 00H
 CONST	ENDS
-PUBLIC	?AuICMPReceive@@YA_KPEAU_socket_@@PEAU_msghdr_@@H@Z ; AuICMPReceive
-PUBLIC	?AuICMPSend@@YA_KPEAU_socket_@@PEAU_msghdr_@@H@Z ; AuICMPSend
+PUBLIC	?AuICMPReceive@@YAHPEAU_socket_@@PEAU_msghdr_@@H@Z ; AuICMPReceive
+PUBLIC	?AuICMPSend@@YAHPEAU_socket_@@PEAU_msghdr_@@H@Z	; AuICMPSend
 PUBLIC	?AuICMPClose@@YAXPEAU_socket_@@@Z		; AuICMPClose
-PUBLIC	?AuICMPBind@@YA_KPEAU_socket_@@PEAU_sockaddr_@@_K@Z ; AuICMPBind
+PUBLIC	?AuICMPBind@@YAHPEAU_socket_@@PEAU_sockaddr_@@_K@Z ; AuICMPBind
 PUBLIC	?AuICMPRead@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z	; AuICMPRead
 PUBLIC	?AuICMPWrite@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z	; AuICMPWrite
 PUBLIC	?CreateICMPSocket@@YAHXZ			; CreateICMPSocket
@@ -96,13 +96,13 @@ $LN1@CreateICMP:
 
 ; 93   : 	AuSocket *sock = (AuSocket*)kmalloc(sizeof(AuSocket));
 
-	mov	ecx, 224				; 000000e0H
+	mov	ecx, 232				; 000000e8H
 	call	kmalloc
 	mov	QWORD PTR sock$[rsp], rax
 
 ; 94   : 	memset(sock, 0, sizeof(AuSocket));
 
-	mov	r8d, 224				; 000000e0H
+	mov	r8d, 232				; 000000e8H
 	xor	edx, edx
 	mov	rcx, QWORD PTR sock$[rsp]
 	call	memset
@@ -128,31 +128,31 @@ $LN1@CreateICMP:
 ; 98   : 	sock->bind = AuICMPBind;
 
 	mov	rax, QWORD PTR sock$[rsp]
-	lea	rcx, OFFSET FLAT:?AuICMPBind@@YA_KPEAU_socket_@@PEAU_sockaddr_@@_K@Z ; AuICMPBind
-	mov	QWORD PTR [rax+216], rcx
+	lea	rcx, OFFSET FLAT:?AuICMPBind@@YAHPEAU_socket_@@PEAU_sockaddr_@@_K@Z ; AuICMPBind
+	mov	QWORD PTR [rax+224], rcx
 
 ; 99   : 	sock->close = AuICMPClose;
 
 	mov	rax, QWORD PTR sock$[rsp]
 	lea	rcx, OFFSET FLAT:?AuICMPClose@@YAXPEAU_socket_@@@Z ; AuICMPClose
-	mov	QWORD PTR [rax+200], rcx
+	mov	QWORD PTR [rax+208], rcx
 
 ; 100  : 	sock->connect = 0;
 
 	mov	rax, QWORD PTR sock$[rsp]
-	mov	QWORD PTR [rax+208], 0
+	mov	QWORD PTR [rax+216], 0
 
 ; 101  : 	sock->receive = AuICMPReceive;
 
 	mov	rax, QWORD PTR sock$[rsp]
-	lea	rcx, OFFSET FLAT:?AuICMPReceive@@YA_KPEAU_socket_@@PEAU_msghdr_@@H@Z ; AuICMPReceive
-	mov	QWORD PTR [rax+184], rcx
+	lea	rcx, OFFSET FLAT:?AuICMPReceive@@YAHPEAU_socket_@@PEAU_msghdr_@@H@Z ; AuICMPReceive
+	mov	QWORD PTR [rax+192], rcx
 
 ; 102  : 	sock->send = AuICMPSend;
 
 	mov	rax, QWORD PTR sock$[rsp]
-	lea	rcx, OFFSET FLAT:?AuICMPSend@@YA_KPEAU_socket_@@PEAU_msghdr_@@H@Z ; AuICMPSend
-	mov	QWORD PTR [rax+192], rcx
+	lea	rcx, OFFSET FLAT:?AuICMPSend@@YAHPEAU_socket_@@PEAU_msghdr_@@H@Z ; AuICMPSend
+	mov	QWORD PTR [rax+200], rcx
 
 ; 103  : 	proc->fds[fd] = (AuVFSNode*)sock;
 
@@ -163,7 +163,7 @@ $LN1@CreateICMP:
 
 ; 104  : 	SeTextOut("ICMP Socket created \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG3308
+	lea	rcx, OFFSET FLAT:$SG3348
 	call	SeTextOut
 
 ; 105  : 	return 0;
@@ -233,9 +233,9 @@ _TEXT	SEGMENT
 sock$ = 8
 addr$ = 16
 addrlen$ = 24
-?AuICMPBind@@YA_KPEAU_socket_@@PEAU_sockaddr_@@_K@Z PROC ; AuICMPBind
+?AuICMPBind@@YAHPEAU_socket_@@PEAU_sockaddr_@@_K@Z PROC	; AuICMPBind
 
-; 66   : uint64_t AuICMPBind(AuSocket* sock, sockaddr* addr, socklen_t addrlen){
+; 66   : int AuICMPBind(AuSocket* sock, sockaddr* addr, socklen_t addrlen){
 
 	mov	QWORD PTR [rsp+24], r8
 	mov	QWORD PTR [rsp+16], rdx
@@ -248,7 +248,7 @@ addrlen$ = 24
 ; 68   : }
 
 	ret	0
-?AuICMPBind@@YA_KPEAU_socket_@@PEAU_sockaddr_@@_K@Z ENDP ; AuICMPBind
+?AuICMPBind@@YAHPEAU_socket_@@PEAU_sockaddr_@@_K@Z ENDP	; AuICMPBind
 _TEXT	ENDS
 ; Function compile flags: /Odtpy
 ; File e:\xeneva project\aurora\kernel\net\icmp.cpp
@@ -272,9 +272,9 @@ _TEXT	SEGMENT
 sock$ = 8
 msg$ = 16
 flags$ = 24
-?AuICMPSend@@YA_KPEAU_socket_@@PEAU_msghdr_@@H@Z PROC	; AuICMPSend
+?AuICMPSend@@YAHPEAU_socket_@@PEAU_msghdr_@@H@Z PROC	; AuICMPSend
 
-; 53   : uint64_t AuICMPSend(AuSocket* sock, msghdr* msg, int flags){
+; 53   : int AuICMPSend(AuSocket* sock, msghdr* msg, int flags){
 
 	mov	DWORD PTR [rsp+24], r8d
 	mov	QWORD PTR [rsp+16], rdx
@@ -287,7 +287,7 @@ flags$ = 24
 ; 55   : }
 
 	ret	0
-?AuICMPSend@@YA_KPEAU_socket_@@PEAU_msghdr_@@H@Z ENDP	; AuICMPSend
+?AuICMPSend@@YAHPEAU_socket_@@PEAU_msghdr_@@H@Z ENDP	; AuICMPSend
 _TEXT	ENDS
 ; Function compile flags: /Odtpy
 ; File e:\xeneva project\aurora\kernel\net\icmp.cpp
@@ -295,9 +295,9 @@ _TEXT	SEGMENT
 sock$ = 8
 msg$ = 16
 flags$ = 24
-?AuICMPReceive@@YA_KPEAU_socket_@@PEAU_msghdr_@@H@Z PROC ; AuICMPReceive
+?AuICMPReceive@@YAHPEAU_socket_@@PEAU_msghdr_@@H@Z PROC	; AuICMPReceive
 
-; 43   : uint64_t AuICMPReceive(AuSocket* sock, msghdr *msg, int flags){
+; 43   : int AuICMPReceive(AuSocket* sock, msghdr *msg, int flags){
 
 	mov	DWORD PTR [rsp+24], r8d
 	mov	QWORD PTR [rsp+16], rdx
@@ -310,6 +310,6 @@ flags$ = 24
 ; 45   : }
 
 	ret	0
-?AuICMPReceive@@YA_KPEAU_socket_@@PEAU_msghdr_@@H@Z ENDP ; AuICMPReceive
+?AuICMPReceive@@YAHPEAU_socket_@@PEAU_msghdr_@@H@Z ENDP	; AuICMPReceive
 _TEXT	ENDS
 END

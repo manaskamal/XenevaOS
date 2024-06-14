@@ -41,15 +41,6 @@
 #define ETHERNET_TYPE_IETF_TRILL_PROTOCOL 0x22F3
 #define ETHERNET_TYPE_STREAM_RESV_PROTOCOL 0x22EA
 
-#pragma pack(push,1)
-__declspec(align(2)) typedef struct _ethernet_ {
-	uint8_t dest[6];
-	uint8_t src[6];
-	uint16_t typeLen;
-	uint8_t payload[];
-}Ethernet;
-#pragma pack(pop)
-
 
 /*
 * AuEthernetSend -- sends a packet to ethernet layer
@@ -59,6 +50,8 @@ __declspec(align(2)) typedef struct _ethernet_ {
 * @param dest -- destination mac address
 */
 extern void AuEthernetSend(AuVFSNode* nic,void* data, size_t len, uint16_t type, uint8_t* dest);
+
+AU_EXTERN AU_EXPORT void AuEthernetHandle(void *frame, int size);
 
 
 #endif

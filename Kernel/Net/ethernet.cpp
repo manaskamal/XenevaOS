@@ -34,14 +34,30 @@
 #include <Hal\serial.h>
 #include <Fs\Dev\devfs.h>
 #include <aucon.h>
+#include <Net\ipv4.h>
+#include <Net\socket.h>
 
-AU_EXTERN AU_EXPORT void AuEthernetHandle(Ethernet *frame) {
+#pragma pack(push,1)
+__declspec(align(2)) typedef struct _ethernet_ {
+	uint8_t dest[6];
+	uint8_t src[6];
+	uint16_t typeLen;
+	uint8_t payload[];
+}Ethernet;
+#pragma pack(pop)
+
+AU_EXTERN AU_EXPORT void AuEthernetHandle(void *data, int size) {
+	Ethernet* frame = (Ethernet*)data;
+	list_t *raw_sockets = AuRawSocketGetList();
+	for (int i = 0; i < raw_sockets->pointer; i++) {
+		AuSocket *sock = (AuSocket*)list_get_at(raw_sockets, i);
+		AuSocketAdd(sock, frame, size);
+	}
 	switch (ntohs(frame->typeLen)) {
 	case ETHERNET_TYPE_ARP:
-		SeTextOut("Ethernet ARP : Packet received \r\n");
 		break;
 	case ETHERNET_TYPE_IPV4:
-		SeTextOut("Ethernet IPv4: Packet received \r\n");
+		IPv4HandlePacket((void*)&frame->payload);
 		break;
 	}
 }

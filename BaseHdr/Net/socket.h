@@ -32,6 +32,8 @@
 
 #include <stdint.h>
 #include <fs/vfs.h>
+#include <stack.h>
+#include <list.h>
 
 #define AF_UNSPEC 0
 #define AF_INET 1
@@ -80,13 +82,21 @@ typedef struct _msghdr_ {
 
 typedef struct _socket_ {
 	AuVFSNode fsnode;
-	uint64_t(*receive)(struct _socket_* sock, msghdr *msg, int flags);
-	uint64_t(*send)(struct _socket_* sock, msghdr* msg, int flags);
+	AuStack *rxstack;
+	int(*receive)(struct _socket_* sock, msghdr *msg, int flags);
+	int(*send)(struct _socket_* sock, msghdr* msg, int flags);
 	void(*close)(struct _socket_* sock);
-	uint64_t(*connect)(struct _socket_* sock, sockaddr* addr, socklen_t addrlen);
-	uint64_t(*bind)(struct _socket_* sock, sockaddr* addr, socklen_t addrlen);
+	int(*connect)(struct _socket_* sock, sockaddr* addr, socklen_t addrlen);
+	int(*bind)(struct _socket_* sock, sockaddr* addr, socklen_t addrlen);
 }AuSocket;
 
+extern void AuSocketAdd(AuSocket* sock, void* data, size_t sz);
+
+/*
+* AuSocketInstall -- install the socket
+* interface
+*/
+extern void AuSocketInstall();
 /*
 * AuCreateSocket -- create a new socket for specific
 * domain
@@ -95,5 +105,12 @@ typedef struct _socket_ {
 * @param protocol -- protocol version
 */
 extern int AuCreateSocket(int domain, int type, int protocol);
+
+extern int AuSocketSetOpt(int sockfd, int level, int optname, const void* optval, socklen_t optlen);
+
+/*
+* AuRawSocketGetList -- get raw socket list
+*/
+extern list_t* AuRawSocketGetList();
 
 #endif

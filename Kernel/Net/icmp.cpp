@@ -40,7 +40,7 @@
 * @param msghdr -- Message header containing every information
 * @param flags -- extra flags
 */
-uint64_t AuICMPReceive(AuSocket* sock, msghdr *msg, int flags){
+int AuICMPReceive(AuSocket* sock, msghdr *msg, int flags){
 	return 0;
 }
 
@@ -50,7 +50,7 @@ uint64_t AuICMPReceive(AuSocket* sock, msghdr *msg, int flags){
 * @param msghdr -- Message header containing every information
 * @param flags -- extra flags
 */
-uint64_t AuICMPSend(AuSocket* sock, msghdr* msg, int flags){
+int AuICMPSend(AuSocket* sock, msghdr* msg, int flags){
 	return 0;
 }
 
@@ -63,7 +63,7 @@ void AuICMPClose(AuSocket* sock) {
 }
 
 
-uint64_t AuICMPBind(AuSocket* sock, sockaddr* addr, socklen_t addrlen){
+int AuICMPBind(AuSocket* sock, sockaddr* addr, socklen_t addrlen){
 	return 0;
 }
 

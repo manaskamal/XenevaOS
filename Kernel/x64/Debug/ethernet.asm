@@ -6,48 +6,97 @@ INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
 CONST	SEGMENT
-$SG3017	DB	'Ethernet ARP : Packet received ', 0dH, 0aH, 00H
-	ORG $+6
-$SG3019	DB	'Ethernet IPv4: Packet received ', 0dH, 0aH, 00H
-	ORG $+6
-$SG3035	DB	'Ethernet setuped %d ', 0dH, 0aH, 00H
+$SG3200	DB	'Ethernet setuped %d ', 0dH, 0aH, 00H
 CONST	ENDS
 PUBLIC	?AuEthernetSend@@YAXPEAU__VFS_NODE__@@PEAX_KGPEAE@Z ; AuEthernetSend
 PUBLIC	AuEthernetHandle
+EXTRN	list_get_at:PROC
 EXTRN	kmalloc:PROC
 EXTRN	kfree:PROC
 EXTRN	memset:PROC
 EXTRN	memcpy:PROC
-EXTRN	SeTextOut:PROC
 EXTRN	AuTextOut:PROC
+EXTRN	?IPv4HandlePacket@@YAXPEAX@Z:PROC		; IPv4HandlePacket
+EXTRN	?AuSocketAdd@@YAXPEAU_socket_@@PEAX_K@Z:PROC	; AuSocketAdd
+EXTRN	?AuRawSocketGetList@@YAPEAU_list_@@XZ:PROC	; AuRawSocketGetList
 pdata	SEGMENT
 $pdata$?AuEthernetSend@@YAXPEAU__VFS_NODE__@@PEAX_KGPEAE@Z DD imagerel $LN4
 	DD	imagerel $LN4+290
 	DD	imagerel $unwind$?AuEthernetSend@@YAXPEAU__VFS_NODE__@@PEAX_KGPEAE@Z
-$pdata$AuEthernetHandle DD imagerel $LN7
-	DD	imagerel $LN7+103
+$pdata$AuEthernetHandle DD imagerel $LN10
+	DD	imagerel $LN10+187
 	DD	imagerel $unwind$AuEthernetHandle
 pdata	ENDS
 xdata	SEGMENT
 $unwind$?AuEthernetSend@@YAXPEAU__VFS_NODE__@@PEAX_KGPEAE@Z DD 011901H
 	DD	08219H
-$unwind$AuEthernetHandle DD 010901H
-	DD	06209H
+$unwind$AuEthernetHandle DD 010d01H
+	DD	0820dH
 xdata	ENDS
 ; Function compile flags: /Odtpy
 ; File e:\xeneva project\aurora\kernel\net\ethernet.cpp
 _TEXT	SEGMENT
-tv73 = 32
-frame$ = 64
+i$1 = 32
+tv84 = 36
+frame$ = 40
+raw_sockets$ = 48
+sock$2 = 56
+data$ = 80
+size$ = 88
 AuEthernetHandle PROC
 
-; 38   : AU_EXTERN AU_EXPORT void AuEthernetHandle(Ethernet *frame) {
+; 49   : AU_EXTERN AU_EXPORT void AuEthernetHandle(void *data, int size) {
 
-$LN7:
+$LN10:
+	mov	DWORD PTR [rsp+16], edx
 	mov	QWORD PTR [rsp+8], rcx
-	sub	rsp, 56					; 00000038H
+	sub	rsp, 72					; 00000048H
 
-; 39   : 	switch (ntohs(frame->typeLen)) {
+; 50   : 	Ethernet* frame = (Ethernet*)data;
+
+	mov	rax, QWORD PTR data$[rsp]
+	mov	QWORD PTR frame$[rsp], rax
+
+; 51   : 	list_t *raw_sockets = AuRawSocketGetList();
+
+	call	?AuRawSocketGetList@@YAPEAU_list_@@XZ	; AuRawSocketGetList
+	mov	QWORD PTR raw_sockets$[rsp], rax
+
+; 52   : 	for (int i = 0; i < raw_sockets->pointer; i++) {
+
+	mov	DWORD PTR i$1[rsp], 0
+	jmp	SHORT $LN7@AuEthernet
+$LN6@AuEthernet:
+	mov	eax, DWORD PTR i$1[rsp]
+	inc	eax
+	mov	DWORD PTR i$1[rsp], eax
+$LN7@AuEthernet:
+	mov	rax, QWORD PTR raw_sockets$[rsp]
+	mov	eax, DWORD PTR [rax]
+	cmp	DWORD PTR i$1[rsp], eax
+	jae	SHORT $LN5@AuEthernet
+
+; 53   : 		AuSocket *sock = (AuSocket*)list_get_at(raw_sockets, i);
+
+	mov	edx, DWORD PTR i$1[rsp]
+	mov	rcx, QWORD PTR raw_sockets$[rsp]
+	call	list_get_at
+	mov	QWORD PTR sock$2[rsp], rax
+
+; 54   : 		AuSocketAdd(sock, frame, size);
+
+	movsxd	rax, DWORD PTR size$[rsp]
+	mov	r8, rax
+	mov	rdx, QWORD PTR frame$[rsp]
+	mov	rcx, QWORD PTR sock$2[rsp]
+	call	?AuSocketAdd@@YAXPEAU_socket_@@PEAX_K@Z	; AuSocketAdd
+
+; 55   : 	}
+
+	jmp	SHORT $LN6@AuEthernet
+$LN5@AuEthernet:
+
+; 56   : 	switch (ntohs(frame->typeLen)) {
 
 	mov	rax, QWORD PTR frame$[rsp]
 	movzx	eax, WORD PTR [rax+12]
@@ -58,37 +107,31 @@ $LN7:
 	and	ecx, 65280				; 0000ff00H
 	sar	ecx, 8
 	or	eax, ecx
-	mov	DWORD PTR tv73[rsp], eax
-	cmp	DWORD PTR tv73[rsp], 2048		; 00000800H
+	mov	DWORD PTR tv84[rsp], eax
+	cmp	DWORD PTR tv84[rsp], 2048		; 00000800H
 	je	SHORT $LN1@AuEthernet
-	cmp	DWORD PTR tv73[rsp], 2054		; 00000806H
-	je	SHORT $LN2@AuEthernet
 	jmp	SHORT $LN3@AuEthernet
-$LN2@AuEthernet:
 
-; 40   : 	case ETHERNET_TYPE_ARP:
-; 41   : 		SeTextOut("Ethernet ARP : Packet received \r\n");
-
-	lea	rcx, OFFSET FLAT:$SG3017
-	call	SeTextOut
-
-; 42   : 		break;
+; 57   : 	case ETHERNET_TYPE_ARP:
+; 58   : 		break;
 
 	jmp	SHORT $LN3@AuEthernet
 $LN1@AuEthernet:
 
-; 43   : 	case ETHERNET_TYPE_IPV4:
-; 44   : 		SeTextOut("Ethernet IPv4: Packet received \r\n");
+; 59   : 	case ETHERNET_TYPE_IPV4:
+; 60   : 		IPv4HandlePacket((void*)&frame->payload);
 
-	lea	rcx, OFFSET FLAT:$SG3019
-	call	SeTextOut
+	mov	rax, QWORD PTR frame$[rsp]
+	add	rax, 14
+	mov	rcx, rax
+	call	?IPv4HandlePacket@@YAXPEAX@Z		; IPv4HandlePacket
 $LN3@AuEthernet:
 
-; 45   : 		break;
-; 46   : 	}
-; 47   : }
+; 61   : 		break;
+; 62   : 	}
+; 63   : }
 
-	add	rsp, 56					; 00000038H
+	add	rsp, 72					; 00000048H
 	ret	0
 AuEthernetHandle ENDP
 _TEXT	ENDS
@@ -106,7 +149,7 @@ type$ = 104
 dest$ = 112
 ?AuEthernetSend@@YAXPEAU__VFS_NODE__@@PEAX_KGPEAE@Z PROC ; AuEthernetSend
 
-; 56   : void AuEthernetSend(AuVFSNode* nic,void* data, size_t len, uint16_t type, uint8_t* dest) {
+; 72   : void AuEthernetSend(AuVFSNode* nic,void* data, size_t len, uint16_t type, uint8_t* dest) {
 
 $LN4:
 	mov	WORD PTR [rsp+32], r9w
@@ -115,42 +158,42 @@ $LN4:
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 72					; 00000048H
 
-; 57   : 	AuNetworkDevice* ndev = (AuNetworkDevice*)nic->device;
+; 73   : 	AuNetworkDevice* ndev = (AuNetworkDevice*)nic->device;
 
 	mov	rax, QWORD PTR nic$[rsp]
 	mov	rax, QWORD PTR [rax+64]
 	mov	QWORD PTR ndev$[rsp], rax
 
-; 58   : 	if (!ndev)
+; 74   : 	if (!ndev)
 
 	cmp	QWORD PTR ndev$[rsp], 0
 	jne	SHORT $LN1@AuEthernet
 
-; 59   : 		return;
+; 75   : 		return;
 
 	jmp	$LN2@AuEthernet
 $LN1@AuEthernet:
 
-; 60   : 	size_t totalSz = sizeof(Ethernet)+len;
+; 76   : 	size_t totalSz = sizeof(Ethernet)+len;
 
 	mov	rax, QWORD PTR len$[rsp]
 	add	rax, 14
 	mov	QWORD PTR totalSz$[rsp], rax
 
-; 61   : 	Ethernet* pacl = (Ethernet*)kmalloc(totalSz);
+; 77   : 	Ethernet* pacl = (Ethernet*)kmalloc(totalSz);
 
 	mov	ecx, DWORD PTR totalSz$[rsp]
 	call	kmalloc
 	mov	QWORD PTR pacl$[rsp], rax
 
-; 62   : 	memset(pacl, 0, totalSz);
+; 78   : 	memset(pacl, 0, totalSz);
 
 	mov	r8d, DWORD PTR totalSz$[rsp]
 	xor	edx, edx
 	mov	rcx, QWORD PTR pacl$[rsp]
 	call	memset
 
-; 63   : 	memcpy(pacl->dest, dest, 6);
+; 79   : 	memcpy(pacl->dest, dest, 6);
 
 	mov	rax, QWORD PTR pacl$[rsp]
 	mov	r8d, 6
@@ -158,12 +201,12 @@ $LN1@AuEthernet:
 	mov	rcx, rax
 	call	memcpy
 
-; 64   : 	uint8_t *src_mac = ndev->mac;
+; 80   : 	uint8_t *src_mac = ndev->mac;
 
 	mov	rax, QWORD PTR ndev$[rsp]
 	mov	QWORD PTR src_mac$[rsp], rax
 
-; 65   : 	memcpy(pacl->src, src_mac, 6);
+; 81   : 	memcpy(pacl->src, src_mac, 6);
 
 	mov	rax, QWORD PTR pacl$[rsp]
 	add	rax, 6
@@ -172,7 +215,7 @@ $LN1@AuEthernet:
 	mov	rcx, rax
 	call	memcpy
 
-; 66   : 	pacl->typeLen = htons(type);
+; 82   : 	pacl->typeLen = htons(type);
 
 	movzx	eax, WORD PTR type$[rsp]
 	and	eax, 255				; 000000ffH
@@ -184,7 +227,7 @@ $LN1@AuEthernet:
 	mov	rcx, QWORD PTR pacl$[rsp]
 	mov	WORD PTR [rcx+12], ax
 
-; 67   : 	memcpy(pacl->payload, data, len);
+; 83   : 	memcpy(pacl->payload, data, len);
 
 	mov	rax, QWORD PTR pacl$[rsp]
 	add	rax, 14
@@ -193,17 +236,17 @@ $LN1@AuEthernet:
 	mov	rcx, rax
 	call	memcpy
 
-; 68   : 	
-; 69   : 	AuTextOut("Ethernet setuped %d \r\n", ndev->type);
+; 84   : 	
+; 85   : 	AuTextOut("Ethernet setuped %d \r\n", ndev->type);
 
 	mov	rax, QWORD PTR ndev$[rsp]
 	movzx	eax, BYTE PTR [rax+10]
 	mov	edx, eax
-	lea	rcx, OFFSET FLAT:$SG3035
+	lea	rcx, OFFSET FLAT:$SG3200
 	call	AuTextOut
 
-; 70   : 
-; 71   : 	nic->write(nic, nic, (uint64_t*)pacl, totalSz);
+; 86   : 
+; 87   : 	nic->write(nic, nic, (uint64_t*)pacl, totalSz);
 
 	mov	r9d, DWORD PTR totalSz$[rsp]
 	mov	r8, QWORD PTR pacl$[rsp]
@@ -212,13 +255,13 @@ $LN1@AuEthernet:
 	mov	rax, QWORD PTR nic$[rsp]
 	call	QWORD PTR [rax+98]
 
-; 72   : 	kfree(pacl);
+; 88   : 	kfree(pacl);
 
 	mov	rcx, QWORD PTR pacl$[rsp]
 	call	kfree
 $LN2@AuEthernet:
 
-; 73   : }
+; 89   : }
 
 	add	rsp, 72					; 00000048H
 	ret	0

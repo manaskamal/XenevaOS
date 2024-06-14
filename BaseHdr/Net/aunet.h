@@ -42,6 +42,9 @@ typedef struct _netdev_{
 	uint8_t mac[6];
 	int linkStatus;
 	uint8_t type;
+	uint32_t ipv4addr;
+	uint32_t ipv4subnet;
+	uint32_t ipv4gateway;
 }AuNetworkDevice;
 #pragma pack(pop)
 
@@ -51,6 +54,15 @@ typedef struct _netdev_{
 #define ntohl(l)  htonl((l))
 #define ntohs(s)  htons((s))
 
+/*I/O Codes used for network interfaces */
+#define AUNET_GET_HARDWARE_ADDRESS 0x100
+#define AUNET_SET_IPV4_ADDRESS 0x101
+#define AUNET_GET_IPV4_ADDRESS 0x102
+#define AUNET_GET_GATEWAY_ADDRESS 0x103
+#define AUNET_SET_GATEWAY_ADDRESS 0x104
+#define AUNET_GET_SUBNET_MASK 0x105
+#define AUNET_SET_SUBNET_MASK 0x106
+#define AUNET_GET_LINK_STATUS 0x107
 
 /*
 * AuInitialiseNet -- initialise network data structures

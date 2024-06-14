@@ -50,6 +50,12 @@ XE_EXTERN{
 #define IPPROTOCOL_TCP  6
 #define IPPROTOCOL_UDP  17
 
+#define SOL_SOCKET 0
+
+#define SO_KEEPALIVE 1
+#define SO_REUSEADDR 2
+#define SO_BINDTODEVICE 3
+
 	typedef size_t socklen_t;
 
 	typedef struct _sockaddr_ {
@@ -84,7 +90,13 @@ XE_EXTERN{
 	}msghdr;
 
 	XE_LIB int socket(int domain, int type, int protocol);
-
+	XE_LIB int connect(int sockfd, sockaddr* addr, socklen_t addrlen);
+	XE_LIB int send(int sockfd, msghdr* msg, int flags);
+	XE_LIB int receive(int sockfd, msghdr *msg, int flags);
+	XE_LIB int socket_setopt(int sockfd, int level, int optname, const void* optval, socklen_t optlen);
+	XE_LIB int bind(int sockfd, sockaddr *addr, socklen_t addrlen);
+	XE_LIB int accept(int sockfd, sockaddr *addr, socklen_t * addrlen);
+	XE_LIB int listen(int sockfd, int backlog);
 #ifdef __cplusplus
 }
 #endif

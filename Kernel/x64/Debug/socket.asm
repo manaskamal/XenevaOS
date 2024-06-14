@@ -5,18 +5,649 @@ include listing.inc
 INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
+PUBLIC	?raw_socket_list@@3PEAU_list_@@EA		; raw_socket_list
+_BSS	SEGMENT
+?raw_socket_list@@3PEAU_list_@@EA DQ 01H DUP (?)	; raw_socket_list
+_BSS	ENDS
+CONST	SEGMENT
+$SG3772	DB	'Device binding ->%s ', 0dH, 0aH, 00H
+CONST	ENDS
+PUBLIC	?AuSocketAdd@@YAXPEAU_socket_@@PEAX_K@Z		; AuSocketAdd
+PUBLIC	?AuSocketInstall@@YAXXZ				; AuSocketInstall
 PUBLIC	?AuCreateSocket@@YAHHHH@Z			; AuCreateSocket
+PUBLIC	?AuSocketSetOpt@@YAHHHHPEBX_K@Z			; AuSocketSetOpt
+PUBLIC	?AuRawSocketGetList@@YAPEAU_list_@@XZ		; AuRawSocketGetList
+PUBLIC	?AuSocketGet@@YAPEAXPEAU_socket_@@@Z		; AuSocketGet
+PUBLIC	?AuRawSocketReceive@@YAHPEAU_socket_@@PEAU_msghdr_@@H@Z ; AuRawSocketReceive
+PUBLIC	?AuRawSocketSend@@YAHPEAU_socket_@@PEAU_msghdr_@@H@Z ; AuRawSocketSend
+PUBLIC	?AuSocketSOSocket@@YAHPEAU_socket_@@HPEBX_K@Z	; AuSocketSOSocket
+PUBLIC	?AuNetCreateSocket@@YAPEAU_socket_@@XZ		; AuNetCreateSocket
+PUBLIC	?AuCreateRawSocket@@YAHHH@Z			; AuCreateRawSocket
+EXTRN	initialize_list:PROC
+EXTRN	list_add:PROC
+EXTRN	AuStackCreate:PROC
+EXTRN	AuStackPush:PROC
+EXTRN	AuStackPop:PROC
 EXTRN	?CreateIPv4Socket@@YAHHH@Z:PROC			; CreateIPv4Socket
+EXTRN	AuGetCurrentThread:PROC
+EXTRN	?AuProcessFindThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z:PROC ; AuProcessFindThread
+EXTRN	?AuProcessFindSubThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z:PROC ; AuProcessFindSubThread
+EXTRN	?AuProcessGetFileDesc@@YAHPEAU_au_proc_@@@Z:PROC ; AuProcessGetFileDesc
 EXTRN	x64_cli:PROC
+EXTRN	kmalloc:PROC
+EXTRN	kfree:PROC
+EXTRN	memset:PROC
+EXTRN	memcpy:PROC
+EXTRN	AuGetNetworkAdapter:PROC
+EXTRN	SeTextOut:PROC
 pdata	SEGMENT
+$pdata$?AuSocketAdd@@YAXPEAU_socket_@@PEAX_K@Z DD imagerel $LN3
+	DD	imagerel $LN3+131
+	DD	imagerel $unwind$?AuSocketAdd@@YAXPEAU_socket_@@PEAX_K@Z
+$pdata$?AuSocketInstall@@YAXXZ DD imagerel $LN3
+	DD	imagerel $LN3+21
+	DD	imagerel $unwind$?AuSocketInstall@@YAXXZ
 $pdata$?AuCreateSocket@@YAHHHH@Z DD imagerel $LN8
-	DD	imagerel $LN8+75
+	DD	imagerel $LN8+86
 	DD	imagerel $unwind$?AuCreateSocket@@YAHHHH@Z
+$pdata$?AuSocketSetOpt@@YAHHHHPEBX_K@Z DD imagerel $LN9
+	DD	imagerel $LN9+173
+	DD	imagerel $unwind$?AuSocketSetOpt@@YAHHHHPEBX_K@Z
+$pdata$?AuSocketGet@@YAPEAXPEAU_socket_@@@Z DD imagerel $LN3
+	DD	imagerel $LN3+41
+	DD	imagerel $unwind$?AuSocketGet@@YAPEAXPEAU_socket_@@@Z
+$pdata$?AuRawSocketReceive@@YAHPEAU_socket_@@PEAU_msghdr_@@H@Z DD imagerel $LN7
+	DD	imagerel $LN7+213
+	DD	imagerel $unwind$?AuRawSocketReceive@@YAHPEAU_socket_@@PEAU_msghdr_@@H@Z
+$pdata$?AuRawSocketSend@@YAHPEAU_socket_@@PEAU_msghdr_@@H@Z DD imagerel $LN5
+	DD	imagerel $LN5+138
+	DD	imagerel $unwind$?AuRawSocketSend@@YAHPEAU_socket_@@PEAU_msghdr_@@H@Z
+$pdata$?AuSocketSOSocket@@YAHPEAU_socket_@@HPEBX_K@Z DD imagerel $LN7
+	DD	imagerel $LN7+115
+	DD	imagerel $unwind$?AuSocketSOSocket@@YAHPEAU_socket_@@HPEBX_K@Z
+$pdata$?AuNetCreateSocket@@YAPEAU_socket_@@XZ DD imagerel $LN3
+	DD	imagerel $LN3+78
+	DD	imagerel $unwind$?AuNetCreateSocket@@YAPEAU_socket_@@XZ
+$pdata$?AuCreateRawSocket@@YAHHH@Z DD imagerel $LN6
+	DD	imagerel $LN6+203
+	DD	imagerel $unwind$?AuCreateRawSocket@@YAHHH@Z
 pdata	ENDS
 xdata	SEGMENT
+$unwind$?AuSocketAdd@@YAXPEAU_socket_@@PEAX_K@Z DD 011301H
+	DD	06213H
+$unwind$?AuSocketInstall@@YAXXZ DD 010401H
+	DD	04204H
 $unwind$?AuCreateSocket@@YAHHHH@Z DD 011101H
 	DD	06211H
+$unwind$?AuSocketSetOpt@@YAHHHHPEBX_K@Z DD 011601H
+	DD	08216H
+$unwind$?AuSocketGet@@YAPEAXPEAU_socket_@@@Z DD 010901H
+	DD	06209H
+$unwind$?AuRawSocketReceive@@YAHPEAU_socket_@@PEAU_msghdr_@@H@Z DD 011301H
+	DD	08213H
+$unwind$?AuRawSocketSend@@YAHPEAU_socket_@@PEAU_msghdr_@@H@Z DD 011301H
+	DD	06213H
+$unwind$?AuSocketSOSocket@@YAHPEAU_socket_@@HPEBX_K@Z DD 011701H
+	DD	06217H
+$unwind$?AuNetCreateSocket@@YAPEAU_socket_@@XZ DD 010401H
+	DD	06204H
+$unwind$?AuCreateRawSocket@@YAHHH@Z DD 010c01H
+	DD	0820cH
 xdata	ENDS
+; Function compile flags: /Odtpy
+; File e:\xeneva project\aurora\kernel\net\socket.cpp
+_TEXT	SEGMENT
+fd$ = 32
+proc$ = 40
+sock$ = 48
+curr_thr$ = 56
+type$ = 80
+protocol$ = 88
+?AuCreateRawSocket@@YAHHH@Z PROC			; AuCreateRawSocket
+
+; 129  : int AuCreateRawSocket(int type, int protocol){
+
+$LN6:
+	mov	DWORD PTR [rsp+16], edx
+	mov	DWORD PTR [rsp+8], ecx
+	sub	rsp, 72					; 00000048H
+
+; 130  : 	if (type != SOCK_RAW)return -1;
+
+	cmp	DWORD PTR type$[rsp], 3
+	je	SHORT $LN3@AuCreateRa
+	mov	eax, -1
+	jmp	$LN4@AuCreateRa
+$LN3@AuCreateRa:
+
+; 131  : 	AuThread* curr_thr = AuGetCurrentThread();
+
+	call	AuGetCurrentThread
+	mov	QWORD PTR curr_thr$[rsp], rax
+
+; 132  : 	AuProcess *proc = AuProcessFindThread(curr_thr);
+
+	mov	rcx, QWORD PTR curr_thr$[rsp]
+	call	?AuProcessFindThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z ; AuProcessFindThread
+	mov	QWORD PTR proc$[rsp], rax
+
+; 133  : 	if (!proc){
+
+	cmp	QWORD PTR proc$[rsp], 0
+	jne	SHORT $LN2@AuCreateRa
+
+; 134  : 		proc = AuProcessFindSubThread(curr_thr);
+
+	mov	rcx, QWORD PTR curr_thr$[rsp]
+	call	?AuProcessFindSubThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z ; AuProcessFindSubThread
+	mov	QWORD PTR proc$[rsp], rax
+
+; 135  : 		if (!proc)
+
+	cmp	QWORD PTR proc$[rsp], 0
+	jne	SHORT $LN1@AuCreateRa
+
+; 136  : 			return 1;
+
+	mov	eax, 1
+	jmp	SHORT $LN4@AuCreateRa
+$LN1@AuCreateRa:
+$LN2@AuCreateRa:
+
+; 137  : 	}
+; 138  : 	AuSocket* sock = AuNetCreateSocket();
+
+	call	?AuNetCreateSocket@@YAPEAU_socket_@@XZ	; AuNetCreateSocket
+	mov	QWORD PTR sock$[rsp], rax
+
+; 139  : 	sock->receive = AuRawSocketReceive;
+
+	mov	rax, QWORD PTR sock$[rsp]
+	lea	rcx, OFFSET FLAT:?AuRawSocketReceive@@YAHPEAU_socket_@@PEAU_msghdr_@@H@Z ; AuRawSocketReceive
+	mov	QWORD PTR [rax+192], rcx
+
+; 140  : 	sock->send = AuRawSocketSend;
+
+	mov	rax, QWORD PTR sock$[rsp]
+	lea	rcx, OFFSET FLAT:?AuRawSocketSend@@YAHPEAU_socket_@@PEAU_msghdr_@@H@Z ; AuRawSocketSend
+	mov	QWORD PTR [rax+200], rcx
+
+; 141  : 	int fd = AuProcessGetFileDesc(proc);
+
+	mov	rcx, QWORD PTR proc$[rsp]
+	call	?AuProcessGetFileDesc@@YAHPEAU_au_proc_@@@Z ; AuProcessGetFileDesc
+	mov	DWORD PTR fd$[rsp], eax
+
+; 142  : 	proc->fds[fd] = (AuVFSNode*)sock;
+
+	movsxd	rax, DWORD PTR fd$[rsp]
+	mov	rcx, QWORD PTR proc$[rsp]
+	mov	rdx, QWORD PTR sock$[rsp]
+	mov	QWORD PTR [rcx+rax*8+567], rdx
+
+; 143  : 	list_add(raw_socket_list, sock);
+
+	mov	rdx, QWORD PTR sock$[rsp]
+	mov	rcx, QWORD PTR ?raw_socket_list@@3PEAU_list_@@EA ; raw_socket_list
+	call	list_add
+
+; 144  : 	return fd;
+
+	mov	eax, DWORD PTR fd$[rsp]
+$LN4@AuCreateRa:
+
+; 145  : }
+
+	add	rsp, 72					; 00000048H
+	ret	0
+?AuCreateRawSocket@@YAHHH@Z ENDP			; AuCreateRawSocket
+_TEXT	ENDS
+; Function compile flags: /Odtpy
+; File e:\xeneva project\aurora\kernel\net\socket.cpp
+_TEXT	SEGMENT
+sock$ = 32
+?AuNetCreateSocket@@YAPEAU_socket_@@XZ PROC		; AuNetCreateSocket
+
+; 115  : AuSocket* AuNetCreateSocket() {
+
+$LN3:
+	sub	rsp, 56					; 00000038H
+
+; 116  : 	AuSocket* sock = (AuSocket*)kmalloc(sizeof(AuSocket));
+
+	mov	ecx, 232				; 000000e8H
+	call	kmalloc
+	mov	QWORD PTR sock$[rsp], rax
+
+; 117  : 	memset(sock, 0, sizeof(AuSocket));
+
+	mov	r8d, 232				; 000000e8H
+	xor	edx, edx
+	mov	rcx, QWORD PTR sock$[rsp]
+	call	memset
+
+; 118  : 	sock->fsnode.flags = FS_FLAG_SOCKET;
+
+	mov	eax, 512				; 00000200H
+	mov	rcx, QWORD PTR sock$[rsp]
+	mov	WORD PTR [rcx+61], ax
+
+; 119  : 	sock->rxstack = AuStackCreate();
+
+	call	AuStackCreate
+	mov	rcx, QWORD PTR sock$[rsp]
+	mov	QWORD PTR [rcx+184], rax
+
+; 120  : 	return sock;
+
+	mov	rax, QWORD PTR sock$[rsp]
+
+; 121  : }
+
+	add	rsp, 56					; 00000038H
+	ret	0
+?AuNetCreateSocket@@YAPEAU_socket_@@XZ ENDP		; AuNetCreateSocket
+_TEXT	ENDS
+; Function compile flags: /Odtpy
+; File e:\xeneva project\aurora\kernel\net\socket.cpp
+_TEXT	SEGMENT
+tv64 = 32
+nic$1 = 40
+sock$ = 64
+optname$ = 72
+optval$ = 80
+optlen$ = 88
+?AuSocketSOSocket@@YAHPEAU_socket_@@HPEBX_K@Z PROC	; AuSocketSOSocket
+
+; 83   : int AuSocketSOSocket(AuSocket* sock, int optname, const void* optval, socklen_t optlen){
+
+$LN7:
+	mov	QWORD PTR [rsp+32], r9
+	mov	QWORD PTR [rsp+24], r8
+	mov	DWORD PTR [rsp+16], edx
+	mov	QWORD PTR [rsp+8], rcx
+	sub	rsp, 56					; 00000038H
+
+; 84   : 	switch (optname){
+
+	mov	eax, DWORD PTR optname$[rsp]
+	mov	DWORD PTR tv64[rsp], eax
+	cmp	DWORD PTR tv64[rsp], 3
+	je	SHORT $LN2@AuSocketSO
+	jmp	SHORT $LN3@AuSocketSO
+$LN2@AuSocketSO:
+
+; 85   : 	case SO_BINDTODEVICE: {   SeTextOut("Device binding ->%s \r\n", ((char*)optval));
+
+	mov	rdx, QWORD PTR optval$[rsp]
+	lea	rcx, OFFSET FLAT:$SG3772
+	call	SeTextOut
+
+; 86   : 							  //if (optlen < 1 || optlen > 32 || ((const char*)optval)[optlen - 1] != 0) return -1;  
+; 87   : 							  AuVFSNode* nic = AuGetNetworkAdapter((char*)optval);
+
+	mov	rcx, QWORD PTR optval$[rsp]
+	call	AuGetNetworkAdapter
+	mov	QWORD PTR nic$1[rsp], rax
+
+; 88   : 							  if (!nic) return -1;
+
+	cmp	QWORD PTR nic$1[rsp], 0
+	jne	SHORT $LN1@AuSocketSO
+	mov	eax, -1
+	jmp	SHORT $LN5@AuSocketSO
+$LN1@AuSocketSO:
+
+; 89   : 							  sock->fsnode.device = nic;
+
+	mov	rax, QWORD PTR sock$[rsp]
+	mov	rcx, QWORD PTR nic$1[rsp]
+	mov	QWORD PTR [rax+64], rcx
+
+; 90   : 							  return 0;
+
+	xor	eax, eax
+	jmp	SHORT $LN5@AuSocketSO
+$LN3@AuSocketSO:
+
+; 91   : 	}
+; 92   : 	}
+; 93   : 	return 1;
+
+	mov	eax, 1
+$LN5@AuSocketSO:
+
+; 94   : }
+
+	add	rsp, 56					; 00000038H
+	ret	0
+?AuSocketSOSocket@@YAHPEAU_socket_@@HPEBX_K@Z ENDP	; AuSocketSOSocket
+_TEXT	ENDS
+; Function compile flags: /Odtpy
+; File e:\xeneva project\aurora\kernel\net\socket.cpp
+_TEXT	SEGMENT
+device$ = 32
+sock$ = 64
+msg$ = 72
+flags$ = 80
+?AuRawSocketSend@@YAHPEAU_socket_@@PEAU_msghdr_@@H@Z PROC ; AuRawSocketSend
+
+; 69   : int AuRawSocketSend(AuSocket* sock, msghdr* msg, int flags) {
+
+$LN5:
+	mov	DWORD PTR [rsp+24], r8d
+	mov	QWORD PTR [rsp+16], rdx
+	mov	QWORD PTR [rsp+8], rcx
+	sub	rsp, 56					; 00000038H
+
+; 70   : 	if (!sock->fsnode.device) return -1;
+
+	mov	rax, QWORD PTR sock$[rsp]
+	cmp	QWORD PTR [rax+64], 0
+	jne	SHORT $LN2@AuRawSocke
+	mov	eax, -1
+	jmp	SHORT $LN3@AuRawSocke
+$LN2@AuRawSocke:
+
+; 71   : 	if (msg->msg_iovlen == 0) return 0;
+
+	mov	rax, QWORD PTR msg$[rsp]
+	cmp	QWORD PTR [rax+24], 0
+	jne	SHORT $LN1@AuRawSocke
+	xor	eax, eax
+	jmp	SHORT $LN3@AuRawSocke
+$LN1@AuRawSocke:
+
+; 72   : 	AuVFSNode* device = (AuVFSNode*)sock->fsnode.device;
+
+	mov	rax, QWORD PTR sock$[rsp]
+	mov	rax, QWORD PTR [rax+64]
+	mov	QWORD PTR device$[rsp], rax
+
+; 73   : 	device->write(device, device, (uint64_t*)msg->msg_iov[0].iov_base, msg->msg_iov[0].iov_len);
+
+	mov	eax, 16
+	imul	rax, rax, 0
+	mov	rcx, QWORD PTR msg$[rsp]
+	mov	rcx, QWORD PTR [rcx+16]
+	mov	edx, 16
+	imul	rdx, rdx, 0
+	mov	r8, QWORD PTR msg$[rsp]
+	mov	r8, QWORD PTR [r8+16]
+	mov	r9d, DWORD PTR [rcx+rax+8]
+	mov	r8, QWORD PTR [r8+rdx]
+	mov	rdx, QWORD PTR device$[rsp]
+	mov	rcx, QWORD PTR device$[rsp]
+	mov	rax, QWORD PTR device$[rsp]
+	call	QWORD PTR [rax+98]
+
+; 74   : 	return 0;
+
+	xor	eax, eax
+$LN3@AuRawSocke:
+
+; 75   : }
+
+	add	rsp, 56					; 00000038H
+	ret	0
+?AuRawSocketSend@@YAHPEAU_socket_@@PEAU_msghdr_@@H@Z ENDP ; AuRawSocketSend
+_TEXT	ENDS
+; Function compile flags: /Odtpy
+; File e:\xeneva project\aurora\kernel\net\socket.cpp
+_TEXT	SEGMENT
+data$ = 32
+pack_sz$ = 40
+tv86 = 48
+sock$ = 80
+msg$ = 88
+flags$ = 96
+?AuRawSocketReceive@@YAHPEAU_socket_@@PEAU_msghdr_@@H@Z PROC ; AuRawSocketReceive
+
+; 56   : int AuRawSocketReceive(AuSocket* sock, msghdr* msg, int flags) {
+
+$LN7:
+	mov	DWORD PTR [rsp+24], r8d
+	mov	QWORD PTR [rsp+16], rdx
+	mov	QWORD PTR [rsp+8], rcx
+	sub	rsp, 72					; 00000048H
+
+; 57   : 	if (!sock->fsnode.device)
+
+	mov	rax, QWORD PTR sock$[rsp]
+	cmp	QWORD PTR [rax+64], 0
+	jne	SHORT $LN4@AuRawSocke
+
+; 58   : 		return -1;
+
+	mov	eax, -1
+	jmp	$LN5@AuRawSocke
+$LN4@AuRawSocke:
+
+; 59   : 	if (msg->msg_iovlen == 0) return 0;
+
+	mov	rax, QWORD PTR msg$[rsp]
+	cmp	QWORD PTR [rax+24], 0
+	jne	SHORT $LN3@AuRawSocke
+	xor	eax, eax
+	jmp	$LN5@AuRawSocke
+$LN3@AuRawSocke:
+
+; 60   : 	char* data = (char*)AuSocketGet(sock);
+
+	mov	rcx, QWORD PTR sock$[rsp]
+	call	?AuSocketGet@@YAPEAXPEAU_socket_@@@Z	; AuSocketGet
+	mov	QWORD PTR data$[rsp], rax
+
+; 61   : 	if (!data) return -1;
+
+	cmp	QWORD PTR data$[rsp], 0
+	jne	SHORT $LN2@AuRawSocke
+	mov	eax, -1
+	jmp	SHORT $LN5@AuRawSocke
+$LN2@AuRawSocke:
+
+; 62   : 	size_t pack_sz = *(size_t*)data;
+
+	mov	rax, QWORD PTR data$[rsp]
+	mov	rax, QWORD PTR [rax]
+	mov	QWORD PTR pack_sz$[rsp], rax
+
+; 63   : 	if (msg->msg_iov[0].iov_len < pack_sz) return -1;
+
+	mov	eax, 16
+	imul	rax, rax, 0
+	mov	rcx, QWORD PTR msg$[rsp]
+	mov	rcx, QWORD PTR [rcx+16]
+	mov	rdx, QWORD PTR pack_sz$[rsp]
+	cmp	QWORD PTR [rcx+rax+8], rdx
+	jae	SHORT $LN1@AuRawSocke
+	mov	eax, -1
+	jmp	SHORT $LN5@AuRawSocke
+$LN1@AuRawSocke:
+
+; 64   : 	memcpy(msg->msg_iov[0].iov_base, data + sizeof(size_t), pack_sz);
+
+	mov	rax, QWORD PTR data$[rsp]
+	add	rax, 8
+	mov	ecx, 16
+	imul	rcx, rcx, 0
+	mov	rdx, QWORD PTR msg$[rsp]
+	mov	rdx, QWORD PTR [rdx+16]
+	mov	QWORD PTR tv86[rsp], rdx
+	mov	r8, QWORD PTR pack_sz$[rsp]
+	mov	rdx, rax
+	mov	rax, QWORD PTR tv86[rsp]
+	mov	rcx, QWORD PTR [rax+rcx]
+	call	memcpy
+
+; 65   : 	kfree(data);
+
+	mov	rcx, QWORD PTR data$[rsp]
+	call	kfree
+
+; 66   : 	return pack_sz;
+
+	mov	eax, DWORD PTR pack_sz$[rsp]
+$LN5@AuRawSocke:
+
+; 67   : }
+
+	add	rsp, 72					; 00000048H
+	ret	0
+?AuRawSocketReceive@@YAHPEAU_socket_@@PEAU_msghdr_@@H@Z ENDP ; AuRawSocketReceive
+_TEXT	ENDS
+; Function compile flags: /Odtpy
+; File e:\xeneva project\aurora\kernel\net\socket.cpp
+_TEXT	SEGMENT
+data$ = 32
+sock$ = 64
+?AuSocketGet@@YAPEAXPEAU_socket_@@@Z PROC		; AuSocketGet
+
+; 51   : void* AuSocketGet(AuSocket* sock) {
+
+$LN3:
+	mov	QWORD PTR [rsp+8], rcx
+	sub	rsp, 56					; 00000038H
+
+; 52   : 	void* data = AuStackPop(sock->rxstack);
+
+	mov	rax, QWORD PTR sock$[rsp]
+	mov	rcx, QWORD PTR [rax+184]
+	call	AuStackPop
+	mov	QWORD PTR data$[rsp], rax
+
+; 53   : 	return data;
+
+	mov	rax, QWORD PTR data$[rsp]
+
+; 54   : }
+
+	add	rsp, 56					; 00000038H
+	ret	0
+?AuSocketGet@@YAPEAXPEAU_socket_@@@Z ENDP		; AuSocketGet
+_TEXT	ENDS
+; Function compile flags: /Odtpy
+; File e:\xeneva project\aurora\kernel\net\socket.cpp
+_TEXT	SEGMENT
+?AuRawSocketGetList@@YAPEAU_list_@@XZ PROC		; AuRawSocketGetList
+
+; 178  : 	return raw_socket_list;
+
+	mov	rax, QWORD PTR ?raw_socket_list@@3PEAU_list_@@EA ; raw_socket_list
+
+; 179  : }
+
+	ret	0
+?AuRawSocketGetList@@YAPEAU_list_@@XZ ENDP		; AuRawSocketGetList
+_TEXT	ENDS
+; Function compile flags: /Odtpy
+; File e:\xeneva project\aurora\kernel\net\socket.cpp
+_TEXT	SEGMENT
+tv75 = 32
+proc$ = 40
+curr$ = 48
+sock$ = 56
+sockfd$ = 80
+level$ = 88
+optname$ = 96
+optval$ = 104
+optlen$ = 112
+?AuSocketSetOpt@@YAHHHHPEBX_K@Z PROC			; AuSocketSetOpt
+
+; 96   : int AuSocketSetOpt(int sockfd, int level, int optname, const void* optval, socklen_t optlen) {
+
+$LN9:
+	mov	QWORD PTR [rsp+32], r9
+	mov	DWORD PTR [rsp+24], r8d
+	mov	DWORD PTR [rsp+16], edx
+	mov	DWORD PTR [rsp+8], ecx
+	sub	rsp, 72					; 00000048H
+
+; 97   : 	x64_cli();
+
+	call	x64_cli
+
+; 98   : 	AuThread* curr = AuGetCurrentThread();
+
+	call	AuGetCurrentThread
+	mov	QWORD PTR curr$[rsp], rax
+
+; 99   : 	AuProcess* proc = AuProcessFindThread(curr);
+
+	mov	rcx, QWORD PTR curr$[rsp]
+	call	?AuProcessFindThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z ; AuProcessFindThread
+	mov	QWORD PTR proc$[rsp], rax
+
+; 100  : 	if (!proc){
+
+	cmp	QWORD PTR proc$[rsp], 0
+	jne	SHORT $LN6@AuSocketSe
+
+; 101  : 		proc = AuProcessFindSubThread(curr);
+
+	mov	rcx, QWORD PTR curr$[rsp]
+	call	?AuProcessFindSubThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z ; AuProcessFindSubThread
+	mov	QWORD PTR proc$[rsp], rax
+
+; 102  : 		if (!proc)
+
+	cmp	QWORD PTR proc$[rsp], 0
+	jne	SHORT $LN5@AuSocketSe
+
+; 103  : 			return -1;
+
+	mov	eax, -1
+	jmp	SHORT $LN7@AuSocketSe
+$LN5@AuSocketSe:
+$LN6@AuSocketSe:
+
+; 104  : 	}
+; 105  : 	AuSocket* sock = (AuSocket*)proc->fds[sockfd];
+
+	movsxd	rax, DWORD PTR sockfd$[rsp]
+	mov	rcx, QWORD PTR proc$[rsp]
+	mov	rax, QWORD PTR [rcx+rax*8+567]
+	mov	QWORD PTR sock$[rsp], rax
+
+; 106  : 	switch (level)
+
+	mov	eax, DWORD PTR level$[rsp]
+	mov	DWORD PTR tv75[rsp], eax
+	cmp	DWORD PTR tv75[rsp], 0
+	je	SHORT $LN2@AuSocketSe
+	jmp	SHORT $LN1@AuSocketSe
+$LN2@AuSocketSe:
+
+; 107  : 	{
+; 108  : 	case SOL_SOCKET:
+; 109  : 		return AuSocketSOSocket(sock, optname, optval, optlen);
+
+	mov	r9, QWORD PTR optlen$[rsp]
+	mov	r8, QWORD PTR optval$[rsp]
+	mov	edx, DWORD PTR optname$[rsp]
+	mov	rcx, QWORD PTR sock$[rsp]
+	call	?AuSocketSOSocket@@YAHPEAU_socket_@@HPEBX_K@Z ; AuSocketSOSocket
+	jmp	SHORT $LN7@AuSocketSe
+$LN1@AuSocketSe:
+
+; 110  : 	default:
+; 111  : 		return -1;
+
+	mov	eax, -1
+	jmp	SHORT $LN7@AuSocketSe
+
+; 112  : 	}
+; 113  : 	return -1;
+
+	mov	eax, -1
+$LN7@AuSocketSe:
+
+; 114  : }
+
+	add	rsp, 72					; 00000048H
+	ret	0
+?AuSocketSetOpt@@YAHHHHPEBX_K@Z ENDP			; AuSocketSetOpt
+_TEXT	ENDS
 ; Function compile flags: /Odtpy
 ; File e:\xeneva project\aurora\kernel\net\socket.cpp
 _TEXT	SEGMENT
@@ -26,7 +657,7 @@ type$ = 72
 protocol$ = 80
 ?AuCreateSocket@@YAHHHH@Z PROC				; AuCreateSocket
 
-; 41   : int AuCreateSocket(int domain, int type, int protocol) {
+; 154  : int AuCreateSocket(int domain, int type, int protocol) {
 
 $LN8:
 	mov	DWORD PTR [rsp+24], r8d
@@ -34,11 +665,11 @@ $LN8:
 	mov	DWORD PTR [rsp+8], ecx
 	sub	rsp, 56					; 00000038H
 
-; 42   : 	x64_cli();
+; 155  : 	x64_cli();
 
 	call	x64_cli
 
-; 43   : 	switch (domain) {
+; 156  : 	switch (domain) {
 
 	mov	eax, DWORD PTR domain$[rsp]
 	mov	DWORD PTR tv64[rsp], eax
@@ -49,8 +680,8 @@ $LN8:
 	jmp	SHORT $LN1@AuCreateSo
 $LN3@AuCreateSo:
 
-; 44   : 	case AF_INET:
-; 45   : 		return CreateIPv4Socket(type, protocol);
+; 157  : 	case AF_INET:
+; 158  : 		return CreateIPv4Socket(type, protocol);
 
 	mov	edx, DWORD PTR protocol$[rsp]
 	mov	ecx, DWORD PTR type$[rsp]
@@ -58,25 +689,109 @@ $LN3@AuCreateSo:
 	jmp	SHORT $LN6@AuCreateSo
 $LN2@AuCreateSo:
 
-; 46   : 	case AF_RAW:
-; 47   : 		//create a raw socket
-; 48   : 		return 0;
+; 159  : 	case AF_RAW:
+; 160  : 		return AuCreateRawSocket(type, protocol);
 
-	xor	eax, eax
+	mov	edx, DWORD PTR protocol$[rsp]
+	mov	ecx, DWORD PTR type$[rsp]
+	call	?AuCreateRawSocket@@YAHHH@Z		; AuCreateRawSocket
 	jmp	SHORT $LN6@AuCreateSo
 $LN1@AuCreateSo:
 
-; 49   : 	default:
-; 50   : 		return -1;
+; 161  : 	default:
+; 162  : 		return -1;
 
 	mov	eax, -1
 $LN6@AuCreateSo:
 
-; 51   : 	}
-; 52   : }
+; 163  : 	}
+; 164  : }
 
 	add	rsp, 56					; 00000038H
 	ret	0
 ?AuCreateSocket@@YAHHHH@Z ENDP				; AuCreateSocket
+_TEXT	ENDS
+; Function compile flags: /Odtpy
+; File e:\xeneva project\aurora\kernel\net\socket.cpp
+_TEXT	SEGMENT
+?AuSocketInstall@@YAXXZ PROC				; AuSocketInstall
+
+; 170  : void AuSocketInstall() {
+
+$LN3:
+	sub	rsp, 40					; 00000028H
+
+; 171  : 	raw_socket_list = initialize_list();
+
+	call	initialize_list
+	mov	QWORD PTR ?raw_socket_list@@3PEAU_list_@@EA, rax ; raw_socket_list
+
+; 172  : }
+
+	add	rsp, 40					; 00000028H
+	ret	0
+?AuSocketInstall@@YAXXZ ENDP				; AuSocketInstall
+_TEXT	ENDS
+; Function compile flags: /Odtpy
+; File e:\xeneva project\aurora\kernel\net\socket.cpp
+_TEXT	SEGMENT
+data_$ = 32
+sock$ = 64
+data$ = 72
+sz$ = 80
+?AuSocketAdd@@YAXPEAU_socket_@@PEAX_K@Z PROC		; AuSocketAdd
+
+; 43   : void AuSocketAdd(AuSocket* sock, void* data, size_t sz) {
+
+$LN3:
+	mov	QWORD PTR [rsp+24], r8
+	mov	QWORD PTR [rsp+16], rdx
+	mov	QWORD PTR [rsp+8], rcx
+	sub	rsp, 56					; 00000038H
+
+; 44   : 	char* data_ = (char*)kmalloc(sizeof(size_t)+sz);
+
+	mov	rax, QWORD PTR sz$[rsp]
+	add	rax, 8
+	mov	ecx, eax
+	call	kmalloc
+	mov	QWORD PTR data_$[rsp], rax
+
+; 45   : 	memset(data_, 0, sz + sizeof(size_t));
+
+	mov	rax, QWORD PTR sz$[rsp]
+	add	rax, 8
+	mov	r8d, eax
+	xor	edx, edx
+	mov	rcx, QWORD PTR data_$[rsp]
+	call	memset
+
+; 46   : 	*(size_t*)data_ = sz;
+
+	mov	rax, QWORD PTR data_$[rsp]
+	mov	rcx, QWORD PTR sz$[rsp]
+	mov	QWORD PTR [rax], rcx
+
+; 47   : 	memcpy(data_ + sizeof(size_t), data, sz);
+
+	mov	rax, QWORD PTR data_$[rsp]
+	add	rax, 8
+	mov	r8, QWORD PTR sz$[rsp]
+	mov	rdx, QWORD PTR data$[rsp]
+	mov	rcx, rax
+	call	memcpy
+
+; 48   : 	AuStackPush(sock->rxstack, data_);
+
+	mov	rdx, QWORD PTR data_$[rsp]
+	mov	rax, QWORD PTR sock$[rsp]
+	mov	rcx, QWORD PTR [rax+184]
+	call	AuStackPush
+
+; 49   : }
+
+	add	rsp, 56					; 00000038H
+	ret	0
+?AuSocketAdd@@YAXPEAU_socket_@@PEAX_K@Z ENDP		; AuSocketAdd
 _TEXT	ENDS
 END

@@ -39,7 +39,7 @@
 * @param msghdr -- Message header containing every information
 * @param flags -- extra flags
 */
-uint64_t AuUDPReceive(AuSocket* sock, msghdr *msg, int flags){
+int AuUDPReceive(AuSocket* sock, msghdr *msg, int flags){
 	return 0;
 }
 
@@ -49,7 +49,7 @@ uint64_t AuUDPReceive(AuSocket* sock, msghdr *msg, int flags){
 * @param msghdr -- Message header containing every information
 * @param flags -- extra flags
 */
-uint64_t AuUDPSend(AuSocket* sock, msghdr* msg, int flags){
+int AuUDPSend(AuSocket* sock, msghdr* msg, int flags){
 	return 0;
 }
 
@@ -62,7 +62,7 @@ void AuUDPClose(AuSocket* sock) {
 }
 
 
-uint64_t AuUDPBind(AuSocket* sock, sockaddr* addr, socklen_t addrlen){
+int AuUDPBind(AuSocket* sock, sockaddr* addr, socklen_t addrlen){
 	return 0;
 }
 

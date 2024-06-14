@@ -6,12 +6,12 @@ INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
 CONST	SEGMENT
-$SG3308	DB	'UDP Socket created ', 0dH, 0aH, 00H
+$SG3348	DB	'UDP Socket created ', 0dH, 0aH, 00H
 CONST	ENDS
-PUBLIC	?AuUDPReceive@@YA_KPEAU_socket_@@PEAU_msghdr_@@H@Z ; AuUDPReceive
-PUBLIC	?AuUDPSend@@YA_KPEAU_socket_@@PEAU_msghdr_@@H@Z	; AuUDPSend
+PUBLIC	?AuUDPReceive@@YAHPEAU_socket_@@PEAU_msghdr_@@H@Z ; AuUDPReceive
+PUBLIC	?AuUDPSend@@YAHPEAU_socket_@@PEAU_msghdr_@@H@Z	; AuUDPSend
 PUBLIC	?AuUDPClose@@YAXPEAU_socket_@@@Z		; AuUDPClose
-PUBLIC	?AuUDPBind@@YA_KPEAU_socket_@@PEAU_sockaddr_@@_K@Z ; AuUDPBind
+PUBLIC	?AuUDPBind@@YAHPEAU_socket_@@PEAU_sockaddr_@@_K@Z ; AuUDPBind
 PUBLIC	?AuUDPRead@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z	; AuUDPRead
 PUBLIC	?AuUDPWrite@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z	; AuUDPWrite
 PUBLIC	?CreateUDPSocket@@YAHXZ				; CreateUDPSocket
@@ -96,13 +96,13 @@ $LN1@CreateUDPS:
 
 ; 91   : 	AuSocket *sock = (AuSocket*)kmalloc(sizeof(AuSocket));
 
-	mov	ecx, 224				; 000000e0H
+	mov	ecx, 232				; 000000e8H
 	call	kmalloc
 	mov	QWORD PTR sock$[rsp], rax
 
 ; 92   : 	memset(sock, 0, sizeof(AuSocket));
 
-	mov	r8d, 224				; 000000e0H
+	mov	r8d, 232				; 000000e8H
 	xor	edx, edx
 	mov	rcx, QWORD PTR sock$[rsp]
 	call	memset
@@ -128,31 +128,31 @@ $LN1@CreateUDPS:
 ; 96   : 	sock->bind = AuUDPBind;
 
 	mov	rax, QWORD PTR sock$[rsp]
-	lea	rcx, OFFSET FLAT:?AuUDPBind@@YA_KPEAU_socket_@@PEAU_sockaddr_@@_K@Z ; AuUDPBind
-	mov	QWORD PTR [rax+216], rcx
+	lea	rcx, OFFSET FLAT:?AuUDPBind@@YAHPEAU_socket_@@PEAU_sockaddr_@@_K@Z ; AuUDPBind
+	mov	QWORD PTR [rax+224], rcx
 
 ; 97   : 	sock->close = AuUDPClose;
 
 	mov	rax, QWORD PTR sock$[rsp]
 	lea	rcx, OFFSET FLAT:?AuUDPClose@@YAXPEAU_socket_@@@Z ; AuUDPClose
-	mov	QWORD PTR [rax+200], rcx
+	mov	QWORD PTR [rax+208], rcx
 
 ; 98   : 	sock->connect = 0;
 
 	mov	rax, QWORD PTR sock$[rsp]
-	mov	QWORD PTR [rax+208], 0
+	mov	QWORD PTR [rax+216], 0
 
 ; 99   : 	sock->receive = AuUDPReceive;
 
 	mov	rax, QWORD PTR sock$[rsp]
-	lea	rcx, OFFSET FLAT:?AuUDPReceive@@YA_KPEAU_socket_@@PEAU_msghdr_@@H@Z ; AuUDPReceive
-	mov	QWORD PTR [rax+184], rcx
+	lea	rcx, OFFSET FLAT:?AuUDPReceive@@YAHPEAU_socket_@@PEAU_msghdr_@@H@Z ; AuUDPReceive
+	mov	QWORD PTR [rax+192], rcx
 
 ; 100  : 	sock->send = AuUDPSend;
 
 	mov	rax, QWORD PTR sock$[rsp]
-	lea	rcx, OFFSET FLAT:?AuUDPSend@@YA_KPEAU_socket_@@PEAU_msghdr_@@H@Z ; AuUDPSend
-	mov	QWORD PTR [rax+192], rcx
+	lea	rcx, OFFSET FLAT:?AuUDPSend@@YAHPEAU_socket_@@PEAU_msghdr_@@H@Z ; AuUDPSend
+	mov	QWORD PTR [rax+200], rcx
 
 ; 101  : 	proc->fds[fd] = (AuVFSNode*)sock;
 
@@ -163,7 +163,7 @@ $LN1@CreateUDPS:
 
 ; 102  : 	SeTextOut("UDP Socket created \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG3308
+	lea	rcx, OFFSET FLAT:$SG3348
 	call	SeTextOut
 
 ; 103  : 	return fd;
@@ -233,9 +233,9 @@ _TEXT	SEGMENT
 sock$ = 8
 addr$ = 16
 addrlen$ = 24
-?AuUDPBind@@YA_KPEAU_socket_@@PEAU_sockaddr_@@_K@Z PROC	; AuUDPBind
+?AuUDPBind@@YAHPEAU_socket_@@PEAU_sockaddr_@@_K@Z PROC	; AuUDPBind
 
-; 65   : uint64_t AuUDPBind(AuSocket* sock, sockaddr* addr, socklen_t addrlen){
+; 65   : int AuUDPBind(AuSocket* sock, sockaddr* addr, socklen_t addrlen){
 
 	mov	QWORD PTR [rsp+24], r8
 	mov	QWORD PTR [rsp+16], rdx
@@ -248,7 +248,7 @@ addrlen$ = 24
 ; 67   : }
 
 	ret	0
-?AuUDPBind@@YA_KPEAU_socket_@@PEAU_sockaddr_@@_K@Z ENDP	; AuUDPBind
+?AuUDPBind@@YAHPEAU_socket_@@PEAU_sockaddr_@@_K@Z ENDP	; AuUDPBind
 _TEXT	ENDS
 ; Function compile flags: /Odtpy
 ; File e:\xeneva project\aurora\kernel\net\udp.cpp
@@ -272,9 +272,9 @@ _TEXT	SEGMENT
 sock$ = 8
 msg$ = 16
 flags$ = 24
-?AuUDPSend@@YA_KPEAU_socket_@@PEAU_msghdr_@@H@Z PROC	; AuUDPSend
+?AuUDPSend@@YAHPEAU_socket_@@PEAU_msghdr_@@H@Z PROC	; AuUDPSend
 
-; 52   : uint64_t AuUDPSend(AuSocket* sock, msghdr* msg, int flags){
+; 52   : int AuUDPSend(AuSocket* sock, msghdr* msg, int flags){
 
 	mov	DWORD PTR [rsp+24], r8d
 	mov	QWORD PTR [rsp+16], rdx
@@ -287,7 +287,7 @@ flags$ = 24
 ; 54   : }
 
 	ret	0
-?AuUDPSend@@YA_KPEAU_socket_@@PEAU_msghdr_@@H@Z ENDP	; AuUDPSend
+?AuUDPSend@@YAHPEAU_socket_@@PEAU_msghdr_@@H@Z ENDP	; AuUDPSend
 _TEXT	ENDS
 ; Function compile flags: /Odtpy
 ; File e:\xeneva project\aurora\kernel\net\udp.cpp
@@ -295,9 +295,9 @@ _TEXT	SEGMENT
 sock$ = 8
 msg$ = 16
 flags$ = 24
-?AuUDPReceive@@YA_KPEAU_socket_@@PEAU_msghdr_@@H@Z PROC	; AuUDPReceive
+?AuUDPReceive@@YAHPEAU_socket_@@PEAU_msghdr_@@H@Z PROC	; AuUDPReceive
 
-; 42   : uint64_t AuUDPReceive(AuSocket* sock, msghdr *msg, int flags){
+; 42   : int AuUDPReceive(AuSocket* sock, msghdr *msg, int flags){
 
 	mov	DWORD PTR [rsp+24], r8d
 	mov	QWORD PTR [rsp+16], rdx
@@ -310,6 +310,6 @@ flags$ = 24
 ; 44   : }
 
 	ret	0
-?AuUDPReceive@@YA_KPEAU_socket_@@PEAU_msghdr_@@H@Z ENDP	; AuUDPReceive
+?AuUDPReceive@@YAHPEAU_socket_@@PEAU_msghdr_@@H@Z ENDP	; AuUDPReceive
 _TEXT	ENDS
 END
