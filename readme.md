@@ -29,7 +29,7 @@ _And many more coming soon_
 
 ## Screenshot:
 
-![alt text](https://github.com/manaskamal/XenevaOS/blob/master/newmarch24.png?raw=true)
+![alt text](https://github.com/manaskamal/XenevaOS/blob/master/XenevaV1_2.png?raw=true)
 
 ## AppTray:
 

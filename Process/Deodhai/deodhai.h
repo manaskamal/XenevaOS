@@ -62,14 +62,14 @@
 
 
 
-
+#pragma pack(push,1)
 typedef struct _rect_ {
-	uint32_t x;
-	uint32_t y;
-	uint32_t w;
-	uint32_t h;
+	int32_t x;
+	int32_t y;
+	int32_t w;
+	int32_t h;
 }Rect;
-
+#pragma pack(pop)
 
 #pragma pack(push,1)
 typedef struct _bmp_ {

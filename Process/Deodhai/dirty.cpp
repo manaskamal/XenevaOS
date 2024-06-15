@@ -54,6 +54,12 @@ void InitialiseDirtyClipList() {
 void AddDirtyClip(int x, int y, int w, int h) {
 	if (_dirty_count >= 511)
 		_dirty_count = 0;
+	
+	if (x < 0)
+		_KePrint("AddDirtyClip: corrupted x value %d\r\n", x);
+	if (y < 0)
+		_KePrint("AddDirtyClip: corrupted y value %d\r\n", y);
+
 	dirtyRect[_dirty_count].x = x;
 	dirtyRect[_dirty_count].y = y;
 	dirtyRect[_dirty_count].w = w;

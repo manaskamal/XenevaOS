@@ -518,14 +518,10 @@ void CursorDrawBack(ChCanvas* canv,Cursor* cur, unsigned x, unsigned y) {
  */
 void ComposeFrame(ChCanvas *canvas) {
 
-	//if (_cursor_update_  || _cursor_drawback_){
-		CursorDrawBack(canvas, currentCursor, currentCursor->oldXPos, currentCursor->oldYPos);
-		AddDirtyClip(currentCursor->oldXPos, currentCursor->oldYPos, 24, 24);
-	/*	if (_cursor_drawback_)
-			_cursor_update_ = true;
-		_cursor_drawback_ = false;
-
-	}*/
+	
+	CursorDrawBack(canvas, currentCursor, currentCursor->oldXPos, currentCursor->oldYPos);
+	AddDirtyClip(currentCursor->oldXPos, currentCursor->oldYPos, 24, 24);
+	
 
 	int _back_d_count_ = BackDirtyGetDirtyCount();
 
@@ -1436,7 +1432,7 @@ int main(int argc, char* arv[]) {
 		surfaceBuffer[j * canv->canvasWidth + i] = GRAY; //0xFF938585;
 
 	DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
-	DrawWallpaper(canv, "/assam.jpg");
+	DrawWallpaper(canv, "/XE1_2.jpg");
 	DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
 	ChCanvasScreenUpdate(canv, 0, 0, canv->canvasWidth, canv->canvasHeight);
 
