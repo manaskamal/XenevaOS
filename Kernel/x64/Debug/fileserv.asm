@@ -6,11 +6,9 @@ INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
 CONST	SEGMENT
-$SG3910	DB	'Opening file -> %s | %x ', 0dH, 0aH, 00H
-	ORG $+5
-$SG3911	DB	'e1000 ctl -> %x ', 0dH, 0aH, 00H
+$SG3910	DB	'Opening file -> %s | %d ', 0dH, 0aH, 00H
 	ORG $+1
-$SG3925	DB	'/', 00H
+$SG3924	DB	'/', 00H
 	ORG $+2
 $SG4023	DB	'Closing fs -> %s ', 0dH, 0aH, 00H
 	ORG $+4
@@ -54,7 +52,7 @@ EXTRN	SeTextOut:PROC
 EXTRN	x64_cli:PROC
 pdata	SEGMENT
 $pdata$?OpenFile@@YAHPEADH@Z DD imagerel $LN12
-	DD	imagerel $LN12+312
+	DD	imagerel $LN12+291
 	DD	imagerel $unwind$?OpenFile@@YAHPEADH@Z
 $pdata$?FileSetOffset@@YAHH_K@Z DD imagerel $LN9
 	DD	imagerel $LN9+309
@@ -62,8 +60,8 @@ $pdata$?FileSetOffset@@YAHH_K@Z DD imagerel $LN9
 $pdata$?ReadFile@@YA_KHPEAX_K@Z DD imagerel $LN17
 	DD	imagerel $LN17+477
 	DD	imagerel $unwind$?ReadFile@@YA_KHPEAX_K@Z
-$pdata$?WriteFile@@YA_KHPEAX_K@Z DD imagerel $LN16
-	DD	imagerel $LN16+496
+$pdata$?WriteFile@@YA_KHPEAX_K@Z DD imagerel $LN17
+	DD	imagerel $LN17+513
 	DD	imagerel $unwind$?WriteFile@@YA_KHPEAX_K@Z
 $pdata$?CreateDir@@YAHPEAD@Z DD imagerel $LN9
 	DD	imagerel $LN9+182
@@ -1214,185 +1212,185 @@ file$ = 40
 current_proc$ = 48
 buff$1 = 56
 current_thr$ = 64
-aligned_buffer$ = 72
-fsys$ = 80
+fsys$ = 72
+aligned_buffer$ = 80
 write_bytes$ = 88
 fd$ = 112
 buffer$ = 120
 length$ = 128
 ?WriteFile@@YA_KHPEAX_K@Z PROC				; WriteFile
 
-; 175  : size_t WriteFile(int fd, void* buffer, size_t length) {
+; 174  : size_t WriteFile(int fd, void* buffer, size_t length) {
 
-$LN16:
+$LN17:
 	mov	QWORD PTR [rsp+24], r8
 	mov	QWORD PTR [rsp+16], rdx
 	mov	DWORD PTR [rsp+8], ecx
 	sub	rsp, 104				; 00000068H
 
-; 176  : 	x64_cli();
+; 175  : 	x64_cli();
 
 	call	x64_cli
 
-; 177  : 	if (fd == -1)
+; 176  : 	if (fd == -1)
 
 	cmp	DWORD PTR fd$[rsp], -1
-	jne	SHORT $LN11@WriteFile
+	jne	SHORT $LN12@WriteFile
 
-; 178  : 		return 0;
+; 177  : 		return 0;
 
 	xor	eax, eax
-	jmp	$LN12@WriteFile
-$LN11@WriteFile:
+	jmp	$LN13@WriteFile
+$LN12@WriteFile:
 
-; 179  : 	if (!buffer)
+; 178  : 	if (!buffer)
 
 	cmp	QWORD PTR buffer$[rsp], 0
-	jne	SHORT $LN10@WriteFile
+	jne	SHORT $LN11@WriteFile
 
-; 180  : 		return 0;
+; 179  : 		return 0;
 
 	xor	eax, eax
-	jmp	$LN12@WriteFile
-$LN10@WriteFile:
+	jmp	$LN13@WriteFile
+$LN11@WriteFile:
 
-; 181  : 	if (!length)
+; 180  : 	if (!length)
 
 	cmp	QWORD PTR length$[rsp], 0
-	jne	SHORT $LN9@WriteFile
+	jne	SHORT $LN10@WriteFile
 
-; 182  : 		return 0;
+; 181  : 		return 0;
 
 	xor	eax, eax
-	jmp	$LN12@WriteFile
-$LN9@WriteFile:
+	jmp	$LN13@WriteFile
+$LN10@WriteFile:
 
-; 183  : 	AuThread* current_thr = AuGetCurrentThread();
+; 182  : 	AuThread* current_thr = AuGetCurrentThread();
 
 	call	AuGetCurrentThread
 	mov	QWORD PTR current_thr$[rsp], rax
 
-; 184  : 	if (!current_thr)
+; 183  : 	if (!current_thr)
 
 	cmp	QWORD PTR current_thr$[rsp], 0
-	jne	SHORT $LN8@WriteFile
+	jne	SHORT $LN9@WriteFile
 
-; 185  : 		return 0;
+; 184  : 		return 0;
 
 	xor	eax, eax
-	jmp	$LN12@WriteFile
-$LN8@WriteFile:
+	jmp	$LN13@WriteFile
+$LN9@WriteFile:
 
-; 186  : 	AuProcess* current_proc = AuProcessFindThread(current_thr);
+; 185  : 	AuProcess* current_proc = AuProcessFindThread(current_thr);
 
 	mov	rcx, QWORD PTR current_thr$[rsp]
 	call	?AuProcessFindThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z ; AuProcessFindThread
 	mov	QWORD PTR current_proc$[rsp], rax
 
-; 187  : 	if (!current_proc) {
+; 186  : 	if (!current_proc) {
 
 	cmp	QWORD PTR current_proc$[rsp], 0
-	jne	SHORT $LN7@WriteFile
+	jne	SHORT $LN8@WriteFile
 
-; 188  : 		current_proc = AuProcessFindSubThread(current_thr);
+; 187  : 		current_proc = AuProcessFindSubThread(current_thr);
 
 	mov	rcx, QWORD PTR current_thr$[rsp]
 	call	?AuProcessFindSubThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z ; AuProcessFindSubThread
 	mov	QWORD PTR current_proc$[rsp], rax
 
-; 189  : 		if (!current_proc) 
+; 188  : 		if (!current_proc) 
 
 	cmp	QWORD PTR current_proc$[rsp], 0
-	jne	SHORT $LN6@WriteFile
+	jne	SHORT $LN7@WriteFile
 
-; 190  : 			return 0;
+; 189  : 			return 0;
 
 	xor	eax, eax
-	jmp	$LN12@WriteFile
-$LN6@WriteFile:
+	jmp	$LN13@WriteFile
 $LN7@WriteFile:
+$LN8@WriteFile:
 
-; 191  : 	}
-; 192  : 	AuVFSNode* file = current_proc->fds[fd];
+; 190  : 	}
+; 191  : 	AuVFSNode* file = current_proc->fds[fd];
 
 	movsxd	rax, DWORD PTR fd$[rsp]
 	mov	rcx, QWORD PTR current_proc$[rsp]
 	mov	rax, QWORD PTR [rcx+rax*8+576]
 	mov	QWORD PTR file$[rsp], rax
 
-; 193  : 	uint8_t* aligned_buffer = (uint8_t*)buffer;
+; 192  : 	uint8_t* aligned_buffer = (uint8_t*)buffer;
 
 	mov	rax, QWORD PTR buffer$[rsp]
 	mov	QWORD PTR aligned_buffer$[rsp], rax
 
-; 194  : 	if (!file)
+; 193  : 	if (!file)
 
 	cmp	QWORD PTR file$[rsp], 0
-	jne	SHORT $LN5@WriteFile
+	jne	SHORT $LN6@WriteFile
 
-; 195  : 		return 0;
+; 194  : 		return 0;
 
 	xor	eax, eax
-	jmp	$LN12@WriteFile
-$LN5@WriteFile:
+	jmp	$LN13@WriteFile
+$LN6@WriteFile:
 
-; 196  : 	size_t write_bytes = 0;
+; 195  : 	size_t write_bytes = 0;
 
 	mov	QWORD PTR write_bytes$[rsp], 0
 
-; 197  : 	size_t ret_bytes;
-; 198  : 	/* every general file will contain its
-; 199  : 	* file system node as device */
-; 200  : 	AuVFSNode* fsys = (AuVFSNode*)file->device;
+; 196  : 	size_t ret_bytes;
+; 197  : 	/* every general file will contain its
+; 198  : 	* file system node as device */
+; 199  : 	AuVFSNode* fsys = (AuVFSNode*)file->device;
 
 	mov	rax, QWORD PTR file$[rsp]
 	mov	rax, QWORD PTR [rax+64]
 	mov	QWORD PTR fsys$[rsp], rax
 
-; 201  : 
-; 202  : 	if (file->flags & FS_FLAG_GENERAL && (!file->flags & FS_FLAG_TTY)) {
+; 200  : 
+; 201  : 	if (file->flags & FS_FLAG_GENERAL && (!file->flags & FS_FLAG_TTY)) {
 
 	mov	rax, QWORD PTR file$[rsp]
 	movzx	eax, WORD PTR [rax+61]
 	and	eax, 4
 	test	eax, eax
-	je	$LN4@WriteFile
+	je	$LN5@WriteFile
 	mov	rax, QWORD PTR file$[rsp]
 	movzx	eax, WORD PTR [rax+61]
 	test	eax, eax
-	jne	SHORT $LN14@WriteFile
+	jne	SHORT $LN15@WriteFile
 	mov	DWORD PTR tv88[rsp], 1
-	jmp	SHORT $LN15@WriteFile
-$LN14@WriteFile:
-	mov	DWORD PTR tv88[rsp], 0
+	jmp	SHORT $LN16@WriteFile
 $LN15@WriteFile:
+	mov	DWORD PTR tv88[rsp], 0
+$LN16@WriteFile:
 	mov	eax, DWORD PTR tv88[rsp]
 	and	eax, 256				; 00000100H
 	test	eax, eax
-	je	SHORT $LN4@WriteFile
+	je	SHORT $LN5@WriteFile
 
-; 203  : 		uint64_t* buff = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
+; 202  : 		uint64_t* buff = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
 
 	call	AuPmmngrAlloc
 	mov	rcx, rax
 	call	P2V
 	mov	QWORD PTR buff$1[rsp], rax
 
-; 204  : 		memset(buff, 0, PAGE_SIZE);
+; 203  : 		memset(buff, 0, PAGE_SIZE);
 
 	mov	r8d, 4096				; 00001000H
 	xor	edx, edx
 	mov	rcx, QWORD PTR buff$1[rsp]
 	call	memset
 
-; 205  : 		memcpy(buff,aligned_buffer, PAGE_SIZE);
+; 204  : 		memcpy(buff,aligned_buffer, PAGE_SIZE);
 
 	mov	r8d, 4096				; 00001000H
 	mov	rdx, QWORD PTR aligned_buffer$[rsp]
 	mov	rcx, QWORD PTR buff$1[rsp]
 	call	memcpy
 
-; 206  : 		AuVFSNodeWrite(fsys, file, buff, length);
+; 205  : 		AuVFSNodeWrite(fsys, file, buff, length);
 
 	mov	r9d, DWORD PTR length$[rsp]
 	mov	r8, QWORD PTR buff$1[rsp]
@@ -1400,32 +1398,41 @@ $LN15@WriteFile:
 	mov	rcx, QWORD PTR fsys$[rsp]
 	call	AuVFSNodeWrite
 
-; 207  : 		AuPmmngrFree((void*)V2P((size_t)buff));
+; 206  : 		AuPmmngrFree((void*)V2P((size_t)buff));
 
 	mov	rcx, QWORD PTR buff$1[rsp]
 	call	V2P
 	mov	rcx, rax
 	call	AuPmmngrFree
-$LN4@WriteFile:
+$LN5@WriteFile:
 
-; 208  : 	}
-; 209  : 
-; 210  : 	if (file->flags & FS_FLAG_TTY) {
+; 207  : 	}
+; 208  : 
+; 209  : 	if (file->flags & FS_FLAG_TTY) {
 
 	mov	rax, QWORD PTR file$[rsp]
 	movzx	eax, WORD PTR [rax+61]
 	and	eax, 256				; 00000100H
 	test	eax, eax
+	je	SHORT $LN4@WriteFile
+
+; 210  : 		if (file->write)
+
+	mov	rax, QWORD PTR file$[rsp]
+	cmp	QWORD PTR [rax+98], 0
 	je	SHORT $LN3@WriteFile
 
-; 211  : 		AuVFSNodeWrite(file, file, (uint64_t*)aligned_buffer, length);
+; 211  : 			return file->write(file, file, (uint64_t*)buffer, length);
 
 	mov	r9d, DWORD PTR length$[rsp]
-	mov	r8, QWORD PTR aligned_buffer$[rsp]
+	mov	r8, QWORD PTR buffer$[rsp]
 	mov	rdx, QWORD PTR file$[rsp]
 	mov	rcx, QWORD PTR file$[rsp]
-	call	AuVFSNodeWrite
+	mov	rax, QWORD PTR file$[rsp]
+	call	QWORD PTR [rax+98]
+	jmp	SHORT $LN13@WriteFile
 $LN3@WriteFile:
+$LN4@WriteFile:
 
 ; 212  : 	}
 ; 213  : 
@@ -1443,7 +1450,7 @@ $LN3@WriteFile:
 	cmp	QWORD PTR [rax+98], 0
 	je	SHORT $LN1@WriteFile
 
-; 216  : 			file->write(fsys, file, (uint64_t*)buffer, length);
+; 216  : 			return file->write(fsys, file, (uint64_t*)buffer, length);
 
 	mov	r9d, DWORD PTR length$[rsp]
 	mov	r8, QWORD PTR buffer$[rsp]
@@ -1453,7 +1460,7 @@ $LN3@WriteFile:
 	call	QWORD PTR [rax+98]
 $LN1@WriteFile:
 $LN2@WriteFile:
-$LN12@WriteFile:
+$LN13@WriteFile:
 
 ; 217  : 		}
 ; 218  : 	}
@@ -1477,7 +1484,7 @@ buffer$ = 104
 length$ = 112
 ?ReadFile@@YA_KHPEAX_K@Z PROC				; ReadFile
 
-; 120  : size_t ReadFile(int fd, void* buffer, size_t length) {
+; 119  : size_t ReadFile(int fd, void* buffer, size_t length) {
 
 $LN17:
 	mov	QWORD PTR [rsp+24], r8
@@ -1485,126 +1492,126 @@ $LN17:
 	mov	DWORD PTR [rsp+8], ecx
 	sub	rsp, 88					; 00000058H
 
-; 121  : 	x64_cli();
+; 120  : 	x64_cli();
 
 	call	x64_cli
 
-; 122  : 	if (fd == -1)
+; 121  : 	if (fd == -1)
 
 	cmp	DWORD PTR fd$[rsp], -1
 	jne	SHORT $LN14@ReadFile
 
-; 123  : 		return 0;
+; 122  : 		return 0;
 
 	xor	eax, eax
 	jmp	$LN15@ReadFile
 $LN14@ReadFile:
 
-; 124  : 	if (!buffer)
+; 123  : 	if (!buffer)
 
 	cmp	QWORD PTR buffer$[rsp], 0
 	jne	SHORT $LN13@ReadFile
 
-; 125  : 		return 0;
+; 124  : 		return 0;
 
 	xor	eax, eax
 	jmp	$LN15@ReadFile
 $LN13@ReadFile:
 
-; 126  : 	if (!length)
+; 125  : 	if (!length)
 
 	cmp	QWORD PTR length$[rsp], 0
 	jne	SHORT $LN12@ReadFile
 
-; 127  : 		return 0;
+; 126  : 		return 0;
 
 	xor	eax, eax
 	jmp	$LN15@ReadFile
 $LN12@ReadFile:
 
-; 128  : 	AuThread* current_thr = AuGetCurrentThread();
+; 127  : 	AuThread* current_thr = AuGetCurrentThread();
 
 	call	AuGetCurrentThread
 	mov	QWORD PTR current_thr$[rsp], rax
 
-; 129  : 	if (!current_thr)
+; 128  : 	if (!current_thr)
 
 	cmp	QWORD PTR current_thr$[rsp], 0
 	jne	SHORT $LN11@ReadFile
 
-; 130  : 		return 0;
+; 129  : 		return 0;
 
 	xor	eax, eax
 	jmp	$LN15@ReadFile
 $LN11@ReadFile:
 
-; 131  : 	AuProcess* current_proc = AuProcessFindThread(current_thr);
+; 130  : 	AuProcess* current_proc = AuProcessFindThread(current_thr);
 
 	mov	rcx, QWORD PTR current_thr$[rsp]
 	call	?AuProcessFindThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z ; AuProcessFindThread
 	mov	QWORD PTR current_proc$[rsp], rax
 
-; 132  : 	if (!current_proc){
+; 131  : 	if (!current_proc){
 
 	cmp	QWORD PTR current_proc$[rsp], 0
 	jne	SHORT $LN10@ReadFile
 
-; 133  : 		current_proc = AuProcessFindSubThread(current_thr);
+; 132  : 		current_proc = AuProcessFindSubThread(current_thr);
 
 	mov	rcx, QWORD PTR current_thr$[rsp]
 	call	?AuProcessFindSubThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z ; AuProcessFindSubThread
 	mov	QWORD PTR current_proc$[rsp], rax
 
-; 134  : 		if (!current_proc)
+; 133  : 		if (!current_proc)
 
 	cmp	QWORD PTR current_proc$[rsp], 0
 	jne	SHORT $LN9@ReadFile
 
-; 135  : 			return 0;
+; 134  : 			return 0;
 
 	xor	eax, eax
 	jmp	$LN15@ReadFile
 $LN9@ReadFile:
 $LN10@ReadFile:
 
-; 136  : 	}
-; 137  : 	AuVFSNode* file = current_proc->fds[fd];
+; 135  : 	}
+; 136  : 	AuVFSNode* file = current_proc->fds[fd];
 
 	movsxd	rax, DWORD PTR fd$[rsp]
 	mov	rcx, QWORD PTR current_proc$[rsp]
 	mov	rax, QWORD PTR [rcx+rax*8+576]
 	mov	QWORD PTR file$[rsp], rax
 
-; 138  : 	uint64_t* aligned_buffer = (uint64_t*)buffer;
+; 137  : 	uint64_t* aligned_buffer = (uint64_t*)buffer;
 
 	mov	rax, QWORD PTR buffer$[rsp]
 	mov	QWORD PTR aligned_buffer$[rsp], rax
 
-; 139  : 	if (!file)
+; 138  : 	if (!file)
 
 	cmp	QWORD PTR file$[rsp], 0
 	jne	SHORT $LN8@ReadFile
 
-; 140  : 		return 0;
+; 139  : 		return 0;
 
 	xor	eax, eax
 	jmp	$LN15@ReadFile
 $LN8@ReadFile:
 
-; 141  : 	size_t ret_bytes = 0;
+; 140  : 	size_t ret_bytes = 0;
 
 	mov	QWORD PTR ret_bytes$[rsp], 0
 
-; 142  : 	
-; 143  : 	/* every general file will contain its
-; 144  : 	 * file system node as device */
-; 145  : 	AuVFSNode* fsys = (AuVFSNode*)file->device;
+; 141  : 	
+; 142  : 	/* every general file will contain its
+; 143  : 	 * file system node as device */
+; 144  : 	AuVFSNode* fsys = (AuVFSNode*)file->device;
 
 	mov	rax, QWORD PTR file$[rsp]
 	mov	rax, QWORD PTR [rax+64]
 	mov	QWORD PTR fsys$[rsp], rax
 
-; 146  : 	if (file->flags & FS_FLAG_GENERAL && !(file->flags & FS_FLAG_TTY)) {
+; 145  : 	if (file->flags & FS_FLAG_GENERAL && !(file->flags & FS_FLAG_TTY)) {
 
 	mov	rax, QWORD PTR file$[rsp]
 	movzx	eax, WORD PTR [rax+61]
@@ -1617,7 +1624,7 @@ $LN8@ReadFile:
 	test	eax, eax
 	jne	SHORT $LN7@ReadFile
 
-; 147  : 		ret_bytes = AuVFSNodeRead(fsys, file,aligned_buffer, length);
+; 146  : 		ret_bytes = AuVFSNodeRead(fsys, file,aligned_buffer, length);
 
 	mov	r9d, DWORD PTR length$[rsp]
 	mov	r8, QWORD PTR aligned_buffer$[rsp]
@@ -1627,8 +1634,8 @@ $LN8@ReadFile:
 	mov	QWORD PTR ret_bytes$[rsp], rax
 $LN7@ReadFile:
 
-; 148  : 	}
-; 149  : 	if (file->flags & FS_FLAG_DEVICE){
+; 147  : 	}
+; 148  : 	if (file->flags & FS_FLAG_DEVICE){
 
 	mov	rax, QWORD PTR file$[rsp]
 	movzx	eax, WORD PTR [rax+61]
@@ -1636,14 +1643,14 @@ $LN7@ReadFile:
 	test	eax, eax
 	je	SHORT $LN6@ReadFile
 
-; 150  : 		/* devfs will handle*/
-; 151  : 		if (file->read)
+; 149  : 		/* devfs will handle*/
+; 150  : 		if (file->read)
 
 	mov	rax, QWORD PTR file$[rsp]
 	cmp	QWORD PTR [rax+90], 0
 	je	SHORT $LN5@ReadFile
 
-; 152  : 			ret_bytes = file->read(file, file, (uint64_t*)buffer, length);
+; 151  : 			ret_bytes = file->read(file, file, (uint64_t*)buffer, length);
 
 	mov	r9d, DWORD PTR length$[rsp]
 	mov	r8, QWORD PTR buffer$[rsp]
@@ -1655,9 +1662,9 @@ $LN7@ReadFile:
 $LN5@ReadFile:
 $LN6@ReadFile:
 
-; 153  : 	}
-; 154  : 
-; 155  : 	if (file->flags & FS_FLAG_TTY) {
+; 152  : 	}
+; 153  : 
+; 154  : 	if (file->flags & FS_FLAG_TTY) {
 
 	mov	rax, QWORD PTR file$[rsp]
 	movzx	eax, WORD PTR [rax+61]
@@ -1665,13 +1672,13 @@ $LN6@ReadFile:
 	test	eax, eax
 	je	SHORT $LN4@ReadFile
 
-; 156  : 		if (file->read)
+; 155  : 		if (file->read)
 
 	mov	rax, QWORD PTR file$[rsp]
 	cmp	QWORD PTR [rax+90], 0
 	je	SHORT $LN3@ReadFile
 
-; 157  : 			ret_bytes = file->read(file, file, (uint64_t*)aligned_buffer, length);
+; 156  : 			ret_bytes = file->read(file, file, (uint64_t*)aligned_buffer, length);
 
 	mov	r9d, DWORD PTR length$[rsp]
 	mov	r8, QWORD PTR aligned_buffer$[rsp]
@@ -1683,8 +1690,8 @@ $LN6@ReadFile:
 $LN3@ReadFile:
 $LN4@ReadFile:
 
-; 158  : 	}
-; 159  : 	if ((file->flags & FS_FLAG_PIPE)) {
+; 157  : 	}
+; 158  : 	if ((file->flags & FS_FLAG_PIPE)) {
 
 	mov	rax, QWORD PTR file$[rsp]
 	movzx	eax, WORD PTR [rax+61]
@@ -1692,14 +1699,14 @@ $LN4@ReadFile:
 	test	eax, eax
 	je	SHORT $LN2@ReadFile
 
-; 160  : 		/* ofcourse, pipe subsystem will handle */
-; 161  : 		if (file->read)
+; 159  : 		/* ofcourse, pipe subsystem will handle */
+; 160  : 		if (file->read)
 
 	mov	rax, QWORD PTR file$[rsp]
 	cmp	QWORD PTR [rax+90], 0
 	je	SHORT $LN1@ReadFile
 
-; 162  : 			ret_bytes = file->read(file, file, (uint64_t*)buffer, length);
+; 161  : 			ret_bytes = file->read(file, file, (uint64_t*)buffer, length);
 
 	mov	r9d, DWORD PTR length$[rsp]
 	mov	r8, QWORD PTR buffer$[rsp]
@@ -1711,14 +1718,14 @@ $LN4@ReadFile:
 $LN1@ReadFile:
 $LN2@ReadFile:
 
-; 163  : 	}
-; 164  : 
-; 165  : 	return ret_bytes;
+; 162  : 	}
+; 163  : 
+; 164  : 	return ret_bytes;
 
 	mov	rax, QWORD PTR ret_bytes$[rsp]
 $LN15@ReadFile:
 
-; 166  : }
+; 165  : }
 
 	add	rsp, 88					; 00000058H
 	ret	0
@@ -1736,84 +1743,84 @@ fd$ = 96
 offset$ = 104
 ?FileSetOffset@@YAHH_K@Z PROC				; FileSetOffset
 
-; 89   : int FileSetOffset(int fd, size_t offset) {
+; 88   : int FileSetOffset(int fd, size_t offset) {
 
 $LN9:
 	mov	QWORD PTR [rsp+16], rdx
 	mov	DWORD PTR [rsp+8], ecx
 	sub	rsp, 88					; 00000058H
 
-; 90   : 	x64_cli();
+; 89   : 	x64_cli();
 
 	call	x64_cli
 
-; 91   : 	AuThread* current_thr = AuGetCurrentThread();
+; 90   : 	AuThread* current_thr = AuGetCurrentThread();
 
 	call	AuGetCurrentThread
 	mov	QWORD PTR current_thr$[rsp], rax
 
-; 92   : 	if (!current_thr)
+; 91   : 	if (!current_thr)
 
 	cmp	QWORD PTR current_thr$[rsp], 0
 	jne	SHORT $LN6@FileSetOff
 
-; 93   : 		return -1;
+; 92   : 		return -1;
 
 	mov	eax, -1
 	jmp	$LN7@FileSetOff
 $LN6@FileSetOff:
 
-; 94   : 	AuProcess* current_proc = AuProcessFindThread(current_thr);
+; 93   : 	AuProcess* current_proc = AuProcessFindThread(current_thr);
 
 	mov	rcx, QWORD PTR current_thr$[rsp]
 	call	?AuProcessFindThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z ; AuProcessFindThread
 	mov	QWORD PTR current_proc$[rsp], rax
 
-; 95   : 	if (!current_proc) {
+; 94   : 	if (!current_proc) {
 
 	cmp	QWORD PTR current_proc$[rsp], 0
 	jne	SHORT $LN5@FileSetOff
 
-; 96   : 		current_proc = AuProcessFindSubThread(current_thr);
+; 95   : 		current_proc = AuProcessFindSubThread(current_thr);
 
 	mov	rcx, QWORD PTR current_thr$[rsp]
 	call	?AuProcessFindSubThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z ; AuProcessFindSubThread
 	mov	QWORD PTR current_proc$[rsp], rax
 
-; 97   : 		if (!current_proc)
+; 96   : 		if (!current_proc)
 
 	cmp	QWORD PTR current_proc$[rsp], 0
 	jne	SHORT $LN4@FileSetOff
 
-; 98   : 			return -1;
+; 97   : 			return -1;
 
 	mov	eax, -1
 	jmp	$LN7@FileSetOff
 $LN4@FileSetOff:
 $LN5@FileSetOff:
 
-; 99   : 	}
-; 100  : 
-; 101  : 	AuVFSNode* file = current_proc->fds[fd];
+; 98   : 	}
+; 99   : 
+; 100  : 	AuVFSNode* file = current_proc->fds[fd];
 
 	movsxd	rax, DWORD PTR fd$[rsp]
 	mov	rcx, QWORD PTR current_proc$[rsp]
 	mov	rax, QWORD PTR [rcx+rax*8+576]
 	mov	QWORD PTR file$[rsp], rax
 
-; 102  : 	if (!file)
+; 101  : 	if (!file)
 
 	cmp	QWORD PTR file$[rsp], 0
 	jne	SHORT $LN3@FileSetOff
 
-; 103  : 		return -1;
+; 102  : 		return -1;
 
 	mov	eax, -1
 	jmp	$LN7@FileSetOff
 $LN3@FileSetOff:
 
-; 104  : 	if (!((file->flags & FS_FLAG_FILE_SYSTEM) || (file->flags & FS_FLAG_DEVICE) || (file->flags & FS_FLAG_PIPE)
-; 105  : 		|| (file->flags & FS_FLAG_DIRECTORY) || (file->flags & FS_FLAG_TTY))){
+; 103  : 	if (!((file->flags & FS_FLAG_FILE_SYSTEM) || (file->flags & FS_FLAG_DEVICE) || (file->flags & FS_FLAG_PIPE)
+; 104  : 		|| (file->flags & FS_FLAG_DIRECTORY) || (file->flags & FS_FLAG_TTY))){
 
 	mov	rax, QWORD PTR file$[rsp]
 	movzx	eax, WORD PTR [rax+61]
@@ -1841,24 +1848,24 @@ $LN3@FileSetOff:
 	test	eax, eax
 	jne	SHORT $LN2@FileSetOff
 
-; 106  : 		AuVFSNode* fsys = AuVFSFind("/");
+; 105  : 		AuVFSNode* fsys = AuVFSFind("/");
 
-	lea	rcx, OFFSET FLAT:$SG3925
+	lea	rcx, OFFSET FLAT:$SG3924
 	call	AuVFSFind
 	mov	QWORD PTR fsys$1[rsp], rax
 
-; 107  : 		if (!fsys)
+; 106  : 		if (!fsys)
 
 	cmp	QWORD PTR fsys$1[rsp], 0
 	jne	SHORT $LN1@FileSetOff
 
-; 108  : 			return -1;
+; 107  : 			return -1;
 
 	mov	eax, -1
 	jmp	SHORT $LN7@FileSetOff
 $LN1@FileSetOff:
 
-; 109  : 		size_t block = AuVFSGetBlockFor(fsys, file, offset);
+; 108  : 		size_t block = AuVFSGetBlockFor(fsys, file, offset);
 
 	mov	r8, QWORD PTR offset$[rsp]
 	mov	rdx, QWORD PTR file$[rsp]
@@ -1866,20 +1873,20 @@ $LN1@FileSetOff:
 	call	AuVFSGetBlockFor
 	mov	QWORD PTR block$2[rsp], rax
 
-; 110  : 		file->current = block;
+; 109  : 		file->current = block;
 
 	mov	rax, QWORD PTR file$[rsp]
 	mov	rcx, QWORD PTR block$2[rsp]
 	mov	QWORD PTR [rax+53], rcx
 $LN2@FileSetOff:
 
-; 111  : 	}
-; 112  : 	return 0;
+; 110  : 	}
+; 111  : 	return 0;
 
 	xor	eax, eax
 $LN7@FileSetOff:
 
-; 113  : }
+; 112  : }
 
 	add	rsp, 88					; 00000058H
 	ret	0
@@ -1889,8 +1896,8 @@ _TEXT	ENDS
 ; File e:\xeneva project\aurora\kernel\serv\fileserv.cpp
 _TEXT	SEGMENT
 fd$ = 32
-file$ = 40
-current_proc$ = 48
+current_proc$ = 40
+file$ = 48
 current_thr$ = 56
 fsys$ = 64
 filename$ = 96
@@ -2043,27 +2050,20 @@ $LN1@OpenFile:
 	mov	rdx, QWORD PTR file$[rsp]
 	mov	QWORD PTR [rcx+rax*8+576], rdx
 
-; 78   : 	SeTextOut("Opening file -> %s | %x \r\n", file->filename, file);
+; 78   : 	SeTextOut("Opening file -> %s | %d \r\n", file->filename, fd);
 
 	mov	rax, QWORD PTR file$[rsp]
-	mov	r8, QWORD PTR file$[rsp]
+	mov	r8d, DWORD PTR fd$[rsp]
 	mov	rdx, rax
 	lea	rcx, OFFSET FLAT:$SG3910
 	call	SeTextOut
 
-; 79   : 	SeTextOut("e1000 ctl -> %x \r\n", file->write);
-
-	mov	rax, QWORD PTR file$[rsp]
-	mov	rdx, QWORD PTR [rax+98]
-	lea	rcx, OFFSET FLAT:$SG3911
-	call	SeTextOut
-
-; 80   : 	return fd;
+; 79   : 	return fd;
 
 	mov	eax, DWORD PTR fd$[rsp]
 $LN10@OpenFile:
 
-; 81   : }
+; 80   : }
 
 	add	rsp, 88					; 00000058H
 	ret	0

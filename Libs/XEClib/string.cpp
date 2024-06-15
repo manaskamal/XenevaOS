@@ -32,6 +32,11 @@
 #include <stdlib.h>
 #include <ctype.h>
 
+#define SS (sizeof(size_t))
+#define ALIGN (sizeof(size_t)-1)
+#define ONES ((size_t)-1/UCHAR_MAX)
+#define HIGHS (ONES * (UCHAR_MAX/2+1))
+#define HASZERO(x) ((x)-ONES & ~(x) & HIGHS)
 
 void* _cdecl memset(void *targ, unsigned char val, size_t len){
 	uint8_t *t = (uint8_t*)targ;
@@ -90,10 +95,17 @@ char *strcpy(char *s1, const char *s2){
 	return s1_p;
 }
 
-size_t strlen(const char* str){
-	size_t len = 0;
-	while (str[len++]);
-	return len;
+size_t strlen(const char* s){
+	const char * a = s;
+	const size_t * w;
+	for (; (uintptr_t)s % ALIGN; s++){
+		if (!*s){
+			return s - a;
+		}
+	}
+	for (w = (const size_t*)s; !HASZERO(*w); w++);
+	for (s = (const char*)w; *s; s++);
+	return s - a;
 }
 
 size_t strnlen(const char *string, size_t maxlen){
@@ -607,11 +619,7 @@ void *memmove(void* dest, void const* src, unsigned __int64 bytes) {
 }
 
 
-#define SS (sizeof(size_t))
-#define ALIGN (sizeof(size_t)-1)
-#define ONES ((size_t)-1/UCHAR_MAX)
-#define HIGHS (ONES * (UCHAR_MAX/2+1))
-#define HASZERO(x) ((x)-ONES & ~(x) & HIGHS)
+
 
 void *memchr(const void *src, int c, size_t n){
 	const unsigned char *s = (const unsigned char *)src;

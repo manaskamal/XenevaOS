@@ -172,14 +172,14 @@ int CreateTCPSocket() {
 			return -1;
 	AuSocket *sock = (AuSocket*)kmalloc(sizeof(AuSocket));
 	memset(sock, 0, sizeof(AuSocket));
-	sock->fsnode.flags = FS_FLAG_SOCKET;
+	//sock->fsnode.flags = FS_FLAG_SOCKET;
 	sock->send = AuTCPSend;
 	sock->receive = AuTCPReceive;
 	sock->connect = AuTCPConnect;
 	sock->bind = AuTCPBind;
 	sock->close = AuTCPClose;
-	sock->fsnode.read = AuTCPRead;
-	sock->fsnode.write = AuTCPWrite;
+	/*sock->fsnode.read = AuTCPRead;
+	sock->fsnode.write = AuTCPWrite;*/
 	fd = AuProcessGetFileDesc(proc);
 	proc->fds[fd] = (AuVFSNode*)sock;
 	SeTextOut("TCP Socket created \r\n");

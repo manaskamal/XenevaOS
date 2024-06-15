@@ -54,7 +54,7 @@ void* AuSocketGet(AuSocket* sock) {
 }
 
 int AuRawSocketReceive(AuSocket* sock, msghdr* msg, int flags) {
-	if (!sock->fsnode.device)
+	if (!sock->binedDev)
 		return -1;
 	if (msg->msg_iovlen == 0) return 0;
 	char* data = (char*)AuSocketGet(sock);
@@ -67,9 +67,9 @@ int AuRawSocketReceive(AuSocket* sock, msghdr* msg, int flags) {
 }
 
 int AuRawSocketSend(AuSocket* sock, msghdr* msg, int flags) {
-	if (!sock->fsnode.device) return -1;
+	if (!sock->binedDev) return -1;
 	if (msg->msg_iovlen == 0) return 0;
-	AuVFSNode* device = (AuVFSNode*)sock->fsnode.device;
+	AuVFSNode* device = (AuVFSNode*)sock->binedDev;
 	device->write(device, device, (uint64_t*)msg->msg_iov[0].iov_base, msg->msg_iov[0].iov_len);
 	return 0;
 }
@@ -86,7 +86,8 @@ int AuSocketSOSocket(AuSocket* sock, int optname, const void* optval, socklen_t 
 							  //if (optlen < 1 || optlen > 32 || ((const char*)optval)[optlen - 1] != 0) return -1;  
 							  AuVFSNode* nic = AuGetNetworkAdapter((char*)optval);
 							  if (!nic) return -1;
-							  sock->fsnode.device = nic;
+							  sock->binedDev = nic;
+							  SeTextOut("Device binded \r\n");
 							  return 0;
 	}
 	}
@@ -102,7 +103,8 @@ int AuSocketSetOpt(int sockfd, int level, int optname, const void* optval, sockl
 		if (!proc)
 			return -1;
 	}
-	AuSocket* sock = (AuSocket*)proc->fds[sockfd];
+	AuVFSNode* node = proc->fds[sockfd];
+	AuSocket* sock = (AuSocket*)node->device;
 	switch (level)
 	{
 	case SOL_SOCKET:
@@ -115,7 +117,6 @@ int AuSocketSetOpt(int sockfd, int level, int optname, const void* optval, sockl
 AuSocket* AuNetCreateSocket() {
 	AuSocket* sock = (AuSocket*)kmalloc(sizeof(AuSocket));
 	memset(sock, 0, sizeof(AuSocket));
-	sock->fsnode.flags = FS_FLAG_SOCKET;
 	sock->rxstack = AuStackCreate();
 	return sock;
 }
@@ -127,6 +128,7 @@ AuSocket* AuNetCreateSocket() {
  * @param protocol -- unused
  */
 int AuCreateRawSocket(int type, int protocol){
+	x64_cli();
 	if (type != SOCK_RAW)return -1;
 	AuThread* curr_thr = AuGetCurrentThread();
 	AuProcess *proc = AuProcessFindThread(curr_thr);
@@ -139,8 +141,12 @@ int AuCreateRawSocket(int type, int protocol){
 	sock->receive = AuRawSocketReceive;
 	sock->send = AuRawSocketSend;
 	int fd = AuProcessGetFileDesc(proc);
-	proc->fds[fd] = (AuVFSNode*)sock;
 	list_add(raw_socket_list, sock);
+	AuVFSNode* node = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
+	memset(node, 0, sizeof(AuVFSNode));
+	node->flags = FS_FLAG_SOCKET;
+	node->device = sock;
+	proc->fds[fd] = node;
 	return fd;
 }
 

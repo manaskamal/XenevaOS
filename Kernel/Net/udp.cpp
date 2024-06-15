@@ -91,8 +91,8 @@ int CreateUDPSocket() {
 	AuSocket *sock = (AuSocket*)kmalloc(sizeof(AuSocket));
 	memset(sock, 0, sizeof(AuSocket));
 	fd = AuProcessGetFileDesc(proc);
-	sock->fsnode.read = AuUDPRead;
-	sock->fsnode.write = AuUDPWrite;
+	/*sock->fsnode.read = AuUDPRead;
+	sock->fsnode.write = AuUDPWrite;*/
 	sock->bind = AuUDPBind;
 	sock->close = AuUDPClose;
 	sock->connect = 0;

@@ -31,6 +31,7 @@
 #include <_null.h>
 #include <string.h>
 #include <aucon.h>
+#include <Hal/serial.h>
 
 /*
  * AuGetProcAddress -- get procedure address in a dll image
@@ -145,6 +146,94 @@ void AuKernelLinkImports(void* image) {
 			++iat;
 		}
 	}
+}
+
+/* relocation types */
+#define IMAGE_REL_BASED_ABSOLUTE  0
+#define IMAGE_REL_BASED_HIGH      1
+#define IMAGE_REL_BASED_LOW       2
+#define IMAGE_REL_BASED_HIGHLOW   3
+#define IMAGE_REL_BASED_HIGHADJ   4
+#define IMAGE_REL_BASED_MIPS_JMPADDR   5
+#define IMAGE_REL_BASED_MIPS_JMPADDR16 9
+#define IMAGE_REL_BASED_DIR64          10
+
+/* dll characteristics*/
+#define IMAGE_DLL_CHARACTERISTICS_DYNAMIC_BASE          0x40
+#define IMAGE_DLL_CHARACTERISTICS_FORCE_INTEGRITY       0x80
+#define IMAGE_DLL_CHARACTERISTICS_NX_COMPAT             0x100
+#define IMAGE_DLL_CHARACTERISTICS_NO_ISOLATION          0x200
+#define IMAGE_DLL_CHARACTERISTICS_NO_SEH                0x400
+#define IMAGE_DLL_CHARACTERISTICS_NO_BIND               0x800
+#define IMAGE_DLL_CHARACTERISTICS_WDM_DRIVER            0x2000
+#define IMAGE_DLL_CHARACTERISTICS_TERMINAL_SERVER_AWARE 0x8000
+
+
+#define DIV_ROUND_UP(x, y) \
+	((x + y - 1) / y)
+
+
+#define IMAGE_DATA_DIRECTORY_EXPORT 0
+#define IMAGE_DATA_DIRECTORY_IMPORT 1
+#define IMAGE_DATA_DIRECTORY_RELOC  5
+
+/*
+* AuKernelRelocatePE -- relocates the image from its actual
+* base address
+* @param image -- pointer to executable image
+* @param nt -- nt headers
+* @param diff -- difference from its original
+*/
+void AuKernelRelocatePE(void* image, PIMAGE_NT_HEADERS nt, int diff) {
+	if (!diff)
+		return;
+	if ((nt->OptionalHeader.DllCharacteristics & IMAGE_DLL_CHARACTERISTICS_DYNAMIC_BASE) == 0)
+		return;
+	if (IMAGE_DATA_DIRECTORY_RELOC + 1 > nt->OptionalHeader.NumberOfRvaAndSizes)
+		return;
+	IMAGE_DATA_DIRECTORY& data_dir = nt->OptionalHeader.DataDirectory[IMAGE_DATA_DIRECTORY_RELOC];
+	if (data_dir.VirtualAddress == 0 || data_dir.Size == 0)
+		return;
+
+	PIMAGE_RELOCATION_BLOCK reloc_table = raw_offset<PIMAGE_RELOCATION_BLOCK>(image, data_dir.VirtualAddress);
+	PIMAGE_RELOCATION_BLOCK cur_block = reloc_table;
+
+	while (raw_diff(cur_block, reloc_table) < data_dir.Size) {
+		uint32_t entries = (cur_block->BlockSize - 8) / 2;
+		for (uint32_t i = 0; i < entries; ++i) {
+			auto& entry = cur_block->entries[i];
+			uint16_t type = entry.type;
+			void* relocitem = raw_offset<void*>(image, entry.offset + cur_block->PageRVA);
+			switch (type){
+			case IMAGE_REL_BASED_ABSOLUTE:
+				break;
+			case IMAGE_REL_BASED_HIGH:
+				*reinterpret_cast<uint16_t*>(relocitem) += (diff >> 16) & UINT16_MAX;
+				break;
+			case IMAGE_REL_BASED_LOW:
+				*reinterpret_cast<uint16_t*>(relocitem) += (diff & UINT16_MAX);
+				break;
+			case IMAGE_REL_BASED_HIGHLOW:
+				*reinterpret_cast<uint32_t*>(relocitem) += (diff & UINT32_MAX);
+				break;
+			case IMAGE_REL_BASED_HIGHADJ:
+				return;
+				break;
+			case IMAGE_REL_BASED_DIR64:
+				*reinterpret_cast<uint64_t*>(relocitem) += (diff & UINT32_MAX);
+				SeTextOut("Relocating executable dir64 %x\r\n", *reinterpret_cast<uint64_t*>(relocitem));
+				break;
+			default:
+				return;
+				break;
+			}
+
+		}
+
+		uint32_t next_off = DIV_ROUND_UP(cur_block->BlockSize, 4) * 4;
+		cur_block = raw_offset<PIMAGE_RELOCATION_BLOCK>(cur_block, next_off);
+	}
+	//for (;;);
 }
 
 /*

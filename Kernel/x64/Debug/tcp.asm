@@ -26,7 +26,7 @@ EXTRN	?AuProcessGetFileDesc@@YAHPEAU_au_proc_@@@Z:PROC ; AuProcessGetFileDesc
 EXTRN	SeTextOut:PROC
 pdata	SEGMENT
 $pdata$?CreateTCPSocket@@YAHXZ DD imagerel $LN6
-	DD	imagerel $LN6+328
+	DD	imagerel $LN6+267
 	DD	imagerel $unwind$?CreateTCPSocket@@YAHXZ
 $pdata$?CalculateTCPChecksum@@YAGPEAU_tcpcheckheader_@@PEAU_tcphead_@@PEAX_K@Z DD imagerel $LN17
 	DD	imagerel $LN17+623
@@ -557,65 +557,50 @@ $LN1@CreateTCPS:
 
 ; 173  : 	AuSocket *sock = (AuSocket*)kmalloc(sizeof(AuSocket));
 
-	mov	ecx, 232				; 000000e8H
+	mov	ecx, 56					; 00000038H
 	call	kmalloc
 	mov	QWORD PTR sock$[rsp], rax
 
 ; 174  : 	memset(sock, 0, sizeof(AuSocket));
 
-	mov	r8d, 232				; 000000e8H
+	mov	r8d, 56					; 00000038H
 	xor	edx, edx
 	mov	rcx, QWORD PTR sock$[rsp]
 	call	memset
 
-; 175  : 	sock->fsnode.flags = FS_FLAG_SOCKET;
-
-	mov	eax, 512				; 00000200H
-	mov	rcx, QWORD PTR sock$[rsp]
-	mov	WORD PTR [rcx+61], ax
-
+; 175  : 	//sock->fsnode.flags = FS_FLAG_SOCKET;
 ; 176  : 	sock->send = AuTCPSend;
 
 	mov	rax, QWORD PTR sock$[rsp]
 	lea	rcx, OFFSET FLAT:?AuTCPSend@@YAHPEAU_socket_@@PEAU_msghdr_@@H@Z ; AuTCPSend
-	mov	QWORD PTR [rax+200], rcx
+	mov	QWORD PTR [rax+24], rcx
 
 ; 177  : 	sock->receive = AuTCPReceive;
 
 	mov	rax, QWORD PTR sock$[rsp]
 	lea	rcx, OFFSET FLAT:?AuTCPReceive@@YAHPEAU_socket_@@PEAU_msghdr_@@H@Z ; AuTCPReceive
-	mov	QWORD PTR [rax+192], rcx
+	mov	QWORD PTR [rax+16], rcx
 
 ; 178  : 	sock->connect = AuTCPConnect;
 
 	mov	rax, QWORD PTR sock$[rsp]
 	lea	rcx, OFFSET FLAT:?AuTCPConnect@@YAHPEAU_socket_@@PEAU_sockaddr_@@_K@Z ; AuTCPConnect
-	mov	QWORD PTR [rax+216], rcx
+	mov	QWORD PTR [rax+40], rcx
 
 ; 179  : 	sock->bind = AuTCPBind;
 
 	mov	rax, QWORD PTR sock$[rsp]
 	lea	rcx, OFFSET FLAT:?AuTCPBind@@YAHPEAU_socket_@@PEAU_sockaddr_@@_K@Z ; AuTCPBind
-	mov	QWORD PTR [rax+224], rcx
+	mov	QWORD PTR [rax+48], rcx
 
 ; 180  : 	sock->close = AuTCPClose;
 
 	mov	rax, QWORD PTR sock$[rsp]
 	lea	rcx, OFFSET FLAT:?AuTCPClose@@YAXPEAU_socket_@@@Z ; AuTCPClose
-	mov	QWORD PTR [rax+208], rcx
+	mov	QWORD PTR [rax+32], rcx
 
-; 181  : 	sock->fsnode.read = AuTCPRead;
-
-	mov	rax, QWORD PTR sock$[rsp]
-	lea	rcx, OFFSET FLAT:?AuTCPRead@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z ; AuTCPRead
-	mov	QWORD PTR [rax+90], rcx
-
-; 182  : 	sock->fsnode.write = AuTCPWrite;
-
-	mov	rax, QWORD PTR sock$[rsp]
-	lea	rcx, OFFSET FLAT:?AuTCPWrite@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z ; AuTCPWrite
-	mov	QWORD PTR [rax+98], rcx
-
+; 181  : 	/*sock->fsnode.read = AuTCPRead;
+; 182  : 	sock->fsnode.write = AuTCPWrite;*/
 ; 183  : 	fd = AuProcessGetFileDesc(proc);
 
 	mov	rcx, QWORD PTR proc$[rsp]

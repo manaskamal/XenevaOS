@@ -24,7 +24,7 @@ EXTRN	memset:PROC
 EXTRN	SeTextOut:PROC
 pdata	SEGMENT
 $pdata$?CreateICMPSocket@@YAHXZ DD imagerel $LN6
-	DD	imagerel $LN6+309
+	DD	imagerel $LN6+262
 	DD	imagerel $unwind$?CreateICMPSocket@@YAHXZ
 pdata	ENDS
 xdata	SEGMENT
@@ -96,13 +96,13 @@ $LN1@CreateICMP:
 
 ; 93   : 	AuSocket *sock = (AuSocket*)kmalloc(sizeof(AuSocket));
 
-	mov	ecx, 232				; 000000e8H
+	mov	ecx, 56					; 00000038H
 	call	kmalloc
 	mov	QWORD PTR sock$[rsp], rax
 
 ; 94   : 	memset(sock, 0, sizeof(AuSocket));
 
-	mov	r8d, 232				; 000000e8H
+	mov	r8d, 56					; 00000038H
 	xor	edx, edx
 	mov	rcx, QWORD PTR sock$[rsp]
 	call	memset
@@ -113,46 +113,36 @@ $LN1@CreateICMP:
 	call	?AuProcessGetFileDesc@@YAHPEAU_au_proc_@@@Z ; AuProcessGetFileDesc
 	mov	DWORD PTR fd$[rsp], eax
 
-; 96   : 	sock->fsnode.read = AuICMPRead;
-
-	mov	rax, QWORD PTR sock$[rsp]
-	lea	rcx, OFFSET FLAT:?AuICMPRead@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z ; AuICMPRead
-	mov	QWORD PTR [rax+90], rcx
-
-; 97   : 	sock->fsnode.write = AuICMPWrite;
-
-	mov	rax, QWORD PTR sock$[rsp]
-	lea	rcx, OFFSET FLAT:?AuICMPWrite@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z ; AuICMPWrite
-	mov	QWORD PTR [rax+98], rcx
-
+; 96   : 	/*sock->fsnode.read = AuICMPRead;
+; 97   : 	sock->fsnode.write = AuICMPWrite;*/
 ; 98   : 	sock->bind = AuICMPBind;
 
 	mov	rax, QWORD PTR sock$[rsp]
 	lea	rcx, OFFSET FLAT:?AuICMPBind@@YAHPEAU_socket_@@PEAU_sockaddr_@@_K@Z ; AuICMPBind
-	mov	QWORD PTR [rax+224], rcx
+	mov	QWORD PTR [rax+48], rcx
 
 ; 99   : 	sock->close = AuICMPClose;
 
 	mov	rax, QWORD PTR sock$[rsp]
 	lea	rcx, OFFSET FLAT:?AuICMPClose@@YAXPEAU_socket_@@@Z ; AuICMPClose
-	mov	QWORD PTR [rax+208], rcx
+	mov	QWORD PTR [rax+32], rcx
 
 ; 100  : 	sock->connect = 0;
 
 	mov	rax, QWORD PTR sock$[rsp]
-	mov	QWORD PTR [rax+216], 0
+	mov	QWORD PTR [rax+40], 0
 
 ; 101  : 	sock->receive = AuICMPReceive;
 
 	mov	rax, QWORD PTR sock$[rsp]
 	lea	rcx, OFFSET FLAT:?AuICMPReceive@@YAHPEAU_socket_@@PEAU_msghdr_@@H@Z ; AuICMPReceive
-	mov	QWORD PTR [rax+192], rcx
+	mov	QWORD PTR [rax+16], rcx
 
 ; 102  : 	sock->send = AuICMPSend;
 
 	mov	rax, QWORD PTR sock$[rsp]
 	lea	rcx, OFFSET FLAT:?AuICMPSend@@YAHPEAU_socket_@@PEAU_msghdr_@@H@Z ; AuICMPSend
-	mov	QWORD PTR [rax+200], rcx
+	mov	QWORD PTR [rax+24], rcx
 
 ; 103  : 	proc->fds[fd] = (AuVFSNode*)sock;
 

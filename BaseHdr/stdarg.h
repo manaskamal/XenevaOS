@@ -40,7 +40,7 @@ extern "C"
 #endif
 
 	/* width of stack == width of int */
-#define	STACKITEM	int
+#define	STACKITEM	int64_t
 
 	/* round up width of objects pushed on stack. The expression before the
 	& ensures that we get 0 for objects of size 0. */

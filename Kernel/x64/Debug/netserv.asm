@@ -17,16 +17,16 @@ EXTRN	?AuProcessFindSubThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z:PROC ; AuPro
 EXTRN	x64_cli:PROC
 pdata	SEGMENT
 $pdata$?NetSend@@YAHHPEAU_msghdr_@@H@Z DD imagerel $LN9
-	DD	imagerel $LN9+213
+	DD	imagerel $LN9+221
 	DD	imagerel $unwind$?NetSend@@YAHHPEAU_msghdr_@@H@Z
 $pdata$?NetReceive@@YAHHPEAU_msghdr_@@H@Z DD imagerel $LN9
-	DD	imagerel $LN9+213
+	DD	imagerel $LN9+221
 	DD	imagerel $unwind$?NetReceive@@YAHHPEAU_msghdr_@@H@Z
 $pdata$?NetConnect@@YAHHPEAU_sockaddr_@@_K@Z DD imagerel $LN7
-	DD	imagerel $LN7+177
+	DD	imagerel $LN7+171
 	DD	imagerel $unwind$?NetConnect@@YAHHPEAU_sockaddr_@@_K@Z
 $pdata$?NetBind@@YAHHPEAU_sockaddr_@@_K@Z DD imagerel $LN7
-	DD	imagerel $LN7+177
+	DD	imagerel $LN7+171
 	DD	imagerel $unwind$?NetBind@@YAHHPEAU_sockaddr_@@_K@Z
 pdata	ENDS
 xdata	SEGMENT
@@ -46,16 +46,16 @@ sockfd$ = 8
 backlog$ = 16
 ?NetListen@@YAHHH@Z PROC				; NetListen
 
-; 118  : int NetListen(int sockfd, int backlog){
+; 120  : int NetListen(int sockfd, int backlog){
 
 	mov	DWORD PTR [rsp+16], edx
 	mov	DWORD PTR [rsp+8], ecx
 
-; 119  : 	return 0;
+; 121  : 	return 0;
 
 	xor	eax, eax
 
-; 120  : }
+; 122  : }
 
 	ret	0
 ?NetListen@@YAHHH@Z ENDP				; NetListen
@@ -68,17 +68,17 @@ addr$ = 16
 addrlen$ = 24
 ?NetAccept@@YAHHPEAU_sockaddr_@@PEA_K@Z PROC		; NetAccept
 
-; 114  : int NetAccept(int sockfd, sockaddr *addr, socklen_t * addrlen){
+; 116  : int NetAccept(int sockfd, sockaddr *addr, socklen_t * addrlen){
 
 	mov	QWORD PTR [rsp+24], r8
 	mov	QWORD PTR [rsp+16], rdx
 	mov	DWORD PTR [rsp+8], ecx
 
-; 115  : 	return 0;
+; 117  : 	return 0;
 
 	xor	eax, eax
 
-; 116  : }
+; 118  : }
 
 	ret	0
 ?NetAccept@@YAHHPEAU_sockaddr_@@PEA_K@Z ENDP		; NetAccept
@@ -94,7 +94,7 @@ addr$ = 88
 addrlen$ = 96
 ?NetBind@@YAHHPEAU_sockaddr_@@_K@Z PROC			; NetBind
 
-; 96   : int NetBind(int sockfd, sockaddr *addr, socklen_t addrlen){
+; 98   : int NetBind(int sockfd, sockaddr *addr, socklen_t addrlen){
 
 $LN7:
 	mov	QWORD PTR [rsp+24], r8
@@ -102,86 +102,86 @@ $LN7:
 	mov	DWORD PTR [rsp+8], ecx
 	sub	rsp, 72					; 00000048H
 
-; 97   : 	x64_cli();
+; 99   : 	x64_cli();
 
 	call	x64_cli
 
-; 98   : 	AuThread* thr = AuGetCurrentThread();
+; 100  : 	AuThread* thr = AuGetCurrentThread();
 
 	call	AuGetCurrentThread
 	mov	QWORD PTR thr$[rsp], rax
 
-; 99   : 	if (!thr)
+; 101  : 	if (!thr)
 
 	cmp	QWORD PTR thr$[rsp], 0
 	jne	SHORT $LN4@NetBind
 
-; 100  : 		return 1;
+; 102  : 		return 1;
 
 	mov	eax, 1
 	jmp	SHORT $LN5@NetBind
 $LN4@NetBind:
 
-; 101  : 	AuProcess *proc = AuProcessFindThread(thr);
+; 103  : 	AuProcess *proc = AuProcessFindThread(thr);
 
 	mov	rcx, QWORD PTR thr$[rsp]
 	call	?AuProcessFindThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z ; AuProcessFindThread
 	mov	QWORD PTR proc$[rsp], rax
 
-; 102  : 	if (!proc){
+; 104  : 	if (!proc){
 
 	cmp	QWORD PTR proc$[rsp], 0
 	jne	SHORT $LN3@NetBind
 
-; 103  : 		proc = AuProcessFindSubThread(thr);
+; 105  : 		proc = AuProcessFindSubThread(thr);
 
 	mov	rcx, QWORD PTR thr$[rsp]
 	call	?AuProcessFindSubThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z ; AuProcessFindSubThread
 	mov	QWORD PTR proc$[rsp], rax
 
-; 104  : 		if (!proc)
+; 106  : 		if (!proc)
 
 	cmp	QWORD PTR proc$[rsp], 0
 	jne	SHORT $LN2@NetBind
 
-; 105  : 			return 1;
+; 107  : 			return 1;
 
 	mov	eax, 1
 	jmp	SHORT $LN5@NetBind
 $LN2@NetBind:
 $LN3@NetBind:
 
-; 106  : 	}
-; 107  : 
-; 108  : 	AuSocket* sock = (AuSocket*)proc->fds[sockfd];
+; 108  : 	}
+; 109  : 
+; 110  : 	AuSocket* sock = (AuSocket*)proc->fds[sockfd];
 
 	movsxd	rax, DWORD PTR sockfd$[rsp]
 	mov	rcx, QWORD PTR proc$[rsp]
 	mov	rax, QWORD PTR [rcx+rax*8+567]
 	mov	QWORD PTR sock$[rsp], rax
 
-; 109  : 	if (sock->bind)
+; 111  : 	if (sock->bind)
 
 	mov	rax, QWORD PTR sock$[rsp]
-	cmp	QWORD PTR [rax+224], 0
+	cmp	QWORD PTR [rax+48], 0
 	je	SHORT $LN1@NetBind
 
-; 110  : 		return sock->bind(sock, addr, addrlen);
+; 112  : 		return sock->bind(sock, addr, addrlen);
 
 	mov	r8, QWORD PTR addrlen$[rsp]
 	mov	rdx, QWORD PTR addr$[rsp]
 	mov	rcx, QWORD PTR sock$[rsp]
 	mov	rax, QWORD PTR sock$[rsp]
-	call	QWORD PTR [rax+224]
+	call	QWORD PTR [rax+48]
 	jmp	SHORT $LN5@NetBind
 $LN1@NetBind:
 
-; 111  : 	return 1;
+; 113  : 	return 1;
 
 	mov	eax, 1
 $LN5@NetBind:
 
-; 112  : }
+; 114  : }
 
 	add	rsp, 72					; 00000048H
 	ret	0
@@ -198,7 +198,7 @@ addr$ = 88
 addrlen$ = 96
 ?NetConnect@@YAHHPEAU_sockaddr_@@_K@Z PROC		; NetConnect
 
-; 78   : int NetConnect(int sockfd, sockaddr* addr, socklen_t addrlen) {
+; 80   : int NetConnect(int sockfd, sockaddr* addr, socklen_t addrlen) {
 
 $LN7:
 	mov	QWORD PTR [rsp+24], r8
@@ -206,86 +206,86 @@ $LN7:
 	mov	DWORD PTR [rsp+8], ecx
 	sub	rsp, 72					; 00000048H
 
-; 79   : 	x64_cli();
+; 81   : 	x64_cli();
 
 	call	x64_cli
 
-; 80   : 	AuThread* thr = AuGetCurrentThread();
+; 82   : 	AuThread* thr = AuGetCurrentThread();
 
 	call	AuGetCurrentThread
 	mov	QWORD PTR thr$[rsp], rax
 
-; 81   : 	if (!thr)
+; 83   : 	if (!thr)
 
 	cmp	QWORD PTR thr$[rsp], 0
 	jne	SHORT $LN4@NetConnect
 
-; 82   : 		return 1;
+; 84   : 		return 1;
 
 	mov	eax, 1
 	jmp	SHORT $LN5@NetConnect
 $LN4@NetConnect:
 
-; 83   : 	AuProcess *proc = AuProcessFindThread(thr);
+; 85   : 	AuProcess *proc = AuProcessFindThread(thr);
 
 	mov	rcx, QWORD PTR thr$[rsp]
 	call	?AuProcessFindThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z ; AuProcessFindThread
 	mov	QWORD PTR proc$[rsp], rax
 
-; 84   : 	if (!proc){
+; 86   : 	if (!proc){
 
 	cmp	QWORD PTR proc$[rsp], 0
 	jne	SHORT $LN3@NetConnect
 
-; 85   : 		proc = AuProcessFindSubThread(thr);
+; 87   : 		proc = AuProcessFindSubThread(thr);
 
 	mov	rcx, QWORD PTR thr$[rsp]
 	call	?AuProcessFindSubThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z ; AuProcessFindSubThread
 	mov	QWORD PTR proc$[rsp], rax
 
-; 86   : 		if (!proc)
+; 88   : 		if (!proc)
 
 	cmp	QWORD PTR proc$[rsp], 0
 	jne	SHORT $LN2@NetConnect
 
-; 87   : 			return 1;
+; 89   : 			return 1;
 
 	mov	eax, 1
 	jmp	SHORT $LN5@NetConnect
 $LN2@NetConnect:
 $LN3@NetConnect:
 
-; 88   : 	}
-; 89   : 
-; 90   : 	AuSocket* sock = (AuSocket*)proc->fds[sockfd];
+; 90   : 	}
+; 91   : 
+; 92   : 	AuSocket* sock = (AuSocket*)proc->fds[sockfd];
 
 	movsxd	rax, DWORD PTR sockfd$[rsp]
 	mov	rcx, QWORD PTR proc$[rsp]
 	mov	rax, QWORD PTR [rcx+rax*8+567]
 	mov	QWORD PTR sock$[rsp], rax
 
-; 91   : 	if (sock->connect)
+; 93   : 	if (sock->connect)
 
 	mov	rax, QWORD PTR sock$[rsp]
-	cmp	QWORD PTR [rax+216], 0
+	cmp	QWORD PTR [rax+40], 0
 	je	SHORT $LN1@NetConnect
 
-; 92   : 		return sock->connect(sock, addr, addrlen);
+; 94   : 		return sock->connect(sock, addr, addrlen);
 
 	mov	r8, QWORD PTR addrlen$[rsp]
 	mov	rdx, QWORD PTR addr$[rsp]
 	mov	rcx, QWORD PTR sock$[rsp]
 	mov	rax, QWORD PTR sock$[rsp]
-	call	QWORD PTR [rax+216]
+	call	QWORD PTR [rax+40]
 	jmp	SHORT $LN5@NetConnect
 $LN1@NetConnect:
 
-; 93   : 	return 1;
+; 95   : 	return 1;
 
 	mov	eax, 1
 $LN5@NetConnect:
 
-; 94   : }
+; 96   : }
 
 	add	rsp, 72					; 00000048H
 	ret	0
@@ -297,12 +297,13 @@ _TEXT	SEGMENT
 proc$ = 32
 sock$ = 40
 thr$ = 48
+node$ = 56
 sockfd$ = 80
 msg$ = 88
 flags$ = 96
 ?NetReceive@@YAHHPEAU_msghdr_@@H@Z PROC			; NetReceive
 
-; 57   : int NetReceive(int sockfd, msghdr *msg, int flags){
+; 58   : int NetReceive(int sockfd, msghdr *msg, int flags){
 
 $LN9:
 	mov	DWORD PTR [rsp+24], r8d
@@ -310,107 +311,113 @@ $LN9:
 	mov	DWORD PTR [rsp+8], ecx
 	sub	rsp, 72					; 00000048H
 
-; 58   : 	x64_cli();
+; 59   : 	x64_cli();
 
 	call	x64_cli
 
-; 59   : 	if (!msg)
+; 60   : 	if (!msg)
 
 	cmp	QWORD PTR msg$[rsp], 0
 	jne	SHORT $LN6@NetReceive
 
-; 60   : 		return 1;
+; 61   : 		return 1;
 
 	mov	eax, 1
 	jmp	$LN7@NetReceive
 $LN6@NetReceive:
 
-; 61   : 	AuThread *thr = AuGetCurrentThread();
+; 62   : 	AuThread *thr = AuGetCurrentThread();
 
 	call	AuGetCurrentThread
 	mov	QWORD PTR thr$[rsp], rax
 
-; 62   : 	if (!thr)
+; 63   : 	if (!thr)
 
 	cmp	QWORD PTR thr$[rsp], 0
 	jne	SHORT $LN5@NetReceive
 
-; 63   : 		return 1;
+; 64   : 		return 1;
 
 	mov	eax, 1
 	jmp	$LN7@NetReceive
 $LN5@NetReceive:
 
-; 64   : 	AuProcess *proc = AuProcessFindThread(thr);
+; 65   : 	AuProcess *proc = AuProcessFindThread(thr);
 
 	mov	rcx, QWORD PTR thr$[rsp]
 	call	?AuProcessFindThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z ; AuProcessFindThread
 	mov	QWORD PTR proc$[rsp], rax
 
-; 65   : 	if (!proc){
+; 66   : 	if (!proc){
 
 	cmp	QWORD PTR proc$[rsp], 0
 	jne	SHORT $LN4@NetReceive
 
-; 66   : 		proc = AuProcessFindSubThread(thr);
+; 67   : 		proc = AuProcessFindSubThread(thr);
 
 	mov	rcx, QWORD PTR thr$[rsp]
 	call	?AuProcessFindSubThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z ; AuProcessFindSubThread
 	mov	QWORD PTR proc$[rsp], rax
 
-; 67   : 		if (!proc)
+; 68   : 		if (!proc)
 
 	cmp	QWORD PTR proc$[rsp], 0
 	jne	SHORT $LN3@NetReceive
 
-; 68   : 			return 1;
+; 69   : 			return 1;
 
 	mov	eax, 1
 	jmp	SHORT $LN7@NetReceive
 $LN3@NetReceive:
 $LN4@NetReceive:
 
-; 69   : 	}
-; 70   : 	AuSocket* sock = (AuSocket*)proc->fds[sockfd];
+; 70   : 	}
+; 71   : 	AuVFSNode* node = proc->fds[sockfd];
 
 	movsxd	rax, DWORD PTR sockfd$[rsp]
 	mov	rcx, QWORD PTR proc$[rsp]
 	mov	rax, QWORD PTR [rcx+rax*8+567]
+	mov	QWORD PTR node$[rsp], rax
+
+; 72   : 	AuSocket* sock = (AuSocket*)node->device;
+
+	mov	rax, QWORD PTR node$[rsp]
+	mov	rax, QWORD PTR [rax+64]
 	mov	QWORD PTR sock$[rsp], rax
 
-; 71   : 	if (!sock)
+; 73   : 	if (!sock)
 
 	cmp	QWORD PTR sock$[rsp], 0
 	jne	SHORT $LN2@NetReceive
 
-; 72   : 		return -1;
+; 74   : 		return -1;
 
 	mov	eax, -1
 	jmp	SHORT $LN7@NetReceive
 $LN2@NetReceive:
 
-; 73   : 	if (sock->receive)
+; 75   : 	if (sock->receive)
 
 	mov	rax, QWORD PTR sock$[rsp]
-	cmp	QWORD PTR [rax+192], 0
+	cmp	QWORD PTR [rax+16], 0
 	je	SHORT $LN1@NetReceive
 
-; 74   : 		return sock->receive(sock, msg, flags);
+; 76   : 		return sock->receive(sock, msg, flags);
 
 	mov	r8d, DWORD PTR flags$[rsp]
 	mov	rdx, QWORD PTR msg$[rsp]
 	mov	rcx, QWORD PTR sock$[rsp]
 	mov	rax, QWORD PTR sock$[rsp]
-	call	QWORD PTR [rax+192]
+	call	QWORD PTR [rax+16]
 	jmp	SHORT $LN7@NetReceive
 $LN1@NetReceive:
 
-; 75   : 	return 1;
+; 77   : 	return 1;
 
 	mov	eax, 1
 $LN7@NetReceive:
 
-; 76   : }
+; 78   : }
 
 	add	rsp, 72					; 00000048H
 	ret	0
@@ -422,6 +429,7 @@ _TEXT	SEGMENT
 proc$ = 32
 sock$ = 40
 thr$ = 48
+node$ = 56
 sockfd$ = 80
 msg$ = 88
 flags$ = 96
@@ -496,46 +504,52 @@ $LN3@NetSend:
 $LN4@NetSend:
 
 ; 48   : 	}
-; 49   : 	AuSocket* sock = (AuSocket*)proc->fds[sockfd];
+; 49   : 	AuVFSNode* node = proc->fds[sockfd];
 
 	movsxd	rax, DWORD PTR sockfd$[rsp]
 	mov	rcx, QWORD PTR proc$[rsp]
 	mov	rax, QWORD PTR [rcx+rax*8+567]
+	mov	QWORD PTR node$[rsp], rax
+
+; 50   : 	AuSocket* sock = (AuSocket*)node->device;
+
+	mov	rax, QWORD PTR node$[rsp]
+	mov	rax, QWORD PTR [rax+64]
 	mov	QWORD PTR sock$[rsp], rax
 
-; 50   : 	if (!sock)
+; 51   : 	if (!sock)
 
 	cmp	QWORD PTR sock$[rsp], 0
 	jne	SHORT $LN2@NetSend
 
-; 51   : 		return -1;
+; 52   : 		return -1;
 
 	mov	eax, -1
 	jmp	SHORT $LN7@NetSend
 $LN2@NetSend:
 
-; 52   : 	if (sock->send)
+; 53   : 	if (sock->send)
 
 	mov	rax, QWORD PTR sock$[rsp]
-	cmp	QWORD PTR [rax+200], 0
+	cmp	QWORD PTR [rax+24], 0
 	je	SHORT $LN1@NetSend
 
-; 53   : 		return sock->send(sock, msg, flags);
+; 54   : 		return sock->send(sock, msg, flags);
 
 	mov	r8d, DWORD PTR flags$[rsp]
 	mov	rdx, QWORD PTR msg$[rsp]
 	mov	rcx, QWORD PTR sock$[rsp]
 	mov	rax, QWORD PTR sock$[rsp]
-	call	QWORD PTR [rax+200]
+	call	QWORD PTR [rax+24]
 	jmp	SHORT $LN7@NetSend
 $LN1@NetSend:
 
-; 54   : 	return 1;
+; 55   : 	return 1;
 
 	mov	eax, 1
 $LN7@NetSend:
 
-; 55   : }
+; 56   : }
 
 	add	rsp, 72					; 00000048H
 	ret	0

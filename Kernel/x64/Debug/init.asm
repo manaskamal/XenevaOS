@@ -6,7 +6,7 @@ INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
 CONST	SEGMENT
-$SG5134	DB	'BootDev HID -> %x, UID -> %x, CID -> %x ', 0dH, 0aH, 00H
+$SG5161	DB	'BootDev HID -> %x, UID -> %x, CID -> %x ', 0dH, 0aH, 00H
 CONST	ENDS
 PUBLIC	?_AuMain@@YAXPEAU_KERNEL_BOOT_INFO_@@@Z		; _AuMain
 EXTRN	?AuConsoleInitialize@@YAXPEAU_KERNEL_BOOT_INFO_@@_N@Z:PROC ; AuConsoleInitialize
@@ -100,7 +100,7 @@ $LN5:
 	mov	r8d, DWORD PTR [rax+174]
 	mov	rax, QWORD PTR info$[rsp]
 	mov	edx, DWORD PTR [rax+170]
-	lea	rcx, OFFSET FLAT:$SG5134
+	lea	rcx, OFFSET FLAT:$SG5161
 	call	AuTextOut
 
 ; 88   : 	AuAHCIInitialise();
@@ -207,22 +207,21 @@ $LN5:
 
 	call	?AuVmmngrBootFree@@YAXXZ		; AuVmmngrBootFree
 
-; 133  : 
-; 134  : 	/* Process initialisation begins here */
-; 135  : 	AuStartRootProc();
+; 133  : 	/* Process initialisation begins here */
+; 134  : 	AuStartRootProc();
 
 	call	?AuStartRootProc@@YAXXZ			; AuStartRootProc
 
-; 136  : 	AuSchedulerStart();
+; 135  : 	AuSchedulerStart();
 
 	call	?AuSchedulerStart@@YAXXZ		; AuSchedulerStart
 $LN2@AuMain:
 
-; 137  : 	for (;;);
+; 136  : 	for (;;);
 
 	jmp	SHORT $LN2@AuMain
 
-; 138  : }
+; 137  : }
 
 	add	rsp, 40					; 00000028H
 	ret	0

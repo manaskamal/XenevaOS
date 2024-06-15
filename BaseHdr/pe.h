@@ -172,6 +172,10 @@ struct _IMAGE_NT_HEADERS_PE32PLUS {
 	IMAGE_OPTIONAL_HEADER_PE32PLUS OptionalHeader;
 };
 
+
+#define IMAGE_NUMBEROF_DIRECTORY_ENTRIES 16
+
+
 #define IMAGE_SCN_CNT_CODE 0x00000020
 #define IMAGE_SCN_CNT_INITIALIZED_DATA 0x00000040
 #define IMAGE_SCN_CNT_UNINITIALIZED_DATA 0x00000080
@@ -224,6 +228,17 @@ typedef struct _IMAGE_IMPORT_DIRECTORY {
 	uint32_t ThunkTableRva;
 }IMAGE_IMPORT_DIRECTORY, *PIMAGE_IMPORT_DIRECTORY;
 
+typedef struct _IMAGE_RELOCATION_ENTRY_ {
+	uint16_t offset : 12;
+	uint16_t type : 4;
+}IMAGE_RELOCATION_ENTRY, *PIMAGE_RELOCATION_ENTRY;
+
+typedef struct _IMAGE_RELOCATION_BLOCK_ {
+	uint32_t PageRVA;
+	uint32_t BlockSize;
+	IMAGE_RELOCATION_ENTRY entries[0];
+}IMAGE_RELOCATION_BLOCK, *PIMAGE_RELOCATION_BLOCK;
+
 typedef struct _IMAGE_IMPORT_HINT_TABLE {
 	uint16_t Hint;
 	char name[2];
@@ -271,6 +286,15 @@ extern void AuPEPrintExports(void *image);
 * @param image -- dll image
 */
 extern void AuKernelLinkImports(void* image);
+
+/*
+* AuKernelRelocatePE -- relocates the image from its actual
+* base address
+* @param image -- pointer to executable image
+* @param nt -- nt headers
+* @param diff -- difference from its original
+*/
+extern void AuKernelRelocatePE(void* image, PIMAGE_NT_HEADERS nt, int diff);
 
 /*
 * AuPEFileIsDynamicallyLinked -- checks if the current

@@ -6,15 +6,15 @@ INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
 CONST	SEGMENT
-$SG3814	DB	'No process found ', 0aH, 00H
+$SG3841	DB	'No process found ', 0aH, 00H
 	ORG $+5
-$SG3831	DB	'THRSERV: allocatedarg[1] -> %s ', 0dH, 0aH, 00H
+$SG3858	DB	'THRSERV: allocatedarg[1] -> %s ', 0dH, 0aH, 00H
 	ORG $+6
-$SG3835	DB	'Process launched failed %s', 0dH, 0aH, 00H
+$SG3862	DB	'Process launched failed %s', 0dH, 0aH, 00H
 	ORG $+3
-$SG3836	DB	'Returning ', 0dH, 0aH, 00H
+$SG3863	DB	'Returning ', 0dH, 0aH, 00H
 	ORG $+3
-$SG3847	DB	'Signal Return ', 0dH, 0aH, 00H
+$SG3874	DB	'Signal Return ', 0dH, 0aH, 00H
 CONST	ENDS
 PUBLIC	?PauseThread@@YAHXZ				; PauseThread
 PUBLIC	?GetThreadID@@YAGXZ				; GetThreadID
@@ -637,7 +637,7 @@ $LN3:
 
 ; 193  : 	SeTextOut("Signal Return \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG3847
+	lea	rcx, OFFSET FLAT:$SG3874
 	call	SeTextOut
 
 ; 194  : 	/* just make a page fault */
@@ -759,7 +759,7 @@ $LN14:
 
 ; 128  : 		AuTextOut("No process found \n");
 
-	lea	rcx, OFFSET FLAT:$SG3814
+	lea	rcx, OFFSET FLAT:$SG3841
 	call	AuTextOut
 
 ; 129  : 		return -1;
@@ -881,7 +881,7 @@ $LN7@ProcessLoa:
 	imul	rax, rax, 1
 	mov	rcx, QWORD PTR allocated_argv$[rsp]
 	mov	rdx, QWORD PTR [rcx+rax]
-	lea	rcx, OFFSET FLAT:$SG3831
+	lea	rcx, OFFSET FLAT:$SG3858
 	call	SeTextOut
 $LN3@ProcessLoa:
 
@@ -913,7 +913,7 @@ $LN1@ProcessLoa:
 ; 164  : 		SeTextOut("Process launched failed %s\r\n", filename);
 
 	mov	rdx, QWORD PTR filename$[rsp]
-	lea	rcx, OFFSET FLAT:$SG3835
+	lea	rcx, OFFSET FLAT:$SG3862
 	call	SeTextOut
 
 ; 165  : 		AuProcessExit(proc, true);
@@ -924,7 +924,7 @@ $LN1@ProcessLoa:
 
 ; 166  : 		SeTextOut("Returning \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG3836
+	lea	rcx, OFFSET FLAT:$SG3863
 	call	SeTextOut
 
 ; 167  : 		return -1;

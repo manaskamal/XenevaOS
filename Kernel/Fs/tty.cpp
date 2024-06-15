@@ -186,6 +186,7 @@ size_t AuTTYSlaveRead(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint32
  */
 size_t AuTTYSlaveWrite(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint32_t len) {
 	x64_cli();
+	char* data = (char*)buffer;
 	AuThread* curr_th = AuGetCurrentThread();
 	uint8_t* aligned_buf = (uint8_t*)buffer;
 	TTY* tty = (TTY*)file->device;
@@ -195,7 +196,6 @@ size_t AuTTYSlaveWrite(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint3
 		len = 512;
 
 	if (CircBufFull(tty->masterbuf)) {
-		//AuSleepThread(curr_th, 1000000000000);
 		AuForceScheduler();
 		return 0;
 	}
@@ -277,7 +277,7 @@ AuVFSNode* AuTTYCreateMaster(TTY* tty) {
 	strcpy(node->filename, name);
 
 	node->size = 512;
-	node->flags = FS_FLAG_GENERAL | FS_FLAG_TTY;
+	node->flags |= FS_FLAG_TTY;
 	node->device = tty;
 	node->read = AuTTYMasterRead;
 	node->write = AuTTYMasterWrite;
@@ -306,7 +306,7 @@ AuVFSNode* AuTTYCreateSlave(TTY* tty) {
 	strcpy(node->filename, name);
 
 	node->size = 512;
-	node->flags = FS_FLAG_GENERAL | FS_FLAG_TTY;
+	node->flags |= FS_FLAG_TTY;
 	node->device = tty;
 	node->read = AuTTYSlaveRead;
 	node->write = AuTTYSlaveWrite;

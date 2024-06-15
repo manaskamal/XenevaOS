@@ -6,6 +6,15 @@ INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
 PUBLIC	?null_call@@YA_K_K00000@Z			; null_call
+EXTRN	?CloseFile@@YAHH@Z:PROC				; CloseFile
+EXTRN	?FileIoControl@@YAHHHPEAX@Z:PROC		; FileIoControl
+EXTRN	?FileStat@@YAHHPEAX@Z:PROC			; FileStat
+EXTRN	?GetSystemTimerTick@@YA_KXZ:PROC		; GetSystemTimerTick
+EXTRN	?CreateUserThread@@YAHP6AXPEAX@ZPEAD@Z:PROC	; CreateUserThread
+EXTRN	?SetFileToProcess@@YAHHHH@Z:PROC		; SetFileToProcess
+EXTRN	?ProcessHeapUnmap@@YAHPEAX_K@Z:PROC		; ProcessHeapUnmap
+EXTRN	?SendSignal@@YAHHH@Z:PROC			; SendSignal
+EXTRN	?GetCurrentTime@@YAHPEAX@Z:PROC			; GetCurrentTime
 EXTRN	?OpenDir@@YAHPEAD@Z:PROC			; OpenDir
 EXTRN	?ReadDir@@YAHHPEAX@Z:PROC			; ReadDir
 EXTRN	?CreateTimer@@YAHHHE@Z:PROC			; CreateTimer
@@ -50,15 +59,6 @@ EXTRN	?ReadFile@@YA_KHPEAX_K@Z:PROC			; ReadFile
 EXTRN	?WriteFile@@YA_KHPEAX_K@Z:PROC			; WriteFile
 EXTRN	?CreateDir@@YAHPEAD@Z:PROC			; CreateDir
 EXTRN	?RemoveFile@@YAHPEAD@Z:PROC			; RemoveFile
-EXTRN	?CloseFile@@YAHH@Z:PROC				; CloseFile
-EXTRN	?FileIoControl@@YAHHHPEAX@Z:PROC		; FileIoControl
-EXTRN	?FileStat@@YAHHPEAX@Z:PROC			; FileStat
-EXTRN	?GetSystemTimerTick@@YA_KXZ:PROC		; GetSystemTimerTick
-EXTRN	?CreateUserThread@@YAHP6AXPEAX@ZPEAD@Z:PROC	; CreateUserThread
-EXTRN	?SetFileToProcess@@YAHHHH@Z:PROC		; SetFileToProcess
-EXTRN	?ProcessHeapUnmap@@YAHPEAX_K@Z:PROC		; ProcessHeapUnmap
-EXTRN	?SendSignal@@YAHHH@Z:PROC			; SendSignal
-EXTRN	?GetCurrentTime@@YAHPEAX@Z:PROC			; GetCurrentTime
 _DATA	SEGMENT
 syscalls DQ	FLAT:?null_call@@YA_K_K00000@Z
 	DQ	FLAT:SeTextOut
@@ -116,7 +116,7 @@ syscalls DQ	FLAT:?null_call@@YA_K_K00000@Z
 	DQ	FLAT:?NetListen@@YAHHH@Z
 _DATA	ENDS
 CONST	SEGMENT
-$SG4384	DB	'%s', 0aH, 00H
+$SG4411	DB	'%s', 0aH, 00H
 CONST	ENDS
 PUBLIC	?KePrintMsg@@YA_K_K00000@Z			; KePrintMsg
 PUBLIC	x64_syscall_handler
@@ -285,7 +285,7 @@ $LN3:
 ; 60   : 	AuTextOut("%s\n",text);
 
 	mov	rdx, QWORD PTR text$[rsp]
-	lea	rcx, OFFSET FLAT:$SG4384
+	lea	rcx, OFFSET FLAT:$SG4411
 	call	AuTextOut
 
 ; 61   : 	return 0;

@@ -265,9 +265,8 @@ int rename(const char* oldpath, const char* newpath) {
 
 int sprintf(char* output, const char* format, ...) {
 	va_list list;
-	int len = 0;
 	va_start(list, format);
-
+	int len = 0;
 	len = _xeprint(output, MAX_STRING_LENGTH, format, list);
 	va_end(list);
 	return len;
@@ -277,11 +276,9 @@ int sprintf(char* output, const char* format, ...) {
 
 int snprintf(char* output, size_t sz, const char* format, ...) {
 	va_list list;
-	int len = 0;
-
-	memset(output, 0, sz);
-
 	va_start(list, format);
+	int len = 0;
+	memset(output, 0, sz);
 	len = _xeprint(output, sz, format, list);
 	va_end(list);
 	return len;
@@ -294,7 +291,7 @@ int printf(const char* format, ...) {
 	memset(output, '\0', MAX_STRING_LENGTH);
 	int len = _xeprint(output, MAX_STRING_LENGTH, format, list);
 	va_end(list);
-	_KeWriteFile(XENEVA_STDOUT, output, strlen(output)-1);
+	_KeWriteFile(XENEVA_STDOUT, output, strlen(output));
 	return len;
 }
 

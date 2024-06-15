@@ -1,4 +1,4 @@
-﻿Build started 13-06-2024 আবেলি 12:44:50.
+﻿Build started 15-06-2024 ৰাতিপু 10:27:50.
      1>Project "E:\Xeneva Project\Aurora\Process\XEShell\XEShell.vcxproj" on node 2 (Rebuild target(s)).
      1>ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /I"E:\Xeneva Project\Aurora\Libs\Chitralekha" /I"E:\os_dev\freetype2-master\freetype2-master\include" /Zi /nologo /W4 /WX- /sdl- /MP /Od /Oy /D ARCH_X64 /D YES_DYNAMIC /D DYNAMIC_IMPORTER /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt main.cpp
@@ -6,16 +6,16 @@
      1>cl : Command line warning D9002: ignoring unknown option '/arch:SSE2'
          main.cpp
      1>main.cpp(91): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
-     1>main.cpp(101): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
+     1>main.cpp(100): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
      1>main.cpp(91): warning C4189: 'totalCharacterCount' : local variable is initialized but not referenced
-     1>main.cpp(142): warning C4189: 'status' : local variable is initialized but not referenced
-     1>main.cpp(162): warning C4244: 'initializing' : conversion from 'int' to 'char', possible loss of data
-     1>main.cpp(197): warning C4127: conditional expression is constant
-     1>main.cpp(256): warning C4129: '%' : unrecognized character escape sequence
+     1>main.cpp(140): warning C4189: 'status' : local variable is initialized but not referenced
+     1>main.cpp(160): warning C4244: 'initializing' : conversion from 'int' to 'char', possible loss of data
+     1>main.cpp(195): warning C4127: conditional expression is constant
+     1>main.cpp(254): warning C4129: '%' : unrecognized character escape sequence
      1>main.cpp(287): warning C4313: 'printf'  : '%x' in format string conflicts with argument 1 of type 'void (__cdecl *)(int)'
      1>main.cpp(296): warning C4127: conditional expression is constant
-     1>main.cpp(281): warning C4100: 'arv' : unreferenced formal parameter
-     1>main.cpp(281): warning C4100: 'argc' : unreferenced formal parameter
+     1>main.cpp(280): warning C4100: 'arv' : unreferenced formal parameter
+     1>main.cpp(280): warning C4100: 'argc' : unreferenced formal parameter
      1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(1186,5): warning MSB8012: TargetPath(E:\Xeneva Project\Aurora\x64\Debug\XEShell.exe) does not match the Linker's OutputFile property value (F:\xesh.exe). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
      1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(1188,5): warning MSB8012: TargetName(XEShell) does not match the Linker's OutputFile property value (xesh). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
        Link:
@@ -27,4 +27,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:00.56
+Time Elapsed 00:00:00.71

@@ -16,19 +16,19 @@ _BSS	SEGMENT
 ?process_mutex@@3PEAU_mutex_@@EA DQ 01H DUP (?)		; process_mutex
 _BSS	ENDS
 CONST	SEGMENT
-$SG4250	DB	'_root', 00H
+$SG4277	DB	'_root', 00H
 	ORG $+2
-$SG4277	DB	'-about', 00H
+$SG4304	DB	'-about', 00H
 	ORG $+1
-$SG4282	DB	'/init.exe', 00H
+$SG4309	DB	'/init.exe', 00H
 	ORG $+6
-$SG4338	DB	'[aurora]: cannot exit root process ', 0dH, 0aH, 00H
+$SG4365	DB	'[aurora]: cannot exit root process ', 0dH, 0aH, 00H
 	ORG $+2
-$SG4351	DB	'Closing file -> %s , address -> %x ', 0dH, 0aH, 00H
+$SG4378	DB	'Closing file -> %s , address -> %x ', 0dH, 0aH, 00H
 	ORG $+2
-$SG4365	DB	'unmapping mem ', 0dH, 0aH, 00H
+$SG4392	DB	'unmapping mem ', 0dH, 0aH, 00H
 	ORG $+7
-$SG4367	DB	'closing process -> %s ', 0dH, 0aH, 00H
+$SG4394	DB	'closing process -> %s ', 0dH, 0aH, 00H
 CONST	ENDS
 _DATA	SEGMENT
 pid	DD	01H
@@ -494,7 +494,7 @@ $LN6:
 
 	mov	rax, QWORD PTR proc$[rsp]
 	add	rax, 4
-	lea	rdx, OFFSET FLAT:$SG4250
+	lea	rdx, OFFSET FLAT:$SG4277
 	mov	rcx, rax
 	call	strcpy
 
@@ -1162,7 +1162,7 @@ $LN26:
 
 ; 470  : 		SeTextOut("[aurora]: cannot exit root process \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG4338
+	lea	rcx, OFFSET FLAT:$SG4365
 	call	SeTextOut
 
 ; 471  : 		return;
@@ -1272,7 +1272,7 @@ $LN18@AuProcessE:
 	mov	rax, QWORD PTR file$4[rsp]
 	mov	r8, QWORD PTR file$4[rsp]
 	mov	rdx, rax
-	lea	rcx, OFFSET FLAT:$SG4351
+	lea	rcx, OFFSET FLAT:$SG4378
 	call	SeTextOut
 
 ; 500  : 			if (file->flags & FS_FLAG_DEVICE || file->flags & FS_FLAG_FILE_SYSTEM)
@@ -1394,7 +1394,7 @@ $LN6@AuProcessE:
 ; 519  : 
 ; 520  : 	SeTextOut("unmapping mem \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG4365
+	lea	rcx, OFFSET FLAT:$SG4392
 	call	SeTextOut
 
 ; 521  : 	UnmapMemMapping((void*)PROCESS_MMAP_ADDRESS, proc->proc_mmap_len);
@@ -1417,7 +1417,7 @@ $LN6@AuProcessE:
 	mov	rax, QWORD PTR proc$[rsp]
 	add	rax, 4
 	mov	rdx, rax
-	lea	rcx, OFFSET FLAT:$SG4367
+	lea	rcx, OFFSET FLAT:$SG4394
 	call	SeTextOut
 
 ; 527  : 	AuProcessHeapMemDestroy(proc);
@@ -1727,7 +1727,7 @@ $LN3:
 
 ; 331  : 	char* about_str = "-about";
 
-	lea	rax, OFFSET FLAT:$SG4277
+	lea	rax, OFFSET FLAT:$SG4304
 	mov	QWORD PTR about_str$[rsp], rax
 
 ; 332  : 	char* about = (char*)kmalloc(strlen(about_str));
@@ -1769,7 +1769,7 @@ $LN3:
 
 	mov	r9, QWORD PTR argvs$[rsp]
 	mov	r8d, DWORD PTR num_args$[rsp]
-	lea	rdx, OFFSET FLAT:$SG4282
+	lea	rdx, OFFSET FLAT:$SG4309
 	mov	rcx, QWORD PTR ?root_proc@@3PEAU_au_proc_@@EA ; root_proc
 	call	?AuLoadExecToProcess@@YAHPEAU_au_proc_@@PEADHPEAPEAD@Z ; AuLoadExecToProcess
 

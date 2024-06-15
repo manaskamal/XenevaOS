@@ -46,7 +46,8 @@ int NetSend(int sockfd, msghdr* msg, int flags) {
 		if (!proc)
 			return 1;
 	}
-	AuSocket* sock = (AuSocket*)proc->fds[sockfd];
+	AuVFSNode* node = proc->fds[sockfd];
+	AuSocket* sock = (AuSocket*)node->device;
 	if (!sock)
 		return -1;
 	if (sock->send)
@@ -67,7 +68,8 @@ int NetReceive(int sockfd, msghdr *msg, int flags){
 		if (!proc)
 			return 1;
 	}
-	AuSocket* sock = (AuSocket*)proc->fds[sockfd];
+	AuVFSNode* node = proc->fds[sockfd];
+	AuSocket* sock = (AuSocket*)node->device;
 	if (!sock)
 		return -1;
 	if (sock->receive)

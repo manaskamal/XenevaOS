@@ -80,8 +80,9 @@ typedef struct _msghdr_ {
 	int msg_flags;
 }msghdr;
 
+#pragma pack(push,1)
 typedef struct _socket_ {
-	AuVFSNode fsnode;
+	void* binedDev;
 	AuStack *rxstack;
 	int(*receive)(struct _socket_* sock, msghdr *msg, int flags);
 	int(*send)(struct _socket_* sock, msghdr* msg, int flags);
@@ -89,6 +90,7 @@ typedef struct _socket_ {
 	int(*connect)(struct _socket_* sock, sockaddr* addr, socklen_t addrlen);
 	int(*bind)(struct _socket_* sock, sockaddr* addr, socklen_t addrlen);
 }AuSocket;
+#pragma pack(pop)
 
 extern void AuSocketAdd(AuSocket* sock, void* data, size_t sz);
 

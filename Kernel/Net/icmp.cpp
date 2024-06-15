@@ -93,8 +93,8 @@ int CreateICMPSocket() {
 	AuSocket *sock = (AuSocket*)kmalloc(sizeof(AuSocket));
 	memset(sock, 0, sizeof(AuSocket));
 	fd = AuProcessGetFileDesc(proc);
-	sock->fsnode.read = AuICMPRead;
-	sock->fsnode.write = AuICMPWrite;
+	/*sock->fsnode.read = AuICMPRead;
+	sock->fsnode.write = AuICMPWrite;*/
 	sock->bind = AuICMPBind;
 	sock->close = AuICMPClose;
 	sock->connect = 0;

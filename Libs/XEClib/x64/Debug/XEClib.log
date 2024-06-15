@@ -1,12 +1,12 @@
-﻿Build started 13-06-2024 আবেলি 12:37:39.
+﻿Build started 15-06-2024 ৰাতিপু 10:23:07.
      1>Project "E:\Xeneva Project\Aurora\Libs\XEClib\XEClib.vcxproj" on node 2 (Rebuild target(s)).
      1>_NASM:
          setjmp.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp162b9ba0dcda4110a8e1aeffcb498993.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp037396feb36f4774ab11ae9f86a6c198.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\setjmp.obj"  "E:\Xeneva Project\Aurora\Libs\XEClib\setjmp.asm"
        _NASM:
          _callbase.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmpa1fb32b34d674794bf8998ab4e469899.cmd"
+         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp4195fe85feee494f8832cdb4ade62d7b.cmd"
          "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\_callbase.obj"  "E:\Xeneva Project\Aurora\Libs\XEClib\_callbase.asm"
      1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(935,5): warning MSB8027: Two or more files with the name of _xeprint.cpp will produce outputs to the same location. This can lead to an incorrect build result.  The files involved are sys\_xeprint.cpp, _xeprint.cpp.
        ClCompile:
@@ -23,23 +23,19 @@
      1>_xeprint.cpp(422): warning C4267: '=' : conversion from 'size_t' to 'int', possible loss of data
      1>_xeprint.cpp(538): warning C4244: 'return' : conversion from 'double' to 'float', possible loss of data
      1>_xeprint.cpp(553): warning C4267: '=' : conversion from 'size_t' to 'int', possible loss of data
+     1>_xeprint.cpp(556): warning C4244: 'return' : conversion from 'int64_t' to 'int', possible loss of data
+     1>_xeprint.cpp(560): warning C4244: 'return' : conversion from 'int64_t' to 'int', possible loss of data
      1>_xeprint.cpp(627): warning C4244: 'argument' : conversion from '__int64' to 'unsigned int', possible loss of data
-     1>_xeprint.cpp(638): warning C4244: 'argument' : conversion from '__int64' to 'unsigned int', possible loss of data
-     1>_xeprint.cpp(640): warning C4267: '=' : conversion from 'size_t' to 'int', possible loss of data
-     1>_xeprint.cpp(655): warning C4244: 'argument' : conversion from '__int64' to 'unsigned int', possible loss of data
-     1>_xeprint.cpp(666): warning C4244: 'argument' : conversion from '__int64' to 'unsigned int', possible loss of data
-     1>_xeprint.cpp(668): warning C4267: '=' : conversion from 'size_t' to 'int', possible loss of data
-     1>_xeprint.cpp(685): warning C4267: '+=' : conversion from 'size_t' to 'int', possible loss of data
-     1>_xeprint.cpp(701): warning C4244: 'argument' : conversion from '__int64' to 'unsigned int', possible loss of data
-     1>_xeprint.cpp(711): warning C4244: 'argument' : conversion from '__int64' to 'unsigned int', possible loss of data
-     1>_xeprint.cpp(713): warning C4267: '=' : conversion from 'size_t' to 'int', possible loss of data
-     1>_xeprint.cpp(726): warning C4244: 'argument' : conversion from '__int64' to 'unsigned int', possible loss of data
-     1>_xeprint.cpp(737): warning C4244: 'argument' : conversion from '__int64' to 'unsigned int', possible loss of data
-     1>_xeprint.cpp(739): warning C4267: '=' : conversion from 'size_t' to 'int', possible loss of data
-     1>_xeprint.cpp(754): warning C4244: 'argument' : conversion from '__int64' to 'unsigned int', possible loss of data
-     1>_xeprint.cpp(765): warning C4244: 'argument' : conversion from '__int64' to 'unsigned int', possible loss of data
-     1>_xeprint.cpp(767): warning C4267: '=' : conversion from 'size_t' to 'int', possible loss of data
-     1>_xeprint.cpp(790): warning C4267: '=' : conversion from 'size_t' to 'int', possible loss of data
+     1>_xeprint.cpp(639): warning C4244: 'argument' : conversion from '__int64' to 'unsigned int', possible loss of data
+     1>_xeprint.cpp(657): warning C4244: 'argument' : conversion from '__int64' to 'unsigned int', possible loss of data
+     1>_xeprint.cpp(668): warning C4244: 'argument' : conversion from '__int64' to 'unsigned int', possible loss of data
+     1>_xeprint.cpp(703): warning C4244: 'argument' : conversion from '__int64' to 'unsigned int', possible loss of data
+     1>_xeprint.cpp(713): warning C4244: 'argument' : conversion from '__int64' to 'unsigned int', possible loss of data
+     1>_xeprint.cpp(728): warning C4244: 'argument' : conversion from '__int64' to 'unsigned int', possible loss of data
+     1>_xeprint.cpp(739): warning C4244: 'argument' : conversion from '__int64' to 'unsigned int', possible loss of data
+     1>_xeprint.cpp(756): warning C4244: 'argument' : conversion from '__int64' to 'unsigned int', possible loss of data
+     1>_xeprint.cpp(767): warning C4244: 'argument' : conversion from '__int64' to 'unsigned int', possible loss of data
+     1>_xeprint.cpp(805): warning C4244: 'return' : conversion from 'int64_t' to 'int', possible loss of data
          _xeinput.cpp
      1>_xeinput.cpp(47): warning C4267: '=' : conversion from 'size_t' to 'int', possible loss of data
      1>_xeinput.cpp(54): warning C4267: '=' : conversion from 'size_t' to 'int', possible loss of data
@@ -63,12 +59,12 @@
      1>sys\_heap.cpp(490): warning C4244: '=' : conversion from 'unsigned __int64' to 'int', possible loss of data
      1>sys\_heap.cpp(519): warning C4018: '>' : signed/unsigned mismatch
          string.cpp
-     1>string.cpp(231): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
-     1>string.cpp(232): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
-     1>string.cpp(343): warning C4267: '=' : conversion from 'size_t' to 'int', possible loss of data
-     1>string.cpp(393): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
-     1>string.cpp(394): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
-     1>string.cpp(411): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
+     1>string.cpp(243): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
+     1>string.cpp(244): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
+     1>string.cpp(355): warning C4267: '=' : conversion from 'size_t' to 'int', possible loss of data
+     1>string.cpp(405): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
+     1>string.cpp(406): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
+     1>string.cpp(423): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
          stdlib.cpp
      1>stdlib.cpp(111): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
      1>stdlib.cpp(147): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
@@ -77,10 +73,10 @@
      1>stdlib.cpp(406): warning C4146: unary minus operator applied to unsigned type, result still unsigned
          stdio.cpp
      1>stdio.cpp(76): warning C4267: '=' : conversion from 'size_t' to 'int', possible loss of data
-     1>stdio.cpp(285): warning C4267: 'argument' : conversion from 'size_t' to 'int', possible loss of data
-     1>stdio.cpp(323): warning C4267: 'argument' : conversion from 'size_t' to 'int', possible loss of data
-     1>stdio.cpp(343): warning C4267: '=' : conversion from 'size_t' to 'int', possible loss of data
-     1>stdio.cpp(373): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
+     1>stdio.cpp(282): warning C4267: 'argument' : conversion from 'size_t' to 'int', possible loss of data
+     1>stdio.cpp(320): warning C4267: 'argument' : conversion from 'size_t' to 'int', possible loss of data
+     1>stdio.cpp(340): warning C4267: '=' : conversion from 'size_t' to 'int', possible loss of data
+     1>stdio.cpp(370): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
          stat.cpp
          qsort.cpp
      1>qsort.cpp(83): warning C4267: 'argument' : conversion from 'size_t' to 'ssize_t', possible loss of data
@@ -119,7 +115,7 @@
                      charT=char
                  ]
          Generating Code...
-     1>e:\xeneva project\aurora\libs\xeclib\stdio.cpp(316): warning C4715: 'vfprintf' : not all control paths return a value
+     1>e:\xeneva project\aurora\libs\xeclib\stdio.cpp(313): warning C4715: 'vfprintf' : not all control paths return a value
      1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(1186,5): warning MSB8012: TargetPath(E:\Xeneva Project\Aurora\x64\Debug\XEClib.dll) does not match the Linker's OutputFile property value (F:\XEClib.dll). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
        Link:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\link.exe /ERRORREPORT:PROMPT /OUT:"F:\XEClib.dll" /INCREMENTAL /NOLOGO /NODEFAULTLIB /MANIFEST:NO /PDB:"E:\Xeneva Project\Aurora\x64\Debug\XEClib.pdb" /MAP /MAPINFO:EXPORTS /SUBSYSTEM:NATIVE /LARGEADDRESSAWARE /Driver /OPT:NOREF /LTCG /TLBID:1 /BASE:"0x0000000000600000" /FIXED:NO /NXCOMPAT /IMPLIB:"E:\Xeneva Project\Aurora\x64\Debug\XEClib.lib" /MACHINE:X64 /ALIGN:512 /DLL x64\Debug\ios.obj
@@ -154,4 +150,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:05.57
+Time Elapsed 00:00:02.79

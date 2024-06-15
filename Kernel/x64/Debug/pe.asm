@@ -6,12 +6,15 @@ INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
 CONST	SEGMENT
-$SG3060	DB	'Fname -> %s ', 0aH, 00H
+$SG3095	DB	'Fname -> %s ', 0aH, 00H
+	ORG $+2
+$SG3252	DB	'Relocating executable dir64 %x', 0dH, 0aH, 00H
 CONST	ENDS
 PUBLIC	?AuGetProcAddress@@YAPEAXPEAXPEBD@Z		; AuGetProcAddress
 PUBLIC	?AuKernelLinkDLL@@YAXPEAX@Z			; AuKernelLinkDLL
 PUBLIC	?AuPEPrintExports@@YAXPEAX@Z			; AuPEPrintExports
 PUBLIC	?AuKernelLinkImports@@YAXPEAX@Z			; AuKernelLinkImports
+PUBLIC	?AuKernelRelocatePE@@YAXPEAXPEAU_IMAGE_NT_HEADERS_PE32PLUS@@H@Z ; AuKernelRelocatePE
 PUBLIC	?AuPEFileIsDynamicallyLinked@@YA_NPEAX@Z	; AuPEFileIsDynamicallyLinked
 PUBLIC	??$raw_offset@PEAU_IMAGE_NT_HEADERS_PE32PLUS@@PEAU_IMAGE_DOS_HEADER_@@@@YAPEAU_IMAGE_NT_HEADERS_PE32PLUS@@PEAU_IMAGE_DOS_HEADER_@@H@Z ; raw_offset<_IMAGE_NT_HEADERS_PE32PLUS * __ptr64,_IMAGE_DOS_HEADER_ * __ptr64>
 PUBLIC	??$raw_offset@PEAU_IMAGE_EXPORT_DIRECTORY@@PEAX@@YAPEAU_IMAGE_EXPORT_DIRECTORY@@PEAXH@Z ; raw_offset<_IMAGE_EXPORT_DIRECTORY * __ptr64,void * __ptr64>
@@ -25,8 +28,12 @@ PUBLIC	??$raw_offset@PEA_KPEAE@@YAPEA_KPEAEH@Z		; raw_offset<unsigned __int64 * 
 PUBLIC	??$raw_offset@PEAU_IMAGE_IMPORT_HINT_TABLE@@PEAX@@YAPEAU_IMAGE_IMPORT_HINT_TABLE@@PEAXH@Z ; raw_offset<_IMAGE_IMPORT_HINT_TABLE * __ptr64,void * __ptr64>
 PUBLIC	??$raw_offset@PEBDPEAE@@YAPEBDPEAEH@Z		; raw_offset<char const * __ptr64,unsigned char * __ptr64>
 PUBLIC	??$raw_offset@PEAU_IMAGE_IMPORT_HINT_TABLE@@PEAE@@YAPEAU_IMAGE_IMPORT_HINT_TABLE@@PEAEH@Z ; raw_offset<_IMAGE_IMPORT_HINT_TABLE * __ptr64,unsigned char * __ptr64>
+PUBLIC	??$raw_offset@PEAU_IMAGE_RELOCATION_BLOCK_@@PEAX@@YAPEAU_IMAGE_RELOCATION_BLOCK_@@PEAXH@Z ; raw_offset<_IMAGE_RELOCATION_BLOCK_ * __ptr64,void * __ptr64>
+PUBLIC	??$raw_diff@U_IMAGE_RELOCATION_BLOCK_@@U1@@@YAHPEAU_IMAGE_RELOCATION_BLOCK_@@0@Z ; raw_diff<_IMAGE_RELOCATION_BLOCK_,_IMAGE_RELOCATION_BLOCK_>
+PUBLIC	??$raw_offset@PEAU_IMAGE_RELOCATION_BLOCK_@@PEAU1@@@YAPEAU_IMAGE_RELOCATION_BLOCK_@@PEAU0@H@Z ; raw_offset<_IMAGE_RELOCATION_BLOCK_ * __ptr64,_IMAGE_RELOCATION_BLOCK_ * __ptr64>
 EXTRN	strcmp:PROC
 EXTRN	AuTextOut:PROC
+EXTRN	SeTextOut:PROC
 pdata	SEGMENT
 $pdata$?AuGetProcAddress@@YAPEAXPEAXPEBD@Z DD imagerel $LN10
 	DD	imagerel $LN10+386
@@ -40,6 +47,9 @@ $pdata$?AuPEPrintExports@@YAXPEAX@Z DD imagerel $LN9
 $pdata$?AuKernelLinkImports@@YAXPEAX@Z DD imagerel $LN11
 	DD	imagerel $LN11+385
 	DD	imagerel $unwind$?AuKernelLinkImports@@YAXPEAX@Z
+$pdata$?AuKernelRelocatePE@@YAXPEAXPEAU_IMAGE_NT_HEADERS_PE32PLUS@@H@Z DD imagerel $LN22
+	DD	imagerel $LN22+592
+	DD	imagerel $unwind$?AuKernelRelocatePE@@YAXPEAXPEAU_IMAGE_NT_HEADERS_PE32PLUS@@H@Z
 $pdata$?AuPEFileIsDynamicallyLinked@@YA_NPEAX@Z DD imagerel $LN6
 	DD	imagerel $LN6+154
 	DD	imagerel $unwind$?AuPEFileIsDynamicallyLinked@@YA_NPEAX@Z
@@ -53,9 +63,86 @@ $unwind$?AuPEPrintExports@@YAXPEAX@Z DD 010901H
 	DD	0e209H
 $unwind$?AuKernelLinkImports@@YAXPEAX@Z DD 020c01H
 	DD	011010cH
+$unwind$?AuKernelRelocatePE@@YAXPEAXPEAU_IMAGE_NT_HEADERS_PE32PLUS@@H@Z DD 011301H
+	DD	0c213H
 $unwind$?AuPEFileIsDynamicallyLinked@@YA_NPEAX@Z DD 010901H
 	DD	0a209H
 xdata	ENDS
+; Function compile flags: /Odtpy
+; File e:\xeneva project\aurora\basehdr\stdint.h
+;	COMDAT ??$raw_offset@PEAU_IMAGE_RELOCATION_BLOCK_@@PEAU1@@@YAPEAU_IMAGE_RELOCATION_BLOCK_@@PEAU0@H@Z
+_TEXT	SEGMENT
+p1$ = 8
+offset$ = 16
+??$raw_offset@PEAU_IMAGE_RELOCATION_BLOCK_@@PEAU1@@@YAPEAU_IMAGE_RELOCATION_BLOCK_@@PEAU0@H@Z PROC ; raw_offset<_IMAGE_RELOCATION_BLOCK_ * __ptr64,_IMAGE_RELOCATION_BLOCK_ * __ptr64>, COMDAT
+
+; 207  : 	{
+
+	mov	DWORD PTR [rsp+16], edx
+	mov	QWORD PTR [rsp+8], rcx
+
+; 208  : 		return (T)((size_t)p1 + offset);
+
+	movsxd	rax, DWORD PTR offset$[rsp]
+	mov	rcx, QWORD PTR p1$[rsp]
+	add	rcx, rax
+	mov	rax, rcx
+
+; 209  : 	};
+
+	ret	0
+??$raw_offset@PEAU_IMAGE_RELOCATION_BLOCK_@@PEAU1@@@YAPEAU_IMAGE_RELOCATION_BLOCK_@@PEAU0@H@Z ENDP ; raw_offset<_IMAGE_RELOCATION_BLOCK_ * __ptr64,_IMAGE_RELOCATION_BLOCK_ * __ptr64>
+_TEXT	ENDS
+; Function compile flags: /Odtpy
+; File e:\xeneva project\aurora\basehdr\stdint.h
+;	COMDAT ??$raw_diff@U_IMAGE_RELOCATION_BLOCK_@@U1@@@YAHPEAU_IMAGE_RELOCATION_BLOCK_@@0@Z
+_TEXT	SEGMENT
+p1$ = 8
+p2$ = 16
+??$raw_diff@U_IMAGE_RELOCATION_BLOCK_@@U1@@@YAHPEAU_IMAGE_RELOCATION_BLOCK_@@0@Z PROC ; raw_diff<_IMAGE_RELOCATION_BLOCK_,_IMAGE_RELOCATION_BLOCK_>, COMDAT
+
+; 203  : 	{
+
+	mov	QWORD PTR [rsp+16], rdx
+	mov	QWORD PTR [rsp+8], rcx
+
+; 204  : 		return (intptr_t)p1 - (intptr_t)p2;
+
+	mov	eax, DWORD PTR p2$[rsp]
+	mov	ecx, DWORD PTR p1$[rsp]
+	sub	ecx, eax
+	mov	eax, ecx
+
+; 205  : 	};
+
+	ret	0
+??$raw_diff@U_IMAGE_RELOCATION_BLOCK_@@U1@@@YAHPEAU_IMAGE_RELOCATION_BLOCK_@@0@Z ENDP ; raw_diff<_IMAGE_RELOCATION_BLOCK_,_IMAGE_RELOCATION_BLOCK_>
+_TEXT	ENDS
+; Function compile flags: /Odtpy
+; File e:\xeneva project\aurora\basehdr\stdint.h
+;	COMDAT ??$raw_offset@PEAU_IMAGE_RELOCATION_BLOCK_@@PEAX@@YAPEAU_IMAGE_RELOCATION_BLOCK_@@PEAXH@Z
+_TEXT	SEGMENT
+p1$ = 8
+offset$ = 16
+??$raw_offset@PEAU_IMAGE_RELOCATION_BLOCK_@@PEAX@@YAPEAU_IMAGE_RELOCATION_BLOCK_@@PEAXH@Z PROC ; raw_offset<_IMAGE_RELOCATION_BLOCK_ * __ptr64,void * __ptr64>, COMDAT
+
+; 207  : 	{
+
+	mov	DWORD PTR [rsp+16], edx
+	mov	QWORD PTR [rsp+8], rcx
+
+; 208  : 		return (T)((size_t)p1 + offset);
+
+	movsxd	rax, DWORD PTR offset$[rsp]
+	mov	rcx, QWORD PTR p1$[rsp]
+	add	rcx, rax
+	mov	rax, rcx
+
+; 209  : 	};
+
+	ret	0
+??$raw_offset@PEAU_IMAGE_RELOCATION_BLOCK_@@PEAX@@YAPEAU_IMAGE_RELOCATION_BLOCK_@@PEAXH@Z ENDP ; raw_offset<_IMAGE_RELOCATION_BLOCK_ * __ptr64,void * __ptr64>
+_TEXT	ENDS
 ; Function compile flags: /Odtpy
 ; File e:\xeneva project\aurora\basehdr\stdint.h
 ;	COMDAT ??$raw_offset@PEAU_IMAGE_IMPORT_HINT_TABLE@@PEAE@@YAPEAU_IMAGE_IMPORT_HINT_TABLE@@PEAEH@Z
@@ -367,23 +454,23 @@ importdir$ = 64
 image$ = 96
 ?AuPEFileIsDynamicallyLinked@@YA_NPEAX@Z PROC		; AuPEFileIsDynamicallyLinked
 
-; 155  : bool AuPEFileIsDynamicallyLinked(void* image) {
+; 244  : bool AuPEFileIsDynamicallyLinked(void* image) {
 
 $LN6:
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 88					; 00000058H
 
-; 156  : 	uint8_t *imageAligned = (uint8_t*)image;
+; 245  : 	uint8_t *imageAligned = (uint8_t*)image;
 
 	mov	rax, QWORD PTR image$[rsp]
 	mov	QWORD PTR imageAligned$[rsp], rax
 
-; 157  : 	PIMAGE_DOS_HEADER dos_header = (PIMAGE_DOS_HEADER)imageAligned;
+; 246  : 	PIMAGE_DOS_HEADER dos_header = (PIMAGE_DOS_HEADER)imageAligned;
 
 	mov	rax, QWORD PTR imageAligned$[rsp]
 	mov	QWORD PTR dos_header$[rsp], rax
 
-; 158  : 	PIMAGE_NT_HEADERS nt_headers = raw_offset<PIMAGE_NT_HEADERS>(dos_header, dos_header->e_lfanew);
+; 247  : 	PIMAGE_NT_HEADERS nt_headers = raw_offset<PIMAGE_NT_HEADERS>(dos_header, dos_header->e_lfanew);
 
 	mov	rax, QWORD PTR dos_header$[rsp]
 	movzx	eax, WORD PTR [rax+60]
@@ -392,20 +479,20 @@ $LN6:
 	call	??$raw_offset@PEAU_IMAGE_NT_HEADERS_PE32PLUS@@PEAU_IMAGE_DOS_HEADER_@@@@YAPEAU_IMAGE_NT_HEADERS_PE32PLUS@@PEAU_IMAGE_DOS_HEADER_@@H@Z ; raw_offset<_IMAGE_NT_HEADERS_PE32PLUS * __ptr64,_IMAGE_DOS_HEADER_ * __ptr64>
 	mov	QWORD PTR nt_headers$[rsp], rax
 
-; 159  : 	
-; 160  : 	if (IMAGE_DATA_DIRECTORY_IMPORT + 1 > nt_headers->OptionalHeader.NumberOfRvaAndSizes)
+; 248  : 	
+; 249  : 	if (IMAGE_DATA_DIRECTORY_IMPORT + 1 > nt_headers->OptionalHeader.NumberOfRvaAndSizes)
 
 	mov	rax, QWORD PTR nt_headers$[rsp]
 	cmp	DWORD PTR [rax+132], 2
 	jae	SHORT $LN3@AuPEFileIs
 
-; 161  : 		return false;
+; 250  : 		return false;
 
 	xor	al, al
 	jmp	SHORT $LN4@AuPEFileIs
 $LN3@AuPEFileIs:
 
-; 162  : 	IMAGE_DATA_DIRECTORY* datadir = &nt_headers->OptionalHeader.DataDirectory[IMAGE_DATA_DIRECTORY_IMPORT];
+; 251  : 	IMAGE_DATA_DIRECTORY* datadir = &nt_headers->OptionalHeader.DataDirectory[IMAGE_DATA_DIRECTORY_IMPORT];
 
 	mov	eax, 8
 	imul	rax, rax, 1
@@ -413,7 +500,7 @@ $LN3@AuPEFileIs:
 	lea	rax, QWORD PTR [rcx+rax+136]
 	mov	QWORD PTR datadir$[rsp], rax
 
-; 163  : 	if (datadir->VirtualAddress == 0 || datadir->Size == 0)
+; 252  : 	if (datadir->VirtualAddress == 0 || datadir->Size == 0)
 
 	mov	rax, QWORD PTR datadir$[rsp]
 	cmp	DWORD PTR [rax], 0
@@ -423,14 +510,14 @@ $LN3@AuPEFileIs:
 	jne	SHORT $LN2@AuPEFileIs
 $LN1@AuPEFileIs:
 
-; 164  : 		return false;
+; 253  : 		return false;
 
 	xor	al, al
 	jmp	SHORT $LN4@AuPEFileIs
 $LN2@AuPEFileIs:
 
-; 165  : 	
-; 166  : 	PIMAGE_IMPORT_DIRECTORY importdir = raw_offset<PIMAGE_IMPORT_DIRECTORY>(imageAligned, datadir->VirtualAddress);
+; 254  : 	
+; 255  : 	PIMAGE_IMPORT_DIRECTORY importdir = raw_offset<PIMAGE_IMPORT_DIRECTORY>(imageAligned, datadir->VirtualAddress);
 
 	mov	rax, QWORD PTR datadir$[rsp]
 	mov	edx, DWORD PTR [rax]
@@ -438,16 +525,325 @@ $LN2@AuPEFileIs:
 	call	??$raw_offset@PEAU_IMAGE_IMPORT_DIRECTORY@@PEAE@@YAPEAU_IMAGE_IMPORT_DIRECTORY@@PEAEH@Z ; raw_offset<_IMAGE_IMPORT_DIRECTORY * __ptr64,unsigned char * __ptr64>
 	mov	QWORD PTR importdir$[rsp], rax
 
-; 167  : 	return true;
+; 256  : 	return true;
 
 	mov	al, 1
 $LN4@AuPEFileIs:
 
-; 168  : }
+; 257  : }
 
 	add	rsp, 88					; 00000058H
 	ret	0
 ?AuPEFileIsDynamicallyLinked@@YA_NPEAX@Z ENDP		; AuPEFileIsDynamicallyLinked
+_TEXT	ENDS
+; Function compile flags: /Odtpy
+; File e:\xeneva project\aurora\kernel\pe.cpp
+_TEXT	SEGMENT
+tv143 = 32
+i$1 = 36
+relocitem$2 = 40
+type$3 = 48
+cur_block$ = 56
+data_dir$ = 64
+next_off$4 = 72
+entries$5 = 76
+reloc_table$ = 80
+entry$6 = 88
+image$ = 112
+nt$ = 120
+diff$ = 128
+?AuKernelRelocatePE@@YAXPEAXPEAU_IMAGE_NT_HEADERS_PE32PLUS@@H@Z PROC ; AuKernelRelocatePE
+
+; 187  : void AuKernelRelocatePE(void* image, PIMAGE_NT_HEADERS nt, int diff) {
+
+$LN22:
+	mov	DWORD PTR [rsp+24], r8d
+	mov	QWORD PTR [rsp+16], rdx
+	mov	QWORD PTR [rsp+8], rcx
+	sub	rsp, 104				; 00000068H
+
+; 188  : 	if (!diff)
+
+	cmp	DWORD PTR diff$[rsp], 0
+	jne	SHORT $LN19@AuKernelRe
+
+; 189  : 		return;
+
+	jmp	$LN20@AuKernelRe
+$LN19@AuKernelRe:
+
+; 190  : 	if ((nt->OptionalHeader.DllCharacteristics & IMAGE_DLL_CHARACTERISTICS_DYNAMIC_BASE) == 0)
+
+	mov	rax, QWORD PTR nt$[rsp]
+	movzx	eax, WORD PTR [rax+94]
+	and	eax, 64					; 00000040H
+	test	eax, eax
+	jne	SHORT $LN18@AuKernelRe
+
+; 191  : 		return;
+
+	jmp	$LN20@AuKernelRe
+$LN18@AuKernelRe:
+
+; 192  : 	if (IMAGE_DATA_DIRECTORY_RELOC + 1 > nt->OptionalHeader.NumberOfRvaAndSizes)
+
+	mov	rax, QWORD PTR nt$[rsp]
+	cmp	DWORD PTR [rax+132], 6
+	jae	SHORT $LN17@AuKernelRe
+
+; 193  : 		return;
+
+	jmp	$LN20@AuKernelRe
+$LN17@AuKernelRe:
+
+; 194  : 	IMAGE_DATA_DIRECTORY& data_dir = nt->OptionalHeader.DataDirectory[IMAGE_DATA_DIRECTORY_RELOC];
+
+	mov	eax, 8
+	imul	rax, rax, 5
+	mov	rcx, QWORD PTR nt$[rsp]
+	lea	rax, QWORD PTR [rcx+rax+136]
+	mov	QWORD PTR data_dir$[rsp], rax
+
+; 195  : 	if (data_dir.VirtualAddress == 0 || data_dir.Size == 0)
+
+	mov	rax, QWORD PTR data_dir$[rsp]
+	cmp	DWORD PTR [rax], 0
+	je	SHORT $LN15@AuKernelRe
+	mov	rax, QWORD PTR data_dir$[rsp]
+	cmp	DWORD PTR [rax+4], 0
+	jne	SHORT $LN16@AuKernelRe
+$LN15@AuKernelRe:
+
+; 196  : 		return;
+
+	jmp	$LN20@AuKernelRe
+$LN16@AuKernelRe:
+
+; 197  : 
+; 198  : 	PIMAGE_RELOCATION_BLOCK reloc_table = raw_offset<PIMAGE_RELOCATION_BLOCK>(image, data_dir.VirtualAddress);
+
+	mov	rax, QWORD PTR data_dir$[rsp]
+	mov	edx, DWORD PTR [rax]
+	mov	rcx, QWORD PTR image$[rsp]
+	call	??$raw_offset@PEAU_IMAGE_RELOCATION_BLOCK_@@PEAX@@YAPEAU_IMAGE_RELOCATION_BLOCK_@@PEAXH@Z ; raw_offset<_IMAGE_RELOCATION_BLOCK_ * __ptr64,void * __ptr64>
+	mov	QWORD PTR reloc_table$[rsp], rax
+
+; 199  : 	PIMAGE_RELOCATION_BLOCK cur_block = reloc_table;
+
+	mov	rax, QWORD PTR reloc_table$[rsp]
+	mov	QWORD PTR cur_block$[rsp], rax
+$LN14@AuKernelRe:
+
+; 200  : 
+; 201  : 	while (raw_diff(cur_block, reloc_table) < data_dir.Size) {
+
+	mov	rdx, QWORD PTR reloc_table$[rsp]
+	mov	rcx, QWORD PTR cur_block$[rsp]
+	call	??$raw_diff@U_IMAGE_RELOCATION_BLOCK_@@U1@@@YAHPEAU_IMAGE_RELOCATION_BLOCK_@@0@Z ; raw_diff<_IMAGE_RELOCATION_BLOCK_,_IMAGE_RELOCATION_BLOCK_>
+	mov	rcx, QWORD PTR data_dir$[rsp]
+	cmp	eax, DWORD PTR [rcx+4]
+	jae	$LN13@AuKernelRe
+
+; 202  : 		uint32_t entries = (cur_block->BlockSize - 8) / 2;
+
+	mov	rax, QWORD PTR cur_block$[rsp]
+	mov	eax, DWORD PTR [rax+4]
+	sub	eax, 8
+	xor	edx, edx
+	mov	ecx, 2
+	div	ecx
+	mov	DWORD PTR entries$5[rsp], eax
+
+; 203  : 		for (uint32_t i = 0; i < entries; ++i) {
+
+	mov	DWORD PTR i$1[rsp], 0
+	jmp	SHORT $LN12@AuKernelRe
+$LN11@AuKernelRe:
+	mov	eax, DWORD PTR i$1[rsp]
+	inc	eax
+	mov	DWORD PTR i$1[rsp], eax
+$LN12@AuKernelRe:
+	mov	eax, DWORD PTR entries$5[rsp]
+	cmp	DWORD PTR i$1[rsp], eax
+	jae	$LN10@AuKernelRe
+
+; 204  : 			auto& entry = cur_block->entries[i];
+
+	mov	eax, DWORD PTR i$1[rsp]
+	mov	rcx, QWORD PTR cur_block$[rsp]
+	lea	rax, QWORD PTR [rcx+rax*2+8]
+	mov	QWORD PTR entry$6[rsp], rax
+
+; 205  : 			uint16_t type = entry.type;
+
+	mov	rax, QWORD PTR entry$6[rsp]
+	movzx	eax, WORD PTR [rax]
+	shr	ax, 12
+	and	ax, 15
+	mov	WORD PTR type$3[rsp], ax
+
+; 206  : 			void* relocitem = raw_offset<void*>(image, entry.offset + cur_block->PageRVA);
+
+	mov	eax, 4095				; 00000fffH
+	mov	rcx, QWORD PTR entry$6[rsp]
+	movzx	ecx, WORD PTR [rcx]
+	and	cx, ax
+	movzx	eax, cx
+	movzx	eax, ax
+	mov	rcx, QWORD PTR cur_block$[rsp]
+	add	eax, DWORD PTR [rcx]
+	mov	edx, eax
+	mov	rcx, QWORD PTR image$[rsp]
+	call	??$raw_offset@PEAXPEAX@@YAPEAXPEAXH@Z	; raw_offset<void * __ptr64,void * __ptr64>
+	mov	QWORD PTR relocitem$2[rsp], rax
+
+; 207  : 			switch (type){
+
+	movzx	eax, WORD PTR type$3[rsp]
+	mov	DWORD PTR tv143[rsp], eax
+	cmp	DWORD PTR tv143[rsp], 0
+	je	SHORT $LN7@AuKernelRe
+	cmp	DWORD PTR tv143[rsp], 1
+	je	SHORT $LN6@AuKernelRe
+	cmp	DWORD PTR tv143[rsp], 2
+	je	SHORT $LN5@AuKernelRe
+	cmp	DWORD PTR tv143[rsp], 3
+	je	SHORT $LN4@AuKernelRe
+	cmp	DWORD PTR tv143[rsp], 10
+	je	SHORT $LN2@AuKernelRe
+	jmp	$LN1@AuKernelRe
+$LN7@AuKernelRe:
+
+; 208  : 			case IMAGE_REL_BASED_ABSOLUTE:
+; 209  : 				break;
+
+	jmp	$LN8@AuKernelRe
+$LN6@AuKernelRe:
+
+; 210  : 			case IMAGE_REL_BASED_HIGH:
+; 211  : 				*reinterpret_cast<uint16_t*>(relocitem) += (diff >> 16) & UINT16_MAX;
+
+	mov	eax, DWORD PTR diff$[rsp]
+	sar	eax, 16
+	and	eax, 65535				; 0000ffffH
+	mov	rcx, QWORD PTR relocitem$2[rsp]
+	movzx	ecx, WORD PTR [rcx]
+	add	ecx, eax
+	mov	eax, ecx
+	mov	rcx, QWORD PTR relocitem$2[rsp]
+	mov	WORD PTR [rcx], ax
+
+; 212  : 				break;
+
+	jmp	SHORT $LN8@AuKernelRe
+$LN5@AuKernelRe:
+
+; 213  : 			case IMAGE_REL_BASED_LOW:
+; 214  : 				*reinterpret_cast<uint16_t*>(relocitem) += (diff & UINT16_MAX);
+
+	mov	eax, DWORD PTR diff$[rsp]
+	and	eax, 65535				; 0000ffffH
+	mov	rcx, QWORD PTR relocitem$2[rsp]
+	movzx	ecx, WORD PTR [rcx]
+	add	ecx, eax
+	mov	eax, ecx
+	mov	rcx, QWORD PTR relocitem$2[rsp]
+	mov	WORD PTR [rcx], ax
+
+; 215  : 				break;
+
+	jmp	SHORT $LN8@AuKernelRe
+$LN4@AuKernelRe:
+
+; 216  : 			case IMAGE_REL_BASED_HIGHLOW:
+; 217  : 				*reinterpret_cast<uint32_t*>(relocitem) += (diff & UINT32_MAX);
+
+	mov	rax, QWORD PTR relocitem$2[rsp]
+	mov	eax, DWORD PTR [rax]
+	add	eax, DWORD PTR diff$[rsp]
+	mov	rcx, QWORD PTR relocitem$2[rsp]
+	mov	DWORD PTR [rcx], eax
+
+; 218  : 				break;
+
+	jmp	SHORT $LN8@AuKernelRe
+
+; 219  : 			case IMAGE_REL_BASED_HIGHADJ:
+; 220  : 				return;
+
+	jmp	SHORT $LN20@AuKernelRe
+
+; 221  : 				break;
+
+	jmp	SHORT $LN8@AuKernelRe
+$LN2@AuKernelRe:
+
+; 222  : 			case IMAGE_REL_BASED_DIR64:
+; 223  : 				*reinterpret_cast<uint64_t*>(relocitem) += (diff & UINT32_MAX);
+
+	mov	eax, DWORD PTR diff$[rsp]
+	mov	rcx, QWORD PTR relocitem$2[rsp]
+	add	rax, QWORD PTR [rcx]
+	mov	rcx, QWORD PTR relocitem$2[rsp]
+	mov	QWORD PTR [rcx], rax
+
+; 224  : 				SeTextOut("Relocating executable dir64 %x\r\n", *reinterpret_cast<uint64_t*>(relocitem));
+
+	mov	rax, QWORD PTR relocitem$2[rsp]
+	mov	rdx, QWORD PTR [rax]
+	lea	rcx, OFFSET FLAT:$SG3252
+	call	SeTextOut
+
+; 225  : 				break;
+
+	jmp	SHORT $LN8@AuKernelRe
+$LN1@AuKernelRe:
+
+; 226  : 			default:
+; 227  : 				return;
+
+	jmp	SHORT $LN20@AuKernelRe
+$LN8@AuKernelRe:
+
+; 228  : 				break;
+; 229  : 			}
+; 230  : 
+; 231  : 		}
+
+	jmp	$LN11@AuKernelRe
+$LN10@AuKernelRe:
+
+; 232  : 
+; 233  : 		uint32_t next_off = DIV_ROUND_UP(cur_block->BlockSize, 4) * 4;
+
+	mov	rax, QWORD PTR cur_block$[rsp]
+	mov	eax, DWORD PTR [rax+4]
+	add	eax, 3
+	xor	edx, edx
+	mov	ecx, 4
+	div	ecx
+	shl	eax, 2
+	mov	DWORD PTR next_off$4[rsp], eax
+
+; 234  : 		cur_block = raw_offset<PIMAGE_RELOCATION_BLOCK>(cur_block, next_off);
+
+	mov	edx, DWORD PTR next_off$4[rsp]
+	mov	rcx, QWORD PTR cur_block$[rsp]
+	call	??$raw_offset@PEAU_IMAGE_RELOCATION_BLOCK_@@PEAU1@@@YAPEAU_IMAGE_RELOCATION_BLOCK_@@PEAU0@H@Z ; raw_offset<_IMAGE_RELOCATION_BLOCK_ * __ptr64,_IMAGE_RELOCATION_BLOCK_ * __ptr64>
+	mov	QWORD PTR cur_block$[rsp], rax
+
+; 235  : 	}
+
+	jmp	$LN14@AuKernelRe
+$LN13@AuKernelRe:
+$LN20@AuKernelRe:
+
+; 236  : 	//for (;;);
+; 237  : }
+
+	add	rsp, 104				; 00000068H
+	ret	0
+?AuKernelRelocatePE@@YAXPEAXPEAU_IMAGE_NT_HEADERS_PE32PLUS@@H@Z ENDP ; AuKernelRelocatePE
 _TEXT	ENDS
 ; Function compile flags: /Odtpy
 ; File e:\xeneva project\aurora\kernel\pe.cpp
@@ -467,28 +863,28 @@ func$6 = 120
 image$ = 144
 ?AuKernelLinkImports@@YAXPEAX@Z PROC			; AuKernelLinkImports
 
-; 124  : void AuKernelLinkImports(void* image) {
+; 125  : void AuKernelLinkImports(void* image) {
 
 $LN11:
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 136				; 00000088H
 
-; 125  : 	void* keaddr = (void*)0xFFFFC00000000000;
+; 126  : 	void* keaddr = (void*)0xFFFFC00000000000;
 
 	mov	rax, -70368744177664			; ffffc00000000000H
 	mov	QWORD PTR keaddr$[rsp], rax
 
-; 126  : 	uint8_t *imageAligned = (uint8_t*)keaddr;
+; 127  : 	uint8_t *imageAligned = (uint8_t*)keaddr;
 
 	mov	rax, QWORD PTR keaddr$[rsp]
 	mov	QWORD PTR imageAligned$[rsp], rax
 
-; 127  : 	PIMAGE_DOS_HEADER dos_header = (PIMAGE_DOS_HEADER)imageAligned;
+; 128  : 	PIMAGE_DOS_HEADER dos_header = (PIMAGE_DOS_HEADER)imageAligned;
 
 	mov	rax, QWORD PTR imageAligned$[rsp]
 	mov	QWORD PTR dos_header$[rsp], rax
 
-; 128  : 	PIMAGE_NT_HEADERS nt_headers = raw_offset<PIMAGE_NT_HEADERS>(dos_header, dos_header->e_lfanew);
+; 129  : 	PIMAGE_NT_HEADERS nt_headers = raw_offset<PIMAGE_NT_HEADERS>(dos_header, dos_header->e_lfanew);
 
 	mov	rax, QWORD PTR dos_header$[rsp]
 	movzx	eax, WORD PTR [rax+60]
@@ -497,18 +893,18 @@ $LN11:
 	call	??$raw_offset@PEAU_IMAGE_NT_HEADERS_PE32PLUS@@PEAU_IMAGE_DOS_HEADER_@@@@YAPEAU_IMAGE_NT_HEADERS_PE32PLUS@@PEAU_IMAGE_DOS_HEADER_@@H@Z ; raw_offset<_IMAGE_NT_HEADERS_PE32PLUS * __ptr64,_IMAGE_DOS_HEADER_ * __ptr64>
 	mov	QWORD PTR nt_headers$[rsp], rax
 
-; 129  : 	if (IMAGE_DATA_DIRECTORY_IMPORT + 1 > nt_headers->OptionalHeader.NumberOfRvaAndSizes)
+; 130  : 	if (IMAGE_DATA_DIRECTORY_IMPORT + 1 > nt_headers->OptionalHeader.NumberOfRvaAndSizes)
 
 	mov	rax, QWORD PTR nt_headers$[rsp]
 	cmp	DWORD PTR [rax+132], 2
 	jae	SHORT $LN8@AuKernelLi
 
-; 130  : 		return;
+; 131  : 		return;
 
 	jmp	$LN9@AuKernelLi
 $LN8@AuKernelLi:
 
-; 131  : 	IMAGE_DATA_DIRECTORY& datadir = nt_headers->OptionalHeader.DataDirectory[IMAGE_DATA_DIRECTORY_IMPORT];
+; 132  : 	IMAGE_DATA_DIRECTORY& datadir = nt_headers->OptionalHeader.DataDirectory[IMAGE_DATA_DIRECTORY_IMPORT];
 
 	mov	eax, 8
 	imul	rax, rax, 1
@@ -516,7 +912,7 @@ $LN8@AuKernelLi:
 	lea	rax, QWORD PTR [rcx+rax+136]
 	mov	QWORD PTR datadir$[rsp], rax
 
-; 132  : 	if (datadir.VirtualAddress == 0 || datadir.Size == 0)
+; 133  : 	if (datadir.VirtualAddress == 0 || datadir.Size == 0)
 
 	mov	rax, QWORD PTR datadir$[rsp]
 	cmp	DWORD PTR [rax], 0
@@ -526,13 +922,13 @@ $LN8@AuKernelLi:
 	jne	SHORT $LN7@AuKernelLi
 $LN6@AuKernelLi:
 
-; 133  : 		return;
+; 134  : 		return;
 
 	jmp	$LN9@AuKernelLi
 $LN7@AuKernelLi:
 
-; 134  : 	
-; 135  : 	PIMAGE_IMPORT_DIRECTORY importdir = raw_offset<PIMAGE_IMPORT_DIRECTORY>(imageAligned, datadir.VirtualAddress);
+; 135  : 	
+; 136  : 	PIMAGE_IMPORT_DIRECTORY importdir = raw_offset<PIMAGE_IMPORT_DIRECTORY>(imageAligned, datadir.VirtualAddress);
 
 	mov	rax, QWORD PTR datadir$[rsp]
 	mov	edx, DWORD PTR [rax]
@@ -540,7 +936,7 @@ $LN7@AuKernelLi:
 	call	??$raw_offset@PEAU_IMAGE_IMPORT_DIRECTORY@@PEAE@@YAPEAU_IMAGE_IMPORT_DIRECTORY@@PEAEH@Z ; raw_offset<_IMAGE_IMPORT_DIRECTORY * __ptr64,unsigned char * __ptr64>
 	mov	QWORD PTR importdir$[rsp], rax
 
-; 136  : 	for (size_t n = 0; importdir[n].ThunkTableRva; ++n) {
+; 137  : 	for (size_t n = 0; importdir[n].ThunkTableRva; ++n) {
 
 	mov	QWORD PTR n$2[rsp], 0
 	jmp	SHORT $LN5@AuKernelLi
@@ -554,7 +950,7 @@ $LN5@AuKernelLi:
 	cmp	DWORD PTR [rcx+rax+16], 0
 	je	$LN3@AuKernelLi
 
-; 137  : 		const char* func = raw_offset<const char*>(imageAligned, importdir[n].NameRva);
+; 138  : 		const char* func = raw_offset<const char*>(imageAligned, importdir[n].NameRva);
 
 	imul	rax, QWORD PTR n$2[rsp], 20
 	mov	rcx, QWORD PTR importdir$[rsp]
@@ -563,7 +959,7 @@ $LN5@AuKernelLi:
 	call	??$raw_offset@PEBDPEAE@@YAPEBDPEAEH@Z	; raw_offset<char const * __ptr64,unsigned char * __ptr64>
 	mov	QWORD PTR func$6[rsp], rax
 
-; 138  : 		PIMAGE_IMPORT_LOOKUP_TABLE_PE32P iat = raw_offset<PIMAGE_IMPORT_LOOKUP_TABLE_PE32P>(imageAligned, importdir[n].ThunkTableRva);
+; 139  : 		PIMAGE_IMPORT_LOOKUP_TABLE_PE32P iat = raw_offset<PIMAGE_IMPORT_LOOKUP_TABLE_PE32P>(imageAligned, importdir[n].ThunkTableRva);
 
 	imul	rax, QWORD PTR n$2[rsp], 20
 	mov	rcx, QWORD PTR importdir$[rsp]
@@ -573,13 +969,13 @@ $LN5@AuKernelLi:
 	mov	QWORD PTR iat$1[rsp], rax
 $LN2@AuKernelLi:
 
-; 139  : 		while (*iat) {
+; 140  : 		while (*iat) {
 
 	mov	rax, QWORD PTR iat$1[rsp]
 	cmp	QWORD PTR [rax], 0
 	je	SHORT $LN1@AuKernelLi
 
-; 140  : 			PIMAGE_IMPORT_HINT_TABLE hint = raw_offset<PIMAGE_IMPORT_HINT_TABLE>(imageAligned, *iat);
+; 141  : 			PIMAGE_IMPORT_HINT_TABLE hint = raw_offset<PIMAGE_IMPORT_HINT_TABLE>(imageAligned, *iat);
 
 	mov	rax, QWORD PTR iat$1[rsp]
 	mov	edx, DWORD PTR [rax]
@@ -587,44 +983,44 @@ $LN2@AuKernelLi:
 	call	??$raw_offset@PEAU_IMAGE_IMPORT_HINT_TABLE@@PEAE@@YAPEAU_IMAGE_IMPORT_HINT_TABLE@@PEAEH@Z ; raw_offset<_IMAGE_IMPORT_HINT_TABLE * __ptr64,unsigned char * __ptr64>
 	mov	QWORD PTR hint$3[rsp], rax
 
-; 141  : 			const char* fname = hint->name;
+; 142  : 			const char* fname = hint->name;
 
 	mov	rax, QWORD PTR hint$3[rsp]
 	add	rax, 2
 	mov	QWORD PTR fname$4[rsp], rax
 
-; 142  : 			//AuTextOut("Imports -> %s \n", fname);
-; 143  : 			void* procaddr = AuGetProcAddress((void*)image, fname);
+; 143  : 			//AuTextOut("Imports -> %s \n", fname);
+; 144  : 			void* procaddr = AuGetProcAddress((void*)image, fname);
 
 	mov	rdx, QWORD PTR fname$4[rsp]
 	mov	rcx, QWORD PTR image$[rsp]
 	call	?AuGetProcAddress@@YAPEAXPEAXPEBD@Z	; AuGetProcAddress
 	mov	QWORD PTR procaddr$5[rsp], rax
 
-; 144  : 			*iat = (uint64_t)procaddr;
+; 145  : 			*iat = (uint64_t)procaddr;
 
 	mov	rax, QWORD PTR iat$1[rsp]
 	mov	rcx, QWORD PTR procaddr$5[rsp]
 	mov	QWORD PTR [rax], rcx
 
-; 145  : 			++iat;
+; 146  : 			++iat;
 
 	mov	rax, QWORD PTR iat$1[rsp]
 	add	rax, 8
 	mov	QWORD PTR iat$1[rsp], rax
 
-; 146  : 		}
+; 147  : 		}
 
 	jmp	SHORT $LN2@AuKernelLi
 $LN1@AuKernelLi:
 
-; 147  : 	}
+; 148  : 	}
 
 	jmp	$LN4@AuKernelLi
 $LN3@AuKernelLi:
 $LN9@AuKernelLi:
 
-; 148  : }
+; 149  : }
 
 	add	rsp, 136				; 00000088H
 	ret	0
@@ -645,19 +1041,19 @@ FunctionAddressArray$ = 96
 image$ = 128
 ?AuPEPrintExports@@YAXPEAX@Z PROC			; AuPEPrintExports
 
-; 71   : void AuPEPrintExports(void *image){
+; 72   : void AuPEPrintExports(void *image){
 
 $LN9:
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 120				; 00000078H
 
-; 72   : 
-; 73   : 	PIMAGE_DOS_HEADER dos_header = (PIMAGE_DOS_HEADER)image;
+; 73   : 
+; 74   : 	PIMAGE_DOS_HEADER dos_header = (PIMAGE_DOS_HEADER)image;
 
 	mov	rax, QWORD PTR image$[rsp]
 	mov	QWORD PTR dos_header$[rsp], rax
 
-; 74   : 	PIMAGE_NT_HEADERS ntHeaders = raw_offset<PIMAGE_NT_HEADERS>(dos_header, dos_header->e_lfanew);
+; 75   : 	PIMAGE_NT_HEADERS ntHeaders = raw_offset<PIMAGE_NT_HEADERS>(dos_header, dos_header->e_lfanew);
 
 	mov	rax, QWORD PTR dos_header$[rsp]
 	movzx	eax, WORD PTR [rax+60]
@@ -666,18 +1062,18 @@ $LN9:
 	call	??$raw_offset@PEAU_IMAGE_NT_HEADERS_PE32PLUS@@PEAU_IMAGE_DOS_HEADER_@@@@YAPEAU_IMAGE_NT_HEADERS_PE32PLUS@@PEAU_IMAGE_DOS_HEADER_@@H@Z ; raw_offset<_IMAGE_NT_HEADERS_PE32PLUS * __ptr64,_IMAGE_DOS_HEADER_ * __ptr64>
 	mov	QWORD PTR ntHeaders$[rsp], rax
 
-; 75   : 	if (IMAGE_DATA_DIRECTORY_EXPORT + 1 > ntHeaders->OptionalHeader.NumberOfRvaAndSizes)
+; 76   : 	if (IMAGE_DATA_DIRECTORY_EXPORT + 1 > ntHeaders->OptionalHeader.NumberOfRvaAndSizes)
 
 	mov	rax, QWORD PTR ntHeaders$[rsp]
 	cmp	DWORD PTR [rax+132], 1
 	jae	SHORT $LN6@AuPEPrintE
 
-; 76   : 		return;
+; 77   : 		return;
 
 	jmp	$LN7@AuPEPrintE
 $LN6@AuPEPrintE:
 
-; 77   : 	IMAGE_DATA_DIRECTORY& datadir = ntHeaders->OptionalHeader.DataDirectory[IMAGE_DATA_DIRECTORY_EXPORT];
+; 78   : 	IMAGE_DATA_DIRECTORY& datadir = ntHeaders->OptionalHeader.DataDirectory[IMAGE_DATA_DIRECTORY_EXPORT];
 
 	mov	eax, 8
 	imul	rax, rax, 0
@@ -685,7 +1081,7 @@ $LN6@AuPEPrintE:
 	lea	rax, QWORD PTR [rcx+rax+136]
 	mov	QWORD PTR datadir$[rsp], rax
 
-; 78   : 	if (datadir.VirtualAddress == 0 || datadir.Size == 0)
+; 79   : 	if (datadir.VirtualAddress == 0 || datadir.Size == 0)
 
 	mov	rax, QWORD PTR datadir$[rsp]
 	cmp	DWORD PTR [rax], 0
@@ -695,12 +1091,12 @@ $LN6@AuPEPrintE:
 	jne	SHORT $LN5@AuPEPrintE
 $LN4@AuPEPrintE:
 
-; 79   : 		return;
+; 80   : 		return;
 
 	jmp	$LN7@AuPEPrintE
 $LN5@AuPEPrintE:
 
-; 80   : 	PIMAGE_EXPORT_DIRECTORY exportdir = raw_offset<PIMAGE_EXPORT_DIRECTORY>(image, datadir.VirtualAddress);
+; 81   : 	PIMAGE_EXPORT_DIRECTORY exportdir = raw_offset<PIMAGE_EXPORT_DIRECTORY>(image, datadir.VirtualAddress);
 
 	mov	rax, QWORD PTR datadir$[rsp]
 	mov	edx, DWORD PTR [rax]
@@ -708,7 +1104,7 @@ $LN5@AuPEPrintE:
 	call	??$raw_offset@PEAU_IMAGE_EXPORT_DIRECTORY@@PEAX@@YAPEAU_IMAGE_EXPORT_DIRECTORY@@PEAXH@Z ; raw_offset<_IMAGE_EXPORT_DIRECTORY * __ptr64,void * __ptr64>
 	mov	QWORD PTR exportdir$[rsp], rax
 
-; 81   : 	uint32_t* FuntionNameAddressArray = raw_offset<uint32_t*>(image, exportdir->AddressOfNames);
+; 82   : 	uint32_t* FuntionNameAddressArray = raw_offset<uint32_t*>(image, exportdir->AddressOfNames);
 
 	mov	rax, QWORD PTR exportdir$[rsp]
 	mov	edx, DWORD PTR [rax+32]
@@ -716,7 +1112,7 @@ $LN5@AuPEPrintE:
 	call	??$raw_offset@PEAIPEAX@@YAPEAIPEAXH@Z	; raw_offset<unsigned int * __ptr64,void * __ptr64>
 	mov	QWORD PTR FuntionNameAddressArray$[rsp], rax
 
-; 82   : 	uint16_t* FunctionOrdinalAddressArray = raw_offset<uint16_t*>(image, exportdir->AddressOfNameOrdinal);
+; 83   : 	uint16_t* FunctionOrdinalAddressArray = raw_offset<uint16_t*>(image, exportdir->AddressOfNameOrdinal);
 
 	mov	rax, QWORD PTR exportdir$[rsp]
 	mov	edx, DWORD PTR [rax+36]
@@ -724,7 +1120,7 @@ $LN5@AuPEPrintE:
 	call	??$raw_offset@PEAGPEAX@@YAPEAGPEAXH@Z	; raw_offset<unsigned short * __ptr64,void * __ptr64>
 	mov	QWORD PTR FunctionOrdinalAddressArray$[rsp], rax
 
-; 83   : 	uint32_t* FunctionAddressArray = raw_offset<uint32_t*>(image, exportdir->AddressOfFunctions);
+; 84   : 	uint32_t* FunctionAddressArray = raw_offset<uint32_t*>(image, exportdir->AddressOfFunctions);
 
 	mov	rax, QWORD PTR exportdir$[rsp]
 	mov	edx, DWORD PTR [rax+28]
@@ -732,8 +1128,8 @@ $LN5@AuPEPrintE:
 	call	??$raw_offset@PEAIPEAX@@YAPEAIPEAXH@Z	; raw_offset<unsigned int * __ptr64,void * __ptr64>
 	mov	QWORD PTR FunctionAddressArray$[rsp], rax
 
-; 84   : 
-; 85   : 	for (int i = 0; i < exportdir->NumberOfNames; i++) {
+; 85   : 
+; 86   : 	for (int i = 0; i < exportdir->NumberOfNames; i++) {
 
 	mov	DWORD PTR i$1[rsp], 0
 	jmp	SHORT $LN3@AuPEPrintE
@@ -747,8 +1143,8 @@ $LN3@AuPEPrintE:
 	cmp	DWORD PTR i$1[rsp], eax
 	jae	SHORT $LN1@AuPEPrintE
 
-; 86   : 
-; 87   : 		char* function_name = raw_offset<char*>(image, FuntionNameAddressArray[i]);
+; 87   : 
+; 88   : 		char* function_name = raw_offset<char*>(image, FuntionNameAddressArray[i]);
 
 	movsxd	rax, DWORD PTR i$1[rsp]
 	mov	rcx, QWORD PTR FuntionNameAddressArray$[rsp]
@@ -757,19 +1153,19 @@ $LN3@AuPEPrintE:
 	call	??$raw_offset@PEADPEAX@@YAPEADPEAXH@Z	; raw_offset<char * __ptr64,void * __ptr64>
 	mov	QWORD PTR function_name$2[rsp], rax
 
-; 88   : 		AuTextOut("Fname -> %s \n", function_name);
+; 89   : 		AuTextOut("Fname -> %s \n", function_name);
 
 	mov	rdx, QWORD PTR function_name$2[rsp]
-	lea	rcx, OFFSET FLAT:$SG3060
+	lea	rcx, OFFSET FLAT:$SG3095
 	call	AuTextOut
 
-; 89   : 	}
+; 90   : 	}
 
 	jmp	SHORT $LN2@AuPEPrintE
 $LN1@AuPEPrintE:
 $LN7@AuPEPrintE:
 
-; 90   : }
+; 91   : }
 
 	add	rsp, 120				; 00000078H
 	ret	0
@@ -792,23 +1188,23 @@ func$6 = 112
 image$ = 144
 ?AuKernelLinkDLL@@YAXPEAX@Z PROC			; AuKernelLinkDLL
 
-; 95   : void AuKernelLinkDLL(void* image) {
+; 96   : void AuKernelLinkDLL(void* image) {
 
 $LN11:
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 136				; 00000088H
 
-; 96   : 	uint8_t *imageAligned = (uint8_t*)image;
+; 97   : 	uint8_t *imageAligned = (uint8_t*)image;
 
 	mov	rax, QWORD PTR image$[rsp]
 	mov	QWORD PTR imageAligned$[rsp], rax
 
-; 97   : 	PIMAGE_DOS_HEADER dos_header = (PIMAGE_DOS_HEADER)imageAligned;
+; 98   : 	PIMAGE_DOS_HEADER dos_header = (PIMAGE_DOS_HEADER)imageAligned;
 
 	mov	rax, QWORD PTR imageAligned$[rsp]
 	mov	QWORD PTR dos_header$[rsp], rax
 
-; 98   : 	PIMAGE_NT_HEADERS nt_headers = raw_offset<PIMAGE_NT_HEADERS>(dos_header, dos_header->e_lfanew);
+; 99   : 	PIMAGE_NT_HEADERS nt_headers = raw_offset<PIMAGE_NT_HEADERS>(dos_header, dos_header->e_lfanew);
 
 	mov	rax, QWORD PTR dos_header$[rsp]
 	movzx	eax, WORD PTR [rax+60]
@@ -817,18 +1213,18 @@ $LN11:
 	call	??$raw_offset@PEAU_IMAGE_NT_HEADERS_PE32PLUS@@PEAU_IMAGE_DOS_HEADER_@@@@YAPEAU_IMAGE_NT_HEADERS_PE32PLUS@@PEAU_IMAGE_DOS_HEADER_@@H@Z ; raw_offset<_IMAGE_NT_HEADERS_PE32PLUS * __ptr64,_IMAGE_DOS_HEADER_ * __ptr64>
 	mov	QWORD PTR nt_headers$[rsp], rax
 
-; 99   : 	if (IMAGE_DATA_DIRECTORY_IMPORT + 1 > nt_headers->OptionalHeader.NumberOfRvaAndSizes)
+; 100  : 	if (IMAGE_DATA_DIRECTORY_IMPORT + 1 > nt_headers->OptionalHeader.NumberOfRvaAndSizes)
 
 	mov	rax, QWORD PTR nt_headers$[rsp]
 	cmp	DWORD PTR [rax+132], 2
 	jae	SHORT $LN8@AuKernelLi
 
-; 100  : 		return;
+; 101  : 		return;
 
 	jmp	$LN9@AuKernelLi
 $LN8@AuKernelLi:
 
-; 101  : 	IMAGE_DATA_DIRECTORY& datadir = nt_headers->OptionalHeader.DataDirectory[IMAGE_DATA_DIRECTORY_IMPORT];
+; 102  : 	IMAGE_DATA_DIRECTORY& datadir = nt_headers->OptionalHeader.DataDirectory[IMAGE_DATA_DIRECTORY_IMPORT];
 
 	mov	eax, 8
 	imul	rax, rax, 1
@@ -836,7 +1232,7 @@ $LN8@AuKernelLi:
 	lea	rax, QWORD PTR [rcx+rax+136]
 	mov	QWORD PTR datadir$[rsp], rax
 
-; 102  : 	if (datadir.VirtualAddress == 0 || datadir.Size == 0) {
+; 103  : 	if (datadir.VirtualAddress == 0 || datadir.Size == 0) {
 
 	mov	rax, QWORD PTR datadir$[rsp]
 	cmp	DWORD PTR [rax], 0
@@ -846,13 +1242,13 @@ $LN8@AuKernelLi:
 	jne	SHORT $LN7@AuKernelLi
 $LN6@AuKernelLi:
 
-; 103  : 		return;
+; 104  : 		return;
 
 	jmp	$LN9@AuKernelLi
 $LN7@AuKernelLi:
 
-; 104  : 	}
-; 105  : 	PIMAGE_IMPORT_DIRECTORY importdir = raw_offset<PIMAGE_IMPORT_DIRECTORY>(imageAligned, datadir.VirtualAddress);
+; 105  : 	}
+; 106  : 	PIMAGE_IMPORT_DIRECTORY importdir = raw_offset<PIMAGE_IMPORT_DIRECTORY>(imageAligned, datadir.VirtualAddress);
 
 	mov	rax, QWORD PTR datadir$[rsp]
 	mov	edx, DWORD PTR [rax]
@@ -860,7 +1256,7 @@ $LN7@AuKernelLi:
 	call	??$raw_offset@PEAU_IMAGE_IMPORT_DIRECTORY@@PEAE@@YAPEAU_IMAGE_IMPORT_DIRECTORY@@PEAEH@Z ; raw_offset<_IMAGE_IMPORT_DIRECTORY * __ptr64,unsigned char * __ptr64>
 	mov	QWORD PTR importdir$[rsp], rax
 
-; 106  : 	for (size_t n = 0; importdir[n].ThunkTableRva; ++n) {
+; 107  : 	for (size_t n = 0; importdir[n].ThunkTableRva; ++n) {
 
 	mov	QWORD PTR n$1[rsp], 0
 	jmp	SHORT $LN5@AuKernelLi
@@ -874,7 +1270,7 @@ $LN5@AuKernelLi:
 	cmp	DWORD PTR [rcx+rax+16], 0
 	je	$LN3@AuKernelLi
 
-; 107  : 		const char* func = raw_offset<const char*>(image, importdir[n].NameRva);
+; 108  : 		const char* func = raw_offset<const char*>(image, importdir[n].NameRva);
 
 	imul	rax, QWORD PTR n$1[rsp], 20
 	mov	rcx, QWORD PTR importdir$[rsp]
@@ -883,7 +1279,7 @@ $LN5@AuKernelLi:
 	call	??$raw_offset@PEBDPEAX@@YAPEBDPEAXH@Z	; raw_offset<char const * __ptr64,void * __ptr64>
 	mov	QWORD PTR func$6[rsp], rax
 
-; 108  : 		PIMAGE_IMPORT_LOOKUP_TABLE_PE32P iat = raw_offset<PIMAGE_IMPORT_LOOKUP_TABLE_PE32P>(imageAligned, importdir[n].ThunkTableRva);
+; 109  : 		PIMAGE_IMPORT_LOOKUP_TABLE_PE32P iat = raw_offset<PIMAGE_IMPORT_LOOKUP_TABLE_PE32P>(imageAligned, importdir[n].ThunkTableRva);
 
 	imul	rax, QWORD PTR n$1[rsp], 20
 	mov	rcx, QWORD PTR importdir$[rsp]
@@ -893,13 +1289,13 @@ $LN5@AuKernelLi:
 	mov	QWORD PTR iat$2[rsp], rax
 $LN2@AuKernelLi:
 
-; 109  : 		while (*iat) {
+; 110  : 		while (*iat) {
 
 	mov	rax, QWORD PTR iat$2[rsp]
 	cmp	QWORD PTR [rax], 0
 	je	SHORT $LN1@AuKernelLi
 
-; 110  : 			PIMAGE_IMPORT_HINT_TABLE hint = raw_offset<PIMAGE_IMPORT_HINT_TABLE>(image, *iat);
+; 111  : 			PIMAGE_IMPORT_HINT_TABLE hint = raw_offset<PIMAGE_IMPORT_HINT_TABLE>(image, *iat);
 
 	mov	rax, QWORD PTR iat$2[rsp]
 	mov	edx, DWORD PTR [rax]
@@ -907,43 +1303,43 @@ $LN2@AuKernelLi:
 	call	??$raw_offset@PEAU_IMAGE_IMPORT_HINT_TABLE@@PEAX@@YAPEAU_IMAGE_IMPORT_HINT_TABLE@@PEAXH@Z ; raw_offset<_IMAGE_IMPORT_HINT_TABLE * __ptr64,void * __ptr64>
 	mov	QWORD PTR hint$5[rsp], rax
 
-; 111  : 			const char* fname = hint->name;
+; 112  : 			const char* fname = hint->name;
 
 	mov	rax, QWORD PTR hint$5[rsp]
 	add	rax, 2
 	mov	QWORD PTR fname$3[rsp], rax
 
-; 112  : 			void* procaddr = AuGetProcAddress((void*)0xFFFFC00000000000, fname);
+; 113  : 			void* procaddr = AuGetProcAddress((void*)0xFFFFC00000000000, fname);
 
 	mov	rdx, QWORD PTR fname$3[rsp]
 	mov	rcx, -70368744177664			; ffffc00000000000H
 	call	?AuGetProcAddress@@YAPEAXPEAXPEBD@Z	; AuGetProcAddress
 	mov	QWORD PTR procaddr$4[rsp], rax
 
-; 113  : 			*iat = (uint64_t)procaddr;
+; 114  : 			*iat = (uint64_t)procaddr;
 
 	mov	rax, QWORD PTR iat$2[rsp]
 	mov	rcx, QWORD PTR procaddr$4[rsp]
 	mov	QWORD PTR [rax], rcx
 
-; 114  : 			++iat;
+; 115  : 			++iat;
 
 	mov	rax, QWORD PTR iat$2[rsp]
 	add	rax, 8
 	mov	QWORD PTR iat$2[rsp], rax
 
-; 115  : 		}
+; 116  : 		}
 
 	jmp	SHORT $LN2@AuKernelLi
 $LN1@AuKernelLi:
 
-; 116  : 	}
+; 117  : 	}
 
 	jmp	$LN4@AuKernelLi
 $LN3@AuKernelLi:
 $LN9@AuKernelLi:
 
-; 117  : }
+; 118  : }
 
 	add	rsp, 136				; 00000088H
 	ret	0
@@ -967,20 +1363,20 @@ image$ = 128
 procname$ = 136
 ?AuGetProcAddress@@YAPEAXPEAXPEBD@Z PROC		; AuGetProcAddress
 
-; 40   : void* AuGetProcAddress(void *image, const char* procname){
+; 41   : void* AuGetProcAddress(void *image, const char* procname){
 
 $LN10:
 	mov	QWORD PTR [rsp+16], rdx
 	mov	QWORD PTR [rsp+8], rcx
 	sub	rsp, 120				; 00000078H
 
-; 41   : 
-; 42   : 	PIMAGE_DOS_HEADER dos_header = (PIMAGE_DOS_HEADER)image;
+; 42   : 
+; 43   : 	PIMAGE_DOS_HEADER dos_header = (PIMAGE_DOS_HEADER)image;
 
 	mov	rax, QWORD PTR image$[rsp]
 	mov	QWORD PTR dos_header$[rsp], rax
 
-; 43   : 	PIMAGE_NT_HEADERS ntHeaders = raw_offset<PIMAGE_NT_HEADERS>(dos_header, dos_header->e_lfanew);
+; 44   : 	PIMAGE_NT_HEADERS ntHeaders = raw_offset<PIMAGE_NT_HEADERS>(dos_header, dos_header->e_lfanew);
 
 	mov	rax, QWORD PTR dos_header$[rsp]
 	movzx	eax, WORD PTR [rax+60]
@@ -989,19 +1385,19 @@ $LN10:
 	call	??$raw_offset@PEAU_IMAGE_NT_HEADERS_PE32PLUS@@PEAU_IMAGE_DOS_HEADER_@@@@YAPEAU_IMAGE_NT_HEADERS_PE32PLUS@@PEAU_IMAGE_DOS_HEADER_@@H@Z ; raw_offset<_IMAGE_NT_HEADERS_PE32PLUS * __ptr64,_IMAGE_DOS_HEADER_ * __ptr64>
 	mov	QWORD PTR ntHeaders$[rsp], rax
 
-; 44   : 	if (IMAGE_DATA_DIRECTORY_EXPORT + 1 > ntHeaders->OptionalHeader.NumberOfRvaAndSizes)
+; 45   : 	if (IMAGE_DATA_DIRECTORY_EXPORT + 1 > ntHeaders->OptionalHeader.NumberOfRvaAndSizes)
 
 	mov	rax, QWORD PTR ntHeaders$[rsp]
 	cmp	DWORD PTR [rax+132], 1
 	jae	SHORT $LN7@AuGetProcA
 
-; 45   : 		return NULL;
+; 46   : 		return NULL;
 
 	xor	eax, eax
 	jmp	$LN8@AuGetProcA
 $LN7@AuGetProcA:
 
-; 46   : 	IMAGE_DATA_DIRECTORY& datadir = ntHeaders->OptionalHeader.DataDirectory[IMAGE_DATA_DIRECTORY_EXPORT];
+; 47   : 	IMAGE_DATA_DIRECTORY& datadir = ntHeaders->OptionalHeader.DataDirectory[IMAGE_DATA_DIRECTORY_EXPORT];
 
 	mov	eax, 8
 	imul	rax, rax, 0
@@ -1009,7 +1405,7 @@ $LN7@AuGetProcA:
 	lea	rax, QWORD PTR [rcx+rax+136]
 	mov	QWORD PTR datadir$[rsp], rax
 
-; 47   : 	if (datadir.VirtualAddress == 0 || datadir.Size == 0)
+; 48   : 	if (datadir.VirtualAddress == 0 || datadir.Size == 0)
 
 	mov	rax, QWORD PTR datadir$[rsp]
 	cmp	DWORD PTR [rax], 0
@@ -1019,13 +1415,13 @@ $LN7@AuGetProcA:
 	jne	SHORT $LN6@AuGetProcA
 $LN5@AuGetProcA:
 
-; 48   : 		return NULL;
+; 49   : 		return NULL;
 
 	xor	eax, eax
 	jmp	$LN8@AuGetProcA
 $LN6@AuGetProcA:
 
-; 49   : 	PIMAGE_EXPORT_DIRECTORY exportdir = raw_offset<PIMAGE_EXPORT_DIRECTORY>(image, datadir.VirtualAddress);
+; 50   : 	PIMAGE_EXPORT_DIRECTORY exportdir = raw_offset<PIMAGE_EXPORT_DIRECTORY>(image, datadir.VirtualAddress);
 
 	mov	rax, QWORD PTR datadir$[rsp]
 	mov	edx, DWORD PTR [rax]
@@ -1033,7 +1429,7 @@ $LN6@AuGetProcA:
 	call	??$raw_offset@PEAU_IMAGE_EXPORT_DIRECTORY@@PEAX@@YAPEAU_IMAGE_EXPORT_DIRECTORY@@PEAXH@Z ; raw_offset<_IMAGE_EXPORT_DIRECTORY * __ptr64,void * __ptr64>
 	mov	QWORD PTR exportdir$[rsp], rax
 
-; 50   : 	uint32_t* FuntionNameAddressArray = raw_offset<uint32_t*>(image, exportdir->AddressOfNames);
+; 51   : 	uint32_t* FuntionNameAddressArray = raw_offset<uint32_t*>(image, exportdir->AddressOfNames);
 
 	mov	rax, QWORD PTR exportdir$[rsp]
 	mov	edx, DWORD PTR [rax+32]
@@ -1041,7 +1437,7 @@ $LN6@AuGetProcA:
 	call	??$raw_offset@PEAIPEAX@@YAPEAIPEAXH@Z	; raw_offset<unsigned int * __ptr64,void * __ptr64>
 	mov	QWORD PTR FuntionNameAddressArray$[rsp], rax
 
-; 51   : 	uint16_t* FunctionOrdinalAddressArray = raw_offset<uint16_t*>(image, exportdir->AddressOfNameOrdinal);
+; 52   : 	uint16_t* FunctionOrdinalAddressArray = raw_offset<uint16_t*>(image, exportdir->AddressOfNameOrdinal);
 
 	mov	rax, QWORD PTR exportdir$[rsp]
 	mov	edx, DWORD PTR [rax+36]
@@ -1049,7 +1445,7 @@ $LN6@AuGetProcA:
 	call	??$raw_offset@PEAGPEAX@@YAPEAGPEAXH@Z	; raw_offset<unsigned short * __ptr64,void * __ptr64>
 	mov	QWORD PTR FunctionOrdinalAddressArray$[rsp], rax
 
-; 52   : 	uint32_t* FunctionAddressArray = raw_offset<uint32_t*>(image, exportdir->AddressOfFunctions);
+; 53   : 	uint32_t* FunctionAddressArray = raw_offset<uint32_t*>(image, exportdir->AddressOfFunctions);
 
 	mov	rax, QWORD PTR exportdir$[rsp]
 	mov	edx, DWORD PTR [rax+28]
@@ -1057,8 +1453,8 @@ $LN6@AuGetProcA:
 	call	??$raw_offset@PEAIPEAX@@YAPEAIPEAXH@Z	; raw_offset<unsigned int * __ptr64,void * __ptr64>
 	mov	QWORD PTR FunctionAddressArray$[rsp], rax
 
-; 53   : 
-; 54   : 	for (int i = 0; i < exportdir->NumberOfNames; i++) {
+; 54   : 
+; 55   : 	for (int i = 0; i < exportdir->NumberOfNames; i++) {
 
 	mov	DWORD PTR i$1[rsp], 0
 	jmp	SHORT $LN4@AuGetProcA
@@ -1072,8 +1468,8 @@ $LN4@AuGetProcA:
 	cmp	DWORD PTR i$1[rsp], eax
 	jae	SHORT $LN2@AuGetProcA
 
-; 55   : 
-; 56   : 		char* function_name = raw_offset<char*>(image, FuntionNameAddressArray[i]);
+; 56   : 
+; 57   : 		char* function_name = raw_offset<char*>(image, FuntionNameAddressArray[i]);
 
 	movsxd	rax, DWORD PTR i$1[rsp]
 	mov	rcx, QWORD PTR FuntionNameAddressArray$[rsp]
@@ -1082,7 +1478,7 @@ $LN4@AuGetProcA:
 	call	??$raw_offset@PEADPEAX@@YAPEADPEAXH@Z	; raw_offset<char * __ptr64,void * __ptr64>
 	mov	QWORD PTR function_name$4[rsp], rax
 
-; 57   : 		if (strcmp(function_name, procname) == 0) {
+; 58   : 		if (strcmp(function_name, procname) == 0) {
 
 	mov	rdx, QWORD PTR procname$[rsp]
 	mov	rcx, QWORD PTR function_name$4[rsp]
@@ -1090,21 +1486,21 @@ $LN4@AuGetProcA:
 	test	eax, eax
 	jne	SHORT $LN1@AuGetProcA
 
-; 58   : 			uint16_t ordinal = FunctionOrdinalAddressArray[i];
+; 59   : 			uint16_t ordinal = FunctionOrdinalAddressArray[i];
 
 	movsxd	rax, DWORD PTR i$1[rsp]
 	mov	rcx, QWORD PTR FunctionOrdinalAddressArray$[rsp]
 	movzx	eax, WORD PTR [rcx+rax*2]
 	mov	WORD PTR ordinal$2[rsp], ax
 
-; 59   : 			uint32_t FunctionAddress = FunctionAddressArray[ordinal];
+; 60   : 			uint32_t FunctionAddress = FunctionAddressArray[ordinal];
 
 	movzx	eax, WORD PTR ordinal$2[rsp]
 	mov	rcx, QWORD PTR FunctionAddressArray$[rsp]
 	mov	eax, DWORD PTR [rcx+rax*4]
 	mov	DWORD PTR FunctionAddress$3[rsp], eax
 
-; 60   : 			return raw_offset<void*>(image, FunctionAddress);
+; 61   : 			return raw_offset<void*>(image, FunctionAddress);
 
 	mov	edx, DWORD PTR FunctionAddress$3[rsp]
 	mov	rcx, QWORD PTR image$[rsp]
@@ -1112,19 +1508,19 @@ $LN4@AuGetProcA:
 	jmp	SHORT $LN8@AuGetProcA
 $LN1@AuGetProcA:
 
-; 61   : 		}
-; 62   : 	}
+; 62   : 		}
+; 63   : 	}
 
 	jmp	$LN3@AuGetProcA
 $LN2@AuGetProcA:
 
-; 63   : 
-; 64   : 	return nullptr;
+; 64   : 
+; 65   : 	return nullptr;
 
 	xor	eax, eax
 $LN8@AuGetProcA:
 
-; 65   : }
+; 66   : }
 
 	add	rsp, 120				; 00000078H
 	ret	0

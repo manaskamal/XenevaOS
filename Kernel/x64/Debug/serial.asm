@@ -20,7 +20,7 @@ EXTRN	strlen:PROC
 EXTRN	AuInterruptEnd:PROC
 EXTRN	x64_inportb:PROC
 EXTRN	x64_outportb:PROC
-EXTRN	?sztoa@@YAPEAD_JPEADH@Z:PROC			; sztoa
+EXTRN	?sztoa@@YAPEAD_KPEADH@Z:PROC			; sztoa
 EXTRN	?ftoa@@YAPEADME@Z:PROC				; ftoa
 EXTRN	_fltused:DWORD
 pdata	SEGMENT
@@ -196,7 +196,7 @@ i$5 = 64
 width$6 = 72
 x$7 = 80
 x$8 = 88
-x$9 = 96
+val$9 = 96
 len$10 = 104
 buffer$11 = 112
 buffer$12 = 192
@@ -316,7 +316,7 @@ $LN15@SeTextOut:
 $LN18@SeTextOut:
 
 ; 101  : 				}
-; 102  : 				int64_t i = va_arg(args, int64_t);
+; 102  : 				size_t i = va_arg(args, size_t);
 
 	mov	rax, QWORD PTR args$[rsp]
 	add	rax, 8
@@ -348,7 +348,7 @@ $LN18@SeTextOut:
 	mov	r8d, 10
 	lea	rdx, QWORD PTR buffer$11[rsp]
 	mov	rcx, QWORD PTR i$5[rsp]
-	call	?sztoa@@YAPEAD_JPEADH@Z			; sztoa
+	call	?sztoa@@YAPEAD_KPEADH@Z			; sztoa
 
 ; 109  : 				}
 ; 110  : 				else {
@@ -361,7 +361,7 @@ $LN14@SeTextOut:
 	mov	r8d, 10
 	lea	rdx, QWORD PTR buffer$11[rsp]
 	mov	rcx, QWORD PTR i$5[rsp]
-	call	?sztoa@@YAPEAD_JPEADH@Z			; sztoa
+	call	?sztoa@@YAPEAD_KPEADH@Z			; sztoa
 
 ; 112  : 					size_t len = strlen(buffer);
 
@@ -392,10 +392,10 @@ $LN19@SeTextOut:
 ; 120  : 				char c = va_arg(args, char);
 
 	mov	rax, QWORD PTR args$[rsp]
-	add	rax, 4
+	add	rax, 8
 	mov	QWORD PTR args$[rsp], rax
 	mov	rax, QWORD PTR args$[rsp]
-	movzx	eax, BYTE PTR [rax-4]
+	movzx	eax, BYTE PTR [rax-8]
 	mov	BYTE PTR c$1[rsp], al
 
 ; 121  : 				//char buffer[sizeof(size_t) * 8 + 1];
@@ -417,22 +417,22 @@ $LN11@SeTextOut:
 	jne	SHORT $LN9@SeTextOut
 
 ; 127  : 			{
-; 128  : 				size_t x = va_arg(args, size_t);
+; 128  : 				size_t val = va_arg(args,size_t);
 
 	mov	rax, QWORD PTR args$[rsp]
 	add	rax, 8
 	mov	QWORD PTR args$[rsp], rax
 	mov	rax, QWORD PTR args$[rsp]
 	mov	rax, QWORD PTR [rax-8]
-	mov	QWORD PTR x$9[rsp], rax
+	mov	QWORD PTR val$9[rsp], rax
 
 ; 129  : 				char buffer[sizeof(size_t)* 8 + 1];
-; 130  : 				sztoa(x, buffer, 16);
+; 130  : 				sztoa(val, buffer, 16);
 
 	mov	r8d, 16
 	lea	rdx, QWORD PTR buffer$12[rsp]
-	mov	rcx, QWORD PTR x$9[rsp]
-	call	?sztoa@@YAPEAD_JPEADH@Z			; sztoa
+	mov	rcx, QWORD PTR val$9[rsp]
+	call	?sztoa@@YAPEAD_KPEADH@Z			; sztoa
 
 ; 131  : 				//puts("0x");
 ; 132  : 				DebugSerial(buffer);

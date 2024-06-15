@@ -16,69 +16,69 @@ _BSS	SEGMENT
 ?__ACPIRSDP@@3PEAXEA DQ 01H DUP (?)			; __ACPIRSDP
 _BSS	ENDS
 CONST	SEGMENT
-$SG8831	DB	'[ACPI]: Data structures incomplete ', 0aH, 00H
+$SG8858	DB	'[ACPI]: Data structures incomplete ', 0aH, 00H
 	ORG $+3
-$SG8834	DB	'[ACPI]: Already enabled ', 0aH, 00H
+$SG8861	DB	'[ACPI]: Already enabled ', 0aH, 00H
 	ORG $+6
-$SG8837	DB	'ACPI Enabled successfully', 0aH, 00H
+$SG8864	DB	'ACPI Enabled successfully', 0aH, 00H
 	ORG $+5
-$SG8841	DB	'ACPI Enabled successfully', 0aH, 00H
+$SG8868	DB	'ACPI Enabled successfully', 0aH, 00H
 	ORG $+5
-$SG8863	DB	'FADT Handler called ', 0aH, 00H
+$SG8890	DB	'FADT Handler called ', 0aH, 00H
 	ORG $+2
-$SG8885	DB	'acpi cpu count -> %d ', 0aH, 00H
+$SG8912	DB	'acpi cpu count -> %d ', 0aH, 00H
 	ORG $+1
-$SG8889	DB	'acpi ioapic base -> %x, gsi -> %d ', 0aH, 00H
+$SG8916	DB	'acpi ioapic base -> %x, gsi -> %d ', 0aH, 00H
 	ORG $+4
-$SG8893	DB	'acpi interrupt source override gsi -> %d, src-> %d ', 0aH
+$SG8920	DB	'acpi interrupt source override gsi -> %d, src-> %d ', 0aH
 	DB	00H
 	ORG $+3
-$SG8923	DB	'FACP', 00H
+$SG8950	DB	'FACP', 00H
 	ORG $+3
-$SG8924	DB	'FACP', 00H
+$SG8951	DB	'FACP', 00H
 	ORG $+3
-$SG8926	DB	'acpi fadt supported ', 0aH, 00H
+$SG8953	DB	'acpi fadt supported ', 0aH, 00H
 	ORG $+2
-$SG8929	DB	'CIPA', 00H
+$SG8956	DB	'CIPA', 00H
 	ORG $+3
-$SG8930	DB	'APIC', 00H
+$SG8957	DB	'APIC', 00H
 	ORG $+3
-$SG8932	DB	'acpi madt supported ', 0aH, 00H
+$SG8959	DB	'acpi madt supported ', 0aH, 00H
 	ORG $+2
-$SG8935	DB	'SRAT', 00H
+$SG8962	DB	'SRAT', 00H
 	ORG $+3
-$SG8936	DB	'SRAT', 00H
+$SG8963	DB	'SRAT', 00H
 	ORG $+3
-$SG8937	DB	'acpi srat supported ', 0aH, 00H
+$SG8964	DB	'acpi srat supported ', 0aH, 00H
 	ORG $+2
-$SG8940	DB	'SLIT', 00H
+$SG8967	DB	'SLIT', 00H
 	ORG $+3
-$SG8941	DB	'SLIT', 00H
+$SG8968	DB	'SLIT', 00H
 	ORG $+3
-$SG8942	DB	'acpi slit supported ', 0aH, 00H
+$SG8969	DB	'acpi slit supported ', 0aH, 00H
 	ORG $+2
-$SG8945	DB	'MCFG', 00H
+$SG8972	DB	'MCFG', 00H
 	ORG $+3
-$SG8946	DB	'MCFG', 00H
+$SG8973	DB	'MCFG', 00H
 	ORG $+3
-$SG8947	DB	'acpi mcfg supported ', 0aH, 00H
+$SG8974	DB	'acpi mcfg supported ', 0aH, 00H
 	ORG $+2
-$SG8951	DB	'HPET', 00H
+$SG8978	DB	'HPET', 00H
 	ORG $+3
-$SG8952	DB	'HPET', 00H
+$SG8979	DB	'HPET', 00H
 	ORG $+3
-$SG8953	DB	'acpi hpet supported ', 0aH, 00H
+$SG8980	DB	'acpi hpet supported ', 0aH, 00H
 	ORG $+2
-$SG8956	DB	'MCHI', 00H
+$SG8983	DB	'MCHI', 00H
 	ORG $+3
-$SG8957	DB	'MCHI', 00H
+$SG8984	DB	'MCHI', 00H
 	ORG $+3
-$SG8958	DB	'acpi management controller host interface supported', 0aH
+$SG8985	DB	'acpi management controller host interface supported', 0aH
 	DB	00H
 	ORG $+3
-$SG9026	DB	'Failed to initialise acpi subsystem ', 0aH, 00H
+$SG9053	DB	'Failed to initialise acpi subsystem ', 0aH, 00H
 	ORG $+2
-$SG9028	DB	'Failed to load acpi tables ', 0aH, 00H
+$SG9055	DB	'Failed to load acpi tables ', 0aH, 00H
 CONST	ENDS
 PUBLIC	?AuACPIEnable@@YAXXZ				; AuACPIEnable
 PUBLIC	?AuACPIInitialise@@YAXPEAX@Z			; AuACPIInitialise
@@ -347,7 +347,7 @@ $LN4@AuACPIPars:
 	mov	rax, QWORD PTR ?__AuroraBasicAcpi@@3PEAU_aurora_acpi_@@EA ; __AuroraBasicAcpi
 	movzx	eax, BYTE PTR [rax+45]
 	mov	edx, eax
-	lea	rcx, OFFSET FLAT:$SG8885
+	lea	rcx, OFFSET FLAT:$SG8912
 	call	AuTextOut
 
 ; 127  : 									  break;
@@ -368,7 +368,7 @@ $LN3@AuACPIPars:
 	mov	r8d, DWORD PTR [rax+8]
 	mov	rax, QWORD PTR io_apic$2[rsp]
 	mov	edx, DWORD PTR [rax+4]
-	lea	rcx, OFFSET FLAT:$SG8889
+	lea	rcx, OFFSET FLAT:$SG8916
 	call	AuTextOut
 
 ; 132  : 									  break;
@@ -390,7 +390,7 @@ $LN2@AuACPIPars:
 	mov	r8d, eax
 	mov	rax, QWORD PTR over$3[rsp]
 	mov	edx, DWORD PTR [rax+4]
-	lea	rcx, OFFSET FLAT:$SG8893
+	lea	rcx, OFFSET FLAT:$SG8920
 	call	AuTextOut
 $LN1@AuACPIPars:
 $LN6@AuACPIPars:
@@ -438,7 +438,7 @@ $LN3:
 
 ; 109  : 	AuTextOut("FADT Handler called \n");
 
-	lea	rcx, OFFSET FLAT:$SG8863
+	lea	rcx, OFFSET FLAT:$SG8890
 	call	AuTextOut
 
 ; 110  : 	AuInterruptEnd(__AuroraBasicAcpi->fadt->sciInt);
@@ -788,7 +788,7 @@ $LN6@AuInitiali:
 
 ; 286  : 		AuTextOut("Failed to initialise acpi subsystem \n");
 
-	lea	rcx, OFFSET FLAT:$SG9026
+	lea	rcx, OFFSET FLAT:$SG9053
 	call	AuTextOut
 $LN2@AuInitiali:
 
@@ -804,7 +804,7 @@ $LN2@AuInitiali:
 
 ; 289  : 		AuTextOut("Failed to load acpi tables \n");
 
-	lea	rcx, OFFSET FLAT:$SG9028
+	lea	rcx, OFFSET FLAT:$SG9055
 	call	AuTextOut
 $LN1@AuInitiali:
 
@@ -969,10 +969,10 @@ $LN22@AuACPIInit:
 ; 169  : 
 ; 170  : 		if (!strncmp(sig, ACPI_SIG_FADT, strlen(ACPI_SIG_FADT))) {
 
-	lea	rcx, OFFSET FLAT:$SG8923
+	lea	rcx, OFFSET FLAT:$SG8950
 	call	strlen
 	mov	r8, rax
-	lea	rdx, OFFSET FLAT:$SG8924
+	lea	rdx, OFFSET FLAT:$SG8951
 	lea	rcx, QWORD PTR sig$[rsp]
 	call	strncmp
 	test	eax, eax
@@ -986,7 +986,7 @@ $LN22@AuACPIInit:
 
 ; 172  : 			AuTextOut("acpi fadt supported \n");
 
-	lea	rcx, OFFSET FLAT:$SG8926
+	lea	rcx, OFFSET FLAT:$SG8953
 	call	AuTextOut
 	jmp	$LN18@AuACPIInit
 $LN19@AuACPIInit:
@@ -995,10 +995,10 @@ $LN19@AuACPIInit:
 ; 174  : 
 ; 175  : 		else if (!strncmp(sig, ACPI_SIG_APIC, strlen("CIPA"))) {
 
-	lea	rcx, OFFSET FLAT:$SG8929
+	lea	rcx, OFFSET FLAT:$SG8956
 	call	strlen
 	mov	r8, rax
-	lea	rdx, OFFSET FLAT:$SG8930
+	lea	rdx, OFFSET FLAT:$SG8957
 	lea	rcx, QWORD PTR sig$[rsp]
 	call	strncmp
 	test	eax, eax
@@ -1012,7 +1012,7 @@ $LN19@AuACPIInit:
 
 ; 177  : 			AuTextOut("acpi madt supported \n");
 
-	lea	rcx, OFFSET FLAT:$SG8932
+	lea	rcx, OFFSET FLAT:$SG8959
 	call	AuTextOut
 	jmp	$LN16@AuACPIInit
 $LN17@AuACPIInit:
@@ -1020,10 +1020,10 @@ $LN17@AuACPIInit:
 ; 178  : 		}
 ; 179  : 		else if (!strncmp(sig, ACPI_SIG_SRAT, strlen(ACPI_SIG_SRAT))) {
 
-	lea	rcx, OFFSET FLAT:$SG8935
+	lea	rcx, OFFSET FLAT:$SG8962
 	call	strlen
 	mov	r8, rax
-	lea	rdx, OFFSET FLAT:$SG8936
+	lea	rdx, OFFSET FLAT:$SG8963
 	lea	rcx, QWORD PTR sig$[rsp]
 	call	strncmp
 	test	eax, eax
@@ -1031,7 +1031,7 @@ $LN17@AuACPIInit:
 
 ; 180  : 			AuTextOut("acpi srat supported \n");
 
-	lea	rcx, OFFSET FLAT:$SG8937
+	lea	rcx, OFFSET FLAT:$SG8964
 	call	AuTextOut
 	jmp	$LN14@AuACPIInit
 $LN15@AuACPIInit:
@@ -1041,10 +1041,10 @@ $LN15@AuACPIInit:
 ; 183  : 		}
 ; 184  : 		else if (!strncmp(sig, ACPI_SIG_SLIT, strlen(ACPI_SIG_SLIT))) {
 
-	lea	rcx, OFFSET FLAT:$SG8940
+	lea	rcx, OFFSET FLAT:$SG8967
 	call	strlen
 	mov	r8, rax
-	lea	rdx, OFFSET FLAT:$SG8941
+	lea	rdx, OFFSET FLAT:$SG8968
 	lea	rcx, QWORD PTR sig$[rsp]
 	call	strncmp
 	test	eax, eax
@@ -1052,7 +1052,7 @@ $LN15@AuACPIInit:
 
 ; 185  : 			AuTextOut("acpi slit supported \n");
 
-	lea	rcx, OFFSET FLAT:$SG8942
+	lea	rcx, OFFSET FLAT:$SG8969
 	call	AuTextOut
 	jmp	$LN12@AuACPIInit
 $LN13@AuACPIInit:
@@ -1060,10 +1060,10 @@ $LN13@AuACPIInit:
 ; 186  : 		}
 ; 187  : 		else if (!strncmp(sig, ACPI_SIG_MCFG, strlen(ACPI_SIG_MCFG))) {
 
-	lea	rcx, OFFSET FLAT:$SG8945
+	lea	rcx, OFFSET FLAT:$SG8972
 	call	strlen
 	mov	r8, rax
-	lea	rdx, OFFSET FLAT:$SG8946
+	lea	rdx, OFFSET FLAT:$SG8973
 	lea	rcx, QWORD PTR sig$[rsp]
 	call	strncmp
 	test	eax, eax
@@ -1071,7 +1071,7 @@ $LN13@AuACPIInit:
 
 ; 188  : 			AuTextOut("acpi mcfg supported \n");
 
-	lea	rcx, OFFSET FLAT:$SG8947
+	lea	rcx, OFFSET FLAT:$SG8974
 	call	AuTextOut
 
 ; 189  : 			__AuroraBasicAcpi->mcfg = (acpiMcfg*)header;
@@ -1089,10 +1089,10 @@ $LN11@AuACPIInit:
 ; 191  : 		}
 ; 192  : 		else if (!strncmp(sig, ACPI_SIG_HPET, strlen(ACPI_SIG_HPET))) {
 
-	lea	rcx, OFFSET FLAT:$SG8951
+	lea	rcx, OFFSET FLAT:$SG8978
 	call	strlen
 	mov	r8, rax
-	lea	rdx, OFFSET FLAT:$SG8952
+	lea	rdx, OFFSET FLAT:$SG8979
 	lea	rcx, QWORD PTR sig$[rsp]
 	call	strncmp
 	test	eax, eax
@@ -1100,7 +1100,7 @@ $LN11@AuACPIInit:
 
 ; 193  : 			AuTextOut("acpi hpet supported \n");
 
-	lea	rcx, OFFSET FLAT:$SG8953
+	lea	rcx, OFFSET FLAT:$SG8980
 	call	AuTextOut
 	jmp	SHORT $LN8@AuACPIInit
 $LN9@AuACPIInit:
@@ -1108,10 +1108,10 @@ $LN9@AuACPIInit:
 ; 194  : 		}
 ; 195  : 		else if (!strncmp(sig, ACPI_SIG_MCHI, strlen(ACPI_SIG_MCHI))) {
 
-	lea	rcx, OFFSET FLAT:$SG8956
+	lea	rcx, OFFSET FLAT:$SG8983
 	call	strlen
 	mov	r8, rax
-	lea	rdx, OFFSET FLAT:$SG8957
+	lea	rdx, OFFSET FLAT:$SG8984
 	lea	rcx, QWORD PTR sig$[rsp]
 	call	strncmp
 	test	eax, eax
@@ -1119,7 +1119,7 @@ $LN9@AuACPIInit:
 
 ; 196  : 			AuTextOut("acpi management controller host interface supported\n");
 
-	lea	rcx, OFFSET FLAT:$SG8958
+	lea	rcx, OFFSET FLAT:$SG8985
 	call	AuTextOut
 $LN7@AuACPIInit:
 $LN8@AuACPIInit:
@@ -1323,7 +1323,7 @@ $LN5@AuACPIEnab:
 
 ; 66   : 		AuTextOut("[ACPI]: Data structures incomplete \n");
 
-	lea	rcx, OFFSET FLAT:$SG8831
+	lea	rcx, OFFSET FLAT:$SG8858
 	call	AuTextOut
 
 ; 67   : 		return;
@@ -1350,7 +1350,7 @@ $LN6@AuACPIEnab:
 
 ; 72   : 		AuTextOut("[ACPI]: Already enabled \n");
 
-	lea	rcx, OFFSET FLAT:$SG8834
+	lea	rcx, OFFSET FLAT:$SG8861
 	call	AuTextOut
 
 ; 73   : 		return;
@@ -1387,7 +1387,7 @@ $LN4@AuACPIEnab:
 
 ; 79   : 		AuTextOut("ACPI Enabled successfully\n");
 
-	lea	rcx, OFFSET FLAT:$SG8837
+	lea	rcx, OFFSET FLAT:$SG8864
 	call	AuTextOut
 $LN3@AuACPIEnab:
 
@@ -1416,7 +1416,7 @@ $LN3@AuACPIEnab:
 
 ; 84   : 			AuTextOut("ACPI Enabled successfully\n");
 
-	lea	rcx, OFFSET FLAT:$SG8841
+	lea	rcx, OFFSET FLAT:$SG8868
 	call	AuTextOut
 $LN1@AuACPIEnab:
 $LN2@AuACPIEnab:

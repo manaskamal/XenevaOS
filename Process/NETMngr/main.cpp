@@ -232,27 +232,32 @@ ssize_t socket_sendto(int sockfd, const void* buf, size_t len, int flags, sockad
 	return send(sockfd, &hdr, flags);
 }
 void ip_ntoa(uint32_t src_addr, char* out) {
-	snprintf(out, 16, "%d.%d.%d.%d",
+	snprintf(out, 16, "%d %d %d %d \n",
 		(src_addr & 0xFF000000) >> 24,
 		(src_addr & 0xFF0000) >> 16,
 		(src_addr & 0xFF00) >> 8,
 		(src_addr & 0xFF));
 }
+
+
 /*
 * main -- main entry
 */
 int main(int argc, char* argv[]){
 	printf("Network Manager Started ...\n");
 	printf("Identifying Network...\n");
-	int sock_fd = socket(AF_RAW, SOCK_RAW, 0);
+	
 
 	/* for now we have only ethernet driver, so
 	 * we will use that
 	 */
 	int e1000 = _KeOpenFile("/dev/net/e1000", FILE_OPEN_READ_ONLY);
-
+	
 
 	_KeFileIoControl(e1000, NET_GET_HARDWARE_ADDRESS, mac);
+
+	int sock_fd = socket(AF_RAW, SOCK_RAW, 0);
+	
 	char ifname[5];
 	strcpy(ifname, "e1000");
 
@@ -261,30 +266,33 @@ int main(int argc, char* argv[]){
 	Ethernet* eth = fillDHCP();
 	uint32_t totalsz = (sizeof(Ethernet)+sizeof(IPV4)+sizeof(UDPPack)+sizeof(DHCPPack)+8);
 	socket_send(sock_fd, eth, totalsz, 0);
-	_KeProcessSleep(1000);
+	_KePrint("Packet sent \n");
 	uint8_t* buf = (uint8_t*)malloc(4096);
 	while (1) {
 		int size = socket_receive(sock_fd, buf, 4096, 0);
-		if (size <= 0)
+		if (size <= 0){
+			_KeProcessSleep(10);
 			continue;
+		}
 
 		Ethernet* eth = (Ethernet*)buf;
-		_KePrint("DHCP response received \r\n");
+		printf("DHCP response received \n");
 		IPV4* ip = (IPV4*)&eth->payload;
 
-		char srcaddr[16];
-		memset(srcaddr, 0, 16);
-		ip_ntoa(ntohl(ip->source),srcaddr);
-		char destaddr[16];
-		memset(destaddr, 0, 16);
-		ip_ntoa(ntohl(ip->destination), destaddr);
-
-		_KePrint("IP Destination : %s \r\n", destaddr);
-		_KePrint("IP Source : %s \r\n", srcaddr);
+	
+		uint32_t srcip = ntohl(ip->source);
+		printf("Source IP - %d.%d.%d.%d \n", ((srcip & 0xFF000000) >> 24), ((srcip & 0xFF0000) >> 16), ((srcip & 0xFF00) >> 8),
+			((srcip & 0xFF)));
+	
+		uint32_t destip = ntohl(ip->destination);
+		printf("Destination IP - %d.%d.%d.%d \n", ((destip & 0xFF000000) >> 24),
+			((destip & 0xFF0000) >> 16),
+			((destip & 0xFF00) >> 8),
+			destip & 0xFF);
 
 		UDPPack* udp = (UDPPack*)&ip->payload;
 		int udp_port = ntohs(udp->destinationPort);
-		_KePrint("UDP Port - %d \r\n", udp_port);
+		printf("UDP Port - %d \n", udp_port);
 		break;
 
 	}

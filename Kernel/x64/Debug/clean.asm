@@ -6,22 +6,22 @@ INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
 CONST	SEGMENT
-$SG4100	DB	'Used RAM -> %d GB  Avail -> %d GB ', 0dH, 0aH, 00H
-	ORG $+3
-$SG4101	DB	'Process cleaned ', 0dH, 0aH, 00H
-	ORG $+5
-$SG4059	DB	'KStack freed %s ', 0dH, 0aH, 00H
-	ORG $+5
-$SG4061	DB	'T->Uentry -> %x ', 0dH, 0aH, 00H
-	ORG $+5
-$SG4082	DB	'cleaning thread -> %x %s', 0aH, 00H
+$SG4109	DB	'cleaning thread -> %x %s', 0aH, 00H
 	ORG $+6
-$SG4087	DB	'Stack_ -> %x stack -> %x', 0dH, 0aH, 00H
+$SG4114	DB	'Stack_ -> %x stack -> %x', 0dH, 0aH, 00H
 	ORG $+5
-$SG4089	DB	'Thread user stack freed ', 0dH, 0aH, 00H
+$SG4116	DB	'Thread user stack freed ', 0dH, 0aH, 00H
 	ORG $+5
-$SG4090	DB	'Thread freed ', 0dH, 0aH, 00H
-$SG4092	DB	'Uenty -> %x ', 0dH, 0aH, 00H
+$SG4117	DB	'Thread freed ', 0dH, 0aH, 00H
+$SG4119	DB	'Uenty -> %x ', 0dH, 0aH, 00H
+	ORG $+1
+$SG4127	DB	'Used RAM -> %d GB  Avail -> %d GB ', 0dH, 0aH, 00H
+	ORG $+3
+$SG4128	DB	'Process cleaned ', 0dH, 0aH, 00H
+	ORG $+5
+$SG4086	DB	'KStack freed %s ', 0dH, 0aH, 00H
+	ORG $+5
+$SG4088	DB	'T->Uentry -> %x ', 0dH, 0aH, 00H
 CONST	ENDS
 PUBLIC	?AuProcessClean@@YAXPEAU_au_proc_@@0@Z		; AuProcessClean
 PUBLIC	?FreeUserStack@@YAXPEA_KPEAX@Z			; FreeUserStack
@@ -164,7 +164,7 @@ $LN3@AuThreadFr:
 	mov	rax, QWORD PTR t$[rsp]
 	add	rax, 284				; 0000011cH
 	mov	rdx, rax
-	lea	rcx, OFFSET FLAT:$SG4059
+	lea	rcx, OFFSET FLAT:$SG4086
 	call	SeTextOut
 $LN2@AuThreadFr:
 
@@ -180,7 +180,7 @@ $LN2@AuThreadFr:
 
 	mov	rax, QWORD PTR t$[rsp]
 	mov	rdx, QWORD PTR [rax+641]
-	lea	rcx, OFFSET FLAT:$SG4061
+	lea	rcx, OFFSET FLAT:$SG4088
 	call	SeTextOut
 
 ; 110  : 		kfree(t->uentry);
@@ -504,7 +504,7 @@ $LN7@AuProcessC:
 	add	rax, 284				; 0000011cH
 	mov	r8, rax
 	mov	rdx, QWORD PTR t_$3[rsp]
-	lea	rcx, OFFSET FLAT:$SG4082
+	lea	rcx, OFFSET FLAT:$SG4109
 	call	SeTextOut
 
 ; 145  : 			AuThreadCleanTrash(t_);
@@ -540,7 +540,7 @@ $LN7@AuProcessC:
 
 	mov	r8, QWORD PTR stack$8[rsp]
 	mov	rdx, QWORD PTR stack_$5[rsp]
-	lea	rcx, OFFSET FLAT:$SG4087
+	lea	rcx, OFFSET FLAT:$SG4114
 	call	SeTextOut
 
 ; 151  : 				FreeUserStack(killable->cr3, (void*)stack_);
@@ -562,7 +562,7 @@ $LN3@AuProcessC:
 ; 153  : 			}
 ; 154  : 			SeTextOut("Thread user stack freed \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG4089
+	lea	rcx, OFFSET FLAT:$SG4116
 	call	SeTextOut
 
 ; 155  : 			AuThreadFree(killable, t_);
@@ -573,7 +573,7 @@ $LN3@AuProcessC:
 
 ; 156  : 			SeTextOut("Thread freed \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG4090
+	lea	rcx, OFFSET FLAT:$SG4117
 	call	SeTextOut
 $LN4@AuProcessC:
 
@@ -594,7 +594,7 @@ $LN5@AuProcessC:
 ; 161  : 	SeTextOut("Uenty -> %x \r\n", uentry);
 
 	mov	rdx, QWORD PTR uentry$[rsp]
-	lea	rcx, OFFSET FLAT:$SG4092
+	lea	rcx, OFFSET FLAT:$SG4119
 	call	SeTextOut
 
 ; 162  : 	if (uentry->argvaddr != 0) {
@@ -688,12 +688,12 @@ $LN2@AuProcessC:
 	mov	rcx, QWORD PTR tv174[rsp]
 	mov	r8, rcx
 	mov	rdx, rax
-	lea	rcx, OFFSET FLAT:$SG4100
+	lea	rcx, OFFSET FLAT:$SG4127
 	call	SeTextOut
 
 ; 179  : 	SeTextOut("Process cleaned \r\n");
 
-	lea	rcx, OFFSET FLAT:$SG4101
+	lea	rcx, OFFSET FLAT:$SG4128
 	call	SeTextOut
 
 ; 180  : }

@@ -540,7 +540,7 @@ float strtof(const char *nptr, char **endptr) {
 
 int _xeprint(char* output, int outputlen, const char* format, va_list list) {
 	int inCount = 0;
-	int outCount = 0;
+	int64_t outCount = 0;
 	int formatLen = 0;
 	int zeroPad = 0;
 	int leftJust = 0;
@@ -614,7 +614,7 @@ int _xeprint(char* output, int outputlen, const char* format, va_list list) {
 
 		}
 		else {
-			intArg = va_arg(list, long long);
+			intArg = va_arg(list, unsigned);
 		}
 
 		switch (format[inCount]){
@@ -625,6 +625,7 @@ int _xeprint(char* output, int outputlen, const char* format, va_list list) {
 							 digits = _ldigits(intArg, 10, 1);
 						 else
 							 digits = _digits(intArg, 10, 1);
+						
 
 						 if (!leftJust){
 							 while (digits++ < fieldWidth)
@@ -636,12 +637,13 @@ int _xeprint(char* output, int outputlen, const char* format, va_list list) {
 						 lltoa(intArg, (output + outCount));
 					 else
 						 itoa(intArg, (output + outCount));
-
+					 
 					 outCount = strlen(output);
-
+				
 					 if (fieldWidth && leftJust) {
-						 while (digits++ < fieldWidth)
+						 while (digits++ < fieldWidth){
 							 output[outCount++] = ' ';
+						 }
 					 }
 
 					 break;

@@ -224,6 +224,14 @@ void AuDriverLoad(char* filename, AuDriver *driver) {
 		next_base_offset++;
 	}
 
+	IMAGE_DOS_HEADER *dos_ = (IMAGE_DOS_HEADER*)virtual_base;
+	PIMAGE_NT_HEADERS nt = raw_offset<PIMAGE_NT_HEADERS>(dos_, dos_->e_lfanew);
+
+	uint8_t* relocatebuff = (uint8_t*)virtual_base;
+	uint64_t original_base = nt->OptionalHeader.ImageBase;
+	uint64_t new_addr = (uint64_t)virtual_base;
+	uint64_t diff = new_addr - original_base;
+	AuKernelRelocatePE(relocatebuff, nt, diff);
 
 	void* entry_addr = AuGetProcAddress((void*)driver_load_base, "AuDriverMain");
 	void* unload_addr = AuGetProcAddress((void*)driver_load_base, "AuDriverUnload");

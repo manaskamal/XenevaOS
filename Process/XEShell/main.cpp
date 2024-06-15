@@ -73,7 +73,7 @@ void XEShellWriteCurrentDir() {
 }
 
 void XEShellSpawn(char* string) {
-	if ((strlen(string)-1) > 0) {
+	if ((strlen(string)) > 0) {
 
 		/* allocate separate memories for each strings */
 		char filename[32];
@@ -92,17 +92,15 @@ void XEShellSpawn(char* string) {
 		char** argv = (char**)malloc(10);
 		memset(argv, 0, 10);
 		/* here we mainly prepare for the arguments to pass */
-		for (int i = 0; i < strlen(string); i++){
+		for (int i = 0; i < strlen(string)+1; i++){
 			if (string[i] == ' ' || string[i] == '\0'){
 				index = i;
-				_KePrint("space -> %d  \r\n", _first_string_skipped);
 
 				if (_first_string_skipped) {
 					char* str = (char*)malloc(strlen(arguments));
 					memset(str, 0, strlen(arguments));
 					strcpy(str, arguments);
 					argv[argcount] = str;
-					_KePrint("[XESHELL]: Arguments %s %d\r\n", argv[argcount], _KeGetProcessID());
 					argcount += 1;
 					j = 0;
 					memset(arguments, 0, 32);
@@ -122,11 +120,11 @@ void XEShellSpawn(char* string) {
 				execname[i] = string[i];
 			}
 		}
-	
+
 		memset(filename, 0, 32);
 		strcpy(filename, "/");
 		strcpy(filename + 1, execname);
-		strcpy(filename + strlen(execname), ".exe");
+		strcpy(filename + 1 +  strlen(execname), ".exe");
 	
 		/* before spawning the process, make an entry to
 		 * shell's file descriptors */
@@ -224,7 +222,7 @@ void XEShellProcessLine() {
 			printf("time -- displays the current time \n");
 			_spawnable_process = false;
 		}
-
+		
 		if (strcmp(cmdBuf, "systeminfo") == 0) {
 			printf("\nXeneva Shell v1.0\n");
 			printf("Copyright (C) Manas Kamal Choudhury 2023\n");
@@ -236,7 +234,7 @@ void XEShellProcessLine() {
 			printf("Xeneva is made in Assam with Love \n");
 			_spawnable_process = false;
 		}
-
+		
 		if (strcmp(cmdBuf, "clrscr") == 0) {
 			printf("\033[2J");
 			_spawnable_process = false;
@@ -258,12 +256,13 @@ void XEShellProcessLine() {
 			printf("%s\n", pmam);
 			_spawnable_process = false;
 		} 
-
+	
 		if (strcmp(cmdBuf, "ls") == 0){
 			XEShellLS();
 			_spawnable_process = false;
 		}
-
+		
+		
 		if (_spawnable_process)
 			XEShellSpawn(cmdBuf);
 
@@ -280,11 +279,12 @@ void XEShellProcessLine() {
 */
 int main(int argc, char* arv[]){
 	printf("Xeneva Shell v1.0 \n");
+	
 	printf("Copyright (C) Manas Kamal Choudhury 2023\n");
 	printf("\033[44m^[30mHello World\n");
 	printf("\033[42m^[37mXeneva is an operating system\n");
 	printf("^[42m^[37mMade in North-East India,Assam\n");
-	printf("SignalHandler address -> %x \n", XEShellSigInterrupt);
+	printf("SignalHandler address -> %x \n", XEShellSigInterrupt);	
 	_KeSetSignal(SIGINT, XEShellSigInterrupt);
 	cmdBuf = (char*)malloc(1024);
 	memset(cmdBuf, 0, 1024);
@@ -295,8 +295,8 @@ int main(int argc, char* arv[]){
 	index = 0;
 	while (1){
 		XEShellWriteCurrentDir();
-		XEShellReadLine();
+		XEShellReadLine();	
 		XEShellProcessLine();
-		_KeProcessSleep(8);
+		_KeProcessSleep(100);
 	}
 }

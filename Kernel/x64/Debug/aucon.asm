@@ -49,7 +49,7 @@ EXTRN	strcpy:PROC
 EXTRN	strlen:PROC
 EXTRN	memset:PROC
 EXTRN	memcpy:PROC
-EXTRN	?sztoa@@YAPEAD_JPEADH@Z:PROC			; sztoa
+EXTRN	?sztoa@@YAPEAD_KPEADH@Z:PROC			; sztoa
 EXTRN	?ftoa@@YAPEADME@Z:PROC				; ftoa
 EXTRN	AuVFSFind:PROC
 EXTRN	AuDevFSAddFile:PROC
@@ -1032,7 +1032,7 @@ $LN18@AuTextOut:
 	mov	r8d, 10
 	lea	rdx, QWORD PTR buffer$11[rsp]
 	mov	rcx, QWORD PTR i$5[rsp]
-	call	?sztoa@@YAPEAD_JPEADH@Z			; sztoa
+	call	?sztoa@@YAPEAD_KPEADH@Z			; sztoa
 
 ; 291  : 				}
 ; 292  : 				else {
@@ -1045,7 +1045,7 @@ $LN14@AuTextOut:
 	mov	r8d, 10
 	lea	rdx, QWORD PTR buffer$11[rsp]
 	mov	rcx, QWORD PTR i$5[rsp]
-	call	?sztoa@@YAPEAD_JPEADH@Z			; sztoa
+	call	?sztoa@@YAPEAD_KPEADH@Z			; sztoa
 
 ; 294  : 					size_t len = strlen(buffer);
 
@@ -1076,10 +1076,10 @@ $LN19@AuTextOut:
 ; 302  : 				char c = va_arg(args, char);
 
 	mov	rax, QWORD PTR args$[rsp]
-	add	rax, 4
+	add	rax, 8
 	mov	QWORD PTR args$[rsp], rax
 	mov	rax, QWORD PTR args$[rsp]
-	movzx	eax, BYTE PTR [rax-4]
+	movzx	eax, BYTE PTR [rax-8]
 	mov	BYTE PTR c$1[rsp], al
 
 ; 303  : 				//char buffer[sizeof(size_t) * 8 + 1];
@@ -1116,7 +1116,7 @@ $LN11@AuTextOut:
 	mov	r8d, 16
 	lea	rdx, QWORD PTR buffer$12[rsp]
 	mov	rcx, QWORD PTR x$9[rsp]
-	call	?sztoa@@YAPEAD_JPEADH@Z			; sztoa
+	call	?sztoa@@YAPEAD_KPEADH@Z			; sztoa
 
 ; 313  : 				//puts("0x");
 ; 314  : 				AuPutS(buffer);

@@ -75,8 +75,7 @@ int OpenFile(char* filename, int mode) {
 	if (fd == -1)
 		return -1;
 	current_proc->fds[fd] = file;
-	SeTextOut("Opening file -> %s | %x \r\n", file->filename, file);
-	SeTextOut("e1000 ctl -> %x \r\n", file->write);
+	SeTextOut("Opening file -> %s | %d \r\n", file->filename, fd);
 	return fd;
 }
 
@@ -208,12 +207,13 @@ size_t WriteFile(int fd, void* buffer, size_t length) {
 	}
 
 	if (file->flags & FS_FLAG_TTY) {
-		AuVFSNodeWrite(file, file, (uint64_t*)aligned_buffer, length);
+		if (file->write)
+			return file->write(file, file, (uint64_t*)buffer, length);
 	}
 
 	if (file->flags & FS_FLAG_DEVICE) {
 		if (file->write) {
-			file->write(fsys, file, (uint64_t*)buffer, length);
+			return file->write(fsys, file, (uint64_t*)buffer, length);
 		}
 	}
 }

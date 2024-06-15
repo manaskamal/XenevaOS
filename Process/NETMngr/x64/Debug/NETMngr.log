@@ -1,4 +1,4 @@
-﻿Build started 14-06-2024 ৰাতিপু 8:53:48.
+﻿Build started 15-06-2024 ৰাতিপু 10:37:45.
      1>Project "E:\Xeneva Project\Aurora\Process\NETMngr\NETMngr.vcxproj" on node 2 (Rebuild target(s)).
      1>ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /I"E:\Xeneva Project\Aurora\Libs\Chitralekha" /I"E:\os_dev\freetype2-master\freetype2-master\include" /Zi /nologo /W4 /WX- /sdl- /MP /Od /Oy /D ARCH_X64 /D YES_DYNAMIC /D DYNAMIC_IMPORTER /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt main.cpp
@@ -13,10 +13,10 @@
                  Cannot generate copy-ctor or copy-assignment operator when UDT contains a zero-sized array
      1>main.cpp(97): warning C4200: nonstandard extension used : zero-sized array in struct/union
                  Cannot generate copy-ctor or copy-assignment operator when UDT contains a zero-sized array
-     1>main.cpp(266): warning C4127: conditional expression is constant
-     1>main.cpp(291): warning C4127: conditional expression is constant
-     1>main.cpp(244): warning C4100: 'argv' : unreferenced formal parameter
-     1>main.cpp(244): warning C4100: 'argc' : unreferenced formal parameter
+     1>main.cpp(271): warning C4127: conditional expression is constant
+     1>main.cpp(299): warning C4127: conditional expression is constant
+     1>main.cpp(246): warning C4100: 'argv' : unreferenced formal parameter
+     1>main.cpp(246): warning C4100: 'argc' : unreferenced formal parameter
      1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(1186,5): warning MSB8012: TargetPath(E:\Xeneva Project\Aurora\x64\Debug\NETMngr.exe) does not match the Linker's OutputFile property value (F:\netmngr.exe). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
        Link:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\link.exe /ERRORREPORT:PROMPT /OUT:"F:\netmngr.exe" /INCREMENTAL /NOLOGO /LIBPATH:"E:\Xeneva Project\Aurora\x64\Debug" /LIBPATH:"E:\Xeneva Project\Aurora\Libs\XECrt" XEClib.lib xecrt.lib Chitralekha.lib ftype.lib /NODEFAULTLIB /MANIFEST:NO /PDB:"E:\Xeneva Project\Aurora\x64\Debug\NETMngr.pdb" /MAP /MAPINFO:EXPORTS /SUBSYSTEM:NATIVE /LARGEADDRESSAWARE /Driver /OPT:NOREF /LTCG /TLBID:1 /ENTRY:"_xemain" /BASE:"0x0000000000600000" /FIXED:NO /IMPLIB:"E:\Xeneva Project\Aurora\x64\Debug\NETMngr.lib" /MACHINE:X64 /ALIGN:512 x64\Debug\main.obj
@@ -27,4 +27,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:00.52
+Time Elapsed 00:00:00.59

@@ -99,7 +99,7 @@ AU_EXTERN AU_EXPORT void SeTextOut(char* format, ...) {
 						width += format[i] - '0';
 					}
 				}
-				int64_t i = va_arg(args, int64_t);
+				size_t i = va_arg(args, size_t);
 				char buffer[sizeof(size_t)* 8 + 1];
 				//	size_t len
 				if ((int)i < 0) {
@@ -125,9 +125,9 @@ AU_EXTERN AU_EXPORT void SeTextOut(char* format, ...) {
 			}
 			else if (*format == 'x')
 			{
-				size_t x = va_arg(args, size_t);
+				size_t val = va_arg(args,size_t);
 				char buffer[sizeof(size_t)* 8 + 1];
-				sztoa(x, buffer, 16);
+				sztoa(val, buffer, 16);
 				//puts("0x");
 				DebugSerial(buffer);
 			}
