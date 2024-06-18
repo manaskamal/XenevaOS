@@ -91,8 +91,9 @@ void AuPICClearMask(uint8_t irq) {
 
 void AuPITSleepMS(uint32_t ms) {
 	static int ticks = ms + pic_counter;
-	while (ticks > pic_counter)
+	while (ticks > pic_counter) {
 		;
+	}
 }
 
 void AuInitialisePIC() {
@@ -104,29 +105,38 @@ void AuInitialisePIC() {
 	a2 = x64_inportb(PIC2_DATA);
 
 	x64_outportb(PIC1_COMMAND, ICW1_INIT | ICW1_ICW4);
-	for (int i = 0; i < 1000; i++)
+	for (int i = 0; i < 1000; i++) {
 		;
+	}
 	x64_outportb(PIC2_COMMAND, ICW1_INIT | ICW1_ICW4);
-	for (int i = 0; i < 1000; i++)
+	for (int i = 0; i < 1000; i++) {
 		;
+	}
+
 	x64_outportb(PIC1_DATA, base0);
-	for (int i = 0; i < 1000; i++)
+	for (int i = 0; i < 1000; i++) {
 		;
+	}
 	x64_outportb(PIC2_DATA, base1);
-	for (int i = 0; i < 1000; i++)
+	for (int i = 0; i < 1000; i++) {
 		;
+	}
 	x64_outportb(PIC1_DATA, 4);
-	for (int i = 0; i < 1000; i++)
+	for (int i = 0; i < 1000; i++) {
 		;
+	}
 	x64_outportb(PIC2_DATA, 2);
-	for (int i = 0; i < 1000; i++)
+	for (int i = 0; i < 1000; i++) {
 		;
+	}
 	x64_outportb(PIC1_DATA, ICW4_8086);
-	for (int i = 0; i < 1000; i++)
+	for (int i = 0; i < 1000; i++) {
 		;
+	}
 	x64_outportb(PIC2_DATA, ICW4_8086);
-	for (int i = 0; i < 1000; i++)
+	for (int i = 0; i < 1000; i++) {
 		;
+	}
 	x64_outportb(PIC1_DATA, a1);
 	x64_outportb(PIC2_DATA, a2);
 
@@ -151,6 +161,8 @@ void AuPITOneShotMode() {
 }
 
 void AuPitOneShotWait() {
-	while (!(x64_inportb(COUNTER_2_CONTROLPORT) & (1 << 5)));
+	while (!(x64_inportb(COUNTER_2_CONTROLPORT) & (1 << 5))) {
+		;
+	}
 
 }

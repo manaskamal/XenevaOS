@@ -21,6 +21,7 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{BED35751-DD14-4197-9081-D61F574C0847}</ProjectGuid>
     <RootNamespace>Kernel</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -32,7 +33,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
@@ -318,6 +319,7 @@
     <ClCompile Include="string.cpp" />
     <ClCompile Include="Sync\mutex.cpp" />
     <ClCompile Include="Sync\spinlock.cpp" />
+    <ClCompile Include="threadsafe.c" />
     <ClCompile Include="time.cpp" />
     <ClCompile Include="version.cpp" />
     <ClCompile Include="_CRT.cpp" />

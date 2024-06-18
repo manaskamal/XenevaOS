@@ -85,7 +85,7 @@ XE_EXTERN{
 	* @param w -- width of the canvas
 	* @param h -- height of the canvas
 	*/
-	XE_LIB void ChCanvasScreenUpdate(ChCanvas* canvas, uint32_t x, uint32_t y, uint32_t w, uint32_t h);
+	XE_LIB void ChCanvasScreenUpdate(ChCanvas* canvas, int x, int y, int w, int h);
 
 	/*
 	* ChDrawPixel -- draws a pixel to canvas buffer
@@ -94,7 +94,7 @@ XE_EXTERN{
 	* @param y -- y position
 	* @param color -- color of the pixel
 	*/
-	XE_LIB void ChDrawPixel(ChCanvas* canvas, uint32_t x, uint32_t y, uint32_t color);
+	XE_LIB void ChDrawPixel(ChCanvas* canvas, int x, int y, uint32_t color);
 
 	/*
 	* ChGetPixel -- retuns a pixel from canvas
@@ -102,7 +102,7 @@ XE_EXTERN{
 	* @param x -- x position
 	* @param y -- y position
 	*/
-	XE_LIB uint32_t ChGetPixel(ChCanvas* canvas, uint32_t x, uint32_t y);
+	XE_LIB uint32_t ChGetPixel(ChCanvas* canvas, int x, int y);
 
 	/*
 	* ChCanvasFill -- fill the canvas with specific color
@@ -111,7 +111,7 @@ XE_EXTERN{
 	* @param h -- height to fill
 	* @param color -- color to be filled with
 	*/
-	XE_LIB void ChCanvasFill(ChCanvas* canvas, uint32_t w, uint32_t h, uint32_t color);
+	XE_LIB void ChCanvasFill(ChCanvas* canvas, int w, int h, uint32_t color);
 
 	/*
 	* ChGetScreenDiagonal -- get screen diagonal using

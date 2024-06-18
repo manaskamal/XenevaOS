@@ -18,6 +18,32 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <NASM Include="_fastcpy.asm">
+      <DeploymentContent>true</DeploymentContent>
+    </NASM>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="backdirty.h" />
+    <ClInclude Include="clip.h" />
+    <ClInclude Include="cursor.h" />
+    <ClInclude Include="deodhai.h" />
+    <ClInclude Include="dirty.h" />
+    <ClInclude Include="popup.h" />
+    <ClInclude Include="rect.h" />
+    <ClInclude Include="window.h" />
+    <ClInclude Include="_fastcpy.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="backdirty.cpp" />
+    <ClCompile Include="clip.cpp" />
+    <ClCompile Include="cursor.cpp" />
+    <ClCompile Include="deomain.cpp" />
+    <ClCompile Include="dirty.cpp" />
+    <ClCompile Include="popup.cpp" />
+    <ClCompile Include="rect.cpp" />
+    <ClCompile Include="window.cpp" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{8363E128-4810-4036-B0C9-3537A3CDB90D}</ProjectGuid>
     <RootNamespace>Deodhai</RootNamespace>
@@ -32,7 +58,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
@@ -147,34 +173,6 @@
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <ClCompile Include="backdirty.cpp" />
-    <ClCompile Include="clip.cpp" />
-    <ClCompile Include="cursor.cpp" />
-    <ClCompile Include="deomain.cpp" />
-    <ClCompile Include="dirty.cpp" />
-    <ClCompile Include="popup.cpp" />
-    <ClCompile Include="rect.cpp" />
-    <ClCompile Include="window.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="backdirty.h" />
-    <ClInclude Include="clip.h" />
-    <ClInclude Include="cursor.h" />
-    <ClInclude Include="deodhai.h" />
-    <ClInclude Include="dirty.h" />
-    <ClInclude Include="popup.h" />
-    <ClInclude Include="rect.h" />
-    <ClInclude Include="window.h" />
-    <ClInclude Include="_fastcpy.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <NASM Include="_fastcpy.asm">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
-      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</DeploymentContent>
-      <FileType>Document</FileType>
-    </NASM>
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
     <Import Project="$(VCTargetsPath)\BuildCustomizations\nasm.targets" />

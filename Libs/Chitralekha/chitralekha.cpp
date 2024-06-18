@@ -121,8 +121,10 @@ int ChDeAllocateBuffer(ChCanvas* canvas) {
  * @param w -- width of the canvas
  * @param h -- height of the canvas
  */
-void ChCanvasScreenUpdate(ChCanvas* canvas, uint32_t x, uint32_t y, uint32_t w, uint32_t h) {
+void ChCanvasScreenUpdate(ChCanvas* canvas, int _x, int _y, int _w, int _h) {
 	uint32_t* fb = canvas->framebuff;
+
+	int64_t x = _x, y = _y, w = _w, h = _h;
 
 	if (x >= canvas->screenWidth)
 		return;
@@ -141,11 +143,11 @@ void ChCanvasScreenUpdate(ChCanvas* canvas, uint32_t x, uint32_t y, uint32_t w, 
 	if (y < 0)
 		y = 0;
 
-	for (int i = 0; i < h; i++){
-		if ((canvas->buffer + (y + i) * canvas->canvasWidth + x) >= (canvas->buffer + canvas->bufferSz))
-			_KePrint("Canvas buffer is corrupted -> %x \r\n", (canvas->buffer + (y + i) * canvas->canvasWidth + x));
-		_fastcpy(fb + (y + i) * canvas->screenWidth + x,
-			canvas->buffer + (y + i) * canvas->canvasWidth + x, w * 4);
+	for (int64_t i = 0; i < h; i++){
+		void* fb_mem = (fb + (y + i) * (canvas->screenWidth) + x);
+		void* canvas_mem = (canvas->buffer + (y + i) * (canvas->canvasWidth) + x);
+		_fastcpy(fb_mem,
+			canvas_mem, w*4);
 	}
 }
 
@@ -156,7 +158,7 @@ void ChCanvasScreenUpdate(ChCanvas* canvas, uint32_t x, uint32_t y, uint32_t w, 
  * @param y -- y position
  * @param color -- color of the pixel
  */
-void ChDrawPixel(ChCanvas* canvas, uint32_t x, uint32_t y, uint32_t color) {
+void ChDrawPixel(ChCanvas* canvas, int x, int y, uint32_t color) {
 	unsigned int *lfb = canvas->buffer;
 	lfb[y * canvas->canvasWidth + x] = color;
 }
@@ -167,7 +169,7 @@ void ChDrawPixel(ChCanvas* canvas, uint32_t x, uint32_t y, uint32_t color) {
  * @param x -- x position
  * @param y -- y position
  */
-uint32_t ChGetPixel(ChCanvas* canvas, uint32_t x, uint32_t y) {
+uint32_t ChGetPixel(ChCanvas* canvas, int x, int y) {
 	unsigned int *lfb = canvas->buffer;
 	return lfb[y * canvas->canvasWidth + x];
 }
@@ -179,7 +181,7 @@ uint32_t ChGetPixel(ChCanvas* canvas, uint32_t x, uint32_t y) {
  * @param h -- height to fill
  * @param color -- color to be filled with
  */
-void ChCanvasFill(ChCanvas* canvas, uint32_t w, uint32_t h, uint32_t color) {
+void ChCanvasFill(ChCanvas* canvas, int w, int h, uint32_t color) {
 	for (int i = 0; i < w; i++)
 	for (int j = 0; j < h; j++)
 		ChDrawPixel(canvas, 0 + i, 0 + j, color);

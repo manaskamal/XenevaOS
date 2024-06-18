@@ -77,6 +77,23 @@ void AddDirtyClip(int x, int y, int w, int h) {
  */
 void DirtyScreenUpdate(ChCanvas* canvas) {
 	for (int i = 0; i < _dirty_count; i++) {
+		if (dirtyRect[i].x < 0){
+			_KePrint("DirtyR -x %d\r\n", dirtyRect[i].x);
+			dirtyRect[i].x = 0;
+		}
+		if (dirtyRect[i].y < 0){
+			_KePrint("DirtyRect -y %d\r\n", dirtyRect[i].y);
+			dirtyRect[i].y = 0;
+		}
+		if (dirtyRect[i].w > canvas->canvasWidth){
+			_KePrint("Dirty Rect w - %d \r\n", dirtyRect[i].w);
+			dirtyRect[i].w = canvas->canvasWidth;
+		}
+		if (dirtyRect[i].h > canvas->canvasHeight){
+			_KePrint("Dirty Rect h - %d \r\n", dirtyRect[i].h);
+			dirtyRect[i].h = canvas->canvasHeight;
+		}
+
 		ChCanvasScreenUpdate(canvas, dirtyRect[i].x, dirtyRect[i].y, dirtyRect[i].w, dirtyRect[i].h);
 	}
 	_dirty_count = 0;

@@ -1,27 +1,27 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="deomain.cpp" />
-    <ClCompile Include="dirty.cpp" />
-    <ClCompile Include="cursor.cpp" />
-    <ClCompile Include="window.cpp" />
-    <ClCompile Include="backdirty.cpp" />
-    <ClCompile Include="clip.cpp" />
-    <ClCompile Include="rect.cpp" />
-    <ClCompile Include="popup.cpp" />
+    <NASM Include="_fastcpy.asm" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="_fastcpy.h" />
+    <ClInclude Include="backdirty.h" />
+    <ClInclude Include="clip.h" />
+    <ClInclude Include="cursor.h" />
     <ClInclude Include="deodhai.h" />
     <ClInclude Include="dirty.h" />
-    <ClInclude Include="cursor.h" />
-    <ClInclude Include="window.h" />
-    <ClInclude Include="backdirty.h" />
-    <ClInclude Include="_fastcpy.h" />
-    <ClInclude Include="clip.h" />
-    <ClInclude Include="rect.h" />
     <ClInclude Include="popup.h" />
+    <ClInclude Include="rect.h" />
+    <ClInclude Include="window.h" />
   </ItemGroup>
   <ItemGroup>
-    <NASM Include="_fastcpy.asm" />
+    <ClCompile Include="backdirty.cpp" />
+    <ClCompile Include="clip.cpp" />
+    <ClCompile Include="cursor.cpp" />
+    <ClCompile Include="deomain.cpp" />
+    <ClCompile Include="dirty.cpp" />
+    <ClCompile Include="popup.cpp" />
+    <ClCompile Include="rect.cpp" />
+    <ClCompile Include="window.cpp" />
   </ItemGroup>
 </Project>

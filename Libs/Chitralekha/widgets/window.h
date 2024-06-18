@@ -75,8 +75,8 @@
 		bool updateEntireWindow;
 		int x;
 		int y;
-		uint32_t width;
-		uint32_t height;
+		int width;
+		int height;
 		bool alpha;
 		bool hide;
 		double alphaValue;

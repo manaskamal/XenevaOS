@@ -522,6 +522,7 @@
     <ClCompile Include="Serv\netserv.cpp">
       <Filter>Serv</Filter>
     </ClCompile>
+    <ClCompile Include="threadsafe.c" />
   </ItemGroup>
   <ItemGroup>
     <NASM Include="__fstcpy.asm" />

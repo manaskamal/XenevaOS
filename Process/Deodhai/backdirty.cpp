@@ -57,8 +57,17 @@ void BackDirtyInitialise() {
  * @param h -- Height of the rect
  */
 void BackDirtyAdd(int x, int y, int w, int h) {
-	if (_back_dirty_count >= 511)
+	if (_back_dirty_count >= 512)
 		_back_dirty_count = 0;
+	if (x < 0)
+		_KePrint("BackDirty x < 0 -> %d \r\n", x);
+	if (y < 0)
+		_KePrint("BackDirty y < 0 -> %d \r\n", y);
+	if (w < 0)
+		_KePrint("BackDirty w is corrupted \r\n");
+	if (h < 0)
+		_KePrint("BackDirty h is corrupted \r\n");
+	
 	_back_dirty_rect[_back_dirty_count].x = x;
 	_back_dirty_rect[_back_dirty_count].y = y;
 	_back_dirty_rect[_back_dirty_count].w = w;

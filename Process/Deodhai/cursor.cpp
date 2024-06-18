@@ -45,7 +45,6 @@ unsigned char* imageData;
 Cursor* CursorOpen(char* path, uint8_t type) {
 	Cursor* cur = (Cursor*)malloc(sizeof(Cursor));
 	memset(cur, 0, sizeof(Cursor));
-	cur->cursorBack = (uint32_t*)malloc(8192);
 
 	int fd = _KeOpenFile(path, FILE_OPEN_READ_ONLY);
 	XEFileStatus stat;
@@ -83,6 +82,7 @@ void CursorRead(Cursor* cur) {
 	cur->bpp = bpp;
 	cur_w = cur->width;
 	cur_h = cur->height;
+	cur->cursorBack = (uint32_t*)malloc(cur->width * cur->height * 32);
 	imageData = cur->imageData;
 }
 

@@ -39,7 +39,7 @@ XE_EXTERN{
 
 
 #pragma pack(push,1)
-	typedef struct _time_ {
+	typedef struct _xe_time_ {
 		uint8_t century;
 		uint8_t year;
 		uint8_t month;
