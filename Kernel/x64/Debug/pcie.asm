@@ -32,7 +32,7 @@ EXTRN	__ImageBase:BYTE
 ;	COMDAT pdata
 pdata	SEGMENT
 $pdata$?AuPCIEGetDevice@@YA_KGHHH@Z DD imagerel $LN7
-	DD	imagerel $LN7+234
+	DD	imagerel $LN7+231
 	DD	imagerel $unwind$?AuPCIEGetDevice@@YA_KGHHH@Z
 pdata	ENDS
 ;	COMDAT pdata
@@ -2713,30 +2713,26 @@ $LN4@AuPCIEGetD:
 	cmp	DWORD PTR bus$[rbp], eax
 	jg	SHORT $LN5@AuPCIEGetD
 
-; 56   : 		addr = allocs->baseAddress + ((bus - allocs->startBusNum) << 20) |
+; 56   : 		addr = allocs->baseAddress + ((static_cast<uint64_t>(bus) - allocs->startBusNum) << 20) |
 
-	mov	rax, QWORD PTR allocs$[rbp]
-	movzx	eax, BYTE PTR [rax+10]
-	mov	ecx, DWORD PTR bus$[rbp]
-	sub	ecx, eax
-	mov	eax, ecx
-	shl	eax, 20
-	cdqe
+	movsxd	rax, DWORD PTR bus$[rbp]
+	mov	rcx, QWORD PTR allocs$[rbp]
+	movzx	ecx, BYTE PTR [rcx+10]
+	sub	rax, rcx
+	shl	rax, 20
 	mov	rcx, QWORD PTR allocs$[rbp]
 	mov	rcx, QWORD PTR [rcx]
 	add	rcx, rax
 	mov	rax, rcx
-	mov	ecx, DWORD PTR dev$[rbp]
-	shl	ecx, 15
-	movsxd	rcx, ecx
+	movsxd	rcx, DWORD PTR dev$[rbp]
+	shl	rcx, 15
 	or	rax, rcx
-	mov	ecx, DWORD PTR func$[rbp]
-	shl	ecx, 12
-	movsxd	rcx, ecx
+	movsxd	rcx, DWORD PTR func$[rbp]
+	shl	rcx, 12
 	or	rax, rcx
 	mov	QWORD PTR addr$[rbp], rax
 
-; 57   : 			(dev << 15) | (func << 12);
+; 57   : 			(static_cast<uint64_t>(dev) << 15) | (static_cast<uint64_t>(func) << 12);
 ; 58   : 		return addr;
 
 	mov	rax, QWORD PTR addr$[rbp]

@@ -1,106 +1,142 @@
-﻿Build started 14-06-2024 আবেলি 3:50:21.
-     1>Project "E:\Xeneva Project\Aurora\Drivers\Usb3\Usb3.vcxproj" on node 2 (Rebuild target(s)).
-     1>ClCompile:
-         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\BaseHdr" /Zi /nologo /W3 /WX- /Od /Oy /D ARCH_X64 /D USE_APIC /D _WINDLL /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt classes\hid.cpp classes\hub.cpp main.cpp usb3.cpp usbstd.cpp xhci_cmd.cpp
-     1>cl : Command line warning D9002: ignoring unknown option '/arch:SSE2'
-         xhci_cmd.cpp
-     1>e:\xeneva project\aurora\drivers\usb3\xhci.h(143): warning C4200: nonstandard extension used : zero-sized array in struct/union
-                 Cannot generate copy-ctor or copy-assignment operator when UDT contains a zero-sized array
-     1>e:\xeneva project\aurora\drivers\usb3\xhci.h(306): warning C4161: #pragma pack(pop...) : more pops than pushes
-     1>E:\Xeneva Project\Aurora\BaseHdr\stdarg.h(54): warning C4005: 'va_start' : macro redefinition
-                 E:\Xeneva Project\Aurora\BaseHdr\va_list.h(56) : see previous definition of 'va_start'
-     1>xhci_cmd.cpp(155): warning C4267: 'argument' : conversion from 'size_t' to 'uint16_t', possible loss of data
-     1>xhci_cmd.cpp(174): warning C4267: 'argument' : conversion from 'size_t' to 'uint16_t', possible loss of data
-         usbstd.cpp
-     1>e:\xeneva project\aurora\drivers\usb3\xhci.h(143): warning C4200: nonstandard extension used : zero-sized array in struct/union
-                 Cannot generate copy-ctor or copy-assignment operator when UDT contains a zero-sized array
-     1>e:\xeneva project\aurora\drivers\usb3\xhci.h(306): warning C4161: #pragma pack(pop...) : more pops than pushes
-         usb3.cpp
-     1>e:\xeneva project\aurora\drivers\usb3\xhci.h(143): warning C4200: nonstandard extension used : zero-sized array in struct/union
-                 Cannot generate copy-ctor or copy-assignment operator when UDT contains a zero-sized array
-     1>e:\xeneva project\aurora\drivers\usb3\xhci.h(306): warning C4161: #pragma pack(pop...) : more pops than pushes
-     1>E:\Xeneva Project\Aurora\BaseHdr\stdarg.h(54): warning C4005: 'va_start' : macro redefinition
-                 E:\Xeneva Project\Aurora\BaseHdr\va_list.h(56) : see previous definition of 'va_start'
-     1>e:\xeneva project\aurora\drivers\usb3\classes\hub.h(75): warning C4200: nonstandard extension used : zero-sized array in struct/union
-                 Cannot generate copy-ctor or copy-assignment operator when UDT contains a zero-sized array
-     1>usb3.cpp(89): warning C4244: '=' : conversion from 'uint64_t' to 'uint32_t', possible loss of data
-     1>usb3.cpp(166): warning C4018: '<' : signed/unsigned mismatch
-     1>usb3.cpp(183): warning C4018: '<' : signed/unsigned mismatch
-     1>usb3.cpp(198): warning C4018: '<' : signed/unsigned mismatch
-     1>usb3.cpp(211): warning C4018: '<' : signed/unsigned mismatch
-     1>usb3.cpp(222): warning C4018: '<' : signed/unsigned mismatch
-     1>usb3.cpp(365): warning C4244: '=' : conversion from 'uint64_t' to 'unsigned int', possible loss of data
-     1>usb3.cpp(367): warning C4244: '=' : conversion from 'uint64_t' to 'unsigned int', possible loss of data
-     1>usb3.cpp(821): warning C4244: 'argument' : conversion from 'uint64_t' to 'const intptr_t', possible loss of data
-     1>usb3.cpp(822): warning C4244: 'argument' : conversion from 'uint64_t' to 'const intptr_t', possible loss of data
-     1>usb3.cpp(825): warning C4244: 'argument' : conversion from 'uint64_t' to 'const intptr_t', possible loss of data
-     1>usb3.cpp(826): warning C4244: 'argument' : conversion from 'uint64_t' to 'const intptr_t', possible loss of data
-     1>usb3.cpp(827): warning C4244: 'argument' : conversion from 'uint64_t' to 'const intptr_t', possible loss of data
-     1>usb3.cpp(837): warning C4244: '=' : conversion from 'uint16_t' to 'uint8_t', possible loss of data
-     1>usb3.cpp(838): warning C4244: '=' : conversion from 'uint16_t' to 'uint8_t', possible loss of data
-     1>usb3.cpp(839): warning C4244: '=' : conversion from 'uint64_t' to 'uint32_t', possible loss of data
-     1>usb3.cpp(841): warning C4244: '=' : conversion from 'uint64_t' to 'uint32_t', possible loss of data
-         main.cpp
-     1>e:\xeneva project\aurora\drivers\usb3\xhci.h(143): warning C4200: nonstandard extension used : zero-sized array in struct/union
-                 Cannot generate copy-ctor or copy-assignment operator when UDT contains a zero-sized array
-     1>e:\xeneva project\aurora\drivers\usb3\xhci.h(306): warning C4161: #pragma pack(pop...) : more pops than pushes
-     1>E:\Xeneva Project\Aurora\BaseHdr\Hal\x86_64_hal.h(35): warning C4103: 'e:\xeneva project\aurora\basehdr\hal\x86_64_hal.h' : alignment changed after including header, may be due to missing #pragma pack(pop)
-     1>main.cpp(33): warning C4103: 'e:\xeneva project\aurora\drivers\usb3\main.cpp' : alignment changed after including header, may be due to missing #pragma pack(pop)
-     1>E:\Xeneva Project\Aurora\BaseHdr\stdarg.h(54): warning C4005: 'va_start' : macro redefinition
-                 E:\Xeneva Project\Aurora\BaseHdr\va_list.h(56) : see previous definition of 'va_start'
-     1>E:\Xeneva Project\Aurora\BaseHdr\Hal\basicacpi.h(154): warning C4200: nonstandard extension used : zero-sized array in struct/union
-                 Cannot generate copy-ctor or copy-assignment operator when UDT contains a zero-sized array
-     1>E:\Xeneva Project\Aurora\BaseHdr\Hal\basicacpi.h(185): warning C4200: nonstandard extension used : zero-sized array in struct/union
-                 Cannot generate copy-ctor or copy-assignment operator when UDT contains a zero-sized array
-     1>E:\Xeneva Project\Aurora\BaseHdr\Hal\basicacpi.h(267): warning C4200: nonstandard extension used : zero-sized array in struct/union
-                 Cannot generate copy-ctor or copy-assignment operator when UDT contains a zero-sized array
-     1>E:\Xeneva Project\Aurora\BaseHdr\Hal\basicacpi.h(283): warning C4200: nonstandard extension used : zero-sized array in struct/union
-                 Cannot generate copy-ctor or copy-assignment operator when UDT contains a zero-sized array
-     1>main.cpp(152): warning C4244: '=' : conversion from 'uint64_t' to 'unsigned int', possible loss of data
-     1>main.cpp(209): warning C4244: 'argument' : conversion from 'uint64_t' to 'uint32_t', possible loss of data
-     1>main.cpp(214): warning C4293: '<<' : shift count negative or too big, undefined behavior
-     1>main.cpp(240): warning C4800: 'uint32_t' : forcing value to bool 'true' or 'false' (performance warning)
-         hub.cpp
-     1>e:\xeneva project\aurora\drivers\usb3\xhci.h(143): warning C4200: nonstandard extension used : zero-sized array in struct/union
-                 Cannot generate copy-ctor or copy-assignment operator when UDT contains a zero-sized array
-     1>e:\xeneva project\aurora\drivers\usb3\xhci.h(306): warning C4161: #pragma pack(pop...) : more pops than pushes
-     1>e:\xeneva project\aurora\drivers\usb3\classes\hub.h(75): warning C4200: nonstandard extension used : zero-sized array in struct/union
-                 Cannot generate copy-ctor or copy-assignment operator when UDT contains a zero-sized array
-     1>E:\Xeneva Project\Aurora\BaseHdr\stdarg.h(54): warning C4005: 'va_start' : macro redefinition
-                 E:\Xeneva Project\Aurora\BaseHdr\va_list.h(56) : see previous definition of 'va_start'
-         hid.cpp
-     1>e:\xeneva project\aurora\drivers\usb3\classes\../xhci.h(143): warning C4200: nonstandard extension used : zero-sized array in struct/union
-                 Cannot generate copy-ctor or copy-assignment operator when UDT contains a zero-sized array
-     1>e:\xeneva project\aurora\drivers\usb3\classes\../xhci.h(306): warning C4161: #pragma pack(pop...) : more pops than pushes
-     1>E:\Xeneva Project\Aurora\BaseHdr\stdarg.h(54): warning C4005: 'va_start' : macro redefinition
-                 E:\Xeneva Project\Aurora\BaseHdr\va_list.h(56) : see previous definition of 'va_start'
-     1>classes\hid.cpp(205): warning C4267: 'initializing' : conversion from 'size_t' to 'uintptr_t', possible loss of data
-     1>classes\hid.cpp(216): warning C4018: '<' : signed/unsigned mismatch
-     1>classes\hid.cpp(367): warning C4267: '+=' : conversion from 'size_t' to 'int', possible loss of data
-     1>classes\hid.cpp(410): warning C4018: '<' : signed/unsigned mismatch
-     1>classes\hid.cpp(535): warning C4018: '<' : signed/unsigned mismatch
-     1>classes\hid.cpp(551): warning C4267: 'argument' : conversion from 'size_t' to 'uint16_t', possible loss of data
-         Generating Code...
-     1>e:\xeneva project\aurora\drivers\usb3\classes\hid.cpp(440): warning C4700: uninitialized local variable 'i' used
-     1>e:\xeneva project\aurora\drivers\usb3\classes\hid.cpp(459): warning C4700: uninitialized local variable 'i' used
-     1>e:\xeneva project\aurora\drivers\usb3\classes\hid.cpp(371): warning C4715: 'HIDParseReportDescriptor' : not all control paths return a value
-     1>e:\xeneva project\aurora\drivers\usb3\classes\hid.cpp(249): warning C4700: uninitialized local variable 'current_data_offset' used
-     1>e:\xeneva project\aurora\drivers\usb3\usb3.cpp(926): warning C4715: 'USBGetDescriptor' : not all control paths return a value
-     1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(1186,5): warning MSB8012: TargetPath(E:\Xeneva Project\Aurora\x64\Debug\Usb3.dll) does not match the Linker's OutputFile property value (F:\usb.dll). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
-     1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(1188,5): warning MSB8012: TargetName(Usb3) does not match the Linker's OutputFile property value (usb). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
-       Link:
-         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\link.exe /ERRORREPORT:PROMPT /OUT:"F:\usb.dll" /INCREMENTAL /NOLOGO /LIBPATH:"E:\Xeneva Project\Aurora\x64\Debug" Kernel.lib /NODEFAULTLIB /MANIFEST:NO /PDB:"E:\Xeneva Project\Aurora\x64\Debug\Usb3.pdb" /MAP /MAPINFO:EXPORTS /SUBSYSTEM:NATIVE /LARGEADDRESSAWARE /Driver /OPT:NOREF /LTCG /TLBID:1 /BASE:"0xFFFFC00000400000" /FIXED:NO /IMPLIB:"E:\Xeneva Project\Aurora\x64\Debug\Usb3.lib" /MACHINE:X64 /ALIGN:512 /DLL x64\Debug\hid.obj
-         x64\Debug\hub.obj
-         x64\Debug\main.obj
-         x64\Debug\usb3.obj
-         x64\Debug\usbstd.obj
-         x64\Debug\xhci_cmd.obj
-     1>LINK : warning LNK4075: ignoring '/INCREMENTAL' due to '/LTCG' specification
-            Creating library E:\Xeneva Project\Aurora\x64\Debug\Usb3.lib and object E:\Xeneva Project\Aurora\x64\Debug\Usb3.exp
-         LINK : /LTCG specified but no code generation required; remove /LTCG from the link command line to improve linker performance
-         Usb3.vcxproj -> E:\Xeneva Project\Aurora\x64\Debug\Usb3.dll
-     1>Done Building Project "E:\Xeneva Project\Aurora\Drivers\Usb3\Usb3.vcxproj" (Rebuild target(s)).
-
-Build succeeded.
-
-Time Elapsed 00:00:01.37
+﻿cl : command line warning D9002: ignoring unknown option '/arch:SSE2'
+  hid.cpp
+E:\Xeneva Project\Aurora\Drivers\Usb3\xhci.h(143,25): warning C4200: nonstandard extension used: zero-sized array in struct/union
+E:\Xeneva Project\Aurora\Drivers\Usb3\xhci.h(143,25): message : This member will be ignored by a defaulted constructor or copy/move assignment operator
+E:\Xeneva Project\Aurora\Drivers\Usb3\xhci.h(306,9): warning C4161: #pragma pack(pop...): more pops than pushes
+E:\Xeneva Project\Aurora\BaseHdr\stdarg.h(43,1): warning C4005: 'STACKITEM': macro redefinition
+E:\Xeneva Project\Aurora\BaseHdr\va_list.h(49): message : see previous definition of 'STACKITEM'
+E:\Xeneva Project\Aurora\BaseHdr\stdarg.h(54,1): warning C4005: 'va_start': macro redefinition
+E:\Xeneva Project\Aurora\BaseHdr\va_list.h(56): message : see previous definition of 'va_start'
+E:\Xeneva Project\Aurora\Drivers\Usb3\classes\hid.cpp(205,4): warning C4267: 'initializing': conversion from 'size_t' to 'uintptr_t', possible loss of data
+E:\Xeneva Project\Aurora\Drivers\Usb3\classes\hid.cpp(216,25): warning C4018: '<': signed/unsigned mismatch
+E:\Xeneva Project\Aurora\Drivers\Usb3\classes\hid.cpp(367,29): warning C4267: '+=': conversion from 'size_t' to 'int', possible loss of data
+E:\Xeneva Project\Aurora\Drivers\Usb3\classes\hid.cpp(410,20): warning C4018: '<': signed/unsigned mismatch
+E:\Xeneva Project\Aurora\Drivers\Usb3\classes\hid.cpp(535,20): warning C4018: '<': signed/unsigned mismatch
+E:\Xeneva Project\Aurora\Drivers\Usb3\classes\hid.cpp(551,41): warning C4267: 'argument': conversion from 'size_t' to 'uint16_t', possible loss of data
+  hub.cpp
+E:\Xeneva Project\Aurora\Drivers\Usb3\xhci.h(143,25): warning C4200: nonstandard extension used: zero-sized array in struct/union
+E:\Xeneva Project\Aurora\Drivers\Usb3\xhci.h(143,25): message : This member will be ignored by a defaulted constructor or copy/move assignment operator
+E:\Xeneva Project\Aurora\Drivers\Usb3\xhci.h(306,9): warning C4161: #pragma pack(pop...): more pops than pushes
+E:\Xeneva Project\Aurora\Drivers\Usb3\classes\hub.h(75,10): warning C4200: nonstandard extension used: zero-sized array in struct/union
+E:\Xeneva Project\Aurora\Drivers\Usb3\classes\hub.h(75,10): message : This member will be ignored by a defaulted constructor or copy/move assignment operator
+E:\Xeneva Project\Aurora\BaseHdr\stdarg.h(43,1): warning C4005: 'STACKITEM': macro redefinition
+E:\Xeneva Project\Aurora\BaseHdr\va_list.h(49): message : see previous definition of 'STACKITEM'
+E:\Xeneva Project\Aurora\BaseHdr\stdarg.h(54,1): warning C4005: 'va_start': macro redefinition
+E:\Xeneva Project\Aurora\BaseHdr\va_list.h(56): message : see previous definition of 'va_start'
+  main.cpp
+E:\Xeneva Project\Aurora\Drivers\Usb3\xhci.h(143,25): warning C4200: nonstandard extension used: zero-sized array in struct/union
+E:\Xeneva Project\Aurora\Drivers\Usb3\xhci.h(143,25): message : This member will be ignored by a defaulted constructor or copy/move assignment operator
+E:\Xeneva Project\Aurora\Drivers\Usb3\xhci.h(306,9): warning C4161: #pragma pack(pop...): more pops than pushes
+E:\Xeneva Project\Aurora\BaseHdr\Hal\x86_64_hal.h(35,1): warning C4103: alignment changed after including header, may be due to missing #pragma pack(pop)
+E:\Xeneva Project\Aurora\Drivers\Usb3\main.cpp(33,1): warning C4103: alignment changed after including header, may be due to missing #pragma pack(pop)
+E:\Xeneva Project\Aurora\BaseHdr\stdarg.h(43,1): warning C4005: 'STACKITEM': macro redefinition
+E:\Xeneva Project\Aurora\BaseHdr\va_list.h(49): message : see previous definition of 'STACKITEM'
+E:\Xeneva Project\Aurora\BaseHdr\stdarg.h(54,1): warning C4005: 'va_start': macro redefinition
+E:\Xeneva Project\Aurora\BaseHdr\va_list.h(56): message : see previous definition of 'va_start'
+E:\Xeneva Project\Aurora\BaseHdr\Hal\basicacpi.h(154,11): warning C4200: nonstandard extension used: zero-sized array in struct/union
+E:\Xeneva Project\Aurora\BaseHdr\Hal\basicacpi.h(154,11): message : This member will be ignored by a defaulted constructor or copy/move assignment operator
+E:\Xeneva Project\Aurora\BaseHdr\Hal\basicacpi.h(185,9): warning C4200: nonstandard extension used: zero-sized array in struct/union
+E:\Xeneva Project\Aurora\BaseHdr\Hal\basicacpi.h(185,9): message : This member will be ignored by a defaulted constructor or copy/move assignment operator
+E:\Xeneva Project\Aurora\BaseHdr\Hal\basicacpi.h(267,16): warning C4200: nonstandard extension used: zero-sized array in struct/union
+E:\Xeneva Project\Aurora\BaseHdr\Hal\basicacpi.h(267,16): message : This member will be ignored by a defaulted constructor or copy/move assignment operator
+E:\Xeneva Project\Aurora\BaseHdr\Hal\basicacpi.h(283,11): warning C4200: nonstandard extension used: zero-sized array in struct/union
+E:\Xeneva Project\Aurora\BaseHdr\Hal\basicacpi.h(283,11): message : This member will be ignored by a defaulted constructor or copy/move assignment operator
+E:\Xeneva Project\Aurora\Drivers\Usb3\main.cpp(152,115): warning C4244: '=': conversion from 'uint64_t' to 'unsigned int', possible loss of data
+E:\Xeneva Project\Aurora\Drivers\Usb3\main.cpp(209,35): warning C4244: 'argument': conversion from 'uint64_t' to 'uint32_t', possible loss of data
+E:\Xeneva Project\Aurora\Drivers\Usb3\main.cpp(214,43): warning C4293: '<<': shift count negative or too big, undefined behavior
+  usb3.cpp
+E:\Xeneva Project\Aurora\Drivers\Usb3\xhci.h(143,25): warning C4200: nonstandard extension used: zero-sized array in struct/union
+E:\Xeneva Project\Aurora\Drivers\Usb3\xhci.h(143,25): message : This member will be ignored by a defaulted constructor or copy/move assignment operator
+E:\Xeneva Project\Aurora\Drivers\Usb3\xhci.h(306,9): warning C4161: #pragma pack(pop...): more pops than pushes
+E:\Xeneva Project\Aurora\BaseHdr\stdarg.h(43,1): warning C4005: 'STACKITEM': macro redefinition
+E:\Xeneva Project\Aurora\BaseHdr\va_list.h(49): message : see previous definition of 'STACKITEM'
+E:\Xeneva Project\Aurora\BaseHdr\stdarg.h(54,1): warning C4005: 'va_start': macro redefinition
+E:\Xeneva Project\Aurora\BaseHdr\va_list.h(56): message : see previous definition of 'va_start'
+E:\Xeneva Project\Aurora\Drivers\Usb3\classes\hub.h(75,10): warning C4200: nonstandard extension used: zero-sized array in struct/union
+E:\Xeneva Project\Aurora\Drivers\Usb3\classes\hub.h(75,10): message : This member will be ignored by a defaulted constructor or copy/move assignment operator
+E:\Xeneva Project\Aurora\Drivers\Usb3\usb3.cpp(89,31): warning C4244: '=': conversion from 'uint64_t' to 'uint32_t', possible loss of data
+E:\Xeneva Project\Aurora\Drivers\Usb3\usb3.cpp(166,20): warning C4018: '<': signed/unsigned mismatch
+E:\Xeneva Project\Aurora\Drivers\Usb3\usb3.cpp(183,20): warning C4018: '<': signed/unsigned mismatch
+E:\Xeneva Project\Aurora\Drivers\Usb3\usb3.cpp(198,20): warning C4018: '<': signed/unsigned mismatch
+E:\Xeneva Project\Aurora\Drivers\Usb3\usb3.cpp(211,20): warning C4018: '<': signed/unsigned mismatch
+E:\Xeneva Project\Aurora\Drivers\Usb3\usb3.cpp(222,20): warning C4018: '<': signed/unsigned mismatch
+E:\Xeneva Project\Aurora\Drivers\Usb3\usb3.cpp(365,67): warning C4244: '=': conversion from 'uint64_t' to 'unsigned int', possible loss of data
+E:\Xeneva Project\Aurora\Drivers\Usb3\usb3.cpp(367,46): warning C4244: '=': conversion from 'uint64_t' to 'unsigned int', possible loss of data
+E:\Xeneva Project\Aurora\Drivers\Usb3\usb3.cpp(821,57): warning C4244: 'argument': conversion from 'uint64_t' to 'const intptr_t', possible loss of data
+E:\Xeneva Project\Aurora\Drivers\Usb3\usb3.cpp(822,57): warning C4244: 'argument': conversion from 'uint64_t' to 'const intptr_t', possible loss of data
+E:\Xeneva Project\Aurora\Drivers\Usb3\usb3.cpp(825,57): warning C4244: 'argument': conversion from 'uint64_t' to 'const intptr_t', possible loss of data
+E:\Xeneva Project\Aurora\Drivers\Usb3\usb3.cpp(826,57): warning C4244: 'argument': conversion from 'uint64_t' to 'const intptr_t', possible loss of data
+E:\Xeneva Project\Aurora\Drivers\Usb3\usb3.cpp(827,57): warning C4244: 'argument': conversion from 'uint64_t' to 'const intptr_t', possible loss of data
+E:\Xeneva Project\Aurora\Drivers\Usb3\usb3.cpp(837,24): warning C4244: '=': conversion from 'uint16_t' to 'uint8_t', possible loss of data
+E:\Xeneva Project\Aurora\Drivers\Usb3\usb3.cpp(838,14): warning C4244: '=': conversion from 'uint16_t' to 'uint8_t', possible loss of data
+E:\Xeneva Project\Aurora\Drivers\Usb3\usb3.cpp(839,17): warning C4244: '=': conversion from 'uint64_t' to 'uint32_t', possible loss of data
+E:\Xeneva Project\Aurora\Drivers\Usb3\usb3.cpp(841,20): warning C4244: '=': conversion from 'uint64_t' to 'uint32_t', possible loss of data
+E:\Xeneva Project\Aurora\BaseHdr\stdint.h(204,1): warning C4311: 'type cast': pointer truncation from 'T *' to 'intptr_t'
+          with
+          [
+              T=usb_endpoint_desc_t
+          ]
+E:\Xeneva Project\Aurora\Drivers\Usb3\usb3.cpp(761): message : see reference to function template instantiation 'intptr_t raw_diff<usb_endpoint_desc_t,usb_config_desc_t>(T *,U *)' being compiled
+          with
+          [
+              T=usb_endpoint_desc_t,
+              U=usb_config_desc_t
+          ]
+E:\Xeneva Project\Aurora\BaseHdr\stdint.h(204,1): warning C4302: 'type cast': truncation from 'T *' to 'intptr_t'
+          with
+          [
+              T=usb_endpoint_desc_t
+          ]
+E:\Xeneva Project\Aurora\BaseHdr\stdint.h(204,1): warning C4311: 'type cast': pointer truncation from 'U *' to 'intptr_t'
+          with
+          [
+              U=usb_config_desc_t
+          ]
+E:\Xeneva Project\Aurora\BaseHdr\stdint.h(204,1): warning C4302: 'type cast': truncation from 'U *' to 'intptr_t'
+          with
+          [
+              U=usb_config_desc_t
+          ]
+E:\Xeneva Project\Aurora\BaseHdr\stdint.h(204,1): warning C4311: 'type cast': pointer truncation from 'T *' to 'intptr_t'
+          with
+          [
+              T=usb_descriptor_t
+          ]
+E:\Xeneva Project\Aurora\Drivers\Usb3\usb3.cpp(920): message : see reference to function template instantiation 'intptr_t raw_diff<usb_descriptor_t,usb_config_desc_t>(T *,U *)' being compiled
+          with
+          [
+              T=usb_descriptor_t,
+              U=usb_config_desc_t
+          ]
+E:\Xeneva Project\Aurora\BaseHdr\stdint.h(204,1): warning C4302: 'type cast': truncation from 'T *' to 'intptr_t'
+          with
+          [
+              T=usb_descriptor_t
+          ]
+  usbstd.cpp
+E:\Xeneva Project\Aurora\Drivers\Usb3\xhci.h(143,25): warning C4200: nonstandard extension used: zero-sized array in struct/union
+E:\Xeneva Project\Aurora\Drivers\Usb3\xhci.h(143,25): message : This member will be ignored by a defaulted constructor or copy/move assignment operator
+E:\Xeneva Project\Aurora\Drivers\Usb3\xhci.h(306,9): warning C4161: #pragma pack(pop...): more pops than pushes
+  xhci_cmd.cpp
+E:\Xeneva Project\Aurora\Drivers\Usb3\xhci.h(143,25): warning C4200: nonstandard extension used: zero-sized array in struct/union
+E:\Xeneva Project\Aurora\Drivers\Usb3\xhci.h(143,25): message : This member will be ignored by a defaulted constructor or copy/move assignment operator
+E:\Xeneva Project\Aurora\Drivers\Usb3\xhci.h(306,9): warning C4161: #pragma pack(pop...): more pops than pushes
+E:\Xeneva Project\Aurora\BaseHdr\stdarg.h(43,1): warning C4005: 'STACKITEM': macro redefinition
+E:\Xeneva Project\Aurora\BaseHdr\va_list.h(49): message : see previous definition of 'STACKITEM'
+E:\Xeneva Project\Aurora\BaseHdr\stdarg.h(54,1): warning C4005: 'va_start': macro redefinition
+E:\Xeneva Project\Aurora\BaseHdr\va_list.h(56): message : see previous definition of 'va_start'
+E:\Xeneva Project\Aurora\Drivers\Usb3\xhci_cmd.cpp(155,53): warning C4267: 'argument': conversion from 'size_t' to 'uint16_t', possible loss of data
+E:\Xeneva Project\Aurora\Drivers\Usb3\xhci_cmd.cpp(174,49): warning C4267: 'argument': conversion from 'size_t' to 'uint16_t', possible loss of data
+  Generating Code...
+E:\Xeneva Project\Aurora\Drivers\Usb3\usb3.cpp(926): warning C4715: 'USBGetDescriptor': not all control paths return a value
+E:\Xeneva Project\Aurora\Drivers\Usb3\classes\hid.cpp(371): warning C4715: 'HIDParseReportDescriptor': not all control paths return a value
+E:\Xeneva Project\Aurora\Drivers\Usb3\classes\hid.cpp(440): warning C4700: uninitialized local variable 'i' used
+E:\Xeneva Project\Aurora\Drivers\Usb3\classes\hid.cpp(459): warning C4700: uninitialized local variable 'i' used
+E:\Xeneva Project\Aurora\Drivers\Usb3\classes\hid.cpp(249): warning C4700: uninitialized local variable 'current_data_offset' used
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(1363,5): warning MSB8012: TargetPath(E:\Xeneva Project\Aurora\x64\Debug\Usb3.dll) does not match the Linker's OutputFile property value (F:\usb.dll). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(1365,5): warning MSB8012: TargetName(Usb3) does not match the Linker's OutputFile property value (usb). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
+LINK : warning LNK4075: ignoring '/INCREMENTAL' due to '/LTCG' specification
+hid.obj : warning LNK4075: ignoring '/EDITANDCONTINUE' due to '/DRIVER' specification
+     Creating library E:\Xeneva Project\Aurora\x64\Debug\Usb3.lib and object E:\Xeneva Project\Aurora\x64\Debug\Usb3.exp
+  LINK : /LTCG specified but no code generation required; remove /LTCG from the link command line to improve linker performance
+  Usb3.vcxproj -> E:\Xeneva Project\Aurora\x64\Debug\Usb3.dll

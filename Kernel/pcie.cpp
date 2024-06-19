@@ -53,8 +53,8 @@ uint64_t AuPCIEGetDevice(uint16_t seg, int bus, int dev, int func) {
 	acpiMcfg* mcfg = AuACPIGetMCFG();
 	acpiMcfgAlloc* allocs = mem_after<acpiMcfgAlloc*>(mcfg);
 	if (allocs->startBusNum <= bus && bus <= allocs->endBusNum){
-		addr = allocs->baseAddress + ((bus - allocs->startBusNum) << 20) |
-			(dev << 15) | (func << 12);
+		addr = allocs->baseAddress + ((static_cast<uint64_t>(bus) - allocs->startBusNum) << 20) |
+			(static_cast<uint64_t>(dev) << 15) | (static_cast<uint64_t>(func) << 12);
 		return addr;
 	}
 

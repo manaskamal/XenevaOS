@@ -330,7 +330,7 @@ void XHCIProtocolInit(USBDevice *dev) {
 		}
 		if (cap->next == 0)
 			break;
-		cap = ((xhci_ext_cap_t*)cap + (cap->next << 2));
+		cap = ((xhci_ext_cap_t*)cap + (static_cast<uint64_t>(cap->next) << 2));
 	}
 }
 
@@ -784,8 +784,8 @@ void XHCIPortInitialize(USBDevice *dev, unsigned int port) {
 			}
 			if (endp_num == 0)
 				ici = (endp_num + 1) * 2;
-			uint64_t addr = (ici * 32);
-			uint64_t dc_addr = (dci * 32);
+			uint64_t addr = (static_cast<uint64_t>(ici) * 32);
+			uint64_t dc_addr = (static_cast<uint64_t>(dci) * 32);
 			uint8_t ep_type, cerr;
 			cerr = 3;
 			switch (transfer_type) {

@@ -562,7 +562,7 @@ int _xeprint(char* output, int outputlen, const char* format, va_list list) {
 	formatLen = min(formatLen, MAX_STRING_LENGTH);
 
 	for (inCount = 0; ((inCount < formatLen) &&
-		(outCount < (outputlen - 1)));)
+		(outCount < outputlen));)
 	{
 		if (format[inCount] != '%') {
 			output[outCount++] = format[inCount++];
@@ -614,7 +614,7 @@ int _xeprint(char* output, int outputlen, const char* format, va_list list) {
 
 		}
 		else {
-			intArg = va_arg(list, unsigned);
+			intArg = va_arg(list, unsigned long long);
 		}
 
 		switch (format[inCount]){
@@ -684,7 +684,7 @@ int _xeprint(char* output, int outputlen, const char* format, va_list list) {
 		case 's': {
 					  if (intArg) {
 						  strcpy((output + outCount), (char*)((uint64_t)intArg));
-						  outCount += strlen((char*)((uint64_t)intArg));
+						  outCount += strlen((char*)intArg);
 					  }
 					  else {
 						  strncpy((output + outCount), "(NULL)", 7);

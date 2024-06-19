@@ -31,18 +31,22 @@
 
 extern "C" int _fltused = 1;
 
-void* __cdecl ::operator new(size_t size){
+extern "C" void* __cdecl ::operator new(size_t size) {
 	return malloc(size);
 }
 
-void* __cdecl operator new[](size_t size) {
+extern "C" void* __cdecl ::operator new[](size_t size) {
 	return malloc(size);
 }
 
-void __cdecl operator delete (void* p) {
+extern "C" void __cdecl ::operator delete (void* p) {
 	free(p);
 }
 
-void __cdecl operator delete[](void* p) {
+extern "C" void __cdecl ::operator delete[](void* p) {
 	free(p);
+}
+
+extern "C" void __cdecl ::operator delete(void* p, uint64_t s) {
+
 }

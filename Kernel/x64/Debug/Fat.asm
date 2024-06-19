@@ -75,7 +75,7 @@ pdata	ENDS
 ;	COMDAT pdata
 pdata	SEGMENT
 $pdata$?FatToDOSFilename@@YAXPEBDPEADI@Z DD imagerel $LN19
-	DD	imagerel $LN19+357
+	DD	imagerel $LN19+354
 	DD	imagerel $unwind$?FatToDOSFilename@@YAXPEBDPEADI@Z
 pdata	ENDS
 ;	COMDAT pdata
@@ -2637,7 +2637,7 @@ $LN12@FatToDOSFi:
 	call	memset
 
 ; 84   : 
-; 85   : 	for (i = 0; i < strlen(filename) - 1 && i < fname_length; i++)
+; 85   : 	for (i = 0; i < strlen(filename) && i < fname_length; i++)
 
 	mov	DWORD PTR i$[rbp], 0
 	jmp	SHORT $LN4@FatToDOSFi
@@ -2650,7 +2650,6 @@ $LN4@FatToDOSFi:
 	mov	QWORD PTR tv71[rbp], rax
 	mov	rcx, QWORD PTR filename$[rbp]
 	call	strlen
-	dec	rax
 	mov	rcx, QWORD PTR tv71[rbp]
 	cmp	rcx, rax
 	jae	SHORT $LN3@FatToDOSFi

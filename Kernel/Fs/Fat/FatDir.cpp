@@ -300,6 +300,7 @@ int FatDirectoryRead(AuVFSNode* fs, AuVFSNode* dir, AuDirectoryEntry* dirent) {
 		return -1;
 	if (!dir)
 		return -1;
+
 	memset(dirent->filename, 0, 32);
 	int index = dirent->index;
 	FatFS* fatfs = (FatFS*)fs->device;

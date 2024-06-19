@@ -82,7 +82,7 @@ void FatToDOSFilename(const char* filename, char* fname, unsigned int fname_leng
 
 	memset(fname, ' ', fname_length);
 
-	for (i = 0; i < strlen(filename) - 1 && i < fname_length; i++)
+	for (i = 0; i < strlen(filename) && i < fname_length; i++)
 	{
 		if (filename[i] == '.' || i == 8)
 			break;

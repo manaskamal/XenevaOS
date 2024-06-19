@@ -13,14 +13,14 @@ PUBLIC	?_kernel_patch_version@@3HA			; _kernel_patch_version
 PUBLIC	?_kernel_build_date@@3PEBDEB			; _kernel_build_date
 PUBLIC	??_C@_0M@FIOLEJMK@Jun?519?52024@		; `string'
 PUBLIC	?_kernel_build_time@@3PEBDEB			; _kernel_build_time
-PUBLIC	??_C@_08NEBDIAFI@11?359?353@			; `string'
+PUBLIC	??_C@_08MPPMIID@20?323?316@			; `string'
 _BSS	SEGMENT
 ?_kernel_minor_version@@3HA DD 01H DUP (?)		; _kernel_minor_version
 ?_kernel_patch_version@@3HA DD 01H DUP (?)		; _kernel_patch_version
 _BSS	ENDS
-;	COMDAT ??_C@_08NEBDIAFI@11?359?353@
+;	COMDAT ??_C@_08MPPMIID@20?323?316@
 CONST	SEGMENT
-??_C@_08NEBDIAFI@11?359?353@ DB '11:59:53', 00H		; `string'
+??_C@_08MPPMIID@20?323?316@ DB '20:23:16', 00H		; `string'
 CONST	ENDS
 ;	COMDAT ??_C@_0M@FIOLEJMK@Jun?519?52024@
 CONST	SEGMENT
@@ -35,6 +35,6 @@ _DATA	SEGMENT
 ?_kernel_major_version@@3HA DD 01H			; _kernel_major_version
 	ORG $+4
 ?_kernel_build_date@@3PEBDEB DQ FLAT:??_C@_0M@FIOLEJMK@Jun?519?52024@ ; _kernel_build_date
-?_kernel_build_time@@3PEBDEB DQ FLAT:??_C@_08NEBDIAFI@11?359?353@ ; _kernel_build_time
+?_kernel_build_time@@3PEBDEB DQ FLAT:??_C@_08MPPMIID@20?323?316@ ; _kernel_build_time
 _DATA	ENDS
 END

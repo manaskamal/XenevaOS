@@ -1,153 +1,114 @@
-﻿Build started 15-06-2024 ৰাতিপু 10:23:07.
-     1>Project "E:\Xeneva Project\Aurora\Libs\XEClib\XEClib.vcxproj" on node 2 (Rebuild target(s)).
-     1>_NASM:
-         setjmp.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp037396feb36f4774ab11ae9f86a6c198.cmd"
-         "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\setjmp.obj"  "E:\Xeneva Project\Aurora\Libs\XEClib\setjmp.asm"
-       _NASM:
-         _callbase.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmp4195fe85feee494f8832cdb4ade62d7b.cmd"
-         "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\_callbase.obj"  "E:\Xeneva Project\Aurora\Libs\XEClib\_callbase.asm"
-     1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(935,5): warning MSB8027: Two or more files with the name of _xeprint.cpp will produce outputs to the same location. This can lead to an incorrect build result.  The files involved are sys\_xeprint.cpp, _xeprint.cpp.
-       ClCompile:
-         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes\c++" /Zi /nologo /W3 /WX- /sdl- /MP /Od /D ARCH_X64 /D YES_DYNAMIC /D DYNAMIC_EXPORTER /D _WINDLL /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt c++\ios.cpp c++\iostream.cpp c++\istream.cpp c++\memory.cpp c++\ostream.cpp c++\_string.cpp ctype.cpp errno.cpp math.cpp qsort.cpp stat.cpp stdio.cpp stdlib.cpp string.cpp sys\_heap.cpp sys\_xeneva.cpp sys\_xeprint.cpp time.cpp _xeinput.cpp _xeprint.cpp
-     1>cl : Command line warning D9025: overriding '/sdl-' with '/GS-'
-     1>cl : Command line warning D9002: ignoring unknown option '/arch:SSE2'
-     1>cl : Command line warning D9030: '/Gm' is incompatible with multiprocessing; ignoring /MP switch
-         _xeprint.cpp
-     1>_xeprint.cpp(84): warning C4267: '=' : conversion from 'size_t' to 'int', possible loss of data
-     1>_xeprint.cpp(205): warning C4244: '=' : conversion from 'unsigned __int64' to 'char', possible loss of data
-     1>_xeprint.cpp(207): warning C4244: '=' : conversion from 'unsigned __int64' to 'char', possible loss of data
-     1>_xeprint.cpp(279): warning C4267: '=' : conversion from 'size_t' to 'int', possible loss of data
-     1>_xeprint.cpp(305): warning C4244: '=' : conversion from 'unsigned __int64' to 'char', possible loss of data
-     1>_xeprint.cpp(422): warning C4267: '=' : conversion from 'size_t' to 'int', possible loss of data
-     1>_xeprint.cpp(538): warning C4244: 'return' : conversion from 'double' to 'float', possible loss of data
-     1>_xeprint.cpp(553): warning C4267: '=' : conversion from 'size_t' to 'int', possible loss of data
-     1>_xeprint.cpp(556): warning C4244: 'return' : conversion from 'int64_t' to 'int', possible loss of data
-     1>_xeprint.cpp(560): warning C4244: 'return' : conversion from 'int64_t' to 'int', possible loss of data
-     1>_xeprint.cpp(627): warning C4244: 'argument' : conversion from '__int64' to 'unsigned int', possible loss of data
-     1>_xeprint.cpp(639): warning C4244: 'argument' : conversion from '__int64' to 'unsigned int', possible loss of data
-     1>_xeprint.cpp(657): warning C4244: 'argument' : conversion from '__int64' to 'unsigned int', possible loss of data
-     1>_xeprint.cpp(668): warning C4244: 'argument' : conversion from '__int64' to 'unsigned int', possible loss of data
-     1>_xeprint.cpp(703): warning C4244: 'argument' : conversion from '__int64' to 'unsigned int', possible loss of data
-     1>_xeprint.cpp(713): warning C4244: 'argument' : conversion from '__int64' to 'unsigned int', possible loss of data
-     1>_xeprint.cpp(728): warning C4244: 'argument' : conversion from '__int64' to 'unsigned int', possible loss of data
-     1>_xeprint.cpp(739): warning C4244: 'argument' : conversion from '__int64' to 'unsigned int', possible loss of data
-     1>_xeprint.cpp(756): warning C4244: 'argument' : conversion from '__int64' to 'unsigned int', possible loss of data
-     1>_xeprint.cpp(767): warning C4244: 'argument' : conversion from '__int64' to 'unsigned int', possible loss of data
-     1>_xeprint.cpp(805): warning C4244: 'return' : conversion from 'int64_t' to 'int', possible loss of data
-         _xeinput.cpp
-     1>_xeinput.cpp(47): warning C4267: '=' : conversion from 'size_t' to 'int', possible loss of data
-     1>_xeinput.cpp(54): warning C4267: '=' : conversion from 'size_t' to 'int', possible loss of data
-     1>_xeinput.cpp(162): warning C4244: 'argument' : conversion from 'unsigned __int64' to 'unsigned int', possible loss of data
-     1>_xeinput.cpp(177): warning C4244: 'argument' : conversion from 'unsigned __int64' to 'unsigned int', possible loss of data
-     1>_xeinput.cpp(208): warning C4244: 'argument' : conversion from 'unsigned __int64' to 'unsigned int', possible loss of data
-     1>_xeinput.cpp(229): warning C4244: 'argument' : conversion from 'unsigned __int64' to 'unsigned int', possible loss of data
-         time.cpp
-     1>time.cpp(45): warning C4172: returning address of local variable or temporary
-     1>time.cpp(99): warning C4172: returning address of local variable or temporary
-     1>time.cpp(108): warning C4267: '=' : conversion from 'size_t' to 'clock_t', possible loss of data
-     1>time.cpp(123): warning C4101: 'count' : unreferenced local variable
-         _xeprint.cpp
-         _xeneva.cpp
-     1>sys\_xeneva.cpp(35): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
-     1>sys\_xeneva.cpp(39): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
-         _heap.cpp
-     1>sys\_heap.cpp(60): warning C4018: '>' : signed/unsigned mismatch
-     1>sys\_heap.cpp(250): warning C4018: '<' : signed/unsigned mismatch
-     1>sys\_heap.cpp(450): warning C4018: '<' : signed/unsigned mismatch
-     1>sys\_heap.cpp(490): warning C4244: '=' : conversion from 'unsigned __int64' to 'int', possible loss of data
-     1>sys\_heap.cpp(519): warning C4018: '>' : signed/unsigned mismatch
-         string.cpp
-     1>string.cpp(243): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
-     1>string.cpp(244): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
-     1>string.cpp(355): warning C4267: '=' : conversion from 'size_t' to 'int', possible loss of data
-     1>string.cpp(405): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
-     1>string.cpp(406): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
-     1>string.cpp(423): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
-         stdlib.cpp
-     1>stdlib.cpp(111): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
-     1>stdlib.cpp(147): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
-     1>stdlib.cpp(315): warning C4146: unary minus operator applied to unsigned type, result still unsigned
-     1>stdlib.cpp(340): warning C4146: unary minus operator applied to unsigned type, result still unsigned
-     1>stdlib.cpp(406): warning C4146: unary minus operator applied to unsigned type, result still unsigned
-         stdio.cpp
-     1>stdio.cpp(76): warning C4267: '=' : conversion from 'size_t' to 'int', possible loss of data
-     1>stdio.cpp(282): warning C4267: 'argument' : conversion from 'size_t' to 'int', possible loss of data
-     1>stdio.cpp(320): warning C4267: 'argument' : conversion from 'size_t' to 'int', possible loss of data
-     1>stdio.cpp(340): warning C4267: '=' : conversion from 'size_t' to 'int', possible loss of data
-     1>stdio.cpp(370): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
-         stat.cpp
-         qsort.cpp
-     1>qsort.cpp(83): warning C4267: 'argument' : conversion from 'size_t' to 'ssize_t', possible loss of data
-         math.cpp
-     1>math.cpp(94): warning C4305: '-=' : truncation from 'double' to 'float'
-     1>math.cpp(96): warning C4305: '+=' : truncation from 'double' to 'float'
-     1>math.cpp(234): warning C4305: '-=' : truncation from 'double' to 'float'
-     1>math.cpp(236): warning C4305: '+=' : truncation from 'double' to 'float'
-         errno.cpp
-         ctype.cpp
-     1>ctype.cpp(50): warning C4554: '&' : check operator precedence for possible error; use parentheses to clarify precedence
-         _string.cpp
-         ostream.cpp
-         memory.cpp
-         istream.cpp
-         iostream.cpp
-         ios.cpp
-     1>E:\Xeneva Project\Aurora\Libs\XEClib\includes\c++\istream(71): warning C4661: 'std::basic_ios<char,std::char_traits<charT>>::basic_ios(std::basic_streambuf<charT,std::char_traits<charT>> *)' : no suitable definition provided for explicit template instantiation request
-                 with
-                 [
-                     charT=char
-                 ]
-                 E:\Xeneva Project\Aurora\Libs\XEClib\includes\c++\istream(67) : see declaration of 'std::basic_ios<char,std::char_traits<charT>>::basic_ios'
-                 with
-                 [
-                     charT=char
-                 ]
-     1>c++\ios.cpp(70): warning C4661: 'std::basic_ios<char,std::char_traits<charT>>::basic_ios(std::basic_streambuf<charT,std::char_traits<charT>> *)' : no suitable definition provided for explicit template instantiation request
-                 with
-                 [
-                     charT=char
-                 ]
-                 E:\Xeneva Project\Aurora\Libs\XEClib\includes\c++\istream(67) : see declaration of 'std::basic_ios<char,std::char_traits<charT>>::basic_ios'
-                 with
-                 [
-                     charT=char
-                 ]
-         Generating Code...
-     1>e:\xeneva project\aurora\libs\xeclib\stdio.cpp(313): warning C4715: 'vfprintf' : not all control paths return a value
-     1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(1186,5): warning MSB8012: TargetPath(E:\Xeneva Project\Aurora\x64\Debug\XEClib.dll) does not match the Linker's OutputFile property value (F:\XEClib.dll). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
-       Link:
-         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\link.exe /ERRORREPORT:PROMPT /OUT:"F:\XEClib.dll" /INCREMENTAL /NOLOGO /NODEFAULTLIB /MANIFEST:NO /PDB:"E:\Xeneva Project\Aurora\x64\Debug\XEClib.pdb" /MAP /MAPINFO:EXPORTS /SUBSYSTEM:NATIVE /LARGEADDRESSAWARE /Driver /OPT:NOREF /LTCG /TLBID:1 /BASE:"0x0000000000600000" /FIXED:NO /NXCOMPAT /IMPLIB:"E:\Xeneva Project\Aurora\x64\Debug\XEClib.lib" /MACHINE:X64 /ALIGN:512 /DLL x64\Debug\ios.obj
-         x64\Debug\iostream.obj
-         x64\Debug\istream.obj
-         x64\Debug\memory.obj
-         x64\Debug\ostream.obj
-         x64\Debug\_string.obj
-         x64\Debug\ctype.obj
-         x64\Debug\errno.obj
-         x64\Debug\math.obj
-         x64\Debug\qsort.obj
-         x64\Debug\stat.obj
-         x64\Debug\stdio.obj
-         x64\Debug\stdlib.obj
-         x64\Debug\string.obj
-         x64\Debug\_heap.obj
-         x64\Debug\_xeneva.obj
-         x64\Debug\_xeprint.obj
-         x64\Debug\time.obj
-         x64\Debug\_xeinput.obj
-         x64\Debug\_xeprint.obj
-         x64\Debug\setjmp.obj
-         x64\Debug\_callbase.obj
-     1>LINK : warning LNK4075: ignoring '/INCREMENTAL' due to '/LTCG' specification
-     1>x64\Debug\_xeprint.obj : warning LNK4042: object specified more than once; extras ignored
-            Creating library E:\Xeneva Project\Aurora\x64\Debug\XEClib.lib and object E:\Xeneva Project\Aurora\x64\Debug\XEClib.exp
-         LINK : /LTCG specified but no code generation required; remove /LTCG from the link command line to improve linker performance
-     1>iostream.obj : warning LNK4210: .CRT section exists; there may be unhandled static initializers or terminators
-         XEClib.vcxproj -> E:\Xeneva Project\Aurora\x64\Debug\XEClib.dll
-     1>Done Building Project "E:\Xeneva Project\Aurora\Libs\XEClib\XEClib.vcxproj" (Rebuild target(s)).
-
-Build succeeded.
-
-Time Elapsed 00:00:02.79
+﻿  setjmp.asm
+  _callbase.asm
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(1091,5): warning MSB8027: Two or more files with the name of _xeprint.cpp will produce outputs to the same location. This can lead to an incorrect build result.  The files involved are sys\_xeprint.cpp, _xeprint.cpp.
+cl : command line warning D9002: ignoring unknown option '/arch:SSE2'
+cl : command line warning D9002: ignoring unknown option '/arch:SSE2'
+  ios.cpp
+cl : command line warning D9002: ignoring unknown option '/arch:SSE2'
+  iostream.cpp
+cl : command line warning D9002: ignoring unknown option '/arch:SSE2'
+  istream.cpp
+cl : command line warning D9002: ignoring unknown option '/arch:SSE2'
+  memory.cpp
+cl : command line warning D9002: ignoring unknown option '/arch:SSE2'
+  ostream.cpp
+cl : command line warning D9002: ignoring unknown option '/arch:SSE2'
+cl : command line warning D9002: ignoring unknown option '/arch:SSE2'
+  _string.cpp
+  ctype.cpp
+cl : command line warning D9002: ignoring unknown option '/arch:SSE2'
+  errno.cpp
+E:\Xeneva Project\Aurora\Libs\XEClib\includes\c++\istream(71): warning C4661: 'std::basic_ios<char,std::char_traits<char>>::basic_ios(std::basic_streambuf<char,std::char_traits<char>> *)': no suitable definition provided for explicit template instantiation request (compiling source file c++\ios.cpp)
+E:\Xeneva Project\Aurora\Libs\XEClib\includes\c++\istream(67): message : see declaration of 'std::basic_ios<char,std::char_traits<char>>::basic_ios' (compiling source file c++\ios.cpp)
+E:\Xeneva Project\Aurora\Libs\XEClib\c++\ios.cpp(70): warning C4661: 'std::basic_ios<char,std::char_traits<char>>::basic_ios(std::basic_streambuf<char,std::char_traits<char>> *)': no suitable definition provided for explicit template instantiation request
+E:\Xeneva Project\Aurora\Libs\XEClib\includes\c++\istream(67): message : see declaration of 'std::basic_ios<char,std::char_traits<char>>::basic_ios'
+E:\Xeneva Project\Aurora\Libs\XEClib\ctype.cpp(50,56): warning C4554: '&': check operator precedence for possible error; use parentheses to clarify precedence
+  math.cpp
+  qsort.cpp
+  stat.cpp
+  stdio.cpp
+E:\Xeneva Project\Aurora\Libs\XEClib\math.cpp(36,50): warning C4838: conversion from 'unsigned int' to 'int' requires a narrowing conversion
+E:\Xeneva Project\Aurora\Libs\XEClib\math.cpp(37,26): warning C4838: conversion from 'unsigned int' to 'int' requires a narrowing conversion
+E:\Xeneva Project\Aurora\Libs\XEClib\math.cpp(37,50): warning C4838: conversion from 'unsigned int' to 'int' requires a narrowing conversion
+E:\Xeneva Project\Aurora\Libs\XEClib\math.cpp(38,2): warning C4838: conversion from 'unsigned int' to 'int' requires a narrowing conversion
+E:\Xeneva Project\Aurora\Libs\XEClib\math.cpp(94,24): warning C4305: '-=': truncation from 'double' to 'float'
+E:\Xeneva Project\Aurora\Libs\XEClib\math.cpp(96,24): warning C4305: '+=': truncation from 'double' to 'float'
+E:\Xeneva Project\Aurora\Libs\XEClib\math.cpp(234,24): warning C4305: '-=': truncation from 'double' to 'float'
+E:\Xeneva Project\Aurora\Libs\XEClib\math.cpp(236,24): warning C4305: '+=': truncation from 'double' to 'float'
+  stdlib.cpp
+E:\Xeneva Project\Aurora\Libs\XEClib\qsort.cpp(83,32): warning C4267: 'argument': conversion from 'size_t' to 'ssize_t', possible loss of data
+E:\Xeneva Project\Aurora\Libs\XEClib\stdio.cpp(76,24): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+E:\Xeneva Project\Aurora\Libs\XEClib\stdio.cpp(144,18): warning C4838: conversion from 'int' to 'char' requires a narrowing conversion
+  string.cpp
+E:\Xeneva Project\Aurora\Libs\XEClib\stdio.cpp(282,41): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+  _heap.cpp
+E:\Xeneva Project\Aurora\Libs\XEClib\stdio.cpp(320,39): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+E:\Xeneva Project\Aurora\Libs\XEClib\stdio.cpp(340,73): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+E:\Xeneva Project\Aurora\Libs\XEClib\stdio.cpp(370,52): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+  _xeneva.cpp
+  _xeprint.cpp
+E:\Xeneva Project\Aurora\Libs\XEClib\sys\_heap.cpp(60,20): warning C4018: '>': signed/unsigned mismatch
+E:\Xeneva Project\Aurora\Libs\XEClib\sys\_heap.cpp(250,12): warning C4018: '<': signed/unsigned mismatch
+E:\Xeneva Project\Aurora\Libs\XEClib\sys\_heap.cpp(450,14): warning C4018: '<': signed/unsigned mismatch
+E:\Xeneva Project\Aurora\Libs\XEClib\sys\_heap.cpp(490,19): warning C4244: '=': conversion from 'unsigned __int64' to 'int', possible loss of data
+E:\Xeneva Project\Aurora\Libs\XEClib\sys\_heap.cpp(519,16): warning C4018: '>': signed/unsigned mismatch
+E:\Xeneva Project\Aurora\Libs\XEClib\sys\_xeneva.cpp(35,20): warning C4267: 'argument': conversion from 'size_t' to 'unsigned int', possible loss of data
+E:\Xeneva Project\Aurora\Libs\XEClib\sys\_xeneva.cpp(39,20): warning C4267: 'argument': conversion from 'size_t' to 'unsigned int', possible loss of data
+E:\Xeneva Project\Aurora\Libs\XEClib\stdio.cpp(313): warning C4715: 'vfprintf': not all control paths return a value
+  _xeinput.cpp
+  time.cpp
+E:\Xeneva Project\Aurora\Libs\XEClib\stdlib.cpp(111,34): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+E:\Xeneva Project\Aurora\Libs\XEClib\stdlib.cpp(147,44): warning C4267: 'argument': conversion from 'size_t' to 'unsigned int', possible loss of data
+  _xeprint.cpp
+E:\Xeneva Project\Aurora\Libs\XEClib\stdlib.cpp(315,17): warning C4146: unary minus operator applied to unsigned type, result still unsigned
+E:\Xeneva Project\Aurora\Libs\XEClib\stdlib.cpp(340,9): warning C4146: unary minus operator applied to unsigned type, result still unsigned
+E:\Xeneva Project\Aurora\Libs\XEClib\stdlib.cpp(406,9): warning C4146: unary minus operator applied to unsigned type, result still unsigned
+E:\Xeneva Project\Aurora\Libs\XEClib\string.cpp(101,22): warning C4311: 'type cast': pointer truncation from 'const char *' to 'uintptr_t'
+E:\Xeneva Project\Aurora\Libs\XEClib\string.cpp(101,22): warning C4302: 'type cast': truncation from 'const char *' to 'uintptr_t'
+E:\Xeneva Project\Aurora\Libs\XEClib\string.cpp(243,28): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+E:\Xeneva Project\Aurora\Libs\XEClib\string.cpp(244,28): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+E:\Xeneva Project\Aurora\Libs\XEClib\string.cpp(355,48): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+E:\Xeneva Project\Aurora\Libs\XEClib\string.cpp(405,28): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+E:\Xeneva Project\Aurora\Libs\XEClib\string.cpp(406,28): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+E:\Xeneva Project\Aurora\Libs\XEClib\string.cpp(423,24): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+E:\Xeneva Project\Aurora\Libs\XEClib\time.cpp(108,31): warning C4267: '=': conversion from 'size_t' to 'clock_t', possible loss of data
+E:\Xeneva Project\Aurora\Libs\XEClib\time.cpp(123,6): warning C4101: 'count': unreferenced local variable
+E:\Xeneva Project\Aurora\Libs\XEClib\_xeinput.cpp(47,26): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+E:\Xeneva Project\Aurora\Libs\XEClib\_xeinput.cpp(54,28): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+E:\Xeneva Project\Aurora\Libs\XEClib\_xeinput.cpp(145,59): warning C4312: 'type cast': conversion from 'unsigned int' to 'unsigned __int64 *' of greater size
+E:\Xeneva Project\Aurora\Libs\XEClib\_xeinput.cpp(162,27): warning C4244: 'argument': conversion from 'unsigned __int64' to 'unsigned int', possible loss of data
+E:\Xeneva Project\Aurora\Libs\XEClib\_xeinput.cpp(177,27): warning C4244: 'argument': conversion from 'unsigned __int64' to 'unsigned int', possible loss of data
+E:\Xeneva Project\Aurora\Libs\XEClib\_xeinput.cpp(208,27): warning C4244: 'argument': conversion from 'unsigned __int64' to 'unsigned int', possible loss of data
+E:\Xeneva Project\Aurora\Libs\XEClib\_xeinput.cpp(229,27): warning C4244: 'argument': conversion from 'unsigned __int64' to 'unsigned int', possible loss of data
+E:\Xeneva Project\Aurora\Libs\XEClib\_xeprint.cpp(84,25): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+E:\Xeneva Project\Aurora\Libs\XEClib\_xeprint.cpp(205,31): warning C4244: '=': conversion from 'unsigned __int64' to 'char', possible loss of data
+E:\Xeneva Project\Aurora\Libs\XEClib\_xeprint.cpp(207,31): warning C4244: '=': conversion from 'unsigned __int64' to 'char', possible loss of data
+E:\Xeneva Project\Aurora\Libs\XEClib\_xeprint.cpp(279,28): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+E:\Xeneva Project\Aurora\Libs\XEClib\_xeprint.cpp(305,31): warning C4244: '=': conversion from 'unsigned __int64' to 'char', possible loss of data
+E:\Xeneva Project\Aurora\Libs\XEClib\_xeprint.cpp(422,28): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+E:\Xeneva Project\Aurora\Libs\XEClib\_xeprint.cpp(538,15): warning C4244: 'return': conversion from 'double' to 'float', possible loss of data
+E:\Xeneva Project\Aurora\Libs\XEClib\_xeprint.cpp(553,28): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+E:\Xeneva Project\Aurora\Libs\XEClib\_xeprint.cpp(556,20): warning C4244: 'return': conversion from 'int64_t' to 'int', possible loss of data
+E:\Xeneva Project\Aurora\Libs\XEClib\_xeprint.cpp(560,20): warning C4244: 'return': conversion from 'int64_t' to 'int', possible loss of data
+E:\Xeneva Project\Aurora\Libs\XEClib\_xeprint.cpp(627,26): warning C4244: 'argument': conversion from '__int64' to 'unsigned int', possible loss of data
+E:\Xeneva Project\Aurora\Libs\XEClib\_xeprint.cpp(639,8): warning C4244: 'argument': conversion from '__int64' to 'unsigned int', possible loss of data
+E:\Xeneva Project\Aurora\Libs\XEClib\_xeprint.cpp(657,26): warning C4244: 'argument': conversion from '__int64' to 'unsigned int', possible loss of data
+E:\Xeneva Project\Aurora\Libs\XEClib\_xeprint.cpp(668,8): warning C4244: 'argument': conversion from '__int64' to 'unsigned int', possible loss of data
+E:\Xeneva Project\Aurora\Libs\XEClib\_xeprint.cpp(704,25): warning C4244: 'argument': conversion from '__int64' to 'unsigned int', possible loss of data
+E:\Xeneva Project\Aurora\Libs\XEClib\_xeprint.cpp(714,8): warning C4244: 'argument': conversion from '__int64' to 'unsigned int', possible loss of data
+E:\Xeneva Project\Aurora\Libs\XEClib\_xeprint.cpp(729,26): warning C4244: 'argument': conversion from '__int64' to 'unsigned int', possible loss of data
+E:\Xeneva Project\Aurora\Libs\XEClib\_xeprint.cpp(740,8): warning C4244: 'argument': conversion from '__int64' to 'unsigned int', possible loss of data
+E:\Xeneva Project\Aurora\Libs\XEClib\_xeprint.cpp(757,25): warning C4244: 'argument': conversion from '__int64' to 'unsigned int', possible loss of data
+E:\Xeneva Project\Aurora\Libs\XEClib\_xeprint.cpp(768,7): warning C4244: 'argument': conversion from '__int64' to 'unsigned int', possible loss of data
+E:\Xeneva Project\Aurora\Libs\XEClib\_xeprint.cpp(806,10): warning C4244: 'return': conversion from 'int64_t' to 'int', possible loss of data
+E:\Xeneva Project\Aurora\Libs\XEClib\time.cpp(99): warning C4172: returning address of local variable or temporary: timeStruc
+E:\Xeneva Project\Aurora\Libs\XEClib\time.cpp(45): warning C4172: returning address of local variable or temporary: timeStr
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(1363,5): warning MSB8012: TargetPath(E:\Xeneva Project\Aurora\x64\Debug\XEClib.dll) does not match the Linker's OutputFile property value (F:\XEClib.dll). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
+LINK : warning LNK4075: ignoring '/INCREMENTAL' due to '/LTCG' specification
+ios.obj : warning LNK4075: ignoring '/EDITANDCONTINUE' due to '/DRIVER' specification
+x64\Debug\_xeprint.obj : warning LNK4042: object specified more than once; extras ignored
+     Creating library E:\Xeneva Project\Aurora\x64\Debug\XEClib.lib and object E:\Xeneva Project\Aurora\x64\Debug\XEClib.exp
+  LINK : /LTCG specified but no code generation required; remove /LTCG from the link command line to improve linker performance
+LINK : warning LNK4281: undesirable base address 0x600000 for x64 image; set base address above 4GB for best ASLR optimization
+iostream.obj : warning LNK4210: .CRT section exists; there may be unhandled static initializers or terminators
+  XEClib.vcxproj -> E:\Xeneva Project\Aurora\x64\Debug\XEClib.dll

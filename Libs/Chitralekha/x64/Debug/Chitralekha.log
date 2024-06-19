@@ -41,8 +41,8 @@ E:\Xeneva Project\Aurora\Libs\Chitralekha\font.cpp(186,28): warning C4018: '>=':
 E:\Xeneva Project\Aurora\Libs\Chitralekha\font.cpp(186,54): warning C4018: '>=': signed/unsigned mismatch
 E:\Xeneva Project\Aurora\Libs\Chitralekha\font.cpp(319,12): warning C4018: '>=': signed/unsigned mismatch
 E:\Xeneva Project\Aurora\Libs\Chitralekha\font.cpp(319,43): warning C4018: '>=': signed/unsigned mismatch
-E:\Xeneva Project\Aurora\Libs\Chitralekha\font.cpp(368,28): warning C4018: '>': signed/unsigned mismatch
-E:\Xeneva Project\Aurora\Libs\Chitralekha\font.cpp(371,28): warning C4018: '>': signed/unsigned mismatch
+E:\Xeneva Project\Aurora\Libs\Chitralekha\font.cpp(367,28): warning C4018: '>': signed/unsigned mismatch
+E:\Xeneva Project\Aurora\Libs\Chitralekha\font.cpp(370,28): warning C4018: '>': signed/unsigned mismatch
   keycode.cpp
   ttf.cpp
 E:\Xeneva Project\Aurora\Libs\Chitralekha\ttf.h(82,9): warning C4161: #pragma pack(pop...): more pops than pushes

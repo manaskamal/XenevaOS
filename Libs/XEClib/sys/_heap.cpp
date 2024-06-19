@@ -535,13 +535,13 @@ int liballoc_unlock() {
 }
 
 void* liballoc_alloc(int pages) {
-	size_t size = pages * 4096;
+	size_t size = static_cast<size_t>(pages) * 4096;
 	char* p = (char*)_KeGetProcessHeapMem(size);
 	return p;
 }
 
 int liballoc_free(void* ptr, int pages) {
-	_KeProcessHeapUnmap(ptr, pages * 4096);
+	_KeProcessHeapUnmap(ptr, static_cast<size_t>(pages) * 4096);
 	return 0;
 }
 

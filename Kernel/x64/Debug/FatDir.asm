@@ -168,7 +168,8 @@ $LN2@FatDirecto:
 	jmp	$LN1@FatDirecto
 $LN3@FatDirecto:
 
-; 303  : 	memset(dirent->filename, 0, 32);
+; 303  : 
+; 304  : 	memset(dirent->filename, 0, 32);
 
 	mov	rax, QWORD PTR dirent$[rbp]
 	mov	r8d, 32					; 00000020H
@@ -176,41 +177,41 @@ $LN3@FatDirecto:
 	mov	rcx, rax
 	call	memset
 
-; 304  : 	int index = dirent->index;
+; 305  : 	int index = dirent->index;
 
 	mov	rax, QWORD PTR dirent$[rbp]
 	mov	eax, DWORD PTR [rax+32]
 	mov	DWORD PTR index$[rbp], eax
 
-; 305  : 	FatFS* fatfs = (FatFS*)fs->device;
+; 306  : 	FatFS* fatfs = (FatFS*)fs->device;
 
 	mov	rax, QWORD PTR fs$[rbp]
 	mov	rax, QWORD PTR [rax+64]
 	mov	QWORD PTR fatfs$[rbp], rax
 
-; 306  : 	AuVDisk* vdisk = (AuVDisk*)fatfs->vdisk;
+; 307  : 	AuVDisk* vdisk = (AuVDisk*)fatfs->vdisk;
 
 	mov	rax, QWORD PTR fatfs$[rbp]
 	mov	rax, QWORD PTR [rax+8]
 	mov	QWORD PTR vdisk$[rbp], rax
 
-; 307  : 
-; 308  : 	uint64_t* buf = (uint64_t*)P2V((uint64_t)AuPmmngrAlloc());
+; 308  : 
+; 309  : 	uint64_t* buf = (uint64_t*)P2V((uint64_t)AuPmmngrAlloc());
 
 	call	AuPmmngrAlloc
 	mov	rcx, rax
 	call	P2V
 	mov	QWORD PTR buf$[rbp], rax
 
-; 309  : 	memset(buf, 0, PAGE_SIZE);
+; 310  : 	memset(buf, 0, PAGE_SIZE);
 
 	mov	r8d, 4096				; 00001000H
 	xor	edx, edx
 	mov	rcx, QWORD PTR buf$[rbp]
 	call	memset
 
-; 310  : 		
-; 311  : 	if ((index / 16) > fatfs->__SectorPerCluster) {
+; 311  : 		
+; 312  : 	if ((index / 16) > fatfs->__SectorPerCluster) {
 
 	mov	eax, DWORD PTR index$[rbp]
 	cdq
@@ -222,33 +223,33 @@ $LN3@FatDirecto:
 	cmp	eax, ecx
 	jle	SHORT $LN4@FatDirecto
 
-; 312  : 		dirent->index = -1;
+; 313  : 		dirent->index = -1;
 
 	mov	rax, QWORD PTR dirent$[rbp]
 	mov	DWORD PTR [rax+32], -1
 
-; 313  : 		AuPmmngrFree((void*)V2P((size_t)buf));
+; 314  : 		AuPmmngrFree((void*)V2P((size_t)buf));
 
 	mov	rcx, QWORD PTR buf$[rbp]
 	call	V2P
 	mov	rcx, rax
 	call	AuPmmngrFree
 
-; 314  : 		return -1;
+; 315  : 		return -1;
 
 	mov	eax, -1
 	jmp	$LN1@FatDirecto
 $LN4@FatDirecto:
 
-; 315  : 	}
-; 316  : 
+; 316  : 	}
 ; 317  : 
-; 318  : 	uint8_t* aligned_buf = (uint8_t*)buf;
+; 318  : 
+; 319  : 	uint8_t* aligned_buf = (uint8_t*)buf;
 
 	mov	rax, QWORD PTR buf$[rbp]
 	mov	QWORD PTR aligned_buf$[rbp], rax
 
-; 319  : 	AuVDiskRead(vdisk, FatClusterToSector32(fatfs, dir->first_block) + index/16, 1, (uint64_t*)V2P((uint64_t)buf));
+; 320  : 	AuVDiskRead(vdisk, FatClusterToSector32(fatfs, dir->first_block) + index/16, 1, (uint64_t*)V2P((uint64_t)buf));
 
 	mov	rcx, QWORD PTR buf$[rbp]
 	call	V2P
@@ -274,7 +275,7 @@ $LN4@FatDirecto:
 	mov	rcx, QWORD PTR vdisk$[rbp]
 	call	AuVDiskRead
 
-; 320  : 	FatDir* dir_ = (FatDir*)(aligned_buf + ((index % 16) * sizeof(FatDir)));
+; 321  : 	FatDir* dir_ = (FatDir*)(aligned_buf + ((index % 16) * sizeof(FatDir)));
 
 	mov	eax, DWORD PTR index$[rbp]
 	cdq
@@ -289,8 +290,8 @@ $LN4@FatDirecto:
 	mov	rax, rcx
 	mov	QWORD PTR dir_$[rbp], rax
 
-; 321  : 
-; 322  : 	if (dir_->filename[0] == 0x00){
+; 322  : 
+; 323  : 	if (dir_->filename[0] == 0x00){
 
 	mov	eax, 1
 	imul	rax, rax, 0
@@ -299,28 +300,28 @@ $LN4@FatDirecto:
 	test	eax, eax
 	jne	SHORT $LN5@FatDirecto
 
-; 323  : 		dirent->index = -1;
+; 324  : 		dirent->index = -1;
 
 	mov	rax, QWORD PTR dirent$[rbp]
 	mov	DWORD PTR [rax+32], -1
 
-; 324  : 		AuPmmngrFree((void*)V2P((size_t)buf));
+; 325  : 		AuPmmngrFree((void*)V2P((size_t)buf));
 
 	mov	rcx, QWORD PTR buf$[rbp]
 	call	V2P
 	mov	rcx, rax
 	call	AuPmmngrFree
 
-; 325  : 		return -1;
+; 326  : 		return -1;
 
 	mov	eax, -1
 	jmp	$LN1@FatDirecto
 $LN5@FatDirecto:
 
-; 326  : 	}
-; 327  : 
-; 328  : 	if (dir_->filename[0] == 0xE5 || 
-; 329  : 		dir_->filename[0] == 0x05 ||
+; 327  : 	}
+; 328  : 
+; 329  : 	if (dir_->filename[0] == 0xE5 || 
+; 330  : 		dir_->filename[0] == 0x05 ||
 
 	mov	eax, 1
 	imul	rax, rax, 0
@@ -342,15 +343,15 @@ $LN5@FatDirecto:
 	jne	SHORT $LN6@FatDirecto
 $LN7@FatDirecto:
 
-; 330  : 		dir_->filename[0] == 0xFF) {
-; 331  : 		AuPmmngrFree((void*)V2P((size_t)buf));
+; 331  : 		dir_->filename[0] == 0xFF) {
+; 332  : 		AuPmmngrFree((void*)V2P((size_t)buf));
 
 	mov	rcx, QWORD PTR buf$[rbp]
 	call	V2P
 	mov	rcx, rax
 	call	AuPmmngrFree
 
-; 332  : 		dirent->index += 1;
+; 333  : 		dirent->index += 1;
 
 	mov	rax, QWORD PTR dirent$[rbp]
 	mov	eax, DWORD PTR [rax+32]
@@ -358,15 +359,15 @@ $LN7@FatDirecto:
 	mov	rcx, QWORD PTR dirent$[rbp]
 	mov	DWORD PTR [rcx+32], eax
 
-; 333  : 		return -1;
+; 334  : 		return -1;
 
 	mov	eax, -1
 	jmp	$LN1@FatDirecto
 $LN6@FatDirecto:
 
-; 334  : 	}
-; 335  : 
-; 336  : 	if (dir_->attrib & 0x02){
+; 335  : 	}
+; 336  : 
+; 337  : 	if (dir_->attrib & 0x02){
 
 	mov	rax, QWORD PTR dir_$[rbp]
 	movzx	eax, BYTE PTR [rax+11]
@@ -374,14 +375,14 @@ $LN6@FatDirecto:
 	test	eax, eax
 	je	SHORT $LN8@FatDirecto
 
-; 337  : 		AuPmmngrFree((void*)V2P((size_t)buf));
+; 338  : 		AuPmmngrFree((void*)V2P((size_t)buf));
 
 	mov	rcx, QWORD PTR buf$[rbp]
 	call	V2P
 	mov	rcx, rax
 	call	AuPmmngrFree
 
-; 338  : 		dirent->index += 1;
+; 339  : 		dirent->index += 1;
 
 	mov	rax, QWORD PTR dirent$[rbp]
 	mov	eax, DWORD PTR [rax+32]
@@ -389,15 +390,15 @@ $LN6@FatDirecto:
 	mov	rcx, QWORD PTR dirent$[rbp]
 	mov	DWORD PTR [rcx+32], eax
 
-; 339  : 		return -1;
+; 340  : 		return -1;
 
 	mov	eax, -1
 	jmp	$LN1@FatDirecto
 $LN8@FatDirecto:
 
-; 340  : 	}
-; 341  : 
-; 342  : 	if (dir_->attrib & 0x04) {
+; 341  : 	}
+; 342  : 
+; 343  : 	if (dir_->attrib & 0x04) {
 
 	mov	rax, QWORD PTR dir_$[rbp]
 	movzx	eax, BYTE PTR [rax+11]
@@ -405,14 +406,14 @@ $LN8@FatDirecto:
 	test	eax, eax
 	je	SHORT $LN9@FatDirecto
 
-; 343  : 		AuPmmngrFree((void*)V2P((size_t)buf));
+; 344  : 		AuPmmngrFree((void*)V2P((size_t)buf));
 
 	mov	rcx, QWORD PTR buf$[rbp]
 	call	V2P
 	mov	rcx, rax
 	call	AuPmmngrFree
 
-; 344  : 		dirent->index += 1;
+; 345  : 		dirent->index += 1;
 
 	mov	rax, QWORD PTR dirent$[rbp]
 	mov	eax, DWORD PTR [rax+32]
@@ -420,15 +421,15 @@ $LN8@FatDirecto:
 	mov	rcx, QWORD PTR dirent$[rbp]
 	mov	DWORD PTR [rcx+32], eax
 
-; 345  : 		return -1;
+; 346  : 		return -1;
 
 	mov	eax, -1
 	jmp	$LN1@FatDirecto
 $LN9@FatDirecto:
 
-; 346  : 	}
-; 347  : 
-; 348  : 	if (dir_->attrib & 0x08) {
+; 347  : 	}
+; 348  : 
+; 349  : 	if (dir_->attrib & 0x08) {
 
 	mov	rax, QWORD PTR dir_$[rbp]
 	movzx	eax, BYTE PTR [rax+11]
@@ -436,14 +437,14 @@ $LN9@FatDirecto:
 	test	eax, eax
 	je	SHORT $LN10@FatDirecto
 
-; 349  : 		AuPmmngrFree((void*)V2P((size_t)buf));
+; 350  : 		AuPmmngrFree((void*)V2P((size_t)buf));
 
 	mov	rcx, QWORD PTR buf$[rbp]
 	call	V2P
 	mov	rcx, rax
 	call	AuPmmngrFree
 
-; 350  : 		dirent->index += 1;
+; 351  : 		dirent->index += 1;
 
 	mov	rax, QWORD PTR dirent$[rbp]
 	mov	eax, DWORD PTR [rax+32]
@@ -451,15 +452,15 @@ $LN9@FatDirecto:
 	mov	rcx, QWORD PTR dirent$[rbp]
 	mov	DWORD PTR [rcx+32], eax
 
-; 351  : 		return -1;
+; 352  : 		return -1;
 
 	mov	eax, -1
 	jmp	$LN1@FatDirecto
 $LN10@FatDirecto:
 
-; 352  : 	}
-; 353  : 
-; 354  : 	if (dir_->attrib & 0x01) {
+; 353  : 	}
+; 354  : 
+; 355  : 	if (dir_->attrib & 0x01) {
 
 	mov	rax, QWORD PTR dir_$[rbp]
 	movzx	eax, BYTE PTR [rax+11]
@@ -467,14 +468,14 @@ $LN10@FatDirecto:
 	test	eax, eax
 	je	SHORT $LN11@FatDirecto
 
-; 355  : 		AuPmmngrFree((void*)V2P((size_t)buf));
+; 356  : 		AuPmmngrFree((void*)V2P((size_t)buf));
 
 	mov	rcx, QWORD PTR buf$[rbp]
 	call	V2P
 	mov	rcx, rax
 	call	AuPmmngrFree
 
-; 356  : 		dirent->index += 1;
+; 357  : 		dirent->index += 1;
 
 	mov	rax, QWORD PTR dirent$[rbp]
 	mov	eax, DWORD PTR [rax+32]
@@ -482,24 +483,24 @@ $LN10@FatDirecto:
 	mov	rcx, QWORD PTR dirent$[rbp]
 	mov	DWORD PTR [rcx+32], eax
 
-; 357  : 		return -1;
+; 358  : 		return -1;
 
 	mov	eax, -1
 	jmp	$LN1@FatDirecto
 $LN11@FatDirecto:
 
-; 358  : 	}
-; 359  : 
-; 360  : 	char filename[11];
-; 361  : 	char name[11];
-; 362  : 	memset(name, 0, 11);
+; 359  : 	}
+; 360  : 
+; 361  : 	char filename[11];
+; 362  : 	char name[11];
+; 363  : 	memset(name, 0, 11);
 
 	mov	r8d, 11
 	xor	edx, edx
 	lea	rcx, QWORD PTR name$[rbp]
 	call	memset
 
-; 363  : 	memcpy(name, dir_->filename, 11);
+; 364  : 	memcpy(name, dir_->filename, 11);
 
 	mov	rax, QWORD PTR dir_$[rbp]
 	mov	r8d, 11
@@ -507,42 +508,42 @@ $LN11@FatDirecto:
 	lea	rcx, QWORD PTR name$[rbp]
 	call	memcpy
 
-; 364  : 	FatFromDosToFilename(filename, (char*)dir_->filename);
+; 365  : 	FatFromDosToFilename(filename, (char*)dir_->filename);
 
 	mov	rax, QWORD PTR dir_$[rbp]
 	mov	rdx, rax
 	lea	rcx, QWORD PTR filename$[rbp]
 	call	?FatFromDosToFilename@@YAXPEAD0@Z	; FatFromDosToFilename
 
-; 365  : 	strcpy(dirent->filename,filename);
+; 366  : 	strcpy(dirent->filename,filename);
 
 	mov	rax, QWORD PTR dirent$[rbp]
 	lea	rdx, QWORD PTR filename$[rbp]
 	mov	rcx, rax
 	call	strcpy
 
-; 366  : 	dirent->size = dir_->file_size;
+; 367  : 	dirent->size = dir_->file_size;
 
 	mov	rax, QWORD PTR dirent$[rbp]
 	mov	rcx, QWORD PTR dir_$[rbp]
 	mov	ecx, DWORD PTR [rcx+28]
 	mov	DWORD PTR [rax+36], ecx
 
-; 367  : 	dirent->time = dir_->time_created;
+; 368  : 	dirent->time = dir_->time_created;
 
 	mov	rax, QWORD PTR dir_$[rbp]
 	movzx	eax, WORD PTR [rax+14]
 	mov	rcx, QWORD PTR dirent$[rbp]
 	mov	DWORD PTR [rcx+44], eax
 
-; 368  : 	dirent->date = dir_->date_created;
+; 369  : 	dirent->date = dir_->date_created;
 
 	mov	rax, QWORD PTR dir_$[rbp]
 	movzx	eax, WORD PTR [rax+16]
 	mov	rcx, QWORD PTR dirent$[rbp]
 	mov	DWORD PTR [rcx+40], eax
 
-; 369  : 	if (dir_->attrib & 0x10)
+; 370  : 	if (dir_->attrib & 0x10)
 
 	mov	rax, QWORD PTR dir_$[rbp]
 	movzx	eax, BYTE PTR [rax+11]
@@ -550,13 +551,13 @@ $LN11@FatDirecto:
 	test	eax, eax
 	je	SHORT $LN12@FatDirecto
 
-; 370  : 		dirent->flags = FS_FLAG_DIRECTORY;
+; 371  : 		dirent->flags = FS_FLAG_DIRECTORY;
 
 	mov	rax, QWORD PTR dirent$[rbp]
 	mov	BYTE PTR [rax+48], 2
 $LN12@FatDirecto:
 
-; 371  : 	if (dir_->attrib & 0x20)
+; 372  : 	if (dir_->attrib & 0x20)
 
 	mov	rax, QWORD PTR dir_$[rbp]
 	movzx	eax, BYTE PTR [rax+11]
@@ -564,20 +565,20 @@ $LN12@FatDirecto:
 	test	eax, eax
 	je	SHORT $LN13@FatDirecto
 
-; 372  : 		dirent->flags = FS_FLAG_GENERAL;
+; 373  : 		dirent->flags = FS_FLAG_GENERAL;
 
 	mov	rax, QWORD PTR dirent$[rbp]
 	mov	BYTE PTR [rax+48], 4
 $LN13@FatDirecto:
 
-; 373  : 	AuPmmngrFree((void*)V2P((size_t)buf));
+; 374  : 	AuPmmngrFree((void*)V2P((size_t)buf));
 
 	mov	rcx, QWORD PTR buf$[rbp]
 	call	V2P
 	mov	rcx, rax
 	call	AuPmmngrFree
 
-; 374  : 	dirent->index += 1;
+; 375  : 	dirent->index += 1;
 
 	mov	rax, QWORD PTR dirent$[rbp]
 	mov	eax, DWORD PTR [rax+32]
@@ -585,12 +586,12 @@ $LN13@FatDirecto:
 	mov	rcx, QWORD PTR dirent$[rbp]
 	mov	DWORD PTR [rcx+32], eax
 
-; 375  : 	return 0;
+; 376  : 	return 0;
 
 	xor	eax, eax
 $LN1@FatDirecto:
 
-; 376  : }
+; 377  : }
 
 	lea	rsp, QWORD PTR [rbp+160]
 	pop	rbp

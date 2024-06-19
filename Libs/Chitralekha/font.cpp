@@ -316,7 +316,7 @@ int ChFontDrawTextClipped(ChCanvas *canv, ChFont* font, char* string, int penx, 
 	if (!limit)
 		return 1;
 
-	if ((penx >= canv->canvasWidth) || (peny >= canv->canvasHeight) || penx >= (limit->x - limit->w) || peny >=(limit->y - limit->h))
+	if ((penx >= canv->canvasWidth) || (peny >= canv->canvasHeight))
 		return 1;
 
 	if (peny <= limit->y)
@@ -324,7 +324,6 @@ int ChFontDrawTextClipped(ChCanvas *canv, ChFont* font, char* string, int penx, 
 
 	if (penx < limit->x)
 		return 1;
-
 
 	int w = font->face->glyph->metrics.width;
 	int h = font->face->glyph->metrics.height;

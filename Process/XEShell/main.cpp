@@ -191,7 +191,7 @@ void XEShellLS() {
 	int dirfd = _KeOpenDir("/");
 	XEDirectoryEntry* dirent = (XEDirectoryEntry*)malloc(sizeof(XEDirectoryEntry));
 	memset(dirent, 0, sizeof(XEDirectoryEntry));
-
+	int addr = (int)dirent->filename;
 	while (1) {
 		if (dirent->index == -1)
 			break;

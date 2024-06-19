@@ -14,6 +14,7 @@ _fltused DD	01H
 _DATA	ENDS
 PUBLIC	??2@YAPEAX_K@Z					; operator new
 PUBLIC	??3@YAXPEAX@Z					; operator delete
+PUBLIC	??3@YAXPEAX_K@Z					; operator delete
 PUBLIC	??_U@YAPEAX_K@Z					; operator new[]
 PUBLIC	__JustMyCode_Default
 EXTRN	__CheckForDebuggerJustMyCode:PROC
@@ -31,6 +32,12 @@ $pdata$??3@YAXPEAX@Z DD imagerel $LN3
 pdata	ENDS
 ;	COMDAT pdata
 pdata	SEGMENT
+$pdata$??3@YAXPEAX_K@Z DD imagerel $LN3
+	DD	imagerel $LN3+38
+	DD	imagerel $unwind$??3@YAXPEAX_K@Z
+pdata	ENDS
+;	COMDAT pdata
+pdata	SEGMENT
 $pdata$??_U@YAPEAX_K@Z DD imagerel $LN3
 	DD	imagerel $LN3+35
 	DD	imagerel $unwind$??_U@YAPEAX_K@Z
@@ -40,6 +47,12 @@ xdata	SEGMENT
 $unwind$??_U@YAPEAX_K@Z DD 025030f01H
 	DD	0b20a230fH
 	DD	05006H
+xdata	ENDS
+;	COMDAT xdata
+xdata	SEGMENT
+$unwind$??3@YAXPEAX_K@Z DD 025031401H
+	DD	0b20f2314H
+	DD	0500bH
 xdata	ENDS
 ;	COMDAT xdata
 xdata	SEGMENT
@@ -67,7 +80,7 @@ _TEXT	SEGMENT
 size$ = 80
 ??_U@YAPEAX_K@Z PROC					; operator new[], COMDAT
 
-; 38   : void* __cdecl operator new[](size_t size) {
+; 40   : void* __cdecl ::operator new[](size_t size) {
 
 $LN3:
 	mov	QWORD PTR [rsp+8], rcx
@@ -77,11 +90,11 @@ $LN3:
 	lea	rcx, OFFSET FLAT:__E98F0051__CRT@cpp
 	call	__CheckForDebuggerJustMyCode
 
-; 39   : 	return 0; // malloc(size);
+; 41   : 	return 0; // malloc(size);
 
 	xor	eax, eax
 
-; 40   : }
+; 42   : }
 
 	lea	rsp, QWORD PTR [rbp+64]
 	pop	rbp
@@ -90,12 +103,38 @@ $LN3:
 _TEXT	ENDS
 ; Function compile flags: /Odtp /ZI
 ; File E:\Xeneva Project\Aurora\Kernel\_CRT.cpp
+;	COMDAT ??3@YAXPEAX_K@Z
+_TEXT	SEGMENT
+p$ = 80
+s$ = 88
+??3@YAXPEAX_K@Z PROC					; operator delete, COMDAT
+
+; 48   : void __cdecl ::operator delete(void* p, uint64_t s) {
+
+$LN3:
+	mov	QWORD PTR [rsp+16], rdx
+	mov	QWORD PTR [rsp+8], rcx
+	push	rbp
+	sub	rsp, 96					; 00000060H
+	lea	rbp, QWORD PTR [rsp+32]
+	lea	rcx, OFFSET FLAT:__E98F0051__CRT@cpp
+	call	__CheckForDebuggerJustMyCode
+
+; 49   : }
+
+	lea	rsp, QWORD PTR [rbp+64]
+	pop	rbp
+	ret	0
+??3@YAXPEAX_K@Z ENDP					; operator delete
+_TEXT	ENDS
+; Function compile flags: /Odtp /ZI
+; File E:\Xeneva Project\Aurora\Kernel\_CRT.cpp
 ;	COMDAT ??3@YAXPEAX@Z
 _TEXT	SEGMENT
 p$ = 80
 ??3@YAXPEAX@Z PROC					; operator delete, COMDAT
 
-; 42   : void __cdecl operator delete (void* p) {
+; 44   : void __cdecl ::operator delete (void* p) {
 
 $LN3:
 	mov	QWORD PTR [rsp+8], rcx
@@ -105,8 +144,8 @@ $LN3:
 	lea	rcx, OFFSET FLAT:__E98F0051__CRT@cpp
 	call	__CheckForDebuggerJustMyCode
 
-; 43   : 	//free(p);
-; 44   : }
+; 45   : 	//free(p);
+; 46   : }
 
 	lea	rsp, QWORD PTR [rbp+64]
 	pop	rbp
@@ -120,7 +159,7 @@ _TEXT	SEGMENT
 size$ = 80
 ??2@YAPEAX_K@Z PROC					; operator new, COMDAT
 
-; 34   : void* __cdecl ::operator new(size_t size){
+; 36   : void* __cdecl ::operator new(size_t size){
 
 $LN3:
 	mov	QWORD PTR [rsp+8], rcx
@@ -130,11 +169,11 @@ $LN3:
 	lea	rcx, OFFSET FLAT:__E98F0051__CRT@cpp
 	call	__CheckForDebuggerJustMyCode
 
-; 35   : 	return 0; // malloc(size);
+; 37   : 	return 0; // malloc(size);
 
 	xor	eax, eax
 
-; 36   : }
+; 38   : }
 
 	lea	rsp, QWORD PTR [rbp+64]
 	pop	rbp
