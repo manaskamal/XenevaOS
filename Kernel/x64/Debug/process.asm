@@ -102,13 +102,13 @@ pdata	ENDS
 ;	COMDAT pdata
 pdata	SEGMENT
 $pdata$?CreateKernelStack@@YA_KPEAU_au_proc_@@PEA_K@Z DD imagerel $LN6
-	DD	imagerel $LN6+181
+	DD	imagerel $LN6+183
 	DD	imagerel $unwind$?CreateKernelStack@@YA_KPEAU_au_proc_@@PEA_K@Z
 pdata	ENDS
 ;	COMDAT pdata
 pdata	SEGMENT
 $pdata$?KernelStackFree@@YAXPEAU_au_proc_@@PEAXPEA_K@Z DD imagerel $LN8
-	DD	imagerel $LN8+212
+	DD	imagerel $LN8+217
 	DD	imagerel $unwind$?KernelStackFree@@YAXPEAU_au_proc_@@PEAXPEA_K@Z
 pdata	ENDS
 ;	COMDAT pdata
@@ -132,7 +132,7 @@ pdata	ENDS
 ;	COMDAT pdata
 pdata	SEGMENT
 $pdata$?CreateUserStack@@YAPEA_KPEAU_au_proc_@@PEA_K@Z DD imagerel $LN6
-	DD	imagerel $LN6+208
+	DD	imagerel $LN6+210
 	DD	imagerel $unwind$?CreateUserStack@@YAPEA_KPEAU_au_proc_@@PEA_K@Z
 pdata	ENDS
 ;	COMDAT pdata
@@ -216,7 +216,7 @@ pdata	ENDS
 ;	COMDAT pdata
 pdata	SEGMENT
 $pdata$?AuProcessHeapMemDestroy@@YAXPEAU_au_proc_@@@Z DD imagerel $LN9
-	DD	imagerel $LN9+309
+	DD	imagerel $LN9+311
 	DD	imagerel $unwind$?AuProcessHeapMemDestroy@@YAXPEAU_au_proc_@@@Z
 pdata	ENDS
 ;	COMDAT pdata
@@ -538,10 +538,10 @@ $LN4@AuProcessH:
 	cmp	rcx, rax
 	jae	$LN3@AuProcessH
 
-; 425  : 		AuVPage* page = AuVmmngrGetPage(startaddr + i * PAGE_SIZE, VIRT_GETPAGE_ONLY_RET, VIRT_GETPAGE_ONLY_RET);
+; 425  : 		AuVPage* page = AuVmmngrGetPage(startaddr + static_cast<uint64_t>(i) * PAGE_SIZE, VIRT_GETPAGE_ONLY_RET, VIRT_GETPAGE_ONLY_RET);
 
-	imul	eax, DWORD PTR i$1[rbp], 4096		; 00001000H
-	cdqe
+	movsxd	rax, DWORD PTR i$1[rbp]
+	imul	rax, rax, 4096				; 00001000H
 	mov	rcx, QWORD PTR startaddr$[rbp]
 	add	rcx, rax
 	mov	rax, rcx
@@ -2144,10 +2144,10 @@ $LN4@CreateUser:
 	call	P2V
 	mov	QWORD PTR blk$2[rbp], rax
 
-; 186  : 		AuMapPageEx(cr3, V2P((size_t)blk), location + i * PAGE_SIZE, X86_64_PAGING_USER);
+; 186  : 		AuMapPageEx(cr3, V2P((size_t)blk), location + static_cast<uint64_t>(i) * PAGE_SIZE, X86_64_PAGING_USER);
 
-	imul	eax, DWORD PTR i$1[rbp], 4096		; 00001000H
-	cdqe
+	movsxd	rax, DWORD PTR i$1[rbp]
+	imul	rax, rax, 4096				; 00001000H
 	mov	rcx, QWORD PTR location$[rbp]
 	add	rcx, rax
 	mov	rax, rcx
@@ -2388,10 +2388,10 @@ $LN4@KernelStac:
 	cmp	DWORD PTR i$1[rbp], 2
 	jge	SHORT $LN3@KernelStac
 
-; 221  : 		AuVPage* page = AuVmmngrGetPage((location + (i * PAGE_SIZE)), VIRT_GETPAGE_ONLY_RET, VIRT_GETPAGE_ONLY_RET);
+; 221  : 		AuVPage* page = AuVmmngrGetPage((location + (static_cast<uint64_t>(i) * PAGE_SIZE)), VIRT_GETPAGE_ONLY_RET, VIRT_GETPAGE_ONLY_RET);
 
-	imul	eax, DWORD PTR i$1[rbp], 4096		; 00001000H
-	cdqe
+	movsxd	rax, DWORD PTR i$1[rbp]
+	imul	rax, rax, 4096				; 00001000H
 	mov	rcx, QWORD PTR location$[rbp]
 	add	rcx, rax
 	mov	rax, rcx
@@ -2440,7 +2440,7 @@ $LN5@KernelStac:
 ; 228  : 		}
 ; 229  : 	}
 
-	jmp	SHORT $LN2@KernelStac
+	jmp	$LN2@KernelStac
 $LN3@KernelStac:
 
 ; 230  : 	proc->_kstack_index_ -= 8192;
@@ -2512,10 +2512,10 @@ $LN4@CreateKern:
 	call	AuPmmngrAlloc
 	mov	QWORD PTR p$2[rbp], rax
 
-; 205  : 		AuMapPageEx(cr3, (uint64_t)p, location + i * PAGE_SIZE, X86_64_PAGING_USER);
+; 205  : 		AuMapPageEx(cr3, (uint64_t)p, location + static_cast<uint64_t>(i) * PAGE_SIZE, X86_64_PAGING_USER);
 
-	imul	eax, DWORD PTR i$1[rbp], 4096		; 00001000H
-	cdqe
+	movsxd	rax, DWORD PTR i$1[rbp]
+	imul	rax, rax, 4096				; 00001000H
 	mov	rcx, QWORD PTR location$[rbp]
 	add	rcx, rax
 	mov	rax, rcx

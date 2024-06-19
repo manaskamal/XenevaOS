@@ -90,7 +90,7 @@ AuVFSNode* FatCreateDir(AuVFSNode* fsys,char* filename) {
 	char fname[11];
 	memset(fname, 0, 11);
 	FatToDOSFilename(extract, fname, 11);
-	fname[11] = 0;
+	fname[10] = 0;
 
 	while (1) {
 		for (int j = 0; j < _fs->__SectorPerCluster; j++) {
@@ -135,7 +135,7 @@ AuVFSNode* FatCreateDir(AuVFSNode* fsys,char* filename) {
 					dot_entry->last_wrt_date = dirent->last_wrt_date;
 					dot_entry->last_wrt_time = dirent->last_wrt_time;
 
-					FatDir* dotdot = (FatDir*)(entrybuf + sizeof(FatDir));
+					FatDir* dotdot = (FatDir*)((uint8_t*)entrybuf + sizeof(FatDir));
 					memset(dotdot, 0, sizeof(FatDir));
 					dotdot->filename[0] = '.';
 					dotdot->filename[1] = '.';
@@ -219,9 +219,9 @@ int FatRemoveDir(AuVFSNode* fsys, AuVFSNode* file) {
 			for (int i = 0; i < 16; i++) {
 				char name[11];
 				memcpy(name, dirent->filename, 11);
-				name[11] = 0;
+				name[10] = 0;
 
-				if (dirent->filename[0] != 0x00 || dirent->filename[0] != 0xE5) {
+				if ((dirent->filename[0] != 0x00) && (dirent->filename[0] != 0xE5)) {
 					AuPmmngrFree((void*)V2P((size_t)buff));
 					_is_empty = false;
 					break;
@@ -359,8 +359,8 @@ int FatDirectoryRead(AuVFSNode* fs, AuVFSNode* dir, AuDirectoryEntry* dirent) {
 
 	char filename[11];
 	char name[11];
+	memset(name, 0, 11);
 	memcpy(name, dir_->filename, 11);
-	name[11] = 0;
 	FatFromDosToFilename(filename, (char*)dir_->filename);
 	strcpy(dirent->filename,filename);
 	dirent->size = dir_->file_size;

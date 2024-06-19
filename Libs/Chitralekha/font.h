@@ -130,7 +130,7 @@ XE_EXTERN{
 	* @param font -- Pointer to font
 	* @param string -- total string
 	*/
-	XE_LIB int ChFontGetWidth(ChFont* font, char* string);
+	XE_LIB int64_t ChFontGetWidth(ChFont* font, char* string);
 
 	/*
 	* ChFontGetWidthChar -- return the total width of font in
@@ -138,7 +138,7 @@ XE_EXTERN{
 	* @param font -- Pointer to font
 	* @param c -- character
 	*/
-	XE_LIB int ChFontGetWidthChar(ChFont* font, char c);
+	XE_LIB int64_t ChFontGetWidthChar(ChFont* font, char c);
 
 	/*
 	* ChFontGetHeight -- return the total height of font
@@ -146,7 +146,7 @@ XE_EXTERN{
 	* @param font -- Pointer to font
 	* @param string -- total string
 	*/
-	XE_LIB int ChFontGetHeight(ChFont* font, char* string);
+	XE_LIB int64_t ChFontGetHeight(ChFont* font, char* string);
 
 	/*
 	* ChFontGetHeightChar -- return the total width of font in
@@ -154,7 +154,7 @@ XE_EXTERN{
 	* @param font -- Pointer to font
 	* @param c -- character
 	*/
-	XE_LIB int ChFontGetHeightChar(ChFont* font, char c);
+	XE_LIB int64_t ChFontGetHeightChar(ChFont* font, char c);
 
 	/*
 	* ChFontClose -- closes an opened font

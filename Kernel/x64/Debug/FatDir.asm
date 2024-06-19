@@ -46,13 +46,13 @@ EXTRN	__CheckForDebuggerJustMyCode:PROC
 ;	COMDAT pdata
 pdata	SEGMENT
 $pdata$?FatCreateDir@@YAPEAU__VFS_NODE__@@PEAU1@PEAD@Z DD imagerel $LN28
-	DD	imagerel $LN28+1802
+	DD	imagerel $LN28+1800
 	DD	imagerel $unwind$?FatCreateDir@@YAPEAU__VFS_NODE__@@PEAU1@PEAD@Z
 pdata	ENDS
 ;	COMDAT pdata
 pdata	SEGMENT
-$pdata$?FatRemoveDir@@YAHPEAU__VFS_NODE__@@0@Z DD imagerel $LN17
-	DD	imagerel $LN17+510
+$pdata$?FatRemoveDir@@YAHPEAU__VFS_NODE__@@0@Z DD imagerel $LN16
+	DD	imagerel $LN16+510
 	DD	imagerel $unwind$?FatRemoveDir@@YAHPEAU__VFS_NODE__@@0@Z
 pdata	ENDS
 ;	COMDAT pdata
@@ -64,7 +64,7 @@ pdata	ENDS
 ;	COMDAT pdata
 pdata	SEGMENT
 $pdata$?FatDirectoryRead@@YAHPEAU__VFS_NODE__@@0PEAU_AuDirectoryEnty_@@@Z DD imagerel $LN15
-	DD	imagerel $LN15+1045
+	DD	imagerel $LN15+1048
 	DD	imagerel $unwind$?FatDirectoryRead@@YAHPEAU__VFS_NODE__@@0PEAU_AuDirectoryEnty_@@@Z
 pdata	ENDS
 ;	COMDAT ??_C@_01KMDKNFGN@?1@
@@ -492,19 +492,20 @@ $LN11@FatDirecto:
 ; 359  : 
 ; 360  : 	char filename[11];
 ; 361  : 	char name[11];
-; 362  : 	memcpy(name, dir_->filename, 11);
+; 362  : 	memset(name, 0, 11);
+
+	mov	r8d, 11
+	xor	edx, edx
+	lea	rcx, QWORD PTR name$[rbp]
+	call	memset
+
+; 363  : 	memcpy(name, dir_->filename, 11);
 
 	mov	rax, QWORD PTR dir_$[rbp]
 	mov	r8d, 11
 	mov	rdx, rax
 	lea	rcx, QWORD PTR name$[rbp]
 	call	memcpy
-
-; 363  : 	name[11] = 0;
-
-	mov	eax, 1
-	imul	rax, rax, 11
-	mov	BYTE PTR name$[rbp+rax], 0
 
 ; 364  : 	FatFromDosToFilename(filename, (char*)dir_->filename);
 
@@ -833,7 +834,7 @@ file$ = 168
 
 ; 198  : int FatRemoveDir(AuVFSNode* fsys, AuVFSNode* file) {
 
-$LN17:
+$LN16:
 	mov	QWORD PTR [rsp+16], rdx
 	mov	QWORD PTR [rsp+8], rcx
 	push	rbp
@@ -973,28 +974,27 @@ $LN9@FatRemoveD:
 	lea	rcx, QWORD PTR name$4[rbp]
 	call	memcpy
 
-; 222  : 				name[11] = 0;
+; 222  : 				name[10] = 0;
 
 	mov	eax, 1
-	imul	rax, rax, 11
+	imul	rax, rax, 10
 	mov	BYTE PTR name$4[rbp+rax], 0
 
 ; 223  : 
-; 224  : 				if (dirent->filename[0] != 0x00 || dirent->filename[0] != 0xE5) {
+; 224  : 				if ((dirent->filename[0] != 0x00) && (dirent->filename[0] != 0xE5)) {
 
 	mov	eax, 1
 	imul	rax, rax, 0
 	mov	rcx, QWORD PTR dirent$2[rbp]
 	movzx	eax, BYTE PTR [rcx+rax]
 	test	eax, eax
-	jne	SHORT $LN13@FatRemoveD
+	je	SHORT $LN12@FatRemoveD
 	mov	eax, 1
 	imul	rax, rax, 0
 	mov	rcx, QWORD PTR dirent$2[rbp]
 	movzx	eax, BYTE PTR [rcx+rax]
 	cmp	eax, 229				; 000000e5H
 	je	SHORT $LN12@FatRemoveD
-$LN13@FatRemoveD:
 
 ; 225  : 					AuPmmngrFree((void*)V2P((size_t)buff));
 
@@ -1041,12 +1041,12 @@ $LN5@FatRemoveD:
 ; 234  : 		if (dir_clust == (FAT_EOC_MARK & 0x0FFFFFFF))
 
 	cmp	DWORD PTR dir_clust$[rbp], 268435448	; 0ffffff8H
-	jne	SHORT $LN14@FatRemoveD
+	jne	SHORT $LN13@FatRemoveD
 
 ; 235  : 			break;
 
 	jmp	SHORT $LN3@FatRemoveD
-$LN14@FatRemoveD:
+$LN13@FatRemoveD:
 
 ; 236  : 	}
 
@@ -1058,7 +1058,7 @@ $LN3@FatRemoveD:
 
 	movzx	eax, BYTE PTR _is_empty$[rbp]
 	test	eax, eax
-	je	SHORT $LN15@FatRemoveD
+	je	SHORT $LN14@FatRemoveD
 
 ; 239  : 		FatFileRemove(fsys, file);
 
@@ -1070,7 +1070,7 @@ $LN3@FatRemoveD:
 
 	xor	eax, eax
 	jmp	SHORT $LN1@FatRemoveD
-$LN15@FatRemoveD:
+$LN14@FatRemoveD:
 
 ; 241  : 	}
 ; 242  : 
@@ -1349,10 +1349,10 @@ $LN3@FatCreateD:
 	lea	rcx, QWORD PTR extract$[rbp]
 	call	?FatToDOSFilename@@YAXPEBDPEADI@Z	; FatToDOSFilename
 
-; 93   : 	fname[11] = 0;
+; 93   : 	fname[10] = 0;
 
 	mov	eax, 1
-	imul	rax, rax, 11
+	imul	rax, rax, 10
 	mov	BYTE PTR fname$[rbp+rax], 0
 $LN7@FatCreateD:
 
@@ -1622,10 +1622,10 @@ $LN23@FatCreateD:
 	mov	WORD PTR [rax+22], cx
 
 ; 137  : 
-; 138  : 					FatDir* dotdot = (FatDir*)(entrybuf + sizeof(FatDir));
+; 138  : 					FatDir* dotdot = (FatDir*)((uint8_t*)entrybuf + sizeof(FatDir));
 
 	mov	rax, QWORD PTR entrybuf$6[rbp]
-	add	rax, 256				; 00000100H
+	add	rax, 32					; 00000020H
 	mov	QWORD PTR dotdot$8[rbp], rax
 
 ; 139  : 					memset(dotdot, 0, sizeof(FatDir));

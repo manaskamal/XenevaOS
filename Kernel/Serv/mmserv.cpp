@@ -132,8 +132,8 @@ uint64_t GetProcessHeapMem(size_t sz) {
 		if (vpage->bits.page != 0)
 			continue;*/
 		void* phys = AuPmmngrAlloc();
-		if (!AuMapPage((size_t)phys, start_addr + i * PAGE_SIZE, X86_64_PAGING_USER)) {
-			SeTextOut("Failed to map %x \r\n", (start_addr + i * PAGE_SIZE));
+		if (!AuMapPage((size_t)phys, start_addr + static_cast<uint64_t>(i) * PAGE_SIZE, X86_64_PAGING_USER)) {
+			SeTextOut("Failed to map %x \r\n", (start_addr + static_cast<uint64_t>(i) * PAGE_SIZE));
 		}
 	}
 	//SeTextOut("Mapped \r\n");
@@ -169,7 +169,7 @@ int ProcessHeapUnmap(void* ptr, size_t sz) {
 	}
 	uint64_t start_addr = (uint64_t)ptr;
 	for (int i = 0; i < sz / PAGE_SIZE; i++) {
-		AuVPage* page_ = AuVmmngrGetPage(start_addr + i * PAGE_SIZE, VIRT_GETPAGE_ONLY_RET, VIRT_GETPAGE_ONLY_RET);
+		AuVPage* page_ = AuVmmngrGetPage(start_addr + static_cast<uint64_t>(i) * PAGE_SIZE, VIRT_GETPAGE_ONLY_RET, VIRT_GETPAGE_ONLY_RET);
 		if (page_) {
 			uint64_t phys_page = page_->bits.page << PAGE_SHIFT;
 			if (phys_page){

@@ -96,10 +96,25 @@ char *strcpy(char *s1, const char *s2)
 	return s1_p;
 }
 
-size_t strlen(const char* str){
-	size_t len = 0;
-	while (str[len++]);
-	return len;
+#define UCHAR_MAX 255
+
+#define SS (sizeof(size_t))
+#define ALIGN (sizeof(size_t)-1)
+#define ONES ((size_t)-1/UCHAR_MAX)
+#define HIGHS (ONES * (UCHAR_MAX/2+1))
+#define HASZERO(x) ((x)-ONES & ~(x) & HIGHS)
+
+size_t strlen(const char* s){
+	const char* a = s;
+	const size_t* w;
+	for (; (uintptr_t)s % ALIGN; s++) {
+		if (!*s) {
+			return s - a;
+		}
+	}
+	for (w = (const size_t*)s; !HASZERO(*w); w++);
+	for (s = (const char*)w; *s; s++);
+	return s - a;
 }
 
 

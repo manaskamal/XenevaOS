@@ -280,7 +280,7 @@ void PlayPauseButtonAction(ChWidget* wid, ChWindow* mainWin) {
 		char path[32];
 		memset(path, 0, 32);
 		strcpy(path, "/MUSIC/");
-		strcpy(path + (strlen("/MUSIC/")-1), selectedFile);
+		strcpy(path + strlen("/MUSIC/"), selectedFile);
 		_KePrint("Selected file -> %s \r\n", path);
 		_file = _KeOpenFile(path, FILE_OPEN_READ_ONLY);
 		_KePrint("_file -> %d \r\n", _file);

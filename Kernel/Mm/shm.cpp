@@ -240,10 +240,10 @@ void* AuSHMObtainMem(AuProcess* proc, uint16_t id, void* shmaddr, int shmflg) {
 			have_mappings = true;
 		if (maps->start_addr > last_addr) {
 			size_t gap = maps->start_addr - last_addr;
-			if (gap >= mem->num_frames * PAGE_SIZE){
+			if (gap >= static_cast<uint64_t>(mem->num_frames) * PAGE_SIZE){
 				for (int j = 0; j < mem->num_frames; j++) {
 					size_t phys = mem->frames[j];
-					AuMapPage(phys, last_addr + j * PAGE_SIZE, X86_64_PAGING_USER);
+					AuMapPage(phys, last_addr + static_cast<int64_t>(j) * PAGE_SIZE, X86_64_PAGING_USER);
 				}
 				mappings->start_addr = last_addr;
 				mappings->length = mem->num_frames * PAGE_SIZE;
@@ -292,7 +292,7 @@ void* AuSHMObtainMem(AuProcess* proc, uint16_t id, void* shmaddr, int shmflg) {
 			if (gap >= mem->num_frames * PAGE_SIZE) {
 				for (int j = 0; j < mem->num_frames; j++) {
 					size_t phys = mem->frames[j];
-					AuMapPage(phys, last_addr + j * PAGE_SIZE, X86_64_PAGING_USER);
+					AuMapPage(phys, last_addr + static_cast<int64_t>(j) * PAGE_SIZE, X86_64_PAGING_USER);
 				}
 				mappings->start_addr = last_addr;
 				mappings->length = mem->num_frames * PAGE_SIZE;
@@ -345,11 +345,11 @@ void AuSHMUnmap(uint16_t key, AuProcess* proc) {
 		if (maps->shm == shm){
 			mapping = maps;
 			for (int i = 0; i < mapping->length / PAGE_SIZE; i++) {
-				AuVPage* vpage = AuVmmngrGetPage(mapping->start_addr + i * PAGE_SIZE, VIRT_GETPAGE_ONLY_RET, VIRT_GETPAGE_ONLY_RET);
+				AuVPage* vpage = AuVmmngrGetPage(mapping->start_addr + static_cast<int64_t>(i) * PAGE_SIZE, VIRT_GETPAGE_ONLY_RET, VIRT_GETPAGE_ONLY_RET);
 				if (vpage) {
 					vpage->bits.page = 0;
 					vpage->bits.present = 0;
-					flush_tlb((void*)(mapping->start_addr + i * PAGE_SIZE));
+					flush_tlb((void*)(mapping->start_addr + static_cast<int64_t>(i) * PAGE_SIZE));
 				}
 			}
 			SeTextOut("Closing index -> %d \r\n", i);
@@ -376,10 +376,12 @@ void AuSHMUnmapAll(AuProcess* proc) {
 	for (int i = 0; i < proc->shmmaps->pointer; i++) {
 		AuSHMMappings* mapping = (AuSHMMappings*)list_remove(proc->shmmaps, i);
 		for (int j = 0; j < mapping->length / PAGE_SIZE; j++) {
-			AuVPage* vpage = AuVmmngrGetPage(mapping->start_addr + j * PAGE_SIZE, VIRT_GETPAGE_ONLY_RET, VIRT_GETPAGE_ONLY_RET);
+			AuVPage* vpage = AuVmmngrGetPage(mapping->start_addr + 
+				static_cast<int64_t>(j) * PAGE_SIZE, VIRT_GETPAGE_ONLY_RET, VIRT_GETPAGE_ONLY_RET);
 			vpage->bits.page = 0;
 			vpage->bits.present = 0;
-			flush_tlb((void*)(mapping->start_addr + j * PAGE_SIZE));
+			flush_tlb((void*)(mapping->start_addr + 
+				static_cast<int64_t>(j) * PAGE_SIZE));
 		}
 		AuSHMDelete(mapping->shm);
 		SeTextOut("Unmapping shm -> %x \r\n", mapping->start_addr);

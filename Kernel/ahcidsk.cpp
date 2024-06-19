@@ -203,13 +203,14 @@ void AuAHCIDiskIdentify(HBA_PORT *port, uint64_t lba, uint32_t count, uint64_t *
 
 	HBA_CMD_TABLE *tbl = (HBA_CMD_TABLE*)cmd_list[command_slot].ctba;
 	int i = 0;
+	uint8_t* buffer_aligned = (uint8_t*)buffer;
 	for (i = 0; i < cmd_list->prdtl; i++){
 		tbl->prdt[i].data_base_address = buffer_whole & 0xffffffff;
 		tbl->prdt[i].dbau = buffer_whole >> 32;
 		tbl->prdt[i].data_byte_count = (512 * count) - 1;
 		tbl->prdt[i].i = 1;
-		buffer += 512 * count;
-		buffer_whole = (uint32_t)buffer;
+		buffer_aligned += 512 * static_cast<uint64_t>(count);
+		buffer_whole = (uint64_t)buffer_aligned;
 	}
 	tbl->prdt[i].data_base_address = buffer_whole & 0xffffffff;
 	tbl->prdt[i].dbau = buffer_whole >> 32;

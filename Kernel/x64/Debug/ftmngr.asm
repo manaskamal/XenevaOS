@@ -557,7 +557,7 @@ $LN6@FontManage:
 	mov	rax, QWORD PTR [rax+32]
 	mov	ecx, 8
 	imul	rcx, rcx, 0
-	mov	rax, QWORD PTR [rax+8]
+	mov	rax, QWORD PTR [rax+12]
 	mov	rax, QWORD PTR [rcx+rax]
 	mov	QWORD PTR firstFrame$2[rbp], rax
 

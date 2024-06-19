@@ -1,56 +1,46 @@
-﻿Build started 08-05-2024 আবেলি 8:32:42.
-     1>Project "E:\Xeneva Project\Aurora\Process\Files\Files.vcxproj" on node 2 (Rebuild target(s)).
-     1>ClCompile:
-         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /I"E:\Xeneva Project\Aurora\Libs\Chitralekha" /I"E:\os_dev\freetype2-master\freetype2-master\include" /Zi /nologo /W4 /WX- /sdl- /MP /Od /Oy /D ARCH_X64 /D YES_DYNAMIC /D DYNAMIC_IMPORTER /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt main.cpp
-     1>cl : Command line warning D9025: overriding '/sdl-' with '/GS-'
-     1>cl : Command line warning D9002: ignoring unknown option '/arch:SSE2'
-         main.cpp
-     1>main.cpp(71): warning C4100: 'button' : unreferenced formal parameter
-     1>main.cpp(71): warning C4100: 'y' : unreferenced formal parameter
-     1>main.cpp(71): warning C4100: 'x' : unreferenced formal parameter
-     1>main.cpp(71): warning C4100: 'win' : unreferenced formal parameter
-     1>main.cpp(71): warning C4100: 'wid' : unreferenced formal parameter
-     1>main.cpp(90): warning C4100: 'win' : unreferenced formal parameter
-     1>main.cpp(90): warning C4100: 'wid' : unreferenced formal parameter
-     1>main.cpp(136): warning C4244: 'argument' : conversion from 'int' to 'char', possible loss of data
-     1>main.cpp(128): warning C4189: 'c' : local variable is initialized but not referenced
-     1>main.cpp(146): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
-     1>main.cpp(149): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
-     1>main.cpp(155): warning C4189: 'k' : local variable is initialized but not referenced
-     1>main.cpp(192): warning C4127: conditional expression is constant
-     1>main.cpp(213): warning C4127: conditional expression is constant
-     1>main.cpp(234): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
-     1>main.cpp(235): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
-     1>main.cpp(239): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
-     1>main.cpp(265): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
-     1>main.cpp(266): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
-     1>main.cpp(298): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
-     1>main.cpp(264): warning C4100: 'win' : unreferenced formal parameter
-     1>main.cpp(264): warning C4100: 'wid' : unreferenced formal parameter
-     1>main.cpp(305): warning C4100: 'win' : unreferenced formal parameter
-     1>main.cpp(305): warning C4100: 'wid' : unreferenced formal parameter
-     1>main.cpp(316): warning C4100: 'win' : unreferenced formal parameter
-     1>main.cpp(316): warning C4100: 'wid' : unreferenced formal parameter
-     1>main.cpp(329): warning C4267: 'initializing' : conversion from 'size_t' to 'int', possible loss of data
-     1>main.cpp(330): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
-     1>main.cpp(334): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
-     1>main.cpp(324): warning C4100: 'win' : unreferenced formal parameter
-     1>main.cpp(324): warning C4100: 'wid' : unreferenced formal parameter
-     1>main.cpp(411): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
-     1>main.cpp(425): warning C4267: 'argument' : conversion from 'size_t' to 'unsigned int', possible loss of data
-     1>main.cpp(442): warning C4127: conditional expression is constant
-     1>main.cpp(388): warning C4189: 'about1' : local variable is initialized but not referenced
-     1>main.cpp(389): warning C4189: 'about2' : local variable is initialized but not referenced
-     1>main.cpp(390): warning C4189: 'about3' : local variable is initialized but not referenced
-     1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(1186,5): warning MSB8012: TargetPath(E:\Xeneva Project\Aurora\x64\Debug\Files.exe) does not match the Linker's OutputFile property value (F:\file.exe). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
-     1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(1188,5): warning MSB8012: TargetName(Files) does not match the Linker's OutputFile property value (file). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
-       Link:
-         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\link.exe /ERRORREPORT:PROMPT /OUT:"F:\file.exe" /INCREMENTAL /NOLOGO /LIBPATH:"E:\Xeneva Project\Aurora\x64\Debug" /LIBPATH:"E:\Xeneva Project\Aurora\Libs\XECrt" XEClib.lib xecrt.lib Chitralekha.lib ftype.lib /NODEFAULTLIB /MANIFEST:NO /PDB:"E:\Xeneva Project\Aurora\x64\Debug\Files.pdb" /MAP /MAPINFO:EXPORTS /SUBSYSTEM:NATIVE /LARGEADDRESSAWARE /Driver /OPT:NOREF /LTCG /TLBID:1 /ENTRY:"_xemain" /BASE:"0x0000000000600000" /FIXED:NO /IMPLIB:"E:\Xeneva Project\Aurora\x64\Debug\Files.lib" /MACHINE:X64 /ALIGN:512 x64\Debug\main.obj
-     1>LINK : warning LNK4075: ignoring '/INCREMENTAL' due to '/LTCG' specification
-         LINK : /LTCG specified but no code generation required; remove /LTCG from the link command line to improve linker performance
-         Files.vcxproj -> E:\Xeneva Project\Aurora\x64\Debug\Files.exe
-     1>Done Building Project "E:\Xeneva Project\Aurora\Process\Files\Files.vcxproj" (Rebuild target(s)).
-
-Build succeeded.
-
-Time Elapsed 00:00:00.56
+﻿cl : command line warning D9002: ignoring unknown option '/arch:SSE2'
+  main.cpp
+E:\Xeneva Project\Aurora\Process\Files\main.cpp(71,79): warning C4100: 'button': unreferenced formal parameter
+E:\Xeneva Project\Aurora\Process\Files\main.cpp(71,72): warning C4100: 'y': unreferenced formal parameter
+E:\Xeneva Project\Aurora\Process\Files\main.cpp(71,65): warning C4100: 'x': unreferenced formal parameter
+E:\Xeneva Project\Aurora\Process\Files\main.cpp(71,56): warning C4100: 'win': unreferenced formal parameter
+E:\Xeneva Project\Aurora\Process\Files\main.cpp(71,41): warning C4100: 'wid': unreferenced formal parameter
+E:\Xeneva Project\Aurora\Process\Files\main.cpp(90,53): warning C4100: 'win': unreferenced formal parameter
+E:\Xeneva Project\Aurora\Process\Files\main.cpp(90,38): warning C4100: 'wid': unreferenced formal parameter
+E:\Xeneva Project\Aurora\Process\Files\main.cpp(136,40): warning C4244: 'argument': conversion from 'int' to 'char', possible loss of data
+E:\Xeneva Project\Aurora\Process\Files\main.cpp(128,16): warning C4189: 'c': local variable is initialized but not referenced
+E:\Xeneva Project\Aurora\Process\Files\main.cpp(146,28): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+E:\Xeneva Project\Aurora\Process\Files\main.cpp(149,48): warning C4267: 'argument': conversion from 'size_t' to 'unsigned int', possible loss of data
+E:\Xeneva Project\Aurora\Process\Files\main.cpp(155,6): warning C4189: 'k': local variable is initialized but not referenced
+E:\Xeneva Project\Aurora\Process\Files\main.cpp(233,56): warning C4459: declaration of 'lv' hides global declaration
+E:\Xeneva Project\Aurora\Process\Files\main.cpp(57,13): message : see declaration of 'lv'
+E:\Xeneva Project\Aurora\Process\Files\main.cpp(234,24): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+E:\Xeneva Project\Aurora\Process\Files\main.cpp(235,58): warning C4267: 'argument': conversion from 'size_t' to 'unsigned int', possible loss of data
+E:\Xeneva Project\Aurora\Process\Files\main.cpp(239,42): warning C4267: 'argument': conversion from 'size_t' to 'unsigned int', possible loss of data
+E:\Xeneva Project\Aurora\Process\Files\main.cpp(265,24): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+E:\Xeneva Project\Aurora\Process\Files\main.cpp(266,44): warning C4267: 'argument': conversion from 'size_t' to 'unsigned int', possible loss of data
+E:\Xeneva Project\Aurora\Process\Files\main.cpp(298,38): warning C4267: 'argument': conversion from 'size_t' to 'unsigned int', possible loss of data
+E:\Xeneva Project\Aurora\Process\Files\main.cpp(264,46): warning C4100: 'win': unreferenced formal parameter
+E:\Xeneva Project\Aurora\Process\Files\main.cpp(264,31): warning C4100: 'wid': unreferenced formal parameter
+E:\Xeneva Project\Aurora\Process\Files\main.cpp(305,44): warning C4100: 'win': unreferenced formal parameter
+E:\Xeneva Project\Aurora\Process\Files\main.cpp(305,29): warning C4100: 'wid': unreferenced formal parameter
+E:\Xeneva Project\Aurora\Process\Files\main.cpp(316,47): warning C4100: 'win': unreferenced formal parameter
+E:\Xeneva Project\Aurora\Process\Files\main.cpp(316,32): warning C4100: 'wid': unreferenced formal parameter
+E:\Xeneva Project\Aurora\Process\Files\main.cpp(329,24): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+E:\Xeneva Project\Aurora\Process\Files\main.cpp(330,58): warning C4267: 'argument': conversion from 'size_t' to 'unsigned int', possible loss of data
+E:\Xeneva Project\Aurora\Process\Files\main.cpp(334,42): warning C4267: 'argument': conversion from 'size_t' to 'unsigned int', possible loss of data
+E:\Xeneva Project\Aurora\Process\Files\main.cpp(324,44): warning C4100: 'win': unreferenced formal parameter
+E:\Xeneva Project\Aurora\Process\Files\main.cpp(324,29): warning C4100: 'wid': unreferenced formal parameter
+E:\Xeneva Project\Aurora\Process\Files\main.cpp(408,34): warning C4267: 'argument': conversion from 'size_t' to 'unsigned int', possible loss of data
+E:\Xeneva Project\Aurora\Process\Files\main.cpp(422,37): warning C4267: 'argument': conversion from 'size_t' to 'unsigned int', possible loss of data
+E:\Xeneva Project\Aurora\Process\Files\main.cpp(389,14): warning C4189: 'about2': local variable is initialized but not referenced
+E:\Xeneva Project\Aurora\Process\Files\main.cpp(390,14): warning C4189: 'about3': local variable is initialized but not referenced
+E:\Xeneva Project\Aurora\Process\Files\main.cpp(438,9): warning C4189: 'progress': local variable is initialized but not referenced
+E:\Xeneva Project\Aurora\Process\Files\main.cpp(388,14): warning C4189: 'about1': local variable is initialized but not referenced
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(1363,5): warning MSB8012: TargetPath(E:\Xeneva Project\Aurora\x64\Debug\Files.exe) does not match the Linker's OutputFile property value (F:\file.exe). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(1365,5): warning MSB8012: TargetName(Files) does not match the Linker's OutputFile property value (file). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
+LINK : warning LNK4075: ignoring '/INCREMENTAL' due to '/LTCG' specification
+main.obj : warning LNK4075: ignoring '/EDITANDCONTINUE' due to '/DRIVER' specification
+  LINK : /LTCG specified but no code generation required; remove /LTCG from the link command line to improve linker performance
+LINK : warning LNK4281: undesirable base address 0x600000 for x64 image; set base address above 4GB for best ASLR optimization
+  Files.vcxproj -> E:\Xeneva Project\Aurora\x64\Debug\Files.exe

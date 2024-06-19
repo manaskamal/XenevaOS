@@ -58,19 +58,19 @@ pdata	ENDS
 ;	COMDAT pdata
 pdata	SEGMENT
 $pdata$?CreateMemMapping@@YAPEAXPEAX_KHHH1@Z DD imagerel $LN32
-	DD	imagerel $LN32+1151
+	DD	imagerel $LN32+1157
 	DD	imagerel $unwind$?CreateMemMapping@@YAPEAXPEAX_KHHH1@Z
 pdata	ENDS
 ;	COMDAT pdata
 pdata	SEGMENT
 $pdata$?MemMapDirty@@YAXPEAX_KHH@Z DD imagerel $LN13
-	DD	imagerel $LN13+388
+	DD	imagerel $LN13+390
 	DD	imagerel $unwind$?MemMapDirty@@YAXPEAX_KHH@Z
 pdata	ENDS
 ;	COMDAT pdata
 pdata	SEGMENT
 $pdata$?UnmapMemMapping@@YAXPEAX_K@Z DD imagerel $LN11
-	DD	imagerel $LN11+364
+	DD	imagerel $LN11+366
 	DD	imagerel $unwind$?UnmapMemMapping@@YAXPEAX_K@Z
 pdata	ENDS
 ;	COMDAT pdata
@@ -514,10 +514,10 @@ $LN4@UnmapMemMa:
 	cmp	rcx, rax
 	jae	$LN3@UnmapMemMa
 
-; 282  : 		AuVPage* page = AuVmmngrGetPage(addr + i * PAGE_SIZE, VIRT_GETPAGE_ONLY_RET, VIRT_GETPAGE_ONLY_RET);
+; 282  : 		AuVPage* page = AuVmmngrGetPage(addr + static_cast<int64_t>(i) * PAGE_SIZE, VIRT_GETPAGE_ONLY_RET, VIRT_GETPAGE_ONLY_RET);
 
-	imul	eax, DWORD PTR i$1[rbp], 4096		; 00001000H
-	cdqe
+	movsxd	rax, DWORD PTR i$1[rbp]
+	imul	rax, rax, 4096				; 00001000H
 	mov	rcx, QWORD PTR addr$[rbp]
 	add	rcx, rax
 	mov	rax, rcx
@@ -660,10 +660,10 @@ $LN4@MemMapDirt:
 	cmp	rcx, rax
 	jae	$LN3@MemMapDirt
 
-; 249  : 		AuVPage *page = AuVmmngrGetPage(startAddr + i * PAGE_SIZE, NULL, VIRT_GETPAGE_ONLY_RET);
+; 249  : 		AuVPage *page = AuVmmngrGetPage(startAddr + static_cast<int64_t>(i) * PAGE_SIZE, NULL, VIRT_GETPAGE_ONLY_RET);
 
-	imul	eax, DWORD PTR i$1[rbp], 4096		; 00001000H
-	cdqe
+	movsxd	rax, DWORD PTR i$1[rbp]
+	imul	rax, rax, 4096				; 00001000H
 	mov	rcx, QWORD PTR startAddr$[rbp]
 	add	rcx, rax
 	mov	rax, rcx
@@ -1124,10 +1124,10 @@ $LN4@CreateMemM:
 	test	eax, eax
 	je	SHORT $LN17@CreateMemM
 
-; 194  : 			phys = startingPhysAddr + i * PAGE_SIZE;
+; 194  : 			phys = startingPhysAddr + static_cast<int64_t>(i) * PAGE_SIZE;
 
-	imul	eax, DWORD PTR i$2[rbp], 4096		; 00001000H
-	cdqe
+	movsxd	rax, DWORD PTR i$2[rbp]
+	imul	rax, rax, 4096				; 00001000H
 	mov	rcx, QWORD PTR startingPhysAddr$[rbp]
 	add	rcx, rax
 	mov	rax, rcx
@@ -1181,10 +1181,10 @@ $LN19@CreateMemM:
 $LN20@CreateMemM:
 
 ; 204  : 		}
-; 205  : 		AuMapPage(phys, lookup_addr + i * PAGE_SIZE, X86_64_PAGING_USER);
+; 205  : 		AuMapPage(phys, lookup_addr + static_cast<int64_t>(i) * PAGE_SIZE, X86_64_PAGING_USER);
 
-	imul	eax, DWORD PTR i$2[rbp], 4096		; 00001000H
-	cdqe
+	movsxd	rax, DWORD PTR i$2[rbp]
+	imul	rax, rax, 4096				; 00001000H
 	mov	rcx, QWORD PTR lookup_addr$[rbp]
 	add	rcx, rax
 	mov	rax, rcx
@@ -1193,10 +1193,10 @@ $LN20@CreateMemM:
 	mov	rcx, QWORD PTR phys$3[rbp]
 	call	AuMapPage
 
-; 206  : 		AuVPage *page = AuVmmngrGetPage(lookup_addr + i * PAGE_SIZE, NULL, VIRT_GETPAGE_ONLY_RET);
+; 206  : 		AuVPage *page = AuVmmngrGetPage(lookup_addr + static_cast<int64_t>(i) * PAGE_SIZE, NULL, VIRT_GETPAGE_ONLY_RET);
 
-	imul	eax, DWORD PTR i$2[rbp], 4096		; 00001000H
-	cdqe
+	movsxd	rax, DWORD PTR i$2[rbp]
+	imul	rax, rax, 4096				; 00001000H
 	mov	rcx, QWORD PTR lookup_addr$[rbp]
 	add	rcx, rax
 	mov	rax, rcx

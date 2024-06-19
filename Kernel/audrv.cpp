@@ -119,7 +119,7 @@ search:
 		num[i] = p[i];
 		fbuf++;
 	}
-	num[i] = 0;
+	
 	venid = atoi(num);
 
 	/* Now search for device id / product id */
@@ -131,7 +131,7 @@ search:
 			break;
 		num[i] = p[i];
 	}
-	num[i] = 0;
+	
 	devid = atoi(num);
 
 
@@ -220,7 +220,7 @@ void AuDriverLoad(char* filename, AuDriver *driver) {
 		uint64_t* block = (uint64_t*)AuPmmngrAlloc();
 		memset(block, 0, 4096);
 		AuVFSNodeReadBlock(fsys,file, block);
-		AuMapPage((uint64_t)block, (driver_load_base + next_base_offset * 4096), 0);
+		AuMapPage((uint64_t)block, (driver_load_base + static_cast<uint64_t>(next_base_offset) * 4096), 0);
 		next_base_offset++;
 	}
 
@@ -242,7 +242,7 @@ void AuDriverLoad(char* filename, AuDriver *driver) {
 	driver->base = AU_DRIVER_BASE_START;
 	driver->end = driver->base + file->size;
 	driver->present = true;
-	driver_load_base = driver_load_base + next_base_offset * 4096;
+	driver_load_base = driver_load_base + static_cast<uint64_t>(next_base_offset) * 4096;
 
 	kfree(file);
 }

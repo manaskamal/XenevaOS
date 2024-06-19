@@ -231,7 +231,7 @@ void RefreshFileView(int dirfd, ChListView *lview) {
 }
 
 void DirListItemAction(ChListView* lv, ChListItem* li) {
-	int len = strlen(path) - 1;
+	int len = strlen(path);
 	char *dirname = (char*)malloc(strlen(li->itemText) + len);
 	strcpy(dirname, path);
 	strcpy(dirname + len, li->itemText);
@@ -239,7 +239,7 @@ void DirListItemAction(ChListView* lv, ChListItem* li) {
 	path = (char*)malloc(strlen(dirname) + 1);
 	strcpy(path, dirname);
 
-	strcpy(path + (strlen(dirname) - 1), "/");
+	strcpy(path + strlen(dirname), "/");
 	ChListViewClear(lv);
 
 	PrintParentDir(path);
@@ -279,7 +279,7 @@ void BackbutClicked(ChWidget* wid, ChWindow* win) {
 	/* if subpath is 0, then simply open up the 
 	 * root folder
 	 */
-	if ((strlen(subpath) - 1) <= 0)
+	if (strlen(subpath) <= 0)
 		strcpy(subpath, "/");
 
 	ChListViewClear(lv);
@@ -326,7 +326,7 @@ void EnterClicked(ChWidget* wid, ChWindow* win) {
 	if (li == NULL)
 		return;
 	_KePrint("Entered item -> %s \r\n", li->itemText);
-	int len = strlen(path) - 1;
+	int len = strlen(path);
 	char *dirname = (char*)malloc(strlen(li->itemText) + len);
 	strcpy(dirname, path);
 	strcpy(dirname + len, li->itemText);
@@ -334,7 +334,7 @@ void EnterClicked(ChWidget* wid, ChWindow* win) {
 	path = (char*)malloc(strlen(dirname) + 1);
 	strcpy(path, dirname);
 
-	strcpy(path + (strlen(dirname) - 1), "/");
+	strcpy(path + strlen(dirname), "/");
 	ChListViewClear(lv);
 
 	/* bug : needs to sleep inorder to get
@@ -397,13 +397,10 @@ int main(int argc, char* argv[]){
 	ChListViewSetScrollpane(lv, sp);
 
 
-	ChProgressBar *pb = ChCreateProgressBar(mainWin->info->width / 2 - 300 / 2, mainWin->info->width / 2 - 50 / 2, 300, 50,0);
-	ChProgressBarSetMax(pb, 350);
-
 	ChWindowAddWidget(mainWin, (ChWidget*)mb);
-	/*ChWindowAddWidget(mainWin, (ChWidget*)lv);
-	ChWindowAddWidget(mainWin, (ChWidget*)sp);*/
-	ChWindowAddWidget(mainWin, (ChWidget*)pb);
+	ChWindowAddWidget(mainWin, (ChWidget*)lv);
+	ChWindowAddWidget(mainWin, (ChWidget*)sp);
+
 	
 
 	int dirfd = _KeOpenDir("/");
@@ -419,7 +416,7 @@ int main(int argc, char* argv[]){
 	ChIconOpen(docico, "/icons/doc.bmp");
 	ChIconRead(docico);
 	
-	//RefreshFileView(dirfd, lv);
+	RefreshFileView(dirfd, lv);
 
 	/* first store the root address */
 	history = (char*)malloc(strlen("/"));
@@ -440,12 +437,9 @@ int main(int argc, char* argv[]){
 	setjmp(mainWin->jump);
 	double progress = 0;
 	while (1) {
-		/*int err = _KeFileIoControl(app->postboxfd, POSTBOX_GET_EVENT, &e);
+		int err = _KeFileIoControl(app->postboxfd, POSTBOX_GET_EVENT, &e);
 		WindowHandleMessage(&e);
 		if (err == POSTBOX_NO_EVENT)
-			_KePauseThread();*/
-		ChProgressBarSetValue(pb, mainWin, progress);
-		_KeProcessSleep(5000);
-		progress += 1;
+			_KePauseThread();
 	}
 }

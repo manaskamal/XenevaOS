@@ -191,7 +191,7 @@ void* CreateMemMapping(void* address, size_t len, int prot, int flags, int fd,
 	for (int i = 0; i < len / PAGE_SIZE; i++) {
 		uint64_t phys = 0;
 		if (startingPhysAddr && (flags & MEMMAP_FLAG_SHARED))
-			phys = startingPhysAddr + i * PAGE_SIZE;
+			phys = startingPhysAddr + static_cast<int64_t>(i) * PAGE_SIZE;
 		else
 			phys = (uint64_t)AuPmmngrAlloc();
 
@@ -202,8 +202,8 @@ void* CreateMemMapping(void* address, size_t len, int prot, int flags, int fd,
 			SeTextOut("mmap reading file \r\n");
 			AuVFSNodeReadBlock(fsys, file, (uint64_t*)phys);
 		}
-		AuMapPage(phys, lookup_addr + i * PAGE_SIZE, X86_64_PAGING_USER);
-		AuVPage *page = AuVmmngrGetPage(lookup_addr + i * PAGE_SIZE, NULL, VIRT_GETPAGE_ONLY_RET);
+		AuMapPage(phys, lookup_addr + static_cast<int64_t>(i) * PAGE_SIZE, X86_64_PAGING_USER);
+		AuVPage *page = AuVmmngrGetPage(lookup_addr + static_cast<int64_t>(i) * PAGE_SIZE, NULL, VIRT_GETPAGE_ONLY_RET);
 
 		/* check for  protection flag */
 		if (prot & PROTECTION_FLAG_READONLY)
@@ -246,7 +246,7 @@ void MemMapDirty(void* startingVaddr, size_t len, int flags, int prot) {
 	len = PAGE_ALIGN(len); //simply align the length
 	uint64_t startAddr = (uint64_t)startingVaddr;
 	for (int i = 0; i < len / PAGE_SIZE; i++) {
-		AuVPage *page = AuVmmngrGetPage(startAddr + i * PAGE_SIZE, NULL, VIRT_GETPAGE_ONLY_RET);
+		AuVPage *page = AuVmmngrGetPage(startAddr + static_cast<int64_t>(i) * PAGE_SIZE, NULL, VIRT_GETPAGE_ONLY_RET);
 
 		/* check for  protection flag */
 		if (prot & PROTECTION_FLAG_READONLY)
@@ -279,7 +279,7 @@ void UnmapMemMapping(void* address, size_t len) {
 	SeTextOut("Mem Unmap len aligned -> %d \r\n", len);
 	uint64_t addr = (uint64_t)address;
 	for (int i = 0; i < len / PAGE_SIZE; i++) {
-		AuVPage* page = AuVmmngrGetPage(addr + i * PAGE_SIZE, VIRT_GETPAGE_ONLY_RET, VIRT_GETPAGE_ONLY_RET);
+		AuVPage* page = AuVmmngrGetPage(addr + static_cast<int64_t>(i) * PAGE_SIZE, VIRT_GETPAGE_ONLY_RET, VIRT_GETPAGE_ONLY_RET);
 		if (page) {
 			uint64_t phys = page->bits.page << PAGE_SHIFT;
 			if (phys){

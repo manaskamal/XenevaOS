@@ -183,7 +183,7 @@ uint64_t* CreateUserStack(AuProcess *proc, uint64_t* cr3) {
 	
 	for (int i = 0; i < (PROCESS_USER_STACK_SZ / 4096); i++) {
 		uint64_t* blk = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
-		AuMapPageEx(cr3, V2P((size_t)blk), location + i * PAGE_SIZE, X86_64_PAGING_USER);
+		AuMapPageEx(cr3, V2P((size_t)blk), location + static_cast<uint64_t>(i) * PAGE_SIZE, X86_64_PAGING_USER);
 	}
 
 	proc->_user_stack_index_ += PROCESS_USER_STACK_SZ;
@@ -202,7 +202,7 @@ uint64_t CreateKernelStack(AuProcess* proc, uint64_t *cr3) {
 
 	for (int i = 0; i < 8192 / 4096; i++) {
 		void* p = AuPmmngrAlloc();
-		AuMapPageEx(cr3, (uint64_t)p, location + i * PAGE_SIZE, X86_64_PAGING_USER);
+		AuMapPageEx(cr3, (uint64_t)p, location + static_cast<uint64_t>(i) * PAGE_SIZE, X86_64_PAGING_USER);
 	}
 
 	proc->_kstack_index_ += 8192;
@@ -218,7 +218,7 @@ uint64_t CreateKernelStack(AuProcess* proc, uint64_t *cr3) {
 void KernelStackFree(AuProcess* proc,void* ptr, uint64_t *cr3) {
 	uint64_t location = (uint64_t)ptr;
 	for (int i = 0; i < 8192 / 4096; i++) {
-		AuVPage* page = AuVmmngrGetPage((location + (i * PAGE_SIZE)), VIRT_GETPAGE_ONLY_RET, VIRT_GETPAGE_ONLY_RET);
+		AuVPage* page = AuVmmngrGetPage((location + (static_cast<uint64_t>(i) * PAGE_SIZE)), VIRT_GETPAGE_ONLY_RET, VIRT_GETPAGE_ONLY_RET);
 		if (page) {
 			uint64_t phys = page->bits.page << PAGE_SHIFT;
 			if (phys) {
@@ -422,7 +422,7 @@ void AuProcessHeapMemDestroy(AuProcess* proc) {
 		proc->proc_heapmem_len++;
 
 	for (int i = 0; i < proc->proc_heapmem_len / 4096; i++) {
-		AuVPage* page = AuVmmngrGetPage(startaddr + i * PAGE_SIZE, VIRT_GETPAGE_ONLY_RET, VIRT_GETPAGE_ONLY_RET);
+		AuVPage* page = AuVmmngrGetPage(startaddr + static_cast<uint64_t>(i) * PAGE_SIZE, VIRT_GETPAGE_ONLY_RET, VIRT_GETPAGE_ONLY_RET);
 		if (page) {
 			uint64_t phys = page->bits.page << PAGE_SHIFT;
 			if (phys){

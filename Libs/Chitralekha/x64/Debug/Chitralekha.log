@@ -39,10 +39,6 @@ E:\Xeneva Project\Aurora\Libs\Chitralekha\font.cpp(184,29): warning C4018: '<': 
 E:\Xeneva Project\Aurora\Libs\Chitralekha\font.cpp(185,30): warning C4018: '<': signed/unsigned mismatch
 E:\Xeneva Project\Aurora\Libs\Chitralekha\font.cpp(186,28): warning C4018: '>=': signed/unsigned mismatch
 E:\Xeneva Project\Aurora\Libs\Chitralekha\font.cpp(186,54): warning C4018: '>=': signed/unsigned mismatch
-E:\Xeneva Project\Aurora\Libs\Chitralekha\font.cpp(226,19): warning C4267: 'return': conversion from 'size_t' to 'int', possible loss of data
-E:\Xeneva Project\Aurora\Libs\Chitralekha\font.cpp(250,19): warning C4267: 'return': conversion from 'size_t' to 'int', possible loss of data
-E:\Xeneva Project\Aurora\Libs\Chitralekha\font.cpp(276,20): warning C4267: 'return': conversion from 'size_t' to 'int', possible loss of data
-E:\Xeneva Project\Aurora\Libs\Chitralekha\font.cpp(300,15): warning C4267: 'return': conversion from 'size_t' to 'int', possible loss of data
 E:\Xeneva Project\Aurora\Libs\Chitralekha\font.cpp(319,12): warning C4018: '>=': signed/unsigned mismatch
 E:\Xeneva Project\Aurora\Libs\Chitralekha\font.cpp(319,43): warning C4018: '>=': signed/unsigned mismatch
 E:\Xeneva Project\Aurora\Libs\Chitralekha\font.cpp(368,28): warning C4018: '>': signed/unsigned mismatch
@@ -56,17 +52,23 @@ E:\Xeneva Project\Aurora\Libs\Chitralekha\ttf.cpp(306,46): warning C4244: 'argum
 E:\Xeneva Project\Aurora\Libs\Chitralekha\ttf.cpp(306,41): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
   base.cpp
   button.cpp
+E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\button.cpp(125,13): warning C4244: 'initializing': conversion from 'int64_t' to 'int', possible loss of data
 E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\button.cpp(146,44): warning C4267: 'argument': conversion from 'size_t' to 'unsigned int', possible loss of data
   defaultmenu.cpp
 E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\defaultmenu.cpp(50,20): warning C4018: '<': signed/unsigned mismatch
+E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\defaultmenu.cpp(52,15): warning C4244: 'initializing': conversion from 'int64_t' to 'int', possible loss of data
+E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\defaultmenu.cpp(53,15): warning C4244: 'initializing': conversion from 'int64_t' to 'int', possible loss of data
 E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\defaultmenu.cpp(79,20): warning C4018: '<': signed/unsigned mismatch
   defaultprogressbar.cpp
 E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\defaultprogressbar.cpp(49,31): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\defaultprogressbar.cpp(51,15): warning C4244: 'initializing': conversion from 'int64_t' to 'int', possible loss of data
   defaultscrollbar.cpp
   defaultslider.cpp
   defaultviews.cpp
 E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\defaultviews.cpp(61,40): warning C4018: '<': signed/unsigned mismatch
   defaultwindow.cpp
+E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\defaultwindow.cpp(111,17): warning C4244: 'initializing': conversion from 'int64_t' to 'int', possible loss of data
+E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\defaultwindow.cpp(112,18): warning C4244: 'initializing': conversion from 'int64_t' to 'int', possible loss of data
 E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\defaultwindow.cpp(116,20): warning C4018: '<': signed/unsigned mismatch
 E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\defaultwindow.cpp(129,20): warning C4018: '<': signed/unsigned mismatch
   icon.cpp
@@ -85,6 +87,7 @@ E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\menu.cpp(47,20): warning C4018
 E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\menu.cpp(108,20): warning C4018: '<': signed/unsigned mismatch
 E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\menu.cpp(153,41): warning C4267: 'argument': conversion from 'size_t' to 'unsigned int', possible loss of data
 E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\menu.cpp(169,20): warning C4018: '<': signed/unsigned mismatch
+E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\menu.cpp(171,15): warning C4244: 'initializing': conversion from 'int64_t' to 'int', possible loss of data
 E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\menu.cpp(191,20): warning C4018: '<': signed/unsigned mismatch
 E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\menu.cpp(229,20): warning C4018: '<': signed/unsigned mismatch
   menubar.cpp
@@ -95,7 +98,10 @@ E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\menubar.cpp(129,24): warning C
 E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\menubar.cpp(199,31): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
 E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\menubar.cpp(209,43): warning C4267: 'argument': conversion from 'size_t' to 'unsigned int', possible loss of data
   msgbox.cpp
+E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\msgbox.cpp(55,11): warning C4244: 'initializing': conversion from 'int64_t' to 'int', possible loss of data
+E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\msgbox.cpp(56,11): warning C4244: 'initializing': conversion from 'int64_t' to 'int', possible loss of data
 E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\msgbox.cpp(126,45): warning C4267: 'argument': conversion from 'size_t' to 'unsigned int', possible loss of data
+E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\msgbox.cpp(139,18): warning C4244: 'initializing': conversion from 'int64_t' to 'int', possible loss of data
 E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\msgbox.cpp(151,20): warning C4018: '<': signed/unsigned mismatch
   Generating Code...
 E:\Xeneva Project\Aurora\Libs\Chitralekha\ttf.cpp(194): warning C4700: uninitialized local variable 'glyph' used
@@ -115,7 +121,7 @@ E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\view.cpp(59,84): warning C4244
 E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\view.cpp(73,21): warning C4018: '<': signed/unsigned mismatch
 E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\view.cpp(98,23): warning C4244: 'initializing': conversion from 'double' to 'uint32_t', possible loss of data
 E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\view.cpp(128,20): warning C4018: '<': signed/unsigned mismatch
-E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\view.cpp(190,51): warning C4267: 'argument': conversion from 'size_t' to 'unsigned int', possible loss of data
+E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\view.cpp(190,47): warning C4267: 'argument': conversion from 'size_t' to 'unsigned int', possible loss of data
 E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\view.cpp(194,20): warning C4018: '<': signed/unsigned mismatch
 E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\view.cpp(241,20): warning C4018: '<': signed/unsigned mismatch
   window.cpp

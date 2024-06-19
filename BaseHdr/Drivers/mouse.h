@@ -40,7 +40,7 @@
 #pragma pack(push,1)
 typedef struct __ps2mouse__ {
 	uint8_t mouse_cycle;
-	uint8_t mouse_byte[4];
+	uint8_t mouse_byte[5];
 	int32_t mouse_x;
 	int32_t mouse_y;
 	int32_t mouse_x_diff;

@@ -46,13 +46,13 @@ pdata	ENDS
 ;	COMDAT pdata
 pdata	SEGMENT
 $pdata$?FreeUserStack@@YAXPEA_KPEAX@Z DD imagerel $LN7
-	DD	imagerel $LN7+131
+	DD	imagerel $LN7+133
 	DD	imagerel $unwind$?FreeUserStack@@YAXPEA_KPEAX@Z
 pdata	ENDS
 ;	COMDAT pdata
 pdata	SEGMENT
 $pdata$?FreeImage@@YAXPEAU_au_proc_@@@Z DD imagerel $LN7
-	DD	imagerel $LN7+210
+	DD	imagerel $LN7+211
 	DD	imagerel $unwind$?FreeImage@@YAXPEAU_au_proc_@@@Z
 pdata	ENDS
 ;	COMDAT pdata
@@ -323,10 +323,10 @@ $LN4@FreeImage:
 	cmp	rcx, rax
 	jae	SHORT $LN3@FreeImage
 
-; 67   : 		void* phys = AuGetPhysicalAddressEx(proc->cr3, proc->_image_base_ + i * 4096);
+; 67   : 		void* phys = AuGetPhysicalAddressEx(proc->cr3, proc->_image_base_ + static_cast<uint64_t>(i) * 4096);
 
-	imul	eax, DWORD PTR i$1[rbp], 4096		; 00001000H
-	mov	eax, eax
+	mov	eax, DWORD PTR i$1[rbp]
+	imul	rax, rax, 4096				; 00001000H
 	mov	rcx, QWORD PTR proc$[rbp]
 	add	rax, QWORD PTR [rcx+40]
 	mov	rdx, rax
@@ -420,10 +420,10 @@ $LN4@FreeUserSt:
 	cmp	DWORD PTR i$1[rbp], 128			; 00000080H
 	jge	SHORT $LN3@FreeUserSt
 
-; 52   : 		void* addr = AuGetPhysicalAddressEx(cr3, + i * 4096);
+; 52   : 		void* addr = AuGetPhysicalAddressEx(cr3, + static_cast<uint64_t>(i) * 4096);
 
-	imul	eax, DWORD PTR i$1[rbp], 4096		; 00001000H
-	cdqe
+	movsxd	rax, DWORD PTR i$1[rbp]
+	imul	rax, rax, 4096				; 00001000H
 	mov	rdx, rax
 	mov	rcx, QWORD PTR cr3$[rbp]
 	call	AuGetPhysicalAddressEx

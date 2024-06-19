@@ -49,7 +49,7 @@ void FreeUserStack(uint64_t* cr3, void* ptr) {
 	uint64_t location = (uint64_t)ptr;
 
 	for (int i = 0; i < PROCESS_USER_STACK_SZ / 4096; i++) {
-		void* addr = AuGetPhysicalAddressEx(cr3, + i * 4096);
+		void* addr = AuGetPhysicalAddressEx(cr3, + static_cast<uint64_t>(i) * 4096);
 		uint64_t physaddr = (uint64_t)V2P((uint64_t)addr);
 		if (physaddr != 0)
 			AuPmmngrFree((void*)physaddr);
@@ -64,7 +64,7 @@ void FreeUserStack(uint64_t* cr3, void* ptr) {
 void FreeImage(AuProcess* proc) {
 	/* Unmap the process image */
 	for (uint32_t i = 0; i < proc->_image_size_ / 4096 + 1; i++) {
-		void* phys = AuGetPhysicalAddressEx(proc->cr3, proc->_image_base_ + i * 4096);
+		void* phys = AuGetPhysicalAddressEx(proc->cr3, proc->_image_base_ + static_cast<uint64_t>(i) * 4096);
 		uint64_t physical_address = (uint64_t)V2P((uint64_t)phys);
 		if (physical_address != 0)
 			AuPmmngrFree((void*)physical_address);

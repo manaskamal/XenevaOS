@@ -69,7 +69,7 @@ void ChListViewMouseEvent(ChWidget* widget, ChWindow* win, int x, int y, int but
 		}
 	}
 
-	if (button && ((button != DEODHAI_MOUSE_MSG_SCROLL_UP) || (button != DEODHAI_MOUSE_MSG_SCROLL_DOWN))){
+	if (button && ((button != DEODHAI_MOUSE_MSG_SCROLL_UP) && (button != DEODHAI_MOUSE_MSG_SCROLL_DOWN))){
 		for (int i = 0; i < lv->itemList->pointer; i++) {
 			ChListItem *li = (ChListItem*)list_get_at(lv->itemList, i);
 			li->selected = false;
@@ -187,7 +187,7 @@ void ChListViewSetScrollpane(ChListView* view, ChScrollPane *pane){
 ChListItem* ChListViewAddItem(ChWindow* win, ChListView* lv, char* itemText) {
 	ChListItem* li = (ChListItem*)malloc(sizeof(ChListItem));
 	memset(li, 0, sizeof(ChListItem));
-	li->itemText = (char*)malloc(strlen(itemText - 1));
+	li->itemText = (char*)malloc(strlen(itemText));
 	strcpy(li->itemText, itemText);
 	int xpos = 0;
 	int ypos = 0;

@@ -92,10 +92,11 @@ void WindowShadowFillColor(Window* win,int shadow_w,int x, int y, int w, int h, 
 Window* CreateWindow(int x, int y, int w, int h, uint8_t flags, uint16_t ownerId, char* title) {
 	uint16_t shKey = 0;
 	uint16_t backBufferKey = 0;
+	int64_t w_ = w, h_ = h, x_ = x, y_ = y;
 	Window* win = (Window*)malloc(sizeof(Window));
 	memset(win, 0, sizeof(Window));
 	win->flags = flags;
-	win->backBuffer = (uint32_t*)CreateNewBackBuffer(ownerId, ((w*h * 4 + 0x1F) & (~0x1FULL)), &backBufferKey);
+	win->backBuffer = (uint32_t*)CreateNewBackBuffer(ownerId, ((w_*h_ * 4 + 0x1F) & (~0x1FULL)), &backBufferKey);
 	win->ownerId = ownerId;
 	win->backBufferKey = backBufferKey;
 	win->sharedInfo = CreateSharedWinSpace(&shKey, ownerId);
@@ -113,9 +114,10 @@ Window* CreateWindow(int x, int y, int w, int h, uint8_t flags, uint16_t ownerId
 	shwin->dirty = false;
 	win->handle = DeodhaiAllocateNewHandle();
 	win->popupList = initialize_list();
-	
+#ifdef SHADOW_ENABLED	
 	if (!(win->flags & WINDOW_FLAG_ALWAYS_ON_TOP)){
-		win->shadowBuffers = (uint32_t*)_KeMemMap(NULL, (((shwin->width + SHADOW_SIZE * 2) * (shwin->height + SHADOW_SIZE * 2) * 4 + 0x1F) & (~0x1FULL)),
+
+		win->shadowBuffers = (uint32_t*)_KeMemMap(NULL, (((w_ + SHADOW_SIZE * 2) * (h_ + SHADOW_SIZE * 2) * 4 + 0x1F) & (~0x1FULL)),
 			0, 0, MEMMAP_NO_FILEDESC, 0);
 		for (int i = 0; i < shwin->width + SHADOW_SIZE * 2; i++) {
 			for (int j = 0; j < shwin->height + SHADOW_SIZE * 2; j++) {
@@ -129,7 +131,7 @@ Window* CreateWindow(int x, int y, int w, int h, uint8_t flags, uint16_t ownerId
 		for (int i = 0; i < 10; i++)
 			ChBoxBlur(DeodhaiGetMainCanvas(), win->shadowBuffers, win->shadowBuffers, 1, 1, (shwin->width + SHADOW_SIZE * 2) - 1, (shwin->height + SHADOW_SIZE * 2) - 2);
 	}
-	
+#endif
 	return win;
 }
 

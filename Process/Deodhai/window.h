@@ -44,8 +44,13 @@
 #define WINDOW_FLAG_MESSAGEBOX (1<<7)
 #define WINDOW_FLAG_DIALOGBOX (1<<8)
 
+#ifdef SHADOW_ENABLED
 #define SHADOW_SIZE 11
 #define SHADOW_COLOR 0xFF827474
+#else
+#define SHADOW_SIZE 0 //11
+#define SHADOW_COLOR 0
+#endif
 
 #pragma pack(push,1)
 typedef struct _win_info_ {

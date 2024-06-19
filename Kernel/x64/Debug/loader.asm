@@ -69,7 +69,7 @@ pdata	ENDS
 ;	COMDAT pdata
 pdata	SEGMENT
 $pdata$?AuLoadExecToProcess@@YAHPEAU_au_proc_@@PEADHPEAPEAD@Z DD imagerel $LN24
-	DD	imagerel $LN24+2032
+	DD	imagerel $LN24+2034
 	DD	imagerel $unwind$?AuLoadExecToProcess@@YAHPEAU_au_proc_@@PEADHPEAPEAD@Z
 pdata	ENDS
 ;	COMDAT pdata
@@ -1110,10 +1110,10 @@ $LN13@AuLoadExec:
 	mov	rcx, QWORD PTR fsys$[rbp]
 	call	AuVFSNodeReadBlock
 
-; 225  : 			AuMapPageEx(cr3, V2P((size_t)block), sect_ld_addr + j * PAGE_SIZE, X86_64_PAGING_USER);
+; 225  : 			AuMapPageEx(cr3, V2P((size_t)block), sect_ld_addr + static_cast<uint64_t>(j) * PAGE_SIZE, X86_64_PAGING_USER);
 
-	imul	eax, DWORD PTR j$13[rbp], 4096		; 00001000H
-	cdqe
+	movsxd	rax, DWORD PTR j$13[rbp]
+	imul	rax, rax, 4096				; 00001000H
 	mov	rcx, QWORD PTR sect_ld_addr$10[rbp]
 	add	rcx, rax
 	mov	rax, rcx

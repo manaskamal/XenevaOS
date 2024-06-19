@@ -98,7 +98,7 @@ pdata	ENDS
 ;	COMDAT pdata
 pdata	SEGMENT
 $pdata$?AuGetConfEntry@@YAPEADIIPEAEH@Z DD imagerel $LN21
-	DD	imagerel $LN21+559
+	DD	imagerel $LN21+541
 	DD	imagerel $unwind$?AuGetConfEntry@@YAPEADIIPEAEH@Z
 pdata	ENDS
 ;	COMDAT pdata
@@ -116,7 +116,7 @@ pdata	ENDS
 ;	COMDAT pdata
 pdata	SEGMENT
 $pdata$?AuDriverLoad@@YAXPEADPEAU_aurora_driver_@@@Z DD imagerel $LN5
-	DD	imagerel $LN5+544
+	DD	imagerel $LN5+548
 	DD	imagerel $unwind$?AuDriverLoad@@YAXPEADPEAU_aurora_driver_@@@Z
 pdata	ENDS
 ;	COMDAT pdata
@@ -371,10 +371,10 @@ $LN2@AuDriverLo:
 	mov	rcx, QWORD PTR fsys$[rbp]
 	call	AuVFSNodeReadBlock
 
-; 223  : 		AuMapPage((uint64_t)block, (driver_load_base + next_base_offset * 4096), 0);
+; 223  : 		AuMapPage((uint64_t)block, (driver_load_base + static_cast<uint64_t>(next_base_offset) * 4096), 0);
 
-	imul	eax, DWORD PTR next_base_offset$[rbp], 4096 ; 00001000H
-	cdqe
+	movsxd	rax, DWORD PTR next_base_offset$[rbp]
+	imul	rax, rax, 4096				; 00001000H
 	mov	rcx, QWORD PTR ?driver_load_base@@3_KA
 	add	rcx, rax
 	mov	rax, rcx
@@ -494,10 +494,10 @@ $LN3@AuDriverLo:
 	mov	rax, QWORD PTR driver$[rbp]
 	mov	BYTE PTR [rax+34], 1
 
-; 245  : 	driver_load_base = driver_load_base + next_base_offset * 4096;
+; 245  : 	driver_load_base = driver_load_base + static_cast<uint64_t>(next_base_offset) * 4096;
 
-	imul	eax, DWORD PTR next_base_offset$[rbp], 4096 ; 00001000H
-	cdqe
+	movsxd	rax, DWORD PTR next_base_offset$[rbp]
+	imul	rax, rax, 4096				; 00001000H
 	mov	rcx, QWORD PTR ?driver_load_base@@3_KA
 	add	rcx, rax
 	mov	rax, rcx
@@ -937,11 +937,7 @@ $LN12@AuGetConfE:
 	jmp	SHORT $LN2@AuGetConfE
 $LN3@AuGetConfE:
 
-; 122  : 	num[i] = 0;
-
-	movsxd	rax, DWORD PTR i$[rbp]
-	mov	BYTE PTR num$[rbp+rax], 0
-
+; 122  : 	
 ; 123  : 	venid = atoi(num);
 
 	lea	rcx, QWORD PTR num$[rbp]
@@ -1013,11 +1009,7 @@ $LN15@AuGetConfE:
 	jmp	SHORT $LN5@AuGetConfE
 $LN6@AuGetConfE:
 
-; 134  : 	num[i] = 0;
-
-	movsxd	rax, DWORD PTR i$[rbp]
-	mov	BYTE PTR num$[rbp+rax], 0
-
+; 134  : 	
 ; 135  : 	devid = atoi(num);
 
 	lea	rcx, QWORD PTR num$[rbp]

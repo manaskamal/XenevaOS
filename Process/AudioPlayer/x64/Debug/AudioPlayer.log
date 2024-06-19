@@ -1,113 +1,78 @@
-﻿Build started 15-06-2024 আবেলি 8:16:09.
-     1>Project "E:\Xeneva Project\Aurora\Process\AudioPlayer\AudioPlayer.vcxproj" on node 2 (Rebuild target(s)).
-     1>ClCompile:
-         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /I"E:\Xeneva Project\Aurora\Libs\Chitralekha" /I"E:\os_dev\freetype2-master\freetype2-master\include" /Zi /nologo /W4 /WX- /sdl- /MP /Od /Oy /D ARCH_X64 /D YES_DYNAMIC /D DYNAMIC_IMPORTER /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt main.cpp minimp3.cpp
-     1>cl : Command line warning D9025: overriding '/sdl-' with '/GS-'
-     1>cl : Command line warning D9002: ignoring unknown option '/arch:SSE2'
-     1>cl : Command line warning D9030: '/Gm' is incompatible with multiprocessing; ignoring /MP switch
-         minimp3.cpp
-     1>minimp3.cpp(969): warning C4389: '==' : signed/unsigned mismatch
-     1>minimp3.cpp(977): warning C4244: '=' : conversion from 'int' to 'int16_t', possible loss of data
-     1>minimp3.cpp(978): warning C4244: '=' : conversion from 'int' to 'int16_t', possible loss of data
-     1>minimp3.cpp(988): warning C4244: '=' : conversion from 'int' to 'int16_t', possible loss of data
-     1>minimp3.cpp(998): warning C4244: '=' : conversion from 'int' to 'int16_t', possible loss of data
-     1>minimp3.cpp(1008): warning C4244: '=' : conversion from 'int' to 'int16_t', possible loss of data
-     1>minimp3.cpp(1170): warning C4244: '=' : conversion from 'int' to 'int16_t', possible loss of data
-     1>minimp3.cpp(1184): warning C4244: '=' : conversion from 'int' to 'int16_t', possible loss of data
-     1>minimp3.cpp(1226): warning C4100: 's' : unreferenced formal parameter
-     1>minimp3.cpp(1678): warning C4244: '=' : conversion from '__int64' to 'int', possible loss of data
-     1>minimp3.cpp(1663): warning C4100: 's' : unreferenced formal parameter
-     1>minimp3.cpp(2039): warning C4244: '=' : conversion from 'int' to 'int16_t', possible loss of data
-     1>minimp3.cpp(2053): warning C4244: '=' : conversion from 'int' to 'int16_t', possible loss of data
-     1>minimp3.cpp(2066): warning C4244: '=' : conversion from 'int' to 'int16_t', possible loss of data
-     1>minimp3.cpp(2069): warning C4244: '=' : conversion from 'int' to 'int16_t', possible loss of data
-     1>minimp3.cpp(2077): warning C4244: '=' : conversion from 'int' to 'int16_t', possible loss of data
-     1>minimp3.cpp(2145): warning C4244: '=' : conversion from 'unsigned int' to 'uint8_t', possible loss of data
-     1>minimp3.cpp(2166): warning C4244: '=' : conversion from 'unsigned int' to 'uint8_t', possible loss of data
-     1>minimp3.cpp(2169): warning C4244: '=' : conversion from 'unsigned int' to 'uint8_t', possible loss of data
-     1>minimp3.cpp(2244): warning C4244: '=' : conversion from 'unsigned int' to 'uint8_t', possible loss of data
-     1>minimp3.cpp(2245): warning C4244: '=' : conversion from 'unsigned int' to 'uint8_t', possible loss of data
-     1>minimp3.cpp(2277): warning C4244: '=' : conversion from 'unsigned int' to 'uint8_t', possible loss of data
-     1>minimp3.cpp(2287): warning C4244: '=' : conversion from 'unsigned int' to 'uint8_t', possible loss of data
-     1>minimp3.cpp(2305): warning C4244: '=' : conversion from 'unsigned int' to 'uint8_t', possible loss of data
-     1>minimp3.cpp(2375): warning C4244: '=' : conversion from 'unsigned int' to 'uint8_t', possible loss of data
-     1>minimp3.cpp(2476): warning C4244: '=' : conversion from 'int' to 'int16_t', possible loss of data
-     1>minimp3.cpp(2480): warning C4244: '=' : conversion from 'int' to 'int16_t', possible loss of data
-     1>minimp3.cpp(2516): warning C4244: '=' : conversion from 'int' to 'uint16_t', possible loss of data
-     1>minimp3.cpp(2519): warning C4244: '=' : conversion from 'int' to 'uint16_t', possible loss of data
-     1>minimp3.cpp(2538): warning C4244: '=' : conversion from 'int' to 'int8_t', possible loss of data
-     1>minimp3.cpp(2543): warning C4244: '=' : conversion from 'double' to 'uint32_t', possible loss of data
-     1>minimp3.cpp(2545): warning C4244: '=' : conversion from 'double' to 'uint32_t', possible loss of data
-     1>minimp3.cpp(2552): warning C4244: '=' : conversion from 'double' to 'float', possible loss of data
-     1>minimp3.cpp(2562): warning C4244: '=' : conversion from 'double' to 'int32_t', possible loss of data
-     1>minimp3.cpp(2580): warning C4244: '=' : conversion from 'double' to 'float', possible loss of data
-     1>minimp3.cpp(2464): warning C4100: 's' : unreferenced formal parameter
-         main.cpp
-     1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(302): warning C4127: conditional expression is constant
-     1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(304): warning C4127: conditional expression is constant
-     1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(317): warning C4127: conditional expression is constant
-     1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(318): warning C4127: conditional expression is constant
-     1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(328): warning C4127: conditional expression is constant
-     1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(330): warning C4127: conditional expression is constant
-     1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(333): warning C4127: conditional expression is constant
-     1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(334): warning C4127: conditional expression is constant
-     1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(335): warning C4127: conditional expression is constant
-     1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(336): warning C4127: conditional expression is constant
-     1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(337): warning C4127: conditional expression is constant
-     1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(352): warning C4127: conditional expression is constant
-     1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(353): warning C4127: conditional expression is constant
-     1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(357): warning C4127: conditional expression is constant
-     1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(369): warning C4127: conditional expression is constant
-     1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(370): warning C4127: conditional expression is constant
-     1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(381): warning C4127: conditional expression is constant
-     1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(383): warning C4127: conditional expression is constant
-     1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(399): warning C4127: conditional expression is constant
-     1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(408): warning C4127: conditional expression is constant
-     1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(415): warning C4127: conditional expression is constant
-     1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(420): warning C4127: conditional expression is constant
-     1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(449): warning C4127: conditional expression is constant
-     1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(451): warning C4127: conditional expression is constant
-     1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(465): warning C4127: conditional expression is constant
-     1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(466): warning C4127: conditional expression is constant
-     1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(469): warning C4127: conditional expression is constant
-     1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(470): warning C4127: conditional expression is constant
-     1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(475): warning C4127: conditional expression is constant
-     1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(489): warning C4127: conditional expression is constant
-     1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(523): warning C4127: conditional expression is constant
-     1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(551): warning C4127: conditional expression is constant
-     1>E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(585): warning C4127: conditional expression is constant
-     1>main.cpp(102): warning C4127: conditional expression is constant
-     1>main.cpp(155): warning C4244: 'argument' : conversion from 'int' to 'char', possible loss of data
-     1>main.cpp(147): warning C4189: 'code' : local variable is initialized but not referenced
-     1>main.cpp(162): warning C4100: 'win' : unreferenced formal parameter
-     1>main.cpp(162): warning C4100: 'wid' : unreferenced formal parameter
-     1>main.cpp(172): warning C4100: 'win' : unreferenced formal parameter
-     1>main.cpp(172): warning C4100: 'wid' : unreferenced formal parameter
-     1>main.cpp(190): warning C4267: 'argument' : conversion from 'size_t' to 'uint32_t', possible loss of data
-     1>main.cpp(229): warning C4100: 'win' : unreferenced formal parameter
-     1>main.cpp(229): warning C4100: 'wid' : unreferenced formal parameter
-     1>main.cpp(248): warning C4100: 'win' : unreferenced formal parameter
-     1>main.cpp(248): warning C4100: 'wid' : unreferenced formal parameter
-     1>main.cpp(263): warning C4127: conditional expression is constant
-     1>main.cpp(278): warning C4100: 'mainWin' : unreferenced formal parameter
-     1>main.cpp(278): warning C4100: 'wid' : unreferenced formal parameter
-     1>main.cpp(324): warning C4018: '<' : signed/unsigned mismatch
-     1>main.cpp(408): warning C4127: conditional expression is constant
-     1>main.cpp(400): warning C4189: 'threadIdx' : local variable is initialized but not referenced
-         Generating Code...
-     1>e:\xeneva project\aurora\libs\chitralekha\nanojpg.h(333): warning C4706: assignment within conditional expression
-     1>e:\xeneva project\aurora\libs\chitralekha\nanojpg.h(335): warning C4706: assignment within conditional expression
-     1>e:\xeneva project\aurora\libs\chitralekha\nanojpg.h(353): warning C4706: assignment within conditional expression
-     1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(1186,5): warning MSB8012: TargetPath(E:\Xeneva Project\Aurora\x64\Debug\AudioPlayer.exe) does not match the Linker's OutputFile property value (F:\audplr.exe). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
-     1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(1188,5): warning MSB8012: TargetName(AudioPlayer) does not match the Linker's OutputFile property value (audplr). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
-       Link:
-         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\link.exe /ERRORREPORT:PROMPT /OUT:"F:\audplr.exe" /INCREMENTAL /NOLOGO /LIBPATH:"E:\Xeneva Project\Aurora\x64\Debug" /LIBPATH:"E:\Xeneva Project\Aurora\Libs\XECrt" XEClib.lib xecrt.lib Chitralekha.lib ftype.lib /NODEFAULTLIB /MANIFEST:NO /PDB:"E:\Xeneva Project\Aurora\x64\Debug\AudioPlayer.pdb" /MAP /MAPINFO:EXPORTS /SUBSYSTEM:NATIVE /LARGEADDRESSAWARE /Driver /OPT:NOREF /LTCG /TLBID:1 /ENTRY:"_xemain" /BASE:"0x0000000000600000" /FIXED:NO /IMPLIB:"E:\Xeneva Project\Aurora\x64\Debug\AudioPlayer.lib" /MACHINE:X64 /ALIGN:512 x64\Debug\main.obj
-         x64\Debug\minimp3.obj
-     1>LINK : warning LNK4075: ignoring '/INCREMENTAL' due to '/LTCG' specification
-         LINK : /LTCG specified but no code generation required; remove /LTCG from the link command line to improve linker performance
-         AudioPlayer.vcxproj -> E:\Xeneva Project\Aurora\x64\Debug\AudioPlayer.exe
-     1>Done Building Project "E:\Xeneva Project\Aurora\Process\AudioPlayer\AudioPlayer.vcxproj" (Rebuild target(s)).
-
-Build succeeded.
-
-Time Elapsed 00:00:01.14
+﻿cl : command line warning D9002: ignoring unknown option '/arch:SSE2'
+cl : command line warning D9002: ignoring unknown option '/arch:SSE2'
+  main.cpp
+cl : command line warning D9002: ignoring unknown option '/arch:SSE2'
+  minimp3.cpp
+E:\Xeneva Project\Aurora\Process\AudioPlayer\main.cpp(155,40): warning C4244: 'argument': conversion from 'int' to 'char', possible loss of data
+E:\Xeneva Project\Aurora\Process\AudioPlayer\main.cpp(147,15): warning C4189: 'code': local variable is initialized but not referenced
+E:\Xeneva Project\Aurora\Process\AudioPlayer\main.cpp(162,44): warning C4100: 'win': unreferenced formal parameter
+E:\Xeneva Project\Aurora\Process\AudioPlayer\main.cpp(162,29): warning C4100: 'wid': unreferenced formal parameter
+E:\Xeneva Project\Aurora\Process\AudioPlayer\main.cpp(172,47): warning C4100: 'win': unreferenced formal parameter
+E:\Xeneva Project\Aurora\Process\AudioPlayer\main.cpp(172,32): warning C4100: 'wid': unreferenced formal parameter
+E:\Xeneva Project\Aurora\Process\AudioPlayer\main.cpp(190,100): warning C4267: 'argument': conversion from 'size_t' to 'uint32_t', possible loss of data
+E:\Xeneva Project\Aurora\Process\AudioPlayer\main.cpp(229,55): warning C4100: 'win': unreferenced formal parameter
+E:\Xeneva Project\Aurora\Process\AudioPlayer\main.cpp(229,40): warning C4100: 'wid': unreferenced formal parameter
+E:\Xeneva Project\Aurora\Process\AudioPlayer\main.cpp(248,57): warning C4100: 'win': unreferenced formal parameter
+E:\Xeneva Project\Aurora\Process\AudioPlayer\main.cpp(248,42): warning C4100: 'wid': unreferenced formal parameter
+E:\Xeneva Project\Aurora\Process\AudioPlayer\minimp3.cpp(969,29): warning C4389: '==': signed/unsigned mismatch
+E:\Xeneva Project\Aurora\Process\AudioPlayer\main.cpp(278,62): warning C4459: declaration of 'mainWin' hides global declaration
+E:\Xeneva Project\Aurora\Process\AudioPlayer\main.cpp(53,11): message : see declaration of 'mainWin'
+E:\Xeneva Project\Aurora\Process\AudioPlayer\minimp3.cpp(977,20): warning C4244: '=': conversion from 'int' to 'int16_t', possible loss of data
+E:\Xeneva Project\Aurora\Process\AudioPlayer\minimp3.cpp(978,20): warning C4244: '=': conversion from 'int' to 'int16_t', possible loss of data
+E:\Xeneva Project\Aurora\Process\AudioPlayer\main.cpp(278,53): warning C4100: 'mainWin': unreferenced formal parameter
+E:\Xeneva Project\Aurora\Process\AudioPlayer\minimp3.cpp(988,19): warning C4244: '=': conversion from 'int' to 'int16_t', possible loss of data
+E:\Xeneva Project\Aurora\Process\AudioPlayer\main.cpp(278,38): warning C4100: 'wid': unreferenced formal parameter
+E:\Xeneva Project\Aurora\Process\AudioPlayer\minimp3.cpp(998,19): warning C4244: '=': conversion from 'int' to 'int16_t', possible loss of data
+E:\Xeneva Project\Aurora\Process\AudioPlayer\minimp3.cpp(1008,18): warning C4244: '=': conversion from 'int' to 'int16_t', possible loss of data
+E:\Xeneva Project\Aurora\Process\AudioPlayer\main.cpp(324,20): warning C4018: '<': signed/unsigned mismatch
+E:\Xeneva Project\Aurora\Process\AudioPlayer\main.cpp(400,6): warning C4189: 'threadIdx': local variable is initialized but not referenced
+E:\Xeneva Project\Aurora\Process\AudioPlayer\minimp3.cpp(1170,18): warning C4244: '=': conversion from 'int' to 'int16_t', possible loss of data
+E:\Xeneva Project\Aurora\Process\AudioPlayer\minimp3.cpp(1184,20): warning C4244: '=': conversion from 'int' to 'int16_t', possible loss of data
+E:\Xeneva Project\Aurora\Process\AudioPlayer\minimp3.cpp(1226,47): warning C4100: 's': unreferenced formal parameter
+E:\Xeneva Project\Aurora\Process\AudioPlayer\minimp3.cpp(1517,15): warning C4456: declaration of 'pos' hides previous local declaration
+E:\Xeneva Project\Aurora\Process\AudioPlayer\minimp3.cpp(1493,8): message : see declaration of 'pos'
+E:\Xeneva Project\Aurora\Process\AudioPlayer\minimp3.cpp(1678,41): warning C4244: '=': conversion from '__int64' to 'int', possible loss of data
+E:\Xeneva Project\Aurora\Process\AudioPlayer\minimp3.cpp(1663,18): warning C4100: 's': unreferenced formal parameter
+E:\Xeneva Project\Aurora\Process\AudioPlayer\minimp3.cpp(2015,12): warning C4459: declaration of 'window' hides global declaration
+E:\Xeneva Project\Aurora\Process\AudioPlayer\minimp3.cpp(168,16): message : see declaration of 'window'
+E:\Xeneva Project\Aurora\Process\AudioPlayer\minimp3.cpp(2039,19): warning C4244: '=': conversion from 'int' to 'int16_t', possible loss of data
+E:\Xeneva Project\Aurora\Process\AudioPlayer\minimp3.cpp(2053,26): warning C4244: '=': conversion from 'int' to 'int16_t', possible loss of data
+E:\Xeneva Project\Aurora\Process\AudioPlayer\minimp3.cpp(2062,4): warning C4456: declaration of 'tmp' hides previous local declaration
+E:\Xeneva Project\Aurora\Process\AudioPlayer\minimp3.cpp(2019,11): message : see declaration of 'tmp'
+E:\Xeneva Project\Aurora\Process\AudioPlayer\minimp3.cpp(2064,4): warning C4456: declaration of 'tmp' hides previous local declaration
+E:\Xeneva Project\Aurora\Process\AudioPlayer\minimp3.cpp(2019,11): message : see declaration of 'tmp'
+E:\Xeneva Project\Aurora\Process\AudioPlayer\minimp3.cpp(2066,27): warning C4244: '=': conversion from 'int' to 'int16_t', possible loss of data
+E:\Xeneva Project\Aurora\Process\AudioPlayer\minimp3.cpp(2069,28): warning C4244: '=': conversion from 'int' to 'int16_t', possible loss of data
+E:\Xeneva Project\Aurora\Process\AudioPlayer\minimp3.cpp(2077,26): warning C4244: '=': conversion from 'int' to 'int16_t', possible loss of data
+E:\Xeneva Project\Aurora\Process\AudioPlayer\minimp3.cpp(2145,37): warning C4244: '=': conversion from 'unsigned int' to 'uint8_t', possible loss of data
+E:\Xeneva Project\Aurora\Process\AudioPlayer\minimp3.cpp(2166,30): warning C4244: '=': conversion from 'unsigned int' to 'uint8_t', possible loss of data
+E:\Xeneva Project\Aurora\Process\AudioPlayer\minimp3.cpp(2169,32): warning C4244: '=': conversion from 'unsigned int' to 'uint8_t', possible loss of data
+E:\Xeneva Project\Aurora\Process\AudioPlayer\minimp3.cpp(2244,33): warning C4244: '=': conversion from 'unsigned int' to 'uint8_t', possible loss of data
+E:\Xeneva Project\Aurora\Process\AudioPlayer\minimp3.cpp(2245,37): warning C4244: '=': conversion from 'unsigned int' to 'uint8_t', possible loss of data
+E:\Xeneva Project\Aurora\Process\AudioPlayer\minimp3.cpp(2277,41): warning C4244: '=': conversion from 'unsigned int' to 'uint8_t', possible loss of data
+E:\Xeneva Project\Aurora\Process\AudioPlayer\minimp3.cpp(2287,41): warning C4244: '=': conversion from 'unsigned int' to 'uint8_t', possible loss of data
+E:\Xeneva Project\Aurora\Process\AudioPlayer\minimp3.cpp(2305,43): warning C4244: '=': conversion from 'unsigned int' to 'uint8_t', possible loss of data
+E:\Xeneva Project\Aurora\Process\AudioPlayer\minimp3.cpp(2375,41): warning C4244: '=': conversion from 'unsigned int' to 'uint8_t', possible loss of data
+E:\Xeneva Project\Aurora\Process\AudioPlayer\minimp3.cpp(2476,17): warning C4244: '=': conversion from 'int' to 'int16_t', possible loss of data
+E:\Xeneva Project\Aurora\Process\AudioPlayer\minimp3.cpp(2480,24): warning C4244: '=': conversion from 'int' to 'int16_t', possible loss of data
+E:\Xeneva Project\Aurora\Process\AudioPlayer\minimp3.cpp(2516,30): warning C4244: '=': conversion from 'int' to 'uint16_t', possible loss of data
+E:\Xeneva Project\Aurora\Process\AudioPlayer\minimp3.cpp(2519,30): warning C4244: '=': conversion from 'int' to 'uint16_t', possible loss of data
+E:\Xeneva Project\Aurora\Process\AudioPlayer\minimp3.cpp(2538,24): warning C4244: '=': conversion from 'int' to 'int8_t', possible loss of data
+E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(333): warning C4706: assignment within conditional expression
+E:\Xeneva Project\Aurora\Process\AudioPlayer\minimp3.cpp(2543,38): warning C4244: '=': conversion from 'double' to 'uint32_t', possible loss of data
+E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(335): warning C4706: assignment within conditional expression
+E:\Xeneva Project\Aurora\Process\AudioPlayer\minimp3.cpp(2545,28): warning C4244: '=': conversion from 'double' to 'uint32_t', possible loss of data
+E:\Xeneva Project\Aurora\Libs\Chitralekha\nanojpg.h(353): warning C4706: assignment within conditional expression
+E:\Xeneva Project\Aurora\Process\AudioPlayer\minimp3.cpp(2552,13): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+E:\Xeneva Project\Aurora\Process\AudioPlayer\minimp3.cpp(2562,39): warning C4244: '=': conversion from 'double' to 'int32_t', possible loss of data
+E:\Xeneva Project\Aurora\Process\AudioPlayer\minimp3.cpp(2566,13): warning C4456: declaration of 'k' hides previous local declaration
+E:\Xeneva Project\Aurora\Process\AudioPlayer\minimp3.cpp(2466,13): message : see declaration of 'k'
+E:\Xeneva Project\Aurora\Process\AudioPlayer\minimp3.cpp(2580,14): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+E:\Xeneva Project\Aurora\Process\AudioPlayer\minimp3.cpp(2464,44): warning C4100: 's': unreferenced formal parameter
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(1363,5): warning MSB8012: TargetPath(E:\Xeneva Project\Aurora\x64\Debug\AudioPlayer.exe) does not match the Linker's OutputFile property value (F:\audplr.exe). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(1365,5): warning MSB8012: TargetName(AudioPlayer) does not match the Linker's OutputFile property value (audplr). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
+LINK : warning LNK4075: ignoring '/INCREMENTAL' due to '/LTCG' specification
+main.obj : warning LNK4075: ignoring '/EDITANDCONTINUE' due to '/DRIVER' specification
+  LINK : /LTCG specified but no code generation required; remove /LTCG from the link command line to improve linker performance
+LINK : warning LNK4281: undesirable base address 0x600000 for x64 image; set base address above 4GB for best ASLR optimization
+  AudioPlayer.vcxproj -> E:\Xeneva Project\Aurora\x64\Debug\AudioPlayer.exe

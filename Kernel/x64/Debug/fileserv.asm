@@ -70,8 +70,8 @@ $pdata$?ReadFile@@YA_KHPEAX_K@Z DD imagerel $LN17
 pdata	ENDS
 ;	COMDAT pdata
 pdata	SEGMENT
-$pdata$?WriteFile@@YA_KHPEAX_K@Z DD imagerel $LN17
-	DD	imagerel $LN17+517
+$pdata$?WriteFile@@YA_KHPEAX_K@Z DD imagerel $LN15
+	DD	imagerel $LN15+481
 	DD	imagerel $unwind$?WriteFile@@YA_KHPEAX_K@Z
 pdata	ENDS
 ;	COMDAT pdata
@@ -193,7 +193,7 @@ xdata	ENDS
 xdata	SEGMENT
 $unwind$?WriteFile@@YA_KHPEAX_K@Z DD 025041b01H
 	DD	0116231bH
-	DD	0500f0016H
+	DD	0500f0014H
 xdata	ENDS
 ;	COMDAT xdata
 xdata	SEGMENT
@@ -1367,20 +1367,19 @@ aligned_buffer$ = 24
 write_bytes$ = 32
 fsys$ = 48
 buff$1 = 56
-tv88 = 128
-fd$ = 160
-buffer$ = 168
-length$ = 176
+fd$ = 144
+buffer$ = 152
+length$ = 160
 ?WriteFile@@YA_KHPEAX_K@Z PROC				; WriteFile, COMDAT
 
 ; 174  : size_t WriteFile(int fd, void* buffer, size_t length) {
 
-$LN17:
+$LN15:
 	mov	QWORD PTR [rsp+24], r8
 	mov	QWORD PTR [rsp+16], rdx
 	mov	DWORD PTR [rsp+8], ecx
 	push	rbp
-	sub	rsp, 176				; 000000b0H
+	sub	rsp, 160				; 000000a0H
 	lea	rbp, QWORD PTR [rsp+32]
 	lea	rcx, OFFSET FLAT:__5DFC7571_fileserv@cpp
 	call	__CheckForDebuggerJustMyCode
@@ -1505,26 +1504,18 @@ $LN8@WriteFile:
 	mov	QWORD PTR fsys$[rbp], rax
 
 ; 200  : 
-; 201  : 	if (file->flags & FS_FLAG_GENERAL && (!file->flags & FS_FLAG_TTY)) {
+; 201  : 	if (file->flags & FS_FLAG_GENERAL && !(file->flags & FS_FLAG_TTY)) {
 
 	mov	rax, QWORD PTR file$[rbp]
 	movzx	eax, WORD PTR [rax+61]
 	and	eax, 4
 	test	eax, eax
-	je	$LN9@WriteFile
+	je	SHORT $LN9@WriteFile
 	mov	rax, QWORD PTR file$[rbp]
 	movzx	eax, WORD PTR [rax+61]
-	test	eax, eax
-	jne	SHORT $LN15@WriteFile
-	mov	DWORD PTR tv88[rbp], 1
-	jmp	SHORT $LN16@WriteFile
-$LN15@WriteFile:
-	mov	DWORD PTR tv88[rbp], 0
-$LN16@WriteFile:
-	mov	eax, DWORD PTR tv88[rbp]
 	and	eax, 256				; 00000100H
 	test	eax, eax
-	je	SHORT $LN9@WriteFile
+	jne	SHORT $LN9@WriteFile
 
 ; 202  : 		uint64_t* buff = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
 
@@ -1623,7 +1614,7 @@ $LN1@WriteFile:
 ; 218  : 	}
 ; 219  : }
 
-	lea	rsp, QWORD PTR [rbp+144]
+	lea	rsp, QWORD PTR [rbp+128]
 	pop	rbp
 	ret	0
 ?WriteFile@@YA_KHPEAX_K@Z ENDP				; WriteFile

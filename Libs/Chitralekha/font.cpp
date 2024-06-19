@@ -204,7 +204,7 @@ void ChFontDrawChar(ChCanvas *canv, ChFont* font, char c, int penx, int peny, ui
  * @param font -- Pointer to font
  * @param string -- total string
  */
-int ChFontGetWidth(ChFont* font,char* string) {
+int64_t ChFontGetWidth(ChFont* font,char* string) {
 	size_t font_width = 0;
 	size_t penx = 0;
 	int string_width = 0;
@@ -219,8 +219,8 @@ int ChFontGetWidth(ChFont* font,char* string) {
 	}
 	font_width = penx;
 	if (font_width == 0) {
-		int bbox_xmax = FT_MulFix(font->face->bbox.xMax, font->face->size->metrics.x_scale) >> 6;
-		int bbox_xmin = FT_MulFix(font->face->bbox.xMin, font->face->size->metrics.x_scale) >> 6;
+		int64_t bbox_xmax = FT_MulFix(font->face->bbox.xMax, font->face->size->metrics.x_scale) >> 6;
+		int64_t bbox_xmin = FT_MulFix(font->face->bbox.xMin, font->face->size->metrics.x_scale) >> 6;
 		font_width = bbox_xmax - bbox_xmin;
 	}
 	return font_width;
@@ -232,7 +232,7 @@ int ChFontGetWidth(ChFont* font,char* string) {
 * @param font -- Pointer to font
 * @param c -- character
 */
-int ChFontGetWidthChar(ChFont* font, char c) {
+int64_t ChFontGetWidthChar(ChFont* font, char c) {
 	size_t font_width = 0;
 	size_t penx = 0;
 	int string_width = 0;
@@ -243,8 +243,8 @@ int ChFontGetWidthChar(ChFont* font, char c) {
 	penx += font->face->glyph->advance.x >> 6;
 	font_width = penx;
 	if (font_width == 0) {
-		int bbox_xmax = FT_MulFix(font->face->bbox.xMax, font->face->size->metrics.x_scale) >> 6;
-		int bbox_xmin = FT_MulFix(font->face->bbox.xMin, font->face->size->metrics.x_scale) >> 6;
+		int64_t bbox_xmax = FT_MulFix(font->face->bbox.xMax, font->face->size->metrics.x_scale) >> 6;
+		int64_t bbox_xmin = FT_MulFix(font->face->bbox.xMin, font->face->size->metrics.x_scale) >> 6;
 		font_width = bbox_xmax - bbox_xmin;
 	}
 	return font_width;
@@ -256,7 +256,7 @@ int ChFontGetWidthChar(ChFont* font, char c) {
  * @param font -- Pointer to font
  * @param string -- total string
  */
-int ChFontGetHeight(ChFont* font, char* string) {
+int64_t ChFontGetHeight(ChFont* font, char* string) {
 	size_t font_height = 0;
 	size_t peny = 0;
 	FT_Error err = 0;
@@ -269,8 +269,8 @@ int ChFontGetHeight(ChFont* font, char* string) {
 	}
 	font_height =  peny;
 	if (font_height == 0) {
-		int bbox_ymax = FT_MulFix(font->face->bbox.yMax, font->face->size->metrics.y_scale) >> 6;
-		int bbox_ymin = FT_MulFix(font->face->bbox.yMin, font->face->size->metrics.y_scale) >> 6;
+		int64_t bbox_ymax = FT_MulFix(font->face->bbox.yMax, font->face->size->metrics.y_scale) >> 6;
+		int64_t bbox_ymin = FT_MulFix(font->face->bbox.yMin, font->face->size->metrics.y_scale) >> 6;
 		font_height = bbox_ymax - bbox_ymin;
 	}
 	return font_height;
@@ -282,7 +282,7 @@ int ChFontGetHeight(ChFont* font, char* string) {
 * @param font -- Pointer to font
 * @param c -- character
 */
-int ChFontGetHeightChar(ChFont* font, char c) {
+int64_t ChFontGetHeightChar(ChFont* font, char c) {
 	size_t font_h = 0;
 	size_t peny = 0;
 	int string_width = 0;
@@ -293,8 +293,8 @@ int ChFontGetHeightChar(ChFont* font, char c) {
 	peny += font->face->glyph->advance.y >> 6;
 	font_h = peny;
 	if (font_h == 0) {
-		int bbox_ymax = FT_MulFix(font->face->bbox.yMax, font->face->size->metrics.y_scale) >> 6;
-		int bbox_ymin = FT_MulFix(font->face->bbox.yMin, font->face->size->metrics.y_scale) >> 6;
+		int64_t bbox_ymax = FT_MulFix(font->face->bbox.yMax, font->face->size->metrics.y_scale) >> 6;
+		int64_t bbox_ymin = FT_MulFix(font->face->bbox.yMin, font->face->size->metrics.y_scale) >> 6;
 		font_h = bbox_ymax - bbox_ymin;
 	}
 	return font_h;

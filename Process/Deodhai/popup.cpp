@@ -73,6 +73,7 @@ PopupWindow* CreatePopupWindow(int x, int y, int w, int h, uint16_t owner_id) {
 	PopupWindow* popup = (PopupWindow*)malloc(sizeof(PopupWindow));
 	uint16_t server_win_key = 0;
 	uint16_t buffer_key = 0;
+	int64_t w_ = w, h_ = h, x_ = x, y_ = y;
 	uint32_t* shwin = CreateSharedPopupWinSpace(&server_win_key, owner_id);
 	void* fb = CreateNewBackBuffer(owner_id, w*h * 4, &buffer_key);
 	popup->buffer = (uint32_t*)fb;
@@ -88,7 +89,8 @@ PopupWindow* CreatePopupWindow(int x, int y, int w, int h, uint16_t owner_id) {
 	popup->buffWinKey = buffer_key;
 	popup->shadowUpdate = true;
 	popup->handle = DeodhaiAllocateNewHandle();
-	popup->shadowBuffers = (uint32_t*)_KeMemMap(NULL, (popup->shwin->w + SHADOW_SIZE * 2) * (popup->shwin->h + SHADOW_SIZE * 2) * 4, 0, 0, MEMMAP_NO_FILEDESC, 0);
+#ifdef SHADOW_ENABLED
+	popup->shadowBuffers = (uint32_t*)_KeMemMap(NULL, (w_ + SHADOW_SIZE * 2) * (h_ + SHADOW_SIZE * 2) * 4, 0, 0, MEMMAP_NO_FILEDESC, 0);
 	for (int i = 0; i < popup->shwin->w + SHADOW_SIZE * 2; i++) {
 		for (int j = 0; j < popup->shwin->h + SHADOW_SIZE * 2; j++) {
 			popup->shadowBuffers[j * (popup->shwin->w + SHADOW_SIZE * 2) + i] = 0x00000000;
@@ -102,6 +104,7 @@ PopupWindow* CreatePopupWindow(int x, int y, int w, int h, uint16_t owner_id) {
 	for (int i = 0; i < 8; i++)
 		ChBoxBlur(DeodhaiGetMainCanvas(), popup->shadowBuffers, popup->shadowBuffers, 1, 1, (popup->shwin->w + SHADOW_SIZE * 2) - 1,
 		(popup->shwin->h + SHADOW_SIZE * 2) - 2);
+#endif
 	return popup;
 }
 
@@ -110,7 +113,10 @@ PopupWindow* CreatePopupWindow(int x, int y, int w, int h, uint16_t owner_id) {
  * @param win -- Pointer to popup window
  */
 void PopupWindowDestroy(PopupWindow* win) {
-	_KeMemUnmap(win->shadowBuffers, (win->shwin->w + SHADOW_SIZE * 2) * (win->shwin->h + SHADOW_SIZE * 2) * 4);
+	int64_t w_ = win->shwin->w;
+	int64_t h_ = win->shwin->h;
+
+	_KeMemUnmap(win->shadowBuffers, (w_ + SHADOW_SIZE * 2) * (h_ + SHADOW_SIZE * 2) * 4);
 	_KeUnmapSharedMem(win->buffWinKey);
 	_KeUnmapSharedMem(win->shwinKey);
 	free(win);

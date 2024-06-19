@@ -42,7 +42,7 @@
 typedef struct _shm_ {
 	uint16_t key;
 	uint16_t id;
-	uint32_t num_frames;
+	uint64_t num_frames;
 	uint64_t* frames;
 	uint16_t link_count;
 }AuSHM;

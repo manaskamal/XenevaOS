@@ -53,13 +53,13 @@ pdata	ENDS
 ;	COMDAT pdata
 pdata	SEGMENT
 $pdata$?GetProcessHeapMem@@YA_K_K@Z DD imagerel $LN13
-	DD	imagerel $LN13+463
+	DD	imagerel $LN13+470
 	DD	imagerel $unwind$?GetProcessHeapMem@@YA_K_K@Z
 pdata	ENDS
 ;	COMDAT pdata
 pdata	SEGMENT
 $pdata$?ProcessHeapUnmap@@YAHPEAX_K@Z DD imagerel $LN14
-	DD	imagerel $LN14+472
+	DD	imagerel $LN14+474
 	DD	imagerel $unwind$?ProcessHeapUnmap@@YAHPEAX_K@Z
 pdata	ENDS
 ;	COMDAT ??_C@_0CE@CHBJELCJ@Returning?5error?5heap?5unmap?5?9?$DO?5?$CF@
@@ -259,10 +259,10 @@ $LN4@ProcessHea:
 	cmp	rcx, rax
 	jae	$LN3@ProcessHea
 
-; 172  : 		AuVPage* page_ = AuVmmngrGetPage(start_addr + i * PAGE_SIZE, VIRT_GETPAGE_ONLY_RET, VIRT_GETPAGE_ONLY_RET);
+; 172  : 		AuVPage* page_ = AuVmmngrGetPage(start_addr + static_cast<uint64_t>(i) * PAGE_SIZE, VIRT_GETPAGE_ONLY_RET, VIRT_GETPAGE_ONLY_RET);
 
-	imul	eax, DWORD PTR i$1[rbp], 4096		; 00001000H
-	cdqe
+	movsxd	rax, DWORD PTR i$1[rbp]
+	imul	rax, rax, 4096				; 00001000H
 	mov	rcx, QWORD PTR start_addr$[rbp]
 	add	rcx, rax
 	mov	rax, rcx
@@ -501,10 +501,10 @@ $LN4@GetProcess:
 	call	AuPmmngrAlloc
 	mov	QWORD PTR phys$2[rbp], rax
 
-; 135  : 		if (!AuMapPage((size_t)phys, start_addr + i * PAGE_SIZE, X86_64_PAGING_USER)) {
+; 135  : 		if (!AuMapPage((size_t)phys, start_addr + static_cast<uint64_t>(i) * PAGE_SIZE, X86_64_PAGING_USER)) {
 
-	imul	eax, DWORD PTR i$1[rbp], 4096		; 00001000H
-	cdqe
+	movsxd	rax, DWORD PTR i$1[rbp]
+	imul	rax, rax, 4096				; 00001000H
 	mov	rcx, QWORD PTR start_addr$[rbp]
 	add	rcx, rax
 	mov	rax, rcx
@@ -516,10 +516,10 @@ $LN4@GetProcess:
 	test	eax, eax
 	jne	SHORT $LN9@GetProcess
 
-; 136  : 			SeTextOut("Failed to map %x \r\n", (start_addr + i * PAGE_SIZE));
+; 136  : 			SeTextOut("Failed to map %x \r\n", (start_addr + static_cast<uint64_t>(i) * PAGE_SIZE));
 
-	imul	eax, DWORD PTR i$1[rbp], 4096		; 00001000H
-	cdqe
+	movsxd	rax, DWORD PTR i$1[rbp]
+	imul	rax, rax, 4096				; 00001000H
 	mov	rcx, QWORD PTR start_addr$[rbp]
 	add	rcx, rax
 	mov	rax, rcx
@@ -531,7 +531,7 @@ $LN9@GetProcess:
 ; 137  : 		}
 ; 138  : 	}
 
-	jmp	SHORT $LN2@GetProcess
+	jmp	$LN2@GetProcess
 $LN3@GetProcess:
 
 ; 139  : 	//SeTextOut("Mapped \r\n");

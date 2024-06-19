@@ -116,9 +116,11 @@ void ChProgressBarSetValue(ChProgressBar* pb,ChWindow* win,double value) {
 	if (pb->currentProgress >= pb->maximumProgress)
 		pb->currentProgress = pb->maximumProgress;
 
-	if (pb->base.ChPaintHandler)
-		pb->base.ChPaintHandler((ChWidget*)pb, win);
+	if (pb->currentProgress != pb->maximumProgress) {
+		if (pb->base.ChPaintHandler)
+			pb->base.ChPaintHandler((ChWidget*)pb, win);
 
-	pb->progressPercent = (pb->currentProgress / pb->maximumProgress) * 100;
-	ChWindowUpdate(win, pb->base.x, pb->base.y, pb->base.w, pb->base.h, 0, 1);
+		pb->progressPercent = (pb->currentProgress / pb->maximumProgress) * 100;
+		ChWindowUpdate(win, pb->base.x, pb->base.y, pb->base.w, pb->base.h, 0, 1);
+	}
 }

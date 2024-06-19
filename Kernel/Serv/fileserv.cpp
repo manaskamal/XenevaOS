@@ -198,7 +198,7 @@ size_t WriteFile(int fd, void* buffer, size_t length) {
 	* file system node as device */
 	AuVFSNode* fsys = (AuVFSNode*)file->device;
 
-	if (file->flags & FS_FLAG_GENERAL && (!file->flags & FS_FLAG_TTY)) {
+	if (file->flags & FS_FLAG_GENERAL && !(file->flags & FS_FLAG_TTY)) {
 		uint64_t* buff = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
 		memset(buff, 0, PAGE_SIZE);
 		memcpy(buff,aligned_buffer, PAGE_SIZE);

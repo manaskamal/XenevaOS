@@ -222,7 +222,7 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc,char** argv) {
 		for (int j = 0; j < req_pages; j++) {
 			uint64_t *block = (uint64_t*)P2V((uint64_t)AuPmmngrAlloc());/*(buf + secthdr[i].PointerToRawData);*/
 			AuVFSNodeReadBlock(fsys, file, (uint64_t*)V2P((size_t)block));
-			AuMapPageEx(cr3, V2P((size_t)block), sect_ld_addr + j * PAGE_SIZE, X86_64_PAGING_USER);
+			AuMapPageEx(cr3, V2P((size_t)block), sect_ld_addr + static_cast<uint64_t>(j) * PAGE_SIZE, X86_64_PAGING_USER);
 		}
 	}
 

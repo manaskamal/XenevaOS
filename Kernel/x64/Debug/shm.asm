@@ -67,25 +67,25 @@ pdata	ENDS
 ;	COMDAT pdata
 pdata	SEGMENT
 $pdata$?AuCreateSHM@@YAHPEAU_au_proc_@@G_KE@Z DD imagerel $LN11
-	DD	imagerel $LN11+408
+	DD	imagerel $LN11+412
 	DD	imagerel $unwind$?AuCreateSHM@@YAHPEAU_au_proc_@@G_KE@Z
 pdata	ENDS
 ;	COMDAT pdata
 pdata	SEGMENT
 $pdata$?AuSHMObtainMem@@YAPEAXPEAU_au_proc_@@GPEAXH@Z DD imagerel $LN23
-	DD	imagerel $LN23+994
+	DD	imagerel $LN23+999
 	DD	imagerel $unwind$?AuSHMObtainMem@@YAPEAXPEAU_au_proc_@@GPEAXH@Z
 pdata	ENDS
 ;	COMDAT pdata
 pdata	SEGMENT
 $pdata$?AuSHMUnmap@@YAXGPEAU_au_proc_@@@Z DD imagerel $LN12
-	DD	imagerel $LN12+482
+	DD	imagerel $LN12+486
 	DD	imagerel $unwind$?AuSHMUnmap@@YAXGPEAU_au_proc_@@@Z
 pdata	ENDS
 ;	COMDAT pdata
 pdata	SEGMENT
 $pdata$?AuSHMUnmapAll@@YAXPEAU_au_proc_@@@Z DD imagerel $LN9
-	DD	imagerel $LN9+352
+	DD	imagerel $LN9+356
 	DD	imagerel $unwind$?AuSHMUnmapAll@@YAXPEAU_au_proc_@@@Z
 pdata	ENDS
 ;	COMDAT pdata
@@ -103,7 +103,7 @@ pdata	ENDS
 ;	COMDAT pdata
 pdata	SEGMENT
 $pdata$?AuSHMDelete@@YAXPEAU_shm_@@@Z DD imagerel $LN13
-	DD	imagerel $LN13+254
+	DD	imagerel $LN13+256
 	DD	imagerel $unwind$?AuSHMDelete@@YAXPEAU_shm_@@@Z
 pdata	ENDS
 ;	COMDAT pdata
@@ -495,17 +495,17 @@ $LN8@AuSHMDelet:
 ; 144  : 	if (shm->link_count > 0){
 
 	mov	rax, QWORD PTR shm$[rbp]
-	movzx	eax, WORD PTR [rax+16]
+	movzx	eax, WORD PTR [rax+20]
 	test	eax, eax
 	jle	SHORT $LN9@AuSHMDelet
 
 ; 145  : 		shm->link_count--;
 
 	mov	rax, QWORD PTR shm$[rbp]
-	movzx	eax, WORD PTR [rax+16]
+	movzx	eax, WORD PTR [rax+20]
 	dec	ax
 	mov	rcx, QWORD PTR shm$[rbp]
-	mov	WORD PTR [rcx+16], ax
+	mov	WORD PTR [rcx+20], ax
 $LN9@AuSHMDelet:
 
 ; 146  : 	}
@@ -513,7 +513,7 @@ $LN9@AuSHMDelet:
 ; 148  : 	if (shm->link_count == 0){
 
 	mov	rax, QWORD PTR shm$[rbp]
-	movzx	eax, WORD PTR [rax+16]
+	movzx	eax, WORD PTR [rax+20]
 	test	eax, eax
 	jne	$LN10@AuSHMDelet
 
@@ -526,16 +526,16 @@ $LN2@AuSHMDelet:
 	inc	eax
 	mov	DWORD PTR i$1[rbp], eax
 $LN4@AuSHMDelet:
-	mov	rax, QWORD PTR shm$[rbp]
-	mov	eax, DWORD PTR [rax+4]
-	cmp	DWORD PTR i$1[rbp], eax
+	movsxd	rax, DWORD PTR i$1[rbp]
+	mov	rcx, QWORD PTR shm$[rbp]
+	cmp	rax, QWORD PTR [rcx+4]
 	jae	SHORT $LN3@AuSHMDelet
 
 ; 150  : 			size_t phys = shm->frames[i];
 
 	movsxd	rax, DWORD PTR i$1[rbp]
 	mov	rcx, QWORD PTR shm$[rbp]
-	mov	rcx, QWORD PTR [rcx+8]
+	mov	rcx, QWORD PTR [rcx+12]
 	mov	rax, QWORD PTR [rcx+rax*8]
 	mov	QWORD PTR phys$2[rbp], rax
 
@@ -592,7 +592,7 @@ $LN6@AuSHMDelet:
 ; 159  : 		kfree(shm->frames);
 
 	mov	rax, QWORD PTR shm$[rbp]
-	mov	rcx, QWORD PTR [rax+8]
+	mov	rcx, QWORD PTR [rax+12]
 	call	kfree
 
 ; 160  : 		kfree(shm);
@@ -790,10 +790,10 @@ $LN7@AuSHMUnmap:
 	cmp	rcx, rax
 	jae	SHORT $LN6@AuSHMUnmap
 
-; 379  : 			AuVPage* vpage = AuVmmngrGetPage(mapping->start_addr + j * PAGE_SIZE, VIRT_GETPAGE_ONLY_RET, VIRT_GETPAGE_ONLY_RET);
+; 379  : 			AuVPage* vpage = AuVmmngrGetPage(mapping->start_addr + 
 
-	imul	eax, DWORD PTR j$3[rbp], 4096		; 00001000H
-	cdqe
+	movsxd	rax, DWORD PTR j$3[rbp]
+	imul	rax, rax, 4096				; 00001000H
 	mov	rcx, QWORD PTR mapping$2[rbp]
 	add	rax, QWORD PTR [rcx]
 	mov	r8b, 2
@@ -802,7 +802,8 @@ $LN7@AuSHMUnmap:
 	call	AuVmmngrGetPage
 	mov	QWORD PTR vpage$4[rbp], rax
 
-; 380  : 			vpage->bits.page = 0;
+; 380  : 				static_cast<int64_t>(j) * PAGE_SIZE, VIRT_GETPAGE_ONLY_RET, VIRT_GETPAGE_ONLY_RET);
+; 381  : 			vpage->bits.page = 0;
 
 	mov	rax, QWORD PTR vpage$4[rbp]
 	mov	rcx, -1099511623681			; ffffff0000000fffH
@@ -811,7 +812,7 @@ $LN7@AuSHMUnmap:
 	mov	rcx, QWORD PTR vpage$4[rbp]
 	mov	QWORD PTR [rcx], rax
 
-; 381  : 			vpage->bits.present = 0;
+; 382  : 			vpage->bits.present = 0;
 
 	mov	rax, QWORD PTR vpage$4[rbp]
 	mov	rax, QWORD PTR [rax]
@@ -819,55 +820,56 @@ $LN7@AuSHMUnmap:
 	mov	rcx, QWORD PTR vpage$4[rbp]
 	mov	QWORD PTR [rcx], rax
 
-; 382  : 			flush_tlb((void*)(mapping->start_addr + j * PAGE_SIZE));
+; 383  : 			flush_tlb((void*)(mapping->start_addr + 
 
-	imul	eax, DWORD PTR j$3[rbp], 4096		; 00001000H
-	cdqe
+	movsxd	rax, DWORD PTR j$3[rbp]
+	imul	rax, rax, 4096				; 00001000H
 	mov	rcx, QWORD PTR mapping$2[rbp]
 	add	rax, QWORD PTR [rcx]
 	mov	rcx, rax
 	call	flush_tlb
 
-; 383  : 		}
+; 384  : 				static_cast<int64_t>(j) * PAGE_SIZE));
+; 385  : 		}
 
 	jmp	$LN5@AuSHMUnmap
 $LN6@AuSHMUnmap:
 
-; 384  : 		AuSHMDelete(mapping->shm);
+; 386  : 		AuSHMDelete(mapping->shm);
 
 	mov	rax, QWORD PTR mapping$2[rbp]
 	mov	rcx, QWORD PTR [rax+16]
 	call	?AuSHMDelete@@YAXPEAU_shm_@@@Z		; AuSHMDelete
 
-; 385  : 		SeTextOut("Unmapping shm -> %x \r\n", mapping->start_addr);
+; 387  : 		SeTextOut("Unmapping shm -> %x \r\n", mapping->start_addr);
 
 	mov	rax, QWORD PTR mapping$2[rbp]
 	mov	rdx, QWORD PTR [rax]
 	lea	rcx, OFFSET FLAT:??_C@_0BH@KJKCGEJN@Unmapping?5shm?5?9?$DO?5?$CFx?5?$AN?6@
 	call	SeTextOut
 
-; 386  : 		kfree(mapping);
+; 388  : 		kfree(mapping);
 
 	mov	rcx, QWORD PTR mapping$2[rbp]
 	call	kfree
 
-; 387  : 	}
+; 389  : 	}
 
 	jmp	$LN2@AuSHMUnmap
 $LN3@AuSHMUnmap:
 
-; 388  : 	kfree(proc->shmmaps);
+; 390  : 	kfree(proc->shmmaps);
 
 	mov	rax, QWORD PTR proc$[rbp]
 	mov	rcx, QWORD PTR [rax+1080]
 	call	kfree
 
-; 389  : 	AuReleaseSpinlock(shmlock);
+; 391  : 	AuReleaseSpinlock(shmlock);
 
 	mov	rcx, QWORD PTR ?shmlock@@3PEAU_spinlock_@@EA ; shmlock
 	call	AuReleaseSpinlock
 
-; 390  : }
+; 392  : }
 
 	lea	rsp, QWORD PTR [rbp+112]
 	pop	rbp
@@ -993,10 +995,10 @@ $LN7@AuSHMUnmap:
 	cmp	rcx, rax
 	jae	SHORT $LN6@AuSHMUnmap
 
-; 348  : 				AuVPage* vpage = AuVmmngrGetPage(mapping->start_addr + i * PAGE_SIZE, VIRT_GETPAGE_ONLY_RET, VIRT_GETPAGE_ONLY_RET);
+; 348  : 				AuVPage* vpage = AuVmmngrGetPage(mapping->start_addr + static_cast<int64_t>(i) * PAGE_SIZE, VIRT_GETPAGE_ONLY_RET, VIRT_GETPAGE_ONLY_RET);
 
-	imul	eax, DWORD PTR i$3[rbp], 4096		; 00001000H
-	cdqe
+	movsxd	rax, DWORD PTR i$3[rbp]
+	imul	rax, rax, 4096				; 00001000H
 	mov	rcx, QWORD PTR mapping$[rbp]
 	add	rax, QWORD PTR [rcx]
 	mov	r8b, 2
@@ -1027,10 +1029,10 @@ $LN7@AuSHMUnmap:
 	mov	rcx, QWORD PTR vpage$4[rbp]
 	mov	QWORD PTR [rcx], rax
 
-; 352  : 					flush_tlb((void*)(mapping->start_addr + i * PAGE_SIZE));
+; 352  : 					flush_tlb((void*)(mapping->start_addr + static_cast<int64_t>(i) * PAGE_SIZE));
 
-	imul	eax, DWORD PTR i$3[rbp], 4096		; 00001000H
-	cdqe
+	movsxd	rax, DWORD PTR i$3[rbp]
+	imul	rax, rax, 4096				; 00001000H
 	mov	rcx, QWORD PTR mapping$[rbp]
 	add	rax, QWORD PTR [rcx]
 	mov	rcx, rax
@@ -1082,7 +1084,7 @@ $LN3@AuSHMUnmap:
 ; 364  : 	SeTextOut("%s Unmapping shm ->%d count \r\n",proc->name, shm->link_count);
 
 	mov	rax, QWORD PTR shm$[rbp]
-	movzx	eax, WORD PTR [rax+16]
+	movzx	eax, WORD PTR [rax+20]
 	mov	rcx, QWORD PTR proc$[rbp]
 	add	rcx, 4
 	mov	r8d, eax
@@ -1190,10 +1192,10 @@ $LN14@AuSHMObtai:
 ; 230  : 	mem->link_count++;
 
 	mov	rax, QWORD PTR mem$[rbp]
-	movzx	eax, WORD PTR [rax+16]
+	movzx	eax, WORD PTR [rax+20]
 	inc	ax
 	mov	rcx, QWORD PTR mem$[rbp]
-	mov	WORD PTR [rcx+16], ax
+	mov	WORD PTR [rcx+20], ax
 
 ; 231  : 
 ; 232  : 	/* look for already available address space gap
@@ -1257,11 +1259,10 @@ $LN15@AuSHMObtai:
 	sub	rax, rcx
 	mov	QWORD PTR gap$3[rbp], rax
 
-; 243  : 			if (gap >= mem->num_frames * PAGE_SIZE){
+; 243  : 			if (gap >= static_cast<uint64_t>(mem->num_frames) * PAGE_SIZE){
 
 	mov	rax, QWORD PTR mem$[rbp]
-	imul	eax, DWORD PTR [rax+4], 4096		; 00001000H
-	mov	eax, eax
+	imul	rax, QWORD PTR [rax+4], 4096		; 00001000H
 	cmp	QWORD PTR gap$3[rbp], rax
 	jb	$LN17@AuSHMObtai
 
@@ -1274,23 +1275,23 @@ $LN5@AuSHMObtai:
 	inc	eax
 	mov	DWORD PTR j$4[rbp], eax
 $LN7@AuSHMObtai:
-	mov	rax, QWORD PTR mem$[rbp]
-	mov	eax, DWORD PTR [rax+4]
-	cmp	DWORD PTR j$4[rbp], eax
+	movsxd	rax, DWORD PTR j$4[rbp]
+	mov	rcx, QWORD PTR mem$[rbp]
+	cmp	rax, QWORD PTR [rcx+4]
 	jae	SHORT $LN6@AuSHMObtai
 
 ; 245  : 					size_t phys = mem->frames[j];
 
 	movsxd	rax, DWORD PTR j$4[rbp]
 	mov	rcx, QWORD PTR mem$[rbp]
-	mov	rcx, QWORD PTR [rcx+8]
+	mov	rcx, QWORD PTR [rcx+12]
 	mov	rax, QWORD PTR [rcx+rax*8]
 	mov	QWORD PTR phys$5[rbp], rax
 
-; 246  : 					AuMapPage(phys, last_addr + j * PAGE_SIZE, X86_64_PAGING_USER);
+; 246  : 					AuMapPage(phys, last_addr + static_cast<int64_t>(j) * PAGE_SIZE, X86_64_PAGING_USER);
 
-	imul	eax, DWORD PTR j$4[rbp], 4096		; 00001000H
-	cdqe
+	movsxd	rax, DWORD PTR j$4[rbp]
+	imul	rax, rax, 4096				; 00001000H
 	mov	rcx, QWORD PTR last_addr$[rbp]
 	add	rcx, rax
 	mov	rax, rcx
@@ -1313,8 +1314,7 @@ $LN6@AuSHMObtai:
 ; 249  : 				mappings->length = mem->num_frames * PAGE_SIZE;
 
 	mov	rax, QWORD PTR mem$[rbp]
-	imul	eax, DWORD PTR [rax+4], 4096		; 00001000H
-	mov	eax, eax
+	imul	rax, QWORD PTR [rax+4], 4096		; 00001000H
 	mov	rcx, QWORD PTR mappings$[rbp]
 	mov	QWORD PTR [rcx+8], rax
 
@@ -1422,8 +1422,7 @@ $LN3@AuSHMObtai:
 ; 292  : 			if (gap >= mem->num_frames * PAGE_SIZE) {
 
 	mov	rax, QWORD PTR mem$[rbp]
-	imul	eax, DWORD PTR [rax+4], 4096		; 00001000H
-	mov	eax, eax
+	imul	rax, QWORD PTR [rax+4], 4096		; 00001000H
 	cmp	QWORD PTR gap$7[rbp], rax
 	jb	$LN20@AuSHMObtai
 
@@ -1436,23 +1435,23 @@ $LN8@AuSHMObtai:
 	inc	eax
 	mov	DWORD PTR j$8[rbp], eax
 $LN10@AuSHMObtai:
-	mov	rax, QWORD PTR mem$[rbp]
-	mov	eax, DWORD PTR [rax+4]
-	cmp	DWORD PTR j$8[rbp], eax
+	movsxd	rax, DWORD PTR j$8[rbp]
+	mov	rcx, QWORD PTR mem$[rbp]
+	cmp	rax, QWORD PTR [rcx+4]
 	jae	SHORT $LN9@AuSHMObtai
 
 ; 294  : 					size_t phys = mem->frames[j];
 
 	movsxd	rax, DWORD PTR j$8[rbp]
 	mov	rcx, QWORD PTR mem$[rbp]
-	mov	rcx, QWORD PTR [rcx+8]
+	mov	rcx, QWORD PTR [rcx+12]
 	mov	rax, QWORD PTR [rcx+rax*8]
 	mov	QWORD PTR phys$9[rbp], rax
 
-; 295  : 					AuMapPage(phys, last_addr + j * PAGE_SIZE, X86_64_PAGING_USER);
+; 295  : 					AuMapPage(phys, last_addr + static_cast<int64_t>(j) * PAGE_SIZE, X86_64_PAGING_USER);
 
-	imul	eax, DWORD PTR j$8[rbp], 4096		; 00001000H
-	cdqe
+	movsxd	rax, DWORD PTR j$8[rbp]
+	imul	rax, rax, 4096				; 00001000H
 	mov	rcx, QWORD PTR last_addr$[rbp]
 	add	rcx, rax
 	mov	rax, rcx
@@ -1475,8 +1474,7 @@ $LN9@AuSHMObtai:
 ; 298  : 				mappings->length = mem->num_frames * PAGE_SIZE;
 
 	mov	rax, QWORD PTR mem$[rbp]
-	imul	eax, DWORD PTR [rax+4], 4096		; 00001000H
-	mov	eax, eax
+	imul	rax, QWORD PTR [rax+4], 4096		; 00001000H
 	mov	rcx, QWORD PTR mappings$[rbp]
 	mov	QWORD PTR [rcx+8], rax
 
@@ -1527,16 +1525,16 @@ $LN11@AuSHMObtai:
 	inc	eax
 	mov	DWORD PTR i$10[rbp], eax
 $LN13@AuSHMObtai:
-	mov	rax, QWORD PTR mem$[rbp]
-	mov	eax, DWORD PTR [rax+4]
-	cmp	DWORD PTR i$10[rbp], eax
+	movsxd	rax, DWORD PTR i$10[rbp]
+	mov	rcx, QWORD PTR mem$[rbp]
+	cmp	rax, QWORD PTR [rcx+4]
 	jae	SHORT $LN12@AuSHMObtai
 
 ; 311  : 		uint64_t phys_addr = mem->frames[i];
 
 	movsxd	rax, DWORD PTR i$10[rbp]
 	mov	rcx, QWORD PTR mem$[rbp]
-	mov	rcx, QWORD PTR [rcx+8]
+	mov	rcx, QWORD PTR [rcx+12]
 	mov	rax, QWORD PTR [rcx+rax*8]
 	mov	QWORD PTR phys_addr$11[rbp], rax
 
@@ -1576,8 +1574,7 @@ $LN12@AuSHMObtai:
 ; 318  : 	mappings->length = mem->num_frames * PAGE_SIZE;
 
 	mov	rax, QWORD PTR mem$[rbp]
-	imul	eax, DWORD PTR [rax+4], 4096		; 00001000H
-	mov	eax, eax
+	imul	rax, QWORD PTR [rax+4], 4096		; 00001000H
 	mov	rcx, QWORD PTR mappings$[rbp]
 	mov	QWORD PTR [rcx+8], rax
 
@@ -1691,13 +1688,13 @@ $LN5@AuCreateSH:
 
 ; 114  : 		shm = (AuSHM*)kmalloc(sizeof(AuSHM));
 
-	mov	ecx, 18
+	mov	ecx, 22
 	call	kmalloc
 	mov	QWORD PTR shm$[rbp], rax
 
 ; 115  : 		memset(shm, 0, sizeof(AuSHM));
 
-	mov	r8d, 18
+	mov	r8d, 22
 	xor	edx, edx
 	mov	rcx, QWORD PTR shm$[rbp]
 	call	memset
@@ -1735,23 +1732,23 @@ $LN10@AuCreateSH:
 	movsxd	rcx, DWORD PTR tv84[rbp]
 	add	rax, rcx
 	mov	rcx, QWORD PTR shm$[rbp]
-	mov	DWORD PTR [rcx+4], eax
+	mov	QWORD PTR [rcx+4], rax
 
 ; 119  : 		shm->link_count = 0;
 
 	xor	eax, eax
 	mov	rcx, QWORD PTR shm$[rbp]
-	mov	WORD PTR [rcx+16], ax
+	mov	WORD PTR [rcx+20], ax
 
 ; 120  : 		shm->frames = (uint64_t*)kmalloc(sizeof(uint64_t)* shm->num_frames);
 
 	mov	rax, QWORD PTR shm$[rbp]
-	mov	eax, DWORD PTR [rax+4]
+	mov	rax, QWORD PTR [rax+4]
 	shl	rax, 3
 	mov	ecx, eax
 	call	kmalloc
 	mov	rcx, QWORD PTR shm$[rbp]
-	mov	QWORD PTR [rcx+8], rax
+	mov	QWORD PTR [rcx+12], rax
 
 ; 121  : 		for (int i = 0; i < shm->num_frames; i++)  {
 
@@ -1762,9 +1759,9 @@ $LN2@AuCreateSH:
 	inc	eax
 	mov	DWORD PTR i$1[rbp], eax
 $LN4@AuCreateSH:
-	mov	rax, QWORD PTR shm$[rbp]
-	mov	eax, DWORD PTR [rax+4]
-	cmp	DWORD PTR i$1[rbp], eax
+	movsxd	rax, DWORD PTR i$1[rbp]
+	mov	rcx, QWORD PTR shm$[rbp]
+	cmp	rax, QWORD PTR [rcx+4]
 	jae	SHORT $LN3@AuCreateSH
 
 ; 122  : 			shm->frames[i] = (uint64_t)AuPmmngrAlloc();
@@ -1772,7 +1769,7 @@ $LN4@AuCreateSH:
 	call	AuPmmngrAlloc
 	movsxd	rcx, DWORD PTR i$1[rbp]
 	mov	rdx, QWORD PTR shm$[rbp]
-	mov	rdx, QWORD PTR [rdx+8]
+	mov	rdx, QWORD PTR [rdx+12]
 	mov	QWORD PTR [rdx+rcx*8], rax
 
 ; 123  : 		}

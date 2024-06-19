@@ -187,6 +187,7 @@ void DeodhaiBackSurfaceUpdate(ChCanvas* canv, int x, int y, int w, int h) {
 	uint32_t *lfb = (uint32_t*)canv->buffer;
 	uint32_t* wallp = (uint32_t*)surfaceBuffer;
 
+	int64_t x_ = x, y_ = y, w_ = w, h_ = h;
 
 	if (w > canv->canvasWidth)
 		w = canv->canvasWidth;
@@ -206,8 +207,8 @@ void DeodhaiBackSurfaceUpdate(ChCanvas* canv, int x, int y, int w, int h) {
 		y = 0;
 
 	for (int j = 0; j < h; j++) {
-		_fastcpy(canv->buffer + (y + j) * canv->canvasWidth + x, wallp + (y + j) * canv->canvasWidth + x,
-			w * 4);
+		_fastcpy(canv->buffer + (y_ + j) * canv->canvasWidth + x_, wallp + (y_ + j) * canv->canvasWidth + x_,
+			w_ * 4);
 	}
 }
 
@@ -283,6 +284,7 @@ void DeodhaiWindowMakeTop(Window* win) {
 	DeodhaiRemoveWindow(win);
 	DeodhaiAddWindow(win);
 
+#ifdef SHADOW_ENABLE
 	/* add a back dirty rect to behind windows, because of
 	* its shadows to be undrawn
 	*/
@@ -290,9 +292,19 @@ void DeodhaiWindowMakeTop(Window* win) {
 		WinSharedInfo* backinfo = (WinSharedInfo*)back->sharedInfo;
 		if (back == win)
 			break;
+		int x = backinfo->x - SHADOW_SIZE;
+		int y = backinfo->y - SHADOW_SIZE;
+		int w = backinfo->width + SHADOW_SIZE * 2;
+		int h = backinfo->height + SHADOW_SIZE * 2;
+		if (x < 0)
+			x = 0;
+		if (y < 0)
+			y = 0;
+
 		BackDirtyAdd((backinfo->x - SHADOW_SIZE), (backinfo->y - SHADOW_SIZE),
 			(backinfo->width + SHADOW_SIZE * 2), (backinfo->height + SHADOW_SIZE * 2));
 	}
+#endif
 }
 
 /*
@@ -316,7 +328,7 @@ void DeodhaiWindowSetFocused(Window* win, bool notify) {
 		e.dword = focusedWin->ownerId;
 		DeodhaiBroadcastMessage(&e, NULL);
 
-		_KeProcessSleep(4);
+		_KeProcessSleep(60);
 
 		e.type = DEODHAI_REPLY_FOCUS_CHANGED;
 		DeodhaiSendFocusMessage(&e);
@@ -353,7 +365,10 @@ void DeodhaiRemoveShadow(ChCanvas* canv, Window* win) {
  * @param y -- new y position
  */
 void DeodhaiWindowMove(Window* win, int x, int y) {
-	if (win->flags & WINDOW_FLAG_STATIC && !(win->flags & WINDOW_FLAG_ALWAYS_ON_TOP))
+	if (win->flags & WINDOW_FLAG_STATIC)
+		return;
+
+	if (win->flags & WINDOW_FLAG_ALWAYS_ON_TOP)
 		return;
 
 	if (focusedWin != win)
@@ -366,16 +381,16 @@ void DeodhaiWindowMove(Window* win, int x, int y) {
 	int wh = info->height + SHADOW_SIZE * 2;
 
 	if (wx > canvas->screenWidth)
-		goto _skip;
+		return;
 
 	if (wy > canvas->screenHeight)
-		goto _skip;
+		return;
 
-	if (wx < 0)
-		wx = 0;
+	if (wx <= 0)
+		wx = SHADOW_SIZE + 5;
 
-	if (wy < 0)
-		wy = 0;
+	if (wy <= 0)
+		wy = SHADOW_SIZE + 5;
 
 	if ((wx + ww) >= canvas->screenWidth)
 		ww = canvas->screenWidth - info->x + SHADOW_SIZE;
@@ -728,14 +743,14 @@ void ComposeFrame(ChCanvas *canvas) {
 			if ((info->y + 24) >= canvas->screenHeight)
 				info->y = canvas->screenHeight - 24;
 
-
+#ifdef SHADOW_ENABLED
 			if (((static_cast<int64_t>(info->x) - SHADOW_SIZE) + shad_w) >= canvas->screenWidth)
 				shad_w = static_cast<int64_t>(canvas->screenWidth) - (static_cast<int64_t>(info->x) - SHADOW_SIZE);
 				
 			
 			if (((static_cast<int64_t>(info->y) - SHADOW_SIZE) + shad_h) >= canvas->screenHeight)
 				shad_h = static_cast<int64_t>(canvas->screenHeight) - (static_cast<int64_t>(info->y) - SHADOW_SIZE);
-
+#endif
 
 			Rect r1;
 			Rect r2;
@@ -781,6 +796,7 @@ void ComposeFrame(ChCanvas *canvas) {
 
 			if (focusedWin == win) {
 				if (_shadow_update) {
+#ifdef SHADOW_ENABLED
 					//_KePrint("Entering shadow update \r\n");
 					for (int64_t j = 0; j < shad_h; j++) {
 						for (int64_t q = 0; q < shad_w; q++) {	
@@ -789,6 +805,7 @@ void ComposeFrame(ChCanvas *canvas) {
 								*(uint32_t*)(win->shadowBuffers + j * (static_cast<int64_t>(info->width) + SHADOW_SIZE*2) + q));
 						}
 					}
+#endif
 					_shadow_update = false;
 					//_KePrint("Shadow update completed %d %d \r\n", (winx - SHADOW_SIZE), (winy - SHADOW_SIZE));
 				}
@@ -833,11 +850,14 @@ void ComposeFrame(ChCanvas *canvas) {
 				int64_t popup_y = pw->shwin->y;
 				int64_t popup_w = pw->shwin->w;
 				int64_t popup_h = pw->shwin->h;
+
 				int64_t shad_w = popup_w + SHADOW_SIZE * 2;
 				int64_t shad_h = popup_h + SHADOW_SIZE * 2;
 
 
+
 				if (pw->shadowUpdate) {
+#ifdef SHADOW_ENABLED
 					for (int j = 0; j < shad_h; j++) {
 						for (int i = 0; i < shad_w; i++) {
 							*(uint32_t*)(canvas->buffer + ((popup_y - SHADOW_SIZE) + j) * canvas->canvasWidth + ((popup_x - SHADOW_SIZE) + i)) =
@@ -845,6 +865,7 @@ void ComposeFrame(ChCanvas *canvas) {
 								*(uint32_t*)(pw->shadowBuffers + j * (pw->shwin->w + SHADOW_SIZE * 2) + i));
 						}
 					}
+#endif
 					pw->shadowUpdate = false;
 				}
 
@@ -944,9 +965,12 @@ void ComposeFrame(ChCanvas *canvas) {
 				if (info->alpha) {
 					for (int j = 0; j < r_h; j++) {
 						for (int i = 0; i < r_w; i++) {
-							*(uint32_t*)(canvas->buffer + (info->y + r_y + j) * canvas->canvasWidth + (info->x + r_x + i)) =
-								ChColorAlphaBlend(*(uint32_t*)(canvas->buffer + (info->y + r_y + j)* canvas->canvasWidth + (info->x + r_x + i)),
-								*(uint32_t*)(win->backBuffer + j * info->width + i), info->alphaValue);
+							*(uint32_t*)(canvas->buffer + (static_cast<int64_t>(info->y) + r_y + j) * canvas->canvasWidth + 
+								(static_cast<int64_t>(info->x) + r_x + i)) =
+								ChColorAlphaBlend(*(uint32_t*)(canvas->buffer +
+									(static_cast<int64_t>(info->y) + r_y + j)* canvas->canvasWidth + 
+									(static_cast<int64_t>(info->x) + r_x + i)),
+								*(uint32_t*)(win->backBuffer + static_cast<int64_t>(j) * info->width + i), info->alphaValue);
 						}
 					}
 					AddDirtyClip(info->x + r_x, info->y + r_y, r_w, r_h);
@@ -971,8 +995,11 @@ void ComposeFrame(ChCanvas *canvas) {
 
 					if (clipCount == 0 && !overlap) {
 						for (int i = 0; i < r_h; i++) {
-							_fastcpy(canvas->buffer + (info->y + r_y + i) * canvas->canvasWidth + info->x + r_x,
-								win->backBuffer + (r_y + i) * info->width + r_x, r_w * 4);
+							void* canv_buff = (canvas->buffer + (static_cast<int64_t>(info->y) + r_y + i) * 
+								canvas->canvasWidth + info->x + r_x);
+							void* backbuff = (win->backBuffer + (static_cast<int64_t>(r_y) + i) * info->width + r_x);
+							_fastcpy(canv_buff,
+								backbuff, static_cast<int64_t>(r_w)*4);
 						}
 						AddDirtyClip(info->x + r_x, info->y + r_y, r_w, r_h);
 					}
@@ -1002,8 +1029,9 @@ void ComposeFrame(ChCanvas *canvas) {
 						int update_r_y = r_y + diffy;
 
 						for (int j = 0; j < k_h; j++) {
-							_fastcpy(canvas->buffer + (k_y + j) * canvas->canvasWidth + k_x,
-								win->backBuffer + (update_r_y + j) * info->width + update_r_x, k_w * 4);
+							_fastcpy(canvas->buffer + (static_cast<int64_t>(k_y) + j) * canvas->canvasWidth + k_x,
+								win->backBuffer + (static_cast<int64_t>(update_r_y) + j) * info->width + update_r_x, 
+								static_cast<int64_t>(k_w) * 4);
 						}
 
 						AddDirtyClip(k_x, k_y, k_w, k_h);
@@ -1060,9 +1088,12 @@ void ComposeFrame(ChCanvas *canvas) {
 			if (info->alpha) {
 				for (int j = 0; j < height; j++) {
 					for (int i = 0; i < width; i++) {
-						*(uint32_t*)(canvas->buffer + (winy + j) * canvas->canvasWidth + (winx + i)) =
-							ChColorAlphaBlend(*(uint32_t*)(canvas->buffer + (winy + j)* canvas->canvasWidth + (winx + i)),
-							*(uint32_t*)(win->backBuffer + j * info->width + i), info->alphaValue);
+						*(uint32_t*)(canvas->buffer + (static_cast<int64_t>(winy) + j) * canvas->canvasWidth + 
+							(static_cast<int64_t>(winx) + i)) =
+							ChColorAlphaBlend(*(uint32_t*)(canvas->buffer + (static_cast<int64_t>(winy) + j)* canvas->canvasWidth + 
+								(static_cast<int64_t>(winx) + i)),
+							*(uint32_t*)(win->backBuffer + static_cast<int64_t>(j) * info->width + i),
+								info->alphaValue);
 					}
 				}
 			}
@@ -1082,8 +1113,8 @@ void ComposeFrame(ChCanvas *canvas) {
 				}
 
 				for (int i = 0; i < height; i++) {
-					_fastcpy(canvas->buffer + (winy + i) * canvas->canvasWidth + winx,
-						win->backBuffer + (0 + i) * info->width + 0, width * 4);
+					_fastcpy(canvas->buffer + (static_cast<int64_t>(winy) + i) * canvas->canvasWidth + winx,
+						win->backBuffer + (0 + i) * info->width + 0, static_cast<int64_t>(width) * 4);
 				}
 
 

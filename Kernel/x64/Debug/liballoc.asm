@@ -49,7 +49,7 @@ pdata	ENDS
 ;	COMDAT pdata
 pdata	SEGMENT
 $pdata$liballoc_alloc DD imagerel $LN10
-	DD	imagerel $LN10+214
+	DD	imagerel $LN10+216
 	DD	imagerel $unwind$liballoc_alloc
 pdata	ENDS
 ;	COMDAT pdata
@@ -1951,10 +1951,10 @@ $LN10:
 	lea	rcx, OFFSET FLAT:__4B201462_liballoc@cpp
 	call	__CheckForDebuggerJustMyCode
 
-; 571  : 	size_t size = pages * 4096;
+; 571  : 	size_t size = static_cast<int64_t>(pages) * 4096;
 
-	imul	eax, DWORD PTR pages$[rbp], 4096	; 00001000H
-	cdqe
+	movsxd	rax, DWORD PTR pages$[rbp]
+	imul	rax, rax, 4096				; 00001000H
 	mov	QWORD PTR size$[rbp], rax
 
 ; 572  : 	uint64_t* page = AuGetFreePage(0, false);
