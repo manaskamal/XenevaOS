@@ -72,8 +72,7 @@ AU_EXTERN AU_EXPORT void AuAcquireSpinlock(Spinlock* lock) {
 		SeTextOut("[aurora kernel]: lock -> %x is corrupted \r\n", lock);
 		lock->value = 0;
 	}
-	do {
-		SeTextOut("Locking \r\n");
+	do {	
 		if (x64_lock_test(&lock->value, 0, 1)) {
 			break;
 		}

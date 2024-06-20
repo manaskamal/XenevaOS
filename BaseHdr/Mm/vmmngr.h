@@ -67,6 +67,8 @@
 #define VIRT_ADDR_ALIGN(vaddr) (vaddr & ~(PAGE_SIZE - 1))
 
 #define PAGE_ALIGN(value)  (((PAGE_SIZE-1)&value) ? ((value + PAGE_SIZE) & ~(PAGE_SIZE-1)) : value)
+
+#pragma pack(push,1)
 /* 
  * AuVPage -- structure of virtual page
  */
@@ -89,7 +91,7 @@ typedef union _AuVPage_ {
 	}bits;
 	uint64_t raw;
 }AuVPage;
-
+#pragma pack(pop)
 
 /*
 * AuVmmngrInitialize -- initialize the virtual

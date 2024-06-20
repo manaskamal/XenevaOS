@@ -39,10 +39,8 @@ E:\Xeneva Project\Aurora\Libs\Chitralekha\font.cpp(184,29): warning C4018: '<': 
 E:\Xeneva Project\Aurora\Libs\Chitralekha\font.cpp(185,30): warning C4018: '<': signed/unsigned mismatch
 E:\Xeneva Project\Aurora\Libs\Chitralekha\font.cpp(186,28): warning C4018: '>=': signed/unsigned mismatch
 E:\Xeneva Project\Aurora\Libs\Chitralekha\font.cpp(186,54): warning C4018: '>=': signed/unsigned mismatch
-E:\Xeneva Project\Aurora\Libs\Chitralekha\font.cpp(319,12): warning C4018: '>=': signed/unsigned mismatch
-E:\Xeneva Project\Aurora\Libs\Chitralekha\font.cpp(319,43): warning C4018: '>=': signed/unsigned mismatch
-E:\Xeneva Project\Aurora\Libs\Chitralekha\font.cpp(367,28): warning C4018: '>': signed/unsigned mismatch
-E:\Xeneva Project\Aurora\Libs\Chitralekha\font.cpp(370,28): warning C4018: '>': signed/unsigned mismatch
+E:\Xeneva Project\Aurora\Libs\Chitralekha\font.cpp(324,12): warning C4018: '>=': signed/unsigned mismatch
+E:\Xeneva Project\Aurora\Libs\Chitralekha\font.cpp(324,43): warning C4018: '>=': signed/unsigned mismatch
   keycode.cpp
   ttf.cpp
 E:\Xeneva Project\Aurora\Libs\Chitralekha\ttf.h(82,9): warning C4161: #pragma pack(pop...): more pops than pushes
@@ -74,13 +72,13 @@ E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\defaultwindow.cpp(129,20): war
   icon.cpp
 E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\icon.cpp(65,31): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
 E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\icon.cpp(110,20): warning C4018: '<': signed/unsigned mismatch
-E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\icon.cpp(114,21): warning C4018: '<': signed/unsigned mismatch
-E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\icon.cpp(160,19): warning C4018: '<=': signed/unsigned mismatch
-E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\icon.cpp(163,18): warning C4018: '<=': signed/unsigned mismatch
-E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\icon.cpp(166,18): warning C4018: '>': signed/unsigned mismatch
-E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\icon.cpp(169,19): warning C4018: '>': signed/unsigned mismatch
-E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\icon.cpp(173,20): warning C4018: '<': signed/unsigned mismatch
-E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\icon.cpp(177,21): warning C4018: '<': signed/unsigned mismatch
+E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\icon.cpp(115,21): warning C4018: '<': signed/unsigned mismatch
+E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\icon.cpp(161,19): warning C4018: '<=': signed/unsigned mismatch
+E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\icon.cpp(164,18): warning C4018: '<=': signed/unsigned mismatch
+E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\icon.cpp(167,18): warning C4018: '>': signed/unsigned mismatch
+E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\icon.cpp(170,19): warning C4018: '>': signed/unsigned mismatch
+E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\icon.cpp(174,20): warning C4018: '<': signed/unsigned mismatch
+E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\icon.cpp(179,21): warning C4018: '<': signed/unsigned mismatch
   list.cpp
   menu.cpp
 E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\menu.cpp(47,20): warning C4018: '<': signed/unsigned mismatch
@@ -95,8 +93,8 @@ E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\menubar.cpp(44,20): warning C4
 E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\menubar.cpp(69,21): warning C4018: '<': signed/unsigned mismatch
 E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\menubar.cpp(95,23): warning C4018: '<': signed/unsigned mismatch
 E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\menubar.cpp(129,24): warning C4018: '<': signed/unsigned mismatch
-E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\menubar.cpp(199,31): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\menubar.cpp(209,43): warning C4267: 'argument': conversion from 'size_t' to 'unsigned int', possible loss of data
+E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\menubar.cpp(202,31): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\menubar.cpp(212,43): warning C4267: 'argument': conversion from 'size_t' to 'unsigned int', possible loss of data
   msgbox.cpp
 E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\msgbox.cpp(55,11): warning C4244: 'initializing': conversion from 'int64_t' to 'int', possible loss of data
 E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\msgbox.cpp(56,11): warning C4244: 'initializing': conversion from 'int64_t' to 'int', possible loss of data
@@ -112,7 +110,7 @@ E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\progress.cpp(99,11): warning C
   scrollpane.cpp
 E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\scrollpane.cpp(44,59): warning C4244: '-=': conversion from 'double' to 'int', possible loss of data
 E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\scrollpane.cpp(62,59): warning C4244: '+=': conversion from 'double' to 'int', possible loss of data
-E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\scrollpane.cpp(270,32): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\scrollpane.cpp(269,32): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
   slider.cpp
   view.cpp
 E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\view.cpp(39,18): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
@@ -126,16 +124,16 @@ E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\view.cpp(194,20): warning C401
 E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\view.cpp(241,20): warning C4018: '<': signed/unsigned mismatch
   window.cpp
 E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\window.cpp(161,42): warning C4267: 'argument': conversion from 'size_t' to 'unsigned int', possible loss of data
-E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\window.cpp(279,20): warning C4018: '<': signed/unsigned mismatch
-E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\window.cpp(300,20): warning C4018: '<': signed/unsigned mismatch
-E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\window.cpp(363,21): warning C4018: '<': signed/unsigned mismatch
-E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\window.cpp(386,21): warning C4018: '<': signed/unsigned mismatch
-E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\window.cpp(427,20): warning C4018: '<': signed/unsigned mismatch
-E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\window.cpp(506,20): warning C4018: '<': signed/unsigned mismatch
-E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\window.cpp(512,20): warning C4018: '<': signed/unsigned mismatch
-E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\window.cpp(544,21): warning C4018: '<': signed/unsigned mismatch
-E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\window.cpp(563,20): warning C4018: '<': signed/unsigned mismatch
-E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\window.cpp(638,20): warning C4018: '<': signed/unsigned mismatch
+E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\window.cpp(299,20): warning C4018: '<': signed/unsigned mismatch
+E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\window.cpp(320,20): warning C4018: '<': signed/unsigned mismatch
+E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\window.cpp(383,21): warning C4018: '<': signed/unsigned mismatch
+E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\window.cpp(406,21): warning C4018: '<': signed/unsigned mismatch
+E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\window.cpp(447,20): warning C4018: '<': signed/unsigned mismatch
+E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\window.cpp(526,20): warning C4018: '<': signed/unsigned mismatch
+E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\window.cpp(532,20): warning C4018: '<': signed/unsigned mismatch
+E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\window.cpp(564,21): warning C4018: '<': signed/unsigned mismatch
+E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\window.cpp(583,20): warning C4018: '<': signed/unsigned mismatch
+E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\window.cpp(658,20): warning C4018: '<': signed/unsigned mismatch
   Generating Code...
 C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(1363,5): warning MSB8012: TargetPath(E:\Xeneva Project\Aurora\x64\Debug\Chitralekha.dll) does not match the Linker's OutputFile property value (F:\chlkha.dll). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
 C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(1365,5): warning MSB8012: TargetName(Chitralekha) does not match the Linker's OutputFile property value (chlkha). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).

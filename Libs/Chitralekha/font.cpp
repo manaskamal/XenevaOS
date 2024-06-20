@@ -300,6 +300,11 @@ int64_t ChFontGetHeightChar(ChFont* font, char c) {
 	return font_h;
 }
 
+int ChFontClamp(int val, int min, int max) {
+	if (val < min) return min;
+	if (val > max)return max;
+	return val;
+}
 /*
  * ChFontDrawTextClipped -- draws text using specific font within
  * a clipped boundary
@@ -319,14 +324,14 @@ int ChFontDrawTextClipped(ChCanvas *canv, ChFont* font, char* string, int penx, 
 	if ((penx >= canv->canvasWidth) || (peny >= canv->canvasHeight))
 		return 1;
 
-	if (peny <= limit->y)
+	if (peny < limit->y)
 		return 1;
 
 	if (penx < limit->x)
 		return 1;
 
-	int w = font->face->glyph->metrics.width;
-	int h = font->face->glyph->metrics.height;
+
+
 	FT_Bool use_kerning = FT_HAS_KERNING(font->face);
 	uint32_t prev = 0;
 	FT_UInt glyfIndx;
@@ -364,19 +369,26 @@ int ChFontDrawTextClipped(ChCanvas *canv, ChFont* font, char* string, int penx, 
 		}
 		
 		/* Check width and height for limiting drawing */
-		if ((y_v + font->fontSz) > (limit->y + limit->h))
-			draw_height = (limit->y + limit->h) - y_v;
+		if ((y_v + draw_height) > (limit->y + limit->h))
+			draw_height = (limit->y + limit->h) - peny;
 
-		if ((x_v + font->fontSz) > (limit->x + limit->w))
+		if (draw_height < 0)
+			draw_height = 0;
+
+		if ((x_v + draw_width) > (limit->x + limit->w))
 			draw_width = (limit->x + limit->w) - x_v;
+
+		if (draw_width < 0)
+			draw_width = 0;
 
 		for (int i = x_v, p = buff_p_off; i < x_v + draw_width && 
 			p < draw_width; i++, p++) {
 			for (int j = y_v, q = buff_q_off; j < y_v + draw_height &&
 				q < draw_height; j++, q++) {
 				if (font->face->glyph->bitmap.buffer[q * font->face->glyph->bitmap.width + p] > 0){
-					double val = font->face->glyph->bitmap.buffer[q * font->face->glyph->bitmap.width + p] * 1.0 / 255;
-					canv->buffer[i + j * canv->canvasWidth] = ChColorAlphaBlend(canv->buffer[i + j * canv->canvasWidth],
+					double val = font->face->glyph->bitmap.buffer[static_cast<uint64_t>(q) * font->face->glyph->bitmap.width + p] * 1.0 / 255;
+					canv->buffer[static_cast<uint64_t>(i) + static_cast<uint64_t>(j) * canv->canvasWidth] = 
+						ChColorAlphaBlend(canv->buffer[static_cast<uint64_t>(i) + static_cast<uint64_t>(j) * canv->canvasWidth],
 						color, val);
 				}
 				else if (font->face->glyph->bitmap.buffer[q * font->face->glyph->bitmap.width] == 255)
@@ -386,6 +398,7 @@ int ChFontDrawTextClipped(ChCanvas *canv, ChFont* font, char* string, int penx, 
 
 		penx += font->face->glyph->advance.x >> 6;
 		peny += font->face->glyph->advance.y >> 6;
+
 		prev = glyfIndx;
 		string++;
 	}

@@ -18,7 +18,6 @@ PUBLIC	AuAcquireSpinlock
 PUBLIC	AuReleaseSpinlock
 PUBLIC	__JustMyCode_Default
 PUBLIC	??_C@_0CM@IGBLDAGO@?$FLaurora?5kernel?$FN?3?5lock?5?9?$DO?5?$CFx?5is?5@ ; `string'
-PUBLIC	??_C@_0L@NFGOIDOM@Locking?5?$AN?6@		; `string'
 EXTRN	kmalloc:PROC
 EXTRN	kfree:PROC
 EXTRN	SeTextOut:PROC
@@ -43,7 +42,7 @@ pdata	ENDS
 ;	COMDAT pdata
 pdata	SEGMENT
 $pdata$AuAcquireSpinlock DD imagerel $LN10
-	DD	imagerel $LN10+146
+	DD	imagerel $LN10+134
 	DD	imagerel $unwind$AuAcquireSpinlock
 pdata	ENDS
 ;	COMDAT pdata
@@ -52,10 +51,6 @@ $pdata$AuReleaseSpinlock DD imagerel $LN4
 	DD	imagerel $LN4+71
 	DD	imagerel $unwind$AuReleaseSpinlock
 pdata	ENDS
-;	COMDAT ??_C@_0L@NFGOIDOM@Locking?5?$AN?6@
-CONST	SEGMENT
-??_C@_0L@NFGOIDOM@Locking?5?$AN?6@ DB 'Locking ', 0dH, 0aH, 00H ; `string'
-CONST	ENDS
 ;	COMDAT ??_C@_0CM@IGBLDAGO@?$FLaurora?5kernel?$FN?3?5lock?5?9?$DO?5?$CFx?5is?5@
 CONST	SEGMENT
 ??_C@_0CM@IGBLDAGO@?$FLaurora?5kernel?$FN?3?5lock?5?9?$DO?5?$CFx?5is?5@ DB '['
@@ -69,7 +64,7 @@ $unwind$AuReleaseSpinlock DD 025030f01H
 xdata	ENDS
 ;	COMDAT voltbl
 voltbl	SEGMENT
-_volmd	DB	07aH
+_volmd	DB	06eH
 voltbl	ENDS
 ;	COMDAT xdata
 xdata	SEGMENT
@@ -103,7 +98,7 @@ _TEXT	SEGMENT
 lock$ = 80
 AuReleaseSpinlock PROC					; COMDAT
 
-; 90   : AU_EXTERN AU_EXPORT void AuReleaseSpinlock(Spinlock* lock) {
+; 89   : AU_EXTERN AU_EXPORT void AuReleaseSpinlock(Spinlock* lock) {
 
 $LN4:
 	mov	QWORD PTR [rsp+8], rcx
@@ -113,7 +108,7 @@ $LN4:
 	lea	rcx, OFFSET FLAT:__8B123772_spinlock@cpp
 	call	__CheckForDebuggerJustMyCode
 
-; 91   : 	if (!x64_lock_test(&lock->value, 1, 0))
+; 90   : 	if (!x64_lock_test(&lock->value, 1, 0))
 
 	mov	rax, QWORD PTR lock$[rbp]
 	xor	r8d, r8d
@@ -124,13 +119,13 @@ $LN4:
 	test	eax, eax
 	jne	SHORT $LN2@AuReleaseS
 
-; 92   : 		lock->value = 0;
+; 91   : 		lock->value = 0;
 
 	mov	rax, QWORD PTR lock$[rbp]
 	mov	QWORD PTR [rax], 0
 $LN2@AuReleaseS:
 
-; 93   : }
+; 92   : }
 
 	lea	rsp, QWORD PTR [rbp+64]
 	pop	rbp
@@ -175,13 +170,8 @@ $LN7@AuAcquireS:
 $LN4@AuAcquireS:
 
 ; 74   : 	}
-; 75   : 	do {
-; 76   : 		SeTextOut("Locking \r\n");
-
-	lea	rcx, OFFSET FLAT:??_C@_0L@NFGOIDOM@Locking?5?$AN?6@
-	call	SeTextOut
-
-; 77   : 		if (x64_lock_test(&lock->value, 0, 1)) {
+; 75   : 	do {	
+; 76   : 		if (x64_lock_test(&lock->value, 0, 1)) {
 
 	mov	rax, QWORD PTR lock$[rbp]
 	mov	r8d, 1
@@ -192,23 +182,23 @@ $LN4@AuAcquireS:
 	test	eax, eax
 	je	SHORT $LN8@AuAcquireS
 
-; 78   : 			break;
+; 77   : 			break;
 
 	jmp	SHORT $LN3@AuAcquireS
 $LN8@AuAcquireS:
 
-; 79   : 		}
-; 80   : 		x64_pause();
+; 78   : 		}
+; 79   : 		x64_pause();
 
 	call	x64_pause
 
-; 81   : 		volatile size_t* lockd = &lock->value;
+; 80   : 		volatile size_t* lockd = &lock->value;
 
 	mov	rax, QWORD PTR lock$[rbp]
 	mov	QWORD PTR lockd$1[rbp], rax
 $LN5@AuAcquireS:
 
-; 82   : 		while (*lockd == 1);
+; 81   : 		while (*lockd == 1);
 
 	mov	rax, QWORD PTR lockd$1[rbp]
 	mov	rax, QWORD PTR [rax]
@@ -217,14 +207,14 @@ $LN5@AuAcquireS:
 	jmp	SHORT $LN5@AuAcquireS
 $LN6@AuAcquireS:
 
-; 83   : 	} while (1);
+; 82   : 	} while (1);
 
 	xor	eax, eax
 	cmp	eax, 1
 	jne	SHORT $LN4@AuAcquireS
 $LN3@AuAcquireS:
 
-; 84   : }
+; 83   : }
 
 	lea	rsp, QWORD PTR [rbp+80]
 	pop	rbp

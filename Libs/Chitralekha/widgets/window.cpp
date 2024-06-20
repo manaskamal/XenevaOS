@@ -232,8 +232,28 @@ XE_EXTERN XE_EXPORT void ChWindowBroadcastIcon(ChitralekhaApp* app, char* iconfi
 XE_EXTERN XE_EXPORT void ChWindowUpdate(ChWindow* win, int x, int y, int w, int h,bool updateEntireWin, bool dirty) {
 	uint32_t *lfb = win->buffer;
 	uint32_t* canvaddr = win->canv->buffer;
+	if (x < 0) {
+		_KePrint("Corrupted x -> %d \r\n", x);
+		x = 0;
+	}
+
+	if (y < 0) {
+		_KePrint("Corrupted y -> %d \r\n", y);
+		y = 0;
+	}
+
+	if (w > win->info->width) {
+		_KePrint("Corrupted w -> %d \r\n", w);
+		w = win->info->width;
+	}
+	if (h > win->info->height) {
+		_KePrint("Corrupted h -> %d \r\n", h);
+		h = win->info->height;
+	}
+	
 	for (int i = 0; i < h; i++)
-		_fastcpy(lfb + (y + i) * win->info->width + x, canvaddr + (y + i) * win->info->width + x, w * 4);
+		_fastcpy(lfb + (static_cast<uint64_t>(y) + i) * win->info->width + x, 
+			canvaddr + (static_cast<uint64_t>(y) + i) * win->info->width + x, static_cast<uint64_t>(w) * 4);
 
 	win->info->updateEntireWindow = updateEntireWin;
 
@@ -721,8 +741,23 @@ XE_EXTERN XE_EXPORT ChPopupWindow* ChCreatePopupWindow(ChitralekhaApp *app,ChWin
 XE_EXTERN XE_EXPORT void ChPopupWindowUpdate(ChPopupWindow* pw, int x, int y, int w, int h) {
 	uint32_t *lfb = pw->buffer;
 	uint32_t* canvaddr = pw->canv->buffer;
+	if (x < 0)
+		x = 0;
+	if (y < 0)
+		y = 0;
+	if (w >= pw->shwin->w)
+		w = pw->shwin->w;
+	if (h >= pw->shwin->h)
+		h = pw->shwin->h;
+
+	if (x > pw->shwin->w)
+		return;
+	if (y > pw->shwin->h)
+		return;
+
 	for (int i = 0; i < h; i++)
-		_fastcpy(lfb + (y + i) * pw->shwin->w + x, canvaddr + (y + i) * pw->shwin->w + x, w * 4);
+		_fastcpy(lfb + (static_cast<uint64_t>(y) + i) * pw->shwin->w + x, 
+			canvaddr + (static_cast<uint64_t>(y) + i) * pw->shwin->w + x, static_cast<uint64_t>(w) * 4);
 
 	pw->shwin->dirty = 1;
 }
@@ -765,8 +800,9 @@ XE_EXTERN XE_EXPORT void ChPopupWindowUpdateLocation(ChPopupWindow* pwin,ChWindo
 /*
  * ChPopupWindowHide -- hide the popup window
  * @param pw -- Pointer to Popup Window
+ * @param parent -- Root window
  */
-XE_EXTERN XE_EXPORT void ChPopupWindowHide(ChPopupWindow* pw) {
+XE_EXTERN XE_EXPORT void ChPopupWindowHide(ChPopupWindow* pw, ChWindow* parent) {
 	pw->shwin->hide = true;
 	pw->hidden = true;
 	pw->wid.visible = false;

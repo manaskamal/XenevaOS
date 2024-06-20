@@ -34,6 +34,7 @@ PUBLIC	??_C@_0FI@IAKHKFBH@?$FLAurora?5Kernel?$FN?3?5We?5are?5sorry?5t@ ; `string
 PUBLIC	??_C@_0EB@GBLAIMDC@?$FLAurora?5Kernel?$FN?3?5please?5inform?5@ ; `string'
 PUBLIC	??_C@_0DD@KEEKPGHM@?$FLAurora?5Kernel?$FN?3?5Below?5is?5the?5c@ ; `string'
 PUBLIC	??_C@_0CP@DDGNNPIN@?$FLAurora?5Kernel?$FN?3?5Current?5Proces@ ; `string'
+PUBLIC	??_C@_0FB@CKOCEJAF@?$FLAurora?5Kernel?$FN?3?5If?5anything?5no@ ; `string'
 PUBLIC	??_C@_06BGDIMDGA@?5?$CFs?5?$AN?6@		; `string'
 PUBLIC	??_C@_0N@EBPCEKFE@?6Divide?5by?50@		; `string'
 PUBLIC	??_C@_0P@KPEOJEOL@Divide?5by?50?5?$AN?6@	; `string'
@@ -107,7 +108,7 @@ pdata	ENDS
 ;	COMDAT pdata
 pdata	SEGMENT
 $pdata$?panic@@YAXPEBDZZ DD imagerel $LN3
-	DD	imagerel $LN3+134
+	DD	imagerel $LN3+146
 	DD	imagerel $unwind$?panic@@YAXPEBDZZ
 pdata	ENDS
 ;	COMDAT pdata
@@ -450,6 +451,12 @@ CONST	ENDS
 CONST	SEGMENT
 ??_C@_06BGDIMDGA@?5?$CFs?5?$AN?6@ DB ' %s ', 0dH, 0aH, 00H ; `string'
 CONST	ENDS
+;	COMDAT ??_C@_0FB@CKOCEJAF@?$FLAurora?5Kernel?$FN?3?5If?5anything?5no@
+CONST	SEGMENT
+??_C@_0FB@CKOCEJAF@?$FLAurora?5Kernel?$FN?3?5If?5anything?5no@ DB '[Auror'
+	DB	'a Kernel]: If anything not working, try rebooting/Restarting '
+	DB	'the system ', 0dH, 0aH, 00H			; `string'
+CONST	ENDS
 ;	COMDAT ??_C@_0CP@DDGNNPIN@?$FLAurora?5Kernel?$FN?3?5Current?5Proces@
 CONST	SEGMENT
 ??_C@_0CP@DDGNNPIN@?$FLAurora?5Kernel?$FN?3?5Current?5Proces@ DB '[Aurora'
@@ -613,7 +620,7 @@ v$ = 96
 p$ = 104
 ?simd_fpu_fault@@YAX_KPEAX@Z PROC			; simd_fpu_fault, COMDAT
 
-; 288  : void simd_fpu_fault(size_t v, void* p){
+; 289  : void simd_fpu_fault(size_t v, void* p){
 
 $LN6:
 	mov	QWORD PTR [rsp+16], rdx
@@ -624,57 +631,57 @@ $LN6:
 	lea	rcx, OFFSET FLAT:__3B5C682D_x86_64_exception@cpp
 	call	__CheckForDebuggerJustMyCode
 
-; 289  : 	x64_cli();
+; 290  : 	x64_cli();
 
 	call	x64_cli
 
-; 290  : 	interrupt_stack_frame *frame = (interrupt_stack_frame*)p;
+; 291  : 	interrupt_stack_frame *frame = (interrupt_stack_frame*)p;
 
 	mov	rax, QWORD PTR p$[rbp]
 	mov	QWORD PTR frame$[rbp], rax
 
-; 291  : 	panic("\n SIMD FPU Faul \r\nt");
+; 292  : 	panic("\n SIMD FPU Faul \r\nt");
 
 	lea	rcx, OFFSET FLAT:??_C@_0BE@LFDDCDK@?6?5SIMD?5FPU?5Faul?5?$AN?6t@
 	call	?panic@@YAXPEBDZZ			; panic
 
-; 292  : 	SeTextOut("\n__CPU Informations__ \n");
+; 293  : 	SeTextOut("\n__CPU Informations__ \n");
 
 	lea	rcx, OFFSET FLAT:??_C@_0BI@CEHMAKJG@?6__CPU?5Informations__?5?6@
 	call	SeTextOut
 
-; 293  : 	SeTextOut(" RIP -> %x \n", frame->rip);
+; 294  : 	SeTextOut(" RIP -> %x \n", frame->rip);
 
 	mov	rax, QWORD PTR frame$[rbp]
 	mov	rdx, QWORD PTR [rax+16]
 	lea	rcx, OFFSET FLAT:??_C@_0N@PNNODPEJ@?5RIP?5?9?$DO?5?$CFx?5?6@
 	call	SeTextOut
 
-; 294  : 	SeTextOut(" RSP -> %x \n", frame->rsp);
+; 295  : 	SeTextOut(" RSP -> %x \n", frame->rsp);
 
 	mov	rax, QWORD PTR frame$[rbp]
 	mov	rdx, QWORD PTR [rax+40]
 	lea	rcx, OFFSET FLAT:??_C@_0N@LBIHKDAG@?5RSP?5?9?$DO?5?$CFx?5?6@
 	call	SeTextOut
 
-; 295  : 	SeTextOut(" RFLAGS -> %x \n", frame->rflags);
+; 296  : 	SeTextOut(" RFLAGS -> %x \n", frame->rflags);
 
 	mov	rax, QWORD PTR frame$[rbp]
 	mov	rdx, QWORD PTR [rax+32]
 	lea	rcx, OFFSET FLAT:??_C@_0BA@MAMEGMKL@?5RFLAGS?5?9?$DO?5?$CFx?5?6@
 	call	SeTextOut
 
-; 296  : 	SeTextOut(" MXCSR bit  -- ");
+; 297  : 	SeTextOut(" MXCSR bit  -- ");
 
 	lea	rcx, OFFSET FLAT:??_C@_0BA@JGMDELOL@?5MXCSR?5bit?5?5?9?9?5@
 	call	SeTextOut
 $LN2@simd_fpu_f:
 
-; 297  : 	for (;;);
+; 298  : 	for (;;);
 
 	jmp	SHORT $LN2@simd_fpu_f
 
-; 298  : }
+; 299  : }
 
 	lea	rsp, QWORD PTR [rbp+80]
 	pop	rbp
@@ -689,7 +696,7 @@ v$ = 80
 p$ = 88
 ?machine_check_abort@@YAX_KPEAX@Z PROC			; machine_check_abort, COMDAT
 
-; 281  : void machine_check_abort(size_t v, void* p){
+; 282  : void machine_check_abort(size_t v, void* p){
 
 $LN6:
 	mov	QWORD PTR [rsp+16], rdx
@@ -700,21 +707,21 @@ $LN6:
 	lea	rcx, OFFSET FLAT:__3B5C682D_x86_64_exception@cpp
 	call	__CheckForDebuggerJustMyCode
 
-; 282  : 	x64_cli();
+; 283  : 	x64_cli();
 
 	call	x64_cli
 
-; 283  : 	panic("\nMachine Check Abort");
+; 284  : 	panic("\nMachine Check Abort");
 
 	lea	rcx, OFFSET FLAT:??_C@_0BF@MNKGAIFI@?6Machine?5Check?5Abort@
 	call	?panic@@YAXPEBDZZ			; panic
 $LN2@machine_ch:
 
-; 284  : 	for (;;);
+; 285  : 	for (;;);
 
 	jmp	SHORT $LN2@machine_ch
 
-; 285  : }
+; 286  : }
 
 	lea	rsp, QWORD PTR [rbp+64]
 	pop	rbp
@@ -729,7 +736,7 @@ v$ = 80
 p$ = 88
 ?alignment_check_fault@@YAX_KPEAX@Z PROC		; alignment_check_fault, COMDAT
 
-; 274  : void alignment_check_fault(size_t v, void* p){
+; 275  : void alignment_check_fault(size_t v, void* p){
 
 $LN6:
 	mov	QWORD PTR [rsp+16], rdx
@@ -740,21 +747,21 @@ $LN6:
 	lea	rcx, OFFSET FLAT:__3B5C682D_x86_64_exception@cpp
 	call	__CheckForDebuggerJustMyCode
 
-; 275  : 	x64_cli();
+; 276  : 	x64_cli();
 
 	call	x64_cli
 
-; 276  : 	panic("\nAlignment Check Fault at address ");
+; 277  : 	panic("\nAlignment Check Fault at address ");
 
 	lea	rcx, OFFSET FLAT:??_C@_0CD@CNGJPDL@?6Alignment?5Check?5Fault?5at?5addre@
 	call	?panic@@YAXPEBDZZ			; panic
 $LN2@alignment_:
 
-; 277  : 	for (;;);
+; 278  : 	for (;;);
 
 	jmp	SHORT $LN2@alignment_
 
-; 278  : }
+; 279  : }
 
 	lea	rsp, QWORD PTR [rbp+64]
 	pop	rbp
@@ -769,7 +776,7 @@ vector$ = 80
 p$ = 88
 ?fpu_fault@@YAX_KPEAX@Z PROC				; fpu_fault, COMDAT
 
-; 266  : void fpu_fault(size_t vector, void* p){
+; 267  : void fpu_fault(size_t vector, void* p){
 
 $LN6:
 	mov	QWORD PTR [rsp+16], rdx
@@ -780,21 +787,21 @@ $LN6:
 	lea	rcx, OFFSET FLAT:__3B5C682D_x86_64_exception@cpp
 	call	__CheckForDebuggerJustMyCode
 
-; 267  : 	x64_cli();
+; 268  : 	x64_cli();
 
 	call	x64_cli
 
-; 268  : 	panic("\nFPU Fault");
+; 269  : 	panic("\nFPU Fault");
 
 	lea	rcx, OFFSET FLAT:??_C@_0L@GOHGINKM@?6FPU?5Fault@
 	call	?panic@@YAXPEBDZZ			; panic
 $LN2@fpu_fault:
 
-; 269  : 	for (;;);
+; 270  : 	for (;;);
 
 	jmp	SHORT $LN2@fpu_fault
 
-; 270  : }
+; 271  : }
 
 	lea	rsp, QWORD PTR [rbp+64]
 	pop	rbp
@@ -831,7 +838,7 @@ vector$ = 240
 param$ = 248
 ?page_fault@@YAX_KPEAX@Z PROC				; page_fault, COMDAT
 
-; 186  : void page_fault(size_t vector, void* param){
+; 187  : void page_fault(size_t vector, void* param){
 
 $LN23:
 	mov	QWORD PTR [rsp+16], rdx
@@ -842,28 +849,28 @@ $LN23:
 	lea	rcx, OFFSET FLAT:__3B5C682D_x86_64_exception@cpp
 	call	__CheckForDebuggerJustMyCode
 
-; 187  : 	x64_cli();
+; 188  : 	x64_cli();
 
 	call	x64_cli
 
-; 188  : 	interrupt_stack_frame *frame = (interrupt_stack_frame*)param;
+; 189  : 	interrupt_stack_frame *frame = (interrupt_stack_frame*)param;
 
 	mov	rax, QWORD PTR param$[rbp]
 	mov	QWORD PTR frame$[rbp], rax
 
-; 189  : 	stack_frame *fr = (stack_frame*)param;
+; 190  : 	stack_frame *fr = (stack_frame*)param;
 
 	mov	rax, QWORD PTR param$[rbp]
 	mov	QWORD PTR fr$[rbp], rax
 
-; 190  : 
-; 191  : 	void* vaddr = (void*)x64_read_cr2();
+; 191  : 
+; 192  : 	void* vaddr = (void*)x64_read_cr2();
 
 	call	x64_read_cr2
 	mov	QWORD PTR vaddr$[rbp], rax
 
-; 192  : 
-; 193  : 	int present = !(frame->error & 0x1);
+; 193  : 
+; 194  : 	int present = !(frame->error & 0x1);
 
 	mov	rax, QWORD PTR frame$[rbp]
 	mov	rax, QWORD PTR [rax+8]
@@ -878,81 +885,81 @@ $LN22@page_fault:
 	mov	eax, DWORD PTR tv68[rbp]
 	mov	DWORD PTR present$[rbp], eax
 
-; 194  : 	int rw = frame->error & 0x2;
+; 195  : 	int rw = frame->error & 0x2;
 
 	mov	rax, QWORD PTR frame$[rbp]
 	mov	rax, QWORD PTR [rax+8]
 	and	rax, 2
 	mov	DWORD PTR rw$[rbp], eax
 
-; 195  : 	int us = frame->error & 0x4;
+; 196  : 	int us = frame->error & 0x4;
 
 	mov	rax, QWORD PTR frame$[rbp]
 	mov	rax, QWORD PTR [rax+8]
 	and	rax, 4
 	mov	DWORD PTR us$[rbp], eax
 
-; 196  : 	int resv = frame->error & 0x8;
+; 197  : 	int resv = frame->error & 0x8;
 
 	mov	rax, QWORD PTR frame$[rbp]
 	mov	rax, QWORD PTR [rax+8]
 	and	rax, 8
 	mov	DWORD PTR resv$[rbp], eax
 
-; 197  : 	int id = frame->error & 0x10;
+; 198  : 	int id = frame->error & 0x10;
 
 	mov	rax, QWORD PTR frame$[rbp]
 	mov	rax, QWORD PTR [rax+8]
 	and	rax, 16
 	mov	DWORD PTR id$[rbp], eax
 
-; 198  : 
-; 199  : 	
-; 200  : 	AuThread* thr = AuGetCurrentThread();
+; 199  : 
+; 200  : 	
+; 201  : 	AuThread* thr = AuGetCurrentThread();
 
 	call	AuGetCurrentThread
 	mov	QWORD PTR thr$[rbp], rax
 
-; 201  : 	
-; 202  : 	/* check for signal */
-; 203  : 	if (!thr) {
+; 202  : 	
+; 203  : 	/* check for signal */
+; 204  : 	if (!thr) {
 
 	cmp	QWORD PTR thr$[rbp], 0
 	jne	SHORT $LN5@page_fault
 
-; 204  : 		goto skip;
+; 205  : 		goto skip;
 
 	jmp	$LN6@page_fault
 	jmp	$skip$24
 $LN5@page_fault:
 
-; 205  : 	}
-; 206  : 	if (thr->returnableSignal) {
+; 206  : 	}
+; 207  : 	if (thr->returnableSignal) {
 
 	mov	rax, QWORD PTR thr$[rbp]
 	cmp	QWORD PTR [rax+633], 0
 	je	$LN7@page_fault
 
-; 207  : 		Signal* sig = (Signal*)thr->returnableSignal;
+; 208  : 		Signal* sig = (Signal*)thr->returnableSignal;
 
 	mov	rax, QWORD PTR thr$[rbp]
 	mov	rax, QWORD PTR [rax+633]
 	mov	QWORD PTR sig$1[rbp], rax
 
-; 208  : 		x86_64_cpu_regs_t* ctx = (x86_64_cpu_regs_t*)(thr->frame.kern_esp - sizeof(x86_64_cpu_regs_t));
+; 209  : 		x86_64_cpu_regs_t* ctx = (x86_64_cpu_regs_t*)(thr->frame.kern_esp - sizeof(x86_64_cpu_regs_t));
 
 	mov	rax, QWORD PTR thr$[rbp]
 	mov	rax, QWORD PTR [rax+200]
 	sub	rax, 160				; 000000a0H
 	mov	QWORD PTR ctx$2[rbp], rax
 
-; 209  : 		x86_64_cpu_regs_t* srcCtx = (x86_64_cpu_regs_t*)sig->signalStack;
+; 210  : 		x86_64_cpu_regs_t* srcCtx = (x86_64_cpu_regs_t*)sig->signalStack;
 
 	mov	rax, QWORD PTR sig$1[rbp]
 	mov	rax, QWORD PTR [rax+4]
 	mov	QWORD PTR srcCtx$3[rbp], rax
 
-; 210  : 		memcpy(ctx, sig->signalStack, sizeof(x86_64_cpu_regs_t));
+; 211  : 		memcpy(ctx, sig->signalStack, sizeof(x86_64_cpu_regs_t));
 
 	mov	r8d, 160				; 000000a0H
 	mov	rax, QWORD PTR sig$1[rbp]
@@ -960,7 +967,7 @@ $LN5@page_fault:
 	mov	rcx, QWORD PTR ctx$2[rbp]
 	call	memcpy
 
-; 211  : 		memcpy(&thr->frame, sig->signalState, sizeof(AuThreadFrame));
+; 212  : 		memcpy(&thr->frame, sig->signalState, sizeof(AuThreadFrame));
 
 	mov	rax, QWORD PTR thr$[rbp]
 	mov	r8d, 216				; 000000d8H
@@ -969,55 +976,55 @@ $LN5@page_fault:
 	mov	rcx, rax
 	call	memcpy
 
-; 212  : 		kfree(sig->signalStack);
+; 213  : 		kfree(sig->signalStack);
 
 	mov	rax, QWORD PTR sig$1[rbp]
 	mov	rcx, QWORD PTR [rax+4]
 	call	kfree
 
-; 213  : 		kfree(sig);
+; 214  : 		kfree(sig);
 
 	mov	rcx, QWORD PTR sig$1[rbp]
 	call	kfree
 
-; 214  : 		thr->returnableSignal = NULL;
+; 215  : 		thr->returnableSignal = NULL;
 
 	mov	rax, QWORD PTR thr$[rbp]
 	mov	QWORD PTR [rax+633], 0
 
-; 215  : 		thr->pendingSigCount = 0;
+; 216  : 		thr->pendingSigCount = 0;
 
 	mov	rax, QWORD PTR thr$[rbp]
 	mov	BYTE PTR [rax+632], 0
 
-; 216  : 		thr->signalQueue = 0;
+; 217  : 		thr->signalQueue = 0;
 
 	mov	rax, QWORD PTR thr$[rbp]
 	mov	QWORD PTR [rax+624], 0
 
-; 217  : 		return;
+; 218  : 		return;
 
 	jmp	$LN1@page_fault
 $LN7@page_fault:
 
-; 218  : 	}
-; 219  : 
-; 220  : 	AuProcess *proc = NULL;
+; 219  : 	}
+; 220  : 
+; 221  : 	AuProcess *proc = NULL;
 
 	mov	QWORD PTR proc$[rbp], 0
 
-; 221  : 	if (thr) {
+; 222  : 	if (thr) {
 
 	cmp	QWORD PTR thr$[rbp], 0
 	je	SHORT $LN8@page_fault
 
-; 222  : 		proc = AuProcessFindThread(thr);
+; 223  : 		proc = AuProcessFindThread(thr);
 
 	mov	rcx, QWORD PTR thr$[rbp]
 	call	?AuProcessFindThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z ; AuProcessFindThread
 	mov	QWORD PTR proc$[rbp], rax
 
-; 223  : 		SeTextOut("Thread name -> %s \r\n", thr->name);
+; 224  : 		SeTextOut("Thread name -> %s \r\n", thr->name);
 
 	mov	rax, QWORD PTR thr$[rbp]
 	add	rax, 284				; 0000011cH
@@ -1025,19 +1032,19 @@ $LN7@page_fault:
 	lea	rcx, OFFSET FLAT:??_C@_0BF@OEDHGALK@Thread?5name?5?9?$DO?5?$CFs?5?$AN?6@
 	call	SeTextOut
 
-; 224  : 		if (proc) {
+; 225  : 		if (proc) {
 
 	cmp	QWORD PTR proc$[rbp], 0
 	je	SHORT $LN9@page_fault
 
-; 225  : 			SeTextOut("Process pid -> %d \r\n", proc->proc_id);
+; 226  : 			SeTextOut("Process pid -> %d \r\n", proc->proc_id);
 
 	mov	rax, QWORD PTR proc$[rbp]
 	mov	edx, DWORD PTR [rax]
 	lea	rcx, OFFSET FLAT:??_C@_0BF@GPMBGFMG@Process?5pid?5?9?$DO?5?$CFd?5?$AN?6@
 	call	SeTextOut
 
-; 226  : 			SeTextOut("Process name -> %s \r\n", proc->name);
+; 227  : 			SeTextOut("Process name -> %s \r\n", proc->name);
 
 	mov	rax, QWORD PTR proc$[rbp]
 	add	rax, 4
@@ -1049,62 +1056,62 @@ $LN8@page_fault:
 $LN6@page_fault:
 $skip$24:
 
-; 227  : 		}
-; 228  : 	}
-; 229  : 	
-; 230  : skip:
-; 231  : 	panic("Page Fault !! \r\n");
+; 228  : 		}
+; 229  : 	}
+; 230  : 	
+; 231  : skip:
+; 232  : 	panic("Page Fault !! \r\n");
 
 	lea	rcx, OFFSET FLAT:??_C@_0BB@OINBMLCH@Page?5Fault?5?$CB?$CB?5?$AN?6@
 	call	?panic@@YAXPEBDZZ			; panic
 
-; 232  : 	uint64_t vaddr_ = (uint64_t)vaddr;
+; 233  : 	uint64_t vaddr_ = (uint64_t)vaddr;
 
 	mov	rax, QWORD PTR vaddr$[rbp]
 	mov	QWORD PTR vaddr_$[rbp], rax
 
-; 233  : 	uint64_t vaddr_aligned = VIRT_ADDR_ALIGN(vaddr_);
+; 234  : 	uint64_t vaddr_aligned = VIRT_ADDR_ALIGN(vaddr_);
 
 	mov	rax, QWORD PTR vaddr_$[rbp]
 	and	rax, -4096				; fffffffffffff000H
 	mov	QWORD PTR vaddr_aligned$[rbp], rax
 
-; 234  : 	bool _mapped = false;
+; 235  : 	bool _mapped = false;
 
 	mov	BYTE PTR _mapped$[rbp], 0
 
-; 235  : 	if (present) {
+; 236  : 	if (present) {
 
 	cmp	DWORD PTR present$[rbp], 0
 	je	SHORT $LN10@page_fault
 
-; 236  : 		SeTextOut("Page Not Present \r\n");
+; 237  : 		SeTextOut("Page Not Present \r\n");
 
 	lea	rcx, OFFSET FLAT:??_C@_0BE@JLFIKHEK@Page?5Not?5Present?5?$AN?6@
 	call	SeTextOut
 
-; 237  : 	}
+; 238  : 	}
 
 	jmp	$LN11@page_fault
 $LN10@page_fault:
 
-; 238  : 	else if (rw) {
+; 239  : 	else if (rw) {
 
 	cmp	DWORD PTR rw$[rbp], 0
 	je	$LN12@page_fault
 
-; 239  : 		SeTextOut("Read/Write \r\n");
+; 240  : 		SeTextOut("Read/Write \r\n");
 
 	lea	rcx, OFFSET FLAT:??_C@_0O@GDFNKNKM@Read?1Write?5?$AN?6@
 	call	SeTextOut
 
-; 240  : 		void* phys = AuGetPhysicalAddress(vaddr_aligned);
+; 241  : 		void* phys = AuGetPhysicalAddress(vaddr_aligned);
 
 	mov	rcx, QWORD PTR vaddr_aligned$[rbp]
 	call	AuGetPhysicalAddress
 	mov	QWORD PTR phys$4[rbp], rax
 
-; 241  : 		AuVPage *vpage = AuVmmngrGetPage(vaddr_aligned, 0, 0);
+; 242  : 		AuVPage *vpage = AuVmmngrGetPage(vaddr_aligned, 0, 0);
 
 	xor	r8d, r8d
 	xor	edx, edx
@@ -1112,7 +1119,7 @@ $LN10@page_fault:
 	call	AuVmmngrGetPage
 	mov	QWORD PTR vpage$5[rbp], rax
 
-; 242  : 		SeTextOut("VPage rw -> %d , user -> %d \r\n", vpage->bits.writable, vpage->bits.user);
+; 243  : 		SeTextOut("VPage rw -> %d , user -> %d \r\n", vpage->bits.writable, vpage->bits.user);
 
 	mov	rax, QWORD PTR vpage$5[rbp]
 	mov	rax, QWORD PTR [rax]
@@ -1127,7 +1134,7 @@ $LN10@page_fault:
 	lea	rcx, OFFSET FLAT:??_C@_0BP@JEBAMBMP@VPage?5rw?5?9?$DO?5?$CFd?5?0?5user?5?9?$DO?5?$CFd?5?$AN?6@
 	call	SeTextOut
 
-; 243  : 		SeTextOut("VPage phys1-> %x, phys2-> %x \r\n", phys, (vpage->bits.page << PAGE_SHIFT));
+; 244  : 		SeTextOut("VPage phys1-> %x, phys2-> %x \r\n", phys, (vpage->bits.page << PAGE_SHIFT));
 
 	mov	rax, QWORD PTR vpage$5[rbp]
 	mov	rax, QWORD PTR [rax]
@@ -1139,41 +1146,41 @@ $LN10@page_fault:
 	lea	rcx, OFFSET FLAT:??_C@_0CA@DAKGOMFF@VPage?5phys1?9?$DO?5?$CFx?0?5phys2?9?$DO?5?$CFx?5?$AN?6@
 	call	SeTextOut
 
-; 244  : 	}
+; 245  : 	}
 
 	jmp	SHORT $LN13@page_fault
 $LN12@page_fault:
 
-; 245  : 	else if (us)
+; 246  : 	else if (us)
 
 	cmp	DWORD PTR us$[rbp], 0
 	je	SHORT $LN14@page_fault
 
-; 246  : 		SeTextOut("User bit not set \r\n");
+; 247  : 		SeTextOut("User bit not set \r\n");
 
 	lea	rcx, OFFSET FLAT:??_C@_0BE@HGFGIJLF@User?5bit?5not?5set?5?$AN?6@
 	call	SeTextOut
 	jmp	SHORT $LN15@page_fault
 $LN14@page_fault:
 
-; 247  : 	else if (resv)
+; 248  : 	else if (resv)
 
 	cmp	DWORD PTR resv$[rbp], 0
 	je	SHORT $LN16@page_fault
 
-; 248  : 		SeTextOut("Reserved page \r\n");
+; 249  : 		SeTextOut("Reserved page \r\n");
 
 	lea	rcx, OFFSET FLAT:??_C@_0BB@JGKFHPN@Reserved?5page?5?$AN?6@
 	call	SeTextOut
 	jmp	SHORT $LN17@page_fault
 $LN16@page_fault:
 
-; 249  : 	else if (id)
+; 250  : 	else if (id)
 
 	cmp	DWORD PTR id$[rbp], 0
 	je	SHORT $LN18@page_fault
 
-; 250  : 		SeTextOut("Invalid page \r\n");
+; 251  : 		SeTextOut("Invalid page \r\n");
 
 	lea	rcx, OFFSET FLAT:??_C@_0BA@EFEPIAFE@Invalid?5page?5?$AN?6@
 	call	SeTextOut
@@ -1183,20 +1190,20 @@ $LN15@page_fault:
 $LN13@page_fault:
 $LN11@page_fault:
 
-; 251  : 	uint64_t diff = (frame->rip - 0x600000);
+; 252  : 	uint64_t diff = (frame->rip - 0x600000);
 
 	mov	rax, QWORD PTR frame$[rbp]
 	mov	rax, QWORD PTR [rax+16]
 	sub	rax, 6291456				; 00600000H
 	mov	QWORD PTR diff$[rbp], rax
 
-; 252  : 	uint16_t mask = diff & UINT16_MAX;
+; 253  : 	uint16_t mask = diff & UINT16_MAX;
 
 	mov	rax, QWORD PTR diff$[rbp]
 	and	rax, 65535				; 0000ffffH
 	mov	WORD PTR mask$[rbp], ax
 
-; 253  : 	uint64_t real_addr = (frame->rip - diff);
+; 254  : 	uint64_t real_addr = (frame->rip - diff);
 
 	mov	rax, QWORD PTR frame$[rbp]
 	mov	rcx, QWORD PTR diff$[rbp]
@@ -1204,26 +1211,26 @@ $LN11@page_fault:
 	sub	rax, rcx
 	mov	QWORD PTR real_addr$[rbp], rax
 
-; 254  : 	SeTextOut("Virtual Address -> %x \r\n", vaddr_);
+; 255  : 	SeTextOut("Virtual Address -> %x \r\n", vaddr_);
 
 	mov	rdx, QWORD PTR vaddr_$[rbp]
 	lea	rcx, OFFSET FLAT:??_C@_0BJ@MPFJDHA@Virtual?5Address?5?9?$DO?5?$CFx?5?$AN?6@
 	call	SeTextOut
 
-; 255  : 	SeTextOut("Virtual Address aligned -> %x \r\n", vaddr_aligned);
+; 256  : 	SeTextOut("Virtual Address aligned -> %x \r\n", vaddr_aligned);
 
 	mov	rdx, QWORD PTR vaddr_aligned$[rbp]
 	lea	rcx, OFFSET FLAT:??_C@_0CB@EGGAFDHO@Virtual?5Address?5aligned?5?9?$DO?5?$CFx?5?$AN@
 	call	SeTextOut
 
-; 256  : 	SeTextOut("RSP -> %x \r\n", frame->rsp);
+; 257  : 	SeTextOut("RSP -> %x \r\n", frame->rsp);
 
 	mov	rax, QWORD PTR frame$[rbp]
 	mov	rdx, QWORD PTR [rax+40]
 	lea	rcx, OFFSET FLAT:??_C@_0N@FNJJLAE@RSP?5?9?$DO?5?$CFx?5?$AN?6@
 	call	SeTextOut
 
-; 257  : 	SeTextOut("RIP -> %x , Actual addr -> %x \r\n", frame->rip, (real_addr + mask));
+; 258  : 	SeTextOut("RIP -> %x , Actual addr -> %x \r\n", frame->rip, (real_addr + mask));
 
 	movzx	eax, WORD PTR mask$[rbp]
 	mov	rcx, QWORD PTR real_addr$[rbp]
@@ -1235,7 +1242,7 @@ $LN11@page_fault:
 	lea	rcx, OFFSET FLAT:??_C@_0CB@FDCJCAAG@RIP?5?9?$DO?5?$CFx?5?0?5Actual?5addr?5?9?$DO?5?$CFx?5?$AN@
 	call	SeTextOut
 
-; 258  : 	SeTextOut("CS -> %x, SS -> %x \r\n", frame->cs, frame->ss);
+; 259  : 	SeTextOut("CS -> %x, SS -> %x \r\n", frame->cs, frame->ss);
 
 	mov	rax, QWORD PTR frame$[rbp]
 	mov	r8, QWORD PTR [rax+48]
@@ -1244,21 +1251,21 @@ $LN11@page_fault:
 	lea	rcx, OFFSET FLAT:??_C@_0BG@NKPJLLBP@CS?5?9?$DO?5?$CFx?0?5SS?5?9?$DO?5?$CFx?5?$AN?6@
 	call	SeTextOut
 
-; 259  : 	if (!_mapped) {
+; 260  : 	if (!_mapped) {
 
 	movzx	eax, BYTE PTR _mapped$[rbp]
 	test	eax, eax
 	jne	SHORT $LN19@page_fault
 $LN2@page_fault:
 
-; 260  : 		for (;;);
+; 261  : 		for (;;);
 
 	jmp	SHORT $LN2@page_fault
 $LN19@page_fault:
 $LN1@page_fault:
 
-; 261  : 	}
-; 262  : }
+; 262  : 	}
+; 263  : }
 
 	lea	rsp, QWORD PTR [rbp+224]
 	pop	rbp
@@ -1275,7 +1282,7 @@ v$ = 96
 p$ = 104
 ?general_protection_fault@@YAX_KPEAX@Z PROC		; general_protection_fault, COMDAT
 
-; 165  : void general_protection_fault(size_t v, void* p){
+; 166  : void general_protection_fault(size_t v, void* p){
 
 $LN6:
 	mov	QWORD PTR [rsp+16], rdx
@@ -1286,52 +1293,52 @@ $LN6:
 	lea	rcx, OFFSET FLAT:__3B5C682D_x86_64_exception@cpp
 	call	__CheckForDebuggerJustMyCode
 
-; 166  : 	x64_cli();
+; 167  : 	x64_cli();
 
 	call	x64_cli
 
-; 167  : 	interrupt_stack_frame *frame = (interrupt_stack_frame*)p;
+; 168  : 	interrupt_stack_frame *frame = (interrupt_stack_frame*)p;
 
 	mov	rax, QWORD PTR p$[rbp]
 	mov	QWORD PTR frame$[rbp], rax
 
-; 168  : 	panic("Genral Protection Fault \r\n");
+; 169  : 	panic("Genral Protection Fault \r\n");
 
 	lea	rcx, OFFSET FLAT:??_C@_0BL@BCIGLIE@Genral?5Protection?5Fault?5?$AN?6@
 	call	?panic@@YAXPEBDZZ			; panic
 
-; 169  : 	SeTextOut("General Protection Fault \r\n");
+; 170  : 	SeTextOut("General Protection Fault \r\n");
 
 	lea	rcx, OFFSET FLAT:??_C@_0BM@CNDNHPEF@General?5Protection?5Fault?5?$AN?6@
 	call	SeTextOut
 
-; 170  : 	SeTextOut("__PROCESSOR TRACE__ \r\n");
+; 171  : 	SeTextOut("__PROCESSOR TRACE__ \r\n");
 
 	lea	rcx, OFFSET FLAT:??_C@_0BH@BHCKDMDH@__PROCESSOR?5TRACE__?5?$AN?6@
 	call	SeTextOut
 
-; 171  : 	SeTextOut("RIP -> %x \r\n", frame->rip);
+; 172  : 	SeTextOut("RIP -> %x \r\n", frame->rip);
 
 	mov	rax, QWORD PTR frame$[rbp]
 	mov	rdx, QWORD PTR [rax+16]
 	lea	rcx, OFFSET FLAT:??_C@_0N@ODPGJOJJ@RIP?5?9?$DO?5?$CFx?5?$AN?6@
 	call	SeTextOut
 
-; 172  : 	SeTextOut("Stack -> %x \r\n", frame->rsp);
+; 173  : 	SeTextOut("Stack -> %x \r\n", frame->rsp);
 
 	mov	rax, QWORD PTR frame$[rbp]
 	mov	rdx, QWORD PTR [rax+40]
 	lea	rcx, OFFSET FLAT:??_C@_0P@BEIIBHMJ@Stack?5?9?$DO?5?$CFx?5?$AN?6@
 	call	SeTextOut
 
-; 173  : 	SeTextOut("RFLAGS -> %x \r\n", frame->rflags);
+; 174  : 	SeTextOut("RFLAGS -> %x \r\n", frame->rflags);
 
 	mov	rax, QWORD PTR frame$[rbp]
 	mov	rdx, QWORD PTR [rax+32]
 	lea	rcx, OFFSET FLAT:??_C@_0BA@LFJDMIBB@RFLAGS?5?9?$DO?5?$CFx?5?$AN?6@
 	call	SeTextOut
 
-; 174  : 	SeTextOut("CS -> %x, SS -> %x \r\n", frame->cs, frame->ss);
+; 175  : 	SeTextOut("CS -> %x, SS -> %x \r\n", frame->cs, frame->ss);
 
 	mov	rax, QWORD PTR frame$[rbp]
 	mov	r8, QWORD PTR [rax+48]
@@ -1340,7 +1347,7 @@ $LN6:
 	lea	rcx, OFFSET FLAT:??_C@_0BG@NKPJLLBP@CS?5?9?$DO?5?$CFx?0?5SS?5?9?$DO?5?$CFx?5?$AN?6@
 	call	SeTextOut
 
-; 175  : 	SeTextOut("Current thread ->id %d , %s\r\n", AuGetCurrentThread()->id, AuGetCurrentThread()->name);
+; 176  : 	SeTextOut("Current thread ->id %d , %s\r\n", AuGetCurrentThread()->id, AuGetCurrentThread()->name);
 
 	call	AuGetCurrentThread
 	add	rax, 284				; 0000011cH
@@ -1354,11 +1361,11 @@ $LN6:
 	call	SeTextOut
 $LN2@general_pr:
 
-; 176  : 	for (;;);
+; 177  : 	for (;;);
 
 	jmp	SHORT $LN2@general_pr
 
-; 177  : }
+; 178  : }
 
 	lea	rsp, QWORD PTR [rbp+80]
 	pop	rbp
@@ -1375,7 +1382,7 @@ v$ = 96
 p$ = 104
 ?stack_fault@@YAX_KPEAX@Z PROC				; stack_fault, COMDAT
 
-; 150  : void stack_fault(size_t v, void* p){
+; 151  : void stack_fault(size_t v, void* p){
 
 $LN6:
 	mov	QWORD PTR [rsp+16], rdx
@@ -1386,47 +1393,47 @@ $LN6:
 	lea	rcx, OFFSET FLAT:__3B5C682D_x86_64_exception@cpp
 	call	__CheckForDebuggerJustMyCode
 
-; 151  : 	x64_cli();
+; 152  : 	x64_cli();
 
 	call	x64_cli
 
-; 152  : 	interrupt_stack_frame *frame = (interrupt_stack_frame*)p;
+; 153  : 	interrupt_stack_frame *frame = (interrupt_stack_frame*)p;
 
 	mov	rax, QWORD PTR p$[rbp]
 	mov	QWORD PTR frame$[rbp], rax
 
-; 153  : 	panic("\nStack Fault at ");
+; 154  : 	panic("\nStack Fault at ");
 
 	lea	rcx, OFFSET FLAT:??_C@_0BB@HALEMCKC@?6Stack?5Fault?5at?5@
 	call	?panic@@YAXPEBDZZ			; panic
 
-; 154  : 	SeTextOut("__PROCESSOR TRACE__ \r\n");
+; 155  : 	SeTextOut("__PROCESSOR TRACE__ \r\n");
 
 	lea	rcx, OFFSET FLAT:??_C@_0BH@BHCKDMDH@__PROCESSOR?5TRACE__?5?$AN?6@
 	call	SeTextOut
 
-; 155  : 	SeTextOut("RIP -> %x \r\n", frame->rip);
+; 156  : 	SeTextOut("RIP -> %x \r\n", frame->rip);
 
 	mov	rax, QWORD PTR frame$[rbp]
 	mov	rdx, QWORD PTR [rax+16]
 	lea	rcx, OFFSET FLAT:??_C@_0N@ODPGJOJJ@RIP?5?9?$DO?5?$CFx?5?$AN?6@
 	call	SeTextOut
 
-; 156  : 	SeTextOut("Stack -> %x \r\n", frame->rsp);
+; 157  : 	SeTextOut("Stack -> %x \r\n", frame->rsp);
 
 	mov	rax, QWORD PTR frame$[rbp]
 	mov	rdx, QWORD PTR [rax+40]
 	lea	rcx, OFFSET FLAT:??_C@_0P@BEIIBHMJ@Stack?5?9?$DO?5?$CFx?5?$AN?6@
 	call	SeTextOut
 
-; 157  : 	SeTextOut("RFLAGS -> %x \r\n", frame->rflags);
+; 158  : 	SeTextOut("RFLAGS -> %x \r\n", frame->rflags);
 
 	mov	rax, QWORD PTR frame$[rbp]
 	mov	rdx, QWORD PTR [rax+32]
 	lea	rcx, OFFSET FLAT:??_C@_0BA@LFJDMIBB@RFLAGS?5?9?$DO?5?$CFx?5?$AN?6@
 	call	SeTextOut
 
-; 158  : 	SeTextOut("CS -> %x, SS -> %x \r\n", frame->cs, frame->ss);
+; 159  : 	SeTextOut("CS -> %x, SS -> %x \r\n", frame->cs, frame->ss);
 
 	mov	rax, QWORD PTR frame$[rbp]
 	mov	r8, QWORD PTR [rax+48]
@@ -1435,7 +1442,7 @@ $LN6:
 	lea	rcx, OFFSET FLAT:??_C@_0BG@NKPJLLBP@CS?5?9?$DO?5?$CFx?0?5SS?5?9?$DO?5?$CFx?5?$AN?6@
 	call	SeTextOut
 
-; 159  : 	SeTextOut("Current thread ->id %d , %s\r\n", AuGetCurrentThread()->id, AuGetCurrentThread()->name);
+; 160  : 	SeTextOut("Current thread ->id %d , %s\r\n", AuGetCurrentThread()->id, AuGetCurrentThread()->name);
 
 	call	AuGetCurrentThread
 	add	rax, 284				; 0000011cH
@@ -1449,11 +1456,11 @@ $LN6:
 	call	SeTextOut
 $LN2@stack_faul:
 
-; 160  : 	for (;;);
+; 161  : 	for (;;);
 
 	jmp	SHORT $LN2@stack_faul
 
-; 161  : }
+; 162  : }
 
 	lea	rsp, QWORD PTR [rbp+80]
 	pop	rbp
@@ -1468,7 +1475,7 @@ v$ = 80
 p$ = 88
 ?no_segment_fault@@YAX_KPEAX@Z PROC			; no_segment_fault, COMDAT
 
-; 143  : void no_segment_fault(size_t v, void* p){
+; 144  : void no_segment_fault(size_t v, void* p){
 
 $LN6:
 	mov	QWORD PTR [rsp+16], rdx
@@ -1479,21 +1486,21 @@ $LN6:
 	lea	rcx, OFFSET FLAT:__3B5C682D_x86_64_exception@cpp
 	call	__CheckForDebuggerJustMyCode
 
-; 144  : 	x64_cli();
+; 145  : 	x64_cli();
 
 	call	x64_cli
 
-; 145  : 	panic("\nNo Segment Fault");
+; 146  : 	panic("\nNo Segment Fault");
 
 	lea	rcx, OFFSET FLAT:??_C@_0BC@EJLFDPKP@?6No?5Segment?5Fault@
 	call	?panic@@YAXPEBDZZ			; panic
 $LN2@no_segment:
 
-; 146  : 	for (;;);
+; 147  : 	for (;;);
 
 	jmp	SHORT $LN2@no_segment
 
-; 147  : }
+; 148  : }
 
 	lea	rsp, QWORD PTR [rbp+64]
 	pop	rbp
@@ -1508,7 +1515,7 @@ v$ = 80
 p$ = 88
 ?invalid_tss_fault@@YAX_KPEAX@Z PROC			; invalid_tss_fault, COMDAT
 
-; 136  : void invalid_tss_fault(size_t v, void* p){
+; 137  : void invalid_tss_fault(size_t v, void* p){
 
 $LN6:
 	mov	QWORD PTR [rsp+16], rdx
@@ -1519,21 +1526,21 @@ $LN6:
 	lea	rcx, OFFSET FLAT:__3B5C682D_x86_64_exception@cpp
 	call	__CheckForDebuggerJustMyCode
 
-; 137  : 	x64_cli();
+; 138  : 	x64_cli();
 
 	call	x64_cli
 
-; 138  : 	panic("\nInvalid TSS Fault ");
+; 139  : 	panic("\nInvalid TSS Fault ");
 
 	lea	rcx, OFFSET FLAT:??_C@_0BE@CHCACOMN@?6Invalid?5TSS?5Fault?5@
 	call	?panic@@YAXPEBDZZ			; panic
 $LN2@invalid_ts:
 
-; 139  : 	for (;;);
+; 140  : 	for (;;);
 
 	jmp	SHORT $LN2@invalid_ts
 
-; 140  : }
+; 141  : }
 
 	lea	rsp, QWORD PTR [rbp+64]
 	pop	rbp
@@ -1548,7 +1555,7 @@ v$ = 80
 p$ = 88
 ?double_fault_abort@@YAX_KPEAX@Z PROC			; double_fault_abort, COMDAT
 
-; 129  : void double_fault_abort(size_t v, void* p){
+; 130  : void double_fault_abort(size_t v, void* p){
 
 $LN6:
 	mov	QWORD PTR [rsp+16], rdx
@@ -1559,21 +1566,21 @@ $LN6:
 	lea	rcx, OFFSET FLAT:__3B5C682D_x86_64_exception@cpp
 	call	__CheckForDebuggerJustMyCode
 
-; 130  : 	x64_cli();
+; 131  : 	x64_cli();
 
 	call	x64_cli
 
-; 131  : 	panic("\nDouble Fault Abort");
+; 132  : 	panic("\nDouble Fault Abort");
 
 	lea	rcx, OFFSET FLAT:??_C@_0BE@NLNKFOBM@?6Double?5Fault?5Abort@
 	call	?panic@@YAXPEBDZZ			; panic
 $LN2@double_fau:
 
-; 132  : 	for (;;);
+; 133  : 	for (;;);
 
 	jmp	SHORT $LN2@double_fau
 
-; 133  : }
+; 134  : }
 
 	lea	rsp, QWORD PTR [rbp+64]
 	pop	rbp
@@ -1588,7 +1595,7 @@ v$ = 80
 p$ = 88
 ?no_device_fault@@YAX_KPEAX@Z PROC			; no_device_fault, COMDAT
 
-; 122  : void no_device_fault(size_t v, void* p){
+; 123  : void no_device_fault(size_t v, void* p){
 
 $LN6:
 	mov	QWORD PTR [rsp+16], rdx
@@ -1599,21 +1606,21 @@ $LN6:
 	lea	rcx, OFFSET FLAT:__3B5C682D_x86_64_exception@cpp
 	call	__CheckForDebuggerJustMyCode
 
-; 123  : 	x64_cli();
+; 124  : 	x64_cli();
 
 	call	x64_cli
 
-; 124  : 	panic("\nNo Device Fault");
+; 125  : 	panic("\nNo Device Fault");
 
 	lea	rcx, OFFSET FLAT:??_C@_0BB@DOMGDLHF@?6No?5Device?5Fault@
 	call	?panic@@YAXPEBDZZ			; panic
 $LN2@no_device_:
 
-; 125  : 	for (;;);
+; 126  : 	for (;;);
 
 	jmp	SHORT $LN2@no_device_
 
-; 126  : }
+; 127  : }
 
 	lea	rsp, QWORD PTR [rbp+64]
 	pop	rbp
@@ -1629,7 +1636,7 @@ v$ = 96
 p$ = 104
 ?invalid_opcode_fault@@YAX_KPEAX@Z PROC			; invalid_opcode_fault, COMDAT
 
-; 107  : void invalid_opcode_fault(size_t v, void* p){
+; 108  : void invalid_opcode_fault(size_t v, void* p){
 
 $LN6:
 	mov	QWORD PTR [rsp+16], rdx
@@ -1640,59 +1647,59 @@ $LN6:
 	lea	rcx, OFFSET FLAT:__3B5C682D_x86_64_exception@cpp
 	call	__CheckForDebuggerJustMyCode
 
-; 108  : 	x64_cli();
+; 109  : 	x64_cli();
 
 	call	x64_cli
 
-; 109  : 	interrupt_stack_frame *frame = (interrupt_stack_frame*)p;
+; 110  : 	interrupt_stack_frame *frame = (interrupt_stack_frame*)p;
 
 	mov	rax, QWORD PTR p$[rbp]
 	mov	QWORD PTR frame$[rbp], rax
 
-; 110  : 	panic("Invalid Opcode Fault \r\n");
+; 111  : 	panic("Invalid Opcode Fault \r\n");
 
 	lea	rcx, OFFSET FLAT:??_C@_0BI@DJAKOHAL@Invalid?5Opcode?5Fault?5?$AN?6@
 	call	?panic@@YAXPEBDZZ			; panic
 
-; 111  : 	SeTextOut("Invalid Opcode Fault \r\n");
+; 112  : 	SeTextOut("Invalid Opcode Fault \r\n");
 
 	lea	rcx, OFFSET FLAT:??_C@_0BI@DJAKOHAL@Invalid?5Opcode?5Fault?5?$AN?6@
 	call	SeTextOut
 
-; 112  : 	SeTextOut("__PROCESSOR TRACE__ \r\n");
+; 113  : 	SeTextOut("__PROCESSOR TRACE__ \r\n");
 
 	lea	rcx, OFFSET FLAT:??_C@_0BH@BHCKDMDH@__PROCESSOR?5TRACE__?5?$AN?6@
 	call	SeTextOut
 
-; 113  : 	SeTextOut("RIP -> %x\n", frame->rip);
+; 114  : 	SeTextOut("RIP -> %x\n", frame->rip);
 
 	mov	rax, QWORD PTR frame$[rbp]
 	mov	rdx, QWORD PTR [rax+16]
 	lea	rcx, OFFSET FLAT:??_C@_0L@DLBLLKFH@RIP?5?9?$DO?5?$CFx?6@
 	call	SeTextOut
 
-; 114  : 	SeTextOut("Stack -> %x\n", frame->rsp);
+; 115  : 	SeTextOut("Stack -> %x\n", frame->rsp);
 
 	mov	rax, QWORD PTR frame$[rbp]
 	mov	rdx, QWORD PTR [rax+40]
 	lea	rcx, OFFSET FLAT:??_C@_0N@IJHHEMAG@Stack?5?9?$DO?5?$CFx?6@
 	call	SeTextOut
 
-; 115  : 	SeTextOut("RFLAGS -> %x\n", frame->rflags);
+; 116  : 	SeTextOut("RFLAGS -> %x\n", frame->rflags);
 
 	mov	rax, QWORD PTR frame$[rbp]
 	mov	rdx, QWORD PTR [rax+32]
 	lea	rcx, OFFSET FLAT:??_C@_0O@HPBDGHPH@RFLAGS?5?9?$DO?5?$CFx?6@
 	call	SeTextOut
 
-; 116  : 	SeTextOut("CS -> %x\n", frame->cs);
+; 117  : 	SeTextOut("CS -> %x\n", frame->cs);
 
 	mov	rax, QWORD PTR frame$[rbp]
 	mov	rdx, QWORD PTR [rax+24]
 	lea	rcx, OFFSET FLAT:??_C@_09LNGLKLCE@CS?5?9?$DO?5?$CFx?6@
 	call	SeTextOut
 
-; 117  : 	SeTextOut("SS -> %x\n", frame->ss);
+; 118  : 	SeTextOut("SS -> %x\n", frame->ss);
 
 	mov	rax, QWORD PTR frame$[rbp]
 	mov	rdx, QWORD PTR [rax+48]
@@ -1700,11 +1707,11 @@ $LN6:
 	call	SeTextOut
 $LN2@invalid_op:
 
-; 118  : 	for (;;);
+; 119  : 	for (;;);
 
 	jmp	SHORT $LN2@invalid_op
 
-; 119  : }
+; 120  : }
 
 	lea	rsp, QWORD PTR [rbp+80]
 	pop	rbp
@@ -1719,7 +1726,7 @@ v$ = 80
 p$ = 88
 ?bounds_check_fault@@YAX_KPEAX@Z PROC			; bounds_check_fault, COMDAT
 
-; 100  : void bounds_check_fault(size_t v, void* p){
+; 101  : void bounds_check_fault(size_t v, void* p){
 
 $LN6:
 	mov	QWORD PTR [rsp+16], rdx
@@ -1730,21 +1737,21 @@ $LN6:
 	lea	rcx, OFFSET FLAT:__3B5C682D_x86_64_exception@cpp
 	call	__CheckForDebuggerJustMyCode
 
-; 101  : 	x64_cli();
+; 102  : 	x64_cli();
 
 	call	x64_cli
 
-; 102  : 	panic("\nBound Check Fault");
+; 103  : 	panic("\nBound Check Fault");
 
 	lea	rcx, OFFSET FLAT:??_C@_0BD@OIHLKGEP@?6Bound?5Check?5Fault@
 	call	?panic@@YAXPEBDZZ			; panic
 $LN2@bounds_che:
 
-; 103  : 	for (;;);
+; 104  : 	for (;;);
 
 	jmp	SHORT $LN2@bounds_che
 
-; 104  : }
+; 105  : }
 
 	lea	rsp, QWORD PTR [rbp+64]
 	pop	rbp
@@ -1759,7 +1766,7 @@ v$ = 80
 p$ = 88
 ?overflow_trap@@YAX_KPEAX@Z PROC			; overflow_trap, COMDAT
 
-; 93   : void overflow_trap(size_t v, void* p){
+; 94   : void overflow_trap(size_t v, void* p){
 
 $LN6:
 	mov	QWORD PTR [rsp+16], rdx
@@ -1770,21 +1777,21 @@ $LN6:
 	lea	rcx, OFFSET FLAT:__3B5C682D_x86_64_exception@cpp
 	call	__CheckForDebuggerJustMyCode
 
-; 94   : 	x64_cli();
+; 95   : 	x64_cli();
 
 	call	x64_cli
 
-; 95   : 	panic("\nOverflow Trap");
+; 96   : 	panic("\nOverflow Trap");
 
 	lea	rcx, OFFSET FLAT:??_C@_0P@HPCJBHIE@?6Overflow?5Trap@
 	call	?panic@@YAXPEBDZZ			; panic
 $LN2@overflow_t:
 
-; 96   : 	for (;;);
+; 97   : 	for (;;);
 
 	jmp	SHORT $LN2@overflow_t
 
-; 97   : }
+; 98   : }
 
 	lea	rsp, QWORD PTR [rbp+64]
 	pop	rbp
@@ -1799,7 +1806,7 @@ vector$ = 80
 param$ = 88
 ?breakpoint_trap@@YAX_KPEAX@Z PROC			; breakpoint_trap, COMDAT
 
-; 86   : void breakpoint_trap(size_t vector, void* param){
+; 87   : void breakpoint_trap(size_t vector, void* param){
 
 $LN6:
 	mov	QWORD PTR [rsp+16], rdx
@@ -1810,21 +1817,21 @@ $LN6:
 	lea	rcx, OFFSET FLAT:__3B5C682D_x86_64_exception@cpp
 	call	__CheckForDebuggerJustMyCode
 
-; 87   : 	x64_cli();
+; 88   : 	x64_cli();
 
 	call	x64_cli
 
-; 88   : 	panic("\nBreakpoint Trap");
+; 89   : 	panic("\nBreakpoint Trap");
 
 	lea	rcx, OFFSET FLAT:??_C@_0BB@BPIIODKN@?6Breakpoint?5Trap@
 	call	?panic@@YAXPEBDZZ			; panic
 $LN2@breakpoint:
 
-; 89   : 	for (;;);
+; 90   : 	for (;;);
 
 	jmp	SHORT $LN2@breakpoint
 
-; 90   : }
+; 91   : }
 
 	lea	rsp, QWORD PTR [rbp+64]
 	pop	rbp
@@ -1839,7 +1846,7 @@ vector$ = 80
 param$ = 88
 ?nmi_trap@@YAX_KPEAX@Z PROC				; nmi_trap, COMDAT
 
-; 78   : void nmi_trap(size_t vector, void* param){
+; 79   : void nmi_trap(size_t vector, void* param){
 
 $LN6:
 	mov	QWORD PTR [rsp+16], rdx
@@ -1850,22 +1857,22 @@ $LN6:
 	lea	rcx, OFFSET FLAT:__3B5C682D_x86_64_exception@cpp
 	call	__CheckForDebuggerJustMyCode
 
-; 79   : 	x64_cli();
+; 80   : 	x64_cli();
 
 	call	x64_cli
 
-; 80   : 	panic("\nNMI [Non-Muskable-Interrupt] Trap");
+; 81   : 	panic("\nNMI [Non-Muskable-Interrupt] Trap");
 
 	lea	rcx, OFFSET FLAT:??_C@_0CD@CODJEILI@?6NMI?5?$FLNon?9Muskable?9Interrupt?$FN?5T@
 	call	?panic@@YAXPEBDZZ			; panic
 $LN2@nmi_trap:
 
-; 81   : 	for (;;);
+; 82   : 	for (;;);
 
 	jmp	SHORT $LN2@nmi_trap
 
-; 82   : 
-; 83   : }
+; 83   : 
+; 84   : }
 
 	lea	rsp, QWORD PTR [rbp+64]
 	pop	rbp
@@ -1881,7 +1888,7 @@ vector$ = 96
 param$ = 104
 ?single_step_trap@@YAX_KPEAX@Z PROC			; single_step_trap, COMDAT
 
-; 71   : void single_step_trap(size_t vector, void* param) {
+; 72   : void single_step_trap(size_t vector, void* param) {
 
 $LN6:
 	mov	QWORD PTR [rsp+16], rdx
@@ -1892,26 +1899,26 @@ $LN6:
 	lea	rcx, OFFSET FLAT:__3B5C682D_x86_64_exception@cpp
 	call	__CheckForDebuggerJustMyCode
 
-; 72   : 	x64_cli();
+; 73   : 	x64_cli();
 
 	call	x64_cli
 
-; 73   : 	interrupt_stack_frame *frame = (interrupt_stack_frame*)param;
+; 74   : 	interrupt_stack_frame *frame = (interrupt_stack_frame*)param;
 
 	mov	rax, QWORD PTR param$[rbp]
 	mov	QWORD PTR frame$[rbp], rax
 
-; 74   : 	panic("\nSingle Step Trap");
+; 75   : 	panic("\nSingle Step Trap");
 
 	lea	rcx, OFFSET FLAT:??_C@_0BC@HFIDFDNB@?6Single?5Step?5Trap@
 	call	?panic@@YAXPEBDZZ			; panic
 $LN2@single_ste:
 
-; 75   : 	for (;;);
+; 76   : 	for (;;);
 
 	jmp	SHORT $LN2@single_ste
 
-; 76   : }
+; 77   : }
 
 	lea	rsp, QWORD PTR [rbp+80]
 	pop	rbp
@@ -1927,7 +1934,7 @@ vector$ = 96
 param$ = 104
 ?divide_by_zero_fault@@YAX_KPEAX@Z PROC			; divide_by_zero_fault, COMDAT
 
-; 58   : void divide_by_zero_fault(size_t vector, void* param) {
+; 59   : void divide_by_zero_fault(size_t vector, void* param) {
 
 $LN6:
 	mov	QWORD PTR [rsp+16], rdx
@@ -1938,45 +1945,45 @@ $LN6:
 	lea	rcx, OFFSET FLAT:__3B5C682D_x86_64_exception@cpp
 	call	__CheckForDebuggerJustMyCode
 
-; 59   : 	x64_cli();
+; 60   : 	x64_cli();
 
 	call	x64_cli
 
-; 60   : 	interrupt_stack_frame *frame = (interrupt_stack_frame*)param;
+; 61   : 	interrupt_stack_frame *frame = (interrupt_stack_frame*)param;
 
 	mov	rax, QWORD PTR param$[rbp]
 	mov	QWORD PTR frame$[rbp], rax
 
-; 61   : 	panic("\nDivide by 0");
+; 62   : 	panic("\nDivide by 0");
 
 	lea	rcx, OFFSET FLAT:??_C@_0N@EBPCEKFE@?6Divide?5by?50@
 	call	?panic@@YAXPEBDZZ			; panic
 
-; 62   : 	SeTextOut("Divide by 0 \r\n");
+; 63   : 	SeTextOut("Divide by 0 \r\n");
 
 	lea	rcx, OFFSET FLAT:??_C@_0P@KPEOJEOL@Divide?5by?50?5?$AN?6@
 	call	SeTextOut
 
-; 63   : 	SeTextOut("__PROCESSOR_DATA__ \r\n");
+; 64   : 	SeTextOut("__PROCESSOR_DATA__ \r\n");
 
 	lea	rcx, OFFSET FLAT:??_C@_0BG@OPGPDIMM@__PROCESSOR_DATA__?5?$AN?6@
 	call	SeTextOut
 
-; 64   : 	SeTextOut("RIP -> %x \r\n", frame->rip);
+; 65   : 	SeTextOut("RIP -> %x \r\n", frame->rip);
 
 	mov	rax, QWORD PTR frame$[rbp]
 	mov	rdx, QWORD PTR [rax+16]
 	lea	rcx, OFFSET FLAT:??_C@_0N@ODPGJOJJ@RIP?5?9?$DO?5?$CFx?5?$AN?6@
 	call	SeTextOut
 
-; 65   : 	SeTextOut("RSP -> %x \r\n", frame->rsp);
+; 66   : 	SeTextOut("RSP -> %x \r\n", frame->rsp);
 
 	mov	rax, QWORD PTR frame$[rbp]
 	mov	rdx, QWORD PTR [rax+40]
 	lea	rcx, OFFSET FLAT:??_C@_0N@FNJJLAE@RSP?5?9?$DO?5?$CFx?5?$AN?6@
 	call	SeTextOut
 
-; 66   : 	SeTextOut("RFLAGS -> %x \r\n", frame->rflags);
+; 67   : 	SeTextOut("RFLAGS -> %x \r\n", frame->rflags);
 
 	mov	rax, QWORD PTR frame$[rbp]
 	mov	rdx, QWORD PTR [rax+32]
@@ -1984,12 +1991,12 @@ $LN6:
 	call	SeTextOut
 $LN2@divide_by_:
 
-; 67   : 
-; 68   : 	for (;;);
+; 68   : 
+; 69   : 	for (;;);
 
 	jmp	SHORT $LN2@divide_by_
 
-; 69   : }
+; 70   : }
 
 	lea	rsp, QWORD PTR [rbp+80]
 	pop	rbp
@@ -2044,13 +2051,18 @@ $LN3:
 	lea	rcx, OFFSET FLAT:??_C@_0CP@DDGNNPIN@?$FLAurora?5Kernel?$FN?3?5Current?5Proces@
 	call	SeTextOut
 
-; 55   : 	SeTextOut(" %s \r\n", msg);
+; 55   : 	SeTextOut("[Aurora Kernel]: If anything not working, try rebooting/Restarting the system \r\n");
+
+	lea	rcx, OFFSET FLAT:??_C@_0FB@CKOCEJAF@?$FLAurora?5Kernel?$FN?3?5If?5anything?5no@
+	call	SeTextOut
+
+; 56   : 	SeTextOut(" %s \r\n", msg);
 
 	mov	rdx, QWORD PTR msg$[rbp]
 	lea	rcx, OFFSET FLAT:??_C@_06BGDIMDGA@?5?$CFs?5?$AN?6@
 	call	SeTextOut
 
-; 56   : }
+; 57   : }
 
 	lea	rsp, QWORD PTR [rbp+64]
 	pop	rbp
@@ -2063,7 +2075,7 @@ _TEXT	ENDS
 _TEXT	SEGMENT
 ?x86_64_exception_init@@YAXXZ PROC			; x86_64_exception_init, COMDAT
 
-; 304  : void x86_64_exception_init() {
+; 305  : void x86_64_exception_init() {
 
 $LN3:
 	push	rbp
@@ -2072,115 +2084,115 @@ $LN3:
 	lea	rcx, OFFSET FLAT:__3B5C682D_x86_64_exception@cpp
 	call	__CheckForDebuggerJustMyCode
 
-; 305  : 	setvect(0, divide_by_zero_fault);
+; 306  : 	setvect(0, divide_by_zero_fault);
 
 	lea	rdx, OFFSET FLAT:?divide_by_zero_fault@@YAX_KPEAX@Z ; divide_by_zero_fault
 	xor	ecx, ecx
 	call	setvect
 
-; 306  : 	setvect(1, single_step_trap);
+; 307  : 	setvect(1, single_step_trap);
 
 	lea	rdx, OFFSET FLAT:?single_step_trap@@YAX_KPEAX@Z ; single_step_trap
 	mov	ecx, 1
 	call	setvect
 
-; 307  : 	setvect(2, nmi_trap);
+; 308  : 	setvect(2, nmi_trap);
 
 	lea	rdx, OFFSET FLAT:?nmi_trap@@YAX_KPEAX@Z	; nmi_trap
 	mov	ecx, 2
 	call	setvect
 
-; 308  : 	setvect(3, breakpoint_trap);
+; 309  : 	setvect(3, breakpoint_trap);
 
 	lea	rdx, OFFSET FLAT:?breakpoint_trap@@YAX_KPEAX@Z ; breakpoint_trap
 	mov	ecx, 3
 	call	setvect
 
-; 309  : 	setvect(4, overflow_trap);
+; 310  : 	setvect(4, overflow_trap);
 
 	lea	rdx, OFFSET FLAT:?overflow_trap@@YAX_KPEAX@Z ; overflow_trap
 	mov	ecx, 4
 	call	setvect
 
-; 310  : 	setvect(5, bounds_check_fault);
+; 311  : 	setvect(5, bounds_check_fault);
 
 	lea	rdx, OFFSET FLAT:?bounds_check_fault@@YAX_KPEAX@Z ; bounds_check_fault
 	mov	ecx, 5
 	call	setvect
 
-; 311  : 	setvect(6, invalid_opcode_fault);
+; 312  : 	setvect(6, invalid_opcode_fault);
 
 	lea	rdx, OFFSET FLAT:?invalid_opcode_fault@@YAX_KPEAX@Z ; invalid_opcode_fault
 	mov	ecx, 6
 	call	setvect
 
-; 312  : 	setvect(7, no_device_fault);
+; 313  : 	setvect(7, no_device_fault);
 
 	lea	rdx, OFFSET FLAT:?no_device_fault@@YAX_KPEAX@Z ; no_device_fault
 	mov	ecx, 7
 	call	setvect
 
-; 313  : 	setvect(8, double_fault_abort);
+; 314  : 	setvect(8, double_fault_abort);
 
 	lea	rdx, OFFSET FLAT:?double_fault_abort@@YAX_KPEAX@Z ; double_fault_abort
 	mov	ecx, 8
 	call	setvect
 
-; 314  : 	setvect(10, invalid_tss_fault);
+; 315  : 	setvect(10, invalid_tss_fault);
 
 	lea	rdx, OFFSET FLAT:?invalid_tss_fault@@YAX_KPEAX@Z ; invalid_tss_fault
 	mov	ecx, 10
 	call	setvect
 
-; 315  : 	setvect(11, no_segment_fault);
+; 316  : 	setvect(11, no_segment_fault);
 
 	lea	rdx, OFFSET FLAT:?no_segment_fault@@YAX_KPEAX@Z ; no_segment_fault
 	mov	ecx, 11
 	call	setvect
 
-; 316  : 	setvect(12, stack_fault);
+; 317  : 	setvect(12, stack_fault);
 
 	lea	rdx, OFFSET FLAT:?stack_fault@@YAX_KPEAX@Z ; stack_fault
 	mov	ecx, 12
 	call	setvect
 
-; 317  : 	setvect(13, general_protection_fault);
+; 318  : 	setvect(13, general_protection_fault);
 
 	lea	rdx, OFFSET FLAT:?general_protection_fault@@YAX_KPEAX@Z ; general_protection_fault
 	mov	ecx, 13
 	call	setvect
 
-; 318  : 	setvect(14, page_fault);
+; 319  : 	setvect(14, page_fault);
 
 	lea	rdx, OFFSET FLAT:?page_fault@@YAX_KPEAX@Z ; page_fault
 	mov	ecx, 14
 	call	setvect
 
-; 319  : 	setvect(16, fpu_fault);
+; 320  : 	setvect(16, fpu_fault);
 
 	lea	rdx, OFFSET FLAT:?fpu_fault@@YAX_KPEAX@Z ; fpu_fault
 	mov	ecx, 16
 	call	setvect
 
-; 320  : 	setvect(17, alignment_check_fault);
+; 321  : 	setvect(17, alignment_check_fault);
 
 	lea	rdx, OFFSET FLAT:?alignment_check_fault@@YAX_KPEAX@Z ; alignment_check_fault
 	mov	ecx, 17
 	call	setvect
 
-; 321  : 	setvect(18, machine_check_abort);
+; 322  : 	setvect(18, machine_check_abort);
 
 	lea	rdx, OFFSET FLAT:?machine_check_abort@@YAX_KPEAX@Z ; machine_check_abort
 	mov	ecx, 18
 	call	setvect
 
-; 322  : 	setvect(19, simd_fpu_fault);
+; 323  : 	setvect(19, simd_fpu_fault);
 
 	lea	rdx, OFFSET FLAT:?simd_fpu_fault@@YAX_KPEAX@Z ; simd_fpu_fault
 	mov	ecx, 19
 	call	setvect
 
-; 323  : }
+; 324  : }
 
 	lea	rsp, QWORD PTR [rbp+64]
 	pop	rbp

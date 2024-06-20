@@ -52,6 +52,7 @@ void panic(const char* msg, ...) {
 	SeTextOut("[Aurora Kernel]: please inform it to the master of the kernel \r\n");
 	SeTextOut("[Aurora Kernel]: Below is the code of exception \r\n");
 	SeTextOut("[Aurora Kernel]: Current Processor id -> %d \r\n", AuPerCPUGetCpuID());
+	SeTextOut("[Aurora Kernel]: If anything not working, try rebooting/Restarting the system \r\n");
 	SeTextOut(" %s \r\n", msg);
 }
 

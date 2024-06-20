@@ -54,8 +54,8 @@ void ChPopupMenuMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, int butto
 			mi->wid.hover = true;
 			if (pm->lastActiveMenu && pm->lastActiveMenu != pm){
 				if (!pm->lastActiveMenu->backWindow->hidden){
-					ChPopupWindowHide(pm->lastActiveMenu->backWindow);
-					_KeProcessSleep(30);
+					ChPopupWindowHide(pm->lastActiveMenu->backWindow, win);
+					_KeProcessSleep(200);
 				}
 				pm->lastActiveMenu = NULL;
 			}
@@ -64,17 +64,17 @@ void ChPopupMenuMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, int butto
 					if (mi->menu->backWindow->hidden){
 						ChMenuShow(mi->menu, pm->x_loc + mi->wid.w + 2,pm->y_loc + mi->wid.y);
 						mi->menu->backWindow->hidden = false;
-						_KeProcessSleep(30);
+						_KeProcessSleep(200);
 						
 					}
 					else{
-						ChPopupWindowHide(mi->menu->backWindow);
-						_KeProcessSleep(30);
+						ChPopupWindowHide(mi->menu->backWindow,win);
+						_KeProcessSleep(200);
 					}
 				}
 				else {
 					ChMenuShow(mi->menu, pm->x_loc + mi->wid.w + 2,pm->y_loc + mi->wid.y);
-					_KeProcessSleep(30);
+					_KeProcessSleep(200);
 				}
 				pm->backWindow->shwin->popuped = true;
 				pm->lastActiveMenu = mi->menu;
@@ -93,7 +93,7 @@ void ChPopupMenuMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, int butto
 	if (_need_paint) {
 		ChPopupMenuPaint(pm);
 		ChPopupWindowUpdate(pm->backWindow, 0, 0, pm->wid.w, pm->wid.h);
-		_KeProcessSleep(30);
+		_KeProcessSleep(200);
 	}
 }
 
@@ -203,7 +203,7 @@ void ChMenuShow(ChPopupMenu* menu, int x, int y) {
 		ChPopupWindowUpdateLocation(menu->backWindow, menu->mainWindow, x + 5, y);
 		ChPopupWindowUpdate(menu->backWindow, 0, 0, menu->wid.w, menu->wid.h);
 		menu->backWindow->wid.visible = true;
-		_KeProcessSleep(30);
+		_KeProcessSleep(180);
 	}
 	else {
 		ChMenuRecalculateDimensions(menu);
@@ -215,7 +215,7 @@ void ChMenuShow(ChPopupMenu* menu, int x, int y) {
 		//ChPopupWindowShow(menu->backWindow, menu->mainWindow);
 		ChPopupWindowUpdate(menu->backWindow, 0, 0, menu->wid.w, menu->wid.h);
 		menu->backWindow->wid.visible = true;
-		_KeProcessSleep(30);
+		_KeProcessSleep(180);
 	}
 }
 
@@ -235,8 +235,8 @@ void ChMenuHide(ChPopupMenu* menu) {
 
 	if (menu->backWindow) {
 		if (!menu->backWindow->hidden) {
-			ChPopupWindowHide(menu->backWindow);
-			_KeProcessSleep(30);
+			ChPopupWindowHide(menu->backWindow,menu->mainWindow);
+			_KeProcessSleep(100);
 		}
 	}
 }

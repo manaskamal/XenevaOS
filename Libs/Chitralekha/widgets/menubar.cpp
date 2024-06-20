@@ -79,7 +79,7 @@ void ChMenubarMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, int button)
 			if ((x >(win->info->x + mbut->wid.x) && x < (win->info->x + mbut->wid.x + mbut->wid.w)) &&
 				(y >(win->info->y + mbut->wid.y) && y < (win->info->y + mbut->wid.y + mbut->wid.h))) {
 				mbut->hover = true;
-				if (button) {
+				if (button && mb->wid.lastMouseX == x && mb->wid.lastMouseY == y) {
 					clickedButton = mbut;
 					mbut->clicked = true;
 				}
@@ -102,14 +102,14 @@ void ChMenubarMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, int button)
 					if (mi->menu){
 						if (mi->menu->backWindow){
 							if (!mi->menu->backWindow->hidden){
-								ChPopupWindowHide(mi->menu->backWindow);
-								_KeProcessSleep(50);
+								ChPopupWindowHide(mi->menu->backWindow,win);
+								_KeProcessSleep(100);
 							}
 						}
 					}
 				}
-				ChPopupWindowHide(mb->lastActiveMenu->backWindow);
-				_KeProcessSleep(50);
+				ChPopupWindowHide(mb->lastActiveMenu->backWindow,win);
+				_KeProcessSleep(500);
 			}
 			mb->lastActiveMenu = NULL;
 		}
@@ -131,13 +131,13 @@ void ChMenubarMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, int button)
 						if (mitem->menu){
 							if (mitem->menu->backWindow){
 								if (!mitem->menu->backWindow->hidden){
-									ChPopupWindowHide(mitem->menu->backWindow);
-									_KeProcessSleep(50);
+									ChPopupWindowHide(mitem->menu->backWindow,win);
+									_KeProcessSleep(100);
 								}
 							}
 						}
 					}
-					ChPopupWindowHide(pm->backWindow);
+					ChPopupWindowHide(pm->backWindow,win);
 				}
 
 			}
@@ -154,6 +154,9 @@ void ChMenubarMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, int button)
 		ChWindowUpdate(win, wid->x,
 			wid->y, wid->w - 1, wid->h, false, true);
 	}
+
+	mb->wid.lastMouseX = x;
+	mb->wid.lastMouseY = y;
 }
 /*
  * ChCreateMenubar -- create a new menubar

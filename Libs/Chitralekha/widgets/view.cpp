@@ -50,7 +50,7 @@ void ChListViewMouseEvent(ChWidget* widget, ChWindow* win, int x, int y, int but
 			ChWindowUpdate(win, lv->scrollpane->vScrollBar.bar_x, lv->scrollpane->vScrollBar.bar_y, lv->scrollpane->vScrollBar.bar_w, 
 				lv->scrollpane->vScrollBar.bar_h, 0, 1);
 			_view_update = true;
-			_KeProcessSleep(10);
+			_KeProcessSleep(100);
 		}
 	}
 
@@ -65,7 +65,7 @@ void ChListViewMouseEvent(ChWidget* widget, ChWindow* win, int x, int y, int but
 			ChWindowUpdate(win, lv->scrollpane->vScrollBar.bar_x, lv->scrollpane->vScrollBar.bar_y, lv->scrollpane->vScrollBar.bar_w,
 				lv->scrollpane->vScrollBar.bar_h, 0, 1);
 			_view_update = true;
-			_KeProcessSleep(10);
+			_KeProcessSleep(100);
 		}
 	}
 

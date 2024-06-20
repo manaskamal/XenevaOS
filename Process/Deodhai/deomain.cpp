@@ -900,9 +900,9 @@ void ComposeFrame(ChCanvas *canvas) {
 				pw->shwin->hide = false;
 				pw->shadowUpdate = true;
 				pw->hidden = true;
-				/* add dirty rectagle into the window inorder to
-				 * repaint the occluded area
-				 */
+				///* add dirty rectagle into the window inorder to
+				// * repaint the occluded area
+				// */
 				info->rect[info->rect_count].x = max((px - SHADOW_SIZE),info->x) - min((px - SHADOW_SIZE),info->x);
 				info->rect[info->rect_count].y = max((py - SHADOW_SIZE),info->y) - min((py - SHADOW_SIZE), info->y);
 				info->rect[info->rect_count].w = pwidth + SHADOW_SIZE *2;
@@ -1114,7 +1114,7 @@ void ComposeFrame(ChCanvas *canvas) {
 
 				for (int i = 0; i < height; i++) {
 					_fastcpy(canvas->buffer + (static_cast<int64_t>(winy) + i) * canvas->canvasWidth + winx,
-						win->backBuffer + (0 + i) * info->width + 0, static_cast<int64_t>(width) * 4);
+						win->backBuffer + (0 + static_cast<int64_t>(i)) * info->width + 0, static_cast<int64_t>(width) * 4);
 				}
 
 
@@ -1316,7 +1316,7 @@ void DeodhaiCloseWindow(Window* win) {
 	free(win->popupList);
 	_KeUnmapSharedMem(win->shWinKey);
 	_KeUnmapSharedMem(win->backBufferKey);
-	_KeMemUnmap(win->shadowBuffers, (width + SHADOW_SIZE * 2) * (height + SHADOW_SIZE * 2) * 4);
+	_KeMemUnmap(win->shadowBuffers, (static_cast<size_t>(width) + SHADOW_SIZE * 2) * (height + SHADOW_SIZE * 2) * 4);
 	BackDirtyAdd(x - SHADOW_SIZE, y - SHADOW_SIZE, width + SHADOW_SIZE*2, height + SHADOW_SIZE*2);
 	DeodhaiRemoveWindow(win);
 	free(win);
@@ -1396,7 +1396,7 @@ uint64_t DeodhaiCurrentTime() {
 		usec_diff = (1000000 + tm.tv_usec) - startSubTime;
 	}
 
-	return (uint64_t)(sec_diff * 1000 + usec_diff / 1000);
+	return (uint64_t)(static_cast<uint64_t>(sec_diff) * 1000 + usec_diff / 1000);
 }
 
 uint64_t DeodhaiTimeSince(uint64_t startTime) {
@@ -1450,7 +1450,7 @@ int main(int argc, char* arv[]) {
 	 * and fill it with light-black color */
 	ChAllocateBuffer(canv);
 	/* allocate a surface buffer */
-	surfaceBuffer = (uint32_t*)_KeMemMap(NULL, canv->screenWidth * canv->screenHeight * 4, 0, 0, MEMMAP_NO_FILEDESC, 0);
+	surfaceBuffer = (uint32_t*)_KeMemMap(NULL, static_cast<size_t>(canv->screenWidth) * canv->screenHeight * 4, 0, 0, MEMMAP_NO_FILEDESC, 0);
 	for (int i = 0; i < screen_w; i++)
 	for (int j = 0; j < screen_h; j++)
 		surfaceBuffer[j * canv->canvasWidth + i] = GRAY; //0xFF938585;

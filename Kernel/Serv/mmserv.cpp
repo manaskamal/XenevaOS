@@ -156,7 +156,6 @@ int ProcessHeapUnmap(void* ptr, size_t sz) {
 		return -1;
 		sz = PAGE_ALIGN(sz);
 	}
-
 	AuThread* thr = AuGetCurrentThread();
 	if (!thr)
 		return -1;

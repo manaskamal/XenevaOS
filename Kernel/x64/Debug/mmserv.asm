@@ -187,60 +187,59 @@ $LN13@ProcessHea:
 $LN5@ProcessHea:
 
 ; 158  : 	}
-; 159  : 
-; 160  : 	AuThread* thr = AuGetCurrentThread();
+; 159  : 	AuThread* thr = AuGetCurrentThread();
 
 	call	AuGetCurrentThread
 	mov	QWORD PTR thr$[rbp], rax
 
-; 161  : 	if (!thr)
+; 160  : 	if (!thr)
 
 	cmp	QWORD PTR thr$[rbp], 0
 	jne	SHORT $LN6@ProcessHea
 
-; 162  : 		return -1;
+; 161  : 		return -1;
 
 	mov	eax, -1
 	jmp	$LN1@ProcessHea
 $LN6@ProcessHea:
 
-; 163  : 	AuProcess* proc = AuProcessFindThread(thr);
+; 162  : 	AuProcess* proc = AuProcessFindThread(thr);
 
 	mov	rcx, QWORD PTR thr$[rbp]
 	call	?AuProcessFindThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z ; AuProcessFindThread
 	mov	QWORD PTR proc$[rbp], rax
 
-; 164  : 	if (!proc){
+; 163  : 	if (!proc){
 
 	cmp	QWORD PTR proc$[rbp], 0
 	jne	SHORT $LN7@ProcessHea
 
-; 165  : 		proc = AuProcessFindSubThread(thr);
+; 164  : 		proc = AuProcessFindSubThread(thr);
 
 	mov	rcx, QWORD PTR thr$[rbp]
 	call	?AuProcessFindSubThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z ; AuProcessFindSubThread
 	mov	QWORD PTR proc$[rbp], rax
 
-; 166  : 		if (!proc) {
+; 165  : 		if (!proc) {
 
 	cmp	QWORD PTR proc$[rbp], 0
 	jne	SHORT $LN8@ProcessHea
 
-; 167  : 			return -1;
+; 166  : 			return -1;
 
 	mov	eax, -1
 	jmp	$LN1@ProcessHea
 $LN8@ProcessHea:
 $LN7@ProcessHea:
 
-; 168  : 		}
-; 169  : 	}
-; 170  : 	uint64_t start_addr = (uint64_t)ptr;
+; 167  : 		}
+; 168  : 	}
+; 169  : 	uint64_t start_addr = (uint64_t)ptr;
 
 	mov	rax, QWORD PTR ptr$[rbp]
 	mov	QWORD PTR start_addr$[rbp], rax
 
-; 171  : 	for (int i = 0; i < sz / PAGE_SIZE; i++) {
+; 170  : 	for (int i = 0; i < sz / PAGE_SIZE; i++) {
 
 	mov	DWORD PTR i$1[rbp], 0
 	jmp	SHORT $LN4@ProcessHea
@@ -259,7 +258,7 @@ $LN4@ProcessHea:
 	cmp	rcx, rax
 	jae	$LN3@ProcessHea
 
-; 172  : 		AuVPage* page_ = AuVmmngrGetPage(start_addr + static_cast<uint64_t>(i) * PAGE_SIZE, VIRT_GETPAGE_ONLY_RET, VIRT_GETPAGE_ONLY_RET);
+; 171  : 		AuVPage* page_ = AuVmmngrGetPage(start_addr + static_cast<uint64_t>(i) * PAGE_SIZE, VIRT_GETPAGE_ONLY_RET, VIRT_GETPAGE_ONLY_RET);
 
 	movsxd	rax, DWORD PTR i$1[rbp]
 	imul	rax, rax, 4096				; 00001000H
@@ -272,12 +271,12 @@ $LN4@ProcessHea:
 	call	AuVmmngrGetPage
 	mov	QWORD PTR page_$2[rbp], rax
 
-; 173  : 		if (page_) {
+; 172  : 		if (page_) {
 
 	cmp	QWORD PTR page_$2[rbp], 0
 	je	SHORT $LN9@ProcessHea
 
-; 174  : 			uint64_t phys_page = page_->bits.page << PAGE_SHIFT;
+; 173  : 			uint64_t phys_page = page_->bits.page << PAGE_SHIFT;
 
 	mov	rax, QWORD PTR page_$2[rbp]
 	mov	rax, QWORD PTR [rax]
@@ -286,17 +285,17 @@ $LN4@ProcessHea:
 	shl	rax, 12
 	mov	QWORD PTR phys_page$3[rbp], rax
 
-; 175  : 			if (phys_page){
+; 174  : 			if (phys_page){
 
 	cmp	QWORD PTR phys_page$3[rbp], 0
 	je	SHORT $LN10@ProcessHea
 
-; 176  : 				AuPmmngrFree((void*)phys_page);
+; 175  : 				AuPmmngrFree((void*)phys_page);
 
 	mov	rcx, QWORD PTR phys_page$3[rbp]
 	call	AuPmmngrFree
 
-; 177  : 				page_->bits.page = 0;
+; 176  : 				page_->bits.page = 0;
 
 	mov	rax, QWORD PTR page_$2[rbp]
 	mov	rcx, -1099511623681			; ffffff0000000fffH
@@ -305,7 +304,7 @@ $LN4@ProcessHea:
 	mov	rcx, QWORD PTR page_$2[rbp]
 	mov	QWORD PTR [rcx], rax
 
-; 178  : 				page_->bits.present = 0;
+; 177  : 				page_->bits.present = 0;
 
 	mov	rax, QWORD PTR page_$2[rbp]
 	mov	rax, QWORD PTR [rax]
@@ -313,33 +312,33 @@ $LN4@ProcessHea:
 	mov	rcx, QWORD PTR page_$2[rbp]
 	mov	QWORD PTR [rcx], rax
 
-; 179  : 				page_->raw = 0;
+; 178  : 				page_->raw = 0;
 
 	mov	rax, QWORD PTR page_$2[rbp]
 	mov	QWORD PTR [rax], 0
 $LN10@ProcessHea:
 $LN9@ProcessHea:
 
-; 180  : 			}
-; 181  : 		}
-; 182  : 	}
+; 179  : 			}
+; 180  : 		}
+; 181  : 	}
 
 	jmp	$LN2@ProcessHea
 $LN3@ProcessHea:
 
-; 183  : 	/*if (start_addr < proc->proc_mem_heap)*/
-; 184  : 	proc->proc_mem_heap = start_addr;
+; 182  : 	/*if (start_addr < proc->proc_mem_heap)*/
+; 183  : 	proc->proc_mem_heap = start_addr;
 
 	mov	rax, QWORD PTR proc$[rbp]
 	mov	rcx, QWORD PTR start_addr$[rbp]
 	mov	QWORD PTR [rax+1104], rcx
 
-; 185  : 	return 0;
+; 184  : 	return 0;
 
 	xor	eax, eax
 $LN1@ProcessHea:
 
-; 186  : }
+; 185  : }
 
 	lea	rsp, QWORD PTR [rbp+128]
 	pop	rbp

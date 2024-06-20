@@ -264,12 +264,10 @@ void ChScrollUpdateVerticalScroll(ChScrollPane* sp, ChRect* viewport, int conten
 
 	//double range = ((viewport->h - viewport->y) / contentSz);
 	sp->vScrollBar.scrollAmount = ceil(range);
-	_KePrint("ScrollAmount -> %f \r\n", sp->vScrollBar.scrollAmount);
 	double viewableRatio = (double)viewport->h / (double)contentSz;
 	double thumbHeight = (double)viewport->h * viewableRatio;
 	sp->vScrollBar.thumb_height = thumbHeight;
 	if (sp->vScrollBar.thumb_height <= 0){
-		_KePrint("Thumb is less than 0 \r\n");
 		sp->vScrollBar.thumb_height = 30;
 	}
 }

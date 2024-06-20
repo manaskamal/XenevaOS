@@ -136,7 +136,7 @@ AuVPage * AuVmmngrGetPage(uint64_t virt_addr, uint8_t _flags, uint8_t mode) {
 		const uint64_t page = (uint64_t)AuPmmngrAlloc();
 		pml4i[i4] = page | flags;
 		memset((void*)P2V(page), 0, 4096);
-		flush_tlb((void*)page);
+		flush_tlb((void*)pml4i);
 		x64_mfence();
 	}
 	uint64_t* pml3 = (uint64_t*)(P2V(pml4i[i4]) & ~(4096 - 1));
@@ -146,7 +146,7 @@ AuVPage * AuVmmngrGetPage(uint64_t virt_addr, uint8_t _flags, uint8_t mode) {
 		const uint64_t page = (uint64_t)AuPmmngrAlloc();
 		pml3[i3] = page | flags;
 		memset((void*)P2V(page), 0, 4096);
-		flush_tlb((void*)page);
+		flush_tlb((void*)pml3);
 		x64_mfence();
 
 	}
@@ -159,7 +159,7 @@ AuVPage * AuVmmngrGetPage(uint64_t virt_addr, uint8_t _flags, uint8_t mode) {
 		const uint64_t page = (uint64_t)AuPmmngrAlloc();
 		pml2[i2] = page | flags;
 		memset((void*)P2V(page), 0, 4096);
-		flush_tlb((void*)page);
+		flush_tlb((void*)pml2);
 		x64_mfence();
 
 	}
@@ -167,7 +167,6 @@ AuVPage * AuVmmngrGetPage(uint64_t virt_addr, uint8_t _flags, uint8_t mode) {
 	uint64_t* pml1 = (uint64_t*)(P2V(pml2[i2]) & ~(4096 - 1));
 	if (pml1[i1] & X86_64_PAGING_PRESENT)
 	{
-
 		AuVPage *page = (AuVPage*)&pml1[i1];
 		return page;
 	}
@@ -402,7 +401,7 @@ void AuFreePages(uint64_t virt_addr, bool free_physical, size_t s){
 		if (free_physical && page != 0)
 			AuPmmngrFree((void*)V2P((size_t)page));
 		
-		virt_addr = virt_addr + i * 4096;
+		virt_addr = virt_addr + static_cast<uint64_t>(i) * 4096;
 	}
 
 }

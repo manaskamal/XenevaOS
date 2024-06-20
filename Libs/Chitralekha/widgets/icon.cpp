@@ -108,7 +108,8 @@ XE_EXTERN XE_LIB void ChDrawIcon(ChCanvas* canv, ChIcon* ico, int x, int y){
 
 	uint8_t* image = ico->image.data;
 	for (int i = 0; i < height; i++) {
-		char* image_row = (char*)image + (height - i - 1) * (width * 4);
+		char* image_row = ((char*)image + (static_cast<uint64_t>(height) - i - 1) *
+			(static_cast<uint64_t>(width) * 4));
 		uint32_t h = height - 1 - i;
 		j = 0;
 		for (int k = 0; k < width; k++) {
@@ -171,7 +172,8 @@ XE_EXTERN XE_LIB void ChDrawIconClipped(ChCanvas* canv, ChIcon* ico, int x, int 
 
 	uint8_t* image = ico->image.data;
 	for (int i = 0; i < height; i++) {
-		char* image_row = (char*)image + (imageHeight - i - 1) * (width * 4);
+		char* image_row = (char*)image + (static_cast<uint64_t>(imageHeight) - i - 1) * (
+			static_cast<uint64_t>(width) * 4);
 		uint32_t h = imageHeight - 1 - i;
 		j = 0;
 		for (int k = 0; k < width; k++) {
