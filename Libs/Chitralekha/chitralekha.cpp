@@ -90,7 +90,7 @@ int ChAllocateBuffer(ChCanvas* canvas) {
 	int reqW = canvas->canvasWidth;
 	int reqH = canvas->canvasHeight;
 
-	size_t sz = (reqW * reqH * (canvas->bpp / 8) + 0x1F) & (~0x1FULL);
+	size_t sz = (static_cast<size_t>(reqW) * reqH * (canvas->bpp / 8) + 0x1F) & (~0x1FULL);
 	void* addr = _KeMemMap(NULL, sz, 0, 0, MEMMAP_NO_FILEDESC, 0);
 	if (!addr)
 		return 0;
@@ -160,7 +160,16 @@ void ChCanvasScreenUpdate(ChCanvas* canvas, int _x, int _y, int _w, int _h) {
  */
 void ChDrawPixel(ChCanvas* canvas, int x, int y, uint32_t color) {
 	unsigned int *lfb = canvas->buffer;
-	lfb[y * canvas->canvasWidth + x] = color;
+	if (x < 0) {
+		_KePrint("ChDrawPixel : corrupted x -> %d \r\n", x);
+		x = 0;
+	}
+
+	if (y < 0) {
+		_KePrint("ChDrawPixel : corrupted y -> %d \r\n", y);
+		y = 0;
+	}
+	lfb[static_cast<uint64_t>(y) * canvas->canvasWidth + x] = color;
 }
 
 /*
@@ -171,7 +180,16 @@ void ChDrawPixel(ChCanvas* canvas, int x, int y, uint32_t color) {
  */
 uint32_t ChGetPixel(ChCanvas* canvas, int x, int y) {
 	unsigned int *lfb = canvas->buffer;
-	return lfb[y * canvas->canvasWidth + x];
+	if (x < 0) {
+		_KePrint("ChGetPixel : corrupted x -> %d \r\n", x);
+		x = 0;
+	}
+
+	if (y < 0) {
+		_KePrint("ChGetPixel : corrupted y -> %d \r\n", y);
+		y = 0;
+	}
+	return lfb[static_cast<uint64_t>(y) * canvas->canvasWidth + x];
 }
 
 /*

@@ -7,36 +7,36 @@ cl : command line warning D9002: ignoring unknown option '/arch:SSE2'
 cl : command line warning D9002: ignoring unknown option '/arch:SSE2'
   cursor.cpp
 cl : command line warning D9002: ignoring unknown option '/arch:SSE2'
-cl : command line warning D9002: ignoring unknown option '/arch:SSE2'
-cl : command line warning D9002: ignoring unknown option '/arch:SSE2'
   deomain.cpp
-  dirty.cpp
 cl : command line warning D9002: ignoring unknown option '/arch:SSE2'
+cl : command line warning D9002: ignoring unknown option '/arch:SSE2'
+  dirty.cpp
   popup.cpp
+cl : command line warning D9002: ignoring unknown option '/arch:SSE2'
   rect.cpp
 cl : command line warning D9002: ignoring unknown option '/arch:SSE2'
   window.cpp
+E:\Xeneva Project\Aurora\Process\Deodhai\window.cpp(49,30): warning C4244: 'argument': conversion from 'uint32_t' to 'uint16_t', possible loss of data
+E:\Xeneva Project\Aurora\Process\Deodhai\window.cpp(50,34): warning C4244: 'argument': conversion from 'int' to 'uint16_t', possible loss of data
+E:\Xeneva Project\Aurora\Process\Deodhai\window.cpp(51,11): warning C4244: '=': conversion from 'uint32_t' to 'uint16_t', possible loss of data
 E:\Xeneva Project\Aurora\Process\Deodhai\dirty.cpp(79,20): warning C4018: '<': signed/unsigned mismatch
+E:\Xeneva Project\Aurora\Process\Deodhai\window.cpp(64,30): warning C4244: 'argument': conversion from 'uint32_t' to 'uint16_t', possible loss of data
+E:\Xeneva Project\Aurora\Process\Deodhai\window.cpp(65,33): warning C4244: 'argument': conversion from 'int' to 'uint16_t', possible loss of data
 E:\Xeneva Project\Aurora\Process\Deodhai\dirty.cpp(88,22): warning C4018: '>': signed/unsigned mismatch
-E:\Xeneva Project\Aurora\Process\Deodhai\dirty.cpp(92,22): warning C4018: '>': signed/unsigned mismatch
 E:\Xeneva Project\Aurora\Process\Deodhai\cursor.cpp(102,20): warning C4018: '<': signed/unsigned mismatch
+E:\Xeneva Project\Aurora\Process\Deodhai\window.cpp(66,9): warning C4244: '=': conversion from 'uint32_t' to 'uint16_t', possible loss of data
+E:\Xeneva Project\Aurora\Process\Deodhai\dirty.cpp(92,22): warning C4018: '>': signed/unsigned mismatch
 E:\Xeneva Project\Aurora\Process\Deodhai\cursor.cpp(106,21): warning C4018: '<': signed/unsigned mismatch
-E:\Xeneva Project\Aurora\Process\Deodhai\cursor.cpp(96,41): warning C4100: 'cur': unreferenced formal parameter
-E:\Xeneva Project\Aurora\Process\Deodhai\cursor.cpp(104,12): warning C4189: 'h': local variable is initialized but not referenced
+E:\Xeneva Project\Aurora\Process\Deodhai\window.cpp(104,42): warning C4267: 'argument': conversion from 'size_t' to 'unsigned int', possible loss of data
 E:\Xeneva Project\Aurora\Process\Deodhai\popup.cpp(46,30): warning C4244: 'argument': conversion from 'uint32_t' to 'uint16_t', possible loss of data
 E:\Xeneva Project\Aurora\Process\Deodhai\popup.cpp(47,34): warning C4244: 'argument': conversion from 'int' to 'uint16_t', possible loss of data
 E:\Xeneva Project\Aurora\Process\Deodhai\popup.cpp(48,11): warning C4244: '=': conversion from 'uint32_t' to 'uint16_t', possible loss of data
+E:\Xeneva Project\Aurora\Process\Deodhai\cursor.cpp(96,41): warning C4100: 'cur': unreferenced formal parameter
 E:\Xeneva Project\Aurora\Process\Deodhai\popup.cpp(76,26): warning C4189: 'x_': local variable is initialized but not referenced
 E:\Xeneva Project\Aurora\Process\Deodhai\popup.cpp(76,18): warning C4189: 'h_': local variable is initialized but not referenced
 E:\Xeneva Project\Aurora\Process\Deodhai\popup.cpp(76,34): warning C4189: 'y_': local variable is initialized but not referenced
 E:\Xeneva Project\Aurora\Process\Deodhai\popup.cpp(76,10): warning C4189: 'w_': local variable is initialized but not referenced
-E:\Xeneva Project\Aurora\Process\Deodhai\window.cpp(49,30): warning C4244: 'argument': conversion from 'uint32_t' to 'uint16_t', possible loss of data
-E:\Xeneva Project\Aurora\Process\Deodhai\window.cpp(50,34): warning C4244: 'argument': conversion from 'int' to 'uint16_t', possible loss of data
-E:\Xeneva Project\Aurora\Process\Deodhai\window.cpp(51,11): warning C4244: '=': conversion from 'uint32_t' to 'uint16_t', possible loss of data
-E:\Xeneva Project\Aurora\Process\Deodhai\window.cpp(64,30): warning C4244: 'argument': conversion from 'uint32_t' to 'uint16_t', possible loss of data
-E:\Xeneva Project\Aurora\Process\Deodhai\window.cpp(65,33): warning C4244: 'argument': conversion from 'int' to 'uint16_t', possible loss of data
-E:\Xeneva Project\Aurora\Process\Deodhai\window.cpp(66,9): warning C4244: '=': conversion from 'uint32_t' to 'uint16_t', possible loss of data
-E:\Xeneva Project\Aurora\Process\Deodhai\window.cpp(104,42): warning C4267: 'argument': conversion from 'size_t' to 'unsigned int', possible loss of data
+E:\Xeneva Project\Aurora\Process\Deodhai\cursor.cpp(104,12): warning C4189: 'h': local variable is initialized but not referenced
 E:\Xeneva Project\Aurora\Process\Deodhai\window.cpp(95,26): warning C4189: 'x_': local variable is initialized but not referenced
 E:\Xeneva Project\Aurora\Process\Deodhai\window.cpp(95,34): warning C4189: 'y_': local variable is initialized but not referenced
 E:\Xeneva Project\Aurora\Process\Deodhai\deomain.cpp(192,8): warning C4018: '>': signed/unsigned mismatch

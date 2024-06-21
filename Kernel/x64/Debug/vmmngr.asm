@@ -1354,15 +1354,14 @@ $LN8:
 	lea	rcx, OFFSET FLAT:__71D0FFAE_vmmngr@cpp
 	call	__CheckForDebuggerJustMyCode
 
-; 387  : 
-; 388  : 	const long i1 = x86_64_pml4_index(virt_addr);
+; 387  : 	const long i1 = x86_64_pml4_index(virt_addr);
 
 	mov	rcx, QWORD PTR virt_addr$[rbp]
 	call	?x86_64_pml4_index@@YA_K_K@Z		; x86_64_pml4_index
 	mov	DWORD PTR i1$[rbp], eax
 
-; 389  : 
-; 390  : 	for (int i = 0; i < (s / 4096) + 1; i++) {
+; 388  : 
+; 389  : 	for (int i = 0; i < (s / 4096) + 1; i++) {
 
 	mov	DWORD PTR i$1[rbp], 0
 	jmp	SHORT $LN4@AuFreePage
@@ -1382,14 +1381,14 @@ $LN4@AuFreePage:
 	cmp	rcx, rax
 	jae	$LN3@AuFreePage
 
-; 391  : 		uint64_t *pml4_ = (uint64_t*)P2V(x64_read_cr3());
+; 390  : 		uint64_t *pml4_ = (uint64_t*)P2V(x64_read_cr3());
 
 	call	x64_read_cr3
 	mov	rcx, rax
 	call	P2V
 	mov	QWORD PTR pml4_$2[rbp], rax
 
-; 392  : 		uint64_t *pdpt = (uint64_t*)(P2V(pml4_[x86_64_pml4_index(virt_addr)]) & ~(4096 - 1));
+; 391  : 		uint64_t *pdpt = (uint64_t*)(P2V(pml4_[x86_64_pml4_index(virt_addr)]) & ~(4096 - 1));
 
 	mov	rcx, QWORD PTR virt_addr$[rbp]
 	call	?x86_64_pml4_index@@YA_K_K@Z		; x86_64_pml4_index
@@ -1399,7 +1398,7 @@ $LN4@AuFreePage:
 	and	rax, -4096				; fffffffffffff000H
 	mov	QWORD PTR pdpt$3[rbp], rax
 
-; 393  : 		uint64_t *pd = (uint64_t*)(P2V(pdpt[x86_64_pdp_index(virt_addr)]) & ~(4096 - 1));
+; 392  : 		uint64_t *pd = (uint64_t*)(P2V(pdpt[x86_64_pdp_index(virt_addr)]) & ~(4096 - 1));
 
 	mov	rcx, QWORD PTR virt_addr$[rbp]
 	call	?x86_64_pdp_index@@YA_K_K@Z		; x86_64_pdp_index
@@ -1409,7 +1408,7 @@ $LN4@AuFreePage:
 	and	rax, -4096				; fffffffffffff000H
 	mov	QWORD PTR pd$4[rbp], rax
 
-; 394  : 		uint64_t *pt = (uint64_t*)(P2V(pd[x86_64_pd_index(virt_addr)]) & ~(4096 - 1));
+; 393  : 		uint64_t *pt = (uint64_t*)(P2V(pd[x86_64_pd_index(virt_addr)]) & ~(4096 - 1));
 
 	mov	rcx, QWORD PTR virt_addr$[rbp]
 	call	?x86_64_pd_index@@YA_K_K@Z		; x86_64_pd_index
@@ -1419,7 +1418,7 @@ $LN4@AuFreePage:
 	and	rax, -4096				; fffffffffffff000H
 	mov	QWORD PTR pt$5[rbp], rax
 
-; 395  : 		uint64_t *page = (uint64_t*)(P2V(pt[x86_64_pt_index(virt_addr)]) & ~(4096 - 1));
+; 394  : 		uint64_t *page = (uint64_t*)(P2V(pt[x86_64_pt_index(virt_addr)]) & ~(4096 - 1));
 
 	mov	rcx, QWORD PTR virt_addr$[rbp]
 	call	?x86_64_pt_index@@YA_K_K@Z		; x86_64_pt_index
@@ -1429,8 +1428,8 @@ $LN4@AuFreePage:
 	and	rax, -4096				; fffffffffffff000H
 	mov	QWORD PTR page$6[rbp], rax
 
-; 396  : 
-; 397  : 		if ((pt[x86_64_pt_index(virt_addr)] & X86_64_PAGING_PRESENT) != 0) {
+; 395  : 
+; 396  : 		if ((pt[x86_64_pt_index(virt_addr)] & X86_64_PAGING_PRESENT) != 0) {
 
 	mov	rcx, QWORD PTR virt_addr$[rbp]
 	call	?x86_64_pt_index@@YA_K_K@Z		; x86_64_pt_index
@@ -1440,7 +1439,7 @@ $LN4@AuFreePage:
 	test	rax, rax
 	je	SHORT $LN5@AuFreePage
 
-; 398  : 			pt[x86_64_pt_index(virt_addr)] = 0;
+; 397  : 			pt[x86_64_pt_index(virt_addr)] = 0;
 
 	mov	rcx, QWORD PTR virt_addr$[rbp]
 	call	?x86_64_pt_index@@YA_K_K@Z		; x86_64_pt_index
@@ -1448,9 +1447,9 @@ $LN4@AuFreePage:
 	mov	QWORD PTR [rcx+rax*8], 0
 $LN5@AuFreePage:
 
-; 399  : 		}
-; 400  : 
-; 401  : 		if (free_physical && page != 0)
+; 398  : 		}
+; 399  : 
+; 400  : 		if (free_physical && page != 0) {
 
 	movzx	eax, BYTE PTR free_physical$[rbp]
 	test	eax, eax
@@ -1458,7 +1457,7 @@ $LN5@AuFreePage:
 	cmp	QWORD PTR page$6[rbp], 0
 	je	SHORT $LN6@AuFreePage
 
-; 402  : 			AuPmmngrFree((void*)V2P((size_t)page));
+; 401  : 			AuPmmngrFree((void*)V2P((size_t)page));
 
 	mov	rcx, QWORD PTR page$6[rbp]
 	call	V2P
@@ -1466,6 +1465,7 @@ $LN5@AuFreePage:
 	call	AuPmmngrFree
 $LN6@AuFreePage:
 
+; 402  : 		}
 ; 403  : 		
 ; 404  : 		virt_addr = virt_addr + static_cast<uint64_t>(i) * 4096;
 

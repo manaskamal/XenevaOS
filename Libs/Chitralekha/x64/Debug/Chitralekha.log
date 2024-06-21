@@ -4,8 +4,8 @@ cl : command line warning D9002: ignoring unknown option '/arch:SSE2'
 E:\Xeneva Project\Aurora\Libs\Chitralekha\boxblur.cpp(56,36): warning C4018: '<': signed/unsigned mismatch
 E:\Xeneva Project\Aurora\Libs\Chitralekha\boxblur.cpp(57,33): warning C4018: '<': signed/unsigned mismatch
   chitralekha.cpp
-E:\Xeneva Project\Aurora\Libs\Chitralekha\chitralekha.cpp(197,63): warning C4244: 'argument': conversion from 'uint32_t' to 'float', possible loss of data
-E:\Xeneva Project\Aurora\Libs\Chitralekha\chitralekha.cpp(207,58): warning C4244: 'argument': conversion from 'uint32_t' to 'float', possible loss of data
+E:\Xeneva Project\Aurora\Libs\Chitralekha\chitralekha.cpp(215,63): warning C4244: 'argument': conversion from 'uint32_t' to 'float', possible loss of data
+E:\Xeneva Project\Aurora\Libs\Chitralekha\chitralekha.cpp(225,58): warning C4244: 'argument': conversion from 'uint32_t' to 'float', possible loss of data
   color.cpp
   draw.cpp
 E:\Xeneva Project\Aurora\Libs\Chitralekha\draw.cpp(46,20): warning C4018: '<': signed/unsigned mismatch
@@ -110,7 +110,7 @@ E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\progress.cpp(99,11): warning C
   scrollpane.cpp
 E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\scrollpane.cpp(44,59): warning C4244: '-=': conversion from 'double' to 'int', possible loss of data
 E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\scrollpane.cpp(62,59): warning C4244: '+=': conversion from 'double' to 'int', possible loss of data
-E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\scrollpane.cpp(269,32): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\scrollpane.cpp(285,32): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
   slider.cpp
   view.cpp
 E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\view.cpp(39,18): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data

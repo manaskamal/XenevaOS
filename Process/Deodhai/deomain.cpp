@@ -1597,7 +1597,7 @@ int main(int argc, char* arv[]) {
 			
 			_KeFileIoControl(postbox_fd, POSTBOX_PUT_EVENT, &e);
 			
-			_KeProcessSleep(40);
+			//_KeProcessSleep(40);
 			if (!(flags & WINDOW_FLAG_MESSAGEBOX)){
 				_KePrint("Broadcasting message \n");
 				/* broadcast it to all broadcast listener windows, about this news*/

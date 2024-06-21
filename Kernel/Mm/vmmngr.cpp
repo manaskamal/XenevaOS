@@ -384,7 +384,6 @@ uint64_t* AuGetFreePage(bool user, void* ptr) {
  * @param size_t s -- size of area to be freed
  */
 void AuFreePages(uint64_t virt_addr, bool free_physical, size_t s){
-
 	const long i1 = x86_64_pml4_index(virt_addr);
 
 	for (int i = 0; i < (s / 4096) + 1; i++) {
@@ -398,8 +397,9 @@ void AuFreePages(uint64_t virt_addr, bool free_physical, size_t s){
 			pt[x86_64_pt_index(virt_addr)] = 0;
 		}
 
-		if (free_physical && page != 0)
+		if (free_physical && page != 0) {
 			AuPmmngrFree((void*)V2P((size_t)page));
+		}
 		
 		virt_addr = virt_addr + static_cast<uint64_t>(i) * 4096;
 	}

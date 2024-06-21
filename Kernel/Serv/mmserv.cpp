@@ -136,7 +136,7 @@ uint64_t GetProcessHeapMem(size_t sz) {
 			SeTextOut("Failed to map %x \r\n", (start_addr + static_cast<uint64_t>(i) * PAGE_SIZE));
 		}
 	}
-	//SeTextOut("Mapped \r\n");
+	//SeTextOut("GetProcessHeapMem: %x %d bytes Mapped \r\n", start_addr, sz);
 	proc->proc_mem_heap += sz;
 	proc->proc_heapmem_len += sz;
 	return start_addr;
@@ -150,22 +150,26 @@ uint64_t GetProcessHeapMem(size_t sz) {
  */
 int ProcessHeapUnmap(void* ptr, size_t sz) {
 	x64_cli();
+
 	/* check if size is page aligned */
-	if ((sz % PAGE_SIZE) != 0){
+	if ((sz % PAGE_SIZE) != 0) {
 		AuTextOut("Returning error heap unmap -> %d \r\n", sz);
 		return -1;
 		sz = PAGE_ALIGN(sz);
 	}
+
+
 	AuThread* thr = AuGetCurrentThread();
 	if (!thr)
 		return -1;
 	AuProcess* proc = AuProcessFindThread(thr);
-	if (!proc){
+	if (!proc) {
 		proc = AuProcessFindSubThread(thr);
 		if (!proc) {
 			return -1;
 		}
 	}
+	
 	uint64_t start_addr = (uint64_t)ptr;
 	for (int i = 0; i < sz / PAGE_SIZE; i++) {
 		AuVPage* page_ = AuVmmngrGetPage(start_addr + static_cast<uint64_t>(i) * PAGE_SIZE, VIRT_GETPAGE_ONLY_RET, VIRT_GETPAGE_ONLY_RET);
@@ -173,9 +177,9 @@ int ProcessHeapUnmap(void* ptr, size_t sz) {
 			uint64_t phys_page = page_->bits.page << PAGE_SHIFT;
 			if (phys_page){
 				AuPmmngrFree((void*)phys_page);
-				page_->bits.page = 0;
+				//page_->raw = 0;
 				page_->bits.present = 0;
-				page_->raw = 0;
+				page_->bits.page = 0;
 			}
 		}
 	}

@@ -272,6 +272,7 @@ int RemoveFile(char* pathname) {
  * @param fd -- file descriptor to close
  */
 int CloseFile(int fd) {
+	x64_cli();
 	if (fd == -1)
 		return 0;
 	AuThread* current_thr = AuGetCurrentThread();
@@ -285,6 +286,7 @@ int CloseFile(int fd) {
 	}
 
 	AuVFSNode* file = current_proc->fds[fd];
+	SeTextOut("Closing file -> %x \r\n", file);
 	if (file->flags & FS_FLAG_FILE_SYSTEM){
 		SeTextOut("Closing fs -> %s \r\n", file->filename);
 		current_proc->fds[fd] = 0;

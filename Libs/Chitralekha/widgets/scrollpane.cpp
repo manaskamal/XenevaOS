@@ -51,11 +51,11 @@ void ChDefaultScrollPaneMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, i
 			sp->wid.ChPaintHandler((ChWidget*)sp, win);
 		ChWindowUpdate(win, sp->vScrollBar.bar_x, sp->vScrollBar.bar_y, sp->vScrollBar.bar_w, sp->vScrollBar.bar_h, 0, 1);
 
-		_KeProcessSleep(30);
+		_KeProcessSleep(100);
 
 		if (sp->scrollableView)
 			sp->scrollableView->ChScrollEvent(sp->scrollableView, win, sp->vScrollBar.thumb_posy, CHITRALEKHA_SCROLL_TYPE_VERTICAL);
-		
+		_KeProcessSleep(200);
 	}
 
 	if (button == DEODHAI_MOUSE_MSG_SCROLL_DOWN) {
@@ -74,10 +74,11 @@ void ChDefaultScrollPaneMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, i
 			sp->wid.ChPaintHandler((ChWidget*)sp, win);
 		ChWindowUpdate(win, sp->vScrollBar.bar_x, sp->vScrollBar.bar_y, sp->vScrollBar.bar_w, sp->vScrollBar.bar_h, 0, 1);
 
-		_KeProcessSleep(30);
+		_KeProcessSleep(100);
 
 		if (sp->scrollableView)
 			sp->scrollableView->ChScrollEvent(sp->scrollableView, win, sp->vScrollBar.thumb_posy, CHITRALEKHA_SCROLL_TYPE_VERTICAL);
+		_KeProcessSleep(200);
 	}
 
 
@@ -139,9 +140,17 @@ void ChDefaultScrollPaneMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, i
 		ChWindowUpdate(win, sp->hScrollBar.bar_x, sp->hScrollBar.bar_y, sp->hScrollBar.bar_w, sp->hScrollBar.bar_h, 0, 1);
 
 		if (_scrolled){
-			_KeProcessSleep(30);
+		
 			if (sp->scrollableView)
 				sp->scrollableView->ChScrollEvent(sp->scrollableView, win, sp->vScrollBar.thumb_posy, CHITRALEKHA_SCROLL_TYPE_HORIZONTAL);
+			/*Process sleep because, slowing down the process little bit,
+			 * because freetype frequenctly allocates and frees up memory
+			 * which effects the kernel system HeapUnmapProcess due to
+			 * heavy speed of scroll, TODO: fix this speed problem
+			 * alternative solution is: we can use bitmap fonts for rendering
+			 * fast widgets
+			 */
+			_KeProcessSleep(200);
 		}
 	}
 
@@ -178,9 +187,16 @@ void ChDefaultScrollPaneMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, i
 		ChWindowUpdate(win, sp->vScrollBar.bar_x, sp->vScrollBar.bar_y, sp->vScrollBar.bar_w, sp->vScrollBar.bar_h, 0, 1);
 
 		if (_scrolled) {
-			_KeProcessSleep(30);
 			if (sp->scrollableView)
 				sp->scrollableView->ChScrollEvent(sp->scrollableView, win, sp->vScrollBar.thumb_posy, CHITRALEKHA_SCROLL_TYPE_VERTICAL);
+			/*Process sleep because, slowing down the process little bit,
+			 * because freetype frequenctly allocates and frees up memory
+			 * which effects the kernel system HeapUnmapProcess due to
+			 * heavy speed of scroll, TODO: fix this speed problem 
+			 * alternative solution : we can use bitmap fonts for
+			 * rendering fast widgets
+			 */
+			_KeProcessSleep(200);
 		}
 
 	}

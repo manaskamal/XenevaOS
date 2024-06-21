@@ -179,7 +179,6 @@ void general_protection_fault(size_t v, void* p){
 
 extern "C" bool _signal_debug;
 extern "C" bool syscall_debug;
-extern "C" uint64_t x64_get_rbp();
 
 //! Most important for good performance is page fault! whenever any memory related errors occurs
 //! it get fired and new page swapping process should be allocated
@@ -237,11 +236,9 @@ skip:
 		SeTextOut("Page Not Present \r\n");
 	}
 	else if (rw) {
-		SeTextOut("Read/Write \r\n");
-		void* phys = AuGetPhysicalAddress(vaddr_aligned);
-		AuVPage *vpage = AuVmmngrGetPage(vaddr_aligned, 0, 0);
-		SeTextOut("VPage rw -> %d , user -> %d \r\n", vpage->bits.writable, vpage->bits.user);
-		SeTextOut("VPage phys1-> %x, phys2-> %x \r\n", phys, (vpage->bits.page << PAGE_SHIFT));
+		SeTextOut("Read/Write %x\r\n", vaddr);
+		SeTextOut("Virtual Address Aligned -> %x \r\n", vaddr_aligned);
+		//void* phys = AuGetPhysicalAddress(vaddr_aligned);
 	}
 	else if (us)
 		SeTextOut("User bit not set \r\n");
