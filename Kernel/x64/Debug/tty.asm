@@ -2012,7 +2012,7 @@ $LN3@AuTTYCreat:
 	movsxd	rax, DWORD PTR fd$[rbp]
 	mov	rcx, QWORD PTR proc$[rbp]
 	mov	rdx, QWORD PTR master$[rbp]
-	mov	QWORD PTR [rcx+rax*8+576], rdx
+	mov	QWORD PTR [rcx+rax*8+567], rdx
 
 ; 371  : 	*master_fd = fd;
 
@@ -2043,7 +2043,7 @@ $LN4@AuTTYCreat:
 	movsxd	rax, DWORD PTR fd$[rbp]
 	mov	rcx, QWORD PTR proc$[rbp]
 	mov	rdx, QWORD PTR slave$[rbp]
-	mov	QWORD PTR [rcx+rax*8+576], rdx
+	mov	QWORD PTR [rcx+rax*8+567], rdx
 
 ; 377  : 	*slave_fd = fd;
 

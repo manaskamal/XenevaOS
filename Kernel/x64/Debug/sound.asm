@@ -129,8 +129,8 @@ $pdata$?AuSoundWrite@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z DD imagerel $LN9
 pdata	ENDS
 ;	COMDAT pdata
 pdata	SEGMENT
-$pdata$?AuSoundIOControl@@YAHPEAU__VFS_NODE__@@HPEAX@Z DD imagerel $LN12
-	DD	imagerel $LN12+380
+$pdata$?AuSoundIOControl@@YAHPEAU__VFS_NODE__@@HPEAX@Z DD imagerel $LN11
+	DD	imagerel $LN11+358
 	DD	imagerel $unwind$?AuSoundIOControl@@YAHPEAU__VFS_NODE__@@HPEAX@Z
 pdata	ENDS
 ;	COMDAT ??_C@_01KMDKNFGN@?1@
@@ -233,15 +233,15 @@ thr$ = 8
 dsp$1 = 16
 buffer$2 = 24
 dsp_$3 = 32
-tv67 = 104
+tv65 = 104
 node$ = 128
 code$ = 136
 arg$ = 144
 ?AuSoundIOControl@@YAHPEAU__VFS_NODE__@@HPEAX@Z PROC	; AuSoundIOControl, COMDAT
 
-; 222  : int AuSoundIOControl(AuVFSNode* node, int code, void* arg) {
+; 224  : int AuSoundIOControl(AuVFSNode* node, int code, void* arg) {
 
-$LN12:
+$LN11:
 	mov	QWORD PTR [rsp+24], r8
 	mov	DWORD PTR [rsp+16], edx
 	mov	QWORD PTR [rsp+8], rcx
@@ -251,75 +251,64 @@ $LN12:
 	lea	rcx, OFFSET FLAT:__2B477A22_sound@cpp
 	call	__CheckForDebuggerJustMyCode
 
-; 223  : 	AuFileIOControl *_ioctl = (AuFileIOControl*)arg;
+; 225  : 	AuFileIOControl *_ioctl = (AuFileIOControl*)arg;
 
 	mov	rax, QWORD PTR arg$[rbp]
 	mov	QWORD PTR _ioctl$[rbp], rax
 
-; 224  : 	if (_ioctl->syscall_magic != AURORA_SYSCALL_MAGIC)
-
-	mov	rax, QWORD PTR _ioctl$[rbp]
-	cmp	DWORD PTR [rax], 86056964		; 05212004H
-	je	SHORT $LN4@AuSoundIOC
-
-; 225  : 		return -1;
-
-	mov	eax, -1
-	jmp	$LN1@AuSoundIOC
-$LN4@AuSoundIOC:
-
 ; 226  : 
-; 227  : 	AuThread *thr = AuGetCurrentThread();
+; 227  : 
+; 228  : 	AuThread *thr = AuGetCurrentThread();
 
 	call	AuGetCurrentThread
 	mov	QWORD PTR thr$[rbp], rax
 
-; 228  : 	switch (code)
+; 229  : 	switch (code)
 
 	mov	eax, DWORD PTR code$[rbp]
-	mov	DWORD PTR tv67[rbp], eax
-	cmp	DWORD PTR tv67[rbp], 100		; 00000064H
-	je	SHORT $LN5@AuSoundIOC
-	cmp	DWORD PTR tv67[rbp], 106		; 0000006aH
-	je	$LN7@AuSoundIOC
-	cmp	DWORD PTR tv67[rbp], 110		; 0000006eH
+	mov	DWORD PTR tv65[rbp], eax
+	cmp	DWORD PTR tv65[rbp], 100		; 00000064H
+	je	SHORT $LN4@AuSoundIOC
+	cmp	DWORD PTR tv65[rbp], 106		; 0000006aH
 	je	$LN6@AuSoundIOC
-	cmp	DWORD PTR tv67[rbp], 111		; 0000006fH
-	je	$LN9@AuSoundIOC
-	jmp	$LN10@AuSoundIOC
-$LN5@AuSoundIOC:
+	cmp	DWORD PTR tv65[rbp], 110		; 0000006eH
+	je	$LN5@AuSoundIOC
+	cmp	DWORD PTR tv65[rbp], 111		; 0000006fH
+	je	$LN8@AuSoundIOC
+	jmp	$LN9@AuSoundIOC
+$LN4@AuSoundIOC:
 
-; 229  : 	{
-; 230  : 	case SOUND_REGISTER_SNDPLR: {
-; 231  : 									
-; 232  : 									AuDSP* dsp = (AuDSP*)kmalloc(sizeof(AuDSP));
+; 230  : 	{
+; 231  : 	case SOUND_REGISTER_SNDPLR: {
+; 232  : 									
+; 233  : 									AuDSP* dsp = (AuDSP*)kmalloc(sizeof(AuDSP));
 
 	mov	ecx, 43					; 0000002bH
 	call	kmalloc
 	mov	QWORD PTR dsp$1[rbp], rax
 
-; 233  : 									memset(dsp, 0, sizeof(AuDSP));
+; 234  : 									memset(dsp, 0, sizeof(AuDSP));
 
 	mov	r8d, 43					; 0000002bH
 	xor	edx, edx
 	mov	rcx, QWORD PTR dsp$1[rbp]
 	call	memset
 
-; 234  : 									uint8_t* buffer = (uint8_t*)P2V((size_t)AuPmmngrAlloc());
+; 235  : 									uint8_t* buffer = (uint8_t*)P2V((size_t)AuPmmngrAlloc());
 
 	call	AuPmmngrAlloc
 	mov	rcx, rax
 	call	P2V
 	mov	QWORD PTR buffer$2[rbp], rax
 
-; 235  : 									memset(buffer, 0, PAGE_SIZE);
+; 236  : 									memset(buffer, 0, PAGE_SIZE);
 
 	mov	r8d, 4096				; 00001000H
 	xor	edx, edx
 	mov	rcx, QWORD PTR buffer$2[rbp]
 	call	memset
 
-; 236  : 									dsp->buffer = AuCircBufInitialise(buffer, SND_BUFF_SZ);
+; 237  : 									dsp->buffer = AuCircBufInitialise(buffer, SND_BUFF_SZ);
 
 	mov	edx, 4096				; 00001000H
 	mov	rcx, QWORD PTR buffer$2[rbp]
@@ -327,110 +316,110 @@ $LN5@AuSoundIOC:
 	mov	rcx, QWORD PTR dsp$1[rbp]
 	mov	QWORD PTR [rcx], rax
 
-; 237  : 									dsp->_dsp_id = thr->id;
+; 238  : 									dsp->_dsp_id = thr->id;
 
 	mov	rax, QWORD PTR dsp$1[rbp]
 	mov	rcx, QWORD PTR thr$[rbp]
 	movzx	ecx, WORD PTR [rcx+301]
 	mov	WORD PTR [rax+8], cx
 
-; 238  : 									dsp->SndThread = thr;
+; 239  : 									dsp->SndThread = thr;
 
 	mov	rax, QWORD PTR dsp$1[rbp]
 	mov	rcx, QWORD PTR thr$[rbp]
 	mov	QWORD PTR [rax+10], rcx
 
-; 239  : 									dsp->sleep_time = _ioctl->uint_1;
+; 240  : 									dsp->sleep_time = _ioctl->uint_1;
 
 	mov	rax, QWORD PTR _ioctl$[rbp]
 	mov	eax, DWORD PTR [rax+10]
 	mov	rcx, QWORD PTR dsp$1[rbp]
 	mov	QWORD PTR [rcx+18], rax
 
-; 240  : 									dsp->available = true;
+; 241  : 									dsp->available = true;
 
 	mov	rax, QWORD PTR dsp$1[rbp]
 	mov	BYTE PTR [rax+26], 1
 
-; 241  : 									AuSoundAddDSP(dsp);
+; 242  : 									AuSoundAddDSP(dsp);
 
 	mov	rcx, QWORD PTR dsp$1[rbp]
 	call	?AuSoundAddDSP@@YAXPEAU__au_dsp__@@@Z	; AuSoundAddDSP
 
-; 242  : 									break;
+; 243  : 									break;
 
 	jmp	SHORT $LN2@AuSoundIOC
-$LN6@AuSoundIOC:
+$LN5@AuSoundIOC:
 
-; 243  : 	}
-; 244  : 	case SOUND_READ_AVAIL: {
-; 245  : 							   AuDSP *dsp_ = AuSoundGetDSP(thr->id);
+; 244  : 	}
+; 245  : 	case SOUND_READ_AVAIL: {
+; 246  : 							   AuDSP *dsp_ = AuSoundGetDSP(thr->id);
 
 	mov	rax, QWORD PTR thr$[rbp]
 	movzx	ecx, WORD PTR [rax+301]
 	call	?AuSoundGetDSP@@YAPEAU__au_dsp__@@G@Z	; AuSoundGetDSP
 	mov	QWORD PTR dsp_$3[rbp], rax
 
-; 246  : 							   _ioctl->uchar_2 = dsp_->available;
+; 247  : 							   _ioctl->uchar_2 = dsp_->available;
 
 	mov	rax, QWORD PTR _ioctl$[rbp]
 	mov	rcx, QWORD PTR dsp_$3[rbp]
 	movzx	ecx, BYTE PTR [rcx+26]
 	mov	BYTE PTR [rax+5], cl
 
-; 247  : 							   break;
+; 248  : 							   break;
 
 	jmp	SHORT $LN2@AuSoundIOC
-$LN7@AuSoundIOC:
+$LN6@AuSoundIOC:
 
-; 248  : 
-; 249  : 	}
-; 250  : 	case SOUND_SET_VOLUME: {
-; 251  : 							   if (!_Registered_dev)
+; 249  : 
+; 250  : 	}
+; 251  : 	case SOUND_SET_VOLUME: {
+; 252  : 							   if (!_Registered_dev)
 
 	cmp	QWORD PTR ?_Registered_dev@@3PEAU_SoundDev_@@EA, 0 ; _Registered_dev
-	jne	SHORT $LN8@AuSoundIOC
+	jne	SHORT $LN7@AuSoundIOC
 
-; 252  : 								   return -1;
+; 253  : 								   return -1;
 
 	mov	eax, -1
 	jmp	SHORT $LN1@AuSoundIOC
-$LN8@AuSoundIOC:
+$LN7@AuSoundIOC:
 
-; 253  : 							   _Registered_dev->set_vol(_ioctl->uchar_1);
+; 254  : 							   _Registered_dev->set_vol(_ioctl->uchar_1);
 
 	mov	rax, QWORD PTR _ioctl$[rbp]
 	movzx	ecx, BYTE PTR [rax+4]
 	mov	rax, QWORD PTR ?_Registered_dev@@3PEAU_SoundDev_@@EA ; _Registered_dev
 	call	QWORD PTR [rax+64]
 
-; 254  : 							   break;
+; 255  : 							   break;
 
 	jmp	SHORT $LN2@AuSoundIOC
-$LN9@AuSoundIOC:
+$LN8@AuSoundIOC:
 
-; 255  : 	}
-; 256  : 	case SOUND_UNREGISTER_SNDPLR:{
-; 257  : 									 AuSoundRemoveDSP(thr->id);
+; 256  : 	}
+; 257  : 	case SOUND_UNREGISTER_SNDPLR:{
+; 258  : 									 AuSoundRemoveDSP(thr->id);
 
 	mov	rax, QWORD PTR thr$[rbp]
 	movzx	ecx, WORD PTR [rax+301]
 	call	AuSoundRemoveDSP
-$LN10@AuSoundIOC:
+$LN9@AuSoundIOC:
 $LN2@AuSoundIOC:
 
-; 258  : 									 break;
-; 259  : 
-; 260  : 	}
-; 261  : 	default:
-; 262  : 		break;
-; 263  : 	}
-; 264  : 	return 0;
+; 259  : 									 break;
+; 260  : 
+; 261  : 	}
+; 262  : 	default:
+; 263  : 		break;
+; 264  : 	}
+; 265  : 	return 0;
 
 	xor	eax, eax
 $LN1@AuSoundIOC:
 
-; 265  : }
+; 266  : }
 
 	lea	rsp, QWORD PTR [rbp+112]
 	pop	rbp
@@ -451,7 +440,7 @@ buffer$ = 128
 length$ = 136
 ?AuSoundWrite@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z PROC	; AuSoundWrite, COMDAT
 
-; 171  : size_t AuSoundWrite(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint32_t length) {
+; 173  : size_t AuSoundWrite(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint32_t length) {
 
 $LN9:
 	mov	DWORD PTR [rsp+32], r9d
@@ -464,40 +453,40 @@ $LN9:
 	lea	rcx, OFFSET FLAT:__2B477A22_sound@cpp
 	call	__CheckForDebuggerJustMyCode
 
-; 172  : 	x64_cli();
+; 174  : 	x64_cli();
 
 	call	x64_cli
 
-; 173  : 	if (!_Registered_dev)
+; 175  : 	if (!_Registered_dev)
 
 	cmp	QWORD PTR ?_Registered_dev@@3PEAU_SoundDev_@@EA, 0 ; _Registered_dev
 	jne	SHORT $LN5@AuSoundWri
 
-; 174  : 		return 0;
+; 176  : 		return 0;
 
 	xor	eax, eax
 	jmp	$LN1@AuSoundWri
 $LN5@AuSoundWri:
 
-; 175  : 	AuThread* t = AuGetCurrentThread();
+; 177  : 	AuThread* t = AuGetCurrentThread();
 
 	call	AuGetCurrentThread
 	mov	QWORD PTR t$[rbp], rax
 
-; 176  : 	AuDSP* dsp = AuSoundGetDSP(t->id);
+; 178  : 	AuDSP* dsp = AuSoundGetDSP(t->id);
 
 	mov	rax, QWORD PTR t$[rbp]
 	movzx	ecx, WORD PTR [rax+301]
 	call	?AuSoundGetDSP@@YAPEAU__au_dsp__@@G@Z	; AuSoundGetDSP
 	mov	QWORD PTR dsp$[rbp], rax
 
-; 177  : 	uint8_t *aligned_buf = (uint8_t*)buffer;
+; 179  : 	uint8_t *aligned_buf = (uint8_t*)buffer;
 
 	mov	rax, QWORD PTR buffer$[rbp]
 	mov	QWORD PTR aligned_buf$[rbp], rax
 
-; 178  : 	
-; 179  : 	if (CircBufFull(dsp->buffer)){
+; 180  : 	
+; 181  : 	if (CircBufFull(dsp->buffer)){
 
 	mov	rax, QWORD PTR dsp$[rbp]
 	mov	rcx, QWORD PTR [rax]
@@ -506,7 +495,7 @@ $LN5@AuSoundWri:
 	test	eax, eax
 	je	SHORT $LN6@AuSoundWri
 
-; 180  : 		if (dsp->SndThread->pendingSigCount > 0)
+; 182  : 		if (dsp->SndThread->pendingSigCount > 0)
 
 	mov	rax, QWORD PTR dsp$[rbp]
 	mov	rax, QWORD PTR [rax+10]
@@ -514,25 +503,25 @@ $LN5@AuSoundWri:
 	test	eax, eax
 	jle	SHORT $LN7@AuSoundWri
 
-; 181  : 			return 0;
+; 183  : 			return 0;
 
 	xor	eax, eax
 	jmp	SHORT $LN1@AuSoundWri
 $LN7@AuSoundWri:
 
-; 182  : 		AuBlockThread(dsp->SndThread);
+; 184  : 		AuBlockThread(dsp->SndThread);
 
 	mov	rax, QWORD PTR dsp$[rbp]
 	mov	rcx, QWORD PTR [rax+10]
 	call	AuBlockThread
 
-; 183  : 		AuForceScheduler();	
+; 185  : 		AuForceScheduler();	
 
 	call	AuForceScheduler
 $LN6@AuSoundWri:
 
-; 184  : 	}
-; 185  : 	for (int i = 0; i < SND_BUFF_SZ; i++) { //
+; 186  : 	}
+; 187  : 	for (int i = 0; i < SND_BUFF_SZ; i++) { //
 
 	mov	DWORD PTR i$1[rbp], 0
 	jmp	SHORT $LN4@AuSoundWri
@@ -544,7 +533,7 @@ $LN4@AuSoundWri:
 	cmp	DWORD PTR i$1[rbp], 4096		; 00001000H
 	jge	SHORT $LN3@AuSoundWri
 
-; 186  : 		AuCircBufPut(dsp->buffer, aligned_buf[i]);
+; 188  : 		AuCircBufPut(dsp->buffer, aligned_buf[i]);
 
 	movsxd	rax, DWORD PTR i$1[rbp]
 	mov	rcx, QWORD PTR aligned_buf$[rbp]
@@ -553,18 +542,18 @@ $LN4@AuSoundWri:
 	mov	rcx, QWORD PTR [rax]
 	call	?AuCircBufPut@@YAHPEAU_circ_buf_@@E@Z	; AuCircBufPut
 
-; 187  : 	}
+; 189  : 	}
 
 	jmp	SHORT $LN2@AuSoundWri
 $LN3@AuSoundWri:
 
-; 188  : 
-; 189  : 	return SND_BUFF_SZ;
+; 190  : 
+; 191  : 	return SND_BUFF_SZ;
 
 	mov	eax, 4096				; 00001000H
 $LN1@AuSoundWri:
 
-; 190  : }
+; 192  : }
 
 	lea	rsp, QWORD PTR [rbp+96]
 	pop	rbp
@@ -581,7 +570,7 @@ buffer$ = 96
 length$ = 104
 ?AuSoundRead@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z PROC	; AuSoundRead, COMDAT
 
-; 165  : size_t AuSoundRead(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint32_t length) {
+; 167  : size_t AuSoundRead(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint32_t length) {
 
 $LN4:
 	mov	DWORD PTR [rsp+32], r9d
@@ -594,23 +583,23 @@ $LN4:
 	lea	rcx, OFFSET FLAT:__2B477A22_sound@cpp
 	call	__CheckForDebuggerJustMyCode
 
-; 166  : 	if (_Registered_dev == NULL)
+; 168  : 	if (_Registered_dev == NULL)
 
 	cmp	QWORD PTR ?_Registered_dev@@3PEAU_SoundDev_@@EA, 0 ; _Registered_dev
 	jne	SHORT $LN2@AuSoundRea
 
-; 167  : 		return -1;
+; 169  : 		return -1;
 
 	mov	rax, -1
 	jmp	SHORT $LN1@AuSoundRea
 $LN2@AuSoundRea:
 
-; 168  : 	return 0;
+; 170  : 	return 0;
 
 	xor	eax, eax
 $LN1@AuSoundRea:
 
-; 169  : }
+; 171  : }
 
 	lea	rsp, QWORD PTR [rbp+64]
 	pop	rbp
@@ -853,7 +842,7 @@ _TEXT	ENDS
 _TEXT	SEGMENT
 ?AuSoundStop@@YAXXZ PROC				; AuSoundStop, COMDAT
 
-; 215  : void AuSoundStop() {
+; 217  : void AuSoundStop() {
 
 $LN4:
 	push	rbp
@@ -862,23 +851,23 @@ $LN4:
 	lea	rcx, OFFSET FLAT:__2B477A22_sound@cpp
 	call	__CheckForDebuggerJustMyCode
 
-; 216  : 	if (_Registered_dev == NULL)
+; 218  : 	if (_Registered_dev == NULL)
 
 	cmp	QWORD PTR ?_Registered_dev@@3PEAU_SoundDev_@@EA, 0 ; _Registered_dev
 	jne	SHORT $LN2@AuSoundSto
 
-; 217  : 		return;
+; 219  : 		return;
 
 	jmp	SHORT $LN1@AuSoundSto
 $LN2@AuSoundSto:
 
-; 218  : 	_Registered_dev->stop_output();
+; 220  : 	_Registered_dev->stop_output();
 
 	mov	rax, QWORD PTR ?_Registered_dev@@3PEAU_SoundDev_@@EA ; _Registered_dev
 	call	QWORD PTR [rax+48]
 $LN1@AuSoundSto:
 
-; 219  : }
+; 221  : }
 
 	lea	rsp, QWORD PTR [rbp+64]
 	pop	rbp
@@ -891,7 +880,7 @@ _TEXT	ENDS
 _TEXT	SEGMENT
 ?AuSoundStart@@YAXXZ PROC				; AuSoundStart, COMDAT
 
-; 206  : void AuSoundStart() {
+; 208  : void AuSoundStart() {
 
 $LN4:
 	push	rbp
@@ -900,23 +889,23 @@ $LN4:
 	lea	rcx, OFFSET FLAT:__2B477A22_sound@cpp
 	call	__CheckForDebuggerJustMyCode
 
-; 207  : 	if (_Registered_dev == NULL)
+; 209  : 	if (_Registered_dev == NULL)
 
 	cmp	QWORD PTR ?_Registered_dev@@3PEAU_SoundDev_@@EA, 0 ; _Registered_dev
 	jne	SHORT $LN2@AuSoundSta
 
-; 208  : 		return;
+; 210  : 		return;
 
 	jmp	SHORT $LN1@AuSoundSta
 $LN2@AuSoundSta:
 
-; 209  : 	_Registered_dev->start_output();
+; 211  : 	_Registered_dev->start_output();
 
 	mov	rax, QWORD PTR ?_Registered_dev@@3PEAU_SoundDev_@@EA ; _Registered_dev
 	call	QWORD PTR [rax+56]
 $LN1@AuSoundSta:
 
-; 210  : }
+; 212  : }
 
 	lea	rsp, QWORD PTR [rbp+64]
 	pop	rbp
@@ -931,7 +920,7 @@ dsp_$ = 0
 id$ = 96
 AuSoundRemoveDSP PROC					; COMDAT
 
-; 304  : void AuSoundRemoveDSP(uint16_t id) {
+; 305  : void AuSoundRemoveDSP(uint16_t id) {
 
 $LN4:
 	mov	WORD PTR [rsp+8], cx
@@ -941,18 +930,18 @@ $LN4:
 	lea	rcx, OFFSET FLAT:__2B477A22_sound@cpp
 	call	__CheckForDebuggerJustMyCode
 
-; 305  : 	AuDSP* dsp_ = AuSoundGetDSP(id);
+; 306  : 	AuDSP* dsp_ = AuSoundGetDSP(id);
 
 	movzx	ecx, WORD PTR id$[rbp]
 	call	?AuSoundGetDSP@@YAPEAU__au_dsp__@@G@Z	; AuSoundGetDSP
 	mov	QWORD PTR dsp_$[rbp], rax
 
-; 306  : 	if (dsp_) {
+; 307  : 	if (dsp_) {
 
 	cmp	QWORD PTR dsp_$[rbp], 0
 	je	SHORT $LN2@AuSoundRem
 
-; 307  : 		AuPmmngrFree((void*)V2P((size_t)dsp_->buffer->buffer));
+; 308  : 		AuPmmngrFree((void*)V2P((size_t)dsp_->buffer->buffer));
 
 	mov	rax, QWORD PTR dsp_$[rbp]
 	mov	rax, QWORD PTR [rax]
@@ -961,25 +950,25 @@ $LN4:
 	mov	rcx, rax
 	call	AuPmmngrFree
 
-; 308  : 		AuCircBufFree(dsp_->buffer);
+; 309  : 		AuCircBufFree(dsp_->buffer);
 
 	mov	rax, QWORD PTR dsp_$[rbp]
 	mov	rcx, QWORD PTR [rax]
 	call	?AuCircBufFree@@YAXPEAU_circ_buf_@@@Z	; AuCircBufFree
 
-; 309  : 		AuRemoveDSP(dsp_);
+; 310  : 		AuRemoveDSP(dsp_);
 
 	mov	rcx, QWORD PTR dsp_$[rbp]
 	call	?AuRemoveDSP@@YAXPEAU__au_dsp__@@@Z	; AuRemoveDSP
 
-; 310  : 		kfree(dsp_);
+; 311  : 		kfree(dsp_);
 
 	mov	rcx, QWORD PTR dsp_$[rbp]
 	call	kfree
 $LN2@AuSoundRem:
 
-; 311  : 	}
-; 312  : }
+; 312  : 	}
+; 313  : }
 
 	lea	rsp, QWORD PTR [rbp+80]
 	pop	rbp
@@ -1154,7 +1143,9 @@ $LN13@AuSoundGet:
 $LN12@AuSoundGet:
 
 ; 148  : 
-; 149  : 		for (int i = 0; i < SND_BUFF_SZ / sizeof(int16_t); i++){
+; 149  : 		/* experiments for stereo panning and gain control over
+; 150  : 		 * each channel */
+; 151  : 		for (int i = 0; i < SND_BUFF_SZ / sizeof(int16_t); i++){
 
 	mov	DWORD PTR i$7[rbp], 0
 	jmp	SHORT $LN16@AuSoundGet
@@ -1167,7 +1158,7 @@ $LN16@AuSoundGet:
 	cmp	rax, 2048				; 00000800H
 	jae	SHORT $LN15@AuSoundGet
 
-; 150  : 			hw_buffer[i] += data_16[i];
+; 152  : 			hw_buffer[i] += data_16[i];
 
 	movsxd	rax, DWORD PTR i$7[rbp]
 	movsxd	rcx, DWORD PTR i$7[rbp]
@@ -1180,18 +1171,18 @@ $LN16@AuSoundGet:
 	mov	rdx, QWORD PTR hw_buffer$[rbp]
 	mov	WORD PTR [rdx+rcx*2], ax
 
-; 151  : 		}
+; 153  : 		}
 
 	jmp	SHORT $LN14@AuSoundGet
 $LN15@AuSoundGet:
 
-; 152  : 	}
+; 154  : 	}
 
 	jmp	$LN5@AuSoundGet
 $LN6@AuSoundGet:
 
-; 153  : 
-; 154  : 	for (AuDSP *dsp = dsp_first; dsp != NULL; dsp = dsp->next) {
+; 155  : 
+; 156  : 	for (AuDSP *dsp = dsp_first; dsp != NULL; dsp = dsp->next) {
 
 	mov	rax, QWORD PTR ?dsp_first@@3PEAU__au_dsp__@@EA ; dsp_first
 	mov	QWORD PTR dsp$8[rbp], rax
@@ -1204,13 +1195,13 @@ $LN19@AuSoundGet:
 	cmp	QWORD PTR dsp$8[rbp], 0
 	je	SHORT $LN18@AuSoundGet
 
-; 155  : 		if (dsp->SndThread) {
+; 157  : 		if (dsp->SndThread) {
 
 	mov	rax, QWORD PTR dsp$8[rbp]
 	cmp	QWORD PTR [rax+10], 0
 	je	SHORT $LN22@AuSoundGet
 
-; 156  : 			if (dsp->SndThread->pendingSigCount > 0)
+; 158  : 			if (dsp->SndThread->pendingSigCount > 0)
 
 	mov	rax, QWORD PTR dsp$8[rbp]
 	mov	rax, QWORD PTR [rax+10]
@@ -1218,27 +1209,27 @@ $LN19@AuSoundGet:
 	test	eax, eax
 	jle	SHORT $LN23@AuSoundGet
 
-; 157  : 				return;
+; 159  : 				return;
 
 	jmp	SHORT $LN1@AuSoundGet
 $LN23@AuSoundGet:
 
-; 158  : 			AuUnblockThread(dsp->SndThread);
+; 160  : 			AuUnblockThread(dsp->SndThread);
 
 	mov	rax, QWORD PTR dsp$8[rbp]
 	mov	rcx, QWORD PTR [rax+10]
 	call	AuUnblockThread
 $LN22@AuSoundGet:
 
-; 159  : 		}
-; 160  : 	}
+; 161  : 		}
+; 162  : 	}
 
 	jmp	SHORT $LN17@AuSoundGet
 $LN18@AuSoundGet:
 $LN1@AuSoundGet:
 
-; 161  : 
-; 162  : }
+; 163  : 
+; 164  : }
 
 	lea	rsp, QWORD PTR [rbp+128]
 	pop	rbp
@@ -1252,7 +1243,7 @@ _TEXT	SEGMENT
 dev$ = 80
 AuSoundSetCard PROC					; COMDAT
 
-; 197  : void AuSoundSetCard(AuSound* dev) {
+; 199  : void AuSoundSetCard(AuSound* dev) {
 
 $LN4:
 	mov	QWORD PTR [rsp+8], rcx
@@ -1262,23 +1253,23 @@ $LN4:
 	lea	rcx, OFFSET FLAT:__2B477A22_sound@cpp
 	call	__CheckForDebuggerJustMyCode
 
-; 198  : 	if (_Registered_dev)
+; 200  : 	if (_Registered_dev)
 
 	cmp	QWORD PTR ?_Registered_dev@@3PEAU_SoundDev_@@EA, 0 ; _Registered_dev
 	je	SHORT $LN2@AuSoundSet
 
-; 199  : 		return;
+; 201  : 		return;
 
 	jmp	SHORT $LN1@AuSoundSet
 $LN2@AuSoundSet:
 
-; 200  : 	_Registered_dev = dev;
+; 202  : 	_Registered_dev = dev;
 
 	mov	rax, QWORD PTR dev$[rbp]
 	mov	QWORD PTR ?_Registered_dev@@3PEAU_SoundDev_@@EA, rax ; _Registered_dev
 $LN1@AuSoundSet:
 
-; 201  : }
+; 203  : }
 
 	lea	rsp, QWORD PTR [rbp+64]
 	pop	rbp
@@ -1295,7 +1286,7 @@ dsp_$ = 16
 buffer$ = 24
 ?AuSoundInitialise@@YAXXZ PROC				; AuSoundInitialise, COMDAT
 
-; 270  : void AuSoundInitialise() {
+; 271  : void AuSoundInitialise() {
 
 $LN3:
 	push	rbp
@@ -1304,122 +1295,122 @@ $LN3:
 	lea	rcx, OFFSET FLAT:__2B477A22_sound@cpp
 	call	__CheckForDebuggerJustMyCode
 
-; 271  : 	AuVFSNode* fsys = AuVFSFind("/dev");
+; 272  : 	AuVFSNode* fsys = AuVFSFind("/dev");
 
 	lea	rcx, OFFSET FLAT:??_C@_04PJHBAHNI@?1dev@
 	call	AuVFSFind
 	mov	QWORD PTR fsys$[rbp], rax
 
-; 272  : 	AuVFSNode *dsp = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
+; 273  : 	AuVFSNode *dsp = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
 
 	mov	ecx, 178				; 000000b2H
 	call	kmalloc
 	mov	QWORD PTR dsp$[rbp], rax
 
-; 273  : 	memset(dsp, 0, sizeof(AuVFSNode));
+; 274  : 	memset(dsp, 0, sizeof(AuVFSNode));
 
 	mov	r8d, 178				; 000000b2H
 	xor	edx, edx
 	mov	rcx, QWORD PTR dsp$[rbp]
 	call	memset
 
-; 274  : 	strcpy(dsp->filename, "sound");
+; 275  : 	strcpy(dsp->filename, "sound");
 
 	mov	rax, QWORD PTR dsp$[rbp]
 	lea	rdx, OFFSET FLAT:??_C@_05MHNANJII@sound@
 	mov	rcx, rax
 	call	strcpy
 
-; 275  : 	dsp->flags =  FS_FLAG_DEVICE;
+; 276  : 	dsp->flags =  FS_FLAG_DEVICE;
 
 	mov	eax, 8
 	mov	rcx, QWORD PTR dsp$[rbp]
 	mov	WORD PTR [rcx+61], ax
 
-; 276  : 	dsp->device = fsys;
+; 277  : 	dsp->device = fsys;
 
 	mov	rax, QWORD PTR dsp$[rbp]
 	mov	rcx, QWORD PTR fsys$[rbp]
 	mov	QWORD PTR [rax+64], rcx
 
-; 277  : 	dsp->read = AuSoundRead;
+; 278  : 	dsp->read = AuSoundRead;
 
 	mov	rax, QWORD PTR dsp$[rbp]
 	lea	rcx, OFFSET FLAT:?AuSoundRead@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z ; AuSoundRead
 	mov	QWORD PTR [rax+90], rcx
 
-; 278  : 	dsp->write = AuSoundWrite;
+; 279  : 	dsp->write = AuSoundWrite;
 
 	mov	rax, QWORD PTR dsp$[rbp]
 	lea	rcx, OFFSET FLAT:?AuSoundWrite@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z ; AuSoundWrite
 	mov	QWORD PTR [rax+98], rcx
 
-; 279  : 	dsp->iocontrol = AuSoundIOControl;
+; 280  : 	dsp->iocontrol = AuSoundIOControl;
 
 	mov	rax, QWORD PTR dsp$[rbp]
 	lea	rcx, OFFSET FLAT:?AuSoundIOControl@@YAHPEAU__VFS_NODE__@@HPEAX@Z ; AuSoundIOControl
 	mov	QWORD PTR [rax+170], rcx
 
-; 280  : 	AuDevFSAddFile(fsys, "/", dsp);
+; 281  : 	AuDevFSAddFile(fsys, "/", dsp);
 
 	mov	r8, QWORD PTR dsp$[rbp]
 	lea	rdx, OFFSET FLAT:??_C@_01KMDKNFGN@?1@
 	mov	rcx, QWORD PTR fsys$[rbp]
 	call	AuDevFSAddFile
 
-; 281  : 
-; 282  : 	dsp_first = NULL;
+; 282  : 
+; 283  : 	dsp_first = NULL;
 
 	mov	QWORD PTR ?dsp_first@@3PEAU__au_dsp__@@EA, 0 ; dsp_first
 
-; 283  : 	dsp_last = NULL;
+; 284  : 	dsp_last = NULL;
 
 	mov	QWORD PTR ?dsp_last@@3PEAU__au_dsp__@@EA, 0 ; dsp_last
 
-; 284  : 	_audio_started_ = false;
+; 285  : 	_audio_started_ = false;
 
 	mov	BYTE PTR ?_audio_started_@@3_NA, 0	; _audio_started_
 
-; 285  : 	_audio_stopped_ = false;
+; 286  : 	_audio_stopped_ = false;
 
 	mov	BYTE PTR ?_audio_stopped_@@3_NA, 0	; _audio_stopped_
 
-; 286  : 	mixbuf = (uint8_t*)P2V((uint64_t)AuPmmngrAlloc());
+; 287  : 	mixbuf = (uint8_t*)P2V((uint64_t)AuPmmngrAlloc());
 
 	call	AuPmmngrAlloc
 	mov	rcx, rax
 	call	P2V
 	mov	QWORD PTR ?mixbuf@@3PEAEEA, rax		; mixbuf
 
-; 287  : 	memset(mixbuf, 0, PAGE_SIZE);
+; 288  : 	memset(mixbuf, 0, PAGE_SIZE);
 
 	mov	r8d, 4096				; 00001000H
 	xor	edx, edx
 	mov	rcx, QWORD PTR ?mixbuf@@3PEAEEA		; mixbuf
 	call	memset
 
-; 288  : 
-; 289  : 	AuDSP* dsp_ = (AuDSP*)kmalloc(sizeof(AuDSP));
+; 289  : 
+; 290  : 	AuDSP* dsp_ = (AuDSP*)kmalloc(sizeof(AuDSP));
 
 	mov	ecx, 43					; 0000002bH
 	call	kmalloc
 	mov	QWORD PTR dsp_$[rbp], rax
 
-; 290  : 	memset(dsp_, 0, sizeof(AuDSP));
+; 291  : 	memset(dsp_, 0, sizeof(AuDSP));
 
 	mov	r8d, 43					; 0000002bH
 	xor	edx, edx
 	mov	rcx, QWORD PTR dsp_$[rbp]
 	call	memset
 
-; 291  : 	uint8_t* buffer = (uint8_t*)P2V((size_t)AuPmmngrAlloc());
+; 292  : 	uint8_t* buffer = (uint8_t*)P2V((size_t)AuPmmngrAlloc());
 
 	call	AuPmmngrAlloc
 	mov	rcx, rax
 	call	P2V
 	mov	QWORD PTR buffer$[rbp], rax
 
-; 292  : 	dsp_->buffer = AuCircBufInitialise(buffer, SND_BUFF_SZ);
+; 293  : 	dsp_->buffer = AuCircBufInitialise(buffer, SND_BUFF_SZ);
 
 	mov	edx, 4096				; 00001000H
 	mov	rcx, QWORD PTR buffer$[rbp]
@@ -1427,33 +1418,33 @@ $LN3:
 	mov	rcx, QWORD PTR dsp_$[rbp]
 	mov	QWORD PTR [rcx], rax
 
-; 293  : 	dsp_->_dsp_id = 0;
+; 294  : 	dsp_->_dsp_id = 0;
 
 	xor	eax, eax
 	mov	rcx, QWORD PTR dsp_$[rbp]
 	mov	WORD PTR [rcx+8], ax
 
-; 294  : 	dsp_->SndThread = 0;
+; 295  : 	dsp_->SndThread = 0;
 
 	mov	rax, QWORD PTR dsp_$[rbp]
 	mov	QWORD PTR [rax+10], 0
 
-; 295  : 	dsp_->sleep_time = 0;
+; 296  : 	dsp_->sleep_time = 0;
 
 	mov	rax, QWORD PTR dsp_$[rbp]
 	mov	QWORD PTR [rax+18], 0
 
-; 296  : 	dsp_->available = false;
+; 297  : 	dsp_->available = false;
 
 	mov	rax, QWORD PTR dsp_$[rbp]
 	mov	BYTE PTR [rax+26], 0
 
-; 297  : 	AuSoundAddDSP(dsp_);
+; 298  : 	AuSoundAddDSP(dsp_);
 
 	mov	rcx, QWORD PTR dsp_$[rbp]
 	call	?AuSoundAddDSP@@YAXPEAU__au_dsp__@@@Z	; AuSoundAddDSP
 
-; 298  : }
+; 299  : }
 
 	lea	rsp, QWORD PTR [rbp+96]
 	pop	rbp

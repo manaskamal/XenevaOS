@@ -34,6 +34,8 @@
 #include <aucon.h>
 #include <string.h>
 #include <Hal/serial.h>
+#include <Fs/pipe.h>
+
 
 AuVFSContainer* __RootContainer;
 AuVFSNode* __RootFS;
@@ -51,6 +53,7 @@ void AuVFSInitialise() {
 	_vfs_debug_on = false;
 	/* initialise the device file system */
 	AuDeviceFsInitialize();
+	AuPipeFSInitialise();
 	/* here we need to mount the
 	 * root file system
 	 */
@@ -152,7 +155,7 @@ AU_EXTERN AU_EXPORT AuVFSNode* AuVFSOpen(char* path){
 		char pathname[16];
 		int i = 0;
 		for (i = 0; i < 16; i++) {
-			if (next[i] == '/' || next[i] == '\0')
+			if ((next[i] == '/') || (next[i] == '\0'))
 				break;
 			pathname[i] = next[i];
 		}

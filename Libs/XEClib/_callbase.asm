@@ -864,6 +864,20 @@ listen:
 	syscall
 	ret
 
+global _KeCreatePipe
+%ifdef YES_DYNAMIC
+export _KeCreatePipe
+%endif
+_KeCreatePipe:
+    xor rax, rax
+	mov r12, 54
+	mov r13, rcx
+	mov r14, rdx
+	mov r15, 0
+	mov rdi, 0
+	syscall
+	ret
+
 
 
 

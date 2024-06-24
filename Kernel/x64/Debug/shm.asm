@@ -249,7 +249,7 @@ $LN12:
 ; 189  : 	dataentry* current = proc->shmmaps->entry_current;
 
 	mov	rax, QWORD PTR proc$[rbp]
-	mov	rax, QWORD PTR [rax+1080]
+	mov	rax, QWORD PTR [rax+1071]
 	mov	rax, QWORD PTR [rax+4]
 	mov	QWORD PTR current$[rbp], rax
 
@@ -267,7 +267,7 @@ $LN2@AuSHMProcO:
 	mov	DWORD PTR i$1[rbp], eax
 $LN4@AuSHMProcO:
 	mov	rax, QWORD PTR proc$[rbp]
-	mov	rax, QWORD PTR [rax+1080]
+	mov	rax, QWORD PTR [rax+1071]
 	mov	eax, DWORD PTR [rax]
 	cmp	DWORD PTR i$1[rbp], eax
 	jae	$LN3@AuSHMProcO
@@ -304,7 +304,7 @@ $LN5@AuSHMProcO:
 	mov	DWORD PTR k$3[rbp], eax
 $LN7@AuSHMProcO:
 	mov	rax, QWORD PTR proc$[rbp]
-	mov	rax, QWORD PTR [rax+1080]
+	mov	rax, QWORD PTR [rax+1071]
 	mov	eax, DWORD PTR [rax]
 	dec	eax
 	cmp	DWORD PTR k$3[rbp], eax
@@ -439,16 +439,16 @@ $LN3:
 ; 170  : 	size_t start_addr = proc->shm_break;
 
 	mov	rax, QWORD PTR proc$[rbp]
-	mov	rax, QWORD PTR [rax+1096]
+	mov	rax, QWORD PTR [rax+1087]
 	mov	QWORD PTR start_addr$[rbp], rax
 
 ; 171  : 	proc->shm_break = (proc->shm_break + num_frames * PAGE_SIZE);
 
 	imul	rax, QWORD PTR num_frames$[rbp], 4096	; 00001000H
 	mov	rcx, QWORD PTR proc$[rbp]
-	add	rax, QWORD PTR [rcx+1096]
+	add	rax, QWORD PTR [rcx+1087]
 	mov	rcx, QWORD PTR proc$[rbp]
-	mov	QWORD PTR [rcx+1096], rax
+	mov	QWORD PTR [rcx+1087], rax
 
 ; 172  : 	return start_addr;
 
@@ -757,7 +757,7 @@ $LN2@AuSHMUnmap:
 	mov	DWORD PTR i$1[rbp], eax
 $LN4@AuSHMUnmap:
 	mov	rax, QWORD PTR proc$[rbp]
-	mov	rax, QWORD PTR [rax+1080]
+	mov	rax, QWORD PTR [rax+1071]
 	mov	eax, DWORD PTR [rax]
 	cmp	DWORD PTR i$1[rbp], eax
 	jae	$LN3@AuSHMUnmap
@@ -766,7 +766,7 @@ $LN4@AuSHMUnmap:
 
 	mov	edx, DWORD PTR i$1[rbp]
 	mov	rax, QWORD PTR proc$[rbp]
-	mov	rcx, QWORD PTR [rax+1080]
+	mov	rcx, QWORD PTR [rax+1071]
 	call	list_remove
 	mov	QWORD PTR mapping$2[rbp], rax
 
@@ -861,7 +861,7 @@ $LN3@AuSHMUnmap:
 ; 390  : 	kfree(proc->shmmaps);
 
 	mov	rax, QWORD PTR proc$[rbp]
-	mov	rcx, QWORD PTR [rax+1080]
+	mov	rcx, QWORD PTR [rax+1071]
 	call	kfree
 
 ; 391  : 	AuReleaseSpinlock(shmlock);
@@ -950,7 +950,7 @@ $LN2@AuSHMUnmap:
 	mov	DWORD PTR i$1[rbp], eax
 $LN4@AuSHMUnmap:
 	mov	rax, QWORD PTR proc$[rbp]
-	mov	rax, QWORD PTR [rax+1080]
+	mov	rax, QWORD PTR [rax+1071]
 	mov	eax, DWORD PTR [rax]
 	cmp	DWORD PTR i$1[rbp], eax
 	jae	$LN3@AuSHMUnmap
@@ -959,7 +959,7 @@ $LN4@AuSHMUnmap:
 
 	mov	edx, DWORD PTR i$1[rbp]
 	mov	rax, QWORD PTR proc$[rbp]
-	mov	rcx, QWORD PTR [rax+1080]
+	mov	rcx, QWORD PTR [rax+1071]
 	call	list_get_at
 	mov	QWORD PTR maps$2[rbp], rax
 
@@ -1055,7 +1055,7 @@ $LN6@AuSHMUnmap:
 
 	mov	edx, DWORD PTR i$1[rbp]
 	mov	rax, QWORD PTR proc$[rbp]
-	mov	rcx, QWORD PTR [rax+1080]
+	mov	rcx, QWORD PTR [rax+1071]
 	call	list_remove
 
 ; 357  : 			kfree(mapping);
@@ -1220,7 +1220,7 @@ $LN2@AuSHMObtai:
 	mov	DWORD PTR i$1[rbp], eax
 $LN4@AuSHMObtai:
 	mov	rax, QWORD PTR proc$[rbp]
-	mov	rax, QWORD PTR [rax+1080]
+	mov	rax, QWORD PTR [rax+1071]
 	mov	eax, DWORD PTR [rax]
 	cmp	DWORD PTR i$1[rbp], eax
 	jae	$LN3@AuSHMObtai
@@ -1229,7 +1229,7 @@ $LN4@AuSHMObtai:
 
 	mov	edx, DWORD PTR i$1[rbp]
 	mov	rax, QWORD PTR proc$[rbp]
-	mov	rcx, QWORD PTR [rax+1080]
+	mov	rcx, QWORD PTR [rax+1071]
 	call	list_get_at
 	mov	QWORD PTR maps$2[rbp], rax
 
@@ -1333,7 +1333,7 @@ $LN6@AuSHMObtai:
 
 	mov	rdx, QWORD PTR mappings$[rbp]
 	mov	rax, QWORD PTR proc$[rbp]
-	mov	rcx, QWORD PTR [rax+1080]
+	mov	rcx, QWORD PTR [rax+1071]
 	call	list_add
 
 ; 257  : 				AuReleaseSpinlock(shmlock);
@@ -1408,14 +1408,14 @@ $LN3@AuSHMObtai:
 
 	mov	rax, QWORD PTR proc$[rbp]
 	mov	rcx, QWORD PTR start_addr$6[rbp]
-	cmp	QWORD PTR [rax+1096], rcx
+	cmp	QWORD PTR [rax+1087], rcx
 	jbe	$LN19@AuSHMObtai
 
 ; 291  : 			size_t gap = proc->shm_break - start_addr;
 
 	mov	rax, QWORD PTR proc$[rbp]
 	mov	rcx, QWORD PTR start_addr$6[rbp]
-	mov	rax, QWORD PTR [rax+1096]
+	mov	rax, QWORD PTR [rax+1087]
 	sub	rax, rcx
 	mov	QWORD PTR gap$7[rbp], rax
 
@@ -1488,7 +1488,7 @@ $LN9@AuSHMObtai:
 
 	mov	rdx, QWORD PTR mappings$[rbp]
 	mov	rax, QWORD PTR proc$[rbp]
-	mov	rcx, QWORD PTR [rax+1080]
+	mov	rcx, QWORD PTR [rax+1071]
 	call	list_add
 
 ; 301  : 				/* Now order the list, in ascending order */
@@ -1588,7 +1588,7 @@ $LN12@AuSHMObtai:
 
 	mov	rdx, QWORD PTR mappings$[rbp]
 	mov	rax, QWORD PTR proc$[rbp]
-	mov	rcx, QWORD PTR [rax+1080]
+	mov	rcx, QWORD PTR [rax+1071]
 	call	list_add
 
 ; 321  : 	/* Now order the list, in ascending order */

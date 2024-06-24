@@ -795,7 +795,7 @@ $LN4@CreateTCPS:
 	movsxd	rax, DWORD PTR fd$[rbp]
 	mov	rcx, QWORD PTR proc$[rbp]
 	mov	rdx, QWORD PTR sock$[rbp]
-	mov	QWORD PTR [rcx+rax*8+576], rdx
+	mov	QWORD PTR [rcx+rax*8+567], rdx
 
 ; 185  : 	SeTextOut("TCP Socket created \r\n");
 

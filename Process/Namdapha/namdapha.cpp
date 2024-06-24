@@ -138,9 +138,9 @@ void NamdaphaGoButtonAction(NamdaphaButton* button, ChWindow* win) {
 
 void NamdaphaPaint(ChWindow* win) {
 	ChDrawRect(win->canv, 0, 0, win->info->width, win->info->height, NAMDAPHA_COLOR);
-	ChColorDrawHorizontalGradient(win->canv, 0, 0, win->info->width, win->info->height, NAMDAPHA_COLOR, NAMDAPHA_COLOR_DARK);
-	ChDrawVerticalLine(win->canv, win->info->width - 1, 0, win->info->height, NAMDAPHA_COLOR_LIGHT);
-	ChDrawVerticalLine(win->canv, win->info->width - 2, 0, win->info->height, NAMDAPHA_COLOR_LIGHT);
+	//ChColorDrawHorizontalGradient(win->canv, 0, 0, win->info->width, win->info->height, NAMDAPHA_COLOR, NAMDAPHA_COLOR_DARK);
+	//ChDrawVerticalLine(win->canv, win->info->width - 1, 0, win->info->height, NAMDAPHA_COLOR_LIGHT);
+	//ChDrawVerticalLine(win->canv, win->info->width - 2, 0, win->info->height, NAMDAPHA_COLOR_LIGHT);
 	for (int i = 0; i < button_list->pointer; i++){
 		NamdaphaButton* button = (NamdaphaButton*)list_get_at(button_list, i);
 		if (button->drawNamdaphaButton)
@@ -219,8 +219,6 @@ void NamdaphaHandleMessage(PostEvent *e) {
 	}
 		/* handle icon message from deodhai */
 	case DEODHAI_BROADCAST_ICON:{
-									_KePrint("Namdapha Broadcast Icon received %d \n", e->from_id);
-									_KePrint("icon name %s \r\n", e->charValue3);
 									NamdaphaButton* nbutton = NULL;
 									for (int i = 0; i < button_list->pointer; i++) {
 										NamdaphaButton* nb = (NamdaphaButton*)list_get_at(button_list, i);
@@ -247,15 +245,13 @@ void NamdaphaHandleMessage(PostEvent *e) {
 										}
 										if (!_already_icon_was_there_) {
 											ButtonInfo *info = NmCreateButtonInfo(e->charValue3);
-											_KePrint("Namdapha painted %s\r\n", e->charValue3);
-											_KePrint("ICON FD -> %d \r\n", info->iconFd);
 											NmButtonInfoRead(info);
 											nbutton->nmbuttoninfo = info;
 											info->usageCount += 1;
 										}
 										NamdaphaPaint(win);
 										
-										_KeProcessSleep(8);
+										_KeProcessSleep(120);
 									}
 									memset(e, 0, sizeof(PostEvent));
 									break;
@@ -281,6 +277,7 @@ void NamdaphaHandleMessage(PostEvent *e) {
 									break;
 	}
 	case DEODHAI_BROADCAST_FOCUS_CHANGED: {
+		_KePrint("Focus message recevied \r\n");
 											  for (int i = 0; i < button_list->pointer; i++) {
 												  NamdaphaButton* nb = (NamdaphaButton*)list_get_at(button_list, i);
 												  nb->focused = false;
@@ -325,7 +322,7 @@ void NamdaphaHandleMessage(PostEvent *e) {
 													 destroyable->nmbuttoninfo->usageCount -= 1;
 												 }
 												 else {
-													 _KePrint("[Namdpha]: Button info destroyed -> %s \r\n", destroyable->nmbuttoninfo->filename);
+			
 													 if (destroyable->nmbuttoninfo != defaultappico){
 														 _KeMemUnmap(destroyable->nmbuttoninfo->fileBuffer, destroyable->nmbuttoninfo->fileSize);
 														 free(destroyable->nmbuttoninfo->filename);
@@ -421,6 +418,8 @@ int main(int argc, char* arv[]){
 		"Namdapha", 0, 0, NAMDAPHA_WIDTH, screen_h);
 	win->color = BLACK;
 	win->ChWinPaint = NamdaphaPaint;
+	win->info->alpha = true;
+	win->info->alphaValue = 0.8;
 
 	button_list = initialize_list();
 	windowList = initialize_list();

@@ -218,7 +218,7 @@ void NmButtonInfoDrawIcon(ButtonInfo* info, ChCanvas* canv, int x, int y){
 
 	uint8_t* image = info->imageData;
 	for (int i = 0; i < height; i++) {
-		char* image_row = (char*)image + (height - i - 1) * (width * 4);
+		char* image_row = (char*)image + (static_cast<uint64_t>(height) - i - 1) * (static_cast<uint64_t>(width) * 4);
 		uint32_t h = height - 1 - i;
 		j = 0;
 		for (int k = 0; k < width; k++) {

@@ -69,7 +69,7 @@ pdata	ENDS
 ;	COMDAT pdata
 pdata	SEGMENT
 $pdata$?AuLoadExecToProcess@@YAHPEAU_au_proc_@@PEADHPEAPEAD@Z DD imagerel $LN24
-	DD	imagerel $LN24+2034
+	DD	imagerel $LN24+2030
 	DD	imagerel $unwind$?AuLoadExecToProcess@@YAHPEAU_au_proc_@@PEADHPEAPEAD@Z
 pdata	ENDS
 ;	COMDAT pdata
@@ -607,9 +607,9 @@ num_args$ = 200
 argvaddr$ = 208
 args$15 = 216
 thr$ = 224
-tv344 = 296
-tv259 = 296
-tv346 = 304
+tv348 = 296
+tv263 = 296
+tv350 = 304
 proc$ = 336
 filename$ = 344
 argc$ = 352
@@ -792,7 +792,7 @@ $LN16@AuLoadExec:
 ; 158  : 	uint64_t* cr3 = proc->cr3;
 
 	mov	rax, QWORD PTR proc$[rbp]
-	mov	rax, QWORD PTR [rax+24]
+	mov	rax, QWORD PTR [rax+22]
 	mov	QWORD PTR cr3$[rbp], rax
 
 ; 159  : 
@@ -890,22 +890,18 @@ $LN3@AuLoadExec:
 ; 185  : 		 * allocate memory of size (string_len + char_cnt) * sizeof(char) for
 ; 186  : 		 * argument array
 ; 187  : 		 */
-; 188  : 		char** argvs = (char**)kmalloc((string_len + char_cnt) * sizeof(char));
+; 188  : 		char** argvs = (char**)kmalloc(num_args_ * sizeof(char*));
 
-	mov	eax, DWORD PTR char_cnt$1[rbp]
-	mov	ecx, DWORD PTR string_len$4[rbp]
-	add	ecx, eax
-	mov	eax, ecx
+	movsxd	rax, DWORD PTR num_args_$3[rbp]
+	shl	rax, 3
 	mov	ecx, eax
 	call	kmalloc
 	mov	QWORD PTR argvs$6[rbp], rax
 
-; 189  : 		memset(argvs, 0, (string_len + char_cnt) * sizeof(char));
+; 189  : 		memset(argvs, 0, num_args_ * sizeof(char*));
 
-	mov	eax, DWORD PTR char_cnt$1[rbp]
-	mov	ecx, DWORD PTR string_len$4[rbp]
-	add	ecx, eax
-	mov	eax, ecx
+	movsxd	rax, DWORD PTR num_args_$3[rbp]
+	shl	rax, 3
 	mov	r8d, eax
 	xor	edx, edx
 	mov	rcx, QWORD PTR argvs$6[rbp]
@@ -1117,11 +1113,11 @@ $LN13@AuLoadExec:
 	mov	rcx, QWORD PTR sect_ld_addr$10[rbp]
 	add	rcx, rax
 	mov	rax, rcx
-	mov	QWORD PTR tv259[rbp], rax
+	mov	QWORD PTR tv263[rbp], rax
 	mov	rcx, QWORD PTR block$14[rbp]
 	call	V2P
 	mov	r9b, 4
-	mov	rcx, QWORD PTR tv259[rbp]
+	mov	rcx, QWORD PTR tv263[rbp]
 	mov	r8, rcx
 	mov	rdx, rax
 	mov	rcx, QWORD PTR cr3$[rbp]
@@ -1183,7 +1179,7 @@ $LN9@AuLoadExec:
 ; 238  : 	uint64_t stack = proc->_main_stack_;
 
 	mov	rax, QWORD PTR proc$[rbp]
-	mov	rax, QWORD PTR [rax+48]
+	mov	rax, QWORD PTR [rax+46]
 	mov	QWORD PTR stack$[rbp], rax
 
 ; 239  : 
@@ -1259,7 +1255,7 @@ $LN9@AuLoadExec:
 	mov	r8d, 16384				; 00004000H
 	mov	rdx, rax
 	mov	rax, QWORD PTR proc$[rbp]
-	mov	rcx, QWORD PTR [rax+24]
+	mov	rcx, QWORD PTR [rax+22]
 	call	AuMapPageEx
 	movzx	eax, al
 	test	eax, eax
@@ -1310,17 +1306,17 @@ $LN20@AuLoadExec:
 
 	mov	rax, QWORD PTR proc$[rbp]
 	add	rax, 4
-	mov	QWORD PTR tv344[rbp], rax
+	mov	QWORD PTR tv348[rbp], rax
 	mov	rcx, QWORD PTR cr3$[rbp]
 	call	V2P
-	mov	QWORD PTR tv346[rbp], rax
+	mov	QWORD PTR tv350[rbp], rax
 	call	AuPmmngrAlloc
 	add	rax, 4096				; 00001000H
 	mov	rcx, rax
 	call	P2V
-	mov	rcx, QWORD PTR tv344[rbp]
+	mov	rcx, QWORD PTR tv348[rbp]
 	mov	r9, rcx
-	mov	rcx, QWORD PTR tv346[rbp]
+	mov	rcx, QWORD PTR tv350[rbp]
 	mov	r8, rcx
 	mov	rdx, rax
 	lea	rcx, OFFSET FLAT:?AuProcessEntUser@@YAX_K@Z ; AuProcessEntUser
@@ -1360,31 +1356,31 @@ $LN20@AuLoadExec:
 
 	mov	rax, QWORD PTR proc$[rbp]
 	mov	rcx, QWORD PTR thr$[rbp]
-	mov	QWORD PTR [rax+72], rcx
+	mov	QWORD PTR [rax+70], rcx
 
 ; 270  : 	proc->num_thread = 1;
 
 	mov	rax, QWORD PTR proc$[rbp]
-	mov	BYTE PTR [rax+80], 1
+	mov	BYTE PTR [rax+78], 1
 
 ; 271  : 	proc->entry_point = ent;
 
 	mov	rax, QWORD PTR proc$[rbp]
 	mov	rcx, QWORD PTR ent$[rbp]
-	mov	QWORD PTR [rax+88], rcx
+	mov	QWORD PTR [rax+79], rcx
 
 ; 272  : 	proc->_image_base_ = _image_base_;
 
 	mov	rax, QWORD PTR proc$[rbp]
 	mov	rcx, QWORD PTR _image_base_$[rbp]
-	mov	QWORD PTR [rax+40], rcx
+	mov	QWORD PTR [rax+38], rcx
 
 ; 273  : 	proc->_image_size_ = file->size;
 
 	mov	rax, QWORD PTR file$[rbp]
 	mov	eax, DWORD PTR [rax+32]
 	mov	rcx, QWORD PTR proc$[rbp]
-	mov	QWORD PTR [rcx+32], rax
+	mov	QWORD PTR [rcx+30], rax
 
 ; 274  : 	proc->state = PROCESS_STATE_READY;
 
@@ -1395,13 +1391,13 @@ $LN20@AuLoadExec:
 
 	mov	rax, QWORD PTR proc$[rbp]
 	mov	rcx, QWORD PTR file$[rbp]
-	mov	QWORD PTR [rax+1056], rcx
+	mov	QWORD PTR [rax+1047], rcx
 
 ; 276  : 	proc->fsys = fsys;
 
 	mov	rax, QWORD PTR proc$[rbp]
 	mov	rcx, QWORD PTR fsys$[rbp]
-	mov	QWORD PTR [rax+1064], rcx
+	mov	QWORD PTR [rax+1055], rcx
 
 ; 277  : 	thr->procSlot = proc;
 

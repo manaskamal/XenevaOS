@@ -230,7 +230,7 @@ $LN2@AuThreadFr:
 ; 104  : 		KernelStackFree(proc, (void*)k_stack_, proc->cr3);
 
 	mov	rax, QWORD PTR proc$[rbp]
-	mov	r8, QWORD PTR [rax+24]
+	mov	r8, QWORD PTR [rax+22]
 	mov	rdx, QWORD PTR k_stack_$4[rbp]
 	mov	rcx, QWORD PTR proc$[rbp]
 	call	?KernelStackFree@@YAXPEAU_au_proc_@@PEAXPEA_K@Z ; KernelStackFree
@@ -315,7 +315,7 @@ $LN4@FreeImage:
 	mov	QWORD PTR tv65[rbp], rax
 	xor	edx, edx
 	mov	rcx, QWORD PTR proc$[rbp]
-	mov	rax, QWORD PTR [rcx+32]
+	mov	rax, QWORD PTR [rcx+30]
 	mov	ecx, 4096				; 00001000H
 	div	rcx
 	inc	rax
@@ -328,10 +328,10 @@ $LN4@FreeImage:
 	mov	eax, DWORD PTR i$1[rbp]
 	imul	rax, rax, 4096				; 00001000H
 	mov	rcx, QWORD PTR proc$[rbp]
-	add	rax, QWORD PTR [rcx+40]
+	add	rax, QWORD PTR [rcx+38]
 	mov	rdx, rax
 	mov	rax, QWORD PTR proc$[rbp]
-	mov	rcx, QWORD PTR [rax+24]
+	mov	rcx, QWORD PTR [rax+22]
 	call	AuGetPhysicalAddressEx
 	mov	QWORD PTR phys$2[rbp], rax
 
@@ -361,7 +361,7 @@ $LN3@FreeImage:
 ; 73   : 	AuVMArea *image_area = AuVMAreaGet(proc, proc->_image_base_);
 
 	mov	rax, QWORD PTR proc$[rbp]
-	mov	rdx, QWORD PTR [rax+40]
+	mov	rdx, QWORD PTR [rax+38]
 	mov	rcx, QWORD PTR proc$[rbp]
 	call	?AuVMAreaGet@@YAPEAU_vm_area_@@PEAU_au_proc_@@_K@Z ; AuVMAreaGet
 	mov	QWORD PTR image_area$[rbp], rax
@@ -499,7 +499,7 @@ $LN14:
 ; 124  : 	uint64_t stack_ = killable->_main_stack_ - PROCESS_USER_STACK_SZ;
 
 	mov	rax, QWORD PTR killable$[rbp]
-	mov	rax, QWORD PTR [rax+48]
+	mov	rax, QWORD PTR [rax+46]
 	sub	rax, 524288				; 00080000H
 	mov	QWORD PTR stack_$[rbp], rax
 
@@ -507,7 +507,7 @@ $LN14:
 
 	mov	rdx, QWORD PTR stack_$[rbp]
 	mov	rax, QWORD PTR killable$[rbp]
-	mov	rcx, QWORD PTR [rax+24]
+	mov	rcx, QWORD PTR [rax+22]
 	call	?FreeUserStack@@YAXPEA_KPEAX@Z		; FreeUserStack
 
 ; 126  : 	/* free up shm mappings */
@@ -530,7 +530,7 @@ $LN2@AuProcessC:
 	mov	DWORD PTR i$1[rbp], eax
 $LN4@AuProcessC:
 	mov	rax, QWORD PTR killable$[rbp]
-	mov	rax, QWORD PTR [rax+1072]
+	mov	rax, QWORD PTR [rax+1063]
 	mov	eax, DWORD PTR [rax]
 	cmp	DWORD PTR i$1[rbp], eax
 	jae	SHORT $LN3@AuProcessC
@@ -539,7 +539,7 @@ $LN4@AuProcessC:
 
 	mov	edx, DWORD PTR i$1[rbp]
 	mov	rax, QWORD PTR killable$[rbp]
-	mov	rcx, QWORD PTR [rax+1072]
+	mov	rcx, QWORD PTR [rax+1063]
 	call	list_remove
 	mov	QWORD PTR area$2[rbp], rax
 
@@ -562,7 +562,7 @@ $LN3@AuProcessC:
 ; 137  : 	kfree(killable->vmareas);
 
 	mov	rax, QWORD PTR killable$[rbp]
-	mov	rcx, QWORD PTR [rax+1072]
+	mov	rcx, QWORD PTR [rax+1063]
 	call	kfree
 
 ; 138  : 
@@ -584,7 +584,7 @@ $LN7@AuProcessC:
 
 	movsxd	rax, DWORD PTR i$3[rbp]
 	mov	rcx, QWORD PTR killable$[rbp]
-	mov	rax, QWORD PTR [rcx+rax*8+96]
+	mov	rax, QWORD PTR [rcx+rax*8+87]
 	mov	QWORD PTR t_$4[rbp], rax
 
 ; 143  : 		if (t_) {
@@ -641,16 +641,16 @@ $LN7@AuProcessC:
 
 	mov	rdx, QWORD PTR stack_$7[rbp]
 	mov	rax, QWORD PTR killable$[rbp]
-	mov	rcx, QWORD PTR [rax+24]
+	mov	rcx, QWORD PTR [rax+22]
 	call	?FreeUserStack@@YAXPEA_KPEAX@Z		; FreeUserStack
 
 ; 152  : 				killable->_user_stack_index_ -= PROCESS_USER_STACK_SZ;
 
 	mov	rax, QWORD PTR killable$[rbp]
-	mov	rax, QWORD PTR [rax+56]
+	mov	rax, QWORD PTR [rax+54]
 	sub	rax, 524288				; 00080000H
 	mov	rcx, QWORD PTR killable$[rbp]
-	mov	QWORD PTR [rcx+56], rax
+	mov	QWORD PTR [rcx+54], rax
 $LN10@AuProcessC:
 
 ; 153  : 			}
@@ -681,7 +681,7 @@ $LN6@AuProcessC:
 ; 160  : 	AuUserEntry* uentry = killable->main_thread->uentry;
 
 	mov	rax, QWORD PTR killable$[rbp]
-	mov	rax, QWORD PTR [rax+72]
+	mov	rax, QWORD PTR [rax+70]
 	mov	rax, QWORD PTR [rax+641]
 	mov	QWORD PTR uentry$[rbp], rax
 
@@ -701,7 +701,7 @@ $LN6@AuProcessC:
 
 	mov	edx, 16384				; 00004000H
 	mov	rax, QWORD PTR killable$[rbp]
-	mov	rcx, QWORD PTR [rax+24]
+	mov	rcx, QWORD PTR [rax+22]
 	call	AuGetPhysicalAddressEx
 	mov	QWORD PTR phys$8[rbp], rax
 
@@ -726,13 +726,13 @@ $LN11@AuProcessC:
 ; 170  : 	AuThreadCleanTrash(killable->main_thread);
 
 	mov	rax, QWORD PTR killable$[rbp]
-	mov	rcx, QWORD PTR [rax+72]
+	mov	rcx, QWORD PTR [rax+70]
 	call	?AuThreadCleanTrash@@YAXPEAU_au_thread_@@@Z ; AuThreadCleanTrash
 
 ; 171  : 	AuThreadFree(killable, killable->main_thread);
 
 	mov	rax, QWORD PTR killable$[rbp]
-	mov	rdx, QWORD PTR [rax+72]
+	mov	rdx, QWORD PTR [rax+70]
 	mov	rcx, QWORD PTR killable$[rbp]
 	call	?AuThreadFree@@YAXPEAU_au_proc_@@PEAU_au_thread_@@@Z ; AuThreadFree
 
@@ -742,7 +742,7 @@ $LN11@AuProcessC:
 ; 175  : 	AuPmmngrFree((void*)V2P((size_t)killable->cr3));
 
 	mov	rax, QWORD PTR killable$[rbp]
-	mov	rcx, QWORD PTR [rax+24]
+	mov	rcx, QWORD PTR [rax+22]
 	call	V2P
 	mov	rcx, rax
 	call	AuPmmngrFree

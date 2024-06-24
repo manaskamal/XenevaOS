@@ -185,8 +185,8 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc,char** argv) {
 		 * allocate memory of size (string_len + char_cnt) * sizeof(char) for
 		 * argument array
 		 */
-		char** argvs = (char**)kmalloc((string_len + char_cnt) * sizeof(char));
-		memset(argvs, 0, (string_len + char_cnt) * sizeof(char));
+		char** argvs = (char**)kmalloc(num_args_ * sizeof(char*));
+		memset(argvs, 0, num_args_ * sizeof(char*));
 		argvs[0] = file__;
 
 		for (int i = 0; i < argc; i++){

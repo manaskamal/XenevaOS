@@ -1,11 +1,11 @@
 e:\xeneva project\aurora\xeloader\x64\debug\argpass.obj
 e:\xeneva project\aurora\xeloader\x64\debug\crt0.obj
 e:\xeneva project\aurora\xeloader\x64\debug\fastcpy.obj
-e:\xeneva project\aurora\xeloader\x64\debug\vc120.pdb
-e:\xeneva project\aurora\xeloader\x64\debug\vc120.idb
-e:\xeneva project\aurora\xeloader\x64\debug\main.obj
-e:\xeneva project\aurora\xeloader\x64\debug\pe_.obj
+e:\xeneva project\aurora\xeloader\x64\debug\vc142.pdb
+e:\xeneva project\aurora\xeloader\x64\debug\vc142.idb
 e:\xeneva project\aurora\xeloader\x64\debug\xeldrobject.obj
+e:\xeneva project\aurora\xeloader\x64\debug\pe_.obj
+e:\xeneva project\aurora\xeloader\x64\debug\main.obj
 f:\xeldr.exe
 f:\xeldr.map
 e:\xeneva project\aurora\x64\debug\xeloader.lib

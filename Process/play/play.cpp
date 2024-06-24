@@ -31,11 +31,42 @@
 #include <_xeneva.h>
 #include <stdio.h>
 #include <sys\_keproc.h>
+#include <sys/mman.h>
 #include <sys\_kefile.h>
 #include <sys\iocodes.h>
 #include <string.h>
 #include <stdlib.h>
+#include <sys\_keipcpostbox.h>
 #include <sys\socket.h>
+
+/* Standard Deodhai Request message defined*/
+#define DEODHAI_GET_AUDIO_CONNECTION "DeodhaiGetAudioConnection"
+#define DEODHAI_CLOSE_AUDIO_CONNECTION "DeodhaiCloseAudioConnection"
+
+#pragma pack(push,1)
+typedef struct _deodhai_audio_msg_ {
+	char message[60];
+	uint16_t fromProcessId;
+	uint16_t toProcessId;
+}DeodhaiAudioMessage;
+#pragma pack(pop)
+
+/*
+ * AudioControlPanel is the main way to
+ * control each individual stream, feautres
+ * like attack, release, Eq, compression,
+ * reverb to be added in future
+ */
+#pragma pack(push,1)
+typedef struct _audio_control_panel_ {
+	uint8_t numChannel;
+	float gain;
+	float leftSpeakerScale;
+	float rightSpeakerScale;
+	bool Samplefull;
+	bool ready;
+}AudioControlPanel;
+#pragma pack(pop)
 
 /*
 * main -- terminal emulator
@@ -65,9 +96,41 @@ int main(int argc, char* arv[]){
 		printf("\n No filename specified \n");
 		return -1;
 	}
+	int thrID = _KeGetThreadID();
 
-	int sockfd = socket(AF_INET, SOCK_STREAM, 0);
-	printf("Socket created sockfd -> %d \n", sockfd);
+	int pipe = _KeOpenFile("/pipe/DeodhaiAudio", FILE_OPEN_READ_ONLY);
+	printf("Pipe opened %d \n", pipe);
+
+	int postbox = _KeOpenFile("/dev/postbox", FILE_OPEN_READ_ONLY);
+	_KeFileIoControl(postbox, POSTBOX_CREATE, NULL);
+	
+	DeodhaiAudioMessage* msg = (DeodhaiAudioMessage*)malloc(sizeof(DeodhaiAudioMessage));
+	strcpy(msg->message, DEODHAI_GET_AUDIO_CONNECTION);
+	msg->fromProcessId = thrID;
+	msg->toProcessId = 0;
+	_KeWriteFile(pipe, msg,sizeof(DeodhaiAudioMessage));
+
+	AudioControlPanel* panel;
+	void* sampleBuffer;
+	PostEvent e;
+	while (1) {
+		_KeFileIoControl(postbox, POSTBOX_GET_EVENT, &e);
+		if (e.type != 0) {
+			if (e.type == 11) {
+				printf("DeodhaiAudio Handshake received \n");
+				uint16_t controlPanelKey = e.dword;
+				uint16_t sampleBufferKey = e.dword2;
+				int id = _KeCreateSharedMem(controlPanelKey, 0, 0);
+				int id2 = _KeCreateSharedMem(sampleBufferKey, 0, 0);
+				void* controlPanelBuff = _KeObtainSharedMem(id, 0, 0);
+				void* sampleBuff = _KeObtainSharedMem(id2, 0, 0);
+				panel = (AudioControlPanel*)controlPanelBuff;
+				sampleBuffer = sampleBuff;
+				break;
+			}
+		}
+		_KeProcessSleep(1000);
+	}
 
 	/* open the sound device-file, it is in /dev directory */
 	int snd = _KeOpenFile("/dev/sound", FILE_OPEN_WRITE);
@@ -103,11 +166,19 @@ int main(int argc, char* arv[]){
 	void* songbuf = malloc(4096);
 	memset(songbuf, 0, 4096);
 	_KeReadFile(song, songbuf, 4096);
+	uint8_t* alignedSongBuf = (uint8_t*)songbuf;
 
 	XEFileStatus fs;
 	_KeFileStat(song, &fs);
 	bool finished = 0;
 	
+	printf("ControlPanel gain -> %f \n", panel->gain);
+	panel->ready = true;
+	printf("Sample Buffer -> %x \n", sampleBuffer);
+	panel->rightSpeakerScale = 1.0;
+	panel->leftSpeakerScale = 0.0;
+	panel->gain = 0.2;
+	panel->numChannel = 2;
 	while (1) {
 		/* with each frame read the sound, write it
 		* to sound device, the sound device will automatically
@@ -118,13 +189,21 @@ int main(int argc, char* arv[]){
 
 		if (fs.eof) {
 			finished = 1;
+			panel->ready = false;
 			_KeCloseFile(song);
 			_KeProcessExit();
 		}
 
 		if (!finished) {
-			_KeWriteFile(snd, songbuf, 4096);
-			_KeReadFile(song, songbuf, 4096);
+			//_KeWriteFile(snd, songbuf, 4096);
+			if (!panel->Samplefull) {
+				_KeReadFile(song, songbuf, 4096);
+				memcpy(sampleBuffer, songbuf, 4096);
+				panel->Samplefull = true;
+			}
+			else {
+				_KeProcessSleep(500);
+			}
 		}
 	}
 }

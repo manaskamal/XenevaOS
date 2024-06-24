@@ -33,6 +33,10 @@
 #include <stdint.h>
 #include <aurora.h>
 
+#ifdef __cplusplus
+AU_EXTERN{
+#endif
+
 #pragma pack(push,1)
 typedef struct _time_ {
 	uint8_t century;
@@ -45,7 +49,7 @@ typedef struct _time_ {
 }AuTime;
 #pragma pack(pop)
 
-typedef struct _timeval_{
+typedef struct _timeval_ {
 	long tv_sec;
 	long tv_usec;
 }timeval;
@@ -54,6 +58,10 @@ typedef struct _timeval_{
 * AuGetCurrentTime -- get current time
 * @param time -- pointer to time memory area
 */
-AU_EXTERN AU_EXPORT void AuGetCurrentTime(AuTime* time);
+ AU_EXPORT void AuGetCurrentTime(AuTime* time);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

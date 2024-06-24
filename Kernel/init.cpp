@@ -48,6 +48,7 @@
 #include <ahci.h>
 #include <Fs\vfs.h>
 #include <Fs\tty.h>
+#include <Fs\pipe.h>
 #include <Drivers\mouse.h>
 #include <Drivers\ps2kybrd.h>
 #include <Drivers\rtc.h>
@@ -67,10 +68,6 @@
 #include <ftmngr.h>
 #include <hashmap.h>
 
-typedef struct _test_struct_{
-	int val;
-	int val2;
-}testStruct;
 /**========================================
 ** the main entry routine -- _AuMain
 **/
@@ -130,6 +127,7 @@ void _AuMain(KERNEL_BOOT_INFO *info) {
 
 	/* make the kernel standalone*/
 	AuVmmngrBootFree();
+
 	/* Process initialisation begins here */
 	AuStartRootProc();
 	AuSchedulerStart();

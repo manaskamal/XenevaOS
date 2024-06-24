@@ -41,6 +41,7 @@
 #include <Serv/sysserv.h>
 #include <ftmngr.h>
 #include <Fs\tty.h>
+#include <Fs\pipe.h>
 #include <Mm\mmap.h>
 #include <net\socket.h>
 
@@ -125,6 +126,7 @@ static void* syscalls[AURORA_MAX_SYSCALL] = {
 	NetBind, //51
 	NetAccept, //52
 	NetListen, //53
+	AuCreatePipe, //54
 };
 
 //! System Call Handler Functions
@@ -137,7 +139,7 @@ extern "C" uint64_t x64_syscall_handler(int a) {
 	AuThread* current_thr = AuGetCurrentThread();
 	uint64_t ret_code = 0;
 
-	if (a > AURORA_MAX_SYSCALL)
+	if (a < 0 || a >= AURORA_MAX_SYSCALL)
 		return -1;
 	
 	syscall_func func = (syscall_func)syscalls[a];

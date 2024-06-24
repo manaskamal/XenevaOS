@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2013
-VisualStudioVersion = 12.0.21005.1
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.34729.46
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Kernel", "Kernel\Kernel.vcxproj", "{BED35751-DD14-4197-9081-D61F574C0847}"
 EndProject
@@ -59,6 +59,8 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NVMe", "Drivers\NVMe\NVMe.vcxproj", "{B3D51D1A-09E7-47D9-A6A5-5E6059585D6E}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NETMngr", "Process\NETMngr\NETMngr.vcxproj", "{567DA5F4-5B2E-4993-9370-C4A4F022C928}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DeodhaiAudio", "Process\DeodhaiAudio\DeodhaiAudio.vcxproj", "{6CEF9127-6B8C-4885-BA8D-C2B206EA7134}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -666,8 +668,35 @@ Global
 		{567DA5F4-5B2E-4993-9370-C4A4F022C928}.Release|Win32.Build.0 = Release|Win32
 		{567DA5F4-5B2E-4993-9370-C4A4F022C928}.Release|x64.ActiveCfg = Release|x64
 		{567DA5F4-5B2E-4993-9370-C4A4F022C928}.Release|x64.Build.0 = Release|x64
+		{6CEF9127-6B8C-4885-BA8D-C2B206EA7134}.Debug Static|Mixed Platforms.ActiveCfg = Debug|Win32
+		{6CEF9127-6B8C-4885-BA8D-C2B206EA7134}.Debug Static|Mixed Platforms.Build.0 = Debug|Win32
+		{6CEF9127-6B8C-4885-BA8D-C2B206EA7134}.Debug Static|Win32.ActiveCfg = Debug|Win32
+		{6CEF9127-6B8C-4885-BA8D-C2B206EA7134}.Debug Static|Win32.Build.0 = Debug|Win32
+		{6CEF9127-6B8C-4885-BA8D-C2B206EA7134}.Debug Static|x64.ActiveCfg = Debug|x64
+		{6CEF9127-6B8C-4885-BA8D-C2B206EA7134}.Debug Static|x64.Build.0 = Debug|x64
+		{6CEF9127-6B8C-4885-BA8D-C2B206EA7134}.Debug|Mixed Platforms.ActiveCfg = Debug|x64
+		{6CEF9127-6B8C-4885-BA8D-C2B206EA7134}.Debug|Mixed Platforms.Build.0 = Debug|x64
+		{6CEF9127-6B8C-4885-BA8D-C2B206EA7134}.Debug|Win32.ActiveCfg = Debug|Win32
+		{6CEF9127-6B8C-4885-BA8D-C2B206EA7134}.Debug|Win32.Build.0 = Debug|Win32
+		{6CEF9127-6B8C-4885-BA8D-C2B206EA7134}.Debug|x64.ActiveCfg = Debug|x64
+		{6CEF9127-6B8C-4885-BA8D-C2B206EA7134}.Debug|x64.Build.0 = Debug|x64
+		{6CEF9127-6B8C-4885-BA8D-C2B206EA7134}.Release Static|Mixed Platforms.ActiveCfg = Release|Win32
+		{6CEF9127-6B8C-4885-BA8D-C2B206EA7134}.Release Static|Mixed Platforms.Build.0 = Release|Win32
+		{6CEF9127-6B8C-4885-BA8D-C2B206EA7134}.Release Static|Win32.ActiveCfg = Release|Win32
+		{6CEF9127-6B8C-4885-BA8D-C2B206EA7134}.Release Static|Win32.Build.0 = Release|Win32
+		{6CEF9127-6B8C-4885-BA8D-C2B206EA7134}.Release Static|x64.ActiveCfg = Release|x64
+		{6CEF9127-6B8C-4885-BA8D-C2B206EA7134}.Release Static|x64.Build.0 = Release|x64
+		{6CEF9127-6B8C-4885-BA8D-C2B206EA7134}.Release|Mixed Platforms.ActiveCfg = Release|Win32
+		{6CEF9127-6B8C-4885-BA8D-C2B206EA7134}.Release|Mixed Platforms.Build.0 = Release|Win32
+		{6CEF9127-6B8C-4885-BA8D-C2B206EA7134}.Release|Win32.ActiveCfg = Release|Win32
+		{6CEF9127-6B8C-4885-BA8D-C2B206EA7134}.Release|Win32.Build.0 = Release|Win32
+		{6CEF9127-6B8C-4885-BA8D-C2B206EA7134}.Release|x64.ActiveCfg = Release|x64
+		{6CEF9127-6B8C-4885-BA8D-C2B206EA7134}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {946ECE42-30EC-4F0F-A2B6-144229D2D575}
 	EndGlobalSection
 EndGlobal

@@ -42,7 +42,7 @@ void HDAInitOutput() {
 		void*p = AuPmmngrAlloc();
 		if (phys_buf == 0)
 			phys_buf = (uint64_t)p;
-		AuMapPage((size_t)p, pos + i * 4096, X86_64_PAGING_NO_CACHING | X86_64_PAGING_NO_EXECUTE |
+		AuMapPage((size_t)p, pos + static_cast<uint64_t>(i) * 4096, X86_64_PAGING_NO_CACHING | X86_64_PAGING_NO_EXECUTE |
 			X86_64_PAGING_WRITE_THROUGH);
 	}
 

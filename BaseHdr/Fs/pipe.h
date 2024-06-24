@@ -34,6 +34,7 @@
 #include <list.h>
 #include <Fs\vfs.h>
 
+#pragma pack(push,1)
 typedef struct _pipe_ {
 	uint8_t* buffer;
 	size_t write_ptr;
@@ -43,6 +44,7 @@ typedef struct _pipe_ {
 	list_t* readers_wait_queue;
 	list_t* writers_wait_queue;
 }AuPipe;
+#pragma pack(pop)
 
 /*
  * AuPipeUnread -- get the available read
@@ -55,5 +57,18 @@ extern size_t AuPipeUnread(AuPipe* pipe);
 * @param name -- name of the pipe
 * @param sz -- Size of the pipe
 */
-extern AuVFSNode* AuCreatePipe(char* name, size_t sz);
+extern int AuCreatePipe(char* name, size_t sz);
+
+/*
+* AuPipeFSAddFile -- adds a file/directory
+* @param fs -- pointer to device file system
+* @param path -- path of the file
+* @param file -- file to add to dev fs
+*/
+extern int AuPipeFSAddFile(AuVFSNode* fs, char* path, AuVFSNode* file);
+
+/*
+ * AuPipeFSInitialise -- initialise the pipe filesystem
+ */
+extern void AuPipeFSInitialise();
 #endif

@@ -329,7 +329,8 @@ void HDAHandler(size_t v, void* p) {
 			uint32_t pos = dma[4] & 0xffffffff;
 			pos /= BUFFER_SIZE;
 			pos %= BDL_SIZE;
-			AuSoundGetBlock((uint64_t*)(_hdaudio->sample_buffer + pos * BUFFER_SIZE));
+			AuSoundGetBlock((uint64_t*)(_hdaudio->sample_buffer + 
+				static_cast<uint64_t>(pos) * BUFFER_SIZE));
 		}
 
 	}

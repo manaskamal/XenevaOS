@@ -84,6 +84,7 @@ int GetProcessID() {
  * from the main thread of the process
  */
 int ProcessExit() {
+	x64_cli();
 	AuThread* current_thr = AuGetCurrentThread();
 	AuProcess* proc = AuProcessFindThread(current_thr);
 	if (!proc)
@@ -98,6 +99,7 @@ int ProcessExit() {
  * @param pid -- child process id, if -1 then any process
  */
 int ProcessWaitForTermination(int pid) {
+	x64_cli();
 	AuThread* current_thr = AuGetCurrentThread();
 	AuProcess* proc = AuProcessFindThread(current_thr);
 	AuProcessWaitForTermination(proc, pid);
@@ -110,6 +112,7 @@ int ProcessWaitForTermination(int pid) {
  * @param name -- name of the current process slot
  */
 int CreateProcess(int parent_id, char *name) {
+	x64_cli();
 	AuProcess* slot = AuCreateProcessSlot(0, name);
 	if (!slot)
 		return -1;
@@ -141,8 +144,8 @@ int ProcessLoadExec(int proc_id, char* filename,int argc, char** argv) {
 		/*
 		 BUGG:kmalloc: mentioned in loader.cpp inside AuLoadExecToProcess 
 		 */
-		allocated_argv = (char**)kmalloc(char_cnt * sizeof(char));
-		memset(allocated_argv, 0, char_cnt * sizeof(char));
+		allocated_argv = (char**)kmalloc(argc * sizeof(char*));
+		memset(allocated_argv, 0, argc * sizeof(char*));
 		for (int i = 0; i < argc; i++){
 			/*
 			 * TRICKY: char pointers from argv[i] is already allocated

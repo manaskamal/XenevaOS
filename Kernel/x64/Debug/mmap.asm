@@ -878,7 +878,7 @@ $LN5@CreateMemM:
 
 	movsxd	rax, DWORD PTR fd$[rbp]
 	mov	rcx, QWORD PTR proc$[rbp]
-	mov	rax, QWORD PTR [rcx+rax*8+576]
+	mov	rax, QWORD PTR [rcx+rax*8+567]
 	mov	QWORD PTR file$[rbp], rax
 $LN6@CreateMemM:
 
@@ -1358,10 +1358,10 @@ $LN26@CreateMemM:
 ; 233  : 	proc->proc_mmap_len += len;
 
 	mov	rax, QWORD PTR proc$[rbp]
-	mov	rax, QWORD PTR [rax+1120]
+	mov	rax, QWORD PTR [rax+1111]
 	add	rax, QWORD PTR len$[rbp]
 	mov	rcx, QWORD PTR proc$[rbp]
-	mov	QWORD PTR [rcx+1120], rax
+	mov	QWORD PTR [rcx+1111], rax
 
 ; 234  : 	return (void*)lookup_addr;
 

@@ -11,20 +11,20 @@ PUBLIC	?_kernel_major_version@@3HA			; _kernel_major_version
 PUBLIC	?_kernel_minor_version@@3HA			; _kernel_minor_version
 PUBLIC	?_kernel_patch_version@@3HA			; _kernel_patch_version
 PUBLIC	?_kernel_build_date@@3PEBDEB			; _kernel_build_date
-PUBLIC	??_C@_0M@OFILAAEO@Jun?521?52024@		; `string'
+PUBLIC	??_C@_0M@LHLDCPOJ@Jun?524?52024@		; `string'
 PUBLIC	?_kernel_build_time@@3PEBDEB			; _kernel_build_time
-PUBLIC	??_C@_08NKJGKDDA@13?304?318@			; `string'
+PUBLIC	??_C@_08LKBJMDHM@17?319?341@			; `string'
 _BSS	SEGMENT
 ?_kernel_minor_version@@3HA DD 01H DUP (?)		; _kernel_minor_version
 ?_kernel_patch_version@@3HA DD 01H DUP (?)		; _kernel_patch_version
 _BSS	ENDS
-;	COMDAT ??_C@_08NKJGKDDA@13?304?318@
+;	COMDAT ??_C@_08LKBJMDHM@17?319?341@
 CONST	SEGMENT
-??_C@_08NKJGKDDA@13?304?318@ DB '13:04:18', 00H		; `string'
+??_C@_08LKBJMDHM@17?319?341@ DB '17:19:41', 00H		; `string'
 CONST	ENDS
-;	COMDAT ??_C@_0M@OFILAAEO@Jun?521?52024@
+;	COMDAT ??_C@_0M@LHLDCPOJ@Jun?524?52024@
 CONST	SEGMENT
-??_C@_0M@OFILAAEO@Jun?521?52024@ DB 'Jun 21 2024', 00H	; `string'
+??_C@_0M@LHLDCPOJ@Jun?524?52024@ DB 'Jun 24 2024', 00H	; `string'
 CONST	ENDS
 ;	COMDAT ??_C@_06BAMEHABM@Aurora@
 CONST	SEGMENT
@@ -34,7 +34,7 @@ _DATA	SEGMENT
 ?kernelName@@3PEBDEB DQ FLAT:??_C@_06BAMEHABM@Aurora@	; kernelName
 ?_kernel_major_version@@3HA DD 01H			; _kernel_major_version
 	ORG $+4
-?_kernel_build_date@@3PEBDEB DQ FLAT:??_C@_0M@OFILAAEO@Jun?521?52024@ ; _kernel_build_date
-?_kernel_build_time@@3PEBDEB DQ FLAT:??_C@_08NKJGKDDA@13?304?318@ ; _kernel_build_time
+?_kernel_build_date@@3PEBDEB DQ FLAT:??_C@_0M@LHLDCPOJ@Jun?524?52024@ ; _kernel_build_date
+?_kernel_build_time@@3PEBDEB DQ FLAT:??_C@_08LKBJMDHM@17?319?341@ ; _kernel_build_time
 _DATA	ENDS
 END

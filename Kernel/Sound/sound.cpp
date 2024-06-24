@@ -146,6 +146,8 @@ void AuSoundGetBlock(uint64_t *buffer) {
 		for (int i = 0; i < SND_BUFF_SZ / sizeof(int16_t); i++)
 			data_16[i] /= 2;
 
+		/* experiments for stereo panning and gain control over
+		 * each channel */
 		for (int i = 0; i < SND_BUFF_SZ / sizeof(int16_t); i++){
 			hw_buffer[i] += data_16[i];
 		}
@@ -221,8 +223,7 @@ void AuSoundStop() {
 
 int AuSoundIOControl(AuVFSNode* node, int code, void* arg) {
 	AuFileIOControl *_ioctl = (AuFileIOControl*)arg;
-	if (_ioctl->syscall_magic != AURORA_SYSCALL_MAGIC)
-		return -1;
+
 
 	AuThread *thr = AuGetCurrentThread();
 	switch (code)

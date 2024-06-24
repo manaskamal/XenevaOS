@@ -21,6 +21,7 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{38A7B436-745B-4193-A5F3-4FE14D682F8A}</ProjectGuid>
     <RootNamespace>XEClib</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -87,7 +88,7 @@
       <SDLCheck>false</SDLCheck>
       <AdditionalIncludeDirectories>E:\Xeneva Project\Aurora\Libs\XEClib\includes;E:\Xeneva Project\Aurora\Libs\XEClib\includes\c++</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <PreprocessorDefinitions>ARCH_X64; YES_DYNAMIC; DYNAMIC_EXPORTER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>ARCH_X64; DYNAMIC_EXPORTER; YES_DYNAMIC</PreprocessorDefinitions>
       <IgnoreStandardIncludePath>true</IgnoreStandardIncludePath>
       <ExceptionHandling>false</ExceptionHandling>
       <BasicRuntimeChecks />

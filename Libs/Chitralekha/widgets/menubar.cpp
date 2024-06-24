@@ -103,7 +103,7 @@ void ChMenubarMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, int button)
 						if (mi->menu->backWindow){
 							if (!mi->menu->backWindow->hidden){
 								ChPopupWindowHide(mi->menu->backWindow,win);
-								_KeProcessSleep(100);
+								_KeProcessSleep(500);
 							}
 						}
 					}
@@ -132,7 +132,7 @@ void ChMenubarMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, int button)
 							if (mitem->menu->backWindow){
 								if (!mitem->menu->backWindow->hidden){
 									ChPopupWindowHide(mitem->menu->backWindow,win);
-									_KeProcessSleep(100);
+									_KeProcessSleep(500);
 								}
 							}
 						}

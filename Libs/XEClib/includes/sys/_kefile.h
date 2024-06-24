@@ -104,6 +104,7 @@ XE_EXTERN{
 	XE_LIB int _KeOpenDir(char* filename);
 	XE_LIB int _KeReadDir(int dirfd, void* dirent);
 	XE_LIB int _KeFileSetOffset(int fd, size_t offset);
+	XE_LIB int _KeCreatePipe(char* name, size_t sz);
 #ifdef __cplusplus
 }
 #endif

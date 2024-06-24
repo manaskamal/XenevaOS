@@ -5,11 +5,17 @@ include listing.inc
 INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
+PUBLIC	?pipeFS@@3PEAU__VFS_NODE__@@EA			; pipeFS
+_BSS	SEGMENT
+?pipeFS@@3PEAU__VFS_NODE__@@EA DQ 01H DUP (?)		; pipeFS
+_BSS	ENDS
 msvcjmc	SEGMENT
 __AA583385_pipe@cpp DB 01H
 msvcjmc	ENDS
 PUBLIC	?AuPipeUnread@@YA_KPEAU_pipe_@@@Z		; AuPipeUnread
-PUBLIC	?AuCreatePipe@@YAPEAU__VFS_NODE__@@PEAD_K@Z	; AuCreatePipe
+PUBLIC	?AuCreatePipe@@YAHPEAD_K@Z			; AuCreatePipe
+PUBLIC	?AuPipeFSAddFile@@YAHPEAU__VFS_NODE__@@PEAD0@Z	; AuPipeFSAddFile
+PUBLIC	?AuPipeFSInitialise@@YAXXZ			; AuPipeFSInitialise
 PUBLIC	?AuPipeGetAvailableBytes@@YA_KPEAU_pipe_@@@Z	; AuPipeGetAvailableBytes
 PUBLIC	?AuPipeIncrementRead@@YAXPEAU_pipe_@@@Z		; AuPipeIncrementRead
 PUBLIC	?AuPipeIncrementWrite@@YAXPEAU_pipe_@@@Z	; AuPipeIncrementWrite
@@ -18,12 +24,28 @@ PUBLIC	?AuPipeRead@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z	; AuPipeRead
 PUBLIC	?AuPipeWrite@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z	; AuPipeWrite
 PUBLIC	?AuPipeOpen@@YAPEAU__VFS_NODE__@@PEAU1@PEAD@Z	; AuPipeOpen
 PUBLIC	?AuPipeClose@@YAHPEAU__VFS_NODE__@@0@Z		; AuPipeClose
+PUBLIC	?AuPipeFSOpen@@YAPEAU__VFS_NODE__@@PEAU1@PEAD@Z	; AuPipeFSOpen
 PUBLIC	__JustMyCode_Default
+PUBLIC	??_C@_0BD@LACECMDD@Pipe?5proc?5?9?$DO?5?$CFs?5?$AN?6@ ; `string'
+PUBLIC	??_C@_01KMDKNFGN@?1@				; `string'
+PUBLIC	??_C@_0BI@BEIFGIPP@Pipe?5Created?5?9?$DO?5?$CFd?5?$CFs?$AN?6@ ; `string'
+PUBLIC	??_C@_04MKFKKHBG@pipe@				; `string'
 EXTRN	initialize_list:PROC
+EXTRN	list_add:PROC
+EXTRN	list_get_at:PROC
+EXTRN	AuVFSAddFileSystem:PROC
 EXTRN	kmalloc:PROC
 EXTRN	kfree:PROC
+EXTRN	strcmp:PROC
 EXTRN	strcpy:PROC
+EXTRN	strchr:PROC
 EXTRN	memset:PROC
+EXTRN	SeTextOut:PROC
+EXTRN	AuGetCurrentThread:PROC
+EXTRN	?AuProcessFindThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z:PROC ; AuProcessFindThread
+EXTRN	?AuProcessFindSubThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z:PROC ; AuProcessFindSubThread
+EXTRN	?AuProcessGetFileDesc@@YAHPEAU_au_proc_@@@Z:PROC ; AuProcessGetFileDesc
+EXTRN	x64_cli:PROC
 EXTRN	__CheckForDebuggerJustMyCode:PROC
 ;	COMDAT pdata
 pdata	SEGMENT
@@ -33,9 +55,21 @@ $pdata$?AuPipeUnread@@YA_KPEAU_pipe_@@@Z DD imagerel $LN6
 pdata	ENDS
 ;	COMDAT pdata
 pdata	SEGMENT
-$pdata$?AuCreatePipe@@YAPEAU__VFS_NODE__@@PEAD_K@Z DD imagerel $LN3
-	DD	imagerel $LN3+286
-	DD	imagerel $unwind$?AuCreatePipe@@YAPEAU__VFS_NODE__@@PEAD_K@Z
+$pdata$?AuCreatePipe@@YAHPEAD_K@Z DD imagerel $LN7
+	DD	imagerel $LN7+513
+	DD	imagerel $unwind$?AuCreatePipe@@YAHPEAD_K@Z
+pdata	ENDS
+;	COMDAT pdata
+pdata	SEGMENT
+$pdata$?AuPipeFSAddFile@@YAHPEAU__VFS_NODE__@@PEAD0@Z DD imagerel $LN18
+	DD	imagerel $LN18+398
+	DD	imagerel $unwind$?AuPipeFSAddFile@@YAHPEAU__VFS_NODE__@@PEAD0@Z
+pdata	ENDS
+;	COMDAT pdata
+pdata	SEGMENT
+$pdata$?AuPipeFSInitialise@@YAXXZ DD imagerel $LN3
+	DD	imagerel $LN3+171
+	DD	imagerel $unwind$?AuPipeFSInitialise@@YAXXZ
 pdata	ENDS
 ;	COMDAT pdata
 pdata	SEGMENT
@@ -64,7 +98,7 @@ pdata	ENDS
 ;	COMDAT pdata
 pdata	SEGMENT
 $pdata$?AuPipeRead@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z DD imagerel $LN9
-	DD	imagerel $LN9+202
+	DD	imagerel $LN9+196
 	DD	imagerel $unwind$?AuPipeRead@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z
 pdata	ENDS
 ;	COMDAT pdata
@@ -85,6 +119,36 @@ $pdata$?AuPipeClose@@YAHPEAU__VFS_NODE__@@0@Z DD imagerel $LN4
 	DD	imagerel $LN4+144
 	DD	imagerel $unwind$?AuPipeClose@@YAHPEAU__VFS_NODE__@@0@Z
 pdata	ENDS
+;	COMDAT pdata
+pdata	SEGMENT
+$pdata$?AuPipeFSOpen@@YAPEAU__VFS_NODE__@@PEAU1@PEAD@Z DD imagerel $LN21
+	DD	imagerel $LN21+404
+	DD	imagerel $unwind$?AuPipeFSOpen@@YAPEAU__VFS_NODE__@@PEAU1@PEAD@Z
+pdata	ENDS
+;	COMDAT ??_C@_04MKFKKHBG@pipe@
+CONST	SEGMENT
+??_C@_04MKFKKHBG@pipe@ DB 'pipe', 00H			; `string'
+CONST	ENDS
+;	COMDAT ??_C@_0BI@BEIFGIPP@Pipe?5Created?5?9?$DO?5?$CFd?5?$CFs?$AN?6@
+CONST	SEGMENT
+??_C@_0BI@BEIFGIPP@Pipe?5Created?5?9?$DO?5?$CFd?5?$CFs?$AN?6@ DB 'Pipe Cr'
+	DB	'eated -> %d %s', 0dH, 0aH, 00H		; `string'
+CONST	ENDS
+;	COMDAT ??_C@_01KMDKNFGN@?1@
+CONST	SEGMENT
+??_C@_01KMDKNFGN@?1@ DB '/', 00H			; `string'
+CONST	ENDS
+;	COMDAT ??_C@_0BD@LACECMDD@Pipe?5proc?5?9?$DO?5?$CFs?5?$AN?6@
+CONST	SEGMENT
+??_C@_0BD@LACECMDD@Pipe?5proc?5?9?$DO?5?$CFs?5?$AN?6@ DB 'Pipe proc -> %s'
+	DB	' ', 0dH, 0aH, 00H				; `string'
+CONST	ENDS
+;	COMDAT xdata
+xdata	SEGMENT
+$unwind$?AuPipeFSOpen@@YAPEAU__VFS_NODE__@@PEAU1@PEAD@Z DD 025041701H
+	DD	01122317H
+	DD	0500b0014H
+xdata	ENDS
 ;	COMDAT xdata
 xdata	SEGMENT
 $unwind$?AuPipeClose@@YAHPEAU__VFS_NODE__@@0@Z DD 025031401H
@@ -135,9 +199,21 @@ $unwind$?AuPipeGetAvailableBytes@@YA_KPEAU_pipe_@@@Z DD 025030f01H
 xdata	ENDS
 ;	COMDAT xdata
 xdata	SEGMENT
-$unwind$?AuCreatePipe@@YAPEAU__VFS_NODE__@@PEAD_K@Z DD 025031401H
-	DD	0d20f2314H
-	DD	0500bH
+$unwind$?AuPipeFSInitialise@@YAXXZ DD 025030b01H
+	DD	0d206230bH
+	DD	05002H
+xdata	ENDS
+;	COMDAT xdata
+xdata	SEGMENT
+$unwind$?AuPipeFSAddFile@@YAHPEAU__VFS_NODE__@@PEAD0@Z DD 025041c01H
+	DD	0117231cH
+	DD	050100014H
+xdata	ENDS
+;	COMDAT xdata
+xdata	SEGMENT
+$unwind$?AuCreatePipe@@YAHPEAD_K@Z DD 025041701H
+	DD	01122317H
+	DD	0500b0012H
 xdata	ENDS
 ;	COMDAT xdata
 xdata	SEGMENT
@@ -151,6 +227,251 @@ _TEXT	SEGMENT
 __JustMyCode_Default PROC				; COMDAT
 	ret	0
 __JustMyCode_Default ENDP
+_TEXT	ENDS
+; Function compile flags: /Odtp /ZI
+; File E:\Xeneva Project\Aurora\Kernel\Fs\pipe.cpp
+;	COMDAT ?AuPipeFSOpen@@YAPEAU__VFS_NODE__@@PEAU1@PEAD@Z
+_TEXT	SEGMENT
+entries$ = 0
+next$ = 8
+first_list$ = 16
+node_to_ret$ = 24
+pathname$1 = 32
+i$2 = 48
+j$3 = 52
+node_$4 = 56
+fs$ = 144
+path$ = 152
+?AuPipeFSOpen@@YAPEAU__VFS_NODE__@@PEAU1@PEAD@Z PROC	; AuPipeFSOpen, COMDAT
+
+; 259  : AuVFSNode* AuPipeFSOpen(AuVFSNode* fs, char* path) {
+
+$LN21:
+	mov	QWORD PTR [rsp+16], rdx
+	mov	QWORD PTR [rsp+8], rcx
+	push	rbp
+	sub	rsp, 160				; 000000a0H
+	lea	rbp, QWORD PTR [rsp+32]
+	lea	rcx, OFFSET FLAT:__AA583385_pipe@cpp
+	call	__CheckForDebuggerJustMyCode
+
+; 260  : 	AuVFSContainer* entries = (AuVFSContainer*)fs->device;
+
+	mov	rax, QWORD PTR fs$[rbp]
+	mov	rax, QWORD PTR [rax+64]
+	mov	QWORD PTR entries$[rbp], rax
+
+; 261  : 	/* now verify the path and add the directory to the list */
+; 262  : 	char* next = strchr(path, '/');
+
+	mov	edx, 47					; 0000002fH
+	mov	rcx, QWORD PTR path$[rbp]
+	call	strchr
+	mov	QWORD PTR next$[rbp], rax
+
+; 263  : 	if (next)
+
+	cmp	QWORD PTR next$[rbp], 0
+	je	SHORT $LN10@AuPipeFSOp
+
+; 264  : 		next++;
+
+	mov	rax, QWORD PTR next$[rbp]
+	inc	rax
+	mov	QWORD PTR next$[rbp], rax
+$LN10@AuPipeFSOp:
+
+; 265  : 
+; 266  : 	AuVFSContainer* first_list = entries;
+
+	mov	rax, QWORD PTR entries$[rbp]
+	mov	QWORD PTR first_list$[rbp], rax
+
+; 267  : 	AuVFSNode* node_to_ret = NULL;
+
+	mov	QWORD PTR node_to_ret$[rbp], 0
+$LN2@AuPipeFSOp:
+
+; 268  : 	while (next) {
+
+	cmp	QWORD PTR next$[rbp], 0
+	je	$LN3@AuPipeFSOp
+
+; 269  : 		char pathname[16];
+; 270  : 		int i;
+; 271  : 		for (i = 0; i < 16; i++) {
+
+	mov	DWORD PTR i$2[rbp], 0
+	jmp	SHORT $LN6@AuPipeFSOp
+$LN4@AuPipeFSOp:
+	mov	eax, DWORD PTR i$2[rbp]
+	inc	eax
+	mov	DWORD PTR i$2[rbp], eax
+$LN6@AuPipeFSOp:
+	cmp	DWORD PTR i$2[rbp], 16
+	jge	SHORT $LN5@AuPipeFSOp
+
+; 272  : 			if (next[i] == '/' || next[i] == '\0')
+
+	movsxd	rax, DWORD PTR i$2[rbp]
+	mov	rcx, QWORD PTR next$[rbp]
+	movsx	eax, BYTE PTR [rcx+rax]
+	cmp	eax, 47					; 0000002fH
+	je	SHORT $LN12@AuPipeFSOp
+	movsxd	rax, DWORD PTR i$2[rbp]
+	mov	rcx, QWORD PTR next$[rbp]
+	movsx	eax, BYTE PTR [rcx+rax]
+	test	eax, eax
+	jne	SHORT $LN11@AuPipeFSOp
+$LN12@AuPipeFSOp:
+
+; 273  : 				break;
+
+	jmp	SHORT $LN5@AuPipeFSOp
+$LN11@AuPipeFSOp:
+
+; 274  : 			pathname[i] = next[i];
+
+	movsxd	rax, DWORD PTR i$2[rbp]
+	movsxd	rcx, DWORD PTR i$2[rbp]
+	mov	rdx, QWORD PTR next$[rbp]
+	movzx	eax, BYTE PTR [rdx+rax]
+	mov	BYTE PTR pathname$1[rbp+rcx], al
+
+; 275  : 		}
+
+	jmp	SHORT $LN4@AuPipeFSOp
+$LN5@AuPipeFSOp:
+
+; 276  : 		pathname[i] = 0;
+
+	movsxd	rax, DWORD PTR i$2[rbp]
+	mov	BYTE PTR pathname$1[rbp+rax], 0
+
+; 277  : 
+; 278  : 		for (int j = 0; j < first_list->childs->pointer; j++) {
+
+	mov	DWORD PTR j$3[rbp], 0
+	jmp	SHORT $LN9@AuPipeFSOp
+$LN7@AuPipeFSOp:
+	mov	eax, DWORD PTR j$3[rbp]
+	inc	eax
+	mov	DWORD PTR j$3[rbp], eax
+$LN9@AuPipeFSOp:
+	mov	rax, QWORD PTR first_list$[rbp]
+	mov	rax, QWORD PTR [rax]
+	mov	eax, DWORD PTR [rax]
+	cmp	DWORD PTR j$3[rbp], eax
+	jae	SHORT $LN8@AuPipeFSOp
+
+; 279  : 			AuVFSNode* node_ = (AuVFSNode*)list_get_at(first_list->childs, j);
+
+	mov	edx, DWORD PTR j$3[rbp]
+	mov	rax, QWORD PTR first_list$[rbp]
+	mov	rcx, QWORD PTR [rax]
+	call	list_get_at
+	mov	QWORD PTR node_$4[rbp], rax
+
+; 280  : 			if (strcmp(node_->filename, pathname) == 0) {
+
+	mov	rax, QWORD PTR node_$4[rbp]
+	lea	rdx, QWORD PTR pathname$1[rbp]
+	mov	rcx, rax
+	call	strcmp
+	test	eax, eax
+	jne	SHORT $LN13@AuPipeFSOp
+
+; 281  : 				if (node_->flags & FS_FLAG_DIRECTORY)
+
+	mov	rax, QWORD PTR node_$4[rbp]
+	movzx	eax, WORD PTR [rax+61]
+	and	eax, 2
+	test	eax, eax
+	je	SHORT $LN14@AuPipeFSOp
+
+; 282  : 					first_list = (AuVFSContainer*)node_->device;
+
+	mov	rax, QWORD PTR node_$4[rbp]
+	mov	rax, QWORD PTR [rax+64]
+	mov	QWORD PTR first_list$[rbp], rax
+	jmp	SHORT $LN15@AuPipeFSOp
+$LN14@AuPipeFSOp:
+
+; 283  : 				else if (node_->flags & FS_FLAG_PIPE)
+
+	mov	rax, QWORD PTR node_$4[rbp]
+	movzx	eax, WORD PTR [rax+61]
+	and	eax, 128				; 00000080H
+	test	eax, eax
+	je	SHORT $LN16@AuPipeFSOp
+
+; 284  : 					node_to_ret = node_;
+
+	mov	rax, QWORD PTR node_$4[rbp]
+	mov	QWORD PTR node_to_ret$[rbp], rax
+$LN16@AuPipeFSOp:
+$LN15@AuPipeFSOp:
+$LN13@AuPipeFSOp:
+
+; 285  : 			}
+; 286  : 		}
+
+	jmp	SHORT $LN7@AuPipeFSOp
+$LN8@AuPipeFSOp:
+
+; 287  : 
+; 288  : 		next = strchr(next + 1, '/');
+
+	mov	rax, QWORD PTR next$[rbp]
+	inc	rax
+	mov	edx, 47					; 0000002fH
+	mov	rcx, rax
+	call	strchr
+	mov	QWORD PTR next$[rbp], rax
+
+; 289  : 		if (next)
+
+	cmp	QWORD PTR next$[rbp], 0
+	je	SHORT $LN17@AuPipeFSOp
+
+; 290  : 			next++;
+
+	mov	rax, QWORD PTR next$[rbp]
+	inc	rax
+	mov	QWORD PTR next$[rbp], rax
+$LN17@AuPipeFSOp:
+
+; 291  : 	}
+
+	jmp	$LN2@AuPipeFSOp
+$LN3@AuPipeFSOp:
+
+; 292  : 
+; 293  : 	if (node_to_ret)
+
+	cmp	QWORD PTR node_to_ret$[rbp], 0
+	je	SHORT $LN18@AuPipeFSOp
+
+; 294  : 		return node_to_ret;
+
+	mov	rax, QWORD PTR node_to_ret$[rbp]
+	jmp	SHORT $LN1@AuPipeFSOp
+	jmp	SHORT $LN19@AuPipeFSOp
+$LN18@AuPipeFSOp:
+
+; 295  : 	else
+; 296  : 		return NULL;
+
+	xor	eax, eax
+$LN19@AuPipeFSOp:
+$LN1@AuPipeFSOp:
+
+; 297  : }
+
+	lea	rsp, QWORD PTR [rbp+128]
+	pop	rbp
+	ret	0
+?AuPipeFSOpen@@YAPEAU__VFS_NODE__@@PEAU1@PEAD@Z ENDP	; AuPipeFSOpen
 _TEXT	ENDS
 ; Function compile flags: /Odtp /ZI
 ; File E:\Xeneva Project\Aurora\Kernel\Fs\pipe.cpp
@@ -291,7 +612,7 @@ buffer$ = 128
 length$ = 136
 ?AuPipeWrite@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z PROC	; AuPipeWrite, COMDAT
 
-; 114  : size_t AuPipeWrite(AuVFSNode *fs, AuVFSNode *file, uint64_t* buffer, uint32_t length) {
+; 116  : size_t AuPipeWrite(AuVFSNode *fs, AuVFSNode *file, uint64_t* buffer, uint32_t length) {
 
 $LN8:
 	mov	DWORD PTR [rsp+32], r9d
@@ -304,30 +625,29 @@ $LN8:
 	lea	rcx, OFFSET FLAT:__AA583385_pipe@cpp
 	call	__CheckForDebuggerJustMyCode
 
-; 115  : 	uint8_t* aligned_buff = (uint8_t*)buffer;
+; 117  : 	uint8_t* aligned_buff = (uint8_t*)buffer;
 
 	mov	rax, QWORD PTR buffer$[rbp]
 	mov	QWORD PTR aligned_buff$[rbp], rax
 
-; 116  : 	AuPipe* pipe = (AuPipe*)fs->device;
+; 118  : 	AuPipe* pipe = (AuPipe*)fs->device;
 
 	mov	rax, QWORD PTR fs$[rbp]
 	mov	rax, QWORD PTR [rax+64]
 	mov	QWORD PTR pipe$[rbp], rax
 
-; 117  : 
-; 118  : 	size_t written = 0;
+; 119  : 	size_t written = 0;
 
 	mov	QWORD PTR written$[rbp], 0
 $LN2@AuPipeWrit:
 
-; 119  : 	while (written < length) {
+; 120  : 	while (written < length) {
 
 	mov	eax, DWORD PTR length$[rbp]
 	cmp	QWORD PTR written$[rbp], rax
 	jae	SHORT $LN3@AuPipeWrit
 
-; 120  : 		if (AuPipeGetAvailableBytes(pipe) > length) {
+; 121  : 		if (AuPipeGetAvailableBytes(pipe) > length) {
 
 	mov	rcx, QWORD PTR pipe$[rbp]
 	call	?AuPipeGetAvailableBytes@@YA_KPEAU_pipe_@@@Z ; AuPipeGetAvailableBytes
@@ -336,7 +656,7 @@ $LN2@AuPipeWrit:
 	jbe	SHORT $LN6@AuPipeWrit
 $LN4@AuPipeWrit:
 
-; 121  : 			while (AuPipeGetAvailableBytes(pipe) > 0 && written < length) {
+; 122  : 			while (AuPipeGetAvailableBytes(pipe) > 0 && written < length) {
 
 	mov	rcx, QWORD PTR pipe$[rbp]
 	call	?AuPipeGetAvailableBytes@@YA_KPEAU_pipe_@@@Z ; AuPipeGetAvailableBytes
@@ -346,7 +666,7 @@ $LN4@AuPipeWrit:
 	cmp	QWORD PTR written$[rbp], rax
 	jae	SHORT $LN5@AuPipeWrit
 
-; 122  : 				pipe->buffer[pipe->write_ptr] = aligned_buff[written];
+; 123  : 				pipe->buffer[pipe->write_ptr] = aligned_buff[written];
 
 	mov	rax, QWORD PTR pipe$[rbp]
 	mov	rax, QWORD PTR [rax+8]
@@ -359,30 +679,29 @@ $LN4@AuPipeWrit:
 	movzx	edx, BYTE PTR [rdx]
 	mov	BYTE PTR [rcx+rax], dl
 
-; 123  : 				AuPipeIncrementWrite(pipe);
+; 124  : 				AuPipeIncrementWrite(pipe);
 
 	mov	rcx, QWORD PTR pipe$[rbp]
 	call	?AuPipeIncrementWrite@@YAXPEAU_pipe_@@@Z ; AuPipeIncrementWrite
 
-; 124  : 				written++;
+; 125  : 				written++;
 
 	mov	rax, QWORD PTR written$[rbp]
 	inc	rax
 	mov	QWORD PTR written$[rbp], rax
 
-; 125  : 			}
+; 126  : 			}
 
 	jmp	SHORT $LN4@AuPipeWrit
 $LN5@AuPipeWrit:
 $LN6@AuPipeWrit:
 
-; 126  : 		}
-; 127  : 	}
+; 127  : 		}
+; 128  : 	}
 
 	jmp	SHORT $LN2@AuPipeWrit
 $LN3@AuPipeWrit:
 
-; 128  : 	
 ; 129  : 	return written;
 
 	mov	rax, QWORD PTR written$[rbp]
@@ -407,7 +726,7 @@ buffer$ = 128
 length$ = 136
 ?AuPipeRead@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z PROC	; AuPipeRead, COMDAT
 
-; 86   : size_t AuPipeRead(AuVFSNode *fs, AuVFSNode *file, uint64_t* buffer, uint32_t length) {
+; 89   : size_t AuPipeRead(AuVFSNode *fs, AuVFSNode *file, uint64_t* buffer, uint32_t length) {
 
 $LN9:
 	mov	DWORD PTR [rsp+32], r9d
@@ -420,38 +739,36 @@ $LN9:
 	lea	rcx, OFFSET FLAT:__AA583385_pipe@cpp
 	call	__CheckForDebuggerJustMyCode
 
-; 87   : 	uint8_t* aligned_buff = (uint8_t*)buffer;
+; 90   : 	uint8_t* aligned_buff = (uint8_t*)buffer;
 
 	mov	rax, QWORD PTR buffer$[rbp]
 	mov	QWORD PTR aligned_buff$[rbp], rax
 
-; 88   : 	AuPipe *pipe = (AuPipe*)fs->device;
+; 91   : 	AuPipe *pipe = (AuPipe*)fs->device;
 
 	mov	rax, QWORD PTR fs$[rbp]
 	mov	rax, QWORD PTR [rax+64]
 	mov	QWORD PTR pipe$[rbp], rax
 
-; 89   : 
-; 90   : 	size_t collected = 0;
+; 92   : 	size_t collected = 0;
 
 	mov	QWORD PTR collected$[rbp], 0
 $LN2@AuPipeRead:
 
-; 91   : 	while (collected == 0) {
+; 93   : 	while (collected == 0) {
 
 	cmp	QWORD PTR collected$[rbp], 0
 	jne	SHORT $LN3@AuPipeRead
 
-; 92   : 		if (AuPipeUnread(pipe) >= length) {
+; 94   : 		if (AuPipeUnread(pipe) > 0) {
 
 	mov	rcx, QWORD PTR pipe$[rbp]
 	call	?AuPipeUnread@@YA_KPEAU_pipe_@@@Z	; AuPipeUnread
-	mov	ecx, DWORD PTR length$[rbp]
-	cmp	rax, rcx
-	jb	SHORT $LN6@AuPipeRead
+	test	rax, rax
+	jbe	SHORT $LN6@AuPipeRead
 $LN4@AuPipeRead:
 
-; 93   : 			while (AuPipeUnread(pipe) > 0 && collected < length) {
+; 95   : 			while (AuPipeUnread(pipe) > 0 && collected < length) {
 
 	mov	rcx, QWORD PTR pipe$[rbp]
 	call	?AuPipeUnread@@YA_KPEAU_pipe_@@@Z	; AuPipeUnread
@@ -461,7 +778,7 @@ $LN4@AuPipeRead:
 	cmp	QWORD PTR collected$[rbp], rax
 	jae	SHORT $LN5@AuPipeRead
 
-; 94   : 				aligned_buff[collected] = pipe->buffer[pipe->read_ptr];
+; 96   : 				aligned_buff[collected] = pipe->buffer[pipe->read_ptr];
 
 	mov	rax, QWORD PTR pipe$[rbp]
 	mov	rax, QWORD PTR [rax+16]
@@ -474,45 +791,45 @@ $LN4@AuPipeRead:
 	movzx	eax, BYTE PTR [rcx+rax]
 	mov	BYTE PTR [rdx], al
 
-; 95   : 				AuPipeIncrementRead(pipe);
+; 97   : 				AuPipeIncrementRead(pipe);
 
 	mov	rcx, QWORD PTR pipe$[rbp]
 	call	?AuPipeIncrementRead@@YAXPEAU_pipe_@@@Z	; AuPipeIncrementRead
 
-; 96   : 				collected++;
+; 98   : 				collected++;
 
 	mov	rax, QWORD PTR collected$[rbp]
 	inc	rax
 	mov	QWORD PTR collected$[rbp], rax
 
-; 97   : 			}
+; 99   : 			}
 
 	jmp	SHORT $LN4@AuPipeRead
 $LN5@AuPipeRead:
 
-; 98   : 			
-; 99   : 		}
+; 100  : 			
+; 101  : 		}
 
 	jmp	SHORT $LN7@AuPipeRead
 $LN6@AuPipeRead:
 
-; 100  : 		else 
-; 101  : 			break;
+; 102  : 		else 
+; 103  : 			break;
 
 	jmp	SHORT $LN3@AuPipeRead
 $LN7@AuPipeRead:
 
-; 102  : 	}
+; 104  : 	}
 
 	jmp	SHORT $LN2@AuPipeRead
 $LN3@AuPipeRead:
 
-; 103  : 
-; 104  : 	return collected;
+; 105  : 
+; 106  : 	return collected;
 
 	mov	rax, QWORD PTR collected$[rbp]
 
-; 105  : }
+; 107  : }
 
 	lea	rsp, QWORD PTR [rbp+96]
 	pop	rbp
@@ -527,7 +844,7 @@ pipe$ = 80
 amount$ = 88
 ?AuPipeIncrementWriteAmount@@YAXPEAU_pipe_@@_K@Z PROC	; AuPipeIncrementWriteAmount, COMDAT
 
-; 75   : void AuPipeIncrementWriteAmount(AuPipe* pipe, size_t amount) {
+; 78   : void AuPipeIncrementWriteAmount(AuPipe* pipe, size_t amount) {
 
 $LN3:
 	mov	QWORD PTR [rsp+16], rdx
@@ -538,7 +855,7 @@ $LN3:
 	lea	rcx, OFFSET FLAT:__AA583385_pipe@cpp
 	call	__CheckForDebuggerJustMyCode
 
-; 76   : 	pipe->write_ptr = (pipe->write_ptr + amount) & pipe->size;
+; 79   : 	pipe->write_ptr = (pipe->write_ptr + amount) & pipe->size;
 
 	mov	rax, QWORD PTR pipe$[rbp]
 	mov	rax, QWORD PTR [rax+8]
@@ -548,7 +865,7 @@ $LN3:
 	mov	rcx, QWORD PTR pipe$[rbp]
 	mov	QWORD PTR [rcx+8], rax
 
-; 77   : }
+; 80   : }
 
 	lea	rsp, QWORD PTR [rbp+64]
 	pop	rbp
@@ -562,7 +879,7 @@ _TEXT	SEGMENT
 pipe$ = 80
 ?AuPipeIncrementWrite@@YAXPEAU_pipe_@@@Z PROC		; AuPipeIncrementWrite, COMDAT
 
-; 63   : void AuPipeIncrementWrite(AuPipe* pipe) {
+; 66   : void AuPipeIncrementWrite(AuPipe* pipe) {
 
 $LN4:
 	mov	QWORD PTR [rsp+8], rcx
@@ -572,7 +889,7 @@ $LN4:
 	lea	rcx, OFFSET FLAT:__AA583385_pipe@cpp
 	call	__CheckForDebuggerJustMyCode
 
-; 64   : 	pipe->write_ptr++;
+; 67   : 	pipe->write_ptr++;
 
 	mov	rax, QWORD PTR pipe$[rbp]
 	mov	rax, QWORD PTR [rax+8]
@@ -580,7 +897,7 @@ $LN4:
 	mov	rcx, QWORD PTR pipe$[rbp]
 	mov	QWORD PTR [rcx+8], rax
 
-; 65   : 	if (pipe->write_ptr == pipe->size)
+; 68   : 	if (pipe->write_ptr == pipe->size)
 
 	mov	rax, QWORD PTR pipe$[rbp]
 	mov	rcx, QWORD PTR pipe$[rbp]
@@ -588,13 +905,13 @@ $LN4:
 	cmp	QWORD PTR [rax+8], rcx
 	jne	SHORT $LN2@AuPipeIncr
 
-; 66   : 		pipe->write_ptr = 0;
+; 69   : 		pipe->write_ptr = 0;
 
 	mov	rax, QWORD PTR pipe$[rbp]
 	mov	QWORD PTR [rax+8], 0
 $LN2@AuPipeIncr:
 
-; 67   : }
+; 70   : }
 
 	lea	rsp, QWORD PTR [rbp+64]
 	pop	rbp
@@ -608,7 +925,7 @@ _TEXT	SEGMENT
 pipe$ = 80
 ?AuPipeIncrementRead@@YAXPEAU_pipe_@@@Z PROC		; AuPipeIncrementRead, COMDAT
 
-; 57   : void AuPipeIncrementRead(AuPipe* pipe) {
+; 60   : void AuPipeIncrementRead(AuPipe* pipe) {
 
 $LN4:
 	mov	QWORD PTR [rsp+8], rcx
@@ -618,7 +935,7 @@ $LN4:
 	lea	rcx, OFFSET FLAT:__AA583385_pipe@cpp
 	call	__CheckForDebuggerJustMyCode
 
-; 58   : 	pipe->read_ptr++;
+; 61   : 	pipe->read_ptr++;
 
 	mov	rax, QWORD PTR pipe$[rbp]
 	mov	rax, QWORD PTR [rax+16]
@@ -626,7 +943,7 @@ $LN4:
 	mov	rcx, QWORD PTR pipe$[rbp]
 	mov	QWORD PTR [rcx+16], rax
 
-; 59   : 	if (pipe->read_ptr == pipe->size)
+; 62   : 	if (pipe->read_ptr == pipe->size)
 
 	mov	rax, QWORD PTR pipe$[rbp]
 	mov	rcx, QWORD PTR pipe$[rbp]
@@ -634,13 +951,13 @@ $LN4:
 	cmp	QWORD PTR [rax+16], rcx
 	jne	SHORT $LN2@AuPipeIncr
 
-; 60   : 		pipe->read_ptr = 0;
+; 63   : 		pipe->read_ptr = 0;
 
 	mov	rax, QWORD PTR pipe$[rbp]
 	mov	QWORD PTR [rax+16], 0
 $LN2@AuPipeIncr:
 
-; 61   : }
+; 64   : }
 
 	lea	rsp, QWORD PTR [rbp+64]
 	pop	rbp
@@ -654,7 +971,7 @@ _TEXT	SEGMENT
 pipe$ = 80
 ?AuPipeGetAvailableBytes@@YA_KPEAU_pipe_@@@Z PROC	; AuPipeGetAvailableBytes, COMDAT
 
-; 46   : size_t AuPipeGetAvailableBytes(AuPipe *pipe) {
+; 49   : size_t AuPipeGetAvailableBytes(AuPipe *pipe) {
 
 $LN6:
 	mov	QWORD PTR [rsp+8], rcx
@@ -664,7 +981,7 @@ $LN6:
 	lea	rcx, OFFSET FLAT:__AA583385_pipe@cpp
 	call	__CheckForDebuggerJustMyCode
 
-; 47   : 	if (pipe->read_ptr == pipe->write_ptr) 
+; 50   : 	if (pipe->read_ptr == pipe->write_ptr) 
 
 	mov	rax, QWORD PTR pipe$[rbp]
 	mov	rcx, QWORD PTR pipe$[rbp]
@@ -672,7 +989,7 @@ $LN6:
 	cmp	QWORD PTR [rax+16], rcx
 	jne	SHORT $LN2@AuPipeGetA
 
-; 48   : 		return pipe->size - 1;
+; 51   : 		return pipe->size - 1;
 
 	mov	rax, QWORD PTR pipe$[rbp]
 	mov	rax, QWORD PTR [rax+24]
@@ -680,8 +997,8 @@ $LN6:
 	jmp	SHORT $LN1@AuPipeGetA
 $LN2@AuPipeGetA:
 
-; 49   : 
-; 50   : 	if (pipe->read_ptr > pipe->write_ptr)
+; 52   : 
+; 53   : 	if (pipe->read_ptr > pipe->write_ptr)
 
 	mov	rax, QWORD PTR pipe$[rbp]
 	mov	rcx, QWORD PTR pipe$[rbp]
@@ -689,7 +1006,7 @@ $LN2@AuPipeGetA:
 	cmp	QWORD PTR [rax+16], rcx
 	jbe	SHORT $LN3@AuPipeGetA
 
-; 51   : 		return pipe->read_ptr - pipe->write_ptr - 1;
+; 54   : 		return pipe->read_ptr - pipe->write_ptr - 1;
 
 	mov	rax, QWORD PTR pipe$[rbp]
 	mov	rcx, QWORD PTR pipe$[rbp]
@@ -701,8 +1018,8 @@ $LN2@AuPipeGetA:
 	jmp	SHORT $LN4@AuPipeGetA
 $LN3@AuPipeGetA:
 
-; 52   : 	else
-; 53   : 		return (pipe->size - pipe->write_ptr) + pipe->read_ptr - 1;
+; 55   : 	else
+; 56   : 		return (pipe->size - pipe->write_ptr) + pipe->read_ptr - 1;
 
 	mov	rax, QWORD PTR pipe$[rbp]
 	mov	rcx, QWORD PTR pipe$[rbp]
@@ -715,7 +1032,7 @@ $LN3@AuPipeGetA:
 $LN4@AuPipeGetA:
 $LN1@AuPipeGetA:
 
-; 54   : }
+; 57   : }
 
 	lea	rsp, QWORD PTR [rbp+64]
 	pop	rbp
@@ -724,143 +1041,572 @@ $LN1@AuPipeGetA:
 _TEXT	ENDS
 ; Function compile flags: /Odtp /ZI
 ; File E:\Xeneva Project\Aurora\Kernel\Fs\pipe.cpp
-;	COMDAT ?AuCreatePipe@@YAPEAU__VFS_NODE__@@PEAD_K@Z
+;	COMDAT ?AuPipeFSInitialise@@YAXXZ
 _TEXT	SEGMENT
-node$ = 0
-pipe$ = 8
-name$ = 96
-sz$ = 104
-?AuCreatePipe@@YAPEAU__VFS_NODE__@@PEAD_K@Z PROC	; AuCreatePipe, COMDAT
+entries$ = 0
+node$ = 8
+?AuPipeFSInitialise@@YAXXZ PROC				; AuPipeFSInitialise, COMDAT
 
-; 161  : AuVFSNode* AuCreatePipe(char* name, size_t sz) {
+; 302  : void AuPipeFSInitialise() {
 
 $LN3:
-	mov	QWORD PTR [rsp+16], rdx
-	mov	QWORD PTR [rsp+8], rcx
 	push	rbp
 	sub	rsp, 112				; 00000070H
 	lea	rbp, QWORD PTR [rsp+32]
 	lea	rcx, OFFSET FLAT:__AA583385_pipe@cpp
 	call	__CheckForDebuggerJustMyCode
 
-; 162  : 	AuVFSNode* node = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
+; 303  : 	AuVFSContainer* entries = (AuVFSContainer*)kmalloc(sizeof(AuVFSContainer));
+
+	mov	ecx, 8
+	call	kmalloc
+	mov	QWORD PTR entries$[rbp], rax
+
+; 304  : 	entries->childs = initialize_list();
+
+	call	initialize_list
+	mov	rcx, QWORD PTR entries$[rbp]
+	mov	QWORD PTR [rcx], rax
+
+; 305  : 
+; 306  : 	AuVFSNode* node = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
 
 	mov	ecx, 178				; 000000b2H
 	call	kmalloc
 	mov	QWORD PTR node$[rbp], rax
 
-; 163  : 	AuPipe *pipe = (AuPipe*)kmalloc(sizeof(AuPipe));
-
-	mov	ecx, 56					; 00000038H
-	call	kmalloc
-	mov	QWORD PTR pipe$[rbp], rax
-
-; 164  : 	memset(node, 0, sizeof(AuVFSNode));
+; 307  : 	memset(node, 0, sizeof(AuVFSNode));
 
 	mov	r8d, 178				; 000000b2H
 	xor	edx, edx
 	mov	rcx, QWORD PTR node$[rbp]
 	call	memset
 
-; 165  : 	memset(pipe, 0, sizeof(AuPipe));
+; 308  : 	strcpy(node->filename, "pipe");
+
+	mov	rax, QWORD PTR node$[rbp]
+	lea	rdx, OFFSET FLAT:??_C@_04MKFKKHBG@pipe@
+	mov	rcx, rax
+	call	strcpy
+
+; 309  : 	node->device = entries;
+
+	mov	rax, QWORD PTR node$[rbp]
+	mov	rcx, QWORD PTR entries$[rbp]
+	mov	QWORD PTR [rax+64], rcx
+
+; 310  : 	node->flags |= FS_FLAG_FILE_SYSTEM;
+
+	mov	rax, QWORD PTR node$[rbp]
+	movzx	eax, WORD PTR [rax+61]
+	or	eax, 64					; 00000040H
+	mov	rcx, QWORD PTR node$[rbp]
+	mov	WORD PTR [rcx+61], ax
+
+; 311  : 	node->open = AuPipeFSOpen;
+
+	mov	rax, QWORD PTR node$[rbp]
+	lea	rcx, OFFSET FLAT:?AuPipeFSOpen@@YAPEAU__VFS_NODE__@@PEAU1@PEAD@Z ; AuPipeFSOpen
+	mov	QWORD PTR [rax+74], rcx
+
+; 312  : 	AuVFSAddFileSystem(node);
+
+	mov	rcx, QWORD PTR node$[rbp]
+	call	AuVFSAddFileSystem
+
+; 313  : 
+; 314  : 	pipeFS = node;
+
+	mov	rax, QWORD PTR node$[rbp]
+	mov	QWORD PTR ?pipeFS@@3PEAU__VFS_NODE__@@EA, rax ; pipeFS
+
+; 315  : }
+
+	lea	rsp, QWORD PTR [rbp+80]
+	pop	rbp
+	ret	0
+?AuPipeFSInitialise@@YAXXZ ENDP				; AuPipeFSInitialise
+_TEXT	ENDS
+; Function compile flags: /Odtp /ZI
+; File E:\Xeneva Project\Aurora\Kernel\Fs\pipe.cpp
+;	COMDAT ?AuPipeFSAddFile@@YAHPEAU__VFS_NODE__@@PEAD0@Z
+_TEXT	SEGMENT
+entries$ = 0
+next$ = 8
+first_list$ = 16
+pathname$ = 24
+i$1 = 40
+j$2 = 44
+node_$3 = 48
+fs$ = 144
+path$ = 152
+file$ = 160
+?AuPipeFSAddFile@@YAHPEAU__VFS_NODE__@@PEAD0@Z PROC	; AuPipeFSAddFile, COMDAT
+
+; 162  : int AuPipeFSAddFile(AuVFSNode* fs, char* path, AuVFSNode* file) {
+
+$LN18:
+	mov	QWORD PTR [rsp+24], r8
+	mov	QWORD PTR [rsp+16], rdx
+	mov	QWORD PTR [rsp+8], rcx
+	push	rbp
+	sub	rsp, 160				; 000000a0H
+	lea	rbp, QWORD PTR [rsp+32]
+	lea	rcx, OFFSET FLAT:__AA583385_pipe@cpp
+	call	__CheckForDebuggerJustMyCode
+
+; 163  : 	AuVFSContainer* entries = (AuVFSContainer*)fs->device;
+
+	mov	rax, QWORD PTR fs$[rbp]
+	mov	rax, QWORD PTR [rax+64]
+	mov	QWORD PTR entries$[rbp], rax
+
+; 164  : 	if (!entries)
+
+	cmp	QWORD PTR entries$[rbp], 0
+	jne	SHORT $LN10@AuPipeFSAd
+
+; 165  : 		return -1;
+
+	mov	eax, -1
+	jmp	$LN1@AuPipeFSAd
+$LN10@AuPipeFSAd:
+
+; 166  : 
+; 167  : 	char* next = strchr(path, '/');
+
+	mov	edx, 47					; 0000002fH
+	mov	rcx, QWORD PTR path$[rbp]
+	call	strchr
+	mov	QWORD PTR next$[rbp], rax
+
+; 168  : 	if (next)
+
+	cmp	QWORD PTR next$[rbp], 0
+	je	SHORT $LN11@AuPipeFSAd
+
+; 169  : 		next++;
+
+	mov	rax, QWORD PTR next$[rbp]
+	inc	rax
+	mov	QWORD PTR next$[rbp], rax
+$LN11@AuPipeFSAd:
+
+; 170  : 
+; 171  : 	AuVFSContainer* first_list = entries;
+
+	mov	rax, QWORD PTR entries$[rbp]
+	mov	QWORD PTR first_list$[rbp], rax
+$LN2@AuPipeFSAd:
+
+; 172  : 	char pathname[16];
+; 173  : 	while (next) {
+
+	cmp	QWORD PTR next$[rbp], 0
+	je	$LN3@AuPipeFSAd
+
+; 174  : 		int i;
+; 175  : 		for (i = 0; i < 16; i++) {
+
+	mov	DWORD PTR i$1[rbp], 0
+	jmp	SHORT $LN6@AuPipeFSAd
+$LN4@AuPipeFSAd:
+	mov	eax, DWORD PTR i$1[rbp]
+	inc	eax
+	mov	DWORD PTR i$1[rbp], eax
+$LN6@AuPipeFSAd:
+	cmp	DWORD PTR i$1[rbp], 16
+	jge	SHORT $LN5@AuPipeFSAd
+
+; 176  : 			if (next[i] == '/' || next[i] == '\0')
+
+	movsxd	rax, DWORD PTR i$1[rbp]
+	mov	rcx, QWORD PTR next$[rbp]
+	movsx	eax, BYTE PTR [rcx+rax]
+	cmp	eax, 47					; 0000002fH
+	je	SHORT $LN13@AuPipeFSAd
+	movsxd	rax, DWORD PTR i$1[rbp]
+	mov	rcx, QWORD PTR next$[rbp]
+	movsx	eax, BYTE PTR [rcx+rax]
+	test	eax, eax
+	jne	SHORT $LN12@AuPipeFSAd
+$LN13@AuPipeFSAd:
+
+; 177  : 				break;
+
+	jmp	SHORT $LN5@AuPipeFSAd
+$LN12@AuPipeFSAd:
+
+; 178  : 			pathname[i] = next[i];
+
+	movsxd	rax, DWORD PTR i$1[rbp]
+	movsxd	rcx, DWORD PTR i$1[rbp]
+	mov	rdx, QWORD PTR next$[rbp]
+	movzx	eax, BYTE PTR [rdx+rax]
+	mov	BYTE PTR pathname$[rbp+rcx], al
+
+; 179  : 		}
+
+	jmp	SHORT $LN4@AuPipeFSAd
+$LN5@AuPipeFSAd:
+
+; 180  : 		pathname[i] = 0;
+
+	movsxd	rax, DWORD PTR i$1[rbp]
+	mov	BYTE PTR pathname$[rbp+rax], 0
+
+; 181  : 
+; 182  : 		for (int j = 0; j < first_list->childs->pointer; j++) {
+
+	mov	DWORD PTR j$2[rbp], 0
+	jmp	SHORT $LN9@AuPipeFSAd
+$LN7@AuPipeFSAd:
+	mov	eax, DWORD PTR j$2[rbp]
+	inc	eax
+	mov	DWORD PTR j$2[rbp], eax
+$LN9@AuPipeFSAd:
+	mov	rax, QWORD PTR first_list$[rbp]
+	mov	rax, QWORD PTR [rax]
+	mov	eax, DWORD PTR [rax]
+	cmp	DWORD PTR j$2[rbp], eax
+	jae	SHORT $LN8@AuPipeFSAd
+
+; 183  : 			AuVFSNode* node_ = (AuVFSNode*)list_get_at(first_list->childs, j);
+
+	mov	edx, DWORD PTR j$2[rbp]
+	mov	rax, QWORD PTR first_list$[rbp]
+	mov	rcx, QWORD PTR [rax]
+	call	list_get_at
+	mov	QWORD PTR node_$3[rbp], rax
+
+; 184  : 			if (strcmp(node_->filename, pathname) == 0) {
+
+	mov	rax, QWORD PTR node_$3[rbp]
+	lea	rdx, QWORD PTR pathname$[rbp]
+	mov	rcx, rax
+	call	strcmp
+	test	eax, eax
+	jne	SHORT $LN14@AuPipeFSAd
+
+; 185  : 				if (node_->flags & FS_FLAG_DIRECTORY)
+
+	mov	rax, QWORD PTR node_$3[rbp]
+	movzx	eax, WORD PTR [rax+61]
+	and	eax, 2
+	test	eax, eax
+	je	SHORT $LN15@AuPipeFSAd
+
+; 186  : 					first_list = (AuVFSContainer*)node_->device;
+
+	mov	rax, QWORD PTR node_$3[rbp]
+	mov	rax, QWORD PTR [rax+64]
+	mov	QWORD PTR first_list$[rbp], rax
+$LN15@AuPipeFSAd:
+$LN14@AuPipeFSAd:
+
+; 187  : 			}
+; 188  : 		}
+
+	jmp	SHORT $LN7@AuPipeFSAd
+$LN8@AuPipeFSAd:
+
+; 189  : 
+; 190  : 		next = strchr(next + 1, '/');
+
+	mov	rax, QWORD PTR next$[rbp]
+	inc	rax
+	mov	edx, 47					; 0000002fH
+	mov	rcx, rax
+	call	strchr
+	mov	QWORD PTR next$[rbp], rax
+
+; 191  : 		if (next)
+
+	cmp	QWORD PTR next$[rbp], 0
+	je	SHORT $LN16@AuPipeFSAd
+
+; 192  : 			next++;
+
+	mov	rax, QWORD PTR next$[rbp]
+	inc	rax
+	mov	QWORD PTR next$[rbp], rax
+$LN16@AuPipeFSAd:
+
+; 193  : 	}
+
+	jmp	$LN2@AuPipeFSAd
+$LN3@AuPipeFSAd:
+
+; 194  : 
+; 195  : 	list_add(first_list->childs, file);
+
+	mov	rdx, QWORD PTR file$[rbp]
+	mov	rax, QWORD PTR first_list$[rbp]
+	mov	rcx, QWORD PTR [rax]
+	call	list_add
+
+; 196  : 
+; 197  : 	return 1;
+
+	mov	eax, 1
+$LN1@AuPipeFSAd:
+
+; 198  : }
+
+	lea	rsp, QWORD PTR [rbp+128]
+	pop	rbp
+	ret	0
+?AuPipeFSAddFile@@YAHPEAU__VFS_NODE__@@PEAD0@Z ENDP	; AuPipeFSAddFile
+_TEXT	ENDS
+; Function compile flags: /Odtp /ZI
+; File E:\Xeneva Project\Aurora\Kernel\Fs\pipe.cpp
+;	COMDAT ?AuCreatePipe@@YAHPEAD_K@Z
+_TEXT	SEGMENT
+currentThr$ = 0
+proc$ = 8
+fd$ = 16
+node$ = 24
+pipe$ = 32
+name$ = 128
+sz$ = 136
+?AuCreatePipe@@YAHPEAD_K@Z PROC				; AuCreatePipe, COMDAT
+
+; 205  : int AuCreatePipe(char* name, size_t sz) {
+
+$LN7:
+	mov	QWORD PTR [rsp+16], rdx
+	mov	QWORD PTR [rsp+8], rcx
+	push	rbp
+	sub	rsp, 144				; 00000090H
+	lea	rbp, QWORD PTR [rsp+32]
+	lea	rcx, OFFSET FLAT:__AA583385_pipe@cpp
+	call	__CheckForDebuggerJustMyCode
+
+; 206  : 	x64_cli();
+
+	call	x64_cli
+
+; 207  : 
+; 208  : 	AuThread* currentThr = AuGetCurrentThread();
+
+	call	AuGetCurrentThread
+	mov	QWORD PTR currentThr$[rbp], rax
+
+; 209  : 	if (!currentThr)
+
+	cmp	QWORD PTR currentThr$[rbp], 0
+	jne	SHORT $LN2@AuCreatePi
+
+; 210  : 		return -1;
+
+	mov	eax, -1
+	jmp	$LN1@AuCreatePi
+$LN2@AuCreatePi:
+
+; 211  : 	AuProcess* proc = AuProcessFindThread(currentThr);
+
+	mov	rcx, QWORD PTR currentThr$[rbp]
+	call	?AuProcessFindThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z ; AuProcessFindThread
+	mov	QWORD PTR proc$[rbp], rax
+
+; 212  : 	if (!proc) {
+
+	cmp	QWORD PTR proc$[rbp], 0
+	jne	SHORT $LN3@AuCreatePi
+
+; 213  : 		proc = AuProcessFindSubThread(currentThr);
+
+	mov	rcx, QWORD PTR currentThr$[rbp]
+	call	?AuProcessFindSubThread@@YAPEAU_au_proc_@@PEAU_au_thread_@@@Z ; AuProcessFindSubThread
+	mov	QWORD PTR proc$[rbp], rax
+
+; 214  : 		if (!proc)
+
+	cmp	QWORD PTR proc$[rbp], 0
+	jne	SHORT $LN4@AuCreatePi
+
+; 215  : 			return -1;
+
+	mov	eax, -1
+	jmp	$LN1@AuCreatePi
+$LN4@AuCreatePi:
+$LN3@AuCreatePi:
+
+; 216  : 	}
+; 217  : 
+; 218  : 	if (sz == 0)
+
+	cmp	QWORD PTR sz$[rbp], 0
+	jne	SHORT $LN5@AuCreatePi
+
+; 219  : 		return -1;
+
+	mov	eax, -1
+	jmp	$LN1@AuCreatePi
+$LN5@AuCreatePi:
+
+; 220  : 
+; 221  : 	int fd = AuProcessGetFileDesc(proc);
+
+	mov	rcx, QWORD PTR proc$[rbp]
+	call	?AuProcessGetFileDesc@@YAHPEAU_au_proc_@@@Z ; AuProcessGetFileDesc
+	mov	DWORD PTR fd$[rbp], eax
+
+; 222  : 
+; 223  : 
+; 224  : 	AuVFSNode* node = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
+
+	mov	ecx, 178				; 000000b2H
+	call	kmalloc
+	mov	QWORD PTR node$[rbp], rax
+
+; 225  : 	AuPipe *pipe = (AuPipe*)kmalloc(sizeof(AuPipe));
+
+	mov	ecx, 56					; 00000038H
+	call	kmalloc
+	mov	QWORD PTR pipe$[rbp], rax
+
+; 226  : 	memset(node, 0, sizeof(AuVFSNode));
+
+	mov	r8d, 178				; 000000b2H
+	xor	edx, edx
+	mov	rcx, QWORD PTR node$[rbp]
+	call	memset
+
+; 227  : 	memset(pipe, 0, sizeof(AuPipe));
 
 	mov	r8d, 56					; 00000038H
 	xor	edx, edx
 	mov	rcx, QWORD PTR pipe$[rbp]
 	call	memset
 
-; 166  : 
-; 167  : 	pipe->buffer = (uint8_t*)kmalloc(sz);
+; 228  : 
+; 229  : 	pipe->buffer = (uint8_t*)kmalloc(sz);
 
 	mov	ecx, DWORD PTR sz$[rbp]
 	call	kmalloc
 	mov	rcx, QWORD PTR pipe$[rbp]
 	mov	QWORD PTR [rcx], rax
 
-; 168  : 	pipe->readers_wait_queue = initialize_list();
+; 230  : 	pipe->readers_wait_queue = initialize_list();
 
 	call	initialize_list
 	mov	rcx, QWORD PTR pipe$[rbp]
 	mov	QWORD PTR [rcx+40], rax
 
-; 169  : 	pipe->writers_wait_queue = initialize_list();
+; 231  : 	pipe->writers_wait_queue = initialize_list();
 
 	call	initialize_list
 	mov	rcx, QWORD PTR pipe$[rbp]
 	mov	QWORD PTR [rcx+48], rax
 
-; 170  : 	pipe->size = sz;
+; 232  : 	pipe->size = sz;
 
 	mov	rax, QWORD PTR pipe$[rbp]
 	mov	rcx, QWORD PTR sz$[rbp]
 	mov	QWORD PTR [rax+24], rcx
 
-; 171  : 
-; 172  : 	strcpy(node->filename, name);
+; 233  : 
+; 234  : 	strcpy(node->filename, name);
 
 	mov	rax, QWORD PTR node$[rbp]
 	mov	rdx, QWORD PTR name$[rbp]
 	mov	rcx, rax
 	call	strcpy
 
-; 173  : 	node->flags = FS_FLAG_DEVICE | FS_FLAG_PIPE;
+; 235  : 	node->flags = FS_FLAG_PIPE;
 
-	mov	eax, 136				; 00000088H
+	mov	eax, 128				; 00000080H
 	mov	rcx, QWORD PTR node$[rbp]
 	mov	WORD PTR [rcx+61], ax
 
-; 174  : 	node->size = sz;
+; 236  : 	node->size = sz;
 
 	mov	rax, QWORD PTR node$[rbp]
 	mov	ecx, DWORD PTR sz$[rbp]
 	mov	DWORD PTR [rax+32], ecx
 
-; 175  : 	node->device = pipe;
+; 237  : 	node->device = pipe; // pipe;
 
 	mov	rax, QWORD PTR node$[rbp]
 	mov	rcx, QWORD PTR pipe$[rbp]
 	mov	QWORD PTR [rax+64], rcx
 
-; 176  : 	node->read = AuPipeRead;
+; 238  : 	node->read = AuPipeRead;
 
 	mov	rax, QWORD PTR node$[rbp]
 	lea	rcx, OFFSET FLAT:?AuPipeRead@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z ; AuPipeRead
 	mov	QWORD PTR [rax+90], rcx
 
-; 177  : 	node->write = AuPipeWrite;
+; 239  : 	node->write = AuPipeWrite;
 
 	mov	rax, QWORD PTR node$[rbp]
 	lea	rcx, OFFSET FLAT:?AuPipeWrite@@YA_KPEAU__VFS_NODE__@@0PEA_KI@Z ; AuPipeWrite
 	mov	QWORD PTR [rax+98], rcx
 
-; 178  : 	node->open = AuPipeOpen;
+; 240  : 	node->open = AuPipeOpen;
 
 	mov	rax, QWORD PTR node$[rbp]
 	lea	rcx, OFFSET FLAT:?AuPipeOpen@@YAPEAU__VFS_NODE__@@PEAU1@PEAD@Z ; AuPipeOpen
 	mov	QWORD PTR [rax+74], rcx
 
-; 179  : 	node->close = AuPipeClose;
+; 241  : 	node->close = AuPipeClose;
 
 	mov	rax, QWORD PTR node$[rbp]
 	lea	rcx, OFFSET FLAT:?AuPipeClose@@YAHPEAU__VFS_NODE__@@0@Z ; AuPipeClose
 	mov	QWORD PTR [rax+138], rcx
 
-; 180  : 	node->iocontrol = NULL;
+; 242  : 	node->iocontrol = NULL;
 
 	mov	rax, QWORD PTR node$[rbp]
 	mov	QWORD PTR [rax+170], 0
 
-; 181  : 	
-; 182  : 	return node;
+; 243  : 
+; 244  : 	proc->fds[fd] = node;
 
-	mov	rax, QWORD PTR node$[rbp]
+	movsxd	rax, DWORD PTR fd$[rbp]
+	mov	rcx, QWORD PTR proc$[rbp]
+	mov	rdx, QWORD PTR node$[rbp]
+	mov	QWORD PTR [rcx+rax*8+567], rdx
 
-; 183  : }
+; 245  : 
+; 246  : 	SeTextOut("Pipe proc -> %s \r\n", proc->name);
 
-	lea	rsp, QWORD PTR [rbp+80]
+	mov	rax, QWORD PTR proc$[rbp]
+	add	rax, 4
+	mov	rdx, rax
+	lea	rcx, OFFSET FLAT:??_C@_0BD@LACECMDD@Pipe?5proc?5?9?$DO?5?$CFs?5?$AN?6@
+	call	SeTextOut
+
+; 247  : 	AuPipeFSAddFile(pipeFS, "/", node);
+
+	mov	r8, QWORD PTR node$[rbp]
+	lea	rdx, OFFSET FLAT:??_C@_01KMDKNFGN@?1@
+	mov	rcx, QWORD PTR ?pipeFS@@3PEAU__VFS_NODE__@@EA ; pipeFS
+	call	?AuPipeFSAddFile@@YAHPEAU__VFS_NODE__@@PEAD0@Z ; AuPipeFSAddFile
+
+; 248  : 	SeTextOut("Pipe Created -> %d %s\r\n", fd, proc->fds[fd]->filename);
+
+	movsxd	rax, DWORD PTR fd$[rbp]
+	mov	rcx, QWORD PTR proc$[rbp]
+	mov	rax, QWORD PTR [rcx+rax*8+567]
+	mov	r8, rax
+	mov	edx, DWORD PTR fd$[rbp]
+	lea	rcx, OFFSET FLAT:??_C@_0BI@BEIFGIPP@Pipe?5Created?5?9?$DO?5?$CFd?5?$CFs?$AN?6@
+	call	SeTextOut
+
+; 249  : 	//AuForceScheduler();
+; 250  : 	return fd;
+
+	mov	eax, DWORD PTR fd$[rbp]
+$LN1@AuCreatePi:
+
+; 251  : }
+
+	lea	rsp, QWORD PTR [rbp+112]
 	pop	rbp
 	ret	0
-?AuCreatePipe@@YAPEAU__VFS_NODE__@@PEAD_K@Z ENDP	; AuCreatePipe
+?AuCreatePipe@@YAHPEAD_K@Z ENDP				; AuCreatePipe
 _TEXT	ENDS
 ; Function compile flags: /Odtp /ZI
 ; File E:\Xeneva Project\Aurora\Kernel\Fs\pipe.cpp
@@ -869,7 +1615,7 @@ _TEXT	SEGMENT
 pipe$ = 80
 ?AuPipeUnread@@YA_KPEAU_pipe_@@@Z PROC			; AuPipeUnread, COMDAT
 
-; 37   : size_t AuPipeUnread(AuPipe* pipe) {
+; 40   : size_t AuPipeUnread(AuPipe* pipe) {
 
 $LN6:
 	mov	QWORD PTR [rsp+8], rcx
@@ -879,7 +1625,7 @@ $LN6:
 	lea	rcx, OFFSET FLAT:__AA583385_pipe@cpp
 	call	__CheckForDebuggerJustMyCode
 
-; 38   : 	if (pipe->read_ptr == pipe->write_ptr)
+; 41   : 	if (pipe->read_ptr == pipe->write_ptr)
 
 	mov	rax, QWORD PTR pipe$[rbp]
 	mov	rcx, QWORD PTR pipe$[rbp]
@@ -887,13 +1633,13 @@ $LN6:
 	cmp	QWORD PTR [rax+16], rcx
 	jne	SHORT $LN2@AuPipeUnre
 
-; 39   : 		return 0; //0 bytes difference
+; 42   : 		return 0; //0 bytes difference
 
 	xor	eax, eax
 	jmp	SHORT $LN1@AuPipeUnre
 $LN2@AuPipeUnre:
 
-; 40   : 	if (pipe->read_ptr > pipe->write_ptr)
+; 43   : 	if (pipe->read_ptr > pipe->write_ptr)
 
 	mov	rax, QWORD PTR pipe$[rbp]
 	mov	rcx, QWORD PTR pipe$[rbp]
@@ -901,7 +1647,7 @@ $LN2@AuPipeUnre:
 	cmp	QWORD PTR [rax+16], rcx
 	jbe	SHORT $LN3@AuPipeUnre
 
-; 41   : 		return (pipe->size - pipe->read_ptr) + pipe->write_ptr;
+; 44   : 		return (pipe->size - pipe->read_ptr) + pipe->write_ptr;
 
 	mov	rax, QWORD PTR pipe$[rbp]
 	mov	rcx, QWORD PTR pipe$[rbp]
@@ -914,8 +1660,8 @@ $LN2@AuPipeUnre:
 	jmp	SHORT $LN4@AuPipeUnre
 $LN3@AuPipeUnre:
 
-; 42   : 	else
-; 43   : 		return (pipe->write_ptr - pipe->read_ptr);
+; 45   : 	else
+; 46   : 		return (pipe->write_ptr - pipe->read_ptr);
 
 	mov	rax, QWORD PTR pipe$[rbp]
 	mov	rcx, QWORD PTR pipe$[rbp]
@@ -925,7 +1671,7 @@ $LN3@AuPipeUnre:
 $LN4@AuPipeUnre:
 $LN1@AuPipeUnre:
 
-; 44   : }
+; 47   : }
 
 	lea	rsp, QWORD PTR [rbp+64]
 	pop	rbp

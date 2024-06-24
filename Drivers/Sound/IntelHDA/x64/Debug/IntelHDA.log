@@ -1,88 +1,71 @@
-﻿Build started 14-06-2024 আবেলি 3:50:10.
-     1>Project "E:\Xeneva Project\Aurora\Drivers\Sound\IntelHDA\IntelHDA.vcxproj" on node 2 (Rebuild target(s)).
-     1>ClCompile:
-         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\BaseHdr" /Zi /nologo /W3 /WX- /Od /Oy /D ARCH_X64 /D USE_APIC /D _WINDLL /D _MBCS /X /Gm /GS- /arch:SSE /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt codec.cpp ihda.cpp sigmatel.cpp stream.cpp widget.cpp
-     1>cl : Command line warning D9002: ignoring unknown option '/arch:SSE'
-         widget.cpp
-     1>widget.cpp(31): warning C4067: unexpected tokens following preprocessor directive - expected a newline
-     1>E:\Xeneva Project\Aurora\BaseHdr\stdarg.h(54): warning C4005: 'va_start' : macro redefinition
-                 E:\Xeneva Project\Aurora\BaseHdr\va_list.h(56) : see previous definition of 'va_start'
-     1>widget.cpp(100): warning C4018: '<' : signed/unsigned mismatch
-     1>widget.cpp(119): warning C4800: 'uint32_t' : forcing value to bool 'true' or 'false' (performance warning)
-     1>widget.cpp(124): warning C4800: 'uint32_t' : forcing value to bool 'true' or 'false' (performance warning)
-     1>widget.cpp(95): warning C4101: 'conn_val' : unreferenced local variable
-     1>widget.cpp(94): warning C4101: 'i' : unreferenced local variable
-     1>widget.cpp(182): warning C4018: '<' : signed/unsigned mismatch
-     1>widget.cpp(201): warning C4800: 'uint32_t' : forcing value to bool 'true' or 'false' (performance warning)
-     1>widget.cpp(207): warning C4800: 'uint32_t' : forcing value to bool 'true' or 'false' (performance warning)
-     1>widget.cpp(177): warning C4101: 'conn_val' : unreferenced local variable
-     1>widget.cpp(176): warning C4101: 'i' : unreferenced local variable
-         stream.cpp
-     1>E:\Xeneva Project\Aurora\BaseHdr\stdarg.h(54): warning C4005: 'va_start' : macro redefinition
-                 E:\Xeneva Project\Aurora\BaseHdr\va_list.h(56) : see previous definition of 'va_start'
-     1>stream.cpp(46): warning C4305: 'argument' : truncation from 'int' to 'uint8_t'
-     1>stream.cpp(46): warning C4309: 'argument' : truncation of constant value
-     1>stream.cpp(77): warning C4305: 'argument' : truncation from 'int' to 'uint8_t'
-     1>stream.cpp(77): warning C4309: 'argument' : truncation of constant value
-     1>stream.cpp(78): warning C4305: 'argument' : truncation from 'int' to 'uint8_t'
-     1>stream.cpp(78): warning C4309: 'argument' : truncation of constant value
-     1>stream.cpp(83): warning C4244: 'argument' : conversion from 'uint64_t' to 'uint32_t', possible loss of data
-     1>stream.cpp(96): warning C4305: 'argument' : truncation from 'int' to 'uint8_t'
-     1>stream.cpp(96): warning C4309: 'argument' : truncation of constant value
-     1>stream.cpp(99): warning C4244: 'argument' : conversion from 'uint64_t' to 'uint32_t', possible loss of data
-     1>stream.cpp(154): warning C4244: 'argument' : conversion from 'uint64_t' to 'uint32_t', possible loss of data
-     1>stream.cpp(170): warning C4244: 'argument' : conversion from 'uint64_t' to 'uint32_t', possible loss of data
-         sigmatel.cpp
-     1>E:\Xeneva Project\Aurora\BaseHdr\stdarg.h(54): warning C4005: 'va_start' : macro redefinition
-                 E:\Xeneva Project\Aurora\BaseHdr\va_list.h(56) : see previous definition of 'va_start'
-         ihda.cpp
-     1>E:\Xeneva Project\Aurora\BaseHdr\Hal\basicacpi.h(154): warning C4200: nonstandard extension used : zero-sized array in struct/union
-                 Cannot generate copy-ctor or copy-assignment operator when UDT contains a zero-sized array
-     1>E:\Xeneva Project\Aurora\BaseHdr\Hal\basicacpi.h(185): warning C4200: nonstandard extension used : zero-sized array in struct/union
-                 Cannot generate copy-ctor or copy-assignment operator when UDT contains a zero-sized array
-     1>E:\Xeneva Project\Aurora\BaseHdr\Hal\basicacpi.h(267): warning C4200: nonstandard extension used : zero-sized array in struct/union
-                 Cannot generate copy-ctor or copy-assignment operator when UDT contains a zero-sized array
-     1>E:\Xeneva Project\Aurora\BaseHdr\Hal\basicacpi.h(283): warning C4200: nonstandard extension used : zero-sized array in struct/union
-                 Cannot generate copy-ctor or copy-assignment operator when UDT contains a zero-sized array
-     1>E:\Xeneva Project\Aurora\BaseHdr\Hal\x86_64_hal.h(35): warning C4103: 'e:\xeneva project\aurora\basehdr\hal\x86_64_hal.h' : alignment changed after including header, may be due to missing #pragma pack(pop)
-     1>ihda.cpp(33): warning C4103: 'e:\xeneva project\aurora\drivers\sound\intelhda\ihda.cpp' : alignment changed after including header, may be due to missing #pragma pack(pop)
-     1>E:\Xeneva Project\Aurora\BaseHdr\stdarg.h(54): warning C4005: 'va_start' : macro redefinition
-                 E:\Xeneva Project\Aurora\BaseHdr\va_list.h(56) : see previous definition of 'va_start'
-     1>ihda.cpp(149): warning C4244: 'argument' : conversion from 'uint64_t' to 'uint32_t', possible loss of data
-     1>ihda.cpp(198): warning C4244: 'argument' : conversion from 'uint64_t' to 'uint32_t', possible loss of data
-     1>ihda.cpp(347): warning C4101: 'codec' : unreferenced local variable
-     1>ihda.cpp(407): warning C4244: '=' : conversion from 'uint64_t' to 'uint8_t', possible loss of data
-     1>ihda.cpp(416): warning C4244: 'argument' : conversion from 'uint64_t' to 'uint32_t', possible loss of data
-     1>ihda.cpp(421): warning C4554: '&' : check operator precedence for possible error; use parentheses to clarify precedence
-         codec.cpp
-     1>E:\Xeneva Project\Aurora\BaseHdr\stdarg.h(54): warning C4005: 'va_start' : macro redefinition
-                 E:\Xeneva Project\Aurora\BaseHdr\va_list.h(56) : see previous definition of 'va_start'
-     1>codec.cpp(227): warning C4258: 'i' : definition from the for loop is ignored; the definition from the enclosing scope is used
-                 codec.cpp(225) : definition of 'i' ignored
-                 codec.cpp(179) : definition of 'i' used
-     1>codec.cpp(231): warning C4258: 'i' : definition from the for loop is ignored; the definition from the enclosing scope is used
-                 codec.cpp(228) : definition of 'i' ignored
-                 codec.cpp(179) : definition of 'i' used
-     1>codec.cpp(234): warning C4258: 'i' : definition from the for loop is ignored; the definition from the enclosing scope is used
-                 codec.cpp(228) : definition of 'i' ignored
-                 codec.cpp(179) : definition of 'i' used
-     1>codec.cpp(179): warning C4101: 'j' : unreferenced local variable
-         Generating Code...
-     1>e:\xeneva project\aurora\drivers\sound\intelhda\ihda.cpp(480): warning C4715: 'AuDriverMain' : not all control paths return a value
-     1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(1186,5): warning MSB8012: TargetPath(E:\Xeneva Project\Aurora\x64\Debug\IntelHDA.dll) does not match the Linker's OutputFile property value (F:\hda.dll). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
-     1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(1188,5): warning MSB8012: TargetName(IntelHDA) does not match the Linker's OutputFile property value (hda). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
-       Link:
-         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\link.exe /ERRORREPORT:PROMPT /OUT:"F:\hda.dll" /INCREMENTAL /NOLOGO /LIBPATH:"E:\Xeneva Project\Aurora\x64\Debug" Kernel.lib /NODEFAULTLIB /MANIFEST:NO /PDB:"E:\Xeneva Project\Aurora\x64\Debug\IntelHDA.pdb" /MAP /MAPINFO:EXPORTS /SUBSYSTEM:NATIVE /LARGEADDRESSAWARE /Driver /OPT:NOREF /LTCG /TLBID:1 /BASE:"0xFFFFC00000400000" /FIXED:NO /IMPLIB:"E:\Xeneva Project\Aurora\x64\Debug\IntelHDA.lib" /MACHINE:X64 /ALIGN:512 /DLL x64\Debug\codec.obj
-         x64\Debug\ihda.obj
-         x64\Debug\sigmatel.obj
-         x64\Debug\stream.obj
-         x64\Debug\widget.obj
-     1>LINK : warning LNK4075: ignoring '/INCREMENTAL' due to '/LTCG' specification
-            Creating library E:\Xeneva Project\Aurora\x64\Debug\IntelHDA.lib and object E:\Xeneva Project\Aurora\x64\Debug\IntelHDA.exp
-         LINK : /LTCG specified but no code generation required; remove /LTCG from the link command line to improve linker performance
-         IntelHDA.vcxproj -> E:\Xeneva Project\Aurora\x64\Debug\IntelHDA.dll
-     1>Done Building Project "E:\Xeneva Project\Aurora\Drivers\Sound\IntelHDA\IntelHDA.vcxproj" (Rebuild target(s)).
-
-Build succeeded.
-
-Time Elapsed 00:00:01.25
+﻿cl : command line warning D9002: ignoring unknown option '/arch:SSE'
+  codec.cpp
+E:\Xeneva Project\Aurora\BaseHdr\stdarg.h(43,1): warning C4005: 'STACKITEM': macro redefinition
+E:\Xeneva Project\Aurora\BaseHdr\va_list.h(49): message : see previous definition of 'STACKITEM'
+E:\Xeneva Project\Aurora\BaseHdr\stdarg.h(54,1): warning C4005: 'va_start': macro redefinition
+E:\Xeneva Project\Aurora\BaseHdr\va_list.h(56): message : see previous definition of 'va_start'
+E:\Xeneva Project\Aurora\Drivers\Sound\IntelHDA\codec.cpp(179,9): warning C4101: 'j': unreferenced local variable
+  ihda.cpp
+E:\Xeneva Project\Aurora\BaseHdr\Hal\basicacpi.h(154,11): warning C4200: nonstandard extension used: zero-sized array in struct/union
+E:\Xeneva Project\Aurora\BaseHdr\Hal\basicacpi.h(154,11): message : This member will be ignored by a defaulted constructor or copy/move assignment operator
+E:\Xeneva Project\Aurora\BaseHdr\Hal\basicacpi.h(185,9): warning C4200: nonstandard extension used: zero-sized array in struct/union
+E:\Xeneva Project\Aurora\BaseHdr\Hal\basicacpi.h(185,9): message : This member will be ignored by a defaulted constructor or copy/move assignment operator
+E:\Xeneva Project\Aurora\BaseHdr\Hal\basicacpi.h(267,16): warning C4200: nonstandard extension used: zero-sized array in struct/union
+E:\Xeneva Project\Aurora\BaseHdr\Hal\basicacpi.h(267,16): message : This member will be ignored by a defaulted constructor or copy/move assignment operator
+E:\Xeneva Project\Aurora\BaseHdr\Hal\basicacpi.h(283,11): warning C4200: nonstandard extension used: zero-sized array in struct/union
+E:\Xeneva Project\Aurora\BaseHdr\Hal\basicacpi.h(283,11): message : This member will be ignored by a defaulted constructor or copy/move assignment operator
+E:\Xeneva Project\Aurora\BaseHdr\Hal\x86_64_hal.h(35,1): warning C4103: alignment changed after including header, may be due to missing #pragma pack(pop)
+E:\Xeneva Project\Aurora\Drivers\Sound\IntelHDA\ihda.cpp(33,1): warning C4103: alignment changed after including header, may be due to missing #pragma pack(pop)
+E:\Xeneva Project\Aurora\BaseHdr\stdarg.h(43,1): warning C4005: 'STACKITEM': macro redefinition
+E:\Xeneva Project\Aurora\BaseHdr\va_list.h(49): message : see previous definition of 'STACKITEM'
+E:\Xeneva Project\Aurora\BaseHdr\stdarg.h(54,1): warning C4005: 'va_start': macro redefinition
+E:\Xeneva Project\Aurora\BaseHdr\va_list.h(56): message : see previous definition of 'va_start'
+E:\Xeneva Project\Aurora\Drivers\Sound\IntelHDA\ihda.cpp(149,24): warning C4244: 'argument': conversion from 'uint64_t' to 'uint32_t', possible loss of data
+E:\Xeneva Project\Aurora\Drivers\Sound\IntelHDA\ihda.cpp(198,24): warning C4244: 'argument': conversion from 'uint64_t' to 'uint32_t', possible loss of data
+E:\Xeneva Project\Aurora\Drivers\Sound\IntelHDA\ihda.cpp(348,6): warning C4101: 'codec': unreferenced local variable
+E:\Xeneva Project\Aurora\Drivers\Sound\IntelHDA\ihda.cpp(408,22): warning C4244: '=': conversion from 'uint64_t' to 'uint8_t', possible loss of data
+E:\Xeneva Project\Aurora\Drivers\Sound\IntelHDA\ihda.cpp(417,35): warning C4244: 'argument': conversion from 'uint64_t' to 'uint32_t', possible loss of data
+E:\Xeneva Project\Aurora\Drivers\Sound\IntelHDA\ihda.cpp(422,5): warning C4554: '&': check operator precedence for possible error; use parentheses to clarify precedence
+  sigmatel.cpp
+E:\Xeneva Project\Aurora\BaseHdr\stdarg.h(43,1): warning C4005: 'STACKITEM': macro redefinition
+E:\Xeneva Project\Aurora\BaseHdr\va_list.h(49): message : see previous definition of 'STACKITEM'
+E:\Xeneva Project\Aurora\BaseHdr\stdarg.h(54,1): warning C4005: 'va_start': macro redefinition
+E:\Xeneva Project\Aurora\BaseHdr\va_list.h(56): message : see previous definition of 'va_start'
+  stream.cpp
+E:\Xeneva Project\Aurora\BaseHdr\stdarg.h(43,1): warning C4005: 'STACKITEM': macro redefinition
+E:\Xeneva Project\Aurora\BaseHdr\va_list.h(49): message : see previous definition of 'STACKITEM'
+E:\Xeneva Project\Aurora\BaseHdr\stdarg.h(54,1): warning C4005: 'va_start': macro redefinition
+E:\Xeneva Project\Aurora\BaseHdr\va_list.h(56): message : see previous definition of 'va_start'
+E:\Xeneva Project\Aurora\Drivers\Sound\IntelHDA\stream.cpp(46,31): warning C4305: 'argument': truncation from 'int' to 'uint8_t'
+E:\Xeneva Project\Aurora\Drivers\Sound\IntelHDA\stream.cpp(45,115): warning C4309: 'argument': truncation of constant value
+E:\Xeneva Project\Aurora\Drivers\Sound\IntelHDA\stream.cpp(77,46): warning C4305: 'argument': truncation from 'int' to 'uint8_t'
+E:\Xeneva Project\Aurora\Drivers\Sound\IntelHDA\stream.cpp(77,35): warning C4309: 'argument': truncation of constant value
+E:\Xeneva Project\Aurora\Drivers\Sound\IntelHDA\stream.cpp(78,35): warning C4305: 'argument': truncation from 'int' to 'uint8_t'
+E:\Xeneva Project\Aurora\Drivers\Sound\IntelHDA\stream.cpp(78,29): warning C4309: 'argument': truncation of constant value
+E:\Xeneva Project\Aurora\Drivers\Sound\IntelHDA\stream.cpp(83,27): warning C4244: 'argument': conversion from 'uint64_t' to 'uint32_t', possible loss of data
+E:\Xeneva Project\Aurora\Drivers\Sound\IntelHDA\stream.cpp(96,92): warning C4305: 'argument': truncation from 'int' to 'uint8_t'
+E:\Xeneva Project\Aurora\Drivers\Sound\IntelHDA\stream.cpp(96,66): warning C4309: 'argument': truncation of constant value
+E:\Xeneva Project\Aurora\Drivers\Sound\IntelHDA\stream.cpp(99,24): warning C4244: 'argument': conversion from 'uint64_t' to 'uint32_t', possible loss of data
+E:\Xeneva Project\Aurora\Drivers\Sound\IntelHDA\stream.cpp(154,26): warning C4244: 'argument': conversion from 'uint64_t' to 'uint32_t', possible loss of data
+E:\Xeneva Project\Aurora\Drivers\Sound\IntelHDA\stream.cpp(170,32): warning C4244: 'argument': conversion from 'uint64_t' to 'uint32_t', possible loss of data
+  widget.cpp
+E:\Xeneva Project\Aurora\Drivers\Sound\IntelHDA\widget.cpp(31,10): warning C4067: unexpected tokens following preprocessor directive - expected a newline
+E:\Xeneva Project\Aurora\BaseHdr\stdarg.h(43,1): warning C4005: 'STACKITEM': macro redefinition
+E:\Xeneva Project\Aurora\BaseHdr\va_list.h(49): message : see previous definition of 'STACKITEM'
+E:\Xeneva Project\Aurora\BaseHdr\stdarg.h(54,1): warning C4005: 'va_start': macro redefinition
+E:\Xeneva Project\Aurora\BaseHdr\va_list.h(56): message : see previous definition of 'va_start'
+E:\Xeneva Project\Aurora\Drivers\Sound\IntelHDA\widget.cpp(100,20): warning C4018: '<': signed/unsigned mismatch
+E:\Xeneva Project\Aurora\Drivers\Sound\IntelHDA\widget.cpp(95,11): warning C4101: 'conn_val': unreferenced local variable
+E:\Xeneva Project\Aurora\Drivers\Sound\IntelHDA\widget.cpp(94,6): warning C4101: 'i': unreferenced local variable
+E:\Xeneva Project\Aurora\Drivers\Sound\IntelHDA\widget.cpp(182,20): warning C4018: '<': signed/unsigned mismatch
+E:\Xeneva Project\Aurora\Drivers\Sound\IntelHDA\widget.cpp(177,11): warning C4101: 'conn_val': unreferenced local variable
+E:\Xeneva Project\Aurora\Drivers\Sound\IntelHDA\widget.cpp(176,6): warning C4101: 'i': unreferenced local variable
+  Generating Code...
+E:\Xeneva Project\Aurora\Drivers\Sound\IntelHDA\ihda.cpp(481): warning C4715: 'AuDriverMain': not all control paths return a value
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(1363,5): warning MSB8012: TargetPath(E:\Xeneva Project\Aurora\x64\Debug\IntelHDA.dll) does not match the Linker's OutputFile property value (F:\hda.dll). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(1365,5): warning MSB8012: TargetName(IntelHDA) does not match the Linker's OutputFile property value (hda). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
+LINK : warning LNK4075: ignoring '/INCREMENTAL' due to '/LTCG' specification
+codec.obj : warning LNK4075: ignoring '/EDITANDCONTINUE' due to '/DRIVER' specification
+     Creating library E:\Xeneva Project\Aurora\x64\Debug\IntelHDA.lib and object E:\Xeneva Project\Aurora\x64\Debug\IntelHDA.exp
+  LINK : /LTCG specified but no code generation required; remove /LTCG from the link command line to improve linker performance
+  IntelHDA.vcxproj -> E:\Xeneva Project\Aurora\x64\Debug\IntelHDA.dll

@@ -244,7 +244,7 @@ $LN4@CreateUDPS:
 	movsxd	rax, DWORD PTR fd$[rbp]
 	mov	rcx, QWORD PTR proc$[rbp]
 	mov	rdx, QWORD PTR sock$[rbp]
-	mov	QWORD PTR [rcx+rax*8+576], rdx
+	mov	QWORD PTR [rcx+rax*8+567], rdx
 
 ; 102  : 	SeTextOut("UDP Socket created \r\n");
 

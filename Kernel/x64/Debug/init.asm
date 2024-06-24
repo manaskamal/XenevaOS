@@ -72,7 +72,7 @@ _TEXT	SEGMENT
 info$ = 80
 ?_AuMain@@YAXPEAU_KERNEL_BOOT_INFO_@@@Z PROC		; _AuMain, COMDAT
 
-; 78   : void _AuMain(KERNEL_BOOT_INFO *info) {
+; 75   : void _AuMain(KERNEL_BOOT_INFO *info) {
 
 $LN6:
 	mov	QWORD PTR [rsp+8], rcx
@@ -82,40 +82,40 @@ $LN6:
 	lea	rcx, OFFSET FLAT:__AB3BDA9D_init@cpp
 	call	__CheckForDebuggerJustMyCode
 
-; 79   : 	AuConsoleInitialize(info, true);	
+; 76   : 	AuConsoleInitialize(info, true);	
 
 	mov	dl, 1
 	mov	rcx, QWORD PTR info$[rbp]
 	call	?AuConsoleInitialize@@YAXPEAU_KERNEL_BOOT_INFO_@@_N@Z ; AuConsoleInitialize
 
-; 80   : 	AuPmmngrInitialize(info);
+; 77   : 	AuPmmngrInitialize(info);
 
 	mov	rcx, QWORD PTR info$[rbp]
 	call	?AuPmmngrInitialize@@YAXPEAU_KERNEL_BOOT_INFO_@@@Z ; AuPmmngrInitialize
 
-; 81   : 	AuVmmngrInitialize();
+; 78   : 	AuVmmngrInitialize();
 
 	call	?AuVmmngrInitialize@@YAXXZ		; AuVmmngrInitialize
 
-; 82   : 	AuHeapInitialize();
+; 79   : 	AuHeapInitialize();
 
 	call	AuHeapInitialize
 
-; 83   : 	
-; 84   : 	AuHalInitialise(info);
+; 80   : 	
+; 81   : 	AuHalInitialise(info);
 
 	mov	rcx, QWORD PTR info$[rbp]
 	call	AuHalInitialise
 
-; 85   : 	AuInitialiseSerial();
+; 82   : 	AuInitialiseSerial();
 
 	call	?AuInitialiseSerial@@YAXXZ		; AuInitialiseSerial
 
-; 86   : 	AuVFSInitialise();
+; 83   : 	AuVFSInitialise();
 
 	call	?AuVFSInitialise@@YAXXZ			; AuVFSInitialise
 
-; 87   : 	AuTextOut("BootDev HID -> %x, UID -> %x, CID -> %x \r\n", info->hid, info->uid, info->cid);
+; 84   : 	AuTextOut("BootDev HID -> %x, UID -> %x, CID -> %x \r\n", info->hid, info->uid, info->cid);
 
 	mov	rax, QWORD PTR info$[rbp]
 	mov	r9d, DWORD PTR [rax+178]
@@ -126,125 +126,126 @@ $LN6:
 	lea	rcx, OFFSET FLAT:??_C@_0CL@IFOGFJIG@BootDev?5HID?5?9?$DO?5?$CFx?0?5UID?5?9?$DO?5?$CFx?0?5C@
 	call	AuTextOut
 
-; 88   : 	AuAHCIInitialise();
+; 85   : 	AuAHCIInitialise();
 
 	call	?AuAHCIInitialise@@YAXXZ		; AuAHCIInitialise
 
-; 89   : 
-; 90   : 	AuConsolePostInitialise(info);
+; 86   : 
+; 87   : 	AuConsolePostInitialise(info);
 
 	mov	rcx, QWORD PTR info$[rbp]
 	call	?AuConsolePostInitialise@@YAXPEAU_KERNEL_BOOT_INFO_@@@Z ; AuConsolePostInitialise
 
-; 91   : 	/* Here initialize all legacy bus system
-; 92   : 	 * like ps2.... using AuLegacyBusInitialize() */
-; 93   : 	AuPS2MouseInitialise();
+; 88   : 	/* Here initialize all legacy bus system
+; 89   : 	 * like ps2.... using AuLegacyBusInitialize() */
+; 90   : 	AuPS2MouseInitialise();
 
 	call	?AuPS2MouseInitialise@@YAXXZ		; AuPS2MouseInitialise
 
-; 94   : 	AuRTCInitialize();
+; 91   : 	AuRTCInitialize();
 
 	call	?AuRTCInitialize@@YAXXZ			; AuRTCInitialize
 
-; 95   : 	AuPS2KybrdInitialize();
+; 92   : 	AuPS2KybrdInitialize();
 
 	call	?AuPS2KybrdInitialize@@YAXXZ		; AuPS2KybrdInitialize
 
-; 96   : 
-; 97   : 	/*initialise kernel tty */
-; 98   : 	AuTTYInitialise();
+; 93   : 
+; 94   : 	/*initialise kernel tty */
+; 95   : 	AuTTYInitialise();
 
 	call	?AuTTYInitialise@@YAXXZ			; AuTTYInitialise
 
-; 99   : 
-; 100  : 	/* initialise the shared mem man */
-; 101  : 	AuInitialiseSHMMan();
+; 96   : 
+; 97   : 	/* initialise the shared mem man */
+; 98   : 	AuInitialiseSHMMan();
 
 	call	?AuInitialiseSHMMan@@YAXXZ		; AuInitialiseSHMMan
 
-; 102  : 
-; 103  : 	SharedMemMapListInitialise();
+; 99   : 
+; 100  : 	SharedMemMapListInitialise();
 
 	call	?SharedMemMapListInitialise@@YAXXZ	; SharedMemMapListInitialise
 
-; 104  : 
-; 105  : 	/* initialise sound service */
-; 106  : 	AuSoundInitialise();
+; 101  : 
+; 102  : 	/* initialise sound service */
+; 103  : 	AuSoundInitialise();
 
 	call	?AuSoundInitialise@@YAXXZ		; AuSoundInitialise
 
-; 107  : 
-; 108  : 	/* initialise PostBoxIPCManager */
-; 109  : 	AuIPCPostBoxInitialise();
+; 104  : 
+; 105  : 	/* initialise PostBoxIPCManager */
+; 106  : 	AuIPCPostBoxInitialise();
 
 	call	?AuIPCPostBoxInitialise@@YAXXZ		; AuIPCPostBoxInitialise
 
-; 110  : 
-; 111  : 	/* initialise aurora timer manager*/
-; 112  : 	AuTimerDataInitialise();
+; 107  : 
+; 108  : 	/* initialise aurora timer manager*/
+; 109  : 	AuTimerDataInitialise();
 
 	call	?AuTimerDataInitialise@@YAXXZ		; AuTimerDataInitialise
 
-; 113  : 
-; 114  : 	/* initialise pre network service*/
-; 115  : 	AuInitialiseNet();
+; 110  : 
+; 111  : 	/* initialise pre network service*/
+; 112  : 	AuInitialiseNet();
 
 	call	?AuInitialiseNet@@YAXXZ			; AuInitialiseNet
 
-; 116  : 
-; 117  : 	x64_cli();
+; 113  : 
+; 114  : 	x64_cli();
 
 	call	x64_cli
 
-; 118  : 	AuSchedulerInitialise();
+; 115  : 	AuSchedulerInitialise();
 
 	call	?AuSchedulerInitialise@@YAXXZ		; AuSchedulerInitialise
 
-; 119  : 	
-; 120  : 	/*initialise aurora driver manager*/
-; 121  : 	AuDrvMngrInitialize(info);
+; 116  : 	
+; 117  : 	/*initialise aurora driver manager*/
+; 118  : 	AuDrvMngrInitialize(info);
 
 	mov	rcx, QWORD PTR info$[rbp]
 	call	?AuDrvMngrInitialize@@YAXPEAU_KERNEL_BOOT_INFO_@@@Z ; AuDrvMngrInitialize
 
-; 122  : 
-; 123  : 	/* initialise all application processors*/
-; 124  : 	AuHalPostInitialise();
+; 119  : 
+; 120  : 	/* initialise all application processors*/
+; 121  : 	AuHalPostInitialise();
 
 	call	AuHalPostInitialise
 
-; 125  : 
-; 126  : 	/* intiialise all system fonts */
-; 127  : 	FontManagerInitialise();
+; 122  : 
+; 123  : 	/* intiialise all system fonts */
+; 124  : 	FontManagerInitialise();
 
 	call	?FontManagerInitialise@@YAXXZ		; FontManagerInitialise
 
-; 128  : 	
-; 129  : 	AuInitialiseLoader();
+; 125  : 	
+; 126  : 	AuInitialiseLoader();
 
 	call	?AuInitialiseLoader@@YAXXZ		; AuInitialiseLoader
 
-; 130  : 
-; 131  : 	/* make the kernel standalone*/
-; 132  : 	AuVmmngrBootFree();
+; 127  : 
+; 128  : 	/* make the kernel standalone*/
+; 129  : 	AuVmmngrBootFree();
 
 	call	?AuVmmngrBootFree@@YAXXZ		; AuVmmngrBootFree
 
-; 133  : 	/* Process initialisation begins here */
-; 134  : 	AuStartRootProc();
+; 130  : 
+; 131  : 	/* Process initialisation begins here */
+; 132  : 	AuStartRootProc();
 
 	call	?AuStartRootProc@@YAXXZ			; AuStartRootProc
 
-; 135  : 	AuSchedulerStart();
+; 133  : 	AuSchedulerStart();
 
 	call	?AuSchedulerStart@@YAXXZ		; AuSchedulerStart
 $LN2@AuMain:
 
-; 136  : 	for (;;);
+; 134  : 	for (;;);
 
 	jmp	SHORT $LN2@AuMain
 
-; 137  : }
+; 135  : }
 
 	lea	rsp, QWORD PTR [rbp+64]
 	pop	rbp

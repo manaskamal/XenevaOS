@@ -30,6 +30,7 @@ EXTRN	AuPmmngrAlloc:PROC
 EXTRN	AuPmmngrFree:PROC
 EXTRN	AuTextOut:PROC
 EXTRN	x64_cli:PROC
+EXTRN	flush_tlb:PROC
 EXTRN	SeTextOut:PROC
 EXTRN	__CheckForDebuggerJustMyCode:PROC
 ;	COMDAT pdata
@@ -59,7 +60,7 @@ pdata	ENDS
 ;	COMDAT pdata
 pdata	SEGMENT
 $pdata$?ProcessHeapUnmap@@YAHPEAX_K@Z DD imagerel $LN14
-	DD	imagerel $LN14+463
+	DD	imagerel $LN14+490
 	DD	imagerel $unwind$?ProcessHeapUnmap@@YAHPEAX_K@Z
 pdata	ENDS
 ;	COMDAT ??_C@_0CE@CHBJELCJ@Returning?5error?5heap?5unmap?5?9?$DO?5?$CF@
@@ -316,29 +317,43 @@ $LN4@ProcessHea:
 	and	rax, rcx
 	mov	rcx, QWORD PTR page_$2[rbp]
 	mov	QWORD PTR [rcx], rax
+
+; 183  : 				page_->bits.writable = 0;
+
+	mov	rax, QWORD PTR page_$2[rbp]
+	mov	rax, QWORD PTR [rax]
+	and	rax, -3
+	mov	rcx, QWORD PTR page_$2[rbp]
+	mov	QWORD PTR [rcx], rax
 $LN10@ProcessHea:
 $LN9@ProcessHea:
 
-; 183  : 			}
-; 184  : 		}
-; 185  : 	}
+; 184  : 			}
+; 185  : 		}
+; 186  : 	}
 
 	jmp	$LN2@ProcessHea
 $LN3@ProcessHea:
 
-; 186  : 	/*if (start_addr < proc->proc_mem_heap)*/
-; 187  : 	proc->proc_mem_heap = start_addr;
+; 187  : 
+; 188  : 	flush_tlb((void*)start_addr);
+
+	mov	rcx, QWORD PTR start_addr$[rbp]
+	call	flush_tlb
+
+; 189  : 	/*if (start_addr < proc->proc_mem_heap)*/
+; 190  : 	proc->proc_mem_heap = start_addr;
 
 	mov	rax, QWORD PTR proc$[rbp]
 	mov	rcx, QWORD PTR start_addr$[rbp]
-	mov	QWORD PTR [rax+1104], rcx
+	mov	QWORD PTR [rax+1095], rcx
 
-; 188  : 	return 0;
+; 191  : 	return 0;
 
 	xor	eax, eax
 $LN1@ProcessHea:
 
-; 189  : }
+; 192  : }
 
 	lea	rsp, QWORD PTR [rbp+128]
 	pop	rbp
@@ -467,7 +482,7 @@ $LN7@GetProcess:
 ; 128  : 	uint64_t start_addr = (uint64_t)AuGetFreePage(false, (void*)proc->proc_mem_heap);
 
 	mov	rax, QWORD PTR proc$[rbp]
-	mov	rdx, QWORD PTR [rax+1104]
+	mov	rdx, QWORD PTR [rax+1095]
 	xor	ecx, ecx
 	call	AuGetFreePage
 	mov	QWORD PTR start_addr$[rbp], rax
@@ -537,18 +552,18 @@ $LN3@GetProcess:
 ; 140  : 	proc->proc_mem_heap += sz;
 
 	mov	rax, QWORD PTR proc$[rbp]
-	mov	rax, QWORD PTR [rax+1104]
+	mov	rax, QWORD PTR [rax+1095]
 	add	rax, QWORD PTR sz$[rbp]
 	mov	rcx, QWORD PTR proc$[rbp]
-	mov	QWORD PTR [rcx+1104], rax
+	mov	QWORD PTR [rcx+1095], rax
 
 ; 141  : 	proc->proc_heapmem_len += sz;
 
 	mov	rax, QWORD PTR proc$[rbp]
-	mov	rax, QWORD PTR [rax+1112]
+	mov	rax, QWORD PTR [rax+1103]
 	add	rax, QWORD PTR sz$[rbp]
 	mov	rcx, QWORD PTR proc$[rbp]
-	mov	QWORD PTR [rcx+1112], rax
+	mov	QWORD PTR [rcx+1103], rax
 
 ; 142  : 	return start_addr;
 

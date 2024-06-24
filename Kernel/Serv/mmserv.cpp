@@ -180,9 +180,12 @@ int ProcessHeapUnmap(void* ptr, size_t sz) {
 				//page_->raw = 0;
 				page_->bits.present = 0;
 				page_->bits.page = 0;
+				page_->bits.writable = 0;
 			}
 		}
 	}
+
+	flush_tlb((void*)start_addr);
 	/*if (start_addr < proc->proc_mem_heap)*/
 	proc->proc_mem_heap = start_addr;
 	return 0;

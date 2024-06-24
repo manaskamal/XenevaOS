@@ -75,6 +75,7 @@ bool _window_broadcast_mouse_;
 bool _cursor_update_;
 bool _cursor_drawback_;
 bool _always_on_top_update;
+bool _window_moving_;
 Window* focusedWin;
 Window* focusedLast;
 Window* topWin;
@@ -373,6 +374,8 @@ void DeodhaiWindowMove(Window* win, int x, int y) {
 
 	if (focusedWin != win)
 		DeodhaiWindowSetFocused(win, true);
+
+	_window_moving_ = true;
 
 	WinSharedInfo *info = (WinSharedInfo*)win->sharedInfo;
 	int wx = info->x -SHADOW_SIZE;
@@ -797,7 +800,6 @@ void ComposeFrame(ChCanvas *canvas) {
 			if (focusedWin == win) {
 				if (_shadow_update) {
 #ifdef SHADOW_ENABLED
-					//_KePrint("Entering shadow update \r\n");
 					for (int64_t j = 0; j < shad_h; j++) {
 						for (int64_t q = 0; q < shad_w; q++) {	
 							*(uint32_t*)(canvas->buffer + ((winy - SHADOW_SIZE) + j) * canvas->canvasWidth + ((winx - SHADOW_SIZE) + q)) =
@@ -807,7 +809,6 @@ void ComposeFrame(ChCanvas *canvas) {
 					}
 #endif
 					_shadow_update = false;
-					//_KePrint("Shadow update completed %d %d \r\n", (winx - SHADOW_SIZE), (winy - SHADOW_SIZE));
 				}
 			}
 			
@@ -816,7 +817,14 @@ void ComposeFrame(ChCanvas *canvas) {
 					win->backBuffer + (0 + i) * info->width + 0,width * 4);
 			}
 
-			if (clipCount == 0) {
+			/*
+			 * Here we check the moving bit because, if any behind 
+			 * windows is not intersected by moving window, so during
+			 * _window_update_all_ process its clipped rect count will
+			 * be zero, so moving window prevents its from redrawing
+			 * non intersected window with clip count = 0
+			 */
+			if (clipCount == 0 && !_window_moving_) {
 				AddDirtyClip(winx - SHADOW_SIZE, winy - SHADOW_SIZE, shad_w, shad_h);
 			}
 
@@ -962,15 +970,16 @@ void ComposeFrame(ChCanvas *canvas) {
 				Window* clipWin = NULL;
 				WinSharedInfo* clipInfo = NULL;
 
-				if (info->alpha) {
+				if (info->alpha && !_window_moving_) {
 					for (int j = 0; j < r_h; j++) {
 						for (int i = 0; i < r_w; i++) {
-							*(uint32_t*)(canvas->buffer + (static_cast<int64_t>(info->y) + r_y + j) * canvas->canvasWidth + 
+							*(uint32_t*)(canvas->buffer + (static_cast<uint64_t>(info->y) + r_y + j) * canvas->canvasWidth + 
 								(static_cast<int64_t>(info->x) + r_x + i)) =
-								ChColorAlphaBlend(*(uint32_t*)(canvas->buffer +
-									(static_cast<int64_t>(info->y) + r_y + j)* canvas->canvasWidth + 
-									(static_cast<int64_t>(info->x) + r_x + i)),
-								*(uint32_t*)(win->backBuffer + static_cast<int64_t>(j) * info->width + i), info->alphaValue);
+								ChColorAlphaBlend2(*(uint32_t*)(canvas->buffer +
+									(static_cast<uint64_t>(info->y) + r_y + j)* canvas->canvasWidth + 
+									(static_cast<uint64_t>(info->x) + r_x + i)),
+								*(uint32_t*)(win->backBuffer + (static_cast<uint64_t>(r_y) + j)* info->width + 
+									(static_cast<uint64_t>(r_x) + i)));
 						}
 					}
 					AddDirtyClip(info->x + r_x, info->y + r_y, r_w, r_h);
@@ -1029,11 +1038,10 @@ void ComposeFrame(ChCanvas *canvas) {
 						int update_r_y = r_y + diffy;
 
 						for (int j = 0; j < k_h; j++) {
-							_fastcpy(canvas->buffer + (static_cast<int64_t>(k_y) + j) * canvas->canvasWidth + k_x,
-								win->backBuffer + (static_cast<int64_t>(update_r_y) + j) * info->width + update_r_x, 
+							_fastcpy((canvas->buffer + (static_cast<int64_t>(k_y) + j) * canvas->canvasWidth + k_x),
+								(win->backBuffer + (static_cast<int64_t>(update_r_y) + j) * info->width + update_r_x), 
 								static_cast<int64_t>(k_w) * 4);
 						}
-
 						AddDirtyClip(k_x, k_y, k_w, k_h);
 					}
 					clipCount = 0;
@@ -1047,7 +1055,7 @@ void ComposeFrame(ChCanvas *canvas) {
 
 		/* If no small areas, update entire window */
 
-		if (win != NULL && _always_on_top_update || (info->rect_count == 0 && info->updateEntireWindow == 1)) {
+		if (win != NULL && _always_on_top_update  || (info->rect_count == 0 && info->updateEntireWindow == 1)) {
 			int winx = 0;
 			int winy = 0;
 			winx = info->x;
@@ -1083,19 +1091,35 @@ void ComposeFrame(ChCanvas *canvas) {
 			int clipCount = 0;
 			Window* clipWin = NULL;
 			WinSharedInfo* clipInfo = NULL;
+			bool _intersected_ = false;
+
+			for (clipWin = rootWin; clipWin != NULL; clipWin = clipWin->next) {
+				clipInfo = (WinSharedInfo*)clipWin->sharedInfo;
+				if (clipWin == win)
+					continue;
+				r2.x = clipInfo->x;
+				r2.y = clipInfo->y;
+				r2.w = clipInfo->width;
+				r2.h = clipInfo->height;
+
+				if (ClipCheckIntersect(&r1, &r2)) {
+					_intersected_ = true;
+				}
+			}
 
 			/* alpha is only used for fade animation right now */
-			if (info->alpha) {
+			if ((info->alpha && info->updateEntireWindow) || (info->alpha && _intersected_)) {
 				for (int j = 0; j < height; j++) {
 					for (int i = 0; i < width; i++) {
-						*(uint32_t*)(canvas->buffer + (static_cast<int64_t>(winy) + j) * canvas->canvasWidth + 
+						*(uint32_t*)(canvas->buffer + (static_cast<uint64_t>(winy) + j) * canvas->canvasWidth + 
 							(static_cast<int64_t>(winx) + i)) =
-							ChColorAlphaBlend(*(uint32_t*)(canvas->buffer + (static_cast<int64_t>(winy) + j)* canvas->canvasWidth + 
+							ChColorAlphaBlend2(*(uint32_t*)(canvas->buffer + (static_cast<uint64_t>(winy) + j)* canvas->canvasWidth + 
 								(static_cast<int64_t>(winx) + i)),
-							*(uint32_t*)(win->backBuffer + static_cast<int64_t>(j) * info->width + i),
-								info->alphaValue);
+							*(uint32_t*)(win->backBuffer + static_cast<int64_t>(j) * info->width + i)
+								/*info->alphaValue*/);
 					}
 				}
+				AddDirtyClip(winx, winy, width, height);
 			}
 			else {
 				for (clipWin = win; clipWin != NULL; clipWin = clipWin->next) {
@@ -1112,9 +1136,12 @@ void ComposeFrame(ChCanvas *canvas) {
 					}
 				}
 
-				for (int i = 0; i < height; i++) {
-					_fastcpy(canvas->buffer + (static_cast<int64_t>(winy) + i) * canvas->canvasWidth + winx,
-						win->backBuffer + (0 + static_cast<int64_t>(i)) * info->width + 0, static_cast<int64_t>(width) * 4);
+				if ((clipCount == 0 && info->updateEntireWindow) || (clipCount == 0 && !_window_moving_)) {
+					for (int i = 0; i < height; i++) {
+						void* canvas_buff = (canvas->buffer + (static_cast<uint64_t>(winy) + i) * canvas->canvasWidth + winx);
+						void* winbuff = (win->backBuffer + (0 + static_cast<uint64_t>(i)) * info->width + 0);
+						_fastcpy(canvas_buff,winbuff, static_cast<uint64_t>(width) * 4);
+					}
 				}
 
 
@@ -1138,7 +1165,7 @@ void ComposeFrame(ChCanvas *canvas) {
 				}
 			}
 
-			AddDirtyClip(winx, winy, width, height);
+			
 			if (win->animFrameCount == 0)
 				info->updateEntireWindow = 0;
 		}
@@ -1157,7 +1184,9 @@ void ComposeFrame(ChCanvas *canvas) {
 
 	if (_always_on_top_update)
 		_always_on_top_update = false;
-
+	
+	if (_window_moving_)
+		_window_moving_ = false;
 
 	currentCursor->oldXPos = currentCursor->xpos;
 	currentCursor->oldYPos = currentCursor->ypos;
@@ -1419,6 +1448,7 @@ int main(int argc, char* arv[]) {
 	startTime = tm.tv_sec;
 	startSubTime = tm.tv_usec;
 
+
 	/* first of all get screen width and screen height */
 	XEFileIOControl graphctl;
 	memset(&graphctl, 0, sizeof(XEFileIOControl));
@@ -1430,6 +1460,7 @@ int main(int argc, char* arv[]) {
 	int ret = 0;
 	int screen_w = 0;
 	int screen_h = 0;
+	_window_moving_ = false;
 	
 	/* create a demo canvas just for getting the graphics
 	 * file descriptor 
@@ -1455,8 +1486,6 @@ int main(int argc, char* arv[]) {
 	for (int j = 0; j < screen_h; j++)
 		surfaceBuffer[j * canv->canvasWidth + i] = GRAY; //0xFF938585;
 
-	DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
-	DrawWallpaper(canv, "/XE1_2.jpg");
 	DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
 	ChCanvasScreenUpdate(canv, 0, 0, canv->canvasWidth, canv->canvasHeight);
 
@@ -1489,6 +1518,7 @@ int main(int argc, char* arv[]) {
 	uint64_t diff_tick = 0;
 	uint64_t last_click_time = 0;
 	uint64_t last_redraw = 0;
+
 	while (1) {
 
 		unsigned long frameTime = DeodhaiTimeSince(last_redraw);
@@ -1597,7 +1627,7 @@ int main(int argc, char* arv[]) {
 			
 			_KeFileIoControl(postbox_fd, POSTBOX_PUT_EVENT, &e);
 			
-			//_KeProcessSleep(40);
+			_KeProcessSleep(40);
 			if (!(flags & WINDOW_FLAG_MESSAGEBOX)){
 				_KePrint("Broadcasting message \n");
 				/* broadcast it to all broadcast listener windows, about this news*/

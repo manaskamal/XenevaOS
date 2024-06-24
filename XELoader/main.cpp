@@ -207,6 +207,8 @@ void DefaultSignalHandler(int signo) {
 
 typedef int(*entrypoint) (int argc, char*argv[]);
 
+
+
 /*
  * main entry point of the loader, it accepts
  * three commands "-about", "-f", and filename
@@ -221,27 +223,35 @@ int main(int argc, char* argv[]) {
 
 	XELdrInitObjectList();
 
+
 	/* load the main object */
 	char* filename = argv[0];
 	XELoaderObject* mainobj = XELdrCreateObj(filename);
 
-
 	XELdrStartProc(mainobj->objname, mainobj);
 	XELdrLoadAllObject();
 
+	
 	/* links all dependencies of libraries*/
 	XELdrLinkDepObject(mainobj);
+	
 
 	/* now link all objects from the list
 	 * to main object
 	 */
 	XELdrLinkAllObject(mainobj);
+	
+	
 
 	uint64_t entry_addr = mainobj->entry_addr;
 	
-	XELdrClearObjectList();
+	_KePrint("XELdr clearing objects \r\n");
+
+	//XELdrClearObjectList();
+
 	
 	
+//	for (;;);
 	/* register the default signal handler to
 	 * all signal
 	 */

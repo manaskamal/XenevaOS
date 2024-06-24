@@ -130,9 +130,9 @@ E:\Xeneva Project\Aurora\Drivers\Usb3\xhci_cmd.cpp(174,49): warning C4267: 'argu
   Generating Code...
 E:\Xeneva Project\Aurora\Drivers\Usb3\usb3.cpp(926): warning C4715: 'USBGetDescriptor': not all control paths return a value
 E:\Xeneva Project\Aurora\Drivers\Usb3\classes\hid.cpp(371): warning C4715: 'HIDParseReportDescriptor': not all control paths return a value
+E:\Xeneva Project\Aurora\Drivers\Usb3\classes\hid.cpp(249): warning C4700: uninitialized local variable 'current_data_offset' used
 E:\Xeneva Project\Aurora\Drivers\Usb3\classes\hid.cpp(440): warning C4700: uninitialized local variable 'i' used
 E:\Xeneva Project\Aurora\Drivers\Usb3\classes\hid.cpp(459): warning C4700: uninitialized local variable 'i' used
-E:\Xeneva Project\Aurora\Drivers\Usb3\classes\hid.cpp(249): warning C4700: uninitialized local variable 'current_data_offset' used
 C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(1363,5): warning MSB8012: TargetPath(E:\Xeneva Project\Aurora\x64\Debug\Usb3.dll) does not match the Linker's OutputFile property value (F:\usb.dll). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
 C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(1365,5): warning MSB8012: TargetName(Usb3) does not match the Linker's OutputFile property value (usb). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
 LINK : warning LNK4075: ignoring '/INCREMENTAL' due to '/LTCG' specification

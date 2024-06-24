@@ -74,8 +74,14 @@ int OpenFile(char* filename, int mode) {
 	int fd = AuProcessGetFileDesc(current_proc);
 	if (fd == -1)
 		return -1;
+
+	/* just to increase the reference count */
+	if (file->flags & FS_FLAG_PIPE)
+		SeTextOut("Opening file -> %s \r\n", file->filename);
+		if (file->open)
+			file->open(file, NULL);
+
 	current_proc->fds[fd] = file;
-	SeTextOut("Opening file -> %s | %d \r\n", file->filename, fd);
 	return fd;
 }
 
@@ -133,8 +139,11 @@ size_t ReadFile(int fd, void* buffer, size_t length) {
 		if (!current_proc)
 			return 0;
 	}
+	
 	AuVFSNode* file = current_proc->fds[fd];
 	uint64_t* aligned_buffer = (uint64_t*)buffer;
+
+	//SeTextOut("Reading from file -> %d -> %x \r\n", fd, file);
 	if (!file)
 		return 0;
 	size_t ret_bytes = 0;
@@ -155,7 +164,7 @@ size_t ReadFile(int fd, void* buffer, size_t length) {
 		if (file->read)
 			ret_bytes = file->read(file, file, (uint64_t*)aligned_buffer, length);
 	}
-	if ((file->flags & FS_FLAG_PIPE)) {
+	if (file->flags == FS_FLAG_PIPE) {
 		/* ofcourse, pipe subsystem will handle */
 		if (file->read)
 			ret_bytes = file->read(file, file, (uint64_t*)buffer, length);
@@ -215,6 +224,11 @@ size_t WriteFile(int fd, void* buffer, size_t length) {
 		if (file->write) {
 			return file->write(fsys, file, (uint64_t*)buffer, length);
 		}
+	}
+
+	if (file->flags & FS_FLAG_PIPE) {
+		if (file->write)
+			return file->write(file, file, (uint64_t*)buffer, length);
 	}
 }
 
@@ -286,7 +300,6 @@ int CloseFile(int fd) {
 	}
 
 	AuVFSNode* file = current_proc->fds[fd];
-	SeTextOut("Closing file -> %x \r\n", file);
 	if (file->flags & FS_FLAG_FILE_SYSTEM){
 		SeTextOut("Closing fs -> %s \r\n", file->filename);
 		current_proc->fds[fd] = 0;

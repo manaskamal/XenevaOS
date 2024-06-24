@@ -23,6 +23,8 @@ with hybrid design and the entire operating system is known as _'Xeneva'_.
 14. Desktop environment called Namdapha Desktop
 15. Storage supports : AHCI/SATA, NVMe
 16. USB3 Class drivers (USB HID Mouse, USB Tablet) ..etc
+17. Audio Server called "Deodhai-Audio" with 
+    (44kHz/16bit audio format, stereo/mono panning, gain control)
 
 
 _And many more coming soon_

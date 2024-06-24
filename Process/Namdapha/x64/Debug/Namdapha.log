@@ -1,20 +1,12 @@
 ﻿cl : command line warning D9002: ignoring unknown option '/arch:SSE2'
 cl : command line warning D9002: ignoring unknown option '/arch:SSE2'
-cl : command line warning D9002: ignoring unknown option '/arch:SSE2'
   gomenu.cpp
 cl : command line warning D9002: ignoring unknown option '/arch:SSE2'
   namdapha.cpp
+cl : command line warning D9002: ignoring unknown option '/arch:SSE2'
   NamdaphaButton.cpp
 cl : command line warning D9002: ignoring unknown option '/arch:SSE2'
   nmGoButton.cpp
-E:\Xeneva Project\Aurora\Process\Namdapha\NamdaphaButton.cpp(108,12): warning C4189: 'color': local variable is initialized but not referenced
-E:\Xeneva Project\Aurora\Process\Namdapha\NamdaphaButton.cpp(124,62): warning C4100: 'win': unreferenced formal parameter
-E:\Xeneva Project\Aurora\Process\Namdapha\NamdaphaButton.cpp(148,44): warning C4267: 'argument': conversion from 'size_t' to 'unsigned int', possible loss of data
-E:\Xeneva Project\Aurora\Process\Namdapha\NamdaphaButton.cpp(170,52): warning C4267: 'argument': conversion from 'size_t' to 'unsigned int', possible loss of data
-E:\Xeneva Project\Aurora\Process\Namdapha\NamdaphaButton.cpp(175,31): warning C4267: '=': conversion from 'size_t' to 'uint32_t', possible loss of data
-E:\Xeneva Project\Aurora\Process\Namdapha\NamdaphaButton.cpp(220,20): warning C4018: '<': signed/unsigned mismatch
-E:\Xeneva Project\Aurora\Process\Namdapha\NamdaphaButton.cpp(224,21): warning C4018: '<': signed/unsigned mismatch
-E:\Xeneva Project\Aurora\Process\Namdapha\NamdaphaButton.cpp(222,12): warning C4189: 'h': local variable is initialized but not referenced
 E:\Xeneva Project\Aurora\Process\Namdapha\namdapha.cpp(98,69): warning C4459: declaration of 'win' hides global declaration
 E:\Xeneva Project\Aurora\Process\Namdapha\namdapha.cpp(44,11): message : see declaration of 'win'
 E:\Xeneva Project\Aurora\Process\Namdapha\namdapha.cpp(100,13): warning C4244: 'initializing': conversion from 'int64_t' to 'int', possible loss of data
@@ -34,17 +26,25 @@ E:\Xeneva Project\Aurora\Process\Namdapha\namdapha.cpp(144,20): warning C4018: '
 E:\Xeneva Project\Aurora\Process\Namdapha\namdapha.cpp(202,31): warning C4018: '<': signed/unsigned mismatch
 E:\Xeneva Project\Aurora\Process\Namdapha\namdapha.cpp(203,30): warning C4459: declaration of 'win' hides global declaration
 E:\Xeneva Project\Aurora\Process\Namdapha\namdapha.cpp(44,11): message : see declaration of 'win'
-E:\Xeneva Project\Aurora\Process\Namdapha\namdapha.cpp(225,28): warning C4018: '<': signed/unsigned mismatch
-E:\Xeneva Project\Aurora\Process\Namdapha\namdapha.cpp(236,29): warning C4018: '<': signed/unsigned mismatch
-E:\Xeneva Project\Aurora\Process\Namdapha\namdapha.cpp(266,28): warning C4018: '<': signed/unsigned mismatch
-E:\Xeneva Project\Aurora\Process\Namdapha\namdapha.cpp(271,30): warning C4244: '=': conversion from 'uint32_t' to 'uint16_t', possible loss of data
-E:\Xeneva Project\Aurora\Process\Namdapha\namdapha.cpp(284,32): warning C4018: '<': signed/unsigned mismatch
-E:\Xeneva Project\Aurora\Process\Namdapha\namdapha.cpp(302,31): warning C4018: '<': signed/unsigned mismatch
-E:\Xeneva Project\Aurora\Process\Namdapha\namdapha.cpp(309,25): warning C4389: '==': signed/unsigned mismatch
-E:\Xeneva Project\Aurora\Process\Namdapha\namdapha.cpp(318,36): warning C4018: '<': signed/unsigned mismatch
+E:\Xeneva Project\Aurora\Process\Namdapha\namdapha.cpp(223,28): warning C4018: '<': signed/unsigned mismatch
+E:\Xeneva Project\Aurora\Process\Namdapha\namdapha.cpp(234,29): warning C4018: '<': signed/unsigned mismatch
+E:\Xeneva Project\Aurora\Process\Namdapha\namdapha.cpp(262,28): warning C4018: '<': signed/unsigned mismatch
+E:\Xeneva Project\Aurora\Process\Namdapha\namdapha.cpp(267,30): warning C4244: '=': conversion from 'uint32_t' to 'uint16_t', possible loss of data
+E:\Xeneva Project\Aurora\Process\Namdapha\namdapha.cpp(281,32): warning C4018: '<': signed/unsigned mismatch
+E:\Xeneva Project\Aurora\Process\Namdapha\namdapha.cpp(299,31): warning C4018: '<': signed/unsigned mismatch
+E:\Xeneva Project\Aurora\Process\Namdapha\namdapha.cpp(306,25): warning C4389: '==': signed/unsigned mismatch
+E:\Xeneva Project\Aurora\Process\Namdapha\NamdaphaButton.cpp(108,12): warning C4189: 'color': local variable is initialized but not referenced
+E:\Xeneva Project\Aurora\Process\Namdapha\namdapha.cpp(315,36): warning C4018: '<': signed/unsigned mismatch
+E:\Xeneva Project\Aurora\Process\Namdapha\NamdaphaButton.cpp(124,62): warning C4100: 'win': unreferenced formal parameter
+E:\Xeneva Project\Aurora\Process\Namdapha\NamdaphaButton.cpp(148,44): warning C4267: 'argument': conversion from 'size_t' to 'unsigned int', possible loss of data
+E:\Xeneva Project\Aurora\Process\Namdapha\NamdaphaButton.cpp(170,52): warning C4267: 'argument': conversion from 'size_t' to 'unsigned int', possible loss of data
+E:\Xeneva Project\Aurora\Process\Namdapha\NamdaphaButton.cpp(175,31): warning C4267: '=': conversion from 'size_t' to 'uint32_t', possible loss of data
 E:\Xeneva Project\Aurora\Process\Namdapha\namdapha.cpp(216,15): warning C4189: 'code': local variable is initialized but not referenced
-E:\Xeneva Project\Aurora\Process\Namdapha\namdapha.cpp(299,17): warning C4189: 'handle': local variable is initialized but not referenced
-E:\Xeneva Project\Aurora\Process\Namdapha\namdapha.cpp(447,48): warning C4267: 'argument': conversion from 'size_t' to 'unsigned int', possible loss of data
+E:\Xeneva Project\Aurora\Process\Namdapha\namdapha.cpp(296,17): warning C4189: 'handle': local variable is initialized but not referenced
+E:\Xeneva Project\Aurora\Process\Namdapha\NamdaphaButton.cpp(220,20): warning C4018: '<': signed/unsigned mismatch
+E:\Xeneva Project\Aurora\Process\Namdapha\NamdaphaButton.cpp(224,21): warning C4018: '<': signed/unsigned mismatch
+E:\Xeneva Project\Aurora\Process\Namdapha\NamdaphaButton.cpp(222,12): warning C4189: 'h': local variable is initialized but not referenced
+E:\Xeneva Project\Aurora\Process\Namdapha\namdapha.cpp(446,48): warning C4267: 'argument': conversion from 'size_t' to 'unsigned int', possible loss of data
 C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(1363,5): warning MSB8012: TargetPath(E:\Xeneva Project\Aurora\x64\Debug\Namdapha.exe) does not match the Linker's OutputFile property value (F:\nmdapha.exe). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
 C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(1365,5): warning MSB8012: TargetName(Namdapha) does not match the Linker's OutputFile property value (nmdapha). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
 LINK : warning LNK4075: ignoring '/INCREMENTAL' due to '/LTCG' specification

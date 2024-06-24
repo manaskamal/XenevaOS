@@ -83,8 +83,8 @@ void AuConsoleInitialize(PKERNEL_BOOT_INFO info, bool early) {
 int AuConsoleIoControl(AuVFSNode* node, int code, void* args) {
 	int ret = 0;
 	AuFileIOControl *ioctl = (AuFileIOControl*)args;
-	if (ioctl->syscall_magic != AURORA_SYSCALL_MAGIC)
-		return 0;
+	/*if (ioctl->syscall_magic != AURORA_SYSCALL_MAGIC)
+		return 0;*/
 
 	if (!aucon)
 		return 0;
@@ -144,7 +144,8 @@ void AuConsolePostInitialise(PKERNEL_BOOT_INFO info) {
 	memset(aucon, 0, sizeof(AuConsole));
 
 	for (int i = 0; i < info->fb_size / PAGE_SIZE; i++)
-		AuMapPage((uint64_t)info->graphics_framebuffer + i * PAGE_SIZE, 0xFFFFD00000200000 + i * 4096, X86_64_PAGING_USER);
+		AuMapPage((uint64_t)info->graphics_framebuffer + static_cast<uint64_t>(i) * PAGE_SIZE, 
+			0xFFFFD00000200000 + static_cast<uint64_t>(i) * 4096, X86_64_PAGING_USER);
 	early_ = false;
 	aucon->buffer = (uint32_t*)0xFFFFD00000200000;
 	aucon->width = info->X_Resolution;

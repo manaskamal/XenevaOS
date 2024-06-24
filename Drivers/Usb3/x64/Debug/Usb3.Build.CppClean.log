@@ -1,11 +1,11 @@
-e:\xeneva project\aurora\drivers\usb3\x64\debug\vc120.pdb
-e:\xeneva project\aurora\drivers\usb3\x64\debug\vc120.idb
-e:\xeneva project\aurora\drivers\usb3\x64\debug\hid.obj
-e:\xeneva project\aurora\drivers\usb3\x64\debug\hub.obj
-e:\xeneva project\aurora\drivers\usb3\x64\debug\main.obj
-e:\xeneva project\aurora\drivers\usb3\x64\debug\usb3.obj
-e:\xeneva project\aurora\drivers\usb3\x64\debug\usbstd.obj
+e:\xeneva project\aurora\drivers\usb3\x64\debug\vc142.pdb
+e:\xeneva project\aurora\drivers\usb3\x64\debug\vc142.idb
 e:\xeneva project\aurora\drivers\usb3\x64\debug\xhci_cmd.obj
+e:\xeneva project\aurora\drivers\usb3\x64\debug\usbstd.obj
+e:\xeneva project\aurora\drivers\usb3\x64\debug\usb3.obj
+e:\xeneva project\aurora\drivers\usb3\x64\debug\main.obj
+e:\xeneva project\aurora\drivers\usb3\x64\debug\hub.obj
+e:\xeneva project\aurora\drivers\usb3\x64\debug\hid.obj
 f:\usb.dll
 f:\usb.map
 e:\xeneva project\aurora\x64\debug\usb3.lib

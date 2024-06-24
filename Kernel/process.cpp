@@ -284,10 +284,9 @@ AuProcess* AuCreateRootProc() {
 AuProcess* AuCreateProcessSlot(AuProcess* parent, char* name) {
 	AuProcess* proc = (AuProcess*)kmalloc(sizeof(AuProcess));
 	memset(proc, 0, sizeof(AuProcess));
+	strcpy(proc->name, name);
 
 	proc->proc_id = AuAllocateProcessID();
-	memset(proc->name, 0, 16);
-	strcpy(proc->name, name);
 
 	/* create empty virtual address space */
 	uint64_t* cr3 = AuCreateVirtualAddressSpace();
@@ -328,10 +327,9 @@ void AuStartRootProc() {
 	process_mutex = AuCreateMutex();
 	root_proc = AuCreateRootProc();
 	int num_args = 1;
-	char* about_str = "-about";
-	char* about = (char*)kmalloc(strlen(about_str));
-	strcpy(about, about_str);
-	char** argvs = (char**)kmalloc(num_args);
+	char* about = (char*)kmalloc(strlen("-about"));
+	strcpy(about, "-about");
+	char** argvs = (char**)kmalloc(num_args*sizeof(char*));
 	memset(argvs, 0, num_args);
 	argvs[0] = about;
 	AuLoadExecToProcess(root_proc, "/init.exe",num_args,argvs);
@@ -405,7 +403,7 @@ void AuProcessWaitForTermination(AuProcess *proc, int pid) {
  * @param proc -- pointer to process slot
  */
 int AuProcessGetFileDesc(AuProcess* proc) {
-	for (int i = 3; i < FILE_DESC_PER_PROCESS; i++) {
+	for (int i = 0; i < FILE_DESC_PER_PROCESS; i++) {
 		if (!proc->fds[i])
 			return i;
 	}

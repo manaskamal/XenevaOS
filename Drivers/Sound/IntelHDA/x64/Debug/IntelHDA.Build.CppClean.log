@@ -1,10 +1,10 @@
-e:\xeneva project\aurora\drivers\sound\intelhda\x64\debug\vc120.pdb
-e:\xeneva project\aurora\drivers\sound\intelhda\x64\debug\vc120.idb
-e:\xeneva project\aurora\drivers\sound\intelhda\x64\debug\codec.obj
-e:\xeneva project\aurora\drivers\sound\intelhda\x64\debug\ihda.obj
-e:\xeneva project\aurora\drivers\sound\intelhda\x64\debug\sigmatel.obj
-e:\xeneva project\aurora\drivers\sound\intelhda\x64\debug\stream.obj
+e:\xeneva project\aurora\drivers\sound\intelhda\x64\debug\vc142.pdb
+e:\xeneva project\aurora\drivers\sound\intelhda\x64\debug\vc142.idb
 e:\xeneva project\aurora\drivers\sound\intelhda\x64\debug\widget.obj
+e:\xeneva project\aurora\drivers\sound\intelhda\x64\debug\stream.obj
+e:\xeneva project\aurora\drivers\sound\intelhda\x64\debug\sigmatel.obj
+e:\xeneva project\aurora\drivers\sound\intelhda\x64\debug\ihda.obj
+e:\xeneva project\aurora\drivers\sound\intelhda\x64\debug\codec.obj
 e:\xeneva project\aurora\x64\debug\intelhda.lib
 e:\xeneva project\aurora\x64\debug\intelhda.exp
 f:\hda.dll

@@ -132,7 +132,7 @@ void TerminalDrawAllCells() {
 		}
 	}
 	ChWindowUpdate(win, 0, 26, win->info->width-1, win->info->height - 26, 0, 1);
-	_KeProcessSleep(100);
+	_KeProcessSleep(160);
 }
 
 
@@ -533,7 +533,7 @@ void TerminalThread() {
 			_update_terminal_ = false;
 		}
 
-		_KeProcessSleep(80); //
+		_KeProcessSleep(100); //
 	}
 }
 
@@ -582,7 +582,7 @@ int main(int argc, char* arv[]){
 	_KeFileIoControl(master_fd, TIOCSWINSZ, &sz);
 
 	term_buffer = (TermCell*)malloc(ws_col * ws_row * sizeof(TermCell));
-	memset(term_buffer, 0x0, ws_col * ws_row * sizeof(TermCell));
+	memset(term_buffer, 0x0, static_cast<uint64_t>(ws_col) * ws_row * sizeof(TermCell));
 
 	
 	ChWindowPaint(win);

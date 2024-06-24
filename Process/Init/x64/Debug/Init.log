@@ -1,24 +1,10 @@
-﻿Build started 07-11-2023 আবেলি 8:33:48.
-     1>Project "E:\Xeneva Project\Aurora\Process\Init\Init.vcxproj" on node 2 (Rebuild target(s)).
-     1>_NASM:
-         crt0.asm
-         cmd.exe /C "C:\Users\HP\AppData\Local\Temp\tmpf2eb8aa0bb7f43298d7acba3d2ff750b.cmd"
-         "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\crt0.obj"  "E:\Xeneva Project\Aurora\Process\Init\crt0.asm"
-       ClCompile:
-         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I"E:\Xeneva Project\Aurora\Libs\XEClib\includes" /Zi /nologo /W3 /WX- /sdl- /Od /D ARCH_X64 /D _MBCS /X /Gm /GS- /arch:SSE2 /fp:precise /Zc:wchar_t /Zc:forScope /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt _init.cpp
-     1>cl : Command line warning D9025: overriding '/sdl-' with '/GS-'
-     1>cl : Command line warning D9002: ignoring unknown option '/arch:SSE2'
-         _init.cpp
-     1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(1186,5): warning MSB8012: TargetPath(E:\Xeneva Project\Aurora\x64\Debug\Init.exe) does not match the Linker's OutputFile property value (F:\init.exe). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
-       Link:
-         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\link.exe /ERRORREPORT:PROMPT /OUT:"F:\init.exe" /INCREMENTAL /NOLOGO /LIBPATH:"E:\Xeneva Project\Aurora\XELoader" XEClib.lib /NODEFAULTLIB /MANIFEST:NO /PDB:"E:\Xeneva Project\Aurora\x64\Debug\Init.pdb" /MAP /MAPINFO:EXPORTS /SUBSYSTEM:NATIVE /LARGEADDRESSAWARE /Driver /OPT:NOREF /LTCG /TLBID:1 /ENTRY:"_aumain" /BASE:"0x0000000000600000" /FIXED:NO /IMPLIB:"E:\Xeneva Project\Aurora\x64\Debug\Init.lib" /MACHINE:X64 /FILEALIGN:4096 x64\Debug\_init.obj
-         x64\Debug\crt0.obj
-     1>LINK : warning LNK4075: ignoring '/INCREMENTAL' due to '/LTCG' specification
-            Creating library E:\Xeneva Project\Aurora\x64\Debug\Init.lib and object E:\Xeneva Project\Aurora\x64\Debug\Init.exp
-         LINK : /LTCG specified but no code generation required; remove /LTCG from the link command line to improve linker performance
-         Init.vcxproj -> E:\Xeneva Project\Aurora\x64\Debug\Init.exe
-     1>Done Building Project "E:\Xeneva Project\Aurora\Process\Init\Init.vcxproj" (Rebuild target(s)).
-
-Build succeeded.
-
-Time Elapsed 00:00:00.75
+﻿  crt0.asm
+cl : command line warning D9002: ignoring unknown option '/arch:SSE2'
+  _init.cpp
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(1363,5): warning MSB8012: TargetPath(E:\Xeneva Project\Aurora\x64\Debug\Init.exe) does not match the Linker's OutputFile property value (F:\init.exe). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
+LINK : warning LNK4075: ignoring '/INCREMENTAL' due to '/LTCG' specification
+_init.obj : warning LNK4075: ignoring '/EDITANDCONTINUE' due to '/DRIVER' specification
+     Creating library E:\Xeneva Project\Aurora\x64\Debug\Init.lib and object E:\Xeneva Project\Aurora\x64\Debug\Init.exp
+  LINK : /LTCG specified but no code generation required; remove /LTCG from the link command line to improve linker performance
+LINK : warning LNK4281: undesirable base address 0x600000 for x64 image; set base address above 4GB for best ASLR optimization
+  Init.vcxproj -> E:\Xeneva Project\Aurora\x64\Debug\Init.exe

@@ -37,8 +37,8 @@
 #include <Net\socket.h>
 
 /* maximum supported system calls */
-#define AURORA_MAX_SYSCALL  54
-#define AURORA_SYSCALL_MAGIC  0x05212004  /* actual number to remember */
+#define AURORA_MAX_SYSCALL  55
+#define AURORA_SYSCALL_MAGIC  0x15062023 
 
 /* ==========================================
  *  Threading

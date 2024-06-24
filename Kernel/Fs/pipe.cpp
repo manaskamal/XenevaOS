@@ -33,6 +33,9 @@
 #include <_null.h>
 #include <string.h>
 #include <Hal\serial.h>
+#include <Hal/x86_64_hal.h>
+
+AuVFSNode* pipeFS;
 
 size_t AuPipeUnread(AuPipe* pipe) {
 	if (pipe->read_ptr == pipe->write_ptr)
@@ -86,10 +89,9 @@ void AuPipeIncrementWriteAmount(AuPipe* pipe, size_t amount) {
 size_t AuPipeRead(AuVFSNode *fs, AuVFSNode *file, uint64_t* buffer, uint32_t length) {
 	uint8_t* aligned_buff = (uint8_t*)buffer;
 	AuPipe *pipe = (AuPipe*)fs->device;
-
 	size_t collected = 0;
 	while (collected == 0) {
-		if (AuPipeUnread(pipe) >= length) {
+		if (AuPipeUnread(pipe) > 0) {
 			while (AuPipeUnread(pipe) > 0 && collected < length) {
 				aligned_buff[collected] = pipe->buffer[pipe->read_ptr];
 				AuPipeIncrementRead(pipe);
@@ -114,7 +116,6 @@ size_t AuPipeRead(AuVFSNode *fs, AuVFSNode *file, uint64_t* buffer, uint32_t len
 size_t AuPipeWrite(AuVFSNode *fs, AuVFSNode *file, uint64_t* buffer, uint32_t length) {
 	uint8_t* aligned_buff = (uint8_t*)buffer;
 	AuPipe* pipe = (AuPipe*)fs->device;
-
 	size_t written = 0;
 	while (written < length) {
 		if (AuPipeGetAvailableBytes(pipe) > length) {
@@ -125,7 +126,6 @@ size_t AuPipeWrite(AuVFSNode *fs, AuVFSNode *file, uint64_t* buffer, uint32_t le
 			}
 		}
 	}
-	
 	return written;
 }
 
@@ -154,11 +154,73 @@ int AuPipeClose(AuVFSNode* fs, AuVFSNode* file) {
 }
 
 /*
+* AuPipeFSAddFile -- adds a file/directory
+* @param fs -- pointer to device file system
+* @param path -- path of the file
+* @param file -- file to add to dev fs
+*/
+int AuPipeFSAddFile(AuVFSNode* fs, char* path, AuVFSNode* file) {
+	AuVFSContainer* entries = (AuVFSContainer*)fs->device;
+	if (!entries)
+		return -1;
+
+	char* next = strchr(path, '/');
+	if (next)
+		next++;
+
+	AuVFSContainer* first_list = entries;
+	char pathname[16];
+	while (next) {
+		int i;
+		for (i = 0; i < 16; i++) {
+			if (next[i] == '/' || next[i] == '\0')
+				break;
+			pathname[i] = next[i];
+		}
+		pathname[i] = 0;
+
+		for (int j = 0; j < first_list->childs->pointer; j++) {
+			AuVFSNode* node_ = (AuVFSNode*)list_get_at(first_list->childs, j);
+			if (strcmp(node_->filename, pathname) == 0) {
+				if (node_->flags & FS_FLAG_DIRECTORY)
+					first_list = (AuVFSContainer*)node_->device;
+			}
+		}
+
+		next = strchr(next + 1, '/');
+		if (next)
+			next++;
+	}
+
+	list_add(first_list->childs, file);
+
+	return 1;
+}
+
+/*
  * AuCreatePipe -- creates a new pipe
  * @param name -- name of the pipe
  * @param sz -- Size of the pipe
  */
-AuVFSNode* AuCreatePipe(char* name, size_t sz) {
+int AuCreatePipe(char* name, size_t sz) {
+	x64_cli();
+
+	AuThread* currentThr = AuGetCurrentThread();
+	if (!currentThr)
+		return -1;
+	AuProcess* proc = AuProcessFindThread(currentThr);
+	if (!proc) {
+		proc = AuProcessFindSubThread(currentThr);
+		if (!proc)
+			return -1;
+	}
+
+	if (sz == 0)
+		return -1;
+
+	int fd = AuProcessGetFileDesc(proc);
+
+
 	AuVFSNode* node = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
 	AuPipe *pipe = (AuPipe*)kmalloc(sizeof(AuPipe));
 	memset(node, 0, sizeof(AuVFSNode));
@@ -170,15 +232,85 @@ AuVFSNode* AuCreatePipe(char* name, size_t sz) {
 	pipe->size = sz;
 
 	strcpy(node->filename, name);
-	node->flags = FS_FLAG_DEVICE | FS_FLAG_PIPE;
+	node->flags = FS_FLAG_PIPE;
 	node->size = sz;
-	node->device = pipe;
+	node->device = pipe; // pipe;
 	node->read = AuPipeRead;
 	node->write = AuPipeWrite;
 	node->open = AuPipeOpen;
 	node->close = AuPipeClose;
 	node->iocontrol = NULL;
-	
-	return node;
+
+	proc->fds[fd] = node;
+
+	SeTextOut("Pipe proc -> %s \r\n", proc->name);
+	AuPipeFSAddFile(pipeFS, "/", node);
+	SeTextOut("Pipe Created -> %d %s\r\n", fd, proc->fds[fd]->filename);
+	//AuForceScheduler();
+	return fd;
+}
+
+/*
+* AuPipeFSOpen -- open a pipe file and return to the
+* caller
+* @param fs -- file system node
+* @param path -- path of the pipe file
+*/
+AuVFSNode* AuPipeFSOpen(AuVFSNode* fs, char* path) {
+	AuVFSContainer* entries = (AuVFSContainer*)fs->device;
+	/* now verify the path and add the directory to the list */
+	char* next = strchr(path, '/');
+	if (next)
+		next++;
+
+	AuVFSContainer* first_list = entries;
+	AuVFSNode* node_to_ret = NULL;
+	while (next) {
+		char pathname[16];
+		int i;
+		for (i = 0; i < 16; i++) {
+			if (next[i] == '/' || next[i] == '\0')
+				break;
+			pathname[i] = next[i];
+		}
+		pathname[i] = 0;
+
+		for (int j = 0; j < first_list->childs->pointer; j++) {
+			AuVFSNode* node_ = (AuVFSNode*)list_get_at(first_list->childs, j);
+			if (strcmp(node_->filename, pathname) == 0) {
+				if (node_->flags & FS_FLAG_DIRECTORY)
+					first_list = (AuVFSContainer*)node_->device;
+				else if (node_->flags & FS_FLAG_PIPE)
+					node_to_ret = node_;
+			}
+		}
+
+		next = strchr(next + 1, '/');
+		if (next)
+			next++;
+	}
+
+	if (node_to_ret)
+		return node_to_ret;
+	else
+		return NULL;
+}
+
+/*
+ * AuPipeFSInitialise -- initialise the pipe filesystem
+ */
+void AuPipeFSInitialise() {
+	AuVFSContainer* entries = (AuVFSContainer*)kmalloc(sizeof(AuVFSContainer));
+	entries->childs = initialize_list();
+
+	AuVFSNode* node = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
+	memset(node, 0, sizeof(AuVFSNode));
+	strcpy(node->filename, "pipe");
+	node->device = entries;
+	node->flags |= FS_FLAG_FILE_SYSTEM;
+	node->open = AuPipeFSOpen;
+	AuVFSAddFileSystem(node);
+
+	pipeFS = node;
 }
 

@@ -54,6 +54,8 @@ extern "C" void main(int argc, char* argv[]) {
 
 	int child = _KeCreateProcess(0, "deodhai");
 	_KeProcessLoadExec(child, "/deodhai.exe", 0, NULL);
+
+
 	while (1) {
 		if (pid == 1) {
 			_KeProcessWaitForTermination(-1);

@@ -245,7 +245,7 @@ $LN5@AuDevMouse:
 ; 178  : 	if (ioctl->syscall_magic != AURORA_SYSCALL_MAGIC)
 
 	mov	rax, QWORD PTR ioctl$[rbp]
-	cmp	DWORD PTR [rax], 86056964		; 05212004H
+	cmp	DWORD PTR [rax], 352722979		; 15062023H
 	je	SHORT $LN6@AuDevMouse
 
 ; 179  : 		return 0;

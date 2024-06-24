@@ -53,7 +53,7 @@
 #define XE_LIB XE_EXPORT
 
 
-#define AURORA_SYSCALL_MAGIC  0x05212004
+#define AURORA_SYSCALL_MAGIC  0x15062023
 
 #ifdef __cplusplus
 XE_EXTERN{
