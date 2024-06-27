@@ -314,6 +314,11 @@ int CloseFile(int fd) {
 		kfree(file);
 	}
 
+	if (file->flags & FS_FLAG_PIPE) {
+		if (file->close)
+			file->close(file, file);
+	}
+
 	current_proc->fds[fd] = 0;
 	return 0;
 }

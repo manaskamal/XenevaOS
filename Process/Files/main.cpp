@@ -425,6 +425,7 @@ int main(int argc, char* argv[]){
 	_KeCloseFile(dirfd);
 
 	ChWindowPaint(mainWin);
+
 	ChWindowBroadcastIcon(app, "/icons/file.bmp");
 
 	PostEvent e;

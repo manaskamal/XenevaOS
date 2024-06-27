@@ -2,7 +2,7 @@
 <Project>
   <ProjectOutputs>
     <ProjectOutput>
-      <FullPath>E:\Xeneva Project\Aurora\x64\Debug\NETMngr.exe</FullPath>
+      <FullPath>E:\Xeneva Project\Aurora\x64\Debug\netmngr.exe</FullPath>
     </ProjectOutput>
   </ProjectOutputs>
   <ContentFiles />

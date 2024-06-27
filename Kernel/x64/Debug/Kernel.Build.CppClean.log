@@ -162,8 +162,8 @@ e:\xeneva project\aurora\kernel\x64\debug\threadsafe.obj
 e:\xeneva project\aurora\kernel\x64\debug\threadsafe.asm
 e:\xeneva project\aurora\x64\debug\kernel.lib
 e:\xeneva project\aurora\x64\debug\kernel.exp
-f:\efi\xeneva\xnkrnl.exe
-f:\efi\xeneva\xnkrnl.map
+e:\xeneva project\aurora\build\efi\xeneva\xnkrnl.exe
+e:\xeneva project\aurora\build\efi\xeneva\xnkrnl.map
 e:\xeneva project\aurora\kernel\x64\debug\kernel.write.1.tlog
 e:\xeneva project\aurora\kernel\x64\debug\kernel.tlog\cl.command.1.tlog
 e:\xeneva project\aurora\kernel\x64\debug\kernel.tlog\cl.read.1.tlog

@@ -6,8 +6,8 @@ e:\xeneva project\aurora\xeloader\x64\debug\vc142.idb
 e:\xeneva project\aurora\xeloader\x64\debug\xeldrobject.obj
 e:\xeneva project\aurora\xeloader\x64\debug\pe_.obj
 e:\xeneva project\aurora\xeloader\x64\debug\main.obj
-f:\xeldr.exe
-f:\xeldr.map
+e:\xeneva project\aurora\build\xeldr.exe
+e:\xeneva project\aurora\build\xeldr.map
 e:\xeneva project\aurora\x64\debug\xeloader.lib
 e:\xeneva project\aurora\x64\debug\xeloader.exp
 e:\xeneva project\aurora\xeloader\x64\debug\xeloader.write.1.tlog

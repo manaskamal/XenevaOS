@@ -21,6 +21,7 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{13366E8F-2DBF-4E21-A7A7-52D8B788F4BC}</ProjectGuid>
     <RootNamespace>Chitralekha</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -69,6 +70,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <TargetExt>.dll</TargetExt>
     <GenerateManifest>false</GenerateManifest>
+    <TargetName>chlkha</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -85,7 +87,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>false</SDLCheck>
-      <AdditionalIncludeDirectories>E:\Xeneva Project\Aurora\Libs\XEClib\includes;E:\os_dev\freetype2-master\freetype2-master\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\Libs\XEClib\includes;..\..\Ports\freetype2\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>ARCH_X64;YES_DYNAMIC; DYNAMIC_EXPORTER; _USE_FREETYPE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <IgnoreStandardIncludePath>true</IgnoreStandardIncludePath>
       <ExceptionHandling>false</ExceptionHandling>
@@ -98,8 +100,8 @@
     <Link>
       <GenerateDebugInformation>
       </GenerateDebugInformation>
-      <OutputFile>F:\chlkha.dll</OutputFile>
-      <AdditionalLibraryDirectories>E:\Xeneva Project\Aurora\x64\Debug;E:\os_dev\freetype2-master\freetype2-master\objs;E:\Xeneva Project\Aurora\Libs\XECrt</AdditionalLibraryDirectories>
+      <OutputFile>..\..\Build\chlkha.dll</OutputFile>
+      <AdditionalLibraryDirectories>..\..\x64\Debug;..\..\Libs\XECrt</AdditionalLibraryDirectories>
       <AdditionalDependencies>XEClib.lib; ftype.lib;xecrt.lib;</AdditionalDependencies>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
       <EnableUAC>false</EnableUAC>
@@ -117,6 +119,9 @@
       <DataExecutionPrevention>true</DataExecutionPrevention>
       <AdditionalOptions>/ALIGN:512 %(AdditionalOptions)</AdditionalOptions>
     </Link>
+    <PostBuildEvent>
+      <Command>copy "..\..\Build\$(TargetName).dll" "%XENEVA_BUILDS%\$(TargetName).dll"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -147,6 +152,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="audio\audio.h" />
     <ClInclude Include="bmp.h" />
     <ClInclude Include="boxblur.h" />
     <ClInclude Include="chitralekha.h" />
@@ -172,6 +178,7 @@
     <ClInclude Include="_fastcpy.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="audio\audio.cpp" />
     <ClCompile Include="boxblur.cpp" />
     <ClCompile Include="chitralekha.cpp" />
     <ClCompile Include="color.cpp" />

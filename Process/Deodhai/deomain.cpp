@@ -402,6 +402,15 @@ void DeodhaiWindowMove(Window* win, int x, int y) {
 		wh = canvas->screenHeight - info->y + SHADOW_SIZE;
 	BackDirtyAdd(wx, wy, ww, wh );
 _skip:
+	if (x < 0)
+		x = 0;
+	if (y < 0)
+		y = 0;
+	if (x >= canvas->screenWidth)
+		x = canvas->screenWidth - ww;
+	if (y >= canvas->screenHeight)
+		y = canvas->screenHeight - wh;
+
 	info->x = x;
 	info->y = y;
 	_window_update_all_ = true;
@@ -1004,9 +1013,9 @@ void ComposeFrame(ChCanvas *canvas) {
 
 					if (clipCount == 0 && !overlap) {
 						for (int i = 0; i < r_h; i++) {
-							void* canv_buff = (canvas->buffer + (static_cast<int64_t>(info->y) + r_y + i) * 
+							void* canv_buff = (canvas->buffer + (static_cast<uint64_t>(info->y) + r_y + i) * 
 								canvas->canvasWidth + info->x + r_x);
-							void* backbuff = (win->backBuffer + (static_cast<int64_t>(r_y) + i) * info->width + r_x);
+							void* backbuff = (win->backBuffer + (static_cast<uint64_t>(r_y) + i) * info->width + r_x);
 							_fastcpy(canv_buff,
 								backbuff, static_cast<int64_t>(r_w)*4);
 						}
@@ -1142,6 +1151,8 @@ void ComposeFrame(ChCanvas *canvas) {
 						void* winbuff = (win->backBuffer + (0 + static_cast<uint64_t>(i)) * info->width + 0);
 						_fastcpy(canvas_buff,winbuff, static_cast<uint64_t>(width) * 4);
 					}
+
+					AddDirtyClip(winx, winy, width, height);
 				}
 
 
@@ -1536,8 +1547,8 @@ int main(int argc, char* arv[]) {
 		
 		
 		if (mice_input.type == AU_INPUT_MOUSE) {
-			uint32_t cursor_x = mice_input.xpos;
-			uint32_t cursor_y = mice_input.ypos;
+			int32_t cursor_x = mice_input.xpos;
+			int32_t cursor_y = mice_input.ypos;
 			double scale_x, scale_y;
 			if (mice_input.code4 != 0){
 				/*scaling is needed*/
@@ -1562,6 +1573,11 @@ int main(int argc, char* arv[]) {
 			if ((currentCursor->ypos + 24) >= canvas->screenHeight)
 				currentCursor->ypos = canvas->screenHeight - 24;
 
+			if (currentCursor->xpos >= canvas->screenWidth)
+				currentCursor->xpos = 0;
+
+			if (currentCursor->ypos >= canvas->screenHeight)
+				currentCursor->ypos = 0;
 
 			DeodhaiWindowCheckDraggable(currentCursor->xpos, currentCursor->ypos, button);
 
@@ -1828,7 +1844,6 @@ int main(int argc, char* arv[]) {
 			}
 			memset(&event, 0, sizeof(PostEvent));
 		}
-
 		_KeProcessSleep((16 - frameTime));
 	}
 }

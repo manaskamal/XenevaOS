@@ -119,14 +119,21 @@ void ChButtonDefaultPainter(ChWidget* widget, ChWindow* win) {
 		color2 = BUTTON_CLICKED_DARK;
 	}
 
-	ChColorDrawVerticalGradient(win->canv,widget->x, widget->y, 
-		widget->w, widget->h, color1, color2);
+	ChDrawRect(win->canv, widget->x, widget->y,
+		widget->w, widget->h, color1);
+	/*ChColorDrawVerticalGradient(win->canv,widget->x, widget->y, 
+		widget->w, widget->h, color1, color2);*/
 	ChFontSetSize(win->app->baseFont,11);
 	int font_w = ChFontGetWidth(win->app->baseFont, button->title);
 	int font_h = win->app->baseFont->fontHeight;//ChFontGetHeight(win->app->baseFont, button->title);
 	ChFontDrawText(win->canv, win->app->baseFont, button->title,widget->x + widget->w/2 - font_w/2,
 		widget->y + widget->h/2 + 4 , 11, WHITE);
-
+	ChDrawRectUnfilled(win->canv, widget->x, widget->y,
+		widget->w, widget->h, GRAY);
+	ChDrawRectUnfilled(win->canv, widget->x+1, widget->y+1,
+		widget->w-2, widget->h-2, 0xFF9A9A9A);
+	ChDrawRectUnfilled(win->canv, widget->x + 2, widget->y + 2,
+		widget->w - 4, widget->h - 4, 0xFF9A9A9A);
 }
 /*
  * ChCreateButton -- Create a button widget

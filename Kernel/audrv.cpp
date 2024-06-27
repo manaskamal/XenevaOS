@@ -36,6 +36,7 @@
 #include <Mm\kmalloc.h>
 #include <pcie.h>
 #include <Hal\serial.h>
+#include <aucon.h>
 
 
 #define AU_DRIVER_BASE_START  0xFFFFC00000400000
@@ -262,6 +263,10 @@ void AuDrvMngrInitialize(KERNEL_BOOT_INFO *info) {
 	memset(conf, 0, 4096);
 	AuVFSNode* fsys = AuVFSFind("/");
 	AuVFSNode* file = AuVFSOpen("/audrv.cnf");
+	if (!file) {
+		AuTextOut("[Aurora]: Driver Manager failed to open audrv.cnf, file not found \n");
+		for (;;);
+	}
 	int filesize = file->size / 1024;
 
 	if (filesize < 4096)

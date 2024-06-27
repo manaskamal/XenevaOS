@@ -242,7 +242,7 @@ void TerminalPrintChar(char c, uint32_t fgcolor, uint32_t bgcolor) {
 void TerminalPrintString(char* string, uint32_t fgcolor, uint32_t bgcolor) {
 	while (*string) {
 		TerminalPrintChar(*string, fgcolor, bgcolor);
-		*string++;
+		string++;
 	}
 }
 
@@ -586,7 +586,7 @@ int main(int argc, char* arv[]){
 
 	
 	ChWindowPaint(win);
-	_KeProcessSleep(100);
+	_KeProcessSleep(10);
 
 	int term_id = _KeGetProcessID();
 	/* try loading the shell process */

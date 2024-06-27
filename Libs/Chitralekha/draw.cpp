@@ -30,6 +30,7 @@
 #include "draw.h"
 #include <stdlib.h>
 #include <math.h>
+#include "_fastcpy.h"
 #include <string.h>
 
 #define sign(x) ((x < 0) ? -1 : ((x > 0) ? 1 : 0))

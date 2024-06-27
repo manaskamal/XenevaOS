@@ -71,7 +71,7 @@ uint16_t shSampleBufferKey;
 
 /* Standard Deodhai Request message defined*/
 #define DEODHAI_GET_AUDIO_CONNECTION "DeodhaiGetAudioConnection"
-#define DEODHAI_CLOSE_AUDIO_CONNECTION "DeodhaiCloseAudioConnection"
+#define DEODHAI_GET_GLOBAL_CONNECTION "DeodhaiAudioGetGlobalConnection"
 
 #define DEODHAI_AUDIO_CONNECTION_HANDSHAKE 11
 #define DEODHAI_AUDIO_CONNECTION_CLOSED 12
@@ -98,6 +98,7 @@ typedef struct _audio_control_panel_ {
 	float rightSpeakerScale;
 	bool Samplefull;
 	bool ready;
+	bool close;
 }AudioControlPanel;
 #pragma pack(pop)
 
@@ -163,6 +164,14 @@ DeodhaiAudioBox* DeodhaiCreateAudioBox(uint16_t ownerThreadID) {
 	list_add(audioBoxList, audioBox);
 	return audioBox;
 }
+
+/*
+ * DeodhaiAudioBoxClose -- close audio box
+ */
+void DeodhaiAudioBoxClose(DeodhaiAudioBox* box) {
+	_KeUnmapSharedMem(box->shControlPanelKey);
+	_KeUnmapSharedMem(box->shSampleBuffKey);
+}
 /* 
  * DeodhaiAudioHandleMessage -- handle incoming message requests
  * @param message -- Pointer to incoming message
@@ -180,8 +189,8 @@ void DeodhaiAudioHandleMessage(DeodhaiAudioMessage* message) {
 		_KeFileIoControl(postbox, POSTBOX_PUT_EVENT, &e);
 	}
 
-	if (strcmp(message->message, DEODHAI_CLOSE_AUDIO_CONNECTION) == 0) {
-		printf("DeodhaiAudio: CloseConnection request received from -> %d \n", message->fromProcessId);
+	if (strcmp(message->message, DEODHAI_GET_GLOBAL_CONNECTION) == 0) {
+		printf("DeodhaiAudio: Global Connection request received from -> %d \n", message->fromProcessId);
 	}
 }
 
@@ -236,16 +245,16 @@ void DeodhaiAudioComposeFrame() {
 			}
 		}
 		box->ctlPanel->Samplefull = false;
+
+		/* close an opened deodhai box */
+		if (box->ctlPanel->close) {
+			list_remove(audioBoxList, i);
+			DeodhaiAudioBoxClose(box);
+			free(box);
+			printf("DeodhaiAudio: an audio box closed \n");
+		}
 	}
 	_KeWriteFile(sound, mainOutput, 4096);
-}
-
-void FrameThread() {
-	printf("DeodhaiAudio frame thread spawned \n");
-	while (1) {
-		DeodhaiAudioComposeFrame();
-		_KeProcessSleep(500);
-	}
 }
 /*
 * main -- main entry

@@ -102,7 +102,7 @@ void AuProcessEntUser(uint64_t rcx) {
 		void* address = (void*)ent->argvs;
 		kfree(address);
 	}
-	
+	ent->argvs = 0;
 	PUSH(ent->rsp, size_t, (size_t)ent->argvaddr);
 	PUSH(ent->rsp, size_t, ent->num_args);
 	x64_enter_user(ent->rsp, ent->entrypoint, ent->cs, ent->ss);

@@ -273,7 +273,7 @@ void AuInitialiseACPISubsys(KERNEL_BOOT_INFO *info) {
 		size_t load_addr = imageBase + secthdr[i].VirtualAddress;
 		size_t sectSize = secthdr[i].SizeOfRawData;
 		for (int j = 0; j < sectSize / 4096 + 4; j++)
-			AuMapPage((uint64_t)AuPmmngrAlloc(), load_addr + j * 4096, NULL);
+			AuMapPage((uint64_t)AuPmmngrAlloc(), load_addr + static_cast<uint64_t>(j) * 4096, NULL);
 
 		memcpy((void*)load_addr, raw_offset<void*>(info->driver_entry1, secthdr[i].PointerToRawData), secthdr[i].SizeOfRawData);
 	}
@@ -281,12 +281,12 @@ void AuInitialiseACPISubsys(KERNEL_BOOT_INFO *info) {
 	AuKernelLinkImports((void*)imageBase);
 	AuKernelLinkDLL((void*)imageBase);
 	
-	ACPI_STATUS status = AcpiInitializeSubsystem();
-	if (ACPI_FAILURE(status))
-		AuTextOut("Failed to initialise acpi subsystem \n");
-	status = AcpiLoadTables();
-	if (ACPI_FAILURE(status))
-		AuTextOut("Failed to load acpi tables \n");
+	//ACPI_STATUS status = AcpiInitializeSubsystem();
+	//if (ACPI_FAILURE(status))
+	//	AuTextOut("Failed to initialise acpi subsystem \n");
+	//status = AcpiLoadTables();
+	//if (ACPI_FAILURE(status))
+	//	AuTextOut("Failed to load acpi tables \n");
 }
 
 /*

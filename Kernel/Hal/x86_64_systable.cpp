@@ -47,16 +47,16 @@
 
 
 /* Syscall function format */
-typedef uint64_t(*syscall_func) (uint64_t param1, uint64_t param2, uint64_t param3, uint64_t
-	param4, uint64_t param5, uint64_t param6);
+typedef int64_t(*syscall_func) (int64_t param1, int64_t param2, int64_t param3, int64_t
+	param4, int64_t param5, int64_t param6);
 
 
 /*
  * KePringMsg -- this system call uses kernel console output
  * to pring msg directly from process
  */
-uint64_t KePrintMsg(uint64_t param1, uint64_t param2, uint64_t param3, uint64_t
-	param4, uint64_t param5, uint64_t param6) {
+uint64_t KePrintMsg(int64_t param1, int64_t param2, int64_t param3, int64_t
+	param4, int64_t param5, int64_t param6) {
 	char* text = (char*)param1;
 	AuTextOut("%s\n",text);
 	return 0;
@@ -65,8 +65,8 @@ uint64_t KePrintMsg(uint64_t param1, uint64_t param2, uint64_t param3, uint64_t
 /*
  * null_call -- 0th call is null call
  */
-uint64_t null_call(uint64_t param1, uint64_t param2, uint64_t param3, uint64_t
-	param4, uint64_t param5, uint64_t param6) {
+uint64_t null_call(int64_t param1, int64_t param2, int64_t param3, int64_t
+	param4, int64_t param5, int64_t param6) {
 	return 0;
 }
 
@@ -134,7 +134,7 @@ static void* syscalls[AURORA_MAX_SYSCALL] = {
 //! @param b -- arg2 passed in r13 register
 //! @param c -- arg3 passed in r14 register
 //! @param d -- arg4 passed in r15 register
-extern "C" uint64_t x64_syscall_handler(int a) {
+extern "C" int64_t x64_syscall_handler(int a) {
 	x64_cli();
 	AuThread* current_thr = AuGetCurrentThread();
 	uint64_t ret_code = 0;

@@ -86,7 +86,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>
       </SDLCheck>
-      <AdditionalIncludeDirectories>..\BaseHdr;E:\Xeneva Project\Aurora\Acpica\include;E:\Xeneva Project\Aurora\Acpica;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\BaseHdr;..\Acpica\include;..\Acpica;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <OmitFramePointers>true</OmitFramePointers>
       <PreprocessorDefinitions>ARCH_X64;__AU_KERNEL__;X64;AUXENEVA;_USE_LIBALLOC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -101,9 +101,10 @@
     </ClCompile>
     <Link>
       <GenerateDebugInformation>false</GenerateDebugInformation>
-      <OutputFile>F:\EFI\XENEVA\xnkrnl.exe</OutputFile>
+      <OutputFile>..\Build\EFI\XENEVA\xnkrnl.exe</OutputFile>
       <Version>1.0</Version>
-      <AdditionalDependencies>Acpica.lib;</AdditionalDependencies>
+      <AdditionalDependencies>
+      </AdditionalDependencies>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
       <EnableUAC>false</EnableUAC>
       <GenerateMapFile>true</GenerateMapFile>
@@ -119,9 +120,12 @@
       <RandomizedBaseAddress />
       <FixedBaseAddress>false</FixedBaseAddress>
       <DataExecutionPrevention />
-      <AdditionalLibraryDirectories>E:\Xeneva Project\Aurora\x64\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalOptions>/filealign:0x1000 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalLibraryDirectories>..\x64\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalOptions>/filealign:0x1000  %(AdditionalOptions)</AdditionalOptions>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy "..\Build\EFI\XENEVA\" "%XENEVA_BUILDS%\EFI\XENEVA\" /Y /I</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>

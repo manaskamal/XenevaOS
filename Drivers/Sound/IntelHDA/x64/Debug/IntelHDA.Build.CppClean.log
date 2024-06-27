@@ -7,8 +7,8 @@ e:\xeneva project\aurora\drivers\sound\intelhda\x64\debug\ihda.obj
 e:\xeneva project\aurora\drivers\sound\intelhda\x64\debug\codec.obj
 e:\xeneva project\aurora\x64\debug\intelhda.lib
 e:\xeneva project\aurora\x64\debug\intelhda.exp
-f:\hda.dll
-f:\hda.map
+e:\xeneva project\aurora\build\hda.dll
+e:\xeneva project\aurora\build\hda.map
 e:\xeneva project\aurora\drivers\sound\intelhda\x64\debug\intelhda.tlog\cl.command.1.tlog
 e:\xeneva project\aurora\drivers\sound\intelhda\x64\debug\intelhda.tlog\cl.read.1.tlog
 e:\xeneva project\aurora\drivers\sound\intelhda\x64\debug\intelhda.tlog\cl.write.1.tlog

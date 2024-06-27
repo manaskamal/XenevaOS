@@ -1,10 +1,10 @@
-e:\xeneva project\aurora\drivers\e1000\x64\debug\vc120.pdb
-e:\xeneva project\aurora\drivers\e1000\x64\debug\vc120.idb
+e:\xeneva project\aurora\drivers\e1000\x64\debug\vc142.pdb
+e:\xeneva project\aurora\drivers\e1000\x64\debug\vc142.idb
 e:\xeneva project\aurora\drivers\e1000\x64\debug\e1000.obj
 e:\xeneva project\aurora\x64\debug\e1000.lib
 e:\xeneva project\aurora\x64\debug\e1000.exp
-f:\e1000.dll
-f:\e1000.map
+e:\xeneva project\aurora\build\e1000.dll
+e:\xeneva project\aurora\build\e1000.map
 e:\xeneva project\aurora\drivers\e1000\x64\debug\e1000.tlog\cl.command.1.tlog
 e:\xeneva project\aurora\drivers\e1000\x64\debug\e1000.tlog\cl.read.1.tlog
 e:\xeneva project\aurora\drivers\e1000\x64\debug\e1000.tlog\cl.write.1.tlog

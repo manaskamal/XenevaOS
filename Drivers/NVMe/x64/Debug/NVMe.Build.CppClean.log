@@ -1,9 +1,9 @@
-e:\xeneva project\aurora\drivers\nvme\x64\debug\vc120.pdb
-e:\xeneva project\aurora\drivers\nvme\x64\debug\vc120.idb
-e:\xeneva project\aurora\drivers\nvme\x64\debug\namespace.obj
+e:\xeneva project\aurora\drivers\nvme\x64\debug\vc142.pdb
+e:\xeneva project\aurora\drivers\nvme\x64\debug\vc142.idb
 e:\xeneva project\aurora\drivers\nvme\x64\debug\nvme.obj
-f:\nvme.dll
-f:\nvme.map
+e:\xeneva project\aurora\drivers\nvme\x64\debug\namespace.obj
+e:\xeneva project\aurora\build\nvme.dll
+e:\xeneva project\aurora\build\nvme.map
 e:\xeneva project\aurora\x64\debug\nvme.lib
 e:\xeneva project\aurora\x64\debug\nvme.exp
 e:\xeneva project\aurora\drivers\nvme\x64\debug\nvme.tlog\cl.command.1.tlog

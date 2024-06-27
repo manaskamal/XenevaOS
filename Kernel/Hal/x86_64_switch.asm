@@ -87,7 +87,7 @@ execute_idle:
 	mov r9, 1
 	cmp r8, 0
 	cmove r8, r9
-	mov r9, [rcx + 0x10]   ;rflags
+	mov r9,[rcx + 0x10]   ;rflags
 	
 	mov r10, [rcx + 0xC0]
 	mov cr3, r10

@@ -1,0 +1,622 @@
+ BOOTx64
+
+ Timestamp is 66346300 (Fri May 03 09:37:28 2024)
+
+ Preferred load address is 0000000180000000
+
+ Start         Length     Name                   Class
+ 0001:00000000 00007677H .text                   CODE
+ 0002:00000000 00001d60H .rdata                  DATA
+ 0002:00001d60 00000354H .xdata                  DATA
+ 0002:000020b4 00000000H .edata                  DATA
+ 0003:00000000 000001fcH .data                   DATA
+ 0003:00000200 00001198H .bss                    DATA
+ 0004:00000000 000004e0H .pdata                  DATA
+
+  Address         Publics by Value              Rva+Base               Lib:Object
+
+ 0000:00000000       ___safe_se_handler_table   0000000000000000     <absolute>
+ 0000:00000000       ___safe_se_handler_count   0000000000000000     <absolute>
+ 0001:00000000       ?arch_initialize_paging@@YAXXZ 0000000180001000 f   arch_paging.obj
+ 0001:000000a0       ?paging_map@@YA_NPEAX_K11@Z 00000001800010a0 f   arch_paging.obj
+ 0001:000001f0       ?check_free@@YA_NPEAX_K@Z  00000001800011f0 f   arch_paging.obj
+ 0001:00000240       ?set_paging_attributes@@YAXPEAX_K11@Z 0000000180001240 f   arch_paging.obj
+ 0001:00000440       ?fill_arch_paging_info@@YAXPEAX@Z 0000000180001440 f   arch_paging.obj
+ 0001:00000480       ?arch_get_recursive_slot@@YA_KXZ 0000000180001480 f   arch_paging.obj
+ 0001:00000490       ?arch_get_pml4ptr@@YAPEAXXZ 0000000180001490 f   arch_paging.obj
+ 0001:00000830       ?identity_map_4kb@@YAX_K@Z 0000000180001830 f   arch_paging.obj
+ 0001:00000ac0       ?paging_map@@YA_NPEAX_K1@Z 0000000180001ac0 f   arch_paging.obj
+ 0001:00000f30       ??$raw_offset@PEAXPEAX@@YAPEAXPEAXH@Z 0000000180001f30 f i arch_paging.obj
+ 0001:00000f50       ??$raw_offset@_K_K@@YA_K_KH@Z 0000000180001f50 f i arch_paging.obj
+ 0001:00000f70       ?cls@@YAXXZ                0000000180001f70 f   console.obj
+ 0001:00000fa0       ?Cursor@@YA_KE@Z           0000000180001fa0 f   console.obj
+ 0001:00000fe0       ?GetCurrentCursorPos@@YAXPEAH0@Z 0000000180001fe0 f   console.obj
+ 0001:00001030       ?SetCurrentCursorPos@@YA_KHH@Z 0000000180002030 f   console.obj
+ 0001:00001080       ?SetTextAttribute@@YA_KHH@Z 0000000180002080 f   console.obj
+ 0001:000010d0       ?PutChar@@YAXH@Z           00000001800020d0 f   console.obj
+ 0001:00001130       ?printf@@YAHPEA_WZZ        0000000180002130 f   console.obj
+ 0001:00001db0       ?InitializeLib@@YA_KPEAXPEAUEFI_SYSTEM_TABLE@@@Z 0000000180002db0 f   efi.obj
+ 0001:00001eb0       ?Stall@@YAX_K@Z            0000000180002eb0 f   efi.obj
+ 0001:00001ee0       ?GetBootServices@@YAPEAUEFI_BOOT_SERVICES@@XZ 0000000180002ee0 f   efi.obj
+ 0001:00001ef0       ?GetRuntimeServices@@YAPEAUEFI_RUNTIME_SERVICES@@XZ 0000000180002ef0 f   efi.obj
+ 0001:00001f00       ?getError@@YAPEAG_K@Z      0000000180002f00 f   efi.obj
+ 0001:00001f80       ?getErrno@@YA_KXZ          0000000180002f80 f   efi.obj
+ 0001:00001f90       ?GetIntegerInput@@YA_KPEAG@Z 0000000180002f90 f   efi.obj
+ 0001:000021b0       ?GetBootFileSystem@@YA_KPEAXPEAPEAU_EFI_SIMPLE_FILE_SYSTEM_PROTOCOL@@@Z 00000001800031b0 f   file_io.obj
+ 0001:00002230       ?CloseFile@@YA_KPEAU_EFI_FILE_PROTOCOL@@@Z 0000000180003230 f   file_io.obj
+ 0001:00002260       ?GetFileSize@@YA_KPEAU_EFI_FILE_PROTOCOL@@@Z 0000000180003260 f   file_io.obj
+ 0001:00002320       ?ReadFile@@YA_KPEAX_K1PEAU_EFI_FILE_PROTOCOL@@@Z 0000000180003320 f   file_io.obj
+ 0001:00002380       ?WriteFile@@YA_KPEAX_K1PEAU_EFI_FILE_PROTOCOL@@@Z 0000000180003380 f   file_io.obj
+ 0001:000023e0       ?GetRootDirectory@@YAPEAEXZ 00000001800033e0 f   file_io.obj
+ 0001:00002760       ?get_kernel_size@@YA_KXZ   0000000180003760 f   file_io.obj
+ 0001:00002770       ?LoadFile@@YAPEAEPEA_W@Z   0000000180003770 f   file_io.obj
+ 0001:00002aa0       ?get_file_size@@YA_KXZ     0000000180003aa0 f   file_io.obj
+ 0001:00002ab0       ?PrepareExitBootService@@YA_KXZ 0000000180003ab0 f   main.obj
+ 0001:00002ad0       ?guids_match@@YA_NUGUID@@0@Z 0000000180003ad0 f   main.obj
+ 0001:00002b90       ?find_acpi_table@@YAPEAXPEAUEFI_SYSTEM_TABLE@@@Z 0000000180003b90 f   main.obj
+ 0001:00002cd0       ?get_integer_input@@YA_KPEBD@Z 0000000180003cd0 f   main.obj
+ 0001:00002ec0       ?strcmp_config@@YAHPEBD0@Z 0000000180003ec0 f   main.obj
+ 0001:00002f40       ?strcpy@@YAPEADPEADPEBD@Z  0000000180003f40 f   main.obj
+ 0001:00002fb0       ?mbsrtowcs@@YA_KPEA_WPEBD_K@Z 0000000180003fb0 f   main.obj
+ 0001:00003050       ?strlen@@YA_KPEBD@Z        0000000180004050 f   main.obj
+ 0001:000030a0       ?efi_main@@YA_KPEAXPEAUEFI_SYSTEM_TABLE@@@Z 00000001800040a0 f   main.obj
+ 0001:00003990       ?AllocatePool@@YAPEAX_K@Z  0000000180004990 f   memory.obj
+ 0001:000039e0       ?AllocatePhysical@@YAPEAXKK@Z 00000001800049e0 f   memory.obj
+ 0001:00003ad0       ?AllocateZeroPool@@YAPEAXK@Z 0000000180004ad0 f   memory.obj
+ 0001:00003b20       ?FreePool@@YAXPEAX@Z       0000000180004b20 f   memory.obj
+ 0001:00003b40       load_minifs                0000000180004b40 f   minifs.obj
+ 0001:00003dc0       initialize_vm              0000000180004dc0 f   paging.obj
+ 0001:00003e00       install_paging             0000000180004e00 f   paging.obj
+ 0001:00003e10       map_page                   0000000180004e10 f   paging.obj
+ 0001:00004070       map_page_count             0000000180005070 f   paging.obj
+ 0001:00004100       _print_cr3                 0000000180005100 f   paging.obj
+ 0001:00004180       ?CreatePT164@@YAXPEAUPT@@@Z 0000000180005180 f   paging.obj
+ 0001:000042b0       ?CreatePhysicalToVirtual@@YAXPEAUPML4@@H@Z 00000001800052b0 f   paging.obj
+ 0001:00004460       ?pml4_index@@YA_K_K@Z      0000000180005460 f   paging.obj
+ 0001:00004480       ?pdp_index@@YA_K_K@Z       0000000180005480 f   paging.obj
+ 0001:000044a0       ?pd_index@@YA_K_K@Z        00000001800054a0 f   paging.obj
+ 0001:000044c0       ?pt_index@@YA_K_K@Z        00000001800054c0 f   paging.obj
+ 0001:000044e0       ?p_index@@YA_K_K@Z         00000001800054e0 f   paging.obj
+ 0001:00004500       ?get_physical_address@@YAPEA_K_K@Z 0000000180005500 f   paging.obj
+ 0001:000045b0       ??$align_up@_K@@YA_K_KI@Z  00000001800055b0 f i paging.obj
+ 0001:000045e0       ?LibDevicePathToInterface@@YA_KPEAUGUID@@PEAUEFI_DEVICE_PATH_PROTOCOL@@PEAPEAX@Z 00000001800055e0 f   path.obj
+ 0001:00004690       ?DuplicateDevicePath@@YAPEAUEFI_DEVICE_PATH_PROTOCOL@@PEAU1@@Z 0000000180005690 f   path.obj
+ 0001:000046b0       ?FileDevicePath@@YAPEAUEFI_DEVICE_PATH_PROTOCOL@@PEAXPEBD@Z 00000001800056b0 f   path.obj
+ 0001:000046d0       ?DevicePathType@@YAEPEBX@Z 00000001800056d0 f   path.obj
+ 0001:000046f0       ?IsDevicePathEndType@@YAEPEBX@Z 00000001800056f0 f   path.obj
+ 0001:00004730       ?DevicePathSubType@@YAEPEBX@Z 0000000180005730 f   path.obj
+ 0001:00004750       ?IsDevicePathEnd@@YAEPEBX@Z 0000000180005750 f   path.obj
+ 0001:000047a0       ?DevicePathSize@@YAKPEAUEFI_DEVICE_PATH_PROTOCOL@@@Z 00000001800057a0 f   path.obj
+ 0001:000047b0       ?DevicePathFromHandle@@YAPEAUEFI_DEVICE_PATH_PROTOCOL@@PEAX@Z 00000001800057b0 f   path.obj
+ 0001:00004800       ?DevicePathInstance@@YAPEAUEFI_DEVICE_PATH_PROTOCOL@@PEAPEAU1@PEAK@Z 0000000180005800 f   path.obj
+ 0001:00004820       ?DevicePathInstanceCount@@YAKPEAUEFI_DEVICE_PATH_PROTOCOL@@@Z 0000000180005820 f   path.obj
+ 0001:00004860       ?AppendDevicePath@@YAPEAUEFI_DEVICE_PATH_PROTOCOL@@PEAU1@0@Z 0000000180005860 f   path.obj
+ 0001:000049d0       ?Load_PEImage@@YAPEAXPEAX@Z 00000001800059d0 f   pe.obj
+ 0001:00004c50       ?GetDLLName@@YAPEBDPEAX@Z  0000000180005c50 f   pe.obj
+ 0001:00004d00       ?link_image_import@@YAXPEAX0@Z 0000000180005d00 f   pe.obj
+ 0001:00004e70       ?LoadDLLImage@@YAXPEAX@Z   0000000180005e70 f   pe.obj
+ 0001:00004fd0       ?GetStackSize@@YA_KPEAX@Z  0000000180005fd0 f   pe.obj
+ 0001:00005020       ?GetEntryPoint@@YAP6AXPEAU_KERNEL_BOOT_INFO_@@@ZPEAX@Z 0000000180006020 f   pe.obj
+ 0001:00005070       ?GetProcAddress@@YAPEAXPEAXPEBD@Z 0000000180006070 f   pe.obj
+ 0001:00005200       ?strcmp_basic@@YAHPEBD0@Z  0000000180006200 f   pe.obj
+ 0001:00005280       ?strcmp@@YAHPEBD0@Z        0000000180006280 f   pe.obj
+ 0001:000053e0       ?fill_modloader_info@@YAXAEAPEAX@Z 00000001800063e0 f   pe.obj
+ 0001:00005410       ??$raw_offset@P6AXPEAU_KERNEL_BOOT_INFO_@@@ZPEAX@@YAP6AXPEAU_KERNEL_BOOT_INFO_@@@ZPEAXH@Z 0000000180006410 f i pe.obj
+ 0001:00005430       ??$raw_offset@PEADPEAX@@YAPEADPEAXH@Z 0000000180006430 f i pe.obj
+ 0001:00005450       ??$raw_offset@PEAGPEAX@@YAPEAGPEAXH@Z 0000000180006450 f i pe.obj
+ 0001:00005470       ??$raw_offset@PEAKPEAX@@YAPEAKPEAXH@Z 0000000180006470 f i pe.obj
+ 0001:00005490       ??$raw_offset@PEAU_IMAGE_EXPORT_DIRECTORY@@PEAX@@YAPEAU_IMAGE_EXPORT_DIRECTORY@@PEAXH@Z 0000000180006490 f i pe.obj
+ 0001:000054b0       ??$raw_offset@PEAU_IMAGE_IMPORT_DIRECTORY@@PEAX@@YAPEAU_IMAGE_IMPORT_DIRECTORY@@PEAXH@Z 00000001800064b0 f i pe.obj
+ 0001:000054d0       ??$raw_offset@PEAU_IMAGE_IMPORT_HINT_TABLE@@PEAX@@YAPEAU_IMAGE_IMPORT_HINT_TABLE@@PEAXH@Z 00000001800064d0 f i pe.obj
+ 0001:000054f0       ??$raw_offset@PEAU_IMAGE_NT_HEADERS_PE32PLUS@@PEAU_IMAGE_DOS_HEADER_@@@@YAPEAU_IMAGE_NT_HEADERS_PE32PLUS@@PEAU_IMAGE_DOS_HEADER_@@H@Z 00000001800064f0 f i pe.obj
+ 0001:00005510       ??$raw_offset@PEAU_IMAGE_SECTION_HEADER@@PEAU_IMAGE_OPTIONAL_HEADER_PE32PLUS@@@@YAPEAU_IMAGE_SECTION_HEADER@@PEAU_IMAGE_OPTIONAL_HEADER_PE32PLUS@@H@Z 0000000180006510 f i pe.obj
+ 0001:00005530       ??$raw_offset@PEA_KPEAX@@YAPEA_KPEAXH@Z 0000000180006530 f i pe.obj
+ 0001:00005550       ??$raw_offset@PEBDPEAX@@YAPEBDPEAXH@Z 0000000180006550 f i pe.obj
+ 0001:00005570       ?InitializePmmngr@@YAXUEfiMemoryMap@@PEAX_K@Z 0000000180006570 f   pmmngr.obj
+ 0001:00005770       ?PmmngrAllocate@@YA_KXZ    0000000180006770 f   pmmngr.obj
+ 0001:000057f0       ?PmmngrFree@@YAX_K@Z       00000001800067f0 f   pmmngr.obj
+ 0001:00005820       ?PmmngrList@@YAXXZ         0000000180006820 f   pmmngr.obj
+ 0001:00005890       ?fill_pmmngr_info@@YAXPEAX@Z 0000000180006890 f   pmmngr.obj
+ 0001:000058e0       ?get_physical_start@@YA_KXZ 00000001800068e0 f   pmmngr.obj
+ 0001:000058f0       ?get_physical_size@@YA_KXZ 00000001800068f0 f   pmmngr.obj
+ 0001:00005900       ?get_pg_stack@@YAPEA_KXZ   0000000180006900 f   pmmngr.obj
+ 0001:00005910       ?get_alstack@@YAPEA_KXZ    0000000180006910 f   pmmngr.obj
+ 0001:00005920       ?get_alstackptr@@YAPEA_KXZ 0000000180006920 f   pmmngr.obj
+ 0001:00005930       ?get_stack_ptr@@YAPEA_KXZ  0000000180006930 f   pmmngr.obj
+ 0001:00005940       ?get_ram_size@@YA_KXZ      0000000180006940 f   pmmngr.obj
+ 0001:00005950       ?reserve_mem_count@@YA_KXZ 0000000180006950 f   pmmngr.obj
+ 0001:00005960       ??$raw_diff@UEFI_MEMORY_DESCRIPTOR@@U1@@@YAHPEAUEFI_MEMORY_DESCRIPTOR@@0@Z 0000000180006960 f i pmmngr.obj
+ 0001:00005980       ??$raw_diff@_K_K@@YAHPEA_K0@Z 0000000180006980 f i pmmngr.obj
+ 0001:000059a0       ??$raw_offset@PEAUEFI_MEMORY_DESCRIPTOR@@PEAU1@@@YAPEAUEFI_MEMORY_DESCRIPTOR@@PEAU0@H@Z 00000001800069a0 f i pmmngr.obj
+ 0001:000059c0       memset                     00000001800069c0 f   string.obj
+ 0001:00005a00       ?memcpy@@YAXPEAX0K@Z       0000000180006a00 f   string.obj
+ 0001:00005a40       ?wstrchr@@YAPEA_WPEA_WH@Z  0000000180006a40 f   string.obj
+ 0001:00005a90       ?wstrlen@@YAHPEA_W@Z       0000000180006a90 f   string.obj
+ 0001:00005ae0       ?wstrsize@@YAKPEA_W@Z      0000000180006ae0 f   string.obj
+ 0001:00005b10       ?_memset@@YAXPEAXEK@Z      0000000180006b10 f   string.obj
+ 0001:00005b70       ?_memcpy@@YAXPEAX0K@Z      0000000180006b70 f   string.obj
+ 0001:00005c90       ?to_upper@@YAHH@Z          0000000180006c90 f   type.obj
+ 0001:00005cc0       ?to_lower@@YAHH@Z          0000000180006cc0 f   type.obj
+ 0001:00005cf0       ?is_digit@@YAHH@Z          0000000180006cf0 f   type.obj
+ 0001:00005d20       ?IterateGraphicsMode@@YAIP6A_NIPEAU_efi_graphics_output_mode_information@@@Z@Z 0000000180006d20 f   video.obj
+ 0001:00005e10       ?GetGraphicsModeInfo@@YA_KIPEAPEAU_efi_graphics_output_mode_information@@PEA_K@Z 0000000180006e10 f   video.obj
+ 0001:00005ef0       ?SetGraphicsMode@@YA_K_K@Z 0000000180006ef0 f   video.obj
+ 0001:00006220       ?fill_framebuffer_info@@YAX_K000@Z 0000000180007220 f   video.obj
+ 0001:00006270       ?get_framebuffer@@YAPEAKXZ 0000000180007270 f   video.obj
+ 0001:00006280       ?get_width@@YAGXZ          0000000180007280 f   video.obj
+ 0001:00006290       ?get_height@@YAGXZ         0000000180007290 f   video.obj
+ 0001:000062a0       ?get_fb_size@@YA_KXZ       00000001800072a0 f   video.obj
+ 0001:000062b0       ?get_pixels_per_line@@YA_KXZ 00000001800072b0 f   video.obj
+ 0001:000062c0       ?get_red_mask@@YAKXZ       00000001800072c0 f   video.obj
+ 0001:000062d0       ?get_blue_mask@@YAKXZ      00000001800072d0 f   video.obj
+ 0001:000062e0       ?get_green_mask@@YAKXZ     00000001800072e0 f   video.obj
+ 0001:000062f0       ?get_resv_mask@@YAKXZ      00000001800072f0 f   video.obj
+ 0001:00006300       ?ClearScreen@@YAXXZ        0000000180007300 f   video.obj
+ 0001:00006370       ?QueryGOP@@YA_KGG@Z        0000000180007370 f   video.obj
+ 0001:00006480       ?set_xn_output_proc@@YAXP6AXPEBD@Z@Z 0000000180007480 f   xn_console.obj
+ 0001:000064a0       ?puts@@YAXPEBD@Z           00000001800074a0 f   xn_console.obj
+ 0001:000064c0       ?printf_gui@@YAXPEBDZZ     00000001800074c0 f   xn_console.obj
+ 0001:00006880       ?sztoa@@YAPEAD_KPEADH@Z    0000000180007880 f   xn_console.obj
+ 0001:000069a0       ?atow@@YAXPEADPEBD@Z       00000001800079a0 f   xn_console.obj
+ 0001:000069f0       ?InitializeGraphics@@YAXU_FRAMEBUFFER_INFORMATION@@@Z 00000001800079f0 f   xn_gui.obj
+ 0001:00006ae0       ?putpixel@@YAX_K0K@Z       0000000180007ae0 f   xn_gui.obj
+ 0001:00006c10       ?gputs_k@@YAXPEBD@Z        0000000180007c10 f   xn_gui.obj
+ 0001:00006ef0       ?DrawRect@@YAXHHHHK@Z      0000000180007ef0 f   xn_gui.obj
+ 0001:00006fb0       ?set_gui@@YAXKK_K0@Z       0000000180007fb0 f   xn_gui.obj
+ 0001:00007000       ?putpixel_ii@@YAX_K0K@Z    0000000180008000 f   xn_gui.obj
+ 0001:00007130       ?gputc@@YAXD@Z             0000000180008130 f   xn_gui.obj
+ 0001:00007400       ?scroll@@YAXXZ             0000000180008400 f   xn_gui.obj
+ 0001:000074e0       ??$raw_offset@PEAKPEA_K@@YAPEAKPEA_KH@Z 00000001800084e0 f i xn_gui.obj
+ 0001:00007500       ??$raw_offset@PEAK_K@@YAPEAK_KH@Z 0000000180008500 f i xn_gui.obj
+ 0001:00007520       inportb                    0000000180008520     asm_helper.obj
+ 0001:00007528       inportw                    0000000180008528     asm_helper.obj
+ 0001:00007531       inportd                    0000000180008531     asm_helper.obj
+ 0001:00007539       outportb                   0000000180008539     asm_helper.obj
+ 0001:00007540       outportw                   0000000180008540     asm_helper.obj
+ 0001:00007549       outportd                   0000000180008549     asm_helper.obj
+ 0001:00007550       cpuid                      0000000180008550     asm_helper.obj
+ 0001:00007574       cacheflush                 0000000180008574     asm_helper.obj
+ 0001:00007577       tlbflush                   0000000180008577     asm_helper.obj
+ 0001:0000757b       x64_locked_cas             000000018000857b     asm_helper.obj
+ 0001:00007591       disable                    0000000180008591     asm_helper.obj
+ 0001:00007595       restore                    0000000180008595     asm_helper.obj
+ 0001:00007598       memory_barrier             0000000180008598     asm_helper.obj
+ 0001:0000759c       get_paging_root            000000018000859c     asm_helper.obj
+ 0001:000075a0       set_paging_root            00000001800085a0     asm_helper.obj
+ 0001:000075a4       cpu_startup                00000001800085a4     asm_helper.obj
+ 0001:000075cd       pause                      00000001800085cd     asm_helper.obj
+ 0001:000075d0       save_gdt                   00000001800085d0     asm_helper.obj
+ 0001:000075d4       get_segment_register       00000001800085d4     asm_helper.obj
+ 0001:00007616       rdmsr                      0000000180008616     asm_helper.obj
+ 0001:00007620       wrmsr                      0000000180008620     asm_helper.obj
+ 0001:0000762a       read_cr0                   000000018000862a     asm_helper.obj
+ 0001:0000762e       write_cr0                  000000018000862e     asm_helper.obj
+ 0001:00007632       call_kernel                0000000180008632     asm_helper.obj
+ 0001:00007649       activate_sse               0000000180008649     asm_helper.obj
+ 0001:00007662       activate_avx               0000000180008662     asm_helper.obj
+ 0001:00007675       arch_cli                   0000000180008675     asm_helper.obj
+ 0003:000000e0       ?FileSystemProtocol@@3UGUID@@A 000000018000c0e0     file_io.obj
+ 0003:000000f0       ?LoadFileProtocol@@3UGUID@@A 000000018000c0f0     file_io.obj
+ 0003:00000100       ?GenericFileInfo@@3UGUID@@A 000000018000c100     file_io.obj
+ 0003:00000120       ?efi_memory_types@@3PAPEBDA 000000018000c120     main.obj
+ 0003:00000198       ?stackaddr@@3PEAXEA        000000018000c198     main.obj
+ 0003:000001a0       ?idtaddr@@3PEAXEA          000000018000c1a0     main.obj
+ 0003:000001a8       ?bootinfo_addr@@3PEAXEA    000000018000c1a8     main.obj
+ 0003:000001c0       ?GenericFileInfo_new@@3UGUID@@A 000000018000c1c0     minifs.obj
+ 0003:000001d0       ?DevicePathProtocol@@3UGUID@@A 000000018000c1d0     path.obj
+ 0003:000001e0       ?EndInstanceDevicePath@@3PAUEFI_DEVICE_PATH_PROTOCOL@@A 000000018000c1e0     path.obj
+ 0003:000001e4       ?EndDevicePath@@3PAUEFI_DEVICE_PATH_PROTOCOL@@A 000000018000c1e4     path.obj
+ 0003:00000220       ?pml4e@@3PA_KA             000000018000c220     arch_paging.obj
+ 0003:00001230       ?gImageHandle@@3PEAXEA     000000018000d230     efi.obj
+ 0003:00001238       ?gSystemTable@@3PEAUEFI_SYSTEM_TABLE@@EA 000000018000d238     efi.obj
+ 0003:00001240       ?gBS@@3PEAUEFI_BOOT_SERVICES@@EA 000000018000d240     efi.obj
+ 0003:00001248       ?Rs@@3PEAUEFI_RUNTIME_SERVICES@@EA 000000018000d248     efi.obj
+ 0003:00001278       ?file_size@@3_KA           000000018000d278     file_io.obj
+ 0003:00001280       ?pml4@@3PEA_KEA            000000018000d280     paging.obj
+ 0003:000012b8       ?usable_ram@@3_KA          000000018000d2b8     pmmngr.obj
+ 0003:000012c0       ?usable_size@@3_KA         000000018000d2c0     pmmngr.obj
+ 0003:000012c8       ?ram_size@@3_KA            000000018000d2c8     pmmngr.obj
+ 0003:000012e8       ?framebuffer_address@@3_KA 000000018000d2e8     video.obj
+ 0003:000012f0       ?X_Resolution@@3_KA        000000018000d2f0     video.obj
+ 0003:000012f8       ?Y_Resolution@@3_KA        000000018000d2f8     video.obj
+ 0003:00001300       ?efigop@@3PEAU_efi_graphics_output_protocol_@@EA 000000018000d300     video.obj
+
+ entry point at        0000:00000000
+
+ Static symbols
+
+ 0001:000004a0       ?make_canonical_i@@YAPEAX_K@Z 00000001800014a0 f   arch_paging.obj
+ 0001:000004f0       ?make_canonical@@YAPEAXPEAX@Z 00000001800014f0 f   arch_paging.obj
+ 0001:00000510       ?decanonical@@YA_KPEAX@Z   0000000180001510 f   arch_paging.obj
+ 0001:00000540       ?getPML4@@YAPEA_KPEAX@Z    0000000180001540 f   arch_paging.obj
+ 0001:00000590       ?getPML4index@@YA_KPEAX@Z  0000000180001590 f   arch_paging.obj
+ 0001:000005c0       ?getPD@@YAPEA_KPEAX@Z      00000001800015c0 f   arch_paging.obj
+ 0001:00000620       ?getPDPT@@YAPEA_KPEAX@Z    0000000180001620 f   arch_paging.obj
+ 0001:00000690       ?getPDindex@@YA_KPEAX@Z    0000000180001690 f   arch_paging.obj
+ 0001:000006c0       ?getPTAB@@YAPEA_KPEAX@Z    00000001800016c0 f   arch_paging.obj
+ 0001:00000720       ?getPTABindex@@YA_KPEAX@Z  0000000180001720 f   arch_paging.obj
+ 0001:00000750       ?getPDPTindex@@YA_KPEAX@Z  0000000180001750 f   arch_paging.obj
+ 0001:00000780       ?setPML4_recursive@@YAPEA_KPEA_K_K@Z 0000000180001780 f   arch_paging.obj
+ 0001:00000a70       ?clear_ptabs@@YAXPEAX@Z    0000000180001a70 f   arch_paging.obj
+ 0001:00000d80       ?check_free@@YA_NHPEAX0@Z  0000000180001d80 f   arch_paging.obj
+ 0001:00002180       ?uefi_puts@@YAXPEBG@Z      0000000180003180 f   efi.obj
+ 0001:00004130       ?clear@@YAXPEAX@Z          0000000180005130 f   paging.obj
+ 0001:00005300       ?copy_mem@@YAXPEAX0_K@Z    0000000180006300 f   pe.obj
+ 0001:00005380       ?zero_mem@@YAXPEAX_K@Z     0000000180006380 f   pe.obj
+ 0001:00006830       ?strlen_simple@@YA_KPEBD@Z 0000000180007830 f   xn_console.obj
+ 0001:00007370       ?high_set_bit@@YAD_K@Z     0000000180008370 f   xn_gui.obj
+ 0001:000073b0       ?low_set_bit@@YAD_K@Z      00000001800083b0 f   xn_gui.obj
+ 0001:0000758b       x64_locked_cas.true        000000018000858b     asm_helper.obj
+ 0001:000075ea       get_segment_register.jmp_tab 00000001800085ea     asm_helper.obj
+ 0001:000075fa       get_segment_register.cs    00000001800085fa     asm_helper.obj
+ 0001:000075fe       get_segment_register.ds    00000001800085fe     asm_helper.obj
+ 0001:00007602       get_segment_register.es    0000000180008602     asm_helper.obj
+ 0001:00007606       get_segment_register.fs    0000000180008606     asm_helper.obj
+ 0001:0000760a       get_segment_register.gs    000000018000860a     asm_helper.obj
+ 0001:0000760e       get_segment_register.ss    000000018000860e     asm_helper.obj
+ 0001:00007612       get_segment_register.invalid 0000000180008612     asm_helper.obj
+ 0002:00000000       $SG13669                   0000000180009000     arch_paging.obj
+ 0002:00000018       $SG13493                   0000000180009018     console.obj
+ 0002:00000020       $SG13499                   0000000180009020     console.obj
+ 0002:00000038       $SG13546                   0000000180009038     console.obj
+ 0002:0000004c       $SG13558                   000000018000904c     console.obj
+ 0002:00000050       $SG13556                   0000000180009050     console.obj
+ 0002:00000064       $SG13559                   0000000180009064     console.obj
+ 0002:00000070       $SG13562                   0000000180009070     efi.obj
+ 0002:00000088       $SG13565                   0000000180009088     efi.obj
+ 0002:00000090       $SG13567                   0000000180009090     efi.obj
+ 0002:0000009c       $SG13638                   000000018000909c     efi.obj
+ 0002:000000a0       $SG13569                   00000001800090a0     efi.obj
+ 0002:000000b4       $SG13645                   00000001800090b4     efi.obj
+ 0002:000000b8       $SG13571                   00000001800090b8     efi.obj
+ 0002:000000c4       $SG13648                   00000001800090c4     efi.obj
+ 0002:000000c8       $SG13573                   00000001800090c8     efi.obj
+ 0002:000000d8       $SG13575                   00000001800090d8     efi.obj
+ 0002:000000f0       $SG13577                   00000001800090f0     efi.obj
+ 0002:00000100       $SG13579                   0000000180009100     efi.obj
+ 0002:00000110       $SG13581                   0000000180009110     efi.obj
+ 0002:00000120       $SG13583                   0000000180009120     efi.obj
+ 0002:00000138       $SG13585                   0000000180009138     efi.obj
+ 0002:00000150       $SG13587                   0000000180009150     efi.obj
+ 0002:00000160       $SG13589                   0000000180009160     efi.obj
+ 0002:00000170       $SG13591                   0000000180009170     efi.obj
+ 0002:00000180       $SG13593                   0000000180009180     efi.obj
+ 0002:00000190       $SG13595                   0000000180009190     efi.obj
+ 0002:000001a0       $SG13598                   00000001800091a0     efi.obj
+ 0002:000001b0       $SG13622                   00000001800091b0     efi.obj
+ 0002:00000200       $SG13968                   0000000180009200     file_io.obj
+ 0002:00000210       $SG13971                   0000000180009210     file_io.obj
+ 0002:00000228       $SG13975                   0000000180009228     file_io.obj
+ 0002:00000258       $SG13978                   0000000180009258     file_io.obj
+ 0002:00000278       $SG13986                   0000000180009278     file_io.obj
+ 0002:000002a0       $SG13987                   00000001800092a0     file_io.obj
+ 0002:000002c8       $SG13988                   00000001800092c8     file_io.obj
+ 0002:000002f0       $SG13989                   00000001800092f0     file_io.obj
+ 0002:00000318       $SG13990                   0000000180009318     file_io.obj
+ 0002:00000340       $SG13996                   0000000180009340     file_io.obj
+ 0002:00000378       $SG14012                   0000000180009378     file_io.obj
+ 0002:00000388       $SG14015                   0000000180009388     file_io.obj
+ 0002:000003a0       $SG14021                   00000001800093a0     file_io.obj
+ 0002:000003c0       $SG14026                   00000001800093c0     file_io.obj
+ 0002:000003e8       $SG14027                   00000001800093e8     file_io.obj
+ 0002:00000410       $SG14028                   0000000180009410     file_io.obj
+ 0002:00000430       $SG14029                   0000000180009430     file_io.obj
+ 0002:00000458       $SG14030                   0000000180009458     file_io.obj
+ 0002:00000480       $SG14038                   0000000180009480     file_io.obj
+ 0002:000004b8       $SG14050                   00000001800094b8     main.obj
+ 0002:000004d0       $SG14051                   00000001800094d0     main.obj
+ 0002:000004e0       $SG14052                   00000001800094e0     main.obj
+ 0002:000004f0       $SG14053                   00000001800094f0     main.obj
+ 0002:00000504       $SG14126                   0000000180009504     main.obj
+ 0002:00000508       $SG14054                   0000000180009508     main.obj
+ 0002:0000051c       $SG14133                   000000018000951c     main.obj
+ 0002:00000520       $SG14055                   0000000180009520     main.obj
+ 0002:00000538       $SG14056                   0000000180009538     main.obj
+ 0002:00000550       $SG14057                   0000000180009550     main.obj
+ 0002:00000568       $SG14058                   0000000180009568     main.obj
+ 0002:0000057c       $SG14135                   000000018000957c     main.obj
+ 0002:00000580       $SG14059                   0000000180009580     main.obj
+ 0002:00000598       $SG14060                   0000000180009598     main.obj
+ 0002:000005ac       $SG14205                   00000001800095ac     main.obj
+ 0002:000005b0       $SG14061                   00000001800095b0     main.obj
+ 0002:000005c8       $SG14062                   00000001800095c8     main.obj
+ 0002:000005e8       $SG14063                   00000001800095e8     main.obj
+ 0002:000005f8       $SG14094                   00000001800095f8     main.obj
+ 0002:00000618       $SG14103                   0000000180009618     main.obj
+ 0002:00000628       $SG14105                   0000000180009628     main.obj
+ 0002:00000660       $SG14106                   0000000180009660     main.obj
+ 0002:00000670       $SG14111                   0000000180009670     main.obj
+ 0002:00000698       $SG14202                   0000000180009698     main.obj
+ 0002:000006d8       $SG14204                   00000001800096d8     main.obj
+ 0002:000006e8       $SG14206                   00000001800096e8     main.obj
+ 0002:00000700       $SG14213                   0000000180009700     main.obj
+ 0002:00000730       $SG14216                   0000000180009730     main.obj
+ 0002:00000748       $SG14218                   0000000180009748     main.obj
+ 0002:00000768       $SG14221                   0000000180009768     main.obj
+ 0002:00000788       $SG14224                   0000000180009788     main.obj
+ 0002:000007a8       $SG14226                   00000001800097a8     main.obj
+ 0002:000007c8       $SG14228                   00000001800097c8     main.obj
+ 0002:000007f8       $SG14230                   00000001800097f8     main.obj
+ 0002:00000820       $SG14235                   0000000180009820     main.obj
+ 0002:00000850       $SG14237                   0000000180009850     main.obj
+ 0002:00000870       $SG14242                   0000000180009870     main.obj
+ 0002:00000898       $SG14243                   0000000180009898     main.obj
+ 0002:000008b8       $SG14247                   00000001800098b8     main.obj
+ 0002:000008e8       $SG14250                   00000001800098e8     main.obj
+ 0002:00000908       $SG14251                   0000000180009908     main.obj
+ 0002:00000920       $SG14254                   0000000180009920     main.obj
+ 0002:00000940       $SG14281                   0000000180009940     main.obj
+ 0002:00000960       $SG14287                   0000000180009960     main.obj
+ 0002:00000980       $SG13415                   0000000180009980     memory.obj
+ 0002:000009e0       $SG13418                   00000001800099e0     memory.obj
+ 0002:00000ae0       $SG13619                   0000000180009ae0     minifs.obj
+ 0002:00000af8       $SG13623                   0000000180009af8     minifs.obj
+ 0002:00000b28       $SG13626                   0000000180009b28     minifs.obj
+ 0002:00000b40       $SG13633                   0000000180009b40     minifs.obj
+ 0002:00000b88       $SG13641                   0000000180009b88     minifs.obj
+ 0002:00000bb8       $SG13642                   0000000180009bb8     minifs.obj
+ 0002:00000bd0       $SG13569                   0000000180009bd0     paging.obj
+ 0002:00000bf0       $SG14248                   0000000180009bf0     pe.obj
+ 0002:00000c28       $SG14291                   0000000180009c28     pe.obj
+ 0002:00000c60       $SG14255                   0000000180009c60     pe.obj
+ 0002:00000cb0       $SG14304                   0000000180009cb0     pe.obj
+ 0002:00000cd0       $SG14323                   0000000180009cd0     pe.obj
+ 0002:00000ce0       $SG13544                   0000000180009ce0     pmmngr.obj
+ 0002:00000cf0       $SG13493                   0000000180009cf0     video.obj
+ 0002:00000d08       $SG13510                   0000000180009d08     video.obj
+ 0002:00000d18       $SG13516                   0000000180009d18     video.obj
+ 0002:00000d40       $SG13470                   0000000180009d40     xn_console.obj
+ 0002:00000d54       $SG13519                   0000000180009d54     xn_console.obj
+ 0002:00000d58       $SG13564                   0000000180009d58     xn_console.obj
+ 0002:00000d60       bx_vgafont                 0000000180009d60     xn_gui.obj
+ 0002:00001d60       $unwind$?arch_initialize_paging@@YAXXZ 000000018000ad60     arch_paging.obj
+ 0002:00001d68       $unwind$?paging_map@@YA_NPEAX_K11@Z 000000018000ad68     arch_paging.obj
+ 0002:00001d70       $unwind$?check_free@@YA_NPEAX_K@Z 000000018000ad70     arch_paging.obj
+ 0002:00001d78       $unwind$?set_paging_attributes@@YAXPEAX_K11@Z 000000018000ad78     arch_paging.obj
+ 0002:00001d80       $unwind$?make_canonical@@YAPEAXPEAX@Z 000000018000ad80     arch_paging.obj
+ 0002:00001d88       $unwind$?getPML4@@YAPEA_KPEAX@Z 000000018000ad88     arch_paging.obj
+ 0002:00001d90       $unwind$?getPML4index@@YA_KPEAX@Z 000000018000ad90     arch_paging.obj
+ 0002:00001d98       $unwind$?getPD@@YAPEA_KPEAX@Z 000000018000ad98     arch_paging.obj
+ 0002:00001da0       $unwind$?getPDPT@@YAPEA_KPEAX@Z 000000018000ada0     arch_paging.obj
+ 0002:00001da8       $unwind$?getPDindex@@YA_KPEAX@Z 000000018000ada8     arch_paging.obj
+ 0002:00001db0       $unwind$?getPTAB@@YAPEA_KPEAX@Z 000000018000adb0     arch_paging.obj
+ 0002:00001db8       $unwind$?getPTABindex@@YA_KPEAX@Z 000000018000adb8     arch_paging.obj
+ 0002:00001dc0       $unwind$?getPDPTindex@@YA_KPEAX@Z 000000018000adc0     arch_paging.obj
+ 0002:00001dc8       $unwind$?setPML4_recursive@@YAPEA_KPEA_K_K@Z 000000018000adc8     arch_paging.obj
+ 0002:00001dd0       $unwind$?identity_map_4kb@@YAX_K@Z 000000018000add0     arch_paging.obj
+ 0002:00001dd8       $unwind$?clear_ptabs@@YAXPEAX@Z 000000018000add8     arch_paging.obj
+ 0002:00001de0       $unwind$?paging_map@@YA_NPEAX_K1@Z 000000018000ade0     arch_paging.obj
+ 0002:00001de8       $unwind$?check_free@@YA_NHPEAX0@Z 000000018000ade8     arch_paging.obj
+ 0002:00001df0       $unwind$?cls@@YAXXZ        000000018000adf0     console.obj
+ 0002:00001df8       $unwind$?Cursor@@YA_KE@Z   000000018000adf8     console.obj
+ 0002:00001e00       $unwind$?SetCurrentCursorPos@@YA_KHH@Z 000000018000ae00     console.obj
+ 0002:00001e08       $unwind$?SetTextAttribute@@YA_KHH@Z 000000018000ae08     console.obj
+ 0002:00001e10       $unwind$?PutChar@@YAXH@Z   000000018000ae10     console.obj
+ 0002:00001e18       $unwind$?printf@@YAHPEA_WZZ 000000018000ae18     console.obj
+ 0002:00001e20       $unwind$?InitializeLib@@YA_KPEAXPEAUEFI_SYSTEM_TABLE@@@Z 000000018000ae20     efi.obj
+ 0002:00001e28       $unwind$?Stall@@YAX_K@Z    000000018000ae28     efi.obj
+ 0002:00001e30       $unwind$?getError@@YAPEAG_K@Z 000000018000ae30     efi.obj
+ 0002:00001e38       $unwind$?GetIntegerInput@@YA_KPEAG@Z 000000018000ae38     efi.obj
+ 0002:00001e40       $unwind$?uefi_puts@@YAXPEBG@Z 000000018000ae40     efi.obj
+ 0002:00001e48       $unwind$?GetBootFileSystem@@YA_KPEAXPEAPEAU_EFI_SIMPLE_FILE_SYSTEM_PROTOCOL@@@Z 000000018000ae48     file_io.obj
+ 0002:00001e50       $unwind$?CloseFile@@YA_KPEAU_EFI_FILE_PROTOCOL@@@Z 000000018000ae50     file_io.obj
+ 0002:00001e58       $unwind$?GetFileSize@@YA_KPEAU_EFI_FILE_PROTOCOL@@@Z 000000018000ae58     file_io.obj
+ 0002:00001e64       $unwind$?ReadFile@@YA_KPEAX_K1PEAU_EFI_FILE_PROTOCOL@@@Z 000000018000ae64     file_io.obj
+ 0002:00001e6c       $unwind$?WriteFile@@YA_KPEAX_K1PEAU_EFI_FILE_PROTOCOL@@@Z 000000018000ae6c     file_io.obj
+ 0002:00001e74       $unwind$?GetRootDirectory@@YAPEAEXZ 000000018000ae74     file_io.obj
+ 0002:00001e7c       $unwind$?LoadFile@@YAPEAEPEA_W@Z 000000018000ae7c     file_io.obj
+ 0002:00001e84       $unwind$?PrepareExitBootService@@YA_KXZ 000000018000ae84     main.obj
+ 0002:00001e8c       $unwind$?guids_match@@YA_NUGUID@@0@Z 000000018000ae8c     main.obj
+ 0002:00001e94       $unwind$?find_acpi_table@@YAPEAXPEAUEFI_SYSTEM_TABLE@@@Z 000000018000ae94     main.obj
+ 0002:00001ea0       $unwind$?get_integer_input@@YA_KPEBD@Z 000000018000aea0     main.obj
+ 0002:00001ea8       $unwind$?strcmp_config@@YAHPEBD0@Z 000000018000aea8     main.obj
+ 0002:00001eb0       $unwind$?strcpy@@YAPEADPEADPEBD@Z 000000018000aeb0     main.obj
+ 0002:00001eb8       $unwind$?mbsrtowcs@@YA_KPEA_WPEBD_K@Z 000000018000aeb8     main.obj
+ 0002:00001ec0       $unwind$?strlen@@YA_KPEBD@Z 000000018000aec0     main.obj
+ 0002:00001ec8       $unwind$?efi_main@@YA_KPEAXPEAUEFI_SYSTEM_TABLE@@@Z 000000018000aec8     main.obj
+ 0002:00001ed4       $unwind$?AllocatePool@@YAPEAX_K@Z 000000018000aed4     memory.obj
+ 0002:00001edc       $unwind$?AllocatePhysical@@YAPEAXKK@Z 000000018000aedc     memory.obj
+ 0002:00001ee4       $unwind$?AllocateZeroPool@@YAPEAXK@Z 000000018000aee4     memory.obj
+ 0002:00001eec       $unwind$?FreePool@@YAXPEAX@Z 000000018000aeec     memory.obj
+ 0002:00001ef4       $unwind$load_minifs        000000018000aef4     minifs.obj
+ 0002:00001efc       $unwind$initialize_vm      000000018000aefc     paging.obj
+ 0002:00001f04       $unwind$map_page           000000018000af04     paging.obj
+ 0002:00001f0c       $unwind$map_page_count     000000018000af0c     paging.obj
+ 0002:00001f14       $unwind$_print_cr3         000000018000af14     paging.obj
+ 0002:00001f1c       $unwind$?clear@@YAXPEAX@Z  000000018000af1c     paging.obj
+ 0002:00001f24       $unwind$?CreatePT164@@YAXPEAUPT@@@Z 000000018000af24     paging.obj
+ 0002:00001f2c       $unwind$?CreatePhysicalToVirtual@@YAXPEAUPML4@@H@Z 000000018000af2c     paging.obj
+ 0002:00001f34       $unwind$?get_physical_address@@YAPEA_K_K@Z 000000018000af34     paging.obj
+ 0002:00001f3c       $unwind$?LibDevicePathToInterface@@YA_KPEAUGUID@@PEAUEFI_DEVICE_PATH_PROTOCOL@@PEAPEAX@Z 000000018000af3c     path.obj
+ 0002:00001f44       $unwind$?DuplicateDevicePath@@YAPEAUEFI_DEVICE_PATH_PROTOCOL@@PEAU1@@Z 000000018000af44     path.obj
+ 0002:00001f4c       $unwind$?FileDevicePath@@YAPEAUEFI_DEVICE_PATH_PROTOCOL@@PEAXPEBD@Z 000000018000af4c     path.obj
+ 0002:00001f54       $unwind$?IsDevicePathEndType@@YAEPEBX@Z 000000018000af54     path.obj
+ 0002:00001f5c       $unwind$?IsDevicePathEnd@@YAEPEBX@Z 000000018000af5c     path.obj
+ 0002:00001f64       $unwind$?DevicePathFromHandle@@YAPEAUEFI_DEVICE_PATH_PROTOCOL@@PEAX@Z 000000018000af64     path.obj
+ 0002:00001f6c       $unwind$?DevicePathInstanceCount@@YAKPEAUEFI_DEVICE_PATH_PROTOCOL@@@Z 000000018000af6c     path.obj
+ 0002:00001f74       $unwind$?AppendDevicePath@@YAPEAUEFI_DEVICE_PATH_PROTOCOL@@PEAU1@0@Z 000000018000af74     path.obj
+ 0002:00001f7c       $unwind$?Load_PEImage@@YAPEAXPEAX@Z 000000018000af7c     pe.obj
+ 0002:00001f84       $unwind$?GetDLLName@@YAPEBDPEAX@Z 000000018000af84     pe.obj
+ 0002:00001f8c       $unwind$?link_image_import@@YAXPEAX0@Z 000000018000af8c     pe.obj
+ 0002:00001f94       $unwind$?LoadDLLImage@@YAXPEAX@Z 000000018000af94     pe.obj
+ 0002:00001f9c       $unwind$?GetStackSize@@YA_KPEAX@Z 000000018000af9c     pe.obj
+ 0002:00001fa4       $unwind$?GetEntryPoint@@YAP6AXPEAU_KERNEL_BOOT_INFO_@@@ZPEAX@Z 000000018000afa4     pe.obj
+ 0002:00001fac       $unwind$?GetProcAddress@@YAPEAXPEAXPEBD@Z 000000018000afac     pe.obj
+ 0002:00001fb4       $unwind$?strcmp@@YAHPEBD0@Z 000000018000afb4     pe.obj
+ 0002:00001fbc       $unwind$?copy_mem@@YAXPEAX0_K@Z 000000018000afbc     pe.obj
+ 0002:00001fc4       $unwind$?zero_mem@@YAXPEAX_K@Z 000000018000afc4     pe.obj
+ 0002:00001fcc       $unwind$?InitializePmmngr@@YAXUEfiMemoryMap@@PEAX_K@Z 000000018000afcc     pmmngr.obj
+ 0002:00001fd4       $unwind$?PmmngrAllocate@@YA_KXZ 000000018000afd4     pmmngr.obj
+ 0002:00001fdc       $unwind$?PmmngrList@@YAXXZ 000000018000afdc     pmmngr.obj
+ 0002:00001fe4       $unwind$memset             000000018000afe4     string.obj
+ 0002:00001fec       $unwind$?memcpy@@YAXPEAX0K@Z 000000018000afec     string.obj
+ 0002:00001ff4       $unwind$?wstrlen@@YAHPEA_W@Z 000000018000aff4     string.obj
+ 0002:00001ffc       $unwind$?wstrsize@@YAKPEA_W@Z 000000018000affc     string.obj
+ 0002:00002004       $unwind$?_memset@@YAXPEAXEK@Z 000000018000b004     string.obj
+ 0002:0000200c       $unwind$?_memcpy@@YAXPEAX0K@Z 000000018000b00c     string.obj
+ 0002:00002014       $unwind$?is_digit@@YAHH@Z  000000018000b014     type.obj
+ 0002:0000201c       $unwind$?IterateGraphicsMode@@YAIP6A_NIPEAU_efi_graphics_output_mode_information@@@Z@Z 000000018000b01c     video.obj
+ 0002:00002024       $unwind$?GetGraphicsModeInfo@@YA_KIPEAPEAU_efi_graphics_output_mode_information@@PEA_K@Z 000000018000b024     video.obj
+ 0002:0000202c       $unwind$?SetGraphicsMode@@YA_K_K@Z 000000018000b02c     video.obj
+ 0002:00002038       $unwind$?ClearScreen@@YAXXZ 000000018000b038     video.obj
+ 0002:00002040       $unwind$?QueryGOP@@YA_KGG@Z 000000018000b040     video.obj
+ 0002:00002048       $unwind$?puts@@YAXPEBD@Z   000000018000b048     xn_console.obj
+ 0002:00002050       $unwind$?printf_gui@@YAXPEBDZZ 000000018000b050     xn_console.obj
+ 0002:00002058       $unwind$?strlen_simple@@YA_KPEBD@Z 000000018000b058     xn_console.obj
+ 0002:00002060       $unwind$?sztoa@@YAPEAD_KPEADH@Z 000000018000b060     xn_console.obj
+ 0002:00002068       $unwind$?InitializeGraphics@@YAXU_FRAMEBUFFER_INFORMATION@@@Z 000000018000b068     xn_gui.obj
+ 0002:00002070       $unwind$?putpixel@@YAX_K0K@Z 000000018000b070     xn_gui.obj
+ 0002:00002078       $unwind$?gputs_k@@YAXPEBD@Z 000000018000b078     xn_gui.obj
+ 0002:00002084       $unwind$?DrawRect@@YAXHHHHK@Z 000000018000b084     xn_gui.obj
+ 0002:0000208c       $unwind$?putpixel_ii@@YAX_K0K@Z 000000018000b08c     xn_gui.obj
+ 0002:00002094       $unwind$?gputc@@YAXD@Z     000000018000b094     xn_gui.obj
+ 0002:0000209c       $unwind$?high_set_bit@@YAD_K@Z 000000018000b09c     xn_gui.obj
+ 0002:000020a4       $unwind$?low_set_bit@@YAD_K@Z 000000018000b0a4     xn_gui.obj
+ 0002:000020ac       $unwind$?scroll@@YAXXZ     000000018000b0ac     xn_gui.obj
+ 0003:00000000       get_tab_dispatch           000000018000c000     arch_paging.obj
+ 0003:00000028       get_index_dispatch         000000018000c028     arch_paging.obj
+ 0003:00000050       unknownError               000000018000c050     efi.obj
+ 0003:00000058       efiWarnings                000000018000c058     efi.obj
+ 0003:00000060       efiErrors                  000000018000c060     efi.obj
+ 0003:00000110       graphics_width             000000018000c110     main.obj
+ 0003:00000118       graphics_height            000000018000c118     main.obj
+ 0003:000001b0       ?acpi_guid@?CD@??efi_main@@YA_KPEAXPEAUEFI_SYSTEM_TABLE@@@Z@4UGUID@@A 000000018000c1b0     main.obj
+ 0003:000001e8       allocated_count            000000018000c1e8     pmmngr.obj
+ 0003:000001f0       chars                      000000018000c1f0     xn_console.obj
+ 0003:000001f8       LINES                      000000018000c1f8     xn_gui.obj
+ 0003:00000200       pdptr                      000000018000c200     arch_paging.obj
+ 0003:00000208       pml4ptr                    000000018000c208     arch_paging.obj
+ 0003:00000210       recursive_slot             000000018000c210     arch_paging.obj
+ 0003:00001220       paging_info                000000018000d220     arch_paging.obj
+ 0003:00001250       Kernel                     000000018000d250     efi.obj
+ 0003:00001258       errno                      000000018000d258     efi.obj
+ 0003:00001260       Xeneva                     000000018000d260     file_io.obj
+ 0003:00001268       pwd                        000000018000d268     file_io.obj
+ 0003:00001270       kernel_size                000000018000d270     file_io.obj
+ 0003:00001288       loaded_images              000000018000d288     pe.obj
+ 0003:00001290       modloader_info             000000018000d290     pe.obj
+ 0003:00001298       pagestack                  000000018000d298     pmmngr.obj
+ 0003:000012a0       stackptr                   000000018000d2a0     pmmngr.obj
+ 0003:000012a8       allocated_stack            000000018000d2a8     pmmngr.obj
+ 0003:000012b0       allocated_ptr              000000018000d2b0     pmmngr.obj
+ 0003:000012d0       pmmngr_boot_info           000000018000d2d0     pmmngr.obj
+ 0003:00001308       information                000000018000d308     video.obj
+ 0003:00001338       put_s                      000000018000d338     xn_console.obj
+ 0003:00001340       framebuffer                000000018000d340     xn_gui.obj
+ 0003:00001348       framebuffer_sz             000000018000d348     xn_gui.obj
+ 0003:00001350       pixelsPerLine              000000018000d350     xn_gui.obj
+ 0003:00001358       xpos                       000000018000d358     xn_gui.obj
+ 0003:00001360       ypos                       000000018000d360     xn_gui.obj
+ 0003:00001368       redm                       000000018000d368     xn_gui.obj
+ 0003:0000136c       greenm                     000000018000d36c     xn_gui.obj
+ 0003:00001370       bluem                      000000018000d370     xn_gui.obj
+ 0003:00001374       resvm                      000000018000d374     xn_gui.obj
+ 0003:00001378       bpp                        000000018000d378     xn_gui.obj
+ 0003:00001380       h_res                      000000018000d380     xn_gui.obj
+ 0003:00001388       v_res                      000000018000d388     xn_gui.obj
+ 0003:00001390       background                 000000018000d390     xn_gui.obj
+ 0003:00001394       foreground                 000000018000d394     xn_gui.obj
+ 0004:00000000       $pdata$?arch_initialize_paging@@YAXXZ 000000018000e000     arch_paging.obj
+ 0004:0000000c       $pdata$?paging_map@@YA_NPEAX_K11@Z 000000018000e00c     arch_paging.obj
+ 0004:00000018       $pdata$?check_free@@YA_NPEAX_K@Z 000000018000e018     arch_paging.obj
+ 0004:00000024       $pdata$?set_paging_attributes@@YAXPEAX_K11@Z 000000018000e024     arch_paging.obj
+ 0004:00000030       $pdata$?make_canonical@@YAPEAXPEAX@Z 000000018000e030     arch_paging.obj
+ 0004:0000003c       $pdata$?getPML4@@YAPEA_KPEAX@Z 000000018000e03c     arch_paging.obj
+ 0004:00000048       $pdata$?getPML4index@@YA_KPEAX@Z 000000018000e048     arch_paging.obj
+ 0004:00000054       $pdata$?getPD@@YAPEA_KPEAX@Z 000000018000e054     arch_paging.obj
+ 0004:00000060       $pdata$?getPDPT@@YAPEA_KPEAX@Z 000000018000e060     arch_paging.obj
+ 0004:0000006c       $pdata$?getPDindex@@YA_KPEAX@Z 000000018000e06c     arch_paging.obj
+ 0004:00000078       $pdata$?getPTAB@@YAPEA_KPEAX@Z 000000018000e078     arch_paging.obj
+ 0004:00000084       $pdata$?getPTABindex@@YA_KPEAX@Z 000000018000e084     arch_paging.obj
+ 0004:00000090       $pdata$?getPDPTindex@@YA_KPEAX@Z 000000018000e090     arch_paging.obj
+ 0004:0000009c       $pdata$?setPML4_recursive@@YAPEA_KPEA_K_K@Z 000000018000e09c     arch_paging.obj
+ 0004:000000a8       $pdata$?identity_map_4kb@@YAX_K@Z 000000018000e0a8     arch_paging.obj
+ 0004:000000b4       $pdata$?clear_ptabs@@YAXPEAX@Z 000000018000e0b4     arch_paging.obj
+ 0004:000000c0       $pdata$?paging_map@@YA_NPEAX_K1@Z 000000018000e0c0     arch_paging.obj
+ 0004:000000cc       $pdata$?check_free@@YA_NHPEAX0@Z 000000018000e0cc     arch_paging.obj
+ 0004:000000d8       $pdata$?cls@@YAXXZ         000000018000e0d8     console.obj
+ 0004:000000e4       $pdata$?Cursor@@YA_KE@Z    000000018000e0e4     console.obj
+ 0004:000000f0       $pdata$?SetCurrentCursorPos@@YA_KHH@Z 000000018000e0f0     console.obj
+ 0004:000000fc       $pdata$?SetTextAttribute@@YA_KHH@Z 000000018000e0fc     console.obj
+ 0004:00000108       $pdata$?PutChar@@YAXH@Z    000000018000e108     console.obj
+ 0004:00000114       $pdata$?printf@@YAHPEA_WZZ 000000018000e114     console.obj
+ 0004:00000120       $pdata$?InitializeLib@@YA_KPEAXPEAUEFI_SYSTEM_TABLE@@@Z 000000018000e120     efi.obj
+ 0004:0000012c       $pdata$?Stall@@YAX_K@Z     000000018000e12c     efi.obj
+ 0004:00000138       $pdata$?getError@@YAPEAG_K@Z 000000018000e138     efi.obj
+ 0004:00000144       $pdata$?GetIntegerInput@@YA_KPEAG@Z 000000018000e144     efi.obj
+ 0004:00000150       $pdata$?uefi_puts@@YAXPEBG@Z 000000018000e150     efi.obj
+ 0004:0000015c       $pdata$?GetBootFileSystem@@YA_KPEAXPEAPEAU_EFI_SIMPLE_FILE_SYSTEM_PROTOCOL@@@Z 000000018000e15c     file_io.obj
+ 0004:00000168       $pdata$?CloseFile@@YA_KPEAU_EFI_FILE_PROTOCOL@@@Z 000000018000e168     file_io.obj
+ 0004:00000174       $pdata$?GetFileSize@@YA_KPEAU_EFI_FILE_PROTOCOL@@@Z 000000018000e174     file_io.obj
+ 0004:00000180       $pdata$?ReadFile@@YA_KPEAX_K1PEAU_EFI_FILE_PROTOCOL@@@Z 000000018000e180     file_io.obj
+ 0004:0000018c       $pdata$?WriteFile@@YA_KPEAX_K1PEAU_EFI_FILE_PROTOCOL@@@Z 000000018000e18c     file_io.obj
+ 0004:00000198       $pdata$?GetRootDirectory@@YAPEAEXZ 000000018000e198     file_io.obj
+ 0004:000001a4       $pdata$?LoadFile@@YAPEAEPEA_W@Z 000000018000e1a4     file_io.obj
+ 0004:000001b0       $pdata$?PrepareExitBootService@@YA_KXZ 000000018000e1b0     main.obj
+ 0004:000001bc       $pdata$?guids_match@@YA_NUGUID@@0@Z 000000018000e1bc     main.obj
+ 0004:000001c8       $pdata$?find_acpi_table@@YAPEAXPEAUEFI_SYSTEM_TABLE@@@Z 000000018000e1c8     main.obj
+ 0004:000001d4       $pdata$?get_integer_input@@YA_KPEBD@Z 000000018000e1d4     main.obj
+ 0004:000001e0       $pdata$?strcmp_config@@YAHPEBD0@Z 000000018000e1e0     main.obj
+ 0004:000001ec       $pdata$?strcpy@@YAPEADPEADPEBD@Z 000000018000e1ec     main.obj
+ 0004:000001f8       $pdata$?mbsrtowcs@@YA_KPEA_WPEBD_K@Z 000000018000e1f8     main.obj
+ 0004:00000204       $pdata$?strlen@@YA_KPEBD@Z 000000018000e204     main.obj
+ 0004:00000210       $pdata$?efi_main@@YA_KPEAXPEAUEFI_SYSTEM_TABLE@@@Z 000000018000e210     main.obj
+ 0004:0000021c       $pdata$?AllocatePool@@YAPEAX_K@Z 000000018000e21c     memory.obj
+ 0004:00000228       $pdata$?AllocatePhysical@@YAPEAXKK@Z 000000018000e228     memory.obj
+ 0004:00000234       $pdata$?AllocateZeroPool@@YAPEAXK@Z 000000018000e234     memory.obj
+ 0004:00000240       $pdata$?FreePool@@YAXPEAX@Z 000000018000e240     memory.obj
+ 0004:0000024c       $pdata$load_minifs         000000018000e24c     minifs.obj
+ 0004:00000258       $pdata$initialize_vm       000000018000e258     paging.obj
+ 0004:00000264       $pdata$map_page            000000018000e264     paging.obj
+ 0004:00000270       $pdata$map_page_count      000000018000e270     paging.obj
+ 0004:0000027c       $pdata$_print_cr3          000000018000e27c     paging.obj
+ 0004:00000288       $pdata$?clear@@YAXPEAX@Z   000000018000e288     paging.obj
+ 0004:00000294       $pdata$?CreatePT164@@YAXPEAUPT@@@Z 000000018000e294     paging.obj
+ 0004:000002a0       $pdata$?CreatePhysicalToVirtual@@YAXPEAUPML4@@H@Z 000000018000e2a0     paging.obj
+ 0004:000002ac       $pdata$?get_physical_address@@YAPEA_K_K@Z 000000018000e2ac     paging.obj
+ 0004:000002b8       $pdata$?LibDevicePathToInterface@@YA_KPEAUGUID@@PEAUEFI_DEVICE_PATH_PROTOCOL@@PEAPEAX@Z 000000018000e2b8     path.obj
+ 0004:000002c4       $pdata$?DuplicateDevicePath@@YAPEAUEFI_DEVICE_PATH_PROTOCOL@@PEAU1@@Z 000000018000e2c4     path.obj
+ 0004:000002d0       $pdata$?FileDevicePath@@YAPEAUEFI_DEVICE_PATH_PROTOCOL@@PEAXPEBD@Z 000000018000e2d0     path.obj
+ 0004:000002dc       $pdata$?IsDevicePathEndType@@YAEPEBX@Z 000000018000e2dc     path.obj
+ 0004:000002e8       $pdata$?IsDevicePathEnd@@YAEPEBX@Z 000000018000e2e8     path.obj
+ 0004:000002f4       $pdata$?DevicePathFromHandle@@YAPEAUEFI_DEVICE_PATH_PROTOCOL@@PEAX@Z 000000018000e2f4     path.obj
+ 0004:00000300       $pdata$?DevicePathInstanceCount@@YAKPEAUEFI_DEVICE_PATH_PROTOCOL@@@Z 000000018000e300     path.obj
+ 0004:0000030c       $pdata$?AppendDevicePath@@YAPEAUEFI_DEVICE_PATH_PROTOCOL@@PEAU1@0@Z 000000018000e30c     path.obj
+ 0004:00000318       $pdata$?Load_PEImage@@YAPEAXPEAX@Z 000000018000e318     pe.obj
+ 0004:00000324       $pdata$?GetDLLName@@YAPEBDPEAX@Z 000000018000e324     pe.obj
+ 0004:00000330       $pdata$?link_image_import@@YAXPEAX0@Z 000000018000e330     pe.obj
+ 0004:0000033c       $pdata$?LoadDLLImage@@YAXPEAX@Z 000000018000e33c     pe.obj
+ 0004:00000348       $pdata$?GetStackSize@@YA_KPEAX@Z 000000018000e348     pe.obj
+ 0004:00000354       $pdata$?GetEntryPoint@@YAP6AXPEAU_KERNEL_BOOT_INFO_@@@ZPEAX@Z 000000018000e354     pe.obj
+ 0004:00000360       $pdata$?GetProcAddress@@YAPEAXPEAXPEBD@Z 000000018000e360     pe.obj
+ 0004:0000036c       $pdata$?strcmp@@YAHPEBD0@Z 000000018000e36c     pe.obj
+ 0004:00000378       $pdata$?copy_mem@@YAXPEAX0_K@Z 000000018000e378     pe.obj
+ 0004:00000384       $pdata$?zero_mem@@YAXPEAX_K@Z 000000018000e384     pe.obj
+ 0004:00000390       $pdata$?InitializePmmngr@@YAXUEfiMemoryMap@@PEAX_K@Z 000000018000e390     pmmngr.obj
+ 0004:0000039c       $pdata$?PmmngrAllocate@@YA_KXZ 000000018000e39c     pmmngr.obj
+ 0004:000003a8       $pdata$?PmmngrList@@YAXXZ  000000018000e3a8     pmmngr.obj
+ 0004:000003b4       $pdata$memset              000000018000e3b4     string.obj
+ 0004:000003c0       $pdata$?memcpy@@YAXPEAX0K@Z 000000018000e3c0     string.obj
+ 0004:000003cc       $pdata$?wstrlen@@YAHPEA_W@Z 000000018000e3cc     string.obj
+ 0004:000003d8       $pdata$?wstrsize@@YAKPEA_W@Z 000000018000e3d8     string.obj
+ 0004:000003e4       $pdata$?_memset@@YAXPEAXEK@Z 000000018000e3e4     string.obj
+ 0004:000003f0       $pdata$?_memcpy@@YAXPEAX0K@Z 000000018000e3f0     string.obj
+ 0004:000003fc       $pdata$?is_digit@@YAHH@Z   000000018000e3fc     type.obj
+ 0004:00000408       $pdata$?IterateGraphicsMode@@YAIP6A_NIPEAU_efi_graphics_output_mode_information@@@Z@Z 000000018000e408     video.obj
+ 0004:00000414       $pdata$?GetGraphicsModeInfo@@YA_KIPEAPEAU_efi_graphics_output_mode_information@@PEA_K@Z 000000018000e414     video.obj
+ 0004:00000420       $pdata$?SetGraphicsMode@@YA_K_K@Z 000000018000e420     video.obj
+ 0004:0000042c       $pdata$?ClearScreen@@YAXXZ 000000018000e42c     video.obj
+ 0004:00000438       $pdata$?QueryGOP@@YA_KGG@Z 000000018000e438     video.obj
+ 0004:00000444       $pdata$?puts@@YAXPEBD@Z    000000018000e444     xn_console.obj
+ 0004:00000450       $pdata$?printf_gui@@YAXPEBDZZ 000000018000e450     xn_console.obj
+ 0004:0000045c       $pdata$?strlen_simple@@YA_KPEBD@Z 000000018000e45c     xn_console.obj
+ 0004:00000468       $pdata$?sztoa@@YAPEAD_KPEADH@Z 000000018000e468     xn_console.obj
+ 0004:00000474       $pdata$?InitializeGraphics@@YAXU_FRAMEBUFFER_INFORMATION@@@Z 000000018000e474     xn_gui.obj
+ 0004:00000480       $pdata$?putpixel@@YAX_K0K@Z 000000018000e480     xn_gui.obj
+ 0004:0000048c       $pdata$?gputs_k@@YAXPEBD@Z 000000018000e48c     xn_gui.obj
+ 0004:00000498       $pdata$?DrawRect@@YAXHHHHK@Z 000000018000e498     xn_gui.obj
+ 0004:000004a4       $pdata$?putpixel_ii@@YAX_K0K@Z 000000018000e4a4     xn_gui.obj
+ 0004:000004b0       $pdata$?gputc@@YAXD@Z      000000018000e4b0     xn_gui.obj
+ 0004:000004bc       $pdata$?high_set_bit@@YAD_K@Z 000000018000e4bc     xn_gui.obj
+ 0004:000004c8       $pdata$?low_set_bit@@YAD_K@Z 000000018000e4c8     xn_gui.obj
+ 0004:000004d4       $pdata$?scroll@@YAXXZ      000000018000e4d4     xn_gui.obj

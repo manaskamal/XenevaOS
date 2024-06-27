@@ -158,8 +158,7 @@ int ProcessLoadExec(int proc_id, char* filename,int argc, char** argv) {
 			allocated_argv[i] = argv[i];
 		}
 	}
-	if (argc > 1)
-		SeTextOut("THRSERV: allocatedarg[1] -> %s \r\n", allocated_argv[1]);
+	
 	int status = AuLoadExecToProcess(proc, filename, argc,allocated_argv);
 	if (status == -1) {
 		if (allocated_argv)
@@ -178,6 +177,9 @@ int ProcessLoadExec(int proc_id, char* filename,int argc, char** argv) {
  */
 int ProcessSleep(uint64_t ms) {
 	x64_cli();
+	if (ms <= 0)
+		return -1;
+
 	uint64_t sleep_time = ms * 1000;
 	AuThread* current_thr = AuGetCurrentThread();
 	if (!current_thr)

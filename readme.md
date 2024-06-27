@@ -4,7 +4,7 @@
 
 Xeneva is a GUI based operating system for 64 bit architecture based processors. For x86_64
 bit systems, it can be booted from UEFI environment. The Kernel is known as _'Aurora'_ 
-with hybrid design and the entire operating system is known as _'Xeneva'_.
+with hybrid design and the entire operating system is known as _'Xeneva'_.<br> Please visit [Build Instructions](Docs/BuildInstructions.md) to build the project
 
 ## __Features__ :
 1. ACPI (through acpica)
@@ -48,16 +48,10 @@ _And many more coming soon_
 
 # Building the project
 
-The project is build on Windows environment. It requires Microsoft 
-Visual Studio 2013 or later.
-By downloading the project, once can open the solution file (_.sln_) which
-s configured as per the project requirements.
-_NOTE: The project directories are need to be manually configured for now_
-NASM is used as the main assembler. Setup of nasm under Visual Studio is
-also required.
+The project is build purely on Windows Environment. Please Visit [Build Instructions page ](Docs/BuildInstructions.md) for more information
 
-## __Requirements__ :
-1> Nasm as the main assembler <br>
+## __Requirements__ : <hr>
+1> NASM as the main assembler <br>
 2> Microsoft Visual Studio 2013 or later <br>
 3> GPT configured FAT32 partition ( EFI-System Partition ) to store 
    the Kernel {_'xnkrnl.exe'_} and the bootloader {_'BOOTx64.efi'_}.

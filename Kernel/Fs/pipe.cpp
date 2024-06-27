@@ -132,26 +132,10 @@ size_t AuPipeWrite(AuVFSNode *fs, AuVFSNode *file, uint64_t* buffer, uint32_t le
 AuVFSNode* AuPipeOpen(AuVFSNode *node, char* path){
 	AuPipe* pipe = (AuPipe*)node->device;
 	pipe->refcount++;
+	SeTextOut("Pipe opened refcount -> %d \n", pipe->refcount);
 	return node;
 }
 
-/*
- * AuPipeClose -- closes the pipe
- * @param fs -- Pointer to the pipe 
- * @param file -- Pointer to file, not needed
- */
-int AuPipeClose(AuVFSNode* fs, AuVFSNode* file) {
-	AuPipe* pipe = (AuPipe*)fs->device;
-	pipe->refcount--;
-	if (pipe->refcount == 0) {
-		kfree(pipe->buffer);
-		kfree(pipe->readers_wait_queue);
-		kfree(pipe->writers_wait_queue);
-		kfree(pipe);
-		fs->device = NULL;
-	}
-	return 1;
-}
 
 /*
 * AuPipeFSAddFile -- adds a file/directory
@@ -198,6 +182,86 @@ int AuPipeFSAddFile(AuVFSNode* fs, char* path, AuVFSNode* file) {
 }
 
 /*
+ * AuDevFSRemoveFile -- remove a file from device
+ * file system
+ * @param fs -- pointer to the file system
+ * @param path -- path of the file
+ */
+int AuPipeFSRemoveFile(AuVFSNode* fs, char* path) {
+	AuVFSContainer* entries = (AuVFSContainer*)fs->device;
+	/* now verify the path and add the directory to the list */
+	char* next = strchr(path, '/');
+	if (next)
+		next++;
+
+	AuVFSContainer* first_list = entries;
+	AuVFSNode* node_to_rem = NULL;
+	int index = 0;
+	while (next) {
+		char pathname[16];
+		int i;
+		for (i = 0; i < 16; i++) {
+			if (next[i] == '/' || next[i] == '\0')
+				break;
+			pathname[i] = next[i];
+		}
+		pathname[i] = 0;
+
+		for (int j = 0; j < first_list->childs->pointer; j++) {
+			AuVFSNode* node_ = (AuVFSNode*)list_get_at(first_list->childs, j);
+			if (strcmp(node_->filename, pathname) == 0) {
+				if (node_->flags & FS_FLAG_DIRECTORY)
+					first_list = (AuVFSContainer*)node_->device;
+				else if (node_->flags & FS_FLAG_PIPE) {
+					node_to_rem = node_;
+					index = j;
+				}
+			}
+		}
+
+		next = strchr(next + 1, '/');
+		if (next)
+			next++;
+	}
+
+	/* only files can be removed */
+	if (node_to_rem && node_to_rem->flags & FS_FLAG_DIRECTORY)
+		return -1;
+
+	if (node_to_rem && (node_to_rem->flags & FS_FLAG_DEVICE)) {
+		list_remove(first_list->childs, index);
+		/* here, call node_to_rem->close(node_to_rem) in order
+		 * to inform the device to shutdown itself */
+		if (node_to_rem->close)
+			node_to_rem->close(node_to_rem, NULL);
+		kfree(node_to_rem);
+		return 1;
+	}
+
+	return -1;
+}
+
+/*
+ * AuPipeClose -- closes the pipe
+ * @param fs -- Pointer to the pipe
+ * @param file -- Pointer to file, not needed
+ */
+int AuPipeClose(AuVFSNode* fs, AuVFSNode* file) {
+	AuPipe* pipe = (AuPipe*)fs->device;
+	pipe->refcount--;
+	SeTextOut("Pipe closed refcount -> %d \n", pipe->refcount);
+	if (pipe->refcount == 0) {
+		kfree(pipe->buffer);
+		kfree(pipe->readers_wait_queue);
+		kfree(pipe->writers_wait_queue);
+		kfree(pipe);
+		fs->device = NULL;
+		AuPipeFSRemoveFile(pipeFS, file->filename);
+	}
+	return 1;
+}
+
+/*
  * AuCreatePipe -- creates a new pipe
  * @param name -- name of the pipe
  * @param sz -- Size of the pipe
@@ -230,6 +294,7 @@ int AuCreatePipe(char* name, size_t sz) {
 	pipe->readers_wait_queue = initialize_list();
 	pipe->writers_wait_queue = initialize_list();
 	pipe->size = sz;
+	pipe->refcount = 1;
 
 	strcpy(node->filename, name);
 	node->flags = FS_FLAG_PIPE;

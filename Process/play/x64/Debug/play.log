@@ -1,17 +1,1 @@
-﻿cl : command line warning D9002: ignoring unknown option '/arch:SSE2'
-  play.cpp
-E:\Xeneva Project\Aurora\Process\play\play.cpp(109,23): warning C4244: '=': conversion from 'int' to 'uint16_t', possible loss of data
-E:\Xeneva Project\Aurora\Process\play\play.cpp(121,30): warning C4244: 'initializing': conversion from 'uint32_t' to 'uint16_t', possible loss of data
-E:\Xeneva Project\Aurora\Process\play\play.cpp(122,30): warning C4244: 'initializing': conversion from 'uint32_t' to 'uint16_t', possible loss of data
-E:\Xeneva Project\Aurora\Process\play\play.cpp(125,49): warning C4244: 'argument': conversion from 'int' to 'uint16_t', possible loss of data
-E:\Xeneva Project\Aurora\Process\play\play.cpp(126,43): warning C4244: 'argument': conversion from 'int' to 'uint16_t', possible loss of data
-E:\Xeneva Project\Aurora\Process\play\play.cpp(177,9): warning C4477: 'printf' : format string '%x' requires an argument of type 'unsigned int', but variadic argument 1 has type 'void *'
-E:\Xeneva Project\Aurora\Process\play\play.cpp(177,9): warning C4313: 'printf': '%x' in format string conflicts with argument 1 of type 'void *'
-E:\Xeneva Project\Aurora\Process\play\play.cpp(180,19): warning C4305: '=': truncation from 'double' to 'float'
-E:\Xeneva Project\Aurora\Process\play\play.cpp(169,11): warning C4189: 'alignedSongBuf': local variable is initialized but not referenced
-C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(1363,5): warning MSB8012: TargetPath(E:\Xeneva Project\Aurora\x64\Debug\play.exe) does not match the Linker's OutputFile property value (F:\play.exe). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
-LINK : warning LNK4075: ignoring '/INCREMENTAL' due to '/LTCG' specification
-play.obj : warning LNK4075: ignoring '/EDITANDCONTINUE' due to '/DRIVER' specification
-  LINK : /LTCG specified but no code generation required; remove /LTCG from the link command line to improve linker performance
-LINK : warning LNK4281: undesirable base address 0x600000 for x64 image; set base address above 4GB for best ASLR optimization
-  play.vcxproj -> E:\Xeneva Project\Aurora\x64\Debug\play.exe
+﻿

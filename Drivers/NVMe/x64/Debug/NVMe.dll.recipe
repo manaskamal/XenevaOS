@@ -2,7 +2,7 @@
 <Project>
   <ProjectOutputs>
     <ProjectOutput>
-      <FullPath>E:\Xeneva Project\Aurora\x64\Debug\NVMe.dll</FullPath>
+      <FullPath>E:\Xeneva Project\Aurora\x64\Debug\nvme.dll</FullPath>
     </ProjectOutput>
   </ProjectOutputs>
   <ContentFiles />

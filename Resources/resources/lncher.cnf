@@ -1,0 +1,15 @@
+{[Title]Xeneva Terminal|
+[Icon]/icons/terml.bmp|
+[App]/term.exe}
+
+{[Title]Calculator|
+[Icon]/icons/calcl.bmp|
+[App]/calc.exe}
+
+{[Title]Navigator|
+[Icon]/icons/filel.bmp|
+[App]/file.exe}
+
+{[Title]Accent Player|
+[Icon]/icons/medial.bmp|
+[App]/audplr.exe>

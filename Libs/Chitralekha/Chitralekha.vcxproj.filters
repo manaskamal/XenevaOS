@@ -48,6 +48,9 @@
     <ClInclude Include="widgets\progress.h">
       <Filter>widgets</Filter>
     </ClInclude>
+    <ClInclude Include="audio\audio.h">
+      <Filter>audio</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="chitralekha.cpp" />
@@ -111,6 +114,9 @@
     <ClCompile Include="widgets\defaultprogressbar.cpp">
       <Filter>widgets\styles</Filter>
     </ClCompile>
+    <ClCompile Include="audio\audio.cpp">
+      <Filter>audio</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <NASM Include="_fastcpy.asm" />
@@ -121,6 +127,9 @@
     </Filter>
     <Filter Include="widgets\styles">
       <UniqueIdentifier>{b5b17953-d019-44d0-8c19-c77d99ba6938}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="audio">
+      <UniqueIdentifier>{ff881b15-1059-465a-a98f-c10592ada390}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

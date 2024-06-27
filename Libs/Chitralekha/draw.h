@@ -146,6 +146,8 @@ XE_EXTERN{
 	XE_LIB void ChDrawCircleUnfilled(ChCanvas * canvas, int x, int y, int radius, uint32_t color);
 
 
+	XE_LIB void ChDrawRoundedRect(ChCanvas* canv, int x, int y, int width, int height, uint32_t color, int topleftRadius,
+		int topRightRadius, int bottomRightRadius, int bottomLeftRadius, ChRect* mask);
 #ifdef __cplusplus
 }
 #endif

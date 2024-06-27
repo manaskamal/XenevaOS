@@ -1,10 +1,1 @@
-﻿  crt0.asm
-cl : command line warning D9002: ignoring unknown option '/arch:SSE2'
-  _init.cpp
-C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(1363,5): warning MSB8012: TargetPath(E:\Xeneva Project\Aurora\x64\Debug\Init.exe) does not match the Linker's OutputFile property value (F:\init.exe). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
-LINK : warning LNK4075: ignoring '/INCREMENTAL' due to '/LTCG' specification
-_init.obj : warning LNK4075: ignoring '/EDITANDCONTINUE' due to '/DRIVER' specification
-     Creating library E:\Xeneva Project\Aurora\x64\Debug\Init.lib and object E:\Xeneva Project\Aurora\x64\Debug\Init.exp
-  LINK : /LTCG specified but no code generation required; remove /LTCG from the link command line to improve linker performance
-LINK : warning LNK4281: undesirable base address 0x600000 for x64 image; set base address above 4GB for best ASLR optimization
-  Init.vcxproj -> E:\Xeneva Project\Aurora\x64\Debug\Init.exe
+﻿

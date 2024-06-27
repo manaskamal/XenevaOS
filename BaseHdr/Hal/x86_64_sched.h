@@ -83,12 +83,12 @@ typedef struct _frame_ {
 
 #pragma pack(push,1)
 typedef struct _syscall_param_ {
-	uint64_t param1;    //0xE0
-	uint64_t param2;    //0xE8
-	uint64_t param3;    //0xF0
-	uint64_t param4;    //0xF8
-	uint64_t param5;    //0x100
-	uint64_t param6;    //0x108
+	int64_t param1;    //0xE0
+	int64_t param2;    //0xE8
+	int64_t param3;    //0xF0
+	int64_t param4;    //0xF8
+	int64_t param5;    //0x100
+	int64_t param6;    //0x108
 }AuSyscallParam;
 #pragma pack(pop)
 
