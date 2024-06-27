@@ -50,7 +50,7 @@ _And many more coming soon_
 
 The project is build purely on Windows Environment. Please Visit [Build Instructions page ](Docs/BuildInstructions.md) for more information
 
-## __Requirements__ : <hr>
+## __Requirements__ : 
 1> NASM as the main assembler <br>
 2> Microsoft Visual Studio 2013 or later <br>
 3> GPT configured FAT32 partition ( EFI-System Partition ) to store 
