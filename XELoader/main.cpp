@@ -83,34 +83,35 @@ int XELdrLoadObject(XELoaderObject *obj){
 
 	PSECTION_HEADER secthdr = raw_offset<PSECTION_HEADER>(&nt->OptionalHeader, nt->FileHeader.SizeOfOptionaHeader);
 
-	/*if (nt->OptionalHeader.FileAlignment == 512) {
+	if (nt->OptionalHeader.FileAlignment == 512) {
 		while (!stat->eof) {
 			uint64_t* block = (uint64_t*)_KeMemMap(NULL, 4096, 0, 0, -1, 0);
 			_KeReadFile(file, block, 4096);
 			_KeFileStat(file, stat);
 		}
-	}*/
-	for (size_t i = 0; i < nt->FileHeader.NumberOfSections; ++i) {
-		size_t sect_ld_addr = _image_load_base_ + secthdr[i].VirtualAddress;
-		size_t sect_sz = secthdr[i].VirtualSize;
-		int req_pages = sect_sz / 4096 +
-			((sect_sz % 4096) ? 1 : 0);
-		uint64_t* block = 0;
-		for (int j = 0; j < req_pages; j++) {
-			uint64_t* alloc = (uint64_t*)_KeMemMap(NULL, 4096, 0, 0, -1, 0);
-			memset(alloc, 0, 4096);
-			if (!block)
-				block = alloc;
-			countbytes += 4096;
-			int bytes = _KeReadFile(file, alloc, 4096);
-			ret_bytes += bytes;
-			obj->len += 4096;
-		}
-
-		if (secthdr[i].VirtualSize > secthdr[i].SizeOfRawData)
-			memset(raw_offset<void*>(block, secthdr[i].SizeOfRawData), 0, secthdr[i].VirtualSize - secthdr[i].SizeOfRawData);
 	}
+	else {
+		for (size_t i = 0; i < nt->FileHeader.NumberOfSections; ++i) {
+			size_t sect_ld_addr = _image_load_base_ + secthdr[i].VirtualAddress;
+			size_t sect_sz = secthdr[i].VirtualSize;
+			int req_pages = sect_sz / 4096 +
+				((sect_sz % 4096) ? 1 : 0);
+			uint64_t* block = 0;
+			for (int j = 0; j < req_pages; j++) {
+				uint64_t* alloc = (uint64_t*)_KeMemMap(NULL, 4096, 0, 0, -1, 0);
+				memset(alloc, 0, 4096);
+				if (!block)
+					block = alloc;
+				countbytes += 4096;
+				int bytes = _KeReadFile(file, alloc, 4096);
+				ret_bytes += bytes;
+				obj->len += 4096;
+			}
 
+			if (secthdr[i].VirtualSize > secthdr[i].SizeOfRawData)
+				memset(raw_offset<void*>(block, secthdr[i].SizeOfRawData), 0, secthdr[i].VirtualSize - secthdr[i].SizeOfRawData);
+		}
+	}
 
 	uint8_t* aligned_buf = (uint8_t*)first_ptr;
 

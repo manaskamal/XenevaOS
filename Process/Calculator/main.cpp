@@ -38,6 +38,7 @@
 #include <widgets\button.h>
 #include <widgets\window.h>
 #include <widgets\menu.h>
+#include <keycode.h>
 #include <widgets\menubar.h>
 #include <widgets\msgbox.h>
 #include <string.h>
@@ -321,6 +322,8 @@ void WindowHandleMessage(PostEvent *e) {
 		/* handle key events from deodhai */
 	case DEODHAI_REPLY_KEY_EVENT:{
 									 int code = e->dword;
+									 int c = ChitralekhaKeyToASCII(code);
+									 HandleKeyEvents(c);
 									 memset(e, 0, sizeof(PostEvent));
 									 break;
 	}

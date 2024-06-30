@@ -374,16 +374,14 @@ extern "C" uint64_t x64_get_rsp();
 void x8664SchedulerISR(size_t v, void* param) {
 	x64_cli();
 	interrupt_stack_frame *frame = (interrupt_stack_frame*)param;
-
 	if (_x86_64_sched_enable == false)
 		goto sched_end;
-
+	
 	TSS *ktss = AuPerCPUGetKernelTSS();
 	AuThread* current_thread = AuPerCPUGetCurrentThread();
 	if (save_context(current_thread, ktss) == 0) {
 		current_thread->frame.cr3 = x64_read_cr3();
 		current_thread->frame.kern_esp = x64_get_kstack(ktss);
-		current_thread->frame.rflags = 0x286;
 		/* check for any signal */
 		if (AuCheckSignal(current_thread, frame)) {
 			Signal* sig = AuGetSignal(current_thread);
@@ -409,15 +407,13 @@ void x8664SchedulerISR(size_t v, void* param) {
 		x64_set_kstack(ktss, current_thread->frame.kern_esp);
 
 		x64_ldmxcsr(&current_thread->mxcsr);
-		current_thread->frame.rflags = 0x86;
-
+	
 		execute_idle(current_thread, ktss);
 	}
 
 sched_end:
 	AuInterruptEnd(0);
 }
-
 
 /*
  * AuSchedulerStart -- start the scheduler service

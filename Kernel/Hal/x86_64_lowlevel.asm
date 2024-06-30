@@ -497,12 +497,11 @@ x64_set_rsp:
      mov rsp, rcx
 	 ret
 
-
 ;;------------------------------------------------
 ;; USER MODE SWITCH 
 ;;================================================
 global x64_enter_user ;; (rcx : stack, rdx: entrypoint, r8 : cs, r9 : ss)
-x64_enter_user:
+x64_enter_user:	
     mov rbp, rcx
     pushfq 
 	pop rax
@@ -512,7 +511,6 @@ x64_enter_user:
 	push rax       ;rflags
 	push r8        ;cs
 	push rdx       ;rip
-	cli
 	;swapgs
 	iretq          ;finally enter user mode
 .end:
@@ -532,8 +530,12 @@ x64_lock_test:
      mov rax, 1
 	 ret
 
+global x64_set_rbp
+x64_set_rbp:
+     mov rbp, rcx
+	 ret
 
-global x64_get_rbp:
+global x64_get_rbp
 x64_get_rbp:
      mov rax, rbp
 	 ret

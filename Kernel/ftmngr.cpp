@@ -229,11 +229,13 @@ void FontManagerInitialise() {
 		if (!first_addr)
 			first_addr = addr;
 	}
+	
 	memset(first_addr, 0, fontconf->size);
 	AuVFSNodeRead(fs, fontconf, first_addr, fontconf->size);
 	totalSysFonts = 0;
 	font_conf_data = (uint8_t*)first_addr;
 	totalSysFonts = FontManagerGetFontCount(font_conf_data);
+	SeTextOut("Font Count ->%d \r\n", totalSysFonts);
 	FontManagerIterateFontList(font_conf_data);
 }
 

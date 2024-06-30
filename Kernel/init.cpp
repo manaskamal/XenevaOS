@@ -127,7 +127,7 @@ void _AuMain(KERNEL_BOOT_INFO *info) {
 
 	/* make the kernel standalone*/
 	AuVmmngrBootFree();
-
+	SeTextOut("Boot freeing kernel \r\n");
 	/* Process initialisation begins here */
 	AuStartRootProc();
 	AuSchedulerStart();

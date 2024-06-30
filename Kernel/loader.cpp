@@ -71,7 +71,7 @@ while (stack & (sizeof(type)-1))stack--; \
 }while (0)
 
 
-
+extern "C" void x64_set_rbp(uint64_t rbp);
 
 /*
 * AuProcessEntUser -- main kernel thread call
@@ -82,6 +82,8 @@ void AuProcessEntUser(uint64_t rcx) {
 	x64_cli();
 	AuThread* t = AuGetCurrentThread();
 	AuUserEntry* ent = t->uentry;
+
+	//x64_set_rbp(ent->rsp);
 	/* do all arguments passing stuff, arguments
 	 * are passed as strings to stack
 	 */
@@ -208,7 +210,6 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc,char** argv) {
 	}
 
 	AuMapPageEx(cr3, V2P((size_t)buf), _image_base_, X86_64_PAGING_USER);
-
 	/* this should be memory mapped, i.e, sections should be
 	 * memory mapped
 	 */
@@ -218,12 +219,12 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc,char** argv) {
 		int req_pages = sect_sz / PAGE_SIZE;
 		if ((sect_sz % PAGE_SIZE) != 0)
 			req_pages++;
-
 		for (int j = 0; j < req_pages; j++) {
 			uint64_t *block = (uint64_t*)P2V((uint64_t)AuPmmngrAlloc());/*(buf + secthdr[i].PointerToRawData);*/
 			AuVFSNodeReadBlock(fsys, file, (uint64_t*)V2P((size_t)block));
 			AuMapPageEx(cr3, V2P((size_t)block), sect_ld_addr + static_cast<uint64_t>(j) * PAGE_SIZE, X86_64_PAGING_USER);
 		}
+
 	}
 
 	

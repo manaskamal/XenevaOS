@@ -398,6 +398,7 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 		return 1;
 	}
 
+
 	uint32_t dev_vendid = AuPCIERead(device, PCI_VENDOR_ID, bus, dev, func);
 	uint32_t dev_devid = AuPCIERead(device, PCI_DEVICE_ID, bus, dev, func);
 
@@ -454,7 +455,7 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 
 	HDAInitOutput();
 	HDAInitInputStream();
-
+	SeTextOut("Reseting HDA \r\n");
 
 	uint16_t statests = _aud_inw_(STATESTS);
 	for (int i = 0; i < 15; i++) {

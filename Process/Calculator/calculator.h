@@ -130,5 +130,6 @@ void MultAction(ChWidget* wid, ChWindow* win);
 void SubAction(ChWidget* wid, ChWindow* win);
 void ModAction(ChWidget* wid, ChWindow* win);
 void EqualAction(ChWidget* wid, ChWindow* win);
+void HandleKeyEvents(int keycode);
 
 #endif

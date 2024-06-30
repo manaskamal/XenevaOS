@@ -48,6 +48,9 @@ void ChButtonMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, int button) 
 	if (button && !wid->KillFocus)
 		wid->clicked = true;
 
+	if (button == 0)
+		wid->clicked = false;
+
 	if (wid->KillFocus)
 		wid->clicked = false;
 

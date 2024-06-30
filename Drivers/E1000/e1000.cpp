@@ -348,7 +348,6 @@ AU_EXTERN AU_EXPORT int E1000IOCtl(AuVFSNode* file, int code, void* arg) {
 AU_EXTERN AU_EXPORT int AuDriverMain() {
 
 	AuDisableInterrupt();
-
 	//AuTextOut("Starting e1000 driver \n");
 
 	int bus, dev_, func = 0;

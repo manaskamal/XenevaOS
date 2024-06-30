@@ -115,7 +115,7 @@
       <FixedBaseAddress>false</FixedBaseAddress>
       <DataExecutionPrevention />
       <EntryPointSymbol>_aumain</EntryPointSymbol>
-      <AdditionalOptions>/FILEALIGN:4096 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/filealign:4096 %(AdditionalOptions)</AdditionalOptions>
       <AdditionalLibraryDirectories>..\..\XELoader;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>

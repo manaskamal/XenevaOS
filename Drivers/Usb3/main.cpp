@@ -189,7 +189,7 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 		AuTextOut("[usb]: xhci not found \n");
 		return 1;
 	}
-
+	
 	usb_thread_msg = 0;
 
 	if (AuCheckDevice(0x0C, 0x03, 0x30))
