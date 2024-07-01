@@ -91,7 +91,7 @@ int strcmp(const char* str1, const char* str2){
 
 char *strcpy(char *s1, const char *s2){
 	char *s1_p = s1;
-	while (*s1++ = *s2++);
+	for (; (*s1 = *s2); s1++, s2++);
 	return s1_p;
 }
 

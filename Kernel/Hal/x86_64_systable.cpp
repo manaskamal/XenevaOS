@@ -44,7 +44,7 @@
 #include <Fs\pipe.h>
 #include <Mm\mmap.h>
 #include <net\socket.h>
-
+#include <Fs\vdisk.h>
 
 /* Syscall function format */
 typedef int64_t(*syscall_func) (int64_t param1, int64_t param2, int64_t param3, int64_t
@@ -127,6 +127,8 @@ static void* syscalls[AURORA_MAX_SYSCALL] = {
 	NetAccept, //52
 	NetListen, //53
 	AuCreatePipe, //54
+	AuGetVDiskInfo, //55
+	AuGetVDiskPartitionInfo, //56
 };
 
 //! System Call Handler Functions

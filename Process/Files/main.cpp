@@ -1,7 +1,7 @@
 /**
 * BSD 2-Clause License
 *
-* Copyright (c) 2022, Manas Kamal Choudhury
+* Copyright (c) 2024, Manas Kamal Choudhury
 * All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
@@ -48,6 +48,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <widgets\menu.h>
+#include "partition.h"
 
 ChitralekhaApp *app;
 ChWindow* mainWin;
@@ -68,7 +69,26 @@ FileAddressBar *addressbar;
 
 void DirListItemAction(ChListView* lv, ChListItem* li);
 
+
+/*
+ * FileAddressBarMouseEvent -- handle mouse event for address bar
+ */
 void FileAddressBarMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, int button) {
+	if (wid->hover) {
+		if (wid->ChPaintHandler) {
+			wid->ChPaintHandler(wid, win);
+			ChWindowUpdate(win, wid->x, wid->y, wid->w, wid->h, 0, 1);
+		}
+		wid->hoverPainted = true;
+	}
+
+	if (!wid->hover && wid->hoverPainted) {
+		if (wid->ChPaintHandler) {
+			wid->ChPaintHandler(wid, win);
+			ChWindowUpdate(win, wid->x, wid->y, wid->w, wid->h, 0, 1);
+		}
+		wid->hoverPainted = true;
+	}
 }
 
 
@@ -76,10 +96,14 @@ void FileAddressBarPaintHandler(ChWidget* wid, ChWindow* win) {
 	FileAddressBar* bar = (FileAddressBar*)wid;
 	ChDrawRect(win->canv, bar->base.x, bar->base.y, bar->base.w, bar->base.h, WHITE);
 	ChDrawRectUnfilled(win->canv, bar->base.x, bar->base.y, bar->base.w, bar->base.h, GRAY);
-	ChFontSetSize(win->app->baseFont, 15);
+	ChFontSetSize(win->app->baseFont, 13);
 	ChFontDrawText(win->canv, win->app->baseFont,path, bar->base.x + 10, 
 		bar->base.y + 22,
-		15, BLACK);
+		15,GRAY);
+	if (wid->hover) {
+		ChDrawRectUnfilled(win->canv, bar->base.x, bar->base.y, bar->base.w, bar->base.h, 0xFF4067BA);
+		ChDrawRectUnfilled(win->canv, bar->base.x + 1, bar->base.y + 1, bar->base.w - 2, bar->base.h - 2,0xFF6689D5);
+	}
 }
 
 void FileAddressBarRepaint(FileAddressBar* bar) {
@@ -392,8 +416,8 @@ int main(int argc, char* argv[]){
 	ChMenuButtonAddMenu(edit, help);
 
 
-	ChScrollPane* sp = ChCreateScrollPane(mainWin, 10, 100, mainWin->info->width - 20, mainWin->info->height - 120);
-	lv = ChCreateListView(10, 100, mainWin->info->width - 20, mainWin->info->height - 120);
+	ChScrollPane* sp = ChCreateScrollPane(mainWin, 250, 100, mainWin->info->width - 270, mainWin->info->height - 120);
+	lv = ChCreateListView(250, 100, mainWin->info->width - 270, mainWin->info->height - 120);
 	ChListViewSetScrollpane(lv, sp);
 
 
@@ -401,7 +425,9 @@ int main(int argc, char* argv[]){
 	ChWindowAddWidget(mainWin, (ChWidget*)lv);
 	ChWindowAddWidget(mainWin, (ChWidget*)sp);
 
-	
+	FileManagerPartitionList* partitionList = FileManagerCreatePartitionList(10, 100, mainWin->info->width - (20 + (mainWin->info->width - 250)),
+		mainWin->info->height - 120);
+	ChWindowAddWidget(mainWin, (ChWidget*)partitionList);
 
 	int dirfd = _KeOpenDir("/");
 	
@@ -415,6 +441,10 @@ int main(int argc, char* argv[]){
 	docico = ChCreateIcon();
 	ChIconOpen(docico, "/icons/doc.bmp");
 	ChIconRead(docico);
+
+	ChIcon* drive = ChCreateIcon();
+	ChIconOpen(drive, "/icons/drive.bmp");
+	ChIconRead(drive);
 	
 	RefreshFileView(dirfd, lv);
 
@@ -424,6 +454,45 @@ int main(int argc, char* argv[]){
 
 	_KeCloseFile(dirfd);
 
+	XEVDiskInfo diskInfo;
+	memset(&diskInfo, 0, sizeof(XEVDiskInfo));
+	XEVDiskPartitionInfo partitionInfo;
+	memset(&partitionInfo, 0, sizeof(XEVDiskPartitionInfo));
+	for (int i = 0; i < XE_MAX_STORAGE_DEVICE; i++) {
+		int ret = _KeGetStorageDiskInfo(i, &diskInfo);
+		if (ret == -1)
+			break;
+		printf("\nStorage Found %s \r\n", diskInfo.diskname);
+		printf("Number of Partitions -> %d \r\n", diskInfo.num_partition);
+		for (int j = 0; j < diskInfo.num_partition; j++) {
+			int ret2 = _KeGetStoragePartitionInfo(i, j, &partitionInfo);
+			if (ret2 == -1)
+				break;
+			printf("Partition Mounted to -> %s \r\n", partitionInfo.mountedName);
+			printf("GUID -> %x-%x-%x\r\n", partitionInfo.partitionGUID.Data1, partitionInfo.partitionGUID.Data2,
+				partitionInfo.partitionGUID.Data3);
+			for (int k = 0; k < 8; k++)
+				printf("-%x", partitionInfo.partitionGUID.Data4[k]);
+			FileManagerPartitionButton* pbut = FileManageCreatePartitionButton(partitionList);
+			pbut->icon = drive;
+			pbut->mounted = true;
+			strcpy(pbut->partitionName, diskInfo.diskname);
+			strcpy(pbut->guidString, partitionInfo.mountedName);
+			memset(&partitionInfo, 0, sizeof(XEVDiskPartitionInfo));
+		}
+
+		if (diskInfo.num_partition == 0) {
+			FileManagerPartitionButton* pbut = FileManageCreatePartitionButton(partitionList);
+			pbut->icon = drive;
+			pbut->mounted = false;
+			strcpy(pbut->partitionName, diskInfo.diskname);
+			char buf[32];
+			strcpy(buf,"Raw Drive");
+			memcpy(pbut->guidString, buf, 32);
+		}
+		memset(&diskInfo, 0, sizeof(XEVDiskInfo));
+	}
+
 	ChWindowPaint(mainWin);
 
 	ChWindowBroadcastIcon(app, "/icons/file.bmp");
@@ -431,6 +500,9 @@ int main(int argc, char* argv[]){
 	PostEvent e;
 	memset(&e, 0, sizeof(PostEvent));
 
+
+
+	
 	/* needs to set jmp environment, if a subwindow
 	 * get closed it will jump here for continuing
 	 * the application

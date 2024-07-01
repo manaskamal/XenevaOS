@@ -878,6 +878,34 @@ _KeCreatePipe:
 	syscall
 	ret
 
+global _KeGetStorageDiskInfo
+%ifdef YES_DYNAMIC
+export _KeGetStorageDiskInfo
+%endif
+_KeGetStorageDiskInfo:
+    xor rax,rax
+	mov r12, 55
+	mov r13, rcx
+	mov r14, rdx
+	mov r15, 0,
+	mov rdi, 0
+	syscall
+	ret
+
+global _KeGetStoragePartitionInfo
+%ifdef YES_DYNAMIC
+export _KeGetStoragePartitionInfo
+%endif
+_KeGetStoragePartitionInfo:
+    xor rax, rax
+	mov r12, 56
+	mov r13, rcx
+	mov r14, rdx
+	mov r15, r8
+	mov rdi, 0
+	syscall
+	ret
+
 
 
 

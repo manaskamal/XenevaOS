@@ -27,6 +27,17 @@
 *
 **/
 
+/*
+ * Here, Aurora kernel, the virtual disk service registers
+ * each disk drives present in the system , for example
+ * a system might have two AHCI/SATA drives in two port connected
+ * and one NVMe drive, so there will be total three Virtaul Disk
+ * registered to each connected physical disk, and each 
+ * physical disk will have number of partitions, and the maximum
+ * available partition should be 128 because GPT only supports
+ * 16 partitions
+ */
+
 #ifndef __VDISK_H__
 #define __VDISK_H__
 
@@ -37,6 +48,7 @@
 
 
 #define MAX_VDISK_DEVICES 26
+#define MAX_PARTITION_PER_DISK 128
 
 struct _VDISK_;
 
@@ -66,6 +78,9 @@ typedef struct _VDISK_ {
 	//----------------------//
 	// partition specific   //
 	//----------------------//
+	// Actually it should   //
+	// look like :         //
+	// AuPartition part[MAX_PARTITION_PER_DISK] //
 	uint8_t num_partition;
 	uint64_t startingLBA;
 	uint64_t currentLBA;
@@ -89,6 +104,26 @@ typedef struct _VDISK_ {
 	 * needs to be added like eject
 	 */
 }AuVDisk;
+#pragma pack(pop)
+
+#pragma pack(push,1)
+typedef struct _vdisk_info_ {
+	char diskname[40];
+	char serialNumber[20];
+	uint8_t vDiskID;
+	int num_partition;
+	uint64_t maxBlocks;
+	uint64_t blocksSize;
+}AuVDiskInfo;
+#pragma pack(pop)
+
+#pragma pack(push,1)
+typedef struct _vdisk_partition_info_ {
+	char mountedName[32];
+	GUID partitionGUID;
+	GUID uniqueGUID;
+	uint64_t startingLBA;
+}AuVDiskPartitionInfo;
 #pragma pack(pop)
 
 /*
@@ -137,4 +172,22 @@ AU_EXTERN AU_EXPORT size_t AuVDiskWrite(AuVDisk* disk, uint64_t lba, uint32_t co
 * @param vdisk -- pointer to vdisk
 */
 AU_EXTERN AU_EXPORT void AuVDiskDestroy(AuVDisk *vdisk);
+
+/*
+ * AuGetVDiskInfo -- returns virtual disk information
+ * to application
+ * @param vdiskID -- id of vdisk
+ * @param buffer -- Pointer to memory where to store
+ * the information
+ */
+extern int AuGetVDiskInfo(uint8_t vdiskID, void* buffer);
+
+/*
+ * AuGetVDiskPartitionInfo -- get partition information from
+ * desired virtual disk
+ * @param vdiskID -- virtual disk identifier
+ * @param partitionID -- partition number
+ * @param buffer -- memory pointer where to store the information
+ */
+extern int AuGetVDiskPartitionInfo(uint8_t vdiskID, uint8_t partition_ID, void* buffer);
 #endif

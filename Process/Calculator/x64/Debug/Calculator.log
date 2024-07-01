@@ -1,1 +1,73 @@
-﻿
+﻿cl : command line warning D9002: ignoring unknown option '/arch:SSE2'
+cl : command line warning D9002: ignoring unknown option '/arch:SSE2'
+  actions.cpp
+cl : command line warning D9002: ignoring unknown option '/arch:SSE2'
+  main.cpp
+E:\Xeneva Project\Aurora\Process\Calculator\actions.cpp(33,43): warning C4100: 'win': unreferenced formal parameter
+E:\Xeneva Project\Aurora\Process\Calculator\actions.cpp(33,28): warning C4100: 'wid': unreferenced formal parameter
+E:\Xeneva Project\Aurora\Process\Calculator\actions.cpp(39,41): warning C4100: 'win': unreferenced formal parameter
+E:\Xeneva Project\Aurora\Process\Calculator\actions.cpp(39,26): warning C4100: 'wid': unreferenced formal parameter
+E:\Xeneva Project\Aurora\Process\Calculator\actions.cpp(45,42): warning C4100: 'win': unreferenced formal parameter
+E:\Xeneva Project\Aurora\Process\Calculator\actions.cpp(45,27): warning C4100: 'wid': unreferenced formal parameter
+E:\Xeneva Project\Aurora\Process\Calculator\actions.cpp(51,42): warning C4100: 'win': unreferenced formal parameter
+E:\Xeneva Project\Aurora\Process\Calculator\actions.cpp(51,27): warning C4100: 'wid': unreferenced formal parameter
+E:\Xeneva Project\Aurora\Process\Calculator\actions.cpp(57,43): warning C4100: 'win': unreferenced formal parameter
+E:\Xeneva Project\Aurora\Process\Calculator\actions.cpp(57,28): warning C4100: 'wid': unreferenced formal parameter
+E:\Xeneva Project\Aurora\Process\Calculator\actions.cpp(63,41): warning C4100: 'win': unreferenced formal parameter
+E:\Xeneva Project\Aurora\Process\Calculator\actions.cpp(63,26): warning C4100: 'wid': unreferenced formal parameter
+E:\Xeneva Project\Aurora\Process\Calculator\actions.cpp(69,41): warning C4100: 'win': unreferenced formal parameter
+E:\Xeneva Project\Aurora\Process\Calculator\actions.cpp(69,26): warning C4100: 'wid': unreferenced formal parameter
+E:\Xeneva Project\Aurora\Process\Calculator\actions.cpp(75,43): warning C4100: 'win': unreferenced formal parameter
+E:\Xeneva Project\Aurora\Process\Calculator\main.cpp(76,13): warning C4244: 'initializing': conversion from 'int64_t' to 'int', possible loss of data
+E:\Xeneva Project\Aurora\Process\Calculator\actions.cpp(75,28): warning C4100: 'wid': unreferenced formal parameter
+E:\Xeneva Project\Aurora\Process\Calculator\actions.cpp(81,42): warning C4100: 'win': unreferenced formal parameter
+E:\Xeneva Project\Aurora\Process\Calculator\main.cpp(102,12): warning C4244: 'initializing': conversion from 'int64_t' to 'int', possible loss of data
+E:\Xeneva Project\Aurora\Process\Calculator\actions.cpp(81,27): warning C4100: 'wid': unreferenced formal parameter
+E:\Xeneva Project\Aurora\Process\Calculator\main.cpp(103,12): warning C4244: 'initializing': conversion from 'int64_t' to 'int', possible loss of data
+E:\Xeneva Project\Aurora\Process\Calculator\actions.cpp(87,42): warning C4100: 'win': unreferenced formal parameter
+E:\Xeneva Project\Aurora\Process\Calculator\actions.cpp(87,27): warning C4100: 'wid': unreferenced formal parameter
+E:\Xeneva Project\Aurora\Process\Calculator\main.cpp(111,14): warning C4244: 'initializing': conversion from 'int64_t' to 'int', possible loss of data
+E:\Xeneva Project\Aurora\Process\Calculator\actions.cpp(94,42): warning C4100: 'win': unreferenced formal parameter
+E:\Xeneva Project\Aurora\Process\Calculator\main.cpp(112,14): warning C4244: 'initializing': conversion from 'int64_t' to 'int', possible loss of data
+E:\Xeneva Project\Aurora\Process\Calculator\actions.cpp(94,27): warning C4100: 'wid': unreferenced formal parameter
+E:\Xeneva Project\Aurora\Process\Calculator\actions.cpp(100,46): warning C4100: 'win': unreferenced formal parameter
+E:\Xeneva Project\Aurora\Process\Calculator\actions.cpp(100,31): warning C4100: 'wid': unreferenced formal parameter
+E:\Xeneva Project\Aurora\Process\Calculator\main.cpp(112,7): warning C4189: 'hist_h': local variable is initialized but not referenced
+E:\Xeneva Project\Aurora\Process\Calculator\actions.cpp(131,51): warning C4267: '=': conversion from 'size_t' to 'uint16_t', possible loss of data
+E:\Xeneva Project\Aurora\Process\Calculator\actions.cpp(112,41): warning C4100: 'win': unreferenced formal parameter
+E:\Xeneva Project\Aurora\Process\Calculator\actions.cpp(112,26): warning C4100: 'wid': unreferenced formal parameter
+E:\Xeneva Project\Aurora\Process\Calculator\main.cpp(187,58): warning C4267: '+=': conversion from 'size_t' to 'uint16_t', possible loss of data
+E:\Xeneva Project\Aurora\Process\Calculator\actions.cpp(156,51): warning C4267: '=': conversion from 'size_t' to 'uint16_t', possible loss of data
+E:\Xeneva Project\Aurora\Process\Calculator\actions.cpp(137,44): warning C4100: 'win': unreferenced formal parameter
+E:\Xeneva Project\Aurora\Process\Calculator\actions.cpp(137,29): warning C4100: 'wid': unreferenced formal parameter
+E:\Xeneva Project\Aurora\Process\Calculator\actions.cpp(179,51): warning C4267: '=': conversion from 'size_t' to 'uint16_t', possible loss of data
+E:\Xeneva Project\Aurora\Process\Calculator\actions.cpp(162,42): warning C4100: 'win': unreferenced formal parameter
+E:\Xeneva Project\Aurora\Process\Calculator\main.cpp(284,30): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+E:\Xeneva Project\Aurora\Process\Calculator\actions.cpp(162,27): warning C4100: 'wid': unreferenced formal parameter
+E:\Xeneva Project\Aurora\Process\Calculator\main.cpp(286,28): warning C4244: '+=': conversion from 'int' to 'uint16_t', possible loss of data
+E:\Xeneva Project\Aurora\Process\Calculator\actions.cpp(204,51): warning C4267: '=': conversion from 'size_t' to 'uint16_t', possible loss of data
+E:\Xeneva Project\Aurora\Process\Calculator\actions.cpp(185,41): warning C4100: 'win': unreferenced formal parameter
+E:\Xeneva Project\Aurora\Process\Calculator\actions.cpp(185,26): warning C4100: 'wid': unreferenced formal parameter
+E:\Xeneva Project\Aurora\Process\Calculator\main.cpp(335,40): warning C4244: 'argument': conversion from 'int' to 'char', possible loss of data
+E:\Xeneva Project\Aurora\Process\Calculator\actions.cpp(230,51): warning C4267: '=': conversion from 'size_t' to 'uint16_t', possible loss of data
+E:\Xeneva Project\Aurora\Process\Calculator\actions.cpp(211,41): warning C4100: 'win': unreferenced formal parameter
+E:\Xeneva Project\Aurora\Process\Calculator\actions.cpp(211,26): warning C4100: 'wid': unreferenced formal parameter
+E:\Xeneva Project\Aurora\Process\Calculator\actions.cpp(236,43): warning C4100: 'win': unreferenced formal parameter
+E:\Xeneva Project\Aurora\Process\Calculator\actions.cpp(236,28): warning C4100: 'wid': unreferenced formal parameter
+E:\Xeneva Project\Aurora\Process\Calculator\actions.cpp(328,52): warning C4267: '=': conversion from 'size_t' to 'uint16_t', possible loss of data
+E:\Xeneva Project\Aurora\Process\Calculator\main.cpp(351,6): warning C4189: 'num_buttons_per_row': local variable is initialized but not referenced
+E:\Xeneva Project\Aurora\Process\Calculator\actions.cpp(353,52): warning C4267: '=': conversion from 'size_t' to 'uint16_t', possible loss of data
+E:\Xeneva Project\Aurora\Process\Calculator\main.cpp(438,57): warning C4100: 'ctl': unreferenced formal parameter
+E:\Xeneva Project\Aurora\Process\Calculator\actions.cpp(378,52): warning C4267: '=': conversion from 'size_t' to 'uint16_t', possible loss of data
+E:\Xeneva Project\Aurora\Process\Calculator\main.cpp(449,53): warning C4100: 'win': unreferenced formal parameter
+E:\Xeneva Project\Aurora\Process\Calculator\main.cpp(449,35): warning C4100: 'widget': unreferenced formal parameter
+E:\Xeneva Project\Aurora\Process\Calculator\actions.cpp(403,52): warning C4267: '=': conversion from 'size_t' to 'uint16_t', possible loss of data
+E:\Xeneva Project\Aurora\Process\Calculator\main.cpp(467,20): warning C4018: '<': signed/unsigned mismatch
+E:\Xeneva Project\Aurora\Process\Calculator\actions.cpp(428,52): warning C4267: '=': conversion from 'size_t' to 'uint16_t', possible loss of data
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(1363,5): warning MSB8012: TargetPath(E:\Xeneva Project\Aurora\x64\Debug\calc.exe) does not match the Linker's OutputFile property value (E:\Xeneva Project\Aurora\Build\calc.exe). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
+LINK : warning LNK4075: ignoring '/INCREMENTAL' due to '/LTCG' specification
+actions.obj : warning LNK4075: ignoring '/EDITANDCONTINUE' due to '/DRIVER' specification
+  LINK : /LTCG specified but no code generation required; remove /LTCG from the link command line to improve linker performance
+LINK : warning LNK4281: undesirable base address 0x600000 for x64 image; set base address above 4GB for best ASLR optimization
+  Calculator.vcxproj -> E:\Xeneva Project\Aurora\x64\Debug\calc.exe
+          1 file(s) copied.

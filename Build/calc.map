@@ -1,0 +1,291 @@
+ calc
+
+ Timestamp is 66818f62 (Sun Jun 30 22:31:22 2024)
+
+ Preferred load address is 0000000000600000
+
+ Start         Length     Name                   Class
+ 0001:00000000 00000020H .text                   CODE
+ 0001:00000020 0000274fH .text$mn                CODE
+ 0002:00000000 00000128H .idata$5                DATA
+ 0002:00000128 00000144H .rdata                  DATA
+ 0002:0000026c 00000020H .rdata$voltmd           DATA
+ 0002:0000028c 00000110H .rdata$zzzdbg           DATA
+ 0002:0000039c 000001a4H .xdata                  DATA
+ 0003:00000000 00000020H .bss                    DATA
+ 0004:00000000 000001a4H .pdata                  DATA
+ 0005:00000000 00000002H .msvcjmc                DATA
+ 0006:00000000 00000028H .idata$2                DATA
+ 0006:00000028 00000018H .idata$3                DATA
+ 0006:00000040 00000128H .idata$4                DATA
+ 0006:00000168 00000276H .idata$6                DATA
+
+  Address         Publics by Value              Rva+Base               Lib:Object
+
+ 0000:00000000       __x64_code_ranges_to_entry_points 0000000000000000     <absolute>
+ 0000:00000000       __guard_fids_count         0000000000000000     <absolute>
+ 0000:00000000       __arm64x_redirection_metadata 0000000000000000     <absolute>
+ 0000:00000000       __arm64x_extra_rfe_table   0000000000000000     <absolute>
+ 0000:00000000       __guard_iat_table          0000000000000000     <absolute>
+ 0000:00000000       __hybrid_code_map_count    0000000000000000     <absolute>
+ 0000:00000000       __arm64x_native_entrypoint 0000000000000000     <absolute>
+ 0000:00000000       __guard_eh_cont_count      0000000000000000     <absolute>
+ 0000:00000000       __guard_eh_cont_table      0000000000000000     <absolute>
+ 0000:00000000       __guard_flags              0000000000000000     <absolute>
+ 0000:00000000       __hybrid_code_map          0000000000000000     <absolute>
+ 0000:00000000       __enclave_config           0000000000000000     <absolute>
+ 0000:00000000       __arm64x_redirection_metadata_count 0000000000000000     <absolute>
+ 0000:00000000       __x64_code_ranges_to_entry_points_count 0000000000000000     <absolute>
+ 0000:00000000       __guard_longjmp_table      0000000000000000     <absolute>
+ 0000:00000000       ___safe_se_handler_table   0000000000000000     <absolute>
+ 0000:00000000       __AbsoluteZero             0000000000000000     <absolute>
+ 0000:00000000       __guard_iat_count          0000000000000000     <absolute>
+ 0000:00000000       __guard_longjmp_count      0000000000000000     <absolute>
+ 0000:00000000       __guard_fids_table         0000000000000000     <absolute>
+ 0000:00000000       __dynamic_value_reloc_table 0000000000000000     <absolute>
+ 0000:00000000       ___safe_se_handler_count   0000000000000000     <absolute>
+ 0000:00000000       __hybrid_auxiliary_iat     0000000000000000     <absolute>
+ 0000:00000000       __guard_check_icall_a64n_fptr 0000000000000000     <absolute>
+ 0000:00000000       __arm64x_extra_rfe_table_size 0000000000000000     <absolute>
+ 0000:00000000       __hybrid_auxiliary_iat_copy 0000000000000000     <absolute>
+ 0000:00000000       __ImageBase                0000000000600000     <linker-defined>
+ 0001:00000000       __chkstk                   0000000000600400     xecrt:crt0.obj
+ 0001:00000001       _xemain                    0000000000600401     xecrt:crt0.obj
+ 0001:00000020       ?AddAction@@YAXPEAU_ChWidget_@@PEAU_chwin_@@@Z 0000000000600420 f   actions.obj
+ 0001:00000120       ?AllClearAction@@YAXPEAU_ChWidget_@@PEAU_chwin_@@@Z 0000000000600520 f   actions.obj
+ 0001:000001a0       ?BackAction@@YAXPEAU_ChWidget_@@PEAU_chwin_@@@Z 00000000006005a0 f   actions.obj
+ 0001:000001f0       ?DivideAction@@YAXPEAU_ChWidget_@@PEAU_chwin_@@@Z 00000000006005f0 f   actions.obj
+ 0001:000002f0       ?EightAction@@YAXPEAU_ChWidget_@@PEAU_chwin_@@@Z 00000000006006f0 f   actions.obj
+ 0001:00000340       ?EqualAction@@YAXPEAU_ChWidget_@@PEAU_chwin_@@@Z 0000000000600740 f   actions.obj
+ 0001:000003c0       ?FiveAction@@YAXPEAU_ChWidget_@@PEAU_chwin_@@@Z 00000000006007c0 f   actions.obj
+ 0001:00000410       ?FourAction@@YAXPEAU_ChWidget_@@PEAU_chwin_@@@Z 0000000000600810 f   actions.obj
+ 0001:00000460       ?HandleKeyEvents@@YAXH@Z   0000000000600860 f   actions.obj
+ 0001:00000b70       ?ModAction@@YAXPEAU_ChWidget_@@PEAU_chwin_@@@Z 0000000000600f70 f   actions.obj
+ 0001:00000c70       ?MultAction@@YAXPEAU_ChWidget_@@PEAU_chwin_@@@Z 0000000000601070 f   actions.obj
+ 0001:00000d50       ?NineAction@@YAXPEAU_ChWidget_@@PEAU_chwin_@@@Z 0000000000601150 f   actions.obj
+ 0001:00000da0       ?OneAction@@YAXPEAU_ChWidget_@@PEAU_chwin_@@@Z 00000000006011a0 f   actions.obj
+ 0001:00000df0       ?SevenAction@@YAXPEAU_ChWidget_@@PEAU_chwin_@@@Z 00000000006011f0 f   actions.obj
+ 0001:00000e40       ?SixAction@@YAXPEAU_ChWidget_@@PEAU_chwin_@@@Z 0000000000601240 f   actions.obj
+ 0001:00000e90       ?SubAction@@YAXPEAU_ChWidget_@@PEAU_chwin_@@@Z 0000000000601290 f   actions.obj
+ 0001:00000f90       ?ThreeAction@@YAXPEAU_ChWidget_@@PEAU_chwin_@@@Z 0000000000601390 f   actions.obj
+ 0001:00000fe0       ?TwoAction@@YAXPEAU_ChWidget_@@PEAU_chwin_@@@Z 00000000006013e0 f   actions.obj
+ 0001:00001030       ?ZeroAction@@YAXPEAU_ChWidget_@@PEAU_chwin_@@@Z 0000000000601430 f   actions.obj
+ 0001:00001080       __JustMyCode_Default       0000000000601480 f i actions.obj
+ 0001:00001080       __CheckForDebuggerJustMyCode 0000000000601480 f i actions.obj
+ 0001:00001090       ?CalcAddDigit@@YAXPEAU_display_widget_@@H@Z 0000000000601490 f   main.obj
+ 0001:00001120       ?CalcAddToHistory@@YAXPEAU_display_widget_@@PEADE@Z 0000000000601520 f   main.obj
+ 0001:00001240       ?CalcAllClear@@YAXPEAU_display_widget_@@@Z 0000000000601640 f   main.obj
+ 0001:00001280       ?CalcClearHistory@@YAXPEAU_display_widget_@@@Z 0000000000601680 f   main.obj
+ 0001:000012c0       ?CalcClearOutput@@YAXPEAU_display_widget_@@@Z 00000000006016c0 f   main.obj
+ 0001:00001300       ?CalcCreateDisplay@@YAPEAU_display_widget_@@HHHH@Z 0000000000601700 f   main.obj
+ 0001:00001400       ?CalcDisplayDraw@@YAXPEAU_ChWidget_@@PEAU_chwin_@@@Z 0000000000601800 f   main.obj
+ 0001:00001820       ?CalcRemoveDigit@@YAXPEAU_display_widget_@@@Z 0000000000601c20 f   main.obj
+ 0001:000018b0       ?CalcUpdateDisplay@@YAXPEAU_display_widget_@@@Z 0000000000601cb0 f   main.obj
+ 0001:00001920       ?CalculatorAboutBox@@YAXPEAU_ChWidget_@@PEAU_chwin_@@@Z 0000000000601d20 f   main.obj
+ 0001:00001980       ?CalculatorClose@@YAXPEAU_chwin_@@PEAU_global_ctrl_@@@Z 0000000000601d80 f   main.obj
+ 0001:000019b0       ?CalculatorCreateButtonGird@@YAXPEAU_chwin_@@@Z 0000000000601db0 f   main.obj
+ 0001:00002130       ?CalculatorGetMainDisplay@@YAPEAU_display_widget_@@XZ 0000000000602530 f   main.obj
+ 0001:00002160       ?CalculatorProcess@@YAXPEAU_display_widget_@@@Z 0000000000602560 f   main.obj
+ 0001:00002340       ?WindowHandleMessage@@YAXPEAU_post_event_@@@Z 0000000000602740 f   main.obj
+ 0001:000024a0       main                       00000000006028a0 f   main.obj
+ 0001:0000269d       strlen                     0000000000602a9d f   XEClib:XEClib.dll
+ 0001:000026a3       atoi                       0000000000602aa3 f   XEClib:XEClib.dll
+ 0001:000026a9       itoa_s                     0000000000602aa9 f   XEClib:XEClib.dll
+ 0001:000026af       printf                     0000000000602aaf f   XEClib:XEClib.dll
+ 0001:000026b5       _KePauseThread             0000000000602ab5 f   XEClib:XEClib.dll
+ 0001:000026bb       _KeFileIoControl           0000000000602abb f   XEClib:XEClib.dll
+ 0001:000026c1       strcmp                     0000000000602ac1 f   XEClib:XEClib.dll
+ 0001:000026c7       strcpy                     0000000000602ac7 f   XEClib:XEClib.dll
+ 0001:000026cd       memset                     0000000000602acd f   XEClib:XEClib.dll
+ 0001:000026d3       malloc                     0000000000602ad3 f   XEClib:XEClib.dll
+ 0001:000026d9       setjmp                     0000000000602ad9 f   XEClib:XEClib.dll
+ 0001:000026df       ChColorDrawHorizontalGradient 0000000000602adf f   chlkha:chlkha.dll
+ 0001:000026e5       ChDrawRect                 0000000000602ae5 f   chlkha:chlkha.dll
+ 0001:000026eb       ChDrawRectUnfilled         0000000000602aeb f   chlkha:chlkha.dll
+ 0001:000026f1       ChInitialiseFont           0000000000602af1 f   chlkha:chlkha.dll
+ 0001:000026f7       ChFontSetSize              0000000000602af7 f   chlkha:chlkha.dll
+ 0001:000026fd       ChFontDrawText             0000000000602afd f   chlkha:chlkha.dll
+ 0001:00002703       ChFontGetWidth             0000000000602b03 f   chlkha:chlkha.dll
+ 0001:00002709       ChFontGetHeight            0000000000602b09 f   chlkha:chlkha.dll
+ 0001:0000270f       ChitralekhaStartApp        0000000000602b0f f   chlkha:chlkha.dll
+ 0001:00002715       list_get_at                0000000000602b15 f   chlkha:chlkha.dll
+ 0001:0000271b       ChCreateWindow             0000000000602b1b f   chlkha:chlkha.dll
+ 0001:00002721       ChWindowBroadcastIcon      0000000000602b21 f   chlkha:chlkha.dll
+ 0001:00002727       ChWindowPaint              0000000000602b27 f   chlkha:chlkha.dll
+ 0001:0000272d       ChWindowUpdate             0000000000602b2d f   chlkha:chlkha.dll
+ 0001:00002733       ChWindowHandleMouse        0000000000602b33 f   chlkha:chlkha.dll
+ 0001:00002739       ChWindowHandleFocus        0000000000602b39 f   chlkha:chlkha.dll
+ 0001:0000273f       ChWindowAddWidget          0000000000602b3f f   chlkha:chlkha.dll
+ 0001:00002745       ChGetWindowByHandle        0000000000602b45 f   chlkha:chlkha.dll
+ 0001:0000274b       ChWindowCloseWindow        0000000000602b4b f   chlkha:chlkha.dll
+ 0001:00002751       ChCreateButton             0000000000602b51 f   chlkha:chlkha.dll
+ 0001:00002757       ChitralekhaKeyToASCII      0000000000602b57 f   chlkha:chlkha.dll
+ 0001:0000275d       ChCreateMessageBox         0000000000602b5d f   chlkha:chlkha.dll
+ 0001:00002763       ChMessageBoxShow           0000000000602b63 f   chlkha:chlkha.dll
+ 0001:00002769       _KeProcessExit             0000000000602b69 f   XEClib:XEClib.dll
+ 0002:00000000       __imp_strlen               0000000000602c00     XEClib:XEClib.dll
+ 0002:00000008       __imp_atoi                 0000000000602c08     XEClib:XEClib.dll
+ 0002:00000010       __imp_itoa_s               0000000000602c10     XEClib:XEClib.dll
+ 0002:00000018       __imp_printf               0000000000602c18     XEClib:XEClib.dll
+ 0002:00000020       __imp__KePauseThread       0000000000602c20     XEClib:XEClib.dll
+ 0002:00000028       __imp__KeFileIoControl     0000000000602c28     XEClib:XEClib.dll
+ 0002:00000030       __imp_strcmp               0000000000602c30     XEClib:XEClib.dll
+ 0002:00000038       __imp_strcpy               0000000000602c38     XEClib:XEClib.dll
+ 0002:00000040       __imp_memset               0000000000602c40     XEClib:XEClib.dll
+ 0002:00000048       __imp_malloc               0000000000602c48     XEClib:XEClib.dll
+ 0002:00000050       __imp_setjmp               0000000000602c50     XEClib:XEClib.dll
+ 0002:00000058       __imp__KeProcessExit       0000000000602c58     XEClib:XEClib.dll
+ 0002:00000060       \177XEClib_NULL_THUNK_DATA 0000000000602c60     XEClib:XEClib.dll
+ 0002:00000068       __imp_ChDrawRectUnfilled   0000000000602c68     chlkha:chlkha.dll
+ 0002:00000070       __imp_ChInitialiseFont     0000000000602c70     chlkha:chlkha.dll
+ 0002:00000078       __imp_ChFontSetSize        0000000000602c78     chlkha:chlkha.dll
+ 0002:00000080       __imp_ChFontDrawText       0000000000602c80     chlkha:chlkha.dll
+ 0002:00000088       __imp_ChDrawRect           0000000000602c88     chlkha:chlkha.dll
+ 0002:00000090       __imp_ChColorDrawHorizontalGradient 0000000000602c90     chlkha:chlkha.dll
+ 0002:00000098       __imp_ChFontGetHeight      0000000000602c98     chlkha:chlkha.dll
+ 0002:000000a0       __imp_ChitralekhaStartApp  0000000000602ca0     chlkha:chlkha.dll
+ 0002:000000a8       __imp_list_get_at          0000000000602ca8     chlkha:chlkha.dll
+ 0002:000000b0       __imp_ChCreateWindow       0000000000602cb0     chlkha:chlkha.dll
+ 0002:000000b8       __imp_ChWindowBroadcastIcon 0000000000602cb8     chlkha:chlkha.dll
+ 0002:000000c0       __imp_ChWindowPaint        0000000000602cc0     chlkha:chlkha.dll
+ 0002:000000c8       __imp_ChWindowUpdate       0000000000602cc8     chlkha:chlkha.dll
+ 0002:000000d0       __imp_ChWindowHandleMouse  0000000000602cd0     chlkha:chlkha.dll
+ 0002:000000d8       __imp_ChWindowHandleFocus  0000000000602cd8     chlkha:chlkha.dll
+ 0002:000000e0       __imp_ChWindowAddWidget    0000000000602ce0     chlkha:chlkha.dll
+ 0002:000000e8       __imp_ChGetWindowByHandle  0000000000602ce8     chlkha:chlkha.dll
+ 0002:000000f0       __imp_ChWindowCloseWindow  0000000000602cf0     chlkha:chlkha.dll
+ 0002:000000f8       __imp_ChCreateButton       0000000000602cf8     chlkha:chlkha.dll
+ 0002:00000100       __imp_ChitralekhaKeyToASCII 0000000000602d00     chlkha:chlkha.dll
+ 0002:00000108       __imp_ChCreateMessageBox   0000000000602d08     chlkha:chlkha.dll
+ 0002:00000110       __imp_ChMessageBoxShow     0000000000602d10     chlkha:chlkha.dll
+ 0002:00000118       __imp_ChFontGetWidth       0000000000602d18     chlkha:chlkha.dll
+ 0002:00000120       \177chlkha_NULL_THUNK_DATA 0000000000602d20     chlkha:chlkha.dll
+ 0002:00000128       ??_C@_03MLGDJBNI@?$CI?$CL?$CJ@ 0000000000602d28     main.obj
+ 0002:0000012c       ??_C@_03MKKBPLOP@?$CI?$CK?$CJ@ 0000000000602d2c     main.obj
+ 0002:00000130       ??_C@_03MMGKDJAE@?$CI?1?$CJ@ 0000000000602d30     main.obj
+ 0002:00000134       ??_C@_03MBPNLMNC@?$CI?$CF?$CJ@ 0000000000602d34     main.obj
+ 0002:00000138       ??_C@_03MPOOONGK@?$CI?9?$CJ@ 0000000000602d38     main.obj
+ 0002:0000013c       ??_C@_01CLKCMJKC@?5@       0000000000602d3c     main.obj
+ 0002:00000140       ??_C@_0BC@OFABHCAJ@Can?8t?5divide?5by?50@ 0000000000602d40     main.obj
+ 0002:00000158       ??_C@_0BC@LAKEMOL@Key?5code?5?9?$DO?5?$CFd?5?$AN?6@ 0000000000602d58     main.obj
+ 0002:0000016c       ??_C@_02KKLCNNNM@AC@       0000000000602d6c     main.obj
+ 0002:00000170       ??_C@_04FEOMFELI@Back@     0000000000602d70     main.obj
+ 0002:00000178       ??_C@_01FGNFDNOH@?$CF@     0000000000602d78     main.obj
+ 0002:0000017c       ??_C@_01KMDKNFGN@?1@       0000000000602d7c     main.obj
+ 0002:00000180       ??_C@_01COCBENDE@7@        0000000000602d80     main.obj
+ 0002:00000184       ??_C@_01KJLJFBPL@8@        0000000000602d84     main.obj
+ 0002:00000188       ??_C@_01LAKCGALK@9@        0000000000602d88     main.obj
+ 0002:0000018c       ??_C@_01NBENCBCI@?$CK@     0000000000602d8c     main.obj
+ 0002:00000190       ??_C@_01FAMBOPH@4@         0000000000602d90     main.obj
+ 0002:00000194       ??_C@_01BMBHCPLG@5@        0000000000602d94     main.obj
+ 0002:00000198       ??_C@_01DHDKHMHF@6@        0000000000602d98     main.obj
+ 0002:0000019c       ??_C@_01JOAMLHOP@?9@       0000000000602d9c     main.obj
+ 0002:000001a0       ??_C@_01HIHLOKLC@1@        0000000000602da0     main.obj
+ 0002:000001a4       ??_C@_01FDFGLJHB@2@        0000000000602da4     main.obj
+ 0002:000001a8       ??_C@_01EKENIIDA@3@        0000000000602da8     main.obj
+ 0002:000001ac       ??_C@_01MIFGBAGJ@?$CL@     0000000000602dac     main.obj
+ 0002:000001b0       ??_C@_03LKLDFDOO@?$CL?1?9@ 0000000000602db0     main.obj
+ 0002:000001b4       ??_C@_01GBGANLPD@0@        0000000000602db4     main.obj
+ 0002:000001b8       ??_C@_01LFCBOECM@?4@       0000000000602db8     main.obj
+ 0002:000001bc       ??_C@_01NEMOKFLO@?$DN@     0000000000602dbc     main.obj
+ 0002:000001c0       ??_C@_0CC@DFEFJEEK@This?5program?5is?5part?5of?5Xeneva?5@ 0000000000602dc0     main.obj
+ 0002:000001e8       ??_C@_0BG@MOMOGHMC@About?5Calculator?5v1?40@ 0000000000602de8     main.obj
+ 0002:00000200       ??_C@_06JGIPHBBD@?9about@  0000000000602e00     main.obj
+ 0002:00000208       ??_C@_0CA@OGADECKG@Calculator?5v1?40?5for?5Xeneva?5OS?5?6@ 0000000000602e08     main.obj
+ 0002:00000228       ??_C@_0L@NOCPEFKJ@Calculator@ 0000000000602e28     main.obj
+ 0002:00000238       ??_C@_0BA@EECAEFAI@?1icons?1calc?4bmp@ 0000000000602e38     main.obj
+ 0002:00000248       ??_C@_07IJHPCLIM@Calibri@  0000000000602e48     main.obj
+ 0002:0000026c       __volatile_metadata        0000000000602e6c     <linker-defined>
+ 0003:00000000       ?app@@3PEAU_ChApp_@@EA     0000000000603200     main.obj
+ 0003:00000008       ?mainWin@@3PEAU_chwin_@@EA 0000000000603208     main.obj
+ 0003:00000010       ?dispFont@@3PEAU_ch_font_@@EA 0000000000603210     main.obj
+ 0003:00000018       ?mainDisp@@3PEAU_display_widget_@@EA 0000000000603218     main.obj
+ 0006:00000000       __IMPORT_DESCRIPTOR_XEClib 0000000000603800     XEClib:XEClib.dll
+ 0006:00000014       __IMPORT_DESCRIPTOR_chlkha 0000000000603814     chlkha:chlkha.dll
+ 0006:00000028       __NULL_IMPORT_DESCRIPTOR   0000000000603828     XEClib:XEClib.dll
+
+ entry point at        0001:00000001
+
+ Static symbols
+
+ 0000:00000000       .debug$S                   0000000000600000     XEClib:XEClib.dll
+ 0000:00000000       .debug$S                   0000000000600000     XEClib:XEClib.dll
+ 0000:00000000       .debug$S                   0000000000600000     XEClib:XEClib.dll
+ 0000:00000000       .debug$S                   0000000000600000     XEClib:XEClib.dll
+ 0000:00000000       .debug$S                   0000000000600000     XEClib:XEClib.dll
+ 0000:00000000       .debug$S                   0000000000600000     XEClib:XEClib.dll
+ 0000:00000000       .debug$S                   0000000000600000     XEClib:XEClib.dll
+ 0000:00000000       .debug$S                   0000000000600000     XEClib:XEClib.dll
+ 0000:00000000       .debug$S                   0000000000600000     XEClib:XEClib.dll
+ 0000:00000000       .debug$S                   0000000000600000     XEClib:XEClib.dll
+ 0000:00000000       .debug$S                   0000000000600000     XEClib:XEClib.dll
+ 0000:00000000       .debug$S                   0000000000600000     XEClib:XEClib.dll
+ 0000:00000000       .debug$S                   0000000000600000     chlkha:chlkha.dll
+ 0000:00000000       .debug$S                   0000000000600000     chlkha:chlkha.dll
+ 0000:00000000       .debug$S                   0000000000600000     chlkha:chlkha.dll
+ 0000:00000000       .debug$S                   0000000000600000     chlkha:chlkha.dll
+ 0000:00000000       .debug$S                   0000000000600000     chlkha:chlkha.dll
+ 0000:00000000       .debug$S                   0000000000600000     chlkha:chlkha.dll
+ 0000:00000000       .debug$S                   0000000000600000     chlkha:chlkha.dll
+ 0000:00000000       .debug$S                   0000000000600000     chlkha:chlkha.dll
+ 0000:00000000       .debug$S                   0000000000600000     chlkha:chlkha.dll
+ 0000:00000000       .debug$S                   0000000000600000     chlkha:chlkha.dll
+ 0000:00000000       .debug$S                   0000000000600000     chlkha:chlkha.dll
+ 0000:00000000       .debug$S                   0000000000600000     chlkha:chlkha.dll
+ 0000:00000000       .debug$S                   0000000000600000     chlkha:chlkha.dll
+ 0000:00000000       .debug$S                   0000000000600000     chlkha:chlkha.dll
+ 0000:00000000       .debug$S                   0000000000600000     chlkha:chlkha.dll
+ 0000:00000000       .debug$S                   0000000000600000     chlkha:chlkha.dll
+ 0000:00000000       .debug$S                   0000000000600000     chlkha:chlkha.dll
+ 0000:00000000       .debug$S                   0000000000600000     chlkha:chlkha.dll
+ 0000:00000000       .debug$S                   0000000000600000     chlkha:chlkha.dll
+ 0000:00000000       .debug$S                   0000000000600000     chlkha:chlkha.dll
+ 0000:00000000       .debug$S                   0000000000600000     chlkha:chlkha.dll
+ 0000:00000000       .debug$S                   0000000000600000     chlkha:chlkha.dll
+ 0000:00000000       .debug$S                   0000000000600000     chlkha:chlkha.dll
+ 0001:00000af4       $LN44                      0000000000600ef4     actions.obj
+ 0001:00000b3c       $LN43                      0000000000600f3c     actions.obj
+ 0002:0000039c       $unwind$?SevenAction@@YAXPEAU_ChWidget_@@PEAU_chwin_@@@Z 0000000000602f9c     actions.obj
+ 0002:000003a8       $unwind$?SixAction@@YAXPEAU_ChWidget_@@PEAU_chwin_@@@Z 0000000000602fa8     actions.obj
+ 0002:000003b4       $unwind$?FiveAction@@YAXPEAU_ChWidget_@@PEAU_chwin_@@@Z 0000000000602fb4     actions.obj
+ 0002:000003c0       $unwind$?FourAction@@YAXPEAU_ChWidget_@@PEAU_chwin_@@@Z 0000000000602fc0     actions.obj
+ 0002:000003cc       $unwind$?ThreeAction@@YAXPEAU_ChWidget_@@PEAU_chwin_@@@Z 0000000000602fcc     actions.obj
+ 0002:000003d8       $unwind$?TwoAction@@YAXPEAU_ChWidget_@@PEAU_chwin_@@@Z 0000000000602fd8     actions.obj
+ 0002:000003e4       $unwind$?OneAction@@YAXPEAU_ChWidget_@@PEAU_chwin_@@@Z 0000000000602fe4     actions.obj
+ 0002:000003f0       $unwind$?EightAction@@YAXPEAU_ChWidget_@@PEAU_chwin_@@@Z 0000000000602ff0     actions.obj
+ 0002:000003fc       $unwind$?NineAction@@YAXPEAU_ChWidget_@@PEAU_chwin_@@@Z 0000000000602ffc     actions.obj
+ 0002:00000408       $unwind$?ZeroAction@@YAXPEAU_ChWidget_@@PEAU_chwin_@@@Z 0000000000603008     actions.obj
+ 0002:00000414       $unwind$?BackAction@@YAXPEAU_ChWidget_@@PEAU_chwin_@@@Z 0000000000603014     actions.obj
+ 0002:00000420       $unwind$?AllClearAction@@YAXPEAU_ChWidget_@@PEAU_chwin_@@@Z 0000000000603020     actions.obj
+ 0002:0000042c       $unwind$?AddAction@@YAXPEAU_ChWidget_@@PEAU_chwin_@@@Z 000000000060302c     actions.obj
+ 0002:00000438       $unwind$?DivideAction@@YAXPEAU_ChWidget_@@PEAU_chwin_@@@Z 0000000000603038     actions.obj
+ 0002:00000444       $unwind$?MultAction@@YAXPEAU_ChWidget_@@PEAU_chwin_@@@Z 0000000000603044     actions.obj
+ 0002:00000450       $unwind$?SubAction@@YAXPEAU_ChWidget_@@PEAU_chwin_@@@Z 0000000000603050     actions.obj
+ 0002:0000045c       $unwind$?ModAction@@YAXPEAU_ChWidget_@@PEAU_chwin_@@@Z 000000000060305c     actions.obj
+ 0002:00000468       $unwind$?EqualAction@@YAXPEAU_ChWidget_@@PEAU_chwin_@@@Z 0000000000603068     actions.obj
+ 0002:00000474       $unwind$?HandleKeyEvents@@YAXH@Z 0000000000603074     actions.obj
+ 0002:00000480       $unwind$?CalculatorGetMainDisplay@@YAPEAU_display_widget_@@XZ 0000000000603080     main.obj
+ 0002:0000048c       $unwind$?CalcUpdateDisplay@@YAXPEAU_display_widget_@@@Z 000000000060308c     main.obj
+ 0002:00000498       $unwind$?CalcAddDigit@@YAXPEAU_display_widget_@@H@Z 0000000000603098     main.obj
+ 0002:000004a4       $unwind$?CalcRemoveDigit@@YAXPEAU_display_widget_@@@Z 00000000006030a4     main.obj
+ 0002:000004b0       $unwind$?CalcAllClear@@YAXPEAU_display_widget_@@@Z 00000000006030b0     main.obj
+ 0002:000004bc       $unwind$?CalculatorProcess@@YAXPEAU_display_widget_@@@Z 00000000006030bc     main.obj
+ 0002:000004c8       $unwind$?CalcAddToHistory@@YAXPEAU_display_widget_@@PEADE@Z 00000000006030c8     main.obj
+ 0002:000004d4       $unwind$?CalcClearHistory@@YAXPEAU_display_widget_@@@Z 00000000006030d4     main.obj
+ 0002:000004e0       $unwind$?CalcClearOutput@@YAXPEAU_display_widget_@@@Z 00000000006030e0     main.obj
+ 0002:000004ec       $unwind$?CalcDisplayDraw@@YAXPEAU_ChWidget_@@PEAU_chwin_@@@Z 00000000006030ec     main.obj
+ 0002:000004f8       $unwind$?CalcCreateDisplay@@YAPEAU_display_widget_@@HHHH@Z 00000000006030f8     main.obj
+ 0002:00000504       $unwind$?WindowHandleMessage@@YAXPEAU_post_event_@@@Z 0000000000603104     main.obj
+ 0002:00000510       $unwind$?CalculatorCreateButtonGird@@YAXPEAU_chwin_@@@Z 0000000000603110     main.obj
+ 0002:0000051c       $unwind$?CalculatorClose@@YAXPEAU_chwin_@@PEAU_global_ctrl_@@@Z 000000000060311c     main.obj
+ 0002:00000528       $unwind$?CalculatorAboutBox@@YAXPEAU_ChWidget_@@PEAU_chwin_@@@Z 0000000000603128     main.obj
+ 0002:00000534       $unwind$main               0000000000603134     main.obj
+ 0005:00000000       __B8AAD5F7_actions@cpp     0000000000603600     actions.obj
+ 0005:00000001       __D07A1010_main@cpp        0000000000603601     main.obj
+ 0006:000001e6       .idata$6                   00000000006039e6     XEClib:XEClib.dll
+ 0006:000003c0       .idata$6                   0000000000603bc0     chlkha:chlkha.dll
+
+ Exports
+
+  ordinal    name
+

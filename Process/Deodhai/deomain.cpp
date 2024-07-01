@@ -1047,9 +1047,9 @@ void ComposeFrame(ChCanvas *canvas) {
 						int update_r_y = r_y + diffy;
 
 						for (int j = 0; j < k_h; j++) {
-							_fastcpy((canvas->buffer + (static_cast<int64_t>(k_y) + j) * canvas->canvasWidth + k_x),
-								(win->backBuffer + (static_cast<int64_t>(update_r_y) + j) * info->width + update_r_x), 
-								static_cast<int64_t>(k_w) * 4);
+							_fastcpy((canvas->buffer + (static_cast<uint64_t>(k_y) + j) * canvas->canvasWidth + k_x),
+								(win->backBuffer + (static_cast<uint64_t>(update_r_y) + j) * info->width + update_r_x), 
+								static_cast<uint64_t>(k_w) * 4);
 						}
 						AddDirtyClip(k_x, k_y, k_w, k_h);
 					}

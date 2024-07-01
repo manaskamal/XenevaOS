@@ -20,6 +20,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="partition.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="partition.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{CB840DBD-BC3E-45DA-80A1-FF92E0DB3463}</ProjectGuid>

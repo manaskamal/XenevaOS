@@ -55,6 +55,41 @@ XE_EXTERN{
 #define XENEVA_STDOUT 1
 #define XENEVA_STDERR 2
 
+/*  number of supported storage device*/
+#define XE_MAX_STORAGE_DEVICE 26
+/* number of partitions in each storage device */
+#define XE_MAX_PARTITION     128
+
+#pragma pack (push,1)
+typedef struct _GUID {
+	uint32_t Data1;
+	uint16_t Data2;
+	uint16_t Data3;
+	uint8_t Data4[8];
+}GUID;
+#pragma pack(pop)
+
+
+#pragma pack(push,1)
+typedef struct _disk_info_ {
+	char diskname[40];
+	char serialNumber[20];
+	uint8_t vDiskID;
+	int num_partition;
+	uint64_t maxBlocks;
+	uint64_t blocksSize;
+}XEVDiskInfo;
+#pragma pack(pop)
+
+#pragma pack(push,1)
+typedef struct _disk_partition_info_ {
+	char mountedName[32];
+	GUID partitionGUID;
+	GUID uniqueGUID;
+	uint64_t startingLBA;
+}XEVDiskPartitionInfo;
+#pragma pack(pop)
+
 #pragma pack(push,1)
 	typedef struct _XEFileStatus_ {
 		uint8_t filemode; //mode of the file
@@ -105,6 +140,8 @@ XE_EXTERN{
 	XE_LIB int _KeReadDir(int dirfd, void* dirent);
 	XE_LIB int _KeFileSetOffset(int fd, size_t offset);
 	XE_LIB int _KeCreatePipe(char* name, size_t sz);
+	XE_LIB int _KeGetStorageDiskInfo(uint8_t diskID, void* buffer);
+	XE_LIB int _KeGetStoragePartitionInfo(uint8_t diskID, uint8_t partitionID, void* buffer);
 #ifdef __cplusplus
 }
 #endif

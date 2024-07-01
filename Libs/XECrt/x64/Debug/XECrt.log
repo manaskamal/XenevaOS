@@ -1,1 +1,7 @@
-﻿
+﻿  crt0.asm
+cl : command line warning D9002: ignoring unknown option '/arch:SSE2'
+  crt.cpp
+E:\Xeneva Project\Aurora\Libs\XECrt\crt.cpp(36,20): warning C4267: 'argument': conversion from 'size_t' to 'unsigned int', possible loss of data
+E:\Xeneva Project\Aurora\Libs\XECrt\crt.cpp(40,20): warning C4267: 'argument': conversion from 'size_t' to 'unsigned int', possible loss of data
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(1545,5): warning MSB8012: TargetPath(E:\Xeneva Project\Aurora\x64\Debug\XECrt.lib) does not match the Library's OutputFile property value (E:\Xeneva Project\Aurora\Libs\XECrt\xecrt.lib). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Lib.OutputFile).
+  XECrt.vcxproj -> E:\Xeneva Project\Aurora\x64\Debug\XECrt.lib

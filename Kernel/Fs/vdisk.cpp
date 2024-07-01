@@ -34,6 +34,7 @@
 #include <aucon.h>
 #include <Hal\serial.h>
 #include <Mm/pmmngr.h>
+#include <Hal/x86_64_hal.h>
 #include <string.h>
 #include <Fs/Fat/fat.h>
 
@@ -118,7 +119,7 @@ void AuVDiskRegisterPartition(AuVDisk* vdisk){
 		SeTextOut("%c", aligned_buf[i]);
 
 	uint64_t part_lba = header->part_table_lba;
-
+	vdisk->num_partition = header->num_part_entries;
 	for (int i = 0; i < header->num_part_entries; i++) {
 		memset(buffer, 0, 4096);
 		vdisk->Read(vdisk, part_lba, 1, buffer);
@@ -160,6 +161,7 @@ void AuVDiskRegisterPartition(AuVDisk* vdisk){
 
 	AuTextOut("\n");
 	AuPmmngrFree(buffer);
+
 }
 
 /*
@@ -177,7 +179,6 @@ void AuVDiskRegister(AuVDisk* disk) {
 		disk->serialNumber);
 
 	disk->__VDiskID = _index;
-	disk->num_partition = 1;
 	/* Register a partition and initialise the file system*/
 	AuVDiskRegisterPartition(disk);
 }
@@ -198,4 +199,70 @@ void AuVDiskDestroy(AuVDisk *vdisk) {
 
 	VdiskArray[_index] = NULL;
 	kfree(vdisk);
+}
+
+
+/*
+ * AuGetVDiskInfo -- returns virtual disk information
+ * to application
+ * @param vdiskID -- id of vdisk
+ * @param buffer -- Pointer to memory where to store
+ * the information
+ */
+int AuGetVDiskInfo(uint8_t vdiskID, void* buffer) {
+	x64_cli();
+	if (!buffer)
+		return -1;
+	AuVDisk* vdisk = VdiskArray[vdiskID];
+	if (!vdisk)
+		return -1;
+	AuVDiskInfo* info = (AuVDiskInfo*)buffer;
+	strcpy(info->diskname, vdisk->diskname);
+	strcpy(info->serialNumber, vdisk->serialNumber);
+	info->vDiskID = vdiskID;
+	info->maxBlocks = vdisk->max_blocks;
+	info->blocksSize = vdisk->blockSize;
+	info->num_partition = vdisk->num_partition;
+	return 0;
+}
+
+/*
+ * AuGetVDiskPartitionInfo -- get partition information from
+ * desired virtual disk 
+ * @param vdiskID -- virtual disk identifier
+ * @param partitionID -- partition number
+ * @param buffer -- memory pointer where to store the information
+ */
+int AuGetVDiskPartitionInfo(uint8_t vdiskID,uint8_t partition_ID, void* buffer) {
+	/*
+	 *FUTURE WORK:
+	 * VDisk *disk = VdiskArray[vdiskID];
+	 * AuVDiskPartitionInfo* pinfo = (AuVDiskPartitionInfo*)buffer;
+	 * strcpy(pinfo->mountedName, disk->partitions[partition_ID].mountedName);
+	 * pinfo->startingLBA = disk->partition[partition_ID].startingLBA;
+	 */
+	x64_cli();
+	if (!buffer)
+		return -1;
+	AuVDisk* vdisk = VdiskArray[vdiskID];
+	if (!vdisk)
+		return -1;
+	if (!vdisk->fsys)
+		return 1;
+	AuVDiskPartitionInfo* pinfo = (AuVDiskPartitionInfo*)buffer;
+	strcpy(pinfo->mountedName, vdisk->fsys->filename);
+	SeTextOut("FILE SYSTEM NAME -> %s \r\n", vdisk->fsys->filename);
+	pinfo->partitionGUID.Data1 = vdisk->part_guid.Data1;
+	pinfo->partitionGUID.Data2 = vdisk->part_guid.Data2;
+	pinfo->partitionGUID.Data3 = vdisk->part_guid.Data3;
+	for (int i = 0; i < 8; i++)
+		pinfo->partitionGUID.Data4[i] = vdisk->part_guid.Data4[i];
+
+	pinfo->uniqueGUID.Data1 = vdisk->part_unique_guid.Data1;
+	pinfo->uniqueGUID.Data2 = vdisk->part_unique_guid.Data2;
+	pinfo->uniqueGUID.Data3 = vdisk->part_unique_guid.Data3;
+	for (int i = 0; i < 8; i++)
+		pinfo->uniqueGUID.Data4[i] = vdisk->part_unique_guid.Data4[i];
+	pinfo->startingLBA = vdisk->startingLBA;
+	return 0;
 }

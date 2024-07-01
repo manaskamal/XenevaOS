@@ -605,6 +605,7 @@ AuVFSNode* FatInitialise(AuVDisk *vdisk, char* mountname){
 	fsys->get_blockfor = FatGetClusterFor;
 	fsys->opendir = FatOpenDir;
 	fsys->read_dir = FatDirectoryRead;
+	vdisk->fsys = fsys;
 	AuVFSAddFileSystem(fsys);
 	AuVFSRegisterRoot(fsys);
 
