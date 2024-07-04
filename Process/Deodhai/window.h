@@ -43,6 +43,8 @@
 #define WINDOW_FLAG_BLOCKED (1<<6)
 #define WINDOW_FLAG_MESSAGEBOX (1<<7)
 #define WINDOW_FLAG_DIALOGBOX (1<<8)
+#define WINDOW_FLAG_ANIMATION_FADE_IN (1<<9)
+#define WINDOW_FLAG_ANIMATION_FADE_OUT (1<<10)
 
 #ifdef SHADOW_ENABLED
 #define SHADOW_SIZE 11
@@ -69,7 +71,7 @@ typedef struct _win_info_ {
 #pragma pack(pop)
 
 typedef struct _win_ {
-	uint8_t flags;
+	uint16_t flags;
 	uint16_t ownerId;
 	uint32_t* backBuffer;
 	uint32_t* sharedInfo;
@@ -83,7 +85,7 @@ typedef struct _win_ {
 	int resz_b;
 	bool markForClose;
 	uint8_t animFrameCount;
-	double animAlphaVal;
+	int animAlphaVal;
 	bool animdirection; 
 	char* title;
 	list_t* popupList;

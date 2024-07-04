@@ -24,6 +24,7 @@
     </NASM>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="animation.h" />
     <ClInclude Include="backdirty.h" />
     <ClInclude Include="clip.h" />
     <ClInclude Include="cursor.h" />
@@ -35,6 +36,7 @@
     <ClInclude Include="_fastcpy.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="animation.cpp" />
     <ClCompile Include="backdirty.cpp" />
     <ClCompile Include="clip.cpp" />
     <ClCompile Include="cursor.cpp" />

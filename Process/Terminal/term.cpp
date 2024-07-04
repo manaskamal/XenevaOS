@@ -60,6 +60,7 @@ bool _escape_seq = false;
 bool _seq_csi = false;
 bool _cursor_blink = 0;
 bool _update_terminal_ = false;
+bool _first_time = false;
 char* escBuf;
 int shell_id;
 uint32_t backColor;
@@ -127,12 +128,15 @@ void TerminalDrawCell(int x, int y, bool dirty) {
  */
 void TerminalDrawAllCells() {
 	for (int x = 0; x < ws_col; x++) {
-		for (int y = 0; y < ws_row; y++){
-			TerminalDrawCell(x,y, 0);
+		for (int y = 0; y < ws_row; y++) {
+			TerminalDrawCell(x, y, 0);
 		}
 	}
-	ChWindowUpdate(win, 0, 26, win->info->width-1, win->info->height - 26, 0, 1);
-	_KeProcessSleep(160);
+
+	
+	ChWindowUpdate(win, 0, 26, win->info->width - 1, win->info->height - 26, 0, 1);
+
+	_KeProcessSleep(1600);
 }
 
 
@@ -527,13 +531,20 @@ void TerminalThread() {
 		 * cells 
 		 */
 		if ((bytes_read > 0) || _update_terminal_) {
-			TerminalDrawAllCells();
-			TerminalDrawCursor();
+			if (_first_time) {
+				ChWindowPaint(win);
+				_KeProcessSleep(1000);
+				_first_time = false;
+			}
+			else {
+				TerminalDrawAllCells();
+			}
+			//TerminalDrawCursor();
 			bytes_read = 0;
 			_update_terminal_ = false;
 		}
 
-		_KeProcessSleep(100); //
+		_KeProcessSleep(500); //
 	}
 }
 
@@ -585,8 +596,7 @@ int main(int argc, char* arv[]){
 	memset(term_buffer, 0x0, static_cast<uint64_t>(ws_col) * ws_row * sizeof(TermCell));
 
 	
-	ChWindowPaint(win);
-	_KeProcessSleep(10);
+
 
 	int term_id = _KeGetProcessID();
 	/* try loading the shell process */
@@ -601,6 +611,8 @@ int main(int argc, char* arv[]){
 	_KeSetFileToProcess(slave_fd, 2, term_id);
 
 	_KeProcessLoadExec(shell_id, "/xesh.exe", 0, 0);
+
+	_first_time = true;
 
 	int thread_idx = _KeCreateThread(TerminalThread, "asyncthr");
 	PostEvent e;

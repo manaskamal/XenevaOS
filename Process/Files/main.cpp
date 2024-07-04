@@ -377,7 +377,7 @@ void EnterClicked(ChWidget* wid, ChWindow* win) {
 */
 int main(int argc, char* argv[]){
 	app = ChitralekhaStartApp(argc, argv);
-	mainWin = ChCreateWindow(app, WINDOW_FLAG_MOVABLE, "Navigator", 100, 100, 660, 
+	mainWin = ChCreateWindow(app, WINDOW_FLAG_MOVABLE, "Files", 100, 100, 660, 
 		500);
 
 	win2 = NULL;
@@ -416,8 +416,8 @@ int main(int argc, char* argv[]){
 	ChMenuButtonAddMenu(edit, help);
 
 
-	ChScrollPane* sp = ChCreateScrollPane(mainWin, 250, 100, mainWin->info->width - 270, mainWin->info->height - 120);
-	lv = ChCreateListView(250, 100, mainWin->info->width - 270, mainWin->info->height - 120);
+	ChScrollPane* sp = ChCreateScrollPane(mainWin, 170, 100, mainWin->info->width - (170+2), mainWin->info->height - 120);
+	lv = ChCreateListView(170, 100, mainWin->info->width - (170+2), mainWin->info->height - 120);
 	ChListViewSetScrollpane(lv, sp);
 
 
@@ -425,7 +425,7 @@ int main(int argc, char* argv[]){
 	ChWindowAddWidget(mainWin, (ChWidget*)lv);
 	ChWindowAddWidget(mainWin, (ChWidget*)sp);
 
-	FileManagerPartitionList* partitionList = FileManagerCreatePartitionList(10, 100, mainWin->info->width - (20 + (mainWin->info->width - 250)),
+	FileManagerPartitionList* partitionList = FileManagerCreatePartitionList(10, 100, mainWin->info->width - (20 + (mainWin->info->width - 170)),
 		mainWin->info->height - 120);
 	ChWindowAddWidget(mainWin, (ChWidget*)partitionList);
 

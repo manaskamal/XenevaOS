@@ -50,6 +50,7 @@
 #include "clip.h"
 #include "backdirty.h"
 #include "draw.h"
+#include "animation.h"
 #include "popup.h"
 #include <sys\socket.h>
 #include <boxblur.h>
@@ -72,8 +73,7 @@ uint32_t winHandles;
 uint32_t* CursorBack;
 bool _window_update_all_;
 bool _window_broadcast_mouse_;
-bool _cursor_update_;
-bool _cursor_drawback_;
+bool _skip_disable_;
 bool _always_on_top_update;
 bool _window_moving_;
 Window* focusedWin;
@@ -96,7 +96,6 @@ uint64_t startSubTime;
  */
 void DeodhaiInitialiseData() {
 	_window_update_all_ = false;
-	_cursor_update_ = false;
 	_window_broadcast_mouse_ = false;
 	focusedWin = focusedLast = topWin = dragWin = NULL;
 	reszWin = rootWin = lastWin = NULL;
@@ -426,16 +425,18 @@ void DeodhaiWindowHide(Window* win) {
 	WinSharedInfo *info = (WinSharedInfo*)win->sharedInfo;
 	BackDirtyAdd(info->x, info->y, info->width, info->height);
 	if (info->hide) {
+		/* UNHIDE the window , if its already hidden */
 		info->hide = false;
 		focusedWin = win;
 	}
 	else{
+		/* HIDE the window, if its not hidden */
 		info->hide = true;
+		focusedWin = NULL;
 	}
 
 	_window_update_all_ = true;
 	_always_on_top_update = true;
-	_cursor_update_ = true;
 }
 
 
@@ -563,12 +564,15 @@ void ComposeFrame(ChCanvas *canvas) {
 
 	for (Window* win = rootWin; win != NULL; win = win->next) {
 		WinSharedInfo* info = (WinSharedInfo*)win->sharedInfo;
-		if (info->hide)
+
+	
+		if (info->hide) 
 			continue;
+			
 		/*
 		 * Check for small area updates !! not entire window 
 		 */
-		if (info->rect_count > 0) {
+		if ((info->rect_count > 0) && (info->dirty)) {
 			for (int k = 0; k < info->rect_count; k++) {
 				int64_t r_x = info->rect[k].x;
 				int64_t r_y = info->rect[k].y;
@@ -663,11 +667,6 @@ void ComposeFrame(ChCanvas *canvas) {
 
 
 				if (clipCount == 0 && !overlap ) {
-					if ((currentCursor->xpos >= (info->x + r_x) && currentCursor->xpos < (info->x + r_x + r_w)) &&
-						(currentCursor->ypos >=(info->y + r_y) && currentCursor->ypos < (info->y + r_y + r_h))){
-						_cursor_update_ = true;
-						_cursor_drawback_ = true;
-					}
 					for (int i = 0; i < r_h; i++) {
 						void* canvas_mem = (canvas->buffer + (info->y + r_y + i) * canvas->canvasWidth + info->x + r_x);
 						void* win_mem = (win->backBuffer + (r_y + i) * info->width + r_x);
@@ -713,6 +712,7 @@ void ComposeFrame(ChCanvas *canvas) {
 				}
 
 				clipCount = 0;
+				info->rect[k].x = 0, info->rect[k].y = 0, info->rect[k].w = 0, info->rect[k].h = 0;
 			}
 			info->rect_count = 0;
 			info->dirty = 0;
@@ -763,175 +763,189 @@ void ComposeFrame(ChCanvas *canvas) {
 			if (((static_cast<int64_t>(info->y) - SHADOW_SIZE) + shad_h) >= canvas->screenHeight)
 				shad_h = static_cast<int64_t>(canvas->screenHeight) - (static_cast<int64_t>(info->y) - SHADOW_SIZE);
 #endif
-
-			Rect r1;
-			Rect r2;
-			r1.x = winx - SHADOW_SIZE;
-			r1.y = winy - SHADOW_SIZE;
-			r1.w = width + SHADOW_SIZE*2;
-			r1.h = height + SHADOW_SIZE*2;
-
-			Rect clip[100];
-			memset(clip, 0, sizeof(Rect)* 100);
-			int clipCount = 0;
-			Window* clipWin = NULL;
-			WinSharedInfo* clipInfo = NULL;
-			
-			for (clipWin = win; clipWin != NULL; clipWin = clipWin->next) {
-				clipInfo = (WinSharedInfo*)clipWin->sharedInfo;
-				if (clipWin == win)
-					continue;
-				r2.x = clipInfo->x;
-				r2.y = clipInfo->y;
-				r2.w = clipInfo->width;
-				r2.h = clipInfo->height;
-
-				if (ClipCheckIntersect(&r1, &r2)) {
-					ClipCalculateRect(&r1, &r2, clip, &clipCount);
-				}
+			if ((win->flags & WINDOW_FLAG_ANIMATED)) {
+				if (win->flags & WINDOW_FLAG_ANIMATION_FADE_IN) 
+					FadeInAnimationWindow(canvas, win, info, winx, winy, shad_w, shad_h);
+				
+				if (win->flags & WINDOW_FLAG_ANIMATION_FADE_OUT)
+					FadeOutAnimationWindow(canvas, win, info, winx, winy, shad_w, shad_h);
 			}
-			
-			/* always on top list */
-			for (clipWin = alwaysOnTop; clipWin != NULL; clipWin = clipWin->next) {
-				clipInfo = (WinSharedInfo*)clipWin->sharedInfo;
-				if (clipWin == win)
-					continue;
-				r2.x = clipInfo->x;
-				r2.y = clipInfo->y;
-				r2.w = clipInfo->width;
-				r2.h = clipInfo->height;
+			else {
+				Rect r1;
+				Rect r2;
+				r1.x = winx - SHADOW_SIZE;
+				r1.y = winy - SHADOW_SIZE;
+				r1.w = width + SHADOW_SIZE * 2;
+				r1.h = height + SHADOW_SIZE * 2;
 
-				if (ClipCheckIntersect(&r1, &r2)) {
-					ClipCalculateRect(&r1, &r2, clip, &clipCount);
-				}
-			}
+				Rect clip[100];
+				memset(clip, 0, sizeof(Rect) * 100);
+				int clipCount = 0;
+				Window* clipWin = NULL;
+				WinSharedInfo* clipInfo = NULL;
 
-			if (focusedWin == win) {
-				if (_shadow_update) {
-#ifdef SHADOW_ENABLED
-					for (int64_t j = 0; j < shad_h; j++) {
-						for (int64_t q = 0; q < shad_w; q++) {	
-							*(uint32_t*)(canvas->buffer + ((winy - SHADOW_SIZE) + j) * canvas->canvasWidth + ((winx - SHADOW_SIZE) + q)) =
-								ChColorAlphaBlend2(*(uint32_t*)(canvas->buffer + ((winy - SHADOW_SIZE) + j)* canvas->canvasWidth + ((winx - SHADOW_SIZE) + q)),
-								*(uint32_t*)(win->shadowBuffers + j * (static_cast<int64_t>(info->width) + SHADOW_SIZE*2) + q));
-						}
+				for (clipWin = win; clipWin != NULL; clipWin = clipWin->next) {
+					clipInfo = (WinSharedInfo*)clipWin->sharedInfo;
+					if (clipWin == win)
+						continue;
+					
+					r2.x = clipInfo->x;
+					r2.y = clipInfo->y;
+					r2.w = clipInfo->width;
+					r2.h = clipInfo->height;
+
+					if (ClipCheckIntersect(&r1, &r2)) {
+						ClipCalculateRect(&r1, &r2, clip, &clipCount);
 					}
-#endif
-					_shadow_update = false;
 				}
-			}
-			
-			for (int64_t i = 0; i < height; i++) {
-				_fastcpy(canvas->buffer + (winy + i) * canvas->canvasWidth + winx,
-					win->backBuffer + (0 + i) * info->width + 0,width * 4);
-			}
 
-			/*
-			 * Here we check the moving bit because, if any behind 
-			 * windows is not intersected by moving window, so during
-			 * _window_update_all_ process its clipped rect count will
-			 * be zero, so moving window prevents its from redrawing
-			 * non intersected window with clip count = 0
-			 */
-			if (clipCount == 0 && !_window_moving_) {
-				AddDirtyClip(winx - SHADOW_SIZE, winy - SHADOW_SIZE, shad_w, shad_h);
-			}
+				/* always on top list */
+				for (clipWin = alwaysOnTop; clipWin != NULL; clipWin = clipWin->next) {
+					clipInfo = (WinSharedInfo*)clipWin->sharedInfo;
+					if (clipWin == win)
+						continue;
+					r2.x = clipInfo->x;
+					r2.y = clipInfo->y;
+					r2.w = clipInfo->width;
+					r2.h = clipInfo->height;
 
-			for (int k = 0; k < clipCount; k++) {
-				int k_x = clip[k].x;
-				int k_y = clip[k].y;
-				int k_w = clip[k].w;
-				int k_h = clip[k].h;
+					if (ClipCheckIntersect(&r1, &r2)) {
+						ClipCalculateRect(&r1, &r2, clip, &clipCount);
+					}
+				}
 
-				if (k_x < 0)
-					k_x = 0;
-				if (k_y < 0)
-					k_y = 0;
-				if ((k_x + k_w) >= canvas->screenWidth)
-					k_w = canvas->screenWidth - k_x;
-				if ((k_y + k_h) >= canvas->screenHeight)
-					k_h = canvas->screenHeight - k_y;
+				if (focusedWin == win) {
+					if (_shadow_update) {
+#ifdef SHADOW_ENABLED
+						for (int64_t j = 0; j < shad_h; j++) {
+							for (int64_t q = 0; q < shad_w; q++) {
+								*(uint32_t*)(canvas->buffer + ((winy - SHADOW_SIZE) + j) * canvas->canvasWidth + ((winx - SHADOW_SIZE) + q)) =
+									ChColorAlphaBlend2(*(uint32_t*)(canvas->buffer + ((winy - SHADOW_SIZE) + j) * canvas->canvasWidth + ((winx - SHADOW_SIZE) + q)),
+										*(uint32_t*)(win->shadowBuffers + j * (static_cast<int64_t>(info->width) + SHADOW_SIZE * 2) + q));
+							}
+						}
+#endif
+						_shadow_update = false;
+					}
+				}
 
-				AddDirtyClip(k_x, k_y, k_w, k_h);
-				clipCount = 0;
+				for (int64_t i = 0; i < height; i++) {
+					_fastcpy(canvas->buffer + (winy + i) * canvas->canvasWidth + winx,
+						win->backBuffer + (0 + i) * info->width + 0, width * 4);
+				}
+
+				/*
+				 * Here we check the moving bit because, if any behind
+				 * windows is not intersected by moving window, so during
+				 * _window_update_all_ process its clipped rect count will
+				 * be zero, so moving window prevents its from redrawing
+				 * non intersected window with clip count = 0
+				 */
+				if (clipCount == 0 && !_window_moving_) {
+					AddDirtyClip(winx - SHADOW_SIZE, winy - SHADOW_SIZE, shad_w, shad_h);
+				}
+
+				for (int k = 0; k < clipCount; k++) {
+					int k_x = clip[k].x;
+					int k_y = clip[k].y;
+					int k_w = clip[k].w;
+					int k_h = clip[k].h;
+
+					if (k_x < 0)
+						k_x = 0;
+					if (k_y < 0)
+						k_y = 0;
+					if ((k_x + k_w) >= canvas->screenWidth)
+						k_w = canvas->screenWidth - k_x;
+					if ((k_y + k_h) >= canvas->screenHeight)
+						k_h = canvas->screenHeight - k_y;
+
+					AddDirtyClip(k_x, k_y, k_w, k_h);
+					clipCount = 0;
+				}
+				if (!(win->flags & WINDOW_FLAG_ANIMATED))
+					if (info->updateEntireWindow)
+						info->updateEntireWindow = 0;
+
+				/* render all popup windows of this window */
+				for (int w = 0; w < win->popupList->pointer; w++) {
+					PopupWindow* pw = (PopupWindow*)list_get_at(win->popupList, w);
+					if (pw->shwin->dirty) {
+						int64_t popup_x = pw->shwin->x;
+						int64_t popup_y = pw->shwin->y;
+						int64_t popup_w = pw->shwin->w;
+						int64_t popup_h = pw->shwin->h;
+
+						int64_t shad_w = popup_w + SHADOW_SIZE * 2;
+						int64_t shad_h = popup_h + SHADOW_SIZE * 2;
+
+
+
+						if (pw->shadowUpdate) {
+#ifdef SHADOW_ENABLED
+							for (int j = 0; j < shad_h; j++) {
+								for (int i = 0; i < shad_w; i++) {
+									*(uint32_t*)(canvas->buffer + ((popup_y - SHADOW_SIZE) + j) * canvas->canvasWidth + ((popup_x - SHADOW_SIZE) + i)) =
+										ChColorAlphaBlend2(*(uint32_t*)(canvas->buffer + ((popup_y - SHADOW_SIZE) + j) * canvas->canvasWidth + ((popup_x - SHADOW_SIZE) + i)),
+											*(uint32_t*)(pw->shadowBuffers + j * (pw->shwin->w + SHADOW_SIZE * 2) + i));
+								}
+							}
+#endif
+							pw->shadowUpdate = false;
+						}
+
+
+						if (pw->shwin->alpha) {
+							for (int64_t j = 0; j < popup_h; j++) {
+								for (int64_t i = 0; i < popup_w; i++) {
+									*(uint32_t*)(canvas->buffer + (popup_y + j) * canvas->canvasWidth + (popup_x + i)) =
+										ChColorAlphaBlend2(*(uint32_t*)(canvas->buffer + (popup_y + j) * canvas->canvasWidth + (popup_x + i)),
+											*(uint32_t*)(pw->buffer + j * pw->shwin->w + i));
+								}
+							}
+						}
+						else {
+							for (int64_t i = 0; i < popup_h; i++) {
+								_fastcpy(canvas->buffer + (popup_y + i) * canvas->canvasWidth + popup_x,
+									pw->buffer + i * pw->shwin->w + 0, popup_w * 4);
+							}
+						}
+
+						AddDirtyClip(popup_x - SHADOW_SIZE, popup_y - SHADOW_SIZE, shad_w, shad_h);
+						pw->shwin->dirty = 0;
+						pw->hidden = false;
+						//_cursor_update_ = true;
+					}
+					if (pw->shwin->hide) {
+						int px = pw->shwin->x;
+						int py = pw->shwin->y;
+						int pwidth = pw->shwin->w;
+						int pheight = pw->shwin->h;
+						pw->shwin->dirty = 0;
+						pw->shwin->hide = false;
+						pw->shadowUpdate = true;
+						pw->hidden = true;
+						///* add dirty rectagle into the window inorder to
+						// * repaint the occluded area
+						// */
+						info->rect[info->rect_count].x = max((px - SHADOW_SIZE), info->x) - min((px - SHADOW_SIZE), info->x);
+						info->rect[info->rect_count].y = max((py - SHADOW_SIZE), info->y) - min((py - SHADOW_SIZE), info->y);
+						info->rect[info->rect_count].w = pwidth + SHADOW_SIZE * 2;
+						info->rect[info->rect_count].h = pheight + SHADOW_SIZE * 2;
+						info->rect_count++;
+					}
+
+					if (pw->shwin->popuped) {
+						pw->shadowUpdate = true;
+						pw->shwin->popuped = false;
+					}
+				}
 			}
 	
-			info->updateEntireWindow = 0;
+			
 		}
 
-		/* render all popup windows of this window */
-		for (int w = 0; w < win->popupList->pointer; w++) {
-			PopupWindow* pw = (PopupWindow*)list_get_at(win->popupList, w);
-			if (pw->shwin->dirty) {
-				int64_t popup_x = pw->shwin->x;
-				int64_t popup_y = pw->shwin->y;
-				int64_t popup_w = pw->shwin->w;
-				int64_t popup_h = pw->shwin->h;
-
-				int64_t shad_w = popup_w + SHADOW_SIZE * 2;
-				int64_t shad_h = popup_h + SHADOW_SIZE * 2;
-
-
-
-				if (pw->shadowUpdate) {
-#ifdef SHADOW_ENABLED
-					for (int j = 0; j < shad_h; j++) {
-						for (int i = 0; i < shad_w; i++) {
-							*(uint32_t*)(canvas->buffer + ((popup_y - SHADOW_SIZE) + j) * canvas->canvasWidth + ((popup_x - SHADOW_SIZE) + i)) =
-								ChColorAlphaBlend2(*(uint32_t*)(canvas->buffer + ((popup_y - SHADOW_SIZE) + j)* canvas->canvasWidth + ((popup_x - SHADOW_SIZE) + i)),
-								*(uint32_t*)(pw->shadowBuffers + j * (pw->shwin->w + SHADOW_SIZE * 2) + i));
-						}
-					}
-#endif
-					pw->shadowUpdate = false;
-				}
-
-
-				if (pw->shwin->alpha) {
-					for (int64_t j = 0; j < popup_h; j++) {
-						for (int64_t i = 0; i < popup_w; i++) {
-							*(uint32_t*)(canvas->buffer + (popup_y + j) * canvas->canvasWidth + (popup_x + i)) =
-								ChColorAlphaBlend2(*(uint32_t*)(canvas->buffer + (popup_y + j)* canvas->canvasWidth + (popup_x + i)),
-								*(uint32_t*)(pw->buffer + j * pw->shwin->w + i));
-						}
-					}
-				}
-				else {
-					for (int64_t i = 0; i < popup_h; i++) {
-						_fastcpy(canvas->buffer + (popup_y + i) * canvas->canvasWidth + popup_x,
-							pw->buffer + i * pw->shwin->w + 0, popup_w * 4);
-					}
-				}
-
-				AddDirtyClip(popup_x - SHADOW_SIZE , popup_y - SHADOW_SIZE, shad_w, shad_h);
-				pw->shwin->dirty = 0;
-				pw->hidden = false;
-				//_cursor_update_ = true;
-			}
-			if (pw->shwin->hide) {
-				int px = pw->shwin->x;
-				int py = pw->shwin->y;
-				int pwidth = pw->shwin->w;
-				int pheight = pw->shwin->h;
-				pw->shwin->dirty = 0;
-				pw->shwin->hide = false;
-				pw->shadowUpdate = true;
-				pw->hidden = true;
-				///* add dirty rectagle into the window inorder to
-				// * repaint the occluded area
-				// */
-				info->rect[info->rect_count].x = max((px - SHADOW_SIZE),info->x) - min((px - SHADOW_SIZE),info->x);
-				info->rect[info->rect_count].y = max((py - SHADOW_SIZE),info->y) - min((py - SHADOW_SIZE), info->y);
-				info->rect[info->rect_count].w = pwidth + SHADOW_SIZE *2;
-				info->rect[info->rect_count].h = pheight + SHADOW_SIZE *2;
-				info->rect_count++;
-			}
-
-			if (pw->shwin->popuped){
-				pw->shadowUpdate = true;
-				pw->shwin->popuped = false;
-			}
-		}
+		
 	}
 
 
@@ -1131,7 +1145,7 @@ void ComposeFrame(ChCanvas *canvas) {
 				AddDirtyClip(winx, winy, width, height);
 			}
 			else {
-				for (clipWin = win; clipWin != NULL; clipWin = clipWin->next) {
+				for (clipWin = rootWin; clipWin != NULL; clipWin = clipWin->next) {
 					clipInfo = (WinSharedInfo*)clipWin->sharedInfo;
 					if (clipWin == win)
 						continue;
@@ -1139,21 +1153,24 @@ void ComposeFrame(ChCanvas *canvas) {
 					r2.y = clipInfo->y;
 					r2.w = clipInfo->width;
 					r2.h = clipInfo->height;
-
+					
 					if (ClipCheckIntersect(&r1, &r2)) {
+						_intersected_ = true;
 						ClipCalculateRect(&r1, &r2, clip, &clipCount);
 					}
 				}
 
-				if ((clipCount == 0 && info->updateEntireWindow) || (clipCount == 0 && !_window_moving_)) {
-					for (int i = 0; i < height; i++) {
-						void* canvas_buff = (canvas->buffer + (static_cast<uint64_t>(winy) + i) * canvas->canvasWidth + winx);
-						void* winbuff = (win->backBuffer + (0 + static_cast<uint64_t>(i)) * info->width + 0);
-						_fastcpy(canvas_buff,winbuff, static_cast<uint64_t>(width) * 4);
-					}
 
-					AddDirtyClip(winx, winy, width, height);
+				for (int i = 0; i < height; i++) {
+					void* canvas_buff = (canvas->buffer + (static_cast<uint64_t>(winy) + i) * canvas->canvasWidth + winx);
+					void* winbuff = (win->backBuffer + (0 + static_cast<uint64_t>(i)) * info->width + 0);
+					_fastcpy(canvas_buff, winbuff, static_cast<uint64_t>(width) * 4);
 				}
+
+
+				if ((clipCount == 0 && info->updateEntireWindow) || (clipCount == 0 && !_window_moving_)) 	
+					AddDirtyClip(winx, winy, width, height);
+				
 
 
 				for (int m = 0; m < clipCount; m++) {
@@ -1170,6 +1187,7 @@ void ComposeFrame(ChCanvas *canvas) {
 						k_w = canvas->screenWidth - k_x;
 					if ((k_y + k_h) >= canvas->screenHeight)
 						k_h = canvas->screenHeight - k_y;
+
 
 					AddDirtyClip(k_x, k_y, k_w, k_h);
 					clipCount = 0;
@@ -1190,6 +1208,7 @@ void ComposeFrame(ChCanvas *canvas) {
 	/* finally present all updates to framebuffer */
 	DirtyScreenUpdate(canvas);
 
+
 	if (_window_update_all_)
 		_window_update_all_ = false;
 
@@ -1198,6 +1217,9 @@ void ComposeFrame(ChCanvas *canvas) {
 	
 	if (_window_moving_)
 		_window_moving_ = false;
+
+	if (_skip_disable_)
+		_skip_disable_ = false;
 
 	currentCursor->oldXPos = currentCursor->xpos;
 	currentCursor->oldYPos = currentCursor->ypos;
@@ -1444,6 +1466,14 @@ uint64_t DeodhaiTimeSince(uint64_t startTime) {
 	uint64_t diff = now - startTime;
 	return diff;
 }
+
+/*
+ * DeodhaiUpdateBits -- update specific deodhai bits
+ */
+void DeodhaiUpdateBits(bool window_update, bool skip_disable) {
+	_window_update_all_ = window_update;
+	_skip_disable_ = skip_disable;
+}
 /*
  * main -- deodhai compositor
  */
@@ -1510,8 +1540,6 @@ int main(int argc, char* arv[]) {
 	currentCursor = arrow;
 	CursorStoreBack(canv, currentCursor, 0, 0);
 
-	_cursor_update_ = true;
-	_cursor_drawback_ = true;
 	/* Open all required device file */
 	mouse_fd = _KeOpenFile("/dev/mice", FILE_OPEN_READ_ONLY);
 	kybrd_fd = _KeOpenFile("/dev/kybrd", FILE_OPEN_READ_ONLY);
@@ -1622,7 +1650,6 @@ int main(int argc, char* arv[]) {
 
 		if (kybrd_input.type == AU_INPUT_KEYBOARD) {
 			DeodhaiBroadcastKey(kybrd_input.code);
-			_cursor_update_ = true;
 			memset(&kybrd_input, 0, sizeof(AuInputMessage));
 		}
 
@@ -1657,11 +1684,12 @@ int main(int argc, char* arv[]) {
 				DeodhaiBroadcastMessage(&e, win);
 			}
 
-			_cursor_update_ = true;
-			_window_update_all_ = true;
-			_shadow_update = true;
-			focusedWin = win;
-			DeodhaiWindowMakeTop(win);
+			if (!(win->flags & WINDOW_FLAG_ALWAYS_ON_TOP)) {
+				win->flags |= WINDOW_FLAG_ANIMATED | WINDOW_FLAG_ANIMATION_FADE_IN;
+				win->animAlphaVal = 0;
+			}
+
+		
 			memset(&event, 0, sizeof(PostEvent));
 
 		}
@@ -1732,7 +1760,6 @@ int main(int argc, char* arv[]) {
 			}
 			_window_update_all_ = true;
 			_always_on_top_update = true;
-			_cursor_update_ = true;
 			memset(&event, 0, sizeof(PostEvent));
 		}
 
@@ -1792,7 +1819,6 @@ int main(int argc, char* arv[]) {
 				focusedWin = NULL;
 				focusedLast = NULL;
 				_window_update_all_ = true;
-				_cursor_update_ = true;
 				_always_on_top_update = true;
 			}
 			memset(&event, 0, sizeof(PostEvent));

@@ -74,6 +74,9 @@ void LaunchButtonMouseEvent(LaunchButton* wid, ChWindow* win, int x, int y, int 
 	if (button && !wid->kill_focus)
 		wid->clicked = true;
 
+	if (button == 0) 
+		wid->clicked = 0;
+
 	if (wid->kill_focus)
 		wid->clicked = false;
 
@@ -95,7 +98,7 @@ void LaunchButtonMouseEvent(LaunchButton* wid, ChWindow* win, int x, int y, int 
 		if (wid->drawLaunchButton)
 			wid->drawLaunchButton(wid, win);
 		ChWindowUpdate(win, wid->x, wid->y, wid->w, wid->h, false, true);
-		_KeProcessSleep(8);
+		_KeProcessSleep(500);
 		
 		wid->hover_painted = false;
 		wid->clicked = false;
@@ -115,8 +118,11 @@ void LaunchButtonMouseEvent(LaunchButton* wid, ChWindow* win, int x, int y, int 
  */
 void LauncherButtonDefaultAction(LaunchButton* lbutton, ChWindow *win){
 	int id = _KeCreateProcess(0, lbutton->title);
+	if (id == -1) {
+		_KePrint("Failed to open app -> %s \r\n", lbutton->title);
+	}
 	int status = _KeProcessLoadExec(id, lbutton->appname, 0, 0);
-	_KeProcessSleep(100);
+	_KeProcessSleep(160);
 	ChWindowHide(win);
 }
 
@@ -218,7 +224,7 @@ void ButtonIconDraw(ButtonIcon* info, ChCanvas* canv, int x, int y){
 
 	uint8_t* image = info->imageData;
 	for (int i = 0; i < height; i++) {
-		char* image_row = (char*)image + (height - i - 1) * (width * 4);
+		char* image_row = (char*)image + (static_cast<int64_t>(height) - i - 1) * (static_cast<int64_t>(width) * 4);
 		uint32_t h = height - 1 - i;
 		j = 0;
 		for (int k = 0; k < width; k++) {

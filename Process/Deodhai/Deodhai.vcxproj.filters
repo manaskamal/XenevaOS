@@ -13,6 +13,7 @@
     <ClInclude Include="popup.h" />
     <ClInclude Include="rect.h" />
     <ClInclude Include="window.h" />
+    <ClInclude Include="animation.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="backdirty.cpp" />
@@ -23,5 +24,6 @@
     <ClCompile Include="popup.cpp" />
     <ClCompile Include="rect.cpp" />
     <ClCompile Include="window.cpp" />
+    <ClCompile Include="animation.cpp" />
   </ItemGroup>
 </Project>

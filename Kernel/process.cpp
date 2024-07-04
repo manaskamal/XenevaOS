@@ -403,7 +403,7 @@ void AuProcessWaitForTermination(AuProcess *proc, int pid) {
  * @param proc -- pointer to process slot
  */
 int AuProcessGetFileDesc(AuProcess* proc) {
-	for (int i = 0; i < FILE_DESC_PER_PROCESS; i++) {
+	for (int i = 3; i < (FILE_DESC_PER_PROCESS-3); i++) {
 		if (!proc->fds[i])
 			return i;
 	}

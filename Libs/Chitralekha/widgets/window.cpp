@@ -135,6 +135,10 @@ void ChGlobalCloseAction(ChWindow* win, ChWinGlobalControl *ctl) {
 	ChWindowCloseWindow(win);
 }
 
+void ChGlobalMinimiseAction(ChWindow* win, ChWinGlobalControl* ctl) {
+	ChWindowHide(win);
+}
+
 /*
  * ChCreateWindow -- create a new chitralekha window
  * @param app -- pointer to Chitralekha app
@@ -200,6 +204,7 @@ XE_EXTERN XE_EXPORT ChWindow* ChCreateWindow(ChitralekhaApp *app, uint8_t attrib
 	minim->hoverOutlineColor = 0xFFAFA3A3;
 	minim->clickedOutlineColor = 0xFF444444;
 	minim->ChGlobalMouseEvent = ChGlobalCtlMouseHandler;
+	minim->ChGlobalActionEvent = ChGlobalMinimiseAction;
 	return win;
 }
 

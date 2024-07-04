@@ -84,7 +84,7 @@
 #pragma pack(pop)
 
 	typedef struct _chwin_ {
-		uint8_t flags;
+		uint16_t flags;
 		uint32_t *buffer;
 		void* sharedwin;
 		ChCanvas* canv;

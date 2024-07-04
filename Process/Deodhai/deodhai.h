@@ -117,4 +117,8 @@ typedef struct _au_input_msg_ {
 */
 extern uint32_t DeodhaiAllocateNewHandle();
 extern ChCanvas* DeodhaiGetMainCanvas();
+/*
+ * DeodhaiUpdateBits -- update specific deodhai bits
+ */
+extern void DeodhaiUpdateBits(bool window_update, bool skip);
 #endif

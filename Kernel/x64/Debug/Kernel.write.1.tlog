@@ -1,8 +1,0 @@
-^Hal\x86_64_intrs.asm
-E:\Xeneva Project\Aurora\Kernel\x64\Debug\x86_64_intrs.obj
-^Hal\x86_64_lowlevel.asm
-E:\Xeneva Project\Aurora\Kernel\x64\Debug\x86_64_lowlevel.obj
-^Hal\x86_64_switch.asm
-E:\Xeneva Project\Aurora\Kernel\x64\Debug\x86_64_switch.obj
-^__fstcpy.asm
-E:\Xeneva Project\Aurora\Kernel\x64\Debug\__fstcpy.obj
