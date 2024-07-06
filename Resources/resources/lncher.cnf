@@ -6,10 +6,14 @@
 [Icon]/icons/calcl.bmp|
 [App]/calc.exe}
 
-{[Title]Navigator|
+{[Title]Files|
 [Icon]/icons/filel.bmp|
 [App]/file.exe}
 
 {[Title]Accent Player|
 [Icon]/icons/medial.bmp|
-[App]/audplr.exe>
+[App]/audplr.exe}
+
+{[Title]Controls|
+[Icon]/icons/gearl.bmp|
+[App]/ctrl.exe>

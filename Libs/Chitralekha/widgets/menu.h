@@ -56,6 +56,7 @@ typedef struct _menu_item_ {
 	ChWidget wid;
 	char* title;
 	ChPopupMenu* menu;
+	bool seperator;
 }ChMenuItem;
 
 /*

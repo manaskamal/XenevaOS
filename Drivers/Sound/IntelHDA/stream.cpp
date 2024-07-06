@@ -67,15 +67,15 @@ void HDAInitOutput() {
 
 	int j = 0;
 	for (j = 0; j < BDL_SIZE; j++) {
-		bdl[j].paddr = (uint64_t)(phys_buf + j * BUFFER_SIZE);
+		bdl[j].paddr = (uint64_t)(phys_buf + static_cast<uint64_t>(j) * BUFFER_SIZE);
 		bdl[j].length = BUFFER_SIZE;
 		bdl[j].flags = 0;
 	}
 	bdl[j - 1].flags = 1;
 
 
-	_aud_outb_(REG_O0_CTLU, (1 << 4) | (1 << 19));
-	_aud_outb_(REG_O0_CTLL, (1 << 16));
+	_aud_outw_(REG_O0_CTLU, (1 << 4) | (1 << 19));
+	//_aud_outw_(REG_O0_CTLL, (1 << 16));
 
 	_aud_outl_(REG_O0_CBL, BDL_SIZE*BUFFER_SIZE);
 	_aud_outw_(REG_O0_STLVI, BDL_SIZE - 1);
@@ -119,7 +119,7 @@ void HDAInitInputStream() {
 		void *p = AuPmmngrAlloc();
 		if (phys_buf == 0)
 			phys_buf = (uint64_t)p;
-		AuMapPage((uint64_t)p, pos + i * 4096, (1 << 4));
+		AuMapPage((uint64_t)p, pos + static_cast<uint64_t>(i) * 4096, (1 << 4));
 	}
 
 
@@ -141,7 +141,7 @@ void HDAInitInputStream() {
 
 	int j = 0;
 	for (j = 0; j < 4; j++) {
-		bdl[j].paddr = (uint64_t)(phys_buf + j * BUFFER_SIZE);
+		bdl[j].paddr = (uint64_t)(phys_buf + static_cast<uint64_t>(j) * BUFFER_SIZE);
 		bdl[j].length = BUFFER_SIZE;
 		bdl[j].flags = 1;
 	}

@@ -396,6 +396,11 @@ void x8664SchedulerISR(size_t v, void* param) {
 			x64_fxsave(current_thread->fx_state);
 
 		scheduler_tick++;
+
+		if (scheduler_tick == UINT64_MAX) {
+			SeTextOut("Scheduler tick max reached \r\n");
+			for (;;);
+		}
 		AuNextThread();
 		current_thread = AuPerCPUGetCurrentThread();
 		

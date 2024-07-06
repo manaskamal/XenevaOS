@@ -83,7 +83,7 @@ void ChPopupMenuPaint(ChPopupMenu* popup){
 		if (mi->wid.hover) {
 			/*ChColorDrawHorizontalGradient(popup->backWindow->canv, 
 				0, mi->wid.y, popup->wid.w, DEFAULT_MENU_ITEM_HEIGHT, 0xFF658096, 0xFF8CA2B4);*/
-			ChDrawRect(popup->backWindow->canv, 0, menu_item_y, popup->wid.w, DEFAULT_MENU_ITEM_HEIGHT, 0xFF8CA2B4);
+			ChDrawRect(popup->backWindow->canv, 0, menu_item_y + 2, popup->wid.w, DEFAULT_MENU_ITEM_HEIGHT - 2, 0xFF8CA2B4);
 		}
 	/*	ChDrawRect(popup->backWindow->canv, 0, menu_item_y, popup->wid.w, DEFAULT_MENU_ITEM_HEIGHT, GREEN);*/
 		ChFontDrawText(popup->backWindow->canv, popup->mainWindow->app->baseFont, mi->title, 10, menu_item_y +
@@ -92,7 +92,15 @@ void ChPopupMenuPaint(ChPopupMenu* popup){
 		if (mi->menu)
 			ChPopupMenuAppendButton(popup, popup->wid.w - 15, menu_item_y + menu_item_height/2 - 7/2, 7,7);
 
-		menu_item_y += DEFAULT_MENU_ITEM_HEIGHT + DEFAULT_MENU_ITEM_BUTTON_PADY;
+		if (mi->seperator) {
+			ChDrawHorizontalLine(popup->backWindow->canv, 4, menu_item_y + 1, popup->wid.w - (4*2), LIGHTSILVER);
+			menu_item_y += DEFAULT_MENU_ITEM_HEIGHT + DEFAULT_MENU_ITEM_BUTTON_PADY + 2;
+		}
+		else
+			menu_item_y += DEFAULT_MENU_ITEM_HEIGHT + DEFAULT_MENU_ITEM_BUTTON_PADY;
+
+		
+
 	}
 	ChDrawRectUnfilled(popup->backWindow->canv, 0, 0, popup->wid.w, popup->wid.h, SILVER);
 }

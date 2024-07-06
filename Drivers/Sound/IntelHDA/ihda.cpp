@@ -420,7 +420,7 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 
 	uint64_t com2 = AuPCIERead(device, PCI_COMMAND, bus, dev, func);
 
-	if ((com2 & (1 << 10) != 1)){
+	if ((com2 & (1 << 10)) != 1){
 		SeTextOut("[ihda]: Interrupt enabled \r\n");
 	}
 

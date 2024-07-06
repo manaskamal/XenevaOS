@@ -175,7 +175,7 @@ int HDAWidgetDumpConnections(int codec, int nid, HDAAudioPath *path) {
 	uint32_t sel;
 	int i;
 	uint32_t conn_val;
-	int ret_nid;
+	int ret_nid = -1;
 	num_conn = HDACodecQuery(codec, nid, VERB_GET_PARAMETER | PARAM_CONN_LIST_LEN);
 
 

@@ -322,6 +322,7 @@ void WindowHandleMessage(PostEvent *e) {
 		/* handle key events from deodhai */
 	case DEODHAI_REPLY_KEY_EVENT:{
 									 int code = e->dword;
+									 ChitralekhaProcessKey(code);
 									 int c = ChitralekhaKeyToASCII(code);
 									 HandleKeyEvents(c);
 									 memset(e, 0, sizeof(PostEvent));

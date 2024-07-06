@@ -147,6 +147,7 @@ void ChMenuItemDestroy(ChWidget* wid, ChWindow* win) {
  */
 ChMenuItem* ChCreateMenuItem(char* title,ChPopupMenu* pm) {
 	ChMenuItem* mi = (ChMenuItem*)malloc(sizeof(ChMenuItem));
+	memset(mi, 0, sizeof(ChMenuItem));
 	mi->wid.h = DEFAULT_MENU_ITEM_HEIGHT;
 	mi->wid.x = 0;
 	memset(mi, 0, sizeof(ChMenuItem));
@@ -171,7 +172,10 @@ void ChMenuRecalculateDimensions(ChPopupMenu * pm) {
 		int stringW = ChFontGetWidth(pm->mainWindow->app->baseFont, mi->title);
 		if (w < stringW)
 			w = stringW;
-		h += DEFAULT_MENU_ITEM_HEIGHT + DEFAULT_MENU_ITEM_BUTTON_PADY;
+		if (mi->seperator)
+			h += DEFAULT_MENU_ITEM_HEIGHT + DEFAULT_MENU_ITEM_BUTTON_PADY + 2;
+		else
+			h += DEFAULT_MENU_ITEM_HEIGHT + DEFAULT_MENU_ITEM_BUTTON_PADY;
 	}
 	if (!w && !h){
 		w = DEFAULT_POPUP_MENU_WIDTH;

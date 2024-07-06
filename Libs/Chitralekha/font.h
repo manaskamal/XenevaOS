@@ -51,8 +51,6 @@ XE_EXTERN{
 #define CALIBRI       "Calibri"
 #define FORTE         "Forte"
 #define CONSOLAS      "Consolas"
-#define DEVANAGARI    "Devanagari"
-#define KALPANA       "Kalpana"
 
 	/* default font for xeneva */
 #define XENEVA_DEFAULT_FONT  CALIBRI

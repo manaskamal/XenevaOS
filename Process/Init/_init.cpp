@@ -51,11 +51,28 @@ extern "C" void main(int argc, char* argv[]) {
 	if (strcmp(argv[0], "-about") == 0)
 		_KePrint("Xeneva v1.0 !! Copyright (C) Manas Kamal Choudhury 2020-2023 \r\n");
 
-	int child = _KeCreateProcess(0, "deodhai");
+
+	/* just load all the background services */
+	int child = _KeCreateProcess(0, "deoaud");
+	_KeProcessLoadExec(child, "/deoaud.exe", 0, NULL);
+
+	_KeProcessSleep(1000);
+		
+	child = _KeCreateProcess(0, "deodhai");
 	_KeProcessLoadExec(child, "/deodhai.exe", 0, NULL);
 
 	_KePrint("Deodhai spawned \r\n");
+	_KeProcessSleep(1000);
+
+	child = _KeCreateProcess(0, "xelnch");
+	_KeProcessLoadExec(child, "/xelnch.exe", 0, NULL);
+
+	_KeProcessSleep(1000);
+
+	child = _KeCreateProcess(0, "nmdapha");
+	_KeProcessLoadExec(child, "/nmdapha.exe", 0, NULL);
 	while (1) {
+		/* from here, enter as a killer of all dead processes*/
 		if (pid == 1) {
 			_KeProcessWaitForTermination(-1);
 		}

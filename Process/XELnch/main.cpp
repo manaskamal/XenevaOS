@@ -134,12 +134,14 @@ int main(int argc, char* arv[]){
 	mainGrid = LauncherCreateAppGrid(launcher_w / 2 - grid_w / 2, launcher_h / 2 - grid_h / 2,
 		grid_w, grid_h);
 
+
 	/* now read the launcher config file
 	 * for application entries 
 	 */
 	LauncherConfigInitialise();
 	LauncherSetupByConfigFile();
 
+	_KePrint("Launcher config initialised \r\n");
 
 	win->color = BLACK;
 	win->ChWinPaint = XELauncherPaint;

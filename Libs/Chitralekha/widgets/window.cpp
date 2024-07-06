@@ -761,9 +761,8 @@ XE_EXTERN XE_EXPORT void ChPopupWindowUpdate(ChPopupWindow* pw, int x, int y, in
 		return;
 
 	for (int i = 0; i < h; i++)
-		_fastcpy(lfb + (static_cast<uint64_t>(y) + i) * pw->shwin->w + x, 
-			canvaddr + (static_cast<uint64_t>(y) + i) * pw->shwin->w + x, (static_cast<uint64_t>(w) * 4));
-
+		_fastcpy(lfb + (static_cast<int64_t>(y) + i) * pw->shwin->w + x, 
+			canvaddr + (static_cast<int64_t>(y) + i) * pw->shwin->w + x, (static_cast<int64_t>(w) * 4));
 	pw->shwin->dirty = 1;
 }
 

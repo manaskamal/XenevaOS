@@ -446,7 +446,7 @@ int NVMeInitialise() {
 
 	uint64_t base32 = AuPCIERead(device, PCI_BAR0, bus, dev, func);
 	base32 &= 0xFFFFFFFC;
-	base32 |= (AuPCIERead(device, PCI_BAR1, bus, dev, func) & 0xFFFFFFF0) << 32;
+	base32 |= (static_cast<uint64_t>(AuPCIERead(device, PCI_BAR1, bus, dev, func)) & 0xFFFFFFF0) << 32;
 
 	// enable bus master and memory space
 	uint64_t command = AuPCIERead(device, PCI_COMMAND, bus, dev, func);

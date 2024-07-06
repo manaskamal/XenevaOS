@@ -410,7 +410,9 @@ int main(int argc, char* argv[]){
 	ChPopupMenu* help = ChCreatePopupMenu(mainWin);
 	ChMenuItem* about = ChCreateMenuItem("About", help);
 	ChMenuItem* about1 = ChCreateMenuItem("About 1", help);
+	about1->seperator = true;
 	ChMenuItem* about2 = ChCreateMenuItem("About 2", help);
+	about2->seperator = true;
 	ChMenuItem* about3 = ChCreateMenuItem("About 3", help);
 	about->wid.ChActionHandler = AboutClicked;
 	ChMenuButtonAddMenu(edit, help);

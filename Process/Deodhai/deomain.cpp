@@ -729,10 +729,10 @@ void ComposeFrame(ChCanvas *canvas) {
 
 			int64_t width = info->width;
 			int64_t height = info->height;
-			int64_t shad_w = width + SHADOW_SIZE*2;
-			int64_t shad_h = height + SHADOW_SIZE*2;
+			int64_t shad_w = width + SHADOW_SIZE * 2;
+			int64_t shad_h = height + SHADOW_SIZE * 2;
 
-			if ((info->x - SHADOW_SIZE) <= 0){
+			if ((info->x - SHADOW_SIZE) <= 0) {
 				info->x = 5 + SHADOW_SIZE;
 				winx = info->x;
 			}
@@ -747,7 +747,7 @@ void ComposeFrame(ChCanvas *canvas) {
 
 			if ((info->y + info->height) >= canvas->screenHeight)
 				height = static_cast<int64_t>(canvas->screenHeight) - info->y;
-			
+
 
 			if ((info->x + 24) >= canvas->screenWidth)
 				info->x = canvas->screenWidth - 24;
@@ -758,15 +758,15 @@ void ComposeFrame(ChCanvas *canvas) {
 #ifdef SHADOW_ENABLED
 			if (((static_cast<int64_t>(info->x) - SHADOW_SIZE) + shad_w) >= canvas->screenWidth)
 				shad_w = static_cast<int64_t>(canvas->screenWidth) - (static_cast<int64_t>(info->x) - SHADOW_SIZE);
-				
-			
+
+
 			if (((static_cast<int64_t>(info->y) - SHADOW_SIZE) + shad_h) >= canvas->screenHeight)
 				shad_h = static_cast<int64_t>(canvas->screenHeight) - (static_cast<int64_t>(info->y) - SHADOW_SIZE);
 #endif
 			if ((win->flags & WINDOW_FLAG_ANIMATED)) {
-				if (win->flags & WINDOW_FLAG_ANIMATION_FADE_IN) 
+				if (win->flags & WINDOW_FLAG_ANIMATION_FADE_IN)
 					FadeInAnimationWindow(canvas, win, info, winx, winy, shad_w, shad_h);
-				
+
 				if (win->flags & WINDOW_FLAG_ANIMATION_FADE_OUT)
 					FadeOutAnimationWindow(canvas, win, info, winx, winy, shad_w, shad_h);
 			}
@@ -788,7 +788,7 @@ void ComposeFrame(ChCanvas *canvas) {
 					clipInfo = (WinSharedInfo*)clipWin->sharedInfo;
 					if (clipWin == win)
 						continue;
-					
+
 					r2.x = clipInfo->x;
 					r2.y = clipInfo->y;
 					r2.w = clipInfo->width;
@@ -866,83 +866,81 @@ void ComposeFrame(ChCanvas *canvas) {
 				if (!(win->flags & WINDOW_FLAG_ANIMATED))
 					if (info->updateEntireWindow)
 						info->updateEntireWindow = 0;
+			}
+		}
 
 				/* render all popup windows of this window */
-				for (int w = 0; w < win->popupList->pointer; w++) {
-					PopupWindow* pw = (PopupWindow*)list_get_at(win->popupList, w);
-					if (pw->shwin->dirty) {
-						int64_t popup_x = pw->shwin->x;
-						int64_t popup_y = pw->shwin->y;
-						int64_t popup_w = pw->shwin->w;
-						int64_t popup_h = pw->shwin->h;
+		for (int w = 0; w < win->popupList->pointer; w++) {
+			PopupWindow* pw = (PopupWindow*)list_get_at(win->popupList, w);
+			if (pw->shwin->dirty) {
+				int64_t popup_x = pw->shwin->x;
+				int64_t popup_y = pw->shwin->y;
+				int64_t popup_w = pw->shwin->w;
+				int64_t popup_h = pw->shwin->h;
 
-						int64_t shad_w = popup_w + SHADOW_SIZE * 2;
-						int64_t shad_h = popup_h + SHADOW_SIZE * 2;
+				int64_t shad_w = popup_w + SHADOW_SIZE * 2;
+				int64_t shad_h = popup_h + SHADOW_SIZE * 2;
 
 
-
-						if (pw->shadowUpdate) {
+				if (pw->shadowUpdate) {
 #ifdef SHADOW_ENABLED
-							for (int j = 0; j < shad_h; j++) {
-								for (int i = 0; i < shad_w; i++) {
-									*(uint32_t*)(canvas->buffer + ((popup_y - SHADOW_SIZE) + j) * canvas->canvasWidth + ((popup_x - SHADOW_SIZE) + i)) =
-										ChColorAlphaBlend2(*(uint32_t*)(canvas->buffer + ((popup_y - SHADOW_SIZE) + j) * canvas->canvasWidth + ((popup_x - SHADOW_SIZE) + i)),
-											*(uint32_t*)(pw->shadowBuffers + j * (pw->shwin->w + SHADOW_SIZE * 2) + i));
-								}
-							}
+					for (int j = 0; j < shad_h; j++) {
+						for (int i = 0; i < shad_w; i++) {
+							*(uint32_t*)(canvas->buffer + ((popup_y - SHADOW_SIZE) + j) * canvas->canvasWidth + ((popup_x - SHADOW_SIZE) + i)) =
+								ChColorAlphaBlend2(*(uint32_t*)(canvas->buffer + ((popup_y - SHADOW_SIZE) + j) * canvas->canvasWidth + ((popup_x - SHADOW_SIZE) + i)),
+									*(uint32_t*)(pw->shadowBuffers + j * (pw->shwin->w + SHADOW_SIZE * 2) + i));
+						}
+					}
 #endif
-							pw->shadowUpdate = false;
+					pw->shadowUpdate = false;
+				}
+
+
+				if (pw->shwin->alpha) {
+					for (int64_t j = 0; j < popup_h; j++) {
+						for (int64_t i = 0; i < popup_w; i++) {
+							*(uint32_t*)(canvas->buffer + (popup_y + j) * canvas->canvasWidth + (popup_x + i)) =
+								ChColorAlphaBlend2(*(uint32_t*)(canvas->buffer + (popup_y + j) * canvas->canvasWidth + (popup_x + i)),
+									*(uint32_t*)(pw->buffer + j * pw->shwin->w + i));
 						}
-
-
-						if (pw->shwin->alpha) {
-							for (int64_t j = 0; j < popup_h; j++) {
-								for (int64_t i = 0; i < popup_w; i++) {
-									*(uint32_t*)(canvas->buffer + (popup_y + j) * canvas->canvasWidth + (popup_x + i)) =
-										ChColorAlphaBlend2(*(uint32_t*)(canvas->buffer + (popup_y + j) * canvas->canvasWidth + (popup_x + i)),
-											*(uint32_t*)(pw->buffer + j * pw->shwin->w + i));
-								}
-							}
-						}
-						else {
-							for (int64_t i = 0; i < popup_h; i++) {
-								_fastcpy(canvas->buffer + (popup_y + i) * canvas->canvasWidth + popup_x,
-									pw->buffer + i * pw->shwin->w + 0, popup_w * 4);
-							}
-						}
-
-						AddDirtyClip(popup_x - SHADOW_SIZE, popup_y - SHADOW_SIZE, shad_w, shad_h);
-						pw->shwin->dirty = 0;
-						pw->hidden = false;
-						//_cursor_update_ = true;
-					}
-					if (pw->shwin->hide) {
-						int px = pw->shwin->x;
-						int py = pw->shwin->y;
-						int pwidth = pw->shwin->w;
-						int pheight = pw->shwin->h;
-						pw->shwin->dirty = 0;
-						pw->shwin->hide = false;
-						pw->shadowUpdate = true;
-						pw->hidden = true;
-						///* add dirty rectagle into the window inorder to
-						// * repaint the occluded area
-						// */
-						info->rect[info->rect_count].x = max((px - SHADOW_SIZE), info->x) - min((px - SHADOW_SIZE), info->x);
-						info->rect[info->rect_count].y = max((py - SHADOW_SIZE), info->y) - min((py - SHADOW_SIZE), info->y);
-						info->rect[info->rect_count].w = pwidth + SHADOW_SIZE * 2;
-						info->rect[info->rect_count].h = pheight + SHADOW_SIZE * 2;
-						info->rect_count++;
-					}
-
-					if (pw->shwin->popuped) {
-						pw->shadowUpdate = true;
-						pw->shwin->popuped = false;
 					}
 				}
+				else {
+					for (int64_t i = 0; i < popup_h; i++) {
+						_fastcpy(canvas->buffer + (popup_y + i) * canvas->canvasWidth + popup_x,
+							pw->buffer + i * pw->shwin->w + 0, popup_w * 4);
+					}
+				}
+
+				AddDirtyClip(popup_x - SHADOW_SIZE, popup_y - SHADOW_SIZE, shad_w, shad_h);
+				pw->shwin->dirty = 0;
+				pw->hidden = false;
+				//_cursor_update_ = true;
 			}
-	
-			
+			if (pw->shwin->hide) {
+				int px = pw->shwin->x;
+				int py = pw->shwin->y;
+				int pwidth = pw->shwin->w;
+				int pheight = pw->shwin->h;
+				pw->shwin->dirty = 0;
+				pw->shwin->hide = false;
+				pw->shadowUpdate = true;
+				pw->hidden = true;
+				///* add dirty rectagle into the window inorder to
+				// * repaint the occluded area
+				// */
+				info->rect[info->rect_count].x = max((px - SHADOW_SIZE), info->x) - min((px - SHADOW_SIZE), info->x);
+				info->rect[info->rect_count].y = max((py - SHADOW_SIZE), info->y) - min((py - SHADOW_SIZE), info->y);
+				info->rect[info->rect_count].w = pwidth + SHADOW_SIZE * 2;
+				info->rect[info->rect_count].h = pheight + SHADOW_SIZE * 2;
+				info->rect_count++;
+			}
+
+			if (pw->shwin->popuped) {
+				pw->shadowUpdate = true;
+				pw->shwin->popuped = false;
+			}
+
 		}
 
 		
@@ -1548,9 +1546,6 @@ int main(int argc, char* arv[]) {
 	memset(&mice_input, 0, sizeof(AuInputMessage));
 	memset(&kybrd_input, 0, sizeof(AuInputMessage));
 	postbox_fd = _KeOpenFile("/dev/postbox", FILE_OPEN_READ_ONLY);
-
-	int proc_id = _KeCreateProcess(0, "term");
-	_KeProcessLoadExec(proc_id, "/term.exe", 0, NULL);
 
 	_KeFileIoControl(postbox_fd, POSTBOX_CREATE_ROOT, NULL);
 	PostEvent event;
