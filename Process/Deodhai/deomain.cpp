@@ -216,11 +216,12 @@ void DeodhaiBackSurfaceUpdate(ChCanvas* canv, int x, int y, int w, int h) {
 /*
  * DeodhaiCreateWindow -- create a new deodhai window
  */
-Window* DeodhaiCreateWindow(int x, int y, int w, int h, uint8_t flags, uint16_t ownerId, char* title) {
+Window* DeodhaiCreateWindow(int x, int y, int w, int h, uint16_t flags, uint16_t ownerId, char* title) {
 	Window* win = CreateWindow(x, y, w, h, flags, ownerId, title);
-	if (flags & WINDOW_FLAG_ALWAYS_ON_TOP){
+	if (flags & WINDOW_FLAG_ALWAYS_ON_TOP) {
 		DeodhaiAddWindowAlwaysOnTop(win);
-	}else
+	}
+	else
 		DeodhaiAddWindow(win);
 	return win;
 }
@@ -322,7 +323,7 @@ void DeodhaiWindowSetFocused(Window* win, bool notify) {
 		_always_on_top_update = true;
 	}
 
-	if (notify) {
+	if (notify && !(win->flags & WINDOW_FLAG_POPUP)) {
 		PostEvent e;
 		e.type = DEODHAI_BROADCAST_FOCUS_CHANGED;
 		e.dword = focusedWin->ownerId;
@@ -369,6 +370,9 @@ void DeodhaiWindowMove(Window* win, int x, int y) {
 		return;
 
 	if (win->flags & WINDOW_FLAG_ALWAYS_ON_TOP)
+		return;
+
+	if (win->flags & WINDOW_FLAG_POPUP)
 		return;
 
 	if (focusedWin != win)
@@ -868,81 +872,6 @@ void ComposeFrame(ChCanvas *canvas) {
 						info->updateEntireWindow = 0;
 			}
 		}
-
-				/* render all popup windows of this window */
-		for (int w = 0; w < win->popupList->pointer; w++) {
-			PopupWindow* pw = (PopupWindow*)list_get_at(win->popupList, w);
-			if (pw->shwin->dirty) {
-				int64_t popup_x = pw->shwin->x;
-				int64_t popup_y = pw->shwin->y;
-				int64_t popup_w = pw->shwin->w;
-				int64_t popup_h = pw->shwin->h;
-
-				int64_t shad_w = popup_w + SHADOW_SIZE * 2;
-				int64_t shad_h = popup_h + SHADOW_SIZE * 2;
-
-
-				if (pw->shadowUpdate) {
-#ifdef SHADOW_ENABLED
-					for (int j = 0; j < shad_h; j++) {
-						for (int i = 0; i < shad_w; i++) {
-							*(uint32_t*)(canvas->buffer + ((popup_y - SHADOW_SIZE) + j) * canvas->canvasWidth + ((popup_x - SHADOW_SIZE) + i)) =
-								ChColorAlphaBlend2(*(uint32_t*)(canvas->buffer + ((popup_y - SHADOW_SIZE) + j) * canvas->canvasWidth + ((popup_x - SHADOW_SIZE) + i)),
-									*(uint32_t*)(pw->shadowBuffers + j * (pw->shwin->w + SHADOW_SIZE * 2) + i));
-						}
-					}
-#endif
-					pw->shadowUpdate = false;
-				}
-
-
-				if (pw->shwin->alpha) {
-					for (int64_t j = 0; j < popup_h; j++) {
-						for (int64_t i = 0; i < popup_w; i++) {
-							*(uint32_t*)(canvas->buffer + (popup_y + j) * canvas->canvasWidth + (popup_x + i)) =
-								ChColorAlphaBlend2(*(uint32_t*)(canvas->buffer + (popup_y + j) * canvas->canvasWidth + (popup_x + i)),
-									*(uint32_t*)(pw->buffer + j * pw->shwin->w + i));
-						}
-					}
-				}
-				else {
-					for (int64_t i = 0; i < popup_h; i++) {
-						_fastcpy(canvas->buffer + (popup_y + i) * canvas->canvasWidth + popup_x,
-							pw->buffer + i * pw->shwin->w + 0, popup_w * 4);
-					}
-				}
-
-				AddDirtyClip(popup_x - SHADOW_SIZE, popup_y - SHADOW_SIZE, shad_w, shad_h);
-				pw->shwin->dirty = 0;
-				pw->hidden = false;
-				//_cursor_update_ = true;
-			}
-			if (pw->shwin->hide) {
-				int px = pw->shwin->x;
-				int py = pw->shwin->y;
-				int pwidth = pw->shwin->w;
-				int pheight = pw->shwin->h;
-				pw->shwin->dirty = 0;
-				pw->shwin->hide = false;
-				pw->shadowUpdate = true;
-				pw->hidden = true;
-				///* add dirty rectagle into the window inorder to
-				// * repaint the occluded area
-				// */
-				info->rect[info->rect_count].x = max((px - SHADOW_SIZE), info->x) - min((px - SHADOW_SIZE), info->x);
-				info->rect[info->rect_count].y = max((py - SHADOW_SIZE), info->y) - min((py - SHADOW_SIZE), info->y);
-				info->rect[info->rect_count].w = pwidth + SHADOW_SIZE * 2;
-				info->rect[info->rect_count].h = pheight + SHADOW_SIZE * 2;
-				info->rect_count++;
-			}
-
-			if (pw->shwin->popuped) {
-				pw->shadowUpdate = true;
-				pw->shwin->popuped = false;
-			}
-
-		}
-
 		
 	}
 
@@ -994,13 +923,13 @@ void ComposeFrame(ChCanvas *canvas) {
 				if (info->alpha && !_window_moving_) {
 					for (int j = 0; j < r_h; j++) {
 						for (int i = 0; i < r_w; i++) {
-							*(uint32_t*)(canvas->buffer + (static_cast<uint64_t>(info->y) + r_y + j) * canvas->canvasWidth + 
+							*(uint32_t*)(canvas->buffer + (static_cast<int64_t>(info->y) + r_y + j) * canvas->canvasWidth + 
 								(static_cast<int64_t>(info->x) + r_x + i)) =
 								ChColorAlphaBlend2(*(uint32_t*)(canvas->buffer +
-									(static_cast<uint64_t>(info->y) + r_y + j)* canvas->canvasWidth + 
-									(static_cast<uint64_t>(info->x) + r_x + i)),
-								*(uint32_t*)(win->backBuffer + (static_cast<uint64_t>(r_y) + j)* info->width + 
-									(static_cast<uint64_t>(r_x) + i)));
+									(static_cast<int64_t>(info->y) + r_y + j)* canvas->canvasWidth + 
+									(static_cast<int64_t>(info->x) + r_x + i)),
+								*(uint32_t*)(win->backBuffer + (static_cast<int64_t>(r_y) + j)* info->width + 
+									(static_cast<int64_t>(r_x) + i)));
 						}
 					}
 					AddDirtyClip(info->x + r_x, info->y + r_y, r_w, r_h);
@@ -1025,9 +954,9 @@ void ComposeFrame(ChCanvas *canvas) {
 
 					if (clipCount == 0 && !overlap) {
 						for (int i = 0; i < r_h; i++) {
-							void* canv_buff = (canvas->buffer + (static_cast<uint64_t>(info->y) + r_y + i) * 
+							void* canv_buff = (canvas->buffer + (static_cast<int64_t>(info->y) + r_y + i) * 
 								canvas->canvasWidth + info->x + r_x);
-							void* backbuff = (win->backBuffer + (static_cast<uint64_t>(r_y) + i) * info->width + r_x);
+							void* backbuff = (win->backBuffer + (static_cast<int64_t>(r_y) + i) * info->width + r_x);
 							_fastcpy(canv_buff,
 								backbuff, static_cast<int64_t>(r_w)*4);
 						}
@@ -1059,9 +988,9 @@ void ComposeFrame(ChCanvas *canvas) {
 						int update_r_y = r_y + diffy;
 
 						for (int j = 0; j < k_h; j++) {
-							_fastcpy((canvas->buffer + (static_cast<uint64_t>(k_y) + j) * canvas->canvasWidth + k_x),
-								(win->backBuffer + (static_cast<uint64_t>(update_r_y) + j) * info->width + update_r_x), 
-								static_cast<uint64_t>(k_w) * 4);
+							_fastcpy((canvas->buffer + (static_cast<int64_t>(k_y) + j) * canvas->canvasWidth + k_x),
+								(win->backBuffer + (static_cast<int64_t>(update_r_y) + j) * info->width + update_r_x), 
+								static_cast<int64_t>(k_w) * 4);
 						}
 						AddDirtyClip(k_x, k_y, k_w, k_h);
 					}
@@ -1132,9 +1061,9 @@ void ComposeFrame(ChCanvas *canvas) {
 			if ((info->alpha && info->updateEntireWindow) || (info->alpha && _intersected_)) {
 				for (int j = 0; j < height; j++) {
 					for (int i = 0; i < width; i++) {
-						*(uint32_t*)(canvas->buffer + (static_cast<uint64_t>(winy) + j) * canvas->canvasWidth + 
+						*(uint32_t*)(canvas->buffer + (static_cast<int64_t>(winy) + j) * canvas->canvasWidth + 
 							(static_cast<int64_t>(winx) + i)) =
-							ChColorAlphaBlend2(*(uint32_t*)(canvas->buffer + (static_cast<uint64_t>(winy) + j)* canvas->canvasWidth + 
+							ChColorAlphaBlend2(*(uint32_t*)(canvas->buffer + (static_cast<int64_t>(winy) + j)* canvas->canvasWidth + 
 								(static_cast<int64_t>(winx) + i)),
 							*(uint32_t*)(win->backBuffer + static_cast<int64_t>(j) * info->width + i)
 								/*info->alphaValue*/);
@@ -1160,9 +1089,9 @@ void ComposeFrame(ChCanvas *canvas) {
 
 
 				for (int i = 0; i < height; i++) {
-					void* canvas_buff = (canvas->buffer + (static_cast<uint64_t>(winy) + i) * canvas->canvasWidth + winx);
-					void* winbuff = (win->backBuffer + (0 + static_cast<uint64_t>(i)) * info->width + 0);
-					_fastcpy(canvas_buff, winbuff, static_cast<uint64_t>(width) * 4);
+					void* canvas_buff = (canvas->buffer + (static_cast<int64_t>(winy) + i) * canvas->canvasWidth + winx);
+					void* winbuff = (win->backBuffer + (0 + static_cast<int64_t>(i)) * info->width + 0);
+					_fastcpy(canvas_buff, winbuff, static_cast<int64_t>(width) * 4);
 				}
 
 
@@ -1313,17 +1242,8 @@ broadcast:
 	if (mouseWin){
 		int handle = mouseWin->handle;
 		uint8_t handleType = HANDLE_TYPE_NORMAL_WINDOW;
-		for (int j = 0; j < mouseWin->popupList->pointer; j++) {
-			PopupWindow* pw = (PopupWindow*)list_get_at(mouseWin->popupList, j);
-			if (pw->hidden)
-				continue;
-			if (mouse_x >= pw->shwin->x && (mouse_x < (pw->shwin->x + pw->shwin->w)) &&
-				mouse_y >= pw->shwin->y && (mouse_y < (pw->shwin->y + pw->shwin->h))){
-				handle = pw->handle;
-				handleType = HANDLE_TYPE_POPUP_WINDOW;
-				break;
-			}
-		}
+		if ((mouseWin->flags & WINDOW_FLAG_POPUP))
+			handleType = HANDLE_TYPE_POPUP_WINDOW;
 		DeodhaiSendMouseEvent(handle,mouseWin->ownerId, handleType,mouse_x, mouse_y, button);
 	}
 }
@@ -1356,7 +1276,7 @@ void DeodhaiBroadcastKey(int code) {
 void DeodhaiCloseWindow(Window* win) {
 	int ownerId = win->ownerId;
 	int handle = win->handle;
-	uint8_t flags = win->flags;
+	uint16_t flags = win->flags;
 	WinSharedInfo* info = (WinSharedInfo*)win->sharedInfo;
 	int width = info->width;
 	int height = info->height;
@@ -1365,18 +1285,24 @@ void DeodhaiCloseWindow(Window* win) {
 	free(win->title);
 
 	/* iterate all popup window and close them */
-	for (int i = 0; i < win->popupList->pointer; i++){
+	for (Window* popup = win->firstPopupWin; popup != NULL; popup = popup->next) {
 		//close all
-		PopupWindow* popup = (PopupWindow*)list_get_at(win->popupList, i);
-		PopupWindowDestroy(popup);
+		free(popup->title);
+		_KeUnmapSharedMem(popup->shWinKey);
+		_KeUnmapSharedMem(popup->backBufferKey);
+#ifdef SHADOW_ENABLED
+		_KeMemUnmap(popup->shadowBuffers, (static_cast<size_t>(width) + SHADOW_SIZE * 2) * (height + SHADOW_SIZE * 2) * 4);
+#endif
+		PopupRemoveWindow(win, popup);
+		free(popup);
 	}
 
-	list_clear_all(win->popupList);
 
-	free(win->popupList);
 	_KeUnmapSharedMem(win->shWinKey);
 	_KeUnmapSharedMem(win->backBufferKey);
+#ifdef SHADOW_ENABLED
 	_KeMemUnmap(win->shadowBuffers, (static_cast<size_t>(width) + SHADOW_SIZE * 2) * (height + SHADOW_SIZE * 2) * 4);
+#endif
 	BackDirtyAdd(x - SHADOW_SIZE, y - SHADOW_SIZE, width + SHADOW_SIZE*2, height + SHADOW_SIZE*2);
 	DeodhaiRemoveWindow(win);
 	free(win);
@@ -1653,9 +1579,25 @@ int main(int argc, char* arv[]) {
 			int y = event.dword2;
 			int w = event.dword3;
 			int h = event.dword4;
-			uint8_t flags = event.dword5;
+			/* if this create window is creating a popup window
+			 * then we will need it's parent window handle
+			 */
+			int parent_handle = event.dword6;
+			uint16_t flags = event.dword5;
 
 			Window* win = DeodhaiCreateWindow(x, y, w, h, flags, event.from_id, event.charValue3);
+
+			if ((win->flags & WINDOW_FLAG_POPUP)) {
+				for (Window* parentWin = rootWin; parentWin != NULL; parentWin = parentWin->next) {
+					if (parentWin->handle == parent_handle) {
+						win->parent = parentWin;
+						_KePrint("[Deodhai]: popup added \r\n");
+						break;
+					}
+				}
+				_KePrint("[Deodhai]:Popup window created \r\n");
+				
+			}
 			PostEvent e;
 			memset(&e, 0, sizeof(PostEvent));
 
@@ -1667,8 +1609,8 @@ int main(int argc, char* arv[]) {
 			
 			_KeFileIoControl(postbox_fd, POSTBOX_PUT_EVENT, &e);
 			
-			_KeProcessSleep(40);
-			if (!(flags & WINDOW_FLAG_MESSAGEBOX)){
+			_KeProcessSleep(180);
+			if (!(win->flags & WINDOW_FLAG_MESSAGEBOX || win->flags & WINDOW_FLAG_POPUP)){
 				_KePrint("Broadcasting message \n");
 				/* broadcast it to all broadcast listener windows, about this news*/
 				memset(&e, 0, sizeof(PostEvent));
@@ -1741,14 +1683,15 @@ int main(int argc, char* arv[]) {
 
 		/* brings back a window to front */
 		if (event.type == DEODHAI_MESSAGE_WINDOW_BRING_FRONT) {
-			uint16_t ownerId = event.dword;
+			uint32_t handle = event.dword2;
 			Window* frontableWin = NULL;
 			for (Window* win = rootWin; win != NULL; win = win->next) {
-				if (win->ownerId == ownerId){
+				if (win->handle == handle){
 					frontableWin = win;
 					break;
 				}
 			}
+
 			if (frontableWin) {
 				if (!(frontableWin->flags & WINDOW_FLAG_BLOCKED))
 					DeodhaiWindowSetFocused(frontableWin, true);
@@ -1833,40 +1776,7 @@ int main(int argc, char* arv[]) {
 			memset(&event, 0, sizeof(PostEvent));
 		}
 
-		/*
-		 * DEODHAI_MESSAGE_CREATE_POPUP -- creates a popup
-		 * window
-		 */
-		if (event.type == DEODHAI_MESSAGE_CREATE_POPUP) {
-			int handle = event.dword;
-			int ownerId = event.from_id;
-			uint8_t type = event.dword2;
-			int x = event.dword3;
-			int y = event.dword4;
-			int w = event.dword5;
-			int h = event.dword6;
-			Window* parent = NULL;
-			for (Window* win = rootWin; win != NULL; win = win->next) {
-				if (win->handle == handle && win->ownerId == ownerId) {
-					parent = win;
-					break;
-				}
-			}
-
-			if (parent) {
-				PopupWindow* popup = CreatePopupWindow(x, y, w, h, ownerId);
-				list_add(parent->popupList, popup);
-				PostEvent e;
-				memset(&e, 0, sizeof(PostEvent));
-				e.type = DEODHAI_REPLY_WINCREATED;
-				e.dword = popup->shwinKey;
-				e.dword2 = popup->buffWinKey;
-				e.dword3 = popup->handle;
-				e.to_id = event.from_id;
-				_KeFileIoControl(postbox_fd, POSTBOX_PUT_EVENT, &e);
-			}
-			memset(&event, 0, sizeof(PostEvent));
-		}
+		
 		_KeProcessSleep((16 - frameTime));
 	}
 }

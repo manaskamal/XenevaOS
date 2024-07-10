@@ -44,26 +44,28 @@
 typedef struct _popup_menu_ {
 	ChWidget wid;
 	ChWindow* mainWindow;
-	ChPopupWindow* backWindow;
+	ChWindow* backWindow;
 	list_t* MenuItems;
 	int x_loc;
 	int y_loc;
 	void* lastSelectedMenuItem;
-	struct _popup_menu_ *lastActiveMenu;
+	struct _popup_menu_ *parent;
 }ChPopupMenu;
 
 typedef struct _menu_item_ {
 	ChWidget wid;
 	char* title;
 	ChPopupMenu* menu;
+	ChPopupMenu* parent;
 	bool seperator;
 }ChMenuItem;
 
 /*
 * ChCreatePopupMenu -- create a new popup menu
 * @param mainWin -- Pointer to Main Window
+* @param parent -- Parent popup menu
 */
-XE_EXTERN XE_EXPORT ChPopupMenu* ChCreatePopupMenu(ChWindow* mainWin);
+XE_EXTERN XE_EXPORT ChPopupMenu* ChCreatePopupMenu(ChWindow* mainWin, ChPopupMenu* parent);
 
 /*
 * ChCreateMenuItem -- create a new menu item

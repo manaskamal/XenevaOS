@@ -68,12 +68,12 @@ void ChDefaultMenubarPainter(ChWidget* wid, ChWindow* win) {
 
 void ChPopupMenuAppendButton(ChPopupMenu* pm, int x, int y, int w, int h) {
 	//ChDrawRect(pm->backWindow->canv, x, y, w, h, WHITE);
-	ChDrawLine(pm->backWindow->canv, x, y, x + w, y + h/2, WHITE);
-	ChDrawLine(pm->backWindow->canv, x + w, y + h/2,x, y + h, WHITE);
+	ChDrawLine(pm->backWindow->canv, x, y, x + w, y + h/2, BLACK);
+	ChDrawLine(pm->backWindow->canv, x + w, y + h/2,x, y + h, BLACK);
 }
 
 void ChPopupMenuPaint(ChPopupMenu* popup){
-	ChDrawRect(popup->backWindow->canv, 0, 0, popup->wid.w, popup->wid.h, MENUBAR_COLORLIGHT);
+	ChDrawRect(popup->backWindow->canv, 0, 0, popup->wid.w, popup->wid.h, 0xFFE6CACA);
 	int menu_item_height = DEFAULT_MENU_ITEM_HEIGHT;
 	int menu_item_y = DEFAULT_MENU_ITEM_BUTTON_PADY;
 	for (int i = 0; i < popup->MenuItems->pointer; i++) {
@@ -87,13 +87,13 @@ void ChPopupMenuPaint(ChPopupMenu* popup){
 		}
 	/*	ChDrawRect(popup->backWindow->canv, 0, menu_item_y, popup->wid.w, DEFAULT_MENU_ITEM_HEIGHT, GREEN);*/
 		ChFontDrawText(popup->backWindow->canv, popup->mainWindow->app->baseFont, mi->title, 10, menu_item_y +
-			(menu_item_height/2) + 5, 10, WHITE);
+			(menu_item_height/2) + 5, 10, BLACK);
 
 		if (mi->menu)
 			ChPopupMenuAppendButton(popup, popup->wid.w - 15, menu_item_y + menu_item_height/2 - 7/2, 7,7);
 
 		if (mi->seperator) {
-			ChDrawHorizontalLine(popup->backWindow->canv, 4, menu_item_y + 1, popup->wid.w - (4*2), LIGHTSILVER);
+			ChDrawHorizontalLine(popup->backWindow->canv, 4, menu_item_y + 1, popup->wid.w - (4*2), GRAY);
 			menu_item_y += DEFAULT_MENU_ITEM_HEIGHT + DEFAULT_MENU_ITEM_BUTTON_PADY + 2;
 		}
 		else
@@ -102,5 +102,5 @@ void ChPopupMenuPaint(ChPopupMenu* popup){
 		
 
 	}
-	ChDrawRectUnfilled(popup->backWindow->canv, 0, 0, popup->wid.w, popup->wid.h, SILVER);
+	ChDrawRectUnfilled(popup->backWindow->canv, 0, 0, popup->wid.w, popup->wid.h,GRAY);
 }

@@ -89,63 +89,10 @@ void ChMenubarMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, int button)
 	}
 
 	if (clickedButton) {
-		ChPopupMenu* pm = clickedButton->popupMenu;
-		if (mb->lastActiveMenu && mb->lastActiveMenu != pm){
-			if (!mb->lastActiveMenu->backWindow->hidden){
-				for (int i = 0; i < mb->lastActiveMenu->MenuItems->pointer; i++) {
-					/*
-					* Check all menu items -- if any menu item's menu is visible,
-					* hide it,
-					* [[[TODO]]] -- check all menu items -menu recursively
-					*/
-					ChMenuItem* mi = (ChMenuItem*)list_get_at(mb->lastActiveMenu->MenuItems, i);
-					if (mi->menu){
-						if (mi->menu->backWindow){
-							if (!mi->menu->backWindow->hidden){
-								ChPopupWindowHide(mi->menu->backWindow,win);
-								_KeProcessSleep(500);
-							}
-						}
-					}
-				}
-				ChPopupWindowHide(mb->lastActiveMenu->backWindow,win);
-				_KeProcessSleep(500);
-			}
-			mb->lastActiveMenu = NULL;
-		}
-
+		ChPopupMenu* pm = clickedButton->popupMenu;	
 		if (pm) {
-			if (pm->backWindow) {
-				if (pm->backWindow->hidden){
-					ChMenuShow(pm, clickedButton->wid.x, clickedButton->wid.y + 26);
-					pm->backWindow->hidden = false;
-				}
-				else {
-					/*
-					 * Check all menu items -- if any menu item's menu is visible,
-					 * hide it, 
-					 * TODO -- check all menu items -menu recursively
-					 */
-					for (int k = 0; k < pm->MenuItems->pointer; k++) {
-						ChMenuItem* mitem = (ChMenuItem*)list_get_at(pm->MenuItems, k);
-						if (mitem->menu){
-							if (mitem->menu->backWindow){
-								if (!mitem->menu->backWindow->hidden){
-									ChPopupWindowHide(mitem->menu->backWindow,win);
-									_KeProcessSleep(500);
-								}
-							}
-						}
-					}
-					ChPopupWindowHide(pm->backWindow,win);
-				}
-
-			}
-			else {
-				ChMenuShow(pm,clickedButton->wid.x, clickedButton->wid.y + 26);
-			}
-			mb->lastActiveMenu = pm;
-			win->currentPopupMenu = pm;
+			ChMenuShow(pm,clickedButton->wid.x, clickedButton->wid.y + 26);
+			_KePrint("Popup menu availabled \r\n");
 		}
 	}
 

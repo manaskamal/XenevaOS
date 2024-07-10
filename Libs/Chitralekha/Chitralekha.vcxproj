@@ -199,6 +199,7 @@
     <ClCompile Include="widgets\menu.cpp" />
     <ClCompile Include="widgets\menubar.cpp" />
     <ClCompile Include="widgets\msgbox.cpp" />
+    <ClCompile Include="widgets\popupwin.cpp" />
     <ClCompile Include="widgets\progress.cpp" />
     <ClCompile Include="widgets\scrollpane.cpp" />
     <ClCompile Include="widgets\slider.cpp" />

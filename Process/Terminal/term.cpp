@@ -554,7 +554,7 @@ void TerminalThread() {
 int main(int argc, char* arv[]){
 	_KePrint("Creating terminal \r\n");
 	app = ChitralekhaStartApp(argc, arv);
-	win = ChCreateWindow(app, (1 << 0), "Xeneva Terminal", 300, 300, 650, 450);
+	win = ChCreateWindow(app, (WINDOW_FLAG_MOVABLE), "Xeneva Terminal", 300, 300, 650, 450);
 	ChWindowBroadcastIcon(app, "/icons/term.bmp");
 	win->info->alpha = true;
 	win->info->alphaValue = 0.7;

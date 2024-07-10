@@ -141,7 +141,12 @@ void ChDefaultWinPaint(ChWindow* win){
 	ChWindowUpdate(win, 0, 0, win->info->width, win->info->height, 1,0);
 }
 
-void ChDefaultPopupWinPaint(ChPopupWindow* popup, ChWindow* win) {
-	ChDrawRect(popup->canv, 0, 0, popup->wid.w, popup->wid.h, 0xFFD2D2D2);
-	ChDrawRectUnfilled(popup->canv, 0, 0, popup->wid.w, popup->wid.h, GRAY);
+void ChDefaultPopupWinPaint(ChWindow* popup) {
+	ChDrawRect(popup->canv, 0, 0, popup->info->width, popup->info->height, 0xFFD2D2D2);
+	for (int i = 0; i < popup->widgets->pointer; i++) {
+		ChWidget* wid = (ChWidget*)list_get_at(popup->widgets, i);
+		if (wid->ChPaintHandler)
+			wid->ChPaintHandler(wid, popup);
+	}
+	ChDrawRectUnfilled(popup->canv, 0, 0, popup->info->width, popup->info->height, GRAY);
 }

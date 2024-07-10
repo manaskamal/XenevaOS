@@ -32,6 +32,8 @@
 
 #include <stdint.h>
 #include <stdarg.h>
+#include "deodhai.h"
+#include "window.h"
 #include <string.h>
 
 #define POPUP_TYPE_MENU (1<<0)
@@ -40,6 +42,8 @@
 
 #pragma pack(push,1)
 typedef struct _popup_sh_win_ {
+	Rect rect[100];
+	uint32_t rect_count;
 	int x;
 	int y;
 	int w;
@@ -64,19 +68,13 @@ typedef struct _PopupWin_ {
 	bool shadowUpdate;
 }PopupWindow;
 
-/*
-* CreatePopupWindow -- create a new popup window
-* @param x -- X location
-* @param y -- Y location
-* @param w -- Width of the window
-* @param h -- Height of the window
-* @param owner_id -- Owner of the window
-*/
-extern PopupWindow* CreatePopupWindow(int x, int y, int w, int h, uint16_t owner_id);
+extern void PopupWindowAdd(Window* parent, Window* win);
 
-/*
-* PopupWindowDestroy -- destroy popup window
-* @param win -- Pointer to popup window
-*/
-extern void PopupWindowDestroy(PopupWindow* win);
+extern void PopupRemoveWindow(Window* parent, Window* win);
+
+/*  Compose all popup menus of given window
+ * @param canv -- Pointer to canvas
+ * @param thisWin -- Pointer to the top level window
+ */
+extern void ComposePopupMenus(ChCanvas* canv, Window* thisWin);
 #endif

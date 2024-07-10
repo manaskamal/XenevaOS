@@ -30,94 +30,162 @@
 #include "popup.h"
 #include "window.h"
 #include <boxblur.h>
+#include "dirty.h"
+#include "_fastcpy.h"
 #include <stdlib.h>
+#include "animation.h"
 #include <sys\mman.h>
 
 
 uint16_t shared_popup_win_key_prefix = 10000;
 
-/*
-* CreateSharedWinSpace -- Create a shared window space
-* @param shkey -- location where to store the window key
-* @param ownerId -- owning process id
-*/
-uint32_t* CreateSharedPopupWinSpace(uint16_t *shkey, uint16_t ownerId) {
-	uint32_t key = shared_popup_win_key_prefix + ownerId;
-	int id = _KeCreateSharedMem(key, sizeof(PopupSharedWin), 0);
-	void* addr = _KeObtainSharedMem(id, NULL, 0);
-	*shkey = key;
-	shared_popup_win_key_prefix += 10;
-	return (uint32_t*)addr;
+
+void PopupWindowAdd(Window* parent,Window* win) {
+	win->next = NULL;
+	win->prev = NULL;
+	if (parent->firstPopupWin == NULL) {
+		parent->firstPopupWin = win;
+		parent->lastPopupWin = win;
+	}
+	else {
+		parent->lastPopupWin->next = win;
+		win->prev = parent->lastPopupWin;
+		parent->lastPopupWin = win;
+	}
 }
 
-void PopupWindowShadowPutPixel(PopupWindow* win, int x, int y, int shadow_w, uint32_t color) {
-	unsigned int *lfb = win->shadowBuffers;
-	lfb[y * shadow_w + x] = color;
+void PopupRemoveWindow(Window* parent,Window* win) {
+	if (parent->firstPopupWin == NULL)
+		return;
+
+	if (win == parent->firstPopupWin)
+		parent->firstPopupWin = parent->firstPopupWin->next;
+	else
+		win->prev->next = win->next;
+
+	if (win == parent->lastPopupWin)
+		parent->lastPopupWin = win->prev;
+	else
+		win->next->prev = win->prev;
 }
 
-void PopupWindowShadowFillColor(PopupWindow* win, int shadow_w, int x, int y, int w, int h, uint32_t col) {
-	for (int i = 0; i < w; i++)
-	for (int j = 0; j < h; j++)
-		PopupWindowShadowPutPixel(win, x + i, y + j, shadow_w, col);
-}
 
-/*
- * CreatePopupWindow -- create a new popup window
- * @param x -- X location
- * @param y -- Y location
- * @param w -- Width of the window
- * @param h -- Height of the window
- * @param owner_id -- Owner of the window
+/*  Compose all popup menus of given window
+ * @param canv -- Pointer to canvas
+ * @param thisWin -- Pointer to the top level window
  */
-PopupWindow* CreatePopupWindow(int x, int y, int w, int h, uint16_t owner_id) {
-	PopupWindow* popup = (PopupWindow*)malloc(sizeof(PopupWindow));
-	uint16_t server_win_key = 0;
-	uint16_t buffer_key = 0;
-	int64_t w_ = w, h_ = h, x_ = x, y_ = y;
-	uint32_t* shwin = CreateSharedPopupWinSpace(&server_win_key, owner_id);
-	void* fb = CreateNewBackBuffer(owner_id, w*h * 4, &buffer_key);
-	popup->buffer = (uint32_t*)fb;
-	popup->shwin = (PopupSharedWin*)shwin;
-	popup->shwin->x = x;
-	popup->shwin->y = y;
-	popup->shwin->w = w;
-	popup->shwin->h = h;
-	popup->shwin->dirty = false;
-	popup->shwin->close = false;
-	popup->shwin->hide = false;
-	popup->shwinKey = server_win_key;
-	popup->buffWinKey = buffer_key;
-	popup->shadowUpdate = true;
-	popup->handle = DeodhaiAllocateNewHandle();
+void ComposePopupMenus(ChCanvas* canv, Window* thisWin) {
+	/* render all popup windows of this window */
+	for (Window* pw = thisWin->firstPopupWin; pw != NULL; pw = pw->next) {
+		WinSharedInfo* info = (WinSharedInfo*)pw->sharedInfo;
+		if (info->hide)
+			continue;
+
+		/*
+		 * Check for small area updates !! not entire window
+		 */
+		if ((info->rect_count > 0) && (info->dirty)) {
+			for (int k = 0; k < info->rect_count; k++) {
+				int64_t r_x = info->rect[k].x;
+				int64_t r_y = info->rect[k].y;
+				int64_t r_w = info->rect[k].w;
+				int64_t r_h = info->rect[k].h;
+
+				if (r_x < 0)
+					r_x = 0;
+
+				if (r_y < 0)
+					r_y = 0;
+
+				if ((info->x + r_x + r_w) >= canv->canvasWidth)
+					r_w = canv->canvasWidth - (info->x + r_x);
+
+				if ((info->y + r_y + r_h) >= canv->canvasHeight)
+					r_h = canv->canvasHeight - (info->y + r_y);
+
+
+				for (int i = 0; i < r_h; i++) {
+					void* canvas_mem = (canv->buffer + (info->y + r_y + i) * canv->canvasWidth + info->x + r_x);
+					void* win_mem = (pw->backBuffer + (r_y + i) * info->width + r_x);
+						_fastcpy(canvas_mem,
+							win_mem, static_cast<size_t>(r_w) * 4);
+					AddDirtyClip(info->x + r_x, info->y + r_y, r_w, r_h);
+				}
+
+			
+				info->rect[k].x = 0, info->rect[k].y = 0, info->rect[k].w = 0, info->rect[k].h = 0;
+			}
+			info->rect_count = 0;
+			info->dirty = 0;
+			info->updateEntireWindow = 0;
+		}
+
+		/* If no small areas, update entire window */
+
+		if (info->rect_count == 0 && info->updateEntireWindow == 1) {
+			int64_t winx = 0;
+			int64_t winy = 0;
+			winx = info->x;
+			winy = info->y;
+
+			int64_t width = info->width;
+			int64_t height = info->height;
+			int64_t shad_w = width + SHADOW_SIZE * 2;
+			int64_t shad_h = height + SHADOW_SIZE * 2;
+
+			if ((info->x - SHADOW_SIZE) <= 0) {
+				info->x = 5 + SHADOW_SIZE;
+				winx = info->x;
+			}
+
+			if ((info->y - SHADOW_SIZE) <= 0) {
+				info->y = 5 + SHADOW_SIZE;
+				winy = info->y;
+			}
+
+			if ((info->x + info->width) >= canv->screenWidth)
+				width = static_cast<int64_t>(canv->screenWidth) - info->x;
+
+			if ((info->y + info->height) >= canv->screenHeight)
+				height = static_cast<int64_t>(canv->screenHeight) - info->y;
+
+
+			if ((info->x + 24) >= canv->screenWidth)
+				info->x = canv->screenWidth - 24;
+
+			if ((info->y + 24) >= canv->screenHeight)
+				info->y = canv->screenHeight - 24;
+
 #ifdef SHADOW_ENABLED
-	popup->shadowBuffers = (uint32_t*)_KeMemMap(NULL, (w_ + SHADOW_SIZE * 2) * (h_ + SHADOW_SIZE * 2) * 4, 0, 0, MEMMAP_NO_FILEDESC, 0);
-	for (int i = 0; i < popup->shwin->w + SHADOW_SIZE * 2; i++) {
-		for (int j = 0; j < popup->shwin->h + SHADOW_SIZE * 2; j++) {
-			popup->shadowBuffers[j * (popup->shwin->w + SHADOW_SIZE * 2) + i] = 0x00000000;
+			if (((static_cast<int64_t>(info->x) - SHADOW_SIZE) + shad_w) >= canvas->screenWidth)
+				shad_w = static_cast<int64_t>(canvas->screenWidth) - (static_cast<int64_t>(info->x) - SHADOW_SIZE);
+
+
+			if (((static_cast<int64_t>(info->y) - SHADOW_SIZE) + shad_h) >= canvas->screenHeight)
+				shad_h = static_cast<int64_t>(canvas->screenHeight) - (static_cast<int64_t>(info->y) - SHADOW_SIZE);
+#endif
+			if ((pw->flags & WINDOW_FLAG_ANIMATED)) {
+				if (pw->flags & WINDOW_FLAG_ANIMATION_FADE_IN)
+					FadeInAnimationWindow(canv, pw, info, winx, winy, shad_w, shad_h);
+
+				if (pw->flags & WINDOW_FLAG_ANIMATION_FADE_OUT)
+					FadeOutAnimationWindow(canv, pw, info, winx, winy, shad_w, shad_h);
+			}
+			else {
+				
+				for (int64_t i = 0; i < height; i++) {
+					_fastcpy(canv->buffer + (winy + i) * canv->canvasWidth + winx,
+						pw->backBuffer + (0 + i) * info->width + 0, width * 4);
+				}
+
+
+				AddDirtyClip(winx - SHADOW_SIZE, winy - SHADOW_SIZE, shad_w, shad_h);
+			
+				if (!(pw->flags & WINDOW_FLAG_ANIMATED))
+					if (info->updateEntireWindow)
+						info->updateEntireWindow = 0;
+			}
 		}
 	}
 
-
-	PopupWindowShadowFillColor(popup, (popup->shwin->w + SHADOW_SIZE * 2), 8, 10, (popup->shwin->w + SHADOW_SIZE * 2) - 8 * 2,
-		(popup->shwin->h + SHADOW_SIZE * 2) - 8 * 2, SHADOW_COLOR);
-
-	for (int i = 0; i < 8; i++)
-		ChBoxBlur(DeodhaiGetMainCanvas(), popup->shadowBuffers, popup->shadowBuffers, 1, 1, (popup->shwin->w + SHADOW_SIZE * 2) - 1,
-		(popup->shwin->h + SHADOW_SIZE * 2) - 2);
-#endif
-	return popup;
-}
-
-/*
- * PopupWindowDestroy -- destroy popup window
- * @param win -- Pointer to popup window
- */
-void PopupWindowDestroy(PopupWindow* win) {
-	int64_t w_ = win->shwin->w;
-	int64_t h_ = win->shwin->h;
-
-	_KeMemUnmap(win->shadowBuffers, (w_ + SHADOW_SIZE * 2) * (h_ + SHADOW_SIZE * 2) * 4);
-	_KeUnmapSharedMem(win->buffWinKey);
-	_KeUnmapSharedMem(win->shwinKey);
-	free(win);
 }

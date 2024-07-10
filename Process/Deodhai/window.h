@@ -45,6 +45,7 @@
 #define WINDOW_FLAG_DIALOGBOX (1<<8)
 #define WINDOW_FLAG_ANIMATION_FADE_IN (1<<9)
 #define WINDOW_FLAG_ANIMATION_FADE_OUT (1<<10)
+#define WINDOW_FLAG_POPUP (1<<11)
 
 #ifdef SHADOW_ENABLED
 #define SHADOW_SIZE 11
@@ -88,7 +89,9 @@ typedef struct _win_ {
 	int animAlphaVal;
 	bool animdirection; 
 	char* title;
-	list_t* popupList;
+	struct _win_* firstPopupWin;
+	struct _win_* lastPopupWin;
+	struct _win_* parent;
 	_win_ * next;
 	_win_ * prev;
 }Window;
@@ -118,5 +121,5 @@ extern void* CreateNewBackBuffer(uint16_t ownerId, uint32_t sz, uint16_t *key);
 * @param ownerId -- process owner id of the window
 * @param title -- title of the window
 */
-extern Window* CreateWindow(int x, int y, int w, int h, uint8_t flags, uint16_t ownerId, char* title);
+extern Window* CreateWindow(int x, int y, int w, int h, uint16_t flags, uint16_t ownerId, char* title);
 #endif

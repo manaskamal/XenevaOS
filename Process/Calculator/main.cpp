@@ -314,8 +314,15 @@ void WindowHandleMessage(PostEvent *e) {
 	/* handle mouse event from deodhai */
 	case DEODHAI_REPLY_MOUSE_EVENT:{
 									   int handle = e->dword4;
-									   ChWindow* mouseWin = ChGetWindowByHandle(mainWin, handle);
-									   ChWindowHandleMouse(mouseWin, e->dword, e->dword2, e->dword3);
+									   if (e->dword5 == WINDOW_HANDLE_TYPE_NORMAL) {
+										   ChWindow* mouseWin = ChGetWindowByHandle(mainWin, handle);
+										   ChWindowHandleMouse(mouseWin, e->dword, e->dword2, e->dword3);
+									   }
+									   else if (e->dword5 == WINDOW_HANDLE_TYPE_POPUP) {
+										  
+										   ChWindow* pw = ChGetPopupWindowByHandle(mainWin, handle); 
+										   ChPopupWindowHandleMouse(pw,e->dword, e->dword2, e->dword3);
+									   }
 									   memset(e, 0, sizeof(PostEvent));
 									   break;
 	}
@@ -452,6 +459,12 @@ void CalculatorAboutBox(ChWidget* widget, ChWindow* win){
 	ChMessageBoxShow(mbox);
 }
 
+void PopupWindowMouseEventTest(ChWidget* widget, ChWindow* win, int x, int y, int button) {
+	ChPopupWindow* pw = (ChPopupWindow*)widget;
+	_KePrint("Popup window mouse event \r\n");
+	pw->shwin->dirty = true;
+}
+
 /*
 * main -- main entry
 */
@@ -484,8 +497,16 @@ int main(int argc, char* argv[]){
 	ChWindowAddWidget(mainWin, (ChWidget*)mainDisp);
 	/* button grid */
 	ChWindowPaint(mainWin);
-
 	
+	_KeProcessSleep(1000);
+	ChWindow* pw = ChCreatePopupWindow(mainWin, 10, 10, 500, 500, (WINDOW_FLAG_STATIC| WINDOW_FLAG_POPUP),"hello");
+	ChButton* pb = ChCreateButton(10, 10, 100, 75, "HELLO");
+	ChWindowAddWidget(pw, (ChWidget*)pb);
+	if (pw->ChWinPaint)
+		pw->ChWinPaint(pw);
+	ChWindowUpdate(pw, 0, 0, 500, 500, 1, 0);
+	ChPopupWindowShow(pw, mainWin);
+
 	PostEvent e;
 	memset(&e, 0, sizeof(PostEvent));
 

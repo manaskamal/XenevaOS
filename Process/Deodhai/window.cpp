@@ -89,7 +89,7 @@ void WindowShadowFillColor(Window* win,int shadow_w,int x, int y, int w, int h, 
  * @param ownerId -- process owner id of the window
  * @param title -- title of the window
  */
-Window* CreateWindow(int x, int y, int w, int h, uint8_t flags, uint16_t ownerId, char* title) {
+Window* CreateWindow(int x, int y, int w, int h, uint16_t flags, uint16_t ownerId, char* title) {
 	uint16_t shKey = 0;
 	uint16_t backBufferKey = 0;
 	int64_t w_ = w, h_ = h, x_ = x, y_ = y;
@@ -113,7 +113,7 @@ Window* CreateWindow(int x, int y, int w, int h, uint8_t flags, uint16_t ownerId
 	shwin->alpha = false;
 	shwin->dirty = false;
 	win->handle = DeodhaiAllocateNewHandle();
-	win->popupList = initialize_list();
+
 #ifdef SHADOW_ENABLED	
 	if (!(win->flags & WINDOW_FLAG_ALWAYS_ON_TOP)){
 

@@ -117,13 +117,13 @@ void LaunchButtonMouseEvent(LaunchButton* wid, ChWindow* win, int x, int y, int 
  * @param win -- Pointer to window structure
  */
 void LauncherButtonDefaultAction(LaunchButton* lbutton, ChWindow *win){
+	ChWindowHide(win);
+	_KeProcessSleep(160);
 	int id = _KeCreateProcess(0, lbutton->title);
 	if (id == -1) {
 		_KePrint("Failed to open app -> %s \r\n", lbutton->title);
 	}
 	int status = _KeProcessLoadExec(id, lbutton->appname, 0, 0);
-	_KeProcessSleep(160);
-	ChWindowHide(win);
 }
 
 /*

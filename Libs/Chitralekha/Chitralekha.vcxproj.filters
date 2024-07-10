@@ -117,6 +117,9 @@
     <ClCompile Include="audio\audio.cpp">
       <Filter>audio</Filter>
     </ClCompile>
+    <ClCompile Include="widgets\popupwin.cpp">
+      <Filter>widgets</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <NASM Include="_fastcpy.asm" />

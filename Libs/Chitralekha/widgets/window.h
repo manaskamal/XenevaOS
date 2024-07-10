@@ -57,6 +57,9 @@
 #define WINDOW_FLAG_BLOCKED (1<<6)
 #define WINDOW_FLAG_MESSAGEBOX (1<<7)
 #define WINDOW_FLAG_DIALOGBOX (1<<8)
+#define WINDOW_FLAG_ANIMATION_FADE_IN (1<<9)
+#define WINDOW_FLAG_ANIMATION_FADE_OUT (1<<10)
+#define WINDOW_FLAG_POPUP (1<<11)
 
 #define CHITRALEKHA_WIDGET_TYPE_CONTROL (1<<1)
 #define CHITRALEKHA_WIDGET_TYPE_POPUP (1<<2)
@@ -146,6 +149,8 @@
 
 #pragma pack(push,1)
 	typedef struct _popup_sh_win_ {
+		ChRect rect[100];
+		uint32_t rect_count;
 		int x;
 		int y;
 		int w;
@@ -185,7 +190,7 @@
 	* @param w -- width of the window
 	* @param h -- height of the window
 	*/
-	XE_LIB ChWindow* ChCreateWindow(ChitralekhaApp *app, uint8_t attrib, char* title, int x, int y, int w, int h);
+	XE_LIB ChWindow* ChCreateWindow(ChitralekhaApp *app, uint16_t attrib, char* title, int x, int y, int w, int h);
 
 	/*
 	* ChWindowAddSubWindow -- add sub window to parent window list
@@ -246,6 +251,11 @@
 	XE_LIB void ChWindowHandleMouse(ChWindow* win, int x, int y, int button);
 
 	/*
+ * ChWindowSetFocused -- bring a window to focused state
+ * @param win -- Pointer to window
+ */
+	XE_LIB void ChWindowSetFocused(ChWindow* win);
+	/*
 	* ChWindowHandleFocus -- handle focus changed events
 	* @param win -- Pointer to window
 	* @param focus_val -- focus bit, 1 -- focused, 0 -- not focused
@@ -287,7 +297,7 @@
 	* @param mainWin -- Pointer to main window
 	* @param handle -- Handle of the popup window
 	*/
-    XE_LIB ChPopupWindow* ChGetPopupWindowByHandle(ChWindow* mainWin, int handle);
+    XE_LIB ChWindow* ChGetPopupWindowByHandle(ChWindow* mainWin, int handle);
 
 	/*
 	* ChPopupWindowHandleMouse -- Handle popup window's mouse event externally
@@ -297,14 +307,14 @@
 	* @param y -- Mouse y coordinate
 	* @param button -- Mouse button state
 	*/
-	XE_LIB void ChPopupWindowHandleMouse(ChPopupWindow* win, ChWindow* mainWin, int x, int y, int button);
+	XE_LIB void ChPopupWindowHandleMouse(ChWindow* win,int x, int y, int button);
 
 	/*
 	* ChWindowSetFlags -- set window flags
 	* @param win -- Pointer to window
 	* @param flags -- flags to set
 	*/
-	XE_LIB void ChWindowSetFlags(ChWindow* win, uint8_t flags);
+	XE_LIB void ChWindowSetFlags(ChWindow* win, uint16_t flags);
 
 	/*
 	* ChWindowRegisterJump -- register long jump address
@@ -329,7 +339,7 @@
 	* @param h -- Height of the window
 	* @param type -- type of the window
 	*/
-	XE_LIB ChPopupWindow* ChCreatePopupWindow(ChitralekhaApp *app, ChWindow* win, int x, int y, int w, int h, uint8_t type);
+	XE_LIB ChWindow* ChCreatePopupWindow(ChWindow* win, int x, int y, int w, int h, uint16_t flags, char* title);
 
 	/*
 	* ChPopupWindowUpdate -- update the popup window
@@ -346,7 +356,7 @@
 	* @param pw -- Pointer to Popup Window
 	* @param win -- Pointer to Chitralekha Main Window
 	*/
-	XE_LIB void ChPopupWindowShow(ChPopupWindow* pw, ChWindow* win);
+	XE_LIB void ChPopupWindowShow(ChWindow* pw, ChWindow* win);
 
 	/*
 	* ChPopupWindowUpdateLocation -- update the location of popup window relative to
@@ -356,14 +366,14 @@
 	* @param x -- X location
 	* @param y -- Y location
 	*/
-	XE_LIB void ChPopupWindowUpdateLocation(ChPopupWindow* pwin, ChWindow* win, int x, int y);
+	XE_LIB void ChPopupWindowUpdateLocation(ChWindow* pwin, ChWindow* win, int x, int y);
 
 	/*
 	* ChPopupWindowHide -- hide the popup window
 	* @param pw -- Pointer to Popup Window
 	* @param perent -- Parent Window
 	*/
-	XE_LIB void ChPopupWindowHide(ChPopupWindow* pw, ChWindow* parent);
+	XE_LIB void ChPopupWindowHide(ChWindow* pw, ChWindow* parent);
 
 #ifdef __cplusplus
 }

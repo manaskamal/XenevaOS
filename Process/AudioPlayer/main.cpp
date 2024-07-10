@@ -136,8 +136,8 @@ void WindowHandleMessage(PostEvent *e) {
 										   ChWindowHandleMouse(mouseWin, e->dword, e->dword2, e->dword3);
 									   }
 									   else if (e->dword5 == WINDOW_HANDLE_TYPE_POPUP) {
-										   ChPopupWindow* pw = ChGetPopupWindowByHandle(mainWin, handle);
-										   ChPopupWindowHandleMouse(pw, mainWin, e->dword, e->dword2, e->dword3);
+										   ChWindow* pw = ChGetPopupWindowByHandle(mainWin, handle);
+										   ChPopupWindowHandleMouse(pw, e->dword, e->dword2, e->dword3);
 									   }
 									   memset(e, 0, sizeof(PostEvent));
 									   break;

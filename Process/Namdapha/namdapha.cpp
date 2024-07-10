@@ -67,6 +67,7 @@ void NamdaphaChangeFocus(NamdaphaButton *button) {
 	memset(&e, 0, sizeof(PostEvent));
 	e.type = DEODHAI_MESSAGE_WINDOW_BRING_FRONT;
 	e.dword = button->ownerId;
+	e.dword2 = button->winHandle;
 	e.to_id = POSTBOX_ROOT_ID;
 	_KeFileIoControl(app->postboxfd, POSTBOX_PUT_EVENT, &e);
 }
@@ -457,7 +458,7 @@ int main(int argc, char* arv[]){
 	gomenuh = ChGetWindowHandle(app, "Xeneva Launcher");
 	gobutton->winHandle = gomenuh;
 	
-	NamdaphaPlayStartupSound();
+	//NamdaphaPlayStartupSound();
 
 	PostEvent e;
 	memset(&e, 0, sizeof(PostEvent));

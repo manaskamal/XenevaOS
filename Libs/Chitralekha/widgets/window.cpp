@@ -42,7 +42,7 @@ extern void ChWindowPaintCloseButton(ChWindow* win, ChWinGlobalControl* button);
 extern void ChWindowPaintMaximButton(ChWindow* win, ChWinGlobalControl* button);
 extern void ChWindowPaintMinimButton(ChWindow* win, ChWinGlobalControl* button);
 extern void ChWindowPaintTitlebar(ChWindow* win);
-extern void ChDefaultPopupWinPaint(ChPopupWindow* popup, ChWindow* win);
+extern void ChDefaultPopupWinPaint(ChWindow* win);
 
 /*
  * ChRequestWindow -- the base of window creation, it request window manager
@@ -53,8 +53,9 @@ extern void ChDefaultPopupWinPaint(ChPopupWindow* popup, ChWindow* win);
  * @param w -- Width of the window
  * @param h -- Height of the window
  * @param title -- title of the window
+ * @param handle -- handle of parent window 
  */
-void ChRequestWindow(ChitralekhaApp* app, int x, int y, int w, int h, char* title, uint8_t attrib) {
+void ChRequestWindow(ChitralekhaApp* app, int x, int y, int w, int h, char* title, uint16_t attrib,int handle) {
 	PostEvent e;
 	e.type = DEODHAI_MESSAGE_CREATEWIN;
 	e.dword = x;
@@ -62,6 +63,7 @@ void ChRequestWindow(ChitralekhaApp* app, int x, int y, int w, int h, char* titl
 	e.dword3 = w;
 	e.dword4 = h;
 	e.dword5 = attrib;
+	e.dword6 = handle;
 	e.to_id = POSTBOX_ROOT_ID;
 	strcpy(e.charValue3, title);
 	e.from_id = app->currentID;
@@ -149,9 +151,9 @@ void ChGlobalMinimiseAction(ChWindow* win, ChWinGlobalControl* ctl) {
  * @param w -- width of the window
  * @param h -- height of the window
  */
-XE_EXTERN XE_EXPORT ChWindow* ChCreateWindow(ChitralekhaApp *app, uint8_t attrib, char* title, int x, int y, int w, int h) {
-	/* request a new window fomr window manager */
-	ChRequestWindow(app, x, y, w, h, title,attrib);
+XE_EXTERN XE_EXPORT ChWindow* ChCreateWindow(ChitralekhaApp *app, uint16_t attrib, char* title, int x, int y, int w, int h) {
+	/* request a new window from window manager */
+	ChRequestWindow(app, x, y, w, h, title,attrib,0);
 	ChWindow* win = (ChWindow*)malloc(sizeof(ChWindow));
 	memset(win, 0, sizeof(ChWindow));
 	ChCanvas* canv = ChCreateCanvas(w, h);
@@ -257,8 +259,8 @@ XE_EXTERN XE_EXPORT void ChWindowUpdate(ChWindow* win, int x, int y, int w, int 
 	}
 	
 	for (int i = 0; i < h; i++)
-		_fastcpy(lfb + (static_cast<uint64_t>(y) + i) * win->info->width + x, 
-			canvaddr + (static_cast<uint64_t>(y) + i) * win->info->width + x, (static_cast<uint64_t>(w) * 4));
+		_fastcpy(lfb + (static_cast<int64_t>(y) + i) * win->info->width + x, 
+			canvaddr + (static_cast<int64_t>(y) + i) * win->info->width + x, (static_cast<int64_t>(w) * 4));
 
 	win->info->updateEntireWindow = updateEntireWin;
 
@@ -320,10 +322,9 @@ XE_EXTERN XE_EXPORT ChWindow* ChGetWindowByHandle(ChWindow* mainWin,int handle) 
  * @param mainWin -- Pointer to main window
  * @param handle -- Handle of the popup window
  */
-XE_EXTERN XE_EXPORT ChPopupWindow* ChGetPopupWindowByHandle(ChWindow* mainWin, int handle){
-	ChPopupWindow* returnable = NULL;
+XE_EXTERN XE_EXPORT ChWindow* ChGetPopupWindowByHandle(ChWindow* mainWin, int handle){
 	for (int i = 0; i < mainWin->popup->pointer; i++) {
-		ChPopupWindow* pw = (ChPopupWindow*)list_get_at(mainWin->popup, i);
+		ChWindow* pw = (ChWindow*)list_get_at(mainWin->popup, i);
 		if (pw->handle == handle){
 			return pw;
 		}
@@ -376,6 +377,19 @@ XE_EXTERN XE_EXPORT uint32_t ChGetWindowHandle(ChitralekhaApp* app, char* title)
 }
 
 /*
+ * ChWindowSetFocused -- bring a window to focused state
+ * @param win -- Pointer to window
+ */
+XE_EXTERN XE_EXPORT void ChWindowSetFocused(ChWindow* win) {
+	PostEvent e;
+	memset(&e, 0, sizeof(PostEvent));
+	e.type = DEODHAI_MESSAGE_WINDOW_BRING_FRONT;
+	e.dword = win->app->currentID;
+	e.dword2 = win->handle;
+	e.to_id = POSTBOX_ROOT_ID;
+	_KeFileIoControl(win->app->postboxfd, POSTBOX_PUT_EVENT, &e);
+}
+/*
  * ChWindowHandleMouse -- handle mouse event 
  * @param win -- Pointer to window
  * @param x -- X coord of the mouse
@@ -383,6 +397,32 @@ XE_EXTERN XE_EXPORT uint32_t ChGetWindowHandle(ChitralekhaApp* app, char* title)
  * @param button -- button state of the mouse
  */
 XE_EXTERN XE_EXPORT void ChWindowHandleMouse(ChWindow* win, int x, int y, int button) {
+	bool _popup_was_active = false;
+
+	if (button != 0) {
+		for (int i = 0; i < win->popup->pointer; i++) {
+			ChWindow* popup = (ChWindow*)list_get_at(win->popup, i);
+			if (popup->info->hide == 0) {
+				_KePrint("A popup window is not hidden \r\n");
+				ChWindowHide(popup);
+				_KeProcessSleep(500);
+				_popup_was_active = true;
+			}
+		}
+		if (_popup_was_active) {
+			ChWindowSetFlags(win, (win->flags & ~(WINDOW_FLAG_STATIC)));
+			_KeProcessSleep(500);
+			ChWindowSetFocused(win);
+			return;
+		}
+	}
+
+	for (int i = 0; i < win->popup->pointer; i++) {
+		ChWindow* popup = (ChWindow*)list_get_at(win->popup, i);
+		if (popup->info->hide == 0) {
+			return;
+		}
+	}
 	/* first check the title bar bound */
 	if (y > win->info->y && y < win->info->y + WINDOW_DEFAULT_TITLEBAR_HEIGHT) {
 		for (int i = 0; i < win->GlobalControls->pointer; i++) {
@@ -428,16 +468,6 @@ XE_EXTERN XE_EXPORT void ChWindowHandleMouse(ChWindow* win, int x, int y, int bu
 		}
 	}
 
-
-	/*if (button) {
-		ChMenuHide((ChPopupMenu*)win->currentPopupMenu);
-		_KeProcessSleep(20);
-		if (win->selectedMenuItem){
-			ChMenuItem* lmi = (ChMenuItem*)win->selectedMenuItem;
-			if (lmi->wid.ChActionHandler)
-				lmi->wid.ChActionHandler((ChWidget*)lmi, win);
-		}
-	}*/
 }
 
 /*
@@ -448,17 +478,29 @@ XE_EXTERN XE_EXPORT void ChWindowHandleMouse(ChWindow* win, int x, int y, int bu
  * @param y -- Mouse y coordinate
  * @param button -- Mouse button state
  */
-XE_EXTERN XE_EXPORT void ChPopupWindowHandleMouse(ChPopupWindow* win,ChWindow* mainWin,int x, int y, int button) {
+XE_EXTERN XE_EXPORT void ChPopupWindowHandleMouse(ChWindow* win,int x, int y, int button) {
+	if (!win)
+		return;
 	for (int i = 0; i < win->widgets->pointer; i++){
 		ChWidget* pwid = (ChWidget*)list_get_at(win->widgets, i);
-		if (x >= (win->shwin->x + pwid->x) && x < (win->shwin->x + pwid->x +  pwid->w) &&
-			y >= (win->shwin->y + pwid->y) && y < (win->shwin->y + pwid->y + pwid->h)){
+		if (x >= (win->info->x + pwid->x) && x < (win->info->x + pwid->x + pwid->w) &&
+			y >= (win->info->y + pwid->y) && y < (win->info->y + pwid->y + pwid->h)) {
+			pwid->hover = true;
+			pwid->KillFocus = false;
 			if (pwid->ChMouseEvent)
-				pwid->ChMouseEvent(pwid, mainWin, x, y, button);
+				pwid->ChMouseEvent(pwid, win, x, y, button);
+		}
+		else {
+			if (pwid->hover) {
+				pwid->hover = false;
+				pwid->KillFocus = true;
+				if (pwid->ChMouseEvent)
+					pwid->ChMouseEvent(pwid, win, x, y, button);
+			}
 		}
 	}
 
-	if (button) {
+	/*if (button) {
 		ChMenuHide((ChPopupMenu*)mainWin->currentPopupMenu);
 		_KeProcessSleep(20);
 		if (mainWin->selectedMenuItem){
@@ -466,7 +508,7 @@ XE_EXTERN XE_EXPORT void ChPopupWindowHandleMouse(ChPopupWindow* win,ChWindow* m
 			if (lmi->wid.ChActionHandler)
 				lmi->wid.ChActionHandler((ChWidget*)lmi, mainWin);
 		}
-	}
+	}*/
 }
 
 
@@ -478,8 +520,6 @@ XE_EXTERN XE_EXPORT void ChPopupWindowHandleMouse(ChPopupWindow* win,ChWindow* m
  */
 XE_EXTERN XE_EXPORT void ChWindowHandleFocus(ChWindow* win, bool focus_val, uint32_t handle) {
 	win->focused = focus_val;
-	if (focus_val == 0) 
-		ChMenuHide((ChPopupMenu*)win->currentPopupMenu);
 	ChWindowPaintTitlebar(win);
 	ChDrawHorizontalLine(win->canv, 0, 0, win->info->width, GRAY);
 	ChDrawVerticalLine(win->canv, 0, 0, 26, GRAY);
@@ -510,7 +550,7 @@ XE_EXTERN XE_EXPORT void ChWindowRegisterJump(ChWindow* win) {
  * @param win -- Pointer to window
  * @param flags -- flags to set
  */
-XE_EXTERN XE_EXPORT void ChWindowSetFlags(ChWindow* win, uint8_t flags) {
+XE_EXTERN XE_EXPORT void ChWindowSetFlags(ChWindow* win, uint16_t flags) {
 	PostEvent e;
 	e.type = DEODHAI_MESSAGE_SET_FLAGS;
 	e.dword = win->handle;
@@ -648,27 +688,6 @@ uint32_t ChWindowGetBackgroundColor(ChWindow* win) {
 	return win->color;
 }
 
-/*
- * ChPopupMouseEvent -- Popup window mouse event handler
- * @param wid -- Pointer to Popup window
- * @param win -- Pointer to Main Window
- * @param x -- Mouse x value
- * @param y -- Mouse y value
- * @param button -- Mouse button state
- */
-void ChPopupMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, int button) {
-	ChPopupWindow* pwin = (ChPopupWindow*)wid;
-	if (pwin->hidden)
-		return;
-	for (int i = 0; i < pwin->widgets->pointer; i++){
-		ChWidget* pwid = (ChWidget*)list_get_at(pwin->widgets, i);
-		if (x >=(win->info->x + pwin->wid.x + pwid->x) && x < (win->info->x + pwin->wid.x + pwid->x + pwid->w) &&
-			y >= (win->info->y +pwin->wid.y + pwid->y) && y < (win->info->y + pwin->wid.y + pwid->y + pwid->h)){
-			if (pwid->ChMouseEvent)
-				pwid->ChMouseEvent(pwid, win, x, y, button);
-		}
-	}
-}
 
 /*
  * ChCreatePopupWindow -- *Create a popup window 
@@ -680,57 +699,37 @@ void ChPopupMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, int button) {
  * @param h -- Height of the window
  * @param type -- type of the window
  */
-XE_EXTERN XE_EXPORT ChPopupWindow* ChCreatePopupWindow(ChitralekhaApp *app,ChWindow* win, int x, int y, int w, int h, uint8_t type){
-	ChPopupWindow* popup = (ChPopupWindow*)malloc(sizeof(ChPopupWindow));
-	memset(popup, 0, sizeof(ChPopupWindow));
-	popup->wid.x = x;
-	popup->wid.y = y;
-	popup->wid.w = w;
-	popup->wid.h = h;
-	popup->wid.type = CHITRALEKHA_WIDGET_TYPE_POPUP;
-	popup->wid.visible = false;
-	popup->wid.ChMouseEvent = ChPopupMouseEvent;
-	popup->ChPopupWindowPaint = ChDefaultPopupWinPaint;
-	popup->canv = ChCreateCanvas(w, h);
-	ChAllocateBuffer(popup->canv);
-	PostEvent e;
-	e.type = DEODHAI_MESSAGE_CREATE_POPUP;
-	e.dword = win->handle;
-	e.dword2 = type;
-	e.dword3 = win->info->x + x;
-	e.dword4 = win->info->y + y;
-	e.dword5 = w;
-	e.dword6 = h;
-	e.to_id = POSTBOX_ROOT_ID;
-	e.from_id = app->currentID;
-	_KeFileIoControl(app->postboxfd, POSTBOX_PUT_EVENT, &e);
-	memset(&e, 0, sizeof(PostEvent));
-	while (1) {
-		int err = _KeFileIoControl(app->postboxfd, POSTBOX_GET_EVENT, &e);
-		if (e.type == DEODHAI_REPLY_WINCREATED){
-			uint16_t shkey = e.dword;
-			uint32_t buffKey = e.dword2;
-			int handle = e.dword3;
-			if (buffKey < 100)
-				_KePrint("Chitralekha: buffer key problem \n");
-			uint16_t shid = _KeCreateSharedMem(shkey, 0, 0);
-			uint16_t backid = _KeCreateSharedMem(buffKey, NULL, 0);
-			void* sharedwinaddr = _KeObtainSharedMem(shid, NULL, 0);
-			void* backbuff = _KeObtainSharedMem(backid, NULL, 0);
-			popup->shwin = (ChPopupSharedWin*)sharedwinaddr;
-			popup->buffer = (uint32_t*)backbuff;
-			popup->buffWinKey = buffKey;
-			popup->shwinKey = shkey;
-			popup->handle = handle;
-			memset(&e, 0, sizeof(PostEvent));
-			break;
-		}
-
-		if (err == -1)
-			_KePauseThread();
-	}
-	list_add(win->popup, popup);
+XE_EXTERN XE_EXPORT ChWindow* ChCreatePopupWindow(ChWindow* win, int x, int y, int w, int h, uint16_t flags, char* title){
+	if (!(flags & WINDOW_FLAG_POPUP))
+		flags |= WINDOW_FLAG_POPUP;
+	ChitralekhaApp* app = ChitralekhaStartSubApp(win->app);
+	ChRequestWindow(app, (win->info->x + x), (win->info->y + y), w, h, title,flags, win->handle);
+	ChWindow* popup = (ChWindow*)malloc(sizeof(ChWindow));
+	memset(popup, 0, sizeof(ChWindow));
+	ChCanvas* canv = ChCreateCanvas(w, h);
+	ChAllocateBuffer(canv);
+	popup->app = app;
+	popup->flags = flags;
+	popup->buffer = (uint32_t*)app->fb;
+	popup->canv = canv;
+	popup->sharedwin = app->shwinbuf;
+	popup->info = (ChSharedWinInfo*)popup->sharedwin;
+	popup->title = (char*)malloc(strlen(title));
+	memset(popup->title, 0, strlen(title));
+	strcpy(popup->title, title);
+	popup->info->x = win->info->x + x;
+	popup->info->y = win->info->y + y;
+	popup->info->width = w;
+	popup->info->height = h;
+	popup->info->rect_count = 0;
+	popup->info->updateEntireWindow = 0;
+	popup->info->hide = true;
+	popup->handle = app->windowHandle;
+	popup->focused = true;
+	popup->ChWinPaint = ChDefaultPopupWinPaint;
 	popup->widgets = initialize_list();
+	popup->parent = win;
+	list_add(win->popup, popup);
 	return popup;
 }
 
@@ -773,18 +772,14 @@ XE_EXTERN XE_EXPORT void ChPopupWindowUpdate(ChPopupWindow* pw, int x, int y, in
  * @param pw -- Pointer to Popup Window
  * @param win -- Pointer to Chitralekha Main Window
  */
-XE_EXTERN XE_EXPORT void ChPopupWindowShow(ChPopupWindow* pw, ChWindow* win) {
-	if (pw->hidden){
-		pw->hidden = false;
-		pw->shwin->dirty = true;
-		pw->wid.visible = true;
-	}
-	else {
-		if (pw->ChPopupWindowPaint)
-			pw->ChPopupWindowPaint(pw, win);
-		ChPopupWindowUpdate(pw, 0, 0, pw->shwin->w, pw->shwin->h);
-		pw->wid.visible = true;
-	}
+XE_EXTERN XE_EXPORT void ChPopupWindowShow(ChWindow* pw, ChWindow* win) {
+	pw->info->hide = 0;
+	ChWindowSetFlags(win,(win->flags | WINDOW_FLAG_STATIC));
+	/* give some time slice to deodhai,
+	 * to update itself and get ready for
+	 * next events
+	 */
+	_KeProcessSleep(1000);
 }
 
 /*
@@ -795,9 +790,9 @@ XE_EXTERN XE_EXPORT void ChPopupWindowShow(ChPopupWindow* pw, ChWindow* win) {
  * @param x -- X location
  * @param y -- Y location
  */
-XE_EXTERN XE_EXPORT void ChPopupWindowUpdateLocation(ChPopupWindow* pwin,ChWindow* win, int x, int y) {
-	pwin->shwin->x = win->info->x + x;
-	pwin->shwin->y = win->info->y + y;
+XE_EXTERN XE_EXPORT void ChPopupWindowUpdateLocation(ChWindow* pwin,ChWindow* win, int x, int y) {
+	pwin->info->x = win->info->x + x;
+	pwin->info->y = win->info->y + y;
 }
 
 
@@ -806,8 +801,6 @@ XE_EXTERN XE_EXPORT void ChPopupWindowUpdateLocation(ChPopupWindow* pwin,ChWindo
  * @param pw -- Pointer to Popup Window
  * @param parent -- Root window
  */
-XE_EXTERN XE_EXPORT void ChPopupWindowHide(ChPopupWindow* pw, ChWindow* parent) {
-	pw->shwin->hide = true;
-	pw->hidden = true;
-	pw->wid.visible = false;
+XE_EXTERN XE_EXPORT void ChPopupWindowHide(ChWindow* pw, ChWindow* parent) {
+	pw->info->hide = true;
 }
