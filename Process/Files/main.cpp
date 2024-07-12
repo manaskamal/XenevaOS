@@ -346,6 +346,9 @@ void ExitItemClicked(ChWidget* wid, ChWindow* win) {
 void M2_2Clicked(ChWidget* wid, ChWindow* win) {
 	/* exit the application*/
 	_KePrint("M2_2Clicked \r\n");
+	int proc_id = _KeCreateProcess(0, "file");
+	_KeProcessLoadExec(proc_id, "/file.exe", 0, 0);
+	longjmp(mainWin->jump, 1);
 }
 
 /*
@@ -416,23 +419,6 @@ int main(int argc, char* argv[]){
 	/* for testing purpose just create some menus */
 	ChPopupMenu* help = ChCreatePopupMenu(mainWin, 0);
 	ChMenuItem* about = ChCreateMenuItem("About", help);
-	ChMenuItem* about1 = ChCreateMenuItem("About 1", help);
-	ChMenuItem* about2 = ChCreateMenuItem("About 2", help);
-	ChMenuItem* about3 = ChCreateMenuItem("About 3", help);
-	ChMenuItem* about4 = ChCreateMenuItem("About 4", help);
-	ChMenuItem* about5 = ChCreateMenuItem("About 5", help);
-	ChMenuItem* about6 = ChCreateMenuItem("About 6", help);
-	ChMenuItem* about7 = ChCreateMenuItem("About 7", help);
-	ChMenuItem* about8 = ChCreateMenuItem("About 8", help);
-	ChMenuItem* about9 = ChCreateMenuItem("About 9", help);
-	ChMenuItem* about10 = ChCreateMenuItem("About 10", help);
-
-	ChMenuItem* about11 = ChCreateMenuItem("About 11", help);
-	ChPopupMenu* m2 = ChCreatePopupMenu(mainWin,help);
-	ChMenuItem* m2_1 = ChCreateMenuItem("Test1", m2);
-	ChMenuItem* m2_2 = ChCreateMenuItem("Launch Calculator...", m2);
-	m2_2->wid.ChActionHandler = M2_2Clicked;
-	about1->menu = m2;
 	about->wid.ChActionHandler = AboutClicked;
 	ChMenuButtonAddMenu(edit, help);
 

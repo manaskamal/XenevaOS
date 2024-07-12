@@ -118,20 +118,27 @@ void ChMenuItemDestroy(ChWidget* wid, ChWindow* win) {
 void ChMenuItemMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, int button) {
 	ChMenuItem* item = (ChMenuItem*)wid;
 	ChPopupMenu* pm = item->parent;
+	
+	bool _action_required = false;
 	if (button) {
+		_KePrint("Item clicked %s \r\n", item->title);
 		if (item->menu) {
 			ChMenuShow(item->menu, item->parent->x_loc + item->wid.x + item->wid.w,
 				item->parent->y_loc + item->wid.y);
 		}else {
 			ChMenuHide(pm);
 			ChWindowSetFlags(pm->mainWindow, (pm->mainWindow->flags & ~(WINDOW_FLAG_STATIC)));
-			_KeProcessSleep(500);
+			_KeProcessSleep(1000);
 			ChWindowSetFocused(pm->mainWindow);
-
-			if (item->wid.ChActionHandler)
-				item->wid.ChActionHandler((ChWidget*)item, win);
+			_KeProcessSleep(500);
+			//_KeProcessSleep(500);
+			_action_required = true;
 		}
 	}
+
+	if (_action_required)
+		if (item->wid.ChActionHandler)
+			item->wid.ChActionHandler((ChWidget*)item, win);
 }
 /*
  * ChCreateMenuItem -- create a new menu item
