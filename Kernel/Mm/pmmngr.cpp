@@ -116,7 +116,7 @@ void AuPmmngrLockPage(uint64_t Address) {
 void AuPmmngrLockPages(void *Address, size_t Size) {
 	uint64_t addr = (uint64_t)Address;
 	for (int i = 0; i < Size; i++)
-		AuPmmngrLockPage(addr + i * 4096);
+		AuPmmngrLockPage(addr + static_cast<uint64_t>(i) * 4096);
 }
 
 /*
