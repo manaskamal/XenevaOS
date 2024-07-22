@@ -37,6 +37,7 @@
 XE_EXTERN{
 #endif
 
+#define PAGE_SIZE 4096
 
 #define MEMMAP_NO_FILEDESC -1
 

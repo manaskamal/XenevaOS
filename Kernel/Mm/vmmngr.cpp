@@ -238,7 +238,7 @@ bool AuMapPage(uint64_t phys_addr, uint64_t virt_addr, uint8_t attrib) {
 	uint64_t* pml1 = (uint64_t*)(P2V(pml2[i2]) & ~(4096 - 1));
 	if (pml1[i1] & X86_64_PAGING_PRESENT)
 	{
-		AuPmmngrFree((void*)phys_addr);
+		//AuPmmngrFree((void*)phys_addr);
 		return false;
 	}
 

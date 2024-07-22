@@ -128,12 +128,10 @@ uint64_t GetProcessHeapMem(size_t sz) {
 	uint64_t start_addr = (uint64_t)AuGetFreePage(false, (void*)proc->proc_mem_heap);
 
 	for (int i = 0; i < sz / PAGE_SIZE; i++) {
-		/*AuVPage* vpage = AuVmmngrGetPage(start_addr + i * PAGE_SIZE, VIRT_GETPAGE_ONLY_RET, VIRT_GETPAGE_ONLY_RET);
-		if (vpage->bits.page != 0)
-			continue;*/
 		void* phys = AuPmmngrAlloc();
 		if (!AuMapPage((size_t)phys, start_addr + static_cast<uint64_t>(i) * PAGE_SIZE, X86_64_PAGING_USER)) {
 			SeTextOut("Failed to map %x \r\n", (start_addr + static_cast<uint64_t>(i) * PAGE_SIZE));
+			AuPmmngrFree(phys);
 		}
 	}
 	//SeTextOut("GetProcessHeapMem: %x %d bytes Mapped \r\n", start_addr, sz);

@@ -28,6 +28,7 @@
 **/
 
 #include "rect.h"
+#include <stdio.h>
 
 /*
 * RectSetLeft -- set a new left edge value to
@@ -74,7 +75,7 @@ int RectSetTop(Rect *rect, int new_top) {
 */
 int RectSetBottom(Rect *rect, int new_bottom) {
 	rect->h = new_bottom - rect->y;
-	return rect->y + rect->h;
+	return (rect->y + rect->h);
 }
 
 /*
@@ -90,7 +91,7 @@ int RectGetLeft(Rect *rect) {
 * @param rect -- pointer to the rect structure
 */
 int RectGetRight(Rect *rect) {
-	return rect->x + rect->w;
+	return (rect->x + rect->w);
 }
 
 /*
@@ -106,5 +107,5 @@ int RectGetTop(Rect *rect) {
 * @param rect -- pointer to the rect structure
 */
 int RectGetBottom(Rect *rect) {
-	return rect->y + rect->h;
+	return (rect->y + rect->h);
 }

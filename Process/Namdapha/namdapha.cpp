@@ -264,13 +264,18 @@ void NamdaphaHandleMessage(PostEvent *e) {
 										NamdaphaButton* nb = (NamdaphaButton*)list_get_at(button_list, i);
 										nb->focused = false;
 									}
+									_KePrint("ButtonlIST checked \r\n");
 									NamdaphaButton* nbutton = NmCreateButton(nbutton_x_loc, nbutton_y_loc, NAMDAPHA_BUTTON_WIDTH, NAMDAPHA_BUTTON_HEIGHT, e->charValue3);
+									_KePrint("Button Created \r\n");
 									nbutton->ownerId = e->dword;
 									nbutton->nmbuttoninfo = defaultappico;
 									nbutton->focused = true;
 									nbutton->winHandle = e->dword2;
+									_KePrint("Adding to list \r\n");
 									list_add(button_list, nbutton);
-									NamdaphaPaint(win);
+									_KePrint("Button List added \r\n");
+									//NamdaphaPaint(win);
+									_KePrint("Namdapha Paint \r\n");
 									nbutton_y_loc += nbutton->h + NAMDAPHA_BUTTON_YPAD;
 									_KePrint("[Namdapha]: Win button created \r\n");
 									memset(e, 0, sizeof(PostEvent));

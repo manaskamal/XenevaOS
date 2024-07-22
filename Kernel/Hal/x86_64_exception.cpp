@@ -220,6 +220,9 @@ void page_fault(size_t vector, void* param){
 	AuProcess *proc = NULL;
 	if (thr) {
 		proc = AuProcessFindThread(thr);
+		if (!proc)
+			proc = AuProcessFindSubThread(thr);
+		
 		SeTextOut("Thread name -> %s \r\n", thr->name);
 		if (proc) {
 			SeTextOut("Process pid -> %d \r\n", proc->proc_id);
@@ -246,13 +249,18 @@ skip:
 		SeTextOut("Reserved page \r\n");
 	else if (id)
 		SeTextOut("Invalid page \r\n");
-	uint64_t diff = (frame->rip - 0x600000);
-	uint16_t mask = diff & UINT16_MAX;
-	uint64_t real_addr = (frame->rip - diff);
+	AuVMArea* vma = AuVMAreaGet(proc, frame->rip);
+
 	SeTextOut("Virtual Address -> %x \r\n", vaddr_);
 	SeTextOut("Virtual Address aligned -> %x \r\n", vaddr_aligned);
 	SeTextOut("RSP -> %x \r\n", frame->rsp);
-	SeTextOut("RIP -> %x , Actual addr -> %x \r\n", frame->rip, (real_addr + mask));
+	SeTextOut("RIP->%x\r\n", frame->rip);
+	if (vma) {
+		SeTextOut("VMA Start -> %x \r\n", vma->start);
+		uint64_t offset = (frame->rip - vma->start);
+		uint64_t realAddress = 0x600000 + offset;
+		SeTextOut("origin address -> %x  %x\r\n", frame->rip, realAddress);
+	}
 	SeTextOut("CS -> %x, SS -> %x \r\n", frame->cs, frame->ss);
 	if (!_mapped) {
 		for (;;);

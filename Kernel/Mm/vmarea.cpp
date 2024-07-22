@@ -85,7 +85,7 @@ AuVMArea* AuVMAreaCreate(size_t start, size_t end, uint8_t prot, size_t len, uin
 AuVMArea* AuVMAreaGet(AuProcess* proc, size_t address) {
 	for (int i = 0; i < proc->vmareas->pointer; i++) {
 		AuVMArea* area_ = (AuVMArea*)list_get_at(proc->vmareas, i);
-		if (address >= area_->start && address <= area_->end)
+		if (address > area_->start && address < area_->end)
 			return area_;
 	}
 	return NULL;

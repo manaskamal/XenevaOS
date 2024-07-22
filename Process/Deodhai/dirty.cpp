@@ -32,11 +32,11 @@
 #include <string.h>
 
 static uint32_t _dirty_count = 0;
-Rect dirtyRect[512];
+Rect dirtyRect[100];
 
 
 void InitialiseDirtyClipList() {
-	for (int i = 0; i < 512; i++) {
+	for (int i = 0; i < 100; i++) {
 		dirtyRect[i].x = 0;
 		dirtyRect[i].y = 0;
 		dirtyRect[i].w = 0;
@@ -52,7 +52,7 @@ void InitialiseDirtyClipList() {
  * @param h -- height of the rect
  */
 void AddDirtyClip(int x, int y, int w, int h) {
-	if (_dirty_count >= 511)
+	if (_dirty_count >= 100)
 		_dirty_count = 0;
 	
 	if (x < 0)

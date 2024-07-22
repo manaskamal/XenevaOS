@@ -1398,6 +1398,8 @@ void DeodhaiUpdateBits(bool window_update, bool skip_disable) {
 	_window_update_all_ = window_update;
 	_skip_disable_ = skip_disable;
 }
+
+
 /*
  * main -- deodhai compositor
  */
@@ -1412,7 +1414,6 @@ int main(int argc, char* arv[]) {
 	gettimeofday(&tm);
 	startTime = tm.tv_sec;
 	startSubTime = tm.tv_usec;
-
 
 	/* first of all get screen width and screen height */
 	XEFileIOControl graphctl;

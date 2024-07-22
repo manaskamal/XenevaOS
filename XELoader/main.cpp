@@ -37,6 +37,7 @@
 #include <sys\iocodes.h>
 #include <sys\_kesignal.h>
 #include "pe_.h"
+#include <sys/_procheap.h>
 #include "XELdrObject.h"
 
 void XECopyMem(void* dest, void* src, size_t len) {
@@ -63,6 +64,7 @@ int XELdrLoadObject(XELoaderObject *obj){
 	uint64_t* buffer = (uint64_t*)_KeMemMap(NULL, 4096, 0, 0, -1, 0);
 	memset(buffer, 0, 4096);
 
+	_KePrint("Object -> %s %x\r\n",obj->objname, buffer);
 	obj->len += 4096;
 
 	int countbytes = 4096;
@@ -88,6 +90,7 @@ int XELdrLoadObject(XELoaderObject *obj){
 			uint64_t* block = (uint64_t*)_KeMemMap(NULL, 4096, 0, 0, -1, 0);
 			_KeReadFile(file, block, 4096);
 			_KeFileStat(file, stat);
+			obj->len += 4096;
 		}
 	}
 	else {
@@ -122,6 +125,8 @@ int XELdrLoadObject(XELoaderObject *obj){
 	XELdrCreatePEObjects(first_ptr);
 	obj->load_addr = _image_load_base_;
 	obj->loaded = true;
+	_KePrint("[XELoader]: loaded file -> %s \r\n", obj->objname);
+	_KeMemMapDirty((void*)_image_load_base_, obj->len, 0, 0);
 	_KeCloseFile(file);
 	free(stat);
 	return 0;
@@ -144,6 +149,7 @@ int XELdrStartProc(char* filename, XELoaderObject *obj) {
 	memset(buffer, 0, 4096);
 	obj->len += 4096;
 
+	_KePrint("Proc %s load addr -> %x \r\n",obj->objname, buffer);
 	uint64_t* first_ptr = buffer;
 	uint64_t _image_load_base_ = (uint64_t)first_ptr;
 
@@ -191,13 +197,15 @@ int XELdrStartProc(char* filename, XELoaderObject *obj) {
 	obj->load_addr = _image_load_base_;
 	obj->loaded = true;
 	obj->entry_addr = _image_load_base_ + nt->OptionalHeader.AddressOfEntryPoint;
+	_KePrint("[XELoader]: loaded file -> %s \r\n", obj->objname);
+	_KeMemMapDirty((void*)_image_load_base_, obj->len, 0, 0);
 	free(stat);
 	_KeCloseFile(file);
 	return 0;
 }
 
 
-extern "C"  void _argpass(void* addr);
+
 /*
  * DefaultSignalHandler -- default signal handler
  * for all signals
@@ -227,7 +235,9 @@ int main(int argc, char* argv[]) {
 
 	/* load the main object */
 	char* filename = argv[0];
+
 	XELoaderObject* mainobj = XELdrCreateObj(filename);
+	
 
 	XELdrStartProc(mainobj->objname, mainobj);
 	XELdrLoadAllObject();
@@ -236,6 +246,7 @@ int main(int argc, char* argv[]) {
 	/* links all dependencies of libraries*/
 	XELdrLinkDepObject(mainobj);
 	
+	_KePrint("Ldr linked \r\n");
 
 	/* now link all objects from the list
 	 * to main object
@@ -251,17 +262,14 @@ int main(int argc, char* argv[]) {
 	//XELdrClearObjectList();
 
 	
-	
-//	for (;;);
 	/* register the default signal handler to
 	 * all signal
 	 */
 	for (int i = 0; i < NUMSIGNALS; i++)
 		_KeSetSignal(i + 1, DefaultSignalHandler);
 
-	
 	entrypoint e = (entrypoint)entry_addr;
-	
+
 	e(argc , argv);
 	
 	while (1) {

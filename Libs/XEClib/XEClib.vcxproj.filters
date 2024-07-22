@@ -166,6 +166,9 @@
     <ClInclude Include="includes\sys\socket.h">
       <Filter>includes\sys</Filter>
     </ClInclude>
+    <ClInclude Include="includes\sys\_procheap.h">
+      <Filter>includes\sys</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="string.cpp" />
@@ -206,5 +209,8 @@
     <ClCompile Include="_xeprint.cpp" />
     <ClCompile Include="_xeinput.cpp" />
     <ClCompile Include="ctype.cpp" />
+    <ClCompile Include="sys\_procheap.cpp">
+      <Filter>sys</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

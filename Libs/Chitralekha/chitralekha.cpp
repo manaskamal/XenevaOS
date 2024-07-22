@@ -126,6 +126,11 @@ void ChCanvasScreenUpdate(ChCanvas* canvas, int _x, int _y, int _w, int _h) {
 
 	int64_t x = _x, y = _y, w = _w, h = _h;
 
+	if (x > canvas->screenWidth)
+		return;
+	if (y > canvas->screenHeight)
+		return;
+
 	if (x >= canvas->screenWidth)
 		return;
 
@@ -137,6 +142,12 @@ void ChCanvasScreenUpdate(ChCanvas* canvas, int _x, int _y, int _w, int _h) {
 
 	if ((y + h) >= canvas->screenHeight)
 		h = canvas->screenHeight - y;
+
+	if (w > canvas->screenWidth)
+		w = canvas->screenWidth;
+	if (h > canvas->screenHeight)
+		h = canvas->screenHeight;
+
 
 	if (x < 0)
 		x = 0;
@@ -169,7 +180,17 @@ void ChDrawPixel(ChCanvas* canvas, int x, int y, uint32_t color) {
 		_KePrint("ChDrawPixel : corrupted y -> %d \r\n", y);
 		y = 0;
 	}
-	lfb[static_cast<uint64_t>(y) * canvas->canvasWidth + x] = color;
+
+	if (x >= canvas->canvasWidth) {
+		_KePrint("ChDrawPixel : corrupted x > canvasWidth \r\n");
+		return;
+	}
+
+	if (y >= canvas->canvasHeight) {
+		_KePrint("ChDrawPixel : corrupted y > canvasHeight \r\n");
+		return;
+	}
+	lfb[static_cast<int64_t>(y) * canvas->canvasWidth + x] = color;
 }
 
 /*
@@ -189,7 +210,18 @@ uint32_t ChGetPixel(ChCanvas* canvas, int x, int y) {
 		_KePrint("ChGetPixel : corrupted y -> %d \r\n", y);
 		y = 0;
 	}
-	return lfb[static_cast<uint64_t>(y) * canvas->canvasWidth + x];
+
+	if (x > canvas->canvasWidth) {
+		_KePrint("ChGetPixel: corrupted x > canvasWidth -> %x \r\n", x);
+		x = canvas->canvasWidth;
+	}
+
+	if (y > canvas->screenHeight) {
+		_KePrint("ChGetPixel: corrupted y > canvasHeight -> %x \r\n", y);
+		y = canvas->canvasHeight;
+	}
+
+	return lfb[static_cast<int64_t>(y) * canvas->canvasWidth + x];
 }
 
 /*

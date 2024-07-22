@@ -89,7 +89,7 @@
       <SDLCheck>false</SDLCheck>
       <AdditionalIncludeDirectories>..\..\Libs\XEClib\includes; includes\c++</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <PreprocessorDefinitions>ARCH_X64; DYNAMIC_EXPORTER; YES_DYNAMIC;</PreprocessorDefinitions>
+      <PreprocessorDefinitions>ARCH_X64; DYNAMIC_EXPORTER; YES_DYNAMIC</PreprocessorDefinitions>
       <IgnoreStandardIncludePath>true</IgnoreStandardIncludePath>
       <ExceptionHandling>false</ExceptionHandling>
       <BasicRuntimeChecks />
@@ -120,7 +120,7 @@
       <AdditionalOptions>/ALIGN:512 %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
-      <Command>copy "..\..\Build\$(TargetName).dll" "%XENEVA_BUILDS%\$(TargetName).dll</Command>
+      <Command>copy "..\..\Build\$(TargetName).dll" "%XENEVA_BUILDS%\$(TargetName).dll"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -200,6 +200,7 @@
     <ClInclude Include="includes\sys\_ketimer.h" />
     <ClInclude Include="includes\sys\_ketty.h" />
     <ClInclude Include="includes\sys\_keycode.h" />
+    <ClInclude Include="includes\sys\_procheap.h" />
     <ClInclude Include="includes\time.h" />
     <ClInclude Include="includes\values.h" />
     <ClInclude Include="includes\_xeneva.h" />
@@ -221,6 +222,9 @@
     <ClCompile Include="stdlib.cpp" />
     <ClCompile Include="string.cpp" />
     <ClCompile Include="sys\_heap.cpp" />
+    <ClCompile Include="sys\_procheap.cpp">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</DeploymentContent>
+    </ClCompile>
     <ClCompile Include="sys\_xeneva.cpp" />
     <ClCompile Include="sys\_xeprint.cpp" />
     <ClCompile Include="time.cpp" />

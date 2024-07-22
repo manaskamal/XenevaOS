@@ -126,6 +126,11 @@ void* CreateMemMapping(void* address, size_t len, int prot, int flags, int fd,
 
 	AuThread* curr_thr = AuGetCurrentThread();
 	AuProcess* proc = AuProcessFindThread(curr_thr);
+	if (!proc) {
+		proc = AuProcessFindSubThread(curr_thr);
+		if (!proc)
+			return NULL;
+	}
 	AuVFSNode *file = NULL;
 	AuVFSNode* fsys = NULL;
 	uint64_t startingPhysAddr = NULL;
@@ -243,23 +248,39 @@ void* CreateMemMapping(void* address, size_t len, int prot, int flags, int fd,
  */
 void MemMapDirty(void* startingVaddr, size_t len, int flags, int prot) {
 	x64_cli();
+
+	AuThread* curr_thr = AuGetCurrentThread();
+	AuProcess* proc = AuProcessFindThread(curr_thr);
+	if (!proc) {
+		proc = AuProcessFindSubThread(curr_thr);
+		if (!proc)
+			return;
+	}
+
 	len = PAGE_ALIGN(len); //simply align the length
 	uint64_t startAddr = (uint64_t)startingVaddr;
-	for (int i = 0; i < len / PAGE_SIZE; i++) {
-		AuVPage *page = AuVmmngrGetPage(startAddr + static_cast<int64_t>(i) * PAGE_SIZE, NULL, VIRT_GETPAGE_ONLY_RET);
+	if (prot != 0) {
+		for (int i = 0; i < len / PAGE_SIZE; i++) {
+			AuVPage* page = AuVmmngrGetPage(startAddr + static_cast<int64_t>(i) * PAGE_SIZE, NULL, VIRT_GETPAGE_ONLY_RET);
 
-		/* check for  protection flag */
-		if (prot & PROTECTION_FLAG_READONLY)
-			page->bits.writable = 0;
-		if (prot & PROTECTION_FLAG_NO_EXEC)
-			page->bits.nx = 1;
-		if (prot & PROTECTION_FLAG_NO_CACHE)
-			page->bits.cache_disable = 1;
-		if (prot & PROTECTION_FLAG_READONLY && prot & PROTECTION_FLAG_WRITE)
-			page->bits.writable = 0;
+			/* check for  protection flag */
+			if (prot & PROTECTION_FLAG_READONLY)
+				page->bits.writable = 0;
+			if (prot & PROTECTION_FLAG_NO_EXEC)
+				page->bits.nx = 1;
+			if (prot & PROTECTION_FLAG_NO_CACHE)
+				page->bits.cache_disable = 1;
+			if (prot & PROTECTION_FLAG_READONLY && prot & PROTECTION_FLAG_WRITE)
+				page->bits.writable = 0;
 
-		if (flags & MEMMAP_FLAG_COW)
-			page->bits.cow = 1;
+			if (flags & MEMMAP_FLAG_COW)
+				page->bits.cow = 1;
+		}
+	}
+	if (!AuVMAreaGet(proc, (size_t)startingVaddr)) {
+		AuVMArea* area = AuVMAreaCreate((size_t)startingVaddr, ((uint64_t)startingVaddr + len), 0, len, VM_EXEC);
+		list_add(proc->vmareas, area);
+		SeTextOut("VMArea added for %s : %x-%x \r\n", proc->name, area->start, area->end);
 	}
 }
 
@@ -274,9 +295,9 @@ void UnmapMemMapping(void* address, size_t len) {
 	if (!len)
 		return;
 
-	SeTextOut("MemUnmap len -> %d \r\n", len);
+	//SeTextOut("MemUnmap len -> %d \r\n", len);
 	len = PAGE_ALIGN(len); //simply align the length
-	SeTextOut("Mem Unmap len aligned -> %d \r\n", len);
+	//SeTextOut("Mem Unmap len aligned -> %d \r\n", len);
 	uint64_t addr = (uint64_t)address;
 	for (int i = 0; i < len / PAGE_SIZE; i++) {
 		AuVPage* page = AuVmmngrGetPage(addr + static_cast<int64_t>(i) * PAGE_SIZE, VIRT_GETPAGE_ONLY_RET, VIRT_GETPAGE_ONLY_RET);

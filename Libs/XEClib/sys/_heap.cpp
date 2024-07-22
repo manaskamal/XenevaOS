@@ -1,6 +1,7 @@
 #include <sys\_heap.h>
 #include <sys\mman.h>
 #include <_xeneva.h>
+#include <sys/_procheap.h>
 
 /**  Durand's Ridiculously Amazing Super Duper Memory functions.  */
 

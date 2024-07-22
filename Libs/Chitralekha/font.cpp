@@ -56,7 +56,7 @@ ChFont *ChInitialiseFont(char* fontname) {
 	uint32_t fileSz = _KeGetFontSize(fontname);
 	if (!fileSz)
 		return NULL;
-
+	
 	ChFont* font = (ChFont*)malloc(sizeof(ChFont));
 	memset(font, 0, sizeof(ChFont));
 	font->buffer = (uint8_t*)buff;
@@ -321,8 +321,8 @@ int ChFontDrawTextClipped(ChCanvas *canv, ChFont* font, char* string, int penx, 
 	if (!limit)
 		return 1;
 
-	if ((penx >= canv->canvasWidth) || (peny >= canv->canvasHeight))
-		return 1;
+	/*if ((penx >= canv->canvasWidth) || (peny >= canv->canvasHeight))
+		return 1;*/
 
 	if (peny < limit->y)
 		return 1;
