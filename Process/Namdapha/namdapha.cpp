@@ -397,6 +397,7 @@ void NamdaphaPlayStartupSound() {
 * main -- namdapha entry point
 */
 int main(int argc, char* arv[]){
+	
 	app = ChitralekhaStartApp(argc, arv);
 	ChFontSetSize(app->baseFont, 13);
 	/* create a demo canvas just for getting the graphics
@@ -405,7 +406,7 @@ int main(int argc, char* arv[]){
 	XEFileIOControl graphctl;
 	memset(&graphctl, 0, sizeof(XEFileIOControl));
 	graphctl.syscall_magic = AURORA_SYSCALL_MAGIC;
-
+	
 	/* create a temporary canvas just to get
 	 * graphics file descriptor and screen resolution
 	 */
@@ -422,6 +423,7 @@ int main(int argc, char* arv[]){
 	
 	win = ChCreateWindow(app, WINDOW_FLAG_STATIC | WINDOW_FLAG_ALWAYS_ON_TOP | WINDOW_FLAG_BROADCAST_LISTENER | WINDOW_FLAG_ANIMATED, 
 		"Namdapha", 0, 0, NAMDAPHA_WIDTH, screen_h);
+
 	win->color = BLACK;
 	win->ChWinPaint = NamdaphaPaint;
 
@@ -463,7 +465,7 @@ int main(int argc, char* arv[]){
 	gomenuh = ChGetWindowHandle(app, "Xeneva Launcher");
 	gobutton->winHandle = gomenuh;
 	
-	//NamdaphaPlayStartupSound();
+	NamdaphaPlayStartupSound();
 
 	PostEvent e;
 	memset(&e, 0, sizeof(PostEvent));

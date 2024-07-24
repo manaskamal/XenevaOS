@@ -20,7 +20,11 @@ This documentation will guide you through all the parts of XenevaOS and how it w
 
 ## Welcome to XenevaOS -_Empowering Creativity_
 
-__Kernel__: 
+__Kernel__ : 
 - [About the Kernel](Kernel/AboutKernel.md)
 - [Boot Process](Kernel/BootProcess.md)
 - [Memory Management](Kernel/MemoryMangement.md)
+
+__Components__ :
+- [XELoader](XELoader.md)
+ 

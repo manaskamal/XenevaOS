@@ -50,6 +50,8 @@ AuThread* blocked_thr_head;
 AuThread* blocked_thr_last;
 AuThread* trash_thr_head;
 AuThread* trash_thr_last;
+AuThread* sleep_thr_head;
+AuThread* sleep_thr_last;
 
 bool _x86_64_sched_enable;
 static uint16_t thread_id;
@@ -197,6 +199,50 @@ void AuThreadDeleteTrash(AuThread* thread) {
 
 
 /**
+* Insert a thread to sleep list
+* @param new_task -- new thread address
+*/
+void AuThreadInsertSleep(AuThread* new_task) {
+	new_task->next = NULL;
+	new_task->prev = NULL;
+
+	if (sleep_thr_head == NULL) {
+		sleep_thr_last = new_task;
+		sleep_thr_head = new_task;
+	}
+	else {
+		sleep_thr_last->next = new_task;
+		new_task->prev = sleep_thr_last;
+	}
+	sleep_thr_last = new_task;
+}
+
+/**
+* AuThreadDeleteSleep -- remove a thread from sleep list
+* @param thread -- thread address to remove
+*/
+void AuThreadDeleteSleep(AuThread* thread) {
+
+	if (sleep_thr_head == NULL)
+		return;
+
+	if (thread == sleep_thr_head) {
+		sleep_thr_head = sleep_thr_head->next;
+	}
+	else {
+		thread->prev->next = thread->next;
+	}
+
+	if (thread == sleep_thr_last) {
+		sleep_thr_last = thread->prev;
+	}
+	else {
+		thread->next->prev = thread->prev;
+	}
+}
+
+
+/**
 * ! Creates a kernel mode thread
 *  @param entry -- Entry point address
 *  @param stack -- Stack address
@@ -332,31 +378,38 @@ void AuSchedulerInitAp() {
 }
 
 
+void AuHandleSleepThreads() {
+	for (AuThread* sleep_thr = sleep_thr_head; sleep_thr != NULL; sleep_thr = sleep_thr->next) {
+		if (sleep_thr->quanta > 0)
+			sleep_thr->quanta--;
+		if (sleep_thr->quanta == 0) {
+			sleep_thr->state = THREAD_STATE_READY;
+			AuThreadDeleteSleep(sleep_thr);
+			AuThreadInsert(sleep_thr);
+		}
+	}
+}
 /*
  * AuNextThread -- get the next thread to run
  */
 void AuNextThread() {
 	AuThread* thread = AuPerCPUGetCurrentThread();
 	bool _run_idle = false;
+run:	
 	do {
-		if (thread->state == THREAD_STATE_SLEEP) {
-			thread->quanta--;
-			if (thread->quanta <= 0) 
-				thread->state = THREAD_STATE_READY;
-		}
 		thread = thread->next;
-		
-		if (thread == NULL) {
+
+		if (!thread)
 			thread = thread_list_head;
-		}
 
 		if (thread == _idle_thr)
 			thread = thread->next;
-		
-		if (!thread){
+
+		if (!thread) {
 			_run_idle = true;
 			break;
 		}
+
 	} while (thread->state != THREAD_STATE_READY);
 end:
 	if (_run_idle)
@@ -401,6 +454,8 @@ void x8664SchedulerISR(size_t v, void* param) {
 			SeTextOut("Scheduler tick max reached \r\n");
 			for (;;);
 		}
+
+		AuHandleSleepThreads();
 		AuNextThread();
 		current_thread = AuPerCPUGetCurrentThread();
 		
@@ -460,6 +515,8 @@ AU_EXTERN AU_EXPORT void AuBlockThread(AuThread *thread) {
 * AuSleepThread -- sleeps a thread 
 */
 AU_EXTERN AU_EXPORT void AuSleepThread(AuThread *thread, uint64_t ms) {
+	AuThreadDelete(thread);
+	AuThreadInsertSleep(thread);
 	thread->state = THREAD_STATE_SLEEP;
 	thread->quanta = ms;
 }

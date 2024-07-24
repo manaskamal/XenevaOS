@@ -269,7 +269,7 @@ void DeodhaiSendFocusMessage(PostEvent *e) {
 			e->dword2 = win->handle;
 		}
 		_KeFileIoControl(postbox_fd, POSTBOX_PUT_EVENT, e);
-		_KeProcessSleep(8);
+		//_KeProcessSleep(1);
 	}
 }
 
@@ -329,7 +329,7 @@ void DeodhaiWindowSetFocused(Window* win, bool notify) {
 		e.dword = focusedWin->ownerId;
 		DeodhaiBroadcastMessage(&e, NULL);
 
-		_KeProcessSleep(60);
+		//_KeProcessSleep();
 
 		e.type = DEODHAI_REPLY_FOCUS_CHANGED;
 		DeodhaiSendFocusMessage(&e);
@@ -1475,8 +1475,8 @@ int main(int argc, char* arv[]) {
 	postbox_fd = _KeOpenFile("/dev/postbox", FILE_OPEN_READ_ONLY);
 
 	_KeFileIoControl(postbox_fd, POSTBOX_CREATE_ROOT, NULL);
-	PostEvent event;
 
+	PostEvent event;
 	uint64_t frame_tick = 0;
 	uint64_t diff_tick = 0;
 	uint64_t last_click_time = 0;
@@ -1588,6 +1588,7 @@ int main(int argc, char* arv[]) {
 
 			Window* win = DeodhaiCreateWindow(x, y, w, h, flags, event.from_id, event.charValue3);
 
+			_KePrint("Window Creation message received \r\n");
 			if ((win->flags & WINDOW_FLAG_POPUP)) {
 				for (Window* parentWin = rootWin; parentWin != NULL; parentWin = parentWin->next) {
 					if (parentWin->handle == parent_handle) {
@@ -1610,7 +1611,7 @@ int main(int argc, char* arv[]) {
 			
 			_KeFileIoControl(postbox_fd, POSTBOX_PUT_EVENT, &e);
 			
-			_KeProcessSleep(180);
+		//	_KeProcessSleep(180);
 			if (!(win->flags & WINDOW_FLAG_MESSAGEBOX || win->flags & WINDOW_FLAG_POPUP)){
 				_KePrint("Broadcasting message \n");
 				/* broadcast it to all broadcast listener windows, about this news*/
@@ -1777,7 +1778,7 @@ int main(int argc, char* arv[]) {
 			memset(&event, 0, sizeof(PostEvent));
 		}
 
-		
-		_KeProcessSleep((16 - frameTime));
+		//_KePrint("Deodhai sleep -> %d \r\n", (16 - frameTime));
+		_KeProcessSleep(1);
 	}
 }

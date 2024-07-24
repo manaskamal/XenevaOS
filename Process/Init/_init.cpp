@@ -52,22 +52,22 @@ extern "C" void main(int argc, char* argv[]) {
 		_KePrint("Xeneva v1.0 !! Copyright (C) Manas Kamal Choudhury 2020-2023 \r\n");
 
 
-	/* just load all the background services */
+	///* just load all the background services */
 	int child = _KeCreateProcess(0, "deoaud");
 	_KeProcessLoadExec(child, "/deoaud.exe", 0, NULL);
 
-	_KeProcessSleep(1000);
+	_KeProcessSleep(100);
 		
 	child = _KeCreateProcess(0, "deodhai");
 	_KeProcessLoadExec(child, "/deodhai.exe", 0, NULL);
 
 	_KePrint("Deodhai spawned \r\n");
-	_KeProcessSleep(1000);
+	_KeProcessSleep(500);
 
 	child = _KeCreateProcess(0, "xelnch");
 	_KeProcessLoadExec(child, "/xelnch.exe", 0, NULL);
 
-	_KeProcessSleep(1000);
+	_KeProcessSleep(500);
 
 	child = _KeCreateProcess(0, "nmdapha");
 	_KeProcessLoadExec(child, "/nmdapha.exe", 0, NULL);

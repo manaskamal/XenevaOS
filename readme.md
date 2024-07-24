@@ -6,6 +6,9 @@ Xeneva is a GUI based operating system for 64 bit architecture based processors.
 bit systems, it can be booted from UEFI environment. The Kernel is known as _'Aurora'_ 
 with hybrid design and the entire operating system is known as _'Xeneva'_.<br> Please visit [Build Instructions](Docs/BuildInstructions.md) to build the project
 
+## Documentation
+Refer to [Documentations of XenevaOS](Docs/Introduction.md)
+
 ## __Features__ :
 1. ACPI (through acpica)
 2. x64 based Kernel

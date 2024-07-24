@@ -179,8 +179,7 @@ int ProcessSleep(uint64_t ms) {
 	x64_cli();
 	if (ms <= 0)
 		return -1;
-
-	uint64_t sleep_time = ms * 1000;
+	uint64_t sleep_time = ms;
 	AuThread* current_thr = AuGetCurrentThread();
 	if (!current_thr)
 		return 0;

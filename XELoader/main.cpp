@@ -217,7 +217,6 @@ void DefaultSignalHandler(int signo) {
 typedef int(*entrypoint) (int argc, char*argv[]);
 
 
-
 /*
  * main entry point of the loader, it accepts
  * three commands "-about", "-f", and filename
