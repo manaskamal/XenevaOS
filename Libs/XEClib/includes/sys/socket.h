@@ -89,6 +89,21 @@ XE_EXTERN{
 		int msg_flags;
 	}msghdr;
 
+	/* Simple Route table entry structure */
+	typedef struct _route_entry_ {
+		char* ifname;
+		uint32_t dest;
+		uint32_t netmask;
+		uint32_t ifaddress;
+		uint32_t gateway;
+		uint8_t flags;
+	}XERouteEntry;
+
+	typedef struct _route_entry_info_ {
+		int index;
+		void* route_entry;
+	}XERouteEntryInfo;
+
 	XE_LIB int socket(int domain, int type, int protocol);
 	XE_LIB int connect(int sockfd, sockaddr* addr, socklen_t addrlen);
 	XE_LIB int send(int sockfd, msghdr* msg, int flags);

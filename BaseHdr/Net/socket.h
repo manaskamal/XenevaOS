@@ -47,6 +47,14 @@
 #define IPPROTOCOL_TCP  6
 #define IPPROTOCOL_UDP  17
 
+/* IO Control Codes */
+//Routing Table codes
+#define SOCK_ROUTE_TABLE_ADD 0x120
+#define SOCK_ROUTE_TABLE_DELETE 0x121
+#define SOCK_ROUTE_TABLE_GETNUMENTRY 0x122
+#define SOCK_ROUTE_TABLE_GETENTRY 0x123
+
+
 typedef size_t socklen_t;
 
 typedef struct _sockaddr_ {
@@ -127,5 +135,13 @@ extern int AuSocketSetOpt(int sockfd, int level, int optname, const void* optval
 */
 extern list_t* AuRawSocketGetList();
 
+
+/*
+ * SocketIOControl -- Global socket io control function
+ * @param file -- Pointer to the socket file
+ * @param code -- IO Control Code
+ * @param arg -- extra argument
+ */
+extern int SocketIOControl(AuVFSNode* file, int code, void* arg);
 
 #endif

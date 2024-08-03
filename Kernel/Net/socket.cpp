@@ -37,6 +37,7 @@
 #include <list.h>
 #include <Hal/serial.h>
 #include <aucon.h>
+#include <Net/route.h>
 
 list_t *raw_socket_list;
 
@@ -159,6 +160,58 @@ int AuRawSocketClose(AuVFSNode* fs, AuVFSNode* file) {
 }
 
 /*
+ * SocketIOControl -- Global socket io control function
+ * @param file -- Pointer to the socket file
+ * @param code -- IO Control Code
+ * @param arg -- extra argument
+ */
+int SocketIOControl(AuVFSNode* file, int code, void* arg) {
+	x64_cli();
+	switch (code) {
+		/* Route Table controls */
+	case SOCK_ROUTE_TABLE_ADD: {
+		if (!arg)
+			return 1;
+		AuRouteEntry* data = (AuRouteEntry*)arg;
+		AuRouteEntry* entry = AuRouteTableCreateEntry();
+		entry->ifname = (char*)kmalloc(strlen(data->ifname));
+		strcpy(entry->ifname, data->ifname);
+		entry->flags = data->flags;
+		entry->ifaddress = data->ifaddress;
+		entry->netmask = data->netmask;
+		entry->dest = data->dest;
+		entry->gateway = data->gateway;
+		AuRouteTableAdd(entry);
+		SeTextOut("Route Entry added \r\n");
+		return 0;
+	}
+	case SOCK_ROUTE_TABLE_DELETE: {
+		if (!arg)
+			return 1;
+		AuRouteEntry* data = (AuRouteEntry*)arg;
+		AuRouteTableDelete(data);
+		return 0;
+	}
+	case SOCK_ROUTE_TABLE_GETNUMENTRY: {
+		return AuRouteTableGetNumEntry();
+	}
+	case SOCK_ROUTE_TABLE_GETENTRY: {
+		SeTextOut("Populating route table \r\n");
+		if (!arg)
+			return 1;
+		AuRouteEntryInfo* info = (AuRouteEntryInfo*)arg;
+		if (info->index == -1)
+			return 1;
+		if (!info->route_entry)
+			return 1;
+		AuRouteEntry* entry = (AuRouteEntry*)info->route_entry;
+		AuRouteTablePopulate(entry, info->index);
+		SeTextOut("RouteTable populated \r\n");
+		return 0;
+	}
+	}
+}
+/*
  * AuCreateRawSocket -- creates a very basic raw socket
  * interface
  * @param type -- type of the socket
@@ -181,9 +234,11 @@ int AuCreateRawSocket(int type, int protocol){
 	list_add(raw_socket_list, sock);
 	AuVFSNode* node = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
 	memset(node, 0, sizeof(AuVFSNode));
+	strcpy(node->filename, "XERawSocket");
 	node->flags = FS_FLAG_SOCKET;
 	node->device = sock;
 	node->close = AuRawSocketClose;
+	node->iocontrol = SocketIOControl;
 	proc->fds[fd] = node;
 	return fd;
 }

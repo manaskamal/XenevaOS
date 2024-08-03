@@ -48,7 +48,7 @@ uint16_t IPv4CalculateChecksum(IPv4Header * p){
 }
 
 void ip_ntoa(const uint32_t src) {
-	SeTextOut("IP -> %d.%d.%d.", ((src & 0xFF000000) >> 24),
+	SeTextOut("%d.%d.%d.", ((src & 0xFF000000) >> 24),
 		((src & 0xFF0000) >> 16),
 		((src & 0xFF00) >> 8),
 		((src & 0xFF)));

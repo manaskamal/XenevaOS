@@ -38,12 +38,54 @@ typedef struct _route_entry_ {
 	uint32_t dest;
 	uint32_t netmask;
 	uint32_t ifaddress;
+	uint32_t gateway;
 	uint8_t flags;
 }AuRouteEntry;
+
+typedef struct _route_entry_info_ {
+	int index;
+	void* route_entry;
+}AuRouteEntryInfo;
+
 
 /*
  * AuRouteTableInitialise -- initialise the kernel route
  * table
  */
 extern void AuRouteTableInitialise();
+
+/*
+ * AuRouteTableCreateEntry -- create a new route table
+ * entry and return
+ */
+extern AuRouteEntry* AuRouteTableCreateEntry();
+
+/*
+ * AuRouteTableAdd -- add an entry to route
+ * table
+ * @param entry -- Entry to add
+ */
+extern void AuRouteTableAdd(AuRouteEntry* entry);
+
+/*
+ * AuRouteTableDelete -- delete an entry from
+ * route table
+ * @param entry -- entry to delete
+ */
+extern void AuRouteTableDelete(AuRouteEntry* entry);
+
+/*
+ * AuRouteTableGetNumEntry -- returns the number
+ * route entry present in the system
+ */
+extern int AuRouteTableGetNumEntry();
+
+/*
+ * AuRouteTablePopulate -- populates a given memory pointer with
+ * route table entry indexed by entryIndex number
+ * @param whereToPopulate -- memory pointer where to populate
+ * with an entry
+ * @param entryIndex -- entry index number
+ */
+extern void AuRouteTablePopulate(AuRouteEntry* whereToPopulate, int entryIndex);
 #endif

@@ -84,8 +84,6 @@ e:\xeneva project\aurora\kernel\x64\debug\_gpt.obj
 e:\xeneva project\aurora\kernel\x64\debug\_gpt.asm
 e:\xeneva project\aurora\kernel\x64\debug\vfs.obj
 e:\xeneva project\aurora\kernel\x64\debug\vfs.asm
-e:\xeneva project\aurora\kernel\x64\debug\mmserv.obj
-e:\xeneva project\aurora\kernel\x64\debug\mmserv.asm
 e:\xeneva project\aurora\kernel\x64\debug\fileserv.obj
 e:\xeneva project\aurora\kernel\x64\debug\fileserv.asm
 e:\xeneva project\aurora\kernel\x64\debug\process.obj
@@ -94,6 +92,8 @@ e:\xeneva project\aurora\kernel\x64\debug\pe.obj
 e:\xeneva project\aurora\kernel\x64\debug\pe.asm
 e:\xeneva project\aurora\kernel\x64\debug\pcie.obj
 e:\xeneva project\aurora\kernel\x64\debug\pcie.asm
+e:\xeneva project\aurora\kernel\x64\debug\route.obj
+e:\xeneva project\aurora\kernel\x64\debug\route.asm
 e:\xeneva project\aurora\kernel\x64\debug\ethernet.obj
 e:\xeneva project\aurora\kernel\x64\debug\ethernet.asm
 e:\xeneva project\aurora\kernel\x64\debug\aunet.obj
@@ -148,6 +148,8 @@ e:\xeneva project\aurora\kernel\x64\debug\thrserv.obj
 e:\xeneva project\aurora\kernel\x64\debug\thrserv.asm
 e:\xeneva project\aurora\kernel\x64\debug\netserv.obj
 e:\xeneva project\aurora\kernel\x64\debug\netserv.asm
+e:\xeneva project\aurora\kernel\x64\debug\mmserv.obj
+e:\xeneva project\aurora\kernel\x64\debug\mmserv.asm
 e:\xeneva project\aurora\kernel\x64\debug\udp.obj
 e:\xeneva project\aurora\kernel\x64\debug\udp.asm
 e:\xeneva project\aurora\kernel\x64\debug\tcp.obj

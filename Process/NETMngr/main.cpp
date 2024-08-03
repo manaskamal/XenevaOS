@@ -128,7 +128,6 @@ uint8_t mac[6];
 
 /* For testing Purpose, impplemented DHCP discovery message */
 Ethernet* fillDHCP(uint8_t* payload, size_t payload_sz) {
-	uint32_t xid = 0x1337;
 	DHCPPack *dpack = (DHCPPack*)malloc(sizeof(DHCPPack));
 	memset(dpack, 0, sizeof(DHCPPack));
 	dpack->op = 1;
@@ -281,6 +280,7 @@ int main(int argc, char* argv[]){
 	socket_setopt(sock_fd, SOL_SOCKET, SO_BINDTODEVICE, ifname,strlen(ifname) + 1);
 	
 	uint8_t stage = 1;
+	xid = rand();
 	/* preparation for the first DHCP Stage */
 	uint8_t payload[] = { 53, 1, 1, 55, 2, 3, 6, 255, 0 };
 	Ethernet* eth = fillDHCP(payload, 8);
@@ -291,6 +291,11 @@ int main(int argc, char* argv[]){
 
 
 	uint8_t* buf = (uint8_t*)malloc(4096);
+
+	XERouteEntry* rtentry = (XERouteEntry*)malloc(sizeof(XERouteEntry));
+	rtentry->ifname = (char*)malloc(strlen("e1000"));
+	strcpy(rtentry->ifname, "e1000");
+	bool rt_entry_filled = false;
 	while (1) {
 		int size = socket_receive(sock_fd, buf, 4096, 0);
 		if (size <= 0){
@@ -312,6 +317,11 @@ int main(int argc, char* argv[]){
 
 		DHCPPack* dhcp = (DHCPPack*)&udp->payload;
 
+		if (ntohl(dhcp->xid) != xid) {
+			printf("DHCP not out transaction of xid : %d \n", xid);
+			continue;
+		}
+
 		if (stage == 1) {
 			uint32_t yiaddr = dhcp->yiaddr;
 			uint8_t payload2[] = { 53,1,3,50,4,(yiaddr) & 0xFF,(yiaddr >> 8) & 0xFF,
@@ -325,6 +335,10 @@ int main(int argc, char* argv[]){
 			char yiaddr_ip[16];
 			ip_ntoa(ntohl(yiaddr), yiaddr_ip);
 			_KeFileIoControl(e1000, NET_SET_IPV4_ADDRESS, &yiaddr);
+			rtentry->dest = dhcp->siaddr;
+			rtentry->ifaddress = yiaddr;
+			rt_entry_filled = true;
+			printf("Interface address -> %s  %x\r\n", yiaddr_ip, yiaddr);
 			/* check for gateway and subnet */
 			uint8_t* opt = dhcp->options;
 			while (*opt && *opt != 255) {
@@ -337,8 +351,9 @@ int main(int argc, char* argv[]){
 					char addr[16];
 					ip_ntoa(ntohl(ip_data), addr);
 					_KeFileIoControl(e1000, NET_SET_SUBNET_MASK, &ip_data);
-					printf("Subnet mask %s \n", addr);
-
+					printf("Subnet mask %s %x\n", addr, ip_data);
+					rtentry->netmask = ip_data;
+					rt_entry_filled = true;
 				}
 				else if (opt_type == 3) {
 					/* gateway address */
@@ -347,7 +362,9 @@ int main(int argc, char* argv[]){
 					char addr[16];
 					ip_ntoa(ntohl(ip_data), addr);
 					_KeFileIoControl(e1000, NET_SET_GATEWAY_ADDRESS, &ip_data);
-					printf("Gateway : %s \n", addr);
+					printf("Gateway : %s %x\n", addr, ip_data);
+					rtentry->gateway = ip_data;
+					rt_entry_filled = true;
 				}
 				else if (opt_type == 6) {
 					/* DNS Server */
@@ -359,6 +376,16 @@ int main(int argc, char* argv[]){
 				}
 				opt += len;
 			}
+
+			if (rt_entry_filled) {
+				int ret = _KeFileIoControl(sock_fd, SOCK_ROUTE_TABLE_ADD, rtentry);
+				if (ret) {
+					printf("[NetManager]: Failed to add Route Entry \n");
+				}
+				free(rtentry->ifname);
+				free(rtentry);
+			}
+
 			break;
 		}
 

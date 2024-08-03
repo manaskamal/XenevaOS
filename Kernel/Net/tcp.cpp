@@ -173,6 +173,7 @@ int AuTCPFileClose(AuVFSNode* fsys, AuVFSNode* file) {
 	}
 	kfree(file);
 	SeTextOut("TCP/IP Socket Closed \r\n");
+	return 0;
 }
 /*
  * CreateTCPSocket -- creates a new TCP Socket
@@ -201,6 +202,7 @@ int CreateTCPSocket() {
 	node->flags |= FS_FLAG_SOCKET;
 	node->device = sock;
 	node->close = AuTCPFileClose;
+	node->iocontrol = SocketIOControl;
 	proc->fds[fd] = node;
 	SeTextOut("TCP Socket created \r\n");
 	return fd;
