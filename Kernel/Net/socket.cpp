@@ -40,6 +40,12 @@
 
 list_t *raw_socket_list;
 
+/*
+ * AuSocketAdd -- add some data to socket
+ * @param sock -- Pointer to the socket
+ * @param data -- data to add
+ * @param sz -- Size of the data
+ */
 void AuSocketAdd(AuSocket* sock, void* data, size_t sz) {
 	char* data_ = (char*)kmalloc(sizeof(size_t)+sz);
 	memset(data_, 0, sz + sizeof(size_t));
@@ -48,11 +54,23 @@ void AuSocketAdd(AuSocket* sock, void* data, size_t sz) {
 	AuStackPush(sock->rxstack, data_);
 }
 
+/*
+ * AuSocketGet -- retreives previously stacked
+ * data from the socket
+ * @param sock -- Pointer to the socket
+ */
 void* AuSocketGet(AuSocket* sock) {
 	void* data = AuStackPop(sock->rxstack);
 	return data;
 }
 
+/*
+ * AuRawSocketReceive -- checks if there is any
+ * received data in this raw socket
+ * @param sock -- Pointer to the socket
+ * @param msg -- Message header
+ * @param flags -- flags to be cared about
+ */
 int AuRawSocketReceive(AuSocket* sock, msghdr* msg, int flags) {
 	if (!sock->binedDev)
 		return -1;
@@ -121,6 +139,25 @@ AuSocket* AuNetCreateSocket() {
 	return sock;
 }
 
+int AuRawSocketClose(AuVFSNode* fs, AuVFSNode* file) {
+	/* here both fs and file points to socket file , better
+	 * would be using file pointer */
+	AuSocket* sock = (AuSocket*)file->device;
+	if (sock) {
+		if (sock->rxstack) {
+			while (sock->rxstack->itemCount) {
+				void* data = AuStackPop(sock->rxstack);
+				kfree(data);
+			}
+			kfree(sock->rxstack);
+		}
+		kfree(sock);
+	}
+	kfree(file);
+	SeTextOut("Raw Socket Closed \r\n");
+	return 0;
+}
+
 /*
  * AuCreateRawSocket -- creates a very basic raw socket
  * interface
@@ -146,6 +183,7 @@ int AuCreateRawSocket(int type, int protocol){
 	memset(node, 0, sizeof(AuVFSNode));
 	node->flags = FS_FLAG_SOCKET;
 	node->device = sock;
+	node->close = AuRawSocketClose;
 	proc->fds[fd] = node;
 	return fd;
 }
@@ -183,3 +221,4 @@ void AuSocketInstall() {
 list_t* AuRawSocketGetList(){
 	return raw_socket_list;
 }
+

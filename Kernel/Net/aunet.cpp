@@ -34,6 +34,7 @@
 #include <hashmap.h>
 #include <Fs\dev\devfs.h>
 #include <Net\socket.h>
+#include <Net/route.h>
 
 hashmap_t* netadapters;
 
@@ -45,6 +46,7 @@ void AuInitialiseNet() {
 	AuVFSNode* fs = AuVFSFind("/dev");
 	AuDevFSCreateFile(fs, "/dev/net", FS_FLAG_DIRECTORY);
 	AuSocketInstall();
+	AuRouteTableInitialise();
 }
 
 

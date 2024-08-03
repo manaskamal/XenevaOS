@@ -783,7 +783,6 @@ void ComposeFrame(ChCanvas *canvas) {
 				r1.h = height + SHADOW_SIZE * 2;
 
 				Rect clip[100];
-				memset(clip, 0, sizeof(Rect) * 100);
 				int clipCount = 0;
 				Window* clipWin = NULL;
 				WinSharedInfo* clipInfo = NULL;

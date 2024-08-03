@@ -333,6 +333,9 @@
     <ClInclude Include="..\BaseHdr\stack.h">
       <Filter>Include</Filter>
     </ClInclude>
+    <ClInclude Include="..\BaseHdr\Net\route.h">
+      <Filter>Include\Net</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="init.cpp" />
@@ -523,6 +526,9 @@
       <Filter>Serv</Filter>
     </ClCompile>
     <ClCompile Include="threadsafe.c" />
+    <ClCompile Include="Net\route.cpp">
+      <Filter>Net</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <NASM Include="__fstcpy.asm" />

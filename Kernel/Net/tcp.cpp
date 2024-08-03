@@ -33,6 +33,7 @@
 #include <string.h>
 #include <Hal\x86_64_sched.h>
 #include <process.h>
+#include <stack.h>
 #include <Hal\serial.h>
 #include <net\tcp.h>
 
@@ -101,7 +102,7 @@ uint16_t CalculateTCPChecksum(TCPCheckHeader* p, TCPHeader* h, void* d, size_t p
 
 		sum += ntohs(f[0]);
 		if (sum > 0xFFFF)
-			sum = (sum >> 16) + (sum & 0xFFFF);
+			sum = (sum >> 16) + (sum & 0xFFFF); 
 	}
 
 	return ~(sum & 0xFFFF) & 0xFFFF;
@@ -157,6 +158,22 @@ uint64_t AuTCPRead(AuVFSNode* node, AuVFSNode* file, uint64_t* buffer, uint32_t 
 uint64_t AuTCPWrite(AuVFSNode* node, AuVFSNode* file, uint64_t* buffer, uint32_t len) {
 	return 0;
 }
+
+int AuTCPFileClose(AuVFSNode* fsys, AuVFSNode* file) {
+	AuSocket* sock = (AuSocket*)file->device;
+	if (sock) {
+		if (sock->rxstack) {
+			while (sock->rxstack->itemCount) {
+				void* data = AuStackPop(sock->rxstack);
+				kfree(data);
+			}
+			kfree(sock->rxstack);
+		}
+		kfree(sock);
+	}
+	kfree(file);
+	SeTextOut("TCP/IP Socket Closed \r\n");
+}
 /*
  * CreateTCPSocket -- creates a new TCP Socket
  */
@@ -172,16 +189,19 @@ int CreateTCPSocket() {
 			return -1;
 	AuSocket *sock = (AuSocket*)kmalloc(sizeof(AuSocket));
 	memset(sock, 0, sizeof(AuSocket));
-	//sock->fsnode.flags = FS_FLAG_SOCKET;
 	sock->send = AuTCPSend;
 	sock->receive = AuTCPReceive;
 	sock->connect = AuTCPConnect;
 	sock->bind = AuTCPBind;
 	sock->close = AuTCPClose;
-	/*sock->fsnode.read = AuTCPRead;
-	sock->fsnode.write = AuTCPWrite;*/
+	sock->rxstack = AuStackCreate();
 	fd = AuProcessGetFileDesc(proc);
-	proc->fds[fd] = (AuVFSNode*)sock;
+	AuVFSNode* node = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
+	memset(node, 0, sizeof(AuVFSNode));
+	node->flags |= FS_FLAG_SOCKET;
+	node->device = sock;
+	node->close = AuTCPFileClose;
+	proc->fds[fd] = node;
 	SeTextOut("TCP Socket created \r\n");
 	return fd;
 }

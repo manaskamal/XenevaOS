@@ -533,7 +533,7 @@ void TerminalThread() {
 		if ((bytes_read > 0) || _update_terminal_) {
 			if (_first_time) {
 				ChWindowPaint(win);
-				_KeProcessSleep(10);
+				_KeProcessSleep(500);
 				_first_time = false;
 				//for (;;);
 			}

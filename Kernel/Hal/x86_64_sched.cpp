@@ -343,7 +343,6 @@ void AuKThreadCopy(AuThread* dest, AuThread* src) {
 void AuIdleThread(uint64_t t) {
 	SeTextOut("_idle id -> %d  \r\n", AuPerCPUGetCpuID());
 	while (1) {
-		SeTextOut("IDLE \r\n");
 		x64_hlt();
 	}
 }

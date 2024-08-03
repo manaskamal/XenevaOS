@@ -37,6 +37,17 @@
 #include <stdlib.h>
 #include <sys\socket.h>
 
+
+
+/*
+ * ===========================================================================
+ * TODO: Interact with multiple Network Interfaces installed in the system
+ * and obtain IP addresses for each interfaces, currently the system have only
+ * driver for e1000 based cards, so we are manually opening it and obtaining
+ * IP address for it and adding it to the kernel route table
+ * ===========================================================================
+ */
+
 #define htonl(l)  ((((l) & 0xFF) << 24) | (((l) & 0xFF00) << 8) | (((l) & 0xFF0000) >> 8) | (((l) & 0xFF000000) >> 24))
 #define htons(s)  ((((s) & 0xFF) << 8) | (((s) & 0xFF00) >> 8))
 #define ntohl(l)  htonl((l))
@@ -116,8 +127,7 @@ uint32_t xid = 0x1337;
 uint8_t mac[6];
 
 /* For testing Purpose, impplemented DHCP discovery message */
-Ethernet* fillDHCP() {
-	
+Ethernet* fillDHCP(uint8_t* payload, size_t payload_sz) {
 	uint32_t xid = 0x1337;
 	DHCPPack *dpack = (DHCPPack*)malloc(sizeof(DHCPPack));
 	memset(dpack, 0, sizeof(DHCPPack));
@@ -139,22 +149,21 @@ Ethernet* fillDHCP() {
 	dpack->chaddr[4] = mac[4];
 	dpack->chaddr[5] = mac[5];
 	dpack->magic = htonl(DHCP_MAGIC);
-	uint8_t payload[] = { 53, 1, 1, 55, 2, 3, 6, 255, 0 };
 
-	UDPPack* udp = (UDPPack*)malloc(sizeof(UDPPack)+sizeof(DHCPPack));
+	UDPPack* udp = (UDPPack*)malloc(sizeof(UDPPack)+sizeof(DHCPPack)+payload_sz);
 	memset(udp, 0, sizeof(UDPPack));
 	udp->sourcePort = htons(68);
 	udp->destinationPort = htons(67);
-	udp->length = htons((sizeof(UDPPack)+sizeof(DHCPPack)+8));
+	udp->length = htons((sizeof(UDPPack)+sizeof(DHCPPack)+payload_sz));
 	udp->checksum = 0;
 	memcpy(udp->payload, dpack, sizeof(DHCPPack));
-	memcpy(udp->payload + sizeof(DHCPPack), payload, 8);
+	memcpy(udp->payload + sizeof(DHCPPack), payload, payload_sz);
 	free(dpack);
 
-	IPV4 *ip = (IPV4*)malloc((sizeof(IPV4)+sizeof(UDPPack)+sizeof(DHCPPack)));
+	IPV4 *ip = (IPV4*)malloc(sizeof(IPV4)+sizeof(UDPPack)+sizeof(DHCPPack) + payload_sz);
 	ip->version_ihl = ((0x4 << 4) | (0x5 << 0));
 	ip->dscp_ecn = 0;
-	ip->length = htons(sizeof(IPV4)+sizeof(UDPPack)+sizeof(DHCPPack)+8);
+	ip->length = htons(sizeof(IPV4)+sizeof(UDPPack)+sizeof(DHCPPack)+ payload_sz);
 	ip->ident = htons(1);
 	ip->flags_fragment = 0;
 	ip->ttl = 0x40;
@@ -163,9 +172,9 @@ Ethernet* fillDHCP() {
 	ip->source = htonl(0);
 	ip->destination = htonl(0xFFFFFFFF);
 	ip->checksum = htons(calculate_ipv4_checksum(ip));
-	memcpy(ip->payload, udp, sizeof(UDPPack)+sizeof(DHCPPack)+8);
+	memcpy(ip->payload, udp, sizeof(UDPPack)+sizeof(DHCPPack)+ payload_sz);
 	free(udp);
-	Ethernet* eth = (Ethernet*)malloc((sizeof(Ethernet)+sizeof(DHCPPack)+sizeof(UDPPack)+sizeof(IPV4)+8));
+	Ethernet* eth = (Ethernet*)malloc(sizeof(Ethernet)+sizeof(DHCPPack)+sizeof(UDPPack)+sizeof(IPV4)+ payload_sz);
 	
 	eth->dest[0] = 0xFF;
 	eth->dest[1] = 0xFF;
@@ -180,9 +189,17 @@ Ethernet* fillDHCP() {
 	eth->src[4] = mac[4];
 	eth->src[5] = mac[5];
 	eth->typeLen = htons(0x0800);
-	memcpy(eth->payload, ip, sizeof(IPV4)+sizeof(UDPPack)+sizeof(DHCPPack)+8);
-
+	memcpy(eth->payload, ip, sizeof(IPV4)+sizeof(UDPPack)+sizeof(DHCPPack)+ payload_sz);
+	free(ip);
 	return eth;
+}
+
+/*
+ * ClearDHCP -- clear up previously allocated
+ * dhcp packet
+ */
+void ClearDHCP(Ethernet* eth) {
+	free(eth);
 }
 
 ssize_t socket_receive(int sockfd, void* buf, size_t len, int flags) {
@@ -232,7 +249,7 @@ ssize_t socket_sendto(int sockfd, const void* buf, size_t len, int flags, sockad
 	return send(sockfd, &hdr, flags);
 }
 void ip_ntoa(uint32_t src_addr, char* out) {
-	snprintf(out, 16, "%d %d %d %d \n",
+	snprintf(out, 16, "%d.%d.%d.%d ",
 		(src_addr & 0xFF000000) >> 24,
 		(src_addr & 0xFF0000) >> 16,
 		(src_addr & 0xFF00) >> 8,
@@ -244,7 +261,7 @@ void ip_ntoa(uint32_t src_addr, char* out) {
 * main -- main entry
 */
 int main(int argc, char* argv[]){
-	printf("Network Manager Started ...\n");
+	printf("\nNetwork Manager Started ...\n");
 	printf("Identifying Network...\n");
 	
 
@@ -263,10 +280,16 @@ int main(int argc, char* argv[]){
 
 	socket_setopt(sock_fd, SOL_SOCKET, SO_BINDTODEVICE, ifname,strlen(ifname) + 1);
 	
-	Ethernet* eth = fillDHCP();
+	uint8_t stage = 1;
+	/* preparation for the first DHCP Stage */
+	uint8_t payload[] = { 53, 1, 1, 55, 2, 3, 6, 255, 0 };
+	Ethernet* eth = fillDHCP(payload, 8);
 	uint32_t totalsz = (sizeof(Ethernet)+sizeof(IPV4)+sizeof(UDPPack)+sizeof(DHCPPack)+8);
 	socket_send(sock_fd, eth, totalsz, 0);
 	_KePrint("Packet sent \n");
+	ClearDHCP(eth);
+
+
 	uint8_t* buf = (uint8_t*)malloc(4096);
 	while (1) {
 		int size = socket_receive(sock_fd, buf, 4096, 0);
@@ -276,27 +299,68 @@ int main(int argc, char* argv[]){
 		}
 
 		Ethernet* eth = (Ethernet*)buf;
-		printf("DHCP response received \n");
+
+		if (memcmp(eth->dest, mac, 6))
+			continue;
+
 		IPV4* ip = (IPV4*)&eth->payload;
-
-	
-		uint32_t srcip = ntohl(ip->source);
-		printf("Source IP - %d.%d.%d.%d \n", ((srcip & 0xFF000000) >> 24), ((srcip & 0xFF0000) >> 16), ((srcip & 0xFF00) >> 8),
-			((srcip & 0xFF)));
-	
-		uint32_t destip = ntohl(ip->destination);
-		printf("Destination IP - %d.%d.%d.%d \n", ((destip & 0xFF000000) >> 24),
-			((destip & 0xFF0000) >> 16),
-			((destip & 0xFF00) >> 8),
-			destip & 0xFF);
-
 		UDPPack* udp = (UDPPack*)&ip->payload;
 		int udp_port = ntohs(udp->destinationPort);
-		printf("UDP Port - %d \n", udp_port);
-		break;
+		
+		if (udp_port != 68)
+			continue;
 
-	}
-	while (1) {
-		_KePauseThread();
+		DHCPPack* dhcp = (DHCPPack*)&udp->payload;
+
+		if (stage == 1) {
+			uint32_t yiaddr = dhcp->yiaddr;
+			uint8_t payload2[] = { 53,1,3,50,4,(yiaddr) & 0xFF,(yiaddr >> 8) & 0xFF,
+			(yiaddr >> 16) & 0xFF, (yiaddr >> 24) & 0xFF, 55,2,3,6,255,0 };
+			Ethernet* eth2 = fillDHCP(payload2, 14);
+			uint32_t totalsz2 = (sizeof(Ethernet) + sizeof(IPV4) + sizeof(UDPPack) + sizeof(DHCPPack) + 14);
+			socket_send(sock_fd, eth2, totalsz2, 0);
+			stage = 2;
+		}else if (stage == 2) {
+			uint32_t yiaddr = dhcp->yiaddr;
+			char yiaddr_ip[16];
+			ip_ntoa(ntohl(yiaddr), yiaddr_ip);
+			_KeFileIoControl(e1000, NET_SET_IPV4_ADDRESS, &yiaddr);
+			/* check for gateway and subnet */
+			uint8_t* opt = dhcp->options;
+			while (*opt && *opt != 255) {
+				uint8_t opt_type = *opt++;
+				uint8_t len = *opt++;
+				if (opt_type == 1) {
+					/* subnet mask */
+					uint32_t ip_data;
+					memcpy(&ip_data, opt, 4);
+					char addr[16];
+					ip_ntoa(ntohl(ip_data), addr);
+					_KeFileIoControl(e1000, NET_SET_SUBNET_MASK, &ip_data);
+					printf("Subnet mask %s \n", addr);
+
+				}
+				else if (opt_type == 3) {
+					/* gateway address */
+					uint32_t ip_data;
+					memcpy(&ip_data, opt, 4);
+					char addr[16];
+					ip_ntoa(ntohl(ip_data), addr);
+					_KeFileIoControl(e1000, NET_SET_GATEWAY_ADDRESS, &ip_data);
+					printf("Gateway : %s \n", addr);
+				}
+				else if (opt_type == 6) {
+					/* DNS Server */
+					uint32_t ip_data;
+					memcpy(&ip_data, opt, 4);
+					char addr[16];
+					ip_ntoa(ntohl(ip_data), addr);
+					printf("DNS server %s \n", addr);
+				}
+				opt += len;
+			}
+			break;
+		}
+
 	}
 }

@@ -92,8 +92,20 @@ typedef struct _socket_ {
 }AuSocket;
 #pragma pack(pop)
 
+/*
+ * AuSocketAdd -- add some data to socket
+ * @param sock -- Pointer to the socket
+ * @param data -- data to add
+ * @param sz -- Size of the data
+ */
 extern void AuSocketAdd(AuSocket* sock, void* data, size_t sz);
 
+/*
+ * AuSocketGet -- retreives previously stacked
+ * data from the socket
+ * @param sock -- Pointer to the socket
+ */
+extern void* AuSocketGet(AuSocket* sock);
 /*
 * AuSocketInstall -- install the socket
 * interface
@@ -114,5 +126,6 @@ extern int AuSocketSetOpt(int sockfd, int level, int optname, const void* optval
 * AuRawSocketGetList -- get raw socket list
 */
 extern list_t* AuRawSocketGetList();
+
 
 #endif

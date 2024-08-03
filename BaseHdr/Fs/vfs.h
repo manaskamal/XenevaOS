@@ -34,15 +34,15 @@
 #include <list.h>
 #include <aurora.h>
 
-#define FS_FLAG_DIRECTORY  (1<<1)
-#define FS_FLAG_GENERAL    (1<<2)
-#define FS_FLAG_DEVICE     (1<<3)
-#define FS_FLAG_DELETED    (1<<4)
-#define FS_FLAG_INVALID    (1<<5)
-#define FS_FLAG_FILE_SYSTEM (1<<6)
-#define FS_FLAG_PIPE        (1<<7)
-#define FS_FLAG_TTY         (1<<8)
-#define FS_FLAG_SOCKET      (1<<9)
+#define FS_FLAG_DIRECTORY  (1<<1) //temporary/freeable  
+#define FS_FLAG_GENERAL    (1<<2)  //tempoary/freeable
+#define FS_FLAG_DEVICE     (1<<3)  //permanent/non-freeable
+#define FS_FLAG_DELETED    (1<<4)  //state
+#define FS_FLAG_INVALID    (1<<5)  //state
+#define FS_FLAG_FILE_SYSTEM (1<<6) //parment/non-freeable
+#define FS_FLAG_PIPE        (1<<7) //temporary/freeable
+#define FS_FLAG_TTY         (1<<8) //temporary/freeable with count
+#define FS_FLAG_SOCKET      (1<<9) //temporary/freeable
 
 #define FS_STATUS_FOUND  0x1
 #define FS_STATUS_NF     0x0

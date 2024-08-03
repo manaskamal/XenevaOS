@@ -279,7 +279,7 @@ void NamdaphaHandleMessage(PostEvent *e) {
 									nbutton_y_loc += nbutton->h + NAMDAPHA_BUTTON_YPAD;
 									_KePrint("[Namdapha]: Win button created \r\n");
 									memset(e, 0, sizeof(PostEvent));
-									_KeProcessSleep(1000);
+									_KeProcessSleep(100);
 									break;
 	}
 	case DEODHAI_BROADCAST_FOCUS_CHANGED: {

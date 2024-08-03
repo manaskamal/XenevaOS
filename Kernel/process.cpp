@@ -48,7 +48,7 @@
 #include <Hal\x86_64_signal.h>
 #include <Ipc\postbox.h>
 #include <autimer.h>
-
+#include <Net/socket.h>
 
 static int pid = 1;
 AuProcess *proc_first;
@@ -502,6 +502,10 @@ void AuProcessExit(AuProcess* proc, bool schedulable) {
 					kfree(file);
 				else
 					file->fileCopyCount -= 1;
+			}
+			if (file->flags & FS_FLAG_SOCKET) {
+				if (file->close)
+					file->close(file, file);
 			}
 		}
 	}
