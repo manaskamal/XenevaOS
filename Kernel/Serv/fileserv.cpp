@@ -114,6 +114,9 @@ int FileSetOffset(int fd, size_t offset) {
 		size_t block = AuVFSGetBlockFor(fsys, file, offset);
 		file->current = block;
 	}
+	else
+		file->pos = offset;
+
 	return 0;
 }
 /*

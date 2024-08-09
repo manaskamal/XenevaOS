@@ -441,7 +441,6 @@ int NVMeInitialise() {
 	uint64_t device = AuPCIEScanClass(0x01, 0x08, &bus, &dev, &func);
 	if (device == UINT32_MAX) {
 		AuTextOut("[NVMe]: no nvme class found \n");
-		for (;;);
 		return -1;
 	}
 
@@ -576,7 +575,8 @@ AU_EXTERN AU_EXPORT int AuDriverUnload() {
 */
 AU_EXTERN AU_EXPORT int AuDriverMain() {
 	AuDisableInterrupt();
-	NVMeInitialise();
+	if (NVMeInitialise() == -1)
+		return -1;
 	AuEnableInterrupt();
 
 	AuVFSNode* devfs = AuVFSFind("/dev");

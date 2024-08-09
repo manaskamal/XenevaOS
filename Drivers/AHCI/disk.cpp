@@ -261,6 +261,47 @@ int AuAHCIVDiskWrite(AuVDisk* disk, uint64_t lba, uint32_t count, uint64_t* buff
 	return count;
 }
 
+size_t AHCIDiskWrite(AuVFSNode* _node_, AuVFSNode* file, uint64_t* buffer, uint32_t len) {
+	/* here avoid using _node_ as file, because it contains the
+	 * address to VDisk structure */
+	if (!file)
+		return 0;
+
+	if (len > PAGE_SIZE)
+		return 0;
+
+    uint64_t lba = file->pos / 512;
+	uint64_t lba_bytes = static_cast<uint64_t>(len) * 512;
+	AuVDisk* disk = (AuVDisk*)file->device;
+	uint64_t* buff = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
+	memset(buff, 0, PAGE_SIZE);
+	memcpy(buff, buffer, lba_bytes);
+	AuAHCIVDiskWrite(disk, lba, len,(uint64_t*)V2P((size_t)buff));
+	AuPmmngrFree((void*)V2P((size_t)buff));
+	return lba_bytes;
+}
+
+size_t AHCIDiskRead(AuVFSNode* _node_, AuVFSNode* file, uint64_t* buffer, uint32_t len) {
+	/* here avoid using _node_ as file, because it contains the
+	 * address to VDisk structure */
+	if (!file)
+		return 0;
+
+	if (len > PAGE_SIZE)
+		return 0;
+
+	uint64_t lba = file->pos / 512;
+	uint64_t lba_bytes = static_cast<uint64_t>(len) * 512;
+	AuVDisk* disk = (AuVDisk*)file->device;
+	uint64_t* buff = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
+	memset(buff, 0, PAGE_SIZE);
+	AuAHCIVDiskRead(disk, lba, len, (uint64_t*)V2P((size_t)buff));
+	memcpy(buffer,buff, lba_bytes);
+	
+	AuPmmngrFree((void*)V2P((size_t)buff));
+	return lba_bytes;
+}
+
 /*
 * AuAHCIDiskInitialise -- initialize the ahci sata disk
 * @param port -- SATA Drive Port memory
@@ -349,7 +390,7 @@ void AHCIDiskInitialise(AHCIController *controller,HBA_PORT* port) {
 	disk->Write = AuAHCIVDiskWrite;
 	disk->max_blocks = -1;
 	disk->currentLBA = 0;
-	AuVDiskRegister(disk);
+	
 
 	int diskID = controller->CurrentPortID;
 	char filename[32];
@@ -357,12 +398,21 @@ void AHCIDiskInitialise(AHCIController *controller,HBA_PORT* port) {
 	int offset = strlen(filename);
 	sztoa(diskID, filename + offset, 10);
 
+	strcpy(disk->diskPath, controller->controllerpath);
+	offset = strlen(disk->diskPath);
+	strcpy(disk->diskPath + offset, "/");
+	offset = strlen(disk->diskPath);
+	strcpy(disk->diskPath + offset, filename);
+
+	AuVDiskRegister(disk);
 
 	AuVFSNode* file = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
 	memset(file, 0, sizeof(AuVFSNode));
 	strcpy(file->filename, filename);
 	file->flags = FS_FLAG_DEVICE;
 	file->device = disk;
+	file->write = AHCIDiskWrite;
+	file->read = AHCIDiskRead;
 
 	AuDevFSAddFile(controller->devfs, controller->controllerpath, file);
 	controller->CurrentPortID++;

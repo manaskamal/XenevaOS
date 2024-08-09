@@ -70,6 +70,7 @@ typedef struct _au_partition_data_ {
 typedef struct _VDISK_ {
 	char diskname[40];
 	char serialNumber[20];
+	char diskPath[32];
 	void* data;
 	uint64_t max_blocks;
 	uint64_t blockSize;
