@@ -36,10 +36,12 @@
 #include <Mm/pmmngr.h>
 #include <Hal/x86_64_hal.h>
 #include <string.h>
+#include <stdio.h>
 #include <Fs/Fat/fat.h>
+#include <Fs/Dev/devfs.h>
 
 AuVDisk *VdiskArray[MAX_VDISK_DEVICES];
-
+int _vdisk_num_;
 
 /*
  * AuVDiskInitialise -- initialise the vdisk 
@@ -47,6 +49,38 @@ AuVDisk *VdiskArray[MAX_VDISK_DEVICES];
 void AuVDiskInitialise() {
 	for (int i = 0; i < MAX_VDISK_DEVICES; i++)
 		VdiskArray[i] = NULL;
+
+	_vdisk_num_ = 0;
+}
+
+
+/*
+ * AuVDiskCreateStorageFile -- creates a storage
+ * directory in device file system
+ */
+AU_EXTERN AU_EXPORT int AuVDiskCreateStorageFile(char* output) {
+	int value = _vdisk_num_;
+	char dirname[10];
+	memset(dirname, 0, 10);
+	strcpy(dirname, "disk");
+	int offset = strlen(dirname);
+	char value_[5];
+	sztoa(value, value_, 10);
+	strcpy(dirname + offset, value_);
+	char path[32];
+	memset(path, 0, 32);
+	strcpy(path, "/dev/");
+	int path_offset = strlen(path);
+	strcpy(path + path_offset, dirname);
+
+	/* Now copy the entire path to output */
+	strcpy(output, path);
+
+	/* Create a directory for this disk */
+	AuVFSNode* fs = AuVFSFind("/dev");
+	AuDevFSCreateFile(fs,path, FS_FLAG_DIRECTORY);
+	_vdisk_num_++;
+	return value;
 }
 
 /*

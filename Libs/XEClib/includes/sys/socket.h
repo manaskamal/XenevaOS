@@ -104,6 +104,20 @@ XE_EXTERN{
 		void* route_entry;
 	}XERouteEntryInfo;
 
+	typedef uint32_t in_addr_t;
+	typedef uint16_t in_port_t;
+
+	struct in_addr {
+		in_addr_t s_addr;
+	};
+
+	typedef struct _sockaddr_in_ {
+		short sin_family;
+		unsigned short sin_port;
+		struct in_addr sin_addr;
+		char sin_zero[8];
+	}sockaddr_in;
+
 	XE_LIB int socket(int domain, int type, int protocol);
 	XE_LIB int connect(int sockfd, sockaddr* addr, socklen_t addrlen);
 	XE_LIB int send(int sockfd, msghdr* msg, int flags);

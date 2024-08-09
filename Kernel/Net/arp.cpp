@@ -31,15 +31,50 @@
 #include <Net\ethernet.h>
 #include <Net\aunet.h>
 #include <string.h>
+#include <_null.h>
 #include <aucon.h>
 #include <Mm\kmalloc.h>
 
+list_t* arp_list;
 
+/*
+ * ARPProtocolInitialise -- initialise arp protocol
+ */
+void ARPProtocolInitialise() {
+	arp_list = initialize_list();
+}
+
+/*
+ * ARPProtocolAdd -- add a new information to ARP cache list
+ * @param nic -- Pointer to NIC device
+ * @param address -- IP Address
+ * @param hwaddr -- Hardware address to add
+ */
+void ARPProtocolAdd(AuVFSNode* nic, uint32_t address, uint8_t* hwaddr) {
+	AuARPCache* arpcache = (AuARPCache*)kmalloc(sizeof(AuARPCache));
+	memset(arpcache, 0, sizeof(AuARPCache));
+	memcpy(arpcache->hw_address, hwaddr, 6);
+	arpcache->ipAddress = address;
+	arpcache->nic = nic;
+}
+
+/*
+ * AuARPGet -- Returns an ARP by its ip address
+ * @param address -- IP Address to look
+ */
+AuARPCache* AuARPGet(uint32_t address) {
+	for (int i = 0; i < arp_list->pointer; i++) {
+		AuARPCache* arp = (AuARPCache*)list_get_at(arp_list, i);
+		if (arp->ipAddress == address)
+			return arp;
+	}
+	return NULL;
+}
 /*
  * AuARPRequestMAC -- request a mac address from
  * server
  */
-void AuARPRequestMAC(AuVFSNode* nic) {
+void AuARPRequestMAC(AuVFSNode* nic, uint32_t addr) {
 	AuNetworkDevice *ndev = (AuNetworkDevice*)nic->device;
 	if (!ndev)
 		return;
@@ -50,16 +85,17 @@ void AuARPRequestMAC(AuVFSNode* nic) {
 	arp->protocolSize = 4;
 	arp->operation = htons(1);
 
-	uint8_t* mac = ndev->mac;
-	memcpy(arp->srcMac, mac, 6); //192.168.0.1
-	arp->srcIP = 0xC0A80001;
+	arp->arp_data.arp_eth_ipv4.arp_tpa = addr;
+	memcpy(arp->arp_data.arp_eth_ipv4.arp_sha, ndev->mac, 6);
 
-	memset(arp->destMac, 0xff, 6);//192.168.43.02
-	arp->destIP = 0xC0A82B02;
-	AuTextOut("ARP Setuped %x\n",arp->destIP);
-	
-	if (ndev->type == NETDEV_TYPE_ETHERNET)
-		AuEthernetSend(nic,&arp, sizeof(NetARP), ETHERNET_TYPE_ARP, arp->destMac);
+	if (ndev->ipv4addr) {
+		arp->arp_data.arp_eth_ipv4.arp_spa = ndev->ipv4addr;
+	}
+
+
+	uint8_t broadcast_mac[6];
+	memset(broadcast_mac, 0xFF, 6);
+	AuEthernetSend(nic,&arp, sizeof(NetARP), ETHERNET_TYPE_ARP,broadcast_mac);
 	/* here we need to call different interfaces depending
 	 * on the nic node passed, ARP can be sent through different
 	 * link layer other than Ethernet

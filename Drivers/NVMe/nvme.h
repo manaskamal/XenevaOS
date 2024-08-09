@@ -32,6 +32,7 @@
 
 #include <stdint.h>
 #include <list.h>
+#include <Fs/vfs.h>
 #include <aurora.h>
 
 #pragma pack(push,1)
@@ -308,6 +309,8 @@ typedef struct _nvme_queue_ {
 }NVMeQueue;
 
 typedef struct _nvme_dev_ {
+	char* nvmedevpath;
+	AuVFSNode* devfs;
 	uint64_t mmiobase;
 	uint8_t majorVersion;
 	uint8_t minorVersion;

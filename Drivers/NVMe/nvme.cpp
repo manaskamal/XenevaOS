@@ -40,6 +40,7 @@
 #include <_null.h>
 #include <Mm\pmmngr.h>
 #include "namespace.h"
+#include <Fs/vdisk.h>
 
 NVMeDev *nvme;
 /*
@@ -425,7 +426,7 @@ void NVMeIdentifyController() {
 			continue;
 		}
 		NamespaceIdentity *ni = (NamespaceIdentity*)physAddr;
-		NVMeInitialiseNamespace(ci, ni, i + 1);
+		NVMeInitialiseNamespace(nvme,ci, ni, i + 1);
 
 		AuPmmngrFree((void*)physAddr);
 	}
@@ -577,6 +578,15 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 	AuDisableInterrupt();
 	NVMeInitialise();
 	AuEnableInterrupt();
+
+	AuVFSNode* devfs = AuVFSFind("/dev");
+	/* Add an entry to device file system */
+	char* nvmepath = (char*)kmalloc(32);
+	memset(nvmepath, 0, 32);
+	AuVDiskCreateStorageFile(nvmepath);
+	nvme->nvmedevpath = nvmepath;
+	nvme->devfs = devfs;
+
 	NVMeIdentifyController();
 	return 0;
 }

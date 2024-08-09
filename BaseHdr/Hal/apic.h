@@ -31,6 +31,7 @@
 #define __APIC_H__
 
 #include <stdint.h>
+#include <aurora.h>
 
 #define IA32_APIC_BASE_MSR  0x1B
 #define IA32_APIC_BASE_MSR_BSP  0x100
@@ -88,7 +89,7 @@ extern void AuAPICInitialise(bool bsp);
 */
 extern void APICLocalEOI();
 
-extern void APICTimerSleep(uint32_t ms);
+AU_EXTERN AU_EXPORT void APICTimerSleep(uint32_t ms);
 
 /*
  * X2APICSupported -- is x2apic supported ?

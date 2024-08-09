@@ -190,4 +190,10 @@ extern int AuGetVDiskInfo(uint8_t vdiskID, void* buffer);
  * @param buffer -- memory pointer where to store the information
  */
 extern int AuGetVDiskPartitionInfo(uint8_t vdiskID, uint8_t partition_ID, void* buffer);
+
+/*
+ * AuVDiskCreateStorageFile -- creates a storage
+ * directory in device file system
+ */
+AU_EXTERN AU_EXPORT int AuVDiskCreateStorageFile(char* output);
 #endif

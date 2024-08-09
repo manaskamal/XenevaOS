@@ -101,6 +101,13 @@ AU_EXTERN AU_EXPORT void AuRegisterDevice(AuDevice* dev);
 */
 AU_EXTERN AU_EXPORT bool AuCheckDevice(uint16_t classC, uint16_t subclassC, uint8_t progIF);
 
+/*
+ * AuBootDriverInitialise -- Initialise and load all boot time drivers
+ * @param info -- Kernel boot information passed by XNLDR
+ * [TODO] : Everything is hard coded for now
+ */
+AU_EXTERN AU_EXPORT void AuBootDriverInitialise(KERNEL_BOOT_INFO* info);
+
 
 
 #endif

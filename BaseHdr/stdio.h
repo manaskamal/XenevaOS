@@ -51,7 +51,7 @@
 typedef unsigned fpos_t;
 
 extern int atoi(const char* s);
-extern char* sztoa(uint64_t value, char* str, int base);
+AU_EXTERN AU_EXPORT char* sztoa(uint64_t value, char* str, int base);
 AU_EXTERN AU_EXPORT void printf(const char* format, ...);
 extern int putchar(int);
 extern int getchar();

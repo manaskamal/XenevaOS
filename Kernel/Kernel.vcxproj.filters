@@ -391,9 +391,7 @@
     <ClCompile Include="Fs\_gpt.cpp">
       <Filter>Fs</Filter>
     </ClCompile>
-    <ClCompile Include="ahci.cpp" />
     <ClCompile Include="pcie.cpp" />
-    <ClCompile Include="ahcidsk.cpp" />
     <ClCompile Include="Fs\Fat\Fat.cpp">
       <Filter>Fs\Fat</Filter>
     </ClCompile>

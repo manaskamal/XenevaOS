@@ -88,4 +88,11 @@ extern int AuRouteTableGetNumEntry();
  * @param entryIndex -- entry index number
  */
 extern void AuRouteTablePopulate(AuRouteEntry* whereToPopulate, int entryIndex);
+
+/*
+ * AuRouteTableDoRouteLookup -- takes the decision on taking
+ * the best route
+ * @param address -- address to take for routing
+ */
+extern AuRouteEntry* AuRouteTableDoRouteLookup(uint32_t address);
 #endif

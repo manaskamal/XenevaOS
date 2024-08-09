@@ -28,6 +28,7 @@
 **/
 
 #include <Net\aunet.h>
+#include <Net/arp.h>
 #include <Mm\kmalloc.h>
 #include <string.h>
 #include <_null.h>
@@ -47,6 +48,8 @@ void AuInitialiseNet() {
 	AuDevFSCreateFile(fs, "/dev/net", FS_FLAG_DIRECTORY);
 	AuSocketInstall();
 	AuRouteTableInitialise();
+	/* ARP Protocol for Ethernet devices */
+	ARPProtocolInitialise();
 }
 
 
@@ -77,7 +80,10 @@ AuVFSNode* AuGetNetworkAdapter(char* name) {
  */
 AuVFSNode* AuNetworkRoute(uint32_t address){
 	/*if (address == 0x0100007F)*/ /* loop device */
-	return AuGetNetworkAdapter("e1000");
+	AuRouteEntry* rt = AuRouteTableDoRouteLookup(address);
+	if (!rt)
+		return AuGetNetworkAdapter("e1000");
+	return AuGetNetworkAdapter(rt->ifname);
 }
 
 

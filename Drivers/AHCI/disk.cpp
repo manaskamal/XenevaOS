@@ -1,7 +1,7 @@
 /**
 * BSD 2-Clause License
 *
-* Copyright (c) 2022-2023, Manas Kamal Choudhury
+* Copyright (c) 2022-2024, Manas Kamal Choudhury
 * All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
@@ -26,14 +26,16 @@
 * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *
 **/
-
-#include <ahci.h>
-#include <ahcidsk.h>
+#include "disk.h"
+#include "ahci.h"
 #include <Mm\vmmngr.h>
 #include <Mm\pmmngr.h>
+#include <stdio.h>
 #include <aucon.h>
 #include <string.h>
 #include <Fs\vdisk.h>
+#include <Mm/kmalloc.h>
+#include <Fs/Dev/devfs.h>
 #include <Hal\x86_64_lowlevel.h>
 
 /*
@@ -65,16 +67,16 @@ void AuAHCIStartCmd(HBA_PORT* port) {
 
 uint32_t AuAHCIDiskFindSlot(HBA_PORT* port) {
 	uint32_t slots = (port->sact | port->ci);
-	for (int i = 0; i < 32; i++){
+	for (int i = 0; i < 32; i++) {
 		if ((slots & 1) == 0)
 			return i;
 		slots >>= 1;
 	}
 }
 
-void AuAHCIDiskRead(HBA_PORT* port, uint64_t lba, uint32_t count, uint64_t *buffer) {
+void AuAHCIDiskRead(HBA_PORT* port, uint64_t lba, uint32_t count, uint64_t* buffer) {
 	int spin = 0;
-	HBA_CMD_HEADER *cmd_list = (HBA_CMD_HEADER*)P2V(port->clb);
+	HBA_CMD_HEADER* cmd_list = (HBA_CMD_HEADER*)P2V(port->clb);
 	uint64_t buffer_while = (uint64_t)buffer;
 
 	cmd_list->cfl = sizeof(FIS_REG_H2D) / sizeof(uint32_t);
@@ -83,7 +85,7 @@ void AuAHCIDiskRead(HBA_PORT* port, uint64_t lba, uint32_t count, uint64_t *buff
 
 	uint32_t cmd_slot = AuAHCIDiskFindSlot(port);
 
-	HBA_CMD_TABLE *tbl = (HBA_CMD_TABLE*)P2V(cmd_list[cmd_slot].ctba);
+	HBA_CMD_TABLE* tbl = (HBA_CMD_TABLE*)P2V(cmd_list[cmd_slot].ctba);
 
 	int i = 0;
 	tbl->prdt[0].data_base_address = buffer_while & UINT32_MAX;
@@ -91,7 +93,7 @@ void AuAHCIDiskRead(HBA_PORT* port, uint64_t lba, uint32_t count, uint64_t *buff
 	tbl->prdt[0].data_byte_count = 512 * count - 1;
 	tbl->prdt[0].i = 1;
 
-	FIS_REG_H2D *fis = (FIS_REG_H2D*)tbl->cmd_fis;
+	FIS_REG_H2D* fis = (FIS_REG_H2D*)tbl->cmd_fis;
 	fis->fis_type = FIS_TYPE_REG_H2D;
 	fis->c = 1;
 	fis->command = ATA_CMD_READ_DMA_EXT;
@@ -108,12 +110,12 @@ void AuAHCIDiskRead(HBA_PORT* port, uint64_t lba, uint32_t count, uint64_t *buff
 	while ((port->tfd & (ATA_SR_BSY | ATA_SR_DRQ))) {
 		spin++;
 	}
-	
+
 	port->ci = 1 << cmd_slot;
 	while (1) {
 		if ((port->ci & (1 << cmd_slot)) == 0)
 			break;
-		if (port->is & (1 << 30))  {
+		if (port->is & (1 << 30)) {
 			break;
 		}
 	}
@@ -131,9 +133,9 @@ void AuAHCIDiskRead(HBA_PORT* port, uint64_t lba, uint32_t count, uint64_t *buff
 * @param count -- number of sectors to use
 * @param buffer -- memory buffer
 */
-void AuAHCIDiskWrite(HBA_PORT *port, uint64_t lba, uint32_t count, uint64_t *buffer) {
+void AuAHCIDiskWrite(HBA_PORT* port, uint64_t lba, uint32_t count, uint64_t* buffer) {
 	int spin = 0;
-	HBA_CMD_HEADER *cmd_list = (HBA_CMD_HEADER*)P2V(port->clb);
+	HBA_CMD_HEADER* cmd_list = (HBA_CMD_HEADER*)P2V(port->clb);
 	uint64_t buffer_whole = (uint64_t)buffer;
 
 	cmd_list->cfl = sizeof(FIS_REG_H2D) / sizeof(uint32_t);
@@ -142,15 +144,15 @@ void AuAHCIDiskWrite(HBA_PORT *port, uint64_t lba, uint32_t count, uint64_t *buf
 
 	uint32_t command_slot = AuAHCIDiskFindSlot(port);
 
-	HBA_CMD_TABLE *tbl = (HBA_CMD_TABLE*)P2V(cmd_list[command_slot].ctba);
-	
+	HBA_CMD_TABLE* tbl = (HBA_CMD_TABLE*)P2V(cmd_list[command_slot].ctba);
+
 	int i = 0;
 	tbl->prdt[0].data_base_address = buffer_whole & 0xffffffff;
 	tbl->prdt[0].dbau = buffer_whole >> 32;
 	tbl->prdt[0].data_byte_count = 512 * count - 1;
 	tbl->prdt[0].i = 1;
 
-	FIS_REG_H2D *fis = (FIS_REG_H2D*)tbl->cmd_fis;
+	FIS_REG_H2D* fis = (FIS_REG_H2D*)tbl->cmd_fis;
 	fis->fis_type = FIS_TYPE_REG_H2D;
 	fis->c = 1;
 	fis->command = ATA_CMD_WRITE_DMA_EXT;
@@ -174,7 +176,7 @@ void AuAHCIDiskWrite(HBA_PORT *port, uint64_t lba, uint32_t count, uint64_t *buf
 	while (1) {
 		if ((port->ci & (1 << command_slot)) == 0)
 			break;
-		if (port->is & (1 << 30))  {
+		if (port->is & (1 << 30)) {
 			AuTextOut("[AHCI]: Port error \r\n");
 			break;
 		}
@@ -190,9 +192,9 @@ void AuAHCIDiskWrite(HBA_PORT *port, uint64_t lba, uint32_t count, uint64_t *buf
 * @param count -- count --> 1
 * @param buffer -- memory area to store the information
 */
-void AuAHCIDiskIdentify(HBA_PORT *port, uint64_t lba, uint32_t count, uint64_t *buffer) {
+void AuAHCIDiskIdentify(HBA_PORT* port, uint64_t lba, uint32_t count, uint64_t* buffer) {
 	int spin = 0;
-	HBA_CMD_HEADER *cmd_list = (HBA_CMD_HEADER*)port->clb;
+	HBA_CMD_HEADER* cmd_list = (HBA_CMD_HEADER*)port->clb;
 	uint64_t buffer_whole = (uint64_t)buffer;
 
 	cmd_list->cfl = sizeof(FIS_REG_H2D) / sizeof(uint32_t);
@@ -201,10 +203,10 @@ void AuAHCIDiskIdentify(HBA_PORT *port, uint64_t lba, uint32_t count, uint64_t *
 
 	uint32_t command_slot = AuAHCIDiskFindSlot(port);
 
-	HBA_CMD_TABLE *tbl = (HBA_CMD_TABLE*)cmd_list[command_slot].ctba;
+	HBA_CMD_TABLE* tbl = (HBA_CMD_TABLE*)cmd_list[command_slot].ctba;
 	int i = 0;
 	uint8_t* buffer_aligned = (uint8_t*)buffer;
-	for (i = 0; i < cmd_list->prdtl; i++){
+	for (i = 0; i < cmd_list->prdtl; i++) {
 		tbl->prdt[i].data_base_address = buffer_whole & 0xffffffff;
 		tbl->prdt[i].dbau = buffer_whole >> 32;
 		tbl->prdt[i].data_byte_count = (512 * count) - 1;
@@ -217,7 +219,7 @@ void AuAHCIDiskIdentify(HBA_PORT *port, uint64_t lba, uint32_t count, uint64_t *
 	tbl->prdt[i].data_byte_count = (512 * count) - 1;
 	tbl->prdt[i].i = 1;
 
-	FIS_REG_H2D *fis = (FIS_REG_H2D*)tbl->cmd_fis;
+	FIS_REG_H2D* fis = (FIS_REG_H2D*)tbl->cmd_fis;
 	fis->fis_type = FIS_TYPE_REG_H2D;
 	fis->c = 1;
 	fis->command = ATA_CMD_IDENTIFY;
@@ -247,13 +249,13 @@ void AuAHCIDiskIdentify(HBA_PORT *port, uint64_t lba, uint32_t count, uint64_t *
 }
 
 
-int AuAHCIVDiskRead(AuVDisk *disk, uint64_t lba, uint32_t count, uint64_t* buffer) {
-	HBA_PORT * port = (HBA_PORT*)disk->data;
+int AuAHCIVDiskRead(AuVDisk* disk, uint64_t lba, uint32_t count, uint64_t* buffer) {
+	HBA_PORT* port = (HBA_PORT*)disk->data;
 	AuAHCIDiskRead(port, lba, count, buffer);
 	return count;
 }
 
-int AuAHCIVDiskWrite(AuVDisk *disk, uint64_t lba, uint32_t count, uint64_t* buffer) {
+int AuAHCIVDiskWrite(AuVDisk* disk, uint64_t lba, uint32_t count, uint64_t* buffer) {
 	HBA_PORT* port = (HBA_PORT*)disk->data;
 	AuAHCIDiskWrite(port, lba, count, buffer);
 	return count;
@@ -264,7 +266,7 @@ int AuAHCIVDiskWrite(AuVDisk *disk, uint64_t lba, uint32_t count, uint64_t* buff
 * @param port -- SATA Drive Port memory
 * @param slot -- slot number
 */
-void AuAHCIDiskInitialise(HBA_PORT *port) {
+void AHCIDiskInitialise(AHCIController *controller,HBA_PORT* port) {
 
 	/* stop the DMA engine */
 	AuAHCIStopCmd(port);
@@ -276,7 +278,7 @@ void AuAHCIDiskInitialise(HBA_PORT *port) {
 	port->clb = phys & 0xffffffff;
 	port->clbu = phys >> 32;
 
-	HBA_CMD_HEADER *cmd_list = (HBA_CMD_HEADER*)phys;
+	HBA_CMD_HEADER* cmd_list = (HBA_CMD_HEADER*)phys;
 	memset((void*)phys, 0, 4096);
 
 	/* Allocate FIS */
@@ -284,7 +286,7 @@ void AuAHCIDiskInitialise(HBA_PORT *port) {
 	port->fb = phys & 0xffffffff;
 	port->fbu = (phys >> 32);
 
-	HBA_FIS *fis_dev = (HBA_FIS*)phys;
+	HBA_FIS* fis_dev = (HBA_FIS*)phys;
 	memset((void*)phys, 0, 4096);
 
 	uint8_t cold_presence = port->cmd & (1 << 20);
@@ -317,11 +319,11 @@ void AuAHCIDiskInitialise(HBA_PORT *port) {
 
 	uint8_t current_slot = port->cmd & (1 << 8);
 
-	uint64_t *addr = (uint64_t*)AuPmmngrAlloc();
+	uint64_t* addr = (uint64_t*)AuPmmngrAlloc();
 	memset(addr, 0, 4096);
 	AuAHCIDiskIdentify(port, 0, 1, addr);
 	char ata_device_name[40];
-	uint8_t *ide_buf = (uint8_t*)addr;
+	uint8_t* ide_buf = (uint8_t*)addr;
 	uint16_t* aligned_buf = (uint16_t*)addr;
 	for (int i = 0; i < 40; i += 2)
 	{
@@ -336,11 +338,11 @@ void AuAHCIDiskInitialise(HBA_PORT *port) {
 	if (offset_83 & (1 << 10)) {
 		max_sectors = (uint16_t)aligned_buf[100];
 	}
-	else{
+	else {
 		max_sectors = aligned_buf[60] + aligned_buf[61];
 	}
 
-	AuVDisk *disk = AuCreateVDisk();
+	AuVDisk* disk = AuCreateVDisk();
 	strcpy(disk->diskname, ata_device_name);
 	disk->data = port;
 	disk->Read = AuAHCIVDiskRead;
@@ -348,4 +350,20 @@ void AuAHCIDiskInitialise(HBA_PORT *port) {
 	disk->max_blocks = -1;
 	disk->currentLBA = 0;
 	AuVDiskRegister(disk);
+
+	int diskID = controller->CurrentPortID;
+	char filename[32];
+	strcpy(filename, "ahci");
+	int offset = strlen(filename);
+	sztoa(diskID, filename + offset, 10);
+
+
+	AuVFSNode* file = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
+	memset(file, 0, sizeof(AuVFSNode));
+	strcpy(file->filename, filename);
+	file->flags = FS_FLAG_DEVICE;
+	file->device = disk;
+
+	AuDevFSAddFile(controller->devfs, controller->controllerpath, file);
+	controller->CurrentPortID++;
 }

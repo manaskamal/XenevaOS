@@ -34,6 +34,7 @@
 #include <aurora.h>
 #include <fs\vfs.h>
 
+
 #define ETHERNET_TYPE_IPV4  0x0800
 #define ETHERNET_TYPE_ARP   0x0806
 #define ETHERNET_TYPE_WAKE_ON_LAN  0x0842

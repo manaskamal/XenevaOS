@@ -192,8 +192,10 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 	
 	usb_thread_msg = 0;
 
-	if (AuCheckDevice(0x0C, 0x03, 0x30))
+	if (AuCheckDevice(0x0C, 0x03, 0x30)) {
+		AuTextOut("Already USB Driver installed \n");
 		return 1;
+	}
 
 
 	usb_device = (USBDevice*)kmalloc(sizeof(USBDevice));

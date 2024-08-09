@@ -82,7 +82,11 @@ void _AuMain(KERNEL_BOOT_INFO *info) {
 	AuInitialiseSerial();
 	AuVFSInitialise();
 	AuTextOut("BootDev HID -> %x, UID -> %x, CID -> %x \r\n", info->hid, info->uid, info->cid);
-	AuAHCIInitialise();
+
+	/* TODO: AHCI, NVMe, USB Mass Storage, ..etc should
+	 * be included in boot time driver
+	 */
+	AuBootDriverInitialise(info);
 	
 	AuConsolePostInitialise(info);
 	/* Here initialize all legacy bus system

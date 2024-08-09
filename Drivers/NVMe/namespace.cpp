@@ -34,7 +34,9 @@
 #include <Mm\vmmngr.h>
 #include <Hal\serial.h>
 #include <aucon.h>
+#include <stdio.h>
 #include <Fs\vdisk.h>
+#include <Fs/Dev/devfs.h>
 
 enum NVMCommands{
 	NVMCmdFlush = 0x0,
@@ -165,7 +167,7 @@ int NVMeWriteBlock(AuVDisk* vdisk, uint64_t lba, uint32_t count, uint64_t* buffe
  * @param ni -- Namespace information
  * @param id -- Namespace id
  */
-void NVMeInitialiseNamespace(NVMeControllerIdentity* controller, NamespaceIdentity *ni, int id) {
+void NVMeInitialiseNamespace(NVMeDev* nvme, NVMeControllerIdentity* controller, NamespaceIdentity *ni, int id) {
 	uint8_t lbaFormat = ni->fmtLBASize & 0xf;
 	uint8_t lbaSize = ni->lbaFormat[lbaFormat].lbaDataSize;
 	if (lbaSize >= 9) {
@@ -197,6 +199,21 @@ void NVMeInitialiseNamespace(NVMeControllerIdentity* controller, NamespaceIdenti
 		AuTextOut("[NVMe]: VDisk registered as %s,serial -> %s \n", vdisk->diskname,
 			vdisk->serialNumber);
 		AuVDiskRegister(vdisk);
+
+		int diskID = id - 1;
+		char filename[32];
+		strcpy(filename, "nvme");
+		int offset = strlen(filename);
+		sztoa(diskID, filename + offset, 10);
+
+		AuVFSNode* diskfile = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
+		memset(diskfile, 0, sizeof(AuVFSNode));
+		strcpy(diskfile->filename, filename);
+		diskfile->device = vdisk;
+		diskfile->flags = FS_FLAG_DEVICE;
+
+		AuDevFSAddFile(nvme->devfs, nvme->nvmedevpath, diskfile);
+		
 	}
 	
 }

@@ -92,6 +92,8 @@ typedef struct _msghdr_ {
 typedef struct _socket_ {
 	void* binedDev;
 	AuStack *rxstack;
+	int sessionPort;
+	int ipv4Iden;
 	int(*receive)(struct _socket_* sock, msghdr *msg, int flags);
 	int(*send)(struct _socket_* sock, msghdr* msg, int flags);
 	void(*close)(struct _socket_* sock);
@@ -99,6 +101,20 @@ typedef struct _socket_ {
 	int(*bind)(struct _socket_* sock, sockaddr* addr, socklen_t addrlen);
 }AuSocket;
 #pragma pack(pop)
+
+typedef uint32_t in_addr_t;
+typedef uint16_t in_port_t;
+
+struct in_addr {
+	in_addr_t s_addr;
+};
+
+typedef struct _sockaddr_in_ {
+	short sin_family;
+	unsigned short sin_port;
+	struct in_addr sin_addr;
+	char sin_zero[8];
+}sockaddr_in;
 
 /*
  * AuSocketAdd -- add some data to socket

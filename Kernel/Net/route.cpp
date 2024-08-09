@@ -32,6 +32,7 @@
 #include <string.h>
 #include <Mm/kmalloc.h>
 #include <Hal/serial.h>
+#include <_null.h>
 
 list_t* _kernelRouteList;
 
@@ -134,4 +135,21 @@ void AuRouteTablePopulate(AuRouteEntry* whereToPopulate, int entryIndex) {
 	whereToPopulate->gateway = entry->gateway;
 	whereToPopulate->ifaddress = entry->ifaddress;
 	whereToPopulate->netmask = entry->netmask;
+}
+
+/*
+ * AuRouteTableDoRouteLookup -- takes the decision on taking
+ * the best route
+ * @param address -- address to take for routing
+ */
+AuRouteEntry* AuRouteTableDoRouteLookup(uint32_t address) {
+	AuRouteEntry* bestRoute = NULL;
+	for (int i = 0; i < _kernelRouteList->pointer; i++) {
+		AuRouteEntry* _entry = (AuRouteEntry*)list_get_at(_kernelRouteList, i);
+		if ((address & _entry->netmask) == (_entry->dest & _entry->netmask)) {
+			if (!bestRoute || _entry->netmask > bestRoute->netmask)
+				bestRoute = _entry;
+		}
+	}
+	return bestRoute;
 }

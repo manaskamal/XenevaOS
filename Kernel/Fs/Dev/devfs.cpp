@@ -36,6 +36,7 @@
 #include <Hal\serial.h>
 #include <stdint.h>
 
+
 /*
  * AuDeviceFsInitialize -- initialise the device
  * file system
@@ -53,6 +54,7 @@ void AuDeviceFsInitialize() {
 	AuVFSAddFileSystem(node);
 
 	AuDevInputInitialise();
+
 }
 
 /*

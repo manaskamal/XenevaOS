@@ -35,7 +35,10 @@
 #include <process.h>
 #include <stack.h>
 #include <Hal\serial.h>
+#include <Hal/x86_64_hal.h>
 #include <net\tcp.h>
+#include <Net/ipv4.h>
+#include <stdio.h>
 
 #define TCP_FLAGS_FIN (1<<0)
 #define TCP_FLAGS_SYN (1<<1)
@@ -47,6 +50,8 @@
 #define TCP_FLAGS_CWR (1<<7)
 #define TCP_FLAGS_NS (1<<8)
 #define TCP_DATA_OFFSET_5 (0x5 << 12)
+
+#define TCP_DEFAULT_WIN_SZ 65535
 
 typedef struct _tcpcheckheader_{
 	uint32_t source;
@@ -135,6 +140,24 @@ void AuTCPClose(AuSocket* sock) {
 	return;
 }
 
+static int _tcp_port_ = 49152;
+/*
+ * AuTCPObtainPort -- obtains a new port for
+ * a session, port number 0 - 1024 are reserved
+ * for services and protocols like HTTP(port 80)
+ * FTP(port 21), SSH(port 22)..etc
+ * Rage from 1024 to 49151 are assigned by Internet
+ * Assigned Numbers Authority for specific services
+ * upon application by a requesting entity.
+ * Dynamic/Private ports ranges from 49152 - 65535
+ * this ports are not assigned and can be used 
+ * dynamically by applications and services
+ * @param sock -- Pointer to socket session
+ */
+void AuTCPObtainPort(AuSocket* sock) {
+	int port = _tcp_port_++;
+	sock->sessionPort = port;
+}
 /*
 * AuTCPConnect -- TCP protocol connect interface
 * @param sock -- Pointer to socket
@@ -142,6 +165,58 @@ void AuTCPClose(AuSocket* sock) {
 * @param addrlen -- address length
 */
 int AuTCPConnect(AuSocket* sock, sockaddr* addr, socklen_t addrlen){
+	x64_cli();
+	sockaddr_in* sockdata = (sockaddr_in*)addr;
+
+	AuTCPObtainPort(sock);
+	int sourcePort = sock->sessionPort;
+	sock->ipv4Iden = rand();
+	AuVFSNode* nic = AuNetworkRoute(sockdata->sin_addr.s_addr);
+	if (!nic) {
+		SeTextOut("[Aurora-net]: TCP failed to connect, no NIC\r\n");
+		return 1;
+	}
+
+	AuNetworkDevice* ndev = (AuNetworkDevice*)nic->device;
+	if (!ndev) {
+		SeTextOut("[Aurora-net]: TCP No Netword device data \r\n");
+		return 1;
+	}
+
+	size_t totalLen = sizeof(IPv4Header) + sizeof(TCPHeader);
+
+	/* IPV4 Header */
+	IPv4Header* ipv4 = (IPv4Header*)kmalloc(totalLen);
+	ipv4->totalLength = htons(totalLen);
+	ipv4->destAddress = sockdata->sin_addr.s_addr;
+	ipv4->srcAddress = ndev->ipv4addr;
+	ipv4->timeToLive = 64;
+	ipv4->protocol = IPV4_PROTOCOL_TCP;
+	ipv4->identification = htons(sock->ipv4Iden);
+	ipv4->flagsFragOffset = htons(0x0);
+	ipv4->versionHeaderLen = 0x45;
+	ipv4->typeOfService = 0;
+	ipv4->headerChecksum = htons(IPv4CalculateChecksum(ipv4));
+
+	TCPHeader* tcp = (TCPHeader*)ipv4->payload;
+	tcp->srcPort = htons(sock->sessionPort);
+	tcp->destPort = sockdata->sin_port;
+	tcp->sequenceNum = 0;
+	tcp->ackNum = 0;
+	tcp->dataOffsetFlags = htons((1 << 1) | 0x5000);
+	tcp->window = htons(TCP_DEFAULT_WIN_SZ);
+	tcp->checksum = 0;
+	tcp->urgentPointer = 0;
+
+	TCPCheckHeader checkhdr;
+	checkhdr.source = ipv4->srcAddress;
+	checkhdr.destination = ipv4->destAddress;
+	checkhdr.zeros = 0;
+	checkhdr.protocol = IPV4_PROTOCOL_TCP;
+	checkhdr.tcpLen = htons(sizeof(TCPHeader));
+
+	tcp->checksum = htons(CalculateTCPChecksum(&checkhdr, tcp, NULL, 0));
+	
 	return 0;
 }
 

@@ -46,9 +46,10 @@ typedef struct _nvme_namespace_ {
 
 /*
 * NVMeInitialiseNamespace -- initialise and register a NVMe namespace
+* @param nvme -- NVMe data structure
 * @param controller -- controller information
 * @param ni -- Namespace information
 * @param id -- Namespace id
 */
-void NVMeInitialiseNamespace(NVMeControllerIdentity* controller, NamespaceIdentity *ni, int id);
+void NVMeInitialiseNamespace(NVMeDev* nvme, NVMeControllerIdentity* controller, NamespaceIdentity *ni, int id);
 #endif

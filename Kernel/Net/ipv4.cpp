@@ -33,6 +33,9 @@
 #include <net/ipv4.h>
 #include <net/udp.h>
 #include <net/aunet.h>
+#include <Net/ethernet.h>
+#include <Net/arp.h>
+#include <_null.h>
 #include <Hal\serial.h>
 
 uint16_t IPv4CalculateChecksum(IPv4Header * p){
@@ -63,6 +66,7 @@ void IPv4HandlePacket(void* data) {
 	ip_ntoa(ntohl(pack->srcAddress)); 
 	switch (pack->protocol){
 	case 1:
+		SeTextOut("ICMP Message \r\n");
 		break;
 	case IPV4_PROTOCOL_UDP:{
 							   uint16_t destport = ntohs(((uint16_t*)&pack->payload)[1]);
@@ -90,5 +94,38 @@ int CreateIPv4Socket(int type, int protocol) {
 		return CreateTCPSocket();
 	default:
 		return -1;
+	}
+}
+
+
+void IPV4SendPacket(IPv4Header* packet, AuVFSNode* nic) {
+	AuNetworkDevice* ndev = (AuNetworkDevice*)nic->device;
+	if (!ndev)
+		return;
+
+	uint32_t ip_dest = packet->destAddress;
+	
+
+	/* Decide which data link layer to use for
+	   forwarding this packet*/
+	if (ndev->type == NETDEV_TYPE_ETHERNET) {
+		AuARPCache* cache = NULL;
+		if (!ndev->ipv4subnet || ((ip_dest & ndev->ipv4subnet) != (ndev->ipv4addr & ndev->ipv4subnet))) {
+			ip_dest = ndev->ipv4gateway;
+			cache = AuARPGet(ip_dest);
+		}
+		else {
+			cache = AuARPGet(ip_dest);
+			if (!cache) {
+				AuARPRequestMAC(nic, ip_dest);
+				SeTextOut("Requesting MAC \r\n");
+				for (;;);
+				/* Not implemented yet */
+			}
+		}
+		uint8_t broadcast_addr[6];
+		memset(broadcast_addr, 0xFF, 6);
+		AuEthernetSend(nic, packet, ntohs(packet->totalLength), ETHERNET_TYPE_IPV4, cache ? cache->hw_address : broadcast_addr);
+
 	}
 }

@@ -38,20 +38,30 @@
 #include <Hal\serial.h>
 #include <aucon.h>
 
-
-#define AU_DRIVER_BASE_START  0xFFFFC00000400000
+/* 0xFFFFC00000400000 - 0xFFFFC00000A00000 -- Kernel Boot Drivers 
+ * 0xFFFFC00000A00000 - Kernel Runtime Drivers
+ */
+#define AU_DRIVER_BASE_START  0xFFFFC00000A00000
 #define AU_MAX_SUPPORTED_DEVICE 256
 
-AuDriver *drivers[256];
+AuDriver *drivers[246];
+AuDriver* bootDrivers[10];
 AuDevice *au_devices[AU_MAX_SUPPORTED_DEVICE];
 static int _dev_count_;
 static uint32_t driver_class_unique_id = 0;
+static uint32_t driver_boot_unique_id = 0;
 static uint64_t driver_load_base = 0;
 
 //! request an unique id for driver class
 uint32_t AuRequestDriverId() {
 	uint32_t uid = driver_class_unique_id;
 	driver_class_unique_id++;
+	return uid;
+}
+
+uint32_t AuRequestBootDriverId() {
+	uint32_t uid = driver_boot_unique_id;
+	driver_boot_unique_id++;
 	return uid;
 }
 
@@ -154,13 +164,29 @@ search:
  * slot 
  * @param drivername -- name of the driver
  */
-void AuCreateDriverInstance(char* drivername) {
+AuDriver* AuCreateDriverInstance(char* drivername) {
 	AuDriver *driver = (AuDriver*)kmalloc(sizeof(AuDriver));
 	memset(driver, 0, sizeof(AuDriver));
 	strcpy(driver->name, drivername);
 	driver->id = AuRequestDriverId();
 	driver->present = false;
 	drivers[driver->id] = driver;
+	return driver;
+}
+
+/*
+ * AuCreateDriverInstance -- creates a new driver
+ * slot
+ * @param drivername -- name of the driver
+ */
+AuDriver* AuCreateBootDriverInstance(char* drivername) {
+	AuDriver* driver = (AuDriver*)kmalloc(sizeof(AuDriver));
+	memset(driver, 0, sizeof(AuDriver));
+	strcpy(driver->name, drivername);
+	driver->id = AuRequestBootDriverId();
+	driver->present = false;
+	bootDrivers[driver->id] = driver;
+	return driver;
 }
 
 /*
@@ -254,6 +280,7 @@ void AuDriverLoad(char* filename, AuDriver *driver) {
 */
 void AuDrvMngrInitialize(KERNEL_BOOT_INFO *info) {
 	driver_class_unique_id = 0;
+	driver_boot_unique_id = 0;
 	driver_load_base = AU_DRIVER_BASE_START;
 	_dev_count_ = 0;
 
@@ -335,5 +362,54 @@ AU_EXTERN AU_EXPORT bool AuCheckDevice(uint16_t classC, uint16_t subclassC, uint
 	return false;
 }
 
-//AU_EXTERN AU_EXPORT AuDriver* AuGetDriver
+void AuBootDriverLoad(void* driverBuffer, AuDriver* driver) {
+	int next_base_offset = 0;
+
+	uint64_t buffer = (uint64_t)driverBuffer;
+	next_base_offset = 1;
+
+	IMAGE_DOS_HEADER* dos_ = (IMAGE_DOS_HEADER*)driverBuffer;
+	PIMAGE_NT_HEADERS nt = raw_offset<PIMAGE_NT_HEADERS>(dos_, dos_->e_lfanew);
+
+	PSECTION_HEADER secthdr = raw_offset<PSECTION_HEADER>(&nt->OptionalHeader, nt->FileHeader.SizeOfOptionaHeader);
+	
+
+	void* entry_addr = AuGetProcAddress(driverBuffer, "AuDriverMain");
+	void* unload_addr = AuGetProcAddress(driverBuffer, "AuDriverUnload");
+
+	AuKernelLinkDLL(driverBuffer);
+	driver->entry = (au_drv_entry)entry_addr;
+	driver->unload = (au_drv_unload)unload_addr;
+	driver->base = (uint64_t)driverBuffer;
+	driver->end = 0;
+	driver->present = true;
+}
+
+/*
+ * AuBootDriverInitialise -- Initialise and load all boot time drivers
+ * @param info -- Kernel boot information passed by XNLDR
+ * [TODO] : Everything is hard coded for now
+ */
+AU_EXTERN AU_EXPORT void AuBootDriverInitialise(KERNEL_BOOT_INFO* info) {
+	int total_boot_driver = 0;
+	/* HARD CODED */
+
+	/* THE AHCI Controller */
+	if (info->driver_entry1) {
+		AuDriver* driver = AuCreateBootDriverInstance("AHCIController");
+		AuBootDriverLoad(info->driver_entry1, driver);
+	}
+
+	/* THE NVMe Controller */
+	if (info->driver_entry2) {
+		AuDriver* driver = AuCreateBootDriverInstance("NVMeController");
+		AuBootDriverLoad(info->driver_entry2, driver);
+	}
+
+	/* Serially call each startup entries of each driver */
+	for (int i = 0; i < driver_boot_unique_id; i++) {
+		AuDriver* driver = bootDrivers[i];
+		driver->entry();
+	}
+}
 

@@ -49,6 +49,8 @@ typedef struct _ipv4head_ {
 #define IPV4_PROTOCOL_UDP 17
 #define IPV4_PROTOCOL_TCP 6
 
+
+extern uint16_t IPv4CalculateChecksum(IPv4Header* p);
 /*
 * CreateIPv4Socket -- create a new ipv4 socket
 * @param type -- type of the socket its Datagram or

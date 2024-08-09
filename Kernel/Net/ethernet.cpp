@@ -55,6 +55,7 @@ AU_EXTERN AU_EXPORT void AuEthernetHandle(void *data, int size) {
 	}
 	switch (ntohs(frame->typeLen)) {
 	case ETHERNET_TYPE_ARP:
+		SeTextOut("ARP Packet received \r\n");
 		break;
 	case ETHERNET_TYPE_IPV4:
 		IPv4HandlePacket((void*)&frame->payload);
@@ -84,6 +85,8 @@ void AuEthernetSend(AuVFSNode* nic,void* data, size_t len, uint16_t type, uint8_
 	
 	AuTextOut("Ethernet setuped %d \r\n", ndev->type);
 
-	nic->write(nic, nic, (uint64_t*)pacl, totalSz);
+	if (nic->write)
+		nic->write(nic, nic, (uint64_t*)pacl, totalSz);
+
 	kfree(pacl);
 }

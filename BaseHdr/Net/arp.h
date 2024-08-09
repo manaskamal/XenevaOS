@@ -43,18 +43,50 @@ typedef struct _arp_ {
 	uint8_t hwAddressSize;
 	uint8_t protocolSize;
 	uint16_t operation;
-	uint8_t srcMac[6];
-	uint32_t srcIP;
-	uint8_t destMac[6];
-	uint32_t destIP;
+	union {
+#pragma pack(push,1)
+		struct {
+			uint8_t arp_sha[6];
+			uint32_t arp_spa;
+			uint8_t arp_tha[6];
+			uint32_t arp_tpa;
+		}arp_eth_ipv4;
+#pragma pack(pop)
+	}arp_data;
 }NetARP;
 #pragma pack(pop)
 
+typedef struct _arp_cache_ {
+	uint8_t hw_address[6];
+	uint16_t flags;
+	uint32_t ipAddress;
+	AuVFSNode* nic;
+}AuARPCache;
+
 
 /*
-* AuARPRequestMAC -- request a mac address from
-* server
-*/
-AU_EXTERN AU_EXPORT void AuARPRequestMAC(AuVFSNode* nic);
+ * ARPProtocolInitialise -- initialise arp protocol
+ */
+extern void ARPProtocolInitialise();
+
+/*
+ * ARPProtocolAdd -- add a new information to ARP cache list
+ * @param nic -- Pointer to NIC device
+ * @param address -- IP Address
+ * @param hwaddr -- Hardware address to add
+ */
+extern void ARPProtocolAdd(AuVFSNode* nic, uint32_t address, uint8_t* hwaddr);
+
+/*
+ * AuARPGet -- Returns an ARP by its ip address
+ * @param address -- IP Address to look
+ */
+extern AuARPCache* AuARPGet(uint32_t address);
+
+/*
+ * AuARPRequestMAC -- request a mac address from
+ * server
+ */
+extern void AuARPRequestMAC(AuVFSNode* nic, uint32_t addr);
 
 #endif
