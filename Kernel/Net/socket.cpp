@@ -140,10 +140,20 @@ AuSocket* AuNetCreateSocket() {
 	return sock;
 }
 
+
 int AuRawSocketClose(AuVFSNode* fs, AuVFSNode* file) {
 	/* here both fs and file points to socket file , better
 	 * would be using file pointer */
 	AuSocket* sock = (AuSocket*)file->device;
+
+	/* Remove it from raw socket list */
+	for (int i = 0; i < raw_socket_list->pointer; i++) {
+		AuSocket* socket = (AuSocket*)list_get_at(raw_socket_list, i);
+		if (socket == sock) {
+			list_remove(raw_socket_list, i);
+			break;
+		}
+	}
 	if (sock) {
 		if (sock->rxstack) {
 			while (sock->rxstack->itemCount) {

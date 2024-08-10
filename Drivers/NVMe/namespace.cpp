@@ -161,6 +161,31 @@ int NVMeWriteBlock(AuVDisk* vdisk, uint64_t lba, uint32_t count, uint64_t* buffe
 		return NVMeNamespaceWrite(namespace_, lba, count, buffer);
 	return 1;
 }
+
+
+size_t NVMeFileWrite(AuVFSNode* _node_, AuVFSNode* file, uint64_t* buffer, uint32_t len) {
+	if (!file)
+		return 0;
+	uint64_t lba = file->pos / 512;
+	uint64_t lba_bytes = static_cast<uint64_t>(len) * 512;
+	AuVDisk* vdisk = (AuVDisk*)file->device;
+	if (!vdisk)
+		return 0;
+	NVMeWriteBlock(vdisk, lba, len, buffer);
+	return lba_bytes;
+}
+
+size_t NVMeFileRead(AuVFSNode* _node_, AuVFSNode* file, uint64_t* buffer, uint32_t len) {
+	if (!file)
+		return 0;
+	uint64_t lba = file->pos / 512;
+	uint64_t lba_bytes = static_cast<uint64_t>(len) * 512;
+	AuVDisk* vdisk = (AuVDisk*)file->device;
+	if (!vdisk)
+		return 0;
+	NVMeReadBlock(vdisk, lba, len, buffer);
+	return lba_bytes;
+}
 /*
  * NVMeInitialiseNamespace -- initialise and register a NVMe namespace
  * @param controller -- controller information
@@ -198,7 +223,6 @@ void NVMeInitialiseNamespace(NVMeDev* nvme, NVMeControllerIdentity* controller, 
 		vdisk->Read = NVMeReadBlock;
 		AuTextOut("[NVMe]: VDisk registered as %s,serial -> %s \n", vdisk->diskname,
 			vdisk->serialNumber);
-		AuVDiskRegister(vdisk);
 
 		int diskID = id - 1;
 		char filename[32];
@@ -206,11 +230,22 @@ void NVMeInitialiseNamespace(NVMeDev* nvme, NVMeControllerIdentity* controller, 
 		int offset = strlen(filename);
 		sztoa(diskID, filename + offset, 10);
 
+		/* now store the entire path in vdisk */
+		strcpy(vdisk->diskPath, nvme->nvmedevpath);
+		offset = strlen(vdisk->diskPath);
+		strcpy(vdisk->diskPath + offset, "/");
+		offset = strlen(vdisk->diskPath);
+		strcpy(vdisk->diskPath + offset, filename);
+
+		AuVDiskRegister(vdisk);
+
 		AuVFSNode* diskfile = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
 		memset(diskfile, 0, sizeof(AuVFSNode));
 		strcpy(diskfile->filename, filename);
 		diskfile->device = vdisk;
 		diskfile->flags = FS_FLAG_DEVICE;
+		diskfile->write = NVMeFileWrite;
+		diskfile->read = NVMeFileRead;
 
 		AuDevFSAddFile(nvme->devfs, nvme->nvmedevpath, diskfile);
 		

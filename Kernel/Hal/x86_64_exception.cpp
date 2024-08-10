@@ -249,7 +249,10 @@ skip:
 		SeTextOut("Reserved page \r\n");
 	else if (id)
 		SeTextOut("Invalid page \r\n");
-	AuVMArea* vma = AuVMAreaGet(proc, frame->rip);
+
+	AuVMArea* vma = NULL;
+	if (proc)
+		vma = AuVMAreaGet(proc, frame->rip);
 
 	SeTextOut("Virtual Address -> %x \r\n", vaddr_);
 	SeTextOut("Virtual Address aligned -> %x \r\n", vaddr_aligned);
