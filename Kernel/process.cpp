@@ -180,14 +180,16 @@ uint64_t* CreateUserStack(AuProcess *proc, uint64_t* cr3) {
 #define USER_STACK 0x0000700000000000 
 	uint64_t location = USER_STACK;
 	location += proc->_user_stack_index_;
-	
+
 	for (int i = 0; i < (PROCESS_USER_STACK_SZ / 4096); i++) {
-		uint64_t* blk = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
-		AuMapPageEx(cr3, V2P((size_t)blk), location + static_cast<uint64_t>(i) * PAGE_SIZE, X86_64_PAGING_USER);
+		uint64_t blk = (uint64_t)AuPmmngrAlloc();
+		if (!AuMapPageEx(cr3, blk, location + static_cast<uint64_t>(i) * PAGE_SIZE, X86_64_PAGING_USER))
+			SeTextOut("CreateUserStack: already mapped %x \r\n", (location + i * PAGE_SIZE));
 	}
 
 	proc->_user_stack_index_ += PROCESS_USER_STACK_SZ;
-	return (uint64_t*)(location + (PROCESS_USER_STACK_SZ));
+	uint64_t* addr =  (uint64_t*)(location + PROCESS_USER_STACK_SZ);
+	return addr;
 }
 
 
@@ -199,14 +201,17 @@ uint64_t* CreateUserStack(AuProcess *proc, uint64_t* cr3) {
 uint64_t CreateKernelStack(AuProcess* proc, uint64_t *cr3) {
 	uint64_t location = KERNEL_STACK_LOCATION;
 	location += proc->_kstack_index_;
-
-	for (int i = 0; i < 8192 / 4096; i++) {
+	
+	uint64_t last_sz = 0;
+	for (int i = 0; i < KERNEL_STACK_SIZE / PAGE_SIZE; i++) {
 		void* p = AuPmmngrAlloc();
-		AuMapPageEx(cr3, (uint64_t)p, location + static_cast<uint64_t>(i) * PAGE_SIZE, X86_64_PAGING_USER);
-	}
+		if (!AuMapPageEx(cr3, (uint64_t)p, location + static_cast<uint64_t>(i) * PAGE_SIZE, X86_64_PAGING_USER))
+			SeTextOut("CreateKernelStack: Already mapped %x \r\n", (location + i * PAGE_SIZE));
 
-	proc->_kstack_index_ += 8192;
-	return (location + 8192);
+		last_sz = i * PAGE_SIZE;
+	}
+	proc->_kstack_index_ += KERNEL_STACK_SIZE;
+	return (location + KERNEL_STACK_SIZE);
 }
 
 /*
@@ -217,7 +222,7 @@ uint64_t CreateKernelStack(AuProcess* proc, uint64_t *cr3) {
  */
 void KernelStackFree(AuProcess* proc,void* ptr, uint64_t *cr3) {
 	uint64_t location = (uint64_t)ptr;
-	for (int i = 0; i < 8192 / 4096; i++) {
+	for (int i = 0; i < KERNEL_STACK_SIZE / 4096; i++) {
 		AuVPage* page = AuVmmngrGetPage((location + (static_cast<uint64_t>(i) * PAGE_SIZE)), VIRT_GETPAGE_ONLY_RET, VIRT_GETPAGE_ONLY_RET);
 		if (page) {
 			uint64_t phys = page->bits.page << PAGE_SHIFT;
@@ -227,7 +232,7 @@ void KernelStackFree(AuProcess* proc,void* ptr, uint64_t *cr3) {
 			page->bits.page = 0;
 		}
 	}
-	proc->_kstack_index_ -= 8192;
+	proc->_kstack_index_ -= KERNEL_STACK_SIZE;
 }
 /*
  * AuAllocateProcessID -- allocates a new
@@ -563,7 +568,7 @@ AuMutex* AuProcessGetMutex(){
 *  @param name -- name of the thread
 *  @param priority -- (currently unused) thread's priority
 */
-int AuCreateUserthread(AuProcess* proc, void(*entry) (void*), char *name)
+int AuCreateUserthread(AuProcess* proc, void(*entry) (), char *name)
 {
 	AuThread* thr = AuCreateKthread(AuProcessEntUser, CreateKernelStack(proc, proc->cr3), V2P((size_t)proc->cr3), name);
 	thr->frame.rsp -= 32;

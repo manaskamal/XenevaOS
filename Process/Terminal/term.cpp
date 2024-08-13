@@ -525,7 +525,6 @@ void TerminalThread() {
 			TerminalProcessLine(buf[i]);
 		}
 	
-
 		/* now bytes_read tells the terminal
 		 * is dirty, so we need redraw of all 
 		 * cells 
@@ -538,13 +537,13 @@ void TerminalThread() {
 				//for (;;);
 			}
 			else {
-				TerminalDrawAllCells();
+				//TerminalDrawAllCells();
 			}
 			//TerminalDrawCursor();
 			bytes_read = 0;
 			_update_terminal_ = false;
 		}
-
+		
 		_KeProcessSleep(100); //
 	}
 }
@@ -596,7 +595,7 @@ int main(int argc, char* arv[]){
 	term_buffer = (TermCell*)malloc(ws_col * ws_row * sizeof(TermCell));
 	memset(term_buffer, 0x0, static_cast<uint64_t>(ws_col) * ws_row * sizeof(TermCell));
 
-	
+	ChWindowPaint(win);
 
 
 	int term_id = _KeGetProcessID();

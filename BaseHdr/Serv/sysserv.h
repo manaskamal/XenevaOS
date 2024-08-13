@@ -199,7 +199,7 @@ extern size_t GetSystemTimerTick();
 /*
 * CreateUserThread -- creates an user mode thread
 */
-extern int CreateUserThread(void(*entry) (void*), char *name);
+extern int CreateUserThread(void(*entry) (), char *name);
 
 /*
 * SetFileToProcess -- copies a file from one process

@@ -145,6 +145,7 @@ void x86_64_hal_cpu_feature_enable() {
 			_fxsave = true;
 		}
 
+		// don't enable TLS 
 		cr4 |= (1 << 10);
 		x64_write_cr4(cr4);
 	}

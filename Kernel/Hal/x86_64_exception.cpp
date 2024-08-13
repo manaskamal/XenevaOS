@@ -167,13 +167,31 @@ void general_protection_fault(size_t v, void* p){
 	x64_cli();
 	interrupt_stack_frame *frame = (interrupt_stack_frame*)p;
 	panic("Genral Protection Fault \r\n");
+	AuThread* thr = AuGetCurrentThread();
+
+	AuProcess* proc = NULL;
+	if (thr) {
+		proc = AuProcessFindThread(thr);
+		if (!proc)
+			proc = AuProcessFindSubThread(thr);
+	}
+
 	SeTextOut("General Protection Fault \r\n");
 	SeTextOut("__PROCESSOR TRACE__ \r\n");
 	SeTextOut("RIP -> %x \r\n", frame->rip);
 	SeTextOut("Stack -> %x \r\n", frame->rsp);
 	SeTextOut("RFLAGS -> %x \r\n", frame->rflags);
 	SeTextOut("CS -> %x, SS -> %x \r\n", frame->cs, frame->ss);
-	SeTextOut("Current thread ->id %d , %s\r\n", AuGetCurrentThread()->id, AuGetCurrentThread()->name);
+	SeTextOut("Current thread ->id %d , %s\r\n", thr->id, thr->name);
+	AuVMArea* vma = NULL;
+	if (proc)
+		vma = AuVMAreaGet(proc, frame->rip);
+	if (vma) {
+		SeTextOut("VMA Start -> %x \r\n", vma->start);
+		uint64_t offset = (frame->rip - vma->start);
+		uint64_t realAddress = 0x600000 + offset;
+		SeTextOut("origin address -> %x  %x\r\n", frame->rip, realAddress);
+	}
 	for (;;);
 }
 

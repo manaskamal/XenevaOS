@@ -906,6 +906,11 @@ _KeGetStoragePartitionInfo:
 	syscall
 	ret
 
+global _get_rsp
+_get_rsp:
+    mov rax, rsp
+	ret
+
 
 
 

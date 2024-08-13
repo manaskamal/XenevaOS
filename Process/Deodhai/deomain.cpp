@@ -245,8 +245,6 @@ void DeodhaiBroadcastMessage(PostEvent *e, Window* skippablewin){
 			continue;
 		if (win->flags & WINDOW_FLAG_BROADCAST_LISTENER){
 			e->to_id = win->ownerId;
-			_KePrint("Broadcasting msg to -> %d %d\r\n", win->ownerId,
-				e->type);
 			_KeFileIoControl(postbox_fd, POSTBOX_PUT_EVENT, e);
 		}
 	}
@@ -1587,7 +1585,6 @@ int main(int argc, char* arv[]) {
 
 			Window* win = DeodhaiCreateWindow(x, y, w, h, flags, event.from_id, event.charValue3);
 
-			_KePrint("Window Creation message received \r\n");
 			if ((win->flags & WINDOW_FLAG_POPUP)) {
 				for (Window* parentWin = rootWin; parentWin != NULL; parentWin = parentWin->next) {
 					if (parentWin->handle == parent_handle) {
@@ -1612,7 +1609,6 @@ int main(int argc, char* arv[]) {
 			
 		//	_KeProcessSleep(180);
 			if (!(win->flags & WINDOW_FLAG_MESSAGEBOX || win->flags & WINDOW_FLAG_POPUP)){
-				_KePrint("Broadcasting message \n");
 				/* broadcast it to all broadcast listener windows, about this news*/
 				memset(&e, 0, sizeof(PostEvent));
 				e.type = DEODHAI_BROADCAST_WINCREATED;
@@ -1634,7 +1630,6 @@ int main(int argc, char* arv[]) {
 
 		/* broadcast icon message */
 		if (event.type == DEODHAI_MESSAGE_BROADCAST_ICON) {
-			_KePrint("Deodhai broadcast icon %s\r\n", event.charValue3);
 			Window *skippable = NULL;
 			for (Window* win = rootWin; win != NULL; win = win->next){
 				if (win->ownerId == event.from_id){
@@ -1646,7 +1641,6 @@ int main(int argc, char* arv[]) {
 			for (Window* win = alwaysOnTop; win != NULL; win = win->next) {
 				if (win->ownerId == event.from_id){
 					skippable = win;
-					_KePrint("Broadcast icon to win -> %d \r\n", skippable->ownerId);
 					break;
 				}
 			}

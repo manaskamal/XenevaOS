@@ -72,12 +72,16 @@ static mp3_info_t info;
 * RegisterSound -- create a new instance of sound
 */
 void RegisterSound() {
+
 	/* open the sound device-file, it is in /dev directory */
 	snd = _KeOpenFile("/dev/sound", FILE_OPEN_WRITE);
 
+	char test[2];
+	_KePrint("TEST -> %x \r\n", &test);
 	/* allocate an ioctl structure where required information
 	* will be putted */
 	XEFileIOControl ioctl;
+	_KePrint("IOCTL -> %x \r\n", &ioctl);
 	memset(&ioctl, 0, sizeof(XEFileIOControl));
 
 	/* uint_1 holds the millisecond to sleep after
@@ -357,14 +361,14 @@ int main(int argc, char* argv[]){
 	ChMenuButton *edit = ChCreateMenubutton(mainMenubar, "Help");
 	ChMenubarAddButton(mainMenubar, edit);
 
-	ChPopupMenu* pm = ChCreatePopupMenu(mainWin);
+	ChPopupMenu* pm = ChCreatePopupMenu(mainWin,NULL);
 	ChMenuItem* browse = ChCreateMenuItem("Select Song...", pm);
 	browse->wid.ChActionHandler = BrowseMenuActionHandler;
 	ChMenuItem* item = ChCreateMenuItem("Exit", pm);
 	item->wid.ChActionHandler = ExitItemClicked;
 	ChMenuButtonAddMenu(file, pm);
 
-	ChPopupMenu* help = ChCreatePopupMenu(mainWin);
+	ChPopupMenu* help = ChCreatePopupMenu(mainWin, NULL);
 	ChMenuItem* about = ChCreateMenuItem("About", help);
 	about->wid.ChActionHandler = AboutClicked;
 	ChMenuButtonAddMenu(edit, help);

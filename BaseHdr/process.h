@@ -234,6 +234,6 @@ extern AuMutex* AuProcessGetMutex();
 *  @param name -- name of the thread
 *  @param priority -- (currently unused) thread's priority
 */
-extern int AuCreateUserthread(AuProcess* proc, void(*entry) (void*), char *name);
+extern int AuCreateUserthread(AuProcess* proc, void(*entry) (), char *name);
 
 #endif

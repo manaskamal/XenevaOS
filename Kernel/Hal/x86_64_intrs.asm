@@ -129,7 +129,7 @@ x64_interrupt_handler_%2:
     mov rcx, %2
     mov rdx, rbp
 
-	mov r8, cr3
+	;mov r8, cr3
 
     sub rsp, 32
     call interrupt_dispatcher

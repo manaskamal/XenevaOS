@@ -101,6 +101,7 @@ void UnmapSharedMem(uint16_t key) {
 }
 
 
+
 /*
  * GetProcessHeapMem -- get a memory from 
  * process heap
@@ -134,7 +135,7 @@ uint64_t GetProcessHeapMem(size_t sz) {
 			AuPmmngrFree(phys);
 		}
 	}
-	//SeTextOut("GetProcessHeapMem: %x %d bytes Mapped \r\n", start_addr, sz);
+	
 	proc->proc_mem_heap += sz;
 	proc->proc_heapmem_len += sz;
 	return start_addr;

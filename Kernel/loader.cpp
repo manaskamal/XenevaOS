@@ -262,8 +262,9 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc,char** argv) {
 	entry->argvaddr = argvaddr;	
 	entry->num_args = num_args;
 	entry->argvs = argv;
-	AuThread *thr = AuCreateKthread(AuProcessEntUser, P2V((uint64_t)AuPmmngrAlloc() + 4096), V2P((uint64_t)cr3), proc->name);
-	thr->frame.rsp -= 32; // just decrease the stack by 32 for arguments passing
+	AuThread *thr = AuCreateKthread(AuProcessEntUser,CreateKernelStack(proc,cr3) /* P2V((uint64_t)AuPmmngrAlloc() + 4096)*/,
+		V2P((uint64_t)cr3), proc->name);
+	thr->frame.rsp -= 32; // just decrease the stack by 40 for arguments passing
 	thr->frame.kern_esp = thr->frame.rsp;
 	thr->uentry = entry;
 	thr->priviledge |= THREAD_LEVEL_USER | THREAD_LEVEL_MAIN_THREAD | ~THREAD_LEVEL_SUBTHREAD;

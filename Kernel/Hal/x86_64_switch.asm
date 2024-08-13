@@ -120,7 +120,9 @@ syscall_entry:
 	 mov rdx, rsp         ;we save the user stack
 	 mov r9, [gs:1]             ;[rel current_thread]
 	 ;mov [r9 + 0xD0], rdx
-	 mov rsp, [r9 + 0xC8]
+	 mov rsp, [r9 + 0xC8] 
+
+	 sub rsp, 40
 	 mov r10, rdx ;[rel current_thread]   ;store the user stack in r10 because rdx will be modified
 	 ;mov rsp, qword[fs:0x20]    ;load kernel stack
 	 ;swapgs
@@ -130,14 +132,15 @@ syscall_entry:
 	 push rdx
 	 push r11
 	 push rbp
+
 	 mov  rbp, rsp
-    
+
 	 ;align the stack
 	 and sp, 0xFFF0
 	 ;kernel
 	 ;sti
 
-	 sub rsp, 40
+	 
 	 mov rcx, r12
 	 
 	 mov [r9 + 0xE0], r13
@@ -152,7 +155,7 @@ syscall_entry:
 
 	 call  x64_syscall_handler
 
-	 add rsp, 40
+	 ;add rsp, 40
 	 ;return 
 	 ;cli
 
@@ -164,7 +167,7 @@ syscall_entry:
 	 ;swapgs
 
 	 ;user stack
-	 ;mov r10, [rel current_thread]
+	 ;mov r10, [rel current_thread] 
 	 mov rsp, r10 ;[r10 + 0xD0]
 	 o64 sysret
 

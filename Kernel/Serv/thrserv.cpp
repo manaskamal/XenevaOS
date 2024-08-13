@@ -223,7 +223,7 @@ size_t GetSystemTimerTick() {
  * @return idx -- the thread index within 
  * the process
  */
-int CreateUserThread(void(*entry) (void*), char *name){
+int CreateUserThread(void(*entry) (), char *name){
 	x64_cli();
 	AuThread* thr = AuGetCurrentThread();
 	if (!thr)

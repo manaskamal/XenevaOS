@@ -304,6 +304,6 @@ int main(int argc, char* argv[]) {
 			DeodhaiAudioHandleMessage(msg);
 			memset(buff, 0, sizeof(DeodhaiAudioMessage));
 		}
-		//_KeProcessSleep(500);
+		_KeProcessSleep(80);
 	}
 }
