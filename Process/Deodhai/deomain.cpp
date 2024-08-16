@@ -864,10 +864,14 @@ void ComposeFrame(ChCanvas *canvas) {
 					AddDirtyClip(k_x, k_y, k_w, k_h);
 					clipCount = 0;
 				}
-				if (!(win->flags & WINDOW_FLAG_ANIMATED))
+				if (!(win->flags & WINDOW_FLAG_ANIMATED)) {
 					if (info->updateEntireWindow)
 						info->updateEntireWindow = 0;
+					if (!info->windowReady)
+						info->windowReady = 1;
+				}
 			}
+
 		}
 		
 	}
@@ -1121,6 +1125,9 @@ void ComposeFrame(ChCanvas *canvas) {
 			
 			if (win->animFrameCount == 0)
 				info->updateEntireWindow = 0;
+
+			if (!info->windowReady)
+				info->windowReady = 1;
 		}
 	}
 

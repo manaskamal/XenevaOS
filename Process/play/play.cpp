@@ -40,6 +40,7 @@
 #include <sys\socket.h>
 #include <audio/audio.h>
 
+
 /*
 * main -- terminal emulator
 */
@@ -69,7 +70,7 @@ int main(int argc, char* arv[]){
 		return -1;
 	}
 	int thrID = _KeGetThreadID();
-
+	
 	int postbox = _KeOpenFile("/dev/postbox", FILE_OPEN_READ_ONLY);
 	_KeFileIoControl(postbox, POSTBOX_CREATE, NULL);
 	

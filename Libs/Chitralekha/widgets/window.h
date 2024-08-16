@@ -83,6 +83,7 @@
 		bool alpha;
 		bool hide;
 		double alphaValue;
+		bool windowReady;
 	}ChSharedWinInfo;
 #pragma pack(pop)
 

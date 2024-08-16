@@ -178,6 +178,7 @@ AuVPage * AuVmmngrGetPage(uint64_t virt_addr, uint8_t _flags, uint8_t mode) {
 			flush_tlb((void*)virt_addr);
 			x64_mfence();
 			AuVPage *vpage = (AuVPage*)&pml1[i1];
+			SeTextOut("Creating vpage \r\n");
 			return vpage;
 		}
 		if (mode & VIRT_GETPAGE_ONLY_RET)

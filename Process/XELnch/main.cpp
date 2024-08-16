@@ -145,8 +145,8 @@ int main(int argc, char* arv[]){
 
 	win->color = BLACK;
 	win->ChWinPaint = XELauncherPaint;
-	ChWindowPaint(win);
 	win->info->hide = true;
+	ChWindowPaint(win);
 
 
 	PostEvent e;

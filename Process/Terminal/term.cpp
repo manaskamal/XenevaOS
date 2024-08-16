@@ -159,10 +159,10 @@ void TerminalDrawCursor() {
 void TerminalScroll() {
 
 	/* scroll the screen one line up */
-	for (int c_y = 1; c_y < ws_row; c_y++) {
+	for (int c_y = 0; c_y < ws_row-1; c_y++) {
 		for (int c_x = 0; c_x < ws_col; c_x++) {
-			TermCell* destCell = (TermCell*)&term_buffer[(c_y - 1) * ws_col + c_x];
-			TermCell* srcCell = (TermCell*)&term_buffer[c_y * ws_col + c_x];
+			TermCell* destCell = (TermCell*)&term_buffer[c_y * ws_col + c_x];
+			TermCell* srcCell = (TermCell*)&term_buffer[(c_y+ 1) * ws_col + c_x];
 			memcpy(destCell, srcCell, sizeof(TermCell));
 		}
 	}
@@ -204,7 +204,7 @@ void TerminalPrintChar(char c, uint32_t fgcolor, uint32_t bgcolor) {
 		last_cursor_x = cursor_x;
 		cursor_y++;
 		cursor_x = 0;
-		if (cursor_y >= ws_row - 1){
+		if (cursor_y >= ws_row -1){
 			TerminalScroll();
 			cursor_y--;
 		}
@@ -231,7 +231,7 @@ void TerminalPrintChar(char c, uint32_t fgcolor, uint32_t bgcolor) {
 			cursor_y++;
 		}
 
-		if (cursor_y >= ws_row - 1) {
+		if (cursor_y >= ws_row-1) {
 			TerminalScroll();
 			cursor_y--;
 		}
@@ -329,13 +329,18 @@ void ProcessControlSequence(char ch) {
 
 	/* emulates cursor attributes */
 	if (ch == CSI_CURSOR_UP) {
+		int index = 0;
 		for (int i = 0; i < 256; i++) {
 			if (escBuf[i] == CSI_CURSOR_UP) {
 				escBuf[i] = 0;
+				index = i;
 				break;
 			}
 		}
+		
 		int count = atoi(escBuf);
+		if (count == 0)
+			count = 1;
 		cursor_y -= count;
 		if (cursor_y <= 0)
 			cursor_y = 0;
@@ -352,6 +357,8 @@ void ProcessControlSequence(char ch) {
 			}
 		}
 		int count = atoi(escBuf);
+		if (count == 0)
+			count = 1;
 		cursor_x -= count;
 		if (cursor_x <= 0)
 			cursor_x = 0;
@@ -368,6 +375,8 @@ void ProcessControlSequence(char ch) {
 			}
 		}
 		int count = atoi(escBuf);
+		if (count == 0)
+			count = 1;
 		cursor_x += count;
 		if (cursor_x == ws_col - 1){
 			cursor_x = 0;
@@ -386,6 +395,8 @@ void ProcessControlSequence(char ch) {
 			}
 		}
 		int count = atoi(escBuf);
+		if (count == 0)
+			count = 1;
 		cursor_y += count;
 		if (cursor_y >= ws_row)
 			cursor_y--;
@@ -409,11 +420,59 @@ void ProcessControlSequence(char ch) {
 			TerminalClearScreen();
 			break;
 		case 1:
-			//erase upward, not implemented
+			//erase upward
+			for (int y = 0; y < cursor_y; y++) {
+				for (int x = 0; x < ws_col; x++) {
+					TerminalSetCellData(x, y, 0, BLACK, WHITE);
+				}
+			}
 			break;
 		}
 		if (value == 0){
-			/* erase downward, not implemented */
+			/* erase downward */
+			for (int y = cursor_y; y < ws_row-1; y++) {
+				for (int x = 0; x < ws_col; x++) {
+					TerminalSetCellData(x, y, 0, BLACK, WHITE);
+				}
+			}
+		}
+		_escape_seq = false;
+		_seq_csi = false;
+		memset(escBuf, 0, 256);
+		return;
+	}
+
+	if (ch == CSI_ERASE_TEXT_LINE) {
+		for (int i = 0; i < 256; i++) {
+			if (escBuf[i] == CSI_ERASE_TEXT_LINE) {
+				escBuf[i] = 0;
+				break;
+			}
+		}
+		int n = atoi(escBuf);
+		switch (n) {
+		case 2:
+			/* clear the current line*/
+			for (int i =0; i < ws_col; i++) {
+				TermCell* destCell = (TermCell*)&term_buffer[cursor_y * ws_col + i];
+				memset(destCell, 0, sizeof(TermCell));
+			}
+			break;
+		case 1:
+			/* clear the line from start to current cursor position*/
+			for (int i = 0; i < cursor_x; i++) {
+				TermCell* destCell = (TermCell*)&term_buffer[cursor_y * ws_col + i];
+				memset(destCell, 0, sizeof(TermCell));
+			}
+			break;
+		case 0:
+		default:
+			/* clear the line from current cursor position */
+			for (int i = cursor_x; i < ws_col; i++) {
+				TermCell* destCell = (TermCell*)&term_buffer[cursor_y * ws_col + i];
+				memset(destCell, 0, sizeof(TermCell));
+			}
+			break;
 		}
 		_escape_seq = false;
 		_seq_csi = false;
@@ -530,15 +589,8 @@ void TerminalThread() {
 		 * cells 
 		 */
 		if ((bytes_read > 0) || _update_terminal_) {
-			if (_first_time) {
-				ChWindowPaint(win);
-				_KeProcessSleep(500);
-				_first_time = false;
-				//for (;;);
-			}
-			else {
-				//TerminalDrawAllCells();
-			}
+				TerminalDrawAllCells();
+			
 			//TerminalDrawCursor();
 			bytes_read = 0;
 			_update_terminal_ = false;
@@ -597,7 +649,6 @@ int main(int argc, char* arv[]){
 
 	ChWindowPaint(win);
 
-
 	int term_id = _KeGetProcessID();
 	/* try loading the shell process */
 	shell_id = _KeCreateProcess(0, "xesh");
@@ -612,7 +663,6 @@ int main(int argc, char* arv[]){
 
 	_KeProcessLoadExec(shell_id, "/xesh.exe", 0, 0);
 
-	_first_time = true;
 
 	int thread_idx = _KeCreateThread(TerminalThread, "asyncthr");
 	PostEvent e;

@@ -112,6 +112,7 @@ Window* CreateWindow(int x, int y, int w, int h, uint16_t flags, uint16_t ownerI
 	shwin->rect_count = 0;
 	shwin->alpha = false;
 	shwin->dirty = false;
+	shwin->windowReady = false;
 	win->handle = DeodhaiAllocateNewHandle();
 
 #ifdef SHADOW_ENABLED	

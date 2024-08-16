@@ -68,6 +68,7 @@ typedef struct _win_info_ {
 	bool alpha;
 	bool hide;
 	double alphaValue;
+	bool windowReady;
 }WinSharedInfo;
 #pragma pack(pop)
 

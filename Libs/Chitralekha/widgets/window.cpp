@@ -282,6 +282,11 @@ XE_EXTERN XE_EXPORT void ChWindowPaint(ChWindow* win) {
 	if (win->ChWinPaint){
 		win->ChWinPaint(win);
 	}
+
+	/* Wait untill the window is ready on server side */
+	while (!win->info->windowReady)
+		_KeProcessSleep(100);
+
 }
 
 /*

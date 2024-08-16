@@ -36,7 +36,7 @@ const char* kernelName = "Aurora";
  * Kernel version major.minor.patch
  */
 int _kernel_major_version = 1;
-int _kernel_minor_version = 0;
+int _kernel_minor_version = 1;
 int _kernel_patch_version = 0;
 
 /*

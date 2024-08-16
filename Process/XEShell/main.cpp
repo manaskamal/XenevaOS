@@ -42,7 +42,7 @@ bool _draw_shell_curdir;
 bool _spawnable_process;
 int job;
 bool _sig_handled = false;
-
+char* currentDirectory;
 
 void XEShellSigInterrupt(int signo) {
 	/* signal is little buggy so, so it won't
@@ -66,7 +66,6 @@ void XEShellSigInterrupt(int signo) {
  */
 void XEShellWriteCurrentDir() {
 	if (_draw_shell_curdir){
-		printf("\n");
 		printf("\033[32m\033[40mXEShell /$:\033[37m\033[40m");
 		_draw_shell_curdir = false;
 	}
@@ -122,7 +121,7 @@ void XEShellSpawn(char* string) {
 		}
 
 		memset(filename, 0, 32);
-		strcpy(filename, "/");
+		strcpy(filename, currentDirectory);
 		strcpy(filename + 1, execname);
 		strcpy(filename + 1 +  strlen(execname), ".exe");
 	
@@ -148,6 +147,7 @@ void XEShellSpawn(char* string) {
 			argv++;
 			argcount--;
 		}
+		printf("\n");
 		job = 0;
 	}
 }
@@ -168,27 +168,39 @@ void XEShellReadLine() {
 			_process_needed = true;
 			return;
 		}
-		printf("%c", c);
+		
 		if (c == KEY_BACKSPACE){
 			if (index > 0){
+				printf("%c", c);
 				cmdBuf[index--] = 0;
 			}
-			if (index <= 0)
-				_draw_shell_curdir = true;
+			if (index <= 0) {
+				//_draw_shell_curdir = true;
+				return;
+			}
 			return;
 		}
 		if (c == KEY_SPACE){
+			printf("%c", c);
 			cmdBuf[index] = ' ';
 			index++;
 			return;
 		}
+		printf("%c", c);
 		cmdBuf[index++] = c;
 	}
 	cmdBuf[index] = '\0';
 }
 
+void XEShellCD(char* path) {
+	if (currentDirectory)
+		free(currentDirectory);
+	currentDirectory = (char*)malloc(strlen(path));
+	strcpy(currentDirectory, path);
+}
+
 void XEShellLS() {
-	int dirfd = _KeOpenDir("/");
+	int dirfd = _KeOpenDir(currentDirectory);
 	XEDirectoryEntry* dirent = (XEDirectoryEntry*)malloc(sizeof(XEDirectoryEntry));
 	memset(dirent, 0, sizeof(XEDirectoryEntry));
 	int addr = (int)dirent->filename;
@@ -208,6 +220,16 @@ void XEShellLS() {
 	}
 }
 
+void XEShellPrintHelp() {
+	printf("\nWelcome to Xeneva shell v1.1 \n");
+	printf("cd -- Change current working directory \n");
+	printf("ls -- List file and folders of current working directory \n");
+	printf("clrscr -- Clear entire terminal screen \n");
+	printf("help -- Prints all command with their descriptions\n");
+	printf("systeminfo -- Prints about message \n");
+	printf("time -- Displays the current time \n");
+	printf("\n");
+}
 /*
  *XEShellProcessLine -- processes a line by looking
  * the cmdBuf 
@@ -215,19 +237,15 @@ void XEShellLS() {
 void XEShellProcessLine() {
 	if (_process_needed) {
 		if (strcmp(cmdBuf, "help") == 0)  {
-			printf("\nWelcome to Xeneva shell v1.0 \n");
-			printf("clrscr -- Clear entire terminal screen \n");
-			printf("help -- prints all command with their descriptions\n");
-			printf("systeminfo -- prints about message \n");
-			printf("time -- displays the current time \n");
+			XEShellPrintHelp();
 			_spawnable_process = false;
 		}
 		
 		if (strcmp(cmdBuf, "systeminfo") == 0) {
 			printf("\nXeneva Shell v1.0\n");
-			printf("Copyright (C) Manas Kamal Choudhury 2023\n");
-			printf("Operating System : Xeneva v1.0 -Genuine copy\n");
-			printf("Kernel Version: v1.0 \n");
+			printf("Copyright (C) Manas Kamal Choudhury 2023-2024\n");
+			printf("Operating System : Xeneva v1.1 -Genuine copy\n");
+			printf("Kernel Version: v1.1 \n");
 			printf("Platform: x86_64\n");
 			printf("Terminal: Xeneva Terminal v1.0\n");
 			printf("Window Manager: Deodhai Compositor\n");
@@ -261,6 +279,15 @@ void XEShellProcessLine() {
 			XEShellLS();
 			_spawnable_process = false;
 		}
+
+		if (strstr(cmdBuf, "cd")) {
+			char* path = cmdBuf + 2;
+			while (strstr(path, " "))
+				path++;
+			XEShellCD(path);
+			printf("\n");
+			_spawnable_process = false;
+		}
 		
 		
 		if (_spawnable_process)
@@ -278,16 +305,16 @@ void XEShellProcessLine() {
 * main -- terminal emulator
 */
 int main(int argc, char* arv[]){
-	printf("Xeneva Shell v1.0 \n");
+	printf("Xeneva Shell v1.1 \n");
 	
-	printf("Copyright (C) Manas Kamal Choudhury 2023\n");
-	printf("\033[44m^[30mHello World\n");
+	printf("Copyright (C) Manas Kamal Choudhury \n");
 	printf("\033[42m^[37mXeneva is an operating system\n");
 	printf("^[42m^[37mMade in North-East India,Assam\n");
-	printf("SignalHandler address -> %x \n", XEShellSigInterrupt);	
 	_KeSetSignal(SIGINT, XEShellSigInterrupt);
 	cmdBuf = (char*)malloc(1024);
 	memset(cmdBuf, 0, 1024);
+	currentDirectory = (char*)malloc(strlen("/"));
+	strcpy(currentDirectory, "/");
 	_process_needed = true;
 	_spawnable_process = true;
 	_sig_handled = false;

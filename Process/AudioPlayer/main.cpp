@@ -77,11 +77,10 @@ void RegisterSound() {
 	snd = _KeOpenFile("/dev/sound", FILE_OPEN_WRITE);
 
 	char test[2];
-	_KePrint("TEST -> %x \r\n", &test);
 	/* allocate an ioctl structure where required information
 	* will be putted */
 	XEFileIOControl ioctl;
-	_KePrint("IOCTL -> %x \r\n", &ioctl);
+	
 	memset(&ioctl, 0, sizeof(XEFileIOControl));
 
 	/* uint_1 holds the millisecond to sleep after
@@ -245,6 +244,7 @@ void BrowseMenuActionHandler(ChWidget* wid, ChWindow* win) {
 	else{
 		_KePrint("Updating the browsing \r\n");
 		UpdateBrowserUI();
+		_KeProcessSleep(100);
 	}
 }
 
@@ -254,7 +254,7 @@ void SelectButtonActionHandler(ChWidget* wid, ChWindow* win) {
 	if (li) {
 		selectedFile = li->itemText;
 	}
-
+	_KeProcessSleep(100);
 	UpdateHomeUI();
 	_KeProcessSleep(100);
 }
