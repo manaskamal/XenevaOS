@@ -39,11 +39,13 @@
 #include <aucon.h>
 #include <string.h>
 #include <time.h>
+#include <Hal/serial.h>
 
 TSS* _tss;
 bool _fxsave = false;
 uint64_t cpuMhz;
 uint64_t tscBasisTiming;
+uint64_t tscBasisTimingKhz;
 uint64_t bootTime;
 
 /*
@@ -434,7 +436,7 @@ void x86_64_measure_cpu_speed() {
 
 	al |= 0x01;
 	x64_outportb(0x61, al);
-	long stsc = cpu_read_tsc();
+	unsigned long long stsc = cpu_read_tsc();
 	
 	uint8_t count_lo = x64_inportb(0x61);
 	count_lo &= 0x20;
@@ -445,7 +447,7 @@ void x86_64_measure_cpu_speed() {
 
 	uint8_t count_hi = x64_inportb(0x61);
 	count_hi &= 0x20;
-	long etsc = cpu_read_tsc();
+	unsigned long long etsc = cpu_read_tsc();
 	uint64_t cpu_hz = (etsc - stsc) / 10000;
 
 	if (cpu_hz == 0){
@@ -459,6 +461,7 @@ void x86_64_measure_cpu_speed() {
 	cpu_hz = (etsc - stsc) / 10000;
 	cpuMhz = cpu_hz;
 	tscBasisTiming = stsc / cpuMhz;
+	tscBasisTimingKhz = stsc / (cpuMhz * 1000);
 }
 
 uint64_t x86_64_cpu_get_mhz() {
@@ -472,4 +475,26 @@ int x86_64_gettimeofday(timeval *t){
 	t->tv_sec = bootTime + timer_ticks;
 	t->tv_usec = timer_subticks;
 	return 0;
+}
+
+
+/* 
+ *  x86_64_calculate_ticks -- calculate the number of ticks from given milliseconds
+ * @param milliseconds -- amount of milliseconds
+ * @param out_milliseconds -- where to store the number of ticks
+ */
+void x86_64_calculate_ticks(uint64_t milliseconds,uint64_t subsec, uint64_t* out_milliseconds, uint64_t* out_subsec) {
+	uint64_t tsc_time = cpu_read_tsc();
+	uint64_t timer_ticks = 0;
+	uint64_t timer_subticks = 0;
+	updateTicks(tsc_time / cpuMhz, &timer_ticks, &timer_subticks);
+	//SeTextOut("timer_tick -> %d %d\r\n", timer_ticks, (timer_ticks + milliseconds));
+	if (subsec + timer_subticks >= SUBSECONDS_PER_SECOND) {
+		*out_milliseconds = timer_ticks + milliseconds + (subsec + timer_subticks) / SUBSECONDS_PER_SECOND;
+		*out_subsec = (subsec + timer_subticks) % SUBSECONDS_PER_SECOND;
+	}
+	else {
+		*out_milliseconds = timer_ticks + milliseconds;
+		*out_subsec = timer_subticks + subsec;
+	}
 }

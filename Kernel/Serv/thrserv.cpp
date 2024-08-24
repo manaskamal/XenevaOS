@@ -30,7 +30,9 @@
 #include <stdint.h>
 #include <Hal/x86_64_sched.h>
 #include <Hal/x86_64_signal.h>
+#include <Hal/apic.h>
 #include <Hal/x86_64_lowlevel.h>
+#include <Hal/x86_64_cpu.h>
 #include <process.h>
 #include <Hal/serial.h>
 #include <loader.h>
@@ -179,13 +181,13 @@ int ProcessSleep(uint64_t ms) {
 	x64_cli();
 	if (ms <= 0)
 		return -1;
-	uint64_t sleep_time = ms;
+	
 	AuThread* current_thr = AuGetCurrentThread();
 	if (!current_thr)
 		return 0;
 	if (current_thr->pendingSigCount > 0)
 		return 0;
-	AuSleepThread(current_thr, sleep_time);
+	AuSleepThread(current_thr,ms);
 	AuForceScheduler();
 }
 

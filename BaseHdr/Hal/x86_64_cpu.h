@@ -201,4 +201,13 @@ extern uint64_t x86_64_cpu_get_mhz();
 
 extern int x86_64_gettimeofday(timeval *t);
 
+extern void updateTicks(uint64_t ticks, uint64_t* timerTick, uint64_t* timerSubticks);
+
+/*
+ *  x86_64_calculate_ticks -- calculate the number of ticks from given milliseconds
+ * @param milliseconds -- amount of milliseconds
+ * @param out_milliseconds -- where to store the number of ticks
+ */
+void x86_64_calculate_ticks(uint64_t milliseconds, uint64_t subsec, uint64_t* out_milliseconds, uint64_t* out_subsec);
+
 #endif

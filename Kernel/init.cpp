@@ -38,6 +38,7 @@
 #include <Hal\x86_64_gdt.h>
 #include <Hal\x86_64_lowlevel.h>
 #include <Hal\x86_64_cpu.h>
+#include <Hal/apic.h>
 #include <Sync\spinlock.h>
 #include <Hal\serial.h>
 #include <Hal\pcpu.h>
@@ -131,7 +132,6 @@ void _AuMain(KERNEL_BOOT_INFO *info) {
 
 	/* make the kernel standalone*/
 	AuVmmngrBootFree();
-	SeTextOut("Boot freeing kernel \r\n");
 	/* Process initialisation begins here */
 	AuStartRootProc();
 	AuSchedulerStart();

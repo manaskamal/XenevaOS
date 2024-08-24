@@ -163,6 +163,7 @@
     <ClInclude Include="image.h" />
     <ClInclude Include="keycode.h" />
     <ClInclude Include="nanojpg.h" />
+    <ClInclude Include="stb_truetype.h" />
     <ClInclude Include="ttf.h" />
     <ClInclude Include="widgets\base.h" />
     <ClInclude Include="widgets\button.h" />

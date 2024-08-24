@@ -101,6 +101,7 @@ XE_EXTERN{
 	/*
 	 * _KeProcessSleep -- put the current process main thread
 	 *  to sleep mode
+	 *  1s = 10000 ms
 	 * @param ms -- millisecond to sleep
 	 */
 	XE_LIB int _KeProcessSleep(uint64_t ms);

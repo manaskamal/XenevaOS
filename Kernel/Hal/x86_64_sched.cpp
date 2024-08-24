@@ -378,11 +378,15 @@ void AuSchedulerInitAp() {
 
 
 void AuHandleSleepThreads() {
+	uint64_t tsc_ticks = cpu_read_tsc();
+	uint64_t timer_ticks = 0;
+	uint64_t timer_subtick = 0;
+	updateTicks(tsc_ticks / x86_64_cpu_get_mhz(), &timer_ticks, &timer_subtick);
 	for (AuThread* sleep_thr = sleep_thr_head; sleep_thr != NULL; sleep_thr = sleep_thr->next) {
-		if (sleep_thr->quanta > 0)
-			sleep_thr->quanta--;
-		if (sleep_thr->quanta == 0) {
+		if ((sleep_thr->quanta <= timer_ticks) || (sleep_thr->quanta == timer_ticks && sleep_thr->endTick
+			<= timer_subtick)){
 			sleep_thr->state = THREAD_STATE_READY;
+			sleep_thr->quanta = 0;
 			AuThreadDeleteSleep(sleep_thr);
 			AuThreadInsert(sleep_thr);
 		}
@@ -431,6 +435,7 @@ void x8664SchedulerISR(size_t v, void* param) {
 	
 	TSS *ktss = AuPerCPUGetKernelTSS();
 	AuThread* current_thread = AuPerCPUGetCurrentThread();
+	
 	if (save_context(current_thread, ktss) == 0) {
 		current_thread->frame.cr3 = x64_read_cr3();
 		current_thread->frame.kern_esp = x64_get_kstack(ktss);
@@ -453,7 +458,6 @@ void x8664SchedulerISR(size_t v, void* param) {
 			SeTextOut("Scheduler tick max reached \r\n");
 			for (;;);
 		}
-
 		AuHandleSleepThreads();
 		AuNextThread();
 		current_thread = AuPerCPUGetCurrentThread();
@@ -514,10 +518,15 @@ AU_EXTERN AU_EXPORT void AuBlockThread(AuThread *thread) {
 * AuSleepThread -- sleeps a thread 
 */
 AU_EXTERN AU_EXPORT void AuSleepThread(AuThread *thread, uint64_t ms) {
+	uint64_t microseconds = ms * 1000;
+	uint64_t sleep_time = 0;
+	uint64_t sleep_subsec = 0;
+	x86_64_calculate_ticks((microseconds / 10000) / 1000, (microseconds / 10000) % 1000, &sleep_time, &sleep_subsec); 
 	AuThreadDelete(thread);
 	AuThreadInsertSleep(thread);
 	thread->state = THREAD_STATE_SLEEP;
-	thread->quanta = ms;
+	thread->quanta = sleep_time;
+	thread->endTick = sleep_subsec;
 }
 
 

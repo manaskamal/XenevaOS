@@ -51,6 +51,7 @@
     <ClInclude Include="audio\audio.h">
       <Filter>audio</Filter>
     </ClInclude>
+    <ClInclude Include="stb_truetype.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="chitralekha.cpp" />

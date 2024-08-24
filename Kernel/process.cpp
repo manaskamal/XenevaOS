@@ -181,10 +181,12 @@ uint64_t* CreateUserStack(AuProcess *proc, uint64_t* cr3) {
 	uint64_t location = USER_STACK;
 	location += proc->_user_stack_index_;
 
-	for (int i = 0; i < (PROCESS_USER_STACK_SZ / 4096); i++) {
+	for (int i = 0; i < (PROCESS_USER_STACK_SZ / PAGE_SIZE); ++i) {
 		uint64_t blk = (uint64_t)AuPmmngrAlloc();
-		if (!AuMapPageEx(cr3, blk, location + static_cast<uint64_t>(i) * PAGE_SIZE, X86_64_PAGING_USER))
+		if (!AuMapPageEx(cr3, blk, location + static_cast<uint64_t>(i) * PAGE_SIZE, X86_64_PAGING_USER)) {
 			SeTextOut("CreateUserStack: already mapped %x \r\n", (location + i * PAGE_SIZE));
+		}
+
 	}
 
 	proc->_user_stack_index_ += PROCESS_USER_STACK_SZ;
@@ -202,13 +204,10 @@ uint64_t CreateKernelStack(AuProcess* proc, uint64_t *cr3) {
 	uint64_t location = KERNEL_STACK_LOCATION;
 	location += proc->_kstack_index_;
 	
-	uint64_t last_sz = 0;
-	for (int i = 0; i < KERNEL_STACK_SIZE / PAGE_SIZE; i++) {
+	for (int i = 0; i < (KERNEL_STACK_SIZE / PAGE_SIZE); ++i) {
 		void* p = AuPmmngrAlloc();
 		if (!AuMapPageEx(cr3, (uint64_t)p, location + static_cast<uint64_t>(i) * PAGE_SIZE, X86_64_PAGING_USER))
 			SeTextOut("CreateKernelStack: Already mapped %x \r\n", (location + i * PAGE_SIZE));
-
-		last_sz = i * PAGE_SIZE;
 	}
 	proc->_kstack_index_ += KERNEL_STACK_SIZE;
 	return (location + KERNEL_STACK_SIZE);
@@ -384,7 +383,7 @@ void AuProcessWaitForTermination(AuProcess *proc, int pid) {
 
 
 			if (!killable){
-				AuSleepThread(proc->main_thread, 10000);
+				AuSleepThread(proc->main_thread, 10);
 				proc->state = PROCESS_STATE_SUSPENDED;
 				x64_force_sched();
 			}

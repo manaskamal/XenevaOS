@@ -252,7 +252,7 @@ void NamdaphaHandleMessage(PostEvent *e) {
 										}
 										NamdaphaPaint(win);
 										
-										_KeProcessSleep(120);
+										//_KeProcessSleep(120);
 									}
 									memset(e, 0, sizeof(PostEvent));
 									break;
@@ -278,7 +278,7 @@ void NamdaphaHandleMessage(PostEvent *e) {
 									nbutton_y_loc += nbutton->h + NAMDAPHA_BUTTON_YPAD;
 									
 									memset(e, 0, sizeof(PostEvent));
-									_KeProcessSleep(100);
+									_KeProcessSleep(8);
 									break;
 	}
 	case DEODHAI_BROADCAST_FOCUS_CHANGED: {

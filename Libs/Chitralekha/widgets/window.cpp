@@ -285,7 +285,7 @@ XE_EXTERN XE_EXPORT void ChWindowPaint(ChWindow* win) {
 
 	/* Wait untill the window is ready on server side */
 	while (!win->info->windowReady)
-		_KeProcessSleep(100);
+		_KeProcessSleep(10);
 
 }
 
@@ -410,7 +410,7 @@ XE_EXTERN XE_EXPORT void ChWindowHandleMouse(ChWindow* win, int x, int y, int bu
 			if (popup->info->hide == 0) {
 				_KePrint("A popup window is not hidden \r\n");
 				ChWindowHide(popup);
-				_KeProcessSleep(500);
+				_KeProcessSleep(5);
 				_popup_was_active = true;
 			}
 		}

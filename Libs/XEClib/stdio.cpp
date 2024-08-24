@@ -101,7 +101,7 @@ size_t fread(void* ptr, size_t sz, size_t nmemb, FILE* stream) {
 		fd = XENEVA_STDIN;
 	else
 		fd = stream->_file_num;
-	_KePrint("Reading fopen fread %d\r\n", fd);
+	_KePrint("Reading fopen fread %d %d\r\n", fd, (nmemb*sz));
 	size_t ret_bytes = _KeReadFile(fd, ptr, _length);
 	return ret_bytes;
 }

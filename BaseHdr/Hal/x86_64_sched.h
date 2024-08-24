@@ -127,6 +127,7 @@ typedef struct _au_thread_ {
 	uint8_t state;
 	uint16_t id;
 	uint64_t quanta;
+	uint64_t endTick;
 	uint8_t priviledge;
 	AuSigHandler singals[39];
 	SignalQueue* signalQueue;

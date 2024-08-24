@@ -1779,6 +1779,6 @@ int main(int argc, char* arv[]) {
 		}
 
 		//_KePrint("Deodhai sleep -> %d \r\n", (16 - frameTime));
-		_KeProcessSleep(1);
+		_KeProcessSleep((16 - frameTime));
 	}
 }

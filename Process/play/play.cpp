@@ -41,6 +41,14 @@
 #include <audio/audio.h>
 
 
+void drawAnim() {
+	int i = 0;
+	while (1) {
+		printf("\r");
+		printf("Animation :%d", i++);
+		_KeProcessSleep(10000);
+	}
+}
 /*
 * main -- terminal emulator
 */
@@ -70,7 +78,7 @@ int main(int argc, char* arv[]){
 		return -1;
 	}
 	int thrID = _KeGetThreadID();
-	
+
 	int postbox = _KeOpenFile("/dev/postbox", FILE_OPEN_READ_ONLY);
 	_KeFileIoControl(postbox, POSTBOX_CREATE, NULL);
 	

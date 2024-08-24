@@ -163,14 +163,14 @@ int XELdrStartProc(char* filename, XELoaderObject *obj) {
 	intptr_t diff = new_addr - original_base;
 
 	
-	/*if (nt->OptionalHeader.FileAlignment == 512) {
+	if (nt->OptionalHeader.FileAlignment == 512) {
 		while (!stat->eof) {
 			uint64_t* block = (uint64_t*)_KeMemMap(NULL, 4096, 0, 0, -1, 0);
 			int bytes = _KeReadFile(file, block, 4096);
 			ret_bytes += bytes;
 			_KeFileStat(file, stat);
 		}
-	}*/
+	}
 		for (size_t i = 0; i < nt->FileHeader.NumberOfSections; ++i) {
 			size_t sect_ld_addr = _image_load_base_ + secthdr[i].VirtualAddress;
 			size_t sect_sz = secthdr[i].VirtualSize;

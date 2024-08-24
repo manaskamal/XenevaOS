@@ -40,6 +40,7 @@
 
 static bool __x2apic = false;
 static void* _apic = nullptr;
+static uint64_t interrupt_period;
 
 /*
 * ReadAPICRegister -- reads a register of apic
@@ -177,18 +178,21 @@ void AuAPICInitialise(bool bsp) {
 	 * pic
 	 */
 
-	WriteAPICRegister(LAPIC_TIMER_DIV, 0x6);
+	WriteAPICRegister(LAPIC_TIMER_DIV, 0b1010);
 	uint64_t before = cpu_read_tsc();
 	WriteAPICRegister(LAPIC_REGISTER_TMRINITCNT, 1000000); //10000000000UL 
 	while (ReadAPICRegister(LAPIC_REGISTER_TMRCURRCNT));
 	uint64_t after = cpu_read_tsc();
 
-
-	uint64_t ms = (after - before) / 1190;
+	uint64_t ms = (after - before) / x86_64_cpu_get_mhz();
 	uint64_t target = 10000000000UL / ms;
+
+	/* Xeneva uses 128 as divider for base cpu frequency */
+	interrupt_period = (x86_64_cpu_get_mhz() * 1000000) / 128;
+
 	size_t timer_vect = 0x40;
 	setvect(timer_vect, ApicTimerInterrupt);
-	WriteAPICRegister(LAPIC_REGISTER_TMRDIV,0x6);   //bit 0,1 and 3
+	WriteAPICRegister(LAPIC_REGISTER_TMRDIV, 0b1010);   //bit 0,1 and 3
 	size_t timer_reg = (1 << 17) | timer_vect;
 	WriteAPICRegister(LAPIC_REGISTER_LVT_TIMER, timer_reg);
 	IOWait();
@@ -209,4 +213,12 @@ void APICTimerSleep(uint32_t ms) {
 	uint32_t tick = ms + apic_timer_count;
 	while (tick > apic_timer_count)
 		;
+}
+
+/*
+ *AuAPICGetInterruptPeriod -- returns the current interrupt
+ * period timing in microsecond (us)
+ */
+uint64_t AuAPICGetInterruptPeriod() {
+	return interrupt_period;
 }

@@ -118,7 +118,7 @@ void LaunchButtonMouseEvent(LaunchButton* wid, ChWindow* win, int x, int y, int 
  */
 void LauncherButtonDefaultAction(LaunchButton* lbutton, ChWindow *win){
 	ChWindowHide(win);
-	_KeProcessSleep(160);
+	_KeProcessSleep(8);
 	int id = _KeCreateProcess(0, lbutton->title);
 	if (id == -1) {
 		_KePrint("Failed to open app -> %s \r\n", lbutton->title);

@@ -125,18 +125,18 @@ uint64_t GetProcessHeapMem(size_t sz) {
 			return -1;
 		}
 	}
-
+	
 	uint64_t start_addr = (uint64_t)AuGetFreePage(false, (void*)proc->proc_mem_heap);
 
 	for (int i = 0; i < sz / PAGE_SIZE; i++) {
-		void* phys = AuPmmngrAlloc();
-		if (!AuMapPage((size_t)phys, start_addr + static_cast<uint64_t>(i) * PAGE_SIZE, X86_64_PAGING_USER)) {
+		uint64_t phys = (uint64_t)AuPmmngrAlloc();
+		if (!AuMapPage(phys, start_addr + static_cast<uint64_t>(i) * PAGE_SIZE, X86_64_PAGING_USER)) {
 			SeTextOut("Failed to map %x \r\n", (start_addr + static_cast<uint64_t>(i) * PAGE_SIZE));
-			AuPmmngrFree(phys);
+			AuPmmngrFree((void*)phys);
 		}
 	}
 	
-	proc->proc_mem_heap += sz;
+	proc->proc_mem_heap = start_addr;
 	proc->proc_heapmem_len += sz;
 	return start_addr;
 }

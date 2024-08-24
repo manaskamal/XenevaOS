@@ -96,4 +96,10 @@ AU_EXTERN AU_EXPORT void APICTimerSleep(uint32_t ms);
  */
 extern bool X2APICSupported();
 
+/*
+ *AuAPICGetInterruptPeriod -- returns the current interrupt
+ * period timing in microsecond (us)
+ */
+extern uint64_t AuAPICGetInterruptPeriod();
+
 #endif

@@ -324,6 +324,6 @@ int main(int argc, char* arv[]){
 		XEShellWriteCurrentDir();
 		XEShellReadLine();	
 		XEShellProcessLine();
-		_KeProcessSleep(500);
+		_KeProcessSleep(10);
 	}
 }
