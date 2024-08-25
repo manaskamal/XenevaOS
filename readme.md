@@ -1,4 +1,7 @@
-# Xeneva
+# XenevaOS
+
+[![Discord](https://discord.com/invite/4Kj8x7v6h8)]
+ [![YouTube](www.youtube.com/@XEStudio446)]
 
 ![alt text](https://github.com/manaskamal/XenevaOS/blob/master/XeLogo.jpg?raw=true)
 
