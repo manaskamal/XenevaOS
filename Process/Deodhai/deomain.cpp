@@ -54,6 +54,7 @@
 #include "popup.h"
 #include <sys\socket.h>
 #include <boxblur.h>
+#include <sys/types.h>
 
 /******************************************
 *   DEODHAI SUPPORTED WINDOW_TYPES:
@@ -1395,6 +1396,21 @@ uint64_t DeodhaiTimeSince(uint64_t startTime) {
 	return diff;
 }
 
+uint64_t DeodhaiClickCurrentTime() {
+	timeval t;
+	gettimeofday(&t);
+	time_t sec_diff = t.tv_sec;
+	suseconds_t usec_diff = t.tv_usec;
+	return (uint64_t)(static_cast<uint64_t>(sec_diff) * 1000 + (usec_diff / 1000));
+}
+
+/*DeodhaiClickTimeSince -- Return the time in ms*/
+uint64_t DeodhaiClickTimeSince(uint64_t start_time) {
+	uint64_t now = DeodhaiClickCurrentTime();
+	uint64_t diff = now - start_time;
+	return diff;
+}
+
 /*
  * DeodhaiUpdateBits -- update specific deodhai bits
  */
@@ -1541,17 +1557,13 @@ int main(int argc, char* arv[]) {
 			 * TODO: bug fixing
 			 */
 			if (button){
-				if (!last_click_time)
-					last_click_time = _KeGetSystemTimerTick();
-				else{
-					uint64_t currclicktime = _KeGetSystemTimerTick();
-					uint64_t diff = currclicktime - last_click_time;
-					diff /= 1000;
-					if (diff <= 8 && diff > 1)
-						button = DEODHAI_MESSAGE_MOUSE_DBLCLK;
+				if (DeodhaiClickTimeSince(last_click_time) < 400) {
+					button = DEODHAI_MESSAGE_MOUSE_DBLCLK;
 					last_click_time = 0;
 				}
-
+				else {
+					last_click_time = DeodhaiClickCurrentTime();
+				}
 			}
 
 			if (_window_broadcast_mouse_) 

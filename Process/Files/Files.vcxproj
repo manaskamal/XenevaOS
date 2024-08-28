@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="extmngr.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="partition.cpp" />
   </ItemGroup>

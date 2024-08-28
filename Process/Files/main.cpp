@@ -68,8 +68,8 @@ typedef struct _address_bar_ {
 FileAddressBar *addressbar;
 
 void DirListItemAction(ChListView* lv, ChListItem* li);
-
-
+void DocumentItemActionHandler(ChListView* lv, ChListItem* li);
+extern void ExtensionManagerSpawn(ChListItem* li);
 /*
  * FileAddressBarMouseEvent -- handle mouse event for address bar
  */
@@ -164,6 +164,25 @@ void WindowHandleMessage(PostEvent *e) {
 	}
 }
 
+/*
+ * VerifyDocExtension -- checks if given document name
+ * matches with given extension
+ * @param filename -- filename
+ * @param extension -- desired extension
+ */
+bool VerifyDocExtension(char* filename, char* extension) {
+	int i = strlen(filename);
+	int j = strlen(extension);
+
+	do {
+		if (filename[i] != extension[j]) break;
+		if (j == 0) return 1;
+		if (i == 0)break;
+		i--;
+		j--;
+	} while (1);
+	return false;
+}
 
 
 void PrintParentDir(char* pathname) {
@@ -246,6 +265,7 @@ void RefreshFileView(int dirfd, ChListView *lview) {
 				}
 				ChListItem* fi = ChListViewAddItem(mainWin, lv, dirent->filename);
 				ChListViewSetListItemIcon(fi, docico);
+				fi->ChListItemAction = DocumentItemActionHandler;
 			}
 		}
 		memset(dirent->filename, 0, 32);
@@ -254,6 +274,11 @@ void RefreshFileView(int dirfd, ChListView *lview) {
 	free(dirent);
 }
 
+/*
+ * DirListItemAction -- directory item action handler
+ * this handler is called whenever directory is encountered
+ * by double click or keyboard return key event
+ */
 void DirListItemAction(ChListView* lv, ChListItem* li) {
 	int len = strlen(path);
 	char *dirname = (char*)malloc(strlen(li->itemText) + len);
@@ -325,6 +350,13 @@ void BackbutClicked(ChWidget* wid, ChWindow* win) {
 	free(subpath);
 }
 
+/*
+ * DocumentItemActionHandler -- action handler for document
+ * item
+ */
+void DocumentItemActionHandler(ChListView* lv, ChListItem* li) {
+	ExtensionManagerSpawn(li);
+}
 
 void AboutClicked(ChWidget* wid, ChWindow* win) {
 	ChMessageBox* mb = ChCreateMessageBox(mainWin,"File Explorer v1.0", "File Explorer v1.0 for XenevaOS !!",
@@ -380,6 +412,13 @@ void EnterClicked(ChWidget* wid, ChWindow* win) {
 	free(dirname);
 	ChListViewRepaint(mainWin, lv);
 	FileAddressBarRepaint(addressbar);
+}
+
+/*
+ * FileManagerGetCurrentPath -- get the current path 
+ */
+char* FileManagerGetCurrentPath() {
+	return path;
 }
 /*
 * main -- main entry

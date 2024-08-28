@@ -43,5 +43,11 @@ typedef unsigned			blkcnt_t;
 typedef long long			quad_t;
 typedef unsigned long long	uquad_t;
 
+typedef unsigned long useconds_t;
+typedef long suseconds_t;
+typedef int pid_t;
+
+typedef unsigned long clock_t;
+typedef long time_t;
 #endif
 

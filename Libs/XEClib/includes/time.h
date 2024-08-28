@@ -31,6 +31,7 @@
 #define __TIME_H__
 
 #include <_xeneva.h>
+#include <sys/types.h>
 
 #ifdef __cplusplus
 XE_EXTERN{
@@ -77,8 +78,6 @@ XE_EXTERN{
 		long tv_usec;
 	}timeval;
 
-	typedef unsigned clock_t;
-	typedef unsigned time_t;
 
 	XE_LIB char *asctime(const struct tm *);
 	XE_LIB clock_t clock(void);

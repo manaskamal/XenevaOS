@@ -3,6 +3,7 @@
   <ItemGroup>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="partition.cpp" />
+    <ClCompile Include="extmngr.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="partition.h" />

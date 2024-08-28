@@ -67,7 +67,7 @@ void* soundbuff;
 void* filebuff;
 static mp3_decoder_t mp3;
 static mp3_info_t info;
-
+bool _auto_start;
 /*
 * RegisterSound -- create a new instance of sound
 */
@@ -281,14 +281,17 @@ void MusicPrepareLibrary(ChListView *lv) {
 
 void PlayPauseButtonAction(ChWidget* wid, ChWindow* mainWin) {
 	if (selectedFile != NULL) {
-		char path[32];
-		memset(path, 0, 32);
-		strcpy(path, "/MUSIC/");
-		strcpy(path + strlen("/MUSIC/"), selectedFile);
-		_KePrint("Selected file -> %s \r\n", path);
-		_file = _KeOpenFile(path, FILE_OPEN_READ_ONLY);
-		_KePrint("_file -> %d \r\n", _file);
-		_start_player = 1;
+		if (!_auto_start) {
+			char path[32];
+			memset(path, 0, 32);
+			strcpy(path, "/MUSIC/");
+			strcpy(path + strlen("/MUSIC/"), selectedFile);
+			_KePrint("Selected file -> %s \r\n", path);
+			_file = _KeOpenFile(path, FILE_OPEN_READ_ONLY);
+			_KePrint("_file -> %d \r\n", _file);
+			_start_player = 1;
+		}
+		_KePrint("selected File -> %s \r\n", selectedFile);
 	}
 }
 
@@ -345,6 +348,7 @@ void AudioPlayerClose(ChWindow* win) {
 * main -- main entry
 */
 int main(int argc, char* argv[]){
+
 	app = ChitralekhaStartApp(argc, argv);
 	mainWin = ChCreateWindow(app, WINDOW_FLAG_MOVABLE, "Accent", 100, 100, CHITRALEKHA_DEFAULT_WIN_WIDTH, 
 		500);
@@ -352,6 +356,14 @@ int main(int argc, char* argv[]){
 	_music_library_drawn = false;
 	_start_player = false;
 	selectedFile = NULL;
+
+	if (argc > 1) {
+		selectedFile = argv[1];
+		_auto_start = true;
+		_file = _KeOpenFile(selectedFile, FILE_OPEN_READ_ONLY);
+		_start_player = true;
+	}
+	
 	mainWin->ChCloseWin = AudioPlayerClose;
 
 	mainMenubar = ChCreateMenubar(mainWin);
