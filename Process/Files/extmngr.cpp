@@ -67,7 +67,7 @@ void ExtensionManagerLaunch(char* pname,char* app_path, char* filename) {
 	char** argv = (char**)malloc(sizeof(char*));
 	memset(argv, 0, sizeof(char*));
 	char* path = FileManagerGetCurrentPath();
-
+	printf("extension manager: passing path - %s \r\n", path);
 	char* fname = (char*)malloc(strlen(path) + strlen(filename));
 	memset(fname, 0, strlen(path) + strlen(filename));
 	strcpy(fname, path);

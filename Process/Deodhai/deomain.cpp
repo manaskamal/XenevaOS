@@ -1642,7 +1642,7 @@ int main(int argc, char* arv[]) {
 				win->animAlphaVal = 0;
 			}
 
-		
+			focusedWin = win;
 			memset(&event, 0, sizeof(PostEvent));
 
 		}

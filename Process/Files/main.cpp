@@ -70,6 +70,8 @@ FileAddressBar *addressbar;
 void DirListItemAction(ChListView* lv, ChListItem* li);
 void DocumentItemActionHandler(ChListView* lv, ChListItem* li);
 extern void ExtensionManagerSpawn(ChListItem* li);
+void PathNavigateBack();
+void PathEnterForward();
 /*
  * FileAddressBarMouseEvent -- handle mouse event for address bar
  */
@@ -126,6 +128,19 @@ FileAddressBar * FileCreateAddressBar(int x, int y, int w, int h) {
 	addrbar->base.ChDestroy = FileAddressBarDestroy;
 	return addrbar;
 }
+
+void FileHandleKeyEvent(char c) {
+	switch (c) {
+	case KEY_BACKSPACE:
+		PathNavigateBack();
+		break;
+	case KEY_RETURN:
+		PathEnterForward();
+		break;
+	default:
+		break;
+	}
+}
 /*
  * WindowHandleMessage -- handles incoming deodhai messages
  * @param e -- PostBox event message structure
@@ -149,7 +164,9 @@ void WindowHandleMessage(PostEvent *e) {
 		/* handle key events from deodhai */
 	case DEODHAI_REPLY_KEY_EVENT:{
 									 int code = e->dword;
+									 ChitralekhaProcessKey(code);
 									 char c = ChitralekhaKeyToASCII(code);
+									 FileHandleKeyEvent(c);
 									 memset(e, 0, sizeof(PostEvent));
 									 break;
 	}
@@ -310,14 +327,23 @@ void DirListItemAction(ChListView* lv, ChListItem* li) {
 	longjmp(mainWin->jump, 1);
 }
 
-void BackbutClicked(ChWidget* wid, ChWindow* win) {
+/*
+ * PathNavigateBack -- navigate back to parent directory from
+ * current directory
+ */
+void PathNavigateBack() {
 	int len = strlen(path);
+
+	/* check if we are already in root folder */
+	if (len == 1 && (strcmp(path, "/") == 0))
+		return;
+
 	char* subpath = (char*)malloc(strlen(path));
 	strcpy(subpath, path);
-	subpath[len - 2] = '\0';
+	subpath[len - 1] = '\0';
 	int endoffset = 0;
-	for (int i = len; i >= 0; i--) {
-		if (subpath[i] == '/'){
+	for (int i = len; i > 0; i--) {
+		if (subpath[i] == '/') {
 			subpath[i] = '\0';
 			endoffset = i;
 			break;
@@ -325,21 +351,16 @@ void BackbutClicked(ChWidget* wid, ChWindow* win) {
 		subpath[i] = '\0';
 	}
 
-	/* if subpath is 0, then simply open up the 
-	 * root folder
-	 */
-	if (strlen(subpath) <= 0)
-		strcpy(subpath, "/");
 
 	ChListViewClear(lv);
-	
+
 	/* bug : needs to sleep inorder to get
 	* the file descriptor for the desired path */
 	_KeProcessSleep(10);
 
 	int dirfd = _KeOpenDir(subpath);
 	RefreshFileView(dirfd, lv);
-	
+
 	_KeCloseFile(dirfd);
 	ChListViewRepaint(mainWin, lv);
 	free(path);
@@ -348,6 +369,53 @@ void BackbutClicked(ChWidget* wid, ChWindow* win) {
 	strcpy(path, subpath);
 	FileAddressBarRepaint(addressbar);
 	free(subpath);
+}
+
+/*
+ * PathEnterForward -- enter forward from current directory
+ * to the directory from selected item
+ */
+void PathEnterForward() {
+	ChListItem* li = ChListViewGetSelectedItem(lv);
+	if (li == NULL)
+		return;
+	
+	if (li->icon != NULL && li->icon == docico) {
+		/* handle it as document */
+		ExtensionManagerSpawn(li);
+		return;
+	}
+
+	int len = strlen(path);
+	char* dirname = (char*)malloc(strlen(li->itemText) + len);
+	strcpy(dirname, path);
+	strcpy(dirname + len, li->itemText);
+	free(path);
+	path = (char*)malloc(strlen(dirname) + 1);
+	strcpy(path, dirname);
+
+	strcpy(path + strlen(dirname), "/");
+	ChListViewClear(lv);
+
+	/* bug : needs to sleep inorder to get
+	* the file descriptor for the desired path */
+	_KeProcessSleep(10);
+
+	int dirfd = _KeOpenDir(dirname);
+	RefreshFileView(dirfd, lv);
+	_KeCloseFile(dirfd);
+	free(dirname);
+	ChListViewRepaint(mainWin, lv);
+	FileAddressBarRepaint(addressbar);
+}
+
+/*
+ * BackButtonClicked -- back button click event
+ * @param wid -- Pointer to Button widget (passed by system)
+ * @param win -- Pointer to Main Window (passed by system)
+ */
+void BackButtonClicked(ChWidget* wid, ChWindow* win) {
+	PathNavigateBack();
 }
 
 /*
@@ -387,31 +455,7 @@ void M2_2Clicked(ChWidget* wid, ChWindow* win) {
  * EnterClicked -- action handler for enter button
  */
 void EnterClicked(ChWidget* wid, ChWindow* win) {
-	ChListItem *li = ChListViewGetSelectedItem(lv);
-	if (li == NULL)
-		return;
-	_KePrint("Entered item -> %s \r\n", li->itemText);
-	int len = strlen(path);
-	char *dirname = (char*)malloc(strlen(li->itemText) + len);
-	strcpy(dirname, path);
-	strcpy(dirname + len, li->itemText);
-	free(path);
-	path = (char*)malloc(strlen(dirname) + 1);
-	strcpy(path, dirname);
-
-	strcpy(path + strlen(dirname), "/");
-	ChListViewClear(lv);
-
-	/* bug : needs to sleep inorder to get
-	* the file descriptor for the desired path */
-	_KeProcessSleep(10);
-
-	int dirfd = _KeOpenDir(dirname);
-	RefreshFileView(dirfd, lv);
-	_KeCloseFile(dirfd);
-	free(dirname);
-	ChListViewRepaint(mainWin, lv);
-	FileAddressBarRepaint(addressbar);
+	PathEnterForward();
 }
 
 /*
@@ -434,7 +478,7 @@ int main(int argc, char* argv[]){
 
 	ChButton* backbut = ChCreateButton(10,34, 50, 35, "Back"); //mainWin->info->width / 2 - 100 / 2, mainWin->info->height / 2 - 75/2
 	ChWindowAddWidget(mainWin,(ChWidget*)backbut);
-	backbut->base.ChActionHandler = BackbutClicked;
+	backbut->base.ChActionHandler = BackButtonClicked;
 
 	ChButton* Enterbut = ChCreateButton(60 + 10, 34, 50, 35, "Enter");
 	ChWindowAddWidget(mainWin, (ChWidget*)Enterbut);

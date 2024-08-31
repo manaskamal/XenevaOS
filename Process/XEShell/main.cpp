@@ -43,6 +43,7 @@ bool _spawnable_process;
 int job;
 bool _sig_handled = false;
 char* currentDirectory;
+char* lastDirectory;
 
 void XEShellSigInterrupt(int signo) {
 	/* signal is little buggy so, so it won't
@@ -192,13 +193,71 @@ void XEShellReadLine() {
 	cmdBuf[index] = '\0';
 }
 
+/*
+ * XEShellCD -- Change working Directory command
+ * @param path -- path to change (supported only 
+ * relative path)
+ * absolute path changing not implemented
+ */
 void XEShellCD(char* path) {
-	if (currentDirectory)
+	if (!currentDirectory)
+		return;
+	char* prevPath;
+	int prevPathLen = strlen(currentDirectory);
+
+	/* navigate back to parent directory */
+	if (strcmp(path, "..") == 0) {
+		if (prevPathLen == 1 && (strcmp(currentDirectory, "/") == 0))
+			return;
+		for (int i = strlen(currentDirectory); i > 0; i--) {
+			if (currentDirectory[i] == '/') {
+				currentDirectory[i] = '\0';
+				break;
+			}
+			currentDirectory[i] = '\0';
+		}
+		return;
+	}
+
+	/*
+	 * nothing to do, this simple switch to current directory
+	 */
+	if (strcmp(path, "./") == 0)
+		return;
+
+	/*
+	 * This should be the home directory that is being set on
+	 * environment variable or Xeneva configured home directory
+	 * but due to no implementation of environment variable
+	 * passing, "~" this simple navigates back to root directory 
+	 */
+	if (strcmp(path, "~") == 0) {
 		free(currentDirectory);
-	currentDirectory = (char*)malloc(strlen(path));
-	strcpy(currentDirectory, path);
+		currentDirectory = (char*)malloc(strlen("/"));
+		strcpy(currentDirectory, "/");
+		return;
+	}
+	if (currentDirectory[prevPathLen] != '/' && prevPathLen > 1) {
+		prevPath = (char*)malloc(prevPathLen + 1);
+		strcpy(prevPath, currentDirectory);
+		strcpy(prevPath + prevPathLen, "/");
+	}
+	else {
+		prevPath = (char*)malloc(prevPathLen);
+		strcpy(prevPath, currentDirectory);
+	}
+	free(currentDirectory);
+
+	currentDirectory = (char*)malloc(strlen(prevPath) + strlen(path));
+	strcpy(currentDirectory, prevPath);
+	strcpy(currentDirectory + strlen(currentDirectory), path);
+	free(prevPath);
+	free(lastDirectory);
 }
 
+/*
+ * XEShellLS -- list the files inside current directory
+ */
 void XEShellLS() {
 	int dirfd = _KeOpenDir(currentDirectory);
 	XEDirectoryEntry* dirent = (XEDirectoryEntry*)malloc(sizeof(XEDirectoryEntry));
@@ -224,11 +283,47 @@ void XEShellPrintHelp() {
 	printf("\nWelcome to Xeneva shell v1.1 \n");
 	printf("cd -- Change current working directory \n");
 	printf("ls -- List file and folders of current working directory \n");
+	printf("echo -- Displays text \n");
+	printf("pwd -- Display current working directory \n");
 	printf("clrscr -- Clear entire terminal screen \n");
 	printf("help -- Prints all command with their descriptions\n");
 	printf("systeminfo -- Prints about message \n");
 	printf("time -- Displays the current time \n");
 	printf("\n");
+}
+
+/*
+ * XEShellPrintWorkingDirectory -- displays the current working
+ * directory
+ */
+void XEShellPrintWorkingDirectory() {
+	printf("\n");
+	printf("%s\n", currentDirectory);
+}
+
+/*
+ * XEShellEcho -- outputs texts
+ * @param msg -- text to output
+ */
+void XEShellEcho(char* msg) {
+	printf("\n");
+	char* p = strchr(msg, '\"');
+	if (p){
+		p++;
+		msg = p;
+	}
+	else {
+		printf("%s\n", msg);
+		return;
+	}
+	for (int j = strlen(msg); j > 0; j--) {
+		if (msg[j] == '\"') {
+			msg[j] = '\0';
+			break;
+		}
+	}
+	printf("%s\n", msg);
+
 }
 /*
  *XEShellProcessLine -- processes a line by looking
@@ -286,6 +381,17 @@ void XEShellProcessLine() {
 				path++;
 			XEShellCD(path);
 			printf("\n");
+			_spawnable_process = false;
+		}
+
+		if (strcmp(cmdBuf, "pwd") == 0) {
+			XEShellPrintWorkingDirectory();
+			_spawnable_process = false;
+		}
+
+		if (strstr(cmdBuf, "echo")) {
+			char* msg = cmdBuf + 4;
+			XEShellEcho(msg);
 			_spawnable_process = false;
 		}
 		
