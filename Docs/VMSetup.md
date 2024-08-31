@@ -2,7 +2,7 @@
 
 ## Notice
 
-Xeneva is well tested only on VMware Workstation and Virtual Box with vmdk file that maps PhysicalDisk (_The USB Flash drive containing all required binaries_). Refer to [Setting up USB Flash Drive](BuildInstructions.md) for more information. Every thing should be set up as mentioned in this document.
+Xeneva is well tested only on VMware Workstation and Virtual Box with vmdk file that maps PhysicalDisk (_The USB Flash drive containing all required binaries_). Refer to [Setting up USB Flash Drive](BuildInstructions.md) for more information. Every thing should be set up as mentioned in this document. ***You can skip to [Virtual Machine Creation](#creating-the-virtual-machine-in-virtual-box) if you have downloaded the release vhd file***.
 
 ## Creating the .vmdk file 
 
@@ -25,12 +25,13 @@ Repace ```X``` with your drive number of USB Flash drive
 - Now Open Settings of newly created Virtual Machine
 - Go to System and select __ICH9__ from the _Chipset_ , __USB Tablet__ from the _Pointing Device_ and __Enable I/O APIC__ from _Extended Features_
 - Go to Storage and _Add a controller_ of __AHCI(SATA)__. This should create a new controller in the _Storage Device_ list.
-- Now _Add a Hard disk_ inside newly created Controller then click _Add_ button from Hard Disk Selector window and select the __vmdk__ that is created using the steps mentioned above.
+- Now _Add a Hard disk_ inside newly created Controller then click _Add_ button from Hard Disk Selector window and select the __vmdk__ that is created using the steps mentioned above, or directly the downloaded __vhd__ file, if you have downloaded Xeneva from official release page.
+
 - Go to _Audio_ and Windows Direct Sound in Host Audio Driver and Intel HD Audio from Audio Controller and check _Enable Audio Output_ and _Enable Audio Input_
 - Go to USB and select _Enable USB Controller_ and select _USB 3.0 (XHCI) Controller_
 - Upto here XenevaOS is ready to run
 
-## Using Xeneva Terminal
+## Using Xeneva Terminal (_only for v1.0_)
 When the OS boots up it automatically starts the Window Manager and launches Xeneva Terminal application. Desktop should be started manually. Follow the steps to start the desktop
 - Type ```xelnch``` and press _Enter_, this starts the _AppTray_ process
 - Send a signal ```CTRL+C``` to the terminal. 

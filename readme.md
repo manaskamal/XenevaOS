@@ -13,23 +13,23 @@ with hybrid design and the entire operating system is known as _'Xeneva'_.<br> P
 Refer to [Documentations of XenevaOS](Docs/Introduction.md)
 
 ## __Features__ :
-1. ACPI (through acpica)
-2. x64 based Kernel
-3. Fully Higher Half Memory with MMIO mappings
-4. Driver _loading and linking_ through dll files
-5. SSE/SSE3
-6. USB3
-7. Intel High Definition Audio
-8. Multiprocessor support (muliprocessor scheduler not ready !!)
-9. Application loader and dynamic library (shared library)
-10. Freetype2 as font rendering engine
-12. Compositing Window Manager called "Deodhai"
-13. Graphics Library known as "Chitralekha"
-13. Xeneva Terminal with basic ANSI/VT100 escape sequence support
-14. Desktop environment called Namdapha Desktop
-15. Storage supports : AHCI/SATA, NVMe
-16. USB3 Class drivers (USB HID Mouse, USB Tablet) ..etc
-17. Audio Server called "Deodhai-Audio" with 
+- ACPI (through acpica)
+- x64 based Kernel
+- Fully Higher Half Memory with MMIO mappings
+- Driver _loading and linking_ through dll files
+- SSE/SSE3
+- USB3
+- Intel High Definition Audio
+- Multiprocessor support (muliprocessor scheduler not ready !!)
+- Application loader and dynamic library (shared library)
+- Freetype2 as font rendering engine
+- Compositing Window Manager called "Deodhai"
+- Graphics Library known as "Chitralekha"
+- Xeneva Terminal with basic ANSI/VT100 escape sequence support
+- Desktop environment called Namdapha Desktop
+- Storage supports : AHCI/SATA, NVMe
+- USB3 Class drivers (USB HID Mouse, USB Tablet) ..etc
+- Audio Server called "Deodhai-Audio" with 
     (44kHz/16bit audio format, stereo/mono panning, gain control)
 
 
@@ -45,12 +45,16 @@ _And many more coming soon_
 
 # Installed Applications :
 
-1. Basic GUI Wave Audio player called Accent Player
-2. Basic File Navigator App
-3. A Calculator
-4. Xeneva Terminal (ANSI/VT100 support)
-5. Basic shell application called XEShell
-6  Terminal Application : play(wave player)
+- Audio player called Accent Player
+- File Browser
+- Calculator
+- Xeneva Terminal (ANSI/VT100 support)
+- XEShell
+- Audio Server called (DeodhaiAudio)
+- play (_CLI Application_)
+- piano (_CLI Application_)
+- Background Serivices like - Net Manager
+
 
 # Building the project
 

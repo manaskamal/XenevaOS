@@ -20,6 +20,10 @@ This documentation will guide you through all the parts of XenevaOS and how it w
 
 ## Welcome to XenevaOS -_Empowering Creativity_
 
+__Build the project__:
+- [Build instructions](BuildInstructions.md)
+- [Running XenevaOS](VMSetup.md)
+
 __Kernel__ : 
 - [About the Kernel](Kernel/AboutKernel.md)
 - [Boot Process](Kernel/BootProcess.md)
@@ -28,4 +32,7 @@ __Kernel__ :
 
 __Components__ :
 - [XELoader](XELoader.md)
+
+__Development__ :
+- [Writing Drivers for XenevaOS](Development/DriverDevelopment.md)
  

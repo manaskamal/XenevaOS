@@ -154,6 +154,11 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Control", "Process\Control\
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AHCI", "Drivers\AHCI\AHCI.vcxproj", "{C4794DDD-B777-49DF-8600-ED1D71F96EBE}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MyXenevaDriver", "Drivers\MyXenevaDriver\MyXenevaDriver.vcxproj", "{5AD54E94-272C-4AD9-8AFC-A69801538357}"
+	ProjectSection(ProjectDependencies) = postProject
+		{BED35751-DD14-4197-9081-D61F574C0847} = {BED35751-DD14-4197-9081-D61F574C0847}
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug Static|Mixed Platforms = Debug Static|Mixed Platforms
@@ -851,6 +856,30 @@ Global
 		{C4794DDD-B777-49DF-8600-ED1D71F96EBE}.Release|Win32.Build.0 = Release|Win32
 		{C4794DDD-B777-49DF-8600-ED1D71F96EBE}.Release|x64.ActiveCfg = Release|x64
 		{C4794DDD-B777-49DF-8600-ED1D71F96EBE}.Release|x64.Build.0 = Release|x64
+		{5AD54E94-272C-4AD9-8AFC-A69801538357}.Debug Static|Mixed Platforms.ActiveCfg = Debug|Win32
+		{5AD54E94-272C-4AD9-8AFC-A69801538357}.Debug Static|Mixed Platforms.Build.0 = Debug|Win32
+		{5AD54E94-272C-4AD9-8AFC-A69801538357}.Debug Static|Win32.ActiveCfg = Debug|Win32
+		{5AD54E94-272C-4AD9-8AFC-A69801538357}.Debug Static|Win32.Build.0 = Debug|Win32
+		{5AD54E94-272C-4AD9-8AFC-A69801538357}.Debug Static|x64.ActiveCfg = Debug|x64
+		{5AD54E94-272C-4AD9-8AFC-A69801538357}.Debug Static|x64.Build.0 = Debug|x64
+		{5AD54E94-272C-4AD9-8AFC-A69801538357}.Debug|Mixed Platforms.ActiveCfg = Debug|x64
+		{5AD54E94-272C-4AD9-8AFC-A69801538357}.Debug|Mixed Platforms.Build.0 = Debug|x64
+		{5AD54E94-272C-4AD9-8AFC-A69801538357}.Debug|Win32.ActiveCfg = Debug|Win32
+		{5AD54E94-272C-4AD9-8AFC-A69801538357}.Debug|Win32.Build.0 = Debug|Win32
+		{5AD54E94-272C-4AD9-8AFC-A69801538357}.Debug|x64.ActiveCfg = Debug|x64
+		{5AD54E94-272C-4AD9-8AFC-A69801538357}.Debug|x64.Build.0 = Debug|x64
+		{5AD54E94-272C-4AD9-8AFC-A69801538357}.Release Static|Mixed Platforms.ActiveCfg = Release|Win32
+		{5AD54E94-272C-4AD9-8AFC-A69801538357}.Release Static|Mixed Platforms.Build.0 = Release|Win32
+		{5AD54E94-272C-4AD9-8AFC-A69801538357}.Release Static|Win32.ActiveCfg = Release|Win32
+		{5AD54E94-272C-4AD9-8AFC-A69801538357}.Release Static|Win32.Build.0 = Release|Win32
+		{5AD54E94-272C-4AD9-8AFC-A69801538357}.Release Static|x64.ActiveCfg = Release|x64
+		{5AD54E94-272C-4AD9-8AFC-A69801538357}.Release Static|x64.Build.0 = Release|x64
+		{5AD54E94-272C-4AD9-8AFC-A69801538357}.Release|Mixed Platforms.ActiveCfg = Release|Win32
+		{5AD54E94-272C-4AD9-8AFC-A69801538357}.Release|Mixed Platforms.Build.0 = Release|Win32
+		{5AD54E94-272C-4AD9-8AFC-A69801538357}.Release|Win32.ActiveCfg = Release|Win32
+		{5AD54E94-272C-4AD9-8AFC-A69801538357}.Release|Win32.Build.0 = Release|Win32
+		{5AD54E94-272C-4AD9-8AFC-A69801538357}.Release|x64.ActiveCfg = Release|x64
+		{5AD54E94-272C-4AD9-8AFC-A69801538357}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
