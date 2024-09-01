@@ -16,7 +16,28 @@ Development of XenevaOS is done purely under Windows environment. Xeneva project
 - Finally you can start coding your Xeneva driver.
 
 ## Driver Naming Convention
-XenevaOS project includes certain Naming conventions.In XenevaOS driver development naming conventions plays a crucial role in supporting Backward compatibility. Early XenevaOS supported FAT32 file system with no long name entry support. XenevaOS drivers names are limited to maximum 8 characters extra three characters are reserved for extension, as FAT File system without long file name entry supports maximum 11 characters in file name. _We recommend limiting the driver name to 8 characters_.
+XenevaOS project includes certain Naming conventions.In XenevaOS driver development naming conventions plays a crucial role in supporting Backward compatibility. Early XenevaOS supported FAT32 file system with no long name entry support. XenevaOS drivers names are limited to maximum 8 characters extra three characters are reserved for extension, as FAT File system without long file name entry supports maximum 11 characters in file name. _We recommend limiting the driver name up to 8 characters_.
+
+## Dependencies
+- XenevaOS base headers 
+- Kernel.lib (which is automatically created after building the Kernel 'Aurora')
+
+## Xeneva Driver Types
+Current version of XenevaOS supports only Kernel mode drivers. The Kernel mode drivers are divided into two types:
+- Boot Time Drivers 
+- Runtime Drivers
+
+You can read detailed information about each driver in [About XenevaOS Driver](../Kernel/Drivers.md)
+
+## Your first Xeneva Driver
+Information on Initialization and Unloading of XenevaOS drivers can be found [here](../Kernel/Drivers.md#initialization). Xeneva Driver must implement two basic driver functions:
+- ***AuDriverMain*** - The Main entrypoint for the driver
+- ***AuDriverUnload*** - Clears all the resources allocated by the driver and unload it from the Kernel
+
+See here for a [simple driver example.](../Kernel/Drivers.md#initialization)
+
+## ***TODO***
+_Section describing PCIe management, interrupt handling and synchronization, Memory Management, and Kernel resource allocation will be available soon_
 
 
 

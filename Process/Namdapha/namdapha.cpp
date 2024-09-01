@@ -316,12 +316,11 @@ void NamdaphaHandleMessage(PostEvent *e) {
 											 }
 
 											 if (destroyable) {
-												 int w = destroyable->w;
+												 int pos_y = destroyable->y;
 												 for (int i = index; i < button_list->pointer; i++) {
 													 NamdaphaButton* nb = (NamdaphaButton*)list_get_at(button_list, i);
-													 nb->y -= w;
-													 nb->y += NAMDAPHA_BUTTON_YPAD;
-													 nbutton_y_loc = nb->y;
+													 nb->y = pos_y;
+													 nbutton_y_loc = (nb->y + nb->h) + NAMDAPHA_BUTTON_YPAD;
 												 }
 												 if (destroyable->nmbuttoninfo->usageCount > 1) {
 													 destroyable->nmbuttoninfo->usageCount -= 1;
