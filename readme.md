@@ -37,7 +37,7 @@ _And many more coming soon_
 
 ## Screenshot:
 
-![alt text](https://github.com/manaskamal/XenevaOS/blob/master/XenevaV1_2.png?raw=true)
+![alt text](https://github.com/manaskamal/XenevaOS/blob/master/XenevaV1_1.png?raw=true)
 
 ## AppTray:
 
@@ -53,6 +53,7 @@ _And many more coming soon_
 - Audio Server called (DeodhaiAudio)
 - play (_CLI Application_)
 - piano (_CLI Application_)
+- Calender 
 - Background Serivices like - Net Manager
 
 

@@ -292,7 +292,6 @@ void NamdaphaHandleMessage(PostEvent *e) {
 									break;
 	}
 	case DEODHAI_BROADCAST_FOCUS_CHANGED: {
-		_KePrint("Focus message recevied \r\n");
 											  for (int i = 0; i < button_list->pointer; i++) {
 												  NamdaphaButton* nb = (NamdaphaButton*)list_get_at(button_list, i);
 												  nb->focused = false;
