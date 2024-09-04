@@ -593,6 +593,52 @@ void ChFreeWindowResources(ChWindow *win) {
 	free(win->title);
 	free(win->subwindow);
 }
+
+XE_EXTERN XE_EXPORT void ChPopupWindowClose(ChWindow* win) {
+	/* call the close callback before closing the window*/
+	if (win->ChCloseWin)
+		win->ChCloseWin(win);
+
+	_KeUnmapSharedMem(win->app->sharedWinkey);
+	_KeUnmapSharedMem(win->app->backbufkey);
+
+	/*
+ * Close all popup window
+ */
+	for (int i = 0; i < win->popup->pointer; i++) {
+		ChWindow* pw = (ChWindow*)list_get_at(win->popup, i);
+		ChPopupWindowClose(pw);
+	}
+	list_clear_all(win->popup);
+	free(win->popup);
+	_KePrint("Popup Window closed \r\n");
+	/* free up window resources */
+	ChFreeWindowResources(win);
+	
+	/* send close window command to deodhai */
+	int handle = win->handle;
+	PostEvent e;
+	e.type = DEODHAI_MESSAGE_CLOSE_WINDOW;
+	e.dword = handle;
+	e.from_id = win->app->currentID;
+	e.to_id = POSTBOX_ROOT_ID;
+	_KeFileIoControl(win->app->postboxfd, POSTBOX_PUT_EVENT, &e);
+	memset(&e, 0, sizeof(PostEvent));
+
+
+	/* wait for a closed reply window */
+	while (1) {
+		int err = _KeFileIoControl(win->app->postboxfd, POSTBOX_GET_EVENT, &e);
+		if (err == POSTBOX_NO_EVENT)
+			_KePauseThread();
+		if (e.type == DEODHAI_REPLY_WINDOW_CLOSED) {
+			break;
+		}
+	}
+
+	free(win->app);
+	free(win);
+}
 /*
  * ChWindowCloseWindow -- clears window related data and 
  * sends close message to deodhai
@@ -601,14 +647,14 @@ void ChFreeWindowResources(ChWindow *win) {
 XE_EXTERN XE_EXPORT void ChWindowCloseWindow(ChWindow* win){
 	bool subWindow = false;
 	ChWindow* parent = NULL;
-
+	uint16_t flags = win->flags;
 	/* call the close callback before closing the window*/
 	if (win->ChCloseWin)
 		win->ChCloseWin(win);
 
 
 	/* check if this was a sub window */
-	if (win->parent) {
+	if (win->parent && !(win->flags & WINDOW_FLAG_POPUP)) {
 		parent = win->parent;
 		subWindow = true;
 		for (int i = 0; i < win->parent->subwindow->pointer; i++) {
@@ -631,19 +677,13 @@ XE_EXTERN XE_EXPORT void ChWindowCloseWindow(ChWindow* win){
 	 * Close all popup window
 	 */
 	for (int i = 0; i < win->popup->pointer; i++) {
-		ChPopupWindow* pw = (ChPopupWindow*)list_get_at(win->popup, i);
-		
-		list_clear_all(pw->widgets);
-		free(pw->widgets);
-		_KeUnmapSharedMem(pw->shwinKey);
-		_KeUnmapSharedMem(pw->buffWinKey);
-		ChDeAllocateBuffer(pw->canv);
-		free(pw->canv);
-		free(pw);
+		ChWindow* pw = (ChWindow*)list_get_at(win->popup, i);
+		ChPopupWindowClose(pw);
+		_KePrint("pOPUP CLOSED \r\n");
 	}
 	list_clear_all(win->popup);
 	free(win->popup);
-	_KePrint("All Popup Window closed \r\n");
+	_KePrint("All popup window closed \r\n");
 
 	/* free up window resources */
 	ChFreeWindowResources(win);
@@ -674,13 +714,13 @@ XE_EXTERN XE_EXPORT void ChWindowCloseWindow(ChWindow* win){
 
 	/* just jump to post event loop of main
 	 * window */
-	if (subWindow && parent)
+	if (subWindow && parent && !(flags & WINDOW_FLAG_POPUP))
 		longjmp(parent->jump, 1);
 	
 	/* if this window was the main window, simply exit the
 	 * application
 	 */
-	if (!subWindow)
+	if (!subWindow && !(flags & WINDOW_FLAG_POPUP))
 		_KeProcessExit();
 }
 
@@ -733,6 +773,8 @@ XE_EXTERN XE_EXPORT ChWindow* ChCreatePopupWindow(ChWindow* win, int x, int y, i
 	popup->focused = true;
 	popup->ChWinPaint = ChDefaultPopupWinPaint;
 	popup->widgets = initialize_list();
+	popup->popup = initialize_list();
+	popup->GlobalControls = initialize_list();
 	popup->parent = win;
 	list_add(win->popup, popup);
 	return popup;

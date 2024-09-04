@@ -130,12 +130,6 @@ ChMenubar* ChCreateMenubar(ChWindow* win) {
  */
 void ChMenuButtonDestroy(ChWidget* wid, ChWindow* win) {
 	ChMenuButton *mbut = (ChMenuButton*)wid;
-	_KePrint("Menubutton destroying -> %x\r\n", mbut->popupMenu);
-	if (mbut->popupMenu){
-		_KePrint("mbut->back -> %x \r\n", mbut->popupMenu->backWindow);
-		if (mbut->popupMenu->wid.ChDestroy)
-			mbut->popupMenu->wid.ChDestroy((ChWidget*)mbut->popupMenu, win);
-	}
 	_KePrint("Menubutton destroyed \r\n");
 	free(mbut->title);
 	free(mbut);

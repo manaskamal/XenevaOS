@@ -42,7 +42,6 @@
     <ClCompile Include="cursor.cpp" />
     <ClCompile Include="deomain.cpp" />
     <ClCompile Include="dirty.cpp" />
-    <ClCompile Include="popup.cpp" />
     <ClCompile Include="rect.cpp" />
     <ClCompile Include="window.cpp" />
   </ItemGroup>

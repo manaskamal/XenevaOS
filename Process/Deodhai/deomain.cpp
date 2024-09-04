@@ -104,7 +104,7 @@ void DeodhaiInitialiseData() {
 	lastMouseButton = 0;
 	alwaysOnTop = NULL;
 	alwaysOnTopLast = NULL;
-	winHandles = 0;
+	winHandles = 100;
 }
 
 /*
@@ -1298,7 +1298,6 @@ void DeodhaiCloseWindow(Window* win) {
 #ifdef SHADOW_ENABLED
 		_KeMemUnmap(popup->shadowBuffers, (static_cast<size_t>(width) + SHADOW_SIZE * 2) * (height + SHADOW_SIZE * 2) * 4);
 #endif
-		PopupRemoveWindow(win, popup);
 		free(popup);
 	}
 

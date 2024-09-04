@@ -68,13 +68,4 @@ typedef struct _PopupWin_ {
 	bool shadowUpdate;
 }PopupWindow;
 
-extern void PopupWindowAdd(Window* parent, Window* win);
-
-extern void PopupRemoveWindow(Window* parent, Window* win);
-
-/*  Compose all popup menus of given window
- * @param canv -- Pointer to canvas
- * @param thisWin -- Pointer to the top level window
- */
-extern void ComposePopupMenus(ChCanvas* canv, Window* thisWin);
 #endif
