@@ -56,6 +56,7 @@ NamdaphaButton* timebutton;
 ButtonInfo* defaultappico;
 uint32_t gomenuh;
 NamdaphaButton *gobutton;
+XETime _time;
 
 extern void GoMenuThread();
 /*
@@ -98,10 +99,19 @@ void NamdaphaHideWindow(NamdaphaButton* button) {
 /* NamdaphaTimeButtonPaint -- paint the time button */
 void NamdaphaTimeButtonPaint(NamdaphaButton* button, ChWindow* win) {
 	ChDrawRect(win->canv, button->x, button->y,button->w, button->h, NAMDAPHA_TIME_BUTTON_COLOR);
+	ChFontSetSize(app->baseFont, 13);
 	int font_w = ChFontGetWidth(app->baseFont, button->title);
 	int font_h = ChFontGetHeight(app->baseFont, button->title);
 	ChFontDrawText(win->canv, app->baseFont,currenttime, button->x + button->w/2 - font_w/2,
 		button->y + button->h / 2, 12, WHITE);
+	char date[20];
+	memset(&date, 0, 20);
+	
+	sprintf(date, "%02d-%02d-%d", _time.day, _time.month, _time.year);
+	ChFontSetSize(app->baseFont, 11);
+	int date_w = ChFontGetWidth(app->baseFont,date);
+	ChFontDrawText(win->canv, app->baseFont, date, button->x + button->w / 2 - date_w / 2,
+		button->y + button->h - 4, 10,LIGHTSILVER);
 }
 
 /*
@@ -434,6 +444,7 @@ int main(int argc, char* arv[]){
 	_KeCreateTimer(threadID, _KE_TIMER_UNDIFINED_MAXCOUNT, _KE_TIMER_UPDATE_ORDER_MINUTE);
 	_KeStartTimer(threadID);
 
+	_KeGetCurrentTime(&_time);
 
     gobutton = NamdaphaInitialiseGoButton(win);
 	gobutton->actionHandler = NamdaphaGoButtonAction;

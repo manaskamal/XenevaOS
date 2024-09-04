@@ -16,4 +16,8 @@
 
 {[Title]Controls|
 [Icon]/icons/gearl.bmp|
-[App]/ctrl.exe>
+[App]/ctrl.exe}
+
+{[Title]Calender|
+[Icon]/icons/calndrl.bmp|
+[App]/calendr.exe>
