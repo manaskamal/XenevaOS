@@ -100,7 +100,7 @@ void load_default_sregs()
 	x64_set_segment_register(SREG_SS, SEGVAL(GDT_ENTRY_KERNEL_DATA, 0));
 	//Per CPU data
 	x64_set_segment_register(SREG_FS, SEGVAL(GDT_ENTRY_KERNEL_DATA, 0));
-	x64_set_segment_register(SREG_GS, SEGVAL(GDT_ENTRY_KERNEL_DATA, 0));
+	x64_set_segment_register(SREG_GS, SEGVAL(GDT_ENTRY_USER_DATA, 3));
 }
 
 //! Initialize the Global Descriptor Table

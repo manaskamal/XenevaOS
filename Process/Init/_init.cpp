@@ -46,6 +46,7 @@
  * _main -- main entry point
  */
 extern "C" void main(int argc, char* argv[]) {
+
 	int pid = _KeGetProcessID();
 
 	if (strcmp(argv[0], "-about") == 0)

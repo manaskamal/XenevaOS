@@ -214,7 +214,6 @@ void page_fault(size_t vector, void* param){
 	int resv = frame->error & 0x8;
 	int id = frame->error & 0x10;
 
-	
 	AuThread* thr = AuGetCurrentThread();
 	
 	/* check for signal */

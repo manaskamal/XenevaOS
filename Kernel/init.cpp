@@ -134,6 +134,7 @@ void _AuMain(KERNEL_BOOT_INFO *info) {
 	AuVmmngrBootFree();
 	/* Process initialisation begins here */
 	AuStartRootProc();
+
 	AuSchedulerStart();
 	for (;;);
 }

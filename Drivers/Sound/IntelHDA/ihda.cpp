@@ -304,7 +304,7 @@ void HDAReset() {
 	SetupCORB();
 	SetupRIRB();
 
-	for (int i = 0; i < 100000000; i++)
+	for (int i = 0; i < 1000; i++)
 		;
 
 }
@@ -394,7 +394,6 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 	uint64_t device = AuPCIEScanClass(0x04, 0x03, &bus, &dev, &func);
 	if (device == 0xFFFFFFFF){
 		SeTextOut("[driver]: intel hda not found \r\n");
-		for (;;);
 		return 1;
 	}
 
@@ -426,7 +425,12 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 
 
 
-	AuPCIEAllocMSI(device, 80, bus, dev, func);
+	if (!AuPCIEAllocMSI(device, 80, bus, dev, func)) {
+		SeTextOut("[ihda]: Failed to allocate MSI\MSI-X \r\n");
+		kfree(_hdaudio);
+		return 1;
+	}
+
 	setvect(80, HDAHandler);
 
 	CodecInitializeOutput = NULL;
@@ -451,11 +455,13 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 	_hdaudio->num_iss = num_iss;
 	_hdaudio->num_oss = num_oss;
 
+	SeTextOut("Reseting HDA \r\n");
 	HDAReset();
 
+	SeTextOut("Initializing Output \r\n");
 	HDAInitOutput();
+	SeTextOut("Initializing Input \r\n");
 	HDAInitInputStream();
-	SeTextOut("Reseting HDA \r\n");
 
 	uint16_t statests = _aud_inw_(STATESTS);
 	for (int i = 0; i < 15; i++) {

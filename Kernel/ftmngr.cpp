@@ -223,6 +223,7 @@ void FontManagerInitialise() {
 	if ((num_pages % PAGE_SIZE) != 0)
 		num_pages++;
 
+	SeTextOut("Font this \r\n");
 	uint64_t* first_addr = NULL;
 	for (int i = 0; i < num_pages; i++) {
 		uint64_t* addr = (uint64_t*)P2V((size_t)AuPmmngrAlloc());

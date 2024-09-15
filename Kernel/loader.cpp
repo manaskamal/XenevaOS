@@ -41,6 +41,7 @@
 #include <Mm\vmmngr.h>
 #include <Mm\pmmngr.h>
 #include <Mm\kmalloc.h>
+#include <Hal\x86_64_cpu.h>
 #include <Mm\vmarea.h>
 #include <Hal\hal.h>
 #include <Hal\x86_64_gdt.h>
@@ -107,6 +108,7 @@ void AuProcessEntUser(uint64_t rcx) {
 	ent->argvs = 0;
 	PUSH(ent->rsp, size_t, (size_t)ent->argvaddr);
 	PUSH(ent->rsp, size_t, ent->num_args);
+	SeTextOut("Enterint USER GSBase -> %x \r\n", x64_read_msr(MSR_IA32_GS_BASE));
 	x64_enter_user(ent->rsp, ent->entrypoint, ent->cs, ent->ss);
 	while (1) {
 	}

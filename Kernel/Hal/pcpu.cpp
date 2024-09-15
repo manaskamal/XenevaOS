@@ -32,6 +32,7 @@
 #include <Hal/x86_64_lowlevel.h>
 #include <Mm/kmalloc.h>
 #include <string.h>
+#include <Hal/serial.h>
 
 CPUStruc* cpus[256];
 
@@ -91,6 +92,7 @@ void AuPerCPUSetCurrentThread(void* thread) {
  * present processor
  */
 AuThread* AuPerCPUGetCurrentThread() {
+	uint64_t val = x64_gs_readq(1);
 	return (AuThread*)x64_gs_readq(1);
 }
 
@@ -106,7 +108,8 @@ void AuPerCPUSetKernelTSS(TSS *tss){
 * AuPerCPUGetKernelTSS -- Gets the kernel TSS structure
 */
 TSS* AuPerCPUGetKernelTSS() {
-	return (TSS*)x64_gs_readq(9);
+	uint64_t val = x64_gs_readq(9);
+	return (TSS*)val;
 }
 
 

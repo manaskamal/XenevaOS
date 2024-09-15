@@ -367,6 +367,10 @@ int FatDirectoryRead(AuVFSNode* fs, AuVFSNode* dir, AuDirectoryEntry* dirent) {
 	dirent->size = dir_->file_size;
 	dirent->time = dir_->time_created;
 	dirent->date = dir_->date_created;
+	
+	if ((dir_->attrib & FAT_ATTRIBUTE_MASK) == FAT_ATTRIBUTE_LONG_NAME)
+		SeTextOut("DIRName -> %s attrib -> %x, LFN -> yes \r\n", filename, dir_->attrib);
+	
 	if (dir_->attrib & 0x10)
 		dirent->flags = FS_FLAG_DIRECTORY;
 	if (dir_->attrib & 0x20)

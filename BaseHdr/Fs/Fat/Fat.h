@@ -178,6 +178,22 @@ extern uint64_t FatClusterToSector32(FatFS *fs, uint64_t cluster);
 extern void FatToDOSFilename(const char* filename, char* fname, unsigned int fname_length);
 
 /*
+ * FatCalculateCheckSum -- returns an unsigned byte checksum computed on an
+ * unsigned byte array. The array must be 11 bytes long and is assumed to
+ * contain a name stored in the format of a MS-DOS directory entry
+ * @param filename -- Pointer to an unsigned byte array assumed to be
+ *                    11 bytes long
+ */
+extern uint8_t FatCalculateCheckSum(uint8_t* filename);
+
+/*
+ * FatCheckDotCount -- checks the number of '.' dot
+ * count in a given filename
+ * @param filename -- name of the file to check
+ */
+extern uint8_t FatCheckDotCount(char* filename);
+
+/*
 * FatFindFreeCluster -- finds a free cluster from FAT
 * data structure
 * @param node -- fs node

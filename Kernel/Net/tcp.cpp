@@ -97,7 +97,7 @@ uint16_t CalculateTCPChecksum(TCPCheckHeader* p, TCPHeader* h, void* d, size_t p
 			sum = (sum >> 16) + (sum & 0xFFFFF);
 	}
 
-	if (dwords * 2 != payloadsz){
+	if (dwords * static_cast<uint64_t>(2) != payloadsz){
 		uint8_t* t = (uint8_t*)d;
 		uint8_t tmp[2];
 		tmp[0] = t[dwords * sizeof(uint16_t)];

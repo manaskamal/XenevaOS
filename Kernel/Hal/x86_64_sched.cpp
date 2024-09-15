@@ -343,6 +343,7 @@ void AuKThreadCopy(AuThread* dest, AuThread* src) {
 void AuIdleThread(uint64_t t) {
 	SeTextOut("_idle id -> %d  \r\n", AuPerCPUGetCpuID());
 	while (1) {
+		SeTextOut("GS Base -> %x for id -> %d \r\n", x64_read_msr(MSR_IA32_GS_BASE));
 		x64_hlt();
 	}
 }
@@ -434,6 +435,7 @@ void x8664SchedulerISR(size_t v, void* param) {
 		goto sched_end;
 	
 	TSS *ktss = AuPerCPUGetKernelTSS();
+
 	AuThread* current_thread = AuPerCPUGetCurrentThread();
 	
 	if (save_context(current_thread, ktss) == 0) {
@@ -485,6 +487,8 @@ void AuSchedulerStart() {
 	_x86_64_sched_init = true;
 	setvect(0x40, x8664SchedulerISR);  //0x40
 	AuThread* current_thread = AuPerCPUGetCurrentThread();
+	TSS* _ks = x86_64_get_tss();
+	SeTextOut("CurrentThread ->%x %x \r\n", current_thread, _ks);
 	execute_idle(current_thread, x86_64_get_tss());
 }
 

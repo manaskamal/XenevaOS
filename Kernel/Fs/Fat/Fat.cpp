@@ -1,7 +1,7 @@
 /**
 * BSD 2-Clause License
 *
-* Copyright (c) 2022-2023, Manas Kamal Choudhury
+* Copyright (c) 2023-2024, Manas Kamal Choudhury
 * All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
@@ -102,6 +102,35 @@ void FatToDOSFilename(const char* filename, char* fname, unsigned int fname_leng
 
 	for (i = 0; i < 3; i++)
 		fname[8 + i] = toupper(fname[8 + i]);
+}
+
+/*
+ * FatCalculateCheckSum -- returns an unsigned byte checksum computed on an
+ * unsigned byte array. The array must be 11 bytes long and is assumed to 
+ * contain a name stored in the format of a MS-DOS directory entry
+ * @param filename -- Pointer to an unsigned byte array assumed to be 
+ *                    11 bytes long
+ */
+uint8_t FatCalculateCheckSum(uint8_t* filename) {
+	short nameLen;
+	uint8_t sum = 0;
+	for (nameLen = 11; nameLen != 0; nameLen--) 
+		sum = ((sum & 1) ? 0x80 : 0) + (sum >> 1) + *filename++;
+	return sum;
+}
+
+/*
+ * FatCheckDotCount -- checks the number of '.' dot
+ * count in a given filename 
+ * @param filename -- name of the file to check
+ */
+uint8_t FatCheckDotCount(char* filename) {
+	uint8_t dot_count = 0;
+	for (int i = 0; i < strlen(filename); i++) {
+		if (filename[i] == '.')
+			dot_count++;
+	}
+	return dot_count;
 }
 
 /*
@@ -213,22 +242,6 @@ void FatAllocCluster(AuVFSNode* fsys, int position, uint32_t n_value) {
 	uint32_t value2 = *(uint32_t*)&buf[ent_offset];
 	AuVDiskWrite(vdisk, fat_sector, 1, (uint64_t*)V2P((size_t)buffer));
 	AuPmmngrFree((void*)V2P((size_t)buffer));
-}
-
-/*
- * FatCalculateCheckSum -- calculates checksum value
- * for use in long file name
- * @param fname -- short file name 
- */
-uint8_t FatCalculateCheckSum(uint8_t* fname) {
-	short fnameLen;
-	uint8_t sum = 0;
-
-	for (fnameLen = 11; fnameLen != 0; fnameLen--){
-		sum = ((sum & 1) ? 0x80 : 0) + (sum >> 1) + *fname++;
-	}
-
-	return sum;
 }
 
 
@@ -396,6 +409,7 @@ AuVFSNode* FatLocateDir(AuVFSNode* fsys, const char* dir) {
 	uint64_t* buf;
 	FatDir *dirent;
 	char dos_file_name[11];
+
 	FatToDOSFilename(dir, dos_file_name, 11);
 	dos_file_name[10] = 0;
 	
@@ -408,13 +422,14 @@ AuVFSNode* FatLocateDir(AuVFSNode* fsys, const char* dir) {
 		AuVDiskRead(vdisk, FatClusterToSector32(fs,fs->__RootDirFirstCluster) + sector, 1, (uint64_t*)V2P((uint64_t)buf));
 
 		dirent = (FatDir*)buf;
-
+	
 		for (int i = 0; i < 16; i++) {
+
 			char name[11];
 			memcpy(name, dirent->filename, 11);
 			name[10] = 0;
 			if (strcmp(dos_file_name, name) == 0) {
-				
+
 				strcpy(file->filename, dir);
 				file->current = dirent->first_cluster;
 				file->size = dirent->file_size;
@@ -425,7 +440,7 @@ AuVFSNode* FatLocateDir(AuVFSNode* fsys, const char* dir) {
 				file->pos = 0;
 				file->device = fsys;
 				file->parent_block = fs->__RootDirFirstCluster;
-				if (dirent->attrib & 0x10)
+				if (dirent->attrib == 0x10)
 					file->flags |= FS_FLAG_DIRECTORY;
 				else
 					file->flags |= FS_FLAG_GENERAL;
@@ -433,6 +448,7 @@ AuVFSNode* FatLocateDir(AuVFSNode* fsys, const char* dir) {
 				AuPmmngrFree((void*)V2P((size_t)buf));
 				return file;
 			}
+		
 			dirent++;
 		}
 	}
