@@ -304,7 +304,7 @@ void HDAReset() {
 	SetupCORB();
 	SetupRIRB();
 
-	for (int i = 0; i < 1000; i++)
+	for (int i = 0; i < 100000000; i++)
 		;
 
 }
@@ -411,7 +411,7 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 
 	uint64_t command = AuPCIERead(device, PCI_COMMAND, bus, dev, func);
 	command |= (1 << 10);
-	command |= (1 << 1);
+	command |= 0x6;
 
 	//clear the Interrupt disable
 	AuPCIEWrite(device, PCI_COMMAND, command, bus, dev, func);
@@ -459,9 +459,14 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 	HDAReset();
 
 	SeTextOut("Initializing Output \r\n");
-	HDAInitOutput();
+	if (HDAInitOutput()) {
+		SeTextOut("[HDAudio]: Failed to initialize output \r\n");
+		return 1;
+	}
 	SeTextOut("Initializing Input \r\n");
-	HDAInitInputStream();
+	if (HDAInitInputStream())
+		SeTextOut("[HDAudio]: Failed to initialize input \r\n");
+	
 
 	uint16_t statests = _aud_inw_(STATESTS);
 	for (int i = 0; i < 15; i++) {

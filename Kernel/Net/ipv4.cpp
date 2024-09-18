@@ -35,7 +35,9 @@
 #include <net/aunet.h>
 #include <Net/ethernet.h>
 #include <Net/arp.h>
+#include <Net/udp.h>
 #include <_null.h>
+#include <Hal/x86_64_cpu.h>
 #include <Hal\serial.h>
 
 uint16_t IPv4CalculateChecksum(IPv4Header * p){
@@ -58,7 +60,7 @@ void ip_ntoa(const uint32_t src) {
 	SeTextOut("%d \r\n", (src & 0xFF));
 }
 
-void IPv4HandlePacket(void* data) {
+void IPv4HandlePacket(void* data, AuVFSNode* nic) {
 	char dest[16];
 	char src[16];
 	IPv4Header* pack = (IPv4Header*)data;
@@ -71,6 +73,13 @@ void IPv4HandlePacket(void* data) {
 	case IPV4_PROTOCOL_UDP:{
 							   uint16_t destport = ntohs(((uint16_t*)&pack->payload)[1]);
 							   SeTextOut("UDP Packet received dest port -> %d \r\n", destport);
+							   list_t* udpsocklist = UDPProtocolGetSockList();
+							   for (int i = 0; i < udpsocklist->pointer; i++) {
+								   AuSocket* sock = (AuSocket*)list_get_at(udpsocklist, i);
+								   if (sock->sessionPort == destport) {
+									   AuSocketAdd(sock, data, ntohs(pack->totalLength));
+								   }
+							   }
 							   break;
 	}
 	}
@@ -97,7 +106,11 @@ int CreateIPv4Socket(int type, int protocol) {
 	}
 }
 
-
+/*
+ * IPV4SendPacket -- sends a packet to next stage
+ * @param packet -- IPv4 packet to send
+ * @param nic -- Pointer to NIC device
+ */
 void IPV4SendPacket(IPv4Header* packet, AuVFSNode* nic) {
 	AuNetworkDevice* ndev = (AuNetworkDevice*)nic->device;
 	if (!ndev)
@@ -119,8 +132,12 @@ void IPV4SendPacket(IPv4Header* packet, AuVFSNode* nic) {
 			if (!cache) {
 				AuARPRequestMAC(nic, ip_dest);
 				SeTextOut("Requesting MAC \r\n");
-				for (;;);
+				
 				/* Not implemented yet */
+				AuSleepThread(AuGetCurrentThread(), 10000);
+				AuForceScheduler();
+
+				cache = AuARPGet(ip_dest);
 			}
 		}
 		uint8_t broadcast_addr[6];

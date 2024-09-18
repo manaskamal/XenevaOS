@@ -1501,6 +1501,15 @@ int main(int argc, char* arv[]) {
 	uint64_t last_click_time = 0;
 	uint64_t last_redraw = 0;
 
+	/* launch the session manager directly from here */
+	int child = _KeCreateProcess(0, "xelnch");
+	_KeProcessLoadExec(child, "/xelnch.exe", 0, NULL);
+
+	_KeProcessSleep(10);
+
+	child = _KeCreateProcess(0, "nmdapha");
+	_KeProcessLoadExec(child, "/nmdapha.exe", 0, NULL);
+
 	while (1) {
 
 		unsigned long frameTime = DeodhaiTimeSince(last_redraw);
@@ -1789,7 +1798,6 @@ int main(int argc, char* arv[]) {
 			memset(&event, 0, sizeof(PostEvent));
 		}
 
-		//_KePrint("Deodhai sleep -> %d \r\n", (16 - frameTime));
 		_KeProcessSleep((16 - frameTime));
 	}
 }

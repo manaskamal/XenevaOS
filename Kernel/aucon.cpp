@@ -46,6 +46,8 @@ uint32_t *__framebuffer;
 AuConsole *aucon;
 bool early_;
 
+#define CONSOLE_BACKGROUND 0x00000000
+#define CONSOLE_FOREGROUND 0xFFFFFFFF
 void(*_print_func) (const char* text, ...);
 
 #pragma pack (push, 1)
@@ -159,7 +161,7 @@ void AuConsolePostInitialise(PKERNEL_BOOT_INFO info) {
 
 	for (int w = 0; w < info->X_Resolution; w++) {
 		for (int h = 0; h < info->Y_Resolution; h++) {
-			aucon->buffer[w + h * info->X_Resolution] = 0x00000000;
+			aucon->buffer[w + h * info->X_Resolution] = CONSOLE_BACKGROUND;
 		}
 	}
 
@@ -191,7 +193,8 @@ void AuPutC(char c) {
 	for (y = 0; y<font->height; y++) {
 		line = offs; mask = 1 << (font->width - 1);
 		for (x = 0; x<font->width; x++) {
-			aucon->buffer[line + console_x + console_y * aucon->width] = ((int)*glyph) & (mask) ? 0xFFFFFF : 0;
+			aucon->buffer[line + console_x + console_y * aucon->width] = ((int)*glyph) & (mask) ? CONSOLE_FOREGROUND :
+				0;
 			mask >>= 1; line += 1;
 		}
 		aucon->buffer[line + console_x + console_y * aucon->width] = 0; glyph += bpl; offs += aucon->scanline;
@@ -237,7 +240,8 @@ void AuPutS(char *s){
 			for (y = 0; y<font->height; y++) {
 				line = offs; mask = 1 << (font->width - 1);
 				for (x = 0; x<font->width; x++) {
-					aucon->buffer[line + console_y * aucon->width] = ((int)*glyph) & (mask) ? 0xFFFFFF : 0;
+					aucon->buffer[line + console_y * aucon->width] = ((int)*glyph) & (mask) ? CONSOLE_FOREGROUND:
+						CONSOLE_BACKGROUND;
 					mask >>= 1; line += 1;
 				}
 				aucon->buffer[line + console_y * aucon->width] = 0; glyph += bpl; offs += aucon->scanline;

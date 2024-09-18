@@ -34,7 +34,7 @@ uint64_t *strm_buf = 0;
 /*
  * HDAInitOutput -- initialise the output stream
  */
-void HDAInitOutput() {
+int HDAInitOutput() {
 	uint64_t pos = 0xFFFFD00004000000;
 	uint64_t phys_buf = 0;
 	strm_buf = (uint64_t*)pos;
@@ -46,15 +46,23 @@ void HDAInitOutput() {
 			X86_64_PAGING_WRITE_THROUGH);
 	}
 
+
 	/* set the sample buffer to hdaudio struc*/
 	HDAudioSetSampleBuffer(pos);
 
 	_aud_outb_(REG_O0_CTLL, 0 << 1);
 
+
 	/* Now reset the stream */
-	_aud_outb_(REG_O0_CTLL, 1); //reset
-	while ((_aud_inl_(REG_O0_CTLL) & 0x1) == 0)
-		;
+	int timeout = 0;
+	_aud_outl_(REG_O0_CTLL, 1); //reset
+	while (!(_aud_inl_(REG_O0_CTLL) & 0x1)) {
+		if (timeout == 1000000) {
+			SeTextOut("[HDAudio]: Failed to reset output stream \r\n");
+			return 1;
+		}
+		timeout++;
+	}
 
 	_aud_outb_(REG_O0_CTLL, 0);
 	while ((_aud_inl_(REG_O0_CTLL) & 0x1) != 0)
@@ -73,7 +81,7 @@ void HDAInitOutput() {
 	}
 	bdl[j - 1].flags = 1;
 
-
+	SeTextOut("Reset completed \r\n");
 	_aud_outw_(REG_O0_CTLU, (1 << 4) | (1 << 19));
 	//_aud_outw_(REG_O0_CTLL, (1 << 16));
 
@@ -110,7 +118,7 @@ void HDAInitOutput() {
 /*
  * HDAInitInputStream -- start an input stream
  */
-void HDAInitInputStream() {
+int HDAInitInputStream() {
 
 	uint64_t pos = 0xFFFFD00008000000;
 	uint64_t phys_buf = 0;
@@ -126,9 +134,13 @@ void HDAInitInputStream() {
 	//hda_set_sample_buffer(pos);
 	_aud_outl_(REG_I0_CTLL, 0 << 1);
 	/* Now reset the stream */
+	int timeout = 0;
 	_aud_outl_(REG_I0_CTLL, 1); //reset
-	while ((_aud_inl_(REG_I0_CTLL) & 0x1) == 0)
-		;
+	while ((_aud_inl_(REG_I0_CTLL) & 0x1) == 0) {
+		if (timeout == 1000000)
+			return 1;
+		timeout++;
+	}
 
 	_aud_outl_(REG_I0_CTLL, 0);
 	while ((_aud_inl_(REG_I0_CTLL) & 0x1) != 0)

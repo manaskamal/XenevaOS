@@ -62,15 +62,6 @@ extern "C" void main(int argc, char* argv[]) {
 	_KeProcessLoadExec(child, "/deodhai.exe", 0, NULL);
 
 	_KePrint("Deodhai spawned \r\n");
-	_KeProcessSleep(1);
-
-	child = _KeCreateProcess(0, "xelnch");
-	_KeProcessLoadExec(child, "/xelnch.exe", 0, NULL);
-
-	_KeProcessSleep(1);
-
-	child = _KeCreateProcess(0, "nmdapha");
-	_KeProcessLoadExec(child, "/nmdapha.exe", 0, NULL);
 
 	while (1) {
 		/* from here, enter as a killer of all dead processes*/

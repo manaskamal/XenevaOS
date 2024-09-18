@@ -34,6 +34,8 @@
 #include <_null.h>
 #include <aucon.h>
 #include <Mm\kmalloc.h>
+#include <Hal/serial.h>
+#include <Net/ipv4.h>
 
 list_t* arp_list;
 
@@ -101,4 +103,40 @@ void AuARPRequestMAC(AuVFSNode* nic, uint32_t addr) {
 	 * link layer other than Ethernet
 	 */
 	kfree(arp);
+}
+
+void ARPHandlePacket(void* data, AuVFSNode* nic) {
+	AuNetworkDevice* eth = (AuNetworkDevice*)nic->device;
+	if (!eth)
+		return;
+	NetARP* packet = (NetARP*)data;
+	SeTextOut("ARP Packet received hardware type -> %d , protocol -> %d \r\n",
+		ntohs(packet->hwAddressType), ntohs(packet->hwProtocolType));
+	if (ntohs(packet->hwAddressType) == 1 && ntohs(packet->hwProtocolType) == ETHERNET_TYPE_IPV4) {
+		if (packet->arp_data.arp_eth_ipv4.arp_spa)
+			ARPProtocolAdd(nic, packet->arp_data.arp_eth_ipv4.arp_spa, packet->arp_data.arp_eth_ipv4.arp_sha);
+	}
+	if (ntohs(packet->operation) == 1) {
+		char spa[17];
+		ip_ntoa(ntohl(packet->arp_data.arp_eth_ipv4.arp_spa));
+		char tpa[17];
+		ip_ntoa(ntohl(packet->arp_data.arp_eth_ipv4.arp_tpa));
+		if (eth->ipv4addr && packet->arp_data.arp_eth_ipv4.arp_tpa == eth->ipv4addr) {
+			NetARP arp;
+			arp.hwAddressType = htons(1);
+			arp.hwProtocolType = htons(ETHERNET_TYPE_IPV4);
+			arp.hwAddressSize = 6;
+			arp.protocolSize = 4;
+			arp.operation = htons(2);
+			memcpy(arp.arp_data.arp_eth_ipv4.arp_sha, eth->mac, 6);
+			memcpy(arp.arp_data.arp_eth_ipv4.arp_tha, packet->arp_data.arp_eth_ipv4.arp_sha, 6);
+			arp.arp_data.arp_eth_ipv4.arp_spa = eth->ipv4addr;
+			arp.arp_data.arp_eth_ipv4.arp_tpa = packet->arp_data.arp_eth_ipv4.arp_spa;
+			AuEthernetSend(nic,&arp,sizeof(NetARP), ETHERNET_TYPE_ARP, packet->arp_data.arp_eth_ipv4.arp_sha);
+		}
+	}
+	else if (ntohs(packet->operation) == 2) {
+		char spa[17];
+		ip_ntoa(ntohl(packet->arp_data.arp_eth_ipv4.arp_spa));
+	}
 }

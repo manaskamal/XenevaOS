@@ -50,7 +50,10 @@ typedef struct _ipv4head_ {
 #define IPV4_PROTOCOL_TCP 6
 
 
+
 extern uint16_t IPv4CalculateChecksum(IPv4Header* p);
+
+extern void ip_ntoa(const uint32_t src);
 /*
 * CreateIPv4Socket -- create a new ipv4 socket
 * @param type -- type of the socket its Datagram or
@@ -59,5 +62,17 @@ extern uint16_t IPv4CalculateChecksum(IPv4Header* p);
 */
 extern int CreateIPv4Socket(int type, int protocol);
 
-extern void IPv4HandlePacket(void* data);
+/*
+ * IPv4HandlePacket -- IPv4 Handle Packet 
+ * @param data -- Pointer to IPv4 packet
+ * @param nic -- Pointer to Network Card
+ */
+extern void IPv4HandlePacket(void* data,AuVFSNode* nic);
+
+/*
+ * IPV4SendPacket -- sends a packet to next stage
+ * @param packet -- IPv4 packet to send
+ * @param nic -- Pointer to NIC device
+ */
+extern void IPV4SendPacket(IPv4Header* packet, AuVFSNode* nic);
 #endif

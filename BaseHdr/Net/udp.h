@@ -30,12 +30,15 @@
 #ifndef __UDP_H__
 #define __UDP_H__
 
+#include <list.h>
+
 #pragma pack(push,1)
 typedef struct _udpheader_ {
 	unsigned short srcPort;
 	unsigned short destPort;
 	unsigned short length;
 	unsigned short checksum;
+	unsigned char payload[];
 }UDPHeader;
 #pragma pack(pop)
 
@@ -44,5 +47,16 @@ typedef struct _udpheader_ {
 * socket
 */
 extern int CreateUDPSocket();
+
+/*
+ * UDPSocketInstall -- initialize the UDP socket
+ */
+extern void UDPProtocolInstall();
+
+/*
+ * UDPProtocolGetSockList -- returns the socket
+ * list
+ */
+extern list_t* UDPProtocolGetSockList();
 
 #endif

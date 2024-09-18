@@ -36,6 +36,7 @@
 #include <Fs\dev\devfs.h>
 #include <Net\socket.h>
 #include <Net/route.h>
+#include <Net/udp.h>
 
 hashmap_t* netadapters;
 
@@ -50,6 +51,7 @@ void AuInitialiseNet() {
 	AuRouteTableInitialise();
 	/* ARP Protocol for Ethernet devices */
 	ARPProtocolInitialise();
+	UDPProtocolInstall();
 }
 
 

@@ -39,12 +39,12 @@
 /*
 * HDAInitOutput -- initialise the output stream
 */
-extern void HDAInitOutput();
+extern int HDAInitOutput();
 
 /*
 * HDAInitInputStream -- start an input stream
 */
-extern void HDAInitInputStream();
+extern int HDAInitInputStream();
 
 /*
 * HDAudioStartOutput -- starts the output

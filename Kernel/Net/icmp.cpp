@@ -32,8 +32,15 @@
 #include <Fs/vfs.h>
 #include <Mm/kmalloc.h>
 #include <string.h>
+#include <Net/ipv4.h>
+#include <Net/aunet.h>
 #include <Hal/serial.h>
 
+uint16_t AuICMPChecksum(IPv4Header* packet) {
+	uint32_t sum = 0;
+	uint16_t* s = (uint16_t*)packet->payload;
+	return sum;
+}
 /*
 * AuICMPReceive -- ICMP protocol receive interface
 * @param sock -- Pointer to socket
@@ -76,6 +83,10 @@ uint64_t AuICMPWrite(AuVFSNode* node, AuVFSNode* file, uint64_t* buffer, uint32_
 	return 0;
 }
 
+int AuICMPFileClose(AuVFSNode* fsys, AuVFSNode* file) {
+	return 0;
+}
+
 /*
  * CreateICMPSocket -- create a new Internet
  * Control Message Protocol (ICMP) protocol
@@ -93,14 +104,18 @@ int CreateICMPSocket() {
 	AuSocket *sock = (AuSocket*)kmalloc(sizeof(AuSocket));
 	memset(sock, 0, sizeof(AuSocket));
 	fd = AuProcessGetFileDesc(proc);
-	/*sock->fsnode.read = AuICMPRead;
-	sock->fsnode.write = AuICMPWrite;*/
 	sock->bind = AuICMPBind;
 	sock->close = AuICMPClose;
 	sock->connect = 0;
 	sock->receive = AuICMPReceive;
 	sock->send = AuICMPSend;
-	proc->fds[fd] = (AuVFSNode*)sock;
+	AuVFSNode* node = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
+	memset(node, 0, sizeof(AuVFSNode));
+	node->flags |= FS_FLAG_SOCKET;
+	node->device = sock;
+	node->close = AuICMPFileClose;
+	node->iocontrol = SocketIOControl;
+	proc->fds[fd] = node;
 	SeTextOut("ICMP Socket created \r\n");
 	return 0;
 }

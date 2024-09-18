@@ -52,7 +52,7 @@
 */
 extern void AuEthernetSend(AuVFSNode* nic,void* data, size_t len, uint16_t type, uint8_t* dest);
 
-AU_EXTERN AU_EXPORT void AuEthernetHandle(void *frame, int size);
+AU_EXTERN AU_EXPORT void AuEthernetHandle(void *frame, int size, AuVFSNode* nic);
 
 
 #endif

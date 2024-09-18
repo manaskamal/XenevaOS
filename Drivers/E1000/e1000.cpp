@@ -64,6 +64,7 @@ typedef struct _e1000_nic_ {
 
 E1000NIC* e1000_nic;
 AuNetworkDevice* ndev;
+AuVFSNode* nic;
 
 #define INTS (ICR_LSC | ICR_RXO | ICR_RXT0 | ICR_TXQE | ICR_TXDW | ICR_ACK | ICR_RXDMT0 | ICR_SRPD)
 #define CTRL_PHY_RST  (1UL << 31UL)
@@ -262,7 +263,7 @@ void E1000Thread(uint64_t val) {
 			while ((e1000_nic->rx[e1000_nic->rx_index].status & 0x01)) {
 				int i = e1000_nic->rx_index;
 				//handle ethernet packet
-				AuEthernetHandle((void*)e1000_nic->rx_virt[i], e1000_nic->rx[i].length);
+				AuEthernetHandle((void*)e1000_nic->rx_virt[i], e1000_nic->rx[i].length, nic);
 				e1000_nic->rx[i].status = 0;
 				if (++e1000_nic->rx_index == E1000_NUM_RX_DESC)
 					e1000_nic->rx_index = 0;
@@ -504,7 +505,7 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 	AuTextOut("E1000 IOCTL -> %x \n", &E1000IOCtl);
 	AuAddNetAdapter(adapt, "e1000");
 	adapt->read(0, 0, 0, 0);
-
+	nic = adapt;
 
 	E1000WriteCmd(e1000_nic, E1000_REG_IMS, INTS);
 	for (int i = 0; i < 10000000; i++)

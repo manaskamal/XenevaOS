@@ -89,4 +89,11 @@ extern AuARPCache* AuARPGet(uint32_t address);
  */
 extern void AuARPRequestMAC(AuVFSNode* nic, uint32_t addr);
 
+/*
+ * ARPHandlePacket -- handle incoming ARP packet
+ * @param data -- Pointer to ARP packet
+ * @param nic -- Pointer to Network Device file
+ */
+extern void ARPHandlePacket(void* data, AuVFSNode* nic);
+
 #endif

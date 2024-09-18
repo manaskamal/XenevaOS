@@ -217,6 +217,7 @@ int AuTCPConnect(AuSocket* sock, sockaddr* addr, socklen_t addrlen){
 
 	tcp->checksum = htons(CalculateTCPChecksum(&checkhdr, tcp, NULL, 0));
 	
+	IPV4SendPacket(ipv4, nic);
 	return 0;
 }
 
