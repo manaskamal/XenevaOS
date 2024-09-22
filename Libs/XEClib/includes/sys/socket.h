@@ -32,6 +32,7 @@
 
 #include <stdint.h>
 #include <_xeneva.h>
+#include <stddef.h>
 
 #ifdef __cplusplus
 XE_EXTERN{
@@ -57,6 +58,13 @@ XE_EXTERN{
 #define SO_BINDTODEVICE 3
 
 	typedef size_t socklen_t;
+
+#pragma pack(push,1)
+typedef struct _dns_entry_ {
+	int index;
+	uint32_t address;
+}XEDNSEntry;
+#pragma pack(pop)
 
 	typedef struct _sockaddr_ {
 		unsigned short sa_family;  //address family
@@ -123,9 +131,11 @@ XE_EXTERN{
 	XE_LIB int send(int sockfd, msghdr* msg, int flags);
 	XE_LIB int receive(int sockfd, msghdr *msg, int flags);
 	XE_LIB int socket_setopt(int sockfd, int level, int optname, const void* optval, socklen_t optlen);
-	XE_LIB int bind(int sockfd, sockaddr *addr, socklen_t addrlen);
+	XE_LIB int bind(int sockfd, struct sockaddr *addr, socklen_t addrlen);
 	XE_LIB int accept(int sockfd, sockaddr *addr, socklen_t * addrlen);
 	XE_LIB int listen(int sockfd, int backlog);
+	XE_LIB ssize_t recvfrom(int sockfd, void* buf, size_t len, int flags, struct sockaddr* src_addr, socklen_t* addrlen);
+	XE_LIB ssize_t sendto(int sockfd, const void* buf, size_t len, int flags, const struct sockaddr* dest_addr, socklen_t addrlen);
 #ifdef __cplusplus
 }
 #endif

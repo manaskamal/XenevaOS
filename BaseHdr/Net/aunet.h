@@ -47,6 +47,9 @@ typedef struct _netdev_{
 	uint32_t ipv4addr;
 	uint32_t ipv4subnet;
 	uint32_t ipv4gateway;
+	uint32_t dns_ipv4_1;
+	uint32_t dns_ipv4_2;
+	uint32_t dns_ipv4_3;
 }AuNetworkDevice;
 #pragma pack(pop)
 

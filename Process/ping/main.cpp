@@ -32,6 +32,9 @@
 #include <stdio.h>
 #include <sys\_keproc.h>
 #include <sys\_kefile.h>
+#include <sys/socket.h>
+#include <sys/netdb.h>
+#include <arpa/inet.h>
 #include <sys\iocodes.h>
 #include <string.h>
 #include <stdlib.h>
@@ -43,6 +46,12 @@
 */
 int main(int argc, char* argv[]){
 	printf("\n");
+	char* s = (char*)malloc(strlen("www.google.com"));
+	strcpy(s, "www.google.com");
+	printf("Pinging... %s \r\n", s);
+	hostent* ent = gethostbyname(s);
+	char* addr = inet_ntoa(*(struct in_addr*)ent->h_addr_list[0]);
+	printf("Host got %s\r\n",addr);
 	while (1) {
 		_KePauseThread();
 	}

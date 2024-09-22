@@ -16,6 +16,12 @@
     <Filter Include="c++">
       <UniqueIdentifier>{f50df6ec-929a-4a32-81e7-6731f876efbc}</UniqueIdentifier>
     </Filter>
+    <Filter Include="includes\arpa">
+      <UniqueIdentifier>{ab8f0610-514d-4b7b-9e0b-f151ce6ca706}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="arpa">
+      <UniqueIdentifier>{caf1bfe0-c2c1-4506-bacf-05e8207d71d0}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <NASM Include="_callbase.asm" />
@@ -169,6 +175,12 @@
     <ClInclude Include="includes\sys\_procheap.h">
       <Filter>includes\sys</Filter>
     </ClInclude>
+    <ClInclude Include="includes\sys\netdb.h">
+      <Filter>includes\sys</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\arpa\inet.h">
+      <Filter>includes\arpa</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="string.cpp" />
@@ -211,6 +223,12 @@
     <ClCompile Include="ctype.cpp" />
     <ClCompile Include="sys\_procheap.cpp">
       <Filter>sys</Filter>
+    </ClCompile>
+    <ClCompile Include="sys\xenet.cpp">
+      <Filter>sys</Filter>
+    </ClCompile>
+    <ClCompile Include="arpa\inet.cpp">
+      <Filter>arpa</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

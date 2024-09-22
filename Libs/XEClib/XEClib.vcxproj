@@ -156,6 +156,7 @@
     <NASM Include="_callbase.asm" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="includes\arpa\inet.h" />
     <ClInclude Include="includes\assert.h" />
     <ClInclude Include="includes\c++\cctype" />
     <ClInclude Include="includes\c++\cmath" />
@@ -190,6 +191,7 @@
     <ClInclude Include="includes\sys\stat.h" />
     <ClInclude Include="includes\sys\types.h" />
     <ClInclude Include="includes\sys\utf.h" />
+    <ClInclude Include="includes\sys\netdb.h" />
     <ClInclude Include="includes\sys\_heap.h" />
     <ClInclude Include="includes\sys\_kefile.h" />
     <ClInclude Include="includes\sys\_keftmngr.h" />
@@ -207,6 +209,7 @@
     <ClInclude Include="includes\_xeprint.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="arpa\inet.cpp" />
     <ClCompile Include="c++\ios.cpp" />
     <ClCompile Include="c++\iostream.cpp" />
     <ClCompile Include="c++\istream.cpp" />
@@ -221,6 +224,7 @@
     <ClCompile Include="stdio.cpp" />
     <ClCompile Include="stdlib.cpp" />
     <ClCompile Include="string.cpp" />
+    <ClCompile Include="sys\xenet.cpp" />
     <ClCompile Include="sys\_heap.cpp" />
     <ClCompile Include="sys\_procheap.cpp">
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</DeploymentContent>

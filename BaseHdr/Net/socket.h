@@ -53,9 +53,12 @@
 #define SOCK_ROUTE_TABLE_DELETE 0x121
 #define SOCK_ROUTE_TABLE_GETNUMENTRY 0x122
 #define SOCK_ROUTE_TABLE_GETENTRY 0x123
+#define SOCK_ADD_DNS_SERVER 0x124
+#define SOCK_GET_DNS_SERVER 0x125
 
 
 typedef size_t socklen_t;
+
 
 typedef struct _sockaddr_ {
 	unsigned short sa_family;  //address family
@@ -116,6 +119,8 @@ typedef struct _sockaddr_in_ {
 	char sin_zero[8];
 }sockaddr_in;
 
+
+extern AuSocket* AuNetCreateSocket();
 /*
  * AuSocketAdd -- add some data to socket
  * @param sock -- Pointer to the socket

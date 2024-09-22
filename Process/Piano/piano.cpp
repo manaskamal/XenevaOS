@@ -85,7 +85,6 @@ int main(int argc, char* arv[]) {
 	printf("piano : using standard tuning for western musical \n");
 	printf("piano : use keyboard keys a-to-k to play piano \n");
 
-
 	Note note;
 	memset(&note, 0, sizeof(Note));
 	while (1) {

@@ -141,7 +141,8 @@ AuVFSNode* FatCreateFile(AuVFSNode* fsys, char* filename) {
 	char fname[11];
 	memset(fname, 0, 11);
 	FatToDOSFilename(extract, fname, 11);
-	fname[11] = 0;
+	//fname[11] = 0;
+	SeTextOut("File name extracted -> %s \r\n", fname);
 
 	while (1) {
 		for (int j = 0; j < _fs->__SectorPerCluster; j++) {
@@ -150,7 +151,7 @@ AuVFSNode* FatCreateFile(AuVFSNode* fsys, char* filename) {
 
 			FatDir *dirent = (FatDir*)buff;
 			for (int i = 0; i < 16; i++) {
-				if (dirent->filename[0] == 0x00 || dirent->filename[0] == 0xE5) {
+				if ((dirent->filename[0] == 0x00) || (dirent->filename[0] == 0xE5)) {
 					memcpy(dirent->filename, fname, 11);
 
 					uint32_t cluster = FatFindFreeCluster(fsys);
@@ -220,7 +221,7 @@ void FatFileUpdateSize(AuVFSNode* fsys, AuVFSNode* file, size_t size) {
 	char fname[11];
 	memset(fname, 0, 11);
 	FatToDOSFilename(file->filename, fname, 11);
-	fname[11] = 0;
+	//fname[11] = 0;
 	uint64_t* buff = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
 	memset(buff, 0, PAGE_SIZE);
 
@@ -233,7 +234,7 @@ void FatFileUpdateSize(AuVFSNode* fsys, AuVFSNode* file, size_t size) {
 			for (int i = 0; i < 16; i++) {
 				char name[11];
 				memcpy(name, dirent->filename, 11);
-				name[11] = 0;
+				//name[11] = 0;
 
 				if (strcmp(name, fname) == 0) {
 					dirent->file_size = size;
@@ -274,12 +275,12 @@ int FatFileUpdateFilename(AuVFSNode* fsys, AuVFSNode* file, char* newname) {
 	char fname[11];
 	memset(fname, 0, 11);
 	FatToDOSFilename(file->filename, fname, 11);
-	fname[11] = 0;
+	//fname[11] = 0;
 
 	char nname[11];
 	memset(nname, 0, 11);
 	FatToDOSFilename(newname, nname, 11);
-	nname[11] = 0;
+	//nname[11] = 0;
 
 	uint64_t* buff = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
 	memset(buff, 0, PAGE_SIZE);
@@ -293,7 +294,7 @@ int FatFileUpdateFilename(AuVFSNode* fsys, AuVFSNode* file, char* newname) {
 			for (int i = 0; i < 16; i++) {
 				char name[11];
 				memcpy(name, dirent->filename, 11);
-				name[11] = 0;
+				//name[11] = 0;
 
 				if (strcmp(name, fname) == 0) {
 					memcpy(dirent->filename, nname, 11);
@@ -386,12 +387,12 @@ size_t FatWrite(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint32_t len
 		return 0;
 	FatFS* _fs = (FatFS*)fsys->device;
 
-	size_t num_cluster = length / (_fs->__BytesPerSector * _fs->__SectorPerCluster) +
+	size_t num_cluster = static_cast<size_t>(length) / (static_cast<size_t>(_fs->__BytesPerSector) * _fs->__SectorPerCluster) +
 		((length % (_fs->__BytesPerSector * _fs->__SectorPerCluster) ? 1 : 0));
 
 	for (int i = 0; i < num_cluster; i++) {
 		FatFileWriteContent(fsys, file, buffer);
-		buffer += (_fs->__BytesPerSector * _fs->__SectorPerCluster);
+		buffer += (static_cast<size_t>(_fs->__BytesPerSector) * _fs->__SectorPerCluster);
 	}
 
 
@@ -420,7 +421,7 @@ int FatFileClearDirEntry(AuVFSNode* fsys, AuVFSNode* file) {
 	char fname[11];
 	memset(fname, 0, 11);
 	FatToDOSFilename(file->filename, fname, 11);
-	fname[11] = 0;
+	//fname[11] = 0;
 
 	uint64_t* buff = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
 	memset(buff, 0, PAGE_SIZE);
@@ -434,7 +435,7 @@ int FatFileClearDirEntry(AuVFSNode* fsys, AuVFSNode* file) {
 			for (int i = 0; i < 16; i++) {
 				char name[11];
 				memcpy(name, dirent->filename, 11);
-				name[11] = 0;
+				//name[11] = 0;
 
 				if (strcmp(name, fname) == 0) {
 					memset(dirent, 0, sizeof(FatDir));

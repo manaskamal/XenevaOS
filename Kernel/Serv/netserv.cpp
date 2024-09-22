@@ -89,7 +89,10 @@ int NetConnect(int sockfd, sockaddr* addr, socklen_t addrlen) {
 			return 1;
 	}
 
-	AuSocket* sock = (AuSocket*)proc->fds[sockfd];
+	AuVFSNode* node = proc->fds[sockfd];
+	if (!node)
+		return 0;
+	AuSocket* sock = (AuSocket*)node->device;
 	if (sock->connect)
 		return sock->connect(sock, addr, addrlen);
 	return 1;
@@ -107,7 +110,10 @@ int NetBind(int sockfd, sockaddr *addr, socklen_t addrlen){
 			return 1;
 	}
 
-	AuSocket* sock = (AuSocket*)proc->fds[sockfd];
+	AuVFSNode* node = proc->fds[sockfd];
+	if (!node)
+		return 0;
+	AuSocket* sock = (AuSocket*)node->device;
 	if (sock->bind)
 		return sock->bind(sock, addr, addrlen);
 	return 1;

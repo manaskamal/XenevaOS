@@ -77,7 +77,10 @@ void IPv4HandlePacket(void* data, AuVFSNode* nic) {
 							   for (int i = 0; i < udpsocklist->pointer; i++) {
 								   AuSocket* sock = (AuSocket*)list_get_at(udpsocklist, i);
 								   if (sock->sessionPort == destport) {
+									   SeTextOut("UDP Packet adding to sock -> %d sz -> %d \r\n", sock->sessionPort,
+										   ntohs(pack->totalLength));
 									   AuSocketAdd(sock, data, ntohs(pack->totalLength));
+									   break;
 								   }
 							   }
 							   break;

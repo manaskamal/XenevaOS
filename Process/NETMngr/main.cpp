@@ -372,6 +372,10 @@ int main(int argc, char* argv[]){
 					memcpy(&ip_data, opt, 4);
 					char addr[16];
 					ip_ntoa(ntohl(ip_data), addr);
+					XEDNSEntry dns;
+					dns.index = 1;
+					dns.address = ip_data;
+					_KeFileIoControl(sock_fd, SOCK_ADD_DNS_SERVER, &dns);
 					printf("DNS server %s \n", addr);
 				}
 				opt += len;

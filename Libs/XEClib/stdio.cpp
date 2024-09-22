@@ -356,7 +356,7 @@ int fprintf(FILE* stream, const char* format, ...) {
 	len = _xeprint(output, MAX_STRING_LENGTH, format, list);
 	va_end(list);
 	if (len > 0) {
-		_KeWriteFile(XENEVA_STDIN, output, strlen(output)-1);
+		_KeWriteFile(stream->_file_num, output, strlen(output)-1);
 	}
 	return len;
 }

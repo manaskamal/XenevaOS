@@ -41,6 +41,13 @@
 
 list_t *raw_socket_list;
 
+#pragma pack(push,1)
+typedef struct _dns_entry_ {
+	int index;
+	uint32_t address;
+}AuDNSEntry;
+#pragma pack(pop)
+
 /*
  * AuSocketAdd -- add some data to socket
  * @param sock -- Pointer to the socket
@@ -52,6 +59,7 @@ void AuSocketAdd(AuSocket* sock, void* data, size_t sz) {
 	memset(data_, 0, sz + sizeof(size_t));
 	*(size_t*)data_ = sz;
 	memcpy(data_ + sizeof(size_t), data, sz);
+	SeTextOut("Sock stack -> %x \r\n", sock->rxstack);
 	AuStackPush(sock->rxstack, data_);
 }
 
@@ -218,6 +226,68 @@ int SocketIOControl(AuVFSNode* file, int code, void* arg) {
 		AuRouteTablePopulate(entry, info->index);
 		SeTextOut("RouteTable populated \r\n");
 		return 0;
+	}
+	case SOCK_ADD_DNS_SERVER: {
+		AuDNSEntry* dnsentry = (AuDNSEntry*)arg;
+		if (!dnsentry)
+			return 1;
+		AuSocket* sock = (AuSocket*)file->device;
+		if (!sock)
+			return 1;
+		AuVFSNode* nic = (AuVFSNode*)sock->binedDev;
+		if (!nic)
+			return 1;
+		AuNetworkDevice* netdev = (AuNetworkDevice*)nic->device;
+		if (!netdev)
+			return 1;
+		switch (dnsentry->index) {
+		case 1:
+			netdev->dns_ipv4_1 = dnsentry->address;
+			SeTextOut("DNS Server added -> %d \r\n", netdev->dns_ipv4_1);
+			return 0;
+		case 2:
+			netdev->dns_ipv4_2 = dnsentry->address;
+			SeTextOut("DNS Server 2 added -> %d \r\n", netdev->dns_ipv4_2);
+			return 0;
+		case 3:
+			netdev->dns_ipv4_3 = dnsentry->address;
+			SeTextOut("DNS Server 3 added -> %d \r\n", netdev->dns_ipv4_3);
+			return 0;
+		default:
+			SeTextOut("[Aurora]: failed to add dns entry to index -> %d \r\n", dnsentry->index);
+			break;
+		}
+	}
+	case SOCK_GET_DNS_SERVER: {
+		AuDNSEntry* dnsentry = (AuDNSEntry*)arg;
+		SeTextOut("Getting dns entry of index -> %d \r\n", dnsentry->index);
+		if (!dnsentry)
+			return 1;
+		AuSocket* sock = (AuSocket*)file->device;
+		if (!sock)
+			return 1;
+		AuVFSNode* nic = (AuVFSNode*)sock->binedDev;
+		if (!nic)
+			return 1;
+		AuNetworkDevice* netdev = (AuNetworkDevice*)nic->device;
+		SeTextOut("netdev %d \r\n", netdev->dns_ipv4_1);
+		if (!netdev)
+			return 1;
+		switch (dnsentry->index) {
+		case 1:
+			dnsentry->address = netdev->dns_ipv4_1;
+			SeTextOut("DNSEntry address -> %d \r\n", dnsentry->address);
+			return 0;
+		case 2:
+			dnsentry->address = netdev->dns_ipv4_2;
+			return netdev->dns_ipv4_2;
+		case 3:
+			dnsentry->address = netdev->dns_ipv4_3;
+			return netdev->dns_ipv4_3;
+		default:
+			SeTextOut("[Aurora]: failed to get dns entry to index -> %d \r\n", dnsentry->index);
+			break;
+		}
 	}
 	}
 }

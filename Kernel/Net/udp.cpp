@@ -170,8 +170,11 @@ int AuUDPBind(AuSocket* sock, sockaddr* addr, socklen_t addrlen){
 	if (sock->sessionPort != 0)
 		return -1;
 
+	SeTextOut("BINDING UDP \r\n");
 	sockaddr_in* addr_in = (sockaddr_in*)addr;
 	int port = ntohs(addr_in->sin_port);
+	SeTextOut("PORT -> %d \r\n", port);
+	SeTextOut("UDP Protocol List -> %x \r\n", udp_socket_list);
 
 	for (int i = 0; i < udp_socket_list->pointer; i++) {
 		AuSocket* sock = (AuSocket*)list_get_at(udp_socket_list, i);
@@ -180,6 +183,7 @@ int AuUDPBind(AuSocket* sock, sockaddr* addr, socklen_t addrlen){
 	}
 	sock->sessionPort = port;
 	list_add(udp_socket_list, sock);
+	SeTextOut("UDP Socket added \r\n");
 	return 0;
 }
 
@@ -209,8 +213,7 @@ int CreateUDPSocket() {
 		proc = AuProcessFindSubThread(thread);
 	if (!proc)
 		return -1;
-	AuSocket *sock = (AuSocket*)kmalloc(sizeof(AuSocket));
-	memset(sock, 0, sizeof(AuSocket));
+	AuSocket* sock = AuNetCreateSocket();
 	fd = AuProcessGetFileDesc(proc);
 	sock->bind = AuUDPBind;
 	sock->close = AuUDPClose;

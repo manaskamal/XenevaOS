@@ -107,7 +107,7 @@
       </GenerateDebugInformation>
       <OutputFile>..\..\Build\ping.exe</OutputFile>
       <AdditionalLibraryDirectories>..\..\x64\Debug;..\..\Libs\XECrt;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>XEClib.lib; xecrt.lib; Chitralekha.lib;ftype.lib;</AdditionalDependencies>
+      <AdditionalDependencies>XEClib.lib; xecrt.lib; chlkha.lib;ftype.lib;</AdditionalDependencies>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
       <EnableUAC>false</EnableUAC>
       <GenerateMapFile>true</GenerateMapFile>
