@@ -206,6 +206,7 @@ void page_fault(size_t vector, void* param){
 	interrupt_stack_frame *frame = (interrupt_stack_frame*)param;
 	stack_frame *fr = (stack_frame*)param;
 
+
 	void* vaddr = (void*)x64_read_cr2();
 
 	int present = !(frame->error & 0x1);
@@ -213,6 +214,7 @@ void page_fault(size_t vector, void* param){
 	int us = frame->error & 0x4;
 	int resv = frame->error & 0x8;
 	int id = frame->error & 0x10;
+
 
 	AuThread* thr = AuGetCurrentThread();
 	

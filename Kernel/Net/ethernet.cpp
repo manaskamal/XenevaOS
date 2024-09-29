@@ -36,6 +36,7 @@
 #include <aucon.h>
 #include <Net/arp.h>
 #include <Net\ipv4.h>
+#include <Net/udp.h>
 #include <Net\socket.h>
 
 #pragma pack(push,1)
@@ -47,24 +48,44 @@ __declspec(align(2)) typedef struct _ethernet_ {
 }Ethernet;
 #pragma pack(pop)
 
+
 AU_EXTERN AU_EXPORT void AuEthernetHandle(void *data, int size, AuVFSNode* nic) {
 	Ethernet* frame = (Ethernet*)data;
+	AuNetworkDevice* ndev = (AuNetworkDevice*)nic->device;
+	if (!ndev)
+		return;
+
 	list_t *raw_sockets = AuRawSocketGetList();
 	for (int i = 0; i < raw_sockets->pointer; i++) {
 		AuSocket *sock = (AuSocket*)list_get_at(raw_sockets, i);
 		AuSocketAdd(sock, frame, size);
 	}
-	switch (ntohs(frame->typeLen)) {
-	case ETHERNET_TYPE_ARP:
-		ARPHandlePacket((void*)&frame->payload, nic);
-		SeTextOut("ARP Packet received \r\n");
-		break;
-	case ETHERNET_TYPE_IPV4:
-		IPv4HandlePacket((void*)&frame->payload, nic);
-		break;
+
+	char broadcast_mac[6] = { 0xFF,0xFF,0xFF,0xFF,0xFF,0xFF };
+	if (!memcmp(frame->dest, ndev->mac, 6) || !memcmp(frame->dest, broadcast_mac, 6)) {
+		switch (ntohs(frame->typeLen)) {
+		case ETHERNET_TYPE_ARP:
+			ARPHandlePacket((void*)&frame->payload, nic);
+			break;
+		case ETHERNET_TYPE_IPV4:
+			IPv4HandlePacket((void*)&frame->payload, nic);
+			break;
+		}
 	}
 }
 
+#pragma pack(push,1)
+__declspec(align(2))
+typedef struct _dns_ {
+	uint16_t qid;
+	uint16_t flags;
+	uint16_t questions;
+	uint16_t answers;
+	uint16_t authorities;
+	uint16_t additional;
+	uint8_t data[];
+}DNSPacket;
+#pragma pack(pop)
 /*
  * AuEthernetSend -- sends a packet to ethernet layer
  * @param data -- data to send
@@ -79,16 +100,14 @@ void AuEthernetSend(AuVFSNode* nic,void* data, size_t len, uint16_t type, uint8_
 	size_t totalSz = sizeof(Ethernet)+len;
 	Ethernet* pacl = (Ethernet*)kmalloc(totalSz);
 	memset(pacl, 0, totalSz);
+	memcpy(&pacl->payload, data, len);
 	memcpy(pacl->dest, dest, 6);
 	uint8_t *src_mac = ndev->mac;
 	memcpy(pacl->src, src_mac, 6);
 	pacl->typeLen = htons(type);
-	memcpy(pacl->payload, data, len);
-	
-	AuTextOut("Ethernet setuped %d \r\n", ndev->type);
 
-	if (nic->write)
+	if (nic->write) {
 		nic->write(nic, nic, (uint64_t*)pacl, totalSz);
-
+	}
 	kfree(pacl);
 }

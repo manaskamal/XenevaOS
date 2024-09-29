@@ -48,7 +48,7 @@ int main(int argc, char* argv[]) {
 	printf("\n");
 	char* s = (char*)malloc(strlen(argv[1]));
 	strcpy(s, argv[1]);
-	printf("Getting nameserver info for %s \n", s);
+	printf("Getting nameserver info for %s DNS Pack -> %d \n", s, sizeof(DNSPacket));
 	hostent* ent = gethostbyname(s);
 	char* addr = inet_ntoa(*(struct in_addr*)ent->h_addr_list[0]);
 	printf("Non-authorative answer \n");

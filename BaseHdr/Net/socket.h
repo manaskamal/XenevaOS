@@ -95,7 +95,7 @@ typedef struct _msghdr_ {
 typedef struct _socket_ {
 	void* binedDev;
 	AuStack *rxstack;
-	int sessionPort;
+	uint16_t sessionPort;
 	int ipv4Iden;
 	int(*receive)(struct _socket_* sock, msghdr *msg, int flags);
 	int(*send)(struct _socket_* sock, msghdr* msg, int flags);

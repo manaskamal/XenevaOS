@@ -70,8 +70,8 @@ ssize_t recvfrom(int sockfd, void* buf, size_t len, int flags, sockaddr* src_add
 	_hdr.msg_control = NULL;
 	_hdr.msg_controllen = 0;
 	_hdr.msg_flags = 0;
-
 	ssize_t result = receive(sockfd, &_hdr, flags);
+	
 	if (addrlen)
 		*addrlen = _hdr.msg_namelen;
 	return result;
@@ -134,23 +134,28 @@ struct hostent* gethostbyname(const char* name) {
 	strcpy(ifname, "e1000");
 	socket_setopt(sock, SOL_SOCKET, SO_BINDTODEVICE, ifname, strlen(ifname) + 1);
 
-	_KePrint("Binding finished \r\n");
 	XEDNSEntry dns;
 	memset(&dns, 0, sizeof(XEDNSEntry));
 	uint32_t ns_addr = 0;
 	/* supported upto three nameserver for this network adapter */
 	for (int i = 0; i < 3; i++) {
 		dns.index = i+1;
-		_KePrint("nameserver : %d \r\n", i);
 		ns_addr = _KeFileIoControl(sock, SOCK_GET_DNS_SERVER, &dns);
 		if (dns.address != 0)
 			break;
 	}
-	_KePrint("Preparing DNS Packet \r\n");
-	ns_addr = dns.address;
 
-	char dat[256];
-	DNSPacket* pack = (DNSPacket*)&dat;
+	if (dns.address == 0) {
+		printf("gethostbyname: failed to get DNS address \n");
+		return NULL;
+	}
+	
+	ns_addr = dns.address;
+	in_addr in;
+	in.s_addr = ns_addr;
+	char* dns_addr = inet_ntoa(in);
+
+	DNSPacket* pack = (DNSPacket*)malloc(256);
 	uint16_t qid = rand() & 0xFFFF;
 	pack->qid = htons(qid);
 	pack->flags = htons(0x0100);
@@ -159,12 +164,11 @@ struct hostent* gethostbyname(const char* name) {
 	pack->authorities = htons(0);
 	pack->additional = htons(0);
 	
-	_KePrint("till here 1 \r\n");
 	ssize_t i = 0;
 	const char* c = name;
 	ssize_t len = 0;
 	while (*c) {
-		const char* n = strchr((char*)c, '.');
+		const char* n = strchr(c, '.');
 		if (!n) n = c + strlen(c);
 	    len = n - c;
 		pack->data[i++] = len;
@@ -180,28 +184,26 @@ struct hostent* gethostbyname(const char* name) {
 	pack->data[i++] = 0x00;
 	pack->data[i++] = 0x01;
 
-	_KePrint("Till here 2 \r\n");
 	sockaddr_in dest;
 	dest.sin_family = AF_INET;
 	dest.sin_port = htons(53);
-	memcpy(&dest.sin_addr.s_addr, &ns_addr, sizeof(ns_addr));
-
-	_KePrint("Till here 3 \r\n");
-	bind(sock, (struct sockaddr*)&dest, sizeof(sockaddr_in));
-
-	_KePrint("Preparing to send UDP packet \r\n");
-	if (sendto(sock, &dat, sizeof(DNSPacket) + i, 0, (sockaddr*)&dest, sizeof(sockaddr_in)) <= 0) {
+	dest.sin_addr.s_addr = ns_addr;
+	
+	if (sendto(sock, pack, sizeof(DNSPacket) + i, 0, (sockaddr*)&dest, sizeof(sockaddr_in)) <= 0) {
 		fprintf(stderr, "gethostbyname: failed to send dns packet \n");
 		return NULL;
 	}
 
 
 	int timeout = 0;
-	char buf[1550];
+	char *buf = (char*)malloc(1550);
+	memset(buf, 0, 1550);
 	len = 0;
 	while (1) {
-		if (timeout == 200)
-			break;
+		if (timeout == 100) {
+			free(_hostent);
+			return NULL;
+		}
 		len = recv(sock, buf, 1550, 0);
 		if (len > 0)
 			break;
@@ -210,9 +212,9 @@ struct hostent* gethostbyname(const char* name) {
 		timeout++;
 	}
 
-	//_KeCloseFile(sock);
+	_KeCloseFile(sock);
 
-	DNSPacket* resp = (DNSPacket*)&buf;
+	DNSPacket* resp = (DNSPacket*)buf;
 	if (ntohs(resp->answers) == 0) {
 		fprintf(stderr, "gethostbyname : no answer \n");
 		return NULL;

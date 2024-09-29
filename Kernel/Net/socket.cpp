@@ -243,7 +243,7 @@ int SocketIOControl(AuVFSNode* file, int code, void* arg) {
 		switch (dnsentry->index) {
 		case 1:
 			netdev->dns_ipv4_1 = dnsentry->address;
-			SeTextOut("DNS Server added -> %d \r\n", netdev->dns_ipv4_1);
+			SeTextOut("DNS Server added -> %d  %d\r\n", netdev->dns_ipv4_1, dnsentry->address);
 			return 0;
 		case 2:
 			netdev->dns_ipv4_2 = dnsentry->address;

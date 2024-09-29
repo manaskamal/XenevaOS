@@ -49,7 +49,7 @@ uint16_t IPv4CalculateChecksum(IPv4Header * p){
 			sum = (sum >> 16) + (sum & 0xFFFF);
 		}
 	}
-	return sum;
+	return ~(sum & 0xFFFF) & 0xFFFF;
 }
 
 void ip_ntoa(const uint32_t src) {
@@ -67,9 +67,11 @@ void IPv4HandlePacket(void* data, AuVFSNode* nic) {
 	ip_ntoa(ntohl(pack->destAddress));
 	ip_ntoa(ntohl(pack->srcAddress)); 
 	switch (pack->protocol){
-	case 1:
+	case 1: {
 		SeTextOut("ICMP Message \r\n");
+		AuICMPHandle(pack, nic);
 		break;
+	}
 	case IPV4_PROTOCOL_UDP:{
 							   uint16_t destport = ntohs(((uint16_t*)&pack->payload)[1]);
 							   SeTextOut("UDP Packet received dest port -> %d \r\n", destport);
@@ -101,7 +103,6 @@ int CreateIPv4Socket(int type, int protocol) {
 			return CreateUDPSocket();
 		if (protocol == IPPROTOCOL_ICMP)
 			return CreateICMPSocket();
-		return -1;
 	case SOCK_STREAM:
 		return CreateTCPSocket();
 	default:
@@ -121,14 +122,26 @@ void IPV4SendPacket(IPv4Header* packet, AuVFSNode* nic) {
 
 	uint32_t ip_dest = packet->destAddress;
 	
-
+	SeTextOut("IPV4 Sending %x\r\n", nic->device);
+	
 	/* Decide which data link layer to use for
 	   forwarding this packet*/
 	if (ndev->type == NETDEV_TYPE_ETHERNET) {
 		AuARPCache* cache = NULL;
 		if (!ndev->ipv4subnet || ((ip_dest & ndev->ipv4subnet) != (ndev->ipv4addr & ndev->ipv4subnet))) {
 			ip_dest = ndev->ipv4gateway;
+			ip_ntoa(ip_dest);
 			cache = AuARPGet(ip_dest);
+			if (!cache) {
+				AuARPRequestMAC(nic, ip_dest);
+				SeTextOut("Requesting MAC \r\n");
+
+				/* Not implemented yet */
+				AuSleepThread(AuGetCurrentThread(), 100);
+				AuForceScheduler();
+
+				cache = AuARPGet(ip_dest);
+			}
 		}
 		else {
 			cache = AuARPGet(ip_dest);

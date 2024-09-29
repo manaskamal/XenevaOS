@@ -30,15 +30,29 @@
 #ifndef __ICMP_H__
 #define __ICMP_H__
 
+#include <Net/ipv4.h>
+#include <Fs/vfs.h>
+
 #pragma pack(push,1)
+__declspec(align(2))
 typedef struct _icmp_head_ {
 	unsigned char type;
 	unsigned char code;
 	unsigned short checksum;
+	unsigned short identifier;
+	unsigned short sequenceNum;
+	unsigned char payload[];
 }ICMPHeader;
 #pragma pack(pop)
 
-
+ /*
+ * ICMPInitialise -- initialise ICMP
+ */
+extern void ICMPInitialise();
+/*
+ * AuICMPHandle -- ICMP handler
+ */
+extern void AuICMPHandle(IPv4Header* ipv4, AuVFSNode* nic);
 /*
 * CreateICMPSocket -- create a new Internet
 * Control Message Protocol (ICMP) protocol

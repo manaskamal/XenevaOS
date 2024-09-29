@@ -33,6 +33,7 @@
 #include <list.h>
 
 #pragma pack(push,1)
+__declspec(align(2))
 typedef struct _udpheader_ {
 	unsigned short srcPort;
 	unsigned short destPort;

@@ -38,11 +38,12 @@
 #include <Hal/serial.h>
 
 list_t* udp_socket_list;
-static int _udp_port = 49152;
+static int _udp_port = 12345; //12345
 
 int UDPGetPort(AuSocket* sock) {
 	int out = _udp_port++;
 	sock->sessionPort = _udp_port;
+	list_add(udp_socket_list, sock);
 	return out;
 }
 /*
@@ -52,7 +53,6 @@ int UDPGetPort(AuSocket* sock) {
 * @param flags -- extra flags
 */
 int AuUDPReceive(AuSocket* sock, msghdr *msg, int flags){
-	SeTextOut("UDP: Receive \r\n");
 	if (sock->sessionPort == 0)
 		return -1;
 
@@ -63,7 +63,7 @@ int AuUDPReceive(AuSocket* sock, msghdr *msg, int flags){
 
 	if (msg->msg_iovlen == 0)
 		return 0;
-
+	
 	char* packet = (char*)AuSocketGet(sock);
 	if (!packet) return -1;
 	IPv4Header* ipv4 = (IPv4Header*)(packet + sizeof(size_t));
@@ -87,6 +87,7 @@ int AuUDPReceive(AuSocket* sock, msghdr *msg, int flags){
 	return 0;
 }
 
+
 /*
 * AuUDPSend -- UDP protocol send interface
 * @param sock -- Pointer to socket
@@ -94,7 +95,7 @@ int AuUDPReceive(AuSocket* sock, msghdr *msg, int flags){
 * @param flags -- extra flags
 */
 int AuUDPSend(AuSocket* sock, msghdr* msg, int flags){
-	SeTextOut("UDP: Send \r\n");
+	SeTextOut("UDP: Send -> %d \r\n", sizeof(UDPHeader));
 	if (msg->msg_iovlen > 1) {
 		SeTextOut("UDP: Multiple IOV is not supported \r\n");
 		return 1;
@@ -127,6 +128,7 @@ int AuUDPSend(AuSocket* sock, msghdr* msg, int flags){
 	size_t total_len = sizeof(IPv4Header) + msg->msg_iov[0].iov_len + sizeof(UDPHeader);
 
 	IPv4Header* ipv4 = (IPv4Header*)kmalloc(total_len);
+	memset(ipv4, 0, total_len);
 	ipv4->totalLength = htons(total_len);
 	ipv4->destAddress = sockin->sin_addr.s_addr;
 	ipv4->srcAddress = netdev->ipv4addr;
@@ -136,15 +138,17 @@ int AuUDPSend(AuSocket* sock, msghdr* msg, int flags){
 	ipv4->flagsFragOffset = htons(0x4000);
 	ipv4->versionHeaderLen = 0x45;
 	ipv4->typeOfService = 0;
+	ipv4->headerChecksum = 0;
 	ipv4->headerChecksum = htons(IPv4CalculateChecksum(ipv4));
 
 	UDPHeader* udp = (UDPHeader*)&ipv4->payload;
 	udp->srcPort = htons(sock->sessionPort);
 	udp->destPort = sockin->sin_port;
 	udp->length = htons(sizeof(UDPHeader) + msg->msg_iov[0].iov_len);
-	udp->checksum = 0;
+	udp->checksum = 0; 
 
-	memcpy(ipv4->payload + sizeof(UDPHeader), msg->msg_iov[0].iov_base, msg->msg_iov[0].iov_len);
+	memcpy(&udp->payload, msg->msg_iov[0].iov_base, msg->msg_iov[0].iov_len);
+
 	IPV4SendPacket(ipv4, nic);
 	kfree(ipv4);
 	return msg->msg_iov[0].iov_len;
@@ -197,6 +201,30 @@ uint64_t AuUDPWrite(AuVFSNode* node, AuVFSNode* file, uint64_t* buffer, uint32_t
 }
 
 int AuUDPFileClose(AuVFSNode* fsys, AuVFSNode* file) {
+	/* here both fs and file points to socket file , better
+	 * would be using file pointer */
+	AuSocket* sock = (AuSocket*)file->device;
+
+	/* Remove it from raw socket list */
+	for (int i = 0; i < udp_socket_list->pointer; i++) {
+		AuSocket* socket = (AuSocket*)list_get_at(udp_socket_list, i);
+		if (socket == sock) {
+			list_remove(udp_socket_list, i);
+			break;
+		}
+	}
+	if (sock) {
+		if (sock->rxstack) {
+			while (sock->rxstack->itemCount) {
+				void* data = AuStackPop(sock->rxstack);
+				kfree(data);
+			}
+			kfree(sock->rxstack);
+		}
+		kfree(sock);
+	}
+	kfree(file);
+	SeTextOut("UDP: Socket Closed \r\n");
 	return 0;
 }
 /*
@@ -222,6 +250,7 @@ int CreateUDPSocket() {
 	sock->send = AuUDPSend;
 	AuVFSNode* node = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
 	memset(node, 0, sizeof(AuVFSNode));
+	strcpy(node->filename, "udp");
 	node->flags |= FS_FLAG_SOCKET;
 	node->device = sock;
 	node->close = AuUDPFileClose;

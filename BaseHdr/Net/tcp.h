@@ -31,6 +31,7 @@
 #define __TCP_H__
 
 #pragma pack(push,1)
+__declspec(align(2))
 typedef struct _tcphead_ {
 	unsigned short srcPort;
 	unsigned short destPort;

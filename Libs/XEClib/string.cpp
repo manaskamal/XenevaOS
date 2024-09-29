@@ -166,18 +166,30 @@ char *strncpy(char *destString, const char* sourceString, size_t maxLength){
 	return (destString);
 }
 
-//! locates first occurance of character in string
-char* strchr(char* str, int character) {
+char* strchrnul(const char* s, int c) {
+	size_t* w;
+	size_t k;
+	c = (unsigned char)c;
+	if (!c) {
+		return (char*)s + strlen(s);
+	}
 
-	do {
-		if (*str == character)
-			return (char*)str;
-	} while (*str++);
-
-	return 0;
+	for (; (uintptr_t)s % ALIGN; s++) {
+		if (!*s || *(unsigned char*)s == c) {
+			return (char*)s;
+		}
+	}
+	k = ONES * c;
+	for (w = (size_t*)s; !HASZERO(*w) && !HASZERO(*w ^ k); w++);
+	for (s = (const char*)w; *s && *(unsigned char*)s != c; s++);
+	return (char*)s;
 }
 
-
+//! locates first occurance of character in string
+char* strchr(const char* str, int character) {
+	char* r = strchrnul(str, character);
+	return *(unsigned char*)r == (unsigned char)character ? r : 0;
+}
 
 int strcasecmp(const char * s1, const char * s2) {
 	for (; tolower(*s1) == tolower(*s2) && *s1; s1++, s2++);

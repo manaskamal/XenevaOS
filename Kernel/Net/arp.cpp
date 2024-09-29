@@ -58,6 +58,7 @@ void ARPProtocolAdd(AuVFSNode* nic, uint32_t address, uint8_t* hwaddr) {
 	memcpy(arpcache->hw_address, hwaddr, 6);
 	arpcache->ipAddress = address;
 	arpcache->nic = nic;
+	list_add(arp_list, arpcache);
 }
 
 /*
@@ -65,8 +66,10 @@ void ARPProtocolAdd(AuVFSNode* nic, uint32_t address, uint8_t* hwaddr) {
  * @param address -- IP Address to look
  */
 AuARPCache* AuARPGet(uint32_t address) {
+	SeTextOut("ARP Checking \r\n");
 	for (int i = 0; i < arp_list->pointer; i++) {
 		AuARPCache* arp = (AuARPCache*)list_get_at(arp_list, i);
+		ip_ntoa(ntohl(arp->ipAddress));
 		if (arp->ipAddress == address)
 			return arp;
 	}
@@ -81,6 +84,7 @@ void AuARPRequestMAC(AuVFSNode* nic, uint32_t addr) {
 	if (!ndev)
 		return;
 	NetARP *arp = (NetARP*)kmalloc(sizeof(NetARP));
+	memset(arp, 0, sizeof(NetARP));
 	arp->hwAddressType = htons(1); //0x0100;
 	arp->hwProtocolType = htons(ETHERNET_TYPE_IPV4);
 	arp->hwAddressSize = 6;
@@ -94,10 +98,10 @@ void AuARPRequestMAC(AuVFSNode* nic, uint32_t addr) {
 		arp->arp_data.arp_eth_ipv4.arp_spa = ndev->ipv4addr;
 	}
 
-
+	SeTextOut("ARP Requesting MAC \r\n");
 	uint8_t broadcast_mac[6];
 	memset(broadcast_mac, 0xFF, 6);
-	AuEthernetSend(nic,&arp, sizeof(NetARP), ETHERNET_TYPE_ARP,broadcast_mac);
+	AuEthernetSend(nic,arp, sizeof(NetARP), ETHERNET_TYPE_ARP,broadcast_mac);
 	/* here we need to call different interfaces depending
 	 * on the nic node passed, ARP can be sent through different
 	 * link layer other than Ethernet
@@ -110,11 +114,13 @@ void ARPHandlePacket(void* data, AuVFSNode* nic) {
 	if (!eth)
 		return;
 	NetARP* packet = (NetARP*)data;
-	SeTextOut("ARP Packet received hardware type -> %d , protocol -> %d \r\n",
-		ntohs(packet->hwAddressType), ntohs(packet->hwProtocolType));
 	if (ntohs(packet->hwAddressType) == 1 && ntohs(packet->hwProtocolType) == ETHERNET_TYPE_IPV4) {
-		if (packet->arp_data.arp_eth_ipv4.arp_spa)
-			ARPProtocolAdd(nic, packet->arp_data.arp_eth_ipv4.arp_spa, packet->arp_data.arp_eth_ipv4.arp_sha);
+		if (packet->arp_data.arp_eth_ipv4.arp_spa) {
+			if (!AuARPGet(packet->arp_data.arp_eth_ipv4.arp_spa)) {
+				SeTextOut("ARP Added \r\n");
+				ARPProtocolAdd(nic, packet->arp_data.arp_eth_ipv4.arp_spa, packet->arp_data.arp_eth_ipv4.arp_sha);
+			}
+		}
 	}
 	if (ntohs(packet->operation) == 1) {
 		char spa[17];

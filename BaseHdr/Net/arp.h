@@ -44,14 +44,12 @@ typedef struct _arp_ {
 	uint8_t protocolSize;
 	uint16_t operation;
 	union {
-#pragma pack(push,1)
 		struct {
 			uint8_t arp_sha[6];
 			uint32_t arp_spa;
 			uint8_t arp_tha[6];
 			uint32_t arp_tpa;
 		}arp_eth_ipv4;
-#pragma pack(pop)
 	}arp_data;
 }NetARP;
 #pragma pack(pop)

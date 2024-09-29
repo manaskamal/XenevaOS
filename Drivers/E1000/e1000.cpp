@@ -216,6 +216,12 @@ void E1000InitTX(E1000NIC *dev) {
 	E1000WriteCmd(dev, E1000_REG_TCTRL, tctl);
 }
 
+int E1000TxFull(E1000NIC* dev, int tx_tail, int tx_head) {
+	if (tx_tail == tx_head)return 0;
+	if (dev->tx_index == tx_head) return 1;
+	if (((dev->tx_index + 1) & E1000_NUM_TX_DESC) == tx_head) return 1;
+	return 0;
+}
 
 /*
  *E1000SendPacket -- sends a packet 
@@ -224,6 +230,21 @@ void E1000SendPacket(E1000NIC* dev, uint8_t* payload, size_t payload_sz) {
 	int tx_tail = E1000ReadCmd(dev, E1000_REG_TXDESCTAIL);
 	int tx_head = E1000ReadCmd(dev, E1000_REG_TXDESCHEAD);
 
+	if (E1000TxFull(dev, tx_tail, tx_head)) {
+		SeTextOut("TX_FULLL payloadsz -> %d \r\n", payload_sz);
+		int timeout = 1000;
+		do {
+			for (int i = 0; i < 100000; i++)
+				;
+			timeout--;
+			if (timeout == 0) {
+				SeTextOut("E1000:Wait for tx timed out \r\n");
+				return;
+			}
+			tx_tail = E1000ReadCmd(dev, E1000_REG_TXDESCTAIL);
+			tx_head = E1000ReadCmd(dev, E1000_REG_TXDESCHEAD);
+		} while (E1000TxFull(dev, tx_tail, tx_head));
+	}
 	memcpy(dev->tx_virt[dev->tx_index], payload, payload_sz);
 	dev->tx[dev->tx_index].length = payload_sz;
 	dev->tx[dev->tx_index].cmd = CMD_EOP | CMD_IFCS | CMD_RS | CMD_RPS;
@@ -280,7 +301,7 @@ void E1000Thread(uint64_t val) {
 		}
 
 		E1000WriteCmd(e1000_nic, E1000_REG_ICR, status);
-		AuSleepThread(AuGetCurrentThread(), 60);
+		AuSleepThread(AuGetCurrentThread(), 10);
 		AuForceScheduler();
 	}
 }
@@ -371,10 +392,9 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 	e1000_nic = (E1000NIC*)kmalloc(sizeof(E1000NIC));
 	memset(e1000_nic, 0, sizeof(E1000NIC));
 
-	if (AuPCIEAllocMSI(device, 40, bus, dev_, func)) {
+	if (!AuPCIEAllocMSI(device, 40, bus, dev_, func)) {
 		AuTextOut("e1000 don't support MSI/MSI-X, starting up nic thread...\n");
 		nic_thread_required = true;
-		for (;;);
 	}
 
 	e1000_nic->rx_phys = (uint64_t)P2V((size_t)AuPmmngrAlloc());
@@ -501,10 +521,7 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 	adapt->iocontrol = E1000IOCtl;
 	adapt->device = ndev;
 
-	AuTextOut("E1000 READ-> %x, WRITE -> %x \n", adapt->read, adapt->write);
-	AuTextOut("E1000 IOCTL -> %x \n", &E1000IOCtl);
 	AuAddNetAdapter(adapt, "e1000");
-	adapt->read(0, 0, 0, 0);
 	nic = adapt;
 
 	E1000WriteCmd(e1000_nic, E1000_REG_IMS, INTS);

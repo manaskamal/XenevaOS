@@ -150,7 +150,7 @@ Ethernet* fillDHCP(uint8_t* payload, size_t payload_sz) {
 	dpack->magic = htonl(DHCP_MAGIC);
 
 	UDPPack* udp = (UDPPack*)malloc(sizeof(UDPPack)+sizeof(DHCPPack)+payload_sz);
-	memset(udp, 0, sizeof(UDPPack));
+	memset(udp, 0, sizeof(UDPPack) + sizeof(DHCPPack) + payload_sz);
 	udp->sourcePort = htons(68);
 	udp->destinationPort = htons(67);
 	udp->length = htons((sizeof(UDPPack)+sizeof(DHCPPack)+payload_sz));
@@ -284,13 +284,16 @@ int main(int argc, char* argv[]){
 	/* preparation for the first DHCP Stage */
 	uint8_t payload[] = { 53, 1, 1, 55, 2, 3, 6, 255, 0 };
 	Ethernet* eth = fillDHCP(payload, 8);
-	uint32_t totalsz = (sizeof(Ethernet)+sizeof(IPV4)+sizeof(UDPPack)+sizeof(DHCPPack)+8);
+	uint32_t totalsz = (sizeof(Ethernet)+sizeof(IPV4)+sizeof(UDPPack)+sizeof(DHCPPack)+32);
 	socket_send(sock_fd, eth, totalsz, 0);
 	_KePrint("Packet sent \n");
 	ClearDHCP(eth);
 
 
 	uint8_t* buf = (uint8_t*)malloc(4096);
+
+	uint8_t eth_broadcast[6];
+	memset(eth_broadcast, 0xFF, 6);
 
 	XERouteEntry* rtentry = (XERouteEntry*)malloc(sizeof(XERouteEntry));
 	rtentry->ifname = (char*)malloc(strlen("e1000"));
@@ -299,13 +302,14 @@ int main(int argc, char* argv[]){
 	while (1) {
 		int size = socket_receive(sock_fd, buf, 4096, 0);
 		if (size <= 0){
-			_KeProcessSleep(10);
+			_KeProcessSleep(100);
 			continue;
 		}
 
 		Ethernet* eth = (Ethernet*)buf;
 
-		if (memcmp(eth->dest, mac, 6))
+		if (memcmp(eth->dest, mac, 6) &&
+			memcmp(eth->dest, eth_broadcast, 6))
 			continue;
 
 		IPV4* ip = (IPV4*)&eth->payload;
@@ -327,10 +331,13 @@ int main(int argc, char* argv[]){
 			uint8_t payload2[] = { 53,1,3,50,4,(yiaddr) & 0xFF,(yiaddr >> 8) & 0xFF,
 			(yiaddr >> 16) & 0xFF, (yiaddr >> 24) & 0xFF, 55,2,3,6,255,0 };
 			Ethernet* eth2 = fillDHCP(payload2, 14);
-			uint32_t totalsz2 = (sizeof(Ethernet) + sizeof(IPV4) + sizeof(UDPPack) + sizeof(DHCPPack) + 14);
+			uint32_t totalsz2 = (sizeof(Ethernet) + sizeof(IPV4) + sizeof(UDPPack) + sizeof(DHCPPack) + 32);
 			socket_send(sock_fd, eth2, totalsz2, 0);
 			stage = 2;
 		}else if (stage == 2) {
+			char src_ip[16];
+			ip_ntoa(ntohl(ip->source), src_ip);
+			printf("DHCP Packet received from -> %s \r\n", src_ip);
 			uint32_t yiaddr = dhcp->yiaddr;
 			char yiaddr_ip[16];
 			ip_ntoa(ntohl(yiaddr), yiaddr_ip);
@@ -376,7 +383,7 @@ int main(int argc, char* argv[]){
 					dns.index = 1;
 					dns.address = ip_data;
 					_KeFileIoControl(sock_fd, SOCK_ADD_DNS_SERVER, &dns);
-					printf("DNS server %s \n", addr);
+					printf("DNS server %s\n", addr);
 				}
 				opt += len;
 			}

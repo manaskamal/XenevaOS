@@ -48,7 +48,7 @@ XE_EXTERN{
 	XE_LIB size_t strnlen(const char *string, size_t maxlen);
 	XE_LIB int strncmp(const char* s1, const char *s2, size_t n);
 	XE_LIB char *strncpy(char *destString, const char* sourceString, size_t maxLength);
-	XE_LIB char* strchr(char* str, int character);
+	XE_LIB char* strchr(const char* str, int character);
 	XE_LIB int strcasecmp(const char *, const char *);
 	XE_LIB int strncasecmp(const char *s1, const char *s2, size_t length);
 	XE_LIB char* strcasestr(const char*, const char*);
