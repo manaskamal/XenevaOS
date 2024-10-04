@@ -36,6 +36,7 @@
 #include <Fs\vdisk.h>
 #include <Mm/kmalloc.h>
 #include <Fs/Dev/devfs.h>
+#include <Hal/serial.h>
 #include <Hal\x86_64_lowlevel.h>
 
 /*
@@ -94,6 +95,7 @@ void AuAHCIDiskRead(HBA_PORT* port, uint64_t lba, uint32_t count, uint64_t* buff
 	tbl->prdt[0].i = 1;
 
 	FIS_REG_H2D* fis = (FIS_REG_H2D*)tbl->cmd_fis;
+	memset(fis, 0, sizeof(FIS_REG_H2D));
 	fis->fis_type = FIS_TYPE_REG_H2D;
 	fis->c = 1;
 	fis->command = ATA_CMD_READ_DMA_EXT;
@@ -135,6 +137,7 @@ void AuAHCIDiskRead(HBA_PORT* port, uint64_t lba, uint32_t count, uint64_t* buff
 */
 void AuAHCIDiskWrite(HBA_PORT* port, uint64_t lba, uint32_t count, uint64_t* buffer) {
 	int spin = 0;
+	
 	HBA_CMD_HEADER* cmd_list = (HBA_CMD_HEADER*)P2V(port->clb);
 	uint64_t buffer_whole = (uint64_t)buffer;
 
@@ -153,6 +156,7 @@ void AuAHCIDiskWrite(HBA_PORT* port, uint64_t lba, uint32_t count, uint64_t* buf
 	tbl->prdt[0].i = 1;
 
 	FIS_REG_H2D* fis = (FIS_REG_H2D*)tbl->cmd_fis;
+	memset(fis, 0, sizeof(FIS_REG_H2D));
 	fis->fis_type = FIS_TYPE_REG_H2D;
 	fis->c = 1;
 	fis->command = ATA_CMD_WRITE_DMA_EXT;
@@ -165,6 +169,7 @@ void AuAHCIDiskWrite(HBA_PORT* port, uint64_t lba, uint32_t count, uint64_t* buf
 	fis->lba5 = (lba >> 40) & 0xff;
 	fis->countl = count & 0xff;
 	fis->counth = (count >> 8) & 0xff;
+	fis->control = 0x8;
 
 	while ((port->tfd & (ATA_SR_BSY | ATA_SR_DRQ)) && spin < 1000000) {
 		spin++;
@@ -177,10 +182,12 @@ void AuAHCIDiskWrite(HBA_PORT* port, uint64_t lba, uint32_t count, uint64_t* buf
 		if ((port->ci & (1 << command_slot)) == 0)
 			break;
 		if (port->is & (1 << 30)) {
-			AuTextOut("[AHCI]: Port error \r\n");
+			SeTextOut("[AHCI]: Port error \r\n");
 			break;
 		}
 	}
+
+	SeTextOut("AHCI DISK WRITE -> %d , count -> %d \r\n", lba, count);
 }
 
 

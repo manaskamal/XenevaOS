@@ -157,10 +157,10 @@ AuVFSNode* FatCreateFile(AuVFSNode* fsys, char* filename) {
 					uint32_t cluster = FatFindFreeCluster(fsys);
 					FatAllocCluster(fsys, cluster, FAT_EOC_MARK);
 					FatClearCluster(fsys, cluster);
-
+					SeTextOut("Creating the flie %s cluster -> %x \r\n", fname, cluster);
 					dirent->attrib = FAT_ATTRIBUTE_ARCHIVE;
-					dirent->first_cluster = cluster & 0x0000FFFF;
-					dirent->first_cluster_hi_bytes = (cluster & 0x0FFF0000) >> 16;
+					dirent->first_cluster = (uint16_t)(cluster & 0x0000FFFF);
+					dirent->first_cluster_hi_bytes = (uint16_t)((cluster & 0x0FFF0000) >> 16);
 					dirent->date_created = FatFormatDate();
 					dirent->time_created = FatFormatTime();
 					dirent->last_wrt_date = dirent->date_created;
@@ -168,8 +168,18 @@ AuVFSNode* FatCreateFile(AuVFSNode* fsys, char* filename) {
 					dirent->date_last_accessed = dirent->date_created;
 					dirent->file_size = 0; //by default, 0 bytes
 
-					AuVDiskWrite(_fs->vdisk, FatClusterToSector32(_fs, parent_cluster) + j, 1, (uint64_t*)V2P((size_t)buff));
+					uint64_t sector = FatClusterToSector32(_fs, parent_cluster);
+					SeTextOut("sector -> %d , sector -> %d \r\n", sector, sector + j);
+					SeTextOut("Parent cluster -> %d \r\n", parent_cluster);
+					SeTextOut("Cluster begin lba -> %d \r\n", _fs->__ClusterBeginLBA);
+					SeTextOut("Sectors/c -> %d \r\n", _fs->__SectorPerCluster);
+					SeTextOut("ROOT Cluster -> %d \r\n", _fs->__RootDirFirstCluster);
+					AuVDiskWrite(_fs->vdisk, sector + j, 1, (uint64_t*)V2P((size_t)buff));
+
+					SeTextOut("File created \r\n");
+				
 					AuPmmngrFree((void*)V2P((size_t)buff));
+
 
 					strcpy(file->filename, extract);
 					file->size = dirent->file_size;
@@ -181,7 +191,6 @@ AuVFSNode* FatCreateFile(AuVFSNode* fsys, char* filename) {
 					file->device = fsys;
 					file->flags |= FS_FLAG_GENERAL;
 					file->status = FS_STATUS_FOUND;
-
 					kfree(parent);
 					return file;
 				}
@@ -212,16 +221,15 @@ void FatFileUpdateSize(AuVFSNode* fsys, AuVFSNode* file, size_t size) {
 		return;
 	if (!file)
 		return;
-	/*if (!file->parent_block)
-		return;*/
+	if (!file->parent_block)
+		return;
 	FatFS *_fs = (FatFS*)fsys->device;
 
 	uint32_t dir_cluster = file->parent_block;
-
 	char fname[11];
 	memset(fname, 0, 11);
 	FatToDOSFilename(file->filename, fname, 11);
-	//fname[11] = 0;
+	fname[11] = 0;
 	uint64_t* buff = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
 	memset(buff, 0, PAGE_SIZE);
 
@@ -234,10 +242,11 @@ void FatFileUpdateSize(AuVFSNode* fsys, AuVFSNode* file, size_t size) {
 			for (int i = 0; i < 16; i++) {
 				char name[11];
 				memcpy(name, dirent->filename, 11);
-				//name[11] = 0;
+				name[11] = 0;
 
-				if (strcmp(name, fname) == 0) {
+				if (strcmp(fname, name) == 0) {
 					dirent->file_size = size;
+					SeTextOut("Got file updating size -> %d \r\n", dirent->file_size);
 					AuVDiskWrite(_fs->vdisk, FatClusterToSector32(_fs, dir_cluster) + j, 1, (uint64_t*)V2P((size_t)buff));
 					AuPmmngrFree((void*)V2P((size_t)buff));
 					return;
@@ -359,7 +368,9 @@ void FatFileWriteContent(AuVFSNode* fsys,AuVFSNode* file, uint64_t* buffer) {
 	file->size = file->pos * _fs->__SectorPerCluster * _fs->__BytesPerSector;
 	size_t sz = file->size;
 
+	SeTextOut("Updating file size \r\n");
 	FatFileUpdateSize(fsys, file, sz);
+	SeTextOut("File size updated \r\n");
 
 	AuPmmngrFree((void*)V2P((size_t)buff));
 }
@@ -390,11 +401,11 @@ size_t FatWrite(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint32_t len
 	size_t num_cluster = static_cast<size_t>(length) / (static_cast<size_t>(_fs->__BytesPerSector) * _fs->__SectorPerCluster) +
 		((length % (_fs->__BytesPerSector * _fs->__SectorPerCluster) ? 1 : 0));
 
+	SeTextOut("NumCluster -> %d  %d bytes\r\n", num_cluster, length);
 	for (int i = 0; i < num_cluster; i++) {
 		FatFileWriteContent(fsys, file, buffer);
 		buffer += (static_cast<size_t>(_fs->__BytesPerSector) * _fs->__SectorPerCluster);
 	}
-
 
 	FatFileUpdateSize(fsys, file, length);
 	FatFileWriteDone(file);

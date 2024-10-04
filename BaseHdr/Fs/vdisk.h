@@ -197,4 +197,10 @@ extern int AuGetVDiskPartitionInfo(uint8_t vdiskID, uint8_t partition_ID, void* 
  * directory in device file system
  */
 AU_EXTERN AU_EXPORT int AuVDiskCreateStorageFile(char* output);
+
+/*
+ * AuGetVDisk -- get a vdisk from the
+ * vdisk array
+ */
+AU_EXTERN AU_EXPORT AuVDisk* AuGetVDisk(int vdisk_idx);
 #endif

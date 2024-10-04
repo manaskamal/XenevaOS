@@ -298,5 +298,13 @@ int AuGetVDiskPartitionInfo(uint8_t vdiskID,uint8_t partition_ID, void* buffer) 
 	for (int i = 0; i < 8; i++)
 		pinfo->uniqueGUID.Data4[i] = vdisk->part_unique_guid.Data4[i];
 	pinfo->startingLBA = vdisk->startingLBA;
-	return 0;
+	return 0;	
+}
+
+/*
+ * AuGetVDisk -- get a vdisk from the
+ * vdisk array
+ */
+AuVDisk* AuGetVDisk(int vdisk_idx) {
+	return VdiskArray[vdisk_idx];
 }

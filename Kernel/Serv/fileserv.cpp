@@ -56,12 +56,14 @@ int OpenFile(char* filename, int mode) {
 		if (!current_proc)
 			return -1;
 	}
-
+	int fd = AuProcessGetFileDesc(current_proc);
 	AuVFSNode *fsys = AuVFSFind(filename);
 	AuVFSNode* file = AuVFSOpen(filename);
+	bool created = false;
 	if (!file) {
 		if (mode & FILE_OPEN_CREAT || mode & FILE_OPEN_WRITE) {
 			file = AuVFSCreateFile(fsys, filename);
+			created = true;
 		}
 		else 
 			return -1;
@@ -71,7 +73,7 @@ int OpenFile(char* filename, int mode) {
 	if (!file)
 		return -1;
 
-	int fd = AuProcessGetFileDesc(current_proc);
+	
 	if (fd == -1)
 		return -1;
 

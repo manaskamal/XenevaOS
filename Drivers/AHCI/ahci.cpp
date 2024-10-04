@@ -148,6 +148,7 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 	cmd |= (1 << 1);
 	cmd |= (1 << 2);
 	cmd |= (1 << 10);
+	cmd |= 0x6;
 	AuPCIEWrite(device, PCI_COMMAND, cmd, bus, dev, func);
 
 	if (AuPCIEAllocMSI(device, 36, bus, dev, func))

@@ -60,7 +60,7 @@ extern bool _vfs_debug_on;
  * @param cluster -- cluster number
  */
 uint64_t FatClusterToSector32(FatFS *fs, uint64_t cluster) {
-	return fs->__ClusterBeginLBA + (cluster - 2) * fs->__SectorPerCluster;
+	return fs->__ClusterBeginLBA + ((cluster - 2) * fs->__SectorPerCluster);
 }
 
 /**
@@ -196,11 +196,11 @@ uint32_t FatFindFreeCluster(AuVFSNode* node) {
 	if (!vdisk)
 		return NULL;
 
-	for (int i = 2; i < fs->__TotalClusters; i++) {
-		int64_t fat_offset = static_cast<int64>(i) * 4;
+	for (int i = fs->__LastIndexInFat; i < (512*fs->__SectorPerFAT32)/4; i++) {
+		uint64_t fat_offset = static_cast<uint64>(i) * 4;
 		uint64_t fat_sector = fs->__FatBeginLBA + (fat_offset / 512);
 		size_t ent_offset = fat_offset % 512;
-		uint64_t *buffer = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
+		uint32_t *buffer = (uint32_t*)P2V((size_t)AuPmmngrAlloc());
 		memset(buffer, 0, PAGE_SIZE);
 		AuVDiskRead(vdisk, fat_sector, 1, (uint64_t*)V2P((size_t)buffer));
 		uint8_t* buf = (uint8_t*)buffer;
@@ -208,7 +208,8 @@ uint32_t FatFindFreeCluster(AuVFSNode* node) {
 
 		AuPmmngrFree((void*)V2P((size_t)buffer));
 		//! Found a free cluster return the value
-		if (value == 0x00) {
+		if (value == 0x00000000) {
+			fs->__LastIndexInFat = i;
 			return i;
 		}
 	}
@@ -228,10 +229,10 @@ void FatAllocCluster(AuVFSNode* fsys, int position, uint32_t n_value) {
 	if (!vdisk)
 		return;
 
-	int64_t fat_offset = static_cast<int64_t>(position) * 4;
+	uint64_t fat_offset = static_cast<uint64_t>(position) * 4;
 	uint64_t fat_sector = fs->__FatBeginLBA + (fat_offset / 512);
 	size_t ent_offset = fat_offset % 512;
-	uint64_t *buffer = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
+	uint32_t *buffer = (uint32_t*)P2V((size_t)AuPmmngrAlloc());
 	memset(buffer, 0, PAGE_SIZE);
 	AuVDiskRead(vdisk, fat_sector, 1, (uint64_t*)V2P((size_t)buffer));
 
@@ -587,6 +588,7 @@ AuVFSNode* FatInitialise(AuVDisk *vdisk, char* mountname){
 	fs->fat_write_mutex = AuCreateMutex();
 	fs->fat_read_mutex = AuCreateMutex();
 	fs->__TotalClusters = bpb->large_sector_count / fs->__SectorPerCluster;
+	fs->__LastIndexInFat = 2;
 	size_t _root_dir_sectors = ((bpb->num_dir_entries * 32) + bpb->bytes_per_sector - 1) / bpb->bytes_per_sector;
 	size_t _TotalSectors = (bpb->total_sectors_short == 0) ? bpb->large_sector_count : bpb->total_sectors_short;
 	size_t fatsize = (bpb->sectors_per_fat == 0) ? bpb->info.FAT32.sect_per_fat32 : bpb->sectors_per_fat;
@@ -604,6 +606,7 @@ AuVFSNode* FatInitialise(AuVDisk *vdisk, char* mountname){
 		kfree(fs);
 		return NULL;
 	}
+
 
 	AuVFSNode* fsys = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
 	memset(fsys, 0, sizeof(AuVFSNode));
