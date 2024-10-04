@@ -428,7 +428,7 @@ int FatFileClearDirEntry(AuVFSNode* fsys, AuVFSNode* file) {
 	char fname[11];
 	memset(fname, 0, 11);
 	FatToDOSFilename(file->filename, fname, 11);
-	//fname[11] = 0;
+	fname[11] = 0;
 
 	uint64_t* buff = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
 	memset(buff, 0, PAGE_SIZE);
@@ -442,7 +442,7 @@ int FatFileClearDirEntry(AuVFSNode* fsys, AuVFSNode* file) {
 			for (int i = 0; i < 16; i++) {
 				char name[11];
 				memcpy(name, dirent->filename, 11);
-				//name[11] = 0;
+				name[11] = 0;
 
 				if (strcmp(name, fname) == 0) {
 					memset(dirent, 0, sizeof(FatDir));
@@ -470,13 +470,19 @@ int FatFileClearDirEntry(AuVFSNode* fsys, AuVFSNode* file) {
  */
 int FatFileRemove(AuVFSNode* fsys, AuVFSNode* file) {
 	if (!fsys)
-		return -1;
+		return 1;
 	if (!file)
-		return -1;
+		return 1;
 
 	uint32_t parent_clust = file->parent_block;
 	if (!parent_clust)
-		return -1;
+		return 1;
+
+	/* because we will iterate all clusters from
+	 * first one
+	 */
+	if (file->current != file->first_block)
+		file->current = file->first_block;
 
 	uint32_t cluster = file->current;
 	while (1) {

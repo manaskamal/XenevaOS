@@ -316,15 +316,39 @@ void XEShellEcho(char* msg) {
 		printf("%s\n", msg);
 		return;
 	}
+	char file[32];
+	bool _filename_exist = false;
+	char* filename = strchr(msg, '>');
+	if (filename) {
+		filename++;
+		for (int i = 0; i < strlen(filename); i++) {
+			if (filename[i] == ' ')
+				filename++;
+			if (filename[i] != ' ')
+				break;
+		}
+		strcpy(file, filename);
+		_filename_exist = true;
+	}
+
 	for (int j = strlen(msg); j > 0; j--) {
 		if (msg[j] == '\"') {
 			msg[j] = '\0';
 			break;
 		}
 	}
-	printf("%s\n", msg);
+
+	if (_filename_exist) {
+		FILE* f = fopen(file, "w+");
+		if (f) {
+			fprintf(f,msg);
+		}
+	}
+	else 
+		printf("%s\n", msg);
 
 }
+
 /*
  *XEShellProcessLine -- processes a line by looking
  * the cmdBuf 

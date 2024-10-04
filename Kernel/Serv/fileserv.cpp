@@ -276,6 +276,7 @@ int CreateDir(char* filename) {
  * @param dirname -- directory name
  */
 int RemoveFile(char* pathname) {
+	x64_cli();
 	AuVFSNode* dir = AuVFSOpen(pathname);
 	if (!dir)
 		return -1;

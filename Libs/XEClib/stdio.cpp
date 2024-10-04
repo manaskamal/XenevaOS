@@ -254,8 +254,7 @@ int puts(const char *s) {
 }
 
 int remove(const char* pathname) {
-	//not implemented
-	return 0;
+	return _KeRemoveFile((char*)pathname);
 }
 
 int rename(const char* oldpath, const char* newpath) {
