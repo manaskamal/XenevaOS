@@ -245,8 +245,7 @@ void FatFileUpdateSize(AuVFSNode* fsys, AuVFSNode* file, size_t size) {
 				name[11] = 0;
 
 				if (strcmp(fname, name) == 0) {
-					dirent->file_size = size;
-					SeTextOut("Got file updating size -> %d \r\n", dirent->file_size);
+					dirent->file_size += size;
 					AuVDiskWrite(_fs->vdisk, FatClusterToSector32(_fs, dir_cluster) + j, 1, (uint64_t*)V2P((size_t)buff));
 					AuPmmngrFree((void*)V2P((size_t)buff));
 					return;
@@ -342,14 +341,15 @@ void FatFileWriteContent(AuVFSNode* fsys,AuVFSNode* file, uint64_t* buffer) {
 
 	uint32_t cluster = file->current;
 	if (file->eof){
+	
 		/* write the new cluster value to
 		* old cluster */
 		uint32_t new_cluster = FatFindFreeCluster(fsys);
 		FatAllocCluster(fsys, cluster, new_cluster);
 		FatAllocCluster(fsys, new_cluster, FAT_EOC_MARK);
 		FatClearCluster(fsys, new_cluster);
+		uint32_t clust_val = FatReadFAT(fsys, cluster);
 		cluster = new_cluster;
-		SeTextOut("[FAT]: New Cluster allocated \r\n");
 		file->eof = 0;
 	}
 
@@ -359,18 +359,15 @@ void FatFileWriteContent(AuVFSNode* fsys,AuVFSNode* file, uint64_t* buffer) {
 		file->pos++;
 	}
 	uint32_t return_cluster = FatReadFAT(fsys, cluster);
-	if (return_cluster == (FAT_EOC_MARK & 0x0FFFFFFF))
+	if (return_cluster == (FAT_EOC_MARK & 0x0FFFFFFF)) {
 		file->eof = 1;
+	}
 	else
 		cluster = return_cluster;
 
 	file->current = cluster;
 	file->size = file->pos * _fs->__SectorPerCluster * _fs->__BytesPerSector;
 	size_t sz = file->size;
-
-	SeTextOut("Updating file size \r\n");
-	FatFileUpdateSize(fsys, file, sz);
-	SeTextOut("File size updated \r\n");
 
 	AuPmmngrFree((void*)V2P((size_t)buff));
 }
@@ -401,14 +398,13 @@ size_t FatWrite(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint32_t len
 	size_t num_cluster = static_cast<size_t>(length) / (static_cast<size_t>(_fs->__BytesPerSector) * _fs->__SectorPerCluster) +
 		((length % (_fs->__BytesPerSector * _fs->__SectorPerCluster) ? 1 : 0));
 
-	SeTextOut("NumCluster -> %d  %d bytes\r\n", num_cluster, length);
 	for (int i = 0; i < num_cluster; i++) {
 		FatFileWriteContent(fsys, file, buffer);
 		buffer += (static_cast<size_t>(_fs->__BytesPerSector) * _fs->__SectorPerCluster);
 	}
 
 	FatFileUpdateSize(fsys, file, length);
-	FatFileWriteDone(file);
+	//FatFileWriteDone(file);
 
 }
 

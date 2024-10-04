@@ -31,6 +31,7 @@ Refer to [Documentations of XenevaOS](Docs/Introduction.md)
 - USB3 Class drivers (USB HID Mouse, USB Tablet) ..etc
 - Audio Server called "Deodhai-Audio" with 
     (44kHz/16bit audio format, stereo/mono panning, gain control)
+- Networking 
 
 
 _And many more coming soon_

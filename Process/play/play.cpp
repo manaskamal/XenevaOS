@@ -106,7 +106,6 @@ int main(int argc, char* arv[]){
 	_KeFileStat(song, &fs);
 	bool finished = 0;
 	
-
 	while (1) {
 		/* with each frame read the sound, write it
 		* to sound device, the sound device will automatically
