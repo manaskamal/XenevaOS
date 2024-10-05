@@ -188,6 +188,8 @@ void AuAHCIDiskWrite(HBA_PORT* port, uint64_t lba, uint32_t count, uint64_t* buf
 	}
 
 	SeTextOut("AHCI DISK WRITE -> %d , count -> %d \r\n", lba, count);
+	for (int i = 0; i < 100000000; i++)
+		;
 }
 
 

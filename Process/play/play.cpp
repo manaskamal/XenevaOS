@@ -105,6 +105,11 @@ int main(int argc, char* arv[]){
 	XEFileStatus fs;
 	_KeFileStat(song, &fs);
 	bool finished = 0;
+
+	FILE* f = fopen("agol.mp4", "w+");
+	if (f) {
+		fwrite(songbuf, sizeof(char), 4096, f);
+	}
 	
 	while (1) {
 		/* with each frame read the sound, write it
@@ -126,6 +131,7 @@ int main(int argc, char* arv[]){
 			if (!audioBox->ctlPanel->Samplefull) {
 				_KeReadFile(song, songbuf, 4096);
 				DeodhaiAudioWrite(audioBox, songbuf);
+				fwrite(songbuf, sizeof(char), 4096, f);
 			}
 			else {
 				_KeProcessSleep(120);

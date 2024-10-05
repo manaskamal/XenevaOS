@@ -374,7 +374,9 @@ AuVFSNode* FatLocateSubDir(AuVFSNode* fsys,AuVFSNode* kfile, const char* filenam
 					file->status = FS_STATUS_FOUND;
 					file->first_block = file->current;
 					file->device = fsys;
-					file->parent_block = kfile->current;
+					file->parent_block = kfile->first_block;
+					SeTextOut("FILE'S PARENT DIR -> %s \r\n", kfile->filename);
+					SeTextOut("FILE'S Parent dir clust -> %x \r\n", kfile->first_block);
 					if (pkDir->attrib & 0x10)
 						file->flags |= FS_FLAG_DIRECTORY;
 					else
@@ -445,7 +447,6 @@ AuVFSNode* FatLocateDir(AuVFSNode* fsys, const char* dir) {
 					file->flags |= FS_FLAG_DIRECTORY;
 				else
 					file->flags |= FS_FLAG_GENERAL;
-
 				AuPmmngrFree((void*)V2P((size_t)buf));
 				return file;
 			}

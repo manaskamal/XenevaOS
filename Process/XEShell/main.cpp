@@ -283,12 +283,14 @@ void XEShellPrintHelp() {
 	printf("\nWelcome to Xeneva shell v1.1 \n");
 	printf("cd -- Change current working directory \n");
 	printf("ls -- List file and folders of current working directory \n");
-	printf("echo -- Displays text \n");
+	printf("echo -- Displays text or print to a file\n");
 	printf("pwd -- Display current working directory \n");
 	printf("clrscr -- Clear entire terminal screen \n");
 	printf("help -- Prints all command with their descriptions\n");
 	printf("systeminfo -- Prints about message \n");
 	printf("time -- Displays the current time \n");
+	printf("cat -- Display contents of a file \n");
+	printf("rm -- remove a file \n");
 	printf("\n");
 }
 
