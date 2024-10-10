@@ -248,7 +248,7 @@ void FatFileUpdateSize(AuVFSNode* fsys, AuVFSNode* file, size_t size) {
 				name[11] = 0;
 
 				if (strcmp(fname, name) == 0) {
-					dirent->file_size += size;
+					dirent->file_size += size + 1;
 					AuVDiskWrite(_fs->vdisk, FatClusterToSector32(_fs, dir_cluster) + j, 1, (uint64_t*)V2P((size_t)buff));
 					AuPmmngrFree((void*)V2P((size_t)buff));
 					return;
@@ -358,6 +358,7 @@ void FatFileWriteContent(AuVFSNode* fsys,AuVFSNode* file, uint64_t* buffer) {
 
 	if ((cluster != (FAT_EOC_MARK & 0x0FFFFFFF)) || (cluster != (FAT_BAD_CLUSTER & 0x0fffffff))) {
 		memcpy(buff, buffer, PAGE_SIZE);
+		//SeTextOut("Writing -> %d \r\n", _fs->__SectorPerCluster);
 		AuVDiskWrite(_fs->vdisk, FatClusterToSector32(_fs, cluster), _fs->__SectorPerCluster, (uint64_t*)V2P((uint64_t)buff));
 		file->pos++;
 	}

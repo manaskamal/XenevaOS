@@ -55,14 +55,9 @@ int HDAInitOutput() {
 
 	/* Now reset the stream */
 	int timeout = 0;
-	_aud_outl_(REG_O0_CTLL, 1); //reset
-	while (!(_aud_inl_(REG_O0_CTLL) & 0x1)) {
-		if (timeout == 1000000) {
-			SeTextOut("[HDAudio]: Failed to reset output stream \r\n");
-			return 1;
-		}
-		timeout++;
-	}
+	_aud_outb_(REG_O0_CTLL, 1); //reset
+	while ((_aud_inl_(REG_O0_CTLL) & 0x1) == 0)
+		;
 
 	_aud_outb_(REG_O0_CTLL, 0);
 	while ((_aud_inl_(REG_O0_CTLL) & 0x1) != 0)
@@ -83,7 +78,7 @@ int HDAInitOutput() {
 
 	SeTextOut("Reset completed \r\n");
 	_aud_outw_(REG_O0_CTLU, (1 << 4) | (1 << 19));
-	//_aud_outw_(REG_O0_CTLL, (1 << 16));
+	_aud_outl_(REG_O0_CTLL, (1 << 16));
 
 	_aud_outl_(REG_O0_CBL, BDL_SIZE*BUFFER_SIZE);
 	_aud_outw_(REG_O0_STLVI, BDL_SIZE - 1);
@@ -113,6 +108,7 @@ int HDAInitOutput() {
 	strm |= (4<<20);
 	_aud_outl_ (REG_O0_CTLL,strm);*/
 	uint16_t sample_fifo = _aud_inw_(REG_O0_FIFOD);
+	return 0;
 }
 
 /*
@@ -136,11 +132,9 @@ int HDAInitInputStream() {
 	/* Now reset the stream */
 	int timeout = 0;
 	_aud_outl_(REG_I0_CTLL, 1); //reset
-	while ((_aud_inl_(REG_I0_CTLL) & 0x1) == 0) {
-		if (timeout == 1000000)
-			return 1;
-		timeout++;
-	}
+	while ((_aud_inl_(REG_I0_CTLL) & 0x1) == 0)
+		;
+
 
 	_aud_outl_(REG_I0_CTLL, 0);
 	while ((_aud_inl_(REG_I0_CTLL) & 0x1) != 0)
@@ -167,7 +161,7 @@ int HDAInitInputStream() {
 	_aud_outl_(REG_I0_BDPU, bdl_base >> 32);
 
 	//uint16_t format =  (1<<14) | (0<<11)  | (1<<4) | 1;
-	uint16_t format = SR_48_KHZ | BITS_16 | 1;
+	uint16_t format = SR_48_KHZ | BITS_24 | 1;
 	_aud_outw_(REG_I0_FMT, format);
 
 
@@ -188,6 +182,7 @@ int HDAInitInputStream() {
 	strm |= (2 << 20);
 	_aud_outl_(REG_I0_CTLL, strm);
 	uint16_t sample_fifo = _aud_inw_(REG_I0_FIFOD);
+	return 0;
 }
 
 /*

@@ -37,8 +37,15 @@
 #include <Mm/kmalloc.h>
 #include <Fs/Dev/devfs.h>
 #include <Hal/serial.h>
+#include <Hal/x86_64_sched.h>
 #include <Hal\x86_64_lowlevel.h>
 
+
+void AHCISleep(uint32_t ms) {
+	uint32_t tick = ms + AuGetSystemTimerTick();
+	while (tick > AuGetSystemTimerTick())
+		;
+}
 /*
  * AuAHCIStopCmd -- stops ahci dma engine
  * @param port - sata drive port
@@ -187,9 +194,9 @@ void AuAHCIDiskWrite(HBA_PORT* port, uint64_t lba, uint32_t count, uint64_t* buf
 		}
 	}
 
-	SeTextOut("AHCI DISK WRITE -> %d , count -> %d \r\n", lba, count);
-	for (int i = 0; i < 100000000; i++)
+	while (port->tfd & (ATA_SR_BSY | ATA_SR_DRQ))
 		;
+
 }
 
 
@@ -425,4 +432,6 @@ void AHCIDiskInitialise(AHCIController *controller,HBA_PORT* port) {
 
 	AuDevFSAddFile(controller->devfs, controller->controllerpath, file);
 	controller->CurrentPortID++;
+
+	AuPmmngrFree((void*)addr);
 }

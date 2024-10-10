@@ -227,6 +227,7 @@ enum sample_format {
 	SR_44_KHZ = (1 << 14),
 	BITS_32 = (4 << 4),
 	BITS_16 = (1 << 4),
+	BITS_24 = (3 << 4),
 	BITS_8 = (0 << 4),
 };
 

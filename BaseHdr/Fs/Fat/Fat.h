@@ -146,6 +146,7 @@ typedef struct _FatFS_ {
 	unsigned int __SectorPerFAT32;
 	unsigned int __TotalClusters;
 	unsigned char* __RootDirCache;
+	unsigned int __LastIndexSector;
 	unsigned int __LastIndexInFat;
 	uint16_t __BytesPerSector;
 	size_t cluster_sz_in_bytes;

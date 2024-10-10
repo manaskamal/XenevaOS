@@ -51,6 +51,11 @@ HDAAudioPath* path_last;
 void(*CodecInitializeOutput)(int codec, int nid);
 void(*CodecSetVolume) (uint8_t vol, int codec);
 
+
+/*
+ * TODO : Codec power management
+ * /
+
 /*
  * _aud_outl_ -- writes a value to mmio register in dword
  * @param reg -- register
@@ -304,8 +309,6 @@ void HDAReset() {
 	SetupCORB();
 	SetupRIRB();
 
-	for (int i = 0; i < 100000000; i++)
-		;
 
 }
 
@@ -476,7 +479,7 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 	}
 
 	HDAPathInitOutput();
-	HDASetVolume(127);
+	HDASetVolume(100);
 
 	AuSound *sound = (AuSound*)kmalloc(sizeof(AuSound));
 	memset(sound, 0, sizeof(AuSound));

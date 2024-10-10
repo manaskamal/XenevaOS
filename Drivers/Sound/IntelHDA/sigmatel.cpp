@@ -88,22 +88,23 @@ void SigmatelSetVolume(uint8_t volume, int codec) {
 	int meta = 0xb000;
 	uint32_t amp_gain = HDACodecQuery(codec, 3, 0xB8000);
 	uint32_t step = amp_gain & 0x7f;
+	uint8_t vol = 0;
 
 	if (volume == 0)
-		volume = 0x80;  //mute bit
+		vol = 0x80;  //mute bit
 	else
-		volume = volume;
+		vol = volume * step;
 
 	//codec_query (_ihd_audio.output->codec, _ihd_audio.output->nid, VERB_SET_AMP_GAIN_MUTE | 0xb000 | volume);
 
-	HDACodecQuery(codec, 2, 0x39000 | 0xb000 | volume);
-	HDACodecQuery(codec, 2, 0x3A000 | 0xb000 | volume);
-	HDACodecQuery(codec, 3, 0x39000 | 0xb000 | volume);
-	HDACodecQuery(codec, 3, 0x3A000 | 0xb000 | volume);
-	HDACodecQuery(codec, 4, 0x39000 | 0xb000 | volume);
-	HDACodecQuery(codec, 4, 0x3A000 | 0xb000 | volume);
-	HDACodecQuery(codec, 5, 0x39000 | 0xb000 | volume);
-	HDACodecQuery(codec, 5, 0x3A000 | 0xb000 | volume);
-	HDACodecQuery(codec, 6, 0x39000 | 0xb000 | volume);
-	HDACodecQuery(codec, 6, 0x3A000 | 0xb000 | volume);
+	HDACodecQuery(codec, 2, 0x39000 | 0xb000 | vol);
+	HDACodecQuery(codec, 2, 0x3A000 | 0xb000 | vol);
+	HDACodecQuery(codec, 3, 0x39000 | 0xb000 | vol);
+	HDACodecQuery(codec, 3, 0x3A000 | 0xb000 | vol);
+	HDACodecQuery(codec, 4, 0x39000 | 0xb000 | vol);
+	HDACodecQuery(codec, 4, 0x3A000 | 0xb000 | vol);
+	HDACodecQuery(codec, 5, 0x39000 | 0xb000 | vol);
+	HDACodecQuery(codec, 5, 0x3A000 | 0xb000 | vol);
+	HDACodecQuery(codec, 6, 0x39000 | 0xb000 | vol);
+	HDACodecQuery(codec, 6, 0x3A000 | 0xb000 | vol);
 }
