@@ -913,14 +913,3 @@ void XHCIStartDefaultPorts(USBDevice *dev) {
 }
 
 
-usb_descriptor_t* USBGetDescriptor(XHCISlot* slot, uint8_t type) {
-	usb_config_desc_t* config = (usb_config_desc_t*)slot->descriptor_buff;
-	usb_if_desc_t *interface_desc = raw_offset<usb_if_desc_t*>(config, config->bLength);
-	usb_descriptor_t* endp = raw_offset<usb_descriptor_t*>(interface_desc, interface_desc->bLength);
-	while (raw_diff(endp, config) < config->wTotalLength){
-		if (endp->bDescriptorType == type){
-			return endp;
-		}
-		endp = raw_offset<usb_descriptor_t*>(endp, endp->bLength);
-	}
-}

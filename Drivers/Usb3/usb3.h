@@ -415,5 +415,20 @@ extern USBDevice* USBGetMainDevice();
 */
 extern XHCIEndpoint *XHCISlotGetEP(XHCISlot* slot, uint8_t endp_num);
 
+/*
+ * USBGetDescriptor -- checks and return a descriptor of given
+ * type
+ * @param slot -- XHCI Provided slot
+ * @param type -- type of the descriptor
+ */
 extern usb_descriptor_t* USBGetDescriptor(XHCISlot* slot, uint8_t type);
+
+/*
+ * USBScheduleInterrupt -- schedules an interrupt for a device
+ * @param dev -- Pointer to USB Device
+ * @param slot -- Controller slot
+ * @param ep -- Endpoint data
+ * @param physdata -- Physical memory area
+ */
+extern void USBScheduleInterrupt(USBDevice* dev, XHCISlot* slot, XHCIEndpoint* ep, uint64_t physdata);
 #endif

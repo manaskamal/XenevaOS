@@ -336,6 +336,9 @@
     <ClInclude Include="..\BaseHdr\Net\route.h">
       <Filter>Include\Net</Filter>
     </ClInclude>
+    <ClInclude Include="..\BaseHdr\Drivers\usb.h">
+      <Filter>Include\Drivers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="init.cpp" />
@@ -526,6 +529,9 @@
     <ClCompile Include="threadsafe.c" />
     <ClCompile Include="Net\route.cpp">
       <Filter>Net</Filter>
+    </ClCompile>
+    <ClCompile Include="Drivers\usb.cpp">
+      <Filter>Drivers</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -314,7 +314,7 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 	usb_device->usb_thread = t;
 	usb_device->initialised = true;
 	AuDisableInterrupt();
-
+	for (;;);
 	return 0;
 }
 

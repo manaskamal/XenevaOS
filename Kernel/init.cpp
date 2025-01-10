@@ -68,6 +68,7 @@
 #include <autimer.h>
 #include <ftmngr.h>
 #include <hashmap.h>
+#include <Drivers/usb.h>
 
 /**========================================
 ** the main entry routine -- _AuMain
@@ -116,8 +117,12 @@ void _AuMain(KERNEL_BOOT_INFO *info) {
 	/* initialise pre network service*/
 	AuInitialiseNet();
 
+
 	x64_cli();
 	AuSchedulerInitialise();
+
+	/* initialize the usb core subsystem */
+	AuUSBSubsystemInit();
 	
 	/*initialise aurora driver manager*/
 	AuDrvMngrInitialize(info);
@@ -127,6 +132,7 @@ void _AuMain(KERNEL_BOOT_INFO *info) {
 
 	/* intiialise all system fonts */
 	FontManagerInitialise();
+
 	
 	AuInitialiseLoader();
 

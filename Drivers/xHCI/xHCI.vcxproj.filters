@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="xhci.cpp" />
+    <ClCompile Include="port.cpp" />
+    <ClCompile Include="cmd.cpp" />
+    <ClCompile Include="usb.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="xhci.h" />
+    <ClInclude Include="usb.h" />
+    <ClInclude Include="port.h" />
+  </ItemGroup>
+</Project>

@@ -105,3 +105,34 @@ void USBSetConfigDesc(USBDevice* dev, XHCISlot* slot, uint8_t slot_id, uint8_t c
 
 	XHCISendControlCmd(dev, slot, slot_id, &pack, NULL, 0);
 }
+
+usb_descriptor_t* USBGetDescriptor(XHCISlot* slot, uint8_t type) {
+	usb_config_desc_t* config = (usb_config_desc_t*)slot->descriptor_buff;
+	usb_if_desc_t* interface_desc = raw_offset<usb_if_desc_t*>(config, config->bLength);
+	usb_descriptor_t* endp = raw_offset<usb_descriptor_t*>(interface_desc, interface_desc->bLength);
+	while (raw_diff(endp, config) < config->wTotalLength) {
+		if (endp->bDescriptorType == type) {
+			return endp;
+		}
+		endp = raw_offset<usb_descriptor_t*>(endp, endp->bLength);
+	}
+}
+
+/*
+ * USBScheduleInterrupt -- schedules an interrupt for a device
+ * @param dev -- Pointer to USB Device
+ * @param slot -- Controller slot
+ * @param ep -- Endpoint data
+ * @param physdata -- Physical memory area
+ */
+void USBScheduleInterrupt(USBDevice* dev, XHCISlot* slot, XHCIEndpoint* ep, uint64_t physdata) {
+	XHCISendNormalTRB(dev, slot, physdata, ep->max_packet_sz, ep);
+}
+
+void USBControlTransfer(USBDevice* dev, XHCISlot* slot, uint8_t slot_id, const USB_REQUEST_PACKET* request, uint64_t buffer_addr, const size_t len,
+	uint8_t trt) {
+	//Looking upon if its trying to send control to
+	// endpoint or default control pipe?
+	// call XHCIControlCmd or XHCIControlCmdEndp
+	//
+}

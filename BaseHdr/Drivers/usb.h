@@ -1,0 +1,154 @@
+/**
+* BSD 2-Clause License
+*
+* Copyright (c) 2022-2025, Manas Kamal Choudhury
+* All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification, are permitted provided that the following conditions are met:
+*
+* 1. Redistributions of source code must retain the above copyright notice, this
+*    list of conditions and the following disclaimer.
+*
+* 2. Redistributions in binary form must reproduce the above copyright notice,
+*    this list of conditions and the following disclaimer in the documentation
+*    and/or other materials provided with the distribution.
+*
+* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+* AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+* IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+* DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+* FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+* DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+* SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+* CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+* OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+* OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*
+**/
+
+#ifndef __AURORA_USB_H__
+#define __AURORA_USB_H__
+
+#include <stdint.h>
+#include <string.h>
+#include <_null.h>
+
+#pragma pack(push,1)
+typedef struct _usb_request_pack {
+	uint8_t request_type;
+	uint8_t request;
+	uint16_t value;
+	uint16_t index;
+	uint16_t length;
+}AuUSBRequestPacket;
+#pragma pack(pop)
+
+#pragma pack(push,1)
+typedef struct _au_usb_desc_ {
+	uint8_t bLength;
+	uint8_t bDescriptorType;
+}AuUSBDescriptor;
+#pragma pack(pop)
+
+/* Standard XHCI defined Transfer/Command/Event
+* TRB type values
+*/
+#define USB_WAIT_TRANSFER_NORMAL                 1
+#define USB_WAIT_TRANSFER_SETUP_STAGE            2
+#define USB_WAIT_TRANSFER_DATA_STAGE             3
+#define USB_WAIT_TRANSFER_STATUS_STAGE           4
+#define USB_WAIT_TRANSFER_ISOCH                  5
+#define USB_WAIT_TRANSFER_LINK                   6
+#define USB_WAIT_TRANSFER_EVENT_DATA             7
+#define USB_WAIT_TRANSFER_NO_OP                  8
+#define USB_WAIT_CMD_ENABLE_SLOT                 9
+#define USB_WAIT_CMD_DISABLE_SLOT                10
+#define USB_WAIT_CMD_ADDRESS_DEV                 11
+#define USB_WAIT_CMD_CONFIG_ENDPOINT             12
+#define USB_WAIT_CMD_EVALUATE_CTX                13
+#define USB_WAIT_CMD_RESET_ENDPOINT              14
+#define USB_WAIT_CMD_STOP_ENDPOINT               15
+#define USB_WAIT_CMD_SET_TR_DEQ_POINTER          16
+#define USB_WAIT_CMD_RESET_DEV                   17
+#define USB_WAIT_CMD_FORCE_EVENT                 18
+#define USB_WAIT_CMD_NEGOTIATE_BANDWIDTH          19
+#define USB_WAIT_CMD_SET_LATENCY_TOLERANCE_VALUE  20
+#define USB_WAIT_CMD_GET_PORT_BANDWIDTH           21
+#define USB_WAIT_CMD_FORCE_HEADER                 22
+#define USB_WAIT_CMD_NO_OP                        23
+#define USB_WAIT_CMD_GET_EXT_PROPERTY             24
+#define USB_WAIT_CMD_SET_EXT_PROPERTY             25
+#define USB_WAIT_EVENT_TRANSFER                   32
+#define USB_WAIT_EVENT_CMD_COMPLETION             33
+#define USB_WAIT_EVENT_PORT_STATUS_CHANGE         34
+#define USB_WAIT_EVENT_BANDWIDTH_REQUEST          35
+#define USB_WAIT_EVENT_DOORBELL                   36
+#define USB_WAIT_EVENT_HOST_CONTROLLER            37
+#define USB_WAIT_EVENT_DEVICE_NOTIFICATION        38
+#define USB_WAIT_EVENT_MFINDEX                    39
+
+#define USB_DESCRIPTOR_WVALUE(type,index) ((type << 8) | index)
+
+/* transfer type defined in endpoint descriptor*/
+#define ENDPOINT_TRANSFER_TYPE_CONTROL 0
+#define ENDPOINT_TRANSFER_TYPE_ISOCH 1
+#define ENDPOINT_TRANSFER_TYPE_BULK  2
+#define ENDPOINT_TRANSFER_TYPE_INT   3
+
+
+struct _au_usb_dev_;
+
+typedef void (*schedule_interrupt_callback)(_au_usb_dev_* controller, void* ep, uint64_t buffer, void (*callback)(void* dev, void* slot, void* Endp));
+typedef void (*control_transfer)(_au_usb_dev_* usbdev, const AuUSBRequestPacket* request, uint64_t buffer_addr, const size_t len);
+typedef void (*get_device_desc_callback)(_au_usb_dev_* dev, uint64_t buffer, uint16_t len);
+typedef void (*get_string_desc_callback)(_au_usb_dev_* dev, uint64_t buffer, uint16_t id);
+typedef void (*get_config_desc_callback)(_au_usb_dev_* dev, uint64_t buffer, uint16_t len, uint8_t id);
+typedef void* (*get_endpoint)(_au_usb_dev_* dev, uint8_t ep_type);
+typedef int (*get_max_pack_sz)(_au_usb_dev_* dev, void* ep);
+typedef AuUSBDescriptor* (*get_descriptor_callback)(_au_usb_dev_* dev, uint8_t type);
+typedef void (*set_config_val_callback)(_au_usb_dev_* dev, uint8_t config_val);
+typedef int (*poll_wait_callback)(_au_usb_dev_* dev, int poll_wait);
+
+#pragma pack(push,1)
+typedef struct _au_usb_dev_ {
+	void* data;
+	uint8_t classCode;
+	uint8_t subClassCode;
+	uint16_t vendorID;
+	uint16_t deviceID;
+	int configValue;
+	uint16_t usbVersion;
+	uint8_t address;
+	uint8_t protocol;
+	void* descriptor;
+	int numInterfaces;
+	int numEndpoint;
+	bool driverInitialized;
+	schedule_interrupt_callback AuScheduleInterrupt;
+	control_transfer AuControlTransfer;
+	get_device_desc_callback AuGetDeviceDescriptor;
+	get_string_desc_callback AuGetStringDescriptor;
+	get_config_desc_callback AuGetConfigDescriptor;
+	get_descriptor_callback AuGetDescriptor;
+	get_endpoint AuGetEndpoint;
+	get_max_pack_sz AuGetMaxPacketSize;
+	set_config_val_callback AuSetConfigValue;
+	poll_wait_callback AuUSBWait;
+}AuUSBDeviceStruc;
+#pragma pack(pop)
+
+
+/*
+ * AuUSBSubsystemInit -- initialize the
+ * aurora usb system
+ */
+extern void AuUSBSubsystemInit();
+
+/*
+ * AuUSBDeviceConnect -- function is called from the host
+ * driver whenever a port change event occurs
+ * @param device -- Pointer to AuUSBDevice passed by the host
+ */
+AU_EXTERN AU_EXPORT void AuUSBDeviceConnect(AuUSBDeviceStruc* device);
+#endif

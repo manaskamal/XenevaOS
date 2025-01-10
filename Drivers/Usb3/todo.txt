@@ -1,4 +1,5 @@
 [TODO]: Separate HOST Controller code, USB Standard Code and Class Driver codes
+[TODO]: USB Disconnect port handle
 [TODO]: Handle things according to port speed FS, HS and LS devices
 [TODO]: HID Class Driver
 [TODO]: Mass Storage Class Driver

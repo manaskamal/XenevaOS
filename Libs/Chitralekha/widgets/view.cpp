@@ -47,8 +47,6 @@ void ChListViewMouseEvent(ChWidget* widget, ChWindow* win, int x, int y, int but
 			lv->currentStartIndex = display_idx;
 			if (lv->scrollpane->wid.ChPaintHandler)
 				lv->scrollpane->wid.ChPaintHandler((ChWidget*)lv->scrollpane, win);
-			ChWindowUpdate(win, lv->scrollpane->vScrollBar.bar_x, lv->scrollpane->vScrollBar.bar_y, lv->scrollpane->vScrollBar.bar_w, 
-				lv->scrollpane->vScrollBar.bar_h, 0, 1);
 			_view_update = true;
 			_KeProcessSleep(100);
 		}
@@ -62,8 +60,6 @@ void ChListViewMouseEvent(ChWidget* widget, ChWindow* win, int x, int y, int but
 			lv->scrollpane->vScrollBar.update = 1;
 			if (lv->scrollpane->wid.ChPaintHandler)
 				lv->scrollpane->wid.ChPaintHandler((ChWidget*)lv->scrollpane, win);
-			ChWindowUpdate(win, lv->scrollpane->vScrollBar.bar_x, lv->scrollpane->vScrollBar.bar_y, lv->scrollpane->vScrollBar.bar_w,
-				lv->scrollpane->vScrollBar.bar_h, 0, 1);
 			_view_update = true;
 			_KeProcessSleep(100);
 		}
@@ -89,14 +85,17 @@ void ChListViewMouseEvent(ChWidget* widget, ChWindow* win, int x, int y, int but
 	if (_view_update){
 		if (lv->wid.ChPaintHandler)
 			lv->wid.ChPaintHandler((ChWidget*)lv, win);
+		int update_w = lv->wid.w + lv->scrollpane->vScrollBar.bar_w;
+		int update_h = lv->wid.h + lv->scrollpane->vScrollBar.bar_h;
 		ChWindowUpdate(win, lv->wid.x, lv->wid.y, lv->wid.w, lv->wid.h, 0, 1);
 	}
 }
 
 void ChListViewScrollEvent(ChWidget* wid, ChWindow* win, int scollVal, uint8_t type) {
 	ChListView* lv = (ChListView*)wid;
-	uint32_t display_idx = ((lv->scrollpane->vScrollBar.thumb_posy * lv->scrollpane->vScrollBar.scrollAmount)) / LIST_VIEW_ITEM_HEIGHT;
-	
+
+	uint32_t display_idx = (lv->scrollpane->vScrollBar.thumb_posy * lv->scrollpane->vScrollBar.scrollAmount) / LIST_VIEW_ITEM_HEIGHT;
+
 	bool _view_update = false;
 	if (type == CHITRALEKHA_SCROLL_TYPE_VERTICAL){
 		lv->currentStartIndex = display_idx;
@@ -113,7 +112,9 @@ void ChListViewScrollEvent(ChWidget* wid, ChWindow* win, int scollVal, uint8_t t
 	if (_view_update){
 		if (lv->wid.ChPaintHandler)
 			lv->wid.ChPaintHandler((ChWidget*)lv, win);
-		ChWindowUpdate(win, lv->wid.x, lv->wid.y, lv->wid.w, lv->wid.h, 0, 1);
+		int update_w = lv->wid.w; // +lv->scrollpane->vScrollBar.bar_w;
+		int update_h = lv->wid.h;// +lv->scrollpane->hScrollBar.bar_h;
+		ChWindowUpdate(win, lv->wid.x, lv->wid.y,update_w, update_h, 0, 1);
 		lv->lastNodeIndex = lv->currentStartIndex;
 	}
 }

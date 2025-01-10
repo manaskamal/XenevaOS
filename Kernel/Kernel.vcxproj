@@ -168,6 +168,7 @@
     <ClInclude Include="..\BaseHdr\Drivers\mouse.h" />
     <ClInclude Include="..\BaseHdr\Drivers\ps2kybrd.h" />
     <ClInclude Include="..\BaseHdr\Drivers\rtc.h" />
+    <ClInclude Include="..\BaseHdr\Drivers\usb.h" />
     <ClInclude Include="..\BaseHdr\efi.h" />
     <ClInclude Include="..\BaseHdr\Fs\Dev\devfs.h" />
     <ClInclude Include="..\BaseHdr\Fs\Dev\devinput.h" />
@@ -250,6 +251,7 @@
     <ClCompile Include="Drivers\mouse.cpp" />
     <ClCompile Include="Drivers\ps2kybrd.cpp" />
     <ClCompile Include="Drivers\rtc.cpp" />
+    <ClCompile Include="Drivers\usb.cpp" />
     <ClCompile Include="Fs\Dev\devfs.cpp" />
     <ClCompile Include="Fs\Dev\devinput.cpp" />
     <ClCompile Include="Fs\Fat\Fat.cpp" />

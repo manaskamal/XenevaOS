@@ -44,12 +44,14 @@ void ChDefaultScrollPaneMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, i
 		sp->vScrollBar.thumb_posy -= sp->vScrollBar.scrollAmount;
 
 		if ((sp->vScrollBar.bar_y + sp->vScrollBar.thumb_posy) <= sp->vScrollBar.bar_y)
-			sp->vScrollBar.thumb_posy = 1;// sp->vScrollBar.bar_y;
+			sp->vScrollBar.thumb_posy = 0;// sp->vScrollBar.bar_y;
 
 		sp->vScrollBar.currentScrollValue = sp->vScrollBar.thumb_posy;
 		if (sp->wid.ChPaintHandler)
 			sp->wid.ChPaintHandler((ChWidget*)sp, win);
-		ChWindowUpdate(win, sp->vScrollBar.bar_x, sp->vScrollBar.bar_y, sp->vScrollBar.bar_w, sp->vScrollBar.bar_h, 0, 1);
+
+		if (!sp->scrollableView)
+			ChWindowUpdate(win, sp->vScrollBar.bar_x, sp->vScrollBar.bar_y, sp->vScrollBar.bar_w, sp->vScrollBar.bar_h, 0, 1);
 
 		_KeProcessSleep(100);
 
@@ -72,7 +74,9 @@ void ChDefaultScrollPaneMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, i
 		sp->vScrollBar.currentScrollValue = sp->vScrollBar.thumb_posy;
 		if (sp->wid.ChPaintHandler)
 			sp->wid.ChPaintHandler((ChWidget*)sp, win);
-		ChWindowUpdate(win, sp->vScrollBar.bar_x, sp->vScrollBar.bar_y, sp->vScrollBar.bar_w, sp->vScrollBar.bar_h, 0, 1);
+
+		if (!sp->scrollableView)
+			ChWindowUpdate(win, sp->vScrollBar.bar_x, sp->vScrollBar.bar_y, sp->vScrollBar.bar_w, sp->vScrollBar.bar_h, 0, 1);
 
 		_KeProcessSleep(100);
 
@@ -137,7 +141,9 @@ void ChDefaultScrollPaneMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, i
 
 		if (sp->wid.ChPaintHandler)
 			sp->wid.ChPaintHandler((ChWidget*)sp, win);
-		ChWindowUpdate(win, sp->hScrollBar.bar_x, sp->hScrollBar.bar_y, sp->hScrollBar.bar_w, sp->hScrollBar.bar_h, 0, 1);
+
+		if (!sp->scrollableView)
+			ChWindowUpdate(win, sp->hScrollBar.bar_x, sp->hScrollBar.bar_y, sp->hScrollBar.bar_w, sp->hScrollBar.bar_h, 0, 1);
 
 		if (_scrolled){
 		
@@ -184,7 +190,9 @@ void ChDefaultScrollPaneMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, i
 
 		if (sp->wid.ChPaintHandler)
 			sp->wid.ChPaintHandler((ChWidget*)sp, win);
-		ChWindowUpdate(win, sp->vScrollBar.bar_x, sp->vScrollBar.bar_y, sp->vScrollBar.bar_w, sp->vScrollBar.bar_h, 0, 1);
+
+		if (!sp->scrollableView)
+			ChWindowUpdate(win, sp->vScrollBar.bar_x, sp->vScrollBar.bar_y, sp->vScrollBar.bar_w, sp->vScrollBar.bar_h, 0, 1);
 
 		if (_scrolled) {
 			if (sp->scrollableView)
@@ -237,7 +245,7 @@ ChScrollPane* ChCreateScrollPane(ChWindow* win,int x, int y, int width, int heig
 	sp->hScrollBar.thumb_width = 0;
 	sp->hScrollBar.thumb_height = sp->hScrollBar.bar_h - 4;
 	sp->hScrollBar.type = CHITRALEKHA_SCROLL_TYPE_HORIZONTAL;
-	sp->hScrollBar.scrollAmount = 1;
+	sp->hScrollBar.scrollAmount = 1.8;
 	sp->hScrollBar.currentScrollValue = 0;
 	sp->hScrollBar.update = 1;
 

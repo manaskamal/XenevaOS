@@ -234,6 +234,8 @@ void AuDriverLoad(char* filename, AuDriver *driver) {
 	int next_base_offset = 0;
 	uint64_t* virtual_base = (uint64_t*)driver_load_base;
 
+	AuTextOut("Loading driver -> %s \r\n", filename);
+
 	AuVFSNode* fsys = AuVFSFind(filename);
 	AuVFSNode *file = AuVFSOpen(filename);
 	uint64_t* buffer = (uint64_t*)AuPmmngrAlloc();
@@ -406,10 +408,34 @@ AU_EXTERN AU_EXPORT void AuBootDriverInitialise(KERNEL_BOOT_INFO* info) {
 		AuBootDriverLoad(info->driver_entry2, driver);
 	}
 
+	/* The USB 3.x Controller*/
+	if (info->driver_entry3) {
+		AuDriver* driver = AuCreateBootDriverInstance("XHCIController");
+		AuBootDriverLoad(info->driver_entry3, driver);
+	}
+
 	/* Serially call each startup entries of each driver */
 	for (int i = 0; i < driver_boot_unique_id; i++) {
 		AuDriver* driver = bootDrivers[i];
 		driver->entry();
 	}
+}
+
+/*
+ * AuDrvMgrGetBaseAddress -- returns the current
+ * driver load base address
+ */
+uint64_t AuDrvMgrGetBaseAddress() {
+	return driver_load_base;
+}
+
+/*
+ * AuDrvMgrSetBaseAddress -- sets a new base
+ * address for driver to load
+ * it's highly risky because, if we set it to 
+ * kernel stack location, kernel will crash
+ */
+void AuDrvMgrSetBaseAddress(uint64_t base_address) {
+	driver_load_base = base_address;
 }
 

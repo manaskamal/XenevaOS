@@ -108,6 +108,37 @@ AU_EXTERN AU_EXPORT bool AuCheckDevice(uint16_t classC, uint16_t subclassC, uint
  */
 AU_EXTERN AU_EXPORT void AuBootDriverInitialise(KERNEL_BOOT_INFO* info);
 
+/*
+ * AuDrvMgrGetBaseAddress -- returns the current
+ * driver load base address
+ */
+extern uint64_t AuDrvMgrGetBaseAddress();
+
+/*
+ * AuDrvMgrSetBaseAddress -- sets a new base
+ * address for driver to load
+ * it's highly risky because, if we set it to
+ * kernel stack location, kernel will crash
+ */
+extern void AuDrvMgrSetBaseAddress(uint64_t base_address);
+
+/*
+* AuGetConfEntry -- Get an entry offset in the file for required device
+* @param vendor_id -- vendor id of the product
+* @param device_id -- device id of the product
+* @param buffer -- configuration file buffer
+* @param entryoff -- entry offset from where search begins
+*/
+extern char* AuGetConfEntry(uint32_t vendor_id, uint32_t device_id, uint8_t* buffer, int entryoff);
+
+/*
+* AuGetDriverName -- Extract the driver path from its entry offset
+* @param vendor_id -- vendor id of the product
+* @param device_id -- device id of the product
+* @param buffer -- configuration file buffer
+* @param entryoff -- entry offset from where search begins
+*/
+extern void AuGetDriverName(uint32_t vendor_id, uint32_t device_id, uint8_t* buffer, int entryoff);
 
 
 #endif
