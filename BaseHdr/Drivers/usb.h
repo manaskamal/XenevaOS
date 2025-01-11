@@ -96,8 +96,11 @@ typedef struct _au_usb_desc_ {
 #define ENDPOINT_TRANSFER_TYPE_BULK  2
 #define ENDPOINT_TRANSFER_TYPE_INT   3
 
-
 struct _au_usb_dev_;
+
+typedef int(*au_usb_drv_entry)(_au_usb_dev_* dev);
+typedef int(*au_usb_drv_unload)(_au_usb_dev_* dev);
+
 
 typedef void (*schedule_interrupt_callback)(_au_usb_dev_* controller, void* ep, uint64_t buffer, void (*callback)(void* dev, void* slot, void* Endp));
 typedef void (*control_transfer)(_au_usb_dev_* usbdev, const AuUSBRequestPacket* request, uint64_t buffer_addr, const size_t len);
@@ -135,6 +138,8 @@ typedef struct _au_usb_dev_ {
 	get_max_pack_sz AuGetMaxPacketSize;
 	set_config_val_callback AuSetConfigValue;
 	poll_wait_callback AuUSBWait;
+	au_usb_drv_entry ClassEntry;
+	au_usb_drv_unload ClassUnload;
 }AuUSBDeviceStruc;
 #pragma pack(pop)
 
@@ -144,6 +149,20 @@ typedef struct _au_usb_dev_ {
  * aurora usb system
  */
 extern void AuUSBSubsystemInit();
+
+
+/*
+ * AuUSBGetDeviceStruc -- returns USB device struc by looking
+ * its data field
+ * @param data -- Pointer to host controller related data
+ */
+AU_EXTERN AU_EXPORT void* AuUSBGetDeviceStruc(void* data);
+/*
+ * AuUSBDeviceDisconnect -- device detach callback
+ * called from host controller
+ * @param dev -- Pointer to USB Device structure
+ */
+AU_EXTERN AU_EXPORT void AuUSBDeviceDisconnect(AuUSBDeviceStruc* dev);
 
 /*
  * AuUSBDeviceConnect -- function is called from the host

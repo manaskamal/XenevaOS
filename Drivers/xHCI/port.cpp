@@ -115,6 +115,34 @@ XHCISlot* XHCICreateDeviceCtx(XHCIDevice* dev, uint8_t slot_num, uint8_t port_sp
 	return slot;
 }
 
+/*
+ * XHCIGetSlot -- returns a slot from slot list
+ * @param dev -- Pointer to USB device
+ * @param port_num -- port id
+ */
+XHCISlot* XHCIGetSlot(XHCIDevice* dev, uint8_t port_num) {
+	for (int i = 0; i < dev->slot_list->pointer; i++) {
+		XHCISlot* slot = (XHCISlot*)list_get_at(dev->slot_list, i);
+		if (slot->root_hub_port_num == port_num)
+			return slot;
+	}
+
+	return NULL;
+}
+
+/*
+ * XHCISlotReleaseEndpoints -- release all endpoint
+ * @param slot -- Pointer to device slot
+ */
+void XHCISlotReleaseEndpoints(XHCISlot* slot) {
+	for (int i = 0; i < slot->endpoints->pointer; i++) {
+		XHCIEndpoint* ep = (XHCIEndpoint*)list_remove(slot->endpoints, i);
+		if (ep) {
+			AuPmmngrFree((void*)V2P((uint64_t)slot->cmd_ring));
+			kfree(ep);
+		}
+	}
+}
 
 
 /*
@@ -127,6 +155,39 @@ void XHCIPortInitialise(XHCIDevice* dev, unsigned int port) {
 
 	if ((this_port->port_sc & 1) == 0) {
 		/* Handle device disconnection */
+		XHCISlot* slot = XHCIGetSlot(dev, port);
+		uint8_t slot_id = slot->slot_id;
+
+		AuUSBDevice* usbdev = (AuUSBDevice*)AuUSBGetDeviceStruc(slot);
+
+		/* disable the slot */
+		XHCIDisableSlot(dev, slot_id);
+		int idx = XHCIPollEvent(dev, TRB_EVENT_CMD_COMPLETION);
+		if (idx == -1)
+			return;
+
+		dev->dev_ctx_base_array[slot_id] = 0;
+
+		AuPmmngrFree((void*)slot->input_context_phys);
+		AuPmmngrFree((void*)slot->output_context_phys);
+		AuPmmngrFree((void*)V2P(slot->cmd_ring_base));
+		
+
+		/* remove endpoint data structures from the slot */
+		XHCISlotReleaseEndpoints(slot);
+	
+		XHCISlotRemove(dev, slot_id);
+
+		if (!usbdev)
+			return; //will cause critical error
+		
+		/*Report it to USB Stack */
+		AuUSBDeviceDisconnect((AuUSBDeviceStruc*)usbdev);
+
+		/* Here we need to pass this notification to, Aurora
+		* that device is disconnected */
+		AuTextOut("Device disconnected at port -> %d, slot -> %d \n", port, slot_id);
+		this_port->port_sc |= this_port->port_sc;
 	}
 
 	if ((this_port->port_sc & 1)) {

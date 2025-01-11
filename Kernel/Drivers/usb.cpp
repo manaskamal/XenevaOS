@@ -41,15 +41,7 @@
 
 list_t* usb_devices;
 uint8_t* configFile;
-typedef int(*au_usb_drv_entry)(AuUSBDeviceStruc* dev);
-typedef int(*au_usb_drv_unload)(AuUSBDeviceStruc* dev);
 
-typedef struct _driver_list_cache_ {
-	uint8_t classCode;
-	uint8_t subClassCode;
-	int protocol;
-	char* filename;
-}AuUSBDrvListCache;
 
 /*
  * AuUSBSubsystemInit -- initialize the
@@ -151,13 +143,46 @@ int AuUSBLoadDriver(AuUSBDeviceStruc* dev, uint32_t vendor_id, uint32_t device_i
 	AuDrvMgrSetBaseAddress(driver_load_base);
 
 	au_usb_drv_entry entry = (au_usb_drv_entry)entry_addr;
+	au_usb_drv_unload unload = (au_usb_drv_unload)unload_addr;
+	dev->ClassEntry = entry;
+	dev->ClassUnload = unload;
 	entry(dev);
 
 	return 0;
 }
 
 
+/*
+ * AuUSBGetDeviceStruc -- returns USB device struc by looking
+ * its data field
+ * @param data -- Pointer to host controller related data
+ */
+AU_EXTERN AU_EXPORT void* AuUSBGetDeviceStruc(void* data) {
+	for (int j = 0; j < usb_devices->pointer; j++) {
+		AuUSBDeviceStruc* dev = (AuUSBDeviceStruc*)list_get_at(usb_devices, j);
+		if (dev->data == data)
+			return dev;
+	}
+	return NULL;
+}
+/*
+ * AuUSBDeviceDisconnect -- device detach callback
+ * called from host controller
+ * @param dev -- Pointer to USB Device structure
+ */
+AU_EXTERN AU_EXPORT void AuUSBDeviceDisconnect(AuUSBDeviceStruc* dev) {
+	/* free up the device data structure and
+	 * the driver allocated memory
+	 */
+	if (!dev) 
+		return;
+	if (!dev->ClassUnload)
+		return;
 
+	dev->ClassUnload(dev);
+	/* now free up everything here */
+	/* TODO: free up allocated physical memories */
+}
 
 /*
  * AuUSBDeviceConnect -- function is called from the host

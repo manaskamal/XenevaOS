@@ -180,6 +180,11 @@ typedef struct _usb_desc_ {
 }usb_descriptor_t;
 #pragma pack(pop)
 
+struct _usb_dev_;
+
+typedef int(*usb_drv_entry)(_usb_dev_* dev);
+typedef int(*usb_drv_unload)(_usb_dev_* dev);
+
 
 #pragma pack(push,1)
 typedef struct _usb_dev_ {
@@ -206,6 +211,8 @@ typedef struct _usb_dev_ {
 	int (*get_max_pack_sz)(_usb_dev_* dev, void* ep);
 	void (*set_config_val)(_usb_dev_* dev, uint8_t config_val);
 	int (*poll_wait)(_usb_dev_* dev, int wait_type);
+	usb_drv_entry ClassEntry;
+	usb_drv_unload ClassUnload;
 }AuUSBDevice;
 #pragma pack(pop)
 
