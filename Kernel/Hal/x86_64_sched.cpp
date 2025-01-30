@@ -487,7 +487,7 @@ void AuSchedulerStart() {
 	_x86_64_sched_init = true;
 	setvect(0x40, x8664SchedulerISR);  //0x40
 	AuThread* current_thread = AuPerCPUGetCurrentThread();
-	TSS* _ks = x86_64_get_tss();
+	TSS* _ks = AuPerCPUGetKernelTSS(); //x86_64_get_tss();
 	SeTextOut("CurrentThread ->%x %x \r\n", current_thread, _ks);
 	execute_idle(current_thread, x86_64_get_tss());
 }

@@ -172,6 +172,7 @@
     <ClInclude Include="..\BaseHdr\efi.h" />
     <ClInclude Include="..\BaseHdr\Fs\Dev\devfs.h" />
     <ClInclude Include="..\BaseHdr\Fs\Dev\devinput.h" />
+    <ClInclude Include="..\BaseHdr\Fs\Ext2\ext2.h" />
     <ClInclude Include="..\BaseHdr\Fs\Fat\Fat.h" />
     <ClInclude Include="..\BaseHdr\Fs\Fat\FatDir.h" />
     <ClInclude Include="..\BaseHdr\Fs\Fat\FatFile.h" />

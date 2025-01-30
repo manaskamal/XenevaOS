@@ -209,3 +209,49 @@ void XHCISendNormalTRB(XHCIDevice* dev, XHCISlot* slot, uint64_t data_buffer, ui
 		ep_num = XHCI_DOORBELL_ENDPOINT_0;
 	XHCIRingDoorbellSlot(dev, slot->slot_id, ep_num);
 }
+
+/*
+ * XHCIBulkTransfer -- Bulk transfer callback
+ * @param dev -- Pointer to host device structure
+ * @param slot -- Pointer to device slot
+ * @param buffer -- Pointer to memory buffer
+ * @param data_len -- total data length
+ * @param ep_ -- Pointer to endpoint structure
+ */
+void XHCIBulkTransfer(XHCIDevice* dev, XHCISlot* slot, uint64_t buffer, uint16_t data_len, XHCIEndpoint* ep_) {
+	size_t pos = 0;
+	while (pos != data_len) {
+		size_t cnt = PAGE_SIZE - ((buffer + pos) & (PAGE_SIZE - 1));
+		bool last = cnt >= data_len - pos;
+		if (last) cnt = data_len - pos;
+
+		size_t remaining_pack = (data_len - pos + ep_->max_packet_sz - 1) / ep_->max_packet_sz;
+
+		uint32_t ctrl = (TRB_TRANSFER_NORMAL << 10) | (1 << 6) | (1 << 1);
+
+		/*
+		 * Put the chain bit to make it a TD
+		 */
+		if (!last)
+			ctrl |= (1 << 4); 
+
+		/*
+		 * if last no chain bit
+		 */
+		if (last)
+			ctrl |= (1 << 5);
+
+		if (ep_ != 0) {
+			XHCISendCmdOtherEP(slot, ep_->endpoint_num, buffer & UINT32_MAX, (buffer >> 32) & UINT32_MAX,
+				((remaining_pack & 0xFFFF) << 17) | cnt & UINT16_MAX,
+				ctrl);
+		}
+		else {
+			XHCISendCmdToHost(dev, buffer & UINT32_MAX, (buffer >> 32) & UINT32_MAX, ((remaining_pack & 0xFFFF) << 17) | cnt & UINT16_MAX,
+				(TRB_TRANSFER_NORMAL << 10) | (1 << 6) | (1 << 5));
+		}
+
+		pos += cnt;
+		buffer += ep_->max_packet_sz;
+	}
+}

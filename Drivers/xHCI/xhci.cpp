@@ -235,6 +235,8 @@ void XHCIRingDoorbellSlot(XHCIDevice* dev, uint8_t slot, uint32_t endpoint) {
 	dev->db_regs->doorbell[slot] = endpoint;
 }
 
+
+
 /*
 * XHCIPollEvent -- waits for an event to occur on interrupts
 * @param usb_device -- pointer to usb device structure

@@ -496,6 +496,11 @@ void HIDCallback(void* dev, void* slot, void* endp) {
 			lastsz = 0;
 		if (fieldSz < 8)
 			lastsz = fieldSz;
+
+		if (items[i].application == HID_APPLICATION_KEYBOARD_KEYPAD) {
+			//handle keyboard inputs
+			AuTextOut("[HID]: Keyboard received \n");
+		}
 	}
 
 	AuDevWriteMice(&newmsg);
@@ -515,18 +520,14 @@ AU_EXTERN AU_EXPORT int AuUSBDriverMain(AuUSBDeviceStruc* dev) {
 		}
 	}
 
-	AuTextOut("HID: Report bytes -> %d \n", report_bytes);
-	AuTextOut("HID : GetDescriptor -> %x \n", dev->AuGetDescriptor);
 	memset(&items, 0, sizeof(ReportItem) * 32);
 
-	AuTextOut("HID: Protocol -> %d \n", dev->protocol);
+
 	if (dev->protocol > 0) {
 		SetProtocol(dev);
 		dev->AuUSBWait(dev, USB_WAIT_EVENT_TRANSFER);
-		AuTextOut("HID:Protocol setuped \n");
 	}
 
-	AuTextOut("Protocol setuped \n");
 
 	uint64_t buff = (uint64_t)AuPmmngrAlloc();
 	memset((void*)buff, 0, PAGE_SIZE);
@@ -548,7 +549,7 @@ AU_EXTERN AU_EXPORT int AuUSBDriverMain(AuUSBDeviceStruc* dev) {
 
 	void* ep = dev->AuGetEndpoint(dev, ENDPOINT_TRANSFER_TYPE_INT);
 	if (!ep) {
-		AuTextOut("[HID]: Failed to obtained interrupt endpoint \n");
+		AuTextOut("[HID]: Failed to obtaine interrupt endpoint \n");
 		return 1;
 	}
 	endpoint = ep;

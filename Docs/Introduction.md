@@ -29,6 +29,7 @@ __Kernel__ :
 - [Boot Process](Kernel/BootProcess.md)
 - [Memory Management](Kernel/MemoryMangement.md)
 - [Drivers](Kernel/Drivers.md)
+- [USB](Kernel/usb.md)
 
 __Components__ :
 - [XELoader](XELoader.md)

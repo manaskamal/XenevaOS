@@ -203,6 +203,7 @@ typedef struct _usb_dev_ {
 	bool driverInitialized;
 	void (*schedule_interrupt)(_usb_dev_* dev, void* ep, uint64_t buffer, void (*callback)(void* dev, void* slot, void* Endp));
 	void (*control_transfer)(_usb_dev_* usbdev, const USB_REQUEST_PACKET* request, uint64_t buffer_addr, const size_t len);
+	void (*bulk_transfer)(_usb_dev_* usbdev, uint64_t buffer, uint16_t data_len, void* ep);
 	void (*get_device_desc)(_usb_dev_* dev, uint64_t buffer, uint16_t len);
 	void (*get_string_desc)(_usb_dev_* dev, uint64_t buffer, uint16_t id);
 	void (*get_config_desc)(_usb_dev_* dev, uint64_t buffer, uint16_t len, uint8_t id);

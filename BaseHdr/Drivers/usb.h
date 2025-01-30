@@ -104,6 +104,7 @@ typedef int(*au_usb_drv_unload)(_au_usb_dev_* dev);
 
 typedef void (*schedule_interrupt_callback)(_au_usb_dev_* controller, void* ep, uint64_t buffer, void (*callback)(void* dev, void* slot, void* Endp));
 typedef void (*control_transfer)(_au_usb_dev_* usbdev, const AuUSBRequestPacket* request, uint64_t buffer_addr, const size_t len);
+typedef void (*bulk_transfer)(_au_usb_dev_* usbdev, uint64_t buffer_addr, uint16_t len, void* ep);
 typedef void (*get_device_desc_callback)(_au_usb_dev_* dev, uint64_t buffer, uint16_t len);
 typedef void (*get_string_desc_callback)(_au_usb_dev_* dev, uint64_t buffer, uint16_t id);
 typedef void (*get_config_desc_callback)(_au_usb_dev_* dev, uint64_t buffer, uint16_t len, uint8_t id);
@@ -130,6 +131,7 @@ typedef struct _au_usb_dev_ {
 	bool driverInitialized;
 	schedule_interrupt_callback AuScheduleInterrupt;
 	control_transfer AuControlTransfer;
+	bulk_transfer AuBulkTranfer;
 	get_device_desc_callback AuGetDeviceDescriptor;
 	get_string_desc_callback AuGetStringDescriptor;
 	get_config_desc_callback AuGetConfigDescriptor;

@@ -62,6 +62,7 @@ void AuUSBSubsystemInit() {
 	AuVFSNode* file = AuVFSOpen("/usbdrv.cnf");
 	if (!file) {
 		AuTextOut("[Aurora]: USB failed to open usbdrv.cnf, file not found \n");
+		AuTextOut("[Aurora]: Failed to initialise USB subsystem \n");
 		return;
 	}
 

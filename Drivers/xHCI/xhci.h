@@ -630,6 +630,16 @@ extern void XHCISendControlCmd(XHCIDevice* dev, XHCISlot* slot, uint8_t slot_id,
  */
 extern void XHCISendNormalTRB(XHCIDevice* dev, XHCISlot* slot, uint64_t data_buffer, uint16_t data_len, XHCIEndpoint* ep);
 
+/*
+ * XHCIBulkTransfer -- Bulk transfer callback
+ * @param dev -- Pointer to host device structure
+ * @param slot -- Pointer to device slot
+ * @param buffer -- Pointer to memory buffer
+ * @param data_len -- total data length
+ * @param ep_ -- Pointer to endpoint structure
+ */
+extern void XHCIBulkTransfer(XHCIDevice* dev, XHCISlot* slot, uint64_t buffer, uint16_t data_len, XHCIEndpoint* ep_);
+
 
 /*
  * XHCIGetMaxPacketSize -- get the packe size by

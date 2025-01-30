@@ -213,6 +213,27 @@ void USBControlTransfer(AuUSBDevice* usbdev,const USB_REQUEST_PACKET* request, u
 	XHCISendControlCmd(dev, slot, slot->slot_id, request, buffer_addr, len);
 }
 
+/*
+ * USBBulkTransfer -- bulk transfer callback
+ * @param usbdev -- Pointer to USB Device data structure
+ * @param buffer -- Pointer to buffer
+ * @param data_len -- Data length
+ * @param ep -- Pointer to endpoint data structure
+ */
+void USBBulkTransfer(AuUSBDevice* usbdev, uint64_t buffer, uint16_t data_len, void* ep) {
+	XHCIDevice* dev = XHCIGetHost();
+	if (!dev)
+		return;
+	XHCISlot* slot = (XHCISlot*)usbdev->data;
+	if (!slot)
+		return;
+	XHCIEndpoint* ep_ = (XHCIEndpoint*)ep;
+	if (!ep_)
+		return;
+
+	XHCIBulkTransfer(dev, slot, buffer, data_len, ep_);
+}
+
 
 int USBPollWait(AuUSBDevice* usb, int poll_type) {
 	XHCIDevice* dev = XHCIGetHost();
@@ -236,6 +257,8 @@ int USBGetMaxPacketSize(AuUSBDevice *dev_,void* ep) {
 		return -1;
 	return ep_->max_packet_sz;
 }
+
+
 /*
  * USBDeviceSetFunctions -- setup the device data structure with
  * all the function pointers
@@ -251,5 +274,6 @@ void USBDeviceSetFunctions(AuUSBDevice* dev) {
 	dev->get_max_pack_sz = USBGetMaxPacketSize;
 	dev->set_config_val = USBSetConfigDesc;
 	dev->control_transfer = USBControlTransfer;
+	dev->bulk_transfer = USBBulkTransfer;
 	dev->poll_wait = USBPollWait;
 }

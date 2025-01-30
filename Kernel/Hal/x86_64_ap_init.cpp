@@ -37,6 +37,19 @@
 #include <Mm/kmalloc.h>
 #include <Hal/serial.h>
 #include <aucon.h>
+
+void SMPISR(size_t v, void* p) {
+	SeTextOut("SMP %d \r\n", AuPerCPUGetCpuID());
+}
+void SMPStart() {
+	SeTextOut("SMP %d \r\n", AuPerCPUGetCpuID());
+	setvect(0x40, SMPISR);  //0x40
+	//AuThread* current_thread = AuPerCPUGetCurrentThread();
+	//TSS* _ks = AuPerCPUGetKernelTSS(); //x86_64_get_tss();
+	//SeTextOut("CurrentThread ->%x %x \r\n", current_thread, _ks);
+	//execute_idle(current_thread, x86_64_get_tss());
+	x64_sti();
+}
 /*
  * x86_64_ap_init -- application processor initialisation
  * sequence
@@ -66,6 +79,7 @@ void x86_64_ap_init(void* cpu) {
 	//AuSchedulerInitAp();
 	AuTextOut("CPU ID -> %d, TSS -> %x \r\n", AuPerCPUGetCpuID(), AuPerCPUGetKernelTSS());
 	x86_64_set_ap_start_bit(true);
+	//SMPStart();
 	for (;;){
 		x64_pause();
 	}

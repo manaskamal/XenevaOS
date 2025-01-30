@@ -339,6 +339,9 @@
     <ClInclude Include="..\BaseHdr\Drivers\usb.h">
       <Filter>Include\Drivers</Filter>
     </ClInclude>
+    <ClInclude Include="..\BaseHdr\Fs\Ext2\ext2.h">
+      <Filter>Include\Fs\Ext2</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="init.cpp" />
