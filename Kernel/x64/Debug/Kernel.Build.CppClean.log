@@ -4,8 +4,6 @@ e:\xeneva project\aurora\kernel\x64\debug\x86_64_switch.obj
 e:\xeneva project\aurora\kernel\x64\debug\__fstcpy.obj
 e:\xeneva project\aurora\kernel\x64\debug\vc142.pdb
 e:\xeneva project\aurora\kernel\x64\debug\vc142.idb
-e:\xeneva project\aurora\kernel\x64\debug\vfs.obj
-e:\xeneva project\aurora\kernel\x64\debug\vfs.asm
 e:\xeneva project\aurora\kernel\x64\debug\vdisk.obj
 e:\xeneva project\aurora\kernel\x64\debug\vdisk.asm
 e:\xeneva project\aurora\kernel\x64\debug\tty.obj
@@ -18,6 +16,8 @@ e:\xeneva project\aurora\kernel\x64\debug\fatdir.obj
 e:\xeneva project\aurora\kernel\x64\debug\fatdir.asm
 e:\xeneva project\aurora\kernel\x64\debug\fat.obj
 e:\xeneva project\aurora\kernel\x64\debug\fat.asm
+e:\xeneva project\aurora\kernel\x64\debug\ext2.obj
+e:\xeneva project\aurora\kernel\x64\debug\ext2.asm
 e:\xeneva project\aurora\kernel\x64\debug\devinput.obj
 e:\xeneva project\aurora\kernel\x64\debug\devinput.asm
 e:\xeneva project\aurora\kernel\x64\debug\devfs.obj
@@ -44,8 +44,6 @@ e:\xeneva project\aurora\kernel\x64\debug\aucon.obj
 e:\xeneva project\aurora\kernel\x64\debug\aucon.asm
 e:\xeneva project\aurora\kernel\x64\debug\hashmap.obj
 e:\xeneva project\aurora\kernel\x64\debug\hashmap.asm
-e:\xeneva project\aurora\kernel\x64\debug\init.obj
-e:\xeneva project\aurora\kernel\x64\debug\init.asm
 e:\xeneva project\aurora\kernel\x64\debug\x86_64_systable.obj
 e:\xeneva project\aurora\kernel\x64\debug\x86_64_systable.asm
 e:\xeneva project\aurora\kernel\x64\debug\x86_64_signal.obj
@@ -84,8 +82,8 @@ e:\xeneva project\aurora\kernel\x64\debug\ftmngr.obj
 e:\xeneva project\aurora\kernel\x64\debug\ftmngr.asm
 e:\xeneva project\aurora\kernel\x64\debug\_gpt.obj
 e:\xeneva project\aurora\kernel\x64\debug\_gpt.asm
-e:\xeneva project\aurora\kernel\x64\debug\mmserv.obj
-e:\xeneva project\aurora\kernel\x64\debug\mmserv.asm
+e:\xeneva project\aurora\kernel\x64\debug\vfs.obj
+e:\xeneva project\aurora\kernel\x64\debug\vfs.asm
 e:\xeneva project\aurora\kernel\x64\debug\fileserv.obj
 e:\xeneva project\aurora\kernel\x64\debug\fileserv.asm
 e:\xeneva project\aurora\kernel\x64\debug\process.obj
@@ -124,6 +122,8 @@ e:\xeneva project\aurora\kernel\x64\debug\list.obj
 e:\xeneva project\aurora\kernel\x64\debug\list.asm
 e:\xeneva project\aurora\kernel\x64\debug\postbox.obj
 e:\xeneva project\aurora\kernel\x64\debug\postbox.asm
+e:\xeneva project\aurora\kernel\x64\debug\init.obj
+e:\xeneva project\aurora\kernel\x64\debug\init.asm
 e:\xeneva project\aurora\kernel\x64\debug\_crt.obj
 e:\xeneva project\aurora\kernel\x64\debug\_crt.asm
 e:\xeneva project\aurora\kernel\x64\debug\version.obj
@@ -148,6 +148,8 @@ e:\xeneva project\aurora\kernel\x64\debug\thrserv.obj
 e:\xeneva project\aurora\kernel\x64\debug\thrserv.asm
 e:\xeneva project\aurora\kernel\x64\debug\netserv.obj
 e:\xeneva project\aurora\kernel\x64\debug\netserv.asm
+e:\xeneva project\aurora\kernel\x64\debug\mmserv.obj
+e:\xeneva project\aurora\kernel\x64\debug\mmserv.asm
 e:\xeneva project\aurora\kernel\x64\debug\udp.obj
 e:\xeneva project\aurora\kernel\x64\debug\udp.asm
 e:\xeneva project\aurora\kernel\x64\debug\tcp.obj

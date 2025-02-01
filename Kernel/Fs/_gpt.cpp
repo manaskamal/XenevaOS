@@ -31,6 +31,7 @@
 #include <Fs/Fat/Fat.h>
 #include <Fs/_FsGUIDs.h>
 #include <aucon.h>
+#include <Fs/Ext2/ext2.h>
 
 /* Need a function to verify the GUIDs with specific file system
  * if matched, then call the file system to detect other informations
@@ -71,15 +72,24 @@ void AuGPTInitialise_FileSystem(AuVDisk *vdisk) {
 		FatInitialise(vdisk, "/");
 	}
 
-	//guid = LINUX_HOME_PARTITION_GUID;
+	guid = LINUX_HOME_PARTITION_GUID;
 
-	//if (AuGUIDVerify(vdisk->part_guid, guid)) {
-	//	AuTextOut("GPT Partition with Linux file systems \n");
-	//	/*
-	//	 * Now call ext fs detect routine to verify ext version
-	//	 * and initialise it
-	//	 */
-	//}
+	if (AuGUIDVerify(vdisk->part_guid, guid)) {
+		AuTextOut("GPT Partition with Linux file systems \n");
+		/*
+		 * Now call ext fs detect routine to verify ext version
+		 * and initialise it
+		 */
+		Ext2Initialise(vdisk, "home");
+	}
+
+	guid = LINUX_FILESYSTEM;
+	
+	if (AuGUIDVerify(vdisk->part_guid, guid)) {
+		AuTextOut("GPT Partition with Linux file systems \n");
+		/* call ext2mount */
+		Ext2Initialise(vdisk,"home");
+	}
 
 }
 

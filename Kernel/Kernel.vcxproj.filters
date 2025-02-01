@@ -536,6 +536,9 @@
     <ClCompile Include="Drivers\usb.cpp">
       <Filter>Drivers</Filter>
     </ClCompile>
+    <ClCompile Include="Fs\Ext2\ext2.cpp">
+      <Filter>Fs\Ext2</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <NASM Include="__fstcpy.asm" />

@@ -32,6 +32,7 @@
 #define __EXT_2_H__
 
 #include <stdint.h>
+#include <Fs/vdisk.h>
 
 #define EXT2_SUPER_BLOCK_MAGIC 0xEF53
 #define EXT2_DIRECT_BLOCKS 12
@@ -181,5 +182,11 @@ typedef struct _ext2_dir_ {
 
 #define EXT2_FLAG_READWRITE  0x00002
 #define EXT2_FLAG_LOUD  0x0004
+
+
+/*
+ * Ext2Initialise -- mount the file system
+ */
+extern void Ext2Initialise(AuVDisk* vdisk, char* mountname);
 
 #endif

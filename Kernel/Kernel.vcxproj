@@ -255,6 +255,7 @@
     <ClCompile Include="Drivers\usb.cpp" />
     <ClCompile Include="Fs\Dev\devfs.cpp" />
     <ClCompile Include="Fs\Dev\devinput.cpp" />
+    <ClCompile Include="Fs\Ext2\ext2.cpp" />
     <ClCompile Include="Fs\Fat\Fat.cpp" />
     <ClCompile Include="Fs\Fat\FatDir.cpp" />
     <ClCompile Include="Fs\Fat\FatFile.cpp" />
