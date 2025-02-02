@@ -28,5 +28,12 @@ XenevaOS project follows good coding style to maintain consistency, readability,
 for folder names.
 - Keep functions modular and documented with comments
 
+### *Bug Reports & Feature Requests*
+- Open an issue to report bugs or suggest a new features
+- When reporting a bug, provide clear details about the issue, including system debug messages from the serial terminal, processor state and register values. If possible, describe the conditions under which the bug occurs.
+- Mention your testing environment
+- For feature requests, explain the purpose and potential benefits to the project.
 
+### *Conclusion*
+Thank you for your interest in contributing to XenevaOS! Your contributions-whether in code, documentation, bug reports, or discussions-help shape the future of this project. If you have any questions or need guidance, feel free to open an issue or join the discussions on GitHub or Discord. Let's work together to make a powerful and efficient operating system !
 
