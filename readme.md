@@ -12,6 +12,9 @@ with hybrid design and the entire operating system is known as _'Xeneva'_.<br> P
 ## Documentation
 Refer to [Documentations of XenevaOS](Docs/Introduction.md)
 
+## Contributing to the project
+XenevaOS is an open-source project that welcomes contributions from developers, researchers, and enthusiasts who are passionate about low level system development. Whether you're intereseted in Kernel development, driver development, low level graphics or application level features there are many ways to get involved. We encourage contibutions in the form of code, documentation, bug reports, and feature suggestions. If you're interested in contibuting, check out out [Contribution Guideline](Docs/Contributing.md), explore open issues, and join the discussion to help shape the project.
+
 ## __Features__ :
 - ACPI (through acpica)
 - x64 based Kernel
@@ -62,8 +65,6 @@ _And many more coming soon_
 
 The project is build purely on Windows Environment. Please Visit [Build Instructions page ](Docs/BuildInstructions.md) for more information
 
-## Contributing to the project
-XenevaOS is an open-source project that welcomes contributions from developers, researchers, and enthusiasts who are passionate about low level system development. Whether you're intereseted in Kernel development, driver development, low level graphics or application level features there are many ways to get involved. We encourage contibutions in the form of code, documentation, bug reports, and feature suggestions. If you're interested in contibuting, check out out [Contribution Guideline](Docs/Contributing.md), explore open issues, and join the discussion to help shape the project.
 
 ## __Requirements__ : 
 1> NASM as the main assembler <br>

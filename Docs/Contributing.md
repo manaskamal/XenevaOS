@@ -10,4 +10,23 @@ XenevaOS uses Microsoft Visual Studio as development platform, and uses Windows 
 ## Types of Contributions
 
 ### *Kernel Development*
-XenevaOS's kernel is purely written in C and some assembly
+- XenevaOS's kernel _'Aurora'_ is purely written in C and some assembly. Kernel is the main component and highly priviledged layer of an operating system. Any incorrect code or untested changes can lead to system-wide crashes, instability, or security vulnerabilities.
+
+- Always test kernel modificaions in a controlled environment like QEMU, VirtualBox before pushing changes.
+
+- Follow memory management, system calls and other subsystem guidelines as outlined in the documentation.
+
+- Before making major changes, open an issue or discussion in the repository or on Discord to align with the project's direction and avoid duplicate efforts.
+
+### *Coding Style*
+XenevaOS project follows good coding style to maintain consistency, readability, and project discipline. All contributions should adhere to this style to ensure uniformity across the codebase. Well-structured, clean, and documented code is highly valued, as it improves maintainability and collaboration. 
+
+- Use _'PascalCase'_ for function naming and Structs. 
+- If your contribution is for Kernel, use PascalCase for function naming with the prefix __'Au'__, For example - ```AuPmmngrAlloc```
+- Use _'snake_case'_  for variable naming 
+- Use __*lowercase*__ for file names and __*PascalCase*__ 
+for folder names.
+- Keep functions modular and documented with comments
+
+
+
