@@ -33,6 +33,7 @@
 #include <Library/UefiLib.h>
 #include "xnout.h"
 #include "xnldr.h"
+#include "video.h"
 
 /* global variable */
 EFI_HANDLE   gImageHandle;
@@ -63,10 +64,6 @@ EFI_STATUS XEInitialiseLib(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable
 	xnldr2 = loadedimage;
 	return EFI_SUCCESS;
 }
-
-#define EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID \
-{0x9042a9de,0x23dc,0x4a38,\
-{0x96,0xfb,0x7a,0xde,0xd0,0x80,0x51,0x6a}}
 
 
 typedef struct {
@@ -141,7 +138,7 @@ int XEGetScreenResolutionMode(EFI_SYSTEM_TABLE* SystemTable) {
  * @param SystemTable -- Pointer to EFI SYSTEM TABLE
  * @param index -- User selection index
  */
-EFI_STATUS XESetGraphicsMode(EFI_SYSTEM_TABLE* SystemTable, int index) {
+UINTN XESetGraphicsMode(EFI_SYSTEM_TABLE* SystemTable, int index) {
 	EFI_GRAPHICS_OUTPUT_PROTOCOL* GraphicsOutput;
 	EFI_GUID gopguid = EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID;
 	EFI_STATUS Status;
@@ -184,7 +181,9 @@ EFI_STATUS XESetGraphicsMode(EFI_SYSTEM_TABLE* SystemTable, int index) {
 	}
 
 	Status = GraphicsOutput->SetMode(GraphicsOutput, Mode);
-	return EFI_SUCCESS;
+
+	Status = XEInitialiseGraphics(GraphicsOutput);
+	return Mode;
 }
 
 
@@ -205,7 +204,9 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
 	/* Get user graphics resolution choice*/
 	int index = XEGetScreenResolutionMode(SystemTable);
 	/* Set the graphics resolution based on user selection */
-	XESetGraphicsMode(SystemTable, index);
+	UINTN Mode = XESetGraphicsMode(SystemTable, index);
+	XEGuiPrint("XenevaOS Loader 2.0 (XNLDR) \n");
+	XEGuiPrint("Copyright (C) Manas Kamal Choudhury 2020-2025\n");
 	for (;;);
 	return EFI_SUCCESS;
 }

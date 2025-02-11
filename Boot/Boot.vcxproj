@@ -170,11 +170,14 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="clib.cpp" />
+    <ClCompile Include="video.cpp" />
     <ClCompile Include="xnldr.cpp" />
     <ClCompile Include="xnout.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="clib.h" />
+    <ClInclude Include="font.h" />
+    <ClInclude Include="video.h" />
     <ClInclude Include="xnldr.h" />
     <ClInclude Include="xnout.h" />
   </ItemGroup>

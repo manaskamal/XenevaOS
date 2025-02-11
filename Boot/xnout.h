@@ -73,4 +73,10 @@ extern EFI_STATUS XESetTextAttribute(const int Back, const int Fore);
  */
 extern int XEPrintf(wchar_t* fmt, ...);
 
+/*
+ * XEGuiPrint -- print formated text using graphics
+ * @param format -- formated string
+ */
+extern void XEGuiPrint(const char* format, ...);
+
 #endif

@@ -4,10 +4,13 @@
     <ClCompile Include="xnldr.cpp" />
     <ClCompile Include="xnout.cpp" />
     <ClCompile Include="clib.cpp" />
+    <ClCompile Include="video.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="xnldr.h" />
     <ClInclude Include="xnout.h" />
     <ClInclude Include="clib.h" />
+    <ClInclude Include="font.h" />
+    <ClInclude Include="video.h" />
   </ItemGroup>
 </Project>

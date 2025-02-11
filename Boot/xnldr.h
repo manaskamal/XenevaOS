@@ -34,6 +34,32 @@
 #include <stdint.h>
 #include <Uefi.h>
 
+
+#define EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID \
+{0x9042a9de,0x23dc,0x4a38,\
+{0x96,0xfb,0x7a,0xde,0xd0,0x80,0x51,0x6a}}
+
+#pragma pack(push,1)
+
+/*
+ *FRAMEBUFFER_INFORMATION :
+ * framebuffer structure
+ */
+typedef struct _FB_INFO_ {
+	uint32_t* phyaddr;
+	uint32_t* graphics_framebuffer;
+	size_t size;
+	uint16_t pixelsPerLine;
+	uint16_t X_Resolution;
+	uint16_t Y_Resolution;
+	uint32_t redmask;
+	uint32_t greenmask;
+	uint32_t bluemask;
+	uint32_t resvmask;
+} FRAMEBUFFER_INFORMATION, * PFRAMEBUFFER_INFORMATION;
+
+
+
 /* XEBootInfo, Xeneva Boot information 
  * structure passed to the kernel
  */

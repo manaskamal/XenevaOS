@@ -100,3 +100,32 @@ int to_lower(int c) {
 int is_digit(int c) {
 	return ((c >= '0') && (c <= '9'));
 }
+
+
+char* chars = (char*)"0123456789ABCDEF";
+
+char* sztoa(size_t value, char* str, int base) {
+
+	if (base < 2 || base > 16)
+		return nullptr;
+	unsigned int i = 0;
+	do {
+		str[++i] = chars[value % base];
+		value /= base;
+	} while (value != 0);
+	str[0] = '\0';
+	for (unsigned int z = 0; z < i; ++z, --i)
+	{
+		char tmp = str[z];
+		str[z] = str[i];
+		str[i] = tmp;
+	}
+	return str;
+}
+
+
+size_t strlen(const char* s){
+	size_t l = 0;
+	while (*s++)++l;
+	return l;
+}

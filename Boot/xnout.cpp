@@ -30,6 +30,7 @@
 #include "xnout.h"
 #include "xnldr.h"
 #include "clib.h"
+#include "video.h"
 
 typedef unsigned char* va_list;
 
@@ -363,3 +364,73 @@ int XEPrintf(wchar_t* fmt, ...) {
 	gSystemTable->ConOut->OutputString(gSystemTable->ConOut, out);
 	return 0;
 }
+
+
+
+
+/*
+ * XEGuiPrint -- print formated text using graphics
+ * @param format -- formated string
+ */
+void XEGuiPrint(const char* format, ...) {
+	va_list args;
+	va_start(args, format);
+	while (*format != '\0') {
+		if (*format == '%') {
+			++format;
+			if (*format == 'd') {
+				size_t width = 0;
+				if (format[1] == '.'){
+					for (size_t i = 2; format[i] >= '0' && format[i] <= '9'; ++i)
+					{
+						width *= 10;
+						width += format[i] - '0';
+					}
+				}
+				size_t i = va_arg(args, size_t);
+				char buffer[sizeof(size_t) * 8 + 1];
+				sztoa(i, buffer, 10);
+				size_t len = strlen(buffer);
+				while (len++ < width)
+					XEGraphicsPuts("0");
+				XEGraphicsPuts(buffer);
+			}
+			else if (*format == 'c') {
+
+				char c = va_arg(args, char);
+				XEGraphicsPutC(c);
+			}
+			else if (*format == 'x') {
+				size_t x = va_arg(args, size_t);
+				char buffer[sizeof(size_t) * 8 + 1];
+				sztoa(x, buffer, 16);
+				XEGraphicsPuts(buffer);
+			}
+			else if (*format == 's') {
+				char* x = va_arg(args, char*);
+				XEGraphicsPuts(x);
+			}
+			else if (*format == 'S') {
+				char* x = va_arg(args, char*);
+				XEGraphicsPuts(x);
+			}
+			else if (*format == '%') {
+				XEGraphicsPuts(".");
+			}
+			else {
+				char buf[3];
+				buf[0] = '%'; buf[1] = *format; buf[2] = '\0';
+				XEGraphicsPuts(buf);
+			}
+		}
+		else
+		{
+			char buf[2];
+			buf[0] = *format; buf[1] = '\0';
+			XEGraphicsPuts(buf);
+		}
+		++format;
+	}
+	va_end(args);
+}
+
