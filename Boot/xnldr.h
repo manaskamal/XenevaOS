@@ -103,4 +103,18 @@ extern EFI_HANDLE   gImageHandle;
 extern EFI_SYSTEM_TABLE* gSystemTable;
 extern EFI_BOOT_SERVICES* gBS;
 extern EFI_RUNTIME_SERVICES* gRS;
+
+/*
+ * XEAllocatePool -- allocate pool memory
+ * @param sz -- size in bytes to allocate
+ */
+extern void* XEAllocatePool(const uint64_t sz);
+
+/*
+ * XEFreePool -- frees up previously allocated
+ * pool memory
+ * @param Buffer -- Pointer to previously allocated
+ * pool memory
+ */
+extern void XEFreePool(void* Buffer);
 #endif

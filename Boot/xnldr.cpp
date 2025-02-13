@@ -34,6 +34,8 @@
 #include "xnout.h"
 #include "xnldr.h"
 #include "video.h"
+#include "file.h"
+#include "pe.h"
 
 /* global variable */
 EFI_HANDLE   gImageHandle;
@@ -207,6 +209,16 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
 	UINTN Mode = XESetGraphicsMode(SystemTable, index);
 	XEGuiPrint("XenevaOS Loader 2.0 (XNLDR) \n");
 	XEGuiPrint("Copyright (C) Manas Kamal Choudhury 2020-2025\n");
+
+	/* load all important files */
+	VOID* kbuffer = XEOpenAndReadFile(ImageHandle, (CHAR16*)L"\\EFI\\XENEVA\\xnkrnl.exe");
+	VOID* kfontData = XEOpenAndReadFile(ImageHandle,(CHAR16*)L"\\EFI\\XENEVA\\font.psf");
+	VOID* kApCode = XEOpenAndReadFile(ImageHandle, (CHAR16*)L"\\EFI\\XENEVA\\ap.bin");
+	VOID* kAhci = XEOpenAndReadFile(ImageHandle, (CHAR16*)L"\\ahci.dll");
+	VOID* kNvme = XEOpenAndReadFile(ImageHandle, (CHAR16*)L"\\nvme.dll");
+	VOID* kUSB = XEOpenAndReadFile(ImageHandle, (CHAR16*)L"\\xhci.dll");
+
+	XEGuiPrint("System files loaded successfully \n");
 	for (;;);
 	return EFI_SUCCESS;
 }

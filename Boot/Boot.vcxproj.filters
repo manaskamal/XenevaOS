@@ -5,6 +5,8 @@
     <ClCompile Include="xnout.cpp" />
     <ClCompile Include="clib.cpp" />
     <ClCompile Include="video.cpp" />
+    <ClCompile Include="mem.cpp" />
+    <ClCompile Include="file.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="xnldr.h" />
@@ -12,5 +14,7 @@
     <ClInclude Include="clib.h" />
     <ClInclude Include="font.h" />
     <ClInclude Include="video.h" />
+    <ClInclude Include="file.h" />
+    <ClInclude Include="pe.h" />
   </ItemGroup>
 </Project>
