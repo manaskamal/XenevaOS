@@ -7,6 +7,9 @@
     <ClCompile Include="video.cpp" />
     <ClCompile Include="mem.cpp" />
     <ClCompile Include="file.cpp" />
+    <ClCompile Include="physm.cpp" />
+    <ClCompile Include="paging.cpp" />
+    <ClCompile Include="pe.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="xnldr.h" />
@@ -16,5 +19,11 @@
     <ClInclude Include="video.h" />
     <ClInclude Include="file.h" />
     <ClInclude Include="pe.h" />
+    <ClInclude Include="physm.h" />
+    <ClInclude Include="lowlevel.h" />
+    <ClInclude Include="paging.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <NASM Include="lowlevel.asm" />
   </ItemGroup>
 </Project>

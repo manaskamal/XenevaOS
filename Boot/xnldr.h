@@ -34,6 +34,8 @@
 #include <stdint.h>
 #include <Uefi.h>
 
+#define SIZE_MAX 0xFFFFFFFF
+
 
 #define EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID \
 {0x9042a9de,0x23dc,0x4a38,\
@@ -98,6 +100,15 @@ typedef struct _XE_BOOT_INFO_ {
 }XEBootInfo, *XEPBootInfo;
 
 #pragma pack(pop)
+
+typedef void(*XEImageEntry)(XEBootInfo*);
+
+
+struct EfiMemoryMap {
+	EFI_MEMORY_DESCRIPTOR* memmap;
+	uint64_t MemMapSize, MapKey, DescriptorSize;
+	UINT32 DescriptorVersion;
+};
 
 extern EFI_HANDLE   gImageHandle;
 extern EFI_SYSTEM_TABLE* gSystemTable;

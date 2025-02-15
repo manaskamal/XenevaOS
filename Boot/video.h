@@ -75,5 +75,22 @@ extern void XEGraphicsPutC(char str);
  */
 extern void XEGraphicsPuts(const char* str);
 
+/*
+ * XEGraphicsClearScreen -- clear the entire screen
+ * @param gop -- Pointer to Graphics Output Protocol
+ */
+extern void XEGraphicsClearScreen(EFI_GRAPHICS_OUTPUT_PROTOCOL* gop);
+
+extern uint32_t* XEGetFramebuffer();
+extern uint16_t XEGetScreenWidth();
+extern uint16_t XEGetScreenHeight();
+extern size_t XEGetFramebufferSz();
+extern size_t XEGetPixelsPerLine();
+extern uint32_t XEGetRedMask();
+extern uint32_t XEGetBlueMask();
+extern uint32_t XEGetGreenMask();
+extern uint32_t XEGetResvMask();
+
+
 
 #endif

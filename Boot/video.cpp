@@ -38,6 +38,7 @@ uint32_t background;
 uint32_t foreground;
 
 
+
 int_fast8_t high_set_bit(size_t sz) {
 	int_fast8_t count = -1;
 	while (sz){
@@ -232,3 +233,56 @@ void XEGraphicsPuts(const char* str){
 		ypos--;
 	}
 }
+
+/*
+ * XEGraphicsClearScreen -- clear the entire screen
+ * @param gop -- Pointer to Graphics Output Protocol
+ */
+void XEGraphicsClearScreen(EFI_GRAPHICS_OUTPUT_PROTOCOL* gop) {
+	EFI_GRAPHICS_OUTPUT_BLT_PIXEL pixel;
+	pixel.Blue = 0;
+	pixel.Green = 0;
+	pixel.Red = 0;
+	xpos = ypos = 0;
+
+	gop->Blt(gop, &pixel, EfiBltVideoFill, 0, 0, 0, 0, fbinfo.X_Resolution, fbinfo.Y_Resolution, 0);
+}
+
+
+uint32_t* XEGetFramebuffer() {
+	return fbinfo.phyaddr;
+}
+
+uint16_t XEGetScreenWidth() {
+	return fbinfo.X_Resolution;
+}
+
+uint16_t XEGetScreenHeight() {
+	return fbinfo.Y_Resolution;
+}
+
+size_t XEGetFramebufferSz() {
+	return fbinfo.size;
+}
+
+size_t XEGetPixelsPerLine() {
+	return fbinfo.pixelsPerLine;
+}
+
+uint32_t XEGetRedMask() {
+	return fbinfo.redmask;
+}
+
+uint32_t XEGetBlueMask() {
+	return fbinfo.bluemask;
+}
+
+uint32_t XEGetGreenMask() {
+	return fbinfo.greenmask;
+}
+
+
+uint32_t XEGetResvMask() {
+	return fbinfo.resvmask;
+}
+

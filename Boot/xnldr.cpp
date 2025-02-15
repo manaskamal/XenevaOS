@@ -36,6 +36,9 @@
 #include "video.h"
 #include "file.h"
 #include "pe.h"
+#include "physm.h"
+#include "paging.h"
+#include "lowlevel.h"
 
 /* global variable */
 EFI_HANDLE   gImageHandle;
@@ -43,7 +46,27 @@ EFI_SYSTEM_TABLE* gSystemTable;
 EFI_BOOT_SERVICES* gBS;
 EFI_RUNTIME_SERVICES* gRS;
 EFI_LOADED_IMAGE_PROTOCOL* xnldr2;
+EFI_GRAPHICS_OUTPUT_PROTOCOL* gop;
 
+
+#define ACPI_20_TABLE_GUID  {0x8868e871, 0xe4f1, 0x11d3, 0xbc, 0x22, 0x00, 0x80, 0xc7, 0x3c, 0x88, 0x81}
+
+/*
+ * XEGUIDMatch -- compares two given GUID
+ * @param guid1 -- GUID one
+ * @param guid2 -- GUID two
+ */
+bool XEGUIDMatch(EFI_GUID guid1, EFI_GUID guid2) {
+	bool first_part_good = (guid1.Data1 == guid2.Data1 && guid1.Data2 == guid2.Data2 &&
+		guid1.Data3 == guid2.Data3);
+
+	if (!first_part_good) return false;
+
+	for (int i = 0; i < 8; ++i) 
+		if (guid1.Data4[i] != guid2.Data4[i]) return false;
+
+	return true;
+}
 
 /*
  * XEInitialiseLib -- initialise the UEFI library
@@ -183,7 +206,7 @@ UINTN XESetGraphicsMode(EFI_SYSTEM_TABLE* SystemTable, int index) {
 	}
 
 	Status = GraphicsOutput->SetMode(GraphicsOutput, Mode);
-
+	gop = GraphicsOutput;
 	Status = XEInitialiseGraphics(GraphicsOutput);
 	return Mode;
 }
@@ -203,6 +226,8 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
 	Status = XEInitialiseLib(ImageHandle, SystemTable);
 	XEClearScreen();
 
+	XEBootInfo bootinfo;
+
 	/* Get user graphics resolution choice*/
 	int index = XEGetScreenResolutionMode(SystemTable);
 	/* Set the graphics resolution based on user selection */
@@ -211,14 +236,129 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
 	XEGuiPrint("Copyright (C) Manas Kamal Choudhury 2020-2025\n");
 
 	/* load all important files */
-	VOID* kbuffer = XEOpenAndReadFile(ImageHandle, (CHAR16*)L"\\EFI\\XENEVA\\xnkrnl.exe");
-	VOID* kfontData = XEOpenAndReadFile(ImageHandle,(CHAR16*)L"\\EFI\\XENEVA\\font.psf");
-	VOID* kApCode = XEOpenAndReadFile(ImageHandle, (CHAR16*)L"\\EFI\\XENEVA\\ap.bin");
-	VOID* kAhci = XEOpenAndReadFile(ImageHandle, (CHAR16*)L"\\ahci.dll");
-	VOID* kNvme = XEOpenAndReadFile(ImageHandle, (CHAR16*)L"\\nvme.dll");
-	VOID* kUSB = XEOpenAndReadFile(ImageHandle, (CHAR16*)L"\\xhci.dll");
+	XEFile* krnl = XEOpenAndReadFile(ImageHandle, (CHAR16*)L"\\EFI\\XENEVA\\xnkrnl.exe");
+	XEFile* kfont = XEOpenAndReadFile(ImageHandle,(CHAR16*)L"\\EFI\\XENEVA\\font.psf");
+	XEFile* kApCode = XEOpenAndReadFile(ImageHandle, (CHAR16*)L"\\EFI\\XENEVA\\ap.bin");
+	XEFile* kAhci = XEOpenAndReadFile(ImageHandle, (CHAR16*)L"\\ahci.dll");
+	XEFile* kNvme = XEOpenAndReadFile(ImageHandle, (CHAR16*)L"\\nvme.dll");
+
+	uint8_t* allignedKernelBuffer = (uint8_t*)krnl->kBuffer;
+	IMAGE_DOS_HEADER* dos_header = (IMAGE_DOS_HEADER*)allignedKernelBuffer;
+	IMAGE_NT_HEADERS* nt_header = (IMAGE_NT_HEADERS*)(allignedKernelBuffer + dos_header->e_lfanew);
+	VOID* entry = (VOID*)(nt_header->OptionalHeader.ImageBase + nt_header->OptionalHeader.AddressOfEntryPoint);
 
 	XEGuiPrint("System files loaded successfully \n");
+	EFI_CONFIGURATION_TABLE* configuration_tables = gSystemTable->ConfigurationTable;
+
+	/**
+	 *-------------------------------------------------------------------
+	 * Get the address of ACPI Table
+	 *-------------------------------------------------------------------
+	 */
+	void* xdsp_address = NULL;
+	static EFI_GUID acpi_guid = ACPI_20_TABLE_GUID;
+	for (unsigned i = 0; i < gSystemTable->NumberOfTableEntries; ++i) {
+		if (XEGUIDMatch(acpi_guid, configuration_tables[i].VendorGuid)) {
+			xdsp_address = configuration_tables[i].VendorTable;
+		}
+	}
+
+	const size_t EARLY_PAGE_STACK_SIZE = 1024 * 1024;
+	EFI_PHYSICAL_ADDRESS earlyPhyPageStack = 0;
+	if (!(SystemTable->BootServices->AllocatePages(AllocateAnyPages, EfiLoaderData, EARLY_PAGE_STACK_SIZE / EFI_PAGE_SIZE, (EFI_PHYSICAL_ADDRESS*)earlyPhyPageStack))) 
+		XEGuiPrint("Early Page Stack: allocation failed.....\n");
+
+	Status = gSystemTable->BootServices->SetWatchdogTimer(0, 0, 0, 0);
+	if (Status != EFI_SUCCESS) 
+		XEGuiPrint("Failed to set watchdog time \n");
+
+
+	struct EfiMemoryMap map;
+	EFI_MEMORY_DESCRIPTOR* desc_ptr = nullptr;
+	map.MemMapSize = 0;
+	map.MapKey = map.DescriptorSize = map.DescriptorVersion = 0;
+	map.memmap = 0;
+	Status = gSystemTable->BootServices->GetMemoryMap(&map.MemMapSize, nullptr, &map.MapKey, &map.DescriptorSize, &map.DescriptorVersion);
+	if (Status == EFI_BUFFER_TOO_SMALL) {
+		XEGuiPrint("Failed memory map! Buffer to small \n");
+		XEGuiPrint("Required buffer -> %d bytes\n", map.MemMapSize);
+	}
+	else if (Status == EFI_INVALID_PARAMETER) 
+		XEGuiPrint("EFI_Memory_Map failed!!, invalid parameter \n");
+	else if (Status != EFI_SUCCESS) 
+		XEGuiPrint("Memory Map Failed \n");
+	
+
+	//give a nice bit of room to spare
+	map.MemMapSize += 16 * map.DescriptorSize; //sizeof(EFI_MEMORY_DESCRIPTOR);
+	XEGuiPrint("Memory Map size -> %d \n", map.MemMapSize);
+	map.memmap = (EFI_MEMORY_DESCRIPTOR*)XEAllocatePool(map.MemMapSize);
+
+	Status = gSystemTable->BootServices->GetMemoryMap(&map.MemMapSize, map.memmap, &map.MapKey, &map.DescriptorSize, &map.DescriptorVersion);
+	if (Status != EFI_SUCCESS) 
+		XEGuiPrint("Failed to retrieve memory map \n");
+
+	XEGraphicsClearScreen(gop);
+	Status = SystemTable->BootServices->ExitBootServices(ImageHandle, map.MapKey);
+	if (Status != EFI_SUCCESS)
+		XEGuiPrint("Exit Boot Service Failed \n");
+
+	/* Initialise the physical memory manager */
+	XEInitialisePmmngr(map, (void*)earlyPhyPageStack, EARLY_PAGE_STACK_SIZE);
+
+	/* initilise paging */
+	XEInitialisePaging();
+
+
+	void* base = XEPELoadImage(krnl->kBuffer);
+	XEImageEntry kentry = (XEImageEntry)XEPEGetEntryPoint(krnl->kBuffer);
+
+
+	uint64_t ahciAddr = XEPELoadDLLImage(kAhci->kBuffer);
+	uint64_t nvmeAddr = XEPELoadDLLImage(kNvme->kBuffer);
+	
+	
+	void* stackaddr = (void*)0xFFFFA00000000000;
+	void* idtaddr = (void*)0xFFFFD80000000000;
+
+	XEPagingMap(stackaddr, PADDR_T_MAX, 0x100000, 0);
+	memset(stackaddr, 0, 0x100000);
+	XEGuiPrint("Stack mapped \n");
+  
+	XEPagingMap(idtaddr, PADDR_T_MAX, 0x1000, 0); //for idt
+
+	XEGuiPrint("Loading the kernel \n");
+	//Memory Related
+	bootinfo.boot_type = 1;
+	bootinfo.allocated_mem = XEGetAlstackptr();
+	bootinfo.reserved_mem_count = XEReserveMemCount();
+	bootinfo.map = map.memmap;
+	bootinfo.descriptor_size = map.DescriptorSize;
+	bootinfo.mem_map_size = map.MemMapSize;
+	bootinfo.graphics_framebuffer = XEGetFramebuffer();
+	bootinfo.X_Resolution = XEGetScreenWidth();
+	bootinfo.Y_Resolution = XEGetScreenHeight();
+	bootinfo.fb_size = XEGetFramebufferSz();
+	bootinfo.pixels_per_line = XEGetPixelsPerLine();
+	bootinfo.redmask = XEGetRedMask();
+	bootinfo.greenmask = XEGetGreenMask();
+	bootinfo.bluemask = XEGetBlueMask();
+	bootinfo.resvmask = XEGetResvMask();
+	bootinfo.acpi_table_pointer = xdsp_address;
+	bootinfo.kernel_size = krnl->FileSize;
+	bootinfo.printf_gui = XEGuiPrint;
+	bootinfo.font_binary_address = (uint8_t*)kfont->kBuffer;
+	bootinfo.driver_entry1 = (uint8_t*)ahciAddr;
+	bootinfo.driver_entry2 = (uint8_t*)nvmeAddr;
+	bootinfo.driver_entry3 = 0;// usbAddr;
+	bootinfo.driver_entry4 = 0;
+	bootinfo.driver_entry5 = 0;
+	bootinfo.driver_entry6 = 0;
+	bootinfo.ap_code = kApCode->kBuffer;
+	bootinfo.hid =0;
+	bootinfo.uid =0;
+	bootinfo.cid =0;
+	call_kernel(&bootinfo, entry, stackaddr, 0x100000);  //This functions actually does the installation of stack, not for calling kernel
 	for (;;);
 	return EFI_SUCCESS;
 }

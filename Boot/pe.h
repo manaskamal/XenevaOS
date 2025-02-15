@@ -32,6 +32,7 @@
 
 
 #include <stdint.h>
+#include "xnldr.h"
 
 #pragma pack(push, 1)
 
@@ -259,6 +260,27 @@ typedef IMAGE_IMPORT_LOOKUP_TABLE_PE32P IMAGE_IMPORT_LOOKUP_TABLE_PE32P, * PIMAG
 static const enum PeOptionalMagic MAGIC_NATIVE = MAGIC_PE32;
 static const enum PeMachineType   MACHINE_NATIVE = IMAGE_FILE_MACHINE_I386;
 #define IMAGE_IMPORT_LOOKUP_TABLE_FLAG  IMAGE_IMPORT_LOOKUP_TABLE_FLAG_PE32
+
+
+/*
+ * XEPELoadImage -- loads a executable image to memory
+ * @param filebuf -- file buffer
+ */
+extern void* XEPELoadImage(void* filebuf);
+/*
+ * XEPELoadDLLImage -- load dll image to memory
+ @param filebuf -- Pointer to file buffer
+ */
+extern uint64_t XEPELoadDLLImage(void* filebuf);
+
+
+/*
+ * XEPEGetEntryPoint -- returns the entry point
+ * of loaded image
+ * @param image -- Pointer to file buffer
+ */
+extern XEImageEntry XEPEGetEntryPoint(void* image);
+
 
 
 #endif

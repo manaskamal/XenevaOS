@@ -172,6 +172,9 @@
     <ClCompile Include="clib.cpp" />
     <ClCompile Include="file.cpp" />
     <ClCompile Include="mem.cpp" />
+    <ClCompile Include="paging.cpp" />
+    <ClCompile Include="pe.cpp" />
+    <ClCompile Include="physm.cpp" />
     <ClCompile Include="video.cpp" />
     <ClCompile Include="xnldr.cpp" />
     <ClCompile Include="xnout.cpp" />
@@ -180,10 +183,19 @@
     <ClInclude Include="clib.h" />
     <ClInclude Include="file.h" />
     <ClInclude Include="font.h" />
+    <ClInclude Include="lowlevel.h" />
+    <ClInclude Include="paging.h" />
     <ClInclude Include="pe.h" />
+    <ClInclude Include="physm.h" />
     <ClInclude Include="video.h" />
     <ClInclude Include="xnldr.h" />
     <ClInclude Include="xnout.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <NASM Include="lowlevel.asm">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</DeploymentContent>
+    </NASM>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

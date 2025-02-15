@@ -36,18 +36,23 @@
 #include <Uefi.h>
 
 
+typedef struct _XEFILE_ {
+	VOID* kBuffer;
+	UINTN FileSize;
+}XEFile;
+
 /*
  * XEOpenAndReadFile -- open and reads a file
  * @param ImageHandle -- Image handle passed by EFI firmware
  * @param Filename -- name and path of the file
  */
-extern VOID* XEOpenAndReadFile(EFI_HANDLE ImageHandle, CHAR16* Filename);
+extern XEFile* XEOpenAndReadFile(EFI_HANDLE ImageHandle, CHAR16* Filename);
 
 /*
  * XECloseFile -- Close an opened file
  * it just free up the buffer allocated
- * @param Buffer -- Pointer to the file buffer
+ * @param file -- Pointer to the file buffer
  */
-extern VOID XECloseFile(VOID* Buffer);
+extern VOID XECloseFile(XEFile* file);
 
 #endif

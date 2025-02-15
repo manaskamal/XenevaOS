@@ -70,7 +70,7 @@ EFI_GUID GenericFileInfo = {
  * @param ImageHandle -- Image handle passed by EFI firmware
  * @param Filename -- name and path of the file
  */
-VOID* XEOpenAndReadFile(EFI_HANDLE ImageHandle,CHAR16* Filename) {
+XEFile* XEOpenAndReadFile(EFI_HANDLE ImageHandle,CHAR16* Filename) {
 	EFI_STATUS Status;
 	EFI_SIMPLE_FILE_SYSTEM_PROTOCOL* SimpleFileSystem;
 	EFI_GUID loadedImageProtocol = EFI_LOADED_IMAGE_PROTOCOL_GUID;
@@ -81,6 +81,7 @@ VOID* XEOpenAndReadFile(EFI_HANDLE ImageHandle,CHAR16* Filename) {
 	UINTN FileInfoSize = 0;
 	UINTN FileSize;
 	VOID* Buffer;
+	XEFile* xefile;
 
 	EFI_GUID sfsprotocol = EFI_SIMPLE_FILE_SYSTEM_PROTOCOL_GUID;
 
@@ -143,16 +144,27 @@ VOID* XEOpenAndReadFile(EFI_HANDLE ImageHandle,CHAR16* Filename) {
 		File->Close(File);
 		return 0;
 	}
+
+	xefile = (XEFile*)XEAllocatePool(sizeof(XEFile));
+	if (!xefile) {
+		XEGuiPrint("Failed to allocate file data structure \n");
+		File->Close(File);
+		return 0;
+	}
+	memset(xefile, 0, sizeof(XEFile));
+	xefile->kBuffer = Buffer;
+	xefile->FileSize = FileSize;
 	File->Close(File);
 	Root->Close(Root);
-	return Buffer;
+	return xefile;
 }
 
 /*
  * XECloseFile -- Close an opened file
  * it just free up the buffer allocated
- * @param Buffer -- Pointer to the file buffer
+ * @param file -- Pointer to the file structure
  */
-VOID XECloseFile(VOID* Buffer) {
-	gBS->FreePool(Buffer);
+VOID XECloseFile(XEFile *file) {
+	gBS->FreePool(file->kBuffer);
+	XEFreePool(file);
 }
