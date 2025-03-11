@@ -84,11 +84,9 @@ void x86_64_idt_reg_default_handlers() {
  * table
  */
 void  x86_64_idt_init() {
-
 	TSS *tss = (TSS*)kmalloc(sizeof(TSS));
 	tss->iomapbase = sizeof(TSS);
 	size_t tss_addr = (size_t)tss;
-
 	gdtr curr_gdt;
 	x64_sgdt(&curr_gdt);
 	gdt_entry* thegdt = curr_gdt.gdtaddr;

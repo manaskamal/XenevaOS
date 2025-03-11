@@ -80,6 +80,8 @@ size_t x86_64_p_index(uint64_t addr){
 void Au_x86_64_Paging_Init() {
 	uint64_t *OldCR3 = (uint64_t*)x64_read_cr3();
 	uint64_t *NewCR3 = (uint64_t*)AuPmmngrAlloc();
+	if (NewCR3)
+		AuTextOut("NewCR3-> %x \n", NewCR3);
 	memset(NewCR3, 0, 4096);
 	
 	for (int i = 0; i < 512; ++i) {

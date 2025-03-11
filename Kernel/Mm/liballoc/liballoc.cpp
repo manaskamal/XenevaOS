@@ -568,7 +568,7 @@ int liballoc_unlock() {
 }
 
 void* liballoc_alloc(int pages) {
-	size_t size = static_cast<int64_t>(pages) * 4096;
+	size_t size = static_cast<size_t>(pages) * 4096;
 	uint64_t* page = AuGetFreePage(0, false);
 	uint64_t page_ = (uint64_t)page;
 

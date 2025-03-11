@@ -404,7 +404,7 @@ void AHCIDiskInitialise(AHCIController *controller,HBA_PORT* port) {
 	disk->data = port;
 	disk->Read = AuAHCIVDiskRead;
 	disk->Write = AuAHCIVDiskWrite;
-	disk->max_blocks = -1;
+	disk->max_blocks = 0;
 	disk->currentLBA = 0;
 	
 

@@ -44,7 +44,7 @@ uint64_t _RamBitmapIndex;
 uint64_t _TotalRam;
 uint64_t _BitmapSize;
 bool _HigherHalf;
-
+bool debugon;
 
 class Bitmap {
 public:
@@ -52,28 +52,34 @@ public:
 	uint8_t* Buffer;
 
 	bool operator[] (uint64_t index) {
-		if (index > Size * 8) return false;
-		uint64_t ByteIndex = index / 8;
-		uint64_t BitIndex = index % 8;
-		uint8_t BitIndexer = 0x80 >> BitIndex;
+		if (index >= Size * 8) return false;
+		size_t ByteIndex = index / 8;
+		size_t BitIndex = index % 8;
+		size_t BitIndexer = 0x80 >> BitIndex;
 
 		if ((Buffer[ByteIndex] & BitIndexer) > 0) {
+			x64_mfence();
 			return true;
 		}
-
+		if(debugon)
+			AuTextOut("Bit -> %d Index -> %d \n", (Buffer[ByteIndex] & BitIndexer), index);
+		//return ((Buffer[ByteIndex] & BitIndexer) != 0);
+		x64_mfence();
 		return false;
 	}
 
 	bool Set(uint64_t index, bool value) {
-		if (index > Size * 8) return false;
-		uint64_t ByteIndex = index / 8;
-		uint8_t BitIndex = index % 8;
-		uint8_t BitIndexer = 0x80 >> BitIndex;
+		if (index >= Size * 8) return false;
+		size_t ByteIndex = index / 8;
+		size_t BitIndex = index % 8;
+		size_t BitIndexer = 0x80 >> BitIndex;
 
-		Buffer[ByteIndex] &= ~BitIndexer;
+		
 		if (value)
 			Buffer[ByteIndex] |= BitIndexer;
-
+		else
+			Buffer[ByteIndex] &= ~BitIndexer;
+		x64_mfence();
 		return true;
 	}
 };
@@ -86,14 +92,16 @@ Bitmap RamBitmap;
 * @param BitmapSize -- total bitmap size
 * @param Buffer -- Pointer to bitmap buffer
 */
-void AuPmmngrInitBitmap(size_t BitmapSize, void* Buffer) {
-	RamBitmap.Size = BitmapSize;
+void AuPmmngrInitBitmap(size_t BSize, void* Buffer) {
 	RamBitmap.Buffer = (uint8_t*)Buffer;
+	RamBitmap.Size = BSize;
 
-	for (int i = 0; i < BitmapSize; i++)
-		*(uint8_t*)(RamBitmap.Buffer + i) = 0;
+	/*for (int i = 0; i < BSize; i++)
+		*(uint8_t*)(RamBitmap.Buffer + i) = 0;*/
+	memset(RamBitmap.Buffer, 0, BSize*8);
 
 }
+
 
 /*
 * AuPmmngrLockPage -- Lock a given page
@@ -101,7 +109,7 @@ void AuPmmngrInitBitmap(size_t BitmapSize, void* Buffer) {
 */
 void AuPmmngrLockPage(uint64_t Address) {
 	uint64_t Index = (Address / 4096);
-	if (RamBitmap[Index] == true) return;
+	if (RamBitmap[Index]) return;
 	if (RamBitmap.Set(Index, true)) {
 		_FreeMemory--;
 		_ReservedMemory++;
@@ -115,8 +123,9 @@ void AuPmmngrLockPage(uint64_t Address) {
 */
 void AuPmmngrLockPages(void *Address, size_t Size) {
 	uint64_t addr = (uint64_t)Address;
-	for (int i = 0; i < Size; i++)
-		AuPmmngrLockPage(addr + static_cast<uint64_t>(i) * 4096);
+	for (size_t i = 0; i < Size; i++) {
+		AuPmmngrLockPage(addr + i * 4096);
+	}
 }
 
 /*
@@ -139,7 +148,7 @@ void AuPmmngrUnreservePage(void* Address) {
 * @param info -- Pointer to kernel boot info structure
 */
 void AuPmmngrInitialize(KERNEL_BOOT_INFO *info) {
-
+	debugon = 0;
 	_FreeMemory = 0;
 	_BitmapSize = 0;
 	_TotalRam = 0;
@@ -153,13 +162,15 @@ void AuPmmngrInitialize(KERNEL_BOOT_INFO *info) {
 		_TotalRam += EfiMem->num_pages;
 		if (EfiMem->type == 7)  {
 			if (((EfiMem->num_pages * 4096) > 0x100000) && BitmapArea == 0)  {
-				BitmapArea = (void*)EfiMem->phys_start;
+				BitmapArea = (void*)((EfiMem->phys_start + 0xFFF) & ~0xFFF);
+				break;
 			}
 		}
 	}
 
 	_FreeMemory = _TotalRam;
-	uint64_t BitmapSize = (_TotalRam * 4096) / 4096 / 8 + 1;
+	uint64_t BitmapSize = (_TotalRam / 8) + 1; // (_TotalRam * 4096) / 4096 / 8 + 1;
+
 
 	/* now initialise the bitmap */
 	AuPmmngrInitBitmap(BitmapSize, BitmapArea);
@@ -207,8 +218,10 @@ void AuPmmngrInitialize(KERNEL_BOOT_INFO *info) {
  * frame and return it to the caller
  */
 void* AuPmmngrAlloc() {
+	//debugon = true;
 	for (; _RamBitmapIndex < RamBitmap.Size * 8; _RamBitmapIndex++) {
-		if (RamBitmap[_RamBitmapIndex] == true) continue;
+		//AuTextOut("  RamBitmap[%d] -> %d   ",_RamBitmapIndex, RamBitmap[_RamBitmapIndex]);
+		if (RamBitmap[_RamBitmapIndex]) continue;
 		AuPmmngrLockPage(_RamBitmapIndex * 4096);
 		_UsedMemory++;
 		return (void*)(_RamBitmapIndex * 4096);

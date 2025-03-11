@@ -79,12 +79,10 @@ void _AuMain(KERNEL_BOOT_INFO *info) {
 	AuPmmngrInitialize(info);
 	AuVmmngrInitialize();
 	AuHeapInitialize();
-	
 	AuHalInitialise(info);
 	AuInitialiseSerial();
 	AuVFSInitialise();
 	AuTextOut("BootDev HID -> %x, UID -> %x, CID -> %x \r\n", info->hid, info->uid, info->cid);
-
 	/* TODO: AHCI, NVMe, USB Mass Storage, ..etc should
 	 * be included in boot time driver
 	 */
