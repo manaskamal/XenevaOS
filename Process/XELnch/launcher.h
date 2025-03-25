@@ -38,7 +38,7 @@
 
 #define LAUNCH_BUTTON_ICON_W 75
 #define LAUNCH_BUTTON_ICON_H 70
-#define LAUNCHER_BACKGROUND_COLOR 0xFF3A3A3A
+#define LAUNCHER_BACKGROUND_COLOR 0xCCBBBBBB //3A3A3A
 
 #pragma pack(push,1)
 typedef struct _bmp_ {

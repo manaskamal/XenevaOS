@@ -609,113 +609,129 @@ void ComposeFrame(ChCanvas *canvas) {
 				Window* clipWin = NULL;
 				WinSharedInfo* clipInfo = NULL;
 
-				if (focusedWin != win) {
-
-					/* first check for normal windows */
-					for (clipWin = win; clipWin != NULL; clipWin = clipWin->next) {
-						clipInfo = (WinSharedInfo*)clipWin->sharedInfo;
-						if (clipWin == win)
-							continue;
-						r2.x = clipInfo->x;
-						r2.y = clipInfo->y;
-						r2.w = clipInfo->width;
-						r2.h = clipInfo->height;
-
-						if (ClipCheckIntersect(&r1, &r2)){
-							overlap = true;
-							ClipCalculateRect(&r1, &r2, clipRect, &clipCount);
+				if (info->alpha) {
+					for (int j = 0; j < r_h; j++) {
+						for (int i = 0; i < r_w; i++) {
+							*(uint32_t*)(canvas->buffer + (static_cast<int64_t>(info->y) + r_y + j) * canvas->canvasWidth +
+								(static_cast<int64_t>(info->x) + r_x + i)) =
+								ChColorAlphaBlend2(*(uint32_t*)(canvas->buffer +
+									(static_cast<int64_t>(info->y) + r_y + j) * canvas->canvasWidth +
+									(static_cast<int64_t>(info->x) + r_x + i)),
+									*(uint32_t*)(win->backBuffer + (static_cast<int64_t>(r_y) + j) * info->width +
+										(static_cast<int64_t>(r_x) + i))/*,info->alphaValue*/);
 						}
-
-					}
-
-					///* check for always on top windows */
-					for (clipWin = alwaysOnTop; clipWin != NULL; clipWin = clipWin->next) {
-						clipInfo = (WinSharedInfo*)clipWin->sharedInfo;
-						if (clipInfo->hide)
-							continue;
-						r2.x = clipInfo->x;
-						r2.y = clipInfo->y;
-						r2.w = clipInfo->width;
-						r2.h = clipInfo->height;
-
-						if (ClipCheckIntersect(&r1, &r2)){
-							clipInfo->updateEntireWindow = 1;
-						}
-					}
-
-					for (Window* cutt = win; cutt != NULL; cutt = cutt->next){
-						WinSharedInfo* cuttinfo = (WinSharedInfo*)cutt->sharedInfo;
-						if (cutt == win)
-							continue;
-						Rect cuttingr;
-						cuttingr.x = cuttinfo->x;
-						cuttingr.y = cuttinfo->y;
-						cuttingr.w = cuttinfo->width;
-						cuttingr.h = cuttinfo->height;
-						for (int m = 0; m < clipCount; m++) {
-							Rect cu;
-							cu.x = clipRect[m].x;
-							cu.y = clipRect[m].y;
-							cu.w = clipRect[m].w;
-							cu.h = clipRect[m].h;
-							if (cuttingr.x <= (cu.x + cu.w - 1) &&
-							  (cuttingr.x + cuttingr.w - 1) >= cu.x &&
-							cuttingr.y <= (cu.y + cu.h - 1) &&
-							(cuttingr.y + cuttingr.h - 1) >= cu.y){
-								ClipSubtractRect(&cu, &cuttingr, clipRect,m);
-							}
-						}
-					}
-				}
-
-
-				if (clipCount == 0 && !overlap ) {
-					for (int i = 0; i < r_h; i++) {
-						void* canvas_mem = (canvas->buffer + (info->y + r_y + i) * canvas->canvasWidth + info->x + r_x);
-						void* win_mem = (win->backBuffer + (r_y + i) * info->width + r_x);
-						_fastcpy(canvas_mem,
-							win_mem, static_cast<size_t>(r_w) * 4);
 					}
 					AddDirtyClip(info->x + r_x, info->y + r_y, r_w, r_h);
 				}
+				else {
+					if (focusedWin != win) {
 
-				for (int l = 0; l < clipCount; l++) {
-					int64_t k_x = clipRect[l].x;  
-					int64_t k_y = clipRect[l].y;
-					int64_t k_w = clipRect[l].w;
-					int64_t k_h = clipRect[l].h;
-					
-					if (k_x < 0)
-						k_x = 0;
-					if (k_y < 0)
-						k_y = 0;
-					if ((k_x + k_w) >= canvas->screenWidth)
-						k_w = canvas->screenWidth - k_x;
-					if ((k_y + k_h) >= canvas->screenHeight)
-						k_h = canvas->screenHeight - k_y;
+						/* first check for normal windows */
+						for (clipWin = win; clipWin != NULL; clipWin = clipWin->next) {
+							clipInfo = (WinSharedInfo*)clipWin->sharedInfo;
+							if (clipWin == win)
+								continue;
+							r2.x = clipInfo->x;
+							r2.y = clipInfo->y;
+							r2.w = clipInfo->width;
+							r2.h = clipInfo->height;
 
-					int offset_x = info->x + r_x;
+							if (ClipCheckIntersect(&r1, &r2)) {
+								overlap = true;
+								ClipCalculateRect(&r1, &r2, clipRect, &clipCount);
+							}
 
-					int diffx = k_x - offset_x;
-					int64_t update_r_x = r_x + diffx;
+						}
 
-					int offset_y = info->y + r_y;
-					int diffy = k_y - offset_y;
-					int64_t update_r_y = r_y + diffy;
+						///* check for always on top windows */
+						for (clipWin = alwaysOnTop; clipWin != NULL; clipWin = clipWin->next) {
+							clipInfo = (WinSharedInfo*)clipWin->sharedInfo;
+							if (clipInfo->hide)
+								continue;
+							r2.x = clipInfo->x;
+							r2.y = clipInfo->y;
+							r2.w = clipInfo->width;
+							r2.h = clipInfo->height;
 
-					
-					for (int64_t j = 0; j < k_h; j++) {
-						void* canvas_mem = (canvas->buffer + (k_y + j) * canvas->canvasWidth + k_x);
-						void* win_mem = (win->backBuffer + (update_r_y + j) * info->width + update_r_x);
-						_fastcpy(canvas_mem,
-							win_mem, k_w * 4);
+							if (ClipCheckIntersect(&r1, &r2)) {
+								clipInfo->updateEntireWindow = 1;
+							}
+						}
+
+						for (Window* cutt = win; cutt != NULL; cutt = cutt->next) {
+							WinSharedInfo* cuttinfo = (WinSharedInfo*)cutt->sharedInfo;
+							if (cutt == win)
+								continue;
+							Rect cuttingr;
+							cuttingr.x = cuttinfo->x;
+							cuttingr.y = cuttinfo->y;
+							cuttingr.w = cuttinfo->width;
+							cuttingr.h = cuttinfo->height;
+							for (int m = 0; m < clipCount; m++) {
+								Rect cu;
+								cu.x = clipRect[m].x;
+								cu.y = clipRect[m].y;
+								cu.w = clipRect[m].w;
+								cu.h = clipRect[m].h;
+								if (cuttingr.x <= (cu.x + cu.w - 1) &&
+									(cuttingr.x + cuttingr.w - 1) >= cu.x &&
+									cuttingr.y <= (cu.y + cu.h - 1) &&
+									(cuttingr.y + cuttingr.h - 1) >= cu.y) {
+									ClipSubtractRect(&cu, &cuttingr, clipRect, m);
+								}
+							}
+						}
 					}
 
-					AddDirtyClip(k_x,k_y, k_w, k_h);
-				}
 
-				clipCount = 0;
-				info->rect[k].x = 0, info->rect[k].y = 0, info->rect[k].w = 0, info->rect[k].h = 0;
+					if (clipCount == 0 && !overlap) {
+						for (int i = 0; i < r_h; i++) {
+							void* canvas_mem = (canvas->buffer + (info->y + r_y + i) * canvas->canvasWidth + info->x + r_x);
+							void* win_mem = (win->backBuffer + (r_y + i) * info->width + r_x);
+							_fastcpy(canvas_mem,
+								win_mem, static_cast<size_t>(r_w) * 4);
+						}
+						AddDirtyClip(info->x + r_x, info->y + r_y, r_w, r_h);
+					}
+
+					for (int l = 0; l < clipCount; l++) {
+						int64_t k_x = clipRect[l].x;
+						int64_t k_y = clipRect[l].y;
+						int64_t k_w = clipRect[l].w;
+						int64_t k_h = clipRect[l].h;
+
+						if (k_x < 0)
+							k_x = 0;
+						if (k_y < 0)
+							k_y = 0;
+						if ((k_x + k_w) >= canvas->screenWidth)
+							k_w = canvas->screenWidth - k_x;
+						if ((k_y + k_h) >= canvas->screenHeight)
+							k_h = canvas->screenHeight - k_y;
+
+						int offset_x = info->x + r_x;
+
+						int diffx = k_x - offset_x;
+						int64_t update_r_x = r_x + diffx;
+
+						int offset_y = info->y + r_y;
+						int diffy = k_y - offset_y;
+						int64_t update_r_y = r_y + diffy;
+
+
+						for (int64_t j = 0; j < k_h; j++) {
+							void* canvas_mem = (canvas->buffer + (k_y + j) * canvas->canvasWidth + k_x);
+							void* win_mem = (win->backBuffer + (update_r_y + j) * info->width + update_r_x);
+							_fastcpy(canvas_mem,
+								win_mem, k_w * 4);
+						}
+
+						AddDirtyClip(k_x, k_y, k_w, k_h);
+					}
+
+					clipCount = 0;
+					info->rect[k].x = 0, info->rect[k].y = 0, info->rect[k].w = 0, info->rect[k].h = 0;
+				}
 			}
 			info->rect_count = 0;
 			info->dirty = 0;
@@ -786,85 +802,102 @@ void ComposeFrame(ChCanvas *canvas) {
 				Window* clipWin = NULL;
 				WinSharedInfo* clipInfo = NULL;
 
-				for (clipWin = win; clipWin != NULL; clipWin = clipWin->next) {
-					clipInfo = (WinSharedInfo*)clipWin->sharedInfo;
-					if (clipWin == win)
-						continue;
-
-					r2.x = clipInfo->x;
-					r2.y = clipInfo->y;
-					r2.w = clipInfo->width;
-					r2.h = clipInfo->height;
-
-					if (ClipCheckIntersect(&r1, &r2)) {
-						ClipCalculateRect(&r1, &r2, clip, &clipCount);
-					}
-				}
-
-				/* always on top list */
-				for (clipWin = alwaysOnTop; clipWin != NULL; clipWin = clipWin->next) {
-					clipInfo = (WinSharedInfo*)clipWin->sharedInfo;
-					if (clipWin == win)
-						continue;
-					r2.x = clipInfo->x;
-					r2.y = clipInfo->y;
-					r2.w = clipInfo->width;
-					r2.h = clipInfo->height;
-
-					if (ClipCheckIntersect(&r1, &r2)) {
-						ClipCalculateRect(&r1, &r2, clip, &clipCount);
-					}
-				}
-
-				if (focusedWin == win) {
-					if (_shadow_update) {
-#ifdef SHADOW_ENABLED
-						for (int64_t j = 0; j < shad_h; j++) {
-							for (int64_t q = 0; q < shad_w; q++) {
-								*(uint32_t*)(canvas->buffer + ((winy - SHADOW_SIZE) + j) * canvas->canvasWidth + ((winx - SHADOW_SIZE) + q)) =
-									ChColorAlphaBlend2(*(uint32_t*)(canvas->buffer + ((winy - SHADOW_SIZE) + j) * canvas->canvasWidth + ((winx - SHADOW_SIZE) + q)),
-										*(uint32_t*)(win->shadowBuffers + j * (static_cast<int64_t>(info->width) + SHADOW_SIZE * 2) + q));
-							}
+				if (info->alpha) {
+					for (int j = 0; j < height; j++) {
+						for (int i = 0; i < width; i++) {
+							*(uint32_t*)(canvas->buffer + (static_cast<int64_t>(info->y) + j) * canvas->canvasWidth +
+								(static_cast<int64_t>(info->x) + i)) =
+								ChColorAlphaBlend2(*(uint32_t*)(canvas->buffer +
+									(static_cast<int64_t>(info->y) + j) * canvas->canvasWidth +
+									(static_cast<int64_t>(info->x) + i)),
+									*(uint32_t*)(win->backBuffer + (static_cast<int64_t>(0) + j) * info->width +
+										(static_cast<int64_t>(0) + i)));
 						}
-#endif
-						_shadow_update = false;
 					}
+					AddDirtyClip(info->x, info->y, width, height);
+
+				} else {
+
+					for (clipWin = win; clipWin != NULL; clipWin = clipWin->next) {
+						clipInfo = (WinSharedInfo*)clipWin->sharedInfo;
+						if (clipWin == win)
+							continue;
+
+						r2.x = clipInfo->x;
+						r2.y = clipInfo->y;
+						r2.w = clipInfo->width;
+						r2.h = clipInfo->height;
+
+						if (ClipCheckIntersect(&r1, &r2)) {
+							ClipCalculateRect(&r1, &r2, clip, &clipCount);
+						}
+					}
+
+					/* always on top list */
+					for (clipWin = alwaysOnTop; clipWin != NULL; clipWin = clipWin->next) {
+						clipInfo = (WinSharedInfo*)clipWin->sharedInfo;
+						if (clipWin == win)
+							continue;
+						r2.x = clipInfo->x;
+						r2.y = clipInfo->y;
+						r2.w = clipInfo->width;
+						r2.h = clipInfo->height;
+
+						if (ClipCheckIntersect(&r1, &r2)) {
+							ClipCalculateRect(&r1, &r2, clip, &clipCount);
+						}
 				}
 
-				for (int64_t i = 0; i < height; i++) {
-					_fastcpy(canvas->buffer + (winy + i) * canvas->canvasWidth + winx,
-						win->backBuffer + (0 + i) * info->width + 0, width * 4);
-				}
+					if (focusedWin == win) {
+						if (_shadow_update) {
+#ifdef SHADOW_ENABLED
+							for (int64_t j = 0; j < shad_h; j++) {
+								for (int64_t q = 0; q < shad_w; q++) {
+									*(uint32_t*)(canvas->buffer + ((winy - SHADOW_SIZE) + j) * canvas->canvasWidth + ((winx - SHADOW_SIZE) + q)) =
+										ChColorAlphaBlend2(*(uint32_t*)(canvas->buffer + ((winy - SHADOW_SIZE) + j) * canvas->canvasWidth + ((winx - SHADOW_SIZE) + q)),
+											*(uint32_t*)(win->shadowBuffers + j * (static_cast<int64_t>(info->width) + SHADOW_SIZE * 2) + q));
+								}
+							}
+#endif
+							_shadow_update = false;
+						}
+					}
 
-				/*
-				 * Here we check the moving bit because, if any behind
-				 * windows is not intersected by moving window, so during
-				 * _window_update_all_ process its clipped rect count will
-				 * be zero, so moving window prevents its from redrawing
-				 * non intersected window with clip count = 0
-				 */
-				if (clipCount == 0 && !_window_moving_) {
-					AddDirtyClip(winx - SHADOW_SIZE, winy - SHADOW_SIZE, shad_w, shad_h);
-				}
+					for (int64_t i = 0; i < height; i++) {
+						_fastcpy(canvas->buffer + (winy + i) * canvas->canvasWidth + winx,
+							win->backBuffer + (0 + i) * info->width + 0, width * 4);
+					}
 
-				for (int k = 0; k < clipCount; k++) {
-					int k_x = clip[k].x;
-					int k_y = clip[k].y;
-					int k_w = clip[k].w;
-					int k_h = clip[k].h;
+					/*
+					 * Here we check the moving bit because, if any behind
+					 * windows is not intersected by moving window, so during
+					 * _window_update_all_ process its clipped rect count will
+					 * be zero, so moving window prevents its from redrawing
+					 * non intersected window with clip count = 0
+					 */
+					if (clipCount == 0 && !_window_moving_) {
+						AddDirtyClip(winx - SHADOW_SIZE, winy - SHADOW_SIZE, shad_w, shad_h);
+					}
 
-					if (k_x < 0)
-						k_x = 0;
-					if (k_y < 0)
-						k_y = 0;
-					if ((k_x + k_w) >= canvas->screenWidth)
-						k_w = canvas->screenWidth - k_x;
-					if ((k_y + k_h) >= canvas->screenHeight)
-						k_h = canvas->screenHeight - k_y;
+					for (int k = 0; k < clipCount; k++) {
+						int k_x = clip[k].x;
+						int k_y = clip[k].y;
+						int k_w = clip[k].w;
+						int k_h = clip[k].h;
 
-					AddDirtyClip(k_x, k_y, k_w, k_h);
-					clipCount = 0;
-				}
+						if (k_x < 0)
+							k_x = 0;
+						if (k_y < 0)
+							k_y = 0;
+						if ((k_x + k_w) >= canvas->screenWidth)
+							k_w = canvas->screenWidth - k_x;
+						if ((k_y + k_h) >= canvas->screenHeight)
+							k_h = canvas->screenHeight - k_y;
+
+						AddDirtyClip(k_x, k_y, k_w, k_h);
+						clipCount = 0;
+					}
+			}
 				if (!(win->flags & WINDOW_FLAG_ANIMATED)) {
 					if (info->updateEntireWindow)
 						info->updateEntireWindow = 0;
@@ -927,11 +960,12 @@ void ComposeFrame(ChCanvas *canvas) {
 						for (int i = 0; i < r_w; i++) {
 							*(uint32_t*)(canvas->buffer + (static_cast<int64_t>(info->y) + r_y + j) * canvas->canvasWidth + 
 								(static_cast<int64_t>(info->x) + r_x + i)) =
-								ChColorAlphaBlend2(*(uint32_t*)(canvas->buffer +
+								ChColorAlphaBlend2(*(uint32_t*)(surfaceBuffer +
 									(static_cast<int64_t>(info->y) + r_y + j)* canvas->canvasWidth + 
 									(static_cast<int64_t>(info->x) + r_x + i)),
 								*(uint32_t*)(win->backBuffer + (static_cast<int64_t>(r_y) + j)* info->width + 
 									(static_cast<int64_t>(r_x) + i)));
+							
 						}
 					}
 					AddDirtyClip(info->x + r_x, info->y + r_y, r_w, r_h);
@@ -1067,8 +1101,7 @@ void ComposeFrame(ChCanvas *canvas) {
 							(static_cast<int64_t>(winx) + i)) =
 							ChColorAlphaBlend2(*(uint32_t*)(canvas->buffer + (static_cast<int64_t>(winy) + j)* canvas->canvasWidth + 
 								(static_cast<int64_t>(winx) + i)),
-							*(uint32_t*)(win->backBuffer + static_cast<int64_t>(j) * info->width + i)
-								/*info->alphaValue*/);
+							*(uint32_t*)(win->backBuffer + static_cast<int64_t>(j) * info->width + i));
 					}
 				}
 				AddDirtyClip(winx, winy, width, height);
@@ -1472,7 +1505,7 @@ int main(int argc, char* arv[]) {
 		surfaceBuffer[j * canv->canvasWidth + i] = GRAY; //0xFF938585;
 
 	DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
-	DrawWallpaper(canv, "/XE1_2.jpg");
+	DrawWallpaper(canv, "/XEArch.jpg");
 	DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
 	ChCanvasScreenUpdate(canv, 0, 0, canv->canvasWidth, canv->canvasHeight);
 

@@ -91,11 +91,16 @@ typedef struct _msghdr_ {
 	int msg_flags;
 }msghdr;
 
+
+#define SOCK_STATE_WAITING_FOR_CONNECTION 1
+#define SOCK_STATE_CONNECTION_RST 0
 #pragma pack(push,1)
 typedef struct _socket_ {
 	void* binedDev;
 	AuStack *rxstack;
 	uint16_t sessionPort;
+	uint8_t sockState;
+	unsigned packID;
 	int ipv4Iden;
 	int(*receive)(struct _socket_* sock, msghdr *msg, int flags);
 	int(*send)(struct _socket_* sock, msghdr* msg, int flags);

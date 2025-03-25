@@ -46,7 +46,7 @@ void ChDefaultScrollPaneMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, i
 		if ((sp->vScrollBar.bar_y + sp->vScrollBar.thumb_posy) <= sp->vScrollBar.bar_y)
 			sp->vScrollBar.thumb_posy = 0;// sp->vScrollBar.bar_y;
 
-		sp->vScrollBar.currentScrollValue = sp->vScrollBar.thumb_posy;
+		sp->vScrollBar.scrollOffset = sp->vScrollBar.thumb_posy;
 		if (sp->wid.ChPaintHandler)
 			sp->wid.ChPaintHandler((ChWidget*)sp, win);
 
@@ -71,7 +71,7 @@ void ChDefaultScrollPaneMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, i
 		if ((sp->vScrollBar.bar_y + sp->vScrollBar.thumb_posy) <= sp->vScrollBar.bar_y)
 			sp->vScrollBar.thumb_posy = 1;// sp->vScrollBar.bar_y;
 
-		sp->vScrollBar.currentScrollValue = sp->vScrollBar.thumb_posy;
+		sp->vScrollBar.scrollOffset = sp->vScrollBar.thumb_posy;
 		if (sp->wid.ChPaintHandler)
 			sp->wid.ChPaintHandler((ChWidget*)sp, win);
 
@@ -133,8 +133,8 @@ void ChDefaultScrollPaneMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, i
 			if ((sp->hScrollBar.thumb_posx <= sp->hScrollBar.bar_x))
 				sp->hScrollBar.thumb_posx = 1; // sp->hScrollBar.bar_x;
 
-			sp->hScrollBar.currentScrollValue = sp->hScrollBar.thumb_posx * sp->hScrollBar.scrollAmount;
-			_KePrint("Current hscroll -> %d \r\n", sp->hScrollBar.currentScrollValue);
+			sp->hScrollBar.scrollOffset = sp->hScrollBar.thumb_posx * sp->hScrollBar.scrollAmount;
+			_KePrint("Current hscroll -> %d \r\n", sp->hScrollBar.scrollOffset);
 			_scrolled = true;
 		}
 
@@ -170,20 +170,29 @@ void ChDefaultScrollPaneMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, i
 		y < (win->info->y + sp->vScrollBar.bar_y + sp->vScrollBar.thumb_posy + sp->vScrollBar.thumb_height)){
 		sp->vScrollBar.update = 1;
 		sp->vScrollBar.thumbHover = 1;
+		int thumbDragOffset = 0;
 		bool _scrolled = false;
+		bool isDragging = false;
+
 
 		if (button && !((button == DEODHAI_MOUSE_MSG_SCROLL_DOWN) || (button == DEODHAI_MOUSE_MSG_SCROLL_UP)))  {
 			sp->vScrollBar.thumb_posy = y - (win->info->y + sp->vScrollBar.bar_y + sp->vScrollBar.thumb_height/2);
 
 			if ((sp->vScrollBar.bar_y + sp->vScrollBar.thumb_posy + sp->vScrollBar.thumb_height) >= sp->vScrollBar.bar_y + sp->vScrollBar.bar_h){
 				sp->vScrollBar.thumb_posy = (win->info->y + sp->vScrollBar.bar_y + sp->vScrollBar.bar_h) -
-					(win->info->y + sp->vScrollBar.bar_y + sp->vScrollBar.thumb_height) - 2;
+					(win->info->y + sp->vScrollBar.bar_y + sp->vScrollBar.thumb_height); //-2;
 			}
 
 			if ( (sp->vScrollBar.bar_y + sp->vScrollBar.thumb_posy) <= sp->vScrollBar.bar_y)
-				sp->vScrollBar.thumb_posy = 1;// sp->vScrollBar.bar_y;
+				sp->vScrollBar.thumb_posy = 0;// sp->vScrollBar.bar_y;
 
-			sp->vScrollBar.currentScrollValue = sp->vScrollBar.thumb_posy/ sp->vScrollBar.scrollAmount;
+			int maxThumbY = sp->vScrollBar.bar_h - sp->vScrollBar.thumb_height;
+			//double scrollSpeed = ((double)sp->vScrollBar.bar_h / (double)sp->vScrollBar.contentSize) * 3.0;
+			//_KePrint("maxTHUMBY -> %d \r\n", maxThumbY);
+			int maxScrollOffset = sp->vScrollBar.contentSize - sp->scrollableView->h;
+			sp->vScrollBar.scrollOffset = ((double)sp->vScrollBar.thumb_posy / (double)maxThumbY) * (double)maxScrollOffset;
+			//sp->vScrollBar.scrollOffset *= scrollSpeed;
+			//_KePrint("VScroll -> %f , sp->thumbPosy -> %d \r\n", sp->vScrollBar.scrollOffset, sp->vScrollBar.thumb_posy);
 			_scrolled = true;
 		}
 
@@ -246,14 +255,14 @@ ChScrollPane* ChCreateScrollPane(ChWindow* win,int x, int y, int width, int heig
 	sp->hScrollBar.thumb_height = sp->hScrollBar.bar_h - 4;
 	sp->hScrollBar.type = CHITRALEKHA_SCROLL_TYPE_HORIZONTAL;
 	sp->hScrollBar.scrollAmount = 1.8;
-	sp->hScrollBar.currentScrollValue = 0;
+	sp->hScrollBar.scrollOffset = 0;
 	sp->hScrollBar.update = 1;
 
 	sp->vScrollBar.bar_x = x + width - SCROLLBAR_SIZE;
 	sp->vScrollBar.bar_y = y;
 	sp->vScrollBar.bar_w = SCROLLBAR_SIZE;
 	sp->vScrollBar.bar_h = height - SCROLLBAR_SIZE;
-	sp->vScrollBar.currentScrollValue = 0;
+	sp->vScrollBar.scrollOffset = 0;
 	double scrollDisplayRange = ((double)height / win->canv->screenHeight);
 	sp->vScrollBar.scrollAmount = ceil(scrollDisplayRange);
 	sp->vScrollBar.type = CHITRALEKHA_SCROLL_TYPE_VERTICAL;
@@ -289,11 +298,12 @@ void ChScrollUpdateVerticalScroll(ChScrollPane* sp, ChRect* viewport, int conten
 	//double range = ((viewport->h - viewport->y) / contentSz);
 	sp->vScrollBar.scrollAmount = ceil(range);
 	double viewableRatio = (double)viewport->h / (double)contentSz;
-	double thumbHeight = (double)viewport->h * viewableRatio;
+	double thumbHeight = ((double)viewport->h / (double)contentSz) * sp->vScrollBar.bar_h;//(double)viewport->h * viewableRatio;
 	sp->vScrollBar.thumb_height = thumbHeight;
 	if (sp->vScrollBar.thumb_height <= 0){
 		sp->vScrollBar.thumb_height = 30;
 	}
+	sp->vScrollBar.contentSize = contentSz;
 }
 
 /*

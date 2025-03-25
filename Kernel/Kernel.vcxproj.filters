@@ -342,6 +342,9 @@
     <ClInclude Include="..\BaseHdr\Fs\Ext2\ext2.h">
       <Filter>Include\Fs\Ext2</Filter>
     </ClInclude>
+    <ClInclude Include="..\BaseHdr\Net\ipv6.h">
+      <Filter>Include\Net</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="init.cpp" />
@@ -538,6 +541,9 @@
     </ClCompile>
     <ClCompile Include="Fs\Ext2\ext2.cpp">
       <Filter>Fs\Ext2</Filter>
+    </ClCompile>
+    <ClCompile Include="Net\ipv6.cpp">
+      <Filter>Net</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -374,6 +374,11 @@ typedef struct _acpi_srat_mem_affinity_
 extern void AuACPIEnable();
 
 /*
+ * AuACPIShutdown -- power off the system
+ */
+extern void AuACPIShutdown();
+
+/*
 * AuACPIInitialise -- initialise the aurora's basic acpi
 * subsystem
 * @param acpi_base -- acpi base address

@@ -30,6 +30,25 @@
 #ifndef __TCP_H__
 #define __TCP_H__
 
+#include <list.h>
+#include <Net/socket.h>
+#include <Net/ipv4.h>
+#include <Fs/vfs.h>
+
+#define TCP_FLAGS_FIN (1<<0)
+#define TCP_FLAGS_SYN (1<<1)
+#define TCP_FLAGS_RST (1<<2)
+#define TCP_FLAGS_PSH (1<<3)
+#define TCP_FLAGS_ACK (1<<4)
+#define TCP_FLAGS_URG (1<<5)
+#define TCP_FLAGS_ECE (1<<6)
+#define TCP_FLAGS_CWR (1<<7)
+#define TCP_FLAGS_NS (1<<8)
+#define TCP_DATA_OFFSET_5 (0x5 << 12)
+
+#define TCP_DEFAULT_WIN_SZ 65535
+
+
 #pragma pack(push,1)
 __declspec(align(2))
 typedef struct _tcphead_ {
@@ -48,5 +67,25 @@ typedef struct _tcphead_ {
 * CreateTCPSocket -- creates a new TCP Socket
 */
 extern int CreateTCPSocket();
+
+/*
+ * TCPGetSocketList -- return the current socket
+ * list of TCP
+ */
+extern list_t* TCPGetSocketList();
+
+/*
+ * AuTCPAcknowledge -- send ack packets
+ * @param nic -- Pointer to NIC device
+ * @param sock -- Pointer to session socket
+ * @param ippack -- Pointer to IPv4 packet
+ * @param payloadLen -- length of the payload
+*/
+extern int AuTCPAcknowledge(AuVFSNode* nic, AuSocket* sock, IPv4Header* ippack, size_t payloadLen);
+
+/*
+ * TCPProtocolInstall -- initialize the TCP protocol
+ */
+extern void TCPProtocolInstall();
 
 #endif

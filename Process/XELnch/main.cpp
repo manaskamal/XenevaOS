@@ -143,9 +143,11 @@ int main(int argc, char* arv[]){
 
 	_KePrint("Launcher config initialised \r\n");
 
-	win->color = BLACK;
+	win->color = 0xCCBBBBBB;
 	win->ChWinPaint = XELauncherPaint;
 	win->info->hide = true;
+	win->info->alpha = true;
+	win->info->alphaValue = 0.9;
 	ChWindowPaint(win);
 
 

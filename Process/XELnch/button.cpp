@@ -37,9 +37,9 @@
 #include <sys\_keproc.h>
 #include <widgets\msgbox.h>
 
-#define LAUNCHER_BUTTON_HOVER_DARK 0xFF658096
-#define LAUNCHER_BUTTON_HOVER_LIGHT 0xFF8CA2B4
-#define LAUNCHER_BUTTON_CLICKED 0xFF1D1D1D
+#define LAUNCHER_BUTTON_HOVER_DARK 0xCC658096
+#define LAUNCHER_BUTTON_HOVER_LIGHT 0xCC8CA2B4
+#define LAUNCHER_BUTTON_CLICKED 0xCC1D1D1D
 
 void ButtonIconRead(ButtonIcon* btninfo);
 void ButtonIconDraw(ButtonIcon* info, ChCanvas* canv, int x, int y);
@@ -59,7 +59,7 @@ void LaunchButtonPaint(LaunchButton* lb, ChWindow* win) {
 	int font_length = ChFontGetWidth(win->app->baseFont, lb->title);
 	int font_height = ChFontGetHeight(win->app->baseFont, lb->title);
 	ChFontDrawText(win->canv, win->app->baseFont, lb->title, lb->x + lb->w / 2 - font_length / 2,
-		lb->y + lb->h - 5, 12, WHITE);
+		lb->y + lb->h - 5, 12, BLACK);
 }
 
 

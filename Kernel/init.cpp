@@ -69,6 +69,7 @@
 #include <ftmngr.h>
 #include <hashmap.h>
 #include <Drivers/usb.h>
+#include <Hal/basicacpi.h>
 
 /**========================================
 ** the main entry routine -- _AuMain

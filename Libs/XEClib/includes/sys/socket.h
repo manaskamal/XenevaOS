@@ -66,10 +66,10 @@ typedef struct _dns_entry_ {
 }XEDNSEntry;
 #pragma pack(pop)
 
-	typedef struct _sockaddr_ {
+	typedef struct _sock_addr_ {
 		unsigned short sa_family;  //address family
 		char           sa_data[14];
-	}sockaddr;
+	}sockaddr_;
 
 	typedef struct _addrinfo_ {
 		int ai_flags;
@@ -77,7 +77,7 @@ typedef struct _dns_entry_ {
 		int ai_socktype;
 		int ai_protocol;
 		socklen_t ai_addrlen;
-		sockaddr *ai_addr;
+		sockaddr_ *ai_addr;
 		char *ai_canonname;
 		struct _addinfo_* ai_next;
 	}addrinfo;
@@ -127,7 +127,7 @@ typedef struct _dns_entry_ {
 	}sockaddr_in;
 
 	XE_LIB int socket(int domain, int type, int protocol);
-	XE_LIB int connect(int sockfd, sockaddr* addr, socklen_t addrlen);
+	XE_LIB int connect(int sockfd, sockaddr_* addr, socklen_t addrlen);
 	XE_LIB int send(int sockfd, msghdr* msg, int flags);
 	XE_LIB int receive(int sockfd, msghdr *msg, int flags);
 	XE_LIB int socket_setopt(int sockfd, int level, int optname, const void* optval, socklen_t optlen);

@@ -40,18 +40,9 @@
 #include <Net/ipv4.h>
 #include <stdio.h>
 
-#define TCP_FLAGS_FIN (1<<0)
-#define TCP_FLAGS_SYN (1<<1)
-#define TCP_FLAGS_RST (1<<2)
-#define TCP_FLAGS_PSH (1<<3)
-#define TCP_FLAGS_ACK (1<<4)
-#define TCP_FLAGS_URG (1<<5)
-#define TCP_FLAGS_ECE (1<<6)
-#define TCP_FLAGS_CWR (1<<7)
-#define TCP_FLAGS_NS (1<<8)
-#define TCP_DATA_OFFSET_5 (0x5 << 12)
 
-#define TCP_DEFAULT_WIN_SZ 65535
+
+list_t* tcpSocketList;
 
 typedef struct _tcpcheckheader_{
 	uint32_t source;
@@ -157,6 +148,68 @@ static int _tcp_port_ = 49152;
 void AuTCPObtainPort(AuSocket* sock) {
 	int port = _tcp_port_++;
 	sock->sessionPort = port;
+	list_add(tcpSocketList, sock);
+}
+
+/*
+ * AuTCPAcknowledge -- send ack packets
+ * @param nic -- Pointer to NIC device
+ * @param sock -- Pointer to session socket
+ * @param ippack -- Pointer to IPv4 packet
+ * @param payloadLen -- length of the payload
+*/
+int AuTCPAcknowledge(AuVFSNode* nic, AuSocket* sock, IPv4Header* ippack, size_t payloadLen) {
+	AuNetworkDevice* nicdev = (AuNetworkDevice*)nic->device;
+	if (!nicdev)
+		return -1;
+
+
+	/*  need to implement three way ack to handle
+	 * packet loss or errors
+	 */
+	TCPHeader* tcp = (TCPHeader*)&ippack->payload;
+	int windowsz = TCP_DEFAULT_WIN_SZ;
+	
+	unsigned seq_num = sock->packID + 1;
+	unsigned ack_num = (tcp->sequenceNum + payloadLen);
+	size_t totalLen = sizeof(IPv4Header) + sizeof(TCPHeader);
+	IPv4Header* ipv4 = (IPv4Header*)kmalloc(totalLen);
+	ipv4->totalLength = htons(totalLen);
+	ipv4->destAddress = ippack->srcAddress;
+	ipv4->srcAddress = nicdev->ipv4addr;
+	ipv4->timeToLive = 64;
+	ipv4->protocol = IPV4_PROTOCOL_TCP;
+	sock->ipv4Iden++;
+	ipv4->identification = htons(sock->ipv4Iden);
+	ipv4->flagsFragOffset = htons(0x0);
+	ipv4->versionHeaderLen = 0x45;
+	ipv4->typeOfService = 0;
+	ipv4->headerChecksum = htons(IPv4CalculateChecksum(ipv4));
+	
+	/* handle fin packets */
+	int flags = TCP_FLAGS_ACK;
+
+	TCPHeader* tcppack = (TCPHeader*)*ipv4->payload;
+	tcppack->srcPort = htons(sock->sessionPort);
+	tcppack->destPort = tcp->srcPort;
+	tcppack->sequenceNum = htonl(seq_num);
+	tcppack->ackNum = htonl(ack_num);
+	tcppack->dataOffsetFlags = htons(flags | 0x5000);
+	tcppack->window = htons(windowsz);
+	tcppack->checksum = 0;
+	tcppack->urgentPointer = 0;
+
+	TCPCheckHeader checkhdr;
+	checkhdr.source = ipv4->srcAddress;
+	checkhdr.destination = ipv4->destAddress;
+	checkhdr.zeros = 0;
+	checkhdr.protocol = IPV4_PROTOCOL_TCP;
+	checkhdr.tcpLen = htons(sizeof(TCPHeader));
+
+	tcppack->checksum = htons(CalculateTCPChecksum(&checkhdr, tcp, NULL, 0));
+	IPV4SendPacket(ipv4, nic);
+	kfree(ipv4);
+	return 0;
 }
 /*
 * AuTCPConnect -- TCP protocol connect interface
@@ -170,6 +223,7 @@ int AuTCPConnect(AuSocket* sock, sockaddr* addr, socklen_t addrlen){
 
 	AuTCPObtainPort(sock);
 	int sourcePort = sock->sessionPort;
+	sock->sockState |= SOCK_STATE_WAITING_FOR_CONNECTION;
 	sock->ipv4Iden = rand();
 	AuVFSNode* nic = AuNetworkRoute(sockdata->sin_addr.s_addr);
 	if (!nic) {
@@ -198,7 +252,7 @@ int AuTCPConnect(AuSocket* sock, sockaddr* addr, socklen_t addrlen){
 	ipv4->typeOfService = 0;
 	ipv4->headerChecksum = htons(IPv4CalculateChecksum(ipv4));
 
-	TCPHeader* tcp = (TCPHeader*)ipv4->payload;
+	TCPHeader* tcp = (TCPHeader*)&ipv4->payload;
 	tcp->srcPort = htons(sock->sessionPort);
 	tcp->destPort = sockdata->sin_port;
 	tcp->sequenceNum = 0;
@@ -207,6 +261,7 @@ int AuTCPConnect(AuSocket* sock, sockaddr* addr, socklen_t addrlen){
 	tcp->window = htons(TCP_DEFAULT_WIN_SZ);
 	tcp->checksum = 0;
 	tcp->urgentPointer = 0;
+	sock->packID = tcp->sequenceNum;
 
 	TCPCheckHeader checkhdr;
 	checkhdr.source = ipv4->srcAddress;
@@ -218,6 +273,29 @@ int AuTCPConnect(AuSocket* sock, sockaddr* addr, socklen_t addrlen){
 	tcp->checksum = htons(CalculateTCPChecksum(&checkhdr, tcp, NULL, 0));
 	
 	IPV4SendPacket(ipv4, nic);
+
+	
+	int attempts = 0;
+	while (!sock->rxstack->itemCount) {
+		AuSleepThread(AuGetCurrentThread(), 100000);
+		AuForceScheduler();
+		//connection refused
+		if (sock->sockState == SOCK_STATE_CONNECTION_RST) {
+			SeTextOut("Sock state reset \r\n");
+			kfree(ipv4);
+			return -1;
+		}
+		if (attempts == 3) {
+			SeTextOut("Attempts == 3 \r\n");
+			kfree(ipv4);
+			return -1; //timeout
+		}
+		SeTextOut("[aurora]: TCP retrying connection \r\n");
+		IPV4SendPacket(ipv4, nic);
+		attempts++;
+	}
+	kfree(ipv4);
+	SeTextOut("[aurora]: TCP connection succeeded \r\n");
 	return 0;
 }
 
@@ -282,4 +360,19 @@ int CreateTCPSocket() {
 	proc->fds[fd] = node;
 	SeTextOut("TCP Socket created \r\n");
 	return fd;
+}
+
+/*
+ * TCPGetSocketList -- return the current socket
+ * list of TCP
+ */
+list_t* TCPGetSocketList() {
+	return tcpSocketList;
+}
+
+/*
+ * TCPProtocolInstall -- initialize the TCP protocol
+ */
+void TCPProtocolInstall() {
+	tcpSocketList = initialize_list();
 }

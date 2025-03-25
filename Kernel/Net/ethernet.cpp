@@ -36,6 +36,7 @@
 #include <aucon.h>
 #include <Net/arp.h>
 #include <Net\ipv4.h>
+#include <Net/ipv6.h>
 #include <Net/udp.h>
 #include <Net\socket.h>
 
@@ -69,6 +70,11 @@ AU_EXTERN AU_EXPORT void AuEthernetHandle(void *data, int size, AuVFSNode* nic) 
 			break;
 		case ETHERNET_TYPE_IPV4:
 			IPv4HandlePacket((void*)&frame->payload, nic);
+			break;
+		case ETHERNET_TYPE_IPV6:
+			SeTextOut("[aurora net]: ipv6 packet received \r\n");
+			//IPv6 Handle packet
+			IPv6HandlePacket((void*)&frame->payload, nic);
 			break;
 		}
 	}

@@ -608,7 +608,7 @@ int main(int argc, char* arv[]){
 	app = ChitralekhaStartApp(argc, arv);
 	win = ChCreateWindow(app, (WINDOW_FLAG_MOVABLE), "Xeneva Terminal", 300, 300, 650, 450);
 	ChWindowBroadcastIcon(app, "/icons/term.bmp");
-	win->info->alpha = true;
+	win->info->alpha = false;
 	win->info->alphaValue = 0.7;
 	win->color = BLACK;
 	

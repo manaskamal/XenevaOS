@@ -75,8 +75,21 @@ int main(int argc, char* argv[]){
 	hostent* ent = gethostbyname(s);
 	char* addr = inet_ntoa(*(struct in_addr*)ent->h_addr_list[0]);
 	uint32_t ipaddr = *(uint32_t*)ent->h_addr_list[0];
+
+	char request[] = "GET / HTTP/1.1\r\nHost:google.com\r\nConnection: close\r\n\r\n";
 	
-	int sock = socket(AF_INET, SOCK_DGRAM, IPPROTOCOL_ICMP);
+	int sock = socket(AF_INET, SOCK_STREAM, 0);
+	sockaddr_in server_addr;
+	server_addr.sin_family = AF_INET;
+	server_addr.sin_port = htons(80);
+	server_addr.sin_addr.s_addr = htonl(ipaddr);
+
+	if (connect(sock, (sockaddr_*)&server_addr, sizeof(server_addr)) < 0) {
+		printf("error connecting to %s \n", s);
+		return 0;
+	}
+	
+	/*int sock = socket(AF_INET, SOCK_DGRAM, IPPROTOCOL_ICMP);
 
 	if (sock < 0) {
 		fprintf(stderr, "ping: failed to create socket \n");
@@ -142,6 +155,6 @@ int main(int argc, char* argv[]){
 
 	printf("---statistics---- %s \n", argv[1]);
 	printf("%d packets sent, %d packets received \n", pings_sent, response_recved);
-	_KeCloseFile(sock);
+	_KeCloseFile(sock);*/
 	return 0;
 }

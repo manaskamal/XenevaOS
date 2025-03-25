@@ -96,6 +96,9 @@ int main(int argc, char* argv[]) {
 	app = ChitralekhaStartApp(argc, argv);
 	mainWin = ChCreateWindow(app, WINDOW_FLAG_MOVABLE, "Controls", 400, 100, CHITRALEKHA_DEFAULT_WIN_WIDTH,
 		CHITRALEKHA_DEFAULT_WIN_HEIGHT);
+	
+	mainWin->info->alpha = true;
+	mainWin->info->alphaValue = 0.2;
 
 	ChWindowBroadcastIcon(app, "/icons/gear.bmp");
 

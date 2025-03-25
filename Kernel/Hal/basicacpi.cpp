@@ -57,6 +57,12 @@ void AuACPIPowerButtonEnable() {
 	__AuroraBasicAcpi->fadt->pm1aEventBlock = (1<<9) |  ACPI_POWER_BUTTON_ENABLE | 1<<5;
 }
 
+/*
+ * AuACPIShutdown -- power off the system 
+ */
+void AuACPIShutdown() {
+	__AuroraBasicAcpi->fadt->pm1aCtrlBlock = (__AuroraBasicAcpi->slp_typa << 10) | (1 << 13);
+}
 
 /*
  * AuACPIEnable -- Enable acpi
@@ -296,3 +302,4 @@ void AuInitialiseACPISubsys(KERNEL_BOOT_INFO *info) {
 uint8_t AuGetCPUCount() {
 	return __AuroraBasicAcpi->num_cpu;
 }
+

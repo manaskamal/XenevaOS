@@ -38,6 +38,7 @@
 #include <Net/route.h>
 #include <Net/udp.h>
 #include <Net/icmp.h>
+#include <Net/tcp.h>
 
 hashmap_t* netadapters;
 
@@ -54,6 +55,7 @@ void AuInitialiseNet() {
 	ARPProtocolInitialise();
 	UDPProtocolInstall();
 	ICMPInitialise();
+	TCPProtocolInstall();
 }
 
 

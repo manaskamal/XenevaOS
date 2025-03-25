@@ -220,6 +220,7 @@
     <ClInclude Include="..\BaseHdr\Net\ethernet.h" />
     <ClInclude Include="..\BaseHdr\Net\icmp.h" />
     <ClInclude Include="..\BaseHdr\Net\ipv4.h" />
+    <ClInclude Include="..\BaseHdr\Net\ipv6.h" />
     <ClInclude Include="..\BaseHdr\Net\route.h" />
     <ClInclude Include="..\BaseHdr\Net\socket.h" />
     <ClInclude Include="..\BaseHdr\Net\tcp.h" />
@@ -303,6 +304,7 @@
     <ClCompile Include="Net\ipv4.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="Net\ipv6.cpp" />
     <ClCompile Include="Net\route.cpp" />
     <ClCompile Include="Net\socket.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>

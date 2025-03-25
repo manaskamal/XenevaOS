@@ -50,30 +50,32 @@ void ChDefaultListViewPainter(ChWidget* wid, ChWindow* win) {
 	int max_visible_items = lv->currentStartIndex + lv->wid.h / LIST_VIEW_ITEM_HEIGHT + 2 * nodePaddingHeight;
 
 	
-	int ypos = lv->wid.y + win->app->baseFont->fontHeight;
+	int ypos = -((int)lv->scrollpane->vScrollBar.scrollOffset % LIST_VIEW_ITEM_HEIGHT); //(lv->wid.y + win->app->baseFont->fontHeight) +
 
-
-	if ((lv->lastNodeIndex == lv->currentStartIndex))
-		ypos  -= (int)lv->scrollpane->vScrollBar.scrollAmount;
+#define PADDING_Y 5
+	
+	int totalYpos = lv->wid.y + PADDING_Y + ypos;
+	/*if ((lv->lastNodeIndex == lv->currentStartIndex))
+		ypos  -= (int)lv->scrollpane->vScrollBar.scrollAmount;*/
 		
 
 
 	for (int i = lv->currentStartIndex; i < lv->itemList->pointer /*&& i < max_visible_items*/; i++) {
 		ChListItem* li = (ChListItem*)list_get_at(lv->itemList, i);
 		if (li) {
-			li->yPos = ypos;
+			li->yPos = totalYpos;
 			if (li->selected)
 				ChDrawRectClipped(win->canv, lv->wid.x + li->xPos, li->yPos, li->width, li->height - 2, &viewRect, 0xFF6982B7);
 
 			if (li->icon){
-				ChDrawIconClipped(win->canv, li->icon, lv->wid.x + li->xPos + 10, li->yPos, &viewRect);
+				ChDrawIconClipped(win->canv, li->icon, lv->wid.x + li->xPos + 10, li->yPos , &viewRect);
 				ChFontDrawTextClipped(win->canv, win->app->baseFont,li->itemText, lv->wid.x + li->xPos + 40,
-					(ypos + LIST_VIEW_ITEM_HEIGHT / 2) + 5, BLACK, &viewRect); //
+					totalYpos + (li->height/2) + 5, BLACK, &viewRect); //
 			}
 			else
 				ChFontDrawTextClipped(win->canv, win->app->baseFont,li->itemText, lv->wid.x + li->xPos + 10,
-				(ypos + LIST_VIEW_ITEM_HEIGHT / 2) + 5, BLACK, &viewRect); //
-			ypos += LIST_VIEW_ITEM_HEIGHT;
+				totalYpos , BLACK, &viewRect); //
+			totalYpos += LIST_VIEW_ITEM_HEIGHT;
 		}
 	}
 }

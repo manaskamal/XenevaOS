@@ -39,6 +39,8 @@
 #include <_null.h>
 #include <Hal/x86_64_cpu.h>
 #include <Hal\serial.h>
+#include <aucon.h>
+#include <Mm/kmalloc.h>
 
 uint16_t IPv4CalculateChecksum(IPv4Header * p){
 	uint32_t sum = 0;
@@ -86,6 +88,37 @@ void IPv4HandlePacket(void* data, AuVFSNode* nic) {
 								   }
 							   }
 							   break;
+	}
+	case IPV4_PROTOCOL_TCP: {
+		AuTextOut("IPv4 : received TCP packet \r\n");
+		TCPHeader* tcp = (TCPHeader*)&pack->payload;
+		uint16_t destPort = ntohs(tcp->destPort);
+		uint16_t srcPort = ntohs(tcp->srcPort);
+		list_t* tcplist = TCPGetSocketList();
+		for (int i = 0; i < tcplist->pointer; i++) {
+			AuSocket* sock = (AuSocket*)list_get_at(tcplist, i);
+			if (sock->sessionPort == destPort) {
+				AuTextOut("[IPv4]: TCP has an waiting socket \r\n");
+
+				/*connection establishing */
+				if (sock->sockState == SOCK_STATE_WAITING_FOR_CONNECTION) {
+					/* SYN-ACK */
+					if ((ntohs(tcp->dataOffsetFlags) & (TCP_FLAGS_SYN | TCP_FLAGS_ACK))) {
+						AuTextOut("[IPv4]: TCP SynAck \r\n");
+						/*now we need to send ack, to complete 
+						 * three-way handshake
+						 */
+						if (AuTCPAcknowledge(nic, sock, pack, 1)) {
+							SeTextOut("[IPv4]: failed to send TCP synack \r\n");
+							break;
+						}
+						AuSocketAdd(sock, pack, ntohs(pack->totalLength));
+					}
+				}
+				/* TODO: Other events like RST and DATA-ACK */
+			}
+		}
+		break;
 	}
 	}
 }
@@ -159,6 +192,5 @@ void IPV4SendPacket(IPv4Header* packet, AuVFSNode* nic) {
 		uint8_t broadcast_addr[6];
 		memset(broadcast_addr, 0xFF, 6);
 		AuEthernetSend(nic, packet, ntohs(packet->totalLength), ETHERNET_TYPE_IPV4, cache ? cache->hw_address : broadcast_addr);
-
 	}
 }

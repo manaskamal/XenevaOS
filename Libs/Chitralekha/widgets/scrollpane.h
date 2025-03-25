@@ -57,7 +57,8 @@ typedef struct _scrollbar_ {
 	int thumb_lastx;
 	bool thumbHover;
 	double scrollAmount;
-	double currentScrollValue;
+	double scrollOffset;
+	int contentSize;
 }ChScrollbar;
 
 typedef struct _scrollpane_{

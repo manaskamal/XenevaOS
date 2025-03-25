@@ -94,7 +94,7 @@ void ChListViewMouseEvent(ChWidget* widget, ChWindow* win, int x, int y, int but
 void ChListViewScrollEvent(ChWidget* wid, ChWindow* win, int scollVal, uint8_t type) {
 	ChListView* lv = (ChListView*)wid;
 
-	uint32_t display_idx = (lv->scrollpane->vScrollBar.thumb_posy * lv->scrollpane->vScrollBar.scrollAmount) / LIST_VIEW_ITEM_HEIGHT;
+	int display_idx = lv->scrollpane->vScrollBar.scrollOffset / LIST_VIEW_ITEM_HEIGHT;
 
 	bool _view_update = false;
 	if (type == CHITRALEKHA_SCROLL_TYPE_VERTICAL){
@@ -215,6 +215,7 @@ ChListItem* ChListViewAddItem(ChWindow* win, ChListView* lv, char* itemText) {
 		if (lv->scrollpane)
 			ChScrollUpdateVerticalScroll(lv->scrollpane, &view, (lv->numRows*LIST_VIEW_ITEM_HEIGHT + LIST_VIEW_ITEM_YPADDING));
 	}
+	lv->contentSizeY = (lv->numRows * LIST_VIEW_ITEM_HEIGHT + LIST_VIEW_ITEM_YPADDING);
 	/*lv->currentStartIndex = floor((lv->scrollpane->vScrollBar.thumb_posy / LIST_VIEW_ITEM_HEIGHT) - LIST_VIEW_ITEM_HEIGHT);
 	lv->currentStartIndex = max(0, lv->currentStartIndex);*/
 	return li;
