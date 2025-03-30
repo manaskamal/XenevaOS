@@ -5,7 +5,11 @@
       <FullPath>E:\Xeneva Project\Aurora\x64\Debug\chlkha.dll</FullPath>
     </ProjectOutput>
   </ProjectOutputs>
-  <ContentFiles />
+  <ContentFiles>
+    <ContentFile>
+      <FullPath>E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\onoff.cpp</FullPath>
+    </ContentFile>
+  </ContentFiles>
   <SatelliteDlls />
   <NonRecipeFileRefs />
 </Project>

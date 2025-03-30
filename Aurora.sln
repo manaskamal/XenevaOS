@@ -189,6 +189,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "hid", "Drivers\USB\hid\hid.
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Boot", "Boot\Boot.vcxproj", "{1998E8D0-DF15-4A59-B9C1-0728EC4ACA15}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "msc", "Drivers\USB\msc\msc.vcxproj", "{B8C53F70-A4F1-4DA7-8580-B98077EEFCC1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug Static|Mixed Platforms = Debug Static|Mixed Platforms
@@ -1078,6 +1080,30 @@ Global
 		{1998E8D0-DF15-4A59-B9C1-0728EC4ACA15}.Release|Win32.Build.0 = Release|Win32
 		{1998E8D0-DF15-4A59-B9C1-0728EC4ACA15}.Release|x64.ActiveCfg = Release|x64
 		{1998E8D0-DF15-4A59-B9C1-0728EC4ACA15}.Release|x64.Build.0 = Release|x64
+		{B8C53F70-A4F1-4DA7-8580-B98077EEFCC1}.Debug Static|Mixed Platforms.ActiveCfg = Debug|Win32
+		{B8C53F70-A4F1-4DA7-8580-B98077EEFCC1}.Debug Static|Mixed Platforms.Build.0 = Debug|Win32
+		{B8C53F70-A4F1-4DA7-8580-B98077EEFCC1}.Debug Static|Win32.ActiveCfg = Debug|Win32
+		{B8C53F70-A4F1-4DA7-8580-B98077EEFCC1}.Debug Static|Win32.Build.0 = Debug|Win32
+		{B8C53F70-A4F1-4DA7-8580-B98077EEFCC1}.Debug Static|x64.ActiveCfg = Debug|x64
+		{B8C53F70-A4F1-4DA7-8580-B98077EEFCC1}.Debug Static|x64.Build.0 = Debug|x64
+		{B8C53F70-A4F1-4DA7-8580-B98077EEFCC1}.Debug|Mixed Platforms.ActiveCfg = Debug|x64
+		{B8C53F70-A4F1-4DA7-8580-B98077EEFCC1}.Debug|Mixed Platforms.Build.0 = Debug|x64
+		{B8C53F70-A4F1-4DA7-8580-B98077EEFCC1}.Debug|Win32.ActiveCfg = Debug|Win32
+		{B8C53F70-A4F1-4DA7-8580-B98077EEFCC1}.Debug|Win32.Build.0 = Debug|Win32
+		{B8C53F70-A4F1-4DA7-8580-B98077EEFCC1}.Debug|x64.ActiveCfg = Debug|x64
+		{B8C53F70-A4F1-4DA7-8580-B98077EEFCC1}.Debug|x64.Build.0 = Debug|x64
+		{B8C53F70-A4F1-4DA7-8580-B98077EEFCC1}.Release Static|Mixed Platforms.ActiveCfg = Release|Win32
+		{B8C53F70-A4F1-4DA7-8580-B98077EEFCC1}.Release Static|Mixed Platforms.Build.0 = Release|Win32
+		{B8C53F70-A4F1-4DA7-8580-B98077EEFCC1}.Release Static|Win32.ActiveCfg = Release|Win32
+		{B8C53F70-A4F1-4DA7-8580-B98077EEFCC1}.Release Static|Win32.Build.0 = Release|Win32
+		{B8C53F70-A4F1-4DA7-8580-B98077EEFCC1}.Release Static|x64.ActiveCfg = Release|x64
+		{B8C53F70-A4F1-4DA7-8580-B98077EEFCC1}.Release Static|x64.Build.0 = Release|x64
+		{B8C53F70-A4F1-4DA7-8580-B98077EEFCC1}.Release|Mixed Platforms.ActiveCfg = Release|Win32
+		{B8C53F70-A4F1-4DA7-8580-B98077EEFCC1}.Release|Mixed Platforms.Build.0 = Release|Win32
+		{B8C53F70-A4F1-4DA7-8580-B98077EEFCC1}.Release|Win32.ActiveCfg = Release|Win32
+		{B8C53F70-A4F1-4DA7-8580-B98077EEFCC1}.Release|Win32.Build.0 = Release|Win32
+		{B8C53F70-A4F1-4DA7-8580-B98077EEFCC1}.Release|x64.ActiveCfg = Release|x64
+		{B8C53F70-A4F1-4DA7-8580-B98077EEFCC1}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

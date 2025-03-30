@@ -427,6 +427,7 @@ int main(int argc, char* arv[]){
 
 	nbutton_x_loc = NAMDAPHA_WIDTH / 2 - NAMDAPHA_BUTTON_WIDTH / 2;
 	nbutton_y_loc = 0;
+
 	
 	win = ChCreateWindow(app, WINDOW_FLAG_STATIC | WINDOW_FLAG_ALWAYS_ON_TOP | WINDOW_FLAG_BROADCAST_LISTENER | WINDOW_FLAG_ANIMATED, 
 		"Namdapha", 0, 0, NAMDAPHA_WIDTH, screen_h);
@@ -468,6 +469,7 @@ int main(int argc, char* arv[]){
 	timebutton->actionHandler = 0;
 	list_add(button_list, timebutton);
 	nbutton_y_loc += timebutton->y + timebutton->h + NAMDAPHA_BUTTON_YPAD;
+
 	ChWindowPaint(win);
 
 	gomenuh = ChGetWindowHandle(app, "Xeneva Launcher");

@@ -125,6 +125,16 @@ XE_EXTERN{
 	XE_LIB void ChDrawFilledCircle(ChCanvas* canv, int x, int y, int radius, uint32_t fill_col);
 
 	/*
+     * ChDrawFilledCircleAA -- Draw antialiased filled cirlce
+     * @param canv -- Pointer to canvas
+     * @param cx -- x location
+     * @param cy -- y location
+     * @param radius -- radius of the circle
+     * @param color -- color of the circle
+     */
+	XE_LIB void ChDrawFilledCircleAA(ChCanvas* canv, int cx, int cy, int radius, uint32_t color);
+
+	/*
 	* ChDrawLine -- draws a line
 	* @param canv -- Pointer to canvas
 	* @param x1 -- X coord of point one
@@ -144,6 +154,17 @@ XE_EXTERN{
 	* @param color -- outline color
 	*/
 	XE_LIB void ChDrawCircleUnfilled(ChCanvas * canvas, int x, int y, int radius, uint32_t color);
+
+	/*
+     * ChDrawCapsule -- draw a capsule shaped rectangle
+     * @param canv -- Pointer to canvas
+     * @param x -- X location relative to window
+     * @param y -- Y location relative to window
+     * @param width -- Width of the capsule
+     * @param height -- Height of the capsule
+     * @param color -- fill color of the capsule
+     */
+	XE_LIB void ChDrawCapsule(ChCanvas* canv, int x, int y, int width, int height, uint32_t color);
 
 
 	XE_LIB void ChDrawRoundedRect(ChCanvas* canv, int x, int y, int width, int height, uint32_t color, int topleftRadius,

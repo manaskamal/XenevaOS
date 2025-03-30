@@ -36,6 +36,7 @@
 #include <string.h>
 #include <math.h>
 #include "_fastcpy.h"
+#include "color.h"
 
 extern "C" int _fltused = 1;
 
@@ -191,6 +192,20 @@ void ChDrawPixel(ChCanvas* canvas, int x, int y, uint32_t color) {
 		return;
 	}
 	lfb[static_cast<int64_t>(y) * canvas->canvasWidth + x] = color;
+}
+
+/*
+ * ChDrawPixelAA -- draw anti-aliased pixel
+ * @param canv - Pointer to canvas
+ * @param x -- X location relative to window
+ * @param y -- Y location relative to window
+ * @param color -- Color of the pixel
+ * @param alpha -- Alpha value
+ */
+void ChDrawPixelAA(ChCanvas* canv, int x, int y, uint32_t color, double alpha) {
+	uint32_t bgColor = 0xFFFFFFFF;
+	uint32_t blendedColor = ChColorAlphaBlend(bgColor, color, alpha);
+	ChDrawPixel(canv, x, y, blendedColor);
 }
 
 /*

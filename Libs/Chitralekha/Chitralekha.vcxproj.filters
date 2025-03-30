@@ -52,6 +52,9 @@
       <Filter>audio</Filter>
     </ClInclude>
     <ClInclude Include="stb_truetype.h" />
+    <ClInclude Include="widgets\onoff.h">
+      <Filter>widgets</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="chitralekha.cpp" />
@@ -120,6 +123,12 @@
     </ClCompile>
     <ClCompile Include="widgets\popupwin.cpp">
       <Filter>widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="widgets\onoff.cpp">
+      <Filter>widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="widgets\defaultonoff.cpp">
+      <Filter>widgets\styles</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -37,6 +37,7 @@
 #include <_null.h>
 #include <aucon.h>
 #include <Drivers/usb.h>
+#include <Hal/serial.h>
 
 /*
 * XHCIPortReset -- reset the given port
@@ -211,6 +212,7 @@ void XHCIPortInitialise(XHCIDevice* dev, unsigned int port) {
 		if (slot_id == 0)
 			return;
 
+		SeTextOut("Slot enabled \r\n");
 		/* After getting a device slot,
 		* allocate device slot data structures
 		*/
@@ -277,7 +279,7 @@ void XHCIPortInitialise(XHCIDevice* dev, unsigned int port) {
 		uint16_t* string = (uint16_t*)string_buf_ptr;
 
 		/* Here !! do something with the string */
-
+		
 
 		/* The main step: get the 0th config descriptor which contain the
 		 * config value for set_config command */
@@ -413,6 +415,8 @@ void XHCIPortInitialise(XHCIDevice* dev, unsigned int port) {
 			ep->ep_type = transfer_type;
 			ep->dc_offset = dc_addr;
 			ep->dir = dir;
+			ep->endpointAddress = endp->bEndpointAddress;
+			ep->endpointAttr = endp->bmAttributes;
 			ep->callback = NULL;
 
 			/* insert a link trb at the last of cmd ring */
@@ -449,6 +453,7 @@ void XHCIPortInitialise(XHCIDevice* dev, unsigned int port) {
 		t_idx = XHCIPollEvent(dev, TRB_EVENT_TRANSFER);
 
 		slot->descriptor_buff = (uint64_t)buffer;
+		usbdev->descriptor = buffer;
 		AuTextOut("Port initialised CC- %x SC-%x \n", usbdev->classCode, usbdev->subClassCode);
 		USBDeviceSetFunctions(usbdev);
 

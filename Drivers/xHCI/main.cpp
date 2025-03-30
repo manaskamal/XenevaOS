@@ -202,6 +202,17 @@ void XHCIHandleEventInterrupt() {
 			}
 		}
 
+		/*
+		 * PORT Connection/disconnection handling
+		 */
+		if (evt[xhcidev->evnt_ring_index].trbType == TRB_EVENT_PORT_STATUS_CHANGE) {
+			if (xhcidev->initialised) {
+				uint32_t port = event[xhcidev->evnt_ring_index].trb_param_1 >> 24;
+				AuTextOut("[xhci]: port changed %d \n", port);
+				XHCIPortInitialise(xhcidev, port);
+			}
+		}
+
 
 		/*
 		 * COMMAND COMPLETION EVENT
@@ -367,8 +378,9 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 	audev->aurora_dev_class = DEVICE_CLASS_USB3;
 	audev->aurora_driver_class = DRIVER_CLASS_USB;
 	AuRegisterDevice(audev);
-
+	xhcidev->initialised = true;
 	AuDisableInterrupt();
+	for (;;);
 	return 0;
 }
 

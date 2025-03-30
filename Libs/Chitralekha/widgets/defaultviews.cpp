@@ -51,7 +51,7 @@ void ChDefaultListViewPainter(ChWidget* wid, ChWindow* win) {
 
 	
 	int ypos = -((int)lv->scrollpane->vScrollBar.scrollOffset % LIST_VIEW_ITEM_HEIGHT); //(lv->wid.y + win->app->baseFont->fontHeight) +
-
+	int xpos = (int)lv->scrollpane->hScrollBar.scrollOffset;
 #define PADDING_Y 5
 	
 	int totalYpos = lv->wid.y + PADDING_Y + ypos;
@@ -62,6 +62,8 @@ void ChDefaultListViewPainter(ChWidget* wid, ChWindow* win) {
 
 	for (int i = lv->currentStartIndex; i < lv->itemList->pointer /*&& i < max_visible_items*/; i++) {
 		ChListItem* li = (ChListItem*)list_get_at(lv->itemList, i);
+		int originalXpos = li->xPos;
+		//li->xPos = originalXpos - xpos;
 		if (li) {
 			li->yPos = totalYpos;
 			if (li->selected)

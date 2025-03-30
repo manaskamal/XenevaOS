@@ -286,6 +286,47 @@ void ChDrawCircleUnfilled(ChCanvas * canvas, int x, int y, int radius, uint32_t 
 	}
 }
 
+/*
+ * ChDrawFilledCircleAA -- Draw antialiased filled cirlce
+ * @param canv -- Pointer to canvas
+ * @param cx -- x location
+ * @param cy -- y location
+ * @param radius -- radius of the circle
+ * @param color -- color of the circle
+ */
+void ChDrawFilledCircleAA(ChCanvas *canv, int cx, int cy, int radius, uint32_t color) {
+	for (int y = -radius; y <= radius; y++) {
+		for (int x = -radius; x <= radius; x++) {
+			double dist = sqrt(x * x + y * y);
+			double alpha = (radius - dist) / radius;
+			if (dist <= radius) {
+				ChDrawPixelAA(canv, cx + x, cy + y, color, alpha > 0 ? alpha : 0);
+			}
+		}
+	}
+}
+
+/*
+ * ChDrawCapsule -- draw a capsule shaped rectangle
+ * @param canv -- Pointer to canvas
+ * @param x -- X location relative to window
+ * @param y -- Y location relative to window
+ * @param width -- Width of the capsule
+ * @param height -- Height of the capsule
+ * @param color -- fill color of the capsule
+ */
+void ChDrawCapsule(ChCanvas* canv, int x, int y, int width, int height, uint32_t color) {
+	int radius = height / 2;
+	for (int i = 0; i < width - (2 * radius); i++) {
+		for (int j = 0; j < height; j++) {
+			ChDrawPixel(canv,x + radius + i, y + j, color);
+		}
+	}
+
+	ChDrawFilledCircle(canv, x + radius, y + radius, radius, color);
+	ChDrawFilledCircle(canv, x + width - radius - 1, y + radius, radius, color);
+}
+
 
 /**
 * acrylic_box_blur -- Adds box blur filter to a given image using 3x3 matrix kernel

@@ -146,8 +146,7 @@ int main(int argc, char* arv[]){
 	win->color = 0xCCBBBBBB;
 	win->ChWinPaint = XELauncherPaint;
 	win->info->hide = true;
-	win->info->alpha = true;
-	win->info->alphaValue = 0.9;
+	win->info->alpha = false;
 	ChWindowPaint(win);
 
 

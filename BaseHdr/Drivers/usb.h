@@ -51,6 +51,86 @@ typedef struct _au_usb_desc_ {
 }AuUSBDescriptor;
 #pragma pack(pop)
 
+#pragma pack(push,1)
+typedef struct _au_dev_desc_ {
+	uint8_t bLength;
+	uint8_t bDescriptorType;
+	uint16_t bcdUSB;
+	uint8_t  bDeviceClass;
+	uint8_t bDeviceSubClass;
+	uint8_t bDeviceProtocol;
+	uint8_t bMaxPacketSize0;
+	uint16_t idVendor;
+	uint16_t idProduct;
+	uint16_t bcdDevice;
+	uint8_t  iManufacturer;
+	uint8_t iProduct;
+	uint8_t iSerialNumber;
+	uint8_t bNumConfigurations;
+}AuUSBDevDesc;
+#pragma pack(pop)
+
+#pragma pack(push,1)
+typedef struct _au_interface_desc_ {
+	uint8_t bLength;
+	uint8_t bDescriptorType;
+	uint8_t bInterfaceNumber;
+	uint8_t bAlternateSetting;
+	uint8_t bNumEndpoints;
+	uint8_t bInterfaceClass;
+	uint8_t bInterfaceSubClass;
+	uint8_t bInterfaceProtocol;
+	uint8_t iInterface;
+}AuUSBInterfaceDesc;
+#pragma pack(pop)
+
+#pragma pack(push,1)
+typedef struct _au_qualifier_desc_ {
+	uint8_t bLength;
+	uint8_t bDescriptorType;
+	uint16_t bcdUSB;
+	uint8_t bDeviceClass;
+	uint8_t bDeviceSubClass;
+	uint8_t bDeviceProtocol;
+	uint8_t bMaxPacketSize0;
+	uint8_t bNumConfigurations;
+	uint8_t bReserved;
+}AuUSBQualifierDesc;
+#pragma pack(pop)
+
+#pragma pack(push,1)
+typedef struct _au_config_desc_ {
+	uint8_t bLength;
+	uint8_t bDescriptorType;
+	uint16_t wTotalLength;
+	uint8_t bNumInterfaces;
+	uint8_t bConfigurationValue;
+	uint8_t iConfiguration;
+	uint8_t bmAttributes;
+	uint8_t bMaxPower;
+}AuUSBConfigDesc;
+#pragma pack(pop)
+
+#pragma pack(push,1)
+typedef struct _au_string_desc_ {
+	uint8_t bLength;
+	uint8_t bDescriptorType;
+	//..string value
+}AuUSBStringDesc;
+#pragma pack(pop)
+
+#pragma pack(push,1)
+typedef struct _au_endpoint_desc_ {
+	uint8_t bLength;
+	uint8_t bDescriptorType;
+	uint8_t bEndpointAddress;
+	uint8_t bmAttributes;
+	uint16_t wMaxPacketSize;
+	uint8_t bInterval;
+}AuUSBEndpointDesc;
+#pragma pack(pop)
+
+
 /* Standard XHCI defined Transfer/Command/Event
 * TRB type values
 */
@@ -109,7 +189,10 @@ typedef void (*get_device_desc_callback)(_au_usb_dev_* dev, uint64_t buffer, uin
 typedef void (*get_string_desc_callback)(_au_usb_dev_* dev, uint64_t buffer, uint16_t id);
 typedef void (*get_config_desc_callback)(_au_usb_dev_* dev, uint64_t buffer, uint16_t len, uint8_t id);
 typedef void* (*get_endpoint)(_au_usb_dev_* dev, uint8_t ep_type);
+typedef void* (*get_bulk_ep)(_au_usb_dev_* dev, uint8_t dir);
 typedef int (*get_max_pack_sz)(_au_usb_dev_* dev, void* ep);
+typedef uint8_t(*get_endpoint_address)(_au_usb_dev_* dev, void* ep);
+typedef uint8_t(*get_endpoint_attrib)(_au_usb_dev_* dev, void* ep);
 typedef AuUSBDescriptor* (*get_descriptor_callback)(_au_usb_dev_* dev, uint8_t type);
 typedef void (*set_config_val_callback)(_au_usb_dev_* dev, uint8_t config_val);
 typedef int (*poll_wait_callback)(_au_usb_dev_* dev, int poll_wait);
@@ -137,7 +220,10 @@ typedef struct _au_usb_dev_ {
 	get_config_desc_callback AuGetConfigDescriptor;
 	get_descriptor_callback AuGetDescriptor;
 	get_endpoint AuGetEndpoint;
+	get_bulk_ep AuGetBulkEndpoint;
 	get_max_pack_sz AuGetMaxPacketSize;
+	get_endpoint_address AuGetEndpointAddress;
+	get_endpoint_attrib AuGetEndpointAttrib;
 	set_config_val_callback AuSetConfigValue;
 	poll_wait_callback AuUSBWait;
 	au_usb_drv_entry ClassEntry;

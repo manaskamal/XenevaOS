@@ -209,7 +209,10 @@ typedef struct _usb_dev_ {
 	void (*get_config_desc)(_usb_dev_* dev, uint64_t buffer, uint16_t len, uint8_t id);
 	usb_descriptor_t* (*get_descriptor)(_usb_dev_* dev, uint8_t type);
 	void* (*get_endpoint)(_usb_dev_* dev, uint8_t ep_type);
+	void* (*get_bulk_ep)(_usb_dev_* dev, uint8_t dir);
 	int (*get_max_pack_sz)(_usb_dev_* dev, void* ep);
+	uint8_t(*get_endpoint_address)(_usb_dev_* dev, void* ep);
+	uint8_t(*get_endpoint_attrib)(_usb_dev_* dev, void* ep);
 	void (*set_config_val)(_usb_dev_* dev, uint8_t config_val);
 	int (*poll_wait)(_usb_dev_* dev, int wait_type);
 	usb_drv_entry ClassEntry;

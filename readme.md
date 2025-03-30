@@ -31,7 +31,7 @@ XenevaOS is an open-source project that welcomes contributions from developers, 
 - Xeneva Terminal with basic ANSI/VT100 escape sequence support
 - Desktop environment called Namdapha Desktop
 - Storage supports : AHCI/SATA, NVMe
-- USB3 Class drivers (USB HID Mouse, USB Tablet) ..etc
+- USB3 Class drivers (USB HID Mouse, USB Tablet, USB MSC driver) ..etc
 - Audio Server called "Deodhai-Audio" with 
     (44kHz/16bit audio format, stereo/mono panning, gain control)
 - Networking (IPv4, UDP/IP, TCP/IP, ICMP)

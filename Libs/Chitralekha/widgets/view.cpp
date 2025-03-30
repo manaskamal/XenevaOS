@@ -206,14 +206,17 @@ ChListItem* ChListViewAddItem(ChWindow* win, ChListView* lv, char* itemText) {
 	list_add(lv->itemList, li);
 	lv->numRows += 1;
 	lv->horizontalRenderY = (lv->wid.y - LIST_VIEW_ITEM_HEIGHT) + win->app->baseFont->fontHeight;
+	ChRect view;
+	view.x = lv->wid.x;
+	view.y = lv->wid.y;
+	view.w = lv->wid.w;
+	view.h = lv->wid.h;
 	if ((lv->numRows * LIST_VIEW_ITEM_HEIGHT) >= lv->wid.h) {
-		ChRect view;
-		view.x = lv->wid.x;
-		view.y = lv->wid.y;
-		view.w = lv->wid.w;
-		view.h = lv->wid.h;
 		if (lv->scrollpane)
 			ChScrollUpdateVerticalScroll(lv->scrollpane, &view, (lv->numRows*LIST_VIEW_ITEM_HEIGHT + LIST_VIEW_ITEM_YPADDING));
+	}
+	if (width > lv->wid.w) {
+		ChScrollUpdateHorizontalScroll(lv->scrollpane, &view, width);
 	}
 	lv->contentSizeY = (lv->numRows * LIST_VIEW_ITEM_HEIGHT + LIST_VIEW_ITEM_YPADDING);
 	/*lv->currentStartIndex = floor((lv->scrollpane->vScrollBar.thumb_posy / LIST_VIEW_ITEM_HEIGHT) - LIST_VIEW_ITEM_HEIGHT);

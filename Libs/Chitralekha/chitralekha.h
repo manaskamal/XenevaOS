@@ -97,6 +97,16 @@ XE_EXTERN{
 	XE_LIB void ChDrawPixel(ChCanvas* canvas, int x, int y, uint32_t color);
 
 	/*
+     * ChDrawPixelAA -- draw anti-aliased pixel
+     * @param canv - Pointer to canvas
+     * @param x -- X location relative to window
+     * @param y -- Y location relative to window
+     * @param color -- Color of the pixel
+     * @param alpha -- Alpha value
+     */
+	XE_LIB void ChDrawPixelAA(ChCanvas* canv, int x, int y, uint32_t color, double alpha);
+
+	/*
 	* ChGetPixel -- retuns a pixel from canvas
 	* @param canvas -- Pointer to canvas structure
 	* @param x -- x position

@@ -39,6 +39,7 @@
 #include <widgets\scrollpane.h>
 #include <widgets\slider.h>
 #include <widgets\progress.h>
+#include <widgets\onoff.h>
 #include <keycode.h>
 #include <widgets\window.h>
 #include <widgets\msgbox.h>
@@ -96,11 +97,17 @@ int main(int argc, char* argv[]) {
 	app = ChitralekhaStartApp(argc, argv);
 	mainWin = ChCreateWindow(app, WINDOW_FLAG_MOVABLE, "Controls", 400, 100, CHITRALEKHA_DEFAULT_WIN_WIDTH,
 		CHITRALEKHA_DEFAULT_WIN_HEIGHT);
-	
-	mainWin->info->alpha = true;
-	mainWin->info->alphaValue = 0.2;
+
 
 	ChWindowBroadcastIcon(app, "/icons/gear.bmp");
+
+	ChSlider* hslider = ChCreateSlider(CHITRALEKHA_SLIDER_HORIZONTAL, 10, 30, 100);
+	ChWindowAddWidget(mainWin, (ChWidget*)hslider);
+	ChSlider* vslider = ChCreateSlider(CHITRALEKHA_SLIDER_VERTICAL, 10, 60, 100);
+	ChWindowAddWidget(mainWin, (ChWidget*)vslider);
+	ChOnOffButton* onoff = ChCreateOnOffButton(100, 70, CH_ONOFF_VALUE_OFF);
+	ChWindowAddWidget(mainWin, (ChWidget*)onoff);
+	
 
 	ChWindowPaint(mainWin);
 	PostEvent e;

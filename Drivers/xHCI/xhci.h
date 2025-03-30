@@ -220,6 +220,8 @@ typedef struct _xhci_port_reg_ {
 #pragma pack(push,1)
 typedef struct _endp_ {
 	xhci_trb_t* cmd_ring;
+	uint8_t endpointAddress;
+	uint8_t endpointAttr;
 	uint8_t endpoint_num;
 	uint8_t endpoint_type;
 	uint8_t interval;

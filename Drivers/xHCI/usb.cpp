@@ -31,6 +31,7 @@
 #include "xhci.h"
 #include <stdint.h>
 #include <_null.h>
+#include <aucon.h>
 #include <Mm/kmalloc.h>
 #include <string.h>
 
@@ -149,6 +150,7 @@ usb_descriptor_t* USBGetDescriptor(AuUSBDevice *usbdev, uint8_t type) {
 	XHCISlot* slot = (XHCISlot*)usbdev->data;
 	if (!slot)
 		return NULL;
+	usb_descriptor_t* desc = (usb_descriptor_t*)slot->descriptor_buff;
 	usb_config_desc_t* config = (usb_config_desc_t*)slot->descriptor_buff;
 	usb_if_desc_t* interface_desc = raw_offset<usb_if_desc_t*>(config, config->bLength);
 	usb_descriptor_t* endp = raw_offset<usb_descriptor_t*>(interface_desc, interface_desc->bLength);
@@ -178,6 +180,31 @@ void* USBGetEndpoint(AuUSBDevice* usbdev, uint8_t ep_type) {
 		if (ep->ep_type == ep_type) {
 			ep_ = ep;
 			break;
+		}
+	}
+	return (void*)ep_;
+}
+
+
+/*
+ * USBGetBulkEndpoint -- checks and return bulk endpoint
+ * @param usbdev -- Pointer to usb device struc
+ * @param dir -- Direction of the bulk endpoint 1-- IN, 0 -- OUT
+ */
+void* USBGetBulkEndpoint(AuUSBDevice* usbdev, uint8_t dir) {
+	if (!usbdev)
+		return NULL;
+	XHCISlot* slot = (XHCISlot*)usbdev->data;
+	if (!slot)
+		return NULL;
+	XHCIEndpoint* ep_ = NULL;
+	for (int i = 0; i < slot->endpoints->pointer; i++) {
+		XHCIEndpoint* ep = (XHCIEndpoint*)list_get_at(slot->endpoints, i);
+		if (ep->ep_type == ENDPOINT_TRANSFER_TYPE_BULK) {
+			if (ep->dir == dir) {
+				ep_ = ep;
+				break;
+			}
 		}
 	}
 	return (void*)ep_;
@@ -259,6 +286,27 @@ int USBGetMaxPacketSize(AuUSBDevice *dev_,void* ep) {
 }
 
 
+uint8_t USBGetEndpointAttribute(AuUSBDevice* dev_, void* ep) {
+	XHCIDevice* dev = XHCIGetHost();
+	if (!dev)
+		return 0;
+	XHCIEndpoint* endp = (XHCIEndpoint*)ep;
+	if (!endp)
+		return 0;
+	return endp->endpointAttr;
+}
+
+uint8_t USBGetEndpointAddress(AuUSBDevice* dev_, void* ep) {
+	XHCIDevice* dev = XHCIGetHost();
+	if (!dev)
+		return 0;
+	XHCIEndpoint* endp = (XHCIEndpoint*)ep;
+	if (!endp)
+		return 0;
+	return endp->endpointAddress;
+}
+
+
 /*
  * USBDeviceSetFunctions -- setup the device data structure with
  * all the function pointers
@@ -271,7 +319,10 @@ void USBDeviceSetFunctions(AuUSBDevice* dev) {
 	dev->get_string_desc = USBGetStringDesc;
 	dev->get_descriptor = USBGetDescriptor;
 	dev->get_endpoint = USBGetEndpoint;
+	dev->get_bulk_ep = USBGetBulkEndpoint;
 	dev->get_max_pack_sz = USBGetMaxPacketSize;
+	dev->get_endpoint_address = USBGetEndpointAddress;
+	dev->get_endpoint_attrib = USBGetEndpointAttribute;
 	dev->set_config_val = USBSetConfigDesc;
 	dev->control_transfer = USBControlTransfer;
 	dev->bulk_transfer = USBBulkTransfer;

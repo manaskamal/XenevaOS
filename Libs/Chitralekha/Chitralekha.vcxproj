@@ -172,6 +172,7 @@
     <ClInclude Include="widgets\menu.h" />
     <ClInclude Include="widgets\menubar.h" />
     <ClInclude Include="widgets\msgbox.h" />
+    <ClInclude Include="widgets\onoff.h" />
     <ClInclude Include="widgets\progress.h" />
     <ClInclude Include="widgets\scrollpane.h" />
     <ClInclude Include="widgets\slider.h" />
@@ -191,6 +192,7 @@
     <ClCompile Include="widgets\base.cpp" />
     <ClCompile Include="widgets\button.cpp" />
     <ClCompile Include="widgets\defaultmenu.cpp" />
+    <ClCompile Include="widgets\defaultonoff.cpp" />
     <ClCompile Include="widgets\defaultprogressbar.cpp" />
     <ClCompile Include="widgets\defaultscrollbar.cpp" />
     <ClCompile Include="widgets\defaultslider.cpp" />
@@ -201,6 +203,9 @@
     <ClCompile Include="widgets\menu.cpp" />
     <ClCompile Include="widgets\menubar.cpp" />
     <ClCompile Include="widgets\msgbox.cpp" />
+    <ClCompile Include="widgets\onoff.cpp">
+      <DeploymentContent>true</DeploymentContent>
+    </ClCompile>
     <ClCompile Include="widgets\popupwin.cpp" />
     <ClCompile Include="widgets\progress.cpp" />
     <ClCompile Include="widgets\scrollpane.cpp" />

@@ -123,18 +123,21 @@ void ChDefaultScrollPaneMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, i
 		bool _scrolled = false;
 	
 		if (button) {
-			sp->hScrollBar.thumb_posx = x - (win->info->x + sp->hScrollBar.thumb_width / 2);
+			sp->hScrollBar.thumb_posx = x - (win->info->x + sp->hScrollBar.bar_x + sp->hScrollBar.thumb_width / 2);
 
-			if ((sp->hScrollBar.thumb_posx + sp->hScrollBar.thumb_width) >= sp->hScrollBar.bar_x + sp->hScrollBar.bar_w){
+			if ((sp->hScrollBar.bar_x + sp->hScrollBar.thumb_posx + sp->hScrollBar.thumb_width) >= (sp->hScrollBar.bar_x + sp->hScrollBar.bar_w)){
 				sp->hScrollBar.thumb_posx = (win->info->x + sp->hScrollBar.bar_x + sp->hScrollBar.bar_w) -
-					(win->info->x + sp->hScrollBar.bar_x + sp->hScrollBar.thumb_width) - 2;
+					(win->info->x + sp->hScrollBar.bar_x + sp->hScrollBar.thumb_width);
 			}
 
 			if ((sp->hScrollBar.thumb_posx <= sp->hScrollBar.bar_x))
-				sp->hScrollBar.thumb_posx = 1; // sp->hScrollBar.bar_x;
+				sp->hScrollBar.thumb_posx = 0; // sp->hScrollBar.bar_x;
 
-			sp->hScrollBar.scrollOffset = sp->hScrollBar.thumb_posx * sp->hScrollBar.scrollAmount;
-			_KePrint("Current hscroll -> %d \r\n", sp->hScrollBar.scrollOffset);
+			int maxThumbX = sp->hScrollBar.bar_w - sp->hScrollBar.thumb_width;
+			//double scrollSpeed = ((double)sp->vScrollBar.bar_h / (double)sp->vScrollBar.contentSize) * 3.0;
+			//_KePrint("maxTHUMBY -> %d \r\n", maxThumbY);
+			int maxScrollOffset = sp->hScrollBar.contentSize - sp->scrollableView->w;
+			sp->hScrollBar.scrollOffset = ((double)sp->hScrollBar.thumb_posx / (double)maxThumbX) * (double)maxScrollOffset;
 			_scrolled = true;
 		}
 
@@ -148,7 +151,7 @@ void ChDefaultScrollPaneMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, i
 		if (_scrolled){
 		
 			if (sp->scrollableView)
-				sp->scrollableView->ChScrollEvent(sp->scrollableView, win, sp->vScrollBar.thumb_posy, CHITRALEKHA_SCROLL_TYPE_HORIZONTAL);
+				sp->scrollableView->ChScrollEvent(sp->scrollableView, win, sp->hScrollBar.thumb_posx, CHITRALEKHA_SCROLL_TYPE_HORIZONTAL);
 			/*Process sleep because, slowing down the process little bit,
 			 * because freetype frequenctly allocates and frees up memory
 			 * which effects the kernel system HeapUnmapProcess due to
@@ -192,7 +195,6 @@ void ChDefaultScrollPaneMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, i
 			int maxScrollOffset = sp->vScrollBar.contentSize - sp->scrollableView->h;
 			sp->vScrollBar.scrollOffset = ((double)sp->vScrollBar.thumb_posy / (double)maxThumbY) * (double)maxScrollOffset;
 			//sp->vScrollBar.scrollOffset *= scrollSpeed;
-			//_KePrint("VScroll -> %f , sp->thumbPosy -> %d \r\n", sp->vScrollBar.scrollOffset, sp->vScrollBar.thumb_posy);
 			_scrolled = true;
 		}
 
@@ -313,5 +315,27 @@ void ChScrollUpdateVerticalScroll(ChScrollPane* sp, ChRect* viewport, int conten
  * @param contentSz -- content size
  */
 void ChScrollUpdateHorizontalScroll(ChScrollPane* sp,ChRect* viewport, int contentSz){
-	sp->hScrollBar.thumb_width = viewport->x - viewport->w / contentSz;
+	//sp->hScrollBar.thumb_width = viewport->x - viewport->w / contentSz;
+
+	if (contentSz == 0) {
+		sp->vScrollBar.thumb_height = 0;
+		return;
+	}
+
+	if (contentSz < viewport->w) {
+		sp->hScrollBar.thumb_width = 0;
+		return;
+	}
+
+	double range = ((double)contentSz) / (double)viewport->w;
+
+	//double range = ((viewport->h - viewport->y) / contentSz);
+	sp->hScrollBar.scrollAmount = ceil(range);
+	double viewableRatio = (double)viewport->w / (double)contentSz;
+	double thumbWidth = ((double)viewport->w / (double)contentSz) * sp->hScrollBar.bar_w;//(double)viewport->h * viewableRatio;
+	sp->hScrollBar.thumb_width = thumbWidth;
+	if (sp->hScrollBar.thumb_width <= 0) {
+		sp->hScrollBar.thumb_width = 30;
+	}
+	sp->hScrollBar.contentSize = contentSz;
 }
