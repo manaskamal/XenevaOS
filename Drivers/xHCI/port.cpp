@@ -375,6 +375,7 @@ void XHCIPortInitialise(XHCIDevice* dev, unsigned int port) {
 				cerr = 0; // counter error doesn't apply for isoch transfer
 				break;
 			case ENDPOINT_TRANSFER_TYPE_BULK:
+				AuTextOut("BULK Ep num ->%d \n", endp_num);
 				if (dir)
 					ep_type = 6;
 				else

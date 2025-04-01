@@ -37,6 +37,7 @@
 #include <_null.h>
 #include <Mm/pmmngr.h>
 #include <string.h>
+#include <Hal/serial.h>
 #include "port.h"
 #include <Drivers/usb.h>
 
@@ -177,6 +178,7 @@ void XHCIHandleEventInterrupt() {
 		for (int l = 0; l < 100000; l++)
 			;
 
+		//SeTextOut("Event ring interrupt %d\r\n", evt[xhcidev->evnt_ring_index].trbType);
 
 		/*  TRANSFER EVENT INTERRUPT */
 		if (evt[xhcidev->evnt_ring_index].trbType == TRB_EVENT_TRANSFER) {
@@ -184,6 +186,11 @@ void XHCIHandleEventInterrupt() {
 			uint8_t comp_code = (event[xhcidev->evnt_ring_index].trb_status >> 24) & 0xff;
 			uint8_t slot_id = (event[xhcidev->evnt_ring_index].trb_control >> 24) & 0xff;
 			uint64_t data = (event[xhcidev->evnt_ring_index].trb_param_1 | event[xhcidev->evnt_ring_index].trb_param_2);
+
+			xhcidev->event_available = true;
+			xhcidev->poll_return_trb_type = TRB_EVENT_TRANSFER;
+			xhcidev->trb_event_index = xhcidev->evnt_ring_index;
+			xhci_trb_t* trb = (xhci_trb_t*)&evt[xhcidev->evnt_ring_index];
 
 			/* check if this event belongs to endpoint */
 			if (endpoint_id >= 2) {
@@ -193,12 +200,6 @@ void XHCIHandleEventInterrupt() {
 				/* if belongs, call the handler of that endpoint */
 				if (ep->callback)
 					ep->callback(xhcidev, slot, ep);
-			}
-			else {
-				xhcidev->event_available = true;
-				xhcidev->poll_return_trb_type = TRB_EVENT_TRANSFER;
-				xhcidev->trb_event_index = xhcidev->evnt_ring_index;
-				xhci_trb_t* trb = (xhci_trb_t*)&evt[xhcidev->evnt_ring_index];
 			}
 		}
 
@@ -380,7 +381,6 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 	AuRegisterDevice(audev);
 	xhcidev->initialised = true;
 	AuDisableInterrupt();
-	for (;;);
 	return 0;
 }
 

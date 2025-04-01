@@ -225,7 +225,7 @@ typedef struct _endp_ {
 	uint8_t endpoint_num;
 	uint8_t endpoint_type;
 	uint8_t interval;
-	uint8_t max_packet_sz;
+	uint16_t max_packet_sz;
 	unsigned cmd_ring_index;
 	unsigned cmd_ring_max;
 	unsigned cmd_ring_cycle;

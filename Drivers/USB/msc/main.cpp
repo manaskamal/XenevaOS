@@ -29,7 +29,10 @@
 
 #include <aurora.h>
 #include <Drivers/usb.h>
+#include <Mm/kmalloc.h>
+#include <Mm/pmmngr.h>
 #include <aucon.h>
+#include <Hal/serial.h>
 
 
 #define SCSI_CMD_BLK_SIGNATURE 0x43425355 //('USBC')
@@ -60,6 +63,27 @@ typedef struct _scsi_status_ {
 }SCSIStatus;
 #pragma pack(pop)
 
+#pragma pack(push,1)
+typedef struct _scsi_inquiry_resp_ {
+	uint8_t preipheralDeviceType;
+	uint8_t removalMedia;
+	uint8_t version;
+	uint8_t responseDataFormat;
+	uint8_t additionalLength;
+	uint8_t reserved[3];
+	char vendorID[8];
+	char productID[16];
+	char productRev[4];
+}SCSIInquiryResponse;
+#pragma pack(pop)
+
+#pragma pack(push,1)
+typedef struct _scsi_capacity_resp_ {
+	uint32_t lbaCount;
+	uint32_t blockSize;
+}SCSICapacityResponse;
+#pragma pack(pop)
+
 /*
 * AuUSBDriverUnload -- deattach the driver from
 * aurora system
@@ -69,6 +93,33 @@ AU_EXTERN AU_EXPORT int AuDriverUnload(AuUSBDeviceStruc* dev) {
 	return 0;
 }
 
+/*
+ * AuUSBMSCSendCommand -- send a command to MSC device
+ * @param dev -- Pointer to USB device struc
+ * @param bulkIn -- Bulk IN Endpoint
+ * @param bulkOut -- Bulk OUT Endpoint
+ * @param cbw -- SCSI Command to submit
+ * @param resp -- Response buffer
+ * @param respSize -- Response size
+ */
+void AuUSBMSCSendCommand(AuUSBDeviceStruc *dev, void* bulkIn, void* bulkOut, SCSICommand* cbw, void* resp, uint32_t respSize) {
+	dev->AuBulkTranfer(dev, (uint64_t)cbw, sizeof(SCSICommand), bulkOut);
+	dev->AuUSBWait(dev, USB_WAIT_EVENT_TRANSFER);
+
+	if (respSize > 0) {
+		dev->AuBulkTranfer(dev, (uint64_t)resp, respSize, bulkIn);
+		dev->AuUSBWait(dev, USB_WAIT_EVENT_TRANSFER);
+	}
+	SCSIStatus* csw = (SCSIStatus*)P2V((uint64_t)AuPmmngrAlloc());
+	memset(csw, 0, sizeof(SCSIStatus));
+	dev->AuBulkTranfer(dev, V2P((uint64_t)csw), sizeof(SCSIStatus), bulkIn);
+	dev->AuUSBWait(dev, USB_WAIT_EVENT_TRANSFER);
+
+	if (csw->signature == SCSI_CMD_STATUS_SIGNATURE) {
+		SeTextOut("USB MSC -- Command submitted successfully \r\n");
+	}
+	AuPmmngrFree((void*)V2P((uint64_t)csw));
+}
 /*
 * AuUSBDriverMain -- Main entry for USB driver 
 */
@@ -100,9 +151,11 @@ AU_EXTERN AU_EXPORT int AuUSBDriverMain(AuUSBDeviceStruc* dev) {
 		if ((attrib & 0x03) == 0x02) { //Bulk transfer
 			if (endpointAddr & 0x80) {
 				AuTextOut("Bulk IN/ endpoint found \n");
+				AuTextOut("Bulk IN max pack -> %d \n", (endp->wMaxPacketSize & 0x7FFF));
 			}
 			else {
 				AuTextOut("Bulk OUT/ endpoint found \n");
+				AuTextOut("BULK OUT MaxPACk -> %d \n", (endp->wMaxPacketSize & 0x7FFF));
 
 			}
 		}
@@ -118,6 +171,8 @@ AU_EXTERN AU_EXPORT int AuUSBDriverMain(AuUSBDeviceStruc* dev) {
 	void* ep_bulk_out = dev->AuGetBulkEndpoint(dev, 0);
 	if (ep_bulk_out)
 		AuTextOut("USB MSC Bulk-out ep found \n");
+
+	/* Reset the USB MSC Device */
 	AuUSBRequestPacket pack;
 	pack.request_type = 0x21;
 	pack.request = 0xFF;
@@ -127,8 +182,27 @@ AU_EXTERN AU_EXPORT int AuUSBDriverMain(AuUSBDeviceStruc* dev) {
 	dev->AuControlTransfer(dev, &pack, 0, 0);
 	int t_idx = -1;
 	t_idx = dev->AuUSBWait(dev, USB_WAIT_EVENT_TRANSFER);
-	AuTextOut("USB MSC driver reset completed %d \n", t_idx);
+
+	SCSICommand* cbw = (SCSICommand*)P2V((uint64_t)AuPmmngrAlloc());
+	SCSIInquiryResponse* resp = (SCSIInquiryResponse*)P2V((uint64_t)AuPmmngrAlloc());
+	memset(resp, 0, sizeof(SCSIInquiryResponse));
+	memset(cbw, 0, sizeof(SCSICommand));
+
+	cbw->signature = SCSI_CMD_BLK_SIGNATURE;
+	cbw->tag = 0x12345678;
+	cbw->dataBytes = sizeof(SCSIInquiryResponse);
+	cbw->flags = SCSI_CMD_FLAG_INPUT;
+	cbw->lun = 0;
+	cbw->cmdBytes = 6;
+	cbw->cmd[0] = 0x12;
+	cbw->cmd[4] = sizeof(SCSIInquiryResponse);
+
+	AuUSBMSCSendCommand(dev, ep_bulk_in, ep_bulk_out, (SCSICommand*)V2P((uint64_t)cbw), 
+		(void*)V2P((uint64_t)resp), sizeof(SCSIInquiryResponse));
+	AuTextOut("\nUSB Mass Storage device : %s \n", resp->vendorID);
+	AuPmmngrFree((void*)V2P((uint64_t)resp));
+	AuPmmngrFree((void*)V2P((uint64_t)cbw));
+	AuTextOut("USB MSC driver initialised %d \n", t_idx);
 	
-	for (;;);
 	return 0;
 }

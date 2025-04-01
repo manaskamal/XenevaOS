@@ -30,6 +30,8 @@
 #include "xhci.h"
 #include "usb.h"
 #include <Mm/vmmngr.h>
+#include <aucon.h>
+#include <Hal/serial.h>
 
 /*
  * XHCIEvaluateContextCmd -- evaluate context command
@@ -224,22 +226,29 @@ void XHCIBulkTransfer(XHCIDevice* dev, XHCISlot* slot, uint64_t buffer, uint16_t
 		size_t cnt = PAGE_SIZE - ((buffer + pos) & (PAGE_SIZE - 1));
 		bool last = cnt >= data_len - pos;
 		if (last) cnt = data_len - pos;
-
 		size_t remaining_pack = (data_len - pos + ep_->max_packet_sz - 1) / ep_->max_packet_sz;
 
-		uint32_t ctrl = (TRB_TRANSFER_NORMAL << 10) | (1 << 6) | (1 << 1);
-
+		uint32_t ctrl = (TRB_TRANSFER_NORMAL << 10);
+		
 		/*
 		 * Put the chain bit to make it a TD
 		 */
-		if (!last)
-			ctrl |= (1 << 4); 
+		if (!last) {
+			ctrl |= (1 << 4);
+		}
 
-		/*
-		 * if last no chain bit
-		 */
 		if (last)
 			ctrl |= (1 << 5);
+
+
+		/*
+		 * put the immediate data bit if it's in
+		 */
+		if (ep_->dir) {
+			//SeTextOut("This ep -> %d , is IN \r\n", ep_->endpoint_num);
+			ctrl |= (1 << 6);
+		}
+
 
 		if (ep_ != 0) {
 			XHCISendCmdOtherEP(slot, ep_->endpoint_num, buffer & UINT32_MAX, (buffer >> 32) & UINT32_MAX,
@@ -254,4 +263,11 @@ void XHCIBulkTransfer(XHCIDevice* dev, XHCISlot* slot, uint64_t buffer, uint16_t
 		pos += cnt;
 		buffer += ep_->max_packet_sz;
 	}
+
+	uint32_t ep_num = 0;
+	if (ep_)
+		ep_num = ep_->dci;
+	else
+		ep_num = XHCI_DOORBELL_ENDPOINT_0;
+	XHCIRingDoorbellSlot(dev, slot->slot_id, ep_num);
 }
