@@ -1,7 +1,7 @@
 # XenevaOS documentation
 
 ## Introduction
-Welcome to the XenevaOS documentation. XenevaOS is an operating system completely written from scratch with a focus on performance and modern hardware support while providing a robust modern graphical environment for daily needs of user. [Let's get started](#welcome-to-xenevaos--empowering-creativity)
+Welcome to the XenevaOS documentation. XenevaOS is an operating system completely written from scratch with a focus on performance and modern hardware support while providing a robust modern graphical environment for daily needs of users.It is designed to be lightweight, secure, and adaptable, making it ideal for both developers and general users. [Let's get started](#welcome-to-xenevaos--empowering-creativity)
 
 ## NOTE
 The project is still under development and not fully matured. The project requires lot of contribution and developments to various aspects of the system.
