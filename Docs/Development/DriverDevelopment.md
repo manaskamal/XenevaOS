@@ -26,6 +26,7 @@ XenevaOS project includes certain Naming conventions.In XenevaOS driver developm
 Current version of XenevaOS supports only Kernel mode drivers. The Kernel mode drivers are divided into two types:
 - Boot Time Drivers 
 - Runtime Drivers
+- USB Class Drivers
 
 You can read detailed information about each driver in [About XenevaOS Driver](../Kernel/Drivers.md)
 
@@ -35,6 +36,12 @@ Information on Initialization and Unloading of XenevaOS drivers can be found [he
 - ***AuDriverUnload*** - Clears all the resources allocated by the driver and unload it from the Kernel
 
 See here for a [simple driver example.](../Kernel/Drivers.md#initialization)
+
+## Memory Management
+Memory Management is very important part of XenevaOS driver development. It's the most critical aspect of the system stabiity, as improper handling of memory can lead to severe crashes or unpredicatble behavior. Since drivers operate at a low level with direct access to system resources, any mistake in ___Allocation, Deallocation, or Access___ can corrupt kernel memory, causing system instability or event a complete crash. Proper use of Physical Memory Allocation/Deallocation and kernel heap Allocation/Deallocation are recommended. Memory management are divided into three parts-
+- MMIO memory mapping that maps hardware's physical address to Kernel virtual memory
+- Heap memory management helps allocation and deallocating small objects
+- Physical Memory management helps allocating direct physical memory allocation, as some hardware doesn't understand virtual memory. Here, P2V and V2P function plays important role, as kernel is mapped to higher half memory and lower memory mappings are cleared before entering user space. Entire physical memory is linearly mapped from 0xFFFF800000000000.
 
 ## ***TODO***
 _Section describing PCIe management, interrupt handling and synchronization, Memory Management, and Kernel resource allocation will be available soon_
