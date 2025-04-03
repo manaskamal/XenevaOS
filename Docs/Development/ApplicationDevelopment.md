@@ -25,7 +25,7 @@ Most important and used library for GUI application development is _Chitralekha 
 #### ***How Chitralekha Works?***
 Whenever a GUI application is started, Chitralekha is responsible for communicating to Window manager and bringing up a new window for the application. Communication is done through Xeneva's own IPC mechanism called PostBox IPC. Chitralekha library is dynamically linked to GUI applications and is a dynamic library. Here's a step by step breakdown of how a GUI application starts within Xeneva,
 - ***ChBase Object*** -- Responsible for creating and initializing primary usable data's like Application's default font, postbox ipc file index and creating a new postbox for this application and creating a new Chitralekha App instance where all necessary data's are stored
-- ***ChWindow Object*** -- Responsible  for requesting a window of given size from the Window Manager. Whenever new application is launched, two types of Windows are created, _(i) Server Window (ii)Client Window_. A portion of Server Window with necessary informations are shared with the Client Window, i.e it can be accessed from the application process memory. In other words, it uses Xeneva Shared Memory object to share the portion of Server window with the client application. Here's the structure of shared portion of the Server window:
+- ***ChWindow Object*** -- Responsible  for requesting window of given size from the Window Manager. Whenever new application is launched, two types of Windows are created, _(i) Server Window (ii)Client Window_. A portion of Server Window with necessary informations are shared with the Client Window, i.e it can be accessed from the application process memory. In other words, it uses Xeneva Shared Memory object to share the portion of Server window with the client application. Here's the structure of shared portion of the Server window:
 
 ``` 
 typedef struct _sh_win_ {
@@ -45,7 +45,91 @@ typedef struct _sh_win_ {
     bool windowReady;
 }SharedWinInfo;
 ```
+- ***ChWidgets Object ---*** ChWidget object are small objects that helps application provide valuable interface to user. In other words, ChWidget Object is base class of all types of widget that are used by user to make some meaningful task within the application. For example, user clicks a button to launch a floating window, user choosed an onoff button to turn on/off some settings. ChWidget act as a base for all type of widgets that share some common properties. For example, ChButton and ChRadioGroup will share some common properties because both the widgets are based on ChWidget object which includes fundamental properties, that makes it a widget.
 
+- ***Application Event Loop---*** Application event loop runs continuously to poll its postbox for any outsource events. Whenever an event message arrives at its postbox, the event loop immediately pass that event to Application Event Handler. For example, the Window Manager continuously posts mouse event to each application window under which mouse pointer arrives. Each Window's application handles those mouse event and takes valuable action. 
+
+This four fundamental component makes Xeneva GUI application working. 
+
+### Simple GUI Code Snippet
+```
+#include <stdint.h>
+#include <chitralekha.h>
+#include <sys\_kefile.h>
+#include <sys\iocodes.h>
+#include <widgets\base.h>
+#include <widgets\button.h>
+#include <widgets\window.h>
+
+ChitralekhaApp* app;
+ChWindow* mainWin;
+
+/*
+ * WindowHandleMessage -- application event message
+ * handler
+ * @param e -- Pointer to PostEvent message
+ */
+void WindowHandleMessage(PostEvent *e){
+    switch(e->type){
+
+        // handle mouse event
+        case DEODHAI_REPLY_MOUSE_EVENT:{
+            ChWindowHandleMouse(mainWin, e->dword, e->dword2, e->dword3);
+            memset(e, 0, sizeof(PostEvent));
+            break;
+        }
+
+        // handle key event
+        case DEODHAI_REPLY_KEY_EVENT:{
+            int code = e->dword;
+            ChitralekhaProcessKey(code);
+            char c = ChitralekhaKeyToASCII(code);
+            //handle the key event
+            memset(e, 0, sizeof(PostEvent));
+            break;
+        }
+    }
+}
+
+/*
+ * Application's entry point
+ */
+int main(int argc, char* argv[]){
+   app = ChitralekhaStartApp(argc, argv);
+   mainWin = ChCreateWindow(app, WINDOW_FLAG_MOVABLE, "App Title", 100,100,500,400);
+
+   //Create a button in 10-x position and 60-y position
+   //with the size of 50 as width, 35 as height
+
+   ChButton *button = ChCreateButton(10,60,50,35,"Hello World!");
+
+   //now add the button widget to the mainWin that
+   //we've created earlier
+
+   ChWindowAddWidget(mainWin, (ChWidget*)button);
+
+   //Now render the entire window on the application side
+   //and tell the window manager to compose it on the 
+   //display
+
+   ChWindowPaint(mainWin);
+
+   PostEvent e;
+   memset(&e, 0, sizeof(PostEvent));
+
+   //setjmp is used, incase if a subwindow get closed
+   //the application jumps directly to the event loop's
+   //instruction
+
+   setjmp(mainWin->jump);
+   while(1){
+      int err = _KeFileIoControl(app->postboxfd,   POSTBOX_GET_EVENT, &e);
+      WindowHandleMessage(&e);
+      if (err == POSTBOX_NO_EVENT)
+         _KePauseThread();
+   }
+}
+```
 
 
 

@@ -106,6 +106,22 @@ typedef struct _scsi_read_10_ {
 }SCSIRead10;
 #pragma pack(pop)
 
+/* here 10 refers to the size of SCSIWrite command
+ * because SCSI comes with different command sizes
+ * for example SCSIWrite16 has 16 byte command that
+ * is used for very large disk
+ */
+#pragma pack(push,1)
+typedef struct _scsi_write_10_ {
+	uint8_t opcode;
+	uint8_t flags;
+	uint32_t lba;
+	uint8_t reserved;
+	uint16_t transferLen;
+	uint8_t control;
+}SCSIWrite10;
+#pragma pack(pop)
+
 void* bulkIn;
 void* bulkOut;
 /*
@@ -192,6 +208,53 @@ void AuUSBMSCRead(AuUSBDeviceStruc* dev, uint32_t lba, uint16_t numBlocks, uint3
 }
 
 /*
+ * AuUSBMSCWrite -- write data to msc drive block
+ * @param dev -- Pointer to USB Device struc
+ * @param lba -- Linear Block number
+ * @param nummBlocks -- number of block to write to
+ * @param blockSz -- block size of the msc device
+ * @param buffer -- buffer to write
+ */
+void AuUSBMSCWrite(AuUSBDeviceStruc* dev, uint32_t lba, uint16_t numBlocks, uint32_t blockSz, uint64_t* buffer) {
+	SCSICommand* cbw = (SCSICommand*)P2V((uint64_t)AuPmmngrAlloc());
+	memset(cbw, 0, 4096);
+	cbw->signature = SCSI_CMD_BLK_SIGNATURE;
+	cbw->tag = 0x12345678;
+	cbw->dataBytes = numBlocks * blockSz;
+	cbw->flags = 0x80;
+	cbw->lun = 0;
+	cbw->cmdBytes = sizeof(SCSIWrite10);
+
+	SCSIWrite10 write;
+	write.opcode = 0x2A;
+	write.lba = cpuBe32(lba);
+	write.transferLen = (numBlocks >> 8) | ((numBlocks & 0xFF) << 8);
+	memcpy(&cbw->cmd, &write, sizeof(SCSIWrite10));
+
+	/* send the command first to bulkOut*/
+	dev->AuBulkTranfer(dev, V2P((uint64_t)cbw), sizeof(SCSICommand), bulkOut);
+	dev->AuUSBWait(dev, USB_WAIT_EVENT_TRANSFER);
+
+	/* send the buffer to bulkOut */
+	dev->AuBulkTranfer(dev, (uint64_t)buffer, numBlocks * blockSz, bulkOut);
+	dev->AuUSBWait(dev, USB_WAIT_EVENT_TRANSFER);
+
+	/* read the status from bulkIn */
+	SCSIStatus* csw = (SCSIStatus*)P2V((uint64_t)AuPmmngrAlloc());
+	memset(csw, 0, sizeof(SCSIStatus));
+	dev->AuBulkTranfer(dev, V2P((uint64_t)csw), sizeof(SCSIStatus), bulkIn);
+	dev->AuUSBWait(dev, USB_WAIT_EVENT_TRANSFER);
+
+	if (csw->signature == SCSI_CMD_STATUS_SIGNATURE) {
+		SeTextOut("USB MSC -- write successfull \r\n");
+	};
+
+	AuPmmngrFree((void*)V2P((uint64_t)cbw));
+	AuPmmngrFree((void*)V2P((uint64_t)csw));
+
+}
+
+/*
  * AuUSBVDiskRead -- vdisk read interface
  * @param disk -- Pointer to VDisk structure
  * @param lba -- LBA number 
@@ -203,10 +266,29 @@ void AuUSBMSCRead(AuUSBDeviceStruc* dev, uint32_t lba, uint16_t numBlocks, uint3
 		 return -1;
 	 AuUSBDeviceStruc* dev = (AuUSBDeviceStruc*)disk->data;
 	 if (disk->blockSize == 0) {
-		 SeTextOut("USB MSC Block size not defined, assigning default 512 bytes \r\n");
+		 SeTextOut("USB MSC-Read: Block size not defined, assigning default 512 bytes \r\n");
 		 disk->blockSize = 512;
 	 }
 	 AuUSBMSCRead(dev, lba, count, disk->blockSize, buffer);
+	 return count;
+}
+
+ /*
+ * AuUSBVDiskRead -- vdisk write interface
+ * @param disk -- Pointer to VDisk structure
+ * @param lba -- LBA number
+ * @param count -- number of blocks to read
+ * @param buffer -- buffer to write
+ */
+ int AuUSBVDiskWrite(AuVDisk* disk, uint64_t lba, uint32_t count, uint64_t* buffer) {
+	 if (!disk->data)
+		 return -1;
+	 AuUSBDeviceStruc* dev = (AuUSBDeviceStruc*)disk->data;
+	 if (disk->blockSize == 0) {
+		 SeTextOut("USB MSC-Write: Block size not defined, assigning default 512 bytes \r\n");
+		 disk->blockSize = 512;
+	 }
+	 AuUSBMSCWrite(dev, lba, count, disk->blockSize, buffer);
 	 return count;
 }
 /*
@@ -339,7 +421,7 @@ AU_EXTERN AU_EXPORT int AuUSBDriverMain(AuUSBDeviceStruc* dev) {
 	disk->currentLBA = 0;
 	disk->blockSize = blockSz;
 	disk->Read = AuUSBVDiskRead;
-	disk->Write = 0;
+	disk->Write = AuUSBVDiskWrite;
 
 
 	int diskID = dev->deviceID;

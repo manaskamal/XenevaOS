@@ -38,10 +38,15 @@ Information on Initialization and Unloading of XenevaOS drivers can be found [he
 See here for a [simple driver example.](../Kernel/Drivers.md#initialization)
 
 ## Memory Management
-Memory Management is very important part of XenevaOS driver development. It's the most critical aspect of the system stabiity, as improper handling of memory can lead to severe crashes or unpredicatble behavior. Since drivers operate at a low level with direct access to system resources, any mistake in ___Allocation, Deallocation, or Access___ can corrupt kernel memory, causing system instability or event a complete crash. Proper use of Physical Memory Allocation/Deallocation and kernel heap Allocation/Deallocation are recommended. Memory management are divided into three parts-
-- MMIO memory mapping that maps hardware's physical address to Kernel virtual memory
-- Heap memory management helps allocation and deallocating small objects
-- Physical Memory management helps allocating direct physical memory allocation, as some hardware doesn't understand virtual memory. Here, P2V and V2P function plays important role, as kernel is mapped to higher half memory and lower memory mappings are cleared before entering user space. Entire physical memory is linearly mapped from 0xFFFF800000000000.
+Memory Management is very important part of XenevaOS driver development. It's the most critical aspect of the system stability, as improper handling of memory can lead to severe crashes or unpredicatable behavior. Since drivers operate at a low level with direct access to system resources, any mistake in ___Allocation, Deallocation, or Access___ can corrupt kernel memory, causing system instability or even a complete crash. Proper use of Physical Memory Allocation/Deallocation and kernel heap Allocation/Deallocation are recommended. Memory management are divided into three parts-
+- _MMIO memory mapping_ that maps hardware's physical address to Kernel virtual memory
+- _Kernel Heap memory management_ helps allocating and deallocating small objects
+- _Physical Memory management_ helps allocating direct physical memory allocation, as some hardware doesn't understand virtual memory. Here, P2V and V2P function plays important role, as kernel is mapped to higher half memory and lower memory mappings are cleared before entering user space. Entire physical memory is linearly mapped from 0xFFFF800000000000.
+
+### MMIO Mappings
+_will be available soon_
+
+
 
 ## ***TODO***
 _Section describing PCIe management, interrupt handling and synchronization, Memory Management, and Kernel resource allocation will be available soon_
