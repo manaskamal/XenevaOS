@@ -32,7 +32,10 @@
 #include <Mm/kmalloc.h>
 #include <Mm/pmmngr.h>
 #include <aucon.h>
+#include <Fs/vdisk.h>
 #include <Hal/serial.h>
+#include <stdio.h>
+
 
 
 #define SCSI_CMD_BLK_SIGNATURE 0x43425355 //('USBC')
@@ -78,12 +81,33 @@ typedef struct _scsi_inquiry_resp_ {
 #pragma pack(pop)
 
 #pragma pack(push,1)
+typedef struct _scsi_read_capacity_ {
+	uint8_t opcode;
+	uint8_t resv[7];
+	uint8_t ctrl;
+}SCSIReadCapacity;
+#pragma pack(pop)
+
+#pragma pack(push,1)
 typedef struct _scsi_capacity_resp_ {
 	uint32_t lbaCount;
 	uint32_t blockSize;
 }SCSICapacityResponse;
 #pragma pack(pop)
 
+#pragma pack(push,1)
+typedef struct _scsi_read_10_ {
+	uint8_t opcode;
+	uint8_t flags;
+	uint32_t lba;
+	uint8_t resv;
+	uint16_t transferLen;
+	uint8_t ctrl;
+}SCSIRead10;
+#pragma pack(pop)
+
+void* bulkIn;
+void* bulkOut;
 /*
 * AuUSBDriverUnload -- deattach the driver from
 * aurora system
@@ -92,6 +116,8 @@ AU_EXTERN AU_EXPORT int AuDriverUnload(AuUSBDeviceStruc* dev) {
 
 	return 0;
 }
+
+extern "C" int _fltused = 1;
 
 /*
  * AuUSBMSCSendCommand -- send a command to MSC device
@@ -119,6 +145,69 @@ void AuUSBMSCSendCommand(AuUSBDeviceStruc *dev, void* bulkIn, void* bulkOut, SCS
 		SeTextOut("USB MSC -- Command submitted successfully \r\n");
 	}
 	AuPmmngrFree((void*)V2P((uint64_t)csw));
+}
+
+uint32_t convEndian(uint32_t value) {
+	return ((value >> 24) & 0x000000FF) |
+		((value >> 8) & 0x0000FF00) |
+		((value << 8) & 0x00FF0000) |
+		((value << 24) & 0xFF000000);
+}
+
+uint32_t cpuBe32(uint32_t value) {
+	return ((value >> 24) & 0x000000FF) |
+		((value >> 8) & 0x0000FF00) |
+		((value << 8) & 0x00FF0000) |
+		((value << 24) & 0xFF000000);
+}
+
+/*
+ * AuUSBMSCRead -- read a block from MSC device
+ * @param dev -- Pointer to USB device
+ * @param lba -- LBA number to read
+ * @param numBlocks -- Number of blocks to read
+ * @param blockSz -- Size of a block -- 512
+ * @param buffer -- Buffer address where to store the data
+ */
+void AuUSBMSCRead(AuUSBDeviceStruc* dev, uint32_t lba, uint16_t numBlocks, uint32_t blockSz, uint64_t* buffer) {
+	SCSICommand* cbw = (SCSICommand*)P2V((uint64_t)AuPmmngrAlloc());
+	memset(cbw, 0, 4096);
+	cbw->signature = SCSI_CMD_BLK_SIGNATURE;
+	cbw->tag = 0x12345678;
+	cbw->dataBytes = numBlocks * blockSz;
+	cbw->flags = 0x80;
+	cbw->lun = 0;
+	cbw->cmdBytes = sizeof(SCSIRead10);
+
+	SCSIRead10 read;
+	read.opcode = 0x28;
+	read.lba = cpuBe32(lba);
+	read.transferLen = (numBlocks >> 8) | ((numBlocks & 0xFF) << 8);
+	memcpy(&cbw->cmd, &read, sizeof(SCSIRead10));
+
+	AuUSBMSCSendCommand(dev, bulkIn, bulkOut, (SCSICommand*)V2P((uint64_t)cbw), buffer, numBlocks * blockSz);
+
+	AuPmmngrFree((void*)V2P((uint64_t)cbw));
+
+}
+
+/*
+ * AuUSBVDiskRead -- vdisk read interface
+ * @param disk -- Pointer to VDisk structure
+ * @param lba -- LBA number 
+ * @param count -- number of blocks to read
+ * @param buffer -- Pointer to buffer
+ */
+ int AuUSBVDiskRead(AuVDisk* disk, uint64_t lba, uint32_t count, uint64_t* buffer) {
+	 if (!disk->data)
+		 return -1;
+	 AuUSBDeviceStruc* dev = (AuUSBDeviceStruc*)disk->data;
+	 if (disk->blockSize == 0) {
+		 SeTextOut("USB MSC Block size not defined, assigning default 512 bytes \r\n");
+		 disk->blockSize = 512;
+	 }
+	 AuUSBMSCRead(dev, lba, count, disk->blockSize, buffer);
+	 return count;
 }
 /*
 * AuUSBDriverMain -- Main entry for USB driver 
@@ -168,9 +257,13 @@ AU_EXTERN AU_EXPORT int AuUSBDriverMain(AuUSBDeviceStruc* dev) {
 		AuTextOut("USB MSC Bulk-in ep found \n");
 	}
 
+	bulkIn = ep_bulk_in;
+
 	void* ep_bulk_out = dev->AuGetBulkEndpoint(dev, 0);
 	if (ep_bulk_out)
 		AuTextOut("USB MSC Bulk-out ep found \n");
+
+	bulkOut = ep_bulk_out;
 
 	/* Reset the USB MSC Device */
 	AuUSBRequestPacket pack;
@@ -200,9 +293,81 @@ AU_EXTERN AU_EXPORT int AuUSBDriverMain(AuUSBDeviceStruc* dev) {
 	AuUSBMSCSendCommand(dev, ep_bulk_in, ep_bulk_out, (SCSICommand*)V2P((uint64_t)cbw), 
 		(void*)V2P((uint64_t)resp), sizeof(SCSIInquiryResponse));
 	AuTextOut("\nUSB Mass Storage device : %s \n", resp->vendorID);
+
+	AuVDisk* disk = AuCreateVDisk();
+	memset(disk->diskname, 0, 40);
+
+	char* usbdiskname = (char*)kmalloc(4);
+	memset(usbdiskname, 0, 40);
+	strcpy(usbdiskname, "USB ");
+	for (int i = 0; i < 4; i++)
+		disk->diskname[i] = usbdiskname[i];
+	for (int i = 0; i < 16; i++)
+		disk->diskname[4 + i] = resp->productID[i];
+
+	kfree(usbdiskname);
+	//strcpy(disk->diskname,resp->productID);
+
+	memset(cbw, 0, 4096);
+	cbw->signature = SCSI_CMD_BLK_SIGNATURE;
+	cbw->tag = 0x12345678;
+	cbw->dataBytes = sizeof(SCSICapacityResponse);
+	cbw->flags = 0x80; //device-to-host
+	cbw->lun = 0;
+	cbw->cmdBytes = sizeof(SCSIReadCapacity);
+	SCSIReadCapacity readcap;
+	readcap.opcode = 0x25; //read capacity 10
+	memcpy(&cbw->cmd, &readcap, sizeof(SCSIReadCapacity));
+
+	memset(resp, 0, 4096);
+	SCSICapacityResponse* capresp = (SCSICapacityResponse*)resp;
+
+	AuUSBMSCSendCommand(dev, ep_bulk_in, ep_bulk_out, (SCSICommand*)V2P((uint64_t)cbw),
+		(void*)V2P((uint64_t)capresp), sizeof(SCSICapacityResponse));
+
+	uint32_t lbaCount = convEndian(capresp->lbaCount);
+	uint32_t blockSz = convEndian(capresp->blockSize);
+
+	uint64_t totalSz = ((uint64_t)lbaCount + 1) * blockSz;
+	AuTextOut("USB MSC Capacity %f GB \n", ((double)totalSz / (1024 * 1024 * 1024)));
+
+	
+	disk->data = dev;
+	disk->Read =0;
+	disk->Write =0;
+	disk->max_blocks = lbaCount;
+	disk->currentLBA = 0;
+	disk->blockSize = blockSz;
+	disk->Read = AuUSBVDiskRead;
+	disk->Write = 0;
+
+
+	int diskID = dev->deviceID;
+	char filename[32];
+	strcpy(filename, "usbmsc");
+	int offset = strlen(filename);
+	sztoa(diskID, filename + offset, 10);
+
+	char* fspath = (char*)kmalloc(32);
+	memset(fspath, 0, 32);
+	AuVDiskCreateStorageFile(fspath);
+
+	strcpy(disk->diskPath, fspath);
+	offset = strlen(disk->diskPath);
+	strcpy(disk->diskPath + offset, "/");
+	offset = strlen(disk->diskPath);
+	strcpy(disk->diskPath + offset, filename);
+
+	AuTextOut("USB MSC Diskpath -> %s \n", disk->diskPath);
+
+	kfree(fspath);
+
+	AuVDiskRegister(disk);
+
+
 	AuPmmngrFree((void*)V2P((uint64_t)resp));
 	AuPmmngrFree((void*)V2P((uint64_t)cbw));
 	AuTextOut("USB MSC driver initialised %d \n", t_idx);
-	
+
 	return 0;
 }

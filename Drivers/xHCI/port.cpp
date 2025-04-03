@@ -455,6 +455,7 @@ void XHCIPortInitialise(XHCIDevice* dev, unsigned int port) {
 
 		slot->descriptor_buff = (uint64_t)buffer;
 		usbdev->descriptor = buffer;
+		usbdev->deviceID = slot_id;
 		AuTextOut("Port initialised CC- %x SC-%x \n", usbdev->classCode, usbdev->subClassCode);
 		USBDeviceSetFunctions(usbdev);
 
