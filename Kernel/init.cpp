@@ -117,6 +117,7 @@ void _AuMain(KERNEL_BOOT_INFO *info) {
 	AuInitialiseNet();
 
 
+
 	x64_cli();
 	AuSchedulerInitialise();
 

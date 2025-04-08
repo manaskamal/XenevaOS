@@ -134,8 +134,10 @@ AU_EXTERN AU_EXPORT AuVFSNode* AuVFSOpen(char* path){
 	AuVFSNode *Returnable = NULL;
 	AuVFSNode* fs = AuVFSFind(path);
 	
-	if (!fs)
+	if (!fs) {
+		AuTextOut("[aurora-vfs]: failed to find filesystem assigned to path -> %s \n", path);
 		return NULL;
+	}
 	if (fs == __RootFS) {
 		
 		/* just skip the '/' from the path */

@@ -189,8 +189,8 @@ typedef int(*usb_drv_unload)(_usb_dev_* dev);
 #pragma pack(push,1)
 typedef struct _usb_dev_ {
 	void* data;
-	uint8_t classCode;
-	uint8_t subClassCode;
+	uint32_t classCode;
+	uint32_t subClassCode;
 	uint16_t vendorID;
 	uint16_t deviceID;
 	int configValue;

@@ -44,7 +44,14 @@ Memory Management is very important part of XenevaOS driver development. It's th
 - _Physical Memory management_ helps allocating direct physical memory allocation, as some hardware doesn't understand virtual memory. Here, P2V and V2P function plays important role, as kernel is mapped to higher half memory and lower memory mappings are cleared before entering user space. Entire physical memory is linearly mapped from 0xFFFF800000000000.
 
 ### MMIO Mappings
-_will be available soon_
+Once the system enters userspace the physical addresses are not accessible, trying to access physical address will cause the system to enter _Page Fault Exception_. For example consider, '0xFE000000' a physical address and is an address of some hardware. Writing to this address will cause some commands to the hardware. Say, we write the value _"1"_ to offset 0x4 of the physical address _'0xFE000000'_ which looks like ``` *(0xFE000000 + 0x04) = 1```,which will cause the hardware to enter into reset state. And suppose this entire situation happened after Xeneva entered user space and starting of user services. This will cause the system to enter _Page Fault Exception_, because before the system transition into user world, the entire physical memory mappings are cleared from the Kernel address space and the physical memory mappings are always present in lower half of address space, the lower half is completely cleared for user space memory mappings. Somewhere we need a trick to map this hardware address so that we can access the hardware through this mapped address. And here we use Xeneva MMIO Mappings.
+
+### _Why do we clear the Lower Half_
+There are two reason - 
+- The kernel code and its data's are always present in higher half of the kernel's address space, and the lower half is filled with physical memory mappings. Whenever new process are created in Xeneva, they get completely new address space, and when the process occupies the CPU i.e it get executed, the address space is also switched to process's address space, and if the process's address space's higher half is not filled with Kernel code and Kernel data, immediate system failure will happen. To prevent this, whenever a new address space is created for any process, the kernel address space is directly copied to it, so that the new address space doesn't lack the kernel code and data into it.
+- For security purpose, User space program will use memory from lower memory. When doing this, if it writes to any hardware area, it will cause the system to enter _Protection Fault_ or _Abort Exception_.
+
+MMIO are mapped through '___AuMapMMIO'___  function call, ```AuMapMMIO(uint64_t physicalAddr, size_t sizeOfTheAddress)```, Once mapped successfully, it will return the virtual address where you can write to give command to or control the hardware.
 
 
 

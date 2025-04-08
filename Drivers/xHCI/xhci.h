@@ -33,6 +33,7 @@
 #include <stdint.h>
 #include <list.h>
 #include <Sync/spinlock.h>
+#include <Hal/x86_64_sched.h>
 
 #define XHCI_USB_CMD_INTE  (1<<2) //Interrupter enable
 #define XHCI_USB_CMD_HSEE  (1<<3) // Host System Error enable
@@ -417,6 +418,7 @@ typedef struct _xhci_dev_ {
 	int poll_return_trb_type;
 	int trb_event_index;
 	Spinlock* usb_lock;
+	AuThread* usbThread;
 }XHCIDevice;
 #pragma pack(pop)
 

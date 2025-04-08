@@ -44,6 +44,7 @@ void ChSliderDestroy(ChWidget* widget, ChWindow* win) {
  */
 void ChSliderMouseEvent(ChWidget* widget, ChWindow* win, int x, int y, int button) {
 	ChSlider* slider = (ChSlider*)widget;
+	bool actionRequired = false;
 	if (button) {
 		if (slider->type == CHITRALEKHA_SLIDER_VERTICAL){
 			slider->thumbY = y - (win->info->y + widget->y + 15 / 2);
@@ -73,6 +74,8 @@ void ChSliderMouseEvent(ChWidget* widget, ChWindow* win, int x, int y, int butto
 			if (slider->base.ChPaintHandler)
 				slider->base.ChPaintHandler((ChWidget*)slider, win);
 			ChWindowUpdate(win, slider->bound.x, slider->bound.y, slider->bound.w, slider->bound.h, 0, 1);
+
+			actionRequired = true;
 		}
 
 		if (slider->type == CHITRALEKHA_SLIDER_HORIZONTAL) {
@@ -103,7 +106,15 @@ void ChSliderMouseEvent(ChWidget* widget, ChWindow* win, int x, int y, int butto
 			if (slider->base.ChPaintHandler)
 				slider->base.ChPaintHandler((ChWidget*)slider, win);
 			ChWindowUpdate(win, slider->bound.x, slider->bound.y, slider->bound.w, slider->bound.h, 0, 1);
+
+			actionRequired = true;
 		}
+	}
+
+	/* call the action handler for required action */
+	if (actionRequired) {
+		if (widget->ChActionHandler)
+			widget->ChActionHandler(widget, win);
 	}
 }
 

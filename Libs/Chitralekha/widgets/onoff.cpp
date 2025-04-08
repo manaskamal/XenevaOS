@@ -43,7 +43,7 @@ extern void ChDefaultOnOffPainter(ChWidget* wid, ChWindow* win);
  */
 void ChOnOffMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, int button) {
 	ChOnOffButton* onoff = (ChOnOffButton*)wid;
-
+	bool actionRequired = false;
 	if (button && onoff->wid.lastMouseX == x && onoff->wid.lastMouseY == y) {
 		if (onoff->value)
 			onoff->value = 0;
@@ -55,7 +55,13 @@ void ChOnOffMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, int button) {
 
 		ChWindowUpdate(win, onoff->wid.x, onoff->wid.y, onoff->wid.w, onoff->wid.h, 0, 1);
 		wid->hoverPainted = false;
+		actionRequired = true;
 	}
+
+	/* call appropriate action handler */
+	if (actionRequired)
+		if (wid->ChActionHandler)
+			wid->ChActionHandler(wid, win);
 
 	onoff->wid.lastMouseX = x;
 	onoff->wid.lastMouseY = y;

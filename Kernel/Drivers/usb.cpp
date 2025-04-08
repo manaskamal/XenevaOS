@@ -73,6 +73,7 @@ void AuUSBSubsystemInit() {
 
 	configFile = (uint8_t*)config;
 
+
 	/* if any driver is not cached, then we recheck it
 	 * if still, it's not present, we wait for the user
 	 * to install it on the system

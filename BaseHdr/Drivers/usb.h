@@ -200,8 +200,8 @@ typedef int (*poll_wait_callback)(_au_usb_dev_* dev, int poll_wait);
 #pragma pack(push,1)
 typedef struct _au_usb_dev_ {
 	void* data;
-	uint8_t classCode;
-	uint8_t subClassCode;
+	uint32_t classCode;
+	uint32_t subClassCode;
 	uint16_t vendorID;
 	uint16_t deviceID;
 	int configValue;

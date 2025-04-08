@@ -43,6 +43,29 @@
 
 XHCIDevice* xhcidev;
 
+/* usb thread msg codes */
+#define USB_THREAD_MSG_PORT_CHANGE 10
+uint64_t usbThreadCmd;
+uint32_t portNum;
+
+/* Main USB thread, which is responsible for
+ * handling device connects/disconnects events
+ * starting the specific changed port,
+ * in future: it will be moved to new file
+ */
+void AnuvabUSB3Thread(uint64_t value) {
+	AuTextOut("Anuvab USB running \n");
+	/* Initialize all ports */
+	while (1) {
+		if (usbThreadCmd == USB_THREAD_MSG_PORT_CHANGE) {
+			AuTextOut("Handling USB Port change \n");
+			XHCIPortInitialise(xhcidev, portNum);
+			usbThreadCmd = NULL;
+		}
+		AuBlockThread(AuGetCurrentThread());
+		AuForceScheduler();
+	}
+}
 
 /*
  * ==================================================
@@ -166,6 +189,7 @@ void XHCIEventRingInit(XHCIDevice* dev) {
 
 }
 
+extern bool hotPlug;
 /*
  * XHCIHandleEventInterrupt -- handle event interrupts
  */
@@ -210,7 +234,14 @@ void XHCIHandleEventInterrupt() {
 			if (xhcidev->initialised) {
 				uint32_t port = event[xhcidev->evnt_ring_index].trb_param_1 >> 24;
 				AuTextOut("[xhci]: port changed %d \n", port);
-				XHCIPortInitialise(xhcidev, port);
+				hotPlug = true;
+				usbThreadCmd = USB_THREAD_MSG_PORT_CHANGE;
+				portNum = port;
+				//if (xhcidev->usbThread->state == THREAD_STATE_BLOCKED) {
+					AuTextOut("USB Thread was blocked, unblocking \n");
+					AuUnblockThread(xhcidev->usbThread);
+				//}
+				AuTextOut("Port hotplug initialized \n");
 			}
 		}
 
@@ -291,6 +322,8 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 	xhcidev = (XHCIDevice*)kmalloc(sizeof(XHCIDevice));
 	xhcidev->initialised = false;
 	xhcidev->usb_lock = AuCreateSpinlock(false);
+	usbThreadCmd = 0;
+	portNum = 0;
 
 	uint64_t command = AuPCIERead(device, PCI_COMMAND, bus, dev, func);
 	command |= (1 << 10);
@@ -368,6 +401,9 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 	
 	XHCIStartDefaultPorts(xhcidev);
 
+	AuThread* t = AuCreateKthread(AnuvabUSB3Thread, P2V((uint64_t)AuPmmngrAlloc() + 4096), (uint64_t)AuGetRootPageTable(), "AnubhavUsb");
+	xhcidev->usbThread = t;
+
 	/* Disable all interrupts again because
 	* scheduler will enable them all */
 
@@ -380,7 +416,9 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 	audev->aurora_driver_class = DRIVER_CLASS_USB;
 	AuRegisterDevice(audev);
 	xhcidev->initialised = true;
+
 	AuDisableInterrupt();
+
 	return 0;
 }
 

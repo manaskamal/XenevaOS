@@ -363,10 +363,10 @@ AuVFSNode* FatLocateSubDir(AuVFSNode* fsys,AuVFSNode* kfile, const char* filenam
 	AuVFSNode* file = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
 	memset(file, 0, sizeof(AuVFSNode));
 
-	char dos_file_name[11];
+	char dos_file_name[12];
 	memset(dos_file_name, 0, 11);
 	FatToDOSFilename(filename, dos_file_name, 11);
-	dos_file_name[10] = 0;
+	dos_file_name[11] = 0;
 
 	uint64_t* buf = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
 	if (kfile->flags != FS_FLAG_INVALID) {
@@ -380,9 +380,9 @@ AuVFSNode* FatLocateSubDir(AuVFSNode* fsys,AuVFSNode* kfile, const char* filenam
 			
 			FatDir* pkDir = (FatDir*)buf;
 			for (unsigned int i = 0; i < (16*_fs->__SectorPerCluster); ++i) {
-				char name[11];
+				char name[12];
 				memcpy(name, pkDir->filename, 11);
-				name[10] = '\0';
+				name[11] = '\0';
 
 				if (strcmp(name, dos_file_name) == 0) {
 					strcpy(file->filename, filename);
@@ -428,10 +428,10 @@ AuVFSNode* FatLocateDir(AuVFSNode* fsys, const char* dir) {
 
 	uint64_t* buf;
 	FatDir *dirent;
-	char dos_file_name[11];
+	char dos_file_name[12];
 
 	FatToDOSFilename(dir, dos_file_name, 11);
-	dos_file_name[10] = 0;
+	dos_file_name[11] = 0;
 	
 	buf = (uint64_t*)P2V((uint64_t)AuPmmngrAlloc());
 	memset(buf, 0, PAGE_SIZE);
@@ -445,9 +445,9 @@ AuVFSNode* FatLocateDir(AuVFSNode* fsys, const char* dir) {
 	
 		for (int i = 0; i < 16; i++) {
 
-			char name[11];
+			char name[12];
 			memcpy(name, dirent->filename, 11);
-			name[10] = 0;
+			name[11] = 0;
 			if (strcmp(dos_file_name, name) == 0) {
 
 				strcpy(file->filename, dir);

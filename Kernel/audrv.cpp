@@ -121,10 +121,10 @@ search:
 		p++;
 
 	fbuf = p;
-	char num[2];
-	memset(num, 0, 2);
+	char num[4];
+	memset(num, 0, 4);
 	int i;
-	for (i = 0; i < 2; i++) {
+	for (i = 0; i < 4; i++) {
 		if (p[i] == ',' || p[i] == ']')
 			break;
 		num[i] = p[i];
@@ -133,6 +133,7 @@ search:
 	
 	venid = atoi(num);
 
+	memset(num, 0, 4);
 	/* Now search for device id / product id */
 	p = strchr(fbuf, ',');
 	if (p)
@@ -144,7 +145,6 @@ search:
 	}
 	
 	devid = atoi(num);
-
 
 	if (vendor_id != venid || devid != device_id) {
 		entryoff++;

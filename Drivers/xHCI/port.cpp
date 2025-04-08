@@ -145,7 +145,7 @@ void XHCISlotReleaseEndpoints(XHCISlot* slot) {
 	}
 }
 
-
+bool hotPlug = false;
 /*
  * XHCIPortInitialise -- initialise a given port
  * @param dev -- Pointer to XHCIDevice
@@ -192,6 +192,8 @@ void XHCIPortInitialise(XHCIDevice* dev, unsigned int port) {
 	}
 
 	if ((this_port->port_sc & 1)) {
+		if (hotPlug)
+			SeTextOut("Port connection handling \r\n");
 		/* Handle device connection */
 		/* Reset the port */
 		XHCIPortReset(this_port);
@@ -199,6 +201,8 @@ void XHCIPortInitialise(XHCIDevice* dev, unsigned int port) {
 		uint8_t class_code, sub_class_code, protocol = 0;
 		uint8_t slot_id = 0;
 
+		if (hotPlug)
+			SeTextOut("Port reset complete \r\n");
 		/* Enable slot command */
 		XHCIEnableSlot(dev, 0);
 
@@ -208,6 +212,9 @@ void XHCIPortInitialise(XHCIDevice* dev, unsigned int port) {
 			xhci_trb_t* trb = (xhci_trb_t*)evt;
 			slot_id = (trb[idx].trb_control >> 24) & 0xff;
 		}
+
+		if (hotPlug)
+			SeTextOut("Slot ID -> %d \r\n", slot_id);
 
 		if (slot_id == 0)
 			return;
@@ -375,7 +382,7 @@ void XHCIPortInitialise(XHCIDevice* dev, unsigned int port) {
 				cerr = 0; // counter error doesn't apply for isoch transfer
 				break;
 			case ENDPOINT_TRANSFER_TYPE_BULK:
-				AuTextOut("BULK Ep num ->%d \n", endp_num);
+				//AuTextOut("BULK Ep num ->%d \n", endp_num);
 				if (dir)
 					ep_type = 6;
 				else
@@ -456,7 +463,7 @@ void XHCIPortInitialise(XHCIDevice* dev, unsigned int port) {
 		slot->descriptor_buff = (uint64_t)buffer;
 		usbdev->descriptor = buffer;
 		usbdev->deviceID = slot_id;
-		AuTextOut("Port initialised CC- %x SC-%x \n", usbdev->classCode, usbdev->subClassCode);
+		SeTextOut("Port initialised CC- %x SC-%x \r\n", usbdev->classCode, usbdev->subClassCode);
 		USBDeviceSetFunctions(usbdev);
 
 		AuUSBDeviceConnect((AuUSBDeviceStruc*)usbdev);
