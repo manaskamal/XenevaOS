@@ -90,7 +90,7 @@ void IPv4HandlePacket(void* data, AuVFSNode* nic) {
 							   break;
 	}
 	case IPV4_PROTOCOL_TCP: {
-		AuTextOut("IPv4 : received TCP packet \r\n");
+		SeTextOut("IPv4 : received TCP packet \r\n");
 		TCPHeader* tcp = (TCPHeader*)&pack->payload;
 		uint16_t destPort = ntohs(tcp->destPort);
 		uint16_t srcPort = ntohs(tcp->srcPort);
@@ -98,13 +98,13 @@ void IPv4HandlePacket(void* data, AuVFSNode* nic) {
 		for (int i = 0; i < tcplist->pointer; i++) {
 			AuSocket* sock = (AuSocket*)list_get_at(tcplist, i);
 			if (sock->sessionPort == destPort) {
-				AuTextOut("[IPv4]: TCP has an waiting socket \r\n");
+				SeTextOut("[IPv4]: TCP has an waiting socket \r\n");
 
 				/*connection establishing */
 				if (sock->sockState == SOCK_STATE_WAITING_FOR_CONNECTION) {
 					/* SYN-ACK */
 					if ((ntohs(tcp->dataOffsetFlags) & (TCP_FLAGS_SYN | TCP_FLAGS_ACK))) {
-						AuTextOut("[IPv4]: TCP SynAck \r\n");
+						SeTextOut("[IPv4]: TCP SynAck \r\n");
 						/*now we need to send ack, to complete 
 						 * three-way handshake
 						 */

@@ -158,6 +158,7 @@
   <ItemGroup>
     <ClInclude Include="includes\arpa\inet.h" />
     <ClInclude Include="includes\assert.h" />
+    <ClInclude Include="includes\c++\cassert" />
     <ClInclude Include="includes\c++\cctype" />
     <ClInclude Include="includes\c++\cmath" />
     <ClInclude Include="includes\c++\cstddef" />
@@ -167,6 +168,7 @@
     <ClInclude Include="includes\c++\istream" />
     <ClInclude Include="includes\c++\iterator" />
     <ClInclude Include="includes\c++\memory" />
+    <ClInclude Include="includes\c++\new" />
     <ClInclude Include="includes\c++\ostream" />
     <ClInclude Include="includes\c++\streambuf" />
     <ClInclude Include="includes\c++\string" />
@@ -214,6 +216,7 @@
     <ClCompile Include="c++\iostream.cpp" />
     <ClCompile Include="c++\istream.cpp" />
     <ClCompile Include="c++\memory.cpp" />
+    <ClCompile Include="c++\new.cpp" />
     <ClCompile Include="c++\ostream.cpp" />
     <ClCompile Include="c++\_string.cpp" />
     <ClCompile Include="ctype.cpp" />

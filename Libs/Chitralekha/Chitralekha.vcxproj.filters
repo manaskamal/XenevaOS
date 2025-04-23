@@ -55,6 +55,10 @@
     <ClInclude Include="widgets\onoff.h">
       <Filter>widgets</Filter>
     </ClInclude>
+    <ClInclude Include="widgets\textbox.h">
+      <Filter>widgets</Filter>
+    </ClInclude>
+    <ClInclude Include="stb_image_resize.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="chitralekha.cpp" />
@@ -128,6 +132,12 @@
       <Filter>widgets</Filter>
     </ClCompile>
     <ClCompile Include="widgets\defaultonoff.cpp">
+      <Filter>widgets\styles</Filter>
+    </ClCompile>
+    <ClCompile Include="widgets\textbox.cpp">
+      <Filter>widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="widgets\defaulttextbox.cpp">
       <Filter>widgets\styles</Filter>
     </ClCompile>
   </ItemGroup>

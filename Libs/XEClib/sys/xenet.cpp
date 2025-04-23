@@ -98,6 +98,7 @@ ssize_t sendto(int sockfd, const void* buf, size_t len, int flags, const struct 
 
 struct hostent* gethostbyname(const char* name) {
 	hostent* _hostent = (hostent*)malloc(sizeof(hostent));
+	memset(_hostent, 0, sizeof(hostent));
 	int maybe_ip = 1;
 	int dots = 0;
 	for (const char* c = name; *c; ++c) {
@@ -124,16 +125,18 @@ struct hostent* gethostbyname(const char* name) {
 		_hostent_addr = inet_addr(name);
 		return _hostent;
 	}
-
+	_KePrint("Creating SOCK \r\n");
 	int sock = socket(AF_INET, SOCK_DGRAM, 0);
 	if (sock < 0) {
 		fprintf(stderr, "gethostbyname: failed to create socket \n");
+		free(_hostent);
 		return NULL;
 	}
+
 	char ifname[5];
 	strcpy(ifname, "e1000");
 	socket_setopt(sock, SOL_SOCKET, SO_BINDTODEVICE, ifname, strlen(ifname) + 1);
-
+	
 	XEDNSEntry dns;
 	memset(&dns, 0, sizeof(XEDNSEntry));
 	uint32_t ns_addr = 0;
@@ -144,12 +147,13 @@ struct hostent* gethostbyname(const char* name) {
 		if (dns.address != 0)
 			break;
 	}
-
+	
 	if (dns.address == 0) {
-		printf("gethostbyname: failed to get DNS address \n");
+		printf("gethostbyname: failed to get DNS address \n");	
+		free(_hostent);
 		return NULL;
 	}
-	
+
 	ns_addr = dns.address;
 	in_addr in;
 	in.s_addr = ns_addr;
@@ -191,6 +195,7 @@ struct hostent* gethostbyname(const char* name) {
 	
 	if (sendto(sock, pack, sizeof(DNSPacket) + i, 0, (sockaddr*)&dest, sizeof(sockaddr_in)) <= 0) {
 		fprintf(stderr, "gethostbyname: failed to send dns packet \n");
+		free(_hostent);
 		return NULL;
 	}
 
@@ -219,11 +224,12 @@ struct hostent* gethostbyname(const char* name) {
 		fprintf(stderr, "gethostbyname : no answer \n");
 		return NULL;
 	}
-
+	
 	_hostent->h_name = (char*)name;
 	_hostent->h_aliases = NULL;
 	_hostent->h_addrtype = AF_INET;
 	_hostent->h_length = sizeof(uint32_t);
+	
 	_hostent->h_addr_list = _host_entry_list;
 	_hostent_addr = *(uint32_t*)(buf + len - 4);
 	_host_entry_list[0] = (char*)&_hostent_addr;

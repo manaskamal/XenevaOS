@@ -39,7 +39,7 @@
 #include <net\tcp.h>
 #include <Net/ipv4.h>
 #include <stdio.h>
-
+#include <aucon.h>
 
 
 list_t* tcpSocketList;
@@ -189,7 +189,7 @@ int AuTCPAcknowledge(AuVFSNode* nic, AuSocket* sock, IPv4Header* ippack, size_t 
 	/* handle fin packets */
 	int flags = TCP_FLAGS_ACK;
 
-	TCPHeader* tcppack = (TCPHeader*)*ipv4->payload;
+	TCPHeader* tcppack = (TCPHeader*)&ipv4->payload;
 	tcppack->srcPort = htons(sock->sessionPort);
 	tcppack->destPort = tcp->srcPort;
 	tcppack->sequenceNum = htonl(seq_num);
@@ -208,6 +208,7 @@ int AuTCPAcknowledge(AuVFSNode* nic, AuSocket* sock, IPv4Header* ippack, size_t 
 
 	tcppack->checksum = htons(CalculateTCPChecksum(&checkhdr, tcp, NULL, 0));
 	IPV4SendPacket(ipv4, nic);
+	SeTextOut("TCP-ACK Sent !! successfully \r\n");
 	kfree(ipv4);
 	return 0;
 }
@@ -223,7 +224,7 @@ int AuTCPConnect(AuSocket* sock, sockaddr* addr, socklen_t addrlen){
 
 	AuTCPObtainPort(sock);
 	int sourcePort = sock->sessionPort;
-	sock->sockState |= SOCK_STATE_WAITING_FOR_CONNECTION;
+	sock->sockState = SOCK_STATE_WAITING_FOR_CONNECTION;
 	sock->ipv4Iden = rand();
 	AuVFSNode* nic = AuNetworkRoute(sockdata->sin_addr.s_addr);
 	if (!nic) {
@@ -263,6 +264,9 @@ int AuTCPConnect(AuSocket* sock, sockaddr* addr, socklen_t addrlen){
 	tcp->urgentPointer = 0;
 	sock->packID = tcp->sequenceNum;
 
+	TCPHeader* tcpch = (TCPHeader*)ipv4->payload;
+	SeTextOut("TCP Check SRC -> %d \r\n", tcpch->srcPort);
+
 	TCPCheckHeader checkhdr;
 	checkhdr.source = ipv4->srcAddress;
 	checkhdr.destination = ipv4->destAddress;
@@ -274,25 +278,31 @@ int AuTCPConnect(AuSocket* sock, sockaddr* addr, socklen_t addrlen){
 	
 	IPV4SendPacket(ipv4, nic);
 
-	
+	uint64_t s, ss;
+	uint64_t ns, nss;
+	x86_64_calculate_ticks(1, 0, &s, &ss);
 	int attempts = 0;
 	while (!sock->rxstack->itemCount) {
 		AuSleepThread(AuGetCurrentThread(), 100000);
 		AuForceScheduler();
+		x86_64_calculate_ticks(0, 0, &ns, &nss);
 		//connection refused
 		if (sock->sockState == SOCK_STATE_CONNECTION_RST) {
 			SeTextOut("Sock state reset \r\n");
 			kfree(ipv4);
 			return -1;
 		}
-		if (attempts == 3) {
-			SeTextOut("Attempts == 3 \r\n");
-			kfree(ipv4);
-			return -1; //timeout
+		if ((ns > s || (ns == s && nss > ss))) {
+			if (attempts == 3) {
+				SeTextOut("Attempts == 3 \r\n");
+				kfree(ipv4);
+				return -1; //timeout
+			}
+			SeTextOut("[aurora]: TCP retrying connection \r\n");
+			IPV4SendPacket(ipv4, nic);
+			x86_64_calculate_ticks(1, 0, &s, &ss);
+			attempts++;
 		}
-		SeTextOut("[aurora]: TCP retrying connection \r\n");
-		IPV4SendPacket(ipv4, nic);
-		attempts++;
 	}
 	kfree(ipv4);
 	SeTextOut("[aurora]: TCP connection succeeded \r\n");

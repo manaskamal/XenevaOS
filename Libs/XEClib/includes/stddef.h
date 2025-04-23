@@ -34,10 +34,10 @@
 #define NULL	0
 #endif
 
+#include <stdint.h>
+
 typedef int       	ptrdiff_t;
-#ifdef SIZE_T
-typedef unsigned  	size_t;
-#endif
+
 typedef int       	ssize_t;
 typedef unsigned	wint_t;
 

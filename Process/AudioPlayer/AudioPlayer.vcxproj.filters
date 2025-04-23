@@ -3,6 +3,7 @@
   <ItemGroup>
     <ClInclude Include="minimp3.h" />
     <ClInclude Include="libc.h" />
+    <ClInclude Include="minimp4.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />

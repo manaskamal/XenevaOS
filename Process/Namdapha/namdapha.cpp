@@ -430,7 +430,7 @@ int main(int argc, char* arv[]){
 
 	
 	win = ChCreateWindow(app, WINDOW_FLAG_STATIC | WINDOW_FLAG_ALWAYS_ON_TOP | WINDOW_FLAG_BROADCAST_LISTENER | WINDOW_FLAG_ANIMATED, 
-		"Namdapha", 0, 0, NAMDAPHA_WIDTH, screen_h);
+		"switcher", 0, 0, NAMDAPHA_WIDTH, screen_h);
 
 	win->color = BLACK;
 	win->ChWinPaint = NamdaphaPaint;

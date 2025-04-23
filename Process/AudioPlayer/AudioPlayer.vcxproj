@@ -30,6 +30,7 @@
       </DeploymentContent>
     </ClCompile>
     <ClInclude Include="minimp3.h" />
+    <ClInclude Include="minimp4.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{01D9EF82-5076-4E5C-95FF-C027864A8302}</ProjectGuid>
@@ -100,7 +101,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>false</SDLCheck>
       <AdditionalIncludeDirectories>..\..\Libs\XEClib\includes;..\..\Libs\Chitralekha;..\..\Ports\freetype2\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>ARCH_X64;YES_DYNAMIC; DYNAMIC_IMPORTER ;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>ARCH_X64;YES_DYNAMIC; DYNAMIC_IMPORTER ; MINIMP4_IMPLEMENTATION;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <IgnoreStandardIncludePath>true</IgnoreStandardIncludePath>
       <ExceptionHandling>false</ExceptionHandling>
       <BasicRuntimeChecks />

@@ -101,7 +101,7 @@ typedef struct _socket_ {
 	uint16_t sessionPort;
 	uint8_t sockState;
 	unsigned packID;
-	int ipv4Iden;
+	uint16_t ipv4Iden;
 	int(*receive)(struct _socket_* sock, msghdr *msg, int flags);
 	int(*send)(struct _socket_* sock, msghdr* msg, int flags);
 	void(*close)(struct _socket_* sock);

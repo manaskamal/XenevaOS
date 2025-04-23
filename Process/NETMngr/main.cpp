@@ -401,4 +401,8 @@ int main(int argc, char* argv[]){
 		}
 
 	}
+
+	/* Now here we need to use Kernel TCP functionalities 
+	 * to verify if the system is Internet-ready 
+	 */
 }

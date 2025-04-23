@@ -48,6 +48,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "minimp3.h"
+#include "minimp4.h"
 
 ChitralekhaApp *app;
 ChWindow* mainWin;

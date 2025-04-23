@@ -88,7 +88,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>false</SDLCheck>
       <AdditionalIncludeDirectories>..\..\Libs\XEClib\includes;..\..\Ports\freetype2\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>ARCH_X64;YES_DYNAMIC; DYNAMIC_EXPORTER; _USE_FREETYPE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>ARCH_X64;YES_DYNAMIC;DYNAMIC_EXPORTER;_USE_FREETYPE;STB_IMAGE_RESIZE_IMPLEMENTATION;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <IgnoreStandardIncludePath>true</IgnoreStandardIncludePath>
       <ExceptionHandling>false</ExceptionHandling>
       <BasicRuntimeChecks />
@@ -163,6 +163,7 @@
     <ClInclude Include="image.h" />
     <ClInclude Include="keycode.h" />
     <ClInclude Include="nanojpg.h" />
+    <ClInclude Include="stb_image_resize.h" />
     <ClInclude Include="stb_truetype.h" />
     <ClInclude Include="ttf.h" />
     <ClInclude Include="widgets\base.h" />
@@ -176,6 +177,7 @@
     <ClInclude Include="widgets\progress.h" />
     <ClInclude Include="widgets\scrollpane.h" />
     <ClInclude Include="widgets\slider.h" />
+    <ClInclude Include="widgets\textbox.h" />
     <ClInclude Include="widgets\view.h" />
     <ClInclude Include="widgets\window.h" />
     <ClInclude Include="_fastcpy.h" />
@@ -196,6 +198,7 @@
     <ClCompile Include="widgets\defaultprogressbar.cpp" />
     <ClCompile Include="widgets\defaultscrollbar.cpp" />
     <ClCompile Include="widgets\defaultslider.cpp" />
+    <ClCompile Include="widgets\defaulttextbox.cpp" />
     <ClCompile Include="widgets\defaultviews.cpp" />
     <ClCompile Include="widgets\defaultwindow.cpp" />
     <ClCompile Include="widgets\icon.cpp" />
@@ -210,6 +213,7 @@
     <ClCompile Include="widgets\progress.cpp" />
     <ClCompile Include="widgets\scrollpane.cpp" />
     <ClCompile Include="widgets\slider.cpp" />
+    <ClCompile Include="widgets\textbox.cpp" />
     <ClCompile Include="widgets\view.cpp" />
     <ClCompile Include="widgets\window.cpp" />
   </ItemGroup>

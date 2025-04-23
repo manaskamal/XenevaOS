@@ -108,15 +108,15 @@ void TerminalDrawCell(int x, int y, bool dirty) {
 	int y_offset = 26;
 	TermCell* cell = (TermCell*)&term_buffer[(y* ws_col + x)];
 	int f_w = ChFontGetWidthChar(consolas, cell->c);
-	int f_h = ChFontGetHeightChar(consolas, cell->c);
+	int f_h = consolas->face->size->metrics.ascender >> 6;//ChFontGetHeightChar(consolas, cell->c);
 
 	if ((CHITRALEKHA_WINDOW_DEFAULT_PAD_X + x* cell_width + cell_width) >= win->info->width) 
 		return;
-
+	
 	if ((y*cell_height + cell_height) >= win->info->height)
 		return;
 	ChDrawRect(win->canv,CHITRALEKHA_WINDOW_DEFAULT_PAD_X + x* cell_width, y_offset + y * cell_height, cell_width, cell_height, cell->cellBgCol);
-	ChFontDrawChar(win->canv, consolas, cell->c, CHITRALEKHA_WINDOW_DEFAULT_PAD_X + x * cell_width, y_offset + y * cell_height + cell_height - f_h / 2,
+	ChFontDrawChar(win->canv, consolas, cell->c, CHITRALEKHA_WINDOW_DEFAULT_PAD_X + x * cell_width, y_offset + y * cell_height + f_h,//- f_h / 2,
 		0, cell->cellFgCol);
 	/*TerminalDrawArrayFont(win->canv, x * cell_width, y_offset + y * cell_height + 12 / 2, cell->c, cell->cellFgCol);*/
 	if (dirty)
@@ -204,7 +204,7 @@ void TerminalPrintChar(char c, uint32_t fgcolor, uint32_t bgcolor) {
 		last_cursor_x = cursor_x;
 		cursor_y++;
 		cursor_x = 0;
-		if (cursor_y >= ws_row -1){
+		if (cursor_y >= ws_row-1){
 			TerminalScroll();
 			cursor_y--;
 		}
@@ -604,7 +604,6 @@ void TerminalThread() {
 * main -- terminal emulator
 */
 int main(int argc, char* arv[]){
-	_KePrint("Creating terminal \r\n");
 	app = ChitralekhaStartApp(argc, arv);
 	win = ChCreateWindow(app, (WINDOW_FLAG_MOVABLE), "Xeneva Terminal", 300, 300, 650, 450);
 	ChWindowBroadcastIcon(app, "/icons/term.bmp");
@@ -614,12 +613,14 @@ int main(int argc, char* arv[]){
 	
 	consolas = ChInitialiseFont(CONSOLAS);
 	ChFontSetSize(consolas, 12);
-	int term_w = win->info->width - 1;
-	int term_h = win->info->height - 26; // -26 for titlebar height
 	int f_w = ChFontGetWidthChar(consolas,'M');
-	int f_h = ChFontGetHeightChar(consolas, 'A');
+	int f_h = consolas->face->size->metrics.height >> 6;//ChFontGetHeightChar(consolas, 'A');
+
 	cell_width = f_w;
 	cell_height = f_h;
+	int term_w = win->info->width - 1;
+	int term_h = win->info->height - 14; // -26 for titlebar height
+	
 	ws_col = term_w / cell_width;
 	ws_row = term_h / cell_height;
 	cursor_x = 0;

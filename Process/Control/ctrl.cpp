@@ -49,6 +49,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <widgets\menu.h>
+#include <widgets\textbox.h>
 
 
 ChitralekhaApp* app;
@@ -107,6 +108,12 @@ int main(int argc, char* argv[]) {
 	ChWindowAddWidget(mainWin, (ChWidget*)vslider);
 	ChOnOffButton* onoff = ChCreateOnOffButton(100, 70, CH_ONOFF_VALUE_OFF);
 	ChWindowAddWidget(mainWin, (ChWidget*)onoff);
+
+	ChTextBox* tb = ChCreateTextBox(mainWin,60, 70, 280, 35);
+	ChFont* tbfont = ChInitialiseFont(CONSOLAS);
+	ChTextBoxSetFont(tb, tbfont);
+	ChTextBoxSetText(tb, "Hello World ! TextBox");
+	ChWindowAddWidget(mainWin, (ChWidget*)tb);
 	
 
 	ChWindowPaint(mainWin);

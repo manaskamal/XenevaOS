@@ -73,8 +73,20 @@ int main(int argc, char* argv[]){
 	strcpy(s, argv[1]);
 	
 	hostent* ent = gethostbyname(s);
+	if (!ent) {
+		free(s);
+		_KePauseThread();
+	}
+	printf("Hostent addr -> %x \r\n", ent->h_addr_list);
+	
 	char* addr = inet_ntoa(*(struct in_addr*)ent->h_addr_list[0]);
+	_KePrint("PING started \r\n");
+
 	uint32_t ipaddr = *(uint32_t*)ent->h_addr_list[0];
+	in_addr inaddr;
+	inaddr.s_addr = ipaddr;
+
+	printf("IPAddr -> %s \n", inet_ntoa(inaddr));
 
 	char request[] = "GET / HTTP/1.1\r\nHost:google.com\r\nConnection: close\r\n\r\n";
 	
@@ -82,13 +94,14 @@ int main(int argc, char* argv[]){
 	sockaddr_in server_addr;
 	server_addr.sin_family = AF_INET;
 	server_addr.sin_port = htons(80);
-	server_addr.sin_addr.s_addr = htonl(ipaddr);
-
+	memcpy(&server_addr.sin_addr, &ipaddr, sizeof(uint32_t));
+	printf("server port -> %d \n", server_addr.sin_port);
 	if (connect(sock, (sockaddr_*)&server_addr, sizeof(server_addr)) < 0) {
 		printf("error connecting to %s \n", s);
 		return 0;
 	}
 	
+	printf("TCP connection to %s successfull \n", s);
 	/*int sock = socket(AF_INET, SOCK_DGRAM, IPPROTOCOL_ICMP);
 
 	if (sock < 0) {
@@ -156,5 +169,7 @@ int main(int argc, char* argv[]){
 	printf("---statistics---- %s \n", argv[1]);
 	printf("%d packets sent, %d packets received \n", pings_sent, response_recved);
 	_KeCloseFile(sock);*/
+	while (1)
+		_KePauseThread();
 	return 0;
 }

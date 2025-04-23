@@ -391,10 +391,11 @@ void DeodhaiWindowMove(Window* win, int x, int y) {
 	if (wy > canvas->screenHeight)
 		return;
 
-	if (wx <= 0)
+	if (wx <= 0) 
 		wx = SHADOW_SIZE + 5;
 
-	if (wy <= 0)
+
+	if (wy <= 0) 
 		wy = SHADOW_SIZE + 5;
 
 	if ((wx + ww) >= canvas->screenWidth)
@@ -404,7 +405,7 @@ void DeodhaiWindowMove(Window* win, int x, int y) {
 		wh = canvas->screenHeight - info->y + SHADOW_SIZE;
 	BackDirtyAdd(wx, wy, ww, wh );
 _skip:
-	if (x < 0)
+	if (x <= 0)
 		x = 0;
 	if (y < 0)
 		y = 0;
@@ -751,6 +752,13 @@ void ComposeFrame(ChCanvas *canvas) {
 			int64_t shad_w = width + SHADOW_SIZE * 2;
 			int64_t shad_h = height + SHADOW_SIZE * 2;
 
+
+			if ((info->x + info->width) >= canvas->screenWidth)
+				width = static_cast<int64_t>(canvas->screenWidth) - info->x;
+
+			if ((info->y + info->height) >= canvas->screenHeight)
+				height = static_cast<int64_t>(canvas->screenHeight) - info->y;
+
 			if ((info->x - SHADOW_SIZE) <= 0) {
 				info->x = 5 + SHADOW_SIZE;
 				winx = info->x;
@@ -760,12 +768,6 @@ void ComposeFrame(ChCanvas *canvas) {
 				info->y = 5 + SHADOW_SIZE;
 				winy = info->y;
 			}
-
-			if ((info->x + info->width) >= canvas->screenWidth)
-				width = static_cast<int64_t>(canvas->screenWidth) - info->x;
-
-			if ((info->y + info->height) >= canvas->screenHeight)
-				height = static_cast<int64_t>(canvas->screenHeight) - info->y;
 
 
 			if ((info->x + 24) >= canvas->screenWidth)

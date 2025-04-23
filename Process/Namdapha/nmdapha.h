@@ -53,6 +53,10 @@
 #define NAMDAPHA_BUTTON_WIDTH 55
 #define NAMDAPHA_BUTTON_HEIGHT 50
 
+/* tasklet definitions */
+#define NAMDAPHA_TASKLET_AUDIO 1
+#define NAMDAPHA_TASKLET_WEATHER 2
+#define NAMDAPHA_TASKLET_GEOLOCATION 3
 
 typedef struct _buttoninfo_ {
 	char* filename;
@@ -90,6 +94,16 @@ typedef struct _NamdaphaButton_ {
 	void(*drawNamdaphaButton)(_NamdaphaButton_* button, ChWindow* win);
 	void(*destroy)(_NamdaphaButton_* button, ChWindow* win);
 }NamdaphaButton;
+
+
+typedef struct _namdapha_sect_ {
+	int x;
+	int y;
+	int width; //which will be always equals to NAMDAPHA_WIDTH
+	int height;
+	char* title;
+	list_t buttonList;
+}NamdaphaSections;
 
 
 /*

@@ -36,9 +36,9 @@
 
 #if !defined(NDEBUG)
 #define assert(expression) { \
-if (!expression)) { \
-	vfprintf(stderr, "ASSERT failed: %s line %d: %s \n", __FILE__, \
-	__LINE__, (#expression)); \
+if (!expression) { \
+/*	vfprintf(stderr, "ASSERT failed: %s line %d: %s \n", __FILE__, \
+	__LINE__, (#expression)); */\
 	abort(); }}
 #else
 #define assert(expression) ((void)0)

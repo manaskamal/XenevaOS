@@ -181,6 +181,12 @@
     <ClInclude Include="includes\arpa\inet.h">
       <Filter>includes\arpa</Filter>
     </ClInclude>
+    <ClInclude Include="includes\c++\cassert">
+      <Filter>includes\c++</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\c++\new">
+      <Filter>includes\c++</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="string.cpp" />
@@ -230,5 +236,6 @@
     <ClCompile Include="arpa\inet.cpp">
       <Filter>arpa</Filter>
     </ClCompile>
+    <ClCompile Include="c++\new.cpp" />
   </ItemGroup>
 </Project>
