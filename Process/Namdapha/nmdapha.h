@@ -1,7 +1,7 @@
 /**
 * BSD 2-Clause License
 *
-* Copyright (c) 2022, Manas Kamal Choudhury
+* Copyright (c) 2022-2025, Manas Kamal Choudhury
 * All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
@@ -96,14 +96,6 @@ typedef struct _NamdaphaButton_ {
 }NamdaphaButton;
 
 
-typedef struct _namdapha_sect_ {
-	int x;
-	int y;
-	int width; //which will be always equals to NAMDAPHA_WIDTH
-	int height;
-	char* title;
-	list_t buttonList;
-}NamdaphaSections;
 
 
 /*
@@ -156,4 +148,5 @@ extern int NamdaphaGetScreenWidth();
 
 /* NamdaphaGetScreenHeight -- returns the screen height */
 extern int NamdaphaGetScreenHeight();
+
 #endif

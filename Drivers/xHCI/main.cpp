@@ -40,6 +40,9 @@
 #include <Hal/serial.h>
 #include "port.h"
 #include <Drivers/usb.h>
+#include <aucon.h>
+#include <Hal/apic.h>
+#include <Hal/x86_64_cpu.h>
 
 XHCIDevice* xhcidev;
 
@@ -47,6 +50,7 @@ XHCIDevice* xhcidev;
 #define USB_THREAD_MSG_PORT_CHANGE 10
 uint64_t usbThreadCmd;
 uint32_t portNum;
+list_t* deviceHotPlugList;
 
 /* Main USB thread, which is responsible for
  * handling device connects/disconnects events
@@ -91,9 +95,20 @@ AU_EXTERN AU_EXPORT int AuDriverUnload() {
  * structure
  */
 void XHCIReset(XHCIDevice* dev) {
+	AuTextOut("Reseting \n");
+	/*dev->op_regs->op_usbcmd &= ~(1 << 0);
+	while (!(dev->op_regs->op_usbsts & (1 << 0)));*/
 	dev->op_regs->op_usbcmd |= (1 << 1);
+
+	if (dev->vendor == XHCI_VENDOR_INTEL) {
+		AuEnableInterrupt();
+		APICTimerSleep(8);
+		AuDisableInterrupt();
+	}
+	AuTextOut("Reset command wrote \n");
 	while ((dev->op_regs->op_usbcmd & (1 << 1)));
-	while ((dev->op_regs->op_usbsts & (1 << 11)));
+	AuTextOut("Waiting for CNR bit in USBSTS \n");
+	while ((dev->op_regs->op_usbsts & (1 << 11))); //The CNR flag check in USBSTS
 }
 
 /*
@@ -135,7 +150,9 @@ void XHCICommandRingInit(XHCIDevice* dev) {
 	memset((void*)cmd_ring_phys, 0, PAGE_SIZE);
 	dev->cmd_ring = (xhci_trb_t*)AuMapMMIO(cmd_ring_phys, 1);
 
-	dev->op_regs->op_crcr = cmd_ring_phys | 1;
+	uint64_t crcr_val = (cmd_ring_phys & ~0x3F) | 1;
+
+	dev->op_regs->op_crcr = crcr_val;
 	dev->op_regs->op_dnctrl = 4;
 	dev->cmd_ring_index = 0;
 	dev->cmd_ring_max = 128;
@@ -211,6 +228,7 @@ void XHCIHandleEventInterrupt() {
 			uint8_t slot_id = (event[xhcidev->evnt_ring_index].trb_control >> 24) & 0xff;
 			uint64_t data = (event[xhcidev->evnt_ring_index].trb_param_1 | event[xhcidev->evnt_ring_index].trb_param_2);
 
+			AuTextOut("TRB Event available TRB_EVENT_TRSNSFER \n");
 			xhcidev->event_available = true;
 			xhcidev->poll_return_trb_type = TRB_EVENT_TRANSFER;
 			xhcidev->trb_event_index = xhcidev->evnt_ring_index;
@@ -233,15 +251,50 @@ void XHCIHandleEventInterrupt() {
 		if (evt[xhcidev->evnt_ring_index].trbType == TRB_EVENT_PORT_STATUS_CHANGE) {
 			if (xhcidev->initialised) {
 				uint32_t port = event[xhcidev->evnt_ring_index].trb_param_1 >> 24;
-				AuTextOut("[xhci]: port changed %d \n", port);
 				hotPlug = true;
 				usbThreadCmd = USB_THREAD_MSG_PORT_CHANGE;
 				portNum = port;
-				//if (xhcidev->usbThread->state == THREAD_STATE_BLOCKED) {
-					AuTextOut("USB Thread was blocked, unblocking \n");
-					AuUnblockThread(xhcidev->usbThread);
-				//}
-				AuTextOut("Port hotplug initialized \n");
+
+				xhci_port_regs_t* this_port = &xhcidev->ports[port - 1];
+
+				bool csc = this_port->port_sc & (1 << 17);
+				bool pec = this_port->port_sc & (1 << 18); //Port enable change
+				bool wrc = this_port->port_sc & (1 << 19); //Warm reset change
+				bool occ = this_port->port_sc & (1 << 20); //over current change
+				bool prc = this_port->port_sc & (1 << 21); //port reset change
+				bool plc = this_port->port_sc & (1 << 22); //port link change
+
+				if (pec)
+					AuTextOut("[xhci]: port changed %d due to PORT ENABLE Change\n", port);
+				else if (wrc)
+					AuTextOut("[xhci]: port changed %d due to WARM RESET \n", port);
+				else if (occ)
+					AuTextOut("[xhci]: port changed %d due to OVER-CURRENT CHANGE\n", port);
+				else if (prc)
+					AuTextOut("[xhci]: port changed %d due to PORT RESET CHANGE\n", port);
+				else if(plc)
+					AuTextOut("[xhci]: port changed %d due to PORT LINK CHANGE\n", port);
+
+				if (csc) {
+					USBHotPlug* hp = (USBHotPlug*)kmalloc(sizeof(USBHotPlug));
+					hp->portNum = port;
+					hp->initialized = false;
+					list_add(deviceHotPlugList, hp);
+					/*
+					 * Practical approach ! Here we need to queue up hotplugged
+					 * devices then let the usb thread initialize it in background
+					 * so that kernel initialization doesn't get interrupted
+					 */
+					if (AuIsSchedulerInitialised()) {
+						if (xhcidev->usbThread->state == THREAD_STATE_BLOCKED) {
+							//AuTextOut("USB Thread was blocked, unblocking \n");
+							//if (AuIsSchedulerInitialised())
+							AuUnblockThread(xhcidev->usbThread);
+						}
+					}
+
+					AuTextOut("Port hotplug initialized %d\n", portNum);
+				}
 			}
 		}
 
@@ -251,6 +304,7 @@ void XHCIHandleEventInterrupt() {
 		 */
 		if (evt[xhcidev->evnt_ring_index].trbType == TRB_EVENT_CMD_COMPLETION) {
 			xhcidev->event_available = true;
+			AuTextOut("TRB Event available TRB_CMD_COMPLETION \n");
 			xhcidev->poll_return_trb_type = TRB_EVENT_CMD_COMPLETION;
 			xhcidev->trb_event_index = xhcidev->evnt_ring_index;
 			xhci_trb_t* trb = (xhci_trb_t*)&evt[xhcidev->evnt_ring_index];
@@ -300,6 +354,59 @@ void XHCIInterrupt(size_t v, void* p) {
 	AuEnableInterrupt();
 }
 
+void XHCIBiosHandoff(xhci_ext_cap_t* cap) {
+	while (1) {
+		switch (cap->id) {
+		case 1: {
+			AuTextOut("USB Legacy Support \n");
+			xhci_legacy_cap_t* legacy_cp = (xhci_legacy_cap_t*)cap;
+			if ((legacy_cp->legctlsts & (1<<16)))
+				AuTextOut("XHCI was owned by BIOS/UEFI \n");
+			legacy_cp->legctlsts |= (1 << 24);
+			int timeout = 1000;
+			while ((legacy_cp->legctlsts & (1 << 16)) && timeout--) {
+				APICTimerSleep(200);
+			}
+			if (timeout <= 0) {
+				AuTextOut("XHCI BIOS Hand off failed \n");
+			}
+			AuTextOut("BIOS Handoff was successfully \n");
+			break;
+		}
+		case 2: {
+			xhci_ex_cap_protocol_t* prot = (xhci_ex_cap_protocol_t*)cap;
+			char prot_name[4];
+			memset(prot_name, 0, 4);
+			memcpy(prot_name, prot->name, 4);
+			uint8_t start_port = prot->port_cap_field & 0xff;
+			uint8_t max_port = (prot->port_cap_field >> 8) & 0xff;
+			uint32_t proto_speed_id_count = (prot->port_cap_field >> 28) & 0xffff;
+			uint8_t slot_type = prot->port_cap_field2 & 0x1f;
+			AuTextOut("[USB]:Protocol speed count -> %d, slot_type -> %d \n", proto_speed_id_count, slot_type);
+			break;
+		}
+		case 3:
+			AuTextOut("USB Extended Power Management \n");
+			break;
+		case 4:
+			AuTextOut("USB I/O Virtualization \n");
+			break;
+		case 5:
+			AuTextOut("USB Message Interrupt \n");
+			break;
+		case 6:
+			AuTextOut("USB Local Memory \n");
+			break;
+		case 10:
+			AuTextOut("USB Debug Capabiltiy \n");
+			break;
+		}
+		if (cap->next == 0)
+			break;
+		cap = ((xhci_ext_cap_t*)cap + (static_cast<uint64_t>(cap->next) << 2));
+	}
+}
+
 /*
 * AuDriverMain -- Main entry for driver
 */
@@ -310,20 +417,28 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 	uint64_t device = AuPCIEScanClassIF(0x0C, 0x03, 0x30, &bus, &dev, &func);
 	if (device == 0xFFFFFFFF) {
 		AuTextOut("[usb]: xhci not found \n");
+		for (;;);
 		return 1;
 	}
 
 
 	if (AuCheckDevice(0x0C, 0x03, 0x30)) {
 		AuTextOut("Already USB Driver installed \n");
+		for (;;);
 		return 1;
 	}
+
+	uint64_t vendorID = AuPCIERead(device, PCI_VENDOR_ID, bus, dev, func);
+	uint64_t deviceID = AuPCIERead(device, PCI_DEVICE_ID, bus, dev, func);
+
 
 	xhcidev = (XHCIDevice*)kmalloc(sizeof(XHCIDevice));
 	xhcidev->initialised = false;
 	xhcidev->usb_lock = AuCreateSpinlock(false);
 	usbThreadCmd = 0;
 	portNum = 0;
+	deviceHotPlugList = initialize_list();
+	xhcidev->vendor = vendorID;
 
 	uint64_t command = AuPCIERead(device, PCI_COMMAND, bus, dev, func);
 	command |= (1 << 10);
@@ -331,6 +446,36 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 
 
 	AuPCIEWrite(device, PCI_COMMAND, command, bus, dev, func);
+
+	switch (xhcidev->vendor) {
+	case XHCI_VENDOR_INTEL:
+		AuTextOut("xHCI vendor : Intel Corporation \n");
+		break;
+	case XHCI_VENDOR_AMD:
+		AuTextOut("xHCI vendor: AMD \n");
+		break;
+	case XHCI_VENDOR_ASMEDIA:
+		AuTextOut("xHCI vendor: ASMedia Technology Inc\n");
+		break;
+	case XHCI_VENDOR_LINUX_FOUNDATION:
+		AuTextOut("xHCI vendor: Linux Foundation \n");
+		break;
+	case XHCI_VENDOR_NEC:
+		AuTextOut("xHCI vendor: NEC Corporation \n");
+		break;
+	case XHCI_VENDOR_NVIDIA:
+		AuTextOut("xHCI vendor: NVIDIA \n");
+		break;
+	case XHCI_VENDOR_FRESCO:
+		AuTextOut("xHCI vendor: Fresco Logic \n");
+		break;
+	case XHCI_VENDOR_VIA:
+		AuTextOut("xHCI vendor: VIA Technologies, Inc. \n");
+		break;
+	default:
+		AuTextOut("xHCI vendor: unknown \n");
+		break;
+	}
 
 	uint32_t usb_addr_low = AuPCIERead(device, PCI_BAR0, bus, dev, func) & 0xFFFFFFF0;
 	uint32_t usb_addr_high = AuPCIERead(device, PCI_BAR1, bus, dev, func) & 0xFFFFFFFF;
@@ -373,7 +518,10 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 	/* initialize the slot list */
 	xhcidev->slot_list = initialize_list();
 	
+	//XHCIBiosHandoff(ext_cap);
+
 	XHCIReset(xhcidev);
+	AuTextOut("XHCI Reset completed %d\n", xhcidev->num_slots);
 
 	uint32_t cfg = op->op_config;
 	cfg &= ~0xFF;
@@ -391,6 +539,7 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 
 	XHCIEventRingInit(xhcidev);
 
+	AuTextOut("XHCI Command/Event ring initialized \n");
 
 	/* temporarily enable interrupts, because
 	 * we need to send commands and receive
@@ -398,11 +547,15 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 	 */
 	AuEnableInterrupt();
 
-	
-	XHCIStartDefaultPorts(xhcidev);
+	//APICTimerSleep(100);
+
+	XHCISendNoopCmd(xhcidev);
+	int tidx = XHCIPollEvent(xhcidev, TRB_EVENT_CMD_COMPLETION);
+	//XHCIStartDefaultPorts(xhcidev);
 
 	AuThread* t = AuCreateKthread(AnuvabUSB3Thread, P2V((uint64_t)AuPmmngrAlloc() + 4096), (uint64_t)AuGetRootPageTable(), "AnubhavUsb");
 	xhcidev->usbThread = t;
+	AuTextOut("USB Thread created \n");
 
 	/* Disable all interrupts again because
 	* scheduler will enable them all */
@@ -417,8 +570,22 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 	AuRegisterDevice(audev);
 	xhcidev->initialised = true;
 
+	//APICTimerSleep(1000);
+	x86_64_udelay(10000);
+	AuTextOut("XHCI looking for port changes \n");
+	while (1) {
+		for (int i = 0; i < deviceHotPlugList->pointer; i++) {
+			USBHotPlug* hp = (USBHotPlug*)list_get_at(deviceHotPlugList, i);
+			if (hp) {
+				if (!hp->initialized) {
+					XHCIPortInitialise(xhcidev, hp->portNum);
+					hp->initialized = true;
+				}
+			}
+		}
+	}
 	AuDisableInterrupt();
-
+	AuTextOut("XHCI Halted here \n");
 	return 0;
 }
 

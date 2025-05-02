@@ -5,8 +5,10 @@
     <ClCompile Include="NamdaphaButton.cpp" />
     <ClCompile Include="nmGoButton.cpp" />
     <ClCompile Include="gomenu.cpp" />
+    <ClCompile Include="section.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="nmdapha.h" />
+    <ClInclude Include="section.h" />
   </ItemGroup>
 </Project>

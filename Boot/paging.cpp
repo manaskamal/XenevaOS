@@ -293,8 +293,9 @@ bool XEPagingMap_(void* vaddr, paddr_t paddr, size_t attributes){
 		memory_barrier();
 		clear_ptabs(pdpt);
 	}
-	else if (pml4ent & PAGING_SIZEBIT)
+	else if (pml4ent & PAGING_SIZEBIT) {
 		return false;
+	}
 	PDPT_ENTRY& pdptent = pdpt[getPDPTindex(vaddr)];
 	if ((pdptent & PAGING_PRESENT) == 0)
 	{
@@ -379,8 +380,9 @@ bool check_free(int level, void* start_addr, void* end_addr){
  */
 bool XEPagingMap(void* vaddr, paddr_t paddr, size_t length, size_t attributes) {
 
-	if (!check_free(vaddr, length))
+	if (!check_free(vaddr, length)) 
 		return false;
+	
 	size_t vptr = (size_t)vaddr;
 	size_t pgoffset = vptr & (PAGESIZE - 1);
 	vaddr = (void*)(vptr ^ pgoffset);

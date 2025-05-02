@@ -35,6 +35,15 @@
 #include <Sync/spinlock.h>
 #include <Hal/x86_64_sched.h>
 
+#define XHCI_VENDOR_INTEL           0x8086
+#define XHCI_VENDOR_AMD             0x1022
+#define XHCI_VENDOR_ASMEDIA         0x1B21
+#define XHCI_VENDOR_LINUX_FOUNDATION 0x1D6A
+#define XHCI_VENDOR_NEC             0x1033
+#define XHCI_VENDOR_NVIDIA          0x10DE
+#define XHCI_VENDOR_FRESCO          0x1E31
+#define XHCI_VENDOR_VIA             0x1106
+
 #define XHCI_USB_CMD_INTE  (1<<2) //Interrupter enable
 #define XHCI_USB_CMD_HSEE  (1<<3) // Host System Error enable
 
@@ -356,6 +365,13 @@ typedef struct _xhci_ex_cap_protocol_ {
 #pragma pack(pop)
 
 #pragma pack(push,1)
+typedef struct __xhci_legacy_cap__ {
+	volatile uint32_t cap_id_and_next;
+	volatile uint32_t legctlsts;
+}xhci_legacy_cap_t;
+#pragma pack(pop)
+
+#pragma pack(push,1)
 typedef struct _xhci_noop_trb_ {
 	uint32_t rsvdZ[3];
 	uint32_t cycleBit : 1;
@@ -417,10 +433,16 @@ typedef struct _xhci_dev_ {
 	bool event_available;
 	int poll_return_trb_type;
 	int trb_event_index;
+	uint16_t vendor;
 	Spinlock* usb_lock;
 	AuThread* usbThread;
 }XHCIDevice;
 #pragma pack(pop)
+
+typedef struct _usb_hotplug_ {
+	unsigned int portNum;
+	bool initialized;
+}USBHotPlug;
 
 
 #define CTL_TRANSFER_TRT_NO_DATA 0

@@ -318,6 +318,14 @@
 	XE_LIB void ChWindowSetFlags(ChWindow* win, uint16_t flags);
 
 	/*
+     * ChWindowMove -- moves target window to a new location
+     * @param win -- Pointer to the window
+     * @param newX -- new x location relative to screen coord
+     * @param newY -- new y location relative to screen coord
+     */
+	XE_LIB void ChWindowMove(ChWindow* win, int newX, int newY);
+
+	/*
 	* ChWindowRegisterJump -- register long jump address
 	* @param win -- Pointer to main window
 	*/

@@ -211,8 +211,8 @@ void AuAPICInitialise(bool bsp) {
 
 void APICTimerSleep(uint32_t ms) {
 	uint32_t tick = ms + apic_timer_count;
-	while (tick > apic_timer_count)
-		;
+	while (tick > apic_timer_count) 
+		x64_pause();
 }
 
 /*

@@ -129,7 +129,7 @@ void AuACPIParseMADT() {
 									  acpiLocalApic* lapic = (acpiLocalApic*)apic_header;
 									  if (lapic->procId != 0)
 										  __AuroraBasicAcpi->num_cpu = lapic->procId;
-									  AuTextOut("acpi cpu count -> %d \n", __AuroraBasicAcpi->num_cpu);
+									 // AuTextOut("acpi cpu count -> %d \n", __AuroraBasicAcpi->num_cpu);
 									  break;
 		}
 		case ACPI_APICTYPE_IOAPIC:{

@@ -89,6 +89,7 @@ Window* alwaysOnTopLast;
 ChCanvas* canvas;
 uint32_t* surfaceBuffer;
 bool _shadow_update;
+bool _clients_advice;
 uint64_t startTime;
 uint64_t startSubTime;
 
@@ -365,6 +366,9 @@ void DeodhaiRemoveShadow(ChCanvas* canv, Window* win) {
  * @param y -- new y position
  */
 void DeodhaiWindowMove(Window* win, int x, int y) {
+	if (_clients_advice)
+		goto _move_win;
+
 	if (win->flags & WINDOW_FLAG_STATIC)
 		return;
 
@@ -376,6 +380,8 @@ void DeodhaiWindowMove(Window* win, int x, int y) {
 
 	if (focusedWin != win)
 		DeodhaiWindowSetFocused(win, true);
+
+_move_win:
 
 	_window_moving_ = true;
 
@@ -419,6 +425,7 @@ _skip:
 	_window_update_all_ = true;
 	_always_on_top_update = true;
 	_shadow_update = true;
+	_clients_advice = false;
 }
 
 /*
@@ -486,6 +493,7 @@ bool DeodhaiCheckWindowPointOcclusion(Window* win, int x, int y) {
  * @param button -- mouse button state
  */
 void DeodhaiWindowCheckDraggable(int x, int y, int button) {
+	
 	for (Window* win = lastWin; win != NULL; win = win->prev) {
 		WinSharedInfo* info = (WinSharedInfo*)win->sharedInfo;
 		//_KePrint("INFO->x %d, mx -> %d \r\n", info->x, x);
@@ -1481,7 +1489,7 @@ int main(int argc, char* arv[]) {
 	int screen_w = 0;
 	int screen_h = 0;
 	_window_moving_ = false;
-	
+	_clients_advice = false;
 	/* create a demo canvas just for getting the graphics
 	 * file descriptor 
 	 */
@@ -1821,6 +1829,35 @@ int main(int argc, char* arv[]) {
 					break;
 				}
 			}
+			memset(&event, 0, sizeof(PostEvent));
+		}
+
+		/*
+		 * DEODHAI_MESSAGE_MOVE_WINDOW -- moves target window
+		 * to new location
+		 */
+		if (event.type == DEODHAI_MESSAGE_MOVE_WINDOW) {
+			int newX = event.dword;
+			int newY = event.dword2;
+			int ownerID = event.from_id;
+			Window* win_ = NULL;
+			_clients_advice = true;
+			for (Window* win = rootWin; win != NULL; win = win->next) {
+				if (win->ownerId == ownerID) {
+					win_ = win;
+					break;
+				}
+			}
+
+			for (Window* win = alwaysOnTop; win != NULL; win = win->next) {
+				if (win->ownerId == ownerID) {
+					win_ = win;
+					break;
+				}
+			}
+			if (win_) 
+				DeodhaiWindowMove(win_, newX, newY);
+
 			memset(&event, 0, sizeof(PostEvent));
 		}
 

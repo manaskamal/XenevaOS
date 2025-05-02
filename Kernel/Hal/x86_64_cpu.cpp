@@ -449,7 +449,6 @@ void x86_64_measure_cpu_speed() {
 	count_hi &= 0x20;
 	unsigned long long etsc = cpu_read_tsc();
 	uint64_t cpu_hz = (etsc - stsc) / 10000;
-
 	if (cpu_hz == 0){
 		x64_outportb(0x43, 0x04);
 		while (count_hi == 0){
@@ -496,5 +495,16 @@ void x86_64_calculate_ticks(uint64_t milliseconds,uint64_t subsec, uint64_t* out
 	else {
 		*out_milliseconds = timer_ticks + milliseconds;
 		*out_subsec = timer_subticks + subsec;
+	}
+}
+
+/*
+ * x86_64_udelay -- udelay
+ */
+void x86_64_udelay(uint64_t usec) {
+	uint64_t start = cpu_read_tsc();
+	uint64_t end = start + (usec * cpuMhz);
+	while (cpu_read_tsc() < end) {
+		x64_pause();
 	}
 }

@@ -186,6 +186,7 @@ typedef int(*usb_drv_entry)(_usb_dev_* dev);
 typedef int(*usb_drv_unload)(_usb_dev_* dev);
 
 
+
 #pragma pack(push,1)
 typedef struct _usb_dev_ {
 	void* data;

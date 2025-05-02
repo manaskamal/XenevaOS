@@ -108,20 +108,20 @@ uint64_t XEPELoadDLLImage(void* filebuf1) {
 	size_t imageBase = _dll_base_;
 	if (!XEPagingMap((void*)imageBase, PADDR_T_MAX, ntHeaders->OptionalHeader.SizeOfHeaders, PAGE_ATTRIBUTE_WRITABLE)) {
 		XEGuiPrint("Could not allocate enough memory for Xeneva Kernel\n");
-		//for(;;);
+		for(;;);
 		return 0;
 	}
-
-	
 	copy_mem((void*)imageBase, filebuf, ntHeaders->OptionalHeader.SizeOfHeaders);
 	_dll_base_offset_++;
-
 	for (size_t i = 0; i < ntHeaders->FileHeader.NumberOfSections; i++) {
 		size_t load_addr = imageBase + secthdr[i].VirtualAddress;
 		size_t sectSize = secthdr[i].VirtualSize;
 		int req_pages = sectSize / 4096 +
 			((sectSize % 4096) ? 1 : 0);
-		XEPagingMap((void*)load_addr, PADDR_T_MAX, sectSize, PAGE_ATTRIBUTE_WRITABLE);
+		if (!XEPagingMap((void*)load_addr, PADDR_T_MAX, sectSize, PAGE_ATTRIBUTE_WRITABLE)) {
+			XEGuiPrint("Failed to map physical address to virtual address -> %x \n", load_addr);
+			for (;;);
+		}
 		copy_mem((void*)load_addr, raw_offset<void*>(filebuf, secthdr[i].PointerToRawData), secthdr[i].SizeOfRawData);
 		_dll_base_offset_ += req_pages;
 	}

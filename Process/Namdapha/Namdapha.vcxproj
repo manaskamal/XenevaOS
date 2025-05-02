@@ -23,9 +23,11 @@
     <ClCompile Include="namdapha.cpp" />
     <ClCompile Include="NamdaphaButton.cpp" />
     <ClCompile Include="nmGoButton.cpp" />
+    <ClCompile Include="section.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="nmdapha.h" />
+    <ClInclude Include="section.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{E423E38B-E351-4151-895D-5336D27C9A2F}</ProjectGuid>

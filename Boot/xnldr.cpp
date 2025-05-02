@@ -241,6 +241,8 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
 	XEFile* kApCode = XEOpenAndReadFile(ImageHandle, (CHAR16*)L"\\EFI\\XENEVA\\ap.bin");
 	XEFile* kAhci = XEOpenAndReadFile(ImageHandle, (CHAR16*)L"\\ahci.dll");
 	XEFile* kNvme = XEOpenAndReadFile(ImageHandle, (CHAR16*)L"\\nvme.dll");
+	XEFile* kXHCI = XEOpenAndReadFile(ImageHandle, (CHAR16*)L"\\xhci.dll");
+	
 
 	uint8_t* allignedKernelBuffer = (uint8_t*)krnl->kBuffer;
 	IMAGE_DOS_HEADER* dos_header = (IMAGE_DOS_HEADER*)allignedKernelBuffer;
@@ -263,14 +265,15 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
 		}
 	}
 
+
 	const size_t EARLY_PAGE_STACK_SIZE = 1024 * 1024;
 	EFI_PHYSICAL_ADDRESS earlyPhyPageStack = 0;
 	if (!(SystemTable->BootServices->AllocatePages(AllocateAnyPages, EfiLoaderData, EARLY_PAGE_STACK_SIZE / EFI_PAGE_SIZE, (EFI_PHYSICAL_ADDRESS*)earlyPhyPageStack))) 
 		XEGuiPrint("Early Page Stack: allocation failed.....\n");
 
-	Status = gSystemTable->BootServices->SetWatchdogTimer(0, 0, 0, 0);
+	/*Status = gSystemTable->BootServices->SetWatchdogTimer(0, 0, 0, 0);
 	if (Status != EFI_SUCCESS) 
-		XEGuiPrint("Failed to set watchdog time \n");
+		XEGuiPrint("Failed to set watchdog time \n");*/
 
 
 	struct EfiMemoryMap map;
@@ -298,10 +301,14 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
 	if (Status != EFI_SUCCESS) 
 		XEGuiPrint("Failed to retrieve memory map \n");
 
-	XEGraphicsClearScreen(gop);
+	//XEGraphicsClearScreen(gop);
+
+
 	Status = SystemTable->BootServices->ExitBootServices(ImageHandle, map.MapKey);
-	if (Status != EFI_SUCCESS)
+	if (Status != EFI_SUCCESS) {
 		XEGuiPrint("Exit Boot Service Failed \n");
+		for (;;);
+	}
 
 	/* Initialise the physical memory manager */
 	XEInitialisePmmngr(map, (void*)earlyPhyPageStack, EARLY_PAGE_STACK_SIZE);
@@ -316,6 +323,8 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
 
 	uint64_t ahciAddr = XEPELoadDLLImage(kAhci->kBuffer);
 	uint64_t nvmeAddr = XEPELoadDLLImage(kNvme->kBuffer);
+	uint64_t xhciAddr = XEPELoadDLLImage(kXHCI->kBuffer);
+	
 	
 	
 	void* stackaddr = (void*)0xFFFFA00000000000;
@@ -350,7 +359,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
 	bootinfo.font_binary_address = (uint8_t*)kfont->kBuffer;
 	bootinfo.driver_entry1 = (uint8_t*)ahciAddr;
 	bootinfo.driver_entry2 = (uint8_t*)nvmeAddr;
-	bootinfo.driver_entry3 = 0;// usbAddr;
+	bootinfo.driver_entry3 = (uint8_t*)xhciAddr;// usbAddr;
 	bootinfo.driver_entry4 = 0;
 	bootinfo.driver_entry5 = 0;
 	bootinfo.driver_entry6 = 0;

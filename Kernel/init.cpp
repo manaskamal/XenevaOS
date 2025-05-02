@@ -88,7 +88,6 @@ void _AuMain(KERNEL_BOOT_INFO *info) {
 	 * be included in boot time driver
 	 */
 	AuBootDriverInitialise(info);
-	
 	AuConsolePostInitialise(info);
 	/* Here initialize all legacy bus system
 	 * like ps2.... using AuLegacyBusInitialize() */

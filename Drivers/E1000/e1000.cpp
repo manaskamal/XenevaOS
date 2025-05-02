@@ -265,6 +265,30 @@ void E1000IRQHandler(size_t v, void* p) {
 		e1000_nic->link_status = (E1000ReadCmd(e1000_nic, E1000_REG_STATUS)& (1 << 1));
 		SeTextOut("E1000 Link Status : %d \r\n", e1000_nic->link_status);
 	}
+
+	if (status & ICR_RXT0) {
+		int head = E1000ReadCmd(e1000_nic, E1000_REG_RXDESCHEAD);
+
+		while ((e1000_nic->rx[e1000_nic->rx_index].status & 0x01)) {
+			int i = e1000_nic->rx_index;
+			//handle ethernet packet
+			AuEthernetHandle((void*)e1000_nic->rx_virt[i], e1000_nic->rx[i].length, nic);
+			e1000_nic->rx[i].status = 0;
+			if (++e1000_nic->rx_index == E1000_NUM_RX_DESC)
+				e1000_nic->rx_index = 0;
+
+			if (e1000_nic->rx_index == head) {
+				head = E1000ReadCmd(e1000_nic, E1000_REG_RXDESCHEAD);
+				if (e1000_nic->rx_index == head) break;
+			}
+
+			E1000WriteCmd(e1000_nic, E1000_REG_RXDESCTAIL, e1000_nic->rx_index);
+			E1000ReadCmd(e1000_nic, E1000_REG_STATUS);
+
+		}
+	}
+
+	E1000WriteCmd(e1000_nic, E1000_REG_ICR, status);
 }
 
 /* E1000Thread -- no interrupt handling supported then
@@ -488,13 +512,20 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 
 	bool interrupt_installed = false;
 
-	if (AuPCIEAllocMSI(device, 78, bus, dev_, func))
+	if (AuPCIEAllocMSI(device, 78, bus, dev_, func)) {
 		AuTextOut("E1000 DEVICE SUPPORTS MSI/MSI-X \n");
+		interrupt_installed = true;
+	}
 
 
-	AuThread* nic_thr = AuCreateKthread(E1000Thread, (uint64_t)P2V((size_t)AuPmmngrAlloc() + PAGE_SIZE),
-		(uint64_t)AuGetRootPageTable(), "E1000Thr");
-
+	if (interrupt_installed) {
+		setvect(78, E1000IRQHandler);
+	}
+	else {
+		AuTextOut("[E1000]: No MSI/MSI-X supported, Spawning e1000 worker thread \n");
+		AuThread* nic_thr = AuCreateKthread(E1000Thread, (uint64_t)P2V((size_t)AuPmmngrAlloc() + PAGE_SIZE),
+			(uint64_t)AuGetRootPageTable(), "E1000Thr");
+	}
 
 
 	AuDevice *audev = (AuDevice*)kmalloc(sizeof(AuDevice));
@@ -523,10 +554,10 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 
 	AuAddNetAdapter(adapt, "e1000");
 	nic = adapt;
-
 	E1000WriteCmd(e1000_nic, E1000_REG_IMS, INTS);
 	for (int i = 0; i < 10000000; i++)
 		;
 
+	AuEnableInterrupt();
 	return 1;
 }

@@ -210,4 +210,9 @@ extern void updateTicks(uint64_t ticks, uint64_t* timerTick, uint64_t* timerSubt
  */
 void x86_64_calculate_ticks(uint64_t milliseconds, uint64_t subsec, uint64_t* out_milliseconds, uint64_t* out_subsec);
 
+/*
+ * x86_64_udelay -- udelay
+ */
+AU_EXTERN AU_EXPORT void x86_64_udelay(uint64_t usec);
+
 #endif

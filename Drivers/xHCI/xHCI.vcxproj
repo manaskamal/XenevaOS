@@ -116,7 +116,6 @@
       <BaseAddress>0xFFFFC00000400000</BaseAddress>
       <RandomizedBaseAddress />
       <FixedBaseAddress>false</FixedBaseAddress>
-      <AdditionalOptions>/ALIGN:512 %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
       <Command>copy "..\..\Build\$(TargetName).dll" "%XENEVA_BUILDS%\$(TargetName).dll"</Command>

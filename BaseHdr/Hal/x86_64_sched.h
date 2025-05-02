@@ -238,7 +238,7 @@ AU_EXTERN AU_EXPORT AuThread* AuThreadFindByIDBlockList(uint16_t id);
 */
 AU_EXTERN AU_EXPORT void AuForceScheduler();
 
-extern bool AuIsSchedulerInitialised();
+AU_EXTERN AU_EXPORT bool AuIsSchedulerInitialised();
 
 /*
 * AuGetSystemTimerTick -- returns the

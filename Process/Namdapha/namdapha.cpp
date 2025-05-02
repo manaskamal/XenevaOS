@@ -38,6 +38,7 @@
 #include <sys\iocodes.h>
 #include <sys\mman.h>
 #include "nmdapha.h"
+#include "section.h"
 #include <widgets\window.h>
 
 ChitralekhaApp *app;
@@ -57,6 +58,7 @@ ButtonInfo* defaultappico;
 uint32_t gomenuh;
 NamdaphaButton *gobutton;
 XETime _time;
+list_t* sectList;
 
 extern void GoMenuThread();
 /*
@@ -157,6 +159,7 @@ void NamdaphaPaint(ChWindow* win) {
 		if (button->drawNamdaphaButton)
 			button->drawNamdaphaButton(button, win);
 	}
+
 	ChWindowUpdate(win, 0, 0, win->info->width, win->info->height, 1, 0);
 }
 
@@ -437,6 +440,12 @@ int main(int argc, char* arv[]){
 
 	button_list = initialize_list();
 	windowList = initialize_list();
+	SectionModuleInitialize(win);
+	sectList = SectionsGetList();
+
+	NamdaphaSections* appsect = CreateSection(SECTION_TITLE_APPLIST);
+
+
 	list_add(windowList, win);
 
 	int threadID = _KeGetThreadID();
@@ -476,6 +485,10 @@ int main(int argc, char* arv[]){
 	gobutton->winHandle = gomenuh;
 	
 	//NamdaphaPlayStartupSound();
+
+	int procid = _KeCreateProcess(0, "systray");
+	_KeProcessLoadExec(procid, "/systray.exe", NULL, NULL);
+
 
 	PostEvent e;
 	memset(&e, 0, sizeof(PostEvent));

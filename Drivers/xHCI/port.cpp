@@ -37,21 +37,41 @@
 #include <_null.h>
 #include <aucon.h>
 #include <Drivers/usb.h>
+#include <Hal/x86_64_cpu.h>
 #include <Hal/serial.h>
+#include <Hal/apic.h>
 
 /*
 * XHCIPortReset -- reset the given port
 * @param this_port -- pointer to port register
 */
 void XHCIPortReset(xhci_port_regs_t* this_port) {
-	if ((this_port->port_sc & 1)) {
-		if ((this_port->port_sc & (1 << 1)) == 0) {
+	uint8_t port_speed = (this_port->port_sc >> 10) & 0xf;
+	uint32_t port_change_bit = ((1 << 17) | (1 << 18) | (1 << 20) | (1 << 21) | (1 << 22));
+
+
+	if (port_speed <= 3) { //USB 2.0 devices
+		AuTextOut("USB 2.0 device \n");
+
+		this_port->port_sc |= (1 << 4);
+		//APICTimerSleep(5000);
+		x86_64_udelay(100 * 1000);
+		
+		AuTextOut("PORT Reset bit polling \n");
+		while ((this_port->port_sc & (1<<4)) != 0);
+		int timeout = 1000;
+
+		if ((this_port->port_sc & (1 << 21)) == 0) {
+			AuTextOut("Port reset did not complete \n");
+		}
+		AuTextOut("Port is Enabled ? %d \n", ((this_port->port_sc & XHCI_PORTSC_PED) & 0xf));
+		//APICTimerSleep(1000);
+		x86_64_udelay(100 * 1000);
+		/*if ((this_port->port_sc & (1 << 1)) == 0) {
 			this_port->port_sc |= (1 << 4);
 			while ((this_port->port_sc & (1 << 4)) != 0);
-		}
+		}*/
 	}
-	uint32_t port_change_bit = this_port->port_sc;
-	this_port->port_sc |= port_change_bit;
 }
 
 XHCISlot* XHCICreateDeviceCtx(XHCIDevice* dev, uint8_t slot_num, uint8_t port_speed, uint8_t root_port_num) {
@@ -145,6 +165,97 @@ void XHCISlotReleaseEndpoints(XHCISlot* slot) {
 	}
 }
 
+
+void XHCIPortChecLinkState(xhci_port_regs_t* this_port) {
+#define PORTSC_PLS_MASK (0xF << 5)
+#define PORTSC_PLS_SHIFT 5
+#define PORTSC_LWS (1<<16)
+
+	uint8_t pls = (this_port->port_sc >> PORTSC_PLS_SHIFT) & 0xF;
+	if (pls == 3) {
+		AuTextOut("Port is in suspended state \n");
+		//Port is in U3 state (suspended) -- power savings
+		this_port->port_sc &= ~PORTSC_PLS_MASK;
+		this_port->port_sc |= (15 << PORTSC_PLS_SHIFT);
+		this_port->port_sc |= PORTSC_LWS;
+		APICTimerSleep(1000);
+
+	}
+	else if (pls == 7 || pls == 5) {
+		pls = (this_port->port_sc >> PORTSC_PLS_SHIFT) & 0xF;
+		AuTextOut("Port is in Polling state %d\n", pls);
+		int timeout = 1000;
+		while (pls != 0) {
+			if (timeout <= 0)
+				break;
+			//APICTimerSleep(1000);
+			x86_64_udelay(100 * 1000);
+			/*for (int i = 0; i < 10000000000; i++)
+				;*/
+			pls = (this_port->port_sc >> PORTSC_PLS_SHIFT) & 0xF;
+			timeout--;
+		}
+		pls = (this_port->port_sc >> PORTSC_PLS_SHIFT) & 0xF;
+
+		/* retry code */
+		AuTextOut("Port link state changed -> %d\n", pls);
+		if (pls == 7 || pls == 5) {
+			AuTextOut("Port link state is still in polling state retrying... \n");
+			XHCIPortReset(this_port);
+			pls = (this_port->port_sc >> PORTSC_PLS_SHIFT) & 0xF;
+			timeout = 1000;
+			while (pls != 0) {
+				if (timeout <= 0)
+					break;
+				//APICTimerSleep(1000);
+				/*for (int i = 0; i < 10000000000; i++)
+					;*/
+				x86_64_udelay(100 * 1000);
+				pls = (this_port->port_sc >> PORTSC_PLS_SHIFT) & 0xF;
+				timeout--;
+			}
+			pls = (this_port->port_sc >> PORTSC_PLS_SHIFT) & 0xF;
+
+			/* Forcing code */
+			if (pls == 7 || pls == 5) {
+				AuTextOut("Port link state is still in polling after retrying, now forcing \n");
+				uint32_t portval = this_port->port_sc;
+				portval &= ~(0xF << 5);
+				portval |= (0 << 5);
+				portval |= (1 << 16);
+				this_port->port_sc = portval;
+			}
+			if (pls == 3) {
+				AuTextOut("Port is in suspended state \n");
+				//Port is in U3 state (suspended) -- power savings
+				this_port->port_sc &= ~PORTSC_PLS_MASK;
+				this_port->port_sc |= (0<<5);
+				this_port->port_sc |= PORTSC_LWS;
+				x86_64_udelay(100 * 1000);
+
+			}
+			pls = (this_port->port_sc >> PORTSC_PLS_SHIFT) & 0xF;
+			timeout = 1000;
+			while (pls != 0) {
+				if (timeout <= 0)
+					break;
+			/*	APICTimerSleep(1000);
+				for (int i = 0; i < 10000000000; i++)
+					;*/
+				x86_64_udelay(100 * 1000);
+				pls = (this_port->port_sc >> PORTSC_PLS_SHIFT) & 0xF;
+				timeout--;
+			}
+			pls = (this_port->port_sc >> PORTSC_PLS_SHIFT) & 0xF;
+			if (pls == 7 || pls == 5 || pls == 3) {
+				AuTextOut("Your usb device is malfunctioned :)) \n");
+				return;
+			}
+		}
+	}
+
+}
+
 bool hotPlug = false;
 /*
  * XHCIPortInitialise -- initialise a given port
@@ -193,19 +304,47 @@ void XHCIPortInitialise(XHCIDevice* dev, unsigned int port) {
 
 	if ((this_port->port_sc & 1)) {
 		if (hotPlug)
-			SeTextOut("Port connection handling \r\n");
+			AuTextOut("Port connection handling %d \r\n", port);
 		/* Handle device connection */
 		/* Reset the port */
+		AuTextOut("Port link state -> %d \n", ((this_port->port_sc >> 5) & 0xF));
+		if ((this_port->port_sc & (1 << 9)))
+			AuTextOut("Port is powered on \n");
+		else
+			AuTextOut("This port is powered off \n");
+
+
+		APICTimerSleep(500);
+
 		XHCIPortReset(this_port);
+
+		XHCIPortChecLinkState(this_port);
+
+
+		uint8_t pls = ((this_port->port_sc >> 5) & 0xF);
+
+		AuTextOut("Port link state -> %d \n", pls);
+		if (pls == 5) {
+			AuTextOut("Port %d enter RxDetect , i.e failed to start port \n", port);
+			return;
+		}
+		else if (pls == 0)
+			AuTextOut("Port %d link state is active\n", port);
+		
+		uint32_t portsc = this_port->port_sc;
+		this_port->port_sc = portsc;
+
+		APICTimerSleep(1000);
+
 		uint8_t port_speed = (this_port->port_sc >> 10) & 0xf;
 		uint8_t class_code, sub_class_code, protocol = 0;
 		uint8_t slot_id = 0;
 
 		if (hotPlug)
-			SeTextOut("Port reset complete \r\n");
+			AuTextOut("Port reset complete \r\n");
 		/* Enable slot command */
 		XHCIEnableSlot(dev, 0);
-
+		AuTextOut("Enable slot command is sent \n");
 		int idx = XHCIPollEvent(dev, TRB_EVENT_CMD_COMPLETION);
 		if (idx != -1) {
 			xhci_event_trb_t* evt = (xhci_event_trb_t*)dev->event_ring_segment;
@@ -214,18 +353,18 @@ void XHCIPortInitialise(XHCIDevice* dev, unsigned int port) {
 		}
 
 		if (hotPlug)
-			SeTextOut("Slot ID -> %d \r\n", slot_id);
+			AuTextOut("Slot ID -> %d \r\n", slot_id);
 
 		if (slot_id == 0)
 			return;
 
-		SeTextOut("Slot enabled \r\n");
+		AuTextOut("Slot enabled \r\n");
 		/* After getting a device slot,
 		* allocate device slot data structures
 		*/
 		XHCISlot* slot = XHCICreateDeviceCtx(dev, slot_id, port_speed, port);
 
-		this_port->port_sc |= (1 << 9);
+		/*this_port->port_sc |= (1 << 9);*/
 
 		slot->port_speed = port_speed;
 
@@ -239,6 +378,7 @@ void XHCIPortInitialise(XHCIDevice* dev, unsigned int port) {
 		USBGetDeviceDesc(usbdev, V2P((uint64_t)buffer), 18);
 
 		for (int i = 0; i < 1000000; i++);
+		x86_64_udelay(100 * 1000);
 
 		int t_idx = XHCIPollEvent(dev, TRB_EVENT_TRANSFER);
 		if (t_idx != -1) {
@@ -247,7 +387,8 @@ void XHCIPortInitialise(XHCIDevice* dev, unsigned int port) {
 		}
 
 		usb_dev_desc_t* dev_desc = (usb_dev_desc_t*)buffer;
-
+		AuTextOut("DEV Class -> %x , sC -> %x \n", dev_desc->bDeviceClass, dev_desc->bDeviceSubClass);
+	//	return;
 		uint64_t input_ctx_virt = P2V(slot->input_context_phys);
 
 		class_code = dev_desc->bDeviceClass;
@@ -286,7 +427,9 @@ void XHCIPortInitialise(XHCIDevice* dev, unsigned int port) {
 		uint16_t* string = (uint16_t*)string_buf_ptr;
 
 		/* Here !! do something with the string */
-		
+		for (int i = 0; i < 32; i++)
+			AuTextOut("%c", string[i]);
+		AuTextOut("\n");
 
 		/* The main step: get the 0th config descriptor which contain the
 		 * config value for set_config command */
@@ -440,7 +583,7 @@ void XHCIPortInitialise(XHCIDevice* dev, unsigned int port) {
 			/* also send configure endpoint command to xhc*/
 			XHCIConfigureEndpoint(dev, slot->input_context_phys, slot_id);
 			t_idx = -1;
-			//	t_idx = XHCIPollEvent(dev, TRB_EVENT_CMD_COMPLETION);
+			t_idx = XHCIPollEvent(dev, TRB_EVENT_CMD_COMPLETION);
 
 				/* update the required endpoints, if not created, create one */
 			endp = raw_offset<usb_endpoint_desc_t*>(endp, endp->bLength);
@@ -463,10 +606,10 @@ void XHCIPortInitialise(XHCIDevice* dev, unsigned int port) {
 		slot->descriptor_buff = (uint64_t)buffer;
 		usbdev->descriptor = buffer;
 		usbdev->deviceID = slot_id;
-		SeTextOut("Port initialised CC- %x SC-%x \r\n", usbdev->classCode, usbdev->subClassCode);
+		AuTextOut("Port initialised CC- %x SC-%x \r\n", usbdev->classCode, usbdev->subClassCode);
 		USBDeviceSetFunctions(usbdev);
 
-		AuUSBDeviceConnect((AuUSBDeviceStruc*)usbdev);
+		//AuUSBDeviceConnect((AuUSBDeviceStruc*)usbdev);
 	}
 }
 
@@ -476,9 +619,13 @@ void XHCIPortInitialise(XHCIDevice* dev, unsigned int port) {
 * @param dev -- Pointer to USB device structures
 */
 void XHCIStartDefaultPorts(XHCIDevice* dev) {
+	AuTextOut("Num ports of XHCI -> %d \n", dev->num_ports);
 	for (unsigned int i = 1; i <= dev->num_ports; i++) {
 		xhci_port_regs_t* this_port = &dev->ports[i - 1];
 		if ((this_port->port_sc & 1)) {
+			uint32_t status = this_port->port_sc;
+			this_port->port_sc = status;
+			AuTextOut("Handling port %d \n", i);
 			XHCIPortInitialise(dev, i);
 		}
 	}

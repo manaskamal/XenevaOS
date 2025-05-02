@@ -567,6 +567,22 @@ XE_EXTERN XE_EXPORT void ChWindowSetFlags(ChWindow* win, uint16_t flags) {
 }
 
 /*
+ * ChWindowMove -- moves target window to a new location
+ * @param win -- Pointer to the window
+ * @param newX -- new x location relative to screen coord
+ * @param newY -- new y location relative to screen coord
+ */
+XE_EXTERN XE_EXPORT void ChWindowMove(ChWindow* win, int newX, int newY) {
+	PostEvent e;
+	e.type = DEODHAI_MESSAGE_MOVE_WINDOW;
+	e.dword = newX;
+	e.dword2 = newY;
+	e.to_id = POSTBOX_ROOT_ID;
+	e.from_id = win->app->currentID;
+	_KeFileIoControl(win->app->postboxfd, POSTBOX_PUT_EVENT, &e);
+}
+
+/*
  * ChFreeWindowResources -- free up all allocated resources
  * including global controls, widgets.. etc
  * @param win -- Pointer to window

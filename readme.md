@@ -1,6 +1,5 @@
 # XenevaOS
-
-[![Discord](https://img.shields.io/discord/830522505605283862.svg?logo=discord&logoColor=white&logoWidth=20&labelColor=7289DA&label=Discord&color=17cf48)](https://discord.com/invite/4Kj8x7v6h8)
+[![Discord](https://img.shields.io/discord/1255326572617924618)]
 
 
 ![alt text](https://github.com/manaskamal/XenevaOS/blob/master/XeLogo.jpg?raw=true)

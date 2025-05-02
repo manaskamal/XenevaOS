@@ -110,7 +110,7 @@ void XHCICreateStatusTRB(XHCISlot* slot, bool in_direction) {
 */
 void XHCIEnableSlot(XHCIDevice* dev, uint8_t slot_type) {
 	/* Send Enable slot command */
-	XHCISendCmdToHost(dev, 0, 0, 0, (slot_type << 16) | (TRB_CMD_ENABLE_SLOT << 10));
+	XHCISendCmdToHost(dev, 0, 0, 0, (TRB_CMD_ENABLE_SLOT << 10));
 	XHCIRingDoorbellHost(dev);
 }
 

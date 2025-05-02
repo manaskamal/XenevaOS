@@ -244,7 +244,10 @@ void XHCIRingDoorbellSlot(XHCIDevice* dev, uint8_t slot, uint32_t endpoint) {
 * @return trb_event_index -- index of the trb on event_ring_segment
 */
 int XHCIPollEvent(XHCIDevice* usb_device, int trb_type) {
+	int timeout =10000;
 	for (;;) {
+		if (timeout <= 0)
+			break;
 		if (usb_device->event_available && usb_device->poll_return_trb_type == trb_type) {
 			usb_device->event_available = false;
 
@@ -257,6 +260,7 @@ int XHCIPollEvent(XHCIDevice* usb_device, int trb_type) {
 			usb_device->poll_return_trb_type = -1;
 			return idx;
 		}
+		timeout--;
 	}
 
 	return -1; //trb_event_index;
