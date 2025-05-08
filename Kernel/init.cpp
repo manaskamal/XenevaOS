@@ -85,15 +85,16 @@ void _AuMain(KERNEL_BOOT_INFO *info) {
 	AuVFSInitialise();
 	AuTextOut("BootDev HID -> %x, UID -> %x, CID -> %x \r\n", info->hid, info->uid, info->cid);
 	/* TODO: AHCI, NVMe, USB Mass Storage, ..etc should
-	 * be included in boot time driver
+	 * be included in boot time driver	
 	 */
+	AuPS2KybrdInitialize();
 	AuBootDriverInitialise(info);
 	AuConsolePostInitialise(info);
 	/* Here initialize all legacy bus system
 	 * like ps2.... using AuLegacyBusInitialize() */
 	AuPS2MouseInitialise();
 	AuRTCInitialize();
-	AuPS2KybrdInitialize();
+
 
 	/*initialise kernel tty */
 	AuTTYInitialise();

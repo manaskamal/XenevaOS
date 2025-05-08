@@ -54,6 +54,7 @@
 #define DEODHAI_REPLY_WINDOW_ID   153
 #define DEODHAI_REPLY_FOCUS_CHANGED 154
 #define DEODHAI_REPLY_WINDOW_CLOSED 156
+#define DEODHAI_REPLY_MOUSE_LEAVE 157
 
 	/* deodhai broadcast definitions, reply from
 	 * deodhai */

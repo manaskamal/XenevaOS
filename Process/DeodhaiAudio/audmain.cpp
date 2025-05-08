@@ -68,7 +68,6 @@ list_t* audioBoxList;
 uint16_t shControlPanelKey;
 uint16_t shSampleBufferKey;
 
-
 /* Standard Deodhai Request message defined*/
 #define DEODHAI_GET_AUDIO_CONNECTION "DeodhaiGetAudioConnection"
 #define DEODHAI_GET_GLOBAL_CONNECTION "DeodhaiAudioGetGlobalConnection"
@@ -99,6 +98,8 @@ typedef struct _audio_control_panel_ {
 	bool Samplefull;
 	bool ready;
 	bool close;
+	bool global;
+	bool dirty;
 }AudioControlPanel;
 #pragma pack(pop)
 
@@ -109,6 +110,9 @@ typedef struct _audio_box_ {
 	int shSampleBuffKey;
 	int shControlPanelKey;
 }DeodhaiAudioBox;
+
+
+DeodhaiAudioBox* globalBox;
 
 
 /*
@@ -180,6 +184,7 @@ void DeodhaiAudioHandleMessage(DeodhaiAudioMessage* message) {
 	if (strcmp(message->message, DEODHAI_GET_AUDIO_CONNECTION) == 0) {
 		printf("DeodhaiAudio: GetConnection request received from -> %d \n", message->fromProcessId);
 		DeodhaiAudioBox* audioBox = DeodhaiCreateAudioBox(message->fromProcessId);
+		audioBox->ctlPanel->global = false;
 		PostEvent e;
 		memset(&e, 0, sizeof(PostEvent));
 		e.type = DEODHAI_AUDIO_CONNECTION_HANDSHAKE;
@@ -191,6 +196,18 @@ void DeodhaiAudioHandleMessage(DeodhaiAudioMessage* message) {
 
 	if (strcmp(message->message, DEODHAI_GET_GLOBAL_CONNECTION) == 0) {
 		printf("DeodhaiAudio: Global Connection request received from -> %d \n", message->fromProcessId);
+		if (globalBox == NULL) {
+			DeodhaiAudioBox* audioBox = DeodhaiCreateAudioBox(message->fromProcessId);
+			audioBox->ctlPanel->global = true;
+			globalBox = audioBox;
+		}
+		PostEvent e;
+		memset(&e, 0, sizeof(PostEvent));
+		e.type = DEODHAI_AUDIO_CONNECTION_HANDSHAKE;
+		e.to_id = message->fromProcessId;
+		e.dword = globalBox->shControlPanelKey;
+		e.dword2 = globalBox->shSampleBuffKey;
+		_KeFileIoControl(postbox, POSTBOX_PUT_EVENT, &e);
 	}
 }
 
@@ -246,12 +263,26 @@ void DeodhaiAudioComposeFrame() {
 		}
 		box->ctlPanel->Samplefull = false;
 
+		///* handle global controls */
+		//if (box->ctlPanel->global) {
+		//	if (box->ctlPanel->dirty) {
+				/* Normalize and control the gain*/
+	/*	}
+		_KePrint("[DEODHAI AUDIO]: gian Control %f\r\n", box->ctlPanel->gain);
+		box->ctlPanel->dirty = false;
+	}*/
+		
 		/* close an opened deodhai box */
 		if (box->ctlPanel->close) {
 			list_remove(audioBoxList, i);
 			DeodhaiAudioBoxClose(box);
 			free(box);
 			printf("DeodhaiAudio: an audio box closed \n");
+		}
+	}
+	if (globalBox) {
+		for (int j = 0; j < 4096 / sizeof(int16_t); j++) {
+			output[j] *= globalBox->ctlPanel->gain;
 		}
 	}
 	_KeWriteFile(sound, mainOutput, 4096);
@@ -275,6 +306,8 @@ int main(int argc, char* argv[]) {
 
 	sound = _KeOpenFile("/dev/sound", FILE_OPEN_READ_ONLY);
 
+	globalBox = NULL;
+
 	XEFileIOControl ioctl;
 	memset(&ioctl, 0, sizeof(XEFileIOControl));
 
@@ -297,7 +330,6 @@ int main(int argc, char* argv[]) {
 	char* buff = (char*)malloc(sizeof(DeodhaiAudioMessage)+1);
 	while (1) {
 		DeodhaiAudioComposeFrame();
-
 		sz = _KeReadFile(pipe, buff, sizeof(DeodhaiAudioMessage)+1);
 		if (sz > 0) {
 			DeodhaiAudioMessage* msg = (DeodhaiAudioMessage*)buff;

@@ -59,6 +59,9 @@ XE_EXTERN{
 	#define DEODHAI_AUDIO_MONO   1
 	#define DEODHAI_AUDIO_STEREO 2
 
+#define DEODHAI_CONNECTION_TYPE_NORMAL 0
+#define DEODHAI_CONNECTION_TYPE_GLOBAL 1
+
 	#pragma pack(push,1)
 	typedef struct _deodhai_audio_msg_ {
 		char message[60];
@@ -82,6 +85,8 @@ typedef struct _audio_control_panel_ {
 	bool Samplefull;
 	bool ready;
 	bool close;
+	bool global;
+	bool dirty;
 }DeodhaiAudioControlPanel;
 #pragma pack(pop)
 
@@ -101,8 +106,9 @@ typedef struct _deodhai_audio_box_ {
  * audio server
  * @param postbox -- postbox file descriptor
  * @param numChannel -- number of channel -- 1 for MONO, 2 for STEREO
+ * @param connType -- 0 - NORMAL connection, 1 -- GLOBAL connection
  */
-XE_LIB DeodhaiAudioBox* DeodhaiAudioOpenConnection(int postbox, uint8_t numChannel);
+XE_LIB DeodhaiAudioBox* DeodhaiAudioOpenConnection(int postbox, uint8_t numChannel, uint8_t connType);
 
 /*
  * DeodhaiAudioWrite -- write audio samples to

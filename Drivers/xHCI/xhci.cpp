@@ -31,6 +31,7 @@
 #include <stdint.h>
 #include <_null.h>
 #include <Mm/kmalloc.h>
+#include <Hal/x86_64_cpu.h>
 
 
 /*
@@ -244,22 +245,22 @@ void XHCIRingDoorbellSlot(XHCIDevice* dev, uint8_t slot, uint32_t endpoint) {
 * @return trb_event_index -- index of the trb on event_ring_segment
 */
 int XHCIPollEvent(XHCIDevice* usb_device, int trb_type) {
-	int timeout =10000;
+	int timeout = 1000;
 	for (;;) {
-		if (timeout <= 0)
-			break;
 		if (usb_device->event_available && usb_device->poll_return_trb_type == trb_type) {
 			usb_device->event_available = false;
 
 			///* here we need a delay, while using VirtualBox */
-			for (int i = 0; i < 100000000; i++)
-				;
+			x86_64_udelay(100);
 
 			int idx = usb_device->trb_event_index;
 			usb_device->trb_event_index = -1;
 			usb_device->poll_return_trb_type = -1;
 			return idx;
 		}
+		if (timeout <= 0)
+			break;
+		x86_64_udelay(100);
 		timeout--;
 	}
 

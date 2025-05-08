@@ -19,11 +19,15 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="audioCtrl.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="traybutton.cpp" />
+    <ClCompile Include="traygraphics.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="audioCtrl.h" />
     <ClInclude Include="systray.h" />
+    <ClInclude Include="traygraphics.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{AF79F28C-7E9C-4B35-8559-E18EF40C5E2A}</ProjectGuid>
@@ -94,7 +98,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>false</SDLCheck>
       <AdditionalIncludeDirectories>..\..\Libs\XEClib\includes;..\..\Libs\Chitralekha;..\..\Ports\freetype2\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>ARCH_X64;YES_DYNAMIC; DYNAMIC_IMPORTER ;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>ARCH_X64;YES_DYNAMIC;DYNAMIC_IMPORTER;NANOSVG_IMPLEMENTATION;NANOSVGRAST_IMPLEMENTATION;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <IgnoreStandardIncludePath>true</IgnoreStandardIncludePath>
       <ExceptionHandling>false</ExceptionHandling>
       <BasicRuntimeChecks />
@@ -115,8 +119,8 @@
       <EnableUAC>false</EnableUAC>
       <GenerateMapFile>true</GenerateMapFile>
       <MapExports>true</MapExports>
-      <SubSystem>Native</SubSystem>
-      <Driver>Driver</Driver>
+      <SubSystem>NotSet</SubSystem>
+      <Driver>NotSet</Driver>
       <LargeAddressAware>true</LargeAddressAware>
       <OptimizeReferences>false</OptimizeReferences>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>

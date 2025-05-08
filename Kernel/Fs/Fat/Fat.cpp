@@ -354,6 +354,12 @@ size_t FatReadFile(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint32_t 
 		
 	}
 
+	/* Okay, might be we read one block, but length was less
+	 * then 4KiB, just return that length 
+	 */
+	if (length < ret_bytes)
+		ret_bytes = length;
+
 	return ret_bytes;
 }
 

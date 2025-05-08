@@ -49,6 +49,12 @@ typedef struct _slider_ {
 	float currentVal;
 	int progressPixel;
 	float stepSize;
+	bool thumbVisible;
+	bool useCustomColor;
+	/* Custom Color gradient */
+	uint32_t customColor1;
+	uint32_t customColor2;
+	uint32_t outlineColor;
 	uint8_t type;
 }ChSlider;
 

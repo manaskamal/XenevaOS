@@ -30,6 +30,8 @@
 #ifndef __PS2KYBRD_H__
 #define __PS2KYBRD_H__
 
+#include <aurora.h>
+
 enum KEYCODE {
 	KEY_SPACE = ' ',
 	KEY_0 = '0',
@@ -187,5 +189,6 @@ enum KEYCODE {
 * ps2 kybrd
 */
 extern void AuPS2KybrdInitialize();
+
 
 #endif

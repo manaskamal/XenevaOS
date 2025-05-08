@@ -51,6 +51,8 @@ FILE* fopen(const char* name, const char* mode) {
 		mode_ |= FILE_OPEN_WRITE;
 	else if (strcmp(mode, "w+") == 0)
 		mode_ |= FILE_OPEN_WRITE | FILE_OPEN_CREAT;
+	else if (strcmp(mode, "wb") == 0)
+		mode_ |= FILE_OPEN_WRITE | FILE_OPEN_CREAT;
 
 	if (mode_ == 0)
 		mode_ |= FILE_OPEN_WRITE | FILE_OPEN_CREAT;
@@ -103,6 +105,7 @@ size_t fread(void* ptr, size_t sz, size_t nmemb, FILE* stream) {
 		fd = stream->_file_num;
 	_KePrint("Reading fopen fread %d %d\r\n", fd, (nmemb*sz));
 	size_t ret_bytes = _KeReadFile(fd, ptr, _length);
+	_KePrint("Returned bytes %d \r\n", ret_bytes);
 	return ret_bytes;
 }
 
@@ -194,8 +197,8 @@ int fseek(FILE* fp, long int offset, int pos) {
 		fp->curr_pos = newPos;
 		break;
 	case SEEK_END:
-		fp->pos = (fp->base + fp->size - 1);
-		newPos = fp->size - 1;
+		fp->pos = (fp->base + fp->size);
+		newPos = fp->size;
 		fp->curr_pos = newPos;
 		break;
 	}

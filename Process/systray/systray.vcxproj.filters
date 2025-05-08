@@ -3,8 +3,12 @@
   <ItemGroup>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="traybutton.cpp" />
+    <ClCompile Include="traygraphics.cpp" />
+    <ClCompile Include="audioCtrl.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="systray.h" />
+    <ClInclude Include="traygraphics.h" />
+    <ClInclude Include="audioCtrl.h" />
   </ItemGroup>
 </Project>

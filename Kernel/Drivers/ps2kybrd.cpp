@@ -38,6 +38,7 @@
 #include <Hal\serial.h>
 #include <aucon.h>
 #include <Fs\Dev\devinput.h>
+#include <Drivers/ps2kybrd.h>
 
 
 /*

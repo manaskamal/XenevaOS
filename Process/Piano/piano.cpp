@@ -75,7 +75,7 @@ int main(int argc, char* arv[]) {
 	_KeFileIoControl(postbox, POSTBOX_CREATE, NULL);
 
 
-	DeodhaiAudioBox* audioBox = DeodhaiAudioOpenConnection(postbox, DEODHAI_AUDIO_STEREO);
+	DeodhaiAudioBox* audioBox = DeodhaiAudioOpenConnection(postbox, DEODHAI_AUDIO_STEREO, DEODHAI_CONNECTION_TYPE_NORMAL);
 	printf("piano : audio connection initiated successfully \n");
 
 	int sampleCount = (int)(1.0f * SAMPLE_RATE);

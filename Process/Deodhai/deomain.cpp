@@ -86,6 +86,7 @@ Window* rootWin;
 Window* lastWin;
 Window* alwaysOnTop;
 Window* alwaysOnTopLast;
+Window* mouseLastHovered;
 ChCanvas* canvas;
 uint32_t* surfaceBuffer;
 bool _shadow_update;
@@ -1204,14 +1205,15 @@ void ComposeFrame(ChCanvas *canvas) {
 /*
  * DeodhaiSendMouseEvent -- send mouse event to desired window
  * @param win -- Pointer to window
+ * @param eventType -- either MOUSE_EVENT or MOUSE_LEAVE 
  * @param x -- Mouse x location
  * @param y -- Mouse y location
  * @param button -- Mouse button state
  */
-void DeodhaiSendMouseEvent(int handle,int ownerId,uint8_t handleType, int x, int y, int button){
+void DeodhaiSendMouseEvent(int handle,int ownerId,uint8_t handleType,uint8_t eventType, int x, int y, int button){
 	PostEvent e;
 	memset(&e, 0, sizeof(PostEvent));
-	e.type = DEODHAI_REPLY_MOUSE_EVENT;
+	e.type = eventType;
 	e.dword = x;
 	e.dword2 = y;
 	e.dword3 = button;
@@ -1292,7 +1294,21 @@ broadcast:
 		uint8_t handleType = HANDLE_TYPE_NORMAL_WINDOW;
 		if ((mouseWin->flags & WINDOW_FLAG_POPUP))
 			handleType = HANDLE_TYPE_POPUP_WINDOW;
-		DeodhaiSendMouseEvent(handle,mouseWin->ownerId, handleType,mouse_x, mouse_y, button);
+
+		/* handle mouse last window hover */
+		if (mouseLastHovered) {
+			if (mouseLastHovered != mouseWin) {
+				int lastWinHandleType = HANDLE_TYPE_NORMAL_WINDOW;
+				if ((mouseLastHovered->flags & WINDOW_FLAG_POPUP))
+					lastWinHandleType = HANDLE_TYPE_POPUP_WINDOW;
+				DeodhaiSendMouseEvent(mouseLastHovered->handle, mouseLastHovered->ownerId, lastWinHandleType,
+					DEODHAI_REPLY_MOUSE_LEAVE, mouse_x, mouse_y, button);
+			//	_KeProcessSleep(100);
+			}
+		}
+
+		mouseLastHovered = mouseWin;
+		DeodhaiSendMouseEvent(handle,mouseWin->ownerId, handleType,DEODHAI_REPLY_MOUSE_EVENT,mouse_x, mouse_y, button);
 	}
 }
 
@@ -1515,7 +1531,7 @@ int main(int argc, char* arv[]) {
 		surfaceBuffer[j * canv->canvasWidth + i] = GRAY; //0xFF938585;
 
 	DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
-	DrawWallpaper(canv, "/XEArch.jpg");
+	DrawWallpaper(canv, "/nature.jpg");
 	DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
 	ChCanvasScreenUpdate(canv, 0, 0, canv->canvasWidth, canv->canvasHeight);
 
@@ -1537,6 +1553,8 @@ int main(int argc, char* arv[]) {
 	postbox_fd = _KeOpenFile("/dev/postbox", FILE_OPEN_READ_ONLY);
 
 	_KeFileIoControl(postbox_fd, POSTBOX_CREATE_ROOT, NULL);
+
+	mouseLastHovered = NULL;
 
 	PostEvent event;
 	uint64_t frame_tick = 0;
@@ -1669,7 +1687,8 @@ int main(int argc, char* arv[]) {
 			_KeFileIoControl(postbox_fd, POSTBOX_PUT_EVENT, &e);
 			
 		//	_KeProcessSleep(180);
-			if (!(win->flags & WINDOW_FLAG_MESSAGEBOX || win->flags & WINDOW_FLAG_POPUP)){
+			if (!(win->flags & WINDOW_FLAG_MESSAGEBOX || win->flags & WINDOW_FLAG_POPUP || 
+				win->flags & WINDOW_FLAG_BROADCAST_LISTENER)){
 				/* broadcast it to all broadcast listener windows, about this news*/
 				memset(&e, 0, sizeof(PostEvent));
 				e.type = DEODHAI_BROADCAST_WINCREATED;

@@ -65,7 +65,6 @@ void USBGetDeviceDesc(AuUSBDevice *usbdev, uint64_t buffer, uint16_t len) {
 	pack.value = USB_DESCRIPTOR_WVALUE(USB_DESCRIPTOR_DEVICE, 0);
 	pack.index = 0;
 	pack.length = len;
-
 	XHCISendControlCmd(dev, slot, slot_id, &pack, buffer, len);
 }
 

@@ -46,7 +46,7 @@ struct SortableArray {
 
 static ssize_t partition(struct SortableArray * array, ssize_t lo, ssize_t hi) {
 
-	char pivot[100];
+	char* pivot = (char*)malloc(array->size);
 	memcpy(pivot, (char *)array->data + array->size * hi, array->size);
 	ssize_t i = lo - 1;
 	for (ssize_t j = lo; j <= hi; ++j) {
@@ -63,6 +63,7 @@ static ssize_t partition(struct SortableArray * array, ssize_t lo, ssize_t hi) {
 			}
 		}
 	}
+	free(pivot);
 	return i;
 }
 

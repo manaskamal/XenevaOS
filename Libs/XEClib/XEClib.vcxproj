@@ -211,7 +211,10 @@
     <ClInclude Include="includes\_xeprint.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="acosf.cpp" />
     <ClCompile Include="arpa\inet.cpp" />
+    <ClCompile Include="atan2f.cpp" />
+    <ClCompile Include="atanf.cpp" />
     <ClCompile Include="c++\ios.cpp" />
     <ClCompile Include="c++\iostream.cpp" />
     <ClCompile Include="c++\istream.cpp" />
@@ -219,10 +222,13 @@
     <ClCompile Include="c++\new.cpp" />
     <ClCompile Include="c++\ostream.cpp" />
     <ClCompile Include="c++\_string.cpp" />
+    <ClCompile Include="ceilf.cpp" />
     <ClCompile Include="ctype.cpp" />
     <ClCompile Include="errno.cpp" />
+    <ClCompile Include="fmodf.cpp" />
     <ClCompile Include="math.cpp" />
     <ClCompile Include="qsort.cpp" />
+    <ClCompile Include="roundf.cpp" />
     <ClCompile Include="stat.cpp" />
     <ClCompile Include="stdio.cpp" />
     <ClCompile Include="stdlib.cpp" />

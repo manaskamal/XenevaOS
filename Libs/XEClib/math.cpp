@@ -115,6 +115,8 @@ float cosf(float radians) {
 	return (result);
 }
 
+
+
 double fabs(double x) {
 	if (x < 0)
 		return (x *= -1.0);
@@ -324,4 +326,25 @@ double frexp(double x, int *exp) {
 	double out;
 	memcpy(&out, &out_double, sizeof(double));
 	return out;
+}
+
+XE_EXTERN XE_EXPORT int fpclassify(double x) {
+	typedef union {
+		double asFloat;
+		uint64_t asInt;
+	}bits_t;
+	bits_t bits;
+	memset(&bits, 0, sizeof(bits_t));
+	bits.asFloat = x;
+	uint64_t exponent = (bits.asInt >> 52) & 0x7FF;
+	uint64_t mantissa = (bits.asInt & 0xFffffFFFFffffULL);
+
+	if (exponent == 0x7FF) {
+		return mantissa ? FP_NAN : FP_INFINITE;
+	}
+	else if (exponent == 0) {
+		return mantissa ? FP_SUBNORMAL : FP_ZERO;
+	}
+
+	return FP_NORMAL;
 }

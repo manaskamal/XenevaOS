@@ -83,7 +83,7 @@ int main(int argc, char* arv[]){
 	_KeFileIoControl(postbox, POSTBOX_CREATE, NULL);
 	
 	
-	DeodhaiAudioBox* audioBox = DeodhaiAudioOpenConnection(postbox, DEODHAI_AUDIO_STEREO);
+	DeodhaiAudioBox* audioBox = DeodhaiAudioOpenConnection(postbox, DEODHAI_AUDIO_STEREO, DEODHAI_CONNECTION_TYPE_NORMAL);
 	printf("play: audio connection initiated successfully \n");
 
 
@@ -101,11 +101,6 @@ int main(int argc, char* arv[]){
 	memset(songbuf, 0, 4096);
 	_KeReadFile(song, songbuf, 4096);
 	uint8_t* alignedSongBuf = (uint8_t*)songbuf;
-
-	FILE* fv = fopen("agol1.mp4", "w+");
-	if (fv) {
-		fwrite(songbuf, sizeof(char), 4096, fv);
-	}
 
 	XEFileStatus fs;
 	_KeFileStat(song, &fs);
@@ -130,12 +125,12 @@ int main(int argc, char* arv[]){
 			//_KeWriteFile(snd, songbuf, 4096);
 			if (!audioBox->ctlPanel->Samplefull) {
 				_KeReadFile(song, songbuf, 4096);
-				//DeodhaiAudioWrite(audioBox, songbuf);
-				fwrite(songbuf, sizeof(char), 4096, fv);
+				DeodhaiAudioWrite(audioBox, songbuf);
 			}
 			else {
 				_KeProcessSleep(120);
 			}
 		}
+		_KeProcessSleep(10);
 	}
 }

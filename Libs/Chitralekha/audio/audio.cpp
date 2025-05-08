@@ -34,8 +34,9 @@
  * audio server
  * @param postbox -- postbox file descriptor 
  * @param numChannel -- number of channel -- 1 for MONO, 2 for STEREO
+ * @param connectionType -- 0 -- NORMAL connection, 1 -- GLOBAL connection
  */
-DeodhaiAudioBox* DeodhaiAudioOpenConnection(int postbox, uint8_t numChannel) {
+DeodhaiAudioBox* DeodhaiAudioOpenConnection(int postbox, uint8_t numChannel, uint8_t connectionType) {
 	int pipe = _KeOpenFile("/pipe/DeodhaiAudio", FILE_OPEN_READ_ONLY);
 	if (pipe == -1) {
 		printf("DeodhaiAudo Connection failed : pipe -> %d \n", pipe);
@@ -50,7 +51,11 @@ DeodhaiAudioBox* DeodhaiAudioOpenConnection(int postbox, uint8_t numChannel) {
 
 	/* Open up the connection */
 	DeodhaiAudioMessage* msg = (DeodhaiAudioMessage*)malloc(sizeof(DeodhaiAudioMessage));
-	strcpy(msg->message, DEODHAI_GET_AUDIO_CONNECTION);
+	if (connectionType == DEODHAI_CONNECTION_TYPE_NORMAL)
+		strcpy(msg->message, DEODHAI_GET_AUDIO_CONNECTION);
+	else if (connectionType == DEODHAI_CONNECTION_TYPE_GLOBAL)
+		strcpy(msg->message, DEODHAI_AUDIO_GET_GLOBAL_CONNECTION);
+
 	msg->fromProcessId = threadID;
 	msg->toProcessId = 0;
 	_KeWriteFile(pipe, msg, sizeof(DeodhaiAudioMessage));
@@ -61,7 +66,7 @@ DeodhaiAudioBox* DeodhaiAudioOpenConnection(int postbox, uint8_t numChannel) {
 		_KeFileIoControl(postbox, POSTBOX_GET_EVENT, &e);
 		if (e.type != 0) {
 			if (e.type == 11) {
-				printf("DeodhaiAudio Handshake received \n");
+				_KePrint("DeodhaiAudio Handshake received \n");
 				uint16_t controlPanelKey = e.dword;
 				uint16_t sampleBufferKey = e.dword2;
 				int id = _KeCreateSharedMem(controlPanelKey, 0, 0);

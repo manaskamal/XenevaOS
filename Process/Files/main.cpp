@@ -49,6 +49,7 @@
 #include <time.h>
 #include <widgets\menu.h>
 #include "partition.h"
+#include <widgets/base.h>
 
 ChitralekhaApp *app;
 ChWindow* mainWin;
@@ -177,6 +178,10 @@ void WindowHandleMessage(PostEvent *e) {
 										 ChWindowHandleFocus(focWin, focus_val, handle);
 										 memset(e, 0, sizeof(PostEvent));
 										 break;
+	}
+	case DEODHAI_REPLY_MOUSE_LEAVE: {
+		memset(e, 0, sizeof(PostEvent));
+		break;
 	}
 	}
 }

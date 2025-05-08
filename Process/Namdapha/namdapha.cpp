@@ -210,20 +210,25 @@ void NamdaphaHandleMessage(PostEvent *e) {
 								break;
 	}
 		/* handle mouse event from deodhai */
-	case DEODHAI_REPLY_MOUSE_EVENT:{
-									   ChWindow* handlerWin = NULL;
-									   uint32_t handle = e->dword4;
-									   for (int i = 0; i < windowList->pointer; i++) {
-										   ChWindow* win = (ChWindow*)list_get_at(windowList, i);
-										   if (win->handle == handle){
-											   handlerWin = win;
-											   break;
-										   }
-									   }
-									   if (handlerWin) 
-										   NamdaphaMouseHandler(handlerWin, e->dword, e->dword2, e->dword3, 0);
-									   memset(e, 0, sizeof(PostEvent));
-									   break;
+	case DEODHAI_REPLY_MOUSE_EVENT: {
+		ChWindow* handlerWin = NULL;
+		uint32_t handle = e->dword4;
+		for (int i = 0; i < windowList->pointer; i++) {
+			ChWindow* win = (ChWindow*)list_get_at(windowList, i);
+			if (win->handle == handle) {
+				handlerWin = win;
+				break;
+			}
+		}
+		if (handlerWin)
+			NamdaphaMouseHandler(handlerWin, e->dword, e->dword2, e->dword3, 0);
+		memset(e, 0, sizeof(PostEvent));
+		break;
+	}
+
+	case DEODHAI_REPLY_MOUSE_LEAVE: {
+		memset(e, 0, sizeof(PostEvent));
+		break;
 	}
 		/* handle key events from deodhai */
 	case DEODHAI_REPLY_KEY_EVENT:{

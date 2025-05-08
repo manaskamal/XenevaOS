@@ -61,6 +61,7 @@ XE_EXTERN{
 	XE_LIB char* strtok(char*, const char*);
 	XE_LIB char* strtok_r(char*, const char*, char **);
 	XE_LIB char* strstr(const char* s1, const char* s2);
+	XE_LIB long long int strtoll(const char* string, char** endString, int base);
 
 #define index(str, chr) strchr(str, chr)
 #define rindex(str, chr) strrchr(str, chr)

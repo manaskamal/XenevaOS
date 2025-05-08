@@ -49,17 +49,20 @@ void ChSliderMouseEvent(ChWidget* widget, ChWindow* win, int x, int y, int butto
 		if (slider->type == CHITRALEKHA_SLIDER_VERTICAL){
 			slider->thumbY = y - (win->info->y + widget->y + 15 / 2);
 			slider->progressPixel = slider->thumbY;
-
+			
 			//! update the current values
-			if (slider->thumbY < slider->lastThumbY) {
-				slider->currentVal += slider->stepSize;
-				if (slider->currentVal >= slider->max)
-					slider->currentVal = slider->max;
-			}else if (slider->lastThumbY > slider->thumbY) {
-				slider->currentVal -= slider->stepSize;
-				if (slider->currentVal <= slider->min)
-					slider->currentVal = slider->min;
-			}
+			//if (slider->thumbY < slider->lastThumbY) {
+			//	slider->currentVal = ((float)slider->thumbY / (float)slider->base.h); //+= slider->stepSize;
+			//	/*if (slider->currentVal >= slider->max)
+			//		slider->currentVal = slider->max;*/
+			//}else if (slider->lastThumbY < slider->thumbY) {
+			//	slider->currentVal -= slider->stepSize;
+			//	if (slider->currentVal <= slider->min)
+			//		slider->currentVal = slider->min;
+			//}
+
+			float ratio = 1.0f - ((float)slider->thumbY / (float)slider->base.h);
+			slider->currentVal = slider->min + ratio * (slider->max - slider->min);
 
 			if ((win->info->y + widget->y + slider->thumbY) <= (win->info->y + widget->y))
 				slider->thumbY = 0;
@@ -127,24 +130,42 @@ ChSlider *ChCreateSlider(uint8_t sliderType, int x, int y, int length) {
 	memset(slider, 0, sizeof(ChSlider));
 	slider->base.x = x;
 	slider->base.y = 26 + y;
+	slider->thumbVisible = true;
+	slider->useCustomColor = 0;
 	switch (sliderType){
 	case CHITRALEKHA_SLIDER_VERTICAL:
 		slider->base.w = 10;
 		slider->base.h = length;
 		slider->thumbY = slider->base.h - 15;
-		slider->bound.x = slider->base.x - 5;
-		slider->bound.w = slider->base.w + 5 * 2;
-		slider->bound.y = slider->base.y;
-		slider->bound.h = slider->base.h;
+		if (slider->thumbVisible) {
+			slider->bound.x = slider->base.x - 5;
+			slider->bound.w = slider->base.w + 5 * 2;
+			slider->bound.y = slider->base.y;
+			slider->bound.h = slider->base.h;
+		}
+		else {
+			slider->bound.x = slider->base.x;
+			slider->bound.w = slider->base.w; // +5 * 2;
+			slider->bound.y = slider->base.y;
+			slider->bound.h = slider->base.h;
+		}
 		break;
 	case CHITRALEKHA_SLIDER_HORIZONTAL:
 		slider->base.w = length;
 		slider->base.h = 10;
 		slider->thumbX = 0;
-		slider->bound.x = slider->base.x;
-		slider->bound.w = slider->base.w;
-		slider->bound.y = slider->base.y - 5;
-		slider->bound.h = slider->base.h + 5 * 2;
+		if (slider->thumbVisible) {
+			slider->bound.x = slider->base.x;
+			slider->bound.w = slider->base.w;
+			slider->bound.y = slider->base.y - 5;
+			slider->bound.h = slider->base.h + 5 * 2;
+		}
+		else {
+			slider->bound.x = slider->base.x;
+			slider->bound.w = slider->base.w; // +5 * 2;
+			slider->bound.y = slider->base.y;
+			slider->bound.h = slider->base.h;
+		}
 		break;
 	}
 
@@ -154,6 +175,7 @@ ChSlider *ChCreateSlider(uint8_t sliderType, int x, int y, int length) {
 	slider->base.ChPaintHandler = ChDefaultSliderPainter;
 	slider->stepSize = 1.0;
 	slider->min = 0.0;
+	slider->currentVal = slider->min;
 	slider->max = 100.0;
 	return slider;
 }
@@ -234,6 +256,7 @@ float ChSliderGetMax(ChSlider* slider){
  */
 void ChSliderSetMin(ChSlider* slider, float min) {
 	slider->min = min;
+	slider->currentVal = slider->min;
 }
 
 /*

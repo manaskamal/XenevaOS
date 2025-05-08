@@ -31,6 +31,8 @@
 #define __MATH_H__
 
 #include <_xeneva.h>
+#include <stdint.h>
+#include <string.h>
 
 #ifdef __cplusplus
 XE_EXTERN{
@@ -51,8 +53,131 @@ XE_EXTERN{
 #define M_SQRT2     1.41421356237309504880 // sqrt(2)
 #define M_SQRT1_2   0.70710678118654752440 // 1/sqrt(2)
 
+typedef union {
+	float f;
+	uint32_t i;
+}float_bits_t;
+
+typedef union {
+	double d;
+	uint64_t i;
+}double_bits_t;
+
+//#define asuint(f) ((union{float _f; uint32_t _i;}){f})._i
+static inline uint32_t asuint(float f) {
+	float_bits_t u;
+	memset(&u, 0, sizeof(float_bits_t));
+	u.f = f;
+	return u.i;
+}
+
+static inline float asfloat(uint32_t u) {
+	float_bits_t fb;
+	memset(&fb, 0, sizeof(float_bits_t));
+	fb.i = u;
+	return fb.f;
+}
+
+static inline uint64_t asuint64(double d) {
+	double_bits_t db;
+	memset(&db, 0, sizeof(double_bits_t));
+	db.d = d;
+	return db.i;
+}
+
+static inline double asdouble(uint64_t u) {
+	double_bits_t db;
+	memset(&db, 0, sizeof(double_bits_t));
+	db.i = u;
+	return db.d;
+}
+
+
+#define EXTRACT_WORDS(hi,lo,d)                    \
+do {                                              \
+  uint64_t __u = asuint64(d);                     \
+  (hi) = __u >> 32;                               \
+  (lo) = (uint32_t)__u;                           \
+} while (0)
+
+#define GET_HIGH_WORD(hi,d)                       \
+do {                                              \
+  (hi) = asuint64(d) >> 32;                       \
+} while (0)
+
+#define GET_LOW_WORD(lo,d)                        \
+do {                                              \
+  (lo) = (uint32_t)asuint64(d);                   \
+} while (0)
+
+#define INSERT_WORDS(d,hi,lo)                     \
+do {                                              \
+  (d) = asdouble(((uint64_t)(hi)<<32) | (uint32_t)(lo)); \
+} while (0)
+
+#define SET_HIGH_WORD(d,hi)                       \
+  INSERT_WORDS(d, hi, (uint32_t)asuint64(d))
+
+#define SET_LOW_WORD(d,lo)                        \
+  INSERT_WORDS(d, asuint64(d)>>32, lo)
+
+#define GET_FLOAT_WORD(w,d)                       \
+do {                                              \
+  (w) = asuint(d);                                \
+} while (0)
+
+#define SET_FLOAT_WORD(d,w)                       \
+do {                                              \
+  (d) = asfloat(w);                               \
+} while (0)
+
+enum {
+	FP_NAN,
+	FP_INFINITE,
+	FP_ZERO,
+	FP_SUBNORMAL,
+	FP_NORMAL
+};
+
+
+static inline void fp_force_evalf(float x) {
+	volatile float y;
+	y = x;
+}
+
+static inline void fp_force_eval(double x) {
+	volatile double y;
+	y = x;
+}
+
+static inline void fp_force_evall(long double x) {
+	volatile long double y;
+	y = x;
+}
+XE_EXTERN XE_EXPORT int fpclassify(double x);
+
+#define isfinite(x) ((fpclassify(x) != FP_NAN && fpclassify(x) != FP_INFINITE))
+#define isnormal(x) (fpclassify(x) == FP_NORMAL)
+#define isnan(x) (fpclassify(x) == FP_NAN)
+#define isinf(x) (fpclassify(x) == FP_INFINITE)
+
+#define FORCE_EVAL(x) do { \
+ if (sizeof(x) == sizeof(float)){ \
+     _KePrint("Evaluating float \r\n"); \
+     fp_force_evalf(x); \
+ }else if (sizeof(x) == sizeof(double)) { \
+     _KePrint("FORCE EVAL double \r\n"); \
+     fp_force_eval(x);    \
+ } else {    \
+     _KePrint("Force eval long \r\n"); \
+     fp_force_evall(x); \
+ }   \
+}while(0)
+
 	XE_LIB double ceil(double);
+	XE_LIB float ceilf(float x);
 	XE_LIB double cos(double);
+	XE_LIB float acosf(float x);
 	XE_LIB float cosf(float);
 	XE_LIB double fabs(double);
 	XE_LIB float fabsf(float);
@@ -60,6 +185,7 @@ XE_EXTERN{
 	XE_LIB float floorf(float);
 	XE_LIB double fmod(double, double);
 	XE_LIB double modf(double, double *);
+	XE_LIB float fmodf(float x, float y);
 	XE_LIB double pow(double, double);
 	XE_LIB double sin(double);
 	XE_LIB float sinf(float);
@@ -67,7 +193,10 @@ XE_EXTERN{
 	XE_LIB float sqrtf(float x);
 	XE_LIB double tan(double);
 	XE_LIB float tanf(float);
+	XE_LIB float atanf(float x);
+	XE_LIB float atan2f(float y, float x);
 	XE_LIB double frexp(double x, int *exp);
+	XE_LIB float roundf(float x);
 
 #ifdef __cplusplus
 }

@@ -241,7 +241,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
 	XEFile* kApCode = XEOpenAndReadFile(ImageHandle, (CHAR16*)L"\\EFI\\XENEVA\\ap.bin");
 	XEFile* kAhci = XEOpenAndReadFile(ImageHandle, (CHAR16*)L"\\ahci.dll");
 	XEFile* kNvme = XEOpenAndReadFile(ImageHandle, (CHAR16*)L"\\nvme.dll");
-	XEFile* kXHCI = XEOpenAndReadFile(ImageHandle, (CHAR16*)L"\\xhci.dll");
+	//XEFile* kXHCI = XEOpenAndReadFile(ImageHandle, (CHAR16*)L"\\xhci.dll");
 	
 
 	uint8_t* allignedKernelBuffer = (uint8_t*)krnl->kBuffer;
@@ -323,7 +323,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
 
 	uint64_t ahciAddr = XEPELoadDLLImage(kAhci->kBuffer);
 	uint64_t nvmeAddr = XEPELoadDLLImage(kNvme->kBuffer);
-	uint64_t xhciAddr = XEPELoadDLLImage(kXHCI->kBuffer);
+	//uint64_t xhciAddr = XEPELoadDLLImage(kXHCI->kBuffer);
 	
 	
 	
@@ -359,7 +359,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
 	bootinfo.font_binary_address = (uint8_t*)kfont->kBuffer;
 	bootinfo.driver_entry1 = (uint8_t*)ahciAddr;
 	bootinfo.driver_entry2 = (uint8_t*)nvmeAddr;
-	bootinfo.driver_entry3 = (uint8_t*)xhciAddr;// usbAddr;
+	bootinfo.driver_entry3 = 0; // (uint8_t*)xhciAddr;// usbAddr;
 	bootinfo.driver_entry4 = 0;
 	bootinfo.driver_entry5 = 0;
 	bootinfo.driver_entry6 = 0;

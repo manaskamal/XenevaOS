@@ -62,6 +62,7 @@ int OpenFile(char* filename, int mode) {
 	bool created = false;
 	if (!file) {
 		if (mode & FILE_OPEN_CREAT || mode & FILE_OPEN_WRITE) {
+			SeTextOut("Creating file %s \r\n", filename);
 			file = AuVFSCreateFile(fsys, filename);
 			created = true;
 		}

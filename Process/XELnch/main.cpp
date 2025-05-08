@@ -82,6 +82,10 @@ void XenevaLauncherHandleMessage(PostEvent *e) {
 									   memset(e, 0, sizeof(PostEvent));
 									   break;
 	}
+	case DEODHAI_REPLY_MOUSE_LEAVE: {
+		memset(e, 0, sizeof(PostEvent));
+		break;
+	}
 	}
 }
 

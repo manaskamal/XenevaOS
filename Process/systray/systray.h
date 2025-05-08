@@ -35,10 +35,27 @@
 #include <widgets/icon.h>
 #include <widgets/window.h>
 
+#define TRAY_BUTTON_TYPE_ONOFF 1
+#define TRAY_BUTTON_TYPE_NORMAL 0
+
 typedef struct _tray_but_{
 	ChWidget base;
 	ChIcon* icon;
 	char* title;
+	uint8_t frameCount;
+	uint8_t currentFrame;
+	uint8_t type;
+	bool onoff;
 }TrayButton;
 
+extern void TrayButtonInitialize();
+/*
+ * TrayCreateButton -- create a tray button
+ * @param title -- title of the button
+ * @param x -- X location of the button
+ * @param y -- Y location of the button
+ * @param width -- Width of the button
+ * @param height -- Height of the button
+ */
+extern TrayButton* TrayCreateButton(char* title, int x, int y, int width, int height);
 #endif

@@ -557,6 +557,21 @@ char *strtok_r(char *string, const char *delim, char **saveptr){
 	return (token);
 }
 
+long long int strtoll(const char* string, char** endString, int base) {
+	long int ret = 0;
+	int consumed = 0;
+
+	if (!string)
+		return 0;
+
+	ret = (long long int) _str2num(string, base, 1, &consumed);
+	
+	if (endString)
+		*endString = ((char*)string + consumed);
+
+	return (ret);
+}
+
 
 //!===========================================================
 //!==========================================================

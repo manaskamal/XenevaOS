@@ -42,6 +42,7 @@
 #include <Drivers/usb.h>
 #include <aucon.h>
 #include <Hal/apic.h>
+#include <Drivers/ps2kybrd.h>
 #include <Hal/x86_64_cpu.h>
 
 XHCIDevice* xhcidev;
@@ -58,11 +59,9 @@ list_t* deviceHotPlugList;
  * in future: it will be moved to new file
  */
 void AnuvabUSB3Thread(uint64_t value) {
-	AuTextOut("Anuvab USB running \n");
 	/* Initialize all ports */
 	while (1) {
 		if (usbThreadCmd == USB_THREAD_MSG_PORT_CHANGE) {
-			AuTextOut("Handling USB Port change \n");
 			XHCIPortInitialise(xhcidev, portNum);
 			usbThreadCmd = NULL;
 		}
@@ -95,19 +94,16 @@ AU_EXTERN AU_EXPORT int AuDriverUnload() {
  * structure
  */
 void XHCIReset(XHCIDevice* dev) {
-	AuTextOut("Reseting \n");
-	/*dev->op_regs->op_usbcmd &= ~(1 << 0);
-	while (!(dev->op_regs->op_usbsts & (1 << 0)));*/
+	dev->op_regs->op_usbcmd &= ~(1 << 0);
+	while (!(dev->op_regs->op_usbsts & (1 << 0)));
 	dev->op_regs->op_usbcmd |= (1 << 1);
 
 	if (dev->vendor == XHCI_VENDOR_INTEL) {
 		AuEnableInterrupt();
-		APICTimerSleep(8);
+		x86_64_udelay(1000*500);
 		AuDisableInterrupt();
 	}
-	AuTextOut("Reset command wrote \n");
 	while ((dev->op_regs->op_usbcmd & (1 << 1)));
-	AuTextOut("Waiting for CNR bit in USBSTS \n");
 	while ((dev->op_regs->op_usbsts & (1 << 11))); //The CNR flag check in USBSTS
 }
 
@@ -216,9 +212,6 @@ void XHCIHandleEventInterrupt() {
 	uint64_t erdp = (uint64_t)xhcidev->event_ring_seg_phys;
 
 	while ((event[xhcidev->evnt_ring_index].trb_control & (1 << 0)) == xhcidev->evnt_ring_cycle) {
-		for (int l = 0; l < 100000; l++)
-			;
-
 		//SeTextOut("Event ring interrupt %d\r\n", evt[xhcidev->evnt_ring_index].trbType);
 
 		/*  TRANSFER EVENT INTERRUPT */
@@ -227,8 +220,6 @@ void XHCIHandleEventInterrupt() {
 			uint8_t comp_code = (event[xhcidev->evnt_ring_index].trb_status >> 24) & 0xff;
 			uint8_t slot_id = (event[xhcidev->evnt_ring_index].trb_control >> 24) & 0xff;
 			uint64_t data = (event[xhcidev->evnt_ring_index].trb_param_1 | event[xhcidev->evnt_ring_index].trb_param_2);
-
-			AuTextOut("TRB Event available TRB_EVENT_TRSNSFER \n");
 			xhcidev->event_available = true;
 			xhcidev->poll_return_trb_type = TRB_EVENT_TRANSFER;
 			xhcidev->trb_event_index = xhcidev->evnt_ring_index;
@@ -250,8 +241,9 @@ void XHCIHandleEventInterrupt() {
 		 */
 		if (evt[xhcidev->evnt_ring_index].trbType == TRB_EVENT_PORT_STATUS_CHANGE) {
 			if (xhcidev->initialised) {
+
 				uint32_t port = event[xhcidev->evnt_ring_index].trb_param_1 >> 24;
-				hotPlug = true;
+				//hotPlug = true;
 				usbThreadCmd = USB_THREAD_MSG_PORT_CHANGE;
 				portNum = port;
 
@@ -293,7 +285,6 @@ void XHCIHandleEventInterrupt() {
 						}
 					}
 
-					AuTextOut("Port hotplug initialized %d\n", portNum);
 				}
 			}
 		}
@@ -304,7 +295,6 @@ void XHCIHandleEventInterrupt() {
 		 */
 		if (evt[xhcidev->evnt_ring_index].trbType == TRB_EVENT_CMD_COMPLETION) {
 			xhcidev->event_available = true;
-			AuTextOut("TRB Event available TRB_CMD_COMPLETION \n");
 			xhcidev->poll_return_trb_type = TRB_EVENT_CMD_COMPLETION;
 			xhcidev->trb_event_index = xhcidev->evnt_ring_index;
 			xhci_trb_t* trb = (xhci_trb_t*)&evt[xhcidev->evnt_ring_index];
@@ -424,7 +414,6 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 
 	if (AuCheckDevice(0x0C, 0x03, 0x30)) {
 		AuTextOut("Already USB Driver installed \n");
-		for (;;);
 		return 1;
 	}
 
@@ -521,7 +510,6 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 	//XHCIBiosHandoff(ext_cap);
 
 	XHCIReset(xhcidev);
-	AuTextOut("XHCI Reset completed %d\n", xhcidev->num_slots);
 
 	uint32_t cfg = op->op_config;
 	cfg &= ~0xFF;
@@ -533,13 +521,11 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 
 	XHCICommandRingInit(xhcidev);
 
-
 	setvect(76, XHCIInterrupt);
 	AuPCIEAllocMSI(device, 76, bus, dev, func);
 
 	XHCIEventRingInit(xhcidev);
 
-	AuTextOut("XHCI Command/Event ring initialized \n");
 
 	/* temporarily enable interrupts, because
 	 * we need to send commands and receive
@@ -547,15 +533,13 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 	 */
 	AuEnableInterrupt();
 
-	//APICTimerSleep(100);
-
-	XHCISendNoopCmd(xhcidev);
-	int tidx = XHCIPollEvent(xhcidev, TRB_EVENT_CMD_COMPLETION);
-	//XHCIStartDefaultPorts(xhcidev);
+	x86_64_udelay(1000);
+	//APICTimerSleep(1000 * 800);
+	
+	XHCIStartDefaultPorts(xhcidev);
 
 	AuThread* t = AuCreateKthread(AnuvabUSB3Thread, P2V((uint64_t)AuPmmngrAlloc() + 4096), (uint64_t)AuGetRootPageTable(), "AnubhavUsb");
 	xhcidev->usbThread = t;
-	AuTextOut("USB Thread created \n");
 
 	/* Disable all interrupts again because
 	* scheduler will enable them all */
@@ -570,22 +554,7 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 	AuRegisterDevice(audev);
 	xhcidev->initialised = true;
 
-	//APICTimerSleep(1000);
-	x86_64_udelay(10000);
-	AuTextOut("XHCI looking for port changes \n");
-	while (1) {
-		for (int i = 0; i < deviceHotPlugList->pointer; i++) {
-			USBHotPlug* hp = (USBHotPlug*)list_get_at(deviceHotPlugList, i);
-			if (hp) {
-				if (!hp->initialized) {
-					XHCIPortInitialise(xhcidev, hp->portNum);
-					hp->initialized = true;
-				}
-			}
-		}
-	}
 	AuDisableInterrupt();
-	AuTextOut("XHCI Halted here \n");
 	return 0;
 }
 

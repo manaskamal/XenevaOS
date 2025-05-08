@@ -237,5 +237,11 @@
       <Filter>arpa</Filter>
     </ClCompile>
     <ClCompile Include="c++\new.cpp" />
+    <ClCompile Include="acosf.cpp" />
+    <ClCompile Include="atan2f.cpp" />
+    <ClCompile Include="atanf.cpp" />
+    <ClCompile Include="ceilf.cpp" />
+    <ClCompile Include="fmodf.cpp" />
+    <ClCompile Include="roundf.cpp" />
   </ItemGroup>
 </Project>

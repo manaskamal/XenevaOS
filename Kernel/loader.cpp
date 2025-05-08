@@ -215,18 +215,31 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc,char** argv) {
 	/* this should be memory mapped, i.e, sections should be
 	 * memory mapped
 	 */
-	for (size_t i = 0; i < nt->FileHeader.NumberOfSections; ++i) {
-		size_t sect_ld_addr = _image_base_ + secthdr[i].VirtualAddress;
-		size_t sect_sz = secthdr[i].VirtualSize;
-		int req_pages = sect_sz / PAGE_SIZE;
-		if ((sect_sz % PAGE_SIZE) != 0)
-			req_pages++;
-		for (int j = 0; j < req_pages; j++) {
-			uint64_t *block = (uint64_t*)P2V((uint64_t)AuPmmngrAlloc());/*(buf + secthdr[i].PointerToRawData);*/
-			AuVFSNodeReadBlock(fsys, file, (uint64_t*)V2P((size_t)block));
-			AuMapPageEx(cr3, V2P((size_t)block), sect_ld_addr + static_cast<uint64_t>(j) * PAGE_SIZE, X86_64_PAGING_USER);
+	SeTextOut("Binary -> alignment -. %d \r\n", nt->OptionalHeader.FileAlignment);
+	if (nt->OptionalHeader.FileAlignment == 512) {
+		int count = 1;
+		while (file->eof != 1) {
+			uint64_t* block = (uint64_t*)AuPmmngrAlloc();
+			memset(block, 0, 4096);
+			AuVFSNodeReadBlock(fsys, file, block);
+			AuMapPage((uint64_t)block, (_image_base_ + static_cast<uint64_t>(count) * 4096), 0);
+			count++;
 		}
+	}
+	else {
+		for (size_t i = 0; i < nt->FileHeader.NumberOfSections; ++i) {
+			size_t sect_ld_addr = _image_base_ + secthdr[i].VirtualAddress;
+			size_t sect_sz = secthdr[i].VirtualSize;
+			int req_pages = sect_sz / PAGE_SIZE;
+			if ((sect_sz % PAGE_SIZE) != 0)
+				req_pages++;
+			for (int j = 0; j < req_pages; j++) {
+				uint64_t* block = (uint64_t*)P2V((uint64_t)AuPmmngrAlloc());/*(buf + secthdr[i].PointerToRawData);*/
+				AuVFSNodeReadBlock(fsys, file, (uint64_t*)V2P((size_t)block));
+				AuMapPageEx(cr3, V2P((size_t)block), sect_ld_addr + static_cast<uint64_t>(j) * PAGE_SIZE, X86_64_PAGING_USER);
+			}
 
+		}
 	}
 
 	

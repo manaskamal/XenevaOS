@@ -40,7 +40,7 @@
  * @param slot_id -- slot number
  */
 void XHCIEvaluateContextCmd(XHCIDevice* dev, uint64_t input_ctx_ptr, uint8_t slot_id) {
-	XHCISendCmdToHost(dev, input_ctx_ptr & UINT32_MAX, (input_ctx_ptr & UINT32_MAX) >> 32, 0, (slot_id << 24) | (TRB_CMD_EVALUATE_CTX << 10));
+	XHCISendCmdToHost(dev, input_ctx_ptr & UINT32_MAX, (input_ctx_ptr >> 32) & UINT32_MAX, 0, ((slot_id & 0xff) << 24) | (TRB_CMD_EVALUATE_CTX << 10));
 	XHCIRingDoorbellHost(dev);
 }
 
@@ -49,7 +49,7 @@ void XHCIEvaluateContextCmd(XHCIDevice* dev, uint64_t input_ctx_ptr, uint8_t slo
  * XHIConfigureEndpoint -- configure the endpoint
  */
 void XHCIConfigureEndpoint(XHCIDevice* dev, uint64_t input_ctx_ptr, uint8_t slot_id) {
-	XHCISendCmdToHost(dev, input_ctx_ptr & UINT32_MAX, (input_ctx_ptr & UINT32_MAX) >> 32, 0, ((slot_id & 0xff) << 24) | (TRB_CMD_CONFIG_ENDPOINT << 10) | (0 << 9));
+	XHCISendCmdToHost(dev, input_ctx_ptr & UINT32_MAX, (input_ctx_ptr >> 32) & UINT32_MAX ,0, ((slot_id & 0xff) << 24) | (TRB_CMD_CONFIG_ENDPOINT << 10) | (0 << 9));
 	XHCIRingDoorbellHost(dev);
 }
 
@@ -62,7 +62,7 @@ void XHCIConfigureEndpoint(XHCIDevice* dev, uint64_t input_ctx_ptr, uint8_t slot
 * @param slot_id -- slot id number
 */
 void XHCISendAddressDevice(XHCIDevice* dev, XHCISlot* slot, uint8_t bsr, uint64_t input_ctx_ptr, uint8_t slot_id) {
-	XHCISendCmdToHost(dev, input_ctx_ptr & UINT32_MAX, (input_ctx_ptr & UINT32_MAX) >> 32, 0, ((slot_id & 0xff) << 24) | (TRB_CMD_ADDRESS_DEV << 10) | (bsr << 9));
+	XHCISendCmdToHost(dev, input_ctx_ptr & UINT32_MAX, (input_ctx_ptr  >> 32) & UINT32_MAX, 0, ((slot_id & 0xff) << 24) | (TRB_CMD_ADDRESS_DEV << 10) | (bsr << 9));
 	XHCIRingDoorbellHost(dev);
 }
 
@@ -110,7 +110,7 @@ void XHCICreateStatusTRB(XHCISlot* slot, bool in_direction) {
 */
 void XHCIEnableSlot(XHCIDevice* dev, uint8_t slot_type) {
 	/* Send Enable slot command */
-	XHCISendCmdToHost(dev, 0, 0, 0, (TRB_CMD_ENABLE_SLOT << 10));
+	XHCISendCmdToHost(dev, 0, 0, 0, (slot_type << 16) |  (TRB_CMD_ENABLE_SLOT << 10));
 	XHCIRingDoorbellHost(dev);
 }
 
