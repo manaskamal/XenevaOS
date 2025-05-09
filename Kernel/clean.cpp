@@ -162,8 +162,15 @@ void AuProcessClean(AuProcess* parent, AuProcess* killable) {
 	if (uentry->argvaddr != 0) {
 		void* phys = AuGetPhysicalAddressEx(killable->cr3, 0x4000);
 		if (phys) {
-			AuPmmngrFree((void*)P2V((size_t)phys));
+			SeTextOut("Freeing up argument block -> %x \r\n", V2P((size_t)phys));
+			AuPmmngrFree((void*)V2P((size_t)phys));
 		}
+	}
+
+	void* envBlock = AuGetPhysicalAddressEx(killable->cr3, 0x5000);
+	if (envBlock) {
+		SeTextOut("Freeing up Environment Block %x \r\n", V2P((size_t)envBlock));
+		AuPmmngrFree((void*)V2P((size_t)envBlock));
 	}
 
 	/* clean the main thread externally*/

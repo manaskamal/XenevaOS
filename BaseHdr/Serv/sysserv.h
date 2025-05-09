@@ -37,7 +37,7 @@
 #include <Net\socket.h>
 
 /* maximum supported system calls */
-#define AURORA_MAX_SYSCALL  57
+#define AURORA_MAX_SYSCALL  58
 #define AURORA_SYSCALL_MAGIC  0x15062023 
 
 /* ==========================================
@@ -308,4 +308,10 @@ extern int NetBind(int sockfd, sockaddr *addr, socklen_t addrlen);
 extern int NetAccept(int sockfd, sockaddr *addr, socklen_t * addrlen);
 
 extern int NetListen(int sockfd, int backlog);
+
+/*
+ * GetEnvironmentBlock -- returns environment
+ * block of this process
+ */
+extern size_t GetEnvironmenBlock();
 #endif

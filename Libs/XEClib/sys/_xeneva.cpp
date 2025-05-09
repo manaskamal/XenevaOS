@@ -28,6 +28,9 @@
 **/
 
 #include <stdlib.h>
+#include <sys/_keproc.h>
+#include <string.h>
+#include <stdio.h>
 
 extern "C" int _fltused = 1;
 
@@ -50,3 +53,103 @@ extern "C" int _fltused = 1;
 //extern "C" void __cdecl ::operator delete(void* p, uint64_t s) {
 //
 //}
+
+XE_EXTERN XE_LIB void _XESetEnvironmentVariable(char* key, char* value, bool overwrite) {
+	uint64_t* envptr = (uint64_t*)_KeGetEnvironmentBlock();
+	if (!envptr)
+		return;
+	char* envp = (char*)envptr;
+	size_t keyLen = strlen(key);
+	size_t valueLen = strlen(value);
+	size_t totalLen = keyLen + 1 + valueLen;
+
+	size_t maxEnvSize = 4096;
+
+	char temp[4096];
+	memset(temp, 0, sizeof(temp));
+	char* dest = temp;
+	int found = 0;
+
+	char* insert = NULL;
+	char* scan = envp;
+	while (*scan) {
+		if (strncmp(scan, key, keyLen) == 0 && scan[keyLen] == '=') {
+			found = 1;
+			if (!overwrite) {
+				memcpy(envp, temp, maxEnvSize);
+				return;
+			}
+			scan += strlen(scan) + 1;
+			continue;
+		}
+
+		size_t len = strlen(scan) + 1;
+		if ((dest - temp) + len >= maxEnvSize)
+			return;
+		memcpy(dest, scan, len);
+		dest += len;
+		scan += len;
+	}
+
+	if ((dest - temp) + totalLen + 2 >= maxEnvSize)
+		return;
+
+	snprintf(dest, totalLen + 2, "%s=%s", key, value);
+	dest[totalLen + 1] = '\0';
+
+	memcpy(envp, temp, maxEnvSize);
+
+}
+
+
+XE_EXTERN XE_LIB int _XEPutEnvironmentVariable(char* keyval) {
+	uint64_t* envptr = (uint64_t*)_KeGetEnvironmentBlock();
+	if (!envptr)
+		return NULL;
+	char* env = (char*)envptr;
+	size_t maxEnvSize = 4096;
+
+	char* eq = strchr(keyval, '=');
+	if (!eq) return -1;
+
+	size_t keyLen = eq - keyval;
+
+	char* scan = env;
+	while (*scan) {
+		if (strncmp(scan, keyval, keyLen) == 0 && scan[keyLen] == '=') {
+			size_t remain = strlen(scan) + 1;
+			memmove(scan, scan + remain, maxEnvSize - (scan - env) - remain);
+			break;
+		}
+		scan += strlen(scan) + 1;
+	}
+
+	scan = env;
+	while (*scan)
+		scan += strlen(scan) + 1;
+
+	size_t newLen = strlen(keyval) + 1;
+	if ((scan - env) + newLen + 1 >= maxEnvSize)
+		return -1;
+	memcpy(scan, keyval, newLen);
+	scan[newLen] = '\0';
+	return 0;
+}
+
+
+XE_EXTERN XE_LIB const char* _XEGetEnvironmentVariable(const char* key) {
+	uint64_t* envptr = (uint64_t*)_KeGetEnvironmentBlock();
+	if (!envptr)
+		return NULL;
+	/* 1: check if the variable already exist*/
+	char* envp = (char*)envptr;
+	size_t keyLen = strlen(key);
+	while (*envp) {
+		if (strncmp(envp, key, keyLen) == 0 && envp[keyLen] == '=') {
+			return envp + keyLen + 1;
+		}
+
+		while (*envp++) {}
+	}
+	return NULL;
+}

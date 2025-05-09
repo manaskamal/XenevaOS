@@ -906,6 +906,20 @@ _KeGetStoragePartitionInfo:
 	syscall
 	ret
 
+global _KeGetEnvironmentBlock
+%ifdef YES_DYNAMIC
+export _KeGetEnvironmentBlock
+%endif
+_KeGetEnvironmentBlock:
+    xor rax, rax
+	mov r12, 57
+	mov r13, 0
+	mov r14, 0
+	mov r15, 0
+	mov rdi, 0
+	syscall
+	ret
+
 
 
 

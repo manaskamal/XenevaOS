@@ -72,6 +72,13 @@ XE_EXTERN{
 	XE_LIB void qsort(void* base, size_t num, size_t size, int(*comparator)(const void*, const void*));
 
 	XE_LIB char* sztoa(size_t value, char* str, int base);
+    /*
+     * setenv -- set environment variables 
+     * @param name -- Key name
+     * @param value -- value of the variable
+     * @param overwrite -- 0 - append at the last, 1 force-write
+     */
+	XE_LIB int setenv(const char* name, const char* value, int overwrite);
 	XE_LIB char* getenv(const char*);
 	XE_LIB void exit(int errno);
 

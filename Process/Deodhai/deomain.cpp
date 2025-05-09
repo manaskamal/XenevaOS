@@ -88,11 +88,19 @@ Window* alwaysOnTop;
 Window* alwaysOnTopLast;
 Window* mouseLastHovered;
 ChCanvas* canvas;
+Cursor* arrow;
+Cursor* move;
+Cursor* resizeUpDown;
+Cursor* resizeLeftRight;
 uint32_t* surfaceBuffer;
 bool _shadow_update;
 bool _clients_advice;
 uint64_t startTime;
 uint64_t startSubTime;
+
+void CursorStoreBack(ChCanvas* canv, Cursor* cur, unsigned x, unsigned y);
+void CursorDrawBack(ChCanvas* canv, Cursor* cur, unsigned x, unsigned y);
+void ChangeCursor(Cursor* newCursor);
 
 /*
  * DeodhaiInitialiseData -- initialise all data
@@ -427,6 +435,7 @@ _skip:
 	_always_on_top_update = true;
 	_shadow_update = true;
 	_clients_advice = false;
+	//currentCursor = arrow;
 }
 
 /*
@@ -523,10 +532,13 @@ void DeodhaiWindowCheckDraggable(int x, int y, int button) {
 		WinSharedInfo* winInfo = (WinSharedInfo*)dragWin->sharedInfo;
 		int posx = x - dragWin->dragX;
 		int posy = y - dragWin->dragY;
+		ChangeCursor(move);
 		DeodhaiWindowMove(dragWin, posx, posy);
 	}
 
 	if (!button){
+		if (dragWin) 
+			ChangeCursor(arrow);
 		dragWin = NULL;
 		reszWin = NULL;
 		_window_broadcast_mouse_ = true;
@@ -551,6 +563,16 @@ void CursorDrawBack(ChCanvas* canv,Cursor* cur, unsigned x, unsigned y) {
 			ChDrawPixel(canv, x + w, y + h, cur->cursorBack[h * 24 + w]);
 		}
 	}
+}
+
+void ChangeCursor(Cursor* newCursor) {
+	if (!newCursor)
+		return;
+	newCursor->xpos = currentCursor->xpos;
+	newCursor->ypos = currentCursor->ypos;
+	newCursor->oldXPos = currentCursor->oldXPos;
+	newCursor->oldYPos = currentCursor->oldYPos;
+	currentCursor = newCursor;
 }
 
 /* ComposeFrame -- composes a single frame 
@@ -1531,15 +1553,21 @@ int main(int argc, char* arv[]) {
 		surfaceBuffer[j * canv->canvasWidth + i] = GRAY; //0xFF938585;
 
 	DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
-	DrawWallpaper(canv, "/nature.jpg");
-	DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
+	/*DrawWallpaper(canv, "/nature.jpg");
+	DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);*/
 	ChCanvasScreenUpdate(canv, 0, 0, canv->canvasWidth, canv->canvasHeight);
 
 
 	InitialiseDirtyClipList();
 
-	Cursor* arrow = CursorOpen("/pointer.bmp", CURSOR_TYPE_POINTER);
+	arrow = CursorOpen("/pointer.bmp", CURSOR_TYPE_POINTER);
 	CursorRead(arrow);
+	move = CursorOpen("/move.bmp", CURSOR_TYPE_MOVE);
+	CursorRead(move);
+	resizeUpDown = CursorOpen("/rzupdn.bmp", CURSOR_TYPE_RESIZE_UPDOWN);
+	CursorRead(resizeUpDown);
+	resizeLeftRight = CursorOpen("/rzrl.bmp", CURSOR_TYPE_RESIZE_RIGHTLEFT);
+	CursorRead(resizeLeftRight);
 	currentCursor = arrow;
 	CursorStoreBack(canv, currentCursor, 0, 0);
 
@@ -1589,6 +1617,7 @@ int main(int argc, char* arv[]) {
 				scale_y = (double)canvas->screenHeight / (double)mice_input.code4;
 				cursor_y = mice_input.ypos * (double)scale_y;
 			}
+			
 			currentCursor->xpos = cursor_x;
 			currentCursor->ypos = cursor_y;
 			int button = mice_input.button_state;

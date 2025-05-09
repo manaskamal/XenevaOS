@@ -129,6 +129,7 @@ static void* syscalls[AURORA_MAX_SYSCALL] = {
 	AuCreatePipe, //54
 	AuGetVDiskInfo, //55
 	AuGetVDiskPartitionInfo, //56
+	GetEnvironmenBlock, //57
 };
 
 //! System Call Handler Functions

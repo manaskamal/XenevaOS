@@ -247,10 +247,22 @@ void exit(int errno) {
 	_KePrint("Exiting app \n");
 }
 
+/*
+ * setenv -- set environment variables 
+ * @param name -- Key name
+ * @param value -- value of the variable
+ * @param overwrite -- 0 - append at the last, 1 force-write
+ */
+int setenv(const char* name, const char* value, int overwrite) {
+	_XESetEnvironmentVariable((char*)name, (char*)value, overwrite);
+	return 0;
+}
 
-/* For now, no support for environment variables */
+/* getenv -- returns value of given variable
+ * @param name -- variable name
+ */
 char* getenv(const char* name) {
-	return NULL;
+	return  (char*)_XEGetEnvironmentVariable(name);
 }
 
 

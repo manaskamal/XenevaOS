@@ -150,6 +150,12 @@ XE_EXTERN{
 	 */
 	XE_LIB int _KeProcessGetFileDesc(const char* filename);
 
+	/*
+	 * _KeGetEnvironmentBlock -- returns the current environment
+	 * block of the process
+	 */
+	XE_LIB uint64_t _KeGetEnvironmentBlock();
+
 #ifdef __cplusplus
 }
 #endif

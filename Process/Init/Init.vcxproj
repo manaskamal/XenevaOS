@@ -116,7 +116,7 @@
       <DataExecutionPrevention />
       <EntryPointSymbol>_aumain</EntryPointSymbol>
       <AdditionalOptions>/filealign:4096 %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalLibraryDirectories>..\..\XELoader;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\..\x64\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
       <Command>copy "..\..\Build\$(TargetName).exe" "%XENEVA_BUILDS%\$(TargetName).exe</Command>

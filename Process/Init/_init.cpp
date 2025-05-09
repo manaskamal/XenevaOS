@@ -40,8 +40,17 @@
 #include <string.h>
 #include <sys\_heap.h>
 #include <sys\_kefile.h>
+#include <stdlib.h>
 #include <sys\iocodes.h>
 
+void initSetupBasicEnvironmentVars() {
+	setenv("HOME", "/", 1);
+	setenv("USER", "xeuser", 1);
+	setenv("USERNAME", "xeuser", 1);
+	setenv("SHELL", "XenevaTerminal", 1);
+	setenv("LANG", "en_US.UTF-8", 1); //Set it to English(United States), UTF-8
+	setenv("OSNAME", "XenevaOS", 1);
+}
 /*
  * _main -- main entry point
  */
@@ -51,6 +60,8 @@ extern "C" void main(int argc, char* argv[]) {
 
 	if (strcmp(argv[0], "-about") == 0)
 		_KePrint("Xeneva v1.0 !! Copyright (C) Manas Kamal Choudhury 2020-2023 \r\n");
+
+	initSetupBasicEnvironmentVars();
 
 	///* just load all the background services */
 	int child = _KeCreateProcess(0, "deoaud");

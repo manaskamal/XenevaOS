@@ -83,7 +83,7 @@ void CursorRead(Cursor* cur) {
 	cur_w = cur->width;
 	cur_h = cur->height;
 	cur->cursorBack = (uint32_t*)malloc(cur->width * cur->height * 32);
-	imageData = cur->imageData;
+	//imageData = cur->imageData;
 }
 
 /*
@@ -98,7 +98,7 @@ void CursorDraw(ChCanvas* canv, Cursor* cur, unsigned int x, unsigned int y) {
 	uint32_t height = cur_h;
 	uint32_t j = 0;
 
-	uint8_t* image = imageData;
+	uint8_t* image = cur->imageData;
 	for (int i = 0; i < height; i++) {
 		unsigned char* image_row = (unsigned char*)(image + (static_cast<uint64_t>(height) - i - 1) * 
 			(static_cast<uint64_t>(width) * 4));

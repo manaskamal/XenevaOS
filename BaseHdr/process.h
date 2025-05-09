@@ -91,6 +91,7 @@ typedef struct _au_proc_ {
 	uint64_t _main_stack_;
 	size_t _user_stack_index_;
 	size_t _kstack_index_;
+	uint64_t _envp_block_;
 
 	/* threading section */
 	AuThread* main_thread;

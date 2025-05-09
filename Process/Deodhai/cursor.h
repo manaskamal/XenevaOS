@@ -36,6 +36,10 @@
 #define CURSOR_TYPE_POINTER  1
 #define CURSOR_TYPE_LOADING  2
 #define CURSOR_TYPE_TEXT 3
+#define CURSOR_TYPE_MOVE 4
+#define CURSOR_TYPE_RESIZE_UPDOWN 5
+#define CURSOR_TYPE_RESIZE_RIGHTLEFT 6
+
 
 
 typedef struct _cursor_ {

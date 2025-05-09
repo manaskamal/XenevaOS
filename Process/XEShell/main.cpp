@@ -251,6 +251,11 @@ void XEShellCD(char* path) {
 	currentDirectory = (char*)malloc(strlen(prevPath) + strlen(path));
 	strcpy(currentDirectory, prevPath);
 	strcpy(currentDirectory + strlen(currentDirectory), path);
+
+	printf("\n Curr dir -> %s \n", currentDirectory);
+	_XESetEnvironmentVariable("PWD", currentDirectory, 1);
+	const char* val = _XEGetEnvironmentVariable("PWD");
+	printf("NEW ENV VAL -> %s \n", val);
 	free(prevPath);
 	free(lastDirectory);
 }
@@ -452,6 +457,7 @@ int main(int argc, char* arv[]){
 	_sig_handled = false;
 	job = 0;
 	index = 0;
+	_XESetEnvironmentVariable("PWD", currentDirectory, 0);
 	while (1){
 		XEShellWriteCurrentDir();
 		XEShellReadLine();	

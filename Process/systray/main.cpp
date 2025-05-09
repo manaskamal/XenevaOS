@@ -243,6 +243,8 @@ void TrayCreateSoundWindow(ChWindow* mainWin, int x, int y) {
 	soundVol->outlineColor = 0xFFDE86C1;
 	soundVol->base.ChActionHandler = VolumeSliderActionHandler;
 	ChSliderSetMin(soundVol,77.0f);
+	soundVol->thumbY = 1;
+	soundVol->progressPixel = soundVol->thumbY;
 	ChWindowAddWidget(soundWindow, (ChWidget*)soundVol);
 	soundWindow->ChWinPaint = SoundWindowPainter;
 

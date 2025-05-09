@@ -62,6 +62,12 @@ XE_EXTERN{
 	/* _KePrint -- kernel printing function */
 	XE_LIB void _KePrint(const char* text,...);
 
+    XE_LIB void _XESetEnvironmentVariable(char* key, char* value, bool overwrite);
+
+	XE_LIB int _XEPutEnvironmentVariable(char* keyval);
+
+	XE_LIB const char* _XEGetEnvironmentVariable(const char* key);
+
 #ifdef __cplusplus
 }
 #endif

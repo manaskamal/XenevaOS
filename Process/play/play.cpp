@@ -81,7 +81,7 @@ int main(int argc, char* arv[]){
 
 	int postbox = _KeOpenFile("/dev/postbox", FILE_OPEN_READ_ONLY);
 	_KeFileIoControl(postbox, POSTBOX_CREATE, NULL);
-	
+	printf("\n");
 	
 	DeodhaiAudioBox* audioBox = DeodhaiAudioOpenConnection(postbox, DEODHAI_AUDIO_STEREO, DEODHAI_CONNECTION_TYPE_NORMAL);
 	printf("play: audio connection initiated successfully \n");

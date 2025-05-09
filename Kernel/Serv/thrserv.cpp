@@ -115,7 +115,15 @@ int ProcessWaitForTermination(int pid) {
  */
 int CreateProcess(int parent_id, char *name) {
 	x64_cli();
-	AuProcess* slot = AuCreateProcessSlot(0, name);
+	AuThread* current_thr = AuGetCurrentThread();
+	AuProcess* parent = AuProcessFindThread(current_thr);
+	if (!parent) {
+		parent = AuProcessFindSubThread(current_thr);
+		if (!parent)
+			return -1;
+	}
+
+	AuProcess* slot = AuCreateProcessSlot(parent, name);
 	if (!slot)
 		return -1;
 	return slot->proc_id;
@@ -339,5 +347,21 @@ int GetCurrentTime(void* ptr) {
 	x64_cli();
 	AuGetCurrentTime((AuTime*)ptr);
 	return 1;
+}
+
+/*
+ * GetEnvironmentBlock -- returns environment
+ * block of this process
+ */
+size_t GetEnvironmenBlock() {
+	x64_cli();
+	AuThread* curr_thr = AuGetCurrentThread();
+	AuProcess* proc = AuProcessFindThread(curr_thr);
+	if (!proc) {
+		proc = AuProcessFindSubThread(curr_thr);
+		if (!proc)
+			return NULL;
+	}
+	return proc->_envp_block_;
 }
 

@@ -48,7 +48,11 @@ void ChSliderMouseEvent(ChWidget* widget, ChWindow* win, int x, int y, int butto
 	if (button) {
 		if (slider->type == CHITRALEKHA_SLIDER_VERTICAL){
 			slider->thumbY = y - (win->info->y + widget->y + 15 / 2);
+			if (slider->thumbY <= 0)
+				slider->thumbY = 0;
 			slider->progressPixel = slider->thumbY;
+			if (slider->progressPixel == 0)
+				slider->progressPixel = 1;
 			
 			//! update the current values
 			//if (slider->thumbY < slider->lastThumbY) {
@@ -60,7 +64,6 @@ void ChSliderMouseEvent(ChWidget* widget, ChWindow* win, int x, int y, int butto
 			//	if (slider->currentVal <= slider->min)
 			//		slider->currentVal = slider->min;
 			//}
-
 			float ratio = 1.0f - ((float)slider->thumbY / (float)slider->base.h);
 			slider->currentVal = slider->min + ratio * (slider->max - slider->min);
 

@@ -261,6 +261,12 @@ AuProcess* AuCreateRootProc() {
 	proc->state = PROCESS_STATE_NOT_READY;
 	proc->cr3 = cr3;
 	proc->_main_stack_ = main_thr_stack;
+	uint64_t* envpBlock = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
+	memset(envpBlock, 0, PAGE_SIZE);
+	if (!AuMapPageEx(cr3, (uint64_t)V2P((size_t)envpBlock), 0x5000,X86_64_PAGING_USER))
+		SeTextOut("Failed to map environment block for proc %s \r\n", proc->name);
+	else
+		proc->_envp_block_ = 0x5000;
 	
 	proc->vmareas = initialize_list();
 	proc->shmmaps = initialize_list();
@@ -299,7 +305,16 @@ AuProcess* AuCreateProcessSlot(AuProcess* parent, char* name) {
 	proc->state = PROCESS_STATE_NOT_READY;
 	proc->cr3 = cr3;
 	proc->_main_stack_ = main_thr_stack;
-
+	uint64_t* envpBlock = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
+	memset(envpBlock, 0, PAGE_SIZE);
+	if (!AuMapPageEx(cr3, (uint64_t)V2P((size_t)envpBlock), 0x5000, X86_64_PAGING_USER))
+		SeTextOut("Failed to map environment block for proc %s \r\n", name);
+	else
+		proc->_envp_block_ = 0x5000;
+	
+	if (proc->_envp_block_) 
+		memcpy((void*)envpBlock,(void*)parent->_envp_block_, PAGE_SIZE);
+	
 	proc->vmareas = initialize_list();
 	proc->shmmaps = initialize_list();
 	proc->shm_break = USER_SHARED_MEM_START;
@@ -590,6 +605,8 @@ int AuCreateUserthread(AuProcess* proc, void(*entry) (), char *name)
 	proc->num_thread += 1;
 	return thread_indx;
 }
+
+
 
 
 
