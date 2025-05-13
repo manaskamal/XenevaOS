@@ -55,6 +55,8 @@
 #include <sys\socket.h>
 #include <boxblur.h>
 #include <sys/types.h>
+#define STB_IMAGE_RESIZE_IMPLEMENTATION
+#include <stb_image_resize.h>
 
 /******************************************
 *   DEODHAI SUPPORTED WINDOW_TYPES:
@@ -572,6 +574,7 @@ void ChangeCursor(Cursor* newCursor) {
 	newCursor->ypos = currentCursor->ypos;
 	newCursor->oldXPos = currentCursor->oldXPos;
 	newCursor->oldYPos = currentCursor->oldYPos;
+	memcpy(newCursor->cursorBack, currentCursor->cursorBack, 24 * 24 * 32);
 	currentCursor = newCursor;
 }
 
@@ -1247,6 +1250,27 @@ void DeodhaiSendMouseEvent(int handle,int ownerId,uint8_t handleType,uint8_t eve
 }
 
 /*
+ * DeodhaiResizeCursorUpdate -- update the resize cursor
+ */
+void DeodhaiResizeCursorUpdate(int mouse_x, int mouse_y, WinSharedInfo* info) {
+	int left = info->x;
+	int right = info->x + info->width;
+	int top = info->y;
+	int bottom = info->y + info->height;
+
+	bool onLeftEdge = (mouse_x >= left && mouse_x <= left + 5);
+	bool onRightEdge = (mouse_x <= right && mouse_x >= right - 12);
+	bool onTop = (mouse_y >= top && mouse_y <= top + 5);
+	bool onBottom = (mouse_y <= bottom && mouse_y >= bottom - 12);
+
+	if (onLeftEdge || onRightEdge)
+		ChangeCursor(resizeLeftRight);
+	else if (onTop || onBottom)
+		ChangeCursor(resizeUpDown);
+	else
+		ChangeCursor(arrow);
+}
+/*
  * DeodhaiBroadcastMouse -- broadcast mouse event to all window
  * @param mouse_x -- mouse x location
  * @param mouse_y -- mouse y location
@@ -1254,6 +1278,7 @@ void DeodhaiSendMouseEvent(int handle,int ownerId,uint8_t handleType,uint8_t eve
  */
 void DeodhaiBroadcastMouse(int mouse_x, int mouse_y, int button) {
 	Window* mouseWin = NULL;
+	bool cursorRestore;
 
 	if (focusedWin) {
 		WinSharedInfo* info = (WinSharedInfo*)focusedWin->sharedInfo;
@@ -1274,6 +1299,7 @@ void DeodhaiBroadcastMouse(int mouse_x, int mouse_y, int button) {
 				continue;
 			if (mouse_x >= info->x && (mouse_x < (info->x + info->width)) &&
 				mouse_y >= info->y && (mouse_y < (info->y + info->height))) {
+
 				if (DeodhaiCheckWindowPointOcclusion(win, mouse_x, mouse_y))
 					continue;
 				if (win->flags & WINDOW_FLAG_BLOCKED)
@@ -1312,6 +1338,9 @@ void DeodhaiBroadcastMouse(int mouse_x, int mouse_y, int button) {
 
 broadcast:
 	if (mouseWin){
+		WinSharedInfo* info = (WinSharedInfo*)mouseWin->sharedInfo;
+		DeodhaiResizeCursorUpdate(mouse_x, mouse_y, info);
+
 		int handle = mouseWin->handle;
 		uint8_t handleType = HANDLE_TYPE_NORMAL_WINDOW;
 		if ((mouseWin->flags & WINDOW_FLAG_POPUP))
@@ -1331,6 +1360,12 @@ broadcast:
 
 		mouseLastHovered = mouseWin;
 		DeodhaiSendMouseEvent(handle,mouseWin->ownerId, handleType,DEODHAI_REPLY_MOUSE_EVENT,mouse_x, mouse_y, button);
+	}
+
+	if (!mouseWin) {
+		if (currentCursor->type == CURSOR_TYPE_RESIZE_RIGHTLEFT ||
+			currentCursor->type == CURSOR_TYPE_RESIZE_UPDOWN)
+			ChangeCursor(arrow);
 	}
 }
 
@@ -1435,6 +1470,7 @@ void DrawWallpaper(ChCanvas *canv, char* filename) {
 	uint32_t* swapable_buff = canv->buffer;
 	canv->buffer = surfaceBuffer;
 	uint8_t* data = decor->GetImage();
+
 	unsigned x = 0;
 	unsigned y = 0;
 	for (int i = 0; i < h; i++) {
@@ -1449,6 +1485,7 @@ void DrawWallpaper(ChCanvas *canv, char* filename) {
 			j++;
 		}
 	}
+
 	canv->buffer = swapable_buff;
 }
 
@@ -1553,8 +1590,11 @@ int main(int argc, char* arv[]) {
 		surfaceBuffer[j * canv->canvasWidth + i] = GRAY; //0xFF938585;
 
 	DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
-	/*DrawWallpaper(canv, "/nature.jpg");
-	DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);*/
+	if (screen_w == 1920 && screen_h == 1080) {
+		DrawWallpaper(canv, "/nature.jpg");
+		DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
+	}
+
 	ChCanvasScreenUpdate(canv, 0, 0, canv->canvasWidth, canv->canvasHeight);
 
 

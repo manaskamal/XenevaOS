@@ -340,7 +340,6 @@ size_t FatReadFile(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint32_t 
 	size_t num_blocks = length / fs->cluster_sz_in_bytes +
 		((length % fs->cluster_sz_in_bytes) ? 1 : 0);
 
-
 	for (int i = 0; i < num_blocks; i++) {
 		if (file->eof)
 			break;

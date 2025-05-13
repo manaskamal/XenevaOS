@@ -64,28 +64,28 @@ typedef union {
 }double_bits_t;
 
 //#define asuint(f) ((union{float _f; uint32_t _i;}){f})._i
-static inline uint32_t asuint(float f) {
+static INLINE uint32_t asuint(float f) {
 	float_bits_t u;
 	memset(&u, 0, sizeof(float_bits_t));
 	u.f = f;
 	return u.i;
 }
 
-static inline float asfloat(uint32_t u) {
+static INLINE float asfloat(uint32_t u) {
 	float_bits_t fb;
 	memset(&fb, 0, sizeof(float_bits_t));
 	fb.i = u;
 	return fb.f;
 }
 
-static inline uint64_t asuint64(double d) {
+static INLINE uint64_t asuint64(double d) {
 	double_bits_t db;
 	memset(&db, 0, sizeof(double_bits_t));
 	db.d = d;
 	return db.i;
 }
 
-static inline double asdouble(uint64_t u) {
+static INLINE double asdouble(uint64_t u) {
 	double_bits_t db;
 	memset(&db, 0, sizeof(double_bits_t));
 	db.i = u;
@@ -140,21 +140,21 @@ enum {
 };
 
 
-static inline void fp_force_evalf(float x) {
+static INLINE void fp_force_evalf(float x) {
 	volatile float y;
 	y = x;
 }
 
-static inline void fp_force_eval(double x) {
+static INLINE void fp_force_eval(double x) {
 	volatile double y;
 	y = x;
 }
 
-static inline void fp_force_evall(long double x) {
+static INLINE void fp_force_evall(long double x) {
 	volatile long double y;
 	y = x;
 }
-XE_EXTERN XE_EXPORT int fpclassify(double x);
+XE_LIB int fpclassify(double x);
 
 #define isfinite(x) ((fpclassify(x) != FP_NAN && fpclassify(x) != FP_INFINITE))
 #define isnormal(x) (fpclassify(x) == FP_NORMAL)

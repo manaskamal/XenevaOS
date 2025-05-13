@@ -15,6 +15,22 @@ Repace ```X``` with your drive number of USB Flash drive
 ```VBoxManage createmedium -filename "E:\usb.vmdk" --variant RawDisk --format=VMDK --property RawDrive=\\.\PhysicalDrive1```. Here PhysicalDrive1 is my USB Flash Drive<br>
 - Upto here you should be able to create __.vmdk__ file mapped to Physical Drive 
 
+## Disabling VBS(Virtualization Based Security) on Windows (_~Important_)
+Before running XenevaOS on Windows Machine, we need to temporarily disable VBS feature of Windows. Xeneva fails to access virtualized hardware memory regions on VBS enabled Windows machine for which the OS cannot continue the boot process. VBS completely occupies all hardware resource to create an isolated region of memory. To turn off VBS, please follow the steps 
+
+### - Turn off Memory integrity :
+- Open _**Windows Security**_
+- Go to _**Device Security**_ : In the left panel of _**Windows Security**_, click _**Device Security**_
+- Open _**Core Isolation**_ details : _Under _**Core Isolation**_, click _**Core Isolation**_ details_
+- Turn off _**Memory Integrity**_ : _Toggle _**Memory Integrity**_ to Off_.
+- We're done, now _Restart_ the PC (_~~We can also restart all together after we turn off hypervisorlaunchtype_).
+
+### - Turn off _hypervisorlaunchtype_
+- Open _**Command Prompt**_ as Administrator
+- Type ` bcdedit /set hypervisorlaunchtype off ` and press _Enter_
+- We're done, now _Restart_ the PC.
+
+
 ## Creating the Virtual Machine in Virtual Box
 - Create a new Virtual Machine in Virtual Box. ```{Machine - New}```
 - Give a suitable name to the VM and select ```Linux``` from Type and ```Ubuntu (64-bit)``` from Version and click __Next__

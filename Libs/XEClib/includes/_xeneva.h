@@ -55,6 +55,12 @@
 
 #define AURORA_SYSCALL_MAGIC  0x15062023
 
+#ifdef _MSC_VER
+#define INLINE __inline
+#else
+#define INLINE inline
+#endif
+
 #ifdef __cplusplus
 XE_EXTERN{
 #endif

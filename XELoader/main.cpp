@@ -85,7 +85,7 @@ int XELdrLoadObject(XELoaderObject *obj){
 
 	PSECTION_HEADER secthdr = raw_offset<PSECTION_HEADER>(&nt->OptionalHeader, nt->FileHeader.SizeOfOptionaHeader);
 
-	if (nt->OptionalHeader.FileAlignment == 512) {
+	if (nt->OptionalHeader.SectionAlignment == 512) {
 		while (!stat->eof) {
 			uint64_t* block = (uint64_t*)_KeMemMap(NULL, 4096, 0, 0, -1, 0);
 			_KeReadFile(file, block, 4096);
@@ -154,6 +154,7 @@ int XELdrStartProc(char* filename, XELoaderObject *obj) {
 	uint64_t _image_load_base_ = (uint64_t)first_ptr;
 
 	ret_bytes = _KeReadFile(file, buffer, 4096);
+	_KePrint("Ret bytes-> %x \r\n", ret_bytes);
 	IMAGE_DOS_HEADER *dos_ = (IMAGE_DOS_HEADER*)buffer;
 	PIMAGE_NT_HEADERS nt = raw_offset<PIMAGE_NT_HEADERS>(dos_, dos_->e_lfanew);
 	PSECTION_HEADER secthdr = raw_offset<PSECTION_HEADER>(&nt->OptionalHeader, nt->FileHeader.SizeOfOptionaHeader);
@@ -161,9 +162,8 @@ int XELdrStartProc(char* filename, XELoaderObject *obj) {
 	intptr_t original_base = nt->OptionalHeader.ImageBase;
 	intptr_t new_addr = _image_load_base_;
 	intptr_t diff = new_addr - original_base;
-
 	
-	if (nt->OptionalHeader.FileAlignment == 512) {
+	if (nt->OptionalHeader.SectionAlignment == 512) {
 		while (!stat->eof) {
 			uint64_t* block = (uint64_t*)_KeMemMap(NULL, 4096, 0, 0, -1, 0);
 			int bytes = _KeReadFile(file, block, 4096);
@@ -171,6 +171,7 @@ int XELdrStartProc(char* filename, XELoaderObject *obj) {
 			_KeFileStat(file, stat);
 		}
 	}
+	else {
 		for (size_t i = 0; i < nt->FileHeader.NumberOfSections; ++i) {
 			size_t sect_ld_addr = _image_load_base_ + secthdr[i].VirtualAddress;
 			size_t sect_sz = secthdr[i].VirtualSize;
@@ -188,10 +189,11 @@ int XELdrStartProc(char* filename, XELoaderObject *obj) {
 			if (secthdr[i].VirtualSize > secthdr[i].SizeOfRawData)
 				memset(raw_offset<void*>(block, secthdr[i].SizeOfRawData), 0, secthdr[i].VirtualSize - secthdr[i].SizeOfRawData);
 		}
+	}
 	
 	uint8_t* aligned_buff = (uint8_t*)first_ptr;
 	XELdrRelocatePE(aligned_buff, nt, diff);
-
+	_KePrint("Relocating to %x \r\n", aligned_buff);
 	XELdrCreatePEObjects(aligned_buff);
 
 	obj->load_addr = _image_load_base_;

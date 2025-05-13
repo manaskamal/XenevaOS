@@ -252,10 +252,7 @@ void XEShellCD(char* path) {
 	strcpy(currentDirectory, prevPath);
 	strcpy(currentDirectory + strlen(currentDirectory), path);
 
-	printf("\n Curr dir -> %s \n", currentDirectory);
 	_XESetEnvironmentVariable("PWD", currentDirectory, 1);
-	const char* val = _XEGetEnvironmentVariable("PWD");
-	printf("NEW ENV VAL -> %s \n", val);
 	free(prevPath);
 	free(lastDirectory);
 }
