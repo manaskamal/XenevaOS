@@ -428,6 +428,7 @@ XE_EXTERN XE_EXPORT void ChWindowHandleMouse(ChWindow* win, int x, int y, int bu
 			return;
 		}
 	}
+
 	/* first check the title bar bound */
 	if (y > win->info->y && y < win->info->y + WINDOW_DEFAULT_TITLEBAR_HEIGHT) {
 		for (int i = 0; i < win->GlobalControls->pointer; i++) {
@@ -451,26 +452,37 @@ XE_EXTERN XE_EXPORT void ChWindowHandleMouse(ChWindow* win, int x, int y, int bu
 		}
 	}
 
-	/* activity area */
-	if (y > win->info->y + 26 && y < (win->info->y + 26 + win->info->height - 26)) {
-		for (int i = 0; i < win->widgets->pointer; i++) {
-			ChWidget* widget = (ChWidget*)list_get_at(win->widgets, i);
-			if (x > win->info->x + widget->x  && x < (win->info->x + widget->x + widget->w) &&
-				(y > win->info->y + widget->y && y < (win->info->y + widget->y + widget->h))) {
-				widget->hover = true;
-				widget->KillFocus = false;
-				if (widget->ChMouseEvent)
-					widget->ChMouseEvent(widget, win, x, y, button);
-			}
-			else {
-				if (widget->hover) {
-					widget->hover = false;
-					widget->KillFocus = true;
+	if (win->focusedWidget) {
+		ChWidget* focusedWidget = (ChWidget*)win->focusedWidget;
+		if (focusedWidget->ChMouseEvent)
+			focusedWidget->ChMouseEvent(focusedWidget, win, x, y, button);
+	}
+	else {
+		/* activity area */
+		if (y > win->info->y + 26 && y < (win->info->y + 26 + win->info->height - 26)) {
+			for (int i = 0; i < win->widgets->pointer; i++) {
+				ChWidget* widget = (ChWidget*)list_get_at(win->widgets, i);
+				if (x > win->info->x + widget->x && x < (win->info->x + widget->x + widget->w) &&
+					(y > win->info->y + widget->y && y < (win->info->y + widget->y + widget->h))) {
+					widget->hover = true;
+					widget->KillFocus = false;
 					if (widget->ChMouseEvent)
 						widget->ChMouseEvent(widget, win, x, y, button);
 				}
+				else {
+					if (widget->hover) {
+						widget->hover = false;
+						widget->KillFocus = true;
+						if (widget->ChMouseEvent)
+							widget->ChMouseEvent(widget, win, x, y, button);
+					}
+				}
 			}
 		}
+	}
+
+	if (!button) {
+		win->focusedWidget = NULL;
 	}
 
 }

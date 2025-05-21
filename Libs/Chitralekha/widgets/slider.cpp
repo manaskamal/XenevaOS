@@ -35,6 +35,8 @@ extern void ChDefaultSliderPainter(ChWidget* wid, ChWindow* win);
 
 void ChSliderDestroy(ChWidget* widget, ChWindow* win) {
 	ChSlider *slider = (ChSlider*)widget;
+	if (win->focusedWidget == widget)
+		win->focusedWidget = NULL;
 	free(slider);
 	_KePrint("Slider destroyed \r\n");
 }
@@ -81,6 +83,7 @@ void ChSliderMouseEvent(ChWidget* widget, ChWindow* win, int x, int y, int butto
 				slider->base.ChPaintHandler((ChWidget*)slider, win);
 			ChWindowUpdate(win, slider->bound.x, slider->bound.y, slider->bound.w, slider->bound.h, 0, 1);
 
+			win->focusedWidget = widget;
 			actionRequired = true;
 		}
 
@@ -112,7 +115,7 @@ void ChSliderMouseEvent(ChWidget* widget, ChWindow* win, int x, int y, int butto
 			if (slider->base.ChPaintHandler)
 				slider->base.ChPaintHandler((ChWidget*)slider, win);
 			ChWindowUpdate(win, slider->bound.x, slider->bound.y, slider->bound.w, slider->bound.h, 0, 1);
-
+			win->focusedWidget = widget;
 			actionRequired = true;
 		}
 	}

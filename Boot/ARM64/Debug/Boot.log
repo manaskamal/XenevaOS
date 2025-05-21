@@ -1,0 +1,3 @@
+﻿  lowlevel.asm
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\BuildCustomizations\nasm.targets(50,5): error MSB3721: The command "echo NASM not supported on this platform
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\BuildCustomizations\nasm.targets(50,5): error MSB3721: exit 1" exited with code 1.

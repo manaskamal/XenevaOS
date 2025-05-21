@@ -78,7 +78,7 @@ void ChButtonMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, int button) 
 			wid->y, wid->w, wid->h, false, true);
 
 		_action_required = true;
-
+		win->focusedWidget = wid;
 		wid->hoverPainted = false;
 		wid->clicked = false;
 	}
@@ -96,6 +96,8 @@ void ChButtonMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, int button) 
 
 void ChButtonDestroy(ChWidget *widget, ChWindow* win) {
 	ChButton* but = (ChButton*)widget;
+	if (win->focusedWidget == widget)
+		win->focusedWidget = NULL;
 	free(but->title);
 	free(but);
 	_KePrint("Button destroyed \r\n");

@@ -1,0 +1,29 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="xnldr.cpp" />
+    <ClCompile Include="video.cpp" />
+    <ClCompile Include="clib.cpp" />
+    <ClCompile Include="xnout.cpp" />
+    <ClCompile Include="file.cpp" />
+    <ClCompile Include="mem.cpp" />
+    <ClCompile Include="pe.cpp" />
+    <ClCompile Include="physm.cpp" />
+    <ClCompile Include="paging.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="video.h" />
+    <ClInclude Include="xnldr.h" />
+    <ClInclude Include="clib.h" />
+    <ClInclude Include="font.h" />
+    <ClInclude Include="xnout.h" />
+    <ClInclude Include="file.h" />
+    <ClInclude Include="pe.h" />
+    <ClInclude Include="physm.h" />
+    <ClInclude Include="lowlevel.h" />
+    <ClInclude Include="paging.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="lowlevel.s" />
+  </ItemGroup>
+</Project>

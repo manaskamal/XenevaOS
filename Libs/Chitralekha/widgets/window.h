@@ -105,6 +105,7 @@
 		struct _chwin_* parent;
 		void* currentPopupMenu; //points to currently working menu
 		void* selectedMenuItem;
+		void* focusedWidget;
 		jmp_buf jump;
 		void(*ChWinPaint)(struct _chwin_ *win);
 		void(*ChCloseWin)(struct _chwin_* win);
