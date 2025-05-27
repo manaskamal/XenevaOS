@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  <ProjectOutputs>
+    <ProjectOutput>
+      <FullPath>E:\Xeneva Project\Aurora\ARM64\Debug\xnkrnl.exe</FullPath>
+    </ProjectOutput>
+  </ProjectOutputs>
+  <ContentFiles>
+    <ContentFile>
+      <FullPath>E:\Xeneva Project\Aurora\KernelAA64\Hal\aa64vector.s</FullPath>
+    </ContentFile>
+    <ContentFile>
+      <FullPath>E:\Xeneva Project\Aurora\KernelAA64\Hal\aa64lowlevel.s</FullPath>
+    </ContentFile>
+  </ContentFiles>
+  <SatelliteDlls />
+  <NonRecipeFileRefs />
+</Project>

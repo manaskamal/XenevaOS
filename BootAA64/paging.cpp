@@ -50,6 +50,7 @@ void XEPagingInitialize() {
 		(0b01 << 26) | (0b01 << 24) | (3UL << 32));
 	write_tcr_el1(tcr & UINT32_MAX);
 
+	
 
 	uint64_t mair = 0x000000000044ff00;
 	write_mair_el1(mair);
@@ -59,8 +60,11 @@ void XEPagingInitialize() {
 }
 
 
-#define PTE_ADDR_MASK 0x0000FFFFFFFFF000UL
-
+/*
+ * XEPagingMap -- maps a physical address to virtual address
+ * @param virtualAddr -- virtual address
+ * @param physAddr -- physical address
+ */
 void XEPagingMap(uint64_t virtualAddr, uint64_t physAddr) {
 	uint64_t l0_index = (virtualAddr >> 39) & 0x1FF;
 	uint64_t l1_index = (virtualAddr >> 30) & 0x1FF;
@@ -102,3 +106,4 @@ void XEPagingMap(uint64_t virtualAddr, uint64_t physAddr) {
 
 	tlb_flush(virtualAddr);
 }
+

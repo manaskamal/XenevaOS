@@ -93,6 +93,8 @@ extern "C" {
 
 	void tlb_flush(uint64_t virtul_addr);
 
+	void callKernel(void* param, uint64_t stack, uint64_t stacksize, void* entry);
+
 #ifdef __cplusplus
 }
 #endif

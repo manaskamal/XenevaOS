@@ -1,0 +1,75 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="init.c" />
+    <ClCompile Include="Hal\vector.c">
+      <Filter>Hal</Filter>
+    </ClCompile>
+    <ClCompile Include="aucon.c" />
+    <ClCompile Include="Hal\aa64cpu.c">
+      <Filter>Hal</Filter>
+    </ClCompile>
+    <ClCompile Include="dtb.c" />
+    <ClCompile Include="Mm\pmmngr.c">
+      <Filter>Mm</Filter>
+    </ClCompile>
+    <ClCompile Include="string.c" />
+    <ClCompile Include="Mm\vmmngr.c">
+      <Filter>Mm</Filter>
+    </ClCompile>
+    <ClCompile Include="Mm\kmalloc.c">
+      <Filter>Mm</Filter>
+    </ClCompile>
+    <ClCompile Include="Mm\liballoc.c">
+      <Filter>Mm</Filter>
+    </ClCompile>
+    <ClCompile Include="Hal\serial.c">
+      <Filter>Hal</Filter>
+    </ClCompile>
+    <ClCompile Include="stdio.c" />
+    <ClCompile Include="ctype.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Hal">
+      <UniqueIdentifier>{a87bd101-57b9-471d-b917-36359786adb8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Include">
+      <UniqueIdentifier>{f3b1c436-a8b1-4401-8163-30f4efdbdb92}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Include\Hal">
+      <UniqueIdentifier>{575f8990-f325-43f1-9daf-9af4f9d5fce9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Mm">
+      <UniqueIdentifier>{906f7182-2c07-4476-b342-d47f03af50d3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Include\Mm">
+      <UniqueIdentifier>{d3d7db67-206f-4519-a027-d9be213a0a97}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="Hal\aa64vector.s">
+      <Filter>Hal</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Hal\aa64lowlevel.s">
+      <Filter>Hal</Filter>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\BaseHdr\Hal\AA64\aa64lowlevel.h">
+      <Filter>Include\Hal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\Hal\AA64\vector.h">
+      <Filter>Include\Hal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\Hal\AA64\aa64cpu.h">
+      <Filter>Include\Hal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\dtb.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\Hal\AA64\qemu.h">
+      <Filter>Include\Hal</Filter>
+    </ClInclude>
+    <ClInclude Include="font.h" />
+  </ItemGroup>
+</Project>

@@ -49,5 +49,13 @@ PAGE_TABLE_ENTRY_SH | PAGE_TABLE_ENTRY_AP_RW | PAGE_TABLE_ENTRY_MEMATTR);
  */
 extern void XEPagingInitialize();
 
+/*
+ * XEPagingMap -- maps a physical address to virtual address
+ * @param virtualAddr -- virtual address
+ * @param physAddr -- physical address
+ */
 extern void XEPagingMap(uint64_t virtualAddr, uint64_t physAddr);
+
+
+
 #endif

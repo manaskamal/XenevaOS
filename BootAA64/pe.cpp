@@ -29,6 +29,64 @@
 
 #include "pe.h"
 #include "clib.h"
+#include "physm.h"
 #include "xnout.h"
+#include "paging.h"
+
+static void copy_mem(void* dst, void* src, size_t length) {
+	uint8_t* dstp = (uint8_t*)dst;
+	uint8_t* srcp = (uint8_t*)src;
+	while (length--)
+		*dstp++ = *srcp++;
+}
+
+static void zero_mem(void* dst, size_t length) {
+
+	uint8_t* dstp = (uint8_t*)dst;
+	while (length--)
+		*dstp++ = 0;
+}
+
+/*
+ * XEPELoadImage -- loads PE image into virtual address
+ * @param filebuff -- pointer to the pe kernel buffer
+ */
+void XEPELoadImage(void* filebuff) {
+	uint8_t* filebuf = (uint8_t*)filebuff;
+
+	PIMAGE_DOS_HEADER dosHeader = (PIMAGE_DOS_HEADER)filebuf;
+	PIMAGE_NT_HEADERS ntHeaders = raw_offset<PIMAGE_NT_HEADERS>(dosHeader, dosHeader->e_lfanew);
+
+	PSECTION_HEADER sectionHeader = raw_offset<PSECTION_HEADER>(&ntHeaders->OptionalHeader, ntHeaders->FileHeader.SizeOfOptionaHeader);
+	size_t ImageBase = 0xFFFFC00000000000;// 0xFFFFFFFC00000000;
+	void* ImBase = (void*)ImageBase;
 
 
+	XEPagingMap(0xFFFFC00000000000, XEPmmngrAllocate());
+	copy_mem((void*)ImBase, filebuf, ntHeaders->OptionalHeader.SizeOfHeaders);
+
+	for (size_t i = 0; i < ntHeaders->FileHeader.NumberOfSections; ++i) {
+		CHAR16 buf[9];
+		copy_mem(buf, sectionHeader[i].Name, 8);
+		buf[8] = 0;
+		size_t load_addr = ImageBase + sectionHeader[i].VirtualAddress;
+		void* sect_addr = (void*)load_addr;
+		size_t sectsz = sectionHeader[i].VirtualSize;
+		int req_pages = sectsz / 4096 +
+			((sectsz % 4096) ? 1 : 0);
+		uint64_t* block = 0;
+		for (int j = 0; j < req_pages; j++) {
+			uint64_t alloc = (load_addr + j * PAGESIZE);
+			XEPagingMap(alloc, XEPmmngrAllocate());
+			memset((void*)alloc, 0, 4096);
+			if (!block)
+				block = (uint64_t*)alloc;
+
+		}
+		//XEGuiPrint("Section name -> %s %x\n", sectionHeader[i].Name, load_addr);
+
+		copy_mem(sect_addr, raw_offset<void*>(filebuf, sectionHeader[i].PointerToRawData), sectionHeader[i].SizeOfRawData);
+		if (sectionHeader[i].VirtualSize > sectionHeader[i].SizeOfRawData)
+			zero_mem(raw_offset<void*>(sect_addr, sectionHeader[i].SizeOfRawData), sectionHeader[i].VirtualSize - sectionHeader[i].SizeOfRawData);
+	}
+}

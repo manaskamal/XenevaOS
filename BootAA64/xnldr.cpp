@@ -210,29 +210,15 @@ UINTN XESetGraphicsMode(EFI_SYSTEM_TABLE* SystemTable, int index) {
 	return Mode;
 }
 
-extern "C" void printName() {
-	XEGuiPrint("Manas Kamal \n");
-}
-
-
-extern "C" int start();
 
 
 typedef void (*kentry)(void* ptr);
 
-static void copy_mem(void* dst, void* src, size_t length) {
-	uint8_t* dstp = (uint8_t*)dst;
-	uint8_t* srcp = (uint8_t*)src;
-	while (length--)
-		*dstp++ = *srcp++;
-}
 
-static void zero_mem(void* dst, size_t length) {
-
-	uint8_t* dstp = (uint8_t*)dst;
-	while (length--)
-		*dstp++ = 0;
-}
+EFI_GUID FdtTableGuid = {
+	0xb1b621d5, 0xf19c, 0x41a5,
+	{0x83,0x06,0x73,0x0c,0xc1, 0x9b, 0x91, 0x6a}
+};
 
 
 /*
@@ -282,6 +268,13 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
 		}
 	}
 
+	void* fdt_address = NULL;
+	
+	for (unsigned i = 0; i < gSystemTable->NumberOfTableEntries; i++) {
+		if (XEGUIDMatch(FdtTableGuid, configuration_tables[i].VendorGuid))
+			fdt_address = configuration_tables[i].VendorTable;
+	}
+
 
 	const size_t EARLY_PAGE_STACK_SIZE = 1024 * 1024;
 	EFI_PHYSICAL_ADDRESS earlyPhyPageStack = 0;
@@ -320,64 +313,53 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
 		for (;;);
 	}
 
-	XEGuiPrint("Boot service exited successfully \n");
-
 	XEInitialisePmmngr(map, (void*)earlyPhyPageStack, EARLY_PAGE_STACK_SIZE);
 
-	XEGuiPrint("Physical memory manager initialized \n");
 	
 	XEPagingInitialize();
 
-	uint64_t ttbr1 = read_tcr_el1();
 
+	XEPELoadImage(krnl->kBuffer);
 
-	XEGuiPrint("T1SZ -> %d , T0SZ -> %d\n", ((ttbr1 >> 16) & 0x3F), (ttbr1 &0x3f));
-
-	ttbr1 = read_ttbr1_el1();
-	uint64_t ttbr0 = read_ttbr0_el1();
-
-
-	uint8_t* filebuf = (uint8_t*)krnl->kBuffer;
-
-    dosHeader = (PIMAGE_DOS_HEADER)filebuf;
-	PIMAGE_NT_HEADERS ntHeaders = raw_offset<PIMAGE_NT_HEADERS>(dosHeader, dosHeader->e_lfanew);
-
-	PSECTION_HEADER sectionHeader = raw_offset<PSECTION_HEADER>(&ntHeaders->OptionalHeader, ntHeaders->FileHeader.SizeOfOptionaHeader);
-	size_t ImageBase = 0xFFFFC00000000000;// 0xFFFFFFFC00000000;
-	void* ImBase = (void*)ImageBase;
-
-	
-	XEPagingMap(0xFFFFC00000000000,XEPmmngrAllocate());
-	copy_mem((void*)ImBase, filebuf, ntHeaders->OptionalHeader.SizeOfHeaders);
-
-	for (size_t i = 0; i < ntHeaders->FileHeader.NumberOfSections; ++i) {
-		CHAR16 buf[9];
-		copy_mem(buf, sectionHeader[i].Name, 8);
-		buf[8] = 0;
-		size_t load_addr = ImageBase + sectionHeader[i].VirtualAddress;
-		void* sect_addr = (void*)load_addr;
-		size_t sectsz = sectionHeader[i].VirtualSize;
-		int req_pages = sectsz / 4096 +
-			((sectsz % 4096) ? 1 : 0);
-		uint64_t* block = 0;
-		for (int j = 0; j < req_pages; j++) {
-			uint64_t alloc = (load_addr + j * PAGESIZE);
-			XEPagingMap(alloc, XEPmmngrAllocate());
-			memset((void*)alloc, 0, 4096);
-			if (!block)
-				block = (uint64_t*)alloc;
-			
-		}
-		//XEGuiPrint("Section name -> %s %x\n", sectionHeader[i].Name, load_addr);
-
-		copy_mem(sect_addr, raw_offset<void*>(filebuf, sectionHeader[i].PointerToRawData), sectionHeader[i].SizeOfRawData);
-		if (sectionHeader[i].VirtualSize > sectionHeader[i].SizeOfRawData)
-			zero_mem(raw_offset<void*>(sect_addr, sectionHeader[i].SizeOfRawData), sectionHeader[i].VirtualSize - sectionHeader[i].SizeOfRawData);
+	for (int i = 0; i < 0x100000 / PAGESIZE; i++) {
+		XEPagingMap(0xFFFFA00000000000 + i * PAGESIZE, XEPmmngrAllocate());
 	}
 
-	VOID* entry = (VOID*)(ImageBase + ntHeaders->OptionalHeader.AddressOfEntryPoint);
+
+	bootinfo.boot_type = BOOT_UEFI_ARM64;
+	bootinfo.allocated_mem = XEGetAlstackptr();
+	bootinfo.reserved_mem_count = XEReserveMemCount();
+	bootinfo.map = map.memmap;
+	bootinfo.descriptor_size = map.DescriptorSize;
+	bootinfo.mem_map_size = map.MemMapSize;
+	bootinfo.graphics_framebuffer = XEGetFramebuffer();
+	bootinfo.X_Resolution = XEGetScreenWidth();
+	bootinfo.Y_Resolution = XEGetScreenHeight();
+	bootinfo.fb_size = XEGetFramebufferSz();
+	bootinfo.pixels_per_line = XEGetPixelsPerLine();
+	bootinfo.redmask = XEGetRedMask();
+	bootinfo.greenmask = XEGetGreenMask();
+	bootinfo.bluemask = XEGetBlueMask();
+	bootinfo.resvmask = XEGetResvMask();
+	bootinfo.acpi_table_pointer = xdsp_address;
+	bootinfo.kernel_size = krnl->FileSize;
+	bootinfo.printf_gui = XEGuiPrint;
+	bootinfo.font_binary_address = 0;
+	bootinfo.driver_entry1 = 0;
+	bootinfo.driver_entry2 = 0;
+	bootinfo.driver_entry3 = 0; // (uint8_t*)xhciAddr;// usbAddr;
+	bootinfo.driver_entry4 = 0;
+	bootinfo.driver_entry5 = 0;
+	bootinfo.driver_entry6 = 0;
+	bootinfo.ap_code = fdt_address;
+	bootinfo.hid = 0;
+	bootinfo.uid = 0;
+	bootinfo.cid = 0;
+
+
+	VOID* entry = (VOID*)(ntHeader->OptionalHeader.ImageBase + ntHeader->OptionalHeader.AddressOfEntryPoint);
 	kentry ke = (kentry)entry;
-	XEGuiPrint("Entry Point address ->%x \n", entry);
-	ke(XEGuiPrint);
+
+	callKernel(&bootinfo, 0xFFFFA00000000000, 0x100000, entry);
 	while (1);
 }

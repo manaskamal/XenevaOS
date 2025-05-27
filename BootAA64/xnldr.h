@@ -62,7 +62,8 @@ typedef struct _FB_INFO_ {
 } FRAMEBUFFER_INFORMATION, * PFRAMEBUFFER_INFORMATION;
 
 
-
+#define BOOT_UEFI_X64   1
+#define BOOT_UEFI_ARM64 2
 /* XEBootInfo, Xeneva Boot information
  * structure passed to the kernel
  */

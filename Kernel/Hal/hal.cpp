@@ -115,5 +115,7 @@ AU_EXTERN AU_EXPORT void AuEnableInterrupt() {
 AU_EXTERN AU_EXPORT int AuGetTimeOfTheDay(timeval *tv) {
 #ifdef ARCH_X64
 	return x86_64_gettimeofday(tv);
+#else
+	return 0;
 #endif
 }

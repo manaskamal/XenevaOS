@@ -42,7 +42,11 @@
 #define AU_FUNC AU_IMPORT
 #endif
 
+#ifdef __cplusplus
 #define AU_EXTERN  extern "C"
+#else
+#define AU_EXTERN 
+#endif
 
 
 #define KERNEL_STACK_LOCATION   0xFFFFFB0000000000

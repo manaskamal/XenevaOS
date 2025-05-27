@@ -4,9 +4,8 @@
 
 ![alt text](https://github.com/manaskamal/XenevaOS/blob/master/XeLogo.jpg?raw=true)
 
-Xeneva is a GUI based operating system for 64 bit architecture based processors. For x86_64
-bit systems, it can be booted from UEFI environment. The Kernel is known as _'Aurora'_ 
-with hybrid design and the entire operating system is known as _'Xeneva'_.<br> Please visit [Build Instructions](Docs/BuildInstructions.md) to build the project
+Xeneva is an operating system for both x86_64 and ARM64  architectures, built from the ground up. The Kernel is known as _'Aurora'_ 
+with hybrid kernel design and the entire operating system is known as _'Xeneva'_.<br> Please visit [Build Instructions](Docs/BuildInstructions.md) to build the project
 
 ## Documentation
 Refer to [Documentations of XenevaOS](Docs/Introduction.md)
@@ -16,7 +15,7 @@ XenevaOS is an open-source project that welcomes contributions from developers, 
 
 ## __Features__ :
 - ACPI (through acpica)
-- x64 based Kernel
+- x64 and arm64 Kernel
 - Fully Higher Half Memory with MMIO mappings
 - Driver _loading and linking_ through dll files
 - SSE/SSE3
@@ -64,12 +63,6 @@ _And many more coming soon_
 
 The project is build purely on Windows Environment. Please Visit [Build Instructions page ](Docs/BuildInstructions.md) for more information
 
-
-## __Requirements__ : 
-1> NASM as the main assembler <br>
-2> Microsoft Visual Studio 2013 or later <br>
-3> GPT configured FAT32 partition ( EFI-System Partition ) to store 
-   the Kernel {_'xnkrnl.exe'_} and the bootloader {_'BOOTx64.efi'_}.
 
 # Contact:
 

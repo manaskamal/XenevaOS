@@ -263,4 +263,11 @@ static const enum PeMachineType   MACHINE_NATIVE = IMAGE_FILE_MACHINE_I386;
 #define IMAGE_IMPORT_LOOKUP_TABLE_FLAG  IMAGE_IMPORT_LOOKUP_TABLE_FLAG_PE32
 
 
+/*
+ * XEPELoadImage -- loads PE image into virtual address
+ * @param filebuff -- pointer to the pe kernel buffer
+ */
+extern void XEPELoadImage(void* filebuff);
+
+
 #endif

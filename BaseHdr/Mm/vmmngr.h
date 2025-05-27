@@ -40,12 +40,26 @@
 #include <stdint.h>
 #include <aurora.h>
 
+#ifdef ARCH_X64
 #define X86_64_PAGING_PRESENT 0x1
 #define X86_64_PAGING_WRITABLE 0x2
 #define X86_64_PAGING_USER     0x4
 #define X86_64_PAGING_NO_EXECUTE 0x80000
 #define X86_64_PAGING_NO_CACHING 0x200000
 #define X86_64_PAGING_WRITE_THROUGH 0x400000
+#else
+#define PTE_VALID (1ULL << 0)
+#define PTE_TABLE (1ULL << 1)
+#define PTE_BLOCK (0ULL << 1)
+#define PTE_AF (1ULL << 10)
+#define PTE_SH_INNER (3ULL << 8)
+#define PTE_AP_RW (0ULL << 6)  //RW access
+#define PTE_ATTR_IDX_0 (0ULL << 2)  //Device memory
+#define PTE_ATTR_IDX_1 (1ULL << 2)  //Normal memory
+
+#define PTE_NORMAL_MEM PTE_ATTR_IDX_1
+#define PTE_DEVICE_MEM PTE_ATTR_IDX_0
+#endif
 
 #define PHYSICAL_MEM_BASE  0xFFFF800000000000
 #define MMIO_BASE          0xFFFFFF1000000000
@@ -60,6 +74,8 @@
 #define USER_END_ADDRESS  0x0000000080000000
 
 #ifdef ARCH_X64
+#define PAGE_SIZE 4096
+#else
 #define PAGE_SIZE 4096
 #endif
 

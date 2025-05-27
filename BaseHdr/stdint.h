@@ -34,8 +34,17 @@
 #define __need_wint_t
 #define __need_wchar_t
 
-
 typedef unsigned char BOOL;
+
+#ifdef ARCH_ARM64
+#ifndef __cplusplus
+#if !defined(_Bool) && !defined(bool)
+typedef BOOL bool;
+#define true 1
+#define false 0
+#endif
+#endif
+#endif
 
 
 /* 7.18.1.1  Exact-width integer types */
