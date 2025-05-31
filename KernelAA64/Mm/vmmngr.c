@@ -66,15 +66,17 @@ void AuVmmngrInitialize() {
 	uint64_t* newL0 = AuPmmngrAlloc();
 	memset(newL0, 0, PAGE_SIZE);
 
+	
 	for (int i = 0; i < 512; i++) {
 		if (i == 512)
 			continue;
-		if ((previousL0[i] & 1))
+		if ((previousL0[i] & 1)) {
 			newL0[i] = previousL0[i];
+		}
 		else
 			newL0[i] = 0;
 	}
-
+	
 	uint64_t* newL1 = AuPmmngrAlloc();
 	memset(newL1, 0, PAGE_SIZE);
 	newL0[pml4_index(PHYSICAL_MEM_BASE)] = (uint64_t)newL1 | PTE_VALID | PTE_TABLE | PTE_AF;
@@ -230,6 +232,7 @@ void AuFreePages(uint64_t virt_addr, bool free_physical, size_t s) {
 		uint64_t* pt = (uint64_t*)P2V(pd[pd_index(virt_addr)] & ~0xFFFUL);
 		uint64_t* page = (uint64_t*)P2V(pt[pt_index(virt_addr)] & ~0xFFFUL);
 
+		AuTextOut("Your physical page is -> %x %x\n", page, V2P(page));
 		if ((pt[pt_index(virt_addr)] & 1) != 0) {
 			pt[pt_index(virt_addr)] = 0;
 		}
@@ -241,5 +244,24 @@ void AuFreePages(uint64_t virt_addr, bool free_physical, size_t s) {
 		virt_addr = virt_addr + (i * 4096);
 	}
 
+}
+
+/*
+ * AuFreePages -- frees up contiguous pages
+ * @param virt_addr -- starting virtual address
+ * @param flags -- flags to update
+ */
+void AuUpdatePageFlags(uint64_t virt_addr, uint64_t flags) {
+	const long i1 = pml4_index(virt_addr);
+	uint64_t* pml4_ = (uint64_t*)P2V(read_ttbr0_el1());
+	uint64_t* pdpt = (uint64_t*)P2V(pml4_[pml4_index(virt_addr)] & ~0xFFFUL);
+	uint64_t* pd = (uint64_t*)P2V(pdpt[pdpt_index(virt_addr)] & ~0xFFFUL);
+	uint64_t* pt = (uint64_t*)P2V(pd[pd_index(virt_addr)] & ~0xFFFUL);
+	uint64_t* page = (uint64_t*)P2V(pt[pt_index(virt_addr)] & ~0xFFFUL);
+
+	AuTextOut("Your physical page is -> %x %x\n", page, V2P(page));
+	if (page) {
+		pt[pt_index(virt_addr)] = (V2P(page) & ~0xFFFULL) | flags;
+	}
 }
 

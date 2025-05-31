@@ -236,8 +236,12 @@
   <ItemGroup>
     <ClCompile Include="aucon.c" />
     <ClCompile Include="ctype.c" />
+    <ClCompile Include="Drivers\rtcmmio.c" />
+    <ClCompile Include="Drivers\uart.c" />
     <ClCompile Include="dtb.c" />
     <ClCompile Include="Hal\aa64cpu.c" />
+    <ClCompile Include="Hal\basicacpi.c" />
+    <ClCompile Include="Hal\gic.c" />
     <ClCompile Include="Hal\serial.c" />
     <ClCompile Include="Hal\vector.c" />
     <ClCompile Include="init.c" />
@@ -267,11 +271,18 @@
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\BaseHdr\aa64hcode.h" />
+    <ClInclude Include="..\BaseHdr\Drivers\rtcmmio.h" />
+    <ClInclude Include="..\BaseHdr\Drivers\uart.h" />
     <ClInclude Include="..\BaseHdr\dtb.h" />
     <ClInclude Include="..\BaseHdr\Hal\AA64\aa64cpu.h" />
     <ClInclude Include="..\BaseHdr\Hal\AA64\aa64lowlevel.h" />
+    <ClInclude Include="..\BaseHdr\Hal\AA64\gic.h" />
     <ClInclude Include="..\BaseHdr\Hal\AA64\qemu.h" />
     <ClInclude Include="..\BaseHdr\Hal\AA64\vector.h" />
+    <ClInclude Include="..\BaseHdr\uart.h">
+      <DeploymentContent>false</DeploymentContent>
+    </ClInclude>
     <ClInclude Include="font.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -31,7 +31,17 @@
 #define __AA64_CPU_H__
 
 #include <stdint.h>
+#include <aurora.h>
 
+#define CPU_IMPLEMENTER_ARM      0x41
+#define CPU_IMPLEMENTER_BROADCOM 0x42
+#define CPU_IMPLEMENTER_CAVIUM   0x43
+#define CPU_IMPLEMENTER_FUJITSU  0x46
+#define CPU_IMPLEMENTER_INTEL    0x49
+#define CPU_IMPLEMENTER_APPLIED_MICRO 0x50
+#define CPU_IMPLEMENTER_QUALCOMM 0x51
+#define CPU_IMPLEMENTER_MARVELL  0x56
+#define CPU_IMPLEMENTER_APPLE    0x61
 typedef struct _aa64_regs_ {
 	uint64_t x30;
 	uint64_t EL0SP;
@@ -72,4 +82,10 @@ typedef struct _aa64_regs_ {
  * AA64CpuInitialize -- initialize aa64 cpu
  */
 extern void AA64CpuInitialize();
+
+/*
+ * AA64CPUPostInitialize -- initilaize post cpu requirements
+ * @param info -- Pointer to KERNEL BOOT INFORMATIONs
+ */
+extern void AA64CPUPostInitialize(KERNEL_BOOT_INFO* info);
 #endif

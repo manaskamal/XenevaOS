@@ -42,4 +42,5 @@ void AuDeviceTreeInitialize(void* fdt_address) {
 	}
 	fdt_header_t* dtb = (fdt_header_t*)fdt_address;
 	AuTextOut("DTB Magic : %x \n", dtb->magic);
+	for (;;);
 }

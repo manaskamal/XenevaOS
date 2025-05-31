@@ -28,6 +28,18 @@
     </ClCompile>
     <ClCompile Include="stdio.c" />
     <ClCompile Include="ctype.c" />
+    <ClCompile Include="Hal\gic.c">
+      <Filter>Hal</Filter>
+    </ClCompile>
+    <ClCompile Include="Hal\basicacpi.c">
+      <Filter>Hal</Filter>
+    </ClCompile>
+    <ClCompile Include="Drivers\uart.c">
+      <Filter>Drivers</Filter>
+    </ClCompile>
+    <ClCompile Include="Drivers\rtcmmio.c">
+      <Filter>Drivers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Hal">
@@ -44,6 +56,12 @@
     </Filter>
     <Filter Include="Include\Mm">
       <UniqueIdentifier>{d3d7db67-206f-4519-a027-d9be213a0a97}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Include\Drivers">
+      <UniqueIdentifier>{5c378562-63c9-49a7-96af-f387843c99b1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Drivers">
+      <UniqueIdentifier>{d503652f-2888-492d-aed1-5af3fe35f5db}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -71,5 +89,20 @@
       <Filter>Include\Hal</Filter>
     </ClInclude>
     <ClInclude Include="font.h" />
+    <ClInclude Include="..\BaseHdr\Hal\AA64\gic.h">
+      <Filter>Include\Hal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\aa64hcode.h">
+      <Filter>Include\Hal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\uart.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\Drivers\uart.h">
+      <Filter>Include\Drivers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\Drivers\rtcmmio.h">
+      <Filter>Include\Drivers</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

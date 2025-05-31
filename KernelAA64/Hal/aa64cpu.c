@@ -31,7 +31,11 @@
 #include <Hal/AA64/aa64lowlevel.h>
 #include <Hal/AA64/aa64cpu.h>
 #include <Hal/AA64/vector.h>
+#include <Hal/AA64/gic.h>
 #include <aucon.h>
+#include <Hal/basicacpi.h>
+#include <Drivers/uart.h>
+#include <Drivers/rtcmmio.h>
 
 
 uint64_t basisTime;
@@ -62,6 +66,45 @@ void AA64ClockInitialize() {
 	basisTime = AA64GetPhysicalTimerCount() / cpuFrequency;
 	AuTextOut("[aurora]: using %d mHZ \n", cpuFrequency);
 
+	
+}
+
+void AA64CPUImplementer(uint32_t midr) {
+	uint8_t iid = (midr >> 24) & 0xFF;
+	uint8_t arch = (midr >> 16) & 0xF;
+	switch (iid) {
+	case CPU_IMPLEMENTER_ARM:
+		AuTextOut("CPU Implementer: ARM Limited \n");
+		break;
+	case CPU_IMPLEMENTER_BROADCOM:
+		AuTextOut("CPU Implementer: Broadcom\n");
+		break;
+	case CPU_IMPLEMENTER_CAVIUM:
+		AuTextOut("CPU Implementer: Cavium \n");
+		break;
+	case CPU_IMPLEMENTER_FUJITSU:
+		AuTextOut("CPU Implementer: Fujitsu \n");
+		break;
+	case CPU_IMPLEMENTER_INTEL:
+		AuTextOut("CPU Implementer: Intel \n");
+		break;
+	case CPU_IMPLEMENTER_APPLIED_MICRO:
+		AuTextOut("CPU Implementer: Applied Micro\n");
+		break;
+	case CPU_IMPLEMENTER_QUALCOMM:
+		AuTextOut("CPU Implementer: Qualcomm \n");
+		break;
+	case CPU_IMPLEMENTER_MARVELL:
+		AuTextOut("CPU Implementer: Marvell \n");
+		break;
+	case CPU_IMPLEMENTER_APPLE:
+		AuTextOut("CPU Implementer: Apple \n");
+		break;
+	default:
+		AuTextOut("CPU Implementer: Unknown \n");
+		break;
+	}
+	AuTextOut("CPU Architecture: ARMv8-A(%x)\n", arch);
 }
 /*
  * AA64CpuInitialize -- initialize aa64 cpu
@@ -81,9 +124,36 @@ void AA64CpuInitialize() {
 	/* enable FPU and NEON */
 	AA64FPUNeonEnable();
 
+	//enable_irqs();
+
 	// 
 	//initialize Interrupt controller GIC 
 	
 
 	//if smp, set per core datas
+}
+
+/*
+ * AA64CPUPostInitialize -- initilaize post cpu requirements
+ * @param info -- Pointer to KERNEL BOOT INFORMATIONs
+ */
+void AA64CPUPostInitialize(KERNEL_BOOT_INFO* info) {
+	AuACPIInitialise(info->acpi_table_pointer);
+	UARTInitialize();
+	enable_irqs();
+	GICInitialize();
+	setupTimerIRQ();
+
+	//Enable TIMER IRQ 
+	GICEnableIRQ(30);
+	//PS/2 Enable
+	GICEnableIRQ(33);
+	//UART irq enable
+	GICEnableIRQ(UART0_IRQ);
+
+
+	uint32_t id = read_midr();
+	AA64CPUImplementer(id);
+	AuTextOut("arm64 cpu post initialized \n");
+	AuPL031RTCInit();
 }

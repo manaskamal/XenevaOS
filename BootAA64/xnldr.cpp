@@ -221,6 +221,23 @@ EFI_GUID FdtTableGuid = {
 };
 
 
+#pragma pack(push,1)
+//! ACPI version 1.0 structures
+typedef struct _rsdp_
+{
+	char signature[8];
+	unsigned char checksum;
+	char oemId[6];
+	unsigned char revision;
+	unsigned rsdtAddr;
+
+	unsigned length;
+	uint64_t xsdtAddr;
+	unsigned char xChecksum;
+	unsigned char res[3];
+} acpiRsdp;
+#pragma pack(pop)
+
 /*
  * efi_main -- main entry of XNLDR 2.0
  * @param ImageHandle -- System parameter
@@ -267,6 +284,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
 			xdsp_address = configuration_tables[i].VendorTable;
 		}
 	}
+
 
 	void* fdt_address = NULL;
 	

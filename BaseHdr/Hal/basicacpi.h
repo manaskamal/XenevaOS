@@ -36,6 +36,15 @@
 //APIC structure types
 #define ACPI_APICTYPE_LAPIC  0
 #define ACPI_APICTYPE_IOAPIC 1
+#define ACPI_MADTTYPE_GICC  11
+#define ACPI_MADTTYPE_GICD  12
+#define ACPI_MADTTYPE_GICMSI 13
+#define ACPI_MADTTYPE_GICR  14
+#define ACPI_MADTTYPE_GICITS 15
+#define ACPI_MADTTYPE_CIC  17 //RISC-V
+#define ACPI_MADTTYPE_LPI  18 //ARM(Server)
+#define ACPI_MADTTYPE_GICCPU_AFFIN 19
+#define ACPI_MADTTYPE_GICV4 20
 
 
 #define ACPI_SIG_RSDP     "RSD PTR "
@@ -167,6 +176,36 @@ typedef struct
 	unsigned char lapicId;
 	unsigned flags;
 } acpiLocalApic;
+
+typedef struct {
+	acpiApicHeader header;
+	uint16_t reserved1;
+	uint32_t cpuInterfaceNumber;
+	uint32_t acpiProcessorUID;
+	uint32_t flags;
+	uint32_t parkingProtocolVersion;
+	uint32_t performanceGSI;
+	uint64_t parkedAddress;
+	uint64_t physicalBaseAddress;
+	uint64_t gicv;
+	uint64_t gich;
+	uint32_t vgicMaintenanceInterrupt;
+	uint64_t gicrBaseAddress;
+	uint64_t mpidr;
+	uint8_t processorPowerEfficiencyClass;
+	uint8_t reserved2;
+	uint16_t SPEOverflowInterrupt;
+	uint16_t TRBEInterrupt;
+}acpiGICCpuInterface;
+
+typedef struct {
+	acpiApicHeader header;
+	uint16_t reserved01;
+	uint32_t gicID;
+	uint64_t physicalBaseAddress;
+	uint32_t systemVectorBase;
+	uint8_t gicVersion;
+}acpiGICDistributor;
 
 typedef struct
 {

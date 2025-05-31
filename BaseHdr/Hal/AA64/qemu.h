@@ -32,11 +32,14 @@
 
 #ifdef __TARGET_BOARD_QEMU_VIRT__
 
+/* GIC related informations*/
 #define GIC_DIST 0x08000000
-#define GIC_CPY  0x08010000
+#define GIC_CPU  0x08010000
 #define GIC_V2M  0x08020000
 #define GIC_HYP  0x08030000
 #define GIC_VCPU 0x08040000
+#define GIC_ITS  0x08080000
+#define GIC_REDIST 0x080A0000
 
 #define GPIO  0x09030000 
 #define UART0 0x09000000
@@ -44,6 +47,18 @@
 #define RTC   0x09010000
 #define SMMU  0x09050000
 #define VIRT_MMIO 0x0a000000
+#define FW_CFG 0x09020000
+#define PCIE_MMIO  0x10000000
+#define PCIE_PIP   0x3eff0000
+#define PCIE_ECAM  0x3f000000
+
+/* IRQ Mappings to GIC*/
+#define UART0_IRQ  1
+#define RTC_IRQ 2
+#define PCIE_IRQ 3
+#define GPIO_IRQ 7
+#define UART1_IRQ 8
+#define ACPI_GED 9
 
 #endif
 

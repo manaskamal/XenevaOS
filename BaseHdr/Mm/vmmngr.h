@@ -169,6 +169,13 @@ AU_EXTERN AU_EXPORT uint64_t* AuGetFreePage(bool user, void* ptr);
 AU_EXTERN AU_EXPORT void AuFreePages(uint64_t virt_addr, bool free_physical, size_t s);
 
 /*
+ * AuFreePages -- frees up contiguous pages
+ * @param virt_addr -- starting virtual address
+ * @param flags -- flags to update
+ */
+AU_EXTERN AU_EXPORT void AuUpdatePageFlags(uint64_t virt_addr, uint64_t flags);
+
+/*
 * AuGetPhysicalAddress -- translates logical address
 * to its physical address
 * @param virt_addr -- virtual address

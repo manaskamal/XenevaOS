@@ -31,16 +31,65 @@
 #include <Hal/AA64/aa64lowlevel.h>
 #include <Hal/AA64/aa64cpu.h>
 #include <aucon.h>
-
+#include <Hal/AA64/gic.h>
+#include <Drivers/uart.h>
+#include <Drivers/rtcmmio.h>
 
 void sync_el1_handler(AA64Registers *regs) {
-	AuTextOut("Synchronous Exception occured \n");
+    AuTextOut("=======Synchronous Exception occured=========\n");
+    AuTextOut("Fault Address (FAR_EL1): %x \n", read_far_el1());
+    AuTextOut("Fault Instruction (ELR_EL1): %x \n", read_elr_el1());
+    uint64_t esr = read_esr_el1();
+
+    uint32_t dfsc = esr & 0x3F;
+
+    switch (dfsc) {
+    case 0b000000: AuTextOut("Address size, fault level 0\n"); break;
+    case 0b000001: AuTextOut("Address Size, fault level 1\n"); break;
+    case 0b000010: AuTextOut("Address size, fault level 2\n"); break;
+    case 0b000011: AuTextOut("Address size, fault level 3 \n"); break;
+    case 0b000100: AuTextOut("translation, fault level 0\n"); break;
+    case 0b000101: AuTextOut("translation, fault level 1\n"); break;
+    case 0b000110: AuTextOut("translation, fault level 2\n"); break;
+    case 0b000111: AuTextOut("translation, fault level 3\n"); break;
+    case 0b001001: AuTextOut("access flag, fault level 1\n"); break;
+    case 0b001010: AuTextOut("access flag, fault level 2\n"); break;
+    case 0b001011: AuTextOut("access flag, fault level 3\n"); break;
+    case 0b001101: AuTextOut("permission fault, level 1\n"); break;
+    case 0b001110: AuTextOut("permission fault, level 2\n"); break;
+    case 0b001111: AuTextOut("permission fault, level 3\n"); break;
+    default: AuTextOut("Unknown fault code \n"); break;
+    }
 	while (1) {}
 }
 
 void irq_el1_handler(AA64Registers* regs) {
-	AuTextOut("IRQ Exception occured \n");
-	while(1){}
+    uint32_t iar = GICReadIAR();
+    uint32_t irq = iar & 0x3FF;
+    if (irq < 1020) {
+        if (irq == 30) {
+            //AuTextOut("Timer IRQ fired %d multi-tasking possible \n", irq);
+            //timer irq fires here, do multitasking stuffs
+        }
+        else if (irq == 27) {
+            AuTextOut("Virtual Timer IRQ fired %d \n", irq);
+        }
+        else if (irq == 33) {
+            AuTextOut("PS/2 Keyboard irq fired %d\n", irq);
+        }
+        else if (irq == UART0_IRQ) {
+            AuTextOut("UART0 IRQ fired %d \n", irq);
+        }
+        else if (irq == 2) {
+            AuTextOut("PL031 RTC IRQ %d \n", irq);
+            AuPL031RTCIRQHandle();
+        }
+    }
+    GICClearPendingIRQ(irq);
+    if (irq == 1022)
+        return;
+    GICSendEOI(irq);
+	//while(1){}
 }
 
 void fault_el1_handler(AA64Registers* regs) {

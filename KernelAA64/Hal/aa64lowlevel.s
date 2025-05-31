@@ -153,4 +153,34 @@ read_elr_el1:
    mrs x0, elr_el1
    ret
 
+.global enable_irqs
+enable_irqs:
+   msr daifclr, #0x2
+   isb
+   ret
+
+.global mask_irqs
+mask_irqs:
+   msr daifset, #0b1111
+   ret
+
+.global setupTimerIRQ
+setupTimerIRQ:
+   mrs x0, CNTFRQ_EL0
+   mov x1, 100
+   udiv x0, x0, x1
+   msr CNTP_TVAL_EL0, x0
+   mov x0,1
+   msr CNTP_CTL_EL0, x0
+   ret
+
+.global read_icc_iar1_el1
+read_icc_iar1_el1:
+   mrs x0, ICC_IAR1_EL1
+   ret
+
+.global read_midr
+read_midr:
+   mrs x0, MIDR_EL1
+   ret
 

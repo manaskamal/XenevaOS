@@ -155,38 +155,51 @@ irq_el1_wrapper:
 /* define vectors */
 .global vectors
 .balign 0x800
+/*
+ * Current EL with SP_EL0
+ */
 vectors:
-   b .
+   b .  //sync el1t
 .balign 0x80
-   b .
+   b .  //irq
 .balign 0x80
-   b .
+   b .  //fiq
 .balign 0x80 
+   b .   //serror
+
+/*
+ * Current EL with SP_EL1
+ */
+.balign 0x80
+   b sync_el1_wrapper  //sync el1
+.balign 0x80
+   b irq_el1_wrapper   //irq
+.balign 0x80
+   b .                 //FIQ 
+.balign 0x80
+   b .                 //SError
+
+
+//==========================
+// Lower EL --aarch64
+//==========================
+.balign 0x80
+   b . //sync_el1_wrapper   //sync
+.balign 0x80
+   b . //irq_el1_wrapper    //IRQ  
+.balign 0x80
+   b .
+.balign 0x80
    b .
 
+//===========================
+// Lower EL aarch32
+//===========================
 .balign 0x80
-   b fault_el1_wrapper
+   b .                 //sync
 .balign 0x80
-   b .
+   b .                 //IRQ
 .balign 0x80
-   b .
+   b .                 //FIQ
 .balign 0x80
-   b .
-
-.balign 0x80
-   b sync_el1_wrapper
-.balign 0x80
-   b irq_el1_wrapper
-.balign 0x80
-   b .
-.balign 0x80
-   b .
-
-.balign 0x80
-   b .
-.balign 0x80
-   b .
-.balign 0x80
-   b .
-.balign 0x80
-   b .
+   b .                 //SError

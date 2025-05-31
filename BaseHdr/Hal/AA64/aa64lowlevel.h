@@ -109,5 +109,18 @@ AU_EXTERN AU_EXPORT uint64_t read_far_el1();
 
 AU_EXTERN AU_EXPORT uint64_t read_elr_el1();
 
+extern void aa64_write_sysreg(const char* reg, uint64_t value);
 
+extern uint64_t aa64_read_sysreg(const char* reg);
+
+
+extern void setupTimerIRQ();
+
+extern void enable_irqs();
+
+extern void mask_irqs();
+
+extern uint32_t read_icc_iar1_el1();
+
+extern uint32_t read_midr();
 #endif

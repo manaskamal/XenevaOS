@@ -36,23 +36,12 @@
 #include <Mm/vmmngr.h>
 #include <Mm/kmalloc.h>
 #include <_null.h>
+#include <Hal/AA64/gic.h>
+#include <Hal/basicacpi.h>
+#include <Hal/AA64/aa64lowlevel.h>
+#include <Drivers/uart.h>
 
-uint64_t* uartMMIO;
-void UARTInit() {
-	uartMMIO = (uint64_t*)AuMapMMIO(0x09000000, 1);
 
-	AuTextOut("UART MMIO -> %x \n", uartMMIO);
-}
-void uartPutc(char c) {
-	char* uart0 = (char*)uartMMIO;
-	while ((*(uart0 + 0x18) & (1 << 5)));
-	*uart0 = c;
-}
-
-void uartPuts(const char* s) {
-	while (*s)
-		uartPutc(*s++);
-}
 
 extern int _fltused = 1;
 
@@ -65,9 +54,8 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	AuVmmngrInitialize();
 	AuHeapInitialize();
 	AuConsolePostInitialise(info);
-	AuTextOut("Hey!! inside from console \n");
-	UARTInit();
-	uartPuts("Hey!! MMIO \n");
+	AA64CPUPostInitialize(info);
+
 	while (1) {
 	}
 }

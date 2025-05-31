@@ -16,10 +16,18 @@ e:\xeneva project\aurora\kernelaa64\arm64\debug\vector.obj
 e:\xeneva project\aurora\kernelaa64\arm64\debug\vector.asm
 e:\xeneva project\aurora\kernelaa64\arm64\debug\serial.obj
 e:\xeneva project\aurora\kernelaa64\arm64\debug\serial.asm
+e:\xeneva project\aurora\kernelaa64\arm64\debug\gic.obj
+e:\xeneva project\aurora\kernelaa64\arm64\debug\gic.asm
+e:\xeneva project\aurora\kernelaa64\arm64\debug\basicacpi.obj
+e:\xeneva project\aurora\kernelaa64\arm64\debug\basicacpi.asm
 e:\xeneva project\aurora\kernelaa64\arm64\debug\aa64cpu.obj
 e:\xeneva project\aurora\kernelaa64\arm64\debug\aa64cpu.asm
 e:\xeneva project\aurora\kernelaa64\arm64\debug\dtb.obj
 e:\xeneva project\aurora\kernelaa64\arm64\debug\dtb.asm
+e:\xeneva project\aurora\kernelaa64\arm64\debug\uart.obj
+e:\xeneva project\aurora\kernelaa64\arm64\debug\uart.asm
+e:\xeneva project\aurora\kernelaa64\arm64\debug\rtcmmio.obj
+e:\xeneva project\aurora\kernelaa64\arm64\debug\rtcmmio.asm
 e:\xeneva project\aurora\kernelaa64\arm64\debug\ctype.obj
 e:\xeneva project\aurora\kernelaa64\arm64\debug\ctype.asm
 e:\xeneva project\aurora\kernelaa64\arm64\debug\aucon.obj
@@ -39,6 +47,5 @@ e:\xeneva project\aurora\kernelaa64\arm64\debug\kernelaa64.tlog\custombuild.read
 e:\xeneva project\aurora\kernelaa64\arm64\debug\kernelaa64.tlog\custombuild.write.1.tlog
 e:\xeneva project\aurora\kernelaa64\arm64\debug\kernelaa64.tlog\kernelaa64.write.1u.tlog
 e:\xeneva project\aurora\kernelaa64\arm64\debug\kernelaa64.tlog\link.command.1.tlog
-e:\xeneva project\aurora\kernelaa64\arm64\debug\kernelaa64.tlog\link.delete.1.tlog
 e:\xeneva project\aurora\kernelaa64\arm64\debug\kernelaa64.tlog\link.read.1.tlog
 e:\xeneva project\aurora\kernelaa64\arm64\debug\kernelaa64.tlog\link.write.1.tlog
