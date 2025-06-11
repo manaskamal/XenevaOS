@@ -52,7 +52,36 @@
 #define KERNEL_STACK_LOCATION   0xFFFFFB0000000000
 #define KERNEL_STACK_SIZE 16384  //16KiB
 
+#pragma pack(push,1)
+typedef struct _lbprotocol_ {
+	uint64_t initrd_start;
+	uint64_t initrd_end;
+	uint64_t device_tree_base;
+	uint64_t device_tree_end;
+	uint64_t device_tree_sz;
+	/* we should take care of
+	 * little boot binary occupied
+	 * memory area also, becasuse
+	 * upto the main kernel becomes
+	 * standalone, we can't neglect
+	 * little boot code. because memory
+	 * map data structure, and paging
+	 * data structures are statically
+	 * allocated within this region
+	 */
+	uint64_t littleBootStart;
+	uint64_t littleBootStop;
 
+	/* usable memory map describes
+	 * usable memory areas*/
+	void* usable_memory_map;
+}LittleBootProtocol;
+#pragma pack(pop)
+
+
+#define BOOT_UEFI_x64 1
+#define BOOT_UEFI_ARM64 2
+#define BOOT_LITTLEBOOT_ARM64 3
 /**
 * Kernel Boot information structure passed by XNLDR
 */

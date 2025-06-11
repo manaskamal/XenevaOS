@@ -36,10 +36,10 @@
  * bootloader
  */
 void AuDeviceTreeInitialize(void* fdt_address) {
-	if (!fdt_address) {
-		AuTextOut("Device Tree Blob not found \n");
-		return;
-	}
+	//if (!fdt_address) {
+	//	AuTextOut("Device Tree Blob not found \n");
+	//	return;
+	//}
 	fdt_header_t* dtb = (fdt_header_t*)fdt_address;
 	AuTextOut("DTB Magic : %x \n", dtb->magic);
 	for (;;);

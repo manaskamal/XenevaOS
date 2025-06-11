@@ -63,7 +63,10 @@ _And many more coming soon_
 
 The project is build purely on Windows Environment. Please Visit [Build Instructions page ](Docs/BuildInstructions.md) for more information
 
-
 # Contact:
+For questions, suggestions, or collaborations, feel free to reach out
+- Email: hi@getxeneva.com
+- Website: [www.getxeneva.com](https://getxeneva.com)
 
-Email: manaskamal.kandupur@gmail.com
+# License:
+XenevaOS is licensed under the [BSD 2-clause License](./LICENSE)

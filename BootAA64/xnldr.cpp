@@ -289,10 +289,9 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
 	void* fdt_address = NULL;
 	
 	for (unsigned i = 0; i < gSystemTable->NumberOfTableEntries; i++) {
-		if (XEGUIDMatch(FdtTableGuid, configuration_tables[i].VendorGuid))
+		if (XEGUIDMatch(configuration_tables[i].VendorGuid, FdtTableGuid))
 			fdt_address = configuration_tables[i].VendorTable;
 	}
-
 
 	const size_t EARLY_PAGE_STACK_SIZE = 1024 * 1024;
 	EFI_PHYSICAL_ADDRESS earlyPhyPageStack = 0;

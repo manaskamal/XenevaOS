@@ -196,9 +196,10 @@
       <RandomizedBaseAddress />
       <FixedBaseAddress>false</FixedBaseAddress>
       <DataExecutionPrevention />
+      <AdditionalOptions> %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
-      <Command>copy "$(SolutionDir)Build\EFI\XENEVA\$(TargetName).exe" "R:\EFI\XENEVA\$(TargetName).exe"</Command>
+      <Command>copy "$(SolutionDir)Build\EFI\XENEVA\$(TargetName).exe" "M:\EFI\XENEVA\$(TargetName).exe"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">

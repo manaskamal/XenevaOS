@@ -40,13 +40,88 @@
 #include <Hal/basicacpi.h>
 #include <Hal/AA64/aa64lowlevel.h>
 #include <Drivers/uart.h>
-
+#include <Hal/AA64/qemu.h>
 
 
 extern int _fltused = 1;
 
+/*
+ * LBUartPutc -- put a character to UART
+ * @param c -- Character to put
+ */
+void AuUartPutc(char c) {
+	char* uart0 = (char*)UART0;
+	while ((*(uart0 + 0x18) & (1 << 5)));
+	*uart0 = c;
+}
+
+/*
+ * LBUartPutString -- print a string
+ * to UART
+ * @param s -- String to print
+ */
+void AuUartPutString(const char* s) {
+	while (*s)
+		AuUartPutc(*s++);
+}
+
+/*
+ * LBUartPrintInt -- prints integer
+ * through UART
+ * @param value -- value to print
+ */
+void LBUartPrintInt(uint64_t value) {
+    char buffer[12];
+    int i = 0;
+    bool is_negative = false;
+    if (value == 0) {
+        AuUartPutc('0');
+        return;
+    }
+
+    if (value < 0) {
+        is_negative = true;
+        value = -value;
+    }
+
+    while (value > 0) {
+        buffer[i++] = '0' + (value % 10);
+        value /= 10;
+    }
+
+    if (is_negative)
+        buffer[i++] = '-';
+
+    while (i--)
+        AuUartPutc(buffer[i]);
+
+    AuUartPutc('\n');
+}
+
+/*
+ * LBUartPrintHex -- prints hexadecimal value
+ * using serial UART
+ * @param val -- value to print
+ */
+void LBUartPrintHex(uint64_t val) {
+    AuUartPutc('0');
+    AuUartPutc('x');
+    for (int i = 60; i >= 0; i -= 4) {
+        uint8_t nibble = (val >> i) & 0xF;
+        char hex = (nibble < 10) ? ('0' + nibble) : ('A' + (nibble - 10));
+        AuUartPutc(hex);
+    }
+    AuUartPutc('\n');
+}
+
 
 void _AuMain(KERNEL_BOOT_INFO* info) {
+	AuUartPutString("Hey inside from kernel !! \n");
+    LBUartPrintHex(info);
+    LBUartPrintInt(info->boot_type);
+	if (info->boot_type == BOOT_LITTLEBOOT_ARM64)
+		AuUartPutString("Kernel is booted using LittleBoot ARM64 \n");
+	for (;;);
 	AuConsoleInitialize(info, true);
 	AuDeviceTreeInitialize(info->apcode);
 	AA64CpuInitialize();
@@ -55,6 +130,7 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	AuHeapInitialize();
 	AuConsolePostInitialise(info);
 	AA64CPUPostInitialize(info);
+
 
 	while (1) {
 	}
