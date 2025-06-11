@@ -36,7 +36,7 @@ You can use __Refus__ to format an USB Flash drive (_by downloading Refus_) or `
 - type ```format fs=fat32 unit=4096 quick```
 - type ```assign X``` replace 'X' with a drive letter
 
-## _Setting up Environemt Variables_
+## _Setting up Environment Variables_
 Required Environment Variables are: <br>
 - __XENEVA_BUILDS__ with variable value of location USB Flash Drive <br>
 
