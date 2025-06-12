@@ -105,5 +105,5 @@ typedef struct _KERNEL_BOOT_INFO_ {
 #pragma pack(pop)
 ```
 File from _'BaseHdr/aurora.h'_ <br>
-Overall, the boot information passed by the bootloader to the kernel is crucial for the successful initialization and operation of the operating system. This information includes various parameters and settings that help the kernel understand the system's hardware and environment. The boot information ensures a smooth transition from the firmare/bootloader to a fully operational operating system.
+Overall, the boot information passed by the bootloader to the kernel is crucial for the successful initialization and operation of the operating system. This information includes various parameters and settings that help the kernel understand the system's hardware and environment. The boot information ensures a smooth transition from the firmare/bootloader to a fully operational operating system. [More information can be find here](/Docs/Kernel/AboutKernel.md#technical-details-of-xeneva-kernel-boot-protocol).
 

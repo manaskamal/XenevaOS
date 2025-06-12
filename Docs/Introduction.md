@@ -13,9 +13,12 @@ The term _XenevaOS_ made up of four subsystems : (_The Kernel_, _Device Drivers_
 - __Modern Hardware Support__: XenevaOS aims to support modern hardware. Which help and will help the system to follow up the technology trends. It aims to be engineered to take the full advantage of the latest advancements in hardware, ensuring a good performance and stability.
 - __Enhanced Graphics and Audio__ : Xeneva OS aims to provide good stack of graphics and audio with supporting modern specifications of Graphics and Audio Hardware. The project aims to provide a good stack to audio and video production centric choices.
 - __Simple User Interface__ :  _'The function of good software is to make the complex appear to be simple'_ -_Grady Booch_. The Project aims to provide simple user friendly graphical interface while targeting modern design choices. 
+- __Minimal Abstraction__ : XenevaOS aims to have minimal software abstractions as possible, whichs helps enhance performance.
+- __User Priority first__ : XenevaOS aims to put user as first priority rather user solving software dependencies before using software.
 
 ## Getting Started
-__Please NOTE that, though the documentation mentioned _'Core Objectives of XenevaOS'_ and some goals of the project. But still the system lacks various functionalities and doesn't seems to go through the mentioned goals. Still the project is under development and can promise that the system will come with all the mentioned goal. Just needs your support and contributions to make it happen.__<br>
+__Please NOTE that, though the documentation mentioned _'Core Objectives of XenevaOS'_ and some goals of the project. But still the system lacks various functionalities and doesn't seems to go through the mentioned goals. Still the project is under development and can promise that the system will come with all the mentioned goal. Just need your support and contributions to make it happen.__<br> 
+
 This documentation will guide you through all the parts of XenevaOS and how it works. Whether you are a developer looking to contribute to XenevaOS or a user seeking to understand its inner workings, this documentation aims to provide comprehensive and accessible information.
 
 ## Welcome to XenevaOS -_Empowering Creativity_
@@ -26,6 +29,7 @@ __Build the project__:
 
 __Kernel__ : 
 - [About the Kernel](Kernel/AboutKernel.md)
+- [Xeneva Kernel Boot Protocol](Kernel/AboutKernel.md#xeneva-kernel-boot-protocol)
 - [Boot Process](Kernel/BootProcess.md)
 - [Memory Management](Kernel/MemoryMangement.md)
 - [Drivers](Kernel/Drivers.md)
