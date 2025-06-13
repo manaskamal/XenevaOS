@@ -43,5 +43,5 @@ For example here are the steps how it works:
 |(e)_```if(AuPEFileIsDynamicallyLinked(buffer));```_ | Check if the executable is dynamically linked or statically, if dynamically linked, the loading of this executable is discarded and XELoader is loaded.
 |(f) _```AuCreateKthread(AuProcessEntUser,...)```_ | Create a kernel thread with entry point to _```AuProcessEntUser```_ which is a helper function that help jump to mapped user thread, i.e XELoader in this case, if executable was dynamically linked.
 
-After above step is executed successfully, XELoader will have the name of executable (_```"/calc.exe"``` in this case_ ) in its argument list. XELoader can load the executable, resolve external symbols, link required libraries during runtime,..etc and start executing the executable file.
+After above step is executed successfully, XELoader will have the name of executable (_```"/calc.exe"```, in this case_ ) in its argument list. XELoader can load the executable, resolve external symbols, link required libraries during runtime,..etc and start executing the executable file.
 
