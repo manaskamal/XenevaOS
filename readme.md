@@ -4,7 +4,7 @@
 
 ![alt text](https://github.com/manaskamal/XenevaOS/blob/master/XeLogo.jpg?raw=true)
 
-Xeneva is an operating system for both x86_64 and ARM64  architectures, built from the ground up. The Kernel is known as _'Aurora'_ 
+XenevaOS is an operating system for both x86_64 and ARM64  architectures, built from the ground up. The Kernel is known as _'Aurora'_ 
 with hybrid kernel design and the entire operating system is known as _'Xeneva'_.<br> Please visit [Build Instructions](Docs/BuildInstructions.md) to build the project
 
 ## Documentation
