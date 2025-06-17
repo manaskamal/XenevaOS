@@ -32,6 +32,7 @@
 #include <aucon.h>
 #include <Mm/vmmngr.h>
 #include <Hal/AA64/aa64lowlevel.h>
+#include <dtb.h>
 
 
 GIC __gic;
@@ -142,7 +143,43 @@ GIC* AuGetSystemGIC() {
  * or hard-coding
  */
 void GICInitialize() {
+	/* Firstly rely upon UEFI + ACPI for GIC mmio values */
 	AuTextOut("Initializing GIC %x %x\n", __gic.gicCPhys, __gic.gicDPhys);
+
+	/* if not found, go for device tree , because the kernel might get booted
+	 * from LittleBoot 
+	 */
+	if (__gic.gicCPhys == 0 && __gic.gicDPhys == 0) {
+		//Need to fall to Device Tree
+		uint32_t* ic = AuDeviceTreeGetNode("intc@");
+		if (!ic) {
+			AuTextOut("Interrupt controller node not found \n");
+		}
+		else {
+			uint32_t* compat = AuDeviceTreeFindProperty(ic, "compatible");
+			fdt_property_t* prop = (fdt_property_t*)compat;
+			if (compat) {
+				AuTextOut("Interrupt controller found: %s \n", prop->value);
+			}
+			uint32_t* addressSz = AuDeviceTreeFindProperty(ic, "#address-cells");
+			uint32_t* reg = AuDeviceTreeFindProperty(ic, "reg");
+			prop = (fdt_property_t*)reg;
+			if (reg) {
+				/* suspecting, this would only work with QEMU-aarch64-virt board */
+				uint32_t gicd = (uint64_t)AuDTBSwap32(reg[3]) | ((uint64_t)AuDTBSwap32(reg[4]) << 32UL);
+				uint32_t gicc = (uint64_t)AuDTBSwap32(reg[7]) | ((uint64_t)AuDTBSwap32(reg[9]) << 32UL);
+				AuTextOut("GICD : %x, GICC : %x \n", gicd, gicc);
+				__gic.gicDPhys = gicd;
+				__gic.gicCPhys = gicc;
+			}
+
+		}
+	}
+
+	if (__gic.gicCPhys == 0 && __gic.gicDPhys == 0) {
+		AuTextOut("[aurora]: No GIC MMIO found\n");
+		return;
+	}
 
 	__gic.gicDMMIO = AuMapMMIO(__gic.gicDPhys, 2);
 	__gic.gicCMMIO = AuMapMMIO(__gic.gicCPhys, 1);
@@ -172,7 +209,9 @@ void GICInitialize() {
 	AuTextOut("GIC Initialized \n");
 }
 
-
+/* GICEnableIRQ -- enable an IRQ
+ * @param irq -- IRQ number
+ */
 void GICEnableIRQ(uint32_t irq) {
 	uint32_t reg = irq / 32;
 	uint32_t bit = irq % 32;

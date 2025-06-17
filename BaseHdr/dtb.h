@@ -31,6 +31,7 @@
 #define __AA64_DTB_H__
 
 #include <stdint.h>
+#include <aurora.h>
 
 typedef struct {
     uint32_t magic;
@@ -45,12 +46,48 @@ typedef struct {
     uint32_t size_dt_struct;
 }fdt_header_t;
 
+typedef struct _fdt_prop_ {
+    uint32_t tag;
+    uint32_t len;
+    uint32_t nameoff;
+    uint8_t value[];
+}fdt_property_t;
 
+/*
+ * AuDTBSwap32 -- swaps 32 bit value
+ * @param from -- value to swap
+ */
+AU_EXTERN AU_EXPORT uint32_t AuDTBSwap32(uint32_t from);
+
+
+/*
+ * AuDTBSwap64 -- swaps 64 bit value
+ * @param from -- value to swap
+ */
+AU_EXTERN AU_EXPORT uint64_t AuDTBSwap64(uint64_t from);
+
+/*
+ * AuDTBSwap16 -- swaps 16 bit value
+ * @param from -- value to swap
+ */
+AU_EXTERN AU_EXPORT uint16_t AuDTBSwap16(uint16_t from);
+/*
+ * AuDeviceTreeFindProperty -- searches for a property within a node
+ * @param node -- Pointer to node offset
+ * @param property -- Property name
+ */
+AU_EXTERN AU_EXPORT uint32_t* AuDeviceTreeFindProperty(uint32_t* node, const char* property);
+
+/*
+ * AuDeviceTreeGetNode -- searches and get the offset of the node
+ * @param name -- Node name
+ */
+AU_EXTERN AU_EXPORT uint32_t* AuDeviceTreeGetNode(const char* name);
 /*
  * AuDeviceTreeInitialize -- initialize the device tree
  * @param fdt_address -- device tree address passed by
  * bootloader
  */
-extern void AuDeviceTreeInitialize(void* fdt_address);
+extern void AuDeviceTreeInitialize(KERNEL_BOOT_INFO* info);
 
 #endif

@@ -43,7 +43,11 @@ bool _HigherHalf;
 bool debugon;
 uint8_t* BitmapBuffer;
 
-
+typedef struct _lb_mem_rgn_ {
+	uint64_t base;
+	uint64_t size;
+	uint64_t pageCount;
+}LBMemoryRegion;
 /*
 * AuPmmngrInitBitmap -- Initialize the Ram bitmap with
 * all zeros
@@ -136,26 +140,50 @@ void AuPmmngrInitialize(KERNEL_BOOT_INFO* info) {
 	_TotalRam = 0;
 	_RamBitmapIndex = 0;
 	BitmapBuffer = 0;
-
-	uint64_t MemMapEntries = info->mem_map_size / info->descriptor_size;
+	AuTextOut("INFO -> %x \n", info);
+	uint64_t MemMapEntries = 0; 
 	void* BitmapArea = 0;
 	bool print = 0;
-	/* Scan a suitable area for the bitmap */
-	for (size_t i = 0; i < MemMapEntries; i++) {
-		EFI_MEMORY_DESCRIPTOR* EfiMem = (EFI_MEMORY_DESCRIPTOR*)((uint64_t)info->map + i * info->descriptor_size);
-		_TotalRam += EfiMem->num_pages;
-		//AuTextOut("EfiMem phys start -> %x size -> %d > 0x100000,attrib -  %d\n", EfiMem->phys_start, EfiMem->num_pages, EfiMem->attrib);
-		if (EfiMem->type == 7) {
-			if (((EfiMem->num_pages * 4096) > 0x1F0000) && BitmapArea == 0) {
-				if ((EfiMem->phys_start & (4096 - 1)) == 0) {
-					if (!print)
-						AuTextOut("RAM Starts at -> %x end -> %x \n", EfiMem->phys_start, (EfiMem->phys_start + (EfiMem->num_pages * 4096)));
-					BitmapArea = (void*)EfiMem->phys_start; // ((EfiMem->phys_start + 0xFFF) & ~0xFFF);
-					print = 0;
-					break;
+	
+	if (info->boot_type != BOOT_LITTLEBOOT_ARM64) {
+		MemMapEntries = info->mem_map_size / info->descriptor_size;
+		/* Scan a suitable area for the bitmap */
+		for (size_t i = 0; i < MemMapEntries; i++) {
+			EFI_MEMORY_DESCRIPTOR* EfiMem = (EFI_MEMORY_DESCRIPTOR*)((uint64_t)info->map + i * info->descriptor_size);
+			_TotalRam += EfiMem->num_pages;
+			//AuTextOut("EfiMem phys start -> %x size -> %d > 0x100000,attrib -  %d\n", EfiMem->phys_start, EfiMem->num_pages, EfiMem->attrib);
+			if (EfiMem->type == 7) {
+				if (((EfiMem->num_pages * 4096) > 0x1F0000) && BitmapArea == 0) {
+					if ((EfiMem->phys_start & (4096 - 1)) == 0) {
+						if (!print)
+							AuTextOut("RAM Starts at -> %x end -> %x \n", EfiMem->phys_start, (EfiMem->phys_start + (EfiMem->num_pages * 4096)));
+						BitmapArea = (void*)EfiMem->phys_start; // ((EfiMem->phys_start + 0xFFF) & ~0xFFF);
+						print = 0;
+					}
 				}
 			}
 		}
+	}
+	else {
+		AuLittleBootProtocol* lb = (AuLittleBootProtocol*)info->driver_entry1;
+		LBMemoryRegion* memRegn = (LBMemoryRegion*)lb->usable_memory_map;
+
+		if (!lb) {
+			AuTextOut("[aurora]:Booting from non-UEFI boot environment but missing LittleBoot protocol \n");
+			AuTextOut("[aurora]:Unable to continue Kernel initialization \n");
+			for (;;);
+		}
+		for (size_t i = 0; i < lb->usable_region_count; i++) {
+			uint64_t base = memRegn[i].base;
+			uint64_t numPages = memRegn[i].pageCount;
+			if (((numPages * 4096) > 0x1F0000) && BitmapArea == 0) {
+				BitmapArea = (void*)base;
+			}
+			AuTextOut("[aurora]: Usable memory Base : %x , PageCount : %d \n", base, numPages);
+		}
+		_TotalRam = lb->numberOfPages;
+		AuTextOut("Total Ram : %d Pages \n", _TotalRam);
+		AuTextOut("Memory Start : %x, Memory End : %x \n", lb->physicalStart, lb->physicalEnd);
 	}
 
 	//AuPmmngrEarlyVMSetup(info);
@@ -172,14 +200,15 @@ void AuPmmngrInitialize(KERNEL_BOOT_INFO* info) {
 	AuPmmngrLockPages((void*)BitmapArea, BitmapSize);
 
 
-
-	for (size_t i = 0; i < MemMapEntries; i++) {
-		EFI_MEMORY_DESCRIPTOR* EfiMem = (EFI_MEMORY_DESCRIPTOR*)((uint64_t)info->map + i * info->descriptor_size);
-		//_TotalRam += EfiMem->num_pages;
-		if (EfiMem->type != 7) {
-			uint64_t PhysStart = EfiMem->phys_start;
-			for (size_t j = 0; j < EfiMem->num_pages; j++) {
-				AuPmmngrLockPage(PhysStart + j * 4096);
+	if (info->boot_type != BOOT_LITTLEBOOT_ARM64) {
+		for (size_t i = 0; i < MemMapEntries; i++) {
+			EFI_MEMORY_DESCRIPTOR* EfiMem = (EFI_MEMORY_DESCRIPTOR*)((uint64_t)info->map + i * info->descriptor_size);
+			//_TotalRam += EfiMem->num_pages;
+			if (EfiMem->type != 7) {
+				uint64_t PhysStart = EfiMem->phys_start;
+				for (size_t j = 0; j < EfiMem->num_pages; j++) {
+					AuPmmngrLockPage(PhysStart + j * 4096);
+				}
 			}
 		}
 	}
@@ -196,6 +225,8 @@ void AuPmmngrInitialize(KERNEL_BOOT_INFO* info) {
 		AuPmmngrLockPage(Address);
 		AllocCount--;
 	}
+
+	/* need more reservation of memory allocated by initrd and others*/
 }
 
 /*

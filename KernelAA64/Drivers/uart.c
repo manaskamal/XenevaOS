@@ -30,9 +30,11 @@
 #include <Drivers/uart.h>
 #include <Mm/vmmngr.h>
 #include <aucon.h>
+#include <va_list.h>
+#include <stdarg.h>
 
 uint64_t* uartMMIO;
-
+bool _uart_mapped = false;
 
 static inline uint32_t uart_read_reg(uint32_t reg_offset) {
 	return *(volatile uint32_t*)((uint64_t)uartMMIO + reg_offset);
@@ -58,11 +60,17 @@ void UARTInitialize() {
 
 	//enable irq
 	uart_write_reg(UART_IMSC, UART_IMSC_RXIM | UART_IMSC_RTIM);
+	_uart_mapped = true;
 }
 
 
 void uartPutc(char c) {
-	char* uart0 = (char*)uartMMIO;
+	uint64_t* mmioBase = 0;
+	if (_uart_mapped)
+		mmioBase = uartMMIO;
+	else
+		mmioBase = UART0_BASE;
+	char* uart0 = (char*)mmioBase;
 	while ((*(uart0 + 0x18) & (1 << 5)));
 	*uart0 = c;
 }
@@ -74,4 +82,96 @@ void uartPutc(char c) {
 void uartPuts(const char* s) {
 	while (*s)
 		uartPutc(*s++);
+}
+
+/*
+ * UARTDebugOut -- standard text printing function
+ * for early kernel using UART
+ * @param text -- text to output
+ */
+void UARTDebugOut(const char* format, ...) {
+
+	uint64_t buffer[7];
+	store_x0_x7(buffer);
+
+	va_list args = (va_list)buffer;
+	while (*format)
+	{
+		if (*format == '%')
+		{
+			++format;
+			if (*format == 'd')
+			{
+				size_t width = 0;
+				if (format[1] == '.')
+				{
+					for (size_t i = 2; format[i] >= '0' && format[i] <= '9'; ++i)
+					{
+						width *= 10;
+						width += format[i] - '0';
+					}
+				}
+				size_t i = va_arg(args, size_t);
+				char buffer[sizeof(size_t) * 8 + 1];
+				//	size_t len
+				if ((int)i < 0) {
+					uartPuts("-");
+					i = ((int)i * -1);
+					sztoa(i, buffer, 10);
+				}
+				else {
+					sztoa(i, buffer, 10);
+					size_t len = strlen(buffer);
+				}
+				/*	while (len++ < width)
+				puts("0");*/
+				uartPuts(buffer);
+			}
+			else if (*format == 'c')
+			{
+				char c = va_arg(args, char);
+				//char buffer[sizeof(size_t) * 8 + 1];
+				//sztoa(c, buffer, 10);
+				//puts(buffer);
+				uartPutc(c);
+			}
+			else if (*format == 'x')
+			{
+				size_t x = va_arg(args, size_t);
+				char buffer[sizeof(size_t) * 8 + 1];
+				sztoa(x, buffer, 16);
+				//puts("0x");
+				uartPuts(buffer);
+			}
+			else if (*format == 's')
+			{
+				char* x = va_arg(args, char*);
+				uartPuts(x);
+			}
+			else if (*format == 'f')
+			{
+				double x = va_arg(args, double);
+				uartPuts(ftoa(x, 2));
+			}
+			else if (*format == '%')
+			{
+				uartPuts(".");
+			}
+			else
+			{
+				char buf[3];
+				buf[0] = '%'; buf[1] = *format; buf[2] = '\0';
+				uartPuts(buf);
+			}
+		}
+		else
+		{
+			char buf[2];
+			buf[0] = *format; buf[1] = '\0';
+			uartPuts(buf);
+		}
+		++format;
+	}
+	va_end(args);
+
 }

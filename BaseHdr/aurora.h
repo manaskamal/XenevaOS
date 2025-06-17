@@ -75,7 +75,11 @@ typedef struct _lbprotocol_ {
 	/* usable memory map describes
 	 * usable memory areas*/
 	void* usable_memory_map;
-}LittleBootProtocol;
+	int usable_region_count;
+	uint64_t physicalStart;
+	uint64_t physicalEnd;
+	uint64_t numberOfPages;
+}AuLittleBootProtocol;
 #pragma pack(pop)
 
 
@@ -151,7 +155,5 @@ typedef struct _KERNEL_BOOT_INFO_ {
 	uint32_t cid;
 }KERNEL_BOOT_INFO, *PKERNEL_BOOT_INFO;
 #pragma pack(pop)
-
-
 
 #endif

@@ -38,6 +38,7 @@
 #include <string.h>
 #include <va_list.h>
 #include <stdio.h>
+#include <Drivers/uart.h>
 
 uint8_t* font_data;
 uint32_t console_x;
@@ -64,6 +65,8 @@ void AuConsoleInitialize(PKERNEL_BOOT_INFO info, bool early) {
 	if (early) {
 		_print_func = info->printf_gui;
 		early_ = early;
+		if (info->boot_type == BOOT_LITTLEBOOT_ARM64)
+			_print_func = UARTDebugOut;
 	}
 	aucon = NULL;
 }
@@ -75,6 +78,11 @@ void AuConsoleInitialize(PKERNEL_BOOT_INFO info, bool early) {
  * @param info -- pointer to kernel boot info structure
  */
 void AuConsolePostInitialise(PKERNEL_BOOT_INFO info) {
+	/* little boot won't support framebuffer, need to
+	 * rely on graphics driver
+	 */
+	if (info->boot_type == BOOT_LITTLEBOOT_ARM64)
+		return;
 	aucon = (AuConsole*)kmalloc(sizeof(AuConsole));
 	memset(aucon, 0, sizeof(AuConsole));
 

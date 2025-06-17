@@ -104,5 +104,8 @@
     <ClInclude Include="..\BaseHdr\Drivers\rtcmmio.h">
       <Filter>Include\Drivers</Filter>
     </ClInclude>
+    <ClInclude Include="..\BaseHdr\kernelAA64.h">
+      <Filter>Include</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

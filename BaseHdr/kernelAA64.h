@@ -27,72 +27,14 @@
 *
 **/
 
+#ifndef __KERNEL_AA64_H__
+#define __KERNEL_AA64_H__
+
 #include <aurora.h>
-#include <stdint.h>
-#include <aucon.h>
-#include <Hal/AA64/aa64cpu.h>
-#include <dtb.h>
-#include <Mm/pmmngr.h>
-#include <Mm/vmmngr.h>
-#include <Mm/kmalloc.h>
-#include <_null.h>
-#include <Hal/AA64/gic.h>
-#include <Hal/basicacpi.h>
-#include <Hal/AA64/aa64lowlevel.h>
-#include <Drivers/uart.h>
-#include <Hal/AA64/qemu.h>
-
-
-extern int _fltused = 1;
-static bool _littleboot_used;
-
-
-/*
- * LBUartPutc -- put a character to UART
- * @param c -- Character to put
- */
-void AuUartPutc(char c) {
-	char* uart0 = (char*)UART0;
-	while ((*(uart0 + 0x18) & (1 << 5)));
-	*uart0 = c;
-}
-
-/*
- * LBUartPutString -- print a string
- * to UART
- * @param s -- String to print
- */
-void AuUartPutString(const char* s) {
-	while (*s)
-		AuUartPutc(*s++);
-}
-
-
 
 /*
  * AuLittleBootUsed -- check if little boot protocol
  * is used
  */
-bool AuLittleBootUsed() {
-    return _littleboot_used;
-}
-
-
-void _AuMain(KERNEL_BOOT_INFO* info) {
-    _littleboot_used = false;
-    if (info->boot_type == BOOT_LITTLEBOOT_ARM64) {
-        AuUartPutString("Kernel is booted using LittleBoot ARM64 \n");
-        _littleboot_used = true;
-    }
-	AuConsoleInitialize(info, true);
-    AuDeviceTreeInitialize(info);
-	AA64CpuInitialize();
-	AuPmmngrInitialize(info);
-	AuVmmngrInitialize();
-	AuHeapInitialize();
-	AuConsolePostInitialise(info);
-	AA64CPUPostInitialize(info);
-    AuTextOut("AA64 CPU Post initialized \n");
-	while (1) {
-	}
-}
+AU_EXTERN AU_EXPORT bool AuLittleBootUsed();
+#endif

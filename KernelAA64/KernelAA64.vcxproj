@@ -199,7 +199,7 @@
       <AdditionalOptions> %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
-      <Command>copy "$(SolutionDir)Build\EFI\XENEVA\$(TargetName).exe" "M:\EFI\XENEVA\$(TargetName).exe"</Command>
+      <Command>copy "$(SolutionDir)Build\EFI\XENEVA\$(TargetName).exe" "R:\EFI\XENEVA\$(TargetName).exe"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -281,6 +281,7 @@
     <ClInclude Include="..\BaseHdr\Hal\AA64\gic.h" />
     <ClInclude Include="..\BaseHdr\Hal\AA64\qemu.h" />
     <ClInclude Include="..\BaseHdr\Hal\AA64\vector.h" />
+    <ClInclude Include="..\BaseHdr\kernelAA64.h" />
     <ClInclude Include="..\BaseHdr\uart.h">
       <DeploymentContent>false</DeploymentContent>
     </ClInclude>

@@ -73,4 +73,11 @@ extern void uartPutc(char c);
  * @param s -- String
  */
 extern void uartPuts(const char* s);
+
+/*
+ * UARTDebugOut -- standard text printing function
+ * for early kernel using UART
+ * @param text -- text to output
+ */
+extern void UARTDebugOut(const char* format, ...);
 #endif
