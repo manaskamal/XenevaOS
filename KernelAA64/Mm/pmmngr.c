@@ -101,6 +101,8 @@ void AuPmmngrLockPage(uint64_t Address) {
 	}
 }
 
+
+
 /*
 * AuPmmngrLockPage -- locks a set of pages
 * @param Address -- Starting address of the first page
@@ -134,13 +136,23 @@ void AuPmmngrUnreservePage(void* Address) {
 */
 void AuPmmngrInitialize(KERNEL_BOOT_INFO* info) {
 
+	/*
+	 * TODO: UEFI has a good memory map, which describes which areas are usable and
+	 * which are reserved, but for LittleBoot based memory map takes the starting of usable
+	 * ram directly, and start sectioning the ram into usable and unusable area, below
+	 * the starting of usable area, those areas are for hardware mmio reserved. Basically
+	 * in this Pmmngr, it only takes the starting area for examplae, 0x40000000 in QEMU, and 
+	 * search a suitable bitmap area from that area, and mark the usable area from bitmap_area + 
+	 * bitmapsize, which is not a design approach, the design should be make the usable area
+	 * from 0x0 of RAM and reserve all the Hardware mmio reserved memories, the usable_area
+	 * marker will automatically come to 0x40000000
+	 */
 	debugon = 0;
 	_FreeMemory = 0;
 	_BitmapSize = 0;
 	_TotalRam = 0;
 	_RamBitmapIndex = 0;
 	BitmapBuffer = 0;
-	AuTextOut("INFO -> %x \n", info);
 	uint64_t MemMapEntries = 0; 
 	void* BitmapArea = 0;
 	bool print = 0;
@@ -222,11 +234,57 @@ void AuPmmngrInitialize(KERNEL_BOOT_INFO* info) {
 	uint64_t* AllocStack = (uint64_t*)info->allocated_stack;
 	while (AllocCount) {
 		uint64_t Address = *AllocStack--;
-		AuPmmngrLockPage(Address);
+		uint64_t index = (Address - UsablePhysicalMemory);
+		AuPmmngrLockPage(index);
 		AllocCount--;
 	}
 
 	/* need more reservation of memory allocated by initrd and others*/
+	if (info->boot_type == BOOT_LITTLEBOOT_ARM64) {
+		/* reserving DTB area and Kernel INITRD area */
+		AuTextOut("[aurora]: Reserving LittleBoot data \n");
+		uint64_t pageCount = 0;
+		AuLittleBootProtocol* lb = (AuLittleBootProtocol*)info->driver_entry1;
+		uint64_t dtb_start = lb->device_tree_base;
+		uint64_t dtb_end = lb->device_tree_end;
+		dtb_end = (dtb_end + 0x1000 - 1) & ~(0x1000 - 1);
+
+		pageCount = (dtb_end - dtb_start) / 0x1000;
+		for (int i = 0; i < pageCount; i++) {
+			uint64_t addr = dtb_start + i * 0x1000; //  ((uint64_t)Address - UsablePhysicalMemory);
+			uint64_t Index = (addr - UsablePhysicalMemory);
+			AuPmmngrLockPage(Index);
+		
+		}
+
+		uint64_t initrdStart = lb->initrd_start;
+		uint64_t initrdEnd = lb->initrd_end;
+		initrdEnd = (initrdEnd + 0x1000 - 1) & ~(0x1000 - 1);
+		pageCount = (initrdEnd - initrdStart) / 0x1000;
+		for (int i = 0; i < pageCount; i++) {
+			uint64_t addr = initrdStart + i * 0x1000;
+			uint64_t Index = (addr - UsablePhysicalMemory);
+			AuPmmngrLockPage(Index);
+		}
+	
+		uint64_t lbStart = lb->littleBootStart;
+		uint64_t lbEnd = lb->littleBootEnd;
+		lbEnd = (lbEnd + 0x1000 - 1) & ~(0x1000 - 1);
+		pageCount = (lbEnd - lbStart) / 0x1000;
+		for (int i = 0; i < pageCount; i++) {
+			uint64_t addr = lbStart + i * 0x1000;
+			uint64_t Index = (addr - UsablePhysicalMemory);
+			AuPmmngrLockPage(Index);
+		}
+		AuTextOut("[aurora]: Pmmngr locked LittleBoot reserved memory\n");
+	}
+}
+
+bool AuPmmngrAllocCheck(uint64_t address) {
+	uint64_t addr = ((uint64_t)address - UsablePhysicalMemory);
+	uint64_t Index = (uint64_t)addr / 4096;
+	if (AuPmmngrBitmapCheck(Index) == true) return true;
+	return false;
 }
 
 /*

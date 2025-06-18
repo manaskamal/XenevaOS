@@ -573,9 +573,11 @@ void* liballoc_alloc(int pages) {
 
 	for (size_t i = 0; i < pages; i++) {
 		void* p = AuPmmngrAlloc();
-		AuMapPage((uint64_t)p, page_ + i * 4096, 0);
+		AuMapPage((uint64_t)p, page_ + i * 4096,PTE_NORMAL_MEM);
 	}
+	
 	memset(page, 0, pages * PAGE_SIZE);
+
 	if ((page_ % PAGE_SIZE) != 0) {
 		AuTextOut("Request page not aligned to page boundary \r\n");
 		for (;;);

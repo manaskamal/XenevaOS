@@ -31,6 +31,7 @@
 #include <aucon.h>
 #include <_null.h>
 #include <string.h>
+#include <Mm/vmmngr.h>
 
 #define FDT_MAGIC  0xd00dfeed
 #define FDT_BEGIN_NODE 0x1
@@ -195,4 +196,18 @@ void AuDeviceTreeInitialize(KERNEL_BOOT_INFO* info) {
 	}
 	AuTextOut("DTB Magic : %x \n", AuDTBSwap32(dtb->magic));
 	dtbAddress = fdt_address;
+}
+
+/*
+ * AuDeviceTreeMapMMIO -- Maps the physical device tree address
+ * to MMIO address range
+ */
+void AuDeviceTreeMapMMIO() {
+	if (!dtbAddress)
+		return;
+	fdt_header_t* fdt = (fdt_header_t*)dtbAddress;
+	int pageCount = AuDTBSwap32(fdt->totalSize) / 0x1000;
+	void* mmio = AuMapMMIO((uint64_t)dtbAddress, pageCount);
+	dtbAddress = mmio;
+	AuTextOut("[aurora]: Device tree mmio %x mapped with page count : %d \n",mmio, pageCount);
 }

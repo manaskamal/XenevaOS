@@ -90,4 +90,11 @@ AU_EXTERN AU_EXPORT uint32_t* AuDeviceTreeGetNode(const char* name);
  */
 extern void AuDeviceTreeInitialize(KERNEL_BOOT_INFO* info);
 
+
+/*
+ * AuDeviceTreeMapMMIO -- Maps the physical device tree address
+ * to MMIO address range
+ */
+extern void AuDeviceTreeMapMMIO();
+
 #endif
