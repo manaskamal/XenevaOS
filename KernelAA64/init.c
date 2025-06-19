@@ -77,7 +77,12 @@ bool AuLittleBootUsed() {
     return _littleboot_used;
 }
 
-
+extern bool AuPmmngrAllocCheck(uint64_t address);
+/*
+ * _AuMain -- the main entry point for kernel
+ * @param info -- Kernel Boot information passed
+ * by bootloader
+ */
 void _AuMain(KERNEL_BOOT_INFO* info) {
     _littleboot_used = false;
     if (info->boot_type == BOOT_LITTLEBOOT_ARM64) {
@@ -90,9 +95,15 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	AuPmmngrInitialize(info);
 	AuVmmngrInitialize();
 	AuHeapInitialize();
+	AuDeviceTreeMapMMIO();
 	AuConsolePostInitialise(info);
 	AA64CPUPostInitialize(info);
     AuTextOut("AA64 CPU Post initialized \n");
+
+
+	/* need to initialize basic drivers here*/
+	/* scheduler initialize*/
+	/* scheduler start*/
 	while (1) {
 	}
 }

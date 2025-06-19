@@ -70,7 +70,7 @@ typedef struct _lbprotocol_ {
 	 * allocated within this region
 	 */
 	uint64_t littleBootStart;
-	uint64_t littleBootStop;
+	uint64_t littleBootEnd;
 
 	/* usable memory map describes
 	 * usable memory areas*/
