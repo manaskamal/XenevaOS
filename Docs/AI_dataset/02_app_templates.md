@@ -157,4 +157,4 @@ int main() {
 
 ---
 
-Save this file in `docs/AI_dataset/` to support AI training and prompt engineering for XenevaOS GUI development.
+This file acts as the “playbook” for your AI assistant to turn dev requests into working apps.
