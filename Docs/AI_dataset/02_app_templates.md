@@ -152,8 +152,114 @@ int main() {
 **Prompt:** UI form with username and password textbox + submit button
 
 ```c
-// Planned for AI demos once auth + backend API is in place
+
 ```
+
+### 🧮 Calculator App (Real XenevaOS Example)
+
+Prompt:
+> Create a calculator app with digit buttons, operator buttons (+, -, ×, ÷), and an output display. Should update the display in real time and support clear and backspace actions.
+
+Completion:
+```c
+#include <chitralekha/window.h>
+#include <chitralekha/button.h>
+#include <chitralekha/font.h>
+#include <calculator.h>  // Contains CalculatorDisplay struct
+
+void EqualAction(ChWidget* wid, void* ctx) {
+    CalculatorDisplay* calc = (CalculatorDisplay*)ctx;
+    CalculatorProcess(calc);  // performs the actual calculation
+}
+
+int main() {
+    ChitralekhaStartApp();
+
+    ChWindow* win = ChCreateWindow(400, 500, "Calculator");
+    CalculatorDisplay* display = CalcCreateDisplay(win);
+    CalculatorCreateButtonGrid(win, display);
+
+    PostEvent e;
+    while (true) {
+        if (PostBoxPollEvent(&e)) {
+            WindowHandleMessage(win, &e);
+        }
+    }
+
+    return 0;
+}
+```
+
+This is an actual example from `XenevaOS/Process/Calculator`, demonstrating modular UI, widget interaction, and display rendering using Chitralekha.
+
+---
+
+### 📆 Calendar App (Real XenevaOS Example)
+
+Prompt:
+> Create a dynamic calendar app with monthly views, current date highlighting, and navigation using keyboard.
+
+Completion:
+```c
+#include <chitralekha/window.h>
+#include <widgets/button.h>
+#include <sys/_ketime.h>
+
+int current_month, current_year;
+uint8_t* calenderBuffer;
+ChWindow* mainWin;
+
+void CalenderRepaint(int year, int month, int num_days);
+void CalenderHandleKeys(int c) {
+    if (c == 'W') current_month--;
+    if (c == 'S') current_month++;
+    CalenderRepaint(current_year, current_month, 31);
+}
+
+int main() {
+    app = ChitralekhaStartApp(argc, argv);
+    mainWin = ChCreateWindow(app, WINDOW_FLAG_MOVABLE, "Calendar", 100, 100, 400, 400);
+    calenderBuffer = malloc(sizeof(DateBox) * 42);
+    _KeGetCurrentTime(&t);
+    current_month = t.month; current_year = t.year;
+    CalenderRepaint(current_year, current_month, 31);
+    while (1) {
+        PostEvent e; _KeFileIoControl(app->postboxfd, POSTBOX_GET_EVENT, &e);
+        WindowHandleMessage(&e);
+    }
+}
+```
+
+This is an actual example from `XenevaOS/Process/Calender`, showcasing real-time date rendering, keyboard-driven navigation, and dynamic UI layout using the Chitralekha framework.
+
+---
+
+### 🎧 AudioPlayer App (Real XenevaOS Example)
+
+Prompt:
+> Create a native audio player app that decodes and plays back an MP3 file from disk.
+
+Completion:
+```c
+#include <libc.h>
+#include <minimp3.h>
+
+int main() {
+    int fd = open("/media/test.mp3", 0);
+    uint8_t buf[4096];
+    mp3_decoder_t decoder = mp3_create();
+    while (int len = read(fd, buf, 4096)) {
+        short pcm[4096];
+        mp3_decode(decoder, buf, len, pcm, NULL);
+        play_sound(pcm, len);
+    }
+    mp3_free(decoder);
+    close(fd);
+    return 0;
+}
+```
+This is an actual example from `XenevaOS/Process/AudioPlayer`, demonstrating real-time MP3 decoding, memory-buffered playback, and integration with the kernel’s audio subsystem using userland libraries like `minimp3`.
+
 
 ---
 

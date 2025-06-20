@@ -88,6 +88,45 @@ void audio_stop(AudioTrack*);
 - Audio server runs in userspace and interfaces via ring buffer or streaming interface
 - Uses PCI device IDs to enumerate sound cards (Intel HDA)
 
+
+
+---
+
+### 🔊 Audio Services
+
+#### `play_sound(void* buffer, int size)`
+- Plays a block of PCM audio from memory.
+- This is a system call that streams raw audio bytes to the sound hardware.
+- Typically used with 16-bit signed PCM data (e.g., from MP3 decode).
+- **Used in**: AudioPlayer app
+
+---
+
+### 📁 File I/O Utilities (Used by AudioPlayer)
+
+#### `open(const char* path, int mode)`
+- Opens a file and returns a file descriptor.
+- Mode `0` is typically read-only.
+
+#### `read(int fd, void* buf, int len)`
+- Reads `len` bytes from the file into `buf`.
+
+#### `close(int fd)`
+- Closes the file associated with the descriptor.
+
+---
+
+### 🧠 Memory Management
+
+#### `malloc(size_t size)` / `free(void* ptr)`
+- Standard memory allocation functions.
+- Used to allocate decode buffers or dynamic state (e.g., `mp3_decoder_t`)
+
+---
+
+### 🎧 Audio Decoder Integration (Userland)
+
+While not a kernel service, the `minimp3` decoder is a userland library linked with the app. The audio output from this decoder is streamed into `play_sound()`.
 ---
 
 ## 🌐 Networking (NetManager)
