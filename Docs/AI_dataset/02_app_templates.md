@@ -1,3 +1,4 @@
+
 # 02_app_templates.md - Prompt-to-App Code Templates
 
 This file maps natural language prompts to real-world XenevaOS C code examples. Use this dataset to power AI prompt-generation tools, developer onboarding, or LLM fine-tuning for automated coding assistants.
@@ -152,99 +153,63 @@ int main() {
 **Prompt:** UI form with username and password textbox + submit button
 
 ```c
-
-```
-
-### 🧮 Calculator App (Real XenevaOS Example)
-
-Prompt:
-> Create a calculator app with digit buttons, operator buttons (+, -, ×, ÷), and an output display. Should update the display in real time and support clear and backspace actions.
-
-Completion:
-```c
 #include <chitralekha/window.h>
+#include <chitralekha/textbox.h>
 #include <chitralekha/button.h>
-#include <chitralekha/font.h>
-#include <calculator.h>  // Contains CalculatorDisplay struct
 
-void EqualAction(ChWidget* wid, void* ctx) {
-    CalculatorDisplay* calc = (CalculatorDisplay*)ctx;
-    CalculatorProcess(calc);  // performs the actual calculation
+Textbox* username;
+Textbox* password;
+
+void submit() {
+    printf("Submitted: %s, %s\n", textbox_get(username), textbox_get(password));
 }
 
 int main() {
-    ChitralekhaStartApp();
-
-    ChWindow* win = ChCreateWindow(400, 500, "Calculator");
-    CalculatorDisplay* display = CalcCreateDisplay(win);
-    CalculatorCreateButtonGrid(win, display);
-
-    PostEvent e;
-    while (true) {
-        if (PostBoxPollEvent(&e)) {
-            WindowHandleMessage(win, &e);
-        }
-    }
-
+    Window* win = create_window(400, 300, "Login");
+    username = create_textbox(win, 40, 60, 200, 30);
+    password = create_textbox(win, 40, 110, 200, 30);
+    Button* submit_btn = create_button(win, "Submit", 80, 180);
+    on_click(submit_btn, submit);
+    show_window(win);
     return 0;
 }
 ```
 
-This is an actual example from `XenevaOS/Process/Calculator`, demonstrating modular UI, widget interaction, and display rendering using Chitralekha.
-
 ---
 
-### 📆 Calendar App (Real XenevaOS Example)
+## 📁 File Browser App (Conceptual)
 
-Prompt:
-> Create a dynamic calendar app with monthly views, current date highlighting, and navigation using keyboard.
+**Prompt:** Create a file browser UI with a list of filenames and ability to scroll or click to open.
 
-Completion:
 ```c
 #include <chitralekha/window.h>
-#include <widgets/button.h>
-#include <sys/_ketime.h>
+#include <chitralekha/label.h>
 
-int current_month, current_year;
-uint8_t* calenderBuffer;
-ChWindow* mainWin;
-
-void CalenderRepaint(int year, int month, int num_days);
-void CalenderHandleKeys(int c) {
-    if (c == 'W') current_month--;
-    if (c == 'S') current_month++;
-    CalenderRepaint(current_year, current_month, 31);
-}
+char* files[] = { "boot.xe", "calc.xe", "paint.xe" };
 
 int main() {
-    app = ChitralekhaStartApp(argc, argv);
-    mainWin = ChCreateWindow(app, WINDOW_FLAG_MOVABLE, "Calendar", 100, 100, 400, 400);
-    calenderBuffer = malloc(sizeof(DateBox) * 42);
-    _KeGetCurrentTime(&t);
-    current_month = t.month; current_year = t.year;
-    CalenderRepaint(current_year, current_month, 31);
-    while (1) {
-        PostEvent e; _KeFileIoControl(app->postboxfd, POSTBOX_GET_EVENT, &e);
-        WindowHandleMessage(&e);
+    Window* win = create_window(400, 500, "File Browser");
+    for (int i = 0; i < 3; i++) {
+        create_label(win, files[i], 20, 30 + i * 40);
     }
+    show_window(win);
+    return 0;
 }
 ```
 
-This is an actual example from `XenevaOS/Process/Calender`, showcasing real-time date rendering, keyboard-driven navigation, and dynamic UI layout using the Chitralekha framework.
-
 ---
 
-### 🎧 AudioPlayer App (Real XenevaOS Example)
+## 🔊 AudioPlayer with UI Controls (Concept Variant)
 
-Prompt:
-> Create a native audio player app that decodes and plays back an MP3 file from disk.
+**Prompt:** Build an audio player UI with a play button that loads and plays MP3 using `minimp3`.
 
-Completion:
 ```c
 #include <libc.h>
+#include <chitralekha/window.h>
+#include <chitralekha/button.h>
 #include <minimp3.h>
 
-int main() {
+void play_music() {
     int fd = open("/media/test.mp3", 0);
     uint8_t buf[4096];
     mp3_decoder_t decoder = mp3_create();
@@ -255,11 +220,16 @@ int main() {
     }
     mp3_free(decoder);
     close(fd);
+}
+
+int main() {
+    Window* win = create_window(400, 200, "MP3 Player");
+    Button* btn = create_button(win, "Play", 150, 100);
+    on_click(btn, play_music);
+    show_window(win);
     return 0;
 }
 ```
-This is an actual example from `XenevaOS/Process/AudioPlayer`, demonstrating real-time MP3 decoding, memory-buffered playback, and integration with the kernel’s audio subsystem using userland libraries like `minimp3`.
-
 
 ---
 

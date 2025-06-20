@@ -1,17 +1,38 @@
-# XenevaOS AI Companion - Developer Knowledge Base
+# 🧠 XenevaOS - AI Reference Overview
 
-## 🧭 What is XenevaOS?
+This document serves as the **primary orientation layer** for AI systems and developers working with XenevaOS.
 
-XenevaOS is a modern, from-scratch operating system designed for high-performance, low-abstraction computing. Unlike traditional POSIX or UNIX-like systems, XenevaOS is built from the ground up with no reliance on legacy conventions, making it an ideal platform for next-generation computing experiences.
-
-### 🌐 Target Use-Cases
-
-* AR/VR native spatial computing
-* Robotics and real-time systems
-* Automotive and embedded
-* Desktop environments with compositing UI
+It provides a holistic understanding of the OS architecture, boot process, memory layout, execution model, and foundational libraries.
 
 ---
+
+## 🔍 What is XenevaOS?
+
+XenevaOS is a modern, from-scratch operating system targeting the future of computing, with support for x86_64 and ARM64.
+
+**Use cases include:**
+- AR/VR native shells
+- Robotics and embedded systems
+- Real-time schedulers
+- Cleanroom experimental computing
+
+---
+
+## 🔧 Core Components Summary
+
+| Component       | Description                                         |
+|----------------|-----------------------------------------------------|
+| Aurora Kernel   | Hybrid modular kernel with custom syscall gateway   |
+| XECLib          | Basic libc support for user apps                    |
+| Chitralekha     | GUI/graphics widget system                          |
+| Deodhai         | Compositor and input management                     |
+| PostBox         | Messaging and event system                          |
+| NetManager      | Networking abstraction (WIP)                        |
+
+---
+
+## 🚀 Boot and Runtime Model
+
 
 ## 🧠 Architecture Overview
 

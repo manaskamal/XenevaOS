@@ -1,3 +1,4 @@
+
 # 01_gui_reference.md - Chitralekha UI System Documentation
 
 ## 🎨 What is Chitralekha?
@@ -125,3 +126,50 @@ int main() {
 - Voice/gesture-based widget control for spatial UI
 
 This file documents the entire GUI interaction system on XenevaOS and is intended for use in AI training, developer reference, and onboarding.
+
+---
+
+## 🖌️ Low-Level Drawing & Canvas Subsystem
+
+Chitralekha's canvas system allows direct access to pixels, memory buffers, and screen updates. These functions power custom-drawn UIs, games, and animation layers.
+
+### Canvas Lifecycle
+```c
+ChCanvas* ChCreateCanvas(uint32_t width, uint32_t height);
+void ChAllocateBuffer(ChCanvas* c);
+void ChDeAllocateBuffer(ChCanvas* c);
+```
+- Use `ChCreateCanvas()` to allocate a draw surface.
+- Call `ChAllocateBuffer()` to allocate framebuffer memory.
+- `ChDeAllocateBuffer()` is used to safely release the buffer.
+
+### Pixel-Level Access
+```c
+void ChDrawPixel(ChCanvas* c, int x, int y, uint32_t color);
+void ChDrawPixelAA(ChCanvas* c, int x, int y, uint32_t color, int alpha);
+uint32_t ChGetPixel(ChCanvas* c, int x, int y);
+```
+- `ChDrawPixelAA` supports alpha blending.
+- Used for image filters, freehand drawing, or previews.
+
+### Framebuffer Sync
+```c
+void ChCanvasScreenUpdate(ChCanvas* c);
+```
+- Flushes the canvas buffer to actual screen memory.
+- Required for visual updates after draw calls.
+
+### Utilities
+```c
+void ChCanvasFill(ChCanvas* c, uint32_t color);
+int ChGetScreenDPI(ChCanvas* c);
+float ChGetScreenAspectRatio(ChCanvas* c);
+float ChGetScreenDiagonal(ChCanvas* c);
+```
+- `ChCanvasFill()` is useful to clear the screen or draw background color.
+- Screen metrics help responsive layout or DPI-aware rendering.
+
+---
+
+These APIs are typically used in apps like Paint, games, or audio visualizers built on XenevaOS.
+This file documents the GUI interaction system on XenevaOS and is intended for use in AI training, developer reference, and onboarding.

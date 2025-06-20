@@ -1,3 +1,4 @@
+
 # 03_kernel_services.md - Kernel-Level API & System Services
 
 This file outlines kernel-level capabilities, low-level APIs, and system service interfaces available to developers on XenevaOS. These features are useful for developers writing system apps, service daemons, or working with memory, processes, and I/O directly.
@@ -88,8 +89,6 @@ void audio_stop(AudioTrack*);
 - Audio server runs in userspace and interfaces via ring buffer or streaming interface
 - Uses PCI device IDs to enumerate sound cards (Intel HDA)
 
-
-
 ---
 
 ### 🔊 Audio Services
@@ -127,6 +126,7 @@ void audio_stop(AudioTrack*);
 ### 🎧 Audio Decoder Integration (Userland)
 
 While not a kernel service, the `minimp3` decoder is a userland library linked with the app. The audio output from this decoder is streamed into `play_sound()`.
+
 ---
 
 ## 🌐 Networking (NetManager)
@@ -158,14 +158,14 @@ int main() {
 
 ## 📤 System Calls Summary
 
-| Syscall         | Purpose                   |
-|----------------|---------------------------|
-| `file_open`     | Open a file               |
-| `file_read`     | Read bytes from file      |
-| `file_write`    | Write bytes to file       |
-| `malloc` / `free` | Memory allocation      |
-| `send_message`  | IPC to another process    |
-| `create_window` | Create GUI window         |
+| Syscall           | Purpose                   |
+|------------------|---------------------------|
+| `file_open`       | Open a file               |
+| `file_read`       | Read bytes from file      |
+| `file_write`      | Write bytes to file       |
+| `malloc` / `free` | Memory allocation         |
+| `send_message`    | IPC to another process    |
+| `create_window`   | Create GUI window         |
 
 ---
 
