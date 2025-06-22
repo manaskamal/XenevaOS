@@ -161,7 +161,8 @@ enable_irqs:
 
 .global mask_irqs
 mask_irqs:
-   msr daifset, #0b1111
+   msr daifset, #0x2
+   isb
    ret
 
 .global setupTimerIRQ

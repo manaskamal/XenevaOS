@@ -69,19 +69,19 @@ typedef struct _AuDirectoryEnty_ {
 }AuDirectoryEntry;
 #pragma pack(pop)
 
-typedef __VFS_NODE__* (*open_callback) (__VFS_NODE__ *node, char* path);
-typedef size_t(*read_callback) (__VFS_NODE__ *node,  __VFS_NODE__ *file, uint64_t* buffer, uint32_t length);
-typedef size_t(*read_block_callback) (__VFS_NODE__ *node, __VFS_NODE__ *file, uint64_t* buffer);
-typedef size_t (*write_callback) (__VFS_NODE__ *node,__VFS_NODE__ *file, uint64_t* buffer, uint32_t length);
-typedef __VFS_NODE__*(*create_dir_callback) (__VFS_NODE__ *node, char* dirname);
-typedef __VFS_NODE__*(*create_file_callback) (__VFS_NODE__ *node, char* filename);
-typedef int (*remove_dir_callback) (__VFS_NODE__* node, __VFS_NODE__ *file);
-typedef int (*remove_file_callback)(__VFS_NODE__* node, __VFS_NODE__ *file);
-typedef int(*close_callback) (__VFS_NODE__ *node,__VFS_NODE__ *file);
-typedef int(*iocontrol_callback) (__VFS_NODE__ *file, int code, void *arg);
-typedef __VFS_NODE__* (*opendir_callback) (__VFS_NODE__ *fs, char* dirname);
-typedef int(*readdir_callback)(__VFS_NODE__* fs, __VFS_NODE__* dir, AuDirectoryEntry* dirent);
-typedef size_t(*fs_getblockfor) (__VFS_NODE__* fs, __VFS_NODE__* file, uint64_t offset);
+typedef struct __VFS_NODE__* (*open_callback) (struct __VFS_NODE__ *node, char* path);
+typedef size_t(*read_callback) (struct __VFS_NODE__ *node, struct  __VFS_NODE__ *file, uint64_t* buffer, uint32_t length);
+typedef size_t(*read_block_callback) (struct __VFS_NODE__ *node, struct __VFS_NODE__ *file, uint64_t* buffer);
+typedef size_t (*write_callback) (struct __VFS_NODE__ *node, struct __VFS_NODE__ *file, uint64_t* buffer, uint32_t length);
+typedef struct __VFS_NODE__*(*create_dir_callback) (struct __VFS_NODE__ *node, char* dirname);
+typedef struct __VFS_NODE__*(*create_file_callback) (struct __VFS_NODE__ *node, char* filename);
+typedef int (*remove_dir_callback) (struct __VFS_NODE__* node, struct __VFS_NODE__ *file);
+typedef int (*remove_file_callback)(struct __VFS_NODE__* node, struct  __VFS_NODE__ *file);
+typedef int(*close_callback) (struct __VFS_NODE__ *node, struct __VFS_NODE__ *file);
+typedef int(*iocontrol_callback) (struct __VFS_NODE__ *file, int code, void *arg);
+typedef struct __VFS_NODE__* (*opendir_callback) (struct __VFS_NODE__ *fs, char* dirname);
+typedef int(*readdir_callback)(struct __VFS_NODE__* fs, struct __VFS_NODE__* dir, AuDirectoryEntry* dirent);
+typedef size_t(*fs_getblockfor) (struct __VFS_NODE__* fs, struct  __VFS_NODE__* file, uint64_t offset);
 
 #pragma pack(push,1)
 typedef struct __VFS_NODE__ {

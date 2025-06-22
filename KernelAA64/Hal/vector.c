@@ -68,7 +68,7 @@ void irq_el1_handler(AA64Registers* regs) {
     uint32_t irq = iar & 0x3FF;
     if (irq < 1020) {
         if (irq == 30) {
-           // AuTextOut("Timer IRQ fired %d multi-tasking possible \n", irq);
+            AuTextOut("Timer IRQ fired %d multi-tasking possible \n", irq);
             //timer irq fires here, do multitasking stuffs
         }
         else if (irq == 27) {

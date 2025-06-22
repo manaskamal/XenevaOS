@@ -38,7 +38,7 @@ typedef unsigned char BOOL;
 
 #ifdef ARCH_ARM64
 #ifndef __cplusplus
-#if !defined(_Bool) && !defined(bool)
+#ifndef bool
 typedef BOOL bool;
 #define true 1
 #define false 0

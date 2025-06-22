@@ -52,8 +52,8 @@
 
 struct _VDISK_;
 
-typedef int(*vdisk_read) (_VDISK_ *disk, uint64_t lba, uint32_t count ,uint64_t* buffer);
-typedef int(*vdisk_write) (_VDISK_ *disk, uint64_t lba, uint32_t count, uint64_t *buffer);
+typedef int(*vdisk_read) (struct _VDISK_ *disk, uint64_t lba, uint32_t count ,uint64_t* buffer);
+typedef int(*vdisk_write) (struct _VDISK_ *disk, uint64_t lba, uint32_t count, uint64_t *buffer);
 
 /* will needed in future */
 typedef struct _au_partition_data_ {

@@ -96,7 +96,9 @@ void AuDevWriteKybrd(AuInputMessage* outmsg) {
 * @param length -- length to read
 */
 size_t AuDevInputMiceWrite(AuVFSNode *fs, AuVFSNode *file, uint64_t* buffer, uint32_t length){
+#ifdef ARCH_X64
 	x64_cli();
+#endif
 	if (!file)
 		return 0;
 	if (!buffer)
@@ -114,7 +116,9 @@ size_t AuDevInputMiceWrite(AuVFSNode *fs, AuVFSNode *file, uint64_t* buffer, uin
 * @param length -- length to read
 */
 size_t AuDevInputMiceRead(AuVFSNode *fs, AuVFSNode *file, uint64_t* buffer, uint32_t length){
+#ifdef ARCG_X64
 	x64_cli();
+#endif
 	if (!file)
 		return 0;
 	if (!buffer)
@@ -133,7 +137,9 @@ size_t AuDevInputMiceRead(AuVFSNode *fs, AuVFSNode *file, uint64_t* buffer, uint
 * @param length -- length to read
 */
 size_t AuDevInputKybrdWrite(AuVFSNode *fs, AuVFSNode *file, uint64_t* buffer, uint32_t length){
+#ifdef ARCH_X64
 	x64_cli();
+#endif
 	if (!file)
 		return 0;
 	if (!buffer)
@@ -151,7 +157,9 @@ size_t AuDevInputKybrdWrite(AuVFSNode *fs, AuVFSNode *file, uint64_t* buffer, ui
 * @param length -- length to read
 */
 size_t AuDevInputKybrdRead(AuVFSNode *fs, AuVFSNode *file, uint64_t* buffer, uint32_t length){
+#ifdef ARCH_X64
 	x64_cli();
+#endif
 	if (!file)
 		return 0;
 	if (!buffer)
@@ -181,7 +189,9 @@ int AuDevMouseIoControl(AuVFSNode* file, int code, void* arg) {
 	switch (code)
 	{
 	case MOUSE_IOCODE_SETPOS:
+#ifdef ARCH_X64
 		AuPS2MouseSetPos(ioctl->uint_1, ioctl->uint_2);
+#endif
 		break;
 	default:
 		break;

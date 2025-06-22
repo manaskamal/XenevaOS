@@ -40,6 +40,25 @@
     <ClCompile Include="Drivers\rtcmmio.c">
       <Filter>Drivers</Filter>
     </ClCompile>
+    <ClCompile Include="Fs\vfs.c">
+      <Filter>Fs</Filter>
+    </ClCompile>
+    <ClCompile Include="Fs\Dev\devfs.c">
+      <Filter>Fs\Dev</Filter>
+    </ClCompile>
+    <ClCompile Include="Fs\Dev\devinput.c">
+      <Filter>Fs\Dev</Filter>
+    </ClCompile>
+    <ClCompile Include="list.c" />
+    <ClCompile Include="Fs\vdisk.c">
+      <Filter>Fs</Filter>
+    </ClCompile>
+    <ClCompile Include="Fs\initrd.c">
+      <Filter>Fs</Filter>
+    </ClCompile>
+    <ClCompile Include="Fs\Fat\Fat.c">
+      <Filter>Fs\Fat</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Hal">
@@ -62,6 +81,18 @@
     </Filter>
     <Filter Include="Drivers">
       <UniqueIdentifier>{d503652f-2888-492d-aed1-5af3fe35f5db}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Fs">
+      <UniqueIdentifier>{a6c6091c-adcc-4d9a-a7d9-522a36599370}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Fs\Dev">
+      <UniqueIdentifier>{2b71d464-4635-4265-83f4-83f900efc318}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Include\Fs">
+      <UniqueIdentifier>{62dc4e51-5618-4e4e-9609-0d022ec8218a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Fs\Fat">
+      <UniqueIdentifier>{80275dfa-203a-4e63-be39-f2d58931adfc}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -106,6 +137,9 @@
     </ClInclude>
     <ClInclude Include="..\BaseHdr\kernelAA64.h">
       <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\Fs\initrd.h">
+      <Filter>Include\Fs</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

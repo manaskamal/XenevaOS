@@ -32,7 +32,9 @@
 
 #include <stdint.h>
 #include <Fs/vdisk.h>
+#ifdef ARCH_X64
 #include <Sync/mutex.h>
+#endif
 #include <Fs/vfs.h>
 
 #define FAT_ATTRIBUTE_MASK  0x3F
@@ -150,9 +152,11 @@ typedef struct _FatFS_ {
 	unsigned int __LastIndexInFat;
 	uint16_t __BytesPerSector;
 	size_t cluster_sz_in_bytes;
+#ifdef ARCH_X64
 	AuMutex *fat_mutex;
 	AuMutex *fat_write_mutex;
 	AuMutex *fat_read_mutex;
+#endif
 }FatFS;
 
 

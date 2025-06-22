@@ -35,8 +35,8 @@
 
 #pragma pack(push,1)
 typedef struct _data_ {
-	_data_ *next;
-	_data_ *prev;
+	struct _data_ *next;
+	struct _data_ *prev;
 	void* data;
 }dataentry;
 #pragma pack(pop)

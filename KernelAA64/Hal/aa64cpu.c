@@ -140,7 +140,8 @@ void AA64CpuInitialize() {
 void AA64CPUPostInitialize(KERNEL_BOOT_INFO* info) {
 	AuACPIInitialise(info->acpi_table_pointer);
 	UARTInitialize();
-	enable_irqs();
+	//enable_irqs();
+	mask_irqs();
 	GICInitialize();
 	setupTimerIRQ();
 
@@ -154,6 +155,7 @@ void AA64CPUPostInitialize(KERNEL_BOOT_INFO* info) {
 
 	uint32_t id = read_midr();
 	AA64CPUImplementer(id);
-	AuTextOut("arm64 cpu post initialized \n");
+	AuTextOut("[aurora]: cpu post initialized \n");
 	AuPL031RTCInit();
+	mask_irqs();
 }

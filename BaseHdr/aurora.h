@@ -30,6 +30,8 @@
 #ifndef __AURORA_H__
 #define __AURORA_H__
 
+#pragma once
+
 #include <stdint.h>
 
 

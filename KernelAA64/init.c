@@ -41,6 +41,9 @@
 #include <Hal/AA64/aa64lowlevel.h>
 #include <Drivers/uart.h>
 #include <Hal/AA64/qemu.h>
+#include <list.h>
+#include <Fs/vfs.h>
+#include <Fs/initrd.h>
 
 
 extern int _fltused = 1;
@@ -86,7 +89,7 @@ extern bool AuPmmngrAllocCheck(uint64_t address);
 void _AuMain(KERNEL_BOOT_INFO* info) {
     _littleboot_used = false;
     if (info->boot_type == BOOT_LITTLEBOOT_ARM64) {
-        AuUartPutString("Kernel is booted using LittleBoot ARM64 \n");
+        AuUartPutString("[aurora]:Kernel is booted using LittleBoot ARM64 \n");
         _littleboot_used = true;
     }
 	AuConsoleInitialize(info, true);
@@ -98,9 +101,8 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	AuDeviceTreeMapMMIO();
 	AuConsolePostInitialise(info);
 	AA64CPUPostInitialize(info);
-    AuTextOut("AA64 CPU Post initialized \n");
-
-
+	AuVFSInitialise();
+	AuInitrdInitialize(info);
 	/* need to initialize basic drivers here*/
 	/* scheduler initialize*/
 	/* scheduler start*/
