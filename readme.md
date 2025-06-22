@@ -65,6 +65,11 @@ The project is build purely on Windows Environment. Please Visit [Build Instruct
 # Purpose and Goals
 While writing an Operating System from scratch is very fun and knowledgeable journey, at the same time it is a deeply challenging one. The project was not started with specific goal or purpose in mind; rather.it was started as a passionate solo developer project that aims to learn and address what existing OS's lack. As the project grew over time, it became very necessary to have a clear purpose and goal.Even though it once was a solo development project, XenevaOS now evolved from one-person effort to a collaborative team with shared interest. The strategies and execution of the project are planned and carried out carefully with deliberate intention.
 
+
+## The Purpose:
+While there are many mature Kernel available for different domains and they are already feature-complete, they also come with layers of legacy code that make it difficult for developer to implement or experiment with new ideas on top of them. XenevaOS is fully fresh built from scratch project that aims to provide a flexible playground for experiments with new designs and architectures with modern computing in mind without compromising on software implementation standards and performance. 
+
+
 ## The Goals:
 - XenevaOS aims to target modern hardware with modern computing architecture in mind. 
 - To experiment and build an OS from ground level transitioning away from traditional OS design as much as possible. 
@@ -76,8 +81,6 @@ While writing an Operating System from scratch is very fun and knowledgeable jou
 
 **NOTE: XenevaOS is in early development. The features above are not implemented yet, because the project is in foundation level. But we are committed to exploring each of them through focused iterations and community feedback. Whether you're a developer looking to contribute, or someone exploring alternative OS design, we welcome your curiosity.**
 
-## The Purpose:
-While there are many mature Kernel available for different domains and they are already feature-complete, they also come with layers of legacy code that make it difficult for developer to implement or experiment with new ideas on top of them. XenevaOS is fully fresh built from scratch project that aims to provide a flexible playground for experiments with new designs and architectures with modern computing in mind without compromising on software implementation standards and performance. 
 
 # Contact:
 For questions, suggestions, or collaborations, feel free to reach out
