@@ -37,4 +37,9 @@
  * is used
  */
 AU_EXTERN AU_EXPORT bool AuLittleBootUsed();
+
+/*
+ * AA64PCIeInitialize -- intialize pcie controller
+ */
+extern void AA64PCIeInitialize();
 #endif

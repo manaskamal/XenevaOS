@@ -161,7 +161,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>ARCH_ARM64;__TARGET_BOARD_QEMU_VIRT__;_USE_LIBALLOC ;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>ARCH_ARM64;__TARGET_BOARD_QEMU_VIRT__;_USE_LIBALLOC;__STDC_LIMIT_MACROS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>Default</ConformanceMode>
       <AdditionalIncludeDirectories>..\BaseHdr;..\Acpica\include;..\Acpica;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
@@ -236,13 +236,16 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="aucon.c" />
+    <ClCompile Include="audrv.c" />
     <ClCompile Include="ctype.c" />
     <ClCompile Include="Drivers\rtcmmio.c" />
     <ClCompile Include="Drivers\uart.c" />
+    <ClCompile Include="Drivers\virtiogpu.c" />
     <ClCompile Include="dtb.c" />
     <ClCompile Include="Fs\Dev\devfs.c" />
     <ClCompile Include="Fs\Dev\devinput.c" />
     <ClCompile Include="Fs\Fat\Fat.c" />
+    <ClCompile Include="Fs\Fat\FatFile.c" />
     <ClCompile Include="Fs\initrd.c" />
     <ClCompile Include="Fs\vdisk.c" />
     <ClCompile Include="Fs\vfs.c" />
@@ -257,6 +260,8 @@
     <ClCompile Include="Mm\liballoc.c" />
     <ClCompile Include="Mm\pmmngr.c" />
     <ClCompile Include="Mm\vmmngr.c" />
+    <ClCompile Include="pcie.c" />
+    <ClCompile Include="pe.c" />
     <ClCompile Include="stdio.c" />
     <ClCompile Include="string.c" />
   </ItemGroup>
@@ -282,6 +287,7 @@
     <ClInclude Include="..\BaseHdr\aa64hcode.h" />
     <ClInclude Include="..\BaseHdr\Drivers\rtcmmio.h" />
     <ClInclude Include="..\BaseHdr\Drivers\uart.h" />
+    <ClInclude Include="..\BaseHdr\Drivers\virtiogpu.h" />
     <ClInclude Include="..\BaseHdr\dtb.h" />
     <ClInclude Include="..\BaseHdr\Fs\initrd.h" />
     <ClInclude Include="..\BaseHdr\Hal\AA64\aa64cpu.h" />

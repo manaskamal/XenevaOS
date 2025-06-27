@@ -36,7 +36,7 @@
 
 
 #include <Fs/Fat/Fat.h>
-//#include <Fs/Fat/FatFile.h>
+#include <Fs/Fat/FatFile.h>
 //#include <Fs/Fat/FatDir.h>
 #include <Fs/vdisk.h>
 #include <Fs/vfs.h>
@@ -445,12 +445,7 @@ AuVFSNode* FatLocateDir(AuVFSNode* fsys, const char* dir) {
 		dirent = (FatDir*)buf;
 
 		for (int i = 0; i < 16; i++) {
-
-			char name[12];
-			memcpy(name, dirent->filename, 11);
-			name[11] = 0;
-			if (strcmp(dos_file_name, name) == 0) {
-
+			if (strncmp(dos_file_name, dirent->filename, 11) == 0) {
 				strcpy(file->filename, dir);
 				file->current = dirent->first_cluster;
 				file->size = dirent->file_size;
@@ -465,7 +460,6 @@ AuVFSNode* FatLocateDir(AuVFSNode* fsys, const char* dir) {
 					file->flags |= FS_FLAG_DIRECTORY;
 				else
 					file->flags |= FS_FLAG_GENERAL;
-			//	SeTextOut("FAT OPEN -> %s %x \r\n", file->filename, file->current);
 				AuPmmngrFree((void*)V2P((size_t)buf));
 				return file;
 			}
@@ -642,9 +636,9 @@ AuVFSNode* FatInitialise(AuVDisk* vdisk, char* mountname) {
 	fsys->read_block = FatRead;
 	fsys->remove_dir = 0;//FatRemoveDir;
 	fsys->remove_file = 0; // FatFileRemove;
-	fsys->write = 0; // FatWrite;
+	fsys->write = FatWrite;
 	fsys->create_dir = 0; // FatCreateDir;
-	fsys->create_file = 0; // FatCreateFile;
+	fsys->create_file =  FatCreateFile;
 	fsys->get_blockfor = FatGetClusterFor;
 	fsys->opendir = 0; // FatOpenDir;
 	fsys->read_dir = 0; // FatDirectoryRead;

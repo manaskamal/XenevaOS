@@ -31,8 +31,10 @@
 #define __AU_DRV_H__
 
 #include <stdint.h>
+#ifdef ARCH_X64
 #include <Hal\x86_64_hal.h>
 #include <Hal\hal.h>
+#endif
 #include <Fs\vfs.h>
 
 #define DRIVER_CLASS_AUDIO 1

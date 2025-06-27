@@ -35,8 +35,23 @@ int memcmp(const void* first, const void* second, size_t length) {
 }
 
 
-void memcpy(void* dest, void* src, size_t count) {
+void memcpy(void* dest, void* src, size_t len) {
 	//_fastcpy(dest, src, count);
+	uint8_t* t = (uint8_t*)dest;
+	uint8_t* s = (uint8_t*)src;
+	if (len > 0) {
+		// check to see if target is in the range of src and if so, do a memmove() instead
+		if ((t > s) && (t < (s + len))) {
+			t += (len - 1);
+			s += (len - 1);
+			while (len--)
+				*t-- = *s++;
+		}
+		else {
+			while (len--)
+				*t++ = *s++;
+		}
+	}
 }
 
 

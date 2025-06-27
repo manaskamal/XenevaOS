@@ -168,7 +168,12 @@ void GICInitialize() {
 				/* suspecting, this would only work with QEMU-aarch64-virt board */
 				uint32_t gicd = (uint64_t)AuDTBSwap32(reg[3]) | ((uint64_t)AuDTBSwap32(reg[4]) << 32UL);
 				uint32_t gicc = (uint64_t)AuDTBSwap32(reg[7]) | ((uint64_t)AuDTBSwap32(reg[9]) << 32UL);
+				uint32_t addrS = AuDeviceTreeGetAddressCells(ic);
+				uint32_t sizeS = AuDeviceTreeGetSizeCells(ic);
+				AuTextOut("GIC ADr: %x \n", AuDeviceTreeGetRegAddress(ic, addrS));
+				AuTextOut("GIC Szs: %x \n", AuDeviceTreeGetRegSize(ic, addrS, sizeS));
 				AuTextOut("GICD : %x, GICC : %x \n", gicd, gicc);
+				AuTextOut("GIC Addrsz : %d, sizesz : %d \n", addrS, sizeS);
 				__gic.gicDPhys = gicd;
 				__gic.gicCPhys = gicc;
 			}

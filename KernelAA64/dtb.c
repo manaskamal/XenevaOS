@@ -88,8 +88,7 @@ uint32_t* AuDeviceTreeGetSubNode(uint32_t* node, char* strings, const char* name
 	if (AuDTBSwap32(*node) != 1) return NULL;
 	node++;
 
-	/*char* nodename = (char*)node;
-	AuTextOut("NODE FOUND : %s \n", nodename);*/
+	char* nodename = (char*)node;
 	if (cmp((char*)node, name)) {
 		*node_out = node;
 		return NULL;
@@ -172,6 +171,84 @@ uint32_t* AuDeviceTreeFindProperty(uint32_t* node, const char* property) {
 	AuDeviceTreeFindPropertyInternal(node, dtb_strings, property, &out);
 	return out;
 }
+
+/*
+ * AuDeviceTreeGetAddressCells -- get the value from address cells
+ * property
+ * @param node -- Pointer to node
+ */
+uint32_t AuDeviceTreeGetAddressCells(uint32_t* node) {
+	if (!dtbAddress)
+		return 0;
+	uint32_t* addressCell = AuDeviceTreeFindProperty(node, "#address-cells");
+	if (addressCell) {
+		uint32_t addressSize = AuDTBSwap32(addressCell[2]);
+		return addressSize;
+	}
+	return 0;
+}
+
+
+
+/*
+ * AuDeviceTreeGetSizeCells -- get the value from size cells
+ * property
+ * @param node -- Pointer to node
+ */
+uint32_t AuDeviceTreeGetSizeCells(uint32_t* node) {
+	if (!dtbAddress)
+		return 0;
+	uint32_t* sizeCell = AuDeviceTreeFindProperty(node, "#size-cells");
+	if (sizeCell) {
+		uint32_t sizeSize = AuDTBSwap32(sizeCell[2]);
+		return sizeSize;
+	}
+	return 0;
+}
+
+static inline uint32_t _swap32(uint32_t x) {
+	return ((x & 0x000000FFU) << 24) |
+		((x & 0x0000FF00U) << 8) |
+		((x & 0x00FF0000U) >> 8) |
+		((x & 0xFF000000U) >> 24);
+}
+/*
+ * AuDeviceTreeGetRegAddress -- get the MMIO address from reg property
+ * @param node -- Pointer to parent node
+ * @param addressCell -- size of address cell
+ */
+uint64_t AuDeviceTreeGetRegAddress(uint32_t* node, uint32_t addressCell) {
+	uint32_t* reg = AuDeviceTreeFindProperty(node, "reg");
+	if (reg) {
+		uint64_t addr = 0;
+		for (int i = 0; i < addressCell; i++) {
+			addr <<= 32;
+			addr |= AuDTBSwap32(reg[i+2]);
+		}
+		return addr;
+	}
+	return 0;
+}
+
+/*
+ * AuDeviceTreeGetRegSize -- get the size value from reg property
+ * @param node -- Pointer to parent node
+ * @param addressCell -- size of address cell
+ * @param sizeCell -- value of size cell
+ */
+uint64_t AuDeviceTreeGetRegSize(uint32_t* node, uint32_t addressCell, uint32_t sizeCell) {
+	uint32_t* reg = AuDeviceTreeFindProperty(node, "reg");
+	if (reg) {
+		uint64_t size = 0;
+		for (int i = 0; i < sizeCell; i++) {
+			size <<= 32;
+			size |= AuDTBSwap32(reg[2 + addressCell + i]);
+		}
+		return size;
+	}
+	return 0;
+}
+
 /*
  * AuDeviceTreeInitialize -- initialize the device tree
  * @param fdt_address -- device tree address passed by

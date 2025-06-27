@@ -59,6 +59,15 @@
     <ClCompile Include="Fs\Fat\Fat.c">
       <Filter>Fs\Fat</Filter>
     </ClCompile>
+    <ClCompile Include="Fs\Fat\FatFile.c">
+      <Filter>Fs\Fat</Filter>
+    </ClCompile>
+    <ClCompile Include="Drivers\virtiogpu.c">
+      <Filter>Drivers</Filter>
+    </ClCompile>
+    <ClCompile Include="pcie.c" />
+    <ClCompile Include="audrv.c" />
+    <ClCompile Include="pe.c" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Hal">
@@ -140,6 +149,9 @@
     </ClInclude>
     <ClInclude Include="..\BaseHdr\Fs\initrd.h">
       <Filter>Include\Fs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\Drivers\virtiogpu.h">
+      <Filter>Include\Drivers</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

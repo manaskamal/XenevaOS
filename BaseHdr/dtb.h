@@ -83,6 +83,35 @@ AU_EXTERN AU_EXPORT uint32_t* AuDeviceTreeFindProperty(uint32_t* node, const cha
  * @param name -- Node name
  */
 AU_EXTERN AU_EXPORT uint32_t* AuDeviceTreeGetNode(const char* name);
+
+/*
+ * AuDeviceTreeGetAddressCells -- get the value from address cells
+ * property
+ * @param node -- Pointer to node
+ */
+AU_EXTERN AU_EXPORT uint32_t AuDeviceTreeGetAddressCells(uint32_t* node);
+
+/*
+ * AuDeviceTreeGetSizeCells -- get the value from size cells
+ * property
+ * @param node -- Pointer to node
+ */
+AU_EXTERN AU_EXPORT uint32_t AuDeviceTreeGetSizeCells(uint32_t* node);
+
+/*
+ * AuDeviceTreeGetRegAddress -- get the MMIO address from reg property
+ * @param node -- Pointer to parent node
+ * @param addressCell -- size of address cell
+ */
+AU_EXTERN AU_EXPORT uint64_t AuDeviceTreeGetRegAddress(uint32_t* node, uint32_t addressCell);
+
+/*
+ * AuDeviceTreeGetRegSize -- get the size value from reg property
+ * @param node -- Pointer to parent node
+ * @param addressCell -- size of address cell
+ * @param sizeCell -- value of size cell
+ */
+AU_EXTERN AU_EXPORT uint64_t AuDeviceTreeGetRegSize(uint32_t* node, uint32_t addressCell, uint32_t sizeCell);
 /*
  * AuDeviceTreeInitialize -- initialize the device tree
  * @param fdt_address -- device tree address passed by

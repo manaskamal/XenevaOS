@@ -44,6 +44,8 @@
 #include <list.h>
 #include <Fs/vfs.h>
 #include <Fs/initrd.h>
+#include <Drivers/virtiogpu.h>
+#include <audrv.h>
 
 
 extern int _fltused = 1;
@@ -80,7 +82,6 @@ bool AuLittleBootUsed() {
     return _littleboot_used;
 }
 
-extern bool AuPmmngrAllocCheck(uint64_t address);
 /*
  * _AuMain -- the main entry point for kernel
  * @param info -- Kernel Boot information passed
@@ -103,6 +104,7 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	AA64CPUPostInitialize(info);
 	AuVFSInitialise();
 	AuInitrdInitialize(info);
+	AuDrvMngrInitialize(info);
 	/* need to initialize basic drivers here*/
 	/* scheduler initialize*/
 	/* scheduler start*/

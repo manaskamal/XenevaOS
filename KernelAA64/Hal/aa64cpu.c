@@ -36,6 +36,7 @@
 #include <Hal/basicacpi.h>
 #include <Drivers/uart.h>
 #include <Drivers/rtcmmio.h>
+#include <kernelAA64.h>
 
 
 uint64_t basisTime;
@@ -155,7 +156,8 @@ void AA64CPUPostInitialize(KERNEL_BOOT_INFO* info) {
 
 	uint32_t id = read_midr();
 	AA64CPUImplementer(id);
+	AA64PCIeInitialize();
 	AuTextOut("[aurora]: cpu post initialized \n");
-	AuPL031RTCInit();
+	//AuPL031RTCInit();
 	mask_irqs();
 }

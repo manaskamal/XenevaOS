@@ -567,7 +567,7 @@ int liballoc_unlock() {
 }
 
 void* liballoc_alloc(int pages) {
-	size_t size = (size_t)pages * 4096;
+	size_t size = pages * 4096;
 	uint64_t* page = AuGetFreePage(0, false);
 	uint64_t page_ = (uint64_t)page;
 
@@ -587,6 +587,7 @@ void* liballoc_alloc(int pages) {
 }
 
 int liballoc_free(void* ptr, int pages) {
+	AuTextOut("LIBALLOC: freeing pages : %d \n", pages);
 	AuFreePages((uint64_t)ptr, true, pages);
 	return 0;
 }

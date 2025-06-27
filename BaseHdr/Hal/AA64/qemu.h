@@ -60,6 +60,7 @@
 #define UART1_IRQ 8
 #define ACPI_GED 9
 
+#define PCIE_ECAM 0x10000000ULL
 #endif
 
 #endif
