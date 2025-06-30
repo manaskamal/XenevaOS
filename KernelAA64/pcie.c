@@ -35,6 +35,7 @@
 #include <Hal/AA64/qemu.h>
 #include <Mm/vmmngr.h>
 #include <kernelAA64.h>
+#include <Hal/basicacpi.h>
 
 uint64_t _ecamAddress;
 bool _pcieInitialized;
@@ -42,8 +43,9 @@ bool _pcieInitialized;
  * AA64PCIeInitialize -- intialize pcie controller
  */
 void AA64PCIeInitialize() {
-	if (!AuLittleBootUsed())
-		goto set_address;
+	if (!AuLittleBootUsed()) {
+		goto skipDTB;
+	}
 
 	uint32_t* pcie = AuDeviceTreeGetNode("pcie");
 	if (!pcie) {
@@ -51,7 +53,6 @@ void AA64PCIeInitialize() {
 		return;
 	}
 	AuTextOut("[aurora]: pcie found \n");
-set_address:
 #ifdef __TARGET_BOARD_QEMU_VIRT__
 	
 	/* else need to parse the DTB for */
@@ -63,7 +64,23 @@ set_address:
 	AuTextOut("[aurora]: ecam address : %x, size value : %x \n", ecamAddr, sizeValue);
 	_ecamAddress = AuMapMMIO(ecamAddr, sizeValue / 0x1000);
 	_pcieInitialized = 1;
+	return;
 #endif
+skipDTB:
+	AuTextOut("[aurora]: PCIe no LittleBoot protocol used, falling back to UEFI mechanism \n");
+	_ecamAddress = 0;
+	if (AuACPIPCIESupported()) {
+		AuTextOut("[aurora]: ACPI PCIe is supported \n");
+		acpiMcfg* mcfg = AuACPIGetMCFG();
+		acpiMcfgAlloc* allocs = MEM_AFTER(acpiMcfgAlloc*, mcfg);
+		//_ecamAddress = AuMapMMIO(allocs->baseAddress, 0x10000000/0x1000);
+	}
+	else {
+		AuTextOut("[aurora]: kernel can't continue boot, no device discovery mechanism supported \n");
+		AuTextOut("[aurora]: Ki koriba aru !! Eku dekhun device discovery mechanism support nokore !! Baad diya \n");
+		AuTextOut("[aurora]: Ponta Bhaat khuwa ge \n");
+		for (;;);
+	}
 }
 
 bool AuIsPCIeInitialized() {
@@ -85,8 +102,19 @@ uint64_t AuPCIEGetDevice(uint16_t seg, int bus, int dev, int func) {
 		return 0;
 	if (func > 8)
 		return 0;
-	uint64_t addr = _ecamAddress + ((bus << 20) +
-		(dev << 15) + (func << 12));
+	uint64_t addr = 0;
+	if (_ecamAddress) {
+		addr = _ecamAddress + ((bus << 20) +
+			(dev << 15) + (func << 12));
+	}
+	else {
+		acpiMcfg* mcfg = AuACPIGetMCFG();
+		acpiMcfgAlloc* allocs = MEM_AFTER(acpiMcfgAlloc*,mcfg);
+		if (allocs->startBusNum <= bus && bus <= allocs->endBusNum) {
+			addr = allocs->baseAddress + ((bus - allocs->startBusNum) << 20) |
+				(dev << 15) | (func << 12);
+		}
+	}
 	return addr;
 }
 

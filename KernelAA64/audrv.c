@@ -329,7 +329,7 @@ void AuDrvMngrInitialize(KERNEL_BOOT_INFO* info) {
 	AuVFSNode* file = AuVFSOpen("/audrv.cnf");
 	if (!file) {
 		AuTextOut("[aurora]: Driver Manager failed to open audrv.cnf, file not found \n");
-		for (;;);
+		return;
 	}
 	int filesize = file->size / 1024;
 

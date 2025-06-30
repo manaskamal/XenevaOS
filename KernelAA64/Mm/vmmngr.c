@@ -33,6 +33,7 @@
 #include <Mm/pmmngr.h>
 #include <Hal/AA64/aa64lowlevel.h>
 #include <string.h>
+#include <kernelAA64.h>
 
 
 uint64_t* _RootPaging;
@@ -68,14 +69,27 @@ void AuVmmngrInitialize() {
 
 	
 	for (int i = 0; i < 512; i++) {
-		if (i == 512)
+	/*	if (i == 512)
 			continue;
 		if ((previousL0[i] & 1)) {
 			newL0[i] = previousL0[i];
 		}
 		else
-			newL0[i] = 0;
+			newL0[i] = 0;*/
+		newL0[i] = previousL0[i];
 	}
+
+	if (!AuLittleBootUsed()) {
+	/*	uint64_t* identityMap = (uint64_t*)AuPmmngrAlloc();
+		memset((void*)identityMap, 0, 4096);
+
+		for (int i = 0; i < 512; ++i) {
+			uint64_t addr = i << 30;
+			identityMap[i] = (addr | PTE_VALID | PTE_AF | PTE_SH_INNER | (1UL << 2));
+		}
+		newL0[0] = (uint64_t)identityMap | PTE_VALID | PTE_TABLE | PTE_AF;*/
+	}
+
 	
 	uint64_t* newL1 = AuPmmngrAlloc();
 	memset(newL1, 0, PAGE_SIZE);
@@ -143,6 +157,7 @@ bool AuMapPage(uint64_t phys_addr, uint64_t virt_addr, uint8_t attrib) {
 	if (pml1[i1] & 1)
 	{
 		//AuPmmngrFree((void*)phys_addr);
+		AuTextOut("[aurora]: vmmngr page already present : %x \n", (pml1[i1] & ~0xFFFULL));
 		return false;
 	}
 

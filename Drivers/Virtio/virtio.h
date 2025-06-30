@@ -30,4 +30,47 @@
 #ifndef __VIRTIO_H__
 #define __VIRTIO_H__
 
+#include <stdint.h>
+
+#define VIRTIO_MAGIC_VALUE 0x74726976
+#define VIRTIO_VENDOR_ID_QEMU 0x554D4551
+
+#pragma pack(push,1)
+typedef struct _virtio_mmio_ {
+	volatile uint32_t MagicValue;
+	volatile uint32_t Version;
+	volatile uint32_t DeviceID;
+	volatile uint32_t VendorID;
+	volatile uint32_t DeviceFeatures;
+	volatile uint32_t DeviceFeaturesSel;
+	volatile uint32_t reserved_018;
+	volatile uint32_t reserved_01C;
+	volatile uint32_t DriverFeatures;
+	volatile uint32_t DriverFeaturesSel;
+	volatile uint32_t QueueSel;
+	volatile uint32_t QueueNumMax;
+	volatile uint32_t QueueNum;
+	volatile uint32_t QueueAlign;
+	volatile uint32_t QueuePFN;
+	volatile uint32_t reserved_03C;
+	volatile uint32_t QueueReady;
+	volatile uint32_t reserved_044;
+	volatile uint32_t QueueNotify;
+	volatile uint32_t reserved_04C;
+	volatile uint32_t InterruptStatus;
+	volatile uint32_t InterruptACK;
+	volatile uint32_t Status;
+	volatile uint32_t reserved_05C;
+	volatile uint32_t QueueDescLow;
+	volatile uint32_t QueueDescHigh;
+	volatile uint32_t QueueDriverLow;
+	volatile uint32_t QueueDriverHigh;
+	volatile uint32_t QueueDeviceLow;
+	volatile uint32_t QueueDeviceHigh;
+	volatile uint32_t ConfigGeneration;
+	volatile uint32_t reserved_07C;
+	volatile uint8_t DeviceConfig[0x200 - 0x80];
+}VirtioHeader;
+#pragma pack(pop)
+
 #endif

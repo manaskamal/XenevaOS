@@ -237,6 +237,8 @@
   <ItemGroup>
     <ClCompile Include="aucon.c" />
     <ClCompile Include="audrv.c" />
+    <ClCompile Include="Board\board.c" />
+    <ClCompile Include="Board\Virt\fwcfg.c" />
     <ClCompile Include="ctype.c" />
     <ClCompile Include="Drivers\rtcmmio.c" />
     <ClCompile Include="Drivers\uart.c" />
@@ -247,6 +249,7 @@
     <ClCompile Include="Fs\Fat\Fat.c" />
     <ClCompile Include="Fs\Fat\FatFile.c" />
     <ClCompile Include="Fs\initrd.c" />
+    <ClCompile Include="Fs\pipe.c" />
     <ClCompile Include="Fs\vdisk.c" />
     <ClCompile Include="Fs\vfs.c" />
     <ClCompile Include="Hal\aa64cpu.c" />

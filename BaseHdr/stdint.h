@@ -225,6 +225,7 @@ extern "C++" {
 
 #define RAW_OFFSET(type, x, offset)  (type)((size_t)x + offset)
 #define RAW_DIFF(p1,p2) ((intptr_t)p1 - (intptr_t)p2)
+#define MEM_AFTER(type, p) ((type)(&(p)[1]))
 
 #define DIV_ROUND_UP(x, y) \
 	((x + y - 1) / y)

@@ -201,6 +201,7 @@ void AuPmmngrInitialize(KERNEL_BOOT_INFO* info) {
 	//AuPmmngrEarlyVMSetup(info);
 
 	_FreeMemory = _TotalRam;
+	AuTextOut("Total RAM : %x \n", (_TotalRam * 0x1000));
 
 	uint64_t BitmapSize = (_TotalRam / 8) + 1; // (_TotalRam * 4096) / 4096 / 8 + 1;
 	UsablePhysicalMemory = ((uint64_t)BitmapArea + BitmapSize);

@@ -105,6 +105,7 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	AuVFSInitialise();
 	AuInitrdInitialize(info);
 	AuDrvMngrInitialize(info);
+	AuVirtioGpuInitialize();
 	/* need to initialize basic drivers here*/
 	/* scheduler initialize*/
 	/* scheduler start*/

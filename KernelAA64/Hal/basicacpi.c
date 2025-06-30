@@ -209,3 +209,27 @@ void AuACPIInitialise(void* acpi_base) {
 	}
 
 }
+
+/*
+ * AuACPIGetMCFG -- Returns the mcfg table
+ * from basic acpi
+ */
+acpiMcfg* AuACPIGetMCFG() {
+	return __AuroraBasicAcpi->mcfg;
+}
+
+/*
+ * AuACPIPCIESupported -- Checks if pcie is
+ * supported or not
+ */
+bool AuACPIPCIESupported() {
+	return __PCIESupported;
+}
+
+/*
+ * AuACPIGetRSDP -- return the
+ * rsdp pointer
+ */
+void* AuACPIGetRSDP() {
+	return __ACPIRSDP;
+}

@@ -35,8 +35,14 @@
 #include <Hal/AA64/aa64lowlevel.h>
 #include <string.h>
 #include <Mm/pmmngr.h>
+#include <Mm/vmmngr.h>
 #include <Mm/kmalloc.h>
 #include <pcie.h>
+
+/*
+ * EXPERIMENTAL WORK
+ * WILL BE REMOVED FROM KernelAA64
+ */
 
 #define VIRTIO_MMIO_GPU_ID 0x10
 
@@ -136,7 +142,6 @@ void AuVirtioGpuReset(AuVirtioMMIOHeader* hdr) {
 	hdr->Status = 0;
 	hdr->Status |= 1;
 	hdr->Status |= 2;
-	hdr->Status |= 8;
 	/* write 0 because, we only need 2d support */
 	hdr->DriverFeatures = 0;
 	hdr->DriverFeaturesSel = 0;
@@ -214,13 +219,108 @@ void AuVirtioGpuCreate2D(AuVirtioMMIOHeader *hdr) {
 	AuTextOut("[aurora]: gpu 2d resource created \n");
 }
 
+#pragma pack(push,1)
+typedef struct _common_config_ {
+	volatile uint32_t dev_feature_select;
+	volatile uint32_t dev_feature;
+	volatile uint32_t guest_feature_select;
+	volatile uint32_t guest_feature;
+	volatile uint16_t msix;
+	volatile uint16_t queues;
+	volatile uint8_t device_status;
+	volatile uint8_t config_generation;
+	volatile uint16_t queue_select;
+	volatile uint16_t queue_size;
+	volatile uint16_t queue_msix_vector;
+	volatile uint16_t queue_enable;
+	volatile uint16_t queue_notify_off;
+}VirtioCommonConfig;
+#pragma pack(pop)
+
+struct virtio_dev_cfg {
+	volatile uint8_t select;
+	volatile uint8_t subsel;
+	volatile uint8_t size;
+	volatile uint8_t pad[5];
+	union {
+		struct {
+			volatile uint32_t min;
+			volatile uint32_t max;
+			volatile uint32_t fuzz;
+			volatile uint32_t flat;
+			volatile uint32_t res;
+		}tablet_data;
+		uint8_t str[128];
+	}data;
+};
+
+void AuVirtioGpuPCIInitialize() {
+	int bus, dev, func;
+
+	AuTextOut("[aurora]: Virtio PCI initializing \n");
+	uint64_t device = AuPCIEScanClass(0x03, 0x80, &bus, &dev, &func);
+	if (device == 0xFFFFFFFF)
+		return 1;
+
+	AuTextOut("BUS : %d, Dev : %d, Func : %d \n", bus, dev, func);
+	AuTextOut("Device : %x \n", device);
+
+	uint64_t bar0 = AuPCIERead(device, PCI_BAR1, bus, dev, func);
+	AuTextOut("[virtio]: bar0: %x \n", bar0);
+	if (bar0 == 0) {
+		uint64_t addr = (uint64_t)AuPmmngrAlloc();
+		AuVirtioMMIOHeader* hdr = (AuVirtioMMIOHeader*)addr;
+		hdr->MagicValue = VIRTIO_MAGIC_VALUE;
+		AuPCIEWrite(device, PCI_BAR1, addr, bus, dev, func);
+		AuTextOut("written to pcie \n");
+		addr = (uint64_t)AuPmmngrAlloc();
+		AuPCIEWrite(device, PCI_BAR4, addr, bus, dev, func);
+
+		uint16_t cmd = AuPCIERead(device, PCI_COMMAND, bus, dev, func);
+		AuTextOut("default cmd : %x \n", cmd);
+		cmd |= 4;
+		cmd |= 2;
+		cmd |= 1;
+		AuPCIEWrite(device, PCI_COMMAND, cmd, bus, dev, func);
+		uint16_t cmd2 = AuPCIERead(device, PCI_COMMAND, bus, dev, func);
+		AuTextOut("cmd2 : %x \n", cmd2);
+		isb_flush();
+		for (int i = 0; i < 1000; i++)
+			;
+	}
+	uint64_t barLo = AuPCIERead(device, PCI_BAR3, bus, dev, func);
+	AuTextOut("BAR3 : %x \n", barLo);
+	uint64_t barHi = AuPCIERead(device, PCI_BAR4, bus, dev, func);
+	AuTextOut("BAR4 : %x \n", barHi);
+	bar0 = barHi >> 32 | barLo;
+
+	barHi = AuPCIERead(device, PCI_BAR5, bus, dev, func);
+	AuTextOut("BAR5: %x \n", barHi);
+	barHi = AuPCIERead(device, PCI_BAR2, bus, dev, func);
+	AuTextOut("BAR2: %x \n", barHi);
+
+	AuTextOut("BAR0 : %x \n", bar0);
+	uint64_t finalAddr = AuMapMMIO(bar0, 1);
+	VirtioCommonConfig* cfg = (VirtioCommonConfig*)bar0;
+	struct virtio_dev_cfg* _cfg = (struct virtio_dev_cfg*)(bar0 + 0x2000);
+	_cfg->select = 1;
+	_cfg->subsel = 0;
+	isb_flush();
+
+	AuTextOut("NumQueue : %d \n", cfg->queues);
+	AuTextOut("Virtio found %s \n", _cfg->data.str);
+	return;
+}
+
 /*
  * AuVirtioGpuInitialize -- initialize the virtio
  * gpu
  */
 void AuVirtioGpuInitialize() {
-	if (!AuLittleBootUsed())
+	if (!AuLittleBootUsed()) {
+		AuVirtioGpuPCIInitialize();
 		return;
+	}
 	uint32_t* gpu = AuDeviceTreeGetNode("virtio_mmio");
 	if (!gpu) {
 		AuTextOut("[aurora]: virtio not gpu found \n");
@@ -229,12 +329,8 @@ void AuVirtioGpuInitialize() {
 	AuTextOut("[aurora]: virtio gpu found\n");
 	uint32_t* reg = AuDeviceTreeFindProperty(gpu, "reg");
 	uint64_t virtioMMIO = AuDeviceTreeGetRegAddress(gpu, 2);
-	int bus, dev, func;
-	uint64_t device = AuPCIEScanClass(0x03, 0x00, &bus, &dev, &func);
-	if (device != 0) {
-		AuTextOut("[aurora]: virtio-gpu-pci found : %d %d %d \n", bus, dev, func);
-	}
-	
+	uint64_t MMIOSize = AuDeviceTreeGetRegSize(gpu, 2,2);
+	AuTextOut("VirtioMMIO : %x , Size : %x \n", virtioMMIO, MMIOSize);
 	AuVirtioMMIOHeader* vhdr = NULL;
 	gpuQueue = (VirtQueue*)kmalloc(sizeof(VirtQueue));
 
@@ -243,11 +339,16 @@ void AuVirtioGpuInitialize() {
 		if (count == 0)
 			break;
 		vhdr = (AuVirtioMMIOHeader*)virtioMMIO;
-		if (vhdr->DeviceID == VIRTIO_MMIO_GPU_ID)
+		if (vhdr->DeviceID == VIRTIO_MMIO_GPU_ID) {
+			AuTextOut("We found virtio gpu :%x \n", virtioMMIO);
 			break;
+		}
 		virtioMMIO += sizeof(AuVirtioMMIOHeader);
 		count--;
 	}
+	uint64_t mapMMIO = AuMapMMIO(virtioMMIO, 2);
+	AuTextOut("VHDR : %x \n", vhdr);
+	AuTextOut("mapMMIO : %x \n", mapMMIO);
 	AuTextOut("[aurora]: virtio gpu device ID : %d \n", vhdr->DeviceID);
 	AuTextOut("[aurora]: device features : %x \n", vhdr->DeviceFeatures);
 	AuTextOut("[aurora]: numMax : %d \n", vhdr->QueueSel);

@@ -29,6 +29,9 @@
 
 #include <aurora.h>
 #include <aucon.h>
+#include <pcie.h>
+#include "virtio.h"
+#include <Mm/pmmngr.h>
 
 /*
 * AuDriverUnload -- deattach the driver from
@@ -44,5 +47,24 @@ AU_EXTERN AU_EXPORT int AuDriverUnload() {
 */
 AU_EXTERN AU_EXPORT int AuDriverMain() {
 	AuTextOut("[virtio]: hello from inside virtio driver \n");
+	int bus, dev, func;
+
+	uint64_t device = AuPCIEScanClass(0x03, 0x80, &bus, &dev, &func);
+	if (device == 0xFFFFFFFF)
+		return 1;
+	
+	AuTextOut("BUS : %d, Dev : %d, Func : %d \n", bus, dev, func);
+	AuTextOut("Device : %x \n", device);
+	uint64_t bar0 = AuPCIERead(device, PCI_BAR0, bus, dev, func);
+	AuTextOut("[virtio]: bar0: %x \n", bar0);
+	if (bar0 == 0) {
+		uint64_t addr = (uint64_t)AuPmmngrAlloc();
+		AuPCIEWrite(device, PCI_BAR0, addr, bus, dev, func);
+	}
+	bar0 = AuPCIERead(device, PCI_BAR0, bus, dev, func);
+	AuTextOut("BAR0 : %x \n", bar0);
+	VirtioHeader* hdr = (VirtioHeader*)bar0;
+	AuTextOut("[virtio]: magic value : %x\n", hdr->MagicValue);
+
 	return 0;
 }

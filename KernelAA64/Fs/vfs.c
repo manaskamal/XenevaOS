@@ -34,6 +34,7 @@
 #include <Fs/Dev/devfs.h>
 #include <Fs/vdisk.h>
 #include <string.h>
+#include <Fs/pipe.h>
 
 AuVFSContainer* __RootContainer;
 AuVFSNode* __RootFS;
@@ -45,6 +46,7 @@ void AuVFSInitialise() {
 	__RootFS = NULL;
 	AuDeviceFsInitialize();
 	AuVDiskInitialise();
+	AuPipeFSInitialise();
 }
 
 /*

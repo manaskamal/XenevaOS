@@ -35,6 +35,27 @@
 
 
 uint64_t* l0_table_base;
+
+void PRINTTCR(uint64_t rtc) {
+	XEGuiPrint("T0SZ : %d \n", ((rtc >> 0) & 0x3F));
+	XEGuiPrint("EPD0 : %d \n", ((rtc >> 7) & 0x1));
+	XEGuiPrint("IRGN0 : %d \n", ((rtc >> 8) & 0x3));
+	XEGuiPrint("ORGN0 : %d \n", ((rtc >> 10) & 0x3));
+	XEGuiPrint("SH0 : %d \n", ((rtc >> 12) & 0x3));
+	XEGuiPrint("TG0 : %d \n", ((rtc >> 14) & 0x3));
+	XEGuiPrint("T1SZ : %d \n", ((rtc >> 16) & 0x3F));
+	XEGuiPrint("EPD1 : %d \n", ((rtc >> 23) & 0x1));
+	XEGuiPrint("IRGN1 : %d \n", ((rtc >> 24) & 0x3));
+	XEGuiPrint("ORGN1 : %d \n", ((rtc >> 26) & 0x3));
+	XEGuiPrint("SH1 : %d \n", ((rtc >> 28) & 0x3));
+	XEGuiPrint("TG1 : %d \n", ((rtc >> 30) & 0x3));
+	XEGuiPrint("IPS : %d \n", ((rtc >> 32) & 0x7));
+	XEGuiPrint("AS : %d \n", ((rtc >> 36) & 0x1));
+	XEGuiPrint("TBI0 : %d \n", ((rtc >> 37) & 0x1));
+	XEGuiPrint("TBI1 : %d \n", ((rtc >> 38) & 0x1));
+	XEGuiPrint("HA : %d \n", ((rtc >> 39) & 0x1));
+	XEGuiPrint("HPD0 : %d \n", ((rtc >> 40) & 0x1));
+}
 /*
  * XEPagingInitialize -- initialize paging
  */
@@ -42,21 +63,29 @@ void XEPagingInitialize() {
 	
 	uint64_t previousBase = 0;
 	previousBase = read_ttbr0_el1();
+	XEGuiPrint("ttbr0: %x \n", previousBase);
 
 	l0_table_base = (uint64_t*)previousBase;
 
-	uint64_t tcr = ((24UL << 0) | (0b00 << 14) | (0b11 << 12) |
-		(0b01 << 10) | (0b01 << 8) | (16UL << 16) | (0b10 << 30) | (0b11 << 28) |
-		(0b01 << 26) | (0b01 << 24) | (3UL << 32));
-	write_tcr_el1(tcr & UINT32_MAX);
 
-	
+
+	uint64_t tcr1 = ((20UL << 0) | (0UL << 14) | (0b11UL << 12) |
+		(0b01UL << 10) | (0b01UL << 8) | (16UL << 16) | (0b10UL << 30) | (0b11UL << 28) |
+		(0b01UL << 26) | (0b01UL << 24) | (4ULL << 32));
+
+	write_tcr_el1(tcr1);
+
 
 	uint64_t mair = 0x000000000044ff00;
 	write_mair_el1(mair);
 	mair = read_mair_el1();
 	write_ttbr1_el1(l0_table_base);
 
+	/*uint64_t sctlr = (1UL << 0) | (1UL << 2) | (1UL << 12) | (1UL << 23) | (1UL << 28) |
+		(1UL << 29) | (1UL << 20) | (1UL << 7);
+	write_sctlr_el1(sctlr);*/
+
+	isb_flush();
 }
 
 
