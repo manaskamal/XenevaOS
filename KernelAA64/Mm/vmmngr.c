@@ -280,3 +280,20 @@ void AuUpdatePageFlags(uint64_t virt_addr, uint64_t flags) {
 	}
 }
 
+/*
+ * AuGetPhysicalAddress -- returns the physical address
+ * from a virtual address
+ * @param virt_addr -- Virtual address 
+ */
+void* AuGetPhysicalAddress(uint64_t virt_addr) {
+	uint64_t* pml4_ = (uint64_t*)P2V(read_ttbr0_el1());
+	uint64_t* pdpt = (uint64_t*)P2V(pml4_[pml4_index(virt_addr)] & ~0xFFFUL);
+	uint64_t* pd = (uint64_t*)P2V(pdpt[pdpt_index(virt_addr)] & ~0xFFFUL);
+	uint64_t* pt = (uint64_t*)P2V(pd[pd_index(virt_addr)] & ~0xFFFUL);
+	uint64_t* page = (uint64_t*)P2V(pt[pt_index(virt_addr)] & ~0xFFFUL);
+
+	if (page)
+		return V2P((uint64_t)page);
+	return 0;
+}
+

@@ -35,6 +35,65 @@
 #define VIRTIO_MAGIC_VALUE 0x74726976
 #define VIRTIO_VENDOR_ID_QEMU 0x554D4551
 
+#define VIRTIO_GPU_CMD_RESOURCE_CREATE_2D 0x0100
+#define VIRTIO_GPU_CMD_RESOURCE_ATTACH_BACKING 0x0101
+#define VIRTIO_GPU_CMD_SET_SCANOUT 0x0102
+#define VIRTIO_GPU_CMD_TRANSFER_TO_HOST_2D 0x0103
+#define VIRTIO_GPU_CMD_RESOURCE_FLUSH 0x0104
+#define VIRTIO_GPU_FLAG_FENCE (1<<0)
+
+
+struct virtio_gpu_ctrl_hdr {
+	uint32_t type;
+	uint32_t flags;
+	uint64_t fence_id;
+	uint32_t ctx_id;
+	uint32_t padding;
+};
+
+struct virtio_gpu_resource_create_2d {
+	struct virtio_gpu_ctrl_hdr hdr;
+	uint32_t resource_id;
+	uint32_t format;
+	uint32_t width;
+	uint32_t height;
+};
+
+struct virtio_gpu_resource_attach_backing {
+	struct virtio_gpu_ctrl_hdr hdr;
+	uint32_t resource_id;
+	uint32_t nr_entries;
+	struct {
+		uint64_t addr;
+		uint32_t length;
+		uint32_t padding;
+	}entries[1];
+};
+
+struct virtio_gpu_rect {
+	uint32_t x, y, width, height;
+};
+
+struct virtio_gpu_set_scanout {
+	struct virtio_gpu_ctrl_hdr hdr;
+	uint32_t scanout_id;
+	uint32_t resource_id;
+	struct virtio_gpu_rect rect;
+};
+
+struct virtio_gpu_transfer_to_host_2d {
+	struct virtio_gpu_ctrl_hdr hdr;
+	uint32_t resource_id;
+	struct virtio_gpu_rect rect;
+	uint64_t offset;
+};
+
+struct virtio_gpu_resource_flush {
+	struct virtio_gpu_ctrl_hdr hdr;
+	uint32_t resource_id;
+	struct virtio_gpu_rect rect;
+};
+
 #pragma pack(push,1)
 typedef struct _virtio_mmio_ {
 	volatile uint32_t MagicValue;
@@ -70,7 +129,42 @@ typedef struct _virtio_mmio_ {
 	volatile uint32_t ConfigGeneration;
 	volatile uint32_t reserved_07C;
 	volatile uint8_t DeviceConfig[0x200 - 0x80];
-}VirtioHeader;
+}VirtioMMIOHeader;
 #pragma pack(pop)
 
+
+#pragma pack(push,1)
+typedef struct _common_config_ {
+	volatile uint32_t dev_feature_select;
+	volatile uint32_t dev_feature;
+	volatile uint32_t guest_feature_select;
+	volatile uint32_t guest_feature;
+	volatile uint16_t msix;
+	volatile uint16_t queues;
+	volatile uint8_t device_status;
+	volatile uint8_t config_generation;
+	volatile uint16_t queue_select;
+	volatile uint16_t queue_size;
+	volatile uint16_t queue_msix_vector;
+	volatile uint16_t queue_enable;
+	volatile uint16_t queue_notify_off;
+}virtio_common_config;
+#pragma pack(pop)
+
+#pragma pack(push,1)
+typedef struct {
+	uint8_t cap_vndr;
+	uint8_t cap_next;
+	uint8_t cap_len;
+	uint8_t cfg_type;
+	uint8_t bar;
+	uint8_t padding[3];
+	uint32_t offset;
+	uint32_t length;
+}virtio_pci_cap;
+#pragma pack(pop)
+
+#define VIRTIO_PCI_CAP_ID 0x09
+#define VIRTIO_PCI_CAP_COMMON_CFG 1
+#define VIRTIO_PCI_CAP_DEVICE_CFG 4
 #endif

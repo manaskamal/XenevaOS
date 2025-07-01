@@ -257,7 +257,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
 	XEGuiPrint("XenevaOS Loader 2.0 (XNLDR) ARM64\n");
 	XEGuiPrint("Copyright (C) Manas Kamal Choudhury 2020-2025\n");
 	
-	XEGuiPrint("Loading system files \n");
+	XEGuiPrint("Loading system files.. please wait !! \n");
 	/* load all important files */
 	XEFile* krnl = XEOpenAndReadFile(ImageHandle, (CHAR16*)L"\\EFI\\XENEVA\\xnkrnl.exe");
 	uint8_t* alignedKBuf = (uint8_t*)krnl->kBuffer;
@@ -269,6 +269,8 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
 	
 	if (!isKernelValid)
 		XEGuiPrint("XNLDR: kernel image corrupted \n");
+
+	XEFile* initrd = XEOpenAndReadFile(ImageHandle, (CHAR16*)L"\\initrd2.img");
 
 	EFI_CONFIGURATION_TABLE* configuration_tables = gSystemTable->ConfigurationTable;
 
@@ -362,14 +364,14 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
 	bootinfo.kernel_size = krnl->FileSize;
 	bootinfo.printf_gui = XEGuiPrint;
 	bootinfo.font_binary_address = 0;
-	bootinfo.driver_entry1 = 0;
+	bootinfo.driver_entry1 = (uint8_t*)initrd->kBuffer;
 	bootinfo.driver_entry2 = 0;
 	bootinfo.driver_entry3 = 0; // (uint8_t*)xhciAddr;// usbAddr;
 	bootinfo.driver_entry4 = 0;
 	bootinfo.driver_entry5 = 0;
 	bootinfo.driver_entry6 = 0;
 	bootinfo.ap_code = fdt_address;
-	bootinfo.hid = 0;
+	bootinfo.hid = initrd->FileSize;
 	bootinfo.uid = 0;
 	bootinfo.cid = 0;
 

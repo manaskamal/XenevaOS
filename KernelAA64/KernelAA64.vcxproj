@@ -239,6 +239,8 @@
     <ClCompile Include="audrv.c" />
     <ClCompile Include="Board\board.c" />
     <ClCompile Include="Board\Virt\fwcfg.c" />
+    <ClCompile Include="Board\Virt\virt.c" />
+    <ClCompile Include="Board\Virt\virtioblk.c" />
     <ClCompile Include="ctype.c" />
     <ClCompile Include="Drivers\rtcmmio.c" />
     <ClCompile Include="Drivers\uart.c" />

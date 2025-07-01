@@ -77,6 +77,12 @@
     <ClCompile Include="Board\board.c">
       <Filter>Board</Filter>
     </ClCompile>
+    <ClCompile Include="Board\Virt\virtioblk.c">
+      <Filter>Board\Virt</Filter>
+    </ClCompile>
+    <ClCompile Include="Board\Virt\virt.c">
+      <Filter>Board\Virt</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Hal">

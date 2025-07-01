@@ -33,15 +33,19 @@
 #include <Fs/vdisk.h>
 #include <Fs/vfs.h>
 #include <Fs/Dev/devfs.h>
+#include <Mm/vmmngr.h>
 #include <string.h>
 #include <Mm/kmalloc.h>
 #include <_null.h>
 #include <Fs/Fat/Fat.h>
+#include <Mm/pmmngr.h>
 
 uint64_t ramdisk_start;
 uint64_t ramdisk_end;
 
 #define RAMDISK_SECTOR_SIZE 512
+
+#define RAMDISK_MAPPING_START 0xFFFFC00000900000
 
 /*
  * AuRamdiskRead -- read data from ramdisk
@@ -87,16 +91,36 @@ int AuRamdiskWriteCallback(AuVDisk* vdisk, uint64_t lba, uint32_t count, uint64_
  * @param info -- Pointer to Kernel Boot information
  */
 void AuInitrdInitialize(KERNEL_BOOT_INFO* info) {
-	if (info->boot_type != BOOT_LITTLEBOOT_ARM64)
-		return;
-	AuLittleBootProtocol* lb = (AuLittleBootProtocol*)info->driver_entry1;
-	if (!lb) {
-		AuTextOut("[aurora]: initrd initialization failed !! invalid Littleboot protocol\n");
+	if (info->boot_type == BOOT_LITTLEBOOT_ARM64) {
+		AuLittleBootProtocol* lb = (AuLittleBootProtocol*)info->driver_entry1;
+		if (!lb) {
+			AuTextOut("[aurora]: initrd initialization failed !! invalid Littleboot protocol\n");
+			return;
+		}
+		ramdisk_start = lb->initrd_start;
+		ramdisk_end = lb->initrd_end;
+	}
+	else {
+		/* NOTE: Ramdisk is loaded by bootloader itself into EfiBootServiceData,
+		 * memory areas other than EfiConventionalMemory area locaked by Physical
+		 * memory manager during Kernel memory initialization phase, which is safe
+		 * and will not get overwritten in future. We simply use P2V means converting
+		 * the ramdisk physical memory to Higher half linear mapping, which is done
+		 * during virtual memory manager initialization phase. EfiBootServiceData memories
+		 * are all identity mapped, so everything is all set.
+		 */
+		ramdisk_start = P2V((uint64_t)info->driver_entry1);
+		ramdisk_end = ramdisk_start + (info->hid - 1);
+	}
+
+	if (ramdisk_start == 0) {
+		AuTextOut("[aurora]: ramdisk failed to initialize \n");
 		return;
 	}
-	ramdisk_start = lb->initrd_start;
-	ramdisk_end = lb->initrd_end;
-	
+	/* okay before full initialization, we need to grab all the
+	 * physical address from the ramdisk pointer and map it to
+	 * kernel higher half address
+	 */
 	char* diskpath = (char*)kmalloc(32);
 	memset(diskpath, 0, 32);
 	AuVDiskCreateStorageFile(diskpath);

@@ -104,8 +104,9 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	AA64CPUPostInitialize(info);
 	AuVFSInitialise();
 	AuInitrdInitialize(info);
+	/* required virtio-mouse and keyboard */
+	//Here goes board pre driver initialize
 	AuDrvMngrInitialize(info);
-	AuVirtioGpuInitialize();
 	/* need to initialize basic drivers here*/
 	/* scheduler initialize*/
 	/* scheduler start*/

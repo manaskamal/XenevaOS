@@ -74,6 +74,7 @@ skipDTB:
 		acpiMcfg* mcfg = AuACPIGetMCFG();
 		acpiMcfgAlloc* allocs = MEM_AFTER(acpiMcfgAlloc*, mcfg);
 		//_ecamAddress = AuMapMMIO(allocs->baseAddress, 0x10000000/0x1000);
+		_pcieInitialized = 1;
 	}
 	else {
 		AuTextOut("[aurora]: kernel can't continue boot, no device discovery mechanism supported \n");
@@ -380,10 +381,6 @@ uint64_t AuPCIEScanClass(uint8_t classCode, uint8_t subClassCode, int* bus_, int
 				uint8_t sub_ClassCode = AuPCIERead(address, PCI_SUBCLASS, bus, dev, func);
 				uint16_t vendID = AuPCIERead(address, PCI_VENDOR_ID, bus, dev, func);
 				uint16_t devID = AuPCIERead(address, PCI_DEVICE_ID, bus, dev, func);
-				if (classCode != 0xFF && sub_ClassCode != 0xFF) {
-					AuTextOut("PCIe found : class %x subclass %x  \n", class_code, sub_ClassCode);
-					AuTextOut("PCIe vendor: %x device : %x \n", vendID, devID);
-				}
 				if (classCode == 0xFF || sub_ClassCode == 0xFF)
 					continue;
 				if (class_code == classCode && sub_ClassCode == subClassCode) {

@@ -32,6 +32,8 @@
 #include <pcie.h>
 #include "virtio.h"
 #include <Mm/pmmngr.h>
+#include <Mm/vmmngr.h>
+#include <Hal/AA64/aa64lowlevel.h>
 
 /*
 * AuDriverUnload -- deattach the driver from
@@ -46,25 +48,42 @@ AU_EXTERN AU_EXPORT int AuDriverUnload() {
 * AuDriverMain -- Main entry for vmware svga driver
 */
 AU_EXTERN AU_EXPORT int AuDriverMain() {
-	AuTextOut("[virtio]: hello from inside virtio driver \n");
+	AuTextOut("[virtio-gpu]: hello from inside virtio gpu driver \n");
 	int bus, dev, func;
 
 	uint64_t device = AuPCIEScanClass(0x03, 0x80, &bus, &dev, &func);
 	if (device == 0xFFFFFFFF)
 		return 1;
 	
-	AuTextOut("BUS : %d, Dev : %d, Func : %d \n", bus, dev, func);
-	AuTextOut("Device : %x \n", device);
-	uint64_t bar0 = AuPCIERead(device, PCI_BAR0, bus, dev, func);
-	AuTextOut("[virtio]: bar0: %x \n", bar0);
-	if (bar0 == 0) {
-		uint64_t addr = (uint64_t)AuPmmngrAlloc();
-		AuPCIEWrite(device, PCI_BAR0, addr, bus, dev, func);
+	uint64_t bar1 = AuPCIERead(device, PCI_BAR1, bus, dev, func);
+	if (bar1 == 0) {
+	   /* Need to initialize the hardware from zero level */
 	}
-	bar0 = AuPCIERead(device, PCI_BAR0, bus, dev, func);
-	AuTextOut("BAR0 : %x \n", bar0);
-	VirtioHeader* hdr = (VirtioHeader*)bar0;
-	AuTextOut("[virtio]: magic value : %x\n", hdr->MagicValue);
+
+	uint64_t barLo = AuPCIERead(device, PCI_BAR4, bus, dev, func);
+	uint64_t barHi = AuPCIERead(device, PCI_BAR5, bus, dev, func);
+	uint64_t bar = ((uint64_t)barHi << 32) | (barLo & ~0xFULL);
+	AuTextOut("[virtio-gpu] Base Address Register : %x \n", bar);
+	uint64_t finalAddr = (uint64_t)AuMapMMIO(bar, 1);
+	virtio_common_config* cfg = (virtio_common_config*)bar;
+
+	uint64_t devcfg_offset;
+	uint8_t cap_ptr = AuPCIERead(device, PCI_CAPABILITIES_PTR, bus, dev, func);
+	while (cap_ptr != 0) {
+		volatile virtio_pci_cap* cap = (volatile virtio_pci_cap*)(device + cap_ptr);
+		if (cap->cap_vndr == VIRTIO_PCI_CAP_ID) {
+			if (cap->cfg_type == VIRTIO_PCI_CAP_DEVICE_CFG) {
+				AuTextOut("[virtio]: device configuration offset : %x \n", cap->offset);
+				devcfg_offset = cap->offset;
+				break;
+			}
+		}
+		cap_ptr = cap->cap_next;
+	}
+	if (devcfg_offset == 0)
+		devcfg_offset = 0x2000;
+
+	AuTextOut("[virtio-gpu]: NumQueue : %d \n", cfg->queues);
 
 	return 0;
 }

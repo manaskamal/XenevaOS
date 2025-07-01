@@ -362,7 +362,9 @@ void AuDrvMngrInitialize(KERNEL_BOOT_INFO* info) {
 					dev_id = AuPCIERead(device, PCI_DEVICE_ID, bus, dev, func);
 					class_code = AuPCIERead(device, PCI_CLASS, bus, dev, func);
 					sub_class = AuPCIERead(device, PCI_SUBCLASS, bus, dev, func);
-
+					/*if (class_code != 0xFF && sub_class != 0xFF) {
+						AuTextOut("Class Code : %x, subClass : %x \n", class_code, sub_class);
+					}*/
 					if (dev_id == 0xFFFF || vend_id == 0xFFFF)
 						continue;
 					AuGetDriverName(class_code, sub_class, confdata, 1);

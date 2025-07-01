@@ -254,6 +254,23 @@ struct virtio_dev_cfg {
 	}data;
 };
 
+#pragma pack(push,1)
+typedef struct {
+	uint8_t cap_vndr;
+	uint8_t cap_next;
+	uint8_t cap_len;
+	uint8_t cfg_type;
+	uint8_t bar;
+	uint8_t padding[3];
+	uint32_t offset;
+	uint32_t length;
+}virtio_pci_cap;
+#pragma pack(pop)
+
+#define VIRTIO_PCI_CAP_ID 0x09
+#define VIRTIO_PCI_CAP_COMMON_CFG 1
+#define VIRTIO_PCI_CAP_DEVICE_CFG 4
+
 void AuVirtioGpuPCIInitialize() {
 	int bus, dev, func;
 
@@ -288,27 +305,42 @@ void AuVirtioGpuPCIInitialize() {
 		for (int i = 0; i < 1000; i++)
 			;
 	}
-	uint64_t barLo = AuPCIERead(device, PCI_BAR3, bus, dev, func);
-	AuTextOut("BAR3 : %x \n", barLo);
-	uint64_t barHi = AuPCIERead(device, PCI_BAR4, bus, dev, func);
-	AuTextOut("BAR4 : %x \n", barHi);
-	bar0 = barHi >> 32 | barLo;
 
-	barHi = AuPCIERead(device, PCI_BAR5, bus, dev, func);
+	uint64_t barLo = AuPCIERead(device, PCI_BAR4, bus, dev, func);
+
+	uint64_t barHi = AuPCIERead(device, PCI_BAR5, bus, dev, func);
+	AuTextOut("BAR4 : %x \n", barLo);
+	bar0 = ((uint64_t)barHi << 32) | (barLo & ~0xFULL);
 	AuTextOut("BAR5: %x \n", barHi);
-	barHi = AuPCIERead(device, PCI_BAR2, bus, dev, func);
-	AuTextOut("BAR2: %x \n", barHi);
 
 	AuTextOut("BAR0 : %x \n", bar0);
 	uint64_t finalAddr = AuMapMMIO(bar0, 1);
 	VirtioCommonConfig* cfg = (VirtioCommonConfig*)bar0;
-	struct virtio_dev_cfg* _cfg = (struct virtio_dev_cfg*)(bar0 + 0x2000);
+	uint64_t devcfg_offset;
+	uint8_t cap_ptr = AuPCIERead(device, PCI_CAPABILITIES_PTR, bus, dev, func);
+	while (cap_ptr != 0) {
+		volatile virtio_pci_cap* cap = (volatile virtio_pci_cap*)(device + cap_ptr);
+		if (cap->cap_vndr == VIRTIO_PCI_CAP_ID) {
+			if (cap->cfg_type == VIRTIO_PCI_CAP_DEVICE_CFG) {
+				AuTextOut("VIRTIO DEV CFG \n");
+				AuTextOut("len: %d \n", cap->length);
+				AuTextOut("OFfset : %x \n", cap->offset);
+				devcfg_offset = cap->offset;
+				break;
+			}
+		}
+		cap_ptr = cap->cap_next;
+	}
+	AuTextOut("Sizeof(dev_config) : %d \n", sizeof(struct virtio_dev_cfg));
+	if (devcfg_offset == 0)
+		devcfg_offset = 0x2000;
+	struct virtio_dev_cfg* _cfg = (struct virtio_dev_cfg*)(bar0 + devcfg_offset);
 	_cfg->select = 1;
 	_cfg->subsel = 0;
 	isb_flush();
 
 	AuTextOut("NumQueue : %d \n", cfg->queues);
-	AuTextOut("Virtio found %s \n", _cfg->data.str);
+	//AuTextOut("Virtio found %s \n", _cfg->data.str);
 	return;
 }
 
