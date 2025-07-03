@@ -185,3 +185,31 @@ read_midr:
    mrs x0, MIDR_EL1
    ret
 
+.global aa64_enter_user
+aa64_enter_user:
+   /* Here, we also mask the IRQ bit for now, else IRQ get fired
+    * from CurrentEl with SP_EL0 from vector table, we need to 
+    * make the exception handler return to EL0 
+    */
+   mov x8, #0x80
+   msr SPSR_EL1, x8
+   msr SP_EL0, x0
+   msr ELR_EL1,x1
+   eret
+  // mov sp, x8
+  
+
+.global aa64_svc_test
+aa64_svc_test:
+   mov x8, 10 
+   svc #0
+
+.global aa64_utest
+aa64_utest:
+   mov x14,5
+   mov x8, 0
+   svc #0
+   mov x8, x0
+   svc #0
+ _hang:
+   b _hang

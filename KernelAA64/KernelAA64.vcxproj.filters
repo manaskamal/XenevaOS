@@ -83,6 +83,9 @@
     <ClCompile Include="Board\Virt\virt.c">
       <Filter>Board\Virt</Filter>
     </ClCompile>
+    <ClCompile Include="Hal\systable.c">
+      <Filter>Hal</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Hal">

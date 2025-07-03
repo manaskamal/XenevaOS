@@ -54,8 +54,13 @@
 #define PTE_AF (1ULL << 10)
 #define PTE_SH_INNER (3ULL << 8)
 #define PTE_AP_RW (0ULL << 6)  //RW access
+#define PTE_AP_RW_USER (1ULL << 6)
 #define PTE_ATTR_IDX_0 (0ULL << 2)  //Device memory
 #define PTE_ATTR_IDX_1 (1ULL << 2)  //Normal memory
+#define PTE_USER_EXECUTABLE (0ULL << 54)
+#define PTE_KERNEL_EXECUTABLE (0ULL << 53)
+#define PTE_USER_NOT_EXECUTABLE (1ULL << 54)
+#define PTE_KERNEL_NOT_EXECUTABLE (1ULL << 53)
 
 #define PTE_NORMAL_MEM PTE_ATTR_IDX_1
 #define PTE_DEVICE_MEM PTE_ATTR_IDX_0

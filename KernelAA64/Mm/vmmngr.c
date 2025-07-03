@@ -119,6 +119,10 @@ void AuVmmngrInitialize() {
 bool AuMapPage(uint64_t phys_addr, uint64_t virt_addr, uint8_t attrib) {
 	uint64_t flags = PTE_VALID | PTE_TABLE |  
 		PTE_AF | PTE_SH_INNER | PTE_AP_RW | attrib;
+	if (attrib & PTE_AP_RW_USER) {
+		flags = PTE_VALID | PTE_TABLE |
+			PTE_AF | PTE_SH_INNER | PTE_AP_RW_USER | attrib;
+	}
 
 	const long i4 = (virt_addr >> 39) & 0x1FF;
 	const long i3 = (virt_addr >> 30) & 0x1FF;

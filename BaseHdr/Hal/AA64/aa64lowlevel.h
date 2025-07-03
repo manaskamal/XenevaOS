@@ -123,4 +123,8 @@ extern void mask_irqs();
 extern uint32_t read_icc_iar1_el1();
 
 extern uint32_t read_midr();
+
+extern void aa64_enter_user(uint64_t stack, uint64_t entryAddr);
+extern void aa64_svc_test();
+extern void aa64_utest();
 #endif

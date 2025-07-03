@@ -33,7 +33,9 @@
 #include <stdint.h>
 #include <stdarg.h>
 #include <aurora.h>
+#ifdef ARCH_X64
 #include <Hal\x86_64_signal.h>
+#endif
 #include <Net\socket.h>
 
 /* maximum supported system calls */

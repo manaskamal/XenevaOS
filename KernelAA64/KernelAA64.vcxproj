@@ -258,6 +258,7 @@
     <ClCompile Include="Hal\basicacpi.c" />
     <ClCompile Include="Hal\gic.c" />
     <ClCompile Include="Hal\serial.c" />
+    <ClCompile Include="Hal\systable.c" />
     <ClCompile Include="Hal\vector.c" />
     <ClCompile Include="init.c" />
     <ClCompile Include="list.c" />

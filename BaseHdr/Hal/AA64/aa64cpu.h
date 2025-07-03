@@ -88,4 +88,10 @@ extern void AA64CpuInitialize();
  * @param info -- Pointer to KERNEL BOOT INFORMATIONs
  */
 extern void AA64CPUPostInitialize(KERNEL_BOOT_INFO* info);
+
+/*
+ * AuAA64SyscalHandler -- common system call handler for aarch64
+ * @param regs -- Register information passed by sync_exception
+ */
+extern void AuAA64SyscallHandler(AA64Registers* regs);
 #endif

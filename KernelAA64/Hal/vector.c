@@ -36,29 +36,37 @@
 #include <Drivers/rtcmmio.h>
 
 void sync_el1_handler(AA64Registers *regs) {
-    AuTextOut("=======Synchronous Exception occured=========\n");
-    AuTextOut("Fault Address (FAR_EL1): %x \n", read_far_el1());
-    AuTextOut("Fault Instruction (ELR_EL1): %x \n", read_elr_el1());
+
     uint64_t esr = read_esr_el1();
+
+    if ((esr >> 26) == 0x15) {
+        UARTDebugOut("System call trapped %d\n", regs->x8);
+        AuAA64SyscallHandler(regs);
+        return;
+    }
+
+    UARTDebugOut("=======Synchronous Exception occured=========\n");
+    UARTDebugOut("Fault Address (FAR_EL1): %x \n", read_far_el1());
+    UARTDebugOut("Fault Instruction (ELR_EL1): %x \n", read_elr_el1());
 
     uint32_t dfsc = esr & 0x3F;
 
     switch (dfsc) {
-    case 0b000000: AuTextOut("Address size, fault level 0\n"); break;
-    case 0b000001: AuTextOut("Address Size, fault level 1\n"); break;
-    case 0b000010: AuTextOut("Address size, fault level 2\n"); break;
-    case 0b000011: AuTextOut("Address size, fault level 3 \n"); break;
-    case 0b000100: AuTextOut("translation, fault level 0\n"); break;
-    case 0b000101: AuTextOut("translation, fault level 1\n"); break;
-    case 0b000110: AuTextOut("translation, fault level 2\n"); break;
-    case 0b000111: AuTextOut("translation, fault level 3\n"); break;
-    case 0b001001: AuTextOut("access flag, fault level 1\n"); break;
-    case 0b001010: AuTextOut("access flag, fault level 2\n"); break;
-    case 0b001011: AuTextOut("access flag, fault level 3\n"); break;
-    case 0b001101: AuTextOut("permission fault, level 1\n"); break;
-    case 0b001110: AuTextOut("permission fault, level 2\n"); break;
-    case 0b001111: AuTextOut("permission fault, level 3\n"); break;
-    default: AuTextOut("Unknown fault code \n"); break;
+    case 0b000000: UARTDebugOut("Address size, fault level 0\n"); break;
+    case 0b000001: UARTDebugOut("Address Size, fault level 1\n"); break;
+    case 0b000010: UARTDebugOut("Address size, fault level 2\n"); break;
+    case 0b000011: UARTDebugOut("Address size, fault level 3 \n"); break;
+    case 0b000100: UARTDebugOut("translation, fault level 0\n"); break;
+    case 0b000101: UARTDebugOut("translation, fault level 1\n"); break;
+    case 0b000110: UARTDebugOut("translation, fault level 2\n"); break;
+    case 0b000111: UARTDebugOut("translation, fault level 3\n"); break;
+    case 0b001001: UARTDebugOut("access flag, fault level 1\n"); break;
+    case 0b001010: UARTDebugOut("access flag, fault level 2\n"); break;
+    case 0b001011: UARTDebugOut("access flag, fault level 3\n"); break;
+    case 0b001101: UARTDebugOut("permission fault, level 1\n"); break;
+    case 0b001110: UARTDebugOut("permission fault, level 2\n"); break;
+    case 0b001111: UARTDebugOut("permission fault, level 3\n"); break;
+    default: UARTDebugOut("Unknown fault code \n"); break;
     }
 	while (1) {}
 }
@@ -68,7 +76,7 @@ void irq_el1_handler(AA64Registers* regs) {
     uint32_t irq = iar & 0x3FF;
     if (irq < 1020) {
         if (irq == 30) {
-            AuTextOut("Timer IRQ fired %d multi-tasking possible \n", irq);
+            //AuTextOut("Timer IRQ fired %d multi-tasking possible \n", irq);
             //timer irq fires here, do multitasking stuffs
         }
         else if (irq == 27) {
@@ -93,9 +101,9 @@ void irq_el1_handler(AA64Registers* regs) {
 }
 
 void fault_el1_handler(AA64Registers* regs) {
-	AuTextOut("=======Fault Exception occured=========\n");
-	AuTextOut("Fault Address (FAR_EL1): %x \n", read_far_el1());
-	AuTextOut("Fault Instruction (ELR_EL1): %x \n", read_elr_el1());
+    UARTDebugOut("=======Fault Exception occured=========\n");
+    UARTDebugOut("Fault Address (FAR_EL1): %x \n", read_far_el1());
+    UARTDebugOut("Fault Instruction (ELR_EL1): %x \n", read_elr_el1());
 	uint64_t esr = read_esr_el1();
 
     uint32_t dfsc = esr & 0x3F;
@@ -120,6 +128,9 @@ void fault_el1_handler(AA64Registers* regs) {
 	while (1) {}
 }
 
+void sync_el0_handler(AA64Registers* regs) {
+    AuTextOut("SVC Request got : %d \n", regs->x8);
+}
 extern char vectors[];
 
 void AA64InitializeVectorTable() {
