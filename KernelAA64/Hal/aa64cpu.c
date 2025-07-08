@@ -125,13 +125,20 @@ void AA64CpuInitialize() {
 	/* enable FPU and NEON */
 	AA64FPUNeonEnable();
 
-	//enable_irqs();
+	enable_irqs();
 
 	// 
 	//initialize Interrupt controller GIC 
 	
 
 	//if smp, set per core datas
+}
+
+void AA64TimerSetup() {
+	setupTimerIRQ();
+	GICEnableIRQ(27);
+	GICClearPendingIRQ(27);
+	isb_flush();
 }
 
 /*
@@ -143,16 +150,13 @@ void AA64CPUPostInitialize(KERNEL_BOOT_INFO* info) {
 	UARTInitialize();
 	//enable_irqs();
 	mask_irqs();
+	suspendTimer();
 	GICInitialize();
-	setupTimerIRQ();
-
-	//Enable TIMER IRQ 
-	GICEnableIRQ(30);
+	AA64TimerSetup();
 	//PS/2 Enable
-	GICEnableIRQ(33);
+	//GICEnableIRQ(33);
 	//UART irq enable
-	GICEnableIRQ(UART0_IRQ);
-
+	//GICEnableIRQ(UART0_IRQ);
 
 	uint32_t id = read_midr();
 	AA64CPUImplementer(id);

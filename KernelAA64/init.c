@@ -46,6 +46,7 @@
 #include <Fs/initrd.h>
 #include <Drivers/virtiogpu.h>
 #include <audrv.h>
+#include <Hal/AA64/sched.h>
 
 
 extern int _fltused = 1;
@@ -82,10 +83,36 @@ bool AuLittleBootUsed() {
     return _littleboot_used;
 }
 
-void AuUserEntryTest() {
-	//aa64_utest();
-	while (1) {
+int i_ = 1;
 
+void AuEntryTest(uint64_t test) {
+	//aa64_utest();
+	UARTDebugOut("Second task \r\n");
+	int c = 10;
+	enable_irqs();
+	while (1) {
+		UARTDebugOut("22 Second ...\n");
+		enable_irqs();
+		/*if ((c % 2) == 0)
+			UARTDebugOut("2\n");
+		for (int i = 0; i < 10000000; i++)
+			;
+		c++;*/
+	}
+}
+
+void AuEntryTest2(uint64_t test) {
+	UARTDebugOut("Third Task \r\n");
+	int d = 10;
+	enable_irqs();
+	while (1) {
+		UARTDebugOut("33 Third %d\n", d);
+		enable_irqs();
+		/*if ((d % 2) != 0)
+			UARTDebugOut("3 \n");
+		for (int i = 0; i < 10000000; i++)
+			;*/
+		d++;
 	}
 }
 
@@ -117,17 +144,24 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	/* need to initialize basic drivers here*/
 	/* scheduler initialize*/
 	/* scheduler start*/
-	uint64_t addr = (uint64_t)AuPmmngrAlloc();
-	AuMapPage(addr, 0x40000000000, PTE_AP_RW_USER | PTE_USER_EXECUTABLE);
+	//uint64_t addr = (uint64_t)AuPmmngrAlloc();
+	//AuMapPage(addr, 0x40000000000, PTE_AP_RW_USER | PTE_USER_EXECUTABLE);
 
-	uint64_t addr2 = (uint64_t)AuPmmngrAlloc();
-	AuMapPage(addr2, 0x40000100000, PTE_AP_RW_USER | PTE_USER_EXECUTABLE);
-	memcpy((void*)0x40000100000, &aa64_utest, 4096);
-	UARTDebugOut("Copied \n");
-	/*AuTextOut("SP_EL0: %x\n", ((addr + 4096) - 32));*/
-	UARTDebugOut("User Entry address : %x \n", &AuUserEntryTest);
-	aa64_enter_user(((0x40000000000 + 4096) - 32), 0x40000100000);
-	AuTextOut("Returned here \n");
+	//uint64_t addr2 = (uint64_t)AuPmmngrAlloc();
+	//AuMapPage(addr2, 0x40000100000, PTE_AP_RW_USER | PTE_USER_EXECUTABLE);
+	//memcpy((void*)0x40000100000, &aa64_utest, 4096);
+	//UARTDebugOut("Copied \n");
+	///*AuTextOut("SP_EL0: %x\n", ((addr + 4096) - 32));*/
+	//UARTDebugOut("User Entry address : %x \n", &AuUserEntryTest);
+	//aa64_enter_user(((0x40000000000 + 4096) - 32), 0x40000100000);
+	UARTDebugOut("Initializing scheduler \n");
+	AuSchedulerInitialize();
+    AA64Thread* thr = AuCreateKthread(AuEntryTest, AuCreateKernelStack(), "test2");
+	AA64Thread* thr2 = AuCreateKthread(AuEntryTest2, AuCreateKernelStack(), "test");
+	//UARTDebugOut("Starting scheduler \n");
+	AuSchedulerStart();
+	//AuTextOut("Returned here \n");
 	while (1) {
+		//UARTDebugOut("Printing \n");
 	}
 }

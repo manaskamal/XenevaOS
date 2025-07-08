@@ -200,9 +200,9 @@ sync_el0_wrapper:
  * Current EL with SP_EL0
  */
 vectors:
-   b  sync_el1_wrapper  //sync el1t
+   b . //sync_el1_wrapper  //sync el1t
 .balign 0x80
-   b irq_el1_handler  //irq
+   b . //irq_el1_handler  //irq
 .balign 0x80
    b .  //fiq
 .balign 0x80 
@@ -227,7 +227,7 @@ vectors:
 .balign 0x80
    b sync_el1_wrapper   //sync
 .balign 0x80
-   b irq_el1_wrapper    //IRQ  
+   b . //irq_el1_wrapper    //IRQ  
 .balign 0x80
    b .
 .balign 0x80

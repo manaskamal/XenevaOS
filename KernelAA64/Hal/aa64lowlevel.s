@@ -113,6 +113,19 @@ tlb_flush:
      isb
      ret
 
+.global enable_sre
+enable_sre:
+    mrs x0, ICC_SRE_EL1
+    orr x0, x0, #1
+    msr ICC_SRE_EL1, x0
+    isb 
+    ret
+
+.global read_icc_iidr
+read_icc_iidr:
+   //mrs x0, ICC_IIDR_EL1
+   ret
+
 .global set_vbar_el1
 set_vbar_el1:
      msr VBAR_EL1, x0
@@ -153,6 +166,11 @@ read_elr_el1:
    mrs x0, elr_el1
    ret
 
+.global read_spsr_el1
+read_spsr_el1:
+   mrs x0, SPSR_EL1
+   ret
+
 .global enable_irqs
 enable_irqs:
    msr daifclr, #0x2
@@ -167,14 +185,24 @@ mask_irqs:
 
 .global setupTimerIRQ
 setupTimerIRQ:
-   mrs x0, CNTFRQ_EL0
+   mrs x0, CNTPCT_EL0
    mov x1, 100
    udiv x0, x0, x1
-   msr CNTP_TVAL_EL0, x0
+   msr CNTV_TVAL_EL0, x0
    mov x0,1
-   msr CNTP_CTL_EL0, x0
+   msr CNTV_CTL_EL0, x0
    ret
 
+.global suspendTimer
+suspendTimer:
+   mov x0, 0
+   msr CNTV_CTL_EL0, x0
+   ret
+
+.global readTimerCtl
+readTimerCtl:
+   mrs x0,CNTV_CTL_EL0
+   ret
 .global read_icc_iar1_el1
 read_icc_iar1_el1:
    mrs x0, ICC_IAR1_EL1

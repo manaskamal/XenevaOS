@@ -12,6 +12,9 @@
     <ContentFile>
       <FullPath>E:\Xeneva Project\Aurora\KernelAA64\Hal\aa64lowlevel.s</FullPath>
     </ContentFile>
+    <ContentFile>
+      <FullPath>E:\Xeneva Project\Aurora\KernelAA64\Hal\aa64switch.s</FullPath>
+    </ContentFile>
   </ContentFiles>
   <SatelliteDlls />
   <NonRecipeFileRefs />

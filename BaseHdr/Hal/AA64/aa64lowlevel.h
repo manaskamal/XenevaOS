@@ -113,8 +113,16 @@ extern void aa64_write_sysreg(const char* reg, uint64_t value);
 
 extern uint64_t aa64_read_sysreg(const char* reg);
 
+extern void enable_sre();
+
+extern uint32_t read_icc_iidr();
+
 
 extern void setupTimerIRQ();
+extern void suspendTimer();
+extern uint64_t readTimerCtl();
+
+extern uint64_t read_spsr_el1();
 
 extern void enable_irqs();
 

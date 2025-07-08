@@ -66,10 +66,13 @@ AU_EXTERN AU_EXPORT void GICClearPendingIRQ(uint32_t irq);
  */
 extern uint32_t GICReadIAR();
 
+extern void GICCheckPending(uint32_t irq);
+
 /*
  * GICSendEOI --sends end of interrupt to
  * GIC cpu interface
  */
 extern void GICSendEOI(uint32_t irqnum);
 
+extern void GICSetupTimer();
 #endif

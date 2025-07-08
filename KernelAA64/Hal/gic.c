@@ -32,10 +32,13 @@
 #include <aucon.h>
 #include <Mm/vmmngr.h>
 #include <Hal/AA64/aa64lowlevel.h>
+#include <Drivers/uart.h>
 #include <dtb.h>
 
 
 GIC __gic;
+uint32_t* gic_regs;
+uint32_t* gicc_regs;
 
 /* distributor registers */
 #define GICD(n)  (n.gicDMMIO)
@@ -50,6 +53,7 @@ GIC __gic;
 #define GICD_ITARGETSR(n) (*(volatile uint32_t*)(GICD(__gic) + 0x0800 + (n*4)))
 #define GICD_IROUTER(n) (0x6000 + 8*(n))
 #define GICD_ICPENDR(n) (0x280 + (n/32)*4)
+#define ISPENDING0 0x200
 
 
 /* cpu registers offsets */
@@ -120,7 +124,7 @@ uint16_t gic_inw_(uint64_t* mmio_,int reg) {
  */
 void gic_outb_(uint64_t* mmio_, int reg, uint8_t value) {
 
-	volatile uint8_t* mmio = (volatile uint8_t*)((uintptr_t)mmio_ + reg);
+	volatile uint8_t* mmio = (volatile uint8_t*)((uint64_t)mmio_ + reg);
 	*mmio = value;
 }
 
@@ -129,7 +133,7 @@ void gic_outb_(uint64_t* mmio_, int reg, uint8_t value) {
 * @param reg -- register
 */
 uint8_t gic_inb_(uint64_t* mmio_, int reg) {
-	volatile uint8_t* mmio = (volatile uint8_t*)((uintptr_t)mmio_ + reg);
+	volatile uint8_t* mmio = (volatile uint8_t*)((uint64_t)mmio_ + reg);
 	return *mmio;
 }
 
@@ -145,7 +149,7 @@ GIC* AuGetSystemGIC() {
 void GICInitialize() {
 	/* Firstly rely upon UEFI + ACPI for GIC mmio values */
 	AuTextOut("Initializing GIC %x %x\n", __gic.gicCPhys, __gic.gicDPhys);
-
+	
 	/* if not found, go for device tree , because the kernel might get booted
 	 * from LittleBoot 
 	 */
@@ -186,13 +190,18 @@ void GICInitialize() {
 		return;
 	}
 
-	__gic.gicDMMIO = AuMapMMIO(__gic.gicDPhys, 2);
-	__gic.gicCMMIO = AuMapMMIO(__gic.gicCPhys, 1);
+	__gic.gicDMMIO = __gic.gicDPhys; // AuMapMMIO(__gic.gicDPhys, 2);
+	__gic.gicCMMIO = __gic.gicCPhys; // AuMapMMIO(__gic.gicCPhys, 2);
+	gic_regs = (volatile uint32_t*)__gic.gicDMMIO;
+	gicc_regs = (volatile uint32_t*)__gic.gicCMMIO;
 
 	uint32_t typer = gic_inl_(GICD(__gic), GICD_TYPER);
 	uint32_t numirq = ((typer & 0x1f) + 1) * 32;
 	AuTextOut("GIC Number of supported IRQ -> %d \n", numirq);
 
+	uint32_t icc_iidr = gic_inl_(GICD(__gic), GICD_IIDR);
+	uint32_t rev = (icc_iidr >> 16) & 0xFF;
+	
 	for (int i = 0; i < (numirq / 32); i++)
 		GICD_ICENABLE(i) = 0xFFFFFFFF;
 
@@ -204,7 +213,7 @@ void GICInitialize() {
 
 	/* enable the cpu interface*/
 	/* writing 0xff means accepting all types of priority 0x0 -- 0xFF */
-	gic_outl_(__gic.gicCMMIO, GICC_PMR, 0xff);
+	gic_outl_(__gic.gicCMMIO, GICC_PMR, 0x1ff);
 	gic_outl_(__gic.gicCMMIO, GICC_CTLR,0x1);
 	isb_flush();
 
@@ -220,14 +229,36 @@ void GICInitialize() {
 void GICEnableIRQ(uint32_t irq) {
 	uint32_t reg = irq / 32;
 	uint32_t bit = irq % 32;
-	GICClearPendingIRQ(irq);
+	//GICClearPendingIRQ(irq);
+	uint32_t icfgr = GICD_ICFGR(irq / 16);
+	uint32_t shift = (irq % 16) * 2;
+	uint32_t config_bits = (icfgr >> shift) & 0b11;
+	if (config_bits == 0b00) {
+		UARTDebugOut("IRQ : %d is level-sensitive \n", irq);
+	}
+	else if (config_bits == 0b10) {
+		UARTDebugOut("IRQ : %d is edge-trigggered \n", irq);
+	}
+	else {
+		UARTDebugOut("IRQ: %d is reserved or invalid config : %x \n",irq, config_bits);
+	}
+	UARTDebugOut("ICFGR : %x \n", icfgr);
+	*(volatile uint8_t*)(GICD(__gic) + GICD_IPRIORITYR(irq)) = 0xA0;
 	GICD_ISENABLER(reg) |= (1 << bit);
 }
 
 void GICClearPendingIRQ(uint32_t irq) {
 	uint32_t bit = irq % 32;
 	volatile uint32_t* reg = (volatile uint32_t*)(GICD(__gic) + GICD_ICPENDR(irq));
-	*reg = (1U << bit);
+	//UARTDebugOut("Clear pending reg : %x \n", (GICD(__gic) + GICD_ICPENDR(irq)));
+	*reg |= (1U << bit);
+}
+
+void GICCheckPending(uint32_t irq) {
+	uint32_t pend = *(volatile uint32_t*)(GICD(__gic) + ISPENDING0);
+	if (pend & (1 << irq)) {
+		//UARTDebugOut("IRQ : %d is still pending \n", irq);
+	}
 }
 
 /*
@@ -244,7 +275,30 @@ uint32_t GICReadIAR() {
  * GIC cpu interface
  */
 void GICSendEOI(uint32_t irqnum) {
+#define GICV2_CPUID_SHIFT 10
+	//UARTDebugOut("GICEOI REG : %x \n", (GICC(__gic) + 0x10));
+	//GICClearPendingIRQ(irqnum);
 	*(volatile uint32_t*)(GICC(__gic) + 0x10) = irqnum;
+	//UARTDebugOut("3N : %d \n", (*(volatile uint32_t*)(GICC(__gic) + 0x10)));
+	dsb_ish();
+	isb_flush();
+}
+
+void GICSetupTimer() {
+	mask_irqs();
+	setupTimerIRQ();
+	gic_regs[0] = 1;
+	gicc_regs[0] = 1;
+	gicc_regs[1] = 0x1FF;
+
+	gic_regs[64] = 0xFFFFffff;
+	gic_regs[160] = 0xFFFFffff;
+	gic_regs[65] = 0xFFFFFFFF;
+	gic_regs[66] = 0xFFFFFFFF;
+	gic_regs[67] = 0xFFFFFFFF;
+	gic_regs[520] = 0x07070707;
+	gic_regs[521] = 0x07070707;
+	gic_regs[543] = 0x07070707;
 }
 
 
