@@ -89,10 +89,10 @@ void AuEntryTest(uint64_t test) {
 	//aa64_utest();
 	UARTDebugOut("Second task \r\n");
 	int c = 10;
-	enable_irqs();
+	//enable_irqs();
 	while (1) {
 		UARTDebugOut("22 Second ...\n");
-		enable_irqs();
+		//enable_irqs();
 		/*if ((c % 2) == 0)
 			UARTDebugOut("2\n");
 		for (int i = 0; i < 10000000; i++)
@@ -104,10 +104,10 @@ void AuEntryTest(uint64_t test) {
 void AuEntryTest2(uint64_t test) {
 	UARTDebugOut("Third Task \r\n");
 	int d = 10;
-	enable_irqs();
+	//enable_irqs();
 	while (1) {
 		UARTDebugOut("33 Third %d\n", d);
-		enable_irqs();
+		//enable_irqs();
 		/*if ((d % 2) != 0)
 			UARTDebugOut("3 \n");
 		for (int i = 0; i < 10000000; i++)
@@ -154,13 +154,10 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	///*AuTextOut("SP_EL0: %x\n", ((addr + 4096) - 32));*/
 	//UARTDebugOut("User Entry address : %x \n", &AuUserEntryTest);
 	//aa64_enter_user(((0x40000000000 + 4096) - 32), 0x40000100000);
-	UARTDebugOut("Initializing scheduler \n");
 	AuSchedulerInitialize();
     AA64Thread* thr = AuCreateKthread(AuEntryTest, AuCreateKernelStack(), "test2");
 	AA64Thread* thr2 = AuCreateKthread(AuEntryTest2, AuCreateKernelStack(), "test");
-	//UARTDebugOut("Starting scheduler \n");
 	AuSchedulerStart();
-	//AuTextOut("Returned here \n");
 	while (1) {
 		//UARTDebugOut("Printing \n");
 	}

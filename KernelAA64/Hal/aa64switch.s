@@ -60,12 +60,17 @@ aa64_restore_context:
    ldp x29,x30, [x0,#80]
 
    ldr x2, [x0, #96]
-    mov sp, x2 
-    ldr x2,[x0,#104]
-    msr ELR_EL1,x2 
-    ldr x2, [x0,#112]
-    msr SPSR_EL1,x2
-    ret
+   mov sp, x2 
+   ldr x2,[x0,#104]
+   msr ELR_EL1,x2 
+   ldr x2, [x0,#112]
+   msr SPSR_EL1,x2
+
+   /* We must clear the IRQ bit from daifclr manually,
+    * because when exception is taken DAIF bits are masked */
+   msr daifclr, #0x2
+   isb
+   ret
 
 
 
@@ -87,11 +92,10 @@ first_time_sex:
     ldr x30, [x1, #88]
    
     ldr x2, [x1, #96]
-   // mov sp, x2
+    mov sp, x2
    
     ldr x2, [x1, #104]
     msr ELR_EL1, x2
     ldr x2, [x1, #112]
     msr spsr_el1, x2
-      bl PrintThreadInfo
     eret
