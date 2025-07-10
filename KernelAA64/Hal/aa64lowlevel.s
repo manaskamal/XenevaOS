@@ -219,7 +219,7 @@ aa64_enter_user:
     * from CurrentEl with SP_EL0 from vector table, we need to 
     * make the exception handler return to EL0 
     */
-   mov x8, #0x80
+   mov x8, #0x00 // #0x80
    msr SPSR_EL1, x8
    msr SP_EL0, x0
    msr ELR_EL1,x1
@@ -239,5 +239,5 @@ aa64_utest:
    svc #0
    mov x8, x0
    svc #0
- _hang:
-   b _hang
+ _hng:
+   b _hng

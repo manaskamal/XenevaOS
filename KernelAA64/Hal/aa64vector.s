@@ -187,7 +187,7 @@ vectors:
 .balign 0x80
    b sync_el1_wrapper   //sync
 .balign 0x80
-   b . //irq_el1_wrapper    //IRQ  
+   b irq_el1_wrapper    //IRQ  
 .balign 0x80
    b .
 .balign 0x80

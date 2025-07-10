@@ -103,7 +103,7 @@ run:
 		thread = thread->next;
 
 		if (!thread) {
-			UARTDebugOut("No Next thread \n");
+			//UARTDebugOut("No Next thread \n");
 			thread = thread_list_head;
 		}
 		//UARTDebugOut("Got next thread : %s \n", thread->name);
@@ -149,6 +149,8 @@ extern void PrintThreadInfo() {
 void AuIdleThread(uint64_t ctx) {
 	UARTDebugOut("Idle thread running \n");
 	while (1) {
+		uint64_t el = _getCurrentEL();
+		UARTDebugOut("IDLE CurrentEl : %d \n", el);
 	}
 }
 
@@ -162,6 +164,16 @@ void AuScheduleThread(AA64Registers* regs) {
 	aa64_store_context(runThr);
 	runThr->x30 = regs->x30;
 	runThr->x29 = regs->x29;
+	runThr->x19 = regs->x19;
+	runThr->x20 = regs->x20;
+	runThr->x21 = regs->x21;
+	runThr->x22 = regs->x22;
+	runThr->x23 = regs->x23;
+	runThr->x24 = regs->x24;
+	runThr->x25 = regs->x25;
+	runThr->x26 = regs->x26;
+	runThr->x27 = regs->x27;
+	runThr->x28 = regs->x28;
 
 	if (debug != 3) {
 		//UARTDebugOut("***Stored X30: %x \n", runThr->x30);

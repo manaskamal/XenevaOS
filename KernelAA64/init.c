@@ -87,11 +87,12 @@ int i_ = 1;
 
 void AuEntryTest(uint64_t test) {
 	//aa64_utest();
-	UARTDebugOut("Second task \r\n");
+	AuTextOut("Second task running\r\n");
+	aa64_enter_user(((0x40000000000 + 4096) - 32), 0x40000100000);
 	int c = 10;
 	//enable_irqs();
 	while (1) {
-		UARTDebugOut("22 Second ...\n");
+		//UARTDebugOut("22 Second ...\n");
 		//enable_irqs();
 		/*if ((c % 2) == 0)
 			UARTDebugOut("2\n");
@@ -102,11 +103,11 @@ void AuEntryTest(uint64_t test) {
 }
 
 void AuEntryTest2(uint64_t test) {
-	UARTDebugOut("Third Task \r\n");
+	AuTextOut("Third Task running\r\n");
 	int d = 10;
 	//enable_irqs();
 	while (1) {
-		UARTDebugOut("33 Third %d\n", d);
+		//UARTDebugOut("33 Third %d\n", d);
 		//enable_irqs();
 		/*if ((d % 2) != 0)
 			UARTDebugOut("3 \n");
@@ -144,12 +145,12 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	/* need to initialize basic drivers here*/
 	/* scheduler initialize*/
 	/* scheduler start*/
-	//uint64_t addr = (uint64_t)AuPmmngrAlloc();
-	//AuMapPage(addr, 0x40000000000, PTE_AP_RW_USER | PTE_USER_EXECUTABLE);
+	uint64_t addr = (uint64_t)AuPmmngrAlloc();
+	AuMapPage(addr, 0x40000000000, PTE_AP_RW_USER | PTE_USER_EXECUTABLE);
 
-	//uint64_t addr2 = (uint64_t)AuPmmngrAlloc();
-	//AuMapPage(addr2, 0x40000100000, PTE_AP_RW_USER | PTE_USER_EXECUTABLE);
-	//memcpy((void*)0x40000100000, &aa64_utest, 4096);
+	uint64_t addr2 = (uint64_t)AuPmmngrAlloc();
+	AuMapPage(addr2, 0x40000100000, PTE_AP_RW_USER | PTE_USER_EXECUTABLE);
+	memcpy((void*)0x40000100000, &aa64_utest, 4096);
 	//UARTDebugOut("Copied \n");
 	///*AuTextOut("SP_EL0: %x\n", ((addr + 4096) - 32));*/
 	//UARTDebugOut("User Entry address : %x \n", &AuUserEntryTest);
