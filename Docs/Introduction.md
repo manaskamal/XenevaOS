@@ -32,6 +32,7 @@ __Kernel__ :
 - [Xeneva Kernel Boot Protocol](Kernel/AboutKernel.md#xeneva-kernel-boot-protocol)
 - [Boot Process](Kernel/BootProcess.md)
 - [Memory Management](Kernel/MemoryMangement.md)
+- [Threading in Xeneva](Kernel/Thread.md)
 - [Drivers](Kernel/Drivers.md)
 - [USB](Kernel/usb.md)
 
