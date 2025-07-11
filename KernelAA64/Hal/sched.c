@@ -125,17 +125,18 @@ end:
 }
 
 
-AA64Thread* AuCreateKthread(void(*entry) (uint64_t), uint64_t stack, char* name){
+AA64Thread* AuCreateKthread(void(*entry) (uint64_t), char* name){
 	AA64Thread* t = (AA64Thread*)kmalloc(sizeof(AA64Thread));
 	memset(t, 0, sizeof(AA64Thread));
 	t->elr_el1 = (uint64_t)entry;
 	t->x30 = (uint64_t)entry;
-	t->sp = (uint64_t)stack;
 	t->spsr_el1 = 0x245;
 	//UARTDebugOut("SPSR_EL1: %x \n", t->spsr_el1);
 
 	//UARTDebugOut("Thr %s x30 : %x \n", name, t->x30);
 	//t->sp = stack;
+	t->pml = (uint64_t)AuCreateVirtualAddressSpace();
+	t->sp = (uint64_t)AuCreateKernelStack((uint64_t*)t->pml);
 	t->state = THREAD_STATE_READY;
 	strcpy(t->name, name);
 	AuThreadInsert(t);
@@ -182,6 +183,7 @@ void AuScheduleThread(AA64Registers* regs) {
 	debug++;
 	//UARTDebugOut("StoreCtx x30 -> %x %s\n", runThr->x30, runThr->name);
 	AA64NextThread();
+	write_both_ttbr(V2P(current_thread->pml));
 	//UARTDebugOut("Switching to next thread : %x \n", current_thread->elr_el1);
 	//UARTDebugOut("NextCtx x30 -> %x %s\n", current_thread->x30, current_thread->name);
 	aa64_restore_context(current_thread);
@@ -190,10 +192,10 @@ void AuScheduleThread(AA64Registers* regs) {
 #define STACK_START 0x4000000000
 uint64_t stack_index;
 
-uint64_t AuCreateKernelStack() {
-	uint64_t addr = (uint64_t)AuPmmngrAlloc();
+uint64_t AuCreateKernelStack(uint64_t* pml) {
+	uint64_t addr = (uint64_t)P2V((uint64_t)AuPmmngrAlloc());
 	uint64_t idx = stack_index;
-	AuMapPage(addr, STACK_START + idx * 4096, PTE_AP_RW);// PTE_AP_RW_USER | PTE_USER_EXECUTABLE);
+	AuMapPageEx(pml, V2P(addr), STACK_START + idx * 4096, PTE_AP_RW);// PTE_AP_RW_USER | PTE_USER_EXECUTABLE);
 	stack_index++;
 	return ((STACK_START + idx * 4096) + 4096);
 }
@@ -202,7 +204,7 @@ void AuSchedulerInitialize() {
 	thread_list_head = NULL;
 	thread_list_last = NULL;
 	stack_index = 0;
-	AA64Thread* idle_ = AuCreateKthread(AuIdleThread, AuCreateKernelStack(),"Idle");
+	AA64Thread* idle_ = AuCreateKthread(AuIdleThread,"Idle");
 	//idle_->elr_el1 = (uint64_t)AuIdleThread;
 	_idle_thr = idle_;
 	current_thread = idle_;
@@ -216,6 +218,7 @@ void AuSchedulerStart() {
 		UARTDebugOut("[aurora]:No idle thread specified\n");
 	UARTDebugOut("IDLE Thread x30: %x \n", idle->x30);
 	GICClearPendingIRQ(27);
+	write_both_ttbr(V2P(idle->pml));
 	first_time_sex(idle);
 	//aa64_restore_context(idle);
 }

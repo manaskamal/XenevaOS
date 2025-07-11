@@ -190,8 +190,8 @@ void GICInitialize() {
 		return;
 	}
 
-	__gic.gicDMMIO = __gic.gicDPhys; // AuMapMMIO(__gic.gicDPhys, 2);
-	__gic.gicCMMIO = __gic.gicCPhys; // AuMapMMIO(__gic.gicCPhys, 2);
+	__gic.gicDMMIO = AuMapMMIO(__gic.gicDPhys, 2);
+	__gic.gicCMMIO = AuMapMMIO(__gic.gicCPhys, 2);
 	gic_regs = (volatile uint32_t*)__gic.gicDMMIO;
 	gicc_regs = (volatile uint32_t*)__gic.gicCMMIO;
 

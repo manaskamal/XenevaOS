@@ -53,6 +53,8 @@ AU_EXTERN AU_EXPORT uint64_t read_ttbr1_el1();
 
 AU_EXTERN AU_EXPORT void write_ttbr1_el1(uint64_t* base);
 
+extern void write_both_ttbr(uint64_t physicalBase);
+
 AU_EXTERN AU_EXPORT uint64_t read_tcr_el1();
 
 AU_EXTERN AU_EXPORT void write_tcr_el1(uint64_t tcr);

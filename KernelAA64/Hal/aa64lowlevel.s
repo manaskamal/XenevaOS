@@ -65,6 +65,16 @@ write_ttbr1_el1:
     msr ttbr1_el1, x0
     ret
 
+.global write_both_ttbr
+write_both_ttbr:
+    msr ttbr0_el1, x0
+    msr ttbr1_el1, x0
+    isb sy
+    dsb ishst
+    tlbi vmalle1is 
+    dsb ish
+    isb 
+
 .global read_sctlr_el1
 read_sctlr_el1:
     mrs x0, sctlr_el1

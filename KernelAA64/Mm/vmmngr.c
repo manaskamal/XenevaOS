@@ -172,6 +172,69 @@ bool AuMapPage(uint64_t phys_addr, uint64_t virt_addr, uint8_t attrib) {
 
 
 /*
+* AuMapPageEx -- Maps a virtual page to physical frame in given
+* page level
+* @param pml4i -- root page level pointer
+* @param phys_addr -- physical address
+* @param virt_addr -- virtual address
+* @param attrib -- Page attributes
+*/
+bool AuMapPageEx(uint64_t* pml4i, uint64_t phys_addr, uint64_t virt_addr, uint8_t attrib) {
+	uint64_t flags = PTE_VALID | PTE_TABLE |
+		PTE_AF | PTE_SH_INNER | PTE_AP_RW | attrib;
+	if (attrib & PTE_AP_RW_USER) {
+		flags = PTE_VALID | PTE_TABLE |
+			PTE_AF | PTE_SH_INNER | PTE_AP_RW_USER | attrib;
+	}
+
+	const long i4 = (virt_addr >> 39) & 0x1FF;
+	const long i3 = (virt_addr >> 30) & 0x1FF;
+	const long i2 = (virt_addr >> 21) & 0x1FF;
+	const long i1 = (virt_addr >> 12) & 0x1FF;
+
+	//uint64_t* pml4i = (uint64_t*)pml4;
+
+	if (!(pml4i[i4] & 1))
+	{
+		const uint64_t page = (uint64_t)AuPmmngrAlloc();
+		pml4i[i4] = (page & ~0xFFFUL) | PTE_VALID | PTE_TABLE | PTE_AF;
+		memset((void*)P2V(page), 0, 4096);
+	}
+	uint64_t* pml3 = (uint64_t*)P2V((pml4i[i4] & ~0xFFFULL));
+
+	if (!(pml3[i3] & 1))
+	{
+		const uint64_t page = (uint64_t)AuPmmngrAlloc();
+		pml3[i3] = (page & ~0xFFFUL) | PTE_VALID | PTE_TABLE | PTE_AF;
+		memset((void*)P2V(page), 0, 4096);
+	}
+
+
+	uint64_t* pml2 = (uint64_t*)P2V((pml3[i3] & ~0xFFFULL));
+
+	if (!(pml2[i2] & 1))
+	{
+		const uint64_t page = (uint64_t)AuPmmngrAlloc();
+		pml2[i2] = (page & ~0xFFFUL) | PTE_VALID | PTE_TABLE | PTE_AF;
+		memset((void*)P2V(page), 0, 4096);
+
+	}
+
+	uint64_t* pml1 = (uint64_t*)P2V((pml2[i2] & ~0xFFFULL));
+	if (pml1[i1] & 1)
+	{
+		//AuPmmngrFree((void*)phys_addr);
+		AuTextOut("[aurora]: vmmngr page already present : %x \n", (pml1[i1] & ~0xFFFULL));
+		return false;
+	}
+
+	pml1[i1] = (phys_addr & ~0xFFFULL) | flags;
+	tlb_flush(virt_addr);
+	return true;
+}
+
+
+/*
  * AuMapMMIO -- Maps Memory Mapper I/O addresses
  * @param phys_addr -- MMIO physical address
  * @param page_count -- number of pages
@@ -299,5 +362,35 @@ void* AuGetPhysicalAddress(uint64_t virt_addr) {
 	if (page)
 		return V2P((uint64_t)page);
 	return 0;
+}
+
+/*
+ * AuCreateVirtualAddressSpace -- create a new virtual address space
+ */
+uint64_t* AuCreateVirtualAddressSpace() {
+	uint64_t* root_pml = (uint64_t*)P2V((size_t)_RootPaging);
+	uint64_t* new_pml = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
+	memset(new_pml, 0, PAGE_SIZE);
+
+	for (int i = 0; i < 512; i++) {
+		if (i < 256)
+			continue;
+		if (root_pml[i] & 1)
+			new_pml[i] = root_pml[i];
+		else
+			new_pml[i] = 0;
+	}
+
+	return new_pml;
+}
+
+/*
+ * AuVmmngrBootFree -- free up the lower half
+ */
+void AuVmmngrBootFree() {
+	uint64_t* cr3 = (uint64_t*)_RootPaging;
+	for (int i = 0; i < 256; i++)
+		cr3[i] = 0;
+	write_both_ttbr((uint64_t)_RootPaging);
 }
 

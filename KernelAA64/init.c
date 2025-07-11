@@ -87,7 +87,7 @@ int i_ = 1;
 
 void AuEntryTest(uint64_t test) {
 	//aa64_utest();
-	AuTextOut("Second task running\r\n");
+	UARTDebugOut("Second task running\r\n");
 	aa64_enter_user(((0x40000000000 + 4096) - 32), 0x40000100000);
 	int c = 10;
 	//enable_irqs();
@@ -103,11 +103,10 @@ void AuEntryTest(uint64_t test) {
 }
 
 void AuEntryTest2(uint64_t test) {
-	AuTextOut("Third Task running\r\n");
+	UARTDebugOut("Third Task running\r\n");
 	int d = 10;
 	//enable_irqs();
 	while (1) {
-		//UARTDebugOut("33 Third %d\n", d);
 		//enable_irqs();
 		/*if ((d % 2) != 0)
 			UARTDebugOut("3 \n");
@@ -145,19 +144,24 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	/* need to initialize basic drivers here*/
 	/* scheduler initialize*/
 	/* scheduler start*/
-	uint64_t addr = (uint64_t)AuPmmngrAlloc();
-	AuMapPage(addr, 0x40000000000, PTE_AP_RW_USER | PTE_USER_EXECUTABLE);
 
-	uint64_t addr2 = (uint64_t)AuPmmngrAlloc();
-	AuMapPage(addr2, 0x40000100000, PTE_AP_RW_USER | PTE_USER_EXECUTABLE);
-	memcpy((void*)0x40000100000, &aa64_utest, 4096);
-	//UARTDebugOut("Copied \n");
-	///*AuTextOut("SP_EL0: %x\n", ((addr + 4096) - 32));*/
-	//UARTDebugOut("User Entry address : %x \n", &AuUserEntryTest);
-	//aa64_enter_user(((0x40000000000 + 4096) - 32), 0x40000100000);
+	/* clear out the lower half memory */
+	AuVmmngrBootFree();
+
+
+
+	UARTDebugOut("Kernel Lower half is cleared \n");
 	AuSchedulerInitialize();
-    AA64Thread* thr = AuCreateKthread(AuEntryTest, AuCreateKernelStack(), "test2");
-	AA64Thread* thr2 = AuCreateKthread(AuEntryTest2, AuCreateKernelStack(), "test");
+    AA64Thread* thr = AuCreateKthread(AuEntryTest, "test2");
+	UARTDebugOut("TEST2 created \n");
+	uint64_t addr = (uint64_t)AuPmmngrAlloc();
+	AuMapPageEx((uint64_t*)thr->pml, addr, 0x40000000000, PTE_AP_RW_USER | PTE_USER_EXECUTABLE);
+
+	uint64_t addr2 = (uint64_t)P2V((uint64_t)AuPmmngrAlloc());
+	AuMapPageEx((uint64_t*)thr->pml, V2P(addr2), 0x40000100000, PTE_AP_RW_USER | PTE_USER_EXECUTABLE);
+	memcpy((void*)addr2, &aa64_utest, 4096);//0x40000100000
+
+	AA64Thread* thr2 = AuCreateKthread(AuEntryTest2, "test");
 	AuSchedulerStart();
 	while (1) {
 		//UARTDebugOut("Printing \n");

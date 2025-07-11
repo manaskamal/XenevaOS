@@ -64,14 +64,15 @@ typedef struct _aa64_task_ {
 	uint64_t elr_el1; //104
 	uint64_t spsr_el1;//112
 	uint8_t state;
+	uint64_t pml;
 	char name[8];
 	struct _aa64_task_* next;
 	struct _aa64_task_* prev;
 }AA64Thread;
 #pragma pack(pop)
 extern void AuSchedulerInitialize();
-extern uint64_t AuCreateKernelStack();
-extern AA64Thread* AuCreateKthread(void(*entry) (uint64_t), uint64_t stack, char* name);
+extern uint64_t AuCreateKernelStack(uint64_t* pml);
+extern AA64Thread* AuCreateKthread(void(*entry) (uint64_t), char* name);
 extern void AuScheduleThread(AA64Registers*regs);
 extern void AuSchedulerStart();
 extern AA64Thread* AuGetIdleThread();
