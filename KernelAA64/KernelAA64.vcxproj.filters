@@ -89,6 +89,7 @@
     <ClCompile Include="Hal\sched.c">
       <Filter>Hal</Filter>
     </ClCompile>
+    <ClCompile Include="process.c" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Hal">

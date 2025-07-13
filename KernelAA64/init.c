@@ -141,27 +141,12 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	/* required virtio-mouse and keyboard */
 	//Here goes board pre driver initialize
 	AuDrvMngrInitialize(info);
-	/* need to initialize basic drivers here*/
-	/* scheduler initialize*/
-	/* scheduler start*/
-
+	
 	/* clear out the lower half memory */
 	AuVmmngrBootFree();
 
-
-
 	UARTDebugOut("Kernel Lower half is cleared \n");
 	AuSchedulerInitialize();
-    AA64Thread* thr = AuCreateKthread(AuEntryTest, "test2");
-	UARTDebugOut("TEST2 created \n");
-	uint64_t addr = (uint64_t)AuPmmngrAlloc();
-	AuMapPageEx((uint64_t*)thr->pml, addr, 0x40000000000, PTE_AP_RW_USER | PTE_USER_EXECUTABLE);
-
-	uint64_t addr2 = (uint64_t)P2V((uint64_t)AuPmmngrAlloc());
-	AuMapPageEx((uint64_t*)thr->pml, V2P(addr2), 0x40000100000, PTE_AP_RW_USER | PTE_USER_EXECUTABLE);
-	memcpy((void*)addr2, &aa64_utest, 4096);//0x40000100000
-
-	AA64Thread* thr2 = AuCreateKthread(AuEntryTest2, "test");
 	AuSchedulerStart();
 	while (1) {
 		//UARTDebugOut("Printing \n");

@@ -33,8 +33,11 @@
 
 #include <stdint.h>
 #include <Fs\vfs.h>
+#include <Hal/AA64/sched.h>
+#ifdef ARCH_X64
 #include <Hal\x86_64_sched.h>
 #include <Sync\mutex.h>
+#endif
 #include <list.h>
 
 #define PROCESS_USER_STACK_SZ 512*1024
@@ -94,11 +97,21 @@ typedef struct _au_proc_ {
 	size_t _kstack_index_;
 	uint64_t _envp_block_;
 
+#ifdef ARCH_X64
 	/* threading section */
 	AuThread* main_thread;
-	uint8_t num_thread;
+#elif ARCH_ARM64
+	AA64Thread* main_thread;
+#endif // Maybe RISC-V?
+
+    uint8_t num_thread;
 	entry entry_point;
+
+#ifdef ARCH_X64
 	AuThread* threads[MAX_THREADS_PER_PROCESS];
+#elif ARCH_ARM64
+	AA64Thread* threads[MAX_THREADS_PER_PROCESS];
+#endif // Maybe RISC-V?
 
 	/* file descriptors */
 	AuVFSNode* fds[FILE_DESC_PER_PROCESS];
@@ -156,6 +169,7 @@ extern void KernelStackFree(AuProcess* proc, void* ptr, uint64_t *cr3);
 */
 extern AuProcess* AuProcessFindPID(int pid);
 
+#ifdef ARCH_X64
 /*
 * AuProcessFindThread -- finds a process by its
 * main thread
@@ -170,6 +184,23 @@ extern AuProcess *AuProcessFindThread(AuThread* thread);
 * @param thread -- Pointer to sub thread
 */
 extern AuProcess* AuProcessFindSubThread(AuThread* thread);
+#elif ARCH_ARM64
+/*
+* AuProcessFindThread -- finds a process by its
+* main thread
+* @param thread -- pointer to  main thread
+*/
+extern AuProcess* AuProcessFindThread(AA64Thread* thread);
+
+/*
+* AuProcessFindSubThread -- find a process from its
+* sub threads which contain a pointer to its process
+* slot
+* @param thread -- Pointer to sub thread
+*/
+extern AuProcess* AuProcessFindSubThread(AA64Thread* thread);
+
+#endif
 
 /*
 * CreateUserStack -- creates new user stack
@@ -226,7 +257,9 @@ extern int AuProcessGetFileDesc(AuProcess* proc);
 */
 extern void AuProcessWaitForTermination(AuProcess *proc, int pid);
 
+#ifdef ARCH_X64
 extern AuMutex* AuProcessGetMutex();
+#endif
 
 /**
 *  Creates a user mode thread

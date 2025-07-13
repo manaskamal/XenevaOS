@@ -42,6 +42,8 @@ e:\xeneva project\aurora\kernelaa64\arm64\debug\string.obj
 e:\xeneva project\aurora\kernelaa64\arm64\debug\string.asm
 e:\xeneva project\aurora\kernelaa64\arm64\debug\stdio.obj
 e:\xeneva project\aurora\kernelaa64\arm64\debug\stdio.asm
+e:\xeneva project\aurora\kernelaa64\arm64\debug\process.obj
+e:\xeneva project\aurora\kernelaa64\arm64\debug\process.asm
 e:\xeneva project\aurora\kernelaa64\arm64\debug\pe.obj
 e:\xeneva project\aurora\kernelaa64\arm64\debug\pe.asm
 e:\xeneva project\aurora\kernelaa64\arm64\debug\pcie.obj

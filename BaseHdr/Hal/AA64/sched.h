@@ -31,6 +31,7 @@
 #define __AA64_SCHED_H__
 
 #include <stdint.h>
+#include <Hal/AA64/aa64cpu.h>
 
 #define  THREAD_STATE_READY     1
 #define  THREAD_STATE_BLOCKED   3
@@ -66,13 +67,14 @@ typedef struct _aa64_task_ {
 	uint8_t state;
 	uint64_t pml;
 	char name[8];
+	void *procSlot;
 	struct _aa64_task_* next;
 	struct _aa64_task_* prev;
 }AA64Thread;
 #pragma pack(pop)
 extern void AuSchedulerInitialize();
 extern uint64_t AuCreateKernelStack(uint64_t* pml);
-extern AA64Thread* AuCreateKthread(void(*entry) (uint64_t), char* name);
+extern AA64Thread* AuCreateKthread(void(*entry) (uint64_t),uint64_t* pml, char* name);
 extern void AuScheduleThread(AA64Registers*regs);
 extern void AuSchedulerStart();
 extern AA64Thread* AuGetIdleThread();

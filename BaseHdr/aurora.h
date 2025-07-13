@@ -51,7 +51,12 @@
 #endif
 
 
+#ifdef ARCH_X64
 #define KERNEL_STACK_LOCATION   0xFFFFFB0000000000
+#elif ARCH_ARM64
+#define KERNEL_STACK_LOCATION 0x4000000000
+#endif
+
 #define KERNEL_STACK_SIZE 16384  //16KiB
 
 #pragma pack(push,1)
