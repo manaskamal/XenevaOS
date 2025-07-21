@@ -80,10 +80,10 @@ EFI_STATUS XESetTextAttribute(const int Back, const int Fore) {
 
 
 void XEPutChar(const int ch) {
-	CHAR16 text[2];
+	unsigned short text[2];
 	text[0] = (unsigned short)ch;
 	text[1] = 0;
-	gSystemTable->ConOut->OutputString(gSystemTable->ConOut, text);
+	gSystemTable->ConOut->OutputString(gSystemTable->ConOut, reinterpret_cast<CHAR16*>(text));
 }
 
 /*
@@ -94,7 +94,7 @@ void XEPutChar(const int ch) {
 int XEPrintf(wchar_t* fmt, ...) {
 	va_list vl = (va_list)((uint8_t*)&fmt + sizeof(unsigned short*));
 
-	CHAR16 out[1024];
+	unsigned short out[1024];
 	int o = 0;
 	int c, sign, width, precision, lmodifier;
 	unsigned char ljust, alt, lzeroes;
@@ -156,7 +156,7 @@ int XEPrintf(wchar_t* fmt, ...) {
 		if (c == '[') {
 			if (o > 0) {
 				out[o] = 0;
-				gSystemTable->ConOut->OutputString(gSystemTable->ConOut, out);
+				gSystemTable->ConOut->OutputString(gSystemTable->ConOut, reinterpret_cast<CHAR16*>(out));
 				o = 0;
 			}
 			/**uint32 attr = *(unsigned long*)vl;
@@ -168,7 +168,7 @@ int XEPrintf(wchar_t* fmt, ...) {
 		if (c == ']') {
 			if (o > 0) {
 				out[o] = 0;
-				gSystemTable->ConOut->OutputString(gSystemTable->ConOut, out);
+				gSystemTable->ConOut->OutputString(gSystemTable->ConOut, reinterpret_cast<CHAR16*>(out));
 				o = 0;
 			}
 			XESetTextAttribute(EFI_BACKGROUND_BLACK, EFI_LIGHTGRAY);
@@ -287,14 +287,14 @@ int XEPrintf(wchar_t* fmt, ...) {
 			if (c != 'd') {
 				if (lmodifier == 'H')
 					v = (uint8_t)v;
-				else if (lmodifier == 'h')
+				else if ((lmodifier = 'h'))
 					v = (unsigned short)v;
 				sign = 0;
 			}
 			else {
-				if (lmodifier == 'H')
+				if ((lmodifier = 'H'))
 					v = (signed char)v;
-				else if (lmodifier == 'h')
+				else if ((lmodifier == 'h'))
 					v = (short)v;
 				if ((int)v < 0) {
 					v = -v;
@@ -361,7 +361,7 @@ int XEPrintf(wchar_t* fmt, ...) {
 	}
 
 	out[o++] = 0;
-	gSystemTable->ConOut->OutputString(gSystemTable->ConOut, out);
+	gSystemTable->ConOut->OutputString(gSystemTable->ConOut, reinterpret_cast<CHAR16*>(out));
 	return 0;
 }
 
