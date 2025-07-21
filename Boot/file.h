@@ -33,7 +33,16 @@
 #include "xnldr.h"
 #include "clib.h"
 #include "xnout.h"
-#include <Uefi.h>
+#ifdef _MSC_VER
+    #include <Uefi.h>
+	#include <Protocol/SimpleFileSystem.h>
+	#include <Protocol/LoadFile.h>
+	#include <Protocol/LoadedImage.h>
+	#include <Guid/FileInfo.h>
+	#include <Guid/FileSystemInfo.h>
+#elif __GNUC__
+	#include <efi/efi.h>
+#endif
 
 
 typedef struct _XEFILE_ {

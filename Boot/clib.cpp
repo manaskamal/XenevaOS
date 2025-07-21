@@ -27,7 +27,7 @@
 *
 **/
 
-#include <stdint.h>
+#include <cstdint>
 #include "clib.h"
 
 
@@ -104,7 +104,7 @@ int is_digit(int c) {
 
 char* chars = (char*)"0123456789ABCDEF";
 
-char* sztoa(size_t value, char* str, int base) {
+char* sztoa(std::size_t value, char* str, int base) {
 
 	if (base < 2 || base > 16)
 		return nullptr;
@@ -124,8 +124,8 @@ char* sztoa(size_t value, char* str, int base) {
 }
 
 
-size_t strlen(const char* s){
-	size_t l = 0;
+std::size_t strlen(const char* s){
+	std::size_t l = 0;
 	while (*s++)++l;
 	return l;
 }

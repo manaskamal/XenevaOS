@@ -98,8 +98,6 @@ typedef unsigned uintptr_t;
 typedef long long  intmax_t;
 typedef unsigned long long   uintmax_t;
 
-typedef uint64_t size_t;
-
 /* 7.18.2  Limits of specified-width integer types */
 #if defined ( __cplusplus) || defined (__STDC_LIMIT_MACROS)
 
@@ -205,31 +203,4 @@ object pointers */
 #define UINTMAX_C(val) UINT64_C(val)
 
 #endif  /* !defined ( __cplusplus) || defined __STDC_CONSTANT_MACROS */
-
-#ifdef __cplusplus
-extern "C++" {
-	template <class T, class U> intptr_t raw_diff(T* p1, U* p2)
-	{
-		return (intptr_t)p1 - (intptr_t)p2;
-	};
-	template <class T, class U> T raw_offset(U p1, const intptr_t offset)
-	{
-		return (T)((size_t)p1 + offset);
-	};
-	template <class T, class U> T mem_after(U* p1)
-	{
-		return (T)(&p1[1]);
-	};
-};
-#endif
-
-#define RAW_OFFSET(type, x, offset)  (type)((size_t)x + offset)
-#define RAW_DIFF(p1,p2) ((intptr_t)p1 - (intptr_t)p2)
-#define MEM_AFTER(type, p) ((type)(&(p)[1]))
-
-#define DIV_ROUND_UP(x, y) \
-	((x + y - 1) / y)
-
-#define ALIGN_UP(x, y) (DIV_ROUND_UP(x,y)*y)
-
 #endif

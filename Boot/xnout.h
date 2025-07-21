@@ -30,7 +30,11 @@
 #ifndef __XNOUT_H__
 #define __XNOUT_H__
 
-#include <Uefi.h>
+#ifdef _MSC_VER
+    #include <Uefi.h>
+#elif __GNUC__
+	#include <efi/efi.h>
+#endif
 
 /*
  * XEClearScreen -- clears the screen

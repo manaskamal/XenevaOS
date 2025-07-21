@@ -27,10 +27,6 @@
 *
 **/
 
-#include <Uefi.h>
-#include <Guid/DebugImageInfoTable.h>
-#include <Library/UefiBootServicesTableLib.h>
-#include <Library/UefiLib.h>
 #include "xnout.h"
 #include "xnldr.h"
 #include "video.h"
@@ -47,9 +43,6 @@ EFI_BOOT_SERVICES* gBS;
 EFI_RUNTIME_SERVICES* gRS;
 EFI_LOADED_IMAGE_PROTOCOL* xnldr2;
 EFI_GRAPHICS_OUTPUT_PROTOCOL* gop;
-
-
-#define ACPI_20_TABLE_GUID  {0x8868e871, 0xe4f1, 0x11d3, 0xbc, 0x22, 0x00, 0x80, 0xc7, 0x3c, 0x88, 0x81}
 
 /*
  * XEGUIDMatch -- compares two given GUID
@@ -82,7 +75,7 @@ EFI_STATUS XEInitialiseLib(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable
 	EFI_STATUS Status;
 	EFI_GUID loadedimageprot = EFI_LOADED_IMAGE_PROTOCOL_GUID;
 	EFI_LOADED_IMAGE_PROTOCOL* loadedimage = nullptr;
-	if (Status = gBS->HandleProtocol(gImageHandle, &loadedimageprot, (void**)&loadedimage))
+	if ((Status = gBS->HandleProtocol(gImageHandle, &loadedimageprot, (void**)&loadedimage)) != EFI_SUCCESS)
 	{
 		return Status;
 	}
@@ -103,7 +96,6 @@ MENU_ITEM MenuItem[] = {
 };
 
 #define MENU_SIZE (sizeof(MenuItem)/sizeof(MenuItem[0]))
-
 
 /*
  * XEGetScreenResolutionMode -- Provides a selection based menu
@@ -163,15 +155,15 @@ int XEGetScreenResolutionMode(EFI_SYSTEM_TABLE* SystemTable) {
  * @param SystemTable -- Pointer to EFI SYSTEM TABLE
  * @param index -- User selection index
  */
-UINTN XESetGraphicsMode(EFI_SYSTEM_TABLE* SystemTable, int index) {
+UINTN XESetGraphicsMode( [[maybe_unused]] EFI_SYSTEM_TABLE* SystemTable, int index) {
 	EFI_GRAPHICS_OUTPUT_PROTOCOL* GraphicsOutput;
 	EFI_GUID gopguid = EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID;
 	EFI_STATUS Status;
-	UINTN Mode, MaxMode = 0;
-	EFI_INPUT_KEY Key;
+	// TODO: Are these default values correct?
+	UINTN Mode = 0, MaxMode = 0;
 
-	int dwidth = 0;
-	int dheight = 0;
+	UINT32 dwidth = 0;
+	UINT32 dheight = 0;
 
 	switch (index) {
 	case 1:
@@ -194,7 +186,6 @@ UINTN XESetGraphicsMode(EFI_SYSTEM_TABLE* SystemTable, int index) {
 		return Status;
 	}
 
-
 	MaxMode = GraphicsOutput->Mode->MaxMode;
 	XEPrintf(const_cast<wchar_t*>(L"Available Screen Resolution:\r\n"));
 	for (UINTN i = 0; i < MaxMode; i++) {
@@ -211,16 +202,19 @@ UINTN XESetGraphicsMode(EFI_SYSTEM_TABLE* SystemTable, int index) {
 	return Mode;
 }
 
+EFI_STATUS efi_main_handler(EFI_HANDLE, EFI_SYSTEM_TABLE*);
 
-
-
+extern "C" EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable)
+{
+	return efi_main_handler(ImageHandle, SystemTable);
+}
 
 /*
  * efi_main -- main entry of XNLDR 2.0
  * @param ImageHandle -- System parameter
  * @param SystemTable -- System parameter
  */
-EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
+EFI_STATUS efi_main_handler(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
 	EFI_STATUS Status;
 
 	Status = XEInitialiseLib(ImageHandle, SystemTable);
@@ -231,7 +225,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
 	/* Get user graphics resolution choice*/
 	int index = XEGetScreenResolutionMode(SystemTable);
 	/* Set the graphics resolution based on user selection */
-	UINTN Mode = XESetGraphicsMode(SystemTable, index);
+	[[maybe_unused]] UINTN Mode = XESetGraphicsMode(SystemTable, index);
 	XEGuiPrint("XenevaOS Loader 2.0 (XNLDR) \n");
 	XEGuiPrint("Copyright (C) Manas Kamal Choudhury 2020-2025\n");
 
@@ -277,7 +271,6 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
 
 
 	struct EfiMemoryMap map;
-	EFI_MEMORY_DESCRIPTOR* desc_ptr = nullptr;
 	map.MemMapSize = 0;
 	map.MapKey = map.DescriptorSize = map.DescriptorVersion = 0;
 	map.memmap = 0;
@@ -317,15 +310,12 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
 	XEInitialisePaging();
 
 
-	void* base = XEPELoadImage(krnl->kBuffer);
-	XEImageEntry kentry = (XEImageEntry)XEPEGetEntryPoint(krnl->kBuffer);
-
+	[[maybe_unused]] void* base = XEPELoadImage(krnl->kBuffer);
+	[[maybe_unused]] XEImageEntry kentry = (XEImageEntry)XEPEGetEntryPoint(krnl->kBuffer);
 
 	uint64_t ahciAddr = XEPELoadDLLImage(kAhci->kBuffer);
 	uint64_t nvmeAddr = XEPELoadDLLImage(kNvme->kBuffer);
 	//uint64_t xhciAddr = XEPELoadDLLImage(kXHCI->kBuffer);
-	
-	
 	
 	void* stackaddr = (void*)0xFFFFA00000000000;
 	void* idtaddr = (void*)0xFFFFD80000000000;
@@ -371,5 +361,3 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
 	for (;;);
 	return EFI_SUCCESS;
 }
-
-

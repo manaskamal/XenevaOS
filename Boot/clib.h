@@ -31,7 +31,7 @@
 #define __CLIB_H__
 
 
-#include <stdint.h>
+#include <cstdint>
 
 #ifdef __cplusplus
 extern "C"
@@ -65,8 +65,6 @@ extern uint32_t wstrsize(wchar_t* s);
 extern int to_upper(int c);
 extern int to_lower(int c);
 extern int is_digit(int c);
-extern char* sztoa(size_t value, char* str, int base);
-extern size_t strlen(const char* s);
+extern char* sztoa(std::size_t value, char* str, int base);
+extern std::size_t strlen(const char* s);
 #endif
-
-

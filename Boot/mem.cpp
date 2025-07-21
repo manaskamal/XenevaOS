@@ -35,7 +35,7 @@
  */
 void* XEAllocatePool(const uint64_t sz) {
 	void* Buffer;
-	return (gBS->AllocatePool(EfiLoaderData, sz, &Buffer) < 0) ? NULL : Buffer;
+	return (gBS->AllocatePool(EfiLoaderData, sz, &Buffer) != EFI_SUCCESS) ? NULL : Buffer;
 }
 
 /*

@@ -28,10 +28,6 @@
 **/
 
 #include "file.h"
-#include <Protocol/SimpleFileSystem.h>
-#include <Protocol/LoadFile.h>
-#include <Protocol\LoadedImage.h>
-#include <Guid\FileInfo.h>
 
 EFI_GUID FileSystemProtocol = {
 	0x964E5B22,
@@ -60,10 +56,6 @@ EFI_GUID GenericFileInfo = {
 		0x8E, 0x39, 0x00, 0xA0, 0xC9, 0x69, 0x72, 0x3B
 	}
 };
-
-#define EFI_FILE_SYSTEM_INFO_ID \
-{0x9576e93, 0x6d3f, 0x11d2, {0x8e, 0x39, 0x0, 0xa0, 0xc9, 0x69, 0x72, 0x3b }}
-
 
 /*
  * XEOpenAndReadFile -- open and reads a file

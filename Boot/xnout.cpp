@@ -80,7 +80,7 @@ EFI_STATUS XESetTextAttribute(const int Back, const int Fore) {
 
 
 void XEPutChar(const int ch) {
-	unsigned short text[2];
+	CHAR16 text[2];
 	text[0] = (unsigned short)ch;
 	text[1] = 0;
 	gSystemTable->ConOut->OutputString(gSystemTable->ConOut, text);
@@ -94,12 +94,12 @@ void XEPutChar(const int ch) {
 int XEPrintf(wchar_t* fmt, ...) {
 	va_list vl = (va_list)((uint8_t*)&fmt + sizeof(unsigned short*));
 
-	unsigned short out[1024];
+	CHAR16 out[1024];
 	int o = 0;
 	int c, sign, width, precision, lmodifier;
 	unsigned char ljust, alt, lzeroes;
 
-	while (c = *fmt++) {
+	while ((c = *fmt++)) {
 		if (c != '%' || *fmt == '%') {
 			out[o++] = c;
 			fmt += (c == '%');
@@ -287,12 +287,12 @@ int XEPrintf(wchar_t* fmt, ...) {
 			if (c != 'd') {
 				if (lmodifier == 'H')
 					v = (uint8_t)v;
-				else if (lmodifier = 'h')
+				else if (lmodifier == 'h')
 					v = (unsigned short)v;
 				sign = 0;
 			}
 			else {
-				if (lmodifier = 'H')
+				if (lmodifier == 'H')
 					v = (signed char)v;
 				else if (lmodifier == 'h')
 					v = (short)v;
