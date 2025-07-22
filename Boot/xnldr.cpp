@@ -40,7 +40,12 @@
 /* global variable */
 EFI_HANDLE   gImageHandle;
 EFI_SYSTEM_TABLE* gSystemTable;
-// EFI_BOOT_SERVICES* gBS;
+
+// TODO : Look into this quirk between GNU-EFI and our build process on MSVC
+#ifdef _MSC_VER
+EFI_BOOT_SERVICES* gBS;
+#endif
+
 EFI_RUNTIME_SERVICES* gRS;
 EFI_LOADED_IMAGE_PROTOCOL* xnldr2;
 EFI_GRAPHICS_OUTPUT_PROTOCOL* gop;
@@ -70,7 +75,9 @@ bool XEGUIDMatch(EFI_GUID guid1, EFI_GUID guid2) {
 EFI_STATUS XEInitialiseLib(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
 	gImageHandle = ImageHandle;
 	gSystemTable = SystemTable;
-	// gBS = gSystemTable->BootServices;
+#ifdef _MSC_VER
+	gBS = gSystemTable->BootServices;
+#endif
 	gRS = gSystemTable->RuntimeServices;
 
 	EFI_STATUS Status;
@@ -207,6 +214,7 @@ EFI_STATUS efi_main_handler(EFI_HANDLE, EFI_SYSTEM_TABLE*);
 extern "C" EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable)
 {
 	return efi_main_handler(ImageHandle, SystemTable);
+
 }
 
 /*
@@ -216,7 +224,6 @@ extern "C" EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemT
  */
 EFI_STATUS efi_main_handler(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
 	EFI_STATUS Status;
-
 	Status = XEInitialiseLib(ImageHandle, SystemTable);
 	XEClearScreen();
 
@@ -252,7 +259,7 @@ EFI_STATUS efi_main_handler(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTabl
 	 *-------------------------------------------------------------------
 	 */
 	void* xdsp_address = NULL;
-	static EFI_GUID acpi_guid = ACPI_20_TABLE_GUID;
+	static EFI_GUID acpi_guid = EFI_ACPI_20_TABLE_GUID;
 	for (unsigned i = 0; i < gSystemTable->NumberOfTableEntries; ++i) {
 		if (XEGUIDMatch(acpi_guid, configuration_tables[i].VendorGuid)) {
 			xdsp_address = configuration_tables[i].VendorTable;

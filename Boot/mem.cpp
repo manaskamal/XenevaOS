@@ -28,7 +28,9 @@
 **/
 
 #include "xnldr.h"
+#ifdef __GNUC__
 #include <efi/efilib.h>
+#endif
 
 /*
  * XEAllocatePool -- allocate pool memory
