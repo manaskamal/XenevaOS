@@ -42,6 +42,7 @@
 	#include <Guid/FileSystemInfo.h>
 #elif __GNUC__
 	#include <efi/efi.h>
+	#include <efi/efilib.h>
 #endif
 
 

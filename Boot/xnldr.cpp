@@ -31,6 +31,7 @@
 #include "xnldr.h"
 #include "video.h"
 #include "file.h"
+#include "clib.h"
 #include "pe.h"
 #include "physm.h"
 #include "paging.h"
@@ -39,7 +40,7 @@
 /* global variable */
 EFI_HANDLE   gImageHandle;
 EFI_SYSTEM_TABLE* gSystemTable;
-EFI_BOOT_SERVICES* gBS;
+// EFI_BOOT_SERVICES* gBS;
 EFI_RUNTIME_SERVICES* gRS;
 EFI_LOADED_IMAGE_PROTOCOL* xnldr2;
 EFI_GRAPHICS_OUTPUT_PROTOCOL* gop;
@@ -69,7 +70,7 @@ bool XEGUIDMatch(EFI_GUID guid1, EFI_GUID guid2) {
 EFI_STATUS XEInitialiseLib(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
 	gImageHandle = ImageHandle;
 	gSystemTable = SystemTable;
-	gBS = gSystemTable->BootServices;
+	// gBS = gSystemTable->BootServices;
 	gRS = gSystemTable->RuntimeServices;
 
 	EFI_STATUS Status;
@@ -89,10 +90,10 @@ typedef struct {
 }MENU_ITEM;
 
 MENU_ITEM MenuItem[] = {
-	{(CHAR16*)L"640x480"},
-	{(CHAR16*)L"1024x768"},
-	{(CHAR16*)L"1280x1024"},
-	{(CHAR16*)L"1920x1080"}
+	{(CHAR16*)u"640x480"},
+	{(CHAR16*)u"1024x768"},
+	{(CHAR16*)u"1280x1024"},
+	{(CHAR16*)u"1920x1080"}
 };
 
 #define MENU_SIZE (sizeof(MenuItem)/sizeof(MenuItem[0]))
@@ -109,11 +110,11 @@ int XEGetScreenResolutionMode(EFI_SYSTEM_TABLE* SystemTable) {
 	while (1) {
 		SystemTable->ConOut->SetCursorPosition(SystemTable->ConOut, 0, 0);
 		XESetTextAttribute(0, EFI_WHITE);
-		XEPrintf(const_cast<wchar_t*>(L"XenevaOS loader (XNLDR) 2.0 \r\n"));
+		XEPrintf(u"XenevaOS loader (XNLDR) 2.0 \r\n");
 		XESetTextAttribute(0, EFI_LIGHTGRAY);
-		XEPrintf(const_cast<wchar_t*>(L"Copyright (C) Manas Kamal Choudhury 2020-2025 \r\n"));
-		XEPrintf(const_cast<wchar_t*>(L"Select a screen resolution:\r\n"));
-		XEPrintf(const_cast<wchar_t*>(L"\r\n"));
+		XEPrintf(u"Copyright (C) Manas Kamal Choudhury 2020-2025 \r\n");
+		XEPrintf(u"Select a screen resolution:\r\n");
+		XEPrintf(u"\r\n");
 		for (UINTN i = 0; i < MENU_SIZE; i++) {
 			if (i == SelectedIndex) {
 				SystemTable->ConOut->SetAttribute(SystemTable->ConOut, EFI_WHITE | EFI_BACKGROUND_BLUE);
@@ -121,8 +122,7 @@ int XEGetScreenResolutionMode(EFI_SYSTEM_TABLE* SystemTable) {
 			else {
 				SystemTable->ConOut->SetAttribute(SystemTable->ConOut, EFI_LIGHTGRAY);
 			}
-			XEPrintf(const_cast<wchar_t*>(L"%s\r\n"), MenuItem[i].Label);
-
+			XEPrintf(u"%s\r\n", MenuItem[i].Label);
 		}
 
 
@@ -160,7 +160,7 @@ UINTN XESetGraphicsMode( [[maybe_unused]] EFI_SYSTEM_TABLE* SystemTable, int ind
 	EFI_GUID gopguid = EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID;
 	EFI_STATUS Status;
 	// TODO: Are these default values correct?
-	UINTN Mode = 0, MaxMode = 0;
+	UINTN Mode, MaxMode = 0;
 
 	UINT32 dwidth = 0;
 	UINT32 dheight = 0;
@@ -182,12 +182,12 @@ UINTN XESetGraphicsMode( [[maybe_unused]] EFI_SYSTEM_TABLE* SystemTable, int ind
 
 	Status = gBS->LocateProtocol(&gopguid, NULL, (VOID**)&GraphicsOutput);
 	if (EFI_ERROR(Status)) {
-		XEPrintf(const_cast<wchar_t*>(L"XNLDR 2.0 Failed to locate Graphics Output protocol \r\n"));
+		XEPrintf(u"XNLDR 2.0 Failed to locate Graphics Output protocol \r\n");
 		return Status;
 	}
 
 	MaxMode = GraphicsOutput->Mode->MaxMode;
-	XEPrintf(const_cast<wchar_t*>(L"Available Screen Resolution:\r\n"));
+	XEPrintf(u"Available Screen Resolution:\r\n");
 	for (UINTN i = 0; i < MaxMode; i++) {
 		EFI_GRAPHICS_OUTPUT_MODE_INFORMATION* Info;
 		UINTN Size;

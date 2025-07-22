@@ -29,34 +29,6 @@
 
 #include "file.h"
 
-EFI_GUID FileSystemProtocol = {
-	0x964E5B22,
-	0x6459,
-	0x11D2,
-	{
-		0x8E, 0x39, 0x00, 0xA0, 0xC9, 0x69, 0x72, 0x3B
-	}
-};
-
-EFI_GUID LoadFileProtocol = {
-	0x56EC3091,
-	0x954C,
-	0x11D2,
-	{
-		0x8E, 0x3F, 0x00, 0xA0, 0xC9, 0x69, 0x72, 0x3B
-	}
-};
-
-
-EFI_GUID GenericFileInfo = {
-	0x9576E92,
-	0x6D3F,
-	0x11D2,
-	{
-		0x8E, 0x39, 0x00, 0xA0, 0xC9, 0x69, 0x72, 0x3B
-	}
-};
-
 /*
  * XEOpenAndReadFile -- open and reads a file
  * @param ImageHandle -- Image handle passed by EFI firmware
@@ -102,7 +74,7 @@ XEFile* XEOpenAndReadFile(EFI_HANDLE ImageHandle,CHAR16* Filename) {
 		return 0;
 	}
 
-	Status = File->GetInfo(File, &GenericFileInfo, &FileInfoSize, NULL);
+	Status = File->GetInfo(File, &gEfiFileInfoGuid, &FileInfoSize, NULL);
 	if (Status == EFI_BUFFER_TOO_SMALL) {
 		Status = gBS->AllocatePool(EfiBootServicesData, FileInfoSize, (VOID**)&FileInfo);
 		if (EFI_ERROR(Status)) {
@@ -112,7 +84,7 @@ XEFile* XEOpenAndReadFile(EFI_HANDLE ImageHandle,CHAR16* Filename) {
 		}
 	}
 
-	Status = File->GetInfo(File, &GenericFileInfo, &FileInfoSize, FileInfo);
+	Status = File->GetInfo(File, &gEfiFileInfoGuid, &FileInfoSize, FileInfo);
 	if (EFI_ERROR(Status)) {
 		XEGuiPrint("Failed to get file metadata \n");
 		gBS->FreePool(FileInfo);

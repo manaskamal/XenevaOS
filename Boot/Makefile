@@ -17,9 +17,9 @@ INCLUDES = -I../BaseHdr -Iinclude -Iinclude/x64 -I$(GNU_EFI_DIR)/inc
 
 # Compiler flags
 CXXFLAGS = -Wno-error=pragmas -mno-red-zone -mno-avx -fPIE \
-		   -g -O2 -Wall -Wextra -Werror -funsigned-char -fshort-wchar \
+		    -Wall -Wextra -Werror -funsigned-char -fshort-wchar \
 		   -fno-strict-aliasing -ffreestanding -fno-stack-protector -fno-stack-check \
-		   -fno-merge-all-constants -DCONFIG_x86_64 -std=c++17 -DGNU_EFI_USE_MS_ABI -maccumulate-outgoing-args -DGNU_EFI_USE_MS_ABI $(INCLUDES)
+		   -fno-merge-all-constants -std=c++17 -DGNU_EFI_USE_MS_ABI -maccumulate-outgoing-args -DGNU_EFI_USE_MS_ABI $(INCLUDES)
 
 # NASM flags
 NASMFLAGS = -f win64
@@ -55,8 +55,9 @@ $(SO_OUTPUT): $(CRT0) $(OBJS)
 
 $(EFI_OUTPUT): $(SO_OUTPUT)
 	@mkdir -p $(dir $@)
-	$(OBJCOPY) -j .text -j .sdata -j .data -j .dynamic -j .dynsym -j .rel -j .rela \
-	           -j .reloc --target=efi-app-x86_64 $< $@
+	$(OBJCOPY) -j .text -j .sdata -j .data -j .rodata -j .dynamic -j .dynsym -j .rel -j .rela \
+			   -j .rel.* -j .rela.* \
+	           -j .reloc --target=efi-app-x86_64 --subsystem=10 $< $@
 # $(CP) $@ $(COPY_DEST)
 
 # Compile C++ source files

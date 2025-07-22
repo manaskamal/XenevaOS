@@ -28,6 +28,7 @@
 **/
 
 #include "xnldr.h"
+#include <efi/efilib.h>
 
 /*
  * XEAllocatePool -- allocate pool memory
