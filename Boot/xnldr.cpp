@@ -259,7 +259,14 @@ EFI_STATUS efi_main_handler(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTabl
 	 *-------------------------------------------------------------------
 	 */
 	void* xdsp_address = NULL;
+// TODO: I saw this quirk here, where
+// efilib.h seems to define the GUID differently
+// from what was expected
+#ifdef _MSC_VER
 	static EFI_GUID acpi_guid = EFI_ACPI_20_TABLE_GUID;
+#else
+	static EFI_GUID acpi_guid = ACPI_20_TABLE_GUID;
+#endif
 	for (unsigned i = 0; i < gSystemTable->NumberOfTableEntries; ++i) {
 		if (XEGUIDMatch(acpi_guid, configuration_tables[i].VendorGuid)) {
 			xdsp_address = configuration_tables[i].VendorTable;
