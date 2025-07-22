@@ -32,6 +32,7 @@
 #include "paging.h"
 #include "xnout.h"
 #include "physm.h"
+#include <Common.hpp>
 
 static void copy_mem(void* dst, void* src, size_t length) {
 	uint8_t* dstp = (uint8_t*)dst;
@@ -57,8 +58,6 @@ void* XEPELoadImage(void* filebuf1){
 
 	PIMAGE_DOS_HEADER dosHeader = (PIMAGE_DOS_HEADER)filebuf;
 	PIMAGE_NT_HEADERS ntHeaders = raw_offset<PIMAGE_NT_HEADERS>(dosHeader, dosHeader->e_lfanew);
-
-
 
 	PSECTION_HEADER sectionHeader = raw_offset<PSECTION_HEADER>(&ntHeaders->OptionalHeader, ntHeaders->FileHeader.SizeOfOptionaHeader);
 	size_t ImageBase = ntHeaders->OptionalHeader.ImageBase;

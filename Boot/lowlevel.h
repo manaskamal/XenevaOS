@@ -30,7 +30,7 @@
 #ifndef __LOW_LEVEL_H__
 #define __LOW_LEVEL_H__
 
-#include <stdint.h>
+#include <cstdint>
 
 #ifdef __cplusplus
 extern "C" {

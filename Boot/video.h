@@ -32,9 +32,13 @@
 
 #include "xnldr.h"
 #include "font.h"
-#include <Library/UefiBootServicesTableLib.h>
-#include <Library/UefiLib.h>
 #include "clib.h"
+#ifdef _MSC_VER
+	#include <Library/UefiBootServicesTableLib.h>
+	#include <Library/UefiLib.h>
+#elif __GNUC__
+	#include <efi/efi.h>
+#endif
 
 
 #define RGB(r, g, b) \

@@ -31,8 +31,7 @@
 #include "xnldr.h"
 #include "clib.h"
 #include "video.h"
-
-typedef unsigned char* va_list;
+#include <cstdarg>
 
 /*
  * XEClearScreen -- clears the screen 
@@ -83,7 +82,7 @@ void XEPutChar(const int ch) {
 	unsigned short text[2];
 	text[0] = (unsigned short)ch;
 	text[1] = 0;
-	gSystemTable->ConOut->OutputString(gSystemTable->ConOut, text);
+	gSystemTable->ConOut->OutputString(gSystemTable->ConOut, reinterpret_cast<CHAR16*>(text));
 }
 
 /*
@@ -91,45 +90,49 @@ void XEPutChar(const int ch) {
  * show output to the screen
  * @param fmt -- format to print
  */
-int XEPrintf(wchar_t* fmt, ...) {
-	va_list vl = (va_list)((uint8_t*)&fmt + sizeof(unsigned short*));
+int XEPrintf(const char16_t* fmt, ...) {
+	const char16_t* fmtPtr = fmt;
 
-	unsigned short out[1024];
+	va_list vl;
+	va_start(vl, fmt);
+
+	CHAR16 out[1024];
 	int o = 0;
-	int c, sign, width, precision, lmodifier;
+	char16_t c;
+	int sign, width, precision, lmodifier;
 	unsigned char ljust, alt, lzeroes;
 
-	while (c = *fmt++) {
-		if (c != '%' || *fmt == '%') {
+	while ((c = *fmtPtr++)) {
+		if (c != u'%' || *fmtPtr == u'%') {
 			out[o++] = c;
-			fmt += (c == '%');
+			fmtPtr += (c == '%');
 			continue;
 		}
-		if ((c = (uint8_t)*fmt++) == '\0')
+		if ((c = (uint8_t)*fmtPtr++) == '\0')
 			return -1;
 		ljust = alt = lzeroes = FALSE;
 		sign = 0;
 		for (;;) {
-			if (c == '-') {
+			if (c == u'-') {
 				ljust = TRUE;
 				lzeroes = FALSE;
 			}
-			else if (c == '+')
-				sign = '+';
-			else if (c == ' ') {
+			else if (c == u'+')
+				sign = u'+';
+			else if (c == u' ') {
 				if (!sign)
-					sign = ' ';
+					sign = u' ';
 			}
-			else if (c == '#')
+			else if (c == u'#')
 				alt = TRUE;
-			else if (c == '0') {
+			else if (c == u'0') {
 				if (!ljust)
 					lzeroes = TRUE;
 			}
 			else
 				break;
 
-			if ((c = (uint8_t)*fmt++) == '\0')
+			if ((c = (uint8_t)*fmtPtr++) == u'\0')
 				return -1;
 		}
 
@@ -137,26 +140,26 @@ int XEPrintf(wchar_t* fmt, ...) {
 		if (is_digit(c)) {
 			width = 0;
 			while (is_digit(c)) {
-				width = width * 10 + (c - '0');
-				if ((c = (uint8_t)*fmt++) == '\0')
+				width = width * 10 + (c - u'0');
+				if ((c = (uint8_t)*fmtPtr++) == u'\0')
 					return -1;
 			}
 		}
-		else if (c == '*') {
-			width = *(int*)vl; vl += sizeof(int);
+		else if (c == u'*') {
+			width = va_arg(vl, int);
 			if (width < 0) {
 				ljust = TRUE;
 				lzeroes = FALSE;
 				width = -width;
 			}
-			if ((c = *fmt++) == '\0')
+			if ((c = *fmtPtr++) == u'\0')
 				return -1;
 		}
 
-		if (c == '[') {
+		if (c == u'[') {
 			if (o > 0) {
 				out[o] = 0;
-				gSystemTable->ConOut->OutputString(gSystemTable->ConOut, out);
+				gSystemTable->ConOut->OutputString(gSystemTable->ConOut, reinterpret_cast<CHAR16*>(out));
 				o = 0;
 			}
 			/**uint32 attr = *(unsigned long*)vl;
@@ -165,10 +168,10 @@ int XEPrintf(wchar_t* fmt, ...) {
 			continue;
 		}
 		//restore the default text attribute
-		if (c == ']') {
+		if (c == u']') {
 			if (o > 0) {
 				out[o] = 0;
-				gSystemTable->ConOut->OutputString(gSystemTable->ConOut, out);
+				gSystemTable->ConOut->OutputString(gSystemTable->ConOut, reinterpret_cast<CHAR16*>(out));
 				o = 0;
 			}
 			XESetTextAttribute(EFI_BACKGROUND_BLACK, EFI_LIGHTGRAY);
@@ -176,64 +179,64 @@ int XEPrintf(wchar_t* fmt, ...) {
 		}
 
 		precision = -1;
-		if (c == '.') {
-			if ((c = (uint8_t)*fmt++) == '\0')
+		if (c == u'.') {
+			if ((c = (uint8_t)*fmtPtr++) == u'\0')
 				return -1;
 			precision = 0;
 			lzeroes = FALSE;
 			if (is_digit(c)) {
 				while (is_digit(c)) {
-					precision = precision * 10 + (c - '0');
-					if ((c = (uint8_t)*fmt++) == '\0')
+					precision = precision * 10 + (c - u'0');
+					if ((c = (uint8_t)*fmtPtr++) == u'\0')
 						return -1;
 				}
 			}
-			else if (c == '*') {
-				precision = *(int*)vl; vl += sizeof(int);
-				if ((c = *fmt++) == '\0')
+			else if (c == u'*') {
+				precision = va_arg(vl, int);
+				if ((c = *fmtPtr++) == u'\0')
 					return -1;
 			}
 		}
 
 		lmodifier = 0;
-		if (c == 'h') {
-			if (*fmt == 'h') {
-				fmt++;
-				lmodifier = 'H';
+		if (c == u'h') {
+			if (*fmtPtr == u'h') {
+				fmtPtr++;
+				lmodifier = u'H';
 			}
 			else
 				lmodifier = c;
 		}
-		else if (wstrchr((wchar_t*)L"jzt", c))
+		else if (wstrchr((wchar_t*)u"jzt", c))
 			lmodifier = c;
 		if (lmodifier)
-			if ((c = (uint8_t)*fmt++) == '\0')
+			if ((c = (uint8_t)*fmtPtr++) == u'\0')
 				return -1;
 
-		if (c == 'i')
-			c = 'd';
-		if (!wstrchr((wchar_t*)L"douxXcsp", c))
+		if (c == u'i')
+			c = u'd';
+		if (!wstrchr((wchar_t*)u"douxXcsp", c))
 			return -1;
 
-		if (c == 'c') {
-			int ch = (uint8_t) * (int*)vl; vl += sizeof(int);
+		if (c == u'c') {
+			char16_t ch = va_arg(vl, int);
 			if (!ljust)
 				while (width > 1) {
-					out[o++] = ' ';
+					out[o++] = u' ';
 					width--;
 				}
 			out[o++] = ch;
 
 			if (ljust)
 				while (width > 1) {
-					out[o++] = ' ';
+					out[o++] = u' ';
 					width--;
 				}
 			continue;
 		}
-		else if (c == 's') {
+		else if (c == u's') {
 			int len, i;
-			wchar_t* s = *(wchar_t**)vl; vl += sizeof(wchar_t*);
+			wchar_t* s = va_arg(vl, wchar_t*);
 
 			if (precision < 0)
 				len = wstrlen(s);
@@ -246,7 +249,7 @@ int XEPrintf(wchar_t* fmt, ...) {
 
 			if (!ljust) {
 				while (width > len) {
-					out[o++] = ' ';
+					out[o++] = u' ';
 					width--;
 				}
 			}
@@ -257,53 +260,51 @@ int XEPrintf(wchar_t* fmt, ...) {
 
 			if (ljust) {
 				while (width > len) {
-					out[o++] = ' ';
+					out[o++] = u' ';
 					width--;
 				}
 			}
 			continue;
 		}
 		else {
-			unsigned v = *(unsigned*)vl, tmp;
+			unsigned v = va_arg(vl, unsigned);
 			char s[11];
 			char* p = s + sizeof(s);
-			unsigned base = (c == 'p') ? 16 : 10;
+			unsigned base = (c == u'p') ? 16 : 10;
 			char* digits = (char*)"0123456789abcdef";
 			char* hexpfx = (char*)NULL;
 			int dcnt;
 			int len;
-			vl += sizeof(unsigned);
 
-			if (c == 'o')
+			if (c == u'o')
 				base = 8;
-			else if (to_upper(c) == 'X') {
+			else if (to_upper(c) == u'X') {
 				base = 16;
 				if (c == 'X')
 					digits = (char*)"0123456789ABCDEF";
 				if (alt && v)
-					hexpfx = (char*)((c == 'X') ? "0X" : "0x");
+					hexpfx = (char*)((c == u'X') ? "0X" : "0x");
 			}
 
-			if (c != 'd') {
-				if (lmodifier == 'H')
+			if (c != u'd') {
+				if (lmodifier == u'H')
 					v = (uint8_t)v;
-				else if (lmodifier = 'h')
+				else if ((lmodifier = u'h'))
 					v = (unsigned short)v;
 				sign = 0;
 			}
 			else {
-				if (lmodifier = 'H')
+				if ((lmodifier = u'H'))
 					v = (signed char)v;
-				else if (lmodifier == 'h')
+				else if ((lmodifier == u'h'))
 					v = (short)v;
 				if ((int)v < 0) {
 					v = -v;
-					sign = '-';
+					sign = u'-';
 				}
 			}
 
-
-			tmp = v;
+			auto tmp = v;
 			do {
 				*--p = digits[tmp % base];
 				tmp /= base;
@@ -315,7 +316,7 @@ int XEPrintf(wchar_t* fmt, ...) {
 			else if ((v == 0) && (precision == 0))
 				dcnt = 0;
 
-			if (alt && (c == 'o'))
+			if (alt && (c == u'o'))
 				if (((v == 0) && (precision == 0)) || (v && (precision <= dcnt)))
 					precision = dcnt + 1;
 
@@ -327,7 +328,7 @@ int XEPrintf(wchar_t* fmt, ...) {
 
 			if (!ljust && !lzeroes)
 				while (width > len) {
-					out[o++] = ' ';
+					out[o++] = u' ';
 					width--;
 				}
 
@@ -340,19 +341,19 @@ int XEPrintf(wchar_t* fmt, ...) {
 
 			if (!ljust && lzeroes)
 				while (width > len) {
-					out[o++] = '0';
+					out[o++] = u'0';
 					width--;
 				}
 
 			while (precision-- > dcnt)
-				out[o++] = '0';
+				out[o++] = u'0';
 
 			while (dcnt--)
 				out[o++] = *p++;
 
 			if (ljust)
 				while (width > len) {
-					out[o++] = ' ';
+					out[o++] = u' ';
 					width--;
 				}
 
@@ -360,13 +361,12 @@ int XEPrintf(wchar_t* fmt, ...) {
 		}
 	}
 
+	va_end(vl);
+
 	out[o++] = 0;
-	gSystemTable->ConOut->OutputString(gSystemTable->ConOut, out);
+	gSystemTable->ConOut->OutputString(gSystemTable->ConOut, reinterpret_cast<CHAR16*>(out));
 	return 0;
 }
-
-
-
 
 /*
  * XEGuiPrint -- print formated text using graphics
@@ -397,7 +397,7 @@ void XEGuiPrint(const char* format, ...) {
 			}
 			else if (*format == 'c') {
 
-				char c = va_arg(args, char);
+				char16_t c = va_arg(args, int);
 				XEGraphicsPutC(c);
 			}
 			else if (*format == 'x') {

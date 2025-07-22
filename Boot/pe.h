@@ -31,7 +31,7 @@
 #define __PE_H__
 
 
-#include <stdint.h>
+#include <cstdint>
 #include "xnldr.h"
 
 #pragma pack(push, 1)
