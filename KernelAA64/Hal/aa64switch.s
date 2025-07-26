@@ -32,12 +32,12 @@
 .global aa64_store_context
 aa64_store_context:
 /* x0 holds the register frame */
-   //stp x19,x20,[x0,#0]
-   //stp x21,x22,[x0,#16]
-   //stp x23, x24,[x0,#32]
-   //stp x25,x26,[x0,#48]
-   //stp x27,x28,[x0,#64]
-   //stp x29,x30,[x0,#80]
+   stp x19,x20,[x0,#0]
+   stp x21,x22,[x0,#16]
+   stp x23, x24,[x0,#32]
+   stp x25,x26,[x0,#48]
+   stp x27,x28,[x0,#64]
+   stp x29,x30,[x0,#80]
 
    mov x2,sp 
    str x2,[x0, #96]
@@ -99,3 +99,16 @@ first_time_sex:
     ldr x2, [x1, #112]
     msr spsr_el1, x2
     eret
+
+.global resume_user
+resume_user:
+   // ldp x30,x0,[sp], #16
+   ldr x2, [x0, #112]
+   msr SPSR_EL1,x2  
+   ldp x19,x20,[x0, #0]
+   ldp x21,x22,[x0,#16]
+   ldp x23,x24,[x0,#32]
+   ldp x25,x26,[x0,#48]
+   ldp x27, x28,[x0,#64] 
+   ldp x29,x30, [x0,#80]
+   eret

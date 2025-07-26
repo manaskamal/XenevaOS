@@ -39,6 +39,7 @@
 #include <Hal/AA64/gic.h>
 #include <Hal/basicacpi.h>
 #include <Hal/AA64/aa64lowlevel.h>
+#include <loader.h>
 #include <Drivers/uart.h>
 #include <Hal/AA64/qemu.h>
 #include <list.h>
@@ -107,12 +108,11 @@ void AuEntryTest2(uint64_t test) {
 	int d = 10;
 	//enable_irqs();
 	while (1) {
-		//enable_irqs();
-		/*if ((d % 2) != 0)
+		/*enable_irqs();
+		if ((d % 2) != 0)
 			UARTDebugOut("3 \n");
-		for (int i = 0; i < 10000000; i++)
-			;*/
-		d++;
+		d++;*/
+		//UARTDebugOut("3\n");
 	}
 }
 
@@ -138,15 +138,24 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	AA64CPUPostInitialize(info);
 	AuVFSInitialise();
 	AuInitrdInitialize(info);
+
 	/* required virtio-mouse and keyboard */
 	//Here goes board pre driver initialize
 	AuDrvMngrInitialize(info);
+
+	AuInitialiseLoader();
 	
 	/* clear out the lower half memory */
-	AuVmmngrBootFree();
+	//AuVmmngrBootFree();
+
+	AuSchedulerInitialize();
+
+	AuProcess* proc = AuCreateProcessSlot(0, "exec");
+	AuLoadExecToProcess(proc, "/test.exe", 0, NULL);
+	AA64Thread* thr = AuCreateKthread(AuEntryTest2, AuCreateVirtualAddressSpace(), "Test");
 
 	UARTDebugOut("Kernel Lower half is cleared \n");
-	AuSchedulerInitialize();
+	
 	AuSchedulerStart();
 	while (1) {
 		//UARTDebugOut("Printing \n");

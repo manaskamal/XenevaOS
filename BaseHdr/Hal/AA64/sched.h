@@ -48,6 +48,21 @@
 #define  THREAD_LEVEL_MAIN_THREAD (1<<3)
 
 #pragma pack(push,1)
+/* AuUserEntry structure */
+typedef struct _uentry_ {
+	uint64_t entrypoint;
+	uint64_t rsp;
+	uint64_t cs;
+	uint64_t ss;
+	int num_args;
+	uint64_t argvaddr;
+	char** argvs;
+	uint64_t stackBase;
+}AuUserEntry;
+#pragma pack(pop)
+
+
+#pragma pack(push,1)
 typedef struct _aa64_task_ {
 	uint64_t x19; //0
 	uint64_t x20; //8
@@ -65,12 +80,16 @@ typedef struct _aa64_task_ {
 	uint64_t elr_el1; //104
 	uint64_t spsr_el1;//112
 	uint8_t state;
+	uint8_t threadType;
 	uint64_t pml;
 	char name[8];
 	void *procSlot;
+	AuUserEntry* uentry;
+	bool first_run;
 	struct _aa64_task_* next;
 	struct _aa64_task_* prev;
 }AA64Thread;
+
 #pragma pack(pop)
 extern void AuSchedulerInitialize();
 extern uint64_t AuCreateKernelStack(uint64_t* pml);

@@ -251,3 +251,18 @@ aa64_utest:
    svc #0
  _hng:
    b _hng
+
+.global read_x30
+read_x30:
+   mov x0, x30
+   ret
+
+.global read_sp
+read_sp:
+   mov x0, sp
+   ret
+
+.global read_sp_el1
+read_sp_el1:
+   mrs x0, SP_EL1
+   ret

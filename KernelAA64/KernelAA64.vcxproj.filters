@@ -90,6 +90,7 @@
       <Filter>Hal</Filter>
     </ClCompile>
     <ClCompile Include="process.c" />
+    <ClCompile Include="loader.c" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Hal">

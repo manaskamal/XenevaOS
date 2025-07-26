@@ -33,7 +33,10 @@
 #include <stdint.h>
 #include <pe.h>
 #include <process.h>
+
+#ifdef ARCH_X64
 #include <Sync\mutex.h>
+#endif
 
 /* the base address from where every executable image
  * starts
@@ -59,11 +62,14 @@ extern int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc,char** 
 */
 extern void AuProcessEntUser(uint64_t rcx);
 
+#ifdef ARCH_X64
 /*
 * AuLoaderGetMutex -- returns loader
 * mutex
 */
 extern AuMutex* AuLoaderGetMutex();
+
+#endif
 
 extern bool AuIsLoaderBusy();
 #endif

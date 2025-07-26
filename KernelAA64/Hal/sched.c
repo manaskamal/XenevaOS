@@ -241,27 +241,25 @@ void AA64NextThread() {
 run:
 	do {
 		thread = thread->next;
-
+		
 		if (!thread) {
-			//UARTDebugOut("No Next thread \n");
 			thread = thread_list_head;
 		}
-		//UARTDebugOut("Got next thread : %s \n", thread->name);
-		if (thread == _idle_thr)
+	
+		if (thread == _idle_thr) {
 			thread = thread->next;
+		}
 
 		if (!thread) {
 			_run_idle = true;
 			break;
 		}
-		//UARTDebugOut("Till here thread : %s \n", thread->name);
 	} while (thread->state != THREAD_STATE_READY);
 end:
 	if (_run_idle)
 		thread = _idle_thr;
-	//UARTDebugOut("Till here thread #2: %s \n", thread->name);
+
 	current_thread = thread;
-	//UARTDebugOut("Current thread :%s \n", thread->name);
 }
 
 /*
@@ -273,17 +271,14 @@ end:
 AA64Thread* AuCreateKthread(void(*entry) (uint64_t),uint64_t* pml, char* name){
 	AA64Thread* t = (AA64Thread*)kmalloc(sizeof(AA64Thread));
 	memset(t, 0, sizeof(AA64Thread));
+	strncpy(t->name, name,8);
 	t->elr_el1 = (uint64_t)entry;
 	t->x30 = (uint64_t)entry;
 	t->spsr_el1 = 0x245;
-	//UARTDebugOut("SPSR_EL1: %x \n", t->spsr_el1);
-
-	//UARTDebugOut("Thr %s x30 : %x \n", name, t->x30);
 	//t->sp = stack;
 	t->pml = (uint64_t)pml;
 	t->sp = (uint64_t)AuCreateKernelStack((uint64_t*)t->pml);
 	t->state = THREAD_STATE_READY;
-	strcpy(t->name, name);
 	AuThreadInsert(t);
 	return t;
 }
@@ -295,10 +290,22 @@ extern void PrintThreadInfo() {
 void AuIdleThread(uint64_t ctx) {
 	UARTDebugOut("Idle thread running \n");
 	while (1) {
+		enable_irqs();
 		uint64_t el = _getCurrentEL();
 		UARTDebugOut("IDLE CurrentEl : %d \n", el);
 	}
 }
+
+extern void resume_user(AA64Thread* thr);
+void AuResumeUserThread() {
+	AA64Thread* thr = current_thread;
+	thr->x30 = thr->elr_el1;
+	resume_user(thr);
+	//aa64_enter_user(thr->sp, thr->elr_el1);
+	while (1) {}
+}
+
+extern uint64_t read_x30();
 
 bool debug = 0;
 void AuScheduleThread(AA64Registers* regs) {
@@ -306,31 +313,26 @@ void AuScheduleThread(AA64Registers* regs) {
 		return;
 	}
 	AA64Thread* runThr = current_thread;
-	//UARTDebugOut("Current thread : %s \n", runThr->name);
+	
 	aa64_store_context(runThr);
 	runThr->x30 = regs->x30;
 	runThr->x29 = regs->x29;
-	runThr->x19 = regs->x19;
-	runThr->x20 = regs->x20;
-	runThr->x21 = regs->x21;
-	runThr->x22 = regs->x22;
-	runThr->x23 = regs->x23;
-	runThr->x24 = regs->x24;
-	runThr->x25 = regs->x25;
-	runThr->x26 = regs->x26;
-	runThr->x27 = regs->x27;
-	runThr->x28 = regs->x28;
-
+	//UARTDebugOut("Storing thread : %s , elr_el1: %x \n", runThr->name, runThr->elr_el1);
 	if (debug != 3) {
 		//UARTDebugOut("***Stored X30: %x \n", runThr->x30);
 		//UARTDebugOut("***Saved EL1 : %x \n", runThr->elr_el1);
 	}
 	debug++;
-	//UARTDebugOut("StoreCtx x30 -> %x %s\n", runThr->x30, runThr->name);
+	
 	AA64NextThread();
 	write_both_ttbr(V2P(current_thread->pml));
-	//UARTDebugOut("Switching to next thread : %x \n", current_thread->elr_el1);
-	//UARTDebugOut("NextCtx x30 -> %x %s\n", current_thread->x30, current_thread->name);
+	//UARTDebugOut("Switching to thread : %s \n", current_thread->name);
+	if ((current_thread->threadType & THREAD_LEVEL_USER) && current_thread->first_run == 1) {
+		//UARTDebugOut("Already ELR_EL1 : %x, x30: %x \n", current_thread->elr_el1, current_thread->x30);
+		current_thread->elr_el1 = current_thread->x30;
+		//UARTDebugOut("Now ELR_EL1: %x \n", current_thread->elr_el1);
+		current_thread->x30 = &AuResumeUserThread;
+	}
 	aa64_restore_context(current_thread);
 }
 
@@ -344,7 +346,7 @@ uint64_t stack_index;
 uint64_t AuCreateKernelStack(uint64_t* pml) {
 	uint64_t addr = (uint64_t)P2V((uint64_t)AuPmmngrAlloc());
 	uint64_t idx = stack_index;
-	AuMapPageEx(pml, V2P(addr),KERNEL_STACK_LOCATION + idx * 4096, PTE_AP_RW);// PTE_AP_RW_USER | PTE_USER_EXECUTABLE);
+	AuMapPageEx(pml, V2P(addr),KERNEL_STACK_LOCATION + idx * 4096, PTE_AP_RW | PTE_AP_RW_USER | PTE_USER_EXECUTABLE);
 	stack_index++;
 	return ((KERNEL_STACK_LOCATION + idx * 4096) + 4096);
 }
