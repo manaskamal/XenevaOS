@@ -88,12 +88,10 @@ int i_ = 1;
 
 void AuEntryTest(uint64_t test) {
 	//aa64_utest();
-	UARTDebugOut("Second task running\r\n");
-	aa64_enter_user(((0x40000000000 + 4096) - 32), 0x40000100000);
+	//UARTDebugOut("Second task running\r\n");
 	int c = 10;
 	//enable_irqs();
 	while (1) {
-		//UARTDebugOut("22 Second ...\n");
 		//enable_irqs();
 		/*if ((c % 2) == 0)
 			UARTDebugOut("2\n");
@@ -104,7 +102,7 @@ void AuEntryTest(uint64_t test) {
 }
 
 void AuEntryTest2(uint64_t test) {
-	UARTDebugOut("Third Task running\r\n");
+	//UARTDebugOut("Third Task running\r\n");
 	int d = 10;
 	//enable_irqs();
 	while (1) {
@@ -112,7 +110,7 @@ void AuEntryTest2(uint64_t test) {
 		if ((d % 2) != 0)
 			UARTDebugOut("3 \n");
 		d++;*/
-		//UARTDebugOut("3\n");
+		//UARTDebugOut("3 \n");
 	}
 }
 
@@ -146,13 +144,16 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	AuInitialiseLoader();
 	
 	/* clear out the lower half memory */
-	//AuVmmngrBootFree();
+	AuVmmngrBootFree();
 
 	AuSchedulerInitialize();
-
+	UARTDebugOut("SIZEOF (AuUserEntry) - %d \n", sizeof(AuUserEntry));
 	AuProcess* proc = AuCreateProcessSlot(0, "exec");
 	AuLoadExecToProcess(proc, "/test.exe", 0, NULL);
+
 	AA64Thread* thr = AuCreateKthread(AuEntryTest2, AuCreateVirtualAddressSpace(), "Test");
+	AA64Thread* thr2 = AuCreateKthread(AuEntryTest, AuCreateVirtualAddressSpace(), "Test2User");
+	//UARTDebugOut("Offset of ThreadType - %d \n", (&thr2->threadType - thr));
 
 	UARTDebugOut("Kernel Lower half is cleared \n");
 	

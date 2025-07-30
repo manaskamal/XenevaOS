@@ -101,8 +101,8 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) 
 	PIMAGE_NT_HEADERS nt = RAW_OFFSET(PIMAGE_NT_HEADERS,dos, dos->e_lfanew);
 	PSECTION_HEADER secthdr = RAW_OFFSET(PSECTION_HEADER,&nt->OptionalHeader, nt->FileHeader.SizeOfOptionaHeader);
 
-	uint64_t _image_base_ = nt->OptionalHeader.ImageBase;
-	entry ent = (entry)(nt->OptionalHeader.AddressOfEntryPoint + nt->OptionalHeader.ImageBase);
+	uint64_t _image_base_ = 0x60000000000;//   nt->OptionalHeader.ImageBase;
+	entry ent = (entry)(nt->OptionalHeader.AddressOfEntryPoint + _image_base_);//nt->OptionalHeader.ImageBase);
 	UARTDebugOut("Image base address : %x \n", ent);
 	uint64_t* cr3 = proc->cr3;
 
@@ -167,8 +167,7 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) 
 			uint64_t alloc = (load_addr + j * 0x1000);
 			uint64_t phys = P2V((size_t)AuPmmngrAlloc());
 			UARTDebugOut("LoadAddr : %x , phys : %x \n", alloc, phys);
-			AuMapPageEx(proc->cr3, V2P(phys), alloc, PTE_USER_EXECUTABLE | PTE_AP_RW_USER |
-				PTE_AP_RW | PTE_KERNEL_EXECUTABLE);
+			AuMapPageEx(proc->cr3, V2P(phys), alloc, PTE_USER_EXECUTABLE | PTE_AP_RW_USER );
 			if (!block)
 				block = (uint64_t*)phys;
 		}
@@ -189,7 +188,7 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) 
 	uentry->entrypoint = (size_t)ent;
 	uentry->stackBase = proc->_main_stack_;
 	thr->uentry = uentry;
-	UARTDebugOut("Binary mapped \n");
+	UARTDebugOut("Binary mapped , thread type %d\n", thr->threadType);
 	return 0;
 }
 /*

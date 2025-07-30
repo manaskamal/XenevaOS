@@ -101,35 +101,12 @@ void irq_el1_handler(AA64Registers* regs) {
     uint32_t irq = iar & 0x3FF;
     if (irq < 1020) {
         if (irq == 27) {
-           // if (_debug != 3) {
-               //UARTDebugOut("X30: %x \n", regs->x30);
-               // UARTDebugOut("SPSR of Thread : %s is %x \n", AuGetCurrentThread()->name, AuGetCurrentThread()->spsr_el1);
-           // }
-            _debug++;
-         /*   UARTDebugOut("Timer IRQ fired %d multi-tasking possible \n", irq);
-            uint64_t ctl = readTimerCtl();
-            if (ctl & (1 << 0)) {
-                UARTDebugOut("Timer is enabled \n");
-            }
-            if (ctl & (1 << 1)) {
-                UARTDebugOut("Timer interrupt is masked \n");
-            }
-
-            if (ctl & (1 << 2)) {
-                UARTDebugOut("Timer status bit is not cleared \n");
-            }
-            UARTDebugOut("IAR : %x \n", iar);*/
-            /* suspendTimer();*/
-            // for (;;);
+            //suspendTimer();
             setupTimerIRQ();
             GICSendEOI(iar);
             GICCheckPending(irq);
-            //UARTDebugOut("Timer fired \n");
-            // UARTDebugOut("Timer re setuped \n");
-              //timer irq fires here, do multitasking stuffs
+        
             AuScheduleThread(regs);
-            //suspendTimer();
-           // aa64_restore_context(AuGetIdleThread());
         }
         /*else if (irq == 27) {
             AuTextOut("Virtual Timer IRQ fired %d \n", irq);

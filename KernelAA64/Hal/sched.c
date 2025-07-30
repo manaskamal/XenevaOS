@@ -317,22 +317,13 @@ void AuScheduleThread(AA64Registers* regs) {
 	aa64_store_context(runThr);
 	runThr->x30 = regs->x30;
 	runThr->x29 = regs->x29;
-	//UARTDebugOut("Storing thread : %s , elr_el1: %x \n", runThr->name, runThr->elr_el1);
-	if (debug != 3) {
-		//UARTDebugOut("***Stored X30: %x \n", runThr->x30);
-		//UARTDebugOut("***Saved EL1 : %x \n", runThr->elr_el1);
-	}
-	debug++;
 	
 	AA64NextThread();
 	write_both_ttbr(V2P(current_thread->pml));
-	//UARTDebugOut("Switching to thread : %s \n", current_thread->name);
-	if ((current_thread->threadType & THREAD_LEVEL_USER) && current_thread->first_run == 1) {
-		//UARTDebugOut("Already ELR_EL1 : %x, x30: %x \n", current_thread->elr_el1, current_thread->x30);
-		current_thread->elr_el1 = current_thread->x30;
-		//UARTDebugOut("Now ELR_EL1: %x \n", current_thread->elr_el1);
-		current_thread->x30 = &AuResumeUserThread;
-	}
+
+	if ((current_thread->threadType & THREAD_LEVEL_USER) && current_thread->first_run == 1) 
+		resume_user(current_thread);
+	
 	aa64_restore_context(current_thread);
 }
 
@@ -346,8 +337,7 @@ uint64_t stack_index;
 uint64_t AuCreateKernelStack(uint64_t* pml) {
 	uint64_t addr = (uint64_t)P2V((uint64_t)AuPmmngrAlloc());
 	uint64_t idx = stack_index;
-	AuMapPageEx(pml, V2P(addr),KERNEL_STACK_LOCATION + idx * 4096, PTE_AP_RW | PTE_AP_RW_USER | PTE_USER_EXECUTABLE);
-	stack_index++;
+	AuMapPageEx(pml, V2P(addr),KERNEL_STACK_LOCATION + idx * 4096, PTE_AP_RW);
 	return ((KERNEL_STACK_LOCATION + idx * 4096) + 4096);
 }
 

@@ -79,13 +79,13 @@ typedef struct _aa64_task_ {
 	uint64_t sp; //96
 	uint64_t elr_el1; //104
 	uint64_t spsr_el1;//112
-	uint8_t state;
-	uint8_t threadType;
-	uint64_t pml;
-	char name[8];
-	void *procSlot;
-	AuUserEntry* uentry;
-	bool first_run;
+	uint8_t state; //120
+	uint8_t threadType; //121
+	uint64_t pml;  //122
+	char name[8];   //130
+	void *procSlot; //138
+	AuUserEntry* uentry; //146
+	bool first_run; //206
 	struct _aa64_task_* next;
 	struct _aa64_task_* prev;
 }AA64Thread;

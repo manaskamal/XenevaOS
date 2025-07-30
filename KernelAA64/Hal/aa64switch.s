@@ -28,6 +28,7 @@
 **/
 
 .extern PrintThreadInfo
+.extern AuResumeUserThread
 
 .global aa64_store_context
 aa64_store_context:
@@ -39,12 +40,17 @@ aa64_store_context:
    stp x27,x28,[x0,#64]
    stp x29,x30,[x0,#80]
 
-   mov x2,sp 
-   str x2,[x0, #96]
+   /* dont store the stack,
+    * because it will keep decreasing
+    * over time when this thread will
+    * get executed next time
+    */
+  // mov x2,sp 
+   //str x2,[x0, #96]
    mrs x2,ELR_EL1
    str x2,[x0, #104]
-   mrs x2, spsr_el1
-   str x2, [x0,#112]
+   //mrs x2, spsr_el1
+   //str x2, [x0,#112]
    ret
 
 
@@ -60,12 +66,23 @@ aa64_restore_context:
    ldp x29,x30, [x0,#80]
 
    ldr x2, [x0, #96]
+   /* directly load the original stack 
+    * which is top of the stack
+    */
    mov sp, x2 
    ldr x2,[x0,#104]
    msr ELR_EL1,x2 
    ldr x2, [x0,#112]
    msr SPSR_EL1,x2
 
+   ldrb w2, [x0,#121]
+   cmp w2, #2
+   b.ne _skip_comp
+   ldrb w3, [x0,#206]
+   cmp w3, #1
+   b.ne _skip_comp
+   mov x30, 0
+_skip_comp:
    /* We must clear the IRQ bit from daifclr manually,
     * because when exception is taken DAIF bits are masked */
    msr daifclr, #0x2
@@ -102,13 +119,16 @@ first_time_sex:
 
 .global resume_user
 resume_user:
-   // ldp x30,x0,[sp], #16
-   ldr x2, [x0, #112]
-   msr SPSR_EL1,x2  
-   ldp x19,x20,[x0, #0]
-   ldp x21,x22,[x0,#16]
-   ldp x23,x24,[x0,#32]
-   ldp x25,x26,[x0,#48]
-   ldp x27, x28,[x0,#64] 
-   ldp x29,x30, [x0,#80]
-   eret
+  ldp x19,x20,[x0, #0]
+  ldp x21,x22,[x0,#16]
+  ldp x23,x24,[x0,#32]
+  ldp x25,x26,[x0,#48]
+  ldp x27, x28,[x0,#64] 
+  ldp x29,x30, [x0,#80]
+
+  ldr x2,[x0,#104]
+  msr ELR_EL1,x2 
+  mov x2,#0x00 // [x0,#112]
+  msr SPSR_EL1,x2
+  eret
+  

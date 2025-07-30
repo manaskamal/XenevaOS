@@ -244,13 +244,15 @@ aa64_svc_test:
 
 .global aa64_utest
 aa64_utest:
-   mov x14,5
-   mov x8, 0
-   svc #0
-   mov x8, x0
-   svc #0
- _hng:
-   b _hng
+  // mov x14,5
+   //mov x8, 0
+   //svc #0
+  // mov x8, x0
+  // svc #0
+ _hnge:
+   //mov x8, 0
+  // svc #0
+   b _hnge
 
 .global read_x30
 read_x30:
