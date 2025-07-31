@@ -63,6 +63,11 @@ void AuAA64SyscallHandler(AA64Registers* regs) {
 	uint64_t vector = regs->x8;
 	uint64_t retcode = 0;
 
+	if ((vector > AURORA_MAX_SYSCALL) || (vector < 0)) {
+		regs->x0 = retcode;
+		return;
+	}
+
 	syscall_func func = (syscall_func)syscalls[vector];
 	if (!func)
 		return 0;

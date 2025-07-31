@@ -57,7 +57,7 @@ void sync_el1_handler(AA64Registers *regs) {
         UARTDebugOut("System call trapped %d x30: %x\n", regs->x8, 
             regs->x30);
         AuAA64SyscallHandler(regs);
-        enable_irqs();
+       // enable_irqs();
         return;
     }
 
@@ -166,7 +166,14 @@ void fault_el1_handler(AA64Registers* regs) {
 }
 
 void sync_el0_handler(AA64Registers* regs) {
-    AuTextOut("SVC Request got : %d \n", regs->x8);
+    uint64_t esr = read_esr_el1();
+
+    if ((esr >> 26) == 0x15) {
+        UARTDebugOut("System call trapped %d x30: %x\n", regs->x8,
+            regs->x30);
+        AuAA64SyscallHandler(regs);
+        return;
+    }
 }
 extern char vectors[];
 
