@@ -81,6 +81,25 @@ While there are many mature Kernel available for different domains and they are 
 
 **NOTE: XenevaOS is in early development. The features above are not implemented yet, because the project is in foundation level. But we are committed to exploring each of them through focused iterations and community feedback. Whether you're a developer looking to contribute, or someone exploring alternative OS design, we welcome your curiosity.**
 
+## XenevaOS AI Dataset
+
+This folder contains all knowledge, code samples, and prompt templates used to train or condition the XenevaOS AI Assistant.
+
+It helps developers create apps for XenevaOS via natural language — enabling an AI-native developer experience.
+
+---
+
+## Contents
+
+- `00_overview.md` — OS architecture, boot flow, memory, process model  
+- `01_gui_reference.md` — APIs for GUI rendering using Chitralekha  
+- `02_app_templates.md` — Example prompts → native app code  
+- `03_kernel_services.md` — Syscalls, scheduling, filesystem, memory, IPC  
+- `04_finetune_snippets.jsonl` — Prompt → completion pairs for LLM training or few-shot inference
+
+---
+
+Each file is intended to enrich either LLM-based assistant logic or serve as human developer documentation for building natively on XenevaOS.
 
 # Contact:
 For questions, suggestions, or collaborations, feel free to reach out
