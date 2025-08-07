@@ -21,6 +21,8 @@ Everything inside XELoader is an object. Objects are of two type : _Main Executa
 
 XELoader at last links all the loaded libraries to the main executable by performing similar steps performed during library loading stage. The main object holds the main executable. At this stage the main _entry point_ is extracted from the main executable and stored in main object list.
 
+> Note: Whenever you load an executable it gets linked with required dynamic libraries. Whenever another or same executable needs the same library, it doesn't get loaded from the disk rather the it get pointed to the previously loaded dynamic library until a 'data write' to that library happens. If a 'data write' happens the exact copy of that library is created, this is called "Copy-On-Write" algorithm.
+
 ## Control Transfer
 Transferring the control to the main executable is only performed after loading and linking of the main program and libraries are done efficiently. Failure of loading and linking results in program crash. Before transferring control to the program, XELoader updates the signal table of the current process with Default Signal Handler. Finally XELoader transfers the control to the program by calling the _Main Entry Point_ from the main object list.
 
