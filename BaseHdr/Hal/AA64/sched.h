@@ -86,6 +86,11 @@ typedef struct _aa64_task_ {
 	void *procSlot; //138
 	AuUserEntry* uentry; //146
 	bool first_run; //206
+	uint64_t thread_id; //207
+	uint64_t sleepQuanta; //215
+	uint64_t originalKSp; //223
+	bool returnFromSyscall;
+	bool justStored;
 	struct _aa64_task_* next;
 	struct _aa64_task_* prev;
 }AA64Thread;
@@ -98,5 +103,23 @@ extern void AuScheduleThread(AA64Registers*regs);
 extern void AuSchedulerStart();
 extern AA64Thread* AuGetIdleThread();
 extern AA64Thread* AuGetCurrentThread();
+
+/*
+ * AuBlockThread -- blocks a running thread
+ * @param thread -- Pointer to AA64 Thread
+ */
+AU_EXTERN AU_EXPORT void AuBlockThread(AA64Thread* thread);
+/*
+ * AuForceScheduler -- force the scheduler
+ * to switch next thread
+ */
+AU_EXTERN AU_EXPORT void AuForceScheduler();
+
+/*
+ * AuSleepThread -- block a running thread
+ * and put it into sleep list
+ * @param thread -- Pointer to AA64 Thread
+ */
+AU_EXTERN AU_EXPORT void AuSleepThread(AA64Thread* thread);
 
 #endif

@@ -33,6 +33,9 @@
 .extern sync_el0_handler
 
 sync_el1_wrapper:
+   mov x9, sp
+   bic x9, x9, #15
+   mov sp, x9
    stp x0, x1, [sp, #-16]!
    stp x2, x3, [sp, #-16]!
    stp x4, x5, [sp, #-16]!
@@ -74,6 +77,9 @@ sync_el1_wrapper:
 
 .global irq_el1_wrapper
 irq_el1_wrapper:
+   mov x9, sp
+   bic x9, x9, #15
+   mov sp, x9
    stp x0, x1, [sp, #-16]!
    stp x2, x3, [sp, #-16]!
    stp x4, x5, [sp, #-16]!
@@ -114,6 +120,9 @@ irq_el1_wrapper:
 
 .global sync_el0_wrapper
 sync_el0_wrapper:
+   mov x9, sp
+   bic x9, x9, #15
+   mov sp, x9
    stp x0, x1, [sp, #-16]!
    stp x2, x3, [sp, #-16]!
    stp x4, x5, [sp, #-16]!
@@ -163,6 +172,9 @@ sync_el0_wrapper:
 
 .global irq_el0_wrapper
 irq_el0_wrapper:
+   mov x9, sp
+   bic x9, x9, #15
+   mov sp, x9
    stp x0, x1, [sp, #-16]!
    stp x2, x3, [sp, #-16]!
    stp x4, x5, [sp, #-16]!

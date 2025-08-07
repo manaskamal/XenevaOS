@@ -86,6 +86,8 @@ bool AuLittleBootUsed() {
 
 int i_ = 1;
 
+extern void sub_rsp();
+
 void AuEntryTest(uint64_t test) {
 	//aa64_utest();
 	//UARTDebugOut("Second task running\r\n");
@@ -110,7 +112,6 @@ void AuEntryTest2(uint64_t test) {
 		if ((d % 2) != 0)
 			UARTDebugOut("3 \n");
 		d++;*/
-		//UARTDebugOut("3 \n");
 	}
 }
 

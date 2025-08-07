@@ -74,6 +74,13 @@ write_both_ttbr:
     tlbi vmalle1is 
     dsb ish
     isb 
+    ret
+
+.global dsb_sy_barrier
+dsb_sy_barrier:
+   dsb sy
+   isb
+   ret
 
 .global read_sctlr_el1
 read_sctlr_el1:
@@ -268,3 +275,14 @@ read_sp:
 read_sp_el1:
    mrs x0, SP_EL1
    ret
+
+.global sub_rsp
+sub_rsp:
+   sub sp,sp, #256
+   ret
+
+.global set_kstack
+set_kstack:
+   msr SP_EL1, x0
+   ret
+

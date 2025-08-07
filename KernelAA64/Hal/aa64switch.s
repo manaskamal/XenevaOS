@@ -29,6 +29,7 @@
 
 .extern PrintThreadInfo
 .extern AuResumeUserThread
+.extern AuScheduleThread
 
 .global aa64_store_context
 aa64_store_context:
@@ -45,6 +46,7 @@ aa64_store_context:
     * over time when this thread will
     * get executed next time
     */
+
   // mov x2,sp 
    //str x2,[x0, #96]
    mrs x2,ELR_EL1
@@ -69,6 +71,7 @@ aa64_restore_context:
    /* directly load the original stack 
     * which is top of the stack
     */
+   bic x2, x2, #15
    mov sp, x2 
    ldr x2,[x0,#104]
    msr ELR_EL1,x2 
@@ -131,4 +134,83 @@ resume_user:
   mov x2,#0x00 // [x0,#112]
   msr SPSR_EL1,x2
   eret
+
+.global first_time_sex2
+first_time_sex2:
+    mov x1, x0
+    ldr x19,[x1, #0]
+    ldr x20,[x1, #8]
+    ldr x21, [x1,#16]
+    ldr x22, [x1,#24]
+    ldr x23, [x1, #32]
+    ldr x24, [x1, #40]
+    ldr x25, [x1, #48]
+    ldr x26, [x1, #56]
+    ldr x27, [x1, #64]
+    ldr x28, [x1, #72]
+    ldr x29, [x1, #80]
+    ldr x30, [x1, #88]
+   
+    ldr x2, [x1, #96]
+    bic x2, x2, #15
+    mov sp, x2
+   
+    ldr x2, [x1, #104]
+    msr ELR_EL1, x2
+    ldr x2, [x1, #112]
+    msr spsr_el1, x2
+    eret
+
+
+.global store_syscall
+store_syscall:
+  // stp x29,x30,[sp, #-16]!
+   mov x2,sp 
+   bic x2, x2, #15
+   mov sp, x2
+
+/* x0 holds the register frame */
+   stp x19,x20,[x0,#0]
+   stp x21,x22,[x0,#16]
+   stp x23, x24,[x0,#32]
+   stp x25,x26,[x0,#48]
+   stp x27,x28,[x0,#64]
+   stp x29,x30,[x0,#80]
+
+   /* dont store the stack,
+    * because it will keep decreasing
+    * over time when this thread will
+    * get executed next time
+    */
+    isb
+    tlbi vmalle1is 
+  
+   str x2,[x0, #96]
+   mrs x2,ELR_EL1
+   str x2,[x0, #104]
+   mrs x2, spsr_el1
+   str x2, [x0,#112]
+   ret
+
+.global ret_from_syscall
+ret_from_syscall:
+   mov x1, x30
+   ldp x19,x20,[x0, #0]
+   ldp x21,x22,[x0,#16]
+   ldp x23,x24,[x0,#32]
+   ldp x25,x26,[x0,#48]
+   ldp x27, x28,[x0,#64] 
+   ldp x29,x30, [x0,#80]
+
+   ldr x2, [x0, #96]
+   /* directly load the original stack 
+    * which is top of the stack
+    */
+   mov sp, x2 
+   ldr x2,[x0,#104]
+   msr ELR_EL1,x2 
+   ldr x2, [x0,#112]
+   msr SPSR_EL1,x2
+   mov x30, x1
+   ret
   
