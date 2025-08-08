@@ -282,6 +282,7 @@ AA64Thread* AuCreateKthread(void(*entry) (uint64_t),uint64_t* pml, char* name){
 	//t->sp = stack;
 	t->pml = (uint64_t)pml;
 	t->sp = (uint64_t)AuCreateKernelStack((uint64_t*)t->pml);
+	t->sp -= 32;
 	uint64_t kstack = t->sp;
 	t->sp = (((uint64_t)kstack + 15) & ~(uint64_t)0xF);
 	t->state = THREAD_STATE_READY;
@@ -399,12 +400,12 @@ void AuSchedulerInitialize() {
 	thread_list_head = NULL;
 	thread_list_last = NULL;
 	stack_index = 0;
+	thread_id = 0;
 	uint64_t* idle_pd = AuCreateVirtualAddressSpace();
 	AA64Thread* idle_ = AuCreateKthread(AuIdleThread,idle_pd, "Idle");
 	//idle_->elr_el1 = (uint64_t)AuIdleThread;
 	_idle_thr = idle_;
 	current_thread = idle_;
-	thread_id = 0;
 	_scheduler_initialized = false;
 }
 
@@ -447,6 +448,26 @@ void AuBlockThread(AA64Thread* thread) {
 }
 
 /*
+* AuUnblockThread -- unblocks a thread and insert it to
+* ready list
+* @param t -- pointer to thread
+*/
+void AuUnblockThread(AA64Thread* thread) {
+	thread->state = THREAD_STATE_READY;
+	bool found_ = false;
+	AA64Thread* thr = NULL;
+	for (thr = blocked_thr_head; thr != NULL; thr = thr->next) {
+		if (thr == thread) {
+			AuThreadDeleteBlock(thr);
+			found_ = 1;
+			break;
+		}
+	}
+	if (found_)
+		AuThreadInsert(thread);
+}
+
+/*
  * AuSleepThread -- block a running thread
  * and put it into sleep list
  * @param thread -- Pointer to AA64 Thread
@@ -456,4 +477,32 @@ void AuSleepThread(AA64Thread* thread) {
 	thread->state = THREAD_STATE_SLEEP;
 	AuThreadDelete(thread);
 	AuThreadInsertSleep(thread);
+}
+
+/*
+ * AuThreadFindByID -- finds a thread by its id from
+ * ready queue
+ * @param id -- id of the thread
+ */
+AA64Thread* AuThreadFindByID(uint64_t id) {
+	AA64Thread* ready_queue_ = NULL;
+	for (ready_queue_ = thread_list_head; ready_queue_ != NULL; ready_queue_ = ready_queue_->next) {
+		if (ready_queue_->thread_id== id)
+			return ready_queue_;
+	}
+	return NULL;
+}
+
+/*
+ * AuThreadFindByIDBlockList -- finds a thread by its id from
+ * the block queue
+ * @param id -- id of the thread
+ */
+AA64Thread* AuThreadFindByIDBlockList(uint64_t id) {
+	AA64Thread* block_queue = NULL;
+	for (block_queue = blocked_thr_head; block_queue != NULL; block_queue = block_queue->next) {
+		if (block_queue->thread_id == id)
+			return block_queue;
+	}
+	return NULL;
 }

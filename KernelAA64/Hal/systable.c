@@ -33,8 +33,9 @@
 #include <Hal/AA64/aa64cpu.h>
 #include <Hal/AA64/sched.h>
 #include <_null.h>
+#include <Serv/sysserv.h>
 
-#define AURORA_MAX_SYSCALL 3
+#define AURORA_MAX_SYSCALL 24
 
 /* Syscall function format */
 typedef int64_t(*syscall_func) (int64_t param1, int64_t param2, int64_t param3, int64_t
@@ -48,16 +49,7 @@ uint64_t null_call(int64_t param1, int64_t param2, int64_t param3, int64_t
 
 extern uint64_t read_sp();
 
-uint64_t PauseThread() {
-	uint64_t sp = read_sp();
-	UARTDebugOut("Pause thread sp : %x\n", sp);
-	AA64Thread* thr = AuGetCurrentThread();
-	thr->sleepQuanta = 5;
-	AuSleepThread(thr);
-	AuScheduleThread(NULL);
-	UARTDebugOut("End of pause thread sp: %x\n", read_sp());
-	return 0;
-}
+
 
 uint64_t test_call() {
 	UARTDebugOut("Test call initiated \r\n");
@@ -68,6 +60,27 @@ static void* syscalls[AURORA_MAX_SYSCALL] = {
 	null_call, //0
 	test_call, //1
 	PauseThread, //2
+	GetThreadID, //3
+	GetProcessID, //4
+	ProcessExit, //5
+	ProcessWaitForTermination, //6
+	CreateProcess, //7
+	0, //8
+	0, //9
+	0, //10
+	0, //11
+	0, //12
+	0, //13
+	0, //14
+	0, //15
+	0, //16
+	0, //17
+	0, //18
+	0, //19
+	0, //20
+	0, //21
+	0, //22
+	ProcessSleep, //23
 };
 
 /*

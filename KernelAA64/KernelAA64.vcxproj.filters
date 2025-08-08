@@ -91,6 +91,9 @@
     </ClCompile>
     <ClCompile Include="process.c" />
     <ClCompile Include="loader.c" />
+    <ClCompile Include="Serv\thrserv.c">
+      <Filter>Serv</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Hal">
@@ -131,6 +134,9 @@
     </Filter>
     <Filter Include="Board\Virt">
       <UniqueIdentifier>{67e2c92e-7179-4857-bb26-2023ebd74ce3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Serv">
+      <UniqueIdentifier>{d53e9161-7905-4cec-ba48-ca5e559f4c2d}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

@@ -271,6 +271,7 @@
     <ClCompile Include="pcie.c" />
     <ClCompile Include="pe.c" />
     <ClCompile Include="process.c" />
+    <ClCompile Include="Serv\thrserv.c" />
     <ClCompile Include="stdio.c" />
     <ClCompile Include="string.c" />
   </ItemGroup>

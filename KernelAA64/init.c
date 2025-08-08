@@ -90,7 +90,6 @@ extern void sub_rsp();
 
 void AuEntryTest(uint64_t test) {
 	//aa64_utest();
-	//UARTDebugOut("Second task running\r\n");
 	int c = 10;
 	//enable_irqs();
 	while (1) {
@@ -98,20 +97,24 @@ void AuEntryTest(uint64_t test) {
 		/*if ((c % 2) == 0)
 			UARTDebugOut("2\n");
 		for (int i = 0; i < 10000000; i++)
-			;
-		c++;*/
+			;*/
+		c++;
 	}
 }
 
 void AuEntryTest2(uint64_t test) {
-	//UARTDebugOut("Third Task running\r\n");
 	int d = 10;
 	//enable_irqs();
+	AA64Thread* thr = AuThreadFindByIDBlockList(1);
+	if (thr) {
+		UARTDebugOut("Unblocking thr : %s \n", thr->name);
+		AuUnblockThread(thr);
+	}
 	while (1) {
 		/*enable_irqs();
 		if ((d % 2) != 0)
-			UARTDebugOut("3 \n");
-		d++;*/
+			UARTDebugOut("3 \n");*/
+		d++;
 	}
 }
 

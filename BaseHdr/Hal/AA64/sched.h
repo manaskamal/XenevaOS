@@ -109,6 +109,13 @@ extern AA64Thread* AuGetCurrentThread();
  * @param thread -- Pointer to AA64 Thread
  */
 AU_EXTERN AU_EXPORT void AuBlockThread(AA64Thread* thread);
+
+/*
+* AuUnblockThread -- unblocks a thread and insert it to
+* ready list
+* @param t -- pointer to thread
+*/
+AU_EXTERN AU_EXPORT void AuUnblockThread(AA64Thread* thread);
 /*
  * AuForceScheduler -- force the scheduler
  * to switch next thread
@@ -121,5 +128,20 @@ AU_EXTERN AU_EXPORT void AuForceScheduler();
  * @param thread -- Pointer to AA64 Thread
  */
 AU_EXTERN AU_EXPORT void AuSleepThread(AA64Thread* thread);
+
+/*
+ * AuThreadFindByID -- finds a thread by its id from
+ * ready queue
+ * @param id -- id of the thread
+ */
+AU_EXTERN AU_EXPORT AA64Thread* AuThreadFindByID(uint64_t id);
+
+/*
+ * AuThreadFindByIDBlockList -- finds a thread by its id from
+ * the block queue
+ * @param id -- id of the thread
+ */
+AU_EXTERN AU_EXPORT AA64Thread* AuThreadFindByIDBlockList(uint64_t id);
+
 
 #endif
