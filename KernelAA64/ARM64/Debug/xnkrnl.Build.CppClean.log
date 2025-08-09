@@ -1,9 +1,7 @@
-e:\xeneva project\aurora\kernelaa64\arm64\debug\aa64cpu.obj
-e:\xeneva project\aurora\kernelaa64\arm64\debug\aa64cpu.asm
-e:\xeneva project\aurora\kernelaa64\arm64\debug\vfs.obj
-e:\xeneva project\aurora\kernelaa64\arm64\debug\vfs.asm
 e:\xeneva project\aurora\kernelaa64\arm64\debug\vdisk.obj
 e:\xeneva project\aurora\kernelaa64\arm64\debug\vdisk.asm
+e:\xeneva project\aurora\kernelaa64\arm64\debug\tty.obj
+e:\xeneva project\aurora\kernelaa64\arm64\debug\tty.asm
 e:\xeneva project\aurora\kernelaa64\arm64\debug\pipe.obj
 e:\xeneva project\aurora\kernelaa64\arm64\debug\pipe.asm
 e:\xeneva project\aurora\kernelaa64\arm64\debug\initrd.obj
@@ -26,6 +24,8 @@ e:\xeneva project\aurora\kernelaa64\arm64\debug\rtcmmio.obj
 e:\xeneva project\aurora\kernelaa64\arm64\debug\rtcmmio.asm
 e:\xeneva project\aurora\kernelaa64\arm64\debug\ctype.obj
 e:\xeneva project\aurora\kernelaa64\arm64\debug\ctype.asm
+e:\xeneva project\aurora\kernelaa64\arm64\debug\circbuf.obj
+e:\xeneva project\aurora\kernelaa64\arm64\debug\circbuf.asm
 e:\xeneva project\aurora\kernelaa64\arm64\debug\virtioblk.obj
 e:\xeneva project\aurora\kernelaa64\arm64\debug\virtioblk.asm
 e:\xeneva project\aurora\kernelaa64\arm64\debug\virt.obj
@@ -38,8 +38,6 @@ e:\xeneva project\aurora\kernelaa64\arm64\debug\audrv.obj
 e:\xeneva project\aurora\kernelaa64\arm64\debug\audrv.asm
 e:\xeneva project\aurora\kernelaa64\arm64\debug\aucon.obj
 e:\xeneva project\aurora\kernelaa64\arm64\debug\aucon.asm
-e:\xeneva project\aurora\kernelaa64\arm64\debug\string.obj
-e:\xeneva project\aurora\kernelaa64\arm64\debug\string.asm
 e:\xeneva project\aurora\kernelaa64\arm64\debug\stdio.obj
 e:\xeneva project\aurora\kernelaa64\arm64\debug\stdio.asm
 e:\xeneva project\aurora\kernelaa64\arm64\debug\thrserv.obj
@@ -76,6 +74,12 @@ e:\xeneva project\aurora\kernelaa64\arm64\debug\gic.obj
 e:\xeneva project\aurora\kernelaa64\arm64\debug\gic.asm
 e:\xeneva project\aurora\kernelaa64\arm64\debug\basicacpi.obj
 e:\xeneva project\aurora\kernelaa64\arm64\debug\basicacpi.asm
+e:\xeneva project\aurora\kernelaa64\arm64\debug\aa64cpu.obj
+e:\xeneva project\aurora\kernelaa64\arm64\debug\aa64cpu.asm
+e:\xeneva project\aurora\kernelaa64\arm64\debug\vfs.obj
+e:\xeneva project\aurora\kernelaa64\arm64\debug\vfs.asm
+e:\xeneva project\aurora\kernelaa64\arm64\debug\string.obj
+e:\xeneva project\aurora\kernelaa64\arm64\debug\string.asm
 e:\xeneva project\aurora\kernelaa64\arm64\debug\vc142.pdb
 e:\xeneva project\aurora\kernelaa64\arm64\debug\aa64vector.obj
 e:\xeneva project\aurora\kernelaa64\arm64\debug\aa64lowlevel.obj

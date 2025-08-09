@@ -94,6 +94,10 @@
     <ClCompile Include="Serv\thrserv.c">
       <Filter>Serv</Filter>
     </ClCompile>
+    <ClCompile Include="Fs\tty.c">
+      <Filter>Fs</Filter>
+    </ClCompile>
+    <ClCompile Include="circbuf.c" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Hal">

@@ -506,3 +506,32 @@ AA64Thread* AuThreadFindByIDBlockList(uint64_t id) {
 	}
 	return NULL;
 }
+
+/*
+ * AuThreadMoveToTrash -- move given thread to
+ * trash
+ * @param t -- Thread to move to trash
+ */
+void AuThreadMoveToTrash(AA64Thread* t) {
+	if (!t)
+		return;
+
+	t->state = THREAD_STATE_KILLABLE;
+
+	AA64Thread* ready_queue_ = NULL;
+	/* search the thread in ready queue*/
+	for (ready_queue_ = thread_list_head; ready_queue_ != NULL; ready_queue_ = ready_queue_->next) {
+		if (ready_queue_ == t)
+			AuThreadDelete(t);
+	}
+
+	AA64Thread* block_queue_ = NULL;
+	/* search the thread in block queue*/
+	for (block_queue_ = blocked_thr_head; block_queue_ != NULL; block_queue_ = block_queue_->next) {
+		if (block_queue_ == t)
+			AuThreadDeleteBlock(t);
+	}
+
+	/* insert it in the trash list */
+	AuThreadInsertTrash(t);
+}

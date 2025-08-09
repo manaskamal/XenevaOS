@@ -48,6 +48,7 @@
 #include <Drivers/virtiogpu.h>
 #include <audrv.h>
 #include <Hal/AA64/sched.h>
+#include <Fs/tty.h>
 
 
 extern int _fltused = 1;
@@ -140,6 +141,9 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	AA64CPUPostInitialize(info);
 	AuVFSInitialise();
 	AuInitrdInitialize(info);
+
+	/* initialize the tty service */
+	AuTTYInitialise();
 
 	/* required virtio-mouse and keyboard */
 	//Here goes board pre driver initialize

@@ -33,6 +33,8 @@
 #include <stdint.h>
 #include <Hal/AA64/aa64cpu.h>
 
+#ifdef ARCH_ARM64
+
 #define  THREAD_STATE_READY     1
 #define  THREAD_STATE_BLOCKED   3
 #define  THREAD_STATE_SLEEP     4
@@ -143,5 +145,13 @@ AU_EXTERN AU_EXPORT AA64Thread* AuThreadFindByID(uint64_t id);
  */
 AU_EXTERN AU_EXPORT AA64Thread* AuThreadFindByIDBlockList(uint64_t id);
 
+/*
+ * AuThreadMoveToTrash -- move given thread to
+ * trash
+ * @param t -- Thread to move to trash
+ */
+AU_EXTERN AU_EXPORT void AuThreadMoveToTrash(AA64Thread* t);
+
+#endif
 
 #endif
