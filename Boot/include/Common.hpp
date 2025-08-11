@@ -27,7 +27,7 @@ std::ptrdiff_t raw_diff(T p1, T p2)
 {
     if constexpr (std::is_pointer<T>::value)
     {
-        return p1 - p2;
+        return reinterpret_cast<std::byte*>(p1) - reinterpret_cast<std::byte*>(p2);
     }
     else
     {
@@ -43,7 +43,7 @@ T raw_offset(U p1, std::ptrdiff_t offset)
     if constexpr (std::is_pointer<T>::value)
     {
         return reinterpret_cast<T>(
-        	reinterpret_cast<std::uintptr_t>(p1) + offset
+        	reinterpret_cast<std::byte*>(p1) + offset
     	);
     }
     else

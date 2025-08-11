@@ -259,14 +259,7 @@ EFI_STATUS efi_main_handler(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTabl
 	 *-------------------------------------------------------------------
 	 */
 	void* xdsp_address = NULL;
-// TODO: I saw this quirk here, where
-// efilib.h seems to define the GUID differently
-// from what was expected
-#ifdef _MSC_VER
 	static EFI_GUID acpi_guid = EFI_ACPI_20_TABLE_GUID;
-#else
-	static EFI_GUID acpi_guid = ACPI_20_TABLE_GUID;
-#endif
 	for (unsigned i = 0; i < gSystemTable->NumberOfTableEntries; ++i) {
 		if (XEGUIDMatch(acpi_guid, configuration_tables[i].VendorGuid)) {
 			xdsp_address = configuration_tables[i].VendorTable;
@@ -276,8 +269,14 @@ EFI_STATUS efi_main_handler(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTabl
 
 	const size_t EARLY_PAGE_STACK_SIZE = 1024 * 1024;
 	EFI_PHYSICAL_ADDRESS earlyPhyPageStack = 0;
-	if (!(SystemTable->BootServices->AllocatePages(AllocateAnyPages, EfiLoaderData, EARLY_PAGE_STACK_SIZE / EFI_PAGE_SIZE, (EFI_PHYSICAL_ADDRESS*)earlyPhyPageStack))) 
-		XEGuiPrint("Early Page Stack: allocation failed.....\n");
+	if (
+		(Status = SystemTable->BootServices->AllocatePages(
+			AllocateAnyPages, EfiLoaderData, 
+			EARLY_PAGE_STACK_SIZE / EFI_PAGE_SIZE, (EFI_PHYSICAL_ADDRESS*)&earlyPhyPageStack)) != EFI_SUCCESS) 
+	{
+		XEGuiPrint("Early Page Stack: allocation failed, %x", Status);
+		for(;;);
+	}
 
 	/*Status = gSystemTable->BootServices->SetWatchdogTimer(0, 0, 0, 0);
 	if (Status != EFI_SUCCESS) 
@@ -301,6 +300,7 @@ EFI_STATUS efi_main_handler(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTabl
 
 	//give a nice bit of room to spare
 	map.MemMapSize += 16 * map.DescriptorSize; //sizeof(EFI_MEMORY_DESCRIPTOR);
+
 	XEGuiPrint("Memory Map size -> %d \n", map.MemMapSize);
 	map.memmap = (EFI_MEMORY_DESCRIPTOR*)XEAllocatePool(map.MemMapSize);
 
@@ -309,7 +309,6 @@ EFI_STATUS efi_main_handler(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTabl
 		XEGuiPrint("Failed to retrieve memory map \n");
 
 	//XEGraphicsClearScreen(gop);
-
 
 	Status = SystemTable->BootServices->ExitBootServices(ImageHandle, map.MapKey);
 	if (Status != EFI_SUCCESS) {
@@ -322,7 +321,6 @@ EFI_STATUS efi_main_handler(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTabl
 
 	/* initilise paging */
 	XEInitialisePaging();
-
 
 	[[maybe_unused]] void* base = XEPELoadImage(krnl->kBuffer);
 	[[maybe_unused]] XEImageEntry kentry = (XEImageEntry)XEPEGetEntryPoint(krnl->kBuffer);

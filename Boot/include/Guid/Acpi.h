@@ -39,6 +39,8 @@
 //
 #define EFI_ACPI_20_TABLE_GUID EFI_ACPI_TABLE_GUID
 
-extern EFI_GUID AcpiTableGuid;
+extern EFI_GUID gEfiAcpiTableGuid;
+extern EFI_GUID gEfiAcpi10TableGuid;
+extern EFI_GUID gEfiAcpi20TableGuid;
 
 #endif
