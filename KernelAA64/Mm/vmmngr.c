@@ -384,6 +384,10 @@ uint64_t* AuCreateVirtualAddressSpace() {
 	return new_pml;
 }
 
+uint64_t* AuGetRootPageTable(){
+	return P2V((uint64_t)_RootPaging);
+}
+
 /*
  * AuVmmngrBootFree -- free up the lower half
  */

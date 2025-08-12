@@ -31,8 +31,11 @@
 #include <Drivers/uart.h>
 #include <Hal/AA64/aa64lowlevel.h>
 #include <Hal/AA64/aa64cpu.h>
+#include <Hal/AA64/sched.h>
+#include <_null.h>
+#include <Serv/sysserv.h>
 
-#define AURORA_MAX_SYSCALL 2
+#define AURORA_MAX_SYSCALL 24
 
 /* Syscall function format */
 typedef int64_t(*syscall_func) (int64_t param1, int64_t param2, int64_t param3, int64_t
@@ -44,14 +47,40 @@ uint64_t null_call(int64_t param1, int64_t param2, int64_t param3, int64_t
 	return 1;
 }
 
+extern uint64_t read_sp();
+
+
+
 uint64_t test_call() {
 	UARTDebugOut("Test call initiated \r\n");
 	return 100;
 }
 
 static void* syscalls[AURORA_MAX_SYSCALL] = {
-	null_call,
-	test_call,
+	null_call, //0
+	test_call, //1
+	PauseThread, //2
+	GetThreadID, //3
+	GetProcessID, //4
+	ProcessExit, //5
+	ProcessWaitForTermination, //6
+	CreateProcess, //7
+	0, //8
+	0, //9
+	0, //10
+	0, //11
+	0, //12
+	0, //13
+	0, //14
+	0, //15
+	0, //16
+	0, //17
+	0, //18
+	0, //19
+	0, //20
+	0, //21
+	0, //22
+	ProcessSleep, //23
 };
 
 /*
@@ -63,11 +92,20 @@ void AuAA64SyscallHandler(AA64Registers* regs) {
 	uint64_t vector = regs->x8;
 	uint64_t retcode = 0;
 
+	if ((vector > AURORA_MAX_SYSCALL) || (vector < 0)) {
+		regs->x0 = retcode;
+		return;
+	}
+
+	AA64Thread* currThr = AuGetCurrentThread();
+	currThr->returnFromSyscall = 1;
+
 	syscall_func func = (syscall_func)syscalls[vector];
 	if (!func)
 		return 0;
 
 	retcode = func(0, 0, 0, 0, 0, 0);
 	regs->x0 = retcode;
+	currThr->returnFromSyscall = 0;
 	return;
 }

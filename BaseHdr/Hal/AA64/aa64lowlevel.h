@@ -83,6 +83,10 @@ AU_EXTERN AU_EXPORT void write_sctlr_el1(uint64_t sctlr);
  */
 AU_EXTERN AU_EXPORT void dsb_ish();
 
+AU_EXTERN AU_EXPORT void dsb_sy_barrier();
+
+AU_EXTERN AU_EXPORT void set_kstack(uint64_t stack);
+
 /*
  * isb_flush -- instruction synchronization flush, flush previous
  * instruction set

@@ -207,6 +207,22 @@ AuProcess * AuCreateProcessSlot(AuProcess * parent, char* name) {
 	proc->state = PROCESS_STATE_NOT_READY;
 	proc->cr3 = cr3;
 	proc->_main_stack_ = main_thr_stack;
+	uint64_t ustack = proc->_main_stack_;
+	proc->_main_stack_ = (((uint64_t)ustack + 15) & ~(uint64_t)0xF);
 	AuAddProcess(parent, proc);
 	return proc;
+}
+
+/*
+ * AuProcessGetFileDesc -- returns a empty file descriptor
+ * from process slot, 0, 1 & 2 are reserved for terminal
+ * output
+ * @param proc -- pointer to process slot
+ */
+int AuProcessGetFileDesc(AuProcess* proc) {
+	for (int i = 3; i < (FILE_DESC_PER_PROCESS - 3); i++) {
+		if (!proc->fds[i])
+			return i;
+	}
+	return -1;
 }

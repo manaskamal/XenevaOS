@@ -2,7 +2,7 @@
 [![Discord](https://img.shields.io/discord/1255326572617924618?label=Discord&logo=discord&style=flat)](https://discord.com/invite/YNsY7hhQ)
 
 
-![alt text](https://github.com/manaskamal/XenevaOS/blob/master/XeLogo.jpg?raw=true)
+![alt text](https://github.com/manaskamal/XenevaOS/blob/master/XeLogo.png?raw=true)
 
 XenevaOS is an operating system built from scratch targeted at modern hardware. The OS is designed for both x86 and ARM architecture with plans for RISC-V  implementation in the near future as well. Our OS is built on our very own hybrid kernel known as _'Aurora'_.<br> Please visit [Build Instructions](Docs/BuildInstructions.md) to build the project
 
