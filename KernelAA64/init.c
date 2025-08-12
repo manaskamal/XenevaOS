@@ -39,6 +39,7 @@
 #include <Hal/AA64/gic.h>
 #include <Hal/basicacpi.h>
 #include <Hal/AA64/aa64lowlevel.h>
+#include <loader.h>
 #include <Drivers/uart.h>
 #include <Hal/AA64/qemu.h>
 #include <list.h>
@@ -47,6 +48,7 @@
 #include <Drivers/virtiogpu.h>
 #include <audrv.h>
 #include <Hal/AA64/sched.h>
+#include <Fs/tty.h>
 
 
 extern int _fltused = 1;
@@ -85,33 +87,34 @@ bool AuLittleBootUsed() {
 
 int i_ = 1;
 
+extern void sub_rsp();
+
 void AuEntryTest(uint64_t test) {
 	//aa64_utest();
-	UARTDebugOut("Second task running\r\n");
-	aa64_enter_user(((0x40000000000 + 4096) - 32), 0x40000100000);
 	int c = 10;
 	//enable_irqs();
 	while (1) {
-		//UARTDebugOut("22 Second ...\n");
 		//enable_irqs();
 		/*if ((c % 2) == 0)
 			UARTDebugOut("2\n");
 		for (int i = 0; i < 10000000; i++)
-			;
-		c++;*/
+			;*/
+		c++;
 	}
 }
 
 void AuEntryTest2(uint64_t test) {
-	UARTDebugOut("Third Task running\r\n");
 	int d = 10;
 	//enable_irqs();
+	AA64Thread* thr = AuThreadFindByIDBlockList(1);
+	if (thr) {
+		UARTDebugOut("Unblocking thr : %s \n", thr->name);
+		AuUnblockThread(thr);
+	}
 	while (1) {
-		//enable_irqs();
-		/*if ((d % 2) != 0)
-			UARTDebugOut("3 \n");
-		for (int i = 0; i < 10000000; i++)
-			;*/
+		/*enable_irqs();
+		if ((d % 2) != 0)
+			UARTDebugOut("3 \n");*/
 		d++;
 	}
 }
@@ -138,15 +141,30 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	AA64CPUPostInitialize(info);
 	AuVFSInitialise();
 	AuInitrdInitialize(info);
+
+	/* initialize the tty service */
+	AuTTYInitialise();
+
 	/* required virtio-mouse and keyboard */
 	//Here goes board pre driver initialize
 	AuDrvMngrInitialize(info);
+
+	AuInitialiseLoader();
 	
 	/* clear out the lower half memory */
 	AuVmmngrBootFree();
 
-	UARTDebugOut("Kernel Lower half is cleared \n");
 	AuSchedulerInitialize();
+	UARTDebugOut("SIZEOF (AuUserEntry) - %d \n", sizeof(AuUserEntry));
+	AuProcess* proc = AuCreateProcessSlot(0, "exec");
+	AuLoadExecToProcess(proc, "/test.exe", 0, NULL);
+
+	AA64Thread* thr = AuCreateKthread(AuEntryTest2, AuCreateVirtualAddressSpace(), "Test");
+	AA64Thread* thr2 = AuCreateKthread(AuEntryTest, AuCreateVirtualAddressSpace(), "Test2User");
+	//UARTDebugOut("Offset of ThreadType - %d \n", (&thr2->threadType - thr));
+
+	UARTDebugOut("Kernel Lower half is cleared \n");
+	
 	AuSchedulerStart();
 	while (1) {
 		//UARTDebugOut("Printing \n");

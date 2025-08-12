@@ -95,7 +95,6 @@ void _AuMain(KERNEL_BOOT_INFO *info) {
 	AuPS2MouseInitialise();
 	AuRTCInitialize();
 
-
 	/*initialise kernel tty */
 	AuTTYInitialise();
 
@@ -115,8 +114,6 @@ void _AuMain(KERNEL_BOOT_INFO *info) {
 
 	/* initialise pre network service*/
 	AuInitialiseNet();
-
-
 
 	x64_cli();
 	AuSchedulerInitialise();

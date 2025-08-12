@@ -33,6 +33,8 @@
 #include <stdint.h>
 #include <Hal/AA64/aa64cpu.h>
 
+#ifdef ARCH_ARM64
+
 #define  THREAD_STATE_READY     1
 #define  THREAD_STATE_BLOCKED   3
 #define  THREAD_STATE_SLEEP     4
@@ -46,6 +48,21 @@
 #define  THREAD_LEVEL_USER (1<<1)
 #define  THREAD_LEVEL_SUBTHREAD (1<<2)
 #define  THREAD_LEVEL_MAIN_THREAD (1<<3)
+
+#pragma pack(push,1)
+/* AuUserEntry structure */
+typedef struct _uentry_ {
+	uint64_t entrypoint;
+	uint64_t rsp;
+	uint64_t cs;
+	uint64_t ss;
+	int num_args;
+	uint64_t argvaddr;
+	char** argvs;
+	uint64_t stackBase;
+}AuUserEntry;
+#pragma pack(pop)
+
 
 #pragma pack(push,1)
 typedef struct _aa64_task_ {
@@ -64,13 +81,22 @@ typedef struct _aa64_task_ {
 	uint64_t sp; //96
 	uint64_t elr_el1; //104
 	uint64_t spsr_el1;//112
-	uint8_t state;
-	uint64_t pml;
-	char name[8];
-	void *procSlot;
+	uint8_t state; //120
+	uint8_t threadType; //121
+	uint64_t pml;  //122
+	char name[8];   //130
+	void *procSlot; //138
+	AuUserEntry* uentry; //146
+	bool first_run; //206
+	uint64_t thread_id; //207
+	uint64_t sleepQuanta; //215
+	uint64_t originalKSp; //223
+	bool returnFromSyscall;
+	bool justStored;
 	struct _aa64_task_* next;
 	struct _aa64_task_* prev;
 }AA64Thread;
+
 #pragma pack(pop)
 extern void AuSchedulerInitialize();
 extern uint64_t AuCreateKernelStack(uint64_t* pml);
@@ -79,5 +105,53 @@ extern void AuScheduleThread(AA64Registers*regs);
 extern void AuSchedulerStart();
 extern AA64Thread* AuGetIdleThread();
 extern AA64Thread* AuGetCurrentThread();
+
+/*
+ * AuBlockThread -- blocks a running thread
+ * @param thread -- Pointer to AA64 Thread
+ */
+AU_EXTERN AU_EXPORT void AuBlockThread(AA64Thread* thread);
+
+/*
+* AuUnblockThread -- unblocks a thread and insert it to
+* ready list
+* @param t -- pointer to thread
+*/
+AU_EXTERN AU_EXPORT void AuUnblockThread(AA64Thread* thread);
+/*
+ * AuForceScheduler -- force the scheduler
+ * to switch next thread
+ */
+AU_EXTERN AU_EXPORT void AuForceScheduler();
+
+/*
+ * AuSleepThread -- block a running thread
+ * and put it into sleep list
+ * @param thread -- Pointer to AA64 Thread
+ */
+AU_EXTERN AU_EXPORT void AuSleepThread(AA64Thread* thread);
+
+/*
+ * AuThreadFindByID -- finds a thread by its id from
+ * ready queue
+ * @param id -- id of the thread
+ */
+AU_EXTERN AU_EXPORT AA64Thread* AuThreadFindByID(uint64_t id);
+
+/*
+ * AuThreadFindByIDBlockList -- finds a thread by its id from
+ * the block queue
+ * @param id -- id of the thread
+ */
+AU_EXTERN AU_EXPORT AA64Thread* AuThreadFindByIDBlockList(uint64_t id);
+
+/*
+ * AuThreadMoveToTrash -- move given thread to
+ * trash
+ * @param t -- Thread to move to trash
+ */
+AU_EXTERN AU_EXPORT void AuThreadMoveToTrash(AA64Thread* t);
+
+#endif
 
 #endif

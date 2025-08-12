@@ -363,5 +363,6 @@ size_t GetEnvironmenBlock() {
 			return NULL;
 	}
 	return proc->_envp_block_;
+
 }
 

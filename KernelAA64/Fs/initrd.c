@@ -39,6 +39,7 @@
 #include <_null.h>
 #include <Fs/Fat/Fat.h>
 #include <Mm/pmmngr.h>
+#include <Drivers/uart.h>
 
 uint64_t ramdisk_start;
 uint64_t ramdisk_end;

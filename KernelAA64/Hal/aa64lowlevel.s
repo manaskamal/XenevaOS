@@ -74,6 +74,13 @@ write_both_ttbr:
     tlbi vmalle1is 
     dsb ish
     isb 
+    ret
+
+.global dsb_sy_barrier
+dsb_sy_barrier:
+   dsb sy
+   isb
+   ret
 
 .global read_sctlr_el1
 read_sctlr_el1:
@@ -244,10 +251,38 @@ aa64_svc_test:
 
 .global aa64_utest
 aa64_utest:
-   mov x14,5
-   mov x8, 0
-   svc #0
-   mov x8, x0
-   svc #0
- _hng:
-   b _hng
+  // mov x14,5
+   //mov x8, 0
+   //svc #0
+  // mov x8, x0
+  // svc #0
+ _hnge:
+   //mov x8, 0
+  // svc #0
+   b _hnge
+
+.global read_x30
+read_x30:
+   mov x0, x30
+   ret
+
+.global read_sp
+read_sp:
+   mov x0, sp
+   ret
+
+.global read_sp_el1
+read_sp_el1:
+   mrs x0, SP_EL1
+   ret
+
+.global sub_rsp
+sub_rsp:
+   sub sp,sp, #256
+   ret
+
+.global set_kstack
+set_kstack:
+   msr SP_EL1, x0
+   ret
+

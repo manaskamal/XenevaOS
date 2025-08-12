@@ -53,10 +53,14 @@
 */
 extern int PauseThread();
 
+#ifdef ARCH_X64
 /*
 * GetThreadID -- returns currently running thread id
 */
 extern uint16_t GetThreadID();
+#elif ARCH_ARM64
+extern uint64_t GetThreadID();
+#endif
 
 /*
 * GetProcessID -- returns currently running process
@@ -101,12 +105,14 @@ extern int ProcessSleep(uint64_t ms);
 */
 extern void SignalReturn(int num);
 
+#ifdef ARCH_X64
 /*
 * SetSignal -- register a signal handler
 * @param signo -- signal number
 * @param handler -- handler to register
 */
 extern int SetSignal(int signo, AuSigHandler handler);
+#endif
 /*
 * CreateSharedMem -- create a shared memory chunk
 * @param key -- key to use

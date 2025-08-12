@@ -36,20 +36,40 @@
 #include <Drivers/rtcmmio.h>
 #include <Hal/AA64/sched.h>
 
+extern uint64_t read_sp();
+extern uint64_t read_sp_el1();
+
+void AuDumpRegisters(AA64Thread* thr) {
+    UARTDebugOut("===REGISTER DUMP===\n");
+    UARTDebugOut("x19: %x x20: %x \n", thr->x19, thr->x20);
+    UARTDebugOut("x21: %x X22: %x \n", thr->x21, thr->x22);
+    UARTDebugOut("x23: %x x24: %x \n", thr->x23, thr->x24);
+    UARTDebugOut("x25: %x x26: %x \n", thr->x25, thr->x26);
+    UARTDebugOut("x27: %x x28: %x \n", thr->x27, thr->x28);
+    UARTDebugOut("x29: %x x30: %x \n", thr->x29, thr->x30);
+}
+
 void sync_el1_handler(AA64Registers *regs) {
 
     uint64_t esr = read_esr_el1();
 
     if ((esr >> 26) == 0x15) {
-        UARTDebugOut("System call trapped %d\n", regs->x8);
+        UARTDebugOut("System call trapped %d x30: %x\n", regs->x8, 
+            regs->x30);
         AuAA64SyscallHandler(regs);
-        enable_irqs();
+       // enable_irqs();
         return;
     }
 
     UARTDebugOut("=======Synchronous Exception occured=========\n");
     UARTDebugOut("Fault Address (FAR_EL1): %x \n", read_far_el1());
     UARTDebugOut("Fault Instruction (ELR_EL1): %x \n", read_elr_el1());
+    UARTDebugOut("SP_EL1: %x  \n", read_sp());
+    AA64Thread* currthr = AuGetCurrentThread();
+    if (currthr) {
+        UARTDebugOut("Current Thread: %s \n", currthr->name);
+        AuDumpRegisters(currthr);
+    }
 
     uint32_t dfsc = esr & 0x3F;
 
@@ -81,35 +101,12 @@ void irq_el1_handler(AA64Registers* regs) {
     uint32_t irq = iar & 0x3FF;
     if (irq < 1020) {
         if (irq == 27) {
-           // if (_debug != 3) {
-               //UARTDebugOut("X30: %x \n", regs->x30);
-               // UARTDebugOut("SPSR of Thread : %s is %x \n", AuGetCurrentThread()->name, AuGetCurrentThread()->spsr_el1);
-           // }
-            _debug++;
-         /*   UARTDebugOut("Timer IRQ fired %d multi-tasking possible \n", irq);
-            uint64_t ctl = readTimerCtl();
-            if (ctl & (1 << 0)) {
-                UARTDebugOut("Timer is enabled \n");
-            }
-            if (ctl & (1 << 1)) {
-                UARTDebugOut("Timer interrupt is masked \n");
-            }
-
-            if (ctl & (1 << 2)) {
-                UARTDebugOut("Timer status bit is not cleared \n");
-            }
-            UARTDebugOut("IAR : %x \n", iar);*/
-            /* suspendTimer();*/
-            // for (;;);
+            //suspendTimer();
             setupTimerIRQ();
             GICSendEOI(iar);
             GICCheckPending(irq);
-           // UARTDebugOut("Timer fired \n");
-            // UARTDebugOut("Timer re setuped \n");
-              //timer irq fires here, do multitasking stuffs
+        
             AuScheduleThread(regs);
-            //suspendTimer();
-           // aa64_restore_context(AuGetIdleThread());
         }
         /*else if (irq == 27) {
             AuTextOut("Virtual Timer IRQ fired %d \n", irq);
@@ -169,7 +166,14 @@ void fault_el1_handler(AA64Registers* regs) {
 }
 
 void sync_el0_handler(AA64Registers* regs) {
-    AuTextOut("SVC Request got : %d \n", regs->x8);
+    uint64_t esr = read_esr_el1();
+
+    if ((esr >> 26) == 0x15) {
+        UARTDebugOut("System call trapped %d x30: %x\n", regs->x8,
+            regs->x30);
+        AuAA64SyscallHandler(regs);
+        return;
+    }
 }
 extern char vectors[];
 

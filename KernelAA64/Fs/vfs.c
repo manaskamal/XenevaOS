@@ -31,6 +31,7 @@
 #include <Fs/Dev/devfs.h>
 #include <_null.h>
 #include <Mm/kmalloc.h>
+#include <Drivers/uart.h>
 #include <Fs/Dev/devfs.h>
 #include <Fs/vdisk.h>
 #include <string.h>
@@ -128,7 +129,7 @@ AU_EXTERN AU_EXPORT AuVFSNode* AuVFSOpen(char* path) {
 		return NULL;
 	}
 	if (fs == __RootFS) {
-
+		UARTDebugOut("VFSOpening filename : %s \n", path);
 		/* just skip the '/' from the path */
 		char* next = strchr(path, '/');
 		if (next)

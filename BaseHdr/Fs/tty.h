@@ -61,8 +61,8 @@ typedef struct __tty__ {
 	uint16_t master_pid;
 	uint16_t slave_pid;
 	uint16_t blockedSlaveId;
-	__tty__ *next;
-	__tty__ *prev;
+	struct __tty__ *next;
+	struct __tty__ *prev;
 }TTY;
 #pragma pack(pop)
 
