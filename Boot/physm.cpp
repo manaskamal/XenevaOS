@@ -29,11 +29,8 @@
 
 #include "xnldr.h"
 #include "xnout.h"
-#include <Uefi.h>
 #include "physm.h"
-
-typedef uint64_t EFI_PHYSICAL_ADDRESS;
-
+#include <Common.hpp>
 
 paddr_t* pagestack;
 paddr_t* stackptr;
@@ -61,9 +58,8 @@ void XEInitialisePmmngr(const struct EfiMemoryMap memmap, void* buffer, size_t b
 	allocatedCount = 1;
 
 	EFI_MEMORY_DESCRIPTOR* current = memmap.memmap;
-	while (raw_diff(current, memmap.memmap) < memmap.MemMapSize)
+	while (static_cast<long unsigned int>(raw_diff(current, memmap.memmap)) < memmap.MemMapSize)
 	{
-
 		ramSize += current->NumberOfPages * 4096;
 		if (current->Type == EfiConventionalMemory){//|| current->Type == EfiPersistentMemory){
 			paddr_t addr = current->PhysicalStart;
@@ -77,12 +73,12 @@ void XEInitialisePmmngr(const struct EfiMemoryMap memmap, void* buffer, size_t b
 				numpages *= (EFI_PAGE_SIZE / PAGESIZE);
 
 			mem_blocks++;
-			while (numpages > 0 && raw_diff(stackptr, pagestack) < bufsize){
+			while (numpages > 0 && static_cast<long unsigned int>(raw_diff(stackptr, pagestack)) < bufsize){
 				*stackptr++ = addr;
 				--numpages;
 				addr += PAGESIZE;
 			}
-			if (raw_diff(stackptr, pagestack) >= bufsize)
+			if (static_cast<long unsigned int>(raw_diff(stackptr, pagestack)) >= bufsize)
 				break;
 		}
 		current = raw_offset<EFI_MEMORY_DESCRIPTOR*>(current, memmap.DescriptorSize);
@@ -120,7 +116,6 @@ void XEPmmngrFree(paddr_t addr) {
  * XEPmmngrList -- list all available physical block
  */
 void XEPmmngrList() {
-	int i = 10;
 	while (allocatedCount) {
 		uint64_t addr = *allocatedPtr--;
 		XEGuiPrint("Address -> %x \n", addr);
@@ -128,12 +123,12 @@ void XEPmmngrList() {
 	}
 }
 
-static struct _pmmngr_boot_info_ {
+[[maybe_unused]] static struct _pmmngr_boot_info_ {
 	paddr_t* pgstack;
 	//paddr_t* pgstack;
 	paddr_t* alstack;
 	paddr_t* alstackptr;
-}pmmngr_boot_info;
+} pmmngr_boot_info;
 
 /*
  *XEGetAlstack -- return the allocated stack ptr

@@ -28,6 +28,9 @@
 **/
 
 #include "xnldr.h"
+#ifdef __GNUC__
+#include <efi/efilib.h>
+#endif
 
 /*
  * XEAllocatePool -- allocate pool memory
@@ -35,7 +38,7 @@
  */
 void* XEAllocatePool(const uint64_t sz) {
 	void* Buffer;
-	return (gBS->AllocatePool(EfiLoaderData, sz, &Buffer) < 0) ? NULL : Buffer;
+	return (gBS->AllocatePool(EfiLoaderData, sz, &Buffer) != EFI_SUCCESS) ? NULL : Buffer;
 }
 
 /*
