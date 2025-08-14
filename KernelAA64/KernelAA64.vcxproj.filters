@@ -62,9 +62,6 @@
     <ClCompile Include="Fs\Fat\FatFile.c">
       <Filter>Fs\Fat</Filter>
     </ClCompile>
-    <ClCompile Include="Drivers\virtiogpu.c">
-      <Filter>Drivers</Filter>
-    </ClCompile>
     <ClCompile Include="pcie.c" />
     <ClCompile Include="audrv.c" />
     <ClCompile Include="pe.c" />
@@ -98,6 +95,9 @@
       <Filter>Fs</Filter>
     </ClCompile>
     <ClCompile Include="circbuf.c" />
+    <ClCompile Include="Drivers\virtiokbd.c">
+      <Filter>Drivers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Hal">
@@ -192,11 +192,11 @@
     <ClInclude Include="..\BaseHdr\Fs\initrd.h">
       <Filter>Include\Fs</Filter>
     </ClInclude>
-    <ClInclude Include="..\BaseHdr\Drivers\virtiogpu.h">
-      <Filter>Include\Drivers</Filter>
-    </ClInclude>
     <ClInclude Include="..\BaseHdr\Hal\AA64\sched.h">
       <Filter>Include\Hal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\Drivers\virtio.h">
+      <Filter>Include\Drivers</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

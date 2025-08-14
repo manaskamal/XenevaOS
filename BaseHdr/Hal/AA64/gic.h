@@ -43,6 +43,8 @@ typedef struct _gic_ {
 	uint64_t gicCMMIO;
 	uint64_t gicRMMIO;
 	uint64_t gicMSIMMIO;
+	uint16_t spiBase;
+	uint16_t spiCount;
 }GIC;
 
 
@@ -69,10 +71,32 @@ extern uint32_t GICReadIAR();
 extern void GICCheckPending(uint32_t irq);
 
 /*
+ * AuGICGetMSIAddress -- calculate and return MSI address
+ * for given spi offset
+ * @param interruptID -- spi offset
+ */
+extern uint64_t AuGICGetMSIAddress(int interruptID);
+
+extern uint32_t AuGICGetMSIData(int interruptID);
+
+/*
+ * AuGICAllocateSPI -- allocates Shared Peripheral
+ * interrupt ID
+ */
+extern int AuGICAllocateSPI();
+
+/*
+ *AuGICDeallocateSPI -- free up an used SPI id
+ *@param spiID -- target spi id
+ */
+extern void AuGICDeallocateSPI(int spiID);
+/*
  * GICSendEOI --sends end of interrupt to
  * GIC cpu interface
  */
 extern void GICSendEOI(uint32_t irqnum);
 
 extern void GICSetupTimer();
+
+extern void GICSetTargetCPU(int spi);
 #endif

@@ -134,7 +134,12 @@ void irq_el1_handler(AA64Registers* regs) {
         for (;;);
         return;
     }
-   
+  
+    UARTDebugOut("IRQ Fired ++\n");
+    if (irq >= 32 && irq < 1022) {
+        UARTDebugOut("IRQ Fired++ \n");
+        GICSendEOI(iar);
+    }
 }
 
 void fault_el1_handler(AA64Registers* regs) {

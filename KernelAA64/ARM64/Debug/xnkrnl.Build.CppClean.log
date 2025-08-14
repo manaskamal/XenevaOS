@@ -16,8 +16,8 @@ e:\xeneva project\aurora\kernelaa64\arm64\debug\devfs.obj
 e:\xeneva project\aurora\kernelaa64\arm64\debug\devfs.asm
 e:\xeneva project\aurora\kernelaa64\arm64\debug\dtb.obj
 e:\xeneva project\aurora\kernelaa64\arm64\debug\dtb.asm
-e:\xeneva project\aurora\kernelaa64\arm64\debug\virtiogpu.obj
-e:\xeneva project\aurora\kernelaa64\arm64\debug\virtiogpu.asm
+e:\xeneva project\aurora\kernelaa64\arm64\debug\virtiokbd.obj
+e:\xeneva project\aurora\kernelaa64\arm64\debug\virtiokbd.asm
 e:\xeneva project\aurora\kernelaa64\arm64\debug\uart.obj
 e:\xeneva project\aurora\kernelaa64\arm64\debug\uart.asm
 e:\xeneva project\aurora\kernelaa64\arm64\debug\rtcmmio.obj

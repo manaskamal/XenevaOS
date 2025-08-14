@@ -76,6 +76,13 @@ void AuACPIParseMADT() {
 		}
 		case ACPI_MADTTYPE_GICMSI: {
 			AuTextOut("GIC MSI Frame found \n"); 
+			acpiGICv2MFrame* msiframe = (acpiGICv2MFrame*)apic_header;
+			AuTextOut("GIC MSI Frame Base : %x \n", msiframe->physicalBaseAddress);
+			AuTextOut("GIC MSI SPI Base : %x, SPICount : %x \n", msiframe->spiBase, msiframe->spiCount);
+			GIC* gic = AuGetSystemGIC();
+			gic->gicMSIPhys = msiframe->physicalBaseAddress;
+			gic->spiBase = msiframe->spiBase;
+			gic->spiCount = msiframe->spiCount;
 			break;
 		}
 

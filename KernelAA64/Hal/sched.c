@@ -333,6 +333,11 @@ void AuHandleSleepThreads() {
 bool debug = 0;
 extern uint64_t read_sp();
 
+/*
+ * AuScheduleThread -- the core of multi-tasking. It schedules
+ * threads next to be runned
+ * @param regs -- Passed by Timer ISR
+ */
 void AuScheduleThread(AA64Registers* regs) {
 	if (_scheduler_initialized == 0) {
 		return;

@@ -154,9 +154,6 @@ void AA64CPUPostInitialize(KERNEL_BOOT_INFO* info) {
 	GICInitialize();
 	AA64TimerSetup();
 	//PS/2 Enable
-	//GICEnableIRQ(33);
-	//UART irq enable
-	//GICEnableIRQ(UART0_IRQ);
 
 	uint32_t id = read_midr();
 	AA64CPUImplementer(id);

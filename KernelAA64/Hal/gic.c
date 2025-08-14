@@ -77,6 +77,10 @@ uint64_t* gic_dist_mmio;
 uint64_t* gic_redist_mmio;
 
 
+#define MAX_SPIS 1024
+
+static uint8_t spiBitMap[MAX_SPIS];
+
 
 /*
  * gic_outl_ -- writes a value to mmio register in dword
@@ -142,6 +146,54 @@ GIC* AuGetSystemGIC() {
 }
 
 /*
+ * AuGICGetMSIAddress -- calculate and return MSI address
+ * for given spi offset
+ * @param interruptID -- spi offset
+ */
+uint64_t AuGICGetMSIAddress(int interruptID) {
+	UARTDebugOut("MSI Address : %x \n", __gic.gicMSIPhys + 0x040);
+	return (__gic.gicMSIMMIO + 0x0040);
+}
+
+uint32_t AuGICGetMSIData(int interruptID) {
+	UARTDebugOut("GICGetMSIData: %d \n", interruptID);
+	return interruptID;
+}
+
+/*
+ * AuGICAllocateSPI -- allocates Shared Peripheral 
+ * interrupt ID 
+ */
+int AuGICAllocateSPI() {
+	for (uint32_t i = 0; i < __gic.spiCount; i++) {
+		if (spiBitMap[i] == 0) {
+			spiBitMap[i] = 1;
+			UARTDebugOut("[GIC]: Allocating SPI : %d , SPI_BASE : %d \n", i, __gic.spiBase);
+			return __gic.spiBase + i;
+		}
+	}
+	return -1;
+}
+
+/*
+ *AuGICDeallocateSPI -- free up an used SPI id 
+ *@param spiID -- target spi id
+ */
+void AuGICDeallocateSPI(int spiID) {
+	if (spiID < __gic.spiBase || spiID >= (__gic.spiBase + __gic.spiCount))
+		return;
+	uint32_t index = spiID - __gic.spiBase;
+	spiBitMap[index] = 0;
+}
+
+#define GICV2M_MSI_TYPER  0x008
+#define GICV2M_MSI_SETSPI_NS 0x040
+#define GICV2M_MSI_IIDR  0xFCC
+void GICv2MInitialize() {
+	uint32_t typer = *(volatile uint32_t*)__gic.gicMSIPhys;
+	
+}
+/*
  * GICInitialize -- initialize the gic 
  * controller, it can be parsed through ACPI MADT 
  * or hard-coding
@@ -192,6 +244,7 @@ void GICInitialize() {
 
 	__gic.gicDMMIO = AuMapMMIO(__gic.gicDPhys, 2);
 	__gic.gicCMMIO = AuMapMMIO(__gic.gicCPhys, 2);
+	__gic.gicMSIMMIO = AuMapMMIO(__gic.gicMSIPhys, 2);
 	gic_regs = (volatile uint32_t*)__gic.gicDMMIO;
 	gicc_regs = (volatile uint32_t*)__gic.gicCMMIO;
 
@@ -220,6 +273,10 @@ void GICInitialize() {
 	/* enable the distributor interface */
 	gic_outl_(__gic.gicDMMIO, GICD_CTLR, 0x1);
 	isb_flush();
+
+	for (int i = 0; i < MAX_SPIS; i++)
+		spiBitMap[i] = 0;
+
 	AuTextOut("GIC Initialized \n");
 }
 
@@ -242,11 +299,24 @@ void GICEnableIRQ(uint32_t irq) {
 	else {
 		UARTDebugOut("IRQ: %d is reserved or invalid config : %x \n",irq, config_bits);
 	}
+	//GICD_IGROUPR(reg) |= (1u << bit);
+	/*uint8_t* gicd_itargetsr = (uint8_t*)GICD_ITARGETSR(irq);
+	*gicd_itargetsr = 0x01;*/
 	UARTDebugOut("ICFGR : %x \n", icfgr);
 	*(volatile uint8_t*)(GICD(__gic) + GICD_IPRIORITYR(irq)) = 0xA0;
-	GICD_ISENABLER(reg) |= (1 << bit);
+	GICD_ISENABLER(reg) |= (1u << bit);
 }
 
+void GICSetTargetCPU(int spi) {
+	uint32_t reg_index = spi / 4;
+	uint32_t byteShift = spi % 4;
+
+	uint32_t val = GICD_ITARGETSR(reg_index);
+	uint8_t cpu_mask = 1 << 0x00; //cpu0
+	val &= ~(0xFF << (byteShift * 8));
+	val |= (cpu_mask << (byteShift * 8));
+	GICD_ITARGETSR(reg_index) = val;
+}
 void GICClearPendingIRQ(uint32_t irq) {
 	uint32_t bit = irq % 32;
 	volatile uint32_t* reg = (volatile uint32_t*)(GICD(__gic) + GICD_ICPENDR(irq));

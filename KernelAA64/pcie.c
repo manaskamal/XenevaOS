@@ -33,9 +33,12 @@
 #include <dtb.h>
 #include <aucon.h>
 #include <Hal/AA64/qemu.h>
+#include <Hal/AA64/gic.h>
 #include <Mm/vmmngr.h>
 #include <kernelAA64.h>
 #include <Hal/basicacpi.h>
+#include <Hal/AA64/aa64lowlevel.h>
+#include <Drivers/uart.h>
 
 uint64_t _ecamAddress;
 bool _pcieInitialized;
@@ -398,6 +401,45 @@ uint64_t AuPCIEScanClass(uint8_t classCode, uint8_t subClassCode, int* bus_, int
 
 
 /*
+* AuPCIEScanVendorDevice -- scans and return pcie device with given vendor id and device id
+* @param vendor -- vendor id
+* @param device -- device id
+* @param bus -- address, where bus number will be stored
+* @param dev -- address, where device number will be stored
+* @param func -- address, where function number will be stored
+*/
+uint64_t AuPCIEScanVendorDevice(uint16_t vendor, uint16_t device, int* bus_, int* dev_, int* func_) {
+
+
+	for (int bus = 0; bus < 255; bus++) {
+		for (int dev = 0; dev < PCI_DEVICE_PER_BUS; dev++) {
+			for (int func = 0; func < PCI_FUNCTION_PER_DEVICE; func++) {
+				uint64_t address = AuPCIEGetDevice(0, bus, dev, func);
+				if (address == 0)
+					continue;
+				if (address == 0xFFFFFFFF)
+					continue;
+				uint8_t class_code = AuPCIERead(address, PCI_CLASS, bus, dev, func);
+				uint8_t sub_ClassCode = AuPCIERead(address, PCI_SUBCLASS, bus, dev, func);
+				uint16_t vendID = AuPCIERead(address, PCI_VENDOR_ID, bus, dev, func);
+				uint16_t devID = AuPCIERead(address, PCI_DEVICE_ID, bus, dev, func);
+				if (class_code == 0xFF || sub_ClassCode == 0xFF)
+					continue;
+				if (vendor == vendID && device == devID) {
+					*bus_ = bus;
+					*dev_ = dev;
+					*func_ = func;
+					return address;
+				}
+			}
+		}
+	}
+
+	return 0xFFFFFFFF;
+}
+
+
+/*
 * AuPCIEScanClassIF -- scans and return pcie device with given class code and sub class code
 * @param classCode -- class code
 * @param subClassCode -- sub class code
@@ -433,7 +475,64 @@ uint64_t AuPCIEScanClassIF(uint8_t classCode, uint8_t subClassCode, uint8_t prog
 	return 0xFFFFFFFF;
 }
 
+#define PCI_MEM_BAR_TYPE(x) ((x >>1) & 0x3)
+#define PCI_IS_IO_BAR(x) ((x & 1) != 0)
 
+enum PCI_MEM_BAR_TYPES {
+	MEMBAR32,
+	RESERVED,
+	MEMBAR64
+};
+uint64_t AuPCIEReadBAR(uint64_t device, uint16_t bus, uint16_t dev,uint16_t func, size_t BAR, size_t* barsz) {
+#define INTERNAL_PCI_REG_BAR0 0x4
+	uint64_t baseaddr, highbits, headertype;
+	uint64_t ret = 0;
+	headertype = AuPCIERead64(device, PCI_HEADER_TYPE, 4, bus, dev, func);
+	headertype >>= 16;
+	headertype &= 0xFF;
+	if (((headertype & 0x7F) == 1 && BAR > 1) || ((headertype & 0x7F) == 2))
+		goto end;
+	if (BAR > 5)
+		goto end;
+	baseaddr = AuPCIERead64(device, (BAR + (PCI_BAR0/4))*4, 4, bus, dev, func);
+	uint32_t bartype = baseaddr & 0xF;
+	if (PCI_IS_IO_BAR(bartype)) {
+		ret = baseaddr;
+		goto end;
+	}
+	else if (PCI_MEM_BAR_TYPE(bartype) == MEMBAR32)
+		ret = baseaddr ^ bartype;
+	else if (PCI_MEM_BAR_TYPE(bartype) == MEMBAR64) {
+		highbits = AuPCIERead64(device,(BAR + 1 + (PCI_BAR0/4))*4, 4, bus, dev, func);
+		baseaddr |= (highbits << 32);
+		ret = baseaddr ^ bartype;
+	}
+	else
+		goto end;
+
+	if (barsz) {
+		AuPCIEWrite64(device, (BAR + (PCI_BAR0/4))*4, 4, UINT32_MAX, bus, dev, func);
+		if (PCI_MEM_BAR_TYPE(bartype) == MEMBAR64)
+			AuPCIEWrite64(device, (BAR + 1 + (PCI_BAR0/4))*4, 4, UINT32_MAX, bus, dev, func);
+		uint64_t szbits, szhighbits = 0;
+		szbits = AuPCIERead64(device, (BAR + (PCI_BAR0/4))*4, 4, bus, dev, func);
+		if (PCI_MEM_BAR_TYPE(bartype) == MEMBAR64)
+			szhighbits = AuPCIERead64(device, (BAR + 1 + (PCI_BAR0/4))*4, 4, bus, dev, func);
+		AuPCIEWrite64(device, (BAR + (PCI_BAR0/4))*4, 4, baseaddr, bus, dev, func);
+		if (PCI_MEM_BAR_TYPE(bartype) == MEMBAR64) {
+			AuPCIEWrite64(device, (BAR + 1 + (PCI_BAR0/4))*4, 4, highbits, bus, dev, func);
+			szbits |= (szhighbits << 32);
+		}
+		else
+			szbits |= ((uint64_t)UINT32_MAX << 32);
+		szbits &= (UINT64_MAX - 0xF);
+		szbits = ~szbits;
+		++szbits;
+		*barsz = szbits;
+	}
+end:
+	return ret;
+}
 
 /*
 * AuPCIEAllocMSI -- Allocate MSI/MSI-X for interrupt
@@ -446,59 +545,99 @@ uint64_t AuPCIEScanClassIF(uint8_t classCode, uint8_t subClassCode, uint8_t prog
 */
 bool AuPCIEAllocMSI(uint64_t device, size_t vector, int bus, int dev, int func) {
 
-	//bool value = false;
-	//uint64_t status = AuPCIERead64(device, PCI_COMMAND, 4, bus, dev, func);
-	//status >>= 16;
-	//if ((status & (1 << 4)) != 0) {
-	//	uint32_t capptr = AuPCIERead64(device, PCI_CAPABILITIES_PTR, 4, bus, dev, func);
-	//	capptr &= 0xFF;
-	//	uint32_t cap_reg = 0;
-	//	uint32_t msi_reg = 0;
-	//	while (capptr != 0) {
-	//		cap_reg = AuPCIERead64(device, capptr, 4, bus, dev, func);
-	//		if ((cap_reg & 0xff) == 0x5) {
-	//			msi_reg = cap_reg;
-	//			uint16_t msctl = msi_reg >> 16;
-	//			bool bit64_cap = (msctl & (1 << 7));
-	//			bool maskcap = (msctl & (1 << 8));
+	bool value = false;
+	uint64_t status = AuPCIERead64(device, PCI_COMMAND, 4, bus, dev, func);
+	status >>= 16;
+	if ((status & (1 << 4)) != 0) {
+		uint32_t capptr = AuPCIERead64(device, PCI_CAPABILITIES_PTR, 4, bus, dev, func);
+		capptr &= 0xFF;
+		uint32_t cap_reg = 0;
+		uint32_t msi_reg = 0;
+		while (capptr != 0) {
+			cap_reg = AuPCIERead64(device, capptr, 4, bus, dev, func);
+			if ((cap_reg & 0xff) == 0x5) {
+				msi_reg = cap_reg;
+				uint16_t msctl = msi_reg >> 16;
+				bool bit64_cap = (msctl & (1 << 7));
+				bool maskcap = (msctl & (1 << 8));
 
-	//			uint64_t msi_data = 0;
+				/* for GICv2 msi_data is 0*/
+				uint64_t msi_data = 0;
 
-	//			uint64_t msi_addr = x86_64_cpu_msi_address(&msi_data, vector, 0, 1, 0);
-
-
-	//			AuPCIEWrite64(device, capptr + 0x4, 4, msi_addr & UINT32_MAX, bus, dev, func);
-
-	//			if (bit64_cap) {
-	//				AuPCIEWrite64(device, capptr + 0x8, 4, msi_addr >> 32, bus, dev, func);
-	//				AuPCIEWrite64(device, capptr + 0xC, 2, msi_data & UINT16_MAX, bus, dev, func);
-	//			}
-	//			else
-	//				AuPCIEWrite64(device, capptr + 0x8, 2, msi_data & UINT16_MAX, bus, dev, func);
+				uint64_t msi_addr = AuGICGetMSIAddress((int)vector);
 
 
-	//			if (maskcap)
-	//				AuPCIEWrite64(device, capptr + 0x10, 4, 0, bus, dev, func);
+				AuPCIEWrite64(device, capptr + 0x4, 4, msi_addr & UINT32_MAX, bus, dev, func);
+
+				if (bit64_cap) {
+					AuPCIEWrite64(device, capptr + 0x8, 4, msi_addr >> 32, bus, dev, func);
+					AuPCIEWrite64(device, capptr + 0xC, 2, msi_data & UINT16_MAX, bus, dev, func);
+				}
+				else
+					AuPCIEWrite64(device, capptr + 0x8, 2, msi_data & UINT16_MAX, bus, dev, func);
+
+
+				if (maskcap)
+					AuPCIEWrite64(device, capptr + 0x10, 4, 0, bus, dev, func);
 
 
 
-	//			msctl |= 1;
+				msctl |= 1;
 
-	//			cap_reg = msi_reg & UINT16_MAX | msctl << 16;
-	//			AuPCIEWrite64(device, capptr, 4, cap_reg & UINT32_MAX, bus, dev, func);
-	//			uint32_t cap_reg2 = AuPCIERead64(device, capptr, 4, bus, dev, func);
-	//			value = true; //MSI Allocated
-	//			break;
-	//		}
+				cap_reg = msi_reg & UINT16_MAX | msctl << 16;
+				AuPCIEWrite64(device, capptr, 4, cap_reg & UINT32_MAX, bus, dev, func);
+				uint32_t cap_reg2 = AuPCIERead64(device, capptr, 4, bus, dev, func);
+				value = true; //MSI Allocated
+				UARTDebugOut("MSI found \r\n");
+				break;
+			}
 
-	//		if ((cap_reg & 0xff) == 0x11) {
-	//			value = false; //MSI-X Allocated: not implemented
-	//			AuTextOut("MSI-X found \r\n");
-	//			break;
-	//		}
-	//		capptr = ((cap_reg >> 8) & 0xff);   //((cap_reg >> 8) & 0xFF) / 4;
-	//	}
-	//}
+			if ((cap_reg & 0xff) == 0x11) {
+				value = true; //MSI-X Allocated: not implemented
+				UARTDebugOut("MSI-X found \r\n");
+				msi_reg = capptr;
+				uint16_t msixctl = (msi_reg >> 16) & 0xFFFF;
+				uint64_t tableOffset = AuPCIERead64(device, capptr + 0x4, 4, bus, dev, func);
+				uint64_t pbaOffset = AuPCIERead64(device, capptr + 0x8, 4, bus, dev, func);
+				isb_flush();
+				dsb_ish();
+				uint8_t table_bir = tableOffset & 0x7;
+				uint8_t pba_bir = pbaOffset & 0x7;
+				size_t barsz = 0;
+				uint64_t msi_bar = AuPCIEReadBAR(device, bus, dev, func, table_bir, &barsz);
+				uint64_t mappedMsiBar = (uint64_t)AuMapMMIO(msi_bar,20);
+				UARTDebugOut("MSI BAR : %x barsz : %d\n", msi_bar, barsz);
+				uint64_t tablecount = (msixctl & 0x3ff) + 1;
+				uint64_t msi_address = AuGICGetMSIAddress((int)vector);
+				uint32_t msi_data = AuGICGetMSIData((int)vector);
+				uint32_t offset = tableOffset & ~0x7;
+				volatile uint32_t* msitab = (volatile uint32_t*)msi_bar; //RAW_OFFSET(volatile uint32_t*, mappedMsiBar, offset);
+				UARTDebugOut("MSI Table : %x offset : %x \n", msitab, offset);
+				for (int n = 0; n < tablecount; ++n) {
+					msitab[0 + 4 * n] = (uint32_t)(msi_address & UINT32_MAX);
+					msitab[1 + 4 * n] = (uint32_t)(msi_address >> 32);
+					msitab[2 + 4 * n] = msi_data;
+					msitab[3 + 4 * n] = 0; //vector control
+				}
+				isb_flush();
+				dsb_ish();
+				msi_reg |= (1 << 31);
+				msi_reg &= ~(1 << 30);
+				AuPCIEWrite64(device, capptr, 4, msi_reg, bus, dev, func);
+				isb_flush();
+				dsb_ish();
+				uint32_t msiv = AuPCIERead64(device, capptr, 4, bus, dev, func);
+				uint16_t msicv = (msiv >> 16) & 0xFFFF;
+				if ((msicv & (1 << 15)) != 0)
+					UARTDebugOut("MSI-X Enabled \n");
+				if ((msicv & (1 << 14)) != 0)
+					UARTDebugOut("Function mask \n");
 
-	return 0; // value;
+				break;
+			}
+			capptr = ((cap_reg >> 8) & 0xff);   //((cap_reg >> 8) & 0xFF) / 4;
+		}
+	}
+
+	return value;
 }

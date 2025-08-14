@@ -207,6 +207,16 @@ typedef struct {
 	uint8_t gicVersion;
 }acpiGICDistributor;
 
+typedef struct {
+	acpiApicHeader header;
+	uint16_t reserved;
+	uint32_t gicMSIFrameID;
+	uint64_t physicalBaseAddress;
+	uint32_t flags;
+	uint16_t spiCount;
+	uint16_t spiBase;
+}acpiGICv2MFrame;
+
 typedef struct
 {
 	acpiApicHeader header;

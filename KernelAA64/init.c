@@ -45,7 +45,7 @@
 #include <list.h>
 #include <Fs/vfs.h>
 #include <Fs/initrd.h>
-#include <Drivers/virtiogpu.h>
+#include <Drivers/virtio.h>
 #include <audrv.h>
 #include <Hal/AA64/sched.h>
 #include <Fs/tty.h>
@@ -144,6 +144,9 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 
 	/* initialize the tty service */
 	AuTTYInitialise();
+
+	/* initialize our basic requirement */
+	AuVirtioKbdInitialize();
 
 	/* required virtio-mouse and keyboard */
 	//Here goes board pre driver initialize
