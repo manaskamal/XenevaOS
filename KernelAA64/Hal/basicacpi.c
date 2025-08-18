@@ -56,10 +56,10 @@ void AuACPIParseMADT() {
 		}
 
 		case ACPI_MADTTYPE_GICC: {
-			AuTextOut("GIC CPU Interface found \n");
+			UARTDebugOut("GIC CPU Interface found \n");
 			acpiGICCpuInterface* gicc = (acpiGICCpuInterface*)apic_header;
-			AuTextOut("GIC CPU Interface Phys Base : %x \n", gicc->physicalBaseAddress);
-			AuTextOut("GICR Phys Base : %x \n", gicc->gicrBaseAddress);
+			UARTDebugOut("GIC CPU Interface Phys Base : %x \n", gicc->physicalBaseAddress);
+			UARTDebugOut("GICR Phys Base : %x \n", gicc->gicrBaseAddress);
 			GIC* gic = AuGetSystemGIC();
 			gic->gicCPhys = gicc->physicalBaseAddress;
 			break;
@@ -68,8 +68,8 @@ void AuACPIParseMADT() {
 		case ACPI_MADTTYPE_GICD: {
 			AuTextOut("GIC Distributor found \n");
 			acpiGICDistributor* gicd = (acpiGICDistributor*)apic_header;
-			AuTextOut("GIC Distributor Phys Base : %x \n", gicd->physicalBaseAddress);
-			AuTextOut("GIC Version : %x , GIC ID -> %d \n", gicd->gicVersion, gicd->gicID);
+			UARTDebugOut("GIC Distributor Phys Base : %x \n", gicd->physicalBaseAddress);
+			UARTDebugOut("GIC Version : %x , GIC ID -> %d \n", gicd->gicVersion, gicd->gicID);
 			GIC* gic = AuGetSystemGIC();
 			gic->gicDPhys = gicd->physicalBaseAddress;
 			break;
@@ -77,8 +77,8 @@ void AuACPIParseMADT() {
 		case ACPI_MADTTYPE_GICMSI: {
 			AuTextOut("GIC MSI Frame found \n"); 
 			acpiGICv2MFrame* msiframe = (acpiGICv2MFrame*)apic_header;
-			AuTextOut("GIC MSI Frame Base : %x \n", msiframe->physicalBaseAddress);
-			AuTextOut("GIC MSI SPI Base : %x, SPICount : %x \n", msiframe->spiBase, msiframe->spiCount);
+			UARTDebugOut("GIC MSI Frame Base : %x \n", msiframe->physicalBaseAddress);
+			UARTDebugOut("GIC MSI SPI Base : %d, SPICount : %d \n", msiframe->spiBase, msiframe->spiCount);
 			GIC* gic = AuGetSystemGIC();
 			gic->gicMSIPhys = msiframe->physicalBaseAddress;
 			gic->spiBase = msiframe->spiBase;

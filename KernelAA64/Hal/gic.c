@@ -33,12 +33,15 @@
 #include <Mm/vmmngr.h>
 #include <Hal/AA64/aa64lowlevel.h>
 #include <Drivers/uart.h>
+#include <process.h>
 #include <dtb.h>
-
+#include <Hal/AA64/sched.h>
 
 GIC __gic;
 uint32_t* gic_regs;
 uint32_t* gicc_regs;
+
+typedef void (*irq_callback)(int spi);
 
 /* distributor registers */
 #define GICD(n)  (n.gicDMMIO)
@@ -80,7 +83,7 @@ uint64_t* gic_redist_mmio;
 #define MAX_SPIS 1024
 
 static uint8_t spiBitMap[MAX_SPIS];
-
+static irq_callback callbacks[MAX_SPIS];
 
 /*
  * gic_outl_ -- writes a value to mmio register in dword
@@ -145,6 +148,8 @@ GIC* AuGetSystemGIC() {
 	return &__gic;
 }
 
+#define SET_SPI_NS 0x040
+#define SET_SPI_S  0x080
 /*
  * AuGICGetMSIAddress -- calculate and return MSI address
  * for given spi offset
@@ -152,7 +157,7 @@ GIC* AuGetSystemGIC() {
  */
 uint64_t AuGICGetMSIAddress(int interruptID) {
 	UARTDebugOut("MSI Address : %x \n", __gic.gicMSIPhys + 0x040);
-	return (__gic.gicMSIMMIO + 0x0040);
+	return (__gic.gicMSIPhys + SET_SPI_NS);
 }
 
 uint32_t AuGICGetMSIData(int interruptID) {
@@ -267,15 +272,18 @@ void GICInitialize() {
 	/* enable the cpu interface*/
 	/* writing 0xff means accepting all types of priority 0x0 -- 0xFF */
 	gic_outl_(__gic.gicCMMIO, GICC_PMR, 0x1ff);
-	gic_outl_(__gic.gicCMMIO, GICC_CTLR,0x1);
+	gic_outl_(__gic.gicCMMIO, GICC_CTLR,0x3);
 	isb_flush();
 
 	/* enable the distributor interface */
-	gic_outl_(__gic.gicDMMIO, GICD_CTLR, 0x1);
+	gic_outl_(__gic.gicDMMIO, GICD_CTLR, 0x3);
 	isb_flush();
 
 	for (int i = 0; i < MAX_SPIS; i++)
 		spiBitMap[i] = 0;
+
+	for (int i = 0; i < MAX_SPIS; i++)
+		callbacks[i] = 0;
 
 	AuTextOut("GIC Initialized \n");
 }
@@ -302,8 +310,55 @@ void GICEnableIRQ(uint32_t irq) {
 	//GICD_IGROUPR(reg) |= (1u << bit);
 	/*uint8_t* gicd_itargetsr = (uint8_t*)GICD_ITARGETSR(irq);
 	*gicd_itargetsr = 0x01;*/
-	UARTDebugOut("ICFGR : %x \n", icfgr);
+	UARTDebugOut("IGROUP : %d \n", GICD_IGROUPR(reg));
 	*(volatile uint8_t*)(GICD(__gic) + GICD_IPRIORITYR(irq)) = 0xA0;
+	GICD_ISENABLER(reg) |= (1u << bit);
+}
+
+void GICSetEdgeTriggered(uint32_t irq) {
+	uint32_t reg = irq / 32;
+	uint32_t bit = irq % 32;
+	volatile uint32_t* icfgr = &GICD_ICFGR(irq / 16);
+	uint32_t shift = (irq % 16) * 2;
+
+	uint32_t unsetLevelMask = ~(((uint32_t)0b01) << shift);
+	uint32_t setEdgeMask = ((uint32_t)0b10) << shift;
+
+	*icfgr &= unsetLevelMask;
+	*icfgr |= setEdgeMask;
+}
+
+void GICIsIRQEdgeTriggered(uint32_t irq) {
+	uint32_t icfgr = GICD_ICFGR(irq / 16);
+	uint32_t shift = (irq % 16) * 2;
+	uint32_t config_bits = (icfgr >> shift) & 0b11;
+	if (config_bits == 0b00) {
+		UARTDebugOut("IRQ : %d is level-sensitive \n", irq);
+	}
+	else if (config_bits == 0b10) {
+		UARTDebugOut("IRQ : %d is edge-trigggered \n", irq);
+	}
+	else {
+		UARTDebugOut("IRQ: %d is reserved or invalid config : %x \n", irq, config_bits);
+	}
+	UARTDebugOut("ICFGR : %x \n", icfgr);
+}
+
+/* GICEnableIRQ -- enable an IRQ
+ * @param irq -- IRQ number
+ */
+void GICEnableSPIIRQ(uint32_t irq) {
+	uint32_t reg = irq / 32;
+	uint32_t bit = irq % 32;
+	//GICClearPendingIRQ(irq);
+	//GICD_ICFGR(spi_id / 16) |= (1u << bit);
+	GICSetEdgeTriggered(irq);
+	GICIsIRQEdgeTriggered(irq);
+	/*uint8_t* gicd_itargetsr = (uint8_t*)GICD_ITARGETSR(irq);
+	*gicd_itargetsr = 0x01;*/
+
+	
+	*(volatile uint8_t*)(GICD(__gic) + GICD_IPRIORITYR(irq)) = 0x80;
 	GICD_ISENABLER(reg) |= (1u << bit);
 }
 
@@ -312,7 +367,7 @@ void GICSetTargetCPU(int spi) {
 	uint32_t byteShift = spi % 4;
 
 	uint32_t val = GICD_ITARGETSR(reg_index);
-	uint8_t cpu_mask = 1 << 0x00; //cpu0
+	uint8_t cpu_mask = 1 << 0x01; //cpu0
 	val &= ~(0xFF << (byteShift * 8));
 	val |= (cpu_mask << (byteShift * 8));
 	GICD_ITARGETSR(reg_index) = val;
@@ -371,5 +426,28 @@ void GICSetupTimer() {
 	gic_regs[543] = 0x07070707;
 }
 
+/*
+ * GICRegisterSPIHandler -- register a spi handler
+ * to callback list
+ * @param fptr -- SPI Callback address
+ * @param spi -- SPI number
+ */
+void GICRegisterSPIHandler(void* fptr, int spi) {
+	if (callbacks[spi])
+		return;
+	callbacks[spi] = fptr;
+}
+
+/*
+ * GICCallSPIHandler -- jump to a callback handler
+ * associated with given spi number
+ * @param spi -- SPI number
+ */
+void GICCallSPIHandler(int spi) {
+	if (!callbacks[spi]) 
+		return;
+	irq_callback call = callbacks[spi];
+	call(spi);
+}
 
 

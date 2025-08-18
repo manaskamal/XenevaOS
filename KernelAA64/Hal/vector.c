@@ -101,11 +101,9 @@ void irq_el1_handler(AA64Registers* regs) {
     uint32_t irq = iar & 0x3FF;
     if (irq < 1020) {
         if (irq == 27) {
-            //suspendTimer();
             setupTimerIRQ();
             GICSendEOI(iar);
             GICCheckPending(irq);
-        
             AuScheduleThread(regs);
         }
         /*else if (irq == 27) {
@@ -130,14 +128,13 @@ void irq_el1_handler(AA64Registers* regs) {
     }
     // GICClearPendingIRQ(irq);
     if (irq >= 1020) {
-        UARTDebugOut("Spurious irq \n");
-        for (;;);
+        UARTDebugOut("Spurious irq %d\n", irq);
         return;
     }
   
-    UARTDebugOut("IRQ Fired ++\n");
     if (irq >= 32 && irq < 1022) {
-        UARTDebugOut("IRQ Fired++ \n");
+        AuTextOut("IRQ Fired++ %d\n", irq);
+        GICCallSPIHandler(irq);
         GICSendEOI(iar);
     }
 }

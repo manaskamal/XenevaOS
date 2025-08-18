@@ -59,6 +59,11 @@ extern void GICInitialize();
 
 AU_EXTERN AU_EXPORT void GICEnableIRQ(uint32_t irq);
 
+/* GICEnableIRQ -- enable an IRQ
+ * @param irq -- IRQ number
+ */
+extern void GICEnableSPIIRQ(uint32_t irq);
+
 
 AU_EXTERN AU_EXPORT void GICClearPendingIRQ(uint32_t irq);
 
@@ -99,4 +104,19 @@ extern void GICSendEOI(uint32_t irqnum);
 extern void GICSetupTimer();
 
 extern void GICSetTargetCPU(int spi);
+
+/*
+ * GICRegisterSPIHandler -- register a spi handler
+ * to callback list
+ * @param fptr -- SPI Callback address
+ * @param spi -- SPI number
+ */
+extern void GICRegisterSPIHandler(void* fptr, int spi);
+
+/*
+ * GICCallSPIHandler -- jump to a callback handler
+ * associated with given spi number
+ * @param spi -- SPI number
+ */
+extern void GICCallSPIHandler(int spi);
 #endif

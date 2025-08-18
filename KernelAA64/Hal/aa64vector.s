@@ -245,7 +245,7 @@ vectors:
 .balign 0x80
    b irq_el1_wrapper   //irq
 .balign 0x80
-   b .                 //FIQ 
+   b irq_el1_wrapper                 //FIQ 
 .balign 0x80
    b .                 //SError
 

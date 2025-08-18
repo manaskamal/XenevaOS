@@ -37,6 +37,9 @@
 
 #define OFFSETOF(s,m) ((size_t)&(((s*)0)->m))
 
+void AuVirtioKbdHandler(int spinum) {
+	UARTDebugOut("From inside virtio keyboard handler++ \n");
+}
 /*
  * AuVirtioKbdInitialize -- initialize the virtio keyboard
  */
@@ -73,11 +76,12 @@ void AuVirtioKbdInitialize() {
 	if (AuPCIEAllocMSI(device, spiID, bus, dev, func)) {
 		UARTDebugOut("VIRTIO Keyboard MSI allocated \n");
 	}
-	GICEnableIRQ(spiID);
-	GICSetTargetCPU(spiID);
-
+	GICEnableSPIIRQ(spiID);
+	//GICSetTargetCPU(spiID);
 	isb_flush();
 	dsb_ish();
+
+	GICRegisterSPIHandler(&AuVirtioKbdHandler, spiID);
 
 	cfg->select = 0;
 	cfg->subsel = 0;
@@ -86,6 +90,7 @@ void AuVirtioKbdInitialize() {
 
 	struct VirtioCommonCfg* common = (struct VirtioCommonCfg*)bar;
 	common->DeviceStatus = 0;
+	
 	isb_flush();
 	dsb_ish();
 
@@ -100,6 +105,8 @@ void AuVirtioKbdInitialize() {
 	common->QueueDesc = queuePhys;
 	common->QueueAvail = (queuePhys)+OFFSETOF(struct VirtioQueue, available);
 	common->QueueUsed = (queuePhys)+OFFSETOF(struct VirtioQueue, used);
+	common->MSix = 1;
+	common->QueueMSixVector = 1;
 	isb_flush();
 	dsb_ish();
 
@@ -125,21 +132,22 @@ void AuVirtioKbdInitialize() {
 
 	uint16_t index = 0;
 	queue->available.index = queueSz - 1;
-
+	//*(uint64_t*)(AuGetSystemGIC()->gicMSIPhys + 0x40) = 80;
 	enable_irqs();
 	isb_flush();
 	dsb_ish();
 	UARTDebugOut("Entering loop \n");
-	/*while (1) {
-		while (queue->used.index == index) {
+	//while (1) {
+	//	while (queue->used.index == index) {
 
-		}
-		uint16_t them = queue->used.index;
-		for (; index < them; index++) {
-			AuTextOut("Key Event \n");
+	//	}
+	//	uint16_t them = queue->used.index;
+	//	for (; index < them; index++) {
+	//		AuTextOut("Key Event \n");
+	//	}
+	//	//*(uint64_t*)(AuGetSystemGIC()->gicMSIPhys + 0x40) = 80;
+	//}
 
-		}
-	}*/
 	while (1);
 }
 
