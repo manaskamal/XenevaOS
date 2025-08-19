@@ -133,7 +133,6 @@ void irq_el1_handler(AA64Registers* regs) {
     }
   
     if (irq >= 32 && irq < 1022) {
-        AuTextOut("IRQ Fired++ %d\n", irq);
         GICCallSPIHandler(irq);
         GICSendEOI(iar);
     }

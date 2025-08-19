@@ -69,6 +69,7 @@ struct VirtioDeviceConfig {
 		uint8_t str[128];
 	}data;
 };
+#pragma pack(push,1)
 struct VirtioBuffer {
 	uint64_t Addr;
 	uint32_t Length;
@@ -106,6 +107,8 @@ struct VirtioInputEvent {
 	uint16_t code;
 	uint32_t value;
 };
+#pragma pack(pop)
+
 /*
  * AuVirtioKbdInitialize -- initialize the virtio keyboard
  */

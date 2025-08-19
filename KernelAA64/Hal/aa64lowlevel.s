@@ -286,3 +286,8 @@ set_kstack:
    msr SP_EL1, x0
    ret
 
+.global dc_ivac
+dc_ivac:
+   dc ivac, x0
+   ret
+

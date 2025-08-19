@@ -164,7 +164,6 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 
 	AA64Thread* thr = AuCreateKthread(AuEntryTest2, AuCreateVirtualAddressSpace(), "Test");
 	AA64Thread* thr2 = AuCreateKthread(AuEntryTest, AuCreateVirtualAddressSpace(), "Test2User");
-	//UARTDebugOut("Offset of ThreadType - %d \n", (&thr2->threadType - thr));
 
 	UARTDebugOut("Kernel Lower half is cleared \n");
 	

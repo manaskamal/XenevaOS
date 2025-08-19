@@ -30,15 +30,85 @@
 #include <pcie.h>
 #include <Hal/AA64/aa64lowlevel.h>
 #include <Hal/AA64/gic.h>
+#include <Fs/Dev/devinput.h>
 #include <Drivers/virtio.h>
 #include <Drivers/uart.h>
 #include <Mm/pmmngr.h>
 #include <aucon.h>
+#include <Mm/vmmngr.h>
+#include <Hal/AA64/sched.h>
 
 #define OFFSETOF(s,m) ((size_t)&(((s*)0)->m))
+struct VirtioQueue* queue;
+struct VirtioInputEvent* input;
+static uint16_t index;
+static int queueSize;
 
+static const uint8_t ext_key_map[256] = {
+	[0x63] = 0x37, //print screen
+	[0x66] = 0x47, //home
+	[0x67] = 0x48, //up
+	[0x68] = 0x49, //page up
+	[0x6c] = 0x50, //down
+	[0x69] = 0x4B, //left
+	[0x6a] = 0x4D, //right
+	[0x6b] = 0x4F, //end
+	[0x6d] = 0x51, //page down
+	[0x7d] = 0x5b, //left super
+};
+
+/*
+ * Virtio-keyboard interrupt handler
+ */
 void AuVirtioKbdHandler(int spinum) {
 	UARTDebugOut("From inside virtio keyboard handler++ \n");
+	uint16_t them = queue->used.index;
+	for (; index < them; index++) {
+		dc_ivac(&input[index % queueSize]);
+		dsb_sy_barrier();
+		struct VirtioInputEvent evt = input[index % queueSize];
+		while (evt.type == 0xFF) {
+			evt = input[index % queueSize];
+			UARTDebugOut("VirtioInput: bad packet : %d (them=%d)\n", index, them);
+		}
+		input[index % queueSize].type = 0xFF;
+		isb_flush();
+		dsb_sy_barrier();
+		if (evt.type == 1) {
+			if (evt.code < 0x49) {
+				uint8_t scancode = evt.code;
+				// Key Release: value |= 0x80;
+				// Key Release: value = code
+				if (evt.value == 0) {
+					scancode |= 0x80;
+				}
+				/* write to xeneva key input msg box */
+				AuInputMessage msg;
+				memset(&msg, 0, sizeof(AuInputMessage));
+				msg.type = AU_INPUT_KEYBOARD;
+				msg.code = scancode & 0xFF;
+				AuDevWriteKybrd(&msg);
+				UARTDebugOut("Key Pressed : scancode : %d code: %d \n", scancode, evt.code);
+			}
+			else if (ext_key_map[evt.code]) {
+				uint32_t scancode = (0xE0 & 0xFF) << 16 | (ext_key_map[evt.code] & 0xFF) << 8 | (((evt.value == 0) ? 0x80 : 0) & 0xFF);
+				// 0xE0 (extended code)  upper 16 bits | key code middle 8 bits | value: 0x80 for release, 0 press
+				/* write to xeneva key input msg box */
+				AuInputMessage msg;
+				memset(&msg, 0, sizeof(AuInputMessage));
+				msg.type = AU_INPUT_KEYBOARD;
+				msg.code = scancode;
+				AuDevWriteKybrd(&msg);
+				UARTDebugOut("Extended key press \n");
+			}
+			else {
+				UARTDebugOut("virtio-kybrd: unmapped key code : %d \n", evt.code);
+			}
+		}
+		isb_flush();
+		queue->available.index++;
+	}
+	
 }
 /*
  * AuVirtioKbdInitialize -- initialize the virtio keyboard
@@ -47,6 +117,7 @@ void AuVirtioKbdInitialize() {
 	int bus = 0;
 	int func = 0;
 	int dev = 0;
+	index = 0;
 	uint64_t device = AuPCIEScanVendorDevice(0x1AF4, 0x1052, &bus, &dev, &func);
 	if (device == 0xFFFFFFFF)
 		return 1;
@@ -95,23 +166,27 @@ void AuVirtioKbdInitialize() {
 	dsb_ish();
 
 	int queueSz = common->QueueSize;
+	queueSize = queueSz;
 	UARTDebugOut("virtio: queue sz : %d \n", queueSz);
 
-	uint64_t queuePhys = (uint64_t)AuPmmngrAlloc();
-	struct VirtioQueue* queue = (struct VirtioQueue*)queuePhys;
+
+	uint64_t queuePhys = (uint64_t)AuPmmngrAllocBlocks(((sizeof(struct VirtioQueue) * queueSz))/0x1000);
+	queue = (struct VirtioQueue*)AuMapMMIO(queuePhys, ((sizeof(struct VirtioQueue)*queueSz))/0x1000);
 
 	size_t desc_size = queueSz * sizeof(struct VirtioQueue);
 	common->QueueSelect = 0;
 	common->QueueDesc = queuePhys;
 	common->QueueAvail = (queuePhys)+OFFSETOF(struct VirtioQueue, available);
 	common->QueueUsed = (queuePhys)+OFFSETOF(struct VirtioQueue, used);
-	common->MSix = 1;
-	common->QueueMSixVector = 1;
+	common->MSix = 0;
+	common->QueueMSixVector = 0;
 	isb_flush();
 	dsb_ish();
 
 	uint64_t bufferBase = (uint64_t)AuPmmngrAlloc();
-	
+	input = (struct VirtioInputEvent*)AuMapMMIO(bufferBase, 1);
+
+
 	for (int i = 0; i < queueSz; ++i) {
 		queue->buffers[i].Addr = bufferBase + i * sizeof(struct VirtioInputEvent);
 		queue->buffers[i].Length = sizeof(struct VirtioInputEvent);
@@ -132,22 +207,7 @@ void AuVirtioKbdInitialize() {
 
 	uint16_t index = 0;
 	queue->available.index = queueSz - 1;
-	//*(uint64_t*)(AuGetSystemGIC()->gicMSIPhys + 0x40) = 80;
-	enable_irqs();
 	isb_flush();
 	dsb_ish();
-	UARTDebugOut("Entering loop \n");
-	//while (1) {
-	//	while (queue->used.index == index) {
-
-	//	}
-	//	uint16_t them = queue->used.index;
-	//	for (; index < them; index++) {
-	//		AuTextOut("Key Event \n");
-	//	}
-	//	//*(uint64_t*)(AuGetSystemGIC()->gicMSIPhys + 0x40) = 80;
-	//}
-
-	while (1);
 }
 
