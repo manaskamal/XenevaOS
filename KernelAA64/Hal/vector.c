@@ -54,8 +54,6 @@ void sync_el1_handler(AA64Registers *regs) {
     uint64_t esr = read_esr_el1();
 
     if ((esr >> 26) == 0x15) {
-        UARTDebugOut("System call trapped %d x30: %x\n", regs->x8, 
-            regs->x30);
         AuAA64SyscallHandler(regs);
        // enable_irqs();
         return;

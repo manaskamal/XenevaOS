@@ -104,6 +104,9 @@
     <ClCompile Include="Mm\shm.c">
       <Filter>Mm</Filter>
     </ClCompile>
+    <ClCompile Include="Mm\mmserv.c">
+      <Filter>Serv</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Hal">

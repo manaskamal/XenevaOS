@@ -38,8 +38,6 @@ e:\xeneva project\aurora\kernelaa64\arm64\debug\audrv.obj
 e:\xeneva project\aurora\kernelaa64\arm64\debug\audrv.asm
 e:\xeneva project\aurora\kernelaa64\arm64\debug\aucon.obj
 e:\xeneva project\aurora\kernelaa64\arm64\debug\aucon.asm
-e:\xeneva project\aurora\kernelaa64\arm64\debug\fileserv.obj
-e:\xeneva project\aurora\kernelaa64\arm64\debug\fileserv.asm
 e:\xeneva project\aurora\kernelaa64\arm64\debug\process.obj
 e:\xeneva project\aurora\kernelaa64\arm64\debug\process.asm
 e:\xeneva project\aurora\kernelaa64\arm64\debug\pe.obj
@@ -52,6 +50,8 @@ e:\xeneva project\aurora\kernelaa64\arm64\debug\shm.obj
 e:\xeneva project\aurora\kernelaa64\arm64\debug\shm.asm
 e:\xeneva project\aurora\kernelaa64\arm64\debug\pmmngr.obj
 e:\xeneva project\aurora\kernelaa64\arm64\debug\pmmngr.asm
+e:\xeneva project\aurora\kernelaa64\arm64\debug\mmserv.obj
+e:\xeneva project\aurora\kernelaa64\arm64\debug\mmserv.asm
 e:\xeneva project\aurora\kernelaa64\arm64\debug\liballoc.obj
 e:\xeneva project\aurora\kernelaa64\arm64\debug\liballoc.asm
 e:\xeneva project\aurora\kernelaa64\arm64\debug\kmalloc.obj
@@ -84,6 +84,8 @@ e:\xeneva project\aurora\kernelaa64\arm64\debug\stdio.obj
 e:\xeneva project\aurora\kernelaa64\arm64\debug\stdio.asm
 e:\xeneva project\aurora\kernelaa64\arm64\debug\thrserv.obj
 e:\xeneva project\aurora\kernelaa64\arm64\debug\thrserv.asm
+e:\xeneva project\aurora\kernelaa64\arm64\debug\fileserv.obj
+e:\xeneva project\aurora\kernelaa64\arm64\debug\fileserv.asm
 e:\xeneva project\aurora\kernelaa64\arm64\debug\vc142.pdb
 e:\xeneva project\aurora\kernelaa64\arm64\debug\aa64vector.obj
 e:\xeneva project\aurora\kernelaa64\arm64\debug\aa64lowlevel.obj

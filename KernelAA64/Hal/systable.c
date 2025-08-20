@@ -34,6 +34,7 @@
 #include <Hal/AA64/sched.h>
 #include <_null.h>
 #include <Serv/sysserv.h>
+#include <Mm/shm.h>
 
 #define AURORA_MAX_SYSCALL 24
 
@@ -58,7 +59,7 @@ uint64_t test_call() {
 
 static void* syscalls[AURORA_MAX_SYSCALL] = {
 	null_call, //0
-	test_call, //1
+	UARTDebugOut, //1
 	PauseThread, //2
 	GetThreadID, //3
 	GetProcessID, //4
@@ -66,9 +67,9 @@ static void* syscalls[AURORA_MAX_SYSCALL] = {
 	ProcessWaitForTermination, //6
 	CreateProcess, //7
 	ProcessLoadExec, //8
-	0, //9
-	0, //10
-	0, //11
+	CreateSharedMem, //9
+	ObtainSharedMem, //10
+	UnmapSharedMem, //11
 	OpenFile, //12
 	0, //13
 	0, //14
@@ -104,7 +105,7 @@ void AuAA64SyscallHandler(AA64Registers* regs) {
 	if (!func)
 		return 0;
 
-	retcode = func(0, 0, 0, 0, 0, 0);
+	retcode = func(regs->x0, regs->x1, regs->x2, regs->x3, regs->x4, regs->x5);
 	regs->x0 = retcode;
 	currThr->returnFromSyscall = 0;
 	return;

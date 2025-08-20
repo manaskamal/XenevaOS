@@ -268,6 +268,7 @@
     <ClCompile Include="loader.c" />
     <ClCompile Include="Mm\kmalloc.c" />
     <ClCompile Include="Mm\liballoc.c" />
+    <ClCompile Include="Mm\mmserv.c" />
     <ClCompile Include="Mm\pmmngr.c" />
     <ClCompile Include="Mm\shm.c" />
     <ClCompile Include="Mm\vmmngr.c" />
