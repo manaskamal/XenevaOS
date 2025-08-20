@@ -269,10 +269,12 @@
     <ClCompile Include="Mm\kmalloc.c" />
     <ClCompile Include="Mm\liballoc.c" />
     <ClCompile Include="Mm\pmmngr.c" />
+    <ClCompile Include="Mm\shm.c" />
     <ClCompile Include="Mm\vmmngr.c" />
     <ClCompile Include="pcie.c" />
     <ClCompile Include="pe.c" />
     <ClCompile Include="process.c" />
+    <ClCompile Include="Serv\fileserv.c" />
     <ClCompile Include="Serv\thrserv.c" />
     <ClCompile Include="stdio.c" />
     <ClCompile Include="string.c" />

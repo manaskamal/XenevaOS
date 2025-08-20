@@ -65,15 +65,15 @@ static void* syscalls[AURORA_MAX_SYSCALL] = {
 	ProcessExit, //5
 	ProcessWaitForTermination, //6
 	CreateProcess, //7
-	0, //8
+	ProcessLoadExec, //8
 	0, //9
 	0, //10
 	0, //11
-	0, //12
+	OpenFile, //12
 	0, //13
 	0, //14
 	0, //15
-	0, //16
+	ReadFile, //16
 	0, //17
 	0, //18
 	0, //19

@@ -133,3 +133,55 @@ int PauseThread() {
 	UARTDebugOut("PauseThread return \n");
 	return 1;
 }
+
+
+/*
+ * ProcessLoadExec -- loads an executable to a
+ * process slot
+ */
+int ProcessLoadExec(int proc_id, char* filename, int argc, char** argv) {
+	AuProcess* proc = AuProcessFindPID(proc_id);
+
+	if (!proc) {
+		UARTDebugOut("No process found for proc_id : %d\n", proc_id);
+		return -1;
+	}
+
+	/* prepare stuffs for passing arguments */
+	int char_cnt = 0;
+	for (int i = 0; i < argc; i++) {
+		size_t l = strlen(argv[i]);
+		char_cnt += l;
+	}
+
+	char** allocated_argv = 0;
+	if (char_cnt > 0) {
+		/*
+		 BUGG:kmalloc: mentioned in loader.cpp inside AuLoadExecToProcess
+		 */
+		allocated_argv = (char**)kmalloc(argc * sizeof(char*));
+		memset(allocated_argv, 0, argc * sizeof(char*));
+		for (int i = 0; i < argc; i++) {
+			/*
+			 * TRICKY: char pointers from argv[i] is already allocated
+			 * in XEShell while spawning the process in order to pass
+			 * argument, so we use those allocated user memory areas
+			 * directly inside the argument array and only this argument
+			 * array will get freed while loading the process, pointer
+			 * memory will get freed in XEShell itself
+			 */
+			allocated_argv[i] = argv[i];
+		}
+	}
+
+	int status = AuLoadExecToProcess(proc, filename, argc, allocated_argv);
+	if (status == -1) {
+		if (allocated_argv)
+			kfree(allocated_argv);
+		UARTDebugOut("Process launched failed %s\r\n", filename);
+		//exit the process
+		//AuProcessExit(proc, true);
+		return -1;
+	}
+}
+

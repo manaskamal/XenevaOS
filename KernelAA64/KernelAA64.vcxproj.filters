@@ -98,6 +98,12 @@
     <ClCompile Include="Drivers\virtiokbd.c">
       <Filter>Drivers</Filter>
     </ClCompile>
+    <ClCompile Include="Serv\fileserv.c">
+      <Filter>Serv</Filter>
+    </ClCompile>
+    <ClCompile Include="Mm\shm.c">
+      <Filter>Mm</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Hal">

@@ -35,6 +35,7 @@
 #include <Mm/pmmngr.h>
 #include <Mm/vmmngr.h>
 #include <Mm/kmalloc.h>
+#include <Mm/shm.h>
 #include <_null.h>
 #include <Hal/AA64/gic.h>
 #include <Hal/basicacpi.h>
@@ -49,6 +50,7 @@
 #include <audrv.h>
 #include <Hal/AA64/sched.h>
 #include <Fs/tty.h>
+
 
 
 extern int _fltused = 1;
@@ -144,6 +146,9 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 
 	/* initialize the tty service */
 	AuTTYInitialise();
+
+	/* initialize the shared memory manager*/
+	AuInitialiseSHMMan();
 
 	/* initialize our basic requirement */
 	AuVirtioKbdInitialize();

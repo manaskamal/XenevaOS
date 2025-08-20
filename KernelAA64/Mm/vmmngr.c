@@ -34,6 +34,7 @@
 #include <Hal/AA64/aa64lowlevel.h>
 #include <string.h>
 #include <kernelAA64.h>
+#include <_null.h>
 
 
 uint64_t* _RootPaging;
@@ -231,6 +232,80 @@ bool AuMapPageEx(uint64_t* pml4i, uint64_t phys_addr, uint64_t virt_addr, uint8_
 	pml1[i1] = (phys_addr & ~0xFFFULL) | flags;
 	tlb_flush(virt_addr);
 	return true;
+}
+
+
+/*
+ * AuVmmngrGetPage -- Returns virtual page from virtual address
+ * in AuVPage format
+ * @param virt_addr -- Virtual address
+ * @param _flags -- extra virtual page flags, this is set only if
+ * mode is set to VMMNGR_GETPAGE_CREATE
+ * @param mode -- specifies whether to create a virtual page if its
+ * not present
+ */
+AuVPage* AuVmmngrGetPage(uint64_t virt_addr, uint8_t _flags, uint8_t mode) {
+	uint64_t flags = PTE_VALID | PTE_TABLE |
+		PTE_AF | PTE_SH_INNER | PTE_AP_RW | _flags;
+	if (_flags & PTE_AP_RW_USER) {
+		flags = PTE_VALID | PTE_TABLE |
+			PTE_AF | PTE_SH_INNER | PTE_AP_RW_USER | _flags;
+	}
+
+	const long i4 = (virt_addr >> 39) & 0x1FF;
+	const long i3 = (virt_addr >> 30) & 0x1FF;
+	const long i2 = (virt_addr >> 21) & 0x1FF;
+	const long i1 = (virt_addr >> 12) & 0x1FF;
+
+	uint64_t* pml4i = (uint64_t*)P2V(read_ttbr0_el1());
+
+	if (!(pml4i[i4] & 1))
+	{
+		const uint64_t page = (uint64_t)AuPmmngrAlloc();
+		pml4i[i4] = page | flags;
+		memset((void*)P2V(page), 0, 4096);
+		tlb_flush((void*)pml4i);
+	}
+	uint64_t* pml3 = (uint64_t*)P2V(pml4i[i4] & ~0xFFFULL);
+
+	if (!(pml3[i3] & 1))
+	{
+		const uint64_t page = (uint64_t)AuPmmngrAlloc();
+		pml3[i3] = page | flags;
+		memset((void*)P2V(page), 0, 4096);
+		tlb_flush((void*)pml3);
+	}
+
+
+	uint64_t* pml2 = (uint64_t*)P2V(pml3[i3] & ~0xFFFULL);
+
+	if (!(pml2[i2] & 1))
+	{
+		const uint64_t page = (uint64_t)AuPmmngrAlloc();
+		pml2[i2] = page | flags;
+		memset((void*)P2V(page), 0, 4096);
+		tlb_flush((void*)pml2);
+	}
+
+	uint64_t* pml1 = (uint64_t*)P2V(pml2[i2] & ~0xFFFULL);
+	if (pml1[i1] & 1)
+	{
+		AuVPage* page = (AuVPage*)&pml1[i1];
+		return page;
+	}
+	else {
+		if (mode & VIRT_GETPAGE_CREATE && !(mode & VIRT_GETPAGE_ONLY_RET)) {
+			uint64_t phys_addr = (uint64_t)AuPmmngrAlloc();
+			memset((void*)P2V(phys_addr), 0, 4096);
+			pml1[i1] = phys_addr & ~0xFFFULL | flags;
+			tlb_flush((void*)virt_addr);
+			AuVPage* vpage = (AuVPage*)&pml1[i1];
+			UARTDebugOut("Creating vpage \r\n");
+			return vpage;
+		}
+		if (mode & VIRT_GETPAGE_ONLY_RET)
+			return NULL;
+	}
 }
 
 
