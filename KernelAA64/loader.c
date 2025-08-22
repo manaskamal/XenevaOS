@@ -188,6 +188,7 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) 
 	uentry->entrypoint = (size_t)ent;
 	uentry->stackBase = proc->_main_stack_;
 	thr->uentry = uentry;
+	proc->main_thread = thr;
 	UARTDebugOut("Binary mapped , thread id : %d\n", thr->thread_id);
 	return 0;
 }

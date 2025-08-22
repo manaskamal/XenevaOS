@@ -6,4 +6,7 @@
   <ItemGroup>
     <NASM Include="crt0.asm" />
   </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="crt0arm64.s" />
+  </ItemGroup>
 </Project>

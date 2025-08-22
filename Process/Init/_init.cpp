@@ -58,6 +58,11 @@ extern "C" void main(int argc, char* argv[]) {
 
 	int pid = _KeGetProcessID();
 
+	_KePrint("Init Process running ii %d\n", pid);
+	int threadID = _KeGetThreadID();
+	_KePrint("ThreadID : %d \n", threadID);
+	for (;;);
+
 	if (strcmp(argv[0], "-about") == 0)
 		_KePrint("Xeneva v1.0 !! Copyright (C) Manas Kamal Choudhury 2020-2023 \r\n");
 

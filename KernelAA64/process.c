@@ -199,7 +199,6 @@ AuProcess * AuCreateProcessSlot(AuProcess * parent, char* name) {
 	strcpy(proc->name, name);
 
 	proc->proc_id = AuAllocateProcessID();
-
 	/* create empty virtual address space */
 	uint64_t* cr3 = AuCreateVirtualAddressSpace();
 	/* create the process main thread stack */

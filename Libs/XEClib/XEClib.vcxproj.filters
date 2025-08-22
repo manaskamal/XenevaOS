@@ -244,4 +244,7 @@
     <ClCompile Include="fmodf.cpp" />
     <ClCompile Include="roundf.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="_callbase_arm64.s" />
+  </ItemGroup>
 </Project>
