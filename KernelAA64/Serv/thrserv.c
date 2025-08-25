@@ -31,6 +31,7 @@
 #include <Hal/AA64/sched.h>
 #include <Hal/AA64/aa64lowlevel.h>
 #include <process.h>
+#include <loader.h>
 #include <_null.h>
 #include <Drivers/uart.h>
 

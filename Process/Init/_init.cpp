@@ -61,6 +61,7 @@ extern "C" void main(int argc, char* argv[]) {
 	_KePrint("Init Process running ii %d\n", pid);
 	int threadID = _KeGetThreadID();
 	_KePrint("ThreadID : %d \n", threadID);
+
 	for (;;);
 
 	if (strcmp(argv[0], "-about") == 0)

@@ -40,7 +40,7 @@
 #include <Hal/AA64/aa64lowlevel.h>
 
 uint64_t* _ldr_scratchBuffer;
-
+uint64_t physFrames[64];
 
 /*
 * AuProcessEntUser -- main kernel thread call
@@ -155,7 +155,7 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) 
 		/* load the loader */
 		return AuLoadExecToProcess(proc, "/xeldr.exe", num_args_, argvs);
 	}
-	UARTDebugOut("NT NumberOfSection : %d \n", nt->FileHeader.NumberOfSections);
+	//UARTDebugOut("NT NumberOfSection : %d \n", nt->FileHeader.NumberOfSections);
 	for (size_t i = 0; i < nt->FileHeader.NumberOfSections; ++i) {
 		size_t load_addr = _image_base_ + secthdr[i].VirtualAddress;
 		void* sect_addr = (void*)load_addr;
@@ -163,21 +163,57 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) 
 		int req_pages = sectsz / 4096 +
 			((sectsz % 4096) ? 1 : 0);
 		uint64_t* block = 0;
+		int physFrameIndex = 0;
 		for (int j = 0; j < req_pages; j++) {
 			uint64_t alloc = (load_addr + j * 0x1000);
 			uint64_t phys = P2V((size_t)AuPmmngrAlloc());
-			UARTDebugOut("LoadAddr : %x , phys : %x \n", alloc, phys);
+			physFrames[physFrameIndex] = phys;
+			//UARTDebugOut("LoadAddr : %x , phys : %x \n", alloc, phys);
 			AuMapPageEx(proc->cr3, V2P(phys), alloc, PTE_USER_EXECUTABLE | PTE_AP_RW_USER );
 			if (!block)
 				block = (uint64_t*)phys;
+			physFrameIndex++;
 		}
-		UARTDebugOut("Copying to Phys : %x \n", block);
-		uint64_t current_ttbr = read_ttbr0_el1();
-		write_both_ttbr(V2P((uint64_t)proc->cr3));
-		memcpy(sect_addr, RAW_OFFSET(void*, _ldr_scratchBuffer, secthdr[i].PointerToRawData), secthdr[i].SizeOfRawData);
-		if (secthdr[i].VirtualSize > secthdr[i].SizeOfRawData)
-			memset(RAW_OFFSET(void*, sect_addr, secthdr[i].SizeOfRawData), 0, secthdr[i].VirtualSize - secthdr[i].SizeOfRawData);
-		write_both_ttbr(current_ttbr);
+		size_t rawSize = secthdr[i].SizeOfRawData;
+		size_t virtSize = secthdr[i].VirtualSize;
+		size_t fileOffset = secthdr[i].PointerToRawData;
+		size_t copied = 0;
+		for (int k = 0; k < secthdr[i].SizeOfRawData / 4096; k++) {
+			size_t toCopy = 4096;
+			if (copied + toCopy > rawSize)
+				toCopy = (rawSize - copied) ? rawSize - copied : 0;
+
+			if (toCopy > 0) 
+				//memcpy(sect_addr, RAW_OFFSET(void*, _ldr_scratchBuffer, secthdr[i].PointerToRawData), secthdr[i].SizeOfRawData);
+				memcpy((void*)physFrames[k], RAW_OFFSET(void*,_ldr_scratchBuffer,fileOffset+copied), toCopy); //RAW_OFFSET(void*, _ldr_scratchBuffer, secthdr[i].PointerToRawData)
+			
+			if (toCopy < 4096) 
+				memset((void*)(physFrames[k] + toCopy), 0, PAGE_SIZE - toCopy);
+			copied += toCopy;
+		}
+
+		if (secthdr[i].VirtualSize > secthdr[i].SizeOfRawData) {
+			/* get the index number of physFrame array*/
+			int zeroStart = rawSize;
+			int zeroLen = virtSize - rawSize;
+			int pageIndex = secthdr[i].SizeOfRawData / 4096; 
+			int pageOffset = secthdr[i].SizeOfRawData % PAGE_SIZE;
+			UARTDebugOut("VirtualSize - SizeOfRawData : %d \n", (secthdr[i].VirtualSize - secthdr[i].SizeOfRawData));
+			if (pageOffset > 0) {
+				memset((void*)(physFrames[pageIndex] + pageOffset), 0, PAGE_SIZE - pageOffset);
+				pageIndex++;
+				zeroLen -= (PAGE_SIZE - pageOffset);
+			}
+
+			while (zeroLen >= PAGE_SIZE) {
+				memset((void*)(physFrames[pageIndex++]), 0, PAGE_SIZE);
+				zeroLen -= PAGE_SIZE;
+			}
+
+			if (zeroLen > 0) 
+				memset((void*)physFrames[pageIndex], 0, zeroLen);
+		}
+		//write_both_ttbr(current_ttbr);
 	}
 
 	AA64Thread* thr = AuCreateKthread(AuProcessEntUser, cr3,proc->name);
@@ -199,5 +235,8 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) 
 void AuInitialiseLoader() {
 	_ldr_scratchBuffer = (uint64_t*)P2V((uint64_t)AuPmmngrAllocBlocks((1024 * 1024) / 0x1000));
 	memset(_ldr_scratchBuffer, 0, 1024 * 1024);
+	for (int i = 0; i < 64; i++)
+		physFrames[i] = 0;
+
 	AuTextOut("[aurora]: Kernel-level loader initialized \n");
 }

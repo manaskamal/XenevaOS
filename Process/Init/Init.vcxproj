@@ -195,8 +195,7 @@
       <AdditionalLibraryDirectories>..\..\ARM64\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>
-      </Command>
+      <Command>copy "..\..\Build\$(TargetName).exe" M:\$(TargetName).exe" </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
