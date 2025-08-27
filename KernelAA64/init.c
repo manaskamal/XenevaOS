@@ -165,7 +165,13 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	AuSchedulerInitialize();
 	UARTDebugOut("SIZEOF (AuUserEntry) - %d \n", sizeof(AuUserEntry));
 	AuProcess* proc = AuCreateProcessSlot(0, "exec");
-	AuLoadExecToProcess(proc, "/init.exe", 0, NULL);
+	int num_args = 1;
+	char* about = (char*)kmalloc(strlen("-about"));
+	strcpy(about, "-about");
+	char** argvs = (char**)kmalloc(num_args * sizeof(char*));
+	memset(argvs, 0, num_args);
+	argvs[0] = about;
+	AuLoadExecToProcess(proc, "/init.exe", num_args, argvs);
 
 	AA64Thread* thr = AuCreateKthread(AuEntryTest2, AuCreateVirtualAddressSpace(), "Test");
 	AA64Thread* thr2 = AuCreateKthread(AuEntryTest, AuCreateVirtualAddressSpace(), "Test2User");

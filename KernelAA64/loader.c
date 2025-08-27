@@ -42,6 +42,23 @@
 uint64_t* _ldr_scratchBuffer;
 uint64_t physFrames[64];
 
+/* push item on the stack */
+#define PUSH(stack, type, item) do { \
+	stack -= sizeof(type); \
+while (stack & (sizeof(type)-1))stack--; \
+	*((type*)stack) = item; \
+}while (0);
+
+
+#define PUSHSTRING(stack, s) do { \
+	size_t l = strlen(s) - 1; \
+    do {\
+       PUSH2(stack, char, s[l]); \
+	   l--; \
+	} while (l >= 0); \
+}while (0)
+
+
 /*
 * AuProcessEntUser -- main kernel thread call
 * in order to enter user for processes
@@ -53,7 +70,30 @@ void AuProcessEntUser(uint64_t rcx) {
 	AuUserEntry* uentry = t->uentry;
 	UARTDebugOut("AuProcessEntUser : %x entry - %x \n", uentry->rsp, uentry->entrypoint);
 	t->first_run = 1;
-	aa64_enter_user(uentry->rsp - 32,uentry->entrypoint);
+	/* do all arguments passing stuff, arguments
+	 * are passed as strings to stack
+	 */
+	char** argvs = (char**)uentry->argvaddr;
+	for (int i = 0; i < uentry->num_args; i++) {
+		char* str = uentry->argvs[i];
+		for (int j = strlen(str); j >= 0; j--) {
+			PUSH(uentry->rsp, char, str[j]);
+		}
+		argvs[i] = (char*)uentry->rsp;
+	}
+
+	if (uentry->argvs) {
+		for (int i = 0; i < uentry->num_args; i++) {
+			uint64_t addr = (uint64_t)uentry->argvs[i];
+			kfree((void*)addr);
+		}
+		void* address = (void*)uentry->argvs;
+		kfree(address);
+	}
+	uentry->argvs = 0;
+	PUSH(uentry->rsp, size_t, (size_t)uentry->argvaddr);
+	PUSH(uentry->rsp, size_t, uentry->num_args);
+	aa64_enter_user(uentry->rsp,uentry->entrypoint);
 	while (1) {
 	}
 }
@@ -223,6 +263,23 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) 
 	uentry->rsp = proc->_main_stack_;
 	uentry->entrypoint = (size_t)ent;
 	uentry->stackBase = proc->_main_stack_;
+	int num_args = argc;
+	uint64_t argvaddr = 0;
+	if (num_args) {
+		/* Allocate a memory for passing arguments */
+		char* args = (char*)P2V((size_t)AuPmmngrAlloc());
+		memset(args, 0, PAGE_SIZE);
+		if (!AuMapPageEx(proc->cr3, (size_t)V2P((size_t)args), 0x4000,PTE_AP_RW_USER)) {
+			AuTextOut("Arguments address already mapped \n");
+			argvaddr = 0;
+		}
+		else {
+			argvaddr = 0x4000;
+		}
+	}
+	uentry->argvaddr = argvaddr;
+	uentry->num_args = num_args;
+	uentry->argvs = argv;
 	thr->uentry = uentry;
 	proc->main_thread = thr;
 	UARTDebugOut("Binary mapped , thread id : %d\n", thr->thread_id);

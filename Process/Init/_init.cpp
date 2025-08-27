@@ -62,10 +62,18 @@ extern "C" void main(int argc, char* argv[]) {
 	int threadID = _KeGetThreadID();
 	_KePrint("ThreadID : %d \n", threadID);
 
-	for (;;);
+	if (strcmp(argv[0], "-about") == 0) {
+#ifdef ARCH_X64
+		_KePrint("Xeneva v1.0 x86_64 !! Copyright (C) Manas Kamal Choudhury 2020-2023 \r\n");
+#elif ARCH_ARM64
+		_KePrint("Xeneva v1.0 ARM64 !! Copyright (C) Manas Kamal Choudhury 2020-2025 \r\n");
+	}
+#endif
+	
 
-	if (strcmp(argv[0], "-about") == 0)
-		_KePrint("Xeneva v1.0 !! Copyright (C) Manas Kamal Choudhury 2020-2023 \r\n");
+	while(1){
+		_KePauseThread();
+	}
 
 	initSetupBasicEnvironmentVars();
 
