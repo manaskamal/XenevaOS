@@ -69,7 +69,7 @@ static uint16_t ICMPCalculateChecksum(char* payload, size_t len) {
 */
 int main(int argc, char* argv[]){
 	printf("\n");
-	char* s = (char*)malloc(strlen(argv[1]));
+	char* s = (char*)malloc(strlen(argv[1])+1);
 	strcpy(s, argv[1]);
 	
 	hostent* ent = gethostbyname(s);
