@@ -12,6 +12,9 @@ ASM_SRCS = lowlevel.asm
 # Object directory
 OBJDIR = obj
 
+# GNU-EFI Source Directory
+GNU_EFI_DIR = /home/cortexauth/Repos/gnu-efi-4.0.2
+
 # Include directories
 INCLUDES = -I../BaseHdr -Iinclude -Iinclude/x64 -I$(GNU_EFI_DIR)/inc
 
@@ -25,10 +28,10 @@ CXXFLAGS = -Wno-error=pragmas -mno-red-zone -mno-avx -fPIE \
 NASMFLAGS = -f win64
 
 # GNU-EFI link setup
-LDSCRIPT = /usr/lib/elf_x86_64_efi.lds
-CRT0 = /usr/lib/crt0-efi-x86_64.o
+LDSCRIPT = ${GNU_EFI_DIR}/gnuefi/elf_x86_64_efi.lds
+CRT0 = ${GNU_EFI_DIR}/x86_64/gnuefi/crt0-efi-x86_64.o
 LIBS = -lgnuefi -lefi
-LIBDIRS = -L/usr/lib
+LIBDIRS = -L${GNU_EFI_DIR}/x86_64/gnuefi -L${GNU_EFI_DIR}//x86_64/lib
 
 # Tools
 CXX = g++
