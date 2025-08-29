@@ -38,6 +38,9 @@
 #include <string.h>
 #include <va_list.h>
 #include <stdio.h>
+#include <Hal/AA64/sched.h>
+#include <process.h>
+#include <Fs/vfs.h>
 #include <Drivers/uart.h>
 
 uint8_t* font_data;
@@ -72,6 +75,72 @@ void AuConsoleInitialize(PKERNEL_BOOT_INFO info, bool early) {
 }
 
 
+int AuConsoleIoControl(AuVFSNode* file, int code, void* arg) {
+	int ret = 0;
+	AuFileIOControl* ioctl = (AuFileIOControl*)arg;
+	/*if (ioctl->syscall_magic != AURORA_SYSCALL_MAGIC)
+		return 0;*/
+
+	if (!aucon)
+		return 0;
+
+	switch (code) {
+	case SCREEN_GETWIDTH: {
+		uint32_t width = aucon->width;
+		ioctl->uint_1 = width;
+		break;
+	}
+	case SCREEN_GETHEIGHT: {
+		uint32_t height = aucon->height;
+		ioctl->uint_1 = height;
+		break;
+	}
+	case SCREEN_GETBPP: {
+		uint32_t bpp = aucon->bpp;
+		ioctl->uint_1 = bpp;
+		break;
+	}
+	case SCREEN_GET_SCANLINE: {
+		uint16_t scanline = aucon->scanline;
+		ioctl->ushort_1 = scanline;
+		break;
+	}
+	case SCREEN_GET_PITCH: {
+		uint32_t pitch = aucon->pitch;
+		ioctl->uint_1 = pitch;
+		break;
+	}
+	case SCREEN_GET_FB: {
+		/* here need to map the physical framebuffer for desired process */
+		AA64Thread* thr = AuGetCurrentThread();
+		if (!thr)
+			break;
+		AuProcess* proc = AuProcessFindThread(thr);
+		if (!proc) {
+			proc = AuProcessFindSubThread(thr);
+			if (!proc)
+				break;
+		}
+		uint64_t vmaddr = (uint64_t)AuGetFreePage(1, NULL);
+		uint64_t fbaddr = (uint64_t)__framebuffer;
+		for (int i = 0; i < aucon->size / PAGE_SIZE; i++) {
+			AuMapPage((uint64_t)fbaddr + (i * PAGE_SIZE),
+				vmaddr + (i * PAGE_SIZE), PTE_NORMAL_MEM | PTE_AP_RW_USER);
+
+		}
+		//uint64_t buffaddr = (uint64_t)aucon->buffer;
+		ioctl->ulong_1 = vmaddr;
+		break;
+	}
+
+	case SCREEN_REG_MNGR: {
+		return 1;
+		break;
+	}
+	}
+	return ret;
+}
+
 
 /*
  * AuConsolePostInitialise -- initialise the post console process
@@ -97,6 +166,13 @@ void AuConsolePostInitialise(PKERNEL_BOOT_INFO info) {
 	aucon->scanline = info->pixels_per_line;
 	aucon->pitch = 4 * info->pixels_per_line;
 	aucon->size = info->fb_size;
+
+	/* the _framebuffer global variable was just there lying freely
+	 * decided to use it to store the address of physical framebuffer
+	 * from BOOT info, let's use that
+	 */
+	__framebuffer = info->graphics_framebuffer;
+
 	aucon->early_mode = false;
 	console_x = console_y = 0;
 	redmask = info->redmask;
@@ -109,6 +185,17 @@ void AuConsolePostInitialise(PKERNEL_BOOT_INFO info) {
 		}
 	}
 	early_ = false;
+
+	AuVFSNode* fsys = AuVFSFind("/dev");
+	AuVFSNode* file = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
+	memset(file, 0, sizeof(AuVFSNode));
+	strcpy(file->filename, "graph");
+	file->flags = FS_FLAG_DEVICE;
+	file->device = fsys;
+	file->read = 0;
+	file->write = 0;
+	file->iocontrol = AuConsoleIoControl;
+	AuDevFSAddFile(fsys, "/", file);
 }
 
 

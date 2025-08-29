@@ -173,3 +173,32 @@ size_t ReadFile(int fd, void* buffer, size_t length) {
 }
 
 
+/*
+ * FileIoControl -- controls the file through I/O code
+ * @param fd -- file descriptor
+ * @param code -- code to pass
+ * @param arg -- argument to pass
+ */
+int FileIoControl(int fd, int code, void* arg) {
+	if (fd == -1)
+		return -1;
+	AA64Thread* current_thr = AuGetCurrentThread();
+	if (!current_thr)
+		return 0;
+	AuProcess* current_proc = AuProcessFindThread(current_thr);
+	if (!current_proc) {
+		current_proc = AuProcessFindSubThread(current_thr);
+		if (!current_proc)
+			return 0;
+	}
+	AuVFSNode* file = current_proc->fds[fd];
+
+	if (!file)
+		return -1;
+
+	int ret = 0;
+	ret = AuVFSNodeIOControl(file, code, arg);
+	return ret;
+}
+
+

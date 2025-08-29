@@ -139,10 +139,10 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	AuVmmngrInitialize();
 	AuHeapInitialize();
 	AuDeviceTreeMapMMIO();
-	AuConsolePostInitialise(info);
 	AA64CPUPostInitialize(info);
 	AuVFSInitialise();
 	AuInitrdInitialize(info);
+	AuConsolePostInitialise(info);
 
 	/* initialize the tty service */
 	AuTTYInitialise();

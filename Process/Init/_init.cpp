@@ -70,7 +70,31 @@ extern "C" void main(int argc, char* argv[]) {
 		_KePrint("Xeneva v1.0 ARM64 !! Copyright (C) Manas Kamal Choudhury 2020-2025 \r\n");
 	}
 #endif
-	
+
+	int graphFd = _KeOpenFile("/dev/graph", FILE_OPEN_WRITE);
+	XEFileIOControl ioctl;
+	memset(&ioctl, 0, sizeof(XEFileIOControl));
+	ioctl.syscall_magic = AURORA_SYSCALL_MAGIC;
+	int ret = 0;
+	ret = _KeFileIoControl(graphFd, SCREEN_GETWIDTH, &ioctl);
+	int screenWidth = ioctl.uint_1;
+	ret = _KeFileIoControl(graphFd, SCREEN_GETHEIGHT, &ioctl);
+	int screenHeight = ioctl.uint_1;
+	ret = _KeFileIoControl(graphFd, SCREEN_GETBPP, &ioctl);
+	int bpp = ioctl.uint_1;
+	ret = _KeFileIoControl(graphFd, SCREEN_GET_SCANLINE, &ioctl);
+	int scanline = ioctl.ushort_1;
+	ret = _KeFileIoControl(graphFd, SCREEN_GET_PITCH, &ioctl);
+	int pitch = ioctl.uint_1;
+	ret = _KeFileIoControl(graphFd, SCREEN_GET_FB, &ioctl);
+	uint32_t* framebuff = (uint32_t*)ioctl.ulong_1;
+
+	for (int w = 0; w < screenWidth; w++) {
+		for (int h = 0; h < screenHeight; h++) {
+			framebuff[w + h * screenWidth] = 0xFF803A68;
+		}
+	}
+
 	uint64_t* addr = (uint64_t*)_KeGetProcessHeapMem(4096);
 	addr[0] = 100;
 	_KeProcessHeapUnmap(addr, 4096);
