@@ -95,3 +95,93 @@ void UnmapSharedMem(uint16_t key) {
 	}
 	AuSHMUnmap(key, proc);
 }
+
+
+/*
+ * GetProcessHeapMem -- get a memory from
+ * process heap
+ */
+uint64_t GetProcessHeapMem(size_t sz) {
+	/* check if size is page aligned */
+	if ((sz % PAGE_SIZE) != 0) {
+		AuTextOut("Returning error heap mem -> %d \r\n", sz);
+		return -1;
+		sz = PAGE_ALIGN(sz);
+	}
+
+	AA64Thread* thr = AuGetCurrentThread();
+	if (!thr)
+		return -1;
+	AuProcess* proc = AuProcessFindThread(thr);
+	if (!proc) {
+		proc = AuProcessFindSubThread(thr);
+		if (!proc) {
+			return -1;
+		}
+	}
+
+	uint64_t start_addr = (uint64_t)AuGetFreePage(false, (void*)proc->proc_mem_heap);
+
+	for (int i = 0; i < sz / PAGE_SIZE; i++) {
+		uint64_t phys = (uint64_t)AuPmmngrAlloc();
+		if (!AuMapPage(phys, start_addr + i * PAGE_SIZE,PTE_AP_RW_USER)) {
+			AuPmmngrFree((void*)phys);
+		}
+	}
+
+	proc->proc_mem_heap = start_addr;
+	proc->proc_heapmem_len += sz;
+	return start_addr;
+}
+
+/*
+ * ProcessHeapUnmap -- unmaps previosly allocated
+ * heap memory
+ * @param ptr -- Pointer to freeable address
+ * @param sz -- size in bytes to unallocate
+ */
+int ProcessHeapUnmap(void* ptr, size_t sz) {
+
+	/* check if size is page aligned */
+	if ((sz % PAGE_SIZE) != 0) {
+		AuTextOut("Returning error heap unmap -> %d \r\n", sz);
+		return -1;
+		sz = PAGE_ALIGN(sz);
+	}
+
+	UARTDebugOut("ProcessHeapUnmap \n");
+	AA64Thread* thr = AuGetCurrentThread();
+	if (!thr)
+		return -1;
+	AuProcess* proc = AuProcessFindThread(thr);
+	if (!proc) {
+		proc = AuProcessFindSubThread(thr);
+		if (!proc) {
+			return -1;
+		}
+	}
+	uint64_t start_addr = (uint64_t)ptr;
+	for (int i = 0; i < sz / PAGE_SIZE; i++) {
+		AuVPage* page_ = AuVmmngrGetPage(start_addr + i * PAGE_SIZE, VIRT_GETPAGE_ONLY_RET, VIRT_GETPAGE_ONLY_RET);
+		if (page_) {
+			uint64_t phys_page = page_->bits.page << PAGE_SHIFT;
+			//UARTDebugOut("Unmap phys page : %x \n", phys_page);
+			if (phys_page) {
+				AuPmmngrFree((void*)phys_page);
+				//page_->raw = 0;
+				page_->bits.present = 0;
+				isb_flush();
+				page_->bits.page = 0;
+				isb_flush();
+				/* flush all PTE entries in TLB*/
+				tlb_flush_vmalle1is();
+				dsb_ish();
+				isb_flush();
+			}
+		}
+	
+	}
+	/*if (start_addr < proc->proc_mem_heap)*/
+	proc->proc_mem_heap = start_addr;
+	return 0;
+}

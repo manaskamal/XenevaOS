@@ -95,6 +95,7 @@ AU_EXTERN AU_EXPORT void isb_flush();
 
 AU_EXTERN AU_EXPORT void tlb_flush(uint64_t virtul_addr);
 
+AU_EXTERN AU_EXPORT void tlb_flush_vmalle1is();
 /*
  * set_vbar_el1 -- set vector base address for el1
  * @param addr -- address of the vector table

@@ -36,7 +36,7 @@
 #include <Serv/sysserv.h>
 #include <Mm/shm.h>
 
-#define AURORA_MAX_SYSCALL 24
+#define AURORA_MAX_SYSCALL 35
 
 /* Syscall function format */
 typedef int64_t(*syscall_func) (int64_t param1, int64_t param2, int64_t param3, int64_t
@@ -73,7 +73,7 @@ static void* syscalls[AURORA_MAX_SYSCALL] = {
 	OpenFile, //12
 	0, //13
 	0, //14
-	0, //15
+	GetProcessHeapMem, //15
 	ReadFile, //16
 	0, //17
 	0, //18
@@ -82,6 +82,17 @@ static void* syscalls[AURORA_MAX_SYSCALL] = {
 	0, //21
 	0, //22
 	ProcessSleep, //23
+	0, //24
+	0, //25
+	0, //26
+	0, //27
+	0, //28
+	0, //29
+	0, //30
+	0, //31
+	0, //32
+	0, //33
+	ProcessHeapUnmap, //34
 };
 
 /*

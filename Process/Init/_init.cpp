@@ -39,6 +39,7 @@
 #include <sys\_keproc.h>
 #include <string.h>
 #include <sys\_heap.h>
+#include <sys\mman.h>
 #include <sys\_kefile.h>
 #include <stdlib.h>
 #include <sys\iocodes.h>
@@ -70,6 +71,11 @@ extern "C" void main(int argc, char* argv[]) {
 	}
 #endif
 	
+	uint64_t* addr = (uint64_t*)_KeGetProcessHeapMem(4096);
+	addr[0] = 100;
+	_KeProcessHeapUnmap(addr, 4096);
+	_KePrint("ProcessHeapMem addr : %d \n", addr[0]);
+
 
 	while(1){
 		_KePauseThread();

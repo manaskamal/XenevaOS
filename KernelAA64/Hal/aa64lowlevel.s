@@ -130,6 +130,15 @@ tlb_flush:
      isb
      ret
 
+.global tlb_flush_vmalle1is
+tlb_flush_vmalle1is:
+     dsb ishst
+     tlbi vmalle1is
+     dsb ish
+     isb
+     ret
+      
+
 .global enable_sre
 enable_sre:
     mrs x0, ICC_SRE_EL1

@@ -205,7 +205,10 @@ AuProcess * AuCreateProcessSlot(AuProcess * parent, char* name) {
 	uint64_t  main_thr_stack = (uint64_t)CreateUserStack(proc, cr3);
 	proc->state = PROCESS_STATE_NOT_READY;
 	proc->cr3 = cr3;
+	proc->proc_mem_heap = PROCESS_BREAK_ADDRESS;
+	proc->proc_heapmem_len = 0;
 	proc->_main_stack_ = main_thr_stack;
+	proc->waitlist = initialize_list();
 	uint64_t ustack = proc->_main_stack_;
 	proc->_main_stack_ = (((uint64_t)ustack + 15) & ~(uint64_t)0xF);
 	AuAddProcess(parent, proc);
