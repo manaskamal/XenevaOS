@@ -14,4 +14,7 @@
     <ClInclude Include="pe_.h" />
     <ClInclude Include="XELdrObject.h" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="crt0_arm64.s" />
+  </ItemGroup>
 </Project>

@@ -172,6 +172,47 @@ size_t ReadFile(int fd, void* buffer, size_t length) {
 	return ret_bytes;
 }
 
+/*
+ * CloseFile -- closes a general file
+ * @param fd -- file descriptor to close
+ */
+int CloseFile(int fd) {
+	if (fd == -1)
+		return 0;
+	AA64Thread* current_thr = AuGetCurrentThread();
+	if (!current_thr)
+		return 0;
+	AuProcess* current_proc = AuProcessFindThread(current_thr);
+	if (!current_proc) {
+		current_proc = AuProcessFindSubThread(current_thr);
+		if (!current_proc)
+			return 0;
+	}
+
+	AuVFSNode* file = current_proc->fds[fd];
+	if (file->flags & FS_FLAG_FILE_SYSTEM) {
+		UARTDebugOut("Closing fs -> %s \r\n", file->filename);
+		current_proc->fds[fd] = 0;
+		return -1;
+	}
+	if (file->flags & FS_FLAG_GENERAL) {
+		kfree(file);
+	}
+
+
+	if (file->flags & FS_FLAG_DIRECTORY) {
+		kfree(file);
+	}
+
+	if (file->flags & FS_FLAG_PIPE) {
+		if (file->close)
+			file->close(file, file);
+	}
+
+	current_proc->fds[fd] = 0;
+	return 0;
+}
+
 
 /*
  * FileIoControl -- controls the file through I/O code
@@ -199,6 +240,40 @@ int FileIoControl(int fd, int code, void* arg) {
 	int ret = 0;
 	ret = AuVFSNodeIOControl(file, code, arg);
 	return ret;
+}
+
+/*
+ * FileStat -- writes information related
+ * to file
+ * @param fd -- file descriptor
+ * @param buf -- Pointer to file structure
+ */
+int FileStat(int fd, void* buf) {
+	if (fd == -1)
+		return -1;
+	AA64Thread* current_thr = AuGetCurrentThread();
+	if (!current_thr) {
+		return 0;
+	}
+	AuProcess* current_proc = AuProcessFindThread(current_thr);
+	if (!current_proc) {
+		current_proc = AuProcessFindSubThread(current_thr);
+		if (!current_proc)
+			return 0;
+	}
+	AuVFSNode* file = current_proc->fds[fd];
+	if (!file)
+		return -1;
+
+	AuFileStatus* status = (AuFileStatus*)buf;
+	status->current_block = file->current;
+	status->size = file->size;
+	status->filemode = file->flags;
+	status->eof = file->eof;
+	status->start_block = file->first_block;
+	status->user_id = 0;
+	status->group_id = 0;
+	return 0;
 }
 
 
