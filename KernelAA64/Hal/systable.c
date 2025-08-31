@@ -35,6 +35,7 @@
 #include <_null.h>
 #include <Serv/sysserv.h>
 #include <Mm/shm.h>
+#include <Mm/mmap.h>
 
 #define AURORA_MAX_SYSCALL 35
 
@@ -71,8 +72,8 @@ static void* syscalls[AURORA_MAX_SYSCALL] = {
 	ObtainSharedMem, //10
 	UnmapSharedMem, //11
 	OpenFile, //12
-	0, //13
-	0, //14
+	CreateMemMapping, //13
+	UnmapMemMapping, //14
 	GetProcessHeapMem, //15
 	ReadFile, //16
 	0, //17
@@ -88,7 +89,7 @@ static void* syscalls[AURORA_MAX_SYSCALL] = {
 	0, //27
 	0, //28
 	0, //29
-	0, //30
+	MemMapDirty, //30
 	0, //31
 	0, //32
 	0, //33

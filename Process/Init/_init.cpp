@@ -95,6 +95,11 @@ extern "C" void main(int argc, char* argv[]) {
 		}
 	}
 
+	uint64_t* address = (uint64_t*)_KeMemMap(NULL, 4096, 0, 0, -1, 0);
+	_KePrint("MemMap addr: %x \n", address);
+	address[0] = 11;
+	_KePrint("MemMap data : %d \n", address[0]);
+
 	uint64_t* addr = (uint64_t*)_KeGetProcessHeapMem(4096);
 	addr[0] = 100;
 	_KeProcessHeapUnmap(addr, 4096);
