@@ -15,6 +15,7 @@
     <ClInclude Include="XELdrObject.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="crt0_arm64.s" />
+    <CustomBuild Include="crt0_arm64.s" />
+    <CustomBuild Include="fastcpy_arm64.s" />
   </ItemGroup>
 </Project>

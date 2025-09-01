@@ -227,6 +227,10 @@ typedef int(*entrypoint) (int argc, char*argv[]);
 int main(int argc, char* argv[]) {
 	int pid = _KeGetProcessID();
 
+	_KePrint("From inside XELoader (Xeneva Dynamic Loader v1.0 ARM64)\n");
+	_KePrint("Copyright (C) Manas Kamal Choudhury 2023-2025\n");
+	for (;;);
+
 	/* simply exit*/
 	if (!argv)
 		_KeProcessExit();

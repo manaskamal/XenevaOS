@@ -95,15 +95,8 @@ extern "C" void main(int argc, char* argv[]) {
 		}
 	}
 
-	uint64_t* address = (uint64_t*)_KeMemMap(NULL, 4096, 0, 0, -1, 0);
-	_KePrint("MemMap addr: %x \n", address);
-	address[0] = 11;
-	_KePrint("MemMap data : %d \n", address[0]);
-
-	uint64_t* addr = (uint64_t*)_KeGetProcessHeapMem(4096);
-	addr[0] = 100;
-	_KeProcessHeapUnmap(addr, 4096);
-	_KePrint("ProcessHeapMem addr : %d \n", addr[0]);
+	int proc = _KeCreateProcess(0, "xeldr");
+	_KeProcessLoadExec(proc, "/xeldr.exe", 0, NULL);
 
 
 	while(1){
