@@ -579,7 +579,7 @@ void* liballoc_alloc(int pages) {
 	memset(page, 0, pages * PAGE_SIZE);
 
 	if ((page_ % PAGE_SIZE) != 0) {
-		AuTextOut("Request page not aligned to page boundary \r\n");
+		//AuTextOut("Request page not aligned to page boundary \r\n");
 		for (;;);
 	}
 
@@ -587,7 +587,7 @@ void* liballoc_alloc(int pages) {
 }
 
 int liballoc_free(void* ptr, int pages) {
-	AuTextOut("LIBALLOC: freeing pages : %d \n", pages);
+	//AuTextOut("LIBALLOC: freeing pages : %d \n", pages);
 	AuFreePages((uint64_t)ptr, true, pages);
 	return 0;
 }

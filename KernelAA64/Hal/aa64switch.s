@@ -176,7 +176,6 @@ store_syscall:
    stp x25,x26,[x0,#48]
    stp x27,x28,[x0,#64]
    stp x29,x30,[x0,#80]
-
    /* dont store the stack,
     * because it will keep decreasing
     * over time when this thread will
@@ -201,8 +200,8 @@ ret_from_syscall:
    ldp x25,x26,[x0,#48]
    ldp x27, x28,[x0,#64] 
    ldp x29,x30, [x0,#80]
-
    ldr x2, [x0, #96]
+
    /* directly load the original stack 
     * which is top of the stack
     */

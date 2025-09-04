@@ -127,8 +127,8 @@ int ProcessSleep(uint64_t ms) {
  * thread
  */
 int PauseThread() {
-	UARTDebugOut("PauseThread \n");
 	AA64Thread* current_thr = AuGetCurrentThread();
+	UARTDebugOut("PauseThread %s\n", current_thr->name);
 	AuBlockThread(current_thr);
 	AuScheduleThread(NULL);
 	UARTDebugOut("PauseThread return \n");

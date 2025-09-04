@@ -35,18 +35,21 @@ __chkstk:
 _KePrint:
     mov x8, 1
     svc #0
+	mov x0, x27
     ret
 
 .global _KePauseThread
 _KePauseThread:
     mov x8, 2
     svc #0
+	mov x0, x27
     ret
 
 .global _KeGetThreadID
 _KeGetThreadID:
     mov x8, 3
     svc #0
+	mov x0, x27
     ret
 
 
@@ -54,12 +57,14 @@ _KeGetThreadID:
 _KeGetProcessID:
     mov x8, 4
     svc #0
+	mov x0, x27
     ret
 
 .global _KeProcessExit
 _KeProcessExit:
     mov x8, 5
     svc #0
+	mov x0, x27
     ret
 
 
@@ -74,6 +79,7 @@ _KeProcessExit:
 _KeProcessWaitForTermination:
       mov x8, 6
 	  svc #0
+	  mov x0, x27
 	  ret
 
 //=======================================
@@ -88,18 +94,21 @@ _KeProcessWaitForTermination:
 _KeCreateProcess:
       mov x8, 7
       svc #0
+	  mov x0, x27
 	  ret
 
 .global _KeProcessLoadExec
 _KeProcessLoadExec:
       mov x8, 8
 	  svc #0
+	  mov x0, x27
 	  ret
 
 .global _KeProcessSleep
 _KeProcessSleep:
       mov x8, 23
 	  svc #0
+	  mov x0, x27
 	  ret
 
 
@@ -111,36 +120,42 @@ _KeProcessSleep:
 _KeSetSignal:
 	  mov x8, 25
 	  svc #0
+	  mov x0, x27
 	  ret
 
 .global _KeCreateSharedMem
 _KeCreateSharedMem:
       mov x8, 9
 	  svc #0
+	  mov x0, x27
 	  ret
 
 .global _KeObtainSharedMem
 _KeObtainSharedMem:
       mov x8, 10
 	  svc #0
+	  mov x0, x27
 	  ret
 
 .global _KeUnmapSharedMem
 _KeUnmapSharedMem:
       mov x8, 11
 	  svc #0
+	  mov x0, x27
 	  ret
 
 .global _KeMemMap
 _KeMemMap:
 	  mov x8, 13
 	  svc #0
+	  mov x0, x27
 	  ret
 
 .global _KeMemUnmap
 _KeMemUnmap:
 	  mov x8, 14
 	  svc #0
+	  mov x0, x27
 	  ret
 
 //====================================
@@ -154,6 +169,7 @@ _KeMemUnmap:
 _KeGetProcessHeapMem:
 	  mov x8, 15
 	  svc #0
+	  mov x0, x27
 	  ret
 
 //=====================================
@@ -166,6 +182,7 @@ _KeGetProcessHeapMem:
 _KeOpenFile:
 	  mov x8, 12
 	  svc #0
+	  mov x0, x27
 	  ret
 
 //====================================
@@ -179,6 +196,7 @@ _KeOpenFile:
 _KeReadFile:
 	  mov x8, 16
 	  svc #0
+	  mov x0, x27
 	  ret
 
 //====================================
@@ -192,6 +210,7 @@ _KeReadFile:
 _KeWriteFile:
 	  mov x8, 17
 	  svc #0
+	  mov x0, x27
 	  ret
 
 //==================================
@@ -203,6 +222,7 @@ _KeWriteFile:
 _KeCreateDir:
 	  mov x8, 18
 	  svc #0
+	  mov x0, x27
 	  ret
 
 
@@ -215,6 +235,7 @@ _KeCreateDir:
 _KeRemoveFile:
 	  mov x8, 19
 	  svc #0
+	  mov x0, x27
 	  ret
 
 //====================================
@@ -225,12 +246,14 @@ _KeRemoveFile:
 _KeCloseFile:
 	  mov x8, 20
 	  svc #0
+	  mov x0, x27
 	  ret
 
 .global _KeFileIoControl
 _KeFileIoControl:
 	  mov x8, 21
 	  svc #0
+	  mov x0, x27
 	  ret
 
 //===============================
@@ -241,6 +264,7 @@ _KeFileIoControl:
 _KeFileStat:
 	  mov x8, 22
 	  svc #0
+	  mov x0, x27
 	  ret
 
 //===============================
@@ -252,6 +276,7 @@ _KeFileStat:
 _KeGetSystemTimerTick:
 	  mov x8, 26
 	  svc #0
+	  mov x0, x27
 	  ret
 
 //===============================
@@ -262,6 +287,7 @@ _KeGetSystemTimerTick:
 _KeGetFontID:
 	  mov x8, 27
 	  svc #0
+	  mov x0, x27
 	  ret
 
 //===============================
@@ -272,6 +298,7 @@ _KeGetFontID:
 _KeGetNumFonts:
 	  mov x8, 28
 	  svc #0
+	  mov x0, x27
 	  ret
       
 //===============================
@@ -282,6 +309,7 @@ _KeGetNumFonts:
 _KeGetFontSize:
 	  mov x8, 29
 	  svc #0
+	  mov x0, x27
 	  ret
 
 
@@ -289,90 +317,105 @@ _KeGetFontSize:
 _KeMemMapDirty:
 	  mov x8, 30
 	  svc #0
+	  mov x0, x27
 	  ret
 
 .global _KeCreateTTY
 _KeCreateTTY:
 	  mov x8, 31
 	  svc #0
+	  mov x0, x27
 	  ret
 
 .global _KeCreateThread
 _KeCreateThread:
 	  mov x8, 32
 	  svc #0
+	  mov x0, x27
 	  ret
 
 .global _KeSetFileToProcess
 _KeSetFileToProcess:
 	  mov x8, 33
 	  svc #0
+	  mov x0, x27
 	  ret
 
 .global _KeProcessHeapUnmap
 _KeProcessHeapUnmap:
 	  mov x8, 34
 	  svc #0
+	  mov x0, x27
 	  ret
 
 .global _KeSendSignal
 _KeSendSignal:
 	  mov x8, 35
 	  svc #0
+	  mov x0, x27
 	  ret
 
 .global _KeGetCurrentTime
 _KeGetCurrentTime:
 	 mov x8, 36
 	 svc #0
+	 mov x0, x27
 	 ret
 
 .global _KeOpenDir
 _KeOpenDir:
 	 mov x8, 37
 	 svc #0
+	 mov x0, x27
 	 ret
 
 .global _KeReadDir
 _KeReadDir:
 	 mov x8, 38
 	 svc #0
+	 mov x0, x27
 	 ret
 
 .global _KeCreateTimer
 _KeCreateTimer:
 	 mov x8, 39
 	 svc #0
+	 mov x0, x27
 	 ret
 
 .global _KeStartTimer
 _KeStartTimer:
 	 mov x8, 40
 	 svc #0
+	 mov x0, x27
 	 ret
 
 .global _KeStopTimer
 _KeStopTimer:
 	 mov x8, 41
 	 svc #0
+	 mov x0, x27
 	 ret
 
 .global _KeDestroyTimer
 _KeDestroyTimer:
 	 mov x8, 42
 	 svc #0
+	 mov x0, x27
 	 ret
 
 .global _KeProcessGetFileDesc
 _KeProcessGetFileDesc:
 	 mov x8, 43
 	 svc #0
+	 mov x0, x27
 	 ret
 
 .global _KeFileSetOffset
 _KeFileSetOffset:
 	mov x8, 44
 	svc #0
+	mov x0, x27
 	ret
 
 
@@ -380,30 +423,35 @@ _KeFileSetOffset:
 gettimeofday:
 	mov x8, 45
 	svc #0
+	mov x0, x27
 	ret
 
 .global socket
 socket:
    mov x8, 46
    svc #0
+   mov x0, x27
    ret
 
 .global connect
 connect:
    mov x8, 47
    svc #0
+   mov x0, x27
    ret
 
 .global send
 send:
    mov x8, 48
    svc #0
+   mov x0, x27
    ret
 
 .global receive
 receive:
    mov x8, 49
    svc #0
+   mov x0, x27
    ret
 
 .global socket_setopt
@@ -411,46 +459,54 @@ socket_setopt:
    mov x8, 50
    // rest will be passed through stack
    svc #0
+   mov x0, x27
    ret
 
 .global bind
 bind:
    mov x8, 51
    svc #0
+   mov x0, x27
    ret
 
 .global accept
 accept:
    mov x8, 52
    svc #0
+   mov x0, x27
    ret
 
 .global listen
 listen:
 	mov x8, 53
 	svc #0
+	mov x0, x27
 	ret
 
 .global _KeCreatePipe
 _KeCreatePipe:
 	mov x8, 54
 	svc #0
+	mov x0, x27
 	ret
 
 .global _KeGetStorageDiskInfo
 _KeGetStorageDiskInfo:
 	mov x8, 55
 	svc #0
+	mov x0, x27
 	ret
 
 .global _KeGetStoragePartitionInfo
 _KeGetStoragePartitionInfo:
 	mov x8, 56
 	svc #0
+	mov x0, x27
 	ret
 
 .global _KeGetEnvironmentBlock
 _KeGetEnvironmentBlock:
 	mov x8, 57
 	svc #0
+	mov x0, x27
 	ret

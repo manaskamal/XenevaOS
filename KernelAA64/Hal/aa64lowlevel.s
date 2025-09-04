@@ -300,3 +300,9 @@ dc_ivac:
    dc ivac, x0
    ret
 
+.global set_syscall_retval
+set_syscall_retval:
+   mov x27, x0
+   ret
+
+

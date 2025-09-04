@@ -194,6 +194,7 @@
       </RandomizedBaseAddress>
       <FixedBaseAddress>false</FixedBaseAddress>
       <BaseAddress>0x0000000400000000</BaseAddress>
+      <AdditionalOptions>/def:_export_arm64.def %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
       <Command>
@@ -347,6 +348,9 @@
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">clang --target=aarch64-windows-msvc -c -o "$(IntDir)%(Filename).obj" "%(FullPath)"</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">$(IntDir)%(Filename).obj</Outputs>
     </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="_export_arm64.def" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

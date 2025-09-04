@@ -148,6 +148,7 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) 
 
 	/* check if the binary is dynamically linked */
 	if (AuPEFileIsDynamicallyLinked(_ldr_scratchBuffer)) {
+		UARTDebugOut("The process %s is Dynamically Linked \n", filename);
 		/* free the current file*/
 		kfree(file);
 		//AuPmmngrFree((void*)V2P((sizeof(buf))));

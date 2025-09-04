@@ -162,7 +162,7 @@ bool AuMapPage(uint64_t phys_addr, uint64_t virt_addr, uint8_t attrib) {
 	if (pml1[i1] & 1)
 	{
 		//AuPmmngrFree((void*)phys_addr);
-		AuTextOut("[aurora]: vmmngr page already present : %x \n", (pml1[i1] & ~0xFFFULL));
+		//AuTextOut("[aurora]: vmmngr page already present : %x \n", (pml1[i1] & ~0xFFFULL));
 		return false;
 	}
 

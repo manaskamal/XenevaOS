@@ -79,6 +79,8 @@ int OpenFile(char* filename, int mode) {
 		file->open(file,NULL);
 
 	current_proc->fds[fd] = file;
+	UARTDebugOut("OpenFile: returning fd : %d \n", fd);
+	//_setdebug = 1;
 	return fd;
 }
 
@@ -249,6 +251,7 @@ int FileIoControl(int fd, int code, void* arg) {
  * @param buf -- Pointer to file structure
  */
 int FileStat(int fd, void* buf) {
+	UARTDebugOut("Stating Your file fd : %d, buf : %x \n", fd, buf);
 	if (fd == -1)
 		return -1;
 	AA64Thread* current_thr = AuGetCurrentThread();
@@ -273,6 +276,8 @@ int FileStat(int fd, void* buf) {
 	status->start_block = file->first_block;
 	status->user_id = 0;
 	status->group_id = 0;
+	UARTDebugOut("File sz : %d bytes \n", file->size);
+	UARTDebugOut("File name : %s \n", file->filename);
 	return 0;
 }
 

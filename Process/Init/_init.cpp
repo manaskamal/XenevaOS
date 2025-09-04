@@ -95,8 +95,8 @@ extern "C" void main(int argc, char* argv[]) {
 		}
 	}
 
-	int proc = _KeCreateProcess(0, "xeldr");
-	_KeProcessLoadExec(proc, "/xeldr.exe", 0, NULL);
+	int proc = _KeCreateProcess(0, "deodhaixr");
+	_KeProcessLoadExec(proc, "/deodxr.exe", 0, NULL);
 
 
 	while(1){

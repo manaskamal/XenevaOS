@@ -3,4 +3,7 @@
   <ItemGroup>
     <ClCompile Include="main.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="crt_arm64.s" />
+  </ItemGroup>
 </Project>

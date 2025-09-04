@@ -137,15 +137,21 @@ int XELdrLoadObject(XELoaderObject *obj){
  * process
  */
 int XELdrStartProc(char* filename, XELoaderObject *obj) {
-	int file = _KeOpenFile(filename, FILE_OPEN_READ_ONLY);
+	int file = 0;
+	file = _KeOpenFile(filename, FILE_OPEN_READ_ONLY);
+
+	_KePrint("File descriptor : %d \n", file);
 
 	XEFileStatus *stat = (XEFileStatus*)malloc(sizeof(XEFileStatus));
 	memset(stat, 0, sizeof(XEFileStatus));
 
 	int ret_bytes = 0;
+	_KePrint("stating file %d %x\n",file, stat);
+
 	_KeFileStat(file, stat);
 
 	uint64_t* buffer = (uint64_t*)_KeMemMap(NULL,4096, 0, 0, -1, 0);
+	_KePrint("Buffer mapped : %x \n", buffer);
 	memset(buffer, 0, 4096);
 	obj->len += 4096;
 
@@ -229,11 +235,16 @@ int main(int argc, char* argv[]) {
 
 	_KePrint("From inside XELoader (Xeneva Dynamic Loader v1.0 ARM64)\n");
 	_KePrint("Copyright (C) Manas Kamal Choudhury 2023-2025\n");
-	for (;;);
+	_KePrint("Loadable file name : %s \n", argv[0]);
 
 	/* simply exit*/
 	if (!argv)
 		_KeProcessExit();
+
+	void* p = malloc(256);
+	memset(p, 0, 256);
+	_KePrint("P : %x \n", p);
+	free(p);
 
 	XELdrInitObjectList();
 
@@ -243,7 +254,7 @@ int main(int argc, char* argv[]) {
 
 	XELoaderObject* mainobj = XELdrCreateObj(filename);
 	
-
+	_KePrint("Starting proc \n");
 	XELdrStartProc(mainobj->objname, mainobj);
 	XELdrLoadAllObject();
 

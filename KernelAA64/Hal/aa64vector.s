@@ -31,6 +31,7 @@
 .extern fault_el1_handler
 .extern irq_el1_handler
 .extern sync_el0_handler
+.extern PrintX0
 
 sync_el1_wrapper:
    mov x9, sp
@@ -168,6 +169,7 @@ sync_el0_wrapper:
    ldp x4, x5, [sp], #16
    ldp x2, x3, [sp], #16
    ldp x0, x1, [sp], #16
+   mov x0, x27
    eret
 
 .global irq_el0_wrapper
@@ -219,6 +221,7 @@ irq_el0_wrapper:
    ldp x4, x5, [sp], #16
    ldp x2, x3, [sp], #16
    ldp x0, x1, [sp], #16
+
    eret
 
 

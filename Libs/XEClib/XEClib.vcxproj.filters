@@ -247,4 +247,7 @@
   <ItemGroup>
     <CustomBuild Include="_callbase_arm64.s" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="_export_arm64.def" />
+  </ItemGroup>
 </Project>

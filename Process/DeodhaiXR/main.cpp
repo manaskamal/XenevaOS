@@ -29,59 +29,16 @@
 
 #include <stdint.h>
 #include <_xeneva.h>
-#include <stdio.h>
-#include <sys\_keproc.h>
-#include <sys\_kefile.h>
-#include <sys\iocodes.h>
-#include <chitralekha.h>
-#include <widgets\base.h>
-#include <widgets\button.h>
-#include <widgets\window.h>
 #include <string.h>
 #include <stdlib.h>
 
-ChitralekhaApp *app;
-ChWindow* mainWin;
 
-/*
- * WindowHandleMessage -- handles incoming deodhai messages
- * @param e -- PostBox event message structure
- */
-void WindowHandleMessage(PostEvent *e) {
-	switch (e->type) {
-	/* handle mouse event from deodhai */
-	case DEODHAI_REPLY_MOUSE_EVENT:{
-									   ChWindowHandleMouse(mainWin, e->dword, e->dword2, e->dword3);
-									   memset(e, 0, sizeof(PostEvent));
-									   break;
-	}
-		/* handle key events from deodhai */
-	case DEODHAI_REPLY_KEY_EVENT:{
-									 int code = e->dword;
-									 memset(e, 0, sizeof(PostEvent));
-									 break;
-	}
-	}
-}
 
 /*
 * main -- main entry
 */
 int main(int argc, char* argv[]){
-	app = ChitralekhaStartApp(argc, argv);
-	mainWin = ChCreateWindow(app, WINDOW_FLAG_MOVABLE, "Your app title", 100, 100, CHITRALEKHA_DEFAULT_WIN_WIDTH, 
-		CHITRALEKHA_DEFAULT_WIN_HEIGHT);
-	ChButton* button = ChCreateButton(0, 0, 100, 75, "Click Me !");
-	ChWindowAddWidget(mainWin,(ChWidget*)button);
-	ChWindowPaint(mainWin);
-
-	PostEvent e;
-	memset(&e, 0, sizeof(PostEvent));
-
+	_KePrint("Hello DeodhaiXR \n");
 	while (1) {
-		int err = _KeFileIoControl(app->postboxfd, POSTBOX_GET_EVENT, &e);
-		WindowHandleMessage(&e);
-		if (err == POSTBOX_NO_EVENT)
-			_KePauseThread();
 	}
 }

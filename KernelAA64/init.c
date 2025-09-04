@@ -173,9 +173,7 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	argvs[0] = about;
 	AuLoadExecToProcess(proc, "/init.exe", num_args, argvs);
 
-	AA64Thread* thr = AuCreateKthread(AuEntryTest2, AuCreateVirtualAddressSpace(), "Test");
-	AA64Thread* thr2 = AuCreateKthread(AuEntryTest, AuCreateVirtualAddressSpace(), "Test2User");
-
+	
 	UARTDebugOut("Kernel Lower half is cleared \n");
 	
 	AuSchedulerStart();
