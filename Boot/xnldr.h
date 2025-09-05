@@ -31,15 +31,17 @@
 #ifndef __XNLDR2_H__
 #define __XNLDR2_H__
 
-#include <stdint.h>
+#include <cstdint>
+#include <cstddef>
+#ifdef _MSC_VER
 #include <Uefi.h>
-
-#define SIZE_MAX 0xFFFFFFFF
-
-
-#define EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID \
-{0x9042a9de,0x23dc,0x4a38,\
-{0x96,0xfb,0x7a,0xde,0xd0,0x80,0x51,0x6a}}
+#include <Guid/DebugImageInfoTable.h>
+#include <Library/UefiBootServicesTableLib.h>
+#include <Library/UefiLib.h>
+#include <Guid/Acpi.h>
+#elif __GNUC__
+#include <efi/efi.h>
+#endif
 
 #pragma pack(push,1)
 
@@ -106,7 +108,7 @@ typedef void(*XEImageEntry)(XEBootInfo*);
 
 struct EfiMemoryMap {
 	EFI_MEMORY_DESCRIPTOR* memmap;
-	uint64_t MemMapSize, MapKey, DescriptorSize;
+	UINT64 MemMapSize, MapKey, DescriptorSize;
 	UINT32 DescriptorVersion;
 };
 

@@ -31,31 +31,8 @@
 #define __CLIB_H__
 
 
-#include <stdint.h>
-
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
-#define STACKITEM int
-
-#define VA_SIZE(TYPE)  \
-	((sizeof(TYPE) + sizeof(STACKITEM) - 1) \
-	& ~(sizeof(STACKITEM) - 1))
-
-#define  va_start(AP, LASTARG) \
-	(AP=((va_list)&(LASTARG) + VA_SIZE(LASTARG)))
-
-#define va_end(AP) 
-
-#define va_arg(AP, TYPE)   \
-	(AP += VA_SIZE(TYPE), *((TYPE *)(AP - VA_SIZE(TYPE))))
-
-#ifdef __cplusplus
-}
-#endif
-
+#include <cstdint>
+#include <cstddef>
 
 extern void memset(void* targ, uint8_t val, uint32_t len);
 extern void memcpy(void* targ, void* src, uint32_t len);
@@ -65,8 +42,6 @@ extern uint32_t wstrsize(wchar_t* s);
 extern int to_upper(int c);
 extern int to_lower(int c);
 extern int is_digit(int c);
-extern char* sztoa(size_t value, char* str, int base);
-extern size_t strlen(const char* s);
+extern char* sztoa(std::size_t value, char* str, int base);
+extern std::size_t strlen(const char* s);
 #endif
-
-

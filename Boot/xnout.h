@@ -30,7 +30,11 @@
 #ifndef __XNOUT_H__
 #define __XNOUT_H__
 
-#include <Uefi.h>
+#ifdef _MSC_VER
+    #include <Uefi.h>
+#elif __GNUC__
+	#include <efi/efi.h>
+#endif
 
 /*
  * XEClearScreen -- clears the screen
@@ -71,7 +75,7 @@ extern EFI_STATUS XESetTextAttribute(const int Back, const int Fore);
  * show output to the screen
  * @param fmt -- format to print
  */
-extern int XEPrintf(wchar_t* fmt, ...);
+extern int XEPrintf(const char16_t* fmt, ...);
 
 /*
  * XEGuiPrint -- print formated text using graphics

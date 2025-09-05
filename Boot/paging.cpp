@@ -32,6 +32,7 @@
 #include "lowlevel.h"
 #include "xnldr.h"
 #include "xnout.h"
+#include <Common.hpp>
 
 void* pdptr;
 void* pml4ptr;
@@ -75,7 +76,7 @@ static size_t decanonical(void* addr)
 typedef size_t* (*get_tab_ptr)(void*);
 typedef size_t(*get_tab_index)(void*);
 
-static PML4_ENTRY* getPML4(void* addr)
+static PML4_ENTRY* getPML4([[maybe_unused]] void* addr)
 {
 	if (pml4ptr);
 	else {
@@ -105,7 +106,7 @@ static size_t getPDindex(void* addr)
 	return (decanonical(addr) >> 21) & 0x1FF;
 }
 
-static PD_ENTRY* getPDIR(void* addr)
+[[maybe_unused]] static PD_ENTRY* getPDIR( [[maybe_unused]] void* addr)
 {
 	if (pdptr);
 	else
@@ -117,12 +118,12 @@ static PD_ENTRY* getPDIR(void* addr)
 }
 
 
-static size_t getPDIRindex(void* addr)
+[[maybe_unused]] static size_t getPDIRindex(void* addr)
 {
 	return ((size_t)addr >> 21) & 0x3FF;
 }
 
-static PTAB_ENTRY* getPTAB(void* addr)
+[[maybe_unused]] static PTAB_ENTRY* getPTAB(void* addr)
 {
 	return (PD_ENTRY*)make_canonical((void*)((recursive_slot << 39) | ((decanonical(addr) >> 9) & 0x7FFFFFF000)));
 }
@@ -190,7 +191,7 @@ void identity_map_4kb(uint64_t logical)
 	int pdp_idx = (logical >> 30) & 0x1ff;
 	int pd_idx = (logical >> 21) & 0x1ff;
 	int pt_idx = (logical >> 12) & 0x1ff;
-	int p_idx = logical & 0x7ff;
+	[[maybe_unused]] int p_idx = logical & 0x7ff;
 
 	if (!(pml4e[pml4_index] & PAGING_PRESENT))
 	{
@@ -456,7 +457,7 @@ void* arch_get_pml4ptr() {
 }
 
 
-void fill_arch_paging_info(void* info)
+void fill_arch_paging_info([[maybe_unused]] void* info)
 {
 	info = &paging_info;
 	paging_info.recursive_slot = recursive_slot;
