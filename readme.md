@@ -1,4 +1,4 @@
-# XenevaOS
+<img width="2560" height="1440" alt="Screenshot (1890)" src="https://github.com/user-attachments/assets/96ee9cc0-f6f2-4cdc-8619-6ca46cba3d89" /># XenevaOS
 [![Discord](https://img.shields.io/discord/1255326572617924618?label=Discord&logo=discord&style=flat)](https://discord.com/invite/YNsY7hhQ)
 
 
@@ -36,13 +36,26 @@ XenevaOS is an open-source project that welcomes contributions from developers, 
 
 _And many more coming soon_
 
-## Screenshot:
+## Screenshot (x86 Platform) :
 
 ![alt text](https://github.com/manaskamal/XenevaOS/blob/master/XenevaV1_1.png?raw=true)
 
-## AppTray:
+## AppTray (x86 Platform) :
 
 ![alt text](https://github.com/manaskamal/XenevaOS/blob/master/apptray.png?raw=true)
+
+## Concept UI Renders for XR Platform :
+
+<img width="2187" height="1179" alt="Screenshot (1867)" src="https://github.com/user-attachments/assets/60a9ce72-14c8-44ea-98da-5f03d27583a9" />
+
+## XR App UI Example Render :
+
+<img width="2560" height="1440" alt="Screenshot (1890)" src="https://github.com/user-attachments/assets/f3f7bea8-cf27-4cf0-b054-afb745cc2d7a" />
+
+## XR App Tray Render :
+
+![Uploading Screenshot (1889).png…]()
+
 
 # Installed Applications :
 
