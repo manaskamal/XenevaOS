@@ -36,23 +36,20 @@ XenevaOS is an open-source project that welcomes contributions from developers, 
 
 _And many more coming soon_
 
-## Screenshot (x86 Platform) :
+## Screenshot (x86_64) :
 
 ![alt text](https://github.com/manaskamal/XenevaOS/blob/master/XenevaV1_1.png?raw=true)
 
-## AppTray (x86 Platform) :
+## AppTray (x86_64 ) :
 
 ![alt text](https://github.com/manaskamal/XenevaOS/blob/master/apptray.png?raw=true)
 
-## Concept UI Render for XR Platform :
+## Homescreen (ARM64) :
 
 <img width="2187" height="1179" alt="Screenshot (1867)" src="https://github.com/user-attachments/assets/60a9ce72-14c8-44ea-98da-5f03d27583a9" />
 
-## XR App UI Example Render :
 
-<img width="2560" height="1440" alt="Screenshot (1890)" src="https://github.com/user-attachments/assets/f3f7bea8-cf27-4cf0-b054-afb745cc2d7a" />
-
-## XR App Tray Render :
+## App Tray Render (ARM64) :
 
 <img width="2560" height="1440" alt="Screenshot (1889)" src="https://github.com/user-attachments/assets/a2cb77c3-b004-4e81-9d97-31c341c22e3d" />
 
