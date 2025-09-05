@@ -49,7 +49,7 @@ _And many more coming soon_
 <img width="2187" height="1179" alt="Screenshot (1867)" src="https://github.com/user-attachments/assets/60a9ce72-14c8-44ea-98da-5f03d27583a9" />
 
 
-## App Tray Render (ARM64) :
+## App Tray (ARM64) :
 
 <img width="2560" height="1440" alt="Screenshot (1889)" src="https://github.com/user-attachments/assets/a2cb77c3-b004-4e81-9d97-31c341c22e3d" />
 
