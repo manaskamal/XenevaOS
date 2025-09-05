@@ -44,7 +44,7 @@ _And many more coming soon_
 
 ![alt text](https://github.com/manaskamal/XenevaOS/blob/master/apptray.png?raw=true)
 
-## Concept UI Renders for XR Platform :
+## Concept UI Render for XR Platform :
 
 <img width="2187" height="1179" alt="Screenshot (1867)" src="https://github.com/user-attachments/assets/60a9ce72-14c8-44ea-98da-5f03d27583a9" />
 
@@ -54,7 +54,8 @@ _And many more coming soon_
 
 ## XR App Tray Render :
 
-![Uploading Screenshot (1889).png…]()
+<img width="2560" height="1440" alt="Screenshot (1889)" src="https://github.com/user-attachments/assets/a2cb77c3-b004-4e81-9d97-31c341c22e3d" />
+
 
 
 # Installed Applications :
