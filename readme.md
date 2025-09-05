@@ -1,4 +1,4 @@
-<img width="2560" height="1440" alt="Screenshot (1890)" src="https://github.com/user-attachments/assets/96ee9cc0-f6f2-4cdc-8619-6ca46cba3d89" /># XenevaOS
+
 [![Discord](https://img.shields.io/discord/1255326572617924618?label=Discord&logo=discord&style=flat)](https://discord.com/invite/YNsY7hhQ)
 
 
