@@ -381,7 +381,7 @@ uint64_t* AuGetFreePage(bool user, void* ptr) {
  */
 void AuFreePages(uint64_t virt_addr, bool free_physical, size_t s) {
 	const long i1 = pml4_index(virt_addr);
-	AuTextOut("Freeing up pages -> %x , size -> %d \n", virt_addr, s);
+	//AuTextOut("Freeing up pages -> %x , size -> %d \n", virt_addr, s);
 	for (int i = 0; i < (s / 4096) + 1; i++) {
 		uint64_t* pml4_ = (uint64_t*)P2V(read_ttbr0_el1());
 		uint64_t* pdpt = (uint64_t*)P2V(pml4_[pml4_index(virt_addr)] & ~0xFFFUL);
@@ -389,7 +389,7 @@ void AuFreePages(uint64_t virt_addr, bool free_physical, size_t s) {
 		uint64_t* pt = (uint64_t*)P2V(pd[pd_index(virt_addr)] & ~0xFFFUL);
 		uint64_t* page = (uint64_t*)P2V(pt[pt_index(virt_addr)] & ~0xFFFUL);
 
-		AuTextOut("Your physical page is -> %x %x\n", page, V2P(page));
+		//AuTextOut("Your physical page is -> %x %x\n", page, V2P(page));
 		if ((pt[pt_index(virt_addr)] & 1) != 0) {
 			pt[pt_index(virt_addr)] = 0;
 		}
@@ -416,7 +416,7 @@ void AuUpdatePageFlags(uint64_t virt_addr, uint64_t flags) {
 	uint64_t* pt = (uint64_t*)P2V(pd[pd_index(virt_addr)] & ~0xFFFUL);
 	uint64_t* page = (uint64_t*)P2V(pt[pt_index(virt_addr)] & ~0xFFFUL);
 
-	AuTextOut("Your physical page is -> %x %x\n", page, V2P(page));
+	//AuTextOut("Your physical page is -> %x %x\n", page, V2P(page));
 	if (page) {
 		pt[pt_index(virt_addr)] = (V2P(page) & ~0xFFFULL) | flags;
 	}

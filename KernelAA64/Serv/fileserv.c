@@ -79,7 +79,6 @@ int OpenFile(char* filename, int mode) {
 		file->open(file,NULL);
 
 	current_proc->fds[fd] = file;
-	UARTDebugOut("OpenFile: returning fd : %d \n", fd);
 	//_setdebug = 1;
 	return fd;
 }
@@ -145,8 +144,9 @@ size_t ReadFile(int fd, void* buffer, size_t length) {
 	uint64_t* aligned_buffer = (uint64_t*)buffer;
 
 	//SeTextOut("Reading from file -> %d -> %x \r\n", fd, file);
-	if (!file)
+	if (!file) {
 		return 0;
+	}
 	size_t ret_bytes = 0;
 
 	/* every general file will contain its
@@ -193,26 +193,29 @@ int CloseFile(int fd) {
 
 	AuVFSNode* file = current_proc->fds[fd];
 	if (file->flags & FS_FLAG_FILE_SYSTEM) {
-		UARTDebugOut("Closing fs -> %s \r\n", file->filename);
 		current_proc->fds[fd] = 0;
 		return -1;
 	}
 	if (file->flags & FS_FLAG_GENERAL) {
+		current_proc->fds[fd] = 0;
 		kfree(file);
+		return 0;
 	}
 
 
 	if (file->flags & FS_FLAG_DIRECTORY) {
+		current_proc->fds[fd] = 0;
 		kfree(file);
+		return 0;
 	}
 
 	if (file->flags & FS_FLAG_PIPE) {
 		if (file->close)
 			file->close(file, file);
+		current_proc->fds[fd] = 0;
+		return 0;
 	}
 
-	current_proc->fds[fd] = 0;
-	return 0;
 }
 
 
@@ -251,7 +254,6 @@ int FileIoControl(int fd, int code, void* arg) {
  * @param buf -- Pointer to file structure
  */
 int FileStat(int fd, void* buf) {
-	UARTDebugOut("Stating Your file fd : %d, buf : %x \n", fd, buf);
 	if (fd == -1)
 		return -1;
 	AA64Thread* current_thr = AuGetCurrentThread();
@@ -276,8 +278,6 @@ int FileStat(int fd, void* buf) {
 	status->start_block = file->first_block;
 	status->user_id = 0;
 	status->group_id = 0;
-	UARTDebugOut("File sz : %d bytes \n", file->size);
-	UARTDebugOut("File name : %s \n", file->filename);
 	return 0;
 }
 

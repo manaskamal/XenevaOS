@@ -64,7 +64,6 @@ int XELdrLoadObject(XELoaderObject *obj){
 	uint64_t* buffer = (uint64_t*)_KeMemMap(NULL, 4096, 0, 0, -1, 0);
 	memset(buffer, 0, 4096);
 
-	_KePrint("Object -> %s %x\r\n",obj->objname, buffer);
 	obj->len += 4096;
 
 	int countbytes = 4096;
@@ -77,12 +76,10 @@ int XELdrLoadObject(XELoaderObject *obj){
 	ret_bytes = _KeReadFile(file, buffer, 4096);
 	IMAGE_DOS_HEADER *dos_ = (IMAGE_DOS_HEADER*)buffer;
 	PIMAGE_NT_HEADERS nt = raw_offset<PIMAGE_NT_HEADERS>(dos_, dos_->e_lfanew);
-
 	intptr_t original_base = nt->OptionalHeader.ImageBase;
 	intptr_t new_addr = _image_load_base_;
 	intptr_t diff = new_addr - original_base;
 	/* FORMULA to obtain real address -> new_addr - diff*/
-
 	PSECTION_HEADER secthdr = raw_offset<PSECTION_HEADER>(&nt->OptionalHeader, nt->FileHeader.SizeOfOptionaHeader);
 
 	if (nt->OptionalHeader.SectionAlignment == 512) {
@@ -107,6 +104,7 @@ int XELdrLoadObject(XELoaderObject *obj){
 					block = alloc;
 				countbytes += 4096;
 				int bytes = _KeReadFile(file, alloc, 4096);
+				_KeFileStat(file, stat);
 				ret_bytes += bytes;
 				obj->len += 4096;
 			}
@@ -119,13 +117,11 @@ int XELdrLoadObject(XELoaderObject *obj){
 	uint8_t* aligned_buf = (uint8_t*)first_ptr;
 
 
-	
 	XELdrRelocatePE(aligned_buf, nt, diff);
 
 	XELdrCreatePEObjects(first_ptr);
 	obj->load_addr = _image_load_base_;
 	obj->loaded = true;
-	_KePrint("[XELoader]: loaded file -> %s \r\n", obj->objname);
 	_KeMemMapDirty((void*)_image_load_base_, obj->len, 0, 0);
 	_KeCloseFile(file);
 	free(stat);
@@ -140,31 +136,25 @@ int XELdrStartProc(char* filename, XELoaderObject *obj) {
 	int file = 0;
 	file = _KeOpenFile(filename, FILE_OPEN_READ_ONLY);
 
-	_KePrint("File descriptor : %d \n", file);
 
 	XEFileStatus *stat = (XEFileStatus*)malloc(sizeof(XEFileStatus));
 	memset(stat, 0, sizeof(XEFileStatus));
 
 	int ret_bytes = 0;
-	_KePrint("stating file %d %x\n",file, stat);
-
+	
 	_KeFileStat(file, stat);
 
 	uint64_t* buffer = (uint64_t*)_KeMemMap(NULL,4096, 0, 0, -1, 0);
-	_KePrint("Buffer mapped : %x \n", buffer);
 	memset(buffer, 0, 4096);
 	obj->len += 4096;
 
-	_KePrint("Proc %s load addr -> %x \r\n",obj->objname, buffer);
 	uint64_t* first_ptr = buffer;
 	uint64_t _image_load_base_ = (uint64_t)first_ptr;
 
 	ret_bytes = _KeReadFile(file, buffer, 4096);
-	_KePrint("Ret bytes-> %x \r\n", ret_bytes);
 	IMAGE_DOS_HEADER *dos_ = (IMAGE_DOS_HEADER*)buffer;
 	PIMAGE_NT_HEADERS nt = raw_offset<PIMAGE_NT_HEADERS>(dos_, dos_->e_lfanew);
 	PSECTION_HEADER secthdr = raw_offset<PSECTION_HEADER>(&nt->OptionalHeader, nt->FileHeader.SizeOfOptionaHeader);
-
 	intptr_t original_base = nt->OptionalHeader.ImageBase;
 	intptr_t new_addr = _image_load_base_;
 	intptr_t diff = new_addr - original_base;
@@ -199,13 +189,11 @@ int XELdrStartProc(char* filename, XELoaderObject *obj) {
 	
 	uint8_t* aligned_buff = (uint8_t*)first_ptr;
 	XELdrRelocatePE(aligned_buff, nt, diff);
-	_KePrint("Relocating to %x \r\n", aligned_buff);
 	XELdrCreatePEObjects(aligned_buff);
 
 	obj->load_addr = _image_load_base_;
 	obj->loaded = true;
 	obj->entry_addr = _image_load_base_ + nt->OptionalHeader.AddressOfEntryPoint;
-	_KePrint("[XELoader]: loaded file -> %s \r\n", obj->objname);
 	_KeMemMapDirty((void*)_image_load_base_, obj->len, 0, 0);
 	free(stat);
 	_KeCloseFile(file);
@@ -235,34 +223,28 @@ int main(int argc, char* argv[]) {
 
 	_KePrint("From inside XELoader (Xeneva Dynamic Loader v1.0 ARM64)\n");
 	_KePrint("Copyright (C) Manas Kamal Choudhury 2023-2025\n");
-	_KePrint("Loadable file name : %s \n", argv[0]);
 
 	/* simply exit*/
 	if (!argv)
 		_KeProcessExit();
 
-	void* p = malloc(256);
-	memset(p, 0, 256);
-	_KePrint("P : %x \n", p);
-	free(p);
+	_KePrint("Till here \n");
 
 	XELdrInitObjectList();
 
-
+	_KePrint("Object list initialized \n");
 	/* load the main object */
 	char* filename = argv[0];
 
 	XELoaderObject* mainobj = XELdrCreateObj(filename);
 	
-	_KePrint("Starting proc \n");
 	XELdrStartProc(mainobj->objname, mainobj);
 	XELdrLoadAllObject();
-
+	_KePrint("Objects loaded \n");
 	
 	/* links all dependencies of libraries*/
 	XELdrLinkDepObject(mainobj);
 	
-	_KePrint("Ldr linked \r\n");
 
 	/* now link all objects from the list
 	 * to main object
@@ -273,7 +255,6 @@ int main(int argc, char* argv[]) {
 
 	uint64_t entry_addr = mainobj->entry_addr;
 	
-	_KePrint("XELdr clearing objects \r\n");
 
 	//XELdrClearObjectList();
 
@@ -281,8 +262,10 @@ int main(int argc, char* argv[]) {
 	/* register the default signal handler to
 	 * all signal
 	 */
+#ifdef ARCH_X64
 	for (int i = 0; i < NUMSIGNALS; i++)
 		_KeSetSignal(i + 1, DefaultSignalHandler);
+#endif
 
 	entrypoint e = (entrypoint)entry_addr;
 

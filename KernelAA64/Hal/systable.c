@@ -36,6 +36,7 @@
 #include <Serv/sysserv.h>
 #include <Mm/shm.h>
 #include <Mm/mmap.h>
+#include <aucon.h>
 
 #define AURORA_MAX_SYSCALL 35
 
@@ -60,7 +61,7 @@ uint64_t test_call() {
 
 static void* syscalls[AURORA_MAX_SYSCALL] = {
 	null_call, //0
-	UARTDebugOut, //1
+	AuTextOut, //1
 	PauseThread, //2
 	GetThreadID, //3
 	GetProcessID, //4
@@ -105,7 +106,7 @@ extern void set_syscall_retval(uint64_t val);
  * @param regs -- Register information passed by sync_exception
  */
 void AuAA64SyscallHandler(AA64Registers* regs) {
-	mask_irqs();
+	//mask_irqs();
 	uint64_t vector = regs->x8;
 	uint64_t retcode = 0;
 	if ((vector > AURORA_MAX_SYSCALL) || (vector < 0)) {
@@ -123,7 +124,6 @@ void AuAA64SyscallHandler(AA64Registers* regs) {
 	}
 
 	retcode = func(regs->x0, regs->x1, regs->x2, regs->x3, regs->x4, regs->x5);
-	UARTDebugOut("Returning retcode : %d %x\n", retcode, retcode);
 	regs->x0 = retcode;
 	regs->x27 = retcode;
 	isb_flush();

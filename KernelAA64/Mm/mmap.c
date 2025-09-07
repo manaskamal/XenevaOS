@@ -258,7 +258,7 @@ void* CreateMemMapping(void* address, size_t len, int prot, int flags, int fd,
  * @param prot -- protection flags
  */
 void MemMapDirty(void* startingVaddr, size_t len, int flags, int prot) {
-
+	UARTDebugOut("MemMapDirty called \n");
 	AA64Thread* curr_thr = AuGetCurrentThread();
 	AuProcess* proc = AuProcessFindThread(curr_thr);
 	if (!proc) {
@@ -272,7 +272,7 @@ void MemMapDirty(void* startingVaddr, size_t len, int flags, int prot) {
 	if (prot != 0) {
 		for (int i = 0; i < len / PAGE_SIZE; i++) {
 			AuVPage* page = AuVmmngrGetPage(startAddr + i * PAGE_SIZE, NULL, VIRT_GETPAGE_ONLY_RET);
-
+			UARTDebugOut("PAGE got : %x \n", page);
 			/* check for  protection flag */
 			if (prot & PROTECTION_FLAG_READONLY) {
 				page->bits.ap = 0b11;

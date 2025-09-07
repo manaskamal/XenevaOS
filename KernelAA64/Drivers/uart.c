@@ -84,6 +84,8 @@ void uartPuts(const char* s) {
 		uartPutc(*s++);
 }
 
+uint64_t _static_buffer[7];
+
 /*
  * UARTDebugOut -- standard text printing function
  * for early kernel using UART
@@ -91,10 +93,10 @@ void uartPuts(const char* s) {
  */
 void UARTDebugOut(const char* format, ...) {
 
-	uint64_t buffer[7];
-	store_x0_x7(buffer);
+	//uint64_t buffer = _static_buffer;
+	store_x0_x7(_static_buffer);
 
-	va_list args = (va_list)buffer;
+	va_list args = (va_list)_static_buffer;
 	while (*format)
 	{
 		if (*format == '%')
@@ -173,5 +175,4 @@ void UARTDebugOut(const char* format, ...) {
 		++format;
 	}
 	va_end(args);
-
 }

@@ -89,11 +89,15 @@ void XELdrRelocatePE(void* image, PIMAGE_NT_HEADERS nt, int diff) {
 
 	PIMAGE_RELOCATION_BLOCK reloc_table = raw_offset<PIMAGE_RELOCATION_BLOCK>(image, data_dir.VirtualAddress);
 	PIMAGE_RELOCATION_BLOCK cur_block = reloc_table;
-
+	_KePrint("Relocation till here curr_blk %x\n", cur_block);
+	_KePrint("Data Image: %x , va %x\n", image, data_dir.VirtualAddress);
+	_KePrint("Relocation BlockSize %d \n", cur_block->BlockSize);
 	while (raw_diff(cur_block, reloc_table) < data_dir.Size) {
 		uint32_t entries = (cur_block->BlockSize - 8) / 2;
+		_KePrint("entries : %d \n", entries);
 		for (uint32_t i = 0; i < entries; ++i) {
 			auto& entry = cur_block->entries[i];
+			//_KePrint("Entry %x\n", entry);
 			uint16_t type = entry.type;
 			void* relocitem = raw_offset<void*>(image, entry.offset + cur_block->PageRVA);
 			switch (type){
@@ -250,6 +254,7 @@ void XELdrLinkDependencyPE(XELoaderObject* obj) {
 	if (obj->linked)
 		return;
 	void* exec = (void*)obj->load_addr;
+	_KePrint("linking obj\n");
 	PIMAGE_DOS_HEADER dos_header = (PIMAGE_DOS_HEADER)exec;
 	PIMAGE_NT_HEADERS nt_headers = raw_offset<PIMAGE_NT_HEADERS>(dos_header, dos_header->e_lfanew);
 	if (IMAGE_DATA_DIRECTORY_IMPORT + 1 > nt_headers->OptionalHeader.NumberOfRvaAndSizes)
@@ -274,6 +279,7 @@ void XELdrLinkDependencyPE(XELoaderObject* obj) {
 		while (*iat) {
 			PIMAGE_IMPORT_HINT_TABLE hint = raw_offset<PIMAGE_IMPORT_HINT_TABLE>(exec, *iat);
 			const char* fname = hint->name;
+			_KePrint("FNAME : %s \n", fname);
 			void* procaddr = XELdrGetProcAddress((void*)dll_dep, fname);
 			*iat = (uint64_t)procaddr;
 			++iat;

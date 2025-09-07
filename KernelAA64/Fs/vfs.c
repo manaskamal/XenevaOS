@@ -129,7 +129,7 @@ AU_EXTERN AU_EXPORT AuVFSNode* AuVFSOpen(char* path) {
 		return NULL;
 	}
 	if (fs == __RootFS) {
-		UARTDebugOut("VFSOpening filename : %s \n", path);
+		//UARTDebugOut("VFSOpening filename : %s \n", path);
 		/* just skip the '/' from the path */
 		char* next = strchr(path, '/');
 		if (next)
