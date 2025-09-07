@@ -1,4 +1,4 @@
-# XenevaOS
+
 [![Discord](https://img.shields.io/discord/1255326572617924618?label=Discord&logo=discord&style=flat)](https://discord.com/invite/YNsY7hhQ)
 
 
@@ -36,13 +36,24 @@ XenevaOS is an open-source project that welcomes contributions from developers, 
 
 _And many more coming soon_
 
-## Screenshot:
+## Screenshot (x86_64) :
 
 ![alt text](https://github.com/manaskamal/XenevaOS/blob/master/XenevaV1_1.png?raw=true)
 
-## AppTray:
+## AppTray (x86_64 ) :
 
 ![alt text](https://github.com/manaskamal/XenevaOS/blob/master/apptray.png?raw=true)
+
+## Homescreen (ARM64) :
+
+<img width="2187" height="1179" alt="Screenshot (1867)" src="https://github.com/user-attachments/assets/60a9ce72-14c8-44ea-98da-5f03d27583a9" />
+
+
+## App Tray (ARM64) :
+
+<img width="2560" height="1440" alt="Screenshot (1889)" src="https://github.com/user-attachments/assets/a2cb77c3-b004-4e81-9d97-31c341c22e3d" />
+
+
 
 # Installed Applications :
 
