@@ -74,21 +74,21 @@ _And many more coming soon_
 The project is build purely on Windows Environment. Please Visit [Build Instructions page ](Docs/BuildInstructions.md) for more information
 
 # Purpose and Goals
-While writing an Operating System from scratch is very fun and knowledgeable journey, at the same time it is a deeply challenging one. The project was not started with specific goal or purpose in mind; rather.it was started as a passionate solo developer project that aims to learn and address what existing OS's lack. As the project grew over time, it became very necessary to have a clear purpose and goal. Even though it once was a solo development project, XenevaOS now evolved from one-person effort to a collaborative team with shared interest. The strategies and execution of the project are planned and carried out carefully with deliberate intention.
+While writing an Operating System from scratch is a very fun and knowledgeable journey, at the same time it is a deeply challenging one. The project was not started with a specific goal or purpose in mind; rather, it began as a passionate solo developer project that aims to learn and address what existing Operating Systems lack. As the project grew over time, it became necessary to have a clear purpose and goal. Even though it once was a solo development project, XenevaOS has now evolved from a one-person effort to a collaborative team with a shared interest. The strategies and execution of the project are planned and carried out carefully with a deliberate intention.
 
 
 ## The Purpose:
-While there are many mature Kernel available for different domains and they are already feature-complete, they also come with layers of legacy code that make it difficult for developers to implement or experiment with new ideas on top of them. XenevaOS is completely built from scratch and aims to provide a flexible playground for experiments with new designs and architectures with modern computing in mind without compromising on software implementation standards and performance. 
+While there are many mature Kernels available for different domains and they are already feature-complete, they also come with layers of legacy code that make it difficult for developers to implement or experiment with new ideas on top of them. XenevaOS is completely built from scratch and aims to provide a flexible playground for experiments with new designs and architectures with modern computing in mind without compromising on software implementation standards and performance. 
 
 
 ## The Goals:
 - XenevaOS aims to target modern hardware with modern computing architecture in mind. 
-- To experiment and build an OS from ground level transitioning away from traditional OS design as much as possible. 
-- To ensure that the project have minimal software abstractions as possible as it grows over time in future for better performance without affecting software implementation standards.
-- To make the software robust as possible, to handle software dependencies and software errors transparently without affecting user's flow.
-- To research on implementing some new low level architecture with security concerns in mind like lightweight sandboxes, or memory safety technique.
-- XenevaOS aims to be a single core with multiple domain. For example (_AR/VR/XR, ADAS systems..etc_). Still under development.
-- XenevaOS aims to have native 3D interface as GUI making it suitable for _AR/VR/XR_ computing. 
+- To experiment and build an OS from ground the ground up transitioning away from traditional OS design as much as possible. 
+- To ensure that the project has minimal software abstractions as it grows over time in the future for better performance without affecting software implementation standards.
+- To make the software as robust as possible, to handle software dependencies and errors transparently without affecting the user's flow.
+- To research on implementing some new low level architecture with security concerns in mind like lightweight sandboxes and memory safety technique.
+- XenevaOS aims to be a single core with multiple domain. For example (_XR(AR/VR), Robotics, Custom Niche Solutions etc_.).
+- XenevaOS aims to have native 3D interface as GUI making it suitable for _XR(AR/VR)_ computing. 
 
 **NOTE: XenevaOS is in early development. Some of the features above are not implemented yet, because the project is in foundation level. But we are committed to exploring each of them through focused iterations and community feedback. Whether you're a developer looking to contribute, or someone exploring alternative OS design, we welcome your curiosity.**
 
