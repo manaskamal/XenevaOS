@@ -1,9 +1,8 @@
 # Contributing to XenevaOS
 
-Thank you for your interest in contributing to **XenevaOS**. XenevaOS is an operating system project aims to be modern, lightweight and focuses on performance, multimedia capabilities and synchronisation with current technologies.
+Thank you for your interest in contributing to XenevaOS!
 
-This guide outlines the contibution process and best practices to help maintin the quality and stability of the project.
-
+XenevaOS is a modern, lightweight operating system that focuses on performance, multimedia capabilities, and synchronization with current technologies. This guide outlines the contribution process and best practices to help maintain the quality and stability of the project.
 ## Getting Started
 XenevaOS uses Microsoft Visual Studio as development platform, and uses Windows environment. [You can click here for Build Instructions](BuildInstructions.md), which highlights all required steps to setting up the environment.
 
@@ -16,7 +15,7 @@ XenevaOS uses Microsoft Visual Studio as development platform, and uses Windows 
 
 - Follow memory management, system calls and other subsystem guidelines as outlined in the documentation.
 
-- Before making major changes, open an issue or discussion in the repository or on Discord to align with the project's direction and avoid duplicate efforts.
+- Before making major changes, open an issue or discussion in the repository or on Discord to align with the project's direction and avoid duplicate work.
 
 ### *Coding Style*
 XenevaOS project follows good coding style to maintain consistency, readability, and project discipline. All contributions should adhere to this style to ensure uniformity across the codebase. Well-structured, clean, and documented code is highly valued, as it improves maintainability and collaboration. 
