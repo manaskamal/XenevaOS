@@ -105,7 +105,7 @@ We are not funded by anyone and have been running this running this project boot
 
 <div align="center">
     <a href="https://buymeacoffee.com/xeneva" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" height="41px"></a>
-    <a href="https://paypal.me/xenevaos"><img src="https://i.ibb.co/v6wG7SnM/donate-pp.png" alt="PayPal" height="41" width="174"></a>
+    <a href="https://paypal.me/xenevaos"><img src="https://jumpshare.com/s/weo3a1PnyLC5ELufZDK1" alt="PayPal" height="41" width="174"></a>
     </a> <br>
 </div>
 
