@@ -99,7 +99,7 @@ For questions, suggestions, or collaborations, feel free to reach out
 - Email: hi@getxeneva.com
 - Website: [www.getxeneva.com](https://getxeneva.com)
 
-## ☕ Donate:
+# Donate:
 
 We are not funded by anyone and have been running this running this project bootstrapped. If you believe in our project and would like to support us financially, it would be really helpful!
 
