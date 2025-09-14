@@ -1,4 +1,4 @@
-
+<img width="2560" height="1440" alt="image" src="https://github.com/user-attachments/assets/e0c0ebb8-693c-4417-94d8-8fd163727a41" />
 [![Discord](https://img.shields.io/discord/1255326572617924618?label=Discord&logo=discord&style=flat)](https://discord.com/invite/YNsY7hhQ)
 
 
@@ -22,6 +22,8 @@ We are not funded by anyone and have been running this project bootstrapped. If 
     <a href="https://paypal.me/xenevaos"><img src="Icons/donate-pp.png" alt="PayPal" height="41" width="174"></a>
     </a> <br>
 </div>
+
+UPI ID : 6002872225-2@ybl
 
 ## __Features__ :
 - ACPI (through acpica)
