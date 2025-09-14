@@ -2,6 +2,7 @@
 [![Discord](https://img.shields.io/discord/1255326572617924618?label=Discord&logo=discord&style=flat)](https://discord.com/invite/YNsY7hhQ)
 
 
+
 ![alt text](https://github.com/manaskamal/XenevaOS/blob/master/XeLogo.png?raw=true)
 
 XenevaOS is an operating system built from scratch targeted at modern hardware. The OS is designed for both x86 and ARM architecture with plans for RISC-V  implementation in the near future as well. Our OS is built on our very own hybrid kernel known as _'Aurora'_.<br> Please visit [Build Instructions](Docs/BuildInstructions.md) to build the project
@@ -97,6 +98,16 @@ While there are many mature Kernels available for different domains and they are
 For questions, suggestions, or collaborations, feel free to reach out
 - Email: hi@getxeneva.com
 - Website: [www.getxeneva.com](https://getxeneva.com)
+
+# Donate:
+
+We are not funded by anyone and have been running this running this project bootstrapped. If you believe in our project and would like to support us financially, it would be really helpful!
+
+<div align="center">
+    <a href="https://buymeacoffee.com/xeneva" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" height="41px"></a>
+    <a href="https://paypal.me/xenevaos"><img src="Icons/donate-pp.png" alt="PayPal" height="41" width="174"></a>
+    </a> <br>
+</div>
 
 # License:
 XenevaOS is licensed under the [BSD 2-clause License](./LICENSE)
