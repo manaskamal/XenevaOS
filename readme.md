@@ -1,6 +1,4 @@
-<img width="2560" height="1440" alt="image" src="https://github.com/user-attachments/assets/e0c0ebb8-693c-4417-94d8-8fd163727a41" />
 [![Discord](https://img.shields.io/discord/1255326572617924618?label=Discord&logo=discord&style=flat)](https://discord.com/invite/YNsY7hhQ)
-
 
 
 ![alt text](https://github.com/manaskamal/XenevaOS/blob/master/XeLogo.png?raw=true)
