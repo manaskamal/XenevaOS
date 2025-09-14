@@ -99,9 +99,9 @@ For questions, suggestions, or collaborations, feel free to reach out
 - Email: hi@getxeneva.com
 - Website: [www.getxeneva.com](https://getxeneva.com)
 
-## ☕ Donate
+## ☕ Donate:
 
-We are not funded by anyone and have been running this running this project bootstrapped. If you believe in our journey and would like to support us financially, it would be really helpful!
+We are not funded by anyone and have been running this running this project bootstrapped. If you believe in our project and would like to support us financially, it would be really helpful!
 
 <div align="center">
     <a href="https://buymeacoffee.com/xeneva" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" height="41px"></a>
