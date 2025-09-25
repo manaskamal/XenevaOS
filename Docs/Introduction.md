@@ -1,28 +1,27 @@
 # XenevaOS documentation
 
 ## Introduction
-Welcome to the XenevaOS documentation. XenevaOS is an operating system completely written from scratch with a focus on performance and modern hardware support while providing a robust modern graphical environment for daily needs of users.It is designed to be lightweight, secure, and adaptable, making it ideal for both developers and general users. [Let's get started](#welcome-to-xenevaos--empowering-creativity)
+Welcome to the XenevaOS documentation. XenevaOS is an operating system completely written from scratch with a focus on high performance and modern hardware support. It aims to provide a robust graphical environment for everyday use, and its lightweight, secure, and adaptable design makes it ideal for both developers and general users. [Let's get started](#welcome-to-xenevaos--empowering-creativity)
 
 ## NOTE
-The project is still under development and not fully matured. The project requires lot of contribution and developments to various aspects of the system.
+The project is still under development and not yet fully mature. It requires significant contributions and development to various aspects of the system.
 
 ## _What is XenevaOS?_
-The term _XenevaOS_ made up of four subsystems : (_The Kernel_, _Device Drivers_, _Services_, _Applications_). In easy language we can say, _'XenevaOS' is a collection of various components, where each components works individually. _The Kernel_ being the important component of all, where device drivers, services and applications depends. Every components are binded up by _'Service call layer'_ (which is _'system calls'_ in general language).
+The _XenevaOS_ architecture is composed of four subsystems : (_The Kernel_, _Device Drivers_, _Services_, _Applications_). Each component works individually, with _The Kernel_ being the most crucial as the other components like _Device Drivers_, _Services_ & _Applications_ depend on it. All components are bound together by the _'Service call layer'_ (commonly known as _'system calls'_).
 
 ## Core Objectives of XenevaOS
-- __Modern Hardware Support__: XenevaOS aims to support modern hardware. Which help and will help the system to follow up the technology trends. It aims to be engineered to take the full advantage of the latest advancements in hardware, ensuring a good performance and stability.
-- __Enhanced Graphics and Audio__ : Xeneva OS aims to provide good stack of graphics and audio with supporting modern specifications of Graphics and Audio Hardware. The project aims to provide a good stack to audio and video production centric choices.
-- __Simple User Interface__ :  _'The function of good software is to make the complex appear to be simple'_ -_Grady Booch_. The Project aims to provide simple user friendly graphical interface while targeting modern design choices. 
-- __Minimal Abstraction__ : XenevaOS aims to have minimal software abstractions as possible, whichs helps enhance performance.
-- __User Priority first__ : XenevaOS aims to put user as first priority rather user solving software dependencies before using software.
+- __Modern Hardware Support__: XenevaOS is engineered to utilize all the latest advancements of modern hardware. The project aims to provide optimal performance and stability while keeping up with technology trends.
+- __Enhanced Graphics and Audio__ : XenevaOS aims to provide good stack of graphics and audio by supporting modern specifications of Graphics and Audio Hardware. The project aims to be an ideal choice for audio and video production.
+- __Simple User Interface__ :  _'The function of good software is to make the complex appear to be simple'_ `_Grady Booch_. XenevaOS aims to provide a simple, user-friendly graphical interface that incorporates modern design principles.
+- __Minimal Abstraction__ : XenevaOS aims to have minimal software abstractions, whichs helps enhance performance.
+- __User-First Priority__ : XenevaOS aims to prioritizes the users and their experienece by reducing software dependencies.
 
 ## Getting Started
-__Please NOTE that, though the documentation mentioned _'Core Objectives of XenevaOS'_ and some goals of the project. But still the system lacks various functionalities and doesn't seems to go through the mentioned goals. Still the project is under development and can promise that the system will come with all the mentioned goal. Just need your support and contributions to make it happen.__<br> 
+__NOTE:__ While this documentation outlines the core objectives and goals of the project, XenevaOS is still under active development and currently lacks many of these functionalities. We promise that the system will eventually achieve these goals with your support and contributions.<br> 
 
-This documentation will guide you through all the parts of XenevaOS and how it works. Whether you are a developer looking to contribute to XenevaOS or a user seeking to understand its inner workings, this documentation aims to provide comprehensive and accessible information.
+This documentation will guide you through all aspects of XenevaOS and how it works. Whether you are a developer looking to contribute to XenevaOS or a user seeking to understand its inner workings, this guide aims to provide comprehensive and accessible information.
 
-## Welcome to XenevaOS -_Empowering Creativity_
-
+## Welcome to XenevaOS -
 __Build the project__:
 - [Build instructions](BuildInstructions.md)
 - [Running XenevaOS](VMSetup.md)
