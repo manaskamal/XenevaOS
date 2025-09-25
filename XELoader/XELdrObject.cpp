@@ -32,8 +32,8 @@
 #include "pe_.h"
 #include <string.h>
 
-XELoaderObject *obj_first;
-XELoaderObject *obj_last;
+static XELoaderObject *obj_first;
+static XELoaderObject *obj_last;
 
 
 void XELoaderAddObject(XELoaderObject* obj) {
@@ -49,6 +49,7 @@ void XELoaderAddObject(XELoaderObject* obj) {
 		obj->prev = obj_last;
 	}
 	obj_last = obj;
+	_KePrint("***Obj next : %x\n", obj->next);
 }
 
 /*
@@ -81,8 +82,11 @@ void XELdrRemoveObject(XELoaderObject* obj) {
  */
 XELoaderObject* XELdrCreateObj(char* objname) {
 	XELoaderObject* obj = (XELoaderObject*)malloc(sizeof(XELoaderObject));
-	memset(obj, 0, sizeof(XELoaderObject));
-	obj->objname = (char*)malloc(strlen(objname));
+	_KePrint("OBJ Alloc : %x \n", obj);
+	//memset(obj, 0, sizeof(XELoaderObject));
+	_KePrint("XELdrCreatingObject : %s \n", objname);
+	_KePrint("OBJName : %x \n", obj->objname);
+	obj->objname = (char*)malloc(strlen(objname) + 1);
 	strcpy(obj->objname, objname);
 	obj->loaded = false;
 	obj->load_addr = 0;
@@ -116,15 +120,21 @@ void XELdrInitObjectList() {
  * @param name -- name to check
  */
 bool XELdrCheckObject(const char* name) {
-	for (XELoaderObject *obj_ = obj_first; obj_ != NULL; obj_ = obj_->next) {
+	XELoaderObject* obj_ = NULL;
+	for (obj_ = obj_first; obj_ != NULL; obj_ = obj_->next) {
+		_KePrint("XELdrCheckObject : objname: %x \n", obj_->objname);
+		_KePrint("Obj next : %x \n", obj_->next);
 		char* p = strchr(obj_->objname, '/');
 		if (p)
 			p++;
 		else
 			p = obj_->objname;
-
+		_KePrint("After Strchr : %x \n", obj_->objname);
+		_KePrint("P: %x \n", p);
 		if (strcmp(p, name) == 0)
 			return true;
+		_KePrint("Strcmp %x \n", obj_->objname);
+		
 	}
 	return false;
 }
@@ -134,7 +144,9 @@ bool XELdrCheckObject(const char* name) {
  * @param name -- name of the object
  */
 XELoaderObject* XELdrGetObject(const char* name) {
-	for (XELoaderObject *obj_ = obj_first; obj_ != NULL; obj_ = obj_->next) {
+	XELoaderObject* obj_ = NULL;
+	for (obj_ = obj_first; obj_ != NULL; obj_ = obj_->next) {
+		_KePrint("XELdrGetObject: objname: %x \n", obj_->objname);
 		char* p = strchr(obj_->objname, '/');
 		if (p)
 			p++;
@@ -149,7 +161,8 @@ XELoaderObject* XELdrGetObject(const char* name) {
 * from the list
 */
 void XELdrLoadAllObject() {
-	for (XELoaderObject *obj_ = obj_first; obj_ != NULL; obj_ = obj_->next) {
+	XELoaderObject* obj_ = NULL;
+	for (obj_ = obj_first; obj_ != NULL; obj_ = obj_->next) {
 		if (obj_->loaded == false)
 			XELdrLoadObject(obj_);
 	}
@@ -169,7 +182,8 @@ void XELdrLinkAllObject(XELoaderObject *mainobj) {
  * @param mainobj -- main object
  */
 void XELdrLinkDepObject(XELoaderObject *mainobj) {
-	for (XELoaderObject *obj_ = obj_first; obj_ != NULL; obj_ = obj_->next) {
+	XELoaderObject* obj_ = NULL;
+	for (obj_ = obj_first; obj_ != NULL; obj_ = obj_->next) {
 		if (obj_ == mainobj)
 			continue;
 		XELdrLinkDependencyPE(obj_);

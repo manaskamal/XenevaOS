@@ -42,13 +42,16 @@
 uint64_t* _ldr_scratchBuffer;
 uint64_t physFrames[64];
 
-/* push item on the stack */
+/* push item on the stack */  //
 #define PUSH(stack, type, item) do { \
 	stack -= sizeof(type); \
-while (stack & (sizeof(type)-1))stack--; \
-	*((type*)stack) = item; \
+    while (stack & (sizeof(type)-1))stack--; \
+	*((type*)(stack)) = (item); \
 }while (0);
 
+#define PUSHALIGN(stack, align) do {\
+   stack &= ~((align)-1); \
+}while(0)
 
 #define PUSHSTRING(stack, s) do { \
 	size_t l = strlen(s) - 1; \
@@ -59,20 +62,23 @@ while (stack & (sizeof(type)-1))stack--; \
 }while (0)
 
 
+
 /*
 * AuProcessEntUser -- main kernel thread call
 * in order to enter user for processes
 * @param rcx -- user entry structure
 */
 void AuProcessEntUser(uint64_t rcx) {
-	UARTDebugOut("AuProc\n");
+	mask_irqs();
 	AA64Thread* t = AuGetCurrentThread();
 	AuUserEntry* uentry = t->uentry;
-	UARTDebugOut("AuProcessEntUser : %x entry - %x \n", uentry->rsp, uentry->entrypoint);
+	uentry->rsp -= 32;
+	PUSHALIGN(uentry->rsp, 16);
 	t->first_run = 1;
 	/* do all arguments passing stuff, arguments
 	 * are passed as strings to stack
 	 */
+
 	char** argvs = (char**)uentry->argvaddr;
 	for (int i = 0; i < uentry->num_args; i++) {
 		char* str = uentry->argvs[i];
@@ -82,21 +88,26 @@ void AuProcessEntUser(uint64_t rcx) {
 		argvs[i] = (char*)uentry->rsp;
 	}
 
-	if (uentry->argvs) {
-		for (int i = 0; i < uentry->num_args; i++) {
-			uint64_t addr = (uint64_t)uentry->argvs[i];
-			kfree((void*)addr);
-		}
-		void* address = (void*)uentry->argvs;
-		kfree(address);
-	}
+	/* I think this code should be placed in _KeProcessExit */
+	//if (uentry->argvs) {
+	//	for (int i = 0; i < uentry->num_args; i++) {
+	//		//uint64_t addr = (uint64_t)uentry->argvs[i];
+	//		kfree(uentry->argvs[i]);
+	//	}
+	//	void* address = (void*)uentry->argvs;
+	//	kfree(address);
+	//}
+	PUSHALIGN(uentry->rsp, 16);
 	uentry->argvs = 0;
 	PUSH(uentry->rsp, size_t, (size_t)uentry->argvaddr);
-	PUSH(uentry->rsp, size_t, uentry->num_args);
-	aa64_enter_user(uentry->rsp,uentry->entrypoint);
+	PUSH(uentry->rsp, size_t, (size_t)uentry->num_args);
+	PUSHALIGN(uentry->rsp, 16);
+	aa64_enter_user(uentry->rsp, uentry->entrypoint);
 	while (1) {
 	}
 }
+
+extern bool setStk();
 
 /*
  * AuLoadExecToProcess -- loads an executable to the
@@ -158,6 +169,7 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) 
 		 * libraries
 		 */
 		int char_cnt = 0;
+
 		for (int i = 0; i < argc; i++) {
 			char_cnt += strlen(argv[i]);
 		}
@@ -167,7 +179,7 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) 
 		 */
 		int num_args_ = 1 + argc;
 		int string_len = strlen(filename);
-		char* file__ = (char*)kmalloc(string_len);
+		char* file__ = (char*)kmalloc(string_len+1);
 		strcpy(file__, filename);
 
 		/* BUGG: if kmalloc allocates smaller memory below than 15 bytes,
@@ -176,12 +188,12 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) 
 		 * argument array
 		 */
 		char** argvs = (char**)kmalloc(num_args_ * sizeof(char*));
-		memset(argvs, 0, num_args_ * sizeof(char*));
+		//memset(argvs, 0, num_args_ * sizeof(char*));
 		argvs[0] = file__;
 
 		for (int i = 0; i < argc; i++) {
-			char* argpass = (char*)kmalloc(strlen(argv[i]));
-			memset(argpass, 0, strlen(argv[i]));
+			char* argpass = (char*)kmalloc(strlen(argv[i])+1);
+			memset(argpass, 0, strlen(argv[i])+1);
 			strcpy(argpass, argv[i]);
 			argvs[1 + i] = argpass;
 		}
@@ -191,18 +203,21 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) 
 			kfree(argv);
 		}
 
+		setStk();
 		//AuReleaseSpinlock(loader_lock);
 
 		/* load the loader */
 		return AuLoadExecToProcess(proc, "/xeldr.exe", num_args_, argvs);
 	}
-	//UARTDebugOut("NT NumberOfSection : %d \n", nt->FileHeader.NumberOfSections);
+    UARTDebugOut("NT NumberOfSection : %d for %s\n", nt->FileHeader.NumberOfSections, proc->name);
 	for (size_t i = 0; i < nt->FileHeader.NumberOfSections; ++i) {
 		size_t load_addr = _image_base_ + secthdr[i].VirtualAddress;
+		UARTDebugOut("Section Name : %s \n", secthdr[i].Name);
 		void* sect_addr = (void*)load_addr;
 		size_t sectsz = secthdr[i].VirtualSize;
 		int req_pages = sectsz / 4096 +
 			((sectsz % 4096) ? 1 : 0);
+		UARTDebugOut("Required Pages : %d \n", req_pages);
 		uint64_t* block = 0;
 		int physFrameIndex = 0;
 		for (int j = 0; j < req_pages; j++) {
@@ -210,7 +225,7 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) 
 			uint64_t phys = P2V((size_t)AuPmmngrAlloc());
 			physFrames[physFrameIndex] = phys;
 			//UARTDebugOut("LoadAddr : %x , phys : %x \n", alloc, phys);
-			AuMapPageEx(proc->cr3, V2P(phys), alloc, PTE_USER_EXECUTABLE | PTE_AP_RW_USER );
+			AuMapPageEx(proc->cr3, V2P(phys), alloc, PTE_USER_EXECUTABLE | PTE_AP_RW_USER | PTE_NORMAL_MEM);
 			if (!block)
 				block = (uint64_t*)phys;
 			physFrameIndex++;
@@ -268,14 +283,14 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) 
 	uint64_t argvaddr = 0;
 	if (num_args) {
 		/* Allocate a memory for passing arguments */
-		char* args = (char*)P2V((size_t)AuPmmngrAlloc());
+		uint64_t* args = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
 		memset(args, 0, PAGE_SIZE);
-		if (!AuMapPageEx(proc->cr3, (size_t)V2P((size_t)args), 0x4000,PTE_AP_RW_USER)) {
+		if (!AuMapPageEx(proc->cr3, (size_t)V2P((uint64_t)args), 0x40000000000,PTE_AP_RW_USER | PTE_NORMAL_MEM)) {
 			AuTextOut("Arguments address already mapped \n");
 			argvaddr = 0;
 		}
 		else {
-			argvaddr = 0x4000;
+			argvaddr = 0x40000000000;
 		}
 	}
 	uentry->argvaddr = argvaddr;

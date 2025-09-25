@@ -5,7 +5,11 @@
       <FullPath>E:\Xeneva Project\Aurora\ARM64\Debug\xeldr.exe</FullPath>
     </ProjectOutput>
   </ProjectOutputs>
-  <ContentFiles />
+  <ContentFiles>
+    <ContentFile>
+      <FullPath>E:\Xeneva Project\Aurora\XELoader\crt0_arm64.s</FullPath>
+    </ContentFile>
+  </ContentFiles>
   <SatelliteDlls />
   <NonRecipeFileRefs />
 </Project>

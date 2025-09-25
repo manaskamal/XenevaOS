@@ -168,6 +168,9 @@
     <CustomBuild Include="Hal\aa64switch.s">
       <Filter>Hal</Filter>
     </CustomBuild>
+    <CustomBuild Include="Hal\aa64_print.s">
+      <Filter>Hal</Filter>
+    </CustomBuild>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\BaseHdr\Hal\AA64\aa64lowlevel.h">

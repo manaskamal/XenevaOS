@@ -53,10 +53,16 @@ extern bool _debug_buf;
  * @param obj
  */
 int XELdrLoadObject(XELoaderObject *obj){
+#ifdef ARCH_ARM64
+	//uint64_t addr_preserve = (uint64_t)obj->objname;
+#endif
 	int file = _KeOpenFile(obj->objname, FILE_OPEN_READ_ONLY);
 	if (file == -1)
 		return 0;
 
+#ifdef ARCH_ARM64
+	//obj->objname = (char*)addr_preserve;
+#endif
 	XEFileStatus *stat = (XEFileStatus*)malloc(sizeof(XEFileStatus));
 	memset(stat, 0, sizeof(XEFileStatus));
 	_KeFileStat(file, stat);
@@ -127,6 +133,8 @@ int XELdrLoadObject(XELoaderObject *obj){
 	free(stat);
 	return 0;
 }
+
+extern "C" uint64_t _printstack();
 /*
  * XELdrStartProc -- starts a new process
  * @param filename -- path and name of the
@@ -134,16 +142,52 @@ int XELdrLoadObject(XELoaderObject *obj){
  */
 int XELdrStartProc(char* filename, XELoaderObject *obj) {
 	int file = 0;
-	file = _KeOpenFile(filename, FILE_OPEN_READ_ONLY);
+	char fname[128];
+	memset(fname, 0, 127);
+	fname[127] = '\0';
+	//strncpy(fname, filename,127);
+	strncpy(fname, filename,127);
+	_KePrint("filename : %s \n", filename);
+#ifdef ARCH_ARM64
+	/*uint64_t addr_preserve = (uint64_t)obj->objname;
+	uint32_t presv_len = obj->len;
+	size_t loadAddr = obj->load_addr;
+	size_t entryAddr = obj->entry_addr;
+	void* prevPresv = obj->prev;
+	void* nextPresv = obj->next;
+	bool loaded = obj->loaded;
+	bool linked = obj->linked;*/
+	_KePrint("OBJName : %x \n", obj->objname);
+	_KePrint("Previous stack value : %x \n", _printstack());
+#endif
+	file = _KeOpenFile(fname, FILE_OPEN_READ_ONLY);
 
+#ifdef ARCH_ARM64
+	/*obj->objname = (char*)addr_preserve;
+	obj->len = presv_len;
+	obj->load_addr = loadAddr;
+	obj->entry_addr = entryAddr;
+	obj->linked = linked;
+	obj->loaded = loaded;
+	obj->next = (struct _XELDR_OBJ_*) nextPresv;
+	obj->prev = (struct _XELDR_OBJ_*)prevPresv;
+	_KePrint("OBJNext: %x offset : %x \n", obj->next, &obj->next);*/
+	_KePrint("OBJName : %x \n", obj->objname);
+	_KePrint("Stack value : %x \n", _printstack());
+	
+#endif
 
+	
 	XEFileStatus *stat = (XEFileStatus*)malloc(sizeof(XEFileStatus));
 	memset(stat, 0, sizeof(XEFileStatus));
-
+	
+	
+	
 	int ret_bytes = 0;
 	
 	_KeFileStat(file, stat);
 
+	_KePrint("[[[{ ObjNext: %x \n", obj->next);
 	uint64_t* buffer = (uint64_t*)_KeMemMap(NULL,4096, 0, 0, -1, 0);
 	memset(buffer, 0, 4096);
 	obj->len += 4096;
@@ -189,7 +233,20 @@ int XELdrStartProc(char* filename, XELoaderObject *obj) {
 	
 	uint8_t* aligned_buff = (uint8_t*)first_ptr;
 	XELdrRelocatePE(aligned_buff, nt, diff);
+	_KePrint("Creating PE object for main obj %x\n", obj->objname);
+	_KePrint("[[[{ ObjNext: %x \n", obj->next);
+#ifdef ARCH_ARM64
+	//obj->objname = (char*)addr_preserve;
+	//obj->len = presv_len;
+	//obj->load_addr = loadAddr;
+	//obj->entry_addr = entryAddr;
+	//obj->linked = linked;
+	//obj->loaded = loaded;
+	//obj->next = (struct _XELDR_OBJ_*)nextPresv;
+	//obj->prev = (struct _XELDR_OBJ_*)prevPresv;
+#endif
 	XELdrCreatePEObjects(aligned_buff);
+	_KePrint("Creating done \n");
 
 	obj->load_addr = _image_load_base_;
 	obj->loaded = true;
@@ -200,7 +257,122 @@ int XELdrStartProc(char* filename, XELoaderObject *obj) {
 	return 0;
 }
 
+/*
+ * XELdrStartProc -- starts a new process
+ * @param filename -- path and name of the
+ * process
+ */
+int XELdrStartProc2(char* filename, XELdrObj* obj) {
+	int file = 0;
+	_KePrint("filename : %s \n", filename);
+#ifdef ARCH_ARM64
+	/*uint64_t addr_preserve = (uint64_t)obj->objname;
+	uint32_t presv_len = obj->len;
+	size_t loadAddr = obj->load_addr;
+	size_t entryAddr = obj->entry_addr;
+	void* prevPresv = obj->prev;
+	void* nextPresv = obj->next;
+	bool loaded = obj->loaded;
+	bool linked = obj->linked;*/
+	_KePrint("OBJ2Name : %x \n", obj->objname);
+	_KePrint("Previous stack value : %x \n", _printstack());
+#endif
+	file = _KeOpenFile(filename, FILE_OPEN_READ_ONLY);
 
+#ifdef ARCH_ARM64
+	/*obj->objname = (char*)addr_preserve;
+	obj->len = presv_len;
+	obj->load_addr = loadAddr;
+	obj->entry_addr = entryAddr;
+	obj->linked = linked;
+	obj->loaded = loaded;
+	obj->next = (struct _XELDR_OBJ_*) nextPresv;
+	obj->prev = (struct _XELDR_OBJ_*)prevPresv;
+	_KePrint("OBJNext: %x offset : %x \n", obj->next, &obj->next);*/
+	_KePrint("OBJ2Name : %x \n", obj->objname);
+	_KePrint("Stack value : %x \n", _printstack());
+	for (;;);
+#endif
+
+
+//	XEFileStatus* stat = (XEFileStatus*)malloc(sizeof(XEFileStatus));
+//	memset(stat, 0, sizeof(XEFileStatus));
+//
+//
+//
+//	int ret_bytes = 0;
+//
+//	_KeFileStat(file, stat);
+//
+//	_KePrint("[[[{ ObjNext: %x \n", obj->next);
+//	uint64_t* buffer = (uint64_t*)_KeMemMap(NULL, 4096, 0, 0, -1, 0);
+//	memset(buffer, 0, 4096);
+//	obj->len += 4096;
+//
+//	uint64_t* first_ptr = buffer;
+//	uint64_t _image_load_base_ = (uint64_t)first_ptr;
+//
+//	ret_bytes = _KeReadFile(file, buffer, 4096);
+//	IMAGE_DOS_HEADER* dos_ = (IMAGE_DOS_HEADER*)buffer;
+//	PIMAGE_NT_HEADERS nt = raw_offset<PIMAGE_NT_HEADERS>(dos_, dos_->e_lfanew);
+//	PSECTION_HEADER secthdr = raw_offset<PSECTION_HEADER>(&nt->OptionalHeader, nt->FileHeader.SizeOfOptionaHeader);
+//	intptr_t original_base = nt->OptionalHeader.ImageBase;
+//	intptr_t new_addr = _image_load_base_;
+//	intptr_t diff = new_addr - original_base;
+//
+//	if (nt->OptionalHeader.SectionAlignment == 512) {
+//		while (!stat->eof) {
+//			uint64_t* block = (uint64_t*)_KeMemMap(NULL, 4096, 0, 0, -1, 0);
+//			int bytes = _KeReadFile(file, block, 4096);
+//			ret_bytes += bytes;
+//			_KeFileStat(file, stat);
+//		}
+//	}
+//	else {
+//		for (size_t i = 0; i < nt->FileHeader.NumberOfSections; ++i) {
+//			size_t sect_ld_addr = _image_load_base_ + secthdr[i].VirtualAddress;
+//			size_t sect_sz = secthdr[i].VirtualSize;
+//			int req_pages = sect_sz / 4096 +
+//				((sect_sz % 4096) ? 1 : 0);
+//			uint64_t* block = 0;
+//			for (int j = 0; j < req_pages; j++) {
+//				uint64_t* alloc = (uint64_t*)_KeMemMap(NULL, 4096, 0, 0, -1, 0);
+//				if (!block)
+//					block = alloc;
+//				int bytes = _KeReadFile(file, alloc, 4096);
+//				ret_bytes += bytes;
+//				obj->len += 4096;
+//			}
+//			if (secthdr[i].VirtualSize > secthdr[i].SizeOfRawData)
+//				memset(raw_offset<void*>(block, secthdr[i].SizeOfRawData), 0, secthdr[i].VirtualSize - secthdr[i].SizeOfRawData);
+//		}
+//	}
+//
+//	uint8_t* aligned_buff = (uint8_t*)first_ptr;
+//	XELdrRelocatePE(aligned_buff, nt, diff);
+//	_KePrint("Creating PE object for main obj %x\n", obj->objname);
+//	_KePrint("[[[{ ObjNext: %x \n", obj->next);
+//#ifdef ARCH_ARM64
+//	//obj->objname = (char*)addr_preserve;
+//	//obj->len = presv_len;
+//	//obj->load_addr = loadAddr;
+//	//obj->entry_addr = entryAddr;
+//	//obj->linked = linked;
+//	//obj->loaded = loaded;
+//	//obj->next = (struct _XELDR_OBJ_*)nextPresv;
+//	//obj->prev = (struct _XELDR_OBJ_*)prevPresv;
+//#endif
+//	XELdrCreatePEObjects(aligned_buff);
+//	_KePrint("Creating done \n");
+//
+//	obj->load_addr = _image_load_base_;
+//	obj->loaded = true;
+//	obj->entry_addr = _image_load_base_ + nt->OptionalHeader.AddressOfEntryPoint;
+//	_KeMemMapDirty((void*)_image_load_base_, obj->len, 0, 0);
+//	free(stat);
+//	_KeCloseFile(file);
+	return 0;
+}
 
 /*
  * DefaultSignalHandler -- default signal handler
@@ -218,29 +390,51 @@ typedef int(*entrypoint) (int argc, char*argv[]);
  * three commands "-about", "-f", and filename
  * in 3rd argument
  */
-int main(int argc, char* argv[]) {
-	int pid = _KeGetProcessID();
-
+extern "C" void main(int argc, char* argv[]) {
+	_KePrint("Default stack value : %x \n", _printstack());
+	
 	_KePrint("From inside XELoader (Xeneva Dynamic Loader v1.0 ARM64)\n");
 	_KePrint("Copyright (C) Manas Kamal Choudhury 2023-2025\n");
+	//_KePrint("ARGV %x \n", argv);
 
-	/* simply exit*/
+	///* simply exit*/
 	if (!argv)
 		_KeProcessExit();
 
-	_KePrint("Till here \n");
+//	XELdrObj* obj = (XELdrObj*)malloc(sizeof(XELdrObj));
+////	memset(obj, 0, sizeof(XELdrObj));
+//	obj->objname = (char*)malloc(strlen("/deodxr.exe") + 1);
+//	strcpy(obj->objname, "/deodxr.exe");
+//
+//	_KePrint("filename %x \n", argv[0]);
+//	_KePrint("ARGV[1] : %x \n", argv[1]);
+//
+//	XELdrStartProc2("/deodxr.exe", obj);
+//
+//	for (;;);
 
 	XELdrInitObjectList();
 
-	_KePrint("Object list initialized \n");
 	/* load the main object */
 	char* filename = argv[0];
 
+	_KePrint("filename: %x \n", filename);
+	int i = 0;
+	while (1) {
+		if (filename[i] == '\0') {
+			_KePrint("%c \n", filename[i]);
+			break;
+		}
+		_KePrint("I : %d , %c\n", i, filename[i]);
+		i++;
+	}
+
+	
 	XELoaderObject* mainobj = XELdrCreateObj(filename);
 	
-	XELdrStartProc(mainobj->objname, mainobj);
+	XELdrStartProc(filename, mainobj);
+	_KePrint("Main Proc started \n");
 	XELdrLoadAllObject();
-	_KePrint("Objects loaded \n");
 	
 	/* links all dependencies of libraries*/
 	XELdrLinkDepObject(mainobj);

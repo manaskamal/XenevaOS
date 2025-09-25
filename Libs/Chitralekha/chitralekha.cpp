@@ -38,7 +38,7 @@
 #include "_fastcpy.h"
 #include "color.h"
 
-extern "C" int _fltused = 1;
+//extern "C" int _fltused = 1;
 
 int ChPrintLibName() {
 	_KePrint("Chitralekha Graphics Library v1.0 \n");
@@ -158,8 +158,12 @@ void ChCanvasScreenUpdate(ChCanvas* canvas, int _x, int _y, int _w, int _h) {
 	for (int64_t i = 0; i < h; i++){
 		void* fb_mem = (fb + (y + i) * (canvas->screenWidth) + x);
 		void* canvas_mem = (canvas->buffer + (y + i) * (canvas->canvasWidth) + x);
+#ifdef ARCH_X64
 		_fastcpy(fb_mem,
 			canvas_mem, w*4);
+#elif ARCH_ARM64
+		memcpy(fb_mem, canvas_mem, w * 4);
+#endif
 	}
 }
 

@@ -83,7 +83,7 @@ typedef struct __VFS_NODE__* (*opendir_callback) (struct __VFS_NODE__ *fs, char*
 typedef int(*readdir_callback)(struct __VFS_NODE__* fs, struct __VFS_NODE__* dir, AuDirectoryEntry* dirent);
 typedef size_t(*fs_getblockfor) (struct __VFS_NODE__* fs, struct  __VFS_NODE__* file, uint64_t offset);
 
-#pragma pack(push,1)
+//#pragma pack(push,1)
 typedef struct __VFS_NODE__ {
 	char filename[32];
 	uint32_t size;
@@ -111,7 +111,7 @@ typedef struct __VFS_NODE__ {
 	fs_getblockfor get_blockfor;
 	iocontrol_callback iocontrol;
 }AuVFSNode;
-#pragma pack(pop)
+//#pragma pack(pop)
 
 #pragma pack(push,1)
 typedef struct _AuFileStatus_ {

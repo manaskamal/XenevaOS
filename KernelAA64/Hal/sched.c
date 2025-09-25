@@ -276,13 +276,15 @@ AA64Thread* AuCreateKthread(void(*entry) (uint64_t),uint64_t* pml, char* name){
 	AA64Thread* t = (AA64Thread*)kmalloc(sizeof(AA64Thread));
 	memset(t, 0, sizeof(AA64Thread));
 	strncpy(t->name, name,8);
+	t->name[8] = '\0';
 	t->elr_el1 = (uint64_t)entry;
 	t->x30 = (uint64_t)entry;
 	t->spsr_el1 = 0x245;
 	//t->sp = stack;
 	t->pml = (uint64_t)pml;
 	t->sp = (uint64_t)AuCreateKernelStack((uint64_t*)t->pml);
-	t->sp -= 32;
+	//t->sp -= 32;
+	t->originalKSp = t->sp;
 	uint64_t kstack = t->sp;
 	t->sp = (((uint64_t)kstack + 15) & ~(uint64_t)0xF);
 	t->state = THREAD_STATE_READY;
@@ -299,8 +301,8 @@ void AuIdleThread(uint64_t ctx) {
 	UARTDebugOut("Idle thread running \n");
 	while (1) {
 		enable_irqs();
-		uint64_t el = _getCurrentEL();
-		UARTDebugOut("IDLE CurrentEl : %d \n", el);
+		//uint64_t el = _getCurrentEL();
+		//UARTDebugOut("IDLE CurrentEl : %d \n", el);
 	}
 }
 
@@ -339,6 +341,7 @@ extern uint64_t read_sp();
  * @param regs -- Passed by Timer ISR
  */
 void AuScheduleThread(AA64Registers* regs) {
+	mask_irqs();
 	if (_scheduler_initialized == 0) {
 		return;
 	}
@@ -361,7 +364,7 @@ sched:
 	AuHandleSleepThreads();
 	AA64NextThread();
 	write_both_ttbr(V2P(current_thread->pml));
-
+	//UARTDebugOut("CurrentThread: %s, pml-> %x \n", current_thread->name, V2P(current_thread->pml));
 	dsb_sy_barrier();
 
 //	UARTDebugOut("SCHED: Curr thread : %s , pml %x \n", current_thread->name, current_thread->pml);
@@ -372,8 +375,9 @@ sched:
 		goto ret;
 	}
 
-	if ((current_thread->threadType & THREAD_LEVEL_USER) && current_thread->first_run == 1) 
+	if ((current_thread->threadType & THREAD_LEVEL_USER) && current_thread->first_run == 1) {
 		resume_user(current_thread);
+	}
 	
 	aa64_restore_context(current_thread);
 ret:
@@ -383,6 +387,10 @@ ret:
 
 uint64_t stack_index;
 
+bool setStk() {
+	stack_index = 1;
+}
+
 /*
  * AuCreateKernelStack -- maps kernel stack and return the top
  * of the stack, it only maps 4KiB of stack
@@ -390,12 +398,13 @@ uint64_t stack_index;
  */
 uint64_t AuCreateKernelStack(uint64_t* pml) {
 	uint64_t idx = stack_index;
+	uint64_t location = KERNEL_STACK_LOCATION;
 	for (int i = 0; i < (KERNEL_STACK_SIZE) / 0x1000; i++) {
 		uint64_t addr = (uint64_t)P2V((uint64_t)AuPmmngrAlloc());
 		memset(addr, 0, PAGE_SIZE);
-		AuMapPageEx(pml, V2P(addr), (KERNEL_STACK_LOCATION + i * 4096), PTE_USER_NOT_EXECUTABLE | PTE_KERNEL_NOT_EXECUTABLE);
+		AuMapPageEx(pml, V2P(addr), (location + i * 4096), PTE_AP_RW | PTE_NORMAL_MEM);
 	}
-	return (KERNEL_STACK_LOCATION + KERNEL_STACK_SIZE);
+	return (location + KERNEL_STACK_SIZE);
 }
 
 /*

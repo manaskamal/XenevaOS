@@ -44,7 +44,7 @@ AU_EXTERN{
 	* used to identify valid memory blocks that the
 	* application is trying to free.
 	*/
-
+#pragma pack(push,1)
 	struct	boundary_tag
 	{
 		unsigned int magic;			//< It's a kind of ...
@@ -58,7 +58,7 @@ AU_EXTERN{
 		struct boundary_tag *next;	//< Linked list info.
 		struct boundary_tag *prev;	//< Linked list info.
 	};
-
+#pragma pack(pop)
 
 
 	/** This function is supposed to lock the memory data structures. It

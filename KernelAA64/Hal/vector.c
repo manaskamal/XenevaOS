@@ -39,8 +39,18 @@
 extern uint64_t read_sp();
 extern uint64_t read_sp_el1();
 
-void AuDumpRegisters(AA64Thread* thr) {
+void AuDumpRegisters(AA64Thread* thr, AA64Registers* regs) {
     UARTDebugOut("===REGISTER DUMP===\n");
+    UARTDebugOut("x0: %x x1: %x \n", regs->x0, regs->x1);
+    UARTDebugOut("x2: %x x3: %x \n", regs->x2, regs->x3);
+    UARTDebugOut("x4: %x x5: %x \n", regs->x4, regs->x5);
+    UARTDebugOut("x6: %x x7: %x \n", regs->x6, regs->x7);
+    UARTDebugOut("x8: %x x9: %x \n", regs->x8, regs->x9);
+    UARTDebugOut("x10: %x x11: %x \n", regs->x10, regs->x11);
+    UARTDebugOut("x12: %x x13: %x \n", regs->x12, regs->x13);
+    UARTDebugOut("x14: %x x15: %x \n", regs->x14, regs->x15);
+    UARTDebugOut("x16: %x x17: %x \n", regs->x16, regs->x17);
+    UARTDebugOut("x18: %x \n", regs->x18);
     UARTDebugOut("x19: %x x20: %x \n", thr->x19, thr->x20);
     UARTDebugOut("x21: %x X22: %x \n", thr->x21, thr->x22);
     UARTDebugOut("x23: %x x24: %x \n", thr->x23, thr->x24);
@@ -59,15 +69,26 @@ void sync_el1_handler(AA64Registers *regs) {
         return;
     }
 
+    uint32_t ec = (esr >> 26) & 0x3F;
+
+   
     UARTDebugOut("=======Synchronous Exception occured=========\n");
     UARTDebugOut("Fault Address (FAR_EL1): %x \n", read_far_el1());
+    //UARTDebugOut("Fault Address String (FAR_EL1): %s \n", read_far_el1());
     UARTDebugOut("Fault Instruction (ELR_EL1): %x \n", read_elr_el1());
     UARTDebugOut("SP_EL1: %x  \n", read_sp());
+    UARTDebugOut("SP_EL0 : %x \n", regs->EL0SP);
     AA64Thread* currthr = AuGetCurrentThread();
     if (currthr) {
         UARTDebugOut("Current Thread: %s \n", currthr->name);
-        AuDumpRegisters(currthr);
+        AuDumpRegisters(currthr, regs);
     }
+
+    if (ec == 0x25) {
+        UARTDebugOut("Stack alignment fault \n");
+        AuDumpRegisters(currthr, regs);
+    }
+
 
     uint32_t dfsc = esr & 0x3F;
 
@@ -94,11 +115,17 @@ void sync_el1_handler(AA64Registers *regs) {
 extern void aa64_restore_context(AA64Thread* thr);
 
 bool _debug = 0;
+bool _userprint = 0;
+
+void setuprint() {
+    _userprint = 1;
+}
 void irq_el1_handler(AA64Registers* regs) {
     uint32_t iar = GICReadIAR();
     uint32_t irq = iar & 0x3FF;
     if (irq < 1020) {
         if (irq == 27) {
+            //UARTDebugOut("******timer interrupt *******\n");
             setupTimerIRQ();
             GICSendEOI(iar);
             GICCheckPending(irq);

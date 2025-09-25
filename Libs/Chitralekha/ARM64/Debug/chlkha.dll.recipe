@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  <ProjectOutputs>
+    <ProjectOutput>
+      <FullPath>E:\Xeneva Project\Aurora\ARM64\Debug\chlkha.dll</FullPath>
+    </ProjectOutput>
+  </ProjectOutputs>
+  <ContentFiles>
+    <ContentFile>
+      <FullPath>E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\onoff.cpp</FullPath>
+    </ContentFile>
+    <ContentFile>
+      <FullPath>E:\Xeneva Project\Aurora\Libs\Chitralekha\_fastcpy_arm64.s</FullPath>
+    </ContentFile>
+  </ContentFiles>
+  <SatelliteDlls />
+  <NonRecipeFileRefs />
+</Project>

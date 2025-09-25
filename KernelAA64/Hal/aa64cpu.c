@@ -107,6 +107,8 @@ void AA64CPUImplementer(uint32_t midr) {
 	}
 	AuTextOut("CPU Architecture: ARMv8-A(%x)\n", arch);
 }
+
+extern void enableAlignCheck();
 /*
  * AA64CpuInitialize -- initialize aa64 cpu
  */
@@ -124,6 +126,8 @@ void AA64CpuInitialize() {
 
 	/* enable FPU and NEON */
 	AA64FPUNeonEnable();
+
+	enableAlignCheck();
 
 	enable_irqs();
 

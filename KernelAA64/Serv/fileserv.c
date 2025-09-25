@@ -34,7 +34,17 @@
 #include <process.h>
 #include <Drivers/uart.h>
 #include <_null.h>
+#include <Mm/kmalloc.h>
+#include <string.h>
 
+bool syscall = 0;
+
+bool isSyscall() {
+	return syscall;
+}
+
+extern uint64_t read_sp();
+extern uint64_t read_sp_el1();
 /*
  * OpenFile -- opens a file for user process
  * @param file -- file path
@@ -50,9 +60,15 @@ int OpenFile(char* filename, int mode) {
 		if (!current_proc)
 			return -1;
 	}
+	syscall = 1;
+	char fname[128];
+	memset(fname, 0, 128);
+	fname[127] = '\0';
+	strncpy(fname, filename, 11);
+	AuVFSNode* fsys = AuVFSFind(fname);
 	int fd = AuProcessGetFileDesc(current_proc);
-	AuVFSNode* fsys = AuVFSFind(filename);
-	AuVFSNode* file = AuVFSOpen(filename);
+	AuVFSNode* file = AuVFSOpen(fname);
+	UARTDebugOut("File address *** : %x \n", file);
 	bool created = false;
 	if (!file) {
 		if (mode & FILE_OPEN_CREAT || mode & FILE_OPEN_WRITE) {
@@ -67,7 +83,6 @@ int OpenFile(char* filename, int mode) {
 	/* check for last time, if any error occured */
 	if (!file)
 		return -1;
-
 
 	if (fd == -1)
 		return -1;

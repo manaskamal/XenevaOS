@@ -179,7 +179,7 @@ uint64_t* CreateUserStack(AuProcess* proc, uint64_t* cr3) {
 
 	for (int i = 0; i < (PROCESS_USER_STACK_SZ / PAGE_SIZE); ++i) {
 		uint64_t blk = (uint64_t)AuPmmngrAlloc();
-		if (!AuMapPageEx(cr3, blk, location + i * PAGE_SIZE, PTE_AP_RW_USER | PTE_USER_EXECUTABLE)) {
+		if (!AuMapPageEx(cr3, blk, location + i * PAGE_SIZE, PTE_AP_RW_USER)) {
 			UARTDebugOut("CreateUserStack: already mapped %x \r\n", (location + i * PAGE_SIZE));
 		}
 
@@ -196,7 +196,8 @@ uint64_t* CreateUserStack(AuProcess* proc, uint64_t* cr3) {
 AuProcess * AuCreateProcessSlot(AuProcess * parent, char* name) {
 	AuProcess* proc = (AuProcess*)kmalloc(sizeof(AuProcess));
 	memset(proc, 0, sizeof(AuProcess));
-	strcpy(proc->name, name);
+	strncpy(proc->name, name,16);
+
 
 	proc->proc_id = AuAllocateProcessID();
 	/* create empty virtual address space */
@@ -208,6 +209,7 @@ AuProcess * AuCreateProcessSlot(AuProcess * parent, char* name) {
 	proc->proc_mem_heap = PROCESS_BREAK_ADDRESS;
 	proc->proc_heapmem_len = 0;
 	proc->_main_stack_ = main_thr_stack;
+	UARTDebugOut("PROCESS : %s , stack : %x \n", proc->name, proc->_main_stack_);
 	proc->waitlist = initialize_list();
 	proc->vmareas = initialize_list();
 	uint64_t ustack = proc->_main_stack_;

@@ -69,7 +69,7 @@ write_ttbr1_el1:
 write_both_ttbr:
     msr ttbr0_el1, x0
     msr ttbr1_el1, x0
-    isb sy
+    //isb sy
     dsb ishst
     tlbi vmalle1is 
     dsb ish
@@ -239,12 +239,18 @@ read_midr:
    mrs x0, MIDR_EL1
    ret
 
+.global read_daif
+read_daif:
+   mrs x0,daif
+   ret
+
 .global aa64_enter_user
 aa64_enter_user:
    /* Here, we also mask the IRQ bit for now, else IRQ get fired
     * from CurrentEl with SP_EL0 from vector table, we need to 
     * make the exception handler return to EL0 
     */
+  // bic x0, x0, #15
    mov x8, #0x00 // #0x80
    msr SPSR_EL1, x8
    msr SP_EL0, x0
@@ -303,6 +309,20 @@ dc_ivac:
 .global set_syscall_retval
 set_syscall_retval:
    mov x27, x0
+   ret
+
+ .global modifyx17
+ modifyx17:
+   mov x17,#1234
+   ret
+
+.global enableAlignCheck
+enableAlignCheck:
+   mrs x0, sctlr_el1
+   orr x0, x0, #(1<<3)
+   orr x0, x0, #(1<<4)
+   msr sctlr_el1, x0
+   isb 
    ret
 
 

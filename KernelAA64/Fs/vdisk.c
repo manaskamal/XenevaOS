@@ -61,13 +61,16 @@ AU_EXTERN AU_EXPORT int AuVDiskCreateStorageFile(char* output) {
 	char dirname[10];
 	memset(dirname, 0, 10);
 	strcpy(dirname, "disk");
+	dirname[strlen(dirname)+1] = '\0';
 	int offset = strlen(dirname);
 	char value_[5];
 	sztoa(value, value_, 10);
 	strcpy(dirname + offset, value_);
+	value_[strlen(value_) + 1] = '\0';
 	char path[32];
 	memset(path, 0, 32);
 	strcpy(path, "/dev/");
+	path[strlen(path) + 1] = '\0';
 	int path_offset = strlen(path);
 	strcpy(path + path_offset, dirname);
 

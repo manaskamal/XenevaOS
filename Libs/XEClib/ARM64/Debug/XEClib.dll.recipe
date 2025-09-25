@@ -12,6 +12,9 @@
     <ContentFile>
       <FullPath>E:\Xeneva Project\Aurora\Libs\XEClib\_callbase_arm64.s</FullPath>
     </ContentFile>
+    <ContentFile>
+      <FullPath>E:\Xeneva Project\Aurora\Libs\XEClib\setjmp_arm64.s</FullPath>
+    </ContentFile>
   </ContentFiles>
   <SatelliteDlls />
   <NonRecipeFileRefs />

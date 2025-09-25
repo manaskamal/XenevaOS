@@ -200,7 +200,7 @@ void au_expand_kmalloc(size_t req_size) {
 	last_mark = (uint64_t)(lm + (req_pages * 4096));
 #endif
 }
-
+extern bool isSyscall();
 /*
 * kmalloc -- allocate a small chunk of memory
 * @param size -- size in bytes

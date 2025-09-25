@@ -86,10 +86,10 @@
 
 typedef void(*entry) (void*);
 
-#pragma pack(push,1)
+//#pragma pack(push,1)
 typedef struct _au_proc_ {
-	int proc_id;
 	char name[16];
+	int proc_id;
 	uint8_t state;
 	uint8_t type_flags;
 
@@ -137,7 +137,7 @@ typedef struct _au_proc_ {
 	struct _au_proc_ *next;
 	struct _au_proc_ *prev;
 }AuProcess;
-#pragma pack(pop)
+//#pragma pack(pop)
 /*
 * AuAddProcess -- adds process to kernel data structure
 * @param root -- pointer to the root process

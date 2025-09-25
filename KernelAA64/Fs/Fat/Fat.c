@@ -46,7 +46,9 @@
 #include <aucon.h>
 #include <ctype.h>
 #include <_null.h>
+#include <Drivers/uart.h>
 #include <Mm/kmalloc.h>
+#include <Hal/AA64/aa64lowlevel.h>
 
 
 extern bool _vfs_debug_on;
@@ -418,24 +420,31 @@ AuVFSNode* FatLocateSubDir(AuVFSNode* fsys, AuVFSNode* kfile, const char* filena
 }
 
 
+extern bool isSyscall();
+
+extern uint64_t read_sp();
+
 AuVFSNode* FatLocateDir(AuVFSNode* fsys, const char* dir) {
 	AuVFSNode* file = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
 	memset(file, 0, sizeof(AuVFSNode));
-
+	
 	FatFS* fs = (FatFS*)fsys->device;
 	AuVDisk* vdisk = (AuVDisk*)fs->vdisk;
+
 	if (!vdisk)
 		return NULL;
 
 	uint64_t* buf;
 	FatDir* dirent;
+
 	char dos_file_name[12];
 
 	FatToDOSFilename(dir, dos_file_name, 11);
-	dos_file_name[11] = 0;
+	dos_file_name[11] = '\0';
 
 	buf = (uint64_t*)P2V((uint64_t)AuPmmngrAlloc());
 	memset(buf, 0, PAGE_SIZE);
+
 	for (unsigned int sector = 0; sector < fs->__SectorPerCluster; sector++) {
 
 		memset(buf, 0, PAGE_SIZE);
@@ -446,7 +455,10 @@ AuVFSNode* FatLocateDir(AuVFSNode* fsys, const char* dir) {
 
 		for (int i = 0; i < 16; i++) {
 			if (strncmp(dos_file_name, dirent->filename, 11) == 0) {
+				//memcpy(dirtoo, dir, strlen(dir));
+				//strncpy(&file->filename,"Helle\0",10);
 				strcpy(file->filename, dir);
+				UARTDebugOut("File->Filename : %s\n", file->filename);
 				file->current = dirent->first_cluster;
 				file->size = dirent->file_size;
 				file->eof = 0;
@@ -456,6 +468,9 @@ AuVFSNode* FatLocateDir(AuVFSNode* fsys, const char* dir) {
 				file->pos = 0;
 				file->device = fsys;
 				file->parent_block = fs->__RootDirFirstCluster;
+				file->open = 0;
+				file->write = 0;
+				file->create_file = 0;
 				if (dirent->attrib == 0x10)
 					file->flags |= FS_FLAG_DIRECTORY;
 				else
@@ -463,7 +478,6 @@ AuVFSNode* FatLocateDir(AuVFSNode* fsys, const char* dir) {
 				AuPmmngrFree((void*)V2P((size_t)buf));
 				return file;
 			}
-
 			dirent++;
 		}
 	}
@@ -472,6 +486,7 @@ AuVFSNode* FatLocateDir(AuVFSNode* fsys, const char* dir) {
 	kfree(file);
 	return NULL;
 }
+
 
 
 //! Opens a file 
@@ -487,10 +502,10 @@ AuVFSNode* FatOpen(AuVFSNode* fsys, char* filename) {
 	bool  root_dir = true;
 	char* path = (char*)filename;
 
+	
 	//! any '\'s in path ?
 	p = strchr(path, '/');
 	if (!p) {
-
 		//! nope, must be in root directory, search it
 		cur_dir = FatLocateDir(fsys, path);
 
@@ -503,6 +518,7 @@ AuVFSNode* FatOpen(AuVFSNode* fsys, char* filename) {
 	}
 
 	//! go to next character after first '\'
+	UARTDebugOut("Searching file %x\n",p);
 	p++;
 	while (p) {
 
@@ -519,9 +535,11 @@ AuVFSNode* FatOpen(AuVFSNode* fsys, char* filename) {
 			pathname[i] = p[i];
 		}
 		pathname[i] = 0; //null terminate
-
+		UARTDebugOut("Pathname addr : %x \n", pathname);
+		UARTDebugOut("Pathname : %s \n", pathname);
 		//! open subdirectory or file
 		if (root_dir) {
+			UARTDebugOut("Going through root dir \n");
 			//! search root dir -- open pathname
 			cur_dir = FatLocateDir(fsys, pathname);
 			root_dir = false;

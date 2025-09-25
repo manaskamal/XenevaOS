@@ -155,4 +155,7 @@
       <UniqueIdentifier>{ff881b15-1059-465a-a98f-c10592ada390}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="_fastcpy_arm64.s" />
+  </ItemGroup>
 </Project>

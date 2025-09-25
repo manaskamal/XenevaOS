@@ -89,7 +89,7 @@ int strcmp(const char* str1, const char* str2){
 	return res;
 }
 
-char *strcpy(char *s1, const char *s2){
+char *strcpy(char* __restrict s1, const char * __restrict s2){
 	char *s1_p = s1;
 	for (; (*s1 = *s2); s1++, s2++);
 	return s1_p;
@@ -187,8 +187,17 @@ char* strchrnul(const char* s, int c) {
 
 //! locates first occurance of character in string
 char* strchr(const char* str, int character) {
+#ifdef ARCH_X64
 	char* r = strchrnul(str, character);
 	return *(unsigned char*)r == (unsigned char)character ? r : 0;
+#elif ARCH_ARM64
+	_KePrint("STRCHR: str : %x , character : %c \n", str, character);
+	do {
+		if (*str == character)
+			return (char*)str;
+	} while (*str++);
+	return 0;
+#endif
 }
 
 int strcasecmp(const char * s1, const char * s2) {

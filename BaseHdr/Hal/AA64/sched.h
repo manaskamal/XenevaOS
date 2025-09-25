@@ -81,9 +81,18 @@ typedef struct _aa64_task_ {
 	uint64_t sp; //96
 	uint64_t elr_el1; //104
 	uint64_t spsr_el1;//112
-	uint8_t state; //120
-	uint8_t threadType; //121
-	uint64_t pml;  //122
+	uint64_t x0; //120
+	uint64_t x1; //128
+	uint64_t x2; //136
+	uint64_t x3; //144
+	uint64_t x4; //152
+	uint64_t x5; //160
+	uint64_t x6; //168
+	uint64_t x7; //176
+	uint64_t x8; //184
+	uint8_t state; //192
+	uint8_t threadType; //193
+	uint64_t pml;  //186
 	char name[8];   //130
 	void *procSlot; //138
 	AuUserEntry* uentry; //146

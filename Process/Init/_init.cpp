@@ -52,6 +52,51 @@ void initSetupBasicEnvironmentVars() {
 	setenv("LANG", "en_US.UTF-8", 1); //Set it to English(United States), UTF-8
 	setenv("OSNAME", "XenevaOS", 1);
 }
+
+typedef struct _XELDR_OBJ2_ {
+	char* objname;
+	/*bool loaded;
+	bool linked;
+	uint32_t len;
+	size_t load_addr;
+	size_t entry_addr;*/
+}XELdrObj;
+
+/*
+ * XELdrStartProc -- starts a new process
+ * @param filename -- path and name of the
+ * process
+ */
+int XELdrStartProc2(char* filename, XELdrObj* obj) {
+	int file = 0;
+	_KePrint("filename : %s \n", filename);
+#ifdef ARCH_ARM64
+	/*uint64_t addr_preserve = (uint64_t)obj->objname;
+	uint32_t presv_len = obj->len;
+	size_t loadAddr = obj->load_addr;
+	size_t entryAddr = obj->entry_addr;
+	void* prevPresv = obj->prev;
+	void* nextPresv = obj->next;
+	bool loaded = obj->loaded;
+	bool linked = obj->linked;*/
+	_KePrint("INIT OBJ2Name : %x \n", obj->objname);
+#endif
+	file = _KeOpenFile(filename, FILE_OPEN_READ_ONLY);
+
+#ifdef ARCH_ARM64
+	/*obj->objname = (char*)addr_preserve;
+	obj->len = presv_len;
+	obj->load_addr = loadAddr;
+	obj->entry_addr = entryAddr;
+	obj->linked = linked;
+	obj->loaded = loaded;
+	obj->next = (struct _XELDR_OBJ_*) nextPresv;
+	obj->prev = (struct _XELDR_OBJ_*)prevPresv;
+	_KePrint("OBJNext: %x offset : %x \n", obj->next, &obj->next);*/
+	_KePrint("INIT OBJ2Name : %x \n", obj->objname);
+	for (;;);
+#endif
+}
 /*
  * _main -- main entry point
  */
@@ -71,32 +116,8 @@ extern "C" void main(int argc, char* argv[]) {
 	}
 #endif
 
-	int graphFd = _KeOpenFile("/dev/graph", FILE_OPEN_WRITE);
-	XEFileIOControl ioctl;
-	memset(&ioctl, 0, sizeof(XEFileIOControl));
-	ioctl.syscall_magic = AURORA_SYSCALL_MAGIC;
-	int ret = 0;
-	ret = _KeFileIoControl(graphFd, SCREEN_GETWIDTH, &ioctl);
-	int screenWidth = ioctl.uint_1;
-	ret = _KeFileIoControl(graphFd, SCREEN_GETHEIGHT, &ioctl);
-	int screenHeight = ioctl.uint_1;
-	ret = _KeFileIoControl(graphFd, SCREEN_GETBPP, &ioctl);
-	int bpp = ioctl.uint_1;
-	ret = _KeFileIoControl(graphFd, SCREEN_GET_SCANLINE, &ioctl);
-	int scanline = ioctl.ushort_1;
-	ret = _KeFileIoControl(graphFd, SCREEN_GET_PITCH, &ioctl);
-	int pitch = ioctl.uint_1;
-	ret = _KeFileIoControl(graphFd, SCREEN_GET_FB, &ioctl);
-	uint32_t* framebuff = (uint32_t*)ioctl.ulong_1;
-
-	for (int w = 0; w < screenWidth; w++) {
-		for (int h = 0; h < screenHeight; h++) {
-			framebuff[w + h * screenWidth] = 0xFF803A68;
-		}
-	}
-
 	int proc = _KeCreateProcess(0, "deodhaixr");
-	_KeProcessLoadExec(proc, "/deodxr.exe", 0, NULL);
+	_KeProcessLoadExec(proc, "/deodxr.exe\0", 0, NULL);
 
 
 	while(1){

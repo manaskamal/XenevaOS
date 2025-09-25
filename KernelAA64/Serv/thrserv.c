@@ -121,12 +121,13 @@ int ProcessSleep(uint64_t ms) {
 	return 1;
 }
 
-
+extern void setuprint();
 /*
  * PauseThread -- pause the currently running
  * thread
  */
 int PauseThread() {
+	setuprint();
 	AA64Thread* current_thr = AuGetCurrentThread();
 	UARTDebugOut("PauseThread %s\n", current_thr->name);
 	AuBlockThread(current_thr);

@@ -61,7 +61,7 @@ uint64_t test_call() {
 
 static void* syscalls[AURORA_MAX_SYSCALL] = {
 	null_call, //0
-	AuTextOut, //1
+	UARTDebugOut, //1
 	PauseThread, //2
 	GetThreadID, //3
 	GetProcessID, //4
@@ -99,15 +99,15 @@ static void* syscalls[AURORA_MAX_SYSCALL] = {
 
 
 extern void set_syscall_retval(uint64_t val);
-
-
+extern bool isSyscall();
+extern void modifyx17();
 /*
  * AuAA64SyscalHandler -- common system call handler for aarch64
  * @param regs -- Register information passed by sync_exception
  */
 void AuAA64SyscallHandler(AA64Registers* regs) {
-	//mask_irqs();
-	uint64_t vector = regs->x8;
+	mask_irqs();
+	uint64_t vector = regs->x16;
 	uint64_t retcode = 0;
 	if ((vector > AURORA_MAX_SYSCALL) || (vector < 0)) {
 		regs->x0 = retcode;
@@ -125,8 +125,6 @@ void AuAA64SyscallHandler(AA64Registers* regs) {
 
 	retcode = func(regs->x0, regs->x1, regs->x2, regs->x3, regs->x4, regs->x5);
 	regs->x0 = retcode;
-	regs->x27 = retcode;
-	isb_flush();
-	dsb_ish();
+	regs->x6 = retcode;
 	currThr->returnFromSyscall = 0;
 }

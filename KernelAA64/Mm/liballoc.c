@@ -33,6 +33,7 @@
 #include <Mm\vmmngr.h>
 #include <Mm\liballoc\liballoc.h>
 #include <_null.h>
+#include <Drivers/uart.h>
 
 /**  Durand's Ridiculously Amazing Super Duper Memory functions.  */
 
@@ -263,7 +264,7 @@ static inline struct boundary_tag* split_tag(struct boundary_tag* tag)
 // ***************************************************************
 
 
-
+extern bool isSyscall();
 
 static struct boundary_tag* allocate_new_tag(unsigned int size)
 {
@@ -280,8 +281,14 @@ static struct boundary_tag* allocate_new_tag(unsigned int size)
 
 	// Make sure it's >= the minimum size.
 	if (pages < l_pageCount) pages = l_pageCount;
-
+	/*if (isSyscall())
+		UARTDebugOut("allocate_new_tag calling liballoc_alloc \n");*/
 	tag = (struct boundary_tag*)liballoc_alloc(pages);
+
+	/*if (isSyscall()) {
+		UARTDebugOut("isSyscall() allocate_new_tag \n");
+		return;
+	}*/
 
 	if (tag == NULL) return NULL;	// uh oh, we ran out of memory.
 
@@ -308,15 +315,15 @@ static struct boundary_tag* allocate_new_tag(unsigned int size)
 }
 
 
-
 void* port_malloc(unsigned int size)
 {
+	
 	int index;
 	void* ptr;
 	struct boundary_tag* tag = NULL;
 
 	liballoc_lock();
-
+	
 	if (l_initialized == 0)
 	{
 #ifdef DEBUG
@@ -334,9 +341,9 @@ void* port_malloc(unsigned int size)
 
 	if (index < MINEXP) index = MINEXP;
 
-
 	// Find one big enough.
 	tag = l_freePages[index];				// Start at the front of the list.
+	
 	while (tag != NULL)
 	{
 		// If there's enough space in this tag.
@@ -352,7 +359,7 @@ void* port_malloc(unsigned int size)
 		tag = tag->next;
 	}
 
-
+	
 	// No page found. Make one.
 	if (tag == NULL)
 	{
@@ -361,6 +368,8 @@ void* port_malloc(unsigned int size)
 			liballoc_unlock();
 			return NULL;
 		}
+		/*if (isSyscall())
+			return;*/
 		index = getexp(tag->real_size - sizeof(struct boundary_tag));
 	}
 	else
@@ -373,7 +382,8 @@ void* port_malloc(unsigned int size)
 
 	// We have a free page.  Remove it from the free pages list.
 	tag->size = size;
-
+	
+	
 	// Removed... see if we can re-use the excess space.
 
 #ifdef DEBUG
@@ -569,14 +579,18 @@ int liballoc_unlock() {
 void* liballoc_alloc(int pages) {
 	size_t size = pages * 4096;
 	uint64_t* page = AuGetFreePage(0, false);
+	
 	uint64_t page_ = (uint64_t)page;
-
 	for (size_t i = 0; i < pages; i++) {
 		void* p = AuPmmngrAlloc();
-		AuMapPage((uint64_t)p, page_ + i * 4096,PTE_NORMAL_MEM);
+		AuMapPage((uint64_t)p, page_ + i * 4096,PTE_AP_RW_USER);
 	}
-	
-	memset(page, 0, pages * PAGE_SIZE);
+	//memset(page, 0, pages * PAGE_SIZE);
+
+	/*if (isSyscall()) {
+		UARTDebugOut("LibAlloc : %x \n", page);
+		return;
+	}*/
 
 	if ((page_ % PAGE_SIZE) != 0) {
 		//AuTextOut("Request page not aligned to page boundary \r\n");

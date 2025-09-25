@@ -65,7 +65,7 @@ AuVFSNode* AuVFSFind(char* path) {
 	if (next)
 		next++;
 
-	char pathname[16];
+	char pathname[17];
 	int i;
 	for (i = 0; i < 16; i++) {
 		if (next[i] == '/' || next[i] == '\0')
@@ -129,15 +129,16 @@ AU_EXTERN AU_EXPORT AuVFSNode* AuVFSOpen(char* path) {
 		return NULL;
 	}
 	if (fs == __RootFS) {
-		//UARTDebugOut("VFSOpening filename : %s \n", path);
+		UARTDebugOut("VFSOpening filename : %s \n", path);
 		/* just skip the '/' from the path */
 		char* next = strchr(path, '/');
 		if (next)
 			next++;
 
+		UARTDebugOut("Next : %x \n", next);
+
 		if (fs->open)
 			Returnable = fs->open(fs, path);
-
 	}
 	else {
 		char* next = strchr(path, '/');
@@ -152,6 +153,7 @@ AU_EXTERN AU_EXPORT AuVFSNode* AuVFSOpen(char* path) {
 			pathname[i] = next[i];
 		}
 		pathname[i] = 0;
+		UARTDebugOut("Pathname : next %x \n", next);
 
 		/* skip the fs filename, from the path
 		 * and just pass the required path */

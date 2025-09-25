@@ -27,6 +27,7 @@
 *
 **/
 
+
 #include "font.h"
 #include <sys\mman.h>
 #include <sys\_kefile.h>
@@ -44,6 +45,7 @@
  * @param fontname -- name of the font
  */
 ChFont *ChInitialiseFont(char* fontname) {
+#ifdef ARCH_X64
 	int id = _KeGetFontID(fontname);
 	if (id == 0)
 		return NULL;
@@ -76,6 +78,8 @@ ChFont *ChInitialiseFont(char* fontname) {
 	/* start decoding true type font */
 	//TTFLoadFont(canv,font->buffer);
 	return font;
+#endif
+	return 0;
 }
 
 /*
@@ -84,9 +88,11 @@ ChFont *ChInitialiseFont(char* fontname) {
  * @param size -- size of the font
  */
 void ChFontSetSize(ChFont* font, int size) {
+#ifdef ARCH_X64
 	font->fontSz = size / 72.f * 96;
 	FT_Set_Pixel_Sizes(font->face, 0, font->fontSz);
 	font->fontHeight = font->fontSz;
+#endif
 }
 
 /*
@@ -100,6 +106,7 @@ void ChFontSetSize(ChFont* font, int size) {
  * @param color -- color of the font
  */
 void ChFontDrawText(ChCanvas *canv, ChFont* font, char* string, int penx, int peny, uint32_t sz, uint32_t color){
+#ifdef ARCH_X64
 #ifdef _USE_FREETYPE
 	int w = font->face->glyph->metrics.width;
 	int h = font->face->glyph->metrics.height;
@@ -142,6 +149,7 @@ void ChFontDrawText(ChCanvas *canv, ChFont* font, char* string, int penx, int pe
 		string++;
 	}
 #endif
+#endif
 }
 
 /*
@@ -155,6 +163,7 @@ void ChFontDrawText(ChCanvas *canv, ChFont* font, char* string, int penx, int pe
 * @param color -- color of the font
 */
 void ChFontDrawChar(ChCanvas *canv, ChFont* font, char c, int penx, int peny, uint32_t sz, uint32_t color){
+#ifdef ARCH_X64
 #ifdef _USE_FREETYPE
 	if (penx >= canv->canvasWidth)
 		return;
@@ -196,6 +205,7 @@ void ChFontDrawChar(ChCanvas *canv, ChFont* font, char c, int penx, int peny, ui
 	}
 	font->kern = glyfIndx;
 #endif
+#endif
 }
 
 /*
@@ -205,6 +215,7 @@ void ChFontDrawChar(ChCanvas *canv, ChFont* font, char c, int penx, int peny, ui
  * @param string -- total string
  */
 int64_t ChFontGetWidth(ChFont* font,char* string) {
+#ifdef ARCH_X64
 	size_t font_width = 0;
 	size_t penx = 0;
 	int string_width = 0;
@@ -224,6 +235,8 @@ int64_t ChFontGetWidth(ChFont* font,char* string) {
 		font_width = bbox_xmax - bbox_xmin;
 	}
 	return font_width;
+#endif
+	return 0;
 }
 
 /*
@@ -233,6 +246,7 @@ int64_t ChFontGetWidth(ChFont* font,char* string) {
 * @param c -- character
 */
 int64_t ChFontGetWidthChar(ChFont* font, char c) {
+#ifdef ARCH_X64
 	size_t font_width = 0;
 	size_t penx = 0;
 	int string_width = 0;
@@ -248,6 +262,8 @@ int64_t ChFontGetWidthChar(ChFont* font, char c) {
 		font_width = bbox_xmax - bbox_xmin;
 	}
 	return font_width;
+#endif
+	return 0;
 }
 
 /*
@@ -257,6 +273,7 @@ int64_t ChFontGetWidthChar(ChFont* font, char c) {
  * @param string -- total string
  */
 int64_t ChFontGetHeight(ChFont* font, char* string) {
+#ifdef ARCH_X64
 	size_t font_height = 0;
 	size_t peny = 0;
 	FT_Error err = 0;
@@ -274,6 +291,8 @@ int64_t ChFontGetHeight(ChFont* font, char* string) {
 		font_height = bbox_ymax - bbox_ymin;
 	}
 	return font_height;
+#endif
+	return 0;
 }
 
 /*
@@ -283,6 +302,7 @@ int64_t ChFontGetHeight(ChFont* font, char* string) {
 * @param c -- character
 */
 int64_t ChFontGetHeightChar(ChFont* font, char c) {
+#ifdef ARCH_X64
 	size_t font_h = 0;
 	size_t peny = 0;
 	int string_width = 0;
@@ -298,6 +318,8 @@ int64_t ChFontGetHeightChar(ChFont* font, char c) {
 		font_h = bbox_ymax - bbox_ymin;
 	}
 	return font_h;
+#endif
+	return 0;
 }
 
 int ChFontClamp(int val, int min, int max) {
@@ -317,6 +339,7 @@ int ChFontClamp(int val, int min, int max) {
  * @param limit -- boundary of the rectangle
  */
 int ChFontDrawTextClipped(ChCanvas *canv, ChFont* font, char* string, int penx, int peny, uint32_t color, ChRect* limit){
+#ifdef ARCH_X64
 #ifdef _USE_FREETYPE
 	if (!limit)
 		return 1;
@@ -403,7 +426,9 @@ int ChFontDrawTextClipped(ChCanvas *canv, ChFont* font, char* string, int penx, 
 		string++;
 	}
 #endif
+#endif
 	return 0;
+
 }
 
 /*
@@ -417,3 +442,4 @@ int ChFontClose(ChFont* font) {
 	free(font);
 	return 0;
 }
+

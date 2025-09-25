@@ -40,6 +40,10 @@ aa64_store_context:
    stp x25,x26,[x0,#48]
    stp x27,x28,[x0,#64]
    stp x29,x30,[x0,#80]
+   stp x2,x3, [x0,#136]
+   stp x4,x5, [x0,#152]
+   stp x6,x7,[x0,#168]
+   str x8, [x0,#184]
 
    /* dont store the stack,
     * because it will keep decreasing
@@ -78,16 +82,20 @@ aa64_restore_context:
    ldr x2, [x0,#112]
    msr SPSR_EL1,x2
 
-   ldrb w2, [x0,#121]
-   cmp w2, #2
-   b.ne _skip_comp
-   ldrb w3, [x0,#206]
-   cmp w3, #1
-   b.ne _skip_comp
-   mov x30, 0
+   //ldrb w2, [x0,#121]
+   //cmp w2, #2
+  // b.ne _skip_comp
+  // ldrb w3, [x0,#206]
+  // cmp w3, #1
+  // b.ne _skip_comp
+  // mov x30, 0
 _skip_comp:
    /* We must clear the IRQ bit from daifclr manually,
     * because when exception is taken DAIF bits are masked */
+   ldp x2,x3, [x0,#136]
+   ldp x4,x5, [x0,#152]
+   ldp x6,x7,[x0,#168]
+   ldr x8, [x0,#184]
    msr daifclr, #0x2
    isb
    ret
@@ -133,6 +141,11 @@ resume_user:
   msr ELR_EL1,x2 
   mov x2,#0x00 // [x0,#112]
   msr SPSR_EL1,x2
+   //ldp x0,x1, [x0,#120]
+  ldp x2,x3, [x0,#136]
+  ldp x4,x5, [x0,#152]
+  ldp x6,x7,[x0,#168]
+  ldr x8,[x0,#184]
   eret
 
 .global first_time_sex2
@@ -189,6 +202,11 @@ store_syscall:
    str x2,[x0, #104]
    mrs x2, spsr_el1
    str x2, [x0,#112]
+   //stp x0,x1, [x0,#120]
+   stp x2,x3, [x0,#136]
+   stp x4,x5, [x0,#152]
+   stp x6,x7,[x0,#168]
+   str x8,[x0,#184]
    ret
 
 .global ret_from_syscall
@@ -211,5 +229,10 @@ ret_from_syscall:
    ldr x2, [x0,#112]
    msr SPSR_EL1,x2
    mov x30, x1
+   ldp x0,x1, [x0,#120]
+   ldp x2,x3, [x0,#136]
+   ldp x4,x5, [x0,#152]
+   ldp x6,x7,[x0,#168]
+   ldr x8,[x0,#184]
    ret
   

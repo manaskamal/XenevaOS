@@ -2,16 +2,16 @@
 #include <_null.h>
 
 
-#define MAX_STRING_LENGTH 25
+#define MAX_STRING_LENGTH 4095
 
 typedef size_t WT;
 #define WS (sizeof(WT))
 
 
-void memset(void* targ, uint8_t val, uint32_t len) {
+void memset(void* targ, int val, uint32_t len) {
 	uint8_t* t = (uint8_t*)targ;
 	while (len--)
-		*t++ = val;
+		*t++ = (unsigned char*)val;
 }
 
 int memcmp(const void* first, const void* second, size_t length) {
@@ -35,7 +35,7 @@ int memcmp(const void* first, const void* second, size_t length) {
 }
 
 
-void memcpy(void* dest, void* src, size_t len) {
+void memcpy(void* __restrict dest, void* __restrict src, size_t len) {
 	//_fastcpy(dest, src, count);
 	uint8_t* t = (uint8_t*)dest;
 	uint8_t* s = (uint8_t*)src;
@@ -71,13 +71,13 @@ int strcmp(const char* str1, const char* str2) {
 	return res;
 }
 
-char* strcpy(char* s1, const char* s2)
+char* strcpy(char* __restrict s1, const char* __restrict s2)
 {
 	if (s1 == NULL || s2 == NULL)
 		return NULL;
 
 	char* s1_p = s1;
-	while (*s1++ = *s2++);
+	for (; (*s1 = *s2); s2++, s1++);
 	return s1_p;
 }
 

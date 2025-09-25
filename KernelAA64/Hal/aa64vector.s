@@ -32,6 +32,7 @@
 .extern irq_el1_handler
 .extern sync_el0_handler
 .extern PrintX0
+.extern syscall
 
 sync_el1_wrapper:
    mov x9, sp
@@ -169,7 +170,6 @@ sync_el0_wrapper:
    ldp x4, x5, [sp], #16
    ldp x2, x3, [sp], #16
    ldp x0, x1, [sp], #16
-   mov x0, x27
    eret
 
 .global irq_el0_wrapper
@@ -196,13 +196,13 @@ irq_el0_wrapper:
    stp x30, x0, [sp, #-16]!
    mov x0, sp
    bl irq_el1_handler
-  //  mrs x0, SPSR_EL1
-  // and w0, w0, #0x200000
-  // cbz w0, _irq_cont
-  // mrs x0, MDSCR_EL1
-  // orr x0, x0, #1
-  // msr MDSCR_EL1, x0
-  // _irq_cont: 
+    mrs x0, SPSR_EL1
+   and w0, w0, #0x200000
+   cbz w0, _irq_cont
+   mrs x0, MDSCR_EL1
+   orr x0, x0, #1
+   msr MDSCR_EL1, x0
+   _irq_cont: 
 
    ldp x30, x0, [sp], #16
    msr SP_EL0, x0
@@ -221,7 +221,6 @@ irq_el0_wrapper:
    ldp x4, x5, [sp], #16
    ldp x2, x3, [sp], #16
    ldp x0, x1, [sp], #16
-
    eret
 
 
@@ -248,7 +247,7 @@ vectors:
 .balign 0x80
    b irq_el1_wrapper   //irq
 .balign 0x80
-   b irq_el1_wrapper                 //FIQ 
+   b . //irq_el1_wrapper                 //FIQ 
 .balign 0x80
    b .                 //SError
 

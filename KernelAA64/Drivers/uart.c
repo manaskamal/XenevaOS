@@ -32,6 +32,7 @@
 #include <aucon.h>
 #include <va_list.h>
 #include <stdarg.h>
+#include <string.h>
 
 uint64_t* uartMMIO;
 bool _uart_mapped = false;
@@ -84,19 +85,14 @@ void uartPuts(const char* s) {
 		uartPutc(*s++);
 }
 
-uint64_t _static_buffer[7];
-
 /*
  * UARTDebugOut -- standard text printing function
  * for early kernel using UART
  * @param text -- text to output
  */
-void UARTDebugOut(const char* format, ...) {
+void UARTDebugOut_Call(const char* format, void* reg_save_area, void* entry_sp) {
 
-	//uint64_t buffer = _static_buffer;
-	store_x0_x7(_static_buffer);
-
-	va_list args = (va_list)_static_buffer;
+	va_list args = ((va_list)reg_save_area + 8);
 	while (*format)
 	{
 		if (*format == '%')

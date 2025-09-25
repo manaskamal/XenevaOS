@@ -121,14 +121,15 @@ uint64_t GetProcessHeapMem(size_t sz) {
 	}
 
 	uint64_t start_addr = (uint64_t)AuGetFreePage(false, (void*)proc->proc_mem_heap);
-
 	for (int i = 0; i < sz / PAGE_SIZE; i++) {
 		uint64_t phys = (uint64_t)AuPmmngrAlloc();
-		if (!AuMapPage(phys, start_addr + i * PAGE_SIZE,PTE_AP_RW_USER)) {
+		if (!AuMapPage(phys, start_addr + i * PAGE_SIZE,PTE_AP_RW_USER | PTE_NORMAL_MEM)) {
 			AuPmmngrFree((void*)phys);
 		}
 	}
-
+	isb_flush();
+	dsb_ish();
+	dsb_sy_barrier();
 	proc->proc_mem_heap = start_addr;
 	proc->proc_heapmem_len += sz;
 	return start_addr;
