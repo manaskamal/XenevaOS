@@ -37,11 +37,6 @@
 #include <Mm/kmalloc.h>
 #include <string.h>
 
-bool syscall = 0;
-
-bool isSyscall() {
-	return syscall;
-}
 
 extern uint64_t read_sp();
 extern uint64_t read_sp_el1();
@@ -60,7 +55,6 @@ int OpenFile(char* filename, int mode) {
 		if (!current_proc)
 			return -1;
 	}
-	syscall = 1;
 	char fname[128];
 	memset(fname, 0, 128);
 	fname[127] = '\0';
@@ -68,11 +62,9 @@ int OpenFile(char* filename, int mode) {
 	AuVFSNode* fsys = AuVFSFind(fname);
 	int fd = AuProcessGetFileDesc(current_proc);
 	AuVFSNode* file = AuVFSOpen(fname);
-	UARTDebugOut("File address *** : %x \n", file);
 	bool created = false;
 	if (!file) {
 		if (mode & FILE_OPEN_CREAT || mode & FILE_OPEN_WRITE) {
-			UARTDebugOut("Creating file %s \r\n", filename);
 			file = AuVFSCreateFile(fsys, filename);
 			created = true;
 		}

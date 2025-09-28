@@ -38,7 +38,7 @@
 #include "_fastcpy.h"
 #include "color.h"
 
-//extern "C" int _fltused = 1;
+extern "C" int _fltused = 1;
 
 int ChPrintLibName() {
 	_KePrint("Chitralekha Graphics Library v1.0 \n");

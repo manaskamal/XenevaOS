@@ -64,6 +64,7 @@ typedef struct _uentry_ {
 #pragma pack(pop)
 
 
+
 #pragma pack(push,1)
 typedef struct _aa64_task_ {
 	uint64_t x19; //0
@@ -102,6 +103,9 @@ typedef struct _aa64_task_ {
 	uint64_t originalKSp; //223
 	bool returnFromSyscall;
 	bool justStored;
+	__declspec(align(16)) uint8_t fp_regs[512];
+	uint64_t fpcr;
+	uint64_t fpsr;
 	struct _aa64_task_* next;
 	struct _aa64_task_* prev;
 }AA64Thread;

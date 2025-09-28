@@ -1,1 +1,13 @@
-﻿
+﻿  Performing Custom Build Tools
+cl : command line warning D9002: ignoring unknown option '/arch:SSE2'
+  main.cpp
+E:\Xeneva Project\Aurora\Process\DeodhaiXR\main.cpp(83,26): warning C4100: 'argv': unreferenced formal parameter
+E:\Xeneva Project\Aurora\Process\DeodhaiXR\main.cpp(83,14): warning C4100: 'argc': unreferenced formal parameter
+E:\Xeneva Project\Aurora\Process\DeodhaiXR\main.cpp(159,6): warning C4189: 'f': local variable is initialized but not referenced
+E:\Xeneva Project\Aurora\Process\DeodhaiXR\main.cpp(151,8): warning C4189: 'l': local variable is initialized but not referenced
+E:\Xeneva Project\Aurora\Process\DeodhaiXR\main.cpp(134,12): warning C4189: 'h': local variable is initialized but not referenced
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(1363,5): warning MSB8012: TargetPath(E:\Xeneva Project\Aurora\ARM64\Debug\deodxr.exe) does not match the Linker's OutputFile property value (E:\Xeneva Project\Aurora\Build\deodxr.exe). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
+LINK : warning LNK4075: ignoring '/INCREMENTAL' due to '/LTCG' specification
+  LINK : /LTCG specified but no code generation required; remove /LTCG from the link command line to improve linker performance
+  DeodhaiXR.vcxproj -> E:\Xeneva Project\Aurora\ARM64\Debug\deodxr.exe
+          1 file(s) copied.

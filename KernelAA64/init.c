@@ -172,9 +172,6 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	memset(argvs, 0, num_args);
 	argvs[0] = about;
 	AuLoadExecToProcess(proc, "/init.exe", num_args, argvs);
-
-	
-	UARTDebugOut("Kernel Lower half is cleared \n");
 	
 	AuSchedulerStart();
 	while (1) {

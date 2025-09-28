@@ -455,10 +455,7 @@ AuVFSNode* FatLocateDir(AuVFSNode* fsys, const char* dir) {
 
 		for (int i = 0; i < 16; i++) {
 			if (strncmp(dos_file_name, dirent->filename, 11) == 0) {
-				//memcpy(dirtoo, dir, strlen(dir));
-				//strncpy(&file->filename,"Helle\0",10);
 				strcpy(file->filename, dir);
-				UARTDebugOut("File->Filename : %s\n", file->filename);
 				file->current = dirent->first_cluster;
 				file->size = dirent->file_size;
 				file->eof = 0;
@@ -518,7 +515,6 @@ AuVFSNode* FatOpen(AuVFSNode* fsys, char* filename) {
 	}
 
 	//! go to next character after first '\'
-	UARTDebugOut("Searching file %x\n",p);
 	p++;
 	while (p) {
 
@@ -535,11 +531,8 @@ AuVFSNode* FatOpen(AuVFSNode* fsys, char* filename) {
 			pathname[i] = p[i];
 		}
 		pathname[i] = 0; //null terminate
-		UARTDebugOut("Pathname addr : %x \n", pathname);
-		UARTDebugOut("Pathname : %s \n", pathname);
 		//! open subdirectory or file
 		if (root_dir) {
-			UARTDebugOut("Going through root dir \n");
 			//! search root dir -- open pathname
 			cur_dir = FatLocateDir(fsys, pathname);
 			root_dir = false;

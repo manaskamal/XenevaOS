@@ -41,6 +41,8 @@
 uint32_t screen_w;
 uint32_t screen_h;
 
+extern "C" int _fltused = 1;
+
 #pragma pack(push,1)
 typedef struct _bmp_ {
 	unsigned short type;
@@ -143,6 +145,11 @@ int main(int argc, char* argv[]){
 	}
 
 	ChCanvasScreenUpdate(canv, 0, 0, screen_w, screen_h);
+
+	float v = 0.2f;
+	float c = 0.4f;
+	float l = v * c;
+
 
 	Test* t = (Test*)malloc(sizeof(Test));
 	t->fname = (char*)malloc(48);

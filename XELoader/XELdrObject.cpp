@@ -82,10 +82,7 @@ void XELdrRemoveObject(XELoaderObject* obj) {
  */
 XELoaderObject* XELdrCreateObj(char* objname) {
 	XELoaderObject* obj = (XELoaderObject*)malloc(sizeof(XELoaderObject));
-	_KePrint("OBJ Alloc : %x \n", obj);
-	//memset(obj, 0, sizeof(XELoaderObject));
-	_KePrint("XELdrCreatingObject : %s \n", objname);
-	_KePrint("OBJName : %x \n", obj->objname);
+	memset(obj, 0, sizeof(XELoaderObject));
 	obj->objname = (char*)malloc(strlen(objname) + 1);
 	strcpy(obj->objname, objname);
 	obj->loaded = false;
@@ -122,19 +119,13 @@ void XELdrInitObjectList() {
 bool XELdrCheckObject(const char* name) {
 	XELoaderObject* obj_ = NULL;
 	for (obj_ = obj_first; obj_ != NULL; obj_ = obj_->next) {
-		_KePrint("XELdrCheckObject : objname: %x \n", obj_->objname);
-		_KePrint("Obj next : %x \n", obj_->next);
 		char* p = strchr(obj_->objname, '/');
 		if (p)
 			p++;
 		else
 			p = obj_->objname;
-		_KePrint("After Strchr : %x \n", obj_->objname);
-		_KePrint("P: %x \n", p);
 		if (strcmp(p, name) == 0)
 			return true;
-		_KePrint("Strcmp %x \n", obj_->objname);
-		
 	}
 	return false;
 }
@@ -146,7 +137,6 @@ bool XELdrCheckObject(const char* name) {
 XELoaderObject* XELdrGetObject(const char* name) {
 	XELoaderObject* obj_ = NULL;
 	for (obj_ = obj_first; obj_ != NULL; obj_ = obj_->next) {
-		_KePrint("XELdrGetObject: objname: %x \n", obj_->objname);
 		char* p = strchr(obj_->objname, '/');
 		if (p)
 			p++;

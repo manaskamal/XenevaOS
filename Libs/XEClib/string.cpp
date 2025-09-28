@@ -191,7 +191,6 @@ char* strchr(const char* str, int character) {
 	char* r = strchrnul(str, character);
 	return *(unsigned char*)r == (unsigned char)character ? r : 0;
 #elif ARCH_ARM64
-	_KePrint("STRCHR: str : %x , character : %c \n", str, character);
 	do {
 		if (*str == character)
 			return (char*)str;

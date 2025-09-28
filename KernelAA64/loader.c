@@ -212,12 +212,10 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) 
     UARTDebugOut("NT NumberOfSection : %d for %s\n", nt->FileHeader.NumberOfSections, proc->name);
 	for (size_t i = 0; i < nt->FileHeader.NumberOfSections; ++i) {
 		size_t load_addr = _image_base_ + secthdr[i].VirtualAddress;
-		UARTDebugOut("Section Name : %s \n", secthdr[i].Name);
 		void* sect_addr = (void*)load_addr;
 		size_t sectsz = secthdr[i].VirtualSize;
 		int req_pages = sectsz / 4096 +
 			((sectsz % 4096) ? 1 : 0);
-		UARTDebugOut("Required Pages : %d \n", req_pages);
 		uint64_t* block = 0;
 		int physFrameIndex = 0;
 		for (int j = 0; j < req_pages; j++) {
@@ -254,7 +252,6 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) 
 			int zeroLen = virtSize - rawSize;
 			int pageIndex = secthdr[i].SizeOfRawData / 4096; 
 			int pageOffset = secthdr[i].SizeOfRawData % PAGE_SIZE;
-			UARTDebugOut("VirtualSize - SizeOfRawData : %d \n", (secthdr[i].VirtualSize - secthdr[i].SizeOfRawData));
 			if (pageOffset > 0) {
 				memset((void*)(physFrames[pageIndex] + pageOffset), 0, PAGE_SIZE - pageOffset);
 				pageIndex++;

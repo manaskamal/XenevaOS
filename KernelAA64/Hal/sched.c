@@ -289,6 +289,8 @@ AA64Thread* AuCreateKthread(void(*entry) (uint64_t),uint64_t* pml, char* name){
 	t->sp = (((uint64_t)kstack + 15) & ~(uint64_t)0xF);
 	t->state = THREAD_STATE_READY;
 	t->thread_id = thread_id++;
+	t->fpsr = 0;
+	t->fpcr = 0;
 	AuThreadInsert(t);
 	return t;
 }
@@ -354,6 +356,8 @@ void AuScheduleThread(AA64Registers* regs) {
 	else 
 		aa64_store_context(runThr);
 
+	aa64_store_fp(&runThr->fp_regs, &runThr->fpcr, &runThr->fpsr);
+
 sched:
 	if (regs) {
 		runThr->x30 = regs->x30;
@@ -365,6 +369,7 @@ sched:
 	AA64NextThread();
 	write_both_ttbr(V2P(current_thread->pml));
 	//UARTDebugOut("CurrentThread: %s, pml-> %x \n", current_thread->name, V2P(current_thread->pml));
+	aa64_restore_fp(&current_thread->fp_regs, &current_thread->fpcr, &current_thread->fpsr);
 	dsb_sy_barrier();
 
 //	UARTDebugOut("SCHED: Curr thread : %s , pml %x \n", current_thread->name, current_thread->pml);
@@ -431,6 +436,7 @@ void AuSchedulerStart() {
 	_scheduler_initialized = true;
 	GICClearPendingIRQ(27);
 	write_both_ttbr(V2P(idle->pml));
+	aa64_restore_fp(&idle->fp_regs, &idle->fpcr, &idle->fpsr);
 	first_time_sex(idle);
 }
 
