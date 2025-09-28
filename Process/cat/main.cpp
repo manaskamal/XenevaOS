@@ -89,4 +89,7 @@ int main(int argc, char* argv[]){
     if (read_bytes > 0) {
         printf("%s", buffer);
     }
+    free(filename);
+    free(buffer);
+    return 0;
 }
