@@ -36,6 +36,7 @@
 #include <string.h>
 #include <_null.h>
 #include <Hal/AA64/sched.h>
+#include <Mm/shm.h>
 
 static int pid = 1;
 AuProcess* proc_first;
@@ -206,12 +207,14 @@ AuProcess * AuCreateProcessSlot(AuProcess * parent, char* name) {
 	uint64_t  main_thr_stack = (uint64_t)CreateUserStack(proc, cr3);
 	proc->state = PROCESS_STATE_NOT_READY;
 	proc->cr3 = cr3;
+	proc->shm_break = USER_SHARED_MEM_START;
 	proc->proc_mem_heap = PROCESS_BREAK_ADDRESS;
 	proc->proc_heapmem_len = 0;
 	proc->_main_stack_ = main_thr_stack;
 	UARTDebugOut("PROCESS : %s , stack : %x \n", proc->name, proc->_main_stack_);
 	proc->waitlist = initialize_list();
 	proc->vmareas = initialize_list();
+	proc->shmmaps = initialize_list();
 	uint64_t ustack = proc->_main_stack_;
 	proc->_main_stack_ = (((uint64_t)ustack + 15) & ~(uint64_t)0xF);
 	AuAddProcess(parent, proc);

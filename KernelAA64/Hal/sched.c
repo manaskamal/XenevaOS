@@ -343,7 +343,7 @@ extern uint64_t read_sp();
  * @param regs -- Passed by Timer ISR
  */
 void AuScheduleThread(AA64Registers* regs) {
-	mask_irqs();
+	//mask_irqs();
 	if (_scheduler_initialized == 0) {
 		return;
 	}
@@ -356,15 +356,15 @@ void AuScheduleThread(AA64Registers* regs) {
 	else 
 		aa64_store_context(runThr);
 
-	aa64_store_fp(&runThr->fp_regs, &runThr->fpcr, &runThr->fpsr);
 
 sched:
+	aa64_store_fp(&runThr->fp_regs, &runThr->fpcr, &runThr->fpsr);
 	if (regs) {
 		runThr->x30 = regs->x30;
 		runThr->x29 = regs->x29;
 	}
 
-//	UARTDebugOut("SCHED_PREV: curr thr: %s, pml : %x \n", current_thread->name, current_thread->pml);
+
 	AuHandleSleepThreads();
 	AA64NextThread();
 	write_both_ttbr(V2P(current_thread->pml));

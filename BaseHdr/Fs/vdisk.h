@@ -65,7 +65,7 @@ typedef struct _au_partition_data_ {
 }AuPartitionData;
 
 
-#pragma pack(push,1)
+//#pragma pack(push,1)
 /*  vdisk structures */
 typedef struct _VDISK_ {
 	char diskname[40];
@@ -105,7 +105,7 @@ typedef struct _VDISK_ {
 	 * needs to be added like eject
 	 */
 }AuVDisk;
-#pragma pack(pop)
+//#pragma pack(pop)
 
 #pragma pack(push,1)
 typedef struct _vdisk_info_ {

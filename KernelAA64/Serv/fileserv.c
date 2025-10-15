@@ -116,6 +116,7 @@ int FileSetOffset(int fd, size_t offset) {
 		if (!fsys)
 			return -1;
 		size_t block = AuVFSGetBlockFor(fsys, file, offset);
+		//UARTDebugOut("FileSetOffset: block : %x \n", block);
 		file->current = block;
 	}
 	else

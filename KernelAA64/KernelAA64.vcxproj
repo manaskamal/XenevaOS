@@ -256,6 +256,7 @@
     <ClCompile Include="Fs\tty.c" />
     <ClCompile Include="Fs\vdisk.c" />
     <ClCompile Include="Fs\vfs.c" />
+    <ClCompile Include="ftmngr.c" />
     <ClCompile Include="Hal\aa64cpu.c" />
     <ClCompile Include="Hal\basicacpi.c" />
     <ClCompile Include="Hal\gic.c" />

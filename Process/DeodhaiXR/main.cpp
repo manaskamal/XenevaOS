@@ -35,6 +35,7 @@
 #include <sys/_kefile.h>
 #include <chitralekha.h>
 #include <sys/mman.h>
+#include <font.h>
 #include <sys/iocodes.h>
 #include <draw.h>
 
@@ -104,10 +105,12 @@ int main(int argc, char* argv[]){
 
 	_KePrint("Chitralekha Canvas created : %d \n", canv->screenWidth);
 	ChAllocateBuffer(canv);
-	ChDrawRect(canv, 0, 0, screen_w, screen_h, MAGENTA);
+	_KePrint("About to draw rectangle \n");
+	ChDrawRect(canv, 0, 0, screen_w, screen_h, LIGHTBLACK);
+	_KePrint("Rect drawn \n");
 	ChCanvasScreenUpdate(canv, 0, 0, screen_w, screen_h);
 
-	int bmpfile = _KeOpenFile("/xexr.bmp", FILE_OPEN_READ_ONLY);
+	/*int bmpfile = _KeOpenFile("/xexr.bmp", FILE_OPEN_READ_ONLY);
 	XEFileStatus* stat = (XEFileStatus*)malloc(sizeof(XEFileStatus));
 	_KeFileStat(bmpfile, stat);
 
@@ -142,8 +145,14 @@ int main(int argc, char* argv[]){
 			if (rgb & 0xFF000000)
 				ChDrawPixel(canv, 0 + k, 0 + i, rgb);
 		}
-	}
-
+	}*/
+	ChRect limit;
+	limit.x = 0;
+	limit.y = 0;
+	limit.w = screen_w;
+	limit.h = screen_h;
+	ChFont* font = ChInitialiseFont(CALIBRI);
+	ChFontDrawTextClipped(canv, font, "DeodhaiXR", 100, 100, WHITE, &limit);
 	ChCanvasScreenUpdate(canv, 0, 0, screen_w, screen_h);
 
 	float v = 0.2f;
@@ -151,13 +160,6 @@ int main(int argc, char* argv[]){
 	float l = v * c;
 
 
-	Test* t = (Test*)malloc(sizeof(Test));
-	t->fname = (char*)malloc(48);
-	memset(t->fname, 0, 48);
-	strcpy(t->fname, "Hello World");
-	_KePrint("TFname before : %x \n", t->fname);
-	int f = _KeOpenFile("/deodxr.exe", FILE_OPEN_READ_ONLY);
-	_KePrint("Test addr after : %x \n", t->fname);
 	while (1) {
 		_KePauseThread();
 	}

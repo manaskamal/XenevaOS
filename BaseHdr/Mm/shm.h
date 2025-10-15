@@ -35,7 +35,7 @@
 
 #define USER_SHARED_MEM_START 0x0000000080000000
 
-#pragma pack(push,1)
+//#pragma pack(push,1)
 /*
  * AuSHM -- shared memory segment
  */
@@ -46,15 +46,15 @@ typedef struct _shm_ {
 	uint64_t* frames;
 	uint16_t link_count;
 }AuSHM;
-#pragma pack(pop)
+//#pragma pack(pop)
 
-#pragma pack(push,1)
+//#pragma pack(push,1)
 typedef struct _shm_mapping_ {
 	uint64_t start_addr;
 	size_t length;
 	AuSHM* shm;
 }AuSHMMappings;
-#pragma pack(pop)
+//#pragma pack(pop)
 
 /*
 * AuInitialiseSHMMan -- initialise shm manager

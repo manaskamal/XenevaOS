@@ -97,6 +97,7 @@ int ChAllocateBuffer(ChCanvas* canvas) {
 		return 0;
 	canvas->buffer = (uint32_t*)addr;
 	canvas->bufferSz = sz;
+	_KePrint("Buffer allocated \n");
 	return 1;
 }
 

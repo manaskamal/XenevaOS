@@ -142,7 +142,6 @@ uint64_t GetProcessHeapMem(size_t sz) {
  * @param sz -- size in bytes to unallocate
  */
 int ProcessHeapUnmap(void* ptr, size_t sz) {
-
 	/* check if size is page aligned */
 	if ((sz % PAGE_SIZE) != 0) {
 		AuTextOut("Returning error heap unmap -> %d \r\n", sz);
@@ -150,7 +149,6 @@ int ProcessHeapUnmap(void* ptr, size_t sz) {
 		sz = PAGE_ALIGN(sz);
 	}
 
-	UARTDebugOut("ProcessHeapUnmap \n");
 	AA64Thread* thr = AuGetCurrentThread();
 	if (!thr)
 		return -1;
@@ -175,13 +173,15 @@ int ProcessHeapUnmap(void* ptr, size_t sz) {
 				page_->bits.page = 0;
 				isb_flush();
 				/* flush all PTE entries in TLB*/
-				tlb_flush_vmalle1is();
-				dsb_ish();
-				isb_flush();
+				
 			}
 		}
 	
 	}
+
+	tlb_flush_vmalle1is();
+	dsb_ish();
+	isb_flush();
 	/*if (start_addr < proc->proc_mem_heap)*/
 	proc->proc_mem_heap = start_addr;
 	return 0;

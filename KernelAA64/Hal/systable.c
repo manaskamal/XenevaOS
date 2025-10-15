@@ -37,8 +37,9 @@
 #include <Mm/shm.h>
 #include <Mm/mmap.h>
 #include <aucon.h>
+#include <ftmngr.h>
 
-#define AURORA_MAX_SYSCALL 35
+#define AURORA_MAX_SYSCALL 46
 
 /* Syscall function format */
 typedef int64_t(*syscall_func) (int64_t param1, int64_t param2, int64_t param3, int64_t
@@ -87,14 +88,25 @@ static void* syscalls[AURORA_MAX_SYSCALL] = {
 	0, //24
 	0, //25
 	0, //26
-	0, //27
-	0, //28
-	0, //29
+	AuFTMngrGetFontID, //27
+	AuFTMngrGetNumFonts, //28
+	AuFTMngrGetFontSize, //29
 	MemMapDirty, //30
 	0, //31
 	0, //32
 	0, //33
 	ProcessHeapUnmap, //34
+	0, //35
+	0, //36
+	0, //37
+	0, //38
+	0, //39
+	0, //40
+	0, //41
+	0, //42
+	0, //43
+	FileSetOffset, //44
+	0, //45
 };
 
 

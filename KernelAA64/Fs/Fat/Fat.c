@@ -337,7 +337,7 @@ size_t FatReadFile(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint32_t 
 
 	size_t num_blocks = length / fs->cluster_sz_in_bytes +
 		((length % fs->cluster_sz_in_bytes) ? 1 : 0);
-
+	
 	for (int i = 0; i < num_blocks; i++) {
 		if (file->eof)
 			break;
@@ -494,12 +494,11 @@ AuVFSNode* FatOpen(AuVFSNode* fsys, char* filename) {
 		return NULL;
 	FatFS* _fs = (FatFS*)fsys->device;
 	AuVFSNode* cur_dir = NULL;
-	AuVDisk* vdisk = (AuVDisk*)fsys->device;
 	char* p = 0;
 	bool  root_dir = true;
 	char* path = (char*)filename;
 
-	
+
 	//! any '\'s in path ?
 	p = strchr(path, '/');
 	if (!p) {
@@ -517,11 +516,10 @@ AuVFSNode* FatOpen(AuVFSNode* fsys, char* filename) {
 	//! go to next character after first '\'
 	p++;
 	while (p) {
-
 		//! get pathname
 		char pathname[16];
 		int i = 0;
-		for (i = 0; i < 16; i++) {
+		for (i = 0; i < 15; i++) {
 
 			//! if another '\' or end of line is reached, we are done
 			if (p[i] == '/' || p[i] == '\0')

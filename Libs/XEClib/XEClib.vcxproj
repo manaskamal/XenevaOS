@@ -162,7 +162,7 @@
       <SDLCheck>false</SDLCheck>
       <AdditionalIncludeDirectories>..\..\Libs\XEClib\includes; includes\c++</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <PreprocessorDefinitions>ARCH_ARM64; DYNAMIC_EXPORTER; YES_DYNAMIC;</PreprocessorDefinitions>
+      <PreprocessorDefinitions>ARCH_ARM64; YES_DYNAMIC; DYNAMIC_EXPORTER</PreprocessorDefinitions>
       <IgnoreStandardIncludePath>true</IgnoreStandardIncludePath>
       <ExceptionHandling>false</ExceptionHandling>
       <BasicRuntimeChecks>

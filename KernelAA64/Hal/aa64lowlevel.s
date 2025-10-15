@@ -69,7 +69,7 @@ write_ttbr1_el1:
 write_both_ttbr:
     msr ttbr0_el1, x0
     msr ttbr1_el1, x0
-    //isb sy
+    isb sy
     dsb ishst
     tlbi vmalle1is 
     dsb ish
@@ -117,6 +117,11 @@ dsb_ish:
      dsb ish
      ret
 
+.global dmb_ish
+dmb_ish:
+     dmb ish
+     ret
+
 .global isb_flush
 isb_flush:
      isb
@@ -125,7 +130,7 @@ isb_flush:
 .global tlb_flush
 tlb_flush:
      dsb ishst
-     tlbi vae1is, x0
+     tlbi vaae1is, x0 //vae1is
      dsb ish
      isb
      ret

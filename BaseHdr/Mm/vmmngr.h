@@ -81,7 +81,8 @@
 #ifdef ARCH_X64
 #define PAGE_SIZE 4096
 #else
-#define PAGE_SIZE 4096
+#define PAGE_SIZE (1ULL << PAGE_SHIFT) //4096
+#define PAGE_MASK (PAGE_SIZE - 1)
 #endif
 
 /* aligns a virtual address to its immediate page boundary */

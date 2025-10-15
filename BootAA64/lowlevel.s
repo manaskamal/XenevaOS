@@ -100,9 +100,11 @@ callKernel:
     add x1, x1, x2
     bic x1, x1, #15 //align it to 16-byte boundary
     mov sp, x1
-    sub sp, sp, #0x28
+
+    //sub sp, sp, #0x28
     stp x29, x30, [sp, #-16]!
     mov x29, sp
+
     sub sp, sp, #32
     br x3
 _hang:

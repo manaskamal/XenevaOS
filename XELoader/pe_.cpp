@@ -76,7 +76,7 @@
  * @param nt -- nt headers
  * @param diff -- difference from its original
  */
-void XELdrRelocatePE(void* image, PIMAGE_NT_HEADERS nt, int diff) {
+void XELdrRelocatePE(void* image, PIMAGE_NT_HEADERS nt, uint64_t diff) {
 	if (!diff)
 		return;
 	if ((nt->OptionalHeader.DllCharacteristics & IMAGE_DLL_CHARACTERISTICS_DYNAMIC_BASE) == 0)
@@ -86,7 +86,7 @@ void XELdrRelocatePE(void* image, PIMAGE_NT_HEADERS nt, int diff) {
 	IMAGE_DATA_DIRECTORY& data_dir = nt->OptionalHeader.DataDirectory[IMAGE_DATA_DIRECTORY_RELOC];
 	if (data_dir.VirtualAddress == 0 || data_dir.Size == 0)
 		return;
-
+	_KePrint("Relocating table addr : %x sz: %d \n", ((uint64_t)image + data_dir.VirtualAddress), data_dir.Size);
 	PIMAGE_RELOCATION_BLOCK reloc_table = raw_offset<PIMAGE_RELOCATION_BLOCK>(image, data_dir.VirtualAddress);
 	PIMAGE_RELOCATION_BLOCK cur_block = reloc_table;
 	while (raw_diff(cur_block, reloc_table) < data_dir.Size) {
@@ -111,8 +111,8 @@ void XELdrRelocatePE(void* image, PIMAGE_NT_HEADERS nt, int diff) {
 				return;
 				break;
 			case IMAGE_REL_BASED_DIR64:
-				*reinterpret_cast<uint64_t*>(relocitem) += (diff & UINT32_MAX);
-				//_KePrint("Relocating executable dir64 %x\r\n", *reinterpret_cast<uint64_t*>(relocitem));
+				*reinterpret_cast<uint64_t*>(relocitem) += diff; // &UINT32_MAX);
+				//_KePrint("Relocating executable dir64 %x, diff : %x \r\n", *reinterpret_cast<uint64_t*>(relocitem), diff);
 				break;
 			default:
 				return;

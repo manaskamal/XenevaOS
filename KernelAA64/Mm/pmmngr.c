@@ -30,7 +30,11 @@
 #include <Mm/pmmngr.h>
 #include <Hal/AA64/aa64lowlevel.h>
 #include <Mm/vmmngr.h>
+#include <Drivers/uart.h>
 #include <efi.h>
+
+#define PAGE_SHIFT 12
+
 
 uint64_t _FreeMemory;
 uint64_t _ReservedMemory;
@@ -56,7 +60,7 @@ typedef struct _lb_mem_rgn_ {
 */
 void AuPmmngrInitBitmap(size_t BSize, void* Buffer) {
 	BitmapBuffer = (uint8_t*)Buffer;
-	memset(BitmapBuffer, 0, BSize * 8);
+	memset(BitmapBuffer, 0, BSize);
 	_BitmapSize = BSize;
 }
 
@@ -93,7 +97,7 @@ bool AuPmmngrBitmapSet(uint64_t index, bool value) {
 * @param Address -- Pointer to page
 */
 void AuPmmngrLockPage(uint64_t Address) {
-	uint64_t Index = (Address / 4096);
+	uint64_t Index = Address >> PAGE_SHIFT;
 	if (AuPmmngrBitmapCheck(Index)) return;
 	if (AuPmmngrBitmapSet(Index, true)) {
 		_FreeMemory--;
@@ -205,7 +209,7 @@ void AuPmmngrInitialize(KERNEL_BOOT_INFO* info) {
 
 	uint64_t BitmapSize = (_TotalRam / 8) + 1; // (_TotalRam * 4096) / 4096 / 8 + 1;
 	UsablePhysicalMemory = ((uint64_t)BitmapArea + BitmapSize);
-	UsablePhysicalMemory = (UsablePhysicalMemory + 0xFFF) & ~0xFFF;
+	UsablePhysicalMemory = (UsablePhysicalMemory + (PAGE_SIZE - 1)) & ~(uint64_t)(PAGE_SIZE - 1);
 
 	/* now initialise the bitmap */
 	AuPmmngrInitBitmap(BitmapSize, BitmapArea);
@@ -300,7 +304,10 @@ void* AuPmmngrAlloc() {
 		if (AuPmmngrBitmapCheck(_RamBitmapIndex)) continue;
 		AuPmmngrLockPage(_RamBitmapIndex * 4096);
 		_UsedMemory++;
-		return (void*)(UsablePhysicalMemory + _RamBitmapIndex * 4096);
+		uint64_t index = _RamBitmapIndex;
+		//UARTDebugOut("AuPmmngrAlloc: RamBitmapIndex : %d %x \n", _RamBitmapIndex, (UsablePhysicalMemory + (index * 4096)));
+		dsb_ish();
+		return (void*)(UsablePhysicalMemory + (index * 4096));
 	}
 	AuTextOut("Kernel Panic!!! No more physical memory \n");
 	for (;;);
@@ -313,9 +320,11 @@ void* AuPmmngrAlloc() {
  */
 void* AuPmmngrAllocBlocks(int num) {
 	void* First = AuPmmngrAlloc();
-	for (int i = 1; i < num; i++)
-		AuPmmngrAlloc();
-
+	UARTDebugOut("AuPmmngrAllocBlocks: %x \n", First);
+	for (int i = 1; i < num; i++) {
+		void* p = AuPmmngrAlloc();
+		UARTDebugOut("AuPmmngrAllocBlocks: %x \n", p);
+	}
 	return First;
 }
 
@@ -329,11 +338,15 @@ void AuPmmngrFree(void* Address) {
 	uint64_t Index = (uint64_t)addr / 4096;
 	if (AuPmmngrBitmapCheck(Index) == false) return;
 	if (AuPmmngrBitmapSet(Index, false)) {
+		//UARTDebugOut("Was not free actual address : %x\n", Address);
 		_FreeMemory++;
 		_UsedMemory--;
-		if (_RamBitmapIndex > Index)
+		if (_RamBitmapIndex > Index) {
+			//UARTDebugOut("RAMIndex was to : %d. set to : %d\n", _RamBitmapIndex, Index);
 			_RamBitmapIndex = Index;
+		}
 	}
+	dsb_ish();
 }
 
 /*

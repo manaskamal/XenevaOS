@@ -277,7 +277,7 @@ void AuDriverLoad(char* filename, AuDriver* driver) {
 		uint64_t* block = 0;
 		for (int j = 0; j < req_pages; j++) {
 			uint64_t alloc = (load_addr + j * 0x1000);
-			AuMapPage(AuPmmngrAlloc(), alloc, PTE_NORMAL_MEM);
+			AuMapPage((uint64_t)AuPmmngrAlloc(), alloc, PTE_NORMAL_MEM);
 			if (!block)
 				block = (uint64_t*)alloc;
 			next_base_offset++;

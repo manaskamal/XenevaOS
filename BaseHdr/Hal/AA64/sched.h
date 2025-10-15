@@ -49,7 +49,7 @@
 #define  THREAD_LEVEL_SUBTHREAD (1<<2)
 #define  THREAD_LEVEL_MAIN_THREAD (1<<3)
 
-#pragma pack(push,1)
+//#pragma pack(push,1)
 /* AuUserEntry structure */
 typedef struct _uentry_ {
 	uint64_t entrypoint;
@@ -61,11 +61,11 @@ typedef struct _uentry_ {
 	char** argvs;
 	uint64_t stackBase;
 }AuUserEntry;
-#pragma pack(pop)
+//#pragma pack(pop)
 
 
 
-#pragma pack(push,1)
+//#pragma pack(push,1)
 typedef struct _aa64_task_ {
 	uint64_t x19; //0
 	uint64_t x20; //8
@@ -110,7 +110,7 @@ typedef struct _aa64_task_ {
 	struct _aa64_task_* prev;
 }AA64Thread;
 
-#pragma pack(pop)
+//#pragma pack(pop)
 extern void AuSchedulerInitialize();
 extern uint64_t AuCreateKernelStack(uint64_t* pml);
 extern AA64Thread* AuCreateKthread(void(*entry) (uint64_t),uint64_t* pml, char* name);

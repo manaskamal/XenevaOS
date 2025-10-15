@@ -36,9 +36,10 @@
 #include <aucon.h>
 #include <_null.h>
 #include <string.h>
+#include <stdint.h>
 
-list_t* shm_list;
-uint16_t shm_id;
+static list_t* shm_list;
+static uint16_t shm_id;
 
 /*
  * AuInitialiseSHMMan -- initialise shm manager
@@ -80,6 +81,7 @@ AuSHM* AuGetSHMSeg(uint16_t key) {
 * @param key -- key to search
 */
 AuSHM* AuGetSHMByID(uint16_t id) {
+	UARTDebugOut("SHM ID : %d , shm_list : %x \n", id, shm_list);
 	for (int i = 0; i < shm_list->pointer; i++) {
 		AuSHM* shm = (AuSHM*)list_get_at(shm_list, i);
 		if (shm->id == id)
@@ -214,9 +216,12 @@ void* AuSHMObtainMem(AuProcess* proc, uint16_t id, void* shmaddr, int shmflg) {
 	//AuAcquireSpinlock(shmlock);
 	AuSHM* mem = NULL;
 
+	UARTDebugOut("Obtaining shm %d\n", id);
+
 	/* search for shm memory segment */
 	mem = AuGetSHMByID(id);
 
+	UARTDebugOut("Mem got : %x \n", mem);
 	if (!mem)
 		return NULL;
 
@@ -241,6 +246,8 @@ void* AuSHMObtainMem(AuProcess* proc, uint16_t id, void* shmaddr, int shmflg) {
 				for (int j = 0; j < mem->num_frames; j++) {
 					size_t phys = mem->frames[j];
 					AuMapPage(phys, last_addr + j * PAGE_SIZE, PTE_AP_RW_USER);
+					isb_flush();
+					dsb_ish();
 				}
 				mappings->start_addr = last_addr;
 				mappings->length = mem->num_frames * PAGE_SIZE;
@@ -290,6 +297,8 @@ void* AuSHMObtainMem(AuProcess* proc, uint16_t id, void* shmaddr, int shmflg) {
 				for (int j = 0; j < mem->num_frames; j++) {
 					size_t phys = mem->frames[j];
 					AuMapPage(phys, last_addr + j * PAGE_SIZE, PTE_AP_RW_USER);
+					isb_flush();
+					dsb_ish();
 				}
 				mappings->start_addr = last_addr;
 				mappings->length = mem->num_frames * PAGE_SIZE;
@@ -318,6 +327,7 @@ void* AuSHMObtainMem(AuProcess* proc, uint16_t id, void* shmaddr, int shmflg) {
 	/* Now order the list, in ascending order */
 	AuSHMProcOrderList(proc);
 	//AuReleaseSpinlock(shmlock);
+	UARTDebugOut("Mapping returning : %x \n", mappings->start_addr);
 	return (void*)mappings->start_addr;
 }
 
@@ -345,8 +355,13 @@ void AuSHMUnmap(uint16_t key, AuProcess* proc) {
 				AuVPage* vpage = AuVmmngrGetPage(mapping->start_addr + i * PAGE_SIZE, VIRT_GETPAGE_ONLY_RET, VIRT_GETPAGE_ONLY_RET);
 				if (vpage) {
 					vpage->bits.page = 0;
+					isb_flush();
 					vpage->bits.present = 0;
-					tlb_flush((void*)(mapping->start_addr + i * PAGE_SIZE));
+					isb_flush();
+					tlb_flush_vmalle1is();
+					dsb_ish();
+					isb_flush();
+					//tlb_flush((void*)(mapping->start_addr + i * PAGE_SIZE));
 				}
 			}
 			UARTDebugOut("Closing index -> %d \r\n", i);
@@ -376,14 +391,19 @@ void AuSHMUnmapAll(AuProcess* proc) {
 			AuVPage* vpage = AuVmmngrGetPage(mapping->start_addr +
 				j * PAGE_SIZE, VIRT_GETPAGE_ONLY_RET, VIRT_GETPAGE_ONLY_RET);
 			vpage->bits.page = 0;
+			isb_flush();
 			vpage->bits.present = 0;
+			isb_flush();
 			tlb_flush((void*)(mapping->start_addr +
 				j * PAGE_SIZE));
+			dsb_ish();
+			isb_flush();
 		}
 		AuSHMDelete(mapping->shm);
 		UARTDebugOut("Unmapping shm -> %x \r\n", mapping->start_addr);
 		kfree(mapping);
 	}
+	//tlb_flush_vmalle1is();
 	kfree(proc->shmmaps);
 	//AuReleaseSpinlock(shmlock);
 }

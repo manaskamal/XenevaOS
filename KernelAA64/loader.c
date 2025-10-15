@@ -38,6 +38,10 @@
 #include <pe.h>
 #include <Hal/AA64/sched.h>
 #include <Hal/AA64/aa64lowlevel.h>
+#include <ftmngr.h>
+
+
+#define LOADER_SCRATCH_VIRT 0xFFFFC00000700000
 
 uint64_t* _ldr_scratchBuffer;
 uint64_t physFrames[64];
@@ -203,7 +207,7 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) 
 			kfree(argv);
 		}
 
-		setStk();
+	//	setStk();
 		//AuReleaseSpinlock(loader_lock);
 
 		/* load the loader */
@@ -303,7 +307,10 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) 
  * and allocate atleast 1 MiB for scratch use
  */
 void AuInitialiseLoader() {
-	_ldr_scratchBuffer = (uint64_t*)P2V((uint64_t)AuPmmngrAllocBlocks((1024 * 1024) / 0x1000));
+	for (int i = 0; i < (1024 * 1024) / 0x1000; i++) {
+		AuMapPage((size_t)AuPmmngrAlloc(), LOADER_SCRATCH_VIRT + i * 0x1000, PTE_NORMAL_MEM);
+	}
+	_ldr_scratchBuffer = (uint64_t*)LOADER_SCRATCH_VIRT; // (uint64_t*)P2V((uint64_t)AuPmmngrAllocBlocks((1024 * 1024) / 0x1000));
 	memset(_ldr_scratchBuffer, 0, 1024 * 1024);
 	for (int i = 0; i < 64; i++)
 		physFrames[i] = 0;

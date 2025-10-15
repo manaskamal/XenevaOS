@@ -135,8 +135,6 @@ AU_EXTERN AU_EXPORT AuVFSNode* AuVFSOpen(char* path) {
 		if (next)
 			next++;
 
-		UARTDebugOut("Next : %x \n", next);
-
 		if (fs->open)
 			Returnable = fs->open(fs, path);
 	}

@@ -50,7 +50,7 @@
 #define MEMMAP_FLAG_DISCARD_FILE_READ 1<<3
 
 
-#pragma pack(push,1)
+//#pragma pack(push,1)
 /* shared memory map object */
 typedef struct _sh_memap_object_ {
 	char* objectName;
@@ -61,7 +61,7 @@ typedef struct _sh_memap_object_ {
 	uint16_t linkCount;
 	uint16_t ownerProc;
 }AuSharedMmapObject;
-#pragma pack(pop)
+//#pragma pack(pop)
 
 list_t* shmmaplist;
 
@@ -124,6 +124,7 @@ void* CreateMemMapping(void* address, size_t len, int prot, int flags, int fd,
 	if (!len)
 		return 0;
 
+
 	/* for now, memory mapping doesn't support lazy loading
 	 * so everything works at pre-paging */
 
@@ -154,6 +155,7 @@ void* CreateMemMapping(void* address, size_t len, int prot, int flags, int fd,
 
 
 	if (file) {
+		UARTDebugOut("CreateMemMapping getting file \n");
 		uint64_t file_block_start = 0;
 		fsys = AuVFSFind("/");
 		if (!fsys && fd != -1)
@@ -276,18 +278,22 @@ void MemMapDirty(void* startingVaddr, size_t len, int flags, int prot) {
 			/* check for  protection flag */
 			if (prot & PROTECTION_FLAG_READONLY) {
 				page->bits.ap = 0b11;
+				UARTDebugOut("Memmap dirty setting : readonly \n");
 				isb_flush();
 			}
 			if (prot & PROTECTION_FLAG_NO_EXEC) {
 				page->bits.uxn = 1;
+				UARTDebugOut("Memmap dirty setting : no exec \n");
 				isb_flush();
 			}
 			if (prot & PROTECTION_FLAG_NO_CACHE) {
 				page->bits.attrindex = PTE_DEVICE_MEM;
+				UARTDebugOut("Memmap dirty setting : no cache\n");
 				isb_flush();
 			}
 			if (prot & PROTECTION_FLAG_READONLY && prot & PROTECTION_FLAG_WRITE) {
 				page->bits.ap = 0b01;
+				UARTDebugOut("Memmap dirty setting : write \n");
 				isb_flush();
 			}
 

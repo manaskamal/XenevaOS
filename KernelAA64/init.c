@@ -50,6 +50,7 @@
 #include <audrv.h>
 #include <Hal/AA64/sched.h>
 #include <Fs/tty.h>
+#include <ftmngr.h>
 
 
 
@@ -138,6 +139,7 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	AuPmmngrInitialize(info);
 	AuVmmngrInitialize();
 	AuHeapInitialize();
+
 	AuDeviceTreeMapMMIO();
 	AA64CPUPostInitialize(info);
 	AuVFSInitialise();
@@ -157,13 +159,18 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	//Here goes board pre driver initialize
 	AuDrvMngrInitialize(info);
 
+	FontManagerInitialise();
+
+	
 	AuInitialiseLoader();
+
 	
 	/* clear out the lower half memory */
 	AuVmmngrBootFree();
 
 	AuSchedulerInitialize();
-	UARTDebugOut("SIZEOF (AuUserEntry) - %d \n", sizeof(AuUserEntry));
+
+
 	AuProcess* proc = AuCreateProcessSlot(0, "exec");
 	int num_args = 1;
 	char* about = (char*)kmalloc(strlen("-about"));
@@ -172,6 +179,7 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	memset(argvs, 0, num_args);
 	argvs[0] = about;
 	AuLoadExecToProcess(proc, "/init.exe", num_args, argvs);
+	
 	
 	AuSchedulerStart();
 	while (1) {

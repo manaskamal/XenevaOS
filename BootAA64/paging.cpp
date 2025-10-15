@@ -133,6 +133,6 @@ void XEPagingMap(uint64_t virtualAddr, uint64_t physAddr) {
 
 	l3_table[l3_index] = (physAddr & ~0xFFFULL)| PAGE_FLAGS;
 
-	tlb_flush(virtualAddr);
+	tlb_flush(virtualAddr & ~0xFFFULL);
 }
 

@@ -31,9 +31,6 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "XECrt", "Libs\XECrt\XECrt.vcxproj", "{7E566DB6-F1A9-4C46-B769-79915CB9B182}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Chitralekha", "Libs\Chitralekha\Chitralekha.vcxproj", "{13366E8F-2DBF-4E21-A7A7-52D8B788F4BC}"
-	ProjectSection(ProjectDependencies) = postProject
-		{38A7B436-745B-4193-A5F3-4FE14D682F8A} = {38A7B436-745B-4193-A5F3-4FE14D682F8A}
-	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "E1000", "Drivers\E1000\E1000.vcxproj", "{60C723A8-AED4-4689-B960-F0091B16466F}"
 	ProjectSection(ProjectDependencies) = postProject
