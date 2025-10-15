@@ -152,6 +152,7 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	/* initialize the shared memory manager*/
 	AuInitialiseSHMMan();
 
+
 	/* initialize our basic requirement */
 	AuVirtioKbdInitialize();
 
@@ -161,6 +162,14 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 
 	FontManagerInitialise();
 
+	/* from here, be carefull with AuPmmngrAllocBlocks,
+	 * sometime it doesn't allocate blocks contiguously,
+	 * it allocate one previously freed block and other
+	 * contiguously from some unallocated portion of
+	 * physical memory, which make it problamatic for kheap
+	 * or other data structures that get overwritten.
+	 * We need to be carefull on low level side for this 
+	 */
 	
 	AuInitialiseLoader();
 

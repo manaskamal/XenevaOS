@@ -158,6 +158,9 @@
     <Filter Include="Serv">
       <UniqueIdentifier>{d53e9161-7905-4cec-ba48-ca5e559f4c2d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Net">
+      <UniqueIdentifier>{dec9f210-6aca-4137-b8b8-bbc17d6b0fe7}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="Hal\aa64vector.s">
