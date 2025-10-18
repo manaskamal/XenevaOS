@@ -151,7 +151,7 @@ int main(int argc, char* argv[]){
 	limit.y = 0;
 	limit.w = screen_w;
 	limit.h = screen_h;
-	ChFont* font = ChInitialiseFont(CALIBRI);
+	ChFont* font = ChInitialiseFont(FORTE);
 	ChFontDrawTextClipped(canv, font, "DeodhaiXR", 100, 100, WHITE, &limit);
 	ChCanvasScreenUpdate(canv, 0, 0, screen_w, screen_h);
 

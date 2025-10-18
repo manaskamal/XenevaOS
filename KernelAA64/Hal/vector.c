@@ -35,6 +35,9 @@
 #include <Drivers/uart.h>
 #include <Drivers/rtcmmio.h>
 #include <Hal/AA64/sched.h>
+#include <process.h>
+#include <_null.h>
+#include <Mm/vmarea.h>
 
 extern uint64_t read_sp();
 extern uint64_t read_sp_el1();
@@ -89,6 +92,22 @@ void sync_el1_handler(AA64Registers *regs) {
         AuDumpRegisters(currthr, regs);
     }
 
+    AuProcess* proc = NULL;
+    if (currthr) {
+        proc = AuProcessFindThread(currthr);
+        if (!proc)
+            proc = AuProcessFindSubThread(currthr);
+    }
+
+    AuVMArea* vma = NULL;
+    if (proc)
+        vma = AuVMAreaGet(proc, read_elr_el1());
+    if (vma) {
+        UARTDebugOut("VMA Start -> %x \r\n", vma->start);
+        uint64_t offset = (read_elr_el1() - vma->start);
+        uint64_t realAddress = 0x600000000 + offset;
+        UARTDebugOut("original address of the process -> %x  %x\r\n", read_elr_el1(), realAddress);
+    }
 
     uint32_t dfsc = esr & 0x3F;
 

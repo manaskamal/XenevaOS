@@ -190,7 +190,7 @@
       <Driver>Driver</Driver>
       <OptimizeReferences>false</OptimizeReferences>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
-      <BaseAddress>0x0000000400000000</BaseAddress>
+      <BaseAddress>0x0000000600000000</BaseAddress>
       <RandomizedBaseAddress>
       </RandomizedBaseAddress>
       <FixedBaseAddress>false</FixedBaseAddress>

@@ -31,7 +31,11 @@
 #define __POSTBOX_H__
 
 #include <stdint.h>
+#ifdef ARCH_X64
 #include <Hal\x86_64_sched.h>
+#elif ARCH_ARM64
+#include <Hal/AA64/sched.h>
+#endif
 
 #define POSTBOX_CREATE  401
 #define POSTBOX_DESTROY 402
@@ -67,7 +71,9 @@ typedef struct _post_event_ {
 }PostEvent;
 #pragma pack(pop)
 
+#ifdef ARCH_X64
 #pragma pack(push,1)
+#endif
 typedef struct _postbox_ {
 	uint64_t* address;
 	uint16_t ownerID;
@@ -78,7 +84,9 @@ typedef struct _postbox_ {
 	struct _postbox_ *next;
 	struct _postbox_* prev;
 }PostBox;
+#ifdef ARCH_X64
 #pragma pack(pop)
+#endif
 
 /*
 * AuIPCPostBoxInitialise -- initialise
@@ -92,6 +100,7 @@ extern void AuIPCPostBoxInitialise();
 */
 extern void PostBoxPutEvent(PostEvent* event);
 
+#ifdef ARCH_X64
 /*
  * PostBoxGetEvent -- get an event from post box and copy it to a
  * memory area
@@ -100,6 +109,16 @@ extern void PostBoxPutEvent(PostEvent* event);
  * @param curr_thread -- Pointer to current thread
  */
 extern int PostBoxGetEvent(PostEvent* event, bool root, AuThread* curr_thread);
+#elif ARCH_ARM64
+/*
+ * PostBoxGetEvent -- get an event from post box and copy it to a
+ * memory area
+ * @param event -- pointer to a memory area
+ * @param root -- is this post box is root
+ * @param curr_thread -- Pointer to current thread
+ */
+extern int PostBoxGetEvent(PostEvent* event, bool root, AA64Thread* curr_thread);
+#endif
 
 /*
 * PostBoxCreate -- creates a postbox

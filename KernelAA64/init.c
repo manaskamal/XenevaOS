@@ -51,6 +51,7 @@
 #include <Hal/AA64/sched.h>
 #include <Fs/tty.h>
 #include <ftmngr.h>
+#include <Ipc/postbox.h>
 
 
 
@@ -173,7 +174,9 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	
 	AuInitialiseLoader();
 
-	
+	/* initialize the deodhai's communication protocol */
+	AuIPCPostBoxInitialise();
+
 	/* clear out the lower half memory */
 	AuVmmngrBootFree();
 

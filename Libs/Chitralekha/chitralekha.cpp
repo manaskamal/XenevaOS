@@ -97,7 +97,7 @@ int ChAllocateBuffer(ChCanvas* canvas) {
 		return 0;
 	canvas->buffer = (uint32_t*)addr;
 	canvas->bufferSz = sz;
-	_KePrint("Buffer allocated \n");
+	_KePrint("Buffer allocated, canvas : %x \n", canvas);
 	return 1;
 }
 
@@ -176,7 +176,11 @@ void ChCanvasScreenUpdate(ChCanvas* canvas, int _x, int _y, int _w, int _h) {
  * @param color -- color of the pixel
  */
 void ChDrawPixel(ChCanvas* canvas, int x, int y, uint32_t color) {
+	if (((uint64_t)canvas >> 48) == 0xFFFF)
+		_KePrint("ChDrawPixel : suspected canvas address : %x \n", canvas);
 	unsigned int *lfb = canvas->buffer;
+	if (((uint64_t)lfb >> 48) == 0xFFFF)
+		_KePrint("ChDrawPixel : suspected lfb address : %x \n", lfb);
 	if (x < 0) {
 		_KePrint("ChDrawPixel : corrupted x -> %d \r\n", x);
 		x = 0;
@@ -196,7 +200,7 @@ void ChDrawPixel(ChCanvas* canvas, int x, int y, uint32_t color) {
 		_KePrint("ChDrawPixel : corrupted y > canvasHeight \r\n");
 		return;
 	}
-	lfb[static_cast<int64_t>(y) * canvas->canvasWidth + x] = color;
+	lfb[static_cast<uint64_t>(y) * canvas->canvasWidth + x] = color;
 }
 
 /*

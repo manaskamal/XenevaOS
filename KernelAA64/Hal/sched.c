@@ -350,6 +350,7 @@ void AuScheduleThread(AA64Registers* regs) {
 	AA64Thread* runThr = current_thread;
 
 	if (runThr->returnFromSyscall) {
+		UARTDebugOut("System call interrupted for thread : %s \n", runThr->name);
 		store_syscall(runThr);
 		goto sched;
 	}
@@ -360,6 +361,8 @@ void AuScheduleThread(AA64Registers* regs) {
 sched:
 	aa64_store_fp(&runThr->fp_regs, &runThr->fpcr, &runThr->fpsr);
 	if (regs) {
+		runThr->x0 = regs->x0;
+		runThr->x1 = regs->x1;
 		runThr->x30 = regs->x30;
 		runThr->x29 = regs->x29;
 	}

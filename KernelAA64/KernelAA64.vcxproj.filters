@@ -114,6 +114,9 @@
       <Filter>Mm</Filter>
     </ClCompile>
     <ClCompile Include="ftmngr.c" />
+    <ClCompile Include="Ipc\postbox.c">
+      <Filter>Ipc</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Hal">
@@ -160,6 +163,9 @@
     </Filter>
     <Filter Include="Net">
       <UniqueIdentifier>{dec9f210-6aca-4137-b8b8-bbc17d6b0fe7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Ipc">
+      <UniqueIdentifier>{395952cf-bd09-4b89-b4a0-52c43b85e2da}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

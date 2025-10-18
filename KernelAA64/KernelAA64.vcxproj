@@ -265,6 +265,7 @@
     <ClCompile Include="Hal\systable.c" />
     <ClCompile Include="Hal\vector.c" />
     <ClCompile Include="init.c" />
+    <ClCompile Include="Ipc\postbox.c" />
     <ClCompile Include="list.c" />
     <ClCompile Include="loader.c" />
     <ClCompile Include="Mm\kmalloc.c" />

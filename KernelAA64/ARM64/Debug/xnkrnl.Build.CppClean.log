@@ -38,8 +38,6 @@ e:\xeneva project\aurora\kernelaa64\arm64\debug\audrv.obj
 e:\xeneva project\aurora\kernelaa64\arm64\debug\audrv.asm
 e:\xeneva project\aurora\kernelaa64\arm64\debug\aucon.obj
 e:\xeneva project\aurora\kernelaa64\arm64\debug\aucon.asm
-e:\xeneva project\aurora\kernelaa64\arm64\debug\vmmngr.obj
-e:\xeneva project\aurora\kernelaa64\arm64\debug\vmmngr.asm
 e:\xeneva project\aurora\kernelaa64\arm64\debug\vma.obj
 e:\xeneva project\aurora\kernelaa64\arm64\debug\vma.asm
 e:\xeneva project\aurora\kernelaa64\arm64\debug\shm.obj
@@ -58,6 +56,8 @@ e:\xeneva project\aurora\kernelaa64\arm64\debug\loader.obj
 e:\xeneva project\aurora\kernelaa64\arm64\debug\loader.asm
 e:\xeneva project\aurora\kernelaa64\arm64\debug\list.obj
 e:\xeneva project\aurora\kernelaa64\arm64\debug\list.asm
+e:\xeneva project\aurora\kernelaa64\arm64\debug\postbox.obj
+e:\xeneva project\aurora\kernelaa64\arm64\debug\postbox.asm
 e:\xeneva project\aurora\kernelaa64\arm64\debug\init.obj
 e:\xeneva project\aurora\kernelaa64\arm64\debug\init.asm
 e:\xeneva project\aurora\kernelaa64\arm64\debug\vector.obj
@@ -92,6 +92,8 @@ e:\xeneva project\aurora\kernelaa64\arm64\debug\pe.obj
 e:\xeneva project\aurora\kernelaa64\arm64\debug\pe.asm
 e:\xeneva project\aurora\kernelaa64\arm64\debug\pcie.obj
 e:\xeneva project\aurora\kernelaa64\arm64\debug\pcie.asm
+e:\xeneva project\aurora\kernelaa64\arm64\debug\vmmngr.obj
+e:\xeneva project\aurora\kernelaa64\arm64\debug\vmmngr.asm
 e:\xeneva project\aurora\kernelaa64\arm64\debug\vc142.pdb
 e:\xeneva project\aurora\kernelaa64\arm64\debug\aa64vector.obj
 e:\xeneva project\aurora\kernelaa64\arm64\debug\aa64lowlevel.obj

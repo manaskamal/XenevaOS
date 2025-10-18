@@ -141,11 +141,12 @@ resume_user:
   msr ELR_EL1,x2 
   mov x2,#0x00 // [x0,#112]
   msr SPSR_EL1,x2
-   //ldp x0,x1, [x0,#120]
   ldp x2,x3, [x0,#136]
   ldp x4,x5, [x0,#152]
   ldp x6,x7,[x0,#168]
   ldr x8,[x0,#184]
+  mov x9,x0
+  ldp x0,x1, [x9,#120]
   eret
 
 .global first_time_sex2
@@ -229,11 +230,12 @@ ret_from_syscall:
    ldr x2, [x0,#112]
    msr SPSR_EL1,x2
    mov x30, x1
-   ldp x0,x1, [x0,#120]
    ldp x2,x3, [x0,#136]
    ldp x4,x5, [x0,#152]
    ldp x6,x7,[x0,#168]
    ldr x8,[x0,#184]
+   mov x9,x0
+   ldp x0,x1, [x9,#120]
    ret
 
 
