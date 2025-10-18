@@ -194,8 +194,8 @@ store_syscall:
     * over time when this thread will
     * get executed next time
     */
-    isb
-    tlbi vmalle1is 
+    //isb
+    //tlbi vmalle1is 
   
    str x2,[x0, #96]
    mrs x2,ELR_EL1

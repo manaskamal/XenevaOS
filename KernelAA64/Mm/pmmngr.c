@@ -320,10 +320,10 @@ void* AuPmmngrAlloc() {
  */
 void* AuPmmngrAllocBlocks(int num) {
 	void* First = AuPmmngrAlloc();
-	UARTDebugOut("AuPmmngrAllocBlocks: %x \n", First);
+	//UARTDebugOut("AuPmmngrAllocBlocks: %x \n", First);
 	for (int i = 1; i < num; i++) {
 		void* p = AuPmmngrAlloc();
-		UARTDebugOut("AuPmmngrAllocBlocks: %x \n", p);
+		//UARTDebugOut("AuPmmngrAllocBlocks: %x \n", p);
 	}
 	return First;
 }

@@ -529,7 +529,7 @@ void port_free(void* ptr)
 
 			if ((tag->real_size % l_pageSize) != 0) pages += 1;
 			//if (pages < l_pageCount) pages = l_pageCount;
-			UARTDebugOut("liballoc: Freeing page for address : %x \n", ptr);
+			//UARTDebugOut("liballoc: Freeing page for address : %x \n", ptr);
 			liballoc_free(tag, pages);
 
 #ifdef DEBUG
@@ -639,7 +639,7 @@ void* liballoc_alloc(int pages) {
 }
 
 int liballoc_free(void* ptr, int pages) {
-	UARTDebugOut("Liballoc free: %d \n", pages);
+	//UARTDebugOut("Liballoc free: %d \n", pages);
 	AuFreePages((uint64_t)ptr, true, (pages*4096));
 	return 0;
 }
