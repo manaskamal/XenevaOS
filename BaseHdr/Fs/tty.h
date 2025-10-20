@@ -40,7 +40,9 @@
 #define TIOCGATTR    0x5404
 #define TIOSPGRP     0x5405
 
+#ifdef ARCH_X64
 #pragma pack(push,1)
+#endif
 typedef struct _win_size_ {
 	uint16_t ws_row;
 	uint16_t ws_col;
@@ -64,7 +66,9 @@ typedef struct __tty__ {
 	struct __tty__ *next;
 	struct __tty__ *prev;
 }TTY;
+#ifdef ARCH_X64
 #pragma pack(pop)
+#endif
 
 /*
  * AuTTYCreate -- create tty syscall for process

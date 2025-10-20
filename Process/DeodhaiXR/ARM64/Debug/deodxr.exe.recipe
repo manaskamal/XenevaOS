@@ -5,7 +5,11 @@
       <FullPath>E:\Xeneva Project\Aurora\ARM64\Debug\deodxr.exe</FullPath>
     </ProjectOutput>
   </ProjectOutputs>
-  <ContentFiles />
+  <ContentFiles>
+    <ContentFile>
+      <FullPath>E:\Xeneva Project\Aurora\Process\DeodhaiXR\_fastcpy_arm64.s</FullPath>
+    </ContentFile>
+  </ContentFiles>
   <SatelliteDlls />
   <NonRecipeFileRefs />
 </Project>

@@ -238,6 +238,14 @@ typedef struct _rsdp_
 } acpiRsdp;
 #pragma pack(pop)
 
+void Char16ToASCII(char* dest, CHAR16* src) {
+	while (*src) {
+		*dest++ = (char)(*src++ & 0xFF);
+	}
+	*dest = '\0';
+}
+
+
 /*
  * efi_main -- main entry of XNLDR 2.0
  * @param ImageHandle -- System parameter

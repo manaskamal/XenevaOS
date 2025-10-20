@@ -113,4 +113,9 @@ struct VirtioInputEvent {
  * AuVirtioKbdInitialize -- initialize the virtio keyboard
  */
 extern void AuVirtioKbdInitialize();
+
+/*
+ * AuVirtioTabletInitialize -- initialize virtio tablet
+ */
+extern void AuVirtioTabletInitialize();
 #endif

@@ -163,6 +163,6 @@ void AA64CPUPostInitialize(KERNEL_BOOT_INFO* info) {
 	AA64CPUImplementer(id);
 	AA64PCIeInitialize();
 	AuTextOut("[aurora]: cpu post initialized \n");
-	//AuPL031RTCInit();
+	AuPL031RTCInit();
 	mask_irqs();
 }

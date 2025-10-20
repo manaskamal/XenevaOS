@@ -142,7 +142,7 @@ AU_EXTERN AU_EXPORT void AuForceScheduler();
  * and put it into sleep list
  * @param thread -- Pointer to AA64 Thread
  */
-AU_EXTERN AU_EXPORT void AuSleepThread(AA64Thread* thread);
+AU_EXTERN AU_EXPORT void AuSleepThread(AA64Thread* thread, uint64_t ms);
 
 /*
  * AuThreadFindByID -- finds a thread by its id from

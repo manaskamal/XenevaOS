@@ -38,9 +38,11 @@
 #include <font.h>
 #include <sys/iocodes.h>
 #include <draw.h>
+#include "surface.h"
 
 uint32_t screen_w;
 uint32_t screen_h;
+int postbox_fd;
 
 extern "C" int _fltused = 1;
 
@@ -68,16 +70,13 @@ typedef struct _info_ {
 }BMPInfo;
 #pragma pack(pop)
 
-typedef struct _test_ {
-	char* fname;
-	bool loaded;
-	bool linked;
-	uint32_t len;
-	size_t load_addr;
-	size_t entry_addr;
-	struct _test_* next;
-	struct _test_* prev;
-}Test;
+/*
+ * DeodhaiXR -- The Graphics compositing pipeline
+ * Supports three types of input -- (1) Mouse (2) Keyboard (3) Special XR input
+ * two types of rendering : 2D Compositing for non-xr system(GPU/Software), 3D compositing for XR system (GPU)
+ */
+
+
 /*
 * main -- main entry
 */
@@ -88,6 +87,7 @@ int main(int argc, char* argv[]){
  * file descriptor
  * 
  */
+	postbox_fd = -1;
 	XEFileIOControl graphctl;
 	memset(&graphctl, 0, sizeof(XEFileIOControl));
 	graphctl.syscall_magic = AURORA_SYSCALL_MAGIC;
@@ -103,49 +103,11 @@ int main(int argc, char* argv[]){
 	canv->canvasWidth = screen_w;
 	canv->canvasHeight = screen_h;
 
-	_KePrint("Chitralekha Canvas created : %d \n", canv->screenWidth);
 	ChAllocateBuffer(canv);
-	_KePrint("About to draw rectangle \n");
-	ChDrawRect(canv, 0, 0, screen_w, screen_h, LIGHTBLACK);
-	_KePrint("Rect drawn \n");
+	DeoInitializeBackSurface(canv);
 	ChCanvasScreenUpdate(canv, 0, 0, screen_w, screen_h);
 
-	/*int bmpfile = _KeOpenFile("/xexr.bmp", FILE_OPEN_READ_ONLY);
-	XEFileStatus* stat = (XEFileStatus*)malloc(sizeof(XEFileStatus));
-	_KeFileStat(bmpfile, stat);
 
-	_KePrint("BMP File size : %d MiB\n", ((stat->size) / 1024 / 1024));
-	uint8_t* fileBuffer = (uint8_t*)_KeMemMap(NULL, stat->size, 0, 0, MEMMAP_NO_FILEDESC, 0);
-
-	_KeReadFile(bmpfile, fileBuffer, stat->size);
-
-	BMP* bmp = (BMP*)fileBuffer;
-	unsigned int offset = bmp->off_bits;
-
-	BMPInfo* info = (BMPInfo*)(fileBuffer + sizeof(BMP));
-	int width = info->biWidth;
-	int height = info->biHeight;
-	int bpp = info->biBitCount;
-	_KePrint("BMP W: %d H : %d \n", width, height);
-	_KePrint("BPP : %d \n", bpp);
-	_KePrint("canvasW : %d , canvasH: %d \n", canv->canvasWidth, canv->canvasHeight);
-	uint32_t j = 0;
-	uint8_t* image = (uint8_t*)(fileBuffer + offset);
-	for (int i = 0; i < height; i++) {
-		unsigned char* image_row = (unsigned char*)(image + (static_cast<uint64_t>(height) - i - 1) *
-			(static_cast<uint64_t>(width) * 4));
-		uint32_t h = height - 1 - i;
-		j = 0;
-		for (int k = 0; k < width; k++) {
-			uint32_t b = image_row[j++] & 0xff;
-			uint32_t g = image_row[j++] & 0xff;
-			uint32_t r = image_row[j++] & 0xff;
-			uint32_t a = image_row[j++] & 0xff;
-			uint32_t rgb = ((a << 24) | (r << 16) | (g << 8) | (b));
-			if (rgb & 0xFF000000)
-				ChDrawPixel(canv, 0 + k, 0 + i, rgb);
-		}
-	}*/
 	ChRect limit;
 	limit.x = 0;
 	limit.y = 0;
@@ -155,12 +117,12 @@ int main(int argc, char* argv[]){
 	ChFontDrawTextClipped(canv, font, "DeodhaiXR", 100, 100, WHITE, &limit);
 	ChCanvasScreenUpdate(canv, 0, 0, screen_w, screen_h);
 
-	float v = 0.2f;
-	float c = 0.4f;
-	float l = v * c;
-
+	postbox_fd = _KeOpenFile("/dev/postbox", FILE_OPEN_READ_ONLY);
+	_KePrint("Postbox fd created : %d \n", postbox_fd);
+	_KeFileIoControl(postbox_fd, POSTBOX_CREATE_ROOT, NULL);
 
 	while (1) {
-		_KePauseThread();
+		_KeProcessSleep(16);
+		_KePrint("DeodhaiXR after sleep \n");
 	}
 }

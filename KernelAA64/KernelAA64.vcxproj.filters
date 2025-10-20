@@ -117,6 +117,9 @@
     <ClCompile Include="Ipc\postbox.c">
       <Filter>Ipc</Filter>
     </ClCompile>
+    <ClCompile Include="Drivers\virtiotablet.c">
+      <Filter>Drivers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Hal">

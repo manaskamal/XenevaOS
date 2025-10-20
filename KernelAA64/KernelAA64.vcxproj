@@ -246,6 +246,7 @@
     <ClCompile Include="Drivers\rtcmmio.c" />
     <ClCompile Include="Drivers\uart.c" />
     <ClCompile Include="Drivers\virtiokbd.c" />
+    <ClCompile Include="Drivers\virtiotablet.c" />
     <ClCompile Include="dtb.c" />
     <ClCompile Include="Fs\Dev\devfs.c" />
     <ClCompile Include="Fs\Dev\devinput.c" />

@@ -111,6 +111,7 @@ void PostBoxCreate(bool root, uint16_t tid) {
 		box->prev = lastBox;
 		lastBox = box;
 	}
+	UARTDebugOut("Postbox created for threadID : %d of size : %d num msg \n", tid, box->size);
 }
 
 void PostBoxDestroy(PostBox* box) {
@@ -272,9 +273,9 @@ void AuIPCPostBoxInitialise() {
 	AuVFSNode* node = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
 	memset(node, 0, sizeof(AuVFSNode));
 	strcpy(node->filename, "postbox");
-	node->flags = FS_FLAG_GENERAL | FS_FLAG_DEVICE;
+	node->flags |= FS_FLAG_DEVICE;
 	node->iocontrol = PostBoxIOControl;
-	AuDevFSAddFile(dev, "/dev", node);
+	AuDevFSAddFile(dev, "/", node);
 
 	_PostBoxRootCreated = false;
 	AuTextOut("[aurora]: PostBox IPC mounted and initialized to /dev/postbox \n");

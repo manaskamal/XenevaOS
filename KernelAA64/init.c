@@ -153,7 +153,6 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	/* initialize the shared memory manager*/
 	AuInitialiseSHMMan();
 
-
 	/* initialize our basic requirement */
 	AuVirtioKbdInitialize();
 

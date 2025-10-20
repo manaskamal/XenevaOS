@@ -324,7 +324,7 @@ void AuHandleSleepThreads() {
 	AA64Thread* sleep_thr;
 	for (sleep_thr = sleep_thr_head; sleep_thr != NULL; sleep_thr = sleep_thr->next) {
 		sleep_thr->sleepQuanta--;
-		UARTDebugOut("SLEEP THR : %d \n", sleep_thr->sleepQuanta);
+		//UARTDebugOut("SLEEP THR : %d \n", sleep_thr->sleepQuanta);
 		if (sleep_thr->sleepQuanta == 0){
 			sleep_thr->state = THREAD_STATE_READY;
 			AuThreadDeleteSleep(sleep_thr);
@@ -495,9 +495,10 @@ void AuUnblockThread(AA64Thread* thread) {
  * and put it into sleep list
  * @param thread -- Pointer to AA64 Thread
  */
-void AuSleepThread(AA64Thread* thread) {
+void AuSleepThread(AA64Thread* thread, uint64_t ms) {
 	//UARTDebugOut("Inserting thread to sleep list : %s \n", thread->name);
 	thread->state = THREAD_STATE_SLEEP;
+	thread->sleepQuanta = ms;
 	AuThreadDelete(thread);
 	AuThreadInsertSleep(thread);
 }

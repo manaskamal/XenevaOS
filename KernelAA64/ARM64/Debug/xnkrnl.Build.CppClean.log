@@ -1,5 +1,3 @@
-e:\xeneva project\aurora\kernelaa64\arm64\debug\vdisk.obj
-e:\xeneva project\aurora\kernelaa64\arm64\debug\vdisk.asm
 e:\xeneva project\aurora\kernelaa64\arm64\debug\tty.obj
 e:\xeneva project\aurora\kernelaa64\arm64\debug\tty.asm
 e:\xeneva project\aurora\kernelaa64\arm64\debug\pipe.obj
@@ -16,6 +14,8 @@ e:\xeneva project\aurora\kernelaa64\arm64\debug\devfs.obj
 e:\xeneva project\aurora\kernelaa64\arm64\debug\devfs.asm
 e:\xeneva project\aurora\kernelaa64\arm64\debug\dtb.obj
 e:\xeneva project\aurora\kernelaa64\arm64\debug\dtb.asm
+e:\xeneva project\aurora\kernelaa64\arm64\debug\virtiotablet.obj
+e:\xeneva project\aurora\kernelaa64\arm64\debug\virtiotablet.asm
 e:\xeneva project\aurora\kernelaa64\arm64\debug\virtiokbd.obj
 e:\xeneva project\aurora\kernelaa64\arm64\debug\virtiokbd.asm
 e:\xeneva project\aurora\kernelaa64\arm64\debug\uart.obj
@@ -38,8 +38,6 @@ e:\xeneva project\aurora\kernelaa64\arm64\debug\audrv.obj
 e:\xeneva project\aurora\kernelaa64\arm64\debug\audrv.asm
 e:\xeneva project\aurora\kernelaa64\arm64\debug\aucon.obj
 e:\xeneva project\aurora\kernelaa64\arm64\debug\aucon.asm
-e:\xeneva project\aurora\kernelaa64\arm64\debug\vma.obj
-e:\xeneva project\aurora\kernelaa64\arm64\debug\vma.asm
 e:\xeneva project\aurora\kernelaa64\arm64\debug\shm.obj
 e:\xeneva project\aurora\kernelaa64\arm64\debug\shm.asm
 e:\xeneva project\aurora\kernelaa64\arm64\debug\pmmngr.obj
@@ -78,6 +76,8 @@ e:\xeneva project\aurora\kernelaa64\arm64\debug\ftmngr.obj
 e:\xeneva project\aurora\kernelaa64\arm64\debug\ftmngr.asm
 e:\xeneva project\aurora\kernelaa64\arm64\debug\vfs.obj
 e:\xeneva project\aurora\kernelaa64\arm64\debug\vfs.asm
+e:\xeneva project\aurora\kernelaa64\arm64\debug\vdisk.obj
+e:\xeneva project\aurora\kernelaa64\arm64\debug\vdisk.asm
 e:\xeneva project\aurora\kernelaa64\arm64\debug\string.obj
 e:\xeneva project\aurora\kernelaa64\arm64\debug\string.asm
 e:\xeneva project\aurora\kernelaa64\arm64\debug\stdio.obj
@@ -94,6 +94,8 @@ e:\xeneva project\aurora\kernelaa64\arm64\debug\pcie.obj
 e:\xeneva project\aurora\kernelaa64\arm64\debug\pcie.asm
 e:\xeneva project\aurora\kernelaa64\arm64\debug\vmmngr.obj
 e:\xeneva project\aurora\kernelaa64\arm64\debug\vmmngr.asm
+e:\xeneva project\aurora\kernelaa64\arm64\debug\vma.obj
+e:\xeneva project\aurora\kernelaa64\arm64\debug\vma.asm
 e:\xeneva project\aurora\kernelaa64\arm64\debug\vc142.pdb
 e:\xeneva project\aurora\kernelaa64\arm64\debug\aa64vector.obj
 e:\xeneva project\aurora\kernelaa64\arm64\debug\aa64lowlevel.obj

@@ -112,19 +112,17 @@ void AuPL031RTCIRQHandle() {
  * AuPL031RTCInit -- initialize pl031 rtc
  */
 void AuPL031RTCInit() {
-	mask_irqs();
 	memset(&__rtc, 0, sizeof(AuRTC));
 	GICEnableIRQ(QEMU_VIRT_RTCIRQ);
 
 	rtc_write32(RTC_BASE + PL031_RTC_LR, 1);
 	rtc_write32(RTC_BASE + PL031_RTC_MR, 0);
-	rtc_write32(RTC_BASE + PL031_RTC_CR, 2);
+	rtc_write32(RTC_BASE + PL031_RTC_CR, 1);
 
 	//AuRTCClearInterrupt();
 	AuRTCEnableInterrupt();
 
 	AuTextOut("PL031 RTC Initialized \n");
-	enable_irqs();
 }
 
 /*

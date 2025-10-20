@@ -2,8 +2,15 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="surface.cpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="crt_arm64.s" />
+    <CustomBuild Include="_fastcpy_arm64.s" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="deodxr.h" />
+    <ClInclude Include="_fastcpy.h" />
+    <ClInclude Include="surface.h" />
   </ItemGroup>
 </Project>

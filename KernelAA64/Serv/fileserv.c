@@ -58,7 +58,7 @@ int OpenFile(char* filename, int mode) {
 	char fname[128];
 	memset(fname, 0, 128);
 	fname[127] = '\0';
-	strncpy(fname, filename, 11);
+	strcpy(fname, filename);
 	AuVFSNode* fsys = AuVFSFind(fname);
 	int fd = AuProcessGetFileDesc(current_proc);
 	AuVFSNode* file = AuVFSOpen(fname);
