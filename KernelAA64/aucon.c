@@ -443,3 +443,23 @@ void AuTextOut(const char* format, ...) {
 void AuConsoleEarlyEnable(bool value) {
 	aucon->early_mode = value;
 }
+
+/*
+ * AuConsoleGetScreenWidth -- return the screen
+ * width
+ */
+uint32_t AuConsoleGetScreenWidth() {
+	if (!aucon)
+		return 0;
+	return aucon->width;
+}
+
+/*
+ * AuConsoleGetScreenHeight -- return the screen
+ * height
+ */
+uint32_t AuConsoleGetScreenHeight() {
+	if (!aucon)
+		return 0;
+	return aucon->height;
+}

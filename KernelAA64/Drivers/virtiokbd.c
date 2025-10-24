@@ -38,7 +38,7 @@
 #include <Mm/vmmngr.h>
 #include <Hal/AA64/sched.h>
 
-#define OFFSETOF(s,m) ((size_t)&(((s*)0)->m))
+
 struct VirtioQueue* queue;
 struct VirtioInputEvent* input;
 static uint16_t index;
@@ -113,12 +113,11 @@ void AuVirtioKbdHandler(int spinum) {
 /*
  * AuVirtioKbdInitialize -- initialize the virtio keyboard
  */
-void AuVirtioKbdInitialize() {
+void AuVirtioKbdInitialize(uint64_t device) {
 	int bus = 0;
 	int func = 0;
 	int dev = 0;
 	index = 0;
-	uint64_t device = AuPCIEScanVendorDevice(0x1AF4, 0x1052, &bus, &dev, &func);
 	if (device == 0xFFFFFFFF)
 		return 1;
 	UARTDebugOut("[aurora]: Virtio Keyboard device found \n");
@@ -133,7 +132,6 @@ void AuVirtioKbdInitialize() {
 	uint64_t barLo = AuPCIERead(device, PCI_BAR4, bus, dev, func);
 	uint64_t barHi = AuPCIERead(device, PCI_BAR5, bus, dev, func);
 	uint64_t bar = ((uint64_t)barHi << 32) | (barLo & ~0xFULL);
-	AuTextOut("[virtio-gpu] Base Address Register : %x \n", bar);
 	uint64_t finalAddr = (uint64_t)AuMapMMIO(bar, 2);
 	struct VirtioDeviceConfig* cfg = (struct VirtioDeviceConfig*)(bar + 0x2000);
 	cfg->select = 1;

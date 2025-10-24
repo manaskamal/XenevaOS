@@ -39,36 +39,20 @@
 #include <sys/iocodes.h>
 #include <draw.h>
 #include "surface.h"
+#include "deodxr.h"
+#include "cursor.h"
 
 uint32_t screen_w;
 uint32_t screen_h;
 int postbox_fd;
+int mouse_fd;
+int kybrd_fd;
+Cursor* arrow;
+Cursor* currentCursor;
 
 extern "C" int _fltused = 1;
 
-#pragma pack(push,1)
-typedef struct _bmp_ {
-	unsigned short type;
-	unsigned int size;
-	unsigned short resv1;
-	unsigned short resv2;
-	unsigned int off_bits;
-}BMP;
 
-typedef struct _info_ {
-	unsigned int biSize;
-	long biWidth;
-	long biHeight;
-	unsigned short biPlanes;
-	unsigned short biBitCount;
-	unsigned int biCompression;
-	unsigned int biSizeImage;
-	long biXPelsPerMeter;
-	long biYPelsPerMeter;
-	unsigned int biClrUsed;
-	unsigned int biClrImportant;
-}BMPInfo;
-#pragma pack(pop)
 
 /*
  * DeodhaiXR -- The Graphics compositing pipeline
@@ -121,7 +105,50 @@ int main(int argc, char* argv[]){
 	_KePrint("Postbox fd created : %d \n", postbox_fd);
 	_KeFileIoControl(postbox_fd, POSTBOX_CREATE_ROOT, NULL);
 
+
+	//arrow = CursorOpen("/pointer.bmp", CURSOR_TYPE_POINTER);
+	//CursorRead(arrow);
+	//currentCursor = arrow;
+
+	mouse_fd = _KeOpenFile("/dev/mice", FILE_OPEN_READ_ONLY);
+	kybrd_fd = _KeOpenFile("/dev/kybrd", FILE_OPEN_READ_ONLY);
+	AuInputMessage mice_input;
+	AuInputMessage kybrd_input;
+	memset(&mice_input, 0, sizeof(AuInputMessage));
+	memset(&kybrd_input, 0, sizeof(AuInputMessage));
+
 	while (1) {
+		_KeReadFile(mouse_fd, &mice_input, sizeof(AuInputMessage));
+		_KeReadFile(kybrd_fd, &kybrd_input, sizeof(AuInputMessage));
+
+		if (mice_input.type == AU_INPUT_MOUSE) {
+			int32_t cursor_x = mice_input.xpos;
+			int32_t cursor_y = mice_input.ypos;
+
+			/*currentCursor->xpos = cursor_x;
+			currentCursor->ypos = cursor_y;
+			int button = mice_input.button_state;
+
+			if ((currentCursor->xpos) <= 0)
+				currentCursor->xpos = 0;
+
+			if ((currentCursor->ypos) <= 0)
+				currentCursor->ypos = 0;
+
+			if ((currentCursor->xpos + 24) >= canv->screenWidth)
+				currentCursor->xpos = canv->screenWidth - 24;
+
+			if ((currentCursor->ypos + 24) >= canv->screenHeight)
+				currentCursor->ypos = canv->screenHeight - 24;
+
+			if (currentCursor->xpos >= canv->screenWidth)
+				currentCursor->xpos = 0;
+
+			if (currentCursor->ypos >= canv->screenHeight)
+				currentCursor->ypos = 0;*/
+			_KePrint("MouseX: %d , MouseY: %d \n", cursor_x, cursor_y);
+			memset(&mice_input, 0, sizeof(AuInputMessage));
+		}
 		_KeProcessSleep(16);
 		_KePrint("DeodhaiXR after sleep \n");
 	}

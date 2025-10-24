@@ -109,13 +109,15 @@ struct VirtioInputEvent {
 };
 #pragma pack(pop)
 
+#define OFFSETOF(s,m) ((size_t)&(((s*)0)->m))
+
 /*
  * AuVirtioKbdInitialize -- initialize the virtio keyboard
  */
-extern void AuVirtioKbdInitialize();
+extern void AuVirtioKbdInitialize(uint64_t device);
 
 /*
  * AuVirtioTabletInitialize -- initialize virtio tablet
  */
-extern void AuVirtioTabletInitialize();
+extern void AuVirtioTabletInitialize(uint64_t device);
 #endif

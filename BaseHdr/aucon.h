@@ -81,4 +81,16 @@ AU_EXTERN AU_EXPORT void AuTextOut(const char* text, ...);
 */
 void AuConsoleEarlyEnable(bool value);
 
+/*
+ * AuConsoleGetScreenWidth -- return the screen
+ * width
+ */
+extern uint32_t AuConsoleGetScreenWidth();
+
+/*
+ * AuConsoleGetScreenHeight -- return the screen
+ * height
+ */
+extern uint32_t AuConsoleGetScreenHeight();
+
 #endif

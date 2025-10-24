@@ -30,4 +30,47 @@
 #ifndef __DEODHAI_XR_H__
 #define __DEODHAI_XR_H__
 
+#include <stdint.h>
+
+#define AU_INPUT_MOUSE  1
+#define AU_INPUT_KEYBOARD 2
+
+#pragma pack(push,1)
+/* Copied from kernel*/
+typedef struct _au_input_msg_ {
+	uint8_t type;
+	int32_t xpos;
+	int32_t ypos;
+	uint8_t button_state;
+	uint32_t code;
+	uint32_t code1;
+	uint32_t code3;
+	uint32_t code4;
+}AuInputMessage;
+#pragma pack(pop)
+
+#pragma pack(push,1)
+typedef struct _bmp_ {
+	unsigned short type;
+	unsigned int size;
+	unsigned short resv1;
+	unsigned short resv2;
+	unsigned int off_bits;
+}BMP;
+
+typedef struct _info_ {
+	unsigned int biSize;
+	long biWidth;
+	long biHeight;
+	unsigned short biPlanes;
+	unsigned short biBitCount;
+	unsigned int biCompression;
+	unsigned int biSizeImage;
+	long biXPelsPerMeter;
+	long biYPelsPerMeter;
+	unsigned int biClrUsed;
+	unsigned int biClrImportant;
+}BMPInfo;
+#pragma pack(pop)
+
 #endif

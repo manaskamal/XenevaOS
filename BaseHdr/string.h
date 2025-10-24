@@ -53,6 +53,7 @@ AU_EXTERN{
 	AU_EXPORT int memcmp(const void *first, const void *second, size_t length);
 	AU_EXPORT void* memmove(void*, const void*, size_t);
 	AU_EXPORT char* strdup(const char*  c);
+	AU_EXPORT char* strstr(const char* s1, const char* s2);
 
 #ifdef __cplusplus
 }

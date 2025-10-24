@@ -123,6 +123,8 @@ void AuEntryTest2(uint64_t test) {
 	}
 }
 
+
+
 /*
  * _AuMain -- the main entry point for kernel
  * @param info -- Kernel Boot information passed
@@ -154,7 +156,10 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	AuInitialiseSHMMan();
 
 	/* initialize our basic requirement */
-	AuVirtioKbdInitialize();
+#ifdef __TARGET_BOARD_QEMU_VIRT__
+	/* for qemu virt board, virtIO inputs are used */
+	AuVirtIOInputInitialize();
+#endif
 
 	/* required virtio-mouse and keyboard */
 	//Here goes board pre driver initialize

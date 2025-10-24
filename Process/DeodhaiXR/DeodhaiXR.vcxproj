@@ -27,6 +27,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="cursor.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="surface.cpp" />
   </ItemGroup>
@@ -38,6 +39,7 @@
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="cursor.h" />
     <ClInclude Include="deodxr.h" />
     <ClInclude Include="surface.h" />
     <ClInclude Include="_fastcpy.h" />

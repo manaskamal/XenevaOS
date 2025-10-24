@@ -3,6 +3,7 @@
   <ItemGroup>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="surface.cpp" />
+    <ClCompile Include="cursor.cpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="crt_arm64.s" />
@@ -12,5 +13,6 @@
     <ClInclude Include="deodxr.h" />
     <ClInclude Include="_fastcpy.h" />
     <ClInclude Include="surface.h" />
+    <ClInclude Include="cursor.h" />
   </ItemGroup>
 </Project>
