@@ -165,6 +165,12 @@ AU_EXTERN AU_EXPORT AA64Thread* AuThreadFindByIDBlockList(uint64_t id);
  */
 AU_EXTERN AU_EXPORT void AuThreadMoveToTrash(AA64Thread* t);
 
+/*
+ * AuGetSystemTimerTick -- return the current system
+ * timer tick
+ */
+extern uint64_t AuGetSystemTimerTick();
+
 #endif
 
 #endif

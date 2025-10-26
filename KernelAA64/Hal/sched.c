@@ -63,6 +63,7 @@ AA64Thread* current_thread;
 AA64Thread* _idle_thr;
 uint64_t thread_id;
 bool _scheduler_initialized;
+uint64_t scheduler_tick;
 
 void AuThreadInsert(AA64Thread* new_task) {
 	new_task->next = NULL;
@@ -367,7 +368,7 @@ sched:
 		runThr->x29 = regs->x29;
 	}
 
-
+	scheduler_tick++;
 	AuHandleSleepThreads();
 	AA64NextThread();
 	write_both_ttbr(V2P(current_thread->pml));
@@ -429,6 +430,7 @@ void AuSchedulerInitialize() {
 	_idle_thr = idle_;
 	current_thread = idle_;
 	_scheduler_initialized = false;
+	scheduler_tick = 0;
 }
 
 /*
@@ -558,4 +560,12 @@ void AuThreadMoveToTrash(AA64Thread* t) {
 
 	/* insert it in the trash list */
 	AuThreadInsertTrash(t);
+}
+
+/*
+ * AuGetSystemTimerTick -- return the current system
+ * timer tick
+ */
+uint64_t AuGetSystemTimerTick() {
+	return scheduler_tick;
 }

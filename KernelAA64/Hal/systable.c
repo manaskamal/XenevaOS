@@ -87,7 +87,7 @@ static void* syscalls[AURORA_MAX_SYSCALL] = {
 	ProcessSleep, //23
 	0, //24
 	0, //25
-	0, //26
+	AuGetSystemTimerTick, //26
 	AuFTMngrGetFontID, //27
 	AuFTMngrGetNumFonts, //28
 	AuFTMngrGetFontSize, //29
