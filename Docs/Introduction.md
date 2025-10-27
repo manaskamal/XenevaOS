@@ -34,6 +34,7 @@ __Kernel__ :
 - [Threading in Xeneva](Kernel/Thread.md)
 - [Drivers](Kernel/Drivers.md)
 - [USB](Kernel/usb.md)
+- [Kernel Service Calls](Kernel/KernelServices.md)
 
 __Components__ :
 - [XELoader](XELoader.md)

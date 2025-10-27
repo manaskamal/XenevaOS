@@ -30,4 +30,24 @@ ProcessSleep:
 	  ret
 ```
 
+## Kernel Service calls
+
+The Kernel maintains a service call dispatch table, which maps each Kernel handler function to each respective system call number.
+
+| Service Number | Symbol Name | Description | 
+|----------------|-------------|-------------|
+| 0 | ``null_call`` | _Does nothing, returns 0_ |
+| 1 | ``SeTextOut/UARTDebugOut`` | _Uses Kernel serial console output to print user space messages_ |
+| 2 | ``PauseThread`` | _Put currently running thread to block queue_ |
+|3 | ``GetThreadID`` | _Returns currently running thread ID_ |
+| 4 | ``GetProcessID`` | _Returns current running process ID_ |
+|5 | ``ProcessExit`` | _Terminate and deallocate all resources of current running process_ |
+| 6 | ``ProcessWaitForTermination`` | _Put the currently running process into wait queue untill desired process terminates. Desired process ID is taken as argument by current process_ |
+| 7 | ``CreateProcess`` | _Create a new process slot in Kernel_ |
+|8 | ``ProcessLoadExec`` | _Loads an executable to provided process slot_ |
+| 9| ``CreateSharedMem`` | _Create a shared memory segment into current process slot_ |
+| 10 | ``ObtainSharedMem`` | _Maps and return a pointer to shared memory address which mapped to the physical addresses of provided shared memory segment_ |
+| ..|
+
+
 
