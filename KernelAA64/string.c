@@ -1,7 +1,6 @@
 #include <stdint.h>
 #include <_null.h>
 
-
 #define MAX_STRING_LENGTH 4095
 
 typedef size_t WT;

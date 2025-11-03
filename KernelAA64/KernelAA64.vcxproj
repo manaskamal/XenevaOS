@@ -196,7 +196,7 @@
       <RandomizedBaseAddress />
       <FixedBaseAddress>false</FixedBaseAddress>
       <DataExecutionPrevention />
-      <AdditionalOptions> %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions> /def:exports.def %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
       <Command>copy "$(SolutionDir)Build\EFI\XENEVA\$(TargetName).exe" "R:\EFI\XENEVA\$(TargetName).exe"</Command>
@@ -338,6 +338,9 @@
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">clang --target=aarch64-windows-msvc -c -o "$(IntDir)%(Filename).obj" "%(FullPath)"</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">$(IntDir)%(Filename).obj</Outputs>
     </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="exports.def" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

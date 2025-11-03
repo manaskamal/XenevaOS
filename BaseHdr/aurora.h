@@ -47,7 +47,7 @@
 #ifdef __cplusplus
 #define AU_EXTERN  extern "C"
 #else
-#define AU_EXTERN 
+#define AU_EXTERN extern
 #endif
 
 

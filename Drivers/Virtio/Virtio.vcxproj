@@ -191,7 +191,7 @@
       <FixedBaseAddress>false</FixedBaseAddress>
     </Link>
     <PostBuildEvent>
-      <Command>copy "..\..\Build\$(TargetName).dll" "R:\$(TargetName).dll"</Command>
+      <Command>copy "..\..\Build\$(TargetName).dll" "M:\$(TargetName).dll"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">

@@ -230,4 +230,7 @@
       <Filter>Include\Drivers</Filter>
     </ClInclude>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="exports.def" />
+  </ItemGroup>
 </Project>

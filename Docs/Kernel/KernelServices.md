@@ -47,7 +47,10 @@ The Kernel maintains a service call dispatch table, which maps each Kernel handl
 |8 | ``ProcessLoadExec`` | _Loads an executable to provided process slot_ |
 | 9| ``CreateSharedMem`` | _Create a shared memory segment into current process slot_ |
 | 10 | ``ObtainSharedMem`` | _Maps and return a pointer to shared memory address which mapped to the physical addresses of provided shared memory segment_ |
-| ..|
+| 11 | ``UnmapSharedMem`` | _Unmap a shared memory from current process, Shared memory segment is not freed unless it is detached from all attached processes_ |
+|12 | ``OpenFile`` | _Open a file on Kernel and return its file descriptor allocated on the current process slot_ |
+
+
 
 
 

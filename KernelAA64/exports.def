@@ -1,0 +1,5 @@
+LIBRARY xnkrnl.exe
+EXPORTS
+     isb_flush
+     dsb_ish
+     memset

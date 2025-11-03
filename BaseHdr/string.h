@@ -36,6 +36,7 @@
 #ifdef __cplusplus
 AU_EXTERN{
 #endif
+
 	/*
 	 * Global Functions !!
 	 */

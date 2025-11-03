@@ -54,12 +54,14 @@ void AuDumpRegisters(AA64Thread* thr, AA64Registers* regs) {
     UARTDebugOut("x14: %x x15: %x \n", regs->x14, regs->x15);
     UARTDebugOut("x16: %x x17: %x \n", regs->x16, regs->x17);
     UARTDebugOut("x18: %x \n", regs->x18);
-    UARTDebugOut("x19: %x x20: %x \n", thr->x19, thr->x20);
-    UARTDebugOut("x21: %x X22: %x \n", thr->x21, thr->x22);
-    UARTDebugOut("x23: %x x24: %x \n", thr->x23, thr->x24);
-    UARTDebugOut("x25: %x x26: %x \n", thr->x25, thr->x26);
-    UARTDebugOut("x27: %x x28: %x \n", thr->x27, thr->x28);
-    UARTDebugOut("x29: %x x30: %x \n", thr->x29, thr->x30);
+    if (thr) {
+        UARTDebugOut("x19: %x x20: %x \n", thr->x19, thr->x20);
+        UARTDebugOut("x21: %x X22: %x \n", thr->x21, thr->x22);
+        UARTDebugOut("x23: %x x24: %x \n", thr->x23, thr->x24);
+        UARTDebugOut("x25: %x x26: %x \n", thr->x25, thr->x26);
+        UARTDebugOut("x27: %x x28: %x \n", thr->x27, thr->x28);
+        UARTDebugOut("x29: %x x30: %x \n", thr->x29, thr->x30);
+    }
 }
 
 void sync_el1_handler(AA64Registers *regs) {
