@@ -89,9 +89,10 @@ struct virtio_gpu_set_scanout {
 #pragma pack(push,1)
 struct virtio_gpu_transfer_to_host_2d {
 	struct virtio_gpu_ctrl_hdr hdr;
-	uint32_t resource_id;
 	struct virtio_gpu_rect rect;
 	uint64_t offset;
+	uint32_t resource_id;
+	uint32_t padding;
 };
 #pragma pack(pop)
 

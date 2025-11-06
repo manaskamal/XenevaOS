@@ -68,9 +68,7 @@ AU_EXTERN AU_EXPORT int AuDriverUnload() {
  * @param queueIdx -- queue index
  */
 void AuVirtioGPUAllocQueue(virtio_common_config* cfg, uint16_t queueIdx) {
-	AuTextOut("CFG : %x \n", cfg);
 	int queueSz = cfg->queue_size;
-	AuTextOut("[virtio-gpu]: queue size : %d \n", queueSz);
 	controlQSz = queueSz;
 	uint64_t queuePhys = (uint64_t)AuPmmngrAlloc();//AuPmmngrAllocBlocks(((sizeof(struct VirtioQueue) * queueSz)) / 0x1000);
 	controlQ = (struct VirtioQueue*)AuMapMMIO(queuePhys, 1);
@@ -85,18 +83,15 @@ void AuVirtioGPUAllocQueue(virtio_common_config* cfg, uint16_t queueIdx) {
 	cfg->queue_enable = 1;
 	isb_flush();
 	dsb_ish();
-	AuTextOut("Queue created \n");
 }
 
 void VirtioCleanCommandRespPhys() {
-	memset(CommandPhys, 0, 0x1000);
-	memset(ResponsePhys, 0, 0x1000);
+	memset(CommandPhys, 0, 2048);
+	memset(ResponsePhys, 0, 2048);
 }
 
 void VirtioGPUPushCommand(VirtioQueue* vq, void* req, uint32_t reqLen, void* resp, uint32_t rspLen) {
 	uint16_t idx = vq->available.index % controlQSz;
-	AuTextOut("IDX PushCommand : %d \n", idx);
-	AuTextOut("REQ addr : %x, P: %x \n", req, V2P((size_t)req));
 	vq->buffers[idx].Addr = (uint64_t)req;
 	vq->buffers[idx].Length = reqLen;
 	vq->buffers[idx].Flags = VIRTQ_DESC_F_NEXT;
@@ -117,8 +112,6 @@ void VirtioGPUPushCommand(VirtioQueue* vq, void* req, uint32_t reqLen, void* res
 
 void VirtioGPUAttachBackingCmd(VirtioQueue* vq, void* req, uint32_t reqLen,void* req2, uint32_t reqLen2,void* resp, uint32_t rspLen) {
 	uint16_t idx = vq->available.index % controlQSz;
-	AuTextOut("IDX PushCommand : %d \n", idx);
-	AuTextOut("REQ addr : %x, P: %x \n", req, V2P((size_t)req));
 	vq->buffers[idx].Addr = (uint64_t)req;
 	vq->buffers[idx].Length = reqLen;
 	vq->buffers[idx].Flags = VIRTQ_DESC_F_NEXT;
@@ -147,7 +140,6 @@ void VirtioNotifyQueue(virtio_common_config * cfg, uint16_t queueIdx) {
 	uint16_t notify_off = cfg->queue_notify_off;
 
 	volatile uint16_t* notifyAddr = (volatile uint16_t*)((uint64_t)notifyBase + notify_off * notifyOffMultiplier);
-	AuTextOut("Notify Addre VirtioNotifyQueue : %x \n", notifyAddr);
 	*notifyAddr = queueIdx;
 
 	isb_flush();
@@ -157,6 +149,16 @@ void VirtioNotifyQueue(virtio_common_config * cfg, uint16_t queueIdx) {
 
 #define VIRTIO_GPU_FORMAT_B8G8R8A8_UNORM 1
 #define GPU_FB_BUFFER 0xFFFFD00000500000
+
+void VirtioGPUPutPixel(uint32_t x, uint32_t y, uint32_t color) {
+	uint32_t* lfb = (uint32_t*)GPU_FB_BUFFER;
+	lfb[static_cast<uint64_t>(y) * 1024 + x] = color;
+}
+void VirtioGPUFillColor(uint32_t width, uint32_t height,uint32_t color) {
+	for (int i = 0; i < width; i++)
+		for (int j = 0; j < height; j++)
+			VirtioGPUPutPixel(i,j, color);
+}
 
 void VirtioGPUCreateFB(virtio_common_config *cfg) {
 	virtio_gpu_resource_create_2d* create = (virtio_gpu_resource_create_2d*)CommandPhys;
@@ -168,12 +170,10 @@ void VirtioGPUCreateFB(virtio_common_config *cfg) {
 
 	virtio_gpu_ctrl_hdr* resp = (virtio_gpu_ctrl_hdr*)ResponsePhys;
 	memset(resp, 0, sizeof(virtio_gpu_ctrl_hdr));
-	AuTextOut("VirtioResponse size : %d \n", sizeof(resp));
 	VirtioGPUPushCommand(controlQ, create, sizeof(virtio_gpu_resource_create_2d), resp, sizeof(virtio_gpu_ctrl_hdr));
 	VirtioNotifyQueue(cfg,0);
 
 	for (int i = 0; i < 1000; i++);
-	AuTextOut("Response received : %d \n", resp->type);
 	if (resp->type == VIRTIO_GPU_RESP_OK_NODATA) {
 		AuTextOut("Virtio Response received, and was successfull \n");
 	}
@@ -181,10 +181,11 @@ void VirtioGPUCreateFB(virtio_common_config *cfg) {
 	uint64_t sz = 1024 * 760 * 4;
 	for (int i = 0; i < sz / 0x1000; i++) {
 		uint64_t phys = (uint64_t)AuPmmngrAlloc();
-		AuMapPage(phys, GPU_FB_BUFFER + i * PAGE_SIZE, PTE_NORMAL_MEM);
+		AuMapPage(phys, GPU_FB_BUFFER + i * PAGE_SIZE, PTE_DEVICE_MEM);
 		if (fb_phys == 0)
 			fb_phys = phys;
 	}
+
 
 	VirtioCleanCommandRespPhys();
 
@@ -195,8 +196,6 @@ void VirtioGPUCreateFB(virtio_common_config *cfg) {
 	attach->entries[0].addr = fb_phys;
 	attach->entries[0].length = 1024 * 760 * 4;
 
-	AuTextOut("Framebuffer physical address : %x \n", fb_phys);
-
 
 	VirtioGPUPushCommand(controlQ, attach, sizeof(virtio_gpu_resource_attach_backing), resp, sizeof(virtio_gpu_ctrl_hdr));
 	VirtioNotifyQueue(cfg, 0);
@@ -204,7 +203,6 @@ void VirtioGPUCreateFB(virtio_common_config *cfg) {
 
 	for (int i = 0; i < 1000; i++);
 
-	AuTextOut("Response Data after attach backing : %x \n", resp->type);
 	if (resp->type == VIRTIO_GPU_RESP_OK_NODATA) {
 		AuTextOut("Response received successfully \n");
 	}
@@ -224,7 +222,6 @@ void VirtioGPUCreateFB(virtio_common_config *cfg) {
 	VirtioNotifyQueue(cfg, 0);
 
 	for (int i = 0; i < 1000; i++);
-	AuTextOut("Response Data after scanout settings : %x \n", resp->type);
 	if (resp->type == VIRTIO_GPU_RESP_OK_NODATA) {
 		AuTextOut("Response received successfully \n");
 	}
@@ -242,10 +239,41 @@ void VirtioGPUCreateFB(virtio_common_config *cfg) {
 	VirtioNotifyQueue(cfg, 0);
 
 	for (int i = 0; i < 1000; i++);
-	AuTextOut("Response Data after flush : %x \n", resp->type);
 	if (resp->type == VIRTIO_GPU_RESP_OK_NODATA) {
 		AuTextOut("Response received successfully \n");
 	}
+}
+
+
+void VirtioFillScreen(virtio_common_config* cfg) {
+	VirtioGPUFillColor(1024, 760, 0xFFFF0000);
+	VirtioCleanCommandRespPhys();
+	virtio_gpu_transfer_to_host_2d* host2d = (virtio_gpu_transfer_to_host_2d*)CommandPhys;
+	host2d->hdr.type = VIRTIO_GPU_CMD_TRANSFER_TO_HOST2D;
+	host2d->rect.x = 0;
+	host2d->rect.y = 0;
+	host2d->rect.width = 1024;
+	host2d->rect.height = 760;
+	host2d->offset = 0;
+	host2d->resource_id = 1;
+	virtio_gpu_ctrl_hdr* resp = (virtio_gpu_ctrl_hdr*)ResponsePhys;
+	VirtioGPUPushCommand(controlQ, host2d, sizeof(virtio_gpu_transfer_to_host_2d), resp, sizeof(virtio_gpu_ctrl_hdr));
+	VirtioNotifyQueue(cfg, 0);
+
+	for (int i = 0; i < 1000; i++);
+
+	VirtioCleanCommandRespPhys();
+
+	virtio_gpu_resource_flush* flush = (virtio_gpu_resource_flush*)CommandPhys;
+	flush->hdr.type = VIRTIO_GPU_CMD_RESOURCE_FLUSH;
+	flush->resource_id = 1;
+	flush->rect.x = 0;
+	flush->rect.y = 0;
+	flush->rect.width = 1024;
+	flush->rect.height = 760;
+	VirtioGPUPushCommand(controlQ, flush, sizeof(virtio_gpu_resource_flush), resp, sizeof(virtio_gpu_ctrl_hdr));
+	VirtioNotifyQueue(cfg, 0);
+
 }
 
 /*
@@ -312,9 +340,9 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 	dsb_ish();
 
 	CommandPhys = (uint64_t*)AuPmmngrAlloc();
-	ResponsePhys = (uint64_t*)AuPmmngrAlloc();
-	memset(CommandPhys, 0, 0x1000);
-	memset(ResponsePhys, 0, 0x1000);
+	ResponsePhys = (uint64_t*)((uint64_t)CommandPhys + 2048);
+	memset(CommandPhys, 0, 2048);
+	memset(ResponsePhys, 0, 2048);
 	AuTextOut("[virtio-gpu]: Reset completed, num scanount : %d \n", gpu_cfg->num_scanouts);
 	AuVirtioGPUAllocQueue(cfg, 0);
 
@@ -322,6 +350,7 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 
 	AuTextOut("[virtio-gpu]: Framebuffer created \n");
 
-	for (;;);
+	VirtioFillScreen(cfg);
+
 	return 0;
 }
