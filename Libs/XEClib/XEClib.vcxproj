@@ -198,7 +198,7 @@
       <AdditionalOptions>/filealign:4096 /def:_export_arm64.def %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
-      <Command>copy "..\..\Build\$(TargetName).dll" M:\$(TargetName).dll" </Command>
+      <Command>copy "..\..\Build\$(TargetName).dll" M:\$(TargetName).exe" </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">

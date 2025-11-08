@@ -49,7 +49,6 @@ void XELoaderAddObject(XELoaderObject* obj) {
 		obj->prev = obj_last;
 	}
 	obj_last = obj;
-	_KePrint("***Obj next : %x\n", obj->next);
 }
 
 /*

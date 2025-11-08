@@ -1,9 +1,13 @@
 e:\xeneva project\aurora\process\deodhaixr\arm64\debug\vc142.pdb
 e:\xeneva project\aurora\process\deodhaixr\arm64\debug\surface.obj
 e:\xeneva project\aurora\process\deodhaixr\arm64\debug\main.obj
+e:\xeneva project\aurora\process\deodhaixr\arm64\debug\dirty.obj
 e:\xeneva project\aurora\process\deodhaixr\arm64\debug\cursor.obj
+e:\xeneva project\aurora\process\deodhaixr\arm64\debug\backdirty.obj
 e:\xeneva project\aurora\process\deodhaixr\arm64\debug\crt_arm64.obj
 e:\xeneva project\aurora\process\deodhaixr\arm64\debug\_fastcpy_arm64.obj
+e:\xeneva project\aurora\arm64\debug\deodxr.lib
+e:\xeneva project\aurora\arm64\debug\deodxr.exp
 e:\xeneva project\aurora\build\deodxr.exe
 e:\xeneva project\aurora\build\deodxr.map
 e:\xeneva project\aurora\process\deodhaixr\arm64\debug\deodhaixr.tlog\cl.command.1.tlog
@@ -12,6 +16,7 @@ e:\xeneva project\aurora\process\deodhaixr\arm64\debug\deodhaixr.tlog\cl.write.1
 e:\xeneva project\aurora\process\deodhaixr\arm64\debug\deodhaixr.tlog\custombuild.command.1.tlog
 e:\xeneva project\aurora\process\deodhaixr\arm64\debug\deodhaixr.tlog\custombuild.read.1.tlog
 e:\xeneva project\aurora\process\deodhaixr\arm64\debug\deodhaixr.tlog\custombuild.write.1.tlog
+e:\xeneva project\aurora\process\deodhaixr\arm64\debug\deodhaixr.tlog\deodhaixr.write.1u.tlog
 e:\xeneva project\aurora\process\deodhaixr\arm64\debug\deodhaixr.tlog\link.command.1.tlog
 e:\xeneva project\aurora\process\deodhaixr\arm64\debug\deodhaixr.tlog\link.read.1.tlog
 e:\xeneva project\aurora\process\deodhaixr\arm64\debug\deodhaixr.tlog\link.write.1.tlog

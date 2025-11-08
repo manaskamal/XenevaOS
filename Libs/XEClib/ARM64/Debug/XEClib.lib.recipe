@@ -1,10 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project>
-  <ProjectOutputs>
-    <ProjectOutput>
-      <FullPath>E:\Xeneva Project\Aurora\ARM64\Debug\XEClib.lib</FullPath>
-    </ProjectOutput>
-  </ProjectOutputs>
+  <ProjectOutputs />
   <ContentFiles>
     <ContentFile>
       <FullPath>E:\Xeneva Project\Aurora\Libs\XEClib\sys\_procheap.cpp</FullPath>

@@ -4,6 +4,8 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="surface.cpp" />
     <ClCompile Include="cursor.cpp" />
+    <ClCompile Include="dirty.cpp" />
+    <ClCompile Include="backdirty.cpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="crt_arm64.s" />
@@ -14,5 +16,7 @@
     <ClInclude Include="_fastcpy.h" />
     <ClInclude Include="surface.h" />
     <ClInclude Include="cursor.h" />
+    <ClInclude Include="dirty.h" />
+    <ClInclude Include="backdirty.h" />
   </ItemGroup>
 </Project>

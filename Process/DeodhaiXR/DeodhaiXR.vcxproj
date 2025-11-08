@@ -27,7 +27,9 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="backdirty.cpp" />
     <ClCompile Include="cursor.cpp" />
+    <ClCompile Include="dirty.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="surface.cpp" />
   </ItemGroup>
@@ -39,8 +41,10 @@
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="backdirty.h" />
     <ClInclude Include="cursor.h" />
     <ClInclude Include="deodxr.h" />
+    <ClInclude Include="dirty.h" />
     <ClInclude Include="surface.h" />
     <ClInclude Include="_fastcpy.h" />
   </ItemGroup>

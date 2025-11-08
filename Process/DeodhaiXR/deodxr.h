@@ -35,6 +35,15 @@
 #define AU_INPUT_MOUSE  1
 #define AU_INPUT_KEYBOARD 2
 
+
+typedef struct _rect_ {
+	int32_t x;
+	int32_t y;
+	int32_t w;
+	int32_t h;
+}Rect;
+
+
 #pragma pack(push,1)
 /* Copied from kernel*/
 typedef struct _au_input_msg_ {

@@ -194,12 +194,17 @@ int XELdrStartProc(char* filename, XELoaderObject *obj) {
 			int req_pages = sect_sz / 4096 +
 				((sect_sz % 4096) ? 1 : 0);
 			uint64_t* block = 0;
+			_KeFileSetOffset(file, secthdr[i].PointerToRawData);
 			for (int j = 0; j < req_pages; j++) {
 				uint64_t* alloc = (uint64_t*)_KeMemMap(NULL, 4096, 0, 0, -1, 0);
 				if (!block)
 					block = alloc;
 				
 				int bytes = _KeReadFile(file, alloc, 4096);
+				_KeFileStat(file, stat);
+				if (stat->eof) {
+					_KePrint("File already ended \n");
+				}
 				ret_bytes += bytes;
 				obj->len += 4096;
 			}
