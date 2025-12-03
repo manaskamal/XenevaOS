@@ -42,6 +42,10 @@
 {0x9042a9de,0x23dc,0x4a38,\
 {0x96,0xfb,0x7a,0xde,0xd0,0x80,0x51,0x6a}}
 
+#ifdef __TARGET_BOARD_RPI3__
+#define MMIO_BASE 0x3F000000
+#endif
+
 #pragma pack(push,1)
 
 /*
@@ -108,7 +112,9 @@ typedef void(*XEImageEntry)(XEBootInfo*);
 
 struct EfiMemoryMap {
 	EFI_MEMORY_DESCRIPTOR* memmap;
-	uint64_t MemMapSize, MapKey, DescriptorSize;
+	UINTN MemMapSize;
+	UINTN MapKey;
+	UINTN DescriptorSize;
 	UINT32 DescriptorVersion;
 };
 
@@ -130,4 +136,7 @@ extern void* XEAllocatePool(const uint64_t sz);
  * pool memory
  */
 extern void XEFreePool(void* Buffer);
+
+extern void ASCIIToChar16(const char* src, wchar_t* dst);
+extern void Char16ToASCII(char* dest, CHAR16* src);
 #endif

@@ -32,6 +32,7 @@
 #include <Protocol/LoadFile.h>
 #include <Protocol\LoadedImage.h>
 #include <Guid\FileInfo.h>
+#include "lowlevel.h"
 
 EFI_GUID FileSystemProtocol = {
 	0x964E5B22,
@@ -65,6 +66,26 @@ EFI_GUID GenericFileInfo = {
 {0x9576e93, 0x6d3f, 0x11d2, {0x8e, 0x39, 0x0, 0xa0, 0xc9, 0x69, 0x72, 0x3b }}
 
 
+void cleandcache_to_pou_by_va(size_t va_start, UINTN size) {
+	size_t a = va_start & ~(size_t)63;
+	size_t end = (va_start + size + 63) & ~(size_t)63;
+	for (; a < end; a += 64) {
+		dc_cvau(a);
+	}
+	dsb_ish();
+	isb_flush();
+}
+
+void invalidate_icache_by_va(size_t va_start, UINTN size) {
+	uintptr_t a = va_start & ~(size_t)63;
+	uintptr_t end = (va_start + size + 63) & ~(size_t)63;
+	for (; a < end; a += 64) {
+		ic_ivau(a);
+	}
+
+	dsb_ish();
+	isb_flush();
+}
 /*
  * XEOpenAndReadFile -- open and reads a file
  * @param ImageHandle -- Image handle passed by EFI firmware
@@ -80,7 +101,7 @@ XEFile* XEOpenAndReadFile(EFI_HANDLE ImageHandle, CHAR16* Filename) {
 	EFI_FILE_INFO* FileInfo;
 	UINTN FileInfoSize = 0;
 	UINTN FileSize;
-	VOID* Buffer;
+	EFI_PHYSICAL_ADDRESS Buffer;
 	XEFile* xefile;
 
 	EFI_GUID sfsprotocol = EFI_SIMPLE_FILE_SYSTEM_PROTOCOL_GUID;
@@ -131,14 +152,16 @@ XEFile* XEOpenAndReadFile(EFI_HANDLE ImageHandle, CHAR16* Filename) {
 	FileSize = FileInfo->FileSize;
 	gBS->FreePool(FileInfo);
 
-	Status = gBS->AllocatePool(EfiBootServicesData, FileSize + 1, &Buffer);
+	//Status = gBS->AllocatePool(EfiBootServicesData, FileSize + 1, &Buffer);
+	Status = gBS->AllocatePages(AllocateAnyPages, EfiLoaderData, (FileSize + 1)/0x1000, &Buffer);
 	if (EFI_ERROR(Status)) {
 		XEGuiPrint("Failed to allocate buffer for file content \n");
 		File->Close(File);
 		return 0;
 	}
 
-	Status = File->Read(File, &FileSize, Buffer);
+	void* readBuff = (void*)Buffer;
+	Status = File->Read(File, &FileSize, readBuff);
 	if (EFI_ERROR(Status)) {
 		XEGuiPrint("Failed to read file \n");
 		File->Close(File);
@@ -152,10 +175,13 @@ XEFile* XEOpenAndReadFile(EFI_HANDLE ImageHandle, CHAR16* Filename) {
 		return 0;
 	}
 	memset(xefile, 0, sizeof(XEFile));
-	xefile->kBuffer = Buffer;
+	xefile->kBuffer = (void*)Buffer;
 	xefile->FileSize = FileSize;
 	File->Close(File);
 	Root->Close(Root);
+
+	cleandcache_to_pou_by_va((size_t)readBuff, (FileSize + 1) / 0x1000);
+	invalidate_icache_by_va((size_t)readBuff, (FileSize + 1) / 0x1000);
 	return xefile;
 }
 

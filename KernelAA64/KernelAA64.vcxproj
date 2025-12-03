@@ -161,7 +161,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>ARCH_ARM64;__TARGET_BOARD_QEMU_VIRT__;_USE_LIBALLOC;__STDC_LIMIT_MACROS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>ARCH_ARM64;__TARGET_BOARD_RPI3__;_USE_LIBALLOC;__STDC_LIMIT_MACROS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>Default</ConformanceMode>
       <AdditionalIncludeDirectories>..\BaseHdr;..\Acpica\include;..\Acpica;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
@@ -199,7 +199,7 @@
       <AdditionalOptions> /def:exports.def %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
-      <Command>copy "$(SolutionDir)Build\EFI\XENEVA\$(TargetName).exe" "R:\EFI\XENEVA\$(TargetName).exe"</Command>
+      <Command>copy "$(SolutionDir)Build\EFI\XENEVA\$(TargetName).exe" "M:\EFI\XENEVA\$(TargetName).exe"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -277,6 +277,7 @@
     <ClCompile Include="Mm\shm.c" />
     <ClCompile Include="Mm\vma.c" />
     <ClCompile Include="Mm\vmmngr.c" />
+    <ClCompile Include="Net\ipv4.c" />
     <ClCompile Include="pcie.c" />
     <ClCompile Include="pe.c" />
     <ClCompile Include="process.c" />
@@ -314,6 +315,7 @@
     <ClInclude Include="..\BaseHdr\Hal\AA64\aa64lowlevel.h" />
     <ClInclude Include="..\BaseHdr\Hal\AA64\gic.h" />
     <ClInclude Include="..\BaseHdr\Hal\AA64\qemu.h" />
+    <ClInclude Include="..\BaseHdr\Hal\AA64\rpi3.h" />
     <ClInclude Include="..\BaseHdr\Hal\AA64\sched.h" />
     <ClInclude Include="..\BaseHdr\Hal\AA64\vector.h" />
     <ClInclude Include="..\BaseHdr\kernelAA64.h" />

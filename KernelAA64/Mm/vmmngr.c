@@ -64,11 +64,12 @@ size_t pt_index(uint64_t virt) {
  * AuVmmngrInitialize -- initialize the virtual memory manager
  */
 void AuVmmngrInitialize() {
+	AuTextOut("[aurora]: initializing virtual memory manager \r\n");
 	uint64_t* previousL0 = (uint64_t*)read_ttbr0_el1();
 	uint64_t* newL0 = AuPmmngrAlloc();
 	memset(newL0, 0, PAGE_SIZE);
 
-	
+	AuTextOut("[aurora]: new l0 allocated \r\n");
 	for (int i = 0; i < 512; i++) {
 	/*	if (i == 512)
 			continue;
@@ -95,10 +96,12 @@ void AuVmmngrInitialize() {
 	uint64_t* newL1 = AuPmmngrAlloc();
 	memset(newL1, 0, PAGE_SIZE);
 	newL0[pml4_index(PHYSICAL_MEM_BASE)] = (uint64_t)newL1 | PTE_VALID | PTE_TABLE | PTE_AF;
+	data_cache_flush(&newL0[pml4_index(PHYSICAL_MEM_BASE)]);
 
 	for (int i = 0; i < 512; i++) {
 		uint64_t addr = i << 30;
 		newL1[pdpt_index(PHYSICAL_MEM_BASE) + i] = (addr | (0 << 54) | (0 << 53) | (1 << 10) | (3 << 8) | (0 << 6) | (0 << 2) | 0b01);
+		data_cache_flush(&newL1[pdpt_index(PHYSICAL_MEM_BASE) + i]);
 	}
 
 	write_ttbr0_el1(newL0);
@@ -107,6 +110,8 @@ void AuVmmngrInitialize() {
 	_RootPaging = newL0;
 
 	AuPmmngrMoveHigher();
+
+	tlb_flush_vmalle1is();
 
 	_MMIOBase = (uint64_t*)MMIO_BASE;
 }
@@ -137,6 +142,7 @@ bool AuMapPage(uint64_t phys_addr, uint64_t virt_addr, uint8_t attrib) {
 		const uint64_t page = (uint64_t)AuPmmngrAlloc();
 		pml4i[i4] = (page & ~0xFFFUL) | PTE_VALID | PTE_TABLE | PTE_AF;
 		memset((void*)P2V(page), 0, 4096);
+		data_cache_flush(&pml4i[i4]);
 	}
 	uint64_t* pml3 = (uint64_t*)P2V((pml4i[i4] & ~0xFFFULL));
 
@@ -145,6 +151,7 @@ bool AuMapPage(uint64_t phys_addr, uint64_t virt_addr, uint8_t attrib) {
 		const uint64_t page = (uint64_t)AuPmmngrAlloc();
 		pml3[i3] = (page & ~0xFFFUL) | PTE_VALID | PTE_TABLE | PTE_AF;
 		memset((void*)P2V(page), 0, 4096);
+		data_cache_flush(&pml3[i3]);
 	}
 
 
@@ -155,6 +162,7 @@ bool AuMapPage(uint64_t phys_addr, uint64_t virt_addr, uint8_t attrib) {
 		const uint64_t page = (uint64_t)AuPmmngrAlloc();
 		pml2[i2] = (page & ~0xFFFUL) | PTE_VALID | PTE_TABLE | PTE_AF;
 		memset((void*)P2V(page), 0, 4096);
+		data_cache_flush(&pml2[i2]);
 
 	}
 
@@ -168,6 +176,7 @@ bool AuMapPage(uint64_t phys_addr, uint64_t virt_addr, uint8_t attrib) {
 
 	pml1[i1] = (phys_addr & ~0xFFFULL) | flags;
 	virt_addr &= ~0xFFFULL;
+	data_cache_flush(&pml1[i1]);
 	tlb_flush(virt_addr);
 	return true;
 }

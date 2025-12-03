@@ -57,6 +57,10 @@ extern "C" {
 
 	void write_ttbr1_el1(uint64_t* base);
 
+	uint64_t read_ttbr1_el2();
+
+	uint64_t read_ttbr0_el2();
+
 	uint64_t read_tcr_el1();
 
 	void write_tcr_el1(uint64_t tcr);
@@ -78,6 +82,10 @@ extern "C" {
 	 */
 	void write_sctlr_el1(uint64_t sctlr);
 
+	uint64_t read_spsr_el2();
+
+	void write_spsr_el2(uint64_t spsr);
+
 	/*
 	 * dsb_ish -- data syncronization barrier inner shareablity memory
 	 * flush, which makes the previous memory access visible for
@@ -92,6 +100,18 @@ extern "C" {
 	void isb_flush();
 
 	void tlb_flush(uint64_t virtul_addr);
+
+	uint64_t read_esr_el1();
+
+	uint64_t read_far_el1();
+
+	uint64_t read_elr_el1();
+
+	void write_vbar_el1(uint64_t vecbase);
+
+	void dc_cvau(uint64_t a);
+
+	void ic_ivau(uint64_t a);
 
 	void callKernel(void* param, uint64_t stack, uint64_t stacksize, void* entry);
 

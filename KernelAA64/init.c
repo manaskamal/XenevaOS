@@ -133,14 +133,18 @@ void AuEntryTest2(uint64_t test) {
 void _AuMain(KERNEL_BOOT_INFO* info) {
     _littleboot_used = false;
     if (info->boot_type == BOOT_LITTLEBOOT_ARM64) {
-        AuUartPutString("[aurora]:Kernel is booted using LittleBoot ARM64 \n");
+        AuUartPutString("[aurora]:Kernel is booted using LittleBoot ARM64 \r\n");
         _littleboot_used = true;
     }
 	AuConsoleInitialize(info, true);
     AuDeviceTreeInitialize(info);
 	AA64CpuInitialize();
+	AuTextOut("[aurora]: CPU initialized \r\n");
 	AuPmmngrInitialize(info);
 	AuVmmngrInitialize();
+	AuTextOut("[aurora]: virtual memory manager initialized \r\n");
+	AuTextOut("[aurora]: test physical memory alloc : %x \r\n", AuPmmngrAlloc());
+	for (;;);
 	AuHeapInitialize();
 
 	AuDeviceTreeMapMMIO();

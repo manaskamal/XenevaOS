@@ -53,6 +53,38 @@ There are two reason -
 
 MMIO are mapped through '___AuMapMMIO'___  function call, ```AuMapMMIO(uint64_t physicalAddr, size_t sizeOfTheAddress)```, Once mapped successfully, it will return the virtual address where you can write to give command to or control the hardware.
 
+## Memory Flags Descriptions related to Driver development
+| _Flag_ | _Description_ |
+|--------|-------------|
+| X86_64_PAGING_NO_EXECUTE | Marks the virtual page as non executable | 
+| X86_64_PAGING_NO_CACHING | Marks the page as non cacheable [ ***Important for mmio memory mappings*** ]
+|X86_64_PAGING_WRITE_THROUGH | Marks the page as write through |
+| PTE_ATTR_IDX_0 (__ARM64__)| Marks the page as device memory |
+|PTE_ATTR_IDX_1 (__ARM64__) | Marks the page as Normal memory |
+| PTE_NORMAL_MEM (__ARM64__) | Same as PTE_ATTR_IDX_1 | 
+|PTE_DEVICE_MEM (__ARM64__) | Same as PTE_ATTR_IDX_0 | 
+| PTE_KERNEL_NOT_EXECUTABLE (__ARM64__) | Marks the page as non executable |
+
+
+### X86_64_PAGING_WRITE_THROUGH :
+This flag typically refers to the use of write-through caching policy. In a write-through enabled page, data is simultaneously updated in both the cache and the main memory, ensuring data consistency.
+
+## Interrupt Handling
+Interrupt handling is the mechanism for responding to external events that require immediate attention from the CPU, such as USB interrupt transfer or I2C-slave interrupt. In Xeneva, interrupts are handles through MSI/MSI-X signal to processor both in x86_64 and ARM64 architecture. Generic interrupt id allocation through Device Tree is supported in ARM64 architecture. Legacy PCI-interrupt routing is not supported.
+
+### SPI ID and Interrupt Vector allocation
+For Xeneva both the terms are similar only the difference is the architecture. The term SPI (Shared Peripheral Interrupt) is used in ARM64 architecture while the term Vector allocation is used in x86_64 architecture.
+
+| ***Function*** | ***Description*** |
+|----------|-------------|
+| ``int AuGICAllocateSPI`` | Allocates an SPI ID from Kernel and return it to driver |
+| ``void AuGICDeallocateSPI`` | Deallocate an used SPI ID from kernel and mark it as usable |
+| ``void setvect`` | Used in x86_64, to allocate a interrupt number within the IDT table |
+| ``bool AuPCIEAllocMSI`` | Allocate MSI/MSI-X with given SPI/Vector number. *NOTE: This function will automatically allocate MSI or MSI-X for particular device through its PCI configuration* |
+
+### Interrupt Service Routine (ISR)
+In general definition, Interrupt Service Routine (ISR) is a piece of software that runs when an interrupt signal is received, causing the processor to pause its current task to handle an urgent event. 
+
 
 
 ## ***TODO***

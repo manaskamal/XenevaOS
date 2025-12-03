@@ -39,6 +39,7 @@ extern "C"
 #endif
 
 
+	typedef unsigned char* va_list;
 
 #define STACKITEM 8
 

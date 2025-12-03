@@ -59,7 +59,6 @@
 
 #define KERNEL_STACK_SIZE  40960//16384  //16KiB
 
-#pragma pack(push,1)
 typedef struct _lbprotocol_ {
 	uint64_t initrd_start;
 	uint64_t initrd_end;
@@ -87,7 +86,7 @@ typedef struct _lbprotocol_ {
 	uint64_t physicalEnd;
 	uint64_t numberOfPages;
 }AuLittleBootProtocol;
-#pragma pack(pop)
+
 
 
 #define BOOT_UEFI_x64 1
@@ -96,7 +95,7 @@ typedef struct _lbprotocol_ {
 /**
 * Kernel Boot information structure passed by XNLDR
 */
-#pragma pack (push,1)
+
 typedef struct _KERNEL_BOOT_INFO_ {
 	/* Boot type either UEFI_BOOT or BIOS_BOOT */
 	int boot_type;
@@ -161,6 +160,6 @@ typedef struct _KERNEL_BOOT_INFO_ {
 	uint32_t uid;
 	uint32_t cid;
 }KERNEL_BOOT_INFO, *PKERNEL_BOOT_INFO;
-#pragma pack(pop)
+
 
 #endif

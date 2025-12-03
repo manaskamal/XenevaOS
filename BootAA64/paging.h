@@ -38,10 +38,12 @@
 #define PAGE_TABLE_ENTRY_PAGE (1UL << 1)
 #define PAGE_TABLE_ENTRY_AF  (1UL << 10)
 #define PAGE_TABLE_ENTRY_SH (3UL << 8)
+#define PAGE_TABLE_ENTRY_SH_NONE (0UL << 8)
 #define PAGE_TABLE_ENTRY_AP_RW (0UL << 6)
 #define PAGE_TABLE_ENTRY_MEMATTR (1UL << 2)
 #define PAGE_TABLE_ENTRY_PXN (1UL << 53)
 #define PAGE_TABLE_ENTRY_UXN (1UL << 54)
+#define PAGE_TABLE_ENTRY_DEVICE (0ULL << 2)
 
 #define PAGE_FLAGS (PAGE_TABLE_ENTRY_PRESENT | PAGE_TABLE_ENTRY_PAGE | PAGE_TABLE_ENTRY_AF | \
 PAGE_TABLE_ENTRY_SH | PAGE_TABLE_ENTRY_AP_RW | PAGE_TABLE_ENTRY_MEMATTR);
@@ -59,5 +61,5 @@ extern void XEPagingInitialize();
 extern void XEPagingMap(uint64_t virtualAddr, uint64_t physAddr);
 
 
-
+extern void XEPagingCopy();
 #endif

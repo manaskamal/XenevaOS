@@ -30,6 +30,11 @@
 #ifndef __AA64_HARDCODE_H__
 #define __AA64_HARDCODE_H__
 
+#ifdef __TARGET_BOARD_QEMU_VIRT__
 #include <Hal/AA64/qemu.h>
+#elif __TARGET_BOARD_RPI3__
+#include <Hal/AA64/rpi3.h>
+#endif
+
 
 #endif

@@ -9,6 +9,9 @@
     <ContentFile>
       <FullPath>E:\Xeneva Project\Aurora\BootAA64\lowlevel.s</FullPath>
     </ContentFile>
+    <ContentFile>
+      <FullPath>E:\Xeneva Project\Aurora\BootAA64\vectoraa64.s</FullPath>
+    </ContentFile>
   </ContentFiles>
   <SatelliteDlls />
   <NonRecipeFileRefs />

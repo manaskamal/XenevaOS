@@ -65,7 +65,7 @@ void AA64ClockInitialize() {
 	cpuFrequency = val / 10000;
 
 	basisTime = AA64GetPhysicalTimerCount() / cpuFrequency;
-	AuTextOut("[aurora]: using %d mHZ \n", cpuFrequency);
+	AuTextOut("[aurora]: using %d mHZ \r\n", cpuFrequency);
 
 	
 }
@@ -75,37 +75,37 @@ void AA64CPUImplementer(uint32_t midr) {
 	uint8_t arch = (midr >> 16) & 0xF;
 	switch (iid) {
 	case CPU_IMPLEMENTER_ARM:
-		AuTextOut("CPU Implementer: ARM Limited \n");
+		AuTextOut("CPU Implementer: ARM Limited \r\n");
 		break;
 	case CPU_IMPLEMENTER_BROADCOM:
-		AuTextOut("CPU Implementer: Broadcom\n");
+		AuTextOut("CPU Implementer: Broadcom \r\n");
 		break;
 	case CPU_IMPLEMENTER_CAVIUM:
-		AuTextOut("CPU Implementer: Cavium \n");
+		AuTextOut("CPU Implementer: Cavium \r\n");
 		break;
 	case CPU_IMPLEMENTER_FUJITSU:
-		AuTextOut("CPU Implementer: Fujitsu \n");
+		AuTextOut("CPU Implementer: Fujitsu \r\n");
 		break;
 	case CPU_IMPLEMENTER_INTEL:
-		AuTextOut("CPU Implementer: Intel \n");
+		AuTextOut("CPU Implementer: Intel \r\n");
 		break;
 	case CPU_IMPLEMENTER_APPLIED_MICRO:
-		AuTextOut("CPU Implementer: Applied Micro\n");
+		AuTextOut("CPU Implementer: Applied Micro \r\n");
 		break;
 	case CPU_IMPLEMENTER_QUALCOMM:
-		AuTextOut("CPU Implementer: Qualcomm \n");
+		AuTextOut("CPU Implementer: Qualcomm \r\n");
 		break;
 	case CPU_IMPLEMENTER_MARVELL:
-		AuTextOut("CPU Implementer: Marvell \n");
+		AuTextOut("CPU Implementer: Marvell \r\n");
 		break;
 	case CPU_IMPLEMENTER_APPLE:
-		AuTextOut("CPU Implementer: Apple \n");
+		AuTextOut("CPU Implementer: Apple \r\n");
 		break;
 	default:
-		AuTextOut("CPU Implementer: Unknown \n");
+		AuTextOut("CPU Implementer: Unknown \r\n");
 		break;
 	}
-	AuTextOut("CPU Architecture: ARMv8-A(%x)\n", arch);
+	AuTextOut("CPU Architecture: ARMv8-A(%x) \r\n", arch);
 }
 
 extern void enableAlignCheck();
@@ -127,7 +127,14 @@ void AA64CpuInitialize() {
 	/* enable FPU and NEON */
 	AA64FPUNeonEnable();
 
-	enableAlignCheck();
+	/* because little boot always enable align check 
+	 * so skip this
+	 */
+	if (!AuLittleBootUsed())
+		enableAlignCheck();
+
+	uint32_t id = read_midr();
+	AA64CPUImplementer(id);
 
 	enable_irqs();
 

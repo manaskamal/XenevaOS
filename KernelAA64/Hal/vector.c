@@ -43,24 +43,24 @@ extern uint64_t read_sp();
 extern uint64_t read_sp_el1();
 
 void AuDumpRegisters(AA64Thread* thr, AA64Registers* regs) {
-    UARTDebugOut("===REGISTER DUMP===\n");
-    UARTDebugOut("x0: %x x1: %x \n", regs->x0, regs->x1);
-    UARTDebugOut("x2: %x x3: %x \n", regs->x2, regs->x3);
-    UARTDebugOut("x4: %x x5: %x \n", regs->x4, regs->x5);
-    UARTDebugOut("x6: %x x7: %x \n", regs->x6, regs->x7);
-    UARTDebugOut("x8: %x x9: %x \n", regs->x8, regs->x9);
-    UARTDebugOut("x10: %x x11: %x \n", regs->x10, regs->x11);
-    UARTDebugOut("x12: %x x13: %x \n", regs->x12, regs->x13);
-    UARTDebugOut("x14: %x x15: %x \n", regs->x14, regs->x15);
-    UARTDebugOut("x16: %x x17: %x \n", regs->x16, regs->x17);
-    UARTDebugOut("x18: %x \n", regs->x18);
+    UARTDebugOut("===REGISTER DUMP===\r\n");
+    UARTDebugOut("x0: %x x1: %x \r\n", regs->x0, regs->x1);
+    UARTDebugOut("x2: %x x3: %x \r\n", regs->x2, regs->x3);
+    UARTDebugOut("x4: %x x5: %x \r\n", regs->x4, regs->x5);
+    UARTDebugOut("x6: %x x7: %x \r\n", regs->x6, regs->x7);
+    UARTDebugOut("x8: %x x9: %x \r\n", regs->x8, regs->x9);
+    UARTDebugOut("x10: %x x11: %x \r\n", regs->x10, regs->x11);
+    UARTDebugOut("x12: %x x13: %x \r\n", regs->x12, regs->x13);
+    UARTDebugOut("x14: %x x15: %x \r\n", regs->x14, regs->x15);
+    UARTDebugOut("x16: %x x17: %x \r\n", regs->x16, regs->x17);
+    UARTDebugOut("x18: %x \r\n", regs->x18);
     if (thr) {
-        UARTDebugOut("x19: %x x20: %x \n", thr->x19, thr->x20);
-        UARTDebugOut("x21: %x X22: %x \n", thr->x21, thr->x22);
-        UARTDebugOut("x23: %x x24: %x \n", thr->x23, thr->x24);
-        UARTDebugOut("x25: %x x26: %x \n", thr->x25, thr->x26);
-        UARTDebugOut("x27: %x x28: %x \n", thr->x27, thr->x28);
-        UARTDebugOut("x29: %x x30: %x \n", thr->x29, thr->x30);
+        UARTDebugOut("x19: %x x20: %x \r\n", thr->x19, thr->x20);
+        UARTDebugOut("x21: %x X22: %x \r\n", thr->x21, thr->x22);
+        UARTDebugOut("x23: %x x24: %x \r\n", thr->x23, thr->x24);
+        UARTDebugOut("x25: %x x26: %x \r\n", thr->x25, thr->x26);
+        UARTDebugOut("x27: %x x28: %x \r\n", thr->x27, thr->x28);
+        UARTDebugOut("x29: %x x30: %x \r\n", thr->x29, thr->x30);
     }
 }
 
@@ -77,20 +77,20 @@ void sync_el1_handler(AA64Registers *regs) {
     uint32_t ec = (esr >> 26) & 0x3F;
 
    
-    UARTDebugOut("=======Synchronous Exception occured=========\n");
-    UARTDebugOut("Fault Address (FAR_EL1): %x \n", read_far_el1());
+    UARTDebugOut("=======Synchronous Exception occured========= \r\n");
+    UARTDebugOut("Fault Address (FAR_EL1): %x \r\n", read_far_el1());
     //UARTDebugOut("Fault Address String (FAR_EL1): %s \n", read_far_el1());
-    UARTDebugOut("Fault Instruction (ELR_EL1): %x \n", read_elr_el1());
-    UARTDebugOut("SP_EL1: %x  \n", read_sp());
-    UARTDebugOut("SP_EL0 : %x \n", regs->EL0SP);
+    UARTDebugOut("Fault Instruction (ELR_EL1): %x \r\n", read_elr_el1());
+    UARTDebugOut("SP_EL1: %x  \r\n", read_sp());
+    UARTDebugOut("SP_EL0 : %x \r\n", regs->EL0SP);
     AA64Thread* currthr = AuGetCurrentThread();
     if (currthr) {
-        UARTDebugOut("Current Thread: %s \n", currthr->name);
+        UARTDebugOut("Current Thread: %s \r\n", currthr->name);
         AuDumpRegisters(currthr, regs);
     }
 
     if (ec == 0x25) {
-        UARTDebugOut("Stack alignment fault \n");
+        UARTDebugOut("Stack alignment fault \r\n");
         AuDumpRegisters(currthr, regs);
     }
 
@@ -114,21 +114,21 @@ void sync_el1_handler(AA64Registers *regs) {
     uint32_t dfsc = esr & 0x3F;
 
     switch (dfsc) {
-    case 0b000000: UARTDebugOut("Address size, fault level 0\n"); break;
-    case 0b000001: UARTDebugOut("Address Size, fault level 1\n"); break;
-    case 0b000010: UARTDebugOut("Address size, fault level 2\n"); break;
-    case 0b000011: UARTDebugOut("Address size, fault level 3 \n"); break;
-    case 0b000100: UARTDebugOut("translation, fault level 0\n"); break;
-    case 0b000101: UARTDebugOut("translation, fault level 1\n"); break;
-    case 0b000110: UARTDebugOut("translation, fault level 2\n"); break;
-    case 0b000111: UARTDebugOut("translation, fault level 3\n"); break;
-    case 0b001001: UARTDebugOut("access flag, fault level 1\n"); break;
-    case 0b001010: UARTDebugOut("access flag, fault level 2\n"); break;
-    case 0b001011: UARTDebugOut("access flag, fault level 3\n"); break;
-    case 0b001101: UARTDebugOut("permission fault, level 1\n"); break;
-    case 0b001110: UARTDebugOut("permission fault, level 2\n"); break;
-    case 0b001111: UARTDebugOut("permission fault, level 3\n"); break;
-    default: UARTDebugOut("Unknown fault code \n"); break;
+    case 0b000000: UARTDebugOut("Address size, fault level 0 \r\n"); break;
+    case 0b000001: UARTDebugOut("Address Size, fault level 1 \r\n"); break;
+    case 0b000010: UARTDebugOut("Address size, fault level 2 \r\n"); break;
+    case 0b000011: UARTDebugOut("Address size, fault level 3 \r\n"); break;
+    case 0b000100: UARTDebugOut("translation, fault level 0 \r\n"); break;
+    case 0b000101: UARTDebugOut("translation, fault level 1 \r\n"); break;
+    case 0b000110: UARTDebugOut("translation, fault level 2 \r\n"); break;
+    case 0b000111: UARTDebugOut("translation, fault level 3 \r\n"); break;
+    case 0b001001: UARTDebugOut("access flag, fault level 1 \r\n"); break;
+    case 0b001010: UARTDebugOut("access flag, fault level 2 \r\n"); break;
+    case 0b001011: UARTDebugOut("access flag, fault level 3 \r\n"); break;
+    case 0b001101: UARTDebugOut("permission fault, level 1 \r\n"); break;
+    case 0b001110: UARTDebugOut("permission fault, level 2 \r\n"); break;
+    case 0b001111: UARTDebugOut("permission fault, level 3 \r\n"); break;
+    default: UARTDebugOut("Unknown fault code \r\n"); break;
     }
 	while (1) {}
 }

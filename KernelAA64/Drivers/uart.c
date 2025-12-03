@@ -85,13 +85,13 @@ void uartPuts(const char* s) {
 		uartPutc(*s++);
 }
 
+extern void AuUartPutString(const char* s);
 /*
  * UARTDebugOut -- standard text printing function
  * for early kernel using UART
  * @param text -- text to output
  */
 void UARTDebugOut_Call(const char* format, void* reg_save_area, void* entry_sp) {
-
 	va_list args = ((va_list)reg_save_area + 8);
 	while (*format)
 	{

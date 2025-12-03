@@ -120,6 +120,9 @@
     <ClCompile Include="Drivers\virtiotablet.c">
       <Filter>Drivers</Filter>
     </ClCompile>
+    <ClCompile Include="Net\ipv4.c">
+      <Filter>Net</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Hal">
@@ -228,6 +231,9 @@
     </ClInclude>
     <ClInclude Include="..\BaseHdr\Drivers\virtio.h">
       <Filter>Include\Drivers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\Hal\AA64\rpi3.h">
+      <Filter>Include\Hal</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

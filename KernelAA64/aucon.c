@@ -59,6 +59,11 @@ void(*_print_func) (const char* text, ...);
 #define CONSOLE_BACKGROUND 0x00000000
 #define CONSOLE_FOREGROUND 0xFFFFFFFF
 
+extern void AuUartPutString(const char* s);
+
+void AuTestPrint() {
+	AuUartPutString("Upto here \r\n");
+}
 /*
  * AuConsoleInitialize -- initialize kernel direct screen
  * console
@@ -68,8 +73,10 @@ void AuConsoleInitialize(PKERNEL_BOOT_INFO info, bool early) {
 	if (early) {
 		_print_func = info->printf_gui;
 		early_ = early;
-		if (info->boot_type == BOOT_LITTLEBOOT_ARM64)
+		if (info->boot_type == BOOT_LITTLEBOOT_ARM64) {
 			_print_func = UARTDebugOut;
+			AuUartPutString("[aurora]: printf function set to UARTDebugOut \r\n");
+		}
 	}
 	aucon = NULL;
 }

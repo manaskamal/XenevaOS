@@ -33,7 +33,6 @@
 #include "video.h"
 
 
-typedef unsigned char* va_list;
 
 /*
  * XEClearScreen -- clears the screen

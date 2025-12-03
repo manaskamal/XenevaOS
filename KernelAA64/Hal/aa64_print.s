@@ -27,6 +27,7 @@
 *
 **/
 .extern UARTDebugOut_Call
+.extern AuTestPrint
 
 .global UARTDebugOut
 UARTDebugOut:
@@ -40,10 +41,10 @@ UARTDebugOut:
     stp x4, x5, [sp,#32]
     stp x6,x7,[sp,#48]
 
-    stp q0,q1,[sp,#64]
-    stp q2,q3,[sp,#96]
-    stp q4,q5,[sp,#128]
-    stp q6,q7,[sp,#160]
+    //stp q0,q1,[sp,#64]
+    //stp q2,q3,[sp,#96]
+    //stp q4,q5,[sp,#128]
+    //stp q6,q7,[sp,#160]
 
     ldr x0,[sp,#0]
     mov x1,sp

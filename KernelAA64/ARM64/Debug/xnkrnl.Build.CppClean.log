@@ -92,6 +92,8 @@ e:\xeneva project\aurora\kernelaa64\arm64\debug\pe.obj
 e:\xeneva project\aurora\kernelaa64\arm64\debug\pe.asm
 e:\xeneva project\aurora\kernelaa64\arm64\debug\pcie.obj
 e:\xeneva project\aurora\kernelaa64\arm64\debug\pcie.asm
+e:\xeneva project\aurora\kernelaa64\arm64\debug\ipv4.obj
+e:\xeneva project\aurora\kernelaa64\arm64\debug\ipv4.asm
 e:\xeneva project\aurora\kernelaa64\arm64\debug\vmmngr.obj
 e:\xeneva project\aurora\kernelaa64\arm64\debug\vmmngr.asm
 e:\xeneva project\aurora\kernelaa64\arm64\debug\vma.obj

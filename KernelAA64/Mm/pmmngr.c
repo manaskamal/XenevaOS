@@ -185,8 +185,8 @@ void AuPmmngrInitialize(KERNEL_BOOT_INFO* info) {
 		LBMemoryRegion* memRegn = (LBMemoryRegion*)lb->usable_memory_map;
 
 		if (!lb) {
-			AuTextOut("[aurora]:Booting from non-UEFI boot environment but missing LittleBoot protocol \n");
-			AuTextOut("[aurora]:Unable to continue Kernel initialization \n");
+			AuTextOut("[aurora]:Booting from non-UEFI boot environment but missing LittleBoot protocol \r\n");
+			AuTextOut("[aurora]:Unable to continue Kernel initialization \r\n");
 			for (;;);
 		}
 		for (size_t i = 0; i < lb->usable_region_count; i++) {
@@ -195,17 +195,17 @@ void AuPmmngrInitialize(KERNEL_BOOT_INFO* info) {
 			if (((numPages * 4096) > 0x1F0000) && BitmapArea == 0) {
 				BitmapArea = (void*)base;
 			}
-			AuTextOut("[aurora]: Usable memory Base : %x , PageCount : %d \n", base, numPages);
+			AuTextOut("[aurora]: Usable memory Base : %x , PageCount : %d \r\n", base, numPages);
 		}
 		_TotalRam = lb->numberOfPages;
-		AuTextOut("Total Ram : %d Pages \n", _TotalRam);
-		AuTextOut("Memory Start : %x, Memory End : %x \n", lb->physicalStart, lb->physicalEnd);
+		AuTextOut("Total Ram : %d Pages \r\n", _TotalRam);
+		AuTextOut("Memory Start : %x, Memory End : %x \r\n", lb->physicalStart, lb->physicalEnd);
 	}
 
 	//AuPmmngrEarlyVMSetup(info);
 
 	_FreeMemory = _TotalRam;
-	AuTextOut("Total RAM : %x \n", (_TotalRam * 0x1000));
+	AuTextOut("Total RAM : %x \r\n", (_TotalRam * 0x1000));
 
 	uint64_t BitmapSize = (_TotalRam / 8) + 1; // (_TotalRam * 4096) / 4096 / 8 + 1;
 	UsablePhysicalMemory = ((uint64_t)BitmapArea + BitmapSize);
@@ -247,7 +247,7 @@ void AuPmmngrInitialize(KERNEL_BOOT_INFO* info) {
 	/* need more reservation of memory allocated by initrd and others*/
 	if (info->boot_type == BOOT_LITTLEBOOT_ARM64) {
 		/* reserving DTB area and Kernel INITRD area */
-		AuTextOut("[aurora]: Reserving LittleBoot data \n");
+		AuTextOut("[aurora]: Reserving LittleBoot data \r\n");
 		uint64_t pageCount = 0;
 		AuLittleBootProtocol* lb = (AuLittleBootProtocol*)info->driver_entry1;
 		uint64_t dtb_start = lb->device_tree_base;
@@ -255,6 +255,7 @@ void AuPmmngrInitialize(KERNEL_BOOT_INFO* info) {
 		dtb_end = (dtb_end + 0x1000 - 1) & ~(0x1000 - 1);
 
 		pageCount = (dtb_end - dtb_start) / 0x1000;
+
 		for (int i = 0; i < pageCount; i++) {
 			uint64_t addr = dtb_start + i * 0x1000; //  ((uint64_t)Address - UsablePhysicalMemory);
 			uint64_t Index = (addr - UsablePhysicalMemory);
@@ -276,12 +277,13 @@ void AuPmmngrInitialize(KERNEL_BOOT_INFO* info) {
 		uint64_t lbEnd = lb->littleBootEnd;
 		lbEnd = (lbEnd + 0x1000 - 1) & ~(0x1000 - 1);
 		pageCount = (lbEnd - lbStart) / 0x1000;
+
 		for (int i = 0; i < pageCount; i++) {
 			uint64_t addr = lbStart + i * 0x1000;
 			uint64_t Index = (addr - UsablePhysicalMemory);
 			AuPmmngrLockPage(Index);
 		}
-		AuTextOut("[aurora]: Pmmngr locked LittleBoot reserved memory\n");
+		AuTextOut("[aurora]: Pmmngr locked LittleBoot reserved memory\r\n");
 	}
 }
 

@@ -39,6 +39,8 @@
 #include "physm.h"
 #include "paging.h"
 #include "lowlevel.h"
+#include "uart0.h"
+#include "vector.h"
 
 /* global variable */
 EFI_HANDLE   gImageHandle;
@@ -245,6 +247,42 @@ void Char16ToASCII(char* dest, CHAR16* src) {
 	*dest = '\0';
 }
 
+void ASCIIToChar16(const char* src, wchar_t* dst) {
+	while (*src) {
+		*dst++ = (wchar_t)*src++;
+	}
+	*dst = L'\0';
+}
+
+extern "C" void prepare_el2_exit_phase1();
+extern "C" void prepare_el2_exit_phase2();
+
+
+
+void* kernelBuff;
+uint64_t keBuff;
+
+void XEExitEL2() {
+	uint64_t spsr_el2 = read_spsr_el2();
+	uint64_t sctlr_el1 = read_sctlr_el1();
+
+	prepare_el2_exit_phase1();
+	prepare_el2_exit_phase2();
+	XEUartInitialize();
+	XEUARTPrint("Heyyyyy %x\r\n",0x1234);
+	XEVectorInstall();
+	XEUARTPrint("Installed everything \r\n");
+	XEUARTPrint("Loading PE Image \r\n");
+	XEUARTPrint("KernelBUffer : %x \r\n", kernelBuff);
+	void* paddr = (void*)XEPmmngrAllocate();
+	void* paddr1 = (void*)XEPmmngrAllocate();
+	XEUARTPrint("Physical Address : %x \n", paddr);
+	XEUARTPrint("Physical Address2 : %x \r\n", paddr1);
+	IMAGE_DOS_HEADER* dos_ = (IMAGE_DOS_HEADER*)keBuff; //0x8000000000;
+	XEUARTPrint("DOS Magic : %d \r\n", dos_->e_magic);
+	for (;;);
+}
+
 
 /*
  * efi_main -- main entry of XNLDR 2.0
@@ -256,7 +294,6 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
 
 	Status = XEInitialiseLib(ImageHandle, SystemTable);
 	XEClearScreen();
-
 	XEBootInfo bootinfo;
 	/* Get user graphics resolution choice*/
 	int index = XEGetScreenResolutionMode(SystemTable);
@@ -264,21 +301,34 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
 	UINTN Mode = XESetGraphicsMode(SystemTable, index);
 	XEGuiPrint("XenevaOS Loader 2.0 (XNLDR) ARM64\n");
 	XEGuiPrint("Copyright (C) Manas Kamal Choudhury 2020-2025\n");
-	
+
 	XEGuiPrint("Loading system files.. please wait !! \n");
+
 	/* load all important files */
 	XEFile* krnl = XEOpenAndReadFile(ImageHandle, (CHAR16*)L"\\EFI\\XENEVA\\xnkrnl.exe");
 	uint8_t* alignedKBuf = (uint8_t*)krnl->kBuffer;
+	kernelBuff = krnl->kBuffer;
+	keBuff = (uint64_t)krnl->kBuffer;
 	IMAGE_DOS_HEADER* dosHeader = (IMAGE_DOS_HEADER*)alignedKBuf;
 	IMAGE_NT_HEADERS* ntHeader = (IMAGE_NT_HEADERS*)(alignedKBuf + dosHeader->e_lfanew);
 	bool isKernelValid = false;
-	if (dosHeader->e_magic == 0x5A4D) 
+	if (dosHeader->e_magic == 0x5A4D)
 		isKernelValid = true;
-	
-	if (!isKernelValid)
-		XEGuiPrint("XNLDR: kernel image corrupted \n");
 
-	XEFile* initrd = XEOpenAndReadFile(ImageHandle, (CHAR16*)L"\\initrd2.img");
+	char ps[16];
+	sztoa(dosHeader->e_magic, ps, 16);
+	wchar_t ps16[16];
+	ASCIIToChar16(ps, ps16);
+	XEPrintf(const_cast<wchar_t*>(ps16));
+	XEPrintf(const_cast<wchar_t*>(L"\r\n"));
+	
+	if (!isKernelValid) {
+		XEGuiPrint("XNLDR: kernel image corrupted \n");
+		XEPrintf(const_cast<wchar_t*>(L"Kernel image is corrupted \r\n"));
+		for (;;);
+	}
+
+	//XEFile* initrd = XEOpenAndReadFile(ImageHandle, (CHAR16*)L"\\initrd.img");
 
 	EFI_CONFIGURATION_TABLE* configuration_tables = gSystemTable->ConfigurationTable;
 
@@ -303,56 +353,118 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
 			fdt_address = configuration_tables[i].VendorTable;
 	}
 
+	XEPrintf(const_cast<wchar_t*>(L"fdt loaded : %x \r\n"),fdt_address);
+	
 	const size_t EARLY_PAGE_STACK_SIZE = 1024 * 1024;
 	EFI_PHYSICAL_ADDRESS earlyPhyPageStack = 0;
-	if (!(SystemTable->BootServices->AllocatePages(AllocateAnyPages, EfiLoaderData, EARLY_PAGE_STACK_SIZE / EFI_PAGE_SIZE, (EFI_PHYSICAL_ADDRESS*)&earlyPhyPageStack)))
+	if (!(SystemTable->BootServices->AllocatePages(AllocateAnyPages, EfiLoaderData, EARLY_PAGE_STACK_SIZE / EFI_PAGE_SIZE, (EFI_PHYSICAL_ADDRESS*)&earlyPhyPageStack))) {
 		XEGuiPrint("Early Page Stack: allocation failed.....\n");
+		XEPrintf(const_cast<wchar_t*>(L"Failed to allocate page stack... : "));
+		char ps[16];
+		sztoa(earlyPhyPageStack, ps, 16);
+		wchar_t ps16[16];
+		ASCIIToChar16(ps, ps16);
+		XEPrintf(const_cast<wchar_t*>(ps16));
+		XEPrintf(const_cast<wchar_t*>(L"\r\n"));
 
+	}
 
+	XEPrintf(const_cast<wchar_t*>(L"Pages allocated \r\n"), fdt_address);
 	struct EfiMemoryMap map;
 	EFI_MEMORY_DESCRIPTOR* desc_ptr = nullptr;
 	map.MemMapSize = 0;
 	map.MapKey = map.DescriptorSize = map.DescriptorVersion = 0;
 	map.memmap = 0;
-	Status = gSystemTable->BootServices->GetMemoryMap(&map.MemMapSize, nullptr, &map.MapKey, &map.DescriptorSize, &map.DescriptorVersion);
+	Status = gSystemTable->BootServices->GetMemoryMap(&map.MemMapSize, map.memmap, &map.MapKey, &map.DescriptorSize, &map.DescriptorVersion);
 	if (Status == EFI_BUFFER_TOO_SMALL) {
 		XEGuiPrint("Failed memory map! Buffer to small \n");
+		XEPrintf(const_cast<wchar_t*>(L"Failed memory map ! Buffer to small \r\n"));
 		XEGuiPrint("Required buffer -> %d bytes\n", map.MemMapSize);
+		XEPrintf(const_cast<wchar_t*>(L"Required buffer size : %d \r\n"), map.MemMapSize);
 	}
-	else if (Status == EFI_INVALID_PARAMETER)
+	else if (Status == EFI_INVALID_PARAMETER) {
 		XEGuiPrint("EFI_Memory_Map failed!!, invalid parameter \n");
-	else if (Status != EFI_SUCCESS)
+		XEPrintf(const_cast<wchar_t*>(L"EFI_Memory_Map failed!! invalid parameter \r\n"));
+	}
+	else if (Status != EFI_SUCCESS) {
 		XEGuiPrint("Memory Map Failed \n");
+		XEPrintf(const_cast<wchar_t*>(L"Memory Map failed \r\n"));
+	}
 
+	IMAGE_DOS_HEADER* dos__ = (IMAGE_DOS_HEADER*)kernelBuff;
 
 	//give a nice bit of room to spare
-	map.MemMapSize += 16 * map.DescriptorSize; //sizeof(EFI_MEMORY_DESCRIPTOR);
+	map.MemMapSize += 2 * map.DescriptorSize; //sizeof(EFI_MEMORY_DESCRIPTOR);
 	XEGuiPrint("Memory Map size -> %d \n", map.MemMapSize);
-	map.memmap = (EFI_MEMORY_DESCRIPTOR*)XEAllocatePool(map.MemMapSize);
+	XEPrintf(const_cast<wchar_t*>(L"Memory Map size -> %d \r\n"), map.MemMapSize);
+	if (map.MemMapSize == 0) {
+		map.MemMapSize = 1024;
+		XEPrintf(const_cast<wchar_t*>(L"Memory Map Size was 0 \n"));
+	}
+	VOID* Buffer;
+	Status = SystemTable->BootServices->AllocatePool(EfiLoaderData, map.MemMapSize, &Buffer);
+	if (EFI_ERROR(Status) != 0) {
+		XEPrintf(const_cast<wchar_t*>(L"Failed to allocate pool memory \r\n"));
+	}
+	map.memmap = (EFI_MEMORY_DESCRIPTOR*)Buffer; // XEAllocatePool(map.MemMapSize);
+	uint64_t el = _getCurrentEL();
 
+	char mmaps[16];
+	sztoa(el, mmaps, 10);
+	wchar_t mmap16[16];
+	ASCIIToChar16(mmaps, mmap16);
+	XEPrintf(const_cast<wchar_t*>(L"CurrentEL : "));
+	XEPrintf(const_cast<wchar_t*>(mmap16));
+	XEPrintf(const_cast<wchar_t*>(L"\r\n"));
 	Status = gSystemTable->BootServices->GetMemoryMap(&map.MemMapSize, map.memmap, &map.MapKey, &map.DescriptorSize, &map.DescriptorVersion);
 	if (Status != EFI_SUCCESS)
 		XEGuiPrint("Failed to retrieve memory map \n");
 
+
 	Status = SystemTable->BootServices->ExitBootServices(ImageHandle, map.MapKey);
 	if (Status != EFI_SUCCESS) {
 		XEGuiPrint("Exit Boot Service Failed \n");
+		XEPrintf((wchar_t*)"Exit Boot Service Failed\n");
 		for (;;);
 	}
 
-	XEInitialisePmmngr(map, (void*)earlyPhyPageStack, EARLY_PAGE_STACK_SIZE);
+	//XEPrintf(const_cast<wchar_t*>(L"Exit bootloader successfull \r\n"));
 
+	XEInitialisePmmngr(map, (void*)earlyPhyPageStack, EARLY_PAGE_STACK_SIZE);
 
 	XEPagingInitialize();
 
-
-	XEPELoadImage(krnl->kBuffer);
-
-	for (int i = 0; i < 0x100000 / PAGESIZE; i++) {
-		XEPagingMap(0xFFFFA00000000000 + i * PAGESIZE, XEPmmngrAllocate());
+	if (kernelBuff == 0) {
+		XEPrintf(const_cast<wchar_t*>(L"Sync\r\n"));
 	}
 
+	dos__ = (IMAGE_DOS_HEADER*)kernelBuff;
+	//if (dos__->e_magic == 0x5A4dD) {
 
+		XEPELoadImage((void*)keBuff);
+
+		XEPagingCopy();
+
+		XEExitEL2();
+	//}
+	XEUARTPrint("Loading PE Image \r\n");
+
+	
+
+	//XEPrintf(const_cast<wchar_t*>(L"Kernel image loaded successfully \r\n"));
+	
+	for (int i = 0; i < 0x100000 / PAGESIZE; i++) {
+		XEPagingMap(0x900000000 + i * PAGESIZE, XEPmmngrAllocate());
+	}
+
+	/*
+	 * Changes are made according to RPI_EFI
+	 * kernel is mapped to 0x8000000000 due to there's
+	 * no EL2_TTBR1 for higher half mapping, and also need
+	 * to drop to EL1 before entering Kernel
+	 */
+	
+	for (;;);
 	bootinfo.boot_type = BOOT_UEFI_ARM64;
 	bootinfo.allocated_mem = XEGetAlstackptr();
 	bootinfo.reserved_mem_count = XEReserveMemCount();
@@ -372,21 +484,30 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
 	bootinfo.kernel_size = krnl->FileSize;
 	bootinfo.printf_gui = XEGuiPrint;
 	bootinfo.font_binary_address = 0;
-	bootinfo.driver_entry1 = (uint8_t*)initrd->kBuffer;
+	bootinfo.driver_entry1 = (uint8_t*)0; // initrd->kBuffer;
 	bootinfo.driver_entry2 = 0;
 	bootinfo.driver_entry3 = 0; // (uint8_t*)xhciAddr;// usbAddr;
 	bootinfo.driver_entry4 = 0;
 	bootinfo.driver_entry5 = 0;
 	bootinfo.driver_entry6 = 0;
 	bootinfo.ap_code = fdt_address;
-	bootinfo.hid = initrd->FileSize;
+	bootinfo.hid = 0; // initrd->FileSize;
 	bootinfo.uid = 0;
 	bootinfo.cid = 0;
 
+	uint64_t entryAddr = 0x8000000000 + ntHeader->OptionalHeader.AddressOfEntryPoint;
+	VOID* entry = (VOID*)(0x8000000000 + ntHeader->OptionalHeader.AddressOfEntryPoint);
+	char entry_[16];
+	sztoa(entryAddr, entry_, 16);
+	wchar_t pape16[16];
+	ASCIIToChar16(entry_, pape16);
+	XEPrintf(const_cast<wchar_t*>(L"AddressOfEntryPoint : "));
+	XEPrintf(const_cast<wchar_t*>(pape16));
+	XEPrintf(const_cast<wchar_t*>(L"\r\n"));
+	kentry ke = (kentry)entryAddr;
+	ke(&bootinfo);
+	for (;;);
 
-	VOID* entry = (VOID*)(ntHeader->OptionalHeader.ImageBase + ntHeader->OptionalHeader.AddressOfEntryPoint);
-	kentry ke = (kentry)entry;
-
-	callKernel(&bootinfo, 0xFFFFA00000000000, 0x100000, entry);
+	callKernel(&bootinfo, 0x900000000, 0x100000, entry);
 	while (1);
 }

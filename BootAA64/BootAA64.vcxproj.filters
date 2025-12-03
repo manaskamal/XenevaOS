@@ -10,6 +10,11 @@
     <ClCompile Include="pe.cpp" />
     <ClCompile Include="physm.cpp" />
     <ClCompile Include="paging.cpp" />
+    <ClCompile Include="rpi3b\mbox.cpp">
+      <Filter>rpi3b</Filter>
+    </ClCompile>
+    <ClCompile Include="uart0.cpp" />
+    <ClCompile Include="vector.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="video.h" />
@@ -22,8 +27,20 @@
     <ClInclude Include="physm.h" />
     <ClInclude Include="lowlevel.h" />
     <ClInclude Include="paging.h" />
+    <ClInclude Include="uart0.h" />
+    <ClInclude Include="rpi3b\mbox.h">
+      <Filter>rpi3b</Filter>
+    </ClInclude>
+    <ClInclude Include="gpio.h" />
+    <ClInclude Include="vector.h" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="lowlevel.s" />
+    <CustomBuild Include="vectoraa64.s" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="rpi3b">
+      <UniqueIdentifier>{4a6321dd-5be3-4249-a056-c37dc173c67f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
 </Project>

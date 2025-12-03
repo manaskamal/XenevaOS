@@ -188,7 +188,7 @@
     <ClCompile>
       <WarningLevel>Level1</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>ARCH_ARM64</PreprocessorDefinitions>
+      <PreprocessorDefinitions>ARCH_ARM64; __TARGET_BOARD_RPI3__;</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(SolutionDir)BaseHdr;$(SolutionDir)Boot\include;$(SolutionDir)Boot\include\AArch64;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <IgnoreStandardIncludePath>true</IgnoreStandardIncludePath>
@@ -220,7 +220,7 @@
       <DataExecutionPrevention>false</DataExecutionPrevention>
     </Link>
     <PostBuildEvent>
-      <Command>copy "$(SolutionDir)Build\EFI\BOOT\$(TargetName).efi" "R:\EFI\BOOT\$(TargetName).efi"</Command>
+      <Command>copy "$(SolutionDir)Build\EFI\BOOT\$(TargetName).efi" "F:\EFI\BOOT\$(TargetName).efi"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -262,6 +262,9 @@
     <ClCompile Include="paging.cpp" />
     <ClCompile Include="pe.cpp" />
     <ClCompile Include="physm.cpp" />
+    <ClCompile Include="rpi3b\mbox.cpp" />
+    <ClCompile Include="uart0.cpp" />
+    <ClCompile Include="vector.cpp" />
     <ClCompile Include="video.cpp" />
     <ClCompile Include="xnldr.cpp" />
     <ClCompile Include="xnout.cpp" />
@@ -270,10 +273,14 @@
     <ClInclude Include="clib.h" />
     <ClInclude Include="file.h" />
     <ClInclude Include="font.h" />
+    <ClInclude Include="gpio.h" />
     <ClInclude Include="lowlevel.h" />
     <ClInclude Include="paging.h" />
     <ClInclude Include="pe.h" />
     <ClInclude Include="physm.h" />
+    <ClInclude Include="rpi3b\mbox.h" />
+    <ClInclude Include="uart0.h" />
+    <ClInclude Include="vector.h" />
     <ClInclude Include="video.h" />
     <ClInclude Include="xnldr.h" />
     <ClInclude Include="xnout.h" />
@@ -284,6 +291,15 @@
       <FileType>Document</FileType>
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">clang --target=aarch64-windows-msvc -c -o "$(IntDir)%(Filename).obj" "%(FullPath)"</Command>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">false</ExcludedFromBuild>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">$(IntDir)%(Filename).obj</Outputs>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="vectoraa64.s">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">false</ExcludedFromBuild>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">true</DeploymentContent>
+      <FileType>Document</FileType>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">clang --target=aarch64-windows-msvc -c -o "$(IntDir)%(Filename).obj" "%(FullPath)"</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">$(IntDir)%(Filename).obj</Outputs>
     </CustomBuild>
   </ItemGroup>

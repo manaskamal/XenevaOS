@@ -331,3 +331,10 @@ enableAlignCheck:
    ret
 
 
+.global data_cache_flush
+data_cache_flush:
+    dc civac, x0
+    dsb ish
+    isb
+    ret
+
