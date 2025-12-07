@@ -238,6 +238,8 @@
     <ClCompile Include="aucon.c" />
     <ClCompile Include="audrv.c" />
     <ClCompile Include="Board\board.c" />
+    <ClCompile Include="Board\Rpi3bp\rpi3bp.c" />
+    <ClCompile Include="Board\Rpi3bp\rpi3bpIRQ.c" />
     <ClCompile Include="Board\Virt\fwcfg.c" />
     <ClCompile Include="Board\Virt\virt.c" />
     <ClCompile Include="Board\Virt\virtioblk.c" />
@@ -306,6 +308,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\BaseHdr\aa64hcode.h" />
+    <ClInclude Include="..\BaseHdr\Board\board.h" />
+    <ClInclude Include="..\BaseHdr\Board\RPI3bp\rpi3bp.h" />
     <ClInclude Include="..\BaseHdr\Drivers\rtcmmio.h" />
     <ClInclude Include="..\BaseHdr\Drivers\uart.h" />
     <ClInclude Include="..\BaseHdr\Drivers\virtio.h" />

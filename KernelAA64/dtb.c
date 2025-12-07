@@ -32,6 +32,7 @@
 #include <_null.h>
 #include <string.h>
 #include <Mm/vmmngr.h>
+#include <Mm/pmmngr.h>
 
 #define FDT_MAGIC  0xd00dfeed
 #define FDT_BEGIN_NODE 0x1
@@ -284,7 +285,7 @@ void AuDeviceTreeMapMMIO() {
 		return;
 	fdt_header_t* fdt = (fdt_header_t*)dtbAddress;
 	int pageCount = AuDTBSwap32(fdt->totalSize) / 0x1000;
-	void* mmio = AuMapMMIO((uint64_t)dtbAddress, pageCount);
+	void* mmio = (void*)P2V((uint64_t)dtbAddress); //AuMapMMIO((uint64_t)dtbAddress, pageCount);
 	dtbAddress = mmio;
-	AuTextOut("[aurora]: Device tree mmio %x mapped with page count : %d \n",mmio, pageCount);
+	AuTextOut("[aurora]: Device tree mmio %x mapped with page count : %d \r\n",mmio, pageCount);
 }

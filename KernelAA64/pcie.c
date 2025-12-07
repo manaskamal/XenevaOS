@@ -52,10 +52,10 @@ void AA64PCIeInitialize() {
 
 	uint32_t* pcie = AuDeviceTreeGetNode("pcie");
 	if (!pcie) {
-		AuTextOut("[aurora]: pcie not found \n");
+		AuTextOut("[aurora]: pcie not found \r\n");
 		return;
 	}
-	AuTextOut("[aurora]: pcie found \n");
+	AuTextOut("[aurora]: pcie found \r\n");
 #ifdef __TARGET_BOARD_QEMU_VIRT__
 	
 	/* else need to parse the DTB for */

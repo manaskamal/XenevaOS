@@ -88,6 +88,9 @@ void LBPagingInitialize() {
 #ifdef RASPBERRY_PI
     for (int i = 0; i < 16*1024*1024/0x1000; i++)
         LBMapMMIO(0x3F000000 + i * 0x1000, 0x3F000000 + i * 0x1000);
+
+    for (int i = 0; i < 1024*1024 / 0x1000; i++)
+        LBMapMMIO(0x40000000 + i * 0x1000, 0x40000000 + i * 0x1000);
 #endif
 
 

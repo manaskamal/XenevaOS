@@ -36,6 +36,7 @@
 #include <process.h>
 #include <dtb.h>
 #include <Hal/AA64/sched.h>
+#include <Board/RPI3bp/rpi3bp.h>
 
 GIC __gic;
 uint32_t* gic_regs;
@@ -205,22 +206,30 @@ void GICv2MInitialize() {
  */
 void GICInitialize() {
 	/* Firstly rely upon UEFI + ACPI for GIC mmio values */
-	AuTextOut("Initializing GIC %x %x\n", __gic.gicCPhys, __gic.gicDPhys);
+	AuTextOut("Initializing GIC %x %x \r\n", __gic.gicCPhys, __gic.gicDPhys);
 	
 	/* if not found, go for device tree , because the kernel might get booted
 	 * from LittleBoot 
 	 */
 	if (__gic.gicCPhys == 0 && __gic.gicDPhys == 0) {
+
+#ifdef __TARGET_BOARD_RPI3__
+		AuTextOut("[aurora]: Raspberry Pi 3b+ doesn't use traditional GIC \r\n");
+		/* Initialize BCM2836-ARMCTL-IC */
+		AuRPI3ICInit();
+		AuTextOut("[aurora]: Raspberry Pi 3b+ Interrupt Controller initialized \r\n");
+		return;
+#endif
 		//Need to fall to Device Tree
-		uint32_t* ic = AuDeviceTreeGetNode("intc@");
+		uint32_t* ic = AuDeviceTreeGetNode("ic@");
 		if (!ic) {
-			AuTextOut("Interrupt controller node not found \n");
+			AuTextOut("Interrupt controller node not found \r\n");
 		}
 		else {
 			uint32_t* compat = AuDeviceTreeFindProperty(ic, "compatible");
 			fdt_property_t* prop = (fdt_property_t*)compat;
 			if (compat) {
-				AuTextOut("Interrupt controller found: %s \n", prop->value);
+				AuTextOut("Interrupt controller found: %s \r\n", prop->value);
 			}
 			uint32_t* addressSz = AuDeviceTreeFindProperty(ic, "#address-cells");
 			uint32_t* reg = AuDeviceTreeFindProperty(ic, "reg");
@@ -231,19 +240,20 @@ void GICInitialize() {
 				uint32_t gicc = (uint64_t)AuDTBSwap32(reg[7]) | ((uint64_t)AuDTBSwap32(reg[9]) << 32UL);
 				uint32_t addrS = AuDeviceTreeGetAddressCells(ic);
 				uint32_t sizeS = AuDeviceTreeGetSizeCells(ic);
-				AuTextOut("GIC ADr: %x \n", AuDeviceTreeGetRegAddress(ic, addrS));
-				AuTextOut("GIC Szs: %x \n", AuDeviceTreeGetRegSize(ic, addrS, sizeS));
-				AuTextOut("GICD : %x, GICC : %x \n", gicd, gicc);
-				AuTextOut("GIC Addrsz : %d, sizesz : %d \n", addrS, sizeS);
+				AuTextOut("GIC ADr: %x \r\n", AuDeviceTreeGetRegAddress(ic, addrS));
+				AuTextOut("GIC Szs: %x \r\n", AuDeviceTreeGetRegSize(ic, addrS, sizeS));
+				AuTextOut("GICD : %x, GICC : %x \r\n", gicd, gicc);
+				AuTextOut("GIC Addrsz : %d, sizesz : %d \r\n", addrS, sizeS);
 				__gic.gicDPhys = gicd;
 				__gic.gicCPhys = gicc;
 			}
 
 		}
 	}
+skip_:
 
 	if (__gic.gicCPhys == 0 && __gic.gicDPhys == 0) {
-		AuTextOut("[aurora]: No GIC MMIO found\n");
+		AuTextOut("[aurora]: No GIC MMIO found \r\n");
 		return;
 	}
 
@@ -255,9 +265,10 @@ void GICInitialize() {
 
 	uint32_t typer = gic_inl_(GICD(__gic), GICD_TYPER);
 	uint32_t numirq = ((typer & 0x1f) + 1) * 32;
-	AuTextOut("GIC Number of supported IRQ -> %d \n", numirq);
+	AuTextOut("GIC Number of supported IRQ -> %d \r\n", numirq);
 
 	uint32_t icc_iidr = gic_inl_(GICD(__gic), GICD_IIDR);
+	uint32_t imp = (icc_iidr & 0xFFF);
 	uint32_t rev = (icc_iidr >> 16) & 0xFF;
 	
 	for (int i = 0; i < (numirq / 32); i++)
@@ -265,10 +276,10 @@ void GICInitialize() {
 
 	uint32_t val = gic_inl_(GICD(__gic), GICD_CTLR);
 	if ((val & 1))
-		AuTextOut("GIC already enabled \n");
+		AuTextOut("GIC already enabled \r\n");
 
-	
-
+	AuTextOut("[aurora]: Implementer : %x \r\n", imp);
+	AuTextOut("[aurora]: Revision : %x \r\n", rev);
 	/* enable the cpu interface*/
 	/* writing 0xff means accepting all types of priority 0x0 -- 0xFF */
 	gic_outl_(__gic.gicCMMIO, GICC_PMR, 0x1ff);
@@ -285,7 +296,7 @@ void GICInitialize() {
 	for (int i = 0; i < MAX_SPIS; i++)
 		callbacks[i] = 0;
 
-	AuTextOut("GIC Initialized \n");
+	AuTextOut("GIC Initialized \r\n");
 }
 
 /* GICEnableIRQ -- enable an IRQ
@@ -299,18 +310,18 @@ void GICEnableIRQ(uint32_t irq) {
 	uint32_t shift = (irq % 16) * 2;
 	uint32_t config_bits = (icfgr >> shift) & 0b11;
 	if (config_bits == 0b00) {
-		UARTDebugOut("IRQ : %d is level-sensitive \n", irq);
+		UARTDebugOut("IRQ : %d is level-sensitive \r\n", irq);
 	}
 	else if (config_bits == 0b10) {
-		UARTDebugOut("IRQ : %d is edge-trigggered \n", irq);
+		UARTDebugOut("IRQ : %d is edge-trigggered \r\n", irq);
 	}
 	else {
-		UARTDebugOut("IRQ: %d is reserved or invalid config : %x \n",irq, config_bits);
+		UARTDebugOut("IRQ: %d is reserved or invalid config : %x \r\n",irq, config_bits);
 	}
 	//GICD_IGROUPR(reg) |= (1u << bit);
 	/*uint8_t* gicd_itargetsr = (uint8_t*)GICD_ITARGETSR(irq);
 	*gicd_itargetsr = 0x01;*/
-	UARTDebugOut("IGROUP : %d \n", GICD_IGROUPR(reg));
+	UARTDebugOut("IGROUP : %d \r\n", GICD_IGROUPR(reg));
 	*(volatile uint8_t*)(GICD(__gic) + GICD_IPRIORITYR(irq)) = 0xA0;
 	GICD_ISENABLER(reg) |= (1u << bit);
 }
@@ -333,15 +344,15 @@ void GICIsIRQEdgeTriggered(uint32_t irq) {
 	uint32_t shift = (irq % 16) * 2;
 	uint32_t config_bits = (icfgr >> shift) & 0b11;
 	if (config_bits == 0b00) {
-		UARTDebugOut("IRQ : %d is level-sensitive \n", irq);
+		UARTDebugOut("IRQ : %d is level-sensitive \r\n", irq);
 	}
 	else if (config_bits == 0b10) {
-		UARTDebugOut("IRQ : %d is edge-trigggered \n", irq);
+		UARTDebugOut("IRQ : %d is edge-trigggered \r\n", irq);
 	}
 	else {
-		UARTDebugOut("IRQ: %d is reserved or invalid config : %x \n", irq, config_bits);
+		UARTDebugOut("IRQ: %d is reserved or invalid config : %x \r\n", irq, config_bits);
 	}
-	UARTDebugOut("ICFGR : %x \n", icfgr);
+	UARTDebugOut("ICFGR : %x \r\n", icfgr);
 }
 
 /* GICEnableIRQ -- enable an IRQ

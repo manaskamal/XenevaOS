@@ -126,6 +126,10 @@ extern void enable_sre();
 
 extern uint32_t read_icc_iidr();
 
+extern void set_cntp_cval_el0(uint64_t val);
+
+extern void set_cntp_ctl_el0(uint64_t val);
+
 
 extern void setupTimerIRQ();
 extern void suspendTimer();
@@ -140,6 +144,7 @@ extern void mask_irqs();
 extern uint32_t read_icc_iar1_el1();
 
 extern uint32_t read_midr();
+extern uint64_t read_mpidr_el1();
 extern uint64_t read_daif();
 
 extern void aa64_enter_user(uint64_t stack, uint64_t entryAddr);

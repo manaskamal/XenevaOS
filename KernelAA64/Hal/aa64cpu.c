@@ -158,7 +158,8 @@ void AA64TimerSetup() {
  */
 void AA64CPUPostInitialize(KERNEL_BOOT_INFO* info) {
 	AuACPIInitialise(info->acpi_table_pointer);
-	UARTInitialize();
+	if (info->boot_type != BOOT_LITTLEBOOT_ARM64)
+		UARTInitialize();
 	//enable_irqs();
 	mask_irqs();
 	suspendTimer();
@@ -170,6 +171,8 @@ void AA64CPUPostInitialize(KERNEL_BOOT_INFO* info) {
 	AA64CPUImplementer(id);
 	AA64PCIeInitialize();
 	AuTextOut("[aurora]: cpu post initialized \n");
+	enable_irqs();
+	for (;;);
 	AuPL031RTCInit();
 	mask_irqs();
 }

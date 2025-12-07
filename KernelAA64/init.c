@@ -52,7 +52,7 @@
 #include <Fs/tty.h>
 #include <ftmngr.h>
 #include <Ipc/postbox.h>
-
+#include <Board/board.h>
 
 
 extern int _fltused = 1;
@@ -143,11 +143,9 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	AuPmmngrInitialize(info);
 	AuVmmngrInitialize();
 	AuTextOut("[aurora]: virtual memory manager initialized \r\n");
-	AuTextOut("[aurora]: test physical memory alloc : %x \r\n", AuPmmngrAlloc());
-	for (;;);
 	AuHeapInitialize();
-
 	AuDeviceTreeMapMMIO();
+	AuAA64BoardInitialize();
 	AA64CPUPostInitialize(info);
 	AuVFSInitialise();
 	AuInitrdInitialize(info);

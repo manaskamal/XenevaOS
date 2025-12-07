@@ -31,10 +31,10 @@
 
 #define RPI_MMIO_BASE 0x3F000000
 /* GIC related informations*/
-#define GIC_DIST 0x08000000
-#define GIC_CPU  0x08010000
-#define GIC_V2M  0x08020000
-#define GIC_HYP  0x08030000
+#define GIC_DIST 0x40041000
+#define GIC_CPU  0x40042000
+#define GIC_V2M  0x40046000
+#define GIC_HYP  0x40044000
 #define GIC_VCPU 0x08040000
 #define GIC_ITS  0x08080000
 #define GIC_REDIST 0x080A0000
@@ -57,6 +57,27 @@
 #define GPIO_IRQ 7
 #define UART1_IRQ 8
 #define ACPI_GED 9
+
+#define VIDEOCORE_MBOX (RPI_MMIO_BASE + 0x0000b880)
+
+#define MBOX_RESPONSE 0x80000000
+#define MBOX_FULL     0x80000000
+#define MBOX_EMPTY    0x40000000
+
+#define MBOX_REQUEST 0
+#define MBOX_CH_POWER 0
+#define MBOX_CH_FB 1
+#define MBOX_CH_VUART 2
+#define MBOX_CH_VCHIQ 3
+#define MBOX_CH_LEDS 4
+#define MBOX_CH_BTNS 5
+#define MBOX_CH_TOUCH 6
+#define MBOX_CH_COUNT 7
+#define MBOX_CH_PROP 8
+
+#define MBOX_TAG_GETSERIAL 0x1004
+#define MBOX_TAG_SETCLKRATE 0x38002
+#define MBOX_TAG_LAST 0
 
 #define PCIE_ECAM 0x10000000ULL
 

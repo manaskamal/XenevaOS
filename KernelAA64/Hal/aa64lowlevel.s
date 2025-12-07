@@ -244,6 +244,11 @@ read_midr:
    mrs x0, MIDR_EL1
    ret
 
+.global read_mpidr_el1
+read_mpidr_el1:
+   mrs x0, mpidr_el1
+   ret
+
 .global read_daif
 read_daif:
    mrs x0,daif
@@ -336,5 +341,15 @@ data_cache_flush:
     dc civac, x0
     dsb ish
     isb
+    ret
+
+.global set_cntp_cval_el0
+set_cntp_cval_el0:
+    msr cntp_cval_el0, x0
+    ret
+
+.global set_cntp_ctl_el0
+set_cntp_ctl_el0:
+    msr cntp_ctl_el0, x0
     ret
 

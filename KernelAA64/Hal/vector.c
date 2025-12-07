@@ -38,6 +38,7 @@
 #include <process.h>
 #include <_null.h>
 #include <Mm/vmarea.h>
+#include <Board/RPI3bp/rpi3bp.h>
 
 extern uint64_t read_sp();
 extern uint64_t read_sp_el1();
@@ -141,7 +142,12 @@ bool _userprint = 0;
 void setuprint() {
     _userprint = 1;
 }
+
 void irq_el1_handler(AA64Registers* regs) {
+
+#ifdef __TARGET_BOARD_RPI3__
+    RPI3_IRQ_handler(regs);
+#else
     uint32_t iar = GICReadIAR();
     uint32_t irq = iar & 0x3FF;
     if (irq < 1020) {
@@ -182,6 +188,7 @@ void irq_el1_handler(AA64Registers* regs) {
         GICCallSPIHandler(irq);
         GICSendEOI(iar);
     }
+#endif
 }
 
 void fault_el1_handler(AA64Registers* regs) {

@@ -119,7 +119,7 @@ typedef struct _rsdp2_
  */
 void AuACPIInitialise(void* acpi_base) {
 	if (!acpi_base) {
-		AuTextOut("Could not find ACPI base %x \n", acpi_base);
+		AuTextOut("Could not find ACPI base %x \r\n", acpi_base);
 		return;
 	}
 	/*AuUpdatePageFlags((uint64_t)acpi_base, PTE_VALID | PTE_TABLE |
@@ -130,7 +130,7 @@ void AuACPIInitialise(void* acpi_base) {
 	acpiRsdp2* rsdp = (acpiRsdp2*)acpi_base;
 	acpiRsdt* rsdt = (acpiRsdt*)rsdp->rsdtAddr;
 	acpiXsdt* xsdt = (acpiXsdt*)rsdp->xsdtAddr;
-	AuTextOut("Getting physical address of ACPIBASE \n");
+	AuTextOut("Getting physical address of ACPIBASE \r\n");
 	//AuFreePages(acpi_base, 0, 4096);
 	char sig[5];
 	AuTextOut("ACPI initializing -> %x\n", acpi_base);

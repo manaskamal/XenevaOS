@@ -123,6 +123,12 @@
     <ClCompile Include="Net\ipv4.c">
       <Filter>Net</Filter>
     </ClCompile>
+    <ClCompile Include="Board\Rpi3bp\rpi3bp.c">
+      <Filter>Board\Rpi3bp</Filter>
+    </ClCompile>
+    <ClCompile Include="Board\Rpi3bp\rpi3bpIRQ.c">
+      <Filter>Board\Rpi3bp</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Hal">
@@ -172,6 +178,15 @@
     </Filter>
     <Filter Include="Ipc">
       <UniqueIdentifier>{395952cf-bd09-4b89-b4a0-52c43b85e2da}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Board\Rpi3bp">
+      <UniqueIdentifier>{1a573f0c-95c1-461b-bce1-88e8b0fcbfb1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Include\Board">
+      <UniqueIdentifier>{6825c2e1-10e2-4101-9cf9-f702de79aa52}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Include\Board\RPI3bp">
+      <UniqueIdentifier>{11262d77-2842-4260-8c89-e65a31b256ea}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -234,6 +249,12 @@
     </ClInclude>
     <ClInclude Include="..\BaseHdr\Hal\AA64\rpi3.h">
       <Filter>Include\Hal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\Board\RPI3bp\rpi3bp.h">
+      <Filter>Include\Board\RPI3bp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\Board\board.h">
+      <Filter>Include\Board</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
