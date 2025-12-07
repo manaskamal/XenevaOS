@@ -95,11 +95,11 @@ void AuInitrdInitialize(KERNEL_BOOT_INFO* info) {
 	if (info->boot_type == BOOT_LITTLEBOOT_ARM64) {
 		AuLittleBootProtocol* lb = (AuLittleBootProtocol*)info->driver_entry1;
 		if (!lb) {
-			AuTextOut("[aurora]: initrd initialization failed !! invalid Littleboot protocol\n");
+			AuTextOut("[aurora]: initrd initialization failed !! invalid Littleboot protocol \r\n");
 			return;
 		}
-		ramdisk_start = lb->initrd_start;
-		ramdisk_end = lb->initrd_end;
+		ramdisk_start = P2V(lb->initrd_start);
+		ramdisk_end = P2V(lb->initrd_end);
 	}
 	else {
 		/* NOTE: Ramdisk is loaded by bootloader itself into EfiBootServiceData,
@@ -115,7 +115,7 @@ void AuInitrdInitialize(KERNEL_BOOT_INFO* info) {
 	}
 
 	if (ramdisk_start == 0) {
-		AuTextOut("[aurora]: ramdisk failed to initialize \n");
+		AuTextOut("[aurora]: ramdisk failed to initialize \r\n");
 		return;
 	}
 	/* okay before full initialization, we need to grab all the
@@ -155,8 +155,8 @@ void AuInitrdInitialize(KERNEL_BOOT_INFO* info) {
 	AuVFSNode* dev = AuVFSFind("/dev");
 	AuDevFSAddFile(dev, diskpath, file);
 
-	AuTextOut("[aurora]: ramdisk mounted at %s full path : %s \n", diskpath, disk->diskPath);
+	AuTextOut("[aurora]: ramdisk mounted at %s full path : %s \r\n", diskpath, disk->diskPath);
 	/* Mount FAT as root file system temporarily */
 	FatInitialise(disk, "/");
-	AuTextOut("[aurora]: ramdisk initialized successfully \n");
+	AuTextOut("[aurora]: ramdisk initialized successfully \r\n");
 }

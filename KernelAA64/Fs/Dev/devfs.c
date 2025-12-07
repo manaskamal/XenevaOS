@@ -52,7 +52,7 @@ void AuDeviceFsInitialize() {
 	AuVFSAddFileSystem(node);
 
 	AuDevInputInitialise();
-	AuTextOut("[aurora]: devfs initialized \n");
+	AuTextOut("[aurora]: devfs initialized \r\n");
 }
 
 /*

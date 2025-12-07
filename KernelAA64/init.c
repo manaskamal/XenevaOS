@@ -183,11 +183,11 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	/* initialize the deodhai's communication protocol */
 	AuIPCPostBoxInitialise();
 
+	for (;;);
 	/* clear out the lower half memory */
 	AuVmmngrBootFree();
 
 	AuSchedulerInitialize();
-
 
 	AuProcess* proc = AuCreateProcessSlot(0, "exec");
 	int num_args = 1;

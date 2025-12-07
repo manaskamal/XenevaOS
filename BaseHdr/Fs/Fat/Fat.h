@@ -49,26 +49,26 @@
 #define FAT_EOC_MARK  0xFFFFFFF8
 #define FAT_BAD_CLUSTER 0xFFFFFFF7
 
-#pragma pack(push,1)
+
 /* FAT BPB */
 typedef struct _FAT_BPB_ {
-	uint8_t jmp[3];
-	char    oemid[8];
-	uint16_t bytes_per_sector;
-	uint8_t  sectors_per_cluster;
-	uint16_t reserved_sectors;
-	uint8_t  num_fats;
-	uint16_t num_dir_entries;
-	uint16_t total_sectors_short;
-	uint8_t  media_type;
-	uint16_t sectors_per_fat;
-	uint16_t sectors_per_track;
-	uint16_t heads;
-	uint32_t hidden_sectors;
-	uint32_t large_sector_count;
+	uint8_t jmp[3]; 
+	char    oemid[8]; //0x03 -- 8
+	uint16_t bytes_per_sector; //0x00B 2
+	uint8_t  sectors_per_cluster; //0x00D 1
+	uint16_t reserved_sectors; //0x00E  2
+	uint8_t  num_fats; //0x010  1
+	uint16_t num_dir_entries; //0x011 2
+	uint16_t total_sectors_short; //0x013 2
+	uint8_t  media_type; //0x015 1
+	uint16_t sectors_per_fat; //0x016 2
+	uint16_t sectors_per_track; //0x018 2
+	uint16_t heads; //0x01A 2
+	uint32_t hidden_sectors; //0x01C 4
+	uint32_t large_sector_count; //0x020 4
 	union {
 		struct {
-			uint8_t  drive_num;
+			uint8_t  drive_num; 
 			uint8_t  WinNtFlags;
 			uint8_t  signature;
 			uint32_t vol_serial_num;
@@ -77,23 +77,22 @@ typedef struct _FAT_BPB_ {
 		}FAT16;
 
 		struct {
-			uint32_t sect_per_fat32;
-			uint16_t falgs;
-			uint16_t fat_version;
-			uint32_t root_dir_cluster;
-			uint16_t fs_info_sect;
-			uint16_t backup_boot_sect;
-			uint8_t  reserved[12];
-			uint8_t  drive_number;
-			uint8_t  flagsWinNT;
-			uint8_t  signature;
-			uint32_t vol_serial_num;
-			char     vol_label[11];
-			char     sys_id[8];
+			uint32_t sect_per_fat32; //0x024  4
+			uint16_t falgs; //0x028 2
+			uint16_t fat_version; //0x02A 2
+			uint32_t root_dir_cluster; //0x02C 4
+			uint16_t fs_info_sect; //0x030 2
+			uint16_t backup_boot_sect; //0x032 2
+			uint8_t  reserved[12]; //0x034 12
+			uint8_t  drive_number; //0x040 1
+			uint8_t  flagsWinNT; //0x041 1
+			uint8_t  signature; //0x042 1
+			uint32_t vol_serial_num; //0x043 4
+			char     vol_label[11]; //0x047 11
+			char     sys_id[8]; //0x052 8
 		}FAT32;
 	}info;
 }FatBPB;
-#pragma pack(pop)
 
 /** _fat32_dir_ -- 32 byte fat directory structure */
 #pragma pack (push, 1)

@@ -48,7 +48,7 @@ void AuVDiskInitialise() {
 		VdiskArray[i] = NULL;
 
 	_vdisk_num_ = 0;
-	AuTextOut("[aurora]: virtual disk system initialized \n");
+	AuTextOut("[aurora]: virtual disk system initialized \r\n");
 }
 
 
@@ -149,7 +149,7 @@ void AuVDiskRegisterPartition(AuVDisk* vdisk) {
 
 	/* check if it's Efi partition */
 	if (strcmp(header->sig, "EFI PART") != 0) {
-		AuTextOut("[aurora]: vdisk %s doesn't have valid GPT partition \n", vdisk->diskname);
+		AuTextOut("[aurora]: vdisk %s doesn't have valid GPT partition \r\n", vdisk->diskname);
 		return;
 	}
 	for (int i = 0; i < 8; i++)
@@ -183,20 +183,20 @@ void AuVDiskRegisterPartition(AuVDisk* vdisk) {
 		}
 		part_lba++;
 	}
-	AuTextOut("\n");
-	AuTextOut("VDisk partition created startLBA -> %d \n", vdisk->startingLBA);
+	AuTextOut("\r\n");
+	AuTextOut("VDisk partition created startLBA -> %d \r\n", vdisk->startingLBA);
 	AuTextOut("vDisk partition guid : ");
 	AuTextOut("0x%x-0x%x-0x%x-0x", vdisk->part_guid.Data1, vdisk->part_guid.Data2, vdisk->part_guid.Data3);
 	for (int k = 0; k < 8; k++)
 		AuTextOut("%x", vdisk->part_guid.Data4[k]);
 
-	AuTextOut("\n");
+	AuTextOut("\r\n");
 	/* call gpt file system verifier to load
 	 * the desired file system
 	 */
 	//AuGPTInitialise_FileSystem(vdisk);
 
-	AuTextOut("\n");
+	AuTextOut("\r\n");
 	AuPmmngrFree(buffer);
 
 }
@@ -212,7 +212,7 @@ void AuVDiskRegister(AuVDisk* disk) {
 		return;
 
 	VdiskArray[_index] = disk;
-	AuTextOut("[aurora]: vdisk registered name : %s, serial : %s \n", disk->diskname,
+	AuTextOut("[aurora]: vdisk registered name : %s, serial : %s \r\n", disk->diskname,
 		disk->serialNumber);
 
 	disk->__VDiskID = _index;

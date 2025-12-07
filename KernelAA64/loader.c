@@ -315,5 +315,5 @@ void AuInitialiseLoader() {
 	for (int i = 0; i < 64; i++)
 		physFrames[i] = 0;
 
-	AuTextOut("[aurora]: Kernel-level loader initialized \n");
+	AuTextOut("[aurora]: Kernel-level loader initialized \r\n");
 }

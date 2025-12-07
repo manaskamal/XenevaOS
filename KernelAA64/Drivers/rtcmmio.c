@@ -112,6 +112,7 @@ void AuPL031RTCIRQHandle() {
  * AuPL031RTCInit -- initialize pl031 rtc
  */
 void AuPL031RTCInit() {
+#ifdef __TARGET_BOARD_QEMU_VIRT__
 	memset(&__rtc, 0, sizeof(AuRTC));
 	GICEnableIRQ(QEMU_VIRT_RTCIRQ);
 
@@ -123,6 +124,7 @@ void AuPL031RTCInit() {
 	AuRTCEnableInterrupt();
 
 	AuTextOut("PL031 RTC Initialized \n");
+#endif
 }
 
 /*

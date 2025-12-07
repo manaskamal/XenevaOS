@@ -125,11 +125,11 @@ AU_EXTERN AU_EXPORT AuVFSNode* AuVFSOpen(char* path) {
 	AuVFSNode* fs = AuVFSFind(path);
 
 	if (!fs) {
-		AuTextOut("[aurora-vfs]: failed to find filesystem assigned to path -> %s \n", path);
+		AuTextOut("[aurora-vfs]: failed to find filesystem assigned to path -> %s \r\n", path);
 		return NULL;
 	}
 	if (fs == __RootFS) {
-		UARTDebugOut("VFSOpening filename : %s \n", path);
+		UARTDebugOut("VFSOpening filename : %s \r\n", path);
 		/* just skip the '/' from the path */
 		char* next = strchr(path, '/');
 		if (next)
@@ -151,7 +151,7 @@ AU_EXTERN AU_EXPORT AuVFSNode* AuVFSOpen(char* path) {
 			pathname[i] = next[i];
 		}
 		pathname[i] = 0;
-		UARTDebugOut("Pathname : next %x \n", next);
+		UARTDebugOut("Pathname : next %x \r\n", next);
 
 		/* skip the fs filename, from the path
 		 * and just pass the required path */

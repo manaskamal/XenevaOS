@@ -575,7 +575,6 @@ size_t FatGetClusterFor(AuVFSNode* fs, AuVFSNode* file, uint64_t offset) {
 
 
 
-
 /*
 * FatInitialise -- initialise the fat file system
 * @param vdisk -- Pointer to vdisk structure
@@ -586,40 +585,64 @@ AuVFSNode* FatInitialise(AuVDisk* vdisk, char* mountname) {
 	memset(buffer, 0, 4096);
 	AuVDiskRead(vdisk, 0, 1, buffer);
 
-	FatBPB* bpb = (FatBPB*)buffer;
+	/* avoiding alignment issues */
+	FatBPB bpb;
+	memcpy(&bpb.jmp, (uint8_t*)buffer, 3);
+	memcpy(&bpb.oemid, (uint8_t*)buffer + 0x03, 8);
+	memcpy(&bpb.bytes_per_sector, (uint8_t*)buffer + 0x00B, 2);
+	memcpy(&bpb.sectors_per_cluster, (uint8_t*)buffer + 0x00D, 1);
+	memcpy(&bpb.reserved_sectors, (uint8_t*)buffer + 0x00E, 2);
+	memcpy(&bpb.num_fats, (uint8_t*)buffer + 0x010, 1);
+	memcpy(&bpb.num_dir_entries, (uint8_t*)buffer + 0x011, 2);
+	memcpy(&bpb.total_sectors_short, (uint8_t*)buffer + 0x013, 2);
+	memcpy(&bpb.media_type, (uint8_t*)buffer + 0x015, 1);
+	memcpy(&bpb.sectors_per_fat, (uint8_t*)buffer + 0x016, 2);
+	memcpy(&bpb.sectors_per_track, (uint8_t*)buffer + 0x018, 2);
+	memcpy(&bpb.heads, (uint8_t*)buffer + 0x01A, 2);
+	memcpy(&bpb.hidden_sectors, (uint8_t*)buffer + 0x01C, 4);
+	memcpy(&bpb.large_sector_count, (uint8_t*)buffer + 0x020, 4);
+	memcpy(&bpb.info.FAT32.sect_per_fat32, (uint8_t*)buffer + 0x024, 4);
+	memcpy(&bpb.info.FAT32.falgs, (uint8_t*)buffer + 0x028, 2);
+	memcpy(&bpb.info.FAT32.fat_version, (uint8_t*)buffer + 0x02A, 2);
+	memcpy(&bpb.info.FAT32.root_dir_cluster, (uint8_t*)buffer + 0x02C, 4);
+	memcpy(&bpb.info.FAT32.fs_info_sect, (uint8_t*)buffer + 0x030, 2);
+	memcpy(&bpb.info.FAT32.backup_boot_sect, (uint8_t*)buffer + 0x032, 2);
+	memcpy(&bpb.info.FAT32.signature, (uint8_t*)buffer + 0x042, 1);
+	memcpy(&bpb.info.FAT32.vol_label, (uint8_t*)buffer + 0x047, 11);
+	memcpy(&bpb.info.FAT32.sys_id, (uint8_t*)buffer + 0x052, 8);
 
 	FatFS* fs = (FatFS*)kmalloc(sizeof(FatFS));
 	memset(fs, 0, sizeof(FatFS));
 
-	fs->bpb = bpb;
+	fs->bpb = 0;
 	fs->vdisk = vdisk;
 
 	AuTextOut("[aurora]: FAT32 OEM :");
-	for (int i = 0; i < 8; i++) {
-		AuTextOut("%c", bpb->oemid[i]);
-		fs->oemid[i] = bpb->oemid[i];
+	for (int i = 0; i < 7; i++) {
+		AuTextOut("%c", bpb.oemid[i]);
+		fs->oemid[i] = bpb.oemid[i];
 	}
-	AuTextOut("\n");
+	AuTextOut("\r\n");
 	fs->oemid[7] = '\0';
-	fs->__FatBeginLBA = bpb->reserved_sectors;
-	fs->__ClusterBeginLBA = bpb->reserved_sectors + (bpb->num_fats * bpb->info.FAT32.sect_per_fat32);
-	fs->__SectorPerCluster = bpb->sectors_per_cluster;
-	fs->__RootDirFirstCluster = bpb->info.FAT32.root_dir_cluster;
+	fs->__FatBeginLBA = bpb.reserved_sectors;
+	fs->__ClusterBeginLBA = bpb.reserved_sectors + (bpb.num_fats * bpb.info.FAT32.sect_per_fat32);
+	fs->__SectorPerCluster = bpb.sectors_per_cluster;
+	fs->__RootDirFirstCluster = bpb.info.FAT32.root_dir_cluster;
 	fs->__RootSector = FatClusterToSector32(fs, fs->__RootDirFirstCluster);
-	fs->__SectorPerFAT32 = bpb->info.FAT32.sect_per_fat32;
-	fs->cluster_sz_in_bytes = fs->__SectorPerCluster * bpb->bytes_per_sector;
-	fs->__BytesPerSector = bpb->bytes_per_sector;
-	fs->__TotalClusters = bpb->large_sector_count / fs->__SectorPerCluster;
+	fs->__SectorPerFAT32 = bpb.info.FAT32.sect_per_fat32;
+	fs->cluster_sz_in_bytes = fs->__SectorPerCluster * bpb.bytes_per_sector;
+	fs->__BytesPerSector = bpb.bytes_per_sector;
+	fs->__TotalClusters = bpb.large_sector_count / fs->__SectorPerCluster;
 	fs->__LastIndexInFat = 0;
 	fs->__LastIndexSector = 0;
-	size_t _root_dir_sectors = ((bpb->num_dir_entries * 32) + bpb->bytes_per_sector - 1) / bpb->bytes_per_sector;
-	size_t _TotalSectors = (bpb->total_sectors_short == 0) ? bpb->large_sector_count : bpb->total_sectors_short;
-	size_t fatsize = (bpb->sectors_per_fat == 0) ? bpb->info.FAT32.sect_per_fat32 : bpb->sectors_per_fat;
-	size_t _dataSectors = _TotalSectors - (bpb->reserved_sectors + bpb->num_fats * fatsize + _root_dir_sectors);
+	size_t _root_dir_sectors = ((bpb.num_dir_entries * 32) + bpb.bytes_per_sector - 1) / bpb.bytes_per_sector;
+	size_t _TotalSectors = (bpb.total_sectors_short == 0) ? bpb.large_sector_count : bpb.total_sectors_short;
+	size_t fatsize = (bpb.sectors_per_fat == 0) ? bpb.info.FAT32.sect_per_fat32 : bpb.sectors_per_fat;
+	size_t _dataSectors = _TotalSectors - (bpb.reserved_sectors + bpb.num_fats * fatsize + _root_dir_sectors);
 
-	AuTextOut("[aurora]: fat32 sector/cluster : %d \n", fs->__SectorPerCluster);
-	AuTextOut("[aurora]: fat32 bytes/sector: %d \n", fs->__BytesPerSector);
-	AuTextOut("[aurora]: fat32 mounted at %s \n", mountname);
+	AuTextOut("[aurora]: fat32 sector/cluster : %d \r\n", fs->__SectorPerCluster);
+	AuTextOut("[aurora]: fat32 bytes/sector: %d \r\n", fs->__BytesPerSector);
+	AuTextOut("[aurora]: fat32 mounted at %s \r\n", mountname);
 
 	if (_dataSectors < 4085)
 		fs->fatType = FSTYPE_FAT12;

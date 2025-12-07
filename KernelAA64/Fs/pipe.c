@@ -375,7 +375,7 @@ void AuPipeFSInitialise() {
 	node->flags |= FS_FLAG_FILE_SYSTEM;
 	node->open = AuPipeFSOpen;
 	AuVFSAddFileSystem(node);
-	AuTextOut("[aurora]: pipefs mounted \n");
+	AuTextOut("[aurora]: pipefs mounted \r\n");
 	pipeFS = node;
 }
 

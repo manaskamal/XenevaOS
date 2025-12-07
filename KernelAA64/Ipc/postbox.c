@@ -278,7 +278,7 @@ void AuIPCPostBoxInitialise() {
 	AuDevFSAddFile(dev, "/", node);
 
 	_PostBoxRootCreated = false;
-	AuTextOut("[aurora]: PostBox IPC mounted and initialized to /dev/postbox \n");
-	AuTextOut("[aurora]: PostEvent size : %d bytes \n", sizeof(PostEvent));
-	AuTextOut("[aurora]: PostBox size aligned : %d number \n", (4096 / ALIGN_UP(sizeof(PostEvent), 8)));
+	AuTextOut("[aurora]: PostBox IPC mounted and initialized to /dev/postbox \r\n");
+	AuTextOut("[aurora]: PostEvent size : %d bytes \r\n", sizeof(PostEvent));
+	AuTextOut("[aurora]: PostBox size aligned : %d number \r\n", (4096 / ALIGN_UP(sizeof(PostEvent), 8)));
 }

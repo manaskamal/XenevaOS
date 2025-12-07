@@ -321,14 +321,14 @@ void AuDrvMngrInitialize(KERNEL_BOOT_INFO* info) {
 	driver_load_base = AU_DRIVER_BASE_START;
 	_dev_count_ = 0;
 
-	AuTextOut("[aurora]: initializing drivers, please wait... \n");
+	AuTextOut("[aurora]: initializing drivers, please wait... \r\n");
 	/* Load the conf data */
 	uint64_t* conf = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
 	memset(conf, 0, 4096);
 	AuVFSNode* fsys = AuVFSFind("/");
 	AuVFSNode* file = AuVFSOpen("/audrv.cnf");
 	if (!file) {
-		AuTextOut("[aurora]: Driver Manager failed to open audrv.cnf, file not found \n");
+		AuTextOut("[aurora]: Driver Manager failed to open audrv.cnf, file not found \r\n");
 		return;
 	}
 	int filesize = file->size / 1024;
@@ -340,7 +340,7 @@ void AuDrvMngrInitialize(KERNEL_BOOT_INFO* info) {
 
 	bool proceed = 0;
 
-	AuTextOut("[aurora]: audrv.cnf read successfully %s \n", file->filename);
+	AuTextOut("[aurora]: audrv.cnf read successfully %s \r\n", file->filename);
 
 	
 	scratchBuffer = (uint64_t*)P2V((uint64_t)AuPmmngrAllocBlocks((1024 * 1024) / 0x1000));
@@ -386,7 +386,7 @@ void AuDrvMngrInitialize(KERNEL_BOOT_INFO* info) {
 		}
 	}
 
-	AuTextOut("[aurora]: AuDrvManager initialized successfully \n");
+	AuTextOut("[aurora]: AuDrvManager initialized successfully \r\n");
 	kfree(file);
 }
 

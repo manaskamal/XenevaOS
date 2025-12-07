@@ -109,7 +109,7 @@ uint16_t FontManagerGetKey() {
 FontSeg* FontManagerAllocateSegment(AuVFSNode* fontfile, char* fontname) {
 	if (!fontfile)
 		return NULL;
-	UARTDebugOut("Inside FontManagerAllocateSegment \n");
+	UARTDebugOut("Inside FontManagerAllocateSegment \r\n");
 	FontSeg* seg = (FontSeg*)kmalloc(sizeof(FontSeg));
 	memset(seg, 0, sizeof(FontSeg));
 	strncpy(seg->fontname, fontname, 32);
@@ -218,14 +218,14 @@ int FontManagerGetFontCount(uint8_t* fontlst) {
  * font manager
  */
 void FontManagerInitialise() {
-	AuTextOut("[aurora]: Loading system fonts \n");
+	AuTextOut("[aurora]: Loading system fonts \r\n");
 	firstSeg = NULL;
 	lastSeg = NULL;
 	fontKey = FONTMGR_KEY;
 	AuVFSNode* fs = AuVFSFind("/");
 	AuVFSNode* fontconf = AuVFSOpen("/ftlst.cnf");
 	if (!fontconf) {
-		AuTextOut("[Aurora]: Font Manager failed to open ftlst.cnf, ftlst.cnf file not found \n");
+		AuTextOut("[Aurora]: Font Manager failed to open ftlst.cnf, ftlst.cnf file not found \r\n");
 		for (;;);
 		return;
 	}

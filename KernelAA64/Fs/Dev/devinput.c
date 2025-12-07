@@ -189,7 +189,7 @@ int AuDevMouseIoControl(AuVFSNode* file, int code, void* arg) {
 void AuDevInputInitialise() {
 	AuVFSNode* devfs = AuVFSFind("/dev");
 	if (!devfs) {
-		AuTextOut("[aurora]: critical error in devinput, no dev file system found \n");
+		AuTextOut("[aurora]: critical error in devinput, no dev file system found \r\n");
 		return;
 	}
 	void* mice_input_buf = kmalloc(sizeof(AuInputMessage));
@@ -219,5 +219,5 @@ void AuDevInputInitialise() {
 	kybrd_->read = AuDevInputKybrdRead;
 	kybrd_->write = AuDevInputKybrdWrite;
 	AuDevFSAddFile(devfs, "/", kybrd_);
-	AuTextOut("[aurora]: device input : kybrd and mouse fs registerd \n");
+	AuTextOut("[aurora]: device input : kybrd and mouse fs registerd \r\n");
 }
