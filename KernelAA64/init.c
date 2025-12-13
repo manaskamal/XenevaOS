@@ -53,6 +53,7 @@
 #include <ftmngr.h>
 #include <Ipc/postbox.h>
 #include <Board/board.h>
+#include <Board/RPI3bp/rpi3bp.h>
 
 
 extern int _fltused = 1;

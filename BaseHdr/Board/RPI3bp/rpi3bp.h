@@ -52,6 +52,23 @@
 #define TIMER_IRQ_ENABLE (1ULL<<1)
 #define TIMER_FIQ_ENABLE (1ULL<<3)
 
+/* Mailbox Tags */
+#define TAG_GET_BOARD_REV 0x00010002
+#define TAG_ALLOCATE_BUFFER 0x00040001
+#define TAG_RELEASE_BUFFER 0x00048001
+#define TAG_BLANK_SCREEN 0x00040002
+#define TAG_SET_PHYS_WH 0x00048003
+#define TAG_SET_VIRT_WH 0x00048004
+#define TAG_SET_DEPTH 0x00048005
+#define TAG_SET_PIXEL_ORDER 0x00048006
+#define TAG_GET_PITCH 0x00040008
+#define TAG_SET_VIRT_OFFSET 0x00048009
+#define TAG_SET_BACKLIGHT 0x0004800F
+#define TAG_GET_TOUCHBUF 0x0004000F
+#define TAG_SET_TOUCHBUF 0x0004801F
+#define TAG_GET_DISPLAY_ID 0x00040013
+#define TAG_SET_DSI_TIMING 00x00048014
+#define TAG_LAST 0x00000000
 
 
 extern uint32_t AuRPI3LocalIRQGetPending();
@@ -68,6 +85,17 @@ extern void AuRPI3ICInit();
  * @param regs -- Pointer to AA64 register struct
  */
 extern void RPI3_IRQ_handler(AA64Registers* regs);
+
+
+extern void AuVC4DSIInit();
+
+/*
+ * AuRPIInitializeFramebuffer -- initializes framebuffer
+ * @param width -- fb width by pixels
+ * @param height -- fb height by pixels
+ * @param depth -- fb depth
+ */
+bool AuRPIInitializeFramebuffer(uint32_t width, uint32_t height, uint32_t depth);
 
 #endif
 

@@ -129,6 +129,18 @@
     <ClCompile Include="Board\Rpi3bp\rpi3bpIRQ.c">
       <Filter>Board\Rpi3bp</Filter>
     </ClCompile>
+    <ClCompile Include="Board\Rpi3bp\vc4dsi.c">
+      <Filter>Board\Rpi3bp</Filter>
+    </ClCompile>
+    <ClCompile Include="Board\Rpi3bp\rpi3bpGPIO.c">
+      <Filter>Board\Rpi3bp</Filter>
+    </ClCompile>
+    <ClCompile Include="Board\Rpi3bp\rpi3bpSPI.c">
+      <Filter>Board\Rpi3bp</Filter>
+    </ClCompile>
+    <ClCompile Include="Board\Rpi3bp\rpi_ili9486.c">
+      <Filter>Board\Rpi3bp</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Hal">
@@ -255,6 +267,15 @@
     </ClInclude>
     <ClInclude Include="..\BaseHdr\Board\board.h">
       <Filter>Include\Board</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\Board\RPI3bp\rpi3bp_gpio.h">
+      <Filter>Include\Board\RPI3bp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\Board\RPI3bp\rpi3bp_spi.h">
+      <Filter>Include\Board\RPI3bp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\Board\RPI3bp\rpi_ili9486.h">
+      <Filter>Include\Board\RPI3bp</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

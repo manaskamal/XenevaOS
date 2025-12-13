@@ -239,7 +239,13 @@
     <ClCompile Include="audrv.c" />
     <ClCompile Include="Board\board.c" />
     <ClCompile Include="Board\Rpi3bp\rpi3bp.c" />
+    <ClCompile Include="Board\Rpi3bp\rpi3bpGPIO.c" />
     <ClCompile Include="Board\Rpi3bp\rpi3bpIRQ.c" />
+    <ClCompile Include="Board\Rpi3bp\rpi3bpSPI.c" />
+    <ClCompile Include="Board\Rpi3bp\rpi_ili9486.c" />
+    <ClCompile Include="Board\Rpi3bp\vc4dsi.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="Board\Virt\fwcfg.c" />
     <ClCompile Include="Board\Virt\virt.c" />
     <ClCompile Include="Board\Virt\virtioblk.c" />
@@ -310,6 +316,9 @@
     <ClInclude Include="..\BaseHdr\aa64hcode.h" />
     <ClInclude Include="..\BaseHdr\Board\board.h" />
     <ClInclude Include="..\BaseHdr\Board\RPI3bp\rpi3bp.h" />
+    <ClInclude Include="..\BaseHdr\Board\RPI3bp\rpi3bp_gpio.h" />
+    <ClInclude Include="..\BaseHdr\Board\RPI3bp\rpi3bp_spi.h" />
+    <ClInclude Include="..\BaseHdr\Board\RPI3bp\rpi_ili9486.h" />
     <ClInclude Include="..\BaseHdr\Drivers\rtcmmio.h" />
     <ClInclude Include="..\BaseHdr\Drivers\uart.h" />
     <ClInclude Include="..\BaseHdr\Drivers\virtio.h" />

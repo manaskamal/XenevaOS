@@ -35,6 +35,9 @@
 #include <aucon.h>
 #include <Board/RPI3bp/rpi3bp.h>
 #include <dtb.h>
+#include <Board/RPI3bp/rpi3bp_gpio.h>
+#include <Board/RPI3bp/rpi3bp_spi.h>
+#include <Board/RPI3bp/rpi_ili9486.h>
 
 #ifdef __TARGET_BOARD_RPI3__
 
@@ -222,7 +225,167 @@ void AuRPI3Initialize() {
     mbox = (uint64_t*)P2V(pa);
     AuTextOut("[aurora]: Rasperry Pi 3b+ board initialized \r\n");
     AuTextOut("[aurora]: Video Core MBOX MMIO : %x \r\n", vcmbox_mmio);
+
+    /*  map the GPIO base */
+    AuRPI3BPGpioMap();
+
+    /*  map and initialize SPI0 */
+    AuRPI3SPI0Map();
+    AuRPI3SPI0Init();
+    AuLCDInit();
 }
+
+static inline void RPIMMIOWrite(uint32_t addr, uint32_t val) {
+    data_cache_flush((uint64_t)addr);
+    *(volatile uint32_t*)addr = val;
+    dsb_ish();
+    isb_flush();
+}
+
+static inline uint32_t RPIMMIORead(uint32_t addr) {
+    data_cache_flush((uint64_t)addr);
+    return *(volatile uint32_t*)addr;
+    dsb_ish();
+    isb_flush();
+}
+
+/*
+ * AuRPI3WriteMailbox -- write to mailbox
+ * @param channel -- Mailbox channel 
+ */
+void AuRPI3WriteMailbox(uint8_t channel) {
+    data_cache_flush((uint64_t*)V2P(mbox));
+    while (RPIMMIORead(MBOX_STATUS) & MBOX_FULL);
+    RPIMMIOWrite(MBOX_WRITE, (V2P(mbox) & 0xFFFFFFF0ULL) | (channel & 0xFULL));
+    dsb_ish();
+}
+
+/*
+ * AuRPI3ReadMailbox -- read from mailbox
+ * @param channel -- mailbox channel
+ */
+uint32_t AuRPI3ReadMailbox(uint8_t channel) {
+    uint32_t data;
+    while (1) {
+        while (RPIMMIORead(MBOX_STATUS) & MBOX_EMPTY);
+        data = RPIMMIORead(MBOX_READ);
+        if ((data & 0xF) == channel)
+            return data & 0xFFFFFFF0;
+    }
+}
+
+/*
+ * AuRPIGetMBOXBuffer -- return currently using
+ * mailbox buffer
+ */
+uint64_t* AuRPIGetMBOXBuffer() {
+    return mbox;
+}
+
+typedef struct {
+    uint32_t width;
+    uint32_t height;
+    uint32_t virtWidth;
+    uint32_t virtHeight;
+    uint32_t pitch;
+    uint32_t depth;
+    uint32_t x_offset;
+    uint32_t y_offset;
+    uint32_t framebuffer_addr;
+    uint32_t framebuffer_size;
+    uint8_t displayID;
+}rpi_fb_t;
+
+static rpi_fb_t fb;
+/*
+ * AuRPIInitializeFramebuffer -- initializes framebuffer
+ * @param width -- fb width by pixels
+ * @param height -- fb height by pixels
+ * @param depth -- fb depth
+ */
+bool AuRPIInitializeFramebuffer(uint32_t width, uint32_t height, uint32_t depth) {
+	uint32_t idx = 0;
+	uint32_t fbwidthptr = 0;
+	uint32_t fbheightptr = 0;
+    uint32_t virtwptr = 0;
+    uint32_t virthptr = 0;
+    uint32_t depthptr = 0;
+
+	mbox[idx++] = 0;
+	mbox[idx++] = 0;
+
+	mbox[idx++] = TAG_SET_PHYS_WH;
+	mbox[idx++] = 8;
+	mbox[idx++] = 0;
+	fbwidthptr = idx;
+	mbox[idx++] = width;
+	fbheightptr = idx;
+	mbox[idx++] = height;
+
+	//set virtual width/height
+	mbox[idx++] = TAG_SET_VIRT_WH;
+	mbox[idx++] = 8;
+	mbox[idx++] = 8;
+    virtwptr = idx;
+	mbox[idx++] = width;
+    virthptr = idx;
+	mbox[idx++] = height;
+
+	//set depth
+	mbox[idx++] = TAG_SET_DEPTH;
+	mbox[idx++] = 4;
+	mbox[idx++] = 4;
+    depthptr = idx;
+	mbox[idx++] = depth;
+
+	//set pixel order
+	mbox[idx++] = TAG_SET_PIXEL_ORDER;
+	mbox[idx++] = 4;
+	mbox[idx++] = 4;
+	mbox[idx++] = 1;
+
+	mbox[idx++] = TAG_ALLOCATE_BUFFER;
+	mbox[idx++] = 8;
+	mbox[idx++] = 4;
+	uint32_t fbptr = idx;
+	mbox[idx++] = 16;
+	mbox[idx++] = 0;
+
+	//allocate fb
+	mbox[idx++] = TAG_GET_PITCH;
+	mbox[idx++] = 4;
+	mbox[idx++] = 4;
+	uint32_t fbpitch = idx;
+	mbox[idx++] = 0;
+
+	mbox[idx++] = TAG_LAST;
+	mbox[0] = idx * 4;
+
+	AuRPI3WriteMailbox(MBOX_CH_PROP);
+
+    AuRPI3ReadMailbox(MBOX_CH_PROP);
+
+	if (mbox[1] != 0x80000000)
+		return false;
+
+	//uint32_t respIDx = display_type = DISPLAY_TYPE_DSI ? 11 : 5;
+	fb.width = mbox[fbwidthptr];
+	fb.height = mbox[fbheightptr];
+	fb.virtWidth = mbox[virtwptr];
+	fb.virtHeight = mbox[virthptr];
+	fb.depth = mbox[depthptr];
+	fb.framebuffer_addr = mbox[fbptr] & 0x3FFFFFFF;
+	fb.framebuffer_size = mbox[fbpitch];
+	fb.pitch = mbox[fbpitch];
+	fb.x_offset = 0;
+	fb.y_offset = 0;
+
+	AuTextOut("[aurora]: framebuffer initialized with addr : %x , Size : %x \r\n", fb.framebuffer_addr, fb.framebuffer_size);
+	AuTextOut("[aurora]: framebuffer pitch : %d \r\n", fb.pitch);
+    return true;
+}
+
+
 
 #endif
 
