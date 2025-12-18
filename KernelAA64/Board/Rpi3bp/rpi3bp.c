@@ -233,6 +233,7 @@ void AuRPI3Initialize() {
     AuRPI3SPI0Map();
     AuRPI3SPI0Init();
     AuLCDInit();
+    for (;;);
 }
 
 static inline void RPIMMIOWrite(uint32_t addr, uint32_t val) {

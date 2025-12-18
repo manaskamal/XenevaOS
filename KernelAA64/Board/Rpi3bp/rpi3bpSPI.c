@@ -41,7 +41,7 @@ static uint64_t* spi0Base;
 #define SPI0_FIFO 0x04
 #define SPI0_CLK 0x08
 
-#define SPI_CS_TXD (1ULL<<18)
+#define SPI_CS_TXD (1ULL<18)
 #define SPI_CS_RXD (1ULL<<17)
 #define SPI_CS_DONE (1ULL<<16)
 #define SPI_CS_TA (1ULL<<7)
@@ -51,6 +51,9 @@ static uint64_t* spi0Base;
 #define SPI_CS_CS0 (0ULL<<0)
 #define SPI_CS_CS1 (1ULL<<0)
 #define SPI_CS_CS2 (2ULL<<0)
+#define SPI_CS_CPOL 0x00000008
+#define SPI_CS_CPHA 0x00000004
+
 
 
 #define SPI0_GPIO_DC 25
@@ -79,11 +82,12 @@ void AuRPI3SPI0Init() {
 	AuRPIGPIOSetFunction(SPI0_GPIO_RST, 1);
 	AuRPIGPIOSetFunction(SPI0_GPIO_LED, 1);
 
-	*(volatile uint32_t*)((uint64_t)spi0Base + SPI0_CLK) = 64;
+
+	*(volatile uint32_t*)((uint64_t)spi0Base + SPI0_CLK) = 128;
 	dsb_ish();
 	isb_flush();
 
-	uint32_t cs = SPI_CS_CLEAR_RX | SPI_CS_CLEAR_TX | SPI_CS_CS0 | (1 << 7);
+	uint32_t cs = SPI_CS_CLEAR_RX | SPI_CS_CLEAR_TX | SPI_CS_CS0 | (1 << 7); // SPI_CS_TA;
 	AuTextOut("SPI CS Set to : %x \r\n", cs);
 	
 	*(volatile uint32_t*)((uint64_t)spi0Base + SPI0_CS) = cs;
@@ -104,15 +108,17 @@ void AuRPI3SPI0Init() {
 	AuTextOut("SPI0_CLK : %d \r\n", clk);
 
 	AuTextOut("[aurora]:RPI3 SPI0 initialized \r\n");
+
 }
 
-#define SPI_MMIO_READ(off)   \
-*(volatile uint32_t*)((uint64_t)spi0Base + off)
+#define SPI_MMIO_READ(off)   *(volatile uint32_t*)((uint64_t)spi0Base + off)
 
-#define SPI_MMIO_WRITE(off) \
-*(volatile uint32_t*)((uint64_t)spi0Base + off); \
-dsb_ish(); \
-isb_flush();
+#define SPI_MMIO_WRITE(off, val) \
+do { \
+	(*(volatile uint32_t*)((uint64_t)spi0Base + off)) = (val & UINT32_MAX); \
+		dsb_ish(); \
+		isb_flush(); \
+}while(0)
 
 
 /*
@@ -121,26 +127,57 @@ isb_flush();
  * @param data -- data to transfer
  */
 void AuRPISPITransfer(uint8_t data) {
-	uint32_t cs = SPI_CS_TA | SPI_CS_CS0 | SPI_CS_CLEAR_TX | SPI_CS_CLEAR_RX;
+	//uint32_t cs = 0;
+	//SPI_MMIO_WRITE(SPI0_CS, cs);
+	//cs = SPI_CS_CLEAR_TX | SPI_CS_CLEAR_RX;
+	//SPI_MMIO_WRITE(SPI0_CS, cs);
+	//for (int i = 0; i < 1000000; i++)
+	//	;
+	//cs = SPI_CS_TA | SPI_CS_CS0; // SPI_CS_CLEAR_TX | SPI_CS_CLEAR_RX;
+	//SPI_MMIO_WRITE(SPI0_CS, cs);
+	uint32_t cs = 0;
 	SPI_MMIO_WRITE(SPI0_CS, cs);
-	//AuTextOut("SPITransferring data \r\n");
-
-	while (!((SPI_MMIO_READ(SPI0_CS) & SPI_CS_TXD)));
-	//AuTextOut("TXD is empty \r\n");
+	cs = SPI_CS_CLEAR_TX | SPI_CS_CLEAR_RX;
+	SPI_MMIO_WRITE(SPI0_CS, cs);
+	for (int i = 0; i < 1000000; i++)
+		;
 
 	SPI_MMIO_WRITE(SPI0_FIFO, data);
 
-	//AuTextOut("FIFO Data written \r\n");
 
-	while (!((SPI_MMIO_READ(SPI0_CS) & SPI_CS_DONE)));
+	cs = SPI_CS_TA | SPI_CS_CS0; // SPI_CS_CLEAR_TX | SPI_CS_CLEAR_RX;
+	SPI_MMIO_WRITE(SPI0_CS, cs);
 
-	//AuTextOut("CS Done \r\n");
+	AuTextOut("SPITransferring data cs :%x\r\n", cs);
 
-	while (!((SPI_MMIO_READ(SPI0_CS) & SPI_CS_RXD))) {
+	//while (!((SPI_MMIO_READ(SPI0_CS) & SPI_CS_TXD)));
+	//AuTextOut("TXD is empty \r\n");
+
+	//SPI_MMIO_WRITE(SPI0_FIFO, data);
+
+	AuTextOut("FIFO Data written \r\n");
+	while (!(SPI_MMIO_READ(SPI0_CS) & SPI_CS_RXD))
 		SPI_MMIO_READ(SPI0_FIFO);
-	}
-	//cs = ~SPI_CS_TA | SPI_CS_CS0;
-	SPI_MMIO_WRITE(SPI0_CS, SPI_CS_CS0);
+
+
+
+	while (!(SPI_MMIO_READ(SPI0_CS) & SPI_CS_DONE))
+		;
+	AuTextOut("CS Done \r\n");
+
+	while (SPI_MMIO_READ(SPI0_CS) & SPI_CS_RXD)
+		SPI_MMIO_READ(SPI0_FIFO);
+
+    cs = SPI_MMIO_READ(SPI0_CS);
+	cs &= ~SPI_CS_TA;
+	SPI_MMIO_WRITE(SPI0_CS, cs);
+	
+	/*cs = SPI_MMIO_READ(SPI0_CS);
+	cs &= ~SPI_CS_TA;
+	cs |= SPI_CS_DONE;
+	cs |= SPI_CS_CLEAR_RX | SPI_CS_CLEAR_TX;
+
+	SPI_MMIO_WRITE(SPI0_CS, cs);*/
 }
 
 /*
@@ -150,14 +187,19 @@ void AuRPISPITransfer(uint8_t data) {
  * @param len -- Length of total datas
  */
 void AuRPISPITransferBuffer(const uint8_t* data, uint32_t len) {
-	uint32_t cs = SPI_CS_TA | SPI_CS_CS0;
-
+	uint32_t cs = 0;
+	SPI_MMIO_WRITE(SPI0_CS, cs);
+	cs = SPI_CS_CLEAR_TX | SPI_CS_CLEAR_RX;
+	SPI_MMIO_WRITE(SPI0_CS,cs);
+	for (int i = 0; i < 1000000; i++)
+		;
+	cs = SPI_CS_TA | SPI_CS_CS0; // SPI_CS_CLEAR_TX | SPI_CS_CLEAR_RX;
 	SPI_MMIO_WRITE(SPI0_CS, cs);
 
 	for (uint32_t i = 0; i < len; i++) {
 		while (!(SPI_MMIO_READ(SPI0_CS) & SPI_CS_TXD));
 		SPI_MMIO_WRITE(SPI0_FIFO, data[i]);
-		while (SPI_MMIO_READ(SPI0_CS) & SPI_CS_RXD)
+		if (SPI_MMIO_READ(SPI0_CS) & SPI_CS_RXD)
 			SPI_MMIO_READ(SPI0_FIFO);
 	}
 
@@ -165,6 +207,39 @@ void AuRPISPITransferBuffer(const uint8_t* data, uint32_t len) {
 
 	while (SPI_MMIO_READ(SPI0_CS) & SPI_CS_RXD)
 		SPI_MMIO_READ(SPI0_FIFO);
-	SPI_MMIO_WRITE(SPI0_CS, SPI_CS_CS0);
+
+	cs = SPI_MMIO_READ(SPI0_CS);
+	cs &= ~SPI_CS_TA;
+	SPI_MMIO_WRITE(SPI0_CS, cs);
+}
+
+void AuRPISPITransferStart() {
+	uint32_t cs = 0;
+	SPI_MMIO_WRITE(SPI0_CS, cs);
+	cs = SPI_CS_CLEAR_TX | SPI_CS_CLEAR_RX;
+	SPI_MMIO_WRITE(SPI0_CS, cs);
+	for (int i = 0; i < 1000000; i++)
+		;
+	cs = SPI_CS_TA | SPI_CS_CS0; // SPI_CS_CLEAR_TX | SPI_CS_CLEAR_RX;
+	SPI_MMIO_WRITE(SPI0_CS, cs);
+}
+
+void AuRPISPITrasnferWrite(uint8_t data) {
+	//while (!(SPI_MMIO_READ(SPI0_CS) & SPI_CS_TXD))
+	//	;
+	SPI_MMIO_WRITE(SPI0_FIFO, data);
+	if (SPI_MMIO_READ(SPI0_CS) & SPI_CS_RXD)
+		SPI_MMIO_READ(SPI0_FIFO);
+
+	while (!(SPI_MMIO_READ(SPI0_CS) & SPI_CS_DONE));
+}
+
+void AuRPISPITransferStop() {
+	while (SPI_MMIO_READ(SPI0_CS) & SPI_CS_RXD)
+		SPI_MMIO_READ(SPI0_FIFO);
+
+	uint32_t cs = SPI_MMIO_READ(SPI0_CS);
+	cs &= ~SPI_CS_TA;
+	SPI_MMIO_WRITE(SPI0_CS, cs);
 }
 

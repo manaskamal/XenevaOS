@@ -49,7 +49,8 @@
 void RPI3_IRQ_handler(AA64Registers* regs) {
     uint32_t pending = AuRPI3LocalIRQGetPending();
     if (pending & INT_SRC_CNTPNSIRQ) {
-        AuTextOut("[aurora]: rpi3 timer irq++ \r\n");
+       // AuTextOut("[aurora]: rpi3 timer irq++ \r\n");
+        AuScheduleThread(regs);
     }
 }
 

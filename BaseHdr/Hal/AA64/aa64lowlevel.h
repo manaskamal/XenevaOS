@@ -146,6 +146,7 @@ extern uint32_t read_icc_iar1_el1();
 extern uint32_t read_midr();
 extern uint64_t read_mpidr_el1();
 extern uint64_t read_daif();
+extern uint64_t read_spsel();
 
 extern void aa64_enter_user(uint64_t stack, uint64_t entryAddr);
 extern void aa64_svc_test();

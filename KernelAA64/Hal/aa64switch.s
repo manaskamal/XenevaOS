@@ -96,8 +96,9 @@ _skip_comp:
    ldp x4,x5, [x0,#152]
    ldp x6,x7,[x0,#168]
    ldr x8, [x0,#184]
-   msr daifclr, #0x2
+ //  msr daifclr, #0x2
    isb
+   mov x0, 1
    ret
 
 
@@ -118,14 +119,12 @@ first_time_sex:
     ldr x28, [x1, #72]
     ldr x29, [x1, #80]
     ldr x30, [x1, #88]
-   
-    ldr x2, [x1, #96]
-    mov sp, x2
-   
     ldr x2, [x1, #104]
     msr ELR_EL1, x2
     ldr x2, [x1, #112]
     msr spsr_el1, x2
+    ldr x2, [x1, #96]
+    msr SP_EL0, x2
     eret
 
 .global resume_user

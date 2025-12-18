@@ -45,40 +45,41 @@
 
 #pragma pack(push,1)
 typedef struct _aa64_regs_ {
-	int64_t x30;
-	int64_t EL0SP;
-	int64_t x28;
-	int64_t x29;
-	int64_t x26;
-	int64_t x27;
-	int64_t x24;
-	int64_t x25;
-	int64_t x22;
-	int64_t x23;
-	int64_t x20;
-	int64_t x21;
-	int64_t x18;
-	int64_t x19;
-	int64_t x16;
-	int64_t x17;
-	int64_t x14;
-	int64_t x15;
-	int64_t x12;
-	int64_t x13;
-	int64_t x10;
-	int64_t x11;
-	int64_t x8;
-	int64_t x9;
-	int64_t x6;
-	int64_t x7;
-	int64_t x4;
-	int64_t x5;
-	int64_t x2;
-	int64_t x3;
-	int64_t x0;
-	int64_t x1;
+	int64_t x30;   //0
+	int64_t EL0SP; //8
+	int64_t x28;   //16
+	int64_t x29;   //24
+	int64_t x26;   //32
+	int64_t x27;   //40
+	int64_t x24;   //48
+	int64_t x25;   //56
+	int64_t x22;   //64
+	int64_t x23;   //72
+	int64_t x20;  //80
+	int64_t x21;  //88
+	int64_t x18;  //96
+	int64_t x19;  //104
+	int64_t x16;  //112
+	int64_t x17;  //120
+	int64_t x14;  //128
+	int64_t x15; //136
+	int64_t x12; //144
+	int64_t x13; //152
+	int64_t x10; //160
+	int64_t x11; //168
+	int64_t x8; //176
+	int64_t x9; //184
+	int64_t x6; //192
+	int64_t x7; //200
+	int64_t x4; //208
+	int64_t x5; //216
+	int64_t x2; //224
+	int64_t x3; //232
+	int64_t x0; //240
+	int64_t x1; //248
 }AA64Registers;
 #pragma pack(pop)
+
 
 
 /*

@@ -38,15 +38,17 @@
 #include <Hal/AA64/aa64lowlevel.h>
 #include <Drivers/uart.h>
 #include <Hal/AA64/gic.h>
+#include <aucon.h>
 #include <aurora.h>
 
 extern void aa64_store_context(AA64Thread* thr);
 extern void store_syscall(AA64Thread* thr);
-extern void aa64_restore_context(AA64Thread* thr);
+extern bool aa64_restore_context(AA64Thread* thr);
 extern void ret_from_syscall(AA64Thread* thr);
 
 extern void first_time_sex(AA64Thread* thr);
 extern void first_time_sex2(AA64Thread* thr);
+extern uint64_t read_sp();
 
 AA64Thread* thread_list_head;
 AA64Thread* thread_list_last;
@@ -280,14 +282,16 @@ AA64Thread* AuCreateKthread(void(*entry) (uint64_t),uint64_t* pml, char* name){
 	t->name[8] = '\0';
 	t->elr_el1 = (uint64_t)entry;
 	t->x30 = (uint64_t)entry;
-	t->spsr_el1 = 0x245;
+	t->spsr_el1 = 0x3C4; // 0x245;
 	//t->sp = stack;
 	t->pml = (uint64_t)pml;
-	t->sp = (uint64_t)AuCreateKernelStack((uint64_t*)t->pml);
+	t->sp = ((uint64_t)AuPmmngrAlloc() + 4096);//AuCreateKernelStack((uint64_t*)t->pml);
+	AuTextOut("SP threadinfo : %x \r\n", t->sp);
 	//t->sp -= 32;
 	t->originalKSp = t->sp;
 	uint64_t kstack = t->sp;
-	t->sp = (((uint64_t)kstack + 15) & ~(uint64_t)0xF);
+	t->sp = ((uint64_t)kstack & ~(uint64_t)0xF);
+	AuTextOut("SP After alignment : %x \r\n", t->sp);
 	t->state = THREAD_STATE_READY;
 	t->thread_id = thread_id++;
 	t->fpsr = 0;
@@ -298,14 +302,20 @@ AA64Thread* AuCreateKthread(void(*entry) (uint64_t),uint64_t* pml, char* name){
 
 extern void PrintThreadInfo() {
 	AA64Thread* thr = current_thread;
-	UARTDebugOut("Saving thread : spsr %x \n", thr->spsr_el1);
+	UARTDebugOut("Saving thread : spsr %x \r\n", thr->spsr_el1);
+	UARTDebugOut("ELR_EL1 : %x \r\n", thr->elr_el1);
+	UARTDebugOut("SP : %x \r\n", thr->sp);
 }
 void AuIdleThread(uint64_t ctx) {
-	UARTDebugOut("Idle thread running \n");
+	UARTDebugOut("Idle thread running \r\n");
+	uint64_t sp = read_sp();
+	UARTDebugOut("SP : %x \r\n", sp);
+	enable_irqs();
 	while (1) {
-		enable_irqs();
+		//enable_irqs();
 		//uint64_t el = _getCurrentEL();
 		//UARTDebugOut("IDLE CurrentEl : %d \n", el);
+		UARTDebugOut("Heyy ++ \r\n");
 	}
 }
 
@@ -336,7 +346,6 @@ void AuHandleSleepThreads() {
 }
 
 bool debug = 0;
-extern uint64_t read_sp();
 
 /*
  * AuScheduleThread -- the core of multi-tasking. It schedules
@@ -344,7 +353,7 @@ extern uint64_t read_sp();
  * @param regs -- Passed by Timer ISR
  */
 void AuScheduleThread(AA64Registers* regs) {
-	//mask_irqs();
+	mask_irqs();
 	if (_scheduler_initialized == 0) {
 		return;
 	}
@@ -358,20 +367,27 @@ void AuScheduleThread(AA64Registers* regs) {
 	else 
 		aa64_store_context(runThr);
 
-
+	AuTextOut("Inside Scheduler \r\n");
 sched:
+	//AuTextOut("Schedule thread upto here \r\n");
 	aa64_store_fp(&runThr->fp_regs, &runThr->fpcr, &runThr->fpsr);
+	//AuTextOut("Stored fp \r\n");
 	if (regs) {
-		runThr->x0 = regs->x0;
-		runThr->x1 = regs->x1;
-		runThr->x30 = regs->x30;
-		runThr->x29 = regs->x29;
+	//	AuTextOut("Register storing \r\n");
+		//runThr->x0 = regs->x0;
+		memcpy(&runThr->x0, ((uint64_t)regs + 240), sizeof(int64_t));
+	//	runThr->x1 = regs->x1;
+		memcpy(&runThr->x1, ((uint64_t)regs + 248), sizeof(int64_t));
+	//	runThr->x30 = regs->x30;
+		memcpy(&runThr->x30, ((uint64_t)regs + 0), sizeof(int64_t));
+	//	runThr->x29 = regs->x29;
+		memcpy(&runThr->x29, ((uint64_t)regs + 24), sizeof(int64_t));
 	}
-
+	//AuTextOut("Registered stored \r\n");
 	scheduler_tick++;
 	AuHandleSleepThreads();
 	AA64NextThread();
-	write_both_ttbr(V2P(current_thread->pml));
+	//write_both_ttbr(V2P(current_thread->pml));
 	//UARTDebugOut("CurrentThread: %s, pml-> %x \n", current_thread->name, V2P(current_thread->pml));
 	aa64_restore_fp(&current_thread->fp_regs, &current_thread->fpcr, &current_thread->fpsr);
 	dsb_sy_barrier();
@@ -387,8 +403,11 @@ sched:
 	if ((current_thread->threadType & THREAD_LEVEL_USER) && current_thread->first_run == 1) {
 		resume_user(current_thread);
 	}
-	
-	aa64_restore_context(current_thread);
+	;
+	if (aa64_restore_context(current_thread)) {
+		AuTextOut("here after restore context \r\n");
+		return;
+	}
 ret:
 	return;
 }
@@ -439,9 +458,13 @@ void AuSchedulerInitialize() {
 void AuSchedulerStart() {
 	AA64Thread* idle = current_thread;
 	_scheduler_initialized = true;
+#ifndef __TARGET_BOARD_RPI3__
 	GICClearPendingIRQ(27);
-	write_both_ttbr(V2P(idle->pml));
+#endif
+	AuTextOut("[aurora]: IDle implemented \r\n");
+	//write_both_ttbr(V2P(idle->pml));
 	aa64_restore_fp(&idle->fp_regs, &idle->fpcr, &idle->fpsr);
+	AuTextOut("[aurora]: executing first time sexx... \r\n");
 	first_time_sex(idle);
 }
 

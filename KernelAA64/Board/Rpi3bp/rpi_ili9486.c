@@ -85,10 +85,12 @@ void ILI9486Init() {
 	//LCDWriteCommand(0xB0);
 	//LCDWriteData(0x00);
 	LCDWriteCommand(0x01);
+	LCDWriteData(0x00);
 	for (int i = 0; i < 120000000; i++)
 		;
 
 	LCDWriteCommand(MIPI_DCS_EXIT_SLEEP_MODE);
+	LCDWriteData(0x00);
 	for (int i = 0; i < 100000000; i++)
 		;
 	LCDWriteCommand(MIPI_DCS_SET_PIXEL_FORMAT);
@@ -107,6 +109,8 @@ void ILI9486Init() {
 	LCDWriteCommand(0xC1);
 	LCDWriteData(0x41);
 	LCDWriteData(0x00);
+
+	AuTextOut("Power control command sent \r\n");
 
 	LCDWriteCommand(0xC2);
 	LCDWriteData(0x44);
@@ -186,6 +190,8 @@ void ILI9486Init() {
 	LCDWriteCommand(0x29);
 	for (int i = 0; i < 12000000; i++)
 		;
+
+	AuTextOut("ILI done \r\n");
 }
 
 
@@ -203,25 +209,33 @@ void LCDSetWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1) {
 
 void LCDClear(uint16_t color) {
 	LCDSetWindow(10, 10, LBTFT_WIDTH - 1, LBTFT_HEIGHT - 1);
+	AuTextOut("LCD Set Window completed \r\n");
 	uint8_t color_bytes[2];
 	color_bytes[0] = (color >> 8);
 	color_bytes[1] = color & 0xFF;
 
 	AuRPIGPIOSet(GPIO_DC);
-	for (uint32_t i = 0; i < 480 * 320; i++) {
-		AuRPISPITransfer(color_bytes[0]);
-		AuRPISPITransfer(color_bytes[1]);
+	AuTextOut("color byte [0] = %x byte 1: %x \r\n", color_bytes[0], color_bytes[1]);
+
+	for (uint32_t i = 0; i < LBTFT_WIDTH * LBTFT_HEIGHT; i++) {
+		AuRPISPITrasnferWrite(color_bytes[0]);
+		AuRPISPITrasnferWrite(color_bytes[1]);
 	}
+	AuRPISPITransferStart();
+	AuRPISPITransferStop();
+	AuTextOut("LCD Clear Completed \r\n");
 }
 
-#define RGB_TO_RGB565(r,g,b) (((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b << 3))
+static uint16_t RGB_TO_RGB565(uint8_t r,uint8_t g,uint8_t b) {
+	return ((r & 0xF8) << 8) |
+		((g & 0xFC) << 3) |
+		(b >> 3);
+}
 
 /*
  * AuLCDInit -- initialize ili9486 pi display 
  */
 void AuLCDInit() {
-	AuRPIGPIOSet(GPIO_RST);
-	for (int i = 0; i < 120000000; i++);
 
 	AuRPIGPIOClear(GPIO_RST);
 	for (int i = 0; i < 120000000; i++);
@@ -235,6 +249,7 @@ void AuLCDInit() {
 	AuRPIGPIOSet(GPIO_LED);
 	for (int i = 0; i < 12000000; i++);
 
+	AuTextOut("LCD Clearing \r\n");
 	LCDClear(RGB_TO_RGB565(255, 255, 255));
 
 	for (int i = 0; i < 12000000; i++);

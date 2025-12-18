@@ -84,6 +84,8 @@ void sync_el1_handler(AA64Registers *regs) {
     UARTDebugOut("Fault Instruction (ELR_EL1): %x \r\n", read_elr_el1());
     UARTDebugOut("SP_EL1: %x  \r\n", read_sp());
     UARTDebugOut("SP_EL0 : %x \r\n", regs->EL0SP);
+    UARTDebugOut("Current SPSel : %d \r\n", read_spsel());
+    UARTDebugOut("EC class : %x \r\n", ec);
     AA64Thread* currthr = AuGetCurrentThread();
     if (currthr) {
         UARTDebugOut("Current Thread: %s \r\n", currthr->name);
@@ -134,7 +136,7 @@ void sync_el1_handler(AA64Registers *regs) {
 	while (1) {}
 }
 
-extern void aa64_restore_context(AA64Thread* thr);
+extern bool aa64_restore_context(AA64Thread* thr);
 
 bool _debug = 0;
 bool _userprint = 0;

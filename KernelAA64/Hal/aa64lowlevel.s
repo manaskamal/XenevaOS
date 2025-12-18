@@ -160,6 +160,7 @@ read_icc_iidr:
 .global set_vbar_el1
 set_vbar_el1:
      msr VBAR_EL1, x0
+     isb
      ret
 
 .global get_cntpct_el0
@@ -205,12 +206,14 @@ read_spsr_el1:
 .global enable_irqs
 enable_irqs:
    msr daifclr, #0x2
+   dsb sy
    isb
    ret
 
 .global mask_irqs
 mask_irqs:
    msr daifset, #0x2
+   dsb sy
    isb
    ret
 
@@ -247,6 +250,11 @@ read_midr:
 .global read_mpidr_el1
 read_mpidr_el1:
    mrs x0, mpidr_el1
+   ret
+
+.global read_spsel
+read_spsel:
+   mrs x0, SPSel
    ret
 
 .global read_daif

@@ -98,12 +98,11 @@ void AuEntryTest(uint64_t test) {
 	//aa64_utest();
 	int c = 10;
 	//enable_irqs();
+	AuTextOut("[aurora]: test2 \r\n");
 	while (1) {
-		//enable_irqs();
-		/*if ((c % 2) == 0)
-			UARTDebugOut("2\n");
-		for (int i = 0; i < 10000000; i++)
-			;*/
+		enable_irqs();
+		if ((c % 2) == 0)
+			UARTDebugOut("[aurora_t1]: 2 \r\n");
 		c++;
 	}
 }
@@ -111,15 +110,16 @@ void AuEntryTest(uint64_t test) {
 void AuEntryTest2(uint64_t test) {
 	int d = 10;
 	//enable_irqs();
-	AA64Thread* thr = AuThreadFindByIDBlockList(1);
+	/*AA64Thread* thr = AuThreadFindByIDBlockList(1);
 	if (thr) {
 		UARTDebugOut("Unblocking thr : %s \n", thr->name);
 		AuUnblockThread(thr);
-	}
+	}*/
+	UARTDebugOut("[aurora]: test3 \r\n");
 	while (1) {
-		/*enable_irqs();
+		enable_irqs();
 		if ((d % 2) != 0)
-			UARTDebugOut("3 \n");*/
+			UARTDebugOut("[aurora_t2]: 3 \r\n");
 		d++;
 	}
 }
@@ -184,20 +184,22 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	/* initialize the deodhai's communication protocol */
 	AuIPCPostBoxInitialise();
 
-	for (;;);
 	/* clear out the lower half memory */
-	AuVmmngrBootFree();
+//	AuVmmngrBootFree();
+
+	AuTextOut("[aurora]: address space lower half cleared successfully \r\n");
 
 	AuSchedulerInitialize();
-
-	AuProcess* proc = AuCreateProcessSlot(0, "exec");
-	int num_args = 1;
-	char* about = (char*)kmalloc(strlen("-about"));
-	strcpy(about, "-about");
-	char** argvs = (char**)kmalloc(num_args * sizeof(char*));
-	memset(argvs, 0, num_args);
-	argvs[0] = about;
-	AuLoadExecToProcess(proc, "/init.exe", num_args, argvs);
+	AA64Thread* t2 = AuCreateKthread(AuEntryTest, NULL, "test");
+	AA64Thread* t3 = AuCreateKthread(AuEntryTest2, NULL, "test2");
+	//AuProcess* proc = AuCreateProcessSlot(0, "exec");
+	//int num_args = 1;
+	//char* about = (char*)kmalloc(strlen("-about"));
+	//strcpy(about, "-about");
+	//char** argvs = (char**)kmalloc(num_args * sizeof(char*));
+	//memset(argvs, 0, num_args);
+	//argvs[0] = about;
+	//AuLoadExecToProcess(proc, "/init.exe", num_args, argvs);
 	
 	
 	AuSchedulerStart();

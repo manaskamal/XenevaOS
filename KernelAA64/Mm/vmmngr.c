@@ -485,8 +485,8 @@ uint64_t* AuCreateVirtualAddressSpace() {
 	memset(new_pml, 0, PAGE_SIZE);
 
 	for (int i = 0; i < 512; i++) {
-		if (i < 256)
-			continue;
+		/*if (i < 256)
+			continue;*/
 		if (root_pml[i] & 1)
 			new_pml[i] = root_pml[i];
 		else
