@@ -83,15 +83,15 @@ uint64_t lpbase;
 #define DISABLE_IRQS_2 0xb220
 #define DISABLE_BASIC_IRQS 0xb224
 
-uint64_t* mbox;
+uint32_t* mbox;
 uint64_t vcmbox_mmio;
 
-#define MBOX_READ  ((volatile unsigned int*)(vcmbox_mmio + 0x0))
-#define MBOX_POLL  ((volatile unsigned int*)(vcmbox_mmio + 0x10))
-#define MBOX_SENDER ((volatile unsigned int*)(vcmbox_mmio + 0x14))
-#define MBOX_STATUS ((volatile unsigned int*)(vcmbox_mmio + 0x18))
-#define MBOX_CONFIG ((volatile unsigned int*)(vcmbox_mmio + 0x1C))
-#define MBOX_WRITE  ((volatile unsigned int*)(vcmbox_mmio + 0x20))
+#define MBOX_READ  (VIDEOCORE_MBOX + 0x0)
+#define MBOX_POLL  (VIDEOCORE_MBOX + 0x10)
+#define MBOX_SENDER (VIDEOCORE_MBOX + 0x14)
+#define MBOX_STATUS (VIDEOCORE_MBOX + 0x18)
+#define MBOX_CONFIG (VIDEOCORE_MBOX + 0x1C)
+#define MBOX_WRITE  (VIDEOCORE_MBOX + 0x20)
 
 #define ARMCTRL_READ(addr) (*(volatile uint32_t*)(addr))
 #define ARMCTRL_WRITE(addr,val) (*(volatile uint32_t*)(addr)= (val))
@@ -221,8 +221,8 @@ void AuRPI3ICInit() {
 void AuRPI3Initialize() {
     vcmbox_mmio = (uint64_t)AuMapMMIO(VIDEOCORE_MBOX, 1);
     uint64_t pa = (uint64_t)AuPmmngrAlloc();
-    pa = (pa + 0xF) & ~0xFULL;
-    mbox = (uint64_t*)P2V(pa);
+    pa = (pa + 0xFULL) & ~0xFULL;
+    mbox = (uint32_t*)pa;
     AuTextOut("[aurora]: Rasperry Pi 3b+ board initialized \r\n");
     AuTextOut("[aurora]: Video Core MBOX MMIO : %x \r\n", vcmbox_mmio);
 
@@ -232,22 +232,18 @@ void AuRPI3Initialize() {
     /*  map and initialize SPI0 */
     AuRPI3SPI0Map();
     AuRPI3SPI0Init();
-    AuLCDInit();
-    for (;;);
+    AuRPIInitializeFramebuffer(800, 480, 32);
+    //AuLCDInit();
 }
 
 static inline void RPIMMIOWrite(uint32_t addr, uint32_t val) {
-    data_cache_flush((uint64_t)addr);
     *(volatile uint32_t*)addr = val;
     dsb_ish();
     isb_flush();
 }
 
 static inline uint32_t RPIMMIORead(uint32_t addr) {
-    data_cache_flush((uint64_t)addr);
-    return *(volatile uint32_t*)addr;
-    dsb_ish();
-    isb_flush();
+    return *((volatile uint32_t*)addr);
 }
 
 /*
@@ -255,10 +251,14 @@ static inline uint32_t RPIMMIORead(uint32_t addr) {
  * @param channel -- Mailbox channel 
  */
 void AuRPI3WriteMailbox(uint8_t channel) {
-    data_cache_flush((uint64_t*)V2P(mbox));
+    data_cache_flush((uint64_t*)mbox);
+    uint32_t pa = (uint32_t)mbox;
+    AuTextOut("MBOX Physical address : %x \r\n", pa);
+    AuTextOut("MBOX write addr : %x \r\n", MBOX_WRITE);
     while (RPIMMIORead(MBOX_STATUS) & MBOX_FULL);
-    RPIMMIOWrite(MBOX_WRITE, (V2P(mbox) & 0xFFFFFFF0ULL) | (channel & 0xFULL));
+    RPIMMIOWrite(MBOX_WRITE, (pa & 0xFFFFFFF0ULL) | (channel & 0xFULL));
     dsb_ish();
+    isb_flush();
 }
 
 /*
@@ -267,6 +267,7 @@ void AuRPI3WriteMailbox(uint8_t channel) {
  */
 uint32_t AuRPI3ReadMailbox(uint8_t channel) {
     uint32_t data;
+    AuTextOut("Reading from MBOX : %x \r\n", MBOX_STATUS);
     while (1) {
         while (RPIMMIORead(MBOX_STATUS) & MBOX_EMPTY);
         data = RPIMMIORead(MBOX_READ);
@@ -305,15 +306,17 @@ static rpi_fb_t fb;
  * @param depth -- fb depth
  */
 bool AuRPIInitializeFramebuffer(uint32_t width, uint32_t height, uint32_t depth) {
+    AuTextOut("Requesting framebuffer \r\n");
 	uint32_t idx = 0;
 	uint32_t fbwidthptr = 0;
 	uint32_t fbheightptr = 0;
     uint32_t virtwptr = 0;
     uint32_t virthptr = 0;
     uint32_t depthptr = 0;
+    uint32_t fbsz = 0;
 
-	mbox[idx++] = 0;
-	mbox[idx++] = 0;
+	mbox[idx++] = 35*4;
+	mbox[idx++] = MBOX_REQUEST;
 
 	mbox[idx++] = TAG_SET_PHYS_WH;
 	mbox[idx++] = 8;
@@ -349,7 +352,8 @@ bool AuRPIInitializeFramebuffer(uint32_t width, uint32_t height, uint32_t depth)
 	mbox[idx++] = 8;
 	mbox[idx++] = 4;
 	uint32_t fbptr = idx;
-	mbox[idx++] = 16;
+	mbox[idx++] = 4096;
+    fbsz = idx;
 	mbox[idx++] = 0;
 
 	//allocate fb
@@ -362,8 +366,9 @@ bool AuRPIInitializeFramebuffer(uint32_t width, uint32_t height, uint32_t depth)
 	mbox[idx++] = TAG_LAST;
 	mbox[0] = idx * 4;
 
+    AuTextOut("Writing MBOX \r\n");
 	AuRPI3WriteMailbox(MBOX_CH_PROP);
-
+    AuTextOut("MBOX Written \r\n");
     AuRPI3ReadMailbox(MBOX_CH_PROP);
 
 	if (mbox[1] != 0x80000000)
@@ -376,13 +381,38 @@ bool AuRPIInitializeFramebuffer(uint32_t width, uint32_t height, uint32_t depth)
 	fb.virtHeight = mbox[virthptr];
 	fb.depth = mbox[depthptr];
 	fb.framebuffer_addr = mbox[fbptr] & 0x3FFFFFFF;
-	fb.framebuffer_size = mbox[fbpitch];
+	fb.framebuffer_size = mbox[fbsz];
 	fb.pitch = mbox[fbpitch];
 	fb.x_offset = 0;
 	fb.y_offset = 0;
 
 	AuTextOut("[aurora]: framebuffer initialized with addr : %x , Size : %x \r\n", fb.framebuffer_addr, fb.framebuffer_size);
 	AuTextOut("[aurora]: framebuffer pitch : %d \r\n", fb.pitch);
+    AuTextOut("[aurora]: framebuffer width : %d height : %d \r\n", fb.width, fb.height);
+
+    uint32_t* fbptr_ = (uint32_t*)fb.framebuffer_addr;
+    uint32_t pixels = (fb.width * fb.height) / 4;
+    for (uint32_t x = 0; x < fb.width; x++)
+        for (uint32_t y = 0; y < fb.height; y++)
+            fbptr_[x + y * fb.width] = 0xFFFFFFFF;
+    
+      //  fbptr_[i] = 0xFFFFFFFF;
+
+    data_cache_flush((uint64_t*)fbptr_);
+
+    KERNEL_BOOT_INFO* info = AuGetBootInfoStruc();
+    info->graphics_framebuffer = fb.framebuffer_addr;
+    info->X_Resolution = fb.width;
+    info->Y_Resolution = fb.height;
+    info->fb_size = fb.framebuffer_size;
+    info->pixels_per_line = 4096;
+    info->redmask = 0x00FF0000;
+    info->greenmask = 0x0000FF00;
+    info->bluemask = 0x000000FF;
+    
+
+
+    AuTextOut("FB painted \r\n");
     return true;
 }
 

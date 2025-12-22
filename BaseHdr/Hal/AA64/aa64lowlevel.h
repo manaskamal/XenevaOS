@@ -155,4 +155,5 @@ extern void dc_ivac(uint64_t address);
 extern void aa64_store_fp(uint8_t* address, uint64_t* fpcr, uint64_t* fpsr);
 extern void aa64_restore_fp(uint8_t* address, uint64_t* fpcr, uint64_t* fpsr);
 extern void data_cache_flush(uint64_t* address);
+extern void aa64_data_cache_clean_range(void* addr, size_t size);
 #endif

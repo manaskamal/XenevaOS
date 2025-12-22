@@ -49,6 +49,7 @@ void UARTInitialize() {
 	uartMMIO = (uint64_t*)AuMapMMIO(UART0_BASE, 1);
 	AuTextOut("UART MMIO -> %x \n", uartMMIO);
 
+#ifdef __TARGET_BOARD_QEMU_VIRT__
 	uart_write_reg(UART_CR, 0);
 	uart_write_reg(UART_IBRD, 13);
 	uart_write_reg(UART_FBRD, 1);
@@ -61,6 +62,7 @@ void UARTInitialize() {
 
 	//enable irq
 	uart_write_reg(UART_IMSC, UART_IMSC_RXIM | UART_IMSC_RTIM);
+#endif
 	_uart_mapped = true;
 }
 

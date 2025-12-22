@@ -59,7 +59,9 @@ extern void AuRPISPITransferBuffer(const uint8_t* data, uint32_t len);
 
 extern void AuRPISPITransferStart();
 
-extern void AuRPISPITrasnferWrite(uint8_t data);
+extern void AuRPISPITrasnferWrite(uint32_t data);
 
 extern void AuRPISPITransferStop();
+
+extern void AuRPISPIFifoWrite(uint32_t data);
 #endif

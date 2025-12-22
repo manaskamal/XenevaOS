@@ -66,8 +66,16 @@ void AA64ClockInitialize() {
 
 	basisTime = AA64GetPhysicalTimerCount() / cpuFrequency;
 	AuTextOut("[aurora]: using %d mHZ \r\n", cpuFrequency);
+}
 
-	
+#define CACHE_LINE_SIZE 64
+void aa64_data_cache_clean_range(void* addr, size_t size) {
+	size_t start = (size_t)addr;
+	size_t end = start + size;
+
+	start &= ~(CACHE_LINE_SIZE - 1);
+	for (size_t p = start; p < end; p += CACHE_LINE_SIZE)
+		data_cache_flush((uint64_t*)p);
 }
 
 void AA64CPUImplementer(uint32_t midr) {
@@ -162,8 +170,7 @@ void AA64TimerSetup() {
  */
 void AA64CPUPostInitialize(KERNEL_BOOT_INFO* info) {
 	AuACPIInitialise(info->acpi_table_pointer);
-	if (info->boot_type != BOOT_LITTLEBOOT_ARM64)
-		UARTInitialize();
+	UARTInitialize();
 	//enable_irqs();
 	mask_irqs();
 	suspendTimer();

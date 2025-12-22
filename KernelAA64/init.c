@@ -102,7 +102,7 @@ void AuEntryTest(uint64_t test) {
 	while (1) {
 		enable_irqs();
 		if ((c % 2) == 0)
-			UARTDebugOut("[aurora_t1]: 2 \r\n");
+			AuTextOut("[aurora_t1]: 2 \r\n");
 		c++;
 	}
 }
@@ -115,16 +115,40 @@ void AuEntryTest2(uint64_t test) {
 		UARTDebugOut("Unblocking thr : %s \n", thr->name);
 		AuUnblockThread(thr);
 	}*/
-	UARTDebugOut("[aurora]: test3 \r\n");
+	AuTextOut("[aurora]: test3 \r\n");
 	while (1) {
 		enable_irqs();
 		if ((d % 2) != 0)
-			UARTDebugOut("[aurora_t2]: 3 \r\n");
+			AuTextOut("[aurora_t2]: 3 \r\n");
 		d++;
 	}
 }
 
+void AuEntryTest4(uint64_t test) {
+	int d = 10;
+	//enable_irqs();
+	/*AA64Thread* thr = AuThreadFindByIDBlockList(1);
+	if (thr) {
+		UARTDebugOut("Unblocking thr : %s \n", thr->nme);
+		AuUnblockThread(thr);
+	}*/
+	AuTextOut("[aurora]: test4 \r\n");
+	while (1) {
+		enable_irqs();
+		if ((d % 2) != 0)
+			AuTextOut("[aurora_t4]: 4 \r\n");
+		d++;
+	}
+}
 
+KERNEL_BOOT_INFO* bootinfo;
+
+/*
+ * AuGetBootInfoStruc -- return kernel boot information
+ */
+KERNEL_BOOT_INFO* AuGetBootInfoStruc() {
+	return bootinfo;
+}
 
 /*
  * _AuMain -- the main entry point for kernel
@@ -137,6 +161,7 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
         AuUartPutString("[aurora]:Kernel is booted using LittleBoot ARM64 \r\n");
         _littleboot_used = true;
     }
+	bootinfo = info;
 	AuConsoleInitialize(info, true);
     AuDeviceTreeInitialize(info);
 	AA64CpuInitialize();
@@ -184,14 +209,17 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	/* initialize the deodhai's communication protocol */
 	AuIPCPostBoxInitialise();
 
+	AuTextOut("[aurora]: starting xeneva (ARM64) please wait...\r\n");
+
 	/* clear out the lower half memory */
-//	AuVmmngrBootFree();
+	AuVmmngrBootFree();
 
 	AuTextOut("[aurora]: address space lower half cleared successfully \r\n");
 
 	AuSchedulerInitialize();
-	AA64Thread* t2 = AuCreateKthread(AuEntryTest, NULL, "test");
-	AA64Thread* t3 = AuCreateKthread(AuEntryTest2, NULL, "test2");
+	AA64Thread* t2 = AuCreateKthread(AuEntryTest, AuCreateVirtualAddressSpace(), "test");
+	AA64Thread* t3 = AuCreateKthread(AuEntryTest2, AuCreateVirtualAddressSpace(), "test2");
+	AA64Thread* t4 = AuCreateKthread(AuEntryTest4, AuCreateVirtualAddressSpace(), "test4");
 	//AuProcess* proc = AuCreateProcessSlot(0, "exec");
 	//int num_args = 1;
 	//char* about = (char*)kmalloc(strlen("-about"));

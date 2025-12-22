@@ -60,6 +60,8 @@ extern void AuRPIGPIOSet(uint8_t pin);
  */
 extern void AuRPIGPIOClear(uint8_t pin);
 
+extern void AuRPIGPIOPullUpsDown();
+
 /*
  * AuRPIGPIOWrite -- write boolean value
  * to specific pin

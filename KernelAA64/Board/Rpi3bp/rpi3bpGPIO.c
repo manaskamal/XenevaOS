@@ -70,6 +70,18 @@ void AuRPIGPIOSetFunction(uint8_t pin, uint8_t function) {
 	isb_flush();
 }
 
+void AuRPIGPIOPullUpsDown() {
+	(*(volatile uint32_t*)((uint64_t)gpioBase + 0x94)) = 0;
+	for (int i = 0; i < 15000; i++)
+		;
+	(*(volatile uint32_t*)((uint64_t)gpioBase + 0x98)) = (1 << 8) |
+		(1 << 9) | (1 << 10) | (1 << 11);
+
+	for (int i = 0; i < 15000; i++)
+		;
+	(*(volatile uint32_t*)((uint64_t)gpioBase + 0x98)) = 0;
+}
+
 /*
  * AuRPIGPIOSet -- set a specific pin
  * @param pin -- Pin number

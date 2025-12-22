@@ -82,6 +82,7 @@ void LCDWriteU32(uint32_t data) {
 
 
 void ILI9486Init() {
+	AuRPISPITransferStart();
 	//LCDWriteCommand(0xB0);
 	//LCDWriteData(0x00);
 	LCDWriteCommand(0x01);
@@ -253,6 +254,8 @@ void AuLCDInit() {
 	LCDClear(RGB_TO_RGB565(255, 255, 255));
 
 	for (int i = 0; i < 12000000; i++);
+	AuTextOut("LCD Initialized \r\n");
+	AuRPISPITransferStop();
 }
 
 

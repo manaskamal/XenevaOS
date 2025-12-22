@@ -42,6 +42,8 @@
 #include <process.h>
 #include <Fs/vfs.h>
 #include <Drivers/uart.h>
+#include <Hal/AA64/aa64cpu.h>
+#include <Hal/AA64/aa64lowlevel.h>
 
 uint8_t* font_data;
 uint32_t console_x;
@@ -157,14 +159,18 @@ void AuConsolePostInitialise(PKERNEL_BOOT_INFO info) {
 	/* little boot won't support framebuffer, need to
 	 * rely on graphics driver
 	 */
-	if (info->boot_type == BOOT_LITTLEBOOT_ARM64)
-		return;
+	//if (info->boot_type == BOOT_LITTLEBOOT_ARM64) {
+	//	info->graphics_framebuffer =
+	//}
 	aucon = (AuConsole*)kmalloc(sizeof(AuConsole));
 	memset(aucon, 0, sizeof(AuConsole));
-
-	for (int i = 0; i < info->fb_size / PAGE_SIZE; i++)
+	size_t fb_sz = (info->fb_size + PAGE_SIZE - 1) / PAGE_SIZE;
+	for (int i = 0; i < fb_sz; i++)
 		AuMapPage((uint64_t)info->graphics_framebuffer + (i * PAGE_SIZE),
-			0xFFFFD00000200000 +  (i * 4096), PTE_NORMAL_MEM);
+			0xFFFFD00000200000 +  (i * 4096), PTE_NORMAL_NON_CACHEABLE);
+
+	AuTextOut("[aucon]: graphics framebuffer : %x \r\n", info->graphics_framebuffer);
+	AuTextOut("[aucon]: width : %d px , height : %d px \r\n", info->X_Resolution, info->Y_Resolution);
 	early_ = false;
 	aucon->buffer = (uint32_t*)0xFFFFD00000200000;
 	aucon->width = info->X_Resolution;
@@ -191,7 +197,7 @@ void AuConsolePostInitialise(PKERNEL_BOOT_INFO info) {
 			aucon->buffer[w + h * info->X_Resolution] = CONSOLE_BACKGROUND;
 		}
 	}
-	early_ = false;
+	early_ = 0;
 
 	AuVFSNode* fsys = AuVFSFind("/dev");
 	AuVFSNode* file = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
@@ -250,12 +256,13 @@ void AuPutPixel(size_t x, size_t y, uint32_t col) {
 	uint32_t bpp = aucon->bpp;
 	uint32_t pixelPerLine = aucon->scanline;
 
-	uint32_t* pixelloc = RAW_OFFSET(uint32_t*,framebuffer, (pixelPerLine * y + x) * (bpp / 8));
+	/*uint32_t* pixelloc = RAW_OFFSET(uint32_t*,framebuffer, (pixelPerLine * y + x) * (bpp / 8));
 	size_t pixel = ((RED(col) << low_set_bit(redmask)) & redmask) |
 		((GREEN(col) << low_set_bit(greenmask)) & greenmask) |
 		((BLUE(col) << low_set_bit(bluemask)) & bluemask) |
 		(*pixelloc & resvmask);
-	*pixelloc = pixel;
+	*pixelloc = pixel;*/
+	framebuffer[y * aucon->width + x] = col;
 }
 
 //! Put a character to console output
@@ -469,4 +476,8 @@ uint32_t AuConsoleGetScreenHeight() {
 	if (!aucon)
 		return 0;
 	return aucon->height;
+}
+
+void AuConsoleFlushFramebuffer() {
+	aa64_data_cache_clean_range(aucon->buffer, aucon->size);
 }

@@ -78,22 +78,22 @@ void sync_el1_handler(AA64Registers *regs) {
     uint32_t ec = (esr >> 26) & 0x3F;
 
    
-    UARTDebugOut("=======Synchronous Exception occured========= \r\n");
-    UARTDebugOut("Fault Address (FAR_EL1): %x \r\n", read_far_el1());
+    AuTextOut("=======Synchronous Exception occured========= \r\n");
+    AuTextOut("Fault Address (FAR_EL1): %x \r\n", read_far_el1());
     //UARTDebugOut("Fault Address String (FAR_EL1): %s \n", read_far_el1());
-    UARTDebugOut("Fault Instruction (ELR_EL1): %x \r\n", read_elr_el1());
-    UARTDebugOut("SP_EL1: %x  \r\n", read_sp());
-    UARTDebugOut("SP_EL0 : %x \r\n", regs->EL0SP);
-    UARTDebugOut("Current SPSel : %d \r\n", read_spsel());
-    UARTDebugOut("EC class : %x \r\n", ec);
+    AuTextOut("Fault Instruction (ELR_EL1): %x \r\n", read_elr_el1());
+    AuTextOut("SP_EL1: %x  \r\n", read_sp());
+    AuTextOut("SP_EL0 : %x \r\n", regs->EL0SP);
+    AuTextOut("Current SPSel : %d \r\n", read_spsel());
+    AuTextOut("EC class : %x \r\n", ec);
     AA64Thread* currthr = AuGetCurrentThread();
     if (currthr) {
-        UARTDebugOut("Current Thread: %s \r\n", currthr->name);
+        AuTextOut("Current Thread: %s \r\n", currthr->name);
         AuDumpRegisters(currthr, regs);
     }
 
     if (ec == 0x25) {
-        UARTDebugOut("Stack alignment fault \r\n");
+        AuTextOut("Stack alignment fault \r\n");
         AuDumpRegisters(currthr, regs);
     }
 

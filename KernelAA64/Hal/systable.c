@@ -62,7 +62,7 @@ uint64_t test_call() {
 
 static void* syscalls[AURORA_MAX_SYSCALL] = {
 	null_call, //0
-	UARTDebugOut, //1
+	AuTextOut, //1
 	PauseThread, //2
 	GetThreadID, //3
 	GetProcessID, //4

@@ -82,13 +82,13 @@ aa64_restore_context:
    ldr x2, [x0,#112]
    msr SPSR_EL1,x2
 
-   //ldrb w2, [x0,#121]
-   //cmp w2, #2
-  // b.ne _skip_comp
-  // ldrb w3, [x0,#206]
-  // cmp w3, #1
-  // b.ne _skip_comp
-  // mov x30, 0
+   ldrb w2, [x0,#121]
+   cmp w2, #2
+   b.ne _skip_comp
+   ldrb w3, [x0,#206]
+   cmp w3, #1
+   b.ne _skip_comp
+   mov x30, 0
 _skip_comp:
    /* We must clear the IRQ bit from daifclr manually,
     * because when exception is taken DAIF bits are masked */

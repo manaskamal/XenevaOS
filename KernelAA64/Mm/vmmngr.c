@@ -485,8 +485,8 @@ uint64_t* AuCreateVirtualAddressSpace() {
 	memset(new_pml, 0, PAGE_SIZE);
 
 	for (int i = 0; i < 512; i++) {
-		/*if (i < 256)
-			continue;*/
+		if (i < 256)
+			continue;
 		if (root_pml[i] & 1)
 			new_pml[i] = root_pml[i];
 		else
@@ -500,13 +500,25 @@ uint64_t* AuGetRootPageTable(){
 	return P2V((uint64_t)_RootPaging);
 }
 
+extern void AuConsoleFlushFramebuffer();
 /*
  * AuVmmngrBootFree -- free up the lower half
  */
 void AuVmmngrBootFree() {
 	uint64_t* cr3 = (uint64_t*)_RootPaging;
+	dsb_ish();
+	isb_flush();
+
 	for (int i = 0; i < 256; i++)
 		cr3[i] = 0;
+	aa64_data_cache_clean_range(cr3, 256 * sizeof(uint64_t));
+	dsb_ish();
+
+	AuConsoleFlushFramebuffer();
+	dsb_ish();
+	isb_flush();
+
+	tlb_flush_vmalle1is();
 	write_both_ttbr((uint64_t)_RootPaging);
 }
 

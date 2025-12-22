@@ -285,9 +285,9 @@ AA64Thread* AuCreateKthread(void(*entry) (uint64_t),uint64_t* pml, char* name){
 	t->spsr_el1 = 0x3C4; // 0x245;
 	//t->sp = stack;
 	t->pml = (uint64_t)pml;
-	t->sp = ((uint64_t)AuPmmngrAlloc() + 4096);//AuCreateKernelStack((uint64_t*)t->pml);
+	t->sp = AuCreateKernelStack((uint64_t*)t->pml);
 	AuTextOut("SP threadinfo : %x \r\n", t->sp);
-	//t->sp -= 32;
+	t->sp -= 32;
 	t->originalKSp = t->sp;
 	uint64_t kstack = t->sp;
 	t->sp = ((uint64_t)kstack & ~(uint64_t)0xF);
@@ -367,9 +367,8 @@ void AuScheduleThread(AA64Registers* regs) {
 	else 
 		aa64_store_context(runThr);
 
-	AuTextOut("Inside Scheduler \r\n");
 sched:
-	//AuTextOut("Schedule thread upto here \r\n");
+	//AuTextOut("Schedule thread upto here sp: %x \r\n", regs->EL0SP);
 	aa64_store_fp(&runThr->fp_regs, &runThr->fpcr, &runThr->fpsr);
 	//AuTextOut("Stored fp \r\n");
 	if (regs) {
@@ -387,7 +386,8 @@ sched:
 	scheduler_tick++;
 	AuHandleSleepThreads();
 	AA64NextThread();
-	//write_both_ttbr(V2P(current_thread->pml));
+	tlb_flush_vmalle1is();
+	write_both_ttbr(V2P(current_thread->pml));
 	//UARTDebugOut("CurrentThread: %s, pml-> %x \n", current_thread->name, V2P(current_thread->pml));
 	aa64_restore_fp(&current_thread->fp_regs, &current_thread->fpcr, &current_thread->fpsr);
 	dsb_sy_barrier();
@@ -462,7 +462,8 @@ void AuSchedulerStart() {
 	GICClearPendingIRQ(27);
 #endif
 	AuTextOut("[aurora]: IDle implemented \r\n");
-	//write_both_ttbr(V2P(idle->pml));
+	tlb_flush_vmalle1is();
+	write_both_ttbr(V2P(idle->pml));
 	aa64_restore_fp(&idle->fp_regs, &idle->fpcr, &idle->fpsr);
 	AuTextOut("[aurora]: executing first time sexx... \r\n");
 	first_time_sex(idle);
