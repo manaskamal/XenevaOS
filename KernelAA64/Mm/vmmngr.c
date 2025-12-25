@@ -142,7 +142,8 @@ bool AuMapPage(uint64_t phys_addr, uint64_t virt_addr, uint8_t attrib) {
 		const uint64_t page = (uint64_t)AuPmmngrAlloc();
 		pml4i[i4] = (page & ~0xFFFUL) | PTE_VALID | PTE_TABLE | PTE_AF;
 		memset((void*)P2V(page), 0, 4096);
-		data_cache_flush((uint64_t*)V2P(&pml4i[i4]));
+		void* address = &pml4i[i4];
+		data_cache_flush((uint64_t*)address);
 	}
 	uint64_t* pml3 = (uint64_t*)P2V((pml4i[i4] & ~0xFFFULL));
 
@@ -151,7 +152,8 @@ bool AuMapPage(uint64_t phys_addr, uint64_t virt_addr, uint8_t attrib) {
 		const uint64_t page = (uint64_t)AuPmmngrAlloc();
 		pml3[i3] = (page & ~0xFFFUL) | PTE_VALID | PTE_TABLE | PTE_AF;
 		memset((void*)P2V(page), 0, 4096);
-		data_cache_flush((uint64_t*)V2P(&pml3[i3]));
+		void* address = &pml3[i3];
+		data_cache_flush((uint64_t*)address);
 	}
 
 
@@ -162,7 +164,8 @@ bool AuMapPage(uint64_t phys_addr, uint64_t virt_addr, uint8_t attrib) {
 		const uint64_t page = (uint64_t)AuPmmngrAlloc();
 		pml2[i2] = (page & ~0xFFFUL) | PTE_VALID | PTE_TABLE | PTE_AF;
 		memset((void*)P2V(page), 0, 4096);
-		data_cache_flush((uint64_t*)V2P(&pml2[i2]));
+		void* address = &pml2[i2];
+		data_cache_flush((uint64_t*)address);
 
 	}
 
@@ -176,7 +179,8 @@ bool AuMapPage(uint64_t phys_addr, uint64_t virt_addr, uint8_t attrib) {
 
 	pml1[i1] = (phys_addr & ~0xFFFULL) | flags;
 	virt_addr &= ~0xFFFULL;
-	data_cache_flush((uint64_t*)V2P(&pml1[i1]));
+	void* address = &pml1[i1];
+	data_cache_flush((uint64_t*)address);
 	tlb_flush(virt_addr);
 	return true;
 }
@@ -514,9 +518,9 @@ void AuVmmngrBootFree() {
 	aa64_data_cache_clean_range(cr3, 256 * sizeof(uint64_t));
 	dsb_ish();
 
-	AuConsoleFlushFramebuffer();
+	/*AuConsoleFlushFramebuffer();
 	dsb_ish();
-	isb_flush();
+	isb_flush();*/
 
 	tlb_flush_vmalle1is();
 	write_both_ttbr((uint64_t)_RootPaging);

@@ -113,7 +113,7 @@ typedef struct __VFS_NODE__ {
 }AuVFSNode;
 //#pragma pack(pop)
 
-#pragma pack(push,1)
+//#pragma pack(push,1)
 typedef struct _AuFileStatus_ {
 	uint8_t filemode; //mode of the file
 	size_t size;  //size in bytes
@@ -124,9 +124,9 @@ typedef struct _AuFileStatus_ {
 	uint32_t num_links;
 	uint8_t eof;
 }AuFileStatus;
-#pragma pack(pop)
+//#pragma pack(pop)
 
-#pragma pack(push,1)
+
 typedef struct _FileControl_ {
 	int syscall_magic;
 	uint8_t uchar_1;
@@ -138,7 +138,7 @@ typedef struct _FileControl_ {
 	uint64_t ulong_1;
 	uint64_t ulong_2;
 }AuFileIOControl;
-#pragma pack(pop)
+
 
 /*
  * AuVFSContainer -- is a container

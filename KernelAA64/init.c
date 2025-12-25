@@ -150,6 +150,8 @@ KERNEL_BOOT_INFO* AuGetBootInfoStruc() {
 	return bootinfo;
 }
 
+
+extern void debugLIBOn();
 /*
  * _AuMain -- the main entry point for kernel
  * @param info -- Kernel Boot information passed
@@ -217,19 +219,20 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	AuTextOut("[aurora]: address space lower half cleared successfully \r\n");
 
 	AuSchedulerInitialize();
-	AA64Thread* t2 = AuCreateKthread(AuEntryTest, AuCreateVirtualAddressSpace(), "test");
+
+	/*
 	AA64Thread* t3 = AuCreateKthread(AuEntryTest2, AuCreateVirtualAddressSpace(), "test2");
-	AA64Thread* t4 = AuCreateKthread(AuEntryTest4, AuCreateVirtualAddressSpace(), "test4");
-	//AuProcess* proc = AuCreateProcessSlot(0, "exec");
-	//int num_args = 1;
-	//char* about = (char*)kmalloc(strlen("-about"));
-	//strcpy(about, "-about");
-	//char** argvs = (char**)kmalloc(num_args * sizeof(char*));
-	//memset(argvs, 0, num_args);
-	//argvs[0] = about;
-	//AuLoadExecToProcess(proc, "/init.exe", num_args, argvs);
-	
-	
+	AA64Thread* t4 = AuCreateKthread(AuEntryTest4, AuCreateVirtualAddressSpace(), "test4");*/
+	AuProcess* proc = AuCreateProcessSlot(0, "exec");
+	int num_args = 1;
+	char* about = (char*)kmalloc(strlen("-about"));
+	strcpy(about, "-about");
+	char** argvs = (char**)kmalloc(num_args * sizeof(char*));
+	memset(argvs, 0, num_args);
+	argvs[0] = about;
+	AuLoadExecToProcess(proc, "/init.exe", num_args, argvs);
+	AA64Thread* t2 = AuCreateKthread(AuEntryTest, AuCreateVirtualAddressSpace(), "test");
+
 	AuSchedulerStart();
 	while (1) {
 		//UARTDebugOut("Printing \n");

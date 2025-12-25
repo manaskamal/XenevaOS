@@ -276,6 +276,7 @@ end:
  * @param name -- Name of the thread
  */
 AA64Thread* AuCreateKthread(void(*entry) (uint64_t),uint64_t* pml, char* name){
+
 	AA64Thread* t = (AA64Thread*)kmalloc(sizeof(AA64Thread));
 	memset(t, 0, sizeof(AA64Thread));
 	strncpy(t->name, name,8);
@@ -286,12 +287,10 @@ AA64Thread* AuCreateKthread(void(*entry) (uint64_t),uint64_t* pml, char* name){
 	//t->sp = stack;
 	t->pml = (uint64_t)pml;
 	t->sp = AuCreateKernelStack((uint64_t*)t->pml);
-	AuTextOut("SP threadinfo : %x \r\n", t->sp);
-	t->sp -= 32;
 	t->originalKSp = t->sp;
 	uint64_t kstack = t->sp;
 	t->sp = ((uint64_t)kstack & ~(uint64_t)0xF);
-	AuTextOut("SP After alignment : %x \r\n", t->sp);
+	t->sp -= 64;
 	t->state = THREAD_STATE_READY;
 	t->thread_id = thread_id++;
 	t->fpsr = 0;
@@ -307,15 +306,16 @@ extern void PrintThreadInfo() {
 	UARTDebugOut("SP : %x \r\n", thr->sp);
 }
 void AuIdleThread(uint64_t ctx) {
-	UARTDebugOut("Idle thread running \r\n");
-	uint64_t sp = read_sp();
-	UARTDebugOut("SP : %x \r\n", sp);
+	//UARTDebugOut("Idle thread running \r\n");
+	AuTextOut("idle inside \r\n");
+	//uint64_t sp = read_sp();
+	//UARTDebugOut("SP : %x \r\n", sp);
 	enable_irqs();
 	while (1) {
 		//enable_irqs();
 		//uint64_t el = _getCurrentEL();
 		//UARTDebugOut("IDLE CurrentEl : %d \n", el);
-		UARTDebugOut("Heyy ++ \r\n");
+		//UARTDebugOut("Heyy ++ \r\n");
 	}
 }
 
@@ -444,6 +444,7 @@ void AuSchedulerInitialize() {
 	stack_index = 0;
 	thread_id = 0;
 	uint64_t* idle_pd = AuCreateVirtualAddressSpace();
+	AuTextOut("VA for idle is created \r\n");
 	AA64Thread* idle_ = AuCreateKthread(AuIdleThread,idle_pd, "Idle");
 	//idle_->elr_el1 = (uint64_t)AuIdleThread;
 	_idle_thr = idle_;

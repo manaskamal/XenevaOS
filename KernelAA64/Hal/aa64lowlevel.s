@@ -262,6 +262,7 @@ read_daif:
    mrs x0,daif
    ret
 
+.extern testFunc
 .global aa64_enter_user
 aa64_enter_user:
    /* Here, we also mask the IRQ bit for now, else IRQ get fired
@@ -269,7 +270,7 @@ aa64_enter_user:
     * make the exception handler return to EL0 
     */
   // bic x0, x0, #15
-   mov x8, #0x00 // #0x80
+   mov x8, #0x3C0 // #0x80
    msr SPSR_EL1, x8
    msr SP_EL0, x0
    msr ELR_EL1,x1

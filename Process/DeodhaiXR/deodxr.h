@@ -44,7 +44,7 @@ typedef struct _rect_ {
 }Rect;
 
 
-#pragma pack(push,1)
+//#pragma pack(push,1)
 /* Copied from kernel*/
 typedef struct _au_input_msg_ {
 	uint8_t type;
@@ -56,29 +56,29 @@ typedef struct _au_input_msg_ {
 	uint32_t code3;
 	uint32_t code4;
 }AuInputMessage;
-#pragma pack(pop)
+//#pragma pack(pop)
 
 #pragma pack(push,1)
 typedef struct _bmp_ {
-	unsigned short type;
-	unsigned int size;
-	unsigned short resv1;
-	unsigned short resv2;
-	unsigned int off_bits;
+	unsigned short type; //0
+	unsigned int size;  // pffset 2
+	unsigned short resv1; //6h
+	unsigned short resv2; //8h
+	unsigned int off_bits; //10h
 }BMP;
 
 typedef struct _info_ {
-	unsigned int biSize;
-	long biWidth;
-	long biHeight;
-	unsigned short biPlanes;
-	unsigned short biBitCount;
-	unsigned int biCompression;
-	unsigned int biSizeImage;
-	long biXPelsPerMeter;
-	long biYPelsPerMeter;
-	unsigned int biClrUsed;
-	unsigned int biClrImportant;
+	unsigned int biSize; //0
+	long biWidth; //4h
+	long biHeight; //8h
+	unsigned short biPlanes; //12h
+	unsigned short biBitCount; //14h
+	unsigned int biCompression; //16h
+	unsigned int biSizeImage; //20h
+	long biXPelsPerMeter; //24h
+	long biYPelsPerMeter; //28h
+	unsigned int biClrUsed; //32h
+	unsigned int biClrImportant; //36h
 }BMPInfo;
 #pragma pack(pop)
 

@@ -223,9 +223,9 @@ void fault_el1_handler(AA64Registers* regs) {
 
 void sync_el0_handler(AA64Registers* regs) {
     uint64_t esr = read_esr_el1();
-
+    AuTextOut("SYNC EL0 Hnalder \r\n");
     if ((esr >> 26) == 0x15) {
-        UARTDebugOut("System call trapped %d x30: %x\n", regs->x8,
+        AuTextOut("System call trapped %d x30: %x\n", regs->x8,
             regs->x30);
         AuAA64SyscallHandler(regs);
         return;

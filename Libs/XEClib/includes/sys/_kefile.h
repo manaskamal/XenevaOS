@@ -90,7 +90,6 @@ typedef struct _disk_partition_info_ {
 }XEVDiskPartitionInfo;
 #pragma pack(pop)
 
-#pragma pack(push,1)
 	typedef struct _XEFileStatus_ {
 		uint8_t filemode; //mode of the file
 		size_t size;  //size in bytes
@@ -101,9 +100,9 @@ typedef struct _disk_partition_info_ {
 		uint32_t num_links;
 		uint8_t eof;
 	}XEFileStatus;
-#pragma pack(pop)
 
-#pragma pack(push,1)
+
+//#pragma pack(push,1)
 	typedef struct _XEFileControl_ {
 		int syscall_magic;
 		uint8_t uchar_1;
@@ -115,7 +114,7 @@ typedef struct _disk_partition_info_ {
 		uint64_t ulong_1;
 		uint64_t ulong_2;
 	}XEFileIOControl;
-#pragma pack(pop)
+//#pragma pack(pop)
 
 #pragma pack(push,1)
 	typedef struct _XEDirectoryEnty_ {

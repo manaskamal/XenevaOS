@@ -66,6 +66,12 @@ uint64_t physFrames[64];
 }while (0)
 
 
+void testFunc() {
+	AuTextOut("SP_EL0  \r\n");
+	AuTextOut("ERET HONE WALAL hai \r\n");
+
+}
+
 
 /*
 * AuProcessEntUser -- main kernel thread call
@@ -106,7 +112,9 @@ void AuProcessEntUser(uint64_t rcx) {
 	PUSH(uentry->rsp, size_t, (size_t)uentry->argvaddr);
 	PUSH(uentry->rsp, size_t, (size_t)uentry->num_args);
 	PUSHALIGN(uentry->rsp, 16);
+	AuTextOut("Entering user %x %x\r\n", uentry->rsp,uentry->entrypoint);
 	aa64_enter_user(uentry->rsp, uentry->entrypoint);
+	AuTextOut("Entry returned \r\n");
 	while (1) {
 	}
 }
@@ -158,7 +166,7 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) 
 
 	uint64_t _image_base_ = 0x60000000000;//   nt->OptionalHeader.ImageBase;
 	entry ent = (entry)(nt->OptionalHeader.AddressOfEntryPoint + _image_base_);//nt->OptionalHeader.ImageBase);
-	UARTDebugOut("Image base address : %x \n", ent);
+	UARTDebugOut("Image base address : %x \n", dos->e_magic);
 	uint64_t* cr3 = proc->cr3;
 
 	/* check if the binary is dynamically linked */
@@ -213,7 +221,7 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) 
 		/* load the loader */
 		return AuLoadExecToProcess(proc, "/xeldr.exe", num_args_, argvs);
 	}
-    UARTDebugOut("NT NumberOfSection : %d for %s\n", nt->FileHeader.NumberOfSections, proc->name);
+	UARTDebugOut("NT NumberOfSection : %d for %s\n", nt->FileHeader.NumberOfSections, proc->name);
 	for (size_t i = 0; i < nt->FileHeader.NumberOfSections; ++i) {
 		size_t load_addr = _image_base_ + secthdr[i].VirtualAddress;
 		void* sect_addr = (void*)load_addr;
@@ -287,7 +295,7 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) 
 		uint64_t* args = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
 		memset(args, 0, PAGE_SIZE);
 		if (!AuMapPageEx(proc->cr3, (size_t)V2P((uint64_t)args), 0x40000000000,PTE_AP_RW_USER | PTE_NORMAL_MEM)) {
-			AuTextOut("Arguments address already mapped \n");
+			UARTDebugOut("Arguments address already mapped \n");
 			argvaddr = 0;
 		}
 		else {

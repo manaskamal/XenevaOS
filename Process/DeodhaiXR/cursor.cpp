@@ -68,12 +68,16 @@ void CursorRead(Cursor* cur) {
 	uint8_t* buffer = (uint8_t*)cur->fileBuffer;
 
 	BMP* bmp = (BMP*)buffer;
-	unsigned int offset = bmp->off_bits;
+	unsigned int offset; // = bmp->off_bits;
+	memcpy(&offset, (buffer + 0x10), sizeof(unsigned int));
 
 	BMPInfo* info = (BMPInfo*)(buffer + sizeof(BMP));
-	int width = info->biWidth;
-	int height = info->biHeight;
-	int bpp = info->biBitCount;
+	int width; // = info->biWidth;
+	memcpy(&width, (uint8_t*)info + 0x4, sizeof(int));
+	int height; // = info->biHeight;
+	memcpy(&height, (uint8_t*)info + 0x8, sizeof(int));
+	int bpp; // = info->biBitCount;
+	memcpy(&bpp, (uint8_t*)info + 0x14, sizeof(int));
 
 	void* image_bytes = (void*)(buffer + offset);
 	cur->imageData = (uint8_t*)image_bytes;
