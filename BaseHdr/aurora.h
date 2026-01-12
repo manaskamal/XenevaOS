@@ -35,8 +35,13 @@
 #include <stdint.h>
 
 
+#if (defined(_WIN32) || defined(_MSC_VER)) && !defined(__ELF__)
 #define AU_EXPORT  __declspec(dllexport)
 #define AU_IMPORT  __declspec(dllimport)
+#else
+#define AU_EXPORT
+#define AU_IMPORT
+#endif
 
 #ifdef __AU_KERNEL__
 #define AU_FUNC AU_EXPORT
@@ -164,6 +169,12 @@ typedef struct _KERNEL_BOOT_INFO_ {
 /*
  * AuGetBootInfoStruc -- return kernel boot information
  */
+#ifdef __cplusplus
+extern "C" {
+#endif
 extern KERNEL_BOOT_INFO* AuGetBootInfoStruc();
+#ifdef __cplusplus
+}
+#endif
 
 #endif

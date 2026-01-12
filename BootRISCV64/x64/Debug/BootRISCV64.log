@@ -1,0 +1,4 @@
+﻿  Performing Custom Build Tools
+  clang (LLVM option parsing): Unknown command line argument '-riscv-add-build-attributes'.  Try: 'clang (LLVM option parsing) --help'
+  clang (LLVM option parsing): Did you mean '--arm-add-build-attributes'?
+C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppCommon.targets(254,5): error MSB8066: Custom build for 'lowlevel.s' exited with code 1.
