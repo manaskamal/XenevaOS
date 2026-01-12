@@ -33,10 +33,18 @@
 #include <stdint.h>
 #include <aurora.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * AuInitrdInitialize -- initialize ramdisk
  * @param info -- Pointer to Kernel Boot information
  */
 extern void AuInitrdInitialize(KERNEL_BOOT_INFO* info);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

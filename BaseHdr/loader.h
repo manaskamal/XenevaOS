@@ -34,6 +34,10 @@
 #include <pe.h>
 #include <process.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifdef ARCH_X64
 #include <Sync\mutex.h>
 #endif
@@ -72,4 +76,8 @@ extern AuMutex* AuLoaderGetMutex();
 #endif
 
 extern bool AuIsLoaderBusy();
+#ifdef __cplusplus
+}
+#endif
+
 #endif

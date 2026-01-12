@@ -38,6 +38,9 @@
 #include <Hal\x86_64_sched.h>
 #include <Sync\mutex.h>
 #endif
+#ifdef ARCH_RISCV64
+#include <Hal/riscv64_sched.h>
+#endif
 #include <list.h>
 
 #define PROCESS_USER_STACK_SZ 512*1024
@@ -82,6 +85,9 @@
 #elif ARCH_ARM64
 #define PROCESS_MMAP_ADDRESS    0x0000000C00000000
 #define PROCESS_SHM_ADDRESS     0x0000000800000000
+#elif ARCH_RISCV64
+#define PROCESS_MMAP_ADDRESS    0x0000000C00000000
+#define PROCESS_SHM_ADDRESS     0x0000000800000000
 #endif
 
 typedef void(*entry) (void*);
@@ -107,6 +113,8 @@ typedef struct _au_proc_ {
 	AuThread* main_thread;
 #elif ARCH_ARM64
 	AA64Thread* main_thread;
+#elif ARCH_RISCV64
+	AuThread* main_thread;
 #endif // Maybe RISC-V?
 
     uint8_t num_thread;
@@ -116,6 +124,8 @@ typedef struct _au_proc_ {
 	AuThread* threads[MAX_THREADS_PER_PROCESS];
 #elif ARCH_ARM64
 	AA64Thread* threads[MAX_THREADS_PER_PROCESS];
+#elif ARCH_RISCV64
+	AuThread* threads[MAX_THREADS_PER_PROCESS];
 #endif // Maybe RISC-V?
 
 	/* file descriptors */
@@ -205,6 +215,21 @@ extern AuProcess* AuProcessFindThread(AA64Thread* thread);
 */
 extern AuProcess* AuProcessFindSubThread(AA64Thread* thread);
 
+#elif ARCH_RISCV64
+/*
+* AuProcessFindThread -- finds a process by its
+* main thread
+* @param thread -- pointer to  main thread
+*/
+extern AuProcess* AuProcessFindThread(AuThread* thread);
+
+/*
+* AuProcessFindSubThread -- find a process from its
+* sub threads which contain a pointer to its process
+* slot
+* @param thread -- Pointer to sub thread
+*/
+extern AuProcess* AuProcessFindSubThread(AuThread* thread);
 #endif
 
 /*

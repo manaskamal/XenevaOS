@@ -1,0 +1,240 @@
+/**
+* BSD 2-Clause License
+*
+* Copyright (c) 2022-2025, Manas Kamal Choudhury
+* All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification, are permitted provided that the following conditions are met:
+*
+* 1. Redistributions of source code must retain the above copyright notice, this
+*    list of conditions and the following disclaimer.
+*
+* 2. Redistributions in binary form must reproduce the above copyright notice,
+*    this list of conditions and the following disclaimer in the documentation
+*    and/or other materials provided with the distribution.
+*
+* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+* AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+* IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+* DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+* FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+* DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+* SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+* CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+* OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+* OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*
+**/
+
+#include <aurora.h>
+#include <stdint.h>
+#include <aucon.h>
+#include <Hal/AA64/aa64cpu.h>
+#include <dtb.h>
+#include <Mm/pmmngr.h>
+#include <Mm/vmmngr.h>
+#include <Mm/kmalloc.h>
+#include <Mm/shm.h>
+#include <_null.h>
+#include <Hal/AA64/gic.h>
+#include <Hal/basicacpi.h>
+#include <Hal/AA64/aa64lowlevel.h>
+#include <loader.h>
+#include <Drivers/uart.h>
+#include <Hal/AA64/qemu.h>
+#include <list.h>
+#include <Fs/vfs.h>
+#include <Fs/initrd.h>
+#include <Drivers/virtio.h>
+#include <audrv.h>
+#include <Hal/AA64/sched.h>
+#include <Fs/tty.h>
+#include <ftmngr.h>
+#include <Ipc/postbox.h>
+#include <Board/board.h>
+#include <Board/RPI3bp/rpi3bp.h>
+
+
+extern int _fltused = 1;
+static bool _littleboot_used;
+
+
+/*
+ * LBUartPutc -- put a character to UART
+ * @param c -- Character to put
+ */
+void AuUartPutc(char c) {
+	char* uart0 = (char*)UART0;
+	while ((*(uart0 + 0x18) & (1 << 5)));
+	*uart0 = c;
+}
+
+/*
+ * LBUartPutString -- print a string
+ * to UART
+ * @param s -- String to print
+ */
+void AuUartPutString(const char* s) {
+	while (*s)
+		AuUartPutc(*s++);
+}
+
+
+
+/*
+ * AuLittleBootUsed -- check if little boot protocol
+ * is used
+ */
+bool AuLittleBootUsed() {
+    return _littleboot_used;
+}
+
+int i_ = 1;
+
+extern void sub_rsp();
+
+void AuEntryTest(uint64_t test) {
+	//aa64_utest();
+	int c = 10;
+	//enable_irqs();
+	AuTextOut("[aurora]: test2 \r\n");
+	while (1) {
+		enable_irqs();
+		if ((c % 2) == 0)
+			AuTextOut("[aurora_t1]: 2 \r\n");
+		c++;
+	}
+}
+
+void AuEntryTest2(uint64_t test) {
+	int d = 10;
+	//enable_irqs();
+	/*AA64Thread* thr = AuThreadFindByIDBlockList(1);
+	if (thr) {
+		UARTDebugOut("Unblocking thr : %s \n", thr->name);
+		AuUnblockThread(thr);
+	}*/
+	AuTextOut("[aurora]: test3 \r\n");
+	while (1) {
+		enable_irqs();
+		if ((d % 2) != 0)
+			AuTextOut("[aurora_t2]: 3 \r\n");
+		d++;
+	}
+}
+
+void AuEntryTest4(uint64_t test) {
+	int d = 10;
+	//enable_irqs();
+	/*AA64Thread* thr = AuThreadFindByIDBlockList(1);
+	if (thr) {
+		UARTDebugOut("Unblocking thr : %s \n", thr->nme);
+		AuUnblockThread(thr);
+	}*/
+	AuTextOut("[aurora]: test4 \r\n");
+	while (1) {
+		enable_irqs();
+		if ((d % 2) != 0)
+			AuTextOut("[aurora_t4]: 4 \r\n");
+		d++;
+	}
+}
+
+KERNEL_BOOT_INFO* bootinfo;
+
+/*
+ * AuGetBootInfoStruc -- return kernel boot information
+ */
+KERNEL_BOOT_INFO* AuGetBootInfoStruc() {
+	return bootinfo;
+}
+
+
+extern void debugLIBOn();
+/*
+ * _AuMain -- the main entry point for kernel
+ * @param info -- Kernel Boot information passed
+ * by bootloader
+ */
+void _AuMain(KERNEL_BOOT_INFO* info) {
+    _littleboot_used = false;
+    if (info->boot_type == BOOT_LITTLEBOOT_ARM64) {
+        AuUartPutString("[aurora]:Kernel is booted using LittleBoot ARM64 \r\n");
+        _littleboot_used = true;
+    }
+	bootinfo = info;
+	AuConsoleInitialize(info, true);
+    AuDeviceTreeInitialize(info);
+	AA64CpuInitialize();
+	AuTextOut("[aurora]: CPU initialized \r\n");
+	AuPmmngrInitialize(info);
+	AuVmmngrInitialize();
+	AuTextOut("[aurora]: virtual memory manager initialized \r\n");
+	AuHeapInitialize();
+	AuDeviceTreeMapMMIO();
+	AuAA64BoardInitialize();
+	AA64CPUPostInitialize(info);
+	AuVFSInitialise();
+	AuInitrdInitialize(info);
+	AuConsolePostInitialise(info);
+
+	/* initialize the tty service */
+	AuTTYInitialise();
+
+	/* initialize the shared memory manager*/
+	AuInitialiseSHMMan();
+
+	/* initialize our basic requirement */
+#ifdef __TARGET_BOARD_QEMU_VIRT__
+	/* for qemu virt board, virtIO inputs are used */
+	AuVirtIOInputInitialize();
+#endif
+
+	/* required virtio-mouse and keyboard */
+	//Here goes board pre driver initialize
+	AuDrvMngrInitialize(info);
+
+	FontManagerInitialise();
+
+	/* from here, be carefull with AuPmmngrAllocBlocks,
+	 * sometime it doesn't allocate blocks contiguously,
+	 * it allocate one previously freed block and other
+	 * contiguously from some unallocated portion of
+	 * physical memory, which make it problamatic for kheap
+	 * or other data structures that get overwritten.
+	 * We need to be carefull on low level side for this 
+	 */
+	
+	AuInitialiseLoader();
+
+	/* initialize the deodhai's communication protocol */
+	AuIPCPostBoxInitialise();
+
+	AuTextOut("[aurora]: starting xeneva (ARM64) please wait...\r\n");
+
+	/* clear out the lower half memory */
+	AuVmmngrBootFree();
+
+	AuTextOut("[aurora]: address space lower half cleared successfully \r\n");
+
+	AuSchedulerInitialize();
+
+	/*
+	AA64Thread* t3 = AuCreateKthread(AuEntryTest2, AuCreateVirtualAddressSpace(), "test2");
+	AA64Thread* t4 = AuCreateKthread(AuEntryTest4, AuCreateVirtualAddressSpace(), "test4");*/
+	AuProcess* proc = AuCreateProcessSlot(0, "exec");
+	int num_args = 1;
+	char* about = (char*)kmalloc(strlen("-about"));
+	strcpy(about, "-about");
+	char** argvs = (char**)kmalloc(num_args * sizeof(char*));
+	memset(argvs, 0, num_args);
+	argvs[0] = about;
+	AuLoadExecToProcess(proc, "/init.exe", num_args, argvs);
+	AA64Thread* t2 = AuCreateKthread(AuEntryTest, AuCreateVirtualAddressSpace(), "test");
+
+	AuSchedulerStart();
+	while (1) {
+		//UARTDebugOut("Printing \n");
+	}
+}

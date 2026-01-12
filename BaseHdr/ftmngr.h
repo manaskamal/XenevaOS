@@ -33,6 +33,10 @@
 #include <stdint.h>
 #include <string.h>
 #include <Mm\shm.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 /*
  * ftmngr -- font manager for aurora kernel, loads 
  * true type fonts from font.conf file
@@ -70,5 +74,9 @@ extern int AuFTMngrGetNumFonts();
 * @param fontname -- name of the font
 */
 extern int AuFTMngrGetFontSize(char* fontname);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

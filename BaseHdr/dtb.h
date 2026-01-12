@@ -53,6 +53,10 @@ typedef struct _fdt_prop_ {
     uint8_t value[];
 }fdt_property_t;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * AuDTBSwap32 -- swaps 32 bit value
  * @param from -- value to swap
@@ -125,5 +129,9 @@ extern void AuDeviceTreeInitialize(KERNEL_BOOT_INFO* info);
  * to MMIO address range
  */
 extern void AuDeviceTreeMapMMIO();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

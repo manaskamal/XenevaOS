@@ -32,6 +32,10 @@
 
 #include <aurora.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
 * AuPmmngrInitialise -- initialise the physical memory
 * manager
@@ -94,4 +98,9 @@ extern uint64_t AuPmmngrGetFreeMem();
 * RAM
 */
 extern uint64_t AuPmmngrGetTotalMem();
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif

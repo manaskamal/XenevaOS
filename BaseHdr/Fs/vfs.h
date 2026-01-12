@@ -156,6 +156,10 @@ typedef struct __VFS_Container__ {
 * AuVFSInitialise -- initialise the virtual
 * file system
 */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern void AuVFSInitialise();
 
 /*
@@ -266,5 +270,9 @@ AU_EXTERN AU_EXPORT size_t AuVFSGetBlockFor(AuVFSNode* node, AuVFSNode* file, ui
 
 
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
