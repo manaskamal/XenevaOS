@@ -85,6 +85,11 @@ typedef struct _aurora_device_ {
 * AuDrvMngrInitialize -- Initialize the driver manager
 * @param info -- kernel boot info
 */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern void AuDrvMngrInitialize(KERNEL_BOOT_INFO *info);
 
 /*
@@ -141,6 +146,10 @@ extern char* AuGetConfEntry(uint32_t vendor_id, uint32_t device_id, uint8_t* buf
 * @param entryoff -- entry offset from where search begins
 */
 extern void AuGetDriverName(uint32_t vendor_id, uint32_t device_id, uint8_t* buffer, int entryoff);
+
+#ifdef __cplusplus
+}
+#endif
 
 
 #endif

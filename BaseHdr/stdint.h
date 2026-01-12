@@ -36,10 +36,10 @@
 
 typedef unsigned char BOOL;
 
-#ifdef ARCH_ARM64
+#if defined(ARCH_ARM64) || defined(ARCH_RISCV64)
 #ifndef __cplusplus
 #ifndef bool
-typedef BOOL bool;
+typedef unsigned char bool;
 #define true 1
 #define false 0
 #endif
@@ -91,14 +91,30 @@ typedef long long  int_fast64_t;
 typedef unsigned long long   uint_fast64_t;
 
 /* 7.18.1.4  Integer types capable of holding object pointers */
-typedef int intptr_t;
-typedef unsigned uintptr_t;
+#ifdef __INTPTR_TYPE__
+typedef __INTPTR_TYPE__ intptr_t;
+#else
+typedef long long intptr_t;
+#endif
+
+#ifdef __UINTPTR_TYPE__
+typedef __UINTPTR_TYPE__ uintptr_t;
+#else
+typedef unsigned long long uintptr_t;
+#endif
 
 /* 7.18.1.5  Greatest-width integer types */
 typedef long long  intmax_t;
 typedef unsigned long long   uintmax_t;
 
+#ifndef _SIZE_T_DEFINED
+#ifdef __SIZE_TYPE__
+typedef __SIZE_TYPE__ size_t;
+#else
 typedef uint64_t size_t;
+#endif
+#define _SIZE_T_DEFINED
+#endif
 
 /* 7.18.2  Limits of specified-width integer types */
 #if defined ( __cplusplus) || defined (__STDC_LIMIT_MACROS)

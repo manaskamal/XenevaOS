@@ -32,6 +32,10 @@
 
 #include <aurora.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define SCREEN_SETMODE    200
 #define SCREEN_GETWIDTH   201
 #define SCREEN_GETHEIGHT  202
@@ -92,5 +96,9 @@ extern uint32_t AuConsoleGetScreenWidth();
  * height
  */
 extern uint32_t AuConsoleGetScreenHeight();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

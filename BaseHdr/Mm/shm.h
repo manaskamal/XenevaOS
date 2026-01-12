@@ -56,6 +56,11 @@ typedef struct _shm_mapping_ {
 }AuSHMMappings;
 //#pragma pack(pop)
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
 * AuInitialiseSHMMan -- initialise shm manager
 */
@@ -101,5 +106,9 @@ extern void AuSHMUnmap(uint16_t key, AuProcess* proc);
 * unmapping
 */
 extern void AuSHMUnmapAll(AuProcess* proc);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

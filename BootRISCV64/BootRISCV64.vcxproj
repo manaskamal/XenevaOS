@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <!-- Custom RISCV64 configuration mapping to x64 platform for IDE compatibility -->
+    <ProjectConfiguration Include="Debug|RISCV64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|RISCV64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>16.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{9E48B300-3482-4146-A916-435728864700}</ProjectGuid>
+    <RootNamespace>BootRISCV64</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <!-- Common Configuration Properties -->
+  <PropertyGroup Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>ClangCL</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <UseDebugLibraries>true</UseDebugLibraries>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <!-- RISCV64 Specifics (Mapped to x64 Platform in IDE) -->
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|RISCV64'" Label="Configuration">
+    <UseDebugLibraries>true</UseDebugLibraries>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|RISCV64'" Label="Configuration">
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|RISCV64'">
+    <LinkIncremental>true</LinkIncremental>
+    <TargetName>BOOTRISCV64</TargetName>
+    <TargetExt>.efi</TargetExt>
+    <GenerateManifest>false</GenerateManifest>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|RISCV64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>ARCH_RISCV64;__TARGET_BOARD_RISCV_VIRT__;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(SolutionDir)BaseHdr;$(SolutionDir)Boot\include;$(SolutionDir)Boot\include\AArch64;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <IgnoreStandardIncludePath>true</IgnoreStandardIncludePath>
+      <ExceptionHandling>false</ExceptionHandling>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <RuntimeTypeInfo>false</RuntimeTypeInfo>
+      <!-- Force RISC-V Target for Clang -->
+      <AdditionalOptions>--target=riscv64-pc-windows-msvc -march=rv64imac -mno-relax -Wno-unused-command-line-argument %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <Link>
+      <SubSystem>EFI Application</SubSystem>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <OutputFile>$(SolutionDir)Build\EFI\BOOT\$(TargetName).efi</OutputFile>
+      <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
+      <EnableUAC>false</EnableUAC>
+      <GenerateMapFile>true</GenerateMapFile>
+      <LargeAddressAware>true</LargeAddressAware>
+      <EntryPointSymbol>efi_main</EntryPointSymbol>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <FixedBaseAddress>false</FixedBaseAddress>
+      <!-- LLD will detect target from objects, but we can hint or leave empty -->
+    </Link>
+    <PostBuildEvent>
+      <Command>copy "$(SolutionDir)Build\EFI\BOOT\$(TargetName).efi" "F:\EFI\BOOT\$(TargetName).efi"</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="file.cpp" />
+    <ClCompile Include="mem.cpp" />
+    <ClCompile Include="paging.cpp" />
+    <ClCompile Include="pe.cpp" />
+    <ClCompile Include="physm.cpp" />
+    <ClCompile Include="uart0.cpp" />
+    <ClCompile Include="video.cpp" />
+    <ClCompile Include="xnldr.cpp" />
+    <ClCompile Include="xnout.cpp" />
+    <ClCompile Include="clib.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="file.h" />
+    <ClInclude Include="lowlevel.h" />
+    <ClInclude Include="paging.h" />
+    <ClInclude Include="pe.h" />
+    <ClInclude Include="physm.h" />
+    <ClInclude Include="uart0.h" />
+    <ClInclude Include="video.h" />
+    <ClInclude Include="xnldr.h" />
+    <ClInclude Include="xnout.h" />
+    <ClInclude Include="clib.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Assembly files using Clang assembler -->
+    <CustomBuild Include="lowlevel.s">
+      <FileType>Document</FileType>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">call assemble.bat "$(IntDir)%(Filename).obj" "%(FullPath)"</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|RISCV64'">call assemble.bat "$(IntDir)%(Filename).obj" "%(FullPath)"</Command>
+      <Outputs>$(IntDir)%(Filename).obj</Outputs>
+    </CustomBuild>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+</Project>

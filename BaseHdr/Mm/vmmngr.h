@@ -47,6 +47,18 @@
 #define X86_64_PAGING_NO_EXECUTE 0x80000
 #define X86_64_PAGING_NO_CACHING 0x200000
 #define X86_64_PAGING_WRITE_THROUGH 0x400000
+#elif ARCH_RISCV64
+#define PTE_VALID    (1UL << 0)
+#define PTE_READ     (1UL << 1)
+#define PTE_WRITE    (1UL << 2)
+#define PTE_EXEC     (1UL << 3)
+#define PTE_USER     (1UL << 4)
+#define PTE_GLOBAL   (1UL << 5)
+#define PTE_ACCESSED (1UL << 6)
+#define PTE_DIRTY    (1UL << 7)
+
+#define PTE_NORMAL_MEM (PTE_READ | PTE_WRITE)
+#define PTE_DEVICE_MEM (PTE_READ | PTE_WRITE) // TODO: Add Proper Device attributes
 #else
 #define PTE_VALID (1ULL << 0)
 #define PTE_TABLE (1ULL << 1)
@@ -152,12 +164,35 @@ typedef union _AuVPage_ {
 	uint64_t raw;
 }AuVPage;
 #pragma pack(pop)
+
+#elif ARCH_RISCV64
+#pragma pack(push,1)
+typedef union _au_vpage_ {
+	struct {
+		uint64_t present : 1;
+		uint64_t read : 1;
+		uint64_t write : 1;
+		uint64_t exec : 1;
+		uint64_t user : 1;
+		uint64_t global : 1;
+		uint64_t accessed : 1;
+		uint64_t dirty : 1;
+		uint64_t rsw : 2;
+		uint64_t page : 44;
+		uint64_t reserved : 10;
+	} bits;
+	uint64_t raw;
+} AuVPage;
+#pragma pack(pop)
 #endif
 
 /*
 * AuVmmngrInitialize -- initialize the virtual
 * memory manager
 */
+#ifdef __cplusplus
+extern "C" {
+#endif
 extern void AuVmmngrInitialize();
 
 /*
@@ -259,5 +294,9 @@ extern void AuVmmngrBootFree();
 * @param srccr3 -- source cr3
 */
 extern void AuVmmngrCloneAddressSpace(uint64_t *destcr3, uint64_t* srccr3);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

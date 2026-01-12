@@ -78,10 +78,19 @@ typedef struct __tty__ {
  * where to store slave file descriptor
  *
  */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern int AuTTYCreate(int* master_fd, int* slave_fd);
 
 /*
 * AuTTYInitialise -- initialize the TTY kernel resource
 */
 extern void AuTTYInitialise();
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif

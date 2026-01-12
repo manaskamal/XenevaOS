@@ -1,0 +1,2 @@
+^D:\XENEVAOS\BOOTRISCV64\LOWLEVEL.S
+call assemble.bat "x64\Debug\lowlevel.obj" "D:\XenevaOS\BootRISCV64\lowlevel.s"
