@@ -55,7 +55,7 @@
 #define SHADOW_COLOR 0
 #endif
 
-#pragma pack(push,1)
+//#pragma pack(push,1)
 typedef struct _win_info_ {
 	Rect rect[256];
 	uint32_t rect_count;
@@ -70,7 +70,7 @@ typedef struct _win_info_ {
 	double alphaValue;
 	bool windowReady;
 }WinSharedInfo;
-#pragma pack(pop)
+//#pragma pack(pop)
 
 typedef struct _win_ {
 	uint16_t flags;

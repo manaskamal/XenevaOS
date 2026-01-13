@@ -62,6 +62,16 @@ extern void AuRPIGPIOClear(uint8_t pin);
 
 extern void AuRPIGPIOPullUpsDown();
 
+extern void AuRPIGPIOPullUP(uint8_t pin);
+
+extern void AuRPIGPIOEnableInterrupt(uint8_t pin);
+
+extern bool AuRPIGPIOCheckInterrupt(uint8_t pin);
+
+extern uint32_t AuRPIGPIOGetEvents();
+
+extern void AuRPIGPIOClearEvent(uint8_t pin);
+
 /*
  * AuRPIGPIOWrite -- write boolean value
  * to specific pin

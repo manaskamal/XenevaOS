@@ -30,6 +30,7 @@
 .extern PrintThreadInfo
 .extern AuResumeUserThread
 .extern AuScheduleThread
+.extern AuPrintStack
 
 .global aa64_store_context
 aa64_store_context:
@@ -40,10 +41,10 @@ aa64_store_context:
    stp x25,x26,[x0,#48]
    stp x27,x28,[x0,#64]
    stp x29,x30,[x0,#80]
-   stp x2,x3, [x0,#136]
-   stp x4,x5, [x0,#152]
-   stp x6,x7,[x0,#168]
-   str x8, [x0,#184]
+  // stp x2,x3, [x0,#136]
+  // stp x4,x5, [x0,#152]
+  // stp x6,x7,[x0,#168]
+  // str x8, [x0,#184]
 
    /* dont store the stack,
     * because it will keep decreasing
@@ -51,12 +52,14 @@ aa64_store_context:
     * get executed next time
     */
 
-  // mov x2,sp 
-   //str x2,[x0, #96]
+ //  mov x2,sp 
+  // mov x0, x2
+  // bl AuPrintStack
+ //  str x2,[x0, #96]
    mrs x2,ELR_EL1
    str x2,[x0, #104]
-   //mrs x2, spsr_el1
-   //str x2, [x0,#112]
+   mrs x2, spsr_el1
+   str x2, [x0,#112]
    ret
 
 
@@ -102,7 +105,7 @@ _skip_comp:
    ret
 
 
-
+ .extern PrintThrIn
 
 .global first_time_sex
 first_time_sex:
@@ -124,6 +127,7 @@ first_time_sex:
     ldr x2, [x1, #112]
     msr spsr_el1, x2
     ldr x2, [x1, #96]
+    mov sp, x2
     msr SP_EL0, x2
     eret
 
@@ -140,12 +144,31 @@ resume_user:
   msr ELR_EL1,x2 
   mov x2,#0x00 // [x0,#112]
   msr SPSR_EL1,x2
-  ldp x2,x3, [x0,#136]
-  ldp x4,x5, [x0,#152]
-  ldp x6,x7,[x0,#168]
-  ldr x8,[x0,#184]
-  mov x9,x0
-  ldp x0,x1, [x9,#120]
+
+ // ldp x2,x3, [x0,#136]
+ // ldp x4,x5, [x0,#152]
+ // ldp x6,x7,[x0,#168]
+ // ldr x8,[x0,#184]
+ // mov x9,x0
+//  ldp x0,x1, [x9,#120]
+  mov sp, x1
+  ldp x30, x0, [sp], #16
+  msr SP_EL0, x0
+  ldp x28, x29, [sp], #16
+  ldp x26, x27, [sp], #16
+  ldp x24, x25, [sp], #16
+  ldp x22, x23, [sp], #16
+  ldp x20, x21, [sp], #16
+  ldp x18, x19, [sp], #16
+  ldp x16, x17, [sp], #16
+  ldp x14, x15, [sp], #16
+  ldp x12, x13, [sp], #16
+  ldp x10, x11, [sp], #16
+  ldp x8, x9, [sp], #16
+  ldp x6, x7, [sp], #16
+  ldp x4, x5, [sp], #16
+  ldp x2, x3, [sp], #16
+  ldp x0, x1, [sp], #16
   eret
 
 .global first_time_sex2
@@ -178,9 +201,9 @@ first_time_sex2:
 .global store_syscall
 store_syscall:
   // stp x29,x30,[sp, #-16]!
-   mov x2,sp 
-   bic x2, x2, #15
-   mov sp, x2
+   //mov x2,sp 
+   //bic x2, x2, #15
+   //mov sp, x2
 
 /* x0 holds the register frame */
    stp x19,x20,[x0,#0]
@@ -189,11 +212,17 @@ store_syscall:
    stp x25,x26,[x0,#48]
    stp x27,x28,[x0,#64]
    stp x29,x30,[x0,#80]
+   stp x2,x3, [x0,#136]
+   stp x4,x5, [x0,#152]
+   stp x6,x7,[x0,#168]
+   str x8, [x0,#184]
    /* dont store the stack,
     * because it will keep decreasing
     * over time when this thread will
     * get executed next time
     */
+  // mov x2,sp 
+  // str x2,[x0, #96]
     //isb
     //tlbi vmalle1is 
   
@@ -228,14 +257,25 @@ ret_from_syscall:
    msr ELR_EL1,x2 
    ldr x2, [x0,#112]
    msr SPSR_EL1,x2
-   mov x30, x1
-   ldp x2,x3, [x0,#136]
-   ldp x4,x5, [x0,#152]
-   ldp x6,x7,[x0,#168]
-   ldr x8,[x0,#184]
-   mov x9,x0
-   ldp x0,x1, [x9,#120]
-   ret
+   // mov sp, x1
+  ldp x30, x0, [sp], #16
+  msr SP_EL0, x0
+  ldp x28, x29, [sp], #16
+  ldp x26, x27, [sp], #16
+  ldp x24, x25, [sp], #16
+  ldp x22, x23, [sp], #16
+  ldp x20, x21, [sp], #16
+  ldp x18, x19, [sp], #16
+  ldp x16, x17, [sp], #16
+  ldp x14, x15, [sp], #16
+  ldp x12, x13, [sp], #16
+  ldp x10, x11, [sp], #16
+  ldp x8, x9, [sp], #16
+  ldp x6, x7, [sp], #16
+  ldp x4, x5, [sp], #16
+  ldp x2, x3, [sp], #16
+  ldp x0, x1, [sp], #16
+  eret
 
 
 .global aa64_store_fp

@@ -86,6 +86,8 @@ ChFont *ChInitialiseFont(char* fontname) {
  * @param size -- size of the font
  */
 void ChFontSetSize(ChFont* font, int size) {
+	if (!font)
+		return;
 	font->fontSz = size / 72.f * 96;
 	FT_Set_Pixel_Sizes(font->face, 0, font->fontSz);
 	font->fontHeight = font->fontSz;
@@ -103,6 +105,8 @@ void ChFontSetSize(ChFont* font, int size) {
  */
 void ChFontDrawText(ChCanvas *canv, ChFont* font, char* string, int penx, int peny, uint32_t sz, uint32_t color){
 #ifdef _USE_FREETYPE
+	if (!font)
+		return;
 	int w = font->face->glyph->metrics.width;
 	int h = font->face->glyph->metrics.height;
 	FT_Bool use_kerning = FT_HAS_KERNING(font->face);
@@ -158,6 +162,8 @@ void ChFontDrawText(ChCanvas *canv, ChFont* font, char* string, int penx, int pe
 */
 void ChFontDrawChar(ChCanvas *canv, ChFont* font, char c, int penx, int peny, uint32_t sz, uint32_t color){
 #ifdef _USE_FREETYPE
+	if (!font)
+		return;
 	if (penx >= canv->canvasWidth)
 		return;
 	if (peny >= canv->canvasHeight)
@@ -207,6 +213,8 @@ void ChFontDrawChar(ChCanvas *canv, ChFont* font, char c, int penx, int peny, ui
  * @param string -- total string
  */
 int64_t ChFontGetWidth(ChFont* font,char* string) {
+	if (!font)
+		return -1;
 	size_t font_width = 0;
 	size_t penx = 0;
 	int string_width = 0;
@@ -235,6 +243,8 @@ int64_t ChFontGetWidth(ChFont* font,char* string) {
 * @param c -- character
 */
 int64_t ChFontGetWidthChar(ChFont* font, char c) {
+	if (!font)
+		return -1;
 	size_t font_width = 0;
 	size_t penx = 0;
 	int string_width = 0;
@@ -259,6 +269,8 @@ int64_t ChFontGetWidthChar(ChFont* font, char c) {
  * @param string -- total string
  */
 int64_t ChFontGetHeight(ChFont* font, char* string) {
+	if (!font)
+		return -1;
 	size_t font_height = 0;
 	size_t peny = 0;
 	FT_Error err = 0;
@@ -285,6 +297,8 @@ int64_t ChFontGetHeight(ChFont* font, char* string) {
 * @param c -- character
 */
 int64_t ChFontGetHeightChar(ChFont* font, char c) {
+	if (!font)
+		return -1;
 	size_t font_h = 0;
 	size_t peny = 0;
 	int string_width = 0;
@@ -320,6 +334,8 @@ int ChFontClamp(int val, int min, int max) {
  */
 int ChFontDrawTextClipped(ChCanvas *canv, ChFont* font, char* string, int penx, int peny, uint32_t color, ChRect* limit){
 #ifdef _USE_FREETYPE
+	if (!font)
+		return 1;
 	if (!limit)
 		return 1;
 
@@ -413,6 +429,8 @@ int ChFontDrawTextClipped(ChCanvas *canv, ChFont* font, char* string, int penx, 
  * @param font -- Pointer to font
  */
 int ChFontClose(ChFont* font) {
+	if (!font)
+		return -1;
 	//FT_Done_Face(font->face);
 	//FT_Done_FreeType(font->lib);
 	_KeUnmapSharedMem(font->key);

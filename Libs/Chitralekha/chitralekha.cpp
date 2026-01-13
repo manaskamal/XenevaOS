@@ -168,6 +168,7 @@ void ChCanvasScreenUpdate(ChCanvas* canvas, int _x, int _y, int _w, int _h) {
 	}
 }
 
+
 /*
  * ChDrawPixel -- draws a pixel to canvas buffer
  * @param canvas -- pointer to canvas
@@ -200,8 +201,46 @@ void ChDrawPixel(ChCanvas* canvas, int x, int y, uint32_t color) {
 		_KePrint("ChDrawPixel : corrupted y > canvasHeight \r\n");
 		return;
 	}
+	uint32_t bgra = ChColorRGBAtoBGRA(color);
+	lfb[static_cast<uint64_t>(y) * canvas->canvasWidth + x] = bgra;
+}
+
+
+/*
+ * ChDrawPixelRAW -- draws a pixel to canvas buffer
+ * @param canvas -- pointer to canvas
+ * @param x -- x position
+ * @param y -- y position
+ * @param color -- color of the pixel
+ */
+void ChDrawPixelRAW(ChCanvas* canvas, int x, int y, uint32_t color) {
+	if (((uint64_t)canvas >> 48) == 0xFFFF)
+		_KePrint("ChDrawPixel : suspected canvas address : %x \n", canvas);
+	unsigned int* lfb = canvas->buffer;
+	if (((uint64_t)lfb >> 48) == 0xFFFF)
+		_KePrint("ChDrawPixel : suspected lfb address : %x \n", lfb);
+	if (x < 0) {
+		_KePrint("ChDrawPixel : corrupted x -> %d \r\n", x);
+		x = 0;
+	}
+
+	if (y < 0) {
+		_KePrint("ChDrawPixel : corrupted y -> %d \r\n", y);
+		y = 0;
+	}
+
+	if (x >= canvas->canvasWidth) {
+		_KePrint("ChDrawPixel : corrupted x > canvasWidth \r\n");
+		return;
+	}
+
+	if (y >= canvas->canvasHeight) {
+		_KePrint("ChDrawPixel : corrupted y > canvasHeight \r\n");
+		return;
+	}
 	lfb[static_cast<uint64_t>(y) * canvas->canvasWidth + x] = color;
 }
+
 
 /*
  * ChDrawPixelAA -- draw anti-aliased pixel

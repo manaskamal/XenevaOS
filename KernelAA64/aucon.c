@@ -44,6 +44,7 @@
 #include <Drivers/uart.h>
 #include <Hal/AA64/aa64cpu.h>
 #include <Hal/AA64/aa64lowlevel.h>
+#include <Ipc/postbox.h>
 
 uint8_t* font_data;
 uint32_t console_x;
@@ -96,26 +97,22 @@ int AuConsoleIoControl(AuVFSNode* file, int code, void* arg) {
 	switch (code) {
 	case SCREEN_GETWIDTH: {
 		uint32_t width = aucon->width;
-		AuTextOut("[aucon] :Screen getting width : %d \r\n", width);
 		ioctl->uint_1 = width;
 		//memcpy(&ioctl->uint_1, &width, sizeof(uint32_t));
 		break;
 	}
 	case SCREEN_GETHEIGHT: {
 		uint32_t height = aucon->height;
-		AuTextOut("[aucon]: Getting screen height : %d \r\n", height);
 		ioctl->uint_1 = height;
 		break;
 	}
 	case SCREEN_GETBPP: {
 		uint32_t bpp = aucon->bpp;
-		AuTextOut("[aucon]: Getting bpp : %d \r\n", bpp);
 		ioctl->uint_1 = bpp;
 		break;
 	}
 	case SCREEN_GET_SCANLINE: {
 		uint16_t scanline = aucon->scanline;
-		AuTextOut("[aucon]: getting scanline : %d \r\n", scanline);
 		ioctl->ushort_1 = scanline;
 		break;
 	}
@@ -135,12 +132,11 @@ int AuConsoleIoControl(AuVFSNode* file, int code, void* arg) {
 			if (!proc)
 				break;
 		}
-		AuTextOut("[aucon]: getting FB \r\n");
 		uint64_t vmaddr= (uint64_t)AuGetFreePage(1, NULL);
 		uint64_t fbaddr = (uint64_t)__framebuffer;
 		for (int i = 0; i < aucon->size / PAGE_SIZE; i++) {
 			AuMapPage((uint64_t)fbaddr + (i * PAGE_SIZE),
-				vmaddr + (i * PAGE_SIZE), PTE_NORMAL_MEM | PTE_AP_RW_USER);
+				vmaddr + (i * PAGE_SIZE), PTE_NORMAL_NON_CACHEABLE | PTE_AP_RW_USER);
 
 		}
 		//uint64_t buffaddr = (uint64_t)aucon->buffer;
@@ -152,6 +148,11 @@ int AuConsoleIoControl(AuVFSNode* file, int code, void* arg) {
 		return 1;
 		break;
 	}
+	default: {
+		PostBoxIOControl(file, code, arg);
+		break;
+	}
+
 	}
 	return ret;
 }

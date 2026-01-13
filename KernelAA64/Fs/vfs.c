@@ -35,7 +35,9 @@
 #include <Fs/Dev/devfs.h>
 #include <Fs/vdisk.h>
 #include <string.h>
+#include <Ipc/postbox.h>
 #include <Fs/pipe.h>
+#include <Hal/AA64/aa64lowlevel.h>
 
 AuVFSContainer* __RootContainer;
 AuVFSNode* __RootFS;
@@ -115,15 +117,16 @@ void AuVFSRegisterRoot(AuVFSNode* fs) {
 	__RootFS = fs;
 }
 
-
+extern uint64_t read_sp();
 /*
  * AuVFSOpen -- Opens a file
  * @param path -- path to open
  */
 AU_EXTERN AU_EXPORT AuVFSNode* AuVFSOpen(char* path) {
 	AuVFSNode* Returnable = NULL;
-	AuVFSNode* fs = AuVFSFind(path);
 
+	AuVFSNode* fs = AuVFSFind(path);
+	UARTDebugOut("Opening vfs : %s \r\n", path);
 	if (!fs) {
 		AuTextOut("[aurora-vfs]: failed to find filesystem assigned to path -> %s \r\n", path);
 		return NULL;
@@ -143,22 +146,36 @@ AU_EXTERN AU_EXPORT AuVFSNode* AuVFSOpen(char* path) {
 		if (next)
 			next++;
 
-		char pathname[16];
+		
+		char pathname[16] ;
+		UARTDebugOut("[aurora]: vfs pathname : %s \r\n", path);
 		int i = 0;
 		for (i = 0; i < 16; i++) {
 			if ((next[i] == '/') || (next[i] == '\0'))
 				break;
 			pathname[i] = next[i];
+			dsb_ish();
 		}
 		pathname[i] = 0;
-		UARTDebugOut("Pathname : next %x \r\n", next);
-
+		
 		/* skip the fs filename, from the path
 		 * and just pass the required path */
 		if (strcmp(fs->filename, pathname) == 0)
 			next += i;
-		if (fs->open)
+		dsb_ish();
+		dsb_sy_barrier();
+		UARTDebugOut("next : %s \r\n", next);
+
+		if (fs->open) {
+			UARTDebugOut("VFSOpening : %s \r\n", next);
 			Returnable = fs->open(fs, next);
+			UARTDebugOut("Returnable : %x \r\n", Returnable);
+		}
+	jump:
+		uint64_t sp = read_sp();
+		UARTDebugOut("Current ksp : %x \r\n", sp);
+
+		UARTDebugOut("Finall returnable : %x \r\n", Returnable);
 	}
 	return Returnable;
 }

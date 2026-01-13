@@ -474,12 +474,14 @@ void PopupWindowMouseEventTest(ChWidget* widget, ChWindow* win, int x, int y, in
 */
 int main(int argc, char* argv[]){
 
-	if (strcmp(argv[0], "-about") == 0)
-		printf("Calculator v1.0 for Xeneva OS \n");
+	/*if (strcmp(argv[0], "-about") == 0)
+		printf("Calculator v1.0 for Xeneva OS \n");*/
 
 	app = ChitralekhaStartApp(argc, argv);
-	mainWin = ChCreateWindow(app, WINDOW_FLAG_MOVABLE, "Calculator", 400,100, 380, 
+	_KePrint("Chitralekha app started \r\n");
+	mainWin = ChCreateWindow(app, WINDOW_FLAG_MOVABLE, "Calculator", 400,480/2 - 400/2, 380, 
 		400);
+	_KePrint("Window is created \r\n");
 	mainWin->color = CALCULATOR_BACK_COLOR;
 	for (int i = 0; i < mainWin->GlobalControls->pointer; i++) {
 		ChWinGlobalControl *ctl = (ChWinGlobalControl*)list_get_at(mainWin->GlobalControls, i);
@@ -490,9 +492,9 @@ int main(int argc, char* argv[]){
 		}
 	}
 
-	ChWindowBroadcastIcon(app, "/icons/calc.bmp");
+	//ChWindowBroadcastIcon(app, "/icons/calc.bmp");
 
-	dispFont = ChInitialiseFont(CALIBRI);
+	dispFont = app->baseFont; //ChInitialiseFont(FORTE);
 
 
 	mainDisp = CalcCreateDisplay(10,40, mainWin->info->width - 10*2 - CHITRALEKHA_WINDOW_DEFAULT_PAD_X, 75);
@@ -501,6 +503,8 @@ int main(int argc, char* argv[]){
 	ChWindowAddWidget(mainWin, (ChWidget*)mainDisp);
 	/* button grid */
 	ChWindowPaint(mainWin);
+
+	_KePrint("Calculator ready \r\n");
 
 	PostEvent e;
 	memset(&e, 0, sizeof(PostEvent));

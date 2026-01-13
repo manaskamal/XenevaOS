@@ -97,9 +97,11 @@ Window* CreateWindow(int x, int y, int w, int h, uint16_t flags, uint16_t ownerI
 	memset(win, 0, sizeof(Window));
 	win->flags = flags;
 	win->backBuffer = (uint32_t*)CreateNewBackBuffer(ownerId, ((w_*h_ * 4 + 0x1F) & (~0x1FULL)), &backBufferKey);
+	_KePrint("[deodhai]: backbuffer created \r\n");
 	win->ownerId = ownerId;
 	win->backBufferKey = backBufferKey;
 	win->sharedInfo = CreateSharedWinSpace(&shKey, ownerId);
+	_KePrint("[deodhai]: shared win space created \r\n");
 	win->shWinKey = shKey;
 	win->title = (char*)malloc(strlen(title));
 	memset(win->title, 0, strlen(title));

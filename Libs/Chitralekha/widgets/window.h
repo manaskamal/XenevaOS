@@ -70,7 +70,7 @@
 #define WINDOW_HANDLE_TYPE_NORMAL 1
 #define WINDOW_HANDLE_TYPE_POPUP 2
 
-#pragma pack(push,1)
+//#pragma pack(push,1)
 	typedef struct _ChSharedWin_ {
 		ChRect rect[256];
 		uint32_t rect_count;
@@ -85,7 +85,7 @@
 		double alphaValue;
 		bool windowReady;
 	}ChSharedWinInfo;
-#pragma pack(pop)
+//#pragma pack(pop)
 
 	typedef struct _chwin_ {
 		uint16_t flags;

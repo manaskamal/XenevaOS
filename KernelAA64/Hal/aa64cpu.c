@@ -157,11 +157,12 @@ void AA64TimerSetup() {
 #ifdef __TARGET_BOARD_RPI3__
 	/* already enabled during bcm2836-armctl-ic initialization */
 	return;
-#endif
+#else
 	setupTimerIRQ();
 	GICEnableIRQ(27);
 	GICClearPendingIRQ(27);
 	isb_flush();
+#endif
 }
 
 /*
@@ -182,6 +183,6 @@ void AA64CPUPostInitialize(KERNEL_BOOT_INFO* info) {
 	AA64CPUImplementer(id);
 	AA64PCIeInitialize();
 	AuTextOut("[aurora]: cpu post initialized \r\n");
-	AuPL031RTCInit();
-	mask_irqs();
+	//AuPL031RTCInit();
+	//mask_irqs();
 }

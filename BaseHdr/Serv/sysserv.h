@@ -33,6 +33,11 @@
 #include <stdint.h>
 #include <stdarg.h>
 #include <aurora.h>
+
+#ifdef ARCH_ARM64
+#include <Hal/AA64/aa64cpu.h>
+#endif
+
 #ifdef ARCH_X64
 #include <Hal\x86_64_signal.h>
 #endif
@@ -322,4 +327,6 @@ extern int NetListen(int sockfd, int backlog);
  * block of this process
  */
 extern size_t GetEnvironmenBlock();
+
+extern AA64Registers* AA64GetCurrentRegCtx();
 #endif

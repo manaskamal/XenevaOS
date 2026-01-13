@@ -116,8 +116,10 @@ int ProcessSleep(uint64_t ms) {
 		return 0;
 	/*if (current_thr->pendingSigCount > 0)
 		return 0;*/
+	AA64Registers* regs = AA64GetCurrentRegCtx();
+	//current_thr->sp = (uint64_t)regs;
 	AuSleepThread(current_thr, ms);
-	AuScheduleThread(NULL);
+	AuScheduleThread(regs);
 	return 1;
 }
 
@@ -129,10 +131,11 @@ extern void setuprint();
 int PauseThread() {
 	setuprint();
 	AA64Thread* current_thr = AuGetCurrentThread();
-	UARTDebugOut("PauseThread %s\n", current_thr->name);
+	AA64Registers* regs = AA64GetCurrentRegCtx();
+	//current_thr->sp = (uint64_t)regs;
+
 	AuBlockThread(current_thr);
-	AuScheduleThread(NULL);
-	UARTDebugOut("PauseThread return \n");
+	AuScheduleThread(regs);
 	return 1;
 }
 

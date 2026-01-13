@@ -562,7 +562,7 @@ void CursorStoreBack(ChCanvas* canv,Cursor* cur,unsigned x, unsigned y) {
 void CursorDrawBack(ChCanvas* canv,Cursor* cur, unsigned x, unsigned y) {
 	for (int w = 0; w < 24; w++){
 		for (int h = 0; h < 24; h++){
-			ChDrawPixel(canv, x + w, y + h, cur->cursorBack[h * 24 + w]);
+			ChDrawPixelRAW(canv, x + w, y + h, cur->cursorBack[h * 24 + w]);
 		}
 	}
 }
@@ -1453,6 +1453,7 @@ void DrawWallpaper(ChCanvas *canv, char* filename) {
 	XEFileStatus stat;
 	memset(&stat, 0, sizeof(XEFileStatus));
 	_KeFileStat(image, &stat);
+	_KePrint("Wallpaper sz : %d \r\n", stat.size);
 	void* data_ = _KeMemMap(NULL, stat.size, 0, 0, -1, 0);
 	memset(data_, 0, ALIGN_UP(stat.size, 4096));
 	_KeReadFile(image, data_, ALIGN_UP(stat.size,4096));
@@ -1467,6 +1468,8 @@ void DrawWallpaper(ChCanvas *canv, char* filename) {
 	}
 	int w = decor->GetWidth();
 	int h = decor->GetHeight();
+	_KePrint("Wallpaper width : %d \r\n", w);
+	_KePrint("Wallpaper height : %d \r\n", h);
 	uint32_t* swapable_buff = canv->buffer;
 	canv->buffer = surfaceBuffer;
 	uint8_t* data = decor->GetImage();
@@ -1479,9 +1482,9 @@ void DrawWallpaper(ChCanvas *canv, char* filename) {
 			uint8_t r = data[j * 3];
 			uint8_t g = data[j * 3 + 1];
 			uint8_t b = data[j * 3 + 2];
-			uint32_t rgba = ((r << 16) | (g << 8) | (b)) & 0x00ffffff; 
+			uint32_t rgba = ((r << 16) | (g << 8) | (b)) & 0x00ffffff;
 			rgba = rgba | 0xff000000;
-			ChDrawPixel(canv,x + k, y + i, rgba);
+			ChDrawPixelRAW(canv,x + k, y + i, rgba);
 			j++;
 		}
 	}
@@ -1545,6 +1548,7 @@ int main(int argc, char* arv[]) {
 	
 	_KePrint("Argc == 10 %x\r\n", argc);
 	_KePrint("Deodhai v1.0 running %d\r\n", pid);
+
 	startTime = 0;
 	startSubTime = 0;
 	timeval tm;
@@ -1590,10 +1594,10 @@ int main(int argc, char* arv[]) {
 		surfaceBuffer[j * canv->canvasWidth + i] = GRAY; //0xFF938585;
 
 	DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
-	if (screen_w == 1920 && screen_h == 1080) {
+	//if (screen_w == 1920 && screen_h == 1080) {
 		DrawWallpaper(canv, "/nature.jpg");
 		DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
-	}
+	//}
 
 	ChCanvasScreenUpdate(canv, 0, 0, canv->canvasWidth, canv->canvasHeight);
 
@@ -1602,24 +1606,25 @@ int main(int argc, char* arv[]) {
 
 	arrow = CursorOpen("/pointer.bmp", CURSOR_TYPE_POINTER);
 	CursorRead(arrow);
-	move = CursorOpen("/move.bmp", CURSOR_TYPE_MOVE);
+	/*move = CursorOpen("/move.bmp", CURSOR_TYPE_MOVE);
 	CursorRead(move);
 	resizeUpDown = CursorOpen("/rzupdn.bmp", CURSOR_TYPE_RESIZE_UPDOWN);
 	CursorRead(resizeUpDown);
 	resizeLeftRight = CursorOpen("/rzrl.bmp", CURSOR_TYPE_RESIZE_RIGHTLEFT);
-	CursorRead(resizeLeftRight);
+	CursorRead(resizeLeftRight);*/
 	currentCursor = arrow;
 	CursorStoreBack(canv, currentCursor, 0, 0);
 
 	/* Open all required device file */
-	mouse_fd = _KeOpenFile("/dev/mice", FILE_OPEN_READ_ONLY);
-	kybrd_fd = _KeOpenFile("/dev/kybrd", FILE_OPEN_READ_ONLY);
+	//mouse_fd = _KeOpenFile("/dev/mice", FILE_OPEN_READ_ONLY);
+	//kybrd_fd = _KeOpenFile("/dev/kybrd", FILE_OPEN_READ_ONLY);
 	AuInputMessage mice_input;
 	AuInputMessage kybrd_input;
 	memset(&mice_input, 0, sizeof(AuInputMessage));
 	memset(&kybrd_input, 0, sizeof(AuInputMessage));
-	postbox_fd = _KeOpenFile("/dev/postbox", FILE_OPEN_READ_ONLY);
-
+	postbox_fd = _KeOpenFile("/dev/pbox", FILE_OPEN_READ_ONLY);
+	_KePrint("postboxfd : %d \r\n", postbox_fd);
+	postbox_fd = canv->graphics_fd;
 	_KeFileIoControl(postbox_fd, POSTBOX_CREATE_ROOT, NULL);
 
 	mouseLastHovered = NULL;
@@ -1630,20 +1635,25 @@ int main(int argc, char* arv[]) {
 	uint64_t last_click_time = 0;
 	uint64_t last_redraw = 0;
 
-	while (1) {
+	int proc = _KeCreateProcess(0, "calc");
+	_KeProcessLoadExec(proc, "/calc.exe", NULL, NULL);
 
-		unsigned long frameTime = DeodhaiTimeSince(last_redraw);
+	/*proc = _KeCreateProcess(0, "calendr");
+	_KeProcessLoadExec(proc, "/calendr.exe", NULL, NULL);*/
+
+	_KePrint("Postbox created for deodhai \r\n");
+	while (1) {/*unsigned long frameTime = DeodhaiTimeSince(last_redraw);
 		if (frameTime > 15) {
 			ComposeFrame(canv);
 			last_redraw = DeodhaiCurrentTime();
 			frameTime = 0;
-		}
-
+		}*/
+		ComposeFrame(canv);
 		
 		_KeFileIoControl(postbox_fd, POSTBOX_GET_EVENT_ROOT, &event);
 
-		_KeReadFile(mouse_fd, &mice_input, sizeof(AuInputMessage));
-		_KeReadFile(kybrd_fd, &kybrd_input, sizeof(AuInputMessage));
+	/*	_KeReadFile(mouse_fd, &mice_input, sizeof(AuInputMessage));
+		_KeReadFile(kybrd_fd, &kybrd_input, sizeof(AuInputMessage));*/
 		
 		
 		if (mice_input.type == AU_INPUT_MOUSE) {
@@ -1725,6 +1735,9 @@ int main(int argc, char* arv[]) {
 			int y = event.dword2;
 			int w = event.dword3;
 			int h = event.dword4;
+			_KePrint("[Deodhai]: create win message received \r\n");
+			_KePrint("[Deodhai]: x : %d y : %d \r\n", x, y);
+			_KePrint("[Doedhai]: from id : %d \r\n", event.from_id);
 			/* if this create window is creating a popup window
 			 * then we will need it's parent window handle
 			 */
@@ -1754,7 +1767,7 @@ int main(int argc, char* arv[]) {
 			e.to_id = event.from_id;
 			
 			_KeFileIoControl(postbox_fd, POSTBOX_PUT_EVENT, &e);
-			
+			_KePrint("Msg sent to e.toid : %d \n", e.to_id);
 		//	_KeProcessSleep(180);
 			if (!(win->flags & WINDOW_FLAG_MESSAGEBOX || win->flags & WINDOW_FLAG_POPUP || 
 				win->flags & WINDOW_FLAG_BROADCAST_LISTENER)){
@@ -1771,6 +1784,8 @@ int main(int argc, char* arv[]) {
 				win->flags |= WINDOW_FLAG_ANIMATED | WINDOW_FLAG_ANIMATION_FADE_IN;
 				win->animAlphaVal = 0;
 			}
+
+			_KePrint("[Deodhai]: Window created \r\n");
 
 			focusedWin = win;
 			memset(&event, 0, sizeof(PostEvent));
@@ -1949,6 +1964,7 @@ int main(int argc, char* arv[]) {
 			memset(&event, 0, sizeof(PostEvent));
 		}
 
-		_KeProcessSleep((16 - frameTime));
+		//_KeProcessSleep((16 - frameTime));
+		_KeProcessSleep(16);
 	}
 }

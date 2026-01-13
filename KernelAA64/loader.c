@@ -112,7 +112,6 @@ void AuProcessEntUser(uint64_t rcx) {
 	PUSH(uentry->rsp, size_t, (size_t)uentry->argvaddr);
 	PUSH(uentry->rsp, size_t, (size_t)uentry->num_args);
 	PUSHALIGN(uentry->rsp, 16);
-	AuTextOut("Entering user %x %x\r\n", uentry->rsp,uentry->entrypoint);
 	aa64_enter_user(uentry->rsp, uentry->entrypoint);
 	AuTextOut("Entry returned \r\n");
 	while (1) {

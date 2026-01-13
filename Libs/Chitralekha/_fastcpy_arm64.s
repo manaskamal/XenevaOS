@@ -36,4 +36,5 @@ _fastcpy:
      subs x2,x2,#1
      b.ne .loop
 .done:
+     dmb sy
      ret

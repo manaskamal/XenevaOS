@@ -33,6 +33,7 @@
 #include <Board/RPI3bp/rpi3bp_gpio.h>
 #include <Hal/AA64/aa64lowlevel.h>
 #include <Mm/vmmngr.h>
+#include <Board/RPI3bp/rpi3bp.h>
 #include <Mm/pmmngr.h>
 
 static uint64_t* spi0Base;
@@ -41,7 +42,7 @@ static uint64_t* spi0Base;
 #define SPI0_FIFO 0x04
 #define SPI0_CLK 0x08
 
-#define SPI_CS_TXD (1ULL<18)
+#define SPI_CS_TXD (1ULL<<18)
 #define SPI_CS_RXD (1ULL<<17)
 #define SPI_CS_DONE (1ULL<<16)
 #define SPI_CS_TA (1ULL<<7)
@@ -78,11 +79,13 @@ void AuRPI3SPI0Map() {
 	AuTextOut("[aurora]: RPI3 SPI0 mapped to %x address \r\n", spi0Base);
 }
 
+extern void AuRPIGPIOScanAll();
 /*
  *AuRPI3SPI0Init -- initialize SPI0 of RPI3bp
  */
 void AuRPI3SPI0Init() {
 	/* configure pin 9,10,11,8 to alt function 0*/
+	AuRPIGPIOSetFunction(7, 0b100);
 	AuRPIGPIOSetFunction(9, 0b100);
 	AuRPIGPIOSetFunction(10, 0b100);
 	AuRPIGPIOSetFunction(11, 0b100);
@@ -100,7 +103,7 @@ void AuRPI3SPI0Init() {
 	for (int i = 0; i < 10000000; i++)
 		;
 
-	uint32_t div = 64ULL;
+	uint32_t div = 256;//128;
 	*(volatile uint32_t*)((uint64_t)spi0Base + SPI0_CLK) = div;
 	dsb_ish();
 	isb_flush();
@@ -121,6 +124,7 @@ void AuRPI3SPI0Init() {
 		;
 
 	cs = SPI_MMIO_READ(SPI0_CS);
+	cs &= ~(SPI_CS_CPOL | SPI_CS_CPHA);
 	cs &= ~0x3;
 	cs |= 0;
 	SPI_MMIO_WRITE(SPI0_CS, cs);
@@ -236,3 +240,92 @@ void AuRPISPITransferStop() {
 	SPI_MMIO_WRITE(SPI0_CS, cs);
 }
 
+
+#define XPT2046_CMD_TEMP0 0x84
+#define XPT2046_CMD_TEMP1 0xF4
+#define XPT2046_CMD_XPOS 0x90
+#define XPT2046_CMD_YPOS 0xD0
+#define XPT2046_CMD_Z1_POS 0xB0
+#define XPT2046_CMD_Z2_POS 0xC0
+
+uint16_t XPT2046Read(uint8_t command) {
+	uint8_t tx_buffer[3];
+	uint8_t rx_buffer[3] = { 0,0,0 };
+
+	tx_buffer[0] = command;
+	tx_buffer[1] = 0x00;
+	tx_buffer[2] = 0x00;
+
+	AuRPISPITransferStart();
+
+	for (int i = 0; i < 3; i++) {
+		while (!(SPI_MMIO_READ(SPI0_CS) & (1ULL << 18)));
+
+		*(volatile uint32_t*)((uint64_t)spi0Base + SPI0_FIFO) = tx_buffer[i];
+
+		while (!(SPI_MMIO_READ(SPI0_CS) & SPI_CS_RXD));
+
+		rx_buffer[i] = *(volatile uint32_t*)((uint64_t)spi0Base + SPI0_FIFO);
+	}
+
+	while (!(SPI_MMIO_READ(SPI0_CS) & SPI_CS_DONE));
+
+	AuRPISPITransferStop();
+
+	//AuTextOut("SPI0 Transfer stopped \r\n");
+
+	uint16_t value = ((rx_buffer[1] << 8) | rx_buffer[2]) >> 3;
+
+	return value & 0xFFF;
+}
+
+
+uint16_t XPT2046ReadSimple(uint8_t command) {
+	uint8_t buffer[3];
+	buffer[0] = command;
+	buffer[1] = 0x00;
+	buffer[2] = 0x00;
+
+	AuRPISPITransferBuffer(buffer, 3);
+
+	return 0;
+}
+
+#define PENIRQ_PIN 25
+
+void XPT2046Initialise() {
+	AuTextOut("XPT2046 Connectivity test \r\n");
+
+	uint16_t temp0 = XPT2046Read(XPT2046_CMD_TEMP0);
+	AuTextOut("TEMP0 = %x - %d\r\n", temp0, temp0);
+
+	uint16_t temp1 = XPT2046Read(XPT2046_CMD_TEMP1);
+	AuTextOut("Temp1: %x - %d \r\n", temp1, temp1);
+
+	uint16_t x = XPT2046Read(XPT2046_CMD_XPOS);
+	uint16_t y = XPT2046Read(XPT2046_CMD_YPOS);
+	uint16_t z1 = XPT2046Read(XPT2046_CMD_Z1_POS);
+	uint16_t z2 = XPT2046Read(XPT2046_CMD_Z2_POS);
+
+	AuTextOut("Position - X: %d Y : %d  \r\n", x, y);
+	AuRPIGPIOSetFunction(PENIRQ_PIN, 0b000);
+	AuRPIGPIOPullUP(PENIRQ_PIN);
+	AuRPIGPIOEnableInterrupt(PENIRQ_PIN);
+	AuRPI3PeripheralIRQEnable(49);
+}
+
+#define Z_MIN 80
+#define Z_MAX 2000
+
+static inline int pressurevalid(int z) {
+	return (z > Z_MIN && z < Z_MAX);
+}
+
+void XPT2046ReadTouch() {
+	uint16_t x = XPT2046Read(XPT2046_CMD_XPOS);
+	uint16_t y = XPT2046Read(XPT2046_CMD_YPOS);
+	uint16_t z1 = XPT2046Read(XPT2046_CMD_Z1_POS);
+	uint16_t z2 = XPT2046Read(XPT2046_CMD_Z2_POS);
+	int z = z1 - z2;
+	AuTextOut("Touch X: %d Y : %d \r\n", x, y);
+}

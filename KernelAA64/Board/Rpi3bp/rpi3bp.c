@@ -42,6 +42,7 @@
 #ifdef __TARGET_BOARD_RPI3__
 
 uint64_t lpbase;
+uint64_t pbase;
 #define PERIPHERAL_BASE  0x3F000000
 #define LOCAL_PERIPHERAL_BASE 0x40000000
 
@@ -112,7 +113,9 @@ uint32_t AuRPI3GetCoreID() {
 void AuRPI3LocalIrqInit() {
     uint32_t coreID = AuRPI3GetCoreID();
     uint64_t localPbase = (uint64_t)AuMapMMIO(LOCAL_PERIPHERAL_BASE, 1);
+    uint64_t pBase = (uint64_t)AuMapMMIO(PERIPHERAL_BASE, 2);
     lpbase = localPbase;
+    pbase = pBase;
 
     AuTextOut("[aurora]: coreID : %d \r\n", coreID);
     AuTextOut("[aurora]: local pheripheral mapped to : %x \r\n", lpbase);
@@ -120,21 +123,27 @@ void AuRPI3LocalIrqInit() {
     /* set the prescaler value to divider ratio of 1, setting the prescaler to
      * zero will stop the timer
      */
-    ARMCTRL_WRITE(lpbase + LOCAL_PRESCALER, 0x80000000);
+   // ARMCTRL_WRITE(lpbase + LOCAL_PRESCALER, 0x60000000);
 
     /* route all gpu interrupts to core 0*/
     ARMCTRL_WRITE(lpbase + LOCAL_GPU_INT_ROUTING, 0x00);
 
     /* initialize the core0 timer to reset value*/
-    uint64_t timer_ctrl_addr = lpbase + CORE0_TIMER_IRQCNTL + (coreID * 4);
+    //uint64_t timer_ctrl_addr = lpbase + CORE0_TIMER_IRQCNTL + (coreID * 4);
     uint64_t mbox_ctrl_addr = lpbase + CORE0_MBOX_IRQCNTL + (coreID * 4);
 
-    ARMCTRL_WRITE(timer_ctrl_addr, 0);
+   // ARMCTRL_WRITE(timer_ctrl_addr, 0);
     ARMCTRL_WRITE(mbox_ctrl_addr, 0);
+
+
 
     /* set the 64 bit core timer to run at crystal clock
        and increments by 1 step */
-    ARMCTRL_WRITE(lpbase + LOCAL_CONTROL, (0ULL << 8) | (0ULL < 9));
+    //ARMCTRL_WRITE(lpbase + LOCAL_CONTROL, (0ULL << 8) | (0ULL < 9));
+
+    /*uint64_t core_timer_ctrl = lpbase + 0x34;
+    uint32_t reloadValue = 312500;
+    ARMCTRL_WRITE(core_timer_ctrl, (1 << 29) | reloadValue);*/
 }
 
 /*
@@ -168,8 +177,12 @@ void AuRPI3PeripheralIRQEnable(uint32_t irq_num) {
         ARMCTRL_WRITE(PERIPHERAL_BASE + ENABLE_IRQS_1, 1 << irq_num);
     }
     else if (irq_num < 64) {
+        AuTextOut("Enabling IRQ num : %d \n", irq_num);
         ARMCTRL_WRITE(PERIPHERAL_BASE + ENABLE_IRQS_2, 1 << (irq_num - 32));
     }
+
+    dsb_sy_barrier();
+    isb_flush();
 }
 
 /*
@@ -197,15 +210,29 @@ uint32_t AuRPI3LocalIRQGetPending() {
 }
 
 /*
+ * AuRPI3PeripheralIRQGetPending -- read pending interrupts from
+ * peripheral base
+ */
+uint32_t AuRPI3PeripheralIRQGetPending2() {
+    uint64_t irq_src_addr = PERIPHERAL_BASE + 0xb200 + 0x208;
+    return ARMCTRL_READ(irq_src_addr);
+}
+
+uint32_t AuRPI3PeripheralIRQGetPending1() {
+    uint64_t irq_src_addr = PERIPHERAL_BASE + 0xb200 + 0x204;
+    return ARMCTRL_READ(irq_src_addr);
+}
+/*
  * AuRPI3TimerInit -- initialize and caliberate the
  * 64 bit periodic timer 
  */
 void AuRPI3TimerInit(uint32_t interval_ms) {
-    uint64_t freq = get_cntfrq_el0();
+    /*uint64_t freq = get_cntfrq_el0();
     uint64_t interval_ticks = (freq * interval_ms) / 1000;
     uint64_t current = get_cntpct_el0();
     set_cntp_cval_el0(current + interval_ticks);
-    set_cntp_ctl_el0(1);
+    set_cntp_ctl_el0(1);*/
+    setupTimerIRQ();
 }
 
 /* RPI3ICInit -- initialize RPI3 local interrupt controller */
@@ -213,7 +240,15 @@ void AuRPI3ICInit() {
     AuRPI3TimerInit(10);
     AuRPI3LocalIrqInit();
     AuRPI3PeripheralIRQInit();
-    AuRPI3LocalTimerIRQEnable(INT_SRC_CNTPNSIRQ);
+    AuRPI3LocalTimerIRQEnable(0x08);
+
+    *(volatile uint32_t*)((uint64_t)lpbase + 0x0C) = (0ULL << 0) | (0LL << 2);
+    dsb_sy_barrier();
+    isb_flush();
+    uint32_t v = *(volatile uint32_t*)(LOCAL_PERIPHERAL_BASE + LOCAL_GPU_INT_ROUTING);
+    AuTextOut("Peripheral GPU is routed to %d \r\n", v);
+    uint32_t v2 = *(volatile uint32_t*)(lpbase + LOCAL_GPU_INT_ROUTING);
+    AuTextOut("P GPU2 : %d %d\r\n", ((v2 >> 0) & 0x3), ((v2 >> 2) & 0x3));
 }
 /*
  * AuRPI3Initialize -- initialize the basic board requirement
@@ -232,8 +267,8 @@ void AuRPI3Initialize() {
     /*  map and initialize SPI0 */
     AuRPI3SPI0Map();
     AuRPI3SPI0Init();
-    AuRPIInitializeFramebuffer(800, 480, 32);
-    //AuLCDInit();
+    AuRPIInitializeFramebuffer(800,480, 32);  //800x480  //1820x1080
+   // AuLCDInit();
 }
 
 static inline void RPIMMIOWrite(uint32_t addr, uint32_t val) {

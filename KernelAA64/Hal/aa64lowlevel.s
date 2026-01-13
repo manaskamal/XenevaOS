@@ -178,6 +178,11 @@ get_cpacr_el1:
     mrs x0, CPACR_EL1
     ret
 
+.global get_cntv_ctl_el0
+get_cntv_ctl_el0:
+    mrs x0, CNTV_CTL_EL0
+    ret
+
 .global set_cpacr_el1
 set_cpacr_el1:
     msr CPACR_EL1, x0
@@ -212,7 +217,7 @@ enable_irqs:
 
 .global mask_irqs
 mask_irqs:
-   msr daifset, #0x2
+   msr daifset, #0b1111
    dsb sy
    isb
    ret
@@ -220,9 +225,9 @@ mask_irqs:
 .global setupTimerIRQ
 setupTimerIRQ:
    mrs x0, CNTPCT_EL0
-   mov x1, 100
-   udiv x0, x0, x1
-   msr CNTV_TVAL_EL0, x0
+   mov x1, 1000
+   add x0, x0, x1
+   msr CNTV_CVAL_EL0, x0
    mov x0,1
    msr CNTV_CTL_EL0, x0
    ret
@@ -270,7 +275,7 @@ aa64_enter_user:
     * make the exception handler return to EL0 
     */
   // bic x0, x0, #15
-   mov x8, #0x3C0 // #0x80
+   mov x8, #0x00 //#0x2C0 // #0x80
    msr SPSR_EL1, x8
    msr SP_EL0, x0
    msr ELR_EL1,x1

@@ -41,6 +41,8 @@
 
 #define AURORA_MAX_SYSCALL 46
 
+AA64Registers* svcCurrentRegs;
+
 /* Syscall function format */
 typedef int64_t(*syscall_func) (int64_t param1, int64_t param2, int64_t param3, int64_t
 	param4, int64_t param5, int64_t param6);
@@ -58,6 +60,10 @@ extern uint64_t read_sp();
 uint64_t test_call() {
 	UARTDebugOut("Test call initiated \r\n");
 	return 100;
+}
+
+AA64Registers* AA64GetCurrentRegCtx() {
+	return svcCurrentRegs;
 }
 
 static void* syscalls[AURORA_MAX_SYSCALL] = {
@@ -128,9 +134,12 @@ void AuAA64SyscallHandler(AA64Registers* regs) {
 
 	AA64Thread* currThr = AuGetCurrentThread();
 	currThr->returnFromSyscall = 1;
+	currThr->syscallNum = vector;
+	svcCurrentRegs = regs;
 
 	syscall_func func = (syscall_func)syscalls[vector];
 	if (!func) {
+		currThr->returnFromSyscall = 0;
 		regs->x0 = 0;
 		return 0;
 	}

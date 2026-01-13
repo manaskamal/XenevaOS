@@ -35,6 +35,7 @@
 #include <string.h>
 #include <kernelAA64.h>
 #include <_null.h>
+#include <Drivers/uart.h>
 
 
 uint64_t* _RootPaging;
@@ -58,6 +59,12 @@ size_t pd_index(uint64_t virt) {
 size_t pt_index(uint64_t virt) {
 	uint64_t l3_index = (virt >> 12) & 0x1FF;
 	return l3_index;
+}
+
+bool _vmdebug = 0;
+
+void envmdebug() {
+	_vmdebug = 0;
 }
 
 /*
@@ -136,32 +143,42 @@ bool AuMapPage(uint64_t phys_addr, uint64_t virt_addr, uint8_t attrib) {
 	const long i1 = (virt_addr >> 12) & 0x1FF;
 
 	uint64_t* pml4i = (uint64_t*)P2V(read_ttbr0_el1());
-
+	if (_vmdebug)
+		UARTDebugOut("PML4I got : %x \r\n", pml4i);
 	if (!(pml4i[i4] & 1))
 	{
 		const uint64_t page = (uint64_t)AuPmmngrAlloc();
+		if (_vmdebug)
+			UARTDebugOut("Creating pm4 entry : %x \r\n", page);
 		pml4i[i4] = (page & ~0xFFFUL) | PTE_VALID | PTE_TABLE | PTE_AF;
 		memset((void*)P2V(page), 0, 4096);
 		void* address = &pml4i[i4];
 		data_cache_flush((uint64_t*)address);
 	}
 	uint64_t* pml3 = (uint64_t*)P2V((pml4i[i4] & ~0xFFFULL));
+	if (_vmdebug)
+		UARTDebugOut("PML3 got : %x \r\n", pml3);
 
 	if (!(pml3[i3] & 1))
 	{
 		const uint64_t page = (uint64_t)AuPmmngrAlloc();
+		if (_vmdebug)
+			UARTDebugOut("Creating PML3 Entry : %x \r\n", page);
 		pml3[i3] = (page & ~0xFFFUL) | PTE_VALID | PTE_TABLE | PTE_AF;
 		memset((void*)P2V(page), 0, 4096);
 		void* address = &pml3[i3];
 		data_cache_flush((uint64_t*)address);
 	}
 
-
 	uint64_t* pml2 = (uint64_t*)P2V((pml3[i3] & ~0xFFFULL));
+	if (_vmdebug)
+		UARTDebugOut("PML2 got : %x \r\n", pml2);
 
 	if (!(pml2[i2] & 1))
 	{
 		const uint64_t page = (uint64_t)AuPmmngrAlloc();
+		if (_vmdebug)
+			UARTDebugOut("Creating PML2 Entry %x\r\n", page);
 		pml2[i2] = (page & ~0xFFFUL) | PTE_VALID | PTE_TABLE | PTE_AF;
 		memset((void*)P2V(page), 0, 4096);
 		void* address = &pml2[i2];
@@ -170,6 +187,9 @@ bool AuMapPage(uint64_t phys_addr, uint64_t virt_addr, uint8_t attrib) {
 	}
 
 	uint64_t* pml1 = (uint64_t*)P2V((pml2[i2] & ~0xFFFULL));
+
+	if (_vmdebug)
+		UARTDebugOut("PML1 got : %x \r\n", pml1);
 	if (pml1[i1] & 1)
 	{
 		//AuPmmngrFree((void*)phys_addr);
@@ -182,6 +202,8 @@ bool AuMapPage(uint64_t phys_addr, uint64_t virt_addr, uint8_t attrib) {
 	void* address = &pml1[i1];
 	data_cache_flush((uint64_t*)address);
 	tlb_flush(virt_addr);
+	if (_vmdebug)
+		UARTDebugOut("TLB Flushing pml1 \r\n");
 	return true;
 }
 
@@ -438,9 +460,10 @@ void AuFreePages(uint64_t virt_addr, bool free_physical, size_t s) {
 		if (free_physical && page != 0) {
 			AuPmmngrFree((void*)V2P((size_t)page));
 		}
-
+		data_cache_flush(virt_addr);
 		virt_addr += 4096;
 	}
+		
 }
 
 /*

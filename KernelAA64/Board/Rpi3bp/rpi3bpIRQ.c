@@ -41,16 +41,54 @@
 #include <process.h>
 #include <_null.h>
 #include <Mm/vmarea.h>
+#include <Board/RPI3bp/rpi3bp_gpio.h>
 
+bool timer_debug = false;
+void settimerdebug() {
+    timer_debug = true;
+}
+
+extern void XPT2046ReadTouch();
 /*
  * RPI3_IRQ_handler -- handle pending IRQs
  * @param regs -- Pointer to AA64 register struct
  */
 void RPI3_IRQ_handler(AA64Registers* regs) {
     uint32_t pending = AuRPI3LocalIRQGetPending();
+   // AuTextOut("IRQ Pending++ \r\n");
     if (pending & INT_SRC_CNTPNSIRQ) {
-       // AuTextOut("[aurora]: rpi3 timer irq++ \r\n");
+        uint64_t cnt = get_cntv_ctl_el0();
+        uint8_t bit = (cnt >> 2) & 0x1;
+        UARTDebugOut("[aurora]:******* rpi3 timer irq++ %d\r\n", bit);
+       /* if (bit == 1)
+            for (;;);*/
+        suspendTimer();
+        setupTimerIRQ();
         AuScheduleThread(regs);
+    }
+    if (pending & INT_SRC_CNTPSIRQ) {
+        UARTDebugOut("[aurora]: rpi timer++ \r\n");
+    }
+    if (pending & INT_SRC_CNTHPIRQ) {
+        UARTDebugOut("[aurora]: rpi timer HPIRQ++ \r\n");
+    }
+    if (pending & (1ULL << 3)) {
+        suspendTimer();
+        setupTimerIRQ();
+        AuScheduleThread(regs);
+    }
+
+    if (pending & (1ULL << 8)) {
+        uint32_t penP = AuRPI3PeripheralIRQGetPending2();
+        /* Handle GPIO irq*/
+        if (penP & (1ULL << 17)) {
+            uint32_t gpioEvent = AuRPIGPIOGetEvents();
+            /* PI HDMI Display's XPT2046 Penirq*/
+            if (gpioEvent & (1ULL << 25)) {
+                AuRPIGPIOClearEvent(25);
+                XPT2046ReadTouch();
+            }
+        }
     }
 }
 

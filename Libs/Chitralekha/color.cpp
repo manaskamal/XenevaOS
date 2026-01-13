@@ -169,3 +169,15 @@ void ChColorDrawHorizontalGradient(ChCanvas *canv, int x, int y, int w, int h, u
 double clamp(double x, double upper, double lower){
 	return min(upper, max(x, lower));
 }
+
+
+/*
+ * ChColorRGBAtoBGRA -- convert RGBA pixels to BGRA888
+ * @param col -- Color to convert
+ */
+uint32_t ChColorRGBAtoBGRA(uint32_t col) {
+	return ((col & 0xFF000000)) |
+		((col & 0x00FF0000) >> 16) |
+		((col & 0x0000FF00)) |
+		((col & 0x000000FF) << 16);
+}

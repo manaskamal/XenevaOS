@@ -162,7 +162,7 @@
       <SDLCheck>false</SDLCheck>
       <AdditionalIncludeDirectories>..\..\Libs\XEClib\includes; includes\c++</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <PreprocessorDefinitions>ARCH_ARM64; YES_DYNAMIC; DYNAMIC_EXPORTER</PreprocessorDefinitions>
+      <PreprocessorDefinitions>ARCH_ARM64; YES_DYNAMIC; DYNAMIC_EXPORTER;</PreprocessorDefinitions>
       <IgnoreStandardIncludePath>true</IgnoreStandardIncludePath>
       <ExceptionHandling>false</ExceptionHandling>
       <BasicRuntimeChecks>
@@ -198,7 +198,7 @@
       <AdditionalOptions>/filealign:4096 /def:_export_arm64.def %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
-      <Command>copy "..\..\Build\$(TargetName).dll" M:\$(TargetName).exe" </Command>
+      <Command>copy "..\..\Build\$(TargetName).dll" M:\$(TargetName).dll" </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">

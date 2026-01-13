@@ -119,6 +119,10 @@ extern "C" void main(int argc, char* argv[]) {
 	int proc = _KeCreateProcess(0, "deodhaixr");
 	_KeProcessLoadExec(proc, "/deodxr.exe\0", 0, NULL);
 
+	/*_KeProcessSleep(1000);
+	proc = _KeCreateProcess(0, "calc");
+	_KeProcessLoadExec(proc, "/calc.exe", 0, NULL);*/
+
 
 	while(1){
 		_KePauseThread();

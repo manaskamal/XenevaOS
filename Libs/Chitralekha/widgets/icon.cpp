@@ -198,12 +198,14 @@ ChIcon* information;
  * default icons
  */
 void ChInitialiseDefaultIcons() {
+#ifdef LOAD_DEFAULT_ICONS
 	success = ChCreateIcon();
 	information = ChCreateIcon();
 	ChIconOpen(success, "/icons/succi.bmp");
 	ChIconOpen(information, "/icons/infoi.bmp");
 	ChIconRead(success);
 	ChIconRead(information);
+#endif
 }
 
 /*

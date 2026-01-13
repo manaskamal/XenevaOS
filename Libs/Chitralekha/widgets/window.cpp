@@ -56,6 +56,7 @@ extern void ChDefaultPopupWinPaint(ChWindow* win);
  * @param handle -- handle of parent window 
  */
 void ChRequestWindow(ChitralekhaApp* app, int x, int y, int w, int h, char* title, uint16_t attrib,int handle) {
+	_KePrint("[Chitralekha] : Requesting window \r\n");
 	PostEvent e;
 	e.type = DEODHAI_MESSAGE_CREATEWIN;
 	e.dword = x;
@@ -68,8 +69,10 @@ void ChRequestWindow(ChitralekhaApp* app, int x, int y, int w, int h, char* titl
 	strcpy(e.charValue3, title);
 	e.from_id = app->currentID;
 	_KeFileIoControl(app->postboxfd, POSTBOX_PUT_EVENT, &e);
+	_KePrint("[Chitralekha]: Request putted \r\n");
 	memset(&e, 0, sizeof(PostEvent));
 	while (1) {
+		//_KePrint("[Chitralekha]: Getting event \r\n");
 		int err = _KeFileIoControl(app->postboxfd, POSTBOX_GET_EVENT, &e);
 		if (e.type == DEODHAI_REPLY_WINCREATED){
 				uint16_t shkey = e.dword;
@@ -92,8 +95,11 @@ void ChRequestWindow(ChitralekhaApp* app, int x, int y, int w, int h, char* titl
 				break;
 			}
 
-		if (err == -1)
-			_KePauseThread();
+		if (err == -1) {
+			//_KePauseThread();
+			//_KePrint("Polling post event \r\n");
+			_KeProcessSleep(100);
+		}
 	}
 }
 

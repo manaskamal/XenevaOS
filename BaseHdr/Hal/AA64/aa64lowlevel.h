@@ -110,6 +110,8 @@ AU_EXTERN AU_EXPORT uint64_t get_cntfrq_el0();
 
 AU_EXTERN AU_EXPORT uint64_t get_cpacr_el1();
 
+extern uint64_t get_cntv_ctl_el0();
+
 AU_EXTERN AU_EXPORT void set_cpacr_el1(uint64_t val);
 
 AU_EXTERN AU_EXPORT uint64_t read_esr_el1();

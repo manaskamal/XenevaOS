@@ -33,6 +33,7 @@
 #include <sys\_kefile.h>
 #include <sys\mman.h>
 #include "deodhai.h"
+#include <chitralekha.h>
 
 int cur_w;
 int cur_h;
@@ -67,6 +68,7 @@ void CursorRead(Cursor* cur) {
 
 	uint8_t* buffer = (uint8_t*)cur->fileBuffer;
 
+#ifdef ARCH_X64
 	BMP* bmp = (BMP*)buffer;
 	unsigned int offset = bmp->off_bits;
 
@@ -74,6 +76,23 @@ void CursorRead(Cursor* cur) {
 	int width = info->biWidth;
 	int height = info->biHeight;
 	int bpp = info->biBitCount;
+#elif ARCH_ARM64
+	//BMP* bmp = (BMP*)buffer;
+	unsigned int offset; // = bmp->off_bits;
+	memcpy(&offset, (uint8_t*)buffer + 10, sizeof(int));
+	_KePrint("OFFSet : %x \r\n", offset);
+
+	uint8_t* info = (uint8_t*)(buffer + sizeof(BMP));
+	int width; // = info->biWidth;
+	memcpy(&width, (uint8_t*)info + 4, sizeof(int));
+	_KePrint("Cursor width : %d \r\n", width);
+	int height; // = info->biHeight;
+	memcpy(&height, (uint8_t*)info + 8, sizeof(int));
+	_KePrint("Cursor height : %d \r\n", height);
+	int bpp; // = info->biBitCount;
+	memcpy(&bpp, (uint8_t*)info + 14, sizeof(unsigned short));
+	_KePrint("Cursor bpp : %d \r\n", bpp);
+#endif
 
 	void* image_bytes = (void*)(buffer + offset);
 	cur->imageData = (uint8_t*)image_bytes;
@@ -111,7 +130,7 @@ void CursorDraw(ChCanvas* canv, Cursor* cur, unsigned int x, unsigned int y) {
 			uint32_t a = image_row[j++] & 0xff;
 			uint32_t rgb = ((a << 24) | (r << 16) | (g << 8) | (b));
 			if (rgb & 0xFF000000)
-				ChDrawPixel(canv, x + k, y + i, rgb);
+				ChDrawPixelRAW(canv, x + k, y + i, rgb);
 		}
 	}
 }

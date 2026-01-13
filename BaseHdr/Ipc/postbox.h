@@ -35,6 +35,7 @@
 #include <Hal\x86_64_sched.h>
 #elif ARCH_ARM64
 #include <Hal/AA64/sched.h>
+#include <Fs/vfs.h>
 #endif
 
 #define POSTBOX_CREATE  401
@@ -47,7 +48,7 @@
 #define POSTBOX_NO_EVENT  -1
 #define POSTBOX_ROOT_ID    1
 
-#pragma pack(push,1)
+//#pragma pack(push,1)
 /*
  * PostEvent -- event message structure
  */
@@ -69,7 +70,7 @@ typedef struct _post_event_ {
 	unsigned char* charValue2;
 	char charValue3[100];
 }PostEvent;
-#pragma pack(pop)
+//#pragma pack(pop)
 
 #ifdef ARCH_X64
 #pragma pack(push,1)
@@ -120,6 +121,8 @@ extern int PostBoxGetEvent(PostEvent* event, bool root, AuThread* curr_thread);
 extern int PostBoxGetEvent(PostEvent* event, bool root, AA64Thread* curr_thread);
 #endif
 
+extern AuVFSNode* AuPostBOXGetNode();
+
 /*
 * PostBoxCreate -- creates a postbox
 * @param root -- is this post box root ?
@@ -133,6 +136,15 @@ extern void PostBoxCreate(bool root, uint16_t tid);
 * @param id -- id of the postbox
 */
 extern void PostBoxDestroyByID(uint16_t id);
+
+/*
+ * PostBoxIOControl -- I/O Control function for
+ * post box manager
+ * @param file -- Pointer to postbox file
+ * @param code -- Post Box command
+ * @param arg -- extra data
+ */
+extern int PostBoxIOControl(AuVFSNode* file, int code, void* arg);
 
 
 #endif

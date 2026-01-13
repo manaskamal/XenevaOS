@@ -49,8 +49,10 @@ Cursor* CursorOpen(char* path, uint8_t type) {
 	int fd = _KeOpenFile(path, FILE_OPEN_READ_ONLY);
 	XEFileStatus stat;
 	_KeFileStat(fd, &stat);
+	_KePrint("Cursor size : %d \r\n", stat.size);
 
 	cur->fileBuffer = (uint8_t*)_KeMemMap(NULL, stat.size, 0, 0, MEMMAP_NO_FILEDESC, 0);
+	_KePrint("Cursor file buffer start : %x \r\n", cur->fileBuffer);
 	cur->type = type;
 	cur->cursorFD = fd;
 	cur->cursorFileSize = stat.size;
@@ -67,17 +69,22 @@ void CursorRead(Cursor* cur) {
 
 	uint8_t* buffer = (uint8_t*)cur->fileBuffer;
 
-	BMP* bmp = (BMP*)buffer;
+	//BMP* bmp = (BMP*)buffer;
 	unsigned int offset; // = bmp->off_bits;
-	memcpy(&offset, (buffer + 0x10), sizeof(unsigned int));
+	memcpy(&offset, (uint8_t*)buffer + 10, sizeof(int));
+	_KePrint("OFFSet : %x \r\n", offset);
 
-	BMPInfo* info = (BMPInfo*)(buffer + sizeof(BMP));
+	uint8_t* info = (uint8_t*)(buffer + sizeof(BMP));
 	int width; // = info->biWidth;
-	memcpy(&width, (uint8_t*)info + 0x4, sizeof(int));
+	memcpy(&width, (uint8_t*)info + 4, sizeof(int));
+	_KePrint("Cursor width : %d \r\n", width);
 	int height; // = info->biHeight;
-	memcpy(&height, (uint8_t*)info + 0x8, sizeof(int));
+	memcpy(&height, (uint8_t*)info + 8, sizeof(int));
+	_KePrint("Cursor height : %d \r\n", height);
 	int bpp; // = info->biBitCount;
-	memcpy(&bpp, (uint8_t*)info + 0x14, sizeof(int));
+	memcpy(&bpp, (uint8_t*)info + 14, sizeof(unsigned short));
+	_KePrint("Cursor bpp : %d \r\n", bpp);
+
 
 	void* image_bytes = (void*)(buffer + offset);
 	cur->imageData = (uint8_t*)image_bytes;
@@ -100,8 +107,9 @@ void CursorRead(Cursor* cur) {
 void CursorDraw(ChCanvas* canv, Cursor* cur, unsigned int x, unsigned int y) {
 	uint32_t width = cur_w;
 	uint32_t height = cur_h;
+	_KePrint("Cur w -> %d \r\n", cur_w);
+	_KePrint("Cur h -> %d \r\n", cur_h);
 	uint32_t j = 0;
-
 	uint8_t* image = cur->imageData;
 	for (int i = 0; i < height; i++) {
 		unsigned char* image_row = (unsigned char*)(image + (static_cast<uint64_t>(height) - i - 1) *

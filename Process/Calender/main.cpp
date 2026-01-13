@@ -276,7 +276,7 @@ void CalenderRepaint(int year, int month, int num_days) {
 int main(int argc, char* argv[]){
 	_KePrint("Cal \r\n");
 	app = ChitralekhaStartApp(argc, argv);
-	mainWin = ChCreateWindow(app, WINDOW_FLAG_MOVABLE, "Calender", 100, 100, CHITRALEKHA_DEFAULT_WIN_WIDTH, 
+	mainWin = ChCreateWindow(app, WINDOW_FLAG_MOVABLE, "Calender", 100, 50, CHITRALEKHA_DEFAULT_WIN_WIDTH, 
 		400);
 	
 	_KePrint("Calender \r\n");

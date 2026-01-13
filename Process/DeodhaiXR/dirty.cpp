@@ -94,7 +94,8 @@ void DirtyScreenUpdate(ChCanvas* canvas) {
 			_KePrint("Dirty Rect h - %d \r\n", dirtyRect[i].h);
 			dirtyRect[i].h = canvas->canvasHeight;
 		}
-
+		_KePrint("Dirty rect x: %d y : %d \r\n", dirtyRect[i].x, dirtyRect[i].y);
+		_KePrint("Dirty w: %d h : %d \r\n", dirtyRect[i].w, dirtyRect[i].h);
 		ChCanvasScreenUpdate(canvas, dirtyRect[i].x, dirtyRect[i].y, dirtyRect[i].w, dirtyRect[i].h);
 	}
 	_dirty_count = 0;

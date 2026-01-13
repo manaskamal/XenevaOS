@@ -43,7 +43,7 @@
 #define CPU_IMPLEMENTER_MARVELL  0x56
 #define CPU_IMPLEMENTER_APPLE    0x61
 
-#pragma pack(push,1)
+//#pragma pack(push,1)
 typedef struct _aa64_regs_ {
 	int64_t x30;   //0
 	int64_t EL0SP; //8
@@ -78,7 +78,7 @@ typedef struct _aa64_regs_ {
 	int64_t x0; //240
 	int64_t x1; //248
 }AA64Registers;
-#pragma pack(pop)
+//#pragma pack(pop)
 
 
 

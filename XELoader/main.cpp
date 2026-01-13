@@ -159,10 +159,13 @@ int XELdrStartProc(char* filename, XELoaderObject *obj) {
 	file = _KeOpenFile(fname, FILE_OPEN_READ_ONLY);
 	XEFileStatus *stat = (XEFileStatus*)malloc(sizeof(XEFileStatus));
 	memset(stat, 0, sizeof(XEFileStatus));
+
 	
 	int ret_bytes = 0;
 	
 	_KeFileStat(file, stat);
+
+
 
 	uint64_t* buffer = (uint64_t*)_KeMemMap(NULL,4096, 0, 0, -1, 0);
 	memset(buffer, 0, 4096);
@@ -255,13 +258,17 @@ extern "C" void main(int argc, char* argv[]) {
 
 	XELdrInitObjectList();
 
+
 	/* load the main object */
 	char* filename = argv[0];
 
+	_KePrint("Filename to load : %s \r\n", filename);
 	
 	XELoaderObject* mainobj = XELdrCreateObj(filename);
 	
+
 	XELdrStartProc(filename, mainobj);
+
 
 	XELdrLoadAllObject();
 	

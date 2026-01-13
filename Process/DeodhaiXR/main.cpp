@@ -77,11 +77,14 @@ void CursorDrawBack(ChCanvas* canv, Cursor* cur, unsigned x, unsigned y) {
  * two types of rendering : 2D Compositing for non-xr system(GPU/Software), 3D compositing for XR system (GPU)
  */
 
-
+ChFont* f2;
+ChRect rectb;
+int x_;
+int y_;
 void XRComposeFrame(ChCanvas* canvas) {
 	CursorDrawBack(canvas, currentCursor, currentCursor->oldXPos, currentCursor->oldYPos);
 	AddDirtyClip(currentCursor->oldXPos, currentCursor->oldYPos, 24, 24);
-
+	
 	int _back_d_count_ = BackDirtyGetDirtyCount();
 
 	/* here we redraw all dirty surface area*/
@@ -96,16 +99,14 @@ void XRComposeFrame(ChCanvas* canvas) {
 	}
 
 	CursorStoreBack(canvas, currentCursor, currentCursor->xpos, currentCursor->ypos);
-
 	CursorDraw(canvas, currentCursor, currentCursor->xpos, currentCursor->ypos);
-	AddDirtyClip(currentCursor->xpos, currentCursor->ypos, 24, 24);
+	ChDrawRectUnfilled(canvas, currentCursor->xpos, currentCursor->ypos, 24, 24, GREEN);
 
+	AddDirtyClip(currentCursor->xpos, currentCursor->ypos, 24, 24);
 	/* finally present all updates to framebuffer */
 	DirtyScreenUpdate(canvas);
-
 	currentCursor->oldXPos = currentCursor->xpos;
 	currentCursor->oldYPos = currentCursor->ypos;
-
 }
 
 /*
@@ -145,8 +146,15 @@ int main(int argc, char* argv[]){
 	limit.w = screen_w;
 	limit.h = screen_h;
 	ChFont* font = ChInitialiseFont(FORTE);
-	ChFontDrawTextClipped(canv, font, "DeodhaiXR", 100, 100, WHITE, &limit);
-	ChCanvasScreenUpdate(canv, 0, 0, screen_w, screen_h);
+	ChFontDrawTextClipped(canv, font, "Your Welcome to XenevaOS", 100, 100, WHITE, &limit);
+
+	f2 = ChInitialiseFont(FORTE);
+	rectb.x = 0;
+	rectb.y = 0;
+	rectb.w = screen_w;
+	rectb.h = screen_h;
+	x_ = 0;
+	y_ = 0;
 
 	BackDirtyInitialise();
 	InitialiseDirtyClipList();
@@ -159,7 +167,15 @@ int main(int argc, char* argv[]){
 	arrow = CursorOpen("/pointer.bmp", CURSOR_TYPE_POINTER);
 	CursorRead(arrow);
 	currentCursor = arrow;
+	arrow->xpos = 50;
+	arrow->ypos = 50;
+	arrow->oldXPos = 0;
+	arrow->oldYPos = 0;
+	//CursorDraw(canv, arrow, 50, 50);
 	CursorStoreBack(canv, currentCursor, 0, 0);
+	ChCanvasScreenUpdate(canv, 0, 0, screen_w, screen_h);
+
+	_KeProcessSleep(1000);
 
 	mouse_fd = _KeOpenFile("/dev/mice", FILE_OPEN_READ_ONLY);
 	kybrd_fd = _KeOpenFile("/dev/kybrd", FILE_OPEN_READ_ONLY);
@@ -170,9 +186,8 @@ int main(int argc, char* argv[]){
 
 	while (1) {
 		XRComposeFrame(canv);
-
-		_KeReadFile(mouse_fd, &mice_input, sizeof(AuInputMessage));
-		_KeReadFile(kybrd_fd, &kybrd_input, sizeof(AuInputMessage));
+		//_KeReadFile(mouse_fd, &mice_input, sizeof(AuInputMessage));
+		//_KeReadFile(kybrd_fd, &kybrd_input, sizeof(AuInputMessage));
 
 
 		if (mice_input.type == AU_INPUT_MOUSE) {
@@ -203,6 +218,8 @@ int main(int argc, char* argv[]){
 			_KePrint("MouseX: %d , MouseY: %d \n", cursor_x, cursor_y);
 			memset(&mice_input, 0, sizeof(AuInputMessage));
 		}
-		_KeProcessSleep(6);
+		_KePrint("Going to sleep \r\n");
+		//_KeProcessSleep(40);
+		_KePrint("Sleep thread after this \r\n");
 	}
 }

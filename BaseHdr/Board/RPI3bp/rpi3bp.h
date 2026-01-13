@@ -72,6 +72,14 @@
 
 
 extern uint32_t AuRPI3LocalIRQGetPending();
+
+/*
+ * AuRPI3PeripheralIRQGetPending -- read pending interrupts from
+ * peripheral base
+ */
+extern uint32_t AuRPI3PeripheralIRQGetPending2();
+
+extern uint32_t AuRPI3PeripheralIRQGetPending1();
 /*
  * AuRPI3Initialize -- initialize the basic board requirement
  */
@@ -85,6 +93,12 @@ extern void AuRPI3ICInit();
  * @param regs -- Pointer to AA64 register struct
  */
 extern void RPI3_IRQ_handler(AA64Registers* regs);
+
+/*
+ * AuRPI3PeripheralIRQEnable -- enable particular peripheral irq
+ * @param irq_num -- irq number of the specific peripheral
+ */
+extern void AuRPI3PeripheralIRQEnable(uint32_t irq_num);
 
 
 extern void AuVC4DSIInit();

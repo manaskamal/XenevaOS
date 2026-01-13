@@ -35,9 +35,9 @@
 .extern syscall
 
 sync_el1_wrapper:
-   mov x9, sp
-   bic x9, x9, #15
-   mov sp, x9
+   //mov x9, sp
+   //bic x9, x9, #15
+   //mov sp, x9
    stp x0, x1, [sp, #-16]!
    stp x2, x3, [sp, #-16]!
    stp x4, x5, [sp, #-16]!
@@ -79,9 +79,9 @@ sync_el1_wrapper:
 
 .global irq_el1_wrapper
 irq_el1_wrapper:
-   mov x9, sp
-   bic x9, x9, #15
-   mov sp, x9
+  // mov x9, sp
+   //bic x9, x9, #15
+   //mov sp, x9
    stp x0, x1, [sp, #-16]!
    stp x2, x3, [sp, #-16]!
    stp x4, x5, [sp, #-16]!
@@ -122,9 +122,9 @@ irq_el1_wrapper:
 
 .global sync_el0_wrapper
 sync_el0_wrapper:
-   mov x9, sp
-   bic x9, x9, #15
-   mov sp, x9
+   //mov x9, sp
+   //bic x9, x9, #15
+   //mov sp, x9
    stp x0, x1, [sp, #-16]!
    stp x2, x3, [sp, #-16]!
    stp x4, x5, [sp, #-16]!
@@ -155,6 +155,8 @@ sync_el0_wrapper:
 
    ldp x30, x0, [sp], #16
    msr SP_EL0, x0
+   //mov x0, 0x2c0
+  // msr SPSR_EL1, x0
    ldp x28, x29, [sp], #16
    ldp x26, x27, [sp], #16
    ldp x24, x25, [sp], #16
@@ -174,9 +176,9 @@ sync_el0_wrapper:
 
 .global irq_el0_wrapper
 irq_el0_wrapper:
-   mov x9, sp
-   bic x9, x9, #15
-   mov sp, x9
+   //mov x9, sp
+  //bic x9, x9, #15
+   //mov sp, x9
    stp x0, x1, [sp, #-16]!
    stp x2, x3, [sp, #-16]!
    stp x4, x5, [sp, #-16]!
@@ -206,6 +208,8 @@ irq_el0_wrapper:
 
    ldp x30, x0, [sp], #16
    msr SP_EL0, x0
+   //mov x0, 0x2c0
+   //msr SPSR_EL1, x0
    ldp x28, x29, [sp], #16
    ldp x26, x27, [sp], #16
    ldp x24, x25, [sp], #16
@@ -231,9 +235,9 @@ irq_el0_wrapper:
  * Current EL with SP_EL0
  */
 vectors:
-   b sync_el1_wrapper  //sync el1t
+   b sync_el0_wrapper  //sync el1t
 .balign 0x80
-   b irq_el1_handler  //irq
+   b irq_el0_wrapper  //irq
 .balign 0x80
    b .  //fiq
 .balign 0x80 
@@ -247,7 +251,7 @@ vectors:
 .balign 0x80
    b irq_el1_wrapper   //irq
 .balign 0x80
-   b . //irq_el1_wrapper                 //FIQ 
+   b irq_el1_wrapper                 //FIQ 
 .balign 0x80
    b .                 //SError
 
@@ -260,7 +264,7 @@ vectors:
 .balign 0x80
    b irq_el0_wrapper    //IRQ  
 .balign 0x80
-   b .
+   b . //irq_el0_wrapper //FIQ
 .balign 0x80
    b .
 

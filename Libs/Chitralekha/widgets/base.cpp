@@ -41,14 +41,27 @@ ChitralekhaApp* baseapp;
  */
 ChitralekhaApp* ChitralekhaStartApp(int argc, char* argv[]) {
 	int postboxfd = _KeOpenFile("/dev/postbox", FILE_OPEN_READ_ONLY);
+	int fd = _KeOpenFile("/dev/graph", FILE_OPEN_READ_ONLY);
+	_KePrint("[Chitralekha]: graph : %d \r\n", fd);
+#ifdef ARCH_ARM64
+	_KeFileIoControl(fd, POSTBOX_CREATE, NULL);
+#else
 	_KeFileIoControl(postboxfd, POSTBOX_CREATE, NULL);
+#endif
 
-	
+//#ifdef ARCH_X64
 	ChFont* font = ChInitialiseFont(XENEVA_DEFAULT_FONT);
+//#else
+	//ChFont* font = 0;
+//#endif
 	ChitralekhaApp* app = (ChitralekhaApp*)malloc(sizeof(ChitralekhaApp));
 	memset(app, 0, sizeof(ChitralekhaApp));
 	app->baseFont = font;
+#ifdef ARCH_ARM64
+	app->postboxfd = fd;
+#else
 	app->postboxfd = postboxfd;
+#endif
 	uint16_t thr_id = _KeGetThreadID();
 	app->currentID = thr_id;
 

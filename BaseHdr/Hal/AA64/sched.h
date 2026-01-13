@@ -106,6 +106,7 @@ typedef struct _aa64_task_ {
 	__declspec(align(16)) uint8_t fp_regs[512];
 	uint64_t fpcr;
 	uint64_t fpsr;
+	uint32_t syscallNum;
 	struct _aa64_task_* next;
 	struct _aa64_task_* prev;
 }AA64Thread;

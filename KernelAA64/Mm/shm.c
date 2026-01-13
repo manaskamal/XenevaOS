@@ -204,6 +204,8 @@ void AuSHMProcOrderList(AuProcess* proc) {
 	}
 }
 
+
+extern void envmdebug();
 /*
  * AuSHMObtainMem -- obtains a virtual memory from given
  * shm segment
@@ -231,6 +233,8 @@ void* AuSHMObtainMem(AuProcess* proc, uint16_t id, void* shmaddr, int shmflg) {
 
 	mem->link_count++;
 
+	envmdebug();
+
 	/* look for already available address space gap
 	 * before increasing the process shm_break
 	 */
@@ -245,6 +249,7 @@ void* AuSHMObtainMem(AuProcess* proc, uint16_t id, void* shmaddr, int shmflg) {
 			if (gap >= mem->num_frames * PAGE_SIZE) {
 				for (int j = 0; j < mem->num_frames; j++) {
 					size_t phys = mem->frames[j];
+					UARTDebugOut("Shared mem mapping : %x \r\n", phys);
 					AuMapPage(phys, last_addr + j * PAGE_SIZE, PTE_AP_RW_USER);
 					isb_flush();
 					dsb_ish();
@@ -288,7 +293,7 @@ void* AuSHMObtainMem(AuProcess* proc, uint16_t id, void* shmaddr, int shmflg) {
 		}
 		last_addr = maps->start_addr + maps->length;
 	}
-
+	UARTDebugOut("SHM Till here \r\n");
 	if (!have_mappings) {
 		size_t start_addr = USER_SHARED_MEM_START;
 		if (proc->shm_break > start_addr) {

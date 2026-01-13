@@ -152,6 +152,8 @@ KERNEL_BOOT_INFO* AuGetBootInfoStruc() {
 
 
 extern void debugLIBOn();
+
+extern void XPT2046Initialise();
 /*
  * _AuMain -- the main entry point for kernel
  * @param info -- Kernel Boot information passed
@@ -167,6 +169,7 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	AuConsoleInitialize(info, true);
     AuDeviceTreeInitialize(info);
 	AA64CpuInitialize();
+	mask_irqs();
 	AuTextOut("[aurora]: CPU initialized \r\n");
 	AuPmmngrInitialize(info);
 	AuVmmngrInitialize();
@@ -184,6 +187,10 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 
 	/* initialize the shared memory manager*/
 	AuInitialiseSHMMan();
+
+#ifdef __TARGET_BOARD_RPI3__
+	XPT2046Initialise();
+#endif
 
 	/* initialize our basic requirement */
 #ifdef __TARGET_BOARD_QEMU_VIRT__
@@ -205,7 +212,6 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	 * or other data structures that get overwritten.
 	 * We need to be carefull on low level side for this 
 	 */
-	
 	AuInitialiseLoader();
 
 	/* initialize the deodhai's communication protocol */
@@ -220,6 +226,7 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 
 	AuSchedulerInitialize();
 
+
 	/*
 	AA64Thread* t3 = AuCreateKthread(AuEntryTest2, AuCreateVirtualAddressSpace(), "test2");
 	AA64Thread* t4 = AuCreateKthread(AuEntryTest4, AuCreateVirtualAddressSpace(), "test4");*/
@@ -231,7 +238,7 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	memset(argvs, 0, num_args);
 	argvs[0] = about;
 	AuLoadExecToProcess(proc, "/init.exe", num_args, argvs);
-	AA64Thread* t2 = AuCreateKthread(AuEntryTest, AuCreateVirtualAddressSpace(), "test");
+	//AA64Thread* t2 = AuCreateKthread(AuEntryTest, AuCreateVirtualAddressSpace(), "test");
 
 	AuSchedulerStart();
 	while (1) {

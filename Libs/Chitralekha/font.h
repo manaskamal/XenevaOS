@@ -52,8 +52,12 @@ XE_EXTERN{
 #define FORTE         "Forte"
 #define CONSOLAS      "Consolas"
 
+#ifdef ARCH_ARM64
+#define XENEVA_DEFAULT_FONT FORTE
+#else
 	/* default font for xeneva */
 #define XENEVA_DEFAULT_FONT  CALIBRI
+#endif
 
 	typedef struct _ch_font_ {
 		int fileSz;
