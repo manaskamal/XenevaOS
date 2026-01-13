@@ -11,17 +11,6 @@ Refer to [Documentations of XenevaOS](Docs/Introduction.md)
 ## Contributing to the project
 XenevaOS is an open-source project that welcomes contributions from developers, researchers, and enthusiasts who are passionate about low level system development. Whether you're intereseted in Kernel development, driver development, low level graphics or application level features there are many ways to get involved. We encourage contributions in the form of code, documentation, bug reports, and feature suggestions. If you're interested in contributing, check out out [Contribution Guideline](Docs/Contributing.md), explore open issues, and join the discussion to help shape the project.
 
-## Contribute Financially:
-
-We are not funded by anyone and have been running this project bootstrapped. If you believe in our project and would like to support us financially, any amount would be really helpful!
-
-<div align="center">
-    <a href="https://buymeacoffee.com/xeneva" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" height="41px"></a>
-    <a href="https://paypal.me/xenevaos"><img src="Icons/donate-pp.png" alt="PayPal" height="41" width="174"></a>
-    </a> <br>
-</div>
-
-UPI ID : 6002872225-2@ybl
 
 ## __Features__ :
 - ACPI (through acpica)
