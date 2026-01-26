@@ -249,8 +249,12 @@ typedef int(*entrypoint) (int argc, char*argv[]);
  */
 extern "C" void main(int argc, char* argv[]) {
 	
+#ifdef ARCH_ARM64
 	_KePrint("From inside XELoader (Xeneva Dynamic Loader v1.0 ARM64)\n");
-	_KePrint("Copyright (C) Manas Kamal Choudhury 2023-2025\n");
+#elif ARCH_X64
+	_KePrint("From inside XELoader (Xeneva Dynamic Loader v1.0 x86_64 \r\n");
+#endif
+	_KePrint("Copyright (C) Manas Kamal Choudhury 2023-2025 \r\n");
 
 	///* simply exit*/
 	if (!argv)

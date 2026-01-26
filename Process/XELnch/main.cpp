@@ -109,6 +109,9 @@ ChWindow* XELauncherGetMainWin() {
 int main(int argc, char* arv[]){
 	app = ChitralekhaStartApp(argc, arv);
 	ChFontSetSize(app->baseFont, 12);
+
+
+	_KePrint("XELaunch started \r\n");
 	/* create a demo canvas just for getting the graphics
 	* file descriptor
 	*/
@@ -129,14 +132,14 @@ int main(int argc, char* arv[]){
 
 
 	win = ChCreateWindow(app, WINDOW_FLAG_STATIC | WINDOW_FLAG_ALWAYS_ON_TOP | WINDOW_FLAG_ANIMATED,
-		"Xeneva Launcher", 75 + 10, 10, screen_w - 90, screen_h - 40);
+		"Xeneva Launcher", 10, 10, screen_w - 10, screen_h - 85);
 	launcher_w = screen_w - 90; 
 	launcher_h = screen_h - 40;
-	int grid_w = launcher_w - 100;
-	int grid_h = launcher_h - 100;
+	int grid_w = launcher_w /2;
+	int grid_h = launcher_h /2;
 
-	mainGrid = LauncherCreateAppGrid(launcher_w / 2 - grid_w / 2, launcher_h / 2 - grid_h / 2,
-		grid_w, grid_h);
+	mainGrid = LauncherCreateAppGrid(launcher_w / 2 - (grid_w / 2), launcher_h / 2 - (grid_h/2),
+		grid_w+50, grid_h+50);
 
 
 	/* now read the launcher config file
@@ -150,7 +153,7 @@ int main(int argc, char* arv[]){
 	win->color = 0xCCBBBBBB;
 	win->ChWinPaint = XELauncherPaint;
 	win->info->hide = true;
-	win->info->alpha = false;
+	win->info->alpha = true;
 	ChWindowPaint(win);
 
 

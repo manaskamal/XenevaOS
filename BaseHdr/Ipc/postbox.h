@@ -35,8 +35,9 @@
 #include <Hal\x86_64_sched.h>
 #elif ARCH_ARM64
 #include <Hal/AA64/sched.h>
-#include <Fs/vfs.h>
 #endif
+#include <Fs/vfs.h>
+
 
 #define POSTBOX_CREATE  401
 #define POSTBOX_DESTROY 402

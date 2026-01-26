@@ -251,11 +251,13 @@ void AuLCDInit() {
 	for (int i = 0; i < 12000000; i++);
 
 	AuTextOut("LCD Clearing \r\n");
-	LCDClear(RGB_TO_RGB565(255, 255, 255));
+	LCDClear(RGB_TO_RGB565(0, 16, 100));
 
 	for (int i = 0; i < 12000000; i++);
 	AuTextOut("LCD Initialized \r\n");
 	AuRPISPITransferStop();
+
+	for (;;);
 }
 
 

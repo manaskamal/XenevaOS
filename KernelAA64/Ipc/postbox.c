@@ -283,16 +283,40 @@ void AuIPCPostBoxInitialise() {
 	lastBox = NULL;
 
 	/* create the postbox file */
+
+	/* I dont know, but the sixth item in the device fs list is
+	 * the postbox file node, but miraculously 6th item disappers from 
+	 * the list when opened from user space that's why we are creating
+	 * a dummy node in the dev list
+	 */
 	AuVFSNode* dev = AuVFSFind("/dev");
 	AuVFSNode* node = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
 	memset(node, 0, sizeof(AuVFSNode));
-	strcpy(node->filename, "pbox");
-	data_cache_flush(&node->filename);
-	node->flags |= FS_FLAG_DEVICE;
+	strcpy(node->filename, "dummy");
+	aa64_data_cache_clean_range(&node->filename, 32);
+	node->flags = FS_FLAG_DEVICE;
+	node->device = dev;
+	node->read = 0;
+	node->write = 0;
 	node->iocontrol = PostBoxIOControl;
+	dsb_sy_barrier();
 	AuDevFSAddFile(dev, "/", node);
-	data_cache_flush(node);
-	data_cache_flush(dev);
+
+
+	AuVFSNode* node2 = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
+	memset(node2, 0, sizeof(AuVFSNode));
+	strcpy(node2->filename, "postbox");
+	aa64_data_cache_clean_range(&node2->filename, 32);
+	node2->flags = FS_FLAG_DEVICE;
+	node2->device = dev;
+	node2->read = 0;
+	node2->write = 0;
+	node2->iocontrol = PostBoxIOControl;
+	dsb_sy_barrier();
+	AuDevFSAddFile(dev, "/", node2);
+
+	aa64_data_cache_clean_range(node, sizeof(AuVFSNode));
+	aa64_data_cache_clean_range(dev, sizeof(AuVFSNode));
 	pbox = node;
 	_PostBoxRootCreated = false;
 	AuTextOut("[aurora]: PostBox IPC mounted and initialized to /dev/pbox \r\n");

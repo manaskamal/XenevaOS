@@ -167,8 +167,8 @@ int main(int argc, char* argv[]){
 	arrow = CursorOpen("/pointer.bmp", CURSOR_TYPE_POINTER);
 	CursorRead(arrow);
 	currentCursor = arrow;
-	arrow->xpos = 50;
-	arrow->ypos = 50;
+	arrow->xpos = 0;
+	arrow->ypos = 0;
 	arrow->oldXPos = 0;
 	arrow->oldYPos = 0;
 	//CursorDraw(canv, arrow, 50, 50);
@@ -186,7 +186,7 @@ int main(int argc, char* argv[]){
 
 	while (1) {
 		XRComposeFrame(canv);
-		//_KeReadFile(mouse_fd, &mice_input, sizeof(AuInputMessage));
+		_KeReadFile(mouse_fd, &mice_input, sizeof(AuInputMessage));
 		//_KeReadFile(kybrd_fd, &kybrd_input, sizeof(AuInputMessage));
 
 
@@ -219,7 +219,7 @@ int main(int argc, char* argv[]){
 			memset(&mice_input, 0, sizeof(AuInputMessage));
 		}
 		_KePrint("Going to sleep \r\n");
-		//_KeProcessSleep(40);
+		_KeProcessSleep(16);
 		_KePrint("Sleep thread after this \r\n");
 	}
 }

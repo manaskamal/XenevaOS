@@ -37,6 +37,7 @@
 #include <string.h>
 #include <Ipc/postbox.h>
 #include <Fs/pipe.h>
+#include <Board/RPI3bp/rpi3bp.h>
 #include <Hal/AA64/aa64lowlevel.h>
 
 AuVFSContainer* __RootContainer;
@@ -67,7 +68,7 @@ AuVFSNode* AuVFSFind(char* path) {
 	if (next)
 		next++;
 
-	char pathname[17];
+	char pathname[16];
 	int i;
 	for (i = 0; i < 16; i++) {
 		if (next[i] == '/' || next[i] == '\0')
@@ -75,7 +76,8 @@ AuVFSNode* AuVFSFind(char* path) {
 		pathname[i] = next[i];
 	}
 	pathname[i] = 0;
-
+	aa64_data_cache_clean_range(&pathname, 16);
+	
 	for (int j = 0; j < __RootContainer->childs->pointer; j++) {
 		AuVFSNode* node = (AuVFSNode*)list_get_at(__RootContainer->childs, j);
 		if ((strcmp(node->filename, pathname) == 0) && (node->flags & FS_FLAG_FILE_SYSTEM)) {
@@ -124,9 +126,11 @@ extern uint64_t read_sp();
  */
 AU_EXTERN AU_EXPORT AuVFSNode* AuVFSOpen(char* path) {
 	AuVFSNode* Returnable = NULL;
+	dmb_sy();
+	isb_flush();
 
 	AuVFSNode* fs = AuVFSFind(path);
-	UARTDebugOut("Opening vfs : %s \r\n", path);
+	//AA64SleepUS(200);
 	if (!fs) {
 		AuTextOut("[aurora-vfs]: failed to find filesystem assigned to path -> %s \r\n", path);
 		return NULL;
@@ -146,9 +150,8 @@ AU_EXTERN AU_EXPORT AuVFSNode* AuVFSOpen(char* path) {
 		if (next)
 			next++;
 
-		
 		char pathname[16] ;
-		UARTDebugOut("[aurora]: vfs pathname : %s \r\n", path);
+		//UARTDebugOut("[aurora]: vfs pathname : %s \r\n", path);
 		int i = 0;
 		for (i = 0; i < 16; i++) {
 			if ((next[i] == '/') || (next[i] == '\0'))
@@ -157,6 +160,7 @@ AU_EXTERN AU_EXPORT AuVFSNode* AuVFSOpen(char* path) {
 			dsb_ish();
 		}
 		pathname[i] = 0;
+		aa64_data_cache_clean_range(&pathname, 16);
 		
 		/* skip the fs filename, from the path
 		 * and just pass the required path */
@@ -167,15 +171,12 @@ AU_EXTERN AU_EXPORT AuVFSNode* AuVFSOpen(char* path) {
 		UARTDebugOut("next : %s \r\n", next);
 
 		if (fs->open) {
-			UARTDebugOut("VFSOpening : %s \r\n", next);
+			//AA64SleepUS(600);
 			Returnable = fs->open(fs, next);
-			UARTDebugOut("Returnable : %x \r\n", Returnable);
+			/* wait for sometimes, let the cache things get completed
+			 * let it fetch the data from main memory  */
+			//AA64SleepUS(600);
 		}
-	jump:
-		uint64_t sp = read_sp();
-		UARTDebugOut("Current ksp : %x \r\n", sp);
-
-		UARTDebugOut("Finall returnable : %x \r\n", Returnable);
 	}
 	return Returnable;
 }

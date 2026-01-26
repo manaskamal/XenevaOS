@@ -154,7 +154,7 @@
       <AdditionalOptions>/filealign:0x1000  %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy "..\Build\EFI\XENEVA\" "%XENEVA_BUILDS%\EFI\XENEVA\" /Y /I</Command>
+      <Command>xcopy "..\Build\EFI\XENEVA\" "F:\EFI\XENEVA\" /Y /I</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
@@ -270,6 +270,7 @@
     <ClInclude Include="..\BaseHdr\Fs\Fat\Fat.h" />
     <ClInclude Include="..\BaseHdr\Fs\Fat\FatDir.h" />
     <ClInclude Include="..\BaseHdr\Fs\Fat\FatFile.h" />
+    <ClInclude Include="..\BaseHdr\Fs\initrd.h" />
     <ClInclude Include="..\BaseHdr\Fs\pipe.h" />
     <ClInclude Include="..\BaseHdr\Fs\tty.h" />
     <ClInclude Include="..\BaseHdr\Fs\vdisk.h" />
@@ -354,6 +355,7 @@
     <ClCompile Include="Fs\Fat\Fat.cpp" />
     <ClCompile Include="Fs\Fat\FatDir.cpp" />
     <ClCompile Include="Fs\Fat\FatFile.cpp" />
+    <ClCompile Include="Fs\initrd.cpp" />
     <ClCompile Include="Fs\pipe.cpp" />
     <ClCompile Include="Fs\tty.cpp" />
     <ClCompile Include="Fs\vdisk.cpp" />

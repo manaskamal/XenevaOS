@@ -97,6 +97,8 @@ ChTextBox* ChCreateTextBox(ChWindow* win,int x, int y, int width, int height) {
 	text->text = (char*)malloc(CH_TEXTBOX_MAX_STRING);
 	text->editable = true;
 	text->textColor = BLACK;
+	text->textCursorPosX = 1;
+	text->textCursorPosY = 1;
 	if (win)
 		text->font = win->app->baseFont;
 	text->textBackgroundColor = WHITE;

@@ -34,29 +34,41 @@
 
 
 ButtonInfo* gobtn;
+ButtonInfo* gobtnHover;
+ButtonInfo* gobtnClick;
 
 void NamdaphaGoButtonPaint(NamdaphaButton* button, ChWindow* win) {
 	uint32_t button_col = GO_BUTTON_COLOR;
-	if (button->hover)
+	bool hover_icon = false;
+	ButtonInfo* icon = gobtn;
+	if (button->hover) {
 		button_col = GO_BUTTON_COLOR;
-	if (button->clicked)
+		icon = gobtnHover;
+	}
+	if (button->clicked) {
 		button_col = GO_BUTTON_PRESSED;
-	if (button->hover)
-		ChDrawRect(win->canv, 10, win->info->height - 60, NAMDAPHA_WIDTH - 20, 50, button_col);
+		icon = gobtnClick;
+	}
+	/*if (button->hover)
+		ChDrawRect(win->canv, 10, win->info->height - 60, NAMDAPHA_WIDTH - 20, 50, button_col);*/
 	if (button->clicked)
-		ChDrawRect(win->canv, 10, win->info->height - 60, NAMDAPHA_WIDTH - 20, 50, button_col);
+		ChDrawRect(win->canv, 10, win->info->height - 60, NAMDAPHA_WIDTH - 20, 50, NAMDAPHA_COLOR);
 
 	if (!button->clicked && !button->hover)
 		ChDrawRect(win->canv, button->x, button->y, button->w, button->h, NAMDAPHA_COLOR);
 
-	NmButtonInfoDrawIcon(gobtn, win->canv, button->x + button->w / 2 - gobtn->iconWidth / 2,
+	NmButtonInfoDrawIcon(icon, win->canv, button->x + button->w / 2 - gobtn->iconWidth / 2,
 		button->y + button->h / 2 - gobtn->iconHeight / 2);
 }
 
 NamdaphaButton* NamdaphaInitialiseGoButton(ChWindow* win) {
 	NamdaphaButton* gobutton = NmCreateButton(10, win->info->height - 60, NAMDAPHA_WIDTH - 20, 50, "Go");
 	gobtn = NmCreateButtonInfo("/icons/GoIcon.bmp");
+	gobtnHover = NmCreateButtonInfo("/icons/GoIconL.bmp");
+	gobtnClick = NmCreateButtonInfo("/icons/GoIconS.bmp");
 	NmButtonInfoRead(gobtn);
+	NmButtonInfoRead(gobtnHover);
+	NmButtonInfoRead(gobtnClick);
 	gobutton->drawNamdaphaButton = NamdaphaGoButtonPaint;
 	gobutton->nmbuttoninfo = gobtn;
 	gobutton->actionHandler = 0;

@@ -94,6 +94,18 @@ extern void AA64CpuInitialize();
 extern void AA64CPUPostInitialize(KERNEL_BOOT_INFO* info);
 
 /*
+ * AA64SleepUS -- sleep for sometimes
+ * @param us -- microseconds to sleep
+ */
+extern void AA64SleepUS(uint32_t us);
+
+/*
+ * AA64SleepMS -- sleep for sometimes
+ * @param ms -- milliseconds to sleep
+ */
+extern void AA64SleepMS(uint32_t ms);
+
+/*
  * AuAA64SyscalHandler -- common system call handler for aarch64
  * @param regs -- Register information passed by sync_exception
  */

@@ -35,6 +35,8 @@
 #include <Mm/vmmngr.h>
 #include <Board/RPI3bp/rpi3bp.h>
 #include <Mm/pmmngr.h>
+#include <Drivers/uart.h>
+#include <Fs/Dev/devinput.h>
 
 static uint64_t* spi0Base;
 
@@ -103,7 +105,7 @@ void AuRPI3SPI0Init() {
 	for (int i = 0; i < 10000000; i++)
 		;
 
-	uint32_t div = 256;//128;
+	uint32_t div = 256;
 	*(volatile uint32_t*)((uint64_t)spi0Base + SPI0_CLK) = div;
 	dsb_ish();
 	isb_flush();
@@ -210,7 +212,10 @@ void AuRPISPITransferStart() {
 	uint32_t css = SPI_MMIO_READ(SPI0_CS);
 	if (!(css & SPI_CS_TXD))
 		AuTextOut("TXD is full \r\n");
-	uint32_t cs = css;
+	uint32_t cs = css; 
+	cs |= SPI_CS_CLEAR_RX | SPI_CS_CLEAR_TX;
+	cs &= ~0x3;
+	cs |= 1ULL; 
 	cs |= SPI_CS_TA;
 	SPI_MMIO_WRITE(SPI0_CS, cs);
 }
@@ -241,42 +246,85 @@ void AuRPISPITransferStop() {
 }
 
 
+#define ADS_START (1<<7)
+#define ADS_A2A1A0_d_y (1<<4)
+#define ADS_A2A1A0_D_Z1 (3<<4)
+#define ADS_A2A1A0_D_Z2 (4<<4)
+#define ADS_A2A1A0_D_X (5<<4)
+#define ADS_A2A1A0_TEMP0 (0<<4)
+#define ADS_A2A1A0_VBATT (2<<4)
+#define ADS_A2A1A0_VAUX (6<<4)
+#define ADS_A2A1A0_TEMP1 (7 <<4 )
+#define ADS_8_BIT (1<<3)
+#define ADS_12_BIT (0<<3)
+#define ADS_SER (1<<2)
+#define ADS_DFR (0<<2)
+#define ADS_PD10_PDOWN (0<<0)
+#define ADS_PD10_ADC_ON (1<<0)
+#define ADS_PD10_REF_ON (2<<0)
+#define ADS_PD10_ALL_ON (3<<0)
+#define MAX_12BIT ((1<<12)-1)
+
+#define READ_12BIT_DFR (x, adc, cref) (A)
+
+
 #define XPT2046_CMD_TEMP0 0x84
 #define XPT2046_CMD_TEMP1 0xF4
-#define XPT2046_CMD_XPOS 0x90
-#define XPT2046_CMD_YPOS 0xD0
-#define XPT2046_CMD_Z1_POS 0xB0
-#define XPT2046_CMD_Z2_POS 0xC0
+#define XPT2046_CMD_XPOS 0xD1 // 0x90
+#define XPT2046_CMD_YPOS 0x91 //0xD0
+#define XPT2046_CMD_Z1_POS 0xB1
+#define XPT2046_CMD_Z2_POS 0xC1
+
+static inline void spi_wait_txd() {
+	while (!(SPI_MMIO_READ(SPI0_CS) & SPI_CS_TXD));
+}
+
+static inline void spi_wait_rxd() {
+	while (!(SPI_MMIO_READ(SPI0_CS) & SPI_CS_RXD));
+}
+
+static inline uint8_t spi_fifo_read() {
+	return *(volatile uint32_t*)((uint64_t)spi0Base + SPI0_FIFO);
+
+}
+
+static inline void spi_fifo_write(uint8_t v) {
+	*(volatile uint32_t*)((uint64_t)spi0Base + SPI0_FIFO) = v;
+}
 
 uint16_t XPT2046Read(uint8_t command) {
-	uint8_t tx_buffer[3];
-	uint8_t rx_buffer[3] = { 0,0,0 };
+	uint8_t hi, lo;
 
-	tx_buffer[0] = command;
-	tx_buffer[1] = 0x00;
-	tx_buffer[2] = 0x00;
+	uint32_t cs = SPI_MMIO_READ(SPI0_CS);
+	cs |= SPI_CS_CLEAR_RX | SPI_CS_CLEAR_TX;
+	SPI_MMIO_WRITE(SPI0_CS, cs);
 
 	AuRPISPITransferStart();
+	
+	spi_wait_txd();
+	spi_fifo_write(command);
 
-	for (int i = 0; i < 3; i++) {
-		while (!(SPI_MMIO_READ(SPI0_CS) & (1ULL << 18)));
+	spi_wait_rxd();
+	spi_fifo_read();
 
-		*(volatile uint32_t*)((uint64_t)spi0Base + SPI0_FIFO) = tx_buffer[i];
+	spi_wait_txd();
+	spi_fifo_write(0x00);
+	spi_wait_rxd();
+	hi = spi_fifo_read();
 
-		while (!(SPI_MMIO_READ(SPI0_CS) & SPI_CS_RXD));
-
-		rx_buffer[i] = *(volatile uint32_t*)((uint64_t)spi0Base + SPI0_FIFO);
-	}
+	spi_wait_txd();
+	spi_fifo_write(0x00);
+	spi_wait_rxd();
+	lo = spi_fifo_read();
 
 	while (!(SPI_MMIO_READ(SPI0_CS) & SPI_CS_DONE));
-
 	AuRPISPITransferStop();
 
-	//AuTextOut("SPI0 Transfer stopped \r\n");
+	for (int i = 0; i < 200; i++)
+		;
 
-	uint16_t value = ((rx_buffer[1] << 8) | rx_buffer[2]) >> 3;
-
-	return value & 0xFFF;
+	uint16_t v = ((hi << 8) | lo) >> 3;
+	return v & 0x0FFF;
 }
 
 
@@ -292,11 +340,19 @@ uint16_t XPT2046ReadSimple(uint8_t command) {
 }
 
 #define PENIRQ_PIN 25
+#define TOUCH_X_MIN 300
+#define TOUCH_X_MAX 3900
+#define TOUCH_Y_MIN 300
+#define TOUCH_Y_MAX 3900
+
+int touch_x;
+int touch_y;
 
 void XPT2046Initialise() {
-	AuTextOut("XPT2046 Connectivity test \r\n");
-
-	uint16_t temp0 = XPT2046Read(XPT2046_CMD_TEMP0);
+	AuTextOut("XPT2046 initializing \r\n");
+	touch_x = 0;
+	touch_y = 0;
+	/*uint16_t temp0 = XPT2046Read(XPT2046_CMD_TEMP0);
 	AuTextOut("TEMP0 = %x - %d\r\n", temp0, temp0);
 
 	uint16_t temp1 = XPT2046Read(XPT2046_CMD_TEMP1);
@@ -305,27 +361,143 @@ void XPT2046Initialise() {
 	uint16_t x = XPT2046Read(XPT2046_CMD_XPOS);
 	uint16_t y = XPT2046Read(XPT2046_CMD_YPOS);
 	uint16_t z1 = XPT2046Read(XPT2046_CMD_Z1_POS);
-	uint16_t z2 = XPT2046Read(XPT2046_CMD_Z2_POS);
+	uint16_t z2 = XPT2046Read(XPT2046_CMD_Z2_POS);*/
 
-	AuTextOut("Position - X: %d Y : %d  \r\n", x, y);
+	//AuTextOut("Position - X: %d Y : %d  \r\n", x, y);
 	AuRPIGPIOSetFunction(PENIRQ_PIN, 0b000);
 	AuRPIGPIOPullUP(PENIRQ_PIN);
 	AuRPIGPIOEnableInterrupt(PENIRQ_PIN);
 	AuRPI3PeripheralIRQEnable(49);
+
 }
 
 #define Z_MIN 80
 #define Z_MAX 2000
+#define PRESSURE_THRESHOLD 300
+#define PRESSURE_MAX 3000
+#define NUM_SAMPLES 7
 
 static inline int pressurevalid(int z) {
 	return (z > Z_MIN && z < Z_MAX);
 }
 
-void XPT2046ReadTouch() {
-	uint16_t x = XPT2046Read(XPT2046_CMD_XPOS);
-	uint16_t y = XPT2046Read(XPT2046_CMD_YPOS);
+#define RAW_X_MIN 200
+#define RAW_X_MAX 4095
+
+#define RAW_Y_MIN 200
+#define RAW_Y_MAX 4095
+
+static inline int touchToScrX(uint16_t rx) {
+	if (rx < RAW_X_MIN) rx = RAW_X_MIN;
+	if (rx > RAW_X_MAX) rx = RAW_X_MAX;
+
+	return ((RAW_X_MAX - rx) * 800) / (RAW_X_MAX - RAW_X_MIN);
+}
+
+static inline int touchToScrY(uint16_t ry) {
+	if (ry < RAW_Y_MIN) ry = RAW_Y_MIN;
+	if (ry > RAW_Y_MAX) ry = RAW_Y_MAX;
+
+	return ((RAW_Y_MAX - ry) * 420) / (RAW_Y_MAX - RAW_Y_MIN);
+}
+
+static inline void swap(uint16_t* a, uint16_t* b) {
+	uint16_t t = *a;
+	*a = *b;
+	*b = t;
+}
+
+static inline void sort(uint16_t *arr, int n) {
+	for (int i = 0; i < n - 1; i++) {
+		for (int j = 0; j < n - i - 1; j++) {
+			if (arr[j] > arr[j + 1]) {
+				uint16_t temp = arr[j];
+				arr[j] = arr[j + 1];
+				arr[j + 1] = temp;
+			}
+		}
+	}
+}
+
+uint16_t XPT2046ReadAxis(uint8_t cmd) {
+	uint8_t s[5];
+	XPT2046Read(cmd);
+
+	for (int i = 0; i < 5; i++) {
+		s[i] = XPT2046Read(cmd);
+		AuTextOut("CMD : %x val[%d]: %d \r\n", cmd, i, s[i]);
+	}
+
+	return s[2];
+}
+
+void XPT2046ReadSamples(uint16_t* x_out, uint16_t* y_out, int32_t* pressout) {
+	uint16_t x_samples[NUM_SAMPLES];
+	uint16_t y_samples[NUM_SAMPLES];
+	uint16_t z1_samples[NUM_SAMPLES];
+	uint16_t z2_samples[NUM_SAMPLES];
+
 	uint16_t z1 = XPT2046Read(XPT2046_CMD_Z1_POS);
 	uint16_t z2 = XPT2046Read(XPT2046_CMD_Z2_POS);
-	int z = z1 - z2;
-	AuTextOut("Touch X: %d Y : %d \r\n", x, y);
+	*pressout = z1 + 4095 - z2;
+
+	XPT2046Read(XPT2046_CMD_YPOS);
+	AuRPI3DelayUS(20);
+
+	for (int i = 0; i < NUM_SAMPLES; i++) {
+		y_samples[i] = XPT2046Read(XPT2046_CMD_YPOS); //0x91
+		AuRPI3DelayUS(20);
+		x_samples[i] = XPT2046Read(XPT2046_CMD_XPOS);
+		AuRPI3DelayUS(20);
+	}
+
+	XPT2046Read(0x90);
+
+	sort(x_samples, NUM_SAMPLES);
+	sort(y_samples, NUM_SAMPLES);
+	sort(z1_samples, NUM_SAMPLES);
+	sort(z2_samples, NUM_SAMPLES);
+
+	uint16_t x_median = x_samples[NUM_SAMPLES / 2];
+	uint16_t y_median = y_samples[NUM_SAMPLES / 2];
+	//uint16_t z1_median = z1_samples[NUM_SAMPLES / 2];
+	//uint16_t z2_median = z2_samples[NUM_SAMPLES / 2];
+
+	*x_out = x_median;
+	*y_out = y_median;
+	//if (z1_median > 0) {
+	//	*pressout = (x_median * (z2_median - z1_median)) / z1_median;
+	//}
+	//else {
+	//	*pressout = 0;
+	//}
+
+}
+void XPT2046ReadTouch() {
+	AA64SleepMS(20);
+
+	uint16_t x;
+	uint16_t y;
+	uint32_t z;
+	XPT2046ReadSamples(&x, &y, &z);
+
+	//x = 4095 - x;
+	y = 4095 - y;
+	//AuTextOut("Control x comm val : %x y - %x\r\n",XPT2046_READ_X, XPT2046_READ_Y);
+	//int screen_x = ((x - TOUCH_X_MIN) * 800) / (TOUCH_X_MAX - TOUCH_X_MIN);
+	//int screen_y = ((y - TOUCH_Y_MIN) * 480) / (TOUCH_Y_MAX - TOUCH_Y_MIN);
+	//if (z > PRESSURE_THRESHOLD && z < PRESSURE_MAX) {
+	if (z > PRESSURE_THRESHOLD) {
+		touch_x = touchToScrX(x); 
+		touch_y = touchToScrY(y);
+		/*touch_x = 800 - 1 - touch_x;
+		touch_y = 420 - 1 - touch_y;*/
+
+		//}
+		AuInputMessage im;
+		im.type = AU_INPUT_TOUCH;
+		im.xpos = touch_x;
+		im.ypos = touch_y;
+		AuDevWriteMice(&im);
+	}
 }

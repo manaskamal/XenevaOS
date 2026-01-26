@@ -31,6 +31,7 @@
 #include <Mm/kmalloc.h>
 #include <aucon.h>
 #include <_null.h>
+#include <Hal/AA64/aa64lowlevel.h>
 
 list_t* initialize_list() {
 	list_t* list = (list_t*)kmalloc(sizeof(list_t));
@@ -46,7 +47,10 @@ void list_add(list_t* list, void* data) {
 	current_data->prev = NULL;
 	current_data->data = data;
 
-
+	dmb_sy();
+	dmb_ish();
+	dsb_sy_barrier();
+	dsb_ish();
 
 	if (!list->entry_current) {
 		list->entry_current = current_data;
@@ -59,8 +63,14 @@ void list_add(list_t* list, void* data) {
 		current_entry->next = current_data;
 		current_data->prev = current_entry;
 	}
+	dmb_sy();
+	dmb_ish();
+	dsb_sy_barrier();
+	dsb_ish();
 
 	list->pointer++;
+	aa64_data_cache_clean_range(current_data, sizeof(dataentry));
+	aa64_data_cache_clean_range(list, sizeof(list_t));
 }
 
 void* list_get_at(list_t* list, unsigned int index) {
@@ -68,10 +78,16 @@ void* list_get_at(list_t* list, unsigned int index) {
 	if (list->pointer == 0 || index >= list->pointer)
 		return NULL;
 
+	dmb_sy();
+	dmb_ish();
+	dsb_sy_barrier();
+	dsb_ish();
 	dataentry* current_node = list->entry_current;
 
-	for (unsigned int current_index = 0; (current_index < index) && current_node; current_index++)
+	for (unsigned int current_index = 0; (current_index < index) && current_node; current_index++) {
 		current_node = current_node->next;
+		dmb_sy();
+	}
 
 	return current_node ? current_node->data : NULL;
 }
@@ -101,9 +117,18 @@ void* list_remove(list_t* list, unsigned int index) {
 	if (index == 0)
 		list->entry_current = current_node->next;
 
+	dmb_sy();
+	dmb_ish();
+	dsb_sy_barrier();
+	dsb_ish();
+
 	kfree(current_node);
 
+
+
 	list->pointer--;
+
+	aa64_data_cache_clean_range(list, sizeof(list_t));
 
 	return payload;
 }

@@ -512,3 +512,4 @@ _KeGetEnvironmentBlock:
 	svc #0
 	mov x0, x6
 	ret
+

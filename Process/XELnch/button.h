@@ -60,6 +60,7 @@ typedef struct _button_ {
 	bool kill_focus;
 	char* title;
 	char* appname;
+	char* param;
 	bool focused;
 	ButtonIcon *buttonIcon;
 	void(*actionHandler)(_button_* button, ChWindow*);

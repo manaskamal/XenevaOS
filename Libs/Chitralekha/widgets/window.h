@@ -123,9 +123,11 @@
 		bool hoverPainted;
 		bool KillFocus;
 		bool visible;
+		bool touched;
 		uint8_t type;
 		void(*ChActionHandler)(struct _ChWidget_ *widget,ChWindow* win);
 		void(*ChMouseEvent)(struct _ChWidget_* widget,ChWindow* win, int x, int y, int button);
+		void(*ChTouchEvent)(struct _ChWidget_* widget, ChWindow* win, int x, int y);
 		void(*ChScrollEvent)(struct _ChWidget_* widget, ChWindow* win, int scrollval, uint8_t scrolltype);
 		void(*ChPaintHandler)(struct _ChWidget_* widget,ChWindow* win);
 		void(*ChDestroy)(struct _ChWidget_* widget,ChWindow* win);
@@ -146,6 +148,7 @@
 		uint32_t clickedOutlineColor;
 		void(*ChGlobalButtonPaint)(ChWindow* win, struct _global_ctrl_* glbl);
 		void(*ChGlobalMouseEvent) (ChWindow* win, struct _global_ctrl_* glbl, int x, int y, int button);
+		void(*ChGlobalTouchEvent) (ChWindow* win, struct _global_ctrl_* glbl, int x, int y);
 		void(*ChGlobalActionEvent)(ChWindow* win, struct _global_ctrl_* glbl);
 	}ChWinGlobalControl;
 
@@ -251,6 +254,16 @@
 	* @param button -- button state of the mouse
 	*/
 	XE_LIB void ChWindowHandleMouse(ChWindow* win, int x, int y, int button);
+
+
+	/*
+     * ChWindowHandleTouch -- handle touch event
+     * @param win -- Pointer to window
+     * @param x -- X coord of the mouse
+     * @param y -- Y coord of the mouse
+     * @param button -- button state of the mouse
+     */
+	XE_LIB void ChWindowHandleTouch(ChWindow* win, int x, int y, int button);
 
 	/*
  * ChWindowSetFocused -- bring a window to focused state

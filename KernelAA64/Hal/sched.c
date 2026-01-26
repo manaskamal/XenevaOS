@@ -308,7 +308,7 @@ extern void PrintThreadInfo() {
 void AuIdleThread(uint64_t ctx) {
 	mask_irqs();
 	UARTDebugOut("Idle thread running \r\n");
-	AuTextOut("idle inside \r\n");
+	AuTextOut("Starting up Xeneva please wait...\r\n");
 	//uint64_t sp = read_sp();
 	//UARTDebugOut("SP : %x \r\n", sp);
 	UARTDebugOut("Current sp sel : %d \r\n", read_spsel());

@@ -40,6 +40,8 @@ void LauncherPaintAppGrid(AppGrid* grid, ChWindow* win) {
 		if (button->drawLaunchButton)
 			button->drawLaunchButton(button, win);
 	}
+
+	//ChDrawRectUnfilled(win->canv, grid->x, grid->y, grid->w, grid->h, GREEN);
 }
 
 /*

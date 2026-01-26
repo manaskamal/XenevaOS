@@ -41,6 +41,7 @@
 
 #define AU_INPUT_MOUSE  1
 #define AU_INPUT_KEYBOARD 2
+#define AU_INPUT_TOUCH 3
 
 #define MOUSE_IOCODE_SETPOS  10
 

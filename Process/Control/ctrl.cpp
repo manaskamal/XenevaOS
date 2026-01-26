@@ -96,23 +96,33 @@ void WindowHandleMessage(PostEvent* e) {
 */
 int main(int argc, char* argv[]) {
 	app = ChitralekhaStartApp(argc, argv);
-	mainWin = ChCreateWindow(app, WINDOW_FLAG_MOVABLE, "Controls", 400, 100, CHITRALEKHA_DEFAULT_WIN_WIDTH,
-		CHITRALEKHA_DEFAULT_WIN_HEIGHT);
+	mainWin = ChCreateWindow(app, WINDOW_FLAG_MOVABLE, "Controls", 400, 100, CHITRALEKHA_DEFAULT_WIN_WIDTH + 100,
+		CHITRALEKHA_DEFAULT_WIN_HEIGHT  + 100);
 
-
+	
 	ChWindowBroadcastIcon(app, "/icons/gear.bmp");
 
-	ChSlider* hslider = ChCreateSlider(CHITRALEKHA_SLIDER_HORIZONTAL, 10, 30, 100);
-	ChWindowAddWidget(mainWin, (ChWidget*)hslider);
-	ChSlider* vslider = ChCreateSlider(CHITRALEKHA_SLIDER_VERTICAL, 10, 60, 100);
-	ChWindowAddWidget(mainWin, (ChWidget*)vslider);
-	ChOnOffButton* onoff = ChCreateOnOffButton(100, 70, CH_ONOFF_VALUE_OFF);
-	ChWindowAddWidget(mainWin, (ChWidget*)onoff);
-
-	ChTextBox* tb = ChCreateTextBox(mainWin,60, 70, 280, 35);
-	ChFont* tbfont = ChInitialiseFont(CONSOLAS);
+	ChTextBox* tb = ChCreateTextBox(mainWin,0,26,mainWin->info->width,mainWin->info->height - 100);
+	ChFont* tbfont = ChInitialiseFont(CALIBRI);
+	tb->textBackgroundColor = mainWin->color;
 	ChTextBoxSetFont(tb, tbfont);
-	ChTextBoxSetText(tb, "Hello World ! TextBox");
+
+	char* about = "Hey Ishika \nI think, i am in love with you\nWanna marry you";
+	char* android = "We're porting ART to XenevaOS\nAndroid App will work on XenevaOS";
+	char* default = "Hatt !! Motherchod\n Theek ho?";
+	if (argc > 1) {
+		char* param = argv[1];
+		if (strcmp(param, "about") == 0) {
+			ChTextBoxSetText(tb, about);
+		}
+		else if (strcmp(param, "android") == 0) {
+			ChTextBoxSetText(tb, android);
+		}
+		else if (strcmp(param, "default") == 0) {
+			ChTextBoxSetText(tb, default);
+		}
+	}
+
 	ChWindowAddWidget(mainWin, (ChWidget*)tb);
 	
 

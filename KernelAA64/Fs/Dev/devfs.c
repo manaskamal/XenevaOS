@@ -29,6 +29,7 @@
 
 #include <Fs\Dev\devfs.h>
 //#include <Fs\Dev\devinput.h>
+#include <Hal/AA64/aa64cpu.h>
 #include <Mm\kmalloc.h>
 #include <list.h>
 #include <string.h>
@@ -114,7 +115,7 @@ int AuDevFSCreateFile(AuVFSNode* fs, char* path, uint8_t mode) {
 	}
 	strcpy(file->filename, pathname);
 	list_add(first_list->childs, file);
-
+	aa64_data_cache_clean_range(first_list, sizeof(list_t));
 	return 1;
 }
 
@@ -214,7 +215,7 @@ AuVFSNode* AuDevFSOpen(AuVFSNode* fs, char* path) {
 
 	AuVFSContainer* first_list = entries;
 	AuVFSNode* node_to_ret = NULL;
-	UARTDebugOut("DevFS opening : %s \r\n", path);
+	//UARTDebugOut("[aurora]: DevFS opening : %s \r\n", path);
 	while (next) {
 		char pathname[16];
 		int i;
@@ -224,9 +225,12 @@ AuVFSNode* AuDevFSOpen(AuVFSNode* fs, char* path) {
 			pathname[i] = next[i];
 		}
 		pathname[i] = 0;
+		aa64_data_cache_clean_range(&pathname, 16);
+		//AA64SleepUS(600);
 
 		for (int j = 0; j < first_list->childs->pointer; j++) {
 			AuVFSNode* node_ = (AuVFSNode*)list_get_at(first_list->childs, j);
+			UARTDebugOut("node_->filename : %s \r\n", node_->filename);
 			if (strcmp(node_->filename, pathname) == 0) {
 				if (node_->flags & FS_FLAG_DIRECTORY)
 					first_list = (AuVFSContainer*)node_->device;

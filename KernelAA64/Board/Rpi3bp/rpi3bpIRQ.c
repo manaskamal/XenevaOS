@@ -85,8 +85,20 @@ void RPI3_IRQ_handler(AA64Registers* regs) {
             uint32_t gpioEvent = AuRPIGPIOGetEvents();
             /* PI HDMI Display's XPT2046 Penirq*/
             if (gpioEvent & (1ULL << 25)) {
-                AuRPIGPIOClearEvent(25);
+
+                /* Because matured OS do that, disable GPIO irq then clear
+                 * the event bit
+                 */
+                AuRPIGPIODisableInterrupt(25);
                 XPT2046ReadTouch();
+                while (AuRPIGPIOPinLevelLow(25))
+                    AuRPIDelayMS(20);
+
+
+                AuRPIDelayMS(5);
+                AuRPIGPIOClearEvent(25);
+                /* Re enable it boss*/
+                AuRPIGPIOEnableInterrupt(25);
             }
         }
     }

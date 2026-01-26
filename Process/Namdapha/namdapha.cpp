@@ -100,7 +100,7 @@ void NamdaphaHideWindow(NamdaphaButton* button) {
 
 /* NamdaphaTimeButtonPaint -- paint the time button */
 void NamdaphaTimeButtonPaint(NamdaphaButton* button, ChWindow* win) {
-	ChDrawRect(win->canv, button->x, button->y,button->w, button->h, NAMDAPHA_TIME_BUTTON_COLOR);
+	ChDrawRect(win->canv, button->x, button->y,button->w, button->h,NAMDAPHA_COLOR);
 	ChFontSetSize(app->baseFont, 13);
 	int font_w = ChFontGetWidth(app->baseFont, button->title);
 	int font_h = ChFontGetHeight(app->baseFont, button->title);
@@ -113,7 +113,7 @@ void NamdaphaTimeButtonPaint(NamdaphaButton* button, ChWindow* win) {
 	ChFontSetSize(app->baseFont, 11);
 	int date_w = ChFontGetWidth(app->baseFont,date);
 	ChFontDrawText(win->canv, app->baseFont, date, button->x + button->w / 2 - date_w / 2,
-		button->y + button->h - 4, 10,LIGHTSILVER);
+		button->y + button->h - 4, 10,WHITE);
 }
 
 /*
@@ -270,7 +270,7 @@ void NamdaphaHandleMessage(PostEvent *e) {
 										}
 										NamdaphaPaint(win);
 										
-										//_KeProcessSleep(120);
+										_KeProcessSleep(120);
 									}
 									memset(e, 0, sizeof(PostEvent));
 									break;
@@ -292,8 +292,11 @@ void NamdaphaHandleMessage(PostEvent *e) {
 									list_add(button_list, nbutton);
 									
 									//NamdaphaPaint(win);
-									
+#ifdef NAMDAPHA_VERTICAL
 									nbutton_y_loc += nbutton->h + NAMDAPHA_BUTTON_YPAD;
+#elif NAMDAPHA_HORIZONTAL
+									nbutton_x_loc += nbutton->w + NAMDAPHA_BUTTON_XPAD;
+#endif
 									
 									memset(e, 0, sizeof(PostEvent));
 									_KeProcessSleep(8);
@@ -436,9 +439,13 @@ int main(int argc, char* arv[]){
 	nbutton_x_loc = NAMDAPHA_WIDTH / 2 - NAMDAPHA_BUTTON_WIDTH / 2;
 	nbutton_y_loc = 0;
 
-	
+#ifdef NAMDAPHA_VERTICAL
 	win = ChCreateWindow(app, WINDOW_FLAG_STATIC | WINDOW_FLAG_ALWAYS_ON_TOP | WINDOW_FLAG_BROADCAST_LISTENER | WINDOW_FLAG_ANIMATED, 
 		"switcher", 0, 0, NAMDAPHA_WIDTH, screen_h);
+#elif NAMDAPHA_HORIZONTAL
+	win = ChCreateWindow(app, WINDOW_FLAG_STATIC | WINDOW_FLAG_ALWAYS_ON_TOP | WINDOW_FLAG_BROADCAST_LISTENER | WINDOW_FLAG_ANIMATED,
+		"switcher", 0, screen_h - NAMDAPHA_WIDTH,screen_w , NAMDAPHA_WIDTH);
+#endif
 
 	win->color = BLACK;
 	win->ChWinPaint = NamdaphaPaint;
@@ -476,24 +483,26 @@ int main(int argc, char* arv[]){
 	memset(currenttime, 0, strlen("00:00 CC"));
 
 	/* now initialise the time button */
-	timebutton = NmCreateButton(0, 10, NAMDAPHA_WIDTH, 50, "06:51 PM");
+	timebutton = NmCreateButton(win->info->width - NAMDAPHA_WIDTH, 10, NAMDAPHA_WIDTH, 50, "06:51 PM");
 	timebutton->mouseEvent = 0;
 	timebutton->drawNamdaphaButton = NamdaphaTimeButtonPaint;
 	timebutton->nmbuttoninfo = 0;
 	timebutton->actionHandler = 0;
 	list_add(button_list, timebutton);
-	nbutton_y_loc += timebutton->y + timebutton->h + NAMDAPHA_BUTTON_YPAD;
+#ifdef NAMDAPHA_VERTICAL
+	nbutton_y_loc = timebutton->y + timebutton->h + NAMDAPHA_BUTTON_YPAD;
+#elif NAMDAPHA_HORIZONTAL
+	nbutton_x_loc = gobutton->x + gobutton->w + NAMDAPHA_BUTTON_XPAD;
+#endif
 
+	win->info->alpha = 1;
+	win->info->alphaValue = 0.3f;
 	ChWindowPaint(win);
 
 	gomenuh = ChGetWindowHandle(app, "Xeneva Launcher");
 	gobutton->winHandle = gomenuh;
 	
 	//NamdaphaPlayStartupSound();
-
-	int procid = _KeCreateProcess(0, "systray");
-	_KeProcessLoadExec(procid, "/systray.exe", NULL, NULL);
-
 
 	PostEvent e;
 	memset(&e, 0, sizeof(PostEvent));

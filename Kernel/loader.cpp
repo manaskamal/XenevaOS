@@ -124,6 +124,7 @@ extern bool _vfs_debug_on;
  * @param argv -- array of argument in strings
  */
 int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc,char** argv) {
+
 	AuAcquireSpinlock(loader_lock);
 	
 	/* verify the filename, it can only be '.exe' file no '.dll' or other */
@@ -147,10 +148,9 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc,char** argv) {
 
 	uint64_t* buf = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
 	memset(buf, 0, 4096);
-	
-	
 
 	size_t read_bytes = AuVFSNodeReadBlock(fsys, file, (uint64_t*)V2P((uint64_t)buf));
+
 	
 	IMAGE_DOS_HEADER* dos = (IMAGE_DOS_HEADER*)buf;
 	PIMAGE_NT_HEADERS nt = raw_offset<PIMAGE_NT_HEADERS>(dos, dos->e_lfanew);
@@ -158,7 +158,6 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc,char** argv) {
 
 	uint64_t _image_base_ = nt->OptionalHeader.ImageBase;
 	entry ent = (entry)(nt->OptionalHeader.AddressOfEntryPoint + nt->OptionalHeader.ImageBase);
-
 	uint64_t* cr3 = proc->cr3;
 
 	/* check if the binary is dynamically linked */

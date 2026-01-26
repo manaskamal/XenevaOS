@@ -38,6 +38,46 @@
 #include "../font.h"
 #include "textbox.h"
 
+void ChDefaultTextboxPrint(ChCanvas* canv, ChTextBox* tb, char* text) {
+	ChRect clipRect;
+	clipRect.x = tb->wid.x;
+	clipRect.y = tb->wid.y;
+	clipRect.w = tb->wid.w;
+	clipRect.h = tb->wid.h;
+	char buf[256];
+	int textOff = 0;
+	bool _has_newline = false;
+	for (int i = 0; i < strlen(text); i++) {
+		if (text[i] == '\n') {
+			ChFontDrawTextClipped(canv, tb->font, buf, tb->wid.x + (tb->textCursorPosX * 2),
+				tb->wid.y + (tb->textCursorPosY * 22),
+				tb->textColor, &clipRect);
+			memset(buf, 0, 256);
+			_has_newline = true;
+			tb->textCursorPosY++;
+			textOff = 0;
+			continue;
+		}
+		if (text[i] == '\p') {
+			tb->textCursorPosY++;
+			memset(buf, 0, 256);
+			textOff = 0;
+			continue;
+		}
+		if (text[i] == '\0') {
+			break;
+		}
+		buf[textOff] = text[i];
+		textOff++;
+	}
+
+	ChFontDrawTextClipped(canv, tb->font, buf, tb->wid.x + (tb->textCursorPosX * 2),
+		tb->wid.y + (tb->textCursorPosY * 22),
+		tb->textColor, &clipRect);
+	tb->textCursorPosX = 1;
+	tb->textCursorPosY = 1;
+}
+
 /*
  * ChDefaultTextbox -- default xeneva textbox painter
  * module
@@ -47,7 +87,7 @@
 void ChDefaultTextbox(ChWidget* wid, ChWindow* win) {
 	ChTextBox* tb = (ChTextBox*)wid;
 	ChDrawRect(win->canv, tb->wid.x, tb->wid.y, tb->wid.w, tb->wid.h, tb->textBackgroundColor);
-	ChDrawRectUnfilled(win->canv, tb->wid.x, tb->wid.y, tb->wid.w, tb->wid.h, GRAY);
+	//ChDrawRectUnfilled(win->canv, tb->wid.x, tb->wid.y, tb->wid.w, tb->wid.h, GRAY);
 	ChFontSetSize(tb->font, 13);
 	ChRect clipRect;
 	clipRect.x = tb->wid.x;
@@ -55,9 +95,7 @@ void ChDefaultTextbox(ChWidget* wid, ChWindow* win) {
 	clipRect.w = tb->wid.w;
 	clipRect.h = tb->wid.h;
 	if (tb->text) {
-		ChFontDrawTextClipped(win->canv, tb->font, tb->text, tb->wid.x + 2,
-			tb->wid.y + 22,
-			tb->textColor, &clipRect);
+		ChDefaultTextboxPrint(win->canv, tb, tb->text);
 	}
 	if (wid->hover) {
 		ChDrawRectUnfilled(win->canv, tb->wid.x, tb->wid.y,tb->wid.w,tb->wid.h, 0xFF4067BA);

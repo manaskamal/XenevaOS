@@ -43,6 +43,7 @@
 
 uint64_t lpbase;
 uint64_t pbase;
+uint64_t systimerbase;
 #define PERIPHERAL_BASE  0x3F000000
 #define LOCAL_PERIPHERAL_BASE 0x40000000
 
@@ -113,7 +114,8 @@ uint32_t AuRPI3GetCoreID() {
 void AuRPI3LocalIrqInit() {
     uint32_t coreID = AuRPI3GetCoreID();
     uint64_t localPbase = (uint64_t)AuMapMMIO(LOCAL_PERIPHERAL_BASE, 1);
-    uint64_t pBase = (uint64_t)AuMapMMIO(PERIPHERAL_BASE, 2);
+    uint64_t pBase = (uint64_t)AuMapMMIO(PERIPHERAL_BASE, 4096);
+    systimerbase = (uint64_t)AuMapMMIO(0x3F003000, 1);
     lpbase = localPbase;
     pbase = pBase;
 
@@ -214,12 +216,12 @@ uint32_t AuRPI3LocalIRQGetPending() {
  * peripheral base
  */
 uint32_t AuRPI3PeripheralIRQGetPending2() {
-    uint64_t irq_src_addr = PERIPHERAL_BASE + 0xb200 + 0x208;
+    uint64_t irq_src_addr = pbase + 0xb200 + 0x208;
     return ARMCTRL_READ(irq_src_addr);
 }
 
 uint32_t AuRPI3PeripheralIRQGetPending1() {
-    uint64_t irq_src_addr = PERIPHERAL_BASE + 0xb200 + 0x204;
+    uint64_t irq_src_addr = pbase + 0xb200 + 0x204;
     return ARMCTRL_READ(irq_src_addr);
 }
 /*
@@ -269,11 +271,11 @@ void AuRPI3Initialize() {
     AuRPI3SPI0Init();
     AuRPIInitializeFramebuffer(800,480, 32);  //800x480  //1820x1080
    // AuLCDInit();
+   // for (;;);
 }
 
 static inline void RPIMMIOWrite(uint32_t addr, uint32_t val) {
-    *(volatile uint32_t*)addr = val;
-    dsb_ish();
+    *(volatile uint32_t*)addr = val;    dsb_ish();
     isb_flush();
 }
 
@@ -309,6 +311,35 @@ uint32_t AuRPI3ReadMailbox(uint8_t channel) {
         if ((data & 0xF) == channel)
             return data & 0xFFFFFFF0;
     }
+}
+
+#define TIMER_CLO (*(volatile uint32_t*)((uint64_t)systimerbase + 0x04))
+#define TIMER_CHI (*(volatile uint32_t*)((uint64_t)systimerbase + 0x08))
+
+static inline uint64_t systimer_gettick() {
+    uint32_t hi, lo;
+
+    do {
+        hi = *(volatile uint32_t*)((uint64_t)systimerbase + 0x08);
+        lo = *(volatile uint32_t*)((uint64_t)systimerbase + 0x04);
+    } while (hi != TIMER_CHI);
+
+    return ((uint64_t)hi << 32) | lo;
+}
+
+
+void AuRPI3DelayUS(uint32_t us) {
+    uint64_t start = systimer_gettick();
+    uint64_t end = start + us;
+    if (end < start) {
+        while (systimer_gettick() >= start);
+    }
+
+    while (systimer_gettick() < end);
+}
+
+void AuRPIDelayMS(uint32_t ms) {
+    AuRPI3DelayUS(ms * 1000);
 }
 
 /*

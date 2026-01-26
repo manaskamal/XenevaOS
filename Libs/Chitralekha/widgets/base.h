@@ -55,6 +55,7 @@
 #define DEODHAI_REPLY_FOCUS_CHANGED 154
 #define DEODHAI_REPLY_WINDOW_CLOSED 156
 #define DEODHAI_REPLY_MOUSE_LEAVE 157
+#define DEODHAI_REPLY_TOUCH_EVENT 158
 
 	/* deodhai broadcast definitions, reply from
 	 * deodhai */

@@ -239,8 +239,8 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
 	XEFile* krnl = XEOpenAndReadFile(ImageHandle, (CHAR16*)L"\\EFI\\XENEVA\\xnkrnl.exe");
 	XEFile* kfont = XEOpenAndReadFile(ImageHandle,(CHAR16*)L"\\EFI\\XENEVA\\font.psf");
 	XEFile* kApCode = XEOpenAndReadFile(ImageHandle, (CHAR16*)L"\\EFI\\XENEVA\\ap.bin");
-	XEFile* kAhci = XEOpenAndReadFile(ImageHandle, (CHAR16*)L"\\ahci.dll");
-	XEFile* kNvme = XEOpenAndReadFile(ImageHandle, (CHAR16*)L"\\nvme.dll");
+	XEFile* kAhci = XEOpenAndReadFile(ImageHandle, (CHAR16*)L"\\initrd.img");
+	//XEFile* kNvme = XEOpenAndReadFile(ImageHandle, (CHAR16*)L"\\nvme.dll");
 	//XEFile* kXHCI = XEOpenAndReadFile(ImageHandle, (CHAR16*)L"\\xhci.dll");
 	
 
@@ -250,6 +250,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
 	VOID* entry = (VOID*)(nt_header->OptionalHeader.ImageBase + nt_header->OptionalHeader.AddressOfEntryPoint);
 
 	XEGuiPrint("System files loaded successfully \n");
+	XEGuiPrint("DOS Signature : %x , NTHeader : %x \r\n", dos_header->e_magic, nt_header->Signature);
 	EFI_CONFIGURATION_TABLE* configuration_tables = gSystemTable->ConfigurationTable;
 
 	/**
@@ -321,8 +322,8 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
 	XEImageEntry kentry = (XEImageEntry)XEPEGetEntryPoint(krnl->kBuffer);
 
 
-	uint64_t ahciAddr = XEPELoadDLLImage(kAhci->kBuffer);
-	uint64_t nvmeAddr = XEPELoadDLLImage(kNvme->kBuffer);
+	//uint64_t ahciAddr = XEPELoadDLLImage(kAhci->kBuffer);
+	//uint64_t nvmeAddr = XEPELoadDLLImage(kNvme->kBuffer);
 	//uint64_t xhciAddr = XEPELoadDLLImage(kXHCI->kBuffer);
 	
 	
@@ -357,16 +358,18 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
 	bootinfo.kernel_size = krnl->FileSize;
 	bootinfo.printf_gui = XEGuiPrint;
 	bootinfo.font_binary_address = (uint8_t*)kfont->kBuffer;
-	bootinfo.driver_entry1 = (uint8_t*)ahciAddr;
-	bootinfo.driver_entry2 = (uint8_t*)nvmeAddr;
+	bootinfo.driver_entry1 = (uint8_t*)kAhci->kBuffer;
+	bootinfo.driver_entry2 = 0; // (uint8_t*)nvmeAddr;
 	bootinfo.driver_entry3 = 0; // (uint8_t*)xhciAddr;// usbAddr;
 	bootinfo.driver_entry4 = 0;
 	bootinfo.driver_entry5 = 0;
 	bootinfo.driver_entry6 = 0;
 	bootinfo.ap_code = kApCode->kBuffer;
-	bootinfo.hid =0;
+	bootinfo.hid =kAhci->FileSize;
 	bootinfo.uid =0;
 	bootinfo.cid =0;
+
+	XEGuiPrint("Jumping to kernel \n");
 	call_kernel(&bootinfo, entry, stackaddr, 0x100000);  //This functions actually does the installation of stack, not for calling kernel
 	for (;;);
 	return EFI_SUCCESS;

@@ -216,6 +216,7 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 
 	/* initialize the deodhai's communication protocol */
 	AuIPCPostBoxInitialise();
+	
 
 	AuTextOut("[aurora]: starting xeneva (ARM64) please wait...\r\n");
 

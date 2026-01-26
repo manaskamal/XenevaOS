@@ -37,6 +37,7 @@
 #include <Drivers/uart.h>
 #include <Drivers/rtcmmio.h>
 #include <kernelAA64.h>
+#include <Board/board.h>
 
 
 uint64_t basisTime;
@@ -76,6 +77,9 @@ void aa64_data_cache_clean_range(void* addr, size_t size) {
 	start &= ~(CACHE_LINE_SIZE - 1);
 	for (size_t p = start; p < end; p += CACHE_LINE_SIZE)
 		data_cache_flush((uint64_t*)p);
+
+	dsb_sy_barrier();
+	isb_flush();
 }
 
 void AA64CPUImplementer(uint32_t midr) {
@@ -114,6 +118,22 @@ void AA64CPUImplementer(uint32_t midr) {
 		break;
 	}
 	AuTextOut("CPU Architecture: ARMv8-A(%x) \r\n", arch);
+}
+
+/*
+ * AA64SleepUS -- sleep for sometimes
+ * @param us -- microseconds to sleep
+ */
+void AA64SleepUS(uint32_t us) {
+	AuAA64BoardSleepUS(us);
+}
+
+/*
+ * AA64SleepMS -- sleep for sometimes
+ * @param ms -- milliseconds to sleep
+ */
+void AA64SleepMS(uint32_t ms) {
+	AuAA64BoardSleepMS(ms);
 }
 
 extern void enableAlignCheck();

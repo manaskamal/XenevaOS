@@ -79,8 +79,10 @@ void sync_el1_handler(AA64Registers *regs) {
 
    
     UARTDebugOut("=======Synchronous Exception occured========= \r\n");
+    AuTextOut("Fault Address (FAR_EL1): %x \r\n", read_far_el1());
     UARTDebugOut("Fault Address (FAR_EL1): %x \r\n", read_far_el1());
     //UARTDebugOut("Fault Address String (FAR_EL1): %s \n", read_far_el1());
+    AuTextOut("Fault Instruction (ELR_EL1): %x \r\n", read_elr_el1());
     UARTDebugOut("Fault Instruction (ELR_EL1): %x \r\n", read_elr_el1());
     UARTDebugOut("SP_EL1: %x  \r\n", read_sp());
     UARTDebugOut("SP_EL0 : %x \r\n", regs->EL0SP);

@@ -72,6 +72,11 @@ extern uint32_t AuRPIGPIOGetEvents();
 
 extern void AuRPIGPIOClearEvent(uint8_t pin);
 
+extern bool AuRPIGPIOPinLevelLow(uint8_t pin);
+
+
+extern void AuRPIGPIODisableInterrupt(uint8_t pin);
+
 /*
  * AuRPIGPIOWrite -- write boolean value
  * to specific pin

@@ -29,12 +29,21 @@
 
 #include "button.h"
 
+#ifdef THEME_DEFAULT
 #define BUTTON_NORMAL_DARK 0xFF252525
 #define BUTTON_NORMAL_LIGHT 0xFF454343
 #define BUTTON_HOVER_DARK 0xFF0463C0
 #define BUTTON_HOVER_LIGHT 0xFF3F8EDA
 #define BUTTON_CLICKED_DARK 0xFF374E64
 #define BUTTON_CLICKED_LIGHT 0xFF485A6C
+#elif THEME_PURPLE
+#define BUTTON_NORMAL_DARK  0xFF252525
+#define BUTTON_NORMAL_LIGHT 0xFF454343
+#define BUTTON_HOVER_DARK 0xFF0463C0
+#define BUTTON_HOVER_LIGHT 0xFF1E9D97
+#define BUTTON_CLICKED_DARK 0xFF014D4E
+#define BUTTON_CLICKED_LIGHT 0xFF014D4E
+#endif
 
 /*
  * ChButtonMouseEvent -- mouse event handler for chitralekha button
@@ -93,6 +102,56 @@ void ChButtonMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, int button) 
 	wid->lastMouseY = y;
 }
 
+void ChButtonTouchEvent(ChWidget* wid, ChWindow* win, int x, int y) {
+	if (!wid->KillFocus) {
+		wid->clicked = true;
+		wid->touched = true;
+	}
+
+	if (wid->KillFocus) {
+		wid->clicked = false;
+		wid->touched = false;
+	}
+
+	if (!wid->hoverPainted && wid->hover) {
+		if (wid->ChPaintHandler)
+			wid->ChPaintHandler(wid, win);
+		ChWindowUpdate(win, wid->x,
+			wid->y, wid->w, wid->h, false, true);
+		wid->hoverPainted = true;
+	}
+
+	if (!wid->hover && wid->clicked == false) {
+		wid->hoverPainted = false;
+		if (wid->ChPaintHandler)
+			wid->ChPaintHandler(wid, win);
+		ChWindowUpdate(win, wid->x,
+			wid->y, wid->w, wid->h, false, true);
+	}
+
+	bool _action_required = false;
+	if (wid->clicked) {
+		if (wid->ChPaintHandler)
+			wid->ChPaintHandler(wid, win);
+		ChWindowUpdate(win, wid->x,
+			wid->y, wid->w, wid->h, false, true);
+
+		_action_required = true;
+		win->focusedWidget = wid;
+		wid->hoverPainted = false;
+		wid->clicked = false;
+	}
+
+	if (_action_required) {
+		/* call the action handler */
+		if (wid->ChActionHandler)
+			wid->ChActionHandler(wid, win);
+	}
+
+	wid->lastMouseX = x;
+	wid->lastMouseY = y;
+}
+
 
 void ChButtonDestroy(ChWidget *widget, ChWindow* win) {
 	ChButton* but = (ChButton*)widget;
@@ -122,6 +181,11 @@ void ChButtonDefaultPainter(ChWidget* widget, ChWindow* win) {
 	if (button->base.clicked) {
 		color1 = BUTTON_CLICKED_LIGHT;
 		color2 = BUTTON_CLICKED_DARK;
+	}
+
+	if (button->base.touched) {
+		color1 = BUTTON_HOVER_LIGHT;
+		color2 = BUTTON_HOVER_DARK;
 	}
 
 	ChDrawRect(win->canv, widget->x, widget->y,
@@ -161,5 +225,6 @@ XE_EXTERN XE_EXPORT ChButton* ChCreateButton(int x, int y, int w, int h, char *t
 	button->base.ChMouseEvent = ChButtonMouseEvent;
 	button->base.ChPaintHandler = ChButtonDefaultPainter;
 	button->base.ChDestroy = ChButtonDestroy;
+	button->base.ChTouchEvent = ChButtonTouchEvent;
 	return button;
 }

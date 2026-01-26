@@ -59,7 +59,7 @@ void LaunchButtonPaint(LaunchButton* lb, ChWindow* win) {
 	int font_length = ChFontGetWidth(win->app->baseFont, lb->title);
 	int font_height = ChFontGetHeight(win->app->baseFont, lb->title);
 	ChFontDrawText(win->canv, win->app->baseFont, lb->title, lb->x + lb->w / 2 - font_length / 2,
-		lb->y + lb->h - 5, 12, BLACK);
+		lb->y + lb->h - 5, 12, LIGHTSILVER);
 }
 
 
@@ -123,7 +123,21 @@ void LauncherButtonDefaultAction(LaunchButton* lbutton, ChWindow *win){
 	if (id == -1) {
 		_KePrint("Failed to open app -> %s \r\n", lbutton->title);
 	}
-	int status = _KeProcessLoadExec(id, lbutton->appname, 0, 0);
+	char** argvs = NULL;
+	int numarg = 0;
+	if (strcmp(lbutton->param, "Null") == 1) {
+		char* p = (char*)malloc(strlen(lbutton->param));
+		strcpy(p, lbutton->param);
+		numarg++;
+		argvs = (char**)malloc(numarg * sizeof(char*));
+		memset(argvs, 0, 1);
+		argvs[0] = p;
+	}
+	int status = _KeProcessLoadExec(id, lbutton->appname, numarg, argvs);
+	if (argvs) {
+		free(argvs[0]);
+		free(argvs);
+	}
 }
 
 /*

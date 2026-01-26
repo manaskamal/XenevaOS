@@ -50,6 +50,9 @@
 #define FAT_BAD_CLUSTER 0xFFFFFFF7
 
 
+#ifdef ARCH_X64
+#pragma pack(push,1)
+#endif
 /* FAT BPB */
 typedef struct _FAT_BPB_ {
 	uint8_t jmp[3]; 
@@ -93,6 +96,9 @@ typedef struct _FAT_BPB_ {
 		}FAT32;
 	}info;
 }FatBPB;
+#ifdef ARCH_X64
+#pragma pack(pop)
+#endif
 
 /** _fat32_dir_ -- 32 byte fat directory structure */
 #pragma pack (push, 1)

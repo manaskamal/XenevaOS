@@ -85,6 +85,8 @@ AU_EXTERN AU_EXPORT void dsb_ish();
 
 AU_EXTERN AU_EXPORT void dmb_ish();
 
+AU_EXTERN AU_EXPORT void dmb_sy();
+
 AU_EXTERN AU_EXPORT void dsb_sy_barrier();
 
 AU_EXTERN AU_EXPORT void set_kstack(uint64_t stack);

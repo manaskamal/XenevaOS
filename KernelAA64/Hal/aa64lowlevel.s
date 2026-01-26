@@ -122,6 +122,11 @@ dmb_ish:
      dmb ish
      ret
 
+.global dmb_sy
+dmb_sy:
+     dmb sy
+     ret
+
 .global isb_flush
 isb_flush:
      isb
@@ -353,7 +358,7 @@ enableAlignCheck:
 .global data_cache_flush
 data_cache_flush:
     dc civac, x0
-    dsb ish
+    dsb sy
     isb
     ret
 

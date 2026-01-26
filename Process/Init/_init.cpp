@@ -96,7 +96,9 @@ int XELdrStartProc2(char* filename, XELdrObj* obj) {
 	_KePrint("INIT OBJ2Name : %x \n", obj->objname);
 	for (;;);
 #endif
+	return file;
 }
+
 /*
  * _main -- main entry point
  */
@@ -113,11 +115,16 @@ extern "C" void main(int argc, char* argv[]) {
 		_KePrint("Xeneva v1.0 x86_64 !! Copyright (C) Manas Kamal Choudhury 2020-2023 \r\n");
 #elif ARCH_ARM64
 		_KePrint("Xeneva v1.0 ARM64 !! Copyright (C) Manas Kamal Choudhury 2020-2025 \r\n");
-	}
 #endif
+	}
 
+#ifdef ARCH_ARM64
 	int proc = _KeCreateProcess(0, "deodhaixr");
 	_KeProcessLoadExec(proc, "/deodxr.exe\0", 0, NULL);
+#elif ARCH_X64
+	int proc = _KeCreateProcess(0, "deodhai");
+	_KeProcessLoadExec(proc, "/deodhai.exe", 0, NULL);
+#endif
 
 	/*_KeProcessSleep(1000);
 	proc = _KeCreateProcess(0, "calc");

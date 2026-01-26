@@ -148,10 +148,6 @@ int AuConsoleIoControl(AuVFSNode* file, int code, void* arg) {
 		return 1;
 		break;
 	}
-	default: {
-		PostBoxIOControl(file, code, arg);
-		break;
-	}
 
 	}
 	return ret;

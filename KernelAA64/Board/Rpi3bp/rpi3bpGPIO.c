@@ -107,16 +107,24 @@ void AuRPIGPIOPullUpsDown() {
 
 void AuRPIGPIOPullUP(uint8_t pin) {
 	*(volatile uint32_t*)((uint64_t)gpioBase + 0x94) = 2;
-	for (int i = 0; i < 15000; i++)
+	dsb_sy_barrier();
+	isb_flush();
+	for (int i = 0; i < 150; i++)
 		;
 	uint32_t reg = pin / 32;
 	uint32_t shift = pin % 32;
 	*(volatile uint32_t*)((uint64_t)gpioBase + 0x98 + (reg * 4)) = (1 << shift);
 
-	for (int i = 0; i < 15000; i++)
+	dsb_sy_barrier();
+	isb_flush();
+
+	for (int i = 0; i < 150; i++)
 		;
 	*(volatile uint32_t*)((uint64_t)gpioBase + 0x94) = 0;
 	*(volatile uint32_t*)((uint64_t)gpioBase + 0x98 + (reg * 4)) = 0;
+
+	dsb_sy_barrier();
+	isb_flush();
 
 }
 
@@ -127,6 +135,19 @@ void AuRPIGPIOEnableInterrupt(uint8_t pin) {
 	*(volatile uint32_t*)((uint64_t)gpioBase + GPEDS0 + (reg * 4)) = (1 << shift);
 	*(volatile uint32_t*)((uint64_t)gpioBase + GPFEN0 + (reg*4)) |= (1 << shift);
 	
+	dsb_sy_barrier();
+	isb_flush();
+}
+
+void AuRPIGPIODisableInterrupt(uint8_t pin) {
+	uint32_t reg = pin / 32;
+	uint32_t shift = pin % 32;
+
+	*(volatile uint32_t*)((uint64_t)gpioBase + 0x4C + (reg * 4)) &= ~(1 << shift);
+	*(volatile uint32_t*)((uint64_t)gpioBase + 0x58 + (reg * 4)) &= ~(1 << shift);
+	*(volatile uint32_t*)((uint64_t)gpioBase + 0x64 + (reg * 4)) &= ~(1 << shift);
+	*(volatile uint32_t*)((uint64_t)gpioBase + 0x70 + (reg * 4)) &= ~(1 << shift);
+	*(volatile uint32_t*)((uint64_t)gpioBase + 0x40 + (reg * 4)) &= (1 << shift);
 	dsb_sy_barrier();
 	isb_flush();
 }
@@ -142,6 +163,14 @@ bool AuRPIGPIOCheckInterrupt(uint8_t pin) {
 		return true;
 	}
 	return false;
+}
+
+bool AuRPIGPIOPinLevelLow(uint8_t pin) {
+	volatile uint32_t* gplev0 = (volatile uint32_t*)((uint64_t)gpioBase + 0x34);
+	if ((*gplev0 & (1 << pin)) == 0)
+		return true;
+	else
+		return false;
 }
 /*
  * AuRPIGPIOSet -- set a specific pin

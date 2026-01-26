@@ -328,5 +328,7 @@ extern int NetListen(int sockfd, int backlog);
  */
 extern size_t GetEnvironmenBlock();
 
+#ifdef ARCH_ARM64
 extern AA64Registers* AA64GetCurrentRegCtx();
+#endif
 #endif

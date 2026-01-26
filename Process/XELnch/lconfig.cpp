@@ -114,6 +114,21 @@ void LauncherSetupByConfigFile() {
 
 		fbuf = p;
 
+		char param[42];
+		memset(param, 0, 42);
+		for (int i = 0; i < 42; i++) {
+			if (p[i] == '|') {
+				fbuf++;
+				break;
+			}
+			param[i] = p[i];
+			fbuf++;
+		}
+
+		p = strchr(fbuf, ']');
+		if (p)
+			p++;
+
 		/* appname is the last keyword entry */
 		char app[42];
 		memset(app, 0, 42);
@@ -131,6 +146,8 @@ void LauncherSetupByConfigFile() {
 		}
 		
 		LaunchButton* button = CreateLaunchButton(0, 0, LAUNCH_BUTTON_W, LAUNCH_BUTTON_H, title, app);
+		button->param = (char*)malloc(strlen(param));
+		strcpy(button->param, param);
 		ButtonIcon* ico = CreateLaunchButtonIcon(icon, button);
 		AppGridAddButton(grid, button);
 		

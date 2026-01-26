@@ -49,7 +49,7 @@ typedef struct _text_box_ {
 	int textHeight;
 	//cursor
 	int textCursorPosX;
-	//int textCursorPosY future use
+	int textCursorPosY;// future use
 }ChTextBox;
 
 #ifdef __cplusplus

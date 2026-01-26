@@ -201,8 +201,13 @@ void ChDrawPixel(ChCanvas* canvas, int x, int y, uint32_t color) {
 		_KePrint("ChDrawPixel : corrupted y > canvasHeight \r\n");
 		return;
 	}
+#ifdef COLOR_BGRA
 	uint32_t bgra = ChColorRGBAtoBGRA(color);
 	lfb[static_cast<uint64_t>(y) * canvas->canvasWidth + x] = bgra;
+#elif COLOR_RGBA
+	/* By default Chitralekha uses RGBA */
+	lfb[static_cast<uint64_t>(y) * canvas->canvasWidth + x] = color;
+#endif
 }
 
 

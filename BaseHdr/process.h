@@ -33,7 +33,11 @@
 
 #include <stdint.h>
 #include <Fs\vfs.h>
+
+#ifdef ARCH_ARM64
 #include <Hal/AA64/sched.h>
+#endif
+
 #ifdef ARCH_X64
 #include <Hal\x86_64_sched.h>
 #include <Sync\mutex.h>

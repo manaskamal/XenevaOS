@@ -134,8 +134,8 @@ void ChFontDrawText(ChCanvas *canv, ChFont* font, char* string, int penx, int pe
 				q < font->face->glyph->bitmap.rows; j++, q++) {
 				if (font->face->glyph->bitmap.buffer[q * font->face->glyph->bitmap.width + p] > 0){
 					double val = font->face->glyph->bitmap.buffer[q * font->face->glyph->bitmap.width + p] * 1.0 / 255;
-					canv->buffer[i + j * canv->canvasWidth] = ChColorAlphaBlend(canv->buffer[i + j * canv->canvasWidth],
-						color,val);
+					canv->buffer[i + j * canv->canvasWidth] =ChColorAlphaBlend(canv->buffer[i + j * canv->canvasWidth],
+						color,val); //canv->buffer[i + j * canv->canvasWidth]
 				}
 				else if (font->face->glyph->bitmap.buffer[q * font->face->glyph->bitmap.width] == 255)
 					canv->buffer[i + j * canv->canvasWidth] = color;

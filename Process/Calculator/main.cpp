@@ -335,6 +335,20 @@ void WindowHandleMessage(PostEvent *e) {
 									 memset(e, 0, sizeof(PostEvent));
 									 break;
 	}
+	case DEODHAI_REPLY_TOUCH_EVENT: {
+		int handle = e->dword4;
+		if (e->dword5 == WINDOW_HANDLE_TYPE_NORMAL) {
+			ChWindow* mouseWin = ChGetWindowByHandle(mainWin, handle);
+			ChWindowHandleTouch(mouseWin, e->dword, e->dword2, e->dword3);
+		}
+		else if (e->dword5 == WINDOW_HANDLE_TYPE_POPUP) {
+
+			ChWindow* pw = ChGetPopupWindowByHandle(mainWin, handle);
+			//ChPopupWindowHandleTouch(pw, e->dword, e->dword2, e->dword3);
+		}
+		memset(e, 0, sizeof(PostEvent));
+	}
+
 	case DEODHAI_REPLY_FOCUS_CHANGED:{
 										 int focus_val = e->dword;
 										 int handle = e->dword2;
@@ -492,9 +506,11 @@ int main(int argc, char* argv[]){
 		}
 	}
 
-	//ChWindowBroadcastIcon(app, "/icons/calc.bmp");
+#ifdef ARCH_X64
+	ChWindowBroadcastIcon(app, "/icons/calc.bmp");
+#endif
 
-	dispFont = app->baseFont; //ChInitialiseFont(FORTE);
+	dispFont = ChInitialiseFont(FORTE);
 
 
 	mainDisp = CalcCreateDisplay(10,40, mainWin->info->width - 10*2 - CHITRALEKHA_WINDOW_DEFAULT_PAD_X, 75);

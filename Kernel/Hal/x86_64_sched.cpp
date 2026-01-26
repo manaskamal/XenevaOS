@@ -343,7 +343,6 @@ void AuKThreadCopy(AuThread* dest, AuThread* src) {
 void AuIdleThread(uint64_t t) {
 	SeTextOut("_idle id -> %d  \r\n", AuPerCPUGetCpuID());
 	while (1) {
-		SeTextOut("GS Base -> %x for id -> %d \r\n", x64_read_msr(MSR_IA32_GS_BASE));
 		x64_hlt();
 	}
 }

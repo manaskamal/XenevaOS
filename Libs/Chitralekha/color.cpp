@@ -44,8 +44,8 @@ static const int ONEALPHA = 0x01000000;
  * @param color2 -- color 2
  * @param opacity -- opacity of alpha
  */
-uint32_t ChColorAlphaBlend(uint32_t oldColor, uint32_t color2, double opacity) {
-	int oldB = oldColor & 0xFF;
+uint32_t ChColorAlphaBlend(uint32_t dst, uint32_t src, double opacity) {
+	/*int oldB = oldColor & 0xFF;
 	int oldG = (oldColor >> 8) & 0xFF;
 	int oldR = (oldColor >> 16) & 0xff;
 	uint8_t r = GET_RED(color2);
@@ -54,7 +54,20 @@ uint32_t ChColorAlphaBlend(uint32_t oldColor, uint32_t color2, double opacity) {
 	uint32_t newColor = (int)(b* opacity + oldB * (1 - opacity)) |
 		(((int)(g * opacity + oldG * (1 - opacity)) << 8)) |
 		(((int)(r * opacity + oldR * (1 - opacity)) << 16));
-	return newColor;
+	return newColor;*/
+	uint8_t dstR = (dst >> 16) & 0xFF;
+	uint8_t dstG = (dst >> 8) & 0xFF;
+	uint8_t dstB = dst & 0xFF;
+
+	uint8_t srcR = (src >> 16) & 0xFF;
+	uint8_t srcG = (src >> 8) & 0xFF;
+	uint8_t srcB = src & 0xFF;
+
+	uint8_t outR = (uint8_t)(srcR * opacity + dstR * (1.0f - opacity));
+	uint8_t outG = (uint8_t)(srcG * opacity + dstG * (1.0f - opacity));
+	uint8_t outB = (uint8_t)(srcB * opacity + dstB * (1.0f - opacity));
+
+	return (0xFF << 24) | (outR << 16) | (outG << 8) | outB;
 }
 
 

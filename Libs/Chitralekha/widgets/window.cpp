@@ -400,6 +400,7 @@ XE_EXTERN XE_EXPORT void ChWindowSetFocused(ChWindow* win) {
 	e.to_id = POSTBOX_ROOT_ID;
 	_KeFileIoControl(win->app->postboxfd, POSTBOX_PUT_EVENT, &e);
 }
+
 /*
  * ChWindowHandleMouse -- handle mouse event 
  * @param win -- Pointer to window
@@ -491,6 +492,98 @@ XE_EXTERN XE_EXPORT void ChWindowHandleMouse(ChWindow* win, int x, int y, int bu
 		win->focusedWidget = NULL;
 	}
 
+}
+
+
+/*
+ * ChWindowHandleTouch -- handle touch event
+ * @param win -- Pointer to window
+ * @param x -- X coord of the touch
+ * @param y -- Y coord of the touch
+ * @param button -- button state of the touch
+ */
+XE_EXTERN XE_EXPORT void ChWindowHandleTouch(ChWindow* win, int x, int y, int button) {
+	bool _popup_was_active = false;
+
+	if (button != 0) {
+		for (int i = 0; i < win->popup->pointer; i++) {
+			ChWindow* popup = (ChWindow*)list_get_at(win->popup, i);
+			if (popup->info->hide == 0) {
+				_KePrint("A popup window is not hidden \r\n");
+				ChWindowHide(popup);
+				_KeProcessSleep(5);
+				_popup_was_active = true;
+			}
+		}
+		if (_popup_was_active) {
+			ChWindowSetFlags(win, (win->flags & ~(WINDOW_FLAG_STATIC)));
+			_KeProcessSleep(500);
+			ChWindowSetFocused(win);
+			return;
+		}
+	}
+
+	for (int i = 0; i < win->popup->pointer; i++) {
+		ChWindow* popup = (ChWindow*)list_get_at(win->popup, i);
+		if (popup->info->hide == 0) {
+			return;
+		}
+	}
+
+	/* first check the title bar bound */
+	if (y > win->info->y && y < win->info->y + WINDOW_DEFAULT_TITLEBAR_HEIGHT) {
+		for (int i = 0; i < win->GlobalControls->pointer; i++) {
+			ChWinGlobalControl* globalCtrl = (ChWinGlobalControl*)list_get_at(win->GlobalControls, i);
+			if (x > win->info->x + globalCtrl->x && x < (win->info->x + globalCtrl->x + globalCtrl->w) &&
+				(y > win->info->y + globalCtrl->y && y < (win->info->y + globalCtrl->y + globalCtrl->h))) {
+				globalCtrl->hover = true;
+				if (button)
+					globalCtrl->clicked = true;
+				if (globalCtrl->ChGlobalMouseEvent)
+					globalCtrl->ChGlobalMouseEvent(win, globalCtrl, x, y, button);
+			}
+			else {
+				if (globalCtrl->hover) {
+					globalCtrl->hover = false;
+					globalCtrl->clicked = false;
+					if (globalCtrl->ChGlobalMouseEvent)
+						globalCtrl->ChGlobalMouseEvent(win, globalCtrl, x, y, button);
+				}
+			}
+		}
+	}
+
+	if (win->focusedWidget) {
+		ChWidget* focusedWidget = (ChWidget*)win->focusedWidget;
+		if (focusedWidget->ChTouchEvent)
+			focusedWidget->ChTouchEvent(focusedWidget, win, x, y);
+	}
+	else {
+		/* activity area */
+		if (y > win->info->y + 26 && y < (win->info->y + 26 + win->info->height - 26)) {
+			for (int i = 0; i < win->widgets->pointer; i++) {
+				ChWidget* widget = (ChWidget*)list_get_at(win->widgets, i);
+				if (x > win->info->x + widget->x && x < (win->info->x + widget->x + widget->w) &&
+					(y > win->info->y + widget->y && y < (win->info->y + widget->y + widget->h))) {
+					widget->hover = true;
+					widget->KillFocus = false;
+					if (widget->ChTouchEvent)
+						widget->ChTouchEvent(widget, win, x, y);
+				}
+				else {
+					if (widget->hover) {
+						widget->hover = false;
+						widget->KillFocus = true;
+						if (widget->ChTouchEvent)
+							widget->ChTouchEvent(widget, win, x, y);
+					}
+				}
+			}
+		}
+	}
+
+
+	win->focusedWidget = NULL;
 }
 
 /*

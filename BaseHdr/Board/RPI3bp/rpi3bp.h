@@ -103,6 +103,10 @@ extern void AuRPI3PeripheralIRQEnable(uint32_t irq_num);
 
 extern void AuVC4DSIInit();
 
+extern void AuRPI3DelayUS(uint32_t us);
+
+extern void AuRPIDelayMS(uint32_t ms);
+
 /*
  * AuRPIInitializeFramebuffer -- initializes framebuffer
  * @param width -- fb width by pixels
