@@ -102,6 +102,19 @@ XE_EXTERN{
 	XE_LIB void ChFontDrawText(ChCanvas *canv, ChFont* font, char* string, int penx, int peny, uint32_t sz, uint32_t color);
 
 	/*
+    * ChFontDrawCharClipped -- draws a character using desired font
+    * @param canv -- Pointer to canvas
+    * @param font -- Pointer to font
+    * @param string -- string to draw
+    * @param penx -- x coordinate
+    * @param peny -- y coordinate
+    * @param sz -- font size
+    * @param color -- color of the font
+    * @param limit -- clippings
+    */
+	void ChFontDrawCharClipped(ChCanvas* canv, ChFont* font, char c, int penx, int peny, uint32_t color, ChRect* limit);
+
+	/*
 	* ChFontDrawChar -- draws a character using desired font
 	* @param canv -- Pointer to canvas
 	* @param font -- Pointer to font

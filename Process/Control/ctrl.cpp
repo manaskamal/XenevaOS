@@ -107,13 +107,15 @@ int main(int argc, char* argv[]) {
 	tb->textBackgroundColor = mainWin->color;
 	ChTextBoxSetFont(tb, tbfont);
 
-	char* about = "Hey Ishika \nI think, i am in love with you\nWanna marry you";
+	char* about = "XenevaOS is an XR-Native Operating System built with a custom kernel written completely "
+		"from scretch specifically for AR/VR/MR devices\nThe OS is designed and optimised to run natively on XR glasses "
+       "making  them a full-fledged standalone device capable of replacing smartphones by doing everything they do.";
 	char* android = "We're porting ART to XenevaOS\nAndroid App will work on XenevaOS";
-	char* default = "Hatt !! Motherchod\n Theek ho?";
+	char* default = "default text?";
 	if (argc > 1) {
 		char* param = argv[1];
 		if (strcmp(param, "about") == 0) {
-			ChTextBoxSetText(tb, about);
+			ChTextBoxSetText(tb,about);
 		}
 		else if (strcmp(param, "android") == 0) {
 			ChTextBoxSetText(tb, android);
@@ -125,7 +127,6 @@ int main(int argc, char* argv[]) {
 
 	ChWindowAddWidget(mainWin, (ChWidget*)tb);
 	
-
 	ChWindowPaint(mainWin);
 	PostEvent e;
 	memset(&e, 0, sizeof(PostEvent));

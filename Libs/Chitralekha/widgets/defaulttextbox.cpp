@@ -38,6 +38,8 @@
 #include "../font.h"
 #include "textbox.h"
 
+
+
 void ChDefaultTextboxPrint(ChCanvas* canv, ChTextBox* tb, char* text) {
 	ChRect clipRect;
 	clipRect.x = tb->wid.x;
@@ -47,33 +49,45 @@ void ChDefaultTextboxPrint(ChCanvas* canv, ChTextBox* tb, char* text) {
 	char buf[256];
 	int textOff = 0;
 	bool _has_newline = false;
+	int penx = tb->wid.x + (tb->textCursorPosX * 2);
+	int peny = tb->wid.y + (tb->textCursorPosY * 22);
 	for (int i = 0; i < strlen(text); i++) {
 		if (text[i] == '\n') {
-			ChFontDrawTextClipped(canv, tb->font, buf, tb->wid.x + (tb->textCursorPosX * 2),
-				tb->wid.y + (tb->textCursorPosY * 22),
-				tb->textColor, &clipRect);
-			memset(buf, 0, 256);
 			_has_newline = true;
-			tb->textCursorPosY++;
+			tb->textCursorPosY += 1;
+			tb->textCursorPosX = 1;
+			penx = tb->wid.x + (tb->textCursorPosX * 2);
+			peny = tb->wid.y + (tb->textCursorPosY * 22);
 			textOff = 0;
 			continue;
 		}
-		if (text[i] == '\p') {
-			tb->textCursorPosY++;
-			memset(buf, 0, 256);
-			textOff = 0;
-			continue;
-		}
-		if (text[i] == '\0') {
+		if (text[i] == '\0') 
 			break;
+		int w = ChFontGetWidthChar(tb->font, text[i]);
+		int h = ChFontGetHeightChar(tb->font, text[i]);
+		int x_v = penx + tb->font->face->glyph->bitmap_left;
+		int y_v = peny - tb->font->face->glyph->bitmap_top;
+		int b_w = tb->font->face->glyph->bitmap.width;
+		int draw_width = tb->font->face->glyph->bitmap.width;
+
+		if (x_v + draw_width >= (tb->wid.x + tb->wid.w)) {
+			tb->textCursorPosY += 1;
+			tb->textCursorPosX = 1;
+			penx = tb->wid.x + (tb->textCursorPosX * 2);
+			peny = tb->wid.y + (tb->textCursorPosY * 22);
 		}
-		buf[textOff] = text[i];
-		textOff++;
+
+		ChFontDrawCharClipped(canv, tb->font, text[i], penx,
+			peny,
+			tb->textColor, &clipRect);
+		penx += tb->font->face->glyph->advance.x >> 6;
+		peny += tb->font->face->glyph->advance.y >> 6;
+		tb->textCursorPosX++;
 	}
 
-	ChFontDrawTextClipped(canv, tb->font, buf, tb->wid.x + (tb->textCursorPosX * 2),
-		tb->wid.y + (tb->textCursorPosY * 22),
-		tb->textColor, &clipRect);
+	//ChFontDrawTextClipped(canv, tb->font, buf, tb->wid.x + (tb->textCursorPosX * 2),
+	//	tb->wid.y + (tb->textCursorPosY * 22),
+	//	tb->textColor, &clipRect);
 	tb->textCursorPosX = 1;
 	tb->textCursorPosY = 1;
 }

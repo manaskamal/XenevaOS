@@ -188,17 +188,17 @@ void ChDrawPixel(ChCanvas* canvas, int x, int y, uint32_t color) {
 	}
 
 	if (y < 0) {
-		_KePrint("ChDrawPixel : corrupted y -> %d \r\n", y);
+		//_KePrint("ChDrawPixel : corrupted y -> %d \r\n", y);
 		y = 0;
 	}
 
 	if (x >= canvas->canvasWidth) {
-		_KePrint("ChDrawPixel : corrupted x > canvasWidth \r\n");
+		//_KePrint("ChDrawPixel : corrupted x > canvasWidth \r\n");
 		return;
 	}
 
 	if (y >= canvas->canvasHeight) {
-		_KePrint("ChDrawPixel : corrupted y > canvasHeight \r\n");
+		//_KePrint("ChDrawPixel : corrupted y > canvasHeight \r\n");
 		return;
 	}
 #ifdef COLOR_BGRA

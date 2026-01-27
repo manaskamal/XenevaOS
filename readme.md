@@ -38,11 +38,11 @@ _And many more coming soon_
 
 ## Screenshot (x86_64) :
 
-![alt text](https://github.com/manaskamal/XenevaOS/blob/master/XenevaV1_1.png?raw=true)
+![alt text](https://github.com/manaskamal/XenevaOS/blob/master/XenevaXR.png?raw=true)
 
 ## AppTray (x86_64 ) :
 
-![alt text](https://github.com/manaskamal/XenevaOS/blob/master/apptray.png?raw=true)
+![alt text](https://github.com/manaskamal/XenevaOS/blob/master/apptrayxr.png?raw=true)
 
 ## Homescreen (ARM64) :
 
