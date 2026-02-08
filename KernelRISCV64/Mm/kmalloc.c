@@ -247,6 +247,7 @@ void* kmalloc(unsigned int size) {
 
 	if (ret) {
 		//	meta_data_t *meta = (meta_data_t*)(ret - sizeof(meta_data_t));
+        // AuTextOut("[Heap] kmalloc returning %x\n", ret);
 		return ret;
 	}
 	else {
@@ -416,21 +417,16 @@ void* kcalloc(size_t n_item, size_t size) {
 * au_request_page -- request contiguous 4k virtual pages
 * @param pages -- number of pages needs to be mapped
 */
+/*
+* au_request_page -- request contiguous 4k virtual pages
+* @param pages -- number of pages needs to be mapped
+*/
 void* au_request_page(int pages) {
-	uint64_t* page = (uint64_t*)AuPmmngrAlloc();
-	uint64_t page_ = (uint64_t)page;
-
-	for (size_t i = 0; i < pages; i++) {
-		void* p = AuPmmngrAlloc();
-		AuMapPage((uint64_t)p, page_ + i * 4096, PTE_NORMAL_MEM);
-	}
-
-	if ((page_ % PAGE_SIZE) != 0) {
-		AuTextOut("Request page not aligned to page boundary \r\n");
-		for (;;);
-	}
-
-	return page;
+    if (pages == 1) {
+        return (void*)P2V((uint64_t)AuPmmngrAlloc());
+    } else {
+        return (void*)P2V((uint64_t)AuPmmngrAllocBlocks(pages));
+    }
 }
 
 /*

@@ -56,11 +56,8 @@ void _memcpy(void* targ, void* src, uint32_t len) {
 }
 
 void memcpy(void* targ, void* src, uint32_t len) {
-#ifdef EFI_1_10_SYSTEM_TABLE_REVISION
-	gBS->CopyMem(targ, src, len);
-#else
+    // Always use manual copy to verify logic and avoid gBS global
 	_memcpy(targ, src, len);
-#endif
 }
 
 wchar_t* wstrchr(wchar_t* s, int c) {
@@ -102,9 +99,10 @@ int is_digit(int c) {
 }
 
 
-char* chars = (char*)"0123456789ABCDEF";
+// char* chars = (char*)"0123456789ABCDEF"; // Global removed
 
 char* sztoa(size_t value, char* str, int base) {
+    const char* chars = "0123456789ABCDEF";
 
 	if (base < 2 || base > 16)
 		return nullptr;

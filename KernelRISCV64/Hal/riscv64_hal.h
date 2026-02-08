@@ -25,7 +25,7 @@ void AuRISCV64BoardInitialize();
 #ifdef __cplusplus
 extern "C" {
 #endif
-    void AuRISCV64TrapHandler(void* stack_frame);
+    uint64_t AuRISCV64TrapHandler(void* stack_frame);
 #ifdef __cplusplus
 }
 #endif

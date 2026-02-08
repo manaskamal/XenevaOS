@@ -104,6 +104,7 @@ typedef struct _lbprotocol_ {
 typedef struct _KERNEL_BOOT_INFO_ {
 	/* Boot type either UEFI_BOOT or BIOS_BOOT */
 	int boot_type;
+    int pad0;
 
 	void* allocated_stack;
 
@@ -132,6 +133,7 @@ typedef struct _KERNEL_BOOT_INFO_ {
 
 	/* pixels_per_line -- scanline of the current display */
 	uint16_t   pixels_per_line;
+    uint16_t   pad1;
 
 	/* redmask, greenmask, bluemask, resvmask -- color mask */
 	uint32_t redmask;

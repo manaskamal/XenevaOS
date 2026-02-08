@@ -1,0 +1,1 @@
+fs0:\EFI\BOOT\BOOTRISCV64.efi 

@@ -62,6 +62,7 @@ void XEUARTPrint(const char* format, ...) {
 	while (*format != '\0') {
 		if (*format == '%') {
 			++format;
+            if (*format == 'l') ++format; // Handle 'long' modifier by skipping it (size_t is 64-bit)
 			if (*format == 'd') {
 				size_t width = 0;
 				if (format[1] == '.') {

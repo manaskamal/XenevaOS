@@ -67,42 +67,32 @@ typedef struct _FRAMEBUFFER_INFORMATION {
  * information in fbinfo structure
  * @GraphicsOutput -- Pointer to Graphics Output protocol
  */
-extern EFI_STATUS XEInitialiseGraphics(EFI_GRAPHICS_OUTPUT_PROTOCOL* GraphicsOutput);
+extern EFI_STATUS XEInitialiseGraphics(EFI_GRAPHICS_OUTPUT_PROTOCOL* GraphicsOutput, EFI_SYSTEM_TABLE* SystemTable, FRAMEBUFFER_INFORMATION* fbinfo);
 /*
  * XEPutPixel -- puts a pixel on the screen
  * @param x -- x location of the screen
  * @param y -- y location of the screen
  * @param col -- color of the pixel
  */
-extern void XEPutPixel(size_t x, size_t y, uint32_t col);
+extern void XEPutPixel(size_t x, size_t y, uint32_t col, FRAMEBUFFER_INFORMATION* fbinfo);
 
 /*
  * XEGraphicsPutC -- put a character to the screen
  * @param str -- character to print
  */
-extern void XEGraphicsPutC(char str);
+extern void XEGraphicsPutC(char str, FRAMEBUFFER_INFORMATION* fbinfo);
 
 /*
  * XEGraphicsPuts -- put string on the screen
  * @param str -- string to put
  */
-extern void XEGraphicsPuts(const char* str);
+extern void XEGraphicsPuts(const char* str, FRAMEBUFFER_INFORMATION* fbinfo);
 
 /*
  * XEGraphicsClearScreen -- clear the entire screen
  * @param gop -- Pointer to Graphics Output Protocol
  */
-extern void XEGraphicsClearScreen(EFI_GRAPHICS_OUTPUT_PROTOCOL* gop);
-
-extern uint32_t* XEGetFramebuffer();
-extern uint16_t XEGetScreenWidth();
-extern uint16_t XEGetScreenHeight();
-extern size_t XEGetFramebufferSz();
-extern size_t XEGetPixelsPerLine();
-extern uint32_t XEGetRedMask();
-extern uint32_t XEGetBlueMask();
-extern uint32_t XEGetGreenMask();
-extern uint32_t XEGetResvMask();
+extern void XEGraphicsClearScreen(EFI_GRAPHICS_OUTPUT_PROTOCOL* gop, FRAMEBUFFER_INFORMATION* fbinfo);
 
 
 

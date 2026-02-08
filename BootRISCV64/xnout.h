@@ -35,7 +35,7 @@
 /*
  * XEClearScreen -- clears the screen
  */
-extern void XEClearScreen();
+extern void XEClearScreen(EFI_SYSTEM_TABLE* SystemTable);
 
 /*
  * XESetCursor -- Set the cursor on or off
@@ -71,12 +71,13 @@ extern EFI_STATUS XESetTextAttribute(const int Back, const int Fore);
  * show output to the screen
  * @param fmt -- format to print
  */
-extern int XEPrintf(wchar_t* fmt, ...);
+extern int XEPrintf(EFI_SYSTEM_TABLE* SystemTable, wchar_t* fmt, ...);
+extern void XEPutChar(EFI_SYSTEM_TABLE* SystemTable, const int ch);
 
 /*
  * XEGuiPrint -- print formated text using graphics
  * @param format -- formated string
  */
-extern void XEGuiPrint(const char* format, ...);
+extern "C" void XEGuiPrint(const char* format, ...);
 
 #endif

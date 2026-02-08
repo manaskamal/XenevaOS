@@ -267,7 +267,7 @@ static const enum PeMachineType   MACHINE_NATIVE = IMAGE_FILE_MACHINE_I386;
  * XEPELoadImage -- loads PE image into virtual address
  * @param filebuff -- pointer to the pe kernel buffer
  */
-extern void XEPELoadImage(void* filebuff);
+extern void XEPELoadImage(void* filebuff, uint64_t imageBase);
 
 
 #endif

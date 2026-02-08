@@ -34,12 +34,16 @@
  * XEAllocatePool -- allocate pool memory
  * @param sz -- size in bytes to allocate
  */
-void* XEAllocatePool(const uint64_t sz) {
+/*
+ * XEAllocatePool -- allocate pool memory
+ * @param sz -- size in bytes to allocate
+ */
+void* XEAllocatePool(EFI_SYSTEM_TABLE* SystemTable, const uint64_t sz) {
 	void* Buffer;
 
-	EFI_STATUS Status = gBS->AllocatePool(EfiBootServicesData, sz, &Buffer);
+	EFI_STATUS Status = SystemTable->BootServices->AllocatePool(EfiBootServicesData, sz, &Buffer);
 	if (EFI_ERROR(Status)) {
-		XEPrintf(const_cast<wchar_t*>(L"Failed to allocate pool : %x \r\n"), Status);
+		XEPrintf(SystemTable, const_cast<wchar_t*>(L"Failed to allocate pool : %x \r\n"), Status);
 		return NULL;
 	}
 	return Buffer;
@@ -51,6 +55,6 @@ void* XEAllocatePool(const uint64_t sz) {
  * @param Buffer -- Pointer to previously allocated
  * pool memory
  */
-void XEFreePool(void* Buffer) {
-	gBS->FreePool(Buffer);
+void XEFreePool(EFI_SYSTEM_TABLE* SystemTable, void* Buffer) {
+	SystemTable->BootServices->FreePool(Buffer);
 }

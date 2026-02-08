@@ -10,10 +10,11 @@
 #include "clib.h"
 #include "xnout.h"
 #include "lowlevel.h"
+#include "uart0.h"
 
 // Root table for Sv39 is Level 2 (starts at bit 30)
 // We use a global pointer to the root table (4KB standard page)
-uint64_t* root_table_base;
+uint64_t* root_table_base __attribute__((section(".data"))) = 0;
 
 #define PAGESIZE 4096
 
@@ -25,30 +26,32 @@ uint64_t* root_table_base;
  */
 void XEPagingInitialize() {
 	
-	uint64_t satp = read_satp();
-    //Mask out mode to see PPN
-    uint64_t currentRoot = (satp & 0x0000FFFFFFFFFFFFULL) << 12;
-
-	if (currentRoot == 0) {
-        // If no paging currently (unlikely in UEFI S-mode if it's running), allocate root
-        // But usually UEFI has paging enabled.
-		currentRoot = XEPmmngrAllocate();
-        memset((void*)currentRoot, 0, PAGESIZE);
-	}
+    // Force Sv39 Mode: Allocate new root table
+    uint64_t currentRoot = XEPmmngrAllocate();
+    memset((void*)currentRoot, 0, PAGESIZE);
     
-    // We reuse the current root or the one we just allocated
+    // Identity Map 0-4GB using 1GB Huge Pages (L2 Leaf Entries)
+    uint64_t* root = (uint64_t*)currentRoot;
+    
+    // Flags: Valid | Read | Write | Exec | Global | Accessed | Dirty
+    // Note: RWX is permissive but safe for bootloader stage
+    uint64_t flags = PAGE_ENTRY_VALID | PAGE_ENTRY_READ | PAGE_ENTRY_WRITE | PAGE_ENTRY_EXEC | PAGE_ENTRY_GLOBAL | PAGE_ENTRY_ACCESSED | PAGE_ENTRY_DIRTY;
+    
+    // Map 0x00000000 (0GB)
+    root[0] = ((0x00000000ULL >> 2)) | flags;
+    // Map 0x40000000 (1GB)
+    root[1] = ((0x40000000ULL >> 2)) | flags;
+    // Map 0x80000000 (2GB) - RAM/Code
+    root[2] = ((0x80000000ULL >> 2)) | flags;
+    // Map 0xC0000000 (3GB)
+    root[3] = ((0xC0000000ULL >> 2)) | flags;
+    
     root_table_base = (uint64_t*)currentRoot;
-
-    // In a real scenario, we might want to build a fresh table and switch to it,
-    // but `xnldr` seems to modify existing identity map or create new mappings.
-    // For now, we trust `root_table_base` is accessible.
     
-    // Ensure SATP is set to Sv39 if we allocated it
-    if ((satp >> 60) != 8) {
-         // This is tricky. If we are changing mode, we need careful handling.
-         // Assuming UEFI provided us an Sv39 environment or we are setting it up from scratch (M-mode start).
-         // If we are in S-mode and UEFI set up Sv39, we are good.
-    }
+    // Switch SATP to Sv39 (Mode 8)
+    uint64_t satp_val = (8ULL << 60) | (currentRoot >> 12);
+    write_satp(satp_val);
+    tlb_flush_all();
 }
 
 void XEPagingCopy() {
@@ -66,14 +69,20 @@ void XEPagingCopy() {
  * @param physAddr -- physical address
  */
 void XEPagingMap(uint64_t virtualAddr, uint64_t physAddr) {
+    if (root_table_base == 0) {
+        uint64_t satp = read_satp();
+        uint64_t currentRoot = (satp & 0x00000FFFFFFFFFFFULL) << 12;
+        root_table_base = (uint64_t*)currentRoot;
+    }
+
     // Sv39:
     // VPN[2] bits 38-30
     // VPN[1] bits 29-21
     // VPN[0] bits 20-12
     
-	uint64_t l2_index = (virtualAddr >> 30) & 0x1FF;
-	uint64_t l1_index = (virtualAddr >> 21) & 0x1FF;
-	uint64_t l0_index = (virtualAddr >> 12) & 0x1FF;
+    uint64_t l2_index = (virtualAddr >> 30) & 0x1FF;
+    uint64_t l1_index = (virtualAddr >> 21) & 0x1FF;
+    uint64_t l0_index = (virtualAddr >> 12) & 0x1FF;
 
 	uint64_t* l1_table;
 	uint64_t* l0_table; // Leaf table
@@ -115,7 +124,20 @@ void XEPagingMap(uint64_t virtualAddr, uint64_t physAddr) {
 
     // Set Level 0 Entry (Leaf)
     // Physical Address PPN
-	l0_table[l0_index] = ((physAddr >> 12) << 10) | PAGE_FLAGS;
+    // Set Level 0 Entry (Leaf)
+    // Physical Address PPN
+	uint64_t final_pte = ((physAddr >> 12) << 10) | PAGE_FLAGS;
+    l0_table[l0_index] = final_pte;
+    
+    // Debug log for Kernel high-half mappings
+    if (virtualAddr > 0xFFFFFFFF00000000ULL) {
+        // Can't use XEPrintf easily here as it needs SystemTable...
+        // Use uart directly? Or just rely on previous observation?
+        // Let's rely on uart helpers if available.
+        // But paging.cpp includes clib.h, xnout.h...
+        // xnout.h declares XEUARTPrint?
+        XEUARTPrint("Map: V=%lx P=%lx PTE=%lx\n", virtualAddr, physAddr, final_pte);
+    }
 
 	tlb_flush_all();
 }

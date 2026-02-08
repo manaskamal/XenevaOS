@@ -70,6 +70,7 @@ extern void AuConsoleInitialize(PKERNEL_BOOT_INFO info, bool early);
 * @param info -- pointer to kernel boot info structure
 */
 extern void AuConsolePostInitialise(PKERNEL_BOOT_INFO info);
+extern void AuConsoleEarlyEnable(bool value);
 
 /*
 * AuTextOut -- standard text printing function

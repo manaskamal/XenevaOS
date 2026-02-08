@@ -256,12 +256,16 @@ uint64_t AuDeviceTreeGetRegSize(uint32_t* node, uint32_t addressCell, uint32_t s
  * bootloader
  */
 void AuDeviceTreeInitialize(KERNEL_BOOT_INFO* info) {
-	if (info->boot_type != BOOT_LITTLEBOOT_ARM64)
-		return;
-	AuLittleBootProtocol* lb = (AuLittleBootProtocol*)info->driver_entry1;
-	if (!lb)
-		return;
-	void* fdt_address = (void*)lb->device_tree_base;
+	void* fdt_address = NULL;
+
+	if (info->boot_type == BOOT_LITTLEBOOT_ARM64) {
+		AuLittleBootProtocol* lb = (AuLittleBootProtocol*)info->driver_entry1;
+		if (lb)
+			fdt_address = (void*)lb->device_tree_base;
+	} else if (info->boot_type == 1) { // UEFI Boot (RISC-V Reusing ID 1 for now)
+		/* On RISC-V UEFI boot, bootloader stores FDT pointer in apcode field */
+		fdt_address = info->apcode;
+	}
 
 	if (!fdt_address) {
 		AuTextOut("Device Tree Blob not found \r\n");
@@ -269,7 +273,7 @@ void AuDeviceTreeInitialize(KERNEL_BOOT_INFO* info) {
 	}
 	fdt_header_t* dtb = (fdt_header_t*)fdt_address;
 	if (AuDTBSwap32(dtb->magic) != FDT_MAGIC) {
-		AuTextOut("[Aurora]:Device Tree invalid magic \r\n");
+		AuTextOut("[Aurora]:Device Tree invalid magic %x at %x \r\n", AuDTBSwap32(dtb->magic), fdt_address);
 		return;
 	}
 	AuTextOut("DTB Magic : %x \r\n", AuDTBSwap32(dtb->magic));

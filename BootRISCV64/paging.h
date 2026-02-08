@@ -21,7 +21,7 @@
 #define PAGE_ENTRY_DIRTY    (1UL << 7)
 
 // Common flags for a RW Kernel Page
-#define PAGE_FLAGS (PAGE_ENTRY_VALID | PAGE_ENTRY_READ | PAGE_ENTRY_WRITE | PAGE_ENTRY_ACCESSED | PAGE_ENTRY_DIRTY)
+#define PAGE_FLAGS (PAGE_ENTRY_VALID | PAGE_ENTRY_READ | PAGE_ENTRY_WRITE | PAGE_ENTRY_EXEC | PAGE_ENTRY_ACCESSED | PAGE_ENTRY_DIRTY)
 
 // Common flags for Device Memory (Same as RW Normal for now, usage decides cacheability in PMA usually, but Svpbmt extension adds bits)
 // For basic Sv39 without Svpbmt, just standard RW is fine.

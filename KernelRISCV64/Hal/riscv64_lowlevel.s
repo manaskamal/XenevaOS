@@ -29,8 +29,35 @@
 .global disable_irq
 .global arch_context_switch
 .global riscv64_trap_vector_entry
+.global read_time
 
 // Low level helpers
+
+// AuSwitchStackAndJump(uint64_t new_sp, void (*entry)(void*), void* arg)
+// a0 = new_sp
+// a1 = entry
+// a2 = arg
+.global AuSwitchStackAndJump
+AuSwitchStackAndJump:
+    mv sp, a0       // Set new stack pointer
+    mv a0, a2       // Move arg to first parameter register (a0)
+    jr a1           // Jump to entry point
+
+.global _kernel_entry
+_kernel_entry:
+    // Set up High Half Stack immediately
+    // StackBase: 0xFFFFFFC000F00000, Size: 0x10000 (64KB) -> Top: 0xFFFFFFC000F10000
+    // li sp, 0xFFFFFFC000F10000 -- REMOVED: Stack is not mapped yet!
+    li s0, 0  // Zero Frame Pointer
+    
+    // Jump to C++ Main
+    // a0 (info) is preserved
+    call _AuMain
+    j .
+
+read_time:
+    rdtime a0
+    ret
 
 read_satp:
     csrr a0, satp
@@ -107,6 +134,18 @@ enable_irq:
 
 disable_irq:
     csrci sstatus, 2
+    ret
+
+.global store_a0_a7
+// void store_a0_a7(uint64_t* buffer)
+store_a0_a7:
+    sd a1, 0(a0)
+    sd a2, 8(a0)
+    sd a3, 16(a0)
+    sd a4, 24(a0)
+    sd a5, 32(a0)
+    sd a6, 40(a0)
+    sd a7, 48(a0)
     ret
 
 // void arch_context_switch(void* prev_stack_pointer_addr, void* next_stack_pointer)
@@ -193,9 +232,12 @@ riscv64_trap_vector_entry:
     sd t0, 152(sp)
 
     // Call C handler
-    // void AuRISCV64TrapHandler(void* stack_frame)
+    // uint64_t AuRISCV64TrapHandler(void* stack_frame)
     mv a0, sp
     call AuRISCV64TrapHandler
+    
+    // Switch stack pointer to returned value
+    mv sp, a0
 
     // Restore registers
     ld t0, 128(sp)
@@ -230,3 +272,139 @@ riscv64_trap_vector_entry:
 _hang:
     wfi
     j _hang
+
+// =============================================================================
+// arch_enter_user -- Switch to user mode
+// void arch_enter_user(uint64_t user_stack, uint64_t user_entry)
+// a0 = user stack pointer
+// a1 = user entry point
+// =============================================================================
+.global arch_enter_user
+arch_enter_user:
+    // Save kernel stack pointer to sscratch for trap handling
+    // When we trap from user mode, sscratch will hold kernel stack
+    csrw sscratch, sp
+    
+    // Set sepc to user entry point (where sret will jump to)
+    csrw sepc, a1
+    
+    // Configure sstatus for user mode return:
+    // - Clear SPP (bit 8): 0 = return to U-mode, 1 = return to S-mode
+    // - Set SPIE (bit 5): enable interrupts after sret
+    // - Clear SIE (bit 1): interrupts disabled until sret
+    li t0, 0x100        // SPP bit mask
+    csrc sstatus, t0    // Clear SPP -> return to User mode
+    li t0, 0x20         // SPIE bit mask
+    csrs sstatus, t0    // Set SPIE -> enable interrupts on sret
+    
+    // Align user stack to 16 bytes
+    andi a0, a0, -16
+    
+    // Set user stack pointer
+    mv sp, a0
+    
+    // Clear all general purpose registers for security
+    // (prevent leaking kernel data to user mode)
+    li ra, 0
+    li gp, 0
+    li tp, 0
+    li t0, 0
+    li t1, 0
+    li t2, 0
+    li s0, 0
+    li s1, 0
+    // a0 and a1 will be overwritten below with user args
+    li a2, 0
+    li a3, 0
+    li a4, 0
+    li a5, 0
+    li a6, 0
+    li a7, 0
+    li s2, 0
+    li s3, 0
+    li s4, 0
+    li s5, 0
+    li s6, 0
+    li s7, 0
+    li s8, 0
+    li s9, 0
+    li s10, 0
+    li s11, 0
+    li t3, 0
+    li t4, 0
+    li t5, 0
+    li t6, 0
+    
+    // Clear a0 and a1 (user will get argc/argv through stack)
+    li a0, 0
+    li a1, 0
+    
+    // Return to user mode!
+    sret
+
+// =============================================================================
+// riscv64_resume_user -- Resume a user thread from saved context
+// void riscv64_resume_user(AuThread* thread)
+// a0 = pointer to thread structure
+// =============================================================================
+.global riscv64_resume_user
+riscv64_resume_user:
+    // Save kernel stack to sscratch
+    csrw sscratch, sp
+    
+    // Thread frame offsets:
+    // ra=0, sp=8, gp=16, tp=24, t0=32, t1=40, t2=48, s0=56, s1=64
+    // a0=72, a1=80, a2=88, a3=96, a4=104, a5=112, a6=120, a7=128
+    // s2=136, s3=144, s4=152, s5=160, s6=168, s7=176, s8=184, s9=192
+    // s10=200, s11=208, t3=216, t4=224, t5=232, t6=240
+    // sepc=248, sstatus=256
+    
+    // Load sepc from thread frame
+    ld t0, 248(a0)
+    csrw sepc, t0
+    
+    // Load sstatus from thread frame, but ensure SPP=0 for user mode
+    ld t0, 256(a0)
+    li t1, 0x100        // SPP bit
+    not t1, t1
+    and t0, t0, t1      // Clear SPP bit
+    csrw sstatus, t0
+    
+    // Restore registers from thread frame
+    ld ra, 0(a0)
+    ld sp, 8(a0)
+    ld gp, 16(a0)
+    ld tp, 24(a0)
+    ld t1, 40(a0)       // Skip t0, load it last
+    ld t2, 48(a0)
+    ld s0, 56(a0)
+    ld s1, 64(a0)
+    // Skip a0, load it last
+    ld a1, 80(a0)
+    ld a2, 88(a0)
+    ld a3, 96(a0)
+    ld a4, 104(a0)
+    ld a5, 112(a0)
+    ld a6, 120(a0)
+    ld a7, 128(a0)
+    ld s2, 136(a0)
+    ld s3, 144(a0)
+    ld s4, 152(a0)
+    ld s5, 160(a0)
+    ld s6, 168(a0)
+    ld s7, 176(a0)
+    ld s8, 184(a0)
+    ld s9, 192(a0)
+    ld s10, 200(a0)
+    ld s11, 208(a0)
+    ld t3, 216(a0)
+    ld t4, 224(a0)
+    ld t5, 232(a0)
+    ld t6, 240(a0)
+    
+    // Load t0 and a0 last
+    ld t0, 32(a0)
+    ld a0, 72(a0)
+    
+    sret
+

@@ -9,6 +9,7 @@ extern "C" uint64_t read_satp();
 extern "C" void write_satp(uint64_t val);
 extern "C" void tlb_flush_all();
 extern "C" void callKernel(XEBootInfo* bootinfo, uint64_t stackbase, uint64_t stacksize, void* entry);
+extern "C" uint64_t get_xequi_print_addr();
 extern "C" void _hang();
 
 #endif

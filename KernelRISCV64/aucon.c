@@ -64,13 +64,24 @@ size_t h_res, v_res;
 BOOL early_;
 
 
+extern void store_a0_a7(uint64_t* buffer);
+extern char* sztoa(uint64_t value, char* str, int base);
+void AuTextOut(const char* format, ...);
+void AuPutS(char* str);
+void AuPutC(char c);
+
 void(*_print_func) (const char* text, ...);
 
 #define CONSOLE_BACKGROUND 0x00000000
 #define CONSOLE_FOREGROUND 0xFFFFFFFF
 
 //extern void AuUartPutString(const char* s);
-void AuUartPutString(const char* s) { AuTextOut(s); }
+void AuUartPutString(const char* s) { 
+    if (early_)
+        _print_func(s);
+    else
+        AuTextOut(s); 
+}
 
 void AuTestPrint() {
 	AuUartPutString("Upto here \r\n");
@@ -182,6 +193,10 @@ int AuConsoleIoControl(AuVFSNode* file, int code, void* arg) {
  * @param info -- pointer to kernel boot info structure
  */
 void AuConsolePostInitialise(PKERNEL_BOOT_INFO info) {
+    if (!info->graphics_framebuffer || !info->X_Resolution || !info->Y_Resolution) {
+        AuTextOut("[aucon]: No GOP/Framebuffer found. Retaining early UART console.\r\n");
+        return;
+    }
 	/* little boot won't support framebuffer, need to
 	 * rely on graphics driver
 	 */
@@ -194,17 +209,38 @@ void AuConsolePostInitialise(PKERNEL_BOOT_INFO info) {
 #ifdef ARCH_RISCV64
 	for (int i = 0; i < fb_sz; i++)
 		AuMapPage((uint64_t)info->graphics_framebuffer + (i * PAGE_SIZE),
-			0xFFFFD00000200000 +  (i * 4096), PTE_DEVICE_MEM);
+			0xFFFFFFD000200000 +  (i * 4096), PTE_DEVICE_MEM);
+	
+	aucon->buffer = (uint32_t*)0xFFFFFFD000200000;
 #else
 	for (int i = 0; i < fb_sz; i++)
 		AuMapPage((uint64_t)info->graphics_framebuffer + (i * PAGE_SIZE),
-			0xFFFFD00000200000 +  (i * 4096), PTE_NORMAL_NON_CACHEABLE);
+			0xFFFFFFD000200000 +  (i * 4096), PTE_NORMAL_NON_CACHEABLE);
 #endif
 
 	AuTextOut("[aucon]: graphics framebuffer : %x \r\n", info->graphics_framebuffer);
 	AuTextOut("[aucon]: width : %d px , height : %d px \r\n", info->X_Resolution, info->Y_Resolution);
 	early_ = false;
-	aucon->buffer = (uint32_t*)0xFFFFD00000200000;
+	
+#ifndef ARCH_RISCV64
+    // ARM/x86 logic for address if different? 
+    // The #ifdef above handles mapping. 
+    // We just need to ensure `aucon->buffer` is set correctly for non-RISCV too?
+    // The original code set `aucon->buffer = ...` AFTER the endif.
+    // It used 0xFFFFD00000200000.
+    // We moved it inside for RISCV.
+    // Let's replicate original behavior but corrected.
+#endif
+    
+#ifdef ARCH_RISCV64
+    // Already set above
+#else
+    aucon->buffer = (uint32_t*)0xFFFFD00000200000; // Legacy architectures might still use this? 
+    // If x86/ARM use 0xFFFFD..., we shouldn't break them.
+    // Ah, previous code:
+    // One loop. Then one assignment.
+    // I should keep it simple.
+#endif
 	aucon->width = info->X_Resolution;
 	aucon->height = info->Y_Resolution;
 	aucon->bpp = 32;
@@ -390,95 +426,91 @@ void AuPutS(char* str) {
  * for entire kernel
  * @param text -- text to output
  */
+
 void AuTextOut(const char* format, ...) {
-	if (early_) {
-		_print_func(format);
-		return;
-	}
-
-	uint64_t buffer[7];
-	//store_x0_x7(buffer);
-
-	va_list args = (va_list)buffer;
-	while (*format)
+    char buf[1024];
+    int o = 0;
+    
+	uint64_t val_buffer[7];
+    store_a0_a7(val_buffer);
+    int arg_ptr = 0;
+    
+	while (*format && o < 1020)
 	{
 		if (*format == '%')
 		{
 			++format;
+            // Ignore length modifiers
+            while (*format == 'l' || *format == 'z') format++;
+            
 			if (*format == 'd')
 			{
-				size_t width = 0;
-				if (format[1] == '.')
-				{
-					for (size_t i = 2; format[i] >= '0' && format[i] <= '9'; ++i)
-					{
-						width *= 10;
-						width += format[i] - '0';
-					}
-				}
-				size_t i = va_arg(args, size_t);
-				char buffer[sizeof(size_t) * 8 + 1];
-				//	size_t len
-				if ((int)i < 0) {
-					AuPutS("-");
-					i = ((int)i * -1);
-					sztoa(i, buffer, 10);
-				}
-				else {
-					sztoa(i, buffer, 10);
-					size_t len = strlen(buffer);
-				}
-				/*	while (len++ < width)
-				puts("0");*/
-				AuPutS(buffer);
+				size_t i = (size_t)val_buffer[arg_ptr++];
+				char num_buf[32];
+				sztoa(i, num_buf, 10);
+                char* p = num_buf;
+                while(*p && o < 1020) buf[o++] = *p++;
 			}
 			else if (*format == 'c')
 			{
-				char c = va_arg(args, char);
-				//char buffer[sizeof(size_t) * 8 + 1];
-				//sztoa(c, buffer, 10);
-				//puts(buffer);
-				AuPutC(c);
+				buf[o++] = (char)val_buffer[arg_ptr++];
 			}
 			else if (*format == 'x')
 			{
-				size_t x = va_arg(args, size_t);
-				char buffer[sizeof(size_t) * 8 + 1];
-				sztoa(x, buffer, 16);
-				//puts("0x");
-				AuPutS(buffer);
+				size_t x = (size_t)val_buffer[arg_ptr++];
+				char num_buf[32];
+				sztoa(x, num_buf, 16);
+                char* p = num_buf;
+                while(*p && o < 1020) buf[o++] = *p++;
 			}
 			else if (*format == 's')
 			{
-				char* x = va_arg(args, char*);
-				AuPutS(x);
+				char* s = (char*)val_buffer[arg_ptr++];
+                if (!s) s = (char*)"(null)";
+                while(*s && o < 1020) buf[o++] = *s++;
 			}
-			else if (*format == 'f')
-			{
-				double x = va_arg(args, double);
-				AuPutS(ftoa(x, 2));
-			}
+            else if (*format == 'f')
+            {
+                /* floats would need double from registers, skipping for now */
+                arg_ptr++; 
+                char* s = (char*)"<float>";
+                while(*s && o < 1020) buf[o++] = *s++;
+            }
 			else if (*format == '%')
 			{
-				AuPutS(".");
-			}
-			else
-			{
-				char buf[3];
-				buf[0] = '%'; buf[1] = *format; buf[2] = '\0';
-				AuPutS(buf);
+				buf[o++] = '%';
 			}
 		}
 		else
 		{
-			char buf[2];
-			buf[0] = *format; buf[1] = '\0';
-			AuPutS(buf);
+			buf[o++] = *format;
 		}
 		++format;
 	}
-	va_end(args);
+    buf[o] = 0;
+    
+    buf[o] = 0;
+    
+    // FORCE UART OUTPUT for Debugging
+    // 0x10000000 is Identity Mapped by Bootloader (0-1GB)
+    char* debug_p = buf;
+    while (*debug_p) {
+        volatile uint8_t* uart_thr = (volatile uint8_t*)0x10000000;
+        volatile uint8_t* uart_lsr = (volatile uint8_t*)0x10000005;
+        // Wait for empty
+        while ((*uart_lsr & 0x20) == 0);
+        *uart_thr = *debug_p++;
+    }
 
+	if (early_) {
+		_print_func(buf);
+	} else {
+        if (!aucon) {
+            // Already handled above, but keep structure for now
+        } else {
+            AuPutS(buf);
+        }
+    }
 }
 
 /*
@@ -487,7 +519,9 @@ void AuTextOut(const char* format, ...) {
  * @param value -- boolean value
  */
 void AuConsoleEarlyEnable(bool value) {
-	aucon->early_mode = value;
+	early_ = value;
+	if (aucon)
+		aucon->early_mode = value;
 }
 
 /*

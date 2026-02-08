@@ -233,7 +233,7 @@ void FontManagerInitialise() {
 	AuVFSNode* fontconf = AuVFSOpen("/ftlst.cnf");
 	if (!fontconf) {
 		AuTextOut("[Aurora]: Font Manager failed to open ftlst.cnf, ftlst.cnf file not found \r\n");
-		for (;;);
+		// for (;;);
 		return;
 	}
 	int num_pages = fontconf->size / PAGE_SIZE;
