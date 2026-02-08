@@ -59,6 +59,12 @@
 
 #define PTE_NORMAL_MEM (PTE_READ | PTE_WRITE)
 #define PTE_DEVICE_MEM (PTE_READ | PTE_WRITE) // TODO: Add Proper Device attributes
+
+#define PHYSICAL_MEM_BASE  0xFFFFFFC000000000
+#define MMIO_BASE          0xFFFFFFD000000000
+
+#define P2V(x) ((x) + PHYSICAL_MEM_BASE)
+#define V2P(x) ((x) - PHYSICAL_MEM_BASE)
 #else
 #define PTE_VALID (1ULL << 0)
 #define PTE_TABLE (1ULL << 1)
@@ -79,8 +85,8 @@
 #define PTE_NORMAL_NON_CACHEABLE  (2ULL << 2)
 #endif
 
-#define PHYSICAL_MEM_BASE  0xFFFF800000000000
-#define MMIO_BASE          0xFFFFFF1000000000
+#define PHYSICAL_MEM_BASE  0xFFFFFFC000000000
+#define MMIO_BASE          0xFFFFFFD000000000
 
 #define PAGE_SHIFT  12
 
@@ -193,7 +199,8 @@ typedef union _au_vpage_ {
 #ifdef __cplusplus
 extern "C" {
 #endif
-extern void AuVmmngrInitialize();
+typedef struct _KERNEL_BOOT_INFO_ KERNEL_BOOT_INFO;
+extern void AuVmmngrInitialize(KERNEL_BOOT_INFO* info);
 
 /*
 * AuVmmngrGetPage -- Returns virtual page from virtual address

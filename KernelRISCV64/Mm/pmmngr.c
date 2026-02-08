@@ -165,6 +165,14 @@ void AuPmmngrInitialize(KERNEL_BOOT_INFO* info) {
 	void* BitmapArea = 0;
 	bool print = 0;
 	
+    AuTextOut("[PMM] Checking info pointer... \r\n");
+    if (!info) {
+        AuTextOut("[PMM] Info pointer is NULL! \r\n");
+        for(;;);
+    }
+    AuTextOut("[PMM] info: %x, map: %x, size: %d, desc_sz: %d \r\n", 
+        (uint64_t)info, (uint64_t)info->map, info->mem_map_size, info->descriptor_size);
+
 	if (info->boot_type != BOOT_LITTLEBOOT_ARM64) {
 		MemMapEntries = info->mem_map_size / info->descriptor_size;
 		/* Scan a suitable area for the bitmap */
@@ -373,23 +381,27 @@ void AuPmmngrFreeBlocks(void* Addr, int Count) {
  * P2V -- Physical to Virtual conversion
  * @param addr -- Address to convert
  */
-uint64_t P2V(uint64_t addr) {
+/*
+ * P2V -- Physical to Virtual conversion
+ * @param addr -- Address to convert
+ */
+/*uint64_t P2V(uint64_t addr) {
 	if (_HigherHalf)
 		return (PHYSICAL_MEM_BASE + addr);
 	else
 		return addr;
-}
+}*/
 
 /*
  * V2P -- Virtual to Physical conversion
  * @param vaddr -- Address to convert
  */
-uint64_t V2P(uint64_t vaddr) {
+/*uint64_t V2P(uint64_t vaddr) {
 	if (_HigherHalf)
 		return (vaddr - PHYSICAL_MEM_BASE);
 	else
 		return vaddr;
-}
+}*/
 
 /*
 * AuPmmngrMoveHigher -- moves the kernel to higher half

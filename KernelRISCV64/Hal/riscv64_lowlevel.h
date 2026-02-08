@@ -30,12 +30,17 @@ uint64_t read_sepc();
 void write_sepc(uint64_t val);
 uint64_t read_sscratch();
 void write_sscratch(uint64_t val);
+uint64_t read_time();
 
 void sfence_vma();
 void enable_irq();
 void disable_irq();
 
 void arch_context_switch(void* prev_rsp_addr, void* next_rsp);
+
+/* User mode switching */
+void arch_enter_user(uint64_t user_stack, uint64_t user_entry);
+void riscv64_resume_user(void* thread);
 
 void _hang();
 

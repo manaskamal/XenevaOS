@@ -624,26 +624,9 @@ int liballoc_unlock() {
 
 
 void* liballoc_alloc(int pages) {
-	size_t size = pages * 4096;
-	char* page = (char*)AuPmmngrAlloc();
-	uint64_t page_ = (uint64_t)page;
-	for (size_t i = 0; i < pages; i++) {
-		void* p = AuPmmngrAlloc();
-		AuMapPage((uint64_t)p, page_ + i * 4096, PTE_READ | PTE_WRITE);
-	}
-	memset(page, 0, pages * PAGE_SIZE);
-
-	/*if (isSyscall()) {
-		AuTextOut("LibAlloc : %x \n", page);
-		return;
-	}*/
-	//AuTextOut("New page allocated %x %d\n", page, pages);
-	if ((page_ % PAGE_SIZE) != 0) {
-		//AuTextOut("Request page not aligned to page boundary \r\n");
-		for (;;);
-	}
-	isb_flush();
-	return page;
+	void* p = AuPmmngrAllocBlocks(pages);
+    void* ptr = (void*)P2V((uint64_t)p);
+    return ptr;
 }
 
 int liballoc_free(void* ptr, int pages) {

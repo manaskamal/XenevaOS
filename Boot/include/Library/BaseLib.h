@@ -128,6 +128,39 @@ typedef struct {
 
 #endif  // defined (MDE_CPU_AARCH64)
 
+#if defined (MDE_CPU_RISCV64)
+typedef struct {
+  UINT64    Ra;
+  UINT64    S0;
+  UINT64    S1;
+  UINT64    S2;
+  UINT64    S3;
+  UINT64    S4;
+  UINT64    S5;
+  UINT64    S6;
+  UINT64    S7;
+  UINT64    S8;
+  UINT64    S9;
+  UINT64    S10;
+  UINT64    S11;
+  UINT64    Sp;
+  UINT64    FS0;
+  UINT64    FS1;
+  UINT64    FS2;
+  UINT64    FS3;
+  UINT64    FS4;
+  UINT64    FS5;
+  UINT64    FS6;
+  UINT64    FS7;
+  UINT64    FS8;
+  UINT64    FS9;
+  UINT64    FS10;
+  UINT64    FS11;
+} BASE_LIBRARY_JUMP_BUFFER;
+
+#define BASE_LIBRARY_JUMP_BUFFER_ALIGNMENT 8
+#endif // defined (MDE_CPU_RISCV64)
+
 
 //
 // String Services

@@ -111,6 +111,9 @@ typedef struct _au_thread_ {
     void* returnableSignal;
     AuUserEntry *uentry;
     void* procSlot;
+    uint64_t pml;           /* Page table root (SATP value) */
+    uint64_t sleepQuanta;   /* Sleep counter for timed sleep */
+    uint64_t originalKSp;   /* Original kernel stack pointer */
     struct _au_thread_ *next;
     struct _au_thread_ *prev;
 } AuThread;
@@ -132,6 +135,6 @@ AU_EXTERN AU_EXPORT AuThread* AuThreadFindByIDBlockList(uint16_t id);
 AU_EXTERN AU_EXPORT void AuForceScheduler();
 AU_EXTERN AU_EXPORT bool AuIsSchedulerInitialised();
 AU_EXTERN AU_EXPORT uint64_t AuGetSystemTimerTick();
-AU_EXTERN AU_EXPORT void AuScheduleThread(AuThread* thread);
+AU_EXTERN AU_EXPORT uint64_t AuScheduleThread(uint64_t stack_frame);
 
 #endif

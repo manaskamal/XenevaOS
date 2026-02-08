@@ -47,7 +47,8 @@
 #include <ftmngr.h>
 
 
-#define LOADER_SCRATCH_VIRT 0xFFFFC00000700000
+// Fixed: Was 0xFFFFC00000700000 (Non-Canonical), now canonical Sv39
+#define LOADER_SCRATCH_VIRT 0xFFFFFFC000700000
 
 uint64_t* _ldr_scratchBuffer;
 uint64_t physFrames[64];
@@ -124,10 +125,7 @@ void AuProcessEntUser(uint64_t rcx) {
 	PUSHALIGN(uentry->sp, 16);
 	AuTextOut("Entering user %x %x\r\n", uentry->sp,uentry->entrypoint);
 #ifdef ARCH_RISCV64
-	// arch_enter_user(uentry->sp, uentry->entrypoint); // Need implement
-	// For now, infinite loop to verify build, or find proper function
-	AuTextOut("RISC-V User Entry not yet implemented fully call \r\n");
-	// asm volatile("mv sp, %0; jr %1" :: "r"(uentry->sp), "r"(uentry->entrypoint));
+	arch_enter_user(uentry->sp, uentry->entrypoint);
 #else
 	aa64_enter_user(uentry->sp, uentry->entrypoint);
 #endif

@@ -46,13 +46,7 @@ typedef struct _XEFILE_ {
  * @param ImageHandle -- Image handle passed by EFI firmware
  * @param Filename -- name and path of the file
  */
-extern XEFile* XEOpenAndReadFile(EFI_HANDLE ImageHandle, CHAR16* Filename);
-
-/*
- * XECloseFile -- Close an opened file
- * it just free up the buffer allocated
- * @param file -- Pointer to the file buffer
- */
-extern VOID XECloseFile(XEFile* file);
+extern XEFile* XEOpenAndReadFile(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable, CHAR16* Filename);
+extern VOID XECloseFile(EFI_SYSTEM_TABLE* SystemTable, XEFile* file);
 
 #endif

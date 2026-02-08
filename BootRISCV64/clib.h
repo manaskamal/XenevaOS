@@ -61,6 +61,30 @@ extern "C"
 }
 #endif
 
+// Simple UART helper for debugging
+static inline void uart_putc(char c) {
+    volatile uint8_t* uart = (volatile uint8_t*)0x10000000;
+    while ((uart[5] & 0x20) == 0);
+    uart[0] = c;
+}
+
+static inline void uart_puts(const char* s) {
+    while (*s) uart_putc(*s++);
+}
+
+static inline void uart_puts_w(const wchar_t* s) {
+    while (*s) {
+        char c = (char)(*s & 0xFF);
+        if (c == 0) break;
+        uart_putc(c);
+        s++;
+    }
+}
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 extern void memset(void* targ, uint8_t val, uint32_t len);
 extern void memcpy(void* targ, void* src, uint32_t len);
@@ -73,6 +97,9 @@ extern int is_digit(int c);
 extern char* sztoa(size_t value, char* str, int base);
 extern size_t strlen(const char* s);
 extern void ASCIIToChar16(char* src, wchar_t* dst);
+#ifdef __cplusplus
+}
+#endif
 #endif
 
 

@@ -1,4 +1,34 @@
 .section .text
+
+.global _start
+.option norvc
+.balign 4
+_start:
+    /*
+     * PE/UEFI Entry Point
+     * 
+     * For a "Fake PE" image loaded by UEFI:
+     * - The UEFI loader has already performed base relocations using the .reloc section
+     * - No ELF-style _dynamic processing is needed
+     * - Arguments are already set up per UEFI calling convention:
+     *   a0 = EFI_HANDLE ImageHandle
+     *   a1 = EFI_SYSTEM_TABLE* SystemTable
+     */
+    
+    /* Uncomment the following line to hang on entry (for debugging) */
+    /* j . */
+    
+    /* Call efi_main(ImageHandle, SystemTable) */
+    /* a0 and a1 are already set by UEFI firmware */
+    /* Call efi_main(ImageHandle, SystemTable) */
+    /* a0 and a1 are already set by UEFI firmware */
+    .extern efi_main
+    call efi_main
+    
+    /* efi_main should not return, but if it does, halt the CPU */
+    wfi
+    j .
+    
 .global callKernel
 .global _getCurrentEL
 .global read_satp
@@ -47,40 +77,6 @@ callKernel:
 
 // void store_a0_a7(uint64_t* buffer)
 store_a0_a7:
-    sd a0, 0(a0) // This is wrong! a0 is the address. We want to store a0..a7 contents into the buffer pointed to by a0.
-    // But wait, if we call this function, a0 holds the pointer. The arguments we want to save (a0..a7) are overwritten?
-    // In ARM64 version `store_x0_x7` takes x0 as pointer?
-    // In ARM64 `store_x0_x7` does:
-    // str x1, [x0, #0]
-    // str x2, [x0, #8]
-    // ...
-    // So it saves x1..x7 into buffer pointed by x0. The first argument (x0) itself is not saved (or rather, it's the buffer pointer).
-    // The `XEUARTPrint` calls `store_x0_x7(buffer)`.
-    // The arguments to `XEUARTPrint` are in x0 (fmt), x1...
-    // Wait, `XEUARTPrint` has signature `void XEUARTPrint(const char* format, ...)`.
-    // So `format` is in x0 (ARM64) / a0 (RISC-V).
-    // The varargs start from x1 / a1.
-    // So `store_x0_x7(buffer)` would clobber x0?
-    // In `uart0.cpp`:
-    // void XEUARTPrint(const char* format, ...) {
-    //    uint64_t buffer[7];
-    //    store_x0_x7(buffer);
-    //
-    // If `store_x0_x7` uses x0 as base register, it must be preserving it or arguments are passed differently?
-    // No, `XEUARTPrint` receives `format` in x0.
-    // It allocates buffer on stack.
-    // Calls `store_x0_x7(buffer)`. Now x0 holds `buffer` address.
-    // The original `format` pointer is lost from x0!
-    // But `format` is likely saved in a callee-saved register or on stack by the prologue of `XEUARTPrint`?
-    // No, `XEUARTPrint` is C++. The compiler generates prologue.
-    // If we call a function, it clobbers argument registers.
-    // The `store_x0_x7` hack relies on the fact that `XEUARTPrint` doesn't consume varargs registers yet.
-    // BUT `store_x0_x7` takes one argument (buffer), so it overwrites x0/a0.
-    // So we can only save x1..x7/a1..a7.
-    // And `valist` logic in `XEUARTPrint` accesses `buffer`.
-    
-    // Implementation for RISC-V:
-    // Save a1..a7 into buffer pointed by a0.
     sd a1, 0(a0)
     sd a2, 8(a0)
     sd a3, 16(a0)
@@ -90,7 +86,24 @@ store_a0_a7:
     sd a7, 48(a0)
     ret
 
+.global get_xequi_print_addr
+// uint64_t get_xequi_print_addr()
+get_xequi_print_addr:
+    lla a0, XEGuiPrint
+    ret
+
 .global _hang
 _hang:
     wfi
     j _hang
+
+// Cache Maintenance Stubs for RISC-V 64
+.global cleandcache_to_pou_by_va
+cleandcache_to_pou_by_va:
+    fence
+    ret
+
+.global invalidate_icache_by_va
+invalidate_icache_by_va:
+    fence.i
+    ret

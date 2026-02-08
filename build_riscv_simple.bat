@@ -21,6 +21,7 @@ if exist "%LLVM_STD_X86%\clang.exe" (
     set "CLANG=%LLVM_STD_X86%\clang.exe"
     set "LLD=%LLVM_STD_X86%\ld.lld.exe"
     set "OBJCOPY=%LLVM_STD_X86%\llvm-objcopy.exe"
+    set "OBJCOPY=%LLVM_STD_X86%\llvm-objcopy.exe"
     goto :found_clang
 )
 
@@ -32,9 +33,10 @@ echo [Setup] Using Clang: !CLANG!
 echo [Setup] Using LLD: !LLD!
 
 REM --- FLAGS CONFIGURATION (ELF) ---
+REM --- FLAGS CONFIGURATION (UEFI PE) ---
 set "TARGET=riscv64-unknown-elf"
-set "COMMON_FLAGS=--target=!TARGET! -march=rv64imac -mno-relax -Wno-unused-command-line-argument -ffreestanding -fno-stack-protector -fshort-wchar -DARCH_RISCV64 -D__TARGET_BOARD_RISCV_VIRT__"
-set "INCLUDES=-I..\BaseHdr -I..\Boot\include -I..\Boot\include\AArch64"
+set "COMMON_FLAGS=--target=!TARGET! -march=rv64imac -mno-relax -Wno-unused-command-line-argument -ffreestanding -fno-stack-protector -fshort-wchar -fno-pic -fno-pie -mcmodel=medany -DARCH_RISCV64 -D__TARGET_BOARD_RISCV_VIRT__"
+set "INCLUDES=-I..\BaseHdr -I..\Boot\include -I..\Boot\include\RiscV64"
 set "DEFINES=-D_VCRUNTIME_H_ -D_NO_CRT_STDIO_INLINE -D_CRT_SECURE_NO_WARNINGS"
 set "FLAGS=!COMMON_FLAGS! !INCLUDES! !DEFINES!"
 
@@ -67,42 +69,27 @@ if %errorlevel% neq 0 goto :error
 if %errorlevel% neq 0 goto :error
 "!CLANG!" !FLAGS! -c clib.cpp -o clib.obj
 if %errorlevel% neq 0 goto :error
-"!CLANG!" !FLAGS! -c lowlevel.s -o lowlevel.obj
+"!CLANG!" !FLAGS! -x assembler-with-cpp -c lowlevel.s -o lowlevel.obj
 if %errorlevel% neq 0 goto :error
 
-echo [XenevaOS] Linking Bootloader (ELF)...
-REM Link as an EFI application (PE) is tricky with ld.lld.
-REM We will try to rely on LLD's PE support if checking flavor.
-REM But lld-link rejected inputs.
-REM So we link as ELF shared object, then objcopy?
-REM No, UEFI requires PE/COFF.
-REM Plan B: Use standard Linker Script logic to create a PE-like layout in ELF and then objcopy?
-REM EASIER: Clang can OUTPUT PE if we force it hard enough?
-REM TRY: -target riscv64-unknown-windows-msvc (no pc)
-REM But user said that failed.
-REM Let's just try linking ELF and leave it as ELF for now to see if it BUILDs.
-REM User can't boot ELF.
-REM wait.
-REM "lld-link" accepts ELF if they are LTO? No.
-REM
-REM LINK AS ELF:
-"!LLD!" -nostdlib -z max-page-size=4096 --entry=efi_main --image-base=0x00100000 -o ..\%OUT_DIR%\BOOT\BOOTRISCV64.elf *.obj
+"!CLANG!" !FLAGS! -x assembler-with-cpp -c pe_header.s -o pe_header.obj
 if %errorlevel% neq 0 goto :error
 
-echo [XenevaOS] Converting to PE...
-REM Attempt to convert ELF to PE.
-REM WARNING: This is experimental. If objcopy doesn't support PE output for RISCV, this fails.
-"!OBJCOPY!" -O binary ..\%OUT_DIR%\BOOT\BOOTRISCV64.elf ..\%OUT_DIR%\BOOT\BOOTRISCV64.efi
-REM Binary is NOT EFI. It is raw code.
-REM But for "StandAlone" checking, getting a success build is step 1.
-REM We really need a PE wrapper.
-REM However, let's see if this compiles first.
+"!CLANG!" !FLAGS! -x assembler-with-cpp -c reloc.s -o reloc.obj
+if %errorlevel% neq 0 goto :error
+
+"!LLD!" -flavor gnu -T efi.ld -shared -z notext -Bsymbolic -o ..\%OUT_DIR%\BOOT\BOOTRISCV64.elf pe_header.obj lowlevel.obj xnldr.obj video.obj xnout.obj clib.obj reloc.obj file.obj mem.obj paging.obj uart0.obj pe.obj physm.obj
+if %errorlevel% neq 0 goto :error
+
+echo [XenevaOS] Converting to EFI...
+"!OBJCOPY!" -O binary --only-section=.peheader --only-section=.text --only-section=.data --only-section=.reloc ..\%OUT_DIR%\BOOT\BOOTRISCV64.elf ..\%OUT_DIR%\BOOT\BOOTRISCV64.efi
+if %errorlevel% neq 0 goto :error
 cd ..
 
 REM --- BUILD KERNEL ---
 echo [XenevaOS] Building Kernel (KernelRISCV64)...
 set "KINCLUDES=-I..\BaseHdr -I..\Acpica\include -I..\Acpica"
-set "KFLAGS=!COMMON_FLAGS! !KINCLUDES! !DEFINES! -mcmodel=medany -D_USE_LIBALLOC -D__STDC_LIMIT_MACROS"
+set "KFLAGS=!COMMON_FLAGS! !KINCLUDES! !DEFINES! -mcmodel=medany -D_USE_LIBALLOC -D__STDC_LIMIT_MACROS -fno-asynchronous-unwind-tables -fno-unwind-tables"
 
 cd KernelRISCV64
 if exist *.obj del *.obj
@@ -111,7 +98,11 @@ if exist *.obj del *.obj
 if %errorlevel% neq 0 goto :error
 "!CLANG!" !KFLAGS! -c Hal\riscv64_hal.cpp -o riscv64_hal.obj
 if %errorlevel% neq 0 goto :error
+"!CLANG!" !KFLAGS! -c Hal\sbi.c -o sbi.obj
+if %errorlevel% neq 0 goto :error
 "!CLANG!" !KFLAGS! -c Hal\riscv64_sched.c -o riscv64_sched.obj
+if %errorlevel% neq 0 goto :error
+"!CLANG!" !KFLAGS! -c Hal\plic.c -o plic.obj
 if %errorlevel% neq 0 goto :error
 "!CLANG!" !KFLAGS! -c Mm\riscv64_paging.cpp -o riscv64_paging.obj
 if %errorlevel% neq 0 goto :error
@@ -173,12 +164,20 @@ if %errorlevel% neq 0 goto :error
 "!CLANG!" !KFLAGS! -c pe.c -o pe.obj
 if %errorlevel% neq 0 goto :error
 
-echo [XenevaOS] Linking Kernel...
-"!LLD!" -nostdlib -z max-page-size=4096 --entry=_AuMain --image-base=0xFFFFFFC000000000 -o ..\%OUT_DIR%\XENEVA\xnkrnl.elf *.obj
+"!CLANG!" !KFLAGS! -c pe_header_kernel.s -o kernel_header.obj
 if %errorlevel% neq 0 goto :error
 
-echo [XenevaOS] Converting Kernel...
-"!OBJCOPY!" -O binary ..\%OUT_DIR%\XENEVA\xnkrnl.elf ..\%OUT_DIR%\XENEVA\xnkrnl.exe
+echo [XenevaOS] Linking Kernel (Fake PE)...
+"!LLD!" -flavor gnu -T kernel.ld -o ..\%OUT_DIR%\XENEVA\xnkrnl.elf kernel_header.obj init.obj riscv64_hal.obj sbi.obj plic.obj riscv64_sched.obj riscv64_paging.obj pmmngr.obj kmalloc.obj liballoc.obj shm.obj mmap.obj vma.obj riscv64_lowlevel.obj list.obj process.obj string.obj stdio.obj aucon.obj audrv.obj circbuf.obj ctype.obj dtb.obj ftmngr.obj loader.obj pcie.obj vfs.obj initrd.obj tty.obj devfs.obj vdisk.obj pipe.obj Fat.obj postbox.obj pe.obj
+if %errorlevel% neq 0 goto :error
+
+echo [XenevaOS] Converting Kernel to PE...
+"!OBJCOPY!" -O binary --only-section=.peheader --only-section=.text --only-section=.data --only-section=.reloc ..\%OUT_DIR%\XENEVA\xnkrnl.elf ..\%OUT_DIR%\XENEVA\xnkrnl.exe
+if %errorlevel% neq 0 goto :error
+copy ..\initrd.img ..\%OUT_DIR%\XENEVA\INITRD.IMG
+
+REM echo [XenevaOS] Converting Kernel...
+REM "!OBJCOPY!" -O binary ..\%OUT_DIR%\XENEVA\xnkrnl.elf ..\%OUT_DIR%\XENEVA\xnkrnl.exe
 cd ..
 
 echo [XenevaOS] Build Success!

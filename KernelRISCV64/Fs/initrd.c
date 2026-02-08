@@ -102,22 +102,19 @@ void AuInitrdInitialize(KERNEL_BOOT_INFO* info) {
 		ramdisk_end = P2V(lb->initrd_end);
 	}
 	else {
-		/* NOTE: Ramdisk is loaded by bootloader itself into EfiBootServiceData,
-		 * memory areas other than EfiConventionalMemory area locaked by Physical
-		 * memory manager during Kernel memory initialization phase, which is safe
-		 * and will not get overwritten in future. We simply use P2V means converting
-		 * the ramdisk physical memory to Higher half linear mapping, which is done
-		 * during virtual memory manager initialization phase. EfiBootServiceData memories
-		 * are all identity mapped, so everything is all set.
-		 */
+		/* UEFI path */
 		ramdisk_start = P2V((uint64_t)info->driver_entry1);
 		ramdisk_end = ramdisk_start + (info->hid - 1);
 	}
 
 	if (ramdisk_start == 0) {
-		AuTextOut("[aurora]: ramdisk failed to initialize \r\n");
+		AuTextOut("[aurora]: ramdisk failed to initialize (Start is 0)\r\n");
 		return;
 	}
+    
+    if (info->driver_entry1 == 0) {
+        AuTextOut("[aurora]: ramdisk failed: driver_entry1 is NULL \r\n");
+    }
 	/* okay before full initialization, we need to grab all the
 	 * physical address from the ramdisk pointer and map it to
 	 * kernel higher half address

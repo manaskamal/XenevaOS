@@ -35,44 +35,17 @@
 #include <Guid/FileInfo.h>
 #include "lowlevel.h"
 
-EFI_GUID FileSystemProtocol = {
-	0x964E5B22,
-	0x6459,
-	0x11D2,
-	{
-		0x8E, 0x39, 0x00, 0xA0, 0xC9, 0x69, 0x72, 0x3B
-	}
-};
+// GUIDs commented out to move to local scope
+/*
+EFI_GUID FileSystemProtocol = { ... };
+EFI_GUID LoadFileProtocol = { ... };
+EFI_GUID GenericFileInfo = { ... };
+*/
 
-EFI_GUID LoadFileProtocol = {
-	0x56EC3091,
-	0x954C,
-	0x11D2,
-	{
-		0x8E, 0x3F, 0x00, 0xA0, 0xC9, 0x69, 0x72, 0x3B
-	}
-};
-
-
-EFI_GUID GenericFileInfo = {
-	0x9576E92,
-	0x6D3F,
-	0x11D2,
-	{
-		0x8E, 0x39, 0x00, 0xA0, 0xC9, 0x69, 0x72, 0x3B
-	}
-};
-
-#define EFI_FILE_SYSTEM_INFO_ID \
-{0x9576e93, 0x6d3f, 0x11d2, {0x8e, 0x39, 0x0, 0xa0, 0xc9, 0x69, 0x72, 0x3b }}
 
 
 void cleandcache_to_pou_by_va(size_t va_start, UINTN size) {
     // RISC-V Cache Management
-    // For standard compliance on platforms without Zicbom, FENCE is usually sufficient 
-    // to order writes before I-cache flush.
-    // Ideally we would use CBO.CLEAN if available.
-    // For QEMU virt:
     asm volatile("fence rw,rw" ::: "memory");
 }
 
@@ -86,10 +59,21 @@ void invalidate_icache_by_va(size_t va_start, UINTN size) {
  * @param ImageHandle -- Image handle passed by EFI firmware
  * @param Filename -- name and path of the file
  */
-XEFile* XEOpenAndReadFile(EFI_HANDLE ImageHandle, CHAR16* Filename) {
+XEFile* XEOpenAndReadFile(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable, CHAR16* Filename) {
 	EFI_STATUS Status;
 	EFI_SIMPLE_FILE_SYSTEM_PROTOCOL* SimpleFileSystem;
-	EFI_GUID loadedImageProtocol = EFI_LOADED_IMAGE_PROTOCOL_GUID;
+	
+    // Define GUIDs manually to be 100% sure
+    EFI_GUID loadedImageProtocol = {0x5B1B31A1, 0x9562, 0x11D2, {0x8E, 0x3F, 0x00, 0xA0, 0xC9, 0x69, 0x72, 0x3B}};
+    EFI_GUID sfsprotocol = {0x964E5B22, 0x6459, 0x11D2, {0x8E, 0x39, 0x00, 0xA0, 0xC9, 0x69, 0x72, 0x3B}};
+    
+    // EFI_GUID loadedImageProtocol = EFI_LOADED_IMAGE_PROTOCOL_GUID;
+	// EFI_GUID sfsprotocol = EFI_SIMPLE_FILE_SYSTEM_PROTOCOL_GUID;
+    EFI_GUID GenericFileInfo = {
+    	0x9576E92, 0x6D3F, 0x11D2,
+    	{ 0x8E, 0x39, 0x00, 0xA0, 0xC9, 0x69, 0x72, 0x3B }
+    };
+
 	EFI_LOADED_IMAGE* loadedImage;
 	EFI_FILE_PROTOCOL* Root;
 	EFI_FILE_PROTOCOL* File;
@@ -99,58 +83,73 @@ XEFile* XEOpenAndReadFile(EFI_HANDLE ImageHandle, CHAR16* Filename) {
 	EFI_PHYSICAL_ADDRESS Buffer;
 	XEFile* xefile;
 
-	EFI_GUID sfsprotocol = EFI_SIMPLE_FILE_SYSTEM_PROTOCOL_GUID;
-
-	Status = gBS->HandleProtocol(ImageHandle, &loadedImageProtocol, (void**)&loadedImage);
+	Status = SystemTable->BootServices->HandleProtocol(ImageHandle, &loadedImageProtocol, (void**)&loadedImage);
 	if (EFI_ERROR(Status)) {
-		XEGuiPrint("Failed to locate image handle \n");
+		XEPrintf(SystemTable, const_cast<wchar_t*>(L"Failed to locate image handle \n"));
 		return 0;
 	}
 
 
-	Status = gBS->HandleProtocol(loadedImage->DeviceHandle, &sfsprotocol, (VOID**)&SimpleFileSystem);
-	if (EFI_ERROR(Status)) {
-		XEGuiPrint("Failed to locate file system protocol \n");
+
+	Status = SystemTable->BootServices->HandleProtocol(loadedImage->DeviceHandle, &sfsprotocol, (VOID**)&SimpleFileSystem);
+	if (EFI_ERROR(Status) || !SimpleFileSystem) {
+		XEPrintf(SystemTable, const_cast<wchar_t*>(L"Failed to locate file system protocol \n"));
 		return 0;
 	}
+    // XEPrintf(SystemTable, const_cast<wchar_t*>(L"[DBG] SFS: 0x%x\r\n"), SimpleFileSystem);
 
 	Status = SimpleFileSystem->OpenVolume(SimpleFileSystem, &Root);
-	if (EFI_ERROR(Status)) {
-		XEGuiPrint("Failed to open the root directory \n");
+	if (EFI_ERROR(Status) || !Root) {
+		XEPrintf(SystemTable, const_cast<wchar_t*>(L"Failed to open the root directory \n"));
 		return 0;
 	}
+    
+    // Debug Root Pointer
+    // Cast to uint64_t for printing
+    XEPrintf(SystemTable, const_cast<wchar_t*>(L"[DBG] Root: 0x%x\r\n"), (uint64_t)Root);
+
+    XEPrintf(SystemTable, const_cast<wchar_t*>(L"[File] Opening File...\r\n"));
+    if (!Root->Open) {
+        XEPrintf(SystemTable, const_cast<wchar_t*>(L"Error: Root->Open is NULL!\r\n"));
+        return 0;
+    }
+
 
 	Status = Root->Open(Root, &File, Filename, EFI_FILE_MODE_READ, 0);
 	if (EFI_ERROR(Status)) {
-		XEGuiPrint("Failed to open file \n");
+		XEPrintf(SystemTable, const_cast<wchar_t*>(L"Failed to open file \n"));
 		return 0;
 	}
 
+
+    XEPrintf(SystemTable, const_cast<wchar_t*>(L"[File] Getting Info Size...\r\n"));
 	Status = File->GetInfo(File, &GenericFileInfo, &FileInfoSize, NULL);
 	if (Status == EFI_BUFFER_TOO_SMALL) {
-		Status = gBS->AllocatePool(EfiBootServicesData, FileInfoSize, (VOID**)&FileInfo);
+		Status = SystemTable->BootServices->AllocatePool(EfiBootServicesData, FileInfoSize, (VOID**)&FileInfo);
 		if (EFI_ERROR(Status)) {
-			XEGuiPrint("Failed to allocate buffer for file metadata \n");
+			XEPrintf(SystemTable, const_cast<wchar_t*>(L"Failed to allocate buffer for file metadata \n"));
 			File->Close(File);
 			return 0;
 		}
 	}
 
+    XEPrintf(SystemTable, const_cast<wchar_t*>(L"[File] Getting Info Data...\r\n"));
 	Status = File->GetInfo(File, &GenericFileInfo, &FileInfoSize, FileInfo);
 	if (EFI_ERROR(Status)) {
-		XEGuiPrint("Failed to get file metadata \n");
-		gBS->FreePool(FileInfo);
+		XEPrintf(SystemTable, const_cast<wchar_t*>(L"Failed to get file metadata \n"));
+		SystemTable->BootServices->FreePool(FileInfo);
 		File->Close(File);
 		return 0;
 	}
 
 	FileSize = FileInfo->FileSize;
-	gBS->FreePool(FileInfo);
+	SystemTable->BootServices->FreePool(FileInfo);
 
+    XEPrintf(SystemTable, const_cast<wchar_t*>(L"[File] Reading Content...\r\n"));
 	//Status = gBS->AllocatePool(EfiBootServicesData, FileSize + 1, &Buffer);
-	Status = gBS->AllocatePages(AllocateAnyPages, EfiLoaderData, (FileSize + 1)/0x1000 + 1, &Buffer);
+	Status = SystemTable->BootServices->AllocatePages(AllocateAnyPages, EfiLoaderData, (FileSize + 1)/0x1000 + 1, &Buffer);
 	if (EFI_ERROR(Status)) {
-		XEGuiPrint("Failed to allocate buffer for file content \n");
+		XEPrintf(SystemTable, const_cast<wchar_t*>(L"Failed to allocate buffer for file content \n"));
 		File->Close(File);
 		return 0;
 	}
@@ -158,14 +157,14 @@ XEFile* XEOpenAndReadFile(EFI_HANDLE ImageHandle, CHAR16* Filename) {
 	void* readBuff = (void*)Buffer;
 	Status = File->Read(File, &FileSize, readBuff);
 	if (EFI_ERROR(Status)) {
-		XEGuiPrint("Failed to read file \n");
+		XEPrintf(SystemTable, const_cast<wchar_t*>(L"Failed to read file \n"));
 		File->Close(File);
 		return 0;
 	}
 
-	xefile = (XEFile*)XEAllocatePool(sizeof(XEFile));
+	xefile = (XEFile*)XEAllocatePool(SystemTable, sizeof(XEFile));
 	if (!xefile) {
-		XEGuiPrint("Failed to allocate file data structure \n");
+		XEPrintf(SystemTable, const_cast<wchar_t*>(L"Failed to allocate file data structure \n"));
 		File->Close(File);
 		return 0;
 	}
@@ -189,7 +188,7 @@ XEFile* XEOpenAndReadFile(EFI_HANDLE ImageHandle, CHAR16* Filename) {
  * it just free up the buffer allocated
  * @param file -- Pointer to the file structure
  */
-VOID XECloseFile(XEFile* file) {
-	gBS->FreePool(file->kBuffer);
-	XEFreePool(file);
+VOID XECloseFile(EFI_SYSTEM_TABLE* SystemTable, XEFile* file) {
+	SystemTable->BootServices->FreePool(file->kBuffer);
+	XEFreePool(SystemTable, file);
 }

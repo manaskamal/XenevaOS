@@ -70,16 +70,14 @@ AU_EXTERN AU_EXPORT void AuPmmngrFree(void* Address);
 AU_EXTERN AU_EXPORT void AuPmmngrFreeBlocks(void* Addr, int Count);
 
 /*
-* P2V -- Physical to Virtual conversion
-* @param addr -- Address to convert
-*/
-AU_EXTERN AU_EXPORT uint64_t P2V(uint64_t addr);
+ * P2V -- Physical to Virtual
+ */
+//AU_EXTERN AU_EXPORT uint64_t P2V(uint64_t addr);
 
 /*
-* V2P -- Virtual to Physical conversion
-* @param vaddr -- Address to convert
-*/
-AU_EXTERN AU_EXPORT uint64_t V2P(uint64_t vaddr);
+ * V2P -- Virtual to Physical
+ */
+//AU_EXTERN AU_EXPORT uint64_t V2P(uint64_t vaddr);
 
 /*
 * AuPmmngrMoveHigher -- moves the kernel to higher half

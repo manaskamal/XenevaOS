@@ -52,51 +52,79 @@ static void zero_mem(void* dst, size_t length) {
  * XEPELoadImage -- loads PE image into virtual address
  * @param filebuff -- pointer to the pe kernel buffer
  */
-void XEPELoadImage(void* filebuff) {
-	//XEPrintf(const_cast<wchar_t*>(L"Loading kernel file .... \r\n"));
-	//XEUARTPrint("PELoading image \r\n");
+/*
+ * XEPELoadImage -- loads PE image into virtual address
+ * @param filebuff -- pointer to the pe kernel buffer
+ * @param imageBase -- virtual base address to map to
+ */
+void XEPELoadImage(void* filebuff, uint64_t imageBase) {
 	uint8_t* filebuf = (uint8_t*)filebuff;
 
 	PIMAGE_DOS_HEADER dosHeader = (PIMAGE_DOS_HEADER)filebuf;
 	PIMAGE_NT_HEADERS ntHeaders = raw_offset<PIMAGE_NT_HEADERS>(dosHeader, dosHeader->e_lfanew);
-	//XEUARTPrint("DOS Header -> %x \r\n", dosHeader->e_magic);
-	//XEUARTPrint("NT Headers -> %x \r\n", ntHeaders->Signature);
+	
+    XEUARTPrint("XEPELoadImage: ImageBase from header: %x\n", ntHeaders->OptionalHeader.ImageBase);
+    XEUARTPrint("XEPELoadImage: Passed ImageBase: %x\n", imageBase);
 
 	PSECTION_HEADER sectionHeader = raw_offset<PSECTION_HEADER>(&ntHeaders->OptionalHeader, ntHeaders->FileHeader.SizeOfOptionaHeader);
-	size_t ImageBase = 0x8000000000; //0xFFFFC00000000000;// 0xFFFFFFFC00000000;
-	void* ImBase = (void*)ImageBase;
-
-	paddr_t phys = XEPmmngrAllocate();
-
-	XEPagingMap(0x8000000000, phys);
 	
-	copy_mem((void*)ImBase, filebuf, ntHeaders->OptionalHeader.SizeOfHeaders);
-	
+    // Note: We don't need to allocate a contiguous block for the whole image because we map page-by-page.
+    // However, we MUST map the headers to the ImageBase first.
+    
+    // 1. Map Headers
+    // Headers size aligned to Page Size
+    size_t headerSize = ntHeaders->OptionalHeader.SizeOfHeaders;
+    int headerPages = headerSize / PAGESIZE + ((headerSize % PAGESIZE) ? 1 : 0);
+    
+    for(int i=0; i<headerPages; ++i) {
+        uint64_t vAddr = imageBase + i * PAGESIZE;
+        uint64_t pAddr = XEPmmngrAllocate();
+        XEUARTPrint("XEPELoadImage: Mapping Header page %d: %x -> %x\n", i, vAddr, pAddr);
+        XEPagingMap(vAddr, pAddr);
+        
+        // Zero page first
+        memset((void*)pAddr, 0, PAGESIZE);
+        
+        // Copy chunk
+        if (i == 0) {
+            // First page contains DOS+NT headers
+             copy_mem((void*)pAddr, filebuf, (headerSize < PAGESIZE) ? headerSize : PAGESIZE);
+        } else {
+             // Remaining headers
+             size_t fileOffset = i * PAGESIZE;
+             if (fileOffset < headerSize) {
+                 copy_mem((void*)pAddr, filebuf + fileOffset, headerSize - fileOffset);
+             }
+        }
+    }
+    XEUARTPrint("XEPELoadImage: Headers mapped\n");
+
 	for (size_t i = 0; i < ntHeaders->FileHeader.NumberOfSections; ++i) {
-		CHAR16 buf[9];
-		//copy_mem(buf, sectionHeader[i].Name, 8);
-		ASCIIToChar16(sectionHeader[i].Name,(wchar_t*)buf);
-		buf[8] = 0;
-		size_t load_addr = ImageBase + sectionHeader[i].VirtualAddress;
-		void* sect_addr = (void*)load_addr;
-		/*XEPrintf(const_cast<wchar_t*>((wchar_t*)buf));
-		XEPrintf(const_cast<wchar_t*>(L"\r\n"));*/
+		size_t load_addr = imageBase + sectionHeader[i].VirtualAddress;
+        XEUARTPrint("XEPELoadImage: Mapping section %d at %x\n", i, load_addr);
+        
+        // Align virtual size to pages
 		size_t sectsz = sectionHeader[i].VirtualSize;
 		int req_pages = sectsz / 4096 +
 			((sectsz % 4096) ? 1 : 0);
-		uint64_t* block = 0;
+            
 		for (int j = 0; j < req_pages; j++) {
-			uint64_t alloc = (load_addr + j * PAGESIZE);
-			XEPagingMap(alloc, XEPmmngrAllocate());
-			memset((void*)alloc, 0, 4096);
-			if (!block)
-				block = (uint64_t*)alloc;
+            uint64_t vPage = load_addr + j * PAGESIZE;
+			uint64_t pPage = XEPmmngrAllocate();
+			XEPagingMap(vPage, pPage);
+			memset((void*)pPage, 0, 4096);
+            
+            // Calculate file offset and copy if data exists
+            size_t fileOffset = sectionHeader[i].PointerToRawData + j * PAGESIZE;
+            size_t remainingRaw = 0;
+            
+            if (sectionHeader[i].SizeOfRawData > (j * PAGESIZE))
+                remainingRaw = sectionHeader[i].SizeOfRawData - (j * PAGESIZE);
+            
+            if (remainingRaw > 0) {
+                size_t copyAmount = (remainingRaw > PAGESIZE) ? PAGESIZE : remainingRaw;
+                copy_mem((void*)pPage, filebuf + fileOffset, copyAmount);
+            }
 		}
-		
-		//XEGuiPrint("Section name -> %s %x\n", sectionHeader[i].Name, load_addr);
-
-		copy_mem(sect_addr, raw_offset<void*>(filebuf, sectionHeader[i].PointerToRawData), sectionHeader[i].SizeOfRawData);
-		if (sectionHeader[i].VirtualSize > sectionHeader[i].SizeOfRawData)
-			zero_mem(raw_offset<void*>(sect_addr, sectionHeader[i].SizeOfRawData), sectionHeader[i].VirtualSize - sectionHeader[i].SizeOfRawData);
 	}
 }
