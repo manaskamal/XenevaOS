@@ -144,6 +144,46 @@ When a new application is created, ``ChitralekhaStartApp(argc, argv)`` automatic
 | ``POSTBOX_CREATE_ROOT`` | 405 | Only usable by the Window Manager, application cannot use this command |
 | ``POSTBOX_GET_EVENT_ROOT`` | 406 | Only usable by Window Manager, application cannot use this command | 
 
+## Event structure format
+
+PostEvent defines the core event message structure used by the PostBox IPC to describe the event occured for particular application. It encapsulates essential routing information, including the event type ``type``, destination thread id ``to_id`` and source thread id ``from_id``, followed by a payload region. The payload consists of multiple 32-bit data fields (``dword`` through ``dword8``) for parameter passing, along with pointer-based fields (``pValue, pValue1``) and character buffers for transferring structured or tectual data. This structure allows a single event format to represent a wide range of GUI, system, and application-level events while maintaining a compact and good memory layout. 
+
+Layout of PostEvent structure:
+
+```
+typedef struct _post_event_ {
+    uint8_t type;
+    uint16_t to_id;
+    uint16_t from_id;
+    uint32_t dword;
+    uint32_t dword2;
+    uint32_t dword3;
+    uint32_t dword4;
+    uint32_t dword5;
+    uint32_t dword6;
+    uint32_t dword7;
+    uint32_t dword8;
+    uint32_t* pValue;
+    uint32_t* pValue1;
+    char* charValue;
+    unsigned char* charValue2;
+    char charValue3[100];
+}PostEvent;
+```
+
+| Field name | Description |
+|------------|-------------|
+| _``type``_ | Type of this event, for example ``DEODHAI_REPLY_MOUSE_EVENT`` which expands to integer value of 151 |
+| _``to_id``_ | Destination thread's id number |
+| _``from_id``_ | Source thread's id number |
+| _``dword-dword8``_ | General purpose 32 bit parametar passing fields |
+| _``pValue-pValue1``_ | Used for passing pointer values |
+| _``charValue``_ | Used for passing string values |
+| _``charValue2``_ | Used for passing string and single byte aligned pointer value |
+| _``charValue3``_ | Used for passing textual data |
+
+Using _``_KeFileIoControl(postboxfd, POSTBOX_GET_EVENT, &event)``_ application can receive event message direct to the pointer to event message.
+
 
 
 

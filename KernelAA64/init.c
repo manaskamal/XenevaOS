@@ -155,7 +155,7 @@ extern void debugLIBOn();
 
 extern void XPT2046Initialise();
 /*
- * _AuMain -- the main entry point for kernel
+ * @brief _AuMain -- the main entry point for kernel
  * @param info -- Kernel Boot information passed
  * by bootloader
  */

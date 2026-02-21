@@ -43,7 +43,7 @@ AuProcess* proc_first;
 AuProcess* proc_last;
 AuProcess* root_proc;
 /*
- * AuAddProcess -- adds process to kernel data structure
+ * @brief AuAddProcess -- adds process to kernel data structure
  * @param root -- pointer to the root process
  * @param proc -- process to add
  */
@@ -64,7 +64,7 @@ void AuAddProcess(AuProcess* parent, AuProcess* proc) {
 }
 
 /*
- * AuRemoveProcess -- removes a process from the process
+ * @brief AuRemoveProcess -- removes a process from the process
  * data structure
  * @param parent -- pointer to the parent process
  * @param proc -- process to remove
@@ -90,7 +90,7 @@ void AuRemoveProcess(AuProcess* parent, AuProcess* proc) {
 }
 
 /*
- * AuProcessFindByPID -- finds a process by its pid
+ * @brief AuProcessFindByPID -- finds a process by its pid
  * @param parent -- parent process to search in
  * @param pid -- process id to find
  */
@@ -103,7 +103,7 @@ AuProcess* AuProcessFindByPID(AuProcess* proc, int pid) {
 }
 
 /*
-* AuProcessFindByThread -- finds a process by its main thread
+* @brief AuProcessFindByThread -- finds a process by its main thread
 * @param parent -- parent process to search in
 * @param thread -- thread to find
 */
@@ -117,7 +117,7 @@ AuProcess* AuProcessFindByThread(AuProcess* proc, AA64Thread* thread) {
 }
 
 /*
- * AuProcessFindPID -- finds a process by its pid from
+ * @brief AuProcessFindPID -- finds a process by its pid from
  * the process tree
  * @param pid -- process id of the process
  */
@@ -131,7 +131,7 @@ AuProcess* AuProcessFindPID(int pid) {
 }
 
 /*
- * AuProcessFindThread -- finds a process by its
+ * @brief AuProcessFindThread -- finds a process by its
  * main thread
  * @param thread -- pointer to  main thread
  */
@@ -146,7 +146,7 @@ AuProcess* AuProcessFindThread(AA64Thread* thread) {
 }
 
 /*
- * AuProcessFindSubThread -- find a process from its
+ * @brief AuProcessFindSubThread -- find a process from its
  * sub threads which contain a pointer to its process
  * slot
  * @param thread -- Pointer to sub thread
@@ -157,7 +157,7 @@ AuProcess* AuProcessFindSubThread(AA64Thread* thread) {
 }
 
 /*
- * AuAllocateProcessID -- allocates a new
+ * @brief AuAllocateProcessID -- allocates a new
  * pid and return
  */
 int AuAllocateProcessID() {
@@ -169,7 +169,7 @@ int AuAllocateProcessID() {
 
 #define USER_STACK_FLAG  (1ULL<<54 | 2ULL<<6 | 1ULL<<10 | PTE_NORMAL_MEM | 1)
 /*
- * CreateUserStack -- creates new user stack
+ * @brief CreateUserStack -- creates new user stack
  * @param proc -- Pointer to process slot
  * @param cr3 -- pointer to the address space where to
  * map
@@ -192,7 +192,7 @@ uint64_t* CreateUserStack(AuProcess* proc, uint64_t* cr3) {
 	return addr;
 }
 /*
-*AuCreateProcessSlot -- creates a blank process slot
+* @brief AuCreateProcessSlot -- creates a blank process slot
 * @param parent -- pointer to the parent process
 */
 AuProcess * AuCreateProcessSlot(AuProcess * parent, char* name) {
@@ -223,7 +223,7 @@ AuProcess * AuCreateProcessSlot(AuProcess * parent, char* name) {
 }
 
 /*
- * AuProcessGetFileDesc -- returns a empty file descriptor
+ * @brief AuProcessGetFileDesc -- returns a empty file descriptor
  * from process slot, 0, 1 & 2 are reserved for terminal
  * output
  * @param proc -- pointer to process slot
