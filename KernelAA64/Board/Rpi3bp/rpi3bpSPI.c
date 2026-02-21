@@ -481,7 +481,7 @@ void XPT2046ReadTouch() {
 	uint32_t z;
 	XPT2046ReadSamples(&x, &y, &z);
 
-	//x = 4095 - x;
+	x = 4095 - x;
 	y = 4095 - y;
 	//AuTextOut("Control x comm val : %x y - %x\r\n",XPT2046_READ_X, XPT2046_READ_Y);
 	//int screen_x = ((x - TOUCH_X_MIN) * 800) / (TOUCH_X_MAX - TOUCH_X_MIN);

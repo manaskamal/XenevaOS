@@ -25,7 +25,7 @@ Most important and used library for GUI application development is _Chitralekha 
 #### ***How Chitralekha Works?***
 Whenever a GUI application is started, Chitralekha is responsible for communicating to Window manager and bringing up a new window for the application. Communication is done through Xeneva's own IPC mechanism called PostBox IPC. Chitralekha library is dynamically linked to GUI applications and is a dynamic library. Here's a step by step breakdown of how a GUI application starts within Xeneva,
 - ***ChBase Object*** -- Responsible for creating and initializing primary usable data's like Application's default font, postbox ipc file index and creating a new postbox for this application and creating a new Chitralekha App instance where all necessary data's are stored
-- ***ChWindow Object*** -- Responsible  for requesting window of given size from the Window Manager. Whenever new application is launched, two types of Windows are created, _(i) Server Window (ii)Client Window_. A portion of Server Window with necessary informations are shared with the Client Window, i.e it can be accessed from the application process memory. In other words, it uses Xeneva Shared Memory object to share the portion of Server window with the client application. Here's the structure of shared portion of the Server window:
+- ***ChWindow Object*** -- Responsible  for requesting window of given size from the Window Manager. Whenever new application is launched, two types of Windows are created, _(i) Server Window (ii)Client Window_. A portion of Server Window with necessary informations are shared with the Client Window, i.e it can be accessed from the application's process memory. In other words, it uses Xeneva Shared Memory object to share the portion of Server window with the client application. Here's the structure of shared portion of the Server window:
 
 ``` 
 typedef struct _sh_win_ {
@@ -45,7 +45,7 @@ typedef struct _sh_win_ {
     bool windowReady;
 }SharedWinInfo;
 ```
-- ***ChWidgets Object ---*** ChWidget object are small objects that helps application provide valuable interface to user. In other words, ChWidget Object is base class of all types of widget that are used by user to make some meaningful task within the application. For example, user clicks a button to launch a floating window, user choosed an onoff button to turn on/off some settings. ChWidget act as a base for all type of widgets that share some common properties. For example, ChButton and ChRadioGroup will share some common properties because both the widgets are based on ChWidget object which includes fundamental properties, that makes it a widget.
+- ***ChWidgets Object ---*** ChWidget objects are small objects that helps application provide valuable interface to user. In other words, ChWidget Object is base class of all types of widget that are used by user to make some meaningful task within the application. For example, user clicks a button to launch a floating window, user choosed an onoff button to turn on/off some settings. ChWidget act as a base for all type of widgets that share some common properties. For example, ChButton and ChRadioGroup will share some common properties because both the widgets are based on ChWidget object which includes fundamental properties, that makes it a widget.
 
 - ***Application Event Loop---*** Application event loop runs continuously to poll its postbox for any outsource events. Whenever an event message arrives at its postbox, the event loop immediately pass that event to Application Event Handler. For example, the Window Manager continuously posts mouse event to each application window under which mouse pointer arrives. Each Window's application handles those mouse event and takes valuable action. 
 
@@ -130,6 +130,22 @@ int main(int argc, char* argv[]){
    }
 }
 ```
+
+## Application Event Loop
+When an application is newly created, it gets a ``handle_id`` from the Window Manager. The ``handle_id`` is specific to each window, i.e if an application has two window created, it will include two unique ``handle_id`` for each window. Applications continuously waits for new events in its life time either from the Window Manager or from any external sources from the Operating System or from the application itself. These events can include user interactions such as keyboard input, mouse movements, touch gestures, hand gestures movements or system notifications. In XenevaOS, events are being send or receive through PostBox IPC kernel module, which is a message queue based IPC designed for Xeneva GUI system. Each GUI events received includes the ``handle_id`` attached to it, which further the application can use it to locate the desired window within the application. The event loop typically retrieves events and dispatches them to the appropriate window and then put the application to pause state until a next event arrives. Each application creates there own PostBox within the PostBox IPC module.<br><br>
+When a new application is created, ``ChitralekhaStartApp(argc, argv)`` automatically creates a new PostBox for this application and stores the ***file descriptor to the PostBox*** within ``ChitralekhaApp`` data structure. PostBox IPC can be controlled via _``KeFileIoControl(app->postboxfd, code, &ptr_to_ev_datastruct)``_. Here are some predefined code within PostBox IPC module.
+
+|Code Name | Value in Integer | Description |
+|----------|------------------|-------------|
+| ``POSTBOX_CREATE`` | 401 | Create a new postbox, automatically get created by ``ChitralekhaStartApp(argc, argv)``|
+| ``POSTBOX_DESTROY`` | 402 | Destroys a postbox within the PostBox IPC module, application can no longer use the postbox, after commanding this.
+| ``POST_PUT_EVENT`` | 403 | Put an event message in its application's own postbox |
+| ``POSTBOX_GET_EVENT`` | 404 | Checks for event within its own postbox |
+| ``POSTBOX_CREATE_ROOT`` | 405 | Only usable by the Window Manager, application cannot use this command |
+| ``POSTBOX_GET_EVENT_ROOT`` | 406 | Only usable by Window Manager, application cannot use this command | 
+
+
+
 
 
 

@@ -162,7 +162,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>false</SDLCheck>
       <AdditionalIncludeDirectories>..\..\Libs\XEClib\includes;..\..\Ports\freetype2\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>ARCH_ARM64;YES_DYNAMIC;DYNAMIC_EXPORTER;_USE_FREETYPE;STB_IMAGE_RESIZE_IMPLEMENTATION;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>ARCH_ARM64;YES_DYNAMIC;DYNAMIC_EXPORTER;_USE_FREETYPE;STB_IMAGE_RESIZE_IMPLEMENTATION;THEME_PURPLE;COLOR_BGRA;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <IgnoreStandardIncludePath>true</IgnoreStandardIncludePath>
       <ExceptionHandling>false</ExceptionHandling>
       <BasicRuntimeChecks>

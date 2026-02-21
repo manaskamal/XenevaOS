@@ -39,6 +39,8 @@
 #include <Hal\x86_64_hal.h>
 #include <Hal\serial.h>
 
+#define POSTEVENT_ALIGN 8
+#define POSTEVENT_SIZE_ALIGNED (((sizeof(PostEvent) + (POSTEVENT_ALIGN - 1)) / POSTEVENT_ALIGN) * POSTEVENT_ALIGN)
 /*
  * NOTE: PostBoxIPCManager is aurora's main communication manager between
  * user space processes and kernel, in future drivers will also able to
@@ -95,7 +97,7 @@ void PostBoxCreate(bool root, uint16_t tid) {
 	box->tailIdx = 0;
 	box->full = false;
 
-	box->size = PAGE_SIZE / sizeof(PostEvent);
+	box->size = PAGE_SIZE / ALIGN_UP(sizeof(PostEvent),8);
 
 	if (firstBox == NULL) {
 		firstBox = box;
@@ -156,7 +158,9 @@ void PostBoxPutEvent(PostEvent* event) {
 	for (PostBox* box = firstBox; box != NULL; box = box->next) {
 		if (box->ownerID == owner_id){
 			if (!IsPostBoxFull(box)) {
-				memcpy(&box->address[box->headIdx], event, sizeof(PostEvent));
+				uint8_t* dest = (uint8_t*)box->address + (box->headIdx * POSTEVENT_SIZE_ALIGNED);
+				//memcpy(&box->address[box->headIdx], event, sizeof(PostEvent));
+				memcpy(dest, event, sizeof(PostEvent));
 				PostBoxAdvanceIndex(box);
 			}
 			break;
@@ -190,8 +194,12 @@ int PostBoxGetEvent(PostEvent* event, bool root, AuThread* curr_thread) {
 	for (PostBox* box = firstBox; box != NULL; box = box->next) {
 		if (box->ownerID == owner_id) {
 			if (!IsPostBoxEmpty(box)) {
-				memcpy(event, &box->address[box->tailIdx], sizeof(PostEvent));
-				memset(&box->address[box->tailIdx], 0, sizeof(PostEvent));
+				//memcpy(event, &box->address[box->tailIdx], sizeof(PostEvent));
+				//memset(&box->address[box->tailIdx], 0, sizeof(PostEvent));
+				uint8_t* src = (uint8_t*)box->address + (box->tailIdx * POSTEVENT_SIZE_ALIGNED);
+				//memcpy(event, &box->address[box->tailIdx], sizeof(PostEvent));
+				memcpy(event, src, sizeof(PostEvent));
+				memset(src, 0, sizeof(PostEvent));
 				PostBoxRetreat(box);
 				ret_code = 1;
 			}

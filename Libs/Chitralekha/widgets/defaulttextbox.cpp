@@ -50,14 +50,14 @@ void ChDefaultTextboxPrint(ChCanvas* canv, ChTextBox* tb, char* text) {
 	int textOff = 0;
 	bool _has_newline = false;
 	int penx = tb->wid.x + (tb->textCursorPosX * 2);
-	int peny = tb->wid.y + (tb->textCursorPosY * 22);
+	int peny = tb->wid.y + (tb->textCursorPosY * 19);
 	for (int i = 0; i < strlen(text); i++) {
 		if (text[i] == '\n') {
 			_has_newline = true;
 			tb->textCursorPosY += 1;
 			tb->textCursorPosX = 1;
 			penx = tb->wid.x + (tb->textCursorPosX * 2);
-			peny = tb->wid.y + (tb->textCursorPosY * 22);
+			peny = tb->wid.y + (tb->textCursorPosY * 19);
 			textOff = 0;
 			continue;
 		}
@@ -74,7 +74,7 @@ void ChDefaultTextboxPrint(ChCanvas* canv, ChTextBox* tb, char* text) {
 			tb->textCursorPosY += 1;
 			tb->textCursorPosX = 1;
 			penx = tb->wid.x + (tb->textCursorPosX * 2);
-			peny = tb->wid.y + (tb->textCursorPosY * 22);
+			peny = tb->wid.y + (tb->textCursorPosY * 19);
 		}
 
 		ChFontDrawCharClipped(canv, tb->font, text[i], penx,
@@ -88,8 +88,8 @@ void ChDefaultTextboxPrint(ChCanvas* canv, ChTextBox* tb, char* text) {
 	//ChFontDrawTextClipped(canv, tb->font, buf, tb->wid.x + (tb->textCursorPosX * 2),
 	//	tb->wid.y + (tb->textCursorPosY * 22),
 	//	tb->textColor, &clipRect);
-	tb->textCursorPosX = 1;
-	tb->textCursorPosY = 1;
+	tb->textCursorPosX = 2;
+	tb->textCursorPosY = 2;
 }
 
 /*
@@ -102,7 +102,7 @@ void ChDefaultTextbox(ChWidget* wid, ChWindow* win) {
 	ChTextBox* tb = (ChTextBox*)wid;
 	ChDrawRect(win->canv, tb->wid.x, tb->wid.y, tb->wid.w, tb->wid.h, tb->textBackgroundColor);
 	//ChDrawRectUnfilled(win->canv, tb->wid.x, tb->wid.y, tb->wid.w, tb->wid.h, GRAY);
-	ChFontSetSize(tb->font, 13);
+	//ChFontSetSize(tb->font, 13);
 	ChRect clipRect;
 	clipRect.x = tb->wid.x;
 	clipRect.y = tb->wid.y;

@@ -223,10 +223,7 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	/* clear out the lower half memory */
 	AuVmmngrBootFree();
 
-	AuTextOut("[aurora]: address space lower half cleared successfully \r\n");
-
 	AuSchedulerInitialize();
-
 
 	/*
 	AA64Thread* t3 = AuCreateKthread(AuEntryTest2, AuCreateVirtualAddressSpace(), "test2");

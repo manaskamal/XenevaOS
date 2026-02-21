@@ -269,7 +269,7 @@ void AuRPI3Initialize() {
     /*  map and initialize SPI0 */
     AuRPI3SPI0Map();
     AuRPI3SPI0Init();
-    AuRPIInitializeFramebuffer(800,480, 32);  //800x480  //1820x1080
+    AuRPIInitializeFramebuffer(480,320, 32);  //800x480  //1820x1080 
    // AuLCDInit();
    // for (;;);
 }

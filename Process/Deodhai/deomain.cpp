@@ -451,6 +451,7 @@ void DeodhaiWindowHide(Window* win) {
 		/* UNHIDE the window , if its already hidden */
 		info->hide = false;
 		info->updateEntireWindow = true;
+		info->dirty = 1;
 		focusedWin = win;
 	}
 	else{
@@ -650,11 +651,11 @@ void ComposeFrame(ChCanvas *canvas) {
 						for (int i = 0; i < r_w; i++) {
 							*(uint32_t*)(canvas->buffer + (static_cast<int64_t>(info->y) + r_y + j) * canvas->canvasWidth +
 								(static_cast<int64_t>(info->x) + r_x + i)) =
-								ChColorAlphaBlend2(*(uint32_t*)(canvas->buffer +
+								ChColorAlphaBlend(*(uint32_t*)(canvas->buffer +
 									(static_cast<int64_t>(info->y) + r_y + j) * canvas->canvasWidth +
 									(static_cast<int64_t>(info->x) + r_x + i)),
 									*(uint32_t*)(win->backBuffer + (static_cast<int64_t>(r_y) + j) * info->width +
-										(static_cast<int64_t>(r_x) + i))/*,info->alphaValue*/);
+										(static_cast<int64_t>(r_x) + i)),info->alphaValue);
 						}
 					}
 					AddDirtyClip(info->x + r_x, info->y + r_y, r_w, r_h);
@@ -844,11 +845,11 @@ void ComposeFrame(ChCanvas *canvas) {
 						for (int i = 0; i < width; i++) {
 							*(uint32_t*)(canvas->buffer + (static_cast<int64_t>(info->y) + j) * canvas->canvasWidth +
 								(static_cast<int64_t>(info->x) + i)) =
-								ChColorAlphaBlend2(*(uint32_t*)(canvas->buffer +
+								ChColorAlphaBlend(*(uint32_t*)(canvas->buffer +
 									(static_cast<int64_t>(info->y) + j) * canvas->canvasWidth +
 									(static_cast<int64_t>(info->x) + i)),
 									*(uint32_t*)(win->backBuffer + (static_cast<int64_t>(0) + j) * info->width +
-										(static_cast<int64_t>(0) + i)));
+										(static_cast<int64_t>(0) + i)), info->alphaValue);
 						}
 					}
 					AddDirtyClip(info->x, info->y, width, height);
@@ -1484,7 +1485,8 @@ void DeodhaiCloseWindow(Window* win) {
 	int height = info->height;
 	int x = info->x;
 	int y = info->y;
-	free(win->title);
+	_KePrint("[Deodhai]:CloseWindow : %s \r\n", win->title);
+	//free(win->title);
 
 	/* iterate all popup window and close them */
 	for (Window* popup = win->firstPopupWin; popup != NULL; popup = popup->next) {
@@ -1498,20 +1500,22 @@ void DeodhaiCloseWindow(Window* win) {
 		free(popup);
 	}
 
-
+	_KePrint("Unmapping shared mems \r\n");
 	_KeUnmapSharedMem(win->shWinKey);
 	_KeUnmapSharedMem(win->backBufferKey);
+	_KePrint("Unmapped all shared mems from deodhai side for process\r\n");
 #ifdef SHADOW_ENABLED
 	_KeMemUnmap(win->shadowBuffers, (static_cast<size_t>(width) + SHADOW_SIZE * 2) * (height + SHADOW_SIZE * 2) * 4);
 #endif
 	BackDirtyAdd(x - SHADOW_SIZE, y - SHADOW_SIZE, width + SHADOW_SIZE*2, height + SHADOW_SIZE*2);
 	DeodhaiRemoveWindow(win);
-	free(win);
+	_KePrint("Removing window \r\n");
+	//free(win);
 	PostEvent e;
 	e.to_id = ownerId;
 	e.type = DEODHAI_REPLY_WINDOW_CLOSED;
 	_KeFileIoControl(postbox_fd, POSTBOX_PUT_EVENT, &e);
-
+	_KePrint("Putting post box event \r\n");
 	if (!(flags & WINDOW_FLAG_MESSAGEBOX)) {
 		/* now broadcast this information, that a
 		 * specific window has been destroyed
@@ -1523,6 +1527,8 @@ void DeodhaiCloseWindow(Window* win) {
 		DeodhaiBroadcastMessage(&e, NULL);
 		_KeProcessSleep(100);
 	}
+	_always_on_top_update = 1;
+	_window_update_all_ = 1;
 }
 
 /* DrawWallpaper for getting jpeg image as wallpaper
@@ -1688,6 +1694,9 @@ int main(int argc, char* arv[]) {
 	}else if (screen_w == 1920 && screen_h == 1080) {
 		DrawWallpaper(canv, "/mtnr2.jpg");
 		DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
+	}else if (screen_w == 480 && screen_h == 320) {
+		DrawWallpaper(canv, "/mntr1.jpg");
+		DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
 	}
 
 	ChCanvasScreenUpdate(canv, 0, 0, canv->canvasWidth, canv->canvasHeight);
@@ -1708,7 +1717,9 @@ int main(int argc, char* arv[]) {
 
 	/* Open all required device file */
 	mouse_fd = _KeOpenFile("/dev/mice", FILE_OPEN_READ_ONLY);
-	//kybrd_fd = _KeOpenFile("/dev/kybrd", FILE_OPEN_READ_ONLY);
+#ifdef ARCH_X64
+	kybrd_fd = _KeOpenFile("/dev/kybrd", FILE_OPEN_READ_ONLY);
+#endif
 	AuInputMessage mice_input;
 	AuInputMessage kybrd_input;
 	memset(&mice_input, 0, sizeof(AuInputMessage));
@@ -1727,8 +1738,8 @@ int main(int argc, char* arv[]) {
 	uint64_t last_click_time = 0;
 	uint64_t last_redraw = 0;
 
-	//int proc = _KeCreateProcess(0, "calc");
-	//_KeProcessLoadExec(proc, "/calc.exe", NULL, NULL);
+	/*int proc = _KeCreateProcess(0, "calc");
+	_KeProcessLoadExec(proc, "/calc.exe", NULL, NULL);*/
 
 	/*proc = _KeCreateProcess(0, "calendr");
 	_KeProcessLoadExec(proc, "/calendr.exe", NULL, NULL);*/
@@ -1746,18 +1757,24 @@ int main(int argc, char* arv[]) {
 
 	_KePrint("Postbox created for deodhai \r\n");
 	while (1) {
+#ifdef ARCH_X64
 		unsigned long frameTime = DeodhaiTimeSince(last_redraw);
 		if (frameTime > 15) {
 			ComposeFrame(canv);
 			last_redraw = DeodhaiCurrentTime();
 			frameTime = 0;
 		}
-		//ComposeFrame(canv);
+#elif ARCH_ARM64
+		ComposeFrame(canv);
+#endif
 		
 		_KeFileIoControl(postbox_fd, POSTBOX_GET_EVENT_ROOT, &event);
 
 		_KeReadFile(mouse_fd, &mice_input, sizeof(AuInputMessage));
-	//	_KeReadFile(kybrd_fd, &kybrd_input, sizeof(AuInputMessage));
+
+#ifdef ARCH_X64
+		_KeReadFile(kybrd_fd, &kybrd_input, sizeof(AuInputMessage));
+#endif
 		
 		
 		if (mice_input.type == AU_INPUT_MOUSE) {
@@ -1801,8 +1818,8 @@ int main(int argc, char* arv[]) {
 			/*
 			 * TODO: bug fixing
 			 */
-//#ifdef ARCH_X64
-		/*	if (button){
+#ifdef ARCH_X64
+			if (button){
 				if (DeodhaiClickTimeSince(last_click_time) < 400) {
 					button = DEODHAI_MESSAGE_MOUSE_DBLCLK;
 					last_click_time = 0;
@@ -1810,8 +1827,8 @@ int main(int argc, char* arv[]) {
 				else {
 					last_click_time = DeodhaiClickCurrentTime();
 				}
-			}*/
-//#endif
+			}
+#endif
 			if (_window_broadcast_mouse_) 
 				DeodhaiBroadcastMouse(currentCursor->xpos, currentCursor->ypos, button);
 			
@@ -1887,6 +1904,7 @@ int main(int argc, char* arv[]) {
 		}
 
 		if (kybrd_input.type == AU_INPUT_KEYBOARD) {
+			_KePrint("[Deodhai]: keyinput : %x \r\n", kybrd_input.code);
 			DeodhaiBroadcastKey(kybrd_input.code);
 			memset(&kybrd_input, 0, sizeof(AuInputMessage));
 		}
@@ -1929,7 +1947,7 @@ int main(int argc, char* arv[]) {
 			
 			_KeFileIoControl(postbox_fd, POSTBOX_PUT_EVENT, &e);
 			_KePrint("Msg sent to e.toid : %d \n", e.to_id);
-		//	_KeProcessSleep(180);
+			_KeProcessSleep(180);
 			if (!(win->flags & WINDOW_FLAG_MESSAGEBOX || win->flags & WINDOW_FLAG_POPUP || 
 				win->flags & WINDOW_FLAG_BROADCAST_LISTENER)){
 				/* broadcast it to all broadcast listener windows, about this news*/
@@ -1947,7 +1965,8 @@ int main(int argc, char* arv[]) {
 			}
 
 			_KePrint("[Deodhai]: Window created \r\n");
-
+		/*	_window_update_all_ = true;
+			_always_on_top_update = true;*/
 			focusedWin = win;
 			memset(&event, 0, sizeof(PostEvent));
 
@@ -1972,6 +1991,8 @@ int main(int argc, char* arv[]) {
 			
 			event.type = 174;
 			DeodhaiBroadcastMessage(&event, skippable);
+			_window_update_all_ = 1;
+			_always_on_top_update = 1;
 			_KeProcessSleep(20);
 			memset(&event, 0, sizeof(PostEvent));
 		}
@@ -1998,6 +2019,7 @@ int main(int argc, char* arv[]) {
 
 			if (hideable_win) 
 				DeodhaiWindowHide(hideable_win);
+			_KeProcessSleep(100);
 			memset(&event, 0, sizeof(PostEvent));
 		}
 
@@ -2076,8 +2098,8 @@ int main(int argc, char* arv[]) {
 				DeodhaiCloseWindow(removable);
 				focusedWin = NULL;
 				focusedLast = NULL;
-				_window_update_all_ = true;
-				_always_on_top_update = true;
+				//_window_update_all_ = true;
+				//_always_on_top_update = true;
 			}
 			memset(&event, 0, sizeof(PostEvent));
 		}
@@ -2125,7 +2147,10 @@ int main(int argc, char* arv[]) {
 			memset(&event, 0, sizeof(PostEvent));
 		}
 
+#ifdef ARCH_X64
 		_KeProcessSleep((16 - frameTime));
-		//_KeProcessSleep(16);
+#elif ARCH_ARM64
+		_KeProcessSleep(16);
+#endif
 	}
 }

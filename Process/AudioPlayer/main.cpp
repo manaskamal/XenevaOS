@@ -419,7 +419,7 @@ int main(int argc, char* argv[]){
 	PostEvent e;
 	memset(&e, 0, sizeof(PostEvent));
 
-	//ChWindowBroadcastIcon(app, "/icons/media.bmp");
+	ChWindowBroadcastIcon(app, "/icons/media.bmp");
 
 	setjmp(mainWin->jump);
 	while (1) {

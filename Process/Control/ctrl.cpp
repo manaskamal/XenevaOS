@@ -90,28 +90,69 @@ void WindowHandleMessage(PostEvent* e) {
 		break;
 	}
 }
+ChTextBox* tb;
+
+void RoadMapButton(ChWidget* wid, ChWindow* win) {
+	char* roadmap = "Roadmap\n_______\n\n Current Stage: Prototype XenevaOS + XenevaGlasses\n\n"
+		"Q1 2026: Gaining required partnerships and resources to build final version of \nXenevaOS + Glasses (Expecting to Raise"
+		" Seed Funding)\n\n"
+		"Q2 2026: Test units of XenevaGlasses to be conceived & releasing SDK for building \napps on XenevaOS\n\n"
+		"Q3 2026: Introducing a compatibility layer for Android & Desktop applications to \nenhance our Application"
+		" Library and also build a Driver Porting Interface for our \nOperating System.\n\n"
+		"Q4: Official public release of XenevaOS & Xeneva Glasses and deploying them on the \nmarket.";
+	ChTextBoxSetText(tb, roadmap);
+	ChTextBoxUpdate(tb, win);
+}
+
+void FundButton(ChWidget* wid, ChWindow* win) {
+	char* fund = "Funds:\n_____\n\nWe started this project and conveived a functional Kernel + OS while being \nbootstrapped."
+		" After which, when we made our public debut at IndiaFOSS 2025, we got the chance to pitch our project to the"
+		" CTO of a multi billion dollar trading firm \n(Zerodha), Dr Kailash Nadh."
+		"\n\nHe believed in our long term vision and had then given us an equity free grant through his company for"
+		" us to conveive a prototype and to give us a head-start. Thus making \nour company a worthy investment in "
+		"exchange for equity at a post-prototype stage \nwhere the might potentially act as a lead investor.\n\n"
+		"We, the founders still own 100% of Xeneva and are now looking to raise a seed round \nin exchange of"
+		" equity.";
+	ChTextBoxSetText(tb, fund);
+	ChTextBoxUpdate(tb, win);
+}
+
+void TeamButton(ChWidget* wid, ChWindow* win) {
+	char* team = "Founders:\n\nManas Kamal Choudhury (CTO)\nAyushmaan Bora (CEO)\n\nOur Beloved Engineers:\n\n"
+		"Pradyumna Sudheendra: Electronics Engineer\nNiladri Ghosh: Hardware Design Engineer\nAryan Dadwal: Kernel Engineer";
+	ChTextBoxSetText(tb, team);
+	ChTextBoxUpdate(tb, win);
+}
 
 /*
 * main -- main entry
 */
 int main(int argc, char* argv[]) {
 	app = ChitralekhaStartApp(argc, argv);
-	mainWin = ChCreateWindow(app, WINDOW_FLAG_MOVABLE, "Controls", 400, 100, CHITRALEKHA_DEFAULT_WIN_WIDTH + 100,
-		CHITRALEKHA_DEFAULT_WIN_HEIGHT  + 100);
+	mainWin = ChCreateWindow(app, WINDOW_FLAG_MOVABLE, "Controls", 400, 100, CHITRALEKHA_DEFAULT_WIN_WIDTH + 300,
+		CHITRALEKHA_DEFAULT_WIN_HEIGHT  + 300);
 
 	
-	ChWindowBroadcastIcon(app, "/icons/gear.bmp");
+	//ChWindowBroadcastIcon(app, "/icons/gear.bmp");
 
-	ChTextBox* tb = ChCreateTextBox(mainWin,0,26,mainWin->info->width,mainWin->info->height - 100);
+	mainWin->color = 0xFF252525;
+
+	tb = ChCreateTextBox(mainWin,0,26,mainWin->info->width,mainWin->info->height - 100);
 	ChFont* tbfont = ChInitialiseFont(CALIBRI);
 	tb->textBackgroundColor = mainWin->color;
+	tb->textColor = WHITE;
+	tb->editable = false;
 	ChTextBoxSetFont(tb, tbfont);
+	ChTextBoxSetFontSize(tb, 15);
 
-	char* about = "XenevaOS is an XR-Native Operating System built with a custom kernel written completely "
-		"from scretch specifically for AR/VR/MR devices\nThe OS is designed and optimised to run natively on XR glasses "
-       "making  them a full-fledged standalone device capable of replacing smartphones by doing everything they do.";
-	char* android = "We're porting ART to XenevaOS\nAndroid App will work on XenevaOS";
-	char* default = "default text?";
+	bool _add_buttons = true;
+
+	char* about = "XenevaOS is an XR-Native Operating System built with a custom kernel written \ncompletely "
+		"from scratch specifically for AR/VR/MR devices.\n\nThe OS is designed and optimized to run natively on XR glasses "
+       "making  them a \nfull-fledged standalone device capable of replacing smartphones by doing everything \nthey do.";
+	char* android = "We're working towards adding an Android Compatibility Layer which will bring support for all"
+		" android apps on XenevaOS.";
+	char* default = "Default text for Control App ";
 	if (argc > 1) {
 		char* param = argv[1];
 		if (strcmp(param, "about") == 0) {
@@ -119,14 +160,27 @@ int main(int argc, char* argv[]) {
 		}
 		else if (strcmp(param, "android") == 0) {
 			ChTextBoxSetText(tb, android);
+			_add_buttons = false;
 		}
 		else if (strcmp(param, "default") == 0) {
 			ChTextBoxSetText(tb, default);
+			_add_buttons = false;
 		}
 	}
 
 	ChWindowAddWidget(mainWin, (ChWidget*)tb);
-	
+	if (_add_buttons) {
+		ChButton* button = ChCreateButton(10, mainWin->info->height - 75, 100, 35, "Roadmap");
+		button->base.ChActionHandler = RoadMapButton;
+		ChButton* button2 = ChCreateButton(mainWin->info->width - 120, mainWin->info->height - 75, 100, 35, "Team");
+		ChButton* button3 = ChCreateButton((mainWin->info->width / 2) - (100 / 2), mainWin->info->height - 75, 100, 35, "Funds");
+		button3->base.ChActionHandler = FundButton;
+		button2->base.ChActionHandler = TeamButton;
+		
+		ChWindowAddWidget(mainWin, (ChWidget*)button);
+		ChWindowAddWidget(mainWin, (ChWidget*)button2);
+		ChWindowAddWidget(mainWin, (ChWidget*)button3);
+	}
 	ChWindowPaint(mainWin);
 	PostEvent e;
 	memset(&e, 0, sizeof(PostEvent));

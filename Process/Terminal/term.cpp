@@ -65,6 +65,7 @@ char* escBuf;
 int shell_id;
 uint32_t backColor;
 uint32_t fgColor;
+
 /*
  * TerminalDrawArrayFont -- draw bitmap fonts using defined array
  * @param canv -- Pointer to canvas 
@@ -197,6 +198,7 @@ void TerminalClearScreen() {
  * @param bgcolor -- Background color
  */
 void TerminalPrintChar(char c, uint32_t fgcolor, uint32_t bgcolor) {
+	_KePrint("Terminal printing character : %c \r\n", c);
 	if (c == '\n'){
 		fgColor = WHITE;
 		backColor = BLACK;
@@ -534,6 +536,7 @@ void TerminalHandleMessage(PostEvent *e) {
 		break;
 	case DEODHAI_REPLY_KEY_EVENT: {
 		int code = e->dword;
+		_KePrint("Key event are delivered %x\r\n", code);
 		ChitralekhaProcessKey(code);
 		char rawkey = ChitralekhaGetKeyPress(code);
 		char c = ChitralekhaKeyToASCII(code);
@@ -550,7 +553,7 @@ void TerminalHandleMessage(PostEvent *e) {
 				ChWindowHide(win);
 			}
 		}
-
+		_KePrint("Master fd : %d %c\r\n", master_fd,c);
 		_KeWriteFile(master_fd, &c, 1);
 		/* else its a key release event */
 		memset(e, 0, sizeof(PostEvent));
@@ -580,9 +583,10 @@ void TerminalThread() {
 	int bytes_read = 0;
 	while (1) {
 		bytes_read = _KeReadFile(master_fd, buf, 512);
-
+		
 		if (bytes_read >= 512) {
 			bytes_read = 512;
+			_KePrint("Bytes read : %d \r\n", bytes_read);
 		}
 
 		for (int i = 0; i < bytes_read; i++){
@@ -601,7 +605,7 @@ void TerminalThread() {
 			_update_terminal_ = false;
 		}
 		
-		_KeProcessSleep(10); //
+		_KeProcessSleep(100); //
 	}
 }
 
@@ -611,7 +615,6 @@ void TerminalThread() {
 int main(int argc, char* arv[]){
 	app = ChitralekhaStartApp(argc, arv);
 	win = ChCreateWindow(app, (WINDOW_FLAG_MOVABLE), "Xeneva Terminal", 300, 300, 650, 450);
-	ChWindowBroadcastIcon(app, "/icons/term.bmp");
 	win->info->alpha = false;
 	win->info->alphaValue = 0.7;
 	win->color = BLACK;
@@ -620,7 +623,6 @@ int main(int argc, char* arv[]){
 	ChFontSetSize(consolas, 12);
 	int f_w = ChFontGetWidthChar(consolas,'M');
 	int f_h = consolas->face->size->metrics.height >> 6;//ChFontGetHeightChar(consolas, 'A');
-
 	cell_width = f_w;
 	cell_height = f_h;
 	int term_w = win->info->width - 1;
@@ -635,14 +637,13 @@ int main(int argc, char* arv[]){
 	_cursor_blink = 0;
 	escBuf = (char*)malloc(256);
 	memset(escBuf, 0, 256);
-	backColor = BLACK;
+	backColor = 0x99000000;// BLACK;
 	fgColor = WHITE;
 	_update_terminal_ = false;
 	master_fd = slave_fd = 0;
 	/* create the terminal */
 	int success = 0;
 	success = _KeCreateTTY(&master_fd, &slave_fd);
-
 	WinSize sz;
 	sz.ws_col = ws_col;
 	sz.ws_row = ws_row;
@@ -670,7 +671,10 @@ int main(int argc, char* arv[]){
 	_KeProcessLoadExec(shell_id, "/xesh.exe", 0, 0);
 
 
+
 	int thread_idx = _KeCreateThread(TerminalThread, "asyncthr");
+
+	ChWindowBroadcastIcon(app, "/icons/term.bmp");
 	PostEvent e;
 	memset(&e, 0, sizeof(PostEvent));
 	while (1) {

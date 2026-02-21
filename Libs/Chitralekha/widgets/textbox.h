@@ -73,12 +73,27 @@ XE_EXTERN{
     XE_EXPORT void ChTextBoxSetText(ChTextBox* tb, char* text);
 
 	/*
+    * ChTextBoxUpdate -- updates the textbox with
+    * current graphical content
+    * @param tb -- Pointer to textbox
+    * @param mainWin -- Pointer to main window
+    */
+	XE_EXPORT void ChTextBoxUpdate(ChTextBox* tb, ChWindow* mainWin);
+
+	/*
      * ChTextBoxSetFont -- set font for particular given
      * text box
      * @param tb -- Pointer to textbox
      * @param font -- Font to set
      */
 	XE_EXPORT void ChTextBoxSetFont(ChTextBox* tb, ChFont* font);
+
+	/*
+    * ChTextBoxSetFontSize -- set font size for the text box
+    * @param tb -- Pointer to teh textbox
+    * @param sz -- font sz in pixels
+    */
+	XE_EXPORT void ChTextBoxSetFontSize(ChTextBox* tb, int sz);
 
 	#ifdef __cplusplus
 }

@@ -507,7 +507,7 @@ int main(int argc, char* argv[]){
 	}
 
 #ifdef ARCH_X64
-	ChWindowBroadcastIcon(app, "/icons/calc.bmp");
+	//ChWindowBroadcastIcon(app, "/icons/calc.bmp");
 #endif
 
 	dispFont = ChInitialiseFont(FORTE);

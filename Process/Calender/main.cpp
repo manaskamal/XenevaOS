@@ -344,7 +344,7 @@ int main(int argc, char* argv[]){
 	 */
 	CalenderRepaint(t.year, t.month, days_in_month[t.month]);
 
-	ChWindowBroadcastIcon(app, "/icons/calndr.bmp");
+	//ChWindowBroadcastIcon(app, "/icons/calndr.bmp");
 
 	PostEvent e;
 	memset(&e, 0, sizeof(PostEvent));

@@ -45,6 +45,8 @@ extern void ChDefaultTextbox(ChWidget* wid, ChWindow* win);
  */
 void ChTextBoxDestroy(ChWidget* widget, ChWindow* win) {
 	ChTextBox* textb = (ChTextBox*)widget;
+	if (win->focusedWidget == widget)
+		win->focusedWidget = NULL;
 	free(textb->text);
 	free(textb);
 }
@@ -59,6 +61,8 @@ void ChTextBoxDestroy(ChWidget* widget, ChWindow* win) {
  */
 void ChTextBoxMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, int button) {
 	ChTextBox* tb = (ChTextBox*)wid;
+	if (!tb->editable)
+		return;
 	if (wid->hover) {
 		if (wid->ChPaintHandler) {
 			wid->ChPaintHandler(wid, win);
@@ -74,6 +78,19 @@ void ChTextBoxMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, int button)
 			ChWindowUpdate(win, wid->x, wid->y, wid->w, wid->h, 0, 1);
 		}
 		wid->hoverPainted = true;
+	}
+}
+
+/*
+ * ChTextBoxUpdate -- updates the textbox with
+ * current graphical content
+ * @param tb -- Pointer to textbox
+ * @param mainWin -- Pointer to main window
+ */
+void ChTextBoxUpdate(ChTextBox* tb, ChWindow* mainWin) {
+	if (tb->wid.ChPaintHandler) {
+		tb->wid.ChPaintHandler(&tb->wid, mainWin);
+		ChWindowUpdate(mainWin,tb->wid.x,tb->wid.y, tb->wid.w, tb->wid.h, 0, 1);
 	}
 }
 
@@ -97,8 +114,8 @@ ChTextBox* ChCreateTextBox(ChWindow* win,int x, int y, int width, int height) {
 	text->text = (char*)malloc(CH_TEXTBOX_MAX_STRING);
 	text->editable = true;
 	text->textColor = BLACK;
-	text->textCursorPosX = 1;
-	text->textCursorPosY = 1;
+	text->textCursorPosX = 2;
+	text->textCursorPosY = 2;
 	if (win)
 		text->font = win->app->baseFont;
 	text->textBackgroundColor = WHITE;
@@ -124,4 +141,13 @@ void ChTextBoxSetText(ChTextBox* tb, char* text) {
  */
 void ChTextBoxSetFont(ChTextBox* tb, ChFont* font) {
 	tb->font = font;
+}
+
+/*
+ * ChTextBoxSetFontSize -- set font size for the text box
+ * @param tb -- Pointer to teh textbox
+ * @param sz -- font sz in pixels
+ */
+void ChTextBoxSetFontSize(ChTextBox* tb, int sz) {
+	ChFontSetSize(tb->font, sz);
 }

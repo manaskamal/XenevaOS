@@ -474,7 +474,6 @@ void AuSchedulerInitialize() {
 	stack_index = 0;
 	thread_id = 0;
 	uint64_t* idle_pd = AuCreateVirtualAddressSpace();
-	AuTextOut("VA for idle is created \r\n");
 	AA64Thread* idle_ = AuCreateKthread(AuIdleThread,idle_pd, "Idle");
 	//idle_->elr_el1 = (uint64_t)AuIdleThread;
 	_idle_thr = idle_;
