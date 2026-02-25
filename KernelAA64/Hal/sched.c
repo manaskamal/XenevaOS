@@ -1,4 +1,6 @@
 /**
+* @file sched.c
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2025, Manas Kamal Choudhury
@@ -67,6 +69,10 @@ uint64_t thread_id;
 bool _scheduler_initialized;
 uint64_t scheduler_tick;
 
+/**
+* @brief AuThreadInsert -- insert a thread into thread list
+* @param new_task -- pointer to thread that need to insert
+*/
 void AuThreadInsert(AA64Thread* new_task) {
 	new_task->next = NULL;
 	new_task->prev = NULL;
@@ -83,7 +89,7 @@ void AuThreadInsert(AA64Thread* new_task) {
 }
 
 /**
-* AuThreadDelete -- remove a thread from thread list
+* @brief AuThreadDelete -- remove a thread from thread list
 * @param thread -- thread address to remove
 */
 void AuThreadDelete(AA64Thread* thread) {
@@ -113,8 +119,8 @@ void AuThreadDelete(AA64Thread* thread) {
 }
 
 /**
-* Insert a thread to thread list
-* @param new_task -- new thread address
+* @brief AuThreadInsertBlock -- insert a thread to block thread list
+* @param new_task -- Pointer to thread
 */
 void AuThreadInsertBlock(AA64Thread* new_task) {
 	new_task->next = NULL;
@@ -132,7 +138,7 @@ void AuThreadInsertBlock(AA64Thread* new_task) {
 }
 
 /**
-* AuThreadDeleteBlock -- remove a thread from thread list
+* @brief AuThreadDeleteBlock -- remove a thread from thread list
 * @param thread -- thread address to remove
 */
 void AuThreadDeleteBlock(AA64Thread* thread) {
@@ -156,7 +162,7 @@ void AuThreadDeleteBlock(AA64Thread* thread) {
 }
 
 /**
-* Insert a thread to trash list
+* @brief AuThreadInsertTrash -- Insert a thread to trash list
 * @param new_task -- new thread address
 */
 void AuThreadInsertTrash(AA64Thread* new_task) {
@@ -175,7 +181,7 @@ void AuThreadInsertTrash(AA64Thread* new_task) {
 }
 
 /**
-* AuThreadDeleteTrash -- remove a thread from thread list
+* @brief AuThreadDeleteTrash -- remove a thread from thread list
 * @param thread -- thread address to remove
 */
 void AuThreadDeleteTrash(AA64Thread* thread) {
@@ -200,7 +206,7 @@ void AuThreadDeleteTrash(AA64Thread* thread) {
 
 
 /**
-* Insert a thread to sleep list
+* @brief AuThreadInsertSleep -- Insert a thread to sleep list
 * @param new_task -- new thread address
 */
 void AuThreadInsertSleep(AA64Thread* new_task) {
@@ -219,7 +225,7 @@ void AuThreadInsertSleep(AA64Thread* new_task) {
 }
 
 /**
-* AuThreadDeleteSleep -- remove a thread from sleep list
+* @brief AuThreadDeleteSleep -- remove a thread from sleep list
 * @param thread -- thread address to remove
 */
 void AuThreadDeleteSleep(AA64Thread* thread) {
@@ -269,11 +275,12 @@ end:
 	current_thread = thread;
 }
 
-/*
- * AuCreateKthread -- create kernel thread 
+/**
+ * @brief AuCreateKthread -- create kernel thread 
  * @param entry -- Pointer to entry point
  * @param pml -- Pointer to Page directory
  * @param name -- Name of the thread
+ * @return Pointer to newly created thread
  */
 AA64Thread* AuCreateKthread(void(*entry) (uint64_t),uint64_t* pml, char* name){
 
@@ -305,6 +312,7 @@ extern void PrintThreadInfo() {
 	UARTDebugOut("ELR_EL1 : %x \r\n", thr->elr_el1);
 	UARTDebugOut("SP : %x \r\n", thr->sp);
 }
+
 void AuIdleThread(uint64_t ctx) {
 	mask_irqs();
 	UARTDebugOut("Idle thread running \r\n");
@@ -376,8 +384,8 @@ void AuThreadSafeReturn(uint64_t rcx) {
 extern void AuPrintStack(uint64_t st) {
 	UARTDebugOut("storing sp : %x \r\n", st);
 }
-/*
- * AuScheduleThread -- the core of multi-tasking. It schedules
+/**
+ * @brief AuScheduleThread -- the core of multi-tasking. It schedules
  * threads next to be runned
  * @param regs -- Passed by Timer ISR
  */
@@ -449,10 +457,11 @@ bool setStk() {
 	stack_index = 1;
 }
 
-/*
- * AuCreateKernelStack -- maps kernel stack and return the top
+/**
+ * @brief AuCreateKernelStack -- maps kernel stack and return the top
  * of the stack, it only maps 4KiB of stack
  * @param pml -- Pointer to page directory
+ * @return kernel stack address
  */
 uint64_t AuCreateKernelStack(uint64_t* pml) {
 	uint64_t idx = stack_index;
@@ -465,8 +474,8 @@ uint64_t AuCreateKernelStack(uint64_t* pml) {
 	return (location + KERNEL_STACK_SIZE);
 }
 
-/*
- *	AuSchedulerInitialize -- initialize the scheduler
+/**
+ *	@brief AuSchedulerInitialize -- initialize the scheduler
  */
 void AuSchedulerInitialize() {
 	thread_list_head = NULL;
@@ -482,8 +491,8 @@ void AuSchedulerInitialize() {
 	scheduler_tick = 0;
 }
 
-/*
- * AuSchedulerStart -- start the scheduler
+/**
+ * @brief AuSchedulerStart -- start the scheduler
  */
 void AuSchedulerStart() {
 	mask_irqs();
@@ -492,11 +501,9 @@ void AuSchedulerStart() {
 #ifndef __TARGET_BOARD_RPI3__
 	GICClearPendingIRQ(27);
 #endif
-	AuTextOut("[aurora]: IDle implemented \r\n");
 	tlb_flush_vmalle1is();
 	write_both_ttbr(V2P(idle->pml));
 	aa64_restore_fp(&idle->fp_regs, &idle->fpcr, &idle->fpsr);
-	AuTextOut("[aurora]: spawning idle thread \r\n");
 	suspendTimer();
 	setupTimerIRQ();
 	first_time_sex(idle);
@@ -510,8 +517,8 @@ AA64Thread* AuGetCurrentThread() {
 	return current_thread;
 }
 
-/*
- * AuForceScheduler -- force the scheduler
+/**
+ * @brief AuForceScheduler -- force the scheduler
  * to switch next thread
  */
 void AuForceScheduler() {
@@ -519,8 +526,8 @@ void AuForceScheduler() {
 //	UARTDebugOut("Back to force scheduler \n");
 }
 
-/*
- * AuBlockThread -- blocks a running thread 
+/**
+ * @brief AuBlockThread -- blocks a running thread 
  * @param thread -- Pointer to AA64 Thread
  */
 void AuBlockThread(AA64Thread* thread) {
@@ -529,8 +536,8 @@ void AuBlockThread(AA64Thread* thread) {
 	AuThreadInsertBlock(thread);
 }
 
-/*
-* AuUnblockThread -- unblocks a thread and insert it to
+/**
+* @brief AuUnblockThread -- unblocks a thread and insert it to
 * ready list
 * @param t -- pointer to thread
 */
@@ -549,8 +556,8 @@ void AuUnblockThread(AA64Thread* thread) {
 		AuThreadInsert(thread);
 }
 
-/*
- * AuSleepThread -- block a running thread
+/**
+ * @brief AuSleepThread -- block a running thread
  * and put it into sleep list
  * @param thread -- Pointer to AA64 Thread
  */
@@ -562,8 +569,8 @@ void AuSleepThread(AA64Thread* thread, uint64_t ms) {
 	AuThreadInsertSleep(thread);
 }
 
-/*
- * AuThreadFindByID -- finds a thread by its id from
+/**
+ * @brief AuThreadFindByID -- finds a thread by its id from
  * ready queue
  * @param id -- id of the thread
  */
@@ -576,8 +583,8 @@ AA64Thread* AuThreadFindByID(uint64_t id) {
 	return NULL;
 }
 
-/*
- * AuThreadFindByIDBlockList -- finds a thread by its id from
+/**
+ * @brief AuThreadFindByIDBlockList -- finds a thread by its id from
  * the block queue
  * @param id -- id of the thread
  */
@@ -590,8 +597,8 @@ AA64Thread* AuThreadFindByIDBlockList(uint64_t id) {
 	return NULL;
 }
 
-/*
- * AuThreadMoveToTrash -- move given thread to
+/**
+ * @brief AuThreadMoveToTrash -- move given thread to
  * trash
  * @param t -- Thread to move to trash
  */
@@ -619,8 +626,8 @@ void AuThreadMoveToTrash(AA64Thread* t) {
 	AuThreadInsertTrash(t);
 }
 
-/*
- * AuGetSystemTimerTick -- return the current system
+/**
+ * @brief AuGetSystemTimerTick -- return the current system
  * timer tick
  */
 uint64_t AuGetSystemTimerTick() {
@@ -628,7 +635,8 @@ uint64_t AuGetSystemTimerTick() {
 }
 
 
-/* AuSetIdleThread -- change the idle thread pointer
+/** 
+*  @brief AuSetIdleThread -- change the idle thread pointer
  * @param thr -- Pointer to idle thread
  */
 void AuSetIdleThread(AA64Thread* thr) {

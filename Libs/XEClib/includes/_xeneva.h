@@ -1,4 +1,6 @@
 /**
+* @file _xeneva.h
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2023, Manas Kamal Choudhury
@@ -32,7 +34,7 @@
 
 #include <stdint.h>
 
-/* if, YES_DYNAMIC is set to 1, everything will
+/** if, YES_DYNAMIC is set to 1, everything will
 * be exported as dynamic library
 */
 
@@ -65,7 +67,9 @@
 XE_EXTERN{
 #endif
 
-	/* _KePrint -- kernel printing function */
+	/** @brief _KePrint -- kernel printing function, uses
+	 * kernel serial console to print strings
+	 */
 	XE_LIB void _KePrint(const char* text,...);
 
     XE_LIB void _XESetEnvironmentVariable(char* key, char* value, bool overwrite);

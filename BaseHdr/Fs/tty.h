@@ -1,4 +1,6 @@
 /**
+* @file tty.h
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2023, Manas Kamal Choudhury
@@ -70,8 +72,8 @@ typedef struct __tty__ {
 #pragma pack(pop)
 #endif
 
-/*
- * AuTTYCreate -- create tty syscall for process
+/**
+ * @brief AuTTYCreate -- create tty syscall for process
  * @param master_fd -- Pointer to memory area
  * where to store master file descriptor
  * @param slave_fd -- Pointer to memory area
@@ -80,8 +82,8 @@ typedef struct __tty__ {
  */
 extern int AuTTYCreate(int* master_fd, int* slave_fd);
 
-/*
-* AuTTYInitialise -- initialize the TTY kernel resource
+/**
+* @brief AuTTYInitialise -- initialize the TTY kernel resource
 */
 extern void AuTTYInitialise();
 #endif

@@ -1,4 +1,6 @@
 /**
+* @file vdisk.c
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2023, Manas Kamal Choudhury
@@ -40,8 +42,8 @@
 AuVDisk* VdiskArray[MAX_VDISK_DEVICES];
 int _vdisk_num_;
 
-/*
- * AuVDiskInitialise -- initialise the vdisk
+/**
+ * @brief AuVDiskInitialise -- initialise the vdisk
  */
 void AuVDiskInitialise() {
 	for (int i = 0; i < MAX_VDISK_DEVICES; i++)
@@ -52,9 +54,11 @@ void AuVDiskInitialise() {
 }
 
 
-/*
- * AuVDiskCreateStorageFile -- creates a storage
+/**
+ * @brief AuVDiskCreateStorageFile -- creates a storage
  * directory in device file system
+ * @param output -- Pointer to memory where to store
+ * composite string value
  */
 AU_EXTERN AU_EXPORT int AuVDiskCreateStorageFile(char* output) {
 	int value = _vdisk_num_;
@@ -84,8 +88,8 @@ AU_EXTERN AU_EXPORT int AuVDiskCreateStorageFile(char* output) {
 	return value;
 }
 
-/*
- * AuVDiskGetIndex -- returns a vdisk index
+/**
+ * @brief AuVDiskGetIndex -- returns a vdisk index
  */
 uint8_t AuVDiskGetIndex() {
 	for (uint8_t i = 0; i < MAX_VDISK_DEVICES; i++) {
@@ -95,9 +99,11 @@ uint8_t AuVDiskGetIndex() {
 }
 
 
-/*
- * AuCreateVDisk -- creates a vdisk and
+/**
+ * @brief AuCreateVDisk -- creates a vdisk and
  * return to the caller
+ * @return return the newly created empty vdisk 
+ * structure
  */
 AuVDisk* AuCreateVDisk() {
 	AuVDisk* vdisk = (AuVDisk*)kmalloc(sizeof(AuVDisk));
@@ -105,12 +111,13 @@ AuVDisk* AuCreateVDisk() {
 	return vdisk;
 }
 
-/*
- * AuVDiskRead -- reads a disk block from registered disk
+/**
+ * @brief AuVDiskRead -- reads a disk block from registered disk
  * @param disk -- Pointer to vdsik structure
  * @param lba -- Linear block address to read
  * @param count -- number of blocks to read
  * @param buffer -- Buffer, where to store the data
+ * @return return the amount of data being read in bytes
  */
 size_t AuVDiskRead(AuVDisk* disk, uint64_t lba, uint32_t count, uint64_t* buffer) {
 	if (disk->Read)
@@ -119,12 +126,13 @@ size_t AuVDiskRead(AuVDisk* disk, uint64_t lba, uint32_t count, uint64_t* buffer
 }
 
 
-/*
-* AuVDiskWrite -- reads a disk block from registered disk
+/**
+* @brief AuVDiskWrite -- reads a disk block from registered disk
 * @param disk -- Pointer to vdsik structure
 * @param lba -- Linear block address to read
 * @param count -- number of blocks to read
 * @param buffer -- Buffer, where to store the data
+* @return the amount of data being written in bytes
 */
 size_t AuVDiskWrite(AuVDisk* disk, uint64_t lba, uint32_t count, uint64_t* buffer) {
 	if (disk->Write)
@@ -133,11 +141,10 @@ size_t AuVDiskWrite(AuVDisk* disk, uint64_t lba, uint32_t count, uint64_t* buffe
 }
 
 
-/*
- * AuVDiskRegisterPartition - Gether all informations about the partition
+/**
+ * @brief AuVDiskRegisterPartition - Gether all informations about the partition
  * for now, only GUID Partition is supported
  * @param vdisk -- VDisk structure pointer
- *
  */
 void AuVDiskRegisterPartition(AuVDisk* vdisk) {
 	uint64_t* buffer = (uint64_t*)AuPmmngrAlloc();
@@ -201,8 +208,8 @@ void AuVDiskRegisterPartition(AuVDisk* vdisk) {
 
 }
 
-/*
-* AuVDiskRegister -- adds a vdisk service to the list
+/**
+* @brief AuVDiskRegister -- adds a vdisk service to the list
 * @param disk -- disk to add
 */
 void AuVDiskRegister(AuVDisk* disk) {
@@ -220,8 +227,8 @@ void AuVDiskRegister(AuVDisk* disk) {
 	AuVDiskRegisterPartition(disk);
 }
 
-/*
- * AuVDiskDestroy -- destroy's a vdisk
+/**
+ * @brief AuVDiskDestroy -- destroy's a vdisk
  * @param vdisk -- pointer to vdisk
  */
 void AuVDiskDestroy(AuVDisk* vdisk) {
@@ -239,12 +246,13 @@ void AuVDiskDestroy(AuVDisk* vdisk) {
 }
 
 
-/*
- * AuGetVDiskInfo -- returns virtual disk information
+/**
+ * @brief AuGetVDiskInfo -- returns virtual disk information
  * to application
  * @param vdiskID -- id of vdisk
  * @param buffer -- Pointer to memory where to store
  * the information
+ * @return 0 on success,-1 on failure
  */
 int AuGetVDiskInfo(uint8_t vdiskID, void* buffer) {
 	if (!buffer)
@@ -262,12 +270,13 @@ int AuGetVDiskInfo(uint8_t vdiskID, void* buffer) {
 	return 0;
 }
 
-/*
- * AuGetVDiskPartitionInfo -- get partition information from
+/**
+ * @brief AuGetVDiskPartitionInfo -- get partition information from
  * desired virtual disk
  * @param vdiskID -- virtual disk identifier
  * @param partitionID -- partition number
  * @param buffer -- memory pointer where to store the information
+ * @return 0 on success, -1 on failure
  */
 int AuGetVDiskPartitionInfo(uint8_t vdiskID, uint8_t partition_ID, void* buffer) {
 	/*
@@ -302,9 +311,12 @@ int AuGetVDiskPartitionInfo(uint8_t vdiskID, uint8_t partition_ID, void* buffer)
 	return 0;
 }
 
-/*
- * AuGetVDisk -- get a vdisk from the
+/**
+ * @brief AuGetVDisk -- get a vdisk from the
  * vdisk array
+ * @param vdisk_idx -- virtual disk index
+ * @return the vidisk structure respected to 
+ * the index
  */
 AuVDisk* AuGetVDisk(int vdisk_idx) {
 	return VdiskArray[vdisk_idx];

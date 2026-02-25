@@ -1,4 +1,6 @@
 /**
+* @file tty.c
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2025, Manas Kamal Choudhury
@@ -38,12 +40,21 @@
 #include <Hal/AA64/sched.h>
 #include <aucon.h>
 
+/** @brief master_count -- internal count value of total
+ * master tty
+ */
 size_t master_count = 0;
+/** @brief slave_count -- internal slave tty count */
 size_t slave_count = 0;
 
 TTY* root = NULL;
 TTY* last = NULL;
 
+/**
+ * @brief AuTTYInsert -- insert a new tty to tty
+ * list
+ * @param tty -- Pointer to newly created tty
+ */
 void AuTTYInsert(TTY* tty) {
 	tty->next = NULL;
 	tty->prev = NULL;
@@ -59,6 +70,10 @@ void AuTTYInsert(TTY* tty) {
 	last = tty;
 }
 
+/**
+ * @brief AuTTYDelete -- remove a tty from the tty list
+ * @param tty -- Pointer to the tty to delete
+ */
 void AuTTYDelete(TTY* tty) {
 	if (root == NULL)
 		return;
@@ -75,15 +90,31 @@ void AuTTYDelete(TTY* tty) {
 	kfree(tty);
 }
 
+/**
+ * @brief AuTTYWriteSlave -- writes a character to
+ * to slave tty
+ * @param tty -- Pointer to the tty where to write
+ * @param c -- character to write
+ */
 void AuTTYWriteSlave(TTY* tty, uint8_t c) {
 	AuCircBufPut(tty->slavebuf, c);
 }
 
+/**
+ * @brief AuTTYWriteMaster -- writes a character to master
+ * tty
+ * @param tty -- Pointer to the tty where to write
+ * @param c -- character to write
+ */
 void AuTTYWriteMaster(TTY* tty, uint8_t c) {
 	AuCircBufPut(tty->masterbuf, c);
 }
 
-/* AuTTYProcessLine -- Line Discipline layer*/
+/** 
+ * @brief AuTTYProcessLine -- Line Discipline layer
+ * @param tty -- Pointer to current tty
+ * @param c -- character to process
+ */
 void AuTTYProcessLine(TTY* tty, uint8_t c) {
 	if (tty->term.c_lflag & ISIG) {
 		int sig = -1;
@@ -131,7 +162,14 @@ void AuTTYProcessLine(TTY* tty, uint8_t c) {
 	}
 }
 
-
+/**
+ * @brief AuTTYMasterRead -- vfs read callback for master tty
+ * @param fs -- Pointer to current file system
+ * @param file -- Pointer to tty file
+ * @param buffer -- Pointer to buffer to read onto
+ * @param len -- total length in bytes to read
+ * @return return the amount of bytes read
+ */
 size_t AuTTYMasterRead(AuVFSNode* fs, AuVFSNode* file, uint64_t* buffer, uint32_t len) {
 	TTY* type = (TTY*)file->device;
 	if (!type)
@@ -153,8 +191,13 @@ size_t AuTTYMasterRead(AuVFSNode* fs, AuVFSNode* file, uint64_t* buffer, uint32_
 	return bytes_to_ret;
 }
 
-/*
- * AuTTYMasterWrite -- writing to master goes to slave buffer
+/**
+ * @brief AuTTYMasterWrite -- writing to master goes to slave buffer
+ * @param fs -- Pointer to current file system
+ * @param file -- Pointer to tty file
+ * @param buffer -- Pointer to buffer to write to
+ * @param len -- to length in bytes to write
+ * @return return amount of data written in bytes
  */
 size_t AuTTYMasterWrite(AuVFSNode* fs, AuVFSNode* file, uint64_t* buffer, uint32_t len) {
 	uint8_t* aligned_buf = (uint8_t*)buffer;
@@ -179,8 +222,13 @@ size_t AuTTYSlaveRead(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint32
 	return 1;
 }
 
-/*
- * AuTTYSlaveWrite --- writing to slave goes to master buffer
+/**
+ * @brief AuTTYSlaveWrite --- writing to slave goes to master buffer
+ * @param fsys -- self explanatory
+ * @param file -- self explanatory
+ * @param buffer -- self explanatory
+ * @param len -- self explanatory
+ * @return return the amount of data written in bytes
  */
 size_t AuTTYSlaveWrite(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint32_t len) {
 	char* data = (char*)buffer;
@@ -220,6 +268,13 @@ int AuTTYMasterClose(AuVFSNode* fs, AuVFSNode* file) {
 	return 0;
 }
 
+/**
+ * @breif AuTTYIoControl -- vfs io control callback for tty
+ * @param file -- Pointer to tty file
+ * @param code -- control code
+ * @param arg -- Pointer to user data
+ * @return requested value on success, -1 on failure
+ */
 int AuTTYIoControl(AuVFSNode* file, int code, void* arg) {
 	TTY* tty = (TTY*)file->device;
 	if (!tty)
@@ -258,10 +313,11 @@ int AuTTYIoControl(AuVFSNode* file, int code, void* arg) {
 	return 1;
 }
 
-/*
- * AuTTYCreateMaster -- create a master tty end
+/**
+ * @brief AuTTYCreateMaster -- create a master tty end
  * and mount it to device directory
  * @param tty -- pointer to tty device
+ * @return pointer to newly created tty file
  */
 AuVFSNode* AuTTYCreateMaster(TTY* tty) {
 	AuVFSNode* fs = AuVFSFind("/dev");
@@ -287,10 +343,11 @@ AuVFSNode* AuTTYCreateMaster(TTY* tty) {
 	return node;
 }
 
-/*
-* AuTTYCreateSlave -- create a slave tty end
+/**
+* @brief AuTTYCreateSlave -- create a slave tty end
 * and mount it to device directory
 * @param tty -- pointer to tty device
+* @return pointer to newly created slave tty file
 */
 AuVFSNode* AuTTYCreateSlave(TTY* tty) {
 	AuVFSNode* fs = AuVFSFind("/dev");
@@ -316,13 +373,13 @@ AuVFSNode* AuTTYCreateSlave(TTY* tty) {
 	return node;
 }
 
-/*
- * AuTTYCreate -- create tty syscall for process
+/**
+ * @brief AuTTYCreate -- create tty syscall for process
  * @param master_fd -- Pointer to memory area
  * where to store master file descriptor
  * @param slave_fd -- Pointer to memory area
  * where to store slave file descriptor
- *
+ * @return 1 on success and -1 on failure
  */
 int AuTTYCreate(int* master_fd, int* slave_fd) {
 
@@ -375,8 +432,8 @@ int AuTTYCreate(int* master_fd, int* slave_fd) {
 	return 1;
 }
 
-/*
- * AuTTYInitialise -- initialize the TTY kernel resource
+/**
+ * @brief AuTTYInitialise -- initialize the TTY kernel resource
  */
 void AuTTYInitialise() {
 	root = NULL;

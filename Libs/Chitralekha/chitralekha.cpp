@@ -1,4 +1,6 @@
 /**
+* @file chitralekha.cpp
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2023, Manas Kamal Choudhury
@@ -45,8 +47,8 @@ int ChPrintLibName() {
 	return 0;
 }
 
-/*
- * ChCreateCanvas -- creates a new canvas
+/**
+ * @brief ChCreateCanvas -- creates a new canvas
  * @param reqW -- requested width of the canvas
  * @param reqH -- requested height of the canvas
  */
@@ -81,8 +83,8 @@ ChCanvas* ChCreateCanvas(int reqW, int reqH) {
 	return canvas;
 }
 
-/*
- * ChAllocateBuffer -- allocates buffers for graphics 
+/**
+ * @brief ChAllocateBuffer -- allocates buffers for graphics 
  * @param canvas -- Pointer to canvas
  */
 int ChAllocateBuffer(ChCanvas* canvas) {
@@ -101,8 +103,8 @@ int ChAllocateBuffer(ChCanvas* canvas) {
 	return 1;
 }
 
-/*
- * ChDeAllocateBuffer -- de-allocates buffers from
+/**
+ * @brief ChDeAllocateBuffer -- de-allocates buffers from
  * canvas
  * @param canvas -- pointer to canvas structure
  */
@@ -114,8 +116,8 @@ int ChDeAllocateBuffer(ChCanvas* canvas) {
 	return 1;
 }
 
-/*
- * ChCanvasScreenUpdate -- updates screen buffer with canvas buffer
+/**
+ * @brief ChCanvasScreenUpdate -- updates screen buffer with canvas buffer
  * contents
  * @param canvas -- Pointer to canvas
  * @param x -- x position
@@ -169,8 +171,8 @@ void ChCanvasScreenUpdate(ChCanvas* canvas, int _x, int _y, int _w, int _h) {
 }
 
 
-/*
- * ChDrawPixel -- draws a pixel to canvas buffer
+/**
+ * @brief ChDrawPixel -- draws a pixel to canvas buffer
  * @param canvas -- pointer to canvas
  * @param x -- x position
  * @param y -- y position
@@ -211,8 +213,8 @@ void ChDrawPixel(ChCanvas* canvas, int x, int y, uint32_t color) {
 }
 
 
-/*
- * ChDrawPixelRAW -- draws a pixel to canvas buffer
+/**
+ * @brief ChDrawPixelRAW -- draws a pixel to canvas buffer
  * @param canvas -- pointer to canvas
  * @param x -- x position
  * @param y -- y position
@@ -247,8 +249,8 @@ void ChDrawPixelRAW(ChCanvas* canvas, int x, int y, uint32_t color) {
 }
 
 
-/*
- * ChDrawPixelAA -- draw anti-aliased pixel
+/**
+ * @brief ChDrawPixelAA -- draw anti-aliased pixel
  * @param canv - Pointer to canvas
  * @param x -- X location relative to window
  * @param y -- Y location relative to window
@@ -261,8 +263,8 @@ void ChDrawPixelAA(ChCanvas* canv, int x, int y, uint32_t color, double alpha) {
 	ChDrawPixel(canv, x, y, blendedColor);
 }
 
-/*
- * ChGetPixel -- retuns a pixel from canvas
+/**
+ * @brief ChGetPixel -- retuns a pixel from canvas
  * @param canvas -- Pointer to canvas structure
  * @param x -- x position
  * @param y -- y position
@@ -292,8 +294,8 @@ uint32_t ChGetPixel(ChCanvas* canvas, int x, int y) {
 	return lfb[static_cast<int64_t>(y) * canvas->canvasWidth + x];
 }
 
-/*
- * ChCanvasFill -- fill the canvas with specific color
+/**
+ * @brief ChCanvasFill -- fill the canvas with specific color
  * @param canvas -- pointer to canvas structure
  * @param w -- width to fill
  * @param h -- height to fill
@@ -306,8 +308,8 @@ void ChCanvasFill(ChCanvas* canvas, int w, int h, uint32_t color) {
 }
 
 
-/*
- * ChGetScreenDiagonal -- get screen diagonal using
+/**
+ * @brief ChGetScreenDiagonal -- get screen diagonal using
  * pythagorean theorem in centimetre 
  * @param canv -- Pointer to canvas
  */
@@ -316,8 +318,8 @@ float ChGetScreenDiagonal(ChCanvas* canv) {
 	return diagonal;
 }
 
-/*
- * ChGetScreenDPI -- converts screen resolution into 
+/**
+ * @brief ChGetScreenDPI -- converts screen resolution into 
  * dot-per-inch in centimetre
  * @param canv -- Pointer to canvas
  */
@@ -326,8 +328,8 @@ float ChGetScreenDPI(ChCanvas* canv) {
 	return dpi;
 }
 
-/*
- * ChGetScreenAspectRatio -- returns the aspect ration of the
+/**
+ * @brief ChGetScreenAspectRatio -- returns the aspect ration of the
  * screen
  * @param canv -- Pointer to canvas
  */

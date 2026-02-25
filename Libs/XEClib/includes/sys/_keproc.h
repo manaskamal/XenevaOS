@@ -1,4 +1,6 @@
 /**
+* @file _keproc.h
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2023, Manas Kamal Choudhury
@@ -38,49 +40,49 @@
 XE_EXTERN{
 #endif
 
-	/*
-	 * _KePauseThread -- pause currently running
+	/**
+	 * @brief _KePauseThread -- pause currently running
 	 * thread
 	 */
 	XE_LIB int _KePauseThread();
 
-	/*
-	 * _KeGetThreadID -- get currently running
+	/**
+	 * @brief _KeGetThreadID -- get currently running
 	 * thread id
 	 */
 	XE_LIB uint16_t _KeGetThreadID();
 
-	/*
-	 * _KeGetProcessID -- get currently running
+	/**
+	 * @brief _KeGetProcessID -- get currently running
 	 *  process id
 	 */
 	XE_LIB int _KeGetProcessID();
 
-	/*
-	 * _KeProcessExit -- exits current process
+	/**
+	 * @brief _KeProcessExit -- exits current process
 	 */
 	XE_LIB int _KeProcessExit();
 
-	/*
-	 * _KeProcessWaitForTermination -- suspends
+	/**
+	 * @brief _KeProcessWaitForTermination -- suspends
 	 * currently running process until another
 	 * process state changes
 	 * @param pid -- process id,-1 for all
 	 */
 	XE_LIB int _KeProcessWaitForTermination(int pid);
 
-	/*
-	 * _KeCreateProcess -- create a new process
+	/**
+	 * @brief _KeCreateProcess -- create a new process
 	 * slot by taking
 	 * @param parent_id -- process parent id
 	 * @param name -- process name
-	 * @ret -- process id of newly create process
+	 * @return -- process id of newly create process
 	 * slot
 	 */
 	XE_LIB int _KeCreateProcess(int parent_id, char* name);
 
-	/*
-	 * _KeProcessLoadExec -- loads an executable to a
+	/**
+	 * @brief _KeProcessLoadExec -- loads an executable to a
 	 * process slot
 	 * @param proc_id -- process slot id
 	 * @param filename -- filename of the process
@@ -90,44 +92,44 @@ XE_EXTERN{
 	 */
 	XE_LIB int _KeProcessLoadExec(int proc_id, char* filename, int argc, char** argv);
 
-	/*
-	* _KeGetProcessHeapMem -- Grabs some memory from
+	/**
+	* @brief _KeGetProcessHeapMem -- Grabs some memory from
 	* heap memory of current process slot
 	* @param sz -- size that is needed, should be page-aligned
 	*/
 	XE_LIB uint64_t _KeGetProcessHeapMem(size_t sz);
 
 
-	/*
-	 * _KeProcessSleep -- put the current process main thread
+	/**
+	 * @brief _KeProcessSleep -- put the current process main thread
 	 *  to sleep mode
 	 *  1s = 10000 ms
 	 * @param ms -- millisecond to sleep
 	 */
 	XE_LIB int _KeProcessSleep(uint64_t ms);
 
-	/*
-	 * _KeSetSignal -- register a new signal handler for this
+	/**
+	 * @brief _KeSetSignal -- register a new signal handler for this
 	 * process
 	 * @param signo -- signal number
 	 * @param handler -- handler function
 	 */
 	XE_LIB int _KeSetSignal(int signo, XESigHandler handler);
 
-	/*
-	 * _KeGetSystemTimerTick -- returns the current system
+	/**
+	 * @brief _KeGetSystemTimerTick -- returns the current system
 	 * timer tick
 	 */
 	XE_LIB size_t _KeGetSystemTimerTick();
 
-	/*
-	 * _KeCreateThread -- creates a new thread
+	/**
+	 * @brief _KeCreateThread -- creates a new thread
 	 * inside current process slot
 	 */
 	XE_LIB int _KeCreateThread(void(*entry) (), char *name);
 
-	/*
-	* _KeSetFileToProcess -- copies a file from one process
+	/**
+	* @brief _KeSetFileToProcess -- copies a file from one process
 	* to other
 	* @param fileno -- file number of the current process
 	* @param dest_fdidx -- destination process file index
@@ -135,23 +137,23 @@ XE_EXTERN{
 	*/
 	XE_LIB int _KeSetFileToProcess(int fileno, int dest_fidx, int proc_id);
 
-	/*
-	 * _KeSendSignal -- send a signal to desired process
+	/**
+	 * @brief _KeSendSignal -- send a signal to desired process
 	 * @param pid -- thread id
 	 * @param signum -- signal number
 	 */
 	XE_LIB int _KeSendSignal(int pid, int signum);
 
-	/*
-	 * _KeProcessGetFileDesc -- returns file descriptor for
+	/**
+	 * 2brief _KeProcessGetFileDesc -- returns file descriptor for
 	 * given filename
 	 * @param filename -- name of the file if it's already
 	 * opened
 	 */
 	XE_LIB int _KeProcessGetFileDesc(const char* filename);
 
-	/*
-	 * _KeGetEnvironmentBlock -- returns the current environment
+	/**
+	 * @brief _KeGetEnvironmentBlock -- returns the current environment
 	 * block of the process
 	 */
 	XE_LIB uint64_t _KeGetEnvironmentBlock();

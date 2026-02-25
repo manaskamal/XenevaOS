@@ -1,4 +1,6 @@
 /**
+* @file vdisk.h
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2023, Manas Kamal Choudhury
@@ -127,80 +129,92 @@ typedef struct _vdisk_partition_info_ {
 }AuVDiskPartitionInfo;
 #pragma pack(pop)
 
-/*
-* AuVDiskInitialise -- initialise the vdisk
-*/
+/**
+ * @brief AuVDiskInitialise -- initialise the vdisk
+ */
 extern void AuVDiskInitialise();
 
-/*
-* AuVDiskGetIndex -- returns a vdisk index
-*/
+/**
+ * @brief AuVDiskGetIndex -- returns a vdisk index
+ */
 AU_EXTERN AU_EXPORT uint8_t AuVDiskGetIndex();
 
 
-/*
-* AuVDiskRegister -- adds a vdisk service to the list
+/**
+* @brief AuVDiskRegister -- adds a vdisk service to the list
 * @param disk -- disk to add
 */
 AU_EXTERN AU_EXPORT void AuVDiskRegister(AuVDisk* disk);
-/*
-* AuCreateVDisk -- creates a vdisk and
-* return to the caller
-*/
+
+/**
+ * @brief AuCreateVDisk -- creates a vdisk and
+ * return to the caller
+ * @return return the newly created empty vdisk
+ * structure
+ */
 AU_EXTERN AU_EXPORT AuVDisk *AuCreateVDisk();
 
 
-/*
-* AuVDiskRead -- reads a disk block from registered disk
-* @param disk -- Pointer to vdsik structure
-* @param lba -- Linear block address to read
-* @param count -- number of blocks to read
-* @param buffer -- Buffer, where to store the data
-*/
+/**
+ * @brief AuVDiskRead -- reads a disk block from registered disk
+ * @param disk -- Pointer to vdsik structure
+ * @param lba -- Linear block address to read
+ * @param count -- number of blocks to read
+ * @param buffer -- Buffer, where to store the data
+ * @return return the amount of data being read in bytes
+ */
 AU_EXTERN AU_EXPORT size_t AuVDiskRead(AuVDisk *disk, uint64_t lba, uint32_t count, uint64_t* buffer);
 
-/*
-* AuVDiskWrite -- reads a disk block from registered disk
+/**
+* @brief AuVDiskWrite -- reads a disk block from registered disk
 * @param disk -- Pointer to vdsik structure
 * @param lba -- Linear block address to read
 * @param count -- number of blocks to read
 * @param buffer -- Buffer, where to store the data
+* @return the amount of data being written in bytes
 */
 AU_EXTERN AU_EXPORT size_t AuVDiskWrite(AuVDisk* disk, uint64_t lba, uint32_t count, uint64_t* buffer);
 
-/*
-* AuVDiskDestroy -- destroy's a vdisk
-* @param vdisk -- pointer to vdisk
-*/
+/**
+ * @brief AuVDiskDestroy -- destroy's a vdisk
+ * @param vdisk -- pointer to vdisk
+ */
 AU_EXTERN AU_EXPORT void AuVDiskDestroy(AuVDisk *vdisk);
 
-/*
- * AuGetVDiskInfo -- returns virtual disk information
+/**
+ * @brief AuGetVDiskInfo -- returns virtual disk information
  * to application
  * @param vdiskID -- id of vdisk
  * @param buffer -- Pointer to memory where to store
  * the information
+ * @return 0 on success,-1 on failure
  */
 extern int AuGetVDiskInfo(uint8_t vdiskID, void* buffer);
 
-/*
- * AuGetVDiskPartitionInfo -- get partition information from
+/**
+ * @brief AuGetVDiskPartitionInfo -- get partition information from
  * desired virtual disk
  * @param vdiskID -- virtual disk identifier
  * @param partitionID -- partition number
  * @param buffer -- memory pointer where to store the information
+ * @return 0 on success, -1 on failure
  */
 extern int AuGetVDiskPartitionInfo(uint8_t vdiskID, uint8_t partition_ID, void* buffer);
 
-/*
- * AuVDiskCreateStorageFile -- creates a storage
+/**
+ * @brief AuVDiskCreateStorageFile -- creates a storage
  * directory in device file system
+ * @param output -- Pointer to memory where to store
+ * composite string value
  */
 AU_EXTERN AU_EXPORT int AuVDiskCreateStorageFile(char* output);
 
-/*
- * AuGetVDisk -- get a vdisk from the
+/**
+ * @brief AuGetVDisk -- get a vdisk from the
  * vdisk array
+ * @param vdisk_idx -- virtual disk index
+ * @return the vidisk structure respected to
+ * the index
  */
 AU_EXTERN AU_EXPORT AuVDisk* AuGetVDisk(int vdisk_idx);
 #endif

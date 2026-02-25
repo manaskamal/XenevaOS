@@ -1,4 +1,6 @@
 /**
+* @file dtb.c
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2025, Manas Kamal Choudhury
@@ -43,8 +45,8 @@
 
 uint64_t* dtbAddress;
 
-/*
- * AuDTBSwap32 -- swaps 32 bit value
+/**
+ * @brief AuDTBSwap32 -- swaps 32 bit value
  * @param from -- value to swap
  */
 uint32_t AuDTBSwap32(uint32_t from) {
@@ -55,8 +57,8 @@ uint32_t AuDTBSwap32(uint32_t from) {
 	return (d << 24) | (c << 16) | (b << 8) | a;
 }
 
-/*
- * AuDTBSwap64 -- swaps 64 bit value
+/**
+ * @brief AuDTBSwap64 -- swaps 64 bit value
  * @param from -- value to swap
  */
 uint64_t AuDTBSwap64(uint64_t from) {
@@ -72,8 +74,8 @@ uint64_t AuDTBSwap64(uint64_t from) {
 		((uint64_t)e << 32) | (d << 24) | (c << 16) | (b << 8) | a;
 }
 
-/*
- * AuDTBSwap16 -- swaps 16 bit value
+/**
+ * @brief AuDTBSwap16 -- swaps 16 bit value
  * @param from -- value to swap
  */
 uint16_t AuDTBSwap16(uint16_t from) {
@@ -142,8 +144,8 @@ static int prefix_cmp(const char* a, const char* b) {
 	return !memcmp(a, b, strlen(b));
 }
 
-/*
- * AuDeviceTreeGetNode -- searches and get the offset of the node
+/**
+ * @brief AuDeviceTreeGetNode -- searches and get the offset of the node
  * @param name -- Node name
  */
 uint32_t* AuDeviceTreeGetNode(const char* name) {
@@ -158,8 +160,8 @@ uint32_t* AuDeviceTreeGetNode(const char* name) {
 }
 
 
-/*
- * AuDeviceTreeFindProperty -- searches for a property within a node
+/**
+ * @brief AuDeviceTreeFindProperty -- searches for a property within a node
  * @param node -- Pointer to node offset
  * @param property -- Property name
  */
@@ -173,8 +175,8 @@ uint32_t* AuDeviceTreeFindProperty(uint32_t* node, const char* property) {
 	return out;
 }
 
-/*
- * AuDeviceTreeGetAddressCells -- get the value from address cells
+/**
+ * @brief AuDeviceTreeGetAddressCells -- get the value from address cells
  * property
  * @param node -- Pointer to node
  */
@@ -191,8 +193,8 @@ uint32_t AuDeviceTreeGetAddressCells(uint32_t* node) {
 
 
 
-/*
- * AuDeviceTreeGetSizeCells -- get the value from size cells
+/**
+ * @brief AuDeviceTreeGetSizeCells -- get the value from size cells
  * property
  * @param node -- Pointer to node
  */
@@ -213,8 +215,8 @@ static inline uint32_t _swap32(uint32_t x) {
 		((x & 0x00FF0000U) >> 8) |
 		((x & 0xFF000000U) >> 24);
 }
-/*
- * AuDeviceTreeGetRegAddress -- get the MMIO address from reg property
+/**
+ * @brief AuDeviceTreeGetRegAddress -- get the MMIO address from reg property
  * @param node -- Pointer to parent node
  * @param addressCell -- size of address cell
  */
@@ -231,8 +233,8 @@ uint64_t AuDeviceTreeGetRegAddress(uint32_t* node, uint32_t addressCell) {
 	return 0;
 }
 
-/*
- * AuDeviceTreeGetRegSize -- get the size value from reg property
+/**
+ * @brief AuDeviceTreeGetRegSize -- get the size value from reg property
  * @param node -- Pointer to parent node
  * @param addressCell -- size of address cell
  * @param sizeCell -- value of size cell
@@ -250,8 +252,8 @@ uint64_t AuDeviceTreeGetRegSize(uint32_t* node, uint32_t addressCell, uint32_t s
 	return 0;
 }
 
-/*
- * AuDeviceTreeInitialize -- initialize the device tree
+/**
+ * @brief AuDeviceTreeInitialize -- initialize the device tree
  * @param fdt_address -- device tree address passed by
  * bootloader
  */
@@ -276,8 +278,8 @@ void AuDeviceTreeInitialize(KERNEL_BOOT_INFO* info) {
 	dtbAddress = fdt_address;
 }
 
-/*
- * AuDeviceTreeMapMMIO -- Maps the physical device tree address
+/**
+ * @brief AuDeviceTreeMapMMIO -- Maps the physical device tree address
  * to MMIO address range
  */
 void AuDeviceTreeMapMMIO() {

@@ -1,4 +1,6 @@
 /**
+* @file rpi3bpIRQ.c
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2025, Manas Kamal Choudhury
@@ -49,8 +51,8 @@ void settimerdebug() {
 }
 
 extern void XPT2046ReadTouch();
-/*
- * RPI3_IRQ_handler -- handle pending IRQs
+/**
+ * @brief RPI3_IRQ_handler -- handle pending IRQs of RPI board
  * @param regs -- Pointer to AA64 register struct
  */
 void RPI3_IRQ_handler(AA64Registers* regs) {

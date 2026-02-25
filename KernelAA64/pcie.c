@@ -1,4 +1,6 @@
 /**
+* @file pcie.c
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2025, Manas Kamal Choudhury
@@ -42,8 +44,8 @@
 
 uint64_t _ecamAddress;
 bool _pcieInitialized;
-/*
- * AA64PCIeInitialize -- intialize pcie controller
+/**
+ * @brief AA64PCIeInitialize -- intialize pcie subsystem
  */
 void AA64PCIeInitialize() {
 	if (!AuLittleBootUsed()) {
@@ -91,13 +93,14 @@ bool AuIsPCIeInitialized() {
 	return _pcieInitialized;
 }
 
-/*
- * AuPCIEGetDevice -- gets a device address from its bus
+/**
+ * @brief AuPCIEGetDevice -- gets a device address from its bus
  * dev and func
  * @param seg -- device segment
  * @param bus -- bus of the device
  * @param dev -- device number
  * @param func -- function number
+ * @return return the composited device address
  */
 uint64_t AuPCIEGetDevice(uint16_t seg, int bus, int dev, int func) {
 	if (bus > 255)
@@ -122,13 +125,14 @@ uint64_t AuPCIEGetDevice(uint16_t seg, int bus, int dev, int func) {
 	return addr;
 }
 
-/*
- * AuPCIERead -- reads a register from pci express
+/**
+ * @brief AuPCIERead -- reads a register from pci express
  * @param device -- device address
  * @param reg -- register to read
  * @param bus -- bus number
  * @param dev -- device number
  * @param func -- function number
+ * @return return the result in DWORD
  */
 uint32_t AuPCIERead(uint64_t device, int reg, int bus, int dev, int func) {
 	
@@ -221,14 +225,15 @@ uint32_t AuPCIERead(uint64_t device, int reg, int bus, int dev, int func) {
 }
 
 
-/*
- * AuPCIERead64 -- reads in 64
+/**
+ * @brief AuPCIERead64 -- reads in 64
  * @param device -- device address
  * @param reg -- register
  * @param size -- size to read
  * @param bus -- bus num
  * @param dev -- device number
  * @param func -- func number
+ * @return return the read result in QWORD
  */
 uint64_t AuPCIERead64(uint64_t device, int reg, int size, int bus, int dev, int func) {
 
@@ -252,8 +257,8 @@ uint64_t AuPCIERead64(uint64_t device, int reg, int size, int bus, int dev, int 
 }
 
 
-/*
-* AuPCIEWrite -- writes to a register
+/**
+* @brief AuPCIEWrite -- writes to a register
 * @param device -- device address
 * @param reg -- register
 * @param size -- size to read
@@ -361,8 +366,8 @@ void AuPCIEWrite64(uint64_t device, int reg, int size, uint64_t val, int bus, in
 }
 
 
-/*
-* AuPCIEScanClass -- scans and return pcie device with given class code and sub class code
+/**
+* @brief AuPCIEScanClass -- scans and return pcie device with given class code and sub class code
 * @param classCode -- class code
 * @param subClassCode -- sub class code
 * @param bus -- address, where bus number will be stored
@@ -400,8 +405,8 @@ uint64_t AuPCIEScanClass(uint8_t classCode, uint8_t subClassCode, int* bus_, int
 }
 
 
-/*
-* AuPCIEScanVendorDevice -- scans and return pcie device with given vendor id and device id
+/**
+* @brief AuPCIEScanVendorDevice -- scans and return pcie device with given vendor id and device id
 * @param vendor -- vendor id
 * @param device -- device id
 * @param bus -- address, where bus number will be stored
@@ -439,14 +444,15 @@ uint64_t AuPCIEScanVendorDevice(uint16_t vendor, uint16_t device, int* bus_, int
 }
 
 
-/*
-* AuPCIEScanClassIF -- scans and return pcie device with given class code and sub class code
+/**
+* @brief AuPCIEScanClassIF -- scans and return pcie device with given class code and sub class code
 * @param classCode -- class code
 * @param subClassCode -- sub class code
 * @param bus -- address, where bus number will be stored
 * @param dev -- address, where device number will be stored
 * @param func -- address, where function number will be stored
 * @param progIf -- Programming interface
+* @return pcie device address 
 */
 uint64_t AuPCIEScanClassIF(uint8_t classCode, uint8_t subClassCode, uint8_t progIf, int* bus_, int* dev_, int* func_) {
 
@@ -539,8 +545,8 @@ end:
 	return ret;
 }
 
-/*
-* AuPCIEAllocMSI -- Allocate MSI/MSI-X for interrupt
+/**
+* @brief AuPCIEAllocMSI -- Allocate MSI/MSI-X for interrupt
 * @todo -- MSIX not implemented yet
 * @param device -- PCIe device address
 * @param vector -- interrupt vector

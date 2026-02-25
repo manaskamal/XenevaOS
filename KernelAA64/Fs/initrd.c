@@ -1,4 +1,6 @@
 /**
+* @file initrd.c
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2023, Manas Kamal Choudhury
@@ -48,8 +50,8 @@ uint64_t ramdisk_end;
 
 #define RAMDISK_MAPPING_START 0xFFFFC00000900000
 
-/*
- * AuRamdiskRead -- read data from ramdisk
+/**
+ * @brief AuRamdiskRead -- read data from ramdisk
  * @param lba -- LBA address
  * @param count -- number of sectors to read
  * @param buffer -- Pointer to buffer to write to
@@ -63,8 +65,8 @@ void AuRamdiskRead(uint64_t lba, size_t count, uint8_t* buffer) {
 		buffer[i] = src[i];
 }
 
-/*
- * AuRamdiskWrite -- write data to ramdisk
+/**
+ * @brief AuRamdiskWrite -- write data to ramdisk
  * @param lba -- LBA address
  * @param count -- number of sectors to write
  * @param buffer -- Pointer to buffer from write to 
@@ -87,8 +89,8 @@ int AuRamdiskWriteCallback(AuVDisk* vdisk, uint64_t lba, uint32_t count, uint64_
 	AuRamdiskWrite(vdisk->startingLBA + lba, count, (uint8_t*)buffer);
 	return (count * RAMDISK_SECTOR_SIZE);
 }
-/*
- * AuInitrdInitialize -- initialize ramdisk 
+/**
+ * @brief AuInitrdInitialize -- initialize ramdisk 
  * @param info -- Pointer to Kernel Boot information
  */
 void AuInitrdInitialize(KERNEL_BOOT_INFO* info) {
@@ -118,7 +120,7 @@ void AuInitrdInitialize(KERNEL_BOOT_INFO* info) {
 		AuTextOut("[aurora]: ramdisk failed to initialize \r\n");
 		return;
 	}
-	/* okay before full initialization, we need to grab all the
+	/** okay before full initialization, we need to grab all the
 	 * physical address from the ramdisk pointer and map it to
 	 * kernel higher half address
 	 */

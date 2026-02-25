@@ -1,4 +1,6 @@
 /**
+* @file virt.c
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2025, Manas Kamal Choudhury
@@ -52,8 +54,8 @@ uint8_t AuVirtIOInputCheck(uint64_t device, int bus,int dev,int func) {
 		return VIRTIO_INPUT_TABLET;
 }
 
-/*
- * AuVirtIOInputInitialize -- initialize virtIO input device
+/**
+ * @brief AuVirtIOInputInitialize -- initialize virtIO input device
  */
 void AuVirtIOInputInitialize() {
 	int numVirtIOInput = 0;

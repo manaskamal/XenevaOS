@@ -1,4 +1,6 @@
 /**
+* @file mmserv.c
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2023, Manas Kamal Choudhury
@@ -39,8 +41,8 @@
  *  Shared Memory
  * ============================================================
  */
- /*
-  * CreateSharedMem -- create a shared memory chunk
+ /**
+  * @brief CreateSharedMem -- create a shared memory chunk
   * @param key -- key to use
   * @param sz -- memory size
   * @param flags -- shared memory flags
@@ -60,8 +62,8 @@ int CreateSharedMem(uint16_t key, size_t sz, uint8_t flags) {
 	return id;
 }
 
-/*
- * ObtainSharedMem -- obtain a shared memory
+/**
+ * @brief ObtainSharedMem -- obtain a shared memory
  * @param id -- segment id
  * @param shmaddr -- user specified address
  * @param shmflg -- flags to use for protection
@@ -79,8 +81,8 @@ void* ObtainSharedMem(uint16_t id, void* shmaddr, int shmflg) {
 	return AuSHMObtainMem(proc, id, shmaddr, shmflg);
 }
 
-/*
- * UnmapSharedMem -- unmap shared memory segment
+/**
+ * @brief UnmapSharedMem -- unmap shared memory segment
  * @param key -- key to search
  */
 void UnmapSharedMem(uint16_t key) {
@@ -97,9 +99,10 @@ void UnmapSharedMem(uint16_t key) {
 }
 
 
-/*
- * GetProcessHeapMem -- get a memory from
+/**
+ * @brief GetProcessHeapMem -- get a memory from
  * process heap
+ * @param sz -- size in bytes
  */
 uint64_t GetProcessHeapMem(size_t sz) {
 	/* check if size is page aligned */
@@ -135,8 +138,8 @@ uint64_t GetProcessHeapMem(size_t sz) {
 	return start_addr;
 }
 
-/*
- * ProcessHeapUnmap -- unmaps previosly allocated
+/**
+ * @briefProcessHeapUnmap -- unmaps previosly allocated
  * heap memory
  * @param ptr -- Pointer to freeable address
  * @param sz -- size in bytes to unallocate

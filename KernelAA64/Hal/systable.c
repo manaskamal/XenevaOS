@@ -1,4 +1,6 @@
 /**
+* @file systable.c
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2023-2025, Manas Kamal Choudhury
@@ -119,8 +121,8 @@ static void* syscalls[AURORA_MAX_SYSCALL] = {
 extern void set_syscall_retval(uint64_t val);
 extern bool isSyscall();
 extern void modifyx17();
-/*
- * AuAA64SyscalHandler -- common system call handler for aarch64
+/**
+ * @brief AuAA64SyscalHandler -- common system call handler for aarch64
  * @param regs -- Register information passed by sync_exception
  */
 void AuAA64SyscallHandler(AA64Registers* regs) {

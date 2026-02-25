@@ -1,4 +1,6 @@
 /**
+* @file base.cpp
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2023, Manas Kamal Choudhury
@@ -36,8 +38,8 @@
 
 ChitralekhaApp* baseapp;
 
-/*
- * ChitralekhaStartApp -- start an application instance
+/**
+ * @brief ChitralekhaStartApp -- start an application instance
  */
 ChitralekhaApp* ChitralekhaStartApp(int argc, char* argv[]) {
 	int postboxfd = _KeOpenFile("/dev/postbox", FILE_OPEN_READ_ONLY);
@@ -84,8 +86,8 @@ ChitralekhaApp* ChitralekhaStartSubApp(ChitralekhaApp* parent) {
 	app->parent = parent;
 	return app;
 }
-/*
- * ChitralekhaGetApp -- return running application instance
+/**
+ * @brief ChitralekhaGetApp -- return running application instance
  */
 ChitralekhaApp* ChitralekhaGetApp() {
 	return baseapp;

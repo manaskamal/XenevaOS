@@ -1,4 +1,6 @@
 /**
+* @file gic.c
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2025, Manas Kamal Choudhury
@@ -44,7 +46,7 @@ uint32_t* gicc_regs;
 
 typedef void (*irq_callback)(int spi);
 
-/* distributor registers */
+/** distributor registers */
 #define GICD(n)  (n.gicDMMIO)
 #define GICD_CTLR    0x0000
 #define GICD_TYPER   0x0004
@@ -60,7 +62,7 @@ typedef void (*irq_callback)(int spi);
 #define ISPENDING0 0x200
 
 
-/* cpu registers offsets */
+/** cpu registers offsets */
 #define GICC_CTLR  0x0000
 #define GICC_PMR   0x0004
 #define GICC_BPR   0x0008
@@ -86,8 +88,8 @@ uint64_t* gic_redist_mmio;
 static uint8_t spiBitMap[MAX_SPIS];
 static irq_callback callbacks[MAX_SPIS];
 
-/*
- * gic_outl_ -- writes a value to mmio register in dword
+/**
+ * @brief gic_outl_ -- writes a value to mmio register in dword
  * @param reg -- register
  * @param value -- value to write
  */
@@ -96,17 +98,18 @@ void gic_outl_(uint64_t* mmio_,int reg, uint32_t value) {
 	*mmio = value;
 }
 
-/*
- * gic_inl_ -- reads a value from mmio register in dword
+/**
+ * @brief gic_inl_ -- reads a value from mmio register in dword
  * @param reg -- register
+ * @return value read from mmio address in DWORD
  */
 uint32_t gic_inl_(uint64_t* mmio_, int reg) {
 	volatile uint32_t* mmio = (volatile uint32_t*)((uint64_t)mmio_ + reg);
 	return *mmio;
 }
 
-/*
- * gic_outw_ -- writes a value to mmio register in word
+/**
+ * @brief gic_outw_ -- writes a value to mmio register in word
  * @param reg -- register
  * @param value -- value to write
  */
@@ -115,9 +118,10 @@ void gic_outw_(uint64_t* mmio_, int reg, uint16_t value) {
 	*mmio = value;
 }
 
-/*
- * gic_inw_ -- reads a value from mmio register in word
+/**
+ * @brief gic_inw_ -- reads a value from mmio register in word
  * @param reg -- register
+ * @return value read from the mmio address in WORD 
  */
 uint16_t gic_inw_(uint64_t* mmio_,int reg) {
 	volatile uint16_t* mmio = (volatile uint16_t*)(mmio_ + reg);
@@ -125,8 +129,8 @@ uint16_t gic_inw_(uint64_t* mmio_,int reg) {
 }
 
 
-/*
- * gic_outb_ -- writes a value to mmio register in byte
+/**
+ * @brief gic_outb_ -- writes a value to mmio register in byte
  * @param reg -- register
  * @param value -- value to write
  */
@@ -136,9 +140,10 @@ void gic_outb_(uint64_t* mmio_, int reg, uint8_t value) {
 	*mmio = value;
 }
 
-/*
-* gic_inb_ -- reads a value from mmio register in byte
+/**
+* @brief gic_inb_ -- reads a value from mmio register in byte
 * @param reg -- register
+* @return value read from mmio address in BYTE
 */
 uint8_t gic_inb_(uint64_t* mmio_, int reg) {
 	volatile uint8_t* mmio = (volatile uint8_t*)((uint64_t)mmio_ + reg);
@@ -151,10 +156,11 @@ GIC* AuGetSystemGIC() {
 
 #define SET_SPI_NS 0x040
 #define SET_SPI_S  0x080
-/*
- * AuGICGetMSIAddress -- calculate and return MSI address
+/**
+ * @brief AuGICGetMSIAddress -- calculate and return MSI address
  * for given spi offset
  * @param interruptID -- spi offset
+ * @return composited MSI address
  */
 uint64_t AuGICGetMSIAddress(int interruptID) {
 	UARTDebugOut("MSI Address : %x \n", __gic.gicMSIPhys + 0x040);
@@ -166,8 +172,8 @@ uint32_t AuGICGetMSIData(int interruptID) {
 	return interruptID;
 }
 
-/*
- * AuGICAllocateSPI -- allocates Shared Peripheral 
+/**
+ * @brief AuGICAllocateSPI -- allocates Shared Peripheral 
  * interrupt ID 
  */
 int AuGICAllocateSPI() {
@@ -181,8 +187,8 @@ int AuGICAllocateSPI() {
 	return -1;
 }
 
-/*
- *AuGICDeallocateSPI -- free up an used SPI id 
+/**
+ *@brief AuGICDeallocateSPI -- free up an used SPI id 
  *@param spiID -- target spi id
  */
 void AuGICDeallocateSPI(int spiID) {
@@ -199,8 +205,8 @@ void GICv2MInitialize() {
 	uint32_t typer = *(volatile uint32_t*)__gic.gicMSIPhys;
 	
 }
-/*
- * GICInitialize -- initialize the gic 
+/**
+ * @brief GICInitialize -- initialize the gic 
  * controller, it can be parsed through ACPI MADT 
  * or hard-coding
  */
@@ -299,7 +305,7 @@ skip_:
 	AuTextOut("GIC Initialized \r\n");
 }
 
-/* GICEnableIRQ -- enable an IRQ
+/** @briefGICEnableIRQ -- enable an IRQ
  * @param irq -- IRQ number
  */
 void GICEnableIRQ(uint32_t irq) {
@@ -355,7 +361,7 @@ void GICIsIRQEdgeTriggered(uint32_t irq) {
 	UARTDebugOut("ICFGR : %x \r\n", icfgr);
 }
 
-/* GICEnableIRQ -- enable an IRQ
+/** @brief GICEnableIRQ -- enable an IRQ
  * @param irq -- IRQ number
  */
 void GICEnableSPIIRQ(uint32_t irq) {
@@ -397,8 +403,8 @@ void GICCheckPending(uint32_t irq) {
 	}
 }
 
-/*
- * GICReadIAR -- read interrupt acknowledge
+/**
+ * @brief GICReadIAR -- read interrupt acknowledge
  * register
  */
 uint32_t GICReadIAR() {
@@ -406,9 +412,10 @@ uint32_t GICReadIAR() {
 	return iar;
 }
 
-/*
- * GICSendEOI --sends end of interrupt to 
+/**
+ * @brief GICSendEOI --sends end of interrupt to 
  * GIC cpu interface
+ * @param irqnum -- interrupt ID of the device
  */
 void GICSendEOI(uint32_t irqnum) {
 #define GICV2_CPUID_SHIFT 10
@@ -437,8 +444,8 @@ void GICSetupTimer() {
 	gic_regs[543] = 0x07070707;
 }
 
-/*
- * GICRegisterSPIHandler -- register a spi handler
+/**
+ * @brief GICRegisterSPIHandler -- register a spi handler
  * to callback list
  * @param fptr -- SPI Callback address
  * @param spi -- SPI number
@@ -449,8 +456,8 @@ void GICRegisterSPIHandler(void* fptr, int spi) {
 	callbacks[spi] = fptr;
 }
 
-/*
- * GICCallSPIHandler -- jump to a callback handler
+/**
+ * @brief GICCallSPIHandler -- jump to a callback handler
  * associated with given spi number
  * @param spi -- SPI number
  */

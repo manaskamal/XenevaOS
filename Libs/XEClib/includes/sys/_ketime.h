@@ -1,4 +1,6 @@
 /**
+* @file _ketime.h
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2023, Manas Kamal Choudhury
@@ -50,8 +52,8 @@ XE_EXTERN{
 	}XETime;
 #pragma pack(pop)
 
-	/*
-	* _KeGetCurrentTime -- get current time
+	/**
+	* @brief _KeGetCurrentTime -- get current time
 	* @param time -- pointer to time memory area
 	*/
 	XE_EXPORT int _KeGetCurrentTime(XETime *time);

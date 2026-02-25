@@ -1,4 +1,6 @@
 /**
+* @file rpi3bpGPIO.c
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2025, Manas Kamal Choudhury
@@ -45,8 +47,8 @@ static uint64_t* gpioBase;
 #define GPFEN0  0x58
 #define GPEDS0 0x40
 
-/*
- * AuRPI3BPGpioMap -- map the GPIO base to kernel
+/**
+ * @brief AuRPI3BPGpioMap -- map the GPIO base to kernel
  * highrr half address
  */
 void AuRPI3BPGpioMap() {
@@ -57,8 +59,8 @@ void AuRPI3BPGpioMap() {
 	AuRPI3PeripheralIRQEnable(49);
 }
 
-/*
- * AuRPIGPIOSetFunction -- assign function to 
+/**
+ * @brief AuRPIGPIOSetFunction -- assign function to 
  * given pin
  * @param pin -- pin number 
  * @param function -- function type
@@ -75,6 +77,9 @@ void AuRPIGPIOSetFunction(uint8_t pin, uint8_t function) {
 	isb_flush();
 }
 
+/**
+ * @brief AuRPIGPIOScanAll -- Debug purpose function
+ */
 void AuRPIGPIOScanAll() {
 	while (1) {
 		uint32_t lev0 = *(volatile uint32_t*)(gpioBase + 0x34);
@@ -92,6 +97,9 @@ void AuRPIGPIOScanAll() {
 	}
 }
 
+/**
+ * @brief AuRPIGPIOPullUpsDown --  dummy func
+ */
 void AuRPIGPIOPullUpsDown() {
 	(*(volatile uint32_t*)((uint64_t)gpioBase + 0x94)) = 0;
 	for (int i = 0; i < 15000; i++)
@@ -104,7 +112,10 @@ void AuRPIGPIOPullUpsDown() {
 	(*(volatile uint32_t*)((uint64_t)gpioBase + 0x98)) = 0;
 }
 
-
+/**
+ * @brief AuRPIGPIOPullUP -- perform a pull up for a specific pin
+ * @param pin -- Pin number
+ */
 void AuRPIGPIOPullUP(uint8_t pin) {
 	*(volatile uint32_t*)((uint64_t)gpioBase + 0x94) = 2;
 	dsb_sy_barrier();
@@ -128,6 +139,11 @@ void AuRPIGPIOPullUP(uint8_t pin) {
 
 }
 
+/**
+ * @brief AuRPIGPIOEnableInterrupt -- enable gpio interrupt for
+ * specific pin
+ * @param pin -- pin number
+ */
 void AuRPIGPIOEnableInterrupt(uint8_t pin) {
 	uint32_t reg = pin / 32;
 	uint32_t shift = pin % 32;
@@ -139,6 +155,11 @@ void AuRPIGPIOEnableInterrupt(uint8_t pin) {
 	isb_flush();
 }
 
+/**
+ * @brief AuRPIGPIODisableInterrupt -- disable gpio interrupt for
+ * specific pin
+ * @param pin -- pin number
+ */
 void AuRPIGPIODisableInterrupt(uint8_t pin) {
 	uint32_t reg = pin / 32;
 	uint32_t shift = pin % 32;
@@ -152,6 +173,11 @@ void AuRPIGPIODisableInterrupt(uint8_t pin) {
 	isb_flush();
 }
 
+/**
+ * @brief AuRPIGPIOCheckInterrpt -- check pending interrupt for
+ * specific pin
+ * @param pin -- pin number
+ */
 bool AuRPIGPIOCheckInterrupt(uint8_t pin) {
 	uint32_t reg = pin / 32;
 	uint32_t shift = pin % 32;
@@ -165,6 +191,10 @@ bool AuRPIGPIOCheckInterrupt(uint8_t pin) {
 	return false;
 }
 
+/**
+ * @brief AuRPIGPIOPinLevelLow -- check if pin level is low
+ * @param pin -- Pin number
+ */
 bool AuRPIGPIOPinLevelLow(uint8_t pin) {
 	volatile uint32_t* gplev0 = (volatile uint32_t*)((uint64_t)gpioBase + 0x34);
 	if ((*gplev0 & (1 << pin)) == 0)
@@ -172,8 +202,8 @@ bool AuRPIGPIOPinLevelLow(uint8_t pin) {
 	else
 		return false;
 }
-/*
- * AuRPIGPIOSet -- set a specific pin
+/**
+ * @brief AuRPIGPIOSet -- set a specific pin
  * @param pin -- Pin number
  */
 void AuRPIGPIOSet(uint8_t pin) {
@@ -182,8 +212,8 @@ void AuRPIGPIOSet(uint8_t pin) {
 	isb_flush();
 }
 
-/*
- * AuRPIGPIOClear -- clear a pin
+/**
+ * @brief AuRPIGPIOClear -- clear a pin
  * @param pin -- Pin number to clear
  */
 void AuRPIGPIOClear(uint8_t pin) {
@@ -192,18 +222,25 @@ void AuRPIGPIOClear(uint8_t pin) {
 	isb_flush();
 }
 
+/**
+ * @brief AuRPIGPIOGetEvents -- reads event status 
+ */
 uint32_t AuRPIGPIOGetEvents() {
 	return *(volatile uint32_t*)((uint64_t)gpioBase + 0x40);
 }
 
+/**
+ * @brief AuRPIGPIOClearEvent -- clears event status of given pin
+ * @param pin -- Pin number
+ */
 void AuRPIGPIOClearEvent(uint8_t pin) {
 	*(volatile uint32_t*)((uint64_t)gpioBase + 0x40) = (1 << pin);
 	dsb_sy_barrier();
 	isb_flush();
 }
 
-/*
- * AuRPIGPIOWrite -- write boolean value
+/**
+ * @brief AuRPIGPIOWrite -- write boolean value
  * to specific pin
  * @param pin -- Pin number
  * @param value -- value to write

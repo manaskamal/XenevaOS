@@ -1,4 +1,6 @@
 /**
+* @file fileserv.c
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2025, Manas Kamal Choudhury
@@ -40,8 +42,8 @@
 
 extern uint64_t read_sp();
 extern uint64_t read_sp_el1();
-/*
- * OpenFile -- opens a file for user process
+/**
+ * @brief OpenFile -- opens a file for user process
  * @param file -- file path
  * @param mode -- mode of the file
  */
@@ -90,8 +92,8 @@ int OpenFile(char* filename, int mode) {
 	return fd;
 }
 
-/*
- * FileSetOffset -- set a offset inorder to read the
+/**
+ * @brief FileSetOffset -- set a offset inorder to read the
  * specific position of the file
  * @param fd -- File descriptor
  * @param offset -- offset in bytes
@@ -125,8 +127,8 @@ int FileSetOffset(int fd, size_t offset) {
 	return 0;
 }
 
-/*
- * ReadFile -- reads a file into given buffer
+/**
+ * @brief ReadFile -- reads a file into given buffer
  * @param fd -- file descriptor
  * @param buffer -- buffer where to put the data
  * @param length -- length in bytes
@@ -182,8 +184,8 @@ size_t ReadFile(int fd, void* buffer, size_t length) {
 	return ret_bytes;
 }
 
-/*
- * CloseFile -- closes a general file
+/**
+ * @brief CloseFile -- closes a general file
  * @param fd -- file descriptor to close
  */
 int CloseFile(int fd) {
@@ -227,8 +229,8 @@ int CloseFile(int fd) {
 }
 
 
-/*
- * FileIoControl -- controls the file through I/O code
+/**
+ * @brief FileIoControl -- controls the file through I/O code
  * @param fd -- file descriptor
  * @param code -- code to pass
  * @param arg -- argument to pass
@@ -255,8 +257,8 @@ int FileIoControl(int fd, int code, void* arg) {
 	return ret;
 }
 
-/*
- * FileStat -- writes information related
+/**
+ * @brief FileStat -- writes information related
  * to file
  * @param fd -- file descriptor
  * @param buf -- Pointer to file structure

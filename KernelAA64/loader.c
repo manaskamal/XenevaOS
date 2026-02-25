@@ -1,4 +1,6 @@
 /**
+* @file loader.c
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2023, Manas Kamal Choudhury
@@ -73,8 +75,8 @@ void testFunc() {
 }
 
 
-/*
-* AuProcessEntUser -- main kernel thread call
+/**
+* @brief AuProcessEntUser -- main kernel thread call
 * in order to enter user for processes
 * @param rcx -- user entry structure
 */
@@ -120,13 +122,14 @@ void AuProcessEntUser(uint64_t rcx) {
 
 extern bool setStk();
 
-/*
- * AuLoadExecToProcess -- loads an executable to the
+/**
+ * @brief AuLoadExecToProcess -- loads an executable to the
  * process
  * @param proc -- pointer to process data structure
  * @param filename -- executable file name
  * @param argc -- number of arguments
  * @param argv -- array of argument in strings
+ * @return 0 on success -1 on failure
  */
 int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) {
 
@@ -309,8 +312,8 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) 
 	UARTDebugOut("Binary mapped , thread id : %d\n", thr->thread_id);
 	return 0;
 }
-/*
- * AuInitialiseLoader -- initialize the loader
+/**
+ * @brief AuInitialiseLoader -- initialize the loader
  * and allocate atleast 1 MiB for scratch use
  */
 void AuInitialiseLoader() {

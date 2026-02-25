@@ -46,29 +46,31 @@ typedef struct _pipe_ {
 }AuPipe;
 #pragma pack(pop)
 
-/*
- * AuPipeUnread -- get the available read
+/**
+ * @brief AuPipeUnread -- get the available read
  * space from the pipe
  * @param pipe -- Pointer to the pipe
  */
 extern size_t AuPipeUnread(AuPipe* pipe);
-/*
-* AuCreatePipe -- creates a new pipe
+
+/**
+* @brief AuCreatePipe -- creates a new pipe
 * @param name -- name of the pipe
 * @param sz -- Size of the pipe
 */
 extern int AuCreatePipe(char* name, size_t sz);
 
-/*
-* AuPipeFSAddFile -- adds a file/directory
+/**
+* @brief AuPipeFSAddFile -- adds a file/directory
 * @param fs -- pointer to device file system
 * @param path -- path of the file
 * @param file -- file to add to dev fs
+* @return 0 on success -1 failure
 */
 extern int AuPipeFSAddFile(AuVFSNode* fs, char* path, AuVFSNode* file);
 
-/*
- * AuPipeFSInitialise -- initialise the pipe filesystem
+/**
+ * @brief AuPipeFSInitialise -- initialise the pipe filesystem
  */
 extern void AuPipeFSInitialise();
 #endif

@@ -1,4 +1,6 @@
 /**
+* @file icon.cpp
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022, Manas Kamal Choudhury
@@ -34,8 +36,8 @@
 #include <sys\mman.h>
 #include "..\bmp.h"
 
-/*
- * ChCreateIcon -- create a blank icon slot
+/**
+ * @brief ChCreateIcon -- create a blank icon slot
  * @return icon slot
  */
 XE_EXTERN XE_LIB ChIcon *ChCreateIcon(){
@@ -45,8 +47,8 @@ XE_EXTERN XE_LIB ChIcon *ChCreateIcon(){
 	return ico;
 }
 
-/*
- * ChIconOpen -- open an icon file
+/**
+ * @brief ChIconOpen -- open an icon file
  * @param ico -- pointer to icon file
  * @param filename -- icon file's path
  */
@@ -65,8 +67,8 @@ XE_EXTERN XE_LIB void ChIconOpen(ChIcon* ico, char* filename){
 	ico->image.filesz = stat.size;
 }
 
-/*
- * ChIconRead -- read an icon file
+/**
+ * @brief ChIconRead -- read an icon file
  * @param ico -- pointer to icon structure
  */
 XE_EXTERN XE_LIB void ChIconRead(ChIcon* ico) {
@@ -91,8 +93,8 @@ XE_EXTERN XE_LIB void ChIconRead(ChIcon* ico) {
 	ico->image.height = height;
 }
 
-/*
-* ChDrawIcon -- draws an icon to canvas
+/**
+* @brief ChDrawIcon -- draws an icon to canvas
 * @param canv -- Pointer to canvas
 * @param ico -- pointer to icon file
 * @param x -- X coord
@@ -124,8 +126,8 @@ XE_EXTERN XE_LIB void ChDrawIcon(ChCanvas* canv, ChIcon* ico, int x, int y){
 	}
 }
 
-/*
-* ChDrawIconClipped -- draws an icon to canvas within clipped boundary
+/**
+* @brief ChDrawIconClipped -- draws an icon to canvas within clipped boundary
 * @param canv -- Pointer to canvas
 * @param ico -- pointer to icon file
 * @param x -- X coord
@@ -193,8 +195,8 @@ ChIcon* success;
 ChIcon* exclaim;
 ChIcon* information;
 
-/*
- * ChInitialiseDefaultIcons -- initialise all chitralekha
+/**
+ * @brief ChInitialiseDefaultIcons -- initialise all chitralekha
  * default icons
  */
 void ChInitialiseDefaultIcons() {
@@ -208,8 +210,8 @@ void ChInitialiseDefaultIcons() {
 #endif
 }
 
-/*
- * ChIconGetSystemIcon -- returns all system 
+/**
+ * @brief ChIconGetSystemIcon -- returns all system 
  * icons
  * @param iconnum -- Icon code number
  */

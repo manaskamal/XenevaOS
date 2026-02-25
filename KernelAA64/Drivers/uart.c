@@ -1,4 +1,6 @@
 /**
+* @file uart.c
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2025, Manas Kamal Choudhury
@@ -45,6 +47,9 @@ static inline void uart_write_reg(uint32_t reg_offset, uint32_t value) {
 	*(volatile uint32_t*)((uint64_t)uartMMIO + reg_offset) = value;
 }
 
+/**
+ * @brief UARTInitialize -- initialize uart serial output
+ */
 void UARTInitialize() {
 	uartMMIO = (uint64_t*)AuMapMMIO(UART0_BASE, 1);
 	AuTextOut("UART MMIO -> %x \n", uartMMIO);
@@ -66,7 +71,10 @@ void UARTInitialize() {
 	_uart_mapped = true;
 }
 
-
+/**
+ * @brief uartPutc -- put a single character to uart
+ * @param c -- character to print
+ */
 void uartPutc(char c) {
 	uint64_t* mmioBase = 0;
 	if (_uart_mapped)
@@ -78,8 +86,8 @@ void uartPutc(char c) {
 	*uart0 = c;
 }
 
-/*
- * uartPuts --serial output interface
+/**
+ * @brief uartPuts --serial output interface
  * @param s -- String
  */
 void uartPuts(const char* s) {
@@ -88,8 +96,8 @@ void uartPuts(const char* s) {
 }
 
 extern void AuUartPutString(const char* s);
-/*
- * UARTDebugOut -- standard text printing function
+/**
+ * @brief UARTDebugOut -- standard text printing function
  * for early kernel using UART
  * @param text -- text to output
  */

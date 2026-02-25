@@ -1,4 +1,6 @@
 /**
+* @file aucon.c
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2025, Manas Kamal Choudhury
@@ -67,8 +69,8 @@ extern void AuUartPutString(const char* s);
 void AuTestPrint() {
 	AuUartPutString("Upto here \r\n");
 }
-/*
- * AuConsoleInitialize -- initialize kernel direct screen
+/**
+ * @brief AuConsoleInitialize -- initialize kernel direct screen
  * console
  * @param info -- Pointer to kernel boot info structure
  */
@@ -84,7 +86,13 @@ void AuConsoleInitialize(PKERNEL_BOOT_INFO info, bool early) {
 	aucon = NULL;
 }
 
-
+/**
+ * @brief AuConsoleIoControl -- iocontrol implementation
+ * for au console, called from user space
+ * @param file -- Pointer to console file
+ * @param code -- control code number
+ * @param arg -- Pointer to any user data
+ */
 int AuConsoleIoControl(AuVFSNode* file, int code, void* arg) {
 	int ret = 0;
 	AuFileIOControl* ioctl = (AuFileIOControl*)arg;
@@ -154,8 +162,8 @@ int AuConsoleIoControl(AuVFSNode* file, int code, void* arg) {
 }
 
 
-/*
- * AuConsolePostInitialise -- initialise the post console process
+/**
+ * @brief AuConsolePostInitialise -- initialise the post console process
  * @param info -- pointer to kernel boot info structure
  */
 void AuConsolePostInitialise(PKERNEL_BOOT_INFO info) {
@@ -247,8 +255,8 @@ int_fast8_t low_set_bit(size_t sz) {
 #define BLUE(col) \
 	((col>>16) & 0xFF)
 
-/*
- * AuPutPixel -- puts a pixel on the screen
+/**
+ * @brief AuPutPixel -- puts a pixel on the screen
  * @param x -- x location of the screen
  * @param y -- y location of the screen
  * @param col -- color of the pixel
@@ -268,7 +276,10 @@ void AuPutPixel(size_t x, size_t y, uint32_t col) {
 	framebuffer[y * aucon->width + x] = col;
 }
 
-//! Put a character to console output
+/**
+ * @brief Put a character to console output 
+ * @param c -- character to print
+ */
 void AuPutC(char c) {
 	if (console_x > v_res / 9) {
 		console_x = 0;
@@ -302,7 +313,10 @@ void AuPutC(char c) {
 
 
 
-//! Prints string to console output
+/**
+ * @brief Prints string to console output
+ * @param str -- string to print
+ */
 void AuPutS(char* str) {
 	uint32_t* lfb = aucon->buffer;
 	while (*str) {
@@ -356,8 +370,8 @@ void AuPutS(char* str) {
 	}
 }
 
-/*
- * AuTextOut -- standard text printing function
+/**
+ * @brief AuTextOut -- standard text printing function
  * for entire kernel
  * @param text -- text to output
  */
@@ -452,8 +466,8 @@ void AuTextOut(const char* format, ...) {
 
 }
 
-/*
- * AuConsoleEarlyEnable -- enables or disable early
+/**
+ * @brief AuConsoleEarlyEnable -- enables or disable early
  * mode text output
  * @param value -- boolean value
  */
@@ -461,9 +475,10 @@ void AuConsoleEarlyEnable(bool value) {
 	aucon->early_mode = value;
 }
 
-/*
- * AuConsoleGetScreenWidth -- return the screen
+/**
+ * @brief AuConsoleGetScreenWidth -- return the screen
  * width
+ * @return return screen width 
  */
 uint32_t AuConsoleGetScreenWidth() {
 	if (!aucon)
@@ -471,9 +486,10 @@ uint32_t AuConsoleGetScreenWidth() {
 	return aucon->width;
 }
 
-/*
- * AuConsoleGetScreenHeight -- return the screen
+/**
+ * @brief AuConsoleGetScreenHeight -- return the screen
  * height
+ * @return return screen height
  */
 uint32_t AuConsoleGetScreenHeight() {
 	if (!aucon)

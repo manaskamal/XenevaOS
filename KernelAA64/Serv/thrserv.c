@@ -1,4 +1,6 @@
 /**
+* @file thrserv.c
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2025, Manas Kamal Choudhury
@@ -35,8 +37,8 @@
 #include <_null.h>
 #include <Drivers/uart.h>
 
-/*
- * GetThreadID -- returns current id
+/**
+ * @brief GetThreadID -- returns current id
  * of thread
  */
 uint64_t GetThreadID() {
@@ -46,8 +48,8 @@ uint64_t GetThreadID() {
 	return thr->thread_id;
 }
 
-/*
- * GetProcessID -- returns currently running process
+/**
+ * @brief GetProcessID -- returns currently running process
  * id
  */
 int GetProcessID() {
@@ -64,8 +66,8 @@ int GetProcessID() {
 	return proc->proc_id;
 }
 
-/*
- * ProcessExit -- marks a process as died, only available
+/**
+ * @brief ProcessExit -- marks a process as died, only available
  * from the main thread of the process
  */
 int ProcessExit() {
@@ -73,8 +75,8 @@ int ProcessExit() {
 	return 0;
 }
 
-/*
- * ProcessWaitForTermination -- wait for termination of
+/**
+ * @brief ProcessWaitForTermination -- wait for termination of
  * a child process
  * @param pid -- child process id, if -1 then any process
  */
@@ -83,8 +85,8 @@ int ProcessWaitForTermination(int pid) {
 	return 0;
 }
 
-/*
- * CreateProcess -- creates a new process slot
+/**
+ * @brief CreateProcess -- creates a new process slot
  * @param parent_id -- parent process id
  * @param name -- name of the current process slot
  */
@@ -103,8 +105,8 @@ int CreateProcess(int parent_id, char* name) {
 	return slot->proc_id;
 }
 
-/*
- * ProcessSleep -- put the current thread to sleep and process
+/**
+ * @brief ProcessSleep -- put the current thread to sleep and process
  * to busy wait state
  * @param ms -- millisecond
  */
@@ -124,8 +126,8 @@ int ProcessSleep(uint64_t ms) {
 }
 
 extern void setuprint();
-/*
- * PauseThread -- pause the currently running
+/**
+ * @brief PauseThread -- pause the currently running
  * thread
  */
 int PauseThread() {
@@ -140,8 +142,8 @@ int PauseThread() {
 }
 
 
-/*
- * ProcessLoadExec -- loads an executable to a
+/**
+ * @brief ProcessLoadExec -- loads an executable to a
  * process slot
  */
 int ProcessLoadExec(int proc_id, char* filename, int argc, char** argv) {

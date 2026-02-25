@@ -1,4 +1,6 @@
 /**
+* @file vfs.h
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2023, Manas Kamal Choudhury
@@ -140,8 +142,8 @@ typedef struct _FileControl_ {
 }AuFileIOControl;
 
 
-/*
- * AuVFSContainer -- is a container
+/**
+ * @brief AuVFSContainer -- is a container
  * which contains list of nodes/directories
  * another directory will point to
  * another newly created container
@@ -152,114 +154,124 @@ typedef struct __VFS_Container__ {
 
 
 
-/*
-* AuVFSInitialise -- initialise the virtual
+/**
+* @brief AuVFSInitialise -- initialise the virtual
 * file system
 */
 extern void AuVFSInitialise();
 
-/*
-* AuVFSOpen -- Opens a file
+/**
+* @brief AuVFSOpen -- Opens a file
 * @param path -- path to open
 */
 AU_EXTERN AU_EXPORT AuVFSNode* AuVFSOpen(char* path);
 
-/*
-* AuVFSNodeIOControl -- Calls node's iocontrol pointer
-* @param node -- pointer to fsnode
-* @param code -- code to pass
-* @param arg -- extra arguments
-*/
+/**
+ * @brief AuVFSNodeIOControl -- Calls node's iocontrol pointer
+ * @param node -- pointer to fsnode
+ * @param code -- code to pass
+ * @param arg -- extra arguments
+ * @return return value returned by specific iocontrol handler
+ * to the caller
+ */
 AU_EXTERN AU_EXPORT int AuVFSNodeIOControl(AuVFSNode* node, int code, void* arg);
 
-/*
-* AuVFSAddFileSystem -- adds a file system to the
-* vfs list
-* @param node -- file system node to add
-*/
+/**
+ * @brief AuVFSAddFileSystem -- adds a file system to the
+ * vfs list
+ * @param node -- file system node to add
+ */
 AU_EXTERN AU_EXPORT void AuVFSAddFileSystem(AuVFSNode* node);
 
-/*
-* AuVFSRegisterRoot -- register the root file
-* system
-* @param fs -- fsnode to add
-*/
+/**
+ * @brief AuVFSRegisterRoot -- register the root file
+ * system
+ * @param fs -- fsnode to add
+ */
 AU_EXTERN AU_EXPORT void AuVFSRegisterRoot(AuVFSNode *fs);
 
-/*
-* AuVFSFind -- Searches a filesystem an return it to
-* the caller
-* @param path -- path of the file system
-*/
+/**
+ * @brief AuVFSFind -- Searches a filesystem an return it to
+ * the caller
+ * @param path -- path of the file system
+ * @return pointer to file system extracted from path
+ */
 AU_EXTERN AU_EXPORT AuVFSNode* AuVFSFind(char* path);
 
-/*
-* AuVFSNodeRead -- read from file system
-* @param node -- file system node to use
-* @param file -- file information to use
-* @param buffer -- buffer to write to
-* @param length -- length of the file
-*/
+/**
+ * @brief AuVFSNodeRead -- read from file system
+ * @param node -- file system node to use
+ * @param file -- file information to use
+ * @param buffer -- buffer to write to
+ * @param length -- length of the file
+ * @return amount of data being read in bytes
+ */
 AU_EXTERN AU_EXPORT size_t AuVFSNodeRead(AuVFSNode* node, AuVFSNode* file, uint64_t* buffer, uint32_t length);
 
-/*
-* AuVFSNodeReadBlock -- read a block size data from file system
-* @param node -- file system node to use
-* @param file -- file node to use
-* @param buffer -- buffer area to read to
-*/
+/**
+ * @brief AuVFSNodeReadBlock -- read a block size data from file system
+ * @param node -- file system node to use
+ * @param file -- file node to use
+ * @param buffer -- buffer area to read to
+ * @return always <= 4kib
+ */
 AU_EXTERN AU_EXPORT size_t AuVFSNodeReadBlock(AuVFSNode* node, AuVFSNode* file, uint64_t *buffer);
 
-/*
-* AuVFSCreateDir -- creates a new dir
-* @param fsys -- Pointer to file system
-* @param dirname -- directory name
-*/
+/**
+ * @brief AuVFSCreateDir -- creates a new dir
+ * @param fsys -- Pointer to file system
+ * @param dirname -- directory name
+ * @return pointer to newly created directory node
+ */
 AU_EXTERN AU_EXPORT AuVFSNode* AuVFSCreateDir(AuVFSNode* fsys, char* dirname);
 
-/*
-* AuVFSCreateFile -- create a new file
-* @param fsys -- Pointer to file system
-* @param filename -- filename
-*/
+/**
+ * @brief AuVFSCreateFile -- create a new file
+ * @param fsys -- Pointer to file system
+ * @param filename -- filename
+ * @return pointer to newly created file node
+ */
 AU_EXTERN AU_EXPORT AuVFSNode* AuVFSCreateFile(AuVFSNode* fsys, char* filename);
 
-/*
-* AuVFSRemoveFile --remove a file from a file system
-* @param fsys -- Pointer to file system
-* @param file -- Pointer to file to remove
-*/
+/**
+ * @brief AuVFSRemoveFile --remove a file from a file system
+ * @param fsys -- Pointer to file system
+ * @param file -- Pointer to file to remove
+ * @return 0 on success, -1 on failure
+ */
 extern int AuVFSRemoveFile(AuVFSNode* fsys, AuVFSNode* file);
 
-/*
-* AuVFSRemoveDir -- removes an empty directory
-* @param fsys -- Pointer to file system
-* @param file -- Pointer to directory needs to
-* be deleted
-*/
+/**
+ * @brief AuVFSRemoveFile --remove a file from a file system
+ * @param fsys -- Pointer to file system
+ * @param file -- Pointer to file to remove
+ * @return 0 on success, -1 on failure
+ */
 extern int AuVFSRemoveDir(AuVFSNode* fsys, AuVFSNode* file);
-/*
-* AuVFSNodeWrite -- write to file system
-* @param node -- file system node to use
-* @param file -- file node to use
-* @param buffer -- buffer to write
-* @param length -- length of the data
-*/
+
+/**
+ * @brief AuVFSNodeWrite -- write to file system
+ * @param node -- file system node to use
+ * @param file -- file node to use
+ * @param buffer -- buffer to write
+ * @param length -- length of the data
+ */
 AU_EXTERN AU_EXPORT void AuVFSNodeWrite(AuVFSNode* node, AuVFSNode * file, uint64_t *buffer, uint32_t length);
 
-/*
-* AuVFSNodeClose -- close a file system or file
-* @param node -- file system node to use
-* @param file -- file to close
-*/
+/**
+ * @brief AuVFSNodeClose -- close a file system or file
+ * @param node -- file system node to use
+ * @param file -- file to close
+ */
 AU_EXTERN AU_EXPORT void AuVFSNodeClose(AuVFSNode* node, AuVFSNode* file);
 
-/*
-* AuVFSGetBlockFor -- returns a block number for
+/**
+* @brief AuVFSGetBlockFor -- returns a block number for
 * certain byte offset of file
 * @param node -- file system node
 * @param file -- pointer to file structure
 * @param offset -- byte offset
+* @return block number of that offset
 */
 AU_EXTERN AU_EXPORT size_t AuVFSGetBlockFor(AuVFSNode* node, AuVFSNode* file, uint64_t offset);
 

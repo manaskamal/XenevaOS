@@ -1,4 +1,6 @@
 /**
+* @file postbox.c
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2025, Manas Kamal Choudhury
@@ -40,7 +42,8 @@
 #include <Drivers/uart.h>
 #include <aucon.h>
 
-/*
+/**
+* @brief
  * NOTE: PostBoxIPCManager is aurora's main communication manager between
  * user space processes and kernel, in future drivers will also able to
  * communicate with user processes and kernel through PostBoxIPCManager
@@ -77,8 +80,8 @@ bool IsPostBoxFull(PostBox* box) {
 
 extern uint64_t read_sp();
 
-/*
- * PostBoxCreate -- creates a postbox
+/**
+ * @brief PostBoxCreate -- creates a postbox
  * @param root -- is this post box root ?
  * @param tid -- thread id
  */
@@ -119,6 +122,10 @@ void PostBoxCreate(bool root, uint16_t tid) {
 	UARTDebugOut("SP : %x \r\n", read_sp());
 }
 
+/**
+ * @brief PostBoxDestroy -- destroy given postbox
+ * @param box -- Pointer to postbox need to destroy
+ */
 void PostBoxDestroy(PostBox* box) {
 	if (firstBox == NULL)
 		return;
@@ -139,8 +146,8 @@ void PostBoxDestroy(PostBox* box) {
 	kfree(box);
 }
 
-/*
- * PostBoxDestroyByID -- destroys a post box identified by
+/**
+ * @brief PostBoxDestroyByID -- destroys a post box identified by
  * an id
  * @param id -- id of the postbox
  */
@@ -160,8 +167,8 @@ void PostBoxDestroyByID(uint16_t id) {
 
 
 extern void enscheddebug();
-/*
- * PostBoxPutEvent -- put an event to a specific post box
+/**
+ * @brief PostBoxPutEvent -- put an event to a specific post box
  * @param event -- Event to put
  */
 void PostBoxPutEvent(PostEvent* event) {
@@ -188,8 +195,8 @@ void PostBoxPutEvent(PostEvent* event) {
 	return;
 }
 
-/*
- * PostBoxGetEvent -- get an event from post box and copy it to a
+/**
+ * @brief PostBoxGetEvent -- get an event from post box and copy it to a
  * memory area
  * @param event -- pointer to a memory area
  * @param root -- is this post box is root
@@ -223,8 +230,8 @@ int PostBoxGetEvent(PostEvent* event, bool root, AA64Thread* curr_thread) {
 }
 
 
-/*
- * PostBoxIOControl -- I/O Control function for
+/**
+ * @brief PostBoxIOControl -- I/O Control function for
  * post box manager
  * @param file -- Pointer to postbox file
  * @param code -- Post Box command
@@ -274,17 +281,17 @@ AuVFSNode* AuPostBOXGetNode() {
 	return pbox;
 }
 
-/*
- * AuIPCPostBoxInitialise -- initialise
+/**
+ * @brief AuIPCPostBoxInitialise -- initialise
  * the post box ipc manager
  */
 void AuIPCPostBoxInitialise() {
 	firstBox = NULL;
 	lastBox = NULL;
 
-	/* create the postbox file */
+	/** create the postbox file */
 
-	/* I dont know, but the sixth item in the device fs list is
+	/** I dont know, but the sixth item in the device fs list is
 	 * the postbox file node, but miraculously 6th item disappers from 
 	 * the list when opened from user space that's why we are creating
 	 * a dummy node in the dev list

@@ -1,4 +1,6 @@
 /**
+* @file button.cpp
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2023, Manas Kamal Choudhury
@@ -45,8 +47,8 @@
 #define BUTTON_CLICKED_LIGHT 0xFF014D4E
 #endif
 
-/*
- * ChButtonMouseEvent -- mouse event handler for chitralekha button
+/**
+ * @brief ChButtonMouseEvent -- mouse event handler for chitralekha button
  * @param wid -- Pointer to button widget
  * @param win -- Pointer to root window
  * @param x -- X coord of the button
@@ -162,8 +164,8 @@ void ChButtonDestroy(ChWidget *widget, ChWindow* win) {
 	_KePrint("Button destroyed \r\n");
 }
 
-/*
- * ChButtonDefaultPainter -- default button painting function
+/**
+ * @brief ChButtonDefaultPainter -- default button painting function
  * @param widget -- Pointer to Widget 
  * @param win -- Pointer to root window
  */
@@ -204,8 +206,8 @@ void ChButtonDefaultPainter(ChWidget* widget, ChWindow* win) {
 	ChDrawRectUnfilled(win->canv, widget->x + 2, widget->y + 2,
 		widget->w - 4, widget->h - 4, 0xFF9A9A9A);
 }
-/*
- * ChCreateButton -- Create a button widget
+/**
+ * @brief ChCreateButton -- Create a button widget
  * @param x -- x coord of the widget
  * @param y -- y coord of the widget
  * @param w -- width of the button

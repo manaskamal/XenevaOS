@@ -1,4 +1,6 @@
 /**
+* @file virtiokbd.c
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2025, Manas Kamal Choudhury
@@ -57,8 +59,8 @@ static const uint8_t ext_key_map[256] = {
 	[0x7d] = 0x5b, //left super
 };
 
-/*
- * Virtio-keyboard interrupt handler
+/**
+ * @brief Virtio-keyboard interrupt handler
  */
 void AuVirtioKbdHandler(int spinum) {
 	UARTDebugOut("From inside virtio keyboard handler++ \n");
@@ -110,8 +112,8 @@ void AuVirtioKbdHandler(int spinum) {
 	}
 	
 }
-/*
- * AuVirtioKbdInitialize -- initialize the virtio keyboard
+/**
+ * @brief AuVirtioKbdInitialize -- initialize the virtio keyboard
  */
 void AuVirtioKbdInitialize(uint64_t device) {
 	int bus = 0;

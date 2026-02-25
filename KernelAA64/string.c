@@ -1,3 +1,6 @@
+/**
+ * @file - string.c
+ */
 #include <stdint.h>
 #include <_null.h>
 

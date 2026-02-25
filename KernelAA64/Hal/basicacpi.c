@@ -217,7 +217,7 @@ void AuACPIInitialise(void* acpi_base) {
 
 }
 
-/*
+/**
  * AuACPIGetMCFG -- Returns the mcfg table
  * from basic acpi
  */

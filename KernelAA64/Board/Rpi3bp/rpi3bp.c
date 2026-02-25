@@ -1,4 +1,6 @@
 /**
+* @file rpi3bp.c
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2025, Manas Kamal Choudhury
@@ -98,8 +100,8 @@ uint64_t vcmbox_mmio;
 #define ARMCTRL_READ(addr) (*(volatile uint32_t*)(addr))
 #define ARMCTRL_WRITE(addr,val) (*(volatile uint32_t*)(addr)= (val))
 
-/* 
- * AuRPI3GetCoreID -- get currently running core
+/** 
+ * @brief AuRPI3GetCoreID -- get currently running core
  * number
  */
 uint32_t AuRPI3GetCoreID() {
@@ -107,8 +109,8 @@ uint32_t AuRPI3GetCoreID() {
     return (mpidr & 0x3);
 }
 
-/*
- * AuRPI3LocalIrqInit -- initialize local interrupts, i.e
+/**
+ * @brief AuRPI3LocalIrqInit -- initialize local interrupts, i.e
  * interrupts related to each core
  */
 void AuRPI3LocalIrqInit() {
@@ -148,8 +150,8 @@ void AuRPI3LocalIrqInit() {
     ARMCTRL_WRITE(core_timer_ctrl, (1 << 29) | reloadValue);*/
 }
 
-/*
- * AuRPI3LocalTimerIRQEnable -- enable timer related to each
+/**
+ * @brief AuRPI3LocalTimerIRQEnable -- enable timer related to each
  * core
  * @param timer_mask -- which timer type to enable or mask
  */
@@ -161,8 +163,8 @@ void AuRPI3LocalTimerIRQEnable(uint32_t timer_mask) {
     ARMCTRL_WRITE(timer_ctlr, ctrl);
 }
 
-/*
- * AuRPI3PeripheralIRQInit -- initialize peripheral irqs
+/**
+ * @brief AuRPI3PeripheralIRQInit -- initialize peripheral irqs
  */
 void AuRPI3PeripheralIRQInit() {
     ARMCTRL_WRITE(PERIPHERAL_BASE + DISABLE_IRQS_1, 0xFFFFFFFF);
@@ -170,8 +172,8 @@ void AuRPI3PeripheralIRQInit() {
     ARMCTRL_WRITE(PERIPHERAL_BASE + DISABLE_BASIC_IRQS, 0xFFFFFFFF);
 }
 
-/*
- * AuRPI3PeripheralIRQEnable -- enable particular peripheral irq
+/**
+ * @brief AuRPI3PeripheralIRQEnable -- enable particular peripheral irq
  * @param irq_num -- irq number of the specific peripheral
  */
 void AuRPI3PeripheralIRQEnable(uint32_t irq_num) {
@@ -187,8 +189,8 @@ void AuRPI3PeripheralIRQEnable(uint32_t irq_num) {
     isb_flush();
 }
 
-/*
- * AuRPI3PeripheralIRQDisable -- disable particular peripheral
+/**
+ * @brief AuRPI3PeripheralIRQDisable -- disable particular peripheral
  * irq
  * @param irq_num -- irq number of that peripheral
  */
@@ -201,8 +203,8 @@ void AuRPI3PeripheralIRQDisable(uint32_t irq_num) {
     }
 }
 
-/*
- * AuRPI3LocalIRQGetPending -- read pending interrupts from
+/**
+ * @brief AuRPI3LocalIRQGetPending -- read pending interrupts from
  * specific core
  */
 uint32_t AuRPI3LocalIRQGetPending() {
@@ -211,22 +213,28 @@ uint32_t AuRPI3LocalIRQGetPending() {
     return ARMCTRL_READ(irq_src_addr);
 }
 
-/*
- * AuRPI3PeripheralIRQGetPending -- read pending interrupts from
- * peripheral base
+/**
+ * @brief AuRPI3PeripheralIRQGetPending2 -- read pending interrupts from
+ * peripheral base group one
  */
 uint32_t AuRPI3PeripheralIRQGetPending2() {
     uint64_t irq_src_addr = pbase + 0xb200 + 0x208;
     return ARMCTRL_READ(irq_src_addr);
 }
 
+/**
+ * @brief AuRPI3PeripheralIRQGetPending1 -- read pending interrupts from
+ * peripheral base group two
+ */
 uint32_t AuRPI3PeripheralIRQGetPending1() {
     uint64_t irq_src_addr = pbase + 0xb200 + 0x204;
     return ARMCTRL_READ(irq_src_addr);
 }
-/*
- * AuRPI3TimerInit -- initialize and caliberate the
+
+/**
+ * @brief AuRPI3TimerInit -- initialize and caliberate the
  * 64 bit periodic timer 
+ * @param interval_ms -- not used
  */
 void AuRPI3TimerInit(uint32_t interval_ms) {
     /*uint64_t freq = get_cntfrq_el0();
@@ -237,7 +245,7 @@ void AuRPI3TimerInit(uint32_t interval_ms) {
     setupTimerIRQ();
 }
 
-/* RPI3ICInit -- initialize RPI3 local interrupt controller */
+/** @brief RPI3ICInit -- initialize RPI3 local interrupt controller */
 void AuRPI3ICInit() {
     AuRPI3TimerInit(10);
     AuRPI3LocalIrqInit();
@@ -252,8 +260,8 @@ void AuRPI3ICInit() {
     uint32_t v2 = *(volatile uint32_t*)(lpbase + LOCAL_GPU_INT_ROUTING);
     AuTextOut("P GPU2 : %d %d\r\n", ((v2 >> 0) & 0x3), ((v2 >> 2) & 0x3));
 }
-/*
- * AuRPI3Initialize -- initialize the basic board requirement
+/**
+ * @brief AuRPI3Initialize -- initialize the basic board requirement
  */
 void AuRPI3Initialize() {
     vcmbox_mmio = (uint64_t)AuMapMMIO(VIDEOCORE_MBOX, 1);
@@ -283,8 +291,8 @@ static inline uint32_t RPIMMIORead(uint32_t addr) {
     return *((volatile uint32_t*)addr);
 }
 
-/*
- * AuRPI3WriteMailbox -- write to mailbox
+/**
+ * @brief AuRPI3WriteMailbox -- write to mailbox
  * @param channel -- Mailbox channel 
  */
 void AuRPI3WriteMailbox(uint8_t channel) {
@@ -298,8 +306,8 @@ void AuRPI3WriteMailbox(uint8_t channel) {
     isb_flush();
 }
 
-/*
- * AuRPI3ReadMailbox -- read from mailbox
+/**
+ * @brief AuRPI3ReadMailbox -- read from mailbox
  * @param channel -- mailbox channel
  */
 uint32_t AuRPI3ReadMailbox(uint8_t channel) {
@@ -327,7 +335,10 @@ static inline uint64_t systimer_gettick() {
     return ((uint64_t)hi << 32) | lo;
 }
 
-
+/**
+ * @brief AuRPI3DelayUS -- delay in uSeconds
+ * @param us -- micro seconds to delay
+ */
 void AuRPI3DelayUS(uint32_t us) {
     uint64_t start = systimer_gettick();
     uint64_t end = start + us;
@@ -338,12 +349,16 @@ void AuRPI3DelayUS(uint32_t us) {
     while (systimer_gettick() < end);
 }
 
+/**
+ * AuRPIDelayMS -- delay in milli seconds
+ * @param ms -- Milliseconds to delay
+ */
 void AuRPIDelayMS(uint32_t ms) {
     AuRPI3DelayUS(ms * 1000);
 }
 
-/*
- * AuRPIGetMBOXBuffer -- return currently using
+/**
+ * @brief AuRPIGetMBOXBuffer -- return currently using
  * mailbox buffer
  */
 uint64_t* AuRPIGetMBOXBuffer() {
@@ -365,11 +380,12 @@ typedef struct {
 }rpi_fb_t;
 
 static rpi_fb_t fb;
-/*
- * AuRPIInitializeFramebuffer -- initializes framebuffer
+/**
+ * @brief AuRPIInitializeFramebuffer -- initializes framebuffer
  * @param width -- fb width by pixels
  * @param height -- fb height by pixels
  * @param depth -- fb depth
+ * @return true on success false in failure
  */
 bool AuRPIInitializeFramebuffer(uint32_t width, uint32_t height, uint32_t depth) {
     AuTextOut("Requesting framebuffer \r\n");

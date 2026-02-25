@@ -1,4 +1,6 @@
 /**
+* @file mmap.c
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2023, Manas Kamal Choudhury
@@ -65,16 +67,16 @@ typedef struct _sh_memap_object_ {
 
 list_t* shmmaplist;
 
-/*
- * SharedMemMapListInitialise -- initialise
+/**
+ * @brief SharedMemMapListInitialise -- initialise
  * the shared memory map list
  */
 void SharedMemMapListInitialise() {
 	shmmaplist = initialize_list();
 }
 
-/*
- * AuCreateSharedMmapObject -- create a global object
+/**
+ * @brief AuCreateSharedMmapObject -- create a global object
  */
 AuSharedMmapObject* AuCreateSharedMmapObject(char* name) {
 	AuSharedMmapObject* obj = (AuSharedMmapObject*)kmalloc(sizeof(AuSharedMmapObject));
@@ -108,8 +110,8 @@ AuSharedMmapObject* AuSharedMmapObjectFindByName(char* name) {
 	return NULL;
 }
 
-/*
- * CreateMemMapping -- Create a memory mapping of just memory, file or device
+/**
+ * @brief CreateMemMapping -- Create a memory mapping of just memory, file or device
  * @param address -- address from where mapping start, if null, kernel will
  * find by its own
  * @param len -- length of the address
@@ -117,6 +119,7 @@ AuSharedMmapObject* AuSharedMmapObjectFindByName(char* name) {
  * @param flags -- flags
  * @param fd -- file descriptor, -1 for no file descriptor
  * @param offset -- byte offset for file and device
+ * @return Pointer to starting 
  */
 void* CreateMemMapping(void* address, size_t len, int prot, int flags, int fd,
 	uint64_t offset) {
@@ -252,8 +255,8 @@ void* CreateMemMapping(void* address, size_t len, int prot, int flags, int fd,
 	return (void*)lookup_addr;
 }
 
-/*
- * MemMapDirty -- dirty update previously allocated memory map
+/**
+ * @brief MemMapDirty -- dirty update previously allocated memory map
  * @param startingVaddr -- starting address
  * @param len -- length in bytes
  * @param flags -- memory map flags
@@ -309,8 +312,8 @@ void MemMapDirty(void* startingVaddr, size_t len, int flags, int prot) {
 }
 
 
-/*
- * UnmapMemMapping -- unmaps a memory mapping
+/**
+ * @brief UnmapMemMapping -- unmaps a memory mapping
  * @param address -- address from where mapping starts
  * @param len -- length of the mapping
  */

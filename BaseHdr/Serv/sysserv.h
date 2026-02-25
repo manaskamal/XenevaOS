@@ -52,8 +52,8 @@
  * ==========================================
  */
 
-/*
-* PauseThread -- pause the currently running
+/**
+* @brief PauseThread -- pause the currently running
 * thread
 */
 extern int PauseThread();
@@ -67,46 +67,51 @@ extern uint16_t GetThreadID();
 extern uint64_t GetThreadID();
 #endif
 
-/*
-* GetProcessID -- returns currently running process
+/**
+* @brief GetProcessID -- returns currently running process
 * id
+* @return current process's ID
 */
 extern int GetProcessID();
 
-/*
-* ProcessExit -- marks a process as died
+/**
+* @brief ProcessExit -- marks a process as died
 */
 extern int ProcessExit();
 
-/*
-* ProcessWaitForTermination -- wait for termination of
+/**
+* @brief ProcessWaitForTermination -- wait for termination of
 * a child process
 * @param pid -- child process id, if -1 then any process
 */
 extern int ProcessWaitForTermination(int pid);
 
-/*
-* CreateProcess -- creates a new process slot
+/**
+* @brief CreateProcess -- creates a new process slot
 * @param parent_id -- parent process id
 * @param name -- name of the current process slot
 */
 extern int CreateProcess(int parent_id, char *name);
 
-/*
-* ProcessLoadExec -- loads an executable to a
+/**
+* @brief ProcessLoadExec -- loads an executable to a
 * process slot
+* @param proc_id -- newly created process slot
+* @param filename -- path of the executable
+* @param argc -- argument count
+* @param argv -- pointer to argument list
 */
 extern int ProcessLoadExec(int proc_id, char* filename, int argc, char** argv);
 
-/*
-* ProcessSleep -- put the current thread to sleep and process
+/**
+* @brief ProcessSleep -- put the current thread to sleep and process
 * to busy wait state
 * @param ms -- millisecond
 */
 extern int ProcessSleep(uint64_t ms);
 
-/*
-* SignalReturn -- returns from a signal handler
+/**
+* @brief SignalReturn -- returns from a signal handler
 */
 extern void SignalReturn(int num);
 
@@ -118,85 +123,85 @@ extern void SignalReturn(int num);
 */
 extern int SetSignal(int signo, AuSigHandler handler);
 #endif
-/*
-* CreateSharedMem -- create a shared memory chunk
+/**
+* @brief CreateSharedMem -- create a shared memory chunk
 * @param key -- key to use
 * @param sz -- memory size
 * @param flags -- shared memory flags
 */
 extern int CreateSharedMem(uint16_t key, size_t sz, uint8_t flags);
 
-/*
-* ObtainSharedMem -- obtain a shared memory
+/**
+* @brief ObtainSharedMem -- obtain a shared memory
 * @param id -- segment id
 * @param shmaddr -- user specified address
 * @param shmflg -- flags to use for protection
 */
 extern void* ObtainSharedMem(uint16_t id, void* shmaddr, int shmflg);
 
-/*
-* UnmapSharedMem -- unmap shared memory segment
+/**
+* @brief UnmapSharedMem -- unmap shared memory segment
 * @param key -- key to search
 */
 extern void UnmapSharedMem(uint16_t key);
 
-/*
-* GetProcessHeapMem -- get a memory from
+/**
+* @brief GetProcessHeapMem -- get a memory from
 * process heap
 */
 extern uint64_t GetProcessHeapMem(size_t sz);
 
-/*
-* OpenFile -- opens a file for user process
+/**
+* @brief OpenFile -- opens a file for user process
 * @param file -- file path
 * @param mode -- mode of the file
 */
 extern int OpenFile(char* filename, int mode);
 
-/*
-* ReadFile -- reads a file into given buffer
+/**
+* @brief ReadFile -- reads a file into given buffer
 * @param fd -- file descriptor
 * @param buffer -- buffer where to put the data
 * @param length -- length in bytes
 */
 extern size_t ReadFile(int fd, void* buffer, size_t length);
 
-/*
-* WriteFile -- write system call
+/**
+* @brief WriteFile -- write system call
 * @param fd -- file descriptor
 * @param buffer -- buffer to write
 * @param length -- length in bytes
 */
 extern size_t WriteFile(int fd, void* buffer, size_t length);
 
-/*
-* CreateDir -- creates a directory
+/**
+* @brief CreateDir -- creates a directory
 * @param filename -- name of the directory
 */
 extern int CreateDir(char* filename);
 
-/*
-* RemoveFile -- remove a directory or file
+/**
+* @brief RemoveFile -- remove a directory or file
 * @param dirname -- directory name
 */
 extern int RemoveFile(char* pathname);
 
-/*
-* CloseFile -- closes a general file
+/**
+* @brief CloseFile -- closes a general file
 * @param fd -- file descriptor to close
 */
 extern int CloseFile(int fd);
 
-/*
-* FileIoControl -- controls the file through I/O code
+/**
+* @brief FileIoControl -- controls the file through I/O code
 * @param fd -- file descriptor
 * @param code -- code to pass
 * @param arg -- argument to pass
 */
 extern int FileIoControl(int fd, int code, void* arg);
 
-/*
-* FileStat -- writes information related
+/**
+* @brief FileStat -- writes information related
 * to file
 * @param fd -- file descriptor
 * @param buf -- Pointer to file structure
@@ -209,8 +214,8 @@ extern int FileStat(int fd, void* buf);
 */
 extern size_t GetSystemTimerTick();
 
-/*
-* CreateUserThread -- creates an user mode thread
+/**
+* @brief CreateUserThread -- creates an user mode thread
 */
 extern int CreateUserThread(void(*entry) (), char *name);
 
@@ -223,16 +228,16 @@ extern int CreateUserThread(void(*entry) (), char *name);
 */
 extern int SetFileToProcess(int fileno, int dest_fdidx, int proc_id);
 
-/*
-* ProcessHeapUnmap -- unmaps previosly allocated
+/**
+* @brief ProcessHeapUnmap -- unmaps previosly allocated
 * heap memory
 * @param ptr -- Pointer to freeable address
 * @param sz -- size in bytes to unallocate
 */
 extern int ProcessHeapUnmap(void* ptr, size_t sz);
 
-/*
-* SendSignal -- sends a signal to desired process
+/**
+* @brief SendSignal -- sends a signal to desired process
 * note here pid means thread id
 * @param pid -- thread id
 * @param signo -- signal number
@@ -245,65 +250,65 @@ extern int SendSignal(int pid, int signo);
 */
 extern int GetCurrentTime(void* ptr);
 
-/*
-* KillProcess -- forcefully kills a process
+/**
+* @brief KillProcess -- forcefully kills a process
 * @param proc_id -- process id
 */
 extern int KillProcess(int proc_id);
 
-/*
-* OpenDir -- opens a directory
+/**
+* @brief OpenDir -- opens a directory
 * @param filename -- name of the directory
 */
 extern int OpenDir(char* filename);
 
-/*
-* ReadDir -- reads a directory entry
+/**
+* @brief ReadDir -- reads a directory entry
 * @param dirfd -- directory file descriptor
 * @param dirent -- aurora directory entry struct
 */
 extern int ReadDir(int dirfd, void* dirent);
 
 
-/*
-* CreateTimer -- create timer service
+/**
+* @brief CreateTimer -- create timer service
 * @param maxTickLimit -- maximum tick limit
 * @param updatemode -- Timer update mode
 */
 extern int CreateTimer(int threadID,int maxTickLimit, uint8_t updatemode);
 
-/*
-* StartTimer -- starts the timer
+/**
+* @brief StartTimer -- starts the timer
 */
 extern int StartTimer(int threadID);
 
-/*
-* StopTimer -- stop the timer
+/**
+* @brief StopTimer -- stop the timer
 */
 extern int StopTimer(int threadID);
 
-/*
-* DestroyTimer -- remove the timer
+/**
+* @brief DestroyTimer -- remove the timer
 */
 extern int DestroyTimer(int threadID);
 
-/*
-* ProcessGetFileDesc -- Searches all process file
+/**
+* @brief ProcessGetFileDesc -- Searches all process file
 * descriptor entries for
 * specific filename fd
 */
 extern int ProcessGetFileDesc(const char* filename);
 
-/*
-* FileSetOffset -- set a offset inorder to read the
+/**
+* @brief FileSetOffset -- set a offset inorder to read the
 * specific position of the file
 * @param fd -- File descriptor
 * @param offset -- offset in bytes
 */
 extern int FileSetOffset(int fd, size_t offset);
 
-/*
-* GetTimeOfDay -- returns the time format 
+/**
+* @brief GetTimeOfDay -- returns the time format 
 * in unix format
 * @param ptr -- Pointer to timeval 
 * structure
@@ -322,8 +327,8 @@ extern int NetAccept(int sockfd, sockaddr *addr, socklen_t * addrlen);
 
 extern int NetListen(int sockfd, int backlog);
 
-/*
- * GetEnvironmentBlock -- returns environment
+/**
+ * @brief GetEnvironmentBlock -- returns environment
  * block of this process
  */
 extern size_t GetEnvironmenBlock();

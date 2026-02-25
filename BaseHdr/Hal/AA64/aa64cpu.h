@@ -1,4 +1,6 @@
 /**
+* @file aa64cpu.h
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2025, Manas Kamal Choudhury
@@ -82,31 +84,31 @@ typedef struct _aa64_regs_ {
 
 
 
-/*
- * AA64CpuInitialize -- initialize aa64 cpu
+/**
+ * @brief AA64CpuInitialize -- initialize aa64 cpu
  */
 extern void AA64CpuInitialize();
 
-/*
- * AA64CPUPostInitialize -- initilaize post cpu requirements
+/**
+ * @brief AA64CPUPostInitialize -- initilaize post cpu requirements
  * @param info -- Pointer to KERNEL BOOT INFORMATIONs
  */
 extern void AA64CPUPostInitialize(KERNEL_BOOT_INFO* info);
 
-/*
- * AA64SleepUS -- sleep for sometimes
+/**
+ * @brief AA64SleepUS -- sleep for sometimes
  * @param us -- microseconds to sleep
  */
 extern void AA64SleepUS(uint32_t us);
 
-/*
- * AA64SleepMS -- sleep for sometimes
+/**
+ * @brief AA64SleepMS -- sleep for sometimes
  * @param ms -- milliseconds to sleep
  */
 extern void AA64SleepMS(uint32_t ms);
 
-/*
- * AuAA64SyscalHandler -- common system call handler for aarch64
+/**
+ * @brief AuAA64SyscalHandler -- common system call handler for aarch64
  * @param regs -- Register information passed by sync_exception
  */
 extern void AuAA64SyscallHandler(AA64Registers* regs);

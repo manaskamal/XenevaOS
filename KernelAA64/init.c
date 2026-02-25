@@ -1,4 +1,6 @@
 /**
+* @file init.c
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2025, Manas Kamal Choudhury
@@ -60,8 +62,8 @@ extern int _fltused = 1;
 static bool _littleboot_used;
 
 
-/*
- * LBUartPutc -- put a character to UART
+/**
+ * @brief LBUartPutc -- put a character to UART
  * @param c -- Character to put
  */
 void AuUartPutc(char c) {
@@ -70,8 +72,8 @@ void AuUartPutc(char c) {
 	*uart0 = c;
 }
 
-/*
- * LBUartPutString -- print a string
+/**
+ * @brief LBUartPutString -- print a string
  * to UART
  * @param s -- String to print
  */
@@ -82,8 +84,8 @@ void AuUartPutString(const char* s) {
 
 
 
-/*
- * AuLittleBootUsed -- check if little boot protocol
+/**
+ * @brief AuLittleBootUsed -- check if little boot protocol
  * is used
  */
 bool AuLittleBootUsed() {
@@ -143,8 +145,8 @@ void AuEntryTest4(uint64_t test) {
 
 KERNEL_BOOT_INFO* bootinfo;
 
-/*
- * AuGetBootInfoStruc -- return kernel boot information
+/**
+ * @brief AuGetBootInfoStruc -- return kernel boot information
  */
 KERNEL_BOOT_INFO* AuGetBootInfoStruc() {
 	return bootinfo;
@@ -154,11 +156,11 @@ KERNEL_BOOT_INFO* AuGetBootInfoStruc() {
 extern void debugLIBOn();
 
 extern void XPT2046Initialise();
-/*
+/**
  * @brief _AuMain -- the main entry point for kernel
  * @param info -- Kernel Boot information passed
  * by bootloader
- */
+ **/
 void _AuMain(KERNEL_BOOT_INFO* info) {
     _littleboot_used = false;
     if (info->boot_type == BOOT_LITTLEBOOT_ARM64) {

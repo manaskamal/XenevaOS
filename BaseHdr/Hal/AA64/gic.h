@@ -1,4 +1,6 @@
 /**
+* @file gic.h
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2025, Manas Kamal Choudhury
@@ -50,16 +52,20 @@ typedef struct _gic_ {
 
 GIC* AuGetSystemGIC();
 
-/*
- * GICInitialize -- initialize the gic
+/**
+ * @brief GICInitialize -- initialize the gic
  * controller, it can be parsed through ACPI MADT
  * or hard-coding
  */
 extern void GICInitialize();
 
+/** @briefGICEnableIRQ -- enable an IRQ
+ * @param irq -- IRQ number
+ */
 AU_EXTERN AU_EXPORT void GICEnableIRQ(uint32_t irq);
 
-/* GICEnableIRQ -- enable an IRQ
+
+/** @brief GICEnableIRQ -- enable an SPI IRQ
  * @param irq -- IRQ number
  */
 extern void GICEnableSPIIRQ(uint32_t irq);
@@ -67,37 +73,45 @@ extern void GICEnableSPIIRQ(uint32_t irq);
 
 AU_EXTERN AU_EXPORT void GICClearPendingIRQ(uint32_t irq);
 
-/*
- * GICReadIAR -- read interrupt acknowledge
+/**
+ * @brief GICReadIAR -- read interrupt acknowledge
  * register
  */
 extern uint32_t GICReadIAR();
 
 extern void GICCheckPending(uint32_t irq);
 
-/*
- * AuGICGetMSIAddress -- calculate and return MSI address
+/**
+ * @brief AuGICGetMSIAddress -- calculate and return MSI address
  * for given spi offset
  * @param interruptID -- spi offset
+ * @return composited MSI address
  */
 extern uint64_t AuGICGetMSIAddress(int interruptID);
 
+/**
+ * @brief AuGICGetMSIData -- obtains composited MSI data address
+ * of respected interruptID, useful in PCIe
+ * @param interruptID -- interrupt ID of device
+ */
 extern uint32_t AuGICGetMSIData(int interruptID);
 
-/*
- * AuGICAllocateSPI -- allocates Shared Peripheral
+/**
+ * @brief AuGICAllocateSPI -- allocates Shared Peripheral
  * interrupt ID
  */
 extern int AuGICAllocateSPI();
 
-/*
- *AuGICDeallocateSPI -- free up an used SPI id
+/**
+ *@brief AuGICDeallocateSPI -- free up an used SPI id
  *@param spiID -- target spi id
  */
 extern void AuGICDeallocateSPI(int spiID);
-/*
- * GICSendEOI --sends end of interrupt to
+
+/**
+ * @brief GICSendEOI --sends end of interrupt to
  * GIC cpu interface
+ * @param irqnum -- interrupt ID of the device
  */
 extern void GICSendEOI(uint32_t irqnum);
 
@@ -105,16 +119,16 @@ extern void GICSetupTimer();
 
 extern void GICSetTargetCPU(int spi);
 
-/*
- * GICRegisterSPIHandler -- register a spi handler
+/**
+ * @brief GICRegisterSPIHandler -- register a spi handler
  * to callback list
  * @param fptr -- SPI Callback address
  * @param spi -- SPI number
  */
 extern void GICRegisterSPIHandler(void* fptr, int spi);
 
-/*
- * GICCallSPIHandler -- jump to a callback handler
+/**
+ * @brief GICCallSPIHandler -- jump to a callback handler
  * associated with given spi number
  * @param spi -- SPI number
  */

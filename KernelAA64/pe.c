@@ -1,4 +1,6 @@
 /**
+* @file pe.c
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2023, Manas Kamal Choudhury
@@ -33,10 +35,11 @@
 #include <aucon.h>
 #include <stdint.h>
 
-/*
- * AuGetProcAddress -- get procedure address in a dll image
+/**
+ * @brief AuGetProcAddress -- get procedure address in a dll image
  * @param image -- dll image
  * @param procname -- procedure name
+ * @return return the procedure address in memory
  */
 void* AuGetProcAddress(void* image, const char* procname) {
 	IMAGE_DOS_HEADER* dos_header = (IMAGE_DOS_HEADER*)image;
@@ -64,8 +67,8 @@ void* AuGetProcAddress(void* image, const char* procname) {
 	return NULL;
 }
 
-/*
-* AuPEPrintExports -- get procedure address in a dll image
+/**
+* @brief AuPEPrintExports -- print all function exports for DEBUG purpose
 * @param image -- dll image
 */
 void AuPEPrintExports(void* image) {
@@ -88,8 +91,8 @@ void AuPEPrintExports(void* image) {
 		AuTextOut("Fname -> %s \n", function_name);
 	}
 }
-/*
-* AuKernelLinkDLL -- Links a dll library to kernel symbols
+/**
+* @brief AuKernelLinkDLL -- Links a dll library to kernel symbols
 * @param image -- dll image
 */
 void AuKernelLinkDLL(void* image) {
@@ -117,8 +120,8 @@ void AuKernelLinkDLL(void* image) {
 }
 
 
-/*
-* AuKernelLinkImports -- Links kernel imports to dll
+/**
+*  @briefAuKernelLinkImports -- Links kernel imports to dll
 * @param image -- dll image
 */
 void AuKernelLinkImports(void* image) {
@@ -147,7 +150,7 @@ void AuKernelLinkImports(void* image) {
 	}
 }
 
-/* relocation types */
+/** relocation types **/
 #define IMAGE_REL_BASED_ABSOLUTE  0
 #define IMAGE_REL_BASED_HIGH      1
 #define IMAGE_REL_BASED_LOW       2
@@ -157,7 +160,7 @@ void AuKernelLinkImports(void* image) {
 #define IMAGE_REL_BASED_MIPS_JMPADDR16 9
 #define IMAGE_REL_BASED_DIR64          10
 
-/* dll characteristics*/
+/** dll characteristics **/
 #define IMAGE_DLL_CHARACTERISTICS_DYNAMIC_BASE          0x40
 #define IMAGE_DLL_CHARACTERISTICS_FORCE_INTEGRITY       0x80
 #define IMAGE_DLL_CHARACTERISTICS_NX_COMPAT             0x100
@@ -176,8 +179,8 @@ void AuKernelLinkImports(void* image) {
 #define IMAGE_DATA_DIRECTORY_IMPORT 1
 #define IMAGE_DATA_DIRECTORY_RELOC  5
 
-/*
-* AuKernelRelocatePE -- relocates the image from its actual
+/**
+* @brief AuKernelRelocatePE -- relocates the image from its actual
 * base address
 * @param image -- pointer to executable image
 * @param nt -- nt headers
@@ -235,8 +238,8 @@ void AuKernelRelocatePE(void* image, PIMAGE_NT_HEADERS nt, int diff) {
 	//for (;;);
 }
 
-/*
- * AuPEFileIsDynamicallyLinked -- checks if the current
+/**
+ * @brief AuPEFileIsDynamicallyLinked -- checks if the current
  * binary image is dynamically linked
  * @param image -- pointer to image address
  */

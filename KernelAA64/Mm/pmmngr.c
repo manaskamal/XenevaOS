@@ -1,4 +1,6 @@
 /**
+* @file pmmngr.c
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2025, Manas Kamal Choudhury
@@ -52,8 +54,8 @@ typedef struct _lb_mem_rgn_ {
 	uint64_t size;
 	uint64_t pageCount;
 }LBMemoryRegion;
-/*
-* AuPmmngrInitBitmap -- Initialize the Ram bitmap with
+/**
+* @brief AuPmmngrInitBitmap -- Initialize the Ram bitmap with
 * all zeros
 * @param BitmapSize -- total bitmap size
 * @param Buffer -- Pointer to bitmap buffer
@@ -92,8 +94,8 @@ bool AuPmmngrBitmapSet(uint64_t index, bool value) {
 }
 
 
-/*
-* AuPmmngrLockPage -- Lock a given page
+/**
+* @brief AuPmmngrLockPage -- Lock a given page
 * @param Address -- Pointer to page
 */
 void AuPmmngrLockPage(uint64_t Address) {
@@ -107,8 +109,8 @@ void AuPmmngrLockPage(uint64_t Address) {
 
 
 
-/*
-* AuPmmngrLockPage -- locks a set of pages
+/**
+* @brief AuPmmngrLockPage -- locks a set of pages
 * @param Address -- Starting address of the first page
 * @param Size -- Size of the set
 */
@@ -119,8 +121,8 @@ void AuPmmngrLockPages(void* Address, size_t Size) {
 	}
 }
 
-/*
-* AuPmmngrUnreservePage -- Marks a page as free
+/**
+* @brief AuPmmngrUnreservePage -- Marks a page as free
 * @param Address -- Pointer to the page
 */
 void AuPmmngrUnreservePage(void* Address) {
@@ -133,8 +135,8 @@ void AuPmmngrUnreservePage(void* Address) {
 	}
 }
 
-/*
-* AuPmmngrInitialise -- initialise the physical memory
+/**
+* @brief AuPmmngrInitialise -- initialise the physical memory
 * manager
 * @param info -- Pointer to kernel boot info structure
 */
@@ -294,8 +296,8 @@ bool AuPmmngrAllocCheck(uint64_t address) {
 	return false;
 }
 
-/*
- * AuPmmngrAlloc -- Allocate a single physical page
+/**
+ * @brief AuPmmngrAlloc -- Allocate a single physical page
  * frame and return it to the caller
  */
 void* AuPmmngrAlloc() {
@@ -315,8 +317,8 @@ void* AuPmmngrAlloc() {
 	for (;;);
 }
 
-/*
- * AuPmmngrAllocBlocks -- Allocate multiple physical page frames
+/**
+ * @brief AuPmmngrAllocBlocks -- Allocate multiple physical page frames
  * and return the first page pointer to the caller
  * @param size -- Number of blocks to allocate
  */
@@ -330,8 +332,8 @@ void* AuPmmngrAllocBlocks(int num) {
 	return First;
 }
 
-/*
- * AuPmmngrFree -- Free a physical page frame
+/**
+ * @brief AuPmmngrFree -- Free a physical page frame
  * @param Address -- Pointer to physical page
  */
 void AuPmmngrFree(void* Address) {
@@ -351,8 +353,8 @@ void AuPmmngrFree(void* Address) {
 	dsb_ish();
 }
 
-/*
- * AuPmmngrFreeBlocks -- Free multiple page frames
+/**
+ * @brief AuPmmngrFreeBlocks -- Free multiple page frames
  * @param Addr -- Address of the first page frame
  * @param Count -- Number of blocks to be freed
  */
@@ -365,8 +367,8 @@ void AuPmmngrFreeBlocks(void* Addr, int Count) {
 }
 
 
-/*
- * P2V -- Physical to Virtual conversion
+/**
+ * @brief P2V -- Physical to Virtual conversion
  * @param addr -- Address to convert
  */
 uint64_t P2V(uint64_t addr) {
@@ -376,8 +378,8 @@ uint64_t P2V(uint64_t addr) {
 		return addr;
 }
 
-/*
- * V2P -- Virtual to Physical conversion
+/**
+ * @brief V2P -- Virtual to Physical conversion
  * @param vaddr -- Address to convert
  */
 uint64_t V2P(uint64_t vaddr) {
@@ -387,8 +389,8 @@ uint64_t V2P(uint64_t vaddr) {
 		return vaddr;
 }
 
-/*
-* AuPmmngrMoveHigher -- moves the kernel to higher half
+/**
+* @brief AuPmmngrMoveHigher -- moves the kernel to higher half
 * of memory
 */
 void AuPmmngrMoveHigher() {
@@ -396,16 +398,16 @@ void AuPmmngrMoveHigher() {
 	BitmapBuffer = (uint8_t*)P2V((uint64_t)BitmapBuffer);
 }
 
-/*
- * AuPmmngrGetFreeMem -- returns the total free amount
+/**
+ * @brief AuPmmngrGetFreeMem -- returns the total free amount
  * of RAM
  */
 uint64_t AuPmmngrGetFreeMem() {
 	return _FreeMemory;
 }
 
-/*
- * AuPmmngrGetTotalMem -- returns the total amount of
+/**
+ * @brief AuPmmngrGetTotalMem -- returns the total amount of
  * RAM
  */
 uint64_t AuPmmngrGetTotalMem() {

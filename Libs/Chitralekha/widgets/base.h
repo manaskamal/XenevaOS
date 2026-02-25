@@ -1,4 +1,6 @@
 /**
+* @file base.h
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2023, Manas Kamal Choudhury
@@ -86,18 +88,18 @@
 XE_EXTERN{
 #endif
 
-	/*
-	* ChitralekhaStartApp -- start an application instance
+	/**
+	* @brief ChitralekhaStartApp -- start an application instance
 	*/
 	XE_LIB ChitralekhaApp* ChitralekhaStartApp(int argc, char* argv[]);
 
-	/*
-	* ChitralekhaStartApp -- start an application instance
+	/**
+	* @brief ChitralekhaStartApp -- start an application instance
 	*/
 	XE_LIB ChitralekhaApp* ChitralekhaStartSubApp(ChitralekhaApp* parent);
 
-	/*
-	* ChitralekhaGetApp -- return running application instance
+	/**
+	* @brief ChitralekhaGetApp -- return running application instance
 	*/
 	XE_LIB ChitralekhaApp* ChitralekhaGetApp();
 

@@ -1,4 +1,6 @@
 /**
+* @file rpi3bpSPI.c
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2025, Manas Kamal Choudhury
@@ -73,8 +75,8 @@ do { \
 		isb_flush(); \
 }while(0)
 
-/* 
- * AuRPI3SPI0Map -- map the spi0 to kernel higher half address
+/**
+ * @brief AuRPI3SPI0Map -- map the spi0 to kernel higher half address
  */
 void AuRPI3SPI0Map() {
 	spi0Base = (uint64_t*)AuMapMMIO(SPI0, 1);
@@ -82,8 +84,8 @@ void AuRPI3SPI0Map() {
 }
 
 extern void AuRPIGPIOScanAll();
-/*
- *AuRPI3SPI0Init -- initialize SPI0 of RPI3bp
+/**
+ * @brief AuRPI3SPI0Init -- initialize SPI0 of RPI3bp
  */
 void AuRPI3SPI0Init() {
 	/* configure pin 9,10,11,8 to alt function 0*/
@@ -143,9 +145,10 @@ void AuRPI3SPI0Init() {
 
 
 
-/*
- * AuRPISPITransfer -- transfer a single
+/**
+ * @brief AuRPISPITransfer -- transfer a single
  * 1 byte data
+ * @todo cs selection
  * @param data -- data to transfer
  */
 void AuRPISPITransfer(uint8_t data) {
@@ -168,8 +171,8 @@ void AuRPISPITransfer(uint8_t data) {
 
 }
 
-/*
- * AuRPISPITransferBuffer -- transfer multiple 1 byte
+/**
+ * @brief AuRPISPITransferBuffer -- transfer multiple 1 byte
  * aligned buffer data 
  * @param data -- pointer to buffer
  * @param len -- Length of total datas

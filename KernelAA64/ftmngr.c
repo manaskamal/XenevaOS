@@ -1,4 +1,6 @@
 /**
+* @file ftmngr.c
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2023, Manas Kamal Choudhury
@@ -46,8 +48,8 @@ uint8_t* font_conf_data;
 uint16_t fontKey;
 int totalSysFonts;
 
-/*
- * FontManagerAddSegment -- add a font segment
+/**
+ * @brief FontManagerAddSegment -- add a font segment
  * @param seg -- font segment
  */
 void FontManagerAddSegment(FontSeg* seg) {
@@ -67,8 +69,8 @@ void FontManagerAddSegment(FontSeg* seg) {
 	lastSeg = seg;
 }
 
-/*
- * FontManagerRemoveSegment -- remove a font segment
+/**
+ * @brief FontManagerRemoveSegment -- remove a font segment
  * @param seg -- Pointer to font segment
  */
 void FontManagerRemoveSegment(FontSeg* seg) {
@@ -90,8 +92,9 @@ void FontManagerRemoveSegment(FontSeg* seg) {
 	}
 }
 
-/*
- * FontManagerGetKey -- obtain a key
+/**
+ * @brief FontManagerGetKey -- obtain a key
+ * @return key allocated by font manager
  */
 uint16_t FontManagerGetKey() {
 	uint16_t key = fontKey;
@@ -101,10 +104,11 @@ uint16_t FontManagerGetKey() {
 
 
 
-/*
- * FontManagerAllocateSegment -- allocate a font segment
+/**
+ * @brief FontManagerAllocateSegment -- allocate a font segment
  * @param fontfile -- Pointer to fontfile
  * @param fontname -- name of the font
+ * @return shared memory segment allocated by font manager
  */
 FontSeg* FontManagerAllocateSegment(AuVFSNode* fontfile, char* fontname) {
 	if (!fontfile)
@@ -121,9 +125,10 @@ FontSeg* FontManagerAllocateSegment(AuVFSNode* fontfile, char* fontname) {
 	return seg;
 }
 
-/*
- * FontManagerOpenFontFile-- opens a font file
+/**
+ * @brief FontManagerOpenFontFile-- opens a font file
  * from disk
+ * @return font file opened by font manager
  */
 AuVFSNode* FontManagerOpenFontFile(char* filename) {
 	AuVFSNode* font = AuVFSOpen(filename);
@@ -132,8 +137,8 @@ AuVFSNode* FontManagerOpenFontFile(char* filename) {
 	return font;
 }
 
-/*
- * FontManagerIterateFontList-- iterates all fonts
+/**
+ * @brief FontManagerIterateFontList-- iterates all fonts
  * from the font config file
  * @param fontlst -- pointer to font list buffer
  */
@@ -188,9 +193,10 @@ search:
 	goto search;
 }
 
-/*
- * FontManagerGetFontCount -- returns number of font counts
+/**
+ * @brief FontManagerGetFontCount -- returns number of font counts
  * @param fontlst -- font list buffer
+ * @return the number of total font available in the system
  */
 int FontManagerGetFontCount(uint8_t* fontlst) {
 	char* fbuf = (char*)fontlst;
@@ -213,8 +219,8 @@ int FontManagerGetFontCount(uint8_t* fontlst) {
 	return number;
 }
 
-/*
- * FontManagerInitialise -- initialise
+/**
+ * @brief FontManagerInitialise -- initialise
  * font manager
  */
 void FontManagerInitialise() {
@@ -251,8 +257,11 @@ void FontManagerInitialise() {
 }
 
 
-/*
- * some system call
+/**
+ * @brief AuFTMngrGetFontID -- returns the font id of 
+ * given font name
+ * @param fontname -- name of the desired font
+ * @return id of the desired font
  */
 int AuFTMngrGetFontID(char* fontname) {
 	int font_id = 0;
@@ -269,9 +278,10 @@ int AuFTMngrGetFontID(char* fontname) {
 	return -1;
 }
 
-/*
- * AuFTMngrGetFontSize -- returns font size
+/**
+ * @brief AuFTMngrGetFontSize -- returns font size
  * @param fontname -- name of the font
+ * @return the size of the font in bytes
  */
 int AuFTMngrGetFontSize(char* fontname) {
 	for (FontSeg* seg = firstSeg; seg != NULL; seg = seg->next) {
@@ -282,9 +292,12 @@ int AuFTMngrGetFontSize(char* fontname) {
 	return -1;
 }
 
-/*
- * AuFTMngrGetNumFonts -- return number
+/**
+ * @brief AuFTMngrGetNumFonts -- return number
  * system fonts installed
+ * @return total count of system font
+ * FontManagerGetFontCount does the same thing except it uses
+ * the font config file to get the number of total font count
  */
 int AuFTMngrGetNumFonts() {
 	return totalSysFonts;

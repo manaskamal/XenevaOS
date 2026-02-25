@@ -1,4 +1,6 @@
 /**
+* @file virtiotablet.c
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2025, Manas Kamal Choudhury
@@ -60,6 +62,12 @@ struct VirtioInputEvent* TabletInput;
 #define MOUSE_MOUSE_SCROLL_UP     0x10
 #define MOUSE_MOUSE_SCROLL_DOWN   0x20
 
+/**
+ * @brief AuVirtioTabletHandler -- interrupt handler for 
+ * virtio tablet
+ * @param spiNum -- shared peripheral interrupt number
+ * passed by system
+ */
 void AuVirtioTabletHandler(int spiNum) {
 	uint16_t them = TabletQueue->used.index;
 
@@ -117,8 +125,8 @@ void AuVirtioTabletHandler(int spiNum) {
 		TabletQueue->available.index++;
 	}
 }
-/*
- * AuVirtioKbdInitialize -- initialize the virtio keyboard
+/**
+ * @brief AuVirtioKbdInitialize -- initialize the virtio keyboard
  */
 void AuVirtioTabletInitialize(uint64_t device) {
 	int bus = 0;

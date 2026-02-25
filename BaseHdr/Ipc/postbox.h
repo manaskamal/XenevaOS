@@ -1,4 +1,6 @@
 /**
+* @file postbox.h
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2023, Manas Kamal Choudhury
@@ -90,16 +92,16 @@ typedef struct _postbox_ {
 #pragma pack(pop)
 #endif
 
-/*
-* AuIPCPostBoxInitialise -- initialise
-* the post box ipc manager
-*/
+/**
+ * @brief AuIPCPostBoxInitialise -- initialise
+ * the post box ipc manager
+ */
 extern void AuIPCPostBoxInitialise();
 
-/*
-* PostBoxPutEvent -- put an event to a specific post box
-* @param event -- Event to put
-*/
+/**
+ * @brief PostBoxPutEvent -- put an event to a specific post box
+ * @param event -- Event to put
+ */
 extern void PostBoxPutEvent(PostEvent* event);
 
 #ifdef ARCH_X64
@@ -112,8 +114,8 @@ extern void PostBoxPutEvent(PostEvent* event);
  */
 extern int PostBoxGetEvent(PostEvent* event, bool root, AuThread* curr_thread);
 #elif ARCH_ARM64
-/*
- * PostBoxGetEvent -- get an event from post box and copy it to a
+/**
+ * @brief PostBoxGetEvent -- get an event from post box and copy it to a
  * memory area
  * @param event -- pointer to a memory area
  * @param root -- is this post box is root
@@ -124,22 +126,22 @@ extern int PostBoxGetEvent(PostEvent* event, bool root, AA64Thread* curr_thread)
 
 extern AuVFSNode* AuPostBOXGetNode();
 
-/*
-* PostBoxCreate -- creates a postbox
+/**
+* @brief PostBoxCreate -- creates a postbox
 * @param root -- is this post box root ?
 * @param tid -- thread id
 */
 extern void PostBoxCreate(bool root, uint16_t tid);
 
-/*
-* PostBoxDestroyByID -- destroys a post box identified by
+/**
+* @brief PostBoxDestroyByID -- destroys a post box identified by
 * an id
 * @param id -- id of the postbox
 */
 extern void PostBoxDestroyByID(uint16_t id);
 
-/*
- * PostBoxIOControl -- I/O Control function for
+/**
+ * @brief PostBoxIOControl -- I/O Control function for
  * post box manager
  * @param file -- Pointer to postbox file
  * @param code -- Post Box command

@@ -1,4 +1,6 @@
 /**
+* @file aa64cpu.c
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2025, Manas Kamal Choudhury
@@ -48,8 +50,8 @@ uint64_t AA64GetPhysicalTimerCount() {
 	return val * 100;
 }
 
-/*
- * AA64FPUNeonEnable -- initialize FPU and
+/**
+ * @brief AA64FPUNeonEnable -- initialize FPU and
  * NEON feature
  */
 void AA64FPUNeonEnable() {
@@ -58,8 +60,8 @@ void AA64FPUNeonEnable() {
 	set_cpacr_el1(cpacr_el1);
 }
 
-/*
- * AA64ClockInitialize -- initialize the clock
+/**
+ * @brief AA64ClockInitialize -- initialize the clock
  */
 void AA64ClockInitialize() {
 	uint64_t val = get_cntfrq_el0();
@@ -120,16 +122,16 @@ void AA64CPUImplementer(uint32_t midr) {
 	AuTextOut("CPU Architecture: ARMv8-A(%x) \r\n", arch);
 }
 
-/*
- * AA64SleepUS -- sleep for sometimes
+/**
+ * @brief AA64SleepUS -- sleep for sometimes
  * @param us -- microseconds to sleep
  */
 void AA64SleepUS(uint32_t us) {
 	AuAA64BoardSleepUS(us);
 }
 
-/*
- * AA64SleepMS -- sleep for sometimes
+/**
+ * @brief AA64SleepMS -- sleep for sometimes
  * @param ms -- milliseconds to sleep
  */
 void AA64SleepMS(uint32_t ms) {
@@ -137,8 +139,8 @@ void AA64SleepMS(uint32_t ms) {
 }
 
 extern void enableAlignCheck();
-/*
- * AA64CpuInitialize -- initialize aa64 cpu
+/**
+ * @brief AA64CpuInitialize -- initialize aa64 cpu
  */
 void AA64CpuInitialize() {
 	cpuFrequency = 0;
@@ -185,8 +187,8 @@ void AA64TimerSetup() {
 #endif
 }
 
-/*
- * AA64CPUPostInitialize -- initilaize post cpu requirements
+/**
+ * @brief AA64CPUPostInitialize -- initilaize post cpu requirements
  * @param info -- Pointer to KERNEL BOOT INFORMATIONs
  */
 void AA64CPUPostInitialize(KERNEL_BOOT_INFO* info) {

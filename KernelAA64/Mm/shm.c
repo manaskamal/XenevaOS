@@ -1,4 +1,6 @@
 /**
+* @file shm.c
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2023, Manas Kamal Choudhury
@@ -41,8 +43,8 @@
 static list_t* shm_list;
 static uint16_t shm_id;
 
-/*
- * AuInitialiseSHMMan -- initialise shm manager
+/**
+ * @brief AuInitialiseSHMMan -- initialise shm manager
  */
 void AuInitialiseSHMMan() {
 	shm_list = initialize_list();
@@ -50,8 +52,8 @@ void AuInitialiseSHMMan() {
 	//shmlock = AuCreateSpinlock(false);
 }
 
-/*
- * AuSHMGetID -- allocate a new shared
+/**
+ * @brief AuSHMGetID -- allocate a new shared
  * memory id
  */
 uint16_t AuSHMGetID() {
@@ -60,8 +62,8 @@ uint16_t AuSHMGetID() {
 	return  _id;
 }
 
-/*
- * AuGetSHMSeg -- searches and return a
+/**
+ * @brief AuGetSHMSeg -- searches and return a
  * shm segment by its key
  * @param key -- key to search
  */
@@ -75,10 +77,11 @@ AuSHM* AuGetSHMSeg(uint16_t key) {
 	return NULL;
 }
 
-/*
-* AuGetSHMSeg -- searches and return a
+/**
+* @brief AuGetSHMSeg -- searches and return a
 * shm segment by its key
 * @param key -- key to search
+* @return Pointer to shm on success, NULL on failure
 */
 AuSHM* AuGetSHMByID(uint16_t id) {
 	UARTDebugOut("SHM ID : %d , shm_list : %x \r\n", id, shm_list);
@@ -90,13 +93,14 @@ AuSHM* AuGetSHMByID(uint16_t id) {
 
 	return NULL;
 }
-/*
- * AuCreateSHM -- create a new shared memory segment or
+/**
+ * @brief AuCreateSHM -- create a new shared memory segment or
  * returns previously allocated one
  * @param proc -- Creator process
  * @param key  --  unique key to use
  * @param sz   --  size in multiple of PAGE_SIZE
  * @param flags -- security flags
+ * @return id of newly created SHM, -1 on failure
  */
 int AuCreateSHM(AuProcess* proc, uint16_t key, size_t sz, uint8_t flags) {
 	AuSHM* shm = NULL;
@@ -133,8 +137,8 @@ int AuCreateSHM(AuProcess* proc, uint16_t key, size_t sz, uint8_t flags) {
 	return shm->id;
 }
 
-/*
- * AuSHMDelete -- removes a SHM Segment from system shm list
+/**
+ * @brief AuSHMDelete -- removes a SHM Segment from system shm list
  * @param shm -- segment to delete
  */
 void AuSHMDelete(AuSHM* shm) {
@@ -159,11 +163,12 @@ void AuSHMDelete(AuSHM* shm) {
 		kfree(shm);
 	}
 }
-/*
- * AuSHMProcBreak -- gets some available shm memory
+/**
+ * @brief AuSHMProcBreak -- gets some available shm memory
  * and increase the break count
  * @param proc -- Process to look
  * @param num_frames -- number of frames to increase
+ * @return start address of last break
  */
 size_t AuSHMProcBreak(AuProcess* proc, size_t num_frames) {
 	size_t start_addr = proc->shm_break;
@@ -171,8 +176,8 @@ size_t AuSHMProcBreak(AuProcess* proc, size_t num_frames) {
 	return start_addr;
 }
 
-/*
- * AuSHMProcSwap -- Swaps data between list entry
+/**
+ * @brief AuSHMProcSwap -- Swaps data between list entry
  */
 void AuSHMProcSwap(dataentry* current, dataentry* index) {
 	void* tmp = current->data;
@@ -206,13 +211,14 @@ void AuSHMProcOrderList(AuProcess* proc) {
 
 
 extern void envmdebug();
-/*
- * AuSHMObtainMem -- obtains a virtual memory from given
+/**
+ * @brief AuSHMObtainMem -- obtains a virtual memory from given
  * shm segment
  * @param proc -- Calling process
  * @param id -- shm segment id
  * @param shmaddr -- starting shared memory address to map
  * @parma shmflg -- flags
+ * @return starting address of this shm on success, NULL on failure
  */
 void* AuSHMObtainMem(AuProcess* proc, uint16_t id, void* shmaddr, int shmflg) {
 	//AuAcquireSpinlock(shmlock);
@@ -336,8 +342,8 @@ void* AuSHMObtainMem(AuProcess* proc, uint16_t id, void* shmaddr, int shmflg) {
 	return (void*)mappings->start_addr;
 }
 
-/*
- * AuSHMUnmap -- unmaps a shared memory segment
+/**
+ * @brief AuSHMUnmap -- unmaps a shared memory segment
  * @param key -- key to search
  * @param proc -- process to look
  */
@@ -382,8 +388,8 @@ void AuSHMUnmap(uint16_t key, AuProcess* proc) {
 	//AuReleaseSpinlock(shmlock);
 }
 
-/*
- * AuSHMUnmapAll -- unmaps all mappings for this
+/**
+ * @brief AuSHMUnmapAll -- unmaps all mappings for this
  * process
  * @param proc -- Pointer to process that needs
  * unmapping

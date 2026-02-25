@@ -1,4 +1,6 @@
 /**
+* @file rtcmmio.c
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2025, Manas Kamal Choudhury
@@ -47,14 +49,25 @@ AuRTC __rtc;
 #define rtc_write32(addr, value) (*(volatile uint32_t*)(addr) = (value))
 #define rtc_read32(addr) (*(volatile uint32_t*)(addr))
 
+/**
+ * @brief AuRTCEnableInterrupt -- enable pl031 rtc
+ */
 void AuRTCEnableInterrupt() {
 	rtc_write32(RTCIMSC, 1);
 }
 
+/**
+ * @brief AuRTCGetCurrentTime -- returns thr current time
+ * value
+ * @return return current time value
+ */
 uint32_t AuRTCGetCurrentTime() {
 	return rtc_read32(RTCDR);
 }
 
+/**
+ * @brief AuRTCClearInterrupt -- clear pending rtc interrupt
+ */
 void AuRTCClearInterrupt() {
 	rtc_write32(RTCICR, 1);
 }
@@ -63,6 +76,10 @@ int is_leap(int year) {
 	return ((year % 4 == 0) && (year % 100 != 0)) || (year % 400 == 0);
 }
 
+/**
+ * @brief epoch_to_tm -- convert unix epoch value to time
+ * @param epoch -- unix epoch value
+ */
 void epoch_to_tm(uint32_t epoch) {
 	static const int days_in_month[] = { 31, 28, 31, 30, 31,30, 31, 31, 30, 31, 30, 31 };
 	uint32_t days = epoch / 86400;
@@ -99,8 +116,8 @@ void epoch_to_tm(uint32_t epoch) {
 	__rtc.century = (__rtc.year - 1) / 100 + 1;
 }
 
-/* 
- * AuPL031RTCIRQHandler -- irq handler of PL031 RTC
+/** 
+ * @brief AuPL031RTCIRQHandler -- irq handler of PL031 RTC
  */
 void AuPL031RTCIRQHandle() {
 	uint32_t epoch = AuRTCGetCurrentTime();
@@ -108,8 +125,9 @@ void AuPL031RTCIRQHandle() {
 	AuRTCClearInterrupt();
 }
 
-/*
- * AuPL031RTCInit -- initialize pl031 rtc
+/**
+ * @brief AuPL031RTCInit -- initialize pl031 rtc 
+ * [NOT USED]
  */
 void AuPL031RTCInit() {
 #ifdef __TARGET_BOARD_QEMU_VIRT__
@@ -127,40 +145,45 @@ void AuPL031RTCInit() {
 #endif
 }
 
-/*
-* AuRTCGetYear -- returns the current year
+/**
+* @brief AuRTCGetYear -- returns the current year
+* @return return year value
 */
 uint8_t AuRTCGetYear() {
 	return __rtc.year;
 }
 
-/*
-* AuRTCGetCentury -- returns the current
+/**
+* @brief AuRTCGetCentury -- returns the current
 * century
+* @return return century value
 */
 uint8_t AuRTCGetCentury() {
 	return __rtc.century;
 }
 
-/*
-* AuRTCGetMinutes -- returns the current
+/**
+* @brief AuRTCGetMinutes -- returns the current
 * minutes
+* @return return minute value
 */
 uint8_t AuRTCGetMinutes() {
 	return __rtc.minute;
 }
 
-/*
-* AuRTCGetSecond -- returns the current
+/**
+* @brief AuRTCGetSecond -- returns the current
 * second
+* @return return current second value
 */
 uint8_t AuRTCGetSecond() {
 	return __rtc.second;
 }
 
-/*
-* AuRTCGetDay -- returns the current
+/**
+* @brief AuRTCGetDay -- returns the current
 * day
+* @return return current day value
 */
 uint8_t AuRTCGetDay() {
 	return __rtc.day;
@@ -174,8 +197,8 @@ uint8_t AuRTCGetHour() {
 	return __rtc.hour;
 }
 
-/*
-* AuRTCGetMonth -- returns the current
+/**
+* @brief AuRTCGetMonth -- returns the current
 * month
 */
 uint8_t AuRTCGetMonth() {
