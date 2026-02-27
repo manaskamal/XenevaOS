@@ -168,7 +168,7 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) 
 
 	uint64_t _image_base_ = 0x60000000000;//   nt->OptionalHeader.ImageBase;
 	entry ent = (entry)(nt->OptionalHeader.AddressOfEntryPoint + _image_base_);//nt->OptionalHeader.ImageBase);
-	UARTDebugOut("Image base address : %x \n", dos->e_magic);
+	//AuTextOut("Image base address : %x \n", dos->e_magic);
 	uint64_t* cr3 = proc->cr3;
 
 	/* check if the binary is dynamically linked */

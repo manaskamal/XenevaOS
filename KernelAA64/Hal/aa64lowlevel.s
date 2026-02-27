@@ -68,7 +68,7 @@ write_ttbr1_el1:
 .global write_both_ttbr
 write_both_ttbr:
     msr ttbr0_el1, x0
-    msr ttbr1_el1, x0
+    //msr ttbr1_el1, x0
     isb sy
     dsb ishst
     tlbi vmalle1is 

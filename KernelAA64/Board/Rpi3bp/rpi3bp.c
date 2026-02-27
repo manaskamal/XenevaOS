@@ -277,7 +277,7 @@ void AuRPI3Initialize() {
     /*  map and initialize SPI0 */
     AuRPI3SPI0Map();
     AuRPI3SPI0Init();
-    AuRPIInitializeFramebuffer(480,320, 32);  //800x480  //1820x1080 
+    AuRPIInitializeFramebuffer(800,480, 32);  //800x480  //1820x1080 
    // AuLCDInit();
    // for (;;);
 }
@@ -476,7 +476,7 @@ bool AuRPIInitializeFramebuffer(uint32_t width, uint32_t height, uint32_t depth)
     uint32_t pixels = (fb.width * fb.height) / 4;
     for (uint32_t x = 0; x < fb.width; x++)
         for (uint32_t y = 0; y < fb.height; y++)
-            fbptr_[x + y * fb.width] = 0xFFFFFFFF;
+            fbptr_[x + y * fb.width] = 0xFF7B5E5E;
     
       //  fbptr_[i] = 0xFFFFFFFF;
 

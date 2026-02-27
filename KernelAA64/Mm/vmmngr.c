@@ -41,26 +41,31 @@
 
 
 uint64_t* _RootPaging;
+uint64_t* _RootPagingKe;
 uint64_t* _MMIOBase;
 
-size_t pml4_index(uint64_t virt) {
+static size_t pml4_index(uint64_t virt) {
 	uint64_t l0_index = (virt >> 39) & 0x1FF;
 	return l0_index;
 }
 
-size_t pdpt_index(uint64_t virt) {
+static size_t pdpt_index(uint64_t virt) {
 	uint64_t l1_index = (virt >> 30) & 0x1FF;
 	return l1_index;
 }
 
-size_t pd_index(uint64_t virt) {
+static size_t pd_index(uint64_t virt) {
 	uint64_t l2_index = (virt >> 21) & 0x1FF;
 	return l2_index;
 }
 
-size_t pt_index(uint64_t virt) {
+static size_t pt_index(uint64_t virt) {
 	uint64_t l3_index = (virt >> 12) & 0x1FF;
 	return l3_index;
+}
+
+static int isRangeInsideKernel(uint64_t va) {
+	return va >= 0xFFFF000000000000ULL;
 }
 
 bool _vmdebug = 0;
@@ -80,25 +85,10 @@ void AuVmmngrInitialize() {
 
 	AuTextOut("[aurora]: new l0 allocated \r\n");
 	for (int i = 0; i < 512; i++) {
-	/*	if (i == 512)
-			continue;
-		if ((previousL0[i] & 1)) {
-			newL0[i] = previousL0[i];
-		}
-		else
-			newL0[i] = 0;*/
 		newL0[i] = previousL0[i];
 	}
 
 	if (!AuLittleBootUsed()) {
-	/*	uint64_t* identityMap = (uint64_t*)AuPmmngrAlloc();
-		memset((void*)identityMap, 0, 4096);
-
-		for (int i = 0; i < 512; ++i) {
-			uint64_t addr = i << 30;
-			identityMap[i] = (addr | PTE_VALID | PTE_AF | PTE_SH_INNER | (1UL << 2));
-		}
-		newL0[0] = (uint64_t)identityMap | PTE_VALID | PTE_TABLE | PTE_AF;*/
 	}
 
 	
@@ -112,11 +102,22 @@ void AuVmmngrInitialize() {
 		newL1[pdpt_index(PHYSICAL_MEM_BASE) + i] = (addr | (0 << 54) | (0 << 53) | (1 << 10) | (3 << 8) | (0 << 6) | (0 << 2) | 0b01);
 		data_cache_flush(&newL1[pdpt_index(PHYSICAL_MEM_BASE) + i]);
 	}
+	uint64_t* kernelAS = AuPmmngrAlloc();
+	memset(kernelAS, 0, PAGE_SIZE);
+	
+	for (int i = 0; i < 512; i++) {
+		kernelAS[i] = newL0[i];
+	}
 
 	write_ttbr0_el1(newL0);
-	write_ttbr1_el1(newL0);
+	write_ttbr1_el1(kernelAS);
+	tlb_flush_vmalle1is();
+
+	dsb_sy_barrier();
+	isb_flush();
 
 	_RootPaging = newL0;
+	_RootPagingKe = kernelAS;
 
 	AuPmmngrMoveHigher();
 
@@ -145,7 +146,10 @@ bool AuMapPage(uint64_t phys_addr, uint64_t virt_addr, uint8_t attrib) {
 	const long i2 = (virt_addr >> 21) & 0x1FF;
 	const long i1 = (virt_addr >> 12) & 0x1FF;
 
-	uint64_t* pml4i = (uint64_t*)P2V(read_ttbr0_el1());
+	uint64_t* pml4i = (uint64_t*)P2V(read_ttbr0_el1()); 
+	if (isRangeInsideKernel(virt_addr)) 
+		pml4i = (uint64_t*)P2V(read_ttbr1_el1());
+
 	if (_vmdebug)
 		UARTDebugOut("PML4I got : %x \r\n", pml4i);
 	if (!(pml4i[i4] & 1))
@@ -300,6 +304,8 @@ AuVPage* AuVmmngrGetPage(uint64_t virt_addr, uint8_t _flags, uint8_t mode) {
 	const long i1 = (virt_addr >> 12) & 0x1FF;
 
 	uint64_t* pml4i = (uint64_t*)P2V(read_ttbr0_el1());
+	if (isRangeInsideKernel(virt_addr))
+		pml4i = (uint64_t*)P2V(read_ttbr1_el1());
 
 	if (!(pml4i[i4] & 1))
 	{
@@ -398,6 +404,15 @@ uint64_t* AuGetFreePage(bool user, void* ptr) {
 
 	uint64_t* end = 0;
 	uint64_t* pml4 = (uint64_t*)P2V(read_ttbr0_el1());
+	if (user == 0)
+		pml4 = (uint64_t*)P2V(read_ttbr1_el1());
+
+	if (ptr) {
+		if (isRangeInsideKernel((uint64_t)ptr))
+			pml4 = (uint64_t*)P2V(read_ttbr1_el1());
+		else
+			pml4 = (uint64_t*)P2V(read_ttbr0_el1());
+	}
 
 	/* Walk through every page tables */
 	for (;;) {
@@ -517,7 +532,7 @@ void* AuGetPhysicalAddress(uint64_t virt_addr) {
  * @return pointer to newly created address space
  */
 uint64_t* AuCreateVirtualAddressSpace() {
-	uint64_t* root_pml = (uint64_t*)P2V((size_t)_RootPaging);
+	uint64_t* root_pml = (uint64_t*)P2V((size_t)_RootPagingKe);
 	uint64_t* new_pml = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
 	memset(new_pml, 0, PAGE_SIZE);
 
@@ -555,8 +570,7 @@ void AuVmmngrBootFree() {
 	/*AuConsoleFlushFramebuffer();
 	dsb_ish();
 	isb_flush();*/
-
+	write_ttbr0_el1((uint64_t)_RootPaging);
 	tlb_flush_vmalle1is();
-	write_both_ttbr((uint64_t)_RootPaging);
 }
 

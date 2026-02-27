@@ -422,6 +422,7 @@ sched:
 	AuHandleSleepThreads();
 	AA64NextThread();
 	write_both_ttbr(V2P(current_thread->pml));
+	//tlb_flush_vmalle1is();
 	aa64_restore_fp(&current_thread->fp_regs, &current_thread->fpcr, &current_thread->fpsr);
 	dsb_sy_barrier();
 

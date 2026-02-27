@@ -86,8 +86,8 @@ void sync_el1_handler(AA64Registers *regs) {
     //UARTDebugOut("Fault Address String (FAR_EL1): %s \n", read_far_el1());
     AuTextOut("Fault Instruction (ELR_EL1): %x \r\n", read_elr_el1());
     UARTDebugOut("Fault Instruction (ELR_EL1): %x \r\n", read_elr_el1());
-    UARTDebugOut("SP_EL1: %x  \r\n", read_sp());
-    UARTDebugOut("SP_EL0 : %x \r\n", regs->EL0SP);
+    AuTextOut("SP_EL1: %x  \r\n", read_sp());
+    AuTextOut("SP_EL0 : %x \r\n", regs->EL0SP);
     UARTDebugOut("Current SPSel : %d \r\n", read_spsel());
     UARTDebugOut("EC class : %x \r\n", ec);
     AA64Thread* currthr = AuGetCurrentThread();
@@ -122,21 +122,21 @@ void sync_el1_handler(AA64Registers *regs) {
     uint32_t dfsc = esr & 0x3F;
 
     switch (dfsc) {
-    case 0b000000: UARTDebugOut("Address size, fault level 0 \r\n"); break;
-    case 0b000001: UARTDebugOut("Address Size, fault level 1 \r\n"); break;
-    case 0b000010: UARTDebugOut("Address size, fault level 2 \r\n"); break;
-    case 0b000011: UARTDebugOut("Address size, fault level 3 \r\n"); break;
-    case 0b000100: UARTDebugOut("translation, fault level 0 \r\n"); break;
-    case 0b000101: UARTDebugOut("translation, fault level 1 \r\n"); break;
-    case 0b000110: UARTDebugOut("translation, fault level 2 \r\n"); break;
-    case 0b000111: UARTDebugOut("translation, fault level 3 \r\n"); break;
-    case 0b001001: UARTDebugOut("access flag, fault level 1 \r\n"); break;
-    case 0b001010: UARTDebugOut("access flag, fault level 2 \r\n"); break;
-    case 0b001011: UARTDebugOut("access flag, fault level 3 \r\n"); break;
-    case 0b001101: UARTDebugOut("permission fault, level 1 \r\n"); break;
-    case 0b001110: UARTDebugOut("permission fault, level 2 \r\n"); break;
-    case 0b001111: UARTDebugOut("permission fault, level 3 \r\n"); break;
-    default: UARTDebugOut("Unknown fault code \r\n"); break;
+    case 0b000000: AuTextOut("Address size, fault level 0 \r\n"); break;
+    case 0b000001: AuTextOut("Address Size, fault level 1 \r\n"); break;
+    case 0b000010: AuTextOut("Address size, fault level 2 \r\n"); break;
+    case 0b000011: AuTextOut("Address size, fault level 3 \r\n"); break;
+    case 0b000100: AuTextOut("translation, fault level 0 \r\n"); break;
+    case 0b000101: AuTextOut("translation, fault level 1 \r\n"); break;
+    case 0b000110: AuTextOut("translation, fault level 2 \r\n"); break;
+    case 0b000111: AuTextOut("translation, fault level 3 \r\n"); break;
+    case 0b001001: AuTextOut("access flag, fault level 1 \r\n"); break;
+    case 0b001010: AuTextOut("access flag, fault level 2 \r\n"); break;
+    case 0b001011: AuTextOut("access flag, fault level 3 \r\n"); break;
+    case 0b001101: AuTextOut("permission fault, level 1 \r\n"); break;
+    case 0b001110: AuTextOut("permission fault, level 2 \r\n"); break;
+    case 0b001111: AuTextOut("permission fault, level 3 \r\n"); break;
+    default: AuTextOut("Unknown fault code \r\n"); break;
     }
 	while (1) {}
 }
