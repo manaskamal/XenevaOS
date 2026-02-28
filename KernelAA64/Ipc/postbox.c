@@ -297,7 +297,7 @@ void AuIPCPostBoxInitialise() {
 	 * a dummy node in the dev list
 	 */
 	AuVFSNode* dev = AuVFSFind("/dev");
-	AuVFSNode* node = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
+	/*AuVFSNode* node = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
 	memset(node, 0, sizeof(AuVFSNode));
 	strcpy(node->filename, "dummy");
 	aa64_data_cache_clean_range(&node->filename, 32);
@@ -307,7 +307,7 @@ void AuIPCPostBoxInitialise() {
 	node->write = 0;
 	node->iocontrol = PostBoxIOControl;
 	dsb_sy_barrier();
-	AuDevFSAddFile(dev, "/", node);
+	AuDevFSAddFile(dev, "/", node);*/
 
 
 	AuVFSNode* node2 = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
@@ -322,9 +322,9 @@ void AuIPCPostBoxInitialise() {
 	dsb_sy_barrier();
 	AuDevFSAddFile(dev, "/", node2);
 
-	aa64_data_cache_clean_range(node, sizeof(AuVFSNode));
+	//aa64_data_cache_clean_range(node, sizeof(AuVFSNode));
 	aa64_data_cache_clean_range(dev, sizeof(AuVFSNode));
-	pbox = node;
+	pbox = node2;
 	_PostBoxRootCreated = false;
 	AuTextOut("[aurora]: PostBox IPC mounted and initialized to /dev/pbox \r\n");
 	AuTextOut("[aurora]: PostEvent size : %d bytes \r\n", sizeof(PostEvent));

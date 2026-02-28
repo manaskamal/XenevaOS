@@ -27,6 +27,8 @@
 *
 **/
 
+#ifdef __TARGET_BOARD_RPI3__
+
 #include <Board/RPI3bp/rpi3bp_gpio.h>
 #include <Board/RPI3bp/rpi3bp_spi.h>
 #include <Board/RPI3bp/rpi_ili9486.h>
@@ -260,4 +262,5 @@ void AuLCDInit() {
 	for (;;);
 }
 
+#endif
 

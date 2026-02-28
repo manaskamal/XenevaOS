@@ -53,22 +53,20 @@ static void zero_mem(void* dst, size_t length) {
  * @param filebuff -- pointer to the pe kernel buffer
  */
 void XEPELoadImage(void* filebuff) {
-	//XEPrintf(const_cast<wchar_t*>(L"Loading kernel file .... \r\n"));
-	//XEUARTPrint("PELoading image \r\n");
+	
 	uint8_t* filebuf = (uint8_t*)filebuff;
 
 	PIMAGE_DOS_HEADER dosHeader = (PIMAGE_DOS_HEADER)filebuf;
 	PIMAGE_NT_HEADERS ntHeaders = raw_offset<PIMAGE_NT_HEADERS>(dosHeader, dosHeader->e_lfanew);
-	//XEUARTPrint("DOS Header -> %x \r\n", dosHeader->e_magic);
-	//XEUARTPrint("NT Headers -> %x \r\n", ntHeaders->Signature);
+	
 
 	PSECTION_HEADER sectionHeader = raw_offset<PSECTION_HEADER>(&ntHeaders->OptionalHeader, ntHeaders->FileHeader.SizeOfOptionaHeader);
-	size_t ImageBase = 0x8000000000; //0xFFFFC00000000000;// 0xFFFFFFFC00000000;
+	size_t ImageBase = 0xFFFFC00000000000;// 0xFFFFFFFC00000000;
 	void* ImBase = (void*)ImageBase;
 
 	paddr_t phys = XEPmmngrAllocate();
 
-	XEPagingMap(0x8000000000, phys);
+	XEPagingMap(ImageBase, phys);
 	
 	copy_mem((void*)ImBase, filebuf, ntHeaders->OptionalHeader.SizeOfHeaders);
 	
@@ -79,8 +77,7 @@ void XEPELoadImage(void* filebuff) {
 		buf[8] = 0;
 		size_t load_addr = ImageBase + sectionHeader[i].VirtualAddress;
 		void* sect_addr = (void*)load_addr;
-		/*XEPrintf(const_cast<wchar_t*>((wchar_t*)buf));
-		XEPrintf(const_cast<wchar_t*>(L"\r\n"));*/
+		
 		size_t sectsz = sectionHeader[i].VirtualSize;
 		int req_pages = sectsz / 4096 +
 			((sectsz % 4096) ? 1 : 0);
@@ -92,8 +89,6 @@ void XEPELoadImage(void* filebuff) {
 			if (!block)
 				block = (uint64_t*)alloc;
 		}
-		
-		//XEGuiPrint("Section name -> %s %x\n", sectionHeader[i].Name, load_addr);
 
 		copy_mem(sect_addr, raw_offset<void*>(filebuf, sectionHeader[i].PointerToRawData), sectionHeader[i].SizeOfRawData);
 		if (sectionHeader[i].VirtualSize > sectionHeader[i].SizeOfRawData)

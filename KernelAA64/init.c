@@ -222,10 +222,10 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 
 	AuTextOut("[aurora]: starting xeneva (ARM64) please wait...\r\n");
 
-	
 	/* clear out the lower half memory */
 	AuVmmngrBootFree();
 	AuTextOut("[aurora]: boot freed up \r\n");
+	
 	AuSchedulerInitialize();
 	/*
 	AA64Thread* t3 = AuCreateKthread(AuEntryTest2, AuCreateVirtualAddressSpace(), "test2");

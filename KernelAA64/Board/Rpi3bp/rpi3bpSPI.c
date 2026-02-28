@@ -40,6 +40,8 @@
 #include <Drivers/uart.h>
 #include <Fs/Dev/devinput.h>
 
+#ifdef __TARGET_BOARD_RPI3__
+
 static uint64_t* spi0Base;
 
 #define SPI0_CS  0x00
@@ -504,3 +506,5 @@ void XPT2046ReadTouch() {
 		AuDevWriteMice(&im);
 	}
 }
+
+#endif

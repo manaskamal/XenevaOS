@@ -355,7 +355,7 @@ void AuHandleSleepThreads() {
 	for (sleep_thr = sleep_thr_head; sleep_thr != NULL; sleep_thr = sleep_thr->next) {
 		sleep_thr->sleepQuanta--;
 		if (sleep_thr->sleepQuanta == 0){
-			settimerdebug();
+			//settimerdebug();
 			sleep_thr->state = THREAD_STATE_READY;
 			AuThreadDeleteSleep(sleep_thr);
 			AuThreadInsert(sleep_thr);

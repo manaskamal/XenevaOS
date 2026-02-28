@@ -188,7 +188,7 @@
     <ClCompile>
       <WarningLevel>Level1</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>ARCH_ARM64; __TARGET_BOARD_RPI3__;</PreprocessorDefinitions>
+      <PreprocessorDefinitions>ARCH_ARM64; __TARGET_BOARD_QEMU_VIRT__;</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(SolutionDir)BaseHdr;$(SolutionDir)Boot\include;$(SolutionDir)Boot\include\AArch64;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <IgnoreStandardIncludePath>true</IgnoreStandardIncludePath>
@@ -220,7 +220,7 @@
       <DataExecutionPrevention>false</DataExecutionPrevention>
     </Link>
     <PostBuildEvent>
-      <Command>copy "$(SolutionDir)Build\EFI\BOOT\$(TargetName).efi" "F:\EFI\BOOT\$(TargetName).efi"</Command>
+      <Command>copy "$(SolutionDir)Build\EFI\BOOT\$(TargetName).efi" "M:\EFI\BOOT\$(TargetName).efi"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">

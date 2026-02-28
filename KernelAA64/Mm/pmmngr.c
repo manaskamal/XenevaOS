@@ -212,12 +212,11 @@ void AuPmmngrInitialize(KERNEL_BOOT_INFO* info) {
 	uint64_t BitmapSize = (_TotalRam / 8) + 1; // (_TotalRam * 4096) / 4096 / 8 + 1;
 	UsablePhysicalMemory = ((uint64_t)BitmapArea + BitmapSize);
 	UsablePhysicalMemory = (UsablePhysicalMemory + (PAGE_SIZE - 1)) & ~(uint64_t)(PAGE_SIZE - 1);
-
+	AuTextOut("Usable RAM Start : %x, TotalRAM : %x \r\n", UsablePhysicalMemory, _TotalRam);
 	/* now initialise the bitmap */
 	AuPmmngrInitBitmap(BitmapSize, BitmapArea);
-
+	AuTextOut("Bitmap Size : %x %d \r\n", BitmapSize, BitmapSize);
 	AuPmmngrLockPages((void*)BitmapArea, BitmapSize);
-
 
 	if (info->boot_type != BOOT_LITTLEBOOT_ARM64) {
 		for (size_t i = 0; i < MemMapEntries; i++) {
@@ -310,7 +309,6 @@ void* AuPmmngrAlloc() {
 		_UsedMemory++;
 		uint64_t index = _RamBitmapIndex;
 		//UARTDebugOut("AuPmmngrAlloc: RamBitmapIndex : %d %x \n", _RamBitmapIndex, (UsablePhysicalMemory + (index * 4096)));
-		dsb_ish();
 		return (void*)(UsablePhysicalMemory + (index * 4096));
 	}
 	AuTextOut("Kernel Panic!!! No more physical memory \n");

@@ -37,6 +37,8 @@
 #include <aucon.h>
 
 
+#ifdef __TARGET_BOARD_RPI3__
+
 static uint64_t* gpioBase;
 
 #define GPFSEL0  0x00
@@ -251,6 +253,8 @@ void AuRPIGPIOWrite(uint8_t pin, bool value) {
 	else
 		AuRPIGPIOClear(pin);
 }
+
+#endif
 
 
 

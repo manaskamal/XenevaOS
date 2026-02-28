@@ -114,18 +114,23 @@ void XRComposeFrame(ChCanvas* canvas) {
 */
 int main(int argc, char* argv[]){
 	_KePrint("Hello DeodhaiXR \n");
-	_KePrint("DeodhaiXR , Copyright (C) Manas Kamal Choudhury 2023-2025\n");
+	_KePrint("DeodhaiXR , Copyright (C) Xeneva Pvt Ltd 2023-2025\n");
+	_KePrint("User mode processes are running \n");
 	/* create a demo canvas just for getting the graphics
  * file descriptor
  * 
  */
+	while (1) {
+		_KePauseThread();
+	}
 	postbox_fd = -1;
 	XEFileIOControl graphctl;
 	memset(&graphctl, 0, sizeof(XEFileIOControl));
 	graphctl.syscall_magic = AURORA_SYSCALL_MAGIC;
 
+	_KePrint("Creating canvas \r\n");
 	ChCanvas* canv = ChCreateCanvas(100, 100);
-
+	_KePrint("Canvas created \r\n");
 	int ret = _KeFileIoControl(canv->graphics_fd, SCREEN_GETWIDTH, &graphctl);
 	screen_w = graphctl.uint_1;
 	ret = _KeFileIoControl(canv->graphics_fd, SCREEN_GETHEIGHT, &graphctl);
@@ -134,6 +139,8 @@ int main(int argc, char* argv[]){
 	/* now modify the canvas size with screen size */
 	canv->canvasWidth = screen_w;
 	canv->canvasHeight = screen_h;
+
+	_KePrint("canvas width : %d, canvas height : %d \r\n", screen_w, screen_h);
 
 	ChAllocateBuffer(canv);
 	DeoInitializeBackSurface(canv);

@@ -108,6 +108,15 @@ tlb_flush:
      isb
      ret
 
+.global tlb_flush_all
+tlb_flush_all:
+    isb sy
+    dsb ishst
+    tlbi vmalle1is 
+    dsb ish
+    isb 
+    ret
+
 .global read_esr_el1
 read_esr_el1:
      mrs x0, ESR_EL1

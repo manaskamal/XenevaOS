@@ -101,14 +101,14 @@ void AuProcessEntUser(uint64_t rcx) {
 	}
 
 	/* I think this code should be placed in _KeProcessExit */
-	//if (uentry->argvs) {
-	//	for (int i = 0; i < uentry->num_args; i++) {
-	//		//uint64_t addr = (uint64_t)uentry->argvs[i];
-	//		kfree(uentry->argvs[i]);
-	//	}
-	//	void* address = (void*)uentry->argvs;
-	//	kfree(address);
-	//}
+	if (uentry->argvs) {
+		for (int i = 0; i < uentry->num_args; i++) {
+			//uint64_t addr = (uint64_t)uentry->argvs[i];
+			kfree(uentry->argvs[i]);
+		}
+		void* address = (void*)uentry->argvs;
+		kfree(address);
+	}
 	PUSHALIGN(uentry->rsp, 16);
 	uentry->argvs = 0;
 	PUSH(uentry->rsp, size_t, (size_t)uentry->argvaddr);

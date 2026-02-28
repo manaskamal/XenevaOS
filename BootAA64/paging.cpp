@@ -72,6 +72,8 @@ void XEMapMMIO(uint64_t* l1_table, uint64_t va, uint64_t pa) {
 		PAGE_TABLE_ENTRY_SH | PAGE_TABLE_ENTRY_DEVICE | PAGE_TABLE_ENTRY_AF;
 
 }
+
+extern "C" void tlb_flush_all();
 /*
  * XEPagingInitialize -- initialize paging
  */
@@ -81,7 +83,6 @@ void XEPagingInitialize() {
 	previousBase = read_ttbr0_el1();
 	XEGuiPrint("ttbr0: %x \n", previousBase);
 	bool required_sctrl = 0;
-
 	l0_table_base = (uint64_t*)previousBase;
 	if (previousBase == 0) {
 		previousBase = XEPmmngrAllocate();
@@ -102,7 +103,7 @@ void XEPagingInitialize() {
 
 
 
-	uint64_t tcr1 = ((20UL << 0) | (0UL << 14) | (0b11UL << 12) |
+	uint64_t tcr1 = ((16UL << 0) | (0UL << 14) | (0b11UL << 12) |
 		(0b01UL << 10) | (0b01UL << 8) | (16UL << 16) | (0b10UL << 30) | (0b11UL << 28) |
 		(0b01UL << 26) | (0b01UL << 24) | (4ULL << 32));
 
@@ -114,7 +115,7 @@ void XEPagingInitialize() {
 	mair = read_mair_el1();
 	write_ttbr0_el1(l0_table_base);
 	write_ttbr1_el1(l0_table_base);
-	
+	tlb_flush_all();
 
 	if (required_sctrl) {
 		uint64_t sctlr = (1UL << 0) | (1UL << 2) | (1UL << 12) | (1UL << 23) | (1UL << 28) |
@@ -125,7 +126,9 @@ void XEPagingInitialize() {
 
 	isb_flush();
 
+#ifdef __TARGET_BOARD_RPI3__
 	uint64_t ttbr0_el2 = read_ttbr0_el2();
+#endif
 	/*char pa[16];
 	sztoa(ttbr0_el2, pa, 16);
 	wchar_t pa16[16];
@@ -135,7 +138,7 @@ void XEPagingInitialize() {
 	XEPrintf(const_cast<wchar_t*>(L"\r\n"));
 
 	XEPrintf(const_cast<wchar_t*>(L"Paging initialized \r\n"));*/
-
+	XEGuiPrint("Paging initialized \r\n");
 	if (_getCurrentEL() != 1) 
 		l0_table_base = (uint64_t*)read_ttbr0_el2();
 	
