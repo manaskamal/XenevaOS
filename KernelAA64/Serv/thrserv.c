@@ -36,6 +36,7 @@
 #include <loader.h>
 #include <_null.h>
 #include <Drivers/uart.h>
+#include <aucon.h>
 
 /**
  * @brief GetThreadID -- returns current id
@@ -72,6 +73,9 @@ int GetProcessID() {
  */
 int ProcessExit() {
     //NOT IMPLEMENTED
+	UARTDebugOut("[aurora]: process exit call not implemented :( \r\n");
+	AuTextOut("[aurora]: process exit call not implemented :( \r\n");
+	for (;;);
 	return 0;
 }
 

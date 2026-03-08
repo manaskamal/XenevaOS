@@ -1698,6 +1698,10 @@ int main(int argc, char* arv[]) {
 		DrawWallpaper(canv, "/mntr1.jpg");
 		DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
 	}
+	else if (screen_w == 800 && screen_h == 480) {
+		DrawWallpaper(canv, "/flora1.jpg");
+		DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
+	}
 
 	ChCanvasScreenUpdate(canv, 0, 0, canv->canvasWidth, canv->canvasHeight);
 
@@ -1738,8 +1742,8 @@ int main(int argc, char* arv[]) {
 	uint64_t last_click_time = 0;
 	uint64_t last_redraw = 0;
 
-	/*int proc = _KeCreateProcess(0, "calc");
-	_KeProcessLoadExec(proc, "/calc.exe", NULL, NULL);*/
+	int proc = _KeCreateProcess(0, "calc");
+	_KeProcessLoadExec(proc, "/calc.exe", NULL, NULL);
 
 	/*proc = _KeCreateProcess(0, "calendr");
 	_KeProcessLoadExec(proc, "/calendr.exe", NULL, NULL);*/

@@ -1,4 +1,6 @@
 /**
+* @file virtio.h
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2025, Manas Kamal Choudhury
@@ -111,13 +113,58 @@ struct VirtioInputEvent {
 
 #define OFFSETOF(s,m) ((size_t)&(((s*)0)->m))
 
-/*
- * AuVirtioKbdInitialize -- initialize the virtio keyboard
+#define VIRTIO_NET_F_CSUM (1ULL << 0)
+#define VIRTIO_NET_F_GUEST_CSUM (1ULL << 2)
+#define VIRTIO_NET_F_MAC (1ULL << 5)
+#define VIRTIO_NET_F_CTRL_VQ (1ULL << 17)
+#define VIRTIO_NET_HDR_GSO_NONE 0
+
+typedef struct _virtio_net_hdr_ {
+	uint8_t flags;
+	uint8_t gso_type;
+	uint16_t hdr_len;
+	uint16_t gso_size;
+	uint16_t csum_start;
+	uint16_t csum_offset;
+}virtio_net_hdr_t;
+
+#pragma pack(push,1)
+typedef struct {
+	uint8_t cap_vndr;
+	uint8_t cap_next;
+	uint8_t cap_len;
+	uint8_t cfg_type;
+	uint8_t bar;
+	uint8_t padding[3];
+	uint32_t offset;
+	uint32_t length;
+}virtio_pci_cap;
+#pragma pack(pop)
+
+#pragma pack(push,1)
+struct virtio_notifier_cap {
+	virtio_pci_cap cap;
+	uint32_t notifer_mult_base;
+};
+#pragma pack(pop)
+
+/**
+ * @brief AuVirtioKbdInitialize -- initialize the virtio keyboard
  */
 extern void AuVirtioKbdInitialize(uint64_t device);
 
-/*
- * AuVirtioTabletInitialize -- initialize virtio tablet
+/**
+ * @brief AuVirtioTabletInitialize -- initialize virtio tablet
  */
 extern void AuVirtioTabletInitialize(uint64_t device);
+
+/**
+ * @brief 
+ */
+ /**
+  * @brief AuVirtioNetInitialize -- initialize the virtio network 
+  * device
+  * @param device -- virtio network device address
+  */
+extern void AuVirtioNetInitialize(uint64_t device);
 #endif

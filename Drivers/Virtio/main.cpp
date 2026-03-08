@@ -47,6 +47,19 @@ uint64_t* CommandPhys;
 uint64_t* ResponsePhys;
 
 #pragma pack(push,1)
+typedef struct {
+	uint8_t cap_vndr;
+	uint8_t cap_next;
+	uint8_t cap_len;
+	uint8_t cfg_type;
+	uint8_t bar;
+	uint8_t padding[3];
+	uint32_t offset;
+	uint32_t length;
+}virtio_pci_cap;
+#pragma pack(pop)
+
+#pragma pack(push,1)
 struct virtio_notifier_cap {
 	virtio_pci_cap cap;
 	uint32_t notifer_mult_base;

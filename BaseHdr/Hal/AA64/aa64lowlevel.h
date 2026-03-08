@@ -141,7 +141,7 @@ extern uint64_t readTimerCtl();
 
 extern uint64_t read_spsr_el1();
 
-extern void enable_irqs();
+AU_EXTERN AU_EXPORT void enable_irqs();
 
 extern void mask_irqs();
 

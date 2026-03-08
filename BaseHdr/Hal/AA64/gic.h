@@ -68,7 +68,7 @@ AU_EXTERN AU_EXPORT void GICEnableIRQ(uint32_t irq);
 /** @brief GICEnableIRQ -- enable an SPI IRQ
  * @param irq -- IRQ number
  */
-extern void GICEnableSPIIRQ(uint32_t irq);
+AU_EXTERN AU_EXPORT void GICEnableSPIIRQ(uint32_t irq);
 
 
 AU_EXTERN AU_EXPORT void GICClearPendingIRQ(uint32_t irq);
@@ -87,37 +87,37 @@ extern void GICCheckPending(uint32_t irq);
  * @param interruptID -- spi offset
  * @return composited MSI address
  */
-extern uint64_t AuGICGetMSIAddress(int interruptID);
+AU_EXTERN AU_EXPORT uint64_t AuGICGetMSIAddress(int interruptID);
 
 /**
  * @brief AuGICGetMSIData -- obtains composited MSI data address
  * of respected interruptID, useful in PCIe
  * @param interruptID -- interrupt ID of device
  */
-extern uint32_t AuGICGetMSIData(int interruptID);
+AU_EXTERN AU_EXPORT uint32_t AuGICGetMSIData(int interruptID);
 
 /**
  * @brief AuGICAllocateSPI -- allocates Shared Peripheral
  * interrupt ID
  */
-extern int AuGICAllocateSPI();
+AU_EXTERN AU_EXPORT int AuGICAllocateSPI();
 
 /**
  *@brief AuGICDeallocateSPI -- free up an used SPI id
  *@param spiID -- target spi id
  */
-extern void AuGICDeallocateSPI(int spiID);
+AU_EXTERN AU_EXPORT void AuGICDeallocateSPI(int spiID);
 
 /**
  * @brief GICSendEOI --sends end of interrupt to
  * GIC cpu interface
  * @param irqnum -- interrupt ID of the device
  */
-extern void GICSendEOI(uint32_t irqnum);
+AU_EXTERN AU_EXPORT void GICSendEOI(uint32_t irqnum);
 
 extern void GICSetupTimer();
 
-extern void GICSetTargetCPU(int spi);
+AU_EXTERN AU_EXPORT void GICSetTargetCPU(int spi);
 
 /**
  * @brief GICRegisterSPIHandler -- register a spi handler
@@ -125,7 +125,7 @@ extern void GICSetTargetCPU(int spi);
  * @param fptr -- SPI Callback address
  * @param spi -- SPI number
  */
-extern void GICRegisterSPIHandler(void* fptr, int spi);
+AU_EXTERN AU_EXPORT void GICRegisterSPIHandler(void* fptr, int spi);
 
 /**
  * @brief GICCallSPIHandler -- jump to a callback handler

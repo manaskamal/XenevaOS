@@ -170,8 +170,8 @@ void AuVirtioKbdInitialize(uint64_t device) {
 	UARTDebugOut("virtio: queue sz : %d \n", queueSz);
 
 
-	uint64_t queuePhys = (uint64_t)AuPmmngrAllocBlocks(((sizeof(struct VirtioQueue) * queueSz))/0x1000);
-	queue = (struct VirtioQueue*)AuMapMMIO(queuePhys, ((sizeof(struct VirtioQueue)*queueSz))/0x1000);
+	uint64_t queuePhys = (uint64_t)AuPmmngrAlloc();//AuPmmngrAllocBlocks(((sizeof(struct VirtioQueue) * queueSz))/0x1000);
+	queue = (struct VirtioQueue*)AuMapMMIO(queuePhys,1 /*((sizeof(struct VirtioQueue)*queueSz))/0x1000*/);
 
 	size_t desc_size = queueSz * sizeof(struct VirtioQueue);
 	common->QueueSelect = 0;

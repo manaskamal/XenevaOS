@@ -72,8 +72,8 @@ AuVFSNode* nic;
 #define CTRL_SLU      (1UL << 6UL)
 #define CTRL_LRST     (1UL << 3UL)
 
-/*
- * MMIORead32 -- reads a 32 bit value from 
+/**
+ * @brief MMIORead32 -- reads a 32 bit value from 
  * the given address
  * @param addr -- address from where to read
  */
@@ -81,8 +81,8 @@ uint32_t MMIORead32(uint64_t addr) {
 	return *((volatile uint32_t*)(addr));
 }
 
-/*
- * MMIOWrite32 -- write a 32 bit value to given
+/**
+ * @brief MMIOWrite32 -- write a 32 bit value to given
  * address
  * @param addr -- address where to write
  * @param val -- value to write
@@ -91,8 +91,8 @@ void MMIOWrite32(uint64_t addr, uint32_t val) {
 	(*((volatile uint32_t*)(addr))) = val;
 }
 
-/*
- * E1000WriteCmd -- write a command to given offset
+/**
+ * @brief E1000WriteCmd -- write a command to given offset
  * from mmio address
  * @param dev -- pointer to e1000 device
  * @param addr -- offset from mmio address
@@ -102,8 +102,8 @@ void E1000WriteCmd(E1000NIC* dev, uint16_t addr, uint32_t val) {
 	MMIOWrite32(dev->mmio_addr + addr, val);
 }
 
-/*
- * E1000ReadCmd -- read a command from given offset from
+/**
+ * @brief E1000ReadCmd -- read a command from given offset from
  * mmio address
  * @param dev -- pointer to e1000 device
  * @param addr -- offset from mmio address
@@ -330,8 +330,8 @@ void E1000Thread(uint64_t val) {
 	}
 }
 
-/*
-* AuDriverUnload -- Frees and clear up everthing from the
+/**
+* @brief AuDriverUnload -- Frees and clear up everthing from the
 * driver
 */
 AU_EXTERN AU_EXPORT int AuDriverUnload() {

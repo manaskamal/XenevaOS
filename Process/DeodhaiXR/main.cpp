@@ -120,9 +120,6 @@ int main(int argc, char* argv[]){
  * file descriptor
  * 
  */
-	while (1) {
-		_KePauseThread();
-	}
 	postbox_fd = -1;
 	XEFileIOControl graphctl;
 	memset(&graphctl, 0, sizeof(XEFileIOControl));

@@ -520,7 +520,6 @@ int main(int argc, char* argv[]){
 	/* button grid */
 	ChWindowPaint(mainWin);
 
-	_KePrint("Calculator ready \r\n");
 
 	PostEvent e;
 	memset(&e, 0, sizeof(PostEvent));

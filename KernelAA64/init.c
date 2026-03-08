@@ -56,6 +56,7 @@
 #include <Ipc/postbox.h>
 #include <Board/board.h>
 #include <Board/RPI3bp/rpi3bp.h>
+#include <Net/aunet.h>
 
 
 extern int _fltused = 1;
@@ -189,6 +190,9 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 
 	/* initialize the shared memory manager*/
 	AuInitialiseSHMMan();
+
+	/* initialize the network layer */
+	AuInitialiseNet();
 
 #ifdef __TARGET_BOARD_RPI3__
 	XPT2046Initialise();

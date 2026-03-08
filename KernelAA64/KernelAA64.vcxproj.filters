@@ -141,6 +141,32 @@
     <ClCompile Include="Board\Rpi3bp\rpi_ili9486.c">
       <Filter>Board\Rpi3bp</Filter>
     </ClCompile>
+    <ClCompile Include="Drivers\virtionet.c">
+      <Filter>Drivers</Filter>
+    </ClCompile>
+    <ClCompile Include="Net\aunet.c">
+      <Filter>Net</Filter>
+    </ClCompile>
+    <ClCompile Include="hashmap.c" />
+    <ClCompile Include="Net\socket.c">
+      <Filter>Net</Filter>
+    </ClCompile>
+    <ClCompile Include="Net\route.c">
+      <Filter>Net</Filter>
+    </ClCompile>
+    <ClCompile Include="stack.c" />
+    <ClCompile Include="Net\udp.c">
+      <Filter>Net</Filter>
+    </ClCompile>
+    <ClCompile Include="Net\icmp.c">
+      <Filter>Net</Filter>
+    </ClCompile>
+    <ClCompile Include="Net\ethernet.c">
+      <Filter>Net</Filter>
+    </ClCompile>
+    <ClCompile Include="Net\arp.c">
+      <Filter>Net</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Hal">

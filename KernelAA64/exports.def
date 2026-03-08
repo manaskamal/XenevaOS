@@ -3,3 +3,7 @@ EXPORTS
      isb_flush
      dsb_ish
      memset
+     UARTDebugOut
+     enable_irqs
+     dsb_sy_barrier
+     dc_ivac

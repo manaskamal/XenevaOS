@@ -33,7 +33,7 @@
 #include <pcie.h>
 #include <Drivers/virtio.h>
 #include <string.h>
-
+#include <Drivers/uart.h>
 
 #define VIRTIO_INPUT_KEYBOARD 1
 #define VIRTIO_INPUT_TABLET 2
@@ -58,11 +58,11 @@ uint8_t AuVirtIOInputCheck(uint64_t device, int bus,int dev,int func) {
  * @brief AuVirtIOInputInitialize -- initialize virtIO input device
  */
 void AuVirtIOInputInitialize() {
-	int numVirtIOInput = 0;
+	int numVirtIODevice = 0;
 	for (int bus = 0; bus < 255; bus++) {
 		for (int dev = 0; dev < PCI_DEVICE_PER_BUS; dev++) {
 			for (int func = 0; func < PCI_FUNCTION_PER_DEVICE; func++) {
-				if (numVirtIOInput == 2)
+				if (numVirtIODevice == 3)
 					break;
 				uint64_t address = AuPCIEGetDevice(0, bus, dev, func);
 				if (address == 0)
@@ -73,16 +73,22 @@ void AuVirtIOInputInitialize() {
 				uint8_t sub_ClassCode = AuPCIERead(address, PCI_SUBCLASS, bus, dev, func);
 				uint16_t vendID = AuPCIERead(address, PCI_VENDOR_ID, bus, dev, func);
 				uint16_t devID = AuPCIERead(address, PCI_DEVICE_ID, bus, dev, func);
+				//UARTDebugOut("Vendor ID attached : %x devID : %x \r\n", vendID, devID);
 				if (vendID == 0x1AF4 && devID == 0x1052) {
 					uint8_t devType = AuVirtIOInputCheck(address, bus, dev, func);
 					if (devType == VIRTIO_INPUT_KEYBOARD) {
-						numVirtIOInput++;
+						numVirtIODevice++;
 						AuVirtioKbdInitialize(address);
 					}
 					else if (devType == VIRTIO_INPUT_TABLET) {
-						numVirtIOInput++;
+						numVirtIODevice++;
 						AuVirtioTabletInitialize(address);
 					}
+				}
+				if (vendID == 0x1AF4 && devID == 0x1041) {
+					/* initialize network device */
+					numVirtIODevice++;
+					//AuVirtioNetInitialize(address);
 				}
 			}
 		}

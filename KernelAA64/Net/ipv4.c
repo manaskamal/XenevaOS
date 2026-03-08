@@ -1,4 +1,6 @@
 /**
+* @file ipv4.c
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2025, Manas Kamal Choudhury
@@ -91,5 +93,82 @@ void IPv4HandlePacket(void* data, AuVFSNode* nic) {
 		UARTDebugOut("source port : %d \n", srcPort);
 		break;
 	}
+	}
+}
+
+/*
+ * CreateIPv4Socket -- create a new ipv4 socket
+ * @param type -- type of the socket its Datagram or
+ * stream socket
+ * @param protocol -- protocol number
+ */
+int CreateIPv4Socket(int type, int protocol) {
+	switch (type) {
+	case SOCK_DGRAM:
+		if (protocol == 0 || protocol == IPPROTOCOL_UDP) {
+			UARTDebugOut("[aurora]: ipv4 udp protocol created \r\n");
+			return 0; // CreateUDPSocket();
+		}if (protocol == IPPROTOCOL_ICMP) {
+			UARTDebugOut("[aurora]: ipv4 icmp protocol created \r\n");
+			return 0; // CreateICMPSocket();
+		}
+	case SOCK_STREAM: {
+		UARTDebugOut("[aurora]: tcp protocol created \r\n");
+		return 0; // CreateTCPSocket();
+	}
+	default:
+		return -1;
+	}
+}
+
+/**
+ * @brief IPV4SendPacket -- sends a packet to next stage
+ * @param packet -- IPv4 packet to send
+ * @param nic -- Pointer to NIC device
+ */
+void IPV4SendPacket(IPv4Header* packet, AuVFSNode* nic) {
+	AuNetworkDevice* ndev = (AuNetworkDevice*)nic->device;
+	if (!ndev)
+		return;
+
+	uint32_t ip_dest = packet->destAddress;
+
+	UARTDebugOut("[aurora]: IPV4 Sending %x\r\n", nic->device);
+
+	/* Decide which data link layer to use for
+	   forwarding this packet*/
+	if (ndev->type == NETDEV_TYPE_ETHERNET) {
+		AuARPCache* cache = NULL;
+		if (!ndev->ipv4subnet || ((ip_dest & ndev->ipv4subnet) != (ndev->ipv4addr & ndev->ipv4subnet))) {
+			ip_dest = ndev->ipv4gateway;
+			ip_ntoa(ip_dest);
+			cache = AuARPGet(ip_dest);
+			if (!cache) {
+				AuARPRequestMAC(nic, ip_dest);
+				UARTDebugOut("[aurora]:Requesting MAC \r\n");
+
+				/* Not implemented yet */
+				AuSleepThread(AuGetCurrentThread(), 100);
+				AuForceScheduler();
+
+				cache = AuARPGet(ip_dest);
+			}
+		}
+		else {
+			cache = AuARPGet(ip_dest);
+			if (!cache) {
+				AuARPRequestMAC(nic, ip_dest);
+				UARTDebugOut("[aurora]: Requesting MAC \r\n");
+
+				/* Not implemented yet */
+				AuSleepThread(AuGetCurrentThread(), 10000);
+				AuForceScheduler();
+
+				cache = AuARPGet(ip_dest);
+			}
+		}
+		uint8_t broadcast_addr[6];
+		memset(broadcast_addr, 0xFF, 6);
+		AuEthernetSend(nic, packet, ntohs(packet->totalLength), ETHERNET_TYPE_IPV4, cache ? cache->hw_address : broadcast_addr);
 	}
 }

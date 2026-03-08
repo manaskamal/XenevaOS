@@ -230,7 +230,7 @@ AuVFSNode* AuDevFSOpen(AuVFSNode* fs, char* path) {
 
 		for (int j = 0; j < first_list->childs->pointer; j++) {
 			AuVFSNode* node_ = (AuVFSNode*)list_get_at(first_list->childs, j);
-			UARTDebugOut("node_->filename : %s \r\n", node_->filename);
+			//UARTDebugOut("node_->filename : %s \r\n", node_->filename);
 			if (strcmp(node_->filename, pathname) == 0) {
 				if (node_->flags & FS_FLAG_DIRECTORY)
 					first_list = (AuVFSContainer*)node_->device;

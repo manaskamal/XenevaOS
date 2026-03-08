@@ -3,6 +3,7 @@
  */
 #include <stdint.h>
 #include <_null.h>
+#include <string.h>
 
 #define MAX_STRING_LENGTH 4095
 
