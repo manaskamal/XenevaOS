@@ -41,14 +41,18 @@
 #include <Net/udp.h>
 #include <Net\socket.h>
 
+#ifdef ARCH_X64
 #pragma pack(push,1)
+#endif
 __declspec(align(2)) typedef struct _ethernet_ {
 	uint8_t dest[6];
 	uint8_t src[6];
 	uint16_t typeLen;
 	uint8_t payload[];
 }Ethernet;
+#ifdef ARCH_X64
 #pragma pack(pop)
+#endif
 
 
 AU_EXTERN AU_EXPORT void AuEthernetHandle(void* data, int size, AuVFSNode* nic) {
@@ -81,7 +85,10 @@ AU_EXTERN AU_EXPORT void AuEthernetHandle(void* data, int size, AuVFSNode* nic) 
 	}
 }
 
+#ifdef ARCH_X64
 #pragma pack(push,1)
+#endif
+
 __declspec(align(2))
 typedef struct _dns_ {
 	uint16_t qid;
@@ -92,7 +99,9 @@ typedef struct _dns_ {
 	uint16_t additional;
 	uint8_t data[];
 }DNSPacket;
+#ifdef ARCH_X64
 #pragma pack(pop)
+#endif
 /**
  * @brief AuEthernetSend -- sends a packet to ethernet layer
  * @param data -- data to send

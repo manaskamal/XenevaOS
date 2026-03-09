@@ -119,7 +119,7 @@ void ARPHandlePacket(void* data, AuVFSNode* nic) {
 	if (ntohs(packet->hwAddressType) == 1 && ntohs(packet->hwProtocolType) == ETHERNET_TYPE_IPV4) {
 		if (packet->arp_data.arp_eth_ipv4.arp_spa) {
 			if (!AuARPGet(packet->arp_data.arp_eth_ipv4.arp_spa)) {
-				UARTDebugOut("ARP Added \r\n");
+				UARTDebugOut("[aurora]: net ARP added \r\n");
 				ARPProtocolAdd(nic, packet->arp_data.arp_eth_ipv4.arp_spa, packet->arp_data.arp_eth_ipv4.arp_sha);
 			}
 		}

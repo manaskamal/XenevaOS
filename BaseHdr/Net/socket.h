@@ -94,7 +94,10 @@ typedef struct _msghdr_ {
 
 #define SOCK_STATE_WAITING_FOR_CONNECTION 1
 #define SOCK_STATE_CONNECTION_RST 0
+
+#ifdef ARCH_X64
 #pragma pack(push,1)
+#endif
 typedef struct _socket_ {
 	void* binedDev;
 	AuStack *rxstack;
@@ -108,7 +111,9 @@ typedef struct _socket_ {
 	int(*connect)(struct _socket_* sock, sockaddr* addr, socklen_t addrlen);
 	int(*bind)(struct _socket_* sock, sockaddr* addr, socklen_t addrlen);
 }AuSocket;
+#ifdef ARCH_X64
 #pragma pack(pop)
+#endif
 
 typedef uint32_t in_addr_t;
 typedef uint16_t in_port_t;

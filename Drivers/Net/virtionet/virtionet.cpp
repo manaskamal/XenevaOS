@@ -103,26 +103,11 @@ typedef struct _ethernet_ {
  */
 void AuVirtioNetHandler(int spiNum) {
 	uint16_t them = rxqueue->used.index;
-	AuTextOut("[aurora]: virtio-net interrupt occured++ %d\r\n", them);
 	for (; index < them; index++) {
 		//dc_ivac((uint64_t)&rx_hdrs[index % queueSz]);
 		//dsb_sy_barrier();
 		virtio_net_hdr_t* evt = &rx_hdrs[index % queueSz];
-		AuTextOut("VirtioNetHDR: %x sz : %d bytes\r\n", evt, sizeof(virtio_net_hdr_t));
 		Ethernet* eth = (Ethernet*)((uint8_t*)evt + sizeof(virtio_net_hdr_t) + 2);
-		AuTextOut("Ethernet typeLen: %x \r\n", eth->typeLen);
-		switch (ntohs(eth->typeLen)) {
-		case ETHERNET_TYPE_ARP:
-			AuTextOut("[virtio-net]: arp packet received \r\n");
-			break;
-		case ETHERNET_TYPE_IPV4:
-			AuTextOut("[virtio-net]: ipv4 packet received \r\n");
-			break;
-		case ETHERNET_TYPE_IPV6:
-			AuTextOut("[virtio-net]: ipv6 packet received \r\n");
-			//IPv6 Handle packet
-			break;
-		}
 		if (nic) 
 			AuEthernetHandle(eth, rxqueue->used.ring[index % queueSz].length, nic);
 		

@@ -36,6 +36,7 @@
 #define ARP_OPERATION_REQUEST 0x0100
 #define ARP_OPERATION_RESPONSE 0x0200
 
+
 #pragma pack(push,1)
 typedef struct _arp_ {
 	uint16_t hwAddressType;

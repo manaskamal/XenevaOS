@@ -30,7 +30,9 @@
 #ifndef __IPV4_H__
 #define __IPV4_H__
 
+#ifdef ARCH_X64
 #pragma pack(push,1)
+#endif
 __declspec(align(2))
 typedef struct _ipv4head_ {
 	unsigned char versionHeaderLen;
@@ -45,7 +47,9 @@ typedef struct _ipv4head_ {
 	unsigned destAddress;
 	uint8_t payload[];
 }IPv4Header;
+#ifdef ARCH_X64
 #pragma pack(pop)
+#endif
 
 #define IPV4_PROTOCOL_UDP 17
 #define IPV4_PROTOCOL_TCP 6

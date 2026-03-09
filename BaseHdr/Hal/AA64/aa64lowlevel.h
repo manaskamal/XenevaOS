@@ -143,7 +143,7 @@ extern uint64_t read_spsr_el1();
 
 AU_EXTERN AU_EXPORT void enable_irqs();
 
-extern void mask_irqs();
+AU_EXTERN AU_EXPORT void mask_irqs();
 
 extern uint32_t read_icc_iar1_el1();
 
