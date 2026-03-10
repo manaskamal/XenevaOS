@@ -136,7 +136,12 @@ typedef union _AuVPage_ {
 		uint64_t contiguous : 1;
 		uint64_t pxn : 1;
 		uint64_t uxn : 1;
-		uint64_t avail : 4;
+
+		/* software flags */
+		uint64_t cow : 1;
+		uint64_t file_backed : 1;
+		uint64_t avail : 2;
+
 		uint64_t ignored : 5;
 	}bits;
 

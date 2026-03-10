@@ -167,6 +167,9 @@
     <ClCompile Include="Net\arp.c">
       <Filter>Net</Filter>
     </ClCompile>
+    <ClCompile Include="Mm\mmcow.c">
+      <Filter>Mm</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Hal">

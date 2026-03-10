@@ -282,6 +282,7 @@
     <ClCompile Include="Mm\kmalloc.c" />
     <ClCompile Include="Mm\liballoc.c" />
     <ClCompile Include="Mm\mmap.c" />
+    <ClCompile Include="Mm\mmcow.c" />
     <ClCompile Include="Mm\mmserv.c" />
     <ClCompile Include="Mm\pmmngr.c" />
     <ClCompile Include="Mm\shm.c" />

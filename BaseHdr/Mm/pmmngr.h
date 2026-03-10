@@ -34,6 +34,22 @@
 
 #include <aurora.h>
 
+
+#define AURORA_PAGE_KERNEL  (1ULL<<0)
+#define AURORA_PAGE_SHM     (1ULL<<1)
+#define AURORA_PAGE_DMA     (1ULL<<2)
+#define AURORA_PAGE_NORMAL (1ULL << 3)
+/**
+ * AuPageDesc -- stores metadata
+ * about each physical page
+ */
+typedef struct _au_page_desc_ {
+	uint64_t phys_addr;
+	uint16_t refcount;
+	uint64_t last_accessed;
+	uint8_t page_type;
+}AuPageDesc;
+
 /**
 * @brief AuPmmngrInitialise -- initialise the physical memory
 * manager
@@ -96,4 +112,36 @@ extern uint64_t AuPmmngrGetFreeMem();
  * RAM
  */
 extern uint64_t AuPmmngrGetTotalMem();
+
+/**
+ * @brief AuPmmngrAddRefcount -- increment reference count
+ * of given page
+ * @param physaddr -- Physical address to increase reference
+ * count of
+ * @param count -- number of count to increase
+ */
+extern void AuPmmngrAddRefcount(uint64_t physaddr, uint16_t count);
+
+/**
+ * @brief AuPmmngrGetRefcount -- returns the number of
+ * reference count for given physical address
+ * @param physaddr -- physical address to check for reference
+ * count
+ * @return number of reference count
+ */
+extern uint16_t AuPmmngrGetRefcount(uint64_t physaddr);
+
+/**
+ * @brief AuPmmngrGetPageDesc -- return the correct
+ * page descriptor of given physical address
+ * @param physaddr -- physical address number
+ */
+extern AuPageDesc* AuPmmngrGetPageDesc(uint64_t physaddr);
+
+/**
+ * @brief AuPmmngrSetPageType -- set page type
+ * @param physaddr -- Physical address to treat
+ * @param flags -- type flags
+ */
+extern void AuPmmngrSetPageType(uint64_t physaddr, uint8_t flags);
 #endif

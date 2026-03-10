@@ -38,16 +38,18 @@
 #define PAGE_SHIFT 12
 
 
-uint64_t _FreeMemory;
-uint64_t _ReservedMemory;
-uint64_t _UsedMemory;
-uint64_t _RamBitmapIndex;
-uint64_t _TotalRam;
-uint64_t UsablePhysicalMemory;
-uint64_t _BitmapSize;
-bool _HigherHalf;
+static uint64_t _FreeMemory;
+static uint64_t _ReservedMemory;
+static uint64_t _UsedMemory;
+static uint64_t _RamBitmapIndex;
+static uint64_t _TotalRam;
+static uint64_t UsablePhysicalMemory;
+static uint64_t _BitmapSize;
+static bool _HigherHalf;
 bool debugon;
-uint8_t* BitmapBuffer;
+static uint8_t* BitmapBuffer;
+static AuPageDesc* page_desc;
+static uint32_t total_page_desc_count;
 
 typedef struct _lb_mem_rgn_ {
 	uint64_t base;
@@ -209,14 +211,24 @@ void AuPmmngrInitialize(KERNEL_BOOT_INFO* info) {
 	_FreeMemory = _TotalRam;
 	AuTextOut("Total RAM : %x \r\n", (_TotalRam * 0x1000));
 
+
+
 	uint64_t BitmapSize = (_TotalRam / 8) + 1; // (_TotalRam * 4096) / 4096 / 8 + 1;
-	UsablePhysicalMemory = ((uint64_t)BitmapArea + BitmapSize);
+	uint64_t page_desc_addr = (uint64_t)BitmapArea + BitmapSize;
+	page_desc_addr = ALIGN_UP(page_desc_addr, 64);
+	page_desc = (AuPageDesc*)page_desc_addr;
+	total_page_desc_count = _TotalRam;
+	size_t page_desc_len = total_page_desc_count * sizeof(AuPageDesc);
+	UsablePhysicalMemory = (uint64_t)page_desc_addr + page_desc_len;
 	UsablePhysicalMemory = (UsablePhysicalMemory + (PAGE_SIZE - 1)) & ~(uint64_t)(PAGE_SIZE - 1);
+
+
 	AuTextOut("Usable RAM Start : %x, TotalRAM : %x \r\n", UsablePhysicalMemory, _TotalRam);
 	/* now initialise the bitmap */
 	AuPmmngrInitBitmap(BitmapSize, BitmapArea);
 	AuTextOut("Bitmap Size : %x %d \r\n", BitmapSize, BitmapSize);
 	AuPmmngrLockPages((void*)BitmapArea, BitmapSize);
+	AuPmmngrLockPages((void*)page_desc_addr, total_page_desc_count);
 
 	if (info->boot_type != BOOT_LITTLEBOOT_ARM64) {
 		for (size_t i = 0; i < MemMapEntries; i++) {
@@ -309,6 +321,9 @@ void* AuPmmngrAlloc() {
 		_UsedMemory++;
 		uint64_t index = _RamBitmapIndex;
 		//UARTDebugOut("AuPmmngrAlloc: RamBitmapIndex : %d %x \n", _RamBitmapIndex, (UsablePhysicalMemory + (index * 4096)));
+		page_desc[(UsablePhysicalMemory + (index * PAGE_SIZE)) >> PAGE_SHIFT].refcount = 1;
+		page_desc[(UsablePhysicalMemory + (index * PAGE_SIZE)) >> PAGE_SHIFT].phys_addr = 
+			(UsablePhysicalMemory + (index * PAGE_SIZE));
 		return (void*)(UsablePhysicalMemory + (index * 4096));
 	}
 	AuTextOut("Kernel Panic!!! No more physical memory \n");
@@ -335,7 +350,12 @@ void* AuPmmngrAllocBlocks(int num) {
  * @param Address -- Pointer to physical page
  */
 void AuPmmngrFree(void* Address) {
-	//uint64_t ShiftAddr = (uint64_t)Address >> PAGE_SHIFT;
+
+	uint64_t ShiftAddr = (uint64_t)Address >> PAGE_SHIFT;
+	if (page_desc[ShiftAddr].refcount > 1) {
+		page_desc[ShiftAddr].refcount -= 1;
+		return;
+	}
 	uint64_t addr = ((uint64_t)Address - UsablePhysicalMemory);
 	uint64_t Index = (uint64_t)addr / 4096;
 	if (AuPmmngrBitmapCheck(Index) == false) return;
@@ -394,6 +414,7 @@ uint64_t V2P(uint64_t vaddr) {
 void AuPmmngrMoveHigher() {
 	_HigherHalf = true;
 	BitmapBuffer = (uint8_t*)P2V((uint64_t)BitmapBuffer);
+	page_desc = (AuPageDesc*)P2V((uint64_t)page_desc);
 }
 
 /**
@@ -412,3 +433,51 @@ uint64_t AuPmmngrGetTotalMem() {
 	return _TotalRam;
 }
 
+/**
+ * @brief AuPmmngrAddRefcount -- increment reference count
+ * of given page
+ * @param physaddr -- Physical address to increase reference
+ * count of
+ * @param count -- number of count to increase
+ */
+void AuPmmngrAddRefcount(uint64_t physaddr, uint16_t count) {
+	page_desc[physaddr >> PAGE_SHIFT].refcount += count;
+}
+
+/**
+ * @brief AuPmmngrGetRefcount -- returns the number of 
+ * reference count for given physical address
+ * @param physaddr -- physical address to check for reference
+ * count
+ * @return number of reference count
+ */
+uint16_t AuPmmngrGetRefcount(uint64_t physaddr) {
+	return page_desc[physaddr >> PAGE_SHIFT].refcount;
+}
+
+/**
+ * @brief AuPmmngrGetPageDesc -- return the correct
+ * page descriptor of given physical address
+ * @param physaddr -- physical address number
+ */
+AuPageDesc* AuPmmngrGetPageDesc(uint64_t physaddr) {
+	return &page_desc[physaddr >> PAGE_SHIFT];
+}
+
+/**
+ * @brief AuPmmngrSetPageType -- set page type
+ * @param physaddr -- Physical address to treat
+ * @param flags -- type flags
+ */
+void AuPmmngrSetPageType(uint64_t physaddr,uint8_t flags) {
+
+	/** check if page is kernel or dma, if yes then 
+	 * normal bit should be removed, because kernel
+	 * will treat kernel or dma pages differently
+	 */
+	if (flags & AURORA_PAGE_KERNEL)
+		flags &= ~AURORA_PAGE_NORMAL;
+	if (flags & AURORA_PAGE_DMA)
+		flags &= ~AURORA_PAGE_NORMAL;
+	page_desc[physaddr >> PAGE_SHIFT].page_type = flags;
+}
