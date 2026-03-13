@@ -282,7 +282,7 @@
     <ClCompile Include="Mm\kmalloc.c" />
     <ClCompile Include="Mm\liballoc.c" />
     <ClCompile Include="Mm\mmap.c" />
-    <ClCompile Include="Mm\mmcow.c" />
+    <ClCompile Include="Mm\mmfile.c" />
     <ClCompile Include="Mm\mmserv.c" />
     <ClCompile Include="Mm\pmmngr.c" />
     <ClCompile Include="Mm\shm.c" />
@@ -343,6 +343,7 @@
     <ClInclude Include="..\BaseHdr\Hal\AA64\sched.h" />
     <ClInclude Include="..\BaseHdr\Hal\AA64\vector.h" />
     <ClInclude Include="..\BaseHdr\kernelAA64.h" />
+    <ClInclude Include="..\BaseHdr\Mm\mmfile.h" />
     <ClInclude Include="..\BaseHdr\uart.h">
       <DeploymentContent>false</DeploymentContent>
     </ClInclude>

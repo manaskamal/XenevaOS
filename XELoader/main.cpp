@@ -50,6 +50,8 @@ void XECopyMem(void* dest, void* src, size_t len) {
 extern bool _debug_buf;
 uint8_t* ldr_buffer;
 
+
+
 /*
  * XELdrLoadObject -- loads an object
  * @param obj
@@ -69,8 +71,8 @@ int XELdrLoadObject(XELoaderObject *obj){
 	memset(stat, 0, sizeof(XEFileStatus));
 	_KeFileStat(file, stat);
 
-	uint64_t* buffer = (uint64_t*)_KeMemMap(NULL, 4096, 0, 0, -1, 0);
-	memset(buffer, 0, 4096);
+	uint64_t* buffer = (uint64_t*)_KeMemMap(NULL, 4096, 0, 0,file, 0);
+	//memset(buffer, 0, 4096);
 
 	obj->len += 4096;
 
@@ -81,9 +83,7 @@ int XELdrLoadObject(XELoaderObject *obj){
 
 	size_t ret_bytes = 0;
 
-	_KePrint("Opening library : %s , buffer : %x \n", obj->objname, buffer);
-
-	ret_bytes = _KeReadFile(file, buffer, 4096);
+	//ret_bytes = _KeReadFile(file, buffer, 4096);
 	IMAGE_DOS_HEADER *dos_ = (IMAGE_DOS_HEADER*)buffer;
 	PIMAGE_NT_HEADERS nt = raw_offset<PIMAGE_NT_HEADERS>(dos_, dos_->e_lfanew);
 	uint64_t original_base = nt->OptionalHeader.ImageBase;
@@ -94,7 +94,7 @@ int XELdrLoadObject(XELoaderObject *obj){
 
 	if (nt->OptionalHeader.SectionAlignment == 512) {
 		while (!stat->eof) {
-			uint64_t* block = (uint64_t*)_KeMemMap(NULL, 4096, 0, 0, -1, 0);
+			uint64_t* block = (uint64_t*)_KeMemMap(NULL, 4096, 0, 0,file, 0);
 			_KeReadFile(file, block, 4096);
 			_KeFileStat(file, stat);
 			obj->len += 4096;
@@ -108,23 +108,31 @@ int XELdrLoadObject(XELoaderObject *obj){
 				((sect_sz % 4096) ? 1 : 0);
 			uint64_t* block = 0;
 			_KeFileSetOffset(file, secthdr[i].PointerToRawData);
+			int flags = 0;
+			if ((secthdr[i].Characteristics & IMAGE_SCN_MEM_WRITE) &&
+				!(secthdr[i].Characteristics & IMAGE_SCN_MEM_SHARED))
+				flags |= MEMMAP_FLAG_COW;
+			if (secthdr[i].Characteristics & IMAGE_SCN_CNT_INITIALIZED_DATA)
+				flags |= MEMMAP_FLAG_COW;
+		
 			for (int j = 0; j < req_pages; j++) {
-				uint64_t* alloc = (uint64_t*)_KeMemMap(NULL, 4096, 0, 0, -1, 0);
-				memset(alloc, 0, 4096);
+				uint64_t* alloc = (uint64_t*)_KeMemMap(NULL, 4096, 0, flags, file, obj->len);
+				//memset(alloc, 0, 4096);
 				if (!block)
 					block = alloc;
 				countbytes += 4096;
-				int bytes = _KeReadFile(file, alloc, 4096);
+				//int bytes = _KeReadFile(file, alloc, 4096);
 				_KeFileStat(file, stat);
 				if (stat->eof) {
 					_KePrint("File already ended \n");
+					//break;
 				}
-				ret_bytes += bytes;
+				//ret_bytes += bytes;
 				obj->len += 4096;
 			}
 
 			if (secthdr[i].VirtualSize > secthdr[i].SizeOfRawData) {
-				memset(raw_offset<void*>(block, secthdr[i].SizeOfRawData), 0, secthdr[i].VirtualSize - secthdr[i].SizeOfRawData);
+				//memset(raw_offset<void*>(block, secthdr[i].SizeOfRawData), 0, secthdr[i].VirtualSize - secthdr[i].SizeOfRawData);
 			}
 		}
 	}
@@ -138,8 +146,10 @@ int XELdrLoadObject(XELoaderObject *obj){
 	obj->load_addr = _image_load_base_;
 	obj->loaded = true;
 	_KeMemMapDirty((void*)_image_load_base_, obj->len, 0, 0);
-	_KeCloseFile(file);
+
+	//_KeCloseFile(file);
 	free(stat);
+	_KePrint("Stat freed \r\n");
 	return 0;
 }
 
@@ -167,14 +177,14 @@ int XELdrStartProc(char* filename, XELoaderObject *obj) {
 
 
 
-	uint64_t* buffer = (uint64_t*)_KeMemMap(NULL,4096, 0, 0, -1, 0);
-	memset(buffer, 0, 4096);
+	uint64_t* buffer = (uint64_t*)_KeMemMap(NULL,4096, 0, 0, file, 0);
+	//memset(buffer, 0, 4096);
 	obj->len += 4096;
 
 	uint64_t* first_ptr = buffer;
 	uint64_t _image_load_base_ = (uint64_t)first_ptr;
 
-	ret_bytes = _KeReadFile(file, buffer, 4096);
+	//ret_bytes = _KeReadFile(file, buffer, 4096);
 	IMAGE_DOS_HEADER *dos_ = (IMAGE_DOS_HEADER*)buffer;
 	PIMAGE_NT_HEADERS nt = raw_offset<PIMAGE_NT_HEADERS>(dos_, dos_->e_lfanew);
 	PSECTION_HEADER secthdr = raw_offset<PSECTION_HEADER>(&nt->OptionalHeader, nt->FileHeader.SizeOfOptionaHeader);
@@ -184,9 +194,9 @@ int XELdrStartProc(char* filename, XELoaderObject *obj) {
 	
 	if (nt->OptionalHeader.SectionAlignment == 512) {
 		while (!stat->eof) {
-			uint64_t* block = (uint64_t*)_KeMemMap(NULL, 4096, 0, 0, -1, 0);
-			int bytes = _KeReadFile(file, block, 4096);
-			ret_bytes += bytes;
+			uint64_t* block = (uint64_t*)_KeMemMap(NULL, 4096, 0, 0,file, 0);
+		//	int bytes = _KeReadFile(file, block, 4096);
+			//ret_bytes += bytes;
 			_KeFileStat(file, stat);
 		}
 	}
@@ -198,17 +208,25 @@ int XELdrStartProc(char* filename, XELoaderObject *obj) {
 				((sect_sz % 4096) ? 1 : 0);
 			uint64_t* block = 0;
 			_KeFileSetOffset(file, secthdr[i].PointerToRawData);
+			int flags = 0;
+			if ((secthdr[i].Characteristics & IMAGE_SCN_MEM_WRITE) &&
+				!(secthdr[i].Characteristics & IMAGE_SCN_MEM_SHARED))
+				flags |= MEMMAP_FLAG_COW;
+			if (secthdr[i].Characteristics & IMAGE_SCN_CNT_INITIALIZED_DATA)
+				flags |= MEMMAP_FLAG_COW;
+
 			for (int j = 0; j < req_pages; j++) {
-				uint64_t* alloc = (uint64_t*)_KeMemMap(NULL, 4096, 0, 0, -1, 0);
+				uint64_t* alloc = (uint64_t*)_KeMemMap(NULL, 4096, 0, flags,file, obj->len);
 				if (!block)
 					block = alloc;
 				
-				int bytes = _KeReadFile(file, alloc, 4096);
+				//int bytes = _KeReadFile(file, alloc, 4096);
 				_KeFileStat(file, stat);
 				if (stat->eof) {
 					_KePrint("File already ended \n");
+					//break;
 				}
-				ret_bytes += bytes;
+				//ret_bytes += bytes;
 				obj->len += 4096;
 			}
 			if (secthdr[i].VirtualSize > secthdr[i].SizeOfRawData)
@@ -226,7 +244,8 @@ int XELdrStartProc(char* filename, XELoaderObject *obj) {
 	obj->entry_addr = _image_load_base_ + nt->OptionalHeader.AddressOfEntryPoint;
 	_KeMemMapDirty((void*)_image_load_base_, obj->len, 0, 0);
 	free(stat);
-	_KeCloseFile(file);
+	_KePrint("Stat freed \r\n");
+	//_KeCloseFile(file);
 	return 0;
 }
 
@@ -285,7 +304,6 @@ extern "C" void main(int argc, char* argv[]) {
 	XELdrLinkAllObject(mainobj);
 	
 	
-
 	uint64_t entry_addr = mainobj->entry_addr;
 	
 

@@ -167,7 +167,7 @@
     <ClCompile Include="Net\arp.c">
       <Filter>Net</Filter>
     </ClCompile>
-    <ClCompile Include="Mm\mmcow.c">
+    <ClCompile Include="Mm\mmfile.c">
       <Filter>Mm</Filter>
     </ClCompile>
   </ItemGroup>
@@ -305,6 +305,9 @@
     </ClInclude>
     <ClInclude Include="..\BaseHdr\Board\RPI3bp\rpi_ili9486.h">
       <Filter>Include\Board\RPI3bp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\Mm\mmfile.h">
+      <Filter>Include\Mm</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

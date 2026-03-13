@@ -49,7 +49,7 @@
 #include <Drivers/uart.h>
 #include <Mm/kmalloc.h>
 #include <Hal/AA64/aa64lowlevel.h>
-
+#include <Mm/mmfile.h>
 
 extern bool _vfs_debug_on;
 
@@ -472,6 +472,7 @@ AuVFSNode* FatLocateDir(AuVFSNode* fsys, const char* dir) {
 					file->flags |= FS_FLAG_DIRECTORY;
 				else
 					file->flags |= FS_FLAG_GENERAL;
+
 				AuPmmngrFree((void*)V2P((size_t)buf));
 				return file;
 			}
@@ -573,6 +574,19 @@ size_t FatGetClusterFor(AuVFSNode* fs, AuVFSNode* file, uint64_t offset) {
 	return cluster;
 }
 
+/**
+ * @brief FatGetDiskBlock -- convert fat understood cluster to disk sector
+ * @param fs -- Pointer to fat file system
+ * @param file -- Pointer to file
+ * @param fs_block -- FAT cluster number
+ */
+uint32_t FatGetDiskBlock(AuVFSNode* fs, AuVFSNode* file, uint64_t fs_block) {
+	FatFS* fatfs = (FatFS*)fs->device;
+	if (!fatfs)
+		return;
+	return FatClusterToSector32(fatfs, fs_block);
+}
+
 
 
 /*
@@ -671,6 +685,7 @@ AuVFSNode* FatInitialise(AuVDisk* vdisk, char* mountname) {
 	fsys->write = FatWrite;
 	fsys->create_dir = 0; // FatCreateDir;
 	fsys->create_file =  FatCreateFile;
+	fsys->get_disk_block = FatGetDiskBlock;
 	fsys->get_blockfor = FatGetClusterFor;
 	fsys->opendir = 0; // FatOpenDir;
 	fsys->read_dir = 0; // FatDirectoryRead;

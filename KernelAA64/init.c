@@ -38,6 +38,7 @@
 #include <Mm/vmmngr.h>
 #include <Mm/kmalloc.h>
 #include <Mm/shm.h>
+#include <Mm/mmfile.h>
 #include <_null.h>
 #include <Hal/AA64/gic.h>
 #include <Hal/basicacpi.h>
@@ -190,6 +191,7 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 
 	/* initialize the shared memory manager*/
 	AuInitialiseSHMMan();
+	AuMmngrFileCacheInit();
 
 	/* initialize the network layer */
 	AuInitialiseNet();
@@ -228,8 +230,10 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 
 	/* clear out the lower half memory */
 	AuVmmngrBootFree();
+	AuMmngrFileCacheEnable();
+
 	AuTextOut("[aurora]: boot freed up \r\n");
-	
+
 	AuSchedulerInitialize();
 	/*
 	AA64Thread* t3 = AuCreateKthread(AuEntryTest2, AuCreateVirtualAddressSpace(), "test2");

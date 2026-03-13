@@ -41,7 +41,8 @@
 #include <Hal/AA64/sched.h>
 #include <Hal/AA64/aa64lowlevel.h>
 #include <ftmngr.h>
-
+#include <Mm/mmfile.h>
+#include <_null.h>
 
 #define LOADER_SCRATCH_VIRT 0xFFFFC00000700000
 
@@ -120,6 +121,53 @@ void AuProcessEntUser(uint64_t rcx) {
 	}
 }
 
+/**
+ * @brief AuLoaderMapExecFromCache -- file cache lookup and map directly from the 
+ * file cache page collections, this function called from inside AuLoadExecToProcess
+ * @param proc -- Pointer to process
+ * @param fb -- Pointer to file back struct
+ * @param nt -- Pointer to Image nt header
+ * @param secthdr -- Pointer to Image sect header
+ * @param _image_base_ -- Image base address
+ */
+void AuLoaderMapExecFromCache(AuProcess* proc, AuMMFileBack *fb,PIMAGE_NT_HEADERS nt, PSECTION_HEADER secthdr, uint64_t _image_base_) {
+	for (size_t i = 0; i < nt->FileHeader.NumberOfSections; ++i) {
+		size_t load_addr = _image_base_ + secthdr[i].VirtualAddress;
+		void* sect_addr = (void*)load_addr;
+		size_t sectsz = secthdr[i].VirtualSize;
+		int req_pages = sectsz / 4096 +
+			((sectsz % 4096) ? 1 : 0);
+		uint64_t* block = 0;
+		int physFrameIndex = 0;
+		size_t rawSize = secthdr[i].SizeOfRawData;
+		size_t virtSize = secthdr[i].VirtualSize;
+		size_t fileOffset = secthdr[i].PointerToRawData;
+		int page_index = fileOffset / PAGE_SIZE;
+		AuMMPageCache* cache = AuMmngrFileCacheGetByIndex(fb, page_index);
+		if (secthdr[i].Characteristics & IMAGE_SCN_MEM_WRITE) {
+			for (int j = 0; j < req_pages; j++) {
+				uint64_t alloc = (load_addr + j * 0x1000);
+					uint64_t phys = P2V((size_t)AuPmmngrAlloc());
+					AuMapPageEx(proc->cr3, V2P(phys), alloc, PTE_USER_EXECUTABLE | PTE_AP_RW_USER | PTE_NORMAL_MEM);
+					if (!block)
+						block = (uint64_t*)phys;
+					memcpy(phys, (void*)P2V(cache->physicalPage), PAGE_SIZE);
+				physFrameIndex++;
+				cache = cache->next;
+			}
+		}
+		else {
+			for (int j = 0; j < req_pages; j++) {
+				uint64_t alloc = (load_addr + j * 0x1000);
+				uint64_t phys = cache->physicalPage; //P2V((size_t)AuPmmngrAlloc());
+				AuMapPageEx(proc->cr3, phys, alloc, PTE_USER_EXECUTABLE | PTE_AP_RW_USER | PTE_NORMAL_MEM);
+				physFrameIndex++;
+				cache = cache->next;
+			}
+		}
+	}
+}
+
 extern bool setStk();
 
 /**
@@ -133,7 +181,6 @@ extern bool setStk();
  */
 int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) {
 
-	
 	/* verify the filename, it can only be '.exe' file no '.dll' or other */
 	char* v_ = strchr(filename, '.');
 	
@@ -143,24 +190,59 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) 
 		UARTDebugOut("[aurora]: non-executable process \r\n");
 		return -1;
 	}
-	UARTDebugOut("AuLoadExecToProcess \n");
+
+	AuMMFileBack* fb = AuMmngrFileCacheLookup(filename);
+
 	AuVFSNode* fsys = AuVFSFind(filename);
-	AuVFSNode* file = AuVFSOpen(filename);
+	AuVFSNode* file = NULL;
+	if (fb) {
+		file = AuVFSOpen(filename); //fb->file;
+	}
+	else {
+		file = AuVFSOpen(filename);
+		fb = (AuMMFileBack*)kmalloc(sizeof(filename));
+		memset(fb, 0, sizeof(AuMMFileBack));
+		fb->file = file;
+		AuMmngrAddFileBack(fb);
+	}
 	UARTDebugOut("File found : %s \n", file->filename);
 	if (!file) {
 		UARTDebugOut("No File found -> %s \r\n", filename);
 		return -1;
 	}
 	UARTDebugOut("file found : %s \n", filename);
-
+	AuMMPageCache* pcache = fb->pageCache;
 	int sbIndex = 0;
 	while (file->eof != 1) {
-		uint64_t block = ((uint64_t)_ldr_scratchBuffer + (sbIndex * 0x1000));
-		memset(block, 0, 4096);
-		AuVFSNodeReadBlock(fsys, file, block);
+		uint64_t physcache = NULL;
+		if (fb->readComplete == false) {
+			physcache = (uint64_t)AuPmmngrAlloc();
+			AuMMPageCache* cache = AuMmngrPageCacheCreate();
+			cache->physicalPage = physcache;
+			cache->diskBlock = fsys->get_disk_block(fsys, file, file->current);
+			cache->pageIndex = sbIndex;
+			AuMmngrFileBackAddPageCache(fb, cache);
+			uint64_t block = ((uint64_t)_ldr_scratchBuffer + (sbIndex * 0x1000));
+			memset(block, 0, 4096);
+			AuVFSNodeReadBlock(fsys, file, block);
+			if (physcache) {
+				memcpy(P2V(physcache), block, PAGE_SIZE);
+			}
+		}
+		else {
+			if (pcache == NULL)
+				break;
+			uint64_t block = ((uint64_t)_ldr_scratchBuffer + (sbIndex * 0x1000));
+			memset(block, 0, 4096);
+			memcpy(block, P2V(pcache->physicalPage), PAGE_SIZE);
+			if (physcache) 
+				memcpy(P2V(physcache), block, PAGE_SIZE);
+			
+			pcache = pcache->next;
+		}
 		sbIndex++;
 	}
-
+	fb->readComplete = 1;
 
 	IMAGE_DOS_HEADER* dos = (IMAGE_DOS_HEADER*)_ldr_scratchBuffer;
 	PIMAGE_NT_HEADERS nt = RAW_OFFSET(PIMAGE_NT_HEADERS,dos, dos->e_lfanew);
@@ -175,6 +257,7 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) 
 	if (AuPEFileIsDynamicallyLinked(_ldr_scratchBuffer)) {
 		UARTDebugOut("The process %s is Dynamically Linked \n", filename);
 		/* free the current file*/
+		AuMmngrRemoveFileBack(fb);
 		kfree(file);
 		//AuPmmngrFree((void*)V2P((sizeof(buf))));
 
@@ -223,65 +306,10 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) 
 		/* load the loader */
 		return AuLoadExecToProcess(proc, "/xeldr.exe", num_args_, argvs);
 	}
-	UARTDebugOut("NT NumberOfSection : %d for %s\n", nt->FileHeader.NumberOfSections, proc->name);
-	for (size_t i = 0; i < nt->FileHeader.NumberOfSections; ++i) {
-		size_t load_addr = _image_base_ + secthdr[i].VirtualAddress;
-		void* sect_addr = (void*)load_addr;
-		size_t sectsz = secthdr[i].VirtualSize;
-		int req_pages = sectsz / 4096 +
-			((sectsz % 4096) ? 1 : 0);
-		uint64_t* block = 0;
-		int physFrameIndex = 0;
-		for (int j = 0; j < req_pages; j++) {
-			uint64_t alloc = (load_addr + j * 0x1000);
-			uint64_t phys = P2V((size_t)AuPmmngrAlloc());
-			physFrames[physFrameIndex] = phys;
-			//UARTDebugOut("LoadAddr : %x , phys : %x \n", alloc, phys);
-			AuMapPageEx(proc->cr3, V2P(phys), alloc, PTE_USER_EXECUTABLE | PTE_AP_RW_USER | PTE_NORMAL_MEM);
-			if (!block)
-				block = (uint64_t*)phys;
-			physFrameIndex++;
-		}
-		size_t rawSize = secthdr[i].SizeOfRawData;
-		size_t virtSize = secthdr[i].VirtualSize;
-		size_t fileOffset = secthdr[i].PointerToRawData;
-		size_t copied = 0;
-		for (int k = 0; k < secthdr[i].SizeOfRawData / 4096; k++) {
-			size_t toCopy = 4096;
-			if (copied + toCopy > rawSize)
-				toCopy = (rawSize - copied) ? rawSize - copied : 0;
 
-			if (toCopy > 0) 
-				//memcpy(sect_addr, RAW_OFFSET(void*, _ldr_scratchBuffer, secthdr[i].PointerToRawData), secthdr[i].SizeOfRawData);
-				memcpy((void*)physFrames[k], RAW_OFFSET(void*,_ldr_scratchBuffer,fileOffset+copied), toCopy); //RAW_OFFSET(void*, _ldr_scratchBuffer, secthdr[i].PointerToRawData)
-			
-			if (toCopy < 4096) 
-				memset((void*)(physFrames[k] + toCopy), 0, PAGE_SIZE - toCopy);
-			copied += toCopy;
-		}
-
-		if (secthdr[i].VirtualSize > secthdr[i].SizeOfRawData) {
-			/* get the index number of physFrame array*/
-			int zeroStart = rawSize;
-			int zeroLen = virtSize - rawSize;
-			int pageIndex = secthdr[i].SizeOfRawData / 4096; 
-			int pageOffset = secthdr[i].SizeOfRawData % PAGE_SIZE;
-			if (pageOffset > 0) {
-				memset((void*)(physFrames[pageIndex] + pageOffset), 0, PAGE_SIZE - pageOffset);
-				pageIndex++;
-				zeroLen -= (PAGE_SIZE - pageOffset);
-			}
-
-			while (zeroLen >= PAGE_SIZE) {
-				memset((void*)(physFrames[pageIndex++]), 0, PAGE_SIZE);
-				zeroLen -= PAGE_SIZE;
-			}
-
-			if (zeroLen > 0) 
-				memset((void*)physFrames[pageIndex], 0, zeroLen);
-		}
-		//write_both_ttbr(current_ttbr);
-	}
+	
+	AuLoaderMapExecFromCache(proc, fb, nt, secthdr, _image_base_);
+	
 
 	AA64Thread* thr = AuCreateKthread(AuProcessEntUser, cr3,proc->name);
 	thr->threadType = THREAD_LEVEL_USER;

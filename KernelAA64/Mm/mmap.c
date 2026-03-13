@@ -37,8 +37,10 @@
 #include <list.h>
 #include <_null.h>
 #include <Mm/vmmngr.h>
+#include <Mm/mmfile.h>
 #include <Mm/kmalloc.h>
 #include <Mm/pmmngr.h>
+#include <Mm/mmfile.h>
 
 
 #define PROTECTION_FLAG_READONLY  1<<0
@@ -50,6 +52,7 @@
 #define MEMMAP_FLAG_COW  1<<1
 #define MEMMAP_FLAG_PRIVATE  1<<2
 #define MEMMAP_FLAG_DISCARD_FILE_READ 1<<3
+#define MEMMAP_FLAG_FILE_BACK 1<<4
 
 
 //#pragma pack(push,1)
@@ -155,18 +158,28 @@ void* CreateMemMapping(void* address, size_t len, int prot, int flags, int fd,
 		lookup_addr = (size_t)address;
 
 	len = PAGE_ALIGN(len); //simply align the length
+	AuMMFileBack* fb = NULL;
 
-
-	if (file) {
-		UARTDebugOut("CreateMemMapping getting file \n");
+	if (file && (file->flags & FS_FLAG_GENERAL)) {
+		//UARTDebugOut("[CreateMemMapping] getting file \n");
 		uint64_t file_block_start = 0;
 		fsys = AuVFSFind("/");
 		if (!fsys && fd != -1)
 			return 0;
-		if (!(file->flags & FS_FLAG_DEVICE)) {
-			file_block_start = AuVFSGetBlockFor(fsys, file, offset);
-			file->current = file_block_start;
+		//if (!(file->flags & FS_FLAG_DEVICE)) {
+		//	file_block_start = AuVFSGetBlockFor(fsys, file, offset);
+		//	file->current = file_block_start;
+		//}
+
+		fb = AuMmngrFileCacheLookup(file->filename);
+		if (!fb) {
+			//UARTDebugOut("[mmap]: file %s is not in cache, we're caching it \r\n", file->filename);
+			fb = (AuMMFileBack*)kmalloc(sizeof(AuMMFileBack));
+			memset(fb, 0, sizeof(AuMMFileBack));
+			fb->file = file;
+			AuMmngrAddFileBack(fb);
 		}
+
 
 		if (flags & MEMMAP_FLAG_SHARED) {
 			shobj = AuSharedMmapObjectFindByName(file->filename);
@@ -200,22 +213,64 @@ void* CreateMemMapping(void* address, size_t len, int prot, int flags, int fd,
 	}
 
 
-
+	//UARTDebugOut("[mmap]: num pages reading : %d \r\n", (len / PAGE_SIZE));
 	for (int i = 0; i < len / PAGE_SIZE; i++) {
 		uint64_t phys = 0;
 		if (startingPhysAddr && (flags & MEMMAP_FLAG_SHARED))
 			phys = startingPhysAddr + i * PAGE_SIZE;
-		else
-			phys = (uint64_t)AuPmmngrAlloc();
+		else {
+			if (fb) {
+				if (AuMmngrFileCacheGetPhysicalBlock(fb, offset) == UINT64_MAX) {
+					phys = (uint64_t)AuPmmngrAlloc();
+				}
+				else {
+					if (flags & MEMMAP_FLAG_COW) {
+						uint64_t datablk = AuMmngrFileCacheGetPhysicalBlock(fb, offset);
+						phys = (uint64_t)AuPmmngrAlloc();
+						memcpy((void*)P2V(phys), (void*)P2V(datablk), PAGE_SIZE);
+
+					}
+					else {
+						phys = AuMmngrFileCacheGetPhysicalBlock(fb, offset);
+					}
+				}
+
+			}
+			else {
+				phys = (uint64_t)AuPmmngrAlloc();
+			}
+		}
 
 		if (startingPhysAddr == 0 && shobj_new_create)
 			startingPhysAddr = phys;
 
-		if (file && !(flags & MEMMAP_FLAG_DISCARD_FILE_READ)) {
-		    UARTDebugOut("mmap reading file \r\n");
-			AuVFSNodeReadBlock(fsys, file, (uint64_t*)phys);
+		if (file && fb) {
+			if (AuMmngrFileCacheGetPhysicalBlock(fb,offset) == UINT64_MAX) {
+				uint64_t datablk = phys;
+				if (flags & MEMMAP_FLAG_COW) {
+					datablk = (uint64_t)AuPmmngrAlloc();
+					AuVFSNodeReadBlock(fsys, file, (uint64_t*)P2V(datablk));
+					memcpy(P2V(phys), P2V(datablk), PAGE_SIZE);
+				}
+				else 
+					AuVFSNodeReadBlock(fsys, file, (uint64_t*)P2V(datablk));
+				
+				AuMMPageCache* cache = AuMmngrPageCacheCreate();
+				cache->physicalPage = datablk;
+				cache->pageIndex = fb->numPageIndex;
+				cache->diskBlock = fsys->get_disk_block(fsys, file, file->current);
+				AuMmngrFileBackAddPageCache(fb, cache);
+				fb->numPageIndex++;
+			}
+
+			/*if (file->eof)
+				fb->readComplete = 1;*/
 		}
+
 		AuMapPage(phys, lookup_addr + i * PAGE_SIZE,PTE_AP_RW_USER);
+		isb_flush();
+		dsb_ish();
+
 		AuVPage* page = AuVmmngrGetPage(lookup_addr + i * PAGE_SIZE, NULL, VIRT_GETPAGE_ONLY_RET);
 
 		/* check for  protection flag */
@@ -236,8 +291,12 @@ void* CreateMemMapping(void* address, size_t len, int prot, int flags, int fd,
 			isb_flush();
 		}
 
-		/*if (flags & MEMMAP_FLAG_COW)
+		/*if (flags & MEMMAP_FLAG_COW) 
 			page->bits.cow = 1;*/
+		
+		if (flags & MEMMAP_FLAG_FILE_BACK) {
+			//add to file mapping list
+		}
 	}
 
 	/* shared bit should be handled differently */

@@ -108,8 +108,8 @@ e:\xeneva project\aurora\kernelaa64\arm64\debug\pmmngr.obj
 e:\xeneva project\aurora\kernelaa64\arm64\debug\pmmngr.asm
 e:\xeneva project\aurora\kernelaa64\arm64\debug\mmserv.obj
 e:\xeneva project\aurora\kernelaa64\arm64\debug\mmserv.asm
-e:\xeneva project\aurora\kernelaa64\arm64\debug\mmcow.obj
-e:\xeneva project\aurora\kernelaa64\arm64\debug\mmcow.asm
+e:\xeneva project\aurora\kernelaa64\arm64\debug\mmfile.obj
+e:\xeneva project\aurora\kernelaa64\arm64\debug\mmfile.asm
 e:\xeneva project\aurora\kernelaa64\arm64\debug\mmap.obj
 e:\xeneva project\aurora\kernelaa64\arm64\debug\mmap.asm
 e:\xeneva project\aurora\kernelaa64\arm64\debug\liballoc.obj
