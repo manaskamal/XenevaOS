@@ -76,6 +76,7 @@ void AuMmngrAddFileBack(AuMMFileBack* fb) {
 		fb->prev = fb_last;
 	}
 	fb_last = fb;
+	data_cache_flush(fb);
 	UARTDebugOut("[aurora]: mmfile added : %s \r\n", fb->file->filename);
 }
 
@@ -126,6 +127,8 @@ AuMMFileBack* AuMmngrFileCacheLookup(const char* filename) {
 			fname = filename + 1;
 		filename++;
 	}
+	data_cache_flush(fname);
+
 	AuMMFileBack* fileback = NULL;
 
 	for (AuMMFileBack* fileb_ = fb_first; fileb_ != NULL; fileb_ = fileb_->next) {
@@ -134,6 +137,7 @@ AuMMFileBack* AuMmngrFileCacheLookup(const char* filename) {
 			break;
 		}
 	}
+
 	return fileback;
 }
 

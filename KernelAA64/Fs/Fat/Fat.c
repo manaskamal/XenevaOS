@@ -302,16 +302,19 @@ size_t FatRead(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buf) {
 	if (value >= (FAT_EOC_MARK & 0x0FFFFFFF)) {
 		file->eof = 1;
 		file->current = value;
+		data_cache_flush(file);
 		return (fs->__SectorPerCluster * fs->__BytesPerSector);
 	}
 
 	if (value >= 0x0FFFFFF7) {
 		file->eof = 1;
 		file->current = value;
+		data_cache_flush(file);
 		return (fs->__SectorPerCluster * fs->__BytesPerSector);
 	}
 
 	file->current = value;
+	data_cache_flush(file);
 	return (fs->__SectorPerCluster * fs->__BytesPerSector);
 }
 
@@ -675,7 +678,7 @@ AuVFSNode* FatInitialise(AuVDisk* vdisk, char* mountname) {
 	AuVFSNode* fsys = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
 	memset(fsys, 0, sizeof(AuVFSNode));
 	strcpy(fsys->filename, mountname);
-	fsys->flags |= FS_FLAG_FILE_SYSTEM;
+	fsys->flags |= FS_FLAG_FILE_SYSTEM | FS_FLAG_FILE_SYSTEM_GENERAL;
 	fsys->open = FatOpen;
 	fsys->device = fs;
 	fsys->read = FatReadFile;

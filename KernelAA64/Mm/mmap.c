@@ -261,6 +261,10 @@ void* CreateMemMapping(void* address, size_t len, int prot, int flags, int fd,
 				cache->diskBlock = fsys->get_disk_block(fsys, file, file->current);
 				AuMmngrFileBackAddPageCache(fb, cache);
 				fb->numPageIndex++;
+
+				if (file->eof) {
+					UARTDebugOut("File : %s , eof done : %d\r\n", file->filename, file->eof);
+				}
 			}
 
 			/*if (file->eof)

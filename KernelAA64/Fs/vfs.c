@@ -140,6 +140,27 @@ AU_EXTERN AU_EXPORT AuVFSNode* AuVFSOpen(char* path) {
 		AuTextOut("[aurora-vfs]: failed to find filesystem assigned to path -> %s \r\n", path);
 		return NULL;
 	}
+
+	/* first go through file cache layer */
+	if (fs->flags & FS_FLAG_FILE_SYSTEM_GENERAL) {
+		AuMMFileBack *fileb = AuMmngrFileCacheLookup(path);
+		
+		/** Here check the eof bit, if EOF bit is not marked 1
+		 * this file is on used, we need to create a 
+		 * new file on memory, if eof is marked, already file 
+		 * is free on cache, we can reuse it, 
+		 * memory bachane ka clever technique broo/babe 
+		 */
+		if (fileb) {
+			Returnable = fileb->file;
+			if (Returnable->eof) {
+				Returnable->eof = 0;
+				Returnable->current = Returnable->first_block;
+				return Returnable;
+			}
+		} 
+		//else executing rest of the code
+	}
 	if (fs == __RootFS) {
 		UARTDebugOut("VFSOpening filename : %s \r\n", path);
 		/* just skip the '/' from the path */
@@ -183,6 +204,7 @@ AU_EXTERN AU_EXPORT AuVFSNode* AuVFSOpen(char* path) {
 			//AA64SleepUS(600);
 		}
 	}
+	data_cache_flush(Returnable);
 	return Returnable;
 }
 

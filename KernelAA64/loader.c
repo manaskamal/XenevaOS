@@ -196,7 +196,7 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) 
 	AuVFSNode* fsys = AuVFSFind(filename);
 	AuVFSNode* file = NULL;
 	if (fb) {
-		file = AuVFSOpen(filename); //fb->file;
+		file = fb->file;
 	}
 	else {
 		file = AuVFSOpen(filename);
@@ -337,6 +337,8 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) 
 	uentry->argvs = argv;
 	thr->uentry = uentry;
 	proc->main_thread = thr;
+	file->current = file->first_block;
+	file->eof = 0;
 	UARTDebugOut("Binary mapped , thread id : %d\n", thr->thread_id);
 	return 0;
 }

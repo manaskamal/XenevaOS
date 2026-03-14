@@ -167,22 +167,19 @@ void* XELdrGetProcAddress(void *image, const char* procname){
 * @param exporter -- executable image
 */
 void XELdrLinkPE(void* exec) {
-	_KePrint("XELdr Linkng PE : %x \r\n", exec);
 	PIMAGE_DOS_HEADER dos_header = (PIMAGE_DOS_HEADER)exec;
-	_KePrint("XELdr dos_hdr : %x \r\n", dos_header->e_magic);
 	PIMAGE_NT_HEADERS nt_headers = raw_offset<PIMAGE_NT_HEADERS>(dos_header, dos_header->e_lfanew);
 	if (IMAGE_DATA_DIRECTORY_IMPORT + 1 > nt_headers->OptionalHeader.NumberOfRvaAndSizes)
 		return;
-	_KePrint("till here nt_headers : %x \r\n", nt_headers->Signature);
+
 	IMAGE_DATA_DIRECTORY& datadir = nt_headers->OptionalHeader.DataDirectory[IMAGE_DATA_DIRECTORY_IMPORT];
 	if (datadir.VirtualAddress == 0 || datadir.Size == 0) {
 		return;
 	}
-	_KePrint("Till here $22 \r\n");
+
 	PIMAGE_IMPORT_DIRECTORY importdir = raw_offset<PIMAGE_IMPORT_DIRECTORY>(exec, datadir.VirtualAddress);
 	for (size_t n = 0; importdir[n].ThunkTableRva; ++n) {
 		const char* func = raw_offset<const char*>(exec, importdir[n].NameRva);
-		_KePrint("Till here func : %s \r\n", func);
 		XELoaderObject* dep_obj = XELdrGetObject(func);
 		if (!dep_obj)
 			return;
@@ -191,7 +188,6 @@ void XELdrLinkPE(void* exec) {
 		while (*iat) {
 			PIMAGE_IMPORT_HINT_TABLE hint = raw_offset<PIMAGE_IMPORT_HINT_TABLE>(exec, *iat);
 			const char* fname = hint->name;
-			_KePrint("Till fname : %s \r\n", fname);
 			void* procaddr = XELdrGetProcAddress((void*)dll_dep, fname);
 			*iat = (uint64_t)procaddr;
 			++iat;
@@ -337,7 +333,6 @@ void XELdrGetIATBoundary(void* image,uint64_t* cowStart, uint64_t* cowEnd) {
 		PIMAGE_IMPORT_LOOKUP_TABLE_PE32P iat = raw_offset<PIMAGE_IMPORT_LOOKUP_TABLE_PE32P>(image, importdir[n].ThunkTableRva);
 		while (*iat) {
 			PIMAGE_IMPORT_HINT_TABLE hint = raw_offset<PIMAGE_IMPORT_HINT_TABLE>(image, *iat);
-			_KePrint("Hint address : %x \r\n", hint);
 			++iat;
 		}
 	}

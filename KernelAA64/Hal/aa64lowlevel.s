@@ -358,7 +358,7 @@ enableAlignCheck:
 .global data_cache_flush
 data_cache_flush:
     dc civac, x0
-    dsb sy
+    dmb sy
     isb
     ret
 

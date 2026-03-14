@@ -2154,7 +2154,7 @@ int main(int argc, char* arv[]) {
 #ifdef ARCH_X64
 		_KeProcessSleep((16 - frameTime));
 #elif ARCH_ARM64
-		_KeProcessSleep(16);
+		_KeProcessSleep(2);
 #endif
 	}
 }
