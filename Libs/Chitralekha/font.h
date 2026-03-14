@@ -53,7 +53,7 @@ XE_EXTERN{
 #define CONSOLAS      "Consolas"
 
 #ifdef ARCH_ARM64
-#define XENEVA_DEFAULT_FONT FORTE
+#define XENEVA_DEFAULT_FONT CALIBRI //FORTE
 #else
 	/* default font for xeneva */
 #define XENEVA_DEFAULT_FONT  CALIBRI

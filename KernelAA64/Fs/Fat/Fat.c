@@ -37,7 +37,7 @@
 
 #include <Fs/Fat/Fat.h>
 #include <Fs/Fat/FatFile.h>
-//#include <Fs/Fat/FatDir.h>
+#include <Fs/Fat/FatDir.h>
 #include <Fs/vdisk.h>
 #include <Fs/vfs.h>
 #include <Mm/pmmngr.h>
@@ -686,12 +686,12 @@ AuVFSNode* FatInitialise(AuVDisk* vdisk, char* mountname) {
 	fsys->remove_dir = 0;//FatRemoveDir;
 	fsys->remove_file = 0; // FatFileRemove;
 	fsys->write = FatWrite;
-	fsys->create_dir = 0; // FatCreateDir;
+	fsys->create_dir = FatCreateDir;
 	fsys->create_file =  FatCreateFile;
 	fsys->get_disk_block = FatGetDiskBlock;
 	fsys->get_blockfor = FatGetClusterFor;
-	fsys->opendir = 0; // FatOpenDir;
-	fsys->read_dir = 0; // FatDirectoryRead;
+	fsys->opendir = FatOpenDir;
+	fsys->read_dir = FatDirectoryRead;
 	vdisk->fsys = fsys;
 	AuVFSAddFileSystem(fsys);
 	AuVFSRegisterRoot(fsys);

@@ -156,6 +156,7 @@ AU_EXTERN AU_EXPORT AuVFSNode* AuVFSOpen(char* path) {
 			if (Returnable->eof) {
 				Returnable->eof = 0;
 				Returnable->current = Returnable->first_block;
+				Returnable->fileCopyCount += 1;
 				return Returnable;
 			}
 		} 

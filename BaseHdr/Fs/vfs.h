@@ -61,7 +61,9 @@
 
 struct __VFS_NODE__;
 
+#ifdef ARCH_X64
 #pragma pack(push,1)
+#endif
 typedef struct _AuDirectoryEnty_ {
 	char filename[32];
 	int index;
@@ -70,7 +72,9 @@ typedef struct _AuDirectoryEnty_ {
 	int time;
 	uint8_t flags;
 }AuDirectoryEntry;
+#ifdef ARCH_X64
 #pragma pack(pop)
+#endif
 
 typedef struct __VFS_NODE__* (*open_callback) (struct __VFS_NODE__ *node, char* path);
 typedef size_t(*read_callback) (struct __VFS_NODE__ *node, struct  __VFS_NODE__ *file, uint64_t* buffer, uint32_t length);

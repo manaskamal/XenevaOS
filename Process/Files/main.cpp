@@ -316,7 +316,7 @@ void DirListItemAction(ChListView* lv, ChListItem* li) {
 	PrintParentDir(path);
 	/* bug : needs to sleep inorder to get
 	* the file descriptor for the desired path */
-	_KeProcessSleep(10);
+	_KeProcessSleep(1);
 
 	int dirfd = _KeOpenDir(dirname);
 
@@ -541,6 +541,7 @@ int main(int argc, char* argv[]){
 	ChIconOpen(drive, "/icons/drive.bmp");
 	ChIconRead(drive);
 	
+	_KePrint("refreshing file view \r\n");
 	RefreshFileView(dirfd, lv);
 
 	/* first store the root address */

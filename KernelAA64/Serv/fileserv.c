@@ -292,3 +292,98 @@ int FileStat(int fd, void* buf) {
 }
 
 
+/**
+ * @brief OpenDir -- opens a directory
+ * @param filename -- name of the directory
+ */
+int OpenDir(char* filename) {
+	AA64Thread* current_thr = AuGetCurrentThread();
+	if (!current_thr) {
+		return -1;
+	}
+	AuProcess* current_proc = AuProcessFindThread(current_thr);
+	if (!current_proc) {
+		current_proc = AuProcessFindSubThread(current_thr);
+		if (!current_proc)
+			return -1;
+	}
+
+	AuVFSNode* fsys = AuVFSFind(filename);
+	AuVFSNode* dirfile = NULL;
+	if (!fsys)
+		return -1;
+	if (fsys->opendir)
+		dirfile = fsys->opendir(fsys, filename);
+
+	if (!dirfile)
+		return -1;
+
+	int fd = AuProcessGetFileDesc(current_proc);
+	if (fd == -1)
+		return -1;
+
+	current_proc->fds[fd] = dirfile;
+	UARTDebugOut("[aurora-vfs]: dir opening -> %s , %x \r\n", dirfile->filename, dirfile);
+	return fd;
+}
+
+/**
+ * @brief ReadDir -- reads a directory entry
+ * @param dirfd -- directory file descriptor
+ * @param dirent -- aurora directory entry struct
+ */
+int ReadDir(int dirfd, void* dirent) {
+	if (!dirent)
+		return -1;
+	if (dirfd == -1)
+		return -1;
+
+	AA64Thread* current_thr = AuGetCurrentThread();
+	if (!current_thr) {
+		return 0;
+	}
+	AuProcess* current_proc = AuProcessFindThread(current_thr);
+	if (!current_proc) {
+		current_proc = AuProcessFindSubThread(current_thr);
+		if (!current_proc)
+			return 0;
+	}
+
+	AuDirectoryEntry* dire_ = (AuDirectoryEntry*)dirent;
+
+	AuVFSNode* dirfile = current_proc->fds[dirfd];
+	if (!dirfile)
+		return -1;
+	AuVFSNode* fsys = (AuVFSNode*)dirfile->device;
+	if (!fsys)
+		return -1;
+	if (fsys->read_dir)
+		return fsys->read_dir(fsys, dirfile, dire_);
+}
+
+/**
+ * @brief ProcessGetFileDesc -- Searches all process file
+ * descriptor entries for
+ * specific filename fd
+ */
+int ProcessGetFileDesc(const char* filename) {
+	AA64Thread* thr = AuGetCurrentThread();
+	if (!thr)
+		return -1;
+	AuProcess* currproc = AuProcessFindThread(thr);
+	if (!currproc) {
+		currproc = AuProcessFindSubThread(thr);
+		if (!currproc)
+			return -1;
+	}
+	for (int i = 0; i < FILE_DESC_PER_PROCESS; i++) {
+		AuVFSNode* file = currproc->fds[i];
+		if (file) {
+			if (strcmp(filename, file->filename) == 0) {
+				return i;
+			}
+		}
+	}
+
+	return -1;
+}

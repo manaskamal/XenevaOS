@@ -1742,8 +1742,9 @@ int main(int argc, char* arv[]) {
 	uint64_t last_click_time = 0;
 	uint64_t last_redraw = 0;
 
-	int proc = _KeCreateProcess(0, "calc");
-	_KeProcessLoadExec(proc, "/calc.exe", NULL, NULL);
+	int proc = _KeCreateProcess(0, "file");
+	_KeProcessLoadExec(proc, "/file.exe", NULL, NULL);
+
 
 	/*proc = _KeCreateProcess(0, "calendr");
 	_KeProcessLoadExec(proc, "/calendr.exe", NULL, NULL);*/
@@ -2023,7 +2024,7 @@ int main(int argc, char* arv[]) {
 
 			if (hideable_win) 
 				DeodhaiWindowHide(hideable_win);
-			_KeProcessSleep(100);
+			_KeProcessSleep(10);
 			memset(&event, 0, sizeof(PostEvent));
 		}
 

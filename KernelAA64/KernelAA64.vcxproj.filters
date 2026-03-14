@@ -170,6 +170,9 @@
     <ClCompile Include="Mm\mmfile.c">
       <Filter>Mm</Filter>
     </ClCompile>
+    <ClCompile Include="Fs\Fat\FatDir.c">
+      <Filter>Fs\Fat</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Hal">

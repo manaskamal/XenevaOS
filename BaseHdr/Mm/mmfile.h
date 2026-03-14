@@ -1,5 +1,5 @@
 /**
-* @file mmcow.h
+* @file mmfile.h
 *
 * BSD 2-Clause License
 *
@@ -29,8 +29,8 @@
 *
 **/
 
-#ifndef __MM_COW_H__
-#define __MM_COW_H__
+#ifndef __MM_FILE_H__
+#define __MM_FILE_H__
 
 #include <stdint.h>
 #include <Fs/vfs.h>

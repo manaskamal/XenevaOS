@@ -109,7 +109,9 @@ typedef struct _VDISK_ {
 }AuVDisk;
 //#pragma pack(pop)
 
+#ifdef ARCH_X64
 #pragma pack(push,1)
+#endif
 typedef struct _vdisk_info_ {
 	char diskname[40];
 	char serialNumber[20];
@@ -118,16 +120,22 @@ typedef struct _vdisk_info_ {
 	uint64_t maxBlocks;
 	uint64_t blocksSize;
 }AuVDiskInfo;
+#ifdef ARCH_X64
 #pragma pack(pop)
+#endif
 
+#ifdef ARCH_X64
 #pragma pack(push,1)
+#endif
 typedef struct _vdisk_partition_info_ {
 	char mountedName[32];
 	GUID partitionGUID;
 	GUID uniqueGUID;
 	uint64_t startingLBA;
 }AuVDiskPartitionInfo;
+#ifdef ARCH_X64
 #pragma pack(pop)
+#endif
 
 /**
  * @brief AuVDiskInitialise -- initialise the vdisk

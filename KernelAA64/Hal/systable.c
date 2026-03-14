@@ -40,8 +40,10 @@
 #include <Mm/mmap.h>
 #include <aucon.h>
 #include <ftmngr.h>
+#include <Fs/vfs.h>
+#include <Fs/vdisk.h>
 
-#define AURORA_MAX_SYSCALL 46
+#define AURORA_MAX_SYSCALL 58
 
 AA64Registers* svcCurrentRegs;
 
@@ -106,8 +108,8 @@ static void* syscalls[AURORA_MAX_SYSCALL] = {
 	ProcessHeapUnmap, //34
 	0, //35
 	0, //36
-	0, //37
-	0, //38
+	OpenDir, //37
+	ReadDir, //38
 	0, //39
 	0, //40
 	0, //41
@@ -115,6 +117,18 @@ static void* syscalls[AURORA_MAX_SYSCALL] = {
 	0, //43
 	FileSetOffset, //44
 	0, //45
+	0, //46
+	0, //47
+	0, //48
+	0, //49
+	0, //50
+	0, //51
+	0, //52
+	0, //53
+	0, //54
+	AuGetVDiskInfo, //55, 
+	AuGetVDiskPartitionInfo, //56
+	0, //57
 };
 
 
