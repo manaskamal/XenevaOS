@@ -1721,9 +1721,8 @@ int main(int argc, char* arv[]) {
 
 	/* Open all required device file */
 	mouse_fd = _KeOpenFile("/dev/mice", FILE_OPEN_READ_ONLY);
-#ifdef ARCH_X64
 	kybrd_fd = _KeOpenFile("/dev/kybrd", FILE_OPEN_READ_ONLY);
-#endif
+
 	AuInputMessage mice_input;
 	AuInputMessage kybrd_input;
 	memset(&mice_input, 0, sizeof(AuInputMessage));
@@ -1742,12 +1741,12 @@ int main(int argc, char* arv[]) {
 	uint64_t last_click_time = 0;
 	uint64_t last_redraw = 0;
 
-	int proc = _KeCreateProcess(0, "file");
+	int proc = _KeCreateProcess(0, "term");
+	_KeProcessLoadExec(proc, "/term.exe", NULL, NULL);
+
+
+	proc = _KeCreateProcess(0, "file");
 	_KeProcessLoadExec(proc, "/file.exe", NULL, NULL);
-
-
-	/*proc = _KeCreateProcess(0, "calendr");
-	_KeProcessLoadExec(proc, "/calendr.exe", NULL, NULL);*/
 	/* launch the session manager directly from here */
 #ifdef ARCH_X64
 	int proc = _KeCreateProcess(0, "xelnch");
@@ -1777,9 +1776,9 @@ int main(int argc, char* arv[]) {
 
 		_KeReadFile(mouse_fd, &mice_input, sizeof(AuInputMessage));
 
-#ifdef ARCH_X64
+
 		_KeReadFile(kybrd_fd, &kybrd_input, sizeof(AuInputMessage));
-#endif
+
 		
 		
 		if (mice_input.type == AU_INPUT_MOUSE) {

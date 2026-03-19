@@ -469,6 +469,13 @@ void EnterClicked(ChWidget* wid, ChWindow* win) {
 char* FileManagerGetCurrentPath() {
 	return path;
 }
+
+void _FileMngrThr() {
+	_KePrint("File manager thread running \r\n");
+	while (1) {
+		_KeProcessSleep(1000);
+	}
+}
 /*
 * main -- main entry
 */
@@ -592,6 +599,10 @@ int main(int argc, char* argv[]){
 	ChWindowPaint(mainWin);
 
 	ChWindowBroadcastIcon(app, "/icons/file.bmp");
+
+	_KePrint("Creating file thread \r\n");
+	int thr = _KeCreateThread(&_FileMngrThr, "FileThr");
+	_KePrint("File thread created \r\n");
 
 	PostEvent e;
 	memset(&e, 0, sizeof(PostEvent));

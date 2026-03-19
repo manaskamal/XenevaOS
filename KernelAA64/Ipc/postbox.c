@@ -189,8 +189,12 @@ void PostBoxPutEvent(PostEvent* event) {
 	AA64Thread* thread = AuThreadFindByID(owner_id);
 	if (!thread)
 		thread = AuThreadFindByIDBlockList(owner_id);
-	if (thread != NULL && thread->state == THREAD_STATE_BLOCKED)
-		AuUnblockThread(thread);
+	if (thread != NULL && thread->state == THREAD_STATE_BLOCKED) {
+		if (strcmp(thread->name, "exec") == 1) {
+			//UARTDebugOut("[aurora]: ipc postbox unblocking thread : %s %d\r\n", thread->name, owner_id);
+			AuUnblockThread(thread);
+		}
+	}
 
 	return;
 }

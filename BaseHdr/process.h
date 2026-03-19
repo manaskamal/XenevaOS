@@ -270,6 +270,22 @@ extern void AuProcessWaitForTermination(AuProcess *proc, int pid);
 extern AuMutex* AuProcessGetMutex();
 #endif
 
+#ifdef ARCH_ARM64
+/**
+ * @brief AuCreateSubKernelStack -- maps sub kernel stack and return the top
+ * of the stack, it only maps 4KiB of stack
+ * @param pml -- Pointer to page directory
+ * @return kernel stack address
+ */
+extern uint64_t AuCreateSubKernelStack(AuProcess* proc, uint64_t* pml);
+/*
+ * @brief CreateSubUserStack -- creates new user stack
+ * @param proc -- Pointer to process slot
+ * @param cr3 -- pointer to the address space where to
+ * map
+ */
+extern uint64_t* CreateSubUserStack(AuProcess* proc, uint64_t* cr3);
+#endif
 /**
 *  Creates a user mode thread
 *  @param entry -- Entry point address

@@ -41,6 +41,7 @@
 #include <Drivers/uart.h>
 #include <Hal/AA64/gic.h>
 #include <aucon.h>
+#include <process.h>
 #include <aurora.h>
 
 extern void aa64_store_context(AA64Thread* thr);
@@ -54,8 +55,6 @@ extern uint64_t read_sp();
 
 AA64Thread* thread_list_head;
 AA64Thread* thread_list_last;
-AA64Thread* blocked_thr_head;
-AA64Thread* blocked_thr_last;
 AA64Thread* blocked_thr_head;
 AA64Thread* blocked_thr_last;
 AA64Thread* trash_thr_head;
@@ -86,6 +85,7 @@ void AuThreadInsert(AA64Thread* new_task) {
 		new_task->prev = thread_list_last;
 	}
 	thread_list_last = new_task;
+	aa64_data_cache_clean_range(new_task, sizeof(AA64Thread));
 }
 
 /**
@@ -116,6 +116,8 @@ void AuThreadDelete(AA64Thread* thread) {
 	* same address is used, rather call 'free'
 	* externally
 	*/
+	aa64_data_cache_clean_range(thread_list_head, sizeof(AA64Thread));
+	aa64_data_cache_clean_range(thread_list_last, sizeof(AA64Thread));
 }
 
 /**
@@ -135,6 +137,8 @@ void AuThreadInsertBlock(AA64Thread* new_task) {
 		new_task->prev = blocked_thr_last;
 	}
 	blocked_thr_last = new_task;
+	aa64_data_cache_clean_range(thread_list_head, sizeof(AA64Thread));
+	aa64_data_cache_clean_range(thread_list_last, sizeof(AA64Thread));
 }
 
 /**
@@ -297,6 +301,36 @@ AA64Thread* AuCreateKthread(void(*entry) (uint64_t),uint64_t* pml, char* name){
 	uint64_t kstack = t->sp;
 	t->sp = ((uint64_t)kstack & ~(uint64_t)0xF);
 	t->sp -= 64;
+	UARTDebugOut("[AA64Thread]: t->name : %s stack : %x \r\n",t->name, t->sp);
+	t->originalKSp = t->sp;
+	t->state = THREAD_STATE_READY;
+	t->thread_id = thread_id++;
+	t->fpsr = 0;
+	t->fpcr = 0;
+	AuThreadInsert(t);
+	return t;
+}
+
+/**
+ * @brief AuCreateSubKthread -- create sub kernel thread of parent
+ * kthread
+ * @param entry -- Pointer to entry point
+ * @param pml -- Pointer to Page directory
+ * @param name -- Name of the thread
+ * @return Pointer to newly created thread
+ */
+AA64Thread* AuCreateSubKthread(void(*entry) (uint64_t),uint64_t stack, uint64_t* pml, char* name) {
+
+	AA64Thread* t = (AA64Thread*)kmalloc(sizeof(AA64Thread));
+	memset(t, 0, sizeof(AA64Thread));
+	strncpy(t->name, name, 8);
+	t->name[8] = '\0';
+	t->elr_el1 = (uint64_t)entry;
+	t->x30 = (uint64_t)entry;
+	t->spsr_el1 = 0x3C4; //0x3C4; // 0x245;
+	//t->sp = stack;
+	t->pml = (uint64_t)pml;
+	t->sp = stack;
 	t->originalKSp = t->sp;
 	t->state = THREAD_STATE_READY;
 	t->thread_id = thread_id++;
@@ -443,6 +477,7 @@ sched:
 		resume_user(current_thread,sp);
 	}
 
+
 	current_thread->sp = current_thread->originalKSp;
 	if (aa64_restore_context(current_thread)) {
 		return;
@@ -451,12 +486,7 @@ ret:
 	return;
 }
 
-
-uint64_t stack_index;
-
-bool setStk() {
-	stack_index = 1;
-}
+static int ke_stack_idx;
 
 /**
  * @brief AuCreateKernelStack -- maps kernel stack and return the top
@@ -465,28 +495,49 @@ bool setStk() {
  * @return kernel stack address
  */
 uint64_t AuCreateKernelStack(uint64_t* pml) {
-	uint64_t idx = stack_index;
 	uint64_t location = KERNEL_STACK_LOCATION;
+	location += ke_stack_idx * KERNEL_STACK_SIZE;
 	for (int i = 0; i < (KERNEL_STACK_SIZE) / 0x1000; i++) {
 		uint64_t addr = (uint64_t)P2V((uint64_t)AuPmmngrAlloc());
 		memset(addr, 0, PAGE_SIZE);
-		AuMapPageEx(pml, V2P(addr), (location + i * 4096), PTE_AP_RW | PTE_NORMAL_MEM);
+		AuMapPage(V2P(addr), (location + i * 4096), PTE_AP_RW | PTE_NORMAL_MEM);
 	}
+	ke_stack_idx += 2;
 	return (location + KERNEL_STACK_SIZE);
 }
 
+/**
+ * @brief AuCreateSubKernelStack -- maps sub kernel stack and return the top
+ * of the stack, it only maps 4KiB of stack
+ * @param pml -- Pointer to page directory
+ * @return kernel stack address
+ */
+uint64_t AuCreateSubKernelStack(AuProcess* proc, uint64_t* pml) {
+	uint64_t location = KERNEL_STACK_LOCATION;
+	location += proc->_kstack_index_ * KERNEL_STACK_SIZE;
+	UARTDebugOut("Creating Sub kernel stack : %d, %x \r\n", proc->_kstack_index_, location);
+	for (int i = 0; i < (KERNEL_STACK_SIZE) / 0x1000; i++) {
+		uint64_t addr = (uint64_t)P2V((uint64_t)AuPmmngrAlloc());
+		memset(addr, 0, PAGE_SIZE);
+		AuMapPage(V2P(addr), (location + i * 4096), PTE_AP_RW | PTE_NORMAL_MEM);
+	}
+
+	proc->_kstack_index_++;
+
+	return (location + KERNEL_STACK_SIZE);
+}
 /**
  *	@brief AuSchedulerInitialize -- initialize the scheduler
  */
 void AuSchedulerInitialize() {
 	thread_list_head = NULL;
 	thread_list_last = NULL;
-	stack_index = 0;
 	thread_id = 0;
 	uint64_t* idle_pd = AuCreateVirtualAddressSpace();
 	AA64Thread* idle_ = AuCreateKthread(AuIdleThread,idle_pd, "Idle");
 	//idle_->elr_el1 = (uint64_t)AuIdleThread;
 	_idle_thr = idle_;
+	ke_stack_idx = 0;
 	current_thread = idle_;
 	_scheduler_initialized = false;
 	scheduler_tick = 0;

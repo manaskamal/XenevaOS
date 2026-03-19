@@ -41,6 +41,7 @@
 #include <aucon.h>
 #include <ftmngr.h>
 #include <Fs/vfs.h>
+#include <Fs/tty.h>
 #include <Fs/vdisk.h>
 
 #define AURORA_MAX_SYSCALL 58
@@ -88,7 +89,7 @@ static void* syscalls[AURORA_MAX_SYSCALL] = {
 	UnmapMemMapping, //14
 	GetProcessHeapMem, //15
 	ReadFile, //16
-	0, //17
+	WriteFile, //17
 	0, //18
 	0, //19
 	CloseFile, //20
@@ -102,9 +103,9 @@ static void* syscalls[AURORA_MAX_SYSCALL] = {
 	AuFTMngrGetNumFonts, //28
 	AuFTMngrGetFontSize, //29
 	MemMapDirty, //30
-	0, //31
-	0, //32
-	0, //33
+	AuTTYCreate, //31
+	CreateUserThread, //32
+	SetFileToProcess, //33
 	ProcessHeapUnmap, //34
 	0, //35
 	0, //36
@@ -114,7 +115,7 @@ static void* syscalls[AURORA_MAX_SYSCALL] = {
 	0, //40
 	0, //41
 	0, //42
-	0, //43
+	ProcessGetFileDesc, //43
 	FileSetOffset, //44
 	0, //45
 	0, //46
@@ -128,7 +129,7 @@ static void* syscalls[AURORA_MAX_SYSCALL] = {
 	0, //54
 	AuGetVDiskInfo, //55, 
 	AuGetVDiskPartitionInfo, //56
-	0, //57
+	GetEnvironmenBlock, //57
 };
 
 

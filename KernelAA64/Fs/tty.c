@@ -39,6 +39,8 @@
 #include <process.h>
 #include <Hal/AA64/sched.h>
 #include <aucon.h>
+#include <Serv/sysserv.h>
+#include <Drivers/uart.h>
 
 /** @brief master_count -- internal count value of total
  * master tty
@@ -204,7 +206,6 @@ size_t AuTTYMasterWrite(AuVFSNode* fs, AuVFSNode* file, uint64_t* buffer, uint32
 	TTY* type = (TTY*)file->device;
 	if (!type)
 		return 0;
-
 	for (int i = 0; i < len; i++) {
 		AuCircBufPut(type->slavebuf, aligned_buf[i]);
 	}
@@ -215,7 +216,6 @@ size_t AuTTYSlaveRead(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint32
 	TTY* tty = (TTY*)file->device;
 	if (!tty)
 		return 0;
-
 	for (int i = 0; i < len; i++)
 		AuCircBufGet(tty->slavebuf, &aligned_buf[i]);
 
@@ -240,8 +240,10 @@ size_t AuTTYSlaveWrite(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint3
 	if (len > 512)
 		len = 512;
 
+
 	if (CircBufFull(tty->masterbuf)) {
-		AuScheduleThread(NULL);
+		AA64Registers* regs = AA64GetCurrentRegCtx();
+		AuScheduleThread(regs);
 		return 0;
 	}
 
@@ -253,8 +255,8 @@ size_t AuTTYSlaveWrite(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint3
 	/* little bit slow down the slave process,
 	 * it's too fast
 	 */
-	 //AuSleepThread(curr_th, 1000000000000);
-	AuScheduleThread(NULL);
+	 AuSleepThread(curr_th, 10);
+	 AuScheduleThread(AA64GetCurrentRegCtx());
 }
 
 int AuTTYSlaveClose(AuVFSNode* fs, AuVFSNode* file) {

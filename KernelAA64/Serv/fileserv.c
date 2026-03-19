@@ -38,7 +38,8 @@
 #include <_null.h>
 #include <Mm/kmalloc.h>
 #include <string.h>
-
+#include <Mm/pmmngr.h>
+#include <Mm/vmmngr.h>
 
 extern uint64_t read_sp();
 extern uint64_t read_sp_el1();
@@ -184,6 +185,62 @@ size_t ReadFile(int fd, void* buffer, size_t length) {
 	return ret_bytes;
 }
 
+/**
+ * @brief WriteFile -- write system call
+ * @param fd -- file descriptor
+ * @param buffer -- buffer to write
+ * @param length -- length in bytes
+ */
+size_t WriteFile(int fd, void* buffer, size_t length) {
+	if (fd == -1)
+		return 0;
+	if (!buffer)
+		return 0;
+	if (!length)
+		return 0;
+	AA64Thread* current_thr = AuGetCurrentThread();
+	if (!current_thr)
+		return 0;
+	AuProcess* current_proc = AuProcessFindThread(current_thr);
+	if (!current_proc) {
+		current_proc = AuProcessFindSubThread(current_thr);
+		if (!current_proc)
+			return 0;
+	}
+	AuVFSNode* file = current_proc->fds[fd];
+	uint8_t* aligned_buffer = (uint8_t*)buffer;
+	if (!file)
+		return 0;
+	size_t write_bytes = 0;
+	size_t ret_bytes;
+	/* every general file will contain its
+	* file system node as device */
+	AuVFSNode* fsys = (AuVFSNode*)file->device;
+
+	if (file->flags & FS_FLAG_GENERAL && !(file->flags & FS_FLAG_TTY)) {
+		uint64_t* buff = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
+		memset(buff, 0, PAGE_SIZE);
+		memcpy(buff, aligned_buffer, PAGE_SIZE);
+		AuVFSNodeWrite(fsys, file, buff, length);
+		AuPmmngrFree((void*)V2P((size_t)buff));
+	}
+
+	if (file->flags & FS_FLAG_TTY) {
+		if (file->write)
+			return file->write(file, file, (uint64_t*)buffer, length);
+	}
+
+	if (file->flags & FS_FLAG_DEVICE) {
+		if (file->write) {
+			return file->write(fsys, file, (uint64_t*)buffer, length);
+		}
+	}
+
+	if (file->flags & FS_FLAG_PIPE) {
+		if (file->write)
+			return file->write(file, file, (uint64_t*)buffer, length);
+	}
+}
 /**
  * @brief CloseFile -- closes a general file
  * @param fd -- file descriptor to close

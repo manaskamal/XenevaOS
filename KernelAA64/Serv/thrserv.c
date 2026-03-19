@@ -102,7 +102,6 @@ int CreateProcess(int parent_id, char* name) {
 		if (!parent)
 			return -1;
 	}
-
 	AuProcess* slot = AuCreateProcessSlot(parent, name);
 	if (!slot)
 		return -1;
@@ -135,11 +134,9 @@ extern void setuprint();
  * thread
  */
 int PauseThread() {
-	setuprint();
 	AA64Thread* current_thr = AuGetCurrentThread();
 	AA64Registers* regs = AA64GetCurrentRegCtx();
 	//current_thr->sp = (uint64_t)regs;
-
 	AuBlockThread(current_thr);
 	AuScheduleThread(regs);
 	return 1;
@@ -196,3 +193,94 @@ int ProcessLoadExec(int proc_id, char* filename, int argc, char** argv) {
 	}
 }
 
+/**
+ * @brief SetFileToProcess -- copies a file from one process
+ * to other
+ * @param fileno -- file number of the current process
+ * @param dest_fdidx -- destination process file index
+ * @param proc_id -- destination process id
+ */
+int SetFileToProcess(int fileno, int dest_fdidx, int proc_id) {
+	AA64Thread* thr = AuGetCurrentThread();
+	if (!thr)
+		return 0;
+	/* file check if current thread's process is
+	 * found by checking twice, first by
+	 * main thread checkup second by sub thread
+	 * checkup
+	 */
+	AuProcess* proc = AuProcessFindThread(thr);
+	if (!proc) {
+		proc = AuProcessFindSubThread(thr);
+		if (!proc)
+			return -1;
+	}
+
+
+	/* now try getting the destination process by its
+	* process id
+	*/
+	AuProcess* destproc = AuProcessFindPID(proc_id);
+	if (!destproc)
+		return -1;
+
+	/* now try getting the file from current process
+	 * file entry
+	 */
+	AuVFSNode* file = proc->fds[fileno];
+	if (!file)
+		return -1;
+
+	AuVFSNode* destfile = destproc->fds[dest_fdidx];
+	if (destfile)
+		return -1;
+	else {
+		/* now we have no file entry in destination
+		 * process's file index, so make entry
+		 * of current process's file targeted by
+		 * fileno to destination processes file
+		 * entry
+		 */
+		destproc->fds[dest_fdidx] = file;
+		file->fileCopyCount += 1;
+	}
+}
+
+/**
+* @brief CreateUserThread -- creates an user mode thread
+* @return the thread index within
+* the process
+*/
+int CreateUserThread(void(*entry) (), char* name) {
+	AA64Thread* thr = AuGetCurrentThread();
+	if (!thr)
+		return 0;
+	AuProcess* proc = AuProcessFindThread(thr);
+	if (!proc) {
+		proc = AuProcessFindSubThread(thr);
+		if (!proc)
+			return 0;
+	}
+	int idx = AuCreateUserthread(proc, entry, name);
+	AA64Registers* regs = AA64GetCurrentRegCtx();
+	//current_thr->sp = (uint64_t)regs;
+	AuScheduleThread(regs);
+	return idx;
+}
+
+
+/**
+ * @brief GetEnvironmentBlock -- returns environment
+ * block of this process
+ */
+size_t GetEnvironmenBlock() {
+	AA64Thread* curr_thr = AuGetCurrentThread();
+	AuProcess* proc = AuProcessFindThread(curr_thr);
+	if (!proc) {
+		proc = AuProcessFindSubThread(curr_thr);
+		if (!proc)
+			return NULL;
+	}
+	return proc->_envp_block_;
+
+}

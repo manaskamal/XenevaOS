@@ -5,7 +5,11 @@
       <FullPath>E:\Xeneva Project\Aurora\ARM64\Debug\init.exe</FullPath>
     </ProjectOutput>
   </ProjectOutputs>
-  <ContentFiles />
+  <ContentFiles>
+    <ContentFile>
+      <FullPath>E:\Xeneva Project\Aurora\Process\Init\crt0arm64.s</FullPath>
+    </ContentFile>
+  </ContentFiles>
   <SatelliteDlls />
   <NonRecipeFileRefs />
 </Project>

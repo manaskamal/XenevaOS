@@ -69,10 +69,8 @@ uint64_t physFrames[64];
 }while (0)
 
 
-void testFunc() {
-	AuTextOut("SP_EL0  \r\n");
-	AuTextOut("ERET HONE WALAL hai \r\n");
-
+void testFunc(uint64_t x0, uint64_t x1) {
+	UARTDebugOut("x0: %x x1 : %x \r\n", x0, x1);
 }
 
 
@@ -116,7 +114,6 @@ void AuProcessEntUser(uint64_t rcx) {
 	PUSH(uentry->rsp, size_t, (size_t)uentry->num_args);
 	PUSHALIGN(uentry->rsp, 16);
 	aa64_enter_user(uentry->rsp, uentry->entrypoint);
-	AuTextOut("Entry returned \r\n");
 	while (1) {
 	}
 }

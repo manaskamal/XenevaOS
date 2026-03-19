@@ -130,12 +130,13 @@ extern "C" void main(int argc, char* argv[]) {
 	proc = _KeCreateProcess(0, "calc");
 	_KeProcessLoadExec(proc, "/calc.exe", 0, NULL);*/
 
-
+	_KePrint("Setting up env variable \r\n");
+	initSetupBasicEnvironmentVars();
 	while(1){
 		_KePauseThread();
 	}
 
-	initSetupBasicEnvironmentVars();
+	
 
 	///* just load all the background services */
 	int child = _KeCreateProcess(0, "deoaud");

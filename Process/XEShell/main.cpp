@@ -439,12 +439,15 @@ void XEShellProcessLine() {
 * main -- terminal emulator
 */
 int main(int argc, char* arv[]){
-	printf("Xeneva Shell v1.1 \n");
+#ifdef ARCH_ARM64
+	printf("Xeneva Shell v1.1 (arm64 build)\n");
+#elif ARCH_X64
+	printf("Xeneva Shell v1.1 (x86_64 build) \n");
+#endif
 	
-	printf("Copyright (C) Manas Kamal Choudhury \n");
-	printf("\033[42m^[37mXeneva is an operating system\n");
-	printf("^[42m^[37mMade in North-East India,Assam\n");
-	_KeSetSignal(SIGINT, XEShellSigInterrupt);
+	printf("Copyright (C) Xeneva Private Limited \n");
+
+	//_KeSetSignal(SIGINT, XEShellSigInterrupt);
 	cmdBuf = (char*)malloc(1024);
 	memset(cmdBuf, 0, 1024);
 	currentDirectory = (char*)malloc(strlen("/"));

@@ -42,6 +42,9 @@
 #include "virtiogpu.h"
 #include "virtscreen.h"
 #include <Hal/AA64/gic.h>
+#include <Fs/vfs.h>
+#include <Fs/Dev/devfs.h>
+#include "cmd2d.h"
 
 #define VIRTIO_PCI_CAP_ID 0x09
 #define VIRTIO_PCI_CAP_COMMON_CFG 1
@@ -75,6 +78,8 @@ static int cursorq_sz;
 static int gpu_resource_id;
 static bool _resp_ok;
 static uint16_t* notifyAddress;
+static VirtioCommonCfg* _cfg;
+AuVFSNode* fsnode;
 /*
 * AuDriverUnload -- deattach the driver from
 * aurora system
@@ -373,6 +378,34 @@ void gpu_virt_interrupt(int spinum) {
 	}
 }
 
+
+/**
+ * @brief virtio_gpu_iocontrol -- io control for virtio gpu
+ * @param file -- Pointer to gpu file struct
+ * @param code -- code number
+ * @param arg -- data struct passed to this driver
+ */
+int virtio_gpu_iocontrol(AuVFSNode* file, int code, void* arg) {
+	AuFileIOControl* ioctl = (AuFileIOControl*)arg;
+	switch (code) {
+	case VIRTIO_GPU_CREATE_RESOURCE_2D:
+		int resourceID = ioctl->uint_1;
+		uint32_t width = ioctl->ulong_1 & UINT32_MAX;
+		uint32_t height = ioctl->ulong_2 & UINT32_MAX;
+		virtio_cmd2d_create(resourceID, width, height);
+		UARTDebugOut("[virtio-gpu-ioctl]: 2d resource created \r\n");
+		break;
+	case VIRTIO_GPU_ATTACH_BACKING:
+		break;
+	case VIRTIO_GPU_TRANSFER_TO_HOST2D:
+		break;
+	case VIRTIO_GPU_FLUSH:
+		break;
+		
+	}
+	return 0;
+}
+
 /*
 * AuDriverMain -- Main entry for virtio gpu driver
 */
@@ -429,6 +462,7 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 	struct virtio_gpu_config* gpu_cfg = (struct virtio_gpu_config*)(bar + devcfg_offset);
 	UARTDebugOut("[virtio-gpu]: NumQueue : %d \n", cfg->Queues);
 
+	_cfg = cfg;
 	/** reset the device first **/
 	gpu_reset_device(cfg);
 
@@ -461,5 +495,34 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 	virt_gpu_transfer_to_host2d(cfg, resource_id);
 	virt_gpu_flush(cfg, resource_id);
 	mask_irqs();
+
+	AuVFSNode* devfs = AuVFSFind("/dev");
+	if (!devfs) 
+		return 0;
+	
+	/* avoiding using pipe for latency issue */
+	AuVFSNode* node = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
+	memset(node, 0, sizeof(AuVFSNode));
+	strcpy(node->filename, "virtiogpu");
+	node->flags |= FS_FLAG_DEVICE;
+	node->device = cfg;
+	node->read = 0; // AuDevInputMiceRead;
+	node->write = 0; // AuDevInputMiceWrite;
+	node->open = 0;
+	node->close = 0;
+	node->iocontrol = virtio_gpu_iocontrol; // AuDevMouseIoControl;
+	fsnode = node;
+	AuDevFSAddFile(devfs, "/", node);
+	UARTDebugOut("[virtio_gpu]: registered to device file system \r\n");
 	return 0;
+}
+
+
+/**
+ * @brief gpu_get_config_pointer -- return the pointer
+ * virtio common config descriptor from pcie
+ * @return system config descriptor from pcie config space
+ */
+VirtioCommonCfg* gpu_get_config_pointer() {
+	return _cfg;
 }

@@ -3,9 +3,11 @@
   <ItemGroup>
     <ClCompile Include="virtgpu.cpp" />
     <ClCompile Include="virtscreen.cpp" />
+    <ClCompile Include="cmd2d.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="virtiogpu.h" />
     <ClInclude Include="virtscreen.h" />
+    <ClInclude Include="cmd2d.h" />
   </ItemGroup>
 </Project>

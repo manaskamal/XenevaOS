@@ -198,7 +198,6 @@ void TerminalClearScreen() {
  * @param bgcolor -- Background color
  */
 void TerminalPrintChar(char c, uint32_t fgcolor, uint32_t bgcolor) {
-	_KePrint("Terminal printing character : %c \r\n", c);
 	if (c == '\n'){
 		fgColor = WHITE;
 		backColor = BLACK;
@@ -605,7 +604,11 @@ void TerminalThread() {
 			_update_terminal_ = false;
 		}
 		
-		_KeProcessSleep(100); //
+#ifdef ARCH_ARM64
+		_KeProcessSleep(20);
+#elif ARCH_X64
+		_KeProcessSleep(10000);
+#endif
 	}
 }
 

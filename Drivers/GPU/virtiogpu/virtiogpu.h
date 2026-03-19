@@ -38,6 +38,11 @@
 #define VIRTIO_GPU_FLAG_FENCE (1<<0)
 #define VIRTIO_GPU_FLAG_INFO_RING_IDX (1<<1)
 
+#define VIRTIO_GPU_CREATE_RESOURCE_2D 0x200
+#define VIRTIO_GPU_ATTACH_BACKING 0x201
+#define VIRTIO_GPU_TRANSFER_TO_HOST2D 0x202
+#define VIRTIO_GPU_FLUSH 0x203
+
 
 #pragma pack(push,1)
 struct virtio_gpu_ctrl_hdr {
@@ -228,6 +233,13 @@ extern int gpu_allocate_resource_id();
  * @param len2 -- request command two length
  */
 extern void gpu_attach_back_cmd(VirtioCommonCfg* cfg, void* req, uint32_t len1, void* req2, uint32_t len2);
+
+/**
+ * @brief gpu_get_config_pointer -- return the pointer
+ * virtio common config descriptor from pcie
+ * @return system config descriptor from pcie config space
+ */
+extern VirtioCommonCfg* gpu_get_config_pointer();
 
 
 

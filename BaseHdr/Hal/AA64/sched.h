@@ -116,7 +116,16 @@ typedef struct _aa64_task_ {
 //#pragma pack(pop)
 extern void AuSchedulerInitialize();
 extern uint64_t AuCreateKernelStack(uint64_t* pml);
-extern AA64Thread* AuCreateKthread(void(*entry) (uint64_t),uint64_t* pml, char* name);
+AU_EXTERN AU_EXPORT AA64Thread* AuCreateKthread(void(*entry) (uint64_t),uint64_t* pml, char* name);
+/**
+ * @brief AuCreateSubKthread -- create sub kernel thread of parent
+ * kthread
+ * @param entry -- Pointer to entry point
+ * @param pml -- Pointer to Page directory
+ * @param name -- Name of the thread
+ * @return Pointer to newly created thread
+ */
+AU_EXTERN AU_EXPORT AA64Thread* AuCreateSubKthread(void(*entry) (uint64_t), uint64_t stack, uint64_t* pml, char* name);
 extern void AuScheduleThread(AA64Registers*regs);
 extern void AuSchedulerStart();
 extern AA64Thread* AuGetIdleThread();

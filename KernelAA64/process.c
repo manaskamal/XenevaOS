@@ -39,6 +39,8 @@
 #include <_null.h>
 #include <Hal/AA64/sched.h>
 #include <Mm/shm.h>
+#include <loader.h>
+
 
 static int pid = 1;
 AuProcess* proc_first;
@@ -193,6 +195,31 @@ uint64_t* CreateUserStack(AuProcess* proc, uint64_t* cr3) {
 	uint64_t* addr = (uint64_t*)(location + PROCESS_USER_STACK_SZ);
 	return addr;
 }
+
+/*
+ * @brief CreateSubUserStack -- creates new user stack
+ * @param proc -- Pointer to process slot
+ * @param cr3 -- pointer to the address space where to
+ * map
+ */
+uint64_t* CreateSubUserStack(AuProcess* proc, uint64_t* cr3) {
+#define USER_STACK 0x000000A000000000 
+	uint64_t location = USER_STACK;
+	UARTDebugOut("User stack index : %x \r\n", proc->_user_stack_index_);
+	location += proc->_user_stack_index_;
+
+	for (int i = 0; i < (PROCESS_USER_STACK_SZ / PAGE_SIZE); ++i) {
+		uint64_t blk = (uint64_t)AuPmmngrAlloc();
+		if (!AuMapPage(blk, location + i * PAGE_SIZE, PTE_AP_RW_USER | PTE_AP_RW)) {
+			UARTDebugOut("CreateUserStack: already mapped %x \r\n", (location + i * PAGE_SIZE));
+		}
+
+	}
+
+	proc->_user_stack_index_ += PROCESS_USER_STACK_SZ;
+	uint64_t* addr = (uint64_t*)(location + PROCESS_USER_STACK_SZ);
+	return addr;
+}
 /*
 * @brief AuCreateProcessSlot -- creates a blank process slot
 * @param parent -- pointer to the parent process
@@ -213,8 +240,21 @@ AuProcess * AuCreateProcessSlot(AuProcess * parent, char* name) {
 	proc->shm_break = USER_SHARED_MEM_START;
 	proc->proc_mem_heap = PROCESS_BREAK_ADDRESS;
 	proc->proc_heapmem_len = 0;
+	proc->_kstack_index_ = 1;
 	proc->_main_stack_ = main_thr_stack;
 	UARTDebugOut("PROCESS : %s , stack : %x \n", proc->name, proc->_main_stack_);
+	uint64_t* envpBlock = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
+	memset(envpBlock, 0, PAGE_SIZE);
+
+	/** confusing code :hehehehe **/
+	if (!AuMapPageEx(cr3, (uint64_t)V2P((size_t)envpBlock), 0x5000, PTE_AP_RW_USER | PTE_NORMAL_MEM))
+		UARTDebugOut("Failed to map environment block for proc %s \r\n", name);
+	else
+		proc->_envp_block_ = 0x5000;
+
+	if (parent)
+		memcpy((void*)envpBlock, (void*)parent->_envp_block_, PAGE_SIZE);
+
 	proc->waitlist = initialize_list();
 	proc->vmareas = initialize_list();
 	proc->shmmaps = initialize_list();
@@ -236,4 +276,43 @@ int AuProcessGetFileDesc(AuProcess* proc) {
 			return i;
 	}
 	return -1;
+}
+
+
+/**
+*  @brief Creates a user mode thread
+*  @param entry -- Entry point address
+*  @param stack -- Stack address
+*  @param cr3 -- the top most page map level address
+*  @param name -- name of the thread
+*  @param priority -- (currently unused) thread's priority
+*/
+int AuCreateUserthread(AuProcess* proc, void(*entry) (), char* name)
+{
+	UARTDebugOut("[aurora]: user thread creating kmapping : %s \r\n", proc->name);
+	uint64_t stack = AuCreateKernelStack(proc->cr3);
+	uint64_t kstack = stack;
+	stack = ((uint64_t)kstack & ~(uint64_t)0xF);
+	stack -= 64;
+	UARTDebugOut("User stack created %x \r\n", stack);
+	AA64Thread* thr = AuCreateSubKthread(AuProcessEntUser,stack,proc->cr3, name);
+	UARTDebugOut("[aurora]: user thread created \r\n");
+	thr->threadType = THREAD_LEVEL_USER;
+	thr->first_run = 0;
+	thr->procSlot = proc;
+	AuUserEntry* uentry = (AuUserEntry*)kmalloc(sizeof(AuUserEntry));
+	memset(uentry, 0, sizeof(AuUserEntry));
+	uentry->argvaddr = 0;
+	uentry->entrypoint = (uint64_t)entry;
+	uentry->argvs = 0;
+	uentry->num_args = 0;
+	UARTDebugOut("[aurora]: creating user stack for user thread cr3 : %x %x\r\n",proc->cr3, V2P((uint64_t)thr->pml));
+	uentry->rsp = (uint64_t)CreateSubUserStack(proc, proc->cr3);
+	UARTDebugOut("[aurora]:User stack created : %x main_stack : %x \r\n", uentry->rsp, proc->_main_stack_);
+	uentry->stackBase = uentry->rsp;
+	thr->uentry = uentry;
+	int thread_indx = proc->num_thread;
+	proc->threads[proc->num_thread] = thr;
+	proc->num_thread += 1;
+	return thread_indx;
 }

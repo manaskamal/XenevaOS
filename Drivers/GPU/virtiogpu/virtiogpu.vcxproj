@@ -233,10 +233,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="cmd2d.cpp" />
     <ClCompile Include="virtgpu.cpp" />
     <ClCompile Include="virtscreen.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="cmd2d.h" />
     <ClInclude Include="virtiogpu.h" />
     <ClInclude Include="virtscreen.h" />
   </ItemGroup>

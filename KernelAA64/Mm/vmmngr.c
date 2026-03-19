@@ -147,8 +147,9 @@ bool AuMapPage(uint64_t phys_addr, uint64_t virt_addr, uint8_t attrib) {
 	const long i1 = (virt_addr >> 12) & 0x1FF;
 
 	uint64_t* pml4i = (uint64_t*)P2V(read_ttbr0_el1()); 
-	if (isRangeInsideKernel(virt_addr)) 
+	if (isRangeInsideKernel(virt_addr)) {
 		pml4i = (uint64_t*)P2V(read_ttbr1_el1());
+	}
 
 	if (_vmdebug)
 		UARTDebugOut("PML4I got : %x \r\n", pml4i);

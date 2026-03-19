@@ -214,7 +214,6 @@ void AuACPIInitialise(void* acpi_base) {
 		AuTextOut("ACPI Madt : %x \n", __AuroraBasicAcpi->madt);
 		AuACPIParseMADT();
 	}
-
 }
 
 /**
