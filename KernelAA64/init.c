@@ -158,6 +158,8 @@ KERNEL_BOOT_INFO* AuGetBootInfoStruc() {
 extern void debugLIBOn();
 
 extern void XPT2046Initialise();
+
+extern void AuPmmngrDebugInfo();
 /**
  * @brief _AuMain -- the main entry point for kernel
  * @param info -- Kernel Boot information passed
@@ -211,6 +213,7 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	AuDrvMngrInitialize(info);
 
 	FontManagerInitialise();
+
 
 	/* from here, be carefull with AuPmmngrAllocBlocks,
 	 * sometime it doesn't allocate blocks contiguously,

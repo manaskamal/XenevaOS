@@ -165,6 +165,6 @@ typedef struct _KERNEL_BOOT_INFO_ {
 /*
  * AuGetBootInfoStruc -- return kernel boot information
  */
-extern KERNEL_BOOT_INFO* AuGetBootInfoStruc();
+AU_EXTERN AU_EXPORT KERNEL_BOOT_INFO* AuGetBootInfoStruc();
 
 #endif

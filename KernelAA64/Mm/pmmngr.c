@@ -481,3 +481,8 @@ void AuPmmngrSetPageType(uint64_t physaddr,uint8_t flags) {
 		flags &= ~AURORA_PAGE_NORMAL;
 	page_desc[physaddr >> PAGE_SHIFT].page_type = flags;
 }
+
+void AuPmmngrDebugInfo() {
+	AuTextOut("Total ram page : %d --- %d GB \r\n", _TotalRam, (_TotalRam / 1024 / 1024 / 1024));
+	AuTextOut("UsablePhysical Start : %x \r\n", UsablePhysicalMemory);
+}

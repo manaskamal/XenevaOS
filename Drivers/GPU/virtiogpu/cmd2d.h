@@ -50,8 +50,20 @@ extern void virtio_cmd2d_create(int resource_id, int width, int height);
  * host
  * @param cfg -- Pointer to virtio common config
  * @param resource_id -- screen resource id
+ * @param x -- X coord of the rect
+ * @param y -- Y coord of the rect
+ * @param w -- Width of the rect
+ * @param h -- Height of the rect
  */
-extern void virt_gpu_transfer_to_host2d(VirtioCommonCfg* cfg, int resource_id);
+extern void virt_gpu_transfer_to_host2d(VirtioCommonCfg* cfg, int resource_id, int x, int y, int w, int h);
+
+/**
+ * @brief virt_gpu_flush_rect -- flush graphics from guest to host
+ * only with given rect area
+ * @param cfg -- pointer to virtio common config
+ * @param resource_id -- screen resource id
+ */
+extern void virt_gpu_flush_rect(VirtioCommonCfg* cfg, int resource_id, int x, int y, int w, int h);
 
 
 

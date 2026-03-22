@@ -35,6 +35,9 @@
 #include <Mm/vmmngr.h>
 #include <Mm/pmmngr.h>
 #include <Drivers/uart.h>
+#include <aucon.h>
+#include <aurora.h>
+#include <aucon.h>
 
 static uint32_t virt_display_width;
 static uint32_t virt_display_height;
@@ -59,7 +62,7 @@ int virt_gpu_screen_init(VirtioCommonCfg* cfg, uint32_t width, uint32_t height) 
 	cmd.hdr.ctx_id = 0;
 	cmd.hdr.padding = 0;
 	cmd.resource_id = resource_id;
-	cmd.format = VIRTIO_GPU_FORMAT_R8G8B8X8_UNORM;
+	cmd.format = VIRTIO_GPU_FORMAT_B8G8R8A8_UNORM;
 	cmd.height = height;
 	cmd.width = width;
 	gpu_execute_command(cfg, &cmd, sizeof(virtio_gpu_resource_create_2d));
@@ -80,7 +83,7 @@ void virt_gpu_alloc_fb(VirtioCommonCfg* cfg, int resource_id) {
 	uint64_t fb_phys = 0;
 	for (int i = 0; i < fb_sz; i++) {
 		uint64_t phys = (uint64_t)AuPmmngrAlloc();
-		AuMapPage(phys, GPU_FB_BUFFER + i * PAGE_SIZE, PTE_DEVICE_MEM);
+		AuMapPage(phys, GPU_FB_BUFFER + i * PAGE_SIZE, PTE_NORMAL_NON_CACHEABLE);
 		if (fb_phys == 0)
 			fb_phys = phys;
 	}
@@ -92,7 +95,14 @@ void virt_gpu_alloc_fb(VirtioCommonCfg* cfg, int resource_id) {
 	attach.entries[0].addr = fb_phys;
 	attach.entries[0].length = len;
 	gpu_attach_back_cmd(cfg, &attach, sizeof(virtio_gpu_resource_attach_backing), &attach.entries, sizeof(virtio_gpu_resource_attach_backing));
-	UARTDebugOut("[virtio-gpu]: framebuffer attached to screen id : %d \r\n", resource_id);
+	KERNEL_BOOT_INFO* binfo = AuGetBootInfoStruc();
+	binfo->graphics_framebuffer = (uint32_t*)fb_phys;
+	binfo->fb_size = len;
+	binfo->X_Resolution = virt_display_width;
+	binfo->Y_Resolution = virt_display_height;
+	binfo->pixels_per_line = binfo->X_Resolution;
+	AuConsoleSetConInfo(fb_phys, GPU_FB_BUFFER, virt_display_width, virt_display_height);
+	UARTDebugOut("[virtio-gpu]: framebuffer attached to screen id : %d %d\r\n", resource_id, binfo->fb_size);
 }
 
 /**
@@ -123,15 +133,19 @@ void virt_gpu_set_scanout(VirtioCommonCfg* cfg, int resource_id, int scanout_id)
  * host
  * @param cfg -- Pointer to virtio common config
  * @param resource_id -- screen resource id
+ * @param x -- X coord of the rect
+ * @param y -- Y coord of the rect
+ * @param w -- Width of the rect
+ * @param h -- Height of the rect
  */
-void virt_gpu_transfer_to_host2d(VirtioCommonCfg* cfg, int resource_id) {
+void virt_gpu_transfer_to_host2d(VirtioCommonCfg* cfg, int resource_id, int x, int y, int w, int h) {
 	virtio_gpu_transfer_to_host_2d host2d;
 	host2d.hdr.type = VIRTIO_GPU_CMD_TRANSFER_TO_HOST2D;
-	host2d.rect.x = 0;
-	host2d.rect.y = 0;
-	host2d.rect.width = virt_display_width;
-	host2d.rect.height = virt_display_height;
-	host2d.offset = 0;
+	host2d.rect.x = x;
+	host2d.rect.y = y;
+	host2d.rect.width = w;
+	host2d.rect.height = h;
+	host2d.offset = y * (virt_display_width*4) + x * 4;
 	host2d.resource_id = resource_id;
 	gpu_execute_command(cfg, &host2d, sizeof(virtio_gpu_transfer_to_host_2d));
 }
@@ -149,6 +163,24 @@ void virt_gpu_flush(VirtioCommonCfg* cfg, int resource_id) {
 	flush.rect.y = 0;
 	flush.rect.width = virt_display_width;
 	flush.rect.height = virt_display_height;
+	gpu_execute_command(cfg, &flush, sizeof(virtio_gpu_resource_flush));
+}
+
+/**
+ * @brief virt_gpu_flush_rect -- flush graphics from guest to host
+ * only with given rect area
+ * @param cfg -- pointer to virtio common config
+ * @param resource_id -- screen resource id
+ */
+void virt_gpu_flush_rect(VirtioCommonCfg* cfg, int resource_id, int x, int y, int w, int h) {
+	virtio_gpu_resource_flush flush;
+	flush.hdr.type = VIRTIO_GPU_CMD_RESOURCE_FLUSH;
+	flush.resource_id = 1;
+	flush.rect.x = x;
+	flush.rect.y = y;
+	flush.rect.width = w;
+	flush.rect.height = h;
+	
 	gpu_execute_command(cfg, &flush, sizeof(virtio_gpu_resource_flush));
 }
 

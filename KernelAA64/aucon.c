@@ -205,9 +205,10 @@ void AuConsolePostInitialise(PKERNEL_BOOT_INFO info) {
 	h_res = info->X_Resolution; v_res = info->Y_Resolution;
 	for (int w = 0; w < info->X_Resolution; w++) {
 		for (int h = 0; h < info->Y_Resolution; h++) {
-			aucon->buffer[w + h * info->X_Resolution] = CONSOLE_BACKGROUND;
+			aucon->buffer[h * info->X_Resolution + w] = CONSOLE_BACKGROUND;
 		}
 	}
+
 	early_ = 0;
 
 	AuVFSNode* fsys = AuVFSFind("/dev");
@@ -220,6 +221,7 @@ void AuConsolePostInitialise(PKERNEL_BOOT_INFO info) {
 	file->write = 0;
 	file->iocontrol = AuConsoleIoControl;
 	AuDevFSAddFile(fsys, "/", file);
+
 }
 
 
@@ -499,4 +501,12 @@ uint32_t AuConsoleGetScreenHeight() {
 
 void AuConsoleFlushFramebuffer() {
 	aa64_data_cache_clean_range(aucon->buffer, aucon->size);
+}
+
+void AuConsoleSetConInfo(uint64_t phys, uint64_t virtual, size_t xres, size_t yres) {
+	__framebuffer = (uint32_t*)phys;
+	aucon->buffer = (uint32_t*)virtual;
+	aucon->width = xres;
+	aucon->height = yres;
+	aucon->size = xres * yres * 4;
 }

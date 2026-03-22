@@ -65,8 +65,12 @@ extern void virt_gpu_set_scanout(VirtioCommonCfg* cfg, int resource_id, int scan
  * host
  * @param cfg -- Pointer to virtio common config
  * @param resource_id -- screen resource id
+ * @param x -- X coord of the rect
+ * @param y -- Y coord of the rect
+ * @param w -- Width of the rect
+ * @param h -- Height of the rect
  */
-extern void virt_gpu_transfer_to_host2d(VirtioCommonCfg* cfg, int resource_id);
+extern void virt_gpu_transfer_to_host2d(VirtioCommonCfg* cfg, int resource_id, int x, int y, int w, int h);
 
 /**
  * @brief virt_gpu_flush -- flush graphics from guest to host

@@ -229,10 +229,10 @@ mask_irqs:
 
 .global setupTimerIRQ
 setupTimerIRQ:
-   mrs x0, CNTPCT_EL0
-   mov x1, 1000
-   add x0, x0, x1
-   msr CNTV_CVAL_EL0, x0
+   mrs x0, CNTFRQ_EL0      //mrs x0, CTPCT_EL0
+   mov x1, 1000            //mov x1,1000
+   udiv x0, x0, x1         //add x0, x0, x1
+   msr CNTV_TVAL_EL0, x0   //msr CNTV_CVAL_EL0, x0
    mov x0,1
    msr CNTV_CTL_EL0, x0
    ret

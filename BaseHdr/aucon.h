@@ -93,4 +93,6 @@ extern uint32_t AuConsoleGetScreenWidth();
  */
 extern uint32_t AuConsoleGetScreenHeight();
 
+AU_EXTERN AU_EXPORT void AuConsoleSetConInfo(uint64_t phys, uint64_t virt, size_t xres, size_t yres);
+
 #endif

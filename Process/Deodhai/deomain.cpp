@@ -97,6 +97,9 @@ Cursor* resizeLeftRight;
 uint32_t* surfaceBuffer;
 bool _shadow_update;
 bool _clients_advice;
+int gpu_fd;
+int gpu_display_id;
+bool _gpu_enabled;
 uint64_t startTime;
 uint64_t startSubTime;
 
@@ -1656,6 +1659,7 @@ int main(int argc, char* arv[]) {
 	
 	int ret = 0;
 	int screen_w = 0;
+	_gpu_enabled = 0;
 	int screen_h = 0;
 	_window_moving_ = false;
 	_clients_advice = false;
@@ -1676,6 +1680,12 @@ int main(int argc, char* arv[]) {
 	canv->canvasWidth = screen_w;
 	canv->canvasHeight = screen_h;
 
+	gpu_fd = _KeOpenFile("/dev/virtiogpu", FILE_OPEN_READ_ONLY);
+
+	if (gpu_fd != -1) {
+		_gpu_enabled = 1;
+		gpu_display_id = _KeFileIoControl(gpu_fd, 0x204, NULL);
+	}
 
 	_KePrint("Canv->screen_w -> %d, screenh -> %d \r\n", screen_w, screen_h);
 	/* now allocate a back buffer with respected canvas size
@@ -1704,7 +1714,16 @@ int main(int argc, char* arv[]) {
 	}
 
 	ChCanvasScreenUpdate(canv, 0, 0, canv->canvasWidth, canv->canvasHeight);
-
+	if (_gpu_enabled) {
+		XEFileIOControl ctl;
+		ctl.uint_1 = gpu_display_id;
+		ctl.ushort_1 = 0;
+		ctl.ushort_2 = 0;
+		ctl.ulong_1 = canv->canvasWidth;
+		ctl.ulong_2 = canv->canvasHeight;
+		_KeFileIoControl(gpu_fd, 0x202, &ctl);
+		canv->buffer = canv->framebuff;
+	}
 
 	InitialiseDirtyClipList();
 
@@ -1730,7 +1749,9 @@ int main(int argc, char* arv[]) {
 	postbox_fd = _KeOpenFile("/dev/postbox", FILE_OPEN_READ_ONLY);
 	_KePrint("postboxfd : %d \r\n", postbox_fd);
 
+	
 //	postbox_fd = canv->graphics_fd;
+
 	_KeFileIoControl(postbox_fd, POSTBOX_CREATE_ROOT, NULL);
 
 	mouseLastHovered = NULL;
@@ -1741,12 +1762,13 @@ int main(int argc, char* arv[]) {
 	uint64_t last_click_time = 0;
 	uint64_t last_redraw = 0;
 
-	int proc = _KeCreateProcess(0, "term");
-	_KeProcessLoadExec(proc, "/term.exe", NULL, NULL);
+	int proc = _KeCreateProcess(0, "xelnch");
+	_KeProcessLoadExec(proc, "/xelnch.exe", 0, NULL);
 
+	_KeProcessSleep(100);
+	proc = _KeCreateProcess(0, "nmdapha");
+	_KeProcessLoadExec(proc, "/nmdapha.exe", NULL, NULL);
 
-	proc = _KeCreateProcess(0, "file");
-	_KeProcessLoadExec(proc, "/file.exe", NULL, NULL);
 	/* launch the session manager directly from here */
 #ifdef ARCH_X64
 	int proc = _KeCreateProcess(0, "xelnch");
@@ -2157,4 +2179,16 @@ int main(int argc, char* arv[]) {
 		_KeProcessSleep(2);
 #endif
 	}
+}
+
+int _get_gpu_fd() {
+	return gpu_fd;
+}
+
+int _get_gpu_display_id() {
+	return gpu_display_id;
+}
+
+bool _is_gpu_enabled() {
+	return _gpu_enabled;
 }

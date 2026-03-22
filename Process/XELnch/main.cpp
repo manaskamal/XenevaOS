@@ -111,7 +111,6 @@ int main(int argc, char* arv[]){
 	ChFontSetSize(app->baseFont, 12);
 
 
-	_KePrint("XELaunch started \r\n");
 	/* create a demo canvas just for getting the graphics
 	* file descriptor
 	*/

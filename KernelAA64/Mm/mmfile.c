@@ -128,7 +128,7 @@ AuMMFileBack* AuMmngrFileCacheLookup(const char* filename) {
 		filename++;
 	}
 	data_cache_flush(fname);
-
+	
 	AuMMFileBack* fileback = NULL;
 
 	for (AuMMFileBack* fileb_ = fb_first; fileb_ != NULL; fileb_ = fileb_->next) {

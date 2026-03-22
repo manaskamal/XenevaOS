@@ -424,6 +424,7 @@ void NamdaphaPlayStartupSound() {
 int main(int argc, char* arv[]){
 	
 	app = ChitralekhaStartApp(argc, arv);
+	_KePrint("Namdapha bar started basefont : %x \r\n", app->baseFont);
 	ChFontSetSize(app->baseFont, 13);
 	/* create a demo canvas just for getting the graphics
 	* file descriptor
@@ -469,10 +470,10 @@ int main(int argc, char* arv[]){
 
 	int threadID = _KeGetThreadID();
 	/* create a timer inorder to update the current time */
-	_KeCreateTimer(threadID, _KE_TIMER_UNDIFINED_MAXCOUNT, _KE_TIMER_UPDATE_ORDER_MINUTE);
-	_KeStartTimer(threadID);
-
-	_KeGetCurrentTime(&_time);
+	//_KeCreateTimer(threadID, _KE_TIMER_UNDIFINED_MAXCOUNT, _KE_TIMER_UPDATE_ORDER_MINUTE);
+	//_KeStartTimer(threadID);
+	memset(&_time, 0, sizeof(XETime));
+	//_KeGetCurrentTime(&_time);
 
     gobutton = NamdaphaInitialiseGoButton(win);
 	gobutton->actionHandler = NamdaphaGoButtonAction;

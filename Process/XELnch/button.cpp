@@ -183,6 +183,7 @@ ButtonIcon* CreateLaunchButtonIcon(char* iconfile, LaunchButton* button) {
 		for (;;);
 	}
 
+	_KePrint("Icon fd : %d \r\n", fd);
 	XEFileStatus stat;
 	_KeFileStat(fd, &stat);
 
@@ -220,7 +221,7 @@ void ButtonIconRead(ButtonIcon* btninfo) {
 	btninfo->iconWidth = width;
 	btninfo->iconHeight = height;
 	btninfo->iconBpp = bpp;
-	_KeCloseFile(btninfo->iconFd);
+	//_KeCloseFile(btninfo->iconFd);
 	btninfo->iconFd = -1;
 }
 

@@ -272,8 +272,9 @@ AuProcess * AuCreateProcessSlot(AuProcess * parent, char* name) {
  */
 int AuProcessGetFileDesc(AuProcess* proc) {
 	for (int i = 3; i < (FILE_DESC_PER_PROCESS - 3); i++) {
-		if (!proc->fds[i])
+		if (!proc->fds[i]) {
 			return i;
+		}
 	}
 	return -1;
 }

@@ -74,7 +74,7 @@ int OpenFile(char* filename, int mode) {
 		else
 			return -1;
 	}
-
+	UARTDebugOut("File opening : %s \r\n", file->filename);
 	/* check for last time, if any error occured */
 	if (!file)
 		return -1;
@@ -87,8 +87,9 @@ int OpenFile(char* filename, int mode) {
 		UARTDebugOut("Opening file -> %s \r\n", file->filename);
 	if (file->open)
 		file->open(file,NULL);
-
+	UARTDebugOut("CURRENT proc :%s, fd -> %d \r\n", current_proc->name, fd);
 	current_proc->fds[fd] = file;
+	UARTDebugOut("Curr proc fd : %x \r\n", current_proc->fds[fd]);
 	//_setdebug = 1;
 	return fd;
 }

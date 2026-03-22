@@ -45,6 +45,7 @@
 #include <Fs/vfs.h>
 #include <Fs/Dev/devfs.h>
 #include "cmd2d.h"
+#include <aurora.h>
 
 #define VIRTIO_PCI_CAP_ID 0x09
 #define VIRTIO_PCI_CAP_COMMON_CFG 1
@@ -76,6 +77,7 @@ static void* resp_phys;
 static int controlq_sz;
 static int cursorq_sz;
 static int gpu_resource_id;
+static int default_scr_rsrc_id;
 static bool _resp_ok;
 static uint16_t* notifyAddress;
 static VirtioCommonCfg* _cfg;
@@ -266,14 +268,14 @@ void gpu_execute_command(VirtioCommonCfg* cfg, void* cmd, size_t len) {
 	controlq->buffers[index].Addr = (uint64_t)V2P((uint64_t)command_phys);
 	controlq->buffers[index].Length = len;
     controlq->buffers[index].Flags = VIRTQ_DESC_F_NEXT;
-	controlq->buffers[index].Next = index + 1;
+	controlq->buffers[index].Next = (index + 1) % controlq_sz;
 
 	virtio_gpu_ctrl_hdr* resp = (virtio_gpu_ctrl_hdr*)resp_phys;
 	memset(resp, 0, sizeof(virtio_gpu_ctrl_hdr));
 
-	controlq->buffers[index + 1].Addr = (uint64_t)V2P((uint64_t)resp_phys);
-	controlq->buffers[index + 1].Length = sizeof(virtio_gpu_ctrl_hdr);
-	controlq->buffers[index + 1].Flags = VIRTQ_DESC_F_WRITE;
+	controlq->buffers[(index + 1) % controlq_sz].Addr = (uint64_t)V2P((uint64_t)resp_phys);
+	controlq->buffers[(index + 1) % controlq_sz].Length = sizeof(virtio_gpu_ctrl_hdr);
+	controlq->buffers[(index + 1) % controlq_sz].Flags = VIRTQ_DESC_F_WRITE;
 
 	controlq->available.ring[index % controlq_sz] = index;
 	isb_flush();
@@ -285,11 +287,17 @@ void gpu_execute_command(VirtioCommonCfg* cfg, void* cmd, size_t len) {
 
 	gpu_notify_queue(cfg, 0);
 
+	int count = 10000;
+
 	//a small delay helps a lot
-	while (1) {
-		if (_resp_ok)
+	while (count > 0) {
+		switch (resp->type) {
+		case VIRTIO_GPU_RESP_OK_NODATA:
 			break;
+		}
+		count--;
 	}
+
 
 	memset(command_phys, 0, PAGE_SIZE);
 	_resp_ok = false;
@@ -374,7 +382,8 @@ void gpu_virt_interrupt(int spinum) {
 		UARTDebugOut("[virtio-gpu]: interrupt edid display info changed \r\n");
 		break;
 	default:
-		UARTDebugOut("[virtio-gpu]: unknown response type : %x \r\n", resp->type);
+		//UARTDebugOut("[virtio-gpu]: unknown response type : %x \r\n", resp->type);
+		break;
 	}
 }
 
@@ -388,20 +397,37 @@ void gpu_virt_interrupt(int spinum) {
 int virtio_gpu_iocontrol(AuVFSNode* file, int code, void* arg) {
 	AuFileIOControl* ioctl = (AuFileIOControl*)arg;
 	switch (code) {
-	case VIRTIO_GPU_CREATE_RESOURCE_2D:
+	case VIRTIO_GPU_CREATE_RESOURCE_2D: {
 		int resourceID = ioctl->uint_1;
 		uint32_t width = ioctl->ulong_1 & UINT32_MAX;
 		uint32_t height = ioctl->ulong_2 & UINT32_MAX;
 		virtio_cmd2d_create(resourceID, width, height);
 		UARTDebugOut("[virtio-gpu-ioctl]: 2d resource created \r\n");
 		break;
+	}
 	case VIRTIO_GPU_ATTACH_BACKING:
 		break;
-	case VIRTIO_GPU_TRANSFER_TO_HOST2D:
+	case VIRTIO_GPU_TRANSFER_TO_HOST2D: {
+		int resourceID = ioctl->uint_1;
+		int x = ioctl->ushort_1 & UINT32_MAX;
+		int y = ioctl->ushort_2 & UINT32_MAX;
+		int w = ioctl->ulong_1 & UINT32_MAX;
+		int h = ioctl->ulong_2 & UINT32_MAX;
+		virt_gpu_transfer_to_host2d(_cfg, resourceID, x, y, w, h);
+		virt_gpu_flush_rect(_cfg, resourceID, x, y,w,h);
 		break;
-	case VIRTIO_GPU_FLUSH:
+	}
+	case VIRTIO_GPU_FLUSH: {
+		int resourceID = ioctl->uint_1;
+		int x = ioctl->ushort_1 & UINT32_MAX;
+		int y = ioctl->ushort_2 & UINT32_MAX;
+		int w = ioctl->ulong_1 & UINT32_MAX;
+		int h = ioctl->ulong_2 & UINT32_MAX;
+		virt_gpu_flush_rect(_cfg, resourceID, x, y, w, h);
 		break;
-		
+	}
+	case VIRTIO_GPU_GET_SCREEN_RSRC_ID:
+		return default_scr_rsrc_id;
 	}
 	return 0;
 }
@@ -435,7 +461,7 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 	uint64_t bar = ((uint64_t)barHi << 32) | (barLo & ~0xFULL);
 
 	uint64_t finalAddr = (uint64_t)AuMapMMIO(bar, 1);
-	VirtioCommonCfg* cfg = (VirtioCommonCfg*)bar;
+	VirtioCommonCfg* cfg = (VirtioCommonCfg*)finalAddr;
 
 	uint64_t devcfg_offset;
 	//uint32_t notifyOffMultiplier = 0;
@@ -489,10 +515,11 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 
 	/** initialize the screen data and start scanout 0 **/
 	int resource_id = virt_gpu_screen_init(cfg, 1024, 768);
+	default_scr_rsrc_id = resource_id;
 	virt_gpu_alloc_fb(cfg, resource_id);
 	virt_gpu_set_scanout(cfg, resource_id, 0);
 	virt_gpu_fill_screen(1024, 768, 0xFFFF00FF);
-	virt_gpu_transfer_to_host2d(cfg, resource_id);
+	virt_gpu_transfer_to_host2d(cfg, resource_id, 0, 0, 1024, 768);
 	virt_gpu_flush(cfg, resource_id);
 	mask_irqs();
 
