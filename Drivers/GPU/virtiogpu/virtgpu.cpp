@@ -518,7 +518,7 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 	default_scr_rsrc_id = resource_id;
 	virt_gpu_alloc_fb(cfg, resource_id);
 	virt_gpu_set_scanout(cfg, resource_id, 0);
-	virt_gpu_fill_screen(1024, 768, 0xFFFF00FF);
+	virt_gpu_fill_screen(1024, 768, 0xFF000000);
 	virt_gpu_transfer_to_host2d(cfg, resource_id, 0, 0, 1024, 768);
 	virt_gpu_flush(cfg, resource_id);
 	mask_irqs();

@@ -301,7 +301,6 @@ AA64Thread* AuCreateKthread(void(*entry) (uint64_t),uint64_t* pml, char* name){
 	uint64_t kstack = t->sp;
 	t->sp = ((uint64_t)kstack & ~(uint64_t)0xF);
 	t->sp -= 64;
-	UARTDebugOut("[AA64Thread]: t->name : %s stack : %x \r\n",t->name, t->sp);
 	t->originalKSp = t->sp;
 	t->state = THREAD_STATE_READY;
 	t->thread_id = thread_id++;

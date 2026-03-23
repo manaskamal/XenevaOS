@@ -173,6 +173,9 @@
     <ClCompile Include="Fs\Fat\FatDir.c">
       <Filter>Fs\Fat</Filter>
     </ClCompile>
+    <ClCompile Include="Net\netserv.c">
+      <Filter>Serv</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Hal">

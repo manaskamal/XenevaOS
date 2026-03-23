@@ -84,7 +84,6 @@ AuSHM* AuGetSHMSeg(uint16_t key) {
 * @return Pointer to shm on success, NULL on failure
 */
 AuSHM* AuGetSHMByID(uint16_t id) {
-	UARTDebugOut("SHM ID : %d , shm_list : %x \r\n", id, shm_list);
 	for (int i = 0; i < shm_list->pointer; i++) {
 		AuSHM* shm = (AuSHM*)list_get_at(shm_list, i);
 		if (shm->id == id)
@@ -224,12 +223,9 @@ void* AuSHMObtainMem(AuProcess* proc, uint16_t id, void* shmaddr, int shmflg) {
 	//AuAcquireSpinlock(shmlock);
 	AuSHM* mem = NULL;
 
-	UARTDebugOut("Obtaining shm %d \r\n", id);
-
 	/* search for shm memory segment */
 	mem = AuGetSHMByID(id);
 
-	UARTDebugOut("Mem got : %x \r\n", mem);
 	if (!mem)
 		return NULL;
 
@@ -299,7 +295,7 @@ void* AuSHMObtainMem(AuProcess* proc, uint16_t id, void* shmaddr, int shmflg) {
 		}
 		last_addr = maps->start_addr + maps->length;
 	}
-	UARTDebugOut("SHM Till here \r\n");
+
 	if (!have_mappings) {
 		size_t start_addr = USER_SHARED_MEM_START;
 		if (proc->shm_break > start_addr) {
@@ -338,7 +334,6 @@ void* AuSHMObtainMem(AuProcess* proc, uint16_t id, void* shmaddr, int shmflg) {
 	/* Now order the list, in ascending order */
 	AuSHMProcOrderList(proc);
 	//AuReleaseSpinlock(shmlock);
-	UARTDebugOut("Mapping returning : %x \r\n", mappings->start_addr);
 	return (void*)mappings->start_addr;
 }
 

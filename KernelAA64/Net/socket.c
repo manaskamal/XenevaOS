@@ -98,9 +98,11 @@ int AuRawSocketReceive(AuSocket* sock, msghdr* msg, int flags) {
 }
 
 int AuRawSocketSend(AuSocket* sock, msghdr* msg, int flags) {
+	UARTDebugOut("Socket sending : %x \r\n", sock->binedDev);
 	if (!sock->binedDev) return -1;
 	if (msg->msg_iovlen == 0) return 0;
 	AuVFSNode* device = (AuVFSNode*)sock->binedDev;
+	UARTDebugOut("****/////******socket device name : %s \r\n", device->filename);
 	device->write(device, device, (uint64_t*)msg->msg_iov[0].iov_base, msg->msg_iov[0].iov_len);
 	return 0;
 }
@@ -113,12 +115,13 @@ int AuRawSocketSend(AuSocket* sock, msghdr* msg, int flags) {
 
 int AuSocketSOSocket(AuSocket* sock, int optname, const void* optval, socklen_t optlen) {
 	switch (optname) {
-	case SO_BINDTODEVICE: {   SeTextOut("Device binding ->%s \r\n", ((char*)optval));
+	case SO_BINDTODEVICE: {   UARTDebugOut("Device binding ->%s \r\n", ((char*)optval));
 		//if (optlen < 1 || optlen > 32 || ((const char*)optval)[optlen - 1] != 0) return -1;  
 		AuVFSNode* nic = AuGetNetworkAdapter((char*)optval);
+		UARTDebugOut("NIC : %x \r\n", nic);
 		if (!nic) return -1;
 		sock->binedDev = nic;
-		SeTextOut("Device binded \r\n");
+		UARTDebugOut("Device binded \r\n");
 		return 0;
 	}
 	}
@@ -311,6 +314,7 @@ int AuCreateRawSocket(int type, int protocol) {
 	AuSocket* sock = AuNetCreateSocket();
 	sock->receive = AuRawSocketReceive;
 	sock->send = AuRawSocketSend;
+	UARTDebugOut("*****///Raw Socket created %x\r\n", sock);
 	int fd = AuProcessGetFileDesc(proc);
 	list_add(raw_socket_list, sock);
 	AuVFSNode* node = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));

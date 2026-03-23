@@ -77,7 +77,6 @@ void AuMmngrAddFileBack(AuMMFileBack* fb) {
 	}
 	fb_last = fb;
 	data_cache_flush(fb);
-	UARTDebugOut("[aurora]: mmfile added : %s \r\n", fb->file->filename);
 }
 
 /**
@@ -85,7 +84,6 @@ void AuMmngrAddFileBack(AuMMFileBack* fb) {
 * @param thread -- thread address to remove
 */
 void AuMmngrRemoveFileBack(AuMMFileBack* fb) {
-	UARTDebugOut("Removing File back : %x \r\n", fb);
 	if (fb_first == NULL)
 		return;
 

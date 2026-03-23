@@ -202,12 +202,10 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) 
 		fb->file = file;
 		AuMmngrAddFileBack(fb);
 	}
-	UARTDebugOut("File found : %s \n", file->filename);
 	if (!file) {
 		UARTDebugOut("No File found -> %s \r\n", filename);
 		return -1;
 	}
-	UARTDebugOut("file found : %s \n", filename);
 	AuMMPageCache* pcache = fb->pageCache;
 	int sbIndex = 0;
 	while (file->eof != 1) {
@@ -336,7 +334,6 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) 
 	proc->main_thread = thr;
 	file->current = file->first_block;
 	file->eof = 0;
-	UARTDebugOut("Binary mapped , thread id : %d\n", thr->thread_id);
 	return 0;
 }
 /**

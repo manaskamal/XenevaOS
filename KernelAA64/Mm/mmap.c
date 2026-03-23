@@ -326,7 +326,6 @@ void* CreateMemMapping(void* address, size_t len, int prot, int flags, int fd,
  * @param prot -- protection flags
  */
 void MemMapDirty(void* startingVaddr, size_t len, int flags, int prot) {
-	UARTDebugOut("MemMapDirty called \n");
 	AA64Thread* curr_thr = AuGetCurrentThread();
 	AuProcess* proc = AuProcessFindThread(curr_thr);
 	if (!proc) {
@@ -370,7 +369,6 @@ void MemMapDirty(void* startingVaddr, size_t len, int flags, int prot) {
 	if (!AuVMAreaGet(proc, (size_t)startingVaddr)) {
 		AuVMArea* area = AuVMAreaCreate((size_t)startingVaddr, ((uint64_t)startingVaddr + len), 0, len, VM_EXEC);
 		list_add(proc->vmareas, area);
-		UARTDebugOut("VMArea added for %s : %x-%x \r\n", proc->name, area->start, area->end);
 	}
 }
 

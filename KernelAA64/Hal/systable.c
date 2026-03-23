@@ -43,6 +43,7 @@
 #include <Fs/vfs.h>
 #include <Fs/tty.h>
 #include <Fs/vdisk.h>
+#include <Net/socket.h>
 
 #define AURORA_MAX_SYSCALL 58
 
@@ -118,14 +119,14 @@ static void* syscalls[AURORA_MAX_SYSCALL] = {
 	ProcessGetFileDesc, //43
 	FileSetOffset, //44
 	0, //45
-	0, //46
-	0, //47
-	0, //48
-	0, //49
-	0, //50
-	0, //51
-	0, //52
-	0, //53
+	AuCreateSocket, //46
+	NetConnect, //47
+	NetSend, //48
+	NetReceive, //49
+	AuSocketSetOpt, //50
+	NetBind, //51
+	NetAccept, //52
+	NetListen, //53
 	0, //54
 	AuGetVDiskInfo, //55, 
 	AuGetVDiskPartitionInfo, //56

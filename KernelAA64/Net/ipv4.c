@@ -107,10 +107,10 @@ int CreateIPv4Socket(int type, int protocol) {
 	case SOCK_DGRAM:
 		if (protocol == 0 || protocol == IPPROTOCOL_UDP) {
 			UARTDebugOut("[aurora]: ipv4 udp protocol created \r\n");
-			return 0; // CreateUDPSocket();
+		    return CreateUDPSocket();
 		}if (protocol == IPPROTOCOL_ICMP) {
 			UARTDebugOut("[aurora]: ipv4 icmp protocol created \r\n");
-			return 0; // CreateICMPSocket();
+			return CreateICMPSocket();
 		}
 	case SOCK_STREAM: {
 		UARTDebugOut("[aurora]: tcp protocol created \r\n");

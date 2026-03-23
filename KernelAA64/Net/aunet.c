@@ -69,7 +69,7 @@ void AuInitialiseNet() {
  */
 void AuAddNetAdapter(AuVFSNode* netfs, char* name) {
 	AuHashmapSet(netadapters, name, netfs);
-
+	UARTDebugOut("NetAdapter adding : %x \r\n", name);
 	AuVFSNode* fs = AuVFSFind("/dev");
 	AuDevFSAddFile(fs, "/dev/net", netfs);
 }
@@ -93,7 +93,7 @@ AuVFSNode* AuNetworkRoute(uint32_t address) {
 	/*if (address == 0x0100007F)*/ /* loop device */
 	AuRouteEntry* rt = AuRouteTableDoRouteLookup(address);
 	if (!rt)
-		return AuGetNetworkAdapter("e1000");
+		return AuGetNetworkAdapter("virtio-net");
 	return AuGetNetworkAdapter(rt->ifname);
 }
 

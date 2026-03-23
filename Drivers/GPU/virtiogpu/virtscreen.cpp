@@ -196,7 +196,7 @@ static void virt_gpu_put_pxl(uint32_t x, uint32_t y, uint32_t color) {
  * @param color -- color to fill with
  */
 void virt_gpu_fill_screen(uint32_t width, uint32_t height, uint32_t color) {
-	for (int i = 0; i < width; i++)
-		for (int j = 0; j < height; j++)
-			virt_gpu_put_pxl(i, j, color);
+	for (int i = 0; i < height; i++)
+		for (int j = 0; j < width; j++)
+			virt_gpu_put_pxl(j, i, color);
 }

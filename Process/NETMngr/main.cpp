@@ -267,7 +267,7 @@ int main(int argc, char* argv[]){
 	/* for now we have only ethernet driver, so
 	 * we will use that
 	 */
-	int e1000 = _KeOpenFile("/dev/net/e1000", FILE_OPEN_READ_ONLY);
+	int e1000 = _KeOpenFile("/dev/net/virtio-net", FILE_OPEN_READ_ONLY);
 	
 
 	_KeFileIoControl(e1000, NET_GET_HARDWARE_ADDRESS, mac);
@@ -275,7 +275,7 @@ int main(int argc, char* argv[]){
 	int sock_fd = socket(AF_RAW, SOCK_RAW, 0);
 	
 	char ifname[5];
-	strcpy(ifname, "e1000");
+	strcpy(ifname, "virtio-net");
 
 	socket_setopt(sock_fd, SOL_SOCKET, SO_BINDTODEVICE, ifname,strlen(ifname) + 1);
 	
@@ -297,7 +297,7 @@ int main(int argc, char* argv[]){
 
 	XERouteEntry* rtentry = (XERouteEntry*)malloc(sizeof(XERouteEntry));
 	rtentry->ifname = (char*)malloc(strlen("e1000"));
-	strcpy(rtentry->ifname, "e1000");
+	strcpy(rtentry->ifname, "virtio-net");
 	bool rt_entry_filled = false;
 	while (1) {
 		int size = socket_receive(sock_fd, buf, 4096, 0);

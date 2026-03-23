@@ -418,6 +418,7 @@ void NamdaphaPlayStartupSound() {
 	}
 }
 
+extern void NamdaphaGetOnlineTime();
 /*
 * main -- namdapha entry point
 */
@@ -509,6 +510,8 @@ int main(int argc, char* arv[]){
 
 	gomenuh = ChGetWindowHandle(app, "Xeneva Launcher");
 	gobutton->winHandle = gomenuh;
+
+	NamdaphaGetOnlineTime();
 	
 	//NamdaphaPlayStartupSound();
 

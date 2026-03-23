@@ -58,9 +58,12 @@ struct VirtioQueue* txqueue;
 virtio_net_hdr_t* rx_hdrs;
 static uint16_t queueSz;
 static uint16_t index;
+static uint16_t tx_index;
 volatile uint8_t* notifyBase;
 uint32_t notifyOffMultiplier;
+VirtioCommonCfg* _cfg;
 AuVFSNode* nic;
+AuNetworkDevice* ndev;
 
 /**
  * VirtioNetCfg -- virtio net configuration
@@ -230,7 +233,7 @@ void AuVirtioNetTxinitialize(struct VirtioCommonCfg* common) {
 	dsb_ish();
 	uint16_t qsize = common->QueueSize;
 	UARTDebugOut("[aurora]: tx queue size : %d \r\n", qsize);
-	uint64_t queuePhys = (uint64_t)AuPmmngrAlloc();//AuPmmngrAllocBlocks(((sizeof(struct VirtioQueue) * queueSz)) / 0x1000);
+	uint64_t queuePhys = (uint64_t)AuPmmngrAlloc();
 	txqueue = (struct VirtioQueue*)AuMapMMIO(queuePhys, 1);
 	common->QueueDesc = queuePhys;
 	common->QueueAvail = (queuePhys)+OFFSETOF(struct VirtioQueue, available);
@@ -246,7 +249,7 @@ void AuVirtioNetTxinitialize(struct VirtioCommonCfg* common) {
 	for (int i = 0; i < TX_BUFFER_COUNT; i++) {
 		txqueue->buffers[i].Addr = txbuff + (i * 2048);
 		txqueue->buffers[i].Length = TX_BUFFER_SIZE;
-		txqueue->buffers[i].Flags = 2;
+		txqueue->buffers[i].Flags = 0;
 		txqueue->buffers[i].Next = 0;
 		txqueue->available.ring[i] = i;
 	}
@@ -262,6 +265,93 @@ void AuVirtioNetTxinitialize(struct VirtioCommonCfg* common) {
 	UARTDebugOut("[aurora]: virtio tx queue initialized \r\n");
 }
 
+#define VIRTIO_NET_HDR_GSO_NODE 0
+
+void AuVirtioTransmit(void* packet, uint16_t len) {
+	uint16_t idx = tx_index % TX_BUFFER_COUNT;
+	uint16_t idx1 = (tx_index + 1) % TX_BUFFER_COUNT;
+	uint8_t* buff = (uint8_t*)P2V(txqueue->buffers[idx].Addr);
+	uint8_t* buff1 = (uint8_t*)P2V(txqueue->buffers[idx1].Addr);
+	memset(buff, 0, 2048);
+	memset(buff1, 0, 2048);
+
+	virtio_net_hdr_t* hdr = (virtio_net_hdr_t*)buff;
+	hdr->flags = 0;
+	hdr->gso_type = VIRTIO_NET_HDR_GSO_NONE;
+	hdr->gso_size = 0;
+	hdr->csum_start = 0;
+	hdr->csum_offset = 0;
+	hdr->hdr_len = 0;
+	memcpy(buff1, packet, len);
+
+	uint16_t total_len = len + sizeof(virtio_net_hdr_t);
+	txqueue->buffers[idx].Length = total_len;
+	txqueue->buffers[idx].Flags = 1;
+	txqueue->buffers[idx].Next = idx1;
+
+	txqueue->buffers[idx1].Length = total_len;
+	txqueue->buffers[idx1].Flags = 0;
+	txqueue->buffers[idx1].Next = 0;
+
+	txqueue->available.ring[idx % queueSz] = idx;
+	dsb_ish();
+	isb_flush();
+
+	txqueue->available.index++;
+
+	dsb_ish();
+	isb_flush();
+
+	AuVirtioNetNotifyQueue(_cfg, 1);
+	tx_index+= 2;
+}
+
+
+AU_EXTERN AU_EXPORT size_t AuVirtioWrite(AuVFSNode* node, AuVFSNode* file, uint64_t* buffer, uint32_t len) {
+	UARTDebugOut("VirtioNetWrite \r\n");
+	AuVirtioTransmit(buffer, len);
+	return len;
+}
+
+/**
+ * @brief VirtioNetIOCtl -- io control codes
+ */
+AU_EXTERN AU_EXPORT int VirtioNetIOCtl(AuVFSNode* file, int code, void* arg) {
+	switch (code) {
+	case AUNET_GET_HARDWARE_ADDRESS:
+		if (!arg)
+			return 1;
+		memcpy(arg, ndev->mac, 6);
+		return 0;
+	case AUNET_GET_IPV4_ADDRESS:
+		if (!ndev) return 1; //corrupted something
+		if (ndev->ipv4addr == 0) return -1; //no internet
+		memcpy(arg, &ndev->ipv4addr, sizeof(ndev->ipv4addr));
+		return 0;
+
+	case AUNET_SET_IPV4_ADDRESS:
+		if (!ndev) return 1; //corrupted something
+		memcpy(&ndev->ipv4addr, arg, sizeof(ndev->ipv4addr));
+		return 0;
+
+	case AUNET_GET_GATEWAY_ADDRESS:
+		memcpy(arg, &ndev->ipv4gateway, sizeof(ndev->ipv4gateway));
+		return 0;
+	case AUNET_SET_GATEWAY_ADDRESS:
+		memcpy(&ndev->ipv4gateway, arg, sizeof(ndev->ipv4gateway));
+		return 0;
+	case AUNET_GET_SUBNET_MASK:
+		memcpy(arg, &ndev->ipv4subnet, sizeof(ndev->ipv4subnet));
+		return 0;
+	case AUNET_SET_SUBNET_MASK:
+		memcpy(&ndev->ipv4subnet, arg, sizeof(ndev->ipv4subnet));
+		return 0;
+	case AUNET_GET_LINK_STATUS:
+		memcpy(arg, &ndev->linkStatus, sizeof(ndev->linkStatus));
+		return 0;
+	}
+	return 1;
+}
 /**
  * @brief AuVirtioNetInitialize -- initialize the virtio network device
  * @param device -- device address passed by PCIe
@@ -272,6 +362,7 @@ void AuVirtioNetInitialize(uint64_t device) {
 	int func = 0;
 	int dev = 0;
 	index = 0;
+	tx_index = 0;
 
 	uint16_t command = AuPCIERead(device, PCI_COMMAND, bus, dev, func);
 	command |= 4;
@@ -284,7 +375,7 @@ void AuVirtioNetInitialize(uint64_t device) {
 	uint64_t barLo = AuPCIERead(device, PCI_BAR4, bus, dev, func);
 	uint64_t barHi = AuPCIERead(device, PCI_BAR5, bus, dev, func);
 	uint64_t bar = ((uint64_t)barHi << 32) | (barLo & ~0xFULL);
-	uint64_t finalAddr = (uint64_t)AuMapMMIO(bar, 2);
+	uint64_t finalAddr = (uint64_t)AuMapMMIO(bar, 1);
 
 
 	uint8_t cap_ptr = AuPCIERead(device, PCI_CAPABILITIES_PTR, bus, dev, func);
@@ -298,7 +389,7 @@ void AuVirtioNetInitialize(uint64_t device) {
 				//break;
 			}
 			if (cap->cfg_type == 2) { //NOTIFY_CFG
-				notifyBase = (volatile uint8_t*)(bar + cap->offset);
+				notifyBase = (volatile uint8_t*)AuMapMMIO(bar + cap->offset, 1);
 				struct virtio_notifier_cap* notify = (struct virtio_notifier_cap*)cap;
 				notifyOffMultiplier = notify->notifer_mult_base;
 				UARTDebugOut("[virtio-net]: notify base : %x , off : %x\n", notifyBase, cap->offset);
@@ -308,7 +399,9 @@ void AuVirtioNetInitialize(uint64_t device) {
 		cap_ptr = cap->cap_next;
 	}
 
-	struct VirtioCommonCfg* common = (struct VirtioCommonCfg*)bar;
+	struct VirtioCommonCfg* common = (struct VirtioCommonCfg*)finalAddr;
+	_cfg = common;
+
 	AuVirtioNetReset(common);
 
 	struct VirtioNetCfg* netcfg = (struct VirtioNetCfg*)(bar + devcfg_offset);
@@ -350,7 +443,7 @@ void AuVirtioNetInitialize(uint64_t device) {
 	isb_flush();
 	dsb_ish();
 
-	AuNetworkDevice* ndev = (AuNetworkDevice*)kmalloc(sizeof(AuNetworkDevice));
+	ndev = (AuNetworkDevice*)kmalloc(sizeof(AuNetworkDevice));
 	memset(ndev, 0, sizeof(AuNetworkDevice));
 	ndev->type = NETDEV_TYPE_ETHERNET;
 	ndev->linkStatus = 1;
@@ -367,12 +460,12 @@ void AuVirtioNetInitialize(uint64_t device) {
 	memset(adapt, 0, sizeof(AuVFSNode));
 	strcpy(adapt->filename, "virtio-net");
 	adapt->flags = FS_FLAG_DEVICE;
-	adapt->write = 0;
+	adapt->write = AuVirtioWrite;
 	adapt->read = 0;
-	adapt->iocontrol = 0;
+	adapt->iocontrol = VirtioNetIOCtl;
 	adapt->device = ndev;
 
-	AuAddNetAdapter(adapt, "virtio-net");
+	AuAddNetAdapter(adapt, adapt->filename);
 	nic = adapt;
 	UARTDebugOut("[aurora]: virtio-net-dev initialized successfully \r\n");
 }

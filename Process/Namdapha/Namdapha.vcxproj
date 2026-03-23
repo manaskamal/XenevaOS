@@ -32,6 +32,7 @@
     <ClCompile Include="NamdaphaButton.cpp" />
     <ClCompile Include="nmGoButton.cpp" />
     <ClCompile Include="section.cpp" />
+    <ClCompile Include="_gettime.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="nmdapha.h" />

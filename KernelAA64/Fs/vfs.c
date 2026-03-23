@@ -163,7 +163,6 @@ AU_EXTERN AU_EXPORT AuVFSNode* AuVFSOpen(char* path) {
 		//else executing rest of the code
 	}
 	if (fs == __RootFS) {
-		UARTDebugOut("VFSOpening filename : %s \r\n", path);
 		/* just skip the '/' from the path */
 		char* next = strchr(path, '/');
 		if (next)
@@ -195,7 +194,6 @@ AU_EXTERN AU_EXPORT AuVFSNode* AuVFSOpen(char* path) {
 			next += i;
 		dsb_ish();
 		dsb_sy_barrier();
-		UARTDebugOut("next : %s \r\n", next);
 
 		if (fs->open) {
 			//AA64SleepUS(600);

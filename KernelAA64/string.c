@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <_null.h>
 #include <string.h>
+#include <Mm/kmalloc.h>
 
 #define MAX_STRING_LENGTH 4095
 
@@ -223,8 +224,8 @@ char* strncat(char* destString, const char* sourceString, size_t maxLength)
 }
 
 char* strdup(const char* c) {
-	char* out = (char*)0; // kmalloc(strlen(c) + 1);
-	//memcpy(out, (void*)c, strlen(c) + 1);
+	char* out = (char*)kmalloc(strlen(c) + 1);
+	memcpy(out, (void*)c, strlen(c) + 1);
 	return out;
 }
 

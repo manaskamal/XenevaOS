@@ -600,10 +600,6 @@ int main(int argc, char* argv[]){
 
 	ChWindowBroadcastIcon(app, "/icons/file.bmp");
 
-	_KePrint("Creating file thread \r\n");
-	int thr = _KeCreateThread(&_FileMngrThr, "FileThr");
-	_KePrint("File thread created \r\n");
-
 	PostEvent e;
 	memset(&e, 0, sizeof(PostEvent));
 

@@ -119,7 +119,12 @@ extern "C" void main(int argc, char* argv[]) {
 	}
 
 #ifdef ARCH_ARM64
-	int proc = _KeCreateProcess(0, "deodhaixr");
+	int proc = _KeCreateProcess(0, "netmngr");
+	_KeProcessLoadExec(proc, "/netmngr.exe\0", 0, NULL);
+
+	_KeProcessSleep(20);
+
+	proc = _KeCreateProcess(0, "deodhaixr");
 	_KeProcessLoadExec(proc, "/deodxr.exe\0", 0, NULL);
 #elif ARCH_X64
 	int proc = _KeCreateProcess(0, "deodhai");

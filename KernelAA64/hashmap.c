@@ -32,6 +32,7 @@
 #include <hashmap.h>
 #include <string.h>
 #include <_null.h>
+#include <Drivers/uart.h>
 #include <Mm\kmalloc.h>
 
 unsigned int hashmap_string_hash(const void* _key) {
@@ -101,6 +102,7 @@ hashmap_t* AuHashmapCreateInt(int size) {
 
 void* AuHashmapSet(hashmap_t* map, const void* key, void* value) {
 	unsigned int hash = map->hash_func(key) % map->size;
+	UARTDebugOut("[[Hashmap func : %d \r\n", hash);
 	hashmap_entry_t* x = map->entries[hash];
 	if (!x) {
 		hashmap_entry_t* e = (hashmap_entry_t*)kmalloc(sizeof(hashmap_entry_t));
@@ -134,12 +136,14 @@ void* AuHashmapSet(hashmap_t* map, const void* key, void* value) {
 
 void* AuHashmapGet(hashmap_t* map, const void* key) {
 	unsigned int hash = map->hash_func(key) % map->size;
+	UARTDebugOut("Hashget hash : %d \r\n", hash);
 	hashmap_entry_t* x = map->entries[hash];
 	if (!x) {
 		return NULL;
 	}
 	else {
 		do {
+			UARTDebugOut("Hasmap hash key : %x \r\n", x->key);
 			if (map->hash_comp(x->key, key))
 				return x->value;
 			x = x->next;
