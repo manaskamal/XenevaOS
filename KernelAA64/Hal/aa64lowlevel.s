@@ -173,6 +173,11 @@ get_cntpct_el0:
      mrs x0, CNTPCT_EL0
      ret
 
+.global get_cntvct_el0
+get_cntvct_el0:
+     mrs x0, CNTVCT_EL0
+     ret
+
 .global get_cntfrq_el0
 get_cntfrq_el0:
      mrs x0, CNTFRQ_EL0

@@ -35,6 +35,7 @@
 #include <_null.h>
 #include <Hal/AA64/aa64lowlevel.h>
 #include <Drivers/uart.h>
+#include <Hal/AA64/profile.h>
 #include <Hal/AA64/aa64cpu.h>
 
 /**  Durand's Ridiculously Amazing Super Duper Memory functions.  */
@@ -367,7 +368,6 @@ static struct boundary_tag* allocate_new_tag(unsigned int size)
 
 void* port_malloc(unsigned int size)
 {
-	
 	size = (size + 7) & ~7;
 
 	int index;
@@ -471,7 +471,6 @@ void* port_malloc(unsigned int size)
 	dump_array();
 #endif
 	dmb_sy();
-
 	liballoc_unlock();
 	return ptr;
 }
@@ -561,7 +560,6 @@ void port_free(void* ptr)
 			printf("Resource freeing %x of %i pages\n", tag, pages);
 			dump_array();
 #endif
-
 			liballoc_unlock();
 			return;
 		}

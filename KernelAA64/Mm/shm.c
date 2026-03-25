@@ -38,6 +38,7 @@
 #include <aucon.h>
 #include <_null.h>
 #include <string.h>
+#include <Hal/AA64/profile.h>
 #include <stdint.h>
 
 static list_t* shm_list;

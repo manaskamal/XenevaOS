@@ -35,6 +35,7 @@
 #include <va_list.h>
 #include <stdarg.h>
 #include <string.h>
+#include <stdio.h>
 
 uint64_t* uartMMIO;
 bool _uart_mapped = false;

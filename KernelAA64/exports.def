@@ -4,6 +4,7 @@ EXPORTS
      dsb_ish
      memset
      UARTDebugOut
+     AuTextOut
      enable_irqs
      mask_irqs
      dsb_sy_barrier

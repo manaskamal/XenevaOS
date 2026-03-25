@@ -36,6 +36,7 @@
 #include <Mm/liballoc/liballoc.h>
 #include <aucon.h>
 #include <Sync/spinlock.h>
+#include <Hal/AA64/profile.h>
 
 #ifndef _USE_LIBALLOC
 static meta_data_t* first_block;

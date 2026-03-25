@@ -271,6 +271,7 @@
     <ClCompile Include="Hal\aa64cpu.c" />
     <ClCompile Include="Hal\basicacpi.c" />
     <ClCompile Include="Hal\gic.c" />
+    <ClCompile Include="Hal\profile.c" />
     <ClCompile Include="Hal\sched.c" />
     <ClCompile Include="Hal\serial.c" />
     <ClCompile Include="Hal\systable.c" />
@@ -340,6 +341,7 @@
     <ClInclude Include="..\BaseHdr\Hal\AA64\aa64cpu.h" />
     <ClInclude Include="..\BaseHdr\Hal\AA64\aa64lowlevel.h" />
     <ClInclude Include="..\BaseHdr\Hal\AA64\gic.h" />
+    <ClInclude Include="..\BaseHdr\Hal\AA64\profile.h" />
     <ClInclude Include="..\BaseHdr\Hal\AA64\qemu.h" />
     <ClInclude Include="..\BaseHdr\Hal\AA64\rpi3.h" />
     <ClInclude Include="..\BaseHdr\Hal\AA64\sched.h" />

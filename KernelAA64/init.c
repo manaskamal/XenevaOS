@@ -58,7 +58,7 @@
 #include <Board/board.h>
 #include <Board/RPI3bp/rpi3bp.h>
 #include <Net/aunet.h>
-
+#include <Hal/AA64/profile.h>
 
 extern int _fltused = 1;
 static bool _littleboot_used;
@@ -172,6 +172,8 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
         _littleboot_used = true;
     }
 	bootinfo = info;
+	PROFILE_START("_AuMain");
+
 	AuConsoleInitialize(info, true);
     AuDeviceTreeInitialize(info);
 	AA64CpuInitialize();
@@ -237,6 +239,7 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 
 	AuTextOut("[aurora]: boot freed up \r\n");
 
+
 	AuSchedulerInitialize();
 	/*
 	AA64Thread* t3 = AuCreateKthread(AuEntryTest2, AuCreateVirtualAddressSpace(), "test2");
@@ -250,7 +253,7 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	argvs[0] = about;
 	AuLoadExecToProcess(proc, "/init.exe", num_args, argvs);
 	//AA64Thread* t2 = AuCreateKthread(AuEntryTest, AuCreateVirtualAddressSpace(), "test");
-
+	//PROFILE_END("_AuMain");
 	AuSchedulerStart();
 	while (1) {
 		//UARTDebugOut("Printing \n");

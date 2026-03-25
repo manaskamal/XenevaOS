@@ -493,7 +493,6 @@ bool AuRPIInitializeFramebuffer(uint32_t width, uint32_t height, uint32_t depth)
     info->bluemask = 0x000000FF;
     
 
-
     AuTextOut("FB painted \r\n");
     return true;
 }

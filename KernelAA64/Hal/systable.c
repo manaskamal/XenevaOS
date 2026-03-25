@@ -44,6 +44,7 @@
 #include <Fs/tty.h>
 #include <Fs/vdisk.h>
 #include <Net/socket.h>
+#include <Hal/AA64/profile.h>
 
 #define AURORA_MAX_SYSCALL 58
 
@@ -132,6 +133,67 @@ static void* syscalls[AURORA_MAX_SYSCALL] = {
 	AuGetVDiskPartitionInfo, //56
 	GetEnvironmenBlock, //57
 };
+
+//static char* syscall_name[AURORA_MAX_SYSCALL] = {
+//	"null_call", //0
+//	"UARTDebugOut", //1
+//	"PauseThread", //2
+//	"GetThreadID", //3
+//	"GetProcessID", //4
+//	"ProcessExit", //5
+//	"ProcessWaitForTermination", //6
+//	"CreateProcess", //7
+//	"ProcessLoadExec", //8
+//	"CreateSharedMem", //9
+//	"ObtainSharedMem", //10
+//	"UnmapSharedMem", //11
+//	"OpenFile", //12
+//	"CreateMemMapping", //13
+//	"UnmapMemMapping", //14
+//	"GetProcessHeapMem", //15
+//	"ReadFile", //16
+//	"WriteFile", //17
+//	0, //18
+//	0, //19
+//	"CloseFile", //20
+//	"FileIoControl", //21
+//	"FileStat", //22
+//	"ProcessSleep", //23
+//	0, //24
+//	0, //25
+//	"AuGetSystemTimerTick", //26
+//	"AuFTMngrGetFontID", //27
+//	"AuFTMngrGetNumFonts", //28
+//	"AuFTMngrGetFontSize", //29
+//	"MemMapDirty", //30
+//	"AuTTYCreate", //31
+//	"CreateUserThread", //32
+//	"SetFileToProcess", //33
+//	"ProcessHeapUnmap", //34
+//	0, //35
+//	0, //36
+//	"OpenDir", //37
+//	"ReadDir", //38
+//	0, //39
+//	0, //40
+//	0, //41
+//	0, //42
+//	"ProcessGetFileDesc", //43
+//	"FileSetOffset", //44
+//	0, //45
+//	"AuCreateSocket", //46
+//	"NetConnect", //47
+//	"NetSend", //48
+//	"NetReceive", //49
+//	"AuSocketSetOpt", //50
+//	"NetBind", //51
+//	"NetAccept", //52
+//	"NetListen", //53
+//	0, //54
+//	"AuGetVDiskInfo", //55, 
+//	"AuGetVDiskPartitionInfo", //56
+//	"GetEnvironmenBlock", //57
+//};
 
 
 extern void set_syscall_retval(uint64_t val);

@@ -34,6 +34,7 @@
 #include <Mm/vmmngr.h>
 #include <Drivers/uart.h>
 #include <efi.h>
+#include <Hal/AA64/profile.h>
 
 #define PAGE_SHIFT 12
 
@@ -312,7 +313,6 @@ bool AuPmmngrAllocCheck(uint64_t address) {
  * frame and return it to the caller
  */
 void* AuPmmngrAlloc() {
-	
 	//debugon = true;
 	for (; _RamBitmapIndex < _BitmapSize * 8; _RamBitmapIndex++) {
 		//AuTextOut("  RamBitmap[%d] -> %d   ",_RamBitmapIndex, RamBitmap[_RamBitmapIndex]);

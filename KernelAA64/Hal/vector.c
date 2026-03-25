@@ -41,6 +41,7 @@
 #include <_null.h>
 #include <Mm/vmarea.h>
 #include <Board/RPI3bp/rpi3bp.h>
+#include <Hal/AA64/profile.h>
 
 extern uint64_t read_sp();
 extern uint64_t read_sp_el1();
@@ -195,6 +196,7 @@ void irq_el1_handler(AA64Registers* regs) {
         GICCallSPIHandler(irq);
         GICSendEOI(iar);
     }
+
 #endif
 }
 

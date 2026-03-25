@@ -27,7 +27,8 @@
 *
 **/
 .extern UARTDebugOut_Call
-.extern AuTestPrint
+.extern AuTextOut_Call
+
 
 .global UARTDebugOut
 UARTDebugOut:
@@ -41,15 +42,41 @@ UARTDebugOut:
     stp x4, x5, [sp,#32]
     stp x6,x7,[sp,#48]
 
-    //stp q0,q1,[sp,#64]
-    //stp q2,q3,[sp,#96]
-    //stp q4,q5,[sp,#128]
-    //stp q6,q7,[sp,#160]
+    stp q0,q1,[sp,#64]
+    stp q2,q3,[sp,#96]
+    stp q4,q5,[sp,#128]
+    stp q6,q7,[sp,#160]
 
     ldr x0,[sp,#0]
     mov x1,sp
     mov x2,x9
     bl UARTDebugOut_Call
+    add sp, sp, #(64+128+16)
+    ldp x29,x30,[sp],#16
+    ret
+
+
+.global AuTextOut_profiler
+AuTextOut_profiler:
+    mov x9, sp 
+    stp x29,x30,[sp,#-16]!
+    mov x29, sp
+
+    sub sp, sp, #(64+128+16)
+    stp x0, x1, [sp,#0]
+    stp x2, x3, [sp,#16]
+    stp x4, x5, [sp,#32]
+    stp x6,x7,[sp,#48]
+
+    stp q0,q1,[sp,#64]
+    stp q2,q3,[sp,#96]
+    stp q4,q5,[sp,#128]
+    stp q6,q7,[sp,#160]
+
+    ldr x0,[sp,#0]
+    mov x1,sp
+    mov x2,x9
+    bl AuTextOutpro_Call
     add sp, sp, #(64+128+16)
     ldp x29,x30,[sp],#16
     ret

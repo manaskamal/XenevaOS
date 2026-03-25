@@ -468,6 +468,96 @@ void AuTextOut(const char* format, ...) {
 
 }
 
+
+/**
+ * @brief AuTextOut -- standard text printing function
+ * for entire kernel
+ * @param text -- text to output
+ */
+void AuTextOutpro_Call(const char* format, void* reg_save_area, void* entry_sp) {
+	va_list args = ((va_list)reg_save_area + 8);
+	while (*format)
+	{
+		if (*format == '%')
+		{
+			++format;
+			if (*format == 'd')
+			{
+				size_t width = 0;
+				if (format[1] == '.')
+				{
+					for (size_t i = 2; format[i] >= '0' && format[i] <= '9'; ++i)
+					{
+						width *= 10;
+						width += format[i] - '0';
+					}
+				}
+				size_t i = va_arg(args, size_t);
+				char buffer[sizeof(size_t) * 8 + 1];
+				//	size_t len
+				if ((int)i < 0) {
+					AuPutS("-");
+					i = ((int)i * -1);
+					sztoa(i, buffer, 10);
+				}
+				else {
+					sztoa(i, buffer, 10);
+					size_t len = strlen(buffer);
+				}
+				/*	while (len++ < width)
+				puts("0");*/
+				AuPutS(buffer);
+			}
+			else if (*format == 'c')
+			{
+				char c = va_arg(args, char);
+				//char buffer[sizeof(size_t) * 8 + 1];
+				//sztoa(c, buffer, 10);
+				//puts(buffer);
+				AuPutC(c);
+			}
+			else if (*format == 'x')
+			{
+				size_t x = va_arg(args, size_t);
+				char buffer[sizeof(size_t) * 8 + 1];
+				sztoa(x, buffer, 16);
+				//puts("0x");
+				AuPutS(buffer);
+			}
+			else if (*format == 's')
+			{
+				char* x = va_arg(args, char*);
+				AuPutS(x);
+			}
+			else if (*format == 'f')
+			{
+				double x = va_arg(args, double);
+				AuPutS(ftoa(x, 2));
+			}
+			else if (*format == '%')
+			{
+				AuPutS(".");
+			}
+			else
+			{
+				char buf[3];
+				buf[0] = '%'; buf[1] = *format; buf[2] = '\0';
+				AuPutS(buf);
+			}
+		}
+		else
+		{
+			char buf[2];
+			buf[0] = *format; buf[1] = '\0';
+			AuPutS(buf);
+		}
+		++format;
+	}
+	va_end(args);
+
+}
+
+
 /**
  * @brief AuConsoleEarlyEnable -- enables or disable early
  * mode text output

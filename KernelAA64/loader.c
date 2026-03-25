@@ -43,6 +43,7 @@
 #include <ftmngr.h>
 #include <Mm/mmfile.h>
 #include <_null.h>
+#include <Hal/AA64/profile.h>
 
 #define LOADER_SCRATCH_VIRT 0xFFFFC00000700000
 
@@ -177,7 +178,6 @@ extern bool setStk();
  * @return 0 on success -1 on failure
  */
 int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) {
-
 	/* verify the filename, it can only be '.exe' file no '.dll' or other */
 	char* v_ = strchr(filename, '.');
 	

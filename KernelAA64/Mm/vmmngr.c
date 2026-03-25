@@ -38,6 +38,7 @@
 #include <kernelAA64.h>
 #include <_null.h>
 #include <Drivers/uart.h>
+#include <Hal/AA64/profile.h>
 
 
 uint64_t* _RootPaging;

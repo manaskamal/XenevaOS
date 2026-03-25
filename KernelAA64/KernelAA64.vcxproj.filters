@@ -176,6 +176,9 @@
     <ClCompile Include="Net\netserv.c">
       <Filter>Serv</Filter>
     </ClCompile>
+    <ClCompile Include="Hal\profile.c">
+      <Filter>Hal</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Hal">
@@ -314,6 +317,9 @@
     </ClInclude>
     <ClInclude Include="..\BaseHdr\Mm\mmfile.h">
       <Filter>Include\Mm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\Hal\AA64\profile.h">
+      <Filter>Include\Hal</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
