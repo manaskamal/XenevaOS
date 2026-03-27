@@ -369,12 +369,15 @@ int XEPrintf(wchar_t* fmt, ...) {
 	return 0;
 }
 
+extern bool _is_GraphicsEnabled();
 
 /*
  * XEGuiPrint -- print formated text using graphics
  * @param format -- formated string
  */
 void XEGuiPrint(const char* format, ...) {
+	if (!_is_GraphicsEnabled())
+		return;
 	/* Hacky, printf implementation, it doesn't automatically
 	 * store the registered in stack, rather in a shadow area
 	 * and i don't know how to access those

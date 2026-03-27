@@ -31,6 +31,7 @@
 #include <Guid/DebugImageInfoTable.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/UefiLib.h>
+#include <Guid/SystemResourceTable.h>
 #include "xnldr.h"
 #include "video.h"
 #include "file.h"
@@ -49,7 +50,7 @@ EFI_BOOT_SERVICES* gBS;
 EFI_RUNTIME_SERVICES* gRS;
 EFI_LOADED_IMAGE_PROTOCOL* xnldr2;
 EFI_GRAPHICS_OUTPUT_PROTOCOL* gop;
-
+static bool _is_graphics_enabled;
 
 #define ACPI_20_TABLE_GUID  {0x8868e871, 0xe4f1, 0x11d3, 0xbc, 0x22, 0x00, 0x80, 0xc7, 0x3c, 0x88, 0x81}
 
@@ -70,6 +71,20 @@ bool XEGUIDMatch(EFI_GUID guid1, EFI_GUID guid2) {
 	return true;
 }
 
+int XECompareGUID(const EFI_GUID* Guid1, const EFI_GUID* Guid2) {
+	if (Guid1->Data1 != Guid2->Data1 ||
+		Guid1->Data2 != Guid2->Data2 ||
+		Guid1->Data3 != Guid2->Data3)
+		return 1;
+
+	for (int i = 0; i < 8; i++) {
+		if (Guid1->Data4[i] != Guid2->Data4[i])
+			return 1;
+	}
+
+	return 0;
+}
+
 /*
  * XEInitialiseLib -- initialise the UEFI library
  * @param ImageHandle -- Pointer to EFI_HANDLE
@@ -80,7 +95,7 @@ EFI_STATUS XEInitialiseLib(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable
 	gSystemTable = SystemTable;
 	gBS = gSystemTable->BootServices;
 	gRS = gSystemTable->RuntimeServices;
-
+	_is_graphics_enabled = false;
 	EFI_STATUS Status;
 	EFI_GUID loadedimageprot = EFI_LOADED_IMAGE_PROTOCOL_GUID;
 	EFI_LOADED_IMAGE_PROTOCOL* loadedimage = nullptr;
@@ -192,6 +207,7 @@ UINTN XESetGraphicsMode(EFI_SYSTEM_TABLE* SystemTable, int index) {
 	Status = gBS->LocateProtocol(&gopguid, NULL, (VOID**)&GraphicsOutput);
 	if (EFI_ERROR(Status)) {
 		XEPrintf(const_cast<wchar_t*>(L"XNLDR 2.0 Failed to locate Graphics Output protocol \r\n"));
+		_is_graphics_enabled = false;
 		return Status;
 	}
 
@@ -219,7 +235,7 @@ typedef void (*kentry)(void* ptr);
 
 EFI_GUID FdtTableGuid = {
 	0xb1b621d5, 0xf19c, 0x41a5,
-	{0x83,0x06,0x73,0x0c,0xc1, 0x9b, 0x91, 0x6a}
+	{0x83,0x0b,0xd9,0x15,0x2c, 0x69, 0xaa, 0xe0}
 };
 
 
@@ -283,7 +299,33 @@ void XEExitEL2() {
 	for (;;);
 }
 
+typedef struct {
+	uint32_t magic;
+	uint32_t totalSize;
+	uint32_t off_dt_struct;
+	uint32_t off_dt_strings;
+	uint32_t off_mem_rsvmap;
+	uint32_t version;
+	uint32_t last_comp_version;
+	uint32_t boot_cpuid_phys;
+	uint32_t size_dt_strings;
+	uint32_t size_dt_struct;
+}fdt_header_t;
 
+/**
+ * @brief AuDTBSwap32 -- swaps 32 bit value
+ * @param from -- value to swap
+ */
+uint32_t AuDTBSwap32(uint32_t from) {
+	uint8_t a = from >> 24;
+	uint8_t b = from >> 16;
+	uint8_t c = from >> 8;
+	uint8_t d = from;
+	return (d << 24) | (c << 16) | (b << 8) | a;
+}
+
+
+extern void* XEDTBGetHardcodeAddress();
 /*
  * efi_main -- main entry of XNLDR 2.0
  * @param ImageHandle -- System parameter
@@ -303,6 +345,8 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
 	XEGuiPrint("Copyright (C) Manas Kamal Choudhury 2020-2025\n");
 
 	XEGuiPrint("Loading system files.. please wait !! \n");
+
+	EFI_CONFIGURATION_TABLE* configuration_tables = SystemTable->ConfigurationTable;
 
 	/* load all important files */
 	XEFile* krnl = XEOpenAndReadFile(ImageHandle, (CHAR16*)L"\\EFI\\XENEVA\\xnkrnl.exe");
@@ -328,9 +372,9 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
 		for (;;);
 	}
 
-	XEFile* initrd = XEOpenAndReadFile(ImageHandle, (CHAR16*)L"\\initrd2.img");
+	XEFile* initrd = XEOpenAndReadFile(ImageHandle, (CHAR16*)L"\\initrd.img");
 
-	EFI_CONFIGURATION_TABLE* configuration_tables = gSystemTable->ConfigurationTable;
+	
 
 	/**
 	 *-------------------------------------------------------------------
@@ -347,13 +391,43 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
 
 
 	void* fdt_address = NULL;
+	for (unsigned i = 0; i < SystemTable->NumberOfTableEntries; i++) {
+		if (XEGUIDMatch(configuration_tables[i].VendorGuid, FdtTableGuid)) {
+			char magi[16];
+			sztoa((size_t)SystemTable->ConfigurationTable[i].VendorTable, magi, 16);
+			wchar_t mg_16[16];
+			ASCIIToChar16(magi, mg_16);
+			XEPrintf(const_cast<wchar_t*>(L"FDT Table pointer -- "));
+			XEPrintf(const_cast<wchar_t*>(mg_16));
+			XEPrintf(const_cast<wchar_t*>(L"\r\n"));
+			fdt_address = SystemTable->ConfigurationTable[i].VendorTable;
+		}
 	
-	for (unsigned i = 0; i < gSystemTable->NumberOfTableEntries; i++) {
-		if (XEGUIDMatch(configuration_tables[i].VendorGuid, FdtTableGuid))
-			fdt_address = configuration_tables[i].VendorTable;
 	}
 
-	XEPrintf(const_cast<wchar_t*>(L"fdt loaded : %x \r\n"),fdt_address);
+	bool _need_fdt_hardcode = false;
+	fdt_header_t* fd_ = (fdt_header_t*)fdt_address;
+	if (fd_) {
+		XEPrintf(const_cast<wchar_t*>(L"FDT Address gathered from EFI_CONFIGURATION_TABLES \r\n"));
+		if (AuDTBSwap32(fd_->magic) == 0xd00dfeed) {
+			XEPrintf(const_cast<wchar_t*>(L"Yess DTB was correct \r\n"));
+		}
+		else
+			_need_fdt_hardcode = true;
+	}
+
+	if (_need_fdt_hardcode) {
+		fdt_address = XEDTBGetHardcodeAddress();
+		XEPrintf(const_cast<wchar_t*>(L"Going through hardcoded DTB address \r\n"));
+		fdt_header_t* fdt = (fdt_header_t*)fdt_address;
+		char magic[16];
+		sztoa(AuDTBSwap32(fdt->magic), magic, 16);
+		wchar_t mg16[16];
+		ASCIIToChar16(magic, mg16);
+		XEPrintf(const_cast<wchar_t*>(mg16));
+		XEPrintf(const_cast<wchar_t*>(L"\r\n"));
+	}
+	for (;;);
 	
 	const size_t EARLY_PAGE_STACK_SIZE = 1024 * 1024;
 	EFI_PHYSICAL_ADDRESS earlyPhyPageStack = 0;
@@ -461,4 +535,8 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
 	XEGuiPrint("entry addr : %x bootinfo : %x \r\n", entry, &bootinfo);
 	callKernel(&bootinfo, 0xFFFFA00000000000, 0x100000, entry);
 	while (1);
+}
+
+bool _is_GraphicsEnabled() {
+	return _is_graphics_enabled;
 }

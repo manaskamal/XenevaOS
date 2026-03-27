@@ -171,6 +171,8 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
         AuUartPutString("[aurora]:Kernel is booted using LittleBoot ARM64 \r\n");
         _littleboot_used = true;
     }
+	info->printf_gui("[aurora]: Xeneva arm64 (imx8mp)-toradex verdin dahlia \r\n");
+	for (;;);
 	bootinfo = info;
 	PROFILE_START("_AuMain");
 

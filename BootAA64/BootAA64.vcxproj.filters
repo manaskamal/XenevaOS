@@ -15,6 +15,10 @@
     </ClCompile>
     <ClCompile Include="uart0.cpp" />
     <ClCompile Include="vector.cpp" />
+    <ClCompile Include="devicetree.cpp" />
+    <ClCompile Include="imx8mp\imx8mp_uart.cpp">
+      <Filter>imx8mp</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="video.h" />
@@ -41,6 +45,9 @@
   <ItemGroup>
     <Filter Include="rpi3b">
       <UniqueIdentifier>{4a6321dd-5be3-4249-a056-c37dc173c67f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="imx8mp">
+      <UniqueIdentifier>{352ab680-b997-43e7-8c6d-4360ba9dc7c4}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

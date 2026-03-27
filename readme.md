@@ -35,6 +35,11 @@ XenevaOS is an open-source project that welcomes contributions from developers, 
 - Networking (IPv4, UDP/IP, TCP/IP, ICMP)
 - Upcoming RISC-V implementation
 
+## __ARCH Specific Board Support__ :
+- iMX8MP SoC based (__Toradex Verdin Dahlia SoM__) [work in progress]
+- BCM2837 SoC based (__Raspberry Pi 3b+__)[work in progress]
+- QEMU Virt Board 
+
 _And many more coming soon_
 
 ## Screenshot (x86_64) :
