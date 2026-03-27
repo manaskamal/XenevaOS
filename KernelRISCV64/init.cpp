@@ -21,15 +21,17 @@
 #include <Fs/initrd.h>
 #include <loader.h>
 #include <audrv.h>
-//#include <Hal/sched.h>
+#include <Hal/riscv64_sched.h>
 #include <Fs/tty.h>
 #include <ftmngr.h>
 #include <Ipc/postbox.h>
+#include <process.h>
 
 // RISC-V specific headers
 #include "Hal/riscv64_hal.h"
 #include "Hal/riscv64_lowlevel.h"
 
+extern "C" void AuVirtIOGPUMMIOAttach();
 extern "C" void arch_enter_user(uint64_t user_stack, uint64_t user_entry);
 
 extern "C" int _fltused = 1;
@@ -120,7 +122,11 @@ extern "C" void AuSwitchStackAndJump(uint64_t new_sp, void (*entry)(KERNEL_BOOT_
  */
 void AuKernelMain(KERNEL_BOOT_INFO* info) {
     AuTextOut("[aurora]: Stack switched to High Half (AuKernelMain) \r\n");
-    // AuVmmngrBootFree(); // Disable for now to keep info/map accessible
+    /* After VMM switch, the PMM bitmap pointer is still physical.
+     * Convert it to HHDM virtual so AuPmmngrAlloc works correctly.
+     * AuVmmngrBootFree() is still deferred (GOT/reloc issue). */
+    extern void AuPmmngrMoveHigher();
+    AuPmmngrMoveHigher();
     
 	AuTextOut("[aurora]: virtual memory manager initialized \r\n");
 	AuHeapInitialize();
@@ -147,11 +153,15 @@ void AuKernelMain(KERNEL_BOOT_INFO* info) {
 
 	/* initialize our basic requirement */
     // VirtIO init if supported
-	// AuVirtIOInputInitialize();
+	extern void AuVirtIOInputInitialize();
+	AuVirtIOInputInitialize();
 
 	/* required virtio-mouse and keyboard */
 	//Here goes board pre driver initialize
 	AuDrvMngrInitialize(info);
+	
+	/* Initialize Explicit Boot Drivers natively compiled into kernel */
+	AuVirtIOGPUMMIOAttach();
 
 	// FontManagerInitialise();
     // AuTextOut("[aurora]: Skipped FontManager (Dummy InitRD) \r\n");
@@ -160,84 +170,46 @@ void AuKernelMain(KERNEL_BOOT_INFO* info) {
     FontManagerInitialise();
     AuTextOut("[aurora]: FontManager initialized \r\n");
 
-    // --- User Mode Test ---
-    AuTextOut("[aurora]: Preparing User Mode Test...\r\n");
-    
-    // 1. Allocate Code Page
-    uint64_t phys_code = (uint64_t)AuPmmngrAlloc();
-    if (!phys_code) {
-        AuTextOut("[aurora]: Panic! Failed to allocate physical, code page\r\n");
-        while(1);
-    }
-    uint64_t* virt_code = (uint64_t*)P2V(phys_code);
-    memset(virt_code, 0, 4096);
-    
-    // 2. Allocate Stack Page
-    uint64_t phys_stack = (uint64_t)AuPmmngrAlloc();
-    if (!phys_stack) {
-        AuTextOut("[aurora]: Panic! Failed to allocate physical, stack page\r\n");
-        while(1);
-    }
-    uint64_t* virt_stack = (uint64_t*)P2V(phys_stack);
-    memset(virt_stack, 0, 4096);
-    
-    // 3. Map to User Space
-    // User Code at 0x1000000
-    // User Stack at 0x2000000
-    AuMapPage(phys_code, 0x1000000, PTE_READ | PTE_WRITE | PTE_EXEC | PTE_USER);
-    AuMapPage(phys_stack, 0x2000000, PTE_READ | PTE_WRITE | PTE_USER); // Stack identity mapped for simplicity in this test?
-    // Let's map stack to 0x0000000080000000 (standard user top) or just 0x2000000
-    // Using 0x2000000 for safety.
-    AuMapPage(phys_stack, 0x2000000, PTE_READ | PTE_WRITE | PTE_USER); 
-    
-    AuTextOut("[aurora]: Mapped User Code (0x1000000) and Stack (0x2000000)\r\n");
-    
-    // 4. Write Payload to Code Page
-    // li a7, 1 (Syscall 1)
-    // ecall
-    // j .
-    
-    // li a7, 1 -> addi a7, zero, 1 -> 0x00100893
-    // ecall    -> 0x00000073
-    // j .      -> 0x0000006f
-    
-    uint32_t* code = (uint32_t*)virt_code;
-    code[0] = 0x00100893; 
-    code[1] = 0x00000073; 
-    code[2] = 0x0000006f; 
-    
-    // Fence to ensure I-Cache sees the new instructions
-    sfence_vma();
-    
-    AuTextOut("[aurora]: Entering User Mode...\r\n");
-    
-    // Stack grows down, so point to End of page (0x2000000 + 4096)
-    arch_enter_user(0x2000000 + 4096, 0x1000000);
-    
-    // Should not return here immediateley unless trap returns to this context (which it won't, it returns to user)
-    // But if our trap handler advances SEPC and returns, the USER code will loop.
-    // If we want to return TO KERNEL after test, we need a special syscall to 'exit'.
-    // For now, let it loop or trap.
-    
-	AuInitialiseLoader();
+    AuInitialiseLoader();
 
 	/* initialize the deodhai's communication protocol */
 	AuIPCPostBoxInitialise();
 
 	AuTextOut("[aurora]: starting xeneva (RISC-V 64) please wait...\r\n");
 
-	/* clear out the lower half memory */
+	AuSchedulerInitialise();
+	AuTextOut("[aurora]: Scheduler initialized\r\n");
+
+	/* Launch the real init process from InitRD or Buffer */
+	AuProcess* proc = AuCreateProcessSlot(0, (char*)"init");
+	if (proc) {
+		AuTextOut("[init]: Process slot created, cr3=%x\r\n", (uint64_t)proc->cr3);
+		int ret = -1;
+		if (info->driver_entry2 != 0) {
+			AuTextOut("[init]: Loading init.exe directly from Bootloader RAM buffer...\r\n");
+			ret = AuLoadExecFromBuffer(proc, (void*)info->driver_entry2, (char*)"init.exe", 0, NULL);
+		} else {
+			ret = AuLoadExecToProcess(proc, (char*)"/init.exe", 0, NULL);
+		}
+		
+		if (ret == 0) {
+			AuTextOut("[init]: /init.exe loaded successfully.\r\n");
+		} else {
+			AuTextOut("[aurora]: ERROR - Failed to load /init.exe! Check InitRD or Bootloader.\r\n");
+		}
+	} else {
+		AuTextOut("[aurora]: ERROR - Failed to create process slot!\r\n");
+	}
+
+	/* NOTE: AuVmmngrBootFree() is deferred — the RISC-V kernel's GOT/reloc entries
+	 * reference physical load addresses, which need the identity map to be present.
+	 * This is a known limitation of the fake-PE build approach.
+	 * TODO: Fix the linker/relocation pipeline to use only virtual addresses.
+	 */
 	// AuVmmngrBootFree();
-    AuTextOut("[aurora]: Skipped freeing lower half (Stack is there)\r\n");
 
-	AuTextOut("[aurora]: address space lower half cleared successfully \r\n");
-
-	// AuSchedulerInitialize(); // Arch specific scheduler context switch?
-
-	// test
-    AuTextOut("System Halted. \n");
+	AuSchedulerStart();
 	while (1) {
-		//UARTDebugOut("Printing \n");
 	}
 }
 

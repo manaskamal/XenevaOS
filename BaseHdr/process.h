@@ -33,7 +33,9 @@
 
 #include <stdint.h>
 #include <Fs\vfs.h>
+#ifdef ARCH_ARM64
 #include <Hal/AA64/sched.h>
+#endif
 #ifdef ARCH_X64
 #include <Hal\x86_64_sched.h>
 #include <Sync\mutex.h>
@@ -42,6 +44,10 @@
 #include <Hal/riscv64_sched.h>
 #endif
 #include <list.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #define PROCESS_USER_STACK_SZ 512*1024
 
@@ -300,5 +306,9 @@ extern AuMutex* AuProcessGetMutex();
 *  @param priority -- (currently unused) thread's priority
 */
 extern int AuCreateUserthread(AuProcess* proc, void(*entry) (), char *name);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

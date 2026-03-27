@@ -125,7 +125,7 @@ XEFile* XEOpenAndReadFile(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable,
     XEPrintf(SystemTable, const_cast<wchar_t*>(L"[File] Getting Info Size...\r\n"));
 	Status = File->GetInfo(File, &GenericFileInfo, &FileInfoSize, NULL);
 	if (Status == EFI_BUFFER_TOO_SMALL) {
-		Status = SystemTable->BootServices->AllocatePool(EfiBootServicesData, FileInfoSize, (VOID**)&FileInfo);
+		Status = SystemTable->BootServices->AllocatePool(EfiLoaderData, FileInfoSize, (VOID**)&FileInfo);
 		if (EFI_ERROR(Status)) {
 			XEPrintf(SystemTable, const_cast<wchar_t*>(L"Failed to allocate buffer for file metadata \n"));
 			File->Close(File);

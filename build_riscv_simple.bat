@@ -89,7 +89,7 @@ cd ..
 REM --- BUILD KERNEL ---
 echo [XenevaOS] Building Kernel (KernelRISCV64)...
 set "KINCLUDES=-I..\BaseHdr -I..\Acpica\include -I..\Acpica"
-set "KFLAGS=!COMMON_FLAGS! !KINCLUDES! !DEFINES! -mcmodel=medany -D_USE_LIBALLOC -D__STDC_LIMIT_MACROS -fno-asynchronous-unwind-tables -fno-unwind-tables"
+set "KFLAGS=!COMMON_FLAGS! !KINCLUDES! !DEFINES! -mcmodel=medany -D_USE_LIBALLOC -D__STDC_LIMIT_MACROS -fno-asynchronous-unwind-tables -fno-unwind-tables -fno-omit-frame-pointer"
 
 cd KernelRISCV64
 if exist *.obj del *.obj
@@ -152,6 +152,12 @@ if %errorlevel% neq 0 goto :error
 if %errorlevel% neq 0 goto :error
 "!CLANG!" !KFLAGS! -c Fs\Dev\devfs.c -o devfs.obj
 if %errorlevel% neq 0 goto :error
+"!CLANG!" !KFLAGS! -c Fs\Dev\devinput.c -o devinput.obj
+if %errorlevel% neq 0 goto :error
+"!CLANG!" !KFLAGS! -c Drivers\virtio_input.cpp -o virtio_input.obj
+if %errorlevel% neq 0 goto :error
+"!CLANG!" !KFLAGS! -I. -I..\Drivers\Virtio -c ..\Drivers\Virtio\main.cpp -o virtio_gpu_main.obj
+if %errorlevel% neq 0 goto :error
 "!CLANG!" !KFLAGS! -c Fs\vdisk.c -o vdisk.obj
 if %errorlevel% neq 0 goto :error
 "!CLANG!" !KFLAGS! -c Fs\pipe.c -o pipe.obj
@@ -159,6 +165,12 @@ if %errorlevel% neq 0 goto :error
 "!CLANG!" !KFLAGS! -c Fs\Fat\Fat.c -o Fat.obj
 if %errorlevel% neq 0 goto :error
 "!CLANG!" !KFLAGS! -c Ipc\postbox.c -o postbox.obj
+if %errorlevel% neq 0 goto :error
+"!CLANG!" !KFLAGS! -c Serv\systable.c -o systable.obj
+if %errorlevel% neq 0 goto :error
+"!CLANG!" !KFLAGS! -c Serv\thrserv.c -o thrserv.obj
+if %errorlevel% neq 0 goto :error
+"!CLANG!" !KFLAGS! -c Serv\fileserv.c -o fileserv.obj
 if %errorlevel% neq 0 goto :error
 
 "!CLANG!" !KFLAGS! -c pe.c -o pe.obj
@@ -168,7 +180,7 @@ if %errorlevel% neq 0 goto :error
 if %errorlevel% neq 0 goto :error
 
 echo [XenevaOS] Linking Kernel (Fake PE)...
-"!LLD!" -flavor gnu -T kernel.ld -o ..\%OUT_DIR%\XENEVA\xnkrnl.elf kernel_header.obj init.obj riscv64_hal.obj sbi.obj plic.obj riscv64_sched.obj riscv64_paging.obj pmmngr.obj kmalloc.obj liballoc.obj shm.obj mmap.obj vma.obj riscv64_lowlevel.obj list.obj process.obj string.obj stdio.obj aucon.obj audrv.obj circbuf.obj ctype.obj dtb.obj ftmngr.obj loader.obj pcie.obj vfs.obj initrd.obj tty.obj devfs.obj vdisk.obj pipe.obj Fat.obj postbox.obj pe.obj
+"!LLD!" -flavor gnu -T kernel.ld -o ..\%OUT_DIR%\XENEVA\xnkrnl.elf kernel_header.obj init.obj riscv64_hal.obj sbi.obj plic.obj riscv64_sched.obj riscv64_paging.obj pmmngr.obj kmalloc.obj liballoc.obj shm.obj mmap.obj vma.obj riscv64_lowlevel.obj list.obj process.obj string.obj stdio.obj aucon.obj audrv.obj circbuf.obj ctype.obj dtb.obj ftmngr.obj loader.obj pcie.obj vfs.obj initrd.obj tty.obj devfs.obj devinput.obj virtio_input.obj virtio_gpu_main.obj vdisk.obj pipe.obj Fat.obj postbox.obj pe.obj systable.obj thrserv.obj fileserv.obj
 if %errorlevel% neq 0 goto :error
 
 echo [XenevaOS] Converting Kernel to PE...
@@ -180,9 +192,14 @@ REM echo [XenevaOS] Converting Kernel...
 REM "!OBJCOPY!" -O binary ..\%OUT_DIR%\XENEVA\xnkrnl.elf ..\%OUT_DIR%\XENEVA\xnkrnl.exe
 cd ..
 
+echo [XenevaOS] Building User Space...
+call build_riscv_userspace.bat
+if %errorlevel% neq 0 goto :error
+
 echo [XenevaOS] Build Success!
 echo Output: %OUT_DIR%\BOOT\BOOTRISCV64.elf
 echo Output: %OUT_DIR%\XENEVA\xnkrnl.elf
+echo Output: %OUT_DIR%\init.exe
 goto :eof
 
 :error

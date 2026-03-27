@@ -34,9 +34,11 @@ echo [Info] Mounting %BUILD_DIR% as Virtual FAT drive.
 
 "%QEMU%" -M virt -m 2G -smp 2 ^
     -drive if=pflash,format=raw,unit=0,file=%FW_CODE%,readonly=on ^
-    -drive file=fat:rw:%BUILD_DIR%,media=disk,format=raw ^
+    -drive id=fatdrive,file=fat:rw:%BUILD_DIR%,format=raw,if=none ^
+    -device virtio-blk-device,drive=fatdrive ^
+    -device virtio-gpu-device ^
     -device ramfb ^
-    -device virtio-keyboard-pci ^
-    -serial stdio
+    -device virtio-keyboard-device ^
+    -serial file:%~dp0test_log.txt
 
 endlocal

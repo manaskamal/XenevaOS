@@ -45,6 +45,9 @@ AuSwitchStackAndJump:
 
 .global _kernel_entry
 _kernel_entry:
+    // Ensure sscratch is 0 while in kernel, so nested S-mode traps don't try to swap to a user stack
+    csrw sscratch, zero
+    
     // Set up High Half Stack immediately
     // StackBase: 0xFFFFFFC000F00000, Size: 0x10000 (64KB) -> Top: 0xFFFFFFC000F10000
     // li sp, 0xFFFFFFC000F10000 -- REMOVED: Stack is not mapped yet!
@@ -197,13 +200,20 @@ arch_context_switch:
 // We align to 4 bytes
 .align 4
 riscv64_trap_vector_entry:
-    // We need to save context. 
-    // sscratch usually holds kernel stack pointer if we came from user mode.
-    // Check sstatus.SPP to see if we came from User or Supervisor.
-    // For now assume simple kernel trap or interrupt.
+    // Swap sp and sscratch
+    // If coming from U-mode: sp = Kernel SP, sscratch = User SP
+    // If coming from S-mode: sp = garbage, sscratch = Kernel SP (since S-mode keeps sscratch=0)
+    csrrw sp, sscratch, sp
     
-    // Save registers to stack
-    addi sp, sp, -256
+    // If sp == 0, we originally came from S-mode where sscratch was 0.
+    bnez sp, 1f
+    
+    // Came from S-mode: Swap back so sp = Kernel SP, sscratch = 0
+    csrrw sp, sscratch, sp
+1:
+    // sp is now the guaranteed Kernel Stack pointer.
+    addi sp, sp, -288
+    
     sd ra, 0(sp)
     sd t0, 8(sp)
     sd t1, 16(sp)
@@ -221,6 +231,29 @@ riscv64_trap_vector_entry:
     sd a6, 112(sp)
     sd a7, 120(sp)
     
+    // Save callee-saved registers (s0-s11)
+    // This is CRITICAL: without this, user-mode s0 leaks into kernel
+    // C functions and causes Load Page Faults on the user stack.
+    sd s0, 168(sp)
+    sd s1, 176(sp)
+    sd s2, 184(sp)
+    sd s3, 192(sp)
+    sd s4, 200(sp)
+    sd s5, 208(sp)
+    sd s6, 216(sp)
+    sd s7, 224(sp)
+    sd s8, 232(sp)
+    sd s9, 240(sp)
+    sd s10, 248(sp)
+    sd s11, 256(sp)
+    
+    // Save original SP (which is now in sscratch if from U-mode, or was just zero for S-mode)
+    csrr t0, sscratch
+    sd t0, 160(sp)
+    
+    // Set sscratch to 0 while maintaining kernel execution for reentrancy safety
+    csrw sscratch, zero
+    
     // Save S-mode specific registers
     csrr t0, sepc
     sd t0, 128(sp)
@@ -236,18 +269,40 @@ riscv64_trap_vector_entry:
     mv a0, sp
     call AuRISCV64TrapHandler
     
-    // Switch stack pointer to returned value
+    // Switch stack pointer to returned value (new thread's Kernel SP)
     mv sp, a0
 
-    // Restore registers
+    // Check SPP bit (bit 8) to determine return mode (User or Supervisor)
+    ld t0, 136(sp)
+    andi t1, t0, 0x100
+    bnez t1, restore_smode
+
+restore_umode:
+    // Returning to U-mode: Prepare User SP in sscratch
+    ld t1, 160(sp)
+    csrw sscratch, t1
+    
+    // Restore CSRs
     ld t0, 128(sp)
     csrw sepc, t0
     ld t0, 136(sp)
-    
-    // We might need to handle SPP bit if we return to user mode logic, 
-    // but for simple restoration:
     csrw sstatus, t0
-
+    
+    // Restore callee-saved registers (s0-s11)
+    ld s0, 168(sp)
+    ld s1, 176(sp)
+    ld s2, 184(sp)
+    ld s3, 192(sp)
+    ld s4, 200(sp)
+    ld s5, 208(sp)
+    ld s6, 216(sp)
+    ld s7, 224(sp)
+    ld s8, 232(sp)
+    ld s9, 240(sp)
+    ld s10, 248(sp)
+    ld s11, 256(sp)
+    
+    // Restore GPRs
     ld ra, 0(sp)
     ld t0, 8(sp)
     ld t1, 16(sp)
@@ -265,7 +320,54 @@ riscv64_trap_vector_entry:
     ld a6, 112(sp)
     ld a7, 120(sp)
     
-    addi sp, sp, 256
+    addi sp, sp, 288
+    // Swap sp(Kernel Top) with sscratch(User SP)
+    csrrw sp, sscratch, sp
+    sret
+
+restore_smode:
+    // Returning to S-mode: Ensure sscratch is 0
+    csrw sscratch, zero
+    
+    // Restore CSRs
+    ld t0, 128(sp)
+    csrw sepc, t0
+    ld t0, 136(sp)
+    csrw sstatus, t0
+    
+    // Restore callee-saved registers (s0-s11)
+    ld s0, 168(sp)
+    ld s1, 176(sp)
+    ld s2, 184(sp)
+    ld s3, 192(sp)
+    ld s4, 200(sp)
+    ld s5, 208(sp)
+    ld s6, 216(sp)
+    ld s7, 224(sp)
+    ld s8, 232(sp)
+    ld s9, 240(sp)
+    ld s10, 248(sp)
+    ld s11, 256(sp)
+    
+    // Restore GPRs
+    ld ra, 0(sp)
+    ld t0, 8(sp)
+    ld t1, 16(sp)
+    ld t2, 24(sp)
+    ld t3, 32(sp)
+    ld t4, 40(sp)
+    ld t5, 48(sp)
+    ld t6, 56(sp)
+    ld a0, 64(sp)
+    ld a1, 72(sp)
+    ld a2, 80(sp)
+    ld a3, 88(sp)
+    ld a4, 96(sp)
+    ld a5, 104(sp)
+    ld a6, 112(sp)
+    ld a7, 120(sp)
+    
+    addi sp, sp, 288
     sret
 
 .global _hang

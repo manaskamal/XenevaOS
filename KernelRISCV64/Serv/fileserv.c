@@ -30,16 +30,21 @@
 #include <Serv/sysserv.h>
 #include <Fs/vfs.h>
 #include <Fs/Fat/Fat.h>
+#ifdef ARCH_RISCV64
+#include <Hal/riscv64_sched.h>
+/* Compat: map ARM64 thread type name to RISC-V equivalent */
+#define AA64Thread AuThread
+#else
 #include <Hal/AA64/sched.h>
+#endif
 #include <process.h>
 #include <Drivers/uart.h>
 #include <_null.h>
 #include <Mm/kmalloc.h>
 #include <string.h>
 
-
 extern uint64_t read_sp();
-extern uint64_t read_sp_el1();
+extern void AuTextOut(const char* fmt, ...);
 /*
  * OpenFile -- opens a file for user process
  * @param file -- file path
@@ -81,7 +86,7 @@ int OpenFile(char* filename, int mode) {
 
 	/* just to increase the reference count */
 	if (file->flags & FS_FLAG_PIPE)
-		UARTDebugOut("Opening file -> %s \r\n", file->filename);
+		AuTextOut("Opening file -> %s \r\n", file->filename);
 	if (file->open)
 		file->open(file,NULL);
 
@@ -177,6 +182,50 @@ size_t ReadFile(int fd, void* buffer, size_t length) {
 		/* ofcourse, pipe subsystem will handle */
 		if (file->read)
 			ret_bytes = file->read(file, file, (uint64_t*)buffer, length);
+	}
+
+	return ret_bytes;
+}
+
+/*
+ * WriteFile -- writes data from user buffer to file/device
+ * @param fd -- file descriptor (0=stdin, 1=stdout/TTY, etc.)
+ * @param buffer -- user-space buffer
+ * @param length -- number of bytes to write
+ */
+size_t WriteFile(int fd, void* buffer, size_t length) {
+	if (fd == -1)
+		return 0;
+	if (!buffer)
+		return 0;
+	if (!length)
+		return 0;
+	AA64Thread* current_thr = AuGetCurrentThread();
+	if (!current_thr)
+		return 0;
+	AuProcess* current_proc = AuProcessFindThread(current_thr);
+	if (!current_proc) {
+		current_proc = AuProcessFindSubThread(current_thr);
+		if (!current_proc)
+			return 0;
+	}
+
+	AuVFSNode* file = current_proc->fds[fd];
+	if (!file)
+		return 0;
+
+	size_t ret_bytes = 0;
+	if (file->flags & FS_FLAG_DEVICE) {
+		if (file->write)
+			ret_bytes = file->write(file, file, (uint64_t*)buffer, length);
+	}
+	if (file->flags & FS_FLAG_TTY) {
+		if (file->write)
+			ret_bytes = file->write(file, file, (uint64_t*)buffer, length);
+	}
+	if (file->flags == FS_FLAG_PIPE) {
+		if (file->write)
+			ret_bytes = file->write(file, file, (uint64_t*)buffer, length);
 	}
 
 	return ret_bytes;

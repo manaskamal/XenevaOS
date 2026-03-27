@@ -28,7 +28,7 @@
 **/
 
 #include <Fs\Dev\devfs.h>
-//#include <Fs\Dev\devinput.h>
+#include <Fs\Dev\devinput.h>
 #include <Mm\kmalloc.h>
 #include <list.h>
 #include <string.h>
@@ -51,7 +51,7 @@ void AuDeviceFsInitialize() {
 	node->open = AuDevFSOpen;
 	AuVFSAddFileSystem(node);
 
-	//AuDevInputInitialise();
+	AuDevInputInitialise();
 	AuTextOut("[aurora]: devfs initialized \r\n");
 }
 

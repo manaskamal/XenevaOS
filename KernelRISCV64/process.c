@@ -197,7 +197,13 @@ int AuAllocateProcessID() {
  * map
  */
 uint64_t* CreateUserStack(AuProcess* proc, uint64_t* cr3) {
+#ifdef ARCH_RISCV64
+// Sv39: valid user range is 0x0000000000-0x3FFFFFFFFF (bit 38=0)
+// 0xA000000000 has bit 39=1 — non-canonical! Use 0x2000000000 instead.
+#define USER_STACK 0x0000002000000000
+#else
 #define USER_STACK 0x000000A000000000 
+#endif
 	uint64_t location = USER_STACK;
 	location += proc->_user_stack_index_;
 

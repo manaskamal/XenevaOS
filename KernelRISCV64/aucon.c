@@ -243,6 +243,8 @@ void AuConsolePostInitialise(PKERNEL_BOOT_INFO info) {
 #endif
 	aucon->width = info->X_Resolution;
 	aucon->height = info->Y_Resolution;
+	v_res = info->X_Resolution;
+	h_res = info->Y_Resolution;
 	aucon->bpp = 32;
 	aucon->scanline = info->pixels_per_line;
 	aucon->pitch = 4 * info->pixels_per_line;
@@ -491,12 +493,16 @@ void AuTextOut(const char* format, ...) {
     
     buf[o] = 0;
     
-    // FORCE UART OUTPUT for Debugging
-    // 0x10000000 is Identity Mapped by Bootloader (0-1GB)
+    // UART output — use physical during early boot, virtual after VMM init
     char* debug_p = buf;
+#ifdef ARCH_RISCV64
+    uint64_t uart_addr = early_ ? 0x10000000ULL : 0xFFFFFFD010000000ULL;
+#else
+    uint64_t uart_addr = 0x10000000ULL;
+#endif
     while (*debug_p) {
-        volatile uint8_t* uart_thr = (volatile uint8_t*)0x10000000;
-        volatile uint8_t* uart_lsr = (volatile uint8_t*)0x10000005;
+        volatile uint8_t* uart_thr = (volatile uint8_t*)uart_addr;
+        volatile uint8_t* uart_lsr = (volatile uint8_t*)(uart_addr + 5);
         // Wait for empty
         while ((*uart_lsr & 0x20) == 0);
         *uart_thr = *debug_p++;

@@ -445,38 +445,53 @@ AuVFSNode* FatLocateDir(AuVFSNode* fsys, const char* dir) {
 	buf = (uint64_t*)P2V((uint64_t)AuPmmngrAlloc());
 	memset(buf, 0, PAGE_SIZE);
 
-	for (unsigned int sector = 0; sector < fs->__SectorPerCluster; sector++) {
+    uint32_t cluster = fs->__RootDirFirstCluster;
 
-		memset(buf, 0, PAGE_SIZE);
-		//ata_read_28 (root_sector + sector,1, buf);
-		AuVDiskRead(vdisk, FatClusterToSector32(fs, fs->__RootDirFirstCluster) + sector, 1, buf);
+    while (1) {
+		for (unsigned int sector = 0; sector < fs->__SectorPerCluster; sector++) {
 
-		dirent = (FatDir*)buf;
+			memset(buf, 0, PAGE_SIZE);
+			AuVDiskRead(vdisk, FatClusterToSector32(fs, cluster) + sector, 1, buf);
 
-		for (int i = 0; i < 16; i++) {
-			if (strncmp(dos_file_name, (const char*)dirent->filename, 11) == 0) {
-				strcpy(file->filename, dir);
-				file->current = dirent->first_cluster;
-				file->size = dirent->file_size;
-				file->eof = 0;
-				file->status = FS_STATUS_FOUND;
-				file->close = 0;
-				file->first_block = file->current;
-				file->pos = 0;
-				file->device = fsys;
-				file->parent_block = fs->__RootDirFirstCluster;
-				file->open = 0;
-				file->write = 0;
-				file->create_file = 0;
-				if (dirent->attrib == 0x10)
-					file->flags |= FS_FLAG_DIRECTORY;
-				else
-					file->flags |= FS_FLAG_GENERAL;
-				AuPmmngrFree((void*)V2P((size_t)buf));
-				return file;
+			dirent = (FatDir*)buf;
+
+			for (int i = 0; i < 16; i++) {
+				if (dirent->filename[0] != 0 && dirent->filename[0] != 0xE5) {
+					char temp[12];
+					memcpy(temp, dirent->filename, 11);
+					temp[11] = 0;
+					AuTextOut("FAT ENTRY: [%s]\r\n", temp);
+				}
+
+				if (strncmp(dos_file_name, (const char*)dirent->filename, 11) == 0) {
+					strcpy(file->filename, dir);
+					file->current = dirent->first_cluster;
+					file->size = dirent->file_size;
+					file->eof = 0;
+					file->status = FS_STATUS_FOUND;
+					file->close = 0;
+					file->first_block = file->current;
+					file->pos = 0;
+					file->device = fsys;
+					file->parent_block = fs->__RootDirFirstCluster;
+					file->open = 0;
+					file->write = 0;
+					file->create_file = 0;
+					if (dirent->attrib == 0x10)
+						file->flags |= FS_FLAG_DIRECTORY;
+					else
+						file->flags |= FS_FLAG_GENERAL;
+					AuPmmngrFree((void*)V2P((size_t)buf));
+					return file;
+				}
+				dirent++;
 			}
-			dirent++;
 		}
+
+        cluster = FatReadFAT(fsys, cluster);
+        if (cluster == (FAT_EOC_MARK & 0x0FFFFFFF) || cluster == 0) {
+            break;
+        }
 	}
 
 	AuPmmngrFree((void*)V2P((size_t)buf));

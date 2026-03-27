@@ -1,0 +1,397 @@
+
+OpenSBI v1.7
+   ____                    _____ ____ _____
+  / __ \                  / ____|  _ \_   _|
+ | |  | |_ __   ___ _ __ | (___ | |_) || |
+ | |  | | '_ \ / _ \ '_ \ \___ \|  _ < | |
+ | |__| | |_) |  __/ | | |____) | |_) || |_
+  \____/| .__/ \___|_| |_|_____/|____/_____|
+        | |
+        |_|
+
+Platform Name               : riscv-virtio,qemu
+Platform Features           : medeleg
+Platform HART Count         : 2
+Platform IPI Device         : aclint-mswi
+Platform Timer Device       : aclint-mtimer @ 10000000Hz
+Platform Console Device     : uart8250
+Platform HSM Device         : ---
+Platform PMU Device         : ---
+Platform Reboot Device      : syscon-reboot
+Platform Shutdown Device    : syscon-poweroff
+Platform Suspend Device     : ---
+Platform CPPC Device        : ---
+Firmware Base               : 0x80000000
+Firmware Size               : 329 KB
+Firmware RW Offset          : 0x40000
+Firmware RW Size            : 73 KB
+Firmware Heap Offset        : 0x48000
+Firmware Heap Size          : 41 KB (total), 2 KB (reserved), 12 KB (used), 26 KB (free)
+Firmware Scratch Size       : 4096 B (total), 1400 B (used), 2696 B (free)
+Runtime SBI Version         : 3.0
+Standard SBI Extensions     : time,rfnc,ipi,base,hsm,srst,pmu,dbcn,fwft,legacy,dbtr,sse
+Experimental SBI Extensions : none
+
+Domain0 Name                : root
+Domain0 Boot HART           : 0
+Domain0 HARTs               : 0*,1*
+Domain0 Region00            : 0x0000000000100000-0x0000000000100fff M: (I,R,W) S/U: (R,W)
+Domain0 Region01            : 0x0000000010000000-0x0000000010000fff M: (I,R,W) S/U: (R,W)
+Domain0 Region02            : 0x0000000002000000-0x000000000200ffff M: (I,R,W) S/U: ()
+Domain0 Region03            : 0x0000000080040000-0x000000008005ffff M: (R,W) S/U: ()
+Domain0 Region04            : 0x0000000080000000-0x000000008003ffff M: (R,X) S/U: ()
+Domain0 Region05            : 0x000000000c400000-0x000000000c5fffff M: (I,R,W) S/U: (R,W)
+Domain0 Region06            : 0x000000000c000000-0x000000000c3fffff M: (I,R,W) S/U: (R,W)
+Domain0 Region07            : 0x0000000000000000-0xffffffffffffffff M: () S/U: (R,W,X)
+Domain0 Next Address        : 0x0000000020000000
+Domain0 Next Arg1           : 0x00000000ffe00000
+Domain0 Next Mode           : S-mode
+Domain0 SysReset            : yes
+Domain0 SysSuspend          : yes
+
+Boot HART ID                : 0
+Boot HART Domain            : root
+Boot HART Priv Version      : v1.12
+Boot HART Base ISA          : rv64imafdch
+Boot HART ISA Extensions    : sstc,zicntr,zihpm,zicboz,zicbom,sdtrig,svadu
+Boot HART PMP Count         : 16
+Boot HART PMP Granularity   : 2 bits
+Boot HART PMP Address Bits  : 54
+Boot HART MHPM Info         : 16 (0x0007fff8)
+Boot HART Debug Triggers    : 2 triggers
+Boot HART MIDELEG           : 0x0000000000001666
+Boot HART MEDELEG           : 0x0000000000f4b509
+[2J[04D[=3h[2J[09D[2J[04D[=3h[2J[09DRISC-V EDK2 firmware version 2.7
+Press ESCAPE within 5 seconds for boot options [2J[01;01HXenevaOS RISC-V Bootloader - Production Mode
+Initializing Graphics...
+[DBG] Init Graphics...
+[1m[37m[44m[01;01H[DBG] FB Addr: 0x00000000FDBB7000
+[DBG] PixelFormat: 1
+[DBG] Clearing Screen (Blt)...
+[DBG] Printing Text (Direct Write)... Skipped for stability
+[DBG] Graphics Done.
+[DBG] Root: 0xffc02740
+[File] Opening File...
+[File] Getting Info Size...
+[File] Getting Info Data...
+[File] Reading Content...
+[DBG] Root: 0xffc02740
+[File] Opening File...
+[File] Getting Info Size...
+[File] Getting Info Data...
+[File] Reading Content...
+[DBG] Root: 0xffc02740
+[File] Opening File...
+[File] Getting Info Size...
+[File] Getting Info Data...
+[File] Reading Content...
+[DBG] Reading XNKRNL.EXE...
+Kernel Loaded.
+[DBG] Section 0 Raw: 2E 74 65 78 74 00 00 00 00 E0 01 00 00 10 00 00 00 E0 01 00 00 10 00 00 00 00 0
+0 00 00 00 00 00 00 00 00 00 20 00 00 60 
+XEPELoadImage: ImageBase from header: FFFFFFFF80000000
+XEPELoadImage: Passed ImageBase: FFFFFFFF80000000
+XEPELoadImage: Mapping Header page 0: FFFFFFFF80000000 -> 90B2B000
+Map: V=FFFFFFFF80000000 P=90B2B000 PTE=242CACCF
+XEPELoadImage: Headers mapped
+XEPELoadImage: Mapping section 0 at FFFFFFFF80001000
+Map: V=FFFFFFFF80001000 P=90B28000 PTE=242CA0CF
+Map: V=FFFFFFFF80002000 P=90B27000 PTE=242C9CCF
+Map: V=FFFFFFFF80003000 P=90B26000 PTE=242C98CF
+Map: V=FFFFFFFF80004000 P=90B25000 PTE=242C94CF
+Map: V=FFFFFFFF80005000 P=90B24000 PTE=242C90CF
+Map: V=FFFFFFFF80006000 P=90B23000 PTE=242C8CCF
+Map: V=FFFFFFFF80007000 P=90B22000 PTE=242C88CF
+Map: V=FFFFFFFF80008000 P=90B21000 PTE=242C84CF
+Map: V=FFFFFFFF80009000 P=90B20000 PTE=242C80CF
+Map: V=FFFFFFFF8000A000 P=90B1F000 PTE=242C7CCF
+Map: V=FFFFFFFF8000B000 P=90B1E000 PTE=242C78CF
+Map: V=FFFFFFFF8000C000 P=90B1D000 PTE=242C74CF
+Map: V=FFFFFFFF8000D000 P=90B1C000 PTE=242C70CF
+Map: V=FFFFFFFF8000E000 P=90B1B000 PTE=242C6CCF
+Map: V=FFFFFFFF8000F000 P=90B1A000 PTE=242C68CF
+Map: V=FFFFFFFF80010000 P=90B19000 PTE=242C64CF
+Map: V=FFFFFFFF80011000 P=90B18000 PTE=242C60CF
+Map: V=FFFFFFFF80012000 P=90B17000 PTE=242C5CCF
+Map: V=FFFFFFFF80013000 P=90B16000 PTE=242C58CF
+Map: V=FFFFFFFF80014000 P=90B15000 PTE=242C54CF
+Map: V=FFFFFFFF80015000 P=90B14000 PTE=242C50CF
+Map: V=FFFFFFFF80016000 P=90B13000 PTE=242C4CCF
+Map: V=FFFFFFFF80017000 P=90B12000 PTE=242C48CF
+Map: V=FFFFFFFF80018000 P=90B11000 PTE=242C44CF
+Map: V=FFFFFFFF80019000 P=90B10000 PTE=242C40CF
+Map: V=FFFFFFFF8001A000 P=90B0F000 PTE=242C3CCF
+Map: V=FFFFFFFF8001B000 P=90B0E000 PTE=242C38CF
+Map: V=FFFFFFFF8001C000 P=90B0D000 PTE=242C34CF
+Map: V=FFFFFFFF8001D000 P=90B0C000 PTE=242C30CF
+Map: V=FFFFFFFF8001E000 P=90B0B000 PTE=242C2CCF
+XEPELoadImage: Mapping section 1 at FFFFFFFF80020000
+Map: V=FFFFFFFF80020000 P=90B0A000 PTE=242C28CF
+Map: V=FFFFFFFF80021000 P=90B09000 PTE=242C24CF
+Map: V=FFFFFFFF80022000 P=90B08000 PTE=242C20CF
+Map: V=FFFFFFFF80023000 P=90B07000 PTE=242C1CCF
+XEPELoadImage: Mapping section 2 at FFFFFFFF80030000
+[DBG] Scanning RAM for FDT...
+InitRD Loaded.
+INIT.EXE Loaded.
+Jumping to Kernel...
+DTB Magic : FFFFFFFFD00DFEED 
+DTB Magic : FFFFFFFFD00DFEED 
+RISC-V 64 CPU Initialized
+RISC-V 64 CPU Initialized
+[aurora]: CPU initialized 
+[aurora]: CPU initialized 
+[PMM] Checking info pointer... 
+[PMM] Checking info pointer... 
+[PMM] info: FFFFFFFF80020290, map: FDB9F000, size: 1104, desc_sz: 48 
+[PMM] info: FFFFFFFF80020290, map: FDB9F000, size: 1104, desc_sz: 48 
+RAM Starts at -> 8020E000 end -> 83541000 
+RAM Starts at -> 8020E000 end -> 83541000 
+Total RAM : 82000000 
+Total RAM : 82000000 
+[aurora]: Initializing VMM (Sv39)...
+[aurora]: Initializing VMM (Sv39)...
+[VMM] Old Root: 90B2C000
+[VMM] Old Root: 90B2C000
+[VMM] New Root: 8031F000
+[VMM] New Root: 8031F000
+[VMM] Loop Start. RootTable: 8031F000, OldRoot: 90B2C000
+[VMM] Loop Start. RootTable: 8031F000, OldRoot: 90B2C000
+[VMM] Loop Done.
+[VMM] Loop Done.
+[VMM] Mapped Stack at FDBA3000 (Virt: FFFFFFC000F00000)
+[VMM] Mapped Stack at FDBA3000 (Virt: FFFFFFC000F00000)
+[VMM] Skipped Mapping Info (Already Virtual): FFFFFFFF80020290 
+[VMM] Skipped Mapping Info (Already Virtual): FFFFFFFF80020290 
+[VMM] Mapped MemMap at FDB9F000 (1 pages) 
+[VMM] Mapped MemMap at FDB9F000 (1 pages) 
+[VMM] HHDM Mapped.
+[VMM] HHDM Mapped.
+[aurora]: VMM Initialized.
+[aurora]: VMM Initialized. Switching Stack...
+[aurora]: Stack switched to High Half (AuKernelMain) 
+[aurora]: virtual memory manager initialized 
+[aurora]: Device tree mmio FFFFFFC083FEE000 mapped with page count : 2 
+[PLIC] Looking for PLIC in Device Tree...
+[PLIC] Found at Phys: 0xC000000, Size: 0x600000
+[PLIC] Mapped to Virt: 0xFFFFFFD00C000000
+[PLIC] Initialized for Context 1 (S-Mode).
+[aurora]: RISC-V board initialization complete
+[aurora]: RISC-V CPU post-initialization complete
+[aurora]: Global Interrupts Enabled 
+[aurora]: device input : kybrd and mouse fs registerd 
+[aurora]: devfs initialized 
+[aurora]: virtual disk system initialized 
+[aurora]: pipefs mounted 
+[aurora]: vdisk registered name : XERamdisc, serial :  
+[aurora]: vdisk XERamdisc doesn't have valid GPT partition 
+[aurora]: ramdisk mounted at /dev/disk0 full path : /dev/disk0/ramdisc 
+[aurora]: FAT32 OEM :MSWIN4.
+[aurora]: fat32 sector/cluster : 1 
+[aurora]: fat32 bytes/sector: 512 
+[aurora]: fat32 mounted at / 
+[aurora]: ramdisk initialized successfully 
+[aucon]: graphics framebuffer : FDBB7000 
+[aucon]: width : 800 px , height : 600 px 
+[virtio-input]: Scanning for VirtIO MMIO devices...
+[DTB-Iter] Scanning: reserved-memory
+[DTB-Iter] Scanning: poweroff
+[DTB-Iter] Scanning: reboot
+[DTB-Iter] Scanning: platform-bus@4000000
+[DTB-Iter] Scanning: memory@80000000
+[DTB-Iter] Scanning: cpus
+[DTB-Iter] Scanning: pmu
+[DTB-Iter] Scanning: fw-cfg@10100000
+[DTB-Iter] Scanning: flash@20000000
+[DTB-Iter] Scanning: aliases
+[DTB-Iter] Scanning: chosen
+[DTB-Iter] Scanning: soc
+[DTB-Iter] Scanning: rtc@101000
+[DTB-Iter] Scanning: serial@10000000
+[DTB-Iter] Scanning: test@100000
+[DTB-Iter] Scanning: virtio_mmio@10008000
+[virtio-input]: Probing node...
+[virtio-input]: addrCells: 2, sizeCells: 2
+[virtio-input]: Reg: 10008000, Size: 1000
+[virtio-input]: Aligned Reg: 10008000, offset: 0
+[virtio-input]: Mapped MMIO Virtual: FFFFFFD010008000
+[virtio-input]: Reading Magic... Magic: 74726976, DevID: 2
+[DTB-Iter] Scanning: virtio_mmio@10007000
+[virtio-input]: Probing node...
+[virtio-input]: addrCells: 2, sizeCells: 2
+[virtio-input]: Reg: 10007000, Size: 1000
+[virtio-input]: Aligned Reg: 10007000, offset: 0
+[virtio-input]: Mapped MMIO Virtual: FFFFFFD010007000
+[virtio-input]: Reading Magic... Magic: 74726976, DevID: 16
+[DTB-Iter] Scanning: virtio_mmio@10006000
+[virtio-input]: Probing node...
+[virtio-input]: addrCells: 2, sizeCells: 2
+[virtio-input]: Reg: 10006000, Size: 1000
+[virtio-input]: Aligned Reg: 10006000, offset: 0
+[virtio-input]: Mapped MMIO Virtual: FFFFFFD010006000
+[virtio-input]: Reading Magic... Magic: 74726976, DevID: 18
+[virtio-input]: Found MMIO Input at FFFFFFD010006000 (IRQ 6)
+[virtio-input]: Version=1
+[virtio-input]: QueueNumMax=1024
+[virtio-input]: Queue PFN=0x8074F
+[virtio-input]: Registered IRQ 6. Waiting for interrupts.
+[DTB-Iter] Scanning: virtio_mmio@10005000
+[virtio-input]: Probing node...
+[virtio-input]: addrCells: 2, sizeCells: 2
+[virtio-input]: Reg: 10005000, Size: 1000
+[virtio-input]: Aligned Reg: 10005000, offset: 0
+[virtio-input]: Mapped MMIO Virtual: FFFFFFD010005000
+[virtio-input]: Reading Magic... Magic: 74726976, DevID: 0
+[DTB-Iter] Scanning: virtio_mmio@10004000
+[virtio-input]: Probing node...
+[virtio-input]: addrCells: 2, sizeCells: 2
+[virtio-input]: Reg: 10004000, Size: 1000
+[virtio-input]: Aligned Reg: 10004000, offset: 0
+[virtio-input]: Mapped MMIO Virtual: FFFFFFD010004000
+[virtio-input]: Reading Magic... Magic: 74726976, DevID: 0
+[DTB-Iter] Scanning: virtio_mmio@10003000
+[virtio-input]: Probing node...
+[virtio-input]: addrCells: 2, sizeCells: 2
+[virtio-input]: Reg: 10003000, Size: 1000
+[virtio-input]: Aligned Reg: 10003000, offset: 0
+[virtio-input]: Mapped MMIO Virtual: FFFFFFD010003000
+[virtio-input]: Reading Magic... Magic: 74726976, DevID: 0
+[DTB-Iter] Scanning: virtio_mmio@10002000
+[virtio-input]: Probing node...
+[virtio-input]: addrCells: 2, sizeCells: 2
+[virtio-input]: Reg: 10002000, Size: 1000
+[virtio-input]: Aligned Reg: 10002000, offset: 0
+[virtio-input]: Mapped MMIO Virtual: FFFFFFD010002000
+[virtio-input]: Reading Magic... Magic: 74726976, DevID: 0
+[DTB-Iter] Scanning: virtio_mmio@10001000
+[virtio-input]: Probing node...
+[virtio-input]: addrCells: 2, sizeCells: 2
+[virtio-input]: Reg: 10001000, Size: 1000
+[virtio-input]: Aligned Reg: 10001000, offset: 0
+[virtio-input]: Mapped MMIO Virtual: FFFFFFD010001000
+[virtio-input]: Reading Magic... Magic: 74726976, DevID: 0
+[DTB-Iter] Scanning: plic@c000000
+[DTB-Iter] Scanning: clint@2000000
+[DTB-Iter] Scanning: pci@30000000
+[aurora]: initializing drivers, please wait... 
+VFSOpening filename : /audrv.cnf 
+FAT ENTRY: [AUDRV   CNF]
+[aurora]: audrv.cnf read successfully audrv.cnf 
+[aurora]: Loading driver -> /A.DRV FFFFC00000A00000
+VFSOpening filename : /A.DRV 
+FAT ENTRY: [AUDRV   CNF]
+FAT ENTRY: [FTLST   CNF]
+[aurora]: audrvmngr failed to load driver : /A.DRV 
+[aurora]: AuDrvManager initialized successfully 
+[virtio-gpu]: hello from inside virtio gpu driver 
+[DTB-Iter] Scanning: reserved-memory
+[DTB-Iter] Scanning: poweroff
+[DTB-Iter] Scanning: reboot
+[DTB-Iter] Scanning: platform-bus@4000000
+[DTB-Iter] Scanning: memory@80000000
+[DTB-Iter] Scanning: cpus
+[DTB-Iter] Scanning: pmu
+[DTB-Iter] Scanning: fw-cfg@10100000
+[DTB-Iter] Scanning: flash@20000000
+[DTB-Iter] Scanning: aliases
+[DTB-Iter] Scanning: chosen
+[DTB-Iter] Scanning: soc
+[DTB-Iter] Scanning: rtc@101000
+[DTB-Iter] Scanning: serial@10000000
+[DTB-Iter] Scanning: test@100000
+[DTB-Iter] Scanning: virtio_mmio@10008000
+[virtio-gpu]: Probe MMIO at 10008000, Magic: 74726976, DevID: 2
+[DTB-Iter] Scanning: virtio_mmio@10007000
+[virtio-gpu]: Probe MMIO at 10007000, Magic: 74726976, DevID: 16
+[virtio-gpu]: EXACT MATCH FOUND!
+[DTB-Iter] Scanning: virtio_mmio@10006000
+[virtio-gpu]: Probe MMIO at 10006000, Magic: 74726976, DevID: 18
+[DTB-Iter] Scanning: virtio_mmio@10005000
+[virtio-gpu]: Probe MMIO at 10005000, Magic: 74726976, DevID: 0
+[DTB-Iter] Scanning: virtio_mmio@10004000
+[virtio-gpu]: Probe MMIO at 10004000, Magic: 74726976, DevID: 0
+[DTB-Iter] Scanning: virtio_mmio@10003000
+[virtio-gpu]: Probe MMIO at 10003000, Magic: 74726976, DevID: 0
+[DTB-Iter] Scanning: virtio_mmio@10002000
+[virtio-gpu]: Probe MMIO at 10002000, Magic: 74726976, DevID: 0
+[DTB-Iter] Scanning: virtio_mmio@10001000
+[virtio-gpu]: Probe MMIO at 10001000, Magic: 74726976, DevID: 0
+[DTB-Iter] Scanning: plic@c000000
+[DTB-Iter] Scanning: clint@2000000
+[DTB-Iter] Scanning: pci@30000000
+[virtio-gpu]: Raw[0]=0x74726976 Raw[1]=0x1 Raw[2]=0x10 Raw[3]=0x554D4551
+[virtio-gpu]: struct Magic=0x74726976 Version=1 DevID=16 VendorID=0x554D4551
+[virtio-gpu]: sizeof(VirtioMMIOHeader)=512 offsetof(Status)=112 offsetof(QueueSel)=48
+[virtio-gpu]: After RESET, Status=0x0
+[virtio-gpu]: After ACK, Status=0x1
+[virtio-gpu]: After DRIVER, Status=0x3
+[virtio-gpu]: DeviceFeatures[0]=0x39000002
+[virtio-gpu]: After FEATURES_OK, Status=0xB
+[virtio-gpu]: CmdBuf=0xFFFFFFC080855000 (phys=0x80855000), RspBuf=0xFFFFFFC080855800
+[virtio-gpu]: QueueNumMax=1024, using 64
+[virtio-gpu]: Queue PFN=0x80856 (phys=0x80856000)
+[virtio-gpu]: Queue allocated, QueueSz=64
+[virtio-gpu]: After DRIVER_OK, Status=0xF
+[PLIC] Unhandled IRQ: 7
+[virtio-gpu]: CREATE_2D resp type=0x1100
+Virtio Response received, and was successfull 
+[virtio-gpu]: ATTACH_BACKING desc[0].Addr=0x80855800
+[PLIC] Unhandled IRQ: 7
+[virtio-gpu]: ATTACH_BACKING resp type=0x1100
+Response received successfully 
+[PLIC] Unhandled IRQ: 7
+[virtio-gpu]: SET_SCANOUT resp type=0x1100
+Response received successfully 
+[PLIC] Unhandled IRQ: 7
+[virtio-gpu]: Framebuffer created via MMIO
+[virtio-gpu]: Filling framebuffer...
+[virtio-gpu]: Fill done. Sending TRANSFER_TO_HOST2D...
+[PLIC] Unhandled IRQ: 7
+[virtio-gpu]: TRANSFER resp type=0x1100
+[PLIC] Unhandled IRQ: 7
+[virtio-gpu]: FLUSH resp type=0x1100
+[virtio-gpu]: VirtioFillScreen complete.
+[aurora]: Loading system fonts 
+VFSOpening filename : /ftlst.cnf 
+FAT ENTRY: [AUDRV   CNF]
+FAT ENTRY: [FTLST   CNF]
+Font this 512 bytes numPage: 1 
+Font Count ->0 
+[aurora]: FontManager initialized 
+[aurora]: Kernel-level loader initialized 
+[aurora]: PostBox IPC mounted and initialized to /dev/postbox 
+[aurora]: PostEvent size : 169 bytes 
+[aurora]: PostBox size aligned : 23 number 
+[aurora]: starting xeneva (RISC-V 64) please wait...
+[sched]: AuSchedulerInitialise entry
+[sched]: Creating virtual address space...
+[sched]: VAS created at phys 80C56000
+[sched]: Creating idle kthread...
+[sched]: Idle thread created: FFFFFFC080C57030
+[aurora]: Scheduler initialized
+[aurora]: Scheduler initialized
+PROCESS : init , stack : 2000080000 
+[init]: Process slot created, cr3=80C64000
+[init]: Loading init.exe directly from Bootloader RAM buffer...
+Image base address : 5A4D 
+NT NumberOfSection : 3 for init
+Binary mapped , thread id : 1
+[init]: /init.exe loaded successfully.
+[aurora]: Scheduler started
+Entering user 200007FFD0 10001000
+
+==============================================
+  XenevaOS RISC-V Init Process
+  Build: Mar 26 2026 07:23:29
+  PID=1  TID=1
+==============================================
+
+[init] Starting Deodhai compositor...
+PROCESS : deodhai , stack : 2000080000 
+
+=== RISC-V Exception ===
+Cause: 13 (Load page fault)
+SEPC:  FFFFFFFF8000A3FA
+STVAL: FFFFFFC000F1C0A0
+[FAULT] Page fault at address: FFFFFFC000F1C0A0
+=== System Halted ===

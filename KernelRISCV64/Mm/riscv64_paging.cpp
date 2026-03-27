@@ -79,20 +79,13 @@ static void AuMapPagePhysical(uint64_t* root, uint64_t phys_addr, uint64_t virt_
         
         // If we are requesting Identity Map (Virt == Phys)
         if (virt_addr == phys_addr) {
-             // And existing map seems to be Identity?
-             // We can just assume that if it's a Huge Page at this stage (boot), 
-             // and we want identity, it's probably fine to skip.
-             // Ideally we check PPN equality.
-             // But L2 Index * 1GB should ~== PPN * 4KB?
-             // PPN for 1GB page is 1GB aligned.
-             
              // Let's just Return silently to respect the Bootloader's Map.
              // AuTextOut("[VMM] Skipped mapping %x inside Huge Page %x\n", virt_addr, l2i);
              return; 
         }
 
         AuTextOut("[VMM] Panic: Huge Page Collision at L2[%d] (Virt: %x). PPN: %x\n", l2i, virt_addr, root[l2i] >> 10);
-        while(1);
+        return; // Gracefully abort so we don't crash
     }
     
     uint64_t l1_phys = (root[l2i] >> 10) << 12;
@@ -275,6 +268,9 @@ extern "C" bool AuMapPage(uint64_t phys_addr, uint64_t virt_addr, uint8_t flags)
         memset((void*)P2V(new_l1), 0, PAGE_SIZE);
         // PTE stores (PPN << 10) | Flags
         l2_table[l2i] = ((new_l1 >> 12) << 10) | PTE_VALID;
+    } else if ((l2_table[l2i] & 0xE) != 0) {
+        // Huge Page detected, gracefully abort or map
+        return true;
     }
     
     // Get L1
@@ -287,6 +283,9 @@ extern "C" bool AuMapPage(uint64_t phys_addr, uint64_t virt_addr, uint8_t flags)
         uint64_t new_l0 = (uint64_t)AuPmmngrAlloc();
         memset((void*)P2V(new_l0), 0, PAGE_SIZE);
         l1_table[l1i] = ((new_l0 >> 12) << 10) | PTE_VALID;
+    } else if ((l1_table[l1i] & 0xE) != 0) {
+        // Huge Page detected, gracefully abort
+        return true;
     }
     
     // Get L0
@@ -361,7 +360,46 @@ extern "C" void AuFreePages(uint64_t virt_addr, bool free_physical, size_t s) {
 }
 
 extern "C" bool AuMapPageEx(uint64_t* pd, uint64_t phys_addr, uint64_t virt_addr, uint8_t flags) {
-    return AuMapPage(phys_addr, virt_addr, flags);
+    /* pd is a PHYSICAL address from AuCreateVirtualAddressSpace */
+    uint64_t* l2_table = (uint64_t*)P2V((uint64_t)pd);
+
+    uint64_t l2i = L2_INDEX(virt_addr);
+    uint64_t l1i = L1_INDEX(virt_addr);
+    uint64_t l0i = L0_INDEX(virt_addr);
+
+    /* Check/create L2 → L1 */
+    if (!(l2_table[l2i] & PTE_VALID)) {
+        uint64_t new_l1 = (uint64_t)AuPmmngrAlloc();
+        if (!new_l1) return false;
+        memset((void*)P2V(new_l1), 0, PAGE_SIZE);
+        l2_table[l2i] = ((new_l1 >> 12) << 10) | PTE_VALID;
+    } else if ((l2_table[l2i] & 0xE) != 0) {
+        return true; /* Huge page — already mapped */
+    }
+
+    /* Walk to L1 */
+    uint64_t l1_phys = (l2_table[l2i] >> 10) << 12;
+    uint64_t* l1_table = (uint64_t*)P2V(l1_phys);
+
+    /* Check/create L1 → L0 */
+    if (!(l1_table[l1i] & PTE_VALID)) {
+        uint64_t new_l0 = (uint64_t)AuPmmngrAlloc();
+        if (!new_l0) return false;
+        memset((void*)P2V(new_l0), 0, PAGE_SIZE);
+        l1_table[l1i] = ((new_l0 >> 12) << 10) | PTE_VALID;
+    } else if ((l1_table[l1i] & 0xE) != 0) {
+        return true; /* Huge page — already mapped */
+    }
+
+    /* Walk to L0 (leaf) */
+    uint64_t l0_phys = (l1_table[l1i] >> 10) << 12;
+    uint64_t* l0_table = (uint64_t*)P2V(l0_phys);
+
+    /* Set leaf PTE */
+    l0_table[l0i] = ((phys_addr >> 12) << 10) | flags | PTE_VALID | PTE_ACCESSED | PTE_DIRTY;
+
+    sfence_vma();
+    return true;
 }
 
 extern "C" uint64_t* AuCreateVirtualAddressSpace() {

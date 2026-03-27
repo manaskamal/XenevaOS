@@ -129,14 +129,10 @@ extern "C" uint64_t AuRISCV64TrapHandler(void* stack_frame) {
                 
             case IRQ_S_EXTERNAL:
                 /* Supervisor external interrupt (from PLIC) */
+                /* Supervisor external interrupt (from PLIC) */
                 {
-                    uint32_t irq = AuPlicClaim();
-                    // AuTextOut("[IRQ] External interrupt: %d\r\n", irq);
-                    
-                    if (irq) {
-                        /* TODO: Dispatch to driver */
-                        AuPlicComplete(irq);
-                    }
+                    extern void AuPlicDispatch();
+                    AuPlicDispatch();
                 }
                 break;
                 
@@ -154,18 +150,21 @@ extern "C" uint64_t AuRISCV64TrapHandler(void* stack_frame) {
         switch (cause_code) {
             case EXC_ECALL_FROM_U:
                 /* System call from user mode */
-                /* a7 contains syscall number, a0-a5 are arguments */
-                /* For now, just advance sepc past ecall (4 bytes) */
-                AuTextOut("[User Mode]: Syscall trapped! (SVC: %d)\r\n", ((uint64_t*)stack_frame)[128/8]); // a7 is at offset 120? No.
-                // Frame: ra=0, sp=8... a7=120?
-                // store_a0_a7 stores a1 at 0... wait.
-                // arch_context_switch stores: ra=0, s0=8...
-                // riscv64_trap_vector_entry:
-                // sp -= 256
-                // ra=0, t0=8 ... a0=64 ... a7=120.
-                AuTextOut("[User Mode]: Syscall trapped! (a7=%d)\r\n", ((uint64_t*)stack_frame)[15]); // 120/8 = 15
-                write_sepc(sepc + 4);
-                return ret_stack;  /* Return normally */
+                /* a7 = syscall number, a0-a5 = arguments */
+                ((uint64_t*)stack_frame)[16] += 4; // Advance SEPC past ecall
+                {
+                    /* Set SUM bit so syscall handlers can access user memory */
+                    uint64_t sstatus_val = read_sstatus();
+                    write_sstatus(sstatus_val | (1ULL << 18));
+                    
+                    extern void AuRISCV64SyscallHandler(uint64_t* frame);
+                    AuRISCV64SyscallHandler((uint64_t*)stack_frame);
+                    
+                    /* Clear SUM bit */
+                    sstatus_val = read_sstatus();
+                    write_sstatus(sstatus_val & ~(1ULL << 18));
+                }
+                return ret_stack;
                 
             case EXC_ECALL_FROM_S:
                 /* System call from supervisor mode */

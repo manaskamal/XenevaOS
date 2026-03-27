@@ -183,6 +183,7 @@ extern "C" __attribute__((aligned(4))) EFI_STATUS efi_main(EFI_HANDLE ImageHandl
     // Ensure we use backslashes and correct path
     XEFile* kernelFile = XEOpenAndReadFile(ImageHandle, SystemTable, (CHAR16*)L"EFI\\XENEVA\\XNKRNL.EXE");
     XEFile* initrdFile = XEOpenAndReadFile(ImageHandle, SystemTable, (CHAR16*)L"EFI\\XENEVA\\INITRD.IMG");
+    XEFile* initExeFile = XEOpenAndReadFile(ImageHandle, SystemTable, (CHAR16*)L"INIT.EXE");
     
     // --- MEMORY AND PAGING INITIALIZATION ---
     // 1. Allocate PMM Stack Buffer FIRST
@@ -487,6 +488,17 @@ typedef struct {
             XEPrintf(SystemTable, const_cast<wchar_t*>(L"InitRD Not Found.\r\n"));
             pBootInfo->driver_entry1 = 0;
             pBootInfo->hid = 0;
+        }
+
+        // Init.exe direct buffer for testing
+        if (initExeFile) {
+            XEPrintf(SystemTable, const_cast<wchar_t*>(L"INIT.EXE Loaded.\r\n"));
+            pBootInfo->driver_entry2 = (uint8_t*)initExeFile->kBuffer;
+            pBootInfo->uid = initExeFile->FileSize;
+        } else {
+            XEPrintf(SystemTable, const_cast<wchar_t*>(L"INIT.EXE Not Found.\r\n"));
+            pBootInfo->driver_entry2 = 0;
+            pBootInfo->uid = 0;
         }
 
         // --- GET MEMORY MAP ---

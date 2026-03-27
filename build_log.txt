@@ -1,0 +1,87 @@
+[XenevaOS] Starting Standalone RISC-V Build (v9 - ELF to PE)...
+[Setup] Found Standard LLVM at: C:\Program Files\LLVM\bin
+[Setup] Using Clang: C:\Program Files\LLVM\bin\clang.exe
+[Setup] Using LLD: C:\Program Files\LLVM\bin\ld.lld.exe
+[XenevaOS] Building Bootloader (BootRISCV64)...
+[XenevaOS] Converting to EFI...
+[XenevaOS] Building Kernel (KernelRISCV64)...
+Mm\riscv64_paging.cpp:34:9: warning: 'PAGE_SIZE' macro redefined [-Wmacro-redefined]
+   34 | #define PAGE_SIZE   (1 << PAGE_SHIFT)
+      |         ^
+..\BaseHdr\Mm/vmmngr.h:103:9: note: previous definition is here
+  103 | #define PAGE_SIZE (1ULL << PAGE_SHIFT) //4096
+      |         ^
+1 warning generated.
+Fs\Dev\devinput.c:30:10: warning: non-portable path to file '<Fs\Dev\devinput.h>'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+   30 | #include <Fs\dev\devinput.h>
+      |          ^~~~~~~~~~~~~~~~~~~
+      |          <Fs\Dev\devinput.h>
+Fs\Dev\devinput.c:33:10: warning: non-portable path to file '<Fs\Dev\devfs.h>'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+   33 | #include <Fs\dev\devfs.h>
+      |          ^~~~~~~~~~~~~~~~
+      |          <Fs\Dev\devfs.h>
+2 warnings generated.
+Drivers\virtio_input.cpp:70:2: warning: array designators are a C99 extension [-Wc99-designator]
+   70 |         [0x63] = 0x37, //print screen
+      |         ^~~~~~
+1 warning generated.
+In file included from Serv\systable.c:13:
+In file included from ..\BaseHdr\Serv/sysserv.h:39:
+..\BaseHdr\Net\socket.h:34:10: warning: non-portable path to file '<Fs/vfs.h>'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+   34 | #include <fs/vfs.h>
+      |          ^~~~~~~~~~
+      |          <Fs/vfs.h>
+1 warning generated.
+In file included from Serv\thrserv.c:10:
+In file included from ..\BaseHdr\Serv/sysserv.h:39:
+..\BaseHdr\Net\socket.h:34:10: warning: non-portable path to file '<Fs/vfs.h>'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+   34 | #include <fs/vfs.h>
+      |          ^~~~~~~~~~
+      |          <Fs/vfs.h>
+1 warning generated.
+In file included from Serv\fileserv.c:30:
+In file included from ..\BaseHdr\Serv/sysserv.h:39:
+..\BaseHdr\Net\socket.h:34:10: warning: non-portable path to file '<Fs/vfs.h>'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+   34 | #include <fs/vfs.h>
+      |          ^~~~~~~~~~
+      |          <Fs/vfs.h>
+Serv\fileserv.c:276:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+  276 | }
+      | ^
+2 warnings generated.
+[XenevaOS] Linking Kernel (Fake PE)...
+[XenevaOS] Converting Kernel to PE...
+        1 file(s) copied.
+[XenevaOS] Building User Space...
+[UserSpace] Building RISC-V Init Process...
+Compiling C Runtime...
+clang: warning: argument unused during compilation: '-mcmodel=medany' [-Wunused-command-line-argument]
+clang: warning: argument unused during compilation: '-ffreestanding' [-Wunused-command-line-argument]
+clang: warning: argument unused during compilation: '-fno-builtin' [-Wunused-command-line-argument]
+clang: warning: argument unused during compilation: '-D DISABLE_VSNPRINTF' [-Wunused-command-line-argument]
+Compiling Syscall Callbase...
+clang: warning: argument unused during compilation: '-mcmodel=medany' [-Wunused-command-line-argument]
+clang: warning: argument unused during compilation: '-ffreestanding' [-Wunused-command-line-argument]
+clang: warning: argument unused during compilation: '-fno-builtin' [-Wunused-command-line-argument]
+clang: warning: argument unused during compilation: '-D DISABLE_VSNPRINTF' [-Wunused-command-line-argument]
+Compiling Init Source...
+Compiling PE Header...
+clang: warning: argument unused during compilation: '-mcmodel=medany' [-Wunused-command-line-argument]
+clang: warning: argument unused during compilation: '-ffreestanding' [-Wunused-command-line-argument]
+clang: warning: argument unused during compilation: '-fno-builtin' [-Wunused-command-line-argument]
+clang: warning: argument unused during compilation: '-D DISABLE_VSNPRINTF' [-Wunused-command-line-argument]
+Linking Init Executable (ELF)...
+Converting to Flat Binary (init.bin)...
+Extracting PE Header...
+Extracting User Code and Data...
+Merging into Final PE Executable (init.exe)...
+pe_header.bin
+user_payload.bin
+        1 file(s) copied.
+Copying init.exe to Build directory...
+        1 file(s) copied.
+[UserSpace] Build complete.
+[XenevaOS] Build Success
+Output: Build\EFI\BOOT\BOOTRISCV64.elf
+Output: Build\EFI\XENEVA\xnkrnl.elf
+Output: Build\EFI\init.exe

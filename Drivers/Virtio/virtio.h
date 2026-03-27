@@ -124,43 +124,48 @@ struct virtio_gpu_mem_entry {
 };
 #pragma pack(pop)
 
-#pragma pack(push,1)
+// NOTE: Do NOT use #pragma pack(push,1) here!
+// On RISC-V, pack(1) causes Clang to emit byte-level loads (LBU/SB) for struct member access.
+// MMIO registers require 32-bit aligned word loads (LW/SW) -- byte access returns 0/garbage.
+// The struct is already naturally 4-byte aligned (all uint32_t fields).
 typedef struct _virtio_mmio_ {
-	volatile uint32_t MagicValue;
-	volatile uint32_t Version;
-	volatile uint32_t DeviceID;
-	volatile uint32_t VendorID;
-	volatile uint32_t DeviceFeatures;
-	volatile uint32_t DeviceFeaturesSel;
-	volatile uint32_t reserved_018;
-	volatile uint32_t reserved_01C;
-	volatile uint32_t DriverFeatures;
-	volatile uint32_t DriverFeaturesSel;
-	volatile uint32_t QueueSel;
-	volatile uint32_t QueueNumMax;
-	volatile uint32_t QueueNum;
-	volatile uint32_t QueueAlign;
-	volatile uint32_t QueuePFN;
-	volatile uint32_t reserved_03C;
-	volatile uint32_t QueueReady;
-	volatile uint32_t reserved_044;
-	volatile uint32_t QueueNotify;
-	volatile uint32_t reserved_04C;
-	volatile uint32_t InterruptStatus;
-	volatile uint32_t InterruptACK;
-	volatile uint32_t Status;
-	volatile uint32_t reserved_05C;
-	volatile uint32_t QueueDescLow;
-	volatile uint32_t QueueDescHigh;
-	volatile uint32_t QueueDriverLow;
-	volatile uint32_t QueueDriverHigh;
-	volatile uint32_t QueueDeviceLow;
-	volatile uint32_t QueueDeviceHigh;
-	volatile uint32_t ConfigGeneration;
-	volatile uint32_t reserved_07C;
-	volatile uint8_t DeviceConfig[0x200 - 0x80];
+	volatile uint32_t MagicValue;        // 0x000
+	volatile uint32_t Version;           // 0x004
+	volatile uint32_t DeviceID;          // 0x008
+	volatile uint32_t VendorID;          // 0x00C
+	volatile uint32_t DeviceFeatures;    // 0x010
+	volatile uint32_t DeviceFeaturesSel; // 0x014
+	volatile uint32_t _reserved_018[2];  // 0x018-0x01C
+	volatile uint32_t DriverFeatures;    // 0x020
+	volatile uint32_t DriverFeaturesSel; // 0x024
+	volatile uint32_t GuestPageSize;      // 0x028 (v1: WRITE, set before queue setup)
+	volatile uint32_t _reserved_02C;     // 0x02C
+	volatile uint32_t QueueSel;          // 0x030
+	volatile uint32_t QueueNumMax;       // 0x034
+	volatile uint32_t QueueNum;          // 0x038
+	volatile uint32_t QueueAlign;         // 0x03C (v1: guest page size)
+	volatile uint32_t QueuePFN;           // 0x040 (v1: PFN of queue)
+	volatile uint32_t QueueReady;         // 0x044 (v2 only)
+	volatile uint32_t _reserved_048[2];  // 0x048-0x04C
+	volatile uint32_t QueueNotify;       // 0x050
+	volatile uint32_t _reserved_054[3];  // 0x054-0x05C
+	volatile uint32_t InterruptStatus;   // 0x060
+	volatile uint32_t InterruptACK;      // 0x064
+	volatile uint32_t _reserved_068[2];  // 0x068-0x06C
+	volatile uint32_t Status;            // 0x070
+	volatile uint32_t _reserved_074[3];  // 0x074-0x07C
+	volatile uint32_t QueueDescLow;      // 0x080
+	volatile uint32_t QueueDescHigh;     // 0x084
+	volatile uint32_t _reserved_088[2];  // 0x088-0x08C
+	volatile uint32_t QueueDriverLow;    // 0x090
+	volatile uint32_t QueueDriverHigh;   // 0x094
+	volatile uint32_t _reserved_098[2];  // 0x098-0x09C
+	volatile uint32_t QueueDeviceLow;    // 0x0A0
+	volatile uint32_t QueueDeviceHigh;   // 0x0A4
+	volatile uint32_t _reserved_0A8[21]; // 0x0A8-0x0F8 (SHMSel etc, skip)
+	volatile uint32_t ConfigGeneration;  // 0x0FC
+	volatile uint8_t  DeviceConfig[0x200 - 0x100]; // 0x100+
 }VirtioMMIOHeader;
-#pragma pack(pop)
 
 
 #pragma pack(push,1)

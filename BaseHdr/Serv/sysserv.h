@@ -60,6 +60,8 @@ extern int PauseThread();
 extern uint16_t GetThreadID();
 #elif ARCH_ARM64
 extern uint64_t GetThreadID();
+#elif ARCH_RISCV64
+extern uint64_t GetThreadID();
 #endif
 
 /*

@@ -114,8 +114,15 @@ uint32_t* AuDeviceTreeGetSubNode(uint32_t* node, char* strings, const char* name
 
 uint32_t* AuDeviceTreeFindPropertyInternal(uint32_t* node, char* strings, const char* property,
 	uint32_t** out) {
-	while ((*node & 0xFF000000) && (*node & 0xFF0000) && (*node & 0xFF00) && (*node & 0xFF))node++;
-	node++;
+        
+    /* If the pointer is pointing to BEGIN_NODE, skip token */
+    if (AuDTBSwap32(*node) == 1) node++;
+    
+    /* Safely skip the string name aligned to 4-byte boundaries */
+    char* name_str = (char*)node;
+    size_t name_len = strlen(name_str) + 1;
+    size_t align_len = (name_len + 3) & ~3;
+    node = (uint32_t*)((uint8_t*)node + align_len);
 
 	while (1) {
 		while (AuDTBSwap32(*node) == 4) node++;
@@ -293,3 +300,164 @@ void AuDeviceTreeMapMMIO() {
 	dtbAddress = mmio;
 	AuTextOut("[aurora]: Device tree mmio %x mapped with page count : %d \r\n",mmio, pageCount);
 }
+
+/*
+ * AuDeviceTreeGetInterrupt -- get the interrupt number
+ * @param node -- Pointer to node
+ */
+uint32_t AuDeviceTreeGetInterrupt(uint32_t* node) {
+	if (!dtbAddress)
+		return 0;
+	uint32_t* interrupt = AuDeviceTreeFindProperty(node, "interrupts");
+	if (interrupt) {
+		/* RISC-V QEMU Virt: Interrupts are usually 1 cell (SPI number) */
+		/* But could be extended. Assuming 1 cell for now based on QEMU DTS */
+		return AuDTBSwap32(interrupt[2]);
+	}
+	return 0;
+}
+
+void AuDeviceTreeScanInternal(uint32_t* node, char* strings, const char* name, 
+    void (*callback)(uint32_t* node, void* arg), void* arg) {
+    
+    while (AuDTBSwap32(*node) == 4) node++;
+    if (AuDTBSwap32(*node) == 9) return;
+    if (AuDTBSwap32(*node) != 1) return;
+    node++;
+
+    /* Check if current node matches prefix */
+    AuTextOut("[DTB-Scan] Node: %s\r\n", (char*)node);
+    if (prefix_cmp((char*)node, name)) {
+        callback(node, arg);
+    }
+
+    /* Iterate children */
+    while ((*node & 0xFF000000) && (*node & 0xFF0000) && (*node & 0xFF00) && (*node & 0xFF)) node++;
+    node++;
+    
+    while (1) {
+        while (AuDTBSwap32(*node) == 4) node++;
+        if (AuDTBSwap32(*node) == 2) return; // End child
+        if (AuDTBSwap32(*node) == 3) { // Prop
+            uint32_t len = AuDTBSwap32(node[1]);
+            node += 3;
+            node += (len + 3) / 4;
+        }
+        else if (AuDTBSwap32(*node) == 1) { // Begin Node
+            AuDeviceTreeScanInternal(node, strings, name, callback, arg);
+            /* Helper to skip node */
+            uint32_t depth = 1;
+            node++; // Skip BEGIN_NODE token
+            while ((*node & 0xFF000000) && (*node & 0xFF0000) && (*node & 0xFF00) && (*node & 0xFF)) node++; // Skip name
+            node++;
+            
+            while(depth > 0) {
+                 while (AuDTBSwap32(*node) == 4) node++;
+                 if (AuDTBSwap32(*node) == 1) {
+                     depth++;
+                     node++;
+                     while ((*node & 0xFF000000) && (*node & 0xFF0000) && (*node & 0xFF00) && (*node & 0xFF)) node++; // Name
+                     node++;
+                 }
+                 else if (AuDTBSwap32(*node) == 2) {
+                     depth--;
+                     node++;
+                 }
+                 else if (AuDTBSwap32(*node) == 3) {
+                     uint32_t len = AuDTBSwap32(node[1]);
+                     node += 3;
+                     node += (len + 3) / 4;
+                 }
+                 else if (AuDTBSwap32(*node) == 9) {
+                     return; 
+                 }
+            }
+        }
+        else if (AuDTBSwap32(*node) == 9) return;
+    }
+}
+
+
+/* Re-implementing a simpler Scanner since the recursive skip logic is complex */
+void AuDeviceTreeIterateChildren(uint32_t* parent, char* strings, const char* name_prefix, 
+                                void(*callback)(uint32_t*, void*), void* arg) {
+    if (!parent) {
+        parent = (uint32_t*)((uint64_t)dtbAddress + AuDTBSwap32(((fdt_header_t*)dtbAddress)->off_dt_struct));
+        while (AuDTBSwap32(*parent) == 4) parent++;
+        if (AuDTBSwap32(*parent) != 1) return; // Expect Root
+        parent++; // Skip Root Token
+        while ((*parent & 0xFF000000) && (*parent & 0xFF0000) && (*parent & 0xFF00) && (*parent & 0xFF)) parent++; 
+        parent++; // Skip Root Name
+    }
+     
+     uint32_t* node = parent;
+     
+     while(1) {
+        while (AuDTBSwap32(*node) == 4) node++;
+        uint32_t token = AuDTBSwap32(*node);
+        
+        if (token == 2) return; // End of Root
+        if (token == 9) return; // EOF
+        
+        if (token == 3) { // Property at root or current depth?
+             uint32_t len = AuDTBSwap32(node[1]);
+             node += 3;
+             node += (len + 3) / 4;
+        } else if (token == 1) { // Child Node
+             uint32_t* child_node = node;
+             node++; // Token
+             char* child_name = (char*)node;
+             
+             AuTextOut("[DTB-Iter] Scanning: %s\r\n", child_name);
+             if (prefix_cmp(child_name, name_prefix)) {
+                 callback(child_node, arg);
+             }
+             
+             /* If it's a 'soc' node, we WANT to parse its children. 
+              * QEMU puts virtio_mmio inside /soc.
+              * So we just skip its name string and let the main loop continue parsing its properties/children 
+              * without skipping the entire block!
+              */
+             if (prefix_cmp(child_name, "soc")) {
+                 while ((*node & 0xFF000000) && (*node & 0xFF0000) && (*node & 0xFF00) && (*node & 0xFF)) node++;
+                 node++;
+                 continue; // Continue main loop, which will now parse inside 'soc'
+             }
+             
+             /* For all OTHER nodes that don't match our target and aren't 'soc', 
+              * we skip their entire tree block to get to the next sibling */
+             while ((*node & 0xFF000000) && (*node & 0xFF0000) && (*node & 0xFF00) && (*node & 0xFF)) node++;
+             node++;
+             
+             int depth = 1;
+             while (depth > 0) {
+                 while (AuDTBSwap32(*node) == 4) node++; // NOP
+                 uint32_t t = AuDTBSwap32(*node);
+                 if (t == 1) { // Child of child
+                     depth++;
+                     node++;
+                     while ((*node & 0xFF000000) && (*node & 0xFF0000) && (*node & 0xFF00) && (*node & 0xFF)) node++;
+                     node++;
+                 } else if (t == 2) { // End of child
+                     depth--;
+                     node++;
+                 } else if (t == 3) { // Property of child
+                     uint32_t len = AuDTBSwap32(node[1]);
+                     node += 3;
+                     node += (len + 3) / 4;
+                 } else if (t == 9) return;
+             }
+        }
+     }
+}
+
+/*
+ * AuDeviceTreeScan -- Scans root children for matching prefix
+ */
+void AuDeviceTreeScan(const char* prefix, void (*callback)(uint32_t* node, void* arg), void* arg) {
+    if (!dtbAddress) return;
+    fdt_header_t* fdt = (fdt_header_t*)dtbAddress;
+	char* dtb_strings = (char*)((uint64_t)dtbAddress + AuDTBSwap32(fdt->off_dt_strings));
+    AuDeviceTreeIterateChildren(NULL, dtb_strings, prefix, callback, arg);
+}
+

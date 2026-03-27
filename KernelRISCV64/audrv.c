@@ -386,6 +386,15 @@ void AuDrvMngrInitialize(KERNEL_BOOT_INFO* info) {
 		}
 	}
 
+#ifdef ARCH_RISCV64
+	/* Load the VirtIO MMIO GPU driver natively since it bypassed PCI enumeration */
+	AuDriver* virtio_mmio_drv = AuCreateDriverInstance("/A.DRV");
+	AuDriverLoad(virtio_mmio_drv->name, virtio_mmio_drv);
+	if (virtio_mmio_drv->entry) {
+		virtio_mmio_drv->entry();
+	}
+#endif
+
 	AuTextOut("[aurora]: AuDrvManager initialized successfully \r\n");
 	kfree(file);
 }
@@ -447,25 +456,9 @@ void AuBootDriverLoad(void* driverBuffer, AuDriver* driver) {
  */
 AU_EXTERN AU_EXPORT void AuBootDriverInitialise(KERNEL_BOOT_INFO* info) {
 	int total_boot_driver = 0;
-	/* HARD CODED */
 
-	/* THE AHCI Controller */
-	if (info->driver_entry1) {
-		AuDriver* driver = AuCreateBootDriverInstance("AHCIController");
-		AuBootDriverLoad(info->driver_entry1, driver);
-	}
-
-	/* THE NVMe Controller */
-	if (info->driver_entry2) {
-		AuDriver* driver = AuCreateBootDriverInstance("NVMeController");
-		AuBootDriverLoad(info->driver_entry2, driver);
-	}
-
-	/* The USB 3.x Controller*/
-	if (info->driver_entry3) {
-		AuDriver* driver = AuCreateBootDriverInstance("XHCIController");
-		AuBootDriverLoad(info->driver_entry3, driver);
-	}
+	/* In RISC-V, driver_entry1 is InitRD ! DO NOT LOAD IT AS PE! */
+	/* In RISC-V, driver_entry2 is no longer used for A.DRV (VirtIO GPU) because it's built into the kernel natively. */
 
 	/* Serially call each startup entries of each driver */
 	for (int i = 0; i < driver_boot_unique_id; i++) {

@@ -128,6 +128,17 @@ extern void AuDeviceTreeInitialize(KERNEL_BOOT_INFO* info);
  * AuDeviceTreeMapMMIO -- Maps the physical device tree address
  * to MMIO address range
  */
+/*
+ * AuDeviceTreeGetInterrupt -- get the interrupt number
+ * @param node -- Pointer to node
+ */
+AU_EXTERN AU_EXPORT uint32_t AuDeviceTreeGetInterrupt(uint32_t* node);
+
+/*
+ * AuDeviceTreeScan -- Scans root children for matching prefix
+ */
+AU_EXTERN AU_EXPORT void AuDeviceTreeScan(const char* prefix, void (*callback)(uint32_t* node, void* arg), void* arg);
+
 extern void AuDeviceTreeMapMMIO();
 
 #ifdef __cplusplus

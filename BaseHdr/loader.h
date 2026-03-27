@@ -50,6 +50,17 @@ extern "C" {
 extern void AuInitialiseLoader();
 
 /*
+* AuLoadExecFromBuffer -- loads an executable from a memory buffer to the
+* process
+* @param proc -- pointer to process data structure
+* @param buffer -- memory buffer containing the PE image
+* @param filename -- executable file name (for logging)
+* @param argc -- number of arguments
+* @param argv -- array of argument in strings
+*/
+extern int AuLoadExecFromBuffer(AuProcess* proc, void* buffer, char* filename, int argc, char** argv);
+
+/*
 * AuLoadExecToProcess -- loads an executable to the
 * process
 * @param proc -- pointer to process data structure

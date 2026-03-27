@@ -123,6 +123,18 @@ uint32_t AuPlicClaim() {
     return *claim_reg;
 }
 
+/* Interrupt Handler Table */
+static void (*_plic_handlers[1024])(uint32_t) = { 0 };
+
+/* 
+ * AuRegisterPLICIrq -- Register an interrupt handler
+ */
+void AuRegisterPLICIrq(uint32_t irq, void (*handler)(uint32_t)) {
+    if (irq < 1024) {
+        _plic_handlers[irq] = handler;
+    }
+}
+
 /*
  * AuPlicComplete -- Signal completion of interrupt
  * @param id -- Interrupt ID retrieved from Claim
@@ -132,4 +144,19 @@ void AuPlicComplete(uint32_t id) {
     
     volatile uint32_t* complete_reg = (volatile uint32_t*)(_plic_base + PLIC_CLAIM_OFFSET + (PLIC_CTX_S_MODE * 0x1000));
     *complete_reg = id;
+}
+
+/* 
+ * AuPlicDispatch -- Handle external interrupt
+ */
+void AuPlicDispatch() {
+    uint32_t irq = AuPlicClaim();
+    if (irq) {
+        if (irq < 1024 && _plic_handlers[irq]) {
+            _plic_handlers[irq](irq);
+        } else {
+             AuTextOut("[PLIC] Unhandled IRQ: %d\r\n", irq);
+        }
+        AuPlicComplete(irq);
+    }
 }

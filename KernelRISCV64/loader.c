@@ -89,6 +89,11 @@ void AuProcessEntUser(uint64_t rcx) {
 	disable_irq();
 #ifdef ARCH_RISCV64
 	AuThread* t = AuGetCurrentThread();
+	/* RISC-V: Set SUM bit (bit 18) in sstatus to allow S-mode access to U-mode pages.
+	 * Without this, writing to the user stack (which has PTE_USER) causes a Store page fault. */
+	uint64_t sstatus_val = read_sstatus();
+	sstatus_val |= (1ULL << 18);  /* SUM bit */
+	write_sstatus(sstatus_val);
 #else
 	AA64Thread* t = AuGetCurrentThread();
 #endif
@@ -125,6 +130,11 @@ void AuProcessEntUser(uint64_t rcx) {
 	PUSHALIGN(uentry->sp, 16);
 	AuTextOut("Entering user %x %x\r\n", uentry->sp,uentry->entrypoint);
 #ifdef ARCH_RISCV64
+	/* Clear SUM bit before entering user mode */
+	sstatus_val = read_sstatus();
+	sstatus_val &= ~(1ULL << 18);
+	write_sstatus(sstatus_val);
+	asm volatile("fence.i" ::: "memory");
 	arch_enter_user(uentry->sp, uentry->entrypoint);
 #else
 	aa64_enter_user(uentry->sp, uentry->entrypoint);
@@ -144,6 +154,169 @@ extern bool setStk();
  * @param argc -- number of arguments
  * @param argv -- array of argument in strings
  */
+int AuLoadExecFromBuffer(AuProcess* proc, void* buffer, char* filename, int argc, char** argv) {
+	IMAGE_DOS_HEADER* dos = (IMAGE_DOS_HEADER*)buffer;
+	PIMAGE_NT_HEADERS nt = RAW_OFFSET(PIMAGE_NT_HEADERS,dos, dos->e_lfanew);
+	PSECTION_HEADER secthdr = RAW_OFFSET(PSECTION_HEADER,&nt->OptionalHeader, nt->FileHeader.SizeOfOptionaHeader);
+
+#ifdef ARCH_RISCV64
+	uint64_t _image_base_ = 0x10000000;  // Sv39: must fit in 39-bit user space
+#else
+	uint64_t _image_base_ = 0x60000000000;//   nt->OptionalHeader.ImageBase;
+#endif
+	entry ent = (entry)(nt->OptionalHeader.AddressOfEntryPoint + _image_base_);//nt->OptionalHeader.ImageBase);
+	AuTextOut("Image base address : %x \n", dos->e_magic);
+	uint64_t* cr3 = proc->cr3;
+
+	/* check if the binary is dynamically linked */
+	if (AuPEFileIsDynamicallyLinked(buffer)) {
+		AuTextOut("The process %s is Dynamically Linked \n", filename);
+
+		/* now load XELoader process, which'll further
+		 * link this dynamic process with its shared
+		 * libraries
+		 */
+		int char_cnt = 0;
+
+		for (int i = 0; i < argc; i++) {
+			char_cnt += strlen(argv[i]);
+		}
+		/* here we allocate extra memories for each strings
+		 * because we cannot allocate it to stack, the stack
+		 * will get changed once we enter the desired thread
+		 */
+		int num_args_ = 1 + argc;
+		int string_len = strlen(filename);
+		char* file__ = (char*)kmalloc(string_len+1);
+		strcpy(file__, filename);
+
+		/* BUGG: if kmalloc allocates smaller memory below than 15 bytes,
+		 * it crashes while freeing the allocated memory, that's why we
+		 * allocate memory of size (string_len + char_cnt) * sizeof(char) for
+		 * argument array
+		 */
+		char** argvs = (char**)kmalloc(num_args_ * sizeof(char*));
+		argvs[0] = file__;
+
+		for (int i = 0; i < argc; i++) {
+			char* argpass = (char*)kmalloc(strlen(argv[i])+1);
+			memset(argpass, 0, strlen(argv[i])+1);
+			strcpy(argpass, argv[i]);
+			argvs[1 + i] = argpass;
+		}
+
+		if (argc > 0) {
+			kfree(argv);
+		}
+
+		/* load the loader */
+		return AuLoadExecToProcess(proc, "/xeldr.exe", num_args_, argvs);
+	}
+	AuTextOut("NT NumberOfSection : %d for %s\n", nt->FileHeader.NumberOfSections, proc->name);
+	for (size_t i = 0; i < nt->FileHeader.NumberOfSections; ++i) {
+		size_t load_addr = _image_base_ + secthdr[i].VirtualAddress;
+		size_t sectsz = secthdr[i].VirtualSize;
+		int req_pages = sectsz / 4096 +
+			((sectsz % 4096) ? 1 : 0);
+		uint64_t* block = 0;
+		int physFrameIndex = 0;
+		for (int j = 0; j < req_pages; j++) {
+			uint64_t alloc = (load_addr + j * 0x1000);
+			uint64_t phys = P2V((size_t)AuPmmngrAlloc());
+			physFrames[physFrameIndex] = phys;
+#ifdef ARCH_RISCV64
+			AuMapPageEx(proc->cr3, V2P(phys), alloc, PTE_READ | PTE_WRITE | PTE_EXEC | PTE_USER | PTE_VALID);
+#else
+			AuMapPageEx(proc->cr3, V2P(phys), alloc, PTE_USER_EXECUTABLE | PTE_AP_RW_USER | PTE_NORMAL_MEM);
+#endif
+			if (!block)
+				block = (uint64_t*)phys;
+			physFrameIndex++;
+		}
+		size_t rawSize = secthdr[i].SizeOfRawData;
+		size_t virtSize = secthdr[i].VirtualSize;
+		size_t fileOffset = secthdr[i].PointerToRawData;
+		size_t copied = 0;
+		// Fix: Need ceiling to ensure sections < 4096 bytes are also copied
+		int rawPages = (rawSize + 4095) / 4096;
+		for (int k = 0; k < rawPages; k++) {
+			size_t toCopy = 4096;
+			if (copied + toCopy > rawSize)
+				toCopy = (rawSize > copied) ? (rawSize - copied) : 0;
+
+			if (toCopy > 0) 
+				memcpy((void*)physFrames[k], RAW_OFFSET(void*,buffer,fileOffset+copied), toCopy);
+			
+			if (toCopy < 4096) 
+				memset((void*)(physFrames[k] + toCopy), 0, 4096 - toCopy);
+			copied += toCopy;
+		}
+
+		if (secthdr[i].VirtualSize > secthdr[i].SizeOfRawData) {
+			/* get the index number of physFrame array*/
+			int zeroStart = rawSize;
+			int zeroLen = virtSize - rawSize;
+			int pageIndex = secthdr[i].SizeOfRawData / 4096; 
+			int pageOffset = secthdr[i].SizeOfRawData % PAGE_SIZE;
+			if (pageOffset > 0) {
+				memset((void*)(physFrames[pageIndex] + pageOffset), 0, PAGE_SIZE - pageOffset);
+				pageIndex++;
+				zeroLen -= (PAGE_SIZE - pageOffset);
+			}
+
+			while (zeroLen >= PAGE_SIZE) {
+				memset((void*)(physFrames[pageIndex++]), 0, PAGE_SIZE);
+				zeroLen -= PAGE_SIZE;
+			}
+
+			if (zeroLen > 0) 
+				memset((void*)physFrames[pageIndex], 0, zeroLen);
+		}
+	}
+
+#ifdef ARCH_RISCV64
+	AuThread* thr = AuCreateKthread(AuProcessEntUser, 0, (uint64_t)cr3, proc->name);
+#else
+	AA64Thread* thr = AuCreateKthread(AuProcessEntUser, cr3, proc->name);
+#endif
+	thr->threadType = THREAD_LEVEL_USER;
+	/* CRITICAL: Associate thread with its process for both lookup paths:
+	 * AuProcessFindThread()    checks proc->main_thread == thr
+	 * AuProcessFindSubThread() checks thr->procSlot
+	 */
+	proc->main_thread = thr;
+	thr->procSlot = proc;
+	AuUserEntry* uentry = (AuUserEntry*)kmalloc(sizeof(AuUserEntry));
+	memset(uentry, 0, sizeof(AuUserEntry));
+	uentry->sp = proc->_main_stack_;
+	uentry->entrypoint = (size_t)ent;
+	uentry->stackBase = proc->_main_stack_;
+	int num_args = argc;
+	uint64_t argvaddr = 0;
+	if (num_args) {
+		/* Allocate a memory for passing arguments */
+		uint64_t* args = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
+		memset(args, 0, PAGE_SIZE);
+#ifdef ARCH_RISCV64
+		if (!AuMapPageEx(proc->cr3, (size_t)V2P((uint64_t)args), 0x18000000, PTE_READ | PTE_WRITE | PTE_USER | PTE_VALID)) {
+#else
+		if (!AuMapPageEx(proc->cr3, (size_t)V2P((uint64_t)args), 0x40000000000,PTE_AP_RW_USER | PTE_NORMAL_MEM)) {
+#endif
+			AuTextOut("Arguments address already mapped \n");
+			argvaddr = 0;
+		}
+		else {
+			argvaddr = 0x18000000;  // Sv39 compatible
+		}
+	}
+	uentry->argvaddr = argvaddr;
+	uentry->num_args = num_args;
+	uentry->argvs = argv;
+	thr->uentry = uentry;
+	AuTextOut("Binary mapped , thread id : %d\n", thr->id); //RISCV uses id
+	return 0;
+}
+
 int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) {
 
 	
@@ -174,168 +347,9 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) 
 		sbIndex++;
 	}
 
-
-	IMAGE_DOS_HEADER* dos = (IMAGE_DOS_HEADER*)_ldr_scratchBuffer;
-	PIMAGE_NT_HEADERS nt = RAW_OFFSET(PIMAGE_NT_HEADERS,dos, dos->e_lfanew);
-	PSECTION_HEADER secthdr = RAW_OFFSET(PSECTION_HEADER,&nt->OptionalHeader, nt->FileHeader.SizeOfOptionaHeader);
-
-	uint64_t _image_base_ = 0x60000000000;//   nt->OptionalHeader.ImageBase;
-	entry ent = (entry)(nt->OptionalHeader.AddressOfEntryPoint + _image_base_);//nt->OptionalHeader.ImageBase);
-	AuTextOut("Image base address : %x \n", dos->e_magic);
-	uint64_t* cr3 = proc->cr3;
-
-	/* check if the binary is dynamically linked */
-	if (AuPEFileIsDynamicallyLinked(_ldr_scratchBuffer)) {
-		AuTextOut("The process %s is Dynamically Linked \n", filename);
-		/* free the current file*/
-		kfree(file);
-		//AuPmmngrFree((void*)V2P((sizeof(buf))));
-
-		/* now load XELoader process, which'll further
-		 * link this dynamic process with its shared
-		 * libraries
-		 */
-		int char_cnt = 0;
-
-		for (int i = 0; i < argc; i++) {
-			char_cnt += strlen(argv[i]);
-		}
-		/* here we allocate extra memories for each strings
-		 * because we cannot allocate it to stack, the stack
-		 * will get changed once we enter the desired thread
-		 */
-		int num_args_ = 1 + argc;
-		int string_len = strlen(filename);
-		char* file__ = (char*)kmalloc(string_len+1);
-		strcpy(file__, filename);
-
-		/* BUGG: if kmalloc allocates smaller memory below than 15 bytes,
-		 * it crashes while freeing the allocated memory, that's why we
-		 * allocate memory of size (string_len + char_cnt) * sizeof(char) for
-		 * argument array
-		 */
-		char** argvs = (char**)kmalloc(num_args_ * sizeof(char*));
-		//memset(argvs, 0, num_args_ * sizeof(char*));
-		argvs[0] = file__;
-
-		for (int i = 0; i < argc; i++) {
-			char* argpass = (char*)kmalloc(strlen(argv[i])+1);
-			memset(argpass, 0, strlen(argv[i])+1);
-			strcpy(argpass, argv[i]);
-			argvs[1 + i] = argpass;
-		}
-
-
-		if (argc > 0) {
-			kfree(argv);
-		}
-
-	//	setStk();
-		//AuReleaseSpinlock(loader_lock);
-
-		/* load the loader */
-		return AuLoadExecToProcess(proc, "/xeldr.exe", num_args_, argvs);
-	}
-	AuTextOut("NT NumberOfSection : %d for %s\n", nt->FileHeader.NumberOfSections, proc->name);
-	for (size_t i = 0; i < nt->FileHeader.NumberOfSections; ++i) {
-		size_t load_addr = _image_base_ + secthdr[i].VirtualAddress;
-		void* sect_addr = (void*)load_addr;
-		size_t sectsz = secthdr[i].VirtualSize;
-		int req_pages = sectsz / 4096 +
-			((sectsz % 4096) ? 1 : 0);
-		uint64_t* block = 0;
-		int physFrameIndex = 0;
-		for (int j = 0; j < req_pages; j++) {
-			uint64_t alloc = (load_addr + j * 0x1000);
-			uint64_t phys = P2V((size_t)AuPmmngrAlloc());
-			physFrames[physFrameIndex] = phys;
-			//AuTextOut("LoadAddr : %x , phys : %x \n", alloc, phys);
-#ifdef ARCH_RISCV64
-			AuMapPageEx(proc->cr3, V2P(phys), alloc, PTE_READ | PTE_WRITE | PTE_EXEC | PTE_USER | PTE_VALID);
-#else
-			AuMapPageEx(proc->cr3, V2P(phys), alloc, PTE_USER_EXECUTABLE | PTE_AP_RW_USER | PTE_NORMAL_MEM);
-#endif
-			if (!block)
-				block = (uint64_t*)phys;
-			physFrameIndex++;
-		}
-		size_t rawSize = secthdr[i].SizeOfRawData;
-		size_t virtSize = secthdr[i].VirtualSize;
-		size_t fileOffset = secthdr[i].PointerToRawData;
-		size_t copied = 0;
-		for (int k = 0; k < secthdr[i].SizeOfRawData / 4096; k++) {
-			size_t toCopy = 4096;
-			if (copied + toCopy > rawSize)
-				toCopy = (rawSize - copied) ? rawSize - copied : 0;
-
-			if (toCopy > 0) 
-				//memcpy(sect_addr, RAW_OFFSET(void*, _ldr_scratchBuffer, secthdr[i].PointerToRawData), secthdr[i].SizeOfRawData);
-				memcpy((void*)physFrames[k], RAW_OFFSET(void*,_ldr_scratchBuffer,fileOffset+copied), toCopy); //RAW_OFFSET(void*, _ldr_scratchBuffer, secthdr[i].PointerToRawData)
-			
-			if (toCopy < 4096) 
-				memset((void*)(physFrames[k] + toCopy), 0, PAGE_SIZE - toCopy);
-			copied += toCopy;
-		}
-
-		if (secthdr[i].VirtualSize > secthdr[i].SizeOfRawData) {
-			/* get the index number of physFrame array*/
-			int zeroStart = rawSize;
-			int zeroLen = virtSize - rawSize;
-			int pageIndex = secthdr[i].SizeOfRawData / 4096; 
-			int pageOffset = secthdr[i].SizeOfRawData % PAGE_SIZE;
-			if (pageOffset > 0) {
-				memset((void*)(physFrames[pageIndex] + pageOffset), 0, PAGE_SIZE - pageOffset);
-				pageIndex++;
-				zeroLen -= (PAGE_SIZE - pageOffset);
-			}
-
-			while (zeroLen >= PAGE_SIZE) {
-				memset((void*)(physFrames[pageIndex++]), 0, PAGE_SIZE);
-				zeroLen -= PAGE_SIZE;
-			}
-
-			if (zeroLen > 0) 
-				memset((void*)physFrames[pageIndex], 0, zeroLen);
-		}
-		//write_both_ttbr(current_ttbr);
-	}
-
-#ifdef ARCH_RISCV64
-	AuThread* thr = AuCreateKthread(AuProcessEntUser, 0, (uint64_t)cr3, proc->name);
-#else
-	AA64Thread* thr = AuCreateKthread(AuProcessEntUser, cr3, proc->name);
-#endif
-	thr->threadType = THREAD_LEVEL_USER;
-	AuUserEntry* uentry = (AuUserEntry*)kmalloc(sizeof(AuUserEntry));
-	memset(uentry, 0, sizeof(AuUserEntry));
-	uentry->sp = proc->_main_stack_;
-	uentry->entrypoint = (size_t)ent;
-	uentry->stackBase = proc->_main_stack_;
-	int num_args = argc;
-	uint64_t argvaddr = 0;
-	if (num_args) {
-		/* Allocate a memory for passing arguments */
-		uint64_t* args = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
-		memset(args, 0, PAGE_SIZE);
-#ifdef ARCH_RISCV64
-		if (!AuMapPageEx(proc->cr3, (size_t)V2P((uint64_t)args), 0x40000000000, PTE_READ | PTE_WRITE | PTE_USER | PTE_VALID)) {
-#else
-		if (!AuMapPageEx(proc->cr3, (size_t)V2P((uint64_t)args), 0x40000000000,PTE_AP_RW_USER | PTE_NORMAL_MEM)) {
-#endif
-			AuTextOut("Arguments address already mapped \n");
-			argvaddr = 0;
-		}
-		else {
-			argvaddr = 0x40000000000;
-		}
-	}
-	uentry->argvaddr = argvaddr;
-	uentry->num_args = num_args;
-	uentry->argvs = argv;
-	thr->uentry = uentry;
-	//proc->main_thread = thr;
-	AuTextOut("Binary mapped , thread id : %d\n", thr->id); //RISCV uses id
-	return 0;
+    int ret = AuLoadExecFromBuffer(proc, _ldr_scratchBuffer, filename, argc, argv);
+    kfree(file); // Don't forget to free the file node
+    return ret;
 }
 /*
  * AuInitialiseLoader -- initialize the loader

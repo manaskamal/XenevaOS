@@ -12,6 +12,10 @@
 #include <aurora.h>
 #include <Ipc/signal.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define  THREAD_STATE_READY     1
 #define  THREAD_STATE_BLOCKED   3
 #define  THREAD_STATE_SLEEP     4
@@ -136,5 +140,9 @@ AU_EXTERN AU_EXPORT void AuForceScheduler();
 AU_EXTERN AU_EXPORT bool AuIsSchedulerInitialised();
 AU_EXTERN AU_EXPORT uint64_t AuGetSystemTimerTick();
 AU_EXTERN AU_EXPORT uint64_t AuScheduleThread(uint64_t stack_frame);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

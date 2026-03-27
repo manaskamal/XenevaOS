@@ -328,18 +328,54 @@ void* AuPmmngrAlloc() {
 }
 
 /*
- * AuPmmngrAllocBlocks -- Allocate multiple physical page frames
+ * AuPmmngrAllocBlocks -- Allocate multiple CONTIGUOUS physical page frames
  * and return the first page pointer to the caller
- * @param size -- Number of blocks to allocate
+ * @param num -- Number of blocks to allocate
  */
 void* AuPmmngrAllocBlocks(int num) {
-	void* First = AuPmmngrAlloc();
-	//UARTDebugOut("AuPmmngrAllocBlocks: %x \n", First);
-	for (int i = 1; i < num; i++) {
-		void* p = AuPmmngrAlloc();
-		//UARTDebugOut("AuPmmngrAllocBlocks: %x \n", p);
+	if (num <= 0) return 0;
+	
+	uint64_t contiguous_start = 0;
+	bool found = false;
+	
+	// Scan the bitmap for 'num' consecutive free blocks
+	for (uint64_t i = _RamBitmapIndex; i < _BitmapSize * 8; i++) {
+		if (AuPmmngrBitmapCheck(i)) continue; // Bit is set (used)
+		
+		// Found a free bit. Let's check if the next 'num-1' bits are also free.
+		bool continuous = true;
+		for (int j = 1; j < num; j++) {
+			if (i + j >= _BitmapSize * 8) {
+				continuous = false;
+				break;
+			}
+			if (AuPmmngrBitmapCheck(i + j)) {
+				continuous = false;
+				i += j; // Skip ahead to save time
+				break;
+			}
+		}
+		
+		if (continuous) {
+			contiguous_start = i;
+			found = true;
+			break;
+		}
 	}
-	return First;
+	
+	if (!found) {
+		AuTextOut("Kernel Panic!!! No contiguous physical memory for %d blocks\n", num);
+		for (;;);
+	}
+	
+	// Lock the sequence
+	for (int k = 0; k < num; k++) {
+		AuPmmngrLockPage((contiguous_start + k) * 4096);
+		_UsedMemory++;
+	}
+	dsb_ish();
+	
+	return (void*)(UsablePhysicalMemory + (contiguous_start * 4096));
 }
 
 /*

@@ -255,8 +255,8 @@ static void AuIdleThread(uint64_t ctx) {
  * @return stack top address
  */
 static uint64_t AuCreateKernelStack(uint64_t pml) {
-    /* Kernel stack location in RISC-V higher half */
-    #define RISCV_KERNEL_STACK_LOCATION  0xFFFFFFC000F00000ULL
+    /* Kernel stack location — MUST NOT overlap boot stack at 0xFFFFFFC000F00000-F10000 */
+    #define RISCV_KERNEL_STACK_LOCATION  0xFFFFFFC001000000ULL
     #define RISCV_KERNEL_STACK_SIZE      40960  /* 40KB */
     
     static uint64_t stack_index = 0;
@@ -277,6 +277,7 @@ static uint64_t AuCreateKernelStack(uint64_t pml) {
  * AuSchedulerInitialise -- Initialize the scheduler
  */
 void AuSchedulerInitialise() {
+    AuTextOut("[sched]: AuSchedulerInitialise entry\n");
     thread_list_head = NULL;
     thread_list_last = NULL;
     blocked_thr_head = NULL;
@@ -288,9 +289,15 @@ void AuSchedulerInitialise() {
     _thread_id = 0;
     _scheduler_tick = 0;
     
+    AuTextOut("[sched]: Creating virtual address space...\n");
     /* Create idle thread */
     uint64_t* idle_pd = AuCreateVirtualAddressSpace();
+    AuTextOut("[sched]: VAS created at phys %x\n", (uint64_t)idle_pd);
+    
+    AuTextOut("[sched]: Creating idle kthread...\n");
     AuThread* idle_ = AuCreateKthread(AuIdleThread, 0, (uint64_t)idle_pd, "Idle");
+    AuTextOut("[sched]: Idle thread created: %x\n", (uint64_t)idle_);
+    
     _idle_thr = idle_;
     _current_thread = idle_;
     _scheduler_initialized = false;
@@ -312,7 +319,8 @@ void AuSchedulerStart() {
     
     /* Switch to idle thread's page table */
     if (_idle_thr->pml) {
-        uint64_t satp_val = (8ULL << 60) | (V2P(_idle_thr->pml) >> 12);
+        /* pml is already a PHYSICAL address from AuCreateVirtualAddressSpace */
+        uint64_t satp_val = (8ULL << 60) | ((uint64_t)_idle_thr->pml >> 12);
         write_satp(satp_val);
         sfence_vma();
     }
@@ -330,7 +338,7 @@ void AuSchedulerStart() {
         "ld ra, 0(sp)\n"    /* Load RA (offset 0) */
         /* Note: We should technically restore all regs but for first start 
            of idle/init, only PC/Status/SP matter mostly */
-        "addi sp, sp, 256\n" /* Pop frame (256 bytes) */
+        "addi sp, sp, 288\n" /* Pop frame (288 bytes) */
         "sret\n"             /* Return from S-mode to S-mode (for kernel thread) */
         :: "r"(sp) : "t0", "ra", "memory"
     );
@@ -377,14 +385,14 @@ AU_EXTERN AU_EXPORT AuThread* AuCreateKthread(void(*entry) (uint64_t), uint64_t 
     
     /* Prepare stack for first run (fake trap frame) 
      * Layout must match riscv64_lowlevel.s: riscv64_trap_vector_entry
-     * Size: 256 bytes
+     * Size: 288 bytes (expanded to include s0-s11)
      */
     uint64_t sp = kstack;
-    sp -= 256;          /* Allocate trap frame */
+    sp -= 288;          /* Allocate trap frame */
     sp &= ~0xF;         /* Align 16 bytes */
     
     uint64_t* frame = (uint64_t*)sp;
-    memset(frame, 0, 256);
+    memset(frame, 0, 288);
     
     /* Offsets (bytes / 8) from asm:
      * 0: ra
@@ -516,7 +524,8 @@ AU_EXTERN AU_EXPORT uint64_t AuScheduleThread(uint64_t stack_frame) {
     
     /* Switch page tables if needed */
     if (_current_thread->pml) {
-        uint64_t satp_val = (8ULL << 60) | (V2P(_current_thread->pml) >> 12);
+        /* pml is already a PHYSICAL address from AuCreateVirtualAddressSpace */
+        uint64_t satp_val = (8ULL << 60) | ((uint64_t)_current_thread->pml >> 12);
         write_satp(satp_val);
         sfence_vma();
     }
