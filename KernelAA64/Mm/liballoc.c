@@ -464,7 +464,6 @@ void* port_malloc(unsigned int size)
 
 
 	ptr = (void*)((size_t)tag + sizeof(struct boundary_tag));
-
 #ifdef DEBUG
 	l_inuse += size;
 	printf("malloc: %x,  %i, %i\n", ptr, (int)l_inuse / 1024, (int)l_allocated / 1024);
@@ -497,7 +496,6 @@ void port_free(void* ptr)
 	tag = (struct boundary_tag*)((size_t)ptr - sizeof(struct boundary_tag));
 
 	
-
 	if (((size_t)tag & 0xF) != 0) {
 		liballoc_unlock();
 		UARTDebugOut("liballoc:free: tag unaligned returning \n");
@@ -559,7 +557,7 @@ void port_free(void* ptr)
 			l_allocated -= pages * l_pageSize;
 			printf("Resource freeing %x of %i pages\n", tag, pages);
 			dump_array();
-#endif
+#endif  
 			liballoc_unlock();
 			return;
 		}
@@ -578,7 +576,6 @@ void port_free(void* ptr)
 	printf("Returning tag with %i bytes (requested %i bytes), which has exponent: %i\n", tag->real_size, tag->size, index);
 	dump_array();
 #endif
-
 	liballoc_unlock();
 }
 

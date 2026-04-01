@@ -180,7 +180,6 @@ extern bool setStk();
 int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) {
 	/* verify the filename, it can only be '.exe' file no '.dll' or other */
 	char* v_ = strchr(filename, '.');
-	
 	if (v_)
 		v_++;
 	if (strcmp(v_, "exe") != 0) {
@@ -256,14 +255,13 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) 
 
 	/* check if the binary is dynamically linked */
 	if (AuPEFileIsDynamicallyLinked(_ldr_scratchBuffer)) {
-		UARTDebugOut("The process %s is Dynamically Linked %x\n", filename,fb);
+		UARTDebugOut("The process %s is Dynamically Linked\n", filename);
 		/* free the current file*/
 		//UARTDebugOut("fb : %x \r\n", fb);
 		//aa64_data_cache_clean_range(fb, sizeof(AuMMFileBack));
 		AuMmngrRemoveFileBack(fb);
 		//aa64_data_cache_clean_range(file, sizeof(AuVFSNode));
 		kfree(file);
-		AuTextOut("File cache removed \r\n");
 		//AuPmmngrFree((void*)V2P((sizeof(buf))));
 
 		/* now load XELoader process, which'll further
@@ -281,9 +279,7 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) 
 		 */
 		int num_args_ = 1 + argc;
 		int string_len = strlen(filename);
-		AuTextOut("Stringlen got \r\n");
 		char* file__ = (char*)kmalloc(string_len+1);
-		AuTextOut("File__ %x \r\n", file__);
 		strcpy(file__, filename);
 	
 		/* BUGG: if kmalloc allocates smaller memory below than 15 bytes,

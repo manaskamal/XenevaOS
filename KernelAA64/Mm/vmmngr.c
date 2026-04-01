@@ -216,7 +216,6 @@ bool AuMapPage(uint64_t phys_addr, uint64_t virt_addr, uint8_t attrib) {
 	
 	//data_cache_flush((uint64_t*)address);
 	tlb_flush(virt_addr);
-
 	return true;
 }
 

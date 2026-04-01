@@ -229,6 +229,55 @@ void AuGetDriverName(uint32_t vendor_id, uint32_t device_id, uint8_t* buffer, in
 }
 
 /**
+ * @brief AuBoardIterateModule -- iterate all modules 
+ * present in board config file
+ * @param board -- pointer to board config buffer
+ * @param moduleCount -- total number of module described
+ */
+void AuBoardIterateModule(uint8_t* board, int moduleCount) {
+	char* fbuf = (char*)board;
+	int fcount = 0;
+search:
+	if (fcount >= moduleCount)
+		return;
+	char* p = strchr(fbuf, '[');
+	if (p) {
+		p++;
+		fbuf++;
+	}
+	else {
+		return;
+	}
+
+	char fontname[33];
+	int i = 0;
+	for (i = 0; i < 32; i++) {
+		if (p[i] == ']') {
+			fbuf = p + i;
+			fbuf++;
+			break;
+		}
+		fontname[i] = p[i];
+		fbuf++;
+	}
+	fontname[i] = 0;
+
+	p = fbuf;
+	char filename[33];
+	for (i = 0; i < 32; i++) {
+		if (p[i] == '|')
+			break;
+		filename[i] = p[i];
+		fbuf++;
+	}
+	filename[i] = 0;
+
+	AuTextOut("[aurora]: Board entry : %s \r\n", filename);
+	AuCreateDriverInstance(filename);
+	goto search;
+}
+
+/**
 * @brief AuDriverLoad -- Manage and loads dll drivers
 * @param filename -- file path
 * @param driver -- driver instance
@@ -258,10 +307,6 @@ void AuDriverLoad(char* filename, AuDriver* driver) {
 	IMAGE_DOS_HEADER* dos_ = (IMAGE_DOS_HEADER*)scratchBuffer;
 	PIMAGE_NT_HEADERS nt = RAW_OFFSET(PIMAGE_NT_HEADERS,dos_, dos_->e_lfanew);
 	PSECTION_HEADER sectionHeader = RAW_OFFSET(PSECTION_HEADER,&nt->OptionalHeader, nt->FileHeader.SizeOfOptionaHeader);
-
-	AuTextOut("[aurora]: driver section alignment : %d \n", nt->OptionalHeader.SectionAlignment);
-	AuTextOut("[aurora]: driver file alignment : %d \n", nt->OptionalHeader.FileAlignment);
-	AuTextOut("[aurora]: size of section : %d \n", nt->OptionalHeader.SizeOfHeaders);
 	
 	uint64_t first_block = (uint64_t)AuPmmngrAlloc();
 	memset((void*)first_block, 0, 4096);
@@ -313,6 +358,11 @@ void AuDriverLoad(char* filename, AuDriver* driver) {
 
 extern bool AuIsPCIeInitialized();
 
+/** we're using FontManagerGetFontCount because
+ * both board config descriptor file and 
+ * font config file share same writing style
+ */
+extern int FontManagerGetFontCount(uint8_t* buffer);
 /**
 * @brief AuDrvMngrInitialize -- Initialize the driver manager
 * @param info -- kernel boot info
@@ -326,7 +376,10 @@ void AuDrvMngrInitialize(KERNEL_BOOT_INFO* info) {
 	AuTextOut("[aurora]: initializing drivers, please wait... \r\n");
 	/* Load the conf data */
 	uint64_t* conf = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
-	memset(conf, 0, 4096);
+	uint64_t* boardcnf = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
+	memset(conf, 0, PAGE_SIZE);
+	memset(boardcnf, 0, PAGE_SIZE);
+
 	AuVFSNode* fsys = AuVFSFind("/");
 	AuVFSNode* file = AuVFSOpen("/audrv.cnf");
 	if (!file) {
@@ -343,6 +396,18 @@ void AuDrvMngrInitialize(KERNEL_BOOT_INFO* info) {
 	bool proceed = 0;
 
 	AuTextOut("[aurora]: audrv.cnf read successfully %s \r\n", file->filename);
+
+	/** now initialize board specific driver list **/
+	AuVFSNode* board = AuVFSOpen("/board.cnf");
+	if (board) {
+		filesize = board->size / 1024;
+		if (filesize < 4096)
+			AuVFSNodeReadBlock(fsys, board, (uint64_t*)V2P((size_t)boardcnf));
+		AuTextOut("[aurora]: board.cnf read successfully %s \r\n", board->filename);
+
+	}else
+		AuTextOut("[aurora] Driver Manager failed to open board.cnf, file not found \r\n");
+	
 
 	
 	scratchBuffer = (uint64_t*)P2V((uint64_t)AuPmmngrAllocBlocks((1024 * 1024) / 0x1000));
@@ -376,6 +441,16 @@ void AuDrvMngrInitialize(KERNEL_BOOT_INFO* info) {
 		proceed = 1;
 	}
 
+	/*if PCIe fails then */
+	if (board) {
+		/** using font manager's function because both board config
+		 * data and font manager config data shares same style
+		 */
+		int num_module_entry = FontManagerGetFontCount(boardcnf);
+		AuTextOut("[aurora]: number of board's module entry : %d \r\n", num_module_entry);
+		AuBoardIterateModule(boardcnf, num_module_entry);
+		proceed = 1;
+	}
 
 	if (proceed) {
 		/* Serially call each startup entries of each driver */

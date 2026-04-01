@@ -313,7 +313,6 @@ bool AuPmmngrAllocCheck(uint64_t address) {
  * frame and return it to the caller
  */
 void* AuPmmngrAlloc() {
-	//debugon = true;
 	for (; _RamBitmapIndex < _BitmapSize * 8; _RamBitmapIndex++) {
 		//AuTextOut("  RamBitmap[%d] -> %d   ",_RamBitmapIndex, RamBitmap[_RamBitmapIndex]);
 		if (AuPmmngrBitmapCheck(_RamBitmapIndex)) continue;

@@ -206,7 +206,6 @@ extern void modifyx17();
 void AuAA64SyscallHandler(AA64Registers* regs) {
 	mask_irqs();
 	uint64_t vector = regs->x16;
-	//PROFILE_START("AuAA64SyscallHandler");
 	uint64_t retcode = 0;
 	if ((vector > AURORA_MAX_SYSCALL) || (vector < 0)) {
 		regs->x0 = retcode;
@@ -222,7 +221,6 @@ void AuAA64SyscallHandler(AA64Registers* regs) {
 	if (!func) {
 		currThr->returnFromSyscall = 0;
 		regs->x0 = 0;
-		//PROFILE_END("AuAA64SyscallHandler");
 		return 0;
 	}
 
@@ -230,5 +228,4 @@ void AuAA64SyscallHandler(AA64Registers* regs) {
 	regs->x0 = retcode;
 	regs->x6 = retcode;
 	currThr->returnFromSyscall = 0;
-	//PROFILE_END("AuAA64SyscallHandler");
 }
