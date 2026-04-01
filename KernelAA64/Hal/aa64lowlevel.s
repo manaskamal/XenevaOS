@@ -377,3 +377,54 @@ set_cntp_ctl_el0:
     msr cntp_ctl_el0, x0
     ret
 
+.global _wfi
+_wfi:
+    wfi
+    ret
+
+
+.global gic_cpu_init
+gic_cpu_init:
+    mrs x0, ICC_SRE_EL1
+    orr x0, x0, #(1<<0)
+    msr ICC_SRE_EL1, x0
+    isb 
+    mrs x0, ICC_SRE_EL1
+    tbz x0, #0, .sre_failed
+
+    mov x0, #0xFF
+    msr ICC_PMR_EL1, x0
+    isb
+
+    mov x0, #0
+    msr ICC_BPR1_EL1, x0
+    isb
+
+    mrs x0, ICC_CTLR_EL1
+    bic x0, x0, #(1<<1)
+   // bic x0, x0, #(1<<0)
+    msr ICC_CTLR_EL1, x0
+    isb
+
+    mov x0, #1
+    msr ICC_IGRPEN1_EL1, x0
+    isb
+
+    mov x0, #0
+    ret
+.sre_failed:
+    mov x0, #1
+    ret
+    
+
+.global gic_read_intid
+gic_read_intid:
+    mrs x0, ICC_IAR1_EL1
+    ret
+
+.global gic_icc_eoi
+gic_icc_eoi:
+    msr ICC_EOIR1_EL1, x0
+    isb
+    ret
+

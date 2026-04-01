@@ -271,7 +271,7 @@ void* CreateMemMapping(void* address, size_t len, int prot, int flags, int fd,
 				fb->readComplete = 1;*/
 		}
 
-		AuMapPage(phys, lookup_addr + i * PAGE_SIZE,PTE_AP_RW_USER);
+		AuMapPage(phys, lookup_addr + i * PAGE_SIZE, PTE_NORMAL_MEM | PTE_AP_RW_USER);
 		isb_flush();
 		dsb_ish();
 

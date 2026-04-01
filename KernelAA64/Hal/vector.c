@@ -80,7 +80,30 @@ void sync_el1_handler(AA64Registers *regs) {
 
     uint32_t ec = (esr >> 26) & 0x3F;
 
-   
+    AuTextOut("======Synch exception=======\r\n");
+    AuTextOut("FAR: %x, PC: %x \r\n", read_far_el1(), read_elr_el1());
+
+
+
+    uint32_t dfsc = esr & 0x3F;
+
+    switch (dfsc) {
+    case 0b000000: AuTextOut("Address size, fault level 0 \r\n"); break;
+    case 0b000001: AuTextOut("Address Size, fault level 1 \r\n"); break;
+    case 0b000010: AuTextOut("Address size, fault level 2 \r\n"); break;
+    case 0b000011: AuTextOut("Address size, fault level 3 \r\n"); break;
+    case 0b000100: AuTextOut("translation, fault level 0 \r\n"); break;
+    case 0b000101: AuTextOut("translation, fault level 1 \r\n"); break;
+    case 0b000110: AuTextOut("translation, fault level 2 \r\n"); break;
+    case 0b000111: AuTextOut("translation, fault level 3 \r\n"); break;
+    case 0b001001: AuTextOut("access flag, fault level 1 \r\n"); break;
+    case 0b001010: AuTextOut("access flag, fault level 2 \r\n"); break;
+    case 0b001011: AuTextOut("access flag, fault level 3 \r\n"); break;
+    case 0b001101: AuTextOut("permission fault, level 1 \r\n"); break;
+    case 0b001110: AuTextOut("permission fault, level 2 \r\n"); break;
+    case 0b001111: AuTextOut("permission fault, level 3 \r\n"); break;
+    default: AuTextOut("Unknown fault code \r\n"); break;
+    }
     UARTDebugOut("=======Synchronous Exception occured========= \r\n");
     //AuTextOut("Fault Address (FAR_EL1): %x \r\n", read_far_el1());
     UARTDebugOut("Fault Address (FAR_EL1): %x \r\n", read_far_el1());
@@ -120,7 +143,7 @@ void sync_el1_handler(AA64Registers *regs) {
         UARTDebugOut("original address of the process -> %x  %x\r\n", read_elr_el1(), realAddress);
     }
 
-    uint32_t dfsc = esr & 0x3F;
+    dfsc = esr & 0x3F;
 
     switch (dfsc) {
     case 0b000000: AuTextOut("Address size, fault level 0 \r\n"); break;
@@ -160,7 +183,6 @@ void irq_el1_handler(AA64Registers* regs) {
     uint32_t irq = iar & 0x3FF;
     if (irq < 1020) {
         if (irq == 27) {
-            //UARTDebugOut("******timer interrupt *******\n");
             setupTimerIRQ();
             GICSendEOI(iar);
             GICCheckPending(irq);

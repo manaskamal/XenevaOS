@@ -644,7 +644,7 @@ void* liballoc_alloc(int pages) {
 	uint64_t page_ = (uint64_t)page;
 	for (size_t i = 0; i < pages; i++) {
 		void* p = AuPmmngrAlloc();
-		AuMapPage((uint64_t)p, page_ + i * 4096,PTE_AP_RW);
+		AuMapPage((uint64_t)p, page_ + i * 4096,PTE_NORMAL_MEM | PTE_AP_RW);
 	}
 	memset(page, 0, pages * PAGE_SIZE);
 

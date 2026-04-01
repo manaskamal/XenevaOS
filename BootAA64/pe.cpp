@@ -67,8 +67,12 @@ void XEPELoadImage(void* filebuff) {
 	paddr_t phys = XEPmmngrAllocate();
 
 	XEPagingMap(ImageBase, phys);
+
+	XEUARTPrint("Paging mapped : %x -- %x \r\n", ImageBase, phys);
 	
 	copy_mem((void*)ImBase, filebuf, ntHeaders->OptionalHeader.SizeOfHeaders);
+
+	XEUARTPrint("Copied first 4KiB \r\n");
 	
 	for (size_t i = 0; i < ntHeaders->FileHeader.NumberOfSections; ++i) {
 		CHAR16 buf[9];

@@ -16,7 +16,7 @@
     <ClCompile Include="uart0.cpp" />
     <ClCompile Include="vector.cpp" />
     <ClCompile Include="devicetree.cpp" />
-    <ClCompile Include="imx8mp\imx8mp_uart.cpp">
+    <ClCompile Include="imx8mp\imx8mp_uartc.cpp">
       <Filter>imx8mp</Filter>
     </ClCompile>
   </ItemGroup>
@@ -37,6 +37,9 @@
     </ClInclude>
     <ClInclude Include="gpio.h" />
     <ClInclude Include="vector.h" />
+    <ClInclude Include="imx8mp\imx8mp_uartc.h">
+      <Filter>imx8mp</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="lowlevel.s" />

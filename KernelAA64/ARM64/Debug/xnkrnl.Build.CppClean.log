@@ -1,5 +1,3 @@
-e:\xeneva project\aurora\kernelaa64\arm64\debug\devfs.obj
-e:\xeneva project\aurora\kernelaa64\arm64\debug\devfs.asm
 e:\xeneva project\aurora\kernelaa64\arm64\debug\dtb.obj
 e:\xeneva project\aurora\kernelaa64\arm64\debug\dtb.asm
 e:\xeneva project\aurora\kernelaa64\arm64\debug\virtiotablet.obj
@@ -32,14 +30,14 @@ e:\xeneva project\aurora\kernelaa64\arm64\debug\rpi3bpgpio.obj
 e:\xeneva project\aurora\kernelaa64\arm64\debug\rpi3bpgpio.asm
 e:\xeneva project\aurora\kernelaa64\arm64\debug\rpi3bp.obj
 e:\xeneva project\aurora\kernelaa64\arm64\debug\rpi3bp.asm
+e:\xeneva project\aurora\kernelaa64\arm64\debug\imx8mp_uart.obj
+e:\xeneva project\aurora\kernelaa64\arm64\debug\imx8mp_uart.asm
 e:\xeneva project\aurora\kernelaa64\arm64\debug\board.obj
 e:\xeneva project\aurora\kernelaa64\arm64\debug\board.asm
 e:\xeneva project\aurora\kernelaa64\arm64\debug\audrv.obj
 e:\xeneva project\aurora\kernelaa64\arm64\debug\audrv.asm
 e:\xeneva project\aurora\kernelaa64\arm64\debug\aucon.obj
 e:\xeneva project\aurora\kernelaa64\arm64\debug\aucon.asm
-e:\xeneva project\aurora\kernelaa64\arm64\debug\init.obj
-e:\xeneva project\aurora\kernelaa64\arm64\debug\init.asm
 e:\xeneva project\aurora\kernelaa64\arm64\debug\hashmap.obj
 e:\xeneva project\aurora\kernelaa64\arm64\debug\hashmap.asm
 e:\xeneva project\aurora\kernelaa64\arm64\debug\vector.obj
@@ -78,8 +76,8 @@ e:\xeneva project\aurora\kernelaa64\arm64\debug\fat.obj
 e:\xeneva project\aurora\kernelaa64\arm64\debug\fat.asm
 e:\xeneva project\aurora\kernelaa64\arm64\debug\devinput.obj
 e:\xeneva project\aurora\kernelaa64\arm64\debug\devinput.asm
-e:\xeneva project\aurora\kernelaa64\arm64\debug\socket.obj
-e:\xeneva project\aurora\kernelaa64\arm64\debug\socket.asm
+e:\xeneva project\aurora\kernelaa64\arm64\debug\devfs.obj
+e:\xeneva project\aurora\kernelaa64\arm64\debug\devfs.asm
 e:\xeneva project\aurora\kernelaa64\arm64\debug\route.obj
 e:\xeneva project\aurora\kernelaa64\arm64\debug\route.asm
 e:\xeneva project\aurora\kernelaa64\arm64\debug\netserv.obj
@@ -118,6 +116,8 @@ e:\xeneva project\aurora\kernelaa64\arm64\debug\list.obj
 e:\xeneva project\aurora\kernelaa64\arm64\debug\list.asm
 e:\xeneva project\aurora\kernelaa64\arm64\debug\postbox.obj
 e:\xeneva project\aurora\kernelaa64\arm64\debug\postbox.asm
+e:\xeneva project\aurora\kernelaa64\arm64\debug\init.obj
+e:\xeneva project\aurora\kernelaa64\arm64\debug\init.asm
 e:\xeneva project\aurora\kernelaa64\arm64\debug\string.obj
 e:\xeneva project\aurora\kernelaa64\arm64\debug\string.asm
 e:\xeneva project\aurora\kernelaa64\arm64\debug\stdio.obj
@@ -136,6 +136,8 @@ e:\xeneva project\aurora\kernelaa64\arm64\debug\pcie.obj
 e:\xeneva project\aurora\kernelaa64\arm64\debug\pcie.asm
 e:\xeneva project\aurora\kernelaa64\arm64\debug\udp.obj
 e:\xeneva project\aurora\kernelaa64\arm64\debug\udp.asm
+e:\xeneva project\aurora\kernelaa64\arm64\debug\socket.obj
+e:\xeneva project\aurora\kernelaa64\arm64\debug\socket.asm
 e:\xeneva project\aurora\kernelaa64\arm64\debug\vc142.pdb
 e:\xeneva project\aurora\kernelaa64\arm64\debug\aa64vector.obj
 e:\xeneva project\aurora\kernelaa64\arm64\debug\aa64lowlevel.obj

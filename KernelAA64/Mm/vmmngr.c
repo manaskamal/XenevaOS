@@ -84,7 +84,7 @@ void AuVmmngrInitialize() {
 	uint64_t* newL0 = AuPmmngrAlloc();
 	memset(newL0, 0, PAGE_SIZE);
 
-	AuTextOut("[aurora]: new l0 allocated \r\n");
+	AuTextOut("[aurora]: new l0 allocated %x\r\n", newL0);
 	for (int i = 0; i < 512; i++) {
 		newL0[i] = previousL0[i];
 	}
@@ -95,12 +95,15 @@ void AuVmmngrInitialize() {
 	
 	uint64_t* newL1 = AuPmmngrAlloc();
 	memset(newL1, 0, PAGE_SIZE);
-	newL0[pml4_index(PHYSICAL_MEM_BASE)] = (uint64_t)newL1 | PTE_VALID | PTE_TABLE | PTE_AF;
+	newL0[pml4_index(PHYSICAL_MEM_BASE)] = (uint64_t)newL1 | 0x3; // | PTE_VALID | PTE_TABLE | PTE_AF;
 	data_cache_flush(&newL0[pml4_index(PHYSICAL_MEM_BASE)]);
 
 	for (int i = 0; i < 512; i++) {
-		uint64_t addr = i << 30;
-		newL1[pdpt_index(PHYSICAL_MEM_BASE) + i] = (addr | (0 << 54) | (0 << 53) | (1 << 10) | (3 << 8) | (0 << 6) | (0 << 2) | 0b01);
+		uint64_t addr = (uint64_t)i << 30;
+		newL1[pdpt_index(PHYSICAL_MEM_BASE) + i] = (addr | (0ULL << 54) | 
+			(0ULL << 53) | (1ULL << 10) | 
+			(3ULL << 8) | (0ULL << 6) |
+			(1UL << 2) | 0b01);
 		data_cache_flush(&newL1[pdpt_index(PHYSICAL_MEM_BASE) + i]);
 	}
 	uint64_t* kernelAS = AuPmmngrAlloc();
@@ -112,6 +115,7 @@ void AuVmmngrInitialize() {
 
 	write_ttbr0_el1(newL0);
 	write_ttbr1_el1(kernelAS);
+
 	tlb_flush_vmalle1is();
 
 	dsb_sy_barrier();
@@ -139,7 +143,7 @@ bool AuMapPage(uint64_t phys_addr, uint64_t virt_addr, uint8_t attrib) {
 		PTE_AF | PTE_SH_INNER | PTE_AP_RW | attrib;
 	if (attrib & PTE_AP_RW_USER) {
 		flags = PTE_VALID | PTE_TABLE |
-			PTE_AF | PTE_SH_INNER | attrib;
+			PTE_AF | PTE_SH_INNER |  attrib;
 	}
 
 	const long i4 = (virt_addr >> 39) & 0x1FF;
@@ -152,67 +156,67 @@ bool AuMapPage(uint64_t phys_addr, uint64_t virt_addr, uint8_t attrib) {
 		pml4i = (uint64_t*)P2V(read_ttbr1_el1());
 	}
 
-	if (_vmdebug)
-		UARTDebugOut("PML4I got : %x \r\n", pml4i);
-	if (!(pml4i[i4] & 1))
-	{
+
+	if (!(pml4i[i4] & 1)){
 		const uint64_t page = (uint64_t)AuPmmngrAlloc();
 		if (_vmdebug)
 			UARTDebugOut("Creating pm4 entry : %x \r\n", page);
-		pml4i[i4] = (page & ~0xFFFUL) | PTE_VALID | PTE_TABLE | PTE_AF;
+		pml4i[i4] = (page & ~0xFFFUL) | PTE_VALID | PTE_TABLE;
 		memset((void*)P2V(page), 0, 4096);
+		/*dsb_ish();
+		isb_flush();*/
 		void* address = &pml4i[i4];
-		data_cache_flush((uint64_t*)address);
+		//data_cache_flush((uint64_t*)address);
+		aa64_data_cache_clean_range(address, 4096);
 	}
 	uint64_t* pml3 = (uint64_t*)P2V((pml4i[i4] & ~0xFFFULL));
-	if (_vmdebug)
-		UARTDebugOut("PML3 got : %x \r\n", pml3);
 
-	if (!(pml3[i3] & 1))
-	{
+	if (!(pml3[i3] & 1)){
 		const uint64_t page = (uint64_t)AuPmmngrAlloc();
 		if (_vmdebug)
 			UARTDebugOut("Creating PML3 Entry : %x \r\n", page);
-		pml3[i3] = (page & ~0xFFFUL) | PTE_VALID | PTE_TABLE | PTE_AF;
+		pml3[i3] = (page & ~0xFFFUL) | PTE_VALID | PTE_TABLE;
 		memset((void*)P2V(page), 0, 4096);
+		/*dsb_ish();
+		isb_flush();*/
 		void* address = &pml3[i3];
-		data_cache_flush((uint64_t*)address);
+		//data_cache_flush((uint64_t*)address);
+		aa64_data_cache_clean_range(address, 4096);
 	}
 
 	uint64_t* pml2 = (uint64_t*)P2V((pml3[i3] & ~0xFFFULL));
-	if (_vmdebug)
-		UARTDebugOut("PML2 got : %x \r\n", pml2);
-
-	if (!(pml2[i2] & 1))
-	{
+	
+	if (!(pml2[i2] & 1)){
 		const uint64_t page = (uint64_t)AuPmmngrAlloc();
 		if (_vmdebug)
 			UARTDebugOut("Creating PML2 Entry %x\r\n", page);
-		pml2[i2] = (page & ~0xFFFUL) | PTE_VALID | PTE_TABLE | PTE_AF;
+		pml2[i2] = (page & ~0xFFFUL) | PTE_VALID | PTE_TABLE;
 		memset((void*)P2V(page), 0, 4096);
+		/*dsb_ish();
+		isb_flush();*/
 		void* address = &pml2[i2];
-		data_cache_flush((uint64_t*)address);
-
+		//data_cache_flush((uint64_t*)address);
+		aa64_data_cache_clean_range(address, 4096);
 	}
 
 	uint64_t* pml1 = (uint64_t*)P2V((pml2[i2] & ~0xFFFULL));
 
-	if (_vmdebug)
-		UARTDebugOut("PML1 got : %x \r\n", pml1);
-	if (pml1[i1] & 1)
-	{
+	if (pml1[i1] & 1){
 		//AuPmmngrFree((void*)phys_addr);
-		//AuTextOut("[aurora]: vmmngr page already present : %x \n", (pml1[i1] & ~0xFFFULL));
+		AuTextOut("[aurora]: vmmngr page already present : %x \r\n", virt_addr);
 		return false;
 	}
 
 	pml1[i1] = (phys_addr & ~0xFFFULL) | flags;
 	virt_addr &= ~0xFFFULL;
 	void* address = &pml1[i1];
-	data_cache_flush((uint64_t*)address);
+	aa64_data_cache_clean_range(address, 4096);
+	dsb_ish();
+	isb_flush();
+	
+	//data_cache_flush((uint64_t*)address);
 	tlb_flush(virt_addr);
-	if (_vmdebug)
-		UARTDebugOut("TLB Flushing pml1 \r\n");
+
 	return true;
 }
 
@@ -373,7 +377,7 @@ AuVPage* AuVmmngrGetPage(uint64_t virt_addr, uint8_t _flags, uint8_t mode) {
 void* AuMapMMIO(uint64_t phys_addr, size_t page_count) {
 	uint64_t out = (uint64_t)_MMIOBase;
 	for (size_t i = 0; i < page_count; i++)
-		AuMapPage(phys_addr + i * 4096, out + i * 4096, PTE_DEVICE_MEM);
+		AuMapPage(phys_addr + i * 4096, out + i * 4096,PTE_DEVICE_MEM);
 
 	uint64_t address = out;
 	_MMIOBase = (uint64_t*)(address + (page_count * 4096));

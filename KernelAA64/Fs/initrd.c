@@ -124,10 +124,11 @@ void AuInitrdInitialize(KERNEL_BOOT_INFO* info) {
 	 * physical address from the ramdisk pointer and map it to
 	 * kernel higher half address
 	 */
+	AuTextOut("Loading ramdisc : %x \r\n", ramdisk_start);
 	char* diskpath = (char*)kmalloc(32);
 	memset(diskpath, 0, 32);
 	AuVDiskCreateStorageFile(diskpath);
-
+	
 	AuVDisk* disk = AuCreateVDisk();
 	strcpy(disk->diskname, "XERamdisc");
 	disk->data = NULL;

@@ -36,6 +36,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <stdio.h>
+#include <Board/imx8mp/imx8mp_uart.h>
 
 uint64_t* uartMMIO;
 bool _uart_mapped = false;
@@ -68,8 +69,16 @@ void UARTInitialize() {
 
 	//enable irq
 	uart_write_reg(UART_IMSC, UART_IMSC_RXIM | UART_IMSC_RTIM);
+#elif __TARGET_BOARD_IMX8MP_VERDIN_DAHLIA__ || (__TARGET_BOARD_IMX8MP_SOC__)
+	au_imx8np_uart_initialize((uint64_t*)uartMMIO);
 #endif
+
 	_uart_mapped = true;
+}
+
+
+bool is_uart_initialized() {
+	return _uart_mapped;
 }
 
 /**
@@ -77,6 +86,10 @@ void UARTInitialize() {
  * @param c -- character to print
  */
 void uartPutc(char c) {
+#ifdef __TARGET_BOARD_IMX8MP_VERDIN_DAHLIA__ || (__TARGET_BOARD_IMX8MP_SOC__)
+	au_imx8mp_uart_putc(c);
+#else
+
 	uint64_t* mmioBase = 0;
 	if (_uart_mapped)
 		mmioBase = uartMMIO;
@@ -85,6 +98,7 @@ void uartPutc(char c) {
 	char* uart0 = (char*)mmioBase;
 	while ((*(uart0 + 0x18) & (1 << 5)));
 	*uart0 = c;
+#endif
 }
 
 /**

@@ -496,6 +496,7 @@ static int ke_stack_idx;
 uint64_t AuCreateKernelStack(uint64_t* pml) {
 	uint64_t location = KERNEL_STACK_LOCATION;
 	location += ke_stack_idx * KERNEL_STACK_SIZE;
+	UARTDebugOut("Creating kernel stack : %x %d\r\n", location, ke_stack_idx);
 	for (int i = 0; i < (KERNEL_STACK_SIZE) / 0x1000; i++) {
 		uint64_t addr = (uint64_t)P2V((uint64_t)AuPmmngrAlloc());
 		memset(addr, 0, PAGE_SIZE);
@@ -532,11 +533,11 @@ void AuSchedulerInitialize() {
 	thread_list_head = NULL;
 	thread_list_last = NULL;
 	thread_id = 0;
+	ke_stack_idx = 0;
 	uint64_t* idle_pd = AuCreateVirtualAddressSpace();
 	AA64Thread* idle_ = AuCreateKthread(AuIdleThread,idle_pd, "Idle");
 	//idle_->elr_el1 = (uint64_t)AuIdleThread;
 	_idle_thr = idle_;
-	ke_stack_idx = 0;
 	current_thread = idle_;
 	_scheduler_initialized = false;
 	scheduler_tick = 0;

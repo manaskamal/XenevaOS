@@ -35,10 +35,11 @@
 #include <stdint.h>
 #include <Fs/vfs.h>
 
+
 typedef struct __page_cache__ {
 	uint64_t physicalPage;
 	uint64_t diskBlock;
-	uint32_t pageIndex;
+	uint64_t pageIndex;
 	struct __page_cache__* next;
 	struct __page_cache__* prev;
 }AuMMPageCache;

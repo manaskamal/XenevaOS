@@ -258,12 +258,16 @@ uint64_t AuDeviceTreeGetRegSize(uint32_t* node, uint32_t addressCell, uint32_t s
  * bootloader
  */
 void AuDeviceTreeInitialize(KERNEL_BOOT_INFO* info) {
-	if (info->boot_type != BOOT_LITTLEBOOT_ARM64)
-		return;
-	AuLittleBootProtocol* lb = (AuLittleBootProtocol*)info->driver_entry1;
-	if (!lb)
-		return;
-	void* fdt_address = lb->device_tree_base;
+	void* fdt_address = NULL; 
+	if (info->boot_type == BOOT_LITTLEBOOT_ARM64) {
+		AuLittleBootProtocol* lb = (AuLittleBootProtocol*)info->driver_entry1;
+		if (!lb)
+			return;
+		fdt_address = lb->device_tree_base;
+	}
+	else if (info->boot_type == BOOT_UEFI_ARM64) {
+		fdt_address = info->apcode;
+	}
 
 	if (!fdt_address) {
 		AuTextOut("Device Tree Blob not found \r\n");

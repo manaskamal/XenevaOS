@@ -185,7 +185,7 @@ uint64_t* CreateUserStack(AuProcess* proc, uint64_t* cr3) {
 
 	for (int i = 0; i < (PROCESS_USER_STACK_SZ / PAGE_SIZE); ++i) {
 		uint64_t blk = (uint64_t)AuPmmngrAlloc();
-		if (!AuMapPageEx(cr3, blk, location + i * PAGE_SIZE,PTE_AP_RW_USER | PTE_AP_RW)){
+		if (!AuMapPageEx(cr3, blk, location + i * PAGE_SIZE, PTE_NORMAL_MEM | PTE_AP_RW_USER | PTE_AP_RW)){
 			UARTDebugOut("CreateUserStack: already mapped %x \r\n", (location + i * PAGE_SIZE));
 		}
 

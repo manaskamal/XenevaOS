@@ -47,6 +47,7 @@
 #include <Hal/AA64/aa64cpu.h>
 #include <Hal/AA64/aa64lowlevel.h>
 #include <Ipc/postbox.h>
+#include <Drivers/uart.h>
 
 uint8_t* font_data;
 uint32_t console_x;
@@ -173,6 +174,11 @@ void AuConsolePostInitialise(PKERNEL_BOOT_INFO info) {
 	//if (info->boot_type == BOOT_LITTLEBOOT_ARM64) {
 	//	info->graphics_framebuffer =
 	//}
+	if (!info->graphics_framebuffer) {
+		AuTextOut("[aurora]: tur luck nai, framebuffer daalu napali, iss iss beya lagi jai deii \r\n");
+		AuTextOut("[aurora]: return marisu deii, byee byee \r\n");
+		return;
+	}
 	aucon = (AuConsole*)kmalloc(sizeof(AuConsole));
 	memset(aucon, 0, sizeof(AuConsole));
 	size_t fb_sz = (info->fb_size + PAGE_SIZE - 1) / PAGE_SIZE;
@@ -379,7 +385,10 @@ void AuPutS(char* str) {
  */
 void AuTextOut(const char* format, ...) {
 	if (early_) {
-		_print_func(format);
+		if (is_uart_initialized())
+			UARTDebugOut(format);
+		else
+			_print_func(format);
 		return;
 	}
 

@@ -32,6 +32,7 @@
 #include "clib.h"
 #include "xnout.h"
 #include "lowlevel.h"
+#include <Board/imx8mp/imx8mp_uart.h>
 
 
 uint64_t* l0_table_base;
@@ -70,7 +71,8 @@ void XEMapMMIO(uint64_t* l1_table, uint64_t va, uint64_t pa) {
 	l1_table[l1_index] = (pa & ~((1ULL << 30) - 1)) |
 		PAGE_TABLE_ENTRY_PRESENT | PAGE_TABLE_ENTRY_BLOCK | PAGE_TABLE_ENTRY_AP_RW |
 		PAGE_TABLE_ENTRY_SH | PAGE_TABLE_ENTRY_DEVICE | PAGE_TABLE_ENTRY_AF;
-
+	dsb_ish();
+	isb_flush();
 }
 
 extern "C" void tlb_flush_all();
@@ -80,15 +82,23 @@ extern "C" void tlb_flush_all();
 void XEPagingInitialize() {
 	
 	uint64_t previousBase = 0;
-	previousBase = read_ttbr0_el1();
+	if (_getCurrentEL() == 1)
+		previousBase = read_ttbr0_el1();
+	else
+		previousBase = read_ttbr0_el2();
+
 	XEGuiPrint("ttbr0: %x \n", previousBase);
 	bool required_sctrl = 0;
 	l0_table_base = (uint64_t*)previousBase;
+	XEGuiPrint("el value : %d \r\n", _getCurrentEL());
 	if (previousBase == 0) {
 		previousBase = XEPmmngrAllocate();
+		XEGuiPrint("pREVIOUS Base : %x \r\n", previousBase);
 		l0_table_base = (uint64_t*)previousBase;
 
 		uint64_t* l0_el2_base = (uint64_t*)read_ttbr0_el2();
+
+		XEGuiPrint("EL2Base : %x \r\n", l0_el2_base);
 
 		for (int i = 0; i < 512; i++) {
 			l0_table_base[i] = l0_el2_base[i];
@@ -101,12 +111,13 @@ void XEPagingInitialize() {
 		required_sctrl = 1;
 	}
 
+	XEMapMMIO((uint64_t*)l0_table_base[pml4_index(IMX8MP_UART3_BASE_ADDRESS)], IMX8MP_UART3_BASE_ADDRESS, IMX8MP_UART3_BASE_ADDRESS);
 
-
-	uint64_t tcr1 = ((16UL << 0) | (0UL << 14) | (0b11UL << 12) |
+	uint64_t tcr1 = read_tcr_el2();/*((16UL << 0) | (0UL << 14) | (0b11UL << 12) |
 		(0b01UL << 10) | (0b01UL << 8) | (16UL << 16) | (0b10UL << 30) | (0b11UL << 28) |
-		(0b01UL << 26) | (0b01UL << 24) | (4ULL << 32));
+		(0b01UL << 26) | (0b01UL << 24) | (4ULL << 32));*/
 
+	XEGuiPrint("TCR1 : %x \r\n", tcr1);
 	write_tcr_el1(tcr1);
 
 
@@ -117,12 +128,12 @@ void XEPagingInitialize() {
 	write_ttbr1_el1(l0_table_base);
 	tlb_flush_all();
 
-	if (required_sctrl) {
-		uint64_t sctlr = (1UL << 0) | (1UL << 2) | (1UL << 12) | (1UL << 23) | (1UL << 28) |
+	//if (required_sctrl) {
+	uint64_t sctlr = (1UL << 0) | (1UL << 2) | (1UL << 12) | (1UL << 23) | (1UL << 28) |
 			(1UL << 29) | (1UL << 20) | (1UL << 7);
-		write_sctlr_el1(sctlr);
+	write_sctlr_el1(sctlr);
 		//XEPrintf(const_cast<wchar_t*>(L"SCTLR_EL1 setup completed \n"));
-	}
+	//}
 
 	isb_flush();
 
@@ -139,9 +150,50 @@ void XEPagingInitialize() {
 
 	XEPrintf(const_cast<wchar_t*>(L"Paging initialized \r\n"));*/
 	XEGuiPrint("Paging initialized \r\n");
-	if (_getCurrentEL() != 1) 
-		l0_table_base = (uint64_t*)read_ttbr0_el2();
+	/*if (_getCurrentEL() != 1) 
+		l0_table_base = (uint64_t*)read_ttbr0_el2();*/
 	
+}
+
+
+void XEPagingInit2() {
+	uint64_t* l0_table = (uint64_t*)XEPmmngrAllocate();
+	memset(l0_table, 0, 4096);
+	uint64_t* l1_table = (uint64_t*)XEPmmngrAllocate();
+	memset(l1_table, 0, 4096);
+
+	l0_table[0] = ((uint64_t)l1_table) | 0x3;
+
+	for (int i = 0; i < 512; ++i) {
+		uint64_t addr = (uint64_t)i << 30;
+		l1_table[i] = (addr | PAGE_TABLE_ENTRY_PRESENT | PAGE_TABLE_ENTRY_BLOCK | PAGE_TABLE_ENTRY_AF | PAGE_TABLE_ENTRY_SH | (1ULL << 2));
+		isb_flush();
+	}
+
+	XEGuiPrint("L0 Index for UART : %d \r\n", pml4_index(IMX8MP_UART3_BASE_ADDRESS));
+	XEMapMMIO(l1_table, IMX8MP_UART3_BASE_ADDRESS, IMX8MP_UART3_BASE_ADDRESS);
+
+	uint64_t tcr1 = ((16UL << 0) | (0UL << 14) | (0b11UL << 12) |
+		(0b01UL << 10) | (0b01UL << 8) | (16UL << 16) | (0b10UL << 30) | (0b11UL << 28) |
+		(0b01UL << 26) | (0b01UL << 24) | (4ULL << 32));
+
+	XEGuiPrint("TCR1 : %x \r\n", tcr1);
+	uint64_t mair = 0x000000000044ff00;
+	write_mair_el1(mair);
+
+
+	write_tcr_el1(tcr1);
+
+	write_ttbr0_el1(l0_table);
+	write_ttbr1_el1(l0_table);
+	isb_flush();
+
+	l0_table_base = l0_table;
+
+	uint64_t sctlr = (1ULL << 0) | (1ull << 2) | (1ull << 12) | (1ull << 23) |
+		(1ull << 28) | (1ull << 29) | (1ull << 20) | (1ull << 7);
+	write_sctlr_el1(sctlr);
+	isb_flush();
 }
 
 void XEPagingCopy() {
@@ -209,7 +261,7 @@ void XEPagingMap(uint64_t virtualAddr, uint64_t physAddr) {
 
 	l3_table[l3_index] = (physAddr & ~0xFFFULL)| PAGE_FLAGS;
 
-	tlb_flush(virtualAddr & ~0xFFFULL);
+	//tlb_flush(virtualAddr & ~0xFFFULL);
 	isb_flush();
 	dsb_ish();
 }

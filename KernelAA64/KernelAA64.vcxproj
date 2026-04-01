@@ -161,7 +161,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>ARCH_ARM64;__TARGET_BOARD_QEMU_VIRT__;_USE_LIBALLOC;__STDC_LIMIT_MACROS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>ARCH_ARM64;__TARGET_BOARD_IMX8MP_VERDIN_DAHLIA__;_USE_LIBALLOC;__STDC_LIMIT_MACROS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>Default</ConformanceMode>
       <AdditionalIncludeDirectories>..\BaseHdr;..\Acpica\include;..\Acpica;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
@@ -238,6 +238,7 @@
     <ClCompile Include="aucon.c" />
     <ClCompile Include="audrv.c" />
     <ClCompile Include="Board\board.c" />
+    <ClCompile Include="Board\imx8mp\imx8mp_uart.c" />
     <ClCompile Include="Board\Rpi3bp\rpi3bp.c" />
     <ClCompile Include="Board\Rpi3bp\rpi3bpGPIO.c" />
     <ClCompile Include="Board\Rpi3bp\rpi3bpIRQ.c" />
@@ -329,6 +330,7 @@
   <ItemGroup>
     <ClInclude Include="..\BaseHdr\aa64hcode.h" />
     <ClInclude Include="..\BaseHdr\Board\board.h" />
+    <ClInclude Include="..\BaseHdr\Board\imx8mp\imx8mp.h" />
     <ClInclude Include="..\BaseHdr\Board\imx8mp\imx8mp_uart.h" />
     <ClInclude Include="..\BaseHdr\Board\RPI3bp\rpi3bp.h" />
     <ClInclude Include="..\BaseHdr\Board\RPI3bp\rpi3bp_gpio.h" />

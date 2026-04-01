@@ -37,6 +37,7 @@
 #include <aurora.h>
 
 typedef struct _gic_ {
+	uint8_t version;
 	uint64_t gicDPhys;
 	uint64_t gicCPhys;
 	uint64_t gicRPhys;

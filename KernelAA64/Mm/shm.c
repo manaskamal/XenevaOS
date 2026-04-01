@@ -111,6 +111,7 @@ int AuCreateSHM(AuProcess* proc, uint16_t key, size_t sz, uint8_t flags) {
 		return -1;
 	}
 	/*  search if it's already created */
+	AuTextOut("[aurora]: Creating SHM \r\n");
 	shm = AuGetSHMSeg(key);
 	/* create a new*/
 	if (!shm) {
@@ -124,7 +125,6 @@ int AuCreateSHM(AuProcess* proc, uint16_t key, size_t sz, uint8_t flags) {
 		for (int i = 0; i < shm->num_frames; i++) {
 			shm->frames[i] = (uint64_t)AuPmmngrAlloc();
 		}
-
 		list_add(shm_list, shm);
 	}
 
@@ -253,7 +253,7 @@ void* AuSHMObtainMem(AuProcess* proc, uint16_t id, void* shmaddr, int shmflg) {
 				for (int j = 0; j < mem->num_frames; j++) {
 					size_t phys = mem->frames[j];
 					UARTDebugOut("Shared mem mapping : %x \r\n", phys);
-					AuMapPage(phys, last_addr + j * PAGE_SIZE, PTE_AP_RW_USER);
+					AuMapPage(phys, last_addr + j * PAGE_SIZE,PTE_NORMAL_MEM | PTE_AP_RW_USER);
 					isb_flush();
 					dsb_ish();
 				}
@@ -324,7 +324,7 @@ void* AuSHMObtainMem(AuProcess* proc, uint16_t id, void* shmaddr, int shmflg) {
 	for (int i = 0; i < mem->num_frames; i++) {
 		uint64_t phys_addr = mem->frames[i];
 		uint64_t current_virt = AuSHMProcBreak(proc, 1);
-		AuMapPage((uint64_t)phys_addr, current_virt,PTE_AP_RW_USER);
+		AuMapPage((uint64_t)phys_addr, current_virt,PTE_NORMAL_MEM | PTE_AP_RW_USER);
 		if (mappings->start_addr == 0)
 			mappings->start_addr = current_virt;
 	}

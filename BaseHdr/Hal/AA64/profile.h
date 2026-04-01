@@ -47,7 +47,7 @@ extern uint64_t AuProfileReadFreq();
     uint64_t freq = get_cntfrq_el0(); \
     double sec = (double)diff / freq; \
     double ms = (double)diff * 1000.0 / freq; \
-    AuTextOut("[AURORA-PROFILE]: %s : time: %f sec, time: %f ms, cpu cycles : %d\r\n", name, sec, ms, (__end_profile - __start_profile));
+    UARTDebugOut("[AURORA-PROFILE]: %s : time: %f sec, time: %f ms, cpu cycles : %d\r\n", name, sec, ms, (__end_profile - __start_profile));
 
 
 #endif

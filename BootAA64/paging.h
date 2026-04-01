@@ -60,6 +60,7 @@ extern void XEPagingInitialize();
  */
 extern void XEPagingMap(uint64_t virtualAddr, uint64_t physAddr);
 
+extern void XEMapMMIO(uint64_t* l1_table, uint64_t va, uint64_t pa);
 
 extern void XEPagingCopy();
 #endif

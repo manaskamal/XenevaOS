@@ -3,6 +3,7 @@ e:\xeneva project\aurora\bootaa64\arm64\debug\vc142.idb
 e:\xeneva project\aurora\bootaa64\arm64\debug\clib.obj
 e:\xeneva project\aurora\bootaa64\arm64\debug\devicetree.obj
 e:\xeneva project\aurora\bootaa64\arm64\debug\file.obj
+e:\xeneva project\aurora\bootaa64\arm64\debug\imx8mp_uartc.obj
 e:\xeneva project\aurora\bootaa64\arm64\debug\mem.obj
 e:\xeneva project\aurora\bootaa64\arm64\debug\paging.obj
 e:\xeneva project\aurora\bootaa64\arm64\debug\pe.obj

@@ -31,7 +31,7 @@
 #include "xnldr.h"
 #include "clib.h"
 #include "video.h"
-
+#include "uart0.h"
 
 
 /*
@@ -376,8 +376,10 @@ extern bool _is_GraphicsEnabled();
  * @param format -- formated string
  */
 void XEGuiPrint(const char* format, ...) {
-	if (!_is_GraphicsEnabled())
+	if (!_is_GraphicsEnabled()) {
+		XEUARTPrint(format);
 		return;
+	}
 	/* Hacky, printf implementation, it doesn't automatically
 	 * store the registered in stack, rather in a shadow area
 	 * and i don't know how to access those
@@ -403,8 +405,9 @@ void XEGuiPrint(const char* format, ...) {
 				char buffer[sizeof(size_t) * 8 + 1];
 				sztoa(i, buffer, 10);
 				size_t len = strlen(buffer);
-				while (len++ < width)
+				while (len++ < width) {
 					XEGraphicsPuts("0");
+				}
 				XEGraphicsPuts(buffer);
 			}
 			else if (*format == 'c') {

@@ -42,6 +42,7 @@
 #include "lowlevel.h"
 #include "uart0.h"
 #include "vector.h"
+#include <Board/imx8mp/imx8mp_uart.h>
 
 /* global variable */
 EFI_HANDLE   gImageHandle;
@@ -296,7 +297,6 @@ void XEExitEL2() {
 	XEUARTPrint("Physical Address2 : %x \r\n", paddr1);
 	IMAGE_DOS_HEADER* dos_ = (IMAGE_DOS_HEADER*)keBuff; //0x8000000000;
 	XEUARTPrint("DOS Magic : %d \r\n", dos_->e_magic);
-	for (;;);
 }
 
 typedef struct {
@@ -326,15 +326,22 @@ uint32_t AuDTBSwap32(uint32_t from) {
 
 
 extern void* XEDTBGetHardcodeAddress();
+extern void XEPagingInit2();
+
 /*
  * efi_main -- main entry of XNLDR 2.0
  * @param ImageHandle -- System parameter
  * @param SystemTable -- System parameter
  */
 EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
+//	prepare_el2_exit_phase1();
+//	prepare_el2_exit_phase2();
+//	XEUartInitialize();
+//	XEVectorInstall();
+//	XEUARTPrint("Exit el2 \r\n");
 	EFI_STATUS Status;
-
 	Status = XEInitialiseLib(ImageHandle, SystemTable);
+	XEUARTPrint("Library initialized \r\n");
 	XEClearScreen();
 	XEBootInfo bootinfo;
 	/* Get user graphics resolution choice*/
@@ -346,6 +353,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
 
 	XEGuiPrint("Loading system files.. please wait !! \n");
 
+	uint64_t adddr = 0x50000000;
 	EFI_CONFIGURATION_TABLE* configuration_tables = SystemTable->ConfigurationTable;
 
 	/* load all important files */
@@ -421,13 +429,14 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
 		XEPrintf(const_cast<wchar_t*>(L"Going through hardcoded DTB address \r\n"));
 		fdt_header_t* fdt = (fdt_header_t*)fdt_address;
 		char magic[16];
-		sztoa(AuDTBSwap32(fdt->magic), magic, 16);
+		sztoa(read_ttbr0_el2(), magic, 16);
 		wchar_t mg16[16];
 		ASCIIToChar16(magic, mg16);
 		XEPrintf(const_cast<wchar_t*>(mg16));
 		XEPrintf(const_cast<wchar_t*>(L"\r\n"));
 	}
-	for (;;);
+
+
 	
 	const size_t EARLY_PAGE_STACK_SIZE = 1024 * 1024;
 	EFI_PHYSICAL_ADDRESS earlyPhyPageStack = 0;
@@ -459,7 +468,15 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
 	
 	//give a nice bit of room to spare
 	map.MemMapSize += 2 * map.DescriptorSize; //sizeof(EFI_MEMORY_DESCRIPTOR);
-	XEGuiPrint("Memory Map size -> %d \n", map.MemMapSize);
+	char magic[16];
+	sztoa(map.DescriptorSize, magic, 16);
+	wchar_t mg16[16];
+	ASCIIToChar16(magic, mg16);
+	XEPrintf(const_cast<wchar_t*>(mg16));
+	XEPrintf(const_cast<wchar_t*>(L"\r\n"));
+	XEGuiPrint("Descriptor size -> %d \n", map.MemMapSize);
+
+
 	if (map.MemMapSize == 0) {
 		map.MemMapSize = 1024;
 		XEGuiPrint("Memory Map Size was 0 \n");
@@ -483,18 +500,54 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
 		for (;;);
 	}
 
-	XEGuiPrint("Exit bootloader successfull \r\n");
+	/**
+	 * @brief after exit_boot_service, no serial printing function, available from 
+	 * efi tables, we need to set up our own
+	 */
+	XEUartInitialize();
 
+	XEGuiPrint("Exit bootloader successfull %x\r\n", 0x1000);
 	XEInitialisePmmngr(map, (void*)earlyPhyPageStack, EARLY_PAGE_STACK_SIZE);
 
 	XEPagingInitialize();
 
+	if (_getCurrentEL() != 1) {
+		prepare_el2_exit_phase1();
+		prepare_el2_exit_phase2();
+		/* install our vector table */
+		XEVectorInstall();
+	}
+	XEUARTPrint("EL: %d \r\n", _getCurrentEL());
+	XEUARTPrint("Adddr : %x \r\n", adddr);
+
+	uint64_t sctlr = read_sctlr_el1();
+
+	if (sctlr & (1UL << 0))
+		XEUARTPrint("MMU is turned ON \r\n");
+	else
+		XEUARTPrint("MMU is disabled \r\n");
+
+	XEPagingInit2();
+
+	XEUARTPrint("MMU Enabled \r\n");
+
+	IMAGE_DOS_HEADER* dos_ = (IMAGE_DOS_HEADER*)krnl->kBuffer;
+	uint64_t* p1 = (uint64_t*)XEPmmngrAllocate();
+	p1[1] = 100;
+	XEPagingMap(0x8000000000, (size_t)p1);
+	//XEUARTPrint("DOS Magic : %x \r\n", dos_->e_magic);
+	
+	uint64_t* virt = (uint64_t*)0x8000000000;
+	XEUARTPrint("VIRT[1] = %d \r\n", virt[1]);
 	XEPELoadImage(krnl->kBuffer);
 
 	for (int i = 0; i < 0x100000 / PAGESIZE; i++) {
 		XEPagingMap(0xFFFFA00000000000 + i * PAGESIZE, XEPmmngrAllocate());
 	}
 
+	XEUARTPrint("Kernel Stack mapped \r\n");
+	IMAGE_DOS_HEADER* dos1_ = (IMAGE_DOS_HEADER*)0xFFFFC00000000000;
+	XEUARTPrint("DOS Magic : %x \r\n", dos1_->e_magic);
 	/*
 	 * Changes are made according to RPI_EFI
 	 * kernel is mapped to 0x8000000000 due to there's

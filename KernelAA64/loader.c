@@ -197,16 +197,22 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) 
 	}
 	else {
 		file = AuVFSOpen(filename);
-		fb = (AuMMFileBack*)kmalloc(sizeof(filename));
+		fb = (AuMMFileBack*)kmalloc(sizeof(AuMMFileBack));
 		memset(fb, 0, sizeof(AuMMFileBack));
 		fb->file = file;
+		fb->pageCache = NULL;
+		fb->pageCacheLast = NULL;
+		fb->readComplete = false;
 		AuMmngrAddFileBack(fb);
+		//aa64_data_cache_clean_range(fb, sizeof(AuMMFileBack));
 	}
 	if (!file) {
 		UARTDebugOut("No File found -> %s \r\n", filename);
 		return -1;
 	}
+	
 	AuMMPageCache* pcache = fb->pageCache;
+	
 	int sbIndex = 0;
 	while (file->eof != 1) {
 		uint64_t physcache = NULL;
@@ -250,10 +256,14 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) 
 
 	/* check if the binary is dynamically linked */
 	if (AuPEFileIsDynamicallyLinked(_ldr_scratchBuffer)) {
-		UARTDebugOut("The process %s is Dynamically Linked \n", filename);
+		UARTDebugOut("The process %s is Dynamically Linked %x\n", filename,fb);
 		/* free the current file*/
+		//UARTDebugOut("fb : %x \r\n", fb);
+		//aa64_data_cache_clean_range(fb, sizeof(AuMMFileBack));
 		AuMmngrRemoveFileBack(fb);
+		//aa64_data_cache_clean_range(file, sizeof(AuVFSNode));
 		kfree(file);
+		AuTextOut("File cache removed \r\n");
 		//AuPmmngrFree((void*)V2P((sizeof(buf))));
 
 		/* now load XELoader process, which'll further
@@ -271,15 +281,18 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) 
 		 */
 		int num_args_ = 1 + argc;
 		int string_len = strlen(filename);
+		AuTextOut("Stringlen got \r\n");
 		char* file__ = (char*)kmalloc(string_len+1);
+		AuTextOut("File__ %x \r\n", file__);
 		strcpy(file__, filename);
-
+	
 		/* BUGG: if kmalloc allocates smaller memory below than 15 bytes,
 		 * it crashes while freeing the allocated memory, that's why we
 		 * allocate memory of size (string_len + char_cnt) * sizeof(char) for
 		 * argument array
 		 */
 		char** argvs = (char**)kmalloc(num_args_ * sizeof(char*));
+		AuTextOut("Argvs : %x \r\n", argvs);
 		//memset(argvs, 0, num_args_ * sizeof(char*));
 		argvs[0] = file__;
 

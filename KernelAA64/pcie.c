@@ -82,10 +82,10 @@ skipDTB:
 		_pcieInitialized = 1;
 	}
 	else {
-		AuTextOut("[aurora]: kernel can't continue boot, no device discovery mechanism supported \n");
-		AuTextOut("[aurora]: Ki koriba aru !! Eku dekhun device discovery mechanism support nokore !! Baad diya \n");
-		AuTextOut("[aurora]: Ponta Bhaat khuwa ge \n");
-		for (;;);
+		AuTextOut("[aurora]: kernel can't continue boot, no device discovery mechanism supported \r\n");
+		AuTextOut("[aurora]: Ki koriba aru !! Eku dekhun device discovery mechanism support nokore !! Baad diya \r\n");
+		AuTextOut("[aurora]: Ponta Bhaat khuwa ge \r\n");
+
 	}
 }
 

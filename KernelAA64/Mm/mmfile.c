@@ -66,7 +66,6 @@ void AuMmngrAddFileBack(AuMMFileBack* fb) {
 		return;
 	fb->next = NULL;
 	fb->prev = NULL;
-
 	if (fb_first == NULL) {
 		fb_last = fb;
 		fb_first = fb;
@@ -76,7 +75,6 @@ void AuMmngrAddFileBack(AuMMFileBack* fb) {
 		fb->prev = fb_last;
 	}
 	fb_last = fb;
-	data_cache_flush(fb);
 }
 
 /**
@@ -84,22 +82,31 @@ void AuMmngrAddFileBack(AuMMFileBack* fb) {
 * @param thread -- thread address to remove
 */
 void AuMmngrRemoveFileBack(AuMMFileBack* fb) {
+
 	if (fb_first == NULL)
 		return;
-
+	
 	if (fb == fb_first) {
 		fb_first = fb_first->next;
+		if (fb_first)
+			fb_first->prev = NULL;
 	}
 	else {
-		fb->prev->next = fb->next;
+		if (fb->prev)
+			fb->prev->next = fb->next;
 	}
-
 	if (fb == fb_last) {
 		fb_last = fb->prev;
+		if (fb_last)
+			fb_last->next = NULL;
 	}
 	else {
-		fb->next->prev = fb->prev;
+		if (fb->next)
+			fb->next->prev = fb->prev;
 	}
+
+	fb->next = (AuMMFileBack*)0xDEADDEADDEADDEADULL;
+	fb->prev = (AuMMFileBack*)0xDEADDEADDEADDEADULL;
 }
 
 
@@ -125,7 +132,9 @@ AuMMFileBack* AuMmngrFileCacheLookup(const char* filename) {
 			fname = filename + 1;
 		filename++;
 	}
+#ifdef __TARGET_BOARD_QEMU_VIRT__
 	data_cache_flush(fname);
+#endif
 	
 	AuMMFileBack* fileback = NULL;
 
@@ -187,7 +196,6 @@ AuMMPageCache* AuMmngrPageCacheCreate() {
 void AuMmngrFileBackAddPageCache(AuMMFileBack* fileb, AuMMPageCache* cache) {
 	cache->next = NULL;
 	cache->prev = NULL;
-	
 	if (fileb->pageCache == NULL) {
 		fileb->pageCacheLast = cache;
 		fileb->pageCache = cache;

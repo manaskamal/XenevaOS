@@ -113,7 +113,6 @@ uint16_t FontManagerGetKey() {
 FontSeg* FontManagerAllocateSegment(AuVFSNode* fontfile, char* fontname) {
 	if (!fontfile)
 		return NULL;
-	UARTDebugOut("Inside FontManagerAllocateSegment \r\n");
 	FontSeg* seg = (FontSeg*)kmalloc(sizeof(FontSeg));
 	memset(seg, 0, sizeof(FontSeg));
 	strncpy(seg->fontname, fontname, 32);
@@ -185,6 +184,7 @@ search:
 	if (fontfile) {
 		FontSeg* seg = FontManagerAllocateSegment(fontfile, fontname);
 		uint64_t* firstFrame = (uint64_t*)seg->sharedSeg->frames[0];
+		UARTDebugOut("fontfile -> %s sz : %d \r\n", fontfile->filename, fontfile->size);
 		size_t ret = AuVFSNodeRead(fs, fontfile, (uint64_t*)P2V((size_t)firstFrame), ALIGN_UP(fontfile->size, 4096));
 		fcount++;
 		kfree(fontfile); //avoiding this, because we need more powerful heap memory allocator 

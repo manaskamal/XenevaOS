@@ -179,6 +179,9 @@
     <ClCompile Include="Hal\profile.c">
       <Filter>Hal</Filter>
     </ClCompile>
+    <ClCompile Include="Board\imx8mp\imx8mp_uart.c">
+      <Filter>Board\imx8mp</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Hal">
@@ -237,6 +240,12 @@
     </Filter>
     <Filter Include="Include\Board\RPI3bp">
       <UniqueIdentifier>{11262d77-2842-4260-8c89-e65a31b256ea}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Board\imx8mp">
+      <UniqueIdentifier>{baba1d7d-10a1-4942-8667-89e8782cbb67}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Include\Board\imx8mp">
+      <UniqueIdentifier>{507f6769-a77e-4ab1-bb23-1418e106d97e}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -320,6 +329,12 @@
     </ClInclude>
     <ClInclude Include="..\BaseHdr\Hal\AA64\profile.h">
       <Filter>Include\Hal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\Board\imx8mp\imx8mp_uart.h">
+      <Filter>Include\Board\imx8mp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\Board\imx8mp\imx8mp.h">
+      <Filter>Include\Board\imx8mp</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -172,7 +172,6 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
         _littleboot_used = true;
     }
 	info->printf_gui("[aurora]: Xeneva arm64 (imx8mp)-toradex verdin dahlia \r\n");
-	for (;;);
 	bootinfo = info;
 	PROFILE_START("_AuMain");
 
@@ -188,7 +187,9 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	AuDeviceTreeMapMMIO();
 	AuAA64BoardInitialize();
 	AA64CPUPostInitialize(info);
+	AuTextOut("Initializing VFS \r\n");
 	AuVFSInitialise();
+	AuTextOut("[aurora]: VFS initialized \r\n");
 	AuInitrdInitialize(info);
 	AuConsolePostInitialise(info);
 
@@ -232,15 +233,21 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	/* initialize the deodhai's communication protocol */
 	AuIPCPostBoxInitialise();
 	
-
+#ifdef __TARGET_BOARD_IMX8MP_VERDIN_DAHLIA__
+	AuTextOut("[aurora]: Board model : Toradex imx8M Plus Verdin Dahlia (Xeneva Build %s - %s)\r\n", __DATE__, __TIME__);
+#elif __TARGET_BOARD_RPI3__
+	AuTextOut("[aurora]: Board Model : Raspberry Pi 3B+ (Xeneva Build %s - %s)\r\n", __DATE__, __TIME__);
+#elif __TARGET_BOARD_QEMU_VIRT__
+	AuTextOut("[aurora]: Board Model : QEMU Virt Machine (Xeneva Build %s - %s)\r\n", __DATE__, __TIME__);
+#endif
 	AuTextOut("[aurora]: starting xeneva (ARM64) please wait...\r\n");
+	
 
 	/* clear out the lower half memory */
 	AuVmmngrBootFree();
 	AuMmngrFileCacheEnable();
 
-	AuTextOut("[aurora]: boot freed up \r\n");
-
+	UARTDebugOut("[aurora]: boot freed up \r\n");
 
 	AuSchedulerInitialize();
 	/*
@@ -255,7 +262,7 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	argvs[0] = about;
 	AuLoadExecToProcess(proc, "/init.exe", num_args, argvs);
 	//AA64Thread* t2 = AuCreateKthread(AuEntryTest, AuCreateVirtualAddressSpace(), "test");
-	//PROFILE_END("_AuMain");
+	PROFILE_END("_AuMain");
 	AuSchedulerStart();
 	while (1) {
 		//UARTDebugOut("Printing \n");

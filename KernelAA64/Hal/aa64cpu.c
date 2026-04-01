@@ -194,11 +194,13 @@ void AA64TimerSetup() {
 void AA64CPUPostInitialize(KERNEL_BOOT_INFO* info) {
 	AuACPIInitialise(info->acpi_table_pointer);
 	UARTInitialize();
+
 	//enable_irqs();
 	mask_irqs();
 	suspendTimer();
 	GICInitialize();
 	AA64TimerSetup();
+
 	//PS/2 Enable
 
 	uint32_t id = read_midr();
