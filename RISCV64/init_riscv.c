@@ -1,7 +1,7 @@
 /**
  * BSD 2-Clause License
  *
- * Copyright (c) 2023-2026, Manas Kamal Choudhury
+ * Copyright (c) 2026, Aryan Dadwal
  * All rights reserved.
  *
  * init_riscv.c -- XenevaOS RISC-V user-space init process

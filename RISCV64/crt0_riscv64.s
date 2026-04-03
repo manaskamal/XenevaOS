@@ -1,7 +1,7 @@
 /**
  * BSD 2-Clause License
  *
- * Copyright (c) 2023-2026, Manas Kamal Choudhury
+ * Copyright (c) 2026, Aryan Dadwal
  * All rights reserved.
  *
  * crt0_riscv64.s -- C runtime startup for RISC-V user space (XenevaOS)

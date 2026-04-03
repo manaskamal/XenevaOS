@@ -1,4 +1,16 @@
-
+/**
+ * BSD 2-Clause License
+ *
+ * Copyright (c) 2026, Aryan Dadwal
+ * All rights reserved.
+ *
+ * crt0_riscv64.s -- C runtime startup for RISC-V user space (XenevaOS)
+ *
+ * The kernel AuProcessEntUser calls our entrypoint with:
+ *   a0 = argc
+ *   a1 = argv pointer
+ * and the stack pointer already set to the user stack.
+ **/
 .section .peheader, "a"
 .global _start_header
 _start_header:
