@@ -10,7 +10,8 @@
  *   a0 = argc
  *   a1 = argv pointer
  * and the stack pointer already set to the user stack.
- **/OUTPUT_FORMAT("elf64-littleriscv", "elf64-littleriscv", "elf64-littleriscv")
+ **/
+OUTPUT_FORMAT("elf64-littleriscv", "elf64-littleriscv", "elf64-littleriscv")
 OUTPUT_ARCH(riscv)
 ENTRY(_start)
 
