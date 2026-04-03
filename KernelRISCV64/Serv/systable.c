@@ -2,6 +2,7 @@
  * BSD 2-Clause License
  *
  * Copyright (c) 2023-2026, Manas Kamal Choudhury
+* Copyright (c) 2026, Aryan Dadwal
  * All rights reserved.
  *
  * RISC-V 64 System Call Table

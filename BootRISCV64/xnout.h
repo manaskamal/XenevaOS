@@ -2,6 +2,7 @@
 * BSD 2-Clause License
 *
 * Copyright (c) 2023-2025, Manas Kamal Choudhury
+* Copyright (c) 2026, Aryan Dadwal
 * All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without

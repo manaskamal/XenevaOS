@@ -2,6 +2,7 @@
  * BSD 2-Clause License
  *
  * Copyright (c) 2022-2025, Manas Kamal Choudhury
+* Copyright (c) 2026, Aryan Dadwal
  * All rights reserved.
  *
  * thrserv.c -- Thread & Process services (RISC-V 64 port)
