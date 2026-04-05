@@ -55,7 +55,8 @@ void lcdif_write(uint64_t base, uint32_t reg, uint32_t value) {
 }
 
 uint32_t lcdif_read(uint64_t base, uint32_t reg) {
-	return (*(volatile uint32_t*)(base + reg));
+	volatile uint32_t* mmio = (volatile uint32_t*)(base + reg);
+	return *mmio;
 }
 
 /*
@@ -91,6 +92,7 @@ void lcdif_setmode() {
 	/** sync pulse widths **/
 	lcdif_write(_base, LCDIF_VSYN_HSYN_WIDTH, VSYN_HSYN_PW_H(hsw) | VSYN_HSYN_PW_V(vsw));
 
+
 	if (inv_hs) lcdif_write(_base, LCDIF_CTRL_SET, CTRL_INV_HS);
 	else        lcdif_write(_base, LCDIF_CTRL_CLR, CTRL_INV_HS);
 	if (inv_vs) lcdif_write(_base, LCDIF_CTRL_SET, CTRL_INV_VS);
@@ -103,19 +105,21 @@ void lcdif_setmode() {
 	lcdif_write(_base, LCDIF_CTRLDESCL_HIGH0_4, (uint32_t)(fb_phys >> 32));
 
 	/** pixel format: ARGB8888 */
-	uint32_t reg = lcdif_read(_base, LCDIF_CTRLDESCL0_5);
+	//uint32_t reg = lcdif_read(_base, LCDIF_CTRLDESCL0_5);
+	uint32_t reg = 0;
 	reg &= ~(CTRLDESCL0_5_BPP(0xf));
 	reg |= CTRLDESCL0_5_BPP(BPP32_ARGB8888);
 	lcdif_write(_base, LCDIF_CTRLDESCL0_5, reg);
 
+	
 	/** enable display + layer */
 	lcdif_write(_base, LCDIF_DISP_PARA, DISP_PARA_DISP_ON);
-	reg = lcdif_read(_base, LCDIF_CTRLDESCL0_5);
+	reg = 0; // lcdif_read(_base, LCDIF_CTRLDESCL0_5);
 	reg |= CTRLDESCL0_5_EN;
 	lcdif_write(_base, LCDIF_CTRLDESCL0_5, reg);
 
 	/** trigger shadow load **/
-	reg = lcdif_read(_base, LCDIF_CTRLDESCL0_5);
+	reg = 0; // lcdif_read(_base, LCDIF_CTRLDESCL0_5);
 	reg |= CTRLDESCL0_5_SHADOW_LOAD_EN;
 	lcdif_write(_base, LCDIF_CTRLDESCL0_5, reg);
 
@@ -128,6 +132,8 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 	UARTDebugOut("[imx8mp_lcdif3]: starting driver... \r\n");
 	uint32_t val = (1ul << 31) | (1ul << 30); //soft reset + clk_gate
 	_base = (uint64_t)AuMapMMIO(IMX8MP_LCDIF3_BASE, 4);
+
+
 	lcdif_write(_base, LCDIF_CTRL, val);
 	lcdif_wait();
 	

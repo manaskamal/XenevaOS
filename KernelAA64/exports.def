@@ -9,3 +9,5 @@ EXPORTS
      mask_irqs
      dsb_sy_barrier
      dc_ivac
+     aa64_data_cache_clean_range
+     _wfi

@@ -80,9 +80,18 @@ void RPI3_IRQ_handler(AA64Registers* regs) {
         AuScheduleThread(regs);
     }
 
+
     if (pending & (1ULL << 8)) {
         uint32_t penP = AuRPI3PeripheralIRQGetPending2();
+        uint32_t penP1 = AuRPI3PeripheralIRQGetPending1();
+
+        if (penP1 & (1ULL << 9)) {
+            GICCallSPIHandler(9);
+        }
         /* Handle GPIO irq*/
+        if (pending & (1ULL << 9)) {
+            UARTDebugOut("USB interrupt under GPU IRQ??? \r\n");
+        }
         if (penP & (1ULL << 17)) {
             uint32_t gpioEvent = AuRPIGPIOGetEvents();
             /* PI HDMI Display's XPT2046 Penirq*/
@@ -103,6 +112,10 @@ void RPI3_IRQ_handler(AA64Registers* regs) {
                 AuRPIGPIOEnableInterrupt(25);
             }
         }
+    }
+
+    if (pending & (1ULL << 9)) {
+        UARTDebugOut("[dwc2_otg]: interrupt occured \r\n");
     }
 }
 

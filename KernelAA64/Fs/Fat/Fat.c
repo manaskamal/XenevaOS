@@ -404,7 +404,6 @@ AuVFSNode* FatLocateSubDir(AuVFSNode* fsys, AuVFSNode* kfile, const char* filena
 						file->flags |= FS_FLAG_DIRECTORY;
 					else
 						file->flags |= FS_FLAG_GENERAL;
-					AuTextOut("[fat]: opening file : %s \r\n", dos_file_name);
 					AuPmmngrFree((void*)V2P((size_t)buf));
 					kfree(kfile);
 					return file;
@@ -475,7 +474,6 @@ AuVFSNode* FatLocateDir(AuVFSNode* fsys, const char* dir) {
 					file->flags |= FS_FLAG_DIRECTORY;
 				else
 					file->flags |= FS_FLAG_GENERAL;
-				AuTextOut("[fat]: opening file : %s \r\n", file->filename);
 				aa64_data_cache_clean_range(file, sizeof(AuVFSNode));
 				AuPmmngrFree((void*)V2P((size_t)buf));
 				return file;

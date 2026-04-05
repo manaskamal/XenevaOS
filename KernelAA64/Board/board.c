@@ -29,10 +29,12 @@
 *
 **/
 #include <Board/RPI3bp/rpi3bp.h>
+#include <Board/imx8mp/imx8mp_clk.h>
 #include <Drivers/uart.h>
 
 #include <aucon.h>
 
+extern void imx8mp_gpc_init();
 /**
  * @brief AuAA64BoardInitialize -- initialize board specific data
  */
@@ -40,6 +42,10 @@ void AuAA64BoardInitialize() {
 	AuTextOut("[aurora]: initializing board data \r\n");
 #ifdef __TARGET_BOARD_RPI3__
 	AuRPI3Initialize();
+#elif __TARGET_BOARD_IMX8MP_VERDIN_DAHLIA__ || (__TARGET_BOARD_IMX8MP_SOC__)
+	/** initialize the ccm module **/
+	imx8mp_gpc_init();
+	imx8mp_ccm_init();
 #endif
 }
 

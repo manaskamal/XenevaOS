@@ -40,6 +40,7 @@
 #include <Board/RPI3bp/rpi3bp_gpio.h>
 #include <Board/RPI3bp/rpi3bp_spi.h>
 #include <Board/RPI3bp/rpi_ili9486.h>
+#include <string.h>
 
 #ifdef __TARGET_BOARD_RPI3__
 
@@ -497,6 +498,42 @@ bool AuRPIInitializeFramebuffer(uint32_t width, uint32_t height, uint32_t depth)
     return true;
 }
 
+/**
+ * @brief AuRPISetPowerState -- set the power state
+ * of a device through mailbox interface
+ * @param device_id -- device id to power on
+ */
+int AuRPISetPowerState(uint32_t device_id) {
+    memset(mbox, 0, PAGE_SIZE);
+    mbox[0] = 9 * 4;
+    mbox[1] = 0;
+
+    /** set power state **/
+    mbox[2] = 0x00028001;
+    mbox[3] = 8;
+    mbox[4] = 8;
+    mbox[5] = device_id;
+    mbox[6] = 0x3;
+
+    mbox[7] = 0;
+    mbox[8] = 0;
+    AuRPI3WriteMailbox(MBOX_CH_PROP);
+    
+    AuRPI3ReadMailbox(MBOX_CH_PROP);
+
+    if (mbox[1] != 0x80000000) {
+        UARTDebugOut("[mailbox-set-power-state]: request failed : %x\r\n", mbox[1]);
+        return 0;
+    }
+
+    if (!(mbox[6] & 0x1)) {
+        UARTDebugOut("mailbox: device didn't power on \r\n");
+        return 0;
+    }
+
+    UARTDebugOut("[mailbox]: USB HCD powered on , state= %x \r\n", mbox[6]);
+    return 1;
+}
 
 
 #endif

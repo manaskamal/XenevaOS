@@ -102,7 +102,6 @@ int AuDevFSCreateFile(AuVFSNode* fs, char* path, uint8_t mode) {
 
 		for (int j = 0; j < first_list->childs->pointer; j++) {
 			AuVFSNode* node_ = (AuVFSNode*)list_get_at(first_list->childs, j);
-			AuTextOut("Dev fs : %s \r\n", node_->filename);
 			if (strcmp(node_->filename, pathname) == 0) {
 				if (node_->flags & FS_FLAG_DIRECTORY)
 					first_list = (AuVFSContainer*)node_->device;

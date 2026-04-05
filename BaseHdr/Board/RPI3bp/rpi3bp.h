@@ -34,7 +34,7 @@
 
 #include <stdint.h>
 #include <Hal/AA64/aa64cpu.h>
-
+#include <aurora.h>
 
 
 #define INT_SRC_CNTPSIRQ (1ULL<<0)
@@ -71,6 +71,18 @@
 #define TAG_LAST 0x00000000
 
 
+enum rpi_power_domain{
+	RPI_POWERUP_SDCARD,
+	RPI_POWERUP_UART0,
+	RPI_POWERUP_UART1,
+	RPI_POWERUP_USB_HCD,
+	RPI_POWERUP_I2C0,
+	RPI_POWERUP_I2C1,
+	RPI_POWERUP_I2C2,
+	RPI_POWERUP_SPI,
+	RPI_POWERUP_CCP2TX
+};
+
 extern uint32_t AuRPI3LocalIRQGetPending();
 
 /*
@@ -98,7 +110,7 @@ extern void RPI3_IRQ_handler(AA64Registers* regs);
  * AuRPI3PeripheralIRQEnable -- enable particular peripheral irq
  * @param irq_num -- irq number of the specific peripheral
  */
-extern void AuRPI3PeripheralIRQEnable(uint32_t irq_num);
+AU_EXTERN AU_EXPORT void AuRPI3PeripheralIRQEnable(uint32_t irq_num);
 
 
 extern void AuVC4DSIInit();
@@ -114,6 +126,13 @@ extern void AuRPIDelayMS(uint32_t ms);
  * @param depth -- fb depth
  */
 bool AuRPIInitializeFramebuffer(uint32_t width, uint32_t height, uint32_t depth);
+
+/**
+ * @brief AuRPISetPowerState -- set the power state
+ * of a device through mailbox interface
+ * @param device_id -- device id to power on
+ */
+AU_EXTERN AU_EXPORT int AuRPISetPowerState(uint32_t device_id);
 
 #endif
 

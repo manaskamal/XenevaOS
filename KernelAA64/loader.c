@@ -288,7 +288,6 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) 
 		 * argument array
 		 */
 		char** argvs = (char**)kmalloc(num_args_ * sizeof(char*));
-		AuTextOut("Argvs : %x \r\n", argvs);
 		//memset(argvs, 0, num_args_ * sizeof(char*));
 		argvs[0] = file__;
 

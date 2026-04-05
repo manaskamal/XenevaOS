@@ -39,4 +39,5 @@ void* XEDTBGetHardcodeAddress() {
 #ifdef __TARGET_BOARD_IMX8MP_VERDIN_DAHLIA__
 	return (void*)0xBFADF940;
 #endif
+	return 0;
 }

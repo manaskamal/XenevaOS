@@ -99,13 +99,13 @@ extern void AA64CPUPostInitialize(KERNEL_BOOT_INFO* info);
  * @brief AA64SleepUS -- sleep for sometimes
  * @param us -- microseconds to sleep
  */
-extern void AA64SleepUS(uint32_t us);
+AU_EXTERN AU_EXPORT void AA64SleepUS(uint32_t us);
 
 /**
  * @brief AA64SleepMS -- sleep for sometimes
  * @param ms -- milliseconds to sleep
  */
-extern void AA64SleepMS(uint32_t ms);
+AU_EXTERN AU_EXPORT void AA64SleepMS(uint32_t ms);
 
 /**
  * @brief AuAA64SyscalHandler -- common system call handler for aarch64

@@ -111,7 +111,6 @@ int AuCreateSHM(AuProcess* proc, uint16_t key, size_t sz, uint8_t flags) {
 		return -1;
 	}
 	/*  search if it's already created */
-	AuTextOut("[aurora]: Creating SHM \r\n");
 	shm = AuGetSHMSeg(key);
 	/* create a new*/
 	if (!shm) {

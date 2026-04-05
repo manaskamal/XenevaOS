@@ -226,6 +226,7 @@ UINTN XESetGraphicsMode(EFI_SYSTEM_TABLE* SystemTable, int index) {
 	Status = GraphicsOutput->SetMode(GraphicsOutput, Mode);
 	gop = GraphicsOutput;
 	Status = XEInitialiseGraphics(GraphicsOutput);
+	_is_graphics_enabled = true;
 	return Mode;
 }
 
@@ -529,7 +530,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
 
 	XEPagingInit2();
 
-	XEUARTPrint("MMU Enabled \r\n");
+	//XEUARTPrint("MMU Enabled \r\n");
 
 	IMAGE_DOS_HEADER* dos_ = (IMAGE_DOS_HEADER*)krnl->kBuffer;
 	uint64_t* p1 = (uint64_t*)XEPmmngrAllocate();

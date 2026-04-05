@@ -58,7 +58,7 @@ uint32_t redmask, bluemask, greenmask;
 uint32_t resvmask;
 size_t h_res, v_res;
 BOOL early_;
-
+bool bypass_autextout;
 
 void(*_print_func) (const char* text, ...);
 
@@ -85,6 +85,7 @@ void AuConsoleInitialize(PKERNEL_BOOT_INFO info, bool early) {
 		}
 	}
 	aucon = NULL;
+	bypass_autextout = false;
 }
 
 /**
@@ -391,6 +392,8 @@ void AuTextOut(const char* format, ...) {
 			_print_func(format);
 		return;
 	}
+	if (bypass_autextout)
+		return;
 
 	uint64_t buffer[7];
 	store_x0_x7(buffer);
@@ -608,4 +611,9 @@ void AuConsoleSetConInfo(uint64_t phys, uint64_t virtual, size_t xres, size_t yr
 	aucon->width = xres;
 	aucon->height = yres;
 	aucon->size = xres * yres * 4;
+	bypass_autextout = true;
+}
+
+void AuConsoleBypassAuTextOut() {
+	bypass_autextout = 1;
 }

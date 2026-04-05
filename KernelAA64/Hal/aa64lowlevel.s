@@ -362,9 +362,12 @@ enableAlignCheck:
 
 .global data_cache_flush
 data_cache_flush:
+    cmp x0, #0
+    beq data_cache_ret
     dc civac, x0
     dmb sy
     isb
+data_cache_ret:
     ret
 
 .global set_cntp_cval_el0

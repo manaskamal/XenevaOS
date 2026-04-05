@@ -229,7 +229,7 @@ void AuPmmngrInitialize(KERNEL_BOOT_INFO* info) {
 	AuPmmngrInitBitmap(BitmapSize, BitmapArea);
 	AuTextOut("Bitmap Size : %x %d \r\n", BitmapSize, BitmapSize);
 	AuPmmngrLockPages((void*)BitmapArea, BitmapSize);
-	AuPmmngrLockPages((void*)page_desc_addr, total_page_desc_count);
+	//AuPmmngrLockPages((void*)page_desc_addr, total_page_desc_count);
 
 	if (info->boot_type != BOOT_LITTLEBOOT_ARM64) {
 		for (size_t i = 0; i < MemMapEntries; i++) {

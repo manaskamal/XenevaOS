@@ -58,6 +58,7 @@ void AA64FPUNeonEnable() {
 	uint64_t cpacr_el1 = get_cpacr_el1();
 	cpacr_el1 |= (3 << 20) | (3 << 16);
 	set_cpacr_el1(cpacr_el1);
+	isb_flush();
 }
 
 /**
@@ -119,7 +120,7 @@ void AA64CPUImplementer(uint32_t midr) {
 		AuTextOut("CPU Implementer: Unknown \r\n");
 		break;
 	}
-	AuTextOut("CPU Architecture: ARMv8-A(%x) \r\n", arch);
+	//AuTextOut("CPU Architecture: ARMv8-A(%x) \r\n", arch);
 }
 
 /**

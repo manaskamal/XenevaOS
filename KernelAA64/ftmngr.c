@@ -117,6 +117,7 @@ FontSeg* FontManagerAllocateSegment(AuVFSNode* fontfile, char* fontname) {
 	memset(seg, 0, sizeof(FontSeg));
 	strncpy(seg->fontname, fontname, 32);
 	uint32_t alignedSz = ALIGN_UP(fontfile->size, 4096);
+	UARTDebugOut("Creating SHM \r\n");
 	int id = AuCreateSHM(NULL, FontManagerGetKey(), alignedSz, 0);
 	seg->sharedSeg = AuGetSHMByID(id);
 	seg->fontFileSz = fontfile->size;
@@ -178,10 +179,11 @@ search:
 		fbuf++;
 	}
 	filename[i] = 0;
-
+	UARTDebugOut("Opening font file : %s \r\n", filename);
 	AuVFSNode* fs = AuVFSFind("/");
 	AuVFSNode* fontfile = AuVFSOpen(filename); //FontManagerOpenFontFile(filename);
 	if (fontfile) {
+		UARTDebugOut("Font file present \r\n");
 		FontSeg* seg = FontManagerAllocateSegment(fontfile, fontname);
 		uint64_t* firstFrame = (uint64_t*)seg->sharedSeg->frames[0];
 		UARTDebugOut("fontfile -> %s sz : %d \r\n", fontfile->filename, fontfile->size);

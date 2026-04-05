@@ -32,6 +32,7 @@
 #include "clib.h"
 #include <Board/imx8mp/imx8mp_uart.h>
 #include "imx8mp/imx8mp_uartc.h"
+#include "xnout.h"
 
 static bool _is_uart_initialized;
 /**
@@ -40,8 +41,8 @@ static bool _is_uart_initialized;
  */
 void XEUartInitialize() {
 #ifdef __TARGET_BOARD_RPI3__
-	RPI3BUartInit();
-	_is_uart_initialized = 1;
+	//RPI3BUartInit();
+	_is_uart_initialized = 0;
 #elif __TARGET_BOARD_IMX8MP_VERDIN_DAHLIA__ || (__TARGET_BOARD_IMX8MP_SOC__)
 	XE_iMX8MP_UART_Initialize(IMX8MP_UART3_BASE_ADDRESS);
 	_is_uart_initialized = 1;
@@ -86,6 +87,11 @@ void XEUARTPrint(const char* format, ...) {
 	 * store the registered in stack, rather in a shadow area
 	 * and i don't know how to access those
 	 */
+#ifdef __TARGET_BOARD_RPI3__
+	XEGuiPrint(format);
+	return;
+#endif
+
 	uint64_t buffer[7];
 	store_x0_x7(buffer);
 

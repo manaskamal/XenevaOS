@@ -1762,12 +1762,20 @@ int main(int argc, char* arv[]) {
 	uint64_t last_click_time = 0;
 	uint64_t last_redraw = 0;
 
-	int proc = _KeCreateProcess(0, "xelnch");
-	_KeProcessLoadExec(proc, "/xelnch.exe", 0, NULL);
+	//int proc = _KeCreateProcess(0, "xelnch");
+	//_KeProcessLoadExec(proc, "/xelnch.exe", 0, NULL);
+
+	//_KeProcessSleep(100);
+	//proc = _KeCreateProcess(0, "nmdapha");
+	//_KeProcessLoadExec(proc, "/nmdapha.exe", NULL, NULL);
+
+	//_KeProcessSleep(200);
+	int proc = _KeCreateProcess(0, "file");
+	_KeProcessLoadExec(proc, "/file.exe", NULL, NULL);
 
 	_KeProcessSleep(100);
-	proc = _KeCreateProcess(0, "nmdapha");
-	_KeProcessLoadExec(proc, "/nmdapha.exe", NULL, NULL);
+	proc = _KeCreateProcess(0, "calc");
+	_KeProcessLoadExec(proc, "/calc.exe", NULL, NULL);
 
 	/* launch the session manager directly from here */
 #ifdef ARCH_X64
@@ -1779,6 +1787,7 @@ int main(int argc, char* arv[]) {
 	proc = _KeCreateProcess(0, "nmdapha");
 	_KeProcessLoadExec(proc, "/nmdapha.exe", 0, NULL);
 #endif
+
 
 
 	_KePrint("Postbox created for deodhai \r\n");

@@ -244,6 +244,9 @@ void GICv2MInitialize() {
  * inorder to control initialization sequence
  */
 uint32_t GICVerifyVersion() {
+#ifdef __TARGET_BOARD_QEMU_VIRT__
+	return GIC_VERSION_2;
+#else
 	uint32_t pidr2 = gic_inl_(GICD(__gic), GICD_PIDR2);
 	uint32_t archrev = GICD_PIDR2_ARCHREV(pidr2);
 	if (archrev == GIC_VERSION_3)
@@ -255,6 +258,7 @@ uint32_t GICVerifyVersion() {
 	else if (archrev == GIC_VERSION_1)
 		UARTDebugOut("[aurora]: using GICv1 \r\n");
 	return archrev;
+#endif
 }
 
 
@@ -302,7 +306,7 @@ void GICRInitialize(int cpu_num) {
 void GICInitialize() {
 	/* Firstly rely upon UEFI + ACPI for GIC mmio values */
 	AuTextOut("Initializing GIC %x %x \r\n", __gic.gicCPhys, __gic.gicDPhys);
-	
+
 	/* if not found, go for device tree , because the kernel might get booted
 	 * from LittleBoot 
 	 */
@@ -366,6 +370,7 @@ skip_:
 	}
 
 	__gic.gicDMMIO = AuMapMMIO(__gic.gicDPhys, 16);
+
 	uint32_t version = GICVerifyVersion();
 	__gic.version = version;
 	bool _need_cpu_interface = true;

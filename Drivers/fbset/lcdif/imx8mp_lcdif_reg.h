@@ -34,7 +34,7 @@
 
 #define IMX8MP_LCDIF1_BASE 0x32E80000UL
 #define IMX8MP_LCDIF2_BASE 0x32E90000UL
-#define IMX8MP_LCDIF3_BASE 0x32FC6000UL
+#define IMX8MP_LCDIF3_BASE 0x32FC6000UL   /** HDMI output goes here **/
 
 #define LCDIF_CTRL           0x0  /** display control register **/
 #define LCDIF_CTRL_SET       0x4

@@ -183,6 +183,7 @@ void irq_el1_handler(AA64Registers* regs) {
     uint32_t irq = iar & 0x3FF;
     if (irq < 1020) {
         if (irq == 27) {
+            suspendTimer(); //<--- suspecting this line 
             setupTimerIRQ();
             GICSendEOI(iar);
             GICCheckPending(irq);

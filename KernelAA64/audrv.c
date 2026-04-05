@@ -373,6 +373,9 @@ void AuDrvMngrInitialize(KERNEL_BOOT_INFO* info) {
 	driver_load_base = AU_DRIVER_BASE_START;
 	_dev_count_ = 0;
 
+	scratchBuffer = (uint64_t*)P2V((uint64_t)AuPmmngrAllocBlocks((1024 * 1024) / 0x1000));
+	memset(scratchBuffer, 0, 1024 * 1024);
+
 	AuTextOut("[aurora]: initializing drivers, please wait... \r\n");
 	/* Load the conf data */
 	uint64_t* conf = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
@@ -389,7 +392,7 @@ void AuDrvMngrInitialize(KERNEL_BOOT_INFO* info) {
 	int filesize = file->size / 1024;
 
 	if (filesize < 4096)
-		AuVFSNodeReadBlock(fsys, file, (uint64_t*)V2P((size_t)conf));
+		AuVFSNodeReadBlock(fsys, file, conf);
 
 	uint8_t* confdata = (uint8_t*)conf;
 
@@ -401,17 +404,15 @@ void AuDrvMngrInitialize(KERNEL_BOOT_INFO* info) {
 	AuVFSNode* board = AuVFSOpen("/board.cnf");
 	if (board) {
 		filesize = board->size / 1024;
-		if (filesize < 4096)
-			AuVFSNodeReadBlock(fsys, board, (uint64_t*)V2P((size_t)boardcnf));
+		if (filesize < 4096) {
+			AuVFSNodeReadBlock(fsys, board, boardcnf);
+		}
 		AuTextOut("[aurora]: board.cnf read successfully %s \r\n", board->filename);
 
 	}else
 		AuTextOut("[aurora] Driver Manager failed to open board.cnf, file not found \r\n");
 	
 
-	
-	scratchBuffer = (uint64_t*)P2V((uint64_t)AuPmmngrAllocBlocks((1024 * 1024) / 0x1000));
-	memset(scratchBuffer, 0, 1024 * 1024);
 	
 	/* AuDrvManager will be responsible for loading drivers through
 	 * scanning MMIO, PCIe and other bus systems
@@ -446,7 +447,7 @@ void AuDrvMngrInitialize(KERNEL_BOOT_INFO* info) {
 		/** using font manager's function because both board config
 		 * data and font manager config data shares same style
 		 */
-		int num_module_entry = FontManagerGetFontCount(boardcnf);
+		int num_module_entry = FontManagerGetFontCount((uint8_t*)boardcnf);
 		AuTextOut("[aurora]: number of board's module entry : %d \r\n", num_module_entry);
 		AuBoardIterateModule(boardcnf, num_module_entry);
 		proceed = 1;
