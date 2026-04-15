@@ -59,6 +59,11 @@ typedef struct _app_grid_ {
 	int numPageCount;
 	int numEntriesInEachRow;
 	int numRowsInOnePage;
+	bool show_search_result;
+	int search_pos_x;
+	int search_pos_y;
+	list_t* searchResultList;
+	bool show_search;
 	void(*PaintAppGrid)(_app_grid_* grid, ChWindow* win);
 }AppGrid;
 
@@ -81,9 +86,23 @@ extern AppGrid* LauncherCreateAppGrid(int x, int y, int w, int h);
 extern void AppGridAddButton(AppGrid* grid, LaunchButton* button);
 
 /*
+ * AppGridAddButtonInSearch -- adds a button to specific grid
+ * @param grid -- Pointer to grid
+ * @param button -- Pointer to launch button needs to
+ * be added
+ */
+extern void AppGridAddButtonInSearch(AppGrid* grid, LaunchButton* button);
+
+/*
 *AppGridPaint -- paints the entire grid
 * @param grid -- Pointer to grid to be painted
 * @param win -- Pointer to root window
 */
 extern void AppGridPaint(AppGrid* grid, ChWindow* win);
+
+/**
+ * @brief AppGridSearchReset -- reset the search list
+ * @param grid -- Pointer to app grid
+ */
+extern void AppGridSearchReset(AppGrid* grid);
 #endif

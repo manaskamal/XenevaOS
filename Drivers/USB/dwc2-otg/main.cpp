@@ -225,8 +225,8 @@ void dwc2_flush_tx_fifo(struct dwc2_core_regs* regs, uint32_t nfifo) {
 	while(dwc2_read((uint64_t)&regs->grstctl) & (1ULL << 5))
 		if (--timeout == 0) return;
 
-	for (int i = 0; i < 10000000; i++)
-		_wfi();
+	/*for (int i = 0; i < 10000000; i++)
+		_wfi();*/
 
 }
 
@@ -241,9 +241,9 @@ void dwc2_flush_rx_fifo(struct dwc2_core_regs* regs) {
 	while (!(dwc2_read((uint64_t)&regs->grstctl) & (1ULL << 4)))
 		if (--timeout == 0) return;
 
-	for (int i = 0; i < 10000000; i++) {
+	/*for (int i = 0; i < 10000000; i++) {
 		_wfi();
-	}
+	}*/
 }
 
 void dwc2_enable_host_interrupts(struct dwc2_core_regs* regs) {
@@ -465,7 +465,7 @@ void dwc2_initialize(struct dwc2_core_regs* regs) {
 
 	if (_root_port_ready)
 		UARTDebugOut("[dwc2-otg]: enumeration thing is work in progress \r\n");
-		//dwc2_enumerate_root_device(regs);
+	dwc2_enumerate_root_device(regs);
 
 }
 
@@ -513,4 +513,8 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 	
 	mask_irqs();
 	return 0;
+}
+
+uint64_t dwc2_get_base() {
+	return _base;
 }

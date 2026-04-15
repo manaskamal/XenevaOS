@@ -133,7 +133,7 @@ void LauncherButtonDefaultAction(LaunchButton* lbutton, ChWindow *win){
 		memset(argvs, 0, 1);
 		argvs[0] = p;
 	}
-	int status = _KeProcessLoadExec(id, lbutton->appname, numarg, argvs);
+	int status = _KeProcessLoadExec(id, lbutton->appname, 0, NULL);
 	if (argvs) {
 		free(argvs[0]);
 		free(argvs);
@@ -157,6 +157,8 @@ LaunchButton *CreateLaunchButton(int x, int y, int w, int h, char* title, char* 
 	lb->y = y;
 	lb->w = w;
 	lb->h = h;
+	lb->scratch_x = x;
+	lb->scratch_y = y;
 	lb->title = (char*)malloc(strlen(title));
 	lb->appname = (char*)malloc(strlen(appname));
 	memset(lb->title, 0, strlen(title));

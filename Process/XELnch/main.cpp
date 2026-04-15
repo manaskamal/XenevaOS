@@ -8,10 +8,14 @@
 #include <chitralekha.h>
 #include <sys\iocodes.h>
 #include <widgets\base.h>
+#include <keycode.h>
 #include <widgets\window.h>
 #include "appgrid.h"
 #include "launcher.h"
 #include "button.h"
+#include "searchbar.h"
+#include <ctype.h>
+#include "search.h"
 
 
 ChitralekhaApp *app;
@@ -22,11 +26,21 @@ int screen_w;
 int bpp;
 int graphicsFd;
 int launcher_w, launcher_h;
+XESearchBar* searchBar;
 
 /* the main painting code */
 void XELauncherPaint(ChWindow* win) {
 	ChDrawRect(win->canv, 0, 0, win->info->width, win->info->height, LAUNCHER_BACKGROUND_COLOR);
-	AppGridPaint(mainGrid, win);
+
+	for (int i = 0; i < win->widgets->pointer; i++) {
+		ChWidget* wid = (ChWidget*)list_get_at(win->widgets, i);
+		if (wid)
+			if (wid->ChPaintHandler)
+				wid->ChPaintHandler(wid, win);
+	}
+	_KePrint("Widget painted \r\n");
+	//AppGridPaint(mainGrid, win);
+	ChDrawRectUnfilled(win->canv, 0, 0, win->info->width, win->info->height, GRAY);
 	ChWindowUpdate(win, 0, 0, win->info->width, win->info->height, 1, 0);
 }
 
@@ -40,8 +54,11 @@ void XELauncherPaint(ChWindow* win) {
 * @param scroll -- scroll information
 */
 void XELauncherMouseHandler(ChWindow* win, int x, int y, int button, int scroll) {
-	for (int i = 0; i < mainGrid->lbbuttonlist->pointer; i++) {
-		LaunchButton* widget = (LaunchButton*)list_get_at(mainGrid->lbbuttonlist, i);
+	list_t* buttonList = mainGrid->lbbuttonlist;
+	if (mainGrid->show_search)
+		buttonList = mainGrid->searchResultList;
+	for (int i = 0; i < buttonList->pointer; i++) {
+		LaunchButton* widget = (LaunchButton*)list_get_at(buttonList, i);
 		if (x > win->info->x + widget->x && x < (win->info->x + widget->x + widget->w) &&
 			(y > win->info->y + widget->y && y < (win->info->y + widget->y + widget->h))) {
 			widget->hover = true;
@@ -58,8 +75,46 @@ void XELauncherMouseHandler(ChWindow* win, int x, int y, int button, int scroll)
 			}
 		}
 	}
+
+	for (int i = 0; i < win->widgets->pointer; i++) {
+		ChWidget* wid = (ChWidget*)list_get_at(win->widgets, i);
+		if (x > win->info->x + wid->x && x < (win->info->x + wid->x + wid->w) &&
+			(y > win->info->y + wid->y && y < (win->info->y + wid->y + wid->h))) {
+			wid->hover = 1;
+			wid->KillFocus = false;
+			if (wid->ChMouseEvent)
+				wid->ChMouseEvent(wid, win, x, y, button);
+		}
+		else {
+			if (wid->hover) {
+				wid->hover = false;
+				wid->KillFocus = true;
+				if (wid->ChMouseEvent)
+					wid->ChMouseEvent(wid, win, x, y, button);
+			}
+		}
+	}
 }
 
+bool isControlKeyPressed(int key) {
+	bool value = 0;
+	switch (key) {
+	case 0x3A: {
+		//capslock on
+		value = 1;
+		bool bit = ChitralekhaKeyGetCapslock();
+		bit = !bit;
+		ChitralekhaKeySetCapslock(bit);
+		break;
+	}
+	case 0xBA: {
+		//capslock off
+		value = 1;
+		break;
+	}
+	}
+	return value;
+}
 /*
 * XenevaLauncherHandleMessage -- handle incoming messages
 *
@@ -81,6 +136,53 @@ void XenevaLauncherHandleMessage(PostEvent *e) {
 										   ChWindowHandleMouse(mouseWin, e->dword, e->dword2, e->dword3);
 									   memset(e, 0, sizeof(PostEvent));
 									   break;
+	}
+	case DEODHAI_REPLY_KEY_EVENT: {
+		if (!isControlKeyPressed(e->dword)) {
+			char c = ChitralekhaGetKeyPress(e->dword);
+			/** dont accept release keys **/
+			if (!(e->dword & 0x80)) {
+				searchBar->prevTextPos = searchBar->textPos;
+				if (c == 0x08) { /* Backspace */
+					if (searchBar->textPos == 0) {
+						mainGrid->show_search = false;
+						AppGridSearchReset(mainGrid);
+						if (mainGrid->PaintAppGrid) {
+							mainGrid->PaintAppGrid(mainGrid, win);
+							ChWindowUpdate(win, mainGrid->x, mainGrid->y, mainGrid->w, mainGrid->h, 0, 1);
+						}
+						memset(e, 0, sizeof(PostEvent));
+						break;
+					}
+					searchBar->textPos--;
+					searchBar->text[searchBar->textPos] = '\0';
+				}
+				else {
+					if (ChitralekhaKeyGetCapslock())
+						c = toupper(c);
+					if (searchBar->textPos == 1024) {
+						/** kiman aru text input lobi kelaaa, break maar sett **/
+						memset(e, 0, sizeof(PostEvent));
+						break;
+					}
+					mainGrid->show_search = true;
+					searchBar->text[searchBar->textPos++] = c;
+					searchBar->text[searchBar->textPos] = '\0';
+				}
+				if (searchBar->wid.ChPaintHandler) {
+					searchBar->wid.ChPaintHandler((ChWidget*)searchBar, win);
+					ChWindowUpdate(win, searchBar->wid.x, searchBar->wid.y, searchBar->wid.w, searchBar->wid.h, 0, 1);
+				}
+				AppGridSearchReset(mainGrid);
+				_match_string(searchBar->text, mainGrid->lbbuttonlist);
+				if (mainGrid->PaintAppGrid) {
+					mainGrid->PaintAppGrid(mainGrid, win);
+					ChWindowUpdate(win, mainGrid->x, mainGrid->y, mainGrid->w, mainGrid->h, 0, 1);
+				}
+			}
+		}
+		memset(e, 0, sizeof(PostEvent));
+		break;
 	}
 	case DEODHAI_REPLY_MOUSE_LEAVE: {
 		memset(e, 0, sizeof(PostEvent));
@@ -130,9 +232,9 @@ int main(int argc, char* arv[]){
 	free(canv);
 
 
-	win = ChCreateWindow(app, WINDOW_FLAG_STATIC | WINDOW_FLAG_ALWAYS_ON_TOP | WINDOW_FLAG_ANIMATED,
-		"Xeneva Launcher", 10, 10, screen_w - 10, screen_h - 85);
-	launcher_w = screen_w - 90; 
+	win = ChCreateWindow(app, WINDOW_FLAG_STATIC | WINDOW_FLAG_ALWAYS_ON_TOP,
+		"Xeneva Launcher", 10, 10, screen_w - 10*2, screen_h - 85);
+	launcher_w = screen_w - (10 * 2); //90; 
 	launcher_h = screen_h - 40;
 	int grid_w = launcher_w /2;
 	int grid_h = launcher_h /2;
@@ -149,12 +251,15 @@ int main(int argc, char* arv[]){
 
 	_KePrint("Launcher config initialised \r\n");
 
-	win->color = 0xCCBBBBBB;
+	win->color = LAUNCHER_BACKGROUND_COLOR;//0xCCBBBBBB;
 	win->ChWinPaint = XELauncherPaint;
 	win->info->hide = true;
-	win->info->alpha = true;
-	ChWindowPaint(win);
+	win->info->alpha = false;
 
+	searchBar = XECreateSearchBar(launcher_w / 2 - 280 / 2, 40, 280, 35);
+	ChWindowAddWidget(win, (ChWidget*)searchBar);
+	_KePrint("XELaunch about to paint \r\n");
+	ChWindowPaint(win);
 
 	PostEvent e;
 	memset(&e, 0, sizeof(PostEvent));
@@ -165,4 +270,8 @@ int main(int argc, char* arv[]){
 		if (err == POSTBOX_NO_EVENT)
 			_KePauseThread();
 	}
+}
+
+AppGrid* xelaunch_get_app_grid() {
+	return mainGrid;
 }

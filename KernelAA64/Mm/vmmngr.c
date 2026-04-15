@@ -104,7 +104,7 @@ void AuVmmngrInitialize() {
 			(0ULL << 53) | (1ULL << 10) | 
 			(3ULL << 8) | (0ULL << 6) |
 			(1UL << 2) | 0b01);
-		data_cache_flush(&newL1[pdpt_index(PHYSICAL_MEM_BASE) + i]);
+		//data_cache_flush(&newL1[pdpt_index(PHYSICAL_MEM_BASE) + i]);
 	}
 	uint64_t* kernelAS = AuPmmngrAlloc();
 	memset(kernelAS, 0, PAGE_SIZE);
@@ -280,6 +280,7 @@ bool AuMapPageEx(uint64_t* pml4i, uint64_t phys_addr, uint64_t virt_addr, uint8_
 
 	pml1[i1] = (phys_addr & ~0xFFFULL) | flags;
 	//tlb_flush(virt_addr);
+	//aa64_data_cache_clean_range((void*)&pml1, 4096);
 	return true;
 }
 
@@ -451,44 +452,52 @@ uint64_t* AuGetFreePage(bool user, void* ptr) {
 void AuFreePages(uint64_t virt_addr, bool free_physical, size_t s) {
 	//AuTextOut("Freeing up pages -> %x , size -> %d \n", virt_addr, s);
 	size_t numPages = (s + 4096 - 1) / 4096;
-	for (int i = 0; i < (s / 4096); i++) {
+	for (int i = 0; i < numPages; i++) {
 		uint64_t* pml4_ = (uint64_t*)P2V(read_ttbr0_el1());
+		if (isRangeInsideKernel(virt_addr)) {
+			pml4_ = (uint64_t*)P2V(read_ttbr1_el1());
+		}
 
 		if ((pml4_[pml4_index(virt_addr)] & 1) == 0) {
-			virt_addr += 4096;
+			//virt_addr += 4096;
 			continue;
 
 		}
 		uint64_t* pdpt = (uint64_t*)P2V(pml4_[pml4_index(virt_addr)] & ~0xFFFUL);
 
 		if ((pdpt[pdpt_index(virt_addr)] & 1) == 0) {
-			virt_addr += 4096;
+			//virt_addr += 4096;
 			continue;
 		}
 
 		uint64_t* pd = (uint64_t*)P2V(pdpt[pdpt_index(virt_addr)] & ~0xFFFUL);
 
 		if ((pd[pd_index(virt_addr)] & 1) == 0) {
-			virt_addr += 4096;
+			//virt_addr += 4096;
 			continue;
 		}
 
 		uint64_t* pt = (uint64_t*)P2V(pd[pd_index(virt_addr)] & ~0xFFFUL);
+
+		if ((pt[pt_index(virt_addr)] & 1) == 0) continue;
+
 		uint64_t* page = (uint64_t*)P2V(pt[pt_index(virt_addr)] & ~0xFFFUL);
 
 		//AuTextOut("Your physical page is -> %x %x\n", page, V2P(page));
 		if ((pt[pt_index(virt_addr)] & 1) != 0) {
 			pt[pt_index(virt_addr)] = 0;
-			data_cache_flush(&pt[pt_index(virt_addr)]);
-			tlb_flush(virt_addr & 0xFFFULL);
+			dsb_ish();
+			//data_cache_flush(&pt[pt_index(virt_addr)]);
+			tlb_flush(virt_addr);
 			dsb_ish();
 			isb_flush();
 		}
 
 		if (free_physical && page != 0) {
+			UARTDebugOut("AuFreePages: Free physical : %x \r\n", V2P((uint64_t)page));
 			AuPmmngrFree((void*)V2P((size_t)page));
 		}
-		data_cache_flush(virt_addr);
+		//data_cache_flush(virt_addr);
 		virt_addr += 4096;
 	}
 		

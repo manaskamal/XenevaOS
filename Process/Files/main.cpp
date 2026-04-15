@@ -95,9 +95,11 @@ void FileAddressBarMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, int bu
 }
 
 
+#define FILE_ADDRESS_BAR_COLOR 0xB3FFFFFF
+
 void FileAddressBarPaintHandler(ChWidget* wid, ChWindow* win) {
 	FileAddressBar* bar = (FileAddressBar*)wid;
-	ChDrawRect(win->canv, bar->base.x, bar->base.y, bar->base.w, bar->base.h, WHITE);
+	ChDrawRect(win->canv, bar->base.x, bar->base.y, bar->base.w, bar->base.h, FILE_ADDRESS_BAR_COLOR);
 	ChDrawRectUnfilled(win->canv, bar->base.x, bar->base.y, bar->base.w, bar->base.h, GRAY);
 	ChFontSetSize(win->app->baseFont, 13);
 	ChFontDrawText(win->canv, win->app->baseFont,path, bar->base.x + 10, 
@@ -485,6 +487,8 @@ int main(int argc, char* argv[]){
 		500);
 
 	win2 = NULL;
+
+	mainWin->color = 0x99808080;
 
 	pm = NULL;
 

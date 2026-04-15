@@ -32,11 +32,17 @@
 #ifndef __PROFILE_H__
 #define __PROFILE_H__
 
+/**
+ * use flag __KERNEL_PROFILER_ON__ to turn on profiler on
+ * specific code portion
+ */
+
 #include <stdint.h>
 #include <Drivers/uart.h>
 
 extern uint64_t AuProfileReadCycles();
 extern uint64_t AuProfileReadFreq();
+
 
 #define PROFILE_START(name) \
      uint64_t __start_profile = AuProfileReadCycles();
@@ -48,6 +54,7 @@ extern uint64_t AuProfileReadFreq();
     double sec = (double)diff / freq; \
     double ms = (double)diff * 1000.0 / freq; \
     UARTDebugOut("[AURORA-PROFILE]: %s : time: %f sec, time: %f ms, cpu cycles : %d\r\n", name, sec, ms, (__end_profile - __start_profile));
+
 
 
 #endif

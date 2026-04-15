@@ -179,6 +179,9 @@ extern bool setStk();
  */
 int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) {
 	/* verify the filename, it can only be '.exe' file no '.dll' or other */
+#ifdef __KERNEL_PROFILER_ON__
+	PROFILE_START("AuLoadExecToProcess");
+#endif
 	char* v_ = strchr(filename, '.');
 	if (v_)
 		v_++;
@@ -306,6 +309,9 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) 
 	//	setStk();
 		//AuReleaseSpinlock(loader_lock);
 
+#ifdef __KERNEL_PROFILER_ON__
+		PROFILE_END("AuLoadExecToProcess");
+#endif
 		/* load the loader */
 		return AuLoadExecToProcess(proc, "/xeldr.exe", num_args_, argvs);
 	}
@@ -342,6 +348,9 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) 
 	proc->main_thread = thr;
 	file->current = file->first_block;
 	file->eof = 0;
+#ifdef __KERNEL_PROFILER_ON__
+	PROFILE_END("AuLoadExecToProcess");
+#endif
 	return 0;
 }
 /**

@@ -43,6 +43,7 @@ extern void ChWindowPaintMaximButton(ChWindow* win, ChWinGlobalControl* button);
 extern void ChWindowPaintMinimButton(ChWindow* win, ChWinGlobalControl* button);
 extern void ChWindowPaintTitlebar(ChWindow* win);
 extern void ChDefaultPopupWinPaint(ChWindow* win);
+extern void _apply_rounded_corner(uint32_t* backbuff, int radius, int winw, int winh);
 
 /*
  * ChRequestWindow -- the base of window creation, it request window manager
@@ -289,10 +290,14 @@ XE_EXTERN XE_EXPORT void ChWindowPaint(ChWindow* win) {
 		win->ChWinPaint(win);
 	}
 
+	_apply_rounded_corner(win->buffer, 4, win->info->width, win->info->height);
+	int timeout = 5000;
 	/* Wait untill the window is ready on server side */
-	while (!win->info->windowReady)
+	while (!win->info->windowReady) {
 		_KeProcessSleep(10);
-
+		if (--timeout)
+			break;
+	}
 }
 
 /*

@@ -263,6 +263,7 @@ int CloseFile(int fd) {
 	}
 	if (file->flags & FS_FLAG_GENERAL) {
 		current_proc->fds[fd] = 0;
+		/** NEED to fix, freeing the file causes crash **/
 		kfree(file);
 		return 0;
 	}

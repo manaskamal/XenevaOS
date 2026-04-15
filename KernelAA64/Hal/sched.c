@@ -85,7 +85,7 @@ void AuThreadInsert(AA64Thread* new_task) {
 		new_task->prev = thread_list_last;
 	}
 	thread_list_last = new_task;
-	aa64_data_cache_clean_range(new_task, sizeof(AA64Thread));
+	//aa64_data_cache_clean_range(new_task, sizeof(AA64Thread));
 }
 
 /**
@@ -116,8 +116,8 @@ void AuThreadDelete(AA64Thread* thread) {
 	* same address is used, rather call 'free'
 	* externally
 	*/
-	aa64_data_cache_clean_range(thread_list_head, sizeof(AA64Thread));
-	aa64_data_cache_clean_range(thread_list_last, sizeof(AA64Thread));
+	//aa64_data_cache_clean_range(thread_list_head, sizeof(AA64Thread));
+	//aa64_data_cache_clean_range(thread_list_last, sizeof(AA64Thread));
 }
 
 /**
@@ -137,8 +137,8 @@ void AuThreadInsertBlock(AA64Thread* new_task) {
 		new_task->prev = blocked_thr_last;
 	}
 	blocked_thr_last = new_task;
-	aa64_data_cache_clean_range(thread_list_head, sizeof(AA64Thread));
-	aa64_data_cache_clean_range(thread_list_last, sizeof(AA64Thread));
+	//aa64_data_cache_clean_range(thread_list_head, sizeof(AA64Thread));
+	//aa64_data_cache_clean_range(thread_list_last, sizeof(AA64Thread));
 }
 
 /**
@@ -604,8 +604,9 @@ void AuUnblockThread(AA64Thread* thread) {
 			break;
 		}
 	}
-	if (found_)
+	if (found_) {
 		AuThreadInsert(thread);
+	}
 }
 
 /**

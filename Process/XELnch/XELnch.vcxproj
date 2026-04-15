@@ -31,11 +31,16 @@
     <ClCompile Include="button.cpp" />
     <ClCompile Include="lconfig.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="rrect.cpp" />
+    <ClCompile Include="search.cpp" />
+    <ClCompile Include="searchbar.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="appgrid.h" />
     <ClInclude Include="button.h" />
     <ClInclude Include="launcher.h" />
+    <ClInclude Include="search.h" />
+    <ClInclude Include="searchbar.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{400E59EB-6E4C-461A-91B2-202F85F33D41}</ProjectGuid>
@@ -173,7 +178,7 @@
       <SDLCheck>false</SDLCheck>
       <AdditionalIncludeDirectories>..\..\Libs\XEClib\includes;..\..\Libs\Chitralekha;..\..\Ports\freetype2\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>ARCH_ARM64;YES_DYNAMIC; DYNAMIC_IMPORTER ;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <IgnoreStandardIncludePath>true</IgnoreStandardIncludePath>
+      <IgnoreStandardIncludePath>false</IgnoreStandardIncludePath>
       <ExceptionHandling>false</ExceptionHandling>
       <BasicRuntimeChecks>
       </BasicRuntimeChecks>

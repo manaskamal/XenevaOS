@@ -116,12 +116,12 @@ void TerminalDrawCell(int x, int y, bool dirty) {
 	
 	if ((y*cell_height + cell_height) >= win->info->height)
 		return;
-	ChDrawRect(win->canv,CHITRALEKHA_WINDOW_DEFAULT_PAD_X + x* cell_width, y_offset + y * cell_height, cell_width, cell_height, cell->cellBgCol);
+	//ChDrawRect(win->canv,CHITRALEKHA_WINDOW_DEFAULT_PAD_X + x* cell_width, y_offset + y * cell_height, cell_width, cell_height, cell->cellBgCol);
 	ChFontDrawChar(win->canv, consolas, cell->c, CHITRALEKHA_WINDOW_DEFAULT_PAD_X + x * cell_width, y_offset + y * cell_height + f_h,//- f_h / 2,
 		0, cell->cellFgCol);
 	/*TerminalDrawArrayFont(win->canv, x * cell_width, y_offset + y * cell_height + 12 / 2, cell->c, cell->cellFgCol);*/
 	if (dirty)
-		ChWindowUpdate(win,x * cell_width, y_offset + y * cell_height, cell_width, cell_height, 0, 1);
+		ChWindowUpdate(win,x * cell_width, y_offset + y * cell_height, cell_width, cell_height, 1, 0);
 }
 
 /*
@@ -135,9 +135,9 @@ void TerminalDrawAllCells() {
 	}
 
 	
-	ChWindowUpdate(win, 0, 26, win->info->width - 1, win->info->height - 26, 0, 1);
+	ChWindowUpdate(win, 0, 26, win->info->width - 1, win->info->height - 26, 1, 0);
 
-	_KeProcessSleep(1600);
+	_KeProcessSleep(10);
 }
 
 
@@ -617,10 +617,10 @@ void TerminalThread() {
 */
 int main(int argc, char* arv[]){
 	app = ChitralekhaStartApp(argc, arv);
-	win = ChCreateWindow(app, (WINDOW_FLAG_MOVABLE), "Xeneva Terminal", 300, 300, 650, 450);
+	win = ChCreateWindow(app, (WINDOW_FLAG_MOVABLE), "Xeneva Terminal", 300, 100, 650, 450);
 	win->info->alpha = false;
 	win->info->alphaValue = 0.7;
-	win->color = BLACK;
+	win->color = 0xE6373434;
 	
 	consolas = ChInitialiseFont(CONSOLAS);
 	ChFontSetSize(consolas, 12);
@@ -640,7 +640,7 @@ int main(int argc, char* arv[]){
 	_cursor_blink = 0;
 	escBuf = (char*)malloc(256);
 	memset(escBuf, 0, 256);
-	backColor = 0x99000000;// BLACK;
+	backColor = 0xFF000000;// BLACK;
 	fgColor = WHITE;
 	_update_terminal_ = false;
 	master_fd = slave_fd = 0;

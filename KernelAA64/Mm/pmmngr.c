@@ -228,7 +228,7 @@ void AuPmmngrInitialize(KERNEL_BOOT_INFO* info) {
 	/* now initialise the bitmap */
 	AuPmmngrInitBitmap(BitmapSize, BitmapArea);
 	AuTextOut("Bitmap Size : %x %d \r\n", BitmapSize, BitmapSize);
-	AuPmmngrLockPages((void*)BitmapArea, BitmapSize);
+	//AuPmmngrLockPages((void*)BitmapArea, BitmapSize);
 	//AuPmmngrLockPages((void*)page_desc_addr, total_page_desc_count);
 
 	if (info->boot_type != BOOT_LITTLEBOOT_ARM64) {
@@ -323,6 +323,7 @@ void* AuPmmngrAlloc() {
 		page_desc[(UsablePhysicalMemory + (index * PAGE_SIZE)) >> PAGE_SHIFT].refcount = 1;
 		page_desc[(UsablePhysicalMemory + (index * PAGE_SIZE)) >> PAGE_SHIFT].phys_addr = 
 			(UsablePhysicalMemory + (index * PAGE_SIZE));
+	//	UARTDebugOut("Page desc : %x \r\n", &page_desc[(UsablePhysicalMemory + (index * PAGE_SIZE)) >> PAGE_SHIFT]);
 		return (void*)(UsablePhysicalMemory + (index * 4096));
 	}
 	AuTextOut("Kernel Panic!!! No more physical memory \n");

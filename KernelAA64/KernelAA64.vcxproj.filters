@@ -188,6 +188,9 @@
     <ClCompile Include="Board\imx8mp\imx8mp_gpc.c">
       <Filter>Board\imx8mp</Filter>
     </ClCompile>
+    <ClCompile Include="Mm\dlmalloc.c">
+      <Filter>Mm</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Hal">

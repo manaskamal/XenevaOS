@@ -1,4 +1,6 @@
 /**
+* @file window.h
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2023, Manas Kamal Choudhury
@@ -98,22 +100,22 @@ typedef struct _win_ {
 }Window;
 
 
-/*
-* CreateSharedWinSpace -- Create a shared window space
+/**
+* @brief CreateSharedWinSpace -- Create a shared window space
 * @param shkey -- location where to store the window key
 * @param ownerId -- owning process id
 */
 extern uint32_t* CreateSharedWinSpace(uint16_t *shkey, uint16_t ownerId);
 
-/*
-* CreateNewBackBuffer --Create a back buffer window
+/**
+* @brief CreateNewBackBuffer --Create a back buffer window
 * @param ownerId -- owner id
 * @param sz -- Size of the buffer
 * @param key -- location where to store the buffer key
 */
 extern void* CreateNewBackBuffer(uint16_t ownerId, uint32_t sz, uint16_t *key);
-/*
-* CreateWindow -- create a new window
+/**
+* @brief CreateWindow -- create a new window
 * @param x -- X position of the window
 * @param y -- Y position of the window
 * @param w -- Width of the window

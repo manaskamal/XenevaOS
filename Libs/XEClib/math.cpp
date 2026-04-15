@@ -348,3 +348,39 @@ XE_EXTERN XE_EXPORT int fpclassify(double x) {
 
 	return FP_NORMAL;
 }
+
+
+static inline int isnan_f(float x) {
+	union {
+		float f; uint32_t u;
+	}v = { x };
+
+	return ((v.u & 0x7F800000u) ==
+		0x7F800000u) && (v.u & 0x007FFFFFu);
+}
+
+static inline float fmaxf_ieee(float a, float b) {
+	if (isnan_f(a)) return b;
+	if (isnan_f(b)) return a;
+
+	if (a == b) return a + b;
+
+	return (a > b) ? a : b;
+}
+
+static inline float fminf_ieee(float a, float b) {
+	if (isnan_f(a)) return b;
+	if (isnan_f(b)) return a;
+
+	if (a == b) return a + b;
+
+	return (a < b) ? a : b;
+}
+
+float fmaxf(float a, float b) {
+	return fmaxf_ieee(a, b);
+}
+
+float fminf(float a, float b) {
+	return fminf_ieee(a, b);
+}

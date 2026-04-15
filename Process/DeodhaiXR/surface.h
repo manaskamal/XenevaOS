@@ -41,4 +41,6 @@ extern void DeoInitializeBackSurface(ChCanvas* canv);
  * DeodhaiBackSurfaceUpdate -- update the back surface
  */
 extern void DeodhaiBackSurfaceUpdate(ChCanvas* canv, int x, int y, int w, int h);
+
+extern uint32_t* DeoGetBackSurface();
 #endif

@@ -2,8 +2,8 @@ e:\xeneva project\aurora\drivers\gpu\virtiogpu\arm64\debug\vc142.pdb
 e:\xeneva project\aurora\drivers\gpu\virtiogpu\arm64\debug\virtscreen.obj
 e:\xeneva project\aurora\drivers\gpu\virtiogpu\arm64\debug\virtgpu.obj
 e:\xeneva project\aurora\drivers\gpu\virtiogpu\arm64\debug\cmd2d.obj
-e:\xeneva project\aurora\drivers\build\virtgpu.dll
-e:\xeneva project\aurora\drivers\build\virtgpu.map
+e:\xeneva project\aurora\build\virtgpu.dll
+e:\xeneva project\aurora\build\virtgpu.map
 e:\xeneva project\aurora\arm64\debug\virtgpu.lib
 e:\xeneva project\aurora\arm64\debug\virtgpu.exp
 e:\xeneva project\aurora\drivers\gpu\virtiogpu\arm64\debug\virtiogpu.tlog\cl.command.1.tlog

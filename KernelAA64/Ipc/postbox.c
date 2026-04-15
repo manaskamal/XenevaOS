@@ -191,7 +191,6 @@ void PostBoxPutEvent(PostEvent* event) {
 		thread = AuThreadFindByIDBlockList(owner_id);
 	if (thread != NULL && thread->state == THREAD_STATE_BLOCKED) {
 		if (strcmp(thread->name, "exec") == 1) {
-			//UARTDebugOut("[aurora]: ipc postbox unblocking thread : %s %d\r\n", thread->name, owner_id);
 			AuUnblockThread(thread);
 		}
 	}
@@ -317,7 +316,6 @@ void AuIPCPostBoxInitialise() {
 	AuVFSNode* node2 = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
 	memset(node2, 0, sizeof(AuVFSNode));
 	strcpy(node2->filename, "postbox");
-	aa64_data_cache_clean_range(&node2->filename, 32);
 	node2->flags = FS_FLAG_DEVICE;
 	node2->device = dev;
 	node2->read = 0;
@@ -325,9 +323,9 @@ void AuIPCPostBoxInitialise() {
 	node2->iocontrol = PostBoxIOControl;
 	dsb_sy_barrier();
 	AuDevFSAddFile(dev, "/", node2);
+	AuDevFSList(dev);
 
 	//aa64_data_cache_clean_range(node, sizeof(AuVFSNode));
-	aa64_data_cache_clean_range(dev, sizeof(AuVFSNode));
 	pbox = node2;
 	_PostBoxRootCreated = false;
 	AuTextOut("[aurora]: PostBox IPC mounted and initialized to /dev/pbox \r\n");

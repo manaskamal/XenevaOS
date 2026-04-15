@@ -156,7 +156,8 @@ KERNEL_BOOT_INFO* AuGetBootInfoStruc() {
 
 
 extern void debugLIBOn();
-
+extern void* dlmalloc(size_t sz);
+extern void dlfree(void* p);
 extern void XPT2046Initialise();
 
 extern void AuPmmngrDebugInfo();
@@ -174,7 +175,10 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
     }
 
 	bootinfo = info;
+
+#ifdef __KERNEL_PROFILER_ON__
 	PROFILE_START("_AuMain");
+#endif
 
 	AuConsoleInitialize(info, true);
     AuDeviceTreeInitialize(info);
@@ -251,19 +255,24 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	UARTDebugOut("[aurora]: boot freed up \r\n");
 
 	AuSchedulerInitialize();
-	/*
-	AA64Thread* t3 = AuCreateKthread(AuEntryTest2, AuCreateVirtualAddressSpace(), "test2");
-	AA64Thread* t4 = AuCreateKthread(AuEntryTest4, AuCreateVirtualAddressSpace(), "test4");*/
+	
+	UARTDebugOut("Creating init process \r\n");
 	AuProcess* proc = AuCreateProcessSlot(0, "exec");
+	UARTDebugOut("Process slot created \r\n");
 	int num_args = 1;
 	char* about = (char*)kmalloc(strlen("-about"));
 	strcpy(about, "-about");
 	char** argvs = (char**)kmalloc(num_args * sizeof(char*));
 	memset(argvs, 0, num_args);
 	argvs[0] = about;
+	UARTDebugOut("Loading process init \r\n");
 	AuLoadExecToProcess(proc, "/init.exe", num_args, argvs);
-	//AA64Thread* t2 = AuCreateKthread(AuEntryTest, AuCreateVirtualAddressSpace(), "test");
+	
+
+#ifdef __KERNEL_PROFILER_ON__
 	PROFILE_END("_AuMain");
+#endif
+
 	AuSchedulerStart();
 	while (1) {
 		//UARTDebugOut("Printing \n");

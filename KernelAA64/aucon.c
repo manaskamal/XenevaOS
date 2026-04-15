@@ -611,7 +611,7 @@ void AuConsoleSetConInfo(uint64_t phys, uint64_t virtual, size_t xres, size_t yr
 	aucon->width = xres;
 	aucon->height = yres;
 	aucon->size = xres * yres * 4;
-	bypass_autextout = true;
+	//bypass_autextout = true;
 }
 
 void AuConsoleBypassAuTextOut() {

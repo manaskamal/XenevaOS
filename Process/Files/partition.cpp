@@ -65,7 +65,7 @@ void FileManagerPartitionButtonPaintHandler(ChWidget* wid, ChWindow* win) {
 		ChColorDrawVerticalGradient(win->canv, wid->x, wid->y, wid->w, wid->h,0xFF6E8BD9, 0xFF3561D6);
 	}
 	else {
-		ChDrawRect(win->canv, wid->x, wid->y, wid->w, wid->h, WHITE);
+		ChDrawRect(win->canv, wid->x, wid->y, wid->w, wid->h, 0xB3FFFFFF);
 	}
 
 	if (pbut->icon) {
@@ -88,13 +88,15 @@ void FileManagerPartitionButtonPaintHandler(ChWidget* wid, ChWindow* win) {
 	ChFontDrawTextClipped(win->canv, win->app->baseFont,pbut->guidString, text_x + 2 + last_text_length, pbut->wid.y + ((pbut->wid.h+25)/2),default_text_col, &limit);
 
 }
+
+#define PARTITION_VIEW_COLOR 0x99808080
 /*
  * FileManagerPaintHandler -- paints the file manager
  * partition list
  */
 void FileManagerPartitionListPaintHandler(ChWidget* wid, ChWindow* win) {
 	FileManagerPartitionList* part = (FileManagerPartitionList*)wid;
-	ChDrawRect(win->canv, wid->x, wid->y, wid->w, wid->h, WHITE);
+	ChDrawRect(win->canv, wid->x, wid->y, wid->w, wid->h, PARTITION_VIEW_COLOR);
 	for (int i = 0; i < part->partitionButtons->pointer; i++) {
 		FileManagerPartitionButton* pbut = (FileManagerPartitionButton*)list_get_at(part->partitionButtons, i);
 		if (pbut->wid.ChPaintHandler)

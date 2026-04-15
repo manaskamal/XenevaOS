@@ -50,9 +50,9 @@ ChWindow* mainWin;
 ChFont* dispFont;
 CalculatorDisplay* mainDisp;
 
-#define CALCULATOR_BACK_COLOR 0xFF353535
-#define CALC_DISPLAY_DARK 0xFF6598DE
-#define CALC_DISPLAY_LIGHT 0xFF8BADDC
+#define CALCULATOR_BACK_COLOR 0xBF353535
+#define CALC_DISPLAY_DARK 0xBF6598DE
+#define CALC_DISPLAY_LIGHT 0xBF8BADDC
 
 
 
@@ -506,9 +506,9 @@ int main(int argc, char* argv[]){
 		}
 	}
 
-#ifdef ARCH_X64
-	//ChWindowBroadcastIcon(app, "/icons/calc.bmp");
-#endif
+
+	ChWindowBroadcastIcon(app, "/icons/calc.bmp");
+
 
 	dispFont = ChInitialiseFont(FORTE);
 

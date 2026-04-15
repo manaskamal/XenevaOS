@@ -73,7 +73,7 @@ void NmButtonMouseEvent(NamdaphaButton* wid, ChWindow* win, int x, int y, int bu
 	if (!wid->hover_painted && wid->hover) {
 		if (wid->drawNamdaphaButton)
 			wid->drawNamdaphaButton(wid, win);
-		ChWindowUpdate(win, wid->x, wid->y, wid->w, wid->h, 1, 0);
+		ChWindowUpdate(win, wid->x, wid->y, wid->w, wid->h, 0, 1);
 		wid->hover_painted = true;
 	}
 
@@ -81,13 +81,13 @@ void NmButtonMouseEvent(NamdaphaButton* wid, ChWindow* win, int x, int y, int bu
 		wid->hover_painted = false;
 		if (wid->drawNamdaphaButton)
 			wid->drawNamdaphaButton(wid, win);
-		ChWindowUpdate(win, wid->x, wid->y, wid->w, wid->h, 1,0);
+		ChWindowUpdate(win, wid->x, wid->y, wid->w, wid->h, 0,1);
 	}
 
 	if (wid->clicked && wid->last_mouse_x == x && wid->last_mouse_y == y){
 		if (wid->drawNamdaphaButton)
 			wid->drawNamdaphaButton(wid, win);
-		ChWindowUpdate(win, wid->x, wid->y, wid->w, wid->h, 1, 0);
+		ChWindowUpdate(win, wid->x, wid->y, wid->w, wid->h, 0, 1);
 
 		if (wid->actionHandler)
 			wid->actionHandler(wid, win);

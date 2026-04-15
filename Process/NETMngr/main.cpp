@@ -262,7 +262,7 @@ void ip_ntoa(uint32_t src_addr, char* out) {
 int main(int argc, char* argv[]){
 	printf("\nNetwork Manager Started ...\n");
 	printf("Identifying Network...\n");
-	
+	_KePauseThread();
 
 	/* for now we have only ethernet driver, so
 	 * we will use that

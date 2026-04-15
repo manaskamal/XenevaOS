@@ -161,7 +161,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>ARCH_ARM64;__TARGET_BOARD_RPI3__;_USE_LIBALLOC;__STDC_LIMIT_MACROS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>ARCH_ARM64;__TARGET_BOARD_QEMU_VIRT__;_USE_DLMALLOC;__STDC_LIMIT_MACROS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>Default</ConformanceMode>
       <AdditionalIncludeDirectories>..\BaseHdr;..\Acpica\include;..\Acpica;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
@@ -284,6 +284,7 @@
     <ClCompile Include="Ipc\postbox.c" />
     <ClCompile Include="list.c" />
     <ClCompile Include="loader.c" />
+    <ClCompile Include="Mm\dlmalloc.c" />
     <ClCompile Include="Mm\kmalloc.c" />
     <ClCompile Include="Mm\liballoc.c" />
     <ClCompile Include="Mm\mmap.c" />

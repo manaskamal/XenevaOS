@@ -63,7 +63,6 @@ static const uint8_t ext_key_map[256] = {
  * @brief Virtio-keyboard interrupt handler
  */
 void AuVirtioKbdHandler(int spinum) {
-	UARTDebugOut("From inside virtio keyboard handler++ \n");
 	uint16_t them = queue->used.index;
 	for (; index < them; index++) {
 		dc_ivac(&input[index % queueSize]);
@@ -90,7 +89,6 @@ void AuVirtioKbdHandler(int spinum) {
 				msg.type = AU_INPUT_KEYBOARD;
 				msg.code = scancode & 0xFF;
 				AuDevWriteKybrd(&msg);
-				UARTDebugOut("Key Pressed : scancode : %d code: %d \n", scancode, evt.code);
 			}
 			else if (ext_key_map[evt.code]) {
 				uint32_t scancode = (0xE0 & 0xFF) << 16 | (ext_key_map[evt.code] & 0xFF) << 8 | (((evt.value == 0) ? 0x80 : 0) & 0xFF);

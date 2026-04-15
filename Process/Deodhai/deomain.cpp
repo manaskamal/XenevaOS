@@ -935,9 +935,9 @@ void ComposeFrame(ChCanvas *canvas) {
 						if ((k_y + k_h) >= canvas->screenHeight)
 							k_h = canvas->screenHeight - k_y;
 
-						AddDirtyClip(k_x, k_y, k_w, k_h);
-						clipCount = 0;
+						AddDirtyClip(k_x, k_y, k_w, k_h);	
 					}
+					clipCount = 0;
 			}
 				if (!(win->flags & WINDOW_FLAG_ANIMATED)) {
 					if (info->updateEntireWindow)
@@ -1643,7 +1643,7 @@ int main(int argc, char* arv[]) {
 	startTime = 0;
 	startSubTime = 0;
 	timeval tm;
-	gettimeofday(&tm);
+	//gettimeofday(&tm);
 	startTime = tm.tv_sec;
 	startSubTime = tm.tv_usec;
 
@@ -1762,20 +1762,20 @@ int main(int argc, char* arv[]) {
 	uint64_t last_click_time = 0;
 	uint64_t last_redraw = 0;
 
-	//int proc = _KeCreateProcess(0, "xelnch");
-	//_KeProcessLoadExec(proc, "/xelnch.exe", 0, NULL);
+	int proc = _KeCreateProcess(0, "xelnch");
+	_KeProcessLoadExec(proc, "/xelnch.exe", 0, NULL);
 
-	//_KeProcessSleep(100);
-	//proc = _KeCreateProcess(0, "nmdapha");
-	//_KeProcessLoadExec(proc, "/nmdapha.exe", NULL, NULL);
+	_KeProcessSleep(100);
+	proc = _KeCreateProcess(0, "nmdapha");
+	_KeProcessLoadExec(proc, "/nmdapha.exe", NULL, NULL);
 
 	//_KeProcessSleep(200);
-	int proc = _KeCreateProcess(0, "file");
+	/*int proc = _KeCreateProcess(0, "file");
 	_KeProcessLoadExec(proc, "/file.exe", NULL, NULL);
 
 	_KeProcessSleep(100);
 	proc = _KeCreateProcess(0, "calc");
-	_KeProcessLoadExec(proc, "/calc.exe", NULL, NULL);
+	_KeProcessLoadExec(proc, "/calc.exe", NULL, NULL);*/
 
 	/* launch the session manager directly from here */
 #ifdef ARCH_X64

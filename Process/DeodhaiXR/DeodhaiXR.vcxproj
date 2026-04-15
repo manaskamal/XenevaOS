@@ -27,11 +27,17 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="alpha.cpp" />
+    <ClCompile Include="animation.cpp" />
     <ClCompile Include="backdirty.cpp" />
+    <ClCompile Include="clip.cpp" />
+    <ClCompile Include="compose.cpp" />
     <ClCompile Include="cursor.cpp" />
     <ClCompile Include="dirty.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="rect.cpp" />
     <ClCompile Include="surface.cpp" />
+    <ClCompile Include="window.cpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="crt_arm64.s">
@@ -41,11 +47,17 @@
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="alpha.h" />
+    <ClInclude Include="animation.h" />
     <ClInclude Include="backdirty.h" />
+    <ClInclude Include="clip.h" />
+    <ClInclude Include="compose.h" />
     <ClInclude Include="cursor.h" />
     <ClInclude Include="deodxr.h" />
     <ClInclude Include="dirty.h" />
+    <ClInclude Include="rect.h" />
     <ClInclude Include="surface.h" />
+    <ClInclude Include="window.h" />
     <ClInclude Include="_fastcpy.h" />
   </ItemGroup>
   <ItemGroup>
@@ -187,8 +199,8 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>false</SDLCheck>
       <AdditionalIncludeDirectories>..\..\Libs\XEClib\includes;..\..\Libs\Chitralekha;..\..\Ports\freetype2\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>ARCH_ARM64;YES_DYNAMIC; DYNAMIC_IMPORTER ;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <IgnoreStandardIncludePath>true</IgnoreStandardIncludePath>
+      <PreprocessorDefinitions>ARCH_ARM64;YES_DYNAMIC;DYNAMIC_IMPORTER;_M_ARM64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <IgnoreStandardIncludePath>false</IgnoreStandardIncludePath>
       <ExceptionHandling>false</ExceptionHandling>
       <BasicRuntimeChecks>
       </BasicRuntimeChecks>
@@ -206,8 +218,8 @@
       <GenerateDebugInformation>
       </GenerateDebugInformation>
       <OutputFile>..\..\Build\$(TargetName).exe</OutputFile>
-      <AdditionalLibraryDirectories>..\..\ARM64\Debug;</AdditionalLibraryDirectories>
-      <AdditionalDependencies>XEClib.lib; chlkha.lib;</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\..\ARM64\Debug;..\..\Libs\XECrt</AdditionalLibraryDirectories>
+      <AdditionalDependencies>XEClib.lib; chlkha.lib;xecrt.lib;</AdditionalDependencies>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
       <EnableUAC>false</EnableUAC>
       <GenerateMapFile>true</GenerateMapFile>

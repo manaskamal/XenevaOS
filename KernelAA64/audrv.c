@@ -442,6 +442,7 @@ void AuDrvMngrInitialize(KERNEL_BOOT_INFO* info) {
 		proceed = 1;
 	}
 
+#if !defined(__TARGET_BOARD_QEMU_VIRT__)
 	/*if PCIe fails then */
 	if (board) {
 		/** using font manager's function because both board config
@@ -452,6 +453,7 @@ void AuDrvMngrInitialize(KERNEL_BOOT_INFO* info) {
 		AuBoardIterateModule(boardcnf, num_module_entry);
 		proceed = 1;
 	}
+#endif
 
 	if (proceed) {
 		/* Serially call each startup entries of each driver */

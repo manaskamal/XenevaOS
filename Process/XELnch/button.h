@@ -62,6 +62,8 @@ typedef struct _button_ {
 	char* appname;
 	char* param;
 	bool focused;
+	int scratch_x;
+	int scratch_y;
 	ButtonIcon *buttonIcon;
 	void(*actionHandler)(_button_* button, ChWindow*);
 	void(*mouseEvent)(_button_* button, ChWindow* win, int x, int y, int but);

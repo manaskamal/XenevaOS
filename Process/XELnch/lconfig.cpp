@@ -58,7 +58,7 @@ void LauncherConfigInitialise() {
 	_KeReadFile(fd, launcher_config_file, stat.size);
 	printf("Launcher config file read \n");
 	/* now read is completed, close the file */
-	_KeCloseFile(fd);
+	//_KeCloseFile(fd);
 }
 
 /*
