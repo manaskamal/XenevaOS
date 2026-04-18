@@ -100,4 +100,38 @@ extern void dwc2_control_transfer(struct dwc2_core_regs* regs, dwc2_usb_endpoint
  */
 extern void dwc2_enumerate_root_device(struct dwc2_core_regs* regs);
 
+/**
+ * @brief dwc2_handle_channel_interrupt -- handle channel
+ * interrupts here
+ * @param regs -- Pointer to dwc2 core registers
+ * @param ch -- channel numbers
+ */
+extern void dwc2_handle_channel_interrupt(dwc2_core_regs* regs, int ch);
+
+/**
+ * @brief dwc2_get_dma_address -- return pre allocated dma address
+ */
+extern void* dwc2_get_dma_address();
+
+extern void* dwc2_get_dma_address_phys();
+
+extern void dwc2_flush_tx_fifo(struct dwc2_core_regs* regs, uint32_t nfifo);
+
+extern void dwc2_flush_rx_fifo(struct dwc2_core_regs* regs);
+
+/**
+ * @brief dwc2_add_to_used_dma_list --
+ * there is a bug i guess within the dwc2 ip
+ * where same buffer can't be used for setup
+ * packet
+ */
+extern void dwc2_add_to_used_dma_list(void* phys);
+
+/**
+ * @brief dwc2_free_used_dma_list -- free up all used
+ * physical memories, this function must be called
+ * at the end of the class driver initialization
+ */
+extern void dwc2_free_used_dma_list();
+
 #endif

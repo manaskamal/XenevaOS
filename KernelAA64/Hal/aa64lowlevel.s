@@ -370,6 +370,17 @@ data_cache_flush:
 data_cache_ret:
     ret
 
+.global read_ctr_el0
+read_ctr_el0:
+    mrs x0, ctr_el0
+    ret
+
+.global dc_cvac
+dc_cvac:
+    mov x9, x0
+    dc cvac, x9
+    ret
+
 .global set_cntp_cval_el0
 set_cntp_cval_el0:
     msr cntp_cval_el0, x0

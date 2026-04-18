@@ -310,9 +310,11 @@ void CalcAllClear(CalculatorDisplay* disp) {
  * @param e -- PostBox event message structure
  */
 void WindowHandleMessage(PostEvent *e) {
+	_KePrint("[Calculator]: mouse received \r\n");
 	switch (e->type) {
 	/* handle mouse event from deodhai */
 	case DEODHAI_REPLY_MOUSE_EVENT:{
+		_KePrint("[Calculator]: mouse event received \r\n");
 									   int handle = e->dword4;
 									   if (e->dword5 == WINDOW_HANDLE_TYPE_NORMAL) {
 										   ChWindow* mouseWin = ChGetWindowByHandle(mainWin, handle);

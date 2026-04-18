@@ -77,12 +77,52 @@ void aa64_data_cache_clean_range(void* addr, size_t size) {
 	size_t start = (size_t)addr;
 	size_t end = start + size;
 
-	start &= ~(CACHE_LINE_SIZE - 1);
+	start &= ~((uint64_t)(CACHE_LINE_SIZE - 1));
 	for (size_t p = start; p < end; p += CACHE_LINE_SIZE)
 		data_cache_flush((uint64_t*)p);
 
 	dsb_sy_barrier();
+	dsb_ish();
 	isb_flush();
+}
+
+uint32_t get_cache_line_sz() {
+	uint64_t ctr = read_ctr_el0();
+	uint32_t dminline = (ctr >> 16) & 0xF;
+	return (4 << dminline);
+}
+
+void aa64_dc_cvac_range(void* addr, size_t sz) {
+	uint64_t start = (uint64_t)addr;
+	size_t end = start + sz;
+
+	uint32_t line_sz = get_cache_line_sz();
+	start &= ~((uint64_t)(line_sz - 1));
+	for (size_t p = start; p < end; p += line_sz) {
+		dc_cvac(p);
+	}
+
+	dsb_sy_barrier();
+	isb_flush();
+	AA64SleepUS(100);
+}
+
+
+void aa64_dc_ivac_range(void* addr, size_t sz) {
+	size_t start = (size_t)addr;
+	size_t end = start + sz;
+
+	uint32_t line_sz = get_cache_line_sz();
+
+	start &= ~((uint64_t)(line_sz - 1));
+
+	for (size_t p = start; p < end; p += line_sz) {
+		dc_ivac(p);
+	}
+
+	dsb_sy_barrier();
+	isb_flush();
+	AA64SleepUS(100);
 }
 
 void AA64CPUImplementer(uint32_t midr) {

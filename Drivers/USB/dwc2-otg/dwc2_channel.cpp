@@ -36,24 +36,110 @@
 #include <Hal/AA64/aa64cpu.h>
 #include <Mm/pmmngr.h>
 #include <Drivers/uart.h>
+#include <string.h>
 
+static bool _channel_interrupt_occured = 0;
 extern uint64_t dwc2_get_base();
+
+void dwc2_reset_channel(dwc2_core_regs* regs, uint8_t ch) {
+	uint32_t hcchar = dwc2_read((uint64_t)&regs->hc_regs[ch].hcchar);
+	if (hcchar & DWC2_HCCHAR_CHEN) {
+		hcchar |= DWC2_HCCHAR_CHDIS;
+		hcchar &= ~DWC2_HCCHAR_EPDIR;
+		dwc2_write((uint64_t)&regs->hc_regs[ch].hcchar, hcchar);
+
+		uint32_t timeout = 10000;
+		while ((dwc2_read((uint64_t)&regs->hc_regs[ch].hcchar & DWC2_HCCHAR_CHEN)) && --timeout);
+
+		if (!timeout)
+			UARTDebugOut("[dwc2_otg]: channel halt timeout \r\n");
+	}
+
+	dwc2_write((uint64_t)&regs->hc_regs[ch].hcint, 0x3FFF);
+	dwc2_write((uint64_t)&regs->hc_regs[ch].hcintmsk, 0);
+	dwc2_write((uint64_t)&regs->hc_regs[ch].hcsplt, 0);
+	dwc2_write((uint64_t)&regs->hc_regs[ch].hctsiz, 0);
+	dwc2_write((uint64_t)&regs->hc_regs[ch].hcdma, 0);
+	dsb_sy_barrier();
+	AA64SleepMS(1);
+
+	uint32_t haint = dwc2_read((uint64_t)&regs->host_regs.haintmsk);
+	haint &= ~(1u << ch);
+	dwc2_write((uint64_t)&regs->host_regs.haintmsk, haint);
+	dwc2_write((uint64_t)&regs->host_regs.haint, (1u << ch));
+
+	dsb_sy_barrier();
+}
 /**
  * @brief dwc2_start_channel -- allocates a channel 
  */
-void dwc2_start_channel(struct dwc2_core_regs* regs, dwc2_usb_endpoint_t* ep, uint8_t ch, uint8_t is_in, uint8_t ep_type, uint8_t pid) {
+void dwc2_start_channel(struct dwc2_core_regs* regs, dwc2_usb_endpoint_t* ep, uint8_t ch, uint8_t is_in, uint8_t ep_type, uint8_t pid,
+	void* dma, uint32_t length, uint32_t pack_count, uint8_t is_odd_frame) {
 	dwc2_core_regs* reg2 = (dwc2_core_regs*)0x3F980000;
 
+	dwc2_reset_channel(regs, ch);
+	dwc2_flush_tx_fifo(regs, 0x10);
+	dwc2_flush_rx_fifo(regs);
+
 	struct dwc2_hc_regs* hc = &regs->hc_regs[ch];
-	UARTDebugOut("[dwc2_start_channel]: hc address : %x \r\n", &reg2->hc_regs[ch]);
+
+	uint32_t hcchar_ = dwc2_read((uint64_t)&hc->hcchar);
+	
+	//if (hcchar_ & DWC2_HCCHAR_CHEN) {
+	//	UARTDebugOut("CHnnel : %d, host charracter is already enabled \r\n");
+	//	
+	//	hcchar_ |= DWC2_HCCHAR_CHDIS;
+	//	hcchar_ &= ~(DWC2_HCCHAR_CHEN);
+	//	dwc2_write((uint64_t)&hc->hcchar, hcchar_);
+
+	//	uint32_t hcintmsk_ = dwc2_read((uint64_t)&hc->hcintmsk);
+	//	hcintmsk_ |= DWC2_HCINTMSK_CHHLTD;
+	//	dwc2_write((uint64_t)&hc->hcintmsk, hcintmsk_);
+	//}
+	//else if (hcchar_ & DWC2_HCCHAR_CHDIS) {
+	//	UARTDebugOut("Chnnel : %d is disabled \r\n");
+	//}
+
 	/** clear all pending interrupts */
 	dwc2_write((uint64_t)&hc->hcint, 0xFFFFFFFF);
 
+	/** now set transfer size **/
+	dwc2_write((uint64_t)&hc->hctsiz, ((pid << 29) & (3 << 29)) | ((pack_count << 19) & (0x3FF << 19)) | (length & 0x7ffff));
+
+	/** now set the dma address **/
+	/*aa64_data_cache_clean_range(dma, length);
+	dsb_ish();
+	dsb_sy_barrier();*/
+	dwc2_write((uint64_t)&hc->hcdma, (uint32_t)dma);
+	dwc2_write((uint64_t)&hc->hcdmab, ((uint32_t)dma >> 32) & UINT32_MAX);
+
+	/* set the split control to zero*/
+	dwc2_write((uint64_t)&hc->hcsplt, 0);
+
+	uint8_t ls_bit = (ep->speed == 2) ? 1 : 0;
+
+	uint32_t hcchar = ((ep->max_packet_sz & 0x7ff) << 0) |
+		(ep->ep_num << 11) |
+		(is_in << 15) |
+		(ls_bit << 17) |
+		(ep->type << 18) |
+		(1 << 20) |
+		(ep->dev_address << 22) |
+		(0 << 29);
+	//dwc2_write((uint64_t)&hc->hcchar, hcchar);
+	/*
+	 DWC2_HOST_CHAN_INT_XFER_COMPLETE |
+	 DWC2_HOST_CHAN_INT_HALTED |
+	 DWC2_HOST_CHAN_INT_ERROR_MASK */
+	dwc2_write((uint64_t)&hc->hcintmsk, DWC2_HCINTMSK_XFERCOMPL |
+	DWC2_HCINT_CHHLTD | DWC2_HCINT_AHBERR | DWC2_HCINT_STALL | 
+	 DWC2_HCINT_XACTERR | DWC2_HCINT_BBLERR | DWC2_HCINT_FRMOVRUN | DWC2_HCINT_DATATGLERR);
+
 	uint32_t haintmsk = dwc2_read((uint64_t)&regs->host_regs.haintmsk);
-	haintmsk |= (1 << ch);
+	haintmsk |= (1U << ch);
 	dwc2_write((uint64_t)&regs->host_regs.haintmsk, haintmsk);
 
-	uint32_t hcintmsk = (1ULL << 0) |
+	/*uint32_t hcintmsk = (1ULL << 0) |
 		(1ULL << 1) |
 		(1ULL << 2) |
 		(1ULL << 3) |
@@ -64,20 +150,12 @@ void dwc2_start_channel(struct dwc2_core_regs* regs, dwc2_usb_endpoint_t* ep, ui
 		(1ULL << 9) |
 		(1ULL << 10);
 
-	dwc2_write((uint64_t)&hc->hcintmsk, hcintmsk);
+	dwc2_write((uint64_t)&hc->hcintmsk, hcintmsk);*/
 
-	uint8_t ls_bit = (ep->speed == 2) ? 1 : 0;
-
-	uint32_t hcchar = ((ep->max_packet_sz & 0x7ff) << 0) |
-		(ep->ep_num << 11) |
-		(is_in << 15) |
-		(ls_bit << 17) |
-		(ep->type << 18) |
-		(1 << 20) |
-		(ep->dev_address << 22);
+	hcchar |= DWC2_HCCHAR_CHEN;
+	hcchar &= ~DWC2_HCCHAR_CHDIS;
 	dwc2_write((uint64_t)&hc->hcchar, hcchar);
-
-
+	
 	dsb_sy_barrier();
 	isb_flush();
 }
@@ -117,64 +195,23 @@ void dwc2_start_transaction(struct dwc2_core_regs* regs, uint8_t ch, void* dma, 
 
 	/** now enable the channel **/
 //	hcchar &= ~(1ULL << 30); //clear disable bit
-	hcchar |= (1ULL << 31);
+	hcchar |= (1u << 20);
+	hcchar |= (1U << 31); 
 	dwc2_write((uint64_t)&hc->hcchar, hcchar);
+
+	uint32_t val = dwc2_read((uint64_t)&hc->hcchar);
 }
 
 int dwc2_wait_channel(struct dwc2_core_regs* regs, int ch) {
 	struct dwc2_hc_regs* hc = &regs->hc_regs[ch];
 
-	uint32_t timeout = 500000;
-	uint32_t hcint;
 
-	do {
-		hcint = dwc2_read((uint64_t)&hc->hcint);
-
-		if (--timeout == 0) {
-			UARTDebugOut("[dwc2_otg]: ch: %d, timeout \r\n", ch);
-			uint32_t hcchar = dwc2_read((uint64_t)&hc->hcchar);
-			UARTDebugOut("HCCHAR : %x \r\n", hcchar);
-			UARTDebugOut("HCTSIZ : %x \r\n", dwc2_read((uint64_t)&hc->hctsiz));
-			UARTDebugOut("HCDMA: %x \r\n", dwc2_read((uint64_t)&hc->hcdma));
-			UARTDebugOut("HCINT: %x \r\n", dwc2_read((uint64_t)&hc->hcint));
-			UARTDebugOut("HCINTMSK : %x \r\n", dwc2_read((uint64_t)&hc->hcintmsk));
-			UARTDebugOut("HAINT : %x \r\n", dwc2_read((uint64_t)&regs->host_regs.haint));
-			UARTDebugOut("HAINTMSK : %x \r\n", dwc2_read((uint64_t)&regs->host_regs.haintmsk));
-			UARTDebugOut("GINTSTS : %x \r\n", dwc2_read((uint64_t)&regs->gintsts));
-			UARTDebugOut("HPRT0: %x \r\n", dwc2_read((uint64_t)&regs->hprt0));
-			UARTDebugOut("GNPTXSTS : %x \r\n", dwc2_read((uint64_t)&regs->gnptxsts));
-			hcchar |= (1ULL << 30);
-			hcchar &= ~(1ULL << 31);
-			dwc2_write((uint64_t)&hc->hcchar, hcchar);
-			return -1;
+	while (1) {
+		if (_channel_interrupt_occured) {
+			_channel_interrupt_occured = 0;
+			break;
 		}
-		if (hcint & (1ULL << 3)) {
-			UARTDebugOut("[dwc2_otg]: channel stalled : %d \r\n", ch);
-			return -1;
-		}
-
-		if (hcint & (1ULL << 7)) {
-			UARTDebugOut("[dwc2_otg]: channel XactErr : %d \r\n", ch);
-			return -1;
-		}
-		if (hcint & (1ULL << 2)) {
-			UARTDebugOut("[dwc2_otg]: channel AHNErr : %d \r\n", ch);
-			return -1;
-		}
-
-		if (hcint & (1ULL << 8)) {
-			UARTDebugOut("[dwc2_otg]: channel BabbleErr : %d \r\n", ch);
-			return -1;
-		}
-	} while (!(hcint & (1ULL << 0)) && !(hcint & (1ULL << 1)));
-
-	dwc2_write((uint64_t)&hc->hcint, hcint);
-
-	if ((hcint & (1ULL << 1)) && !(hcint & (1ULL << 0))) {
-		UARTDebugOut("[dwc2_otg]: ch : %d  halted without complete, hcint: %x \r\n", ch, hcint);
-		return -1;
 	}
-
 	return 0;
 }
 
@@ -182,25 +219,25 @@ void dwc2_control_transfer(struct dwc2_core_regs* regs, dwc2_usb_endpoint_t* ep,
 	uint16_t wValue, uint16_t wIndex, void* data, uint16_t wLength) {
 
 	usb_setup_packet_t* setup = (usb_setup_packet_t*)P2V((uint64_t)AuPmmngrAlloc());
-	setup->bmRequest = bmRequestType;
+	//aa64_data_cache_clean_range(setup, 4096);
+	setup->bmRequestType = bmRequestType;
 	setup->bmRequest = b_request;
 	setup->wValue = wValue;
 	setup->wIndex = wIndex;
 	setup->wLength = wLength;
-	//aa64_data_cache_clean_range(setup, sizeof(usb_setup_packet_t));
-
+	aa64_data_cache_clean_range(setup,4096);
 	uint8_t ch = 0;
-
-	dwc2_start_channel(regs, ep, ch, 0, 0, USB_PID_SETUP);
-	dwc2_start_transaction(regs, ch, (void*)V2P((uint64_t)setup), 8, 1, USB_PID_SETUP, 0);
-
+	
+	//aa64_dc_cvac_range(dmaphys, 4096);
+	dwc2_write((uint64_t)&regs->gahbcfg, 0x27);
+	dwc2_start_channel(regs, ep, ch, 0, 0, USB_PID_SETUP,(void*)V2P((size_t)setup), 8, 1, 0);
+	dwc2_add_to_used_dma_list(setup);
+	
 	int result = dwc2_wait_channel(regs, ch);
 	if (result < 0) {
 		UARTDebugOut("[dwc2_otg]: failed in channel \r\n");
-		return;
+		//return;
 	}
-
-	UARTDebugOut("SETUP stage completed %d\r\n", result);
 
 	if (wLength > 0) {
 		uint8_t is_in = (bmRequestType & 0x80) ? 1 : 0;
@@ -211,9 +248,13 @@ void dwc2_control_transfer(struct dwc2_core_regs* regs, dwc2_usb_endpoint_t* ep,
 			/* need to copy the buffer to another buffer, which is 4-byte aligned */
 		}
 		uint32_t packet_count = (wLength + ep->max_packet_sz - 1) / ep->max_packet_sz;
-		dwc2_start_channel(regs, ep,ch, is_in, USB_PID_DATA, 0);
-		aa64_data_cache_clean_range(dma_buf, wLength);
-		dwc2_start_transaction(regs, ch, dma_buf, wLength, packet_count, USB_PID_DATA, 0);
+
+		aa64_data_cache_clean_range(dma_buf, 4096);
+
+		dwc2_write((uint64_t)&regs->gahbcfg, 0x27);
+		dwc2_start_channel(regs, ep,ch, is_in,0, USB_PID_DATA,dma_buf,wLength, packet_count, 0);
+
+		aa64_dc_ivac_range(dma_buf, 4096);
 
 		result = dwc2_wait_channel(regs, ch);
 		if (result < 0) {
@@ -230,9 +271,9 @@ void dwc2_control_transfer(struct dwc2_core_regs* regs, dwc2_usb_endpoint_t* ep,
 	else
 		status_is_in = (bmRequestType & 0x80) ? 0 : 1;
 
-	dwc2_start_channel(regs, ep, ch, status_is_in, 0, USB_PID_DATA);
-
-	dwc2_start_transaction(regs, ch, 0, 0, 1, 2, 0);
+	dwc2_write((uint64_t)&regs->gahbcfg, 0x27);
+	dwc2_start_channel(regs, ep, ch, status_is_in, 0, USB_PID_DATA,setup, 0,1,0);
+	//dwc2_start_transaction(regs, ch, 0, 0, 1, 2, 0);
 
 	result = dwc2_wait_channel(regs, ch);
 	if (result < 0) {
@@ -240,6 +281,57 @@ void dwc2_control_transfer(struct dwc2_core_regs* regs, dwc2_usb_endpoint_t* ep,
 		return;
 	}
 
+	//AuPmmngrFree((void*)V2P((uint64_t)setup));
+	memset((void*)setup, 0, 4096);
+	aa64_data_cache_clean_range(setup, 4096);
+	return;
 	/** free up the channel **/
+}
+
+/**
+ * @brief dwc2_handle_channel_interrupt -- handle channel
+ * interrupts here
+ * @param regs -- Pointer to dwc2 core registers
+ * @param ch -- channel numbers
+ */
+void dwc2_handle_channel_interrupt(dwc2_core_regs* regs, int ch) {
+	uint32_t hcint = dwc2_read((uint64_t)&regs->hc_regs[ch].hcint);
+	uint32_t hcintmsk = dwc2_read((uint64_t)&regs->hc_regs[ch].hcintmsk);
+	uint32_t active = hcint & hcintmsk;
+
+	/** W1C**/
+	dwc2_write((uint64_t)&regs->hc_regs[ch].hcint, hcint);
+
+	if (active & DWC2_HCINT_CHHLTD) {
+		if (active & DWC2_HCINT_XFERCOMP) {
+			UARTDebugOut("[dwc2-otg]: channel transfer completed \r\n");
+		}
+		else if (active & DWC2_HCINT_NAK) {
+			UARTDebugOut("[dwc2-otg]: device not ready -- retry later \r\n");
+		}
+		else if (active & DWC2_HCINT_NYET) {
+			UARTDebugOut("[dwc2-otg]: hs split not ready -- retry later \r\n");
+		}
+		else if (active & DWC2_HCINT_XACTERR) {
+			UARTDebugOut("[dwc2-otg]: transaction error -- retry upto 3 times \r\n");
+		}
+		else if (active & DWC2_HCINTMSK_BBLERR) {
+			UARTDebugOut("[dwc2-otg]: babble -- device sent too much data \r\n");
+		}
+		else if (active & DWC2_HCINT_AHBERR) {
+			UARTDebugOut("[dwc2-otg]: ahb buss error \r\n");
+		}
+		else if (active & DWC2_HCINT_DATATGLERR) {
+			UARTDebugOut("[dwc2-otg]: data toggle mismatch \r\n");
+		}
+		else if (active & DWC2_HCINT_STALL) {
+			UARTDebugOut("[dwc2-otg]: channel stalled \r\n");
+		}
+	}
+
+	uint32_t haint = dwc2_read((uint64_t)&regs->host_regs.haint);
+	haint |= (1u << ch);
+	dwc2_write((uint64_t)&regs->host_regs.haint, haint);
+	_channel_interrupt_occured = 1;
 }
 

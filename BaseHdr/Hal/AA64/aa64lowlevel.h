@@ -123,6 +123,8 @@ AU_EXTERN AU_EXPORT uint64_t read_far_el1();
 
 AU_EXTERN AU_EXPORT uint64_t read_elr_el1();
 
+extern uint64_t read_ctr_el0();
+
 extern void aa64_write_sysreg(const char* reg, uint64_t value);
 
 extern uint64_t aa64_read_sysreg(const char* reg);
@@ -146,6 +148,8 @@ AU_EXTERN AU_EXPORT void enable_irqs();
 
 AU_EXTERN AU_EXPORT void mask_irqs();
 
+AU_EXTERN AU_EXPORT void dc_cvac(uint64_t x0);
+
 extern uint32_t read_icc_iar1_el1();
 
 extern uint32_t read_midr();
@@ -161,6 +165,8 @@ extern void aa64_store_fp(uint8_t* address, uint64_t* fpcr, uint64_t* fpsr);
 extern void aa64_restore_fp(uint8_t* address, uint64_t* fpcr, uint64_t* fpsr);
 extern void data_cache_flush(uint64_t* address);
 AU_EXTERN AU_EXPORT void aa64_data_cache_clean_range(void* addr, size_t size);
+AU_EXTERN AU_EXPORT void aa64_dc_cvac_range(void* addr, size_t sz);
+AU_EXTERN AU_EXPORT void aa64_dc_ivac_range(void* addr, size_t sz);
 extern int gic_cpu_init();
 extern uint32_t gic_read_intid();
 extern void gic_icc_eoi(uint32_t intid);

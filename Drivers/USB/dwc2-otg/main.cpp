@@ -35,14 +35,31 @@
 #include <Board/RPI3bp/rpi3bp.h>
 #include <Hal/AA64/gic.h>
 #include "dwc2.h"
+#include <Mm/pmmngr.h>
+#include <list.h>
+#include <string.h>
 
 #define DWC2_BASE 0x3F980000
 uint64_t _base;
 bool _root_port_ready;
 bool _enable_root_port;
-
+static int num_channel;
+uint64_t* dmaAddress;
+uint64_t* dmaAddressPhys;
+static int dmaAddress_Offset;
 #define DWC2_GSNPSID 0x40
 #define HPRT_DEFAULT_MASK  ((1ULL << 1) | (1ULL <<  2) | (1ULL << 3) | (1ULL << 5))
+
+#define DWC2_SETUP_SLOT 1
+static uint32_t setup_slot;
+
+#pragma pack(push,1)
+typedef struct {
+	uint8_t data[4096];
+}dwc2_dma_slot;
+#pragma pack(pop)
+
+static dwc2_dma_slot* setup_pages[DWC2_SETUP_SLOT];
 
 /**
  * REFERENCE USED : Linux open source project, U-Boot and USPi from Circle
@@ -208,11 +225,15 @@ void dwc2_init_core(struct dwc2_core_regs* regs) {
 	usbconfig &= ~DWC2_GUSBCFG_HNPCAP;
 	usbconfig &= ~DWC2_GUSBCFG_SRPCAP;
 	dwc2_write((uint64_t)&regs->gusbcfg, usbconfig);
+
+	dwc2_write((uint64_t)&regs->gintsts, 0xFFFFFFFF);
+	
 }
 
 void dwc2_enable_global_interrupt(struct dwc2_core_regs* regs) {
 	uint32_t ahbcfg = dwc2_read((uint64_t)&regs->gahbcfg);
 	ahbcfg |= DWC2_GAHBCFG_GLBLINTRMSK; 
+	UARTDebugOut("glbl ahbcfg---- : %x \r\n", ahbcfg);
 	dwc2_write((uint64_t)&regs->gahbcfg, ahbcfg);
 }
 
@@ -290,6 +311,34 @@ void dwc2_init_host(struct dwc2_core_regs* regs) {
 	dwc2_flush_tx_fifo(regs, 0x10);
 	dwc2_flush_rx_fifo(regs);
 
+	uint32_t val = *(volatile uint32_t*)&regs->ghwcfg2;
+	val &= DWC2_HWCFG2_NUM_HOST_CHAN_MASK;
+	val >>= DWC2_HWCFG2_NUM_HOST_CHAN_OFFSET;
+	int num_host_channel = val + 1;
+	for (int i = 0; i < num_host_channel; i++) {
+		uint32_t chan = dwc2_read((uint64_t)&regs->hc_regs[i].hcchar);
+		chan &= ~(DWC2_HCCHAR_CHEN | DWC2_HCCHAR_EPDIR);
+		chan |= DWC2_HCCHAR_CHDIS;
+		dwc2_write((uint64_t)&regs->hc_regs[i].hcchar, chan);
+	}
+
+	int timeout = 1000;
+	for (int i = 0; i < num_host_channel; i++) {
+		uint32_t val = dwc2_read((uint64_t)&regs->hc_regs[i].hcchar);
+		val &= ~DWC2_HCCHAR_EPDIR;
+		val |= (DWC2_HCCHAR_CHEN | DWC2_HCCHAR_CHDIS);
+		dwc2_write((uint64_t)&regs->hc_regs[i].hcchar, val);
+
+		timeout = 1000;
+		while (timeout--) {
+			if (!(dwc2_read((uint64_t)&regs->hc_regs[i].hcchar) & DWC2_HCCHAR_CHEN))
+				break;
+			AA64SleepUS(1);
+		}
+
+		
+		UARTDebugOut("[dwc2-otg]: halting OTG channel %d , timeout : %d \r\n", i, timeout);
+	}
 	uint32_t hostport = dwc2_read((uint64_t)&regs->hprt0);
 	hostport &= ~HPRT_DEFAULT_MASK;
 	if (!(hostport & (1ULL << 12))) {
@@ -298,6 +347,8 @@ void dwc2_init_host(struct dwc2_core_regs* regs) {
 	}
 
 	dwc2_write((uint64_t)_base + 0x088, 1ULL);
+
+	dwc2_write((uint64_t)&regs->gahbcfg, 0x30);
 
 	dwc2_enable_host_interrupts(regs);
 	dwc2_enable_global_interrupt(regs);
@@ -333,8 +384,12 @@ bool dwc2_enable_root_port(struct dwc2_core_regs* regs) {
 	return true;
 }
 
+/**
+ * @brief dwc2_interrupt_handler -- interrupt handler for
+ * dwc2 OTG controller
+ * @param spiID -- system passed interrupt id 
+ */
 void dwc2_interrupt_handler(int spiID) {
-	UARTDebugOut("[dwc2_otg]: interrupt occured \r\n");
 	dsb_sy_barrier();
 
 	struct dwc2_core_regs* regs = (struct dwc2_core_regs*)_base;
@@ -396,8 +451,20 @@ void dwc2_interrupt_handler(int spiID) {
 		}
 	}
 
+	/**
+	 * handle host channel interrupts here
+	 */
 	if (gintsts & (1ULL << 25)) {
-		UARTDebugOut("[dwc2_otg]: Host system interrupt \r\n");
+		uint32_t haint = dwc2_read((uint64_t)&regs->host_regs.haint);
+		uint32_t haintmsk = dwc2_read((uint64_t)&regs->host_regs.haintmsk);
+
+		uint32_t pending = haint & haintmsk;
+
+		for (int i = 0; i < num_channel; i++) {
+			if (!(pending & (1u << i)))
+				continue;
+			dwc2_handle_channel_interrupt(regs, i);
+		}
 	}
 
 	dwc2_write((uint64_t)&regs->gintsts, gintsts);
@@ -485,6 +552,8 @@ void dwc2_dump_regs(struct dwc2_core_regs* regs) {
 	UARTDebugOut("VBUS = %x \r\n", dwc2_read(_base + 0x088));
 }
 
+#define DMA_ADDRESS 0xFFFFF00000000000
+static list_t* setupPacketBuffers;
 /*
 * AuDriverMain -- Main entry for dwc2 otg driver
 */
@@ -493,6 +562,11 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 	_base = (uint64_t)AuMapMMIO(DWC2_BASE, 2);
 	_root_port_ready = false;
 	_enable_root_port = false;
+
+
+	setupPacketBuffers = initialize_list();
+
+
 	/**
 	 * This driver is only for RPI for now, and before initializing
 	 * the driver it is powered up by VideoCore firmware, so life 
@@ -503,7 +577,10 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 	uint32_t id = regs->gsnpsid;
 	UARTDebugOut("[dwc2_otg]: synopsys id: %x \r\n", id);	
 	uint32_t val = *(volatile uint32_t*)&regs->ghwcfg2;
-	int num_host_channel = (val >> 10) & 0x1F;
+	val &= DWC2_HWCFG2_NUM_HOST_CHAN_MASK;
+	val >>= DWC2_HWCFG2_NUM_HOST_CHAN_OFFSET;
+	int num_host_channel = val + 1;
+	num_channel = num_host_channel;
 	UARTDebugOut("[dwc2_otg]: number of host channels : %d \r\n", num_host_channel);
 
 	
@@ -517,4 +594,38 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 
 uint64_t dwc2_get_base() {
 	return _base;
+}
+
+void* dwc2_get_dma_address() {
+	int offset = dmaAddress_Offset * 64;
+	return (dmaAddress + offset);
+}
+
+void* dwc2_get_dma_address_phys() {
+	dwc2_dma_slot* page = setup_pages[setup_slot];
+	UARTDebugOut("[[[[Slot Index : %d \r\n", setup_slot);
+	setup_slot = (setup_slot + 1) % DWC2_SETUP_SLOT;
+	return (void*)page;
+}
+
+/**
+ * @brief dwc2_add_to_used_dma_list -- 
+ * there is a bug i guess within the dwc2 ip 
+ * where same buffer can't be used for setup
+ * packet
+ */
+void dwc2_add_to_used_dma_list(void* phys) {
+	list_add(setupPacketBuffers, phys);
+}
+
+/**
+ * @brief dwc2_free_used_dma_list -- free up all used
+ * physical memories, this function must be called
+ * at the end of the class driver initialization
+ */
+void dwc2_free_used_dma_list() {
+	for (int i = 0; i < setupPacketBuffers->pointer; i++) {
+		void* phys = (void*)list_remove(setupPacketBuffers, i);
+		AuPmmngrFree((void*)V2P((uint64_t)phys));
+	}
 }

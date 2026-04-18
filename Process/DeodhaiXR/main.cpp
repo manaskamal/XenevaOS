@@ -412,6 +412,7 @@ void DeodhaiWindowSetFocused(Window* win, bool notify) {
 	if (focusedWin == win)
 		return;
 	focusedWin = win;
+	_KePrint("[DeodhaiXR]: Focused window set to : %s \r\n", focusedWin->title);
 	_shadow_update = true;
 	WinSharedInfo* info = (WinSharedInfo*)focusedWin->sharedInfo;
 	if (info->hide) {
@@ -613,6 +614,7 @@ void DeodhaiSendMouseEvent(int handle, int ownerId, uint8_t handleType, uint8_t 
 	e.dword5 = handleType;
 	e.to_id = ownerId;
 	e.from_id = POSTBOX_ROOT_ID;
+	_KePrint("MouseEvent to : %d , type : %d \r\n", e.to_id, e.type);
 	_KeFileIoControl(postbox_fd, POSTBOX_PUT_EVENT, &e);
 }
 
@@ -687,12 +689,12 @@ broadcast:
 	if (mouseWin) {
 		WinSharedInfo* info = (WinSharedInfo*)mouseWin->sharedInfo;
 		//DeodhaiResizeCursorUpdate(mouse_x, mouse_y, info);
-
 		int handle = mouseWin->handle;
 		uint8_t handleType = HANDLE_TYPE_NORMAL_WINDOW;
 		if ((mouseWin->flags & WINDOW_FLAG_POPUP))
 			handleType = HANDLE_TYPE_POPUP_WINDOW;
 
+		_KePrint("MouseWin : %s , id : %d \r\n", mouseWin->title, mouseWin->ownerId);
 		/* handle mouse last window hover */
 		if (mouseLastHovered) {
 			if (mouseLastHovered != mouseWin) {
@@ -913,10 +915,6 @@ int main(int argc, char* argv[]){
 
 	proc = _KeCreateProcess(0, "nmdapha");
 	_KeProcessLoadExec(proc, "/nmdapha.exe", NULL, NULL);
-
-	_KeProcessSleep(500);
-	proc = _KeCreateProcess(0, "file");
-	_KeProcessLoadExec(proc, "/file.exe", NULL, NULL);
 
 	while (1) {
 		XRComposeFrame(canv);
