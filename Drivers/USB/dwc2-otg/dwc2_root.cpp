@@ -125,9 +125,25 @@ typedef struct _usb_hub_ {
 }usb_hub_desc_t;
 #pragma pack(pop)
 
+#pragma pack(push,1)
+typedef struct _usb_ep_desc_ {
+	uint8_t bLength;
+	uint8_t bDescriptorType;
+	uint8_t bEndpointAddress;
+	uint8_t bmAttributes;
+	uint16_t wMaxPacketSize;
+	uint8_t bInterval;
+}usb_ep_desc_t;
+#pragma pack(pop)
+
 #define DESCRIPTOR_TYPE_CONFIG 2
 #define DESCRIPTOR_TYPE_INTERFACE 4
 #define DESCRIPTOR_TYPE_ENDPOINT 5
+
+#define USB_EP_TYPE_CONTROL 0x00
+#define USB_EP_TYPE_ISOC 0x01
+#define USB_EP_TYPE_BULK 0x02
+#define USB_EP_TYPE_INTERRUPT 0x03
 
 
 usb_descriptor_t* dwc2_get_descriptor(void* desc, uint8_t type) {
@@ -142,6 +158,35 @@ usb_descriptor_t* dwc2_get_descriptor(void* desc, uint8_t type) {
 		endp = raw_offset<usb_descriptor_t*>(endp, endp->bLength);
 	}
 }
+
+#define PORT_STATUS_CONNECTION (1<<0)
+#define PORT_CHANGE_CONNECTION (1<<0)
+
+#pragma pack(push,1)
+typedef struct {
+	uint16_t wPortStatus;
+	uint16_t wPortChange;
+}usb_port_status_t;
+#pragma pack(pop)
+
+void usb_hub_get_port_status(struct dwc2_core_regs* regs, uint8_t port, void* dma, uint8_t address, uint8_t speed) {
+	dwc2_usb_endpoint_t ep;
+	ep.dev_address = address; //0 for very beginning 
+	ep.ep_num = 0; //control ep
+	ep.type = EP_CONTROL; //control
+	ep.dir = EP_BIDIR;
+	ep.speed = speed;
+	ep.max_packet_sz = 8;
+
+	dwc2_control_transfer(regs, &ep, 0xA3, 0x00, 0x0000, port, dma, 4);
+
+}
+
+static bool _all_init = false;
+void* intb;
+static uint8_t speed_;
+static dwc2_usb_endpoint_t ep;
+uint8_t port_changed;
 /**
  * dwc2_enumerate_root_device -- enumerate the root device
  * @param regs -- pointer to system regs
@@ -155,8 +200,8 @@ void dwc2_enumerate_root_device(struct dwc2_core_regs* regs) {
 		hprt |= (1 << 12);
 		dwc2_write((uint64_t)&regs->hprt0, hprt);
 	}
-
-	dwc2_usb_endpoint_t ep;
+	speed_ = speed;
+	port_changed = 0;
 	ep.dev_address = 0; //0 for very beginning 
 	ep.ep_num = 0; //control ep
 	ep.type = EP_CONTROL; //control
@@ -205,19 +250,124 @@ void dwc2_enumerate_root_device(struct dwc2_core_regs* regs) {
 
 	dwc2_control_transfer(regs, &ep, 0x00, 0x09, 1, 0, NULL, 0);
 	UARTDebugOut("[dwc2_otg]: set configuration successfull \r\n");
+
+	usb_ep_desc_t* endp = (usb_ep_desc_t*)dwc2_get_descriptor(cdesc, DESCRIPTOR_TYPE_ENDPOINT);
+	while (raw_diff(endp, cdesc) < cdesc->wTotalLength) {
+		if ((endp->bmAttributes & 0x03) == USB_EP_TYPE_INTERRUPT) {
+			UARTDebugOut("Interrupt endpoint found num : %d dir -> %d \r\n", (endp->bEndpointAddress & 0x0f),
+				((endp->bEndpointAddress >> 0x7) & 0xF) );
+			UARTDebugOut("MPS: %d \r\n", endp->wMaxPacketSize & 0x7FF);
+		}
+		endp = raw_offset<usb_ep_desc_t*>(endp, endp->bLength);
+	}
 	
+
 	void* desc2 = (void*)AuPmmngrAlloc();
 	memset(desc2, 0, 4096);
 	dwc2_control_transfer(regs, &ep, 0xA0, 0x06, 0x2900, 0, desc2, 8);
 	usb_hub_desc_t* hub = (usb_hub_desc_t*)desc2;
 	UARTDebugOut("got hub descriptor, num ports : %d \r\n", hub->bNbrPorts);
 
+	/** PORT power up **/
 	for (int i = 1; i <= hub->bNbrPorts; i++) {
 		dwc2_control_transfer(regs, &ep, 0x23, 0x03, 8, i,NULL, 0);
-		AA64SleepMS(100);
+		AA64SleepMS(50);
 	}
+	
+	UARTDebugOut("Port powered up \r\n");
+	void* desc3 = (void*)AuPmmngrAlloc();
+	memset(desc3, 0, 4096);
 
+	for (int i = 1; i <= hub->bNbrPorts; i++) {
+		usb_hub_get_port_status(regs, i, desc3, 1, speed);
+		usb_port_status_t* pstatus = (usb_port_status_t*)desc3;
+
+		if (pstatus->wPortChange == 0)
+			continue;
+
+		root_hub_handle_port_change(regs, i);
+		/*if (pstatus->wPortStatus & PORT_STATUS_CONNECTION) {
+			UARTDebugOut("Port[%d] already has connection \r\n", i);
+			root_hub_handle_port_change(regs, i);
+		}*/
+		UARTDebugOut("PortStatus [%d] : %x change : %x \r\n", pstatus->wPortStatus, pstatus->wPortChange);
+	}
+	dwc2_usb_endpoint_t intep;
+	intep.dev_address = 1; // ep.dev_address;
+	intep.dir = 1U;
+	intep.ep_num = 1;
+	intep.max_packet_sz = 1;
+	intep.speed = ep.speed;
+	intep.type = USB_EP_TYPE_INTERRUPT;
+
+	void* inbuf = AuPmmngrAlloc();
+	memset(inbuf, 0, 4096);
+	intb = inbuf;
+	dwc2_interrupt_transfer(regs, &intep, inbuf, 0, 0, USB_PID_DATA0);
+
+	AuPmmngrFree(desc3);
 	AuPmmngrFree(desc2);
 	AuPmmngrFree(desc);
 	dwc2_free_used_dma_list();
+
+	_all_init = true;
+}
+
+
+void root_hub_transfer_int(dwc2_core_regs* regs, uint8_t pid) {
+	if (!_all_init)
+		return;
+	dwc2_usb_endpoint_t intep;
+	intep.dev_address = 1; // ep.dev_address;
+	intep.dir = 1U;
+	intep.ep_num = 1;
+	intep.max_packet_sz = 1;
+	intep.speed = speed_;
+	intep.type = USB_EP_TYPE_INTERRUPT;
+
+	dwc2_interrupt_transfer(regs, &intep, intb, 0, 0,pid );
+}
+
+void* root_hub_get_interrupt_buffer() {
+	return intb;
+}
+
+#define PORT_CHANGE_ENABLE (1<<1)
+#define PORT_CHANGE_SUSPEND (1<<2)
+#define PORT_CHANGE_OVERCURRENT (1<<3)
+#define PORT_CHANGE_RESET (1<<4)
+
+void root_hub_handle_port_change(dwc2_core_regs* regs, uint8_t port) {
+	void* p = AuPmmngrAlloc();
+	usb_hub_get_port_status(regs, port, p, 1, speed_);
+	AA64SleepMS(1);
+
+	usb_port_status_t* status = (usb_port_status_t*)p;
+	UARTDebugOut("status : %x , port change : %x \r\n", status->wPortStatus, status->wPortChange);
+	if (status->wPortChange & PORT_CHANGE_CONNECTION) {
+		dwc2_control_transfer(regs, &ep, 0x23, 0x01, 0x0010, port, NULL, 0);
+		UARTDebugOut("[root-hub]: cleared port change connection %d \r\n", port);
+	}
+
+	if (status->wPortChange & PORT_CHANGE_ENABLE) {
+		dwc2_control_transfer(regs, &ep, 0x23, 0x01, 0x0011, port, NULL, 0);
+		UARTDebugOut("[root-hub]: cleared C_PORT_ENABLE port %d \r\n", port);
+	}
+
+	if (status->wPortChange & PORT_CHANGE_SUSPEND) {
+		dwc2_control_transfer(regs, &ep, 0x23, 0x01, 0x0012, port, NULL, 0);
+		UARTDebugOut("[root-hub]: cleared suspend bit at port %d \r\n", port);
+	}
+
+	if (status->wPortChange & PORT_CHANGE_OVERCURRENT) {
+		dwc2_control_transfer(regs, &ep, 0x23, 0x01, 0x0013, port, NULL, 0);
+		UARTDebugOut("[root-hub]: cleared overcurrent bit at port : %d \r\n", port);
+	}
+
+	if (status->wPortChange & PORT_CHANGE_RESET) {
+		dwc2_control_transfer(regs, &ep, 0x23, 0x01, 0x0014, port, NULL, 0);
+		UARTDebugOut("[root-hub]: cleared reset bit at port : %d \r\n", port);
+	}
+
+
 }

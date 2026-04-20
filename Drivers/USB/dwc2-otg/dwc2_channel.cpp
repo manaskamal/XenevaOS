@@ -118,6 +118,10 @@ void dwc2_start_channel(struct dwc2_core_regs* regs, dwc2_usb_endpoint_t* ep, ui
 
 	uint8_t ls_bit = (ep->speed == 2) ? 1 : 0;
 
+	uint32_t hfnum = dwc2_read((uint64_t)&regs->host_regs.hdnum);
+	uint32_t frmnum = hfnum & 0xFFFF;
+	uint32_t odd = (frmnum & 1) ? 0 : 1;
+
 	uint32_t hcchar = ((ep->max_packet_sz & 0x7ff) << 0) |
 		(ep->ep_num << 11) |
 		(is_in << 15) |
@@ -125,7 +129,7 @@ void dwc2_start_channel(struct dwc2_core_regs* regs, dwc2_usb_endpoint_t* ep, ui
 		(ep->type << 18) |
 		(1 << 20) |
 		(ep->dev_address << 22) |
-		(0 << 29);
+		(odd << 29);
 	//dwc2_write((uint64_t)&hc->hcchar, hcchar);
 	/*
 	 DWC2_HOST_CHAN_INT_XFER_COMPLETE |
@@ -288,6 +292,7 @@ void dwc2_control_transfer(struct dwc2_core_regs* regs, dwc2_usb_endpoint_t* ep,
 	/** free up the channel **/
 }
 
+extern uint8_t port_changed;
 /**
  * @brief dwc2_handle_channel_interrupt -- handle channel
  * interrupts here
@@ -297,14 +302,26 @@ void dwc2_control_transfer(struct dwc2_core_regs* regs, dwc2_usb_endpoint_t* ep,
 void dwc2_handle_channel_interrupt(dwc2_core_regs* regs, int ch) {
 	uint32_t hcint = dwc2_read((uint64_t)&regs->hc_regs[ch].hcint);
 	uint32_t hcintmsk = dwc2_read((uint64_t)&regs->hc_regs[ch].hcintmsk);
+	uint32_t hctsz = dwc2_read((uint64_t)&regs->hc_regs[ch].hctsiz);
 	uint32_t active = hcint & hcintmsk;
 
+	uint8_t pid = USB_PID_DATA0;
 	/** W1C**/
 	dwc2_write((uint64_t)&regs->hc_regs[ch].hcint, hcint);
 
 	if (active & DWC2_HCINT_CHHLTD) {
 		if (active & DWC2_HCINT_XFERCOMP) {
-			UARTDebugOut("[dwc2-otg]: channel transfer completed \r\n");
+			//UARTDebugOut("[dwc2-otg]: channel transfer completed \r\n");
+			pid = (hctsz >> 29) & 0x3;
+			uint8_t* buf = (uint8_t*)root_hub_get_interrupt_buffer();
+			uint8_t bitmap = buf[0];
+			for (int p = 1; p <= 4; p++) {
+				if (bitmap & (1 << p)) {
+					UARTDebugOut("[dwc2-otg]: root hub port changed : %d \r\n", p);
+					//root_hub_handle_port_change(regs, p);
+					port_changed = p;
+				}
+			}
 		}
 		else if (active & DWC2_HCINT_NAK) {
 			UARTDebugOut("[dwc2-otg]: device not ready -- retry later \r\n");
@@ -322,6 +339,7 @@ void dwc2_handle_channel_interrupt(dwc2_core_regs* regs, int ch) {
 			UARTDebugOut("[dwc2-otg]: ahb buss error \r\n");
 		}
 		else if (active & DWC2_HCINT_DATATGLERR) {
+			pid = (hctsz >> 29) & 0x3;
 			UARTDebugOut("[dwc2-otg]: data toggle mismatch \r\n");
 		}
 		else if (active & DWC2_HCINT_STALL) {
@@ -333,5 +351,11 @@ void dwc2_handle_channel_interrupt(dwc2_core_regs* regs, int ch) {
 	haint |= (1u << ch);
 	dwc2_write((uint64_t)&regs->host_regs.haint, haint);
 	_channel_interrupt_occured = 1;
+	root_hub_transfer_int(regs, pid);
+}
+
+void dwc2_interrupt_transfer(dwc2_core_regs* regs, dwc2_usb_endpoint_t* ep, void* intbuf, uint8_t ch, uint32_t odd,uint8_t pid) {
+	dwc2_write((uint64_t)&regs->gahbcfg, 0x27);
+	dwc2_start_channel(regs, ep, ch, 1,0x3,pid, intbuf, 1, 1, odd);
 }
 

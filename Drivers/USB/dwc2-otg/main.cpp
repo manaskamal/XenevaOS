@@ -391,7 +391,7 @@ bool dwc2_enable_root_port(struct dwc2_core_regs* regs) {
  */
 void dwc2_interrupt_handler(int spiID) {
 	dsb_sy_barrier();
-
+//	UARTDebugOut("dwc2 irq fired++ \r\n");
 	struct dwc2_core_regs* regs = (struct dwc2_core_regs*)_base;
 	uint32_t gintsts = dwc2_read((uint64_t)&regs->gintsts);
 	uint32_t gintmsk = dwc2_read((uint64_t)&regs->gintmsk);
@@ -470,7 +470,7 @@ void dwc2_interrupt_handler(int spiID) {
 	dwc2_write((uint64_t)&regs->gintsts, gintsts);
 }
 
-
+extern uint8_t port_changed;
 void dwc2_initialize(struct dwc2_core_regs* regs) {
 	/** data memory barrier **/
 	dsb_sy_barrier();
@@ -588,6 +588,12 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 	dwc2_initialize(regs);
 	UARTDebugOut("[dwc2_org]: successfully initialized \r\n");
 	
+	for (;;) {
+		if (port_changed != 0) {
+			root_hub_handle_port_change(regs, port_changed);
+			port_changed = 0;
+		}
+	}
 	mask_irqs();
 	return 0;
 }

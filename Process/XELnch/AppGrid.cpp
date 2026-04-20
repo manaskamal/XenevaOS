@@ -49,7 +49,7 @@ void LauncherPaintAppGrid(AppGrid* grid, ChWindow* win) {
 		ChDrawRect(win->canv, grid->x, grid->y, grid->w, grid->h, 0x1A48494B);
 		for (int i = 0; i < grid->lbbuttonlist->pointer; i++) {
 			LaunchButton* button = (LaunchButton*)list_get_at(grid->lbbuttonlist, i);
-			if (button->drawLaunchButton)
+			if (button->drawLaunchButton && (button->page_number == grid->activePageNumber))
 				button->drawLaunchButton(button, win);
 		}
 	}
@@ -81,7 +81,36 @@ AppGrid* LauncherCreateAppGrid(int x, int y, int w, int h) {
 	grid->show_search = false;
 	grid->search_pos_x = grid->start_pos_x;
 	grid->search_pos_y = grid->start_pos_y;
+	grid->activePageNumber = 1;
+	for (int i = 0; i < MAX_PAGE_COUNT; i++) {
+		grid->page[i].start_x = grid->start_pos_x;
+		grid->page[i].start_y = grid->start_pos_y;
+		grid->page[i].pageNumber = i + 1;
+	}
 	return grid;
+}
+
+void AppGridAddButtonToPage(AppGrid* grid, LaunchButton* button) {
+	button->x = grid->page[button->page_number].start_x;
+	button->y = grid->page[button->page_number].start_y;
+	
+	if ((button->x + button->w) >= (grid->x + grid->w)) {
+		grid->page[button->page_number].start_x = grid->x + BUTTONS_PAD_X;
+		grid->page[button->page_number].start_y += button->h + ROWS_PAD_Y;
+		button->x = grid->page[button->page_number].start_x;
+		button->y = grid->page[button->page_number].start_y;
+	}
+
+	if ((button->y + button->h) >= (grid->x + grid->h)) {
+		_KePrint("Button %s striked app grid \r\n", button->title);
+		button->page_number += 1;
+		AppGridAddButtonToPage(grid, button);
+
+	}
+	grid->page[button->page_number].start_x += button->w + BUTTONS_PAD_X;
+	grid->page[button->page_number].hasItem = 1;
+	button->scratch_x = button->x;
+	button->scratch_y = button->y;
 }
 
 /*
@@ -98,6 +127,13 @@ void AppGridAddButton(AppGrid* grid, LaunchButton* button) {
 		grid->start_pos_y += button->h + ROWS_PAD_Y;
 		button->x = grid->start_pos_x;
 		button->y = grid->start_pos_y;
+	}
+
+	if ((button->y + button->h) >= (grid->x + grid->h)) {
+		_KePrint("Button %s striked app grid \r\n", button->title);
+		button->page_number += 1;
+		AppGridAddButtonToPage(grid, button);
+		
 	}
 	grid->start_pos_x += button->w + BUTTONS_PAD_X;
 	button->scratch_x = button->x;
@@ -153,4 +189,14 @@ void AppGridSearchReset(AppGrid* grid) {
 void AppGridPaint(AppGrid* grid, ChWindow* win) {
 	if (grid->PaintAppGrid)
 		grid->PaintAppGrid(grid, win);
+}
+
+
+int AppGridGetTotalNumberOfPage(AppGrid* grid) {
+	int numPage = 1;
+	for (int i = 0; i < 8; i++) {
+		if (grid->page[i].hasItem)
+			numPage += 1;
+	}
+	return numPage;
 }

@@ -413,7 +413,7 @@ void NamdaphaPlayStartupSound() {
 			_KeCloseFile(sndfd);
 			break;
 		}
-
+		
 		if (!finished) {
 			_KeWriteFile(sndfd, songbuf, 4096);
 			_KeReadFile(song, songbuf, 4096);
@@ -458,8 +458,14 @@ int main(int argc, char* arv[]){
 		"switcher", 0, 0, NAMDAPHA_WIDTH, screen_h);
 	nbutton_y_loc = 0;
 #elif NAMDAPHA_HORIZONTAL
+	int nmw = screen_w - (100 * 2);
+	int nmx = 100;
+	if (screen_w < 1024 && screen_h < 768) {
+		nmx = 0;
+		nmw = screen_w;
+	}
 	win = ChCreateWindow(app, WINDOW_FLAG_STATIC | WINDOW_FLAG_ALWAYS_ON_TOP | WINDOW_FLAG_BROADCAST_LISTENER,
-		"switcher", 100, screen_h - NAMDAPHA_WIDTH,screen_w-100*2, NAMDAPHA_WIDTH);
+		"switcher", nmx, screen_h - NAMDAPHA_WIDTH,nmw, NAMDAPHA_WIDTH);
 	nbutton_y_loc = win->info->height - 60;
 #endif
 

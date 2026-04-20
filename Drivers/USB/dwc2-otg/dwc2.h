@@ -36,6 +36,8 @@
 
 #define USB_PID_SETUP 3
 #define USB_PID_DATA 2
+#define USB_PID_DATA0 0
+#define USB_PID_DATA2 1
 
 
 #define DWC2_GET_PORT_SPEED(hport)  ((hport >> 17) & 0x3)  
@@ -94,6 +96,8 @@ extern void dwc2_write(uint64_t base, uint32_t value);
 extern void dwc2_control_transfer(struct dwc2_core_regs* regs, dwc2_usb_endpoint_t* ep, uint8_t bmRequestType, uint8_t b_request,
 	uint16_t wValue, uint16_t wIndex, void* data, uint16_t wLength);
 
+extern void dwc2_interrupt_transfer(dwc2_core_regs* regs, dwc2_usb_endpoint_t* ep, void* intbuf, uint8_t ch, uint32_t odd, uint8_t pid);
+
 /**
  * dwc2_enumerate_root_device -- enumerate the root device
  * @param regs -- pointer to system regs
@@ -134,4 +138,9 @@ extern void dwc2_add_to_used_dma_list(void* phys);
  */
 extern void dwc2_free_used_dma_list();
 
+extern void root_hub_transfer_int(dwc2_core_regs* regs, uint8_t pid);
+
+extern void* root_hub_get_interrupt_buffer();
+
+extern void root_hub_handle_port_change(dwc2_core_regs* regs, uint8_t port);
 #endif

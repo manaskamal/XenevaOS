@@ -37,12 +37,13 @@
 #include <sys\_keproc.h>
 #include <widgets\msgbox.h>
 
+
 #define LAUNCHER_BUTTON_HOVER_DARK 0xCC658096
 #define LAUNCHER_BUTTON_HOVER_LIGHT 0xCC8CA2B4
 #define LAUNCHER_BUTTON_CLICKED 0xCC1D1D1D
 
 void ButtonIconRead(ButtonIcon* btninfo);
-void ButtonIconDraw(ButtonIcon* info, ChCanvas* canv, int x, int y);
+void ButtonIconDraw(ButtonIcon* info, ChCanvas* canv, int x, int y, ChRect *limit);
 
 /* LaunchButtonPaint -- default paint handler for launch button */
 void LaunchButtonPaint(LaunchButton* lb, ChWindow* win) {
@@ -53,13 +54,19 @@ void LaunchButtonPaint(LaunchButton* lb, ChWindow* win) {
 	if (lb->clicked) 
 		ChDrawRect(win->canv, lb->x, lb->y, lb->w, lb->h, LAUNCHER_BUTTON_CLICKED);
 		
+	AppGrid* grid = XELauncherGetAppGrid();
+	ChRect limit;
+	limit.x = grid->x;
+	limit.y = grid->y;
+	limit.w = grid->w;
+	limit.h = grid->h;
 	ButtonIconDraw(lb->buttonIcon, win->canv, lb->x + lb->w / 2 - lb->buttonIcon->iconWidth / 2,
-		lb->y + lb->h / 2 - lb->buttonIcon->iconHeight / 2);
+		lb->y + lb->h / 2 - lb->buttonIcon->iconHeight / 2, &limit);
 	ChFontSetSize(win->app->baseFont,11);
 	int font_length = ChFontGetWidth(win->app->baseFont, lb->title);
 	int font_height = ChFontGetHeight(win->app->baseFont, lb->title);
-	ChFontDrawText(win->canv, win->app->baseFont, lb->title, lb->x + lb->w / 2 - font_length / 2,
-		lb->y + lb->h - 5, 12, LIGHTSILVER);
+	ChFontDrawTextClipped(win->canv, win->app->baseFont, lb->title, lb->x + lb->w / 2 - font_length / 2,
+		lb->y + lb->h - 5, LIGHTSILVER, &limit);
 }
 
 
@@ -169,6 +176,7 @@ LaunchButton *CreateLaunchButton(int x, int y, int w, int h, char* title, char* 
 	lb->drawLaunchButton = LaunchButtonPaint;
 	lb->mouseEvent = LaunchButtonMouseEvent;
 	lb->actionHandler = LauncherButtonDefaultAction;
+	lb->page_number = 1;
 	return lb;
 }
 
@@ -234,10 +242,40 @@ void ButtonIconRead(ButtonIcon* btninfo) {
 * @param x -- X coordinate
 * @param y -- Y coordinate
 */
-void ButtonIconDraw(ButtonIcon* info, ChCanvas* canv, int x, int y){
+void ButtonIconDraw(ButtonIcon* info, ChCanvas* canv, int x, int y, ChRect* limit){
 	uint32_t width = info->iconWidth;
 	uint32_t height = info->iconHeight;
+	uint32_t imageHeight = height;
 	uint32_t j = 0;
+
+	if (x > (limit->x + limit->w))
+		return;
+
+	if (y > (limit->y + limit->h))
+		return;
+
+	if (y <= limit->y) {
+		int diff = limit->y - y;
+		y = limit->y;
+		height -= diff;
+		imageHeight -= diff;
+	}
+
+	if (x <= limit->x)
+		x = limit->x;
+
+	if ((y + height) <= limit->y)
+		return;
+
+	if ((x + width) <= limit->x)
+		return;
+
+	if ((x + width) > (limit->x + limit->w))
+		width = (limit->x + limit->w) - x;
+
+	if ((y + height) > (limit->y + limit->h))
+		height = (limit->y + limit->h) - y;
+
 
 	uint8_t* image = info->imageData;
 	for (int i = 0; i < height; i++) {

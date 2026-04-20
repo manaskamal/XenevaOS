@@ -31,6 +31,7 @@
     <ClCompile Include="button.cpp" />
     <ClCompile Include="lconfig.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="pagebutton.cpp" />
     <ClCompile Include="rrect.cpp" />
     <ClCompile Include="search.cpp" />
     <ClCompile Include="searchbar.cpp" />
@@ -39,6 +40,7 @@
     <ClInclude Include="appgrid.h" />
     <ClInclude Include="button.h" />
     <ClInclude Include="launcher.h" />
+    <ClInclude Include="pagebutton.h" />
     <ClInclude Include="search.h" />
     <ClInclude Include="searchbar.h" />
   </ItemGroup>

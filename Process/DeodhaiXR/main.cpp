@@ -614,7 +614,7 @@ void DeodhaiSendMouseEvent(int handle, int ownerId, uint8_t handleType, uint8_t 
 	e.dword5 = handleType;
 	e.to_id = ownerId;
 	e.from_id = POSTBOX_ROOT_ID;
-	_KePrint("MouseEvent to : %d , type : %d \r\n", e.to_id, e.type);
+	//_KePrint("MouseEvent to : %d , type : %d \r\n", e.to_id, e.type);
 	_KeFileIoControl(postbox_fd, POSTBOX_PUT_EVENT, &e);
 }
 
@@ -694,7 +694,7 @@ broadcast:
 		if ((mouseWin->flags & WINDOW_FLAG_POPUP))
 			handleType = HANDLE_TYPE_POPUP_WINDOW;
 
-		_KePrint("MouseWin : %s , id : %d \r\n", mouseWin->title, mouseWin->ownerId);
+		//_KePrint("MouseWin : %s , id : %d \r\n", mouseWin->title, mouseWin->ownerId);
 		/* handle mouse last window hover */
 		if (mouseLastHovered) {
 			if (mouseLastHovered != mouseWin) {
@@ -840,6 +840,9 @@ int main(int argc, char* argv[]){
 	}
 	else if (screen_w == 800 && screen_h == 480) {
 		DrawWallpaper(canv, "/flora1.jpg");
+		DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
+	}else if (screen_w == 640 && screen_h == 480) {
+		DrawWallpaper(canv, "/snow.jpg");
 		DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
 	}
 

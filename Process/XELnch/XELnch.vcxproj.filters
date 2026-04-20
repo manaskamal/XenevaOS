@@ -8,6 +8,7 @@
     <ClCompile Include="searchbar.cpp" />
     <ClCompile Include="rrect.cpp" />
     <ClCompile Include="search.cpp" />
+    <ClCompile Include="pagebutton.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="button.h" />
@@ -15,5 +16,6 @@
     <ClInclude Include="launcher.h" />
     <ClInclude Include="searchbar.h" />
     <ClInclude Include="search.h" />
+    <ClInclude Include="pagebutton.h" />
   </ItemGroup>
 </Project>

@@ -16,6 +16,7 @@
 #include "searchbar.h"
 #include <ctype.h>
 #include "search.h"
+#include "pagebutton.h"
 
 
 ChitralekhaApp *app;
@@ -39,7 +40,7 @@ void XELauncherPaint(ChWindow* win) {
 				wid->ChPaintHandler(wid, win);
 	}
 	_KePrint("Widget painted \r\n");
-	//AppGridPaint(mainGrid, win);
+	AppGridPaint(mainGrid, win);
 	ChDrawRectUnfilled(win->canv, 0, 0, win->info->width, win->info->height, GRAY);
 	ChWindowUpdate(win, 0, 0, win->info->width, win->info->height, 1, 0);
 }
@@ -59,6 +60,8 @@ void XELauncherMouseHandler(ChWindow* win, int x, int y, int button, int scroll)
 		buttonList = mainGrid->searchResultList;
 	for (int i = 0; i < buttonList->pointer; i++) {
 		LaunchButton* widget = (LaunchButton*)list_get_at(buttonList, i);
+		if (widget->page_number != mainGrid->activePageNumber)
+			continue;
 		if (x > win->info->x + widget->x && x < (win->info->x + widget->x + widget->w) &&
 			(y > win->info->y + widget->y && y < (win->info->y + widget->y + widget->h))) {
 			widget->hover = true;
@@ -192,7 +195,7 @@ void XenevaLauncherHandleMessage(PostEvent *e) {
 }
 
 
-
+static int _total_page_count;
 /*
  * XELauncherGetAppGrid -- returns the main
  * application grid
@@ -203,6 +206,27 @@ AppGrid* XELauncherGetAppGrid() {
 
 ChWindow* XELauncherGetMainWin() {
 	return win;
+}
+
+void XEUpPageButtonAction(ChWidget* wid, ChWindow* win) {
+	mainGrid->activePageNumber -= 1;
+	if (mainGrid->activePageNumber < 1)
+		mainGrid->activePageNumber = 1;
+
+	AppGridPaint(mainGrid, win);
+	ChWindowUpdate(win, mainGrid->x, mainGrid->y, mainGrid->w, mainGrid->h, 0, 1);
+}
+
+void XEDownPageButtonAction(ChWidget* wid, ChWindow* win) {
+	if (mainGrid->activePageNumber >= 8)
+		mainGrid->activePageNumber = 8;
+	mainGrid->activePageNumber += 1;
+
+	if (mainGrid->activePageNumber > _total_page_count)
+		mainGrid->activePageNumber = _total_page_count;
+
+	AppGridPaint(mainGrid, win);
+	ChWindowUpdate(win, mainGrid->x, mainGrid->y, mainGrid->w, mainGrid->h, 0, 1);
 }
 
 /*
@@ -228,7 +252,7 @@ int main(int argc, char* arv[]){
 	screen_h = canv->screenHeight;
 	bpp = canv->bpp;
 	graphicsFd = canv->graphics_fd;
-
+	_total_page_count = 1;
 	free(canv);
 
 
@@ -242,7 +266,7 @@ int main(int argc, char* arv[]){
 	mainGrid = LauncherCreateAppGrid(launcher_w / 2 - (grid_w / 2), launcher_h / 2 - (grid_h/2),
 		grid_w+50, grid_h+50);
 
-
+	mainGrid->activePageNumber = 1;
 	/* now read the launcher config file
 	 * for application entries 
 	 */
@@ -257,7 +281,17 @@ int main(int argc, char* arv[]){
 	win->info->alpha = false;
 
 	searchBar = XECreateSearchBar(launcher_w / 2 - 280 / 2, 40, 280, 35);
+	XEPageButton* up = CreatePageButton(launcher_w - 70, launcher_h / 2 - (55 / 2) - 60, 40, 55, PAGE_BUTTON_UP);
+	up->wid.ChActionHandler = XEUpPageButtonAction;
+	XEPageButton* down = CreatePageButton(launcher_w - 70, launcher_h / 2 - 55 / 2, 40, 55, PAGE_BUTTON_DOWN);
+	ChWindowAddWidget(win, (ChWidget*)up);
+	down->wid.ChActionHandler = XEDownPageButtonAction;
+	ChWindowAddWidget(win, (ChWidget*)down);
+
 	ChWindowAddWidget(win, (ChWidget*)searchBar);
+
+	_total_page_count =  AppGridGetTotalNumberOfPage(mainGrid);
+
 	_KePrint("XELaunch about to paint \r\n");
 	ChWindowPaint(win);
 
