@@ -683,7 +683,8 @@ int main(int argc, char* arv[]){
 	while (1) {
 		int err = _KeFileIoControl(app->postboxfd, POSTBOX_GET_EVENT, &e);
 		TerminalHandleMessage(&e);
-		if (err == POSTBOX_NO_EVENT)
+		if (err == POSTBOX_NO_EVENT) {
 			_KePauseThread();
+		}
 	}
 }

@@ -52,12 +52,12 @@ _And many more coming soon_
 
 ## Homescreen (ARM64) :
 
-<img width="2187" height="1179" alt="Screenshot (1867)" src="https://github.com/user-attachments/assets/60a9ce72-14c8-44ea-98da-5f03d27583a9" />
+![alt text](https://github.com/manaskamal/XenevaOS/blob/master/armprogress19.jpg?raw=true)
 
 
 ## App Tray (ARM64) :
 
-<img width="2560" height="1440" alt="Screenshot (1889)" src="https://github.com/user-attachments/assets/a2cb77c3-b004-4e81-9d97-31c341c22e3d" />
+![alt text](https://github.com/manaskamal/XenevaOS/blob/master/armprogress17.jpg?raw=true)
 
 
 

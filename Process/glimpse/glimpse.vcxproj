@@ -29,6 +29,7 @@
   <ItemGroup>
     <ClCompile Include="glwin.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="thumbnail.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="glimpse.h" />

@@ -464,7 +464,7 @@ int main(int argc, char* arv[]){
 		nmx = 0;
 		nmw = screen_w;
 	}
-	win = ChCreateWindow(app, WINDOW_FLAG_STATIC | WINDOW_FLAG_ALWAYS_ON_TOP | WINDOW_FLAG_BROADCAST_LISTENER,
+	win = ChCreateWindow(app, WINDOW_FLAG_STATIC | WINDOW_FLAG_ALWAYS_ON_TOP | WINDOW_FLAG_BROADCAST_LISTENER | WINDOW_FLAG_GLASS,
 		"switcher", nmx, screen_h - NAMDAPHA_WIDTH,nmw, NAMDAPHA_WIDTH);
 	nbutton_y_loc = win->info->height - 60;
 #endif

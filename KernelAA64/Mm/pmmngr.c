@@ -171,9 +171,9 @@ void AuPmmngrInitialize(KERNEL_BOOT_INFO* info) {
 		/* Scan a suitable area for the bitmap */
 		for (size_t i = 0; i < MemMapEntries; i++) {
 			EFI_MEMORY_DESCRIPTOR* EfiMem = (EFI_MEMORY_DESCRIPTOR*)((uint64_t)info->map + i * info->descriptor_size);
-			_TotalRam += EfiMem->num_pages;
-			//AuTextOut("EfiMem phys start -> %x size -> %d > 0x100000,attrib -  %d\n", EfiMem->phys_start, EfiMem->num_pages, EfiMem->attrib);
+		
 			if (EfiMem->type == 7) {
+				_TotalRam += EfiMem->num_pages;
 				if (((EfiMem->num_pages * 4096) > 0x1F0000) && BitmapArea == 0) {
 					if ((EfiMem->phys_start & (4096 - 1)) == 0) {
 						if (!print)
@@ -182,6 +182,19 @@ void AuPmmngrInitialize(KERNEL_BOOT_INFO* info) {
 						print = 0;
 					}
 				}
+			}
+			if (EfiMem->type == 1) {
+				_TotalRam += EfiMem->num_pages;
+			}
+			if (EfiMem->type == 2) {
+				_TotalRam += EfiMem->num_pages;
+			}
+			if (EfiMem->type == 3) {
+				_TotalRam += EfiMem->num_pages;
+			}
+
+			if (EfiMem->type == 4) {
+				_TotalRam += EfiMem->num_pages;
 			}
 		}
 	}
@@ -225,6 +238,8 @@ void AuPmmngrInitialize(KERNEL_BOOT_INFO* info) {
 
 
 	AuTextOut("Usable RAM Start : %x, TotalRAM : %x \r\n", UsablePhysicalMemory, _TotalRam);
+	AuTextOut("LastPage : %x \r\n", (_TotalRam * 4096));
+
 	/* now initialise the bitmap */
 	AuPmmngrInitBitmap(BitmapSize, BitmapArea);
 	AuTextOut("Bitmap Size : %x %d \r\n", BitmapSize, BitmapSize);
@@ -235,7 +250,8 @@ void AuPmmngrInitialize(KERNEL_BOOT_INFO* info) {
 		for (size_t i = 0; i < MemMapEntries; i++) {
 			EFI_MEMORY_DESCRIPTOR* EfiMem = (EFI_MEMORY_DESCRIPTOR*)((uint64_t)info->map + i * info->descriptor_size);
 			//_TotalRam += EfiMem->num_pages;
-			if (EfiMem->type != 7) {
+			if (EfiMem->type != 7 || EfiMem->type != 1 || EfiMem->type != 2 ||
+				EfiMem->type != 3 || EfiMem->type != 4) {
 				uint64_t PhysStart = EfiMem->phys_start;
 				for (size_t j = 0; j < EfiMem->num_pages; j++) {
 					AuPmmngrLockPage(PhysStart + j * 4096);
@@ -423,6 +439,13 @@ void AuPmmngrMoveHigher() {
  */
 uint64_t AuPmmngrGetFreeMem() {
 	return _FreeMemory;
+}
+
+/**
+ * @brief AuPmmngrGetUsedMem -- return total used page count
+ */
+uint64_t AuPmmngrGetUsedMem() {
+	return _UsedMemory;
 }
 
 /**

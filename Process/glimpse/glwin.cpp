@@ -32,9 +32,10 @@
 #include <chitralekha.h>
 #include <widgets/base.h>
 #include <widgets/window.h>
+#include "glimpse.h"
 
-#define GLIMPSE_TITLEBAR_LIGHT 0xFFE4DDDD
-#define GLIMPSE_TITLEBAR_DARK 0xFFCAC5C5
+#define GLIMPSE_TITLEBAR_LIGHT 0xFFd3d1d1
+#define GLIMPSE_TITLEBAR_DARK 0xFFB5B5B5
 #define GLIMPSE_TITLEBAR_FOCUS_DARK 0xFFA3AFBB
 
 void GlimpsePaintTitlebar(ChWindow* win) {
@@ -45,13 +46,14 @@ void GlimpsePaintTitlebar(ChWindow* win) {
 		dark_color = GLIMPSE_TITLEBAR_FOCUS_DARK;
 	}
 
-	ChDrawRect(win->canv, 0, 0, win->info->width, 26, light_color);
+	//ChDrawRect(win->canv, 0, 0, win->info->width, 26, light_color);
+	ChColorDrawVerticalGradient(win->canv, 0, 0, win->info->width, 26, light_color, dark_color);
 	ChFont* font = win->app->baseFont;
 	ChFontSetSize(win->app->baseFont, 10);
 	int font_width = ChFontGetWidth(font, win->title);
 	int font_height = ChFontGetHeight(font, win->title);
-	ChFontDrawText(win->canv, font, win->title, win->info->width / 2 - font_width / 2, 26 / 2 + 4, 16, WHITE);
-	ChDrawRectUnfilled(win->canv, 0, 0, win->info->width, 26, LIGHTBLACK);
+	ChFontDrawText(win->canv, font, win->title, win->info->width / 2 - font_width / 2, 26 / 2 + 4, 16, BLACK);
+	//ChDrawRectUnfilled(win->canv, 0, 0, win->info->width, 26, LIGHTBLACK);
 
 	for (int i = 0; i < win->GlobalControls->pointer; i++) {
 		ChWinGlobalControl* global = (ChWinGlobalControl*)list_get_at(win->GlobalControls, i);
@@ -64,7 +66,13 @@ void GlimpsePaintTitlebar(ChWindow* win) {
 
 
 void GlimpseWindowPaint(ChWindow* win) {
+	GlimpBox* glimp = _Glimpse_get_main_glimp();
+
 	ChDrawRect(win->canv, 0, 0, win->info->width, win->info->height, win->color);
+
+	if (glimp) 
+		_Glimpse_box_repaint(glimp, win);
+	
 	GlimpsePaintTitlebar(win);
 	ChWindowUpdate(win, 0, 0, win->info->width, win->info->height, 1, 0);
 }

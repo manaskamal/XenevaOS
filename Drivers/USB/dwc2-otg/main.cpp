@@ -584,6 +584,7 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 	UARTDebugOut("[dwc2_otg]: number of host channels : %d \r\n", num_host_channel);
 
 	
+	return 0;
 
 	dwc2_initialize(regs);
 	UARTDebugOut("[dwc2_org]: successfully initialized \r\n");

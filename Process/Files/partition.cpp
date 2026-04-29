@@ -65,7 +65,7 @@ void FileManagerPartitionButtonPaintHandler(ChWidget* wid, ChWindow* win) {
 		ChColorDrawVerticalGradient(win->canv, wid->x, wid->y, wid->w, wid->h,0xFF6E8BD9, 0xFF3561D6);
 	}
 	else {
-		ChDrawRect(win->canv, wid->x, wid->y, wid->w, wid->h, 0xB3FFFFFF);
+		ChDrawRect(win->canv, wid->x, wid->y, wid->w, wid->h, 0xFFFFFFFF);
 	}
 
 	if (pbut->icon) {
@@ -89,7 +89,7 @@ void FileManagerPartitionButtonPaintHandler(ChWidget* wid, ChWindow* win) {
 
 }
 
-#define PARTITION_VIEW_COLOR 0x99808080
+#define PARTITION_VIEW_COLOR 0xFF808080
 /*
  * FileManagerPaintHandler -- paints the file manager
  * partition list

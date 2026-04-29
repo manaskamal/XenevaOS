@@ -199,6 +199,7 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	AuConsolePostInitialise(info);
 	//AuConsoleBypassAuTextOut();
 	/* initialize the tty service */
+
 	AuTTYInitialise();
 
 	/* initialize the shared memory manager*/

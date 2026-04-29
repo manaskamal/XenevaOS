@@ -40,6 +40,8 @@
 #include <Hal/AA64/sched.h>
 #include <Mm/shm.h>
 #include <loader.h>
+#include <Ipc/postbox.h>
+#include <Mm/mmap.h>
 
 
 static int pid = 1;
@@ -316,4 +318,84 @@ int AuCreateUserthread(AuProcess* proc, void(*entry) (), char* name)
 	proc->threads[proc->num_thread] = thr;
 	proc->num_thread += 1;
 	return thread_indx;
+}
+
+
+/**
+ * @brief AuProcessHeapMemDestroy -- destroys the heap area of process
+ * @param proc -- Pointer to process
+ */
+void AuProcessHeapMemDestroy(AuProcess* proc) {
+	uint64_t startaddr = PROCESS_BREAK_ADDRESS;
+	if ((proc->proc_heapmem_len % PAGE_SIZE) != 0)
+		proc->proc_heapmem_len++;
+
+	for (int i = 0; i < proc->proc_heapmem_len / 4096; i++) {
+		AuVPage* page = AuVmmngrGetPage(startaddr + i * PAGE_SIZE, VIRT_GETPAGE_ONLY_RET, VIRT_GETPAGE_ONLY_RET);
+		if (page) {
+			uint64_t phys = page->bits.page << PAGE_SHIFT;
+			if (phys) {
+#if 0
+				UARTDebugOut("Heap mem destroy -> %x \r\n", phys);
+#endif
+				AuPmmngrFree((void*)phys);
+			}
+			page->bits.page = 0;
+			isb_flush();
+			page->bits.present = 0;
+			isb_flush();
+			tlb_flush_vmalle1is();
+			dsb_ish();
+			isb_flush();
+		}
+	}
+}
+
+/**
+ * @brief AuProcessFreeKeResource -- free up allocated kernel
+ * resources
+ * @param thr -- Pointer to thread which allocated
+ * kernel resources
+ */
+void AuProcessFreeKeResource(AA64Thread* thr) {
+	if (!thr)
+		return;
+	/* free-up all allocated kernel resources */
+
+	//AuSoundRemoveDSP(thr->id);
+
+	/* close allocated signals */
+	//AuSignalRemoveAll(thr);
+
+	/* remove allocated postbox*/
+	PostBoxDestroyByID(thr->thread_id);
+
+	/* destroy allocated timer */
+	//AuTimerDestroy(thr->id);
+}
+
+/**
+ * @brief AuProcessExit -- exits a process
+ * @param proc -- process to exit
+ * @param schedulable -- schedule to next thread
+ */
+void AuProcessExit(AuProcess* proc, bool schedulable) {
+	if (proc == root_proc) {
+		UARTDebugOut("[aurora]: cannot exit root process \r\n");
+		return;
+	}
+
+
+	proc->state = PROCESS_STATE_DIED;
+
+	AuProcessFreeKeResource(proc->main_thread);
+
+	AuThreadMoveToTrash(proc->main_thread);
+
+	if (schedulable) {
+		AA64Registers* regs = AA64GetCurrentRegCtx();
+		//current_thr->sp = (uint64_t)regs;
+		UARTDebugOut("About to schedule \r\n");
+		AuScheduleThread(regs);
+	}
 }

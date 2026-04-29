@@ -108,6 +108,11 @@ extern void AuPmmngrMoveHigher();
 extern uint64_t AuPmmngrGetFreeMem();
 
 /**
+ * @brief AuPmmngrGetUsedMem -- return total used page count
+ */
+extern uint64_t AuPmmngrGetUsedMem();
+
+/**
  * @brief AuPmmngrGetTotalMem -- returns the total amount of
  * RAM
  */

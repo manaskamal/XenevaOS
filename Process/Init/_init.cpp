@@ -99,6 +99,8 @@ int XELdrStartProc2(char* filename, XELdrObj* obj) {
 	return file;
 }
 
+extern void SplashScreenShow();
+
 /*
  * _main -- main entry point
  */
@@ -117,6 +119,10 @@ extern "C" void main(int argc, char* argv[]) {
 		_KePrint("Xeneva v1.0 ARM64 !! Copyright (C) Manas Kamal Choudhury 2020-2025 \r\n");
 #endif
 	}
+
+	SplashScreenShow();
+	/** TODO: add IPC system to track real system progress and animate the logo accordingly **/
+	_KeProcessSleep(500);
 
 #ifdef ARCH_ARM64
 	int proc = _KeCreateProcess(0, "netmngr");

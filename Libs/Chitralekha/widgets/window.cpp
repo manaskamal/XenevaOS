@@ -290,7 +290,10 @@ XE_EXTERN XE_EXPORT void ChWindowPaint(ChWindow* win) {
 		win->ChWinPaint(win);
 	}
 
-	_apply_rounded_corner(win->buffer, 4, win->info->width, win->info->height);
+	if (win->flags & WINDOW_FLAG_GLASS)
+		_apply_rounded_corner(win->buffer, 4, win->info->width, win->info->height);
+	else
+		_apply_rounded_corner(win->buffer, 8, win->info->width, win->info->height);
 	int timeout = 5000;
 	/* Wait untill the window is ready on server side */
 	while (!win->info->windowReady) {
@@ -799,6 +802,29 @@ XE_EXTERN XE_EXPORT void ChWindowCloseWindow(ChWindow* win){
 
 	}
 
+	/* send close window command to deodhai */
+	int handle = win->handle;
+	PostEvent e;
+	e.type = DEODHAI_MESSAGE_CLOSE_WINDOW;
+	e.dword = handle;
+	e.from_id = win->app->currentID;
+	e.to_id = POSTBOX_ROOT_ID;
+	_KeFileIoControl(win->app->postboxfd, POSTBOX_PUT_EVENT, &e);
+	memset(&e, 0, sizeof(PostEvent));
+
+
+	/* wait for a closed reply window */
+	while (1) {
+		int err = _KeFileIoControl(win->app->postboxfd, POSTBOX_GET_EVENT, &e);
+		if (err == POSTBOX_NO_EVENT)
+			_KePauseThread();
+		if (e.type == DEODHAI_REPLY_WINDOW_CLOSED) {
+			break;
+		}
+	}
+
+	_KePrint("Closed reply received \r\n");
+
 	/* free up window's shared buffers, backbuffer and 
 	 * shared window info buffer
 	 */
@@ -820,30 +846,10 @@ XE_EXTERN XE_EXPORT void ChWindowCloseWindow(ChWindow* win){
 	/* free up window resources */
 	ChFreeWindowResources(win);
 
-	/* send close window command to deodhai */
-	int handle = win->handle;
-	PostEvent e;
-	e.type = DEODHAI_MESSAGE_CLOSE_WINDOW;
-	e.dword = handle;
-	e.from_id = win->app->currentID;
-	e.to_id = POSTBOX_ROOT_ID;
-	_KeFileIoControl(win->app->postboxfd, POSTBOX_PUT_EVENT, &e);
-	memset(&e, 0, sizeof(PostEvent));
-
-	
-	/* wait for a closed reply window */
-	while (1) {
-		int err = _KeFileIoControl(win->app->postboxfd, POSTBOX_GET_EVENT, &e);
-		if (err == POSTBOX_NO_EVENT)
-			_KePauseThread();
-		if (e.type == DEODHAI_REPLY_WINDOW_CLOSED){
-			break;
-		}
-	}
-	
 	free(win->app);
 	free(win);
 
+	_KePrint("Window freed \r\n");
 	/* just jump to post event loop of main
 	 * window */
 	if (subWindow && parent && !(flags & WINDOW_FLAG_POPUP))
@@ -852,8 +858,12 @@ XE_EXTERN XE_EXPORT void ChWindowCloseWindow(ChWindow* win){
 	/* if this window was the main window, simply exit the
 	 * application
 	 */
+#ifdef ARCH_X64
 	if (!subWindow && !(flags & WINDOW_FLAG_POPUP))
 		_KeProcessExit();
+#endif
+	_KePrint("about to exit \r\n");
+	_KeProcessExit();
 }
 
 /*

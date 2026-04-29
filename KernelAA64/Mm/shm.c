@@ -361,16 +361,15 @@ void AuSHMUnmap(uint16_t key, AuProcess* proc) {
 				AuVPage* vpage = AuVmmngrGetPage(mapping->start_addr + i * PAGE_SIZE, VIRT_GETPAGE_ONLY_RET, VIRT_GETPAGE_ONLY_RET);
 				if (vpage) {
 					vpage->bits.page = 0;
+					dsb_ish();
 					isb_flush();
 					vpage->bits.present = 0;
-					isb_flush();
-					tlb_flush_vmalle1is();
 					dsb_ish();
 					isb_flush();
 					//tlb_flush((void*)(mapping->start_addr + i * PAGE_SIZE));
 				}
 			}
-			UARTDebugOut("Closing index -> %d \r\n", i);
+			UARTDebugOut("Closing index -> %d, %s \r\n", i, proc->name);
 			list_remove(proc->shmmaps, i);
 			kfree(mapping);
 			break;

@@ -256,7 +256,7 @@ int main(int argc, char* arv[]){
 	free(canv);
 
 
-	win = ChCreateWindow(app, WINDOW_FLAG_STATIC | WINDOW_FLAG_ALWAYS_ON_TOP,
+	win = ChCreateWindow(app, WINDOW_FLAG_STATIC | WINDOW_FLAG_ALWAYS_ON_TOP | WINDOW_FLAG_GLASS,
 		"Xeneva Launcher", 10, 10, screen_w - 10*2, screen_h - 85);
 	launcher_w = screen_w - (10 * 2); //90; 
 	launcher_h = screen_h - 40;
@@ -291,6 +291,10 @@ int main(int argc, char* arv[]){
 	ChWindowAddWidget(win, (ChWidget*)searchBar);
 
 	_total_page_count =  AppGridGetTotalNumberOfPage(mainGrid);
+	if (_total_page_count == 1) {
+		up->disabled = true;
+		down->disabled = true;
+	}
 
 	_KePrint("XELaunch about to paint \r\n");
 	ChWindowPaint(win);

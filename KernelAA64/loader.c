@@ -129,6 +129,9 @@ void AuProcessEntUser(uint64_t rcx) {
  * @param _image_base_ -- Image base address
  */
 void AuLoaderMapExecFromCache(AuProcess* proc, AuMMFileBack *fb,PIMAGE_NT_HEADERS nt, PSECTION_HEADER secthdr, uint64_t _image_base_) {
+	UARTDebugOut("AuLoaderMapExecFromCache : %x, %x %xr\n", proc, fb, fb->file);
+	if (fb->file)
+		UARTDebugOut("Name : %s \r\n", fb->file->filename);
 	for (size_t i = 0; i < nt->FileHeader.NumberOfSections; ++i) {
 		size_t load_addr = _image_base_ + secthdr[i].VirtualAddress;
 		void* sect_addr = (void*)load_addr;
@@ -215,6 +218,9 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) 
 	
 	AuMMPageCache* pcache = fb->pageCache;
 	
+	if (file->eof == 1 && fb->readComplete == 1)
+		file->eof = 0;
+
 	int sbIndex = 0;
 	while (file->eof != 1) {
 		uint64_t physcache = NULL;
@@ -233,18 +239,19 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) 
 			}
 		}
 		else {
-			if (pcache == NULL)
+			if (pcache == NULL) {
 				break;
+			}
 			uint64_t block = ((uint64_t)_ldr_scratchBuffer + (sbIndex * 0x1000));
 			memset(block, 0, 4096);
 			memcpy(block, P2V(pcache->physicalPage), PAGE_SIZE);
-			if (physcache) 
+			if (physcache)
 				memcpy(P2V(physcache), block, PAGE_SIZE);
-			
 			pcache = pcache->next;
 		}
 		sbIndex++;
 	}
+	
 	fb->readComplete = 1;
 
 	IMAGE_DOS_HEADER* dos = (IMAGE_DOS_HEADER*)_ldr_scratchBuffer;

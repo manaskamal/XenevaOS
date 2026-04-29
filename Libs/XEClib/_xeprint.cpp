@@ -607,7 +607,6 @@ int _xeprint(char* output, int outputlen, const char* format, va_list list) {
 			intArg = (long long)va_arg(list, unsigned);
 			intArg |= (((long long)va_arg(list, unsigned)) << 32);
 		}
-
 		else if ((format[inCount] == 'e') || (format[inCount] == 'E') ||
 			(format[inCount] == 'f') || (format[inCount] == 'F') ||
 			(format[inCount] == 'g') || (format[inCount] == 'G')){
@@ -616,7 +615,6 @@ int _xeprint(char* output, int outputlen, const char* format, va_list list) {
 		else {
 			intArg = va_arg(list, unsigned long long);
 		}
-
 		switch (format[inCount]){
 		case 'd':
 		case 'i':{
@@ -645,7 +643,6 @@ int _xeprint(char* output, int outputlen, const char* format, va_list list) {
 							 output[outCount++] = ' ';
 						 }
 					 }
-
 					 break;
 		}
 
@@ -673,7 +670,6 @@ int _xeprint(char* output, int outputlen, const char* format, va_list list) {
 						 while (digits++ < fieldWidth)
 							 output[outCount++] = ' ';
 					 }
-
 					 break;
 		}
 		case 'c':
@@ -800,7 +796,6 @@ int _xeprint(char* output, int outputlen, const char* format, va_list list) {
 		}
 		inCount += 1;
 	}
-
 	output[outCount] = '\0';
 	return (outCount);
 }

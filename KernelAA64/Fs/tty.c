@@ -216,8 +216,9 @@ size_t AuTTYSlaveRead(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint32
 	TTY* tty = (TTY*)file->device;
 	if (!tty)
 		return 0;
-	for (int i = 0; i < len; i++)
+	for (int i = 0; i < len; i++) {
 		AuCircBufGet(tty->slavebuf, &aligned_buf[i]);
+	}
 
 	return 1;
 }
@@ -231,7 +232,7 @@ size_t AuTTYSlaveRead(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint32
  * @return return the amount of data written in bytes
  */
 size_t AuTTYSlaveWrite(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint32_t len) {
-	char* data = (char*)buffer;
+	//char* data = (char*)buffer;
 	AA64Thread* curr_th = AuGetCurrentThread();
 	uint8_t* aligned_buf = (uint8_t*)buffer;
 	TTY* tty = (TTY*)file->device;

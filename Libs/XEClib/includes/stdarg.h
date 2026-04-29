@@ -50,6 +50,7 @@ extern "C"
 	((sizeof(TYPE)+sizeof(STACKITEM)-1)	\
 	& ~(sizeof(STACKITEM)-1))
 
+#ifdef ARCH_X64
 	/* &(LASTARG) points to the LEFTMOST argument of the function call
 	(before the ...) */
 #define	va_start(AP, LASTARG)	\
@@ -60,6 +61,16 @@ extern "C"
 
 #define va_arg(AP, TYPE)	\
 	(AP += VA_SIZE(TYPE), *((TYPE *)(AP - VA_SIZE(TYPE))))
+#elif ARCH_ARM64
+#define va_start(ap,last) \
+     ((ap) = (va_list)(&(last)) + 8)
+
+#define va_arg(ap,T) \
+     (*(T*)((ap) += 8, (ap) - 8))
+
+#define va_end(ap) \
+     ((ap) = (va_list)0)
+#endif
 
 #ifdef __cplusplus
 }

@@ -264,10 +264,16 @@ int rename(const char* oldpath, const char* newpath) {
 	return -1;
 }
 
+extern "C" void _store_stack_param(uint8_t * buffer);
 
 int sprintf(char* output, const char* format, ...) {
 	va_list list;
 	va_start(list, format);
+#ifdef ARCH_ARM64
+	uint8_t buffer[192];
+	_store_stack_param(buffer);
+	list = (va_list)buffer;
+#endif
 	int len = 0;
 	len = _xeprint(output, MAX_STRING_LENGTH, format, list);
 	va_end(list);
@@ -279,6 +285,11 @@ int sprintf(char* output, const char* format, ...) {
 int snprintf(char* output, size_t sz, const char* format, ...) {
 	va_list list;
 	va_start(list, format);
+#ifdef ARCH_ARM64
+	uint64_t buffer[192];
+	_store_stack_param((uint8_t*)buffer);
+	list = (va_list)&buffer[16];
+#endif
 	int len = 0;
 	memset(output, 0, sz);
 	len = _xeprint(output, sz, format, list);
@@ -289,6 +300,11 @@ int snprintf(char* output, size_t sz, const char* format, ...) {
 int printf(const char* format, ...) {
 	va_list list;
 	va_start(list, format);
+#ifdef ARCH_ARM64
+	uint8_t buffer[192];
+	_store_stack_param(buffer);
+	list = (va_list)buffer;
+#endif
 	char output[MAX_STRING_LENGTH + 1];
 	memset(output, '\0', MAX_STRING_LENGTH);
 	int len = _xeprint(output, MAX_STRING_LENGTH, format, list);

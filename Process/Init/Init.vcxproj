@@ -241,6 +241,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="splash.cpp" />
     <ClCompile Include="_init.cpp" />
   </ItemGroup>
   <ItemGroup>

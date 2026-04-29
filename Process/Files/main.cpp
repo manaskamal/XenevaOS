@@ -50,6 +50,7 @@
 #include <widgets\menu.h>
 #include "partition.h"
 #include <widgets/base.h>
+#include <ctype.h>
 
 ChitralekhaApp *app;
 ChWindow* mainWin;
@@ -59,6 +60,9 @@ ChPopupMenu* pm;
 ChListView* lv;
 ChIcon *dirico;
 ChIcon *docico;
+ChIcon* exeico;
+ChIcon* imgico;
+ChIcon* dllico;
 char* path;
 char* history;
 
@@ -95,7 +99,7 @@ void FileAddressBarMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, int bu
 }
 
 
-#define FILE_ADDRESS_BAR_COLOR 0xB3FFFFFF
+#define FILE_ADDRESS_BAR_COLOR 0xFFFFFFFF
 
 void FileAddressBarPaintHandler(ChWidget* wid, ChWindow* win) {
 	FileAddressBar* bar = (FileAddressBar*)wid;
@@ -246,6 +250,40 @@ void PrintParentDir(char* pathname) {
 	free(subpath);
 }
 
+const char* get_extension(const char* filename) {
+	const char* dot = strrchr(filename, '.');
+	if (!dot || dot == filename) return "";
+	return dot + 1;
+}
+
+int stricmp_custom(const char* a, const char* b) {
+	while (*a && *b) {
+		if (tolower(*a) != tolower(*b))
+			return 0;
+		a++; b++;
+	}
+	return *a == *b;
+}
+
+ChIcon* GetIconByName(char* filename) {
+	const char* ext = get_extension(filename);
+	
+	if (stricmp_custom(ext, "bmp") ||
+		stricmp_custom(ext, "jpg") ||
+		stricmp_custom(ext, "png")) {
+		return imgico;
+	}
+
+	if (stricmp_custom(ext, "exe")) 
+		return exeico;
+	
+	if (stricmp_custom(ext, "dll")) 
+		return dllico;
+	
+
+	return docico;
+}
+
 /*
  * RefreshFileView -- reiterate and add file to the list view
  * @param dirfd -- directory file descriptor
@@ -288,7 +326,8 @@ void RefreshFileView(int dirfd, ChListView *lview) {
 					continue;
 				}
 				ChListItem* fi = ChListViewAddItem(mainWin, lv, dirent->filename);
-				ChListViewSetListItemIcon(fi, docico);
+				ChIcon* ico = GetIconByName(dirent->filename);
+				ChListViewSetListItemIcon(fi, ico);
 				fi->ChListItemAction = DocumentItemActionHandler;
 			}
 		}
@@ -548,9 +587,22 @@ int main(int argc, char* argv[]){
 	ChIconOpen(docico, "/icons/doc.bmp");
 	ChIconRead(docico);
 
+	exeico = ChCreateIcon();
+	ChIconOpen(exeico, "/icons/exe.bmp");
+	ChIconRead(exeico);
+
+	imgico = ChCreateIcon();
+	ChIconOpen(imgico, "/icons/img.bmp");
+	ChIconRead(imgico);
+
+	dllico = ChCreateIcon();
+	ChIconOpen(dllico, "/icons/dll.bmp");
+	ChIconRead(dllico);
+
 	ChIcon* drive = ChCreateIcon();
 	ChIconOpen(drive, "/icons/drive.bmp");
 	ChIconRead(drive);
+
 	
 	_KePrint("refreshing file view \r\n");
 	RefreshFileView(dirfd, lv);

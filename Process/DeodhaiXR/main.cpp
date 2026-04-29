@@ -194,7 +194,6 @@ Window* DeodhaiCreateWindow(int x, int y, int w, int h, uint16_t flags, uint16_t
 }
 
 
-
 void CursorStoreBack(ChCanvas* canv, Cursor* cur, unsigned x, unsigned y) {
 	/*for (int w = 0; w < 24; w++) {
 		for (int h = 0; h < 24; h++) {
@@ -752,6 +751,7 @@ void DeodhaiWindowHide(Window* win) {
 void DeodhaiBroadcastKey(int code) {
 	if (!focusedWin)
 		return;
+	_KePrint("Broadcasting key to %s \r\n", focusedWin->title);
 	PostEvent e;
 	memset(&e, 0, sizeof(PostEvent));
 	e.type = DEODHAI_REPLY_KEY_EVENT;
@@ -787,6 +787,65 @@ void DeodhaiBroadcastMessage(PostEvent* e, Window* skippablewin) {
 }
 
 
+/**
+ * @brief DeodhaiCloseWindow -- closes and cleanup an opened
+ * window
+ * @param win -- Pointer to window to be closed
+ */
+void DeodhaiCloseWindow(Window* win) {
+	int ownerId = win->ownerId;
+	int handle = win->handle;
+	uint16_t flags = win->flags;
+	WinSharedInfo* info = (WinSharedInfo*)win->sharedInfo;
+	int width = info->width;
+	int height = info->height;
+	int x = info->x;
+	int y = info->y;
+	_KePrint("[Deodhai]:CloseWindow : %s \r\n", win->title);
+	free(win->title);
+
+	/* iterate all popup window and close them */
+	for (Window* popup = win->firstPopupWin; popup != NULL; popup = popup->next) {
+		//close all
+		free(popup->title);
+		_KeUnmapSharedMem(popup->shWinKey);
+		_KeUnmapSharedMem(popup->backBufferKey);
+#ifdef SHADOW_ENABLED
+		_KeMemUnmap(popup->shadowBuffers, (static_cast<size_t>(width) + SHADOW_SIZE * 2) * (height + SHADOW_SIZE * 2) * 4);
+#endif
+		free(popup);
+	}
+
+	_KePrint("Unmapping shared mems \r\n");
+	//_KeUnmapSharedMem(win->shWinKey);
+	//_KeUnmapSharedMem(win->backBufferKey);
+	_KePrint("Unmapped all shared mems from deodhai side for process\r\n");
+#ifdef SHADOW_ENABLED
+	_KeMemUnmap(win->shadowBuffers, (static_cast<size_t>(width) + SHADOW_SIZE * 2) * (height + SHADOW_SIZE * 2) * 4);
+#endif
+	BackDirtyAdd(x - SHADOW_SIZE, y - SHADOW_SIZE, width + SHADOW_SIZE * 2, height + SHADOW_SIZE * 2);
+	DeodhaiRemoveWindow(win);
+	_KePrint("Removing window \r\n");
+	free(win);
+	PostEvent e;
+	e.to_id = ownerId;
+	e.type = DEODHAI_REPLY_WINDOW_CLOSED;
+	_KeFileIoControl(postbox_fd, POSTBOX_PUT_EVENT, &e);
+	_KePrint("Putting post box event \r\n");
+	if (!(flags & WINDOW_FLAG_MESSAGEBOX)) {
+		/* now broadcast this information, that a
+		 * specific window has been destroyed
+		 */
+		memset(&e, 0, sizeof(PostEvent));
+		e.type = DEODHAI_BROADCAST_WINDESTROYED;
+		e.dword = ownerId;
+		e.dword2 = handle;
+		DeodhaiBroadcastMessage(&e, NULL);
+		_KeProcessSleep(10);
+	}
+	_always_on_top_update = 1;
+	_window_update_all_ = 1;
+}
 /**
 * @brief main -- main entry
 */
@@ -827,7 +886,7 @@ int main(int argc, char* argv[]){
 	DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
 	if (screen_w == 1024 && screen_h == 768) {
 		_KePrint("Drawing wallpaper \r\n");
-		DrawWallpaper(canv, "/city.jpg");
+		DrawWallpaper(canv, "/vill.jpg");
 		DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
 	}
 	else if (screen_w == 1920 && screen_h == 1080) {
@@ -1112,6 +1171,27 @@ int main(int argc, char* argv[]){
 			_window_update_all_ = 1;
 			_always_on_top_update = 1;
 			_KeProcessSleep(6);
+			memset(&event, 0, sizeof(PostEvent));
+		}
+
+		if (event.type == DEODHAI_MESSAGE_CLOSE_WINDOW) {
+			_KePrint("Close Window request \r\n");
+			int handle = event.dword;
+			int ownerId = event.from_id;
+			Window* removable = NULL;
+			for (Window* win = rootWin; win != NULL; win = win->next) {
+				if (win->handle == handle && win->ownerId == ownerId) {
+					removable = win;
+					break;
+				}
+			}
+
+			if (removable) {
+				_KePrint("Close request for window : %s \r\n", removable->title);
+				DeodhaiCloseWindow(removable);
+			}
+			focusedWin = NULL;
+			focusedLast = NULL;
 			memset(&event, 0, sizeof(PostEvent));
 		}
 		

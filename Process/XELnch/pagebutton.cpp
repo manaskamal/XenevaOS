@@ -71,6 +71,8 @@ void XEPageButtonPaint(ChWidget* wid,ChWindow* win) {
 	int cy = wid->y + wid->h / 2;
 
 	uint32_t outline = LIGHTSILVER;
+	if (pb->disabled) 
+		outline = GRAY;
 	if (wid->hover)
 		outline = DESKBLUE;
 
@@ -87,6 +89,10 @@ void XEPageButtonPaint(ChWidget* wid,ChWindow* win) {
 }
 
 void XEPageButtonMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, int button) {
+	XEPageButton* pb = (XEPageButton*)wid;
+	if (pb->disabled)
+		return;
+
 	if (button && !wid->KillFocus)
 		wid->clicked = true;
 
@@ -142,6 +148,7 @@ XEPageButton* CreatePageButton(int x, int y, int w, int h, uint8_t type) {
 	but->wid.w = w;
 	but->wid.h = h;
 	but->type = type;
+	but->disabled = false;
 	but->wid.ChPaintHandler = XEPageButtonPaint;
 	but->wid.ChMouseEvent = XEPageButtonMouseEvent;
 	return but;

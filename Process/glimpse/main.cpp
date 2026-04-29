@@ -43,6 +43,7 @@
 
 ChitralekhaApp *app;
 ChWindow* mainWin;
+static GlimpBox* glimp;
 
 /*
  * WindowHandleMessage -- handles incoming deodhai messages
@@ -74,13 +75,46 @@ int main(int argc, char* argv[]){
 	app = ChitralekhaStartApp(argc, argv);
 	mainWin = ChCreateWindow(app, WINDOW_FLAG_MOVABLE, "Glimpse", 100, 100, 780, 
 		500);
-	ChButton* button = ChCreateButton(0, 0, 100, 75, "Click Me !");
-	ChWindowAddWidget(mainWin,(ChWidget*)button);
-
-	mainWin->color = 0xFFE7E8E9;
+	
+	mainWin->color = 0xFFB5B5B5;
 	mainWin->info->alpha = false;
 	mainWin->ChWinPaint = GlimpseWindowPaint;
+	for (int i = 0; i < mainWin->GlobalControls->pointer; i++) {
+		ChWinGlobalControl* glbl = (ChWinGlobalControl*)list_get_at(mainWin->GlobalControls, i);
+		glbl->outlineColor = BLACK;
+	}
+
+	/* design grid layout */
+	glimp = _Glimpse_create_glimbox(10, 50, mainWin->info->width - 20, mainWin->info->height - 70);
+	
+	/** HACKY way, for now let's only display 5 images, later on i'll add auto-scanning */
+	thumbnail_t* thum1 = _Glimpse_create_thumbnail(0, 0, THUMB_W, THUMB_H);
+	_Glimpse_add_thumbnail(glimp, thum1);
+
+	thumbnail_t* thum2 = _Glimpse_create_thumbnail(0, 0, THUMB_W, THUMB_H);
+	_Glimpse_add_thumbnail(glimp, thum2);
+
+	//thumbnail_t* thum3 = _Glimpse_create_thumbnail(0, 0, THUMB_W, THUMB_H);
+	//_Glimpse_add_thumbnail(glimp, thum3);
+
+	thumbnail_t* thum4 = _Glimpse_create_thumbnail(0, 0, THUMB_W, THUMB_H);
+	_Glimpse_add_thumbnail(glimp, thum4);
+
+	/* scan /image directory, generate thumbnails, add it to grid layout */
+
+	/* paint the grid layout */
+
 	ChWindowPaint(mainWin);
+
+	_Glimpse_draw_thumb(mainWin->canv, "/wall.jpg", thum1->xloc, thum1->yloc, thum1->width,thum1->height);
+	_Glimpse_draw_thumb(mainWin->canv, "/XE_1_2.jpg",thum2->xloc, thum2->yloc,thum2->width, thum2->height);
+	ChWindowUpdate(mainWin, glimp->xloc, glimp->yloc, glimp->width, glimp->height, 0, 1);
+	//_Glimpse_draw_thumb(mainWin->canv, "/budha.jpg", thum3->xloc, thum3->yloc, thum3->width, thum3->height);
+	_Glimpse_draw_thumb(mainWin->canv, "/ayshman.jpg", thum4->xloc, thum4->yloc, thum4->width, thum4->height);
+	ChWindowUpdate(mainWin, glimp->xloc, glimp->yloc, glimp->width, glimp->height, 0, 1);
+	//_Glimpse_draw_thumb(mainWin->canv, "/dawki.jpg", thum5->xloc, thum5->yloc, thum5->width, thum5->height);
+	//_Glimpse_draw_thumb(mainWin->canv, "/boat.jpg", thum6->xloc, thum6->yloc, thum6->width, thum6->height);
+	//ChWindowUpdate(mainWin,glimp->xloc,glimp->yloc,glimp->width,glimp->height, 0, 1);
 	
 	ChWindowBroadcastIcon(app, "/icons/glim.bmp");
 	PostEvent e;
@@ -92,4 +126,8 @@ int main(int argc, char* argv[]){
 		if (err == POSTBOX_NO_EVENT)
 			_KePauseThread();
 	}
+}
+
+GlimpBox* _Glimpse_get_main_glimp() {
+	return glimp;
 }

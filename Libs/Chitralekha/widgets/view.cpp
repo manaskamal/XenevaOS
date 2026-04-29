@@ -48,7 +48,11 @@ void ChListViewMouseEvent(ChWidget* widget, ChWindow* win, int x, int y, int but
 			if (lv->scrollpane->wid.ChPaintHandler)
 				lv->scrollpane->wid.ChPaintHandler((ChWidget*)lv->scrollpane, win);
 			_view_update = true;
+#ifdef ARCH_X64
 			_KeProcessSleep(100);
+#elif ARCH_ARM64
+			_KeProcessSleep(1);
+#endif
 		}
 	}
 
@@ -61,7 +65,11 @@ void ChListViewMouseEvent(ChWidget* widget, ChWindow* win, int x, int y, int but
 			if (lv->scrollpane->wid.ChPaintHandler)
 				lv->scrollpane->wid.ChPaintHandler((ChWidget*)lv->scrollpane, win);
 			_view_update = true;
+#ifdef ARCH_X64
 			_KeProcessSleep(100);
+#elif ARCH_ARM64
+			_KeProcessSleep(1);
+#endif
 		}
 	}
 

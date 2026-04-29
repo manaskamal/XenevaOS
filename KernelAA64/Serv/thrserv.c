@@ -37,6 +37,8 @@
 #include <_null.h>
 #include <Drivers/uart.h>
 #include <aucon.h>
+#include <Mm/shm.h>
+#include <Mm/mmap.h>
 
 /**
  * @brief GetThreadID -- returns current id
@@ -72,10 +74,25 @@ int GetProcessID() {
  * from the main thread of the process
  */
 int ProcessExit() {
-    //NOT IMPLEMENTED
-	UARTDebugOut("[aurora]: process exit call not implemented :( \r\n");
-	AuTextOut("[aurora]: process exit call not implemented :( \r\n");
-	for (;;);
+	UARTDebugOut("Exiting process called \r\n");
+	AA64Thread* current_thr = AuGetCurrentThread();
+	AuProcess* proc = AuProcessFindThread(current_thr);
+	UARTDebugOut("Proc : %x - %s\r\n", proc, current_thr->name);
+	if (!proc) {
+		UARTDebugOut("Process exit not found \r\n");
+		for (;;);
+	}
+
+//	UnmapMemMapping((void*)PROCESS_MMAP_ADDRESS, proc->proc_mmap_len);
+	/* we need to add this process to killable list, so that we can kill it
+	 * later on, because we can't kill here, or else system will crash
+	 */
+	proc->state = PROCESS_STATE_DIED;
+	AuSHMUnmapAll(proc);
+
+	AuThreadMoveToTrash(current_thr);
+	AA64Registers* regs = AA64GetCurrentRegCtx();
+	AuScheduleThread(regs);
 	return 0;
 }
 

@@ -44,6 +44,7 @@
 
 typedef struct _pagebutton_ {
 	ChWidget wid;
+	bool disabled;
 	uint8_t type;
 }XEPageButton;
 

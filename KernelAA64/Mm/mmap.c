@@ -173,7 +173,8 @@ void* CreateMemMapping(void* address, size_t len, int prot, int flags, int fd,
 
 		fb = AuMmngrFileCacheLookup(file->filename);
 		if (!fb) {
-			//UARTDebugOut("[mmap]: file %s is not in cache, we're caching it \r\n", file->filename);
+			UARTDebugOut("[mmap]: file %s is not in cache, we're caching it \r\n", file->filename);
+			UARTDebugOut("[mmap]: file starting address : %x , curr : %x\r\n", file->first_block, file->current);
 			fb = (AuMMFileBack*)kmalloc(sizeof(AuMMFileBack));
 			memset(fb, 0, sizeof(AuMMFileBack));
 			fb->file = file;
@@ -267,8 +268,8 @@ void* CreateMemMapping(void* address, size_t len, int prot, int flags, int fd,
 				}
 			}
 
-			/*if (file->eof)
-				fb->readComplete = 1;*/
+			if (file->eof)
+				fb->readComplete = 1;
 		}
 
 		AuMapPage(phys, lookup_addr + i * PAGE_SIZE, PTE_NORMAL_MEM | PTE_AP_RW_USER);

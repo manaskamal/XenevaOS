@@ -135,11 +135,12 @@ Window* CreateWindow(int x, int y, int w, int h, uint16_t flags, uint16_t ownerI
 	shwin->dirty = false;
 	shwin->windowReady = false;
 	win->handle = DeodhaiAllocateNewHandle();
-	win->glassBlur = (uint32_t*)_KeMemMap(NULL, (((w_ + SHADOW_SIZE_S * 2) * (h_ + SHADOW_SIZE_S * 2) * 4 + 0x1F) & (~0x1FULL)),
-		0, 0, MEMMAP_NO_FILEDESC, 0);
-	win->glassTmp = (uint32_t*)_KeMemMap(NULL, (((w_ + SHADOW_SIZE_S * 2) * (h_ + SHADOW_SIZE_S * 2) * 4 + 0x1F) & (~0x1FULL)),
-		0, 0, MEMMAP_NO_FILEDESC, 0);
-
+	if (flags & WINDOW_FLAG_GLASS) {
+		win->glassBlur = (uint32_t*)_KeMemMap(NULL, (((w_ + SHADOW_SIZE_S * 2) * (h_ + SHADOW_SIZE_S * 2) * 4 + 0x1F) & (~0x1FULL)),
+			0, 0, MEMMAP_NO_FILEDESC, 0);
+		win->glassTmp = (uint32_t*)_KeMemMap(NULL, (((w_ + SHADOW_SIZE_S * 2) * (h_ + SHADOW_SIZE_S * 2) * 4 + 0x1F) & (~0x1FULL)),
+			0, 0, MEMMAP_NO_FILEDESC, 0);
+	}
 #ifdef SHADOW_ENABLED
 	int sw = w + 2 * SHADOW_SIZE;
 	int sh = h + 2 * SHADOW_SIZE;

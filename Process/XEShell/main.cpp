@@ -187,6 +187,7 @@ void XEShellReadLine() {
 			index++;
 			return;
 		}
+		_KePrint("xeshell : %c \r\n", c);
 		printf("%c", c);
 		cmdBuf[index++] = c;
 	}
@@ -366,10 +367,14 @@ void XEShellProcessLine() {
 		
 		if (strcmp(cmdBuf, "systeminfo") == 0) {
 			printf("\nXeneva Shell v1.0\n");
-			printf("Copyright (C) Manas Kamal Choudhury 2023-2024\n");
+			printf("Copyright (C) Xeneva Private Limited 2023-2026\n");
 			printf("Operating System : Xeneva v1.1 -Genuine copy\n");
 			printf("Kernel Version: v1.1 \n");
+#ifdef ARCH_X64
 			printf("Platform: x86_64\n");
+#elif ARCH_ARM64
+			printf("Platform: ARMv8-A \n");
+#endif
 			printf("Terminal: Xeneva Terminal v1.0\n");
 			printf("Window Manager: Deodhai Compositor\n");
 			printf("Xeneva is made in Assam with Love \n");
@@ -446,7 +451,6 @@ int main(int argc, char* arv[]){
 #endif
 	
 	printf("Copyright (C) Xeneva Private Limited \n");
-
 	//_KeSetSignal(SIGINT, XEShellSigInterrupt);
 	cmdBuf = (char*)malloc(1024);
 	memset(cmdBuf, 0, 1024);
@@ -462,6 +466,6 @@ int main(int argc, char* arv[]){
 		XEShellWriteCurrentDir();
 		XEShellReadLine();	
 		XEShellProcessLine();
-		_KeProcessSleep(10);
+		_KeProcessSleep(2);
 	}
 }

@@ -34,6 +34,7 @@
 #include <string.h>
 #include <aucon.h>
 #include <stdint.h>
+#include <Drivers/uart.h>
 
 /**
  * @brief AuGetProcAddress -- get procedure address in a dll image
@@ -251,6 +252,7 @@ bool AuPEFileIsDynamicallyLinked(void* image) {
 	if (IMAGE_DATA_DIRECTORY_IMPORT + 1 > nt_headers->OptionalHeader.NumberOfRvaAndSizes)
 		return false;
 	IMAGE_DATA_DIRECTORY* datadir = &nt_headers->OptionalHeader.DataDirectory[IMAGE_DATA_DIRECTORY_IMPORT];
+	UARTDebugOut("data dir va = %d , size = %d \r\n", datadir->VirtualAddress, datadir->Size);
 	if (datadir->VirtualAddress == 0 || datadir->Size == 0)
 		return false;
 

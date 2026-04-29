@@ -3,6 +3,7 @@
   <ItemGroup>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="glwin.cpp" />
+    <ClCompile Include="thumbnail.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="glimpse.h" />

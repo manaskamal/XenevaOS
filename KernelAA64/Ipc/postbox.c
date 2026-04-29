@@ -144,6 +144,7 @@ void PostBoxDestroy(PostBox* box) {
 
 	AuPmmngrFree((void*)V2P((size_t)box->address));
 	kfree(box);
+	UARTDebugOut("[postbox]: destroyed for id \r\n");
 }
 
 /**
@@ -186,13 +187,17 @@ void PostBoxPutEvent(PostEvent* event) {
 		}
 	}
 
+
 	AA64Thread* thread = AuThreadFindByID(owner_id);
 	if (!thread)
 		thread = AuThreadFindByIDBlockList(owner_id);
+
 	if (thread != NULL && thread->state == THREAD_STATE_BLOCKED) {
-		if (strcmp(thread->name, "exec") == 1) {
-			AuUnblockThread(thread);
-		}
+		/* sometime i don't know, this happens */
+		if (strcmp(thread->name, "exec") == 0)
+			return;
+		AuUnblockThread(thread);
+
 	}
 
 	return;

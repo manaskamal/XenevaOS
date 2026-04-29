@@ -40,7 +40,6 @@ void _compose_dirty_area_(ChCanvas* canvas,Window* win, Window* focusedWin, WinS
 	Window* alwaysOnTop = _get_always_on_top();
 
 	if ((info->rect_count > 0) && (info->dirty)) {
-		_KePrint("Updating normal dirty rect : %s \r\n", win->title);
 		for (int k = 0; k < info->rect_count; k++) {
 			int64_t r_x = info->rect[k].x;
 			int64_t r_y = info->rect[k].y;
@@ -56,8 +55,8 @@ void _compose_dirty_area_(ChCanvas* canvas,Window* win, Window* focusedWin, WinS
 			if ((info->x + r_x + r_w) >= canvas->canvasWidth)
 				r_w = canvas->canvasWidth - (info->x + r_x);
 
-			if ((info->y + r_y + r_h) >= canvas->canvasHeight)
-				r_h = canvas->canvasHeight - (info->y + r_y);
+			if ((info->y + r_y + r_h) >= (canvas->canvasHeight - 70))
+				r_h = (canvas->canvasHeight-70) - (info->y + r_y);
 
 			/* from here, we check if the small rectangle is
 			 * covered by a window or another rectangle */
@@ -142,10 +141,11 @@ void _compose_dirty_area_(ChCanvas* canvas,Window* win, Window* focusedWin, WinS
 						_fastcpy(canvas_mem,
 							win_mem, static_cast<size_t>(r_w) * 4);
 					}*/
-					_KePrint("dirty update on normal window ?? \r\n");
-					uint32_t* backSurface = DeoGetBackSurface();
-					glass_precompute_blur(win->glassBlur, win->glassTmp, backSurface, canvas->canvasWidth, canvas->canvasHeight,
-						info->x + r_x, info->y + r_y, r_w, r_h, 4);
+					if (win->flags & WINDOW_FLAG_GLASS) {
+						uint32_t* backSurface = DeoGetBackSurface();
+						glass_precompute_blur(win->glassBlur, win->glassTmp, backSurface, canvas->canvasWidth, canvas->canvasHeight,
+							info->x + r_x, info->y + r_y, r_w, r_h, 4);
+					}
 
 					for (int64_t i = 0; i < r_h; i++) {
 						//_fastcpy(canvas->buffer + (winy + i) * canvas->canvasWidth + winx,
@@ -157,9 +157,12 @@ void _compose_dirty_area_(ChCanvas* canvas,Window* win, Window* focusedWin, WinS
 						_shadow_compose_neon(canvas_row, canvas->canvasWidth, canvas->canvasHeight, win->shadowBuffers,
 							width + 2 * SHADOW_SIZE, height + 2 * SHADOW_SIZE, winx, winy);
 #endif
-						uint32_t* blur_row = win->glassBlur + i * r_w;
-						//__pixel_blend_neon(canvas_row, backbuff, width);
-						_blend_scanline_glass_neon(canvas_row, backbuff, blur_row, r_w);
+						if (win->flags & WINDOW_FLAG_GLASS) {
+							uint32_t* blur_row = win->glassBlur + i * r_w;
+							_blend_scanline_glass_neon(canvas_row, backbuff, blur_row, r_w);
+						}else
+							__pixel_blend_neon(canvas_row, backbuff, r_w);
+
 					}
 					AddDirtyClip(info->x + r_x, info->y + r_y, r_w, r_h);
 				}
@@ -195,9 +198,11 @@ void _compose_dirty_area_(ChCanvas* canvas,Window* win, Window* focusedWin, WinS
 						_fastcpy(canvas_mem,
 							win_mem, k_w * 4);
 					}*/
-					uint32_t* backSurface = DeoGetBackSurface();
-					glass_precompute_blur(win->glassBlur, win->glassTmp, backSurface, canvas->canvasWidth, canvas->canvasHeight,
-						 k_x, k_y, info->width, info->height, 4);
+					if (win->flags & WINDOW_FLAG_GLASS) {
+						uint32_t* backSurface = DeoGetBackSurface();
+						glass_precompute_blur(win->glassBlur, win->glassTmp, backSurface, canvas->canvasWidth, canvas->canvasHeight,
+							k_x, k_y, info->width, info->height, 4);
+					}
 
 					for (int64_t i = 0; i < k_h; i++) {
 						//_fastcpy(canvas->buffer + (winy + i) * canvas->canvasWidth + winx,
@@ -209,9 +214,13 @@ void _compose_dirty_area_(ChCanvas* canvas,Window* win, Window* focusedWin, WinS
 						_shadow_compose_neon(canvas_row, canvas->canvasWidth, canvas->canvasHeight, win->shadowBuffers,
 							width + 2 * SHADOW_SIZE, height + 2 * SHADOW_SIZE, winx, winy);
 #endif
-						uint32_t* blur_row = win->glassBlur + i * k_w;
-						//__pixel_blend_neon(canvas_row, backbuff, width);
-						_blend_scanline_glass_neon(canvas_row, backbuff, blur_row, k_w);
+						if (win->flags & WINDOW_FLAG_GLASS) {
+							uint32_t* blur_row = win->glassBlur + i * k_w;
+							//
+							_blend_scanline_glass_neon(canvas_row, backbuff, blur_row, k_w);
+						}else
+							__pixel_blend_neon(canvas_row, backbuff, k_w);
+
 					}
 
 					AddDirtyClip(k_x, k_y, k_w, k_h);
@@ -387,9 +396,11 @@ void _compose_entire_window(ChCanvas* canvas, Window* win, bool _window_update_a
 						height = (canvas->screenHeight - 70) - winy;
 				}
 
-				uint32_t* backSurface = DeoGetBackSurface();
-				glass_precompute_blur(win->glassBlur, win->glassTmp, backSurface, canvas->canvasWidth, canvas->canvasHeight,
-					winx, winy, width, height, 4);
+				if (win->flags & WINDOW_FLAG_GLASS) {
+					uint32_t* backSurface = DeoGetBackSurface();
+					glass_precompute_blur(win->glassBlur, win->glassTmp, backSurface, canvas->canvasWidth, canvas->canvasHeight,
+						winx, winy, width, height, 4);
+				}
 
 				for (int64_t i = 0; i < height; i++) {
 					//_fastcpy(canvas->buffer + (winy + i) * canvas->canvasWidth + winx,
@@ -401,9 +412,11 @@ void _compose_entire_window(ChCanvas* canvas, Window* win, bool _window_update_a
 					_shadow_compose_neon(canvas_row, canvas->canvasWidth, canvas->canvasHeight, win->shadowBuffers,
 						width + 2 * SHADOW_SIZE, height + 2 * SHADOW_SIZE, winx, winy);
 #endif
-					uint32_t* blur_row = win->glassBlur + i * width;
-					//__pixel_blend_neon(canvas_row, backbuff, width);
-					_blend_scanline_glass_neon(canvas_row, backbuff, blur_row, width);
+					if (win->flags & WINDOW_FLAG_GLASS) {
+						uint32_t* blur_row = win->glassBlur + i * width;
+						_blend_scanline_glass_neon(canvas_row, backbuff, blur_row, width);
+					}else
+						__pixel_blend_neon(canvas_row, backbuff, width);
 				}
 			}
 
@@ -445,9 +458,11 @@ void _compose_entire_window(ChCanvas* canvas, Window* win, bool _window_update_a
 				height = k_h;
 				int diffx = k_x - info->x;
 				int diffy = k_y - info->y;
-				uint32_t* backSurface = DeoGetBackSurface();
-				glass_precompute_blur(win->glassBlur, win->glassTmp, backSurface, canvas->canvasWidth, canvas->canvasHeight,
-					winx, winy,k_w, k_h, 4);
+				if (win->flags & WINDOW_FLAG_GLASS) {
+					uint32_t* backSurface = DeoGetBackSurface();
+					glass_precompute_blur(win->glassBlur, win->glassTmp, backSurface, canvas->canvasWidth, canvas->canvasHeight,
+						winx, winy, k_w, k_h, 4);
+				}
 
 				for (int64_t i = 0; i < height; i++) {
 					//_fastcpy(canvas->buffer + (winy + i) * canvas->canvasWidth + winx,
@@ -459,9 +474,14 @@ void _compose_entire_window(ChCanvas* canvas, Window* win, bool _window_update_a
 					_shadow_compose_neon(canvas_row, canvas->canvasWidth, canvas->canvasHeight, win->shadowBuffers,
 						width + 2 * SHADOW_SIZE, height + 2 * SHADOW_SIZE, winx, winy);
 #endif
-					uint32_t* blur_row = win->glassBlur + i * width;
-					//__pixel_blend_neon(canvas_row, backbuff, width);
-					_blend_scanline_glass_neon(canvas_row, backbuff, blur_row, width);
+					if (win->flags & WINDOW_FLAG_GLASS) {
+						uint32_t* blur_row = win->glassBlur + i * width;
+						//__pixel_blend_neon(canvas_row, backbuff, width);
+						_blend_scanline_glass_neon(canvas_row, backbuff, blur_row, width);
+					}
+					else 
+						__pixel_blend_neon(canvas_row, backbuff, width);
+					
 				}
 
 				AddDirtyClip(k_x, k_y, k_w, k_h);
@@ -560,10 +580,12 @@ void _compose_always_on_top_dirty(ChCanvas* canvas, WinSharedInfo* info, bool _w
 				}
 
 				if (clipCount == 0 && !overlap) {
-
-					uint32_t* backSurface = DeoGetBackSurface();
-					glass_precompute_blur(win->glassBlur, win->glassTmp, backSurface, canvas->canvasWidth, canvas->canvasHeight,
-						info->x + r_x, info->y + r_y, r_w, r_h, 4);
+					
+					if (win->flags & WINDOW_FLAG_GLASS) {
+						uint32_t* backSurface = DeoGetBackSurface();
+						glass_precompute_blur(win->glassBlur, win->glassTmp, backSurface, canvas->canvasWidth, canvas->canvasHeight,
+							info->x + r_x, info->y + r_y, r_w, r_h, 4);
+					}
 
 					for (uint64_t i = 0; i < r_h; i++) {
 						//_fastcpy(canvas->buffer + (winy + i) * canvas->canvasWidth + winx,
@@ -575,9 +597,13 @@ void _compose_always_on_top_dirty(ChCanvas* canvas, WinSharedInfo* info, bool _w
 						_shadow_compose_neon(canvas_row, canvas->canvasWidth, canvas->canvasHeight, win->shadowBuffers,
 							width + 2 * SHADOW_SIZE, height + 2 * SHADOW_SIZE, winx, winy);
 #endif
-						uint32_t* blur_row = win->glassBlur + i * r_w;
-						//__pixel_blend_neon(canvas_row, backbuff, width);
-						_blend_scanline_glass_neon(canvas_row, backbuff, blur_row, r_w);
+						if (win->flags & WINDOW_FLAG_GLASS) {
+							uint32_t* blur_row = win->glassBlur + i * r_w;
+							_blend_scanline_glass_neon(canvas_row, backbuff, blur_row, r_w);
+						}
+						else 
+							__pixel_blend_neon(canvas_row, backbuff, r_w);
+						
 					}
 					AddDirtyClip(info->x + r_x, info->y + r_y, r_w, r_h);
 				}
@@ -606,9 +632,11 @@ void _compose_always_on_top_dirty(ChCanvas* canvas, WinSharedInfo* info, bool _w
 					int diffy = k_y - offset_y;
 					int update_r_y = r_y + diffy;
 
-					uint32_t* backSurface = DeoGetBackSurface();
-					glass_precompute_blur(win->glassBlur, win->glassTmp, backSurface, canvas->canvasWidth, canvas->canvasHeight,
-						k_x, k_y, info->width, info->height, 4);
+					if (win->flags & WINDOW_FLAG_GLASS) {
+						uint32_t* backSurface = DeoGetBackSurface();
+						glass_precompute_blur(win->glassBlur, win->glassTmp, backSurface, canvas->canvasWidth, canvas->canvasHeight,
+							k_x, k_y, info->width, info->height, 4);
+					}
 
 					for (int64_t i = 0; i < k_h; i++) {
 						//_fastcpy(canvas->buffer + (winy + i) * canvas->canvasWidth + winx,
@@ -620,9 +648,13 @@ void _compose_always_on_top_dirty(ChCanvas* canvas, WinSharedInfo* info, bool _w
 						_shadow_compose_neon(canvas_row, canvas->canvasWidth, canvas->canvasHeight, win->shadowBuffers,
 							width + 2 * SHADOW_SIZE, height + 2 * SHADOW_SIZE, winx, winy);
 #endif
-						uint32_t* blur_row = win->glassBlur + i * k_w;
-						//__pixel_blend_neon(canvas_row, backbuff, width);
-						_blend_scanline_glass_neon(canvas_row, backbuff, blur_row, k_w);
+						if (win->flags & WINDOW_FLAG_GLASS) {
+							uint32_t* blur_row = win->glassBlur + i * k_w;
+							_blend_scanline_glass_neon(canvas_row, backbuff, blur_row, k_w);
+						}
+						else 
+							__pixel_blend_neon(canvas_row, backbuff, k_w);
+						
 						clipRect[l].x = clipRect[l].y = clipRect[l].w = clipRect[l].h = 0;
 					}
 					AddDirtyClip(k_x, k_y, k_w, k_h);
@@ -748,9 +780,11 @@ void _compose_always_on_top_entire(ChCanvas* canvas, Window* win, bool _always_o
 				 * maybe window was hidden but the algorithm above detected the AOT window and
 				 * normal window, because algorithm doesn't care about hidden or non-hidden **/
 				(clipCount > 0 && info->updateEntireWindow)) {
-				uint32_t* backSurface = DeoGetBackSurface();
-				glass_precompute_blur(win->glassBlur, win->glassTmp, backSurface, canvas->canvasWidth, canvas->canvasHeight,
-					winx, winy, width, height, 4);
+				if (win->flags & WINDOW_FLAG_GLASS) {
+					uint32_t* backSurface = DeoGetBackSurface();
+					glass_precompute_blur(win->glassBlur, win->glassTmp, backSurface, canvas->canvasWidth, canvas->canvasHeight,
+						winx, winy, width, height, 4);
+				}
 
 				for (int64_t i = 0; i < height; i++) {
 					//_fastcpy(canvas->buffer + (winy + i) * canvas->canvasWidth + winx,
@@ -762,9 +796,13 @@ void _compose_always_on_top_entire(ChCanvas* canvas, Window* win, bool _always_o
 					_shadow_compose_neon(canvas_row, canvas->canvasWidth, canvas->canvasHeight, win->shadowBuffers,
 						width + 2 * SHADOW_SIZE, height + 2 * SHADOW_SIZE, winx, winy);
 #endif
-					uint32_t* blur_row = win->glassBlur + i * width;
-					//__pixel_blend_neon(canvas_row, backbuff, width);
-					_blend_scanline_glass_neon(canvas_row, backbuff, blur_row, width);
+					if (win->flags & WINDOW_FLAG_GLASS) {
+						uint32_t* blur_row = win->glassBlur + i * width;
+						_blend_scanline_glass_neon(canvas_row, backbuff, blur_row, width);
+					}
+					else 
+						__pixel_blend_neon(canvas_row, backbuff, width);
+					
 				}
 				if (clipCount > 0)
 					clipCount = 0;
@@ -794,9 +832,12 @@ void _compose_always_on_top_entire(ChCanvas* canvas, Window* win, bool _always_o
 				height = k_h;
 				int diffx = k_x - info->x;
 				int diffy = k_y - info->y;
-				uint32_t* backSurface = DeoGetBackSurface();
-				glass_precompute_blur(win->glassBlur, win->glassTmp, backSurface, canvas->canvasWidth, canvas->canvasHeight,
-					winx, winy, k_w, k_h, 4);
+
+				if (win->flags & WINDOW_FLAG_GLASS) {
+					uint32_t* backSurface = DeoGetBackSurface();
+					glass_precompute_blur(win->glassBlur, win->glassTmp, backSurface, canvas->canvasWidth, canvas->canvasHeight,
+						winx, winy, k_w, k_h, 4);
+				}
 
 				for (uint64_t i = 0; i < height; i++) {
 					//_fastcpy(canvas->buffer + (winy + i) * canvas->canvasWidth + winx,
@@ -808,9 +849,14 @@ void _compose_always_on_top_entire(ChCanvas* canvas, Window* win, bool _always_o
 					_shadow_compose_neon(canvas_row, canvas->canvasWidth, canvas->canvasHeight, win->shadowBuffers,
 						width + 2 * SHADOW_SIZE, height + 2 * SHADOW_SIZE, winx, winy);
 #endif
-					uint32_t* blur_row = win->glassBlur + i * width;
-					//__pixel_blend_neon(canvas_row, backbuff, width);
-					_blend_scanline_glass_neon(canvas_row, backbuff, blur_row, width);
+					if (win->flags & WINDOW_FLAG_GLASS) {
+						uint32_t* blur_row = win->glassBlur + i * width;
+						
+						_blend_scanline_glass_neon(canvas_row, backbuff, blur_row, width);
+					}
+					else 
+					    __pixel_blend_neon(canvas_row, backbuff, width);
+					
 				}
 			}
 			AddDirtyClip(info->x, info->y, info->width, info->height);
