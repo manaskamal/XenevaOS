@@ -83,12 +83,7 @@ int ProcessExit() {
 		for (;;);
 	}
 
-//	UnmapMemMapping((void*)PROCESS_MMAP_ADDRESS, proc->proc_mmap_len);
-	/* we need to add this process to killable list, so that we can kill it
-	 * later on, because we can't kill here, or else system will crash
-	 */
-	proc->state = PROCESS_STATE_DIED;
-	AuSHMUnmapAll(proc);
+	AuProcessExit(proc, false);
 
 	AuThreadMoveToTrash(current_thr);
 	AA64Registers* regs = AA64GetCurrentRegCtx();
@@ -103,6 +98,11 @@ int ProcessExit() {
  */
 int ProcessWaitForTermination(int pid) {
 	//NOT IMPLEMENTED
+	AA64Thread* current_thr = AuGetCurrentThread();
+	AuProcess* proc = AuProcessFindThread(current_thr);
+	AuProcessWaitForTermination(proc, pid);
+	AA64Registers* regs = AA64GetCurrentRegCtx();
+	AuScheduleThread(regs);
 	return 0;
 }
 

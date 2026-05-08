@@ -256,6 +256,15 @@
     <Filter Include="Include\Board\imx8mp">
       <UniqueIdentifier>{507f6769-a77e-4ab1-bb23-1418e106d97e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Include\linux">
+      <UniqueIdentifier>{cf982478-5943-4e71-bd53-369a547bfae4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="dcl">
+      <UniqueIdentifier>{9d1d129c-870b-4e24-8436-78e9cb13ad21}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Include\linux\usb">
+      <UniqueIdentifier>{c9365c92-0db6-4335-ab5b-3a4fb31cc782}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="Hal\aa64vector.s">
@@ -347,6 +356,27 @@
     </ClInclude>
     <ClInclude Include="..\BaseHdr\Board\imx8mp\imx8mp_clk.h">
       <Filter>Include\Board\imx8mp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\linux\kernel.h">
+      <Filter>Include\linux</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\linux\usb\otg.h">
+      <Filter>Include\linux\usb</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\linux\bitmap.h">
+      <Filter>Include\linux</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\linux\list.h">
+      <Filter>Include\linux</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\linux\usb\ch9.h">
+      <Filter>Include\linux\usb</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\linux\workqueue.h">
+      <Filter>Include\linux</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\linux\timer.h">
+      <Filter>Include\linux</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

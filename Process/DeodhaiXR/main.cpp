@@ -751,7 +751,6 @@ void DeodhaiWindowHide(Window* win) {
 void DeodhaiBroadcastKey(int code) {
 	if (!focusedWin)
 		return;
-	_KePrint("Broadcasting key to %s \r\n", focusedWin->title);
 	PostEvent e;
 	memset(&e, 0, sizeof(PostEvent));
 	e.type = DEODHAI_REPLY_KEY_EVENT;

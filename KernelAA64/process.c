@@ -386,16 +386,87 @@ void AuProcessExit(AuProcess* proc, bool schedulable) {
 	}
 
 
-	proc->state = PROCESS_STATE_DIED;
-
 	AuProcessFreeKeResource(proc->main_thread);
 
-	AuThreadMoveToTrash(proc->main_thread);
+	UARTDebugOut("Proc->proc_mmap_len : %d \r\n", proc->proc_mmap_len);
+	UnmapMemMapping((void*)PROCESS_MMAP_ADDRESS, proc->proc_mmap_len);
+	/* we need to add this process to killable list, so that we can kill it
+	 * later on, because we can't kill here, or else system will crash
+	 */
+	proc->state = PROCESS_STATE_DIED;
+	AuSHMUnmapAll(proc);
 
-	if (schedulable) {
-		AA64Registers* regs = AA64GetCurrentRegCtx();
-		//current_thr->sp = (uint64_t)regs;
-		UARTDebugOut("About to schedule \r\n");
-		AuScheduleThread(regs);
+	//AuProcessHeapMemDestroy(proc);
+
+	for (int i = 0; i < proc->waitlist->pointer; i++) {
+		AA64Thread* thr = (AA64Thread*)list_remove(proc->waitlist, i);
+		if (thr) 
+			AuUnblockThread(thr);
+	}
+
+	kfree(proc->waitlist);
+
+	///* mark all the threads as blocked */
+	for (int i = 1; i < proc->num_thread; i++) {
+		AA64Thread* killable = proc->threads[i];
+		if (killable) {
+			/* here we should cleanup sub postbox
+			 * sound, timer resources also
+			 */
+			AuProcessFreeKeResource(killable);
+			AuThreadMoveToTrash(killable);
+		}
+	}
+
+}
+
+/*
+ * AuGetKillableProcess -- returns a killable process
+ * @param proc -- process to kill
+ */
+AuProcess* AuGetKillableProcess() {
+	for (AuProcess* proc_ = proc_first; proc_ != NULL; proc_ = proc_->next) {
+		if (proc_->state & PROCESS_STATE_DIED)
+			return proc_;
+	}
+
+	return NULL;
+}
+
+/**
+ * @brief AuProcessWaitForTermination -- waits for termination
+ * of child processes
+ * @param proc -- pointer to process who needs to
+ * wait for termination
+ * @param pid -- pid of the process, if -1 then any child
+ * process
+ */
+void AuProcessWaitForTermination(AuProcess* proc, int pid) {
+	if (pid == -1) {
+		do {
+			AuProcess* killable = AuGetKillableProcess();
+
+			if (killable) {
+				//AuProcessClean(0, killable);
+				UARTDebugOut("Killable process found -> %s \r\n", killable->name);
+				killable = NULL;
+			}
+
+
+			if (!killable) {
+				AuSleepThread(proc->main_thread, 10);
+				proc->state = PROCESS_STATE_SUSPENDED;
+				return;
+			}
+		} while (1);
+	}
+	else {
+		AuProcess* proc = AuProcessFindByPID(0, pid);
+		if (!proc)
+			return;
+		AA64Thread* thr = AuGetCurrentThread();
+		AuBlockThread(thr);
+		list_add(proc->waitlist, thr);
+		return;
 	}
 }

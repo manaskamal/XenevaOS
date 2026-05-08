@@ -340,7 +340,7 @@ void* root_hub_get_interrupt_buffer() {
 void root_hub_handle_port_change(dwc2_core_regs* regs, uint8_t port) {
 	void* p = AuPmmngrAlloc();
 	usb_hub_get_port_status(regs, port, p, 1, speed_);
-	AA64SleepMS(1);
+	AA64SleepMS(10);
 
 	usb_port_status_t* status = (usb_port_status_t*)p;
 	UARTDebugOut("status : %x , port change : %x \r\n", status->wPortStatus, status->wPortChange);

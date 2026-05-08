@@ -144,7 +144,8 @@ extern "C" void main(int argc, char* argv[]) {
 	_KePrint("Setting up env variable \r\n");
 	initSetupBasicEnvironmentVars();
 	while(1){
-		_KePauseThread();
+		if (pid == 1)
+			_KeProcessWaitForTermination(-1);
 	}
 
 	

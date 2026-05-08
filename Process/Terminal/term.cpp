@@ -121,7 +121,7 @@ void TerminalDrawCell(int x, int y, bool dirty) {
 		0, cell->cellFgCol);
 	/*TerminalDrawArrayFont(win->canv, x * cell_width, y_offset + y * cell_height + 12 / 2, cell->c, cell->cellFgCol);*/
 	if (dirty)
-		ChWindowUpdate(win,x * cell_width, y_offset + y * cell_height, cell_width, cell_height, 1, 0);
+		ChWindowUpdate(win,x * cell_width, y_offset + y * cell_height, cell_width, cell_height, 0, 1);
 }
 
 /*
@@ -137,7 +137,7 @@ void TerminalDrawAllCells() {
 	
 	ChWindowUpdate(win, 0, 26, win->info->width - 1, win->info->height - 26, 1, 0);
 
-	_KeProcessSleep(10);
+	//_KeProcessSleep(10);
 }
 
 
@@ -535,7 +535,6 @@ void TerminalHandleMessage(PostEvent *e) {
 		break;
 	case DEODHAI_REPLY_KEY_EVENT: {
 		int code = e->dword;
-		_KePrint("Key event are delivered %x\r\n", code);
 		ChitralekhaProcessKey(code);
 		char rawkey = ChitralekhaGetKeyPress(code);
 		char c = ChitralekhaKeyToASCII(code);
@@ -552,7 +551,6 @@ void TerminalHandleMessage(PostEvent *e) {
 				ChWindowHide(win);
 			}
 		}
-		_KePrint("Master fd : %d %c\r\n", master_fd,c);
 		_KeWriteFile(master_fd, &c, 1);
 		/* else its a key release event */
 		memset(e, 0, sizeof(PostEvent));
@@ -605,7 +603,7 @@ void TerminalThread() {
 		}
 		
 #ifdef ARCH_ARM64
-		_KeProcessSleep(20);
+		_KeProcessSleep(4);
 #elif ARCH_X64
 		_KeProcessSleep(10000);
 #endif

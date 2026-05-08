@@ -317,9 +317,10 @@ void dwc2_handle_channel_interrupt(dwc2_core_regs* regs, int ch) {
 			uint8_t bitmap = buf[0];
 			for (int p = 1; p <= 4; p++) {
 				if (bitmap & (1 << p)) {
-					UARTDebugOut("[dwc2-otg]: root hub port changed : %d \r\n", p);
+					UARTDebugOut("[dwc2-otg]: root hub port changed : %d bitmap: %x\r\n", p, bitmap);
 					//root_hub_handle_port_change(regs, p);
 					port_changed = p;
+					memset(buf, 0, 4096);
 				}
 			}
 		}

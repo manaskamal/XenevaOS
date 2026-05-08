@@ -8,6 +8,8 @@ EXPORTS
      enable_irqs
      mask_irqs
      dsb_sy_barrier
+     dmb_sy
      dc_ivac
      aa64_data_cache_clean_range
+     data_cache_flush
      _wfi

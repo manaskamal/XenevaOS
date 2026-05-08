@@ -161,7 +161,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>ARCH_ARM64;__TARGET_BOARD_QEMU_VIRT__;_USE_DLMALLOC;__STDC_LIMIT_MACROS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>ARCH_ARM64;__TARGET_BOARD_RPI3__;_USE_DLMALLOC;__STDC_LIMIT_MACROS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>Default</ConformanceMode>
       <AdditionalIncludeDirectories>..\BaseHdr;..\Acpica\include;..\Acpica;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
@@ -354,6 +354,13 @@
     <ClInclude Include="..\BaseHdr\Hal\AA64\sched.h" />
     <ClInclude Include="..\BaseHdr\Hal\AA64\vector.h" />
     <ClInclude Include="..\BaseHdr\kernelAA64.h" />
+    <ClInclude Include="..\BaseHdr\linux\bitmap.h" />
+    <ClInclude Include="..\BaseHdr\linux\kernel.h" />
+    <ClInclude Include="..\BaseHdr\linux\list.h" />
+    <ClInclude Include="..\BaseHdr\linux\timer.h" />
+    <ClInclude Include="..\BaseHdr\linux\usb\ch9.h" />
+    <ClInclude Include="..\BaseHdr\linux\usb\otg.h" />
+    <ClInclude Include="..\BaseHdr\linux\workqueue.h" />
     <ClInclude Include="..\BaseHdr\Mm\mmfile.h" />
     <ClInclude Include="..\BaseHdr\uart.h">
       <DeploymentContent>false</DeploymentContent>

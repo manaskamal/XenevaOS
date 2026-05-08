@@ -256,8 +256,8 @@ size_t AuTTYSlaveWrite(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint3
 	/* little bit slow down the slave process,
 	 * it's too fast
 	 */
-	 AuSleepThread(curr_th, 10);
-	 AuScheduleThread(AA64GetCurrentRegCtx());
+	 //AuSleepThread(curr_th, );
+	 //AuScheduleThread(AA64GetCurrentRegCtx());
 }
 
 int AuTTYSlaveClose(AuVFSNode* fs, AuVFSNode* file) {

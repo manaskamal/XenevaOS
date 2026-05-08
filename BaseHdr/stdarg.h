@@ -32,6 +32,7 @@
 
 
 #include <va_list.h>
+#include <stdint.h>
 
 
 #ifdef __cplusplus
