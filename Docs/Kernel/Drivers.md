@@ -64,3 +64,29 @@ Upto here the Kernel will smoothly initialize the driver and powers up the desti
 
 ## devfs (The device file system)
 In Xeneva, The device can be controlled through file system callbacks, as for all devices the driver creates a file and store it in the device file system, similar to Unix environment. For example to control each storage discs of AHCI controller, you can open the desired disc file from ```dev/disk0/ahci1``` to read the disc number one. Another example for reading the first SSD from NVMe controller, you can open the file from ```dev/dsik1/nvme0```. 
+
+## Interrupt handling
+During external driver initialization, the kernel temporarily disables interrupts to ensure that drivers initialize in a stable and predictable manner. However, certain drivers depend on interrupts to complete their initialization sequence. In such cases, a driver may temporarily enable interrupts during its initialization process and disable them again once initialization is complete.<br><br>
+Before continuing with the initialization of the next driver, the kernel ensures that interrupts are properly disabled. This prevents unexpected interrupt handling during subsequent driver initialization stages and helps maintain a smooth and controlled boot process.<br><br>
+
+On x86_64 systems, interrupts are disabled using `x64_cli()` and enabled using `x64_sti()`, both declared in `x86_64_lowlevel.h`.  <br><br>
+On ARM64 systems, interrupts are disabled using `mark_irqs()` and enabled using `enable_irqs()`, declared in `aa64lowlevel.h`.
+
+## Registering Interrupt handler
+ The kernel maintains a list of interrupt handler functions that are invoked whenever a corresponding interrupt is triggered. Both x86_64 and ARM64 architectures follow this interrupt handling model. <br><br>
+ Before an interrupt handler can receive interrupts, the corresponding interrupt number must be enabled in the interrupt controller. By default, all interrupts remain disabled until explicitly enabled. <br><br>
+ ### x86_64 systems: 
+ On x86_64 systems, interrupts handlers can be registered using: ```setvect(size_t vector, void(*function)(size_t vector, void* param))```
+ - ``vector`` specifies the interrupt vector number.
+ - ``function`` is the interrupt handler function associated with that interrupt.
+
+ Before calling ``setvect``, the interrupt must already be enabled at both the bus level and the interrupt controller level.
+
+ ### arm64 systems:
+ On ARM64 systems, interrupt handlers can be registered using:
+ ```GICRegisterSPIHandler(void* fptr, int spi)```
+ - ``spi`` specifies the Shared Peripheral Interrupt (SPI) number.
+ - ``fptr`` points to the interrupt handler function.
+
+ Before calling ``GICRegisterSPIHnalder()``, the interrupt must be enabled at both the bus level and the interrupt controller level.
+ At the interrupt controller level the interrupt can be enabled using : ``GICEnableSPIIRQ(uint32_t irq)`` where ``irq`` is the interrupt number.

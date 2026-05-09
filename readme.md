@@ -33,6 +33,8 @@ XenevaOS is an open-source project that welcomes contributions from developers, 
 - Audio Server called "Deodhai-Audio" with 
     (44kHz/16bit audio format, stereo/mono panning, gain control)
 - Networking (IPv4, UDP/IP, TCP/IP, ICMP)
+- DWC2 otg driver as usb controller 
+- Virtio drivers
 - Upcoming RISC-V implementation
 
 ## __ARCH Specific Board Support__ :

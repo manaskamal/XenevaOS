@@ -1,2 +1,0 @@
-^E:\XENEVA PROJECT\AURORA\LIBS\XECRT\CRT0_ARM64.S
-clang --target=aarch64-windows-msvc -fms-compatibility -fms-extensions  -c -o "ARM64\Debug\crt0_arm64.obj" "E:\Xeneva Project\Aurora\Libs\XECrt\crt0_arm64.s"
