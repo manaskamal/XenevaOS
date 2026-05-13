@@ -82,7 +82,7 @@ void AuMmngrAddFileBack(AuMMFileBack* fb) {
 * @param thread -- thread address to remove
 */
 void AuMmngrRemoveFileBack(AuMMFileBack* fb) {
-
+	UARTDebugOut("Removing file back :%s \r\n", fb->file->filename);
 	if (fb_first == NULL)
 		return;
 	
@@ -204,6 +204,11 @@ void AuMmngrFileBackAddPageCache(AuMMFileBack* fileb, AuMMPageCache* cache) {
 		fileb->pageCacheLast->next = cache;
 		cache->prev = fileb->pageCacheLast;
 	}
+	AuPageDesc* desc = AuPmmngrGetPageDesc(cache->physicalPage);
+
+	if (desc && (cache->diskBlock != -1))
+		desc->diskblock = cache->diskBlock;
+
 	fileb->pageCacheLast = cache;
 }
 

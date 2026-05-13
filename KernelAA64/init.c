@@ -269,7 +269,6 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	UARTDebugOut("Loading process init \r\n");
 	AuLoadExecToProcess(proc, "/init.exe", num_args, argvs);
 	
-
 #ifdef __KERNEL_PROFILER_ON__
 	PROFILE_END("_AuMain");
 #endif

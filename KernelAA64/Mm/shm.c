@@ -114,6 +114,9 @@ int AuCreateSHM(AuProcess* proc, uint16_t key, size_t sz, uint8_t flags) {
 	shm = AuGetSHMSeg(key);
 	/* create a new*/
 	if (!shm) {
+		if (proc) {
+			UARTDebugOut("Creating shm for proc : %s \r\n", proc->name);
+		}
 		shm = (AuSHM*)kmalloc(sizeof(AuSHM));
 		memset(shm, 0, sizeof(AuSHM));
 		shm->id = AuSHMGetID();
@@ -121,9 +124,10 @@ int AuCreateSHM(AuProcess* proc, uint16_t key, size_t sz, uint8_t flags) {
 		shm->num_frames = (sz / 0x1000) + ((sz % 0x1000) ? 1 : 0);
 		shm->link_count = 0;
 		shm->frames = (uint64_t*)kmalloc(sizeof(uint64_t) * shm->num_frames);
-		for (int i = 0; i < shm->num_frames; i++) {
+		for (int i = 0; i < shm->num_frames; i++) 
 			shm->frames[i] = (uint64_t)AuPmmngrAlloc();
-		}
+	
+		
 		list_add(shm_list, shm);
 	}
 
@@ -251,7 +255,6 @@ void* AuSHMObtainMem(AuProcess* proc, uint16_t id, void* shmaddr, int shmflg) {
 			if (gap >= mem->num_frames * PAGE_SIZE) {
 				for (int j = 0; j < mem->num_frames; j++) {
 					size_t phys = mem->frames[j];
-					UARTDebugOut("Shared mem mapping : %x \r\n", phys);
 					AuMapPage(phys, last_addr + j * PAGE_SIZE,PTE_NORMAL_MEM | PTE_AP_RW_USER);
 					isb_flush();
 					dsb_ish();
@@ -303,6 +306,7 @@ void* AuSHMObtainMem(AuProcess* proc, uint16_t id, void* shmaddr, int shmflg) {
 			if (gap >= mem->num_frames * PAGE_SIZE) {
 				for (int j = 0; j < mem->num_frames; j++) {
 					size_t phys = mem->frames[j];
+					AuPmmngrAddRefcount(phys, 1);
 					AuMapPage(phys, last_addr + j * PAGE_SIZE, PTE_AP_RW_USER);
 					isb_flush();
 					dsb_ish();
@@ -369,7 +373,6 @@ void AuSHMUnmap(uint16_t key, AuProcess* proc) {
 					//tlb_flush((void*)(mapping->start_addr + i * PAGE_SIZE));
 				}
 			}
-			UARTDebugOut("Closing index -> %d, %s \r\n", i, proc->name);
 			list_remove(proc->shmmaps, i);
 			kfree(mapping);
 			break;
@@ -399,8 +402,6 @@ void AuSHMUnmapAll(AuProcess* proc) {
 			isb_flush();
 			vpage->bits.present = 0;
 			isb_flush();
-			tlb_flush((void*)(mapping->start_addr +
-				j * PAGE_SIZE));
 			dsb_ish();
 			isb_flush();
 		}

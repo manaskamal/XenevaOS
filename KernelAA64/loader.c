@@ -201,9 +201,11 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) 
 		file = fb->file;
 	}
 	else {
+		UARTDebugOut("[loader.c]: file : %s was not in cache adding it \r\n", filename);
 		file = AuVFSOpen(filename);
 		fb = (AuMMFileBack*)kmalloc(sizeof(AuMMFileBack));
 		memset(fb, 0, sizeof(AuMMFileBack));
+		file->flags |= FS_FLAG_CACHED;
 		fb->file = file;
 		fb->pageCache = NULL;
 		fb->pageCacheLast = NULL;
@@ -269,9 +271,9 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) 
 		/* free the current file*/
 		//UARTDebugOut("fb : %x \r\n", fb);
 		//aa64_data_cache_clean_range(fb, sizeof(AuMMFileBack));
-		AuMmngrRemoveFileBack(fb);
+		//AuMmngrRemoveFileBack(fb);
 		//aa64_data_cache_clean_range(file, sizeof(AuVFSNode));
-		kfree(file);
+		//kfree(file);
 		//AuPmmngrFree((void*)V2P((sizeof(buf))));
 
 		/* now load XELoader process, which'll further

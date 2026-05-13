@@ -680,6 +680,15 @@ void AuThreadMoveToTrash(AA64Thread* t) {
 }
 
 /**
+ * @brief AuThreadCleanTrash -- clean a thread from
+ * trash list
+ */
+void AuThreadCleanTrash(AA64Thread* t) {
+	AuThreadDeleteTrash(t);
+
+}
+
+/**
  * @brief AuGetSystemTimerTick -- return the current system
  * timer tick
  */

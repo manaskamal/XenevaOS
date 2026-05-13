@@ -511,6 +511,7 @@ void AuFreePages(uint64_t virt_addr, bool free_physical, size_t s) {
 void AuUpdatePageFlags(uint64_t virt_addr, uint64_t flags) {
 	const long i1 = pml4_index(virt_addr);
 	uint64_t* pml4_ = (uint64_t*)P2V(read_ttbr0_el1());
+
 	uint64_t* pdpt = (uint64_t*)P2V(pml4_[pml4_index(virt_addr)] & ~0xFFFUL);
 	uint64_t* pd = (uint64_t*)P2V(pdpt[pdpt_index(virt_addr)] & ~0xFFFUL);
 	uint64_t* pt = (uint64_t*)P2V(pd[pd_index(virt_addr)] & ~0xFFFUL);
@@ -531,15 +532,68 @@ void AuUpdatePageFlags(uint64_t virt_addr, uint64_t flags) {
  */
 void* AuGetPhysicalAddress(uint64_t virt_addr) {
 	uint64_t* pml4_ = (uint64_t*)P2V(read_ttbr0_el1());
+	if (isRangeInsideKernel(virt_addr)) 
+		pml4_ = (uint64_t*)P2V(read_ttbr1_el1());
+	
+
+	if ((pml4_[pml4_index(virt_addr)] & 1) == 0) 
+		return NULL;
+	
 	uint64_t* pdpt = (uint64_t*)P2V(pml4_[pml4_index(virt_addr)] & ~0xFFFUL);
+	
+	if ((pdpt[pdpt_index(virt_addr)] & 1) == 0) 
+		return NULL;
+	
 	uint64_t* pd = (uint64_t*)P2V(pdpt[pdpt_index(virt_addr)] & ~0xFFFUL);
+
+	if ((pd[pd_index(virt_addr)] & 1) == 0)
+		return NULL;
+
 	uint64_t* pt = (uint64_t*)P2V(pd[pd_index(virt_addr)] & ~0xFFFUL);
+
+	if ((pt[pt_index(virt_addr)] & 1) == 0)
+		return NULL;
+
 	uint64_t* page = (uint64_t*)P2V(pt[pt_index(virt_addr)] & ~0xFFFUL);
 
 	if (page)
 		return V2P((uint64_t)page);
-	return 0;
+	return NULL;
 }
+
+/**
+ * @brief AuGetPhysicalAddressEx -- returns the physical address
+ * from a virtual address
+ * @param virt_addr -- Virtual address
+ * @return the physical address of respected virtual address
+ */
+void* AuGetPhysicalAddressEx(uint64_t* pml4_, uint64_t virt_addr) {
+	
+	if ((pml4_[pml4_index(virt_addr)] & 1) == 0)
+		return NULL;
+
+	uint64_t* pdpt = (uint64_t*)P2V(pml4_[pml4_index(virt_addr)] & ~0xFFFUL);
+
+	if ((pdpt[pdpt_index(virt_addr)] & 1) == 0)
+		return NULL;
+
+	uint64_t* pd = (uint64_t*)P2V(pdpt[pdpt_index(virt_addr)] & ~0xFFFUL);
+
+	if ((pd[pd_index(virt_addr)] & 1) == 0)
+		return NULL;
+
+	uint64_t* pt = (uint64_t*)P2V(pd[pd_index(virt_addr)] & ~0xFFFUL);
+
+	if ((pt[pt_index(virt_addr)] & 1) == 0)
+		return NULL;
+
+	uint64_t* page = (uint64_t*)P2V(pt[pt_index(virt_addr)] & ~0xFFFUL);
+
+	if (page)
+		return V2P((uint64_t)page);
+	return NULL;
+}
+
 
 /**
  * @brief AuCreateVirtualAddressSpace -- create a new virtual address space

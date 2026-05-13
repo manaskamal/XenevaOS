@@ -435,7 +435,11 @@ void AuDrvMngrInitialize(KERNEL_BOOT_INFO* info) {
 					}*/
 					if (dev_id == 0xFFFF || vend_id == 0xFFFF)
 						continue;
-					AuGetDriverName(class_code, sub_class, confdata, 1);
+					char* offset = AuGetConfEntry(class_code, sub_class, confdata, 1);
+					if (offset == NULL)
+						AuGetDriverName(vend_id, dev_id, confdata, 1);
+					else
+						AuGetDriverName(class_code, sub_class, confdata, 1);
 				}
 			}
 		}

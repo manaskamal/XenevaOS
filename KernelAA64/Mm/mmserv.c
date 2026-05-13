@@ -36,6 +36,7 @@
 #include <Mm/pmmngr.h>
 #include <Mm/vmmngr.h>
 #include <_null.h>
+#include <Drivers/uart.h>
 
 /* ============================================================
  *  Shared Memory
@@ -123,6 +124,10 @@ uint64_t GetProcessHeapMem(size_t sz) {
 		}
 	}
 
+	if (sz < 0)
+		UARTDebugOut("[GetProcessHeapMem]: dlmalloc is asking to free up pages \r\n");
+	
+
 	uint64_t start_addr = (uint64_t)AuGetFreePage(false, (void*)proc->proc_mem_heap);
 	for (int i = 0; i < sz / PAGE_SIZE; i++) {
 		uint64_t phys = (uint64_t)AuPmmngrAlloc();
@@ -135,6 +140,7 @@ uint64_t GetProcessHeapMem(size_t sz) {
 	dsb_sy_barrier();
 	proc->proc_mem_heap = start_addr;
 	proc->proc_heapmem_len += sz;
+	UARTDebugOut("[GetProcessHeapMem]: returning start addre : %x \r\n", start_addr);
 	return start_addr;
 }
 
@@ -145,6 +151,7 @@ uint64_t GetProcessHeapMem(size_t sz) {
  * @param sz -- size in bytes to unallocate
  */
 int ProcessHeapUnmap(void* ptr, size_t sz) {
+	UARTDebugOut("[ProcessHeapUnmap]: called : %x , sz : %d \r\n", ptr, sz);
 	/* check if size is page aligned */
 	if ((sz % PAGE_SIZE) != 0) {
 		AuTextOut("Returning error heap unmap -> %d \r\n", sz);

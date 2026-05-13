@@ -45,7 +45,7 @@ uint64_t last_mark;
 bool _debug_on;
 extern bool _vfs_debug_on;
 #endif
-void au_free_page(void* ptr, int pages);
+int au_free_page(void* ptr, int pages);
 void* au_request_page(int pages);
 
 #ifdef _USE_DLMALLOC 
@@ -456,7 +456,7 @@ void* au_request_page(int pages) {
 #endif
 	
 #ifdef _USE_DLMALLOC
-	UARTDebugOut("[au_request_page]: num_pages : %d, ptr : %x \r\n", pages, page_);
+	//UARTDebugOut("[au_request_page]: num_pages : %d, ptr : %x \r\n", pages, page_);
 	pages = (pages + 4095) / 4096;
 #endif
 	for (size_t i = 0; i < pages; i++) {
@@ -482,12 +482,13 @@ void* au_request_page(int pages) {
 * @param ptr -- pointer to the first page
 * @param pages --pages -- number of pages
 */
-void au_free_page(void* ptr, int pages) {
+int au_free_page(void* ptr, int pages) {
 #ifdef _USE_DLMALLOC
 	pages = (pages + 4095) / 4096;
 #endif
 	UARTDebugOut("[au_free_page]: num_pages: %d, ptr : %x \r\n", pages, ptr);
 	AuFreePages((uint64_t)ptr, true, pages);
+	return 0;
 }
 
 

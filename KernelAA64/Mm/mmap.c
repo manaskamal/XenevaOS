@@ -177,11 +177,11 @@ void* CreateMemMapping(void* address, size_t len, int prot, int flags, int fd,
 			UARTDebugOut("[mmap]: file starting address : %x , curr : %x\r\n", file->first_block, file->current);
 			fb = (AuMMFileBack*)kmalloc(sizeof(AuMMFileBack));
 			memset(fb, 0, sizeof(AuMMFileBack));
+			UARTDebugOut("mmap: file flag : %x \r\n", file->flags);
 			fb->file = file;
 			AuMmngrAddFileBack(fb);
 		}
-
-
+		
 		if (flags & MEMMAP_FLAG_SHARED) {
 			shobj = AuSharedMmapObjectFindByName(file->filename);
 			/* no shobject found with specified name, so we create
@@ -314,6 +314,9 @@ void* CreateMemMapping(void* address, size_t len, int prot, int flags, int fd,
 		if (shobj_len_increase)
 			shobj->len += len;
 	}
+
+	if (file)
+		file->flags |= FS_FLAG_CACHED;
 
 	proc->proc_mmap_len += len;
 	return (void*)lookup_addr;

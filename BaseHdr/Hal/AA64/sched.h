@@ -178,6 +178,12 @@ AU_EXTERN AU_EXPORT AA64Thread* AuThreadFindByIDBlockList(uint64_t id);
 AU_EXTERN AU_EXPORT void AuThreadMoveToTrash(AA64Thread* t);
 
 /**
+ * @brief AuThreadCleanTrash -- clean a thread from
+ * trash list
+ */
+extern void AuThreadCleanTrash(AA64Thread* t);
+
+/**
  * @brief AuGetSystemTimerTick -- return the current system
  * timer tick
  */

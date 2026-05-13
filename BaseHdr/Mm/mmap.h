@@ -39,6 +39,13 @@
 #include <Mm/kmalloc.h>
 #include <process.h>
 
+#define MAP_ANONYMOUS 0
+#define MAP_PRIVATE 0
+#define MAP_FAILED ((void*)-1)
+#define PROT_READ 0
+#define PROT_WRITE 0
+#define O_RDWR 0
+
 /**
  * @brief SharedMemMapListInitialise -- initialise
  * the shared memory map list

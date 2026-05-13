@@ -46,6 +46,7 @@
 #define FS_FLAG_TTY         (1<<8) //temporary/freeable with count
 #define FS_FLAG_SOCKET      (1<<9) //temporary/freeable
 #define FS_FLAG_FILE_SYSTEM_GENERAL (1<<10) //general file system
+#define FS_FLAG_CACHED      (1<<11) //file is being cached
 
 #define FS_STATUS_FOUND  0x1
 #define FS_STATUS_NF     0x0

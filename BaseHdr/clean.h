@@ -31,12 +31,15 @@
 #define __CLEAN_H__
 
 #include <process.h>
+
+#ifdef ARCH_X64
 #include <Hal\x86_64_sched.h>
+#endif
 #include <stdint.h>
 
 
-/*
-* AuProcessClean -- completely remove a process
+/**
+* @brief AuProcessClean -- completely remove a process
 * @param parent -- Pointer to parent process
 * @param proc -- Process to remove
 */

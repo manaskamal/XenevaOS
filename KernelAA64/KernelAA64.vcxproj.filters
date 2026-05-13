@@ -191,6 +191,7 @@
     <ClCompile Include="Mm\dlmalloc.c">
       <Filter>Mm</Filter>
     </ClCompile>
+    <ClCompile Include="clean.c" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Hal">

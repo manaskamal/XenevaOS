@@ -339,6 +339,7 @@ void* AuPmmngrAlloc() {
 		page_desc[(UsablePhysicalMemory + (index * PAGE_SIZE)) >> PAGE_SHIFT].refcount = 1;
 		page_desc[(UsablePhysicalMemory + (index * PAGE_SIZE)) >> PAGE_SHIFT].phys_addr = 
 			(UsablePhysicalMemory + (index * PAGE_SIZE));
+		page_desc[(UsablePhysicalMemory + (index * PAGE_SIZE)) >> PAGE_SHIFT].diskblock = -1;
 	//	UARTDebugOut("Page desc : %x \r\n", &page_desc[(UsablePhysicalMemory + (index * PAGE_SIZE)) >> PAGE_SHIFT]);
 		return (void*)(UsablePhysicalMemory + (index * 4096));
 	}

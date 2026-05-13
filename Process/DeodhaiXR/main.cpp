@@ -801,7 +801,6 @@ void DeodhaiCloseWindow(Window* win) {
 	int x = info->x;
 	int y = info->y;
 	_KePrint("[Deodhai]:CloseWindow : %s \r\n", win->title);
-	free(win->title);
 
 	/* iterate all popup window and close them */
 	for (Window* popup = win->firstPopupWin; popup != NULL; popup = popup->next) {
@@ -816,8 +815,8 @@ void DeodhaiCloseWindow(Window* win) {
 	}
 
 	_KePrint("Unmapping shared mems \r\n");
-	//_KeUnmapSharedMem(win->shWinKey);
-	//_KeUnmapSharedMem(win->backBufferKey);
+	_KeUnmapSharedMem(win->shWinKey);
+	_KeUnmapSharedMem(win->backBufferKey);
 	_KePrint("Unmapped all shared mems from deodhai side for process\r\n");
 #ifdef SHADOW_ENABLED
 	_KeMemUnmap(win->shadowBuffers, (static_cast<size_t>(width) + SHADOW_SIZE * 2) * (height + SHADOW_SIZE * 2) * 4);
@@ -825,6 +824,7 @@ void DeodhaiCloseWindow(Window* win) {
 	BackDirtyAdd(x - SHADOW_SIZE, y - SHADOW_SIZE, width + SHADOW_SIZE * 2, height + SHADOW_SIZE * 2);
 	DeodhaiRemoveWindow(win);
 	_KePrint("Removing window \r\n");
+	free(win->title);
 	free(win);
 	PostEvent e;
 	e.to_id = ownerId;
@@ -881,9 +881,9 @@ int main(int argc, char* argv[]){
 	ChAllocateBuffer(canv);
 	DeoInitializeBackSurface(canv);
 
-
+	_KePrint("Deodhai Initializaed back surface \r\n");
 	DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
-	if (screen_w == 1024 && screen_h == 768) {
+	/*if (screen_w == 1024 && screen_h == 768) {
 		_KePrint("Drawing wallpaper \r\n");
 		DrawWallpaper(canv, "/vill.jpg");
 		DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
@@ -902,10 +902,14 @@ int main(int argc, char* argv[]){
 	}else if (screen_w == 640 && screen_h == 480) {
 		DrawWallpaper(canv, "/snow.jpg");
 		DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
-	}
+	}*/
+
+	_KePrint("Wallpaper ready \r\n");
 
 //	ChCanvasScreenUpdate(canv, 0, 0, canv->canvasWidth, canv->canvasHeight);
 	ChCanvasScreenUpdate(canv, 0, 0, screen_w, screen_h);
+
+	_KePrint("Canvas updated \r\n");
 
 	gpu_fd = _KeOpenFile("/dev/virtiogpu", FILE_OPEN_READ_ONLY);
 

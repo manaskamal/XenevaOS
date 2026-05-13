@@ -362,6 +362,8 @@ void AuProcessFreeKeResource(AA64Thread* thr) {
 		return;
 	/* free-up all allocated kernel resources */
 
+	/* cleanup user related informations */
+
 	//AuSoundRemoveDSP(thr->id);
 
 	/* close allocated signals */
@@ -372,6 +374,9 @@ void AuProcessFreeKeResource(AA64Thread* thr) {
 
 	/* destroy allocated timer */
 	//AuTimerDestroy(thr->id);
+
+	/* cleanup all network resources */
+
 }
 
 /**
@@ -385,19 +390,45 @@ void AuProcessExit(AuProcess* proc, bool schedulable) {
 		return;
 	}
 
+	/** free up all allocated files by this process **/
+	for (int i = 0; i < FILE_DESC_PER_PROCESS; i++) {
+		AuVFSNode* file = proc->fds[i];
+		if (file) {
+			UARTDebugOut("[AuProcessExit]: closing file : %s flags %x\r\n", file->filename,file->flags);
+			/** conditional check for cache flag **/
+			if (file->flags & FS_FLAG_CACHED) {
+				UARTDebugOut("[AuProcessExit]: cached file skipped close : %s, flags : %x\r\n", file->filename);
+				if (file->fileCopyCount > 0)
+					file->fileCopyCount -= 1;
+				continue;
+			}
+			if (file->flags & FS_FLAG_DEVICE || file->flags & FS_FLAG_FILE_SYSTEM)
+				continue;
+			if ((file->flags & FS_FLAG_GENERAL) || (file->flags & FS_FLAG_DIRECTORY)) {
+				if (file->fileCopyCount <= 0) {
+					UARTDebugOut("Freeing up file : %s \r\n", file->filename);
+					kfree(file);
+				}
+				else
+					file->fileCopyCount -= 1;
+			}
+			if (file->flags & FS_FLAG_SOCKET) {
+				if (file->close)
+					file->close(file, file);
+			}
+		}
+	}
 
 	AuProcessFreeKeResource(proc->main_thread);
 
-	UARTDebugOut("Proc->proc_mmap_len : %d \r\n", proc->proc_mmap_len);
-	UnmapMemMapping((void*)PROCESS_MMAP_ADDRESS, proc->proc_mmap_len);
+	//UnmapMemMapping((void*)PROCESS_MMAP_ADDRESS, proc->proc_mmap_len);
 	/* we need to add this process to killable list, so that we can kill it
 	 * later on, because we can't kill here, or else system will crash
 	 */
 	proc->state = PROCESS_STATE_DIED;
 	AuSHMUnmapAll(proc);
 
-	//AuProcessHeapMemDestroy(proc);
-
+	/** unblock all waitlisted threads **/
 	for (int i = 0; i < proc->waitlist->pointer; i++) {
 		AA64Thread* thr = (AA64Thread*)list_remove(proc->waitlist, i);
 		if (thr) 
@@ -417,7 +448,6 @@ void AuProcessExit(AuProcess* proc, bool schedulable) {
 			AuThreadMoveToTrash(killable);
 		}
 	}
-
 }
 
 /*
@@ -447,8 +477,7 @@ void AuProcessWaitForTermination(AuProcess* proc, int pid) {
 			AuProcess* killable = AuGetKillableProcess();
 
 			if (killable) {
-				//AuProcessClean(0, killable);
-				UARTDebugOut("Killable process found -> %s \r\n", killable->name);
+				AuProcessClean(0, killable);
 				killable = NULL;
 			}
 

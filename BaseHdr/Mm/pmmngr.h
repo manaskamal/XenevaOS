@@ -48,6 +48,7 @@ typedef struct _au_page_desc_ {
 	uint16_t refcount;
 	uint64_t last_accessed;
 	uint8_t page_type;
+	int64_t diskblock;
 }AuPageDesc;
 
 /**
