@@ -40,6 +40,7 @@
 #include <string.h>
 #include <Mm/pmmngr.h>
 #include <Mm/vmmngr.h>
+#include <Cred/cred.h>
 
 extern uint64_t read_sp();
 extern uint64_t read_sp_el1();
@@ -65,6 +66,19 @@ int OpenFile(char* filename, int mode) {
 	AuVFSNode* fsys = AuVFSFind(fname);
 	int fd = AuProcessGetFileDesc(current_proc);
 	AuVFSNode* file = AuVFSOpen(fname);
+
+	/** check permissions before procedding **/
+	if (AuCredCheckPermissions(file, &current_proc->creds)) {
+		if (!file)
+			return -1;
+		UARTDebugOut("[aurora]: file : %s is not accessible to this user with uid : %d \r\n", 
+			file->filename, current_proc->creds.uid);
+		if (!(file->flags & FS_FLAG_CACHED)||
+			!(file->flags & FS_FLAG_DEVICE)||
+			!(file->flags & FS_FLAG_FILE_SYSTEM))
+			kfree(file);
+		return -1;
+	}
 	bool created = false;
 	if (!file) {
 		if (mode & FILE_OPEN_CREAT || mode & FILE_OPEN_WRITE) {

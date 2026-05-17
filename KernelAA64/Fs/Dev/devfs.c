@@ -37,6 +37,7 @@
 #include <aucon.h>
 #include <Drivers/uart.h>
 #include <Hal/AA64/aa64lowlevel.h>
+#include <Cred/group.h>
 
 /*
  * AuDeviceFsInitialize -- initialise the device

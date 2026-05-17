@@ -43,6 +43,7 @@
 #include <sys\_kefile.h>
 #include <stdlib.h>
 #include <sys\iocodes.h>
+#include <sys/_kecred.h>
 
 void initSetupBasicEnvironmentVars() {
 	setenv("HOME", "/", 1);
@@ -101,6 +102,15 @@ int XELdrStartProc2(char* filename, XELdrObj* obj) {
 
 extern void SplashScreenShow();
 
+void init_basic_gid_to_dev() {
+	int fd = _KeOpenFile("/dev/graph", FILE_OPEN_READ_ONLY);
+	_KeCredChangeID(fd, 0, 20);
+	fd = _KeOpenFile("/dev/mice", FILE_OPEN_READ_ONLY);
+	_KeCredChangeID(fd, 0, 29);
+	fd = _KeOpenFile("/dev/kybrd", FILE_OPEN_READ_ONLY);
+	_KeCredChangeID(fd, 0, 30);
+}
+
 /*
  * _main -- main entry point
  */
@@ -121,16 +131,30 @@ extern "C" void main(int argc, char* argv[]) {
 	}
 
 	SplashScreenShow();
+	init_basic_gid_to_dev();
 	/** TODO: add IPC system to track real system progress and animate the logo accordingly **/
 	_KeProcessSleep(500);
 
+	int ggid_misc_world = _KeGetGlobalGroupID(AURORA_GID_MISC_WORLD);
+	int ggid_misc_postbox = _KeGetGlobalGroupID(AURORA_GID_IPC_POSTBOX);
 #ifdef ARCH_ARM64
 	int proc = _KeCreateProcess(0, "netmngr");
+	_KeSetUID(proc, 1000);
+	_KeSetGID(proc, 1000);
+	_KeCredAddSGroup(proc, ggid_misc_world);
 	_KeProcessLoadExec(proc, "/netmngr.exe\0", 0, NULL);
+
 
 	_KeProcessSleep(20);
 
 	proc = _KeCreateProcess(0, "deodhaixr");
+	_KeSetUID(proc, 1001);
+	_KeSetGID(proc, 1001);
+	_KeCredAddSGroup(proc, ggid_misc_world);
+	_KeCredAddSGroup(proc, ggid_misc_postbox);
+	/*_KeCredAddSGroup(proc, 20);
+	_KeCredAddSGroup(proc, 29);
+	_KeCredAddSGroup(proc, 30);*/
 	_KeProcessLoadExec(proc, "/deodxr.exe\0", 0, NULL);
 #elif ARCH_X64
 	int proc = _KeCreateProcess(0, "deodhai");

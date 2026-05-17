@@ -244,7 +244,6 @@ AuProcess * AuCreateProcessSlot(AuProcess * parent, char* name) {
 	proc->proc_heapmem_len = 0;
 	proc->_kstack_index_ = 1;
 	proc->_main_stack_ = main_thr_stack;
-	UARTDebugOut("PROCESS : %s , stack : %x \n", proc->name, proc->_main_stack_);
 	uint64_t* envpBlock = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
 	memset(envpBlock, 0, PAGE_SIZE);
 

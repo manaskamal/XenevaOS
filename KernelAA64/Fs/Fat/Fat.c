@@ -50,6 +50,8 @@
 #include <Mm/kmalloc.h>
 #include <Hal/AA64/aa64lowlevel.h>
 #include <Mm/mmfile.h>
+#include <Cred/cred.h>
+#include <Cred/group.h>
 
 extern bool _vfs_debug_on;
 
@@ -400,6 +402,7 @@ AuVFSNode* FatLocateSubDir(AuVFSNode* fsys, AuVFSNode* kfile, const char* filena
 					file->first_block = file->current;
 					file->device = fsys;
 					file->parent_block = kfile->first_block;
+					file->gid = AuCredGetGroupID(AURORA_GID_MISC_WORLD);
 					if (pkDir->attrib & 0x10)
 						file->flags |= FS_FLAG_DIRECTORY;
 					else
@@ -470,6 +473,11 @@ AuVFSNode* FatLocateDir(AuVFSNode* fsys, const char* dir) {
 				file->open = 0;
 				file->write = 0;
 				file->create_file = 0;
+
+				/* FAT32 doesn't has UID/GID value stored in file, so
+				 * using global misc world gid 
+				 */
+				file->gid = AuCredGetGroupID(AURORA_GID_MISC_WORLD);
 				if (dirent->attrib == 0x10)
 					file->flags |= FS_FLAG_DIRECTORY;
 				else

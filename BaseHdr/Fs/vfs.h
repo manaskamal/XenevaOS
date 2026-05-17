@@ -35,6 +35,8 @@
 #include <stdint.h>
 #include <list.h>
 #include <aurora.h>
+#include <Cred/group.h>
+#include <Cred/user.h>
 
 #define FS_FLAG_DIRECTORY  (1<<1) //temporary/freeable  
 #define FS_FLAG_GENERAL    (1<<2)  //tempoary/freeable
@@ -103,6 +105,8 @@ typedef struct __VFS_NODE__ {
 	uint64_t current;
 	uint16_t  flags;
 	uint8_t status;
+	UID_NUM uid;
+	GID_NUM gid;
 	void* device;
 	uint16_t fileCopyCount; //important for tty files
 	/* callback specific */
@@ -283,8 +287,14 @@ AU_EXTERN AU_EXPORT void AuVFSNodeClose(AuVFSNode* node, AuVFSNode* file);
 */
 AU_EXTERN AU_EXPORT size_t AuVFSGetBlockFor(AuVFSNode* node, AuVFSNode* file, uint64_t offset);
 
-
-
+/**
+ * @brief AuVFSSetCred -- set gid/uid value for a file
+ * @param node -- file node
+ * @param uid -- user id
+ * @param gid -- group id
+ * @return zero on success, one on failure
+ */
+AU_EXTERN AU_EXPORT int AuVFSSetCred(AuVFSNode* node, UID_NUM uid, GID_NUM gid);
 
 
 #endif

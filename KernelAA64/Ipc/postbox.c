@@ -41,6 +41,7 @@
 #include <Hal/AA64/aa64lowlevel.h>
 #include <Drivers/uart.h>
 #include <aucon.h>
+#include <Cred/cred.h>
 
 /**
 * @brief
@@ -325,6 +326,8 @@ void AuIPCPostBoxInitialise() {
 	node2->device = dev;
 	node2->read = 0;
 	node2->write = 0;
+	node2->uid = 0;
+	node2->gid = AuCredGetGroupID(AURORA_GID_IPC_POSTBOX);
 	node2->iocontrol = PostBoxIOControl;
 	dsb_sy_barrier();
 	AuDevFSAddFile(dev, "/", node2);

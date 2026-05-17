@@ -45,8 +45,10 @@
 #include <Fs/vdisk.h>
 #include <Net/socket.h>
 #include <Hal/AA64/profile.h>
+#include <Cred/group.h>
+#include <Cred/cred.h>
 
-#define AURORA_MAX_SYSCALL 58
+#define AURORA_MAX_SYSCALL 65
 
 AA64Registers* svcCurrentRegs;
 
@@ -132,6 +134,13 @@ static void* syscalls[AURORA_MAX_SYSCALL] = {
 	AuGetVDiskInfo, //55, 
 	AuGetVDiskPartitionInfo, //56
 	GetEnvironmenBlock, //57
+	AuCredChangeID, //58
+	AuCredAddSGroup, //59
+	AuCredSetCap, //60
+	AuCredGetCap, //61
+	AuSetUID, //62
+	AuSetGID, //63
+	AuCredGetGroupID, //64
 };
 
 #ifdef __KERNEL_PROFILER_ON__
@@ -194,6 +203,13 @@ static char* syscall_name[AURORA_MAX_SYSCALL] = {
 	"AuGetVDiskInfo", //55, 
 	"AuGetVDiskPartitionInfo", //56
 	"GetEnvironmenBlock", //57
+	"AuCredChangeID", //58
+	"AuCredAddSGroup", //59
+	"AuCredSetCap", //60
+	"AuCredGetCap", //61
+	"AuSetUID", //62
+	"AuSetGID", //63
+	"AuCredGetGroupID", //64
 };
 #endif
 

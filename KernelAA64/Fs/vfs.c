@@ -386,3 +386,19 @@ AU_EXTERN AU_EXPORT size_t AuVFSGetBlockFor(AuVFSNode* node, AuVFSNode* file, ui
 	}
 	return -1;
 }
+
+
+/**
+ * @brief AuVFSSetCred -- set gid/uid value for a file
+ * @param node -- file node
+ * @param uid -- user id 
+ * @param gid -- group id 
+ * @return zero on success, one on failure
+ */
+AU_EXTERN AU_EXPORT int AuVFSSetCred(AuVFSNode* node,UID_NUM uid, GID_NUM gid) {
+	if (!node)
+		return 1;
+	node->uid = uid;
+	node->gid = gid;
+	return 0;
+}

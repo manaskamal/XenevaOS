@@ -59,6 +59,8 @@
 #include <Board/RPI3bp/rpi3bp.h>
 #include <Net/aunet.h>
 #include <Hal/AA64/profile.h>
+#include <Cred/group.h>
+#include <Cred/cred.h>
 
 extern int _fltused = 1;
 static bool _littleboot_used;
@@ -206,6 +208,11 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	AuInitialiseSHMMan();
 	AuMmngrFileCacheInit();
 
+	/* initialize kernel credentials
+	 * note: untill here ensure no file gets opened
+	 * because file system may use credentials 
+	 */
+	AuCredGroupInitialize();
 	/* initialize the network layer */
 	AuInitialiseNet();
 
@@ -257,16 +264,17 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 
 	AuSchedulerInitialize();
 	
-	UARTDebugOut("Creating init process \r\n");
 	AuProcess* proc = AuCreateProcessSlot(0, "exec");
-	UARTDebugOut("Process slot created \r\n");
 	int num_args = 1;
 	char* about = (char*)kmalloc(strlen("-about"));
 	strcpy(about, "-about");
 	char** argvs = (char**)kmalloc(num_args * sizeof(char*));
 	memset(argvs, 0, num_args);
 	argvs[0] = about;
-	UARTDebugOut("Loading process init \r\n");
+
+	/** make init process, as root of all */
+	CRED_SET_CAP_ROOT(proc);
+	CRED_MARK_ROOT(proc);
 	AuLoadExecToProcess(proc, "/init.exe", num_args, argvs);
 	
 #ifdef __KERNEL_PROFILER_ON__

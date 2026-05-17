@@ -33,6 +33,8 @@
 
 #include <stdint.h>
 #include <Fs\vfs.h>
+#include <Cred/group.h>
+#include <Cred/user.h>
 
 #ifdef ARCH_ARM64
 #include <Hal/AA64/sched.h>
@@ -90,13 +92,21 @@
 
 typedef void(*entry) (void*);
 
+typedef struct _au_proc_cred_ {
+	uint8_t caps;
+	UID_NUM uid;
+	GID_NUM gid;
+	GID_NUM sgid[AURORA_MAX_GROUPS];
+	uint16_t num_sgid;
+}AuProcCredentials;
+
 //#pragma pack(push,1)
 typedef struct _au_proc_ {
 	char name[16];
 	int proc_id;
 	uint8_t state;
 	uint8_t type_flags;
-
+	
 	/* process image related stuff */
 	uint64_t  *cr3;
 	uint64_t _image_size_;
@@ -136,6 +146,9 @@ typedef struct _au_proc_ {
 	size_t proc_mem_heap;
 	size_t proc_heapmem_len;
 	size_t proc_mmap_len;
+
+	/** credentials **/
+	AuProcCredentials creds;
 
 	/* data structure */
 	struct _au_proc_ *next;

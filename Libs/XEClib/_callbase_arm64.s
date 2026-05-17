@@ -513,3 +513,52 @@ _KeGetEnvironmentBlock:
 	mov x0, x6
 	ret
 
+.global _KeCredChangeID
+_KeCredChangeID:
+    mov x16, 58
+	svc #0
+	mov x0, x6
+	ret
+
+.global _KeCredAddSGroup
+_KeCredAddSGroup:
+    mov x16, 59
+	svc #0
+	mov x0, x6
+	ret
+
+.global _KeCredSetCap
+_KeCredSetCap:
+    mov x16, 60
+	svc #0
+	mov x0, x6
+	ret
+
+.global _KeCredGetCap
+_KeCredGetCap:
+    mov x16, 61
+	svc #0
+	mov x0, x6
+	ret
+
+.global _KeSetUID
+_KeSetUID:
+    mov x16, 62
+	svc #0
+	mov x0, x6
+	ret
+
+.global _KeSetGID
+_KeSetGID:
+    mov x16, 63
+	svc #0
+	mov x0, x6
+	ret
+
+.global _KeGetGlobalGroupID
+_KeGetGlobalGroupID:
+    mov x16, 64
+	svc #0
+	mov x0, x6
+	ret
+

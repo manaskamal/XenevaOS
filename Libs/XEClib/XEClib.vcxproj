@@ -294,6 +294,7 @@
     <ClInclude Include="includes\sys\utf.h" />
     <ClInclude Include="includes\sys\netdb.h" />
     <ClInclude Include="includes\sys\_heap.h" />
+    <ClInclude Include="includes\sys\_kecred.h" />
     <ClInclude Include="includes\sys\_kefile.h" />
     <ClInclude Include="includes\sys\_keftmngr.h" />
     <ClInclude Include="includes\sys\_keipcpostbox.h" />

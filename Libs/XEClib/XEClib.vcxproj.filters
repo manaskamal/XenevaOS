@@ -187,6 +187,9 @@
     <ClInclude Include="includes\c++\new">
       <Filter>includes\c++</Filter>
     </ClInclude>
+    <ClInclude Include="includes\sys\_kecred.h">
+      <Filter>includes\sys</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="string.cpp" />
