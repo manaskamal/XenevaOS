@@ -253,8 +253,19 @@ AuProcess * AuCreateProcessSlot(AuProcess * parent, char* name) {
 	else
 		proc->_envp_block_ = 0x5000;
 
-	if (parent)
+	if (parent) {
 		memcpy((void*)envpBlock, (void*)parent->_envp_block_, PAGE_SIZE);
+
+		/** just inherit all parent credential's to belong to that 
+		 * uac and group
+		 */
+		proc->creds.uid = parent->creds.uid;
+		proc->creds.gid = parent->creds.gid;
+		proc->creds.num_sgid = parent->creds.num_sgid;
+		for (int i = 0; i < parent->creds.num_sgid; i++)
+			proc->creds.sgid[i] = parent->creds.sgid[i];
+		proc->creds.caps = parent->creds.caps;
+	}
 
 	proc->waitlist = initialize_list();
 	proc->vmareas = initialize_list();

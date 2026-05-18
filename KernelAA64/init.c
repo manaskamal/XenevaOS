@@ -232,7 +232,6 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 
 	FontManagerInitialise();
 
-
 	/* from here, be carefull with AuPmmngrAllocBlocks,
 	 * sometime it doesn't allocate blocks contiguously,
 	 * it allocate one previously freed block and other

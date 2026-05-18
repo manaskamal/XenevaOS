@@ -35,6 +35,10 @@
 #include <_null.h>
 #include <string.h>
 #include <list.h>
+#include <Hal/AA64/sched.h>
+#include <process.h>
+#include <Drivers/uart.h>
+#include <aucon.h>
 
 AuVFSNode* pipeFS;
 
@@ -273,7 +277,7 @@ int AuPipeFSRemoveFile(AuVFSNode* fs, char* path) {
 int AuPipeClose(AuVFSNode* fs, AuVFSNode* file) {
 	AuPipe* pipe = (AuPipe*)fs->device;
 	pipe->refcount--;
-	AuTextOut("[aurora]: Pipe closed refcount -> %d \n", pipe->refcount);
+	AuTextOut("[aurora]: pipe closed, refcount -> %d \n", pipe->refcount);
 	if (pipe->refcount == 0) {
 		kfree(pipe->buffer);
 		kfree(pipe->readers_wait_queue);
@@ -291,53 +295,51 @@ int AuPipeClose(AuVFSNode* fs, AuVFSNode* file) {
  * @param sz -- Size of the pipe
  */
 int AuCreatePipe(char* name, size_t sz) {
-	//x64_cli();
+	AA64Thread* currentThr = AuGetCurrentThread();
+	if (!currentThr)
+		return -1;
+	AuProcess* proc = AuProcessFindThread(currentThr);
+	if (!proc) {
+		proc = AuProcessFindSubThread(currentThr);
+		if (!proc)
+			return -1;
+	}
 
-	//AuThread* currentThr = AuGetCurrentThread();
-	//if (!currentThr)
-	//	return -1;
-	//AuProcess* proc = AuProcessFindThread(currentThr);
-	//if (!proc) {
-	//	proc = AuProcessFindSubThread(currentThr);
-	//	if (!proc)
-	//		return -1;
-	//}
+	if (sz == 0)
+		return -1;
 
-	//if (sz == 0)
-	//	return -1;
-
-	//int fd = AuProcessGetFileDesc(proc);
+	int fd = AuProcessGetFileDesc(proc);
 
 
-	//AuVFSNode* node = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
-	//AuPipe* pipe = (AuPipe*)kmalloc(sizeof(AuPipe));
-	//memset(node, 0, sizeof(AuVFSNode));
-	//memset(pipe, 0, sizeof(AuPipe));
+	AuVFSNode* node = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
+	AuPipe* pipe = (AuPipe*)kmalloc(sizeof(AuPipe));
+	memset(node, 0, sizeof(AuVFSNode));
+	memset(pipe, 0, sizeof(AuPipe));
 
-	//pipe->buffer = (uint8_t*)kmalloc(sz);
-	//pipe->readers_wait_queue = initialize_list();
-	//pipe->writers_wait_queue = initialize_list();
-	//pipe->size = sz;
-	//pipe->refcount = 1;
+	pipe->buffer = (uint8_t*)kmalloc(sz);
+	pipe->readers_wait_queue = initialize_list();
+	pipe->writers_wait_queue = initialize_list();
+	pipe->size = sz;
+	pipe->refcount = 1;
 
-	//strcpy(node->filename, name);
-	//node->flags = FS_FLAG_PIPE;
-	//node->size = sz;
-	//node->device = pipe; // pipe;
-	//node->read = AuPipeRead;
-	//node->write = AuPipeWrite;
-	//node->open = AuPipeOpen;
-	//node->close = AuPipeClose;
-	//node->iocontrol = NULL;
+	strcpy(node->filename, name);
+	node->flags = FS_FLAG_PIPE;
+	node->size = sz;
+	node->device = pipe; // pipe;
+	node->read = AuPipeRead;
+	node->write = AuPipeWrite;
+	node->open = AuPipeOpen;
+	node->close = AuPipeClose;
+	node->uid = proc->creds.uid;
+	node->gid = proc->creds.gid;
+	node->iocontrol = NULL;
 
-	//proc->fds[fd] = node;
+	proc->fds[fd] = node;
 
-	//AuTextOut("[aurora]: Pipe proc -> %s \r\n", proc->name);
-	//AuPipeFSAddFile(pipeFS, "/", node);
-	//SeTextOut("Pipe Created -> %d %s\r\n", fd, proc->fds[fd]->filename);
-	////AuForceScheduler();
-	//return fd;
-	return 0;
+	AuPipeFSAddFile(pipeFS, "/", node);
+	UARTDebugOut("[aurora]: pipe created : %d name: %s\r\n", fd, proc->fds[fd]->filename);
+	//AuForceScheduler();
+	return fd;
 }
 
 /**

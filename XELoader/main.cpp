@@ -139,7 +139,6 @@ int XELdrLoadObject(XELoaderObject *obj){
 
 	uint8_t* aligned_buf = (uint8_t*)first_ptr;
 
-	_KePrint("Relocation diff : %x \n", diff);
 	XELdrRelocatePE(aligned_buf, nt, diff);
 
 	XELdrCreatePEObjects(first_ptr);
@@ -149,7 +148,6 @@ int XELdrLoadObject(XELoaderObject *obj){
 
 	//_KeCloseFile(file);
 	free(stat);
-	_KePrint("Stat freed \r\n");
 	return 0;
 }
 
@@ -244,7 +242,6 @@ int XELdrStartProc(char* filename, XELoaderObject *obj) {
 	obj->entry_addr = _image_load_base_ + nt->OptionalHeader.AddressOfEntryPoint;
 	_KeMemMapDirty((void*)_image_load_base_, obj->len, 0, 0);
 	free(stat);
-	_KePrint("Stat freed \r\n");
 	//_KeCloseFile(file);
 	return 0;
 }

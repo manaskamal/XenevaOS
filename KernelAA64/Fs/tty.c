@@ -335,6 +335,8 @@ AuVFSNode* AuTTYCreateMaster(TTY* tty) {
 	node->size = 512;
 	node->flags |= FS_FLAG_TTY;
 	node->device = tty;
+	node->uid = 0;
+	node->gid = 0;
 	node->read = AuTTYMasterRead;
 	node->write = AuTTYMasterWrite;
 	node->close = AuTTYMasterClose;
@@ -369,6 +371,8 @@ AuVFSNode* AuTTYCreateSlave(TTY* tty) {
 	node->write = AuTTYSlaveWrite;
 	node->close = AuTTYSlaveClose;
 	node->iocontrol = AuTTYIoControl;
+	node->uid = 0;
+	node->gid = 0;
 	node->fileCopyCount = 0;
 
 	AuDevFSAddFile(fs, "/dev/tty", node);
@@ -419,6 +423,12 @@ int AuTTYCreate(int* master_fd, int* slave_fd) {
 
 	AuVFSNode* master = AuTTYCreateMaster(tty);
 	AuVFSNode* slave = AuTTYCreateSlave(tty);
+
+	/** now current process owns the both file **/
+	master->uid = proc->creds.uid;
+	master->gid = proc->creds.gid;
+	slave->uid = proc->creds.uid;
+	slave->gid = proc->creds.gid;
 
 	int fd = AuProcessGetFileDesc(proc);
 	if (fd == -1)

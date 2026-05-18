@@ -86,7 +86,6 @@ void XELdrRelocatePE(void* image, PIMAGE_NT_HEADERS nt, uint64_t diff) {
 	IMAGE_DATA_DIRECTORY& data_dir = nt->OptionalHeader.DataDirectory[IMAGE_DATA_DIRECTORY_RELOC];
 	if (data_dir.VirtualAddress == 0 || data_dir.Size == 0)
 		return;
-	_KePrint("Relocating table addr : %x sz: %d \n", ((uint64_t)image + data_dir.VirtualAddress), data_dir.Size);
 	PIMAGE_RELOCATION_BLOCK reloc_table = raw_offset<PIMAGE_RELOCATION_BLOCK>(image, data_dir.VirtualAddress);
 	PIMAGE_RELOCATION_BLOCK cur_block = reloc_table;
 	while (raw_diff(cur_block, reloc_table) < data_dir.Size) {

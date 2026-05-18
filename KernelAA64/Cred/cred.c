@@ -320,7 +320,7 @@ int AuCredCheckPermissions(AuVFSNode* node, AuProcCredentials *cred) {
 			return 0;
 	}
 
-	UARTDebugOut("[aurora]: file : %s is not accessible to uid : %d \r\n", node->filename,
+	AuTextOut("[aurora]: file : %s is not accessible to uid : %d \r\n", node->filename,
 		cred->uid);
 	/** sorry,kela, no access to the file **/
 	return 1;

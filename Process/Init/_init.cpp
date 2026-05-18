@@ -45,6 +45,21 @@
 #include <sys\iocodes.h>
 #include <sys/_kecred.h>
 
+/** Let's hardcode,credentials
+ * untill we get proper login manager
+ */
+#define GROUP_INPUT  20
+#define GROUP_VIDEO  21
+#define GROUP_TTY    22
+#define GROUP_AUDIO  21
+
+/** hardcoded untill we get proper
+ * login manager
+ */
+#define UAC_DEAMONS 40
+#define UAC_NORMAL_USER 1000
+
+
 void initSetupBasicEnvironmentVars() {
 	setenv("HOME", "/", 1);
 	setenv("USER", "xeuser", 1);
@@ -54,61 +69,17 @@ void initSetupBasicEnvironmentVars() {
 	setenv("OSNAME", "XenevaOS", 1);
 }
 
-typedef struct _XELDR_OBJ2_ {
-	char* objname;
-	/*bool loaded;
-	bool linked;
-	uint32_t len;
-	size_t load_addr;
-	size_t entry_addr;*/
-}XELdrObj;
 
-/*
- * XELdrStartProc -- starts a new process
- * @param filename -- path and name of the
- * process
- */
-int XELdrStartProc2(char* filename, XELdrObj* obj) {
-	int file = 0;
-	_KePrint("filename : %s \n", filename);
-#ifdef ARCH_ARM64
-	/*uint64_t addr_preserve = (uint64_t)obj->objname;
-	uint32_t presv_len = obj->len;
-	size_t loadAddr = obj->load_addr;
-	size_t entryAddr = obj->entry_addr;
-	void* prevPresv = obj->prev;
-	void* nextPresv = obj->next;
-	bool loaded = obj->loaded;
-	bool linked = obj->linked;*/
-	_KePrint("INIT OBJ2Name : %x \n", obj->objname);
-#endif
-	file = _KeOpenFile(filename, FILE_OPEN_READ_ONLY);
-
-#ifdef ARCH_ARM64
-	/*obj->objname = (char*)addr_preserve;
-	obj->len = presv_len;
-	obj->load_addr = loadAddr;
-	obj->entry_addr = entryAddr;
-	obj->linked = linked;
-	obj->loaded = loaded;
-	obj->next = (struct _XELDR_OBJ_*) nextPresv;
-	obj->prev = (struct _XELDR_OBJ_*)prevPresv;
-	_KePrint("OBJNext: %x offset : %x \n", obj->next, &obj->next);*/
-	_KePrint("INIT OBJ2Name : %x \n", obj->objname);
-	for (;;);
-#endif
-	return file;
-}
 
 extern void SplashScreenShow();
 
 void init_basic_gid_to_dev() {
 	int fd = _KeOpenFile("/dev/graph", FILE_OPEN_READ_ONLY);
-	_KeCredChangeID(fd, 0, 20);
+	_KeCredChangeID(fd, 0, GROUP_VIDEO);
 	fd = _KeOpenFile("/dev/mice", FILE_OPEN_READ_ONLY);
-	_KeCredChangeID(fd, 0, 29);
+	_KeCredChangeID(fd, 0, GROUP_INPUT);
 	fd = _KeOpenFile("/dev/kybrd", FILE_OPEN_READ_ONLY);
-	_KeCredChangeID(fd, 0, 30);
+	_KeCredChangeID(fd, 0, GROUP_INPUT);
 }
 
 /*
@@ -137,24 +108,27 @@ extern "C" void main(int argc, char* argv[]) {
 
 	int ggid_misc_world = _KeGetGlobalGroupID(AURORA_GID_MISC_WORLD);
 	int ggid_misc_postbox = _KeGetGlobalGroupID(AURORA_GID_IPC_POSTBOX);
+
+
 #ifdef ARCH_ARM64
 	int proc = _KeCreateProcess(0, "netmngr");
-	_KeSetUID(proc, 1000);
-	_KeSetGID(proc, 1000);
+	_KeSetUID(proc, UAC_DEAMONS);
+	_KeSetGID(proc, UAC_DEAMONS);
 	_KeCredAddSGroup(proc, ggid_misc_world);
 	_KeProcessLoadExec(proc, "/netmngr.exe\0", 0, NULL);
 
 
 	_KeProcessSleep(20);
 
+	/** from now, normal user's won't get system access */
 	proc = _KeCreateProcess(0, "deodhaixr");
-	_KeSetUID(proc, 1001);
-	_KeSetGID(proc, 1001);
+	_KeSetUID(proc, UAC_NORMAL_USER);
+	_KeSetGID(proc, UAC_NORMAL_USER);
 	_KeCredAddSGroup(proc, ggid_misc_world);
 	_KeCredAddSGroup(proc, ggid_misc_postbox);
-	/*_KeCredAddSGroup(proc, 20);
-	_KeCredAddSGroup(proc, 29);
-	_KeCredAddSGroup(proc, 30);*/
+	_KeCredAddSGroup(proc, GROUP_VIDEO);
+	_KeCredAddSGroup(proc, GROUP_INPUT);
+	_KeCredSetCap(proc, 0);
 	_KeProcessLoadExec(proc, "/deodxr.exe\0", 0, NULL);
 #elif ARCH_X64
 	int proc = _KeCreateProcess(0, "deodhai");
