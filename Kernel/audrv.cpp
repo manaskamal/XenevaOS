@@ -196,7 +196,7 @@ AuDriver* AuCreateBootDriverInstance(char* drivername) {
 * @param buffer -- configuration file buffer
 * @param entryoff -- entry offset from where search begins
 */
-void AuGetDriverName(uint32_t vendor_id, uint32_t device_id, uint8_t* buffer, int entryoff) {
+AuDriver* AuGetDriverName(uint32_t vendor_id, uint32_t device_id, uint8_t* buffer, int entryoff) {
 
 	/* Get the entry offset for required device driver */
 	char* offset = AuGetConfEntry(vendor_id, device_id, buffer, entryoff);
@@ -221,8 +221,8 @@ void AuGetDriverName(uint32_t vendor_id, uint32_t device_id, uint8_t* buffer, in
 
 	drivername[i] = 0;
 
-	AuCreateDriverInstance(drivername);
-	return;
+	AuDriver* drv = AuCreateDriverInstance(drivername);
+	return drv;
 }
 
 /*
@@ -303,7 +303,7 @@ void AuDrvMngrInitialize(KERNEL_BOOT_INFO *info) {
 
 	uint8_t* confdata = (uint8_t*)conf;
 
-
+	AuDriver* drv = NULL;
 	uint32_t vend_id, dev_id, class_code, sub_class = 0;
 	uint32_t device = 0;
 	for (uint16_t bus = 0; bus < 0x20; bus++) {
@@ -319,7 +319,7 @@ void AuDrvMngrInitialize(KERNEL_BOOT_INFO *info) {
 
 				if (dev_id == 0xFFFF || vend_id == 0xFFFF)
 					continue;
-				AuGetDriverName(class_code, sub_class, confdata, 1);
+				drv = AuGetDriverName(class_code, sub_class, confdata, 1);
 				for (int i = 0; i < 1000; i++)
 					;
 			}

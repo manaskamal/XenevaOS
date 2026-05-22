@@ -178,6 +178,7 @@ AuDriver* AuCreateDriverInstance(char* drivername) {
 	driver->id = AuRequestDriverId();
 	driver->present = false;
 	drivers[driver->id] = driver;
+	AuIncreaseDriverCount();
 	return driver;
 }
 
@@ -203,11 +204,11 @@ AuDriver* AuCreateBootDriverInstance(char* drivername) {
 * @param buffer -- configuration file buffer
 * @param entryoff -- entry offset from where search begins
 */
-void AuGetDriverName(uint32_t vendor_id, uint32_t device_id, uint8_t* buffer, int entryoff) {
+AuDriver* AuGetDriverName(uint32_t vendor_id, uint32_t device_id, uint8_t* buffer, int entryoff) {
 	/* Get the entry offset for required device driver */
 	char* offset = AuGetConfEntry(vendor_id, device_id, buffer, entryoff);
 	if (offset == NULL)
-		return;
+		return NULL;
 	char* p = strchr(offset, ']');
 	if (p)
 		p++;
@@ -224,8 +225,8 @@ void AuGetDriverName(uint32_t vendor_id, uint32_t device_id, uint8_t* buffer, in
 
 	drivername[i] = 0;
 
-	AuCreateDriverInstance(drivername);
-	return;
+	AuDriver* drv = AuCreateDriverInstance(drivername);
+	return drv;
 }
 
 /**
@@ -413,7 +414,7 @@ void AuDrvMngrInitialize(KERNEL_BOOT_INFO* info) {
 		AuTextOut("[aurora] Driver Manager failed to open board.cnf, file not found \r\n");
 	
 
-	
+	AuDriver* drv = NULL;
 	/* AuDrvManager will be responsible for loading drivers through
 	 * scanning MMIO, PCIe and other bus systems
 	 */
@@ -437,9 +438,21 @@ void AuDrvMngrInitialize(KERNEL_BOOT_INFO* info) {
 						continue;
 					char* offset = AuGetConfEntry(class_code, sub_class, confdata, 1);
 					if (offset == NULL)
-						AuGetDriverName(vend_id, dev_id, confdata, 1);
+						drv = AuGetDriverName(vend_id, dev_id, confdata, 1);
 					else
-						AuGetDriverName(class_code, sub_class, confdata, 1);
+						drv = AuGetDriverName(class_code, sub_class, confdata, 1);
+
+					if (drv) {
+						drv->classCode = class_code;
+						drv->subClassCode = sub_class;
+						drv->device = device;
+						drv->vendorID = vend_id;
+						drv->deviceID = dev_id;
+						drv->bus = bus;
+						drv->func = func;
+						drv->dev = dev;
+						drv = NULL;
+					}
 				}
 			}
 		}
@@ -465,7 +478,7 @@ void AuDrvMngrInitialize(KERNEL_BOOT_INFO* info) {
 			AuDriver* driver = drivers[i];
 			AuDriverLoad(driver->name, driver);
 			if (driver->entry) {
-				driver->entry();
+				driver->entry(driver);
 			}
 		}
 	}
@@ -559,7 +572,7 @@ AU_EXTERN AU_EXPORT void AuBootDriverInitialise(KERNEL_BOOT_INFO* info) {
 	/* Serially call each startup entries of each driver */
 	for (int i = 0; i < driver_boot_unique_id; i++) {
 		AuDriver* driver = bootDrivers[i];
-		driver->entry();
+		driver->entry(driver);
 	}
 }
 
@@ -580,4 +593,6 @@ uint64_t AuDrvMgrGetBaseAddress() {
 void AuDrvMgrSetBaseAddress(uint64_t base_address) {
 	driver_load_base = base_address;
 }
+
+
 

@@ -53,9 +53,8 @@
 
 #define AURORA_MAX_DRIVERS  256
 
-
-typedef int(*au_drv_entry)();
-typedef int(*au_drv_unload)();
+typedef int(*au_drv_entry)(void* drv);
+typedef int(*au_drv_unload)(void* drv);
 
 #pragma pack(push,1)
 typedef struct _aurora_driver_ {
@@ -65,6 +64,14 @@ typedef struct _aurora_driver_ {
 	bool present;
 	uint64_t base;
 	uint64_t end;
+	uint16_t vendorID;
+	uint16_t deviceID;
+	uint8_t classCode;
+	uint8_t subClassCode;
+	int bus;
+	int func;
+	int dev;
+	uint64_t device;
 	au_drv_entry entry;
 	au_drv_unload unload;
 }AuDriver;
@@ -80,6 +87,7 @@ typedef struct _aurora_device_ {
 	uint8_t aurora_driver_class;
 }AuDevice;
 #pragma pack(pop)
+
 
 /*
 * AuDrvMngrInitialize -- Initialize the driver manager
@@ -140,7 +148,7 @@ extern char* AuGetConfEntry(uint32_t vendor_id, uint32_t device_id, uint8_t* buf
 * @param buffer -- configuration file buffer
 * @param entryoff -- entry offset from where search begins
 */
-extern void AuGetDriverName(uint32_t vendor_id, uint32_t device_id, uint8_t* buffer, int entryoff);
+extern AuDriver* AuGetDriverName(uint32_t vendor_id, uint32_t device_id, uint8_t* buffer, int entryoff);
 
 
 #endif

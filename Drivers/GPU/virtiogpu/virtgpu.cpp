@@ -252,7 +252,6 @@ void gpu_notify_queue(VirtioCommonCfg* cfg, uint16_t queueIdx) {
 	*notifyAddr = queueIdx;
 	isb_flush();
 	dsb_ish();
-
 }
 
 /**
