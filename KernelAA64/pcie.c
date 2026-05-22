@@ -605,7 +605,6 @@ bool AuPCIEAllocMSI(uint64_t device, size_t vector, int bus, int dev, int func) 
 
 			if ((cap_reg & 0xff) == 0x11) {
 				value = true; //MSI-X Allocated: not implemented
-				UARTDebugOut("MSI-X found \r\n");
 				msi_reg = cap_reg;
 				uint16_t msixctl = (msi_reg >> 16) & 0xFFFF;
 				uint64_t tableOffset = AuPCIERead64(device, capptr + 0x4, 4, bus, dev, func);
@@ -617,19 +616,14 @@ bool AuPCIEAllocMSI(uint64_t device, size_t vector, int bus, int dev, int func) 
 				size_t barsz = 0;
 				uint64_t msi_bar = AuPCIEReadBAR(device, bus, dev, func,table_bir, &barsz);
 				uint64_t mappedMsiBar = (uint64_t)AuMapMMIO(msi_bar,1);
-				UARTDebugOut("MSI BAR : %x barsz : %d\n", msi_bar, barsz);
 				uint64_t tablecount = (msixctl & 0x7ff) + 1;
-				UARTDebugOut("TAble count : %d \n", tablecount);
 				uint64_t msi_address = AuGICGetMSIAddress((int)vector);
 				uint32_t msi_data = AuGICGetMSIData((int)vector);
 				uint32_t offset = tableOffset & ~0x7;
 				volatile uint32_t* msitab = RAW_OFFSET(volatile uint32_t*, mappedMsiBar, offset);
-				UARTDebugOut("MSI Table : %x offset : %x \n", msitab, offset);
 				for (int n = 0; n < tablecount; ++n) {
 					msitab[0 + 4 * n] = (uint32_t)msi_address;
-					UARTDebugOut("msi address low : %x \n", msitab[0 + 4 * n]);
 					msitab[1 + 4 * n] = (uint32_t)(msi_address >> 32);
-					UARTDebugOut("msi address up : %x \n", msitab[1 + 4 * n]);
 					msitab[2 + 4 * n] = (uint32_t)msi_data;
 					msitab[3 + 4 * n] = 0; //vector control
 				}

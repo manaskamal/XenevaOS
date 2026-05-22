@@ -400,6 +400,11 @@ void AuProcessExit(AuProcess* proc, bool schedulable) {
 		return;
 	}
 
+	if (proc->type_flags & PROCESS_TYPE_NON_KILLABLE) {
+		UARTDebugOut("[aurora]: process : %s cannot exit \r\n",proc->name);
+		return;
+	}
+
 	/** free up all allocated files by this process **/
 	for (int i = 0; i < FILE_DESC_PER_PROCESS; i++) {
 		AuVFSNode* file = proc->fds[i];

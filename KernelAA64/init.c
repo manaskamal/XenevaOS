@@ -61,6 +61,8 @@
 #include <Hal/AA64/profile.h>
 #include <Cred/group.h>
 #include <Cred/cred.h>
+#include <Sound/sound.h>
+#include <proctoken.h>
 
 extern int _fltused = 1;
 static bool _littleboot_used;
@@ -213,8 +215,15 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	 * because file system may use credentials 
 	 */
 	AuCredGroupInitialize();
+
 	/* initialize the network layer */
 	AuInitialiseNet();
+
+	/* initialize aurora sound layer */
+	AuSoundInitialise();
+
+	/* initialize process token layer */
+	AuProcessTokenInitialize();
 
 #ifdef __TARGET_BOARD_RPI3__
 	XPT2046Initialise();

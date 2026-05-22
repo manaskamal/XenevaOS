@@ -40,7 +40,7 @@
 #include <aucon.h>
 
 /** global group ID's for kernel use **/
-GID_NUM _groups[AURORA_MAX_GROUPS];
+static GID_NUM _groups[AURORA_MAX_GROUPS];
 
 
 static inline uint64 _mix64(uint64_t x) {

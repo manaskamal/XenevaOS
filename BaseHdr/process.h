@@ -154,6 +154,8 @@ typedef struct _au_proc_ {
 	struct _au_proc_ *next;
 	struct _au_proc_ *prev;
 }AuProcess;
+
+
 //#pragma pack(pop)
 /*
 * AuAddProcess -- adds process to kernel data structure

@@ -195,6 +195,10 @@
     <ClCompile Include="Cred\cred.c">
       <Filter>Cred</Filter>
     </ClCompile>
+    <ClCompile Include="Sound\sndcore.c">
+      <Filter>Sound</Filter>
+    </ClCompile>
+    <ClCompile Include="proctoken.c" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Hal">
@@ -274,6 +278,9 @@
     </Filter>
     <Filter Include="Include\Cred">
       <UniqueIdentifier>{320730a3-1f5c-4118-aa12-d34f658afe20}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sound">
+      <UniqueIdentifier>{ca328030-92be-464f-86c9-47904d473330}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -396,6 +403,9 @@
     </ClInclude>
     <ClInclude Include="..\BaseHdr\Cred\cred.h">
       <Filter>Include\Cred</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\proctoken.h">
+      <Filter>Include</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -308,8 +308,10 @@
     <ClCompile Include="pcie.c" />
     <ClCompile Include="pe.c" />
     <ClCompile Include="process.c" />
+    <ClCompile Include="proctoken.c" />
     <ClCompile Include="Serv\fileserv.c" />
     <ClCompile Include="Serv\thrserv.c" />
+    <ClCompile Include="Sound\sndcore.c" />
     <ClCompile Include="stack.c" />
     <ClCompile Include="stdio.c" />
     <ClCompile Include="string.c" />
@@ -367,6 +369,7 @@
     <ClInclude Include="..\BaseHdr\linux\usb\otg.h" />
     <ClInclude Include="..\BaseHdr\linux\workqueue.h" />
     <ClInclude Include="..\BaseHdr\Mm\mmfile.h" />
+    <ClInclude Include="..\BaseHdr\proctoken.h" />
     <ClInclude Include="..\BaseHdr\uart.h">
       <DeploymentContent>false</DeploymentContent>
     </ClInclude>

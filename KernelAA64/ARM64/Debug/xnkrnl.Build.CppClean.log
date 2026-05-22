@@ -124,10 +124,14 @@ e:\xeneva_project\aurora\kernelaa64\arm64\debug\stdio.obj
 e:\xeneva_project\aurora\kernelaa64\arm64\debug\stdio.asm
 e:\xeneva_project\aurora\kernelaa64\arm64\debug\stack.obj
 e:\xeneva_project\aurora\kernelaa64\arm64\debug\stack.asm
+e:\xeneva_project\aurora\kernelaa64\arm64\debug\sndcore.obj
+e:\xeneva_project\aurora\kernelaa64\arm64\debug\sndcore.asm
 e:\xeneva_project\aurora\kernelaa64\arm64\debug\thrserv.obj
 e:\xeneva_project\aurora\kernelaa64\arm64\debug\thrserv.asm
 e:\xeneva_project\aurora\kernelaa64\arm64\debug\fileserv.obj
 e:\xeneva_project\aurora\kernelaa64\arm64\debug\fileserv.asm
+e:\xeneva_project\aurora\kernelaa64\arm64\debug\proctoken.obj
+e:\xeneva_project\aurora\kernelaa64\arm64\debug\proctoken.asm
 e:\xeneva_project\aurora\kernelaa64\arm64\debug\process.obj
 e:\xeneva_project\aurora\kernelaa64\arm64\debug\process.asm
 e:\xeneva_project\aurora\kernelaa64\arm64\debug\pe.obj
@@ -165,5 +169,6 @@ e:\xeneva_project\aurora\kernelaa64\arm64\debug\kernelaa64.tlog\custombuild.read
 e:\xeneva_project\aurora\kernelaa64\arm64\debug\kernelaa64.tlog\custombuild.write.1.tlog
 e:\xeneva_project\aurora\kernelaa64\arm64\debug\kernelaa64.tlog\kernelaa64.write.1u.tlog
 e:\xeneva_project\aurora\kernelaa64\arm64\debug\kernelaa64.tlog\link.command.1.tlog
+e:\xeneva_project\aurora\kernelaa64\arm64\debug\kernelaa64.tlog\link.delete.1.tlog
 e:\xeneva_project\aurora\kernelaa64\arm64\debug\kernelaa64.tlog\link.read.1.tlog
 e:\xeneva_project\aurora\kernelaa64\arm64\debug\kernelaa64.tlog\link.write.1.tlog

@@ -25,7 +25,6 @@
 * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *
-*
 **/
 
 #include <Sound\sound.h>
@@ -265,8 +264,8 @@ int AuSoundIOControl(AuVFSNode* node, int code, void* arg) {
 	return 0;
 }
 
-/*
-* AuSoundInitialize -- Initialized the Aurora sound system
+/**
+* @brief AuSoundInitialize -- Initialized the Aurora sound system
 */
 void AuSoundInitialise() {
 	AuVFSNode* fsys = AuVFSFind("/dev");

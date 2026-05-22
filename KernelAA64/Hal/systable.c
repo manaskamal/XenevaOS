@@ -47,8 +47,9 @@
 #include <Hal/AA64/profile.h>
 #include <Cred/group.h>
 #include <Cred/cred.h>
+#include <proctoken.h>
 
-#define AURORA_MAX_SYSCALL 65
+#define AURORA_MAX_SYSCALL 68
 
 AA64Registers* svcCurrentRegs;
 
@@ -141,6 +142,9 @@ static void* syscalls[AURORA_MAX_SYSCALL] = {
 	AuSetUID, //62
 	AuSetGID, //63
 	AuCredGetGroupID, //64
+	AuProcessTokenAddSelf, //65
+	AuProcessTokenGetThreadID, //66
+	AuProcessTokenRemoveSelf, //67
 };
 
 #ifdef __KERNEL_PROFILER_ON__

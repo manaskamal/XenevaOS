@@ -40,6 +40,8 @@
 #include <Hal/AA64/gic.h>
 #include <string.h>
 #include <_null.h>
+#include <Sound/sound.h>
+#include <Mm/kmalloc.h>
 
 #define VIRTIO_F_VERSION_1 (1ull << 32)
 #define VIRTIO_PCI_CAP_ID 0x09
@@ -65,6 +67,10 @@ static int controlq_lst_idx;
 static int eventq_lst_idx;
 static int txq_lst_idx;
 static bool _response_ok;
+static bool _force_hardware;
+static bool _output_running;
+static bool _input_running;
+static VirtioCommonCfg* _config;
 
 struct virtio_snd_config {
 	uint32_t jacks;
@@ -243,6 +249,8 @@ typedef struct {
 	uint32_t latency_bytes;
 }virtio_snd_pcm_status;
 
+#define VIRTIO_PCM_BUFFER_MAXSZ  0x1000   //page size
+
 /*
 * AuDriverUnload -- deattach the driver from
 * aurora system
@@ -416,7 +424,11 @@ void snd_notify_queue(VirtioCommonCfg* cfg, uint16_t queueIdx) {
 	dsb_ish();
 }
 
-
+/**
+ * @brief snd_query_pcm_info -- query pcm information
+ * like number of jacks, chmaps, etc
+ * @param cfg -- pointer to virtio common config
+ */
 virtio_snd_pcm_info* snd_query_pcm_info(VirtioCommonCfg* cfg) {
 	uint32_t num_streams = n_streams;
 	int index = controlq->available.index % controlq_sz;
@@ -461,7 +473,12 @@ virtio_snd_pcm_info* snd_query_pcm_info(VirtioCommonCfg* cfg) {
 	return NULL;
 }
 
-
+/**
+ * @brief snd_send_pcm -- send pcm data to virtio-snd codec
+ * @param cfg -- pointer to virtio common configuration
+ * @param pcm_data -- pointer to pcm data
+ * @param len -- length of pcm data
+ */
 static void snd_send_pcm(VirtioCommonCfg* cfg, void* pcm_data, uint32_t len) {
 	int index = txq->available.index % txq_sz;
 
@@ -668,6 +685,57 @@ static int snd_pcm_output_start(VirtioCommonCfg* cfg) {
 	return val;
 }
 
+
+/**
+ * snd_pcm_output_stop -- stop output stream
+ * @param cfg -- Pointer to common config
+ */
+static int snd_pcm_output_stop(VirtioCommonCfg* cfg) {
+	int val = 1;
+	int index = controlq->available.index % controlq_sz;
+
+	virtio_snd_pcm_hdr* pcm = (virtio_snd_pcm_hdr*)command_phys;
+	virtio_snd_hdr* resp = (virtio_snd_hdr*)resp_phys;
+
+	pcm->hdr.code = VIRTIO_SND_R_PCM_STOP;
+	pcm->stream_id = 0;
+
+	controlq->buffers[index].Addr = (uint64_t)V2P((uint64_t)command_phys);
+	controlq->buffers[index].Length = sizeof(virtio_snd_pcm_hdr);
+	controlq->buffers[index].Flags = VIRTQ_DESC_F_NEXT;
+	controlq->buffers[index].Next = (index + 1) % controlq_sz;
+
+
+	controlq->buffers[(index + 1) % controlq_sz].Addr = (uint64_t)V2P((uint64_t)resp_phys);
+	controlq->buffers[(index + 1) % controlq_sz].Length = sizeof(virtio_snd_hdr);
+	controlq->buffers[(index + 1) % controlq_sz].Flags = VIRTQ_DESC_F_WRITE;
+
+	controlq->available.ring[index % controlq_sz] = index;
+	isb_flush();
+	dsb_ish();
+
+	controlq->available.index++;
+	isb_flush();
+	dsb_ish();
+
+	snd_notify_queue(cfg, 0);
+
+	int timeout = 5000000;
+	while (timeout--) {
+		if (_response_ok == true) {
+			_response_ok = false;
+			val = 0;
+			break;
+		}
+	}
+	return val;
+}
+
+
+/**
+ * @brief virtio_snd_interrupt -- virtio-snd interrupt
+ * handler
+ */
 void virtio_snd_interrupt(int spi_id) {
 	uint16_t them = controlq->used.index;
 
@@ -683,6 +751,91 @@ void virtio_snd_interrupt(int spi_id) {
 	}
 }
 
+/**
+ * @brief virtio_snd_write -- sound write pcm data to card
+ * @param buffer -- buffer containing pcm data
+ * @param len -- len of the pcm data
+ */
+int virtio_snd_write(uint8_t* buffer, size_t len) {
+	if (len > VIRTIO_PCM_BUFFER_MAXSZ) {
+		UARTDebugOut("[virtio-snd]: virtio_snd_write exceeds expected size \r\n");
+		if (_force_hardware)
+			return  1;
+		else
+			len = VIRTIO_PCM_BUFFER_MAXSZ;
+	}
+
+	/* copy the pcm buffer */
+	memcpy(pcm_buffer, buffer, len);
+}
+
+/**
+ * @brief virtio_snd_read -- read pcm data from sound
+ * @param buffer -- buffer where to copy input pcm data
+ * @param len -- length to copy
+ */
+int virtio_snd_read(uint8_t* buffer, size_t len) {
+	/** input capability not implemented yet */
+	return 0;
+}
+
+/**
+ * @brief virtio_snd_stop -- stop output stream
+ */
+int virtio_snd_output_stop() {
+	if (!_config) {
+		UARTDebugOut("[virtio-snd]: fatel error while stopping output stream, no virtio common config \r\n");
+		return 1;
+	}
+	
+	if (_output_running == false)
+		return 0;
+
+	// start pcm output stream 
+	memset(command_phys, 0, 0x1000);
+	if (snd_pcm_output_stop(_config)) {
+		UARTDebugOut("[virtio-snd]: failed to stop output stream \r\n");
+		return 1;
+	}
+	_output_running = false;
+	UARTDebugOut("[virtio-snd]: output stream stopped successfully \r\n");
+	return 0;
+}
+
+/**
+ * @brief virtio_snd_output_start -- start output
+ * stream
+ */
+int virtio_snd_output_start() {
+	if (!_config) {
+		UARTDebugOut("[virtio-snd]: fatel error while starting output stream, no virtio common config \r\n");
+		return 1;
+	}
+
+	// check if already output is running 
+	if (_output_running)
+		return 0;
+
+	// start pcm output stream 
+	memset(command_phys, 0, 0x1000);
+	if (snd_pcm_output_start(_config)) {
+		UARTDebugOut("[virtio-snd]: failed to start output stream \r\n");
+		return 1;
+	}
+
+	UARTDebugOut("[virtio-snd]: output stream successfully \r\n");
+	return 0;
+}
+
+/**
+ * @brief virtio_snd_set_vol -- set volume of output stream
+ * @param vol -- volume in steps
+ */
+int virtio_snd_set_vol(uint8_t vol) {
+	/* not implemented yet */
+	return 0;
+}
+
 /*
 * AuDriverMain -- Main entry for vmware svga driver
 */
@@ -693,6 +846,8 @@ AU_EXTERN AU_EXPORT int AuDriverMain(AuDriver* drv) {
 	int dev = drv->dev;
 	int func = drv->func;
 	_response_ok = false;
+	_output_running = false;
+	_input_running = false;
 
 	command_phys = (uint64_t*)P2V((uint64_t)AuPmmngrAlloc());
 	resp_phys = (void*)((uint64_t)command_phys + 2048);
@@ -700,7 +855,7 @@ AU_EXTERN AU_EXPORT int AuDriverMain(AuDriver* drv) {
 	controlq_lst_idx = 0;
 	eventq_lst_idx = 0;
 	txq_lst_idx = 0;
-
+	_force_hardware = false;
 
 	pcm_buffer = (void*)P2V((uint64_t)AuPmmngrAlloc());
 	memset(pcm_buffer, 0, 0x1000);
@@ -743,6 +898,9 @@ AU_EXTERN AU_EXPORT int AuDriverMain(AuDriver* drv) {
 
 	VirtioCommonCfg* cfg = (VirtioCommonCfg*)finalAddr;
 	AuTextOut("[virtio-snd]: num queues : %d \r\n", cfg->Queues);
+
+	_config = cfg;
+
 	/** reset the device **/
 	virtio_snd_reset(cfg);
 
@@ -833,11 +991,27 @@ AU_EXTERN AU_EXPORT int AuDriverMain(AuDriver* drv) {
 		UARTDebugOut("[virtio-snd]: failed to start output stream \r\n");
 		return 1;
 	}
+	_output_running = true;
 
 	UARTDebugOut("[virtio-snd]: output stream started \r\n");
 	memset(command_phys, 0, 0x1000);
 
-	UARTDebugOut("[virtio-snd]: initialized successfully \r\n");
 	mask_irqs();
+
+	AuSound* ausnd = (AuSound*)kmalloc(sizeof(AuSound));
+	strcpy(ausnd->name, "virtio-sound");
+	ausnd->read = virtio_snd_read;
+	ausnd->write = virtio_snd_write;
+	ausnd->stop_output = virtio_snd_output_stop;
+	ausnd->start_output = virtio_snd_output_start;
+	ausnd->set_vol = virtio_snd_set_vol;
+	ausnd->control = 0;
+	if (AuSoundRegisterCard(ausnd)) {
+		UARTDebugOut("[aurora]: failed to register sound card : %s \r\n", ausnd->name);
+		kfree(ausnd);
+		return 1;
+	}
+	
+	UARTDebugOut("[virtio-snd]: initialized successfully \r\n");
 	return 0;
 }
