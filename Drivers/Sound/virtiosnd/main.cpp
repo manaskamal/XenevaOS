@@ -525,12 +525,12 @@ static void snd_send_pcm(VirtioCommonCfg* cfg, void* pcm_data, uint32_t len) {
 		txq_lst_idx++;
 	}
 
-	while (1) {
+	/*while (1) {
 		if (_response_ok == true) {
 			_response_ok = false;
 			break;
 		}
-	}
+	}*/
 
 	virtio_snd_pcm_status* stat = (virtio_snd_pcm_status*)resp_phys;
 	if (stat->status != VIRTIO_SND_S_OK)
@@ -767,6 +767,7 @@ int virtio_snd_write(uint8_t* buffer, size_t len) {
 
 	/* copy the pcm buffer */
 	memcpy(pcm_buffer, buffer, len);
+	snd_send_pcm(_config, pcm_buffer, len);
 }
 
 /**
@@ -999,13 +1000,19 @@ AU_EXTERN AU_EXPORT int AuDriverMain(AuDriver* drv) {
 	mask_irqs();
 
 	AuSound* ausnd = (AuSound*)kmalloc(sizeof(AuSound));
+	memset(ausnd, 0, sizeof(AuSound));
 	strcpy(ausnd->name, "virtio-sound");
-	ausnd->read = virtio_snd_read;
-	ausnd->write = virtio_snd_write;
-	ausnd->stop_output = virtio_snd_output_stop;
-	ausnd->start_output = virtio_snd_output_start;
-	ausnd->set_vol = virtio_snd_set_vol;
+	ausnd->read = &virtio_snd_read;
+	ausnd->write = &virtio_snd_write;
+	ausnd->stop_output = &virtio_snd_output_stop;
+	ausnd->start_output = &virtio_snd_output_start;
+	ausnd->set_vol = &virtio_snd_set_vol;
 	ausnd->control = 0;
+
+	/** no interrupt based sound playback, hardware need to
+	 * be forced to send pcm through command 
+	 */
+	ausnd->_force_write = 1;
 	if (AuSoundRegisterCard(ausnd)) {
 		UARTDebugOut("[aurora]: failed to register sound card : %s \r\n", ausnd->name);
 		kfree(ausnd);

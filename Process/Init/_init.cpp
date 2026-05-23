@@ -80,6 +80,8 @@ void init_basic_gid_to_dev() {
 	_KeCredChangeID(fd, 0, GROUP_INPUT);
 	fd = _KeOpenFile("/dev/kybrd", FILE_OPEN_READ_ONLY);
 	_KeCredChangeID(fd, 0, GROUP_INPUT);
+	fd = _KeOpenFile("/dev/sound", FILE_OPEN_READ_ONLY);
+	_KeCredChangeID(fd, 0, GROUP_AUDIO);
 }
 
 /*
@@ -117,8 +119,12 @@ extern "C" void main(int argc, char* argv[]) {
 	_KeCredAddSGroup(proc, ggid_misc_world);
 	_KeProcessLoadExec(proc, "/netmngr.exe\0", 0, NULL);
 
+	/** actually, design should be like that, each process after
+	 * finish its initialization, it should send a signal to 
+	 * init, so that it can continue next proccesses spawning
+	 */
+	_KeProcessSleep(500);
 
-	_KeProcessSleep(20);
 
 	/** from now, normal user's won't get system access */
 	proc = _KeCreateProcess(0, "deodhaixr");
@@ -129,7 +135,20 @@ extern "C" void main(int argc, char* argv[]) {
 	_KeCredAddSGroup(proc, GROUP_VIDEO);
 	_KeCredAddSGroup(proc, GROUP_INPUT);
 	_KeCredSetCap(proc, 0);
-	_KeProcessLoadExec(proc, "/deodxr.exe\0", 0, NULL);
+	_KeProcessLoadExec(proc, "/deodxr.exe", 0, NULL);
+
+	_KeProcessSleep(800);
+
+
+	proc = _KeCreateProcess(0, "deoaud");
+	_KePrint("deoaud proc id : %d \r\n", proc);
+	_KeSetUID(proc, UAC_DEAMONS);
+	_KeSetGID(proc, UAC_DEAMONS);
+	_KeCredAddSGroup(proc, ggid_misc_world);
+	_KeCredAddSGroup(proc, GROUP_AUDIO);
+	_KeCredAddSGroup(proc, ggid_misc_postbox);
+	_KeProcessLoadExec(proc, "/deoaud.exe", 0, NULL);
+	
 #elif ARCH_X64
 	int proc = _KeCreateProcess(0, "deodhai");
 	_KeProcessLoadExec(proc, "/deodhai.exe", 0, NULL);

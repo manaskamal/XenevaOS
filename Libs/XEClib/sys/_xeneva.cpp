@@ -55,11 +55,9 @@ extern "C" int _fltused = 1;
 //}
 
 XE_EXTERN XE_LIB void _XESetEnvironmentVariable(char* key, char* value, bool overwrite) {
-	_KePrint("Setting env variables \r\n");
 	uint64_t* envptr = (uint64_t*)_KeGetEnvironmentBlock();
 	if (!envptr)
 		return;
-	_KePrint("Envptr : %x \r\n", envptr);
 	char* envp = (char*)envptr;
 	size_t keyLen = strlen(key);
 	size_t valueLen = strlen(value);
@@ -96,10 +94,8 @@ XE_EXTERN XE_LIB void _XESetEnvironmentVariable(char* key, char* value, bool ove
 	if ((dest - temp) + totalLen + 2 >= maxEnvSize)
 		return;
 	
-	_KePrint("SNPRintf output : %x , value : %x \r\n", dest, value);
 	snprintf(dest, totalLen + 2, "%s=%s", key, value);
 	dest[totalLen + 1] = '\0';
-	_KePrint("SNPrint succedded \r\n");
 
 	memcpy(envp, temp, maxEnvSize);
 

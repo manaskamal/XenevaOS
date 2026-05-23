@@ -75,13 +75,13 @@ uint16_t shSampleBufferKey;
 #define DEODHAI_AUDIO_CONNECTION_HANDSHAKE 11
 #define DEODHAI_AUDIO_CONNECTION_CLOSED 12
 
-#pragma pack(push,1)
+
 typedef struct _deodhai_audio_msg_ {
 	char message[60];
 	uint16_t fromProcessId;
 	uint16_t toProcessId;
 }DeodhaiAudioMessage;
-#pragma pack(pop)
+
 
 /*
  * AudioControlPanel is the main way to 
@@ -114,6 +114,12 @@ typedef struct _audio_box_ {
 
 DeodhaiAudioBox* globalBox;
 
+
+typedef struct _sound_card_list {
+	char name[32];
+	int cardID;
+	struct _sound_card_list* next;
+}aurora_snd_card_list;
 
 /*
  * DeodhaiGetNewControlPanelKey -- get a new key
@@ -212,7 +218,7 @@ void DeodhaiAudioHandleMessage(DeodhaiAudioMessage* message) {
 }
 
 void DeodhaiAudioComposeFrame() {
-	memset(mainOutput, 0, 4096);
+	memset(mainOutput,0, 4096);
 	int16_t* output = (int16_t*)mainOutput;
 	for (int i = 0; i < audioBoxList->pointer; i++) {
 		DeodhaiAudioBox* box = (DeodhaiAudioBox*)list_get_at(audioBoxList, i);
@@ -293,16 +299,21 @@ void DeodhaiAudioComposeFrame() {
 int main(int argc, char* argv[]) {
 	int process_ID = _KeGetProcessID();
 
+	_KePrint("DeodhaiAudio daemon running %d\r\n", process_ID);
+	
 	/* open all important files and configurations */
 	int pipe = _KeCreatePipe("DeodhaiAudio", (sizeof(DeodhaiAudioMessage)*4));
 	if (pipe != -1)
 		printf("Pipe creation successful %d\n", pipe);
 	else
 		return 1;
-	
+
 	postbox = _KeOpenFile("/dev/postbox", FILE_OPEN_READ_ONLY);
 
-	_KeFileIoControl(postbox, POSTBOX_CREATE, NULL);
+	if (postbox != -1)
+		_KeFileIoControl(postbox, POSTBOX_CREATE, NULL);
+	else
+		_KePrint("[deodhai audio]: failed to create postbox ipc \r\n");
 
 	sound = _KeOpenFile("/dev/sound", FILE_OPEN_READ_ONLY);
 
@@ -311,10 +322,33 @@ int main(int argc, char* argv[]) {
 	XEFileIOControl ioctl;
 	memset(&ioctl, 0, sizeof(XEFileIOControl));
 
+
 	/* uint_1 holds the millisecond to sleep after
 	* one frame playback */
 	ioctl.uint_1 = 0;
 	ioctl.syscall_magic = AURORA_SYSCALL_MAGIC;
+	/** uint_2 must hold the sound card number to use **/
+	ioctl.uint_2 = -1; 
+	int num_card_count = _KeFileIoControl(sound, SOUND_GET_CARD_TOTALNUM, &ioctl);
+
+	_KePrint("[deodhai-audio]: total sound cards : %d \r\n", num_card_count);
+
+	ioctl.uint_1 = num_card_count;
+	aurora_snd_card_list* list = (aurora_snd_card_list*)malloc(sizeof(aurora_snd_card_list) * num_card_count);
+	ioctl.ulong_1 = (uint64_t)list;
+	if (_KeFileIoControl(sound, SOUND_GET_CARD_LIST, &ioctl)) {
+		_KePrint("[deodhai-audio]: failed to get sound card list \r\n");
+		_KePauseThread();
+	}
+
+	/** just print all card name once **/
+	for (int i = 0; i < num_card_count; i++) {
+		_KePrint("[deodhai-audio]: %s sound is installed, id : %d \r\n", list[i].name, list[i].cardID);
+	}
+
+	/** let's use default first sound card here **/
+	ioctl.uint_2 = list->cardID;
+
 	_KeFileIoControl(sound, SOUND_REGISTER_SNDPLR, &ioctl);
 
 	mainOutput = (uint64_t*)malloc(4096);
@@ -336,6 +370,6 @@ int main(int argc, char* argv[]) {
 			DeodhaiAudioHandleMessage(msg);
 			memset(buff, 0, sizeof(DeodhaiAudioMessage));
 		}
-		_KeProcessSleep(1);
+		_KeProcessSleep(100);
 	}
 }

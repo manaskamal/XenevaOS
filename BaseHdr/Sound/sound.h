@@ -50,7 +50,7 @@
 typedef struct __au_dsp__ {
 	CircBuffer *buffer;
 	uint16_t _dsp_id;
-	uint16_t _cardID;
+	int16_t _cardID;
 #ifdef ARCH_X64
 	AuThread *SndThread;
 #elif ARCH_ARM64
@@ -75,6 +75,7 @@ typedef struct _SoundDev_ {
 	int(*start_output)();
 	int(*set_vol)(uint8_t vol);
 	int(*control)(void* data, int code);
+	bool _force_write;
 }AuSound;
 
 

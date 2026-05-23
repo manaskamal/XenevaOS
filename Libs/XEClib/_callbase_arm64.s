@@ -562,3 +562,23 @@ _KeGetGlobalGroupID:
 	mov x0, x6
 	ret
 
+.global _KeProcessTokenAddSelf
+ _KeProcessTokenAddSelf:
+    mov x16, 65
+	svc #0
+	mov x0, x6
+	ret
+
+.global _KeProcessTokenGetThreadID
+_KeProcessTokenGetThreadID:
+    mov x16, 66
+	svc #0
+	mov x0, x6
+	ret
+
+.global _KeProcessTokenRemoveSelf
+_KeProcessTokenRemoveSelf:
+    mov x16, 67
+	svc #0
+	mov x0, x6
+	ret

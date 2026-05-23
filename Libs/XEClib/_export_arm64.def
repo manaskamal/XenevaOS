@@ -42,6 +42,9 @@ EXPORTS
     _KeDestroyTimer
     _KeProcessGetFileDesc
     _KeFileSetOffset
+    _KeProcessTokenAddSelf
+    _KeProcessTokenGetThreadID
+    _KeProcessTokenRemoveSelf
     gettimeofday
     socket
     connect

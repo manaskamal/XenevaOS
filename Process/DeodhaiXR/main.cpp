@@ -33,6 +33,7 @@
 #include <stdlib.h>
 #include <sys/_keproc.h>
 #include <sys/_kefile.h>
+#include <sys/_kecred.h>
 #include <chitralekha.h>
 #include <sys/_keipcpostbox.h>
 #include <sys/mman.h>
@@ -972,6 +973,10 @@ int main(int argc, char* argv[]){
 	memset(&mice_input, 0, sizeof(AuInputMessage));
 	memset(&kybrd_input, 0, sizeof(AuInputMessage));
 
+	/** register deodhai as global daemon for kernel display
+	 * employee
+	 */
+	_KeProcessTokenAddSelf(PROCESS_TOKEN_DISPLAY);
 
 	int proc = _KeCreateProcess(0, "xelnch");
 	_KeProcessLoadExec(proc, "/xelnch.exe", NULL, NULL);

@@ -48,6 +48,7 @@
 #include <Cred/group.h>
 #include <Cred/cred.h>
 #include <proctoken.h>
+#include <Fs/pipe.h>
 
 #define AURORA_MAX_SYSCALL 68
 
@@ -131,7 +132,7 @@ static void* syscalls[AURORA_MAX_SYSCALL] = {
 	NetBind, //51
 	NetAccept, //52
 	NetListen, //53
-	0, //54
+	AuCreatePipe, //54
 	AuGetVDiskInfo, //55, 
 	AuGetVDiskPartitionInfo, //56
 	GetEnvironmenBlock, //57

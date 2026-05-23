@@ -295,21 +295,27 @@ int AuPipeClose(AuVFSNode* fs, AuVFSNode* file) {
  * @param sz -- Size of the pipe
  */
 int AuCreatePipe(char* name, size_t sz) {
+	UARTDebugOut("Creating PIPE \r\n");
 	AA64Thread* currentThr = AuGetCurrentThread();
-	if (!currentThr)
+	if (!currentThr) {
+		UARTDebugOut("creating pipe !currentThr\r\n");
 		return -1;
+	}
 	AuProcess* proc = AuProcessFindThread(currentThr);
 	if (!proc) {
 		proc = AuProcessFindSubThread(currentThr);
-		if (!proc)
+		if (!proc) {
+			UARTDebugOut("!proc \r\n");
 			return -1;
+		}
 	}
 
-	if (sz == 0)
+	if (sz == 0) {
+		UARTDebugOut("SZ == 0 \r\n");
 		return -1;
+	}
 
 	int fd = AuProcessGetFileDesc(proc);
-
 
 	AuVFSNode* node = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
 	AuPipe* pipe = (AuPipe*)kmalloc(sizeof(AuPipe));
@@ -325,6 +331,8 @@ int AuCreatePipe(char* name, size_t sz) {
 	strcpy(node->filename, name);
 	node->flags = FS_FLAG_PIPE;
 	node->size = sz;
+	node->uid = proc->creds.uid;
+	node->gid = proc->creds.gid;
 	node->device = pipe; // pipe;
 	node->read = AuPipeRead;
 	node->write = AuPipeWrite;

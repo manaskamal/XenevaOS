@@ -41,6 +41,17 @@ XE_EXTERN{
 #endif
 
 	/**
+	 * process token definitions
+	 */
+	enum _proc_tokens_ {
+	   PROCESS_TOKEN_NETWORK,
+	   PROCESS_TOKEN_DISPLAY,
+	   PROCESS_TOKEN_AUDIO,
+	   PROCESS_TOKEN_DEV,
+	   PROCESS_TOKEN_NETSERVER,
+    };
+
+	/**
 	 * @brief _KePauseThread -- pause currently running
 	 * thread
 	 */
@@ -157,6 +168,26 @@ XE_EXTERN{
 	 * block of the process
 	 */
 	XE_LIB uint64_t _KeGetEnvironmentBlock();
+
+	/**
+     * _KeProcessTokenAddSelf -- add current process
+     * to its belonging category
+     * @param category -- category to look
+     */
+	XE_LIB int _KeProcessTokenAddSelf(uint8_t category);
+
+	/**
+     * @brief _KeProcessTokenGetThreadID -- get the thread id
+     * of a slot
+	 * @param category -- token category
+     */
+	XE_LIB int _KeProcessTokenGetThreadID(uint8_t category);
+
+	/**
+     * @brief _KeProcessTokenRemoveSelf -- remove self from a token
+     * @param category -- category to free
+     */
+	XE_LIB int _KeProcessTokenRemoveSelf(uint8_t category);
 
 #ifdef __cplusplus
 }

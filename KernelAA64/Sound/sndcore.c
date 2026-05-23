@@ -38,6 +38,7 @@
 #include <_null.h>
 #include <Drivers/uart.h>
 #include <Mm/vmmngr.h>
+#include <Mm/pmmngr.h>
 
 #define AURORA_MAX_SOUND_CARDS 256
 
@@ -150,15 +151,23 @@ int AuSoundIOControl(AuVFSNode* node, int code, void* arg) {
 	switch (code)
 	{
 	case SOUND_REGISTER_SNDPLR: {
+		UARTDebugOut("Registering sound player \r\n");
 		AuDSP* dsp = (AuDSP*)kmalloc(sizeof(AuDSP));
 		memset(dsp, 0, sizeof(AuDSP));
 		uint8_t* buffer = (uint8_t*)P2V((size_t)AuPmmngrAlloc());
+		UARTDebugOut("buffer : %x \r\n", buffer);
 		memset(buffer, 0, PAGE_SIZE);
 		dsp->buffer = AuCircBufInitialise(buffer, SND_BUFF_SZ);
 		dsp->_dsp_id = thr->thread_id;
 		dsp->SndThread = thr;
 		dsp->sleep_time = _ioctl->uint_1;
 		dsp->available = true;
+		UARTDebugOut("UINT_2 value : %d \r\n", _ioctl->uint_2);
+		if (_ioctl->uint_2 != UINT32_MAX) 
+			dsp->_cardID = _ioctl->uint_2;
+		else 
+			dsp->_cardID = -1;
+		UARTDebugOut("Sound registered successfully \r\n");
 		AuSoundAddDSP(dsp);
 		break;
 	}
@@ -205,6 +214,38 @@ int AuSoundIOControl(AuVFSNode* node, int code, void* arg) {
 	return 0;
 }
 
+size_t AuSoundRead(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint32_t length) {
+	/** NOT implemented yet **/
+	return 0;
+}
+
+size_t AuSoundWrite(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint32_t length) {
+	AA64Thread* t = AuGetCurrentThread();
+	AuDSP* dsp = AuSoundGetDSP(t->thread_id);
+	uint8_t* aligned_buf = (uint8_t*)buffer;
+	/** see if dps has card attached to it, also
+	 * verify if the card is in force write mode
+	 */
+	if (dsp->_cardID != -1) {
+		AuSound* card = _cards[dsp->_cardID];
+		if (card)
+			if (card->_force_write) {
+				card->write((uint8_t*)buffer, length);
+				return length;
+			}
+	}
+
+
+	if (CircBufFull(dsp->buffer)) {
+		/*AuBlockThread(dsp->SndThread);
+		AuForceScheduler();*/
+		return -1;
+	}
+	for (int i = 0; i < SND_BUFF_SZ; i++) { //
+		AuCircBufPut(dsp->buffer, aligned_buf[i]);
+	}
+	return SND_BUFF_SZ;
+}
 /**
 * @brief AuSoundInitialize -- Initialized the Aurora sound system
 */
@@ -217,9 +258,9 @@ void AuSoundInitialise() {
 	dsp->uid = 0;
 	dsp->gid = 0; 
 	dsp->device = fsys;
-	dsp->read = 0; // AuSoundRead;
-	dsp->write = 0;// AuSoundWrite;
-	dsp->iocontrol = 0; // AuSoundIOControl;
+	dsp->read = AuSoundRead;
+	dsp->write = AuSoundWrite;
+	dsp->iocontrol = AuSoundIOControl;
 	AuDevFSAddFile(fsys, "/", dsp);
 
 	/** clear up the card data structure */

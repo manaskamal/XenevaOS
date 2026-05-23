@@ -58,7 +58,6 @@ ChFont *ChInitialiseFont(char* fontname) {
 	if (!fileSz)
 		return NULL;
 	
-	_KePrint("Font initialized upto here \n");
 	ChFont* font = (ChFont*)malloc(sizeof(ChFont));
 	memset(font, 0, sizeof(ChFont));
 	font->buffer = (uint8_t*)buff;
@@ -70,6 +69,7 @@ ChFont *ChInitialiseFont(char* fontname) {
 	FT_Error err = 0;
 	err = FT_Init_FreeType(&font->lib);
 	err = FT_New_Memory_Face(font->lib, font->buffer, font->fileSz, 0, &font->face);
+
 	err = FT_Set_Pixel_Sizes(font->face, 0, 32);
 	font->slot = font->face->glyph;
 	font->lineHeight = font->face->size->metrics.height / 64;

@@ -89,6 +89,7 @@ int AuProcessTokenAddSelf(uint8_t category) {
 	}
 	_tokens[category].proc = proc;
 	_tokens[category].thread_id = current_thr->thread_id;
+	UARTDebugOut("[aurora]: process registered to token : %s \r\n", _token_id_to_string(category));
 	return 0;
 }
 
@@ -124,5 +125,6 @@ int AuProcessTokenRemoveSelf(uint8_t category) {
 	}
 	_tokens[category].proc = NULL;
 	_tokens[category].thread_id = -1;
+	UARTDebugOut("[aurora]: process removed from token : %s \r\n", _token_id_to_string(category));
 	return 0;
 }
