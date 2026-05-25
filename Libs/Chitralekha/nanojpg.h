@@ -621,7 +621,9 @@ namespace Jpeg
 		}
 
 		DecodeResult _Decode(const unsigned char* jpeg, const int size) {
+			_KePrint("Decoding : %x, jpeg: %x\r\n", ctx, jpeg);
 			ctx.pos = (const unsigned char*)jpeg;
+			_KePrint("CTX.Pos : %x \r\n", ctx.pos);
 			ctx.size = size & 0x7FFFFFFF;
 			if (ctx.size < 2) return NotAJpeg;
 			if ((ctx.pos[0] ^ 0xFF) | (ctx.pos[1] ^ 0xD8)) return NotAJpeg;
@@ -665,7 +667,8 @@ namespace Jpeg
 			38, 31, 39, 46, 53, 60, 61, 54, 47, 55, 62, 63 };
 		memcpy(ZZ, temp, sizeof(ZZ));
 		memset(&ctx, 0, sizeof(Context));
-		_KePrint("ctx -> %x \r\n", &ctx);
+		_KePrint("ctx -> %x calling decoder, %x\r\n", &ctx, data);
+		_KePrint("size : %d _Decode %x\r\n", size, &Decoder::_Decode);
 		_Decode(data, size);
 	}
 

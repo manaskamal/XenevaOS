@@ -134,6 +134,8 @@ e:\xeneva_project\aurora\kernelaa64\arm64\debug\proctoken.obj
 e:\xeneva_project\aurora\kernelaa64\arm64\debug\proctoken.asm
 e:\xeneva_project\aurora\kernelaa64\arm64\debug\process.obj
 e:\xeneva_project\aurora\kernelaa64\arm64\debug\process.asm
+e:\xeneva_project\aurora\kernelaa64\arm64\debug\power.obj
+e:\xeneva_project\aurora\kernelaa64\arm64\debug\power.asm
 e:\xeneva_project\aurora\kernelaa64\arm64\debug\pe.obj
 e:\xeneva_project\aurora\kernelaa64\arm64\debug\pe.asm
 e:\xeneva_project\aurora\kernelaa64\arm64\debug\pcie.obj
@@ -157,6 +159,7 @@ e:\xeneva_project\aurora\kernelaa64\arm64\debug\aa64vector.obj
 e:\xeneva_project\aurora\kernelaa64\arm64\debug\aa64lowlevel.obj
 e:\xeneva_project\aurora\kernelaa64\arm64\debug\aa64switch.obj
 e:\xeneva_project\aurora\kernelaa64\arm64\debug\aa64_print.obj
+e:\xeneva_project\aurora\kernelaa64\arm64\debug\virt_power.obj
 e:\xeneva_project\aurora\arm64\debug\xnkrnl.lib
 e:\xeneva_project\aurora\arm64\debug\xnkrnl.exp
 e:\xeneva_project\aurora\build\efi\xeneva\xnkrnl.exe

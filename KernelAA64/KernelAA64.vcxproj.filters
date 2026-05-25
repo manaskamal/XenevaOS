@@ -199,6 +199,7 @@
       <Filter>Sound</Filter>
     </ClCompile>
     <ClCompile Include="proctoken.c" />
+    <ClCompile Include="power.c" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Hal">
@@ -295,6 +296,9 @@
     </CustomBuild>
     <CustomBuild Include="Hal\aa64_print.s">
       <Filter>Hal</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Board\Virt\virt_power.s">
+      <Filter>Board\Virt</Filter>
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
@@ -405,6 +409,9 @@
       <Filter>Include\Cred</Filter>
     </ClInclude>
     <ClInclude Include="..\BaseHdr\proctoken.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\power.h">
       <Filter>Include</Filter>
     </ClInclude>
   </ItemGroup>

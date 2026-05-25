@@ -49,4 +49,15 @@ extern void AuAA64BoardSleepUS(uint32_t us);
  */
 extern void AuAA64BoardSleepMS(uint32_t ms);
 
+
+/**
+ * @brief AuAA64BoardPowerDown -- power down the board
+ */
+extern void AuAA64BoardPowerDown();
+
+/**
+ * @brief AuAA64BoardReboot -- reboot the board
+ */
+extern void AuAA64BoardReboot();
+
 #endif

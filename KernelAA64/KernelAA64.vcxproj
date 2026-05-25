@@ -307,6 +307,7 @@
     <ClCompile Include="Net\udp.c" />
     <ClCompile Include="pcie.c" />
     <ClCompile Include="pe.c" />
+    <ClCompile Include="power.c" />
     <ClCompile Include="process.c" />
     <ClCompile Include="proctoken.c" />
     <ClCompile Include="Serv\fileserv.c" />
@@ -369,6 +370,7 @@
     <ClInclude Include="..\BaseHdr\linux\usb\otg.h" />
     <ClInclude Include="..\BaseHdr\linux\workqueue.h" />
     <ClInclude Include="..\BaseHdr\Mm\mmfile.h" />
+    <ClInclude Include="..\BaseHdr\power.h" />
     <ClInclude Include="..\BaseHdr\proctoken.h" />
     <ClInclude Include="..\BaseHdr\uart.h">
       <DeploymentContent>false</DeploymentContent>
@@ -393,6 +395,12 @@
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
+    <CustomBuild Include="Board\Virt\virt_power.s">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">true</DeploymentContent>
+      <FileType>Document</FileType>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">clang --target=aarch64-windows-msvc -c -o "$(IntDir)%(Filename).obj" "%(FullPath)"</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">$(IntDir)%(Filename).obj</Outputs>
+    </CustomBuild>
     <None Include="exports.def" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

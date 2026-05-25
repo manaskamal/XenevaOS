@@ -557,7 +557,7 @@ static int snd_pcm_set_params(VirtioCommonCfg* cfg) {
 	parm->period_bytes = 4096;
 	parm->channels = 2;
 	parm->format = VIRTIO_SND_PCM_FMT_S16;
-	parm->rate = VIRTIO_SND_PCM_RATE_44100;
+	parm->rate = VIRTIO_SND_PCM_RATE_48000;
 	aa64_data_cache_clean_range(command_phys, sizeof(virtio_snd_pcm_set_params));
 
 

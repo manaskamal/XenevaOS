@@ -160,7 +160,6 @@ size_t AuPipeWrite(AuVFSNode* fs, AuVFSNode* file, uint64_t* buffer, uint32_t le
 AuVFSNode* AuPipeOpen(AuVFSNode* node, char* path) {
 	AuPipe* pipe = (AuPipe*)node->device;
 	pipe->refcount++;
-	AuTextOut("[aurora]: Pipe opened refcount -> %d \n", pipe->refcount);
 	return node;
 }
 
@@ -277,7 +276,6 @@ int AuPipeFSRemoveFile(AuVFSNode* fs, char* path) {
 int AuPipeClose(AuVFSNode* fs, AuVFSNode* file) {
 	AuPipe* pipe = (AuPipe*)fs->device;
 	pipe->refcount--;
-	AuTextOut("[aurora]: pipe closed, refcount -> %d \n", pipe->refcount);
 	if (pipe->refcount == 0) {
 		kfree(pipe->buffer);
 		kfree(pipe->readers_wait_queue);

@@ -2,7 +2,7 @@
 <Project>
   <ProjectOutputs>
     <ProjectOutput>
-      <FullPath>E:\Xeneva Project\Aurora\ARM64\Debug\virtgpu.dll</FullPath>
+      <FullPath>E:\Xeneva_Project\Aurora\ARM64\Debug\virtgpu.dll</FullPath>
     </ProjectOutput>
   </ProjectOutputs>
   <ContentFiles />

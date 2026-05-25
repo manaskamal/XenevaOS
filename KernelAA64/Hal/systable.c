@@ -49,8 +49,9 @@
 #include <Cred/cred.h>
 #include <proctoken.h>
 #include <Fs/pipe.h>
+#include <power.h>
 
-#define AURORA_MAX_SYSCALL 68
+#define AURORA_MAX_SYSCALL 70
 
 AA64Registers* svcCurrentRegs;
 
@@ -146,6 +147,8 @@ static void* syscalls[AURORA_MAX_SYSCALL] = {
 	AuProcessTokenAddSelf, //65
 	AuProcessTokenGetThreadID, //66
 	AuProcessTokenRemoveSelf, //67
+	AuPowerDown, //68
+    AuPowerReset, //69
 };
 
 #ifdef __KERNEL_PROFILER_ON__
@@ -215,6 +218,11 @@ static char* syscall_name[AURORA_MAX_SYSCALL] = {
 	"AuSetUID", //62
 	"AuSetGID", //63
 	"AuCredGetGroupID", //64
+	"AuProcessTokenAddSelf", //65
+	"AuProcessTokenGetThreadID", //66
+	"AuProcessTokenRemoveSelf", //67
+	"AuPowerDown", //68
+	"AuPowerReset", //69
 };
 #endif
 

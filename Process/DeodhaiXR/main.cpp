@@ -903,9 +903,9 @@ int main(int argc, char* argv[]){
 	}else if (screen_w == 640 && screen_h == 480) {
 		DrawWallpaper(canv, "/snow.jpg");
 		DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
-	}*/
+	}
 
-	_KePrint("Wallpaper ready \r\n");
+	_KePrint("Wallpaper ready \r\n");*/
 
 //	ChCanvasScreenUpdate(canv, 0, 0, canv->canvasWidth, canv->canvasHeight);
 	ChCanvasScreenUpdate(canv, 0, 0, screen_w, screen_h);

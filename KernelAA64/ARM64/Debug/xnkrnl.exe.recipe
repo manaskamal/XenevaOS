@@ -18,6 +18,9 @@
     <ContentFile>
       <FullPath>E:\Xeneva_Project\Aurora\KernelAA64\Hal\aa64_print.s</FullPath>
     </ContentFile>
+    <ContentFile>
+      <FullPath>E:\Xeneva_Project\Aurora\KernelAA64\Board\Virt\virt_power.s</FullPath>
+    </ContentFile>
   </ContentFiles>
   <SatelliteDlls />
   <NonRecipeFileRefs />

@@ -78,6 +78,9 @@ XE_EXTERN{
 
 	XE_LIB const char* _XEGetEnvironmentVariable(const char* key);
 
+	XE_LIB int _KePowerDown();
+
+	XE_LIB int _KePowerReset();
 #ifdef __cplusplus
 }
 #endif

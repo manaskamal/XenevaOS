@@ -582,3 +582,22 @@ _KeProcessTokenRemoveSelf:
 	svc #0
 	mov x0, x6
 	ret
+
+.global _KePowerDown
+_KePowerDown:
+    mov x16, 68
+	svc #0
+	/*haha, power down success hole eneiu return nahe*/
+	mov x0, x6
+	ret
+
+
+.global _KePowerReset
+_KePowerReset:
+    mov x16, 69
+	svc #0
+	/* ki dhemali behh, return nahe buli janiu, return mari asu 
+	 * haha, bhakha ulai jai mukhere 
+	 */
+	 mov x0, x6
+	 ret

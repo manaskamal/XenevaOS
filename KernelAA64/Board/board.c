@@ -31,10 +31,19 @@
 #include <Board/RPI3bp/rpi3bp.h>
 #include <Board/imx8mp/imx8mp_clk.h>
 #include <Drivers/uart.h>
-
+#include <Board/board.h>
+#include <stdint.h>
 #include <aucon.h>
 
 extern void imx8mp_gpc_init();
+
+
+#ifdef __TARGET_BOARD_QEMU_VIRT__
+extern void virt_power_down(uint64_t code);
+extern void virt_power_reboot(uint64_t code);
+#endif
+
+
 /**
  * @brief AuAA64BoardInitialize -- initialize board specific data
  */
@@ -65,5 +74,25 @@ void AuAA64BoardSleepUS(uint32_t us) {
 void AuAA64BoardSleepMS(uint32_t ms) {
 #ifdef __TARGET_BOARD_RPI3__
 	AuRPIDelayMS(ms);
+#endif
+}
+
+/**
+ * @brief AuAA64BoardPowerDown -- power down the board
+ */
+void AuAA64BoardPowerDown() {
+#ifdef __TARGET_BOARD_QEMU_VIRT__
+	UARTDebugOut("[aurora]: shutting down your system \r\n");
+	virt_power_down(0x84000008);
+#endif
+}
+
+/**
+ * @brief AuAA64BoardReboot -- reboot the board
+ */
+void AuAA64BoardReboot() {
+#ifdef __TARGET_BOARD_QEMU_VIRT__
+	UARTDebugOut("[aurora]: restarting your system \r\n");
+	virt_power_reboot(0x84000009);
 #endif
 }

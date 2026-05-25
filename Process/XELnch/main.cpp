@@ -17,6 +17,7 @@
 #include <ctype.h>
 #include "search.h"
 #include "pagebutton.h"
+#include "pwbutton.h"
 
 
 ChitralekhaApp *app;
@@ -27,6 +28,7 @@ int screen_w;
 int bpp;
 int graphicsFd;
 int launcher_w, launcher_h;
+static int _initpipe;
 XESearchBar* searchBar;
 
 /* the main painting code */
@@ -229,13 +231,45 @@ void XEDownPageButtonAction(ChWidget* wid, ChWindow* win) {
 	ChWindowUpdate(win, mainGrid->x, mainGrid->y, mainGrid->w, mainGrid->h, 0, 1);
 }
 
+/**
+ *@brief xe_shutdown_action -- send shutdown request to init
+ */
+void xe_shutdown_action(ChWidget* wid, ChWindow* win) {
+	if (xelaunch_get_pipe() != -1) {
+		InitRequestMsg* msg = (InitRequestMsg*)malloc(sizeof(InitRequestMsg));
+		strcpy(msg->message, INIT_REQUEST_PW_DOWN);
+		_KeWriteFile(xelaunch_get_pipe(), msg, sizeof(InitRequestMsg));
+	}
+	else {
+		_KePrint("****xelauncg piipe : %d \r\n", xelaunch_get_pipe());
+	}
+}
+
+/**
+ * @brief xe_restart_action -- send restart request to init
+ */
+void xe_restart_action(ChWidget* wid, ChWindow* win) {
+	if (xelaunch_get_pipe() != -1) {
+		InitRequestMsg* msg = (InitRequestMsg*)malloc(sizeof(InitRequestMsg));
+		strcpy(msg->message, INIT_REQUEST_PW_REBOOT);
+		_KeWriteFile(xelaunch_get_pipe(), msg, sizeof(InitRequestMsg));
+	}
+	else {
+		_KePrint("****xelauncg piipe : %d \r\n", xelaunch_get_pipe());
+	}
+}
+
 /*
 * main -- xeneva launcher entry point
 */
 int main(int argc, char* arv[]){
 	app = ChitralekhaStartApp(argc, arv);
 	ChFontSetSize(app->baseFont, 12);
-	_KePrint("XELaunch till here \r\n");
+
+	/** open init pipe, for admin requests */
+	_initpipe = _KeOpenFile("/pipe/init", FILE_OPEN_READ_ONLY);
+	if (_initpipe == -1)
+		_KePrint("[XELaunch]: failed to initialize the pipe \r\n");
 
 	/* create a demo canvas just for getting the graphics
 	* file descriptor
@@ -254,7 +288,6 @@ int main(int argc, char* arv[]){
 	graphicsFd = canv->graphics_fd;
 	_total_page_count = 1;
 	free(canv);
-
 
 	win = ChCreateWindow(app, WINDOW_FLAG_STATIC | WINDOW_FLAG_ALWAYS_ON_TOP | WINDOW_FLAG_GLASS,
 		"Xeneva Launcher", 10, 10, screen_w - 10*2, screen_h - 85);
@@ -296,7 +329,14 @@ int main(int argc, char* arv[]){
 		down->disabled = true;
 	}
 
-	_KePrint("XELaunch about to paint \r\n");
+	power_button* shutdown = create_power_button(POWER_BUTTON_TYPE_SHUTDOWN, launcher_w - 50 * 2 + 20, 40);
+	shutdown->base.ChActionHandler = xe_shutdown_action;
+	ChWindowAddWidget(win, (ChWidget*)shutdown);
+
+	power_button* restart = create_power_button(POWER_BUTTON_TYPE_RESTART, launcher_w - 70 + 20, 40);
+	restart->base.ChActionHandler = xe_restart_action;
+	ChWindowAddWidget(win, (ChWidget*)restart);
+
 	ChWindowPaint(win);
 
 	PostEvent e;
@@ -312,4 +352,8 @@ int main(int argc, char* arv[]){
 
 AppGrid* xelaunch_get_app_grid() {
 	return mainGrid;
+}
+
+int xelaunch_get_pipe() {
+	return _initpipe;
 }

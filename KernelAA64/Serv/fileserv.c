@@ -276,6 +276,11 @@ int CloseFile(int fd) {
 		current_proc->fds[fd] = 0;
 		return -1;
 	}
+
+	if (file->flags & FS_FLAG_CACHED) {
+		current_proc->fds[fd] = 0;
+		return 0;
+	}
 	if (file->flags & FS_FLAG_GENERAL) {
 		current_proc->fds[fd] = 0;
 		/** NEED to fix, freeing the file causes crash **/
