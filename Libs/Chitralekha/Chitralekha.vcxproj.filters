@@ -59,6 +59,8 @@
       <Filter>widgets</Filter>
     </ClInclude>
     <ClInclude Include="stb_image_resize.h" />
+    <ClInclude Include="nanosvg.h" />
+    <ClInclude Include="nanosvgrast.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="chitralekha.cpp" />

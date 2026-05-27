@@ -35,6 +35,7 @@
 #include <chitralekha.h>
 #include <widgets/base.h>
 #include <widgets/window.h>
+#include <widgets/icon.h>
 
 enum _power_button_type_{
 	POWER_BUTTON_TYPE_SHUTDOWN,
@@ -46,6 +47,7 @@ enum _power_button_type_{
 typedef struct _pw_button_ {
 	ChWidget base;
 	uint8_t type;
+	ChIcon* icon;
 }power_button;
 
 

@@ -18,6 +18,10 @@
 #include "search.h"
 #include "pagebutton.h"
 #include "pwbutton.h"
+#define NANOSVG_IMPLEMENTATION
+#include <nanosvg.h>
+#define NANOSVGRAST_IMPLEMENTATION
+#include <nanosvgrast.h>
 
 
 ChitralekhaApp *app;
@@ -329,7 +333,7 @@ int main(int argc, char* arv[]){
 		down->disabled = true;
 	}
 
-	power_button* shutdown = create_power_button(POWER_BUTTON_TYPE_SHUTDOWN, launcher_w - 50 * 2 + 20, 40);
+	power_button* shutdown = create_power_button(POWER_BUTTON_TYPE_SHUTDOWN, launcher_w - 70 * 2 + 20, 40);
 	shutdown->base.ChActionHandler = xe_shutdown_action;
 	ChWindowAddWidget(win, (ChWidget*)shutdown);
 

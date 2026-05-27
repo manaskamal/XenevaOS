@@ -884,9 +884,9 @@ int main(int argc, char* argv[]){
 
 	_KePrint("Deodhai Initializaed back surface \r\n");
 	DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
-	/*if (screen_w == 1024 && screen_h == 768) {
+	if (screen_w == 1024 && screen_h == 768) {
 		_KePrint("Drawing wallpaper \r\n");
-		DrawWallpaper(canv, "/vill.jpg");
+		DrawWallpaper(canv, "/batman.jpg");
 		DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
 	}
 	else if (screen_w == 1920 && screen_h == 1080) {
@@ -905,7 +905,7 @@ int main(int argc, char* argv[]){
 		DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
 	}
 
-	_KePrint("Wallpaper ready \r\n");*/
+	_KePrint("Wallpaper ready \r\n");
 
 //	ChCanvasScreenUpdate(canv, 0, 0, canv->canvasWidth, canv->canvasHeight);
 	ChCanvasScreenUpdate(canv, 0, 0, screen_w, screen_h);

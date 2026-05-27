@@ -350,6 +350,11 @@ namespace Jpeg
 				c->height = (ctx.height * c->ssy + ssymax - 1) / ssymax;
 				c->stride = ctx.mbwidth * ctx.mbsizex * c->ssx / ssxmax;
 				if (((c->width < 3) && (c->ssx != ssxmax)) || ((c->height < 3) && (c->ssy != ssymax))) JPEG_DECODER_THROW(Unsupported);
+				uint32_t step1 = ctx.mbheight * ctx.mbsizey;
+				uint32_t step2 = step1 * c->ssy;
+				uint32_t step3 = step2 / ssymax;
+				uint32_t total = c->stride * step3;
+
 				if (!(c->pixels = (unsigned char*)AllocMem(c->stride * (ctx.mbheight * ctx.mbsizey * c->ssy / ssymax)))) JPEG_DECODER_THROW(OutOfMemory);
 			}
 			if (ctx.ncomp == 3) {
@@ -621,9 +626,7 @@ namespace Jpeg
 		}
 
 		DecodeResult _Decode(const unsigned char* jpeg, const int size) {
-			_KePrint("Decoding : %x, jpeg: %x\r\n", ctx, jpeg);
 			ctx.pos = (const unsigned char*)jpeg;
-			_KePrint("CTX.Pos : %x \r\n", ctx.pos);
 			ctx.size = size & 0x7FFFFFFF;
 			if (ctx.size < 2) return NotAJpeg;
 			if ((ctx.pos[0] ^ 0xFF) | (ctx.pos[1] ^ 0xD8)) return NotAJpeg;
@@ -632,22 +635,20 @@ namespace Jpeg
 				if ((ctx.size < 2) || (ctx.pos[0] != 0xFF)) return SyntaxError;
 				_Skip(2);
 				switch (ctx.pos[-1]) {	
-				case 0xC0: _DecodeSOF();  break;
-				case 0xC4: _DecodeDHT();  break;
-				case 0xDB: _DecodeDQT();  break; 
-				case 0xDD: _DecodeDRI();  break;
-				case 0xDA: _DecodeScan(); break;
-				case 0xFE: _SkipMarker(); break;
+				case 0xC0:  _DecodeSOF();  break;
+				case 0xC4:  _DecodeDHT();  break;
+				case 0xDB:  _DecodeDQT();  break;
+				case 0xDD:  _DecodeDRI();  break;
+				case 0xDA:  _DecodeScan(); break;
+				case 0xFE:  _SkipMarker(); break;
 				default:
 					if ((ctx.pos[-1] & 0xF0) == 0xE0){
 						_SkipMarker();
-						//_KePrint("Skip marker found \r\n");
 					}
 					else
 						return Unsupported;
 				}
 			}
-			_KePrint("Converting \n");
 			if (ctx.error != Internal_Finished) return ctx.error;
 			ctx.error = OK;
 			_Convert();
@@ -667,8 +668,8 @@ namespace Jpeg
 			38, 31, 39, 46, 53, 60, 61, 54, 47, 55, 62, 63 };
 		memcpy(ZZ, temp, sizeof(ZZ));
 		memset(&ctx, 0, sizeof(Context));
-		_KePrint("ctx -> %x calling decoder, %x\r\n", &ctx, data);
-		_KePrint("size : %d _Decode %x\r\n", size, &Decoder::_Decode);
+	/*	_KePrint("ctx -> %x calling decoder, %x\r\n", &ctx, data);
+		_KePrint("size : %d _Decode %x\r\n", size, &Decoder::_Decode);*/
 		_Decode(data, size);
 	}
 

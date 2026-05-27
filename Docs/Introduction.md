@@ -25,6 +25,10 @@ This documentation will guide you through all aspects of XenevaOS and how it wor
 __Build the project__:
 - [Build instructions](BuildInstructions.md)
 - [Running XenevaOS](VMSetup.md)
+- [Build instructions for ARM64](BuildInstructions(ARM64).md)
+
+__Kernel Configuration File__
+- [Populating Configuration Files](PopulatingConfig.md)
 
 __Kernel__ : 
 - [About the Kernel](Kernel/AboutKernel.md)

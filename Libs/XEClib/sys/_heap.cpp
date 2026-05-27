@@ -6154,9 +6154,15 @@ int mspace_mallopt(int param_number, int value) {
 * @param pages -- number of pages needs to be mapped
 */
 void* xe_request_page(int pages) {
-    size_t size = static_cast<size_t>(pages) * 4096;
-    _KePrint("XE_Request_page sz : %d \r\n", pages);
-    uint64_t* p = (uint64_t*)_KeGetProcessHeapMem(size);
+    /*size_t size = static_cast<size_t>(pages) * 4096;
+    _KePrint("XE_Request_page sz : %d - size : %d \r\n", pages, size);*/
+
+    // don't worry, _KeGetProcessHeapMem will convert req_sz to
+    // number of pages, dlmalloc uses morecore to allocate pages
+    // that's why it passes bytes not pages
+
+    size_t req_sz = (pages + 4095);
+    uint64_t* p = (uint64_t*)_KeGetProcessHeapMem(req_sz);
     return p;
 }
 

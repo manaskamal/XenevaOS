@@ -255,6 +255,8 @@
     <ClInclude Include="image.h" />
     <ClInclude Include="keycode.h" />
     <ClInclude Include="nanojpg.h" />
+    <ClInclude Include="nanosvg.h" />
+    <ClInclude Include="nanosvgrast.h" />
     <ClInclude Include="stb_image_resize.h" />
     <ClInclude Include="stb_truetype.h" />
     <ClInclude Include="ttf.h" />
