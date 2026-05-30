@@ -52,6 +52,8 @@ static int dmaAddress_Offset;
 
 #define DWC2_SETUP_SLOT 1
 static uint32_t setup_slot;
+static uint8_t _usb_address;
+
 
 #pragma pack(push,1)
 typedef struct {
@@ -73,6 +75,16 @@ static dwc2_dma_slot* setup_pages[DWC2_SETUP_SLOT];
 AU_EXTERN AU_EXPORT int AuDriverUnload() {
 
 	return 0;
+}
+
+/**
+ * @brief dwc2_assign_address -- assigns address
+ * to a usb device
+ */
+uint8_t dwc2_assign_address() {
+	uint8_t addr = _usb_address;
+	_usb_address++;
+	return addr;
 }
 
 /**
@@ -233,7 +245,7 @@ void dwc2_init_core(struct dwc2_core_regs* regs) {
 void dwc2_enable_global_interrupt(struct dwc2_core_regs* regs) {
 	uint32_t ahbcfg = dwc2_read((uint64_t)&regs->gahbcfg);
 	ahbcfg |= DWC2_GAHBCFG_GLBLINTRMSK; 
-	UARTDebugOut("glbl ahbcfg---- : %x \r\n", ahbcfg);
+//	UARTDebugOut("glbl ahbcfg---- : %x \r\n", ahbcfg);
 	dwc2_write((uint64_t)&regs->gahbcfg, ahbcfg);
 }
 
@@ -510,7 +522,7 @@ void dwc2_initialize(struct dwc2_core_regs* regs) {
 
 	enable_irqs();
 
-	int timeout = 50000;
+	int timeout = 500000;
 	while (1) {
 		if (_enable_root_port == 1)
 			break;
@@ -522,7 +534,7 @@ void dwc2_initialize(struct dwc2_core_regs* regs) {
 		dwc2_enable_root_port(regs);
 
 	dsb_sy_barrier();
-	timeout = 50000;
+	timeout = 500000;
 	while (1) {
 		if (_root_port_ready == 1)
 			break;
@@ -530,9 +542,10 @@ void dwc2_initialize(struct dwc2_core_regs* regs) {
 			break;
 	}
 
-	if (_root_port_ready)
+	if (_root_port_ready) {
 		UARTDebugOut("[dwc2-otg]: enumeration thing is work in progress \r\n");
-	dwc2_enumerate_root_device(regs);
+		dwc2_enumerate_root_device(regs);
+	}
 
 }
 
@@ -565,7 +578,7 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 
 
 	setupPacketBuffers = initialize_list();
-
+	_usb_address = 1;
 
 	/**
 	 * This driver is only for RPI for now, and before initializing
@@ -587,12 +600,6 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 	dwc2_initialize(regs);
 	UARTDebugOut("[dwc2_org]: successfully initialized \r\n");
 	
-	for (;;) {
-		if (port_changed != 0) {
-			root_hub_handle_port_change(regs, port_changed);
-			port_changed = 0;
-		}
-	}
 	mask_irqs();
 	return 0;
 }

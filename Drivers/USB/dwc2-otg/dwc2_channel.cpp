@@ -36,6 +36,7 @@
 #include <Hal/AA64/aa64cpu.h>
 #include <Mm/pmmngr.h>
 #include <Drivers/uart.h>
+#include "usb_desc.h"
 #include <string.h>
 
 static bool _channel_interrupt_occured = 0;
@@ -70,6 +71,15 @@ void dwc2_reset_channel(dwc2_core_regs* regs, uint8_t ch) {
 
 	dsb_sy_barrier();
 }
+
+#define CONVERT_TO_BUS(phys) (phys | 0xC0000000UL)
+#define HCSPLT_PRTADDR(x)  (((x) & 0x7F) << DWC2_HCSPLT_PRTADDR_OFFSET)
+#define HCSPLT_HUBADDR(x)  (((x) & 0x7F) << DWC2_HCSPLT_HUBADDR_OFFSET)
+#define HCSPLT_XACTPOS(x)  (((x) & 0x3) << DWC2_HCSPLT_XACTPOS_OFFSET)
+#define HCSPLT_COMPSPLT  (1U <<  DWC2_HCSPLT_COMPSPLT_OFFSET)
+#define HCSPLT_SPLTENA   (1U << DWC2_HCSPLT_SPLTENA_OFFSET)
+#define HCSPLT_XACTPOS_ALL 0x3
+
 /**
  * @brief dwc2_start_channel -- allocates a channel 
  */
@@ -110,13 +120,28 @@ void dwc2_start_channel(struct dwc2_core_regs* regs, dwc2_usb_endpoint_t* ep, ui
 	/*aa64_data_cache_clean_range(dma, length);
 	dsb_ish();
 	dsb_sy_barrier();*/
-	dwc2_write((uint64_t)&hc->hcdma, (uint32_t)dma);
-	dwc2_write((uint64_t)&hc->hcdmab, ((uint32_t)dma >> 32) & UINT32_MAX);
+	dwc2_write((uint64_t)&hc->hcdma, (uint32_t)CONVERT_TO_BUS((uint64_t)dma));
+	dwc2_write((uint64_t)&hc->hcdmab, ((uint32_t)CONVERT_TO_BUS((uint64_t)dma) >> 32) & UINT32_MAX);
 
 	/* set the split control to zero*/
-	dwc2_write((uint64_t)&hc->hcsplt, 0);
+	if (!ep->split_enable)
+		dwc2_write((uint64_t)&hc->hcsplt, 0);
+	else {
+		/* enable split transfer for translation between different
+		 * speed mode devices 
+		 */
+		dwc2_write((uint64_t)&hc->hcsplt, 0);
+		dwc2_hcsplit_t* split = (dwc2_hcsplit_t*)&hc->hcsplt;
+		split->hubaddr = ep->hub_address;
+		split->prtaddr = ep->hub_port;
+		split->xactpos = 0x3;
+		split->compsplt = 0;
+		split->spltena = 1;
+		dwc2_write((uint64_t)&hc->hcsplt, HCSPLT_SPLTENA | HCSPLT_XACTPOS(0x3) | HCSPLT_HUBADDR(ep->hub_address)|
+		HCSPLT_PRTADDR(ep->hub_port));
+	}
 
-	uint8_t ls_bit = (ep->speed == 2) ? 1 : 0;
+	uint8_t ls_bit = (ep->speed == USBSpeedLow) ? 1 : 0;
 
 	uint32_t hfnum = dwc2_read((uint64_t)&regs->host_regs.hdnum);
 	uint32_t frmnum = hfnum & 0xFFFF;
@@ -158,8 +183,86 @@ void dwc2_start_channel(struct dwc2_core_regs* regs, dwc2_usb_endpoint_t* ep, ui
 
 	hcchar |= DWC2_HCCHAR_CHEN;
 	hcchar &= ~DWC2_HCCHAR_CHDIS;
+
 	dwc2_write((uint64_t)&hc->hcchar, hcchar);
+
 	
+	dsb_sy_barrier();
+	isb_flush();
+}
+
+/**
+ * @brief dwc2_channel_do_csplit -- complete the split transaction here
+ * @param regs -- pointer to dwc2 core registers
+ * @param ep -- pointer to usb endpoint
+ * @param ch -- channel number
+ */
+void dwc2_channel_do_csplit(struct dwc2_core_regs* regs, dwc2_usb_endpoint_t* ep, uint8_t ch, uint8_t is_in, uint8_t ep_type, uint8_t pid,
+	void* dma, uint32_t length, uint32_t pack_count, uint8_t is_odd_frame) {
+	
+	dwc2_reset_channel(regs, ch);
+	/*dwc2_flush_tx_fifo(regs, 0x10);
+	dwc2_flush_rx_fifo(regs);*/
+
+	struct dwc2_hc_regs* hc = &regs->hc_regs[ch];
+
+	uint32_t hcchar_ = dwc2_read((uint64_t)&hc->hcchar);
+
+
+	/** clear all pending interrupts */
+	dwc2_write((uint64_t)&hc->hcint, 0xFFFFFFFF);
+
+	/** now set transfer size **/
+	dwc2_write((uint64_t)&hc->hctsiz, ((pid << 29) & (3 << 29)) | ((pack_count << 19) & (0x3FF << 19)) | (length & 0x7ffff));
+
+	/** now set the dma address **/
+	/*aa64_data_cache_clean_range(dma, length);
+	dsb_ish();
+	dsb_sy_barrier();*/
+	dwc2_write((uint64_t)&hc->hcdma, (uint32_t)CONVERT_TO_BUS((uint64_t)dma));
+	dwc2_write((uint64_t)&hc->hcdmab, ((uint32_t)CONVERT_TO_BUS((uint64_t)dma) >> 32) & UINT32_MAX);
+
+	/* set the split control to zero*/
+	if (!ep->split_enable)
+		dwc2_write((uint64_t)&hc->hcsplt, 0);
+	else {
+		/* enable split transfer for translation between different
+		 * speed mode devices
+		 */
+		dwc2_write((uint64_t)&hc->hcsplt, HCSPLT_SPLTENA | HCSPLT_COMPSPLT | HCSPLT_XACTPOS(0x3) | HCSPLT_HUBADDR(ep->hub_address) |
+			HCSPLT_PRTADDR(ep->hub_port));
+	}
+
+	uint8_t ls_bit = (ep->speed == USBSpeedLow) ? 1 : 0;
+
+	uint32_t hfnum = dwc2_read((uint64_t)&regs->host_regs.hdnum);
+	uint32_t frmnum = hfnum & 0xFFFF;
+	uint32_t odd = (frmnum & 1) ? 0 : 1;
+
+	uint32_t hcchar = ((ep->max_packet_sz & 0x7ff) << 0) |
+		(ep->ep_num << 11) |
+		(is_in << 15) |
+		(ls_bit << 17) |
+		(ep->type << 18) |
+		(1 << 20) |
+		(ep->dev_address << 22) |
+		(odd << 29);
+	
+	dwc2_write((uint64_t)&hc->hcintmsk, DWC2_HCINTMSK_XFERCOMPL |
+		DWC2_HCINT_CHHLTD | DWC2_HCINT_AHBERR | DWC2_HCINT_STALL |
+		DWC2_HCINT_XACTERR | DWC2_HCINT_BBLERR | DWC2_HCINT_FRMOVRUN | DWC2_HCINT_DATATGLERR);
+
+	uint32_t haintmsk = dwc2_read((uint64_t)&regs->host_regs.haintmsk);
+	haintmsk |= (1U << ch);
+	dwc2_write((uint64_t)&regs->host_regs.haintmsk, haintmsk);
+
+
+	hcchar |= DWC2_HCCHAR_CHEN;
+	hcchar &= ~DWC2_HCCHAR_CHDIS;
+
+	dwc2_write((uint64_t)&hc->hcchar, hcchar);
+
+
 	dsb_sy_barrier();
 	isb_flush();
 }
@@ -219,7 +322,7 @@ int dwc2_wait_channel(struct dwc2_core_regs* regs, int ch) {
 	return 0;
 }
 
-void dwc2_control_transfer(struct dwc2_core_regs* regs, dwc2_usb_endpoint_t* ep, uint8_t bmRequestType, uint8_t b_request,
+bool dwc2_control_transfer(struct dwc2_core_regs* regs, dwc2_usb_endpoint_t* ep, uint8_t bmRequestType, uint8_t b_request,
 	uint16_t wValue, uint16_t wIndex, void* data, uint16_t wLength) {
 
 	usb_setup_packet_t* setup = (usb_setup_packet_t*)P2V((uint64_t)AuPmmngrAlloc());
@@ -235,35 +338,69 @@ void dwc2_control_transfer(struct dwc2_core_regs* regs, dwc2_usb_endpoint_t* ep,
 	//aa64_dc_cvac_range(dmaphys, 4096);
 	dwc2_write((uint64_t)&regs->gahbcfg, 0x27);
 	dwc2_start_channel(regs, ep, ch, 0, 0, USB_PID_SETUP,(void*)V2P((size_t)setup), 8, 1, 0);
-	dwc2_add_to_used_dma_list(setup);
-	
 	int result = dwc2_wait_channel(regs, ch);
 	if (result < 0) {
 		UARTDebugOut("[dwc2_otg]: failed in channel \r\n");
-		//return;
+		return 1;
 	}
 
+
+	if (ep->split_enable) {
+		AA64SleepMS(20);
+		dwc2_channel_do_csplit(regs, ep, ch, 0, 0, USB_PID_SETUP, (void*)V2P((size_t)setup), 8, 1, 0);
+		int result = dwc2_wait_channel(regs, ch);
+		if (result < 0) {
+			UARTDebugOut("[dwc2_otg]: failed in channel \r\n");
+			return 1;
+		}
+	}
+	
+	/** Handle data stage **/
 	if (wLength > 0) {
 		uint8_t is_in = (bmRequestType & 0x80) ? 1 : 0;
 		void* dma_buf = data;
+		uint64_t data_ptr = (uint64_t)dma_buf;
 		int need_bounce = ((uint32_t)data & 0x3) != 0;
+		uint16_t remaining = wLength;
+		uint8_t pid = USB_PID_DATA;
+		uint16_t chunk = 0;
+		while (remaining > 0) {
+			chunk = (remaining > ep->max_packet_sz) ? ep->max_packet_sz : remaining;
 
-		if (need_bounce) {
-			/* need to copy the buffer to another buffer, which is 4-byte aligned */
-		}
-		uint32_t packet_count = (wLength + ep->max_packet_sz - 1) / ep->max_packet_sz;
+			if (need_bounce) {
+				/* need to copy the buffer to another buffer, which is 4-byte aligned */
+			}
 
-		aa64_data_cache_clean_range(dma_buf, 4096);
+			/* should always be 1 for Low Speed devices */
+			uint32_t packet_count = (wLength + ep->max_packet_sz - 1) / ep->max_packet_sz;
 
-		dwc2_write((uint64_t)&regs->gahbcfg, 0x27);
-		dwc2_start_channel(regs, ep,ch, is_in,0, USB_PID_DATA,dma_buf,wLength, packet_count, 0);
+			aa64_data_cache_clean_range(dma_buf, 4096);
 
-		aa64_dc_ivac_range(dma_buf, 4096);
+			dwc2_write((uint64_t)&regs->gahbcfg, 0x27);
+			dwc2_start_channel(regs, ep, ch, is_in, 0, pid, dma_buf, chunk, packet_count, 0);
 
-		result = dwc2_wait_channel(regs, ch);
-		if (result < 0) {
-			UARTDebugOut("[dwc2_otg]: failed in channel \r\n");
-			return;
+
+			result = dwc2_wait_channel(regs, ch);
+			if (result < 0) {
+				UARTDebugOut("[dwc2_otg]: failed in channel \r\n");
+				return 1;
+			}
+
+			if (ep->split_enable) {
+				AA64SleepMS(20);
+				dwc2_channel_do_csplit(regs, ep, ch, is_in, 0, pid, dma_buf,chunk, packet_count, 0);
+				int result = dwc2_wait_channel(regs, ch);
+				if (result < 0) {
+					UARTDebugOut("[dwc2_otg]: failed in channel csplit\r\n");
+					return 1;
+				}
+			}
+			aa64_data_cache_clean_range(dma_buf, 4096);
+
+			data_ptr += chunk;
+			dma_buf = (void*)data_ptr;
+			remaining -= chunk;
+			pid = (pid == USB_PID_DATA0) ? USB_PID_DATA : USB_PID_DATA0;
 		}
 	}
 
@@ -282,13 +419,22 @@ void dwc2_control_transfer(struct dwc2_core_regs* regs, dwc2_usb_endpoint_t* ep,
 	result = dwc2_wait_channel(regs, ch);
 	if (result < 0) {
 		UARTDebugOut("[dwc2_otg]: status stage failed \r\n");
-		return;
+		return 1;
 	}
 
-	//AuPmmngrFree((void*)V2P((uint64_t)setup));
-	memset((void*)setup, 0, 4096);
-	aa64_data_cache_clean_range(setup, 4096);
-	return;
+	if (ep->split_enable) {
+		AA64SleepMS(20);
+		dwc2_channel_do_csplit(regs, ep, ch, status_is_in, 0, USB_PID_DATA, setup, 0, 1, 0);
+		int result = dwc2_wait_channel(regs, ch);
+		if (result < 0) {
+			UARTDebugOut("[dwc2_otg]: failed in channel csplit\r\n");
+			return 1;
+		}
+	}
+
+	AuPmmngrFree((void*)V2P((uint64_t)setup));
+
+	return 0;
 	/** free up the channel **/
 }
 
@@ -312,17 +458,17 @@ void dwc2_handle_channel_interrupt(dwc2_core_regs* regs, int ch) {
 	if (active & DWC2_HCINT_CHHLTD) {
 		if (active & DWC2_HCINT_XFERCOMP) {
 			//UARTDebugOut("[dwc2-otg]: channel transfer completed \r\n");
-			pid = (hctsz >> 29) & 0x3;
-			uint8_t* buf = (uint8_t*)root_hub_get_interrupt_buffer();
-			uint8_t bitmap = buf[0];
-			for (int p = 1; p <= 4; p++) {
-				if (bitmap & (1 << p)) {
-					UARTDebugOut("[dwc2-otg]: root hub port changed : %d bitmap: %x\r\n", p, bitmap);
-					//root_hub_handle_port_change(regs, p);
-					port_changed = p;
-					memset(buf, 0, 4096);
-				}
-			}
+			//pid = (hctsz >> 29) & 0x3;
+			//uint8_t* buf = (uint8_t*)root_hub_get_interrupt_buffer();
+			//uint8_t bitmap = buf[0];
+			//for (int p = 1; p <= 4; p++) {
+			//	if (bitmap & (1 << p)) {
+			//		UARTDebugOut("[dwc2-otg]: root hub port changed : %d bitmap: %x\r\n", p, bitmap);
+			//		//root_hub_handle_port_change(regs, p);
+			//		port_changed = p;
+			//		memset(buf, 0, 4096);
+			//	}
+			//}
 		}
 		else if (active & DWC2_HCINT_NAK) {
 			UARTDebugOut("[dwc2-otg]: device not ready -- retry later \r\n");
@@ -345,6 +491,8 @@ void dwc2_handle_channel_interrupt(dwc2_core_regs* regs, int ch) {
 		}
 		else if (active & DWC2_HCINT_STALL) {
 			UARTDebugOut("[dwc2-otg]: channel stalled \r\n");
+			UARTDebugOut("[dwc2-otg]: hcint : %x \r\n", hcint);
+			UARTDebugOut("[dwc2-otg]: hctsz : %x \r\n", hctsz);
 		}
 	}
 

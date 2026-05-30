@@ -42,6 +42,7 @@
 #include <Mm/vmarea.h>
 #include <Board/RPI3bp/rpi3bp.h>
 #include <Hal/AA64/profile.h>
+#include <audrv.h>
 
 extern uint64_t read_sp();
 extern uint64_t read_sp_el1();
@@ -114,6 +115,15 @@ void sync_el1_handler(AA64Registers *regs) {
    // AuTextOut("SP_EL0 : %x \r\n", regs->EL0SP);
     UARTDebugOut("Current SPSel : %d \r\n", read_spsel());
     UARTDebugOut("EC class : %x \r\n", ec);
+
+    /** check if the fault occured on drivers **/
+    AuDriver* drv = AuDrvManagerCheckFault(read_elr_el1());
+    if (drv) {
+        UARTDebugOut("======CRASH in Kernel Driver====== \r\n");
+        AuDrvCatchFault(drv, read_elr_el1());
+    }
+    
+
     AA64Thread* currthr = AuGetCurrentThread();
     if (currthr) {
         UARTDebugOut("Current Thread: %s \r\n", currthr->name);

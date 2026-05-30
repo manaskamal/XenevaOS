@@ -947,7 +947,6 @@ void DWHCIDeviceStartChannel (TDWHCIDevice *pThis, TDWHCITransferStageData *pSta
 void DWHCIDeviceChannelInterruptHandler (TDWHCIDevice *pThis, unsigned nChannel)
 {
 	assert (pThis != 0);
-
 	TDWHCITransferStageData *pStageData = &pThis->m_StageData[nChannel];
 	TDWHCIFrameScheduler *pFrameScheduler = DWHCITransferStageDataGetFrameScheduler (pStageData);
 	TUSBRequest *pURB = DWHCITransferStageDataGetURB (pStageData);

@@ -197,7 +197,7 @@ boolean USBDeviceInitialize (TUSBDevice *pThis)
 	}
 	
 	USBDeviceSetAddress (pThis, ucAddress);
-	UARTDebugOut("[dwc2otg]: set address successfull :%d\r\n", ucAddress);
+	//UARTDebugOut("[dwc2otg]: set address successfull :%d\r\n", ucAddress);
 
 	if (   pThis->m_pDeviceDesc->iManufacturer != 0
 	    || pThis->m_pDeviceDesc->iProduct != 0)
@@ -234,7 +234,7 @@ boolean USBDeviceInitialize (TUSBDevice *pThis)
 
 		return FALSE;
 	}
-	UARTDebugOut("Configuration descriptor device got \r\n");
+	//UARTDebugOut("Configuration descriptor device got \r\n");
 
 	if (   pThis->m_pConfigDesc->bLength         != sizeof *pThis->m_pConfigDesc
 	    || pThis->m_pConfigDesc->bDescriptorType != DESCRIPTOR_CONFIGURATION
@@ -274,7 +274,7 @@ boolean USBDeviceInitialize (TUSBDevice *pThis)
 #ifndef NDEBUG
 	//DebugHexdump (pThis->m_pConfigDesc, nTotalLength, FromDevice);
 #endif
-	UARTDebugOut("Parsing config descriptor total Len: %d\r\n", pThis->m_pConfigDesc->wTotalLength);
+	//UARTDebugOut("Parsing config descriptor total Len: %d\r\n", pThis->m_pConfigDesc->wTotalLength);
 	
 	assert (pThis->m_pConfigParser == 0);
 	pThis->m_pConfigParser = malloc (sizeof (TUSBConfigurationParser));
@@ -290,7 +290,7 @@ boolean USBDeviceInitialize (TUSBDevice *pThis)
 
 	TString *pNames	= USBDeviceGetNames (pThis);
 	assert (pNames != 0);
-	USBDeviceLogWrite (pThis, LOG_NOTICE, "Device %s found \r\n", StringGet (pNames));
+	//USBDeviceLogWrite (pThis, LOG_NOTICE, "Device %s found \r\n", StringGet (pNames));
 	_String (pNames);
 	 free (pNames);
 
@@ -313,8 +313,8 @@ boolean USBDeviceInitialize (TUSBDevice *pThis)
 			continue;
 		}
 
-		UARTDebugOut("pInterfaceDesc class: %x \r\n", pInterfaceDesc->bInterfaceClass);
-		UARTDebugOut("pInterfaceDesc iNumber : %x \r\n", pInterfaceDesc->bInterfaceSubClass);
+		//UARTDebugOut("pInterfaceDesc class: %x \r\n", pInterfaceDesc->bInterfaceClass);
+		//UARTDebugOut("pInterfaceDesc iNumber : %x \r\n", pInterfaceDesc->bInterfaceSubClass);
 		assert (pThis->m_pConfigParser != 0);
 		assert (pThis->m_pFunction[nFunction] == 0);
 		pThis->m_pFunction[nFunction] = (TUSBFunction *) malloc (sizeof (TUSBFunction));
@@ -393,10 +393,10 @@ boolean USBDeviceConfigure (TUSBDevice *pThis)
 	{
 		return FALSE;
 	}
-	UARTDebugOut("Configuring usb device %d\r\n", pThis->m_pConfigDesc->bConfigurationValue);
+	//UARTDebugOut("Configuring usb device %d\r\n", pThis->m_pConfigDesc->bConfigurationValue);
 	if (!DWHCIDeviceSetConfiguration (pThis->m_pHost, pThis->m_pEndpoint0, pThis->m_pConfigDesc->bConfigurationValue))
 	{
-		UARTDebugOut("Failed to configure device \r\n");
+		//UARTDebugOut("Failed to configure device \r\n");
 		USBDeviceLogWrite (pThis, LOG_ERROR, "Cannot set configuration (%u)",
 			     (unsigned) pThis->m_pConfigDesc->bConfigurationValue);
 
@@ -404,7 +404,7 @@ boolean USBDeviceConfigure (TUSBDevice *pThis)
 	}
 
 	boolean bResult = FALSE;
-	UARTDebugOut("Configured the device successfully %d\r\n", pThis->m_pConfigDesc->bConfigurationValue);
+	//UARTDebugOut("Configured the device successfully %d\r\n", pThis->m_pConfigDesc->bConfigurationValue);
 	for (unsigned nFunction = 0; nFunction < USBDEV_MAX_FUNCTIONS; nFunction++)
 	{
 		if (pThis->m_pFunction[nFunction] != 0)

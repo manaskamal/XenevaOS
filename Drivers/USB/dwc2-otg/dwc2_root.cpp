@@ -37,137 +37,16 @@
 #include <Hal/AA64/aa64lowlevel.h>
 #include <Hal/AA64/aa64cpu.h>
 #include <_null.h>
+#include "dwc2_usbdev.h"
 
-#pragma pack(push,1)
-typedef struct _dev_desc_ {
-	uint8_t bLength;
-	uint8_t bDescriptorType;
-	uint16_t bcdUSB;
-	uint8_t  bDeviceClass;
-	uint8_t bDeviceSubClass;
-	uint8_t bDeviceProtocol;
-	uint8_t bMaxPacketSize0;
-	uint16_t idVendor;
-	uint16_t idProduct;
-	uint16_t bcdDevice;
-	uint8_t  iManufacturer;
-	uint8_t iProduct;
-	uint8_t iSerialNumber;
-	uint8_t bNumConfigurations;
-}usb_dev_desc_t;
-#pragma pack(pop)
-
-#pragma pack(push,1)
-typedef struct _string_desc_ {
-	uint8_t bLength;
-	uint8_t bDescriptorType;
-	//..string value
-}usb_string_desc_t;
-#pragma pack(pop)
+#include "usb_desc.h"
 
 
-#pragma pack(push,1)
-typedef struct _interface_desc_ {
-	uint8_t bLength;
-	uint8_t bDescriptorType;
-	uint8_t bInterfaceNumber;
-	uint8_t bAlternateSetting;
-	uint8_t bNumEndpoints;
-	uint8_t bInterfaceClass;
-	uint8_t bInterfaceSubClass;
-	uint8_t bInterfaceProtocol;
-	uint8_t iInterface;
-}usb_if_desc_t;
-#pragma pack(pop)
-
-#pragma pack(push,1)
-typedef struct _qualifier_desc_ {
-	uint8_t bLength;
-	uint8_t bDescriptorType;
-	uint16_t bcdUSB;
-	uint8_t bDeviceClass;
-	uint8_t bDeviceSubClass;
-	uint8_t bDeviceProtocol;
-	uint8_t bMaxPacketSize0;
-	uint8_t bNumConfigurations;
-	uint8_t bReserved;
-}usb_qualifier_desc_t;
-#pragma pack(pop)
-
-#pragma pack(push,1)
-typedef struct _config_desc_ {
-	uint8_t bLength;
-	uint8_t bDescriptorType;
-	uint16_t wTotalLength;
-	uint8_t bNumInterfaces;
-	uint8_t bConfigurationValue;
-	uint8_t iConfiguration;
-	uint8_t bmAttributes;
-	uint8_t bMaxPower;
-}usb_config_desc_t;
-#pragma pack(pop)
-
-#pragma pack(push,1)
-typedef struct _usb_desc_ {
-	uint8_t bLength;
-	uint8_t bDescriptorType;
-}usb_descriptor_t;
-#pragma pack(pop)
-
-#pragma pack(push,1)
-typedef struct _usb_hub_ {
-	uint8_t bLength;
-	uint8_t bDescriptorType;
-	uint8_t bNbrPorts;
-	uint16_t wHubCharacteristics;
-	uint8_t bPwrOn2PwrGood;
-	uint8_t bHubContrCurrent;
-}usb_hub_desc_t;
-#pragma pack(pop)
-
-#pragma pack(push,1)
-typedef struct _usb_ep_desc_ {
-	uint8_t bLength;
-	uint8_t bDescriptorType;
-	uint8_t bEndpointAddress;
-	uint8_t bmAttributes;
-	uint16_t wMaxPacketSize;
-	uint8_t bInterval;
-}usb_ep_desc_t;
-#pragma pack(pop)
-
-#define DESCRIPTOR_TYPE_CONFIG 2
-#define DESCRIPTOR_TYPE_INTERFACE 4
-#define DESCRIPTOR_TYPE_ENDPOINT 5
-
-#define USB_EP_TYPE_CONTROL 0x00
-#define USB_EP_TYPE_ISOC 0x01
-#define USB_EP_TYPE_BULK 0x02
-#define USB_EP_TYPE_INTERRUPT 0x03
-
-
-usb_descriptor_t* dwc2_get_descriptor(void* desc, uint8_t type) {
-	usb_config_desc_t* config = (usb_config_desc_t*)desc;
-	usb_if_desc_t* interface_desc = raw_offset<usb_if_desc_t*>(config, config->bLength);
-	usb_descriptor_t* endp = raw_offset<usb_descriptor_t*>(interface_desc, interface_desc->bLength);
-	while (raw_diff(endp, config) < config->wTotalLength) {
-		if (endp->bDescriptorType == type) {
-			UARTDebugOut("Descriptor found %x\r\n", type);
-			return endp;
-		}
-		endp = raw_offset<usb_descriptor_t*>(endp, endp->bLength);
-	}
-}
 
 #define PORT_STATUS_CONNECTION (1<<0)
 #define PORT_CHANGE_CONNECTION (1<<0)
 
-#pragma pack(push,1)
-typedef struct {
-	uint16_t wPortStatus;
-	uint16_t wPortChange;
-}usb_port_status_t;
-#pragma pack(pop)
+
 
 void usb_hub_get_port_status(struct dwc2_core_regs* regs, uint8_t port, void* dma, uint8_t address, uint8_t speed) {
 	dwc2_usb_endpoint_t ep;
@@ -200,115 +79,121 @@ void dwc2_enumerate_root_device(struct dwc2_core_regs* regs) {
 		hprt |= (1 << 12);
 		dwc2_write((uint64_t)&regs->hprt0, hprt);
 	}
-	speed_ = speed;
-	port_changed = 0;
-	ep.dev_address = 0; //0 for very beginning 
-	ep.ep_num = 0; //control ep
-	ep.type = EP_CONTROL; //control
-	ep.dir = EP_BIDIR;
-	ep.speed = speed;
-	ep.max_packet_sz = 8;
 
-	void* desc = (void*)AuPmmngrAlloc();
-	memset(desc, 0, 4096);
-	UARTDebugOut("Desc addr : %x \r\n", desc);
-	dwc2_control_transfer(regs, &ep, 0x80, 0x06, 0x0100, 0, desc, 0x0008);
-
-	usb_dev_desc_t* desc_ = (usb_dev_desc_t*)desc;
-	UARTDebugOut("[dwc2_otg]: usb device descriptor received len : %d, maxpack : %d\r\n", desc_->bLength, desc_->bMaxPacketSize0);
-	UARTDebugOut("[dwc2_otg]: string blength : %d \r\n", desc_->bLength);
-	ep.max_packet_sz = desc_->bMaxPacketSize0;
-
-	dwc2_control_transfer(regs, &ep, 0x80, 0x06, 0x0100, 0, desc, sizeof(usb_dev_desc_t));
-	desc_ = (usb_dev_desc_t*)desc;
-	UARTDebugOut("[dwc2_otg]: product id : %d \r\n", desc_->iProduct);
-	UARTDebugOut("[dwc2_otg]: manufacturer id : %d \r\n", desc_->iManufacturer);
-	UARTDebugOut("[dwc2_otg]: serial id : %d \r\n", desc_->iSerialNumber);
-	UARTDebugOut("[dwc2_otg]: num config : %d \r\n", desc_->bNumConfigurations);
-	
-	/** no strings for root hub, iss iss bom laaj pali no ??**/
-	UARTDebugOut("[dwc2_otg]: no string for root hub, iss iss bisarisili kiba, ulal kiba \r\n");
-	/** next set address, and configure the hub, because devices are waiting to get powered in */
-	dwc2_control_transfer(regs, &ep, 0x00, 0x05, 1, 0x0000, NULL, 0x0000);
-	UARTDebugOut("[dwc2_otg]: set address successfull \r\n");
-
-	AA64SleepMS(1000);
-
-	memset(desc, 0, 4096);
-	
-	ep.dev_address = 1;
-	/* now get the config descriptor*/
-	dwc2_control_transfer(regs, &ep, 0x80, 0x06, 0x0200, 0x0000, desc,9);
-	usb_config_desc_t* cdesc = (usb_config_desc_t*)desc;
-	UARTDebugOut("[dwc2_otg]: config desc wTotalLen : %d \r\n", cdesc->wTotalLength);
-	dwc2_control_transfer(regs, &ep, 0x80, 0x06, 0x0200, 0x0000, desc, cdesc->wTotalLength);
-	
-	usb_if_desc_t* interface_desc = raw_offset<usb_if_desc_t*>(cdesc, cdesc->bLength);
-	UARTDebugOut("num interfaces : %d , device class: %x \r\n", cdesc->bNumInterfaces, interface_desc->bInterfaceClass);
-	if (interface_desc->bInterfaceClass == 0x09)
-		UARTDebugOut("This is a hub device \r\n");
-
-	dwc2_control_transfer(regs, &ep, 0x00, 0x09, 1, 0, NULL, 0);
-	UARTDebugOut("[dwc2_otg]: set configuration successfull \r\n");
-
-	usb_ep_desc_t* endp = (usb_ep_desc_t*)dwc2_get_descriptor(cdesc, DESCRIPTOR_TYPE_ENDPOINT);
-	while (raw_diff(endp, cdesc) < cdesc->wTotalLength) {
-		if ((endp->bmAttributes & 0x03) == USB_EP_TYPE_INTERRUPT) {
-			UARTDebugOut("Interrupt endpoint found num : %d dir -> %d \r\n", (endp->bEndpointAddress & 0x0f),
-				((endp->bEndpointAddress >> 0x7) & 0xF) );
-			UARTDebugOut("MPS: %d \r\n", endp->wMaxPacketSize & 0x7FF);
-		}
-		endp = raw_offset<usb_ep_desc_t*>(endp, endp->bLength);
+	if (dwc2_usbdev_initialize(regs, 0, 0, 0, speed)) {
+		UARTDebugOut("[dwc2-otg]: failed to initialize usb device at root port \r\n");
 	}
-	
+	//speed_ = speed;
+	//port_changed = 0;
+	//ep.dev_address = 0; //0 for very beginning 
+	//ep.ep_num = 0; //control ep
+	//ep.type = EP_CONTROL; //control
+	//ep.dir = EP_BIDIR;
+	//ep.speed = speed;
+	//ep.max_packet_sz = 8;
 
-	void* desc2 = (void*)AuPmmngrAlloc();
-	memset(desc2, 0, 4096);
-	dwc2_control_transfer(regs, &ep, 0xA0, 0x06, 0x2900, 0, desc2, 8);
-	usb_hub_desc_t* hub = (usb_hub_desc_t*)desc2;
-	UARTDebugOut("got hub descriptor, num ports : %d \r\n", hub->bNbrPorts);
+	//void* desc = (void*)AuPmmngrAlloc();
+	//memset(desc, 0, 4096);
+	//UARTDebugOut("Desc addr : %x \r\n", desc);
+	//dwc2_control_transfer(regs, &ep, 0x80, 0x06, 0x0100, 0, desc, 0x0008);
 
-	/** PORT power up **/
-	for (int i = 1; i <= hub->bNbrPorts; i++) {
-		dwc2_control_transfer(regs, &ep, 0x23, 0x03, 8, i,NULL, 0);
-		AA64SleepMS(50);
-	}
-	
-	UARTDebugOut("Port powered up \r\n");
-	void* desc3 = (void*)AuPmmngrAlloc();
-	memset(desc3, 0, 4096);
+	//usb_dev_desc_t* desc_ = (usb_dev_desc_t*)desc;
+	//UARTDebugOut("[dwc2_otg]: usb device descriptor received len : %d, maxpack : %d\r\n", desc_->bLength, desc_->bMaxPacketSize0);
+	//UARTDebugOut("[dwc2_otg]: string blength : %d \r\n", desc_->bLength);
+	//ep.max_packet_sz = desc_->bMaxPacketSize0;
 
-	for (int i = 1; i <= hub->bNbrPorts; i++) {
-		usb_hub_get_port_status(regs, i, desc3, 1, speed);
-		usb_port_status_t* pstatus = (usb_port_status_t*)desc3;
+	//dwc2_control_transfer(regs, &ep, 0x80, 0x06, 0x0100, 0, desc, sizeof(usb_dev_desc_t));
+	//desc_ = (usb_dev_desc_t*)desc;
+	//UARTDebugOut("[dwc2_otg]: product id : %d \r\n", desc_->iProduct);
+	//UARTDebugOut("[dwc2_otg]: manufacturer id : %d \r\n", desc_->iManufacturer);
+	//UARTDebugOut("[dwc2_otg]: serial id : %d \r\n", desc_->iSerialNumber);
+	//UARTDebugOut("[dwc2_otg]: num config : %d \r\n", desc_->bNumConfigurations);
+	//
+	///** no strings for root hub, iss iss bom laaj pali no ??**/
+	//UARTDebugOut("[dwc2_otg]: no string for root hub, iss iss bisarisili kiba, ulal kiba \r\n");
+	///** next set address, and configure the hub, because devices are waiting to get powered in */
+	//dwc2_control_transfer(regs, &ep, 0x00, 0x05, 1, 0x0000, NULL, 0x0000);
+	//UARTDebugOut("[dwc2_otg]: set address successfull \r\n");
 
-		if (pstatus->wPortChange == 0)
-			continue;
+	//AA64SleepMS(1000);
 
-		root_hub_handle_port_change(regs, i);
-		/*if (pstatus->wPortStatus & PORT_STATUS_CONNECTION) {
-			UARTDebugOut("Port[%d] already has connection \r\n", i);
-			root_hub_handle_port_change(regs, i);
-		}*/
-		UARTDebugOut("PortStatus [%d] : %x change : %x \r\n", pstatus->wPortStatus, pstatus->wPortChange);
-	}
-	dwc2_usb_endpoint_t intep;
-	intep.dev_address = 1; // ep.dev_address;
-	intep.dir = 1U;
-	intep.ep_num = 1;
-	intep.max_packet_sz = 1;
-	intep.speed = ep.speed;
-	intep.type = USB_EP_TYPE_INTERRUPT;
+	//memset(desc, 0, 4096);
+	//
+	//ep.dev_address = 1;
+	///* now get the config descriptor*/
+	//dwc2_control_transfer(regs, &ep, 0x80, 0x06, 0x0200, 0x0000, desc,9);
+	//usb_config_desc_t* cdesc = (usb_config_desc_t*)desc;
+	//UARTDebugOut("[dwc2_otg]: config desc wTotalLen : %d \r\n", cdesc->wTotalLength);
+	//dwc2_control_transfer(regs, &ep, 0x80, 0x06, 0x0200, 0x0000, desc, cdesc->wTotalLength);
+	//
+	//usb_if_desc_t* interface_desc = raw_offset<usb_if_desc_t*>(cdesc, cdesc->bLength);
+	//UARTDebugOut("num interfaces : %d , device class: %x \r\n", cdesc->bNumInterfaces, interface_desc->bInterfaceClass);
+	//if (interface_desc->bInterfaceClass == 0x09)
+	//	UARTDebugOut("This is a hub device \r\n");
 
-	void* inbuf = AuPmmngrAlloc();
-	memset(inbuf, 0, 4096);
-	intb = inbuf;
-	dwc2_interrupt_transfer(regs, &intep, inbuf, 0, 0, USB_PID_DATA0);
+	//dwc2_control_transfer(regs, &ep, 0x00, 0x09, 1, 0, NULL, 0);
+	//UARTDebugOut("[dwc2_otg]: set configuration successfull \r\n");
 
-	AuPmmngrFree(desc3);
-	AuPmmngrFree(desc2);
-	AuPmmngrFree(desc);
-	dwc2_free_used_dma_list();
+	//usb_ep_desc_t* endp = (usb_ep_desc_t*)dwc2_get_descriptor(cdesc, DESCRIPTOR_TYPE_ENDPOINT);
+	//while (raw_diff(endp, cdesc) < cdesc->wTotalLength) {
+	//	if ((endp->bmAttributes & 0x03) == USB_EP_TYPE_INTERRUPT) {
+	//		UARTDebugOut("Interrupt endpoint found num : %d dir -> %d \r\n", (endp->bEndpointAddress & 0x0f),
+	//			((endp->bEndpointAddress >> 0x7) & 0xF) );
+	//		UARTDebugOut("MPS: %d \r\n", endp->wMaxPacketSize & 0x7FF);
+	//	}
+	//	endp = raw_offset<usb_ep_desc_t*>(endp, endp->bLength);
+	//}
+	//
+
+	//void* desc2 = (void*)AuPmmngrAlloc();
+	//memset(desc2, 0, 4096);
+	//dwc2_control_transfer(regs, &ep, 0xA0, 0x06, 0x2900, 0, desc2, 8);
+	//usb_hub_desc_t* hub = (usb_hub_desc_t*)desc2;
+	//UARTDebugOut("got hub descriptor, num ports : %d \r\n", hub->bNbrPorts);
+
+	///** PORT power up **/
+	//for (int i = 1; i <= hub->bNbrPorts; i++) {
+	//	dwc2_control_transfer(regs, &ep, 0x23, 0x03, 8, i,NULL, 0);
+	//	AA64SleepMS(100);
+	//}
+	//
+	//UARTDebugOut("Port powered up \r\n");
+
+	//return;
+	//void* desc3 = (void*)AuPmmngrAlloc();
+	//memset(desc3, 0, 4096);
+
+	//for (int i = 1; i <= hub->bNbrPorts; i++) {
+	//	usb_hub_get_port_status(regs, i, desc3, 1, speed);
+	//	usb_port_status_t* pstatus = (usb_port_status_t*)desc3;
+
+	//	if (pstatus->wPortChange == 0)
+	//		continue;
+
+	//	root_hub_handle_port_change(regs, i);
+	//	/*if (pstatus->wPortStatus & PORT_STATUS_CONNECTION) {
+	//		UARTDebugOut("Port[%d] already has connection \r\n", i);
+	//		root_hub_handle_port_change(regs, i);
+	//	}*/
+	//	UARTDebugOut("PortStatus [%d] : %x change : %x \r\n", pstatus->wPortStatus, pstatus->wPortChange);
+	//}
+	//dwc2_usb_endpoint_t intep;
+	//intep.dev_address = 1; // ep.dev_address;
+	//intep.dir = 1U;
+	//intep.ep_num = 1;
+	//intep.max_packet_sz = 1;
+	//intep.speed = ep.speed;
+	//intep.type = USB_EP_TYPE_INTERRUPT;
+
+	//void* inbuf = AuPmmngrAlloc();
+	//memset(inbuf, 0, 4096);
+	//intb = inbuf;
+	//dwc2_interrupt_transfer(regs, &intep, inbuf, 0, 0, USB_PID_DATA0);
+
+	//AuPmmngrFree(desc3);
+	//AuPmmngrFree(desc2);
+	//AuPmmngrFree(desc);
+	//dwc2_free_used_dma_list();
 
 	_all_init = true;
 }

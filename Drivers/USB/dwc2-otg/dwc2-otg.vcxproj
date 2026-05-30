@@ -240,11 +240,19 @@
   <ItemGroup>
     <ClCompile Include="dwc2_channel.cpp" />
     <ClCompile Include="dwc2_root.cpp" />
+    <ClCompile Include="dwc2_usbdev.cpp" />
+    <ClCompile Include="lan7800.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="usb_desc.cpp" />
+    <ClCompile Include="usb_stdhub.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="dwc2.h" />
     <ClInclude Include="dwc2_reg.h" />
+    <ClInclude Include="dwc2_usbdev.h" />
+    <ClInclude Include="lan7800.h" />
+    <ClInclude Include="usb_desc.h" />
+    <ClInclude Include="usb_stdhub.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

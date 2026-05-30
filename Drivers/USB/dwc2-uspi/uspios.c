@@ -25,6 +25,8 @@
 #include <Drivers/uart.h>
 #include <Board/RPI3bp/rpi3bp.h>
 #include <Hal/AA64/gic.h>
+#include <Hal/AA64/aa64cpu.h>
+#include <Hal/AA64/aa64lowlevel.h>
 
 void* malloc(unsigned nSize) {
 	return kmalloc(nSize);
@@ -56,9 +58,10 @@ static void* inthandler;
 static void* pParam_;
 
 void dwc2_interrupt_handler(void* fptr, int spi) {
-	UARTDebugOut("[dwc2-uspi]: Interrupt++ %x \r\n", pParam_);
+	mask_irqs();
 	TInterruptHandler* pHandler = (TInterruptHandler*)inthandler;
 	pHandler(pParam_);
+	enable_irqs();
 }
 
 // USPi uses USB IRQ 9

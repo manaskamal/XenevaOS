@@ -28,6 +28,7 @@
 #include "uspi/util.h"
 #include "uspi/assert.h"
 #include "uspios.h"
+#include <Drivers/uart.h>
 
 // Sizes
 #define HS_USB_PKT_SIZE			512
@@ -371,6 +372,7 @@ boolean LAN7800DeviceConfigure (TUSBFunction *pUSBFunction)
 		return FALSE;
 	}
 
+	UARTDebugOut("Setting up MAC address \r\n");
 	if (!LAN7800DeviceInitMACAddress (pThis))
 	{
 		LogWrite (FromLAN7800, LOG_ERROR, "Cannot init MAC address");

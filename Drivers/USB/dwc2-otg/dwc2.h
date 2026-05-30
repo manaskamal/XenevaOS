@@ -93,7 +93,7 @@ extern uint32_t dwc2_read(uint64_t base);
  */
 extern void dwc2_write(uint64_t base, uint32_t value);
 
-extern void dwc2_control_transfer(struct dwc2_core_regs* regs, dwc2_usb_endpoint_t* ep, uint8_t bmRequestType, uint8_t b_request,
+extern bool dwc2_control_transfer(struct dwc2_core_regs* regs, dwc2_usb_endpoint_t* ep, uint8_t bmRequestType, uint8_t b_request,
 	uint16_t wValue, uint16_t wIndex, void* data, uint16_t wLength);
 
 extern void dwc2_interrupt_transfer(dwc2_core_regs* regs, dwc2_usb_endpoint_t* ep, void* intbuf, uint8_t ch, uint32_t odd, uint8_t pid);
@@ -143,4 +143,10 @@ extern void root_hub_transfer_int(dwc2_core_regs* regs, uint8_t pid);
 extern void* root_hub_get_interrupt_buffer();
 
 extern void root_hub_handle_port_change(dwc2_core_regs* regs, uint8_t port);
+
+/**
+ * @brief dwc2_assign_address -- assigns address
+ * to a usb device
+ */
+extern uint8_t dwc2_assign_address();
 #endif

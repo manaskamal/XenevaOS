@@ -92,6 +92,18 @@ struct dwc2_core_regs {
 	uint32_t pcgcctl;
 };
 
+typedef union {
+	struct {
+		uint32_t prtaddr : 7;
+		uint32_t hubaddr : 7;
+		uint32_t xactpos : 2;
+		uint32_t compsplt : 1;
+		uint32_t reserved : 14;
+		uint32_t spltena : 1;
+	};
+	uint32_t val;
+}dwc2_hcsplit_t;
+
 #define DWC2_GOTGCTL_SESREQSCS				(1ULL << 0)
 #define DWC2_GOTGCTL_SESREQSCS_OFFSET			0UL
 #define DWC2_GOTGCTL_SESREQ				(1ULL << 1)

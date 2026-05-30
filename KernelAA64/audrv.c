@@ -39,6 +39,7 @@
 #include <pcie.h>
 #include <aucon.h>
 #include <string.h>
+#include <Drivers/uart.h>
 
 /** @TODO: Implement UEFI based pcie discovery mechanism and fix
  * AuBootDriverLoad
@@ -307,6 +308,8 @@ void AuDriverLoad(char* filename, AuDriver* driver) {
 
 	IMAGE_DOS_HEADER* dos_ = (IMAGE_DOS_HEADER*)scratchBuffer;
 	PIMAGE_NT_HEADERS nt = RAW_OFFSET(PIMAGE_NT_HEADERS,dos_, dos_->e_lfanew);
+	driver->original_load_base = nt->OptionalHeader.ImageBase;
+	driver->image_sz = nt->OptionalHeader.SizeOfImage;
 	PSECTION_HEADER sectionHeader = RAW_OFFSET(PSECTION_HEADER,&nt->OptionalHeader, nt->FileHeader.SizeOfOptionaHeader);
 	
 	uint64_t first_block = (uint64_t)AuPmmngrAlloc();
@@ -339,6 +342,7 @@ void AuDriverLoad(char* filename, AuDriver* driver) {
 	uint8_t* relocatebuff = (uint8_t*)virtual_base;
 	uint64_t original_base = nt->OptionalHeader.ImageBase;
 	uint64_t new_addr = (uint64_t)virtual_base;
+	driver->new_load_base = new_addr;
 	uint64_t diff = new_addr - original_base;
 
 	AuKernelRelocatePE(relocatebuff, nt, diff);
@@ -592,6 +596,36 @@ uint64_t AuDrvMgrGetBaseAddress() {
  */
 void AuDrvMgrSetBaseAddress(uint64_t base_address) {
 	driver_load_base = base_address;
+}
+
+/**
+ * @brief AuDrvManagerCheckFault -- check if this driver contain the fault
+ * address, helpful for debugging
+ * @param fault_addr -- address of fault
+ */
+AuDriver* AuDrvManagerCheckFault(uint64_t fault_addr) {
+	for (int i = 0; i < 246; i++) {
+		AuDriver* drv = drivers[i];
+		if (drv) {
+			if (fault_addr > drv->new_load_base || fault_addr <= drv->new_load_base + drv->image_sz)
+				return drv;
+		}
+	}
+}
+
+/**
+ * @brief AuDrvCatchFault -- resolves original virtual address of the driver
+ * and relocate its symbol name
+ * @param drv -- Pointer to driver 
+ * @param fault_addr -- istruction pointer address
+ */
+void AuDrvCatchFault(AuDriver* drv, uint64_t fault_addr) {
+	UARTDebugOut("[aurora]: crash in kernel driver : %s \r\n", drv->name);
+	uint64_t rva = fault_addr - drv->new_load_base;
+	uint64_t original_va = drv->original_load_base + rva;
+
+	UARTDebugOut("[aurora]: relocated address: %x, original address : %x \r\n", fault_addr, original_va);
+	AuCoffResolveAddress(drv->new_load_base, fault_addr);
 }
 
 

@@ -259,3 +259,76 @@ bool AuPEFileIsDynamicallyLinked(void* image) {
 	PIMAGE_IMPORT_DIRECTORY importdir = RAW_OFFSET(PIMAGE_IMPORT_DIRECTORY,imageAligned, datadir->VirtualAddress);
 	return true;
 }
+
+static const char* AuCoffSymName(IMAGE_COFF_SYMBOL* sym, const char* strtab) {
+	if (sym->name.lng.zeros != 0)
+		return sym->name.short_name;
+	return strtab + sym->name.lng.offset;
+}
+
+#define OFFSETOF(s,m) ((size_t)&(((s*)0)->m))
+
+#define IMAGE_FIRST_SECTION(nt)\
+    ((SECTION_HEADER*)( \
+     (uint8_t*)(nt) + \
+     OFFSETOF(IMAGE_NT_HEADERS, OptionalHeader) + \
+     ((IMAGE_NT_HEADERS*)(nt))->FileHeader.SizeOfOptionaHeader \
+))
+
+static uint64_t AuCoffSectionBase(uint8_t* imageBase, int section_idx) {
+	IMAGE_DOS_HEADER* dos = (IMAGE_DOS_HEADER*)imageBase;
+	IMAGE_NT_HEADERS* nt = (IMAGE_NT_HEADERS*)(imageBase + dos->e_lfanew);
+	SECTION_HEADER* sec = IMAGE_FIRST_SECTION(nt);
+	return (uint64_t)(imageBase)+sec[section_idx - 1].VirtualAddress;
+}
+
+/**
+ * @brief AuCoffResolveAddress -- print the symbol function name
+ * for specific pointing address
+ * @param imageBase - base address of the image
+ * @param paddr -- Pointing address, or instruction/function address 
+ */
+bool AuCoffResolveAddress(uint8_t* imageBase, uint64_t paddr) {
+	IMAGE_DOS_HEADER* dos = (IMAGE_DOS_HEADER*)imageBase;
+	IMAGE_NT_HEADERS* nt = (IMAGE_NT_HEADERS*)(imageBase + dos->e_lfanew);
+	uint32_t symoff = nt->FileHeader.PointerToSymbolTable;
+	uint32_t nsyms = nt->FileHeader.NumberOfSymbols;
+
+	uint64_t rva = paddr - (uint64_t)imageBase;
+
+	IMAGE_COFF_SYMBOL* coff_symtab = (void*)(imageBase + symoff);
+	char* strtab = (char*)(imageBase + symoff + nsyms * 18);
+	IMAGE_COFF_SYMBOL* best = NULL;
+	uint64_t best_va = 0;
+
+	UARTDebugOut("num_symbols : %d, SymbolTable : %x \r\n", nsyms, coff_symtab);
+
+	
+	for (uint32_t j = 0; j < nsyms; j++) {
+		IMAGE_COFF_SYMBOL* s = &coff_symtab[j];
+
+		if (s->section <= 0) goto next;
+
+		if ((s->type & 0x20) == 0) goto next;
+
+		uint64_t sym_va = AuCoffSectionBase(imageBase, s->section) + s->value;
+		uint64_t sym_rva = sym_va - (uint64_t)imageBase;
+
+		if (sym_rva <= rva) {
+			if (!best || sym_rva > (best_va - (uint64_t)imageBase)) {
+				best = s;
+				best_va = sym_va;
+			}
+		}
+	next:
+		j += s->aux_count;
+	}
+
+	if (best) {
+		UARTDebugOut("[aurora]: pe symbol name : %s \r\n", AuCoffSymName(best, strtab));
+		UARTDebugOut("[aurora]: out offset : %x \r\n", (paddr - best_va));
+	}
+	else 
+		UARTDebugOut("[aurora]: pe symbol <?no match?>, offset : %x \r\n", rva);
+	
+}

@@ -38,13 +38,12 @@ TUSBFunction *USBDeviceFactoryGetDevice (TUSBFunction *pParent, TString *pName)
 	assert (pName != 0);
 	
 	TUSBFunction *pResult = 0;
-	UARTDebugOut("USBDeviceFactoryGetDevice : name : %s \r\n", pName->m_pBuffer);
 	if (   StringCompare (pName, "int9-0-2") == 0
 	    || StringCompare (pName, "int9-0-0") == 0)
 	{
 		TUSBStandardHub *pDevice = (TUSBStandardHub *) malloc (sizeof (TUSBStandardHub));
 		assert (pDevice != 0);
-		UARTDebugOut("[dwc2otg]: starting standard USB hub \r\n");
+		//UARTDebugOut("[dwc2otg]: starting standard USB hub \r\n");
 		USBStandardHub (pDevice, pParent);
 		pResult = (TUSBFunction *) pDevice;
 	}
@@ -65,6 +64,7 @@ TUSBFunction *USBDeviceFactoryGetDevice (TUSBFunction *pParent, TString *pName)
 	}
 	else if (StringCompare (pName, "int3-1-2") == 0)
 	{
+		UARTDebugOut("Starting HID/Mouse device \r\n");
 		TUSBMouseDevice *pDevice = (TUSBMouseDevice *) malloc (sizeof (TUSBMouseDevice));
 		assert (pDevice != 0);
 		USBMouseDevice (pDevice, pParent);
@@ -79,11 +79,11 @@ TUSBFunction *USBDeviceFactoryGetDevice (TUSBFunction *pParent, TString *pName)
 	}
 	else if (StringCompare (pName, "ven424-7800") == 0)
 	{
-		/*TLAN7800Device *pDevice = (TLAN7800Device *) malloc (sizeof (TLAN7800Device));
+		TLAN7800Device *pDevice = (TLAN7800Device *) malloc (sizeof (TLAN7800Device));
 		assert (pDevice != 0);
 		UARTDebugOut("Initializing LAN7800 USB Device \r\n");
 		LAN7800Device (pDevice, pParent);
-		pResult = (TUSBFunction *) pDevice;*/
+		pResult = (TUSBFunction *) pDevice;
 		pResult = 0;
 	}
     else if (StringCompare (pName, "int3-0-0") == 0)

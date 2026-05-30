@@ -80,7 +80,6 @@ void _USBStandardHub (TUSBStandardHub *pThis)
 
 boolean USBStandardHubConfigure (TUSBFunction *pUSBFunction)
 {
-	UARTDebugOut("USBStandardHubConfiguring device \r\n");
 	TUSBStandardHub *pThis = (TUSBStandardHub *) pUSBFunction;
 	assert (pThis != 0);
 
@@ -184,12 +183,10 @@ boolean USBStandardHubEnumeratePorts (TUSBStandardHub *pThis)
 	// for some low speed devices, so we use the maximum here
 	MsDelay (510);
 
-	UARTDebugOut("numHUB Port: %d \r\n", pThis->m_nPorts);
 	
 	// now detect devices, reset and initialize them
 	for (unsigned nPort = 0; nPort < pThis->m_nPorts; nPort++)
 	{
-		UARTDebugOut("Enumerating port : %d of hub \r\n", nPort);
 		assert (pThis->m_pStatus[nPort] == 0);
 		pThis->m_pStatus[nPort] = AuPmmngrAlloc();// malloc (sizeof (TUSBPortStatus));
 		assert (pThis->m_pStatus[nPort] != 0);
@@ -284,9 +281,6 @@ boolean USBStandardHubEnumeratePorts (TUSBStandardHub *pThis)
 		ucHubAddress = USBDeviceGetAddress(pHubDevice);
 		ucHubPortNumber = nPort + 1;
 
-		UARTDebugOut("bSplit : %d \r\n", bSplit);
-		UARTDebugOut("ucHubAddress : %d \r\n", ucHubAddress);
-		UARTDebugOut("ucHubPortNumber : %d \r\n", ucHubPortNumber);
 
 		// first create default device
 		assert (pThis->m_pDevice[nPort] == 0);
@@ -294,7 +288,6 @@ boolean USBStandardHubEnumeratePorts (TUSBStandardHub *pThis)
 		assert (pThis->m_pDevice[nPort] != 0);
 		USBDevice (pThis->m_pDevice[nPort], pHost, Speed, bSplit, ucHubAddress, ucHubPortNumber);
 
-		UARTDebugOut("Initializing USB Device at port : %d \r\n", nPort);
 		if (!USBDeviceInitialize (pThis->m_pDevice[nPort]))
 		{
 			UARTDebugOut("Failed to initialize USB Device \r\n");

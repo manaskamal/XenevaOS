@@ -173,7 +173,7 @@
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
     </ClCompile>
     <Link>
-      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
       <OutputFile>$(SolutionDir)\Build\$(TargetName).dll</OutputFile>
       <AdditionalLibraryDirectories>$(SolutionDir)\ARM64\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>xnkrnl.lib</AdditionalDependencies>
