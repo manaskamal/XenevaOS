@@ -39,6 +39,7 @@
 #include <Mm/kmalloc.h>
 #include <Mm/shm.h>
 #include <Mm/mmfile.h>
+#include <Mm/dma.h>
 #include <_null.h>
 #include <Hal/AA64/gic.h>
 #include <Hal/basicacpi.h>

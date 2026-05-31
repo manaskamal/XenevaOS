@@ -200,6 +200,9 @@
     </ClCompile>
     <ClCompile Include="proctoken.c" />
     <ClCompile Include="power.c" />
+    <ClCompile Include="Mm\dma.c">
+      <Filter>Mm</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Hal">
@@ -413,6 +416,9 @@
     </ClInclude>
     <ClInclude Include="..\BaseHdr\power.h">
       <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\Mm\dma.h">
+      <Filter>Include\Mm</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

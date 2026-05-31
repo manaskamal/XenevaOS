@@ -287,6 +287,7 @@
     <ClCompile Include="list.c" />
     <ClCompile Include="loader.c" />
     <ClCompile Include="Mm\dlmalloc.c" />
+    <ClCompile Include="Mm\dma.c" />
     <ClCompile Include="Mm\kmalloc.c" />
     <ClCompile Include="Mm\liballoc.c" />
     <ClCompile Include="Mm\mmap.c" />
@@ -369,6 +370,7 @@
     <ClInclude Include="..\BaseHdr\linux\usb\ch9.h" />
     <ClInclude Include="..\BaseHdr\linux\usb\otg.h" />
     <ClInclude Include="..\BaseHdr\linux\workqueue.h" />
+    <ClInclude Include="..\BaseHdr\Mm\dma.h" />
     <ClInclude Include="..\BaseHdr\Mm\mmfile.h" />
     <ClInclude Include="..\BaseHdr\power.h" />
     <ClInclude Include="..\BaseHdr\proctoken.h" />
