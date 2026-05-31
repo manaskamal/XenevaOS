@@ -273,6 +273,7 @@ typedef struct {
 	uint8_t storage;
 	uint8_t aux_count;
 }IMAGE_COFF_SYMBOL;
+#pragma pack(pop)
 
 /*
 * AuGetProcAddress -- get procedure address in a dll image

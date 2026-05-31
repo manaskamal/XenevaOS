@@ -307,6 +307,15 @@ void GICInitialize() {
 	/* Firstly rely upon UEFI + ACPI for GIC mmio values */
 	AuTextOut("Initializing GIC %x %x \r\n", __gic.gicCPhys, __gic.gicDPhys);
 
+#ifdef __TARGET_BOARD_QEMU_VIRT__
+	__gic.gicCPhys = 0x08010000ULL;
+	__gic.gicDPhys = 0x08000000ULL;
+	__gic.gicMSIPhys = 0x08020000ULL;
+	__gic.gicRPhys = 0x080A0000ULL;
+	__gic.spiBase = 80;
+	__gic.spiCount = 64;
+#endif
+
 	/* if not found, go for device tree , because the kernel might get booted
 	 * from LittleBoot 
 	 */

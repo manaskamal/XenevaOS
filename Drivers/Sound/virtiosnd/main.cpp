@@ -862,8 +862,9 @@ AU_EXTERN AU_EXPORT int AuDriverMain(AuDriver* drv) {
 	memset(pcm_buffer, 0, 0x1000);
 
 	/** change the class/subclass value **/
+	UARTDebugOut("scanning class \r\n");
 	uint64_t device = AuPCIEScanClass(drv->classCode, drv->subClassCode, &bus, &dev, &func);
-
+	UARTDebugOut("Device addr : %x \r\n", device);
 	uint16_t command = AuPCIERead(device, PCI_COMMAND, bus, dev, func);
 	command |= 4;
 	command |= 2;

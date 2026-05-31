@@ -42,51 +42,92 @@
 #include <Hal/AA64/aa64lowlevel.h>
 #include <Drivers/uart.h>
 
-uint64_t _ecamAddress;
-bool _pcieInitialized;
-/**
- * @brief AA64PCIeInitialize -- intialize pcie subsystem
- */
-void AA64PCIeInitialize() {
-	if (!AuLittleBootUsed()) {
-		goto skipDTB;
-	}
+#define QEMU_VIRT_ECAM_BASE 0x4010000000ULL
 
+static uint64_t _ecamAddress;
+static bool _pcieInitialized;
+
+static int _pcie_check_and_map_dtb() {
+	AuTextOut("[aurora]: pcie getting ecam from dtb \r\n");
 	uint32_t* pcie = AuDeviceTreeGetNode("pcie");
 	if (!pcie) {
 		AuTextOut("[aurora]: pcie not found \r\n");
-		return;
+		return 1;
 	}
 	AuTextOut("[aurora]: pcie found \r\n");
 #ifdef __TARGET_BOARD_QEMU_VIRT__
-	
 	/* else need to parse the DTB for */
 	uint32_t addressCell = AuDeviceTreeGetAddressCells(pcie);
 	uint32_t sizeCell = AuDeviceTreeGetSizeCells(pcie);
 	AuTextOut("[aurora]: pcie address cell : %d, size cell : %d \n", addressCell, sizeCell);
 	uint64_t ecamAddr = AuDeviceTreeGetRegAddress(pcie, 2);
-	uint64_t sizeValue = AuDeviceTreeGetRegSize(pcie,2, 2);
+	uint64_t sizeValue = AuDeviceTreeGetRegSize(pcie, 2, 2);
 	AuTextOut("[aurora]: ecam address : %x, size value : %x \n", ecamAddr, sizeValue);
 	_ecamAddress = AuMapMMIO(ecamAddr, sizeValue / 0x1000);
-	_pcieInitialized = 1;
-	return;
 #endif
-skipDTB:
-	AuTextOut("[aurora]: PCIe no LittleBoot protocol used, falling back to UEFI mechanism \n");
-	_ecamAddress = 0;
-	if (AuACPIPCIESupported()) {
-		AuTextOut("[aurora]: ACPI PCIe is supported \n");
-		acpiMcfg* mcfg = AuACPIGetMCFG();
-		acpiMcfgAlloc* allocs = MEM_AFTER(acpiMcfgAlloc*, mcfg);
-		//_ecamAddress = AuMapMMIO(allocs->baseAddress, 0x10000000/0x1000);
-		_pcieInitialized = 1;
-	}
-	else {
-		AuTextOut("[aurora]: kernel can't continue boot, no device discovery mechanism supported \r\n");
-		AuTextOut("[aurora]: Ki koriba aru !! Eku dekhun device discovery mechanism support nokore !! Baad diya \r\n");
-		AuTextOut("[aurora]: Ponta Bhaat khuwa ge \r\n");
 
+	_pcieInitialized = 1;
+	return 0;
+}
+
+static bool _pcie_use_hard_code_ecam() {
+	AuTextOut("[aurora]: pcie getting hard code ecam address \r\n");
+#ifdef __TARGET_BOARD_QEMU_VIRT__
+	_ecamAddress = QEMU_VIRT_ECAM_BASE; // AuMapMMIO(QEMU_VIRT_ECAM_BASE, 0x10000000 / 0x1000);
+#elif __TARGET_BOARD_RPI3__
+	_ecamAddress = 0;
+#elif __TARGET_BOARD_IMX8MP_VERDIN_DAHLIA__
+	_ecamAddress = 0;
+#endif
+
+	if (_ecamAddress != 0) {
+		_pcieInitialized = 1;
+		return 0;
 	}
+	else
+		return 1;
+}
+/**
+ * @brief AA64PCIeInitialize -- intialize pcie subsystem
+ */
+void AA64PCIeInitialize() {
+
+	bool _use_hard_code_ = false;
+	bool _use_acpi = false;
+
+	if (_pcie_check_and_map_dtb()) {
+		AuTextOut("[aurora]: could not get pcie ecam from device tree blob \r\n");
+		_use_acpi = true;
+	}
+	else
+		return;
+
+	if (_use_acpi) {
+		if (AuACPIPCIESupported()) {
+			AuTextOut("[aurora]: ACPI PCIe is supported \n");
+			acpiMcfg* mcfg = AuACPIGetMCFG();
+			acpiMcfgAlloc* allocs = MEM_AFTER(acpiMcfgAlloc*, mcfg);
+			//_ecamAddress = AuMapMMIO(allocs->baseAddress, 0x10000000/0x1000);
+			_pcieInitialized = 1;
+			return;
+		}
+	}
+
+
+	if (_pcie_use_hard_code_ecam()) {
+		AuTextOut("[aurora]: no hard coded value for PCIe \r\n");
+	}
+	else
+		return;
+
+
+
+	AuTextOut("[aurora]: kernel can't continue boot, no device discovery mechanism supported \r\n");
+	AuTextOut("[aurora]: Ki koriba aru !! Eku dekhun device discovery mechanism support nokore !! Baad diya \r\n");
+	AuTextOut("[aurora]: Ponta Bhaat khuwa ge \r\n");
+	_pcieInitialized = 0;
+	return;
+
 }
 
 bool AuIsPCIeInitialized() {
@@ -110,9 +151,9 @@ uint64_t AuPCIEGetDevice(uint16_t seg, int bus, int dev, int func) {
 	if (func > 8)
 		return 0;
 	uint64_t addr = 0;
-	if (_ecamAddress) {
-		addr = _ecamAddress + ((bus << 20) +
-			(dev << 15) + (func << 12));
+	if (_ecamAddress != 0) {
+		addr = _ecamAddress + ((bus << 20) |
+			(dev << 15) | (func << 12));
 	}
 	else {
 		acpiMcfg* mcfg = AuACPIGetMCFG();
@@ -375,7 +416,6 @@ void AuPCIEWrite64(uint64_t device, int reg, int size, uint64_t val, int bus, in
 * @param func -- address, where function number will be stored
 */
 uint64_t AuPCIEScanClass(uint8_t classCode, uint8_t subClassCode, int* bus_, int* dev_, int* func_) {
-
 
 	for (int bus = 0; bus < 255; bus++) {
 		for (int dev = 0; dev < PCI_DEVICE_PER_BUS; dev++) {

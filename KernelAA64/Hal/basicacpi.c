@@ -122,6 +122,10 @@ void AuACPIInitialise(void* acpi_base) {
 		AuTextOut("Could not find ACPI base %x \r\n", acpi_base);
 		return;
 	}
+
+#ifdef __TARGET_BOARD_QEMU_VIRT__
+	return;
+#endif
 	/*AuUpdatePageFlags((uint64_t)acpi_base, PTE_VALID | PTE_TABLE |
 		PTE_AF | PTE_SH_INNER | PTE_AP_RW | PTE_NORMAL_MEM);*/
 	__AuroraBasicAcpi = (AuroraBasicACPI*)kmalloc(sizeof(AuroraBasicACPI));
@@ -148,10 +152,14 @@ void AuACPIInitialise(void* acpi_base) {
 	__PCIESupported = false;
 	
 	for (int count = 0; count < entries; count++) {
-		if (rsdt)
+		if (rsdt) {
 			header = (acpiSysDescHeader*)rsdt->entry[count];
-		else
+		}
+		else {
 			header = (acpiSysDescHeader*)xsdt->entry[count];
+		}
+
+
 		strncpy(sig, header->signature, 4);
 		sig[4] = '\0';
 
@@ -214,6 +222,7 @@ void AuACPIInitialise(void* acpi_base) {
 		AuTextOut("ACPI Madt : %x \n", __AuroraBasicAcpi->madt);
 		AuACPIParseMADT();
 	}
+
 }
 
 /**
@@ -221,6 +230,8 @@ void AuACPIInitialise(void* acpi_base) {
  * from basic acpi
  */
 acpiMcfg* AuACPIGetMCFG() {
+	if (!__AuroraBasicAcpi)
+		return NULL;
 	return __AuroraBasicAcpi->mcfg;
 }
 

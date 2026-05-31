@@ -217,7 +217,6 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) 
 		UARTDebugOut("No File found -> %s \r\n", filename);
 		return -1;
 	}
-	
 	AuMMPageCache* pcache = fb->pageCache;
 	
 	if (file->eof == 1 && fb->readComplete == 1)

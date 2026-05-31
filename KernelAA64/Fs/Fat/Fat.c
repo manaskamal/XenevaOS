@@ -462,6 +462,7 @@ AuVFSNode* FatLocateDir(AuVFSNode* fsys, const char* dir) {
 			if (strncmp(dos_file_name, dirent->filename, 11) == 0) {
 				strcpy(file->filename, dir);
 				file->current = dirent->first_cluster;
+				UARTDebugOut("opening file : %s, current : %x \r\n", file->filename, file->current);
 				file->size = dirent->file_size;
 				file->eof = 0;
 				file->status = FS_STATUS_FOUND;

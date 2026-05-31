@@ -389,7 +389,7 @@ typedef struct _acpi_sub_tab_
 	uint8_t    length;
 }acpi_sub_table;
 
-#pragma pack (pop)
+#pragma pack(pop)
 enum acpi_srat_type
 {
 	acpi_srat_type_cpu_affinity = 0,

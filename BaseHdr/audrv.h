@@ -56,9 +56,8 @@
 typedef int(*au_drv_entry)(void* drv);
 typedef int(*au_drv_unload)(void* drv);
 
-#ifdef ARCH_X64
+
 #pragma pack(push,1)
-#endif
 typedef struct _aurora_driver_ {
 	uint8_t id;
 	uint8_t drv_type;
@@ -80,13 +79,12 @@ typedef struct _aurora_driver_ {
 	uint64_t new_load_base;
 	size_t image_sz;
 }AuDriver;
-#ifdef ARCH_X64
 #pragma pack(pop)
-#endif
 
-#ifdef ARCH_X64
+
+
 #pragma pack(push,1)
-#endif
+
 typedef struct _aurora_device_ {
 	uint16_t classCode;
 	uint16_t subClassCode;
@@ -95,9 +93,8 @@ typedef struct _aurora_device_ {
 	uint8_t aurora_dev_class;
 	uint8_t aurora_driver_class;
 }AuDevice;
-#ifdef ARCH_X64
+
 #pragma pack(pop)
-#endif
 
 
 /*
