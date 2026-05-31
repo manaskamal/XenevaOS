@@ -123,6 +123,7 @@ void AuACPIInitialise(void* acpi_base) {
 		return;
 	}
 
+	/** bypassing acpi on qemu virt **/
 #ifdef __TARGET_BOARD_QEMU_VIRT__
 	return;
 #endif

@@ -381,7 +381,11 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
 		for (;;);
 	}
 
+#ifdef __TARGET_BOARD_QEMU_VIRT__
+	XEFile* initrd = XEOpenAndReadFile(ImageHandle, (CHAR16*)L"\\initrd2.img");
+#else
 	XEFile* initrd = XEOpenAndReadFile(ImageHandle, (CHAR16*)L"\\initrd.img");
+#endif
 
 	
 
@@ -518,8 +522,6 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
 		/* install our vector table */
 		XEVectorInstall();
 	}
-	XEUARTPrint("EL: %d \r\n", _getCurrentEL());
-	XEUARTPrint("Adddr : %x \r\n", adddr);
 
 	uint64_t sctlr = read_sctlr_el1();
 
@@ -528,27 +530,26 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
 	else
 		XEUARTPrint("MMU is disabled \r\n");
 
+
+#if ! __TARGET_BOARD_QEMU_VIRT__
 	XEPagingInit2();
+#endif
+
 
 	//XEUARTPrint("MMU Enabled \r\n");
 
 	IMAGE_DOS_HEADER* dos_ = (IMAGE_DOS_HEADER*)krnl->kBuffer;
-	uint64_t* p1 = (uint64_t*)XEPmmngrAllocate();
-	p1[1] = 100;
-	XEPagingMap(0x8000000000, (size_t)p1);
+	
 	//XEUARTPrint("DOS Magic : %x \r\n", dos_->e_magic);
 	
-	uint64_t* virt = (uint64_t*)0x8000000000;
-	XEUARTPrint("VIRT[1] = %d \r\n", virt[1]);
+
 	XEPELoadImage(krnl->kBuffer);
 
 	for (int i = 0; i < 0x100000 / PAGESIZE; i++) {
 		XEPagingMap(0xFFFFA00000000000 + i * PAGESIZE, XEPmmngrAllocate());
 	}
 
-	XEUARTPrint("Kernel Stack mapped \r\n");
-	IMAGE_DOS_HEADER* dos1_ = (IMAGE_DOS_HEADER*)0xFFFFC00000000000;
-	XEUARTPrint("DOS Magic : %x \r\n", dos1_->e_magic);
+
 	/*
 	 * Changes are made according to RPI_EFI
 	 * kernel is mapped to 0x8000000000 due to there's

@@ -111,15 +111,22 @@ void XEPagingInitialize() {
 		required_sctrl = 1;
 	}
 
+#ifdef __TARGET_BOARD_IMX8MP_VERDIN_DAHLIA__
 	XEMapMMIO((uint64_t*)l0_table_base[pml4_index(IMX8MP_UART3_BASE_ADDRESS)], IMX8MP_UART3_BASE_ADDRESS, IMX8MP_UART3_BASE_ADDRESS);
+#endif
 
-	uint64_t tcr1 = read_tcr_el2();/*((16UL << 0) | (0UL << 14) | (0b11UL << 12) |
-		(0b01UL << 10) | (0b01UL << 8) | (16UL << 16) | (0b10UL << 30) | (0b11UL << 28) |
-		(0b01UL << 26) | (0b01UL << 24) | (4ULL << 32));*/
+	if (_getCurrentEL() != 1) {
+		uint64_t tcr1 = read_tcr_el2();
 
-	XEGuiPrint("TCR1 : %x \r\n", tcr1);
-	write_tcr_el1(tcr1);
-
+		XEGuiPrint("TCR1 : %x \r\n", tcr1);
+		write_tcr_el1(tcr1);
+	}
+	else {
+		uint64_t tcr = ((16UL << 0) | (0UL << 14) | (0b11UL << 12) |
+			(0b01UL << 10) | (0b01UL << 8) | (16UL << 16) | (0b10UL << 30) | (0b11UL << 28) |
+			(0b01UL << 26) | (0b01UL << 24) | (4ULL << 32)); 
+		write_tcr_el1(tcr);
+	}
 
 	uint64_t mair = 0x000000000044ff00;
 	write_mair_el1(mair);
@@ -170,8 +177,10 @@ void XEPagingInit2() {
 		isb_flush();
 	}
 
+#ifdef __TARGET_BOARD_IMX8MP_VERDIN_DAHLIA__
 	XEGuiPrint("L0 Index for UART : %d \r\n", pml4_index(IMX8MP_UART3_BASE_ADDRESS));
 	XEMapMMIO(l1_table, IMX8MP_UART3_BASE_ADDRESS, IMX8MP_UART3_BASE_ADDRESS);
+#endif
 
 	uint64_t tcr1 = ((16UL << 0) | (0UL << 14) | (0b11UL << 12) |
 		(0b01UL << 10) | (0b01UL << 8) | (16UL << 16) | (0b10UL << 30) | (0b11UL << 28) |

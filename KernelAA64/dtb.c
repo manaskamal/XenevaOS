@@ -278,8 +278,9 @@ void AuDeviceTreeInitialize(KERNEL_BOOT_INFO* info) {
 		//AuTextOut("[Aurora]:Device Tree invalid magic \r\n");
 		return;
 	}
-	//AuTextOut("DTB Magic : %x \r\n", AuDTBSwap32(dtb->magic));
+	AuTextOut("DTB Magic : %x \r\n", AuDTBSwap32(dtb->magic));
 	dtbAddress = fdt_address;
+	for (;;);
 }
 
 /**

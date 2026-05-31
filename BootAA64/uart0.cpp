@@ -40,6 +40,7 @@ static bool _is_uart_initialized;
  * uart controller
  */
 void XEUartInitialize() {
+	_is_uart_initialized = 0;
 #ifdef __TARGET_BOARD_RPI3__
 	//RPI3BUartInit();
 	_is_uart_initialized = 0;
