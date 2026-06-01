@@ -33,6 +33,7 @@
 #define __DWC2_H__
 
 #include <stdint.h>
+#include <Mm/dma.h>
 
 #define USB_PID_SETUP 3
 #define USB_PID_DATA 2
@@ -149,4 +150,9 @@ extern void root_hub_handle_port_change(dwc2_core_regs* regs, uint8_t port);
  * to a usb device
  */
 extern uint8_t dwc2_assign_address();
+
+/**
+ * @brief dwc2_get_dma_class -- get global dma class
+ */
+extern AuDMAGlobalClass* dwc2_get_dma_class();
 #endif

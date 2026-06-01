@@ -30,6 +30,7 @@
 #include <aurora.h>
 #include <Drivers/uart.h>
 #include <Mm/vmmngr.h>
+#include <Mm/dma.h>
 #include "dwc2_reg.h"
 #include <Hal/AA64/aa64lowlevel.h>
 #include <Board/RPI3bp/rpi3bp.h>
@@ -53,6 +54,8 @@ static int dmaAddress_Offset;
 #define DWC2_SETUP_SLOT 1
 static uint32_t setup_slot;
 static uint8_t _usb_address;
+
+static AuDMAGlobalClass _dwc2dma;
 
 
 #pragma pack(push,1)
@@ -577,7 +580,7 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 	_enable_root_port = false;
 
 
-	setupPacketBuffers = initialize_list();
+	AuDMAGlobalClassInitialize(&_dwc2dma, "dwc2");
 	_usb_address = 1;
 
 	/**
@@ -640,4 +643,11 @@ void dwc2_free_used_dma_list() {
 		void* phys = (void*)list_remove(setupPacketBuffers, i);
 		AuPmmngrFree((void*)V2P((uint64_t)phys));
 	}
+}
+
+/**
+ * @brief dwc2_get_dma_class -- get global dma class
+ */
+AuDMAGlobalClass* dwc2_get_dma_class() {
+	return &_dwc2dma;
 }

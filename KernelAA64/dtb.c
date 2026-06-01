@@ -280,7 +280,6 @@ void AuDeviceTreeInitialize(KERNEL_BOOT_INFO* info) {
 	}
 	AuTextOut("DTB Magic : %x \r\n", AuDTBSwap32(dtb->magic));
 	dtbAddress = fdt_address;
-	for (;;);
 }
 
 /**

@@ -36,6 +36,9 @@
 #include <string.h>
 #include <_null.h>
 #include <Hal/AA64/aa64cpu.h>
+#include <Mm/dma.h>
+#include "dwc2.h"
+
 /**
  * @brief usb_hub_initialize -- initialize usb hub
  * @param regs -- pointer to dwc2 core register
@@ -44,9 +47,10 @@
 bool usb_hub_initialize(dwc2_core_regs* regs, dwc2_usb_device* dev) {
 	UARTDebugOut("usb hub initializing.... \r\n");
 
-	void* hub = (void*)P2V((uint64_t)AuPmmngrAlloc());
-	memset(hub, 0, 4096);
-	if (dwc2_control_transfer(regs, &dev->ep, 0xA0, 0x06, 0x2900, 0, (void*)V2P((uint64_t)hub), 8)) {
+	uint64_t hub_phys_out = 0;
+	void* hub = (void*)AuDMAGClassAlloc(dwc2_get_dma_class(), sizeof(usb_hub_desc_t), &hub_phys_out); //P2V((uint64_t)AuPmmngrAlloc());
+	//memset(hub, 0, 4096);
+	if (dwc2_control_transfer(regs, &dev->ep, 0xA0, 0x06, 0x2900, 0, (void*)hub_phys_out/*V2P((uint64_t)hub)*/, 8)) {
 		UARTDebugOut("failed to get hub descriptor \r\n");
 	}
 	usb_hub_desc_t* desc = (usb_hub_desc_t*)hub;
@@ -65,15 +69,16 @@ bool usb_hub_initialize(dwc2_core_regs* regs, dwc2_usb_device* dev) {
 	}
 	AA64SleepMS(510);
 	
-	void* scratchBuff = (void*)AuPmmngrAlloc();
-	dev->scratchBuff = scratchBuff;
+	
+	uint64_t status_phys = 0;
+	void* scratchBuff = (void*)AuDMAGClassAlloc(dwc2_get_dma_class(), 8, &status_phys);//AuPmmngrAlloc();
+	
 	// Time to RESET all ports yaayyy
-	UARTDebugOut("Getting port status \r\n");
-	for (unsigned i = 0; i < desc->bNbrPorts; i++) {
-		
+	int numPorts = desc->bNbrPorts;
+	for (unsigned i = 0; i < numPorts; i++) {
 		/** Get status **/
 		if (dwc2_control_transfer(regs, &dev->ep, REQUEST_IN | REQUEST_CLASS | REQUEST_TO_OTHER, GET_STATUS, 0,
-			i + 1, scratchBuff, 4)) {
+			i + 1, (void*)status_phys , 4)) {
 			UARTDebugOut("Failed to get status of port : %d \r\n", (i + 1));
 			continue;
 		}
@@ -84,7 +89,7 @@ bool usb_hub_initialize(dwc2_core_regs* regs, dwc2_usb_device* dev) {
 			continue;
 		}
 		if (!(status->wPortStatus & PORT_STATUS_CONNECTION)) {
-			//UARTDebugOut("port %d, has no active connection \r\n", (i+1));
+			UARTDebugOut("port %d, has no active connection \r\n", (i+1));
 			continue;
 		}
 		UARTDebugOut("initializing port : %d \r\n", (i + 1));
@@ -100,7 +105,7 @@ bool usb_hub_initialize(dwc2_core_regs* regs, dwc2_usb_device* dev) {
 
 		/** Get status **/
 		if (dwc2_control_transfer(regs, &dev->ep, REQUEST_IN | REQUEST_CLASS | REQUEST_TO_OTHER, GET_STATUS, 0,
-			i + 1, scratchBuff, 4)) {
+			i + 1, (void*)status_phys, 4)) {
 			UARTDebugOut("Failed to get second stage status of port : %d \r\n", (i + 1));
 			continue;
 		}
@@ -133,7 +138,6 @@ bool usb_hub_initialize(dwc2_core_regs* regs, dwc2_usb_device* dev) {
 		if (dwc2_usbdev_initialize(regs, i + 1, dev->hub_address, 0, speed)) {
 			UARTDebugOut("failed to initialize device attached to hub port : %d \r\n", i + 1);
 			for (;;);
-
 		}
 	}
 

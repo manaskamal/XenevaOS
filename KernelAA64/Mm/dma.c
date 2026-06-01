@@ -35,6 +35,8 @@
 #include <string.h>
 #include <Drivers/uart.h>
 
+#define DMA_DEFAULT_PAGE_BOUNDARY PAGE_SIZE
+
 static inline size_t dma_align_up(size_t val, size_t align) {
 	return (val + align - 1) & ~(align - 1);
 }
@@ -285,4 +287,116 @@ void AuDMAPoolDestroy(AuDMAPool* pool) {
 
 	//release lock
 	kfree(pool);
+}
+
+static const size_t szClasses[DMA_NUM_CLASSES] = {
+	8,16,32,64,128,256,512
+};
+
+/**
+ * @brief AuDMAGlobalClassInitialize -- initialize and populate global
+ * class structure
+ * @param gclass -- Pointer to allocated gclass 
+ * @param name -- suitable gclass name
+ */
+void AuDMAGlobalClassInitialize(AuDMAGlobalClass* gclass, char* name) {
+	gclass->szClass[0] = 8;
+	gclass->szClass[1] = 16;
+	gclass->szClass[2] = 32;
+	gclass->szClass[3] = 64;
+	gclass->szClass[4] = 128;
+	gclass->szClass[5] = 256;
+	gclass->szClass[6] = 512;
+
+	for (int i = 0; i < DMA_NUM_CLASSES; i++) {
+		size_t sz = gclass->szClass[i];
+		char title[32];
+		int strcount = strlen(name);
+		if (strcount >= 29)
+			strcount = 29;
+
+		title[strcount + 1] = '0' + (char)i;
+		title[strcount + 2] = '\0';
+
+		gclass->pools[i] = AuDMAPoolCreate(title, sz, sz, DMA_DEFAULT_PAGE_BOUNDARY);
+	}
+}
+
+static int _dma_gclass_find_class(AuDMAGlobalClass* gClass, size_t sz) {
+	if (sz == 0)
+		return 1;
+	uint64_t size = sz;
+	size--;
+	size |= size >> 1;
+	size |= size >> 2;
+	size |= size >> 4;
+	size |= size >> 8;
+	size |= size >> 16;
+	size |= size >> 32;
+	size++;
+
+	if (size < 8) size = 8;
+
+	if (size > DMA_MAX_POOL_SIZE)
+		return -1;
+
+	for (int i = 0; i < DMA_NUM_CLASSES; i++) {
+		if (size <= gClass->szClass[i])
+			return i;
+	}
+	return -1;
+}
+
+/**
+ * @brief AuDMAGClassAlloc -- allocate memory from DMA Global Class
+ * @param gClass -- pointer to gClass
+ * @param sz -- size to allocate
+ * @param physOut -- where to put the physical output
+ */
+void* AuDMAGClassAlloc(AuDMAGlobalClass* gClass, size_t sz, uint64_t* physOut) {
+	if (!sz || !physOut)
+		return NULL;
+
+	int idx = _dma_gclass_find_class(gClass, sz);
+
+	if (idx < 0) {
+		/** return a full 4KiB page for larger than MAX_POOL_SZ */
+		return AuPmmngrAlloc();
+	}
+
+	/** or allocate it using pool allocator */
+	return AuDMAPoolAlloc(gClass->pools[idx], physOut);
+}
+
+
+/**
+ * @brief AuDMAGClassFree -- free a memory and put it to gclass pool
+ * @param gClass -- pointer to global class
+ * @param virt -- virtual address
+ * @param physOut -- physical address to put
+ * @param sz -- size of the allocated memory
+ */
+void AuDMAGClassFree(AuDMAGlobalClass* gClass, void* virt, uint64_t physOut, size_t sz) {
+	if (!virt) return;
+
+	int idx = _dma_gclass_find_class(gClass, sz);
+
+	if (idx < 0) {
+		AuPmmngrFree((void*)physOut);
+		return;
+	}
+
+	AuDMAPoolFree(gClass->pools[idx], virt, physOut);
+	
+}
+
+/**
+ * @brief AuDMAGClassDestroy -- destroy entire dma global class
+ * @param gClass -- pointer to gClass
+ */
+void AuDMAGClassDestroy(AuDMAGlobalClass* gClass) {
+	for (int i = 0; i < DMA_NUM_CLASSES; i++) {
+		AuDMAPoolDestroy(gClass->pools[i]);
+		gClass->pools[i] = 0;
+	}
 }

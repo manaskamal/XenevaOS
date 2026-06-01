@@ -60,16 +60,19 @@ static bool dwc2_usbdev_setaddress(dwc2_core_regs* regs, dwc2_usb_device* dev, u
  * @param dev -- pointer to usb device structure
  */
 static bool dwc2_usbdev_configure(dwc2_core_regs* regs, dwc2_usb_device* dev) {
-	void* desc = (void*)P2V((uint64_t)AuPmmngrAlloc());
 
-	if (dwc2_control_transfer(regs, &dev->ep, 0x80, 0x06, 0x0200, 0x0000, (void*)V2P((uint64_t)desc), 9)) {
+	uint64_t config_desc_phys = 0;
+
+	void* desc = AuDMAGClassAlloc(dwc2_get_dma_class(), sizeof(usb_config_desc_t), &config_desc_phys);//(void*)P2V((uint64_t)AuPmmngrAlloc());
+
+	if (dwc2_control_transfer(regs, &dev->ep, 0x80, 0x06, 0x0200, 0x0000, (void*)config_desc_phys, 9)) {
 		UARTDebugOut("[dwc2-otg]: failed to get configuration descriptor \r\n");
 		return 1;
 	}
 	
 	usb_config_desc_t* cdesc = (usb_config_desc_t*)desc;
 
-	if (dwc2_control_transfer(regs, &dev->ep, 0x80, 0x06, 0x0200, 0x0000, (void*)V2P((uint64_t)desc), cdesc->wTotalLength)) {
+	if (dwc2_control_transfer(regs, &dev->ep, 0x80, 0x06, 0x0200, 0x0000,(void*)config_desc_phys /*(void*)V2P((uint64_t)desc)*/, cdesc->wTotalLength)) {
 		UARTDebugOut("[dwc2-otg]: failed to get second stage configuration descriptor \r\n");
 		return 1;
 	}
@@ -114,7 +117,7 @@ static bool dwc2_usbdev_configure(dwc2_core_regs* regs, dwc2_usb_device* dev) {
 	/** try here again with product id **/
 	switch (dev->device_desc->idProduct) {
 	case 0x7800:
-		lan7800_initialize(regs, dev);
+		//lan7800_initialize(regs, dev);
 		break;
 	}
 
@@ -126,9 +129,10 @@ void dwc2_usb_get_string(dwc2_core_regs* regs, dwc2_usb_device* dev, uint8_t ind
 		strcpy(out, "<none>");
 		return;
 	}
-	void* buff = AuPmmngrAlloc();
+	uint64_t strphys_out = 0;
+	void* buff = AuDMAGClassAlloc(dwc2_get_dma_class(), 255, &strphys_out);
 
-	dwc2_control_transfer(regs, &dev->ep, 0x80, 0x06, (0x03 << 8) | index, langID, buff, 255);
+	dwc2_control_transfer(regs, &dev->ep, 0x80, 0x06, (0x03 << 8) | index, langID, (void*)strphys_out, 255);
 
 	uint8_t* buf = (uint8_t*)buff;
 
@@ -144,7 +148,7 @@ void dwc2_usb_get_string(dwc2_core_regs* regs, dwc2_usb_device* dev, uint8_t ind
 		out[out_idx++] = (wchar < 0x80) ? (char)wchar : '?';
 	}
 	out[out_idx] = '\0';
-	AuPmmngrFree(buff);
+	AuDMAGClassFree(dwc2_get_dma_class(), buff, strphys_out, 255);
 }
 /**
  * dwc2_usbdev_initialize -- initializing usb device 
@@ -173,10 +177,12 @@ bool dwc2_usbdev_initialize(dwc2_core_regs* regs, uint8_t port, uint8_t hub_addr
 		(speed == USBSpeedFull && hub_addr != 0))
 		usb->ep.split_enable = 1;
 
+
+	uint64_t dev_desc_phys = 0;
 	/** get the first device descriptor **/
-	void* desc = (void*)P2V((uint64_t)AuPmmngrAlloc());
+	void* desc = (void*)AuDMAGClassAlloc(dwc2_get_dma_class(), sizeof(usb_dev_desc_t), &dev_desc_phys);   //P2V((uint64_t)AuPmmngrAlloc());
 	memset(desc, 0, 4096);
-	if (dwc2_control_transfer(regs, &usb->ep, 0x80, 0x06, 0x0100, 0, (void*)V2P((uint64_t)desc), 0x0008)) {
+	if (dwc2_control_transfer(regs, &usb->ep, 0x80, 0x06, 0x0100, 0, (void*)dev_desc_phys, 0x0008)) {
 		UARTDebugOut("[dwc2_otg]: failed to device descriptor \r\n");
 		return 1;
 	}
@@ -196,7 +202,7 @@ bool dwc2_usbdev_initialize(dwc2_core_regs* regs, uint8_t port, uint8_t hub_addr
 	usb->dev_address = address;
 
 
-	if (dwc2_control_transfer(regs, &usb->ep, 0x80, 0x06, 0x0100, 0, (void*)V2P((uint64_t)desc), sizeof(usb_dev_desc_t))) {
+	if (dwc2_control_transfer(regs, &usb->ep, 0x80, 0x06, 0x0100, 0, (void*)dev_desc_phys, sizeof(usb_dev_desc_t))) {
 		UARTDebugOut("[dwc2_otg]: failed to get second stage device descriptor \r\n");
 		return 1;
 	}
@@ -207,9 +213,9 @@ bool dwc2_usbdev_initialize(dwc2_core_regs* regs, uint8_t port, uint8_t hub_addr
 	UARTDebugOut("[dwc2_otg]: bNumConfig : %d \r\n", desc_->bNumConfigurations);
 	usb->device_desc = desc_;
 
-
-	void* strdesc = AuPmmngrAlloc();
-	if (dwc2_control_transfer(regs, &usb->ep, 0x80, 0x06, 0x0300, 0x0000, strdesc, 4)) {
+	uint64_t string_phys = 0;
+	void* strdesc = AuDMAGClassAlloc(dwc2_get_dma_class(), sizeof(usb_string_desc_t), &string_phys);
+	if (dwc2_control_transfer(regs, &usb->ep, 0x80, 0x06, 0x0300, 0x0000, (void*)string_phys, 4)) {
 		UARTDebugOut("[dwc2-otg]: failed to get string descriptor \r\n");
 	}
 
@@ -223,12 +229,12 @@ bool dwc2_usbdev_initialize(dwc2_core_regs* regs, uint8_t port, uint8_t hub_addr
 	dwc2_usb_get_string(regs, usb, desc_->iManufacturer, lang_id, product);
 	UARTDebugOut("manufactured by : %s \r\n", product);
 
-	AuPmmngrFree(strdesc);
+	//AuPmmngrFree(strdesc);
 
 	if (dwc2_usbdev_configure(regs, usb)) {
 		kfree(usb);
 		UARTDebugOut("[dwc2-otg]: failed to configure the device \r\n");
-		AuPmmngrFree((void*)V2P((uint64_t)desc));
+		//AuPmmngrFree((void*)V2P((uint64_t)desc));
 		return 1;
 	}
 	return 0;

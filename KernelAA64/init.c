@@ -167,6 +167,7 @@ extern void XPT2046Initialise();
 
 extern void AuPmmngrDebugInfo();
 extern void AuConsoleBypassAuTextOut();
+
 /**
  * @brief _AuMain -- the main entry point for kernel
  * @param info -- Kernel Boot information passed

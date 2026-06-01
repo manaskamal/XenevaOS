@@ -38,6 +38,7 @@
 #include <Drivers/uart.h>
 #include "usb_desc.h"
 #include <string.h>
+#include <Mm/dma.h>
 
 static bool _channel_interrupt_occured = 0;
 extern uint64_t dwc2_get_base();
@@ -325,7 +326,8 @@ int dwc2_wait_channel(struct dwc2_core_regs* regs, int ch) {
 bool dwc2_control_transfer(struct dwc2_core_regs* regs, dwc2_usb_endpoint_t* ep, uint8_t bmRequestType, uint8_t b_request,
 	uint16_t wValue, uint16_t wIndex, void* data, uint16_t wLength) {
 
-	usb_setup_packet_t* setup = (usb_setup_packet_t*)P2V((uint64_t)AuPmmngrAlloc());
+	uint64_t setup_phys = 0;
+	usb_setup_packet_t* setup = (usb_setup_packet_t*)AuDMAGClassAlloc(dwc2_get_dma_class(), sizeof(usb_setup_packet_t), &setup_phys); //P2V((uint64_t)AuPmmngrAlloc());
 	//aa64_data_cache_clean_range(setup, 4096);
 	setup->bmRequestType = bmRequestType;
 	setup->bmRequest = b_request;
@@ -337,7 +339,7 @@ bool dwc2_control_transfer(struct dwc2_core_regs* regs, dwc2_usb_endpoint_t* ep,
 	
 	//aa64_dc_cvac_range(dmaphys, 4096);
 	dwc2_write((uint64_t)&regs->gahbcfg, 0x27);
-	dwc2_start_channel(regs, ep, ch, 0, 0, USB_PID_SETUP,(void*)V2P((size_t)setup), 8, 1, 0);
+	dwc2_start_channel(regs, ep, ch, 0, 0, USB_PID_SETUP,(void*)setup_phys, 8, 1, 0);
 	int result = dwc2_wait_channel(regs, ch);
 	if (result < 0) {
 		UARTDebugOut("[dwc2_otg]: failed in channel \r\n");
@@ -347,7 +349,7 @@ bool dwc2_control_transfer(struct dwc2_core_regs* regs, dwc2_usb_endpoint_t* ep,
 
 	if (ep->split_enable) {
 		AA64SleepMS(20);
-		dwc2_channel_do_csplit(regs, ep, ch, 0, 0, USB_PID_SETUP, (void*)V2P((size_t)setup), 8, 1, 0);
+		dwc2_channel_do_csplit(regs, ep, ch, 0, 0, USB_PID_SETUP, (void*)setup_phys, 8, 1, 0);
 		int result = dwc2_wait_channel(regs, ch);
 		if (result < 0) {
 			UARTDebugOut("[dwc2_otg]: failed in channel \r\n");
@@ -374,7 +376,7 @@ bool dwc2_control_transfer(struct dwc2_core_regs* regs, dwc2_usb_endpoint_t* ep,
 			/* should always be 1 for Low Speed devices */
 			uint32_t packet_count = (wLength + ep->max_packet_sz - 1) / ep->max_packet_sz;
 
-			aa64_data_cache_clean_range(dma_buf, 4096);
+			aa64_data_cache_clean_range(dma_buf, wLength);
 
 			dwc2_write((uint64_t)&regs->gahbcfg, 0x27);
 			dwc2_start_channel(regs, ep, ch, is_in, 0, pid, dma_buf, chunk, packet_count, 0);
@@ -395,7 +397,7 @@ bool dwc2_control_transfer(struct dwc2_core_regs* regs, dwc2_usb_endpoint_t* ep,
 					return 1;
 				}
 			}
-			aa64_data_cache_clean_range(dma_buf, 4096);
+			aa64_data_cache_clean_range(dma_buf,4096);
 
 			data_ptr += chunk;
 			dma_buf = (void*)data_ptr;
@@ -413,7 +415,7 @@ bool dwc2_control_transfer(struct dwc2_core_regs* regs, dwc2_usb_endpoint_t* ep,
 		status_is_in = (bmRequestType & 0x80) ? 0 : 1;
 
 	dwc2_write((uint64_t)&regs->gahbcfg, 0x27);
-	dwc2_start_channel(regs, ep, ch, status_is_in, 0, USB_PID_DATA,setup, 0,1,0);
+	dwc2_start_channel(regs, ep, ch, status_is_in, 0, USB_PID_DATA,(void*)setup_phys, 0,1,0);
 	//dwc2_start_transaction(regs, ch, 0, 0, 1, 2, 0);
 
 	result = dwc2_wait_channel(regs, ch);
@@ -424,7 +426,7 @@ bool dwc2_control_transfer(struct dwc2_core_regs* regs, dwc2_usb_endpoint_t* ep,
 
 	if (ep->split_enable) {
 		AA64SleepMS(20);
-		dwc2_channel_do_csplit(regs, ep, ch, status_is_in, 0, USB_PID_DATA, setup, 0, 1, 0);
+		dwc2_channel_do_csplit(regs, ep, ch, status_is_in, 0, USB_PID_DATA, (void*)setup_phys, 0, 1, 0);
 		int result = dwc2_wait_channel(regs, ch);
 		if (result < 0) {
 			UARTDebugOut("[dwc2_otg]: failed in channel csplit\r\n");
@@ -432,7 +434,8 @@ bool dwc2_control_transfer(struct dwc2_core_regs* regs, dwc2_usb_endpoint_t* ep,
 		}
 	}
 
-	AuPmmngrFree((void*)V2P((uint64_t)setup));
+	AuDMAGClassFree(dwc2_get_dma_class(), setup, setup_phys, sizeof(usb_setup_packet_t));
+	//AuPmmngrFree((void*)V2P((uint64_t)setup));
 
 	return 0;
 	/** free up the channel **/

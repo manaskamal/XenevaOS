@@ -83,6 +83,7 @@ void dwc2_enumerate_root_device(struct dwc2_core_regs* regs) {
 	if (dwc2_usbdev_initialize(regs, 0, 0, 0, speed)) {
 		UARTDebugOut("[dwc2-otg]: failed to initialize usb device at root port \r\n");
 	}
+	UARTDebugOut("enumeration successfull \r\n");
 	//speed_ = speed;
 	//port_changed = 0;
 	//ep.dev_address = 0; //0 for very beginning 

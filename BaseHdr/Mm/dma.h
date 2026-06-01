@@ -55,7 +55,14 @@ typedef struct _au_dma_pool_ {
 	uint64_t total_allocs;
 	uint64_t total_frees;
 }AuDMAPool;
-#endif
+
+#define DMA_NUM_CLASSES 7
+#define DMA_MAX_POOL_SIZE 512
+
+typedef struct _au_dma_global_class_{
+	AuDMAPool* pools[DMA_NUM_CLASSES];
+	size_t szClass[DMA_NUM_CLASSES];
+}AuDMAGlobalClass;
 
 
 /**
@@ -87,4 +94,38 @@ AU_EXTERN AU_EXPORT void AuDMAPoolFree(AuDMAPool* pool, void* virt, uint64_t phy
  * @param pool -- pointer to pool
  */
 AU_EXTERN AU_EXPORT void AuDMAPoolDestroy(AuDMAPool* pool);
+
+/**
+ * @brief AuDMAGlobalClassInitialize -- initialize and populate global
+ * class structure
+ * @param gclass -- Pointer to allocated gclass
+ * @param name -- suitable gclass name
+ */
+AU_EXTERN AU_EXPORT void AuDMAGlobalClassInitialize(AuDMAGlobalClass* gclass, char* name);
+
+/**
+ * @brief AuDMAGClassAlloc -- allocate memory from DMA Global Class
+ * @param gClass -- pointer to gClass
+ * @param sz -- size to allocate
+ * @param physOut -- where to put the physical output
+ */
+AU_EXTERN AU_EXPORT void* AuDMAGClassAlloc(AuDMAGlobalClass* gClass, size_t sz, uint64_t* physOut);
+
+/**
+ * @brief AuDMAGClassFree -- free a memory and put it to gclass pool
+ * @param gClass -- pointer to global class
+ * @param virt -- virtual address
+ * @param physOut -- physical address to put
+ * @param sz -- size of the allocated memory
+ */
+AU_EXTERN AU_EXPORT void AuDMAGClassFree(AuDMAGlobalClass* gClass, void* virt, uint64_t physOut, size_t sz);
+
+/**
+ * @brief AuDMAGClassDestroy -- destroy entire dma global class
+ * @param gClass -- pointer to gClass
+ */
+AU_EXTERN AU_EXPORT void AuDMAGClassDestroy(AuDMAGlobalClass* gClass);
+
+
+#endif
 
