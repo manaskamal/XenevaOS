@@ -1,8 +1,8 @@
 # QEMU VHD Automation Runner
 
-This script automates the process of detaching a Virtual Hard Disk (`.vhd` / `.vhdx`) from the Windows host, launching your custom OS kernel inside QEMU, and automatically reattaching the VHD once the QEMU emulation window is closed. 
+This script automates the process of detaching a Virtual Hard Disk (`.vhd` / `.vhdx`) from the Windows host, launching XenevaOS inside QEMU, and automatically reattaching the VHD once the QEMU emulation window is closed. 
 
-This eliminates the manual effort of unmounting/mounting disks during operating system development.
+This eliminates the manual effort of unmounting/mounting disks during during building the project.
 
 ## Prerequisites
 
