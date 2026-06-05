@@ -38,6 +38,7 @@
 #include <Hal/AA64/aa64cpu.h>
 #include "usb_stdhub.h"
 #include "lan7800.h"
+#include "usb_hid.h"
 
 /**
  * @brief dwc2_usbdev_setaddress -- set an address to the current device
@@ -100,6 +101,7 @@ static bool dwc2_usbdev_configure(dwc2_core_regs* regs, dwc2_usb_device* dev) {
 	}
 	case 0x03:
 		UARTDebugOut("[dwc2-otg]: found a HID device \r\n");
+		USBHidInitialize(regs, dev);
 		break;
 	case 0x01: {
 		UARTDebugOut("[dwc2-otg]: found USB-Audio based device \r\n");
@@ -173,6 +175,7 @@ bool dwc2_usbdev_initialize(dwc2_core_regs* regs, uint8_t port, uint8_t hub_addr
 	usb->ep.hub_port = port;
 	usb->hub_address = hub_addr;
 	usb->hub_port = port;
+	usb->ep.ch = 0;
 	if ((speed == USBSpeedLow && hub_addr != 0) || 
 		(speed == USBSpeedFull && hub_addr != 0))
 		usb->ep.split_enable = 1;

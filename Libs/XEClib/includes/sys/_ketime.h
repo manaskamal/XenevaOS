@@ -58,6 +58,10 @@ XE_EXTERN{
 	*/
 	XE_EXPORT int _KeGetCurrentTime(XETime *time);
 
+	XE_LIB uint64_t _KeGetCurrentUS();
+
+	XE_LIB uint64_t _KeGetCurrentMS();
+
 #ifdef __cplusplus
 }
 #endif

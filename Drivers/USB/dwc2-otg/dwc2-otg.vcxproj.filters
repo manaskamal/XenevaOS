@@ -8,6 +8,7 @@
     <ClCompile Include="dwc2_usbdev.cpp" />
     <ClCompile Include="usb_stdhub.cpp" />
     <ClCompile Include="lan7800.cpp" />
+    <ClCompile Include="usb_hid.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="dwc2_reg.h" />
@@ -16,5 +17,6 @@
     <ClInclude Include="usb_desc.h" />
     <ClInclude Include="usb_stdhub.h" />
     <ClInclude Include="lan7800.h" />
+    <ClInclude Include="usb_hid.h" />
   </ItemGroup>
 </Project>

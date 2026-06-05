@@ -44,6 +44,7 @@
 #include <_null.h>
 #include <Mm/vmarea.h>
 #include <Board/RPI3bp/rpi3bp_gpio.h>
+#include <timer.h>
 
 bool timer_debug = false;
 void settimerdebug() {
@@ -66,6 +67,10 @@ void RPI3_IRQ_handler(AA64Registers* regs) {
             for (;;);*/
         suspendTimer();
         setupTimerIRQ();
+
+        /** handle kernel expired kernel timers */
+        AuroraTimerTick();
+
         AuScheduleThread(regs);
     }
     if (pending & INT_SRC_CNTPSIRQ) {
@@ -77,6 +82,9 @@ void RPI3_IRQ_handler(AA64Registers* regs) {
     if (pending & (1ULL << 3)) {
         suspendTimer();
         setupTimerIRQ();
+        
+        /** handle kernel's expired timers */
+        AuroraTimerTick();
         AuScheduleThread(regs);
     }
 

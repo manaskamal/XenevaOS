@@ -50,8 +50,9 @@
 #include <proctoken.h>
 #include <Fs/pipe.h>
 #include <power.h>
+#include <timer.h>
 
-#define AURORA_MAX_SYSCALL 70
+#define AURORA_MAX_SYSCALL 72
 
 AA64Registers* svcCurrentRegs;
 
@@ -149,6 +150,8 @@ static void* syscalls[AURORA_MAX_SYSCALL] = {
 	AuProcessTokenRemoveSelf, //67
 	AuPowerDown, //68
     AuPowerReset, //69
+	AuGetCurrentUS, //70
+	AuGetCurrentMS, //71
 };
 
 #ifdef __KERNEL_PROFILER_ON__
@@ -223,6 +226,8 @@ static char* syscall_name[AURORA_MAX_SYSCALL] = {
 	"AuProcessTokenRemoveSelf", //67
 	"AuPowerDown", //68
 	"AuPowerReset", //69
+	"AuGetCurrentUS", //70
+	"AuGetCurrentMS", //71
 };
 #endif
 

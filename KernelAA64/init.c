@@ -64,6 +64,7 @@
 #include <Cred/cred.h>
 #include <Sound/sound.h>
 #include <proctoken.h>
+#include <timer.h>
 
 extern int _fltused = 1;
 static bool _littleboot_used;
@@ -168,6 +169,11 @@ extern void XPT2046Initialise();
 extern void AuPmmngrDebugInfo();
 extern void AuConsoleBypassAuTextOut();
 
+void _AuroraTimerCallback(void* p) {
+	UARTDebugOut("from inside timer++ \r\n");
+}
+
+
 /**
  * @brief _AuMain -- the main entry point for kernel
  * @param info -- Kernel Boot information passed
@@ -204,8 +210,9 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	AuInitrdInitialize(info);
 	AuConsolePostInitialise(info);
 	//AuConsoleBypassAuTextOut();
-	/* initialize the tty service */
+	AuroraTimerInitialize();
 
+	/* initialize the tty service */
 	AuTTYInitialise();
 
 	/* initialize the shared memory manager*/
@@ -264,6 +271,7 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	UARTDebugOut("[aurora]: Board Model : QEMU Virt Machine (Xeneva Build %s - %s)\r\n", __DATE__, __TIME__);
 #endif
 	UARTDebugOut("[aurora]: starting xeneva (ARM64) please wait...\r\n");
+
 	
 
 	/* clear out the lower half memory */
@@ -273,6 +281,7 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	UARTDebugOut("[aurora]: boot freed up \r\n");
 
 	AuSchedulerInitialize();
+
 	
 	AuProcess* proc = AuCreateProcessSlot(0, "exec");
 	int num_args = 1;

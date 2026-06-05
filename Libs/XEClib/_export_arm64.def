@@ -60,3 +60,5 @@ EXPORTS
     _KeGetEnvironmentBlock
     setjmp
     longjmp
+    _KeGetCurrentUS
+    _KeGetCurrentMS

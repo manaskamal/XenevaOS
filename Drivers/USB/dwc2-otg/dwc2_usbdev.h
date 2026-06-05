@@ -36,6 +36,10 @@
 #include "dwc2_reg.h"
 #include "usb_desc.h"
 
+enum _transfer_stage_ {
+	TRANSFER_SSPLT,
+	TRANSFER_CSPLT
+};
 
 typedef struct _dwc2_usb_dev_ {
 	char name[32];
@@ -48,6 +52,9 @@ typedef struct _dwc2_usb_dev_ {
 	uint8_t hub_address;
 	uint8_t hub_port;
 	void* scratchBuff;
+	uint8_t stage;
+	int kernelTimerHandle;
+	int kernelTimerHandle2;
 }dwc2_usb_device;
 
 

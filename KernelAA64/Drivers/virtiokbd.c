@@ -114,6 +114,7 @@ void AuVirtioKbdHandler(int spinum) {
  * @brief AuVirtioKbdInitialize -- initialize the virtio keyboard
  */
 void AuVirtioKbdInitialize(uint64_t device) {
+	device = 0x4010008000;
 	int bus = 0;
 	int func = 0;
 	int dev = 0;
@@ -145,6 +146,7 @@ void AuVirtioKbdInitialize(uint64_t device) {
 	if (AuPCIEAllocMSI(device, spiID, bus, dev, func)) {
 		UARTDebugOut("VIRTIO Keyboard MSI allocated \n");
 	}
+
 	GICEnableSPIIRQ(spiID);
 	//GICSetTargetCPU(spiID);
 	isb_flush();

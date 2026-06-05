@@ -53,6 +53,7 @@
 #include "nanojpg.h"
 #include <arm_neon.h>
 #include "compose.h"
+#include <sys/_ketime.h>
 
 static uint32_t screen_w;
 static uint32_t screen_h;
@@ -88,6 +89,10 @@ static int lastMouseButton;
 static int gpu_fd;
 static bool _gpu_enabled;
 static int gpu_display_id;
+
+
+#define DEODHAI_TARGET_FPS 60
+#define FRAME_TIME_MS (1000/ DEODHAI_TARGET_FPS)
 
 /**
  * @brief DeodhaiAllocateNewHandle -- get a new window handle
@@ -276,7 +281,7 @@ void DrawWallpaper(ChCanvas* canv, char* filename) {
 			uint8_t b = data[j * 3 + 2];
 			uint32_t rgba = ((r << 16) | (g << 8) | (b)) & 0x00ffffff;
 			rgba = rgba | 0xff000000;
-			ChDrawPixelRAW(canv, x + k, y + i, rgba);
+			ChDrawPixel(canv, x + k, y + i, rgba);
 			j++;
 		}
 	}
@@ -986,7 +991,11 @@ int main(int argc, char* argv[]){
 	proc = _KeCreateProcess(0, "nmdapha");
 	_KeProcessLoadExec(proc, "/nmdapha.exe", NULL, NULL);
 
+	uint64_t frameTime = 0;
+	uint64_t frameStart = 0;
 	while (1) {
+		frameStart = _KeGetCurrentMS();
+
 		XRComposeFrame(canv);
 		_KeReadFile(mouse_fd, &mice_input, sizeof(AuInputMessage));
 		_KeReadFile(kybrd_fd, &kybrd_input, sizeof(AuInputMessage));
@@ -1202,8 +1211,17 @@ int main(int argc, char* argv[]){
 			focusedLast = NULL;
 			memset(&event, 0, sizeof(PostEvent));
 		}
-		
-		_KeProcessSleep(2);
+
+		frameTime = _KeGetCurrentMS() - frameStart;
+
+		if (frameTime < FRAME_TIME_MS) {
+			uint64_t remaining = FRAME_TIME_MS - frameTime;
+			_KeProcessSleep(remaining);
+		}
+		else {
+			_KeProcessSleep(1);
+			//_KePrint("[deodhaiXR]: frame overrun %d\r\n", frameTime);
+		}
 	}
 }
 

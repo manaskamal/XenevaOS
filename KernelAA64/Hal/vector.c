@@ -43,6 +43,7 @@
 #include <Board/RPI3bp/rpi3bp.h>
 #include <Hal/AA64/profile.h>
 #include <audrv.h>
+#include <timer.h>
 
 extern uint64_t read_sp();
 extern uint64_t read_sp_el1();
@@ -202,6 +203,10 @@ void irq_el1_handler(AA64Registers* regs) {
             setupTimerIRQ();
             GICSendEOI(iar);
             GICCheckPending(irq);
+
+            /** handle expired timers **/
+            AuroraTimerTick();
+
             AuScheduleThread(regs);
         }
         /*else if (irq == 27) {

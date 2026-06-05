@@ -71,7 +71,7 @@ struct VirtioDeviceConfig {
 		uint8_t str[128];
 	}data;
 };
-#pragma pack(push,1)
+
 struct VirtioBuffer {
 	uint64_t Addr;
 	uint32_t Length;
@@ -109,7 +109,7 @@ struct VirtioInputEvent {
 	uint16_t code;
 	uint32_t value;
 };
-#pragma pack(pop)
+
 
 #define OFFSETOF(s,m) ((size_t)&(((s*)0)->m))
 
@@ -128,7 +128,7 @@ typedef struct _virtio_net_hdr_ {
 	uint16_t csum_offset;
 }virtio_net_hdr_t;
 
-#pragma pack(push,1)
+
 typedef struct {
 	uint8_t cap_vndr;
 	uint8_t cap_next;
@@ -139,14 +139,14 @@ typedef struct {
 	uint32_t offset;
 	uint32_t length;
 }virtio_pci_cap;
-#pragma pack(pop)
 
-#pragma pack(push,1)
+
+
 struct virtio_notifier_cap {
 	virtio_pci_cap cap;
 	uint32_t notifer_mult_base;
 };
-#pragma pack(pop)
+
 
 /**
  * @brief AuVirtioKbdInitialize -- initialize the virtio keyboard

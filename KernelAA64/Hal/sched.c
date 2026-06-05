@@ -478,6 +478,7 @@ sched:
 
 
 	current_thread->sp = current_thread->originalKSp;
+	current_thread->data = regs;
 	if (aa64_restore_context(current_thread)) {
 		return;
 	}

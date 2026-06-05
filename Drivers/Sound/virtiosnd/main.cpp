@@ -481,11 +481,10 @@ virtio_snd_pcm_info* snd_query_pcm_info(VirtioCommonCfg* cfg) {
  */
 static void snd_send_pcm(VirtioCommonCfg* cfg, void* pcm_data, uint32_t len) {
 	int index = txq->available.index % txq_sz;
-
 	virtio_snd_pcm_xfer* xfer = (virtio_snd_pcm_xfer*)command_phys;
 	xfer->stream_id = 0; //0 for audio output
 	aa64_data_cache_clean_range(command_phys, 0x1000);
-
+	
 #ifdef DEBUG
 	UARTDebugOut("txq index : %d \r\n", index);
 #endif
@@ -515,9 +514,9 @@ static void snd_send_pcm(VirtioCommonCfg* cfg, void* pcm_data, uint32_t len) {
 
 	snd_notify_queue(cfg, 2);
 
-
 	while (txq->used.index == txq_lst_idx)
 		dsb_ish();
+
 
 	while (txq->used.index != txq_lst_idx) {
 		uint16_t idx = txq_lst_idx & (txq_sz - 1);

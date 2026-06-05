@@ -75,6 +75,18 @@ uint16_t shSampleBufferKey;
 #define DEODHAI_AUDIO_CONNECTION_HANDSHAKE 11
 #define DEODHAI_AUDIO_CONNECTION_CLOSED 12
 
+/* bytes per sample definitions */
+#define MONO_8_BIT    1
+#define MONO_16_BIT   2
+#define STEREO_16_BIT 4
+#define STEREO_32_BIT 8
+
+
+/* default configuration */
+#define SAMPLE_BUFFER_SZ 4096
+#define BYTES_PER_SAMPLE STEREO_16_BIT
+#define SAMPLE_FREQUENCY  48000
+
 
 typedef struct _deodhai_audio_msg_ {
 	char message[60];
@@ -336,6 +348,7 @@ int main(int argc, char* argv[]) {
 	ioctl.uint_1 = num_card_count;
 	aurora_snd_card_list* list = (aurora_snd_card_list*)malloc(sizeof(aurora_snd_card_list) * num_card_count);
 	ioctl.ulong_1 = (uint64_t)list;
+	memset(list, 0, sizeof(aurora_snd_card_list) * num_card_count);
 	if (_KeFileIoControl(sound, SOUND_GET_CARD_LIST, &ioctl)) {
 		_KePrint("[deodhai-audio]: failed to get sound card list \r\n");
 		_KePauseThread();
@@ -345,6 +358,7 @@ int main(int argc, char* argv[]) {
 	for (int i = 0; i < num_card_count; i++) {
 		_KePrint("[deodhai-audio]: %s sound is installed, id : %d \r\n", list[i].name, list[i].cardID);
 	}
+
 
 	/** let's use default first sound card here **/
 	ioctl.uint_2 = list->cardID;
@@ -362,6 +376,11 @@ int main(int argc, char* argv[]) {
 
 	int sz = 0;
 	char* buff = (char*)malloc(sizeof(DeodhaiAudioMessage)+1);
+
+	uint64_t sample_count = SAMPLE_BUFFER_SZ / BYTES_PER_SAMPLE;
+	float sample_div = (float)sample_count / (float)SAMPLE_FREQUENCY;
+	uint64_t sleep_duration = (uint64_t)(sample_div * 1000);
+	_KePrint("** deodhai audio sleep duration : %d \r\n", sleep_duration);
 	while (1) {
 		DeodhaiAudioComposeFrame();
 		sz = _KeReadFile(pipe, buff, sizeof(DeodhaiAudioMessage)+1);
@@ -370,6 +389,6 @@ int main(int argc, char* argv[]) {
 			DeodhaiAudioHandleMessage(msg);
 			memset(buff, 0, sizeof(DeodhaiAudioMessage));
 		}
-		_KeProcessSleep(8);
+		_KeProcessSleep(sleep_duration);
 	}
 }

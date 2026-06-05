@@ -36,6 +36,7 @@
 #include <Board/RPI3bp/rpi3bp.h>
 #include <Hal/AA64/gic.h>
 #include "dwc2.h"
+#include "usb_hid.h"
 #include <Mm/pmmngr.h>
 #include <list.h>
 #include <string.h>
@@ -54,6 +55,7 @@ static int dmaAddress_Offset;
 #define DWC2_SETUP_SLOT 1
 static uint32_t setup_slot;
 static uint8_t _usb_address;
+static dwc2_core_regs* _regs;
 
 static AuDMAGlobalClass _dwc2dma;
 
@@ -599,10 +601,12 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 	num_channel = num_host_channel;
 	UARTDebugOut("[dwc2_otg]: number of host channels : %d \r\n", num_host_channel);
 
+	_regs = regs;
 
 	dwc2_initialize(regs);
 	UARTDebugOut("[dwc2_org]: successfully initialized \r\n");
-	
+
+
 	mask_irqs();
 	return 0;
 }
@@ -650,4 +654,8 @@ void dwc2_free_used_dma_list() {
  */
 AuDMAGlobalClass* dwc2_get_dma_class() {
 	return &_dwc2dma;
+}
+
+dwc2_core_regs* dwc2_get_core_regs() {
+	return _regs;
 }

@@ -105,6 +105,7 @@ typedef struct _aa64_task_ {
 	uint64_t originalKSp; //223
 	bool returnFromSyscall;
 	bool justStored;
+	void* data;
 	__declspec(align(16)) uint8_t fp_regs[512];
 	uint64_t fpcr;
 	uint64_t fpsr;

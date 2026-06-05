@@ -37,8 +37,11 @@
 #include <Mm/pmmngr.h>
 #include <Drivers/uart.h>
 #include "usb_desc.h"
+#include "usb_hid.h"
 #include <string.h>
 #include <Mm/dma.h>
+#include <Fs/Dev/devinput.h>
+#include <timer.h>
 
 static bool _channel_interrupt_occured = 0;
 extern uint64_t dwc2_get_base();
@@ -323,6 +326,35 @@ int dwc2_wait_channel(struct dwc2_core_regs* regs, int ch) {
 	return 0;
 }
 
+int dwc2_wait_channel_look_bit(struct dwc2_core_regs* regs, int ch, int bit) {
+	bool _found = 0;
+	uint32_t hcint_ = 0;
+	int timeout = 5000000;
+	while (timeout--) {
+		uint32_t hcint = dwc2_read((uint64_t)&regs->hc_regs[ch].hcint);
+		uint32_t hcintmsk = dwc2_read((uint64_t)&regs->hc_regs[ch].hcintmsk);
+		uint32_t hctsz = dwc2_read((uint64_t)&regs->hc_regs[ch].hctsiz);
+		uint32_t active = hcint & hcintmsk;
+		hcint_ = hcint;
+		uint8_t pid = USB_PID_DATA0;
+		/** W1C**/
+		dwc2_write((uint64_t)&regs->hc_regs[ch].hcint, hcint);
+
+		if (hcint & bit) {
+			_found = 1;
+			break;
+		}
+
+	}
+	uint32_t haint = dwc2_read((uint64_t)&regs->host_regs.haint);
+	haint |= (1u << ch);
+	dwc2_write((uint64_t)&regs->host_regs.haint, haint);
+	if (!_found)
+		return hcint_;
+	else
+		return 0;
+}
+
 bool dwc2_control_transfer(struct dwc2_core_regs* regs, dwc2_usb_endpoint_t* ep, uint8_t bmRequestType, uint8_t b_request,
 	uint16_t wValue, uint16_t wIndex, void* data, uint16_t wLength) {
 
@@ -335,7 +367,7 @@ bool dwc2_control_transfer(struct dwc2_core_regs* regs, dwc2_usb_endpoint_t* ep,
 	setup->wIndex = wIndex;
 	setup->wLength = wLength;
 	aa64_data_cache_clean_range(setup,4096);
-	uint8_t ch = 0;
+	uint8_t ch = ep->ch;
 	
 	//aa64_dc_cvac_range(dmaphys, 4096);
 	dwc2_write((uint64_t)&regs->gahbcfg, 0x27);
@@ -452,14 +484,40 @@ void dwc2_handle_channel_interrupt(dwc2_core_regs* regs, int ch) {
 	uint32_t hcint = dwc2_read((uint64_t)&regs->hc_regs[ch].hcint);
 	uint32_t hcintmsk = dwc2_read((uint64_t)&regs->hc_regs[ch].hcintmsk);
 	uint32_t hctsz = dwc2_read((uint64_t)&regs->hc_regs[ch].hctsiz);
-	uint32_t active = hcint & hcintmsk;
+	uint32_t active = hcint ;
 
 	uint8_t pid = USB_PID_DATA0;
 	/** W1C**/
 	dwc2_write((uint64_t)&regs->hc_regs[ch].hcint, hcint);
 
+	if (ch == 2) {
+	
+	}
+
 	if (active & DWC2_HCINT_CHHLTD) {
 		if (active & DWC2_HCINT_XFERCOMP) {
+			if (ch == 2) {
+				uint8_t* buff = (uint8_t*)usb_hid_get_interrupt_buf();
+				aa64_data_cache_clean_range(buff, 32);
+
+				int8_t dx = (int8_t)buff[1];
+				int8_t dy = (int8_t)buff[3];
+				uint8_t button = (uint8_t)buff[0];
+				if (dx && buff[0] & (1 << 4))
+					dx = dx - 0x100;
+
+				if (dy && buff[0] & (1 << 5))
+					dy = dy - 0x100;
+
+				USBHIDSetMouse(dx, dy, button);
+			
+				uint8_t mpid = usb_hid_get_dev()->ep.next_pid;
+				mpid = (mpid == USB_PID_DATA) ? USB_PID_DATA0 : USB_PID_DATA;
+				usb_hid_get_dev()->ep.next_pid = mpid;
+				
+				dwc2_interrupt_transfer(regs, &usb_hid_get_dev()->ep, (void*)usb_hid_get_physical(), usb_hid_get_dev()->ep.ch, 1, mpid);
+				//USBHIDSetNAKNormal(false, true);
+			}
 			//UARTDebugOut("[dwc2-otg]: channel transfer completed \r\n");
 			//pid = (hctsz >> 29) & 0x3;
 			//uint8_t* buf = (uint8_t*)root_hub_get_interrupt_buffer();
@@ -474,7 +532,7 @@ void dwc2_handle_channel_interrupt(dwc2_core_regs* regs, int ch) {
 			//}
 		}
 		else if (active & DWC2_HCINT_NAK) {
-			UARTDebugOut("[dwc2-otg]: device not ready -- retry later \r\n");
+			//UARTDebugOut("[dwc2-otg]: device not ready -- retry later \r\n");
 		}
 		else if (active & DWC2_HCINT_NYET) {
 			UARTDebugOut("[dwc2-otg]: hs split not ready -- retry later \r\n");
@@ -490,12 +548,44 @@ void dwc2_handle_channel_interrupt(dwc2_core_regs* regs, int ch) {
 		}
 		else if (active & DWC2_HCINT_DATATGLERR) {
 			pid = (hctsz >> 29) & 0x3;
-			UARTDebugOut("[dwc2-otg]: data toggle mismatch \r\n");
+			UARTDebugOut("[dwc2-otg]: data toggle mismatch %d \r\n", pid);
+			if (ch == 2) {
+				pid = (pid == USB_PID_DATA0) ? USB_PID_DATA : USB_PID_DATA0;
+				usb_hid_get_dev()->ep.next_pid = pid;
+				dwc2_interrupt_transfer(regs, &usb_hid_get_dev()->ep, (void*)usb_hid_get_physical(), usb_hid_get_dev()->ep.ch, 1, pid);
+			}
 		}
 		else if (active & DWC2_HCINT_STALL) {
 			UARTDebugOut("[dwc2-otg]: channel stalled \r\n");
 			UARTDebugOut("[dwc2-otg]: hcint : %x \r\n", hcint);
 			UARTDebugOut("[dwc2-otg]: hctsz : %x \r\n", hctsz);
+		}
+
+		if (hcint & DWC2_HCINTMSK_ACK) {
+			if (ch == 2) {
+				AA64SleepMS(1);
+				dwc2_interrupt_transfer_csplit(regs, &usb_hid_get_dev()->ep, (void*)usb_hid_get_physical(), usb_hid_get_dev()->ep.ch, 1,
+					usb_hid_get_dev()->ep.next_pid);
+				usb_hid_get_dev()->stage = TRANSFER_CSPLT;
+			}
+		}
+
+		if (hcint & DWC2_HCINTMSK_NAK) {
+			if (ch == 2) {
+				/*uint8_t mpid = usb_hid_get_dev()->ep.next_pid;
+				dwc2_interrupt_transfer(regs, &usb_hid_get_dev()->ep, (void*)usb_hid_get_physical(), usb_hid_get_dev()->ep.ch, 1, mpid);*/
+				//USBHIDSetNAKNormal(true, false);
+				int idx = AuroraTimerStart(2, HIDRequestInterrupt_NAK, NULL, -1);
+			}
+		}
+
+		if (hcint & DWC2_HCINTMSK_NYET) {
+			if (ch == 2) {
+				UARTDebugOut("NYET \r\n");
+				dwc2_interrupt_transfer_csplit(regs, &usb_hid_get_dev()->ep, (void*)usb_hid_get_physical(), usb_hid_get_dev()->ep.ch, 1,
+					usb_hid_get_dev()->ep.next_pid);
+				usb_hid_get_dev()->stage = TRANSFER_CSPLT;
+			}
 		}
 	}
 
@@ -503,11 +593,16 @@ void dwc2_handle_channel_interrupt(dwc2_core_regs* regs, int ch) {
 	haint |= (1u << ch);
 	dwc2_write((uint64_t)&regs->host_regs.haint, haint);
 	_channel_interrupt_occured = 1;
-	root_hub_transfer_int(regs, pid);
+	//root_hub_transfer_int(regs, pid);
 }
 
 void dwc2_interrupt_transfer(dwc2_core_regs* regs, dwc2_usb_endpoint_t* ep, void* intbuf, uint8_t ch, uint32_t odd,uint8_t pid) {
 	dwc2_write((uint64_t)&regs->gahbcfg, 0x27);
-	dwc2_start_channel(regs, ep, ch, 1,0x3,pid, intbuf, 1, 1, odd);
+	dwc2_start_channel(regs, ep, ch, 1,0x3,pid, intbuf,ep->max_packet_sz, 1, odd);
+}
+
+void dwc2_interrupt_transfer_csplit(dwc2_core_regs* regs, dwc2_usb_endpoint_t* ep, void* intbuf, uint8_t ch, uint32_t odd, uint8_t pid) {
+	dwc2_write((uint64_t)&regs->gahbcfg, 0x27);
+	dwc2_channel_do_csplit(regs, ep, ch, 1, 0x3, pid, intbuf, ep->max_packet_sz, 1, odd);
 }
 

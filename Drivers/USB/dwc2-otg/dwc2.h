@@ -70,7 +70,7 @@ typedef struct {
 	uint8_t hub_address;
 	uint8_t hub_port;
 	uint8_t next_pid;
-
+	uint8_t ch;
 }dwc2_usb_endpoint_t;
 
 
@@ -98,6 +98,7 @@ extern bool dwc2_control_transfer(struct dwc2_core_regs* regs, dwc2_usb_endpoint
 	uint16_t wValue, uint16_t wIndex, void* data, uint16_t wLength);
 
 extern void dwc2_interrupt_transfer(dwc2_core_regs* regs, dwc2_usb_endpoint_t* ep, void* intbuf, uint8_t ch, uint32_t odd, uint8_t pid);
+extern void dwc2_interrupt_transfer_csplit(dwc2_core_regs* regs, dwc2_usb_endpoint_t* ep, void* intbuf, uint8_t ch, uint32_t odd, uint8_t pid);
 
 /**
  * dwc2_enumerate_root_device -- enumerate the root device
@@ -112,6 +113,10 @@ extern void dwc2_enumerate_root_device(struct dwc2_core_regs* regs);
  * @param ch -- channel numbers
  */
 extern void dwc2_handle_channel_interrupt(dwc2_core_regs* regs, int ch);
+
+extern int dwc2_wait_channel(struct dwc2_core_regs* regs, int ch);
+
+extern int dwc2_wait_channel_look_bit(struct dwc2_core_regs* regs, int ch, int bit);
 
 /**
  * @brief dwc2_get_dma_address -- return pre allocated dma address
@@ -155,4 +160,6 @@ extern uint8_t dwc2_assign_address();
  * @brief dwc2_get_dma_class -- get global dma class
  */
 extern AuDMAGlobalClass* dwc2_get_dma_class();
+
+extern dwc2_core_regs* dwc2_get_core_regs();
 #endif

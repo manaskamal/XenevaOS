@@ -601,3 +601,17 @@ _KePowerReset:
 	 */
 	 mov x0, x6
 	 ret
+
+.global _KeGetCurrentUS
+_KeGetCurrentUS:
+    mov x16, 70
+	svc #0
+	mov x0, x6
+	ret
+
+.global _KeGetCurrentMS
+_KeGetCurrentMS:
+    mov x16, 71
+	svc #0
+	mov x0, x6
+	ret

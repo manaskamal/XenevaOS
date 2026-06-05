@@ -93,14 +93,27 @@ extern void SplashScreenShow();
 
 void init_basic_gid_to_dev() {
 	int fd = _KeOpenFile("/dev/graph", FILE_OPEN_READ_ONLY);
-	_KeCredChangeID(fd, 0, GROUP_VIDEO);
+	if (fd != -1) {
+		_KeCredChangeID(fd, 0, GROUP_VIDEO);
+	}
 	fd = _KeOpenFile("/dev/mice", FILE_OPEN_READ_ONLY);
-	_KeCredChangeID(fd, 0, GROUP_INPUT);
+	if (fd != -1) {
+		_KeCredChangeID(fd, 0, GROUP_INPUT);
+	}
 	fd = _KeOpenFile("/dev/kybrd", FILE_OPEN_READ_ONLY);
-	_KeCredChangeID(fd, 0, GROUP_INPUT);
+	if (fd != -1) {
+		_KeCredChangeID(fd, 0, GROUP_INPUT);
+	}
 	fd = _KeOpenFile("/dev/sound", FILE_OPEN_READ_ONLY);
-	_KeCredChangeID(fd, 0, GROUP_AUDIO);
-	_sound = fd;
+	if (fd != -1) {
+		_KeCredChangeID(fd, 0, GROUP_AUDIO);
+		_sound = fd;
+	}
+	fd = _KeOpenFile("/dev/virtiogpu", FILE_OPEN_READ_ONLY);
+	if (fd != -1) {
+		_KeCredChangeID(fd, 0, GROUP_VIDEO);
+	}
+
 }
 
 /**
@@ -121,6 +134,8 @@ void _play_startup_sound() {
 	/** uint_2 must hold the sound card number to use **/
 	ioctl.uint_2 = -1;
 	int num_card_count = _KeFileIoControl(_sound, SOUND_GET_CARD_TOTALNUM, &ioctl);
+	if (num_card_count == 0)
+		return;
 
 	ioctl.uint_1 = num_card_count;
 	aurora_snd_card_list* list = (aurora_snd_card_list*)malloc(sizeof(aurora_snd_card_list) * num_card_count);

@@ -279,7 +279,7 @@ uint32_t AuPCIERead(uint64_t device, int reg, int bus, int dev, int func) {
 uint64_t AuPCIERead64(uint64_t device, int reg, int size, int bus, int dev, int func) {
 
 	uint64_t result = 0;
-
+	UARTDebugOut("Device address : %x \r\n", (device + reg));
 	if (size == 1) {
 		result = *RAW_OFFSET(volatile uint8_t*,device, reg);
 		return result;
@@ -533,7 +533,7 @@ uint64_t AuPCIEReadBAR(uint64_t device, uint16_t bus, uint16_t dev,uint16_t func
 #define INTERNAL_PCI_REG_BAR0 0x4
 	uint64_t baseaddr, highbits, headertype;
 	uint64_t ret = 0;
-	headertype = AuPCIERead64(device, PCI_HEADER_TYPE, 4, bus, dev, func);
+	headertype = AuPCIERead64(device, PCI_HEADER_TYPE, 1, bus, dev, func);
 	headertype >>= 16;
 	headertype &= 0xFF;
 	if (((headertype & 0x7F) == 1 && BAR > 1) || ((headertype & 0x7F) == 2))
@@ -541,7 +541,6 @@ uint64_t AuPCIEReadBAR(uint64_t device, uint16_t bus, uint16_t dev,uint16_t func
 	if (BAR > 5)
 		goto end;
 	baseaddr = AuPCIERead64(device, (BAR + (PCI_BAR0/4))*4, 4, bus, dev, func);
-	UARTDebugOut("BAR Reading : %x \n", (BAR + (PCI_BAR0 / 4)) * 4);
 	uint32_t bartype = baseaddr & 0xF;
 	if (PCI_IS_IO_BAR(bartype)) {
 		ret = baseaddr;
@@ -552,7 +551,6 @@ uint64_t AuPCIEReadBAR(uint64_t device, uint16_t bus, uint16_t dev,uint16_t func
 		ret = baseaddr ^ bartype;
 	else if (PCI_MEM_BAR_TYPE(bartype) == MEMBAR64) {
 		highbits = AuPCIERead64(device,(BAR + 1 + (PCI_BAR0/4))*4, 4, bus, dev, func);
-		UARTDebugOut("BAR Reading : %x \n", (BAR + 1 + (PCI_BAR0 / 4)) * 4);
 		baseaddr |= (highbits << 32);
 		ret = baseaddr ^ bartype;
 	}
@@ -562,7 +560,6 @@ uint64_t AuPCIEReadBAR(uint64_t device, uint16_t bus, uint16_t dev,uint16_t func
 	if (barsz) {
 		AuPCIEWrite64(device, (BAR + (PCI_BAR0/4))*4, 4, UINT32_MAX, bus, dev, func);
 		uint64_t reread = AuPCIERead64(device, (BAR + (PCI_BAR0 / 4)) * 4, 4, bus, dev, func);
-		UARTDebugOut("ReRead: %x \n", reread);
 		if (PCI_MEM_BAR_TYPE(bartype) == MEMBAR64)
 			AuPCIEWrite64(device, (BAR + 1 + (PCI_BAR0/4))*4, 4, UINT32_MAX, bus, dev, func);
 		uint64_t szbits, szhighbits = 0;
