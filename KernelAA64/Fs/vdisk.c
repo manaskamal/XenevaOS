@@ -38,6 +38,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <Fs/Dev/devfs.h>
+#include <Drivers/uart.h>
 
 AuVDisk* VdiskArray[MAX_VDISK_DEVICES];
 int _vdisk_num_;
@@ -149,6 +150,8 @@ size_t AuVDiskWrite(AuVDisk* disk, uint64_t lba, uint32_t count, uint64_t* buffe
 void AuVDiskRegisterPartition(AuVDisk* vdisk) {
 	uint64_t* buffer = (uint64_t*)AuPmmngrAlloc();
 	memset(buffer, 0, 4096);
+	if (!vdisk->Read)
+		return;
 	vdisk->Read(vdisk, 1, 1, buffer);
 	uint8_t* aligned_buf = (uint8_t*)buffer;
 
@@ -160,7 +163,7 @@ void AuVDiskRegisterPartition(AuVDisk* vdisk) {
 		return;
 	}
 	for (int i = 0; i < 8; i++)
-		SeTextOut("%c", aligned_buf[i]);
+		UARTDebugOut("%c", aligned_buf[i]);
 
 	uint64_t part_lba = header->part_table_lba;
 	vdisk->num_partition = header->num_part_entries;
