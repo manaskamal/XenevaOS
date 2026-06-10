@@ -160,6 +160,6 @@ void AuInitrdInitialize(KERNEL_BOOT_INFO* info) {
 
 	AuTextOut("[aurora]: ramdisk mounted at %s full path : %s \r\n", diskpath, disk->diskPath);
 	/* Mount FAT as root file system temporarily */
-	FatInitialise(disk, "/");
+	//FatInitialise(disk, "/");
 	AuTextOut("[aurora]: ramdisk initialized successfully \r\n");
 }

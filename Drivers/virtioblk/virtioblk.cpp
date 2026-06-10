@@ -57,13 +57,55 @@
 #define VIRTQ_DESC_F_NEXT  1
 #define VIRTQ_DESC_F_WRITE 2
 
+#define VIRTIO_STATUS_ACK 0x01
+#define VIRTIO_STATUS_DRIVER 0x02
+#define VIRTIO_STATUS_DRIVER_OK 0x04
+#define VIRTIO_STATUS_FEATURES_OK 0x08
+#define VIRTIO_STATUS_DEVICE_NEEDS_RESET 0x40
+#define VIRTIO_STATUS_FAILED 0x80
+
+#define VIRTIO_DEFAULT_SECT_COUNT 1
+
+
+struct VirtioBLKBuffer {
+	uint64_t Addr;
+	uint32_t Length;
+	uint16_t Flags;
+	uint16_t Next;
+};
+
+struct VirtioBLKAvail {
+	uint16_t flags;
+	volatile uint16_t index;
+	uint16_t ring[256];
+	uint16_t int_index;
+};
+
+struct VirtioBLKRing {
+	uint32_t index;
+	uint32_t length;
+};
+
+struct VirtioBLKUsed {
+	uint16_t flags;
+	volatile uint16_t index;
+	struct VirtioBLKRing ring[256];
+	uint16_t int_index;
+};
+
+struct VirtioBLKQueue {
+	struct VirtioBLKBuffer buffers[256];
+	struct VirtioBLKAvail available;
+	struct VirtioBLKUsed used;
+};
+
 
 /** static internal usable variables */
 static volatile uint8_t* notifyBase;
 static uint32_t notifyOffMultiplier;
 static VirtioCommonCfg* _cfg;
 static uint64_t devcfg_offset;
-static VirtioQueue* requestQ;
+static VirtioBLKQueue* requestQ;
 static uint64_t requestQ_sz;
 static AuDMAGlobalClass _blkclass;
 static uint64_t _dma_write_buffer;
@@ -73,6 +115,8 @@ static void* _dma_read_vptr;
 static void* _req_buffer_vptr;
 static uint64_t _req_buffer_ptr;
 static uint64_t last_req_idx;
+
+
 /*
 * AuDriverUnload -- deattach the driver from
 * aurora system
@@ -161,7 +205,7 @@ void virtioblk_notify_queu(VirtioCommonCfg* cfg, uint16_t queueIdx) {
 
 
 void virtioblk_interrupt_handler(int spiID) {
-
+	UARTDebugOut("[virtioblk] interrupt++ \r\n");
 }
 
 
@@ -176,12 +220,13 @@ void virtioblk_alloc_requestQ(VirtioCommonCfg* cfg) {
 
 	int queueSz = cfg->QueueSize;
 	requestQ_sz = queueSz;
-	uint64_t queuePhys = (uint64_t)AuPmmngrAlloc();//AuPmmngrAllocBlocks(((sizeof(struct VirtioQueue) * queueSz)) / 0x1000);
-	requestQ = (struct VirtioQueue*)AuMapMMIO(queuePhys, 1);
+	UARTDebugOut("[virtio-blk]: requestQ_sz : %d  - sizeof(VirtioQueue) -> %d \r\n", requestQ_sz, sizeof(VirtioQueue));
+	uint64_t queuePhys = (uint64_t)AuPmmngrAllocBlocks(2);//AuPmmngrAllocBlocks(((sizeof(struct VirtioQueue) * queueSz)) / 0x1000);
+	requestQ = (struct VirtioBLKQueue*)AuMapMMIO(queuePhys, 2);
 
 	cfg->QueueDesc = queuePhys;
-	cfg->QueueAvail = (queuePhys)+OFFSETOF(struct VirtioQueue, available);
-	cfg->QueueUsed = (queuePhys)+OFFSETOF(struct VirtioQueue, used);
+	cfg->QueueAvail = (queuePhys)+OFFSETOF(struct VirtioBLKQueue, available);
+	cfg->QueueUsed = (queuePhys)+OFFSETOF(struct VirtioBLKQueue, used);
 	cfg->MSix = 0;
 	cfg->QueueMSixVector = 0;
 	cfg->QueueEnable = 1;
@@ -198,25 +243,29 @@ void virtioblk_alloc_requestQ(VirtioCommonCfg* cfg) {
  * @brief virtioblk_read -- read data from disc
  */
 bool virtioblk_read(VirtioCommonCfg* cfg, size_t lba, uint64_t buffer, size_t numSector) {
+	memset(_req_buffer_vptr, 0, 512);
     virtio_blk_req_header_t* hdr = (virtio_blk_req_header_t*)_req_buffer_vptr;
 	uint8_t* status = (uint8_t*)((uint64_t)_req_buffer_vptr + 16);
 
 	uint16_t idx = requestQ->available.index % requestQ_sz;
+
 
 	hdr->type = VIRTIO_BLK_OP_IN;
 	hdr->reserved = 0;
 	hdr->sector = lba;
 	*status = 0xFF;
 
+	
 	requestQ->buffers[(idx + 0) % requestQ_sz].Addr = _req_buffer_ptr;
 	requestQ->buffers[(idx + 0) % requestQ_sz].Length = sizeof(virtio_blk_req_header_t);
 	requestQ->buffers[(idx + 0) % requestQ_sz].Flags = VIRTQ_DESC_F_NEXT;
-	requestQ->buffers[(idx + 0) % requestQ_sz].Next = 1;
-
+	requestQ->buffers[(idx + 0) % requestQ_sz].Next =  (idx + 1) % requestQ_sz;
+	
 	requestQ->buffers[(idx + 1) % requestQ_sz].Addr = buffer;
 	requestQ->buffers[(idx + 1) % requestQ_sz].Length = numSector * 512;
 	requestQ->buffers[(idx + 1) % requestQ_sz].Flags = VIRTQ_DESC_F_NEXT | VIRTQ_DESC_F_WRITE;
-	requestQ->buffers[(idx + 1) % requestQ_sz].Next = 2;
+	requestQ->buffers[(idx + 1) % requestQ_sz].Next = (idx + 2) % requestQ_sz;
+
 
 	requestQ->buffers[(idx + 2) % requestQ_sz].Addr = (_req_buffer_ptr + 16);
 	requestQ->buffers[(idx + 2) % requestQ_sz].Length = 1;
@@ -232,18 +281,20 @@ bool virtioblk_read(VirtioCommonCfg* cfg, size_t lba, uint64_t buffer, size_t nu
 	//txq->available.index %= txq_sz;
 	isb_flush();
 	dsb_ish();
+	
 
 	virtioblk_notify_queu(cfg, 0);
 
 	while (requestQ->used.index == last_req_idx)
 		dsb_ish();
 
+	last_req_idx = requestQ->used.index;
 
-	while (requestQ->used.index != last_req_idx) {
-		uint16_t idx = last_req_idx & (requestQ_sz - 1);
-		uint32_t desc_id = requestQ->used.ring[idx].index;
-		last_req_idx++;
-	}
+	//while (requestQ->used.index != last_req_idx) {
+	//	uint16_t idx = last_req_idx & (requestQ_sz - 1);
+	//	uint32_t desc_id = requestQ->used.ring[idx].index;
+	//	last_req_idx++;
+	//}
 
 	return (*status == VIRTIO_BLK_S_OK);
 }
@@ -253,10 +304,12 @@ bool virtioblk_read(VirtioCommonCfg* cfg, size_t lba, uint64_t buffer, size_t nu
  * @brief virtioblk_write -- write data to disc
  */
 bool virtioblk_write(VirtioCommonCfg* cfg, size_t lba, uint64_t buffer, size_t numSector) {
+	memset(_req_buffer_vptr, 0, 512);
 	virtio_blk_req_header_t* hdr = (virtio_blk_req_header_t*)_req_buffer_vptr;
 	uint8_t* status = (uint8_t*)((uint64_t)_req_buffer_vptr + 16);
 
 	uint16_t idx = requestQ->available.index % requestQ_sz;
+
 
 	hdr->type = VIRTIO_BLK_OP_OUT;
 	hdr->reserved = 0;
@@ -266,12 +319,14 @@ bool virtioblk_write(VirtioCommonCfg* cfg, size_t lba, uint64_t buffer, size_t n
 	requestQ->buffers[(idx + 0) % requestQ_sz].Addr = _req_buffer_ptr;
 	requestQ->buffers[(idx + 0) % requestQ_sz].Length = sizeof(virtio_blk_req_header_t);
 	requestQ->buffers[(idx + 0) % requestQ_sz].Flags = VIRTQ_DESC_F_NEXT;
-	requestQ->buffers[(idx + 0) % requestQ_sz].Next = 1;
+	requestQ->buffers[(idx + 0) % requestQ_sz].Next = (idx + 1) % requestQ_sz;
+
 
 	requestQ->buffers[(idx + 1) % requestQ_sz].Addr = buffer;
 	requestQ->buffers[(idx + 1) % requestQ_sz].Length = numSector * 512;
 	requestQ->buffers[(idx + 1) % requestQ_sz].Flags = VIRTQ_DESC_F_NEXT;
-	requestQ->buffers[(idx + 1) % requestQ_sz].Next = 2;
+	requestQ->buffers[(idx + 1) % requestQ_sz].Next = (idx + 2) % requestQ_sz;
+
 
 	requestQ->buffers[(idx + 2) % requestQ_sz].Addr = (_req_buffer_ptr + 16);
 	requestQ->buffers[(idx + 2) % requestQ_sz].Length = 1;
@@ -284,21 +339,16 @@ bool virtioblk_write(VirtioCommonCfg* cfg, size_t lba, uint64_t buffer, size_t n
 	dsb_ish();
 
 	requestQ->available.index++;
-	//txq->available.index %= txq_sz;
 	isb_flush();
 	dsb_ish();
+
 
 	virtioblk_notify_queu(cfg, 0);
 
 	while (requestQ->used.index == last_req_idx)
 		dsb_ish();
 
-
-	while (requestQ->used.index != last_req_idx) {
-		uint16_t idx = last_req_idx & (requestQ_sz - 1);
-		uint32_t desc_id = requestQ->used.ring[idx].index;
-		last_req_idx++;
-	}
+	last_req_idx = requestQ->used.index;
 
 	return (*status == VIRTIO_BLK_S_OK);
 }
@@ -308,13 +358,12 @@ int virtblk_read_vdisk(AuVDisk* disk, uint64_t lba, uint32_t count, uint64_t* bu
 		return 0;
 	if (!buffer)
 		return 0;
-
-	for (int i = 0; i < count; i++) {
-		virtioblk_read(_cfg, lba, _dma_read_buffer, 1);
-		memcpy(buffer, _dma_read_vptr, 512);
-		memset(_dma_read_vptr, 0, 512);
-		buffer += 512;
-	}
+	uint8_t* aligned_buff = (uint8_t*)buffer;
+	/*for (int i = 0; i < count; i++) {*/
+		virtioblk_read(_cfg, lba ,V2P((uint64_t)buffer), count);
+	/*	memcpy(aligned_buff, _dma_read_vptr, 512);
+		aligned_buff += 512;
+	}*/
 	return 512 * count;
 }
 
@@ -324,14 +373,13 @@ int virtblk_write_vdisk(AuVDisk* disk, uint64_t lba, uint32_t count, uint64_t* b
 		return 0;
 	if (!buffer)
 		return 0;
-
-	for (int i = 0; i < count; i++) {
-		memcpy(_dma_write_vptr,buffer, 512);
-		virtioblk_write(_cfg, lba, _dma_write_buffer, 1);
-		memset(_dma_write_vptr, 0, 512);
-		buffer += 512;
-	}
-
+	
+	uint8_t* aligned_buff = (uint8_t*)buffer;
+	/*for (int i = 0; i < count; i++) {
+		memcpy(_dma_write_vptr, aligned_buff, 512);*/
+	virtioblk_write(_cfg, lba, V2P((uint64_t)buffer), count);
+	//	aligned_buff += 512;
+	//}
 	return 512 * count;
 }
 
@@ -386,10 +434,10 @@ AU_EXTERN AU_EXPORT int AuDriverMain(AuDriver * drv) {
 		devcfg_offset = 0x2000;
 
 	AuDMAGlobalClassInitialize(&_blkclass, "virtblk");
-	_dma_read_vptr = AuDMAGClassAlloc(&_blkclass, 512, &_dma_read_buffer);
-	_dma_write_vptr = AuDMAGClassAlloc(&_blkclass, 512, &_dma_write_buffer);
+	
 	_req_buffer_vptr = AuDMAGClassAlloc(&_blkclass, 512, &_req_buffer_ptr);
-
+	_dma_write_vptr = AuDMAGClassAlloc(&_blkclass, 512, &_dma_write_buffer);
+	_dma_read_vptr = AuDMAGClassAlloc(&_blkclass, 512, &_dma_read_buffer);
 	UARTDebugOut("[virtio-blk]: number of queues : %d \r\n", cfg->Queues);
 
 	virtioblk_dev_config* blkconfig = (virtioblk_dev_config*)(bar + devcfg_offset);
@@ -409,8 +457,25 @@ AU_EXTERN AU_EXPORT int AuDriverMain(AuDriver * drv) {
 	/** reset the virtio block device **/
 	virtioblk_reset(cfg);
 
+	/* acknowledge */
+	cfg->DeviceStatus |= 0x01;
+	isb_flush();
+	dsb_ish();
+
+	/* driver status */
+	cfg->DeviceStatus |= 0x02;
+	isb_flush();
+	dsb_ish();
+
 	/* feature negotiate */
 	virtioblk_feature_negotiate(cfg);
+
+	cfg->DeviceStatus |= VIRTIO_STATUS_ACK
+		| VIRTIO_STATUS_DRIVER |
+		VIRTIO_STATUS_FEATURES_OK | VIRTIO_STATUS_DRIVER_OK;
+	isb_flush();
+	dsb_ish();
+
 
 	int spiID = AuGICAllocateSPI();
 	UARTDebugOut("[virtio-blk]: spi id: %d \n", spiID);
@@ -426,6 +491,14 @@ AU_EXTERN AU_EXPORT int AuDriverMain(AuDriver * drv) {
 
 	virtioblk_alloc_requestQ(cfg);
 
+	/** whenever new storage device detected, three kernel objects
+	 * are needed to create :
+	 *  (1) --- VDisk info for read write access
+	 *  (2) --- Device file at /dev for ioctl and raw read write 
+	 *          without partition overhead, write it to anywhere
+	 *  (3) --- File System node after registering partitions
+	 */
+
 	AuVDisk* disk = AuCreateVDisk();
 	strcpy(disk->diskname, "virtio-blk");
 	disk->data = 0;
@@ -440,15 +513,13 @@ AU_EXTERN AU_EXPORT int AuDriverMain(AuDriver * drv) {
 	int offset = strlen(filename);
 	sztoa(diskID, filename + offset, 10);
 
-	strcpy(disk->diskPath, "/disc");
-	offset = strlen(disk->diskPath);
-	strcpy(disk->diskPath + offset, "/");
-	offset = strlen(disk->diskPath);
-	strcpy(disk->diskPath + offset, filename);
+	AuVDiskCreateStorageFile(disk->diskPath);
+	//** now open the disk file and add read write ioctl to it
 
 	AuVDiskRegister(disk);
 	
 	AuTextOut("[virtio-blk]: initialized with max %d MB and %d GB \r\n", size_mb, size_gb);
+	AuTextOut("[virtio-blk]: diskpath : %s \r\n", disk->diskPath);
 
 	return 0;
 }

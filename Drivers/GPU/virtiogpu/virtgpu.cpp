@@ -277,7 +277,7 @@ void gpu_execute_command(VirtioCommonCfg* cfg, void* cmd, size_t len) {
 	controlq->buffers[(index + 1) % controlq_sz].Flags = VIRTQ_DESC_F_WRITE;
 
 	uint16_t ringSlot = controlq->available.index % controlq_sz;
-	controlq->available.ring[index % controlq_sz] = index;
+	controlq->available.ring[ringSlot] = index;
 	isb_flush();
 	dsb_ish();
 

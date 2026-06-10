@@ -267,6 +267,7 @@
     <ClCompile Include="Fs\Fat\Fat.c" />
     <ClCompile Include="Fs\Fat\FatDir.c" />
     <ClCompile Include="Fs\Fat\FatFile.c" />
+    <ClCompile Include="Fs\fsprobe.c" />
     <ClCompile Include="Fs\initrd.c" />
     <ClCompile Include="Fs\pipe.c" />
     <ClCompile Include="Fs\tty.c" />
@@ -354,6 +355,7 @@
     <ClInclude Include="..\BaseHdr\Drivers\uart.h" />
     <ClInclude Include="..\BaseHdr\Drivers\virtio.h" />
     <ClInclude Include="..\BaseHdr\dtb.h" />
+    <ClInclude Include="..\BaseHdr\Fs\fsprobe.h" />
     <ClInclude Include="..\BaseHdr\Fs\initrd.h" />
     <ClInclude Include="..\BaseHdr\Hal\AA64\aa64cpu.h" />
     <ClInclude Include="..\BaseHdr\Hal\AA64\aa64lowlevel.h" />

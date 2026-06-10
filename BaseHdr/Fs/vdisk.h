@@ -137,6 +137,9 @@ typedef struct _vdisk_partition_info_ {
 #pragma pack(pop)
 #endif
 
+
+
+
 /**
  * @brief AuVDiskInitialise -- initialise the vdisk
  */

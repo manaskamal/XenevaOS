@@ -39,9 +39,12 @@
 #include <stdio.h>
 #include <Fs/Dev/devfs.h>
 #include <Drivers/uart.h>
+#include <Fs/fsprobe.h>
+#include <Fs/Fat/Fat.h>
 
 AuVDisk* VdiskArray[MAX_VDISK_DEVICES];
 int _vdisk_num_;
+
 
 /**
  * @brief AuVDiskInitialise -- initialise the vdisk
@@ -228,6 +231,31 @@ void AuVDiskRegister(AuVDisk* disk) {
 	disk->__VDiskID = _index;
 	/* Register a partition and initialise the file system*/
 	AuVDiskRegisterPartition(disk);
+
+	aurora_fs_type type = AuProbeFileSystem(disk);
+	AuTextOut("type : %d \r\n", type);
+
+	switch (type) {
+	case AURORA_FS_NTFS:
+		AuTextOut("[aurora]: vdisk : %s, has NTFS file system \r\n", disk->diskname);
+		break;
+	case AURORA_FS_FAT32:
+		AuTextOut("[aurora]: vdisk : %s, has FAT32 file system \r\n", disk->diskname);
+		char* mpt = AuVFSReserveMountPointLetter();
+		
+		/** make letter /a reserved for root '/' **/
+		if (strcmp(mpt, "/a") == 0)
+			FatInitialise(disk, "/");
+		else
+			FatInitialise(disk, mpt);
+		break;
+	case AURORA_FS_FAT16:
+		AuTextOut("[aurora]: vdisk : %s has FAT16 file system \r\n", disk->diskname);
+		break;
+	case AURORA_FS_EXT2:
+		AuTextOut("[aurora]: vdisk : %s has Ext2 file system \r\n", disk->diskname);
+		break;
+	}
 }
 
 /**

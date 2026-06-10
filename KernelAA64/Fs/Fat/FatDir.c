@@ -58,10 +58,12 @@ AuVFSNode* FatCreateDir(AuVFSNode* fsys, char* filename) {
 
 	AuVFSNode* parent = FatFileGetParent(fsys, filename);
 	if (!parent)
-		return NULL;
+		parent_clust = _fs->__RootDirFirstCluster;
+	else {
+		parent_clust = parent->current;
+	}
 
-	parent_clust = parent->current;
-
+	
 	if (!parent_clust)
 		parent_clust = _fs->__RootDirFirstCluster;
 
@@ -88,10 +90,12 @@ AuVFSNode* FatCreateDir(AuVFSNode* fsys, char* filename) {
 			extract[i] = p[i];
 		}
 		p = strchr(p + 1, '/');
-		if (p)
+		if (p) {
 			p++;
+			memset(extract, 0, 16);
+		}
 	}
-
+	
 	char fname[11];
 	memset(fname, 0, 11);
 	FatToDOSFilename(extract, fname, 11);
@@ -107,13 +111,14 @@ AuVFSNode* FatCreateDir(AuVFSNode* fsys, char* filename) {
 				if (dirent->filename[0] == 0x00 || dirent->filename[0] == 0xE5) {
 
 					/* fill this direntry*/
-					memcpy(dirent->filename, fname, 11);
+					memset(dirent->filename, 0x20, 11);
+					memcpy(dirent->filename, fname, strlen(fname));
 
 					/* allocate a new cluster for dir*/
 					uint32_t cluster = FatFindFreeCluster(fsys);
 					FatAllocCluster(fsys, cluster, FAT_EOC_MARK);
 					FatClearCluster(fsys, cluster);
-
+					
 					dirent->attrib = FAT_ATTRIBUTE_DIRECTORY;
 					dirent->first_cluster = cluster & 0x0000FFFF;
 					dirent->first_cluster_hi_bytes = (cluster & 0x0FFF0000) >> 16;
@@ -124,13 +129,13 @@ AuVFSNode* FatCreateDir(AuVFSNode* fsys, char* filename) {
 					dirent->date_last_accessed = 0;
 					dirent->file_size = 0;
 
-					uint64_t* entrybuf = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
+					uint8_t* entrybuf = (uint8_t*)P2V((size_t)AuPmmngrAlloc());
 					memset(entrybuf, 0, PAGE_SIZE);
 
 					FatDir* dot_entry = (FatDir*)entrybuf;
 					memset(dot_entry, 0, sizeof(FatDir));
+					memset(dot_entry->filename, 0x20, 11);
 					dot_entry->filename[0] = '.';
-					memset(dot_entry->filename + 1, 0x20, 10);
 					dot_entry->attrib = FAT_ATTRIBUTE_DIRECTORY;
 					dot_entry->date_created = dirent->date_created;
 					dot_entry->time_created = dirent->time_created;
@@ -140,8 +145,9 @@ AuVFSNode* FatCreateDir(AuVFSNode* fsys, char* filename) {
 					dot_entry->last_wrt_date = dirent->last_wrt_date;
 					dot_entry->last_wrt_time = dirent->last_wrt_time;
 
-					FatDir* dotdot = (FatDir*)((uint8_t*)entrybuf + sizeof(FatDir));
+					FatDir* dotdot = (FatDir*)(entrybuf + sizeof(FatDir));
 					memset(dotdot, 0, sizeof(FatDir));
+					memset(dotdot->filename, 0x20, 11);
 					dotdot->filename[0] = '.';
 					dotdot->filename[1] = '.';
 					dotdot->attrib = FAT_ATTRIBUTE_DIRECTORY;
@@ -156,13 +162,18 @@ AuVFSNode* FatCreateDir(AuVFSNode* fsys, char* filename) {
 					}
 					else {
 						dotdot->first_cluster = parent_clust & 0x0000FFFF;
-						dotdot->first_cluster_hi_bytes = (0 & 0x0FFF0000) >> 16;
+						dotdot->first_cluster_hi_bytes = (parent_clust & 0x0FFF0000) >> 16;
 					}
 
 					dotdot->last_wrt_date = dirent->last_wrt_date;
 					dotdot->last_wrt_time = dirent->last_wrt_time;
 
-					AuVDiskWrite(_fs->vdisk, FatClusterToSector32(_fs, cluster), _fs->__SectorPerCluster, entrybuf);
+					aa64_data_cache_clean_range(entrybuf, PAGE_SIZE);
+
+
+					AuVDiskWrite(_fs->vdisk, FatClusterToSector32(_fs, cluster), 1, entrybuf);
+
+					aa64_data_cache_clean_range(buff, PAGE_SIZE);
 					AuVDiskWrite(_fs->vdisk, FatClusterToSector32(_fs, parent_clust) + j, 1, buff);
 
 					AuPmmngrFree((void*)V2P((size_t)entrybuf));
@@ -267,12 +278,10 @@ AuVFSNode* FatOpenDir(AuVFSNode* fs, char* path) {
 		return ret;
 	ret = FatOpen(fs, path);
 	if (ret) {
-		UARTDebugOut("[aurora]: fat return directory filename ->%s \r\n", ret->filename);
 		if (ret->flags & FS_FLAG_DIRECTORY)
 			UARTDebugOut("FS Flag dir \r\n");
 	}
 	if (ret && !(ret->flags & FS_FLAG_DIRECTORY)) {
-		UARTDebugOut("freeing ret \r\n");
 		kfree(ret);
 		return NULL;
 	}

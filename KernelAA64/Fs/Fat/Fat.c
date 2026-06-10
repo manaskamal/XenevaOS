@@ -249,16 +249,11 @@ void FatAllocCluster(AuVFSNode* fsys, int position, uint32_t n_value) {
 	memset(buffer, 0, PAGE_SIZE);
 	AuVDiskRead(vdisk, fat_sector, 1, buffer);
 	uint8_t* buf = (uint8_t*)buffer;
-	uint32_t value2 = *(uint32_t*)&buf[ent_offset];
-	/*SeTextOut("FatAllocCluster ->fat_offset -> %d fatsect -> %d \r\n", fat_offset,
-		fat_sector);
-	SeTextOut("EntOffset -> %d , value -> %x \r\n", ent_offset, value2);
-	for (;;);*/
-
+	
 
 	uint32_t value = *(uint32_t*)&buf[ent_offset];
-	*(uint32_t*)&buf[ent_offset] = n_value & 0x0FFFFFFF;
 
+	*(uint32_t*)&buf[ent_offset] = n_value & 0x0FFFFFFF;
 
 	AuVDiskWrite(vdisk, fat_sector, 1, buffer);
 	AuPmmngrFree((void*)V2P((size_t)buffer));
@@ -275,10 +270,12 @@ void FatClearCluster(AuVFSNode* node, uint32_t cluster) {
 	if (!vdisk)
 		return;
 
+	uint32_t val = FatReadFAT(node, cluster);
+
 	uint64_t* buffer = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
 	memset(buffer, 0, PAGE_SIZE);
 	//update_cluster (buffer,cluster);
-	uint32_t sector = FatClusterToSector32(fs, cluster);
+	uint64_t sector = FatClusterToSector32(fs, cluster);
 	AuVDiskWrite(vdisk, sector, fs->__SectorPerCluster, buffer);
 	AuPmmngrFree((void*)V2P((size_t)buffer));
 }
@@ -375,7 +372,6 @@ AuVFSNode* FatLocateSubDir(AuVFSNode* fsys, AuVFSNode* kfile, const char* filena
 	memset(dos_file_name, 0, 11);
 	FatToDOSFilename(filename, dos_file_name, 11);
 	dos_file_name[11] = 0;
-
 	uint64_t* buf = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
 	if (kfile->flags != FS_FLAG_INVALID) {
 		while (1) {
@@ -442,7 +438,7 @@ AuVFSNode* FatLocateDir(AuVFSNode* fsys, const char* dir) {
 	uint64_t* buf;
 	FatDir* dirent;
 
-	char dos_file_name[12];
+	char dos_file_name[11];
 
 	FatToDOSFilename(dir, dos_file_name, 11);
 	dos_file_name[11] = '\0';
@@ -459,10 +455,10 @@ AuVFSNode* FatLocateDir(AuVFSNode* fsys, const char* dir) {
 		dirent = (FatDir*)buf;
 
 		for (int i = 0; i < 16; i++) {
-			if (strncmp(dos_file_name, dirent->filename, 11) == 0) {
+		
+			if (strncmp(dos_file_name, dirent->filename,11) == 0) {
 				strcpy(file->filename, dir);
 				file->current = dirent->first_cluster;
-				UARTDebugOut("opening file : %s, current : %x \r\n", file->filename, file->current);
 				file->size = dirent->file_size;
 				file->eof = 0;
 				file->status = FS_STATUS_FOUND;
@@ -606,7 +602,7 @@ uint32_t FatGetDiskBlock(AuVFSNode* fs, AuVFSNode* file, uint64_t fs_block) {
 * @param mountname -- mount file system name
 */
 AuVFSNode* FatInitialise(AuVDisk* vdisk, char* mountname) {
-	uint64_t* buffer = (uint64_t*)AuPmmngrAlloc();
+	uint64_t* buffer = (uint64_t*)P2V((uint64_t)AuPmmngrAlloc());
 	memset(buffer, 0, 4096);
 	AuVDiskRead(vdisk, 0, 1, buffer);
 
@@ -704,7 +700,7 @@ AuVFSNode* FatInitialise(AuVDisk* vdisk, char* mountname) {
 	AuVFSAddFileSystem(fsys);
 	AuVFSRegisterRoot(fsys);
 
-	AuPmmngrFree(buffer);
+	AuPmmngrFree((void*)V2P((uint64_t)buffer));
 
 	return fsys;
 }

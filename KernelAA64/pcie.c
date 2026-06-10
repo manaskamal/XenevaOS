@@ -279,7 +279,6 @@ uint32_t AuPCIERead(uint64_t device, int reg, int bus, int dev, int func) {
 uint64_t AuPCIERead64(uint64_t device, int reg, int size, int bus, int dev, int func) {
 
 	uint64_t result = 0;
-	UARTDebugOut("Device address : %x \r\n", (device + reg));
 	if (size == 1) {
 		result = *RAW_OFFSET(volatile uint8_t*,device, reg);
 		return result;

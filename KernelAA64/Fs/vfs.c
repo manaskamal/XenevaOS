@@ -45,6 +45,7 @@
 
 AuVFSContainer* __RootContainer;
 AuVFSNode* __RootFS;
+static char _mount_letters[26];
 
 void AuVFSInitialise() {
 	AuVFSContainer* _root = (AuVFSContainer*)kmalloc(sizeof(AuVFSContainer));
@@ -54,7 +55,29 @@ void AuVFSInitialise() {
 	AuDeviceFsInitialize();
 	AuVDiskInitialise();
 	AuPipeFSInitialise();
+
+	for (int i = 0; i < 26; i++)
+		_mount_letters[i] = 0;
 }
+
+
+/**
+ * @brief AuVFSReserveMountPointLetter -- reserve a letter to
+ * mount a file system
+ */
+char* AuVFSReserveMountPointLetter() {
+	static char path[2];
+	for (int i = 0; i < 26; i++) {
+		if (_mount_letters[i] == 1)
+			continue;
+		_mount_letters[i] = 1;
+		path[0] = 'a' + i;
+		path[1] = '\0';
+		return path;
+	}
+	return NULL;
+}
+
 
 /**
  * @brief AuVFSFind -- Searches a filesystem an return it to
@@ -175,6 +198,7 @@ AU_EXTERN AU_EXPORT AuVFSNode* AuVFSOpen(char* path) {
 		char* next = strchr(path, '/');
 		if (next)
 			next++;
+
 
 		char pathname[16] ;
 		//UARTDebugOut("[aurora]: vfs pathname : %s \r\n", path);

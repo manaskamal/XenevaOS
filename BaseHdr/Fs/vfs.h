@@ -173,6 +173,12 @@ typedef struct __VFS_Container__ {
 extern void AuVFSInitialise();
 
 /**
+ * @brief AuVFSReserveMountPointLetter -- reserve a letter to
+ * mount a file system
+ */
+extern char* AuVFSReserveMountPointLetter();
+
+/**
 * @brief AuVFSOpen -- Opens a file
 * @param path -- path to open
 */

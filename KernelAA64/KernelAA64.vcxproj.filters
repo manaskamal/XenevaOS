@@ -204,6 +204,9 @@
       <Filter>Mm</Filter>
     </ClCompile>
     <ClCompile Include="timer.c" />
+    <ClCompile Include="Fs\fsprobe.c">
+      <Filter>Fs</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Hal">
@@ -423,6 +426,9 @@
     </ClInclude>
     <ClInclude Include="..\BaseHdr\timer.h">
       <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\Fs\fsprobe.h">
+      <Filter>Include\Fs</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

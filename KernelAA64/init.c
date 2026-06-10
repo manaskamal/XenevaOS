@@ -65,6 +65,10 @@
 #include <Sound/sound.h>
 #include <proctoken.h>
 #include <timer.h>
+#include <Fs/vdisk.h>
+#include <Fs/Fat/Fat.h>
+#include <Fs/Fat/FatFile.h>
+#include <Fs/Fat/FatDir.h>
 
 extern int _fltused = 1;
 static bool _littleboot_used;
@@ -174,6 +178,25 @@ void _AuroraTimerCallback(void* p) {
 }
 
 
+char* _dir_names[15] = {
+	"/c/heya1",
+	"/c/heya2",
+	"/c/heya3",
+	"/c/heya4",
+	"/c/heya5",
+	"/c/heya6",
+	"/c/heya7",
+	"/c/heya8",
+	"/c/heya10",
+	"/c/heya11",
+	"/c/heya12",
+	"/c/heya13",
+	"/c/heya14",
+	"/c/heya15",
+	"/c/heya16",
+};
+
+
 /**
  * @brief _AuMain -- the main entry point for kernel
  * @param info -- Kernel Boot information passed
@@ -262,6 +285,7 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 
 	/* initialize the deodhai's communication protocol */
 	AuIPCPostBoxInitialise();
+
 	
 #ifdef __TARGET_BOARD_IMX8MP_VERDIN_DAHLIA__
 	AuTextOut("[aurora]: Board model : Toradex imx8M Plus Verdin Dahlia (Xeneva Build %s - %s)\r\n", __DATE__, __TIME__);
@@ -273,7 +297,6 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	UARTDebugOut("[aurora]: starting xeneva (ARM64) please wait...\r\n");
 
 	
-
 	/* clear out the lower half memory */
 	AuVmmngrBootFree();
 	AuMmngrFileCacheEnable();
