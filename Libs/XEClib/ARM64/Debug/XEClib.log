@@ -1,1 +1,159 @@
-﻿
+﻿  Performing Custom Build Tools
+clang : warning : argument unused during compilation: '-fms-compatibility' [-Wunused-command-line-argument]
+clang : warning : argument unused during compilation: '-fms-extensions' [-Wunused-command-line-argument]
+  Performing Custom Build Tools
+  Performing Custom Build Tools
+C:\Program Files\Microsoft Visual Studio\18\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(1091,5): warning MSB8027: Two or more files with the name of _xeprint.cpp will produce outputs to the same location. This can lead to an incorrect build result.  The files involved are sys\_xeprint.cpp, _xeprint.cpp.
+cl : command line warning D9002: ignoring unknown option '/arch:SSE2'
+cl : command line warning D9002: ignoring unknown option '/arch:SSE2'
+  acosf.cpp
+cl : command line warning D9002: ignoring unknown option '/arch:SSE2'
+  inet.cpp
+cl : command line warning D9002: ignoring unknown option '/arch:SSE2'
+  atan2f.cpp
+cl : command line warning D9002: ignoring unknown option '/arch:SSE2'
+  atanf.cpp
+cl : command line warning D9002: ignoring unknown option '/arch:SSE2'
+  ios.cpp
+cl : command line warning D9002: ignoring unknown option '/arch:SSE2'
+  iostream.cpp
+cl : command line warning D9002: ignoring unknown option '/arch:SSE2'
+  istream.cpp
+cl : command line warning D9002: ignoring unknown option '/arch:SSE2'
+  memory.cpp
+cl : command line warning D9002: ignoring unknown option '/arch:SSE2'
+  new.cpp
+cl : command line warning D9002: ignoring unknown option '/arch:SSE2'
+  ostream.cpp
+cl : command line warning D9002: ignoring unknown option '/arch:SSE2'
+  _string.cpp
+cl : command line warning D9002: ignoring unknown option '/arch:SSE2'
+  ceilf.cpp
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\acosf.cpp(35,27): warning C4305: 'initializing': truncation from 'double' to 'float'
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\acosf.cpp(36,27): warning C4305: 'initializing': truncation from 'double' to 'float'
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\acosf.cpp(37,23): warning C4305: 'initializing': truncation from 'double' to 'float'
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\acosf.cpp(38,24): warning C4305: 'initializing': truncation from 'double' to 'float'
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\acosf.cpp(39,24): warning C4305: 'initializing': truncation from 'double' to 'float'
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\acosf.cpp(40,24): warning C4305: 'initializing': truncation from 'double' to 'float'
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\atan2f.cpp(33,22): warning C4305: 'initializing': truncation from 'double' to 'float'
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\atan2f.cpp(34,26): warning C4305: 'initializing': truncation from 'double' to 'float'
+  ctype.cpp
+  errno.cpp
+  fmodf.cpp
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\atanf.cpp(8,1): warning C4305: 'initializing': truncation from 'double' to 'const float'
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\atanf.cpp(15,1): warning C4305: 'initializing': truncation from 'double' to 'const float'
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\atanf.cpp(23,1): warning C4305: 'initializing': truncation from 'double' to 'const float'
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\includes\c++\istream(71): warning C4661: 'std::basic_ios<char,std::char_traits<char>>::basic_ios(std::basic_streambuf<char,std::char_traits<char>> *)': no suitable definition provided for explicit template instantiation request (compiling source file c++\ios.cpp)
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\includes\c++\istream(67): message : see declaration of 'std::basic_ios<char,std::char_traits<char>>::basic_ios' (compiling source file c++\ios.cpp)
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\c++\ios.cpp(70): warning C4661: 'std::basic_ios<char,std::char_traits<char>>::basic_ios(std::basic_streambuf<char,std::char_traits<char>> *)': no suitable definition provided for explicit template instantiation request
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\includes\c++\istream(67): message : see declaration of 'std::basic_ios<char,std::char_traits<char>>::basic_ios'
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\c++\new.cpp(37,21): warning C4267: 'argument': conversion from 'size_t' to 'unsigned int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\c++\new.cpp(41,21): warning C4267: 'argument': conversion from 'size_t' to 'unsigned int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\ctype.cpp(50,56): warning C4554: '&': check operator precedence for possible error; use parentheses to clarify precedence
+  math.cpp
+  qsort.cpp
+  roundf.cpp
+  stat.cpp
+  stdio.cpp
+  stdlib.cpp
+  string.cpp
+  xenet.cpp
+  _heap.cpp
+  _procheap.cpp
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\qsort.cpp(49,41): warning C4267: 'argument': conversion from 'size_t' to 'unsigned int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\qsort.cpp(84,32): warning C4267: 'argument': conversion from 'size_t' to 'ssize_t', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\math.cpp(36,50): warning C4838: conversion from 'unsigned int' to 'int' requires a narrowing conversion
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\math.cpp(37,26): warning C4838: conversion from 'unsigned int' to 'int' requires a narrowing conversion
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\math.cpp(37,50): warning C4838: conversion from 'unsigned int' to 'int' requires a narrowing conversion
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\math.cpp(38,2): warning C4838: conversion from 'unsigned int' to 'int' requires a narrowing conversion
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\math.cpp(94,24): warning C4305: '-=': truncation from 'double' to 'float'
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\math.cpp(96,24): warning C4305: '+=': truncation from 'double' to 'float'
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\math.cpp(236,24): warning C4305: '-=': truncation from 'double' to 'float'
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\math.cpp(238,24): warning C4305: '+=': truncation from 'double' to 'float'
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\includes\sys\netdb.h(52,10): warning C4200: nonstandard extension used: zero-sized array in struct/union (compiling source file sys\xenet.cpp)
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\includes\sys\netdb.h(52,10): message : This member will be ignored by a defaulted constructor or copy/move assignment operator (compiling source file sys\xenet.cpp)
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\sys\xenet.cpp(177,14): warning C4244: '=': conversion from '__int64' to 'ssize_t', possible loss of data
+  _xeneva.cpp
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\stdlib.cpp(111,34): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\stdlib.cpp(147,44): warning C4267: 'argument': conversion from 'size_t' to 'unsigned int', possible loss of data
+  _xeprint.cpp
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\stdlib.cpp(336,17): warning C4146: unary minus operator applied to unsigned type, result still unsigned
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\stdlib.cpp(361,9): warning C4146: unary minus operator applied to unsigned type, result still unsigned
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\stdlib.cpp(427,9): warning C4146: unary minus operator applied to unsigned type, result still unsigned
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\string.cpp(177,22): warning C4311: 'type cast': pointer truncation from 'const char *' to 'uintptr_t'
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\string.cpp(177,22): warning C4302: 'type cast': truncation from 'const char *' to 'uintptr_t'
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\string.cpp(256,28): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\string.cpp(257,28): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\string.cpp(368,48): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\string.cpp(418,28): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\string.cpp(419,28): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\string.cpp(436,24): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\string.cpp(575,32): warning C4244: '=': conversion from '__int64' to 'long', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\sys\_heap.cpp(40,1): warning C4005: 'stderr': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\includes\stdio.h(57): message : see previous definition of 'stderr' (compiling source file sys\_heap.cpp)
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\sys\_heap.cpp(599,1): warning C4005: 'MORECORE_CONTIGUOUS': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\sys\_heap.cpp(43): message : see previous definition of 'MORECORE_CONTIGUOUS'
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\sys\_heap.cpp(600,1): warning C4005: 'HAVE_MMAP': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\sys\_heap.cpp(58): message : see previous definition of 'HAVE_MMAP'
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\sys\_heap.cpp(602,1): warning C4005: 'LACKS_UNISTD_H': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\sys\_heap.cpp(37): message : see previous definition of 'LACKS_UNISTD_H'
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\sys\_heap.cpp(605,1): warning C4005: 'LACKS_FCNTL_H': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\sys\_heap.cpp(38): message : see previous definition of 'LACKS_FCNTL_H'
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\sys\_heap.cpp(606,1): warning C4005: 'LACKS_TIME_H': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\sys\_heap.cpp(46): message : see previous definition of 'LACKS_TIME_H'
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\sys\_heap.cpp(620,1): warning C4005: 'errno': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\sys\_heap.cpp(618): message : see previous definition of 'errno'
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\sys\_heap.cpp(1836,1): warning C4005: 'CALL_MMAP': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\sys\_heap.cpp(50): message : see previous definition of 'CALL_MMAP'
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\sys\_heap.cpp(1837,1): warning C4005: 'CALL_MUNMAP': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\sys\_heap.cpp(51): message : see previous definition of 'CALL_MUNMAP'
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\stdio.cpp(78,24): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\stdio.cpp(147,18): warning C4838: conversion from 'int' to 'char' requires a narrowing conversion
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\stdio.cpp(295,41): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\stdio.cpp(338,39): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\stdio.cpp(358,73): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\stdio.cpp(388,52): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+  time.cpp
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\sys\_heap.cpp(4183,1): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\sys\_heap.cpp(4194,1): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\sys\_heap.cpp(4206,44): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+  _xeinput.cpp
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\sys\_heap.cpp(4210,35): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\sys\_heap.cpp(4241,26): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\sys\_heap.cpp(4413,52): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+  _xeprint.cpp
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\_xeinput.cpp(47,26): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\_xeinput.cpp(54,28): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\_xeinput.cpp(166,27): warning C4244: 'argument': conversion from 'unsigned __int64' to 'unsigned int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\_xeinput.cpp(181,27): warning C4244: 'argument': conversion from 'unsigned __int64' to 'unsigned int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\_xeinput.cpp(212,27): warning C4244: 'argument': conversion from 'unsigned __int64' to 'unsigned int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\_xeinput.cpp(233,27): warning C4244: 'argument': conversion from 'unsigned __int64' to 'unsigned int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\time.cpp(89,18): warning C4018: '<': signed/unsigned mismatch
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\time.cpp(108,31): warning C4267: '=': conversion from 'size_t' to 'clock_t', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\time.cpp(123,6): warning C4101: 'count': unreferenced local variable
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\stdio.cpp(331): warning C4715: 'vfprintf': not all control paths return a value
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\time.cpp(45): warning C4172: returning address of local variable or temporary: timeStr
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\time.cpp(99): warning C4172: returning address of local variable or temporary: timeStruc
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\_xeprint.cpp(84,25): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\_xeprint.cpp(205,31): warning C4244: '=': conversion from 'unsigned __int64' to 'char', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\_xeprint.cpp(207,31): warning C4244: '=': conversion from 'unsigned __int64' to 'char', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\_xeprint.cpp(279,28): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\_xeprint.cpp(305,31): warning C4244: '=': conversion from 'unsigned __int64' to 'char', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\_xeprint.cpp(422,28): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\_xeprint.cpp(538,15): warning C4244: 'return': conversion from 'double' to 'float', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\_xeprint.cpp(553,28): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\_xeprint.cpp(556,20): warning C4244: 'return': conversion from 'int64_t' to 'int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\_xeprint.cpp(560,20): warning C4244: 'return': conversion from 'int64_t' to 'int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\_xeprint.cpp(625,26): warning C4244: 'argument': conversion from '__int64' to 'unsigned int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\_xeprint.cpp(637,8): warning C4244: 'argument': conversion from '__int64' to 'unsigned int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\_xeprint.cpp(654,26): warning C4244: 'argument': conversion from '__int64' to 'unsigned int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\_xeprint.cpp(665,8): warning C4244: 'argument': conversion from '__int64' to 'unsigned int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\_xeprint.cpp(699,25): warning C4244: 'argument': conversion from '__int64' to 'unsigned int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\_xeprint.cpp(709,8): warning C4244: 'argument': conversion from '__int64' to 'unsigned int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\_xeprint.cpp(724,26): warning C4244: 'argument': conversion from '__int64' to 'unsigned int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\_xeprint.cpp(735,8): warning C4244: 'argument': conversion from '__int64' to 'unsigned int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\_xeprint.cpp(752,25): warning C4244: 'argument': conversion from '__int64' to 'unsigned int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\_xeprint.cpp(763,7): warning C4244: 'argument': conversion from '__int64' to 'unsigned int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\_xeprint.cpp(800,10): warning C4244: 'return': conversion from 'int64_t' to 'int', possible loss of data
+ARM64\Debug\_xeprint.obj : warning LNK4042: object specified more than once; extras ignored
+  XEClib.vcxproj -> C:\Users\paras\source\repos\grep-name\XenevaOS\ARM64\Debug\XEClib.lib

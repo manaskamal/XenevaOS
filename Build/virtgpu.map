@@ -1,0 +1,226 @@
+ virtgpu
+
+ Timestamp is 6a2d4791 (Sat Jun 13 17:35:37 2026)
+
+ Preferred load address is ffffc00000400000
+
+ Start         Length     Name                   Class
+ 0001:00000000 00001bc4H .text$mn                CODE
+ 0002:00000000 000000d0H .idata$5                DATA
+ 0002:000000d0 000003e0H .rdata                  DATA
+ 0002:000004b0 000000e8H .rdata$zzzdbg           DATA
+ 0003:00000000 00000068H .bss                    DATA
+ 0004:00000000 000000c0H .pdata                  DATA
+ 0005:00000000 00000003H .msvcjmc                DATA
+ 0006:00000000 00000064H .edata                  DATA
+ 0007:00000000 00000014H .idata$2                DATA
+ 0007:00000014 00000014H .idata$3                DATA
+ 0007:00000028 000000c8H .idata$4                DATA
+ 0007:000000f0 00000162H .idata$6                DATA
+
+  Address         Publics by Value              Rva+Base               Lib:Object
+
+ 0000:00000000       __volatile_metadata        0000000000000000     <absolute>
+ 0000:00000000       ___safe_se_handler_table   0000000000000000     <absolute>
+ 0000:00000000       __hybrid_code_map          0000000000000000     <absolute>
+ 0000:00000000       __hybrid_code_map_count    0000000000000000     <absolute>
+ 0000:00000000       __dynamic_value_reloc_table 0000000000000000     <absolute>
+ 0000:00000000       __arm64x_native_entrypoint 0000000000000000     <absolute>
+ 0000:00000000       __guard_eh_cont_table      0000000000000000     <absolute>
+ 0000:00000000       __enclave_config           0000000000000000     <absolute>
+ 0000:00000000       __arm64x_redirection_metadata_count 0000000000000000     <absolute>
+ 0000:00000000       __x64_code_ranges_to_entry_points_count 0000000000000000     <absolute>
+ 0000:00000000       __guard_longjmp_count      0000000000000000     <absolute>
+ 0000:00000000       __hybrid_auxiliary_iat     0000000000000000     <absolute>
+ 0000:00000000       __guard_longjmp_table      0000000000000000     <absolute>
+ 0000:00000000       __arm64x_redirection_metadata 0000000000000000     <absolute>
+ 0000:00000000       __guard_fids_table         0000000000000000     <absolute>
+ 0000:00000000       __guard_iat_table          0000000000000000     <absolute>
+ 0000:00000000       __guard_eh_cont_count      0000000000000000     <absolute>
+ 0000:00000000       __arm64x_extra_rfe_table   0000000000000000     <absolute>
+ 0000:00000000       __guard_check_icall_a64n_fptr 0000000000000000     <absolute>
+ 0000:00000000       __AbsoluteZero             0000000000000000     <absolute>
+ 0000:00000000       __x64_code_ranges_to_entry_points 0000000000000000     <absolute>
+ 0000:00000000       __guard_iat_count          0000000000000000     <absolute>
+ 0000:00000000       __guard_fids_count         0000000000000000     <absolute>
+ 0000:00000000       __hybrid_auxiliary_iat_copy 0000000000000000     <absolute>
+ 0000:00000000       ___safe_se_handler_count   0000000000000000     <absolute>
+ 0000:00000000       __arm64x_extra_rfe_table_size 0000000000000000     <absolute>
+ 0000:00000100       __guard_flags              0000000000000100     <absolute>
+ 0001:00000000       ?virtio_cmd2d_create@@YAXHHH@Z ffffc00000401000 f   cmd2d.obj
+ 0001:00000090       __CheckForDebuggerJustMyCode ffffc00000401090 f i cmd2d.obj
+ 0001:00000090       __JustMyCode_Default       ffffc00000401090 f i cmd2d.obj
+ 0001:00000098       ?gpu_is_virgl_supported@@YA_NXZ ffffc00000401098 f   virtgpu.obj
+ 0001:000000b8       ?gpu_is_edid_supported@@YA_NXZ ffffc000004010b8 f   virtgpu.obj
+ 0001:000000d8       ?gpu_execute_command@@YAXPEAUVirtioCommonCfg@@PEAX_K@Z ffffc000004010d8 f   virtgpu.obj
+ 0001:00000420       ?gpu_allocate_resource_id@@YAHXZ ffffc00000401420 f   virtgpu.obj
+ 0001:00000468       ?gpu_attach_back_cmd@@YAXPEAUVirtioCommonCfg@@PEAXI1I@Z ffffc00000401468 f   virtgpu.obj
+ 0001:00000830       ?gpu_get_config_pointer@@YAPEAUVirtioCommonCfg@@XZ ffffc00000401830 f   virtgpu.obj
+ 0001:00000850       AuDriverUnload             ffffc00000401850 f   virtgpu.obj
+ 0001:00000870       ?gpu_reset_device@@YAXPEAUVirtioCommonCfg@@@Z ffffc00000401870 f   virtgpu.obj
+ 0001:00000900       ?gpu_feature_negotiate@@YAXPEAUVirtioCommonCfg@@@Z ffffc00000401900 f   virtgpu.obj
+ 0001:00000a98       ?gpu_initialize_controlq@@YAXPEAUVirtioCommonCfg@@@Z ffffc00000401a98 f   virtgpu.obj
+ 0001:00000ba0       ?gpu_initialize_cursorq@@YAXPEAUVirtioCommonCfg@@@Z ffffc00000401ba0 f   virtgpu.obj
+ 0001:00000cb8       ?gpu_notify_queue@@YAXPEAUVirtioCommonCfg@@G@Z ffffc00000401cb8 f   virtgpu.obj
+ 0001:00000d48       ?gpu_virt_interrupt@@YAXH@Z ffffc00000401d48 f   virtgpu.obj
+ 0001:00000dc8       ?virtio_gpu_iocontrol@@YAHPEAU__VFS_NODE__@@HPEAX@Z ffffc00000401dc8 f   virtgpu.obj
+ 0001:00000fe8       AuDriverMain               ffffc00000401fe8 f   virtgpu.obj
+ 0001:000014c0       ?virt_gpu_screen_init@@YAHPEAUVirtioCommonCfg@@II@Z ffffc000004024c0 f   virtscreen.obj
+ 0001:00001580       ?virt_gpu_alloc_fb@@YAXPEAUVirtioCommonCfg@@H@Z ffffc00000402580 f   virtscreen.obj
+ 0001:00001758       ?virt_gpu_set_scanout@@YAXPEAUVirtioCommonCfg@@HH@Z ffffc00000402758 f   virtscreen.obj
+ 0001:00001808       ?virt_gpu_transfer_to_host2d@@YAXPEAUVirtioCommonCfg@@HHHHH@Z ffffc00000402808 f   virtscreen.obj
+ 0001:000018b0       ?virt_gpu_flush@@YAXPEAUVirtioCommonCfg@@H@Z ffffc000004028b0 f   virtscreen.obj
+ 0001:00001920       ?virt_gpu_flush_rect@@YAXPEAUVirtioCommonCfg@@HHHHH@Z ffffc00000402920 f   virtscreen.obj
+ 0001:00001a10       ?virt_gpu_fill_screen@@YAXIII@Z ffffc00000402a10 f   virtscreen.obj
+ 0001:00001aa4       UARTDebugOut               ffffc00000402aa4 f   xnkrnl:xnkrnl.exe
+ 0001:00001ab0       AuPCIEAllocMSI             ffffc00000402ab0 f   xnkrnl:xnkrnl.exe
+ 0001:00001abc       AuPCIEScanClass            ffffc00000402abc f   xnkrnl:xnkrnl.exe
+ 0001:00001ac8       AuPCIERead                 ffffc00000402ac8 f   xnkrnl:xnkrnl.exe
+ 0001:00001ad4       AuMapMMIO                  ffffc00000402ad4 f   xnkrnl:xnkrnl.exe
+ 0001:00001ae0       AuPmmngrAlloc              ffffc00000402ae0 f   xnkrnl:xnkrnl.exe
+ 0001:00001aec       P2V                        ffffc00000402aec f   xnkrnl:xnkrnl.exe
+ 0001:00001af8       V2P                        ffffc00000402af8 f   xnkrnl:xnkrnl.exe
+ 0001:00001b04       kmalloc                    ffffc00000402b04 f   xnkrnl:xnkrnl.exe
+ 0001:00001b10       dsb_ish                    ffffc00000402b10 f   xnkrnl:xnkrnl.exe
+ 0001:00001b1c       isb_flush                  ffffc00000402b1c f   xnkrnl:xnkrnl.exe
+ 0001:00001b28       enable_irqs                ffffc00000402b28 f   xnkrnl:xnkrnl.exe
+ 0001:00001b34       mask_irqs                  ffffc00000402b34 f   xnkrnl:xnkrnl.exe
+ 0001:00001b40       strcpy                     ffffc00000402b40 f   xnkrnl:xnkrnl.exe
+ 0001:00001b4c       memset                     ffffc00000402b4c f   xnkrnl:xnkrnl.exe
+ 0001:00001b58       memcpy                     ffffc00000402b58 f   xnkrnl:xnkrnl.exe
+ 0001:00001b64       GICEnableSPIIRQ            ffffc00000402b64 f   xnkrnl:xnkrnl.exe
+ 0001:00001b70       AuGICAllocateSPI           ffffc00000402b70 f   xnkrnl:xnkrnl.exe
+ 0001:00001b7c       GICRegisterSPIHandler      ffffc00000402b7c f   xnkrnl:xnkrnl.exe
+ 0001:00001b88       AuVFSFind                  ffffc00000402b88 f   xnkrnl:xnkrnl.exe
+ 0001:00001b94       AuDevFSAddFile             ffffc00000402b94 f   xnkrnl:xnkrnl.exe
+ 0001:00001ba0       AuGetBootInfoStruc         ffffc00000402ba0 f   xnkrnl:xnkrnl.exe
+ 0001:00001bac       AuMapPage                  ffffc00000402bac f   xnkrnl:xnkrnl.exe
+ 0001:00001bb8       AuConsoleSetConInfo        ffffc00000402bb8 f   xnkrnl:xnkrnl.exe
+ 0002:00000000       __imp_UARTDebugOut         ffffc00000403000     xnkrnl:xnkrnl.exe
+ 0002:00000008       __imp_AuPCIEAllocMSI       ffffc00000403008     xnkrnl:xnkrnl.exe
+ 0002:00000010       __imp_AuPCIEScanClass      ffffc00000403010     xnkrnl:xnkrnl.exe
+ 0002:00000018       __imp_AuPCIERead           ffffc00000403018     xnkrnl:xnkrnl.exe
+ 0002:00000020       __imp_AuMapMMIO            ffffc00000403020     xnkrnl:xnkrnl.exe
+ 0002:00000028       __imp_AuPmmngrAlloc        ffffc00000403028     xnkrnl:xnkrnl.exe
+ 0002:00000030       __imp_P2V                  ffffc00000403030     xnkrnl:xnkrnl.exe
+ 0002:00000038       __imp_V2P                  ffffc00000403038     xnkrnl:xnkrnl.exe
+ 0002:00000040       __imp_kmalloc              ffffc00000403040     xnkrnl:xnkrnl.exe
+ 0002:00000048       __imp_dsb_ish              ffffc00000403048     xnkrnl:xnkrnl.exe
+ 0002:00000050       __imp_isb_flush            ffffc00000403050     xnkrnl:xnkrnl.exe
+ 0002:00000058       __imp_enable_irqs          ffffc00000403058     xnkrnl:xnkrnl.exe
+ 0002:00000060       __imp_mask_irqs            ffffc00000403060     xnkrnl:xnkrnl.exe
+ 0002:00000068       __imp_strcpy               ffffc00000403068     xnkrnl:xnkrnl.exe
+ 0002:00000070       __imp_memset               ffffc00000403070     xnkrnl:xnkrnl.exe
+ 0002:00000078       __imp_memcpy               ffffc00000403078     xnkrnl:xnkrnl.exe
+ 0002:00000080       __imp_GICEnableSPIIRQ      ffffc00000403080     xnkrnl:xnkrnl.exe
+ 0002:00000088       __imp_AuGICAllocateSPI     ffffc00000403088     xnkrnl:xnkrnl.exe
+ 0002:00000090       __imp_GICRegisterSPIHandler ffffc00000403090     xnkrnl:xnkrnl.exe
+ 0002:00000098       __imp_AuVFSFind            ffffc00000403098     xnkrnl:xnkrnl.exe
+ 0002:000000a0       __imp_AuDevFSAddFile       ffffc000004030a0     xnkrnl:xnkrnl.exe
+ 0002:000000a8       __imp_AuGetBootInfoStruc   ffffc000004030a8     xnkrnl:xnkrnl.exe
+ 0002:000000b0       __imp_AuMapPage            ffffc000004030b0     xnkrnl:xnkrnl.exe
+ 0002:000000b8       __imp_AuConsoleSetConInfo  ffffc000004030b8     xnkrnl:xnkrnl.exe
+ 0002:000000c0       \177xnkrnl_NULL_THUNK_DATA ffffc000004030c0     xnkrnl:xnkrnl.exe
+ 0003:00000050       ?fsnode@@3PEAU__VFS_NODE__@@EA ffffc00000404050     virtgpu.obj
+ 0007:00000000       __IMPORT_DESCRIPTOR_xnkrnl ffffc00000408000     xnkrnl:xnkrnl.exe
+ 0007:00000014       __NULL_IMPORT_DESCRIPTOR   ffffc00000408014     xnkrnl:xnkrnl.exe
+
+ entry point at        0000:00000000
+
+ Static symbols
+
+ 0000:00000000       .debug$S                   ffffc00000400000     virtgpu.exp
+ 0000:00000000       .debug$S                   ffffc00000400000     xnkrnl:xnkrnl.exe
+ 0000:00000000       .debug$S                   ffffc00000400000     xnkrnl:xnkrnl.exe
+ 0000:00000000       .debug$S                   ffffc00000400000     xnkrnl:xnkrnl.exe
+ 0000:00000000       .debug$S                   ffffc00000400000     xnkrnl:xnkrnl.exe
+ 0000:00000000       .debug$S                   ffffc00000400000     xnkrnl:xnkrnl.exe
+ 0000:00000000       .debug$S                   ffffc00000400000     xnkrnl:xnkrnl.exe
+ 0000:00000000       .debug$S                   ffffc00000400000     xnkrnl:xnkrnl.exe
+ 0000:00000000       .debug$S                   ffffc00000400000     xnkrnl:xnkrnl.exe
+ 0000:00000000       .debug$S                   ffffc00000400000     xnkrnl:xnkrnl.exe
+ 0000:00000000       .debug$S                   ffffc00000400000     xnkrnl:xnkrnl.exe
+ 0000:00000000       .debug$S                   ffffc00000400000     xnkrnl:xnkrnl.exe
+ 0000:00000000       .debug$S                   ffffc00000400000     xnkrnl:xnkrnl.exe
+ 0000:00000000       .debug$S                   ffffc00000400000     xnkrnl:xnkrnl.exe
+ 0000:00000000       .debug$S                   ffffc00000400000     xnkrnl:xnkrnl.exe
+ 0000:00000000       .debug$S                   ffffc00000400000     xnkrnl:xnkrnl.exe
+ 0000:00000000       .debug$S                   ffffc00000400000     xnkrnl:xnkrnl.exe
+ 0000:00000000       .debug$S                   ffffc00000400000     xnkrnl:xnkrnl.exe
+ 0000:00000000       .debug$S                   ffffc00000400000     xnkrnl:xnkrnl.exe
+ 0000:00000000       .debug$S                   ffffc00000400000     xnkrnl:xnkrnl.exe
+ 0000:00000000       .debug$S                   ffffc00000400000     xnkrnl:xnkrnl.exe
+ 0000:00000000       .debug$S                   ffffc00000400000     xnkrnl:xnkrnl.exe
+ 0000:00000000       .debug$S                   ffffc00000400000     xnkrnl:xnkrnl.exe
+ 0000:00000000       .debug$S                   ffffc00000400000     xnkrnl:xnkrnl.exe
+ 0000:00000000       .debug$S                   ffffc00000400000     xnkrnl:xnkrnl.exe
+ 0001:00000fdc       $LN11                      ffffc00000401fdc     virtgpu.obj
+ 0001:00000fdd       $LN12                      ffffc00000401fdd     virtgpu.obj
+ 0001:00000fde       $LN13                      ffffc00000401fde     virtgpu.obj
+ 0001:00000fdf       $LN14                      ffffc00000401fdf     virtgpu.obj
+ 0001:00000fe0       $LN15                      ffffc00000401fe0     virtgpu.obj
+ 0001:00000fe1       $LN16                      ffffc00000401fe1     virtgpu.obj
+ 0001:00000fe2       $LN17                      ffffc00000401fe2     virtgpu.obj
+ 0001:00000fe3       $LN18                      ffffc00000401fe3     virtgpu.obj
+ 0001:00001750       $LN7                       ffffc00000402750     virtscreen.obj
+ 0001:00001998       ?virt_gpu_put_pxl@@YAXIII@Z ffffc00000402998 f   virtscreen.obj
+ 0001:00001a08       $LN3                       ffffc00000402a08     virtscreen.obj
+ 0002:000000d0       $SG4722                    ffffc000004030d0     virtgpu.obj
+ 0002:00000100       $SG4732                    ffffc00000403100     virtgpu.obj
+ 0002:00000124       $SG4915                    ffffc00000403124     virtgpu.obj
+ 0002:00000128       $SG4734                    ffffc00000403128     virtgpu.obj
+ 0002:00000150       $SG4736                    ffffc00000403150     virtgpu.obj
+ 0002:00000198       $SG4737                    ffffc00000403198     virtgpu.obj
+ 0002:000001c8       $SG4753                    ffffc000004031c8     virtgpu.obj
+ 0002:000001f0       $SG4754                    ffffc000004031f0     virtgpu.obj
+ 0002:00000218       $SG4766                    ffffc00000403218     virtgpu.obj
+ 0002:00000240       $SG4767                    ffffc00000403240     virtgpu.obj
+ 0002:00000268       $SG4768                    ffffc00000403268     virtgpu.obj
+ 0002:00000290       $SG4833                    ffffc00000403290     virtgpu.obj
+ 0002:000002c8       $SG4858                    ffffc000004032c8     virtgpu.obj
+ 0002:000002f8       $SG4901                    ffffc000004032f8     virtgpu.obj
+ 0002:00000330       $SG4908                    ffffc00000403330     virtgpu.obj
+ 0002:00000350       $SG4909                    ffffc00000403350     virtgpu.obj
+ 0002:00000370       $SG4911                    ffffc00000403370     virtgpu.obj
+ 0002:00000398       $SG4912                    ffffc00000403398     virtgpu.obj
+ 0002:000003a0       $SG4914                    ffffc000004033a0     virtgpu.obj
+ 0002:000003b0       $SG4916                    ffffc000004033b0     virtgpu.obj
+ 0002:000003e8       $SG3542                    ffffc000004033e8     virtscreen.obj
+ 0002:00000418       $SG3563                    ffffc00000403418     virtscreen.obj
+ 0002:00000458       $SG3571                    ffffc00000403458     virtscreen.obj
+ 0003:00000000       ?notifyBase@@3PECEEC       ffffc00000404000     virtgpu.obj
+ 0003:00000008       ?notifyOffMultiplier@@3IA  ffffc00000404008     virtgpu.obj
+ 0003:0000000c       ?_is_edid_supported@@3_NA  ffffc0000040400c     virtgpu.obj
+ 0003:0000000d       ?_is_virgl_supported@@3_NA ffffc0000040400d     virtgpu.obj
+ 0003:0000000e       ?_resp_ok@@3_NA            ffffc0000040400e     virtgpu.obj
+ 0003:00000010       ?controlq@@3PEAUVirtioQueue@@EA ffffc00000404010     virtgpu.obj
+ 0003:00000018       ?cursorq@@3PEAUVirtioQueue@@EA ffffc00000404018     virtgpu.obj
+ 0003:00000020       ?command_phys@@3PEAXEA     ffffc00000404020     virtgpu.obj
+ 0003:00000028       ?resp_phys@@3PEAXEA        ffffc00000404028     virtgpu.obj
+ 0003:00000030       ?controlq_sz@@3HA          ffffc00000404030     virtgpu.obj
+ 0003:00000034       ?cursorq_sz@@3HA           ffffc00000404034     virtgpu.obj
+ 0003:00000038       ?gpu_resource_id@@3HA      ffffc00000404038     virtgpu.obj
+ 0003:0000003c       ?default_scr_rsrc_id@@3HA  ffffc0000040403c     virtgpu.obj
+ 0003:00000040       ?notifyAddress@@3PEAGEA    ffffc00000404040     virtgpu.obj
+ 0003:00000048       ?_cfg@@3PEAUVirtioCommonCfg@@EA ffffc00000404048     virtgpu.obj
+ 0003:00000058       ?virt_display_width@@3IA   ffffc00000404058     virtscreen.obj
+ 0003:0000005c       ?virt_display_height@@3IA  ffffc0000040405c     virtscreen.obj
+ 0003:00000060       ?fb@@3PEAIEA               ffffc00000404060     virtscreen.obj
+ 0005:00000000       __8A0F5C37_cmd2d@cpp       ffffc00000406000     cmd2d.obj
+ 0005:00000001       __B6FC73CC_virtgpu@cpp     ffffc00000406001     virtgpu.obj
+ 0005:00000002       __C89D43F0_virtscreen@cpp  ffffc00000406002     virtscreen.obj
+ 0006:00000000       .edata                     ffffc00000407000     virtgpu.exp
+ 0006:00000028       rgpv                       ffffc00000407028     virtgpu.exp
+ 0006:00000030       rgszName                   ffffc00000407030     virtgpu.exp
+ 0006:00000038       rgwOrd                     ffffc00000407038     virtgpu.exp
+ 0006:0000003c       szName                     ffffc0000040703c     virtgpu.exp
+ 0006:00000048       $N00001                    ffffc00000407048     virtgpu.exp
+ 0006:00000055       $N00002                    ffffc00000407055     virtgpu.exp
+ 0007:00000246       .idata$6                   ffffc00000408246     xnkrnl:xnkrnl.exe
+
+ Exports
+
+  ordinal    name
+
+        1    AuDriverMain
+        2    AuDriverUnload

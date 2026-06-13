@@ -1,0 +1,4 @@
+^C:\USERS\PARAS\SOURCE\REPOS\GREP-NAME\XENEVAOS\PROCESS\DEODHAIXR\CRT_ARM64.S
+clang --target=aarch64-windows-msvc -c -o "ARM64\Debug\crt_arm64.obj" "C:\Users\paras\source\repos\grep-name\XenevaOS\Process\DeodhaiXR\crt_arm64.s"
+^C:\USERS\PARAS\SOURCE\REPOS\GREP-NAME\XENEVAOS\PROCESS\DEODHAIXR\_FASTCPY_ARM64.S
+clang --target=aarch64-windows-msvc -c -o "ARM64\Debug\_fastcpy_arm64.obj" "C:\Users\paras\source\repos\grep-name\XenevaOS\Process\DeodhaiXR\_fastcpy_arm64.s"

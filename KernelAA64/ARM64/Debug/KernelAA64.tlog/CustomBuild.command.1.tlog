@@ -1,0 +1,10 @@
+^C:\USERS\PARAS\SOURCE\REPOS\GREP-NAME\XENEVAOS\KERNELAA64\HAL\AA64VECTOR.S
+clang --target=aarch64-windows-msvc -c -o "ARM64\Debug\aa64vector.obj" "C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Hal\aa64vector.s"
+^C:\USERS\PARAS\SOURCE\REPOS\GREP-NAME\XENEVAOS\KERNELAA64\HAL\AA64LOWLEVEL.S
+clang --target=aarch64-windows-msvc -c -o "ARM64\Debug\aa64lowlevel.obj" "C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Hal\aa64lowlevel.s"
+^C:\USERS\PARAS\SOURCE\REPOS\GREP-NAME\XENEVAOS\KERNELAA64\HAL\AA64SWITCH.S
+clang --target=aarch64-windows-msvc -c -o "ARM64\Debug\aa64switch.obj" "C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Hal\aa64switch.s"
+^C:\USERS\PARAS\SOURCE\REPOS\GREP-NAME\XENEVAOS\KERNELAA64\HAL\AA64_PRINT.S
+clang --target=aarch64-windows-msvc -c -o "ARM64\Debug\aa64_print.obj" "C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Hal\aa64_print.s"
+^C:\USERS\PARAS\SOURCE\REPOS\GREP-NAME\XENEVAOS\KERNELAA64\BOARD\VIRT\VIRT_POWER.S
+clang --target=aarch64-windows-msvc -c -o "ARM64\Debug\virt_power.obj" "C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Board\Virt\virt_power.s"

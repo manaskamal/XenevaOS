@@ -1,0 +1,2 @@
+^C:\USERS\PARAS\SOURCE\REPOS\GREP-NAME\XENEVAOS\LIBS\CHITRALEKHA\_FASTCPY_ARM64.S
+clang --target=aarch64-windows-msvc -c -o "ARM64\Debug\_fastcpy_arm64.obj" "C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\Chitralekha\_fastcpy_arm64.s"

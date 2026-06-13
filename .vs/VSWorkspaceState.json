@@ -1,0 +1,14 @@
+{
+  "ExpandedNodes": [
+    "",
+    "\\BaseHdr\\Fs",
+    "\\BaseHdr\\Fs\\Ext2",
+    "\\KernelAA64",
+    "\\KernelAA64\\Fs",
+    "\\KernelAA64\\Fs\\Ext2",
+    "\\KernelAA64\\Mm",
+    "\\KernelAA64\\Sound"
+  ],
+  "SelectedNode": "\\KernelAA64\\Fs\\initrd.c",
+  "PreviewInSolutionExplorer": false
+}

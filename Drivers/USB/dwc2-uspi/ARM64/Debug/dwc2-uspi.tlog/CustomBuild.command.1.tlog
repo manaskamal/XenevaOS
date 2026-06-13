@@ -1,0 +1,2 @@
+^C:\USERS\PARAS\SOURCE\REPOS\GREP-NAME\XENEVAOS\DRIVERS\USB\DWC2-USPI\_CHKSTK.S
+clang --target=aarch64-windows-msvc -c -o "ARM64\Debug\_chkstk.obj" "C:\Users\paras\source\repos\grep-name\XenevaOS\Drivers\USB\dwc2-uspi\_chkstk.s"

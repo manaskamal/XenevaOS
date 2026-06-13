@@ -183,10 +183,33 @@ typedef struct _ext2_dir_ {
 #define EXT2_FLAG_READWRITE  0x00002
 #define EXT2_FLAG_LOUD  0x0004
 
+#pragma pack(push,1)
+typedef struct _ext2_fs_ {
+	Ext2Superblock*			superblock;
+	Ext2BlockDescriptor*	block_desc;
+	AuVFSNode*				root_node;
+
+	AuVFSNode*				vdisk;
+
+	uint32_t				block_size;
+	uint32_t				pointers_per_block;
+	uint32_t				inodes_per_group;
+	uint32_t				block_group_count;
+
+	uint8_t					bgd_block_span;
+	uint8_t					bgd_offset;
+	uint32_t				inode_size;
+
+	uint8_t*				cache_data;
+
+	int						flags;
+}Ext2Fs;
+#pragma pack(pop)
+
 
 /*
  * Ext2Initialise -- mount the file system
  */
-extern void Ext2Initialise(AuVDisk* vdisk, char* mountname);
+extern AuVFSNode* Ext2Initialise(AuVDisk* vdisk, char* mountname);
 
 #endif

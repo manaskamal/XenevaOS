@@ -1,1 +1,3 @@
-﻿
+﻿C:\Program Files\Microsoft Visual Studio\18\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(1363,5): warning MSB8012: TargetPath(C:\Users\paras\source\repos\grep-name\XenevaOS\x64\Debug\Acpica.dll) does not match the Linker's OutputFile property value (C:\Users\paras\source\repos\grep-name\XenevaOS\Build\acpica.dll). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
+LINK : warning LNK4075: ignoring '/INCREMENTAL' due to '/RELEASE' specification
+LINK : fatal error LNK1181: cannot open input file 'Kernel.lib'

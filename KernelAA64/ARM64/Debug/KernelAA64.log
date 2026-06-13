@@ -1,1 +1,747 @@
-﻿
+﻿cl : command line warning D9038: /ZI is not supported on this platform; enabling /Zi instead
+cl : command line warning D9025: overriding '/sdl' with '/GS-'
+cl : command line warning D9007: '/JMC' requires '/Zi, /ZI or /Z7'; option ignored
+cl : command line warning D9002: ignoring unknown option '/ZI'
+cl : command line warning D9002: ignoring unknown option '/arch:SSE2'
+  aucon.c
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Cred\group.h(88,2): warning C4091: 'typedef ': ignored on left of '_gid_entries_' when no variable is declared
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(63,1): warning C4005: 'PCIE_ECAM': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(53): message : see previous definition of 'PCIE_ECAM'
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Board\imx8mp\imx8mp.h(37,1): warning C4067: unexpected tokens following preprocessor directive - expected a newline
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\aucon.c(199,29): warning C4267: '=': conversion from 'size_t' to 'uint32_t', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\aucon.c(230,16): warning C4013: 'AuDevFSAddFile' undefined; assuming extern returning int
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\aucon.c(399,13): warning C4013: 'store_x0_x7' undefined; assuming extern returning int
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\aucon.c(458,18): warning C4244: 'function': conversion from 'double' to 'float', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\aucon.c(547,18): warning C4244: 'function': conversion from 'double' to 'float', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\aucon.c(611,21): warning C4267: '=': conversion from 'size_t' to 'uint32_t', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\aucon.c(612,22): warning C4267: '=': conversion from 'size_t' to 'uint32_t', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\aucon.c(613,31): warning C4267: '=': conversion from 'size_t' to 'uint32_t', possible loss of data
+  audrv.c
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Cred\group.h(88,2): warning C4091: 'typedef ': ignored on left of '_gid_entries_' when no variable is declared
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(63,1): warning C4005: 'PCIE_ECAM': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(53): message : see previous definition of 'PCIE_ECAM'
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Board\imx8mp\imx8mp.h(37,1): warning C4067: unexpected tokens following preprocessor directive - expected a newline
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\audrv.c(302,10): warning C4022: 'memset': pointer mismatch for actual parameter 1
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\audrv.c(303,39): warning C4047: 'function': 'uint64_t *' differs in levels of indirection from 'uint64_t'
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\audrv.c(303,34): warning C4024: 'AuVFSNodeReadBlock': different types for formal and actual parameter 3
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\audrv.c(348,43): warning C4244: 'function': conversion from 'uint64_t' to 'int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\audrv.c(326,1): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\audrv.c(481,21): warning C4018: '<': signed/unsigned mismatch
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\audrv.c(577,20): warning C4018: '<': signed/unsigned mismatch
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\audrv.c(628,41): warning C4047: 'function': 'uint8_t *' differs in levels of indirection from 'uint64_t'
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\audrv.c(628,26): warning C4024: 'AuCoffResolveAddress': different types for formal and actual parameter 1
+  board.c
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(63,1): warning C4005: 'PCIE_ECAM': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(53): message : see previous definition of 'PCIE_ECAM'
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Board\imx8mp\imx8mp.h(37,1): warning C4067: unexpected tokens following preprocessor directive - expected a newline
+  imx8mp_clk.c
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Board\imx8mp\imx8mp_clk.c(32,1): warning C4067: unexpected tokens following preprocessor directive - expected a newline
+  imx8mp_gpc.c
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Board\imx8mp\imx8mp_gpc.c(32,1): warning C4067: unexpected tokens following preprocessor directive - expected a newline
+  imx8mp_uart.c
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Board\imx8mp\imx8mp_uart.c(32,1): warning C4067: unexpected tokens following preprocessor directive - expected a newline
+  rpi3bp.c
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(63,1): warning C4005: 'PCIE_ECAM': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(53): message : see previous definition of 'PCIE_ECAM'
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Board\imx8mp\imx8mp.h(37,1): warning C4067: unexpected tokens following preprocessor directive - expected a newline
+  rpi3bpGPIO.c
+  rpi3bpIRQ.c
+  rpi3bpSPI.c
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(63,1): warning C4005: 'PCIE_ECAM': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(53): message : see previous definition of 'PCIE_ECAM'
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Board\imx8mp\imx8mp.h(37,1): warning C4067: unexpected tokens following preprocessor directive - expected a newline
+  rpi_ili9486.c
+  fwcfg.c
+  virt.c
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(63,1): warning C4005: 'PCIE_ECAM': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(53): message : see previous definition of 'PCIE_ECAM'
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Board\imx8mp\imx8mp.h(37,1): warning C4067: unexpected tokens following preprocessor directive - expected a newline
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Board\Virt\virt.c(45,42): warning C4013: 'AuMapMMIO' undefined; assuming extern returning int
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Board\Virt\virt.c(49,11): warning C4013: 'isb_flush' undefined; assuming extern returning int
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Board\Virt\virt.c(50,9): warning C4013: 'dsb_ish' undefined; assuming extern returning int
+  virtioblk.c
+  circbuf.c
+  clean.c
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Cred\group.h(88,2): warning C4091: 'typedef ': ignored on left of '_gid_entries_' when no variable is declared
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(63,1): warning C4005: 'PCIE_ECAM': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(53): message : see previous definition of 'PCIE_ECAM'
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Board\imx8mp\imx8mp.h(37,1): warning C4067: unexpected tokens following preprocessor directive - expected a newline
+  cred.c
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Cred\group.h(88,2): warning C4091: 'typedef ': ignored on left of '_gid_entries_' when no variable is declared
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(63,1): warning C4005: 'PCIE_ECAM': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(53): message : see previous definition of 'PCIE_ECAM'
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Board\imx8mp\imx8mp.h(37,1): warning C4067: unexpected tokens following preprocessor directive - expected a newline
+  ctype.c
+  rtcmmio.c
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(63,1): warning C4005: 'PCIE_ECAM': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(53): message : see previous definition of 'PCIE_ECAM'
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Drivers\rtcmmio.c(96,12): warning C4018: '>=': signed/unsigned mismatch
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Drivers\rtcmmio.c(107,12): warning C4018: '>=': signed/unsigned mismatch
+  uart.c
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(63,1): warning C4005: 'PCIE_ECAM': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(53): message : see previous definition of 'PCIE_ECAM'
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Board\imx8mp\imx8mp.h(37,1): warning C4067: unexpected tokens following preprocessor directive - expected a newline
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\stdarg.h(44,1): warning C4005: 'STACKITEM': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\va_list.h(49): message : see previous definition of 'STACKITEM'
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\stdarg.h(55,1): warning C4005: 'va_start': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\va_list.h(56): message : see previous definition of 'va_start'
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Drivers\uart.c(89,1): warning C4067: unexpected tokens following preprocessor directive - expected a newline
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Drivers\uart.c(97,24): warning C4047: '=': 'uint64_t *' differs in levels of indirection from 'int'
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Drivers\uart.c(177,20): warning C4244: 'function': conversion from 'double' to 'float', possible loss of data
+  Generating Code...
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Board\Virt\virt.c(55): warning C4715: 'AuVirtIOInputCheck': not all control paths return a value
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\audrv.c(614): warning C4715: 'AuDrvManagerCheckFault': not all control paths return a value
+  Compiling...
+  virtiokbd.c
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(63,1): warning C4005: 'PCIE_ECAM': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(53): message : see previous definition of 'PCIE_ECAM'
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Board\imx8mp\imx8mp.h(37,1): warning C4067: unexpected tokens following preprocessor directive - expected a newline
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Drivers\virtiokbd.c(68,36): warning C4047: 'function': 'uint64_t' differs in levels of indirection from 'VirtioInputEvent *'
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Drivers\virtiokbd.c(68,11): warning C4024: 'dc_ivac': different types for formal and actual parameter 1
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Drivers\virtiokbd.c(88,11): warning C4013: 'memset' undefined; assuming extern returning int
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Drivers\virtiokbd.c(80,1): warning C4244: 'initializing': conversion from 'uint16_t' to 'uint8_t', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Drivers\virtiokbd.c(123,11): warning C4098: 'AuVirtioKbdInitialize': 'void' function returning a value
+  virtionet.c
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(63,1): warning C4005: 'PCIE_ECAM': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(53): message : see previous definition of 'PCIE_ECAM'
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Board\imx8mp\imx8mp.h(37,1): warning C4067: unexpected tokens following preprocessor directive - expected a newline
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Drivers\virtionet.c(217,11): warning C4098: 'AuVirtioNetInitialize': 'void' function returning a value
+  virtiotablet.c
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(63,1): warning C4005: 'PCIE_ECAM': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(53): message : see previous definition of 'PCIE_ECAM'
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Board\imx8mp\imx8mp.h(37,1): warning C4067: unexpected tokens following preprocessor directive - expected a newline
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Drivers\virtiotablet.c(75,52): warning C4047: 'function': 'uint64_t' differs in levels of indirection from 'VirtioInputEvent *'
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Drivers\virtiotablet.c(75,11): warning C4024: 'dc_ivac': different types for formal and actual parameter 1
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Drivers\virtiotablet.c(112,10): warning C4013: 'memset' undefined; assuming extern returning int
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Drivers\virtiotablet.c(136,11): warning C4098: 'AuVirtioTabletInitialize': 'void' function returning a value
+  dtb.c
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\dtb.c(66,1): warning C4244: 'initializing': conversion from 'uint64_t' to 'uint8_t', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\dtb.c(67,1): warning C4244: 'initializing': conversion from 'uint64_t' to 'uint8_t', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\dtb.c(68,1): warning C4244: 'initializing': conversion from 'uint64_t' to 'uint8_t', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\dtb.c(69,1): warning C4244: 'initializing': conversion from 'uint64_t' to 'uint8_t', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\dtb.c(70,1): warning C4244: 'initializing': conversion from 'uint64_t' to 'uint8_t', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\dtb.c(71,1): warning C4244: 'initializing': conversion from 'uint64_t' to 'uint8_t', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\dtb.c(72,1): warning C4244: 'initializing': conversion from 'uint64_t' to 'uint8_t', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\dtb.c(83,1): warning C4244: 'initializing': conversion from 'uint16_t' to 'uint8_t', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\dtb.c(227,21): warning C4018: '<': signed/unsigned mismatch
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\dtb.c(246,21): warning C4018: '<': signed/unsigned mismatch
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\dtb.c(266,37): warning C4047: '=': 'void *' differs in levels of indirection from 'uint64_t'
+  devfs.c
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Cred\group.h(88,2): warning C4091: 'typedef ': ignored on left of '_gid_entries_' when no variable is declared
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(63,1): warning C4005: 'PCIE_ECAM': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(53): message : see previous definition of 'PCIE_ECAM'
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Board\imx8mp\imx8mp.h(37,1): warning C4067: unexpected tokens following preprocessor directive - expected a newline
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Fs\Dev\devfs.c(58,22): warning C4013: 'AuDevInputInitialise' undefined; assuming extern returning int
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Fs\Dev\devfs.c(104,21): warning C4018: '<': signed/unsigned mismatch
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Fs\Dev\devfs.c(148,21): warning C4018: '<': signed/unsigned mismatch
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Fs\Dev\devfs.c(170,20): warning C4018: '<': signed/unsigned mismatch
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Fs\Dev\devfs.c(186,20): warning C4018: '<': signed/unsigned mismatch
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Fs\Dev\devfs.c(197,16): warning C4129: '%': unrecognized character escape sequence
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Fs\Dev\devfs.c(231,21): warning C4018: '<': signed/unsigned mismatch
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Fs\Dev\devfs.c(279,21): warning C4018: '<': signed/unsigned mismatch
+  devinput.c
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Cred\group.h(88,2): warning C4091: 'typedef ': ignored on left of '_gid_entries_' when no variable is declared
+  Ext2.c
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Cred\group.h(88,2): warning C4091: 'typedef ': ignored on left of '_gid_entries_' when no variable is declared
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(63,1): warning C4005: 'PCIE_ECAM': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(53): message : see previous definition of 'PCIE_ECAM'
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Board\imx8mp\imx8mp.h(37,1): warning C4067: unexpected tokens following preprocessor directive - expected a newline
+  Fat.c
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Cred\group.h(88,2): warning C4091: 'typedef ': ignored on left of '_gid_entries_' when no variable is declared
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(63,1): warning C4005: 'PCIE_ECAM': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(53): message : see previous definition of 'PCIE_ECAM'
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Board\imx8mp\imx8mp.h(37,1): warning C4067: unexpected tokens following preprocessor directive - expected a newline
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Fs\Fat\Fat.c(202,20): warning C4018: '<': signed/unsigned mismatch
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Fs\Fat\Fat.c(250,42): warning C4133: 'function': incompatible types - from 'uint32_t *' to 'uint64_t *'
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Fs\Fat\Fat.c(258,43): warning C4133: 'function': incompatible types - from 'uint32_t *' to 'uint64_t *'
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Fs\Fat\Fat.c(304,24): warning C4133: 'function': incompatible types - from 'AuVFSNode *' to 'uint64_t *'
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Fs\Fat\Fat.c(311,24): warning C4133: 'function': incompatible types - from 'AuVFSNode *' to 'uint64_t *'
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Fs\Fat\Fat.c(316,23): warning C4133: 'function': incompatible types - from 'AuVFSNode *' to 'uint64_t *'
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Fs\Fat\Fat.c(296,1): warning C4244: 'initializing': conversion from 'uint64_t' to 'int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Fs\Fat\Fat.c(386,31): warning C4018: '<': signed/unsigned mismatch
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Fs\Fat\Fat.c(400,45): warning C4244: '=': conversion from 'uint64_t' to 'uint32_t', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Fs\Fat\Fat.c(578,1): warning C4244: 'initializing': conversion from 'uint64_t' to 'uint32_t', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Fs\Fat\Fat.c(593,3): warning C4033: 'FatGetDiskBlock' must return a value
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Fs\Fat\Fat.c(594,46): warning C4244: 'return': conversion from 'uint64_t' to 'uint32_t', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Fs\Fat\Fat.c(652,72): warning C4244: '=': conversion from 'uint64_t' to 'unsigned long', possible loss of data
+  FatDir.c
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Cred\group.h(88,2): warning C4091: 'typedef ': ignored on left of '_gid_entries_' when no variable is declared
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\stdarg.h(44,1): warning C4005: 'STACKITEM': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\va_list.h(49): message : see previous definition of 'STACKITEM'
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\stdarg.h(55,1): warning C4005: 'va_start': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\va_list.h(56): message : see previous definition of 'va_start'
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(63,1): warning C4005: 'PCIE_ECAM': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(53): message : see previous definition of 'PCIE_ECAM'
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Board\imx8mp\imx8mp.h(37,1): warning C4067: unexpected tokens following preprocessor directive - expected a newline
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Fs\Fat\FatDir.c(63,33): warning C4244: '=': conversion from 'uint64_t' to 'uint32_t', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Fs\Fat\FatDir.c(174,78): warning C4133: 'function': incompatible types - from 'uint8_t *' to 'uint64_t *'
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Fs\Fat\FatDir.c(225,1): warning C4244: 'initializing': conversion from 'uint64_t' to 'uint32_t', possible loss of data
+  FatFile.c
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Cred\group.h(88,2): warning C4091: 'typedef ': ignored on left of '_gid_entries_' when no variable is declared
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(63,1): warning C4005: 'PCIE_ECAM': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(53): message : see previous definition of 'PCIE_ECAM'
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Board\imx8mp\imx8mp.h(37,1): warning C4067: unexpected tokens following preprocessor directive - expected a newline
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Fs\Fat\FatFile.c(124,1): warning C4244: 'initializing': conversion from 'uint64_t' to 'uint32_t', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Fs\Fat\FatFile.c(256,31): warning C4267: '+=': conversion from 'size_t' to 'uint32_t', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Fs\Fat\FatFile.c(350,1): warning C4244: 'initializing': conversion from 'uint64_t' to 'uint32_t', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Fs\Fat\FatFile.c(496,1): warning C4244: 'initializing': conversion from 'uint64_t' to 'uint32_t', possible loss of data
+  fsprobe.c
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Cred\group.h(88,2): warning C4091: 'typedef ': ignored on left of '_gid_entries_' when no variable is declared
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(63,1): warning C4005: 'PCIE_ECAM': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(53): message : see previous definition of 'PCIE_ECAM'
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Board\imx8mp\imx8mp.h(37,1): warning C4067: unexpected tokens following preprocessor directive - expected a newline
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Fs\fsprobe.c(64,33): warning C4133: 'function': incompatible types - from 'uint8_t *' to 'uint64_t *'
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Fs\fsprobe.c(91,33): warning C4133: 'function': incompatible types - from 'uint8_t *' to 'uint64_t *'
+  initrd.c
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Cred\group.h(88,2): warning C4091: 'typedef ': ignored on left of '_gid_entries_' when no variable is declared
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(63,1): warning C4005: 'PCIE_ECAM': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(53): message : see previous definition of 'PCIE_ECAM'
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Board\imx8mp\imx8mp.h(37,1): warning C4067: unexpected tokens following preprocessor directive - expected a newline
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Fs\initrd.c(146,33): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Fs\initrd.c(144,1): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+  pipe.c
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Cred\group.h(88,2): warning C4091: 'typedef ': ignored on left of '_gid_entries_' when no variable is declared
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(63,1): warning C4005: 'PCIE_ECAM': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(53): message : see previous definition of 'PCIE_ECAM'
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Board\imx8mp\imx8mp.h(37,1): warning C4067: unexpected tokens following preprocessor directive - expected a newline
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Fs\pipe.c(193,21): warning C4018: '<': signed/unsigned mismatch
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Fs\pipe.c(237,21): warning C4018: '<': signed/unsigned mismatch
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Fs\pipe.c(323,37): warning C4267: 'function': conversion from 'size_t' to 'unsigned int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Fs\pipe.c(331,17): warning C4267: '=': conversion from 'size_t' to 'uint32_t', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Fs\pipe.c(376,21): warning C4018: '<': signed/unsigned mismatch
+  tty.c
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Cred\group.h(88,2): warning C4091: 'typedef ': ignored on left of '_gid_entries_' when no variable is declared
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\stdarg.h(44,1): warning C4005: 'STACKITEM': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\va_list.h(49): message : see previous definition of 'STACKITEM'
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\stdarg.h(55,1): warning C4005: 'va_start': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\va_list.h(56): message : see previous definition of 'va_start'
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(63,1): warning C4005: 'PCIE_ECAM': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(53): message : see previous definition of 'PCIE_ECAM'
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Board\imx8mp\imx8mp.h(37,1): warning C4067: unexpected tokens following preprocessor directive - expected a newline
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Fs\tty.c(209,20): warning C4018: '<': signed/unsigned mismatch
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Fs\tty.c(219,20): warning C4018: '<': signed/unsigned mismatch
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Fs\tty.c(251,20): warning C4018: '<': signed/unsigned mismatch
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Fs\tty.c(409,23): warning C4267: '=': conversion from 'size_t' to 'uint8_t', possible loss of data
+  vdisk.c
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Cred\group.h(88,2): warning C4091: 'typedef ': ignored on left of '_gid_entries_' when no variable is declared
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(63,1): warning C4005: 'PCIE_ECAM': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(53): message : see previous definition of 'PCIE_ECAM'
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Board\imx8mp\imx8mp.h(37,1): warning C4067: unexpected tokens following preprocessor directive - expected a newline
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Fs\vdisk.c(73,1): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Fs\vdisk.c(82,1): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Fs\vdisk.c(173,20): warning C4018: '<': signed/unsigned mismatch
+  vfs.c
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Cred\group.h(88,2): warning C4091: 'typedef ': ignored on left of '_gid_entries_' when no variable is declared
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(63,1): warning C4005: 'PCIE_ECAM': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(53): message : see previous definition of 'PCIE_ECAM'
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Board\imx8mp\imx8mp.h(37,1): warning C4067: unexpected tokens following preprocessor directive - expected a newline
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Fs\vfs.c(108,20): warning C4018: '<': signed/unsigned mismatch
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Fs\vfs.c(129,20): warning C4018: '<': signed/unsigned mismatch
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Fs\vfs.c(163,12): warning C4013: 'AuTextOut' undefined; assuming extern returning int
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Fs\vfs.c(230,29): warning C4133: 'function': incompatible types - from 'AuVFSNode *' to 'uint64_t *'
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Fs\vfs.c(381,20): warning C4018: '<': signed/unsigned mismatch
+  ftmngr.c
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Cred\group.h(88,2): warning C4091: 'typedef ': ignored on left of '_gid_entries_' when no variable is declared
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(63,1): warning C4005: 'PCIE_ECAM': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(53): message : see previous definition of 'PCIE_ECAM'
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Board\imx8mp\imx8mp.h(37,1): warning C4067: unexpected tokens following preprocessor directive - expected a newline
+  aa64cpu.c
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(63,1): warning C4005: 'PCIE_ECAM': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(53): message : see previous definition of 'PCIE_ECAM'
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Board\imx8mp\imx8mp.h(37,1): warning C4067: unexpected tokens following preprocessor directive - expected a newline
+  basicacpi.c
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(63,1): warning C4005: 'PCIE_ECAM': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(53): message : see previous definition of 'PCIE_ECAM'
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Hal\basicacpi.c(26,33): warning C4311: 'type cast': pointer truncation from 'uint32_t *' to 'uint32_t'
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Hal\basicacpi.c(26,37): warning C4312: 'type cast': conversion from 'uint32_t' to 'uint32_t *' of greater size
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Hal\basicacpi.c(38,9): warning C4311: 'type cast': pointer truncation from 'acpiApicHeader *' to 'intptr_t'
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Hal\basicacpi.c(38,9): warning C4311: 'type cast': pointer truncation from 'acpiMadt *' to 'intptr_t'
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Hal\basicacpi.c(38,56): warning C4018: '<': signed/unsigned mismatch
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Hal\basicacpi.c(59,16): warning C4013: 'UARTDebugOut' undefined; assuming extern returning int
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Hal\basicacpi.c(133,8): warning C4013: 'memset' undefined; assuming extern returning int
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Hal\basicacpi.c(136,44): warning C4312: 'type cast': conversion from 'unsigned int' to 'acpiRsdt *' of greater size
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Hal\basicacpi.c(157,51): warning C4312: 'type cast': conversion from 'unsigned int' to 'acpiSysDescHeader *' of greater size
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Hal\basicacpi.c(164,10): warning C4013: 'strncpy' undefined; assuming extern returning int
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Hal\basicacpi.c(167,15): warning C4013: 'strncmp' undefined; assuming extern returning int
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Hal\basicacpi.c(167,42): warning C4013: 'strlen' undefined; assuming extern returning int
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Hal\basicacpi.c(198,73): warning C4312: 'type cast': conversion from 'unsigned int' to 'acpiFacs *' of greater size
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Hal\basicacpi.c(201,73): warning C4312: 'type cast': conversion from 'unsigned int' to 'acpiDsdt *' of greater size
+  gic.c
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(63,1): warning C4005: 'PCIE_ECAM': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(53): message : see previous definition of 'PCIE_ECAM'
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Board\imx8mp\imx8mp.h(37,1): warning C4067: unexpected tokens following preprocessor directive - expected a newline
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Cred\group.h(88,2): warning C4091: 'typedef ': ignored on left of '_gid_entries_' when no variable is declared
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Hal\gic.c(275,50): warning C4293: '>>': shift count negative or too big, undefined behavior
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Hal\gic.c(381,48): warning C4047: '=': 'uint64_t' differs in levels of indirection from 'void *'
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Hal\gic.c(390,48): warning C4047: '=': 'uint64_t' differs in levels of indirection from 'void *'
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Hal\gic.c(393,52): warning C4047: '=': 'uint64_t' differs in levels of indirection from 'void *'
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Hal\gic.c(400,50): warning C4047: '=': 'uint64_t' differs in levels of indirection from 'void *'
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Hal\gic.c(402,47): warning C4090: '=': different 'volatile' qualifiers
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Hal\gic.c(403,48): warning C4090: '=': different 'volatile' qualifiers
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Hal\gic.c(405,39): warning C4047: 'function': 'uint64_t *' differs in levels of indirection from 'uint64_t'
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Hal\gic.c(405,28): warning C4024: 'gic_inl_': different types for formal and actual parameter 1
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Hal\gic.c(409,42): warning C4047: 'function': 'uint64_t *' differs in levels of indirection from 'uint64_t'
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Hal\gic.c(409,31): warning C4024: 'gic_inl_': different types for formal and actual parameter 1
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Hal\gic.c(413,20): warning C4018: '<': signed/unsigned mismatch
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Hal\gic.c(416,37): warning C4047: 'function': 'uint64_t *' differs in levels of indirection from 'uint64_t'
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Hal\gic.c(416,26): warning C4024: 'gic_inl_': different types for formal and actual parameter 1
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Hal\gic.c(425,27): warning C4047: 'function': 'uint64_t *' differs in levels of indirection from 'uint64_t'
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Hal\gic.c(425,18): warning C4024: 'gic_outl_': different types for formal and actual parameter 1
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Hal\gic.c(426,27): warning C4047: 'function': 'uint64_t *' differs in levels of indirection from 'uint64_t'
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Hal\gic.c(426,18): warning C4024: 'gic_outl_': different types for formal and actual parameter 1
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Hal\gic.c(432,27): warning C4047: 'function': 'uint64_t *' differs in levels of indirection from 'uint64_t'
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Hal\gic.c(432,18): warning C4024: 'gic_outl_': different types for formal and actual parameter 1
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Hal\gic.c(435,27): warning C4047: 'function': 'uint64_t *' differs in levels of indirection from 'uint64_t'
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Hal\gic.c(435,18): warning C4024: 'gic_outl_': different types for formal and actual parameter 1
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Hal\gic.c(374,6): warning C4102: 'skip_': unreferenced label
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Hal\gic.c(454,15): warning C4047: 'function': 'uint64_t *' differs in levels of indirection from 'size_t'
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Hal\gic.c(454,12): warning C4024: 'gic_outl_': different types for formal and actual parameter 1
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Hal\gic.c(461,29): warning C4047: 'function': 'uint64_t *' differs in levels of indirection from 'size_t'
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Hal\gic.c(461,26): warning C4024: 'gic_inl_': different types for formal and actual parameter 1
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Hal\gic.c(464,15): warning C4047: 'function': 'uint64_t *' differs in levels of indirection from 'size_t'
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Hal\gic.c(464,12): warning C4024: 'gic_outl_': different types for formal and actual parameter 1
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Hal\gic.c(473,25): warning C4047: 'function': 'uint64_t *' differs in levels of indirection from 'uint64_t'
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Hal\gic.c(473,14): warning C4024: 'gic_outl_': different types for formal and actual parameter 1
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Hal\gic.c(539,24): warning C4047: 'function': 'uint64_t *' differs in levels of indirection from 'uint64_t'
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Hal\gic.c(539,13): warning C4024: 'gic_outl_': different types for formal and actual parameter 1
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Hal\gic.c(556,25): warning C4047: 'function': 'uint64_t *' differs in levels of indirection from 'uint64_t'
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Hal\gic.c(556,14): warning C4024: 'gic_outqw': different types for formal and actual parameter 1
+  Generating Code...
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Fs\vfs.c(344): warning C4715: 'AuVFSRemoveFile': not all control paths return a value
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Fs\vfs.c(362): warning C4715: 'AuVFSRemoveDir': not all control paths return a value
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Fs\vdisk.c(103): warning C4715: 'AuVDiskGetIndex': not all control paths return a value
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Fs\tty.c(212): warning C4715: 'AuTTYMasterWrite': not all control paths return a value
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Fs\tty.c(261): warning C4715: 'AuTTYSlaveWrite': not all control paths return a value
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Fs\tty.c(267): warning C4715: 'AuTTYSlaveClose': not all control paths return a value
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Fs\Fat\FatFile.c(416): warning C4715: 'FatWrite': not all control paths return a value
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Fs\Fat\Fat.c(595): warning C4715: 'FatGetDiskBlock': not all control paths return a value
+  Compiling...
+  profile.c
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(63,1): warning C4005: 'PCIE_ECAM': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(53): message : see previous definition of 'PCIE_ECAM'
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Board\imx8mp\imx8mp.h(37,1): warning C4067: unexpected tokens following preprocessor directive - expected a newline
+  sched.c
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(63,1): warning C4005: 'PCIE_ECAM': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(53): message : see previous definition of 'PCIE_ECAM'
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Board\imx8mp\imx8mp.h(37,1): warning C4067: unexpected tokens following preprocessor directive - expected a newline
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Cred\group.h(88,2): warning C4091: 'typedef ': ignored on left of '_gid_entries_' when no variable is declared
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Hal\sched.c(258,4): warning C4102: 'run': unreferenced label
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Hal\sched.c(275,4): warning C4102: 'end': unreferenced label
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Hal\sched.c(370,22): warning C4022: 'resume_user': pointer mismatch for actual parameter 2
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Hal\sched.c(444,32): warning C4047: 'function': 'uint8_t *' differs in levels of indirection from 'uint8_t (*)[512]'
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Hal\sched.c(444,16): warning C4024: 'aa64_store_fp': different types for formal and actual parameter 1
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Hal\sched.c(459,42): warning C4047: 'function': 'uint8_t *' differs in levels of indirection from 'uint8_t (*)[512]'
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Hal\sched.c(459,18): warning C4024: 'aa64_restore_fp': different types for formal and actual parameter 1
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Hal\sched.c(476,30): warning C4022: 'resume_user': pointer mismatch for actual parameter 2
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Hal\sched.c(442,6): warning C4102: 'sched': unreferenced label
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Hal\sched.c(485,4): warning C4102: 'ret': unreferenced label
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Hal\sched.c(503,10): warning C4022: 'memset': pointer mismatch for actual parameter 1
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Hal\sched.c(522,10): warning C4022: 'memset': pointer mismatch for actual parameter 1
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Hal\sched.c(559,32): warning C4047: 'function': 'uint8_t *' differs in levels of indirection from 'uint8_t (*)[512]'
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Hal\sched.c(559,18): warning C4024: 'aa64_restore_fp': different types for formal and actual parameter 1
+  serial.c
+  systable.c
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(63,1): warning C4005: 'PCIE_ECAM': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(53): message : see previous definition of 'PCIE_ECAM'
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Board\imx8mp\imx8mp.h(37,1): warning C4067: unexpected tokens following preprocessor directive - expected a newline
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\stdarg.h(44,1): warning C4005: 'STACKITEM': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\va_list.h(49): message : see previous definition of 'STACKITEM'
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\stdarg.h(55,1): warning C4005: 'va_start': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\va_list.h(56): message : see previous definition of 'va_start'
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Cred\group.h(88,2): warning C4091: 'typedef ': ignored on left of '_gid_entries_' when no variable is declared
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Hal\systable.c(55,1): warning C4005: 'AURORA_MAX_SYSCALL': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Serv\sysserv.h(47): message : see previous definition of 'AURORA_MAX_SYSCALL'
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Hal\systable.c(259,30): warning C4244: '=': conversion from 'uint64_t' to 'uint32_t', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Hal\systable.c(273,11): warning C4098: 'AuAA64SyscallHandler': 'void' function returning a value
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Hal\systable.c(287,10): warning C4098: 'AuAA64SyscallHandler': 'void' function returning a value
+  vector.c
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(63,1): warning C4005: 'PCIE_ECAM': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(53): message : see previous definition of 'PCIE_ECAM'
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Board\imx8mp\imx8mp.h(37,1): warning C4067: unexpected tokens following preprocessor directive - expected a newline
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Cred\group.h(88,2): warning C4091: 'typedef ': ignored on left of '_gid_entries_' when no variable is declared
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Hal\vector.c(287,23): warning C4047: 'function': 'uint64_t' differs in levels of indirection from 'char (*)[0]'
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Hal\vector.c(287,15): warning C4024: 'set_vbar_el1': different types for formal and actual parameter 1
+  hashmap.c
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(63,1): warning C4005: 'PCIE_ECAM': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(53): message : see previous definition of 'PCIE_ECAM'
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Board\imx8mp\imx8mp.h(37,1): warning C4067: unexpected tokens following preprocessor directive - expected a newline
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\hashmap.c(56,22): warning C4311: 'type cast': pointer truncation from 'const void *' to 'intptr_t'
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\hashmap.c(60,21): warning C4311: 'type cast': pointer truncation from 'const void *' to 'intptr_t'
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\hashmap.c(60,35): warning C4311: 'type cast': pointer truncation from 'const void *' to 'intptr_t'
+  init.c
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Cred\group.h(88,2): warning C4091: 'typedef ': ignored on left of '_gid_entries_' when no variable is declared
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(63,1): warning C4005: 'PCIE_ECAM': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(53): message : see previous definition of 'PCIE_ECAM'
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Board\imx8mp\imx8mp.h(37,1): warning C4067: unexpected tokens following preprocessor directive - expected a newline
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\init.c(311,47): warning C4267: 'function': conversion from 'size_t' to 'unsigned int', possible loss of data
+  postbox.c
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Cred\group.h(88,2): warning C4091: 'typedef ': ignored on left of '_gid_entries_' when no variable is declared
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(63,1): warning C4005: 'PCIE_ECAM': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(53): message : see previous definition of 'PCIE_ECAM'
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Board\imx8mp\imx8mp.h(37,1): warning C4067: unexpected tokens following preprocessor directive - expected a newline
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Ipc\postbox.c(220,36): warning C4244: '=': conversion from 'uint64_t' to 'uint16_t', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Ipc\postbox.c(256,43): warning C4244: 'function': conversion from 'uint64_t' to 'uint16_t', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Ipc\postbox.c(260,42): warning C4244: 'function': conversion from 'uint64_t' to 'uint16_t', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Ipc\postbox.c(264,41): warning C4244: 'function': conversion from 'uint64_t' to 'uint16_t', possible loss of data
+  list.c
+  loader.c
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Cred\group.h(88,2): warning C4091: 'typedef ': ignored on left of '_gid_entries_' when no variable is declared
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(63,1): warning C4005: 'PCIE_ECAM': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(53): message : see previous definition of 'PCIE_ECAM'
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Board\imx8mp\imx8mp.h(37,1): warning C4067: unexpected tokens following preprocessor directive - expected a newline
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\loader.c(97,1): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\loader.c(155,13): warning C4022: 'memcpy': pointer mismatch for actual parameter 1
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\loader.c(139,1): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\loader.c(146,1): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\loader.c(236,11): warning C4022: 'memset': pointer mismatch for actual parameter 1
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\loader.c(237,40): warning C4047: 'function': 'uint64_t *' differs in levels of indirection from 'uint64_t'
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\loader.c(237,35): warning C4024: 'AuVFSNodeReadBlock': different types for formal and actual parameter 3
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\loader.c(239,15): warning C4022: 'memcpy': pointer mismatch for actual parameter 1
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\loader.c(239,28): warning C4022: 'memcpy': pointer mismatch for actual parameter 2
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\loader.c(247,11): warning C4022: 'memset': pointer mismatch for actual parameter 1
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\loader.c(248,11): warning C4022: 'memcpy': pointer mismatch for actual parameter 1
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\loader.c(248,21): warning C4022: 'memcpy': pointer mismatch for actual parameter 2
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\loader.c(250,15): warning C4022: 'memcpy': pointer mismatch for actual parameter 1
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\loader.c(250,28): warning C4022: 'memcpy': pointer mismatch for actual parameter 2
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\loader.c(285,31): warning C4267: '+=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\loader.c(306,52): warning C4267: 'function': conversion from 'size_t' to 'unsigned int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\loader.c(307,40): warning C4267: 'function': conversion from 'size_t' to 'uint32_t', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\loader.c(292,1): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+  dlmalloc.c
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Mm\dlmalloc.c(595,1): warning C4005: 'MORECORE_CONTIGUOUS': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Mm\dlmalloc.c(39): message : see previous definition of 'MORECORE_CONTIGUOUS'
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Mm\dlmalloc.c(596,1): warning C4005: 'HAVE_MMAP': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Mm\dlmalloc.c(54): message : see previous definition of 'HAVE_MMAP'
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Mm\dlmalloc.c(598,1): warning C4005: 'LACKS_UNISTD_H': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Mm\dlmalloc.c(33): message : see previous definition of 'LACKS_UNISTD_H'
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Mm\dlmalloc.c(601,1): warning C4005: 'LACKS_FCNTL_H': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Mm\dlmalloc.c(34): message : see previous definition of 'LACKS_FCNTL_H'
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Mm\dlmalloc.c(602,1): warning C4005: 'LACKS_TIME_H': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Mm\dlmalloc.c(42): message : see previous definition of 'LACKS_TIME_H'
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Mm\dlmalloc.c(616,1): warning C4005: 'errno': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Mm\dlmalloc.c(614): message : see previous definition of 'errno'
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Mm\dlmalloc.c(1832,1): warning C4005: 'CALL_MMAP': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Mm\dlmalloc.c(46): message : see previous definition of 'CALL_MMAP'
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Mm\dlmalloc.c(1833,1): warning C4005: 'CALL_MUNMAP': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Mm\dlmalloc.c(47): message : see previous definition of 'CALL_MUNMAP'
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Mm\dlmalloc.c(4179,35): warning C4267: 'function': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Mm\dlmalloc.c(4190,31): warning C4267: 'function': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Mm\dlmalloc.c(4202,44): warning C4267: 'function': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Mm\dlmalloc.c(4206,35): warning C4267: 'function': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Mm\dlmalloc.c(4237,26): warning C4267: 'function': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Mm\dlmalloc.c(4409,52): warning C4267: 'function': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Mm\dlmalloc.c(4881,27): warning C4267: 'function': conversion from 'size_t' to 'uint32_t', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Mm\dlmalloc.c(5118,74): warning C4267: 'function': conversion from 'size_t' to 'uint32_t', possible loss of data
+  dma.c
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(63,1): warning C4005: 'PCIE_ECAM': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(53): message : see previous definition of 'PCIE_ECAM'
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Board\imx8mp\imx8mp.h(37,1): warning C4067: unexpected tokens following preprocessor directive - expected a newline
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Mm\dma.c(219,32): warning C4267: 'function': conversion from 'size_t' to 'uint32_t', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Mm\dma.c(281,20): warning C4022: 'AuPmmngrFree': pointer mismatch for actual parameter 1
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Mm\dma.c(314,1): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+  kmalloc.c
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(63,1): warning C4005: 'PCIE_ECAM': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(53): message : see previous definition of 'PCIE_ECAM'
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Board\imx8mp\imx8mp.h(37,1): warning C4067: unexpected tokens following preprocessor directive - expected a newline
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Mm\kmalloc.c(369,20): warning C4098: 'kfree': 'void' function returning a value
+  liballoc.c
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(63,1): warning C4005: 'PCIE_ECAM': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(53): message : see previous definition of 'PCIE_ECAM'
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Board\imx8mp\imx8mp.h(37,1): warning C4067: unexpected tokens following preprocessor directive - expected a newline
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Mm\liballoc.c(96,20): warning C4018: '>': signed/unsigned mismatch
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Mm\liballoc.c(329,12): warning C4018: '<': signed/unsigned mismatch
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Mm\liballoc.c(590,25): warning C4244: '=': conversion from 'unsigned __int64' to 'int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Mm\liballoc.c(619,16): warning C4018: '>': signed/unsigned mismatch
+  mmap.c
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Cred\group.h(88,2): warning C4091: 'typedef ': ignored on left of '_gid_entries_' when no variable is declared
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(63,1): warning C4005: 'PCIE_ECAM': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(53): message : see previous definition of 'PCIE_ECAM'
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Board\imx8mp\imx8mp.h(37,1): warning C4067: unexpected tokens following preprocessor directive - expected a newline
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Mm\mmap.c(87,47): warning C4267: 'function': conversion from 'size_t' to 'unsigned int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Mm\mmap.c(98,20): warning C4018: '<': signed/unsigned mismatch
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Mm\mmap.c(108,20): warning C4018: '<': signed/unsigned mismatch
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Mm\mmap.c(224,52): warning C4244: 'function': conversion from 'uint64_t' to 'uint32_t', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Mm\mmap.c(229,69): warning C4244: 'function': conversion from 'uint64_t' to 'uint32_t', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Mm\mmap.c(235,57): warning C4244: 'function': conversion from 'uint64_t' to 'uint32_t', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Mm\mmap.c(249,50): warning C4244: 'function': conversion from 'uint64_t' to 'uint32_t', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Mm\mmap.c(254,16): warning C4022: 'memcpy': pointer mismatch for actual parameter 1
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Mm\mmap.c(254,27): warning C4022: 'memcpy': pointer mismatch for actual parameter 2
+  mmfile.c
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Cred\group.h(88,2): warning C4091: 'typedef ': ignored on left of '_gid_entries_' when no variable is declared
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(63,1): warning C4005: 'PCIE_ECAM': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(53): message : see previous definition of 'PCIE_ECAM'
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Board\imx8mp\imx8mp.h(37,1): warning C4067: unexpected tokens following preprocessor directive - expected a newline
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Mm\mmfile.c(132,24): warning C4090: '=': different 'const' qualifiers
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Mm\mmfile.c(136,24): warning C4133: 'function': incompatible types - from 'char *' to 'uint64_t *'
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Mm\mmfile.c(129,1): warning C4090: 'initializing': different 'const' qualifiers
+  mmserv.c
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Cred\group.h(88,2): warning C4091: 'typedef ': ignored on left of '_gid_entries_' when no variable is declared
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(63,1): warning C4005: 'PCIE_ECAM': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(53): message : see previous definition of 'PCIE_ECAM'
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Board\imx8mp\imx8mp.h(37,1): warning C4067: unexpected tokens following preprocessor directive - expected a newline
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Mm\mmserv.c(155,12): warning C4013: 'AuTextOut' undefined; assuming extern returning int
+  pmmngr.c
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(63,1): warning C4005: 'PCIE_ECAM': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(53): message : see previous definition of 'PCIE_ECAM'
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Board\imx8mp\imx8mp.h(37,1): warning C4067: unexpected tokens following preprocessor directive - expected a newline
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Mm\pmmngr.c(68,8): warning C4013: 'memset' undefined; assuming extern returning int
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Mm\pmmngr.c(82,12): warning C4013: 'AuTextOut' undefined; assuming extern returning int
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Mm\pmmngr.c(234,35): warning C4244: '=': conversion from 'uint64_t' to 'uint32_t', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Mm\pmmngr.c(268,1): warning C4244: 'initializing': conversion from 'uint64_t' to 'uint32_t', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Mm\pmmngr.c(398,25): warning C4018: '<': signed/unsigned mismatch
+  shm.c
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Cred\group.h(88,2): warning C4091: 'typedef ': ignored on left of '_gid_entries_' when no variable is declared
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(63,1): warning C4005: 'PCIE_ECAM': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(53): message : see previous definition of 'PCIE_ECAM'
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Board\imx8mp\imx8mp.h(37,1): warning C4067: unexpected tokens following preprocessor directive - expected a newline
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Mm\shm.c(72,20): warning C4018: '<': signed/unsigned mismatch
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Mm\shm.c(88,20): warning C4018: '<': signed/unsigned mismatch
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Mm\shm.c(126,70): warning C4267: 'function': conversion from 'size_t' to 'unsigned int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Mm\shm.c(160,21): warning C4018: '<=': signed/unsigned mismatch
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Mm\shm.c(198,20): warning C4018: '<': signed/unsigned mismatch
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Mm\shm.c(203,21): warning C4018: '<': signed/unsigned mismatch
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Mm\shm.c(249,20): warning C4018: '<': signed/unsigned mismatch
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Mm\shm.c(360,20): warning C4018: '<': signed/unsigned mismatch
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Mm\shm.c(396,20): warning C4018: '<': signed/unsigned mismatch
+  vma.c
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Cred\group.h(88,2): warning C4091: 'typedef ': ignored on left of '_gid_entries_' when no variable is declared
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Mm\vma.c(50,20): warning C4018: '<': signed/unsigned mismatch
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Mm\vma.c(86,20): warning C4018: '<': signed/unsigned mismatch
+  Generating Code...
+  Compiling...
+  vmmngr.c
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(63,1): warning C4005: 'PCIE_ECAM': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(53): message : see previous definition of 'PCIE_ECAM'
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Board\imx8mp\imx8mp.h(37,1): warning C4067: unexpected tokens following preprocessor directive - expected a newline
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Mm\vmmngr.c(522,38): warning C4047: 'function': 'uint64_t' differs in levels of indirection from 'uint64_t *'
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Mm\vmmngr.c(522,34): warning C4024: 'V2P': different types for formal and actual parameter 1
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Mm\vmmngr.c(512,1): warning C4267: 'initializing': conversion from 'size_t' to 'const long', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Mm\vmmngr.c(560,29): warning C4047: 'return': 'void *' differs in levels of indirection from 'uint64_t'
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Mm\vmmngr.c(593,29): warning C4047: 'return': 'void *' differs in levels of indirection from 'uint64_t'
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Mm\vmmngr.c(620,35): warning C4047: 'return': 'uint64_t *' differs in levels of indirection from 'uint64_t'
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Mm\vmmngr.c(641,39): warning C4047: 'function': 'uint64_t *' differs in levels of indirection from 'uint64_t'
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Mm\vmmngr.c(641,28): warning C4024: 'write_ttbr0_el1': different types for formal and actual parameter 1
+  arp.c
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Cred\group.h(88,2): warning C4091: 'typedef ': ignored on left of '_gid_entries_' when no variable is declared
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(63,1): warning C4005: 'PCIE_ECAM': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(53): message : see previous definition of 'PCIE_ECAM'
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Board\imx8mp\imx8mp.h(37,1): warning C4067: unexpected tokens following preprocessor directive - expected a newline
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Net\arp.c(72,20): warning C4018: '<': signed/unsigned mismatch
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Net\arp.c(128,8): warning C4101: 'spa': unreferenced local variable
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Net\arp.c(130,8): warning C4101: 'tpa': unreferenced local variable
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Net\arp.c(147,8): warning C4101: 'spa': unreferenced local variable
+  aunet.c
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Cred\group.h(88,2): warning C4091: 'typedef ': ignored on left of '_gid_entries_' when no variable is declared
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Net\aunet.c(72,14): warning C4013: 'UARTDebugOut' undefined; assuming extern returning int
+  ethernet.c
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Cred\group.h(88,2): warning C4091: 'typedef ': ignored on left of '_gid_entries_' when no variable is declared
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(63,1): warning C4005: 'PCIE_ECAM': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(53): message : see previous definition of 'PCIE_ECAM'
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Board\imx8mp\imx8mp.h(37,1): warning C4067: unexpected tokens following preprocessor directive - expected a newline
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Net\ethernet.c(65,20): warning C4018: '<': signed/unsigned mismatch
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Net\ethernet.c(117,45): warning C4267: 'function': conversion from 'size_t' to 'unsigned int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Net\ethernet.c(118,25): warning C4267: 'function': conversion from 'size_t' to 'uint32_t', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Net\ethernet.c(126,48): warning C4267: 'function': conversion from 'size_t' to 'uint32_t', possible loss of data
+  icmp.c
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Cred\group.h(88,2): warning C4091: 'typedef ': ignored on left of '_gid_entries_' when no variable is declared
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(63,1): warning C4005: 'PCIE_ECAM': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(53): message : see previous definition of 'PCIE_ECAM'
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Board\imx8mp\imx8mp.h(37,1): warning C4067: unexpected tokens following preprocessor directive - expected a newline
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Net\icmp.c(140,18): warning C4267: 'return': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Net\icmp.c(165,50): warning C4267: 'function': conversion from 'size_t' to 'unsigned int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Net\icmp.c(166,26): warning C4267: 'function': conversion from 'size_t' to 'uint32_t', possible loss of data
+  ipv4.c
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Cred\group.h(88,2): warning C4091: 'typedef ': ignored on left of '_gid_entries_' when no variable is declared
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(63,1): warning C4005: 'PCIE_ECAM': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(53): message : see previous definition of 'PCIE_ECAM'
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Board\imx8mp\imx8mp.h(37,1): warning C4067: unexpected tokens following preprocessor directive - expected a newline
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Net\ipv4.c(72,7): warning C4101: 'dest': unreferenced local variable
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Net\ipv4.c(73,7): warning C4101: 'src': unreferenced local variable
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Net\ipv4.c(151,18): warning C4013: 'AuSleepThread' undefined; assuming extern returning int
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Net\ipv4.c(151,37): warning C4013: 'AuGetCurrentThread' undefined; assuming extern returning int
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Net\ipv4.c(152,21): warning C4013: 'AuForceScheduler' undefined; assuming extern returning int
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Net\ipv4.c(171,9): warning C4013: 'memset' undefined; assuming extern returning int
+  netserv.c
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Cred\group.h(88,2): warning C4091: 'typedef ': ignored on left of '_gid_entries_' when no variable is declared
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\stdarg.h(44,1): warning C4005: 'STACKITEM': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\va_list.h(49): message : see previous definition of 'STACKITEM'
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\stdarg.h(55,1): warning C4005: 'va_start': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\va_list.h(56): message : see previous definition of 'va_start'
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(63,1): warning C4005: 'PCIE_ECAM': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(53): message : see previous definition of 'PCIE_ECAM'
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Board\imx8mp\imx8mp.h(37,1): warning C4067: unexpected tokens following preprocessor directive - expected a newline
+  route.c
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\stdarg.h(44,1): warning C4005: 'STACKITEM': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\va_list.h(49): message : see previous definition of 'STACKITEM'
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\stdarg.h(55,1): warning C4005: 'va_start': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\va_list.h(56): message : see previous definition of 'va_start'
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Net\route.c(93,20): warning C4018: '<': signed/unsigned mismatch
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Net\route.c(128,17): warning C4018: '>': signed/unsigned mismatch
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Net\route.c(149,20): warning C4018: '<': signed/unsigned mismatch
+  socket.c
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Cred\group.h(88,2): warning C4091: 'typedef ': ignored on left of '_gid_entries_' when no variable is declared
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(63,1): warning C4005: 'PCIE_ECAM': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(53): message : see previous definition of 'PCIE_ECAM'
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Board\imx8mp\imx8mp.h(37,1): warning C4067: unexpected tokens following preprocessor directive - expected a newline
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Net\socket.c(62,50): warning C4267: 'function': conversion from 'size_t' to 'unsigned int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Net\socket.c(63,38): warning C4267: 'function': conversion from 'size_t' to 'uint32_t', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Net\socket.c(97,16): warning C4267: 'return': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Net\socket.c(106,92): warning C4267: 'function': conversion from 'size_t' to 'uint32_t', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Net\socket.c(164,20): warning C4018: '<': signed/unsigned mismatch
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Net\socket.c(200,54): warning C4267: 'function': conversion from 'size_t' to 'unsigned int', possible loss of data
+  udp.c
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Cred\group.h(88,2): warning C4091: 'typedef ': ignored on left of '_gid_entries_' when no variable is declared
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(63,1): warning C4005: 'PCIE_ECAM': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(53): message : see previous definition of 'PCIE_ECAM'
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Board\imx8mp\imx8mp.h(37,1): warning C4067: unexpected tokens following preprocessor directive - expected a newline
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Net\udp.c(132,51): warning C4267: 'function': conversion from 'size_t' to 'unsigned int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Net\udp.c(133,27): warning C4267: 'function': conversion from 'size_t' to 'uint32_t', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Net\udp.c(156,32): warning C4267: 'return': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Net\udp.c(185,20): warning C4018: '<': signed/unsigned mismatch
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Net\udp.c(211,20): warning C4018: '<': signed/unsigned mismatch
+  pcie.c
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(63,1): warning C4005: 'PCIE_ECAM': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(53): message : see previous definition of 'PCIE_ECAM'
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Board\imx8mp\imx8mp.h(37,1): warning C4067: unexpected tokens following preprocessor directive - expected a newline
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\pcie.c(66,56): warning C4047: '=': 'uint64_t' differs in levels of indirection from 'void *'
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\pcie.c(254,16): warning C4244: 'return': conversion from 'uint64_t' to 'uint32_t', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\pcie.c(258,16): warning C4244: 'return': conversion from 'uint64_t' to 'uint32_t', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\pcie.c(262,16): warning C4244: 'return': conversion from 'uint64_t' to 'uint32_t', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\pcie.c(404,52): warning C4244: '=': conversion from 'uint64_t' to 'volatile uint32_t', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\pcie.c(542,56): warning C4267: 'function': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\pcie.c(552,60): warning C4267: 'function': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\pcie.c(560,47): warning C4267: 'function': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\pcie.c(561,68): warning C4267: 'function': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\pcie.c(563,52): warning C4267: 'function': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\pcie.c(565,55): warning C4267: 'function': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\pcie.c(567,64): warning C4267: 'function': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\pcie.c(568,47): warning C4267: 'function': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\pcie.c(570,52): warning C4267: 'function': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\pcie.c(604,61): warning C4244: '=': conversion from 'uint64_t' to 'uint32_t', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\pcie.c(599,1): warning C4244: 'initializing': conversion from 'uint64_t' to 'uint32_t', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\pcie.c(636,1): warning C4244: 'initializing': conversion from 'uint64_t' to 'uint32_t', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\pcie.c(673,1): warning C4244: 'initializing': conversion from 'uint64_t' to 'uint32_t', possible loss of data
+  pe.c
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(63,1): warning C4005: 'PCIE_ECAM': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(53): message : see previous definition of 'PCIE_ECAM'
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Board\imx8mp\imx8mp.h(37,1): warning C4067: unexpected tokens following preprocessor directive - expected a newline
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\pe.c(58,20): warning C4018: '<': signed/unsigned mismatch
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\pe.c(89,20): warning C4018: '<': signed/unsigned mismatch
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\pe.c(204,9): warning C4311: 'type cast': pointer truncation from 'PIMAGE_RELOCATION_BLOCK' to 'intptr_t'
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\pe.c(204,42): warning C4018: '<': signed/unsigned mismatch
+  power.c
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Cred\group.h(88,2): warning C4091: 'typedef ': ignored on left of '_gid_entries_' when no variable is declared
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\power.c(77,12): warning C4098: 'AuPowerReset': 'void' function returning a value
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\power.c(81,11): warning C4098: 'AuPowerReset': 'void' function returning a value
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\power.c(84,11): warning C4098: 'AuPowerReset': 'void' function returning a value
+  process.c
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Cred\group.h(88,2): warning C4091: 'typedef ': ignored on left of '_gid_entries_' when no variable is declared
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\process.c(172,13): warning C4267: 'return': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\process.c(191,16): warning C4013: 'UARTDebugOut' undefined; assuming extern returning int
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\process.c(354,13): warning C4013: 'isb_flush' undefined; assuming extern returning int
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\process.c(357,23): warning C4013: 'tlb_flush_vmalle1is' undefined; assuming extern returning int
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\process.c(358,11): warning C4013: 'dsb_ish' undefined; assuming extern returning int
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\process.c(383,35): warning C4244: 'function': conversion from 'uint64_t' to 'uint16_t', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\process.c(447,20): warning C4018: '<': signed/unsigned mismatch
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\process.c(495,19): warning C4013: 'AuProcessClean' undefined; assuming extern returning int
+  proctoken.c
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Cred\group.h(88,2): warning C4091: 'typedef ': ignored on left of '_gid_entries_' when no variable is declared
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(63,1): warning C4005: 'PCIE_ECAM': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(53): message : see previous definition of 'PCIE_ECAM'
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Board\imx8mp\imx8mp.h(37,1): warning C4067: unexpected tokens following preprocessor directive - expected a newline
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\proctoken.c(91,54): warning C4244: '=': conversion from 'uint64_t' to 'int', possible loss of data
+  fileserv.c
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\stdarg.h(44,1): warning C4005: 'STACKITEM': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\va_list.h(49): message : see previous definition of 'STACKITEM'
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\stdarg.h(55,1): warning C4005: 'va_start': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\va_list.h(56): message : see previous definition of 'va_start'
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Cred\group.h(88,2): warning C4091: 'typedef ': ignored on left of '_gid_entries_' when no variable is declared
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(63,1): warning C4005: 'PCIE_ECAM': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(53): message : see previous definition of 'PCIE_ECAM'
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Board\imx8mp\imx8mp.h(37,1): warning C4067: unexpected tokens following preprocessor directive - expected a newline
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Serv\fileserv.c(139,21): warning C4267: '=': conversion from 'size_t' to 'uint32_t', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Serv\fileserv.c(180,63): warning C4267: 'function': conversion from 'size_t' to 'uint32_t', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Serv\fileserv.c(185,64): warning C4267: 'function': conversion from 'size_t' to 'uint32_t', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Serv\fileserv.c(190,72): warning C4267: 'function': conversion from 'size_t' to 'uint32_t', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Serv\fileserv.c(195,64): warning C4267: 'function': conversion from 'size_t' to 'uint32_t', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Serv\fileserv.c(237,42): warning C4267: 'function': conversion from 'size_t' to 'uint32_t', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Serv\fileserv.c(243,60): warning C4267: 'function': conversion from 'size_t' to 'uint32_t', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Serv\fileserv.c(248,60): warning C4267: 'function': conversion from 'size_t' to 'uint32_t', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Serv\fileserv.c(254,60): warning C4267: 'function': conversion from 'size_t' to 'uint32_t', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Serv\fileserv.c(228,9): warning C4101: 'ret_bytes': unreferenced local variable
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Serv\fileserv.c(360,39): warning C4244: '=': conversion from 'uint64_t' to 'uint32_t', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Serv\fileserv.c(362,32): warning C4244: '=': conversion from 'uint16_t' to 'uint8_t', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Serv\fileserv.c(364,41): warning C4244: '=': conversion from 'uint64_t' to 'uint32_t', possible loss of data
+  thrserv.c
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\stdarg.h(44,1): warning C4005: 'STACKITEM': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\va_list.h(49): message : see previous definition of 'STACKITEM'
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\stdarg.h(55,1): warning C4005: 'va_start': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\va_list.h(56): message : see previous definition of 'va_start'
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Cred\group.h(88,2): warning C4091: 'typedef ': ignored on left of '_gid_entries_' when no variable is declared
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(63,1): warning C4005: 'PCIE_ECAM': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(53): message : see previous definition of 'PCIE_ECAM'
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Board\imx8mp\imx8mp.h(37,1): warning C4067: unexpected tokens following preprocessor directive - expected a newline
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Serv\thrserv.c(179,16): warning C4267: '+=': conversion from 'size_t' to 'int', possible loss of data
+  sndcore.c
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Cred\group.h(88,2): warning C4091: 'typedef ': ignored on left of '_gid_entries_' when no variable is declared
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(63,1): warning C4005: 'PCIE_ECAM': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(53): message : see previous definition of 'PCIE_ECAM'
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Board\imx8mp\imx8mp.h(37,1): warning C4067: unexpected tokens following preprocessor directive - expected a newline
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Sound\sndcore.c(156,9): warning C4013: 'memset' undefined; assuming extern returning int
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Sound\sndcore.c(161,32): warning C4244: '=': conversion from 'uint64_t' to 'uint16_t', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Sound\sndcore.c(175,45): warning C4244: 'function': conversion from 'uint64_t' to 'uint16_t', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Sound\sndcore.c(183,34): warning C4244: 'function': conversion from 'uint64_t' to 'uint16_t', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Sound\sndcore.c(193,10): warning C4013: 'strcpy' undefined; assuming extern returning int
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Sound\sndcore.c(224,41): warning C4244: 'function': conversion from 'uint64_t' to 'uint16_t', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Sound\sndcore.c(264,16): warning C4013: 'AuDevFSAddFile' undefined; assuming extern returning int
+  stack.c
+  stdio.c
+  Generating Code...
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Serv\thrserv.c(211): warning C4715: 'ProcessLoadExec': not all control paths return a value
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Serv\thrserv.c(264): warning C4715: 'SetFileToProcess': not all control paths return a value
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Serv\fileserv.c(305): warning C4715: 'CloseFile': not all control paths return a value
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Serv\fileserv.c(256): warning C4715: 'WriteFile': not all control paths return a value
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Serv\fileserv.c(437): warning C4715: 'ReadDir': not all control paths return a value
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\power.c(66): warning C4715: 'AuPowerDown': not all control paths return a value
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\pe.c(334): warning C4716: 'AuCoffResolveAddress': must return a value
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Net\socket.c(298): warning C4715: 'SocketIOControl': not all control paths return a value
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\Mm\vmmngr.c(368): warning C4715: 'AuVmmngrGetPage': not all control paths return a value
+  Compiling...
+  string.c
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\string.c(18,29): warning C4312: 'type cast': conversion from 'int' to 'unsigned char *' of greater size
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\string.c(18,29): warning C4047: '=': 'uint8_t' differs in levels of indirection from 'unsigned char *'
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\string.c(227,42): warning C4267: 'function': conversion from 'size_t' to 'unsigned int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\string.c(235,1): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+  timer.c
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(63,1): warning C4005: 'PCIE_ECAM': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\AA64\qemu.h(53): message : see previous definition of 'PCIE_ECAM'
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Board\imx8mp\imx8mp.h(37,1): warning C4067: unexpected tokens following preprocessor directive - expected a newline
+  Generating Code...
+C:\Users\paras\source\repos\grep-name\XenevaOS\KernelAA64\timer.c(134): warning C4715: 'AuroraTimerIsActive': not all control paths return a value
+C:\Program Files\Microsoft Visual Studio\18\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(1363,5): warning MSB8012: TargetPath(C:\Users\paras\source\repos\grep-name\XenevaOS\ARM64\Debug\xnkrnl.exe) does not match the Linker's OutputFile property value (C:\Users\paras\source\repos\grep-name\XenevaOS\Build\EFI\XENEVA\xnkrnl.exe). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
+LINK : warning LNK4075: ignoring '/INCREMENTAL' due to '/LTCG' specification
+     Creating library C:\Users\paras\source\repos\grep-name\XenevaOS\ARM64\Debug\xnkrnl.lib and object C:\Users\paras\source\repos\grep-name\XenevaOS\ARM64\Debug\xnkrnl.exp
+  LINK : /LTCG specified but no code generation required; remove /LTCG from the link command line to improve linker performance
+  KernelAA64.vcxproj -> C:\Users\paras\source\repos\grep-name\XenevaOS\ARM64\Debug\xnkrnl.exe
+          1 file(s) copied.
+  UEFI firmware (version edk2-stable202408-prebuilt.qemu.org built at 16:28:50 on Sep 12 2024)
+  ArmTrngLib could not be correctly initialized.
+EXEC : error : Image at 0007FDB6000 start failed: 00000001
+EXEC : error : Image at 0007FCB2000 start failed: Unsupported
+EXEC : error : Image at 0007FC37000 start failed: Not Found
+EXEC : error : Image at 0007FB5D000 start failed: Aborted
+  Tpm2SubmitCommand - Tcg2 - Not Found
+  Tpm2GetCapabilityPcrs fail!
+  Tpm2SubmitCommand - Tcg2 - Not Found
+  Image type X64 can't be loaded on AARCH64 UEFI system.
+  [2J[01;01H[=3h[2J[01;01H[2J[01;01H[=3h[2J[01;01H[*] Attempting to detach VHD: C:\XenevaOS\Xeneva.vhd
+  [*] Waiting for Windows to release file lock...
+  [+] File lock verified released.
+  [*] Launching QEMU...
+  [+] QEMU window closed by user.
+  
+  [-] Cleaning up...
+  [*] Attempting to attach VHD: C:\XenevaOS\Xeneva.vhd
+C:\Program Files\Microsoft Visual Studio\18\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppCommon.targets(155,5): error MSB3077: The command "copy "C:\Users\paras\source\repos\grep-name\XenevaOS\Build\EFI\XENEVA\xnkrnl.exe" "M:\EFI\XENEVA\xnkrnl.exe"
+C:\Program Files\Microsoft Visual Studio\18\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppCommon.targets(155,5): error MSB3077: python C:\Users\paras\source\repos\grep-name\XenevaOS\script-1.py
+C:\Program Files\Microsoft Visual Studio\18\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppCommon.targets(155,5): error MSB3077: :VCEnd" exited with return value 0, but errors were detected during execution. ExitCode was set to -1.

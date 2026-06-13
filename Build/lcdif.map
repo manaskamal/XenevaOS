@@ -1,0 +1,109 @@
+ lcdif
+
+ Timestamp is 6a2d4791 (Sat Jun 13 17:35:37 2026)
+
+ Preferred load address is ffffc00000400000
+
+ Start         Length     Name                   Class
+ 0001:00000000 00000558H .text$mn                CODE
+ 0002:00000000 00000020H .idata$5                DATA
+ 0002:00000020 000000c4H .rdata                  DATA
+ 0002:000000e4 000000e8H .rdata$zzzdbg           DATA
+ 0003:00000000 00000032H .bss                    DATA
+ 0004:00000000 00000030H .pdata                  DATA
+ 0005:00000000 00000001H .msvcjmc                DATA
+ 0006:00000000 00000062H .edata                  DATA
+ 0007:00000000 00000014H .idata$2                DATA
+ 0007:00000014 00000014H .idata$3                DATA
+ 0007:00000028 00000020H .idata$4                DATA
+ 0007:00000048 00000038H .idata$6                DATA
+
+  Address         Publics by Value              Rva+Base               Lib:Object
+
+ 0000:00000000       __hybrid_code_map          0000000000000000     <absolute>
+ 0000:00000000       __hybrid_code_map_count    0000000000000000     <absolute>
+ 0000:00000000       __arm64x_native_entrypoint 0000000000000000     <absolute>
+ 0000:00000000       __guard_eh_cont_table      0000000000000000     <absolute>
+ 0000:00000000       __enclave_config           0000000000000000     <absolute>
+ 0000:00000000       __arm64x_redirection_metadata_count 0000000000000000     <absolute>
+ 0000:00000000       __arm64x_extra_rfe_table   0000000000000000     <absolute>
+ 0000:00000000       __guard_fids_table         0000000000000000     <absolute>
+ 0000:00000000       __guard_check_icall_a64n_fptr 0000000000000000     <absolute>
+ 0000:00000000       __AbsoluteZero             0000000000000000     <absolute>
+ 0000:00000000       __guard_fids_count         0000000000000000     <absolute>
+ 0000:00000000       __hybrid_auxiliary_iat_copy 0000000000000000     <absolute>
+ 0000:00000000       __hybrid_auxiliary_iat     0000000000000000     <absolute>
+ 0000:00000000       __dynamic_value_reloc_table 0000000000000000     <absolute>
+ 0000:00000000       __guard_longjmp_count      0000000000000000     <absolute>
+ 0000:00000000       __guard_iat_count          0000000000000000     <absolute>
+ 0000:00000000       __guard_eh_cont_count      0000000000000000     <absolute>
+ 0000:00000000       __x64_code_ranges_to_entry_points 0000000000000000     <absolute>
+ 0000:00000000       __arm64x_extra_rfe_table_size 0000000000000000     <absolute>
+ 0000:00000000       __guard_iat_table          0000000000000000     <absolute>
+ 0000:00000000       __arm64x_redirection_metadata 0000000000000000     <absolute>
+ 0000:00000000       __guard_longjmp_table      0000000000000000     <absolute>
+ 0000:00000000       __volatile_metadata        0000000000000000     <absolute>
+ 0000:00000000       ___safe_se_handler_count   0000000000000000     <absolute>
+ 0000:00000000       __x64_code_ranges_to_entry_points_count 0000000000000000     <absolute>
+ 0000:00000000       ___safe_se_handler_table   0000000000000000     <absolute>
+ 0000:00000100       __guard_flags              0000000000000100     <absolute>
+ 0001:00000000       ?lcdif_write@@YAX_KII@Z    ffffc00000401000 f   main.obj
+ 0001:00000048       ?lcdif_read@@YAI_KI@Z      ffffc00000401048 f   main.obj
+ 0001:00000090       AuDriverUnload             ffffc00000401090 f   main.obj
+ 0001:000000b0       ?lcdif_wait@@YAXXZ         ffffc000004010b0 f   main.obj
+ 0001:00000108       ?lcdif_setmode@@YAXXZ      ffffc00000401108 f   main.obj
+ 0001:000003b8       AuDriverMain               ffffc000004013b8 f   main.obj
+ 0001:00000530       __JustMyCode_Default       ffffc00000401530 f i main.obj
+ 0001:00000530       __CheckForDebuggerJustMyCode ffffc00000401530 f i main.obj
+ 0001:00000534       UARTDebugOut               ffffc00000401534 f   xnkrnl:xnkrnl.exe
+ 0001:00000540       AuMapMMIO                  ffffc00000401540 f   xnkrnl:xnkrnl.exe
+ 0001:0000054c       AuPmmngrAlloc              ffffc0000040154c f   xnkrnl:xnkrnl.exe
+ 0002:00000000       __imp_AuMapMMIO            ffffc00000402000     xnkrnl:xnkrnl.exe
+ 0002:00000008       __imp_AuPmmngrAlloc        ffffc00000402008     xnkrnl:xnkrnl.exe
+ 0002:00000010       __imp_UARTDebugOut         ffffc00000402010     xnkrnl:xnkrnl.exe
+ 0002:00000018       \177xnkrnl_NULL_THUNK_DATA ffffc00000402018     xnkrnl:xnkrnl.exe
+ 0007:00000000       __IMPORT_DESCRIPTOR_xnkrnl ffffc00000407000     xnkrnl:xnkrnl.exe
+ 0007:00000014       __NULL_IMPORT_DESCRIPTOR   ffffc00000407014     xnkrnl:xnkrnl.exe
+
+ entry point at        0000:00000000
+
+ Static symbols
+
+ 0000:00000000       .debug$S                   ffffc00000400000     lcdif.exp
+ 0000:00000000       .debug$S                   ffffc00000400000     xnkrnl:xnkrnl.exe
+ 0000:00000000       .debug$S                   ffffc00000400000     xnkrnl:xnkrnl.exe
+ 0000:00000000       .debug$S                   ffffc00000400000     xnkrnl:xnkrnl.exe
+ 0001:00000100       $LN6                       ffffc00000401100     main.obj
+ 0001:00000528       $LN7                       ffffc00000401528     main.obj
+ 0002:00000020       $SG3211                    ffffc00000402020     main.obj
+ 0002:00000048       $SG3212                    ffffc00000402048     main.obj
+ 0002:00000078       $SG3214                    ffffc00000402078     main.obj
+ 0002:000000a0       $SG3215                    ffffc000004020a0     main.obj
+ 0003:00000000       ?_base@@3_KA               ffffc00000403000     main.obj
+ 0003:00000008       ?fb_phys@@3_KA             ffffc00000403008     main.obj
+ 0003:00000010       ?hact@@3IA                 ffffc00000403010     main.obj
+ 0003:00000014       ?vact@@3IA                 ffffc00000403014     main.obj
+ 0003:00000018       ?hfp@@3IA                  ffffc00000403018     main.obj
+ 0003:0000001c       ?hbp@@3IA                  ffffc0000040301c     main.obj
+ 0003:00000020       ?hsw@@3IA                  ffffc00000403020     main.obj
+ 0003:00000024       ?vfp@@3IA                  ffffc00000403024     main.obj
+ 0003:00000028       ?vbp@@3IA                  ffffc00000403028     main.obj
+ 0003:0000002c       ?vsw@@3IA                  ffffc0000040302c     main.obj
+ 0003:00000030       ?inv_hs@@3_NA              ffffc00000403030     main.obj
+ 0003:00000031       ?inv_vs@@3_NA              ffffc00000403031     main.obj
+ 0005:00000000       __FB67082D_main@cpp        ffffc00000405000     main.obj
+ 0006:00000000       .edata                     ffffc00000406000     lcdif.exp
+ 0006:00000028       rgpv                       ffffc00000406028     lcdif.exp
+ 0006:00000030       rgszName                   ffffc00000406030     lcdif.exp
+ 0006:00000038       rgwOrd                     ffffc00000406038     lcdif.exp
+ 0006:0000003c       szName                     ffffc0000040603c     lcdif.exp
+ 0006:00000046       $N00001                    ffffc00000406046     lcdif.exp
+ 0006:00000053       $N00002                    ffffc00000406053     lcdif.exp
+ 0007:00000074       .idata$6                   ffffc00000407074     xnkrnl:xnkrnl.exe
+
+ Exports
+
+  ordinal    name
+
+        1    AuDriverMain
+        2    AuDriverUnload

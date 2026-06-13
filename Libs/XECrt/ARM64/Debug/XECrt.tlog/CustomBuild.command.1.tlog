@@ -1,0 +1,2 @@
+^C:\USERS\PARAS\SOURCE\REPOS\GREP-NAME\XENEVAOS\LIBS\XECRT\CRT0_ARM64.S
+clang --target=aarch64-windows-msvc -fms-compatibility -fms-extensions  -c -o "ARM64\Debug\crt0_arm64.obj" "C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XECrt\crt0_arm64.s"

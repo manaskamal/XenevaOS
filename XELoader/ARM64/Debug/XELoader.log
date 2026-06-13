@@ -1,1 +1,58 @@
-﻿
+﻿  Performing Custom Build Tools
+  Performing Custom Build Tools
+cl : command line warning D9025: overriding '/sdl' with '/GS-'
+cl : command line warning D9002: ignoring unknown option '/arch:SSE2'
+  main.cpp
+C:\Users\paras\source\repos\grep-name\XenevaOS\XELoader\pe_.h(272,25): warning C4200: nonstandard extension used: zero-sized array in struct/union
+C:\Users\paras\source\repos\grep-name\XenevaOS\XELoader\pe_.h(272,25): message : This member will be ignored by a defaulted constructor or copy/move assignment operator
+C:\Users\paras\source\repos\grep-name\XenevaOS\XELoader\main.cpp(108,31): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\XELoader\main.cpp(189,25): warning C4244: 'initializing': conversion from 'uint64_t' to 'intptr_t', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\XELoader\main.cpp(190,20): warning C4244: 'initializing': conversion from 'uint64_t' to 'intptr_t', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\XELoader\main.cpp(206,31): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+  pe_.cpp
+C:\Users\paras\source\repos\grep-name\XenevaOS\XELoader\pe_.h(272,25): warning C4200: nonstandard extension used: zero-sized array in struct/union
+C:\Users\paras\source\repos\grep-name\XenevaOS\XELoader\pe_.h(272,25): message : This member will be ignored by a defaulted constructor or copy/move assignment operator
+C:\Users\paras\source\repos\grep-name\XenevaOS\XELoader\pe_.cpp(91,42): warning C4018: '<': signed/unsigned mismatch
+C:\Users\paras\source\repos\grep-name\XenevaOS\XELoader\pe_.cpp(151,20): warning C4018: '<': signed/unsigned mismatch
+C:\Users\paras\source\repos\grep-name\XenevaOS\XELoader\pe_.cpp(188,79): warning C4244: 'argument': conversion from 'unsigned __int64' to 'const intptr_t', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\XELoader\pe_.cpp(222,27): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\XELoader\pe_.cpp(231,79): warning C4244: 'argument': conversion from 'unsigned __int64' to 'const intptr_t', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\XELoader\pe_.cpp(272,79): warning C4244: 'argument': conversion from 'unsigned __int64' to 'const intptr_t', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\XELoader\pe_.cpp(334,80): warning C4244: 'argument': conversion from 'unsigned __int64' to 'const intptr_t', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\includes\stdint.h(200,1): warning C4311: 'type cast': pointer truncation from 'T *' to 'intptr_t'
+          with
+          [
+              T=_IMAGE_RELOCATION_BLOCK_
+          ]
+C:\Users\paras\source\repos\grep-name\XenevaOS\XELoader\pe_.cpp(91): message : see reference to function template instantiation 'intptr_t raw_diff<_IMAGE_RELOCATION_BLOCK_,_IMAGE_RELOCATION_BLOCK_>(T *,U *)' being compiled
+          with
+          [
+              T=_IMAGE_RELOCATION_BLOCK_,
+              U=_IMAGE_RELOCATION_BLOCK_
+          ]
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\includes\stdint.h(200,1): warning C4302: 'type cast': truncation from 'T *' to 'intptr_t'
+          with
+          [
+              T=_IMAGE_RELOCATION_BLOCK_
+          ]
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\includes\stdint.h(200,1): warning C4311: 'type cast': pointer truncation from 'U *' to 'intptr_t'
+          with
+          [
+              U=_IMAGE_RELOCATION_BLOCK_
+          ]
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\includes\stdint.h(200,1): warning C4302: 'type cast': truncation from 'U *' to 'intptr_t'
+          with
+          [
+              U=_IMAGE_RELOCATION_BLOCK_
+          ]
+  XELdrObject.cpp
+C:\Users\paras\source\repos\grep-name\XenevaOS\XELoader\pe_.h(272,25): warning C4200: nonstandard extension used: zero-sized array in struct/union
+C:\Users\paras\source\repos\grep-name\XenevaOS\XELoader\pe_.h(272,25): message : This member will be ignored by a defaulted constructor or copy/move assignment operator
+C:\Users\paras\source\repos\grep-name\XenevaOS\XELoader\XELdrObject.cpp(85,50): warning C4267: 'argument': conversion from 'size_t' to 'unsigned int', possible loss of data
+  Generating Code...
+C:\Program Files\Microsoft Visual Studio\18\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(1363,5): warning MSB8012: TargetPath(C:\Users\paras\source\repos\grep-name\XenevaOS\ARM64\Debug\xeldr.exe) does not match the Linker's OutputFile property value (C:\Users\paras\source\repos\grep-name\XenevaOS\Build\xeldr.exe). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
+LINK : warning LNK4075: ignoring '/INCREMENTAL' due to '/LTCG' specification
+     Creating library C:\Users\paras\source\repos\grep-name\XenevaOS\ARM64\Debug\xeldr.lib and object C:\Users\paras\source\repos\grep-name\XenevaOS\ARM64\Debug\xeldr.exp
+  LINK : /LTCG specified but no code generation required; remove /LTCG from the link command line to improve linker performance
+  XELoader.vcxproj -> C:\Users\paras\source\repos\grep-name\XenevaOS\ARM64\Debug\xeldr.exe
+          1 file(s) copied.

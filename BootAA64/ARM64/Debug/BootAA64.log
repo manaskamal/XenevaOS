@@ -1,1 +1,272 @@
-﻿
+﻿  Performing Custom Build Tools
+  Performing Custom Build Tools
+cl : command line warning D9035: option 'Gm' has been deprecated and will be removed in a future release
+cl : command line warning D9025: overriding '/sdl' with '/GS-'
+cl : command line warning D9002: ignoring unknown option '/arch:SSE2'
+  xnout.cpp
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\AArch64\ProcessorBind.h(24,1): warning C4005: 'MDE_CPU_AARCH64': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BootAA64\xnout.cpp : message : see previous definition of 'MDE_CPU_AARCH64'
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(54,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(55,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(56,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(57,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(58,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(59,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(60,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(61,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(62,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(63,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(64,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(85,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(86,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(87,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(1266,11): warning C4162: '_ReturnAddress': no function with C linkage found
+C:\Users\paras\source\repos\grep-name\XenevaOS\BootAA64\xnldr.h(38,1): warning C4005: 'SIZE_MAX': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\stdint.h(172): message : see previous definition of 'SIZE_MAX'
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Protocol\GraphicsOutput.h(23,1): warning C4005: 'EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BootAA64\xnldr.h(43): message : see previous definition of 'EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID'
+  xnldr.cpp
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\AArch64\ProcessorBind.h(24,1): warning C4005: 'MDE_CPU_AARCH64': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BootAA64\xnldr.cpp : message : see previous definition of 'MDE_CPU_AARCH64'
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(54,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(55,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(56,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(57,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(58,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(59,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(60,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(61,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(62,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(63,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(64,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(85,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(86,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(87,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(1266,11): warning C4162: '_ReturnAddress': no function with C linkage found
+C:\Users\paras\source\repos\grep-name\XenevaOS\BootAA64\xnldr.h(38,1): warning C4005: 'SIZE_MAX': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\stdint.h(172): message : see previous definition of 'SIZE_MAX'
+C:\Users\paras\source\repos\grep-name\XenevaOS\BootAA64\xnldr.h(43,1): warning C4005: 'EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Protocol\GraphicsOutput.h(23): message : see previous definition of 'EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID'
+  video.cpp
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\AArch64\ProcessorBind.h(24,1): warning C4005: 'MDE_CPU_AARCH64': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BootAA64\video.cpp : message : see previous definition of 'MDE_CPU_AARCH64'
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(54,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(55,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(56,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(57,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(58,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(59,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(60,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(61,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(62,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(63,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(64,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(85,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(86,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(87,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(1266,11): warning C4162: '_ReturnAddress': no function with C linkage found
+C:\Users\paras\source\repos\grep-name\XenevaOS\BootAA64\xnldr.h(38,1): warning C4005: 'SIZE_MAX': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\stdint.h(172): message : see previous definition of 'SIZE_MAX'
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Protocol\GraphicsOutput.h(23,1): warning C4005: 'EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BootAA64\xnldr.h(43): message : see previous definition of 'EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID'
+  vector.cpp
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\AArch64\ProcessorBind.h(24,1): warning C4005: 'MDE_CPU_AARCH64': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BootAA64\vector.cpp : message : see previous definition of 'MDE_CPU_AARCH64'
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(54,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(55,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(56,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(57,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(58,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(59,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(60,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(61,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(62,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(63,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(64,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(85,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(86,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(87,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(1266,11): warning C4162: '_ReturnAddress': no function with C linkage found
+C:\Users\paras\source\repos\grep-name\XenevaOS\BootAA64\xnldr.h(38,1): warning C4005: 'SIZE_MAX': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\stdint.h(172): message : see previous definition of 'SIZE_MAX'
+  uart0.cpp
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\AArch64\ProcessorBind.h(24,1): warning C4005: 'MDE_CPU_AARCH64': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BootAA64\uart0.cpp : message : see previous definition of 'MDE_CPU_AARCH64'
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(54,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(55,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(56,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(57,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(58,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(59,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(60,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(61,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(62,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(63,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(64,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(85,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(86,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(87,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(1266,11): warning C4162: '_ReturnAddress': no function with C linkage found
+C:\Users\paras\source\repos\grep-name\XenevaOS\BootAA64\xnldr.h(38,1): warning C4005: 'SIZE_MAX': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\stdint.h(172): message : see previous definition of 'SIZE_MAX'
+C:\Users\paras\source\repos\grep-name\XenevaOS\BootAA64\uart0.cpp(61,1): warning C4067: unexpected tokens following preprocessor directive - expected a newline
+  mbox.cpp
+  physm.cpp
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\AArch64\ProcessorBind.h(24,1): warning C4005: 'MDE_CPU_AARCH64': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BootAA64\physm.cpp : message : see previous definition of 'MDE_CPU_AARCH64'
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(54,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(55,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(56,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(57,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(58,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(59,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(60,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(61,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(62,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(63,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(64,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(85,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(86,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(87,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(1266,11): warning C4162: '_ReturnAddress': no function with C linkage found
+C:\Users\paras\source\repos\grep-name\XenevaOS\BootAA64\xnldr.h(38,1): warning C4005: 'SIZE_MAX': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\stdint.h(172): message : see previous definition of 'SIZE_MAX'
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\stdint.h(213,1): warning C4311: 'type cast': pointer truncation from 'T *' to 'intptr_t'
+          with
+          [
+              T=EFI_MEMORY_DESCRIPTOR
+          ]
+C:\Users\paras\source\repos\grep-name\XenevaOS\BootAA64\physm.cpp(64): message : see reference to function template instantiation 'intptr_t raw_diff<EFI_MEMORY_DESCRIPTOR,EFI_MEMORY_DESCRIPTOR>(T *,U *)' being compiled
+          with
+          [
+              T=EFI_MEMORY_DESCRIPTOR,
+              U=EFI_MEMORY_DESCRIPTOR
+          ]
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\stdint.h(213,1): warning C4311: 'type cast': pointer truncation from 'U *' to 'intptr_t'
+          with
+          [
+              U=EFI_MEMORY_DESCRIPTOR
+          ]
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\stdint.h(213,1): warning C4311: 'type cast': pointer truncation from 'T *' to 'intptr_t'
+          with
+          [
+              T=paddr_t
+          ]
+C:\Users\paras\source\repos\grep-name\XenevaOS\BootAA64\physm.cpp(81): message : see reference to function template instantiation 'intptr_t raw_diff<paddr_t,paddr_t>(T *,U *)' being compiled
+          with
+          [
+              T=paddr_t,
+              U=paddr_t
+          ]
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\stdint.h(213,1): warning C4311: 'type cast': pointer truncation from 'U *' to 'intptr_t'
+          with
+          [
+              U=paddr_t
+          ]
+  pe.cpp
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\AArch64\ProcessorBind.h(24,1): warning C4005: 'MDE_CPU_AARCH64': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BootAA64\pe.cpp : message : see previous definition of 'MDE_CPU_AARCH64'
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(54,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(55,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(56,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(57,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(58,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(59,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(60,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(61,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(62,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(63,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(64,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(85,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(86,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(87,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(1266,11): warning C4162: '_ReturnAddress': no function with C linkage found
+C:\Users\paras\source\repos\grep-name\XenevaOS\BootAA64\xnldr.h(38,1): warning C4005: 'SIZE_MAX': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\stdint.h(172): message : see previous definition of 'SIZE_MAX'
+  paging.cpp
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\AArch64\ProcessorBind.h(24,1): warning C4005: 'MDE_CPU_AARCH64': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BootAA64\paging.cpp : message : see previous definition of 'MDE_CPU_AARCH64'
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(54,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(55,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(56,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(57,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(58,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(59,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(60,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(61,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(62,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(63,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(64,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(85,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(86,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(87,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(1266,11): warning C4162: '_ReturnAddress': no function with C linkage found
+C:\Users\paras\source\repos\grep-name\XenevaOS\BootAA64\xnldr.h(38,1): warning C4005: 'SIZE_MAX': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\stdint.h(172): message : see previous definition of 'SIZE_MAX'
+  mem.cpp
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\AArch64\ProcessorBind.h(24,1): warning C4005: 'MDE_CPU_AARCH64': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BootAA64\mem.cpp : message : see previous definition of 'MDE_CPU_AARCH64'
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(54,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(55,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(56,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(57,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(58,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(59,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(60,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(61,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(62,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(63,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(64,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(85,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(86,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(87,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(1266,11): warning C4162: '_ReturnAddress': no function with C linkage found
+C:\Users\paras\source\repos\grep-name\XenevaOS\BootAA64\xnldr.h(38,1): warning C4005: 'SIZE_MAX': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\stdint.h(172): message : see previous definition of 'SIZE_MAX'
+  imx8mp_uartc.cpp
+C:\Users\paras\source\repos\grep-name\XenevaOS\BootAA64\imx8mp\imx8mp_uartc.cpp(32,1): warning C4067: unexpected tokens following preprocessor directive - expected a newline
+  file.cpp
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\AArch64\ProcessorBind.h(24,1): warning C4005: 'MDE_CPU_AARCH64': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BootAA64\file.cpp : message : see previous definition of 'MDE_CPU_AARCH64'
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(54,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(55,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(56,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(57,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(58,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(59,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(60,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(61,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(62,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(63,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(64,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(85,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(86,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(87,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(1266,11): warning C4162: '_ReturnAddress': no function with C linkage found
+C:\Users\paras\source\repos\grep-name\XenevaOS\BootAA64\xnldr.h(38,1): warning C4005: 'SIZE_MAX': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\stdint.h(172): message : see previous definition of 'SIZE_MAX'
+  devicetree.cpp
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\AArch64\ProcessorBind.h(24,1): warning C4005: 'MDE_CPU_AARCH64': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BootAA64\devicetree.cpp : message : see previous definition of 'MDE_CPU_AARCH64'
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(54,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(55,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(56,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(57,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(58,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(59,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(60,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(61,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(62,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(63,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(64,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(85,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(86,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(87,1): warning C4804: '/': unsafe use of type 'bool' in operation
+C:\Users\paras\source\repos\grep-name\XenevaOS\Boot\include\Base.h(1266,11): warning C4162: '_ReturnAddress': no function with C linkage found
+  clib.cpp
+  Generating Code...
+C:\Program Files\Microsoft Visual Studio\18\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(1363,5): warning MSB8012: TargetPath(C:\Users\paras\source\repos\grep-name\XenevaOS\ARM64\Debug\BOOTAA64.efi) does not match the Linker's OutputFile property value (C:\Users\paras\source\repos\grep-name\XenevaOS\Build\EFI\BOOT\BOOTAA64.efi). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
+LINK : warning LNK4075: ignoring '/INCREMENTAL' due to '/LTCG' specification
+  LINK : /LTCG specified but no code generation required; remove /LTCG from the link command line to improve linker performance
+  BootAA64.vcxproj -> C:\Users\paras\source\repos\grep-name\XenevaOS\ARM64\Debug\BOOTAA64.efi
+          1 file(s) copied.

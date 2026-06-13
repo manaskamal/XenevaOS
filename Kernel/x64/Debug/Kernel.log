@@ -1,1 +1,2 @@
-﻿
+﻿  Hal\x86_64_intrs.asm
+C:\Program Files\Microsoft Visual Studio\18\Community\MSBuild\Microsoft\VC\v160\BuildCustomizations\nasm.targets(50,5): error MSB3721: The command ""C:\Program Files\Microsoft Visual Studio\18\Community\VC\"nasm.exe -Xvc -f win64 -o "x64\Debug\x86_64_intrs.obj"  "C:\Users\paras\source\repos\grep-name\XenevaOS\Kernel\Hal\x86_64_intrs.asm"" exited with code 1.

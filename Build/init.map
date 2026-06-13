@@ -1,0 +1,722 @@
+ init
+
+ Timestamp is 6a2d4786 (Sat Jun 13 17:35:26 2026)
+
+ Preferred load address is 0000000600000000
+
+ Start         Length     Name                   Class
+ 0001:00000000 000004c0H .text                   CODE
+ 0001:000004c0 00011c54H .text$mn                CODE
+ 0002:00000000 00000488H .rdata                  DATA
+ 0002:00000488 000000b4H .rdata$zzzdbg           DATA
+ 0002:0000053c 00000024H .xdata                  DATA
+ 0003:00000000 00000060H .data                   DATA
+ 0003:00000060 000003fcH .bss                    DATA
+ 0004:00000000 00000590H .pdata                  DATA
+ 0005:00000000 00000002H .msvcjmc                DATA
+ 0006:00000000 00000826H .edata                  DATA
+
+  Address         Publics by Value              Rva+Base               Lib:Object
+
+ 0000:00000000       __guard_iat_count          0000000000000000     <absolute>
+ 0000:00000000       ___safe_se_handler_table   0000000000000000     <absolute>
+ 0000:00000000       __x64_code_ranges_to_entry_points_count 0000000000000000     <absolute>
+ 0000:00000000       __arm64x_extra_rfe_table   0000000000000000     <absolute>
+ 0000:00000000       __hybrid_code_map          0000000000000000     <absolute>
+ 0000:00000000       __arm64x_redirection_metadata 0000000000000000     <absolute>
+ 0000:00000000       __hybrid_code_map_count    0000000000000000     <absolute>
+ 0000:00000000       __volatile_metadata        0000000000000000     <absolute>
+ 0000:00000000       __arm64x_native_entrypoint 0000000000000000     <absolute>
+ 0000:00000000       __AbsoluteZero             0000000000000000     <absolute>
+ 0000:00000000       __arm64x_extra_rfe_table_size 0000000000000000     <absolute>
+ 0000:00000000       __hybrid_auxiliary_iat_copy 0000000000000000     <absolute>
+ 0000:00000000       ___safe_se_handler_count   0000000000000000     <absolute>
+ 0000:00000000       __guard_iat_table          0000000000000000     <absolute>
+ 0000:00000000       __guard_eh_cont_table      0000000000000000     <absolute>
+ 0000:00000000       __guard_check_icall_a64n_fptr 0000000000000000     <absolute>
+ 0000:00000000       __hybrid_auxiliary_iat     0000000000000000     <absolute>
+ 0000:00000000       __enclave_config           0000000000000000     <absolute>
+ 0000:00000000       __arm64x_redirection_metadata_count 0000000000000000     <absolute>
+ 0000:00000000       __guard_fids_count         0000000000000000     <absolute>
+ 0000:00000000       __dynamic_value_reloc_table 0000000000000000     <absolute>
+ 0000:00000000       __guard_fids_table         0000000000000000     <absolute>
+ 0000:00000000       __guard_longjmp_count      0000000000000000     <absolute>
+ 0000:00000000       __x64_code_ranges_to_entry_points 0000000000000000     <absolute>
+ 0000:00000000       __guard_longjmp_table      0000000000000000     <absolute>
+ 0000:00000000       __guard_eh_cont_count      0000000000000000     <absolute>
+ 0000:00000100       __guard_flags              0000000000000100     <absolute>
+ 0001:00000000       _aumain                    0000000600001000     crt0arm64.obj
+ 0001:0000002c       __chkstk                   000000060000102c     XEClib:_callbase_arm64.obj
+ 0001:00000030       _KePrint                   0000000600001030     XEClib:_callbase_arm64.obj
+ 0001:00000048       _KePauseThread             0000000600001048     XEClib:_callbase_arm64.obj
+ 0001:00000058       _KeGetThreadID             0000000600001058     XEClib:_callbase_arm64.obj
+ 0001:00000068       _KeGetProcessID            0000000600001068     XEClib:_callbase_arm64.obj
+ 0001:00000078       _KeProcessExit             0000000600001078     XEClib:_callbase_arm64.obj
+ 0001:00000088       _KeProcessWaitForTermination 0000000600001088     XEClib:_callbase_arm64.obj
+ 0001:00000098       _KeCreateProcess           0000000600001098     XEClib:_callbase_arm64.obj
+ 0001:000000a8       _KeProcessLoadExec         00000006000010a8     XEClib:_callbase_arm64.obj
+ 0001:000000b8       _KeProcessSleep            00000006000010b8     XEClib:_callbase_arm64.obj
+ 0001:000000c8       _KeSetSignal               00000006000010c8     XEClib:_callbase_arm64.obj
+ 0001:000000d8       _KeCreateSharedMem         00000006000010d8     XEClib:_callbase_arm64.obj
+ 0001:000000e8       _KeObtainSharedMem         00000006000010e8     XEClib:_callbase_arm64.obj
+ 0001:000000f8       _KeUnmapSharedMem          00000006000010f8     XEClib:_callbase_arm64.obj
+ 0001:00000108       _KeMemMap                  0000000600001108     XEClib:_callbase_arm64.obj
+ 0001:00000118       _KeMemUnmap                0000000600001118     XEClib:_callbase_arm64.obj
+ 0001:00000128       _KeGetProcessHeapMem       0000000600001128     XEClib:_callbase_arm64.obj
+ 0001:00000138       _KeOpenFile                0000000600001138     XEClib:_callbase_arm64.obj
+ 0001:00000148       _KeReadFile                0000000600001148     XEClib:_callbase_arm64.obj
+ 0001:00000158       _KeWriteFile               0000000600001158     XEClib:_callbase_arm64.obj
+ 0001:00000168       _KeCreateDir               0000000600001168     XEClib:_callbase_arm64.obj
+ 0001:00000178       _KeRemoveFile              0000000600001178     XEClib:_callbase_arm64.obj
+ 0001:00000188       _KeCloseFile               0000000600001188     XEClib:_callbase_arm64.obj
+ 0001:00000198       _KeFileIoControl           0000000600001198     XEClib:_callbase_arm64.obj
+ 0001:000001a8       _KeFileStat                00000006000011a8     XEClib:_callbase_arm64.obj
+ 0001:000001b8       _KeGetSystemTimerTick      00000006000011b8     XEClib:_callbase_arm64.obj
+ 0001:000001c8       _KeGetFontID               00000006000011c8     XEClib:_callbase_arm64.obj
+ 0001:000001d8       _KeGetNumFonts             00000006000011d8     XEClib:_callbase_arm64.obj
+ 0001:000001e8       _KeGetFontSize             00000006000011e8     XEClib:_callbase_arm64.obj
+ 0001:000001f8       _KeMemMapDirty             00000006000011f8     XEClib:_callbase_arm64.obj
+ 0001:00000208       _KeCreateTTY               0000000600001208     XEClib:_callbase_arm64.obj
+ 0001:00000218       _KeCreateThread            0000000600001218     XEClib:_callbase_arm64.obj
+ 0001:00000228       _KeSetFileToProcess        0000000600001228     XEClib:_callbase_arm64.obj
+ 0001:00000238       _KeProcessHeapUnmap        0000000600001238     XEClib:_callbase_arm64.obj
+ 0001:00000248       _KeSendSignal              0000000600001248     XEClib:_callbase_arm64.obj
+ 0001:00000258       _KeGetCurrentTime          0000000600001258     XEClib:_callbase_arm64.obj
+ 0001:00000268       _KeOpenDir                 0000000600001268     XEClib:_callbase_arm64.obj
+ 0001:00000278       _KeReadDir                 0000000600001278     XEClib:_callbase_arm64.obj
+ 0001:00000288       _KeCreateTimer             0000000600001288     XEClib:_callbase_arm64.obj
+ 0001:00000298       _KeStartTimer              0000000600001298     XEClib:_callbase_arm64.obj
+ 0001:000002a8       _KeStopTimer               00000006000012a8     XEClib:_callbase_arm64.obj
+ 0001:000002b8       _KeDestroyTimer            00000006000012b8     XEClib:_callbase_arm64.obj
+ 0001:000002c8       _KeProcessGetFileDesc      00000006000012c8     XEClib:_callbase_arm64.obj
+ 0001:000002d8       _KeFileSetOffset           00000006000012d8     XEClib:_callbase_arm64.obj
+ 0001:000002e8       gettimeofday               00000006000012e8     XEClib:_callbase_arm64.obj
+ 0001:000002f8       socket                     00000006000012f8     XEClib:_callbase_arm64.obj
+ 0001:00000308       connect                    0000000600001308     XEClib:_callbase_arm64.obj
+ 0001:00000318       send                       0000000600001318     XEClib:_callbase_arm64.obj
+ 0001:00000328       receive                    0000000600001328     XEClib:_callbase_arm64.obj
+ 0001:00000338       socket_setopt              0000000600001338     XEClib:_callbase_arm64.obj
+ 0001:00000348       bind                       0000000600001348     XEClib:_callbase_arm64.obj
+ 0001:00000358       accept                     0000000600001358     XEClib:_callbase_arm64.obj
+ 0001:00000368       listen                     0000000600001368     XEClib:_callbase_arm64.obj
+ 0001:00000378       _KeCreatePipe              0000000600001378     XEClib:_callbase_arm64.obj
+ 0001:00000388       _KeGetStorageDiskInfo      0000000600001388     XEClib:_callbase_arm64.obj
+ 0001:00000398       _KeGetStoragePartitionInfo 0000000600001398     XEClib:_callbase_arm64.obj
+ 0001:000003a8       _KeGetEnvironmentBlock     00000006000013a8     XEClib:_callbase_arm64.obj
+ 0001:000003b8       _KeCredChangeID            00000006000013b8     XEClib:_callbase_arm64.obj
+ 0001:000003c8       _KeCredAddSGroup           00000006000013c8     XEClib:_callbase_arm64.obj
+ 0001:000003d8       _KeCredSetCap              00000006000013d8     XEClib:_callbase_arm64.obj
+ 0001:000003e8       _KeCredGetCap              00000006000013e8     XEClib:_callbase_arm64.obj
+ 0001:000003f8       _KeSetUID                  00000006000013f8     XEClib:_callbase_arm64.obj
+ 0001:00000408       _KeSetGID                  0000000600001408     XEClib:_callbase_arm64.obj
+ 0001:00000418       _KeGetGlobalGroupID        0000000600001418     XEClib:_callbase_arm64.obj
+ 0001:00000428       _KeProcessTokenAddSelf     0000000600001428     XEClib:_callbase_arm64.obj
+ 0001:00000438       _KeProcessTokenGetThreadID 0000000600001438     XEClib:_callbase_arm64.obj
+ 0001:00000448       _KeProcessTokenRemoveSelf  0000000600001448     XEClib:_callbase_arm64.obj
+ 0001:00000458       _KePowerDown               0000000600001458     XEClib:_callbase_arm64.obj
+ 0001:00000468       _KePowerReset              0000000600001468     XEClib:_callbase_arm64.obj
+ 0001:00000478       _KeGetCurrentUS            0000000600001478     XEClib:_callbase_arm64.obj
+ 0001:00000488       _KeGetCurrentMS            0000000600001488     XEClib:_callbase_arm64.obj
+ 0001:00000498       _store_stack_param         0000000600001498     XEClib:store_stack_arm64.obj
+ 0001:000004c0       ?_fb_draw_pixel@@YAXHHI@Z  00000006000014c0 f   splash.obj
+ 0001:00000530       ?_draw_bitmap_@@YAXHHHHPEAE@Z 0000000600001530 f   splash.obj
+ 0001:00000768       ?_fill_screen@@YAXIIIII@Z  0000000600001768 f   splash.obj
+ 0001:00000818       ?SplashScreenShow@@YAXXZ   0000000600001818 f   splash.obj
+ 0001:00000a88       __CheckForDebuggerJustMyCode 0000000600001a88 f i splash.obj
+ 0001:00000a88       __JustMyCode_Default       0000000600001a88 f i splash.obj
+ 0001:00000a90       ?initSetupBasicEnvironmentVars@@YAXXZ 0000000600001a90 f   _init.obj
+ 0001:00000b40       ?init_basic_gid_to_dev@@YAXXZ 0000000600001b40 f   _init.obj
+ 0001:00000c70       ?_play_startup_sound@@YAXXZ 0000000600001c70 f   _init.obj
+ 0001:00000ed8       ?_init_handle_request@@YAXPEAU_init_request_msg_@@@Z 0000000600001ed8 f   _init.obj
+ 0001:00000f50       main                       0000000600001f50 f   _init.obj
+ 0001:000014b8       strcmp                     00000006000024b8 f   XEClib:string.obj
+ 0001:00001560       strcpy                     0000000600002560 f   XEClib:string.obj
+ 0001:000015c8       strlen                     00000006000025c8 f   XEClib:string.obj
+ 0001:00001618       strnlen                    0000000600002618 f   XEClib:string.obj
+ 0001:000016c0       strncmp                    00000006000026c0 f   XEClib:string.obj
+ 0001:00001790       strncpy                    0000000600002790 f   XEClib:string.obj
+ 0001:00001898       strchr                     0000000600002898 f   XEClib:string.obj
+ 0001:000018f8       strcasecmp                 00000006000028f8 f   XEClib:string.obj
+ 0001:000019a8       strncasecmp                00000006000029a8 f   XEClib:string.obj
+ 0001:00001c30       strcasestr                 0000000600002c30 f   XEClib:string.obj
+ 0001:00001cf0       strcat                     0000000600002cf0 f   XEClib:string.obj
+ 0001:00001e10       strncat                    0000000600002e10 f   XEClib:string.obj
+ 0001:00001f88       strdup                     0000000600002f88 f   XEClib:string.obj
+ 0001:00002048       strerror                   0000000600003048 f   XEClib:string.obj
+ 0001:00002068       strrchr                    0000000600003068 f   XEClib:string.obj
+ 0001:00002100       strspn                     0000000600003100 f   XEClib:string.obj
+ 0001:000021e0       strtok                     00000006000031e0 f   XEClib:string.obj
+ 0001:00002390       strtok_r                   0000000600003390 f   XEClib:string.obj
+ 0001:00002550       strstr                     0000000600003550 f   XEClib:string.obj
+ 0001:000025f0       strtoll                    00000006000035f0 f   XEClib:string.obj
+ 0001:00002678       memset                     0000000600003678 f   XEClib:string.obj
+ 0001:000026e0       memcpy                     00000006000036e0 f   XEClib:string.obj
+ 0001:00002758       memcmp                     0000000600003758 f   XEClib:string.obj
+ 0001:00002818       bcopy                      0000000600003818 f   XEClib:string.obj
+ 0001:00002898       bzero                      0000000600003898 f   XEClib:string.obj
+ 0001:000028c0       ffs                        00000006000038c0 f   XEClib:string.obj
+ 0001:00002928       memmove                    0000000600003928 f   XEClib:string.obj
+ 0001:00002948       memchr                     0000000600003948 f   XEClib:string.obj
+ 0001:000029e0       ?memset@@YAXPEAXEI@Z       00000006000039e0 f   XEClib:string.obj
+ 0001:00002a40       ?memcpy@@YAPEAXPEAX0I@Z    0000000600003a40 f   XEClib:string.obj
+ 0001:00002ab8       ?strchrnul@@YAPEADPEBDH@Z  0000000600003ab8 f   XEClib:string.obj
+ 0001:00002c78       malloc                     0000000600003c78 f   XEClib:_heap.obj
+ 0001:00002c98       realloc                    0000000600003c98 f   XEClib:_heap.obj
+ 0001:00002cc0       calloc                     0000000600003cc0 f   XEClib:_heap.obj
+ 0001:00002ce8       free                       0000000600003ce8 f   XEClib:_heap.obj
+ 0001:00002d08       ?xe_request_page@@YAPEAXH@Z 0000000600003d08 f   XEClib:_heap.obj
+ 0001:00002d40       ?xe_free_page@@YAXPEAXH@Z  0000000600003d40 f   XEClib:_heap.obj
+ 0001:00002d70       dlmalloc                   0000000600003d70 f   XEClib:_heap.obj
+ 0001:00003578       dlfree                     0000000600004578 f   XEClib:_heap.obj
+ 0001:00004720       dlcalloc                   0000000600005720 f   XEClib:_heap.obj
+ 0001:000047e8       dlrealloc                  00000006000057e8 f   XEClib:_heap.obj
+ 0001:00004960       dlrealloc_in_place         0000000600005960 f   XEClib:_heap.obj
+ 0001:00004a28       dlmemalign                 0000000600005a28 f   XEClib:_heap.obj
+ 0001:00004a70       dlposix_memalign           0000000600005a70 f   XEClib:_heap.obj
+ 0001:00004b80       dlvalloc                   0000000600005b80 f   XEClib:_heap.obj
+ 0001:00004bc0       dlmallopt                  0000000600005bc0 f   XEClib:_heap.obj
+ 0001:00004bf0       dlmalloc_footprint         0000000600005bf0 f   XEClib:_heap.obj
+ 0001:00004c00       dlmalloc_max_footprint     0000000600005c00 f   XEClib:_heap.obj
+ 0001:00004c10       dlmalloc_footprint_limit   0000000600005c10 f   XEClib:_heap.obj
+ 0001:00004c50       dlmalloc_set_footprint_limit 0000000600005c50 f   XEClib:_heap.obj
+ 0001:00004cf0       dlindependent_calloc       0000000600005cf0 f   XEClib:_heap.obj
+ 0001:00004d30       dlindependent_comalloc     0000000600005d30 f   XEClib:_heap.obj
+ 0001:00004d68       dlbulk_free                0000000600005d68 f   XEClib:_heap.obj
+ 0001:00004d98       dlpvalloc                  0000000600005d98 f   XEClib:_heap.obj
+ 0001:00004df8       dlmalloc_trim              0000000600005df8 f   XEClib:_heap.obj
+ 0001:00004e50       dlmalloc_usable_size       0000000600005e50 f   XEClib:_heap.obj
+ 0001:0000bbb8       atexit                     000000060000cbb8 f   XEClib:stdlib.obj
+ 0001:0000bbd8       atoi                       000000060000cbd8 f   XEClib:stdlib.obj
+ 0001:0000bce8       atof                       000000060000cce8 f   XEClib:stdlib.obj
+ 0001:0000bd08       abs                        000000060000cd08 f   XEClib:stdlib.obj
+ 0001:0000bd40       mblen                      000000060000cd40 f   XEClib:stdlib.obj
+ 0001:0000bed8       mbstowcs                   000000060000ced8 f   XEClib:stdlib.obj
+ 0001:0000bff0       mbtowc                     000000060000cff0 f   XEClib:stdlib.obj
+ 0001:0000c088       rand                       000000060000d088 f   XEClib:stdlib.obj
+ 0001:0000c128       wcstombs                   000000060000d128 f   XEClib:stdlib.obj
+ 0001:0000c220       wctomb                     000000060000d220 f   XEClib:stdlib.obj
+ 0001:0000c2a0       sztoa                      000000060000d2a0 f   XEClib:stdlib.obj
+ 0001:0000c428       setenv                     000000060000d428 f   XEClib:stdlib.obj
+ 0001:0000c460       getenv                     000000060000d460 f   XEClib:stdlib.obj
+ 0001:0000c480       exit                       000000060000d480 f   XEClib:stdlib.obj
+ 0001:0000c4a0       strtol                     000000060000d4a0 f   XEClib:stdlib.obj
+ 0001:0000c898       strtoul                    000000060000d898 f   XEClib:stdlib.obj
+ 0001:0000cc48       itoa_s                     000000060000dc48 f   XEClib:stdlib.obj
+ 0001:0000ccc0       abort                      000000060000dcc0 f   XEClib:stdlib.obj
+ 0001:0000d200       _ldigits                   000000060000e200 f   XEClib:_xeprint.obj
+ 0001:0000d2b8       _digits                    000000060000e2b8 f   XEClib:_xeprint.obj
+ 0001:0000d368       _str2num                   000000060000e368 f   XEClib:_xeprint.obj
+ 0001:0000d930       _lnum2str                  000000060000e930 f   XEClib:_xeprint.obj
+ 0001:0000db40       _dbl2str                   000000060000eb40 f   XEClib:_xeprint.obj
+ 0001:0000df58       _num2str                   000000060000ef58 f   XEClib:_xeprint.obj
+ 0001:0000e168       _flt2str                   000000060000f168 f   XEClib:_xeprint.obj
+ 0001:0000e568       strtod                     000000060000f568 f   XEClib:_xeprint.obj
+ 0001:0000e878       strtof                     000000060000f878 f   XEClib:_xeprint.obj
+ 0001:0000e8a0       _xeprint                   000000060000f8a0 f   XEClib:_xeprint.obj
+ 0001:0000fa00       isspace                    0000000600010a00 f   XEClib:ctype.obj
+ 0001:0000fa70       isascii                    0000000600010a70 f   XEClib:ctype.obj
+ 0001:0000faa8       isupper                    0000000600010aa8 f   XEClib:ctype.obj
+ 0001:0000fae8       islower                    0000000600010ae8 f   XEClib:ctype.obj
+ 0001:0000fb28       isalpha                    0000000600010b28 f   XEClib:ctype.obj
+ 0001:0000fbc0       isdigit                    0000000600010bc0 f   XEClib:ctype.obj
+ 0001:0000fc00       isxdigit                   0000000600010c00 f   XEClib:ctype.obj
+ 0001:0000fc70       isprint                    0000000600010c70 f   XEClib:ctype.obj
+ 0001:0000fcc0       toupper                    0000000600010cc0 f   XEClib:ctype.obj
+ 0001:0000fd00       tolower                    0000000600010d00 f   XEClib:ctype.obj
+ 0001:0000fd40       ?isgraph@@YAHH@Z           0000000600010d40 f   XEClib:ctype.obj
+ 0001:0000fd80       ?isalnum@@YAHH@Z           0000000600010d80 f   XEClib:ctype.obj
+ 0001:0000fdd8       ?ispunct@@YAHH@Z           0000000600010dd8 f   XEClib:ctype.obj
+ 0001:0000fe30       _XESetEnvironmentVariable  0000000600010e30 f   XEClib:_xeneva.obj
+ 0001:00010060       _XEPutEnvironmentVariable  0000000600011060 f   XEClib:_xeneva.obj
+ 0001:00010238       _XEGetEnvironmentVariable  0000000600011238 f   XEClib:_xeneva.obj
+ 0001:00010388       fpclassify                 0000000600011388 f   XEClib:math.obj
+ 0001:00010440       ceil                       0000000600011440 f   XEClib:math.obj
+ 0001:00010498       cos                        0000000600011498 f   XEClib:math.obj
+ 0001:00010668       cosf                       0000000600011668 f   XEClib:math.obj
+ 0001:00010850       fabs                       0000000600011850 f   XEClib:math.obj
+ 0001:00010890       fabsf                      0000000600011890 f   XEClib:math.obj
+ 0001:000108d8       floor                      00000006000118d8 f   XEClib:math.obj
+ 0001:00010900       floorf                     0000000600011900 f   XEClib:math.obj
+ 0001:00010928       fmod                       0000000600011928 f   XEClib:math.obj
+ 0001:00010988       modf                       0000000600011988 f   XEClib:math.obj
+ 0001:000109e0       pow                        00000006000119e0 f   XEClib:math.obj
+ 0001:00010a80       sin                        0000000600011a80 f   XEClib:math.obj
+ 0001:00010c60       sinf                       0000000600011c60 f   XEClib:math.obj
+ 0001:00010e58       sqrt                       0000000600011e58 f   XEClib:math.obj
+ 0001:00010f38       sqrtf                      0000000600011f38 f   XEClib:math.obj
+ 0001:00010f60       tan                        0000000600011f60 f   XEClib:math.obj
+ 0001:00010f98       tanf                       0000000600011f98 f   XEClib:math.obj
+ 0001:00010fd0       frexp                      0000000600011fd0 f   XEClib:math.obj
+ 0001:00011040       fmaxf                      0000000600012040 f   XEClib:math.obj
+ 0001:00011068       fminf                      0000000600012068 f   XEClib:math.obj
+ 0001:000112b8       fprintf                    00000006000122b8 f   XEClib:stdio.obj
+ 0001:00011390       printf                     0000000600012390 f   XEClib:stdio.obj
+ 0001:00011420       fopen                      0000000600012420 f   XEClib:stdio.obj
+ 0001:00011660       fread                      0000000600012660 f   XEClib:stdio.obj
+ 0001:00011758       fwrite                     0000000600012758 f   XEClib:stdio.obj
+ 0001:00011868       ftell                      0000000600012868 f   XEClib:stdio.obj
+ 0001:00011888       fseek                      0000000600012888 f   XEClib:stdio.obj
+ 0001:000119e8       fgetc                      00000006000129e8 f   XEClib:stdio.obj
+ 0001:00011a78       fclose                     0000000600012a78 f   XEClib:stdio.obj
+ 0001:00011ae8       fflush                     0000000600012ae8 f   XEClib:stdio.obj
+ 0001:00011b00       fputc                      0000000600012b00 f   XEClib:stdio.obj
+ 0001:00011b90       fputs                      0000000600012b90 f   XEClib:stdio.obj
+ 0001:00011bf0       puts                       0000000600012bf0 f   XEClib:stdio.obj
+ 0001:00011c40       vfprintf                   0000000600012c40 f   XEClib:stdio.obj
+ 0001:00011cf8       vsnprintf                  0000000600012cf8 f   XEClib:stdio.obj
+ 0001:00011d80       vsprintf                   0000000600012d80 f   XEClib:stdio.obj
+ 0001:00011de0       vprintf                    0000000600012de0 f   XEClib:stdio.obj
+ 0001:00011e68       sprintf                    0000000600012e68 f   XEClib:stdio.obj
+ 0001:00011ed8       snprintf                   0000000600012ed8 f   XEClib:stdio.obj
+ 0001:00011f68       getchar                    0000000600012f68 f   XEClib:stdio.obj
+ 0001:00011fb0       remove                     0000000600012fb0 f   XEClib:stdio.obj
+ 0001:00011fd8       rename                     0000000600012fd8 f   XEClib:stdio.obj
+ 0001:00011ff0       putchar                    0000000600012ff0 f   XEClib:stdio.obj
+ 0001:00012018       scanf                      0000000600013018 f   XEClib:stdio.obj
+ 0001:00012030       sscanf                     0000000600013030 f   XEClib:stdio.obj
+ 0003:00000018       _fltused                   0000000600015018     XEClib:_xeneva.obj
+ 0003:00000070       ?_sound@@3HA               0000000600015070     _init.obj
+ 0003:00000458       ?errno@@3HA                0000000600015458     XEClib:errno.obj
+
+ entry point at        0001:00000000
+
+ Static symbols
+
+ 0000:00000000       .debug$S                   0000000600000000     init.exp
+ 0001:00000a20       $LN3                       0000000600001a20     splash.obj
+ 0001:00000a24       $LN4                       0000000600001a24     splash.obj
+ 0001:00000ed0       $LN14                      0000000600001ed0     _init.obj
+ 0001:00004ee0       ?init_mparams@@YAHXZ       0000000600005ee0 f   XEClib:_heap.obj
+ 0001:00004ff0       $LN11                      0000000600005ff0     XEClib:_heap.obj
+ 0001:00004ff8       ?change_mparam@@YAHHH@Z    0000000600005ff8 f   XEClib:_heap.obj
+ 0001:000050f8       ?mmap_alloc@@YAPEAXPEAUmalloc_state@@_K@Z 00000006000060f8 f   XEClib:_heap.obj
+ 0001:00005320       ?mmap_resize@@YAPEAUmalloc_chunk@@PEAUmalloc_state@@PEAU1@_KH@Z 0000000600006320 f   XEClib:_heap.obj
+ 0001:00005508       ?init_top@@YAXPEAUmalloc_state@@PEAUmalloc_chunk@@_K@Z 0000000600006508 f   XEClib:_heap.obj
+ 0001:00005618       ?init_bins@@YAXPEAUmalloc_state@@@Z 0000000600006618 f   XEClib:_heap.obj
+ 0001:00005698       ?prepend_alloc@@YAPEAXPEAUmalloc_state@@PEAD1_K@Z 0000000600006698 f   XEClib:_heap.obj
+ 0001:00006240       ?add_segment@@YAXPEAUmalloc_state@@PEAD_KI@Z 0000000600007240 f   XEClib:_heap.obj
+ 0001:00006968       ?sys_alloc@@YAPEAXPEAUmalloc_state@@_K@Z 0000000600007968 f   XEClib:_heap.obj
+ 0001:00007520       ?release_unused_segments@@YA_KPEAUmalloc_state@@@Z 0000000600008520 f   XEClib:_heap.obj
+ 0001:00007e40       ?sys_trim@@YAHPEAUmalloc_state@@_K@Z 0000000600008e40 f   XEClib:_heap.obj
+ 0001:00008160       ?dispose_chunk@@YAXPEAUmalloc_state@@PEAUmalloc_chunk@@_K@Z 0000000600009160 f   XEClib:_heap.obj
+ 0001:000092f0       ?tmalloc_large@@YAPEAXPEAUmalloc_state@@_K@Z 000000060000a2f0 f   XEClib:_heap.obj
+ 0001:00009f18       ?tmalloc_small@@YAPEAXPEAUmalloc_state@@_K@Z 000000060000af18 f   XEClib:_heap.obj
+ 0001:0000a5f0       ?try_realloc_chunk@@YAPEAUmalloc_chunk@@PEAUmalloc_state@@PEAU1@_KH@Z 000000060000b5f0 f   XEClib:_heap.obj
+ 0001:0000b110       ?internal_memalign@@YAPEAXPEAUmalloc_state@@_K1@Z 000000060000c110 f   XEClib:_heap.obj
+ 0001:0000b500       ?ialloc@@YAPEAPEAXPEAUmalloc_state@@_KPEA_KHQEAPEAX@Z 000000060000c500 f   XEClib:_heap.obj
+ 0001:0000b900       ?internal_bulk_free@@YA_KPEAUmalloc_state@@QEAPEAX_K@Z 000000060000c900 f   XEClib:_heap.obj
+ 0001:0000bb30       ?segment_holding@@YAPEAUmalloc_segment@@PEAUmalloc_state@@PEAD@Z 000000060000cb30 f   XEClib:_heap.obj
+ 0001:0000cce8       ?utf8CodeWidth@@YAII@Z     000000060000dce8 f   XEClib:stdlib.obj
+ 0001:0000cd68       ?unicodeToUtf8Char@@YAXIPEAEI@Z 000000060000dd68 f   XEClib:stdlib.obj
+ 0001:0000cfc0       ?utf8CharToUnicode@@YAIPEBDI@Z 000000060000dfc0 f   XEClib:stdlib.obj
+ 0001:0000d8f0       $LN52                      000000060000e8f0     XEClib:_xeprint.obj
+ 0001:0000d8f4       $LN53                      000000060000e8f4     XEClib:_xeprint.obj
+ 0001:0000d8f8       $LN54                      000000060000e8f8     XEClib:_xeprint.obj
+ 0001:0000d8fc       $LN55                      000000060000e8fc     XEClib:_xeprint.obj
+ 0001:0000d900       $LN56                      000000060000e900     XEClib:_xeprint.obj
+ 0001:0000d904       $LN57                      000000060000e904     XEClib:_xeprint.obj
+ 0001:0000d908       $LN58                      000000060000e908     XEClib:_xeprint.obj
+ 0001:0000d90c       $LN59                      000000060000e90c     XEClib:_xeprint.obj
+ 0001:0000d910       $LN60                      000000060000e910     XEClib:_xeprint.obj
+ 0001:0000d914       $LN61                      000000060000e914     XEClib:_xeprint.obj
+ 0001:0000d918       $LN62                      000000060000e918     XEClib:_xeprint.obj
+ 0001:0000d91c       $LN63                      000000060000e91c     XEClib:_xeprint.obj
+ 0001:0000d920       $LN64                      000000060000e920     XEClib:_xeprint.obj
+ 0001:0000d924       $LN65                      000000060000e924     XEClib:_xeprint.obj
+ 0001:0000d928       $LN66                      000000060000e928     XEClib:_xeprint.obj
+ 0001:0000df48       $LN25                      000000060000ef48     XEClib:_xeprint.obj
+ 0001:0000df50       $LN26                      000000060000ef50     XEClib:_xeprint.obj
+ 0001:0000e560       $LN25                      000000060000f560     XEClib:_xeprint.obj
+ 0001:0000e564       $LN26                      000000060000f564     XEClib:_xeprint.obj
+ 0001:0000e870       $LN23                      000000060000f870     XEClib:_xeprint.obj
+ 0001:0000f8c0       $LN111                     00000006000108c0     XEClib:_xeprint.obj
+ 0001:0000f8c4       $LN112                     00000006000108c4     XEClib:_xeprint.obj
+ 0001:0000f8c8       $LN113                     00000006000108c8     XEClib:_xeprint.obj
+ 0001:0000f8cc       $LN114                     00000006000108cc     XEClib:_xeprint.obj
+ 0001:0000f8d0       $LN115                     00000006000108d0     XEClib:_xeprint.obj
+ 0001:0000f8d4       $LN116                     00000006000108d4     XEClib:_xeprint.obj
+ 0001:0000f8d8       $LN117                     00000006000108d8     XEClib:_xeprint.obj
+ 0001:0000f8dc       $LN118                     00000006000108dc     XEClib:_xeprint.obj
+ 0001:0000f8e0       $LN119                     00000006000108e0     XEClib:_xeprint.obj
+ 0001:0000f8e4       $LN120                     00000006000108e4     XEClib:_xeprint.obj
+ 0001:0000f8e8       $LN121                     00000006000108e8     XEClib:_xeprint.obj
+ 0001:0000f8ec       $LN122                     00000006000108ec     XEClib:_xeprint.obj
+ 0001:0000f8f0       $LN123                     00000006000108f0     XEClib:_xeprint.obj
+ 0001:0000f8f4       $LN124                     00000006000108f4     XEClib:_xeprint.obj
+ 0001:0000f8f8       $LN125                     00000006000108f8     XEClib:_xeprint.obj
+ 0001:0000f8fc       $LN126                     00000006000108fc     XEClib:_xeprint.obj
+ 0001:0000f900       $LN127                     0000000600010900     XEClib:_xeprint.obj
+ 0001:0000f904       $LN128                     0000000600010904     XEClib:_xeprint.obj
+ 0001:0000f908       $LN129                     0000000600010908     XEClib:_xeprint.obj
+ 0001:0000f90c       $LN130                     000000060001090c     XEClib:_xeprint.obj
+ 0001:0000f910       $LN131                     0000000600010910     XEClib:_xeprint.obj
+ 0001:0000f914       $LN132                     0000000600010914     XEClib:_xeprint.obj
+ 0001:0000f918       $LN133                     0000000600010918     XEClib:_xeprint.obj
+ 0001:0000f91c       $LN134                     000000060001091c     XEClib:_xeprint.obj
+ 0001:0000f920       $LN135                     0000000600010920     XEClib:_xeprint.obj
+ 0001:0000f924       $LN136                     0000000600010924     XEClib:_xeprint.obj
+ 0001:0000f928       $LN137                     0000000600010928     XEClib:_xeprint.obj
+ 0001:0000f92c       $LN138                     000000060001092c     XEClib:_xeprint.obj
+ 0001:0000f930       $LN139                     0000000600010930     XEClib:_xeprint.obj
+ 0001:0000f934       $LN140                     0000000600010934     XEClib:_xeprint.obj
+ 0001:0000f938       $LN141                     0000000600010938     XEClib:_xeprint.obj
+ 0001:0000f93c       $LN142                     000000060001093c     XEClib:_xeprint.obj
+ 0001:0000f940       $LN143                     0000000600010940     XEClib:_xeprint.obj
+ 0001:0000f944       $LN144                     0000000600010944     XEClib:_xeprint.obj
+ 0001:0000f948       $LN145                     0000000600010948     XEClib:_xeprint.obj
+ 0001:0000f94c       $LN146                     000000060001094c     XEClib:_xeprint.obj
+ 0001:0000f950       $LN147                     0000000600010950     XEClib:_xeprint.obj
+ 0001:0000f954       $LN148                     0000000600010954     XEClib:_xeprint.obj
+ 0001:0000f958       $LN149                     0000000600010958     XEClib:_xeprint.obj
+ 0001:0000f95c       $LN150                     000000060001095c     XEClib:_xeprint.obj
+ 0001:0000f960       $LN151                     0000000600010960     XEClib:_xeprint.obj
+ 0001:0000f964       $LN152                     0000000600010964     XEClib:_xeprint.obj
+ 0001:0000f968       $LN153                     0000000600010968     XEClib:_xeprint.obj
+ 0001:0000f96c       $LN154                     000000060001096c     XEClib:_xeprint.obj
+ 0001:0000f970       $LN155                     0000000600010970     XEClib:_xeprint.obj
+ 0001:0000f974       $LN156                     0000000600010974     XEClib:_xeprint.obj
+ 0001:0000f978       $LN157                     0000000600010978     XEClib:_xeprint.obj
+ 0001:0000f97c       $LN158                     000000060001097c     XEClib:_xeprint.obj
+ 0001:0000f980       $LN159                     0000000600010980     XEClib:_xeprint.obj
+ 0001:0000f984       $LN160                     0000000600010984     XEClib:_xeprint.obj
+ 0001:0000f988       $LN161                     0000000600010988     XEClib:_xeprint.obj
+ 0001:0000f98c       $LN162                     000000060001098c     XEClib:_xeprint.obj
+ 0001:00010658       $LN20                      0000000600011658     XEClib:math.obj
+ 0001:00010660       $LN21                      0000000600011660     XEClib:math.obj
+ 0001:00010840       $LN20                      0000000600011840     XEClib:math.obj
+ 0001:00010848       $LN21                      0000000600011848     XEClib:math.obj
+ 0001:00010c50       $LN20                      0000000600011c50     XEClib:math.obj
+ 0001:00010c58       $LN21                      0000000600011c58     XEClib:math.obj
+ 0001:00010e48       $LN20                      0000000600011e48     XEClib:math.obj
+ 0001:00010e50       $LN21                      0000000600011e50     XEClib:math.obj
+ 0001:00011090       ?norm2@@YAHPEAN@Z          0000000600012090 f   XEClib:math.obj
+ 0001:00011118       ?isnan_f@@YAHM@Z           0000000600012118 f   XEClib:math.obj
+ 0001:00011170       ?fmaxf_ieee@@YAMMM@Z       0000000600012170 f   XEClib:math.obj
+ 0001:00011208       ?fminf_ieee@@YAMMM@Z       0000000600012208 f   XEClib:math.obj
+ 0002:00000000       $SG3555                    0000000600014000     splash.obj
+ 0002:00000010       $SG3556                    0000000600014010     splash.obj
+ 0002:00000020       $SG3557                    0000000600014020     splash.obj
+ 0002:00000030       $SG3488                    0000000600014030     _init.obj
+ 0002:00000034       $SG3489                    0000000600014034     _init.obj
+ 0002:0000003c       $SG3490                    000000060001403c     _init.obj
+ 0002:00000044       $SG3491                    0000000600014044     _init.obj
+ 0002:0000004c       $SG3492                    000000060001404c     _init.obj
+ 0002:00000058       $SG3493                    0000000600014058     _init.obj
+ 0002:00000068       $SG3494                    0000000600014068     _init.obj
+ 0002:00000078       $SG3495                    0000000600014078     _init.obj
+ 0002:00000080       $SG3496                    0000000600014080     _init.obj
+ 0002:0000008c       $SG3497                    000000060001408c     _init.obj
+ 0002:00000098       $SG3498                    0000000600014098     _init.obj
+ 0002:000000a4       $SG3499                    00000006000140a4     _init.obj
+ 0002:000000b0       $SG3519                    00000006000140b0     _init.obj
+ 0002:000000c0       $SG3521                    00000006000140c0     _init.obj
+ 0002:000000d0       $SG3523                    00000006000140d0     _init.obj
+ 0002:000000e0       $SG3525                    00000006000140e0     _init.obj
+ 0002:000000f0       $SG3527                    00000006000140f0     _init.obj
+ 0002:00000100       $SG3553                    0000000600014100     _init.obj
+ 0002:00000130       $SG3554                    0000000600014130     _init.obj
+ 0002:00000160       $SG3555                    0000000600014160     _init.obj
+ 0002:00000168       $SG3563                    0000000600014168     _init.obj
+ 0002:00000180       $SG3564                    0000000600014180     _init.obj
+ 0002:000001a0       $SG3566                    00000006000141a0     _init.obj
+ 0002:000001b8       $SG3567                    00000006000141b8     _init.obj
+ 0002:000001d8       $SG3592                    00000006000141d8     _init.obj
+ 0002:000001f8       $SG3593                    00000006000141f8     _init.obj
+ 0002:00000208       $SG3595                    0000000600014208     _init.obj
+ 0002:00000210       $SG3596                    0000000600014210     _init.obj
+ 0002:00000258       $SG3597                    0000000600014258     _init.obj
+ 0002:00000260       $SG3600                    0000000600014260     _init.obj
+ 0002:00000280       $SG3601                    0000000600014280     _init.obj
+ 0002:00000288       $SG3602                    0000000600014288     _init.obj
+ 0002:00000298       $SG3603                    0000000600014298     _init.obj
+ 0002:000002a8       $SG3604                    00000006000142a8     _init.obj
+ 0002:000002b4       $SG3605                    00000006000142b4     _init.obj
+ 0002:000002c0       $SG3606                    00000006000142c0     _init.obj
+ 0002:000002d8       $SG3607                    00000006000142d8     _init.obj
+ 0002:000002e8       $SG3608                    00000006000142e8     _init.obj
+ 0002:00000304       $SG3611                    0000000600014304     _init.obj
+ 0002:00000310       $SG3612                    0000000600014310     _init.obj
+ 0002:00000320       $SG3613                    0000000600014320     _init.obj
+ 0002:00000328       $SG3614                    0000000600014328     _init.obj
+ 0002:00000338       $SG3615                    0000000600014338     _init.obj
+ 0002:0000034c       $SG3616                    000000060001434c     _init.obj
+ 0002:00000358       $SG3617                    0000000600014358     _init.obj
+ 0002:00000368       $SG3618                    0000000600014368     _init.obj
+ 0002:00000370       $SG3619                    0000000600014370     _init.obj
+ 0002:00000380       $SG3350                    0000000600014380     XEClib:string.obj
+ 0002:00000398       $SG3347                    0000000600014398     XEClib:stdlib.obj
+ 0002:000003b0       $SG3367                    00000006000143b0     XEClib:stdlib.obj
+ 0002:000003c0       $SG3358                    00000006000143c0     XEClib:_xeprint.obj
+ 0002:000003d0       $SG3418                    00000006000143d0     XEClib:_xeprint.obj
+ 0002:000003dc       $SG3561                    00000006000143dc     XEClib:_xeprint.obj
+ 0002:000003e4       $SG3243                    00000006000143e4     XEClib:_xeneva.obj
+ 0002:000003f0       $SG3331                    00000006000143f0     XEClib:stdio.obj
+ 0002:000003f4       $SG3334                    00000006000143f4     XEClib:stdio.obj
+ 0002:000003f8       $SG3337                    00000006000143f8     XEClib:stdio.obj
+ 0002:000003fc       $SG3340                    00000006000143fc     XEClib:stdio.obj
+ 0002:00000400       $SG3343                    0000000600014400     XEClib:stdio.obj
+ 0002:00000404       $SG3345                    0000000600014404     XEClib:stdio.obj
+ 0002:00000408       $SG3348                    0000000600014408     XEClib:stdio.obj
+ 0002:00000420       $SG3369                    0000000600014420     XEClib:stdio.obj
+ 0002:0000043c       $SG3453                    000000060001443c     XEClib:stdio.obj
+ 0002:00000440       $SG3370                    0000000600014440     XEClib:stdio.obj
+ 0002:00000458       $SG3428                    0000000600014458     XEClib:stdio.obj
+ 0002:0000053c       $unwind$tan                000000060001453c     XEClib:math.obj
+ 0002:00000548       $unwind$tanf               0000000600014548     XEClib:math.obj
+ 0002:00000554       $unwind$snprintf           0000000600014554     XEClib:stdio.obj
+ 0003:00000000       ?x@@3IA                    0000000600015000     XEClib:stdlib.obj
+ 0003:00000004       ?y@@3IA                    0000000600015004     XEClib:stdlib.obj
+ 0003:00000008       ?z@@3IA                    0000000600015008     XEClib:stdlib.obj
+ 0003:0000000c       ?w@@3IA                    000000060001500c     XEClib:stdlib.obj
+ 0003:00000010       ?chars@@3PEADEA            0000000600015010     XEClib:stdlib.obj
+ 0003:00000020       ?xtable@@3PAHA             0000000600015020     XEClib:math.obj
+ 0003:00000060       ?screen_w@@3HA             0000000600015060     splash.obj
+ 0003:00000064       ?screen_h@@3HA             0000000600015064     splash.obj
+ 0003:00000068       ?fb@@3PEAIEA               0000000600015068     splash.obj
+ 0003:00000078       ?saveptr@@3PEADEA          0000000600015078     XEClib:string.obj
+ 0003:00000080       ?mparams@@3Umalloc_params@@A 0000000600015080     XEClib:_heap.obj
+ 0003:000000b0       ?_gm_@@3Umalloc_state@@A   00000006000150b0     XEClib:_heap.obj
+ 0005:00000000       __379FBA3E_splash@cpp      0000000600017000     splash.obj
+ 0005:00000001       __2E8E8298__init@cpp       0000000600017001     _init.obj
+ 0006:00000000       .edata                     0000000600018000     init.exp
+ 0006:00000028       rgpv                       0000000600018028     init.exp
+ 0006:000001f8       rgszName                   00000006000181f8     init.exp
+ 0006:000003c8       rgwOrd                     00000006000183c8     init.exp
+ 0006:000004b0       szName                     00000006000184b0     init.exp
+ 0006:000004b9       $N00001                    00000006000184b9     init.exp
+ 0006:000004d3       $N00002                    00000006000184d3     init.exp
+ 0006:000004ed       $N00003                    00000006000184ed     init.exp
+ 0006:00000507       $N00004                    0000000600018507     init.exp
+ 0006:00000510       $N00005                    0000000600018510     init.exp
+ 0006:00000518       $N00006                    0000000600018518     init.exp
+ 0006:00000521       $N00007                    0000000600018521     init.exp
+ 0006:0000052a       $N00008                    000000060001852a     init.exp
+ 0006:00000534       $N00009                    0000000600018534     init.exp
+ 0006:0000053d       $N00010                    000000060001853d     init.exp
+ 0006:00000546       $N00011                    0000000600018546     init.exp
+ 0006:0000054c       $N00012                    000000060001854c     init.exp
+ 0006:00000550       $N00013                    0000000600018550     init.exp
+ 0006:00000555       $N00014                    0000000600018555     init.exp
+ 0006:0000055a       $N00015                    000000060001855a     init.exp
+ 0006:00000560       $N00016                    0000000600018560     init.exp
+ 0006:00000566       $N00017                    0000000600018566     init.exp
+ 0006:0000056d       $N00018                    000000060001856d     init.exp
+ 0006:00000572       $N00019                    0000000600018572     init.exp
+ 0006:00000576       $N00020                    0000000600018576     init.exp
+ 0006:0000057b       $N00021                    000000060001857b     init.exp
+ 0006:00000580       $N00022                    0000000600018580     init.exp
+ 0006:00000585       $N00023                    0000000600018585     init.exp
+ 0006:0000058b       $N00024                    000000060001858b     init.exp
+ 0006:00000592       $N00025                    0000000600018592     init.exp
+ 0006:00000599       $N00026                    0000000600018599     init.exp
+ 0006:0000059d       $N00027                    000000060001859d     init.exp
+ 0006:000005a3       $N00028                    00000006000185a3     init.exp
+ 0006:000005a9       $N00029                    00000006000185a9     init.exp
+ 0006:000005b0       $N00030                    00000006000185b0     init.exp
+ 0006:000005b6       $N00031                    00000006000185b6     init.exp
+ 0006:000005bc       $N00032                    00000006000185bc     init.exp
+ 0006:000005c1       $N00033                    00000006000185c1     init.exp
+ 0006:000005c7       $N00034                    00000006000185c7     init.exp
+ 0006:000005d2       $N00035                    00000006000185d2     init.exp
+ 0006:000005da       $N00036                    00000006000185da     init.exp
+ 0006:000005e0       $N00037                    00000006000185e0     init.exp
+ 0006:000005e6       $N00038                    00000006000185e6     init.exp
+ 0006:000005ec       $N00039                    00000006000185ec     init.exp
+ 0006:000005f1       $N00040                    00000006000185f1     init.exp
+ 0006:000005f7       $N00041                    00000006000185f7     init.exp
+ 0006:000005fd       $N00042                    00000006000185fd     init.exp
+ 0006:00000603       $N00043                    0000000600018603     init.exp
+ 0006:0000060a       $N00044                    000000060001860a     init.exp
+ 0006:00000612       $N00045                    0000000600018612     init.exp
+ 0006:00000619       $N00046                    0000000600018619     init.exp
+ 0006:00000621       $N00047                    0000000600018621     init.exp
+ 0006:00000629       $N00048                    0000000600018629     init.exp
+ 0006:00000631       $N00049                    0000000600018631     init.exp
+ 0006:00000639       $N00050                    0000000600018639     init.exp
+ 0006:00000641       $N00051                    0000000600018641     init.exp
+ 0006:00000649       $N00052                    0000000600018649     init.exp
+ 0006:00000651       $N00053                    0000000600018651     init.exp
+ 0006:0000065a       $N00054                    000000060001865a     init.exp
+ 0006:00000661       $N00055                    0000000600018661     init.exp
+ 0006:00000668       $N00056                    0000000600018668     init.exp
+ 0006:0000066e       $N00057                    000000060001866e     init.exp
+ 0006:00000677       $N00058                    0000000600018677     init.exp
+ 0006:0000067e       $N00059                    000000060001867e     init.exp
+ 0006:00000685       $N00060                    0000000600018685     init.exp
+ 0006:0000068c       $N00061                    000000060001868c     init.exp
+ 0006:00000693       $N00062                    0000000600018693     init.exp
+ 0006:0000069b       $N00063                    000000060001869b     init.exp
+ 0006:000006a2       $N00064                    00000006000186a2     init.exp
+ 0006:000006a7       $N00065                    00000006000186a7     init.exp
+ 0006:000006ab       $N00066                    00000006000186ab     init.exp
+ 0006:000006b2       $N00067                    00000006000186b2     init.exp
+ 0006:000006ba       $N00068                    00000006000186ba     init.exp
+ 0006:000006bf       $N00069                    00000006000186bf     init.exp
+ 0006:000006c4       $N00070                    00000006000186c4     init.exp
+ 0006:000006cc       $N00071                    00000006000186cc     init.exp
+ 0006:000006d3       $N00072                    00000006000186d3     init.exp
+ 0006:000006da       $N00073                    00000006000186da     init.exp
+ 0006:000006e0       $N00074                    00000006000186e0     init.exp
+ 0006:000006e7       $N00075                    00000006000186e7     init.exp
+ 0006:000006eb       $N00076                    00000006000186eb     init.exp
+ 0006:000006f0       $N00077                    00000006000186f0     init.exp
+ 0006:000006f9       $N00078                    00000006000186f9     init.exp
+ 0006:00000701       $N00079                    0000000600018701     init.exp
+ 0006:00000706       $N00080                    0000000600018706     init.exp
+ 0006:0000070c       $N00081                    000000060001870c     init.exp
+ 0006:00000713       $N00082                    0000000600018713     init.exp
+ 0006:0000071e       $N00083                    000000060001871e     init.exp
+ 0006:00000729       $N00084                    0000000600018729     init.exp
+ 0006:00000730       $N00085                    0000000600018730     init.exp
+ 0006:00000737       $N00086                    0000000600018737     init.exp
+ 0006:0000073e       $N00087                    000000060001873e     init.exp
+ 0006:00000745       $N00088                    0000000600018745     init.exp
+ 0006:0000074c       $N00089                    000000060001874c     init.exp
+ 0006:00000755       $N00090                    0000000600018755     init.exp
+ 0006:0000075c       $N00091                    000000060001875c     init.exp
+ 0006:00000768       $N00092                    0000000600018768     init.exp
+ 0006:00000770       $N00093                    0000000600018770     init.exp
+ 0006:00000778       $N00094                    0000000600018778     init.exp
+ 0006:00000780       $N00095                    0000000600018780     init.exp
+ 0006:00000788       $N00096                    0000000600018788     init.exp
+ 0006:00000790       $N00097                    0000000600018790     init.exp
+ 0006:00000797       $N00098                    0000000600018797     init.exp
+ 0006:0000079e       $N00099                    000000060001879e     init.exp
+ 0006:000007a5       $N00100                    00000006000187a5     init.exp
+ 0006:000007ac       $N00101                    00000006000187ac     init.exp
+ 0006:000007b3       $N00102                    00000006000187b3     init.exp
+ 0006:000007bc       $N00103                    00000006000187bc     init.exp
+ 0006:000007c3       $N00104                    00000006000187c3     init.exp
+ 0006:000007cb       $N00105                    00000006000187cb     init.exp
+ 0006:000007d3       $N00106                    00000006000187d3     init.exp
+ 0006:000007d9       $N00107                    00000006000187d9     init.exp
+ 0006:000007dd       $N00108                    00000006000187dd     init.exp
+ 0006:000007e2       $N00109                    00000006000187e2     init.exp
+ 0006:000007ea       $N00110                    00000006000187ea     init.exp
+ 0006:000007f2       $N00111                    00000006000187f2     init.exp
+ 0006:000007fb       $N00112                    00000006000187fb     init.exp
+ 0006:00000803       $N00113                    0000000600018803     init.exp
+ 0006:0000080d       $N00114                    000000060001880d     init.exp
+ 0006:00000816       $N00115                    0000000600018816     init.exp
+ 0006:0000081f       $N00116                    000000060001881f     init.exp
+
+ Exports
+
+  ordinal    name
+
+        1    _XEGetEnvironmentVariable
+        2    _XEPutEnvironmentVariable
+        3    _XESetEnvironmentVariable
+        4    _dbl2str
+        5    _digits
+        6    _flt2str
+        7    _ldigits
+        8    _lnum2str
+        9    _num2str
+       10    _str2num
+       11    abort
+       12    abs
+       13    atof
+       14    atoi
+       15    bcopy
+       16    bzero
+       17    calloc
+       18    ceil
+       19    cos
+       20    cosf
+       21    exit
+       22    fabs
+       23    fabsf
+       24    fclose
+       25    fflush
+       26    ffs
+       27    fgetc
+       28    floor
+       29    floorf
+       30    fmaxf
+       31    fminf
+       32    fmod
+       33    fopen
+       34    fpclassify
+       35    fprintf
+       36    fputc
+       37    fputs
+       38    fread
+       39    free
+       40    frexp
+       41    fseek
+       42    ftell
+       43    fwrite
+       44    getchar
+       45    getenv
+       46    isalpha
+       47    isascii
+       48    isdigit
+       49    islower
+       50    isprint
+       51    isspace
+       52    isupper
+       53    isxdigit
+       54    itoa_s
+       55    malloc
+       56    mblen
+       57    mbstowcs
+       58    mbtowc
+       59    memchr
+       60    memcmp
+       61    memcpy
+       62    memmove
+       63    memset
+       64    modf
+       65    pow
+       66    printf
+       67    putchar
+       68    puts
+       69    rand
+       70    realloc
+       71    remove
+       72    rename
+       73    scanf
+       74    setenv
+       75    sin
+       76    sinf
+       77    snprintf
+       78    sprintf
+       79    sqrt
+       80    sqrtf
+       81    sscanf
+       82    strcasecmp
+       83    strcasestr
+       84    strcat
+       85    strchr
+       86    strcmp
+       87    strcpy
+       88    strdup
+       89    strerror
+       90    strlen
+       91    strncasecmp
+       92    strncat
+       93    strncmp
+       94    strncpy
+       95    strnlen
+       96    strrchr
+       97    strspn
+       98    strstr
+       99    strtod
+      100    strtof
+      101    strtok
+      102    strtok_r
+      103    strtol
+      104    strtoll
+      105    strtoul
+      106    sztoa
+      107    tan
+      108    tanf
+      109    tolower
+      110    toupper
+      111    vfprintf
+      112    vprintf
+      113    vsnprintf
+      114    vsprintf
+      115    wcstombs
+      116    wctomb

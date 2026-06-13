@@ -1,0 +1,391 @@
+ BOOTAA64
+
+ Timestamp is 6a2d4785 (Sat Jun 13 17:35:25 2026)
+
+ Preferred load address is 0000000180000000
+
+ Start         Length     Name                   Class
+ 0001:00000000 00000fa0H .text                   CODE
+ 0001:00000fa0 00005e78H .text$mn                CODE
+ 0002:00000000 00001ed4H .rdata                  DATA
+ 0002:00001ed4 00000000H .edata                  DATA
+ 0002:00001ed4 00000094H .rdata$zzzdbg           DATA
+ 0003:00000000 00000078H .data                   DATA
+ 0003:00000078 00000110H .bss                    DATA
+ 0004:00000000 000002e0H .pdata                  DATA
+ 0005:00000000 0000000fH .msvcjmc                DATA
+
+  Address         Publics by Value              Rva+Base               Lib:Object
+
+ 0000:00000000       __guard_fids_count         0000000000000000     <absolute>
+ 0000:00000000       __hybrid_code_map_count    0000000000000000     <absolute>
+ 0000:00000000       __arm64x_native_entrypoint 0000000000000000     <absolute>
+ 0000:00000000       __guard_eh_cont_table      0000000000000000     <absolute>
+ 0000:00000000       __guard_longjmp_count      0000000000000000     <absolute>
+ 0000:00000000       __dynamic_value_reloc_table 0000000000000000     <absolute>
+ 0000:00000000       __enclave_config           0000000000000000     <absolute>
+ 0000:00000000       __guard_iat_table          0000000000000000     <absolute>
+ 0000:00000000       __arm64x_redirection_metadata_count 0000000000000000     <absolute>
+ 0000:00000000       __arm64x_redirection_metadata 0000000000000000     <absolute>
+ 0000:00000000       __guard_eh_cont_count      0000000000000000     <absolute>
+ 0000:00000000       __guard_flags              0000000000000000     <absolute>
+ 0000:00000000       __x64_code_ranges_to_entry_points_count 0000000000000000     <absolute>
+ 0000:00000000       ___safe_se_handler_count   0000000000000000     <absolute>
+ 0000:00000000       __arm64x_extra_rfe_table_size 0000000000000000     <absolute>
+ 0000:00000000       __volatile_metadata        0000000000000000     <absolute>
+ 0000:00000000       __hybrid_auxiliary_iat     0000000000000000     <absolute>
+ 0000:00000000       __guard_fids_table         0000000000000000     <absolute>
+ 0000:00000000       ___safe_se_handler_table   0000000000000000     <absolute>
+ 0000:00000000       __guard_check_icall_a64n_fptr 0000000000000000     <absolute>
+ 0000:00000000       __hybrid_code_map          0000000000000000     <absolute>
+ 0000:00000000       __hybrid_auxiliary_iat_copy 0000000000000000     <absolute>
+ 0000:00000000       __AbsoluteZero             0000000000000000     <absolute>
+ 0000:00000000       __arm64x_extra_rfe_table   0000000000000000     <absolute>
+ 0000:00000000       __guard_iat_count          0000000000000000     <absolute>
+ 0000:00000000       __guard_longjmp_table      0000000000000000     <absolute>
+ 0000:00000000       __x64_code_ranges_to_entry_points 0000000000000000     <absolute>
+ 0001:00000000       start                      0000000180001000     lowlevel.obj
+ 0001:00000008       store_x0_x7                0000000180001008     lowlevel.obj
+ 0001:00000028       _getCurrentEL              0000000180001028     lowlevel.obj
+ 0001:00000034       read_ttbr0_el1             0000000180001034     lowlevel.obj
+ 0001:0000003c       read_ttbr1_el1             000000018000103c     lowlevel.obj
+ 0001:00000044       write_ttbr0_el1            0000000180001044     lowlevel.obj
+ 0001:0000004c       read_ttbr0_el2             000000018000104c     lowlevel.obj
+ 0001:00000054       write_ttbr1_el1            0000000180001054     lowlevel.obj
+ 0001:0000005c       read_spsr_el2              000000018000105c     lowlevel.obj
+ 0001:00000064       write_spsr_el2             0000000180001064     lowlevel.obj
+ 0001:0000006c       read_sctlr_el1             000000018000106c     lowlevel.obj
+ 0001:00000074       write_sctlr_el1            0000000180001074     lowlevel.obj
+ 0001:0000007c       read_mair_el1              000000018000107c     lowlevel.obj
+ 0001:00000084       write_mair_el1             0000000180001084     lowlevel.obj
+ 0001:0000008c       read_tcr_el1               000000018000108c     lowlevel.obj
+ 0001:00000094       write_tcr_el1              0000000180001094     lowlevel.obj
+ 0001:0000009c       read_tcr_el2               000000018000109c     lowlevel.obj
+ 0001:000000a4       dsb_ish                    00000001800010a4     lowlevel.obj
+ 0001:000000ac       isb_flush                  00000001800010ac     lowlevel.obj
+ 0001:000000b4       tlb_flush                  00000001800010b4     lowlevel.obj
+ 0001:000000c8       tlb_flush_all              00000001800010c8     lowlevel.obj
+ 0001:000000e0       read_esr_el1               00000001800010e0     lowlevel.obj
+ 0001:000000e8       read_far_el1               00000001800010e8     lowlevel.obj
+ 0001:000000f0       read_elr_el1               00000001800010f0     lowlevel.obj
+ 0001:000000f8       write_vbar_el1             00000001800010f8     lowlevel.obj
+ 0001:00000100       dc_cvau                    0000000180001100     lowlevel.obj
+ 0001:00000108       ic_ivau                    0000000180001108     lowlevel.obj
+ 0001:00000110       callKernel                 0000000180001110     lowlevel.obj
+ 0001:00000130       prepare_el2_exit_phase1    0000000180001130     lowlevel.obj
+ 0001:000001dc       prepare_el2_exit_phase2    00000001800011dc     lowlevel.obj
+ 0001:00000800       vectors                    0000000180001800     vectoraa64.obj
+ 0001:00000f84       sync_el1_wrapper           0000000180001f84     vectoraa64.obj
+ 0001:00000f90       irq_el1_wrapper            0000000180001f90     vectoraa64.obj
+ 0001:00000fa0       ?memset@@YAXPEAXEI@Z       0000000180001fa0 f   clib.obj
+ 0001:00001018       ?memcpy@@YAXPEAX0I@Z       0000000180002018 f   clib.obj
+ 0001:00001058       ?wstrchr@@YAPEA_WPEA_WH@Z  0000000180002058 f   clib.obj
+ 0001:000010c8       ?wstrlen@@YAHPEA_W@Z       00000001800020c8 f   clib.obj
+ 0001:00001128       ?wstrsize@@YAIPEA_W@Z      0000000180002128 f   clib.obj
+ 0001:00001170       ?to_upper@@YAHH@Z          0000000180002170 f   clib.obj
+ 0001:000011c0       ?to_lower@@YAHH@Z          00000001800021c0 f   clib.obj
+ 0001:00001210       ?is_digit@@YAHH@Z          0000000180002210 f   clib.obj
+ 0001:00001268       ?sztoa@@YAPEAD_KPEADH@Z    0000000180002268 f   clib.obj
+ 0001:00001408       ?strlen@@YA_KPEBD@Z        0000000180002408 f   clib.obj
+ 0001:00001470       ?_memcpy@@YAXPEAX0I@Z      0000000180002470 f   clib.obj
+ 0001:000015b0       __CheckForDebuggerJustMyCode 00000001800025b0 f i clib.obj
+ 0001:000015b0       __JustMyCode_Default       00000001800025b0 f i clib.obj
+ 0001:000015b8       ?XEDTBGetHardcodeAddress@@YAPEAXXZ 00000001800025b8 f   devicetree.obj
+ 0001:000015d8       ?XEOpenAndReadFile@@YAPEAU_XEFILE_@@PEAXPEAG@Z 00000001800025d8 f   file.obj
+ 0001:00001a98       ?XECloseFile@@YAXPEAU_XEFILE_@@@Z 0000000180002a98 f   file.obj
+ 0001:00001ae0       ?cleandcache_to_pou_by_va@@YAX_K0@Z 0000000180002ae0 f   file.obj
+ 0001:00001b60       ?invalidate_icache_by_va@@YAX_K0@Z 0000000180002b60 f   file.obj
+ 0001:00001bf0       ?XEAllocatePool@@YAPEAX_K@Z 0000000180002bf0 f   mem.obj
+ 0001:00001c60       ?XEFreePool@@YAXPEAX@Z     0000000180002c60 f   mem.obj
+ 0001:00001ca0       ?XEPagingInitialize@@YAXXZ 0000000180002ca0 f   paging.obj
+ 0001:00001e80       ?XEPagingMap@@YAX_K0@Z     0000000180002e80 f   paging.obj
+ 0001:000020b8       ?XEMapMMIO@@YAXPEA_K_K1@Z  00000001800030b8 f   paging.obj
+ 0001:00002128       ?XEPagingCopy@@YAXXZ       0000000180003128 f   paging.obj
+ 0001:000021d8       ?PRINTTCR@@YAX_K@Z         00000001800031d8 f   paging.obj
+ 0001:00002368       ?pml4_index@@YA_K_K@Z      0000000180003368 f   paging.obj
+ 0001:000023a0       ?pdpt_index@@YA_K_K@Z      00000001800033a0 f   paging.obj
+ 0001:000023d8       ?XEPagingInit2@@YAXXZ      00000001800033d8 f   paging.obj
+ 0001:00002520       ?XEPELoadImage@@YAXPEAX@Z  0000000180003520 f   pe.obj
+ 0001:00002908       ??$raw_offset@PEAU_IMAGE_NT_HEADERS_PE32PLUS@@PEAU_IMAGE_DOS_HEADER_@@@@YAPEAU_IMAGE_NT_HEADERS_PE32PLUS@@PEAU_IMAGE_DOS_HEADER_@@H@Z 0000000180003908 f i pe.obj
+ 0001:00002940       ??$raw_offset@PEAU_IMAGE_SECTION_HEADER@@PEAU_IMAGE_OPTIONAL_HEADER_PE32PLUS@@@@YAPEAU_IMAGE_SECTION_HEADER@@PEAU_IMAGE_OPTIONAL_HEADER_PE32PLUS@@H@Z 0000000180003940 f i pe.obj
+ 0001:00002978       ??$raw_offset@PEAXPEAE@@YAPEAXPEAEH@Z 0000000180003978 f i pe.obj
+ 0001:000029b0       ??$raw_offset@PEAXPEAX@@YAPEAXPEAXH@Z 00000001800039b0 f i pe.obj
+ 0001:00002a70       ?XEInitialisePmmngr@@YAXUEfiMemoryMap@@PEAX_K@Z 0000000180003a70 f   physm.obj
+ 0001:00002cc8       ?XEPmmngrAllocate@@YA_KXZ  0000000180003cc8 f   physm.obj
+ 0001:00002d70       ?XEPmmngrFree@@YAX_K@Z     0000000180003d70 f   physm.obj
+ 0001:00002db8       ?XEPmmngrList@@YAXXZ       0000000180003db8 f   physm.obj
+ 0001:00002e40       ?XEGetAlstack@@YAPEA_KXZ   0000000180003e40 f   physm.obj
+ 0001:00002e60       ?XEGetAlstackptr@@YAPEA_KXZ 0000000180003e60 f   physm.obj
+ 0001:00002e80       ?XEReserveMemCount@@YA_KXZ 0000000180003e80 f   physm.obj
+ 0001:00002ea8       ?XEGetPgStack@@YAPEA_KXZ   0000000180003ea8 f   physm.obj
+ 0001:00002ec8       ?XEGetStackPtr@@YAPEA_KXZ  0000000180003ec8 f   physm.obj
+ 0001:00002ee8       ?XEGetPhysicalStart@@YA_KXZ 0000000180003ee8 f   physm.obj
+ 0001:00002f08       ?XEGetPhysicalSize@@YA_KXZ 0000000180003f08 f   physm.obj
+ 0001:00002f28       ?XEGetRamSize@@YA_KXZ      0000000180003f28 f   physm.obj
+ 0001:00002f48       ??$raw_diff@UEFI_MEMORY_DESCRIPTOR@@U1@@@YAHPEAUEFI_MEMORY_DESCRIPTOR@@0@Z 0000000180003f48 f i physm.obj
+ 0001:00002f88       ??$raw_diff@_K_K@@YAHPEA_K0@Z 0000000180003f88 f i physm.obj
+ 0001:00002fc8       ??$raw_offset@PEAUEFI_MEMORY_DESCRIPTOR@@PEAU1@@@YAPEAUEFI_MEMORY_DESCRIPTOR@@PEAU0@H@Z 0000000180003fc8 f i physm.obj
+ 0001:00003000       ??$raw_offset@PEA_KPEAX@@YAPEA_KPEAXH@Z 0000000180004000 f i physm.obj
+ 0001:00003038       ?XEUartInitialize@@YAXXZ   0000000180004038 f   uart0.obj
+ 0001:00003060       ?XEUARTPrint@@YAXPEBDZZ    0000000180004060 f   uart0.obj
+ 0001:00003398       ?XEUartPutc@@YAXD@Z        0000000180004398 f   uart0.obj
+ 0001:000033c0       ?XEUartPutString@@YAXPEBD@Z 00000001800043c0 f   uart0.obj
+ 0001:00003420       sync_el1_handler           0000000180004420 f   vector.obj
+ 0001:000035c8       irq_el1_handler            00000001800045c8 f   vector.obj
+ 0001:00003600       ?XEVectorInstall@@YAXXZ    0000000180004600 f   vector.obj
+ 0001:00003630       ?XEInitialiseGraphics@@YA_KPEAU_EFI_GRAPHICS_OUTPUT_PROTOCOL@@@Z 0000000180004630 f   video.obj
+ 0001:00003a18       ?XEPutPixel@@YAX_K0I@Z     0000000180004a18 f   video.obj
+ 0001:00003b68       ?XEGraphicsPutC@@YAXD@Z    0000000180004b68 f   video.obj
+ 0001:00003e10       ?XEGraphicsPuts@@YAXPEBD@Z 0000000180004e10 f   video.obj
+ 0001:00004198       ?XEGraphicsClearScreen@@YAXPEAU_EFI_GRAPHICS_OUTPUT_PROTOCOL@@@Z 0000000180005198 f   video.obj
+ 0001:00004248       ?XEGetFramebuffer@@YAPEAIXZ 0000000180005248 f   video.obj
+ 0001:00004268       ?XEGetScreenWidth@@YAGXZ   0000000180005268 f   video.obj
+ 0001:00004288       ?XEGetScreenHeight@@YAGXZ  0000000180005288 f   video.obj
+ 0001:000042a8       ?XEGetFramebufferSz@@YA_KXZ 00000001800052a8 f   video.obj
+ 0001:000042c8       ?XEGetPixelsPerLine@@YA_KXZ 00000001800052c8 f   video.obj
+ 0001:000042f0       ?XEGetRedMask@@YAIXZ       00000001800052f0 f   video.obj
+ 0001:00004310       ?XEGetBlueMask@@YAIXZ      0000000180005310 f   video.obj
+ 0001:00004330       ?XEGetGreenMask@@YAIXZ     0000000180005330 f   video.obj
+ 0001:00004350       ?XEGetResvMask@@YAIXZ      0000000180005350 f   video.obj
+ 0001:00004370       ?high_set_bit@@YAD_K@Z     0000000180005370 f   video.obj
+ 0001:000043d0       ?low_set_bit@@YAD_K@Z      00000001800053d0 f   video.obj
+ 0001:00004440       ??$raw_offset@PEAIPEAI@@YAPEAIPEAIH@Z 0000000180005440 f i video.obj
+ 0001:00004478       ?ASCIIToChar16@@YAXPEBDPEA_W@Z 0000000180005478 f   xnldr.obj
+ 0001:000044f0       ?Char16ToASCII@@YAXPEADPEAG@Z 00000001800054f0 f   xnldr.obj
+ 0001:00004570       ?XEGUIDMatch@@YA_NUGUID@@0@Z 0000000180005570 f   xnldr.obj
+ 0001:00004698       ?XECompareGUID@@YAHPEBUGUID@@0@Z 0000000180005698 f   xnldr.obj
+ 0001:000047b8       ?XEInitialiseLib@@YA_KPEAXPEAUEFI_SYSTEM_TABLE@@@Z 00000001800057b8 f   xnldr.obj
+ 0001:000048e8       ?XEGetScreenResolutionMode@@YAHPEAUEFI_SYSTEM_TABLE@@@Z 00000001800058e8 f   xnldr.obj
+ 0001:00004b30       ?XESetGraphicsMode@@YA_KPEAUEFI_SYSTEM_TABLE@@H@Z 0000000180005b30 f   xnldr.obj
+ 0001:00004d98       ?XEExitEL2@@YAXXZ          0000000180005d98 f   xnldr.obj
+ 0001:00004e70       ?AuDTBSwap32@@YAII@Z       0000000180005e70 f   xnldr.obj
+ 0001:00004f10       ?efi_main@@YA_KPEAXPEAUEFI_SYSTEM_TABLE@@@Z 0000000180005f10 f   xnldr.obj
+ 0001:00005890       ?_is_GraphicsEnabled@@YA_NXZ 0000000180006890 f   xnldr.obj
+ 0001:000058b0       ?XEClearScreen@@YAXXZ      00000001800068b0 f   xnout.obj
+ 0001:000058f8       ?XESetCursor@@YA_KE@Z      00000001800068f8 f   xnout.obj
+ 0001:00005950       ?XEGetCurrentCursorPos@@YAXPEAH0@Z 0000000180006950 f   xnout.obj
+ 0001:000059c8       ?XESetCurrentCursorPos@@YA_KHH@Z 00000001800069c8 f   xnout.obj
+ 0001:00005a30       ?XESetTextAttribute@@YA_KHH@Z 0000000180006a30 f   xnout.obj
+ 0001:00005a98       ?XEPrintf@@YAHPEA_WZZ      0000000180006a98 f   xnout.obj
+ 0001:00006a58       ?XEGuiPrint@@YAXPEBDZZ     0000000180007a58 f   xnout.obj
+ 0001:00006db0       ?XEPutChar@@YAXH@Z         0000000180007db0 f   xnout.obj
+ 0003:00000000       ?chars@@3PEADEA            000000018000a000     clib.obj
+ 0003:00000008       ?FileSystemProtocol@@3UGUID@@A 000000018000a008     file.obj
+ 0003:00000018       ?LoadFileProtocol@@3UGUID@@A 000000018000a018     file.obj
+ 0003:00000028       ?GenericFileInfo@@3UGUID@@A 000000018000a028     file.obj
+ 0003:00000038       ?MenuItem@@3PAUMENU_ITEM@@A 000000018000a038     xnldr.obj
+ 0003:00000058       ?FdtTableGuid@@3UGUID@@A   000000018000a058     xnldr.obj
+ 0003:00000078       ?l0_table_base@@3PEA_KEA   000000018000a078     paging.obj
+ 0003:00000080       ?pagestack@@3PEA_KEA       000000018000a080     physm.obj
+ 0003:00000088       ?stackptr@@3PEA_KEA        000000018000a088     physm.obj
+ 0003:00000090       ?allocatedStack@@3PEA_KEA  000000018000a090     physm.obj
+ 0003:00000098       ?allocatedPtr@@3PEA_KEA    000000018000a098     physm.obj
+ 0003:000000a0       ?allocatedCount@@3IA       000000018000a0a0     physm.obj
+ 0003:000000a8       ?usableRam@@3_KA           000000018000a0a8     physm.obj
+ 0003:000000b0       ?usableSize@@3_KA          000000018000a0b0     physm.obj
+ 0003:000000b8       ?ramSize@@3_KA             000000018000a0b8     physm.obj
+ 0003:000000e0       ?fbinfo@@3U_FB_INFO_@@A    000000018000a0e0     video.obj
+ 0003:00000110       ?xpos@@3_KA                000000018000a110     video.obj
+ 0003:00000118       ?ypos@@3_KA                000000018000a118     video.obj
+ 0003:00000120       ?bpp@@3_KA                 000000018000a120     video.obj
+ 0003:00000128       ?h_res@@3_KA               000000018000a128     video.obj
+ 0003:00000130       ?v_res@@3_KA               000000018000a130     video.obj
+ 0003:00000138       ?background@@3IA           000000018000a138     video.obj
+ 0003:0000013c       ?foreground@@3IA           000000018000a13c     video.obj
+ 0003:00000140       ?gSystemTable@@3PEAUEFI_SYSTEM_TABLE@@EA 000000018000a140     xnldr.obj
+ 0003:00000148       ?gRS@@3PEAUEFI_RUNTIME_SERVICES@@EA 000000018000a148     xnldr.obj
+ 0003:00000150       ?xnldr2@@3PEAUEFI_LOADED_IMAGE_PROTOCOL@@EA 000000018000a150     xnldr.obj
+ 0003:00000158       ?gop@@3PEAU_EFI_GRAPHICS_OUTPUT_PROTOCOL@@EA 000000018000a158     xnldr.obj
+ 0003:00000168       ?kernelBuff@@3PEAXEA       000000018000a168     xnldr.obj
+ 0003:00000170       ?keBuff@@3_KA              000000018000a170     xnldr.obj
+ 0003:00000178       ?gImageHandle@@3PEAXEA     000000018000a178     xnldr.obj
+ 0003:00000180       ?gBS@@3PEAUEFI_BOOT_SERVICES@@EA 000000018000a180     xnldr.obj
+
+ entry point at        0001:00004f10
+
+ Static symbols
+
+ 0001:0000012c       _hang                      000000018000112c     lowlevel.obj
+ 0001:00000144       .flush_level               0000000180001144     lowlevel.obj
+ 0001:00000178       .flush_set                 0000000180001178     lowlevel.obj
+ 0001:0000017c       .flush_way                 000000018000117c     lowlevel.obj
+ 0001:000001a0       .skip_level                00000001800011a0     lowlevel.obj
+ 0001:000001ac       .flush_done                00000001800011ac     lowlevel.obj
+ 0001:00000248       in_el1                     0000000180001248     lowlevel.obj
+ 0001:00001a88       $LN15                      0000000180002a88     file.obj
+ 0001:00001a90       $LN13                      0000000180002a90     file.obj
+ 0001:00001a94       $LN14                      0000000180002a94     file.obj
+ 0001:00001e68       $LN11                      0000000180002e68     paging.obj
+ 0001:00001e70       $LN12                      0000000180002e70     paging.obj
+ 0001:00001e78       $LN13                      0000000180002e78     paging.obj
+ 0001:00002508       $LN6                       0000000180003508     paging.obj
+ 0001:00002510       $LN7                       0000000180003510     paging.obj
+ 0001:00002518       $LN8                       0000000180003518     paging.obj
+ 0001:00002898       ?zero_mem@@YAXPEAX_K@Z     0000000180003898 f   pe.obj
+ 0001:000029e8       ?copy_mem@@YAXPEAX0_K@Z    00000001800039e8 f   pe.obj
+ 0001:000035b8       $LN23                      00000001800045b8     vector.obj
+ 0001:000035b9       $LN24                      00000001800045b9     vector.obj
+ 0001:000035ba       $LN25                      00000001800045ba     vector.obj
+ 0001:000035bb       $LN26                      00000001800045bb     vector.obj
+ 0001:000035bc       $LN27                      00000001800045bc     vector.obj
+ 0001:000035bd       $LN28                      00000001800045bd     vector.obj
+ 0001:000035be       $LN29                      00000001800045be     vector.obj
+ 0001:000035bf       $LN30                      00000001800045bf     vector.obj
+ 0001:000035c0       $LN31                      00000001800045c0     vector.obj
+ 0001:000035c1       $LN32                      00000001800045c1     vector.obj
+ 0001:000035c2       $LN33                      00000001800045c2     vector.obj
+ 0001:000035c3       $LN34                      00000001800045c3     vector.obj
+ 0001:000035c4       $LN35                      00000001800045c4     vector.obj
+ 0001:000035c5       $LN36                      00000001800045c5     vector.obj
+ 0001:000035c6       $LN37                      00000001800045c6     vector.obj
+ 0001:000035c7       $LN38                      00000001800045c7     vector.obj
+ 0001:00003a10       $LN8                       0000000180004a10     video.obj
+ 0001:000048e0       $LN4                       00000001800058e0     xnldr.obj
+ 0001:00004b28       $LN20                      0000000180005b28     xnldr.obj
+ 0001:00004d90       $LN14                      0000000180005d90     xnldr.obj
+ 0001:00005870       $LN44                      0000000180006870     xnldr.obj
+ 0001:00005878       $LN45                      0000000180006878     xnldr.obj
+ 0001:00005880       $LN46                      0000000180006880     xnldr.obj
+ 0001:00005888       $LN43                      0000000180006888     xnldr.obj
+ 0002:00000000       $SG656                     0000000180008000     clib.obj
+ 0002:00000018       $SG14567                   0000000180008018     file.obj
+ 0002:00000038       $SG14569                   0000000180008038     file.obj
+ 0002:00000060       $SG14571                   0000000180008060     file.obj
+ 0002:00000088       $SG14573                   0000000180008088     file.obj
+ 0002:000000a0       $SG14576                   00000001800080a0     file.obj
+ 0002:000000d0       $SG14578                   00000001800080d0     file.obj
+ 0002:000000f0       $SG14580                   00000001800080f0     file.obj
+ 0002:00000120       $SG14582                   0000000180008120     file.obj
+ 0002:00000138       $SG14584                   0000000180008138     file.obj
+ 0002:00000170       $SG14226                   0000000180008170     mem.obj
+ 0002:000001b0       $SG14326                   00000001800081b0     paging.obj
+ 0002:000001c0       $SG14327                   00000001800081c0     paging.obj
+ 0002:000001d0       $SG14328                   00000001800081d0     paging.obj
+ 0002:000001e0       $SG14329                   00000001800081e0     paging.obj
+ 0002:000001f0       $SG14330                   00000001800081f0     paging.obj
+ 0002:00000200       $SG14331                   0000000180008200     paging.obj
+ 0002:00000210       $SG14332                   0000000180008210     paging.obj
+ 0002:00000220       $SG14333                   0000000180008220     paging.obj
+ 0002:00000230       $SG14334                   0000000180008230     paging.obj
+ 0002:00000240       $SG14335                   0000000180008240     paging.obj
+ 0002:00000250       $SG14336                   0000000180008250     paging.obj
+ 0002:00000260       $SG14337                   0000000180008260     paging.obj
+ 0002:00000270       $SG14338                   0000000180008270     paging.obj
+ 0002:00000280       $SG14339                   0000000180008280     paging.obj
+ 0002:00000290       $SG14340                   0000000180008290     paging.obj
+ 0002:000002a0       $SG14341                   00000001800082a0     paging.obj
+ 0002:000002b0       $SG14342                   00000001800082b0     paging.obj
+ 0002:000002c0       $SG14343                   00000001800082c0     paging.obj
+ 0002:000002d0       $SG14378                   00000001800082d0     paging.obj
+ 0002:000002e0       $SG14379                   00000001800082e0     paging.obj
+ 0002:000002f8       $SG14381                   00000001800082f8     paging.obj
+ 0002:00000310       $SG14382                   0000000180008310     paging.obj
+ 0002:00000320       $SG14385                   0000000180008320     paging.obj
+ 0002:00000330       $SG14386                   0000000180008330     paging.obj
+ 0002:00000348       $SG14404                   0000000180008348     paging.obj
+ 0002:00000358       $SG14690                   0000000180008358     pe.obj
+ 0002:00000378       $SG14691                   0000000180008378     pe.obj
+ 0002:00000390       $SG14299                   0000000180008390     physm.obj
+ 0002:000003a0       $SG14329                   00000001800083a0     uart0.obj
+ 0002:000003a4       $SG14340                   00000001800083a4     uart0.obj
+ 0002:000003a8       $SG14254                   00000001800083a8     vector.obj
+ 0002:000003c0       $SG14255                   00000001800083c0     vector.obj
+ 0002:000003d8       $SG14256                   00000001800083d8     vector.obj
+ 0002:000003f0       $SG14258                   00000001800083f0     vector.obj
+ 0002:00000410       $SG14260                   0000000180008410     vector.obj
+ 0002:00000430       $SG14262                   0000000180008430     vector.obj
+ 0002:00000450       $SG14264                   0000000180008450     vector.obj
+ 0002:00000470       $SG14266                   0000000180008470     vector.obj
+ 0002:00000490       $SG14268                   0000000180008490     vector.obj
+ 0002:000004b0       $SG14270                   00000001800084b0     vector.obj
+ 0002:000004d0       $SG14272                   00000001800084d0     vector.obj
+ 0002:000004f0       $SG14274                   00000001800084f0     vector.obj
+ 0002:00000508       $SG14276                   0000000180008508     vector.obj
+ 0002:00000520       $SG14278                   0000000180008520     vector.obj
+ 0002:00000538       $SG14280                   0000000180008538     vector.obj
+ 0002:00000558       $SG14282                   0000000180008558     vector.obj
+ 0002:00000578       $SG14284                   0000000180008578     vector.obj
+ 0002:00000598       $SG14286                   0000000180008598     vector.obj
+ 0002:000005b0       $SG14291                   00000001800085b0     vector.obj
+ 0002:000005c8       $SG14296                   00000001800085c8     vector.obj
+ 0002:00000600       ?bx_vgafont@@3QBUbx_fontcharbitmap_t@@B 0000000180008600     video.obj
+ 0002:00001600       $SG20715                   0000000180009600     xnldr.obj
+ 0002:00001610       $SG20716                   0000000180009610     xnldr.obj
+ 0002:00001628       $SG20717                   0000000180009628     xnldr.obj
+ 0002:00001640       $SG20718                   0000000180009640     xnldr.obj
+ 0002:00001654       $SG20744                   0000000180009654     xnldr.obj
+ 0002:00001660       $SG20741                   0000000180009660     xnldr.obj
+ 0002:000016b0       $SG20742                   00000001800096b0     xnldr.obj
+ 0002:00001718       $SG20743                   0000000180009718     xnldr.obj
+ 0002:00001758       $SG20747                   0000000180009758     xnldr.obj
+ 0002:00001768       $SG20788                   0000000180009768     xnldr.obj
+ 0002:000017a8       $SG20843                   00000001800097a8     xnldr.obj
+ 0002:000017c0       $SG20787                   00000001800097c0     xnldr.obj
+ 0002:00001830       $SG20842                   0000000180009830     xnldr.obj
+ 0002:00001840       $SG20844                   0000000180009840     xnldr.obj
+ 0002:00001858       $SG20845                   0000000180009858     xnldr.obj
+ 0002:00001870       $SG20846                   0000000180009870     xnldr.obj
+ 0002:00001888       $SG20847                   0000000180009888     xnldr.obj
+ 0002:000018a8       $SG20848                   00000001800098a8     xnldr.obj
+ 0002:000018c0       $SG20986                   00000001800098c0     xnldr.obj
+ 0002:000018d8       $SG20987                   00000001800098d8     xnldr.obj
+ 0002:00001900       $SG20988                   0000000180009900     xnldr.obj
+ 0002:00001930       $SG20989                   0000000180009930     xnldr.obj
+ 0002:00001958       $SG20990                   0000000180009958     xnldr.obj
+ 0002:00001988       $SG20992                   0000000180009988     xnldr.obj
+ 0002:00001990       $SG20994                   0000000180009990     xnldr.obj
+ 0002:000019b0       $SG20995                   00000001800099b0     xnldr.obj
+ 0002:000019f0       $SG20996                   00000001800099f0     xnldr.obj
+ 0002:00001a10       $SG20999                   0000000180009a10     xnldr.obj
+ 0002:00001a3c       $SG21000                   0000000180009a3c     xnldr.obj
+ 0002:00001a48       $SG21005                   0000000180009a48     xnldr.obj
+ 0002:00001a78       $SG21008                   0000000180009a78     xnldr.obj
+ 0002:00001a80       $SG21002                   0000000180009a80     xnldr.obj
+ 0002:00001af0       $SG21007                   0000000180009af0     xnldr.obj
+ 0002:00001b40       $SG21010                   0000000180009b40     xnldr.obj
+ 0002:00001b70       $SG21013                   0000000180009b70     xnldr.obj
+ 0002:00001b98       $SG21022                   0000000180009b98     xnldr.obj
+ 0002:00001bb0       $SG21014                   0000000180009bb0     xnldr.obj
+ 0002:00001c00       $SG21015                   0000000180009c00     xnldr.obj
+ 0002:00001c20       $SG21016                   0000000180009c20     xnldr.obj
+ 0002:00001c60       $SG21019                   0000000180009c60     xnldr.obj
+ 0002:00001c90       $SG21020                   0000000180009c90     xnldr.obj
+ 0002:00001cf0       $SG21023                   0000000180009cf0     xnldr.obj
+ 0002:00001d1c       $SG21024                   0000000180009d1c     xnldr.obj
+ 0002:00001d28       $SG21025                   0000000180009d28     xnldr.obj
+ 0002:00001d40       $SG21027                   0000000180009d40     xnldr.obj
+ 0002:00001d58       $SG21029                   0000000180009d58     xnldr.obj
+ 0002:00001d80       $SG21031                   0000000180009d80     xnldr.obj
+ 0002:00001da0       $SG21033                   0000000180009da0     xnldr.obj
+ 0002:00001dc0       $SG21034                   0000000180009dc0     xnldr.obj
+ 0002:00001de0       $SG21035                   0000000180009de0     xnldr.obj
+ 0002:00001e08       $SG21039                   0000000180009e08     xnldr.obj
+ 0002:00001e20       $SG21040                   0000000180009e20     xnldr.obj
+ 0002:00001e38       $SG21041                   0000000180009e38     xnldr.obj
+ 0002:00001e60       $SG20264                   0000000180009e60     xnout.obj
+ 0002:00001e68       $SG20269                   0000000180009e68     xnout.obj
+ 0002:00001e80       $SG20282                   0000000180009e80     xnout.obj
+ 0002:00001e94       $SG20289                   0000000180009e94     xnout.obj
+ 0002:00001e98       $SG20287                   0000000180009e98     xnout.obj
+ 0002:00001eac       $SG20290                   0000000180009eac     xnout.obj
+ 0002:00001eb0       $SG20364                   0000000180009eb0     xnout.obj
+ 0002:00001eb4       $SG20375                   0000000180009eb4     xnout.obj
+ 0003:00000068       ?acpi_guid@?1??efi_main@@YA_KPEAXPEAUEFI_SYSTEM_TABLE@@@Z@4UGUID@@A 000000018000a068     xnldr.obj
+ 0003:000000c0       ?pmmngr_boot_info@@3U_pmmngr_boot_info_@@A 000000018000a0c0     physm.obj
+ 0003:000000d8       ?_is_uart_initialized@@3_NA 000000018000a0d8     uart0.obj
+ 0003:00000160       ?_is_graphics_enabled@@3_NA 000000018000a160     xnldr.obj
+ 0005:00000000       __0863143E_clib@cpp        000000018000c000     clib.obj
+ 0005:00000001       __44432208_devicetree@cpp  000000018000c001     devicetree.obj
+ 0005:00000002       __F056785E_file@cpp        000000018000c002     file.obj
+ 0005:00000003       __44F627EC_mem@cpp         000000018000c003     mem.obj
+ 0005:00000004       __C1149DC9_paging@cpp      000000018000c004     paging.obj
+ 0005:00000005       __DD4E268B_pe@cpp          000000018000c005     pe.obj
+ 0005:00000006       __CF3EA923_stdint@h        000000018000c006     pe.obj
+ 0005:00000007       __47728D6D_physm@cpp       000000018000c007     physm.obj
+ 0005:00000008       __CF3EA923_stdint@h        000000018000c008     physm.obj
+ 0005:00000009       __CD2BBC31_uart0@cpp       000000018000c009     uart0.obj
+ 0005:0000000a       __70F98421_vector@cpp      000000018000c00a     vector.obj
+ 0005:0000000b       __5184BB91_video@cpp       000000018000c00b     video.obj
+ 0005:0000000c       __CF3EA923_stdint@h        000000018000c00c     video.obj
+ 0005:0000000d       __F340A7EB_xnldr@cpp       000000018000c00d     xnldr.obj
+ 0005:0000000e       __856299E8_xnout@cpp       000000018000c00e     xnout.obj

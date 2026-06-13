@@ -1,0 +1,2098 @@
+ xnkrnl
+
+ Timestamp is 6a2d511d (Sat Jun 13 18:16:21 2026)
+
+ Preferred load address is ffffc00000000000
+
+ Start         Length     Name                   Class
+ 0001:00000000 000016e0H .text                   CODE
+ 0001:000016e0 000382b0H .text$mn                CODE
+ 0002:00000000 000011bcH .rdata                  DATA
+ 0002:000011bc 00000090H .rdata$zzzdbg           DATA
+ 0003:00000000 00004e20H .data                   DATA
+ 0003:00004e20 00005160H .bss                    DATA
+ 0004:00000000 000015a8H .pdata                  DATA
+ 0005:00000000 000010b7H .edata                  DATA
+
+  Address         Publics by Value              Rva+Base               Lib:Object
+
+ 0000:00000000       ___safe_se_handler_count   0000000000000000     <absolute>
+ 0000:00000000       __dynamic_value_reloc_table 0000000000000000     <absolute>
+ 0000:00000000       __enclave_config           0000000000000000     <absolute>
+ 0000:00000000       __guard_check_icall_a64n_fptr 0000000000000000     <absolute>
+ 0000:00000000       ___safe_se_handler_table   0000000000000000     <absolute>
+ 0000:00000000       __guard_eh_cont_table      0000000000000000     <absolute>
+ 0000:00000000       __guard_fids_count         0000000000000000     <absolute>
+ 0000:00000000       __hybrid_auxiliary_iat     0000000000000000     <absolute>
+ 0000:00000000       __arm64x_redirection_metadata 0000000000000000     <absolute>
+ 0000:00000000       __arm64x_extra_rfe_table_size 0000000000000000     <absolute>
+ 0000:00000000       __volatile_metadata        0000000000000000     <absolute>
+ 0000:00000000       __arm64x_redirection_metadata_count 0000000000000000     <absolute>
+ 0000:00000000       __guard_longjmp_count      0000000000000000     <absolute>
+ 0000:00000000       __guard_iat_table          0000000000000000     <absolute>
+ 0000:00000000       __guard_eh_cont_count      0000000000000000     <absolute>
+ 0000:00000000       __hybrid_auxiliary_iat_copy 0000000000000000     <absolute>
+ 0000:00000000       __AbsoluteZero             0000000000000000     <absolute>
+ 0000:00000000       __hybrid_code_map          0000000000000000     <absolute>
+ 0000:00000000       __x64_code_ranges_to_entry_points 0000000000000000     <absolute>
+ 0000:00000000       __guard_longjmp_table      0000000000000000     <absolute>
+ 0000:00000000       __arm64x_native_entrypoint 0000000000000000     <absolute>
+ 0000:00000000       __hybrid_code_map_count    0000000000000000     <absolute>
+ 0000:00000000       __guard_fids_table         0000000000000000     <absolute>
+ 0000:00000000       __x64_code_ranges_to_entry_points_count 0000000000000000     <absolute>
+ 0000:00000000       __guard_iat_count          0000000000000000     <absolute>
+ 0000:00000000       __arm64x_extra_rfe_table   0000000000000000     <absolute>
+ 0000:00000100       __guard_flags              0000000000000100     <absolute>
+ 0001:00000094       irq_el1_wrapper            ffffc00000001094     aa64vector.obj
+ 0001:00000128       sync_el0_wrapper           ffffc00000001128     aa64vector.obj
+ 0001:000001d4       irq_el0_wrapper            ffffc000000011d4     aa64vector.obj
+ 0001:00000800       vectors                    ffffc00000001800     aa64vector.obj
+ 0001:00000f9c       store_x0_x7                ffffc00000001f9c     aa64lowlevel.obj
+ 0001:00000fbc       _getCurrentEL              ffffc00000001fbc     aa64lowlevel.obj
+ 0001:00000fc8       read_ttbr0_el1             ffffc00000001fc8     aa64lowlevel.obj
+ 0001:00000fd0       read_ttbr1_el1             ffffc00000001fd0     aa64lowlevel.obj
+ 0001:00000fd8       write_ttbr0_el1            ffffc00000001fd8     aa64lowlevel.obj
+ 0001:00000fe0       write_ttbr1_el1            ffffc00000001fe0     aa64lowlevel.obj
+ 0001:00000fe8       write_both_ttbr            ffffc00000001fe8     aa64lowlevel.obj
+ 0001:00001004       dsb_sy_barrier             ffffc00000002004     aa64lowlevel.obj
+ 0001:00001010       read_sctlr_el1             ffffc00000002010     aa64lowlevel.obj
+ 0001:00001018       write_sctlr_el1            ffffc00000002018     aa64lowlevel.obj
+ 0001:00001020       read_mair_el1              ffffc00000002020     aa64lowlevel.obj
+ 0001:00001028       write_mair_el1             ffffc00000002028     aa64lowlevel.obj
+ 0001:00001030       read_tcr_el1               ffffc00000002030     aa64lowlevel.obj
+ 0001:00001038       write_tcr_el1              ffffc00000002038     aa64lowlevel.obj
+ 0001:00001040       dsb_ish                    ffffc00000002040     aa64lowlevel.obj
+ 0001:00001048       dmb_ish                    ffffc00000002048     aa64lowlevel.obj
+ 0001:00001050       dmb_sy                     ffffc00000002050     aa64lowlevel.obj
+ 0001:00001058       isb_flush                  ffffc00000002058     aa64lowlevel.obj
+ 0001:00001060       tlb_flush                  ffffc00000002060     aa64lowlevel.obj
+ 0001:00001074       tlb_flush_vmalle1is        ffffc00000002074     aa64lowlevel.obj
+ 0001:00001088       enable_sre                 ffffc00000002088     aa64lowlevel.obj
+ 0001:0000109c       read_icc_iidr              ffffc0000000209c     aa64lowlevel.obj
+ 0001:000010a0       set_vbar_el1               ffffc000000020a0     aa64lowlevel.obj
+ 0001:000010ac       get_cntpct_el0             ffffc000000020ac     aa64lowlevel.obj
+ 0001:000010b4       get_cntvct_el0             ffffc000000020b4     aa64lowlevel.obj
+ 0001:000010bc       get_cntfrq_el0             ffffc000000020bc     aa64lowlevel.obj
+ 0001:000010c4       get_cpacr_el1              ffffc000000020c4     aa64lowlevel.obj
+ 0001:000010cc       get_cntv_ctl_el0           ffffc000000020cc     aa64lowlevel.obj
+ 0001:000010d4       set_cpacr_el1              ffffc000000020d4     aa64lowlevel.obj
+ 0001:000010dc       read_esr_el1               ffffc000000020dc     aa64lowlevel.obj
+ 0001:000010e4       read_far_el1               ffffc000000020e4     aa64lowlevel.obj
+ 0001:000010ec       read_elr_el1               ffffc000000020ec     aa64lowlevel.obj
+ 0001:000010f4       read_spsr_el1              ffffc000000020f4     aa64lowlevel.obj
+ 0001:000010fc       enable_irqs                ffffc000000020fc     aa64lowlevel.obj
+ 0001:0000110c       mask_irqs                  ffffc0000000210c     aa64lowlevel.obj
+ 0001:0000111c       setupTimerIRQ              ffffc0000000211c     aa64lowlevel.obj
+ 0001:00001138       suspendTimer               ffffc00000002138     aa64lowlevel.obj
+ 0001:00001144       readTimerCtl               ffffc00000002144     aa64lowlevel.obj
+ 0001:0000114c       read_icc_iar1_el1          ffffc0000000214c     aa64lowlevel.obj
+ 0001:00001154       read_midr                  ffffc00000002154     aa64lowlevel.obj
+ 0001:0000115c       read_mpidr_el1             ffffc0000000215c     aa64lowlevel.obj
+ 0001:00001164       read_spsel                 ffffc00000002164     aa64lowlevel.obj
+ 0001:0000116c       read_daif                  ffffc0000000216c     aa64lowlevel.obj
+ 0001:00001174       aa64_enter_user            ffffc00000002174     aa64lowlevel.obj
+ 0001:00001188       aa64_svc_test              ffffc00000002188     aa64lowlevel.obj
+ 0001:00001190       aa64_utest                 ffffc00000002190     aa64lowlevel.obj
+ 0001:00001194       read_x30                   ffffc00000002194     aa64lowlevel.obj
+ 0001:0000119c       read_sp                    ffffc0000000219c     aa64lowlevel.obj
+ 0001:000011a4       read_sp_el1                ffffc000000021a4     aa64lowlevel.obj
+ 0001:000011ac       sub_rsp                    ffffc000000021ac     aa64lowlevel.obj
+ 0001:000011b4       set_kstack                 ffffc000000021b4     aa64lowlevel.obj
+ 0001:000011bc       dc_ivac                    ffffc000000021bc     aa64lowlevel.obj
+ 0001:000011c4       set_syscall_retval         ffffc000000021c4     aa64lowlevel.obj
+ 0001:000011cc       modifyx17                  ffffc000000021cc     aa64lowlevel.obj
+ 0001:000011d4       enableAlignCheck           ffffc000000021d4     aa64lowlevel.obj
+ 0001:000011ec       data_cache_flush           ffffc000000021ec     aa64lowlevel.obj
+ 0001:00001204       read_ctr_el0               ffffc00000002204     aa64lowlevel.obj
+ 0001:0000120c       dc_cvac                    ffffc0000000220c     aa64lowlevel.obj
+ 0001:00001218       set_cntp_cval_el0          ffffc00000002218     aa64lowlevel.obj
+ 0001:00001220       set_cntp_ctl_el0           ffffc00000002220     aa64lowlevel.obj
+ 0001:00001228       _wfi                       ffffc00000002228     aa64lowlevel.obj
+ 0001:00001230       gic_cpu_init               ffffc00000002230     aa64lowlevel.obj
+ 0001:0000128c       gic_read_intid             ffffc0000000228c     aa64lowlevel.obj
+ 0001:00001294       gic_icc_eoi                ffffc00000002294     aa64lowlevel.obj
+ 0001:000012a0       aa64_store_context         ffffc000000022a0     aa64switch.obj
+ 0001:000012cc       aa64_restore_context       ffffc000000022cc     aa64switch.obj
+ 0001:00001338       first_time_sex             ffffc00000002338     aa64switch.obj
+ 0001:0000138c       resume_user                ffffc0000000238c     aa64switch.obj
+ 0001:00001400       first_time_sex2            ffffc00000002400     aa64switch.obj
+ 0001:00001454       store_syscall              ffffc00000002454     aa64switch.obj
+ 0001:000014a4       ret_from_syscall           ffffc000000024a4     aa64switch.obj
+ 0001:00001520       aa64_store_fp              ffffc00000002520     aa64switch.obj
+ 0001:000015a8       aa64_restore_fp            ffffc000000025a8     aa64switch.obj
+ 0001:00001634       UARTDebugOut               ffffc00000002634     aa64_print.obj
+ 0001:00001670       AuTextOut_profiler         ffffc00000002670     aa64_print.obj
+ 0001:000016d4       virt_power_down            ffffc000000026d4     virt_power.obj
+ 0001:000016d8       virt_power_reboot          ffffc000000026d8     virt_power.obj
+ 0001:000016e8       AuConsoleInitialize        ffffc000000026e8 f   aucon.obj
+ 0001:00001780       AuConsolePostInitialise    ffffc00000002780 f   aucon.obj
+ 0001:00001bc8       AuTextOut                  ffffc00000002bc8 f   aucon.obj
+ 0001:00001f70       AuConsoleEarlyEnable       ffffc00000002f70 f   aucon.obj
+ 0001:00001f98       AuConsoleGetScreenWidth    ffffc00000002f98 f   aucon.obj
+ 0001:00001fc0       AuConsoleGetScreenHeight   ffffc00000002fc0 f   aucon.obj
+ 0001:00001ff0       AuConsoleSetConInfo        ffffc00000002ff0 f   aucon.obj
+ 0001:00002080       AuTestPrint                ffffc00000003080 f   aucon.obj
+ 0001:00002098       AuConsoleIoControl         ffffc00000003098 f   aucon.obj
+ 0001:000022f0       high_set_bit               ffffc000000032f0 f   aucon.obj
+ 0001:00002340       low_set_bit                ffffc00000003340 f   aucon.obj
+ 0001:00002398       AuPutPixel                 ffffc00000003398 f   aucon.obj
+ 0001:00002428       AuPutC                     ffffc00000003428 f   aucon.obj
+ 0001:000026f8       AuPutS                     ffffc000000036f8 f   aucon.obj
+ 0001:00002a90       AuTextOutpro_Call          ffffc00000003a90 f   aucon.obj
+ 0001:00002dd8       AuConsoleFlushFramebuffer  ffffc00000003dd8 f   aucon.obj
+ 0001:00002e10       AuConsoleBypassAuTextOut   ffffc00000003e10 f   aucon.obj
+ 0001:00002ef8       AuDrvMngrInitialize        ffffc00000003ef8 f   audrv.obj
+ 0001:00003468       AuRegisterDevice           ffffc00000004468 f   audrv.obj
+ 0001:000034b8       AuCheckDevice              ffffc000000044b8 f   audrv.obj
+ 0001:000035c8       AuBootDriverInitialise     ffffc000000045c8 f   audrv.obj
+ 0001:000036f8       AuDrvMgrGetBaseAddress     ffffc000000046f8 f   audrv.obj
+ 0001:00003708       AuDrvMgrSetBaseAddress     ffffc00000004708 f   audrv.obj
+ 0001:00003728       AuGetConfEntry             ffffc00000004728 f   audrv.obj
+ 0001:00003a48       AuGetDriverName            ffffc00000004a48 f   audrv.obj
+ 0001:00003b98       AuDrvManagerCheckFault     ffffc00000004b98 f   audrv.obj
+ 0001:00003c48       AuDrvCatchFault            ffffc00000004c48 f   audrv.obj
+ 0001:00003cd0       AuRequestDriverId          ffffc00000004cd0 f   audrv.obj
+ 0001:00003d00       AuRequestBootDriverId      ffffc00000004d00 f   audrv.obj
+ 0001:00003d30       AuDecreaseDriverCount      ffffc00000004d30 f   audrv.obj
+ 0001:00003d48       AuIncreaseDriverCount      ffffc00000004d48 f   audrv.obj
+ 0001:00003d60       AuCreateDriverInstance     ffffc00000004d60 f   audrv.obj
+ 0001:00003df8       AuCreateBootDriverInstance ffffc00000004df8 f   audrv.obj
+ 0001:00003e90       AuBoardIterateModule       ffffc00000004e90 f   audrv.obj
+ 0001:000040c8       AuDriverLoad               ffffc000000050c8 f   audrv.obj
+ 0001:00004630       AuBootDriverLoad           ffffc00000005630 f   audrv.obj
+ 0001:00004848       AuAA64BoardInitialize      ffffc00000005848 f   board.obj
+ 0001:00004860       AuAA64BoardSleepUS         ffffc00000005860 f   board.obj
+ 0001:00004870       AuAA64BoardSleepMS         ffffc00000005870 f   board.obj
+ 0001:00004880       AuAA64BoardPowerDown       ffffc00000005880 f   board.obj
+ 0001:000048a8       AuAA64BoardReboot          ffffc000000058a8 f   board.obj
+ 0001:00004900       AuVirtIOInputInitialize    ffffc00000005900 f   virt.obj
+ 0001:00004b38       AuVirtIOInputCheck         ffffc00000005b38 f   virt.obj
+ 0001:00004cb0       AuVirtioBlkInitialize      ffffc00000005cb0 f   virtioblk.obj
+ 0001:00004cb8       AuAdvancePointer           ffffc00000005cb8 f   circbuf.obj
+ 0001:00004da0       AuRetreatPointer           ffffc00000005da0 f   circbuf.obj
+ 0001:00004e00       AuCircBufReset             ffffc00000005e00 f   circbuf.obj
+ 0001:00004e40       AuCircBufInitialise        ffffc00000005e40 f   circbuf.obj
+ 0001:00004e90       AuCircBufFree              ffffc00000005e90 f   circbuf.obj
+ 0001:00004eb0       AuCircBufSize              ffffc00000005eb0 f   circbuf.obj
+ 0001:00004f60       AuCircBufCapacity          ffffc00000005f60 f   circbuf.obj
+ 0001:00004f80       AuCircBufPutData           ffffc00000005f80 f   circbuf.obj
+ 0001:00004fd0       AuCircBufPut               ffffc00000005fd0 f   circbuf.obj
+ 0001:00005050       AuCircBufGet               ffffc00000006050 f   circbuf.obj
+ 0001:000050d0       CircBufEmpty               ffffc000000060d0 f   circbuf.obj
+ 0001:00005138       CircBufFull                ffffc00000006138 f   circbuf.obj
+ 0001:00005170       AuProcessClean             ffffc00000006170 f   clean.obj
+ 0001:00005670       AuCleanMMap                ffffc00000006670 f   clean.obj
+ 0001:00005738       AuCleanHeapMem             ffffc00000006738 f   clean.obj
+ 0001:00005800       AuCleanUserStack           ffffc00000006800 f   clean.obj
+ 0001:000058c8       AuCleanKernelStack         ffffc000000068c8 f   clean.obj
+ 0001:00005a10       AuCredGroupInitialize      ffffc00000006a10 f   cred.obj
+ 0001:00005cc8       AuCredGroupAdd             ffffc00000006cc8 f   cred.obj
+ 0001:00005d50       AuCredGetGroupCategory     ffffc00000006d50 f   cred.obj
+ 0001:00005d88       AuCredGetGroupID           ffffc00000006d88 f   cred.obj
+ 0001:00005dd8       AuCredChangeID             ffffc00000006dd8 f   cred.obj
+ 0001:00005eb0       AuCredAddSGroup            ffffc00000006eb0 f   cred.obj
+ 0001:00005f78       AuCredSetCap               ffffc00000006f78 f   cred.obj
+ 0001:00006008       AuCredGetCap               ffffc00000007008 f   cred.obj
+ 0001:00006090       AuCredCheckPermissions     ffffc00000007090 f   cred.obj
+ 0001:000061c8       AuSetUID                   ffffc000000071c8 f   cred.obj
+ 0001:000062a0       AuSetGID                   ffffc000000072a0 f   cred.obj
+ 0001:00006588       isspace                    ffffc00000007588 f   ctype.obj
+ 0001:000065d8       isascii                    ffffc000000075d8 f   ctype.obj
+ 0001:00006610       isupper                    ffffc00000007610 f   ctype.obj
+ 0001:00006650       islower                    ffffc00000007650 f   ctype.obj
+ 0001:00006690       isalpha                    ffffc00000007690 f   ctype.obj
+ 0001:000066e8       isdigit                    ffffc000000076e8 f   ctype.obj
+ 0001:00006728       isxdigit                   ffffc00000007728 f   ctype.obj
+ 0001:00006798       isprint                    ffffc00000007798 f   ctype.obj
+ 0001:000067d8       toupper                    ffffc000000077d8 f   ctype.obj
+ 0001:00006830       tolower                    ffffc00000007830 f   ctype.obj
+ 0001:00006888       toascii                    ffffc00000007888 f   ctype.obj
+ 0001:000068a8       AuPL031RTCIRQHandle        ffffc000000078a8 f   rtcmmio.obj
+ 0001:000068d8       AuPL031RTCInit             ffffc000000078d8 f   rtcmmio.obj
+ 0001:00006950       AuRTCGetYear               ffffc00000007950 f   rtcmmio.obj
+ 0001:00006960       AuRTCGetCentury            ffffc00000007960 f   rtcmmio.obj
+ 0001:00006970       AuRTCGetMinutes            ffffc00000007970 f   rtcmmio.obj
+ 0001:00006980       AuRTCGetSecond             ffffc00000007980 f   rtcmmio.obj
+ 0001:00006990       AuRTCGetDay                ffffc00000007990 f   rtcmmio.obj
+ 0001:000069a0       AuRTCGetHour               ffffc000000079a0 f   rtcmmio.obj
+ 0001:000069b0       AuRTCGetMonth              ffffc000000079b0 f   rtcmmio.obj
+ 0001:000069c0       AuRTCEnableInterrupt       ffffc000000079c0 f   rtcmmio.obj
+ 0001:000069d8       AuRTCGetCurrentTime        ffffc000000079d8 f   rtcmmio.obj
+ 0001:000069e8       AuRTCClearInterrupt        ffffc000000079e8 f   rtcmmio.obj
+ 0001:00006a00       is_leap                    ffffc00000007a00 f   rtcmmio.obj
+ 0001:00006a80       epoch_to_tm                ffffc00000007a80 f   rtcmmio.obj
+ 0001:00006cc8       UARTInitialize             ffffc00000007cc8 f   uart.obj
+ 0001:00006d60       uartPutc                   ffffc00000007d60 f   uart.obj
+ 0001:00006dd8       uartPuts                   ffffc00000007dd8 f   uart.obj
+ 0001:00006e28       is_uart_initialized        ffffc00000007e28 f   uart.obj
+ 0001:00006e38       UARTDebugOut_Call          ffffc00000007e38 f   uart.obj
+ 0001:000071f8       AuVirtioKbdInitialize      ffffc000000081f8 f   virtiokbd.obj
+ 0001:000076d0       AuVirtioKbdHandler         ffffc000000086d0 f   virtiokbd.obj
+ 0001:00007b00       AuVirtioNetInitialize      ffffc00000008b00 f   virtionet.obj
+ 0001:00007f78       AuVirtioNetHandler         ffffc00000008f78 f   virtionet.obj
+ 0001:00007fe0       AuVirtioNetNotifyQueue     ffffc00000008fe0 f   virtionet.obj
+ 0001:00008198       AuVirtioNetRxinitialize    ffffc00000009198 f   virtionet.obj
+ 0001:000083c0       AuVirtioNetTxinitialize    ffffc000000093c0 f   virtionet.obj
+ 0001:00008550       AuVirtioTabletInitialize   ffffc00000009550 f   virtiotablet.obj
+ 0001:00008af8       AuVirtioTabletHandler      ffffc00000009af8 f   virtiotablet.obj
+ 0001:00009058       AuDTBSwap32                ffffc0000000a058 f   dtb.obj
+ 0001:000090e0       AuDTBSwap64                ffffc0000000a0e0 f   dtb.obj
+ 0001:00009208       AuDTBSwap16                ffffc0000000a208 f   dtb.obj
+ 0001:00009260       AuDeviceTreeFindProperty   ffffc0000000a260 f   dtb.obj
+ 0001:000092e8       AuDeviceTreeGetNode        ffffc0000000a2e8 f   dtb.obj
+ 0001:000093a0       AuDeviceTreeGetAddressCells ffffc0000000a3a0 f   dtb.obj
+ 0001:00009418       AuDeviceTreeGetSizeCells   ffffc0000000a418 f   dtb.obj
+ 0001:00009490       AuDeviceTreeGetRegAddress  ffffc0000000a490 f   dtb.obj
+ 0001:00009550       AuDeviceTreeGetRegSize     ffffc0000000a550 f   dtb.obj
+ 0001:00009620       AuDeviceTreeInitialize     ffffc0000000a620 f   dtb.obj
+ 0001:00009710       AuDeviceTreeMapMMIO        ffffc0000000a710 f   dtb.obj
+ 0001:00009798       AuDeviceTreeGetSubNode     ffffc0000000a798 f   dtb.obj
+ 0001:000099e8       AuDeviceTreeFindPropertyInternal ffffc0000000a9e8 f   dtb.obj
+ 0001:00009c70       AuDeviceFsInitialize       ffffc0000000ac70 f   devfs.obj
+ 0001:00009d28       AuDevFSCreateFile          ffffc0000000ad28 f   devfs.obj
+ 0001:00009ff8       AuDevFSAddFile             ffffc0000000aff8 f   devfs.obj
+ 0001:0000a218       AuDevFSOpen                ffffc0000000b218 f   devfs.obj
+ 0001:0000a460       AuDevFSList                ffffc0000000b460 f   devfs.obj
+ 0001:0000a598       AuDevFSRemoveFile          ffffc0000000b598 f   devfs.obj
+ 0001:0000a858       AuDevFSListDir             ffffc0000000b858 f   devfs.obj
+ 0001:0000aa08       AuDevInputInitialise       ffffc0000000ba08 f   devinput.obj
+ 0001:0000ac30       AuDevReadMice              ffffc0000000bc30 f   devinput.obj
+ 0001:0000ac98       AuDevWriteMice             ffffc0000000bc98 f   devinput.obj
+ 0001:0000ace0       AuDevReadKybrd             ffffc0000000bce0 f   devinput.obj
+ 0001:0000ad48       AuDevWriteKybrd            ffffc0000000bd48 f   devinput.obj
+ 0001:0000ad90       AuDevInputMiceWrite        ffffc0000000bd90 f   devinput.obj
+ 0001:0000ae00       AuDevInputMiceRead         ffffc0000000be00 f   devinput.obj
+ 0001:0000ae80       AuDevInputKybrdWrite       ffffc0000000be80 f   devinput.obj
+ 0001:0000aef0       AuDevInputKybrdRead        ffffc0000000bef0 f   devinput.obj
+ 0001:0000af70       AuDevMouseIoControl        ffffc0000000bf70 f   devinput.obj
+ 0001:0000b018       Ext2Initialise             ffffc0000000c018 f   Ext2.obj
+ 0001:0000b650       FatInitialise              ffffc0000000c650 f   Fat.obj
+ 0001:0000bdb8       FatClusterToSector32       ffffc0000000cdb8 f   Fat.obj
+ 0001:0000be00       FatToDOSFilename           ffffc0000000ce00 f   Fat.obj
+ 0001:0000c070       FatCalculateCheckSum       ffffc0000000d070 f   Fat.obj
+ 0001:0000c118       FatCheckDotCount           ffffc0000000d118 f   Fat.obj
+ 0001:0000c1b0       FatFindFreeCluster         ffffc0000000d1b0 f   Fat.obj
+ 0001:0000c3d0       FatAllocCluster            ffffc0000000d3d0 f   Fat.obj
+ 0001:0000c508       FatClearCluster            ffffc0000000d508 f   Fat.obj
+ 0001:0000c5d0       FatReadFAT                 ffffc0000000d5d0 f   Fat.obj
+ 0001:0000c708       FatOpen                    ffffc0000000d708 f   Fat.obj
+ 0001:0000c940       FatFormatDate              ffffc0000000d940 f   Fat.obj
+ 0001:0000c948       FatFormatTime              ffffc0000000d948 f   Fat.obj
+ 0001:0000c950       FatLocateDir               ffffc0000000d950 f   Fat.obj
+ 0001:0000cc70       FatLocateSubDir            ffffc0000000dc70 f   Fat.obj
+ 0001:0000cf50       FatFromDosToFilename       ffffc0000000df50 f   Fat.obj
+ 0001:0000d150       FatRead                    ffffc0000000e150 f   Fat.obj
+ 0001:0000d320       FatReadFile                ffffc0000000e320 f   Fat.obj
+ 0001:0000d4e0       FatGetClusterFor           ffffc0000000e4e0 f   Fat.obj
+ 0001:0000d598       FatGetDiskBlock            ffffc0000000e598 f   Fat.obj
+ 0001:0000d6f8       FatCreateDir               ffffc0000000e6f8 f   FatDir.obj
+ 0001:0000df40       FatRemoveDir               ffffc0000000ef40 f   FatDir.obj
+ 0001:0000e140       FatOpenDir                 ffffc0000000f140 f   FatDir.obj
+ 0001:0000e328       FatDirectoryRead           ffffc0000000f328 f   FatDir.obj
+ 0001:0000e8b8       FatFileGetParent           ffffc0000000f8b8 f   FatFile.obj
+ 0001:0000eb18       FatCreateFile              ffffc0000000fb18 f   FatFile.obj
+ 0001:0000f0a0       FatFileUpdateSize          ffffc000000100a0 f   FatFile.obj
+ 0001:0000f2f0       FatFileUpdateFilename      ffffc000000102f0 f   FatFile.obj
+ 0001:0000f530       FatFileWriteContent        ffffc00000010530 f   FatFile.obj
+ 0001:0000f778       FatFileWriteDone           ffffc00000010778 f   FatFile.obj
+ 0001:0000f7c0       FatWrite                   ffffc000000107c0 f   FatFile.obj
+ 0001:0000f938       FatFileClearDirEntry       ffffc00000010938 f   FatFile.obj
+ 0001:0000fb80       FatFileRemove              ffffc00000010b80 f   FatFile.obj
+ 0001:0000fde0       AuProbeFileSystem          ffffc00000010de0 f   fsprobe.obj
+ 0001:0000ffe8       AuInitrdInitialize         ffffc00000010fe8 f   initrd.obj
+ 0001:000102f8       AuRamdiskRead              ffffc000000112f8 f   initrd.obj
+ 0001:000103d8       AuRamdiskWrite             ffffc000000113d8 f   initrd.obj
+ 0001:000104b8       AuRamdiskReadCallback      ffffc000000114b8 f   initrd.obj
+ 0001:00010510       AuRamdiskWriteCallback     ffffc00000011510 f   initrd.obj
+ 0001:00010608       AuPipeUnread               ffffc00000011608 f   pipe.obj
+ 0001:000106b0       AuCreatePipe               ffffc000000116b0 f   pipe.obj
+ 0001:00010978       AuPipeFSAddFile            ffffc00000011978 f   pipe.obj
+ 0001:00010b98       AuPipeFSInitialise         ffffc00000011b98 f   pipe.obj
+ 0001:00010c58       AuPipeGetAvailableBytes    ffffc00000011c58 f   pipe.obj
+ 0001:00010d18       AuPipeIncrementRead        ffffc00000011d18 f   pipe.obj
+ 0001:00010d78       AuPipeIncrementWrite       ffffc00000011d78 f   pipe.obj
+ 0001:00010dd8       AuPipeIncrementWriteAmount ffffc00000011dd8 f   pipe.obj
+ 0001:00010e20       AuPipeRead                 ffffc00000011e20 f   pipe.obj
+ 0001:00010f08       AuPipeWrite                ffffc00000011f08 f   pipe.obj
+ 0001:00010ff8       AuPipeOpen                 ffffc00000011ff8 f   pipe.obj
+ 0001:00011040       AuPipeFSRemoveFile         ffffc00000012040 f   pipe.obj
+ 0001:00011300       AuPipeClose                ffffc00000012300 f   pipe.obj
+ 0001:000113b8       AuPipeFSOpen               ffffc000000123b8 f   pipe.obj
+ 0001:000116b8       AuTTYCreate                ffffc000000126b8 f   tty.obj
+ 0001:00011968       AuTTYInitialise            ffffc00000012968 f   tty.obj
+ 0001:000119d0       AuTTYInsert                ffffc000000129d0 f   tty.obj
+ 0001:00011a60       AuTTYDelete                ffffc00000012a60 f   tty.obj
+ 0001:00011b30       AuTTYWriteSlave            ffffc00000012b30 f   tty.obj
+ 0001:00011b68       AuTTYWriteMaster           ffffc00000012b68 f   tty.obj
+ 0001:00011ba0       AuTTYProcessLine           ffffc00000012ba0 f   tty.obj
+ 0001:00011d58       AuTTYMasterRead            ffffc00000012d58 f   tty.obj
+ 0001:00011e58       AuTTYMasterWrite           ffffc00000012e58 f   tty.obj
+ 0001:00011f00       AuTTYSlaveRead             ffffc00000012f00 f   tty.obj
+ 0001:00011fa8       AuTTYSlaveWrite            ffffc00000012fa8 f   tty.obj
+ 0001:000120c0       AuTTYSlaveClose            ffffc000000130c0 f   tty.obj
+ 0001:00012100       AuTTYMasterClose           ffffc00000013100 f   tty.obj
+ 0001:00012118       AuTTYIoControl             ffffc00000013118 f   tty.obj
+ 0001:000122c8       AuTTYCreateMaster          ffffc000000132c8 f   tty.obj
+ 0001:00012430       AuTTYCreateSlave           ffffc00000013430 f   tty.obj
+ 0001:00012670       AuVDiskInitialise          ffffc00000013670 f   vdisk.obj
+ 0001:000126e8       AuVDiskGetIndex            ffffc000000136e8 f   vdisk.obj
+ 0001:00012758       AuVDiskRegister            ffffc00000013758 f   vdisk.obj
+ 0001:000128e8       AuCreateVDisk              ffffc000000138e8 f   vdisk.obj
+ 0001:00012920       AuVDiskRead                ffffc00000013920 f   vdisk.obj
+ 0001:00012998       AuVDiskWrite               ffffc00000013998 f   vdisk.obj
+ 0001:00012a10       AuVDiskDestroy             ffffc00000013a10 f   vdisk.obj
+ 0001:00012ad0       AuGetVDiskInfo             ffffc00000013ad0 f   vdisk.obj
+ 0001:00012bc8       AuGetVDiskPartitionInfo    ffffc00000013bc8 f   vdisk.obj
+ 0001:00012df0       AuVDiskCreateStorageFile   ffffc00000013df0 f   vdisk.obj
+ 0001:00012f68       AuGetVDisk                 ffffc00000013f68 f   vdisk.obj
+ 0001:00012f98       AuVDiskRegisterPartition   ffffc00000013f98 f   vdisk.obj
+ 0001:00013500       AuVFSInitialise            ffffc00000014500 f   vfs.obj
+ 0001:000135a0       AuVFSReserveMountPointLetter ffffc000000145a0 f   vfs.obj
+ 0001:00013658       AuVFSOpen                  ffffc00000014658 f   vfs.obj
+ 0001:00013948       AuVFSNodeIOControl         ffffc00000014948 f   vfs.obj
+ 0001:000139b0       AuVFSAddFileSystem         ffffc000000149b0 f   vfs.obj
+ 0001:00013a40       AuVFSRegisterRoot          ffffc00000014a40 f   vfs.obj
+ 0001:00013a70       AuVFSFind                  ffffc00000014a70 f   vfs.obj
+ 0001:00013c40       AuVFSNodeRead              ffffc00000014c40 f   vfs.obj
+ 0001:00013cb0       AuVFSNodeReadBlock         ffffc00000014cb0 f   vfs.obj
+ 0001:00013d28       AuVFSCreateDir             ffffc00000014d28 f   vfs.obj
+ 0001:00013d98       AuVFSCreateFile            ffffc00000014d98 f   vfs.obj
+ 0001:00013e08       AuVFSRemoveFile            ffffc00000014e08 f   vfs.obj
+ 0001:00013ed8       AuVFSRemoveDir             ffffc00000014ed8 f   vfs.obj
+ 0001:00013f98       AuVFSNodeWrite             ffffc00000014f98 f   vfs.obj
+ 0001:00014000       AuVFSNodeClose             ffffc00000015000 f   vfs.obj
+ 0001:00014048       AuVFSGetBlockFor           ffffc00000015048 f   vfs.obj
+ 0001:000140b0       AuVFSSetCred               ffffc000000150b0 f   vfs.obj
+ 0001:00014100       AuVFSRemoveFileSystem      ffffc00000015100 f   vfs.obj
+ 0001:000142d0       FontManagerInitialise      ffffc000000152d0 f   ftmngr.obj
+ 0001:000144a0       AuFTMngrGetFontID          ffffc000000154a0 f   ftmngr.obj
+ 0001:00014588       AuFTMngrGetNumFonts        ffffc00000015588 f   ftmngr.obj
+ 0001:00014598       AuFTMngrGetFontSize        ffffc00000015598 f   ftmngr.obj
+ 0001:00014610       FontManagerAddSegment      ffffc00000015610 f   ftmngr.obj
+ 0001:000146b8       FontManagerRemoveSegment   ffffc000000156b8 f   ftmngr.obj
+ 0001:00014778       FontManagerGetKey          ffffc00000015778 f   ftmngr.obj
+ 0001:000147b0       FontManagerAllocateSegment ffffc000000157b0 f   ftmngr.obj
+ 0001:000148b8       FontManagerOpenFontFile    ffffc000000158b8 f   ftmngr.obj
+ 0001:000148f8       FontManagerIterateFontList ffffc000000158f8 f   ftmngr.obj
+ 0001:00014c08       FontManagerGetFontCount    ffffc00000015c08 f   ftmngr.obj
+ 0001:00014df0       aa64_data_cache_clean_range ffffc00000015df0 f   aa64cpu.obj
+ 0001:00014e70       aa64_dc_cvac_range         ffffc00000015e70 f   aa64cpu.obj
+ 0001:00014f18       aa64_dc_ivac_range         ffffc00000015f18 f   aa64cpu.obj
+ 0001:00014fc0       AA64CpuInitialize          ffffc00000015fc0 f   aa64cpu.obj
+ 0001:00015028       AA64CPUPostInitialize      ffffc00000016028 f   aa64cpu.obj
+ 0001:00015088       AA64SleepUS                ffffc00000016088 f   aa64cpu.obj
+ 0001:000150a8       AA64SleepMS                ffffc000000160a8 f   aa64cpu.obj
+ 0001:000150c8       AA64GetPhysicalTimerCount  ffffc000000160c8 f   aa64cpu.obj
+ 0001:000150f0       AA64FPUNeonEnable          ffffc000000160f0 f   aa64cpu.obj
+ 0001:00015128       AA64ClockInitialize        ffffc00000016128 f   aa64cpu.obj
+ 0001:00015190       get_cache_line_sz          ffffc00000016190 f   aa64cpu.obj
+ 0001:000151d0       AA64CPUImplementer         ffffc000000161d0 f   aa64cpu.obj
+ 0001:00015300       AA64TimerSetup             ffffc00000016300 f   aa64cpu.obj
+ 0001:00015478       AuACPIInitialise           ffffc00000016478 f   basicacpi.obj
+ 0001:00015aa0       AuACPIGetMCFG              ffffc00000016aa0 f   basicacpi.obj
+ 0001:00015ad0       AuACPIPCIESupported        ffffc00000016ad0 f   basicacpi.obj
+ 0001:00015ae0       AuACPIGetRSDP              ffffc00000016ae0 f   basicacpi.obj
+ 0001:00015af0       search_s5                  ffffc00000016af0 f   basicacpi.obj
+ 0001:00015b88       AuACPIParseMADT            ffffc00000016b88 f   basicacpi.obj
+ 0001:00015f20       AuGetSystemGIC             ffffc00000016f20 f   gic.obj
+ 0001:00015f30       GICInitialize              ffffc00000016f30 f   gic.obj
+ 0001:00016530       GICEnableIRQ               ffffc00000017530 f   gic.obj
+ 0001:00016738       GICEnableSPIIRQ            ffffc00000017738 f   gic.obj
+ 0001:00016888       GICClearPendingIRQ         ffffc00000017888 f   gic.obj
+ 0001:00016918       GICReadIAR                 ffffc00000017918 f   gic.obj
+ 0001:00016970       GICCheckPending            ffffc00000017970 f   gic.obj
+ 0001:00016998       AuGICGetMSIAddress         ffffc00000017998 f   gic.obj
+ 0001:000169f0       AuGICGetMSIData            ffffc000000179f0 f   gic.obj
+ 0001:00016a20       AuGICAllocateSPI           ffffc00000017a20 f   gic.obj
+ 0001:00016af8       AuGICDeallocateSPI         ffffc00000017af8 f   gic.obj
+ 0001:00016b88       GICSendEOI                 ffffc00000017b88 f   gic.obj
+ 0001:00016be0       GICSetupTimer              ffffc00000017be0 f   gic.obj
+ 0001:00016cc8       GICSetTargetCPU            ffffc00000017cc8 f   gic.obj
+ 0001:00016db8       GICRegisterSPIHandler      ffffc00000017db8 f   gic.obj
+ 0001:00016e20       GICCallSPIHandler          ffffc00000017e20 f   gic.obj
+ 0001:00016e98       gic_outqw                  ffffc00000017e98 f   gic.obj
+ 0001:00016ed0       gic_outl_                  ffffc00000017ed0 f   gic.obj
+ 0001:00016f08       gic_inl_                   ffffc00000017f08 f   gic.obj
+ 0001:00016f38       gic_outw_                  ffffc00000017f38 f   gic.obj
+ 0001:00016f80       gic_inw_                   ffffc00000017f80 f   gic.obj
+ 0001:00016fb8       gic_outb_                  ffffc00000017fb8 f   gic.obj
+ 0001:00016ff8       gic_inb_                   ffffc00000017ff8 f   gic.obj
+ 0001:00017028       GICv2MInitialize           ffffc00000018028 f   gic.obj
+ 0001:00017048       GICVerifyVersion           ffffc00000018048 f   gic.obj
+ 0001:00017050       GICRInitialize             ffffc00000018050 f   gic.obj
+ 0001:00017200       GICREnablePPI              ffffc00000018200 f   gic.obj
+ 0001:00017260       GICRSetPPIPriority         ffffc00000018260 f   gic.obj
+ 0001:00017358       GICSetEdgeTriggered        ffffc00000018358 f   gic.obj
+ 0001:00017430       GICIsIRQEdgeTriggered      ffffc00000018430 f   gic.obj
+ 0001:000175e0       AuProfileReadCycles        ffffc000000185e0 f   profile.obj
+ 0001:00017600       AuProfileReadFreq          ffffc00000018600 f   profile.obj
+ 0001:00017638       AuSchedulerInitialize      ffffc00000018638 f   sched.obj
+ 0001:000176d0       AuCreateKernelStack        ffffc000000186d0 f   sched.obj
+ 0001:000177c8       AuCreateKthread            ffffc000000187c8 f   sched.obj
+ 0001:00017940       AuCreateSubKthread         ffffc00000018940 f   sched.obj
+ 0001:00017a70       AuScheduleThread           ffffc00000018a70 f   sched.obj
+ 0001:00017c50       AuSchedulerStart           ffffc00000018c50 f   sched.obj
+ 0001:00017cd0       AuGetIdleThread            ffffc00000018cd0 f   sched.obj
+ 0001:00017ce0       AuGetCurrentThread         ffffc00000018ce0 f   sched.obj
+ 0001:00017cf0       AuBlockThread              ffffc00000018cf0 f   sched.obj
+ 0001:00017d28       AuUnblockThread            ffffc00000018d28 f   sched.obj
+ 0001:00017dd0       AuForceScheduler           ffffc00000018dd0 f   sched.obj
+ 0001:00017de8       AuSleepThread              ffffc00000018de8 f   sched.obj
+ 0001:00017e38       AuThreadFindByID           ffffc00000018e38 f   sched.obj
+ 0001:00017ea8       AuThreadFindByIDBlockList  ffffc00000018ea8 f   sched.obj
+ 0001:00017f18       AuThreadMoveToTrash        ffffc00000018f18 f   sched.obj
+ 0001:00017ff8       AuThreadCleanTrash         ffffc00000018ff8 f   sched.obj
+ 0001:00018018       AuGetSystemTimerTick       ffffc00000019018 f   sched.obj
+ 0001:00018028       AuCreateSubKernelStack     ffffc00000019028 f   sched.obj
+ 0001:00018130       AuThreadInsert             ffffc00000019130 f   sched.obj
+ 0001:000181c0       AuThreadDelete             ffffc000000191c0 f   sched.obj
+ 0001:00018280       AuThreadInsertBlock        ffffc00000019280 f   sched.obj
+ 0001:00018310       AuThreadDeleteBlock        ffffc00000019310 f   sched.obj
+ 0001:000183d0       AuThreadInsertTrash        ffffc000000193d0 f   sched.obj
+ 0001:00018460       AuThreadDeleteTrash        ffffc00000019460 f   sched.obj
+ 0001:00018520       AuThreadInsertSleep        ffffc00000019520 f   sched.obj
+ 0001:000185b0       AuThreadDeleteSleep        ffffc000000195b0 f   sched.obj
+ 0001:00018670       AA64NextThread             ffffc00000019670 f   sched.obj
+ 0001:00018738       PrintThreadInfo            ffffc00000019738 f   sched.obj
+ 0001:000187a0       AuIdleThread               ffffc000000197a0 f   sched.obj
+ 0001:00018818       AuResumeUserThread         ffffc00000019818 f   sched.obj
+ 0001:00018878       enscheddebug               ffffc00000019878 f   sched.obj
+ 0001:00018888       AuHandleSleepThreads       ffffc00000019888 f   sched.obj
+ 0001:00018920       PrintThrIn                 ffffc00000019920 f   sched.obj
+ 0001:00018950       AuThreadSafeReturn         ffffc00000019950 f   sched.obj
+ 0001:000189c8       AuPrintStack               ffffc000000199c8 f   sched.obj
+ 0001:000189f0       AuSetIdleThread            ffffc000000199f0 f   sched.obj
+ 0001:00018b50       SeTextOut                  ffffc00000019b50 f   serial.obj
+ 0001:00018b60       AuAA64SyscallHandler       ffffc00000019b60 f   systable.obj
+ 0001:00018cd8       AA64GetCurrentRegCtx       ffffc00000019cd8 f   systable.obj
+ 0001:00018ce8       null_call                  ffffc00000019ce8 f   systable.obj
+ 0001:00018d28       test_call                  ffffc00000019d28 f   systable.obj
+ 0001:00018d68       AuDumpRegisters            ffffc00000019d68 f   vector.obj
+ 0001:00018fd0       sync_el1_handler           ffffc00000019fd0 f   vector.obj
+ 0001:00019528       setuprint                  ffffc0000001a528 f   vector.obj
+ 0001:00019538       irq_el1_handler            ffffc0000001a538 f   vector.obj
+ 0001:00019680       fault_el1_handler          ffffc0000001a680 f   vector.obj
+ 0001:00019818       sync_el0_handler           ffffc0000001a818 f   vector.obj
+ 0001:00019880       AA64InitializeVectorTable  ffffc0000001a880 f   vector.obj
+ 0001:000199d0       AuHashmapCreate            ffffc0000001a9d0 f   hashmap.obj
+ 0001:00019ac0       AuHashmapCreateInt         ffffc0000001aac0 f   hashmap.obj
+ 0001:00019bb0       AuHashmapSet               ffffc0000001abb0 f   hashmap.obj
+ 0001:00019db0       AuHashmapGet               ffffc0000001adb0 f   hashmap.obj
+ 0001:00019ec8       AuHashmapRemove            ffffc0000001aec8 f   hashmap.obj
+ 0001:0001a0c8       AuHashmapHas               ffffc0000001b0c8 f   hashmap.obj
+ 0001:0001a1b8       AuHashmapFree              ffffc0000001b1b8 f   hashmap.obj
+ 0001:0001a298       AuHashmapIsEmpty           ffffc0000001b298 f   hashmap.obj
+ 0001:0001a318       hashmap_string_hash        ffffc0000001b318 f   hashmap.obj
+ 0001:0001a398       hashmap_string_comp        ffffc0000001b398 f   hashmap.obj
+ 0001:0001a3e8       hashmap_string_dupe        ffffc0000001b3e8 f   hashmap.obj
+ 0001:0001a408       hashmap_int_hash           ffffc0000001b408 f   hashmap.obj
+ 0001:0001a428       hashmap_int_comp           ffffc0000001b428 f   hashmap.obj
+ 0001:0001a470       hashmap_int_dupe           ffffc0000001b470 f   hashmap.obj
+ 0001:0001a4e0       AuGetBootInfoStruc         ffffc0000001b4e0 f   init.obj
+ 0001:0001a4f0       AuUartPutc                 ffffc0000001b4f0 f   init.obj
+ 0001:0001a530       AuUartPutString            ffffc0000001b530 f   init.obj
+ 0001:0001a580       AuLittleBootUsed           ffffc0000001b580 f   init.obj
+ 0001:0001a590       AuEntryTest                ffffc0000001b590 f   init.obj
+ 0001:0001a608       AuEntryTest2               ffffc0000001b608 f   init.obj
+ 0001:0001a680       AuEntryTest4               ffffc0000001b680 f   init.obj
+ 0001:0001a6f8       _AuroraTimerCallback       ffffc0000001b6f8 f   init.obj
+ 0001:0001a720       _AuMain                    ffffc0000001b720 f   init.obj
+ 0001:0001ab28       AuIPCPostBoxInitialise     ffffc0000001bb28 f   postbox.obj
+ 0001:0001ac70       PostBoxPutEvent            ffffc0000001bc70 f   postbox.obj
+ 0001:0001add0       PostBoxGetEvent            ffffc0000001bdd0 f   postbox.obj
+ 0001:0001af00       AuPostBOXGetNode           ffffc0000001bf00 f   postbox.obj
+ 0001:0001af10       PostBoxCreate              ffffc0000001bf10 f   postbox.obj
+ 0001:0001b0c8       PostBoxDestroyByID         ffffc0000001c0c8 f   postbox.obj
+ 0001:0001b160       PostBoxIOControl           ffffc0000001c160 f   postbox.obj
+ 0001:0001b298       PostBoxAdvanceIndex        ffffc0000001c298 f   postbox.obj
+ 0001:0001b388       PostBoxRetreat             ffffc0000001c388 f   postbox.obj
+ 0001:0001b3e8       IsPostBoxEmpty             ffffc0000001c3e8 f   postbox.obj
+ 0001:0001b450       IsPostBoxFull              ffffc0000001c450 f   postbox.obj
+ 0001:0001b470       PostBoxDestroy             ffffc0000001c470 f   postbox.obj
+ 0001:0001b670       initialize_list            ffffc0000001c670 f   list.obj
+ 0001:0001b6b0       list_add                   ffffc0000001c6b0 f   list.obj
+ 0001:0001b790       list_remove                ffffc0000001c790 f   list.obj
+ 0001:0001b908       list_get_at                ffffc0000001c908 f   list.obj
+ 0001:0001ba20       AuInitialiseLoader         ffffc0000001ca20 f   loader.obj
+ 0001:0001bb10       AuLoadExecToProcess        ffffc0000001cb10 f   loader.obj
+ 0001:0001c2d8       AuProcessEntUser           ffffc0000001d2d8 f   loader.obj
+ 0001:0001c6c0       testFunc                   ffffc0000001d6c0 f   loader.obj
+ 0001:0001c6f0       AuLoaderMapExecFromCache   ffffc0000001d6f0 f   loader.obj
+ 0001:0001cba8       dlmalloc                   ffffc0000001dba8 f   dlmalloc.obj
+ 0001:0001d3a0       dlfree                     ffffc0000001e3a0 f   dlmalloc.obj
+ 0001:0001e530       dlcalloc                   ffffc0000001f530 f   dlmalloc.obj
+ 0001:0001e600       dlrealloc                  ffffc0000001f600 f   dlmalloc.obj
+ 0001:0001e778       dlrealloc_in_place         ffffc0000001f778 f   dlmalloc.obj
+ 0001:0001e840       dlmemalign                 ffffc0000001f840 f   dlmalloc.obj
+ 0001:0001e888       dlposix_memalign           ffffc0000001f888 f   dlmalloc.obj
+ 0001:0001e9a0       dlvalloc                   ffffc0000001f9a0 f   dlmalloc.obj
+ 0001:0001e9e8       dlmallopt                  ffffc0000001f9e8 f   dlmalloc.obj
+ 0001:0001ea18       dlmalloc_footprint         ffffc0000001fa18 f   dlmalloc.obj
+ 0001:0001ea28       dlmalloc_max_footprint     ffffc0000001fa28 f   dlmalloc.obj
+ 0001:0001ea38       dlmalloc_footprint_limit   ffffc0000001fa38 f   dlmalloc.obj
+ 0001:0001ea78       dlmalloc_set_footprint_limit ffffc0000001fa78 f   dlmalloc.obj
+ 0001:0001eb18       dlindependent_calloc       ffffc0000001fb18 f   dlmalloc.obj
+ 0001:0001eb60       dlindependent_comalloc     ffffc0000001fb60 f   dlmalloc.obj
+ 0001:0001eba0       dlbulk_free                ffffc0000001fba0 f   dlmalloc.obj
+ 0001:0001ebd0       dlpvalloc                  ffffc0000001fbd0 f   dlmalloc.obj
+ 0001:0001ec30       dlmalloc_trim              ffffc0000001fc30 f   dlmalloc.obj
+ 0001:0001ec90       dlmalloc_usable_size       ffffc0000001fc90 f   dlmalloc.obj
+ 0001:000259a8       AuDMAPoolCreate            ffffc000000269a8 f   dma.obj
+ 0001:00025be0       AuDMAPoolAlloc             ffffc00000026be0 f   dma.obj
+ 0001:00025da8       AuDMAPoolFree              ffffc00000026da8 f   dma.obj
+ 0001:00025f50       AuDMAPoolDestroy           ffffc00000026f50 f   dma.obj
+ 0001:00025ff0       AuDMAGlobalClassInitialize ffffc00000026ff0 f   dma.obj
+ 0001:00026178       AuDMAGClassAlloc           ffffc00000027178 f   dma.obj
+ 0001:00026208       AuDMAGClassFree            ffffc00000027208 f   dma.obj
+ 0001:00026290       AuDMAGClassDestroy         ffffc00000027290 f   dma.obj
+ 0001:000269c0       AuHeapInitialize           ffffc000000279c0 f   kmalloc.obj
+ 0001:000269e0       kmalloc                    ffffc000000279e0 f   kmalloc.obj
+ 0001:00026a08       krealloc                   ffffc00000027a08 f   kmalloc.obj
+ 0001:00026a38       kcalloc                    ffffc00000027a38 f   kmalloc.obj
+ 0001:00026a60       kfree                      ffffc00000027a60 f   kmalloc.obj
+ 0001:00026a80       kheap_debug                ffffc00000027a80 f   kmalloc.obj
+ 0001:00026a88       kmalloc_debug_on           ffffc00000027a88 f   kmalloc.obj
+ 0001:00026aa0       au_free_page               ffffc00000027aa0 f   kmalloc.obj
+ 0001:00026b00       au_request_page            ffffc00000027b00 f   kmalloc.obj
+ 0001:00026c50       next_power_of_two          ffffc00000027c50 f   kmalloc.obj
+ 0001:00026cb0       align24                    ffffc00000027cb0 f   kmalloc.obj
+ 0001:00026d00       au_split_block             ffffc00000027d00 f   kmalloc.obj
+ 0001:00026d18       au_expand_kmalloc          ffffc00000027d18 f   kmalloc.obj
+ 0001:00026d28       merge_next                 ffffc00000027d28 f   kmalloc.obj
+ 0001:00026d38       merge_prev                 ffffc00000027d38 f   kmalloc.obj
+ 0001:00026da8       liballoc_lock              ffffc00000027da8 f   liballoc.obj
+ 0001:00026db0       liballoc_unlock            ffffc00000027db0 f   liballoc.obj
+ 0001:00026db8       liballoc_alloc             ffffc00000027db8 f   liballoc.obj
+ 0001:00026ea0       liballoc_free              ffffc00000027ea0 f   liballoc.obj
+ 0001:00026ed0       port_malloc                ffffc00000027ed0 f   liballoc.obj
+ 0001:00027180       port_realloc               ffffc00000028180 f   liballoc.obj
+ 0001:00027258       port_calloc                ffffc00000028258 f   liballoc.obj
+ 0001:000272b0       port_free                  ffffc000000282b0 f   liballoc.obj
+ 0001:00027e20       SharedMemMapListInitialise ffffc00000028e20 f   mmap.obj
+ 0001:00027e38       CreateMemMapping           ffffc00000028e38 f   mmap.obj
+ 0001:000285e8       MemMapDirty                ffffc000000295e8 f   mmap.obj
+ 0001:00028808       UnmapMemMapping            ffffc00000029808 f   mmap.obj
+ 0001:00028940       AuCreateSharedMmapObject   ffffc00000029940 f   mmap.obj
+ 0001:000289c8       AuAddSharedMmapObject      ffffc000000299c8 f   mmap.obj
+ 0001:000289f0       AuRemoveSharedMmapObject   ffffc000000299f0 f   mmap.obj
+ 0001:00028a88       AuSharedMmapObjectFindByName ffffc00000029a88 f   mmap.obj
+ 0001:00028ca0       AuMmngrFileCacheInit       ffffc00000029ca0 f   mmfile.obj
+ 0001:00028cc8       AuMmngrAddFileBack         ffffc00000029cc8 f   mmfile.obj
+ 0001:00028d70       AuMmngrRemoveFileBack      ffffc00000029d70 f   mmfile.obj
+ 0001:00028ee8       AuMmngrFileCacheEnable     ffffc00000029ee8 f   mmfile.obj
+ 0001:00028ef8       AuMmngrFileCacheLookup     ffffc00000029ef8 f   mmfile.obj
+ 0001:00028fe8       AuMmngrFileCacheGetPhysicalBlock ffffc00000029fe8 f   mmfile.obj
+ 0001:00029080       AuMmngrPageCacheCreate     ffffc0000002a080 f   mmfile.obj
+ 0001:000290b8       AuMmngrFileCacheGetByIndex ffffc0000002a0b8 f   mmfile.obj
+ 0001:00029138       AuMmngrFileBackAddPageCache ffffc0000002a138 f   mmfile.obj
+ 0001:00029280       CreateSharedMem            ffffc0000002a280 f   mmserv.obj
+ 0001:00029320       ObtainSharedMem            ffffc0000002a320 f   mmserv.obj
+ 0001:000293b0       UnmapSharedMem             ffffc0000002a3b0 f   mmserv.obj
+ 0001:00029428       GetProcessHeapMem          ffffc0000002a428 f   mmserv.obj
+ 0001:00029608       ProcessHeapUnmap           ffffc0000002a608 f   mmserv.obj
+ 0001:000298b0       AuPmmngrInitialize         ffffc0000002a8b0 f   pmmngr.obj
+ 0001:0002a1d8       AuPmmngrAlloc              ffffc0000002b1d8 f   pmmngr.obj
+ 0001:0002a370       AuPmmngrAllocBlocks        ffffc0000002b370 f   pmmngr.obj
+ 0001:0002a3c8       AuPmmngrFree               ffffc0000002b3c8 f   pmmngr.obj
+ 0001:0002a510       AuPmmngrFreeBlocks         ffffc0000002b510 f   pmmngr.obj
+ 0001:0002a578       P2V                        ffffc0000002b578 f   pmmngr.obj
+ 0001:0002a5b8       V2P                        ffffc0000002b5b8 f   pmmngr.obj
+ 0001:0002a5f8       AuPmmngrMoveHigher         ffffc0000002b5f8 f   pmmngr.obj
+ 0001:0002a638       AuPmmngrGetFreeMem         ffffc0000002b638 f   pmmngr.obj
+ 0001:0002a648       AuPmmngrGetUsedMem         ffffc0000002b648 f   pmmngr.obj
+ 0001:0002a658       AuPmmngrGetTotalMem        ffffc0000002b658 f   pmmngr.obj
+ 0001:0002a668       AuPmmngrAddRefcount        ffffc0000002b668 f   pmmngr.obj
+ 0001:0002a6e0       AuPmmngrGetRefcount        ffffc0000002b6e0 f   pmmngr.obj
+ 0001:0002a718       AuPmmngrGetPageDesc        ffffc0000002b718 f   pmmngr.obj
+ 0001:0002a748       AuPmmngrSetPageType        ffffc0000002b748 f   pmmngr.obj
+ 0001:0002a7d8       AuPmmngrInitBitmap         ffffc0000002b7d8 f   pmmngr.obj
+ 0001:0002a820       AuPmmngrBitmapCheck        ffffc0000002b820 f   pmmngr.obj
+ 0001:0002a938       AuPmmngrBitmapSet          ffffc0000002b938 f   pmmngr.obj
+ 0001:0002aa68       AuPmmngrLockPage           ffffc0000002ba68 f   pmmngr.obj
+ 0001:0002aaf0       AuPmmngrLockPages          ffffc0000002baf0 f   pmmngr.obj
+ 0001:0002ab58       AuPmmngrUnreservePage      ffffc0000002bb58 f   pmmngr.obj
+ 0001:0002ac00       AuPmmngrAllocCheck         ffffc0000002bc00 f   pmmngr.obj
+ 0001:0002ac60       AuPmmngrDebugInfo          ffffc0000002bc60 f   pmmngr.obj
+ 0001:0002acd8       AuInitialiseSHMMan         ffffc0000002bcd8 f   shm.obj
+ 0001:0002ad00       AuGetSHMByID               ffffc0000002bd00 f   shm.obj
+ 0001:0002ad90       AuCreateSHM                ffffc0000002bd90 f   shm.obj
+ 0001:0002af88       AuSHMObtainMem             ffffc0000002bf88 f   shm.obj
+ 0001:0002b438       AuSHMUnmap                 ffffc0000002c438 f   shm.obj
+ 0001:0002b5f0       AuSHMUnmapAll              ffffc0000002c5f0 f   shm.obj
+ 0001:0002b738       AuSHMGetID                 ffffc0000002c738 f   shm.obj
+ 0001:0002b770       AuGetSHMSeg                ffffc0000002c770 f   shm.obj
+ 0001:0002b800       AuSHMDelete                ffffc0000002c800 f   shm.obj
+ 0001:0002b960       AuSHMProcBreak             ffffc0000002c960 f   shm.obj
+ 0001:0002b9b0       AuSHMProcSwap              ffffc0000002c9b0 f   shm.obj
+ 0001:0002ba00       AuSHMProcOrderList         ffffc0000002ca00 f   shm.obj
+ 0001:0002bbf8       AuInsertVMArea             ffffc0000002cbf8 f   vma.obj
+ 0001:0002bc28       AuRemoveVMArea             ffffc0000002cc28 f   vma.obj
+ 0001:0002bcc0       AuVMAreaCreate             ffffc0000002ccc0 f   vma.obj
+ 0001:0002bd70       AuVMAreaGet                ffffc0000002cd70 f   vma.obj
+ 0001:0002be60       AuVmmngrInitialize         ffffc0000002ce60 f   vmmngr.obj
+ 0001:0002c0b0       AuVmmngrGetPage            ffffc0000002d0b0 f   vmmngr.obj
+ 0001:0002c498       AuMapPage                  ffffc0000002d498 f   vmmngr.obj
+ 0001:0002c8a8       AuMapPageEx                ffffc0000002d8a8 f   vmmngr.obj
+ 0001:0002cb90       AuMapMMIO                  ffffc0000002db90 f   vmmngr.obj
+ 0001:0002cc40       AuGetFreePage              ffffc0000002dc40 f   vmmngr.obj
+ 0001:0002ce60       AuFreePages                ffffc0000002de60 f   vmmngr.obj
+ 0001:0002d0c8       AuUpdatePageFlags          ffffc0000002e0c8 f   vmmngr.obj
+ 0001:0002d200       AuGetPhysicalAddress       ffffc0000002e200 f   vmmngr.obj
+ 0001:0002d3a0       AuGetPhysicalAddressEx     ffffc0000002e3a0 f   vmmngr.obj
+ 0001:0002d518       AuCreateVirtualAddressSpace ffffc0000002e518 f   vmmngr.obj
+ 0001:0002d610       AuGetRootPageTable         ffffc0000002e610 f   vmmngr.obj
+ 0001:0002d628       AuVmmngrBootFree           ffffc0000002e628 f   vmmngr.obj
+ 0001:0002d750       envmdebug                  ffffc0000002e750 f   vmmngr.obj
+ 0001:0002d880       ARPProtocolInitialise      ffffc0000002e880 f   arp.obj
+ 0001:0002d898       ARPProtocolAdd             ffffc0000002e898 f   arp.obj
+ 0001:0002d918       AuARPGet                   ffffc0000002e918 f   arp.obj
+ 0001:0002da10       AuARPRequestMAC            ffffc0000002ea10 f   arp.obj
+ 0001:0002db40       ARPHandlePacket            ffffc0000002eb40 f   arp.obj
+ 0001:0002df28       AuInitialiseNet            ffffc0000002ef28 f   aunet.obj
+ 0001:0002df90       AuAddNetAdapter            ffffc0000002ef90 f   aunet.obj
+ 0001:0002dff8       AuGetNetworkAdapter        ffffc0000002eff8 f   aunet.obj
+ 0001:0002e028       AuNetworkRoute             ffffc0000002f028 f   aunet.obj
+ 0001:0002e120       AuEthernetSend             ffffc0000002f120 f   ethernet.obj
+ 0001:0002e260       AuEthernetHandle           ffffc0000002f260 f   ethernet.obj
+ 0001:0002e488       ICMPInitialise             ffffc0000002f488 f   icmp.obj
+ 0001:0002e498       AuICMPHandle               ffffc0000002f498 f   icmp.obj
+ 0001:0002e9f0       CreateICMPSocket           ffffc0000002f9f0 f   icmp.obj
+ 0001:0002ebc8       AuICMPChecksum             ffffc0000002fbc8 f   icmp.obj
+ 0001:0002ecf8       AuICMPReceive              ffffc0000002fcf8 f   icmp.obj
+ 0001:0002ee80       AuICMPSend                 ffffc0000002fe80 f   icmp.obj
+ 0001:0002f140       AuICMPClose                ffffc00000030140 f   icmp.obj
+ 0001:0002f150       AuICMPBind                 ffffc00000030150 f   icmp.obj
+ 0001:0002f170       AuICMPRead                 ffffc00000030170 f   icmp.obj
+ 0001:0002f190       AuICMPWrite                ffffc00000030190 f   icmp.obj
+ 0001:0002f1b0       AuICMPFileClose            ffffc000000301b0 f   icmp.obj
+ 0001:0002f350       IPv4CalculateChecksum      ffffc00000030350 f   ipv4.obj
+ 0001:0002f438       ip_ntoa                    ffffc00000030438 f   ipv4.obj
+ 0001:0002f4b0       CreateIPv4Socket           ffffc000000304b0 f   ipv4.obj
+ 0001:0002f568       IPv4HandlePacket           ffffc00000030568 f   ipv4.obj
+ 0001:0002f768       IPV4SendPacket             ffffc00000030768 f   ipv4.obj
+ 0001:0002f9f0       NetSend                    ffffc000000309f0 f   netserv.obj
+ 0001:0002fb20       NetReceive                 ffffc00000030b20 f   netserv.obj
+ 0001:0002fc30       NetConnect                 ffffc00000030c30 f   netserv.obj
+ 0001:0002fd30       NetBind                    ffffc00000030d30 f   netserv.obj
+ 0001:0002fe30       NetAccept                  ffffc00000030e30 f   netserv.obj
+ 0001:0002fe50       NetListen                  ffffc00000030e50 f   netserv.obj
+ 0001:0002fe98       AuRouteTableInitialise     ffffc00000030e98 f   route.obj
+ 0001:0002feb0       AuRouteTableCreateEntry    ffffc00000030eb0 f   route.obj
+ 0001:0002fee8       AuRouteTableAdd            ffffc00000030ee8 f   route.obj
+ 0001:0002ff50       AuRouteTableDelete         ffffc00000030f50 f   route.obj
+ 0001:00030078       AuRouteTableGetNumEntry    ffffc00000031078 f   route.obj
+ 0001:00030088       AuRouteTablePopulate       ffffc00000031088 f   route.obj
+ 0001:00030190       AuRouteTableDoRouteLookup  ffffc00000031190 f   route.obj
+ 0001:000302c8       AuNetCreateSocket          ffffc000000312c8 f   socket.obj
+ 0001:00030310       AuSocketAdd                ffffc00000031310 f   socket.obj
+ 0001:000303b0       AuSocketGet                ffffc000000313b0 f   socket.obj
+ 0001:000303e0       AuSocketInstall            ffffc000000313e0 f   socket.obj
+ 0001:000303f8       AuCreateSocket             ffffc000000313f8 f   socket.obj
+ 0001:00030470       AuSocketSetOpt             ffffc00000031470 f   socket.obj
+ 0001:00030550       AuRawSocketGetList         ffffc00000031550 f   socket.obj
+ 0001:00030560       SocketIOControl            ffffc00000031560 f   socket.obj
+ 0001:00030a88       AuRawSocketReceive         ffffc00000031a88 f   socket.obj
+ 0001:00030b68       AuRawSocketSend            ffffc00000031b68 f   socket.obj
+ 0001:00030c38       AuSocketSOSocket           ffffc00000031c38 f   socket.obj
+ 0001:00030cd8       AuRawSocketClose           ffffc00000031cd8 f   socket.obj
+ 0001:00030e00       AuCreateRawSocket          ffffc00000031e00 f   socket.obj
+ 0001:00031098       CreateUDPSocket            ffffc00000032098 f   udp.obj
+ 0001:00031240       UDPProtocolInstall         ffffc00000032240 f   udp.obj
+ 0001:00031258       UDPProtocolGetSockList     ffffc00000032258 f   udp.obj
+ 0001:00031268       UDPGetPort                 ffffc00000032268 f   udp.obj
+ 0001:000312d0       AuUDPReceive               ffffc000000322d0 f   udp.obj
+ 0001:000314f0       AuUDPSend                  ffffc000000324f0 f   udp.obj
+ 0001:000318c0       AuUDPClose                 ffffc000000328c0 f   udp.obj
+ 0001:000318d0       AuUDPBind                  ffffc000000328d0 f   udp.obj
+ 0001:00031a20       AuUDPRead                  ffffc00000032a20 f   udp.obj
+ 0001:00031a40       AuUDPWrite                 ffffc00000032a40 f   udp.obj
+ 0001:00031a60       AuUDPFileClose             ffffc00000032a60 f   udp.obj
+ 0001:00031c78       AuPCIEGetDevice            ffffc00000032c78 f   pcie.obj
+ 0001:00031dd0       AuPCIEAllocMSI             ffffc00000032dd0 f   pcie.obj
+ 0001:000323b8       AuPCIEScanClassIF          ffffc000000333b8 f   pcie.obj
+ 0001:00032590       AuPCIEScanVendorDevice     ffffc00000033590 f   pcie.obj
+ 0001:00032788       AuPCIEScanClass            ffffc00000033788 f   pcie.obj
+ 0001:00032980       AuPCIEWrite                ffffc00000033980 f   pcie.obj
+ 0001:00032ba0       AuPCIERead                 ffffc00000033ba0 f   pcie.obj
+ 0001:00032df8       AuPCIERead64               ffffc00000033df8 f   pcie.obj
+ 0001:00032ec8       AuPCIEWrite64              ffffc00000033ec8 f   pcie.obj
+ 0001:00032f70       AA64PCIeInitialize         ffffc00000033f70 f   pcie.obj
+ 0001:000330c8       AuIsPCIeInitialized        ffffc000000340c8 f   pcie.obj
+ 0001:000330d8       AuPCIEReadBAR              ffffc000000340d8 f   pcie.obj
+ 0001:00033750       AuGetProcAddress           ffffc00000034750 f   pe.obj
+ 0001:00033930       AuKernelLinkDLL            ffffc00000034930 f   pe.obj
+ 0001:00033ae0       AuPEPrintExports           ffffc00000034ae0 f   pe.obj
+ 0001:00033c58       AuKernelLinkImports        ffffc00000034c58 f   pe.obj
+ 0001:00033e10       AuKernelRelocatePE         ffffc00000034e10 f   pe.obj
+ 0001:000340c0       AuPEFileIsDynamicallyLinked ffffc000000350c0 f   pe.obj
+ 0001:000341a0       AuCoffResolveAddress       ffffc000000351a0 f   pe.obj
+ 0001:000344e0       AuPowerDown                ffffc000000354e0 f   power.obj
+ 0001:00034570       AuPowerReset               ffffc00000035570 f   power.obj
+ 0001:00034640       AuAddProcess               ffffc00000035640 f   process.obj
+ 0001:000346d8       AuRemoveProcess            ffffc000000356d8 f   process.obj
+ 0001:000347b0       AuProcessFindPID           ffffc000000357b0 f   process.obj
+ 0001:00034818       AuProcessFindThread        ffffc00000035818 f   process.obj
+ 0001:00034880       AuProcessFindSubThread     ffffc00000035880 f   process.obj
+ 0001:000348a8       CreateUserStack            ffffc000000358a8 f   process.obj
+ 0001:000349a0       AuCreateProcessSlot        ffffc000000359a0 f   process.obj
+ 0001:00034c58       AuProcessExit              ffffc00000035c58 f   process.obj
+ 0001:00034fa8       AuProcessGetFileDesc       ffffc00000035fa8 f   process.obj
+ 0001:00035018       AuProcessWaitForTermination ffffc00000036018 f   process.obj
+ 0001:000350f0       CreateSubUserStack         ffffc000000360f0 f   process.obj
+ 0001:00035200       AuCreateUserthread         ffffc00000036200 f   process.obj
+ 0001:00035430       AuProcessFindByPID         ffffc00000036430 f   process.obj
+ 0001:00035498       AuProcessFindByThread      ffffc00000036498 f   process.obj
+ 0001:00035500       AuAllocateProcessID        ffffc00000036500 f   process.obj
+ 0001:00035540       AuProcessHeapMemDestroy    ffffc00000036540 f   process.obj
+ 0001:00035678       AuProcessFreeKeResource    ffffc00000036678 f   process.obj
+ 0001:000356b8       AuGetKillableProcess       ffffc000000366b8 f   process.obj
+ 0001:00035880       AuProcessTokenInitialize   ffffc00000036880 f   proctoken.obj
+ 0001:00035918       AuProcessTokenAddSelf      ffffc00000036918 f   proctoken.obj
+ 0001:00035a30       AuProcessTokenGetProc      ffffc00000036a30 f   proctoken.obj
+ 0001:00035a68       AuProcessTokenGetThreadID  ffffc00000036a68 f   proctoken.obj
+ 0001:00035aa0       AuProcessTokenRemoveSelf   ffffc00000036aa0 f   proctoken.obj
+ 0001:00035b68       _token_id_to_string        ffffc00000036b68 f   proctoken.obj
+ 0001:00035c30       OpenFile                   ffffc00000036c30 f   fileserv.obj
+ 0001:00035e70       ReadFile                   ffffc00000036e70 f   fileserv.obj
+ 0001:000360c8       WriteFile                  ffffc000000370c8 f   fileserv.obj
+ 0001:00036348       CloseFile                  ffffc00000037348 f   fileserv.obj
+ 0001:00036568       FileIoControl              ffffc00000037568 f   fileserv.obj
+ 0001:00036650       FileStat                   ffffc00000037650 f   fileserv.obj
+ 0001:000367c0       OpenDir                    ffffc000000377c0 f   fileserv.obj
+ 0001:000368e8       ReadDir                    ffffc000000378e8 f   fileserv.obj
+ 0001:00036a20       ProcessGetFileDesc         ffffc00000037a20 f   fileserv.obj
+ 0001:00036b08       FileSetOffset              ffffc00000037b08 f   fileserv.obj
+ 0001:00036d90       PauseThread                ffffc00000037d90 f   thrserv.obj
+ 0001:00036dc8       GetThreadID                ffffc00000037dc8 f   thrserv.obj
+ 0001:00036e08       GetProcessID               ffffc00000037e08 f   thrserv.obj
+ 0001:00036e80       ProcessExit                ffffc00000037e80 f   thrserv.obj
+ 0001:00036f10       ProcessWaitForTermination  ffffc00000037f10 f   thrserv.obj
+ 0001:00036f60       CreateProcess              ffffc00000037f60 f   thrserv.obj
+ 0001:00036ff0       ProcessLoadExec            ffffc00000037ff0 f   thrserv.obj
+ 0001:000371c0       ProcessSleep               ffffc000000381c0 f   thrserv.obj
+ 0001:00037228       CreateUserThread           ffffc00000038228 f   thrserv.obj
+ 0001:000372c8       SetFileToProcess           ffffc000000382c8 f   thrserv.obj
+ 0001:00037418       GetEnvironmenBlock         ffffc00000038418 f   thrserv.obj
+ 0001:00037560       AuSoundInitialise          ffffc00000038560 f   sndcore.obj
+ 0001:000376c8       AuSoundRemoveDSP           ffffc000000386c8 f   sndcore.obj
+ 0001:00037730       AuSoundRegisterCard        ffffc00000038730 f   sndcore.obj
+ 0001:000377a0       AuSoundAddDSP              ffffc000000387a0 f   sndcore.obj
+ 0001:00037830       AuRemoveDSP                ffffc00000038830 f   sndcore.obj
+ 0001:000378f0       AuSoundGetDSP              ffffc000000388f0 f   sndcore.obj
+ 0001:000379c8       AuSoundIOControl           ffffc000000389c8 f   sndcore.obj
+ 0001:00037d40       AuSoundRead                ffffc00000038d40 f   sndcore.obj
+ 0001:00037d60       AuSoundWrite               ffffc00000038d60 f   sndcore.obj
+ 0001:00037f88       AuStackCreate              ffffc00000038f88 f   stack.obj
+ 0001:00037fc0       AuStackPush                ffffc00000038fc0 f   stack.obj
+ 0001:00038030       AuStackPop                 ffffc00000039030 f   stack.obj
+ 0001:000380f8       atoi                       ffffc000000390f8 f   stdio.obj
+ 0001:00038210       sztoa                      ffffc00000039210 f   stdio.obj
+ 0001:00038398       printf                     ffffc00000039398 f   stdio.obj
+ 0001:000383b8       ftoa                       ffffc000000393b8 f   stdio.obj
+ 0001:00038520       rand                       ffffc00000039520 f   stdio.obj
+ 0001:000385c0       srand                      ffffc000000395c0 f   stdio.obj
+ 0001:000385e8       atow                       ffffc000000395e8 f   stdio.obj
+ 0001:00038648       int_to_str                 ffffc00000039648 f   stdio.obj
+ 0001:00038800       strcmp                     ffffc00000039800 f   string.obj
+ 0001:000388c8       strcpy                     ffffc000000398c8 f   string.obj
+ 0001:00038950       strlen                     ffffc00000039950 f   string.obj
+ 0001:000389a0       strncmp                    ffffc000000399a0 f   string.obj
+ 0001:00038a70       strncpy                    ffffc00000039a70 f   string.obj
+ 0001:00038b78       strchr                     ffffc00000039b78 f   string.obj
+ 0001:00038bd8       strcat                     ffffc00000039bd8 f   string.obj
+ 0001:00038cf8       strncat                    ffffc00000039cf8 f   string.obj
+ 0001:00038e70       memset                     ffffc00000039e70 f   string.obj
+ 0001:00038ed0       memcpy                     ffffc00000039ed0 f   string.obj
+ 0001:00038ff0       memcmp                     ffffc00000039ff0 f   string.obj
+ 0001:000390d0       strdup                     ffffc0000003a0d0 f   string.obj
+ 0001:00039120       strstr                     ffffc0000003a120 f   string.obj
+ 0001:000391d0       AuroraTimerInitialize      ffffc0000003a1d0 f   timer.obj
+ 0001:00039250       AuroraTimerStart           ffffc0000003a250 f   timer.obj
+ 0001:000394e0       AuroraTimerStartPeriodic   ffffc0000003a4e0 f   timer.obj
+ 0001:00039650       AuroraTimerIsActive        ffffc0000003a650 f   timer.obj
+ 0001:000396a0       AuroraTimerCancel          ffffc0000003a6a0 f   timer.obj
+ 0001:000396f0       AuroraTimerTick            ffffc0000003a6f0 f   timer.obj
+ 0001:000398d0       AuGetCurrentMS             ffffc0000003a8d0 f   timer.obj
+ 0001:000398e0       AuGetCurrentUS             ffffc0000003a8e0 f   timer.obj
+ 0003:00002cd0       _fltused                   ffffc0000003fcd0     init.obj
+ 0003:00002cd4       i_                         ffffc0000003fcd4     init.obj
+ 0003:00002ce0       _dir_names                 ffffc0000003fce0     init.obj
+ 0003:00004e68       _uart_mapped               ffffc00000041e68     uart.obj
+ 0003:00004e78       master_count               ffffc00000041e78     tty.obj
+ 0003:00004e80       slave_count                ffffc00000041e80     tty.obj
+ 0003:00004e88       root                       ffffc00000041e88     tty.obj
+ 0003:00004e90       last                       ffffc00000041e90     tty.obj
+ 0003:000072d0       debug                      ffffc000000442d0     sched.obj
+ 0003:000072d8       _userprint                 ffffc000000442d8     vector.obj
+ 0003:000072e0       firstBox                   ffffc000000442e0     postbox.obj
+ 0003:000072e8       lastBox                    ffffc000000442e8     postbox.obj
+ 0003:0000775a       _vmdebug                   ffffc0000004475a     vmmngr.obj
+ 0003:00007cc0       float_to_string_output     ffffc00000044cc0     <common>
+ 0003:00007ce0       integer_buffer             ffffc00000044ce0     <common>
+ 0003:00007d00       _cards                     ffffc00000044d00     <common>
+ 0003:00008500       _tokens                    ffffc00000045500     <common>
+ 0003:00008820       root_proc                  ffffc00000045820     <common>
+ 0003:00008828       proc_last                  ffffc00000045828     <common>
+ 0003:00008830       proc_first                 ffffc00000045830     <common>
+ 0003:00008838       udp_socket_list            ffffc00000045838     <common>
+ 0003:00008840       raw_socket_list            ffffc00000045840     <common>
+ 0003:00008848       _kernelRouteList           ffffc00000045848     <common>
+ 0003:00008850       current_icmp_sock          ffffc00000045850     <common>
+ 0003:00008858       arp_list                   ffffc00000045858     <common>
+ 0003:00008860       _MMIOBase                  ffffc00000045860     <common>
+ 0003:00008868       _RootPagingKe              ffffc00000045868     <common>
+ 0003:00008870       _RootPaging                ffffc00000045870     <common>
+ 0003:00008878       debugon                    ffffc00000045878     <common>
+ 0003:00008880       shmmaplist                 ffffc00000045880     <common>
+ 0003:000088a0       l_completePages            ffffc000000458a0     <common>
+ 0003:00008920       l_freePages                ffffc00000045920     <common>
+ 0003:00008a20       physFrames                 ffffc00000045a20     <common>
+ 0003:00008c20       _ldr_scratchBuffer         ffffc00000045c20     <common>
+ 0003:00008c28       pbox                       ffffc00000045c28     <common>
+ 0003:00008c30       _PostBoxRootCreated        ffffc00000045c30     <common>
+ 0003:00008c38       bootinfo                   ffffc00000045c38     <common>
+ 0003:00008c40       svcCurrentRegs             ffffc00000045c40     <common>
+ 0003:00008c48       scheduler_tick             ffffc00000045c48     <common>
+ 0003:00008c50       _scheduler_initialized     ffffc00000045c50     <common>
+ 0003:00008c58       thread_id                  ffffc00000045c58     <common>
+ 0003:00008c60       _idle_thr                  ffffc00000045c60     <common>
+ 0003:00008c68       current_thread             ffffc00000045c68     <common>
+ 0003:00008c70       sleep_thr_last             ffffc00000045c70     <common>
+ 0003:00008c78       sleep_thr_head             ffffc00000045c78     <common>
+ 0003:00008c80       trash_thr_last             ffffc00000045c80     <common>
+ 0003:00008c88       trash_thr_head             ffffc00000045c88     <common>
+ 0003:00008c90       blocked_thr_last           ffffc00000045c90     <common>
+ 0003:00008c98       blocked_thr_head           ffffc00000045c98     <common>
+ 0003:00008ca0       thread_list_last           ffffc00000045ca0     <common>
+ 0003:00008ca8       thread_list_head           ffffc00000045ca8     <common>
+ 0003:00008cb0       gic_redist_mmio            ffffc00000045cb0     <common>
+ 0003:00008cb8       gic_dist_mmio              ffffc00000045cb8     <common>
+ 0003:00008cc0       gicc_regs                  ffffc00000045cc0     <common>
+ 0003:00008cc8       gic_regs                   ffffc00000045cc8     <common>
+ 0003:00008ce0       __gic                      ffffc00000045ce0     <common>
+ 0003:00008d30       __ACPIRSDP                 ffffc00000045d30     <common>
+ 0003:00008d38       __PCIESupported            ffffc00000045d38     <common>
+ 0003:00008d40       __AuroraBasicAcpi          ffffc00000045d40     <common>
+ 0003:00008d48       cpuFrequency               ffffc00000045d48     <common>
+ 0003:00008d50       basisTime                  ffffc00000045d50     <common>
+ 0003:00008d58       totalSysFonts              ffffc00000045d58     <common>
+ 0003:00008d5c       fontKey                    ffffc00000045d5c     <common>
+ 0003:00008d60       font_conf_data             ffffc00000045d60     <common>
+ 0003:00008d68       __RootFS                   ffffc00000045d68     <common>
+ 0003:00008d70       __RootContainer            ffffc00000045d70     <common>
+ 0003:00008d78       _vdisk_num_                ffffc00000045d78     <common>
+ 0003:00008d80       VdiskArray                 ffffc00000045d80     <common>
+ 0003:00008e50       pipeFS                     ffffc00000045e50     <common>
+ 0003:00008e58       ramdisk_end                ffffc00000045e58     <common>
+ 0003:00008e60       ramdisk_start              ffffc00000045e60     <common>
+ 0003:00008e68       kybrd_                     ffffc00000045e68     <common>
+ 0003:00008e70       mice_                      ffffc00000045e70     <common>
+ 0003:00008e78       dtbAddress                 ffffc00000045e78     <common>
+ 0003:00008e80       TabletInput                ffffc00000045e80     <common>
+ 0003:00008e88       buttonScrollDown           ffffc00000045e88     <common>
+ 0003:00008e8c       buttonScrollUp             ffffc00000045e8c     <common>
+ 0003:00008e90       buttonRight                ffffc00000045e90     <common>
+ 0003:00008e94       buttonMiddle               ffffc00000045e94     <common>
+ 0003:00008e98       buttonLeft                 ffffc00000045e98     <common>
+ 0003:00008e9c       maxY                       ffffc00000045e9c     <common>
+ 0003:00008ea0       maxX                       ffffc00000045ea0     <common>
+ 0003:00008ea4       resY                       ffffc00000045ea4     <common>
+ 0003:00008ea8       resX                       ffffc00000045ea8     <common>
+ 0003:00008eac       mouseY                     ffffc00000045eac     <common>
+ 0003:00008eb0       mouseX                     ffffc00000045eb0     <common>
+ 0003:00008eb4       tabletQueueSz              ffffc00000045eb4     <common>
+ 0003:00008eb8       tabletIndex                ffffc00000045eb8     <common>
+ 0003:00008ec0       TabletQueue                ffffc00000045ec0     <common>
+ 0003:00008ec8       notifyOffMultiplier        ffffc00000045ec8     <common>
+ 0003:00008ed0       notifyBase                 ffffc00000045ed0     <common>
+ 0003:00008ed8       txqueue                    ffffc00000045ed8     <common>
+ 0003:00008ee0       rxqueue                    ffffc00000045ee0     <common>
+ 0003:00008ee8       input                      ffffc00000045ee8     <common>
+ 0003:00008ef0       queue                      ffffc00000045ef0     <common>
+ 0003:00008ef8       uartMMIO                   ffffc00000045ef8     <common>
+ 0003:00008f00       __rtc                      ffffc00000045f00     <common>
+ 0003:00008f08       scratchBuffer              ffffc00000045f08     <common>
+ 0003:00008f20       au_devices                 ffffc00000045f20     <common>
+ 0003:00009720       bootDrivers                ffffc00000046720     <common>
+ 0003:00009780       drivers                    ffffc00000046780     <common>
+ 0003:00009f30       _print_func                ffffc00000046f30     <common>
+ 0003:00009f38       bypass_autextout           ffffc00000046f38     <common>
+ 0003:00009f39       early_                     ffffc00000046f39     <common>
+ 0003:00009f40       v_res                      ffffc00000046f40     <common>
+ 0003:00009f48       h_res                      ffffc00000046f48     <common>
+ 0003:00009f50       resvmask                   ffffc00000046f50     <common>
+ 0003:00009f54       greenmask                  ffffc00000046f54     <common>
+ 0003:00009f58       bluemask                   ffffc00000046f58     <common>
+ 0003:00009f5c       redmask                    ffffc00000046f5c     <common>
+ 0003:00009f60       aucon                      ffffc00000046f60     <common>
+ 0003:00009f68       __framebuffer              ffffc00000046f68     <common>
+ 0003:00009f70       console_y                  ffffc00000046f70     <common>
+ 0003:00009f74       console_x                  ffffc00000046f74     <common>
+ 0003:00009f78       font_data                  ffffc00000046f78     <common>
+
+ entry point at        0001:0001a720
+
+ Static symbols
+
+ 0000:00000000       .debug$S                   ffffc00000000000     xnkrnl.exp
+ 0001:00000000       sync_el1_wrapper           ffffc00000001000     aa64vector.obj
+ 0001:0000018c       _sync_cont                 ffffc0000000118c     aa64vector.obj
+ 0001:00000238       _irq_cont                  ffffc00000001238     aa64vector.obj
+ 0001:00001190       _hnge                      ffffc00000002190     aa64lowlevel.obj
+ 0001:00001200       data_cache_ret             ffffc00000002200     aa64lowlevel.obj
+ 0001:00001284       .sre_failed                ffffc00000002284     aa64lowlevel.obj
+ 0001:0000131c       _skip_comp                 ffffc0000000231c     aa64switch.obj
+ 0001:00001bc0       $LN13                      ffffc00000002bc0     aucon.obj
+ 0001:00003460       $LN28                      ffffc00000004460     audrv.obj
+ 0001:00004628       $LN16                      ffffc00000005628     audrv.obj
+ 0001:000048a0       $LN3                       ffffc000000058a0     board.obj
+ 0001:000048c8       $LN3                       ffffc000000058c8     board.obj
+ 0001:00006378       _cred_gen_gid              ffffc00000007378 f   cred.obj
+ 0001:00006418       _collision_check_gid       ffffc00000007418 f   cred.obj
+ 0001:00006508       _mix64                     ffffc00000007508 f   cred.obj
+ 0001:00006578       $LN3                       ffffc00000007578     cred.obj
+ 0001:00006580       $LN4                       ffffc00000007580     cred.obj
+ 0001:00006938       $LN3                       ffffc00000007938     rtcmmio.obj
+ 0001:00006940       $LN4                       ffffc00000007940     rtcmmio.obj
+ 0001:00006948       $LN5                       ffffc00000007948     rtcmmio.obj
+ 0001:000069d0       $LN3                       ffffc000000079d0     rtcmmio.obj
+ 0001:000069f8       $LN3                       ffffc000000079f8     rtcmmio.obj
+ 0001:00006ca0       $LN14                      ffffc00000007ca0     rtcmmio.obj
+ 0001:000071c8       uart_write_reg             ffffc000000081c8 f   uart.obj
+ 0001:000076c8       $LN8                       ffffc000000086c8     virtiokbd.obj
+ 0001:00007fa0       AuVirtioNetReset           ffffc00000008fa0 f   virtionet.obj
+ 0001:00008060       AuVirtioNetFeatureNegotiate ffffc00000009060 f   virtionet.obj
+ 0001:00009708       $LN9                       ffffc0000000a708     dtb.obj
+ 0001:00009bd8       prefix_cmp                 ffffc0000000abd8 f   dtb.obj
+ 0001:0000bdb0       $LN18                      ffffc0000000cdb0     Fat.obj
+ 0001:0000d318       $LN6                       ffffc0000000e318     Fat.obj
+ 0001:0000f770       $LN9                       ffffc00000010770     FatFile.obj
+ 0001:00015b80       $LN6                       ffffc00000016b80     basicacpi.obj
+ 0001:000171f0       $LN11                      ffffc000000181f0     gic.obj
+ 0001:000171f4       $LN12                      ffffc000000181f4     gic.obj
+ 0001:000171f8       $LN13                      ffffc000000181f8     gic.obj
+ 0001:000177c0       $LN6                       ffffc000000187c0     sched.obj
+ 0001:00018128       $LN6                       ffffc00000019128     sched.obj
+ 0001:0001a488       hashmap_int_free           ffffc0000001b488 f   hashmap.obj
+ 0001:0001bb08       $LN9                       ffffc0000001cb08     loader.obj
+ 0001:0001ed20       init_mparams               ffffc0000001fd20 f   dlmalloc.obj
+ 0001:0001ee10       $LN9                       ffffc0000001fe10     dlmalloc.obj
+ 0001:0001ee18       change_mparam              ffffc0000001fe18 f   dlmalloc.obj
+ 0001:0001ef20       mmap_alloc                 ffffc0000001ff20 f   dlmalloc.obj
+ 0001:0001f148       mmap_resize                ffffc00000020148 f   dlmalloc.obj
+ 0001:0001f330       init_top                   ffffc00000020330 f   dlmalloc.obj
+ 0001:0001f440       init_bins                  ffffc00000020440 f   dlmalloc.obj
+ 0001:0001f4c0       prepend_alloc              ffffc000000204c0 f   dlmalloc.obj
+ 0001:00020068       add_segment                ffffc00000021068 f   dlmalloc.obj
+ 0001:00020788       sys_alloc                  ffffc00000021788 f   dlmalloc.obj
+ 0001:00021300       release_unused_segments    ffffc00000022300 f   dlmalloc.obj
+ 0001:00021c20       sys_trim                   ffffc00000022c20 f   dlmalloc.obj
+ 0001:00021f40       dispose_chunk              ffffc00000022f40 f   dlmalloc.obj
+ 0001:000230d0       tmalloc_large              ffffc000000240d0 f   dlmalloc.obj
+ 0001:00023cf8       tmalloc_small              ffffc00000024cf8 f   dlmalloc.obj
+ 0001:000243d0       try_realloc_chunk          ffffc000000253d0 f   dlmalloc.obj
+ 0001:00024ef0       internal_memalign          ffffc00000025ef0 f   dlmalloc.obj
+ 0001:000252e8       ialloc                     ffffc000000262e8 f   dlmalloc.obj
+ 0001:000256f8       internal_bulk_free         ffffc000000266f8 f   dlmalloc.obj
+ 0001:00025920       segment_holding            ffffc00000026920 f   dlmalloc.obj
+ 0001:00026310       is_power_of_two            ffffc00000027310 f   dma.obj
+ 0001:00026360       __bitmap_bytes             ffffc00000027360 f   dma.obj
+ 0001:00026388       __bitmap_set               ffffc00000027388 f   dma.obj
+ 0001:00026418       __bitmap_clear             ffffc00000027418 f   dma.obj
+ 0001:000264a8       __bitmap_test              ffffc000000274a8 f   dma.obj
+ 0001:00026508       _dma_pool_add_page         ffffc00000027508 f   dma.obj
+ 0001:000266b8       _dma_page_find_slot        ffffc000000276b8 f   dma.obj
+ 0001:000267d0       _dma_gclass_find_class     ffffc000000277d0 f   dma.obj
+ 0001:00026988       dma_align_up               ffffc00000027988 f   dma.obj
+ 0001:00027520       $LN17                      ffffc00000028520     liballoc.obj
+ 0001:00027528       liballoc_memset            ffffc00000028528 f   liballoc.obj
+ 0001:00027598       liballoc_memcpy            ffffc00000028598 f   liballoc.obj
+ 0001:00027660       insert_tag                 ffffc00000028660 f   liballoc.obj
+ 0001:000277a0       remove_tag                 ffffc000000287a0 f   liballoc.obj
+ 0001:000278c8       melt_left                  ffffc000000288c8 f   liballoc.obj
+ 0001:00027980       absorb_right               ffffc00000028980 f   liballoc.obj
+ 0001:00027a40       split_tag                  ffffc00000028a40 f   liballoc.obj
+ 0001:00027bb8       $LN4                       ffffc00000028bb8     liballoc.obj
+ 0001:00027bc0       allocate_new_tag           ffffc00000028bc0 f   liballoc.obj
+ 0001:00027d28       $LN8                       ffffc00000028d28     liballoc.obj
+ 0001:00027db0       getexp                     ffffc00000028db0 f   liballoc.obj
+ 0001:00028ee0       $LN12                      ffffc00000029ee0     mmfile.obj
+ 0001:0002c0a8       $LN13                      ffffc0000002d0a8     vmmngr.obj
+ 0001:0002d6b8       pdpt_index                 ffffc0000002e6b8 f   vmmngr.obj
+ 0001:0002d6d8       pd_index                   ffffc0000002e6d8 f   vmmngr.obj
+ 0001:0002d6f8       pt_index                   ffffc0000002e6f8 f   vmmngr.obj
+ 0001:0002d718       isRangeInsideKernel        ffffc0000002e718 f   vmmngr.obj
+ 0001:0002d860       pml4_index                 ffffc0000002e860 f   vmmngr.obj
+ 0001:00033070       _pcie_use_hard_code_ecam   ffffc00000034070 f   pcie.obj
+ 0001:000330c0       $LN5                       ffffc000000340c0     pcie.obj
+ 0001:00033608       _pcie_check_and_map_dtb    ffffc00000034608 f   pcie.obj
+ 0001:000343e8       AuCoffSymName              ffffc000000353e8 f   pe.obj
+ 0001:00034430       AuCoffSectionBase          ffffc00000035430 f   pe.obj
+ 0001:00037960       _AuSoundGetFreeID          ffffc00000038960 f   sndcore.obj
+ 0001:000398f0       _get_current_ms            ffffc0000003a8f0 f   timer.obj
+ 0001:00039930       _get_current_us            ffffc0000003a930 f   timer.obj
+ 0001:00039970       $LN4                       ffffc0000003a970     timer.obj
+ 0002:00000000       bx_vgafont                 ffffc0000003b000     aucon.obj
+ 0002:00001000       MAGIC_NATIVE               ffffc0000003c000     audrv.obj
+ 0002:00001004       MACHINE_NATIVE             ffffc0000003c004     audrv.obj
+ 0002:00001008       ?days_in_month@?1??epoch_to_tm@@9@9 ffffc0000003c008     rtcmmio.obj
+ 0002:00001040       ext_key_map                ffffc0000003c040     virtiokbd.obj
+ 0002:00001140       MAGIC_NATIVE               ffffc0000003c140     init.obj
+ 0002:00001144       MACHINE_NATIVE             ffffc0000003c144     init.obj
+ 0002:00001148       MAGIC_NATIVE               ffffc0000003c148     loader.obj
+ 0002:0000114c       MACHINE_NATIVE             ffffc0000003c14c     loader.obj
+ 0002:00001150       szClasses                  ffffc0000003c150     dma.obj
+ 0002:00001188       MAGIC_NATIVE               ffffc0000003c188     pe.obj
+ 0002:0000118c       MACHINE_NATIVE             ffffc0000003c18c     pe.obj
+ 0002:00001190       MAGIC_NATIVE               ffffc0000003c190     process.obj
+ 0002:00001194       MACHINE_NATIVE             ffffc0000003c194     process.obj
+ 0002:00001198       MAGIC_NATIVE               ffffc0000003c198     thrserv.obj
+ 0002:0000119c       MACHINE_NATIVE             ffffc0000003c19c     thrserv.obj
+ 0003:00000000       $SG3527                    ffffc0000003d000     aucon.obj
+ 0003:00000010       $SG3535                    ffffc0000003d010     aucon.obj
+ 0003:00000048       $SG3605                    ffffc0000003d048     aucon.obj
+ 0003:00000078       $SG3606                    ffffc0000003d078     aucon.obj
+ 0003:000000a0       $SG3604                    ffffc0000003d0a0     aucon.obj
+ 0003:000000f0       $SG3607                    ffffc0000003d0f0     aucon.obj
+ 0003:0000011c       $SG3608                    ffffc0000003d11c     aucon.obj
+ 0003:00000124       $SG3609                    ffffc0000003d124     aucon.obj
+ 0003:0000012c       $SG3610                    ffffc0000003d12c     aucon.obj
+ 0003:00000130       $SG3766                    ffffc0000003d130     aucon.obj
+ 0003:00000134       $SG3777                    ffffc0000003d134     aucon.obj
+ 0003:00000138       $SG3851                    ffffc0000003d138     aucon.obj
+ 0003:0000013c       $SG3862                    ffffc0000003d13c     aucon.obj
+ 0003:00000140       $SG3879                    ffffc0000003d140     audrv.obj
+ 0003:00000160       $SG3943                    ffffc0000003d160     audrv.obj
+ 0003:00000184       $SG3998                    ffffc0000003d184     audrv.obj
+ 0003:00000188       $SG3945                    ffffc0000003d188     audrv.obj
+ 0003:000001c0       $SG3948                    ffffc0000003d1c0     audrv.obj
+ 0003:000001d0       $SG3949                    ffffc0000003d1d0     audrv.obj
+ 0003:000001e0       $SG3997                    ffffc0000003d1e0     audrv.obj
+ 0003:00000218       $SG3999                    ffffc0000003d218     audrv.obj
+ 0003:00000230       $SG4001                    ffffc0000003d230     audrv.obj
+ 0003:00000278       $SG4003                    ffffc0000003d278     audrv.obj
+ 0003:000002a8       $SG4004                    ffffc0000003d2a8     audrv.obj
+ 0003:000002b8       $SG4008                    ffffc0000003d2b8     audrv.obj
+ 0003:000002f0       $SG4009                    ffffc0000003d2f0     audrv.obj
+ 0003:00000338       $SG4018                    ffffc0000003d338     audrv.obj
+ 0003:00000370       $SG4056                    ffffc0000003d370     audrv.obj
+ 0003:00000380       $SG4057                    ffffc0000003d380     audrv.obj
+ 0003:00000390       $SG4071                    ffffc0000003d390     audrv.obj
+ 0003:000003a0       $SG4073                    ffffc0000003d3a0     audrv.obj
+ 0003:000003b0       $SG4075                    ffffc0000003d3b0     audrv.obj
+ 0003:000003c0       $SG4098                    ffffc0000003d3c0     audrv.obj
+ 0003:000003f0       $SG4099                    ffffc0000003d3f0     audrv.obj
+ 0003:00000430       $SG2547                    ffffc0000003d430     board.obj
+ 0003:00000458       $SG2555                    ffffc0000003d458     board.obj
+ 0003:00000480       $SG2557                    ffffc0000003d480     board.obj
+ 0003:000004a8       $SG3027                    ffffc0000003d4a8     virt.obj
+ 0003:000004b4       $SG3029                    ffffc0000003d4b4     virt.obj
+ 0003:000004c0       $SG3210                    ffffc0000003d4c0     clean.obj
+ 0003:000004d8       $SG3228                    ffffc0000003d4d8     clean.obj
+ 0003:000004f8       $SG3273                    ffffc0000003d4f8     clean.obj
+ 0003:00000520       $SG3293                    ffffc0000003d520     clean.obj
+ 0003:00000550       $SG3294                    ffffc0000003d550     clean.obj
+ 0003:00000590       $SG3346                    ffffc0000003d590     cred.obj
+ 0003:000005c0       $SG3347                    ffffc0000003d5c0     cred.obj
+ 0003:000005f0       $SG3419                    ffffc0000003d5f0     cred.obj
+ 0003:00000628       $SG3431                    ffffc0000003d628     cred.obj
+ 0003:00000668       $SG3444                    ffffc0000003d668     cred.obj
+ 0003:000006a8       $SG2775                    ffffc0000003d6a8     rtcmmio.obj
+ 0003:000006c0       $SG2703                    ffffc0000003d6c0     uart.obj
+ 0003:000006d4       $SG2796                    ffffc0000003d6d4     uart.obj
+ 0003:000006d8       $SG2807                    ffffc0000003d6d8     uart.obj
+ 0003:000006e0       $SG3498                    ffffc0000003d6e0     virtiokbd.obj
+ 0003:00000708       $SG3505                    ffffc0000003d708     virtiokbd.obj
+ 0003:00000720       $SG3506                    ffffc0000003d720     virtiokbd.obj
+ 0003:00000748       $SG3546                    ffffc0000003d748     virtiokbd.obj
+ 0003:00000778       $SG3547                    ffffc0000003d778     virtiokbd.obj
+ 0003:00000798       $SG3548                    ffffc0000003d798     virtiokbd.obj
+ 0003:000007b8       $SG3550                    ffffc0000003d7b8     virtiokbd.obj
+ 0003:000007d8       $SG3551                    ffffc0000003d7d8     virtiokbd.obj
+ 0003:000007f0       $SG3494                    ffffc0000003d7f0     virtionet.obj
+ 0003:0000081c       $SG3602                    ffffc0000003d81c     virtionet.obj
+ 0003:00000820       $SG3499                    ffffc0000003d820     virtionet.obj
+ 0003:00000858       $SG3519                    ffffc0000003d858     virtionet.obj
+ 0003:00000890       $SG3521                    ffffc0000003d890     virtionet.obj
+ 0003:000008d0       $SG3522                    ffffc0000003d8d0     virtionet.obj
+ 0003:00000908       $SG3541                    ffffc0000003d908     virtionet.obj
+ 0003:00000928       $SG3542                    ffffc0000003d928     virtionet.obj
+ 0003:00000958       $SG3555                    ffffc0000003d958     virtionet.obj
+ 0003:00000978       $SG3556                    ffffc0000003d978     virtionet.obj
+ 0003:000009a8       $SG3588                    ffffc0000003d9a8     virtionet.obj
+ 0003:000009d8       $SG3592                    ffffc0000003d9d8     virtionet.obj
+ 0003:00000a10       $SG3594                    ffffc0000003da10     virtionet.obj
+ 0003:00000a40       $SG3595                    ffffc0000003da40     virtionet.obj
+ 0003:00000a60       $SG3596                    ffffc0000003da60     virtionet.obj
+ 0003:00000a88       $SG3598                    ffffc0000003da88     virtionet.obj
+ 0003:00000ab8       $SG3599                    ffffc0000003dab8     virtionet.obj
+ 0003:00000af0       $SG3600                    ffffc0000003daf0     virtionet.obj
+ 0003:00000b10       $SG3601                    ffffc0000003db10     virtionet.obj
+ 0003:00000b18       $SG3504                    ffffc0000003db18     virtiotablet.obj
+ 0003:00000b40       $SG3562                    ffffc0000003db40     virtiotablet.obj
+ 0003:00000b60       $SG3563                    ffffc0000003db60     virtiotablet.obj
+ 0003:00000b80       $SG3565                    ffffc0000003db80     virtiotablet.obj
+ 0003:00000ba0       $SG2853                    ffffc0000003dba0     dtb.obj
+ 0003:00000bb0       $SG2861                    ffffc0000003dbb0     dtb.obj
+ 0003:00000bbc       $SG2878                    ffffc0000003dbbc     dtb.obj
+ 0003:00000bc0       $SG2893                    ffffc0000003dbc0     dtb.obj
+ 0003:00000bc8       $SG2909                    ffffc0000003dbc8     dtb.obj
+ 0003:00000be0       $SG2918                    ffffc0000003dbe0     dtb.obj
+ 0003:00000c20       $SG3077                    ffffc0000003dc20     devfs.obj
+ 0003:00000c28       $SG3078                    ffffc0000003dc28     devfs.obj
+ 0003:00000c48       $SG3168                    ffffc0000003dc48     devfs.obj
+ 0003:00000c64       $SG3172                    ffffc0000003dc64     devfs.obj
+ 0003:00000c70       $SG3175                    ffffc0000003dc70     devfs.obj
+ 0003:00000c80       $SG3176                    ffffc0000003dc80     devfs.obj
+ 0003:00000c88       $SG3177                    ffffc0000003dc88     devfs.obj
+ 0003:00000ca8       $SG3190                    ffffc0000003dca8     devfs.obj
+ 0003:00000cc0       $SG3194                    ffffc0000003dcc0     devfs.obj
+ 0003:00000cc8       $SG3197                    ffffc0000003dcc8     devfs.obj
+ 0003:00000cd4       $SG3200                    ffffc0000003dcd4     devfs.obj
+ 0003:00000ce0       $SG3201                    ffffc0000003dce0     devfs.obj
+ 0003:00000ce8       $SG3202                    ffffc0000003dce8     devfs.obj
+ 0003:00000cf8       $SG3231                    ffffc0000003dcf8     devfs.obj
+ 0003:00000d10       $SG3004                    ffffc0000003dd10     devinput.obj
+ 0003:00000d20       $SG3006                    ffffc0000003dd20     devinput.obj
+ 0003:00000d64       $SG3007                    ffffc0000003dd64     devinput.obj
+ 0003:00000d6c       $SG3008                    ffffc0000003dd6c     devinput.obj
+ 0003:00000d70       $SG3009                    ffffc0000003dd70     devinput.obj
+ 0003:00000d78       $SG3010                    ffffc0000003dd78     devinput.obj
+ 0003:00000d80       $SG3011                    ffffc0000003dd80     devinput.obj
+ 0003:00000dc0       $SG3159                    ffffc0000003ddc0     Ext2.obj
+ 0003:00000de8       $SG3160                    ffffc0000003dde8     Ext2.obj
+ 0003:00000e10       $SG3161                    ffffc0000003de10     Ext2.obj
+ 0003:00000e38       $SG3162                    ffffc0000003de38     Ext2.obj
+ 0003:00000e58       $SG4246                    ffffc0000003de58     Fat.obj
+ 0003:00000e70       $SG4247                    ffffc0000003de70     Fat.obj
+ 0003:00000e74       $SG4248                    ffffc0000003de74     Fat.obj
+ 0003:00000e78       $SG4249                    ffffc0000003de78     Fat.obj
+ 0003:00000ea0       $SG4250                    ffffc0000003dea0     Fat.obj
+ 0003:00000ec8       $SG4251                    ffffc0000003dec8     Fat.obj
+ 0003:00000ef0       $SG3556                    ffffc0000003def0     FatDir.obj
+ 0003:00000f00       $SG3559                    ffffc0000003df00     FatDir.obj
+ 0003:00000f08       $SG3610                    ffffc0000003df08     FatDir.obj
+ 0003:00000f40       $SG3349                    ffffc0000003df40     FatFile.obj
+ 0003:00000f50       $SG3527                    ffffc0000003df50     FatFile.obj
+ 0003:00000f78       $SG3007                    ffffc0000003df78     fsprobe.obj
+ 0003:00000f88       $SG3008                    ffffc0000003df88     fsprobe.obj
+ 0003:00000f90       $SG3010                    ffffc0000003df90     fsprobe.obj
+ 0003:00000fa0       $SG3011                    ffffc0000003dfa0     fsprobe.obj
+ 0003:00000fb0       $SG3013                    ffffc0000003dfb0     fsprobe.obj
+ 0003:00000fc0       $SG3014                    ffffc0000003dfc0     fsprobe.obj
+ 0003:00000fd0       $SG3483                    ffffc0000003dfd0     initrd.obj
+ 0003:00001020       $SG3485                    ffffc0000003e020     initrd.obj
+ 0003:0000104c       $SG3488                    ffffc0000003e04c     initrd.obj
+ 0003:00001050       $SG3486                    ffffc0000003e050     initrd.obj
+ 0003:00001068       $SG3487                    ffffc0000003e068     initrd.obj
+ 0003:00001078       $SG3489                    ffffc0000003e078     initrd.obj
+ 0003:00001080       $SG3490                    ffffc0000003e080     initrd.obj
+ 0003:00001088       $SG3491                    ffffc0000003e088     initrd.obj
+ 0003:00001090       $SG3492                    ffffc0000003e090     initrd.obj
+ 0003:000010c8       $SG3493                    ffffc0000003e0c8     initrd.obj
+ 0003:000010f8       $SG3494                    ffffc0000003e0f8     initrd.obj
+ 0003:00001100       $SG3334                    ffffc0000003e100     pipe.obj
+ 0003:00001118       $SG3336                    ffffc0000003e118     pipe.obj
+ 0003:00001134       $SG3342                    ffffc0000003e134     pipe.obj
+ 0003:00001138       $SG3339                    ffffc0000003e138     pipe.obj
+ 0003:00001148       $SG3341                    ffffc0000003e148     pipe.obj
+ 0003:00001158       $SG3343                    ffffc0000003e158     pipe.obj
+ 0003:00001180       $SG3387                    ffffc0000003e180     pipe.obj
+ 0003:00001188       $SG3388                    ffffc0000003e188     pipe.obj
+ 0003:000011a8       $SG3766                    ffffc0000003e1a8     tty.obj
+ 0003:000011b0       $SG3808                    ffffc0000003e1b0     tty.obj
+ 0003:000011b8       $SG3809                    ffffc0000003e1b8     tty.obj
+ 0003:000011c0       $SG3810                    ffffc0000003e1c0     tty.obj
+ 0003:000011cc       $SG3821                    ffffc0000003e1cc     tty.obj
+ 0003:000011d4       $SG3822                    ffffc0000003e1d4     tty.obj
+ 0003:000011e0       $SG3823                    ffffc0000003e1e0     tty.obj
+ 0003:000011ec       $SG3847                    ffffc0000003e1ec     tty.obj
+ 0003:000011f8       $SG3848                    ffffc0000003e1f8     tty.obj
+ 0003:00001208       $SG3283                    ffffc0000003e208     vdisk.obj
+ 0003:00001238       $SG3294                    ffffc0000003e238     vdisk.obj
+ 0003:00001240       $SG3295                    ffffc0000003e240     vdisk.obj
+ 0003:00001248       $SG3296                    ffffc0000003e248     vdisk.obj
+ 0003:00001250       $SG3368                    ffffc0000003e250     vdisk.obj
+ 0003:0000125c       $SG3370                    ffffc0000003e25c     vdisk.obj
+ 0003:00001260       $SG3369                    ffffc0000003e260     vdisk.obj
+ 0003:00001298       $SG3372                    ffffc0000003e298     vdisk.obj
+ 0003:0000129c       $SG3373                    ffffc0000003e29c     vdisk.obj
+ 0003:000012a0       $SG3374                    ffffc0000003e2a0     vdisk.obj
+ 0003:000012cc       $SG3377                    ffffc0000003e2cc     vdisk.obj
+ 0003:000012d0       $SG3375                    ffffc0000003e2d0     vdisk.obj
+ 0003:000012e8       $SG3376                    ffffc0000003e2e8     vdisk.obj
+ 0003:000012fc       $SG3378                    ffffc0000003e2fc     vdisk.obj
+ 0003:00001300       $SG3379                    ffffc0000003e300     vdisk.obj
+ 0003:00001304       $SG3397                    ffffc0000003e304     vdisk.obj
+ 0003:00001308       $SG3389                    ffffc0000003e308     vdisk.obj
+ 0003:00001340       $SG3390                    ffffc0000003e340     vdisk.obj
+ 0003:00001350       $SG3392                    ffffc0000003e350     vdisk.obj
+ 0003:00001380       $SG3394                    ffffc0000003e380     vdisk.obj
+ 0003:000013b0       $SG3398                    ffffc0000003e3b0     vdisk.obj
+ 0003:000013b8       $SG3400                    ffffc0000003e3b8     vdisk.obj
+ 0003:000013e8       $SG3402                    ffffc0000003e3e8     vdisk.obj
+ 0003:00001420       $SG3444                    ffffc0000003e420     vfs.obj
+ 0003:00001470       $SG3537                    ffffc0000003e470     ftmngr.obj
+ 0003:00001480       $SG3575                    ffffc0000003e480     ftmngr.obj
+ 0003:0000149c       $SG3576                    ffffc0000003e49c     ftmngr.obj
+ 0003:000014a0       $SG3578                    ffffc0000003e4a0     ftmngr.obj
+ 0003:000014b8       $SG3579                    ffffc0000003e4b8     ftmngr.obj
+ 0003:000014d4       $SG3613                    ffffc0000003e4d4     ftmngr.obj
+ 0003:000014d8       $SG3612                    ffffc0000003e4d8     ftmngr.obj
+ 0003:00001500       $SG3614                    ffffc0000003e500     ftmngr.obj
+ 0003:00001510       $SG3616                    ffffc0000003e510     ftmngr.obj
+ 0003:00001560       $SG3618                    ffffc0000003e560     ftmngr.obj
+ 0003:00001588       $SG3620                    ffffc0000003e588     ftmngr.obj
+ 0003:000015a0       $SG3630                    ffffc0000003e5a0     ftmngr.obj
+ 0003:000015b8       $SG2982                    ffffc0000003e5b8     aa64cpu.obj
+ 0003:000015d8       $SG3038                    ffffc0000003e5d8     aa64cpu.obj
+ 0003:000015f8       $SG3040                    ffffc0000003e5f8     aa64cpu.obj
+ 0003:00001618       $SG3042                    ffffc0000003e618     aa64cpu.obj
+ 0003:00001638       $SG3044                    ffffc0000003e638     aa64cpu.obj
+ 0003:00001658       $SG3046                    ffffc0000003e658     aa64cpu.obj
+ 0003:00001678       $SG3048                    ffffc0000003e678     aa64cpu.obj
+ 0003:000016a0       $SG3050                    ffffc0000003e6a0     aa64cpu.obj
+ 0003:000016c0       $SG3052                    ffffc0000003e6c0     aa64cpu.obj
+ 0003:000016e0       $SG3054                    ffffc0000003e6e0     aa64cpu.obj
+ 0003:00001700       $SG3056                    ffffc0000003e700     aa64cpu.obj
+ 0003:00001720       $SG3073                    ffffc0000003e720     aa64cpu.obj
+ 0003:00001748       $SG2921                    ffffc0000003e748     basicacpi.obj
+ 0003:0000176c       $SG2988                    ffffc0000003e76c     basicacpi.obj
+ 0003:00001770       $SG2923                    ffffc0000003e770     basicacpi.obj
+ 0003:000017a8       $SG2925                    ffffc0000003e7a8     basicacpi.obj
+ 0003:000017c8       $SG2926                    ffffc0000003e7c8     basicacpi.obj
+ 0003:000017f0       $SG2927                    ffffc0000003e7f0     basicacpi.obj
+ 0003:00001808       $SG2929                    ffffc0000003e808     basicacpi.obj
+ 0003:00001820       $SG2930                    ffffc0000003e820     basicacpi.obj
+ 0003:00001848       $SG2931                    ffffc0000003e848     basicacpi.obj
+ 0003:00001870       $SG2933                    ffffc0000003e870     basicacpi.obj
+ 0003:00001888       $SG2934                    ffffc0000003e888     basicacpi.obj
+ 0003:000018a8       $SG2935                    ffffc0000003e8a8     basicacpi.obj
+ 0003:000018d0       $SG2985                    ffffc0000003e8d0     basicacpi.obj
+ 0003:000018f0       $SG2986                    ffffc0000003e8f0     basicacpi.obj
+ 0003:00001918       $SG2987                    ffffc0000003e918     basicacpi.obj
+ 0003:00001938       $SG2989                    ffffc0000003e938     basicacpi.obj
+ 0003:0000194c       $SG2997                    ffffc0000003e94c     basicacpi.obj
+ 0003:00001954       $SG2998                    ffffc0000003e954     basicacpi.obj
+ 0003:00001960       $SG2999                    ffffc0000003e960     basicacpi.obj
+ 0003:00001978       $SG3002                    ffffc0000003e978     basicacpi.obj
+ 0003:00001980       $SG3003                    ffffc0000003e980     basicacpi.obj
+ 0003:00001988       $SG3004                    ffffc0000003e988     basicacpi.obj
+ 0003:000019a0       $SG3007                    ffffc0000003e9a0     basicacpi.obj
+ 0003:000019a8       $SG3008                    ffffc0000003e9a8     basicacpi.obj
+ 0003:000019b0       $SG3009                    ffffc0000003e9b0     basicacpi.obj
+ 0003:000019c8       $SG3012                    ffffc0000003e9c8     basicacpi.obj
+ 0003:000019d0       $SG3013                    ffffc0000003e9d0     basicacpi.obj
+ 0003:000019d8       $SG3014                    ffffc0000003e9d8     basicacpi.obj
+ 0003:000019f0       $SG3017                    ffffc0000003e9f0     basicacpi.obj
+ 0003:000019f8       $SG3018                    ffffc0000003e9f8     basicacpi.obj
+ 0003:00001a00       $SG3019                    ffffc0000003ea00     basicacpi.obj
+ 0003:00001a18       $SG3022                    ffffc0000003ea18     basicacpi.obj
+ 0003:00001a20       $SG3023                    ffffc0000003ea20     basicacpi.obj
+ 0003:00001a28       $SG3024                    ffffc0000003ea28     basicacpi.obj
+ 0003:00001a40       $SG3026                    ffffc0000003ea40     basicacpi.obj
+ 0003:00001a48       $SG3027                    ffffc0000003ea48     basicacpi.obj
+ 0003:00001a50       $SG3028                    ffffc0000003ea50     basicacpi.obj
+ 0003:00001a88       $SG3035                    ffffc0000003ea88     basicacpi.obj
+ 0003:00001aa0       $SG3456                    ffffc0000003eaa0     gic.obj
+ 0003:00001ab8       $SG3460                    ffffc0000003eab8     gic.obj
+ 0003:00001acc       $SG3548                    ffffc0000003eacc     gic.obj
+ 0003:00001ad0       $SG3467                    ffffc0000003ead0     gic.obj
+ 0003:00001b00       $SG3501                    ffffc0000003eb00     gic.obj
+ 0003:00001b18       $SG3502                    ffffc0000003eb18     gic.obj
+ 0003:00001b34       $SG3558                    ffffc0000003eb34     gic.obj
+ 0003:00001b38       $SG3504                    ffffc0000003eb38     gic.obj
+ 0003:00001b68       $SG3505                    ffffc0000003eb68     gic.obj
+ 0003:00001b80       $SG3546                    ffffc0000003eb80     gic.obj
+ 0003:00001ba0       $SG3550                    ffffc0000003eba0     gic.obj
+ 0003:00001bc8       $SG3551                    ffffc0000003ebc8     gic.obj
+ 0003:00001be0       $SG3553                    ffffc0000003ebe0     gic.obj
+ 0003:00001c20       $SG3554                    ffffc0000003ec20     gic.obj
+ 0003:00001c30       $SG3556                    ffffc0000003ec30     gic.obj
+ 0003:00001c58       $SG3557                    ffffc0000003ec58     gic.obj
+ 0003:00001c68       $SG3560                    ffffc0000003ec68     gic.obj
+ 0003:00001c78       $SG3561                    ffffc0000003ec78     gic.obj
+ 0003:00001c88       $SG3562                    ffffc0000003ec88     gic.obj
+ 0003:00001ca0       $SG3563                    ffffc0000003eca0     gic.obj
+ 0003:00001cc0       $SG3565                    ffffc0000003ecc0     gic.obj
+ 0003:00001ce0       $SG3570                    ffffc0000003ece0     gic.obj
+ 0003:00001d08       $SG3572                    ffffc0000003ed08     gic.obj
+ 0003:00001d20       $SG3573                    ffffc0000003ed20     gic.obj
+ 0003:00001d40       $SG3574                    ffffc0000003ed40     gic.obj
+ 0003:00001d60       $SG3579                    ffffc0000003ed60     gic.obj
+ 0003:00001d78       $SG3617                    ffffc0000003ed78     gic.obj
+ 0003:00001d98       $SG3620                    ffffc0000003ed98     gic.obj
+ 0003:00001db8       $SG3621                    ffffc0000003edb8     gic.obj
+ 0003:00001de8       $SG3622                    ffffc0000003ede8     gic.obj
+ 0003:00001df8       $SG3646                    ffffc0000003edf8     gic.obj
+ 0003:00001e18       $SG3649                    ffffc0000003ee18     gic.obj
+ 0003:00001e38       $SG3650                    ffffc0000003ee38     gic.obj
+ 0003:00001e68       $SG3651                    ffffc0000003ee68     gic.obj
+ 0003:00001e78       $SG3607                    ffffc0000003ee78     sched.obj
+ 0003:00001e98       $SG3608                    ffffc0000003ee98     sched.obj
+ 0003:00001ea8       $SG3609                    ffffc0000003eea8     sched.obj
+ 0003:00001eb8       $SG3617                    ffffc0000003eeb8     sched.obj
+ 0003:00001ed0       $SG3618                    ffffc0000003eed0     sched.obj
+ 0003:00001ef8       $SG3619                    ffffc0000003eef8     sched.obj
+ 0003:00001f10       $SG3620                    ffffc0000003ef10     sched.obj
+ 0003:00001f28       $SG3646                    ffffc0000003ef28     sched.obj
+ 0003:00001f38       $SG3654                    ffffc0000003ef38     sched.obj
+ 0003:00001f58       $SG3655                    ffffc0000003ef58     sched.obj
+ 0003:00001f80       $SG3656                    ffffc0000003ef80     sched.obj
+ 0003:00001f98       $SG3661                    ffffc0000003ef98     sched.obj
+ 0003:00001fb0       $SG3687                    ffffc0000003efb0     sched.obj
+ 0003:00001fd0       $SG3701                    ffffc0000003efd0     sched.obj
+ 0003:00001ff8       $SG3705                    ffffc0000003eff8     sched.obj
+ 0003:00002000       $SG4191                    ffffc0000003f000     systable.obj
+ 0003:00002018       $SG4195                    ffffc0000003f018     systable.obj
+ 0003:00002030       syscalls                   ffffc0000003f030     systable.obj
+ 0003:00002270       $SG3643                    ffffc0000003f270     vector.obj
+ 0003:00002288       $SG3644                    ffffc0000003f288     vector.obj
+ 0003:000022a0       $SG3645                    ffffc0000003f2a0     vector.obj
+ 0003:000022b8       $SG3646                    ffffc0000003f2b8     vector.obj
+ 0003:000022d0       $SG3647                    ffffc0000003f2d0     vector.obj
+ 0003:000022e8       $SG3648                    ffffc0000003f2e8     vector.obj
+ 0003:00002300       $SG3649                    ffffc0000003f300     vector.obj
+ 0003:00002318       $SG3650                    ffffc0000003f318     vector.obj
+ 0003:00002330       $SG3651                    ffffc0000003f330     vector.obj
+ 0003:00002348       $SG3652                    ffffc0000003f348     vector.obj
+ 0003:00002360       $SG3653                    ffffc0000003f360     vector.obj
+ 0003:00002370       $SG3655                    ffffc0000003f370     vector.obj
+ 0003:00002388       $SG3656                    ffffc0000003f388     vector.obj
+ 0003:000023a0       $SG3657                    ffffc0000003f3a0     vector.obj
+ 0003:000023b8       $SG3658                    ffffc0000003f3b8     vector.obj
+ 0003:000023d0       $SG3659                    ffffc0000003f3d0     vector.obj
+ 0003:000023e8       $SG3660                    ffffc0000003f3e8     vector.obj
+ 0003:00002400       $SG3684                    ffffc0000003f400     vector.obj
+ 0003:00002420       $SG3685                    ffffc0000003f420     vector.obj
+ 0003:00002438       $SG3687                    ffffc0000003f438     vector.obj
+ 0003:00002458       $SG3689                    ffffc0000003f458     vector.obj
+ 0003:00002478       $SG3691                    ffffc0000003f478     vector.obj
+ 0003:00002498       $SG3693                    ffffc0000003f498     vector.obj
+ 0003:000024b8       $SG3695                    ffffc0000003f4b8     vector.obj
+ 0003:000024d8       $SG3697                    ffffc0000003f4d8     vector.obj
+ 0003:000024f8       $SG3699                    ffffc0000003f4f8     vector.obj
+ 0003:00002518       $SG3701                    ffffc0000003f518     vector.obj
+ 0003:00002538       $SG3703                    ffffc0000003f538     vector.obj
+ 0003:00002558       $SG3705                    ffffc0000003f558     vector.obj
+ 0003:00002578       $SG3707                    ffffc0000003f578     vector.obj
+ 0003:00002598       $SG3709                    ffffc0000003f598     vector.obj
+ 0003:000025b8       $SG3711                    ffffc0000003f5b8     vector.obj
+ 0003:000025d8       $SG3713                    ffffc0000003f5d8     vector.obj
+ 0003:000025f8       $SG3715                    ffffc0000003f5f8     vector.obj
+ 0003:00002610       $SG3716                    ffffc0000003f610     vector.obj
+ 0003:00002648       $SG3717                    ffffc0000003f648     vector.obj
+ 0003:00002668       $SG3718                    ffffc0000003f668     vector.obj
+ 0003:00002690       $SG3719                    ffffc0000003f690     vector.obj
+ 0003:000026a8       $SG3720                    ffffc0000003f6a8     vector.obj
+ 0003:000026c0       $SG3722                    ffffc0000003f6c0     vector.obj
+ 0003:000026e8       $SG3724                    ffffc0000003f6e8     vector.obj
+ 0003:00002700       $SG3725                    ffffc0000003f700     vector.obj
+ 0003:00002718       $SG3727                    ffffc0000003f718     vector.obj
+ 0003:00002738       $SG3728                    ffffc0000003f738     vector.obj
+ 0003:00002778       $SG3733                    ffffc0000003f778     vector.obj
+ 0003:00002790       $SG3734                    ffffc0000003f790     vector.obj
+ 0003:000027c0       $SG3736                    ffffc0000003f7c0     vector.obj
+ 0003:000027e0       $SG3738                    ffffc0000003f7e0     vector.obj
+ 0003:00002800       $SG3740                    ffffc0000003f800     vector.obj
+ 0003:00002820       $SG3742                    ffffc0000003f820     vector.obj
+ 0003:00002840       $SG3744                    ffffc0000003f840     vector.obj
+ 0003:00002860       $SG3746                    ffffc0000003f860     vector.obj
+ 0003:00002880       $SG3748                    ffffc0000003f880     vector.obj
+ 0003:000028a0       $SG3750                    ffffc0000003f8a0     vector.obj
+ 0003:000028c0       $SG3752                    ffffc0000003f8c0     vector.obj
+ 0003:000028e0       $SG3754                    ffffc0000003f8e0     vector.obj
+ 0003:00002900       $SG3756                    ffffc0000003f900     vector.obj
+ 0003:00002920       $SG3758                    ffffc0000003f920     vector.obj
+ 0003:00002940       $SG3760                    ffffc0000003f940     vector.obj
+ 0003:00002960       $SG3762                    ffffc0000003f960     vector.obj
+ 0003:00002980       $SG3764                    ffffc0000003f980     vector.obj
+ 0003:00002998       $SG3782                    ffffc0000003f998     vector.obj
+ 0003:000029b8       $SG3785                    ffffc0000003f9b8     vector.obj
+ 0003:000029d0       $SG3787                    ffffc0000003f9d0     vector.obj
+ 0003:000029e8       $SG3789                    ffffc0000003f9e8     vector.obj
+ 0003:00002a00       $SG3801                    ffffc0000003fa00     vector.obj
+ 0003:00002a30       $SG3802                    ffffc0000003fa30     vector.obj
+ 0003:00002a50       $SG3803                    ffffc0000003fa50     vector.obj
+ 0003:00002a78       $SG3805                    ffffc0000003fa78     vector.obj
+ 0003:00002a98       $SG3807                    ffffc0000003fa98     vector.obj
+ 0003:00002ab8       $SG3809                    ffffc0000003fab8     vector.obj
+ 0003:00002ad8       $SG3811                    ffffc0000003fad8     vector.obj
+ 0003:00002af8       $SG3813                    ffffc0000003faf8     vector.obj
+ 0003:00002b18       $SG3815                    ffffc0000003fb18     vector.obj
+ 0003:00002b38       $SG3817                    ffffc0000003fb38     vector.obj
+ 0003:00002b58       $SG3819                    ffffc0000003fb58     vector.obj
+ 0003:00002b78       $SG3821                    ffffc0000003fb78     vector.obj
+ 0003:00002b98       $SG3823                    ffffc0000003fb98     vector.obj
+ 0003:00002bb8       $SG3825                    ffffc0000003fbb8     vector.obj
+ 0003:00002bd8       $SG3827                    ffffc0000003fbd8     vector.obj
+ 0003:00002bf8       $SG3829                    ffffc0000003fbf8     vector.obj
+ 0003:00002c18       $SG3831                    ffffc0000003fc18     vector.obj
+ 0003:00002c38       $SG3833                    ffffc0000003fc38     vector.obj
+ 0003:00002c50       $SG3839                    ffffc0000003fc50     vector.obj
+ 0003:00002c68       $SG3841                    ffffc0000003fc68     vector.obj
+ 0003:00002c88       $SG2682                    ffffc0000003fc88     hashmap.obj
+ 0003:00002ca0       $SG2697                    ffffc0000003fca0     hashmap.obj
+ 0003:00002cb8       $SG2700                    ffffc0000003fcb8     hashmap.obj
+ 0003:00002d58       $SG5105                    ffffc0000003fd58     init.obj
+ 0003:00002d68       $SG5106                    ffffc0000003fd68     init.obj
+ 0003:00002d78       $SG5107                    ffffc0000003fd78     init.obj
+ 0003:00002d88       $SG5108                    ffffc0000003fd88     init.obj
+ 0003:00002d98       $SG5109                    ffffc0000003fd98     init.obj
+ 0003:00002da8       $SG5110                    ffffc0000003fda8     init.obj
+ 0003:00002db8       $SG5111                    ffffc0000003fdb8     init.obj
+ 0003:00002dc8       $SG5112                    ffffc0000003fdc8     init.obj
+ 0003:00002dd8       $SG5113                    ffffc0000003fdd8     init.obj
+ 0003:00002de8       $SG5114                    ffffc0000003fde8     init.obj
+ 0003:00002df8       $SG5115                    ffffc0000003fdf8     init.obj
+ 0003:00002e08       $SG5116                    ffffc0000003fe08     init.obj
+ 0003:00002e18       $SG5117                    ffffc0000003fe18     init.obj
+ 0003:00002e28       $SG5118                    ffffc0000003fe28     init.obj
+ 0003:00002e38       $SG5119                    ffffc0000003fe38     init.obj
+ 0003:00002e48       $SG5064                    ffffc0000003fe48     init.obj
+ 0003:00002e60       $SG5066                    ffffc0000003fe60     init.obj
+ 0003:00002e78       $SG5074                    ffffc0000003fe78     init.obj
+ 0003:00002e90       $SG5076                    ffffc0000003fe90     init.obj
+ 0003:00002ea8       $SG5084                    ffffc0000003fea8     init.obj
+ 0003:00002ec0       $SG5086                    ffffc0000003fec0     init.obj
+ 0003:00002ed8       $SG5103                    ffffc0000003fed8     init.obj
+ 0003:00002ef0       $SG5134                    ffffc0000003fef0     init.obj
+ 0003:00002f28       $SG5135                    ffffc0000003ff28     init.obj
+ 0003:00002f48       $SG5136                    ffffc0000003ff48     init.obj
+ 0003:00002f78       $SG5137                    ffffc0000003ff78     init.obj
+ 0003:00002f90       $SG5138                    ffffc0000003ff90     init.obj
+ 0003:00002fb0       $SG5139                    ffffc0000003ffb0     init.obj
+ 0003:00002fc0       $SG5140                    ffffc0000003ffc0     init.obj
+ 0003:00002fd0       $SG5141                    ffffc0000003ffd0     init.obj
+ 0003:00003018       $SG5142                    ffffc00000040018     init.obj
+ 0003:00003050       $SG5143                    ffffc00000040050     init.obj
+ 0003:0000306c       $SG5144                    ffffc0000004006c     init.obj
+ 0003:00003074       $SG5145                    ffffc00000040074     init.obj
+ 0003:0000307c       $SG5146                    ffffc0000004007c     init.obj
+ 0003:00003088       $SG5147                    ffffc00000040088     init.obj
+ 0003:00003098       $SG3568                    ffffc00000040098     postbox.obj
+ 0003:000030d8       $SG3569                    ffffc000000400d8     postbox.obj
+ 0003:000030e4       $SG3669                    ffffc000000400e4     postbox.obj
+ 0003:000030e8       $SG3581                    ffffc000000400e8     postbox.obj
+ 0003:00003108       $SG3611                    ffffc00000040108     postbox.obj
+ 0003:00003110       $SG3667                    ffffc00000040110     postbox.obj
+ 0003:00003118       $SG3668                    ffffc00000040118     postbox.obj
+ 0003:00003120       $SG3670                    ffffc00000040120     postbox.obj
+ 0003:00003160       $SG3671                    ffffc00000040160     postbox.obj
+ 0003:00003188       $SG3672                    ffffc00000040188     postbox.obj
+ 0003:000031b8       $SG3774                    ffffc000000401b8     loader.obj
+ 0003:000031d0       $SG3879                    ffffc000000401d0     loader.obj
+ 0003:000031f8       $SG3881                    ffffc000000401f8     loader.obj
+ 0003:00003208       $SG3958                    ffffc00000040208     loader.obj
+ 0003:00003210       $SG3959                    ffffc00000040210     loader.obj
+ 0003:00003238       $SG3962                    ffffc00000040238     loader.obj
+ 0003:00003270       $SG3964                    ffffc00000040270     loader.obj
+ 0003:00003288       $SG3972                    ffffc00000040288     loader.obj
+ 0003:000032b0       $SG3974                    ffffc000000402b0     loader.obj
+ 0003:000032c0       $SG3978                    ffffc000000402c0     loader.obj
+ 0003:000032e8       $SG3990                    ffffc000000402e8     loader.obj
+ 0003:00003318       $SG2803                    ffffc00000040318     dma.obj
+ 0003:00003348       $SG2854                    ffffc00000040348     kmalloc.obj
+ 0003:00003378       $SG2856                    ffffc00000040378     kmalloc.obj
+ 0003:000033b0       $SG2858                    ffffc000000403b0     kmalloc.obj
+ 0003:000033e0       $SG2865                    ffffc000000403e0     kmalloc.obj
+ 0003:00003410       l_pageSize                 ffffc00000040410     liballoc.obj
+ 0003:00003414       l_pageCount                ffffc00000040414     liballoc.obj
+ 0003:00003418       $SG3020                    ffffc00000040418     liballoc.obj
+ 0003:00003448       $SG3022                    ffffc00000040448     liballoc.obj
+ 0003:00003478       $SG3076                    ffffc00000040478     liballoc.obj
+ 0003:00003490       $SG3651                    ffffc00000040490     mmap.obj
+ 0003:00003498       $SG3654                    ffffc00000040498     mmap.obj
+ 0003:000034d0       $SG3655                    ffffc000000404d0     mmap.obj
+ 0003:00003508       $SG3656                    ffffc00000040508     mmap.obj
+ 0003:00003520       $SG3676                    ffffc00000040520     mmap.obj
+ 0003:00003540       $SG3685                    ffffc00000040540     mmap.obj
+ 0003:00003560       $SG3713                    ffffc00000040560     mmap.obj
+ 0003:00003570       $SG3715                    ffffc00000040570     mmap.obj
+ 0003:00003598       $SG3717                    ffffc00000040598     mmap.obj
+ 0003:000035c0       $SG3719                    ffffc000000405c0     mmap.obj
+ 0003:000035e8       $SG3721                    ffffc000000405e8     mmap.obj
+ 0003:00003608       $SG3156                    ffffc00000040608     mmfile.obj
+ 0003:00003628       $SG3366                    ffffc00000040628     mmserv.obj
+ 0003:00003650       $SG3371                    ffffc00000040650     mmserv.obj
+ 0003:00003690       $SG3373                    ffffc00000040690     mmserv.obj
+ 0003:000036a8       $SG3392                    ffffc000000406a8     mmserv.obj
+ 0003:000036d8       $SG3394                    ffffc000000406d8     mmserv.obj
+ 0003:00003700       $SG2756                    ffffc00000040700     pmmngr.obj
+ 0003:00003718       $SG2888                    ffffc00000040718     pmmngr.obj
+ 0003:00003738       $SG2895                    ffffc00000040738     pmmngr.obj
+ 0003:00003770       $SG2894                    ffffc00000040770     pmmngr.obj
+ 0003:000037c8       $SG2897                    ffffc000000407c8     pmmngr.obj
+ 0003:00003800       $SG2898                    ffffc00000040800     pmmngr.obj
+ 0003:00003818       $SG2899                    ffffc00000040818     pmmngr.obj
+ 0003:00003840       $SG2900                    ffffc00000040840     pmmngr.obj
+ 0003:00003858       $SG2901                    ffffc00000040858     pmmngr.obj
+ 0003:00003880       $SG2902                    ffffc00000040880     pmmngr.obj
+ 0003:00003898       $SG2903                    ffffc00000040898     pmmngr.obj
+ 0003:000038b0       $SG2908                    ffffc000000408b0     pmmngr.obj
+ 0003:000038d8       $SG2909                    ffffc000000408d8     pmmngr.obj
+ 0003:00003910       $SG2929                    ffffc00000040910     pmmngr.obj
+ 0003:00003940       $SG3002                    ffffc00000040940     pmmngr.obj
+ 0003:00003968       $SG3003                    ffffc00000040968     pmmngr.obj
+ 0003:00003988       $SG3503                    ffffc00000040988     shm.obj
+ 0003:000039c0       $SG3506                    ffffc000000409c0     shm.obj
+ 0003:000039e0       $SG3639                    ffffc000000409e0     shm.obj
+ 0003:00003a00       $SG3654                    ffffc00000040a00     shm.obj
+ 0003:00003a18       $SG2885                    ffffc00000040a18     vmmngr.obj
+ 0003:00003a50       $SG2886                    ffffc00000040a50     vmmngr.obj
+ 0003:00003a70       $SG2926                    ffffc00000040a70     vmmngr.obj
+ 0003:00003a90       $SG2929                    ffffc00000040a90     vmmngr.obj
+ 0003:00003ab0       $SG2932                    ffffc00000040ab0     vmmngr.obj
+ 0003:00003ad0       $SG2934                    ffffc00000040ad0     vmmngr.obj
+ 0003:00003b00       $SG2969                    ffffc00000040b00     vmmngr.obj
+ 0003:00003b30       $SG3015                    ffffc00000040b30     vmmngr.obj
+ 0003:00003b48       $SG3107                    ffffc00000040b48     vmmngr.obj
+ 0003:00003b70       $SG3004                    ffffc00000040b70     arp.obj
+ 0003:00003b90       $SG3021                    ffffc00000040b90     arp.obj
+ 0003:00003bb0       $SG3040                    ffffc00000040bb0     arp.obj
+ 0003:00003bd0       $SG3244                    ffffc00000040bd0     aunet.obj
+ 0003:00003bd8       $SG3245                    ffffc00000040bd8     aunet.obj
+ 0003:00003be8       $SG3246                    ffffc00000040be8     aunet.obj
+ 0003:00003c10       $SG3254                    ffffc00000040c10     aunet.obj
+ 0003:00003c2c       $SG3255                    ffffc00000040c2c     aunet.obj
+ 0003:00003c38       $SG3256                    ffffc00000040c38     aunet.obj
+ 0003:00003c48       $SG3267                    ffffc00000040c48     aunet.obj
+ 0003:00003c58       $SG3191                    ffffc00000040c58     ethernet.obj
+ 0003:00003c80       $SG3332                    ffffc00000040c80     icmp.obj
+ 0003:00003cb0       $SG3335                    ffffc00000040cb0     icmp.obj
+ 0003:00003ce0       $SG3336                    ffffc00000040ce0     icmp.obj
+ 0003:00003cec       $SG3337                    ffffc00000040cec     icmp.obj
+ 0003:00003cf0       $SG3339                    ffffc00000040cf0     icmp.obj
+ 0003:00003d08       $SG3342                    ffffc00000040d08     icmp.obj
+ 0003:00003d28       $SG3344                    ffffc00000040d28     icmp.obj
+ 0003:00003d58       $SG3440                    ffffc00000040d58     icmp.obj
+ 0003:00003d70       $SG3452                    ffffc00000040d70     icmp.obj
+ 0003:00003db4       $SG3456                    ffffc00000040db4     icmp.obj
+ 0003:00003dc0       $SG3457                    ffffc00000040dc0     icmp.obj
+ 0003:00003dd8       $SG3103                    ffffc00000040dd8     ipv4.obj
+ 0003:00003de4       $SG3104                    ffffc00000040de4     ipv4.obj
+ 0003:00003df0       $SG3121                    ffffc00000040df0     ipv4.obj
+ 0003:00003e18       $SG3123                    ffffc00000040e18     ipv4.obj
+ 0003:00003e38       $SG3125                    ffffc00000040e38     ipv4.obj
+ 0003:00003e58       $SG3126                    ffffc00000040e58     ipv4.obj
+ 0003:00003e70       $SG3127                    ffffc00000040e70     ipv4.obj
+ 0003:00003e88       $SG3138                    ffffc00000040e88     ipv4.obj
+ 0003:00003eb0       $SG3140                    ffffc00000040eb0     ipv4.obj
+ 0003:00003ed8       $SG3142                    ffffc00000040ed8     ipv4.obj
+ 0003:00003f00       $SG3159                    ffffc00000040f00     ipv4.obj
+ 0003:00003f20       $SG3165                    ffffc00000040f20     ipv4.obj
+ 0003:00003f40       $SG3167                    ffffc00000040f40     ipv4.obj
+ 0003:00003f60       $SG3363                    ffffc00000040f60     netserv.obj
+ 0003:00003f88       $SG3506                    ffffc00000040f88     socket.obj
+ 0003:00003fb0       $SG3539                    ffffc00000040fb0     socket.obj
+ 0003:00003fc8       $SG3542                    ffffc00000040fc8     socket.obj
+ 0003:00003ff8       $SG3559                    ffffc00000040ff8     socket.obj
+ 0003:00004010       $SG3560                    ffffc00000041010     socket.obj
+ 0003:00004020       $SG3562                    ffffc00000041020     socket.obj
+ 0003:00004038       $SG3610                    ffffc00000041038     socket.obj
+ 0003:00004050       $SG3652                    ffffc00000041050     socket.obj
+ 0003:00004078       $SG3657                    ffffc00000041078     socket.obj
+ 0003:00004098       $SG3661                    ffffc00000041098     socket.obj
+ 0003:000040c0       $SG3668                    ffffc000000410c0     socket.obj
+ 0003:000040f0       $SG3670                    ffffc000000410f0     socket.obj
+ 0003:00004118       $SG3672                    ffffc00000041118     socket.obj
+ 0003:00004138       $SG3674                    ffffc00000041138     socket.obj
+ 0003:00004170       $SG3676                    ffffc00000041170     socket.obj
+ 0003:000041a0       $SG3680                    ffffc000000411a0     socket.obj
+ 0003:000041b8       $SG3683                    ffffc000000411b8     socket.obj
+ 0003:000041e0       $SG3687                    ffffc000000411e0     socket.obj
+ 0003:00004218       $SG3705                    ffffc00000041218     socket.obj
+ 0003:00004238       $SG3706                    ffffc00000041238     socket.obj
+ 0003:00004248       _udp_port                  ffffc00000041248     udp.obj
+ 0003:0000424c       $SG3473                    ffffc0000004124c     udp.obj
+ 0003:00004250       $SG3351                    ffffc00000041250     udp.obj
+ 0003:00004288       $SG3354                    ffffc00000041288     udp.obj
+ 0003:000042b0       $SG3381                    ffffc000000412b0     udp.obj
+ 0003:000042d0       $SG3383                    ffffc000000412d0     udp.obj
+ 0003:000042f8       $SG3386                    ffffc000000412f8     udp.obj
+ 0003:00004328       $SG3388                    ffffc00000041328     udp.obj
+ 0003:00004358       $SG3390                    ffffc00000041358     udp.obj
+ 0003:00004388       $SG3392                    ffffc00000041388     udp.obj
+ 0003:000043b8       $SG3415                    ffffc000000413b8     udp.obj
+ 0003:000043d8       $SG3416                    ffffc000000413d8     udp.obj
+ 0003:000043f0       $SG3417                    ffffc000000413f0     udp.obj
+ 0003:00004410       $SG3419                    ffffc00000041410     udp.obj
+ 0003:00004428       $SG3460                    ffffc00000041428     udp.obj
+ 0003:00004448       $SG3474                    ffffc00000041448     udp.obj
+ 0003:00004470       $SG3304                    ffffc00000041470     pcie.obj
+ 0003:00004498       $SG3305                    ffffc00000041498     pcie.obj
+ 0003:000044a0       $SG3307                    ffffc000000414a0     pcie.obj
+ 0003:000044c0       $SG3308                    ffffc000000414c0     pcie.obj
+ 0003:000044d8       $SG3309                    ffffc000000414d8     pcie.obj
+ 0003:00004510       $SG3310                    ffffc00000041510     pcie.obj
+ 0003:00004540       $SG3313                    ffffc00000041540     pcie.obj
+ 0003:00004578       $SG3324                    ffffc00000041578     pcie.obj
+ 0003:000045b8       $SG3327                    ffffc000000415b8     pcie.obj
+ 0003:000045e0       $SG3330                    ffffc000000415e0     pcie.obj
+ 0003:00004610       $SG3331                    ffffc00000041610     pcie.obj
+ 0003:00004668       $SG3333                    ffffc00000041668     pcie.obj
+ 0003:00004690       $SG3332                    ffffc00000041690     pcie.obj
+ 0003:000046f0       $SG3640                    ffffc000000416f0     pcie.obj
+ 0003:00004710       $SG3707                    ffffc00000041710     pcie.obj
+ 0003:00004720       $SG3710                    ffffc00000041720     pcie.obj
+ 0003:00004730       $SG3712                    ffffc00000041730     pcie.obj
+ 0003:00004740       $SG2857                    ffffc00000041740     pe.obj
+ 0003:00004750       $SG2994                    ffffc00000041750     pe.obj
+ 0003:00004770       $SG3050                    ffffc00000041770     pe.obj
+ 0003:00004798       $SG3058                    ffffc00000041798     pe.obj
+ 0003:000047c0       $SG3059                    ffffc000000417c0     pe.obj
+ 0003:000047e0       $SG3060                    ffffc000000417e0     pe.obj
+ 0003:00004818       pid                        ffffc00000041818     process.obj
+ 0003:00004820       $SG3714                    ffffc00000041820     process.obj
+ 0003:00004848       $SG3729                    ffffc00000041848     process.obj
+ 0003:00004868       $SG3731                    ffffc00000041868     process.obj
+ 0003:00004890       $SG3760                    ffffc00000041890     process.obj
+ 0003:000048c0       $SG3790                    ffffc000000418c0     process.obj
+ 0003:000048f0       $SG3791                    ffffc000000418f0     process.obj
+ 0003:00004910       $SG3792                    ffffc00000041910     process.obj
+ 0003:00004938       $SG3793                    ffffc00000041938     process.obj
+ 0003:00004978       $SG3794                    ffffc00000041978     process.obj
+ 0003:000049b0       $SG3840                    ffffc000000419b0     process.obj
+ 0003:000049d8       $SG3842                    ffffc000000419d8     process.obj
+ 0003:00004a00       $SG3844                    ffffc00000041a00     process.obj
+ 0003:00004a30       $SG3846                    ffffc00000041a30     process.obj
+ 0003:00004a70       $SG3854                    ffffc00000041a70     process.obj
+ 0003:00004a90       $SG3064                    ffffc00000041a90     proctoken.obj
+ 0003:00004ab8       $SG3072                    ffffc00000041ab8     proctoken.obj
+ 0003:00004ad0       $SG3074                    ffffc00000041ad0     proctoken.obj
+ 0003:00004ae8       $SG3076                    ffffc00000041ae8     proctoken.obj
+ 0003:00004b00       $SG3078                    ffffc00000041b00     proctoken.obj
+ 0003:00004b18       $SG3080                    ffffc00000041b18     proctoken.obj
+ 0003:00004b30       $SG3082                    ffffc00000041b30     proctoken.obj
+ 0003:00004b40       $SG3089                    ffffc00000041b40     proctoken.obj
+ 0003:00004b88       $SG3092                    ffffc00000041b88     proctoken.obj
+ 0003:00004bb8       $SG3106                    ffffc00000041bb8     proctoken.obj
+ 0003:00004bf0       $SG3927                    ffffc00000041bf0     fileserv.obj
+ 0003:00004c34       $SG3955                    ffffc00000041c34     fileserv.obj
+ 0003:00004c38       $SG3937                    ffffc00000041c38     fileserv.obj
+ 0003:00004c50       $SG4081                    ffffc00000041c50     thrserv.obj
+ 0003:00004c70       $SG4082                    ffffc00000041c70     thrserv.obj
+ 0003:00004c88       $SG4084                    ffffc00000041c88     thrserv.obj
+ 0003:00004ca8       $SG4139                    ffffc00000041ca8     thrserv.obj
+ 0003:00004cd0       $SG4143                    ffffc00000041cd0     thrserv.obj
+ 0003:00004cf0       $SG3420                    ffffc00000041cf0     sndcore.obj
+ 0003:00004d0c       $SG3481                    ffffc00000041d0c     sndcore.obj
+ 0003:00004d10       $SG3421                    ffffc00000041d10     sndcore.obj
+ 0003:00004d20       $SG3422                    ffffc00000041d20     sndcore.obj
+ 0003:00004d38       $SG3425                    ffffc00000041d38     sndcore.obj
+ 0003:00004d5c       $SG3479                    ffffc00000041d5c     sndcore.obj
+ 0003:00004d64       $SG3480                    ffffc00000041d64     sndcore.obj
+ 0003:00004d70       $SG3482                    ffffc00000041d70     sndcore.obj
+ 0003:00004d90       $SG3495                    ffffc00000041d90     sndcore.obj
+ 0003:00004dc8       $SG2596                    ffffc00000041dc8     stdio.obj
+ 0003:00004de0       chars                      ffffc00000041de0     stdio.obj
+ 0003:00004de8       r_x                        ffffc00000041de8     stdio.obj
+ 0003:00004dec       r_y                        ffffc00000041dec     stdio.obj
+ 0003:00004df0       r_z                        ffffc00000041df0     stdio.obj
+ 0003:00004df4       r_w                        ffffc00000041df4     stdio.obj
+ 0003:00004df8       $SG2780                    ffffc00000041df8     timer.obj
+ 0003:00004e20       _dev_count_                ffffc00000041e20     audrv.obj
+ 0003:00004e24       driver_class_unique_id     ffffc00000041e24     audrv.obj
+ 0003:00004e28       driver_boot_unique_id      ffffc00000041e28     audrv.obj
+ 0003:00004e30       driver_load_base           ffffc00000041e30     audrv.obj
+ 0003:00004e38       _groups                    ffffc00000041e38     cred.obj
+ 0003:00004e6c       index                      ffffc00000041e6c     virtiokbd.obj
+ 0003:00004e70       queueSize                  ffffc00000041e70     virtiokbd.obj
+ 0003:00004e74       $SG3169                    ffffc00000041e74     devfs.obj
+ 0003:00004e75       $SG3191                    ffffc00000041e75     devfs.obj
+ 0003:00004e98       _mount_letters             ffffc00000041e98     vfs.obj
+ 0003:00004eb4       ?path@?1??AuVFSReserveMountPointLetter@@9@9 ffffc00000041eb4     vfs.obj
+ 0003:00004eb8       firstSeg                   ffffc00000041eb8     ftmngr.obj
+ 0003:00004ec0       lastSeg                    ffffc00000041ec0     ftmngr.obj
+ 0003:00004ed0       spiBitMap                  ffffc00000041ed0     gic.obj
+ 0003:000052d0       callbacks                  ffffc000000422d0     gic.obj
+ 0003:000072d4       ke_stack_idx               ffffc000000442d4     sched.obj
+ 0003:000072d9       _littleboot_used           ffffc000000442d9     init.obj
+ 0003:000072f0       mparams                    ffffc000000442f0     dlmalloc.obj
+ 0003:00007320       _gm_                       ffffc00000044320     dlmalloc.obj
+ 0003:000076c8       _last_morecore_addr        ffffc000000446c8     kmalloc.obj
+ 0003:000076d0       _brk_current               ffffc000000446d0     kmalloc.obj
+ 0003:000076d8       l_initialized              ffffc000000446d8     liballoc.obj
+ 0003:000076e0       fb_first                   ffffc000000446e0     mmfile.obj
+ 0003:000076e8       fb_last                    ffffc000000446e8     mmfile.obj
+ 0003:000076f0       _page_cache_enable         ffffc000000446f0     mmfile.obj
+ 0003:000076f8       _FreeMemory                ffffc000000446f8     pmmngr.obj
+ 0003:00007700       _ReservedMemory            ffffc00000044700     pmmngr.obj
+ 0003:00007708       _UsedMemory                ffffc00000044708     pmmngr.obj
+ 0003:00007710       _RamBitmapIndex            ffffc00000044710     pmmngr.obj
+ 0003:00007718       _TotalRam                  ffffc00000044718     pmmngr.obj
+ 0003:00007720       UsablePhysicalMemory       ffffc00000044720     pmmngr.obj
+ 0003:00007728       _BitmapSize                ffffc00000044728     pmmngr.obj
+ 0003:00007730       _HigherHalf                ffffc00000044730     pmmngr.obj
+ 0003:00007738       BitmapBuffer               ffffc00000044738     pmmngr.obj
+ 0003:00007740       page_desc                  ffffc00000044740     pmmngr.obj
+ 0003:00007748       total_page_desc_count      ffffc00000044748     pmmngr.obj
+ 0003:00007750       shm_list                   ffffc00000044750     shm.obj
+ 0003:00007758       shm_id                     ffffc00000044758     shm.obj
+ 0003:00007760       netadapters                ffffc00000044760     aunet.obj
+ 0003:00007768       _ecamAddress               ffffc00000044768     pcie.obj
+ 0003:00007770       _pcieInitialized           ffffc00000044770     pcie.obj
+ 0003:00007778       dsp_first                  ffffc00000044778     sndcore.obj
+ 0003:00007780       dsp_last                   ffffc00000044780     sndcore.obj
+ 0003:00007788       mixbuf                     ffffc00000044788     sndcore.obj
+ 0003:00007790       _audio_started_            ffffc00000044790     sndcore.obj
+ 0003:00007791       _audio_stopped_            ffffc00000044791     sndcore.obj
+ 0003:000077a0       _timers                    ffffc000000447a0     timer.obj
+ 0003:00007ca0       _system_current_us         ffffc00000044ca0     timer.obj
+ 0003:00007ca8       _system_current_ms         ffffc00000044ca8     timer.obj
+ 0005:00000000       .edata                     ffffc00000049000     xnkrnl.exp
+ 0005:00000028       rgpv                       ffffc00000049028     xnkrnl.exp
+ 0005:000002dc       rgszName                   ffffc000000492dc     xnkrnl.exp
+ 0005:00000590       rgwOrd                     ffffc00000049590     xnkrnl.exp
+ 0005:000006ea       szName                     ffffc000000496ea     xnkrnl.exp
+ 0005:000006f5       $N00001                    ffffc000000496f5     xnkrnl.exp
+ 0005:00000701       $N00002                    ffffc00000049701     xnkrnl.exp
+ 0005:0000070d       $N00003                    ffffc0000004970d     xnkrnl.exp
+ 0005:0000071d       $N00004                    ffffc0000004971d     xnkrnl.exp
+ 0005:0000072b       $N00005                    ffffc0000004972b     xnkrnl.exp
+ 0005:00000742       $N00006                    ffffc00000049742     xnkrnl.exp
+ 0005:00000750       $N00007                    ffffc00000049750     xnkrnl.exp
+ 0005:00000764       $N00008                    ffffc00000049764     xnkrnl.exp
+ 0005:00000774       $N00009                    ffffc00000049774     xnkrnl.exp
+ 0005:00000787       $N00010                    ffffc00000049787     xnkrnl.exp
+ 0005:00000795       $N00011                    ffffc00000049795     xnkrnl.exp
+ 0005:000007b1       $N00012                    ffffc000000497b1     xnkrnl.exp
+ 0005:000007c2       $N00013                    ffffc000000497c2     xnkrnl.exp
+ 0005:000007d5       $N00014                    ffffc000000497d5     xnkrnl.exp
+ 0005:000007e5       $N00015                    ffffc000000497e5     xnkrnl.exp
+ 0005:00000800       $N00016                    ffffc00000049800     xnkrnl.exp
+ 0005:0000080f       $N00017                    ffffc0000004980f     xnkrnl.exp
+ 0005:0000081f       $N00018                    ffffc0000004981f     xnkrnl.exp
+ 0005:00000830       $N00019                    ffffc00000049830     xnkrnl.exp
+ 0005:0000083e       $N00020                    ffffc0000004983e     xnkrnl.exp
+ 0005:0000084a       $N00021                    ffffc0000004984a     xnkrnl.exp
+ 0005:00000856       $N00022                    ffffc00000049856     xnkrnl.exp
+ 0005:00000862       $N00023                    ffffc00000049862     xnkrnl.exp
+ 0005:00000871       $N00024                    ffffc00000049871     xnkrnl.exp
+ 0005:00000883       $N00025                    ffffc00000049883     xnkrnl.exp
+ 0005:00000892       $N00026                    ffffc00000049892     xnkrnl.exp
+ 0005:000008a0       $N00027                    ffffc000000498a0     xnkrnl.exp
+ 0005:000008b0       $N00028                    ffffc000000498b0     xnkrnl.exp
+ 0005:000008bf       $N00029                    ffffc000000498bf     xnkrnl.exp
+ 0005:000008d8       $N00030                    ffffc000000498d8     xnkrnl.exp
+ 0005:000008f4       $N00031                    ffffc000000498f4     xnkrnl.exp
+ 0005:00000908       $N00032                    ffffc00000049908     xnkrnl.exp
+ 0005:00000922       $N00033                    ffffc00000049922     xnkrnl.exp
+ 0005:00000939       $N00034                    ffffc00000049939     xnkrnl.exp
+ 0005:00000952       $N00035                    ffffc00000049952     xnkrnl.exp
+ 0005:00000963       $N00036                    ffffc00000049963     xnkrnl.exp
+ 0005:00000974       $N00037                    ffffc00000049974     xnkrnl.exp
+ 0005:00000980       $N00038                    ffffc00000049980     xnkrnl.exp
+ 0005:00000991       $N00039                    ffffc00000049991     xnkrnl.exp
+ 0005:000009a4       $N00040                    ffffc000000499a4     xnkrnl.exp
+ 0005:000009b7       $N00041                    ffffc000000499b7     xnkrnl.exp
+ 0005:000009c7       $N00042                    ffffc000000499c7     xnkrnl.exp
+ 0005:000009da       $N00043                    ffffc000000499da     xnkrnl.exp
+ 0005:000009e9       $N00044                    ffffc000000499e9     xnkrnl.exp
+ 0005:000009f8       $N00045                    ffffc000000499f8     xnkrnl.exp
+ 0005:00000a06       $N00046                    ffffc00000049a06     xnkrnl.exp
+ 0005:00000a1a       $N00047                    ffffc00000049a1a     xnkrnl.exp
+ 0005:00000a2f       $N00048                    ffffc00000049a2f     xnkrnl.exp
+ 0005:00000a46       $N00049                    ffffc00000049a46     xnkrnl.exp
+ 0005:00000a59       $N00050                    ffffc00000049a59     xnkrnl.exp
+ 0005:00000a64       $N00051                    ffffc00000049a64     xnkrnl.exp
+ 0005:00000a74       $N00052                    ffffc00000049a74     xnkrnl.exp
+ 0005:00000a87       $N00053                    ffffc00000049a87     xnkrnl.exp
+ 0005:00000a95       $N00054                    ffffc00000049a95     xnkrnl.exp
+ 0005:00000aa2       $N00055                    ffffc00000049aa2     xnkrnl.exp
+ 0005:00000aaf       $N00056                    ffffc00000049aaf     xnkrnl.exp
+ 0005:00000ac0       $N00057                    ffffc00000049ac0     xnkrnl.exp
+ 0005:00000ad0       $N00058                    ffffc00000049ad0     xnkrnl.exp
+ 0005:00000add       $N00059                    ffffc00000049add     xnkrnl.exp
+ 0005:00000ae7       $N00060                    ffffc00000049ae7     xnkrnl.exp
+ 0005:00000af1       $N00061                    ffffc00000049af1     xnkrnl.exp
+ 0005:00000afd       $N00062                    ffffc00000049afd     xnkrnl.exp
+ 0005:00000b0c       $N00063                    ffffc00000049b0c     xnkrnl.exp
+ 0005:00000b17       $N00064                    ffffc00000049b17     xnkrnl.exp
+ 0005:00000b24       $N00065                    ffffc00000049b24     xnkrnl.exp
+ 0005:00000b34       $N00066                    ffffc00000049b34     xnkrnl.exp
+ 0005:00000b46       $N00067                    ffffc00000049b46     xnkrnl.exp
+ 0005:00000b5d       $N00068                    ffffc00000049b5d     xnkrnl.exp
+ 0005:00000b69       $N00069                    ffffc00000049b69     xnkrnl.exp
+ 0005:00000b77       $N00070                    ffffc00000049b77     xnkrnl.exp
+ 0005:00000b85       $N00071                    ffffc00000049b85     xnkrnl.exp
+ 0005:00000b99       $N00072                    ffffc00000049b99     xnkrnl.exp
+ 0005:00000ba6       $N00073                    ffffc00000049ba6     xnkrnl.exp
+ 0005:00000bb9       $N00074                    ffffc00000049bb9     xnkrnl.exp
+ 0005:00000bc9       $N00075                    ffffc00000049bc9     xnkrnl.exp
+ 0005:00000bd5       $N00076                    ffffc00000049bd5     xnkrnl.exp
+ 0005:00000be2       $N00077                    ffffc00000049be2     xnkrnl.exp
+ 0005:00000bf2       $N00078                    ffffc00000049bf2     xnkrnl.exp
+ 0005:00000c00       $N00079                    ffffc00000049c00     xnkrnl.exp
+ 0005:00000c0f       $N00080                    ffffc00000049c0f     xnkrnl.exp
+ 0005:00000c1c       $N00081                    ffffc00000049c1c     xnkrnl.exp
+ 0005:00000c2d       $N00082                    ffffc00000049c2d     xnkrnl.exp
+ 0005:00000c3b       $N00083                    ffffc00000049c3b     xnkrnl.exp
+ 0005:00000c4f       $N00084                    ffffc00000049c4f     xnkrnl.exp
+ 0005:00000c60       $N00085                    ffffc00000049c60     xnkrnl.exp
+ 0005:00000c6e       $N00086                    ffffc00000049c6e     xnkrnl.exp
+ 0005:00000c79       $N00087                    ffffc00000049c79     xnkrnl.exp
+ 0005:00000c85       $N00088                    ffffc00000049c85     xnkrnl.exp
+ 0005:00000c8f       $N00089                    ffffc00000049c8f     xnkrnl.exp
+ 0005:00000ca0       $N00090                    ffffc00000049ca0     xnkrnl.exp
+ 0005:00000cba       $N00091                    ffffc00000049cba     xnkrnl.exp
+ 0005:00000cce       $N00092                    ffffc00000049cce     xnkrnl.exp
+ 0005:00000cde       $N00093                    ffffc00000049cde     xnkrnl.exp
+ 0005:00000cf0       $N00094                    ffffc00000049cf0     xnkrnl.exp
+ 0005:00000d09       $N00095                    ffffc00000049d09     xnkrnl.exp
+ 0005:00000d18       $N00096                    ffffc00000049d18     xnkrnl.exp
+ 0005:00000d28       $N00097                    ffffc00000049d28     xnkrnl.exp
+ 0005:00000d34       $N00098                    ffffc00000049d34     xnkrnl.exp
+ 0005:00000d44       $N00099                    ffffc00000049d44     xnkrnl.exp
+ 0005:00000d51       $N00100                    ffffc00000049d51     xnkrnl.exp
+ 0005:00000d64       $N00101                    ffffc00000049d64     xnkrnl.exp
+ 0005:00000d73       $N00102                    ffffc00000049d73     xnkrnl.exp
+ 0005:00000d83       $N00103                    ffffc00000049d83     xnkrnl.exp
+ 0005:00000d8d       $N00104                    ffffc00000049d8d     xnkrnl.exp
+ 0005:00000d9e       $N00105                    ffffc00000049d9e     xnkrnl.exp
+ 0005:00000dad       $N00106                    ffffc00000049dad     xnkrnl.exp
+ 0005:00000dc0       $N00107                    ffffc00000049dc0     xnkrnl.exp
+ 0005:00000dce       $N00108                    ffffc00000049dce     xnkrnl.exp
+ 0005:00000de1       $N00109                    ffffc00000049de1     xnkrnl.exp
+ 0005:00000df0       $N00110                    ffffc00000049df0     xnkrnl.exp
+ 0005:00000dfa       $N00111                    ffffc00000049dfa     xnkrnl.exp
+ 0005:00000e0c       $N00112                    ffffc00000049e0c     xnkrnl.exp
+ 0005:00000e22       $N00113                    ffffc00000049e22     xnkrnl.exp
+ 0005:00000e2f       $N00114                    ffffc00000049e2f     xnkrnl.exp
+ 0005:00000e3f       $N00115                    ffffc00000049e3f     xnkrnl.exp
+ 0005:00000e51       $N00116                    ffffc00000049e51     xnkrnl.exp
+ 0005:00000e65       $N00117                    ffffc00000049e65     xnkrnl.exp
+ 0005:00000e76       $N00118                    ffffc00000049e76     xnkrnl.exp
+ 0005:00000e8f       $N00119                    ffffc00000049e8f     xnkrnl.exp
+ 0005:00000ea2       $N00120                    ffffc00000049ea2     xnkrnl.exp
+ 0005:00000eaf       $N00121                    ffffc00000049eaf     xnkrnl.exp
+ 0005:00000ebf       $N00122                    ffffc00000049ebf     xnkrnl.exp
+ 0005:00000ed5       $N00123                    ffffc00000049ed5     xnkrnl.exp
+ 0005:00000ee0       $N00124                    ffffc00000049ee0     xnkrnl.exp
+ 0005:00000ef0       $N00125                    ffffc00000049ef0     xnkrnl.exp
+ 0005:00000ef4       $N00126                    ffffc00000049ef4     xnkrnl.exp
+ 0005:00000f01       $N00127                    ffffc00000049f01     xnkrnl.exp
+ 0005:00000f05       $N00128                    ffffc00000049f05     xnkrnl.exp
+ 0005:00000f0a       $N00129                    ffffc00000049f0a     xnkrnl.exp
+ 0005:00000f26       $N00130                    ffffc00000049f26     xnkrnl.exp
+ 0005:00000f39       $N00131                    ffffc00000049f39     xnkrnl.exp
+ 0005:00000f4c       $N00132                    ffffc00000049f4c     xnkrnl.exp
+ 0005:00000f5d       $N00133                    ffffc00000049f5d     xnkrnl.exp
+ 0005:00000f65       $N00134                    ffffc00000049f65     xnkrnl.exp
+ 0005:00000f6c       $N00135                    ffffc00000049f6c     xnkrnl.exp
+ 0005:00000f74       $N00136                    ffffc00000049f74     xnkrnl.exp
+ 0005:00000f83       $N00137                    ffffc00000049f83     xnkrnl.exp
+ 0005:00000f8f       $N00138                    ffffc00000049f8f     xnkrnl.exp
+ 0005:00000f9f       $N00139                    ffffc00000049f9f     xnkrnl.exp
+ 0005:00000fa7       $N00140                    ffffc00000049fa7     xnkrnl.exp
+ 0005:00000faf       $N00141                    ffffc00000049faf     xnkrnl.exp
+ 0005:00000fb9       $N00142                    ffffc00000049fb9     xnkrnl.exp
+ 0005:00000fc1       $N00143                    ffffc00000049fc1     xnkrnl.exp
+ 0005:00000fc9       $N00144                    ffffc00000049fc9     xnkrnl.exp
+ 0005:00000fd1       $N00145                    ffffc00000049fd1     xnkrnl.exp
+ 0005:00000fd9       $N00146                    ffffc00000049fd9     xnkrnl.exp
+ 0005:00000fe1       $N00147                    ffffc00000049fe1     xnkrnl.exp
+ 0005:00000fea       $N00148                    ffffc00000049fea     xnkrnl.exp
+ 0005:00000ff2       $N00149                    ffffc00000049ff2     xnkrnl.exp
+ 0005:00000ff8       $N00150                    ffffc00000049ff8     xnkrnl.exp
+ 0005:00001000       $N00151                    ffffc0000004a000     xnkrnl.exp
+ 0005:00001009       $N00152                    ffffc0000004a009     xnkrnl.exp
+ 0005:00001012       $N00153                    ffffc0000004a012     xnkrnl.exp
+ 0005:0000101e       $N00154                    ffffc0000004a01e     xnkrnl.exp
+ 0005:0000102a       $N00155                    ffffc0000004a02a     xnkrnl.exp
+ 0005:00001034       $N00156                    ffffc0000004a034     xnkrnl.exp
+ 0005:0000103b       $N00157                    ffffc0000004a03b     xnkrnl.exp
+ 0005:00001042       $N00158                    ffffc0000004a042     xnkrnl.exp
+ 0005:00001049       $N00159                    ffffc0000004a049     xnkrnl.exp
+ 0005:00001050       $N00160                    ffffc0000004a050     xnkrnl.exp
+ 0005:00001057       $N00161                    ffffc0000004a057     xnkrnl.exp
+ 0005:0000105e       $N00162                    ffffc0000004a05e     xnkrnl.exp
+ 0005:00001065       $N00163                    ffffc0000004a065     xnkrnl.exp
+ 0005:0000106c       $N00164                    ffffc0000004a06c     xnkrnl.exp
+ 0005:00001073       $N00165                    ffffc0000004a073     xnkrnl.exp
+ 0005:0000107a       $N00166                    ffffc0000004a07a     xnkrnl.exp
+ 0005:00001082       $N00167                    ffffc0000004a082     xnkrnl.exp
+ 0005:0000108a       $N00168                    ffffc0000004a08a     xnkrnl.exp
+ 0005:00001092       $N00169                    ffffc0000004a092     xnkrnl.exp
+ 0005:00001099       $N00170                    ffffc0000004a099     xnkrnl.exp
+ 0005:0000109f       $N00171                    ffffc0000004a09f     xnkrnl.exp
+ 0005:000010a7       $N00172                    ffffc0000004a0a7     xnkrnl.exp
+ 0005:000010af       $N00173                    ffffc0000004a0af     xnkrnl.exp
+
+ Exports
+
+  ordinal    name
+
+        1    AA64SleepMS
+        2    AA64SleepUS
+        3    AuAddNetAdapter
+        4    AuBlockThread
+        5    AuBootDriverInitialise
+        6    AuCheckDevice
+        7    AuConsoleSetConInfo
+        8    AuCreateKthread
+        9    AuCreateSubKthread
+       10    AuCreateVDisk
+       11    AuCreateVirtualAddressSpace
+       12    AuDMAGClassAlloc
+       13    AuDMAGClassDestroy
+       14    AuDMAGClassFree
+       15    AuDMAGlobalClassInitialize
+       16    AuDMAPoolAlloc
+       17    AuDMAPoolCreate
+       18    AuDMAPoolDestroy
+       19    AuDMAPoolFree
+       20    AuDTBSwap16
+       21    AuDTBSwap32
+       22    AuDTBSwap64
+       23    AuDevFSAddFile
+       24    AuDevFSRemoveFile
+       25    AuDevReadKybrd
+       26    AuDevReadMice
+       27    AuDevWriteKybrd
+       28    AuDevWriteMice
+       29    AuDeviceTreeFindProperty
+       30    AuDeviceTreeGetAddressCells
+       31    AuDeviceTreeGetNode
+       32    AuDeviceTreeGetRegAddress
+       33    AuDeviceTreeGetRegSize
+       34    AuDeviceTreeGetSizeCells
+       35    AuEthernetHandle
+       36    AuForceScheduler
+       37    AuFreePages
+       38    AuGICAllocateSPI
+       39    AuGICDeallocateSPI
+       40    AuGICGetMSIAddress
+       41    AuGICGetMSIData
+       42    AuGetBootInfoStruc
+       43    AuGetCurrentMS
+       44    AuGetCurrentUS
+       45    AuGetFreePage
+       46    AuGetNetworkAdapter
+       47    AuGetPhysicalAddress
+       48    AuGetPhysicalAddressEx
+       49    AuGetRootPageTable
+       50    AuGetVDisk
+       51    AuHashmapCreate
+       52    AuHashmapCreateInt
+       53    AuHashmapFree
+       54    AuHashmapGet
+       55    AuHashmapHas
+       56    AuHashmapIsEmpty
+       57    AuHashmapRemove
+       58    AuHashmapSet
+       59    AuMapMMIO
+       60    AuMapPage
+       61    AuMapPageEx
+       62    AuPCIEAllocMSI
+       63    AuPCIERead
+       64    AuPCIERead64
+       65    AuPCIEScanClass
+       66    AuPCIEScanClassIF
+       67    AuPCIEScanVendorDevice
+       68    AuPCIEWrite
+       69    AuPCIEWrite64
+       70    AuPmmngrAlloc
+       71    AuPmmngrAllocBlocks
+       72    AuPmmngrFree
+       73    AuPmmngrFreeBlocks
+       74    AuRTCGetCentury
+       75    AuRTCGetDay
+       76    AuRTCGetHour
+       77    AuRTCGetMinutes
+       78    AuRTCGetMonth
+       79    AuRTCGetSecond
+       80    AuRTCGetYear
+       81    AuRegisterDevice
+       82    AuSleepThread
+       83    AuSoundRegisterCard
+       84    AuSoundRemoveDSP
+       85    AuStackCreate
+       86    AuStackPop
+       87    AuStackPush
+       88    AuTextOut
+       89    AuThreadFindByID
+       90    AuThreadFindByIDBlockList
+       91    AuThreadMoveToTrash
+       92    AuUnblockThread
+       93    AuUpdatePageFlags
+       94    AuVDiskCreateStorageFile
+       95    AuVDiskDestroy
+       96    AuVDiskGetIndex
+       97    AuVDiskRead
+       98    AuVDiskRegister
+       99    AuVDiskWrite
+      100    AuVFSAddFileSystem
+      101    AuVFSCreateDir
+      102    AuVFSCreateFile
+      103    AuVFSFind
+      104    AuVFSGetBlockFor
+      105    AuVFSNodeClose
+      106    AuVFSNodeIOControl
+      107    AuVFSNodeRead
+      108    AuVFSNodeReadBlock
+      109    AuVFSNodeWrite
+      110    AuVFSOpen
+      111    AuVFSRegisterRoot
+      112    AuVFSRemoveFileSystem
+      113    AuVFSSetCred
+      114    AuVmmngrGetPage
+      115    AuroraTimerCancel
+      116    AuroraTimerIsActive
+      117    AuroraTimerStart
+      118    AuroraTimerStartPeriodic
+      119    GICClearPendingIRQ
+      120    GICEnableIRQ
+      121    GICEnableSPIIRQ
+      122    GICRegisterSPIHandler
+      123    GICSendEOI
+      124    GICSetTargetCPU
+      125    P2V
+      126    UARTDebugOut
+      127    V2P
+      128    _wfi
+      129    aa64_data_cache_clean_range
+      130    aa64_dc_cvac_range
+      131    aa64_dc_ivac_range
+      132    data_cache_flush
+      133    dc_ivac
+      134    dmb_sy
+      135    dsb_ish
+      136    dsb_sy_barrier
+      137    enable_irqs
+      138    initialize_list
+      139    isalpha
+      140    isascii
+      141    isb_flush
+      142    isdigit
+      143    islower
+      144    isprint
+      145    isspace
+      146    isupper
+      147    isxdigit
+      148    kcalloc
+      149    kfree
+      150    kmalloc
+      151    krealloc
+      152    list_add
+      153    list_get_at
+      154    list_remove
+      155    mask_irqs
+      156    memcmp
+      157    memcpy
+      158    memset
+      159    printf
+      160    strcat
+      161    strchr
+      162    strcmp
+      163    strcpy
+      164    strdup
+      165    strlen
+      166    strncat
+      167    strncmp
+      168    strncpy
+      169    strstr
+      170    sztoa
+      171    toascii
+      172    tolower
+      173    toupper
