@@ -1,1 +1,20 @@
-﻿
+﻿cl : command line warning D9002: ignoring unknown option '/arch:SSE2'
+  main.cpp
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Board\imx8mp\imx8mp.h(37,1): warning C4067: unexpected tokens following preprocessor directive - expected a newline
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\basicacpi.h(163,11): warning C4200: nonstandard extension used: zero-sized array in struct/union
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\basicacpi.h(163,11): message : This member will be ignored by a defaulted constructor or copy/move assignment operator
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\basicacpi.h(234,9): warning C4200: nonstandard extension used: zero-sized array in struct/union
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\basicacpi.h(234,9): message : This member will be ignored by a defaulted constructor or copy/move assignment operator
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\basicacpi.h(316,16): warning C4200: nonstandard extension used: zero-sized array in struct/union
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\basicacpi.h(316,16): message : This member will be ignored by a defaulted constructor or copy/move assignment operator
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\basicacpi.h(332,11): warning C4200: nonstandard extension used: zero-sized array in struct/union
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\basicacpi.h(332,11): message : This member will be ignored by a defaulted constructor or copy/move assignment operator
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Cred\group.h(88,2): warning C4091: 'typedef ': ignored on left of '_gid_entries_' when no variable is declared
+C:\Users\paras\source\repos\grep-name\XenevaOS\Drivers\Sound\virtiosnd\main.cpp(769,39): warning C4267: 'argument': conversion from 'size_t' to 'uint32_t', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\Drivers\Sound\virtiosnd\main.cpp(770): warning C4715: 'virtio_snd_write': not all control paths return a value
+C:\Program Files\Microsoft Visual Studio\18\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(1363,5): warning MSB8012: TargetPath(C:\Users\paras\source\repos\grep-name\XenevaOS\ARM64\Debug\virtsnd.dll) does not match the Linker's OutputFile property value (C:\Users\paras\source\repos\grep-name\XenevaOS\Build\virtsnd.dll). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
+LINK : warning LNK4075: ignoring '/INCREMENTAL' due to '/LTCG' specification
+     Creating library C:\Users\paras\source\repos\grep-name\XenevaOS\ARM64\Debug\virtsnd.lib and object C:\Users\paras\source\repos\grep-name\XenevaOS\ARM64\Debug\virtsnd.exp
+  LINK : /LTCG specified but no code generation required; remove /LTCG from the link command line to improve linker performance
+  virtiosnd.vcxproj -> C:\Users\paras\source\repos\grep-name\XenevaOS\ARM64\Debug\virtsnd.dll
+          1 file(s) copied.

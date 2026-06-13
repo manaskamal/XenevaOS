@@ -1,0 +1,186 @@
+ virtblk
+
+ Timestamp is 6a2d4785 (Sat Jun 13 17:35:25 2026)
+
+ Preferred load address is ffffc00000400000
+
+ Start         Length     Name                   Class
+ 0001:00000000 0000185cH .text$mn                CODE
+ 0002:00000000 000000b8H .idata$5                DATA
+ 0002:000000b8 000002fcH .rdata                  DATA
+ 0002:000003b4 000000e8H .rdata$zzzdbg           DATA
+ 0003:00000000 000000d8H .bss                    DATA
+ 0004:00000000 00000058H .pdata                  DATA
+ 0005:00000000 00000001H .msvcjmc                DATA
+ 0006:00000000 00000064H .edata                  DATA
+ 0007:00000000 00000014H .idata$2                DATA
+ 0007:00000014 00000014H .idata$3                DATA
+ 0007:00000028 000000b8H .idata$4                DATA
+ 0007:000000e0 00000168H .idata$6                DATA
+
+  Address         Publics by Value              Rva+Base               Lib:Object
+
+ 0000:00000000       __dynamic_value_reloc_table 0000000000000000     <absolute>
+ 0000:00000000       __hybrid_code_map          0000000000000000     <absolute>
+ 0000:00000000       __guard_iat_count          0000000000000000     <absolute>
+ 0000:00000000       __hybrid_code_map_count    0000000000000000     <absolute>
+ 0000:00000000       __arm64x_native_entrypoint 0000000000000000     <absolute>
+ 0000:00000000       __guard_eh_cont_table      0000000000000000     <absolute>
+ 0000:00000000       __enclave_config           0000000000000000     <absolute>
+ 0000:00000000       __arm64x_redirection_metadata_count 0000000000000000     <absolute>
+ 0000:00000000       ___safe_se_handler_table   0000000000000000     <absolute>
+ 0000:00000000       __arm64x_extra_rfe_table   0000000000000000     <absolute>
+ 0000:00000000       __x64_code_ranges_to_entry_points_count 0000000000000000     <absolute>
+ 0000:00000000       __guard_fids_table         0000000000000000     <absolute>
+ 0000:00000000       __guard_longjmp_table      0000000000000000     <absolute>
+ 0000:00000000       ___safe_se_handler_count   0000000000000000     <absolute>
+ 0000:00000000       __x64_code_ranges_to_entry_points 0000000000000000     <absolute>
+ 0000:00000000       __hybrid_auxiliary_iat     0000000000000000     <absolute>
+ 0000:00000000       __guard_check_icall_a64n_fptr 0000000000000000     <absolute>
+ 0000:00000000       __guard_eh_cont_count      0000000000000000     <absolute>
+ 0000:00000000       __guard_longjmp_count      0000000000000000     <absolute>
+ 0000:00000000       __AbsoluteZero             0000000000000000     <absolute>
+ 0000:00000000       __arm64x_redirection_metadata 0000000000000000     <absolute>
+ 0000:00000000       __arm64x_extra_rfe_table_size 0000000000000000     <absolute>
+ 0000:00000000       __guard_iat_table          0000000000000000     <absolute>
+ 0000:00000000       __hybrid_auxiliary_iat_copy 0000000000000000     <absolute>
+ 0000:00000000       __guard_fids_count         0000000000000000     <absolute>
+ 0000:00000000       __volatile_metadata        0000000000000000     <absolute>
+ 0000:00000100       __guard_flags              0000000000000100     <absolute>
+ 0001:00000000       AuDriverUnload             ffffc00000401000 f   virtioblk.obj
+ 0001:00000020       ?virtioblk_reset@@YAXPEAUVirtioCommonCfg@@@Z ffffc00000401020 f   virtioblk.obj
+ 0001:000000b0       ?virtioblk_feature_negotiate@@YAXPEAUVirtioCommonCfg@@@Z ffffc000004010b0 f   virtioblk.obj
+ 0001:000001e0       ?virtioblk_notify_queu@@YAXPEAUVirtioCommonCfg@@G@Z ffffc000004011e0 f   virtioblk.obj
+ 0001:00000270       ?virtioblk_interrupt_handler@@YAXH@Z ffffc00000401270 f   virtioblk.obj
+ 0001:000002a0       ?virtioblk_alloc_requestQ@@YAXPEAUVirtioCommonCfg@@@Z ffffc000004012a0 f   virtioblk.obj
+ 0001:000003c8       ?virtioblk_read@@YA_NPEAUVirtioCommonCfg@@_K11@Z ffffc000004013c8 f   virtioblk.obj
+ 0001:000009e0       ?virtioblk_write@@YA_NPEAUVirtioCommonCfg@@_K11@Z ffffc000004019e0 f   virtioblk.obj
+ 0001:00000ff8       ?virtblk_read_vdisk@@YAHPEAU_VDISK_@@_KIPEA_K@Z ffffc00000401ff8 f   virtioblk.obj
+ 0001:00001098       ?virtblk_write_vdisk@@YAHPEAU_VDISK_@@_KIPEA_K@Z ffffc00000402098 f   virtioblk.obj
+ 0001:00001138       AuDriverMain               ffffc00000402138 f   virtioblk.obj
+ 0001:00001750       __JustMyCode_Default       ffffc00000402750 f i virtioblk.obj
+ 0001:00001750       __CheckForDebuggerJustMyCode ffffc00000402750 f i virtioblk.obj
+ 0001:00001754       AuTextOut                  ffffc00000402754 f   xnkrnl:xnkrnl.exe
+ 0001:00001760       AuPCIEAllocMSI             ffffc00000402760 f   xnkrnl:xnkrnl.exe
+ 0001:0000176c       AuPCIEWrite                ffffc0000040276c f   xnkrnl:xnkrnl.exe
+ 0001:00001778       AuPCIERead                 ffffc00000402778 f   xnkrnl:xnkrnl.exe
+ 0001:00001784       AuMapMMIO                  ffffc00000402784 f   xnkrnl:xnkrnl.exe
+ 0001:00001790       dsb_ish                    ffffc00000402790 f   xnkrnl:xnkrnl.exe
+ 0001:0000179c       isb_flush                  ffffc0000040279c f   xnkrnl:xnkrnl.exe
+ 0001:000017a8       UARTDebugOut               ffffc000004027a8 f   xnkrnl:xnkrnl.exe
+ 0001:000017b4       GICEnableSPIIRQ            ffffc000004027b4 f   xnkrnl:xnkrnl.exe
+ 0001:000017c0       AuGICAllocateSPI           ffffc000004027c0 f   xnkrnl:xnkrnl.exe
+ 0001:000017cc       GICRegisterSPIHandler      ffffc000004027cc f   xnkrnl:xnkrnl.exe
+ 0001:000017d8       AuPmmngrAllocBlocks        ffffc000004027d8 f   xnkrnl:xnkrnl.exe
+ 0001:000017e4       V2P                        ffffc000004027e4 f   xnkrnl:xnkrnl.exe
+ 0001:000017f0       AuDMAGlobalClassInitialize ffffc000004027f0 f   xnkrnl:xnkrnl.exe
+ 0001:000017fc       AuDMAGClassAlloc           ffffc000004027fc f   xnkrnl:xnkrnl.exe
+ 0001:00001808       AuVDiskRegister            ffffc00000402808 f   xnkrnl:xnkrnl.exe
+ 0001:00001814       AuCreateVDisk              ffffc00000402814 f   xnkrnl:xnkrnl.exe
+ 0001:00001820       AuVDiskCreateStorageFile   ffffc00000402820 f   xnkrnl:xnkrnl.exe
+ 0001:0000182c       strcpy                     ffffc0000040282c f   xnkrnl:xnkrnl.exe
+ 0001:00001838       strlen                     ffffc00000402838 f   xnkrnl:xnkrnl.exe
+ 0001:00001844       memset                     ffffc00000402844 f   xnkrnl:xnkrnl.exe
+ 0001:00001850       sztoa                      ffffc00000402850 f   xnkrnl:xnkrnl.exe
+ 0002:00000000       __imp_AuTextOut            ffffc00000403000     xnkrnl:xnkrnl.exe
+ 0002:00000008       __imp_AuPCIEAllocMSI       ffffc00000403008     xnkrnl:xnkrnl.exe
+ 0002:00000010       __imp_AuPCIEWrite          ffffc00000403010     xnkrnl:xnkrnl.exe
+ 0002:00000018       __imp_AuPCIERead           ffffc00000403018     xnkrnl:xnkrnl.exe
+ 0002:00000020       __imp_AuMapMMIO            ffffc00000403020     xnkrnl:xnkrnl.exe
+ 0002:00000028       __imp_dsb_ish              ffffc00000403028     xnkrnl:xnkrnl.exe
+ 0002:00000030       __imp_isb_flush            ffffc00000403030     xnkrnl:xnkrnl.exe
+ 0002:00000038       __imp_UARTDebugOut         ffffc00000403038     xnkrnl:xnkrnl.exe
+ 0002:00000040       __imp_GICEnableSPIIRQ      ffffc00000403040     xnkrnl:xnkrnl.exe
+ 0002:00000048       __imp_AuGICAllocateSPI     ffffc00000403048     xnkrnl:xnkrnl.exe
+ 0002:00000050       __imp_GICRegisterSPIHandler ffffc00000403050     xnkrnl:xnkrnl.exe
+ 0002:00000058       __imp_AuPmmngrAllocBlocks  ffffc00000403058     xnkrnl:xnkrnl.exe
+ 0002:00000060       __imp_V2P                  ffffc00000403060     xnkrnl:xnkrnl.exe
+ 0002:00000068       __imp_AuDMAGlobalClassInitialize ffffc00000403068     xnkrnl:xnkrnl.exe
+ 0002:00000070       __imp_AuDMAGClassAlloc     ffffc00000403070     xnkrnl:xnkrnl.exe
+ 0002:00000078       __imp_AuVDiskRegister      ffffc00000403078     xnkrnl:xnkrnl.exe
+ 0002:00000080       __imp_AuCreateVDisk        ffffc00000403080     xnkrnl:xnkrnl.exe
+ 0002:00000088       __imp_AuVDiskCreateStorageFile ffffc00000403088     xnkrnl:xnkrnl.exe
+ 0002:00000090       __imp_strcpy               ffffc00000403090     xnkrnl:xnkrnl.exe
+ 0002:00000098       __imp_strlen               ffffc00000403098     xnkrnl:xnkrnl.exe
+ 0002:000000a0       __imp_memset               ffffc000004030a0     xnkrnl:xnkrnl.exe
+ 0002:000000a8       __imp_sztoa                ffffc000004030a8     xnkrnl:xnkrnl.exe
+ 0002:000000b0       \177xnkrnl_NULL_THUNK_DATA ffffc000004030b0     xnkrnl:xnkrnl.exe
+ 0007:00000000       __IMPORT_DESCRIPTOR_xnkrnl ffffc00000408000     xnkrnl:xnkrnl.exe
+ 0007:00000014       __NULL_IMPORT_DESCRIPTOR   ffffc00000408014     xnkrnl:xnkrnl.exe
+
+ entry point at        0000:00000000
+
+ Static symbols
+
+ 0000:00000000       .debug$S                   ffffc00000400000     virtblk.exp
+ 0000:00000000       .debug$S                   ffffc00000400000     xnkrnl:xnkrnl.exe
+ 0000:00000000       .debug$S                   ffffc00000400000     xnkrnl:xnkrnl.exe
+ 0000:00000000       .debug$S                   ffffc00000400000     xnkrnl:xnkrnl.exe
+ 0000:00000000       .debug$S                   ffffc00000400000     xnkrnl:xnkrnl.exe
+ 0000:00000000       .debug$S                   ffffc00000400000     xnkrnl:xnkrnl.exe
+ 0000:00000000       .debug$S                   ffffc00000400000     xnkrnl:xnkrnl.exe
+ 0000:00000000       .debug$S                   ffffc00000400000     xnkrnl:xnkrnl.exe
+ 0000:00000000       .debug$S                   ffffc00000400000     xnkrnl:xnkrnl.exe
+ 0000:00000000       .debug$S                   ffffc00000400000     xnkrnl:xnkrnl.exe
+ 0000:00000000       .debug$S                   ffffc00000400000     xnkrnl:xnkrnl.exe
+ 0000:00000000       .debug$S                   ffffc00000400000     xnkrnl:xnkrnl.exe
+ 0000:00000000       .debug$S                   ffffc00000400000     xnkrnl:xnkrnl.exe
+ 0000:00000000       .debug$S                   ffffc00000400000     xnkrnl:xnkrnl.exe
+ 0000:00000000       .debug$S                   ffffc00000400000     xnkrnl:xnkrnl.exe
+ 0000:00000000       .debug$S                   ffffc00000400000     xnkrnl:xnkrnl.exe
+ 0000:00000000       .debug$S                   ffffc00000400000     xnkrnl:xnkrnl.exe
+ 0000:00000000       .debug$S                   ffffc00000400000     xnkrnl:xnkrnl.exe
+ 0000:00000000       .debug$S                   ffffc00000400000     xnkrnl:xnkrnl.exe
+ 0000:00000000       .debug$S                   ffffc00000400000     xnkrnl:xnkrnl.exe
+ 0000:00000000       .debug$S                   ffffc00000400000     xnkrnl:xnkrnl.exe
+ 0000:00000000       .debug$S                   ffffc00000400000     xnkrnl:xnkrnl.exe
+ 0000:00000000       .debug$S                   ffffc00000400000     xnkrnl:xnkrnl.exe
+ 0002:000000b8       $SG4968                    ffffc000004030b8     virtioblk.obj
+ 0002:000000e8       $SG4978                    ffffc000004030e8     virtioblk.obj
+ 0002:00000120       $SG4979                    ffffc00000403120     virtioblk.obj
+ 0002:00000150       $SG4991                    ffffc00000403150     virtioblk.obj
+ 0002:00000170       $SG5004                    ffffc00000403170     virtioblk.obj
+ 0002:000001b0       $SG5096                    ffffc000004031b0     virtioblk.obj
+ 0002:000001d0       $SG5101                    ffffc000004031d0     virtioblk.obj
+ 0002:000001d8       $SG5102                    ffffc000004031d8     virtioblk.obj
+ 0002:00000200       $SG5103                    ffffc00000403200     virtioblk.obj
+ 0002:00000220       $SG5104                    ffffc00000403220     virtioblk.obj
+ 0002:00000248       $SG5105                    ffffc00000403248     virtioblk.obj
+ 0002:00000270       $SG5106                    ffffc00000403270     virtioblk.obj
+ 0002:000002a8       $SG5107                    ffffc000004032a8     virtioblk.obj
+ 0002:000002e0       $SG5108                    ffffc000004032e0     virtioblk.obj
+ 0002:00000300       $SG5110                    ffffc00000403300     virtioblk.obj
+ 0002:00000328       $SG5111                    ffffc00000403328     virtioblk.obj
+ 0002:00000338       $SG5112                    ffffc00000403338     virtioblk.obj
+ 0002:00000340       $SG5113                    ffffc00000403340     virtioblk.obj
+ 0002:00000378       $SG5114                    ffffc00000403378     virtioblk.obj
+ 0003:00000000       ?notifyBase@@3PECEEC       ffffc00000404000     virtioblk.obj
+ 0003:00000008       ?notifyOffMultiplier@@3IA  ffffc00000404008     virtioblk.obj
+ 0003:00000010       ?_cfg@@3PEAUVirtioCommonCfg@@EA ffffc00000404010     virtioblk.obj
+ 0003:00000018       ?devcfg_offset@@3_KA       ffffc00000404018     virtioblk.obj
+ 0003:00000020       ?requestQ@@3PEAUVirtioBLKQueue@@EA ffffc00000404020     virtioblk.obj
+ 0003:00000028       ?requestQ_sz@@3_KA         ffffc00000404028     virtioblk.obj
+ 0003:00000030       ?_blkclass@@3U_au_dma_global_class_@@A ffffc00000404030     virtioblk.obj
+ 0003:000000a0       ?_dma_write_buffer@@3_KA   ffffc000004040a0     virtioblk.obj
+ 0003:000000a8       ?_dma_write_vptr@@3PEAXEA  ffffc000004040a8     virtioblk.obj
+ 0003:000000b0       ?_dma_read_buffer@@3_KA    ffffc000004040b0     virtioblk.obj
+ 0003:000000b8       ?_dma_read_vptr@@3PEAXEA   ffffc000004040b8     virtioblk.obj
+ 0003:000000c0       ?_req_buffer_vptr@@3PEAXEA ffffc000004040c0     virtioblk.obj
+ 0003:000000c8       ?_req_buffer_ptr@@3_KA     ffffc000004040c8     virtioblk.obj
+ 0003:000000d0       ?last_req_idx@@3_KA        ffffc000004040d0     virtioblk.obj
+ 0005:00000000       __CA8BC245_virtioblk@cpp   ffffc00000406000     virtioblk.obj
+ 0006:00000000       .edata                     ffffc00000407000     virtblk.exp
+ 0006:00000028       rgpv                       ffffc00000407028     virtblk.exp
+ 0006:00000030       rgszName                   ffffc00000407030     virtblk.exp
+ 0006:00000038       rgwOrd                     ffffc00000407038     virtblk.exp
+ 0006:0000003c       szName                     ffffc0000040703c     virtblk.exp
+ 0006:00000048       $N00001                    ffffc00000407048     virtblk.exp
+ 0006:00000055       $N00002                    ffffc00000407055     virtblk.exp
+ 0007:0000023c       .idata$6                   ffffc0000040823c     xnkrnl:xnkrnl.exe
+
+ Exports
+
+  ordinal    name
+
+        1    AuDriverMain
+        2    AuDriverUnload

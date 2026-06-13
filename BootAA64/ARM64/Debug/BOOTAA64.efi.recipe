@@ -2,15 +2,15 @@
 <Project>
   <ProjectOutputs>
     <ProjectOutput>
-      <FullPath>E:\Xeneva_Project\Aurora\ARM64\Debug\BOOTAA64.efi</FullPath>
+      <FullPath>C:\Users\paras\source\repos\grep-name\XenevaOS\ARM64\Debug\BOOTAA64.efi</FullPath>
     </ProjectOutput>
   </ProjectOutputs>
   <ContentFiles>
     <ContentFile>
-      <FullPath>E:\Xeneva_Project\Aurora\BootAA64\lowlevel.s</FullPath>
+      <FullPath>C:\Users\paras\source\repos\grep-name\XenevaOS\BootAA64\lowlevel.s</FullPath>
     </ContentFile>
     <ContentFile>
-      <FullPath>E:\Xeneva_Project\Aurora\BootAA64\vectoraa64.s</FullPath>
+      <FullPath>C:\Users\paras\source\repos\grep-name\XenevaOS\BootAA64\vectoraa64.s</FullPath>
     </ContentFile>
   </ContentFiles>
   <SatelliteDlls />

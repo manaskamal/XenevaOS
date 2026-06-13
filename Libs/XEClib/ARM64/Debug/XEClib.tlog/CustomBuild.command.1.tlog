@@ -1,0 +1,6 @@
+^C:\USERS\PARAS\SOURCE\REPOS\GREP-NAME\XENEVAOS\LIBS\XECLIB\_CALLBASE_ARM64.S
+clang --target=aarch64-windows-msvc -fms-compatibility -fms-extensions  -c -o "ARM64\Debug\_callbase_arm64.obj" "C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\_callbase_arm64.s"
+^C:\USERS\PARAS\SOURCE\REPOS\GREP-NAME\XENEVAOS\LIBS\XECLIB\SETJMP_ARM64.S
+clang --target=aarch64-windows-msvc -c -o "ARM64\Debug\setjmp_arm64.obj" "C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\setjmp_arm64.s"
+^C:\USERS\PARAS\SOURCE\REPOS\GREP-NAME\XENEVAOS\LIBS\XECLIB\STORE_STACK_ARM64.S
+clang --target=aarch64-windows-msvc -c -o "ARM64\Debug\store_stack_arm64.obj" "C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XEClib\store_stack_arm64.s"

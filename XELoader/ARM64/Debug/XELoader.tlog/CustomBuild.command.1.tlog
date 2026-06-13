@@ -1,0 +1,4 @@
+^C:\USERS\PARAS\SOURCE\REPOS\GREP-NAME\XENEVAOS\XELOADER\CRT0_ARM64.S
+clang --target=aarch64-windows-msvc -c -o "ARM64\Debug\crt0_arm64.obj" "C:\Users\paras\source\repos\grep-name\XenevaOS\XELoader\crt0_arm64.s"
+^C:\USERS\PARAS\SOURCE\REPOS\GREP-NAME\XENEVAOS\XELOADER\FASTCPY_ARM64.S
+clang --target=aarch64-windows-msvc -c -o "ARM64\Debug\fastcpy_arm64.obj" "C:\Users\paras\source\repos\grep-name\XenevaOS\XELoader\fastcpy_arm64.s"

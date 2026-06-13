@@ -1,0 +1,4 @@
+^C:\USERS\PARAS\SOURCE\REPOS\GREP-NAME\XENEVAOS\BOOTAA64\LOWLEVEL.S
+clang --target=aarch64-windows-msvc -c -o "ARM64\Debug\lowlevel.obj" "C:\Users\paras\source\repos\grep-name\XenevaOS\BootAA64\lowlevel.s"
+^C:\USERS\PARAS\SOURCE\REPOS\GREP-NAME\XENEVAOS\BOOTAA64\VECTORAA64.S
+clang --target=aarch64-windows-msvc -c -o "ARM64\Debug\vectoraa64.obj" "C:\Users\paras\source\repos\grep-name\XenevaOS\BootAA64\vectoraa64.s"

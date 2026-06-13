@@ -1,1 +1,9 @@
-﻿
+﻿  Performing Custom Build Tools
+clang : warning : argument unused during compilation: '-fms-compatibility' [-Wunused-command-line-argument]
+clang : warning : argument unused during compilation: '-fms-extensions' [-Wunused-command-line-argument]
+cl : command line warning D9002: ignoring unknown option '/arch:SSE2'
+  crt.cpp
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XECrt\crt.cpp(36,20): warning C4267: 'argument': conversion from 'size_t' to 'unsigned int', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XECrt\crt.cpp(40,20): warning C4267: 'argument': conversion from 'size_t' to 'unsigned int', possible loss of data
+C:\Program Files\Microsoft Visual Studio\18\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(1545,5): warning MSB8012: TargetPath(C:\Users\paras\source\repos\grep-name\XenevaOS\ARM64\Debug\XECrt.lib) does not match the Library's OutputFile property value (C:\Users\paras\source\repos\grep-name\XenevaOS\Libs\XECrt\xecrt.lib). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Lib.OutputFile).
+  XECrt.vcxproj -> C:\Users\paras\source\repos\grep-name\XenevaOS\ARM64\Debug\XECrt.lib

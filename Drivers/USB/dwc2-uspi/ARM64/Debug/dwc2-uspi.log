@@ -1,1 +1,6 @@
-﻿
+﻿C:\Program Files\Microsoft Visual Studio\18\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(1363,5): warning MSB8012: TargetPath(C:\Users\paras\source\repos\grep-name\XenevaOS\ARM64\Debug\dwc2otg.dll) does not match the Linker's OutputFile property value (C:\Users\paras\source\repos\grep-name\XenevaOS\Build\dwc2otg.dll). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
+LINK : warning LNK4075: ignoring '/INCREMENTAL' due to '/LTCG' specification
+     Creating library C:\Users\paras\source\repos\grep-name\XenevaOS\ARM64\Debug\dwc2otg.lib and object C:\Users\paras\source\repos\grep-name\XenevaOS\ARM64\Debug\dwc2otg.exp
+uspios.obj : error LNK2001: unresolved external symbol AuRPI3PeripheralIRQEnable
+uspios.obj : error LNK2001: unresolved external symbol AuRPISetPowerState
+C:\Users\paras\source\repos\grep-name\XenevaOS\\Build\dwc2otg.dll : fatal error LNK1120: 2 unresolved externals

@@ -1,0 +1,29 @@
+﻿cl : command line warning D9002: ignoring unknown option '/arch:SSE'
+  ihda.cpp
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\basicacpi.h(163,11): warning C4200: nonstandard extension used: zero-sized array in struct/union
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\basicacpi.h(163,11): message : This member will be ignored by a defaulted constructor or copy/move assignment operator
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\basicacpi.h(234,9): warning C4200: nonstandard extension used: zero-sized array in struct/union
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\basicacpi.h(234,9): message : This member will be ignored by a defaulted constructor or copy/move assignment operator
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\basicacpi.h(316,16): warning C4200: nonstandard extension used: zero-sized array in struct/union
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\basicacpi.h(316,16): message : This member will be ignored by a defaulted constructor or copy/move assignment operator
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\basicacpi.h(332,11): warning C4200: nonstandard extension used: zero-sized array in struct/union
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\basicacpi.h(332,11): message : This member will be ignored by a defaulted constructor or copy/move assignment operator
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Hal\x86_64_hal.h(35,1): warning C4103: alignment changed after including header, may be due to missing #pragma pack(pop)
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\Cred\group.h(88,2): warning C4091: 'typedef ': ignored on left of '_gid_entries_' when no variable is declared
+C:\Users\paras\source\repos\grep-name\XenevaOS\Drivers\Sound\IntelHDA\ihda.cpp(33,1): warning C4103: alignment changed after including header, may be due to missing #pragma pack(pop)
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\stdarg.h(44,1): warning C4005: 'STACKITEM': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\va_list.h(49): message : see previous definition of 'STACKITEM'
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\stdarg.h(55,1): warning C4005: 'va_start': macro redefinition
+C:\Users\paras\source\repos\grep-name\XenevaOS\BaseHdr\va_list.h(56): message : see previous definition of 'va_start'
+C:\Users\paras\source\repos\grep-name\XenevaOS\Drivers\Sound\IntelHDA\ihda.cpp(154,24): warning C4244: 'argument': conversion from 'uint64_t' to 'uint32_t', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\Drivers\Sound\IntelHDA\ihda.cpp(203,24): warning C4244: 'argument': conversion from 'uint64_t' to 'uint32_t', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\Drivers\Sound\IntelHDA\ihda.cpp(351,6): warning C4101: 'codec': unreferenced local variable
+C:\Users\paras\source\repos\grep-name\XenevaOS\Drivers\Sound\IntelHDA\ihda.cpp(411,22): warning C4244: '=': conversion from 'uint64_t' to 'uint8_t', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\Drivers\Sound\IntelHDA\ihda.cpp(420,35): warning C4244: 'argument': conversion from 'uint64_t' to 'uint32_t', possible loss of data
+C:\Users\paras\source\repos\grep-name\XenevaOS\Drivers\Sound\IntelHDA\ihda.cpp(432,13): warning C4129: 'M': unrecognized character escape sequence
+C:\Users\paras\source\repos\grep-name\XenevaOS\Drivers\Sound\IntelHDA\ihda.cpp(488,31): error C2440: '=': cannot convert from 'void (__cdecl *)(uint8_t)' to 'int (__cdecl *)(uint8_t)'
+C:\Users\paras\source\repos\grep-name\XenevaOS\Drivers\Sound\IntelHDA\ihda.cpp(488,19): message : This conversion requires a reinterpret_cast, a C-style cast or function-style cast
+C:\Users\paras\source\repos\grep-name\XenevaOS\Drivers\Sound\IntelHDA\ihda.cpp(489,42): error C2440: '=': cannot convert from 'void (__cdecl *)(void)' to 'int (__cdecl *)(void)'
+C:\Users\paras\source\repos\grep-name\XenevaOS\Drivers\Sound\IntelHDA\ihda.cpp(489,24): message : This conversion requires a reinterpret_cast, a C-style cast or function-style cast
+C:\Users\paras\source\repos\grep-name\XenevaOS\Drivers\Sound\IntelHDA\ihda.cpp(490,40): error C2440: '=': cannot convert from 'void (__cdecl *)(void)' to 'int (__cdecl *)(void)'
+C:\Users\paras\source\repos\grep-name\XenevaOS\Drivers\Sound\IntelHDA\ihda.cpp(490,23): message : This conversion requires a reinterpret_cast, a C-style cast or function-style cast

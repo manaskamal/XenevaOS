@@ -1,0 +1,192 @@
+ virtnet
+
+ Timestamp is 6a2d4791 (Sat Jun 13 17:35:37 2026)
+
+ Preferred load address is ffffc00000400000
+
+ Start         Length     Name                   Class
+ 0001:00000000 000014d8H .text$mn                CODE
+ 0002:00000000 000000b0H .idata$5                DATA
+ 0002:000000b0 000002f4H .rdata                  DATA
+ 0002:000003a4 000000e8H .rdata$zzzdbg           DATA
+ 0003:00000000 00000048H .bss                    DATA
+ 0004:00000000 00000060H .pdata                  DATA
+ 0005:00000000 00000001H .msvcjmc                DATA
+ 0006:00000000 00000095H .edata                  DATA
+ 0007:00000000 00000014H .idata$2                DATA
+ 0007:00000014 00000014H .idata$3                DATA
+ 0007:00000028 000000b0H .idata$4                DATA
+ 0007:000000d8 00000142H .idata$6                DATA
+
+  Address         Publics by Value              Rva+Base               Lib:Object
+
+ 0000:00000000       __volatile_metadata        0000000000000000     <absolute>
+ 0000:00000000       __arm64x_redirection_metadata 0000000000000000     <absolute>
+ 0000:00000000       __hybrid_code_map_count    0000000000000000     <absolute>
+ 0000:00000000       __arm64x_native_entrypoint 0000000000000000     <absolute>
+ 0000:00000000       __guard_eh_cont_table      0000000000000000     <absolute>
+ 0000:00000000       __guard_eh_cont_count      0000000000000000     <absolute>
+ 0000:00000000       __guard_iat_count          0000000000000000     <absolute>
+ 0000:00000000       __enclave_config           0000000000000000     <absolute>
+ 0000:00000000       __arm64x_redirection_metadata_count 0000000000000000     <absolute>
+ 0000:00000000       __guard_longjmp_count      0000000000000000     <absolute>
+ 0000:00000000       __dynamic_value_reloc_table 0000000000000000     <absolute>
+ 0000:00000000       __arm64x_extra_rfe_table   0000000000000000     <absolute>
+ 0000:00000000       __guard_fids_table         0000000000000000     <absolute>
+ 0000:00000000       __hybrid_code_map          0000000000000000     <absolute>
+ 0000:00000000       __guard_fids_count         0000000000000000     <absolute>
+ 0000:00000000       __x64_code_ranges_to_entry_points 0000000000000000     <absolute>
+ 0000:00000000       __guard_longjmp_table      0000000000000000     <absolute>
+ 0000:00000000       __guard_check_icall_a64n_fptr 0000000000000000     <absolute>
+ 0000:00000000       __hybrid_auxiliary_iat     0000000000000000     <absolute>
+ 0000:00000000       __guard_iat_table          0000000000000000     <absolute>
+ 0000:00000000       __AbsoluteZero             0000000000000000     <absolute>
+ 0000:00000000       __hybrid_auxiliary_iat_copy 0000000000000000     <absolute>
+ 0000:00000000       __arm64x_extra_rfe_table_size 0000000000000000     <absolute>
+ 0000:00000000       ___safe_se_handler_count   0000000000000000     <absolute>
+ 0000:00000000       __x64_code_ranges_to_entry_points_count 0000000000000000     <absolute>
+ 0000:00000000       ___safe_se_handler_table   0000000000000000     <absolute>
+ 0000:00000100       __guard_flags              0000000000000100     <absolute>
+ 0001:00000000       ?AuVirtioNetInitialize@@YAX_K@Z ffffc00000401000 f   virtionet.obj
+ 0001:000005c0       ?AuVirtioNetHandler@@YAXH@Z ffffc000004015c0 f   virtionet.obj
+ 0001:00000780       ?AuVirtioNetNotifyQueue@@YAXPEAUVirtioCommonCfg@@G@Z ffffc00000401780 f   virtionet.obj
+ 0001:00000928       ?AuVirtioNetRxinitialize@@YAXPEAUVirtioCommonCfg@@@Z ffffc00000401928 f   virtionet.obj
+ 0001:00000ba0       ?AuVirtioNetTxinitialize@@YAXPEAUVirtioCommonCfg@@@Z ffffc00000401ba0 f   virtionet.obj
+ 0001:00000df8       ?AuVirtioTransmit@@YAXPEAXG@Z ffffc00000401df8 f   virtionet.obj
+ 0001:00001128       AuVirtioWrite              ffffc00000402128 f   virtionet.obj
+ 0001:00001180       VirtioNetIOCtl             ffffc00000402180 f   virtionet.obj
+ 0001:00001350       AuDriverUnload             ffffc00000402350 f   virtionet.obj
+ 0001:00001370       AuDriverMain               ffffc00000402370 f   virtionet.obj
+ 0001:000013d8       __JustMyCode_Default       ffffc000004023d8 f i virtionet.obj
+ 0001:000013d8       __CheckForDebuggerJustMyCode ffffc000004023d8 f i virtionet.obj
+ 0001:000013dc       AuPCIEAllocMSI             ffffc000004023dc f   xnkrnl:xnkrnl.exe
+ 0001:000013e8       AuPCIEScanClass            ffffc000004023e8 f   xnkrnl:xnkrnl.exe
+ 0001:000013f4       AuPCIEWrite                ffffc000004023f4 f   xnkrnl:xnkrnl.exe
+ 0001:00001400       AuPCIERead                 ffffc00000402400 f   xnkrnl:xnkrnl.exe
+ 0001:0000140c       dsb_ish                    ffffc0000040240c f   xnkrnl:xnkrnl.exe
+ 0001:00001418       isb_flush                  ffffc00000402418 f   xnkrnl:xnkrnl.exe
+ 0001:00001424       GICEnableSPIIRQ            ffffc00000402424 f   xnkrnl:xnkrnl.exe
+ 0001:00001430       AuGICAllocateSPI           ffffc00000402430 f   xnkrnl:xnkrnl.exe
+ 0001:0000143c       GICRegisterSPIHandler      ffffc0000040243c f   xnkrnl:xnkrnl.exe
+ 0001:00001448       UARTDebugOut               ffffc00000402448 f   xnkrnl:xnkrnl.exe
+ 0001:00001454       AuPmmngrAlloc              ffffc00000402454 f   xnkrnl:xnkrnl.exe
+ 0001:00001460       AuPmmngrAllocBlocks        ffffc00000402460 f   xnkrnl:xnkrnl.exe
+ 0001:0000146c       P2V                        ffffc0000040246c f   xnkrnl:xnkrnl.exe
+ 0001:00001478       AuTextOut                  ffffc00000402478 f   xnkrnl:xnkrnl.exe
+ 0001:00001484       AuAddNetAdapter            ffffc00000402484 f   xnkrnl:xnkrnl.exe
+ 0001:00001490       AuMapMMIO                  ffffc00000402490 f   xnkrnl:xnkrnl.exe
+ 0001:0000149c       strcpy                     ffffc0000040249c f   xnkrnl:xnkrnl.exe
+ 0001:000014a8       memset                     ffffc000004024a8 f   xnkrnl:xnkrnl.exe
+ 0001:000014b4       memcpy                     ffffc000004024b4 f   xnkrnl:xnkrnl.exe
+ 0001:000014c0       kmalloc                    ffffc000004024c0 f   xnkrnl:xnkrnl.exe
+ 0001:000014cc       AuEthernetHandle           ffffc000004024cc f   xnkrnl:xnkrnl.exe
+ 0002:00000000       __imp_AuPCIEAllocMSI       ffffc00000403000     xnkrnl:xnkrnl.exe
+ 0002:00000008       __imp_AuPCIEScanClass      ffffc00000403008     xnkrnl:xnkrnl.exe
+ 0002:00000010       __imp_AuPCIEWrite          ffffc00000403010     xnkrnl:xnkrnl.exe
+ 0002:00000018       __imp_AuPCIERead           ffffc00000403018     xnkrnl:xnkrnl.exe
+ 0002:00000020       __imp_dsb_ish              ffffc00000403020     xnkrnl:xnkrnl.exe
+ 0002:00000028       __imp_isb_flush            ffffc00000403028     xnkrnl:xnkrnl.exe
+ 0002:00000030       __imp_GICEnableSPIIRQ      ffffc00000403030     xnkrnl:xnkrnl.exe
+ 0002:00000038       __imp_AuGICAllocateSPI     ffffc00000403038     xnkrnl:xnkrnl.exe
+ 0002:00000040       __imp_GICRegisterSPIHandler ffffc00000403040     xnkrnl:xnkrnl.exe
+ 0002:00000048       __imp_UARTDebugOut         ffffc00000403048     xnkrnl:xnkrnl.exe
+ 0002:00000050       __imp_AuPmmngrAlloc        ffffc00000403050     xnkrnl:xnkrnl.exe
+ 0002:00000058       __imp_AuPmmngrAllocBlocks  ffffc00000403058     xnkrnl:xnkrnl.exe
+ 0002:00000060       __imp_P2V                  ffffc00000403060     xnkrnl:xnkrnl.exe
+ 0002:00000068       __imp_AuTextOut            ffffc00000403068     xnkrnl:xnkrnl.exe
+ 0002:00000070       __imp_AuAddNetAdapter      ffffc00000403070     xnkrnl:xnkrnl.exe
+ 0002:00000078       __imp_AuMapMMIO            ffffc00000403078     xnkrnl:xnkrnl.exe
+ 0002:00000080       __imp_strcpy               ffffc00000403080     xnkrnl:xnkrnl.exe
+ 0002:00000088       __imp_memset               ffffc00000403088     xnkrnl:xnkrnl.exe
+ 0002:00000090       __imp_memcpy               ffffc00000403090     xnkrnl:xnkrnl.exe
+ 0002:00000098       __imp_kmalloc              ffffc00000403098     xnkrnl:xnkrnl.exe
+ 0002:000000a0       __imp_AuEthernetHandle     ffffc000004030a0     xnkrnl:xnkrnl.exe
+ 0002:000000a8       \177xnkrnl_NULL_THUNK_DATA ffffc000004030a8     xnkrnl:xnkrnl.exe
+ 0003:00000000       ?rxqueue@@3PEAUVirtioQueue@@EA ffffc00000404000     virtionet.obj
+ 0003:00000008       ?txqueue@@3PEAUVirtioQueue@@EA ffffc00000404008     virtionet.obj
+ 0003:00000010       ?rx_hdrs@@3PEAU_virtio_net_hdr_@@EA ffffc00000404010     virtionet.obj
+ 0003:00000024       ?notifyOffMultiplier@@3IA  ffffc00000404024     virtionet.obj
+ 0003:00000028       ?notifyBase@@3PECEEC       ffffc00000404028     virtionet.obj
+ 0003:00000030       ?_cfg@@3PEAUVirtioCommonCfg@@EA ffffc00000404030     virtionet.obj
+ 0003:00000038       ?nic@@3PEAU__VFS_NODE__@@EA ffffc00000404038     virtionet.obj
+ 0003:00000040       ?ndev@@3PEAU_netdev_@@EA   ffffc00000404040     virtionet.obj
+ 0007:00000000       __IMPORT_DESCRIPTOR_xnkrnl ffffc00000408000     xnkrnl:xnkrnl.exe
+ 0007:00000014       __NULL_IMPORT_DESCRIPTOR   ffffc00000408014     xnkrnl:xnkrnl.exe
+
+ entry point at        0000:00000000
+
+ Static symbols
+
+ 0000:00000000       .debug$S                   ffffc00000400000     virtnet.exp
+ 0000:00000000       .debug$S                   ffffc00000400000     xnkrnl:xnkrnl.exe
+ 0000:00000000       .debug$S                   ffffc00000400000     xnkrnl:xnkrnl.exe
+ 0000:00000000       .debug$S                   ffffc00000400000     xnkrnl:xnkrnl.exe
+ 0000:00000000       .debug$S                   ffffc00000400000     xnkrnl:xnkrnl.exe
+ 0000:00000000       .debug$S                   ffffc00000400000     xnkrnl:xnkrnl.exe
+ 0000:00000000       .debug$S                   ffffc00000400000     xnkrnl:xnkrnl.exe
+ 0000:00000000       .debug$S                   ffffc00000400000     xnkrnl:xnkrnl.exe
+ 0000:00000000       .debug$S                   ffffc00000400000     xnkrnl:xnkrnl.exe
+ 0000:00000000       .debug$S                   ffffc00000400000     xnkrnl:xnkrnl.exe
+ 0000:00000000       .debug$S                   ffffc00000400000     xnkrnl:xnkrnl.exe
+ 0000:00000000       .debug$S                   ffffc00000400000     xnkrnl:xnkrnl.exe
+ 0000:00000000       .debug$S                   ffffc00000400000     xnkrnl:xnkrnl.exe
+ 0000:00000000       .debug$S                   ffffc00000400000     xnkrnl:xnkrnl.exe
+ 0000:00000000       .debug$S                   ffffc00000400000     xnkrnl:xnkrnl.exe
+ 0000:00000000       .debug$S                   ffffc00000400000     xnkrnl:xnkrnl.exe
+ 0000:00000000       .debug$S                   ffffc00000400000     xnkrnl:xnkrnl.exe
+ 0000:00000000       .debug$S                   ffffc00000400000     xnkrnl:xnkrnl.exe
+ 0000:00000000       .debug$S                   ffffc00000400000     xnkrnl:xnkrnl.exe
+ 0000:00000000       .debug$S                   ffffc00000400000     xnkrnl:xnkrnl.exe
+ 0000:00000000       .debug$S                   ffffc00000400000     xnkrnl:xnkrnl.exe
+ 0000:00000000       .debug$S                   ffffc00000400000     xnkrnl:xnkrnl.exe
+ 0001:00000738       ?AuVirtioNetReset@@YAXPEAUVirtioCommonCfg@@@Z ffffc00000401738 f   virtionet.obj
+ 0001:00000808       ?AuVirtioNetFeatureNegotiate@@YAXPEAUVirtioCommonCfg@@@Z ffffc00000401808 f   virtionet.obj
+ 0001:00001344       $LN18                      ffffc00000402344     virtionet.obj
+ 0001:00001345       $LN19                      ffffc00000402345     virtionet.obj
+ 0001:00001346       $LN20                      ffffc00000402346     virtionet.obj
+ 0001:00001347       $LN21                      ffffc00000402347     virtionet.obj
+ 0001:00001348       $LN22                      ffffc00000402348     virtionet.obj
+ 0001:00001349       $LN23                      ffffc00000402349     virtionet.obj
+ 0001:0000134a       $LN24                      ffffc0000040234a     virtionet.obj
+ 0001:0000134b       $LN25                      ffffc0000040234b     virtionet.obj
+ 0002:000000b0       $SG4534                    ffffc000004030b0     virtionet.obj
+ 0002:000000e8       $SG4552                    ffffc000004030e8     virtionet.obj
+ 0002:00000128       $SG4571                    ffffc00000403128     virtionet.obj
+ 0002:00000148       $SG4572                    ffffc00000403148     virtionet.obj
+ 0002:00000178       $SG4590                    ffffc00000403178     virtionet.obj
+ 0002:00000198       $SG4591                    ffffc00000403198     virtionet.obj
+ 0002:000001c8       $SG4612                    ffffc000004031c8     virtionet.obj
+ 0002:000001e0       $SG4670                    ffffc000004031e0     virtionet.obj
+ 0002:00000210       $SG4673                    ffffc00000403210     virtionet.obj
+ 0002:00000248       $SG4675                    ffffc00000403248     virtionet.obj
+ 0002:00000278       $SG4676                    ffffc00000403278     virtionet.obj
+ 0002:00000298       $SG4677                    ffffc00000403298     virtionet.obj
+ 0002:000002c0       $SG4679                    ffffc000004032c0     virtionet.obj
+ 0002:000002f0       $SG4680                    ffffc000004032f0     virtionet.obj
+ 0002:00000310       $SG4681                    ffffc00000403310     virtionet.obj
+ 0002:00000318       $SG4682                    ffffc00000403318     virtionet.obj
+ 0002:00000340       $SG4683                    ffffc00000403340     virtionet.obj
+ 0002:00000350       $SG4684                    ffffc00000403350     virtionet.obj
+ 0003:00000018       ?queueSz@@3GA              ffffc00000404018     virtionet.obj
+ 0003:0000001c       ?index@@3GA                ffffc0000040401c     virtionet.obj
+ 0003:00000020       ?tx_index@@3GA             ffffc00000404020     virtionet.obj
+ 0005:00000000       __4E829672_virtionet@cpp   ffffc00000406000     virtionet.obj
+ 0006:00000000       .edata                     ffffc00000407000     virtnet.exp
+ 0006:00000028       rgpv                       ffffc00000407028     virtnet.exp
+ 0006:00000038       rgszName                   ffffc00000407038     virtnet.exp
+ 0006:00000048       rgwOrd                     ffffc00000407048     virtnet.exp
+ 0006:00000050       szName                     ffffc00000407050     virtnet.exp
+ 0006:0000005c       $N00001                    ffffc0000040705c     virtnet.exp
+ 0006:00000069       $N00002                    ffffc00000407069     virtnet.exp
+ 0006:00000078       $N00003                    ffffc00000407078     virtnet.exp
+ 0006:00000086       $N00004                    ffffc00000407086     virtnet.exp
+ 0007:0000020e       .idata$6                   ffffc0000040820e     xnkrnl:xnkrnl.exe
+
+ Exports
+
+  ordinal    name
+
+        1    AuDriverMain
+        2    AuDriverUnload
+        3    AuVirtioWrite
+        4    VirtioNetIOCtl

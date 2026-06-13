@@ -199,7 +199,8 @@
       <AdditionalOptions> /def:exports.def %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
-      <Command>copy "$(SolutionDir)Build\EFI\XENEVA\$(TargetName).exe" "M:\EFI\XENEVA\$(TargetName).exe"</Command>
+      <Command>copy "$(SolutionDir)Build\EFI\XENEVA\$(TargetName).exe" "M:\EFI\XENEVA\$(TargetName).exe"
+python $(solutionDir)script-1.py</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -264,6 +265,7 @@
     <ClCompile Include="dtb.c" />
     <ClCompile Include="Fs\Dev\devfs.c" />
     <ClCompile Include="Fs\Dev\devinput.c" />
+    <ClCompile Include="Fs\Ext2\Ext2.c" />
     <ClCompile Include="Fs\Fat\Fat.c" />
     <ClCompile Include="Fs\Fat\FatDir.c" />
     <ClCompile Include="Fs\Fat\FatFile.c" />

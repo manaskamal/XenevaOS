@@ -2,12 +2,12 @@
 <Project>
   <ProjectOutputs>
     <ProjectOutput>
-      <FullPath>E:\Xeneva_Project\Aurora\ARM64\Debug\xeldr.exe</FullPath>
+      <FullPath>C:\Users\paras\source\repos\grep-name\XenevaOS\ARM64\Debug\xeldr.exe</FullPath>
     </ProjectOutput>
   </ProjectOutputs>
   <ContentFiles>
     <ContentFile>
-      <FullPath>E:\Xeneva_Project\Aurora\XELoader\crt0_arm64.s</FullPath>
+      <FullPath>C:\Users\paras\source\repos\grep-name\XenevaOS\XELoader\crt0_arm64.s</FullPath>
     </ContentFile>
   </ContentFiles>
   <SatelliteDlls />

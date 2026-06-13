@@ -1,1 +1,5 @@
-﻿
+﻿C:\Program Files\Microsoft Visual Studio\18\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(1363,5): warning MSB8012: TargetPath(C:\Users\paras\source\repos\grep-name\XenevaOS\ARM64\Debug\xesh.exe) does not match the Linker's OutputFile property value (C:\Users\paras\source\repos\grep-name\XenevaOS\Build\xesh.exe). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
+LINK : warning LNK4075: ignoring '/INCREMENTAL' due to '/LTCG' specification
+xecrt.lib(crt0_arm64.obj) : error LNK2005: __chkstk already defined in XEClib.lib(_callbase_arm64.obj)
+     Creating library C:\Users\paras\source\repos\grep-name\XenevaOS\ARM64\Debug\xesh.lib and object C:\Users\paras\source\repos\grep-name\XenevaOS\ARM64\Debug\xesh.exp
+..\..\Build\xesh.exe : fatal error LNK1169: one or more multiply defined symbols found

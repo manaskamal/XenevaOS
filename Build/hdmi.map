@@ -1,0 +1,84 @@
+ hdmi
+
+ Timestamp is 6a2d4791 (Sat Jun 13 17:35:37 2026)
+
+ Preferred load address is ffffc00000400000
+
+ Start         Length     Name                   Class
+ 0001:00000000 00000068H .text$mn                CODE
+ 0002:00000000 00000010H .idata$5                DATA
+ 0002:00000010 00000070H .rdata                  DATA
+ 0002:00000080 000000e8H .rdata$zzzdbg           DATA
+ 0003:00000000 00000008H .bss                    DATA
+ 0004:00000000 00000010H .pdata                  DATA
+ 0005:00000000 00000001H .msvcjmc                DATA
+ 0006:00000000 00000061H .edata                  DATA
+ 0007:00000000 00000014H .idata$2                DATA
+ 0007:00000014 00000014H .idata$3                DATA
+ 0007:00000028 00000010H .idata$4                DATA
+ 0007:00000038 0000001cH .idata$6                DATA
+
+  Address         Publics by Value              Rva+Base               Lib:Object
+
+ 0000:00000000       __guard_iat_table          0000000000000000     <absolute>
+ 0000:00000000       __hybrid_code_map_count    0000000000000000     <absolute>
+ 0000:00000000       __arm64x_native_entrypoint 0000000000000000     <absolute>
+ 0000:00000000       __guard_eh_cont_table      0000000000000000     <absolute>
+ 0000:00000000       __enclave_config           0000000000000000     <absolute>
+ 0000:00000000       __arm64x_redirection_metadata_count 0000000000000000     <absolute>
+ 0000:00000000       __guard_fids_table         0000000000000000     <absolute>
+ 0000:00000000       __guard_check_icall_a64n_fptr 0000000000000000     <absolute>
+ 0000:00000000       __AbsoluteZero             0000000000000000     <absolute>
+ 0000:00000000       ___safe_se_handler_count   0000000000000000     <absolute>
+ 0000:00000000       __hybrid_auxiliary_iat_copy 0000000000000000     <absolute>
+ 0000:00000000       __hybrid_auxiliary_iat     0000000000000000     <absolute>
+ 0000:00000000       __dynamic_value_reloc_table 0000000000000000     <absolute>
+ 0000:00000000       __guard_longjmp_count      0000000000000000     <absolute>
+ 0000:00000000       __guard_iat_count          0000000000000000     <absolute>
+ 0000:00000000       __guard_eh_cont_count      0000000000000000     <absolute>
+ 0000:00000000       __hybrid_code_map          0000000000000000     <absolute>
+ 0000:00000000       __arm64x_redirection_metadata 0000000000000000     <absolute>
+ 0000:00000000       __arm64x_extra_rfe_table_size 0000000000000000     <absolute>
+ 0000:00000000       __arm64x_extra_rfe_table   0000000000000000     <absolute>
+ 0000:00000000       __x64_code_ranges_to_entry_points_count 0000000000000000     <absolute>
+ 0000:00000000       ___safe_se_handler_table   0000000000000000     <absolute>
+ 0000:00000000       __guard_fids_count         0000000000000000     <absolute>
+ 0000:00000000       __guard_longjmp_table      0000000000000000     <absolute>
+ 0000:00000000       __x64_code_ranges_to_entry_points 0000000000000000     <absolute>
+ 0000:00000000       __volatile_metadata        0000000000000000     <absolute>
+ 0000:00000100       __guard_flags              0000000000000100     <absolute>
+ 0001:00000000       AuDriverUnload             ffffc00000401000 f   main.obj
+ 0001:00000020       AuDriverMain               ffffc00000401020 f   main.obj
+ 0001:00000058       __JustMyCode_Default       ffffc00000401058 f i main.obj
+ 0001:00000058       __CheckForDebuggerJustMyCode ffffc00000401058 f i main.obj
+ 0001:0000005c       UARTDebugOut               ffffc0000040105c f   xnkrnl:xnkrnl.exe
+ 0002:00000000       __imp_UARTDebugOut         ffffc00000402000     xnkrnl:xnkrnl.exe
+ 0002:00000008       \177xnkrnl_NULL_THUNK_DATA ffffc00000402008     xnkrnl:xnkrnl.exe
+ 0007:00000000       __IMPORT_DESCRIPTOR_xnkrnl ffffc00000407000     xnkrnl:xnkrnl.exe
+ 0007:00000014       __NULL_IMPORT_DESCRIPTOR   ffffc00000407014     xnkrnl:xnkrnl.exe
+
+ entry point at        0000:00000000
+
+ Static symbols
+
+ 0000:00000000       .debug$S                   ffffc00000400000     hdmi.exp
+ 0000:00000000       .debug$S                   ffffc00000400000     xnkrnl:xnkrnl.exe
+ 0002:00000010       $SG3118                    ffffc00000402010     main.obj
+ 0002:00000040       $SG3119                    ffffc00000402040     main.obj
+ 0003:00000000       ?_base@@3_KA               ffffc00000403000     main.obj
+ 0005:00000000       __9A16EDE4_main@cpp        ffffc00000405000     main.obj
+ 0006:00000000       .edata                     ffffc00000406000     hdmi.exp
+ 0006:00000028       rgpv                       ffffc00000406028     hdmi.exp
+ 0006:00000030       rgszName                   ffffc00000406030     hdmi.exp
+ 0006:00000038       rgwOrd                     ffffc00000406038     hdmi.exp
+ 0006:0000003c       szName                     ffffc0000040603c     hdmi.exp
+ 0006:00000045       $N00001                    ffffc00000406045     hdmi.exp
+ 0006:00000052       $N00002                    ffffc00000406052     hdmi.exp
+ 0007:00000048       .idata$6                   ffffc00000407048     xnkrnl:xnkrnl.exe
+
+ Exports
+
+  ordinal    name
+
+        1    AuDriverMain
+        2    AuDriverUnload
