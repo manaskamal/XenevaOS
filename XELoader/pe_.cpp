@@ -99,22 +99,24 @@ void XELdrRelocatePE(void* image, PIMAGE_NT_HEADERS nt, uint64_t diff) {
 				break;
 			case IMAGE_REL_BASED_HIGH:
 				*reinterpret_cast<uint16_t*>(relocitem) += (diff >> 16) & UINT16_MAX;
+				_KePrint("Relocation Based HIGH \r\n");
 				break;
 			case IMAGE_REL_BASED_LOW:
 				*reinterpret_cast<uint16_t*>(relocitem) += (diff & UINT16_MAX);
+				_KePrint("Relocation Based LOW \r\n");
 				break;
 			case IMAGE_REL_BASED_HIGHLOW:
 				*reinterpret_cast<uint32_t*>(relocitem) += (diff & UINT32_MAX);
+				_KePrint("Relocation Based HIGHLOW \r\n");
 				break;
 			case IMAGE_REL_BASED_HIGHADJ:
-				return;
+				_KePrint("Rel based HIGHADJ \r\n");
 				break;
 			case IMAGE_REL_BASED_DIR64:
 				*reinterpret_cast<uint64_t*>(relocitem) += diff; // &UINT32_MAX);
 				//_KePrint("Relocating executable dir64 %x, diff : %x \r\n", *reinterpret_cast<uint64_t*>(relocitem), diff);
 				break;
 			default:
-				return;
 				break;
 			}
 		

@@ -108,7 +108,6 @@ void UnmapSharedMem(uint16_t key) {
 uint64_t GetProcessHeapMem(size_t sz) {
 	/* check if size is page aligned */
 	if ((sz % PAGE_SIZE) != 0) {
-		UARTDebugOut("Returning error heap mem -> %d \r\n", sz);
 		sz = PAGE_ALIGN(sz);
 	}
 
@@ -139,6 +138,7 @@ uint64_t GetProcessHeapMem(size_t sz) {
 	dsb_sy_barrier();
 	proc->proc_mem_heap = start_addr;
 	proc->proc_heapmem_len += sz;
+	//UARTDebugOut("Returning heap mem : %x - page : %d, size : %d \r\n", start_addr, (sz / PAGE_SIZE), sz);
 	return start_addr;
 }
 

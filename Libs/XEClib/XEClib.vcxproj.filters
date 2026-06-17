@@ -190,6 +190,18 @@
     <ClInclude Include="includes\sys\_kecred.h">
       <Filter>includes\sys</Filter>
     </ClInclude>
+    <ClInclude Include="includes\inttypes.h">
+      <Filter>includes</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\stdbool.h">
+      <Filter>includes</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\unistd.h">
+      <Filter>includes</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\strings.h">
+      <Filter>includes</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="string.cpp" />

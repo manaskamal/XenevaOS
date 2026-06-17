@@ -54,7 +54,7 @@ _And many more coming soon_
 
 ## Homescreen (ARM64) :
 
-![alt text](https://github.com/manaskamal/XenevaOS/blob/master/armprogress19.jpg?raw=true)
+![alt text](https://github.com/manaskamal/XenevaOS/blob/master/armprogress22.jpg?raw=true)
 
 
 ## App Tray (ARM64) :

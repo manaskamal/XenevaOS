@@ -141,7 +141,7 @@ void AuroraTimerTick() {
 	uint64_t now = _get_current_us();
 	_system_current_us = now;
 	_system_current_ms = _get_current_ms();
-
+	
 	for (int i = 0; i < AURORA_MAX_TIMER; i++) {
 		if (!_timers[i].active) continue;
 		if (now < _timers[i].expireUS)  continue;

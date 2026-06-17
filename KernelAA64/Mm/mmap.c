@@ -250,7 +250,8 @@ void* CreateMemMapping(void* address, size_t len, int prot, int flags, int fd,
 				uint64_t datablk = phys;
 				if (flags & MEMMAP_FLAG_COW) {
 					datablk = (uint64_t)AuPmmngrAlloc();
-					AuVFSNodeReadBlock(fsys, file, (uint64_t*)P2V(datablk));
+					if (!file->eof)
+						AuVFSNodeReadBlock(fsys, file, (uint64_t*)P2V(datablk));
 					memcpy(P2V(phys), P2V(datablk), PAGE_SIZE);
 				}
 				else 

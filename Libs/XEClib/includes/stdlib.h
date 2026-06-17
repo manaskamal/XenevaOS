@@ -71,6 +71,8 @@ XE_EXTERN{
 	XE_LIB int wctomb(char*, wchar_t);
 	XE_LIB void qsort(void* base, size_t num, size_t size, int(*comparator)(const void*, const void*));
 
+	XE_LIB int system(const char* command);
+
 	XE_LIB char* sztoa(size_t value, char* str, int base);
     /*
      * setenv -- set environment variables 

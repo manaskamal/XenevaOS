@@ -38,42 +38,47 @@
 #include <_xeneva.h>
 #include "..\chitralekha.h"
 
+#ifdef __cplusplus
+XE_EXTERN{
+#endif
+
+
 #define CHITRALEKHA_ICON_ICO 1
 #define CHITRALEKHA_ICON_BMP 2
 
-/**
- * @brief System icons codes
- */
-#define CHITRALEKHA_ICON_WARNING 100
-#define CHITRALEKHA_ICON_SUCCESS 101
-#define CHITRALEKHA_ICON_INFORMATION 102
-#define CHITRALEKHA_ICON_EXCLAIMATION 103
+	/**
+	 * @brief System icons codes
+	 */
+	#define CHITRALEKHA_ICON_WARNING 100
+	#define CHITRALEKHA_ICON_SUCCESS 101
+	#define CHITRALEKHA_ICON_INFORMATION 102
+	#define CHITRALEKHA_ICON_EXCLAIMATION 103
 
-typedef struct _icon_ {
-	uint8_t* pixbuf;
-	ChImage image;
-	uint8_t format;
-}ChIcon;
+	typedef struct _icon_ {
+		uint8_t* pixbuf;
+		ChImage image;
+		uint8_t format;
+	}ChIcon;
 
 
 /**
 * @brief ChCreateIcon -- create a blank icon slot
 * @return icon slot
 */
-XE_EXTERN XE_LIB ChIcon *ChCreateIcon();
+XE_LIB ChIcon* ChCreateIcon();
 
 /**
 * @brief ChIconOpen -- open an icon file
 * @param ico -- pointer to icon file
 * @param filename -- icon file's path
 */
-XE_EXTERN XE_LIB void ChIconOpen(ChIcon* ico, char* filename);
+XE_LIB void ChIconOpen(ChIcon* ico, char* filename);
 
 /**
 * @brief ChIconRead -- read an icon file
 * @param ico -- pointer to icon structure
 */
-XE_EXTERN XE_LIB void ChIconRead(ChIcon* ico);
+XE_LIB void ChIconRead(ChIcon* ico);
 
 
 /**
@@ -83,7 +88,7 @@ XE_EXTERN XE_LIB void ChIconRead(ChIcon* ico);
 * @param x -- X coord
 * @param y -- Y coord
 */
-XE_EXTERN XE_LIB void ChDrawIcon(ChCanvas* canv, ChIcon* ico, int x, int y);
+XE_LIB void ChDrawIcon(ChCanvas* canv, ChIcon* ico, int x, int y);
 
 /**
 * @brief ChDrawIconClipped -- draws an icon to canvas within clipped boundary
@@ -93,7 +98,7 @@ XE_EXTERN XE_LIB void ChDrawIcon(ChCanvas* canv, ChIcon* ico, int x, int y);
 * @param y -- Y coord
 * @param limit -- Pointer to limit rect
 */
-XE_EXTERN XE_LIB void ChDrawIconClipped(ChCanvas* canv, ChIcon* ico, int x, int y, ChRect *limit);
+XE_LIB void ChDrawIconClipped(ChCanvas* canv, ChIcon* ico, int x, int y, ChRect* limit);
 
 /**
 * @brief ChInitialiseDefaultIcons -- initialise all chitralekha
@@ -106,6 +111,10 @@ extern void ChInitialiseDefaultIcons();
 * icons
 * @param iconnum -- Icon code number
 */
-XE_EXTERN XE_LIB ChIcon* ChIconGetSystemIcon(uint8_t iconnum);
+XE_LIB ChIcon* ChIconGetSystemIcon(uint8_t iconnum);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

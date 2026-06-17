@@ -293,6 +293,9 @@ size_t FatRead(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buf) {
 		return NULL;
 	}
 
+	if (file->current == (FAT_EOC_MARK & 0x0FFFFFFF))
+		return 0;
+
 	auto lba = FatClusterToSector32(fs, file->current);
 	AuVDiskRead(vdisk, lba, fs->__SectorPerCluster, buf);
 
@@ -337,21 +340,37 @@ size_t FatReadFile(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint32_t 
 	size_t ret_bytes = 0;
 	uint8_t* aligned_buffer = (uint8_t*)buffer;
 
-	size_t num_blocks = length / fs->cluster_sz_in_bytes +
-		((length % fs->cluster_sz_in_bytes) ? 1 : 0);
+	size_t skip = file->pos % fs->cluster_sz_in_bytes;
+	size_t total = length + skip;
+	size_t num_blocks = (total + fs->cluster_sz_in_bytes - 1) / fs->cluster_sz_in_bytes; /*length / fs->cluster_sz_in_bytes +
+		((length % fs->cluster_sz_in_bytes) ? 1 : 0);*/
 	
+	skip = 0;
+	size_t avail = 0;
+	size_t to_copy = 0;
+
 	for (int i = 0; i < num_blocks; i++) {
 		if (file->eof)
 			break;
+		skip = (i == 0) ? (file->pos % fs->cluster_sz_in_bytes) : 0;
+		avail = fs->cluster_sz_in_bytes - skip;
+		to_copy = (length < avail) ? length : avail;
+
 		uint64_t* buff = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
 		memset(buff, 0, PAGE_SIZE);
 		read_bytes = FatRead(fsys, file, buff);
-		memcpy(aligned_buffer, buff, PAGE_SIZE);
+
+		memcpy(aligned_buffer, (uint8_t*)buff + skip, to_copy);
+		
 		AuPmmngrFree((void*)V2P((size_t)buff));
-		aligned_buffer += PAGE_SIZE;
+		aligned_buffer += to_copy;
+		length -= to_copy;
 		ret_bytes += read_bytes;
 
 	}
+
+	// reset the position in bytes value
+	file->pos = 0;
 
 	/* Okay, might be we read one block, but length was less
 	 * then 4KiB, just return that length
@@ -578,6 +597,9 @@ size_t FatGetClusterFor(AuVFSNode* fs, AuVFSNode* file, uint64_t offset) {
 	uint32_t cluster = file->first_block;
 	for (int i = 0; i < index; i++)
 		cluster = FatReadFAT(fs, cluster);
+	if ((cluster != (FAT_EOC_MARK & 0x0FFFFFFF)) && file->eof==1)
+		file->eof = 0;
+	file->pos = offset;
 	return cluster;
 }
 

@@ -2805,7 +2805,7 @@ static int has_segment_link(mstate m, msegmentptr ss) {
 #ifndef MORECORE_CANNOT_TRIM
 #define should_trim(M,s)  ((s) > (M)->trim_check)
 #else  /* MORECORE_CANNOT_TRIM */
-#define should_trim(M,s)  (0)
+#define should_trim(M,s)   (1)
 #endif /* MORECORE_CANNOT_TRIM */
 
 /*
@@ -4266,8 +4266,9 @@ static void* sys_alloc(mstate m, size_t nb) {
             m->release_checks = MAX_RELEASE_CHECK_RATE;
             init_bins(m);
 #if !ONLY_MSPACES
-            if (is_global(m))
+            if (is_global(m)) {
                 init_top(m, (mchunkptr)tbase, tsize - TOP_FOOT_SIZE);
+            }
             else
 #endif
             {
@@ -4281,8 +4282,9 @@ static void* sys_alloc(mstate m, size_t nb) {
             /* Try to merge with an existing segment */
             msegmentptr sp = &m->seg;
             /* Only consider most recent segment if traversal suppressed */
-            while (sp != 0 && tbase != sp->base + sp->size)
+            while (sp != 0 && tbase != sp->base + sp->size) {
                 sp = (NO_SEGMENT_TRAVERSAL) ? 0 : sp->next;
+            }
             if (sp != 0 &&
                 !is_extern_segment(sp) &&
                 (sp->sflags & USE_MMAP_BIT) == mmap_flag &&
@@ -4751,7 +4753,6 @@ void* dlmalloc(size_t bytes) {
         }
 
         mem = sys_alloc(gm, nb);
-
     postaction:
         POSTACTION(gm);
         return mem;
@@ -6426,6 +6427,7 @@ void* realloc(void* ptr, unsigned int new_size) {
 * @param n_item -- number of items
 * @param size -- size of each items
 */
-void* calloc(size_t n_item, size_t size) {
+void* calloc(unsigned long long n_item, unsigned long long size) {
+    _KePrint("Calloc : %d - sz : %d \r\n", n_item, size);
     return dlcalloc(n_item, size);
 }

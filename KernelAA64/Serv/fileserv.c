@@ -113,6 +113,12 @@ int OpenFile(char* filename, int mode) {
  * @param offset -- offset in bytes
  */
 int FileSetOffset(int fd, size_t offset) {
+	if (fd > FILE_DESC_PER_PROCESS)
+		return -1;
+
+	if (fd < 0)
+		return -1;
+
 	AA64Thread* current_thr = AuGetCurrentThread();
 	if (!current_thr)
 		return -1;
@@ -132,7 +138,6 @@ int FileSetOffset(int fd, size_t offset) {
 		if (!fsys)
 			return -1;
 		size_t block = AuVFSGetBlockFor(fsys, file, offset);
-		//UARTDebugOut("FileSetOffset: block : %x \n", block);
 		file->current = block;
 	}
 	else
@@ -154,6 +159,8 @@ size_t ReadFile(int fd, void* buffer, size_t length) {
 		return 0;
 	if (!length)
 		return 0;
+	if (fd > FILE_DESC_PER_PROCESS)
+		return -1;
 	AA64Thread* current_thr = AuGetCurrentThread();
 	if (!current_thr)
 		return 0;

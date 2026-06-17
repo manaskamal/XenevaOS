@@ -991,6 +991,11 @@ int main(int argc, char* argv[]){
 	proc = _KeCreateProcess(0, "nmdapha");
 	_KeProcessLoadExec(proc, "/nmdapha.exe", NULL, NULL);
 
+	void* p1 = malloc(6 * 1024 * 1024);
+	memset(p1, 0, 6 * 1024 * 1024);
+	void* p2 = malloc(50560);
+	memset(p2, 0, 50560);
+
 	uint64_t frameTime = 0;
 	uint64_t frameStart = 0;
 	while (1) {

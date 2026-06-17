@@ -45,7 +45,7 @@
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
@@ -100,7 +100,7 @@
     <TargetName>XEClib</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
-    <TargetExt>.lib</TargetExt>
+    <TargetExt>.dll</TargetExt>
     <GenerateManifest>false</GenerateManifest>
     <TargetName>XEClib</TargetName>
   </PropertyGroup>
@@ -198,8 +198,7 @@
       <AdditionalOptions>/filealign:4096 /def:_export_arm64.def %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
-      <Command>
-      </Command>
+      <Command>copy "..\..\Build\$(TargetName).dll" M:\$(TargetName).dll" </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -276,16 +275,19 @@
     <ClInclude Include="includes\errno.h" />
     <ClInclude Include="includes\fcntl.h" />
     <ClInclude Include="includes\float.h" />
+    <ClInclude Include="includes\inttypes.h" />
     <ClInclude Include="includes\limits.h" />
     <ClInclude Include="includes\math.h" />
     <ClInclude Include="includes\setjmp.h" />
     <ClInclude Include="includes\size_t.h" />
     <ClInclude Include="includes\stdarg.h" />
+    <ClInclude Include="includes\stdbool.h" />
     <ClInclude Include="includes\stddef.h" />
     <ClInclude Include="includes\stdint.h" />
     <ClInclude Include="includes\stdio.h" />
     <ClInclude Include="includes\stdlib.h" />
     <ClInclude Include="includes\string.h" />
+    <ClInclude Include="includes\strings.h" />
     <ClInclude Include="includes\sys\iocodes.h" />
     <ClInclude Include="includes\sys\mman.h" />
     <ClInclude Include="includes\sys\socket.h" />
@@ -306,6 +308,7 @@
     <ClInclude Include="includes\sys\_keycode.h" />
     <ClInclude Include="includes\sys\_procheap.h" />
     <ClInclude Include="includes\time.h" />
+    <ClInclude Include="includes\unistd.h" />
     <ClInclude Include="includes\values.h" />
     <ClInclude Include="includes\_xeneva.h" />
     <ClInclude Include="includes\_xeprint.h" />
