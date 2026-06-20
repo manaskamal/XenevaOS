@@ -106,7 +106,7 @@ typedef struct _aa64_task_ {
 	bool returnFromSyscall;
 	bool justStored;
 	void* data;
-	__declspec(align(16)) uint8_t fp_regs[512];
+	AU_ALIGN(16) uint8_t fp_regs[512];
 	uint64_t fpcr;
 	uint64_t fpsr;
 	uint32_t syscallNum;

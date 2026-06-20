@@ -15,3 +15,7 @@ x64/
 ARM64/
 Debug/
 Release/
+KernelAA64/*.elf
+KernelAA64/*.exe
+KernelAA64/*.log
+KernelAA64/obj/
