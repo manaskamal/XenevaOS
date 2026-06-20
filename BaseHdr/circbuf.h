@@ -32,6 +32,9 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#ifndef __cplusplus
+#include <stdbool.h>
+#endif
 
 
 typedef struct _circ_buf_ {

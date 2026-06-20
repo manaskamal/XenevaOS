@@ -37,7 +37,7 @@
 #include <string.h>
 #include <_null.h>
 #include <Fs/vfs.h>
-#include <Fs/dev/devfs.h>
+#include <Fs/Dev/devfs.h>
 #include <Hal/AA64/aa64lowlevel.h>
 #include <Drivers/uart.h>
 #include <aucon.h>
