@@ -1,0 +1,17 @@
+# C/C++ Build Artifacts
+*.o
+*.so
+*.efi
+obj/
+Build/
+gnu-efi/
+
+# Visual Studio specific files
+.vs/
+*.sdf
+*.suo
+*.user
+x64/
+ARM64/
+Debug/
+Release/

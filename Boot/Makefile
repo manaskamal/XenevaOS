@@ -24,8 +24,13 @@ CXXFLAGS = -Wno-error=pragmas -mno-red-zone -mno-avx -fPIE \
 		   -fno-strict-aliasing -ffreestanding -fno-stack-protector -fno-stack-check \
 		   -fno-merge-all-constants -std=c++17 -DGNU_EFI_USE_MS_ABI -maccumulate-outgoing-args -DGNU_EFI_USE_MS_ABI $(INCLUDES)
 
-# NASM flags
-NASMFLAGS = -f win64
+# Detect OS for NASM format
+UNAME_S := $(shell uname -s)
+ifeq ($(UNAME_S),Linux)
+    NASMFLAGS = -f elf64
+else
+    NASMFLAGS = -f win64
+endif
 
 # GNU-EFI link setup
 LDSCRIPT = ${GNU_EFI_DIR}/gnuefi/elf_x86_64_efi.lds
