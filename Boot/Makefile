@@ -58,8 +58,9 @@ all: $(EFI_OUTPUT)
 
 # Link x64 EFI binary
 $(SO_OUTPUT): $(CRT0) $(OBJS)
+	# Added -z noexecstack to suppress irrelevant GNU-stack warning from NASM ELF64 objects
 	$(LD) -nostdlib --warn-common --no-undefined --fatal-warnings --build-id=sha1 \
-	-z nocombreloc -shared -Bsymbolic $(LIBDIRS) -T$(LDSCRIPT) $(CRT0) $(OBJS) -o $@ $(LIBS)
+	-z noexecstack -z nocombreloc -shared -Bsymbolic $(LIBDIRS) -T$(LDSCRIPT) $(CRT0) $(OBJS) -o $@ $(LIBS)
 
 $(EFI_OUTPUT): $(SO_OUTPUT)
 	@mkdir -p $(dir $@)
