@@ -86,7 +86,7 @@ bool is_uart_initialized() {
  * @param c -- character to print
  */
 void uartPutc(char c) {
-#ifdef __TARGET_BOARD_IMX8MP_VERDIN_DAHLIA__ || (__TARGET_BOARD_IMX8MP_SOC__)
+#if defined(__TARGET_BOARD_IMX8MP_VERDIN_DAHLIA__) || defined(__TARGET_BOARD_IMX8MP_SOC__)
 	au_imx8mp_uart_putc(c);
 #else
 
@@ -94,7 +94,7 @@ void uartPutc(char c) {
 	if (_uart_mapped)
 		mmioBase = uartMMIO;
 	else
-		mmioBase = UART0_BASE;
+		mmioBase = (uint64_t*)UART0_BASE;
 	char* uart0 = (char*)mmioBase;
 	while ((*(uart0 + 0x18) & (1 << 5)));
 	*uart0 = c;
@@ -117,7 +117,13 @@ extern void AuUartPutString(const char* s);
  * @param text -- text to output
  */
 void UARTDebugOut_Call(const char* format, void* reg_save_area, void* entry_sp) {
+#ifdef __GNUC__
+	uint64_t* arg_ptr = (uint64_t*)((uint8_t*)reg_save_area + 8);
+#define AU_VA_ARG(type) ((type)(*arg_ptr++))
+#else
 	va_list args = ((va_list)reg_save_area + 8);
+#define AU_VA_ARG(type) va_arg(args, type)
+#endif
 	while (*format)
 	{
 		if (*format == '%')
@@ -134,7 +140,7 @@ void UARTDebugOut_Call(const char* format, void* reg_save_area, void* entry_sp) 
 						width += format[i] - '0';
 					}
 				}
-				size_t i = va_arg(args, size_t);
+				size_t i = AU_VA_ARG(size_t);
 				char buffer[sizeof(size_t) * 8 + 1];
 				//	size_t len
 				if ((int)i < 0) {
@@ -152,7 +158,7 @@ void UARTDebugOut_Call(const char* format, void* reg_save_area, void* entry_sp) 
 			}
 			else if (*format == 'c')
 			{
-				char c = va_arg(args, char);
+				int c = AU_VA_ARG(int);
 				//char buffer[sizeof(size_t) * 8 + 1];
 				//sztoa(c, buffer, 10);
 				//puts(buffer);
@@ -160,7 +166,7 @@ void UARTDebugOut_Call(const char* format, void* reg_save_area, void* entry_sp) 
 			}
 			else if (*format == 'x')
 			{
-				size_t x = va_arg(args, size_t);
+				size_t x = AU_VA_ARG(size_t);
 				char buffer[sizeof(size_t) * 8 + 1];
 				sztoa(x, buffer, 16);
 				//puts("0x");
@@ -168,12 +174,12 @@ void UARTDebugOut_Call(const char* format, void* reg_save_area, void* entry_sp) 
 			}
 			else if (*format == 's')
 			{
-				char* x = va_arg(args, char*);
+				char* x = AU_VA_ARG(char*);
 				uartPuts(x);
 			}
 			else if (*format == 'f')
 			{
-				double x = va_arg(args, double);
+				double x = AU_VA_ARG(double);
 				uartPuts(ftoa(x, 2));
 			}
 			else if (*format == '%')
@@ -195,5 +201,7 @@ void UARTDebugOut_Call(const char* format, void* reg_save_area, void* entry_sp) 
 		}
 		++format;
 	}
+#ifndef __GNUC__
 	va_end(args);
+#endif
 }

@@ -395,10 +395,15 @@ void AuTextOut(const char* format, ...) {
 	if (bypass_autextout)
 		return;
 
+#ifdef __GNUC__
+	va_list args;
+	va_start(args, format);
+#else
 	uint64_t buffer[7];
 	store_x0_x7(buffer);
 
 	va_list args = (va_list)buffer;
+#endif
 	while (*format)
 	{
 		if (*format == '%')
@@ -433,7 +438,7 @@ void AuTextOut(const char* format, ...) {
 			}
 			else if (*format == 'c')
 			{
-				char c = va_arg(args, char);
+				int c = va_arg(args, int);
 				//char buffer[sizeof(size_t) * 8 + 1];
 				//sztoa(c, buffer, 10);
 				//puts(buffer);
@@ -487,7 +492,13 @@ void AuTextOut(const char* format, ...) {
  * @param text -- text to output
  */
 void AuTextOutpro_Call(const char* format, void* reg_save_area, void* entry_sp) {
+#ifdef __GNUC__
+	uint64_t* arg_ptr = (uint64_t*)((uint8_t*)reg_save_area + 8);
+#define AU_VA_ARG(type) ((type)(*arg_ptr++))
+#else
 	va_list args = ((va_list)reg_save_area + 8);
+#define AU_VA_ARG(type) va_arg(args, type)
+#endif
 	while (*format)
 	{
 		if (*format == '%')
@@ -504,7 +515,7 @@ void AuTextOutpro_Call(const char* format, void* reg_save_area, void* entry_sp) 
 						width += format[i] - '0';
 					}
 				}
-				size_t i = va_arg(args, size_t);
+				size_t i = AU_VA_ARG(size_t);
 				char buffer[sizeof(size_t) * 8 + 1];
 				//	size_t len
 				if ((int)i < 0) {
@@ -522,7 +533,7 @@ void AuTextOutpro_Call(const char* format, void* reg_save_area, void* entry_sp) 
 			}
 			else if (*format == 'c')
 			{
-				char c = va_arg(args, char);
+				int c = AU_VA_ARG(int);
 				//char buffer[sizeof(size_t) * 8 + 1];
 				//sztoa(c, buffer, 10);
 				//puts(buffer);
@@ -530,7 +541,7 @@ void AuTextOutpro_Call(const char* format, void* reg_save_area, void* entry_sp) 
 			}
 			else if (*format == 'x')
 			{
-				size_t x = va_arg(args, size_t);
+				size_t x = AU_VA_ARG(size_t);
 				char buffer[sizeof(size_t) * 8 + 1];
 				sztoa(x, buffer, 16);
 				//puts("0x");
@@ -538,12 +549,12 @@ void AuTextOutpro_Call(const char* format, void* reg_save_area, void* entry_sp) 
 			}
 			else if (*format == 's')
 			{
-				char* x = va_arg(args, char*);
+				char* x = AU_VA_ARG(char*);
 				AuPutS(x);
 			}
 			else if (*format == 'f')
 			{
-				double x = va_arg(args, double);
+				double x = AU_VA_ARG(double);
 				AuPutS(ftoa(x, 2));
 			}
 			else if (*format == '%')
@@ -565,7 +576,9 @@ void AuTextOutpro_Call(const char* format, void* reg_save_area, void* entry_sp) 
 		}
 		++format;
 	}
+#ifndef __GNUC__
 	va_end(args);
+#endif
 
 }
 
