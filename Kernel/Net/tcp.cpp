@@ -27,16 +27,16 @@
 *
 **/
 
-#include <net\socket.h>
-#include <net\aunet.h>
-#include <Mm\kmalloc.h>
+#include <net/socket.h>
+#include <net/aunet.h>
+#include <Mm/kmalloc.h>
 #include <string.h>
-#include <Hal\x86_64_sched.h>
+#include <Hal/x86_64_sched.h>
 #include <process.h>
 #include <stack.h>
-#include <Hal\serial.h>
+#include <Hal/serial.h>
 #include <Hal/x86_64_hal.h>
-#include <net\tcp.h>
+#include <net/tcp.h>
 #include <Net/ipv4.h>
 #include <stdio.h>
 #include <aucon.h>

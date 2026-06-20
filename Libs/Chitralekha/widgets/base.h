@@ -33,8 +33,8 @@
 #define __CH_WIDGET_BASE_H__
 
 #include <stdint.h>
-#include <sys\_keipcpostbox.h>
-#include "..\font.h"
+#include <sys/_keipcpostbox.h>
+#include "../font.h"
 #include <_xeneva.h>
 
 	/* commands to deodhai */

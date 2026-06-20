@@ -29,11 +29,11 @@
 *
 **/
 
-#include <Mm\mmap.h>
-#include <Mm\vmarea.h>
+#include <Mm/mmap.h>
+#include <Mm/vmarea.h>
 #include <aucon.h>
 #include <Drivers/uart.h>
-#include <Hal\AA64\aa64lowlevel.h>
+#include <Hal/AA64/aa64lowlevel.h>
 #include <list.h>
 #include <_null.h>
 #include <Mm/vmmngr.h>

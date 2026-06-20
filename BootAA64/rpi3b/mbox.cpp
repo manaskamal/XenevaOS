@@ -30,8 +30,8 @@
 #ifdef __TARGET_BOARD_RPI3__
 
 #include "mbox.h"
-#include "..\uart0.h"
-#include "..\gpio.h"
+#include "../uart0.h"
+#include "../gpio.h"
 
 
 volatile unsigned int __declspec(align(16)) mbox[36];

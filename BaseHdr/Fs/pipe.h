@@ -32,7 +32,7 @@
 
 #include <stdint.h>
 #include <list.h>
-#include <Fs\vfs.h>
+#include <Fs/vfs.h>
 
 #pragma pack(push,1)
 typedef struct _pipe_ {

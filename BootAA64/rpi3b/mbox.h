@@ -30,7 +30,7 @@
 #ifndef __MBOX_H__
 #define __MBOX_H__
 
-#include "..\xnldr.h"
+#include "../xnldr.h"
 #define VIDEOCORE_MBOX (MMIO_BASE + 0x0000B880)
 #define MBOX_READ ((volatile unsigned int*)(VIDEOCORE_MBOX+0x0))
 #define MBOX_POLL       ((volatile unsigned int*)(VIDEOCORE_MBOX+0x10))

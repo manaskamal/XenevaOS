@@ -29,7 +29,7 @@
 
 #include "window.h"
 #include "deodhai.h"
-#include <sys\mman.h>
+#include <sys/mman.h>
 #include <stdlib.h>
 #include <color.h>
 #include <string.h>

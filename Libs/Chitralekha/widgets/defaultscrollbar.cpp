@@ -28,8 +28,8 @@
 **/
 
 #include "scrollpane.h"
-#include "..\draw.h"
-#include "..\color.h"
+#include "../draw.h"
+#include "../color.h"
 
 
 #define SCROLLBAR_BACKGROUND_COLOR 0xFF3D3A3A

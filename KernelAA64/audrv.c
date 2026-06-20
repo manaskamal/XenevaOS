@@ -30,12 +30,12 @@
 **/
 
 #include <audrv.h>
-#include <Mm\pmmngr.h>
-#include <Mm\vmmngr.h>
+#include <Mm/pmmngr.h>
+#include <Mm/vmmngr.h>
 #include <string.h>
 #include <pe.h>
 #include <stdio.h>
-#include <Mm\kmalloc.h>
+#include <Mm/kmalloc.h>
 #include <pcie.h>
 #include <aucon.h>
 #include <string.h>

@@ -30,8 +30,8 @@
 #include "scrollpane.h"
 #include "view.h"
 #include <math.h>
-#include "..\draw.h"
-#include "..\color.h"
+#include "../draw.h"
+#include "../color.h"
 #include "icon.h"
 
 /*

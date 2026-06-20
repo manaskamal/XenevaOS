@@ -30,8 +30,8 @@
 #include "cursor.h"
 #include <string.h>
 #include <stdlib.h>
-#include <sys\_kefile.h>
-#include <sys\mman.h>
+#include <sys/_kefile.h>
+#include <sys/mman.h>
 #include "deodhai.h"
 #include <chitralekha.h>
 

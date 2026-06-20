@@ -28,8 +28,8 @@
 **/
 
 #include "nmdapha.h"
-#include <sys\_kefile.h>
-#include <sys\mman.h>
+#include <sys/_kefile.h>
+#include <sys/mman.h>
 
 
 

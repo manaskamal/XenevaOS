@@ -27,11 +27,11 @@
 *
 **/
 
-#include <Mm\mmap.h>
-#include <Mm\vmarea.h>
+#include <Mm/mmap.h>
+#include <Mm/vmarea.h>
 #include <aucon.h>
-#include <Hal\serial.h>
-#include <Hal\x86_64_lowlevel.h>
+#include <Hal/serial.h>
+#include <Hal/x86_64_lowlevel.h>
 #include <_null.h>
 
 

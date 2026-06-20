@@ -27,7 +27,7 @@
 *
 **/
 
-#include <net\socket.h>
+#include <net/socket.h>
 #include <process.h>
 #include <Fs/vfs.h>
 #include <Mm/kmalloc.h>

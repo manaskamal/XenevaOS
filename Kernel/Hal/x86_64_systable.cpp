@@ -30,21 +30,21 @@
 #include <stdint.h>
 #include <_null.h>
 #include <aucon.h>
-#include <Hal\x86_64_sched.h>
-#include <Hal\x86_64_hal.h>
+#include <Hal/x86_64_sched.h>
+#include <Hal/x86_64_hal.h>
 #include <loader.h>
-#include <Mm\vmmngr.h>
+#include <Mm/vmmngr.h>
 #include <process.h>
-#include <Hal\serial.h>
-#include <Sync\mutex.h>
-#include <Hal\x86_64_signal.h>
+#include <Hal/serial.h>
+#include <Sync/mutex.h>
+#include <Hal/x86_64_signal.h>
 #include <Serv/sysserv.h>
 #include <ftmngr.h>
-#include <Fs\tty.h>
-#include <Fs\pipe.h>
-#include <Mm\mmap.h>
-#include <net\socket.h>
-#include <Fs\vdisk.h>
+#include <Fs/tty.h>
+#include <Fs/pipe.h>
+#include <Mm/mmap.h>
+#include <net/socket.h>
+#include <Fs/vdisk.h>
 
 /* Syscall function format */
 typedef int64_t(*syscall_func) (int64_t param1, int64_t param2, int64_t param3, int64_t

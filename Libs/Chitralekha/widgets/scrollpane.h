@@ -31,7 +31,7 @@
 #define __SCROLLPANE_H__
 
 #include <stdint.h>
-#include "..\chitralekha.h"
+#include "../chitralekha.h"
 #include "base.h"
 #include "window.h"
 

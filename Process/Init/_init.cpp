@@ -36,13 +36,13 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <_xeneva.h>
-#include <sys\_keproc.h>
+#include <sys/_keproc.h>
 #include <string.h>
-#include <sys\_heap.h>
-#include <sys\mman.h>
-#include <sys\_kefile.h>
+#include <sys/_heap.h>
+#include <sys/mman.h>
+#include <sys/_kefile.h>
 #include <stdlib.h>
-#include <sys\iocodes.h>
+#include <sys/iocodes.h>
 #include <sys/_kecred.h>
 
 /** Let's hardcode,credentials

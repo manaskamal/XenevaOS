@@ -29,16 +29,16 @@
 
 #include <aurora.h>
 #include <aucon.h>
-#include <Hal\hal.h>
-#include <Hal\x86_64_hal.h>
-#include <Hal\serial.h>
+#include <Hal/hal.h>
+#include <Hal/x86_64_hal.h>
+#include <Hal/serial.h>
 #include "nvme.h"
 #include <pcie.h>
-#include <Mm\kmalloc.h>
-#include <Hal\hal.h>
-#include <Mm\vmmngr.h>
+#include <Mm/kmalloc.h>
+#include <Hal/hal.h>
+#include <Mm/vmmngr.h>
 #include <_null.h>
-#include <Mm\pmmngr.h>
+#include <Mm/pmmngr.h>
 #include "namespace.h"
 #include <Fs/vdisk.h>
 

@@ -34,9 +34,9 @@
 #include <aucon.h>
 #include <_null.h>
 #include "font.h"
-#include <Mm\vmmngr.h>
-#include <Mm\pmmngr.h>
-#include <Mm\kmalloc.h>
+#include <Mm/vmmngr.h>
+#include <Mm/pmmngr.h>
+#include <Mm/kmalloc.h>
 #include <string.h>
 #include <va_list.h>
 #include <stdio.h>

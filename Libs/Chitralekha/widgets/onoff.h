@@ -32,7 +32,7 @@
 
 #include <stdint.h>
 #include "base.h"
-#include "..\chitralekha.h"
+#include "../chitralekha.h"
 #include "window.h"
 
 #define CH_ONOFF_VALUE_ON  1

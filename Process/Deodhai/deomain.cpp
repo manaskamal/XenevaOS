@@ -28,17 +28,17 @@
 **/
 
 #include <_xeneva.h>
-#include <sys\_keproc.h>
-#include <sys\_kefile.h>
-#include <sys\mman.h>
+#include <sys/_keproc.h>
+#include <sys/_kefile.h>
+#include <sys/mman.h>
 #include <stdlib.h>
-#include <sys\iocodes.h>
-#include <sys\_keipcpostbox.h>
+#include <sys/iocodes.h>
+#include <sys/_keipcpostbox.h>
 #include <time.h>
 #include <string.h>
 #include <chitralekha.h>
 #include <stdlib.h>
-#include <sys\_kesignal.h>
+#include <sys/_kesignal.h>
 #include "deodhai.h"
 #include "cursor.h"
 #include "nanojpg.h"
@@ -52,7 +52,7 @@
 #include "draw.h"
 #include "animation.h"
 #include "popup.h"
-#include <sys\socket.h>
+#include <sys/socket.h>
 #include <boxblur.h>
 #include <sys/types.h>
 #define STB_IMAGE_RESIZE_IMPLEMENTATION

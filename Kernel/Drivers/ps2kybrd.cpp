@@ -27,17 +27,17 @@
 *
 **/
 
-#include <Hal\hal.h>
-#include <Hal\x86_64_cpu.h>
-#include <Hal\x86_64_hal.h>
-#include <Hal\x86_64_signal.h>
-#include <fs\vfs.h>
-#include <Mm\kmalloc.h>
-#include <fs\dev\devfs.h>
+#include <Hal/hal.h>
+#include <Hal/x86_64_cpu.h>
+#include <Hal/x86_64_hal.h>
+#include <Hal/x86_64_signal.h>
+#include <fs/vfs.h>
+#include <Mm/kmalloc.h>
+#include <fs/dev/devfs.h>
 #include <string.h>
-#include <Hal\serial.h>
+#include <Hal/serial.h>
 #include <aucon.h>
-#include <Fs\Dev\devinput.h>
+#include <Fs/Dev/devinput.h>
 #include <Drivers/ps2kybrd.h>
 
 

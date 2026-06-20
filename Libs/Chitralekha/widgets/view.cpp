@@ -30,7 +30,7 @@
 #include "view.h"
 #include "scrollpane.h"
 #include <math.h>
-#include "sys\_keproc.h"
+#include "sys/_keproc.h"
 
 extern void ChDefaultListViewPainter(ChWidget* wid, ChWindow* win);
 

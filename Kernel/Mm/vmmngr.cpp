@@ -27,14 +27,14 @@
 *
 **/
 
-#include <Mm\vmmngr.h>
-#include <Mm\pmmngr.h>
+#include <Mm/vmmngr.h>
+#include <Mm/pmmngr.h>
 #include <aucon.h>
-#include <Hal\x86_64_lowlevel.h>
-#include <Hal\x86_64_cpu.h>
+#include <Hal/x86_64_lowlevel.h>
+#include <Hal/x86_64_cpu.h>
 #include <string.h>
 #include <_null.h>
-#include <Hal\serial.h>
+#include <Hal/serial.h>
 
 uint64_t *_RootPaging;
 uint64_t *_MmioBase;

@@ -31,9 +31,9 @@
 
 #include "chitralekha.h"
 #include <stdio.h>
-#include <sys\_kefile.h>
-#include <sys\mman.h>
-#include <sys\iocodes.h>
+#include <sys/_kefile.h>
+#include <sys/mman.h>
+#include <sys/iocodes.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>

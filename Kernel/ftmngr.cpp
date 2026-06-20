@@ -29,13 +29,13 @@
 
 #include <ftmngr.h>
 #include <_null.h>
-#include <Fs\vfs.h>
-#include <Mm\vmmngr.h>
-#include <Mm\pmmngr.h>
-#include <Hal\serial.h>
+#include <Fs/vfs.h>
+#include <Mm/vmmngr.h>
+#include <Mm/pmmngr.h>
+#include <Hal/serial.h>
 #include <aucon.h>
-#include <Mm\kmalloc.h>
-#include <Mm\shm.h>
+#include <Mm/kmalloc.h>
+#include <Mm/shm.h>
 #include <stdio.h>
 
 #define FONTMGR_KEY  0x1234

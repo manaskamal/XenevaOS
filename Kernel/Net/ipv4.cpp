@@ -38,7 +38,7 @@
 #include <Net/udp.h>
 #include <_null.h>
 #include <Hal/x86_64_cpu.h>
-#include <Hal\serial.h>
+#include <Hal/serial.h>
 #include <aucon.h>
 #include <Mm/kmalloc.h>
 

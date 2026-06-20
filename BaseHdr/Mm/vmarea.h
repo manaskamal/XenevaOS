@@ -32,9 +32,9 @@
 
 #include <stdint.h>
 #include <stdio.h>
-#include <Mm\vmmngr.h>
-#include <Mm\pmmngr.h>
-#include <Fs\vfs.h>
+#include <Mm/vmmngr.h>
+#include <Mm/pmmngr.h>
+#include <Fs/vfs.h>
 #include <process.h>
 
 /* protection flags */

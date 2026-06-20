@@ -27,10 +27,10 @@
 *
 **/
 
-#include <Fs\Dev\devfs.h>
+#include <Fs/Dev/devfs.h>
 //#include <Fs\Dev\devinput.h>
 #include <Hal/AA64/aa64cpu.h>
-#include <Mm\kmalloc.h>
+#include <Mm/kmalloc.h>
 #include <list.h>
 #include <string.h>
 #include <_null.h>

@@ -29,11 +29,11 @@
 
 
 #include "font.h"
-#include <sys\mman.h>
-#include <sys\_kefile.h>
+#include <sys/mman.h>
+#include <sys/_kefile.h>
 #include <stdlib.h>
 #include "ttf.h"
-#include <sys\_keftmngr.h>
+#include <sys/_keftmngr.h>
 #include <ft2build.h>
 #include "draw.h"
 #include "color.h"

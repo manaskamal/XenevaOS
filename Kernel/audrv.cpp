@@ -28,14 +28,14 @@
 **/
 
 #include <audrv.h>
-#include <Mm\pmmngr.h>
-#include <Mm\vmmngr.h>
+#include <Mm/pmmngr.h>
+#include <Mm/vmmngr.h>
 #include <string.h>
 #include <pe.h>
 #include <stdio.h>
-#include <Mm\kmalloc.h>
+#include <Mm/kmalloc.h>
 #include <pcie.h>
-#include <Hal\serial.h>
+#include <Hal/serial.h>
 #include <aucon.h>
 
 /* 0xFFFFC00000400000 - 0xFFFFC00000A00000 -- Kernel Boot Drivers 

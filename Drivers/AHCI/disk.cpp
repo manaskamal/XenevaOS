@@ -28,17 +28,17 @@
 **/
 #include "disk.h"
 #include "ahci.h"
-#include <Mm\vmmngr.h>
-#include <Mm\pmmngr.h>
+#include <Mm/vmmngr.h>
+#include <Mm/pmmngr.h>
 #include <stdio.h>
 #include <aucon.h>
 #include <string.h>
-#include <Fs\vdisk.h>
+#include <Fs/vdisk.h>
 #include <Mm/kmalloc.h>
 #include <Fs/Dev/devfs.h>
 #include <Hal/serial.h>
 #include <Hal/x86_64_sched.h>
-#include <Hal\x86_64_lowlevel.h>
+#include <Hal/x86_64_lowlevel.h>
 
 
 void AHCISleep(uint32_t ms) {

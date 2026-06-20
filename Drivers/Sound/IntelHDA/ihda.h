@@ -31,7 +31,7 @@
 #define __IHDA_H__
 
 #include <stdint.h>
-#include <Hal\serial.h>
+#include <Hal/serial.h>
 #include "widget.h"
 
 //! Device Registers

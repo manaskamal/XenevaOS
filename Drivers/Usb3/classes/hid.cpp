@@ -29,14 +29,14 @@
 
 #include "hid.h"
 #include <_null.h>
-#include <Hal\serial.h>
-#include <Mm\pmmngr.h>
-#include <Mm\vmmngr.h>
+#include <Hal/serial.h>
+#include <Mm/pmmngr.h>
+#include <Mm/vmmngr.h>
 #include <aucon.h>
-#include <Mm\kmalloc.h>
+#include <Mm/kmalloc.h>
 #include <stdint.h>
-#include <Drivers\mouse.h>
-#include <Fs\Dev\devinput.h>
+#include <Drivers/mouse.h>
+#include <Fs/Dev/devinput.h>
 
 
 uint64_t mouse_data;

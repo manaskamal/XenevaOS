@@ -33,7 +33,7 @@
 #include <process.h>
 
 #ifdef ARCH_X64
-#include <Hal\x86_64_sched.h>
+#include <Hal/x86_64_sched.h>
 #endif
 #include <stdint.h>
 

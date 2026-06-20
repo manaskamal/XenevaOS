@@ -33,7 +33,7 @@
 #define __WINDOW_H__
 
 #include <stdint.h>
-#include <widgets\list.h>
+#include <widgets/list.h>
 #include "deodhai.h"
 
 #define WINDOW_FLAG_MOVABLE (1<<0)

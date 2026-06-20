@@ -36,19 +36,19 @@
 
 #include <loader.h>
 #include <process.h>
-#include <Fs\vfs.h>
+#include <Fs/vfs.h>
 #include <string.h>
-#include <Mm\vmmngr.h>
-#include <Mm\pmmngr.h>
-#include <Mm\kmalloc.h>
-#include <Hal\x86_64_cpu.h>
-#include <Mm\vmarea.h>
-#include <Hal\hal.h>
-#include <Hal\x86_64_gdt.h>
-#include <Hal\x86_64_lowlevel.h>
-#include <Hal\serial.h>
-#include <Sync\spinlock.h>
-#include <Sync\mutex.h>
+#include <Mm/vmmngr.h>
+#include <Mm/pmmngr.h>
+#include <Mm/kmalloc.h>
+#include <Hal/x86_64_cpu.h>
+#include <Mm/vmarea.h>
+#include <Hal/hal.h>
+#include <Hal/x86_64_gdt.h>
+#include <Hal/x86_64_lowlevel.h>
+#include <Hal/serial.h>
+#include <Sync/spinlock.h>
+#include <Sync/mutex.h>
 #include <aucon.h>
 
 Spinlock* loader_lock;

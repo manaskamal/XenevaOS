@@ -29,15 +29,15 @@
 
 #include <aucon.h>
 #include <_null.h>
-#include <Mm\vmmngr.h>
-#include <Mm\pmmngr.h>
-#include <Mm\kmalloc.h>
+#include <Mm/vmmngr.h>
+#include <Mm/pmmngr.h>
+#include <Mm/kmalloc.h>
 #include <string.h>
 #include <va_list.h>
 #include <stdio.h>
-#include <Fs\vfs.h>
-#include <Serv\sysserv.h>
-#include <Fs\Dev\devfs.h>
+#include <Fs/vfs.h>
+#include <Serv/sysserv.h>
+#include <Fs/Dev/devfs.h>
 
 uint8_t *font_data;
 uint32_t console_x;

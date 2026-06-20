@@ -27,18 +27,18 @@
 *
 **/
 
-#include <Net\ethernet.h>
-#include <Net\aunet.h>
-#include <Mm\kmalloc.h>
+#include <Net/ethernet.h>
+#include <Net/aunet.h>
+#include <Mm/kmalloc.h>
 #include <string.h>
-#include <Hal\serial.h>
-#include <Fs\Dev\devfs.h>
+#include <Hal/serial.h>
+#include <Fs/Dev/devfs.h>
 #include <aucon.h>
 #include <Net/arp.h>
-#include <Net\ipv4.h>
+#include <Net/ipv4.h>
 #include <Net/ipv6.h>
 #include <Net/udp.h>
-#include <Net\socket.h>
+#include <Net/socket.h>
 
 #pragma pack(push,1)
 __declspec(align(2)) typedef struct _ethernet_ {

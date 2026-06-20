@@ -28,9 +28,9 @@
 **/
 
 #include <autimer.h>
-#include <Hal\x86_64_hal.h>
-#include <Hal\x86_64_sched.h>
-#include <Hal\hal.h>
+#include <Hal/x86_64_hal.h>
+#include <Hal/x86_64_sched.h>
+#include <Hal/hal.h>
 #include <time.h>
 #include <aucon.h>
 

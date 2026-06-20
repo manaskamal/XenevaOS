@@ -27,14 +27,14 @@
 *
 **/
 
-#include <Fs\Fat\Fat.h>
-#include <Fs\vdisk.h>
-#include <Fs\vfs.h>
-#include <Mm\kmalloc.h>
-#include <Mm\pmmngr.h>
-#include <Mm\vmmngr.h>
+#include <Fs/Fat/Fat.h>
+#include <Fs/vdisk.h>
+#include <Fs/vfs.h>
+#include <Mm/kmalloc.h>
+#include <Mm/pmmngr.h>
+#include <Mm/vmmngr.h>
 #include <string.h>
-#include <Hal\Serial.h>
+#include <Hal/Serial.h>
 #include <_null.h>
 #include <aucon.h>
 

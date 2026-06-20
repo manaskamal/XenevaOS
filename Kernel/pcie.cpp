@@ -28,9 +28,9 @@
 **/
 
 #include <pcie.h>
-#include <Hal\hal.h>
-#include <Hal\basicacpi.h>
-#include <Hal\x86_64_cpu.h>
+#include <Hal/hal.h>
+#include <Hal/basicacpi.h>
+#include <Hal/x86_64_cpu.h>
 #include <aucon.h>
 
 /*

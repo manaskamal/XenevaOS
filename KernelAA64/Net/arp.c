@@ -29,13 +29,13 @@
 *
 **/
 
-#include <Net\arp.h>
-#include <Net\ethernet.h>
-#include <Net\aunet.h>
+#include <Net/arp.h>
+#include <Net/ethernet.h>
+#include <Net/aunet.h>
 #include <string.h>
 #include <_null.h>
 #include <aucon.h>
-#include <Mm\kmalloc.h>
+#include <Mm/kmalloc.h>
 #include <Drivers/uart.h>
 #include <Net/ipv4.h>
 

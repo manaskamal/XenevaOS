@@ -28,11 +28,11 @@
 **/
 
 #include "window.h"
-#include "..\_fastcpy.h"
-#include <sys\_kefile.h>
-#include <sys\_keproc.h>
+#include "../_fastcpy.h"
+#include <sys/_kefile.h>
+#include <sys/_keproc.h>
 #include "menu.h"
-#include <sys\mman.h>
+#include <sys/mman.h>
 
 #define WINDOW_DEFAULT_TITLEBAR_HEIGHT  26
 #define WINDOW_DEFAULT_BACKGROUND 0xFFD2D2D2

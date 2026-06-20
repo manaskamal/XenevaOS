@@ -37,7 +37,7 @@
 #include <circbuf.h>
 
 #ifdef ARCH_X64
-#include <Hal\x86_64_sched.h>
+#include <Hal/x86_64_sched.h>
 #elif ARCH_ARM64
 #include <Hal/AA64/sched.h>
 #endif

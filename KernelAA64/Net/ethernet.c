@@ -29,17 +29,17 @@
 *
 **/
 
-#include <Net\ethernet.h>
-#include <Net\aunet.h>
-#include <Mm\kmalloc.h>
+#include <Net/ethernet.h>
+#include <Net/aunet.h>
+#include <Mm/kmalloc.h>
 #include <string.h>
-#include <Drivers\uart.h>
-#include <Fs\Dev\devfs.h>
+#include <Drivers/uart.h>
+#include <Fs/Dev/devfs.h>
 #include <aucon.h>
 #include <Net/arp.h>
-#include <Net\ipv4.h>
+#include <Net/ipv4.h>
 #include <Net/udp.h>
-#include <Net\socket.h>
+#include <Net/socket.h>
 
 #ifdef ARCH_X64
 #pragma pack(push,1)

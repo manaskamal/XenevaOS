@@ -33,7 +33,7 @@
 #include <stdint.h>
 #include <stdarg.h>
 #include <chitralekha.h>
-#include <widgets\window.h>
+#include <widgets/window.h>
 
 typedef struct _ButtonIcon_ {
 	char* filename;

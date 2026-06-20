@@ -29,9 +29,9 @@
 *
 **/
 
-#include <Fs\pipe.h>
-#include <Mm\kmalloc.h>
-#include <Fs\vfs.h>
+#include <Fs/pipe.h>
+#include <Mm/kmalloc.h>
+#include <Fs/vfs.h>
 #include <_null.h>
 #include <string.h>
 #include <list.h>
