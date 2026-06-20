@@ -12,8 +12,8 @@ ASM_SRCS = lowlevel.asm
 # Object directory
 OBJDIR = obj
 
-# GNU-EFI Source Directory
-GNU_EFI_DIR = /home/cortexauth/Repos/gnu-efi-4.0.2
+# GNU-EFI Source Directory (Override via env variable or make argument)
+GNU_EFI_DIR ?= ../gnu-efi
 
 # Include directories
 INCLUDES = -I../BaseHdr -Iinclude -Iinclude/x64 -I$(GNU_EFI_DIR)/inc
