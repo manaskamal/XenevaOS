@@ -50,7 +50,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'" Label="Configuration">
@@ -109,6 +109,7 @@
     <TargetName>BOOTx64</TargetName>
     <TargetExt>.efi</TargetExt>
     <GenerateManifest>false</GenerateManifest>
+    <OutDir>..\Build\EFI\BOOT\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
     <LinkIncremental>true</LinkIncremental>
@@ -159,14 +160,15 @@
       <MinimalRebuild>true</MinimalRebuild>
       <ExceptionHandling>false</ExceptionHandling>
       <BasicRuntimeChecks />
-      <RuntimeLibrary />
+      <RuntimeLibrary>
+      </RuntimeLibrary>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
       <AdditionalIncludeDirectories>..\BaseHdr;$(ProjectDir)include;$(ProjectDir)include\AArch64;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <IgnoreStandardIncludePath>true</IgnoreStandardIncludePath>
-      <LanguageStandard_C>Default</LanguageStandard_C>
-      <LanguageStandard>Default</LanguageStandard>
+      <IgnoreStandardIncludePath>false</IgnoreStandardIncludePath>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>EFI Application</SubSystem>
@@ -178,7 +180,7 @@
       <GenerateMapFile>true</GenerateMapFile>
       <LargeAddressAware>true</LargeAddressAware>
       <OptimizeReferences>false</OptimizeReferences>
-      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+      <LinkTimeCodeGeneration>Default</LinkTimeCodeGeneration>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <FixedBaseAddress>false</FixedBaseAddress>
       <DataExecutionPrevention>false</DataExecutionPrevention>
@@ -264,6 +266,7 @@
   <ItemGroup>
     <ClCompile Include="clib.cpp" />
     <ClCompile Include="file.cpp" />
+    <ClCompile Include="guid.cpp" />
     <ClCompile Include="mem.cpp" />
     <ClCompile Include="paging.cpp" />
     <ClCompile Include="pe.cpp" />
