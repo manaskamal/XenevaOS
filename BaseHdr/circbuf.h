@@ -31,6 +31,7 @@
 #define __CIRC_BUF_H__
 
 #include <stdint.h>
+#include <stddef.h>
 
 
 typedef struct _circ_buf_ {

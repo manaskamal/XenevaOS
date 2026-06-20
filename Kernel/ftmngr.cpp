@@ -124,6 +124,7 @@ AuVFSNode* FontManagerOpenFontFile(char* filename) {
 	AuVFSNode* font = AuVFSOpen(filename);
 	if (!font)
 		return NULL;
+	return font;
 }
 
 /*

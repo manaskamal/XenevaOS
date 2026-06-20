@@ -30,21 +30,22 @@
 
 
 #include <stdint.h>
+#include <stddef.h>
 
 extern "C" int _fltused = 1;
 
-void* __cdecl ::operator new(size_t size){
+void* operator new(size_t size){
 	return 0; // malloc(size);
 }
 
-void* __cdecl ::operator new[](size_t size) {
+void* operator new[](size_t size) {
 	return 0; // malloc(size);
 }
 
-void __cdecl ::operator delete (void* p) {
+void operator delete (void* p) {
 	//free(p);
 }
 
-void __cdecl ::operator delete(void* p, uint64_t s) {
+void operator delete(void* p, uint64_t s) {
 }
 

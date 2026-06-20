@@ -304,7 +304,7 @@ void AuTextOut(const char* format, ...) {
 			}
 			else if (*format == 'c')
 			{
-				char c = va_arg(args, char);
+				char c = (char)va_arg(args, int);
 				//char buffer[sizeof(size_t) * 8 + 1];
 				//sztoa(c, buffer, 10);
 				//puts(buffer);

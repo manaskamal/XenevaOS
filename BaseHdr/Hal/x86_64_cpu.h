@@ -97,7 +97,7 @@ typedef struct _regs_ctx_ {
 }x86_64_cpu_regs_t;
 #pragma pack(pop)
 
-
+#pragma pack(push,1)
 struct interrupt_stack_frame {
 	stack_frame* baseptr;
 	size_t  error;

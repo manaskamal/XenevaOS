@@ -12,7 +12,7 @@ INCLUDES = -I../BaseHdr -I. -I../KernelAA64
 # Note: Kernel requires strict higher-half memory flags and no-red-zone
 CXXFLAGS = -Wno-error=pragmas -mno-red-zone -mcmodel=large -fPIE \
            -Wall -Wextra -funsigned-char -fshort-wchar -fno-strict-aliasing \
-           -ffreestanding -fno-stack-protector -fno-stack-check -std=c++17 $(INCLUDES)
+           -ffreestanding -fno-stack-protector -fno-stack-check -std=c++17 -DARCH_X64 $(INCLUDES)
 
 # Find all C++ source files in the Kernel directory
 CPP_SRCS = $(wildcard *.cpp) $(wildcard x64/*.cpp)

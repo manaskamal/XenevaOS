@@ -33,10 +33,46 @@
 #pragma once
 
 #include <stdint.h>
+#include <stddef.h>
+
+#ifndef BOOL
+typedef bool BOOL;
+#endif
+
+#ifdef __cplusplus
+template <class T, class U> static inline T raw_offset(U p1, const intptr_t offset)
+{
+    return (T)((size_t)p1 + offset);
+}
+
+template <class T, class U> static inline T mem_after(U* p1)
+{
+    return (T)(&p1[1]);
+}
+
+template <class T, class U> static inline intptr_t raw_diff(T* p1, U* p2)
+{
+    return (intptr_t)p1 - (intptr_t)p2;
+}
+#endif
+
+#ifndef DIV_ROUND_UP
+#define DIV_ROUND_UP(x, y) \
+	((x + y - 1) / y)
+#endif
+
+#ifndef ALIGN_UP
+#define ALIGN_UP(x, y) (DIV_ROUND_UP(x,y)*y)
+#endif
 
 
+#ifdef __GNUC__
+#define AU_EXPORT  __attribute__((visibility("default")))
+#define AU_IMPORT
+#else
 #define AU_EXPORT  __declspec(dllexport)
 #define AU_IMPORT  __declspec(dllimport)
+#endif
 
 #ifdef __AU_KERNEL__
 #define AU_FUNC AU_EXPORT

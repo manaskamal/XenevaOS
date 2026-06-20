@@ -30,7 +30,8 @@
 #define __STRING_H__
 
 
-#include "stdint.h"
+#include <stddef.h>
+#include <stdint.h>
 #include <aurora.h>
 
 #ifdef __cplusplus

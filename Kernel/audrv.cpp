@@ -202,7 +202,7 @@ AuDriver* AuGetDriverName(uint32_t vendor_id, uint32_t device_id, uint8_t* buffe
 	char* offset = AuGetConfEntry(vendor_id, device_id, buffer, entryoff);
 
 	if (offset == NULL)
-		return;
+		return NULL;
 	char *p = strchr(offset, ']');
 	if (p)
 		p++;
@@ -331,7 +331,7 @@ void AuDrvMngrInitialize(KERNEL_BOOT_INFO *info) {
 	for (int i = 0; i < driver_class_unique_id; i++) {
 		AuDriver *driver = drivers[i];
 		AuDriverLoad(driver->name, driver);
-		driver->entry();
+		driver->entry(driver);
 	}
 
 	kfree(file);
@@ -417,7 +417,7 @@ AU_EXTERN AU_EXPORT void AuBootDriverInitialise(KERNEL_BOOT_INFO* info) {
 	/* Serially call each startup entries of each driver */
 	for (int i = 0; i < driver_boot_unique_id; i++) {
 		AuDriver* driver = bootDrivers[i];
-		driver->entry();
+		driver->entry(driver);
 	}
 }
 
