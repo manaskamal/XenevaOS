@@ -57,7 +57,7 @@ typedef struct _meta_data_ {
 
 	AU_EXTERN AU_EXPORT void     *kmalloc(unsigned int);				//< The standard function.
 	AU_EXTERN AU_EXPORT void     *krealloc(void *, unsigned int);		//< The standard function.
-	AU_EXTERN AU_EXPORT void     *kcalloc(unsigned long long, unsigned long long);		//< The standard function.
+	AU_EXTERN AU_EXPORT void     *kcalloc(size_t, size_t);		//< The standard function.
 	AU_EXTERN AU_EXPORT void      kfree(void *);					//< The standard function.
 	extern void kheap_debug();
 	extern void kmalloc_debug_on(bool bit);

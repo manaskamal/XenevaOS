@@ -34,7 +34,7 @@
 
 #include <Board/imx8mp/imx8mp_uart.h>
 
-#ifdef __TARGET_BOARD_IMX8MP_VERDIN_DAHLIA__ || (__TARGET_BOARD_IMX8MP_SOC__)
+#if defined(__TARGET_BOARD_IMX8MP_VERDIN_DAHLIA__) || defined(__TARGET_BOARD_IMX8MP_SOC__)
 
 
 /* GIC related informations*/
