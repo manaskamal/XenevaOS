@@ -35,7 +35,7 @@
 #include <Mm/kmalloc.h>
 #include <string.h>
 #include <_null.h>
-#include <Net/AuNet.h>
+#include <Net/aunet.h>
 #include <list.h>
 #include <Drivers/uart.h>
 #include <aucon.h>
