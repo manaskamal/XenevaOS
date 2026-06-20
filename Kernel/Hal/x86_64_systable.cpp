@@ -43,7 +43,7 @@
 #include <Fs/tty.h>
 #include <Fs/pipe.h>
 #include <Mm/mmap.h>
-#include <net/socket.h>
+#include <Net/socket.h>
 #include <Fs/vdisk.h>
 
 /* Syscall function format */

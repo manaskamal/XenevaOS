@@ -32,7 +32,7 @@
 
 #include <stdint.h>
 #include <aurora.h>
-#include <fs/vfs.h>
+#include <Fs/vfs.h>
 
 
 #define ETHERNET_TYPE_IPV4  0x0800

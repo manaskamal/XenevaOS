@@ -29,12 +29,12 @@
 *
 **/
 
-#include <net/socket.h>
-#include <net/tcp.h>
-#include <net/icmp.h>
-#include <net/ipv4.h>
-#include <net/udp.h>
-#include <net/aunet.h>
+#include <Net/socket.h>
+#include <Net/tcp.h>
+#include <Net/icmp.h>
+#include <Net/ipv4.h>
+#include <Net/udp.h>
+#include <Net/aunet.h>
 #include <Net/ethernet.h>
 #include <Net/arp.h>
 #include <Net/udp.h>

@@ -31,7 +31,7 @@
 #define __SOCKET_H__
 
 #include <stdint.h>
-#include <fs/vfs.h>
+#include <Fs/vfs.h>
 #include <stack.h>
 #include <list.h>
 

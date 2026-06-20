@@ -27,8 +27,8 @@
 *
 **/
 
-#include <net/socket.h>
-#include <net/aunet.h>
+#include <Net/socket.h>
+#include <Net/aunet.h>
 #include <Mm/kmalloc.h>
 #include <string.h>
 #include <Hal/x86_64_sched.h>
@@ -36,7 +36,7 @@
 #include <stack.h>
 #include <Hal/serial.h>
 #include <Hal/x86_64_hal.h>
-#include <net/tcp.h>
+#include <Net/tcp.h>
 #include <Net/ipv4.h>
 #include <stdio.h>
 #include <aucon.h>

@@ -27,7 +27,7 @@
 *
 **/
 
-#include <net/socket.h>
+#include <Net/socket.h>
 #include <Hal/AA64/aa64lowlevel.h>
 #include <Hal/AA64/sched.h>
 #include <Hal/serial.h>

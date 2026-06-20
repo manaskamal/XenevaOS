@@ -31,9 +31,9 @@
 #include <Hal/x86_64_cpu.h>
 #include <Hal/x86_64_hal.h>
 #include <Hal/x86_64_signal.h>
-#include <fs/vfs.h>
+#include <Fs/vfs.h>
 #include <Mm/kmalloc.h>
-#include <fs/dev/devfs.h>
+#include <Fs/dev/devfs.h>
 #include <string.h>
 #include <Hal/serial.h>
 #include <aucon.h>
