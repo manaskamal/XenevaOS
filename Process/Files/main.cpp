@@ -51,6 +51,8 @@
 #include "partition.h"
 #include <widgets/base.h>
 #include <ctype.h>
+#include <widgets/scrollbar.h>
+#include <widgets/listview.h>
 
 ChitralekhaApp *app;
 ChWindow* mainWin;
@@ -565,10 +567,41 @@ int main(int argc, char* argv[]){
 	lv = ChCreateListView(170, 100, mainWin->info->width - (170+2), mainWin->info->height - 120);
 	ChListViewSetScrollpane(lv, sp);
 
+	//ChScrollBar* sb = ChCreateScrollBar(mainWin->info->width - 16, 26, 16, mainWin->info->height - 26, SCROLLBAR_ORIENTATION_VERTICAL);
+	//ChScrollBarSetRange(sb, 0, 800, mainWin->info->height - 26);
+	//ChScrollBar* sb1 = ChCreateScrollBar(0, mainWin->info->height - 16, mainWin->info->width, 16, SCROLLBAR_ORIENTATION_HORIZONTAL);
+	//ChScrollBarSetRange(sb1, 0, 800, mainWin->info->width);
+	ListView* lv1 = ChListViewCreate(170, 100, mainWin->info->width - (170 + 2), mainWin->info->height - 120,24);
+	ListViewAddColumn(lv1, "Name", 200, 60);
+	ListViewAddColumn(lv1, "Size", 100, 50);
+	ListViewAddColumn(lv1, "Type", 100, 50);
+	ListViewAddColumn(lv1, "Modified", 220, 80);
+	ListViewAddColumn(lv1, "Access", 100, 50);
+
+	const char* row1[] = { "kernel.bin", "2.1 MB", "Binary", "2026-06-18 14:02", "root"};
+	ListItem* l1 = ListViewAddItem(lv1, row1, 5, NULL);
+
+	const char* row2[] = { "doom.exe", "880 KB", "exec", "2026-06-17 09:41", "user" };
+	ListItem* l2 = ListViewAddItem(lv1, row2, 5, NULL);
+
+	const char* row3[] = { "xeldr.exe", "78 KB", "exec", "2026-06-17 09:41", "root" };
+	ListItem* l3 = ListViewAddItem(lv1, row3, 5, NULL);
+
+	const char* row4[] = { "audrv.cnf", "1 KB", "config", "2026-06-17 09:41", "user" };
+	ListItem* l4 = ListViewAddItem(lv1, row4, 5, NULL);
+
+	const char* row5[] = { "virtblk.dll", "55 KB", "system", "2026-06-17 09:41", "root" };
+	ListItem* l5 = ListViewAddItem(lv1, row5, 5, NULL);
+
+	const char* row6[] = { "virtnet.dll", "67 KB", "system", "2026-06-17 09:41", "root" };
+	ListItem* l6 = ListViewAddItem(lv1, row6, 5, NULL);
+
+	
 
 	ChWindowAddWidget(mainWin, (ChWidget*)mb);
-	ChWindowAddWidget(mainWin, (ChWidget*)lv);
-	ChWindowAddWidget(mainWin, (ChWidget*)sp);
+	//ChWindowAddWidget(mainWin, (ChWidget*)lv);
+	//ChWindowAddWidget(mainWin, (ChWidget*)sp);
+	ChWindowAddWidget(mainWin, (ChWidget*)lv1);
 
 	FileManagerPartitionList* partitionList = FileManagerCreatePartitionList(10, 100, mainWin->info->width - (20 + (mainWin->info->width - 170)),
 		mainWin->info->height - 120);
@@ -590,6 +623,7 @@ int main(int argc, char* argv[]){
 	exeico = ChCreateIcon();
 	ChIconOpen(exeico, "/icons/exe.bmp");
 	ChIconRead(exeico);
+	ListViewSetItemIcon(lv1, 1, exeico, exeico->image.width, exeico->image.height);
 
 	imgico = ChCreateIcon();
 	ChIconOpen(imgico, "/icons/img.bmp");
@@ -598,11 +632,21 @@ int main(int argc, char* argv[]){
 	dllico = ChCreateIcon();
 	ChIconOpen(dllico, "/icons/dll.bmp");
 	ChIconRead(dllico);
+	ListViewSetItemIcon(lv1,4,dllico,dllico->image.width, dllico->image.height);
+	ListViewSetItemIcon(lv1, 5, dllico, dllico->image.width, dllico->image.height);
+
 
 	ChIcon* drive = ChCreateIcon();
 	ChIconOpen(drive, "/icons/drive.bmp");
 	ChIconRead(drive);
 
+
+	for (int i = 0; i < 20; i++) {
+		const char* row7[] = { "virus.dll", "67 KB", "system", "2026-06-17 09:41", "root" };
+		ListItem* l7 = ListViewAddItem(lv1, row7, 5, NULL);
+		int index = 6 + i;
+		ListViewSetItemIcon(lv1, index, dllico, dllico->image.width, dllico->image.height);
+	}
 	
 	_KePrint("refreshing file view \r\n");
 	RefreshFileView(dirfd, lv);

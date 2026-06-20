@@ -61,6 +61,15 @@
     <ClInclude Include="stb_image_resize.h" />
     <ClInclude Include="nanosvg.h" />
     <ClInclude Include="nanosvgrast.h" />
+    <ClInclude Include="widgets\listview.h">
+      <Filter>widgets</Filter>
+    </ClInclude>
+    <ClInclude Include="widgets\scrollbar.h">
+      <Filter>widgets</Filter>
+    </ClInclude>
+    <ClInclude Include="widgets\gridview.h">
+      <Filter>widgets</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="chitralekha.cpp" />
@@ -141,6 +150,15 @@
     </ClCompile>
     <ClCompile Include="widgets\defaulttextbox.cpp">
       <Filter>widgets\styles</Filter>
+    </ClCompile>
+    <ClCompile Include="widgets\scrollbar.cpp">
+      <Filter>widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="widgets\listview.cpp">
+      <Filter>widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="widgets\gridview.cpp">
+      <Filter>widgets</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

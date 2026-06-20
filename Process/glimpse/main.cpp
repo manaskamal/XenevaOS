@@ -37,6 +37,8 @@
 #include <widgets\base.h>
 #include <widgets\button.h>
 #include <widgets\window.h>
+#include <widgets/icon.h>
+#include <widgets/gridview.h>
 #include <string.h>
 #include <stdlib.h>
 #include "glimpse.h"
@@ -66,7 +68,11 @@ void WindowHandleMessage(PostEvent *e) {
 	}
 }
 
-
+int _baseline_y(int topy, int h) {
+	int ascent = (h * 4) / 5;
+	if (ascent > h) ascent = h;
+	return topy + ascent;
+}
 
 /*
 * main -- main entry
@@ -84,38 +90,51 @@ int main(int argc, char* argv[]){
 		glbl->outlineColor = BLACK;
 	}
 
-	/* design grid layout */
-	glimp = _Glimpse_create_glimbox(10, 50, mainWin->info->width - 20, mainWin->info->height - 70);
+	ChIcon* ico = ChCreateIcon();
+	ChIconOpen(ico, "/dthumb.bmp");
+	ChIconRead(ico);
+
+	ChIcon* ico1 = ChCreateIcon();
+	ChIconOpen(ico1, "/thumb1.bmp");
+	ChIconRead(ico1);
+
+	ChIcon* ico2 = ChCreateIcon();
+	ChIconOpen(ico2, "/thumb2.bmp");
+	ChIconRead(ico2);
+
+	ChIcon* ico3 = ChCreateIcon();
+	ChIconOpen(ico3, "/thumb3.bmp");
+	ChIconRead(ico3);
+
+
+	ChGridView* gv = ChGridViewCreate(10, 50, 780 - 20, 500 - 50, 4, 120, 140, 8);
+	gv->color_bg = mainWin->color;
+	gv->color_label_text = LIGHTBLACK;
+	gv->color_hover_bg = LIGHTSILVER;
+
 	
-	/** HACKY way, for now let's only display 5 images, later on i'll add auto-scanning */
-	thumbnail_t* thum1 = _Glimpse_create_thumbnail(0, 0, THUMB_W, THUMB_H);
-	_Glimpse_add_thumbnail(glimp, thum1);
+	ChGridAddThumbnail(gv, ico, "dawki", NULL);
 
-	thumbnail_t* thum2 = _Glimpse_create_thumbnail(0, 0, THUMB_W, THUMB_H);
-	_Glimpse_add_thumbnail(glimp, thum2);
+	ChGridAddThumbnail(gv, ico1, "founder", NULL);
+	ChGridAddThumbnail(gv, ico2, "assam-rhino", NULL);
+	ChGridAddThumbnail(gv, ico3, "mountain", NULL);
+	ChGridAddThumbnail(gv, ico, "dawki-copy", NULL);
+	ChGridAddThumbnail(gv, ico3, "mountain-cpy", NULL);
+	
+	char buffer[32];
+	for (int i = 0; i < 20; i++) {
+		snprintf(buffer, sizeof(buffer), "image%02d", i);
+		ChGridAddThumbnail(gv, ico2, buffer, NULL);
+	}
 
-	//thumbnail_t* thum3 = _Glimpse_create_thumbnail(0, 0, THUMB_W, THUMB_H);
-	//_Glimpse_add_thumbnail(glimp, thum3);
-
-	thumbnail_t* thum4 = _Glimpse_create_thumbnail(0, 0, THUMB_W, THUMB_H);
-	_Glimpse_add_thumbnail(glimp, thum4);
-
-	/* scan /image directory, generate thumbnails, add it to grid layout */
-
-	/* paint the grid layout */
-
+	
+	ChWindowAddWidget(mainWin, (ChWidget*)gv);
 	ChWindowPaint(mainWin);
-
-	_Glimpse_draw_thumb(mainWin->canv, "/wall.jpg", thum1->xloc, thum1->yloc, thum1->width,thum1->height);
-	_Glimpse_draw_thumb(mainWin->canv, "/XE_1_2.jpg",thum2->xloc, thum2->yloc,thum2->width, thum2->height);
-	ChWindowUpdate(mainWin, glimp->xloc, glimp->yloc, glimp->width, glimp->height, 0, 1);
-	//_Glimpse_draw_thumb(mainWin->canv, "/budha.jpg", thum3->xloc, thum3->yloc, thum3->width, thum3->height);
-	_Glimpse_draw_thumb(mainWin->canv, "/ayshman.jpg", thum4->xloc, thum4->yloc, thum4->width, thum4->height);
-	ChWindowUpdate(mainWin, glimp->xloc, glimp->yloc, glimp->width, glimp->height, 0, 1);
-	//_Glimpse_draw_thumb(mainWin->canv, "/dawki.jpg", thum5->xloc, thum5->yloc, thum5->width, thum5->height);
-	//_Glimpse_draw_thumb(mainWin->canv, "/boat.jpg", thum6->xloc, thum6->yloc, thum6->width, thum6->height);
-	//ChWindowUpdate(mainWin,glimp->xloc,glimp->yloc,glimp->width,glimp->height, 0, 1);
 	
+	ChFontSetSize(mainWin->app->baseFont, 23);
+	ChFontDrawText(mainWin->canv, mainWin->app->baseFont, "Photos", 20, _baseline_y(26 + 2, 24), 20, LIGHTBLACK);
+	ChWindowUpdate(mainWin, 10, 26, 100,25, 0, 1);
+
 	ChWindowBroadcastIcon(app, "/icons/glim.bmp");
 	PostEvent e;
 	memset(&e, 0, sizeof(PostEvent));
