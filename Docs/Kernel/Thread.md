@@ -1,4 +1,7 @@
 # Threading in XenevaOS
-In Xeneva, whole multitasking is built on concept of threads. Xeneva doesn't know what is _process_ or _user application_ instead it only cares about thread which is currently using the cpu resource. In simple language, Thread is a smallest unit of execution in XenevaOS. Entire multi-tasking concept uses threads to do various task. The scheduler is the heart of XenevaOS and its multi-tasking feature. The scheduler is responsible for arranging and executing next threads after previous threads. It does so by creating, blocking-and-unblocking threads (_a.k.a synchronization_) and terminating unwanted threads. <br>
-Thread holds a special structure which stores the current cpu state, stack pointer, memory informations, ..etc. <br>
+
+In XenevaOS, multitasking is entirely built on the concept of threads. XenevaOS does not identify processes or user applications directly; instead, it only schedules and executes individual threads using CPU resources. In simple terms, a thread is the smallest unit of execution in XenevaOS. The scheduler is the heart of XenevaOS and is responsible for managing threads, handling creation, blocking/unblocking (synchronization), context switching, and terminating threads when required.
+
+Each thread is defined by a structure that stores its current CPU registers/state, stack pointer, memory information, and scheduling state.
+
 _coming soon_...
