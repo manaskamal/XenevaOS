@@ -22,7 +22,7 @@ INCLUDES = -I../BaseHdr -I../Boot/include -I../Boot/include/AArch64 -I$(GNU_EFI_
 CXXFLAGS = -Wno-error=pragmas -fPIE \
 		   -Wall -Wextra -funsigned-char -fshort-wchar \
 		   -fno-strict-aliasing -ffreestanding -fno-stack-protector -fno-stack-check \
-		   -fno-merge-all-constants -std=c++17 -DGNU_EFI_USE_MS_ABI -D__TARGET_BOARD_RPI3__ $(INCLUDES)
+		   -fno-merge-all-constants -std=c++17 -DGNU_EFI_USE_MS_ABI -D__TARGET_BOARD_QEMU_VIRT__ $(INCLUDES)
 
 # GNU-EFI link setup
 LDSCRIPT = ${GNU_EFI_DIR}/gnuefi/elf_aarch64_efi.lds
@@ -50,13 +50,13 @@ all: $(EFI_OUTPUT)
 
 # Link aarch64 EFI binary
 $(SO_OUTPUT): $(CRT0) $(OBJS)
-	$(LD) -nostdlib --warn-common --no-undefined --build-id=sha1 -z noexecstack \
+	$(LD) -nostdlib --warn-common --no-undefined --build-id=sha1 -z noexecstack -z max-page-size=4096 \
 	-shared -Bsymbolic $(LIBDIRS) -T$(LDSCRIPT) $(CRT0) $(OBJS) -o $@ $(LIBS)
 
 $(EFI_OUTPUT): $(SO_OUTPUT)
 	@mkdir -p $(dir $@)
-	$(OBJCOPY) -j .text -j .sdata -j .data -j .rodata -j .dynamic -j .dynsym -j .rel -j .rela \
-			   -j .rel.* -j .rela.* \
+	$(OBJCOPY) -j .text -j .sdata -j .data -j .dynamic -j .rodata -j .rel -j .rela \
+			   -j .rel.* -j .rela.* -j .rel* -j .rela* -j .areloc \
 	           -j .reloc --target=efi-app-aarch64 --subsystem=10 $< $@
 
 # Compile C++ source files

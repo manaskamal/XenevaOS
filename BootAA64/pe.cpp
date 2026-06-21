@@ -76,10 +76,10 @@ void XEPELoadImage(void* filebuff) {
 	XEUARTPrint("Copied first 4KiB \r\n");
 	
 	for (size_t i = 0; i < ntHeaders->FileHeader.NumberOfSections; ++i) {
-		CHAR16 buf[9];
+		//CHAR16 buf[9];
 		//copy_mem(buf, sectionHeader[i].Name, 8);
-		ASCIIToChar16(sectionHeader[i].Name,(wchar_t*)buf);
-		buf[8] = 0;
+		//ASCIIToChar16(sectionHeader[i].Name,(wchar_t*)buf);
+		//buf[8] = 0;
 		size_t load_addr = ImageBase + sectionHeader[i].VirtualAddress;
 		void* sect_addr = (void*)load_addr;
 		

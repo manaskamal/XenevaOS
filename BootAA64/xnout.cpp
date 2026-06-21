@@ -86,7 +86,7 @@ void XEPutChar(const int ch) {
 	gSystemTable->ConOut->OutputString(gSystemTable->ConOut, text);
 }
 
-extern "C" void store_x0_x7(uint64_t * buffer);
+#include <stdarg.h>
 
 /*
  * XEPrintf -- print function that will
@@ -94,11 +94,10 @@ extern "C" void store_x0_x7(uint64_t * buffer);
  * @param fmt -- format to print
  */
 int XEPrintf(wchar_t* fmt, ...) {
-	uint64_t buffer[7];
-	store_x0_x7(buffer);
-	va_list vl = (va_list)buffer;//((uint8_t*)&fmt + sizeof(size_t*));
+	va_list vl;
+	va_start(vl, fmt);
 
-	unsigned short out[1024];
+	unsigned short out[256];
 	int o = 0;
 	int c, sign, width, precision, lmodifier;
 	unsigned char ljust, alt, lzeroes;
@@ -380,14 +379,8 @@ void XEGuiPrint(const char* format, ...) {
 		XEUARTPrint(format);
 		return;
 	}
-	/* Hacky, printf implementation, it doesn't automatically
-	 * store the registered in stack, rather in a shadow area
-	 * and i don't know how to access those
-	 */
-	uint64_t buffer[7];
-	store_x0_x7(buffer);
-
-	va_list args = (va_list)buffer;
+	va_list args;
+	va_start(args, format);
 	//va_start(args, format);
 	while (*format != '\0') {
 		if (*format == '%') {
