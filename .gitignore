@@ -20,3 +20,8 @@ KernelAA64/*.exe
 KernelAA64/*.log
 KernelAA64/obj/
 fat.img
+initrd2.img
+qemu.pid
+dump.s
+*.s
+*.so
