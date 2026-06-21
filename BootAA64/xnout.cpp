@@ -146,7 +146,7 @@ int XEPrintf(wchar_t* fmt, ...) {
 			}
 		}
 		else if (c == '*') {
-			width = *(int*)vl; vl += sizeof(int);
+			width = va_arg(vl, int);
 			if (width < 0) {
 				ljust = TRUE;
 				lzeroes = FALSE;
@@ -162,8 +162,7 @@ int XEPrintf(wchar_t* fmt, ...) {
 				gSystemTable->ConOut->OutputString(gSystemTable->ConOut, out);
 				o = 0;
 			}
-			/**uint32 attr = *(unsigned long*)vl;
-			vl += sizeof(unsigned long);**/
+			/**uint32 attr = va_arg(vl, unsigned long);**/
 			XESetTextAttribute(0x000000F0, 0x0000000F); //attr &
 			continue;
 		}
@@ -192,7 +191,7 @@ int XEPrintf(wchar_t* fmt, ...) {
 				}
 			}
 			else if (c == '*') {
-				precision = *(int*)vl; vl += sizeof(int);
+				precision = va_arg(vl, int);
 				if ((c = *fmt++) == '\0')
 					return -1;
 			}
@@ -219,7 +218,7 @@ int XEPrintf(wchar_t* fmt, ...) {
 			return -1;
 
 		if (c == 'c') {
-			int ch = (uint8_t) * (int*)vl; vl += sizeof(int);
+			int ch = (uint8_t)va_arg(vl, int);
 			if (!ljust)
 				while (width > 1) {
 					out[o++] = ' ';
@@ -236,7 +235,7 @@ int XEPrintf(wchar_t* fmt, ...) {
 		}
 		else if (c == 's') {
 			int len, i;
-			wchar_t* s = *(wchar_t**)vl; vl += sizeof(wchar_t*);
+			wchar_t* s = va_arg(vl, wchar_t*);
 
 			if (precision < 0)
 				len = wstrlen(s);
@@ -267,7 +266,7 @@ int XEPrintf(wchar_t* fmt, ...) {
 			continue;
 		}
 		else {
-			unsigned v = *(unsigned*)vl, tmp;
+			unsigned v = va_arg(vl, unsigned), tmp;
 			char s[11];
 			char* p = s + sizeof(s);
 			unsigned base = (c == 'p') ? 16 : 10;
@@ -275,7 +274,6 @@ int XEPrintf(wchar_t* fmt, ...) {
 			char* hexpfx = (char*)NULL;
 			int dcnt;
 			int len;
-			vl += sizeof(unsigned);
 
 			if (c == 'o')
 				base = 8;
@@ -405,8 +403,8 @@ void XEGuiPrint(const char* format, ...) {
 			}
 			else if (*format == 'c') {
 
-				char c = va_arg(args, char);
-				XEGraphicsPutC(c);
+				int c = va_arg(args, int);
+				XEGraphicsPutC((char)c);
 			}
 			else if (*format == 'x') {
 				size_t x = va_arg(args, size_t);
