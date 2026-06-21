@@ -28,6 +28,7 @@
 **/
 
 #include "video.h"
+#include <aurora.h>
 
 FRAMEBUFFER_INFORMATION fbinfo;
 size_t xpos;

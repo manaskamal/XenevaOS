@@ -28,6 +28,7 @@
 **/
 
 #include "pe.h"
+#include <aurora.h>
 #include "clib.h"
 #include "physm.h"
 #include "xnout.h"

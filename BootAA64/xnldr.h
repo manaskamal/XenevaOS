@@ -34,6 +34,7 @@
 
 #include <stdint.h>
 #include <Uefi.h>
+#include <stddef.h>
 
 #define SIZE_MAX 0xFFFFFFFF
 

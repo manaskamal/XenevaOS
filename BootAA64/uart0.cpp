@@ -58,7 +58,7 @@ void XEUartInitialize() {
 void XEUartPutc(char c) {
 	if (_is_uart_initialized != 1)
 		return;
-#ifdef __TARGET_BOARD_IMX8MP_VERDIN_DAHLIA__ || (__TARGET_BOARD_IMX8MP_SOC__)
+#if defined(__TARGET_BOARD_IMX8MP_VERDIN_DAHLIA__) || defined(__TARGET_BOARD_IMX8MP_SOC__)
 	imx8mp_uart_putc(c);
 #elif __TARGET_BOARD_RPI3__
 	char* uart0 = (char*)UART_BASE;

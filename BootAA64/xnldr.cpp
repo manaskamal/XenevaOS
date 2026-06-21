@@ -334,7 +334,7 @@ extern void XEPagingInit2();
  * @param ImageHandle -- System parameter
  * @param SystemTable -- System parameter
  */
-EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
+extern "C" EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
 //	prepare_el2_exit_phase1();
 //	prepare_el2_exit_phase2();
 //	XEUartInitialize();
