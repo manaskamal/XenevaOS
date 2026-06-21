@@ -171,7 +171,7 @@ void CalculatorProcess(CalculatorDisplay* calc) {
 	int num2 = atoi(calc->inputnum);
 	calc->num2 = num2;
 	int result = 0;
-	if (calc->num1 > 0) {
+	if (calc->operator_ != 0) {
 		int num1 = calc->num1;
 		switch (calc->operator_) {
 		case CALC_OPERATOR_ADD:
@@ -226,9 +226,9 @@ void CalculatorProcess(CalculatorDisplay* calc) {
 void CalcAddDigit(CalculatorDisplay* disp, int number){
 	if (number > 9)
 		return;
-	char num[1];
+	char num[16];
 	itoa_s(number, 10, num);
-	if (disp->inputidx == 1024)
+	if (disp->inputidx >= 1023)
 		return;
 	disp->inputnum[disp->inputidx] = num[0];
 	disp->inputidx++;
