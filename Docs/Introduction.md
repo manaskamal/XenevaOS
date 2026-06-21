@@ -23,7 +23,8 @@ This documentation will guide you through all aspects of XenevaOS and how it wor
 
 ## Welcome to XenevaOS -
 __Build the project__:
-- [Build instructions](BuildInstructions.md)
+- [Build instructions (Windows)](BuildInstructions.md)
+- [Build instructions for Linux / GCC](BuildInstructions(Linux).md)
 - [QEMU VHD Automation](QemuAutomation.md)
 - [Running XenevaOS](VMSetup.md)
 - [Build instructions for ARM64](BuildInstructions(ARM64).md)

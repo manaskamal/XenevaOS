@@ -79,7 +79,8 @@ _And many more coming soon_
 
 # Building the project
 
-The project is build purely on Windows Environment. Please Visit [Build Instructions page ](Docs/BuildInstructions.md) for more information
+The project was originally built purely on a Windows Environment. Please visit [Build Instructions page (Windows)](Docs/BuildInstructions.md) for legacy information.
+We are actively porting the project to Linux using GCC. For the new Linux GCC build instructions, please visit [Linux Build Instructions](Docs/BuildInstructions(Linux).md).
 
 # Purpose and Goals
 While writing an Operating System from scratch is a very fun and knowledgeable journey, at the same time it is a deeply challenging one. The project was not started with a specific goal or purpose in mind; rather, it began as a passionate solo developer project that aims to learn and address what existing Operating Systems lack. As the project grew over time, it became necessary to have a clear purpose and goal. Even though it once was a solo development project, XenevaOS has now evolved from a one-person effort to a collaborative team with a shared interest. The strategies and execution of the project are planned and carried out carefully with a deliberate intention.

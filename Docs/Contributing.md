@@ -4,7 +4,9 @@ Thank you for your interest in contributing to XenevaOS!
 
 XenevaOS is a modern, lightweight operating system that focuses on performance, multimedia capabilities, and synchronization with current technologies. This guide outlines the contribution process and best practices to help maintain the quality and stability of the project.
 ## Getting Started
-XenevaOS uses Microsoft Visual Studio as development platform, and uses Windows environment. [You can click here for Build Instructions](BuildInstructions.md), which highlights all required steps to setting up the environment.
+XenevaOS historically used Microsoft Visual Studio as the primary development platform on Windows. However, the project is actively being ported to Linux using the GCC toolchain. 
+- For Windows/MSVC: [You can click here for Build Instructions (Windows)](BuildInstructions.md).
+- For Linux/GCC: [You can click here for Build Instructions (Linux)](BuildInstructions(Linux).md).
 
 ## Types of Contributions
 
@@ -22,9 +24,9 @@ XenevaOS project follows good coding style to maintain consistency, readability,
 
 - Use _'PascalCase'_ for function naming and Structs. 
 - If your contribution is for Kernel, use PascalCase for function naming with the prefix __'Au'__, For example - ```AuPmmngrAlloc```
-- Use _'snake_case'_  for variable naming 
-- Use __*lowercase*__ for file names and __*PascalCase*__ 
-for folder names.
+- Use _'snake_case'_ or _'PascalCase'_ for variable naming.
+- Use __*lowercase*__ for C/C++ source and header files, and __*PascalCase*__ for folder names.
+- Use __*PascalCase*__ for documentation (`.md`) files.
 - Keep functions modular and documented with comments
 
 ### *Bug Reports & Feature Requests*
