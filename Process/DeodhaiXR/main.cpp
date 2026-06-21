@@ -891,7 +891,7 @@ int main(int argc, char* argv[]){
 	DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
 	if (screen_w == 1024 && screen_h == 768) {
 		_KePrint("Drawing wallpaper \r\n");
-		DrawWallpaper(canv, "/batman.jpg");
+		DrawWallpaper(canv, "/mtn.jpg");
 		DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
 	}
 	else if (screen_w == 1920 && screen_h == 1080) {
