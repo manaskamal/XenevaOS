@@ -1,6 +1,6 @@
 ## The XEKernel (_Xeneva Kernel_)
 
-The _Xeneva Kernel_ is the main component of the entire operating system. It follows __Hybrid Kernel Design__, i.e a mixture of _Monolithic Kernel_ and _Microkernel_. The core functionalities (such as _device drivers, file system managements, IPC (Inter-Process Communication), scheduling, and low-level networking_) runs in kernel space. While some services (such as _Display Managements, Network Manager, Audio Services,..etc_) runs in user space.
+The _XenevaOS Kernel_ is the main component of the entire operating system. It follows a __Hybrid Kernel Design__ (a mixture of monolithic and microkernel architectures). The core functionalities (such as _device drivers, filesystem management, IPC (Inter-Process Communication), scheduling, and low-level networking_) run in kernel space, while some services (such as _Display Management, Network Manager, and Audio Services_) run in user space.
 
 ## Core Functionalities
 The core functionalities of the kernel are :
@@ -15,10 +15,10 @@ The core functionalities of the kernel are :
 - System Call (_Service Calls_, in Xeneva's language)
 
 ## Xeneva Kernel Boot Protocol
-The Xeneva boot protocol defines a simple and structured interface between the bootloader and the kernel, where the kernel expects a pointer to a KernelBootInfo structure to be passed as a parameter during boot. From very beginning the Kernel is designed to be booted from UEFI environment in both x86_64 and ARM64 architecture unless traditional non-UEFI boot method is required in ARM64. The structure contains essential system information such as memory layout, framebuffer configuration, hardware-specific data (_like Device Tree Blobs, pointer to ACPI tables_) and pointer to system files required for successfull kernel initialization. By using a well-defined structure, the protocol ensures that the kernel receives all critical information in a consistent format, allowing it to initialize subsystems across various platform.
+The XenevaOS boot protocol defines a simple and structured interface between the bootloader and the kernel, where the kernel expects a pointer to a `KernelBootInfo` structure to be passed as a parameter during boot. From the very beginning, the kernel has been designed to boot from a UEFI environment on both x86_64 and ARM64 architectures (unless a traditional non-UEFI boot method is used on ARM64). The structure contains essential system information such as memory layout, framebuffer configuration, hardware-specific data (_like Device Tree Blobs and pointers to ACPI tables_), and pointers to system files required for successful kernel initialization. By using a well-defined structure, the protocol ensures that the kernel receives all critical information in a consistent format, allowing it to initialize subsystems across various platforms.
 
 ### Technical Details of Xeneva Kernel Boot Protocol
-Before bootloader calls the Kernel Entry Point, it must ensure that Kernel is properly loaded into memory and mapped to ***Kernel Virtual Base Address : which begins from 0xFFFFC00000000000***. Proper stack memory is also required of size 1MiB (0x100000). Kernel expects the KernelBootInfo structure as its first parameter of the Kernel Entry Point. For x86_64 MSVC calling convention, the first parameter goes to register ***rcx*** and for System V AMD64 ABI it goes to ***rdi***.  For ARM64 (_AAPCS64_), the first parameter goes to register ***x0***. This register holds the address of __KernelBootInfo__. Corrupted __KernelBootInfo__ or invalid address will cause the Kernel to behave improperly. 
+Before the bootloader calls the Kernel Entry Point, it must ensure that the kernel is properly loaded into memory and mapped to the ***Kernel Virtual Base Address: `0xFFFFC00000000000`***. A proper stack memory of size 1 MiB (`0x100000`) is also required. The kernel expects the `KernelBootInfo` structure as its first parameter at the Kernel Entry Point. For the x86_64 MSVC calling convention, the first parameter is passed in register ***rcx***, and for the System V AMD64 ABI, it is passed in ***rdi***. For ARM64 (_AAPCS64_), the first parameter is passed in register ***x0***. This register holds the address of the __KernelBootInfo__ structure. A corrupted __KernelBootInfo__ structure or an invalid address will cause the kernel to crash or behave unpredictably. 
 
 ### The KernelBootInfo structure:
 ```
@@ -101,26 +101,26 @@ typedef struct _KERNEL_BOOT_INFO_ {
 
 | Field Name | Type | Description |
 |------------|------|-------------|
-|```boot_type```   | ```int```  | Tells the Kernel from where it's booted, Available values are ```BOOT_UEFI_x64 1```, ```BOOT_UEFI_ARM64 2``` and ```BOOT_LITTLEBOOT_ARM64 3```
-| ```allocated_stack``` | ```void*``` | The Bootloader allocates Physical Memory to load the kernel and it's required runtime data. This field is a stack pointer holding all allocated physical memory addresses, so that Kernel while using the _Kernel Physical Memory Manager_ does reserve these addresses, i.e store in a safe zone.
-| ```reserve_mem_count``` | ```uint64_t``` | It holds the number of pages being allocated by Bootloader for Kernel code and runtime data, i.e the number of physical addresses stored in _allocated_stack_.
+|```boot_type```   | ```int```  | Tells the Kernel from where it's booted. Available values are ```BOOT_UEFI_x64 (1)```, ```BOOT_UEFI_ARM64 (2)``` and ```BOOT_LITTLEBOOT_ARM64 (3)```
+| ```allocated_stack``` | ```void*``` | The Bootloader allocates Physical Memory to load the kernel and its required runtime data. This field is a stack pointer holding all allocated physical memory addresses, so that Kernel, while using the _Kernel Physical Memory Manager_, reserves these addresses (i.e., stores them in a safe zone).
+| ```reserve_mem_count``` | ```uint64_t``` | It holds the number of pages being allocated by Bootloader for Kernel code and runtime data, i.e., the number of physical addresses stored in _allocated_stack_.
 | ```map``` | ```void*``` | Pointer to UEFI memory map. _NOTE: Unused in boot_type ```BOOT_LITTLEBOOT_ARM64```_
 | ```descriptor_size``` | ```uint64_t``` | UEFI memory map descriptor size. _NOTE: Unused in boot_type ```BOOT_LITTLEBOOT_ARM64```_
 | ```mem_map_size``` | ```uint64_t``` | UEFI memory map size. _NOTE: Unused in boot_type ```BOOT_LITTLEBOOT_ARM64```_
-| ```graphics_framebuffer``` | ```uint32_t*```| Pointer to Framebuffer address. If boot_type is ```BOOT_UEFI_x64``` or ```BOOT_UEFI_ARM64``` this field holds the address of GOP's (_Graphics Output Protocol_) framebuffer address. If boot_type is ```BOOT_LITTLEBOOT_ARM64``` this field might be unused, for this the Kernel utilize its Graphics Driver for framebuffer address and if LittleBoot implements Graphics Driver internally, this field is used.
-| ```fb_size``` | ```size_t``` | The total size of framebuffer address, i.e total page occupied. _NOTE: in boot_type ```BOOT_LITTLEBOOT_ARM64``` this might be used if LittleBoot implements Graphics Driver, else unused.
+| ```graphics_framebuffer``` | ```uint32_t*```| Pointer to Framebuffer address. If boot_type is ```BOOT_UEFI_x64``` or ```BOOT_UEFI_ARM64``` this field holds the address of GOP's (_Graphics Output Protocol_) framebuffer address. If boot_type is ```BOOT_LITTLEBOOT_ARM64``` this field might be unused; in this case, the Kernel utilizes its Graphics Driver for the framebuffer address, or if LittleBoot implements the Graphics Driver internally, this field is used.
+| ```fb_size``` | ```size_t``` | The total size of framebuffer address, i.e., total pages occupied. _NOTE: In `BOOT_LITTLEBOOT_ARM64`, this might be used if LittleBoot implements the Graphics Driver, otherwise it is unused._
 | ```X_Resolution``` | ```uint16_t``` | Size of screen in width.
 | ```Y_Resolution``` | ```uint16_t``` | Size of screen in height.
-| ```pixels_per_line```| ```uint16_t```| The number of pixels displayed horizontally in a single row of the screen
+| ```pixels_per_line```| ```uint16_t```| The number of pixels displayed horizontally in a single row of the screen.
 | ```redmask``` | ```uint32_t``` | Tells which bits in 32-bit pixels correspond to red.
 | ```greenmask``` | ```uint32_t```| Tells which bits in 32-bit pixels correspond to green.
 | ```bluemask``` | ```uint32_t``` | Tells which bits in 32-bit pixels correspond to blue.
-| ```resvmask``` | ```uint32_t```| Telss which bits in 32-bit pixels are reserved.
+| ```resvmask``` | ```uint32_t```| Tells which bits in 32-bit pixels are reserved.
 |```acpi_table_pointer```| ```void*```| Pointer to ACPI tables _xsdp_. _NOTE: Unused in boot_type ```BOOT_LITTLEBOOT_ARM64```_
 |```kernel_size``` | `size_t` | Total size of Kernel in bytes
 | ```psf_font_data``` | `uint8_t*` | Pointer to PSF font data start. Used only on boot_type _```BOOT_UEFI_x64```_
-| ```printf_gui``` | _function pointer_ | Formatted text printing function implemented in Bootloader ,used by kernel during early initialization phase. _NOTE: Unused in boot_type ```BOOT_LITTLEBOOT_ARM64```_
-|```driver_entry1 - driver_entry6``` | ```uint8_t*``` | Slots available for using as pointer to Kernel Boot Time drivers. During Kernel early initialization phase, it cannot load the boot time drivers from boot storage because boot storage driver itself is a boot time driver. The bootloader is responsible for loading the boot time drivers and mapping it to Kernel virtual address space. ***Boot time drivers are mapped from based address: 0xFFFFC00000400000***. _NOTE: This field can also be used for _initrd_ like image. If boot_type is ```BOOT_LITTLEBOOT_ARM64``` the driver_entry1 is used as pointer to LittleBootInfo structure.
+| ```printf_gui``` | _function pointer_ | Formatted text printing function implemented in Bootloader, used by kernel during early initialization phase. _NOTE: Unused in boot_type ```BOOT_LITTLEBOOT_ARM64```_
+|```driver_entry1 - driver_entry6``` | ```uint8_t*``` | Slots available for using as pointer to Kernel Boot Time drivers. During Kernel early initialization phase, it cannot load the boot time drivers from boot storage because boot storage driver itself is a boot time driver. The bootloader is responsible for loading the boot time drivers and mapping them to Kernel virtual address space. ***Boot time drivers are mapped from base address: 0xFFFFC00000400000***. _NOTE: This field can also be used for an `initrd`-like image. If `boot_type` is `BOOT_LITTLEBOOT_ARM64`, `driver_entry1` is used as a pointer to the `LittleBootInfo` structure._
 | ```ap_code``` | ```void*``` | Pointer to AP (_Application Processors_) initialization code.
 | ```hid``` | ```uint32_t``` | _Unused_
 | ```uid``` | ```uint32_t``` | _Unused_
