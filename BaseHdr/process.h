@@ -33,6 +33,9 @@
 
 #include <stdint.h>
 #include <Fs\vfs.h>
+#include <Cred/group.h>
+#include <Cred/user.h>
+
 #ifdef ARCH_ARM64
 #include <Hal/AA64/sched.h>
 #endif
@@ -98,13 +101,21 @@ extern "C" {
 
 typedef void(*entry) (void*);
 
+typedef struct _au_proc_cred_ {
+	uint8_t caps;
+	UID_NUM uid;
+	GID_NUM gid;
+	GID_NUM sgid[AURORA_MAX_GROUPS];
+	uint16_t num_sgid;
+}AuProcCredentials;
+
 //#pragma pack(push,1)
 typedef struct _au_proc_ {
 	char name[16];
 	int proc_id;
 	uint8_t state;
 	uint8_t type_flags;
-
+	
 	/* process image related stuff */
 	uint64_t  *cr3;
 	uint64_t _image_size_;
@@ -149,10 +160,15 @@ typedef struct _au_proc_ {
 	size_t proc_heapmem_len;
 	size_t proc_mmap_len;
 
+	/** credentials **/
+	AuProcCredentials creds;
+
 	/* data structure */
 	struct _au_proc_ *next;
 	struct _au_proc_ *prev;
 }AuProcess;
+
+
 //#pragma pack(pop)
 /*
 * AuAddProcess -- adds process to kernel data structure
@@ -297,6 +313,22 @@ extern void AuProcessWaitForTermination(AuProcess *proc, int pid);
 extern AuMutex* AuProcessGetMutex();
 #endif
 
+#ifdef ARCH_ARM64
+/**
+ * @brief AuCreateSubKernelStack -- maps sub kernel stack and return the top
+ * of the stack, it only maps 4KiB of stack
+ * @param pml -- Pointer to page directory
+ * @return kernel stack address
+ */
+extern uint64_t AuCreateSubKernelStack(AuProcess* proc, uint64_t* pml);
+/*
+ * @brief CreateSubUserStack -- creates new user stack
+ * @param proc -- Pointer to process slot
+ * @param cr3 -- pointer to the address space where to
+ * map
+ */
+extern uint64_t* CreateSubUserStack(AuProcess* proc, uint64_t* cr3);
+#endif
 /**
 *  Creates a user mode thread
 *  @param entry -- Entry point address

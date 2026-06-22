@@ -29,11 +29,15 @@
 
 #include <Fs\Dev\devfs.h>
 //#include <Fs\Dev\devinput.h>
+#include <Hal/AA64/aa64cpu.h>
 #include <Mm\kmalloc.h>
 #include <list.h>
 #include <string.h>
 #include <_null.h>
 #include <aucon.h>
+#include <Drivers/uart.h>
+#include <Hal/AA64/aa64lowlevel.h>
+#include <Cred/group.h>
 
 /*
  * AuDeviceFsInitialize -- initialise the device
@@ -111,7 +115,7 @@ int AuDevFSCreateFile(AuVFSNode* fs, char* path, uint8_t mode) {
 	}
 	strcpy(file->filename, pathname);
 	list_add(first_list->childs, file);
-
+	aa64_data_cache_clean_range(first_list, sizeof(list_t));
 	return 1;
 }
 
@@ -162,7 +166,7 @@ int AuDevFSAddFile(AuVFSNode* fs, char* path, AuVFSNode* file) {
 /* For debug purpose */
 void AuDevFSListDir(AuVFSNode* fs, AuVFSNode* dir) {
 	AuVFSContainer* entries = (AuVFSContainer*)dir->device;
-	SeTextOut("Listing Directory -> %s \r\n", dir->filename);
+	UARTDebugOut("Listing Directory -> %s \r\n", dir->filename);
 	for (int i = 0; i < entries->childs->pointer; i++) {
 		AuVFSNode* node_ = (AuVFSNode*)list_get_at(entries->childs, i);
 		char* mode = "";
@@ -172,13 +176,13 @@ void AuDevFSListDir(AuVFSNode* fs, AuVFSNode* dir) {
 			mode = "Directory";
 		else
 			mode = "Unknown";
-		SeTextOut("File ->  %s mode - %s \r\n", node_->filename, mode);
+		UARTDebugOut("File ->  %s mode - %s \r\n", node_->filename, mode);
 	}
 }
 /* for debug purpose */
 void AuDevFSList(AuVFSNode* fs) {
 	AuVFSContainer* entries = (AuVFSContainer*)fs->device;
-	SeTextOut("Listing device fs \r\n");
+	UARTDebugOut("Listing device fs \r\n");
 	for (int i = 0; i < entries->childs->pointer; i++) {
 		AuVFSNode* node_ = (AuVFSNode*)list_get_at(entries->childs, i);
 		char* mode = "";
@@ -190,7 +194,7 @@ void AuDevFSList(AuVFSNode* fs) {
 			mode = "Pipe";
 		else
 			mode = "Unknown";
-		SeTextOut("\%s mode - %s \r\n", node_->filename, mode);
+		UARTDebugOut("\%s mode - %s \r\n", node_->filename, mode);
 		if (node_->flags & FS_FLAG_DIRECTORY)
 			AuDevFSListDir(fs, node_);
 	}
@@ -211,6 +215,7 @@ AuVFSNode* AuDevFSOpen(AuVFSNode* fs, char* path) {
 
 	AuVFSContainer* first_list = entries;
 	AuVFSNode* node_to_ret = NULL;
+	//UARTDebugOut("[aurora]: DevFS opening : %s \r\n", path);
 	while (next) {
 		char pathname[16];
 		int i;
@@ -220,9 +225,12 @@ AuVFSNode* AuDevFSOpen(AuVFSNode* fs, char* path) {
 			pathname[i] = next[i];
 		}
 		pathname[i] = 0;
-
+		//aa64_data_cache_clean_range(&pathname, 16);
+		//AA64SleepUS(600);
+		UARTDebugOut("devfs: open: %s \r\n", pathname);
 		for (int j = 0; j < first_list->childs->pointer; j++) {
 			AuVFSNode* node_ = (AuVFSNode*)list_get_at(first_list->childs, j);
+			//UARTDebugOut("node_->filename : %s \r\n", node_->filename);
 			if (strcmp(node_->filename, pathname) == 0) {
 				if (node_->flags & FS_FLAG_DIRECTORY)
 					first_list = (AuVFSContainer*)node_->device;

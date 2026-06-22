@@ -1,4 +1,6 @@
 /**
+* @file init.c
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2025, Manas Kamal Choudhury
@@ -36,6 +38,8 @@
 #include <Mm/vmmngr.h>
 #include <Mm/kmalloc.h>
 #include <Mm/shm.h>
+#include <Mm/mmfile.h>
+#include <Mm/dma.h>
 #include <_null.h>
 #include <Hal/AA64/gic.h>
 #include <Hal/basicacpi.h>
@@ -54,14 +58,24 @@
 #include <Ipc/postbox.h>
 #include <Board/board.h>
 #include <Board/RPI3bp/rpi3bp.h>
-
+#include <Net/aunet.h>
+#include <Hal/AA64/profile.h>
+#include <Cred/group.h>
+#include <Cred/cred.h>
+#include <Sound/sound.h>
+#include <proctoken.h>
+#include <timer.h>
+#include <Fs/vdisk.h>
+#include <Fs/Fat/Fat.h>
+#include <Fs/Fat/FatFile.h>
+#include <Fs/Fat/FatDir.h>
 
 extern int _fltused = 1;
 static bool _littleboot_used;
 
 
-/*
- * LBUartPutc -- put a character to UART
+/**
+ * @brief LBUartPutc -- put a character to UART
  * @param c -- Character to put
  */
 void AuUartPutc(char c) {
@@ -70,8 +84,8 @@ void AuUartPutc(char c) {
 	*uart0 = c;
 }
 
-/*
- * LBUartPutString -- print a string
+/**
+ * @brief LBUartPutString -- print a string
  * to UART
  * @param s -- String to print
  */
@@ -82,8 +96,8 @@ void AuUartPutString(const char* s) {
 
 
 
-/*
- * AuLittleBootUsed -- check if little boot protocol
+/**
+ * @brief AuLittleBootUsed -- check if little boot protocol
  * is used
  */
 bool AuLittleBootUsed() {
@@ -143,8 +157,8 @@ void AuEntryTest4(uint64_t test) {
 
 KERNEL_BOOT_INFO* bootinfo;
 
-/*
- * AuGetBootInfoStruc -- return kernel boot information
+/**
+ * @brief AuGetBootInfoStruc -- return kernel boot information
  */
 KERNEL_BOOT_INFO* AuGetBootInfoStruc() {
 	return bootinfo;
@@ -152,21 +166,59 @@ KERNEL_BOOT_INFO* AuGetBootInfoStruc() {
 
 
 extern void debugLIBOn();
-/*
- * _AuMain -- the main entry point for kernel
+extern void* dlmalloc(size_t sz);
+extern void dlfree(void* p);
+extern void XPT2046Initialise();
+
+extern void AuPmmngrDebugInfo();
+extern void AuConsoleBypassAuTextOut();
+
+void _AuroraTimerCallback(void* p) {
+	UARTDebugOut("from inside timer++ \r\n");
+}
+
+
+char* _dir_names[15] = {
+	"/c/heya1",
+	"/c/heya2",
+	"/c/heya3",
+	"/c/heya4",
+	"/c/heya5",
+	"/c/heya6",
+	"/c/heya7",
+	"/c/heya8",
+	"/c/heya10",
+	"/c/heya11",
+	"/c/heya12",
+	"/c/heya13",
+	"/c/heya14",
+	"/c/heya15",
+	"/c/heya16",
+};
+
+
+/**
+ * @brief _AuMain -- the main entry point for kernel
  * @param info -- Kernel Boot information passed
  * by bootloader
- */
+ **/
 void _AuMain(KERNEL_BOOT_INFO* info) {
     _littleboot_used = false;
     if (info->boot_type == BOOT_LITTLEBOOT_ARM64) {
         AuUartPutString("[aurora]:Kernel is booted using LittleBoot ARM64 \r\n");
         _littleboot_used = true;
     }
+
 	bootinfo = info;
+
+#ifdef __KERNEL_PROFILER_ON__
+	PROFILE_START("_AuMain");
+#endif
+
 	AuConsoleInitialize(info, true);
     AuDeviceTreeInitialize(info);
 	AA64CpuInitialize();
+	mask_irqs();
 	AuTextOut("[aurora]: CPU initialized \r\n");
 	AuPmmngrInitialize(info);
 	AuVmmngrInitialize();
@@ -175,15 +227,39 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	AuDeviceTreeMapMMIO();
 	AuAA64BoardInitialize();
 	AA64CPUPostInitialize(info);
+	AuTextOut("Initializing VFS \r\n");
 	AuVFSInitialise();
+	AuTextOut("[aurora]: VFS initialized \r\n");
 	AuInitrdInitialize(info);
 	AuConsolePostInitialise(info);
+	//AuConsoleBypassAuTextOut();
+	AuroraTimerInitialize();
 
 	/* initialize the tty service */
 	AuTTYInitialise();
 
 	/* initialize the shared memory manager*/
 	AuInitialiseSHMMan();
+	AuMmngrFileCacheInit();
+
+	/* initialize kernel credentials
+	 * note: untill here ensure no file gets opened
+	 * because file system may use credentials 
+	 */
+	AuCredGroupInitialize();
+
+	/* initialize the network layer */
+	AuInitialiseNet();
+
+	/* initialize aurora sound layer */
+	AuSoundInitialise();
+
+	/* initialize process token layer */
+	AuProcessTokenInitialize();
+
+#ifdef __TARGET_BOARD_RPI3__
+	XPT2046Initialise();
+#endif
 
 	/* initialize our basic requirement */
 #ifdef __TARGET_BOARD_QEMU_VIRT__
@@ -205,24 +281,31 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	 * or other data structures that get overwritten.
 	 * We need to be carefull on low level side for this 
 	 */
-	
 	AuInitialiseLoader();
 
 	/* initialize the deodhai's communication protocol */
 	AuIPCPostBoxInitialise();
 
-	AuTextOut("[aurora]: starting xeneva (ARM64) please wait...\r\n");
+	
+#ifdef __TARGET_BOARD_IMX8MP_VERDIN_DAHLIA__
+	AuTextOut("[aurora]: Board model : Toradex imx8M Plus Verdin Dahlia (Xeneva Build %s - %s)\r\n", __DATE__, __TIME__);
+#elif __TARGET_BOARD_RPI3__
+	AuTextOut("[aurora]: Board Model : Raspberry Pi 3B+ (Xeneva Build %s - %s)\r\n", __DATE__, __TIME__);
+#elif __TARGET_BOARD_QEMU_VIRT__
+	UARTDebugOut("[aurora]: Board Model : QEMU Virt Machine (Xeneva Build %s - %s)\r\n", __DATE__, __TIME__);
+#endif
+	UARTDebugOut("[aurora]: starting xeneva (ARM64) please wait...\r\n");
 
+	
 	/* clear out the lower half memory */
 	AuVmmngrBootFree();
+	AuMmngrFileCacheEnable();
 
-	AuTextOut("[aurora]: address space lower half cleared successfully \r\n");
+	UARTDebugOut("[aurora]: boot freed up \r\n");
 
 	AuSchedulerInitialize();
 
-	/*
-	AA64Thread* t3 = AuCreateKthread(AuEntryTest2, AuCreateVirtualAddressSpace(), "test2");
-	AA64Thread* t4 = AuCreateKthread(AuEntryTest4, AuCreateVirtualAddressSpace(), "test4");*/
+	
 	AuProcess* proc = AuCreateProcessSlot(0, "exec");
 	int num_args = 1;
 	char* about = (char*)kmalloc(strlen("-about"));
@@ -230,8 +313,15 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	char** argvs = (char**)kmalloc(num_args * sizeof(char*));
 	memset(argvs, 0, num_args);
 	argvs[0] = about;
+
+	/** make init process, as root of all */
+	CRED_SET_CAP_ROOT(proc);
+	CRED_MARK_ROOT(proc);
 	AuLoadExecToProcess(proc, "/init.exe", num_args, argvs);
-	AA64Thread* t2 = AuCreateKthread(AuEntryTest, AuCreateVirtualAddressSpace(), "test");
+	
+#ifdef __KERNEL_PROFILER_ON__
+	PROFILE_END("_AuMain");
+#endif
 
 	AuSchedulerStart();
 	while (1) {

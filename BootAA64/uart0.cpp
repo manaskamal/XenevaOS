@@ -30,11 +30,25 @@
 #include "uart0.h"
 #include "rpi3b/mbox.h"
 #include "clib.h"
+#include <Board/imx8mp/imx8mp_uart.h>
+#include "imx8mp/imx8mp_uartc.h"
+#include "xnout.h"
 
+static bool _is_uart_initialized;
+/**
+ * @brief XEUartInitialize -- initialize the
+ * uart controller
+ */
 void XEUartInitialize() {
+	_is_uart_initialized = 0;
 #ifdef __TARGET_BOARD_RPI3__
-	RPI3BUartInit();
+	//RPI3BUartInit();
+	_is_uart_initialized = 0;
+#elif __TARGET_BOARD_IMX8MP_VERDIN_DAHLIA__ || (__TARGET_BOARD_IMX8MP_SOC__)
+	XE_iMX8MP_UART_Initialize(IMX8MP_UART3_BASE_ADDRESS);
+	_is_uart_initialized = 1;
 #endif
+
 }
 
 /*
@@ -42,9 +56,15 @@ void XEUartInitialize() {
  * @param c -- Character to put
  */
 void XEUartPutc(char c) {
+	if (_is_uart_initialized != 1)
+		return;
+#ifdef __TARGET_BOARD_IMX8MP_VERDIN_DAHLIA__ || (__TARGET_BOARD_IMX8MP_SOC__)
+	imx8mp_uart_putc(c);
+#elif __TARGET_BOARD_RPI3__
 	char* uart0 = (char*)UART_BASE;
 	while ((*(uart0 + 0x18) & (1 << 5)));
 	*uart0 = c;
+#endif
 }
 
 /*
@@ -68,6 +88,11 @@ void XEUARTPrint(const char* format, ...) {
 	 * store the registered in stack, rather in a shadow area
 	 * and i don't know how to access those
 	 */
+#ifdef __TARGET_BOARD_RPI3__
+	XEGuiPrint(format);
+	return;
+#endif
+
 	uint64_t buffer[7];
 	store_x0_x7(buffer);
 

@@ -31,10 +31,16 @@
 #include <stdlib.h>
 #include <string.h>
 #include <_xeneva.h>
+#include <sys/_kefile.h>
+#include <sys/iocodes.h>
 
 static uint32_t _dirty_count = 0;
 Rect dirtyRect[100];
+XEFileIOControl ioctl;
 
+extern int _get_gpu_fd();
+extern int _get_gpu_display_id();
+extern bool _is_gpu_enabled();
 
 void InitialiseDirtyClipList() {
 	for (int i = 0; i < 100; i++) {
@@ -44,6 +50,7 @@ void InitialiseDirtyClipList() {
 		dirtyRect[i].h = 0;
 	}
 	_dirty_count = 0;
+	memset(&ioctl, 0, sizeof(XEFileIOControl));
 }
 /*
  * AddDirtyClip -- add a dirty clip rectangle
@@ -77,6 +84,9 @@ void AddDirtyClip(int x, int y, int w, int h) {
  * @param canvas -- pointer to canvas
  */
 void DirtyScreenUpdate(ChCanvas* canvas) {
+	int display_id = _get_gpu_display_id();
+	bool gpu_update = false;
+
 	for (int i = 0; i < _dirty_count; i++) {
 		if (dirtyRect[i].x < 0) {
 			_KePrint("DirtyR -x %d\r\n", dirtyRect[i].x);
@@ -95,7 +105,17 @@ void DirtyScreenUpdate(ChCanvas* canvas) {
 			dirtyRect[i].h = canvas->canvasHeight;
 		}
 
-		ChCanvasScreenUpdate(canvas, dirtyRect[i].x, dirtyRect[i].y, dirtyRect[i].w, dirtyRect[i].h);
+		gpu_update = 1;
+		if (!_is_gpu_enabled())
+			ChCanvasScreenUpdate(canvas, dirtyRect[i].x, dirtyRect[i].y, dirtyRect[i].w, dirtyRect[i].h);
+	}
+	if (gpu_update && _is_gpu_enabled()) {
+		ioctl.uint_1 = display_id;
+		ioctl.ushort_1 = 0;
+		ioctl.ushort_2 = 0;
+		ioctl.ulong_1 = canvas->screenWidth;
+		ioctl.ulong_2 = canvas->screenHeight;
+		_KeFileIoControl(_get_gpu_fd(), 0x202, &ioctl);
 	}
 	_dirty_count = 0;
 }

@@ -162,7 +162,7 @@ size_t AuTTYMasterWrite(AuVFSNode* fs, AuVFSNode* file, uint64_t* buffer, uint32
 	TTY* type = (TTY*)file->device;
 	if (!type)
 		return 0;
-
+	SeTextOut("Writing caharacter len : %d \r\n", len);
 	for (int i = 0; i < len; i++) {
 		AuCircBufPut(type->slavebuf, aligned_buf[i]);
 	}

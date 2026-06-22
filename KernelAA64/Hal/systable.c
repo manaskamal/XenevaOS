@@ -1,4 +1,6 @@
 /**
+* @file systable.c
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2023-2025, Manas Kamal Choudhury
@@ -38,8 +40,21 @@
 #include <Mm/mmap.h>
 #include <aucon.h>
 #include <ftmngr.h>
+#include <Fs/vfs.h>
+#include <Fs/tty.h>
+#include <Fs/vdisk.h>
+#include <Net/socket.h>
+#include <Hal/AA64/profile.h>
+#include <Cred/group.h>
+#include <Cred/cred.h>
+#include <proctoken.h>
+#include <Fs/pipe.h>
+#include <power.h>
+#include <timer.h>
 
-#define AURORA_MAX_SYSCALL 46
+#define AURORA_MAX_SYSCALL 72
+
+AA64Registers* svcCurrentRegs;
 
 /* Syscall function format */
 typedef int64_t(*syscall_func) (int64_t param1, int64_t param2, int64_t param3, int64_t
@@ -60,6 +75,10 @@ uint64_t test_call() {
 	return 100;
 }
 
+AA64Registers* AA64GetCurrentRegCtx() {
+	return svcCurrentRegs;
+}
+
 static void* syscalls[AURORA_MAX_SYSCALL] = {
 	null_call, //0
 	UARTDebugOut, //1
@@ -78,7 +97,7 @@ static void* syscalls[AURORA_MAX_SYSCALL] = {
 	UnmapMemMapping, //14
 	GetProcessHeapMem, //15
 	ReadFile, //16
-	0, //17
+	WriteFile, //17
 	0, //18
 	0, //19
 	CloseFile, //20
@@ -92,35 +111,144 @@ static void* syscalls[AURORA_MAX_SYSCALL] = {
 	AuFTMngrGetNumFonts, //28
 	AuFTMngrGetFontSize, //29
 	MemMapDirty, //30
-	0, //31
-	0, //32
-	0, //33
+	AuTTYCreate, //31
+	CreateUserThread, //32
+	SetFileToProcess, //33
 	ProcessHeapUnmap, //34
 	0, //35
 	0, //36
-	0, //37
-	0, //38
+	OpenDir, //37
+	ReadDir, //38
 	0, //39
 	0, //40
 	0, //41
 	0, //42
-	0, //43
+	ProcessGetFileDesc, //43
 	FileSetOffset, //44
 	0, //45
+	AuCreateSocket, //46
+	NetConnect, //47
+	NetSend, //48
+	NetReceive, //49
+	AuSocketSetOpt, //50
+	NetBind, //51
+	NetAccept, //52
+	NetListen, //53
+	AuCreatePipe, //54
+	AuGetVDiskInfo, //55, 
+	AuGetVDiskPartitionInfo, //56
+	GetEnvironmenBlock, //57
+	AuCredChangeID, //58
+	AuCredAddSGroup, //59
+	AuCredSetCap, //60
+	AuCredGetCap, //61
+	AuSetUID, //62
+	AuSetGID, //63
+	AuCredGetGroupID, //64
+	AuProcessTokenAddSelf, //65
+	AuProcessTokenGetThreadID, //66
+	AuProcessTokenRemoveSelf, //67
+	AuPowerDown, //68
+    AuPowerReset, //69
+	AuGetCurrentUS, //70
+	AuGetCurrentMS, //71
 };
 
+#ifdef __KERNEL_PROFILER_ON__
+static char* syscall_name[AURORA_MAX_SYSCALL] = {
+	"null_call", //0
+	"UARTDebugOut", //1
+	"PauseThread", //2
+	"GetThreadID", //3
+	"GetProcessID", //4
+	"ProcessExit", //5
+	"ProcessWaitForTermination", //6
+	"CreateProcess", //7
+	"ProcessLoadExec", //8
+	"CreateSharedMem", //9
+	"ObtainSharedMem", //10
+	"UnmapSharedMem", //11
+	"OpenFile", //12
+	"CreateMemMapping", //13
+	"UnmapMemMapping", //14
+	"GetProcessHeapMem", //15
+	0, //16
+	"WriteFile", //17
+	0, //18
+	0, //19
+	"CloseFile", //20
+	0, //21
+	"FileStat", //22
+	0, //23
+	0, //24
+	0, //25
+	"AuGetSystemTimerTick", //26
+	"AuFTMngrGetFontID", //27
+	"AuFTMngrGetNumFonts", //28
+	"AuFTMngrGetFontSize", //29
+	"MemMapDirty", //30
+	"AuTTYCreate", //31
+	"CreateUserThread", //32
+	"SetFileToProcess", //33
+	"ProcessHeapUnmap", //34
+	0, //35
+	0, //36
+	"OpenDir", //37
+	"ReadDir", //38
+	0, //39
+	0, //40
+	0, //41
+	0, //42
+	"ProcessGetFileDesc", //43
+	"FileSetOffset", //44
+	0, //45
+	"AuCreateSocket", //46
+	"NetConnect", //47
+	"NetSend", //48
+	"NetReceive", //49
+	"AuSocketSetOpt", //50
+	"NetBind", //51
+	"NetAccept", //52
+	"NetListen", //53
+	0, //54
+	"AuGetVDiskInfo", //55, 
+	"AuGetVDiskPartitionInfo", //56
+	"GetEnvironmenBlock", //57
+	"AuCredChangeID", //58
+	"AuCredAddSGroup", //59
+	"AuCredSetCap", //60
+	"AuCredGetCap", //61
+	"AuSetUID", //62
+	"AuSetGID", //63
+	"AuCredGetGroupID", //64
+	"AuProcessTokenAddSelf", //65
+	"AuProcessTokenGetThreadID", //66
+	"AuProcessTokenRemoveSelf", //67
+	"AuPowerDown", //68
+	"AuPowerReset", //69
+	"AuGetCurrentUS", //70
+	"AuGetCurrentMS", //71
+};
+#endif
 
 extern void set_syscall_retval(uint64_t val);
 extern bool isSyscall();
 extern void modifyx17();
-/*
- * AuAA64SyscalHandler -- common system call handler for aarch64
+/**
+ * @brief AuAA64SyscalHandler -- common system call handler for aarch64
  * @param regs -- Register information passed by sync_exception
  */
 void AuAA64SyscallHandler(AA64Registers* regs) {
 	mask_irqs();
 	uint64_t vector = regs->x16;
 	uint64_t retcode = 0;
+
+#ifdef __KERNEL_PROFILER_ON__
+	if (syscall_name[vector] == 0)
+		goto skip_1;
+	PROFILE_START(syscall_name[vector]);
+skip_1:
+#endif
 	if ((vector > AURORA_MAX_SYSCALL) || (vector < 0)) {
 		regs->x0 = retcode;
 		return;
@@ -128,10 +256,20 @@ void AuAA64SyscallHandler(AA64Registers* regs) {
 
 	AA64Thread* currThr = AuGetCurrentThread();
 	currThr->returnFromSyscall = 1;
+	currThr->syscallNum = vector;
+	svcCurrentRegs = regs;
 
 	syscall_func func = (syscall_func)syscalls[vector];
 	if (!func) {
+		currThr->returnFromSyscall = 0;
 		regs->x0 = 0;
+
+#ifdef __KERNEL_PROFILER_ON__
+		if (syscall_name[vector] == 0)
+			goto skip_2;
+		PROFILE_END(syscall_name[vector]);
+	skip_2:
+#endif
 		return 0;
 	}
 
@@ -139,4 +277,13 @@ void AuAA64SyscallHandler(AA64Registers* regs) {
 	regs->x0 = retcode;
 	regs->x6 = retcode;
 	currThr->returnFromSyscall = 0;
+
+#ifdef __KERNEL_PROFILER_ON__
+	if (syscall_name[vector] == 0)
+		goto skip_3;
+	PROFILE_END(syscall_name[vector]);
+skip_3:
+#endif
+	return 0;
+
 }

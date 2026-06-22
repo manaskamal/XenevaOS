@@ -197,6 +197,8 @@ XE_LIB int fpclassify(double x);
 	XE_LIB float atan2f(float y, float x);
 	XE_LIB double frexp(double x, int *exp);
 	XE_LIB float roundf(float x);
+	XE_LIB float fmaxf(float a, float b);
+	XE_LIB float fminf(float a, float b);
 
 #ifdef __cplusplus
 }

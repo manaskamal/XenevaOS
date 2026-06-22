@@ -2,15 +2,15 @@
 <Project>
   <ProjectOutputs>
     <ProjectOutput>
-      <FullPath>E:\Xeneva Project\Aurora\ARM64\Debug\chlkha.dll</FullPath>
+      <FullPath>E:\Xeneva_Project\Aurora\ARM64\Debug\chlkha.dll</FullPath>
     </ProjectOutput>
   </ProjectOutputs>
   <ContentFiles>
     <ContentFile>
-      <FullPath>E:\Xeneva Project\Aurora\Libs\Chitralekha\widgets\onoff.cpp</FullPath>
+      <FullPath>E:\Xeneva_Project\Aurora\Libs\Chitralekha\widgets\onoff.cpp</FullPath>
     </ContentFile>
     <ContentFile>
-      <FullPath>E:\Xeneva Project\Aurora\Libs\Chitralekha\_fastcpy_arm64.s</FullPath>
+      <FullPath>E:\Xeneva_Project\Aurora\Libs\Chitralekha\_fastcpy_arm64.s</FullPath>
     </ContentFile>
   </ContentFiles>
   <SatelliteDlls />

@@ -48,8 +48,9 @@
 
 #define TCP_DEFAULT_WIN_SZ 65535
 
-
+#ifdef ARCH_X64
 #pragma pack(push,1)
+#endif
 __declspec(align(2))
 typedef struct _tcphead_ {
 	unsigned short srcPort;
@@ -61,7 +62,9 @@ typedef struct _tcphead_ {
 	unsigned short checksum;
 	unsigned short urgentPointer;
 }TCPHeader;
+#ifdef ARCH_X64
 #pragma pack(pop)
+#endif
 
 /*
 * CreateTCPSocket -- creates a new TCP Socket

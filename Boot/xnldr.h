@@ -41,7 +41,7 @@
 {0x9042a9de,0x23dc,0x4a38,\
 {0x96,0xfb,0x7a,0xde,0xd0,0x80,0x51,0x6a}}
 
-#pragma pack(push,1)
+//#pragma pack(push,1)
 
 /*
  *FRAMEBUFFER_INFORMATION :
@@ -99,7 +99,7 @@ typedef struct _XE_BOOT_INFO_ {
 	uint32_t cid;
 }XEBootInfo, *XEPBootInfo;
 
-#pragma pack(pop)
+//#pragma pack(pop)
 
 typedef void(*XEImageEntry)(XEBootInfo*);
 

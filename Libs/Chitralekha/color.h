@@ -155,6 +155,21 @@ XE_EXTERN{
 
 	XE_LIB double clamp(double x, double upper, double lower);
 
+	/*
+     * ChColorRGBAtoBGRA -- convert RGBA pixels to BGRA888
+     * @param col -- Color to convert
+     */
+	XE_LIB uint32_t ChColorRGBAtoBGRA(uint32_t col);
+
+	/*
+     * ChDrawPixelRAW -- draws a pixel to canvas buffer
+     * @param canvas -- pointer to canvas
+     * @param x -- x position
+     * @param y -- y position
+     * @param color -- color of the pixel
+     */
+	XE_LIB void ChDrawPixelRAW(ChCanvas* canvas, int x, int y, uint32_t color);
+
 #ifdef __cplusplus
 }
 #endif

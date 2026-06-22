@@ -118,8 +118,9 @@ static void AuMapPagePhysical(uint64_t* root, uint64_t phys_addr, uint64_t virt_
     l0_table[l0i] = ((phys_addr >> 12) << 10) | flags | PTE_VALID | PTE_ACCESSED | PTE_DIRTY;
 }
 
-extern "C" void AuVmmngrInitialize(KERNEL_BOOT_INFO* info) {
+extern "C" void AuVmmngrInitialize() {
     AuTextOut("[aurora]: Initializing VMM (Sv39)...\n");
+    KERNEL_BOOT_INFO* info = AuGetBootInfoStruc();
     
     // 1. Get Current Page Table (From Bootloader)
     uint64_t current_satp = read_satp();

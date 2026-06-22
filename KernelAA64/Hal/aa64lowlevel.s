@@ -68,7 +68,7 @@ write_ttbr1_el1:
 .global write_both_ttbr
 write_both_ttbr:
     msr ttbr0_el1, x0
-    msr ttbr1_el1, x0
+    //msr ttbr1_el1, x0
     isb sy
     dsb ishst
     tlbi vmalle1is 
@@ -122,6 +122,11 @@ dmb_ish:
      dmb ish
      ret
 
+.global dmb_sy
+dmb_sy:
+     dmb sy
+     ret
+
 .global isb_flush
 isb_flush:
      isb
@@ -168,6 +173,11 @@ get_cntpct_el0:
      mrs x0, CNTPCT_EL0
      ret
 
+.global get_cntvct_el0
+get_cntvct_el0:
+     mrs x0, CNTVCT_EL0
+     ret
+
 .global get_cntfrq_el0
 get_cntfrq_el0:
      mrs x0, CNTFRQ_EL0
@@ -176,6 +186,11 @@ get_cntfrq_el0:
 .global get_cpacr_el1
 get_cpacr_el1:
     mrs x0, CPACR_EL1
+    ret
+
+.global get_cntv_ctl_el0
+get_cntv_ctl_el0:
+    mrs x0, CNTV_CTL_EL0
     ret
 
 .global set_cpacr_el1
@@ -212,17 +227,17 @@ enable_irqs:
 
 .global mask_irqs
 mask_irqs:
-   msr daifset, #0x2
+   msr daifset, #0b1111
    dsb sy
    isb
    ret
 
 .global setupTimerIRQ
 setupTimerIRQ:
-   mrs x0, CNTPCT_EL0
-   mov x1, 100
-   udiv x0, x0, x1
-   msr CNTV_TVAL_EL0, x0
+   mrs x0, CNTFRQ_EL0      //mrs x0, CTPCT_EL0
+   mov x1, 1000            //mov x1,1000
+   udiv x0, x0, x1         //add x0, x0, x1
+   msr CNTV_TVAL_EL0, x0   //msr CNTV_CVAL_EL0, x0
    mov x0,1
    msr CNTV_CTL_EL0, x0
    ret
@@ -270,7 +285,7 @@ aa64_enter_user:
     * make the exception handler return to EL0 
     */
   // bic x0, x0, #15
-   mov x8, #0x3C0 // #0x80
+   mov x8, #0x00 //#0x2C0 // #0x80
    msr SPSR_EL1, x8
    msr SP_EL0, x0
    msr ELR_EL1,x1
@@ -347,9 +362,23 @@ enableAlignCheck:
 
 .global data_cache_flush
 data_cache_flush:
+    cmp x0, #0
+    beq data_cache_ret
     dc civac, x0
-    dsb ish
+    dmb sy
     isb
+data_cache_ret:
+    ret
+
+.global read_ctr_el0
+read_ctr_el0:
+    mrs x0, ctr_el0
+    ret
+
+.global dc_cvac
+dc_cvac:
+    mov x9, x0
+    dc cvac, x9
     ret
 
 .global set_cntp_cval_el0
@@ -360,5 +389,56 @@ set_cntp_cval_el0:
 .global set_cntp_ctl_el0
 set_cntp_ctl_el0:
     msr cntp_ctl_el0, x0
+    ret
+
+.global _wfi
+_wfi:
+    wfi
+    ret
+
+
+.global gic_cpu_init
+gic_cpu_init:
+    mrs x0, ICC_SRE_EL1
+    orr x0, x0, #(1<<0)
+    msr ICC_SRE_EL1, x0
+    isb 
+    mrs x0, ICC_SRE_EL1
+    tbz x0, #0, .sre_failed
+
+    mov x0, #0xFF
+    msr ICC_PMR_EL1, x0
+    isb
+
+    mov x0, #0
+    msr ICC_BPR1_EL1, x0
+    isb
+
+    mrs x0, ICC_CTLR_EL1
+    bic x0, x0, #(1<<1)
+   // bic x0, x0, #(1<<0)
+    msr ICC_CTLR_EL1, x0
+    isb
+
+    mov x0, #1
+    msr ICC_IGRPEN1_EL1, x0
+    isb
+
+    mov x0, #0
+    ret
+.sre_failed:
+    mov x0, #1
+    ret
+    
+
+.global gic_read_intid
+gic_read_intid:
+    mrs x0, ICC_IAR1_EL1
+    ret
+
+.global gic_icc_eoi
+gic_icc_eoi:
+    msr ICC_EOIR1_EL1, x0
+    isb
     ret
 

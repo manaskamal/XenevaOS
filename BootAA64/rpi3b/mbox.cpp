@@ -26,6 +26,9 @@
 * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *
 **/
+
+#ifdef __TARGET_BOARD_RPI3__
+
 #include "mbox.h"
 #include "..\uart0.h"
 #include "..\gpio.h"
@@ -93,5 +96,7 @@ void RPI3BUartInit() {
 	*UART0_LCRH = (3 << 5) | (1 << 4);  // 8n1, enable FIFOs
 	*UART0_CR = (1 << 9) | (1 << 8) | 1;     // enable Tx, Rx, UART
 }
+
+#endif
 
 #endif

@@ -1,4 +1,6 @@
 /**
+* @file postbox.c
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2025, Manas Kamal Choudhury
@@ -36,10 +38,13 @@
 #include <_null.h>
 #include <Fs\vfs.h>
 #include <Fs\dev\devfs.h>
+#include <Hal/AA64/aa64lowlevel.h>
 #include <Drivers/uart.h>
 #include <aucon.h>
+#include <Cred/cred.h>
 
-/*
+/**
+* @brief
  * NOTE: PostBoxIPCManager is aurora's main communication manager between
  * user space processes and kernel, in future drivers will also able to
  * communicate with user processes and kernel through PostBoxIPCManager
@@ -51,6 +56,7 @@
 PostBox* firstBox = NULL;
 PostBox* lastBox = NULL;
 bool _PostBoxRootCreated;
+AuVFSNode* pbox;
 
 void PostBoxAdvanceIndex(PostBox* box) {
 	if (box->full)
@@ -73,8 +79,10 @@ bool IsPostBoxFull(PostBox* box) {
 	return box->full;
 }
 
-/*
- * PostBoxCreate -- creates a postbox
+extern uint64_t read_sp();
+
+/**
+ * @brief PostBoxCreate -- creates a postbox
  * @param root -- is this post box root ?
  * @param tid -- thread id
  */
@@ -112,8 +120,13 @@ void PostBoxCreate(bool root, uint16_t tid) {
 		lastBox = box;
 	}
 	UARTDebugOut("Postbox created for threadID : %d of size : %d num msg \n", tid, box->size);
+	UARTDebugOut("SP : %x \r\n", read_sp());
 }
 
+/**
+ * @brief PostBoxDestroy -- destroy given postbox
+ * @param box -- Pointer to postbox need to destroy
+ */
 void PostBoxDestroy(PostBox* box) {
 	if (firstBox == NULL)
 		return;
@@ -132,10 +145,11 @@ void PostBoxDestroy(PostBox* box) {
 
 	AuPmmngrFree((void*)V2P((size_t)box->address));
 	kfree(box);
+	UARTDebugOut("[postbox]: destroyed for id \r\n");
 }
 
-/*
- * PostBoxDestroyByID -- destroys a post box identified by
+/**
+ * @brief PostBoxDestroyByID -- destroys a post box identified by
  * an id
  * @param id -- id of the postbox
  */
@@ -153,11 +167,14 @@ void PostBoxDestroyByID(uint16_t id) {
 	return;
 }
 
-/*
- * PostBoxPutEvent -- put an event to a specific post box
+
+extern void enscheddebug();
+/**
+ * @brief PostBoxPutEvent -- put an event to a specific post box
  * @param event -- Event to put
  */
 void PostBoxPutEvent(PostEvent* event) {
+	enscheddebug();
 	uint16_t owner_id = event->to_id;
 	for (PostBox* box = firstBox; box != NULL; box = box->next) {
 		if (box->ownerID == owner_id) {
@@ -171,17 +188,24 @@ void PostBoxPutEvent(PostEvent* event) {
 		}
 	}
 
+
 	AA64Thread* thread = AuThreadFindByID(owner_id);
 	if (!thread)
 		thread = AuThreadFindByIDBlockList(owner_id);
-	if (thread != NULL && thread->state == THREAD_STATE_BLOCKED)
+
+	if (thread != NULL && thread->state == THREAD_STATE_BLOCKED) {
+		/* sometime i don't know, this happens */
+		if (strcmp(thread->name, "exec") == 0)
+			return;
 		AuUnblockThread(thread);
+
+	}
 
 	return;
 }
 
-/*
- * PostBoxGetEvent -- get an event from post box and copy it to a
+/**
+ * @brief PostBoxGetEvent -- get an event from post box and copy it to a
  * memory area
  * @param event -- pointer to a memory area
  * @param root -- is this post box is root
@@ -194,9 +218,10 @@ int PostBoxGetEvent(PostEvent* event, bool root, AA64Thread* curr_thread) {
 		owner_id = POSTBOX_ROOT_ID;
 	else
 		owner_id = curr_thread->thread_id;
-
+	
 	for (PostBox* box = firstBox; box != NULL; box = box->next) {
 		if (box->ownerID == owner_id) {
+			//UARTDebugOut("[postbox]: getting event : %d %d\r\n", box->ownerID, owner_id);
 			if (!IsPostBoxEmpty(box)) {
 				uint8_t* src = (uint8_t*)box->address + (box->tailIdx * POSTEVENT_SIZE_ALIGNED);
 				//memcpy(event, &box->address[box->tailIdx], sizeof(PostEvent));
@@ -213,8 +238,9 @@ int PostBoxGetEvent(PostEvent* event, bool root, AA64Thread* curr_thread) {
 	return ret_code;
 }
 
-/*
- * PostBoxIOControl -- I/O Control function for
+
+/**
+ * @brief PostBoxIOControl -- I/O Control function for
  * post box manager
  * @param file -- Pointer to postbox file
  * @param code -- Post Box command
@@ -227,7 +253,6 @@ int PostBoxIOControl(AuVFSNode* file, int code, void* arg) {
 		return 0;
 	switch (code) {
 	case POSTBOX_CREATE: {
-
 		PostBoxCreate(false, curr_thr->thread_id);
 		break;
 	}
@@ -241,6 +266,7 @@ int PostBoxIOControl(AuVFSNode* file, int code, void* arg) {
 	}
 	case POSTBOX_PUT_EVENT: {
 		PostEvent* event = (PostEvent*)arg;
+		//UARTDebugOut("PostBoxPutEvent : %s \r\n", curr_thr->name);
 		PostBoxPutEvent(event);
 		break;
 	}
@@ -260,25 +286,57 @@ int PostBoxIOControl(AuVFSNode* file, int code, void* arg) {
 	return ret_code;
 }
 
-/*
- * AuIPCPostBoxInitialise -- initialise
+AuVFSNode* AuPostBOXGetNode() {
+	return pbox;
+}
+
+/**
+ * @brief AuIPCPostBoxInitialise -- initialise
  * the post box ipc manager
  */
 void AuIPCPostBoxInitialise() {
 	firstBox = NULL;
 	lastBox = NULL;
 
-	/* create the postbox file */
-	AuVFSNode* dev = AuVFSFind("/dev");
-	AuVFSNode* node = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
-	memset(node, 0, sizeof(AuVFSNode));
-	strcpy(node->filename, "postbox");
-	node->flags |= FS_FLAG_DEVICE;
-	node->iocontrol = PostBoxIOControl;
-	AuDevFSAddFile(dev, "/", node);
+	/** create the postbox file */
 
+	/** I dont know, but the sixth item in the device fs list is
+	 * the postbox file node, but miraculously 6th item disappers from 
+	 * the list when opened from user space that's why we are creating
+	 * a dummy node in the dev list
+	 */
+	AuVFSNode* dev = AuVFSFind("/dev");
+	/*AuVFSNode* node = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
+	memset(node, 0, sizeof(AuVFSNode));
+	strcpy(node->filename, "dummy");
+	aa64_data_cache_clean_range(&node->filename, 32);
+	node->flags = FS_FLAG_DEVICE;
+	node->device = dev;
+	node->read = 0;
+	node->write = 0;
+	node->iocontrol = PostBoxIOControl;
+	dsb_sy_barrier();
+	AuDevFSAddFile(dev, "/", node);*/
+
+
+	AuVFSNode* node2 = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
+	memset(node2, 0, sizeof(AuVFSNode));
+	strcpy(node2->filename, "postbox");
+	node2->flags = FS_FLAG_DEVICE;
+	node2->device = dev;
+	node2->read = 0;
+	node2->write = 0;
+	node2->uid = 0;
+	node2->gid = AuCredGetGroupID(AURORA_GID_IPC_POSTBOX);
+	node2->iocontrol = PostBoxIOControl;
+	dsb_sy_barrier();
+	AuDevFSAddFile(dev, "/", node2);
+	AuDevFSList(dev);
+
+	//aa64_data_cache_clean_range(node, sizeof(AuVFSNode));
+	pbox = node2;
 	_PostBoxRootCreated = false;
-	AuTextOut("[aurora]: PostBox IPC mounted and initialized to /dev/postbox \r\n");
+	AuTextOut("[aurora]: PostBox IPC mounted and initialized to /dev/pbox \r\n");
 	AuTextOut("[aurora]: PostEvent size : %d bytes \r\n", sizeof(PostEvent));
 	AuTextOut("[aurora]: PostBox size aligned : %d number \r\n", (4096 / ALIGN_UP(sizeof(PostEvent), 8)));
 }

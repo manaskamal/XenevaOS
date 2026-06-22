@@ -35,6 +35,8 @@
 #include <_null.h>
 #include <Hal/AA64/aa64lowlevel.h>
 #include <Drivers/uart.h>
+#include <Hal/AA64/profile.h>
+#include <Hal/AA64/aa64cpu.h>
 
 /**  Durand's Ridiculously Amazing Super Duper Memory functions.  */
 
@@ -195,6 +197,10 @@ static inline void insert_tag(struct boundary_tag* tag, int index)
 	}
 
 	l_freePages[realIndex] = tag;
+	dmb_sy();
+	dmb_ish();
+	dsb_sy_barrier();
+	dsb_ish();
 }
 
 static inline void remove_tag(struct boundary_tag* tag)
@@ -207,6 +213,10 @@ static inline void remove_tag(struct boundary_tag* tag)
 	tag->next = NULL;
 	tag->prev = NULL;
 	tag->index = -1;
+	dmb_sy();
+	dmb_ish();
+	dsb_sy_barrier();
+	dsb_ish();
 }
 
 
@@ -214,7 +224,9 @@ static inline struct boundary_tag* melt_left(struct boundary_tag* tag)
 {
 	struct boundary_tag* left = tag->split_left;
 
+	dmb_sy();
 	dmb_ish();
+	dsb_sy_barrier();
 	dsb_ish();
 
 	left->real_size += tag->real_size;
@@ -222,7 +234,9 @@ static inline struct boundary_tag* melt_left(struct boundary_tag* tag)
 
 	if (tag->split_right != NULL) tag->split_right->split_left = left;
 
+	dmb_sy();
 	dmb_ish();
+	dsb_sy_barrier();
 	dsb_ish();
 
 	return left;
@@ -233,7 +247,9 @@ static inline struct boundary_tag* absorb_right(struct boundary_tag* tag)
 {
 	struct boundary_tag* right = tag->split_right;
 
+	dmb_sy();
 	dmb_ish();
+	dsb_sy_barrier();
 	dsb_ish();
 
 	remove_tag(right);		// Remove right from free pages.
@@ -244,7 +260,9 @@ static inline struct boundary_tag* absorb_right(struct boundary_tag* tag)
 	if (right->split_right != NULL)
 		right->split_right->split_left = tag;
 
+	dmb_sy();
 	dmb_ish();
+	dsb_sy_barrier();
 	dsb_ish();
 
 	return tag;
@@ -269,7 +287,8 @@ static inline struct boundary_tag* split_tag(struct boundary_tag* tag)
 	new_tag->split_left = tag;
 	new_tag->split_right = tag->split_right;
 
-	dmb_ish();
+	dmb_sy();
+	dsb_sy_barrier();
 	dsb_ish();
 
 	if (new_tag->split_right != NULL) new_tag->split_right->split_left = new_tag;
@@ -277,7 +296,8 @@ static inline struct boundary_tag* split_tag(struct boundary_tag* tag)
 
 	tag->real_size -= new_tag->real_size;
 
-	dmb_ish();
+	dmb_sy();
+	dsb_sy_barrier();
 	dsb_ish();
 
 	insert_tag(new_tag, -1);
@@ -337,13 +357,17 @@ static struct boundary_tag* allocate_new_tag(unsigned int size)
 	printf("Total memory usage = %i KB\n", (int)((l_allocated / (1024))));
 #endif
 
+	dmb_sy();
+	dmb_ish();
+	dsb_sy_barrier();
+	dsb_ish();
+
 	return tag;
 }
 
 
 void* port_malloc(unsigned int size)
 {
-	
 	size = (size + 7) & ~7;
 
 	int index;
@@ -440,14 +464,12 @@ void* port_malloc(unsigned int size)
 
 
 	ptr = (void*)((size_t)tag + sizeof(struct boundary_tag));
-
 #ifdef DEBUG
 	l_inuse += size;
 	printf("malloc: %x,  %i, %i\n", ptr, (int)l_inuse / 1024, (int)l_allocated / 1024);
 	dump_array();
 #endif
-
-
+	dmb_sy();
 	liballoc_unlock();
 	return ptr;
 }
@@ -474,7 +496,6 @@ void port_free(void* ptr)
 	tag = (struct boundary_tag*)((size_t)ptr - sizeof(struct boundary_tag));
 
 	
-
 	if (((size_t)tag & 0xF) != 0) {
 		liballoc_unlock();
 		UARTDebugOut("liballoc:free: tag unaligned returning \n");
@@ -536,8 +557,7 @@ void port_free(void* ptr)
 			l_allocated -= pages * l_pageSize;
 			printf("Resource freeing %x of %i pages\n", tag, pages);
 			dump_array();
-#endif
-
+#endif  
 			liballoc_unlock();
 			return;
 		}
@@ -556,7 +576,6 @@ void port_free(void* ptr)
 	printf("Returning tag with %i bytes (requested %i bytes), which has exponent: %i\n", tag->real_size, tag->size, index);
 	dump_array();
 #endif
-
 	liballoc_unlock();
 }
 
@@ -622,7 +641,7 @@ void* liballoc_alloc(int pages) {
 	uint64_t page_ = (uint64_t)page;
 	for (size_t i = 0; i < pages; i++) {
 		void* p = AuPmmngrAlloc();
-		AuMapPage((uint64_t)p, page_ + i * 4096,PTE_AP_RW);
+		AuMapPage((uint64_t)p, page_ + i * 4096,PTE_NORMAL_MEM);
 	}
 	memset(page, 0, pages * PAGE_SIZE);
 
@@ -640,8 +659,8 @@ void* liballoc_alloc(int pages) {
 }
 
 int liballoc_free(void* ptr, int pages) {
-	//UARTDebugOut("Liballoc free: %d \n", pages);
-	AuFreePages((uint64_t)ptr, true, (pages*4096));
+	UARTDebugOut("Liballoc free: %d \n", pages);
+	//AuFreePages((uint64_t)ptr, true, (pages*4096));
 	return 0;
 }
 

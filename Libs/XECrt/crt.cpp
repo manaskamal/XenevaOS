@@ -32,7 +32,7 @@
 
 extern "C" int _fltused = 1;
 
-void* __cdecl ::operator new(size_t size){
+void* __cdecl operator new(size_t size){
 	return malloc(size);
 }
 

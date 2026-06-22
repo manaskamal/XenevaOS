@@ -3,13 +3,16 @@
   <ProjectOutputs />
   <ContentFiles>
     <ContentFile>
-      <FullPath>E:\Xeneva Project\Aurora\Libs\XEClib\sys\_procheap.cpp</FullPath>
+      <FullPath>E:\Xeneva_Project\Aurora\Libs\XEClib\sys\_procheap.cpp</FullPath>
     </ContentFile>
     <ContentFile>
-      <FullPath>E:\Xeneva Project\Aurora\Libs\XEClib\_callbase_arm64.s</FullPath>
+      <FullPath>E:\Xeneva_Project\Aurora\Libs\XEClib\_callbase_arm64.s</FullPath>
     </ContentFile>
     <ContentFile>
-      <FullPath>E:\Xeneva Project\Aurora\Libs\XEClib\setjmp_arm64.s</FullPath>
+      <FullPath>E:\Xeneva_Project\Aurora\Libs\XEClib\setjmp_arm64.s</FullPath>
+    </ContentFile>
+    <ContentFile>
+      <FullPath>E:\Xeneva_Project\Aurora\Libs\XEClib\store_stack_arm64.s</FullPath>
     </ContentFile>
   </ContentFiles>
   <SatelliteDlls />

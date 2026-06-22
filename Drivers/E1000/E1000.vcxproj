@@ -120,7 +120,7 @@
       <AdditionalOptions>/ALIGN:512</AdditionalOptions>
     </Link>
     <PostBuildEvent>
-      <Command>copy "..\..\Build\$(TargetName).dll" "%XENEVA_BUILDS%\$(TargetName).dll</Command>
+      <Command>copy "..\..\Build\$(TargetName).dll" "M:\$(TargetName).dll</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">

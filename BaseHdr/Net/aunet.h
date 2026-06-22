@@ -38,8 +38,9 @@
 #define NETDEV_TYPE_802_11 2
 #define NETDEV_TYPE_BLUETOOTH 3
 
-
+#ifdef ARCH_X64
 #pragma pack(push,1)
+#endif
 typedef struct _netdev_{
 	uint8_t mac[6];
 	int linkStatus;
@@ -51,7 +52,9 @@ typedef struct _netdev_{
 	uint32_t dns_ipv4_2;
 	uint32_t dns_ipv4_3;
 }AuNetworkDevice;
+#ifdef ARCH_X64
 #pragma pack(pop)
+#endif
 
 
 #define htonl(l)  ((((l) & 0xFF) << 24) | (((l) & 0xFF00) << 8) | (((l) & 0xFF0000) >> 8) | (((l) & 0xFF000000) >> 24))

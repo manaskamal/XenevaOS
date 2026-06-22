@@ -1,4 +1,6 @@
 /**
+* @file base.h
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2023, Manas Kamal Choudhury
@@ -55,6 +57,7 @@
 #define DEODHAI_REPLY_FOCUS_CHANGED 154
 #define DEODHAI_REPLY_WINDOW_CLOSED 156
 #define DEODHAI_REPLY_MOUSE_LEAVE 157
+#define DEODHAI_REPLY_TOUCH_EVENT 158
 
 	/* deodhai broadcast definitions, reply from
 	 * deodhai */
@@ -85,18 +88,18 @@
 XE_EXTERN{
 #endif
 
-	/*
-	* ChitralekhaStartApp -- start an application instance
+	/**
+	* @brief ChitralekhaStartApp -- start an application instance
 	*/
 	XE_LIB ChitralekhaApp* ChitralekhaStartApp(int argc, char* argv[]);
 
-	/*
-	* ChitralekhaStartApp -- start an application instance
+	/**
+	* @brief ChitralekhaStartApp -- start an application instance
 	*/
 	XE_LIB ChitralekhaApp* ChitralekhaStartSubApp(ChitralekhaApp* parent);
 
-	/*
-	* ChitralekhaGetApp -- return running application instance
+	/**
+	* @brief ChitralekhaGetApp -- return running application instance
 	*/
 	XE_LIB ChitralekhaApp* ChitralekhaGetApp();
 

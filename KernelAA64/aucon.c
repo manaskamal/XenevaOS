@@ -1,4 +1,6 @@
 /**
+* @file aucon.c
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2025, Manas Kamal Choudhury
@@ -44,6 +46,8 @@
 #include <Drivers/uart.h>
 #include <Hal/AA64/aa64cpu.h>
 #include <Hal/AA64/aa64lowlevel.h>
+#include <Ipc/postbox.h>
+#include <Drivers/uart.h>
 
 uint8_t* font_data;
 uint32_t console_x;
@@ -54,7 +58,7 @@ uint32_t redmask, bluemask, greenmask;
 uint32_t resvmask;
 size_t h_res, v_res;
 BOOL early_;
-
+bool bypass_autextout;
 
 void(*_print_func) (const char* text, ...);
 
@@ -66,8 +70,8 @@ extern void AuUartPutString(const char* s);
 void AuTestPrint() {
 	AuUartPutString("Upto here \r\n");
 }
-/*
- * AuConsoleInitialize -- initialize kernel direct screen
+/**
+ * @brief AuConsoleInitialize -- initialize kernel direct screen
  * console
  * @param info -- Pointer to kernel boot info structure
  */
@@ -81,9 +85,16 @@ void AuConsoleInitialize(PKERNEL_BOOT_INFO info, bool early) {
 		}
 	}
 	aucon = NULL;
+	bypass_autextout = false;
 }
 
-
+/**
+ * @brief AuConsoleIoControl -- iocontrol implementation
+ * for au console, called from user space
+ * @param file -- Pointer to console file
+ * @param code -- control code number
+ * @param arg -- Pointer to any user data
+ */
 int AuConsoleIoControl(AuVFSNode* file, int code, void* arg) {
 	int ret = 0;
 	AuFileIOControl* ioctl = (AuFileIOControl*)arg;
@@ -96,26 +107,22 @@ int AuConsoleIoControl(AuVFSNode* file, int code, void* arg) {
 	switch (code) {
 	case SCREEN_GETWIDTH: {
 		uint32_t width = aucon->width;
-		AuTextOut("[aucon] :Screen getting width : %d \r\n", width);
 		ioctl->uint_1 = width;
 		//memcpy(&ioctl->uint_1, &width, sizeof(uint32_t));
 		break;
 	}
 	case SCREEN_GETHEIGHT: {
 		uint32_t height = aucon->height;
-		AuTextOut("[aucon]: Getting screen height : %d \r\n", height);
 		ioctl->uint_1 = height;
 		break;
 	}
 	case SCREEN_GETBPP: {
 		uint32_t bpp = aucon->bpp;
-		AuTextOut("[aucon]: Getting bpp : %d \r\n", bpp);
 		ioctl->uint_1 = bpp;
 		break;
 	}
 	case SCREEN_GET_SCANLINE: {
 		uint16_t scanline = aucon->scanline;
-		AuTextOut("[aucon]: getting scanline : %d \r\n", scanline);
 		ioctl->ushort_1 = scanline;
 		break;
 	}
@@ -135,12 +142,11 @@ int AuConsoleIoControl(AuVFSNode* file, int code, void* arg) {
 			if (!proc)
 				break;
 		}
-		AuTextOut("[aucon]: getting FB \r\n");
 		uint64_t vmaddr= (uint64_t)AuGetFreePage(1, NULL);
 		uint64_t fbaddr = (uint64_t)__framebuffer;
 		for (int i = 0; i < aucon->size / PAGE_SIZE; i++) {
 			AuMapPage((uint64_t)fbaddr + (i * PAGE_SIZE),
-				vmaddr + (i * PAGE_SIZE), PTE_NORMAL_MEM | PTE_AP_RW_USER);
+				vmaddr + (i * PAGE_SIZE), PTE_NORMAL_NON_CACHEABLE | PTE_AP_RW_USER);
 
 		}
 		//uint64_t buffaddr = (uint64_t)aucon->buffer;
@@ -152,13 +158,14 @@ int AuConsoleIoControl(AuVFSNode* file, int code, void* arg) {
 		return 1;
 		break;
 	}
+
 	}
 	return ret;
 }
 
 
-/*
- * AuConsolePostInitialise -- initialise the post console process
+/**
+ * @brief AuConsolePostInitialise -- initialise the post console process
  * @param info -- pointer to kernel boot info structure
  */
 void AuConsolePostInitialise(PKERNEL_BOOT_INFO info) {
@@ -168,6 +175,11 @@ void AuConsolePostInitialise(PKERNEL_BOOT_INFO info) {
 	//if (info->boot_type == BOOT_LITTLEBOOT_ARM64) {
 	//	info->graphics_framebuffer =
 	//}
+	if (!info->graphics_framebuffer) {
+		AuTextOut("[aurora]: tur luck nai, framebuffer daalu napali, iss iss beya lagi jai deii \r\n");
+		AuTextOut("[aurora]: return marisu deii, byee byee \r\n");
+		return;
+	}
 	aucon = (AuConsole*)kmalloc(sizeof(AuConsole));
 	memset(aucon, 0, sizeof(AuConsole));
 	size_t fb_sz = (info->fb_size + PAGE_SIZE - 1) / PAGE_SIZE;
@@ -200,9 +212,10 @@ void AuConsolePostInitialise(PKERNEL_BOOT_INFO info) {
 	h_res = info->X_Resolution; v_res = info->Y_Resolution;
 	for (int w = 0; w < info->X_Resolution; w++) {
 		for (int h = 0; h < info->Y_Resolution; h++) {
-			aucon->buffer[w + h * info->X_Resolution] = CONSOLE_BACKGROUND;
+			aucon->buffer[h * info->X_Resolution + w] = CONSOLE_BACKGROUND;
 		}
 	}
+
 	early_ = 0;
 
 	AuVFSNode* fsys = AuVFSFind("/dev");
@@ -215,6 +228,7 @@ void AuConsolePostInitialise(PKERNEL_BOOT_INFO info) {
 	file->write = 0;
 	file->iocontrol = AuConsoleIoControl;
 	AuDevFSAddFile(fsys, "/", file);
+
 }
 
 
@@ -250,8 +264,8 @@ int_fast8_t low_set_bit(size_t sz) {
 #define BLUE(col) \
 	((col>>16) & 0xFF)
 
-/*
- * AuPutPixel -- puts a pixel on the screen
+/**
+ * @brief AuPutPixel -- puts a pixel on the screen
  * @param x -- x location of the screen
  * @param y -- y location of the screen
  * @param col -- color of the pixel
@@ -271,7 +285,10 @@ void AuPutPixel(size_t x, size_t y, uint32_t col) {
 	framebuffer[y * aucon->width + x] = col;
 }
 
-//! Put a character to console output
+/**
+ * @brief Put a character to console output 
+ * @param c -- character to print
+ */
 void AuPutC(char c) {
 	if (console_x > v_res / 9) {
 		console_x = 0;
@@ -305,7 +322,10 @@ void AuPutC(char c) {
 
 
 
-//! Prints string to console output
+/**
+ * @brief Prints string to console output
+ * @param str -- string to print
+ */
 void AuPutS(char* str) {
 	uint32_t* lfb = aucon->buffer;
 	while (*str) {
@@ -359,16 +379,21 @@ void AuPutS(char* str) {
 	}
 }
 
-/*
- * AuTextOut -- standard text printing function
+/**
+ * @brief AuTextOut -- standard text printing function
  * for entire kernel
  * @param text -- text to output
  */
 void AuTextOut(const char* format, ...) {
 	if (early_) {
-		_print_func(format);
+		if (is_uart_initialized())
+			UARTDebugOut(format);
+		else
+			_print_func(format);
 		return;
 	}
+	if (bypass_autextout)
+		return;
 
 	uint64_t buffer[7];
 	store_x0_x7(buffer);
@@ -455,8 +480,98 @@ void AuTextOut(const char* format, ...) {
 
 }
 
-/*
- * AuConsoleEarlyEnable -- enables or disable early
+
+/**
+ * @brief AuTextOut -- standard text printing function
+ * for entire kernel
+ * @param text -- text to output
+ */
+void AuTextOutpro_Call(const char* format, void* reg_save_area, void* entry_sp) {
+	va_list args = ((va_list)reg_save_area + 8);
+	while (*format)
+	{
+		if (*format == '%')
+		{
+			++format;
+			if (*format == 'd')
+			{
+				size_t width = 0;
+				if (format[1] == '.')
+				{
+					for (size_t i = 2; format[i] >= '0' && format[i] <= '9'; ++i)
+					{
+						width *= 10;
+						width += format[i] - '0';
+					}
+				}
+				size_t i = va_arg(args, size_t);
+				char buffer[sizeof(size_t) * 8 + 1];
+				//	size_t len
+				if ((int)i < 0) {
+					AuPutS("-");
+					i = ((int)i * -1);
+					sztoa(i, buffer, 10);
+				}
+				else {
+					sztoa(i, buffer, 10);
+					size_t len = strlen(buffer);
+				}
+				/*	while (len++ < width)
+				puts("0");*/
+				AuPutS(buffer);
+			}
+			else if (*format == 'c')
+			{
+				char c = va_arg(args, char);
+				//char buffer[sizeof(size_t) * 8 + 1];
+				//sztoa(c, buffer, 10);
+				//puts(buffer);
+				AuPutC(c);
+			}
+			else if (*format == 'x')
+			{
+				size_t x = va_arg(args, size_t);
+				char buffer[sizeof(size_t) * 8 + 1];
+				sztoa(x, buffer, 16);
+				//puts("0x");
+				AuPutS(buffer);
+			}
+			else if (*format == 's')
+			{
+				char* x = va_arg(args, char*);
+				AuPutS(x);
+			}
+			else if (*format == 'f')
+			{
+				double x = va_arg(args, double);
+				AuPutS(ftoa(x, 2));
+			}
+			else if (*format == '%')
+			{
+				AuPutS(".");
+			}
+			else
+			{
+				char buf[3];
+				buf[0] = '%'; buf[1] = *format; buf[2] = '\0';
+				AuPutS(buf);
+			}
+		}
+		else
+		{
+			char buf[2];
+			buf[0] = *format; buf[1] = '\0';
+			AuPutS(buf);
+		}
+		++format;
+	}
+	va_end(args);
+
+}
+
+
+/**
+ * @brief AuConsoleEarlyEnable -- enables or disable early
  * mode text output
  * @param value -- boolean value
  */
@@ -464,9 +579,10 @@ void AuConsoleEarlyEnable(bool value) {
 	aucon->early_mode = value;
 }
 
-/*
- * AuConsoleGetScreenWidth -- return the screen
+/**
+ * @brief AuConsoleGetScreenWidth -- return the screen
  * width
+ * @return return screen width 
  */
 uint32_t AuConsoleGetScreenWidth() {
 	if (!aucon)
@@ -474,9 +590,10 @@ uint32_t AuConsoleGetScreenWidth() {
 	return aucon->width;
 }
 
-/*
- * AuConsoleGetScreenHeight -- return the screen
+/**
+ * @brief AuConsoleGetScreenHeight -- return the screen
  * height
+ * @return return screen height
  */
 uint32_t AuConsoleGetScreenHeight() {
 	if (!aucon)
@@ -486,4 +603,17 @@ uint32_t AuConsoleGetScreenHeight() {
 
 void AuConsoleFlushFramebuffer() {
 	aa64_data_cache_clean_range(aucon->buffer, aucon->size);
+}
+
+void AuConsoleSetConInfo(uint64_t phys, uint64_t virtual, size_t xres, size_t yres) {
+	__framebuffer = (uint32_t*)phys;
+	aucon->buffer = (uint32_t*)virtual;
+	aucon->width = xres;
+	aucon->height = yres;
+	aucon->size = xres * yres * 4;
+	//bypass_autextout = true;
+}
+
+void AuConsoleBypassAuTextOut() {
+	bypass_autextout = 1;
 }

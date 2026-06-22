@@ -37,12 +37,13 @@
 #include <sys\_keproc.h>
 #include <widgets\msgbox.h>
 
+
 #define LAUNCHER_BUTTON_HOVER_DARK 0xCC658096
 #define LAUNCHER_BUTTON_HOVER_LIGHT 0xCC8CA2B4
 #define LAUNCHER_BUTTON_CLICKED 0xCC1D1D1D
 
 void ButtonIconRead(ButtonIcon* btninfo);
-void ButtonIconDraw(ButtonIcon* info, ChCanvas* canv, int x, int y);
+void ButtonIconDraw(ButtonIcon* info, ChCanvas* canv, int x, int y, ChRect *limit);
 
 /* LaunchButtonPaint -- default paint handler for launch button */
 void LaunchButtonPaint(LaunchButton* lb, ChWindow* win) {
@@ -53,13 +54,19 @@ void LaunchButtonPaint(LaunchButton* lb, ChWindow* win) {
 	if (lb->clicked) 
 		ChDrawRect(win->canv, lb->x, lb->y, lb->w, lb->h, LAUNCHER_BUTTON_CLICKED);
 		
+	AppGrid* grid = XELauncherGetAppGrid();
+	ChRect limit;
+	limit.x = grid->x;
+	limit.y = grid->y;
+	limit.w = grid->w;
+	limit.h = grid->h;
 	ButtonIconDraw(lb->buttonIcon, win->canv, lb->x + lb->w / 2 - lb->buttonIcon->iconWidth / 2,
-		lb->y + lb->h / 2 - lb->buttonIcon->iconHeight / 2);
+		lb->y + lb->h / 2 - lb->buttonIcon->iconHeight / 2, &limit);
 	ChFontSetSize(win->app->baseFont,11);
 	int font_length = ChFontGetWidth(win->app->baseFont, lb->title);
 	int font_height = ChFontGetHeight(win->app->baseFont, lb->title);
-	ChFontDrawText(win->canv, win->app->baseFont, lb->title, lb->x + lb->w / 2 - font_length / 2,
-		lb->y + lb->h - 5, 12, BLACK);
+	ChFontDrawTextClipped(win->canv, win->app->baseFont, lb->title, lb->x + lb->w / 2 - font_length / 2,
+		lb->y + lb->h - 5, LIGHTSILVER, &limit);
 }
 
 
@@ -118,12 +125,26 @@ void LaunchButtonMouseEvent(LaunchButton* wid, ChWindow* win, int x, int y, int 
  */
 void LauncherButtonDefaultAction(LaunchButton* lbutton, ChWindow *win){
 	ChWindowHide(win);
-	_KeProcessSleep(8);
+	_KeProcessSleep(100);
 	int id = _KeCreateProcess(0, lbutton->title);
 	if (id == -1) {
 		_KePrint("Failed to open app -> %s \r\n", lbutton->title);
 	}
-	int status = _KeProcessLoadExec(id, lbutton->appname, 0, 0);
+	char** argvs = NULL;
+	int numarg = 0;
+	if (strcmp(lbutton->param, "Null") == 1) {
+		char* p = (char*)malloc(strlen(lbutton->param));
+		strcpy(p, lbutton->param);
+		numarg++;
+		argvs = (char**)malloc(numarg * sizeof(char*));
+		memset(argvs, 0, 1);
+		argvs[0] = p;
+	}
+	int status = _KeProcessLoadExec(id, lbutton->appname, 0, NULL);
+	if (argvs) {
+		free(argvs[0]);
+		free(argvs);
+	}
 }
 
 /*
@@ -143,6 +164,8 @@ LaunchButton *CreateLaunchButton(int x, int y, int w, int h, char* title, char* 
 	lb->y = y;
 	lb->w = w;
 	lb->h = h;
+	lb->scratch_x = x;
+	lb->scratch_y = y;
 	lb->title = (char*)malloc(strlen(title));
 	lb->appname = (char*)malloc(strlen(appname));
 	memset(lb->title, 0, strlen(title));
@@ -153,6 +176,7 @@ LaunchButton *CreateLaunchButton(int x, int y, int w, int h, char* title, char* 
 	lb->drawLaunchButton = LaunchButtonPaint;
 	lb->mouseEvent = LaunchButtonMouseEvent;
 	lb->actionHandler = LauncherButtonDefaultAction;
+	lb->page_number = 1;
 	return lb;
 }
 
@@ -169,6 +193,7 @@ ButtonIcon* CreateLaunchButtonIcon(char* iconfile, LaunchButton* button) {
 		for (;;);
 	}
 
+	_KePrint("Icon fd : %d \r\n", fd);
 	XEFileStatus stat;
 	_KeFileStat(fd, &stat);
 
@@ -206,7 +231,7 @@ void ButtonIconRead(ButtonIcon* btninfo) {
 	btninfo->iconWidth = width;
 	btninfo->iconHeight = height;
 	btninfo->iconBpp = bpp;
-	_KeCloseFile(btninfo->iconFd);
+	//_KeCloseFile(btninfo->iconFd);
 	btninfo->iconFd = -1;
 }
 
@@ -217,10 +242,40 @@ void ButtonIconRead(ButtonIcon* btninfo) {
 * @param x -- X coordinate
 * @param y -- Y coordinate
 */
-void ButtonIconDraw(ButtonIcon* info, ChCanvas* canv, int x, int y){
+void ButtonIconDraw(ButtonIcon* info, ChCanvas* canv, int x, int y, ChRect* limit){
 	uint32_t width = info->iconWidth;
 	uint32_t height = info->iconHeight;
+	uint32_t imageHeight = height;
 	uint32_t j = 0;
+
+	if (x > (limit->x + limit->w))
+		return;
+
+	if (y > (limit->y + limit->h))
+		return;
+
+	if (y <= limit->y) {
+		int diff = limit->y - y;
+		y = limit->y;
+		height -= diff;
+		imageHeight -= diff;
+	}
+
+	if (x <= limit->x)
+		x = limit->x;
+
+	if ((y + height) <= limit->y)
+		return;
+
+	if ((x + width) <= limit->x)
+		return;
+
+	if ((x + width) > (limit->x + limit->w))
+		width = (limit->x + limit->w) - x;
+
+	if ((y + height) > (limit->y + limit->h))
+		height = (limit->y + limit->h) - y;
+
 
 	uint8_t* image = info->imageData;
 	for (int i = 0; i < height; i++) {

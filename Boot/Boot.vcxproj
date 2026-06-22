@@ -185,7 +185,7 @@
       <EntryPointSymbol>efi_main</EntryPointSymbol>
     </Link>
     <PostBuildEvent>
-      <Command>copy "$(SolutionDir)Build\EFI\BOOT\$(TargetName).efi" "%XENEVA_BUILDS%\EFI\BOOT\$(TargetName).efi"</Command>
+      <Command>copy "$(SolutionDir)Build\EFI\BOOT\$(TargetName).efi" M:\EFI\BOOT\$(TargetName).efi"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">

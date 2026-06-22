@@ -38,7 +38,7 @@ typedef size_t WT;
 
 extern "C" void _fastcpy(void* dest, void* src, size_t count);
 
-void memset(void *targ, uint8_t val, uint32_t len){
+void memset(void *targ, int val, uint32_t len){
 	uint8_t *t = (uint8_t*)targ;
 	while (len--)
 		*t++ = val;

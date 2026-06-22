@@ -54,8 +54,8 @@ void drawAnim() {
 */
 int main(int argc, char* arv[]){
 	
-	char *filename = NULL;
-	if (argc > 1){
+	//char* filename = "/Ss.wav"; //NULL;
+	/*if (argc > 1){
 		if (strcmp(arv[1], "-help") == 0){
 			printf("\n Play v1.0 -- A simple wave file player \n");
 			printf("Copyright (C) Manas Kamal Choudhury 2024 \n");
@@ -71,12 +71,12 @@ int main(int argc, char* arv[]){
 			}
 			filename = arv[2];
 		}
-	}
+	}*/
 	
-	if (filename == NULL){
+	/*if (filename == NULL){
 		printf("\n No filename specified \n");		
 		return -1;
-	}
+	}*/
 	int thrID = _KeGetThreadID();
 
 	int postbox = _KeOpenFile("/dev/postbox", FILE_OPEN_READ_ONLY);
@@ -91,7 +91,7 @@ int main(int argc, char* arv[]){
 	* a raw wave file with 48kHZ-16bit format, to play mp3 or
 	* other format, one needs another conversion layer of samples */
 
-	int song = _KeOpenFile(filename, FILE_OPEN_READ_ONLY);
+	int song = _KeOpenFile("/Ss.wav", FILE_OPEN_READ_ONLY);
 	if (song == -1){
 		printf("No file found \n");
 		return -1;

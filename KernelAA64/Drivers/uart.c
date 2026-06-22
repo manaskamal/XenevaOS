@@ -1,4 +1,6 @@
 /**
+* @file uart.c
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2025, Manas Kamal Choudhury
@@ -33,6 +35,8 @@
 #include <va_list.h>
 #include <stdarg.h>
 #include <string.h>
+#include <stdio.h>
+#include <Board/imx8mp/imx8mp_uart.h>
 
 uint64_t* uartMMIO;
 bool _uart_mapped = false;
@@ -45,6 +49,9 @@ static inline void uart_write_reg(uint32_t reg_offset, uint32_t value) {
 	*(volatile uint32_t*)((uint64_t)uartMMIO + reg_offset) = value;
 }
 
+/**
+ * @brief UARTInitialize -- initialize uart serial output
+ */
 void UARTInitialize() {
 	uartMMIO = (uint64_t*)AuMapMMIO(UART0_BASE, 1);
 	AuTextOut("UART MMIO -> %x \n", uartMMIO);
@@ -62,12 +69,27 @@ void UARTInitialize() {
 
 	//enable irq
 	uart_write_reg(UART_IMSC, UART_IMSC_RXIM | UART_IMSC_RTIM);
+#elif __TARGET_BOARD_IMX8MP_VERDIN_DAHLIA__ || (__TARGET_BOARD_IMX8MP_SOC__)
+	au_imx8np_uart_initialize((uint64_t*)uartMMIO);
 #endif
+
 	_uart_mapped = true;
 }
 
 
+bool is_uart_initialized() {
+	return _uart_mapped;
+}
+
+/**
+ * @brief uartPutc -- put a single character to uart
+ * @param c -- character to print
+ */
 void uartPutc(char c) {
+#ifdef __TARGET_BOARD_IMX8MP_VERDIN_DAHLIA__ || (__TARGET_BOARD_IMX8MP_SOC__)
+	au_imx8mp_uart_putc(c);
+#else
+
 	uint64_t* mmioBase = 0;
 	if (_uart_mapped)
 		mmioBase = uartMMIO;
@@ -76,10 +98,11 @@ void uartPutc(char c) {
 	char* uart0 = (char*)mmioBase;
 	while ((*(uart0 + 0x18) & (1 << 5)));
 	*uart0 = c;
+#endif
 }
 
-/*
- * uartPuts --serial output interface
+/**
+ * @brief uartPuts --serial output interface
  * @param s -- String
  */
 void uartPuts(const char* s) {
@@ -88,8 +111,8 @@ void uartPuts(const char* s) {
 }
 
 extern void AuUartPutString(const char* s);
-/*
- * UARTDebugOut -- standard text printing function
+/**
+ * @brief UARTDebugOut -- standard text printing function
  * for early kernel using UART
  * @param text -- text to output
  */

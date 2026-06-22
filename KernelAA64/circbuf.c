@@ -1,4 +1,6 @@
 /**
+* @file circbuf.c
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2025, Manas Kamal Choudhury
@@ -30,8 +32,8 @@
 #include <circbuf.h>
 #include <Mm\kmalloc.h>
 
-/*
- * AuAdvancePointer -- advances the pointer
+/**
+ * @brief AuAdvancePointer -- advances the pointer
  * of the buffer
  * @param cbuf -- Pointer to the circular buffer
  */
@@ -43,8 +45,8 @@ void AuAdvancePointer(CircBuffer* cbuf) {
 	cbuf->full = (cbuf->head == cbuf->tail);
 }
 
-/*
- * AuRetreatPointer -- retreat the pointer of
+/**
+ * @brief AuRetreatPointer -- retreat the pointer of
  * the buffer
  * @param cbuf -- Pointer to the circular buffer
  */
@@ -53,8 +55,8 @@ void AuRetreatPointer(CircBuffer* cbuf) {
 	cbuf->tail = (cbuf->tail + 1) % cbuf->max;
 }
 
-/*
- * AuCircBufReset -- reset the entire buffer
+/**
+ * @brief AuCircBufReset -- reset the entire buffer
  * @param cbuf -- Pointer to the circular buffer
  */
 void AuCircBufReset(CircBuffer* cbuf) {
@@ -63,8 +65,8 @@ void AuCircBufReset(CircBuffer* cbuf) {
 	cbuf->full = false;
 }
 
-/*
- * AuCircBufInitialise -- initialise a new circular buffer
+/**
+ * @brief AuCircBufInitialise -- initialise a new circular buffer
  * @param buffer -- Pointer to the actual buffer pointer
  * @param sz -- size of the buffer
  */
@@ -76,8 +78,8 @@ CircBuffer* AuCircBufInitialise(uint8_t* buffer, size_t sz) {
 	return cbuf;
 }
 
-/*
- * AuCircBufFree -- free a circular buffer
+/**
+ * @brief AuCircBufFree -- free a circular buffer
  * @param cbuf -- Pointer to the circular buffer
  * to free
  */
@@ -85,8 +87,8 @@ void AuCircBufFree(CircBuffer* cbuf) {
 	kfree(cbuf);
 }
 
-/*
- * AuCircBufSize -- returns the circular
+/**
+ * @brief AuCircBufSize -- returns the circular
  * buffer size
  * @param cbuf -- Pointer to the circular
  * buffer size
@@ -103,16 +105,16 @@ size_t AuCircBufSize(CircBuffer* cbuf) {
 	return sz;
 }
 
-/*
- * AuCircBufCapacity -- returns the circular
+/**
+ * @brief AuCircBufCapacity -- returns the circular
  * buffer capacity
  */
 size_t AuCircBufCapacity(CircBuffer* cbuf) {
 	return cbuf->max;
 }
 
-/*
- * AuCircBufPutData -- puts a data to circular buffer
+/**
+ * @brief AuCircBufPutData -- puts a data to circular buffer
  * @param cbuf-- Pointer to the circular buffer
  * @param data -- data to put
  */
@@ -121,8 +123,8 @@ void AuCircBufPutData(CircBuffer* cbuf, uint8_t data) {
 	AuAdvancePointer(cbuf);
 }
 
-/*
- * AuCircBufPut -- puts data onto circular buffer
+/**
+ * @brief AuCircBufPut -- puts data onto circular buffer
  * @param cbuf -- Pointer to the circular buffer
  * @param data -- data to put
  */
@@ -137,8 +139,8 @@ int AuCircBufPut(CircBuffer* cbuf, uint8_t data) {
 	return r;
 }
 
-/*
- * AuCircBufGet -- gets a data from circular
+/**
+ * @brief AuCircBufGet -- gets a data from circular
  * buffer
  * @param cbuf -- Pointer to the circular buffer
  * @param data -- Pointer to the buffer
@@ -156,8 +158,8 @@ int AuCircBufGet(CircBuffer* cbuf, uint8_t* data)
 	return r;
 }
 
-/*
- * CircBufEmpty -- checks if the circular
+/**
+ * @brief CircBufEmpty -- checks if the circular
  * buffer is empty
  * @param cbuf -- Pointer to the circular
  * buffer
@@ -167,8 +169,8 @@ bool CircBufEmpty(CircBuffer* cbuf)
 	return (!cbuf->full && (cbuf->head == cbuf->tail));
 }
 
-/*
- * CircBufFull -- checks if the circular
+/**
+ * @brief CircBufFull -- checks if the circular
  * buffer is full
  * @param cbuf -- Pointer to the circular
  * buffer

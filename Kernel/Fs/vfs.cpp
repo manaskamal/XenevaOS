@@ -40,7 +40,7 @@
 AuVFSContainer* __RootContainer;
 AuVFSNode* __RootFS;
 bool _vfs_debug_on;
-
+static char _mount_letters[26];
 /*
  * AuVFSInitialise -- initialise the virtual
  * file system
@@ -57,6 +57,27 @@ void AuVFSInitialise() {
 	/* here we need to mount the
 	 * root file system
 	 */
+
+	for (int i = 0; i < 26; i++)
+		_mount_letters[i] = 0;
+}
+
+/** 
+ * @brief AuVFSReserveMountPointLetter -- reserve a letter to 
+ * mount a file system
+ */
+char* AuVFSReserveMountPointLetter() {
+	static char path[4];
+	for (int i = 0; i < 26; i++) {
+		if (_mount_letters[i] == 1) 
+			continue;
+		_mount_letters[i] = 1;
+		path[0] = '/';
+		path[1] = 'a' + i;
+		path[2] = '\0';
+		return path;
+	}
+	return NULL;
 }
 
 

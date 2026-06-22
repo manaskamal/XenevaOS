@@ -31,11 +31,19 @@
 #include "..\draw.h"
 #include "window.h"
 #include "..\font.h"
+#include <math.h>
 
-#define DEFAULT_TITLEBAR_DARK  0x33252525
-#define DEFAULT_TITLEBAR_LIGHT 0x33454343
-#define DEFAULT_TITLEBAR_FOCUS_LIGHT 0x33576674
-#define DEFAULT_TITLEBAR_FOCUS_DARK  0x33454F58
+#ifdef THEME_DEFAULT
+#define DEFAULT_TITLEBAR_DARK  0xFF252525
+#define DEFAULT_TITLEBAR_LIGHT 0xFF454343
+#define DEFAULT_TITLEBAR_FOCUS_LIGHT 0xFF576674
+#define DEFAULT_TITLEBAR_FOCUS_DARK  0xFF454F58
+#elif THEME_PURPLE
+#define DEFAULT_TITLEBAR_DARK  0xFF252525
+#define DEFAULT_TITLEBAR_LIGHT 0xFF454343
+#define DEFAULT_TITLEBAR_FOCUS_LIGHT  0xFF1E9D97 //0x33576674
+#define DEFAULT_TITLEBAR_FOCUS_DARK  0xFF454F58
+#endif
 
 /*
  * ChWindowPaintCloseButton -- close button painter
@@ -149,4 +157,35 @@ void ChDefaultPopupWinPaint(ChWindow* popup) {
 			wid->ChPaintHandler(wid, popup);
 	}
 	ChDrawRectUnfilled(popup->canv, 0, 0, popup->info->width, popup->info->height, GRAY);
+}
+
+
+#define CORNER_RADIUS 12
+
+void _apply_rounded_corner(uint32_t* backbuff, int radius, int winw, int winh) {
+	int w = winw;
+	int h = winh;
+	for (int y = 0; y < radius; y++) {
+		for (int x = 0; x < radius; x++) {
+
+			float dx = (float)(radius - 1 - x);
+			float dy = (float)(radius - 1 - y);
+			float dist = sqrtf(dx * dx + dy * dy) - (float)(radius - 1);
+
+			float a = 1.0f - fmaxf(0.0f, fminf(1.0f, dist + 0.5f));
+			uint8_t alpha = (uint8_t)(a * 255.0f);
+
+			uint32_t* tl = &backbuff[y * w + x];
+			*tl = (*tl & 0x00FFFFFF) | ((uint32_t)alpha << 24);
+
+			uint32_t* tr = &backbuff[y * w + (w - 1 - x)];
+			*tr = (*tr & 0x00FFFFFF) | ((uint32_t)alpha << 24);
+
+			uint32_t* bl = &backbuff[(h - 1 - y) * w + x];
+			*bl = (*bl & 0x00FFFFFF) | ((uint32_t)alpha << 24);
+
+			uint32_t* br = &backbuff[(h - 1 - y) * w + (w - 1 - x)];
+			*br = (*br & 0x00FFFFFF) | ((uint32_t)alpha << 24);
+		}
+	}
 }

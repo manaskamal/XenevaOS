@@ -188,9 +188,9 @@
     <ClCompile>
       <WarningLevel>Level1</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>ARCH_ARM64; __TARGET_BOARD_RPI3__;</PreprocessorDefinitions>
+      <PreprocessorDefinitions>ARCH_ARM64; __TARGET_BOARD_QEMU_VIRT__; _M_ARM64; MDE_CPU_AARCH64</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)BaseHdr;$(SolutionDir)Boot\include;$(SolutionDir)Boot\include\AArch64;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)BaseHdr;$(SolutionDir)Boot\include;$(SolutionDir)Boot\include\AArch64;$(SolutionDir)BootAA64\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <IgnoreStandardIncludePath>true</IgnoreStandardIncludePath>
       <MinimalRebuild>true</MinimalRebuild>
       <ExceptionHandling>false</ExceptionHandling>
@@ -220,7 +220,7 @@
       <DataExecutionPrevention>false</DataExecutionPrevention>
     </Link>
     <PostBuildEvent>
-      <Command>copy "$(SolutionDir)Build\EFI\BOOT\$(TargetName).efi" "F:\EFI\BOOT\$(TargetName).efi"</Command>
+      <Command>copy "$(SolutionDir)Build\EFI\BOOT\$(TargetName).efi" "M:\EFI\BOOT\$(TargetName).efi"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -257,7 +257,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="clib.cpp" />
+    <ClCompile Include="devicetree.cpp" />
     <ClCompile Include="file.cpp" />
+    <ClCompile Include="imx8mp\imx8mp_uartc.cpp" />
     <ClCompile Include="mem.cpp" />
     <ClCompile Include="paging.cpp" />
     <ClCompile Include="pe.cpp" />
@@ -274,6 +276,7 @@
     <ClInclude Include="file.h" />
     <ClInclude Include="font.h" />
     <ClInclude Include="gpio.h" />
+    <ClInclude Include="imx8mp\imx8mp_uartc.h" />
     <ClInclude Include="lowlevel.h" />
     <ClInclude Include="paging.h" />
     <ClInclude Include="pe.h" />

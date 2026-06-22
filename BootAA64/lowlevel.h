@@ -63,6 +63,8 @@ extern "C" {
 
 	uint64_t read_tcr_el1();
 
+	uint64_t read_tcr_el2();
+
 	void write_tcr_el1(uint64_t tcr);
 
 	uint64_t read_mair_el1();

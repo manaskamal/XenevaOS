@@ -59,10 +59,11 @@
 #ifdef ARCH_X64
 #define KERNEL_STACK_LOCATION   0xFFFFFB0000000000
 #elif ARCH_ARM64
-#define KERNEL_STACK_LOCATION 0xFFFFB00000000000
+#define KERNEL_STACK_LOCATION  0xFFFFB00000000000    //0x0000000B00000000
 #endif
 
 #define KERNEL_STACK_SIZE  40960//16384  //16KiB
+
 
 typedef struct _lbprotocol_ {
 	uint64_t initrd_start;
@@ -174,7 +175,7 @@ typedef struct _KERNEL_BOOT_INFO_ {
 #ifdef __cplusplus
 extern "C" {
 #endif
-extern KERNEL_BOOT_INFO* AuGetBootInfoStruc();
+AU_EXTERN AU_EXPORT KERNEL_BOOT_INFO* AuGetBootInfoStruc();
 #ifdef __cplusplus
 }
 #endif

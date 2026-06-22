@@ -1,4 +1,6 @@
 /**
+* @file _procheap.h
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2023-2024, Manas Kamal Choudhury
@@ -33,19 +35,19 @@
 #include <stdio.h>
 #include <_xeneva.h>
 
-/*
- * _ProcCreateHeap -- create a new process heap area
+/**
+ * @brief _ProcCreateHeap -- create a new process heap area
  *  @param sz -- size to create by default
  */
 extern void ProcCreateHeapArea(size_t sz);
 
-/*
- * _ProcHeapAreaDestroy -- destroy entire heap area
+/**
+ * @brief _ProcHeapAreaDestroy -- destroy entire heap area
  */
 extern void _ProcHeapAreaDestroy();
 
-/*
- * _ProcGetHeapMem -- returns a heap memory from process
+/**
+ * @brief _ProcGetHeapMem -- returns a heap memory from process
  * heap area
  * @param sz -- size in bytes
  */

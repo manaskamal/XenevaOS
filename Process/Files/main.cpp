@@ -50,6 +50,9 @@
 #include <widgets\menu.h>
 #include "partition.h"
 #include <widgets/base.h>
+#include <ctype.h>
+#include <widgets/scrollbar.h>
+#include <widgets/listview.h>
 
 ChitralekhaApp *app;
 ChWindow* mainWin;
@@ -59,6 +62,9 @@ ChPopupMenu* pm;
 ChListView* lv;
 ChIcon *dirico;
 ChIcon *docico;
+ChIcon* exeico;
+ChIcon* imgico;
+ChIcon* dllico;
 char* path;
 char* history;
 
@@ -95,9 +101,11 @@ void FileAddressBarMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, int bu
 }
 
 
+#define FILE_ADDRESS_BAR_COLOR 0xFFFFFFFF
+
 void FileAddressBarPaintHandler(ChWidget* wid, ChWindow* win) {
 	FileAddressBar* bar = (FileAddressBar*)wid;
-	ChDrawRect(win->canv, bar->base.x, bar->base.y, bar->base.w, bar->base.h, WHITE);
+	ChDrawRect(win->canv, bar->base.x, bar->base.y, bar->base.w, bar->base.h, FILE_ADDRESS_BAR_COLOR);
 	ChDrawRectUnfilled(win->canv, bar->base.x, bar->base.y, bar->base.w, bar->base.h, GRAY);
 	ChFontSetSize(win->app->baseFont, 13);
 	ChFontDrawText(win->canv, win->app->baseFont,path, bar->base.x + 10, 
@@ -244,6 +252,40 @@ void PrintParentDir(char* pathname) {
 	free(subpath);
 }
 
+const char* get_extension(const char* filename) {
+	const char* dot = strrchr(filename, '.');
+	if (!dot || dot == filename) return "";
+	return dot + 1;
+}
+
+int stricmp_custom(const char* a, const char* b) {
+	while (*a && *b) {
+		if (tolower(*a) != tolower(*b))
+			return 0;
+		a++; b++;
+	}
+	return *a == *b;
+}
+
+ChIcon* GetIconByName(char* filename) {
+	const char* ext = get_extension(filename);
+	
+	if (stricmp_custom(ext, "bmp") ||
+		stricmp_custom(ext, "jpg") ||
+		stricmp_custom(ext, "png")) {
+		return imgico;
+	}
+
+	if (stricmp_custom(ext, "exe")) 
+		return exeico;
+	
+	if (stricmp_custom(ext, "dll")) 
+		return dllico;
+	
+
+	return docico;
+}
+
 /*
  * RefreshFileView -- reiterate and add file to the list view
  * @param dirfd -- directory file descriptor
@@ -286,7 +328,8 @@ void RefreshFileView(int dirfd, ChListView *lview) {
 					continue;
 				}
 				ChListItem* fi = ChListViewAddItem(mainWin, lv, dirent->filename);
-				ChListViewSetListItemIcon(fi, docico);
+				ChIcon* ico = GetIconByName(dirent->filename);
+				ChListViewSetListItemIcon(fi, ico);
 				fi->ChListItemAction = DocumentItemActionHandler;
 			}
 		}
@@ -316,7 +359,7 @@ void DirListItemAction(ChListView* lv, ChListItem* li) {
 	PrintParentDir(path);
 	/* bug : needs to sleep inorder to get
 	* the file descriptor for the desired path */
-	_KeProcessSleep(10);
+	_KeProcessSleep(1);
 
 	int dirfd = _KeOpenDir(dirname);
 
@@ -469,6 +512,13 @@ void EnterClicked(ChWidget* wid, ChWindow* win) {
 char* FileManagerGetCurrentPath() {
 	return path;
 }
+
+void _FileMngrThr() {
+	_KePrint("File manager thread running \r\n");
+	while (1) {
+		_KeProcessSleep(1000);
+	}
+}
 /*
 * main -- main entry
 */
@@ -478,6 +528,8 @@ int main(int argc, char* argv[]){
 		500);
 
 	win2 = NULL;
+
+	mainWin->color = 0x99808080;
 
 	pm = NULL;
 
@@ -515,10 +567,41 @@ int main(int argc, char* argv[]){
 	lv = ChCreateListView(170, 100, mainWin->info->width - (170+2), mainWin->info->height - 120);
 	ChListViewSetScrollpane(lv, sp);
 
+	//ChScrollBar* sb = ChCreateScrollBar(mainWin->info->width - 16, 26, 16, mainWin->info->height - 26, SCROLLBAR_ORIENTATION_VERTICAL);
+	//ChScrollBarSetRange(sb, 0, 800, mainWin->info->height - 26);
+	//ChScrollBar* sb1 = ChCreateScrollBar(0, mainWin->info->height - 16, mainWin->info->width, 16, SCROLLBAR_ORIENTATION_HORIZONTAL);
+	//ChScrollBarSetRange(sb1, 0, 800, mainWin->info->width);
+	ListView* lv1 = ChListViewCreate(170, 100, mainWin->info->width - (170 + 2), mainWin->info->height - 120,24);
+	ListViewAddColumn(lv1, "Name", 200, 60);
+	ListViewAddColumn(lv1, "Size", 100, 50);
+	ListViewAddColumn(lv1, "Type", 100, 50);
+	ListViewAddColumn(lv1, "Modified", 220, 80);
+	ListViewAddColumn(lv1, "Access", 100, 50);
+
+	const char* row1[] = { "kernel.bin", "2.1 MB", "Binary", "2026-06-18 14:02", "root"};
+	ListItem* l1 = ListViewAddItem(lv1, row1, 5, NULL);
+
+	const char* row2[] = { "doom.exe", "880 KB", "exec", "2026-06-17 09:41", "user" };
+	ListItem* l2 = ListViewAddItem(lv1, row2, 5, NULL);
+
+	const char* row3[] = { "xeldr.exe", "78 KB", "exec", "2026-06-17 09:41", "root" };
+	ListItem* l3 = ListViewAddItem(lv1, row3, 5, NULL);
+
+	const char* row4[] = { "audrv.cnf", "1 KB", "config", "2026-06-17 09:41", "user" };
+	ListItem* l4 = ListViewAddItem(lv1, row4, 5, NULL);
+
+	const char* row5[] = { "virtblk.dll", "55 KB", "system", "2026-06-17 09:41", "root" };
+	ListItem* l5 = ListViewAddItem(lv1, row5, 5, NULL);
+
+	const char* row6[] = { "virtnet.dll", "67 KB", "system", "2026-06-17 09:41", "root" };
+	ListItem* l6 = ListViewAddItem(lv1, row6, 5, NULL);
+
+	
 
 	ChWindowAddWidget(mainWin, (ChWidget*)mb);
-	ChWindowAddWidget(mainWin, (ChWidget*)lv);
-	ChWindowAddWidget(mainWin, (ChWidget*)sp);
+	//ChWindowAddWidget(mainWin, (ChWidget*)lv);
+	//ChWindowAddWidget(mainWin, (ChWidget*)sp);
+	ChWindowAddWidget(mainWin, (ChWidget*)lv1);
 
 	FileManagerPartitionList* partitionList = FileManagerCreatePartitionList(10, 100, mainWin->info->width - (20 + (mainWin->info->width - 170)),
 		mainWin->info->height - 120);
@@ -537,10 +620,35 @@ int main(int argc, char* argv[]){
 	ChIconOpen(docico, "/icons/doc.bmp");
 	ChIconRead(docico);
 
+	exeico = ChCreateIcon();
+	ChIconOpen(exeico, "/icons/exe.bmp");
+	ChIconRead(exeico);
+	ListViewSetItemIcon(lv1, 1, exeico, exeico->image.width, exeico->image.height);
+
+	imgico = ChCreateIcon();
+	ChIconOpen(imgico, "/icons/img.bmp");
+	ChIconRead(imgico);
+
+	dllico = ChCreateIcon();
+	ChIconOpen(dllico, "/icons/dll.bmp");
+	ChIconRead(dllico);
+	ListViewSetItemIcon(lv1,4,dllico,dllico->image.width, dllico->image.height);
+	ListViewSetItemIcon(lv1, 5, dllico, dllico->image.width, dllico->image.height);
+
+
 	ChIcon* drive = ChCreateIcon();
 	ChIconOpen(drive, "/icons/drive.bmp");
 	ChIconRead(drive);
+
+
+	for (int i = 0; i < 20; i++) {
+		const char* row7[] = { "virus.dll", "67 KB", "system", "2026-06-17 09:41", "root" };
+		ListItem* l7 = ListViewAddItem(lv1, row7, 5, NULL);
+		int index = 6 + i;
+		ListViewSetItemIcon(lv1, index, dllico, dllico->image.width, dllico->image.height);
+	}
 	
+	_KePrint("refreshing file view \r\n");
 	RefreshFileView(dirfd, lv);
 
 	/* first store the root address */

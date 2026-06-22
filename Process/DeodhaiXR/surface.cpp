@@ -82,3 +82,7 @@ void DeoInitializeBackSurface(ChCanvas* canv) {
 	DeodhaiBackSurfaceUpdate(canv, 0, 0, canv->screenWidth, canv->screenHeight);
 }
 
+uint32_t* DeoGetBackSurface() {
+	return backSurface;
+}
+

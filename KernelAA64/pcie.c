@@ -1,4 +1,6 @@
 /**
+* @file pcie.c
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2025, Manas Kamal Choudhury
@@ -40,64 +42,106 @@
 #include <Hal/AA64/aa64lowlevel.h>
 #include <Drivers/uart.h>
 
-uint64_t _ecamAddress;
-bool _pcieInitialized;
-/*
- * AA64PCIeInitialize -- intialize pcie controller
- */
-void AA64PCIeInitialize() {
-	if (!AuLittleBootUsed()) {
-		goto skipDTB;
-	}
+#define QEMU_VIRT_ECAM_BASE 0x4010000000ULL
 
+static uint64_t _ecamAddress;
+static bool _pcieInitialized;
+
+static int _pcie_check_and_map_dtb() {
+	AuTextOut("[aurora]: pcie getting ecam from dtb \r\n");
 	uint32_t* pcie = AuDeviceTreeGetNode("pcie");
 	if (!pcie) {
 		AuTextOut("[aurora]: pcie not found \r\n");
-		return;
+		return 1;
 	}
 	AuTextOut("[aurora]: pcie found \r\n");
 #ifdef __TARGET_BOARD_QEMU_VIRT__
-	
 	/* else need to parse the DTB for */
 	uint32_t addressCell = AuDeviceTreeGetAddressCells(pcie);
 	uint32_t sizeCell = AuDeviceTreeGetSizeCells(pcie);
 	AuTextOut("[aurora]: pcie address cell : %d, size cell : %d \n", addressCell, sizeCell);
 	uint64_t ecamAddr = AuDeviceTreeGetRegAddress(pcie, 2);
-	uint64_t sizeValue = AuDeviceTreeGetRegSize(pcie,2, 2);
+	uint64_t sizeValue = AuDeviceTreeGetRegSize(pcie, 2, 2);
 	AuTextOut("[aurora]: ecam address : %x, size value : %x \n", ecamAddr, sizeValue);
 	_ecamAddress = AuMapMMIO(ecamAddr, sizeValue / 0x1000);
-	_pcieInitialized = 1;
-	return;
 #endif
-skipDTB:
-	AuTextOut("[aurora]: PCIe no LittleBoot protocol used, falling back to UEFI mechanism \n");
+
+	_pcieInitialized = 1;
+	return 0;
+}
+
+static bool _pcie_use_hard_code_ecam() {
+	AuTextOut("[aurora]: pcie getting hard code ecam address \r\n");
+#ifdef __TARGET_BOARD_QEMU_VIRT__
+	_ecamAddress = QEMU_VIRT_ECAM_BASE; // AuMapMMIO(QEMU_VIRT_ECAM_BASE, 0x10000000 / 0x1000);
+#elif __TARGET_BOARD_RPI3__
 	_ecamAddress = 0;
-	if (AuACPIPCIESupported()) {
-		AuTextOut("[aurora]: ACPI PCIe is supported \n");
-		acpiMcfg* mcfg = AuACPIGetMCFG();
-		acpiMcfgAlloc* allocs = MEM_AFTER(acpiMcfgAlloc*, mcfg);
-		//_ecamAddress = AuMapMMIO(allocs->baseAddress, 0x10000000/0x1000);
+#elif __TARGET_BOARD_IMX8MP_VERDIN_DAHLIA__
+	_ecamAddress = 0;
+#endif
+
+	if (_ecamAddress != 0) {
 		_pcieInitialized = 1;
+		return 0;
 	}
-	else {
-		AuTextOut("[aurora]: kernel can't continue boot, no device discovery mechanism supported \n");
-		AuTextOut("[aurora]: Ki koriba aru !! Eku dekhun device discovery mechanism support nokore !! Baad diya \n");
-		AuTextOut("[aurora]: Ponta Bhaat khuwa ge \n");
-		for (;;);
+	else
+		return 1;
+}
+/**
+ * @brief AA64PCIeInitialize -- intialize pcie subsystem
+ */
+void AA64PCIeInitialize() {
+
+	bool _use_hard_code_ = false;
+	bool _use_acpi = false;
+
+	if (_pcie_check_and_map_dtb()) {
+		AuTextOut("[aurora]: could not get pcie ecam from device tree blob \r\n");
+		_use_acpi = true;
 	}
+	else
+		return;
+
+	if (_use_acpi) {
+		if (AuACPIPCIESupported()) {
+			AuTextOut("[aurora]: ACPI PCIe is supported \n");
+			acpiMcfg* mcfg = AuACPIGetMCFG();
+			acpiMcfgAlloc* allocs = MEM_AFTER(acpiMcfgAlloc*, mcfg);
+			//_ecamAddress = AuMapMMIO(allocs->baseAddress, 0x10000000/0x1000);
+			_pcieInitialized = 1;
+			return;
+		}
+	}
+
+
+	if (_pcie_use_hard_code_ecam()) {
+		AuTextOut("[aurora]: no hard coded value for PCIe \r\n");
+	}
+	else
+		return;
+
+
+
+	AuTextOut("[aurora]: kernel can't continue boot, no device discovery mechanism supported \r\n");
+	AuTextOut("[aurora]: Ki koriba aru !! Eku dekhun device discovery mechanism support nokore !! Baad diya \r\n");
+	AuTextOut("[aurora]: Ponta Bhaat khuwa ge \r\n");
+	_pcieInitialized = 0;
+	return;
+
 }
 
 bool AuIsPCIeInitialized() {
 	return _pcieInitialized;
 }
 
-/*
- * AuPCIEGetDevice -- gets a device address from its bus
+/**
+ * @brief AuPCIEGetDevice -- gets a device address from its bus
  * dev and func
  * @param seg -- device segment
  * @param bus -- bus of the device
  * @param dev -- device number
  * @param func -- function number
+ * @return return the composited device address
  */
 uint64_t AuPCIEGetDevice(uint16_t seg, int bus, int dev, int func) {
 	if (bus > 255)
@@ -107,9 +151,9 @@ uint64_t AuPCIEGetDevice(uint16_t seg, int bus, int dev, int func) {
 	if (func > 8)
 		return 0;
 	uint64_t addr = 0;
-	if (_ecamAddress) {
-		addr = _ecamAddress + ((bus << 20) +
-			(dev << 15) + (func << 12));
+	if (_ecamAddress != 0) {
+		addr = _ecamAddress + ((bus << 20) |
+			(dev << 15) | (func << 12));
 	}
 	else {
 		acpiMcfg* mcfg = AuACPIGetMCFG();
@@ -122,13 +166,14 @@ uint64_t AuPCIEGetDevice(uint16_t seg, int bus, int dev, int func) {
 	return addr;
 }
 
-/*
- * AuPCIERead -- reads a register from pci express
+/**
+ * @brief AuPCIERead -- reads a register from pci express
  * @param device -- device address
  * @param reg -- register to read
  * @param bus -- bus number
  * @param dev -- device number
  * @param func -- function number
+ * @return return the result in DWORD
  */
 uint32_t AuPCIERead(uint64_t device, int reg, int bus, int dev, int func) {
 	
@@ -221,19 +266,19 @@ uint32_t AuPCIERead(uint64_t device, int reg, int bus, int dev, int func) {
 }
 
 
-/*
- * AuPCIERead64 -- reads in 64
+/**
+ * @brief AuPCIERead64 -- reads in 64
  * @param device -- device address
  * @param reg -- register
  * @param size -- size to read
  * @param bus -- bus num
  * @param dev -- device number
  * @param func -- func number
+ * @return return the read result in QWORD
  */
 uint64_t AuPCIERead64(uint64_t device, int reg, int size, int bus, int dev, int func) {
 
 	uint64_t result = 0;
-
 	if (size == 1) {
 		result = *RAW_OFFSET(volatile uint8_t*,device, reg);
 		return result;
@@ -252,8 +297,8 @@ uint64_t AuPCIERead64(uint64_t device, int reg, int size, int bus, int dev, int 
 }
 
 
-/*
-* AuPCIEWrite -- writes to a register
+/**
+* @brief AuPCIEWrite -- writes to a register
 * @param device -- device address
 * @param reg -- register
 * @param size -- size to read
@@ -361,8 +406,8 @@ void AuPCIEWrite64(uint64_t device, int reg, int size, uint64_t val, int bus, in
 }
 
 
-/*
-* AuPCIEScanClass -- scans and return pcie device with given class code and sub class code
+/**
+* @brief AuPCIEScanClass -- scans and return pcie device with given class code and sub class code
 * @param classCode -- class code
 * @param subClassCode -- sub class code
 * @param bus -- address, where bus number will be stored
@@ -370,7 +415,6 @@ void AuPCIEWrite64(uint64_t device, int reg, int size, uint64_t val, int bus, in
 * @param func -- address, where function number will be stored
 */
 uint64_t AuPCIEScanClass(uint8_t classCode, uint8_t subClassCode, int* bus_, int* dev_, int* func_) {
-
 
 	for (int bus = 0; bus < 255; bus++) {
 		for (int dev = 0; dev < PCI_DEVICE_PER_BUS; dev++) {
@@ -400,8 +444,8 @@ uint64_t AuPCIEScanClass(uint8_t classCode, uint8_t subClassCode, int* bus_, int
 }
 
 
-/*
-* AuPCIEScanVendorDevice -- scans and return pcie device with given vendor id and device id
+/**
+* @brief AuPCIEScanVendorDevice -- scans and return pcie device with given vendor id and device id
 * @param vendor -- vendor id
 * @param device -- device id
 * @param bus -- address, where bus number will be stored
@@ -439,14 +483,15 @@ uint64_t AuPCIEScanVendorDevice(uint16_t vendor, uint16_t device, int* bus_, int
 }
 
 
-/*
-* AuPCIEScanClassIF -- scans and return pcie device with given class code and sub class code
+/**
+* @brief AuPCIEScanClassIF -- scans and return pcie device with given class code and sub class code
 * @param classCode -- class code
 * @param subClassCode -- sub class code
 * @param bus -- address, where bus number will be stored
 * @param dev -- address, where device number will be stored
 * @param func -- address, where function number will be stored
 * @param progIf -- Programming interface
+* @return pcie device address 
 */
 uint64_t AuPCIEScanClassIF(uint8_t classCode, uint8_t subClassCode, uint8_t progIf, int* bus_, int* dev_, int* func_) {
 
@@ -487,7 +532,7 @@ uint64_t AuPCIEReadBAR(uint64_t device, uint16_t bus, uint16_t dev,uint16_t func
 #define INTERNAL_PCI_REG_BAR0 0x4
 	uint64_t baseaddr, highbits, headertype;
 	uint64_t ret = 0;
-	headertype = AuPCIERead64(device, PCI_HEADER_TYPE, 4, bus, dev, func);
+	headertype = AuPCIERead64(device, PCI_HEADER_TYPE, 1, bus, dev, func);
 	headertype >>= 16;
 	headertype &= 0xFF;
 	if (((headertype & 0x7F) == 1 && BAR > 1) || ((headertype & 0x7F) == 2))
@@ -495,7 +540,6 @@ uint64_t AuPCIEReadBAR(uint64_t device, uint16_t bus, uint16_t dev,uint16_t func
 	if (BAR > 5)
 		goto end;
 	baseaddr = AuPCIERead64(device, (BAR + (PCI_BAR0/4))*4, 4, bus, dev, func);
-	UARTDebugOut("BAR Reading : %x \n", (BAR + (PCI_BAR0 / 4)) * 4);
 	uint32_t bartype = baseaddr & 0xF;
 	if (PCI_IS_IO_BAR(bartype)) {
 		ret = baseaddr;
@@ -506,7 +550,6 @@ uint64_t AuPCIEReadBAR(uint64_t device, uint16_t bus, uint16_t dev,uint16_t func
 		ret = baseaddr ^ bartype;
 	else if (PCI_MEM_BAR_TYPE(bartype) == MEMBAR64) {
 		highbits = AuPCIERead64(device,(BAR + 1 + (PCI_BAR0/4))*4, 4, bus, dev, func);
-		UARTDebugOut("BAR Reading : %x \n", (BAR + 1 + (PCI_BAR0 / 4)) * 4);
 		baseaddr |= (highbits << 32);
 		ret = baseaddr ^ bartype;
 	}
@@ -516,7 +559,6 @@ uint64_t AuPCIEReadBAR(uint64_t device, uint16_t bus, uint16_t dev,uint16_t func
 	if (barsz) {
 		AuPCIEWrite64(device, (BAR + (PCI_BAR0/4))*4, 4, UINT32_MAX, bus, dev, func);
 		uint64_t reread = AuPCIERead64(device, (BAR + (PCI_BAR0 / 4)) * 4, 4, bus, dev, func);
-		UARTDebugOut("ReRead: %x \n", reread);
 		if (PCI_MEM_BAR_TYPE(bartype) == MEMBAR64)
 			AuPCIEWrite64(device, (BAR + 1 + (PCI_BAR0/4))*4, 4, UINT32_MAX, bus, dev, func);
 		uint64_t szbits, szhighbits = 0;
@@ -539,8 +581,8 @@ end:
 	return ret;
 }
 
-/*
-* AuPCIEAllocMSI -- Allocate MSI/MSI-X for interrupt
+/**
+* @brief AuPCIEAllocMSI -- Allocate MSI/MSI-X for interrupt
 * @todo -- MSIX not implemented yet
 * @param device -- PCIe device address
 * @param vector -- interrupt vector
@@ -599,7 +641,6 @@ bool AuPCIEAllocMSI(uint64_t device, size_t vector, int bus, int dev, int func) 
 
 			if ((cap_reg & 0xff) == 0x11) {
 				value = true; //MSI-X Allocated: not implemented
-				UARTDebugOut("MSI-X found \r\n");
 				msi_reg = cap_reg;
 				uint16_t msixctl = (msi_reg >> 16) & 0xFFFF;
 				uint64_t tableOffset = AuPCIERead64(device, capptr + 0x4, 4, bus, dev, func);
@@ -611,19 +652,14 @@ bool AuPCIEAllocMSI(uint64_t device, size_t vector, int bus, int dev, int func) 
 				size_t barsz = 0;
 				uint64_t msi_bar = AuPCIEReadBAR(device, bus, dev, func,table_bir, &barsz);
 				uint64_t mappedMsiBar = (uint64_t)AuMapMMIO(msi_bar,1);
-				UARTDebugOut("MSI BAR : %x barsz : %d\n", msi_bar, barsz);
 				uint64_t tablecount = (msixctl & 0x7ff) + 1;
-				UARTDebugOut("TAble count : %d \n", tablecount);
 				uint64_t msi_address = AuGICGetMSIAddress((int)vector);
 				uint32_t msi_data = AuGICGetMSIData((int)vector);
 				uint32_t offset = tableOffset & ~0x7;
 				volatile uint32_t* msitab = RAW_OFFSET(volatile uint32_t*, mappedMsiBar, offset);
-				UARTDebugOut("MSI Table : %x offset : %x \n", msitab, offset);
 				for (int n = 0; n < tablecount; ++n) {
 					msitab[0 + 4 * n] = (uint32_t)msi_address;
-					UARTDebugOut("msi address low : %x \n", msitab[0 + 4 * n]);
 					msitab[1 + 4 * n] = (uint32_t)(msi_address >> 32);
-					UARTDebugOut("msi address up : %x \n", msitab[1 + 4 * n]);
 					msitab[2 + 4 * n] = (uint32_t)msi_data;
 					msitab[3 + 4 * n] = 0; //vector control
 				}

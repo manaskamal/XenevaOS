@@ -1,4 +1,6 @@
 /**
+* @file mmserv.c
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2023, Manas Kamal Choudhury
@@ -34,13 +36,14 @@
 #include <Mm/pmmngr.h>
 #include <Mm/vmmngr.h>
 #include <_null.h>
+#include <Drivers/uart.h>
 
 /* ============================================================
  *  Shared Memory
  * ============================================================
  */
- /*
-  * CreateSharedMem -- create a shared memory chunk
+ /**
+  * @brief CreateSharedMem -- create a shared memory chunk
   * @param key -- key to use
   * @param sz -- memory size
   * @param flags -- shared memory flags
@@ -60,8 +63,8 @@ int CreateSharedMem(uint16_t key, size_t sz, uint8_t flags) {
 	return id;
 }
 
-/*
- * ObtainSharedMem -- obtain a shared memory
+/**
+ * @brief ObtainSharedMem -- obtain a shared memory
  * @param id -- segment id
  * @param shmaddr -- user specified address
  * @param shmflg -- flags to use for protection
@@ -79,8 +82,8 @@ void* ObtainSharedMem(uint16_t id, void* shmaddr, int shmflg) {
 	return AuSHMObtainMem(proc, id, shmaddr, shmflg);
 }
 
-/*
- * UnmapSharedMem -- unmap shared memory segment
+/**
+ * @brief UnmapSharedMem -- unmap shared memory segment
  * @param key -- key to search
  */
 void UnmapSharedMem(uint16_t key) {
@@ -97,15 +100,14 @@ void UnmapSharedMem(uint16_t key) {
 }
 
 
-/*
- * GetProcessHeapMem -- get a memory from
+/**
+ * @brief GetProcessHeapMem -- get a memory from
  * process heap
+ * @param sz -- size in bytes
  */
 uint64_t GetProcessHeapMem(size_t sz) {
 	/* check if size is page aligned */
 	if ((sz % PAGE_SIZE) != 0) {
-		AuTextOut("Returning error heap mem -> %d \r\n", sz);
-		return -1;
 		sz = PAGE_ALIGN(sz);
 	}
 
@@ -120,10 +122,14 @@ uint64_t GetProcessHeapMem(size_t sz) {
 		}
 	}
 
+	if (sz < 0)
+		UARTDebugOut("[GetProcessHeapMem]: dlmalloc is asking to free up pages \r\n");
+	
 	uint64_t start_addr = (uint64_t)AuGetFreePage(false, (void*)proc->proc_mem_heap);
 	for (int i = 0; i < sz / PAGE_SIZE; i++) {
 		uint64_t phys = (uint64_t)AuPmmngrAlloc();
 		if (!AuMapPage(phys, start_addr + i * PAGE_SIZE,PTE_AP_RW_USER | PTE_NORMAL_MEM)) {
+			UARTDebugOut("already present %x \r\n", (start_addr + i * 0x1000));
 			AuPmmngrFree((void*)phys);
 		}
 	}
@@ -132,16 +138,18 @@ uint64_t GetProcessHeapMem(size_t sz) {
 	dsb_sy_barrier();
 	proc->proc_mem_heap = start_addr;
 	proc->proc_heapmem_len += sz;
+	//UARTDebugOut("Returning heap mem : %x - page : %d, size : %d \r\n", start_addr, (sz / PAGE_SIZE), sz);
 	return start_addr;
 }
 
-/*
- * ProcessHeapUnmap -- unmaps previosly allocated
+/**
+ * @briefProcessHeapUnmap -- unmaps previosly allocated
  * heap memory
  * @param ptr -- Pointer to freeable address
  * @param sz -- size in bytes to unallocate
  */
 int ProcessHeapUnmap(void* ptr, size_t sz) {
+	UARTDebugOut("[ProcessHeapUnmap]: called : %x , sz : %d \r\n", ptr, sz);
 	/* check if size is page aligned */
 	if ((sz % PAGE_SIZE) != 0) {
 		AuTextOut("Returning error heap unmap -> %d \r\n", sz);

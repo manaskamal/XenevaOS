@@ -1,4 +1,6 @@
 /**
+* @file pe.c
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2023, Manas Kamal Choudhury
@@ -32,11 +34,13 @@
 #include <string.h>
 #include <aucon.h>
 #include <stdint.h>
+#include <Drivers/uart.h>
 
-/*
- * AuGetProcAddress -- get procedure address in a dll image
+/**
+ * @brief AuGetProcAddress -- get procedure address in a dll image
  * @param image -- dll image
  * @param procname -- procedure name
+ * @return return the procedure address in memory
  */
 void* AuGetProcAddress(void* image, const char* procname) {
 	IMAGE_DOS_HEADER* dos_header = (IMAGE_DOS_HEADER*)image;
@@ -64,8 +68,8 @@ void* AuGetProcAddress(void* image, const char* procname) {
 	return NULL;
 }
 
-/*
-* AuPEPrintExports -- get procedure address in a dll image
+/**
+* @brief AuPEPrintExports -- print all function exports for DEBUG purpose
 * @param image -- dll image
 */
 void AuPEPrintExports(void* image) {
@@ -88,8 +92,8 @@ void AuPEPrintExports(void* image) {
 		AuTextOut("Fname -> %s \n", function_name);
 	}
 }
-/*
-* AuKernelLinkDLL -- Links a dll library to kernel symbols
+/**
+* @brief AuKernelLinkDLL -- Links a dll library to kernel symbols
 * @param image -- dll image
 */
 void AuKernelLinkDLL(void* image) {
@@ -117,8 +121,8 @@ void AuKernelLinkDLL(void* image) {
 }
 
 
-/*
-* AuKernelLinkImports -- Links kernel imports to dll
+/**
+*  @briefAuKernelLinkImports -- Links kernel imports to dll
 * @param image -- dll image
 */
 void AuKernelLinkImports(void* image) {
@@ -147,7 +151,7 @@ void AuKernelLinkImports(void* image) {
 	}
 }
 
-/* relocation types */
+/** relocation types **/
 #define IMAGE_REL_BASED_ABSOLUTE  0
 #define IMAGE_REL_BASED_HIGH      1
 #define IMAGE_REL_BASED_LOW       2
@@ -157,7 +161,7 @@ void AuKernelLinkImports(void* image) {
 #define IMAGE_REL_BASED_MIPS_JMPADDR16 9
 #define IMAGE_REL_BASED_DIR64          10
 
-/* dll characteristics*/
+/** dll characteristics **/
 #define IMAGE_DLL_CHARACTERISTICS_DYNAMIC_BASE          0x40
 #define IMAGE_DLL_CHARACTERISTICS_FORCE_INTEGRITY       0x80
 #define IMAGE_DLL_CHARACTERISTICS_NX_COMPAT             0x100
@@ -176,8 +180,8 @@ void AuKernelLinkImports(void* image) {
 #define IMAGE_DATA_DIRECTORY_IMPORT 1
 #define IMAGE_DATA_DIRECTORY_RELOC  5
 
-/*
-* AuKernelRelocatePE -- relocates the image from its actual
+/**
+* @brief AuKernelRelocatePE -- relocates the image from its actual
 * base address
 * @param image -- pointer to executable image
 * @param nt -- nt headers
@@ -235,8 +239,8 @@ void AuKernelRelocatePE(void* image, PIMAGE_NT_HEADERS nt, int diff) {
 	//for (;;);
 }
 
-/*
- * AuPEFileIsDynamicallyLinked -- checks if the current
+/**
+ * @brief AuPEFileIsDynamicallyLinked -- checks if the current
  * binary image is dynamically linked
  * @param image -- pointer to image address
  */
@@ -248,9 +252,83 @@ bool AuPEFileIsDynamicallyLinked(void* image) {
 	if (IMAGE_DATA_DIRECTORY_IMPORT + 1 > nt_headers->OptionalHeader.NumberOfRvaAndSizes)
 		return false;
 	IMAGE_DATA_DIRECTORY* datadir = &nt_headers->OptionalHeader.DataDirectory[IMAGE_DATA_DIRECTORY_IMPORT];
+	UARTDebugOut("data dir va = %d , size = %d \r\n", datadir->VirtualAddress, datadir->Size);
 	if (datadir->VirtualAddress == 0 || datadir->Size == 0)
 		return false;
 
 	PIMAGE_IMPORT_DIRECTORY importdir = RAW_OFFSET(PIMAGE_IMPORT_DIRECTORY,imageAligned, datadir->VirtualAddress);
 	return true;
+}
+
+static const char* AuCoffSymName(IMAGE_COFF_SYMBOL* sym, const char* strtab) {
+	if (sym->name.lng.zeros != 0)
+		return sym->name.short_name;
+	return strtab + sym->name.lng.offset;
+}
+
+#define OFFSETOF(s,m) ((size_t)&(((s*)0)->m))
+
+#define IMAGE_FIRST_SECTION(nt)\
+    ((SECTION_HEADER*)( \
+     (uint8_t*)(nt) + \
+     OFFSETOF(IMAGE_NT_HEADERS, OptionalHeader) + \
+     ((IMAGE_NT_HEADERS*)(nt))->FileHeader.SizeOfOptionaHeader \
+))
+
+static uint64_t AuCoffSectionBase(uint8_t* imageBase, int section_idx) {
+	IMAGE_DOS_HEADER* dos = (IMAGE_DOS_HEADER*)imageBase;
+	IMAGE_NT_HEADERS* nt = (IMAGE_NT_HEADERS*)(imageBase + dos->e_lfanew);
+	SECTION_HEADER* sec = IMAGE_FIRST_SECTION(nt);
+	return (uint64_t)(imageBase)+sec[section_idx - 1].VirtualAddress;
+}
+
+/**
+ * @brief AuCoffResolveAddress -- print the symbol function name
+ * for specific pointing address
+ * @param imageBase - base address of the image
+ * @param paddr -- Pointing address, or instruction/function address 
+ */
+bool AuCoffResolveAddress(uint8_t* imageBase, uint64_t paddr) {
+	IMAGE_DOS_HEADER* dos = (IMAGE_DOS_HEADER*)imageBase;
+	IMAGE_NT_HEADERS* nt = (IMAGE_NT_HEADERS*)(imageBase + dos->e_lfanew);
+	uint32_t symoff = nt->FileHeader.PointerToSymbolTable;
+	uint32_t nsyms = nt->FileHeader.NumberOfSymbols;
+
+	uint64_t rva = paddr - (uint64_t)imageBase;
+
+	IMAGE_COFF_SYMBOL* coff_symtab = (void*)(imageBase + symoff);
+	char* strtab = (char*)(imageBase + symoff + nsyms * 18);
+	IMAGE_COFF_SYMBOL* best = NULL;
+	uint64_t best_va = 0;
+
+	UARTDebugOut("num_symbols : %d, SymbolTable : %x \r\n", nsyms, coff_symtab);
+
+	
+	for (uint32_t j = 0; j < nsyms; j++) {
+		IMAGE_COFF_SYMBOL* s = &coff_symtab[j];
+
+		if (s->section <= 0) goto next;
+
+		if ((s->type & 0x20) == 0) goto next;
+
+		uint64_t sym_va = AuCoffSectionBase(imageBase, s->section) + s->value;
+		uint64_t sym_rva = sym_va - (uint64_t)imageBase;
+
+		if (sym_rva <= rva) {
+			if (!best || sym_rva > (best_va - (uint64_t)imageBase)) {
+				best = s;
+				best_va = sym_va;
+			}
+		}
+	next:
+		j += s->aux_count;
+	}
+
+	if (best) {
+		UARTDebugOut("[aurora]: pe symbol name : %s \r\n", AuCoffSymName(best, strtab));
+		UARTDebugOut("[aurora]: out offset : %x \r\n", (paddr - best_va));
+	}
+	else 
+		UARTDebugOut("[aurora]: pe symbol <?no match?>, offset : %x \r\n", rva);
+	
 }

@@ -1,4 +1,6 @@
 /**
+* @file virtiokbd.c
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2025, Manas Kamal Choudhury
@@ -57,11 +59,10 @@ static const uint8_t ext_key_map[256] = {
 	[0x7d] = 0x5b, //left super
 };
 
-/*
- * Virtio-keyboard interrupt handler
+/**
+ * @brief Virtio-keyboard interrupt handler
  */
 void AuVirtioKbdHandler(int spinum) {
-	UARTDebugOut("From inside virtio keyboard handler++ \n");
 	uint16_t them = queue->used.index;
 	for (; index < them; index++) {
 		dc_ivac(&input[index % queueSize]);
@@ -88,7 +89,6 @@ void AuVirtioKbdHandler(int spinum) {
 				msg.type = AU_INPUT_KEYBOARD;
 				msg.code = scancode & 0xFF;
 				AuDevWriteKybrd(&msg);
-				UARTDebugOut("Key Pressed : scancode : %d code: %d \n", scancode, evt.code);
 			}
 			else if (ext_key_map[evt.code]) {
 				uint32_t scancode = (0xE0 & 0xFF) << 16 | (ext_key_map[evt.code] & 0xFF) << 8 | (((evt.value == 0) ? 0x80 : 0) & 0xFF);
@@ -110,10 +110,11 @@ void AuVirtioKbdHandler(int spinum) {
 	}
 	
 }
-/*
- * AuVirtioKbdInitialize -- initialize the virtio keyboard
+/**
+ * @brief AuVirtioKbdInitialize -- initialize the virtio keyboard
  */
 void AuVirtioKbdInitialize(uint64_t device) {
+	device = 0x4010008000;
 	int bus = 0;
 	int func = 0;
 	int dev = 0;
@@ -145,6 +146,7 @@ void AuVirtioKbdInitialize(uint64_t device) {
 	if (AuPCIEAllocMSI(device, spiID, bus, dev, func)) {
 		UARTDebugOut("VIRTIO Keyboard MSI allocated \n");
 	}
+
 	GICEnableSPIIRQ(spiID);
 	//GICSetTargetCPU(spiID);
 	isb_flush();
@@ -168,8 +170,8 @@ void AuVirtioKbdInitialize(uint64_t device) {
 	UARTDebugOut("virtio: queue sz : %d \n", queueSz);
 
 
-	uint64_t queuePhys = (uint64_t)AuPmmngrAllocBlocks(((sizeof(struct VirtioQueue) * queueSz))/0x1000);
-	queue = (struct VirtioQueue*)AuMapMMIO(queuePhys, ((sizeof(struct VirtioQueue)*queueSz))/0x1000);
+	uint64_t queuePhys = (uint64_t)AuPmmngrAlloc();//AuPmmngrAllocBlocks(((sizeof(struct VirtioQueue) * queueSz))/0x1000);
+	queue = (struct VirtioQueue*)AuMapMMIO(queuePhys,1 /*((sizeof(struct VirtioQueue)*queueSz))/0x1000*/);
 
 	size_t desc_size = queueSz * sizeof(struct VirtioQueue);
 	common->QueueSelect = 0;

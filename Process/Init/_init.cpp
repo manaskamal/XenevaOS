@@ -43,6 +43,34 @@
 #include <sys\_kefile.h>
 #include <stdlib.h>
 #include <sys\iocodes.h>
+#include <sys/_kecred.h>
+
+/** Let's hardcode,credentials
+ * untill we get proper login manager
+ */
+#define GROUP_INPUT  20
+#define GROUP_VIDEO  21
+#define GROUP_TTY    22
+#define GROUP_AUDIO  21
+
+/** hardcoded untill we get proper
+ * login manager
+ */
+#define UAC_DEAMONS 40
+#define UAC_NORMAL_USER 1000
+
+int _sound;
+
+/** Init Request msgs **/
+#define INIT_REQUEST_PW_DOWN  "init.request.powerdown"
+#define INIT_REQUEST_PW_REBOOT "init.request.reboot"
+
+
+typedef struct _init_request_msg_ {
+	char message[60];
+	uint16_t fromProcessId;
+	uint16_t toProcessId;
+}InitRequestMsg;
 
 void initSetupBasicEnvironmentVars() {
 	setenv("HOME", "/", 1);
@@ -53,50 +81,140 @@ void initSetupBasicEnvironmentVars() {
 	setenv("OSNAME", "XenevaOS", 1);
 }
 
-typedef struct _XELDR_OBJ2_ {
-	char* objname;
-	/*bool loaded;
-	bool linked;
-	uint32_t len;
-	size_t load_addr;
-	size_t entry_addr;*/
-}XELdrObj;
 
-/*
- * XELdrStartProc -- starts a new process
- * @param filename -- path and name of the
- * process
- */
-int XELdrStartProc2(char* filename, XELdrObj* obj) {
-	int file = 0;
-	_KePrint("filename : %s \n", filename);
-#ifdef ARCH_ARM64
-	/*uint64_t addr_preserve = (uint64_t)obj->objname;
-	uint32_t presv_len = obj->len;
-	size_t loadAddr = obj->load_addr;
-	size_t entryAddr = obj->entry_addr;
-	void* prevPresv = obj->prev;
-	void* nextPresv = obj->next;
-	bool loaded = obj->loaded;
-	bool linked = obj->linked;*/
-	_KePrint("INIT OBJ2Name : %x \n", obj->objname);
-#endif
-	file = _KeOpenFile(filename, FILE_OPEN_READ_ONLY);
+typedef struct _sound_card_list {
+	char name[32];
+	int cardID;
+	struct _sound_card_list* next;
+}aurora_snd_card_list;
 
-#ifdef ARCH_ARM64
-	/*obj->objname = (char*)addr_preserve;
-	obj->len = presv_len;
-	obj->load_addr = loadAddr;
-	obj->entry_addr = entryAddr;
-	obj->linked = linked;
-	obj->loaded = loaded;
-	obj->next = (struct _XELDR_OBJ_*) nextPresv;
-	obj->prev = (struct _XELDR_OBJ_*)prevPresv;
-	_KePrint("OBJNext: %x offset : %x \n", obj->next, &obj->next);*/
-	_KePrint("INIT OBJ2Name : %x \n", obj->objname);
-	for (;;);
-#endif
+
+extern void SplashScreenShow();
+
+void init_basic_gid_to_dev() {
+	int fd = _KeOpenFile("/dev/graph", FILE_OPEN_READ_ONLY);
+	if (fd != -1) {
+		_KeCredChangeID(fd, 0, GROUP_VIDEO);
+	}
+	fd = _KeOpenFile("/dev/mice", FILE_OPEN_READ_ONLY);
+	if (fd != -1) {
+		_KeCredChangeID(fd, 0, GROUP_INPUT);
+	}
+	fd = _KeOpenFile("/dev/kybrd", FILE_OPEN_READ_ONLY);
+	if (fd != -1) {
+		_KeCredChangeID(fd, 0, GROUP_INPUT);
+	}
+	fd = _KeOpenFile("/dev/sound", FILE_OPEN_READ_ONLY);
+	if (fd != -1) {
+		_KeCredChangeID(fd, 0, GROUP_AUDIO);
+		_sound = fd;
+	}
+	fd = _KeOpenFile("/dev/virtiogpu", FILE_OPEN_READ_ONLY);
+	if (fd != -1) {
+		_KeCredChangeID(fd, 0, GROUP_VIDEO);
+	}
+
 }
+
+/**
+ * _play_startup_sound -- play the startup sound
+ */
+void _play_startup_sound() {
+	if (_sound == -1) 
+		return;
+	
+	XEFileIOControl ioctl;
+	memset(&ioctl, 0, sizeof(XEFileIOControl));
+
+
+	/* uint_1 holds the millisecond to sleep after
+	* one frame playback */
+	ioctl.uint_1 = 0;
+	ioctl.syscall_magic = AURORA_SYSCALL_MAGIC;
+	/** uint_2 must hold the sound card number to use **/
+	ioctl.uint_2 = -1;
+	int num_card_count = _KeFileIoControl(_sound, SOUND_GET_CARD_TOTALNUM, &ioctl);
+	if (num_card_count == 0)
+		return;
+
+	ioctl.uint_1 = num_card_count;
+	aurora_snd_card_list* list = (aurora_snd_card_list*)malloc(sizeof(aurora_snd_card_list) * num_card_count);
+	ioctl.ulong_1 = (uint64_t)list;
+	if (_KeFileIoControl(_sound, SOUND_GET_CARD_LIST, &ioctl)) {
+		_KePrint("[init]: failed to get sound card list \r\n");
+		_KePauseThread();
+	}
+
+	/** just print all card name once **/
+	for (int i = 0; i < num_card_count; i++) {
+		_KePrint("[init]: %s sound is installed, id : %d \r\n", list[i].name, list[i].cardID);
+	}
+
+	/** let's use default first sound card here **/
+	ioctl.uint_2 = list->cardID;
+
+	_KeFileIoControl(_sound, SOUND_REGISTER_SNDPLR, &ioctl);
+
+	int song = _KeOpenFile("/Ss.wav", FILE_OPEN_READ_ONLY);
+	if (song == -1) {
+		return;
+	}
+
+	void* songbuf = malloc(4096);
+	memset(songbuf, 0, 4096);
+	_KeReadFile(song, songbuf, 4096);
+	uint8_t* alignedSongBuf = (uint8_t*)songbuf;
+
+	XEFileStatus fs;
+	_KeFileStat(song, &fs);
+	bool finished = 0;
+	while (1) {
+		/* with each frame read the sound, write it
+		* to sound device, the sound device will automatically
+		* put the app to sleep for smooth playback for some
+		* milli-seconds
+		*/
+		_KeFileStat(song, &fs);
+
+		if (fs.eof) {
+			finished = 1;
+			return;
+		}
+
+		if (!finished) {
+			_KeReadFile(song, songbuf, 4096);
+			_KeWriteFile(_sound, songbuf, 4096);
+		}
+		_KeProcessSleep(4);
+	}
+}
+
+/**
+ * @brief _init_handle_request -- handle request
+ * msgs
+ */
+void _init_handle_request(InitRequestMsg* msg) {
+	if (strcmp(msg->message, INIT_REQUEST_PW_DOWN) == 0) {
+		_KePrint("[init]: shutting down xeneva \r\n");
+		//clean up all init resources
+
+		/* here also , we need to verify if the request
+		 * came from active-local user id, or else deny request
+		 */
+		_KePowerDown();
+		// no return
+	}
+
+	if (strcmp(msg->message, INIT_REQUEST_PW_REBOOT) == 0) {
+		_KePrint("[init]: restarting xeneva \r\n");
+		/* here also , we need to verify if the request
+		 * came from active-local user id, or else deny request
+		 */
+		_KePowerReset();
+		// no return
+	}
+}
+
 /*
  * _main -- main entry point
  */
@@ -113,18 +231,101 @@ extern "C" void main(int argc, char* argv[]) {
 		_KePrint("Xeneva v1.0 x86_64 !! Copyright (C) Manas Kamal Choudhury 2020-2023 \r\n");
 #elif ARCH_ARM64
 		_KePrint("Xeneva v1.0 ARM64 !! Copyright (C) Manas Kamal Choudhury 2020-2025 \r\n");
+#endif
 	}
+
+	SplashScreenShow();
+	_sound = -1;
+	init_basic_gid_to_dev();
+
+	/** play the startup sound, for better experience */
+	_play_startup_sound();
+
+	int ggid_misc_world = _KeGetGlobalGroupID(AURORA_GID_MISC_WORLD);
+	int ggid_misc_postbox = _KeGetGlobalGroupID(AURORA_GID_IPC_POSTBOX);
+
+	/* open up a pipe, to get request from normal application */
+	int pipe = _KeCreatePipe("init", (sizeof(InitRequestMsg) * 4));
+	if (pipe == -1)
+		_KePrint("[init]: pipe creation failed \r\n");
+	else
+		_KeCredChangeID(pipe,0, ggid_misc_world);
+
+	/** allocate a memory for init request msgs */
+	char* init_msg_buff = (char*)malloc(sizeof(InitRequestMsg) + 1);
+	memset(init_msg_buff, 0, sizeof(InitRequestMsg) + 1);
+
+
+	/** TODO: add IPC system to track real system progress and animate the logo accordingly **/
+	_KeProcessSleep(100);
+
+	
+
+
+#ifdef ARCH_ARM64
+	int proc = _KeCreateProcess(0, "netmngr");
+	_KeSetUID(proc, UAC_DEAMONS);
+	_KeSetGID(proc, UAC_DEAMONS);
+	_KeCredAddSGroup(proc, ggid_misc_world);
+	_KeProcessLoadExec(proc, "/netmngr.exe\0", 0, NULL);
+
+	_KeProcessSleep(500);
+
+
+	/** actually, design should be like that, each process after
+	 * finish its initialization, it should send a signal to 
+	 * init, so that it can continue next proccesses spawning
+	 */
+
+
+	/** from now, normal user's won't get system access */
+	proc = _KeCreateProcess(0, "deodhaixr");
+	_KeSetUID(proc, UAC_NORMAL_USER);
+	_KeSetGID(proc, UAC_NORMAL_USER);
+	_KeCredAddSGroup(proc, ggid_misc_world);
+	_KeCredAddSGroup(proc, ggid_misc_postbox);
+	_KeCredAddSGroup(proc, GROUP_VIDEO);
+	_KeCredAddSGroup(proc, GROUP_INPUT);
+	_KeCredSetCap(proc, 0);
+	_KeProcessLoadExec(proc, "/deodxr.exe", 0, NULL);
+
+	_KeProcessSleep(800);
+
+
+	proc = _KeCreateProcess(0, "deoaud");
+	_KePrint("deoaud proc id : %d \r\n", proc);
+	_KeSetUID(proc, UAC_DEAMONS);
+	_KeSetGID(proc, UAC_DEAMONS);
+	_KeCredAddSGroup(proc, ggid_misc_world);
+	_KeCredAddSGroup(proc, GROUP_AUDIO);
+	_KeCredAddSGroup(proc, ggid_misc_postbox);
+	_KeProcessLoadExec(proc, "/deoaud.exe", 0, NULL);
+
+
+	
+#elif ARCH_X64
+	int proc = _KeCreateProcess(0, "deodhai");
+	_KeProcessLoadExec(proc, "/deodhai.exe", 0, NULL);
 #endif
 
-	int proc = _KeCreateProcess(0, "deodhaixr");
-	_KeProcessLoadExec(proc, "/deodxr.exe\0", 0, NULL);
+	/*_KeProcessSleep(1000);
+	proc = _KeCreateProcess(0, "calc");
+	_KeProcessLoadExec(proc, "/calc.exe", 0, NULL);*/
 
-
+	_KePrint("Setting up env variable \r\n");
+	initSetupBasicEnvironmentVars();
+	int sz = 0;
 	while(1){
-		_KePauseThread();
+		sz = _KeReadFile(pipe, init_msg_buff, sizeof(InitRequestMsg) + 1);
+		if (sz > 0) {
+			_init_handle_request((InitRequestMsg*)init_msg_buff);
+			memset(init_msg_buff, 0, sizeof(InitRequestMsg) + 1);
+		}
+		if (pid == 1)
+			_KeProcessWaitForTermination(-1);
 	}
 
-	initSetupBasicEnvironmentVars();
+	
 
 	///* just load all the background services */
 	int child = _KeCreateProcess(0, "deoaud");

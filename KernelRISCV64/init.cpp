@@ -238,7 +238,7 @@ extern "C" void _AuMain(KERNEL_BOOT_INFO* info) {
     
     AuPmmngrInitialize(info);
     // VMM Init might need arch specific paging code in Mm/
-	AuVmmngrInitialize(info);
+	AuVmmngrInitialize();
 
     // Switch to Kernel Printing (UART Fallback)
     // The bootloader print function is no longer mapped!

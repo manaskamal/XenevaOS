@@ -1,4 +1,6 @@
 /**
+* @file base.cpp
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2023, Manas Kamal Choudhury
@@ -36,19 +38,33 @@
 
 ChitralekhaApp* baseapp;
 
-/*
- * ChitralekhaStartApp -- start an application instance
+/**
+ * @brief ChitralekhaStartApp -- start an application instance
  */
 ChitralekhaApp* ChitralekhaStartApp(int argc, char* argv[]) {
 	int postboxfd = _KeOpenFile("/dev/postbox", FILE_OPEN_READ_ONLY);
+	_KePrint("[Chitralekha]: postboxfd : %d \r\n", postboxfd);
+	int fd = postboxfd;// _KeOpenFile("/dev/graph", FILE_OPEN_READ_ONLY);
+	_KePrint("[Chitralekha]: graph : %d \r\n", fd);
+#ifdef ARCH_ARM64
+	_KeFileIoControl(fd, POSTBOX_CREATE, NULL);
+#else
 	_KeFileIoControl(postboxfd, POSTBOX_CREATE, NULL);
+#endif
 
-	
+//#ifdef ARCH_X64
 	ChFont* font = ChInitialiseFont(XENEVA_DEFAULT_FONT);
+//#else
+	//ChFont* font = 0;
+//#endif
 	ChitralekhaApp* app = (ChitralekhaApp*)malloc(sizeof(ChitralekhaApp));
 	memset(app, 0, sizeof(ChitralekhaApp));
 	app->baseFont = font;
+#ifdef ARCH_ARM64
+	app->postboxfd = fd;
+#else
 	app->postboxfd = postboxfd;
+#endif
 	uint16_t thr_id = _KeGetThreadID();
 	app->currentID = thr_id;
 
@@ -70,8 +86,8 @@ ChitralekhaApp* ChitralekhaStartSubApp(ChitralekhaApp* parent) {
 	app->parent = parent;
 	return app;
 }
-/*
- * ChitralekhaGetApp -- return running application instance
+/**
+ * @brief ChitralekhaGetApp -- return running application instance
  */
 ChitralekhaApp* ChitralekhaGetApp() {
 	return baseapp;

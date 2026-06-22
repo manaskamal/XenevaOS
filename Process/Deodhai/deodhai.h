@@ -53,6 +53,7 @@
 #define DEODHAI_REPLY_FOCUS_CHANGED 154
 #define DEODHAI_REPLY_WINDOW_CLOSED 156
 #define DEODHAI_REPLY_MOUSE_LEAVE 157
+#define DEODHAI_REPLY_TOUCH_EVENT 158
 
 #define DEODHAI_BROADCAST_WINCREATED 170
 #define DEODHAI_BROADCAST_WINDESTROYED 171
@@ -99,8 +100,11 @@ typedef struct _info_ {
 
 #define AU_INPUT_MOUSE  1
 #define AU_INPUT_KEYBOARD 2
+#define AU_INPUT_TOUCH 3
 
+#ifdef ARCH_X64
 #pragma pack(push,1)
+#endif
 /* Copied from kernel*/
 typedef struct _au_input_msg_ {
 	uint8_t type;
@@ -112,7 +116,10 @@ typedef struct _au_input_msg_ {
 	uint32_t code3;
 	uint32_t code4;
 }AuInputMessage;
+
+#ifdef ARCH_X64
 #pragma pack(pop)
+#endif
 
 /*
 * DeodhaiAllocateNewHandle -- get a new window handle

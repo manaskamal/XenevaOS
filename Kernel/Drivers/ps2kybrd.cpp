@@ -52,6 +52,7 @@ void AuPS2KybrdHandler(size_t v, void* p) {
 		 * a signal to deodhai thread which is
 		 * in thread id 4, in a hacky way
 		 */
+		SeTextOut("Keyboard code : %x \r\n", code);
 		AuInputMessage msg;
 		memset(&msg, 0, sizeof(AuInputMessage));
 		msg.type = AU_INPUT_KEYBOARD;

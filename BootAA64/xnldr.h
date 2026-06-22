@@ -46,7 +46,7 @@
 #define MMIO_BASE 0x3F000000
 #endif
 
-#pragma pack(push,1)
+//#pragma pack(push,1)
 
 /*
  *FRAMEBUFFER_INFORMATION :
@@ -105,7 +105,7 @@ typedef struct _XE_BOOT_INFO_ {
 	uint32_t cid;
 }XEBootInfo, * XEPBootInfo;
 
-#pragma pack(pop)
+//#pragma pack(pop)
 
 typedef void(*XEImageEntry)(XEBootInfo*);
 

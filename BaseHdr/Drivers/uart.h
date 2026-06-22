@@ -32,6 +32,8 @@
 
 #include <aa64hcode.h>
 #include <stdint.h>
+#include <aurora.h>
+#include <Board/imx8mp/imx8mp.h>
 
 #define UART_DR  0x00
 #define UART_FR  0x18
@@ -74,10 +76,12 @@ extern void uartPutc(char c);
  */
 extern void uartPuts(const char* s);
 
+extern bool is_uart_initialized();
+
 /*
  * UARTDebugOut -- standard text printing function
  * for early kernel using UART
  * @param text -- text to output
  */
-extern void UARTDebugOut(const char* format, ...);
+AU_EXTERN AU_EXPORT void UARTDebugOut(const char* format, ...);
 #endif

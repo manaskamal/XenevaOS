@@ -79,8 +79,9 @@ XEFile* XEOpenAndReadFile(EFI_HANDLE ImageHandle,CHAR16* Filename) {
 	EFI_FILE_PROTOCOL* File;
 	EFI_FILE_INFO* FileInfo;
 	UINTN FileInfoSize = 0;
-	UINTN FileSize;
-	VOID* Buffer;
+	UINT64 FileSize;
+
+	EFI_PHYSICAL_ADDRESS Buffer = 0;
 	XEFile* xefile;
 
 	EFI_GUID sfsprotocol = EFI_SIMPLE_FILE_SYSTEM_PROTOCOL_GUID;
@@ -112,7 +113,7 @@ XEFile* XEOpenAndReadFile(EFI_HANDLE ImageHandle,CHAR16* Filename) {
 
 	Status = File->GetInfo(File, &GenericFileInfo, &FileInfoSize, NULL);
 	if (Status == EFI_BUFFER_TOO_SMALL) {
-		Status = gBS->AllocatePool(EfiBootServicesData, FileInfoSize, (VOID**)&FileInfo);
+		Status = gBS->AllocatePool(EfiLoaderData, FileInfoSize, (VOID**)&FileInfo);
 		if (EFI_ERROR(Status)) {
 			XEGuiPrint("Failed to allocate buffer for file metadata \n");
 			File->Close(File);
@@ -131,14 +132,16 @@ XEFile* XEOpenAndReadFile(EFI_HANDLE ImageHandle,CHAR16* Filename) {
 	FileSize = FileInfo->FileSize;
 	gBS->FreePool(FileInfo);
 
-	Status = gBS->AllocatePool(EfiBootServicesData, FileSize + 1, &Buffer);
+	XEGuiPrint("Loading file of num bytes : %d , pages : %d \r\n", FileSize, EFI_SIZE_TO_PAGES(FileSize));
+	Status = gBS->AllocatePages(AllocateAnyPages,EfiLoaderData,EFI_SIZE_TO_PAGES(FileSize), &Buffer);
 	if (EFI_ERROR(Status)) {
 		XEGuiPrint("Failed to allocate buffer for file content \n");
 		File->Close(File);
 		return 0;
 	}
 
-	Status = File->Read(File, &FileSize, Buffer);
+	XEGuiPrint("Reading file Buffer : %x \r\n", &Buffer);
+	Status = File->Read(File, &FileSize, (VOID*)Buffer);
 	if (EFI_ERROR(Status)) {
 		XEGuiPrint("Failed to read file \n");
 		File->Close(File);
@@ -152,7 +155,7 @@ XEFile* XEOpenAndReadFile(EFI_HANDLE ImageHandle,CHAR16* Filename) {
 		return 0;
 	}
 	memset(xefile, 0, sizeof(XEFile));
-	xefile->kBuffer = Buffer;
+	xefile->kBuffer = (void*)Buffer;
 	xefile->FileSize = FileSize;
 	File->Close(File);
 	Root->Close(Root);

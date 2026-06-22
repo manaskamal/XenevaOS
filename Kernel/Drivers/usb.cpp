@@ -59,6 +59,7 @@ void AuUSBSubsystemInit() {
 	memset(config, 0, PAGE_SIZE);
 
 	AuVFSNode* fsys = AuVFSFind("/");
+	AuTextOut("FSYS : %x \n", fsys);
 	AuVFSNode* file = AuVFSOpen("/usbdrv.cnf");
 	if (!file) {
 		AuTextOut("[Aurora]: USB failed to open usbdrv.cnf, file not found \n");

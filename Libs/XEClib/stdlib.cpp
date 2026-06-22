@@ -445,3 +445,8 @@ void abort(void) {
 	while (1);
 }
 
+int system(const char* command) {
+	//NOT IMPLEMENTED YET
+	return 0;
+}
+

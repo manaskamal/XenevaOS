@@ -1,4 +1,6 @@
 /**
+* @file aa64cpu.h
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2025, Manas Kamal Choudhury
@@ -43,7 +45,7 @@
 #define CPU_IMPLEMENTER_MARVELL  0x56
 #define CPU_IMPLEMENTER_APPLE    0x61
 
-#pragma pack(push,1)
+//#pragma pack(push,1)
 typedef struct _aa64_regs_ {
 	int64_t x30;   //0
 	int64_t EL0SP; //8
@@ -78,23 +80,35 @@ typedef struct _aa64_regs_ {
 	int64_t x0; //240
 	int64_t x1; //248
 }AA64Registers;
-#pragma pack(pop)
+//#pragma pack(pop)
 
 
 
-/*
- * AA64CpuInitialize -- initialize aa64 cpu
+/**
+ * @brief AA64CpuInitialize -- initialize aa64 cpu
  */
 extern void AA64CpuInitialize();
 
-/*
- * AA64CPUPostInitialize -- initilaize post cpu requirements
+/**
+ * @brief AA64CPUPostInitialize -- initilaize post cpu requirements
  * @param info -- Pointer to KERNEL BOOT INFORMATIONs
  */
 extern void AA64CPUPostInitialize(KERNEL_BOOT_INFO* info);
 
-/*
- * AuAA64SyscalHandler -- common system call handler for aarch64
+/**
+ * @brief AA64SleepUS -- sleep for sometimes
+ * @param us -- microseconds to sleep
+ */
+AU_EXTERN AU_EXPORT void AA64SleepUS(uint32_t us);
+
+/**
+ * @brief AA64SleepMS -- sleep for sometimes
+ * @param ms -- milliseconds to sleep
+ */
+AU_EXTERN AU_EXPORT void AA64SleepMS(uint32_t ms);
+
+/**
+ * @brief AuAA64SyscalHandler -- common system call handler for aarch64
  * @param regs -- Register information passed by sync_exception
  */
 extern void AuAA64SyscallHandler(AA64Registers* regs);

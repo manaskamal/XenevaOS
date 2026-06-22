@@ -2,6 +2,7 @@
 #ifndef __STDARG_H__
 #define __STDARG_H__
 #include <va_list.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {

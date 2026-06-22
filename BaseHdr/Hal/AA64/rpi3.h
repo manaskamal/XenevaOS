@@ -29,6 +29,8 @@
 #ifndef __RPI_3_H__
 #define __RPI_3_H__
 
+#ifdef __TARGET_BOARD_RPI3__
+
 #define RPI_MMIO_BASE 0x3F000000
 /* GIC related informations*/
 #define GIC_DIST 0x40041000
@@ -84,5 +86,7 @@
 
 #define UART0_DR ((volatile uint32_t*)(UART0 + 0x00))
 #define UART0_FR ((volatile uint32_t*)(UART0 + 0x18))
+
+#endif
 
 #endif

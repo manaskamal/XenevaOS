@@ -6,6 +6,12 @@
     <ClCompile Include="cursor.cpp" />
     <ClCompile Include="dirty.cpp" />
     <ClCompile Include="backdirty.cpp" />
+    <ClCompile Include="window.cpp" />
+    <ClCompile Include="clip.cpp" />
+    <ClCompile Include="rect.cpp" />
+    <ClCompile Include="animation.cpp" />
+    <ClCompile Include="alpha.cpp" />
+    <ClCompile Include="compose.cpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="crt_arm64.s" />
@@ -18,5 +24,11 @@
     <ClInclude Include="cursor.h" />
     <ClInclude Include="dirty.h" />
     <ClInclude Include="backdirty.h" />
+    <ClInclude Include="window.h" />
+    <ClInclude Include="clip.h" />
+    <ClInclude Include="rect.h" />
+    <ClInclude Include="animation.h" />
+    <ClInclude Include="alpha.h" />
+    <ClInclude Include="compose.h" />
   </ItemGroup>
 </Project>

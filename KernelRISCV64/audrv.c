@@ -202,11 +202,11 @@ AuDriver* AuCreateBootDriverInstance(char* drivername) {
 * @param buffer -- configuration file buffer
 * @param entryoff -- entry offset from where search begins
 */
-void AuGetDriverName(uint32_t vendor_id, uint32_t device_id, uint8_t* buffer, int entryoff) {
+AuDriver* AuGetDriverName(uint32_t vendor_id, uint32_t device_id, uint8_t* buffer, int entryoff) {
 	/* Get the entry offset for required device driver */
 	char* offset = AuGetConfEntry(vendor_id, device_id, buffer, entryoff);
 	if (offset == NULL)
-		return;
+		return NULL;
 	char* p = strchr(offset, ']');
 	if (p)
 		p++;
@@ -223,8 +223,8 @@ void AuGetDriverName(uint32_t vendor_id, uint32_t device_id, uint8_t* buffer, in
 
 	drivername[i] = 0;
 
-	AuCreateDriverInstance(drivername);
-	return;
+	AuDriver* driver = AuCreateDriverInstance(drivername);
+	return driver;
 }
 
 /*
@@ -382,7 +382,7 @@ void AuDrvMngrInitialize(KERNEL_BOOT_INFO* info) {
 			AuDriver* driver = drivers[i];
 			AuDriverLoad(driver->name, driver);
 			if (driver->entry) {
-				driver->entry();
+				driver->entry(driver);
 			}
 		}
 	}
@@ -392,7 +392,7 @@ void AuDrvMngrInitialize(KERNEL_BOOT_INFO* info) {
 	AuDriver* virtio_mmio_drv = AuCreateDriverInstance("/A.DRV");
 	AuDriverLoad(virtio_mmio_drv->name, virtio_mmio_drv);
 	if (virtio_mmio_drv->entry) {
-		virtio_mmio_drv->entry();
+		virtio_mmio_drv->entry(virtio_mmio_drv);
 	}
 #endif
 
@@ -464,7 +464,7 @@ AU_EXTERN AU_EXPORT void AuBootDriverInitialise(KERNEL_BOOT_INFO* info) {
 	/* Serially call each startup entries of each driver */
 	for (int i = 0; i < driver_boot_unique_id; i++) {
 		AuDriver* driver = bootDrivers[i];
-		driver->entry();
+		driver->entry(driver);
 	}
 }
 

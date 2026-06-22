@@ -50,6 +50,7 @@
 #include <Fs\vfs.h>
 #include <Fs\tty.h>
 #include <Fs\pipe.h>
+#include <Fs/initrd.h>
 #include <Drivers\mouse.h>
 #include <Drivers\ps2kybrd.h>
 #include <Drivers\rtc.h>
@@ -88,8 +89,9 @@ void _AuMain(KERNEL_BOOT_INFO *info) {
 	 * be included in boot time driver	
 	 */
 	AuPS2KybrdInitialize();
-	AuBootDriverInitialise(info);
+	//AuBootDriverInitialise(info);
 	AuConsolePostInitialise(info);
+	AuInitrdInitialize(info);
 	/* Here initialize all legacy bus system
 	 * like ps2.... using AuLegacyBusInitialize() */
 	AuPS2MouseInitialise();
@@ -135,6 +137,7 @@ void _AuMain(KERNEL_BOOT_INFO *info) {
 
 	/* make the kernel standalone*/
 	AuVmmngrBootFree();
+
 	/* Process initialisation begins here */
 	AuStartRootProc();
 

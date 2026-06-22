@@ -512,3 +512,106 @@ _KeGetEnvironmentBlock:
 	svc #0
 	mov x0, x6
 	ret
+
+.global _KeCredChangeID
+_KeCredChangeID:
+    mov x16, 58
+	svc #0
+	mov x0, x6
+	ret
+
+.global _KeCredAddSGroup
+_KeCredAddSGroup:
+    mov x16, 59
+	svc #0
+	mov x0, x6
+	ret
+
+.global _KeCredSetCap
+_KeCredSetCap:
+    mov x16, 60
+	svc #0
+	mov x0, x6
+	ret
+
+.global _KeCredGetCap
+_KeCredGetCap:
+    mov x16, 61
+	svc #0
+	mov x0, x6
+	ret
+
+.global _KeSetUID
+_KeSetUID:
+    mov x16, 62
+	svc #0
+	mov x0, x6
+	ret
+
+.global _KeSetGID
+_KeSetGID:
+    mov x16, 63
+	svc #0
+	mov x0, x6
+	ret
+
+.global _KeGetGlobalGroupID
+_KeGetGlobalGroupID:
+    mov x16, 64
+	svc #0
+	mov x0, x6
+	ret
+
+.global _KeProcessTokenAddSelf
+ _KeProcessTokenAddSelf:
+    mov x16, 65
+	svc #0
+	mov x0, x6
+	ret
+
+.global _KeProcessTokenGetThreadID
+_KeProcessTokenGetThreadID:
+    mov x16, 66
+	svc #0
+	mov x0, x6
+	ret
+
+.global _KeProcessTokenRemoveSelf
+_KeProcessTokenRemoveSelf:
+    mov x16, 67
+	svc #0
+	mov x0, x6
+	ret
+
+.global _KePowerDown
+_KePowerDown:
+    mov x16, 68
+	svc #0
+	/*haha, power down success hole eneiu return nahe*/
+	mov x0, x6
+	ret
+
+
+.global _KePowerReset
+_KePowerReset:
+    mov x16, 69
+	svc #0
+	/* ki dhemali behh, return nahe buli janiu, return mari asu 
+	 * haha, bhakha ulai jai mukhere 
+	 */
+	 mov x0, x6
+	 ret
+
+.global _KeGetCurrentUS
+_KeGetCurrentUS:
+    mov x16, 70
+	svc #0
+	mov x0, x6
+	ret
+
+.global _KeGetCurrentMS
+_KeGetCurrentMS:
+    mov x16, 71
+	svc #0
+	mov x0, x6
+	ret

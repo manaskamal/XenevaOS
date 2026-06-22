@@ -152,7 +152,7 @@
       <AdditionalOptions>/ALIGN:512 %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
-      <Command>copy "..\..\Build\$(TargetName).dll" "%XENEVA_BUILDS%\$(TargetName).dll"</Command>
+      <Command>copy "..\..\Build\$(TargetName).dll" "M:\$(TargetName).dll"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
@@ -162,7 +162,7 @@
       <SDLCheck>false</SDLCheck>
       <AdditionalIncludeDirectories>..\..\Libs\XEClib\includes; includes\c++</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <PreprocessorDefinitions>ARCH_ARM64; YES_DYNAMIC; DYNAMIC_EXPORTER</PreprocessorDefinitions>
+      <PreprocessorDefinitions>ARCH_ARM64; YES_DYNAMIC; DYNAMIC_EXPORTER;</PreprocessorDefinitions>
       <IgnoreStandardIncludePath>true</IgnoreStandardIncludePath>
       <ExceptionHandling>false</ExceptionHandling>
       <BasicRuntimeChecks>
@@ -198,7 +198,7 @@
       <AdditionalOptions>/filealign:4096 /def:_export_arm64.def %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
-      <Command>copy "..\..\Build\$(TargetName).dll" M:\$(TargetName).exe" </Command>
+      <Command>copy "..\..\Build\$(TargetName).dll" M:\$(TargetName).dll" </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -249,6 +249,8 @@
     </NASM>
     <NASM Include="_callbase.asm">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</DeploymentContent>
     </NASM>
   </ItemGroup>
   <ItemGroup>
@@ -273,16 +275,19 @@
     <ClInclude Include="includes\errno.h" />
     <ClInclude Include="includes\fcntl.h" />
     <ClInclude Include="includes\float.h" />
+    <ClInclude Include="includes\inttypes.h" />
     <ClInclude Include="includes\limits.h" />
     <ClInclude Include="includes\math.h" />
     <ClInclude Include="includes\setjmp.h" />
     <ClInclude Include="includes\size_t.h" />
     <ClInclude Include="includes\stdarg.h" />
+    <ClInclude Include="includes\stdbool.h" />
     <ClInclude Include="includes\stddef.h" />
     <ClInclude Include="includes\stdint.h" />
     <ClInclude Include="includes\stdio.h" />
     <ClInclude Include="includes\stdlib.h" />
     <ClInclude Include="includes\string.h" />
+    <ClInclude Include="includes\strings.h" />
     <ClInclude Include="includes\sys\iocodes.h" />
     <ClInclude Include="includes\sys\mman.h" />
     <ClInclude Include="includes\sys\socket.h" />
@@ -291,6 +296,7 @@
     <ClInclude Include="includes\sys\utf.h" />
     <ClInclude Include="includes\sys\netdb.h" />
     <ClInclude Include="includes\sys\_heap.h" />
+    <ClInclude Include="includes\sys\_kecred.h" />
     <ClInclude Include="includes\sys\_kefile.h" />
     <ClInclude Include="includes\sys\_keftmngr.h" />
     <ClInclude Include="includes\sys\_keipcpostbox.h" />
@@ -302,6 +308,7 @@
     <ClInclude Include="includes\sys\_keycode.h" />
     <ClInclude Include="includes\sys\_procheap.h" />
     <ClInclude Include="includes\time.h" />
+    <ClInclude Include="includes\unistd.h" />
     <ClInclude Include="includes\values.h" />
     <ClInclude Include="includes\_xeneva.h" />
     <ClInclude Include="includes\_xeprint.h" />
@@ -347,10 +354,19 @@
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">true</DeploymentContent>
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">clang --target=aarch64-windows-msvc -fms-compatibility -fms-extensions  -c -o "$(IntDir)%(Filename).obj" "%(FullPath)"</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">$(IntDir)%(Filename).obj</Outputs>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</DeploymentContent>
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="setjmp_arm64.s">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">false</ExcludedFromBuild>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">true</DeploymentContent>
+      <FileType>Document</FileType>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">clang --target=aarch64-windows-msvc -c -o "$(IntDir)%(Filename).obj" "%(FullPath)"</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">$(IntDir)%(Filename).obj</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="store_stack_arm64.s">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">false</ExcludedFromBuild>
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">true</DeploymentContent>
       <FileType>Document</FileType>

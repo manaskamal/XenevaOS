@@ -311,6 +311,8 @@ extern void XELdrLinkPE(void* exec);
 */
 extern void XELdrCreatePEObjects(void* exec);
 
+extern void XELdrGetIATBoundary(void* image, uint64_t* cowStart, uint64_t* cowEnd);
+
 /*
 * XELdrLinkDependencyPE -- link all dependencies except
 * the main object

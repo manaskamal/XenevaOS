@@ -124,8 +124,10 @@ static int _kkybrd_scancode_std[] = {
 	KEY_F12			//0x58
 };
 
-/* ChitralekhaKeyInitialise -- initialise keycode
- * library
+/**
+ * @brief ChitralekhaKeyInitialise -- initialise keycode
+ * library, this is automatically called during starting of
+ * chitralekha appplication
  */
 void ChitralekhaKeyInitialise() {
 	chkey = (ChitralekhaKey*)malloc(sizeof(ChitralekhaKey));
@@ -357,4 +359,19 @@ void ChitralekhaKeySetAlt(bool bit) {
  */
 void ChitralekhaKeySetShift(bool bit) {
 	chkey->_shift = bit;
+}
+
+/**
+ * @brief ChitralekhaKeySetCapslock -- set capslock bit forcefully
+ * @param bit -- bit to set
+ */
+void ChitralekhaKeySetCapslock(bool bit) {
+	chkey->_capslock = bit;
+}
+
+/**
+ * @brief ChitralekhaKeyGetCapslock -- get capslock bit 
+ */
+bool ChitralekhaKeyGetCapslock() {
+	return chkey->_capslock;
 }

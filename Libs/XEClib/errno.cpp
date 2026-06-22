@@ -30,6 +30,10 @@
 #include <errno.h>
 #include <_xeneva.h>
 
-int errno = 0;
+int _errno_loc = 0;
+
+XE_EXTERN XE_EXPORT int* __errno_location(void) {
+	return &_errno_loc;
+}
 
 

@@ -45,6 +45,15 @@
 #define APP_GRID_DEFAULT_HEIGHT 500
 
 
+typedef struct _page_ {
+	int start_x;
+	int start_y;
+	int pageNumber;
+	bool hasItem;
+}Page;
+
+#define MAX_PAGE_COUNT 8
+
 typedef struct _app_grid_ {
 	list_t* lbbuttonlist;
 	int start_pos_x;
@@ -59,6 +68,13 @@ typedef struct _app_grid_ {
 	int numPageCount;
 	int numEntriesInEachRow;
 	int numRowsInOnePage;
+	int activePageNumber;
+	bool show_search_result;
+	int search_pos_x;
+	int search_pos_y;
+	Page page[MAX_PAGE_COUNT];
+	list_t* searchResultList;
+	bool show_search;
 	void(*PaintAppGrid)(_app_grid_* grid, ChWindow* win);
 }AppGrid;
 
@@ -81,9 +97,25 @@ extern AppGrid* LauncherCreateAppGrid(int x, int y, int w, int h);
 extern void AppGridAddButton(AppGrid* grid, LaunchButton* button);
 
 /*
+ * AppGridAddButtonInSearch -- adds a button to specific grid
+ * @param grid -- Pointer to grid
+ * @param button -- Pointer to launch button needs to
+ * be added
+ */
+extern void AppGridAddButtonInSearch(AppGrid* grid, LaunchButton* button);
+
+/*
 *AppGridPaint -- paints the entire grid
 * @param grid -- Pointer to grid to be painted
 * @param win -- Pointer to root window
 */
 extern void AppGridPaint(AppGrid* grid, ChWindow* win);
+
+/**
+ * @brief AppGridSearchReset -- reset the search list
+ * @param grid -- Pointer to app grid
+ */
+extern void AppGridSearchReset(AppGrid* grid);
+
+extern int AppGridGetTotalNumberOfPage(AppGrid* grid);
 #endif

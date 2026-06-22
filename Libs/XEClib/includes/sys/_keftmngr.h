@@ -1,4 +1,6 @@
 /**
+* @file _keftmngr.h
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2023, Manas Kamal Choudhury
@@ -39,19 +41,19 @@ XE_EXTERN{
 
 	/* font manager api */
 
-	/* _KeGetFontID -- get a font id by its name
+	/** @brief _KeGetFontID -- get a font id by its name
 	 * @param fontname -- name of the font
 	 */
 	XE_LIB int _KeGetFontID(char* fontname);
 
-	/*
-	 * _KeGetNumFonts -- returns total number
+	/**
+	 * @brief _KeGetNumFonts -- returns total number
 	 * of fonts installed on the system
 	 */
 	XE_LIB int _KeGetNumFonts();
 
-	/*
-	 * _KeGetFontSize -- returns the size
+	/**
+	 * @brief _KeGetFontSize -- returns the size
 	 * of font by its name
 	 */
 	XE_LIB int _KeGetFontSize(char* fontname);

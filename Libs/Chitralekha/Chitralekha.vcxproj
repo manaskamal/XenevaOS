@@ -120,7 +120,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>false</SDLCheck>
       <AdditionalIncludeDirectories>..\..\Libs\XEClib\includes;..\..\Ports\freetype2\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>ARCH_X64;YES_DYNAMIC;DYNAMIC_EXPORTER;_USE_FREETYPE;STB_IMAGE_RESIZE_IMPLEMENTATION;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>ARCH_X64;YES_DYNAMIC;DYNAMIC_EXPORTER;_USE_FREETYPE;STB_IMAGE_RESIZE_IMPLEMENTATION;COLOR_RGBA;THEME_PURPLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <IgnoreStandardIncludePath>true</IgnoreStandardIncludePath>
       <ExceptionHandling>false</ExceptionHandling>
       <BasicRuntimeChecks />
@@ -153,7 +153,7 @@
       <AdditionalOptions>/ALIGN:512 %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
-      <Command>copy "..\..\Build\$(TargetName).dll" "%XENEVA_BUILDS%\$(TargetName).dll"</Command>
+      <Command>copy "..\..\Build\$(TargetName).dll" "M:\$(TargetName).dll"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
@@ -162,8 +162,8 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>false</SDLCheck>
       <AdditionalIncludeDirectories>..\..\Libs\XEClib\includes;..\..\Ports\freetype2\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>ARCH_ARM64;YES_DYNAMIC;DYNAMIC_EXPORTER;_USE_FREETYPE;STB_IMAGE_RESIZE_IMPLEMENTATION;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <IgnoreStandardIncludePath>true</IgnoreStandardIncludePath>
+      <PreprocessorDefinitions>ARCH_ARM64;YES_DYNAMIC;DYNAMIC_EXPORTER;_USE_FREETYPE;STB_IMAGE_RESIZE_IMPLEMENTATION;THEME_DEFAULT;COLOR_RGBA;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <IgnoreStandardIncludePath>false</IgnoreStandardIncludePath>
       <ExceptionHandling>false</ExceptionHandling>
       <BasicRuntimeChecks>
       </BasicRuntimeChecks>
@@ -174,6 +174,7 @@
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
       <AssemblerOutput>AssemblyAndSourceCode</AssemblerOutput>
       <SupportJustMyCode>false</SupportJustMyCode>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>
@@ -254,18 +255,23 @@
     <ClInclude Include="image.h" />
     <ClInclude Include="keycode.h" />
     <ClInclude Include="nanojpg.h" />
+    <ClInclude Include="nanosvg.h" />
+    <ClInclude Include="nanosvgrast.h" />
     <ClInclude Include="stb_image_resize.h" />
     <ClInclude Include="stb_truetype.h" />
     <ClInclude Include="ttf.h" />
     <ClInclude Include="widgets\base.h" />
     <ClInclude Include="widgets\button.h" />
+    <ClInclude Include="widgets\gridview.h" />
     <ClInclude Include="widgets\icon.h" />
     <ClInclude Include="widgets\list.h" />
+    <ClInclude Include="widgets\listview.h" />
     <ClInclude Include="widgets\menu.h" />
     <ClInclude Include="widgets\menubar.h" />
     <ClInclude Include="widgets\msgbox.h" />
     <ClInclude Include="widgets\onoff.h" />
     <ClInclude Include="widgets\progress.h" />
+    <ClInclude Include="widgets\scrollbar.h" />
     <ClInclude Include="widgets\scrollpane.h" />
     <ClInclude Include="widgets\slider.h" />
     <ClInclude Include="widgets\textbox.h" />
@@ -292,8 +298,10 @@
     <ClCompile Include="widgets\defaulttextbox.cpp" />
     <ClCompile Include="widgets\defaultviews.cpp" />
     <ClCompile Include="widgets\defaultwindow.cpp" />
+    <ClCompile Include="widgets\gridview.cpp" />
     <ClCompile Include="widgets\icon.cpp" />
     <ClCompile Include="widgets\list.cpp" />
+    <ClCompile Include="widgets\listview.cpp" />
     <ClCompile Include="widgets\menu.cpp" />
     <ClCompile Include="widgets\menubar.cpp" />
     <ClCompile Include="widgets\msgbox.cpp" />
@@ -302,6 +310,7 @@
     </ClCompile>
     <ClCompile Include="widgets\popupwin.cpp" />
     <ClCompile Include="widgets\progress.cpp" />
+    <ClCompile Include="widgets\scrollbar.cpp" />
     <ClCompile Include="widgets\scrollpane.cpp" />
     <ClCompile Include="widgets\slider.cpp" />
     <ClCompile Include="widgets\textbox.cpp" />

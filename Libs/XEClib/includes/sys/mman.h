@@ -1,4 +1,6 @@
 /**
+* @file mman.h
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2023, Manas Kamal Choudhury
@@ -53,7 +55,7 @@ XE_EXTERN{
 #define MEMMAP_FLAG_DISCARD_FILE_READ 1<<3
 
 	/**
-	* _KeMemMap -- memory map
+	* @brief _KeMemMap -- memory map
 	* @param address -- starting address
 	* @param length -- length of the mappings
 	* @param protect -- protection flags
@@ -63,44 +65,44 @@ XE_EXTERN{
 	*/
 	XE_LIB void* _KeMemMap(void* address, size_t length, int protect, int flags, int filedesc, uint64_t offset);
 
-	/*
-	 * _KeMemUnmap -- unmaps a memory segment
+	/**
+	 * @brief _KeMemUnmap -- unmaps a memory segment
 	 * @param address -- starting address of mapped address range
 	 * @param len -- length of the address mapped range
 	 */
 	XE_LIB void _KeMemUnmap(void* address, size_t len);
 
-	/*
-	* _KeCreateSharedMem -- create a shared memory chunk
+	/**
+	* @brief _KeCreateSharedMem -- create a shared memory chunk
 	* @param key -- key to use
 	* @param sz -- memory size
 	* @param flags -- shared memory flags
 	*/
 	XE_LIB int _KeCreateSharedMem(uint16_t key, size_t sz, uint8_t flags);
 
-	/*
-	* _KeObtainSharedMem -- obtain a shared memory
+	/**
+	* @brief _KeObtainSharedMem -- obtain a shared memory
 	* @param id -- segment id
 	* @param shmaddr -- user specified address
 	* @param shmflg -- flags to use for protection
 	*/
 	XE_LIB void* _KeObtainSharedMem(uint16_t id, void* shmaddr, int shmflg);
 
-	/*
-	* _KeUnmapSharedMem -- unmap shared memory segment
+	/**
+	* @brief _KeUnmapSharedMem -- unmap shared memory segment
 	* @param key -- key to search
 	*/
 	XE_LIB void _KeUnmapSharedMem(uint16_t key);
 
-	/*
-	 * _KeGetProcessHeapMem -- request a new memory from
+	/**
+	 * @brief _KeGetProcessHeapMem -- request a new memory from
 	 * process heap
 	 * @param sz -- size in bytes
 	 */
 	XE_LIB uint64_t _KeGetProcessHeapMem(size_t sz);
 
-	/*
-	* _KeMemMapDirty -- dirty update previously allocated memory map
+	/**
+	* @brief _KeMemMapDirty -- dirty update previously allocated memory map
 	* @param startAddr -- starting address
 	* @param len -- length in bytes
 	* @param flags -- memory map flags
@@ -108,8 +110,8 @@ XE_EXTERN{
 	*/
 	XE_LIB void _KeMemMapDirty(void* startAddr, size_t len, int flags, int prot);
 
-	/*
-	* _KeProcessHeapUnmap -- unmaps previosly allocated
+	/**
+	* @brief _KeProcessHeapUnmap -- unmaps previosly allocated
 	* heap memory
 	* @param ptr -- Pointer to freeable address
 	* @param sz -- size in bytes to unallocate

@@ -1,4 +1,6 @@
 /**
+* @file rpi3bp.c
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2025, Manas Kamal Choudhury
@@ -38,10 +40,13 @@
 #include <Board/RPI3bp/rpi3bp_gpio.h>
 #include <Board/RPI3bp/rpi3bp_spi.h>
 #include <Board/RPI3bp/rpi_ili9486.h>
+#include <string.h>
 
 #ifdef __TARGET_BOARD_RPI3__
 
 uint64_t lpbase;
+uint64_t pbase;
+uint64_t systimerbase;
 #define PERIPHERAL_BASE  0x3F000000
 #define LOCAL_PERIPHERAL_BASE 0x40000000
 
@@ -96,8 +101,8 @@ uint64_t vcmbox_mmio;
 #define ARMCTRL_READ(addr) (*(volatile uint32_t*)(addr))
 #define ARMCTRL_WRITE(addr,val) (*(volatile uint32_t*)(addr)= (val))
 
-/* 
- * AuRPI3GetCoreID -- get currently running core
+/** 
+ * @brief AuRPI3GetCoreID -- get currently running core
  * number
  */
 uint32_t AuRPI3GetCoreID() {
@@ -105,14 +110,17 @@ uint32_t AuRPI3GetCoreID() {
     return (mpidr & 0x3);
 }
 
-/*
- * AuRPI3LocalIrqInit -- initialize local interrupts, i.e
+/**
+ * @brief AuRPI3LocalIrqInit -- initialize local interrupts, i.e
  * interrupts related to each core
  */
 void AuRPI3LocalIrqInit() {
     uint32_t coreID = AuRPI3GetCoreID();
     uint64_t localPbase = (uint64_t)AuMapMMIO(LOCAL_PERIPHERAL_BASE, 1);
+    uint64_t pBase = (uint64_t)AuMapMMIO(PERIPHERAL_BASE, 4096);
+    systimerbase = (uint64_t)AuMapMMIO(0x3F003000, 1);
     lpbase = localPbase;
+    pbase = pBase;
 
     AuTextOut("[aurora]: coreID : %d \r\n", coreID);
     AuTextOut("[aurora]: local pheripheral mapped to : %x \r\n", lpbase);
@@ -120,25 +128,31 @@ void AuRPI3LocalIrqInit() {
     /* set the prescaler value to divider ratio of 1, setting the prescaler to
      * zero will stop the timer
      */
-    ARMCTRL_WRITE(lpbase + LOCAL_PRESCALER, 0x80000000);
+   // ARMCTRL_WRITE(lpbase + LOCAL_PRESCALER, 0x60000000);
 
     /* route all gpu interrupts to core 0*/
     ARMCTRL_WRITE(lpbase + LOCAL_GPU_INT_ROUTING, 0x00);
 
     /* initialize the core0 timer to reset value*/
-    uint64_t timer_ctrl_addr = lpbase + CORE0_TIMER_IRQCNTL + (coreID * 4);
+    //uint64_t timer_ctrl_addr = lpbase + CORE0_TIMER_IRQCNTL + (coreID * 4);
     uint64_t mbox_ctrl_addr = lpbase + CORE0_MBOX_IRQCNTL + (coreID * 4);
 
-    ARMCTRL_WRITE(timer_ctrl_addr, 0);
+   // ARMCTRL_WRITE(timer_ctrl_addr, 0);
     ARMCTRL_WRITE(mbox_ctrl_addr, 0);
+
+
 
     /* set the 64 bit core timer to run at crystal clock
        and increments by 1 step */
-    ARMCTRL_WRITE(lpbase + LOCAL_CONTROL, (0ULL << 8) | (0ULL < 9));
+    //ARMCTRL_WRITE(lpbase + LOCAL_CONTROL, (0ULL << 8) | (0ULL < 9));
+
+    /*uint64_t core_timer_ctrl = lpbase + 0x34;
+    uint32_t reloadValue = 312500;
+    ARMCTRL_WRITE(core_timer_ctrl, (1 << 29) | reloadValue);*/
 }
 
-/*
- * AuRPI3LocalTimerIRQEnable -- enable timer related to each
+/**
+ * @brief AuRPI3LocalTimerIRQEnable -- enable timer related to each
  * core
  * @param timer_mask -- which timer type to enable or mask
  */
@@ -150,8 +164,8 @@ void AuRPI3LocalTimerIRQEnable(uint32_t timer_mask) {
     ARMCTRL_WRITE(timer_ctlr, ctrl);
 }
 
-/*
- * AuRPI3PeripheralIRQInit -- initialize peripheral irqs
+/**
+ * @brief AuRPI3PeripheralIRQInit -- initialize peripheral irqs
  */
 void AuRPI3PeripheralIRQInit() {
     ARMCTRL_WRITE(PERIPHERAL_BASE + DISABLE_IRQS_1, 0xFFFFFFFF);
@@ -159,8 +173,8 @@ void AuRPI3PeripheralIRQInit() {
     ARMCTRL_WRITE(PERIPHERAL_BASE + DISABLE_BASIC_IRQS, 0xFFFFFFFF);
 }
 
-/*
- * AuRPI3PeripheralIRQEnable -- enable particular peripheral irq
+/**
+ * @brief AuRPI3PeripheralIRQEnable -- enable particular peripheral irq
  * @param irq_num -- irq number of the specific peripheral
  */
 void AuRPI3PeripheralIRQEnable(uint32_t irq_num) {
@@ -168,12 +182,16 @@ void AuRPI3PeripheralIRQEnable(uint32_t irq_num) {
         ARMCTRL_WRITE(PERIPHERAL_BASE + ENABLE_IRQS_1, 1 << irq_num);
     }
     else if (irq_num < 64) {
+        AuTextOut("Enabling IRQ num : %d \n", irq_num);
         ARMCTRL_WRITE(PERIPHERAL_BASE + ENABLE_IRQS_2, 1 << (irq_num - 32));
     }
+
+    dsb_sy_barrier();
+    isb_flush();
 }
 
-/*
- * AuRPI3PeripheralIRQDisable -- disable particular peripheral
+/**
+ * @brief AuRPI3PeripheralIRQDisable -- disable particular peripheral
  * irq
  * @param irq_num -- irq number of that peripheral
  */
@@ -186,8 +204,8 @@ void AuRPI3PeripheralIRQDisable(uint32_t irq_num) {
     }
 }
 
-/*
- * AuRPI3LocalIRQGetPending -- read pending interrupts from
+/**
+ * @brief AuRPI3LocalIRQGetPending -- read pending interrupts from
  * specific core
  */
 uint32_t AuRPI3LocalIRQGetPending() {
@@ -196,27 +214,55 @@ uint32_t AuRPI3LocalIRQGetPending() {
     return ARMCTRL_READ(irq_src_addr);
 }
 
-/*
- * AuRPI3TimerInit -- initialize and caliberate the
+/**
+ * @brief AuRPI3PeripheralIRQGetPending2 -- read pending interrupts from
+ * peripheral base group one
+ */
+uint32_t AuRPI3PeripheralIRQGetPending2() {
+    uint64_t irq_src_addr = pbase + 0xb200 + 0x208;
+    return ARMCTRL_READ(irq_src_addr);
+}
+
+/**
+ * @brief AuRPI3PeripheralIRQGetPending1 -- read pending interrupts from
+ * peripheral base group two
+ */
+uint32_t AuRPI3PeripheralIRQGetPending1() {
+    uint64_t irq_src_addr = pbase + 0xb200 + 0x204;
+    return ARMCTRL_READ(irq_src_addr);
+}
+
+/**
+ * @brief AuRPI3TimerInit -- initialize and caliberate the
  * 64 bit periodic timer 
+ * @param interval_ms -- not used
  */
 void AuRPI3TimerInit(uint32_t interval_ms) {
-    uint64_t freq = get_cntfrq_el0();
+    /*uint64_t freq = get_cntfrq_el0();
     uint64_t interval_ticks = (freq * interval_ms) / 1000;
     uint64_t current = get_cntpct_el0();
     set_cntp_cval_el0(current + interval_ticks);
-    set_cntp_ctl_el0(1);
+    set_cntp_ctl_el0(1);*/
+    setupTimerIRQ();
 }
 
-/* RPI3ICInit -- initialize RPI3 local interrupt controller */
+/** @brief RPI3ICInit -- initialize RPI3 local interrupt controller */
 void AuRPI3ICInit() {
     AuRPI3TimerInit(10);
     AuRPI3LocalIrqInit();
     AuRPI3PeripheralIRQInit();
-    AuRPI3LocalTimerIRQEnable(INT_SRC_CNTPNSIRQ);
+    AuRPI3LocalTimerIRQEnable(0x08);
+
+    *(volatile uint32_t*)((uint64_t)lpbase + 0x0C) = (0ULL << 0) | (0LL << 2);
+    dsb_sy_barrier();
+    isb_flush();
+    uint32_t v = *(volatile uint32_t*)(LOCAL_PERIPHERAL_BASE + LOCAL_GPU_INT_ROUTING);
+    AuTextOut("Peripheral GPU is routed to %d \r\n", v);
+    uint32_t v2 = *(volatile uint32_t*)(lpbase + LOCAL_GPU_INT_ROUTING);
+    AuTextOut("P GPU2 : %d %d\r\n", ((v2 >> 0) & 0x3), ((v2 >> 2) & 0x3));
 }
-/*
- * AuRPI3Initialize -- initialize the basic board requirement
+/**
+ * @brief AuRPI3Initialize -- initialize the basic board requirement
  */
 void AuRPI3Initialize() {
     vcmbox_mmio = (uint64_t)AuMapMMIO(VIDEOCORE_MBOX, 1);
@@ -232,13 +278,13 @@ void AuRPI3Initialize() {
     /*  map and initialize SPI0 */
     AuRPI3SPI0Map();
     AuRPI3SPI0Init();
-    AuRPIInitializeFramebuffer(800, 480, 32);
-    //AuLCDInit();
+    AuRPIInitializeFramebuffer(800,480, 32);  //800x480  //1820x1080 
+   // AuLCDInit();
+   // for (;;);
 }
 
 static inline void RPIMMIOWrite(uint32_t addr, uint32_t val) {
-    *(volatile uint32_t*)addr = val;
-    dsb_ish();
+    *(volatile uint32_t*)addr = val;    dsb_ish();
     isb_flush();
 }
 
@@ -246,8 +292,8 @@ static inline uint32_t RPIMMIORead(uint32_t addr) {
     return *((volatile uint32_t*)addr);
 }
 
-/*
- * AuRPI3WriteMailbox -- write to mailbox
+/**
+ * @brief AuRPI3WriteMailbox -- write to mailbox
  * @param channel -- Mailbox channel 
  */
 void AuRPI3WriteMailbox(uint8_t channel) {
@@ -261,8 +307,8 @@ void AuRPI3WriteMailbox(uint8_t channel) {
     isb_flush();
 }
 
-/*
- * AuRPI3ReadMailbox -- read from mailbox
+/**
+ * @brief AuRPI3ReadMailbox -- read from mailbox
  * @param channel -- mailbox channel
  */
 uint32_t AuRPI3ReadMailbox(uint8_t channel) {
@@ -276,8 +322,44 @@ uint32_t AuRPI3ReadMailbox(uint8_t channel) {
     }
 }
 
-/*
- * AuRPIGetMBOXBuffer -- return currently using
+#define TIMER_CLO (*(volatile uint32_t*)((uint64_t)systimerbase + 0x04))
+#define TIMER_CHI (*(volatile uint32_t*)((uint64_t)systimerbase + 0x08))
+
+static inline uint64_t systimer_gettick() {
+    uint32_t hi, lo;
+
+    do {
+        hi = *(volatile uint32_t*)((uint64_t)systimerbase + 0x08);
+        lo = *(volatile uint32_t*)((uint64_t)systimerbase + 0x04);
+    } while (hi != TIMER_CHI);
+
+    return ((uint64_t)hi << 32) | lo;
+}
+
+/**
+ * @brief AuRPI3DelayUS -- delay in uSeconds
+ * @param us -- micro seconds to delay
+ */
+void AuRPI3DelayUS(uint32_t us) {
+    uint64_t start = systimer_gettick();
+    uint64_t end = start + us;
+    if (end < start) {
+        while (systimer_gettick() >= start);
+    }
+
+    while (systimer_gettick() < end);
+}
+
+/**
+ * AuRPIDelayMS -- delay in milli seconds
+ * @param ms -- Milliseconds to delay
+ */
+void AuRPIDelayMS(uint32_t ms) {
+    AuRPI3DelayUS(ms * 1000);
+}
+
+/**
+ * @brief AuRPIGetMBOXBuffer -- return currently using
  * mailbox buffer
  */
 uint64_t* AuRPIGetMBOXBuffer() {
@@ -299,11 +381,12 @@ typedef struct {
 }rpi_fb_t;
 
 static rpi_fb_t fb;
-/*
- * AuRPIInitializeFramebuffer -- initializes framebuffer
+/**
+ * @brief AuRPIInitializeFramebuffer -- initializes framebuffer
  * @param width -- fb width by pixels
  * @param height -- fb height by pixels
  * @param depth -- fb depth
+ * @return true on success false in failure
  */
 bool AuRPIInitializeFramebuffer(uint32_t width, uint32_t height, uint32_t depth) {
     AuTextOut("Requesting framebuffer \r\n");
@@ -394,7 +477,7 @@ bool AuRPIInitializeFramebuffer(uint32_t width, uint32_t height, uint32_t depth)
     uint32_t pixels = (fb.width * fb.height) / 4;
     for (uint32_t x = 0; x < fb.width; x++)
         for (uint32_t y = 0; y < fb.height; y++)
-            fbptr_[x + y * fb.width] = 0xFFFFFFFF;
+            fbptr_[x + y * fb.width] = 0xFF7B5E5E;
     
       //  fbptr_[i] = 0xFFFFFFFF;
 
@@ -411,11 +494,46 @@ bool AuRPIInitializeFramebuffer(uint32_t width, uint32_t height, uint32_t depth)
     info->bluemask = 0x000000FF;
     
 
-
     AuTextOut("FB painted \r\n");
     return true;
 }
 
+/**
+ * @brief AuRPISetPowerState -- set the power state
+ * of a device through mailbox interface
+ * @param device_id -- device id to power on
+ */
+int AuRPISetPowerState(uint32_t device_id) {
+    memset(mbox, 0, PAGE_SIZE);
+    mbox[0] = 9 * 4;
+    mbox[1] = 0;
+
+    /** set power state **/
+    mbox[2] = 0x00028001;
+    mbox[3] = 8;
+    mbox[4] = 8;
+    mbox[5] = device_id;
+    mbox[6] = 0x3;
+
+    mbox[7] = 0;
+    mbox[8] = 0;
+    AuRPI3WriteMailbox(MBOX_CH_PROP);
+    
+    AuRPI3ReadMailbox(MBOX_CH_PROP);
+
+    if (mbox[1] != 0x80000000) {
+        UARTDebugOut("[mailbox-set-power-state]: request failed : %x\r\n", mbox[1]);
+        return 0;
+    }
+
+    if (!(mbox[6] & 0x1)) {
+        UARTDebugOut("mailbox: device didn't power on \r\n");
+        return 0;
+    }
+
+    UARTDebugOut("[mailbox]: USB HCD powered on , state= %x \r\n", mbox[6]);
+    return 1;
+}
 
 
 #endif

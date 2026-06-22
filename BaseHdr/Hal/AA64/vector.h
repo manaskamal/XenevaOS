@@ -1,4 +1,6 @@
 /**
+* @file vector.h
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2025, Manas Kamal Choudhury
@@ -30,7 +32,9 @@
 #ifndef __VECTOR_H__
 #define __VECTOR_H__
 
-
+/**
+ * @brief AA64InitializeVectorTable -- initialize the vector table
+ */
 void AA64InitializeVectorTable();
 
 #endif

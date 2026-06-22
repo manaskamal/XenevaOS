@@ -600,6 +600,8 @@ AuVFSNode* FatInitialise(AuVDisk *vdisk, char* mountname){
 		fs->oemid[i] = bpb->oemid[i];
 	}
 	fs->oemid[7] = '\0';
+
+	AuTextOut("\n");
 	fs->__FatBeginLBA = bpb->reserved_sectors;
 	fs->__ClusterBeginLBA = bpb->reserved_sectors + (bpb->num_fats* bpb->info.FAT32.sect_per_fat32);
 	fs->__SectorPerCluster = bpb->sectors_per_cluster;
@@ -607,6 +609,7 @@ AuVFSNode* FatInitialise(AuVDisk *vdisk, char* mountname){
 	fs->__RootSector = FatClusterToSector32(fs, fs->__RootDirFirstCluster);
 	fs->__SectorPerFAT32 = bpb->info.FAT32.sect_per_fat32;
 	fs->cluster_sz_in_bytes = static_cast<int64_t>(fs->__SectorPerCluster) * bpb->bytes_per_sector;
+	AuTextOut("fs->cluster_Sz_in_bytes : %d \n", bpb->bytes_per_sector);
 	fs->__BytesPerSector = bpb->bytes_per_sector;
 	fs->fat_mutex = AuCreateMutex();
 	fs->fat_write_mutex = AuCreateMutex();
@@ -618,7 +621,7 @@ AuVFSNode* FatInitialise(AuVDisk *vdisk, char* mountname){
 	size_t _TotalSectors = (bpb->total_sectors_short == 0) ? bpb->large_sector_count : bpb->total_sectors_short;
 	size_t fatsize = (bpb->sectors_per_fat == 0) ? bpb->info.FAT32.sect_per_fat32 : bpb->sectors_per_fat;
 	size_t _dataSectors = _TotalSectors - (bpb->reserved_sectors + bpb->num_fats * fatsize + _root_dir_sectors);
-	
+	AuTextOut("data sectors : %d \n", _dataSectors);
 	if (_dataSectors < 4085)
 		fs->fatType = FSTYPE_FAT12;
 	else if (_dataSectors < 65525)
@@ -650,6 +653,7 @@ AuVFSNode* FatInitialise(AuVDisk *vdisk, char* mountname){
 	fsys->opendir = FatOpenDir;
 	fsys->read_dir = FatDirectoryRead;
 	vdisk->fsys = fsys;
+
 	AuVFSAddFileSystem(fsys);
 	AuVFSRegisterRoot(fsys);
 

@@ -6,6 +6,7 @@
     <ClCompile Include="nmGoButton.cpp" />
     <ClCompile Include="gomenu.cpp" />
     <ClCompile Include="section.cpp" />
+    <ClCompile Include="_gettime.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="nmdapha.h" />

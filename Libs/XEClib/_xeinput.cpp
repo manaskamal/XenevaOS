@@ -142,7 +142,11 @@ int _xeinput(const char *input, const char *format, va_list list)
 			isLong = 0;
 
 		// We have some format characters.  Get the corresponding argument.
+#ifdef ARCH_X64
 		argument = (unsigned long long *) va_arg(list, unsigned);
+#elif ARCH_ARM64
+		argument = (unsigned long long*) va_arg(list, uint64_t);
+#endif
 
 		// What is it?
 		switch (format[formatCount])

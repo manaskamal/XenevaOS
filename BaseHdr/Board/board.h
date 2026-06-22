@@ -37,4 +37,27 @@
  */
 extern void AuAA64BoardInitialize();
 
+/*
+ * AuAA64BoardSleepUS -- calls board specific sleep function
+ */
+extern void AuAA64BoardSleepUS(uint32_t us);
+
+
+/*
+ * AuAA64BoardSleepMS -- calls board specific sleep function
+ * in ms
+ */
+extern void AuAA64BoardSleepMS(uint32_t ms);
+
+
+/**
+ * @brief AuAA64BoardPowerDown -- power down the board
+ */
+extern void AuAA64BoardPowerDown();
+
+/**
+ * @brief AuAA64BoardReboot -- reboot the board
+ */
+extern void AuAA64BoardReboot();
+
 #endif

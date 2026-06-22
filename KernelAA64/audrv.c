@@ -1,4 +1,6 @@
 /**
+* @file audrv.c
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2023, Manas Kamal Choudhury
@@ -37,13 +39,14 @@
 #include <pcie.h>
 #include <aucon.h>
 #include <string.h>
+#include <Drivers/uart.h>
 
-/*TODO: Implement UEFI based pcie discovery mechanism and fix
+/** @TODO: Implement UEFI based pcie discovery mechanism and fix
  * AuBootDriverLoad
  */
 
-/* 0xFFFFC00000400000 - 0xFFFFC00000A00000 -- Kernel Boot Drivers
- * 0xFFFFC00000A00000 - Kernel Runtime Drivers
+/** @brief 0xFFFFC00000400000 - 0xFFFFC00000A00000 -- Kernel Boot Drivers
+ *  0xFFFFC00000A00000 - Kernel Runtime Drivers
  */
 #define AU_DRIVER_BASE_START  0xFFFFC00000A00000
 #define AU_MAX_SUPPORTED_DEVICE 256
@@ -70,24 +73,24 @@ uint32_t AuRequestBootDriverId() {
 	return uid;
 }
 
-/*
- * AuDecreaseDriverCount -- decrease the
+/**
+ * @brief AuDecreaseDriverCount -- decrease the
  * number of device count
  */
 void AuDecreaseDriverCount() {
 	_dev_count_--;
 }
 
-/*
- * AuIncreaseDriverCount -- increase the
+/**
+ * @brief AuIncreaseDriverCount -- increase the
  * number of device count
  */
 void AuIncreaseDriverCount() {
 	_dev_count_++;
 }
 
-/*
-* AuGetConfEntry -- Get an entry offset in the file for required device
+/**
+* @brief AuGetConfEntry -- Get an entry offset in the file for required device
 * @param vendor_id -- vendor id of the product
 * @param device_id -- device id of the product
 * @param buffer -- configuration file buffer
@@ -164,8 +167,8 @@ search:
 	return 0;
 }
 
-/*
- * AuCreateDriverInstance -- creates a new driver
+/**
+ * @brief AuCreateDriverInstance -- creates a new driver
  * slot
  * @param drivername -- name of the driver
  */
@@ -176,11 +179,12 @@ AuDriver* AuCreateDriverInstance(char* drivername) {
 	driver->id = AuRequestDriverId();
 	driver->present = false;
 	drivers[driver->id] = driver;
+	AuIncreaseDriverCount();
 	return driver;
 }
 
-/*
- * AuCreateDriverInstance -- creates a new driver
+/**
+ * @brief AuCreateDriverInstance -- creates a new driver
  * slot
  * @param drivername -- name of the driver
  */
@@ -194,18 +198,18 @@ AuDriver* AuCreateBootDriverInstance(char* drivername) {
 	return driver;
 }
 
-/*
-* AuGetDriverName -- Extract the driver path from its entry offset
+/**
+* @brief AuGetDriverName -- Extract the driver path from its entry offset
 * @param vendor_id -- vendor id of the product
 * @param device_id -- device id of the product
 * @param buffer -- configuration file buffer
 * @param entryoff -- entry offset from where search begins
 */
-void AuGetDriverName(uint32_t vendor_id, uint32_t device_id, uint8_t* buffer, int entryoff) {
+AuDriver* AuGetDriverName(uint32_t vendor_id, uint32_t device_id, uint8_t* buffer, int entryoff) {
 	/* Get the entry offset for required device driver */
 	char* offset = AuGetConfEntry(vendor_id, device_id, buffer, entryoff);
 	if (offset == NULL)
-		return;
+		return NULL;
 	char* p = strchr(offset, ']');
 	if (p)
 		p++;
@@ -222,12 +226,61 @@ void AuGetDriverName(uint32_t vendor_id, uint32_t device_id, uint8_t* buffer, in
 
 	drivername[i] = 0;
 
-	AuCreateDriverInstance(drivername);
-	return;
+	AuDriver* drv = AuCreateDriverInstance(drivername);
+	return drv;
 }
 
-/*
-* AuDriverLoad -- Manage and loads dll drivers
+/**
+ * @brief AuBoardIterateModule -- iterate all modules 
+ * present in board config file
+ * @param board -- pointer to board config buffer
+ * @param moduleCount -- total number of module described
+ */
+void AuBoardIterateModule(uint8_t* board, int moduleCount) {
+	char* fbuf = (char*)board;
+	int fcount = 0;
+search:
+	if (fcount >= moduleCount)
+		return;
+	char* p = strchr(fbuf, '[');
+	if (p) {
+		p++;
+		fbuf++;
+	}
+	else {
+		return;
+	}
+
+	char fontname[33];
+	int i = 0;
+	for (i = 0; i < 32; i++) {
+		if (p[i] == ']') {
+			fbuf = p + i;
+			fbuf++;
+			break;
+		}
+		fontname[i] = p[i];
+		fbuf++;
+	}
+	fontname[i] = 0;
+
+	p = fbuf;
+	char filename[33];
+	for (i = 0; i < 32; i++) {
+		if (p[i] == '|')
+			break;
+		filename[i] = p[i];
+		fbuf++;
+	}
+	filename[i] = 0;
+
+	AuTextOut("[aurora]: Board entry : %s \r\n", filename);
+	AuCreateDriverInstance(filename);
+	goto search;
+}
+
+/**
+* @brief AuDriverLoad -- Manage and loads dll drivers
 * @param filename -- file path
 * @param driver -- driver instance
 */
@@ -255,11 +308,9 @@ void AuDriverLoad(char* filename, AuDriver* driver) {
 
 	IMAGE_DOS_HEADER* dos_ = (IMAGE_DOS_HEADER*)scratchBuffer;
 	PIMAGE_NT_HEADERS nt = RAW_OFFSET(PIMAGE_NT_HEADERS,dos_, dos_->e_lfanew);
+	driver->original_load_base = nt->OptionalHeader.ImageBase;
+	driver->image_sz = nt->OptionalHeader.SizeOfImage;
 	PSECTION_HEADER sectionHeader = RAW_OFFSET(PSECTION_HEADER,&nt->OptionalHeader, nt->FileHeader.SizeOfOptionaHeader);
-
-	AuTextOut("[aurora]: driver section alignment : %d \n", nt->OptionalHeader.SectionAlignment);
-	AuTextOut("[aurora]: driver file alignment : %d \n", nt->OptionalHeader.FileAlignment);
-	AuTextOut("[aurora]: size of section : %d \n", nt->OptionalHeader.SizeOfHeaders);
 	
 	uint64_t first_block = (uint64_t)AuPmmngrAlloc();
 	memset((void*)first_block, 0, 4096);
@@ -291,6 +342,7 @@ void AuDriverLoad(char* filename, AuDriver* driver) {
 	uint8_t* relocatebuff = (uint8_t*)virtual_base;
 	uint64_t original_base = nt->OptionalHeader.ImageBase;
 	uint64_t new_addr = (uint64_t)virtual_base;
+	driver->new_load_base = new_addr;
 	uint64_t diff = new_addr - original_base;
 
 	AuKernelRelocatePE(relocatebuff, nt, diff);
@@ -311,8 +363,13 @@ void AuDriverLoad(char* filename, AuDriver* driver) {
 
 extern bool AuIsPCIeInitialized();
 
-/*
-* AuDrvMngrInitialize -- Initialize the driver manager
+/** we're using FontManagerGetFontCount because
+ * both board config descriptor file and 
+ * font config file share same writing style
+ */
+extern int FontManagerGetFontCount(uint8_t* buffer);
+/**
+* @brief AuDrvMngrInitialize -- Initialize the driver manager
 * @param info -- kernel boot info
 */
 void AuDrvMngrInitialize(KERNEL_BOOT_INFO* info) {
@@ -321,10 +378,16 @@ void AuDrvMngrInitialize(KERNEL_BOOT_INFO* info) {
 	driver_load_base = AU_DRIVER_BASE_START;
 	_dev_count_ = 0;
 
+	scratchBuffer = (uint64_t*)P2V((uint64_t)AuPmmngrAllocBlocks((1024 * 1024) / 0x1000));
+	memset(scratchBuffer, 0, 1024 * 1024);
+
 	AuTextOut("[aurora]: initializing drivers, please wait... \r\n");
 	/* Load the conf data */
 	uint64_t* conf = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
-	memset(conf, 0, 4096);
+	uint64_t* boardcnf = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
+	memset(conf, 0, PAGE_SIZE);
+	memset(boardcnf, 0, PAGE_SIZE);
+
 	AuVFSNode* fsys = AuVFSFind("/");
 	AuVFSNode* file = AuVFSOpen("/audrv.cnf");
 	if (!file) {
@@ -334,7 +397,7 @@ void AuDrvMngrInitialize(KERNEL_BOOT_INFO* info) {
 	int filesize = file->size / 1024;
 
 	if (filesize < 4096)
-		AuVFSNodeReadBlock(fsys, file, (uint64_t*)V2P((size_t)conf));
+		AuVFSNodeReadBlock(fsys, file, conf);
 
 	uint8_t* confdata = (uint8_t*)conf;
 
@@ -342,10 +405,20 @@ void AuDrvMngrInitialize(KERNEL_BOOT_INFO* info) {
 
 	AuTextOut("[aurora]: audrv.cnf read successfully %s \r\n", file->filename);
 
+	/** now initialize board specific driver list **/
+	AuVFSNode* board = AuVFSOpen("/board.cnf");
+	if (board) {
+		filesize = board->size / 1024;
+		if (filesize < 4096) {
+			AuVFSNodeReadBlock(fsys, board, boardcnf);
+		}
+		AuTextOut("[aurora]: board.cnf read successfully %s \r\n", board->filename);
+
+	}else
+		AuTextOut("[aurora] Driver Manager failed to open board.cnf, file not found \r\n");
 	
-	scratchBuffer = (uint64_t*)P2V((uint64_t)AuPmmngrAllocBlocks((1024 * 1024) / 0x1000));
-	memset(scratchBuffer, 0, 1024 * 1024);
-	
+
+	AuDriver* drv = NULL;
 	/* AuDrvManager will be responsible for loading drivers through
 	 * scanning MMIO, PCIe and other bus systems
 	 */
@@ -367,13 +440,41 @@ void AuDrvMngrInitialize(KERNEL_BOOT_INFO* info) {
 					}*/
 					if (dev_id == 0xFFFF || vend_id == 0xFFFF)
 						continue;
-					AuGetDriverName(class_code, sub_class, confdata, 1);
+					char* offset = AuGetConfEntry(class_code, sub_class, confdata, 1);
+					if (offset == NULL)
+						drv = AuGetDriverName(vend_id, dev_id, confdata, 1);
+					else
+						drv = AuGetDriverName(class_code, sub_class, confdata, 1);
+
+					if (drv) {
+						drv->classCode = class_code;
+						drv->subClassCode = sub_class;
+						drv->device = device;
+						drv->vendorID = vend_id;
+						drv->deviceID = dev_id;
+						drv->bus = bus;
+						drv->func = func;
+						drv->dev = dev;
+						drv = NULL;
+					}
 				}
 			}
 		}
 		proceed = 1;
 	}
 
+#if !defined(__TARGET_BOARD_QEMU_VIRT__)
+	/*if PCIe fails then */
+	if (board) {
+		/** using font manager's function because both board config
+		 * data and font manager config data shares same style
+		 */
+		int num_module_entry = FontManagerGetFontCount((uint8_t*)boardcnf);
+		AuTextOut("[aurora]: number of board's module entry : %d \r\n", num_module_entry);
+		AuBoardIterateModule(boardcnf, num_module_entry);
+		proceed = 1;
+	}
+#endif
 
 	if (proceed) {
 		/* Serially call each startup entries of each driver */
@@ -381,7 +482,7 @@ void AuDrvMngrInitialize(KERNEL_BOOT_INFO* info) {
 			AuDriver* driver = drivers[i];
 			AuDriverLoad(driver->name, driver);
 			if (driver->entry) {
-				driver->entry();
+				driver->entry(driver);
 			}
 		}
 	}
@@ -390,8 +491,8 @@ void AuDrvMngrInitialize(KERNEL_BOOT_INFO* info) {
 	kfree(file);
 }
 
-/*
- * AuRegisterDevice -- register a new device to
+/**
+ * @brief AuRegisterDevice -- register a new device to
  * aurora system
  * @param dev -- Pointer to device to add
  */
@@ -400,8 +501,8 @@ AU_EXTERN AU_EXPORT void AuRegisterDevice(AuDevice* dev) {
 	_dev_count_++;
 }
 
-/*
- * AuCheckDevice -- checks an aurora device if it's
+/**
+ * @brief AuCheckDevice -- checks an aurora device if it's
  * already present
  * @param classC -- class code of the device to check
  * @param subclassC -- sub class code of the device to check
@@ -417,6 +518,11 @@ AU_EXTERN AU_EXPORT bool AuCheckDevice(uint16_t classC, uint16_t subclassC, uint
 	return false;
 }
 
+/**
+ * @brief AuBootDriverLoad -- loads all boot drivers
+ * @param driverBuffer - Pointer to driver location in memory
+ * @param driver -- Pointer to aurora driver structure
+ */
 void AuBootDriverLoad(void* driverBuffer, AuDriver* driver) {
 	int next_base_offset = 0;
 
@@ -440,8 +546,8 @@ void AuBootDriverLoad(void* driverBuffer, AuDriver* driver) {
 	driver->present = true;
 }
 
-/*
- * AuBootDriverInitialise -- Initialise and load all boot time drivers
+/**
+ * @brief AuBootDriverInitialise -- Initialise and load all boot time drivers
  * @param info -- Kernel boot information passed by XNLDR
  * [TODO] : Everything is hard coded for now
  */
@@ -470,20 +576,20 @@ AU_EXTERN AU_EXPORT void AuBootDriverInitialise(KERNEL_BOOT_INFO* info) {
 	/* Serially call each startup entries of each driver */
 	for (int i = 0; i < driver_boot_unique_id; i++) {
 		AuDriver* driver = bootDrivers[i];
-		driver->entry();
+		driver->entry(driver);
 	}
 }
 
-/*
- * AuDrvMgrGetBaseAddress -- returns the current
+/**
+ * @brief AuDrvMgrGetBaseAddress -- returns the current
  * driver load base address
  */
 uint64_t AuDrvMgrGetBaseAddress() {
 	return driver_load_base;
 }
 
-/*
- * AuDrvMgrSetBaseAddress -- sets a new base
+/**
+ * @brief AuDrvMgrSetBaseAddress -- sets a new base
  * address for driver to load
  * it's highly risky because, if we set it to
  * kernel stack location, kernel will crash
@@ -491,4 +597,36 @@ uint64_t AuDrvMgrGetBaseAddress() {
 void AuDrvMgrSetBaseAddress(uint64_t base_address) {
 	driver_load_base = base_address;
 }
+
+/**
+ * @brief AuDrvManagerCheckFault -- check if this driver contain the fault
+ * address, helpful for debugging
+ * @param fault_addr -- address of fault
+ */
+AuDriver* AuDrvManagerCheckFault(uint64_t fault_addr) {
+	for (int i = 0; i < 246; i++) {
+		AuDriver* drv = drivers[i];
+		if (drv) {
+			if (fault_addr > drv->new_load_base || fault_addr <= drv->new_load_base + drv->image_sz)
+				return drv;
+		}
+	}
+}
+
+/**
+ * @brief AuDrvCatchFault -- resolves original virtual address of the driver
+ * and relocate its symbol name
+ * @param drv -- Pointer to driver 
+ * @param fault_addr -- istruction pointer address
+ */
+void AuDrvCatchFault(AuDriver* drv, uint64_t fault_addr) {
+	UARTDebugOut("[aurora]: crash in kernel driver : %s \r\n", drv->name);
+	uint64_t rva = fault_addr - drv->new_load_base;
+	uint64_t original_va = drv->original_load_base + rva;
+
+	UARTDebugOut("[aurora]: relocated address: %x, original address : %x \r\n", fault_addr, original_va);
+	AuCoffResolveAddress(drv->new_load_base, fault_addr);
+}
+
+
 

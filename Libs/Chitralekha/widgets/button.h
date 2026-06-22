@@ -1,4 +1,6 @@
 /**
+* @file button.h
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2023, Manas Kamal Choudhury
@@ -44,8 +46,8 @@ XE_EXTERN{
 		char* title;
 	}ChButton;
 
-	/*
-	* ChCreateButton -- Create a button widget
+	/**
+	* @brief ChCreateButton -- Create a button widget
 	* @param x -- x coord of the widget
 	* @param y -- y coord of the widget
 	* @param w -- width of the button

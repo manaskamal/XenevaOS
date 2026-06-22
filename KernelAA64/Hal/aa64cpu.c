@@ -1,4 +1,6 @@
 /**
+* @file aa64cpu.c
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2025, Manas Kamal Choudhury
@@ -37,6 +39,7 @@
 #include <Drivers/uart.h>
 #include <Drivers/rtcmmio.h>
 #include <kernelAA64.h>
+#include <Board/board.h>
 
 
 uint64_t basisTime;
@@ -47,18 +50,19 @@ uint64_t AA64GetPhysicalTimerCount() {
 	return val * 100;
 }
 
-/*
- * AA64FPUNeonEnable -- initialize FPU and
+/**
+ * @brief AA64FPUNeonEnable -- initialize FPU and
  * NEON feature
  */
 void AA64FPUNeonEnable() {
 	uint64_t cpacr_el1 = get_cpacr_el1();
 	cpacr_el1 |= (3 << 20) | (3 << 16);
 	set_cpacr_el1(cpacr_el1);
+	isb_flush();
 }
 
-/*
- * AA64ClockInitialize -- initialize the clock
+/**
+ * @brief AA64ClockInitialize -- initialize the clock
  */
 void AA64ClockInitialize() {
 	uint64_t val = get_cntfrq_el0();
@@ -73,9 +77,52 @@ void aa64_data_cache_clean_range(void* addr, size_t size) {
 	size_t start = (size_t)addr;
 	size_t end = start + size;
 
-	start &= ~(CACHE_LINE_SIZE - 1);
+	start &= ~((uint64_t)(CACHE_LINE_SIZE - 1));
 	for (size_t p = start; p < end; p += CACHE_LINE_SIZE)
 		data_cache_flush((uint64_t*)p);
+
+	dsb_sy_barrier();
+	dsb_ish();
+	isb_flush();
+}
+
+uint32_t get_cache_line_sz() {
+	uint64_t ctr = read_ctr_el0();
+	uint32_t dminline = (ctr >> 16) & 0xF;
+	return (4 << dminline);
+}
+
+void aa64_dc_cvac_range(void* addr, size_t sz) {
+	uint64_t start = (uint64_t)addr;
+	size_t end = start + sz;
+
+	uint32_t line_sz = get_cache_line_sz();
+	start &= ~((uint64_t)(line_sz - 1));
+	for (size_t p = start; p < end; p += line_sz) {
+		dc_cvac(p);
+	}
+
+	dsb_sy_barrier();
+	isb_flush();
+	AA64SleepUS(100);
+}
+
+
+void aa64_dc_ivac_range(void* addr, size_t sz) {
+	size_t start = (size_t)addr;
+	size_t end = start + sz;
+
+	uint32_t line_sz = get_cache_line_sz();
+
+	start &= ~((uint64_t)(line_sz - 1));
+
+	for (size_t p = start; p < end; p += line_sz) {
+		dc_ivac(p);
+	}
+
+	dsb_sy_barrier();
+	isb_flush();
+	AA64SleepUS(100);
 }
 
 void AA64CPUImplementer(uint32_t midr) {
@@ -113,12 +160,28 @@ void AA64CPUImplementer(uint32_t midr) {
 		AuTextOut("CPU Implementer: Unknown \r\n");
 		break;
 	}
-	AuTextOut("CPU Architecture: ARMv8-A(%x) \r\n", arch);
+	//AuTextOut("CPU Architecture: ARMv8-A(%x) \r\n", arch);
+}
+
+/**
+ * @brief AA64SleepUS -- sleep for sometimes
+ * @param us -- microseconds to sleep
+ */
+void AA64SleepUS(uint32_t us) {
+	AuAA64BoardSleepUS(us);
+}
+
+/**
+ * @brief AA64SleepMS -- sleep for sometimes
+ * @param ms -- milliseconds to sleep
+ */
+void AA64SleepMS(uint32_t ms) {
+	AuAA64BoardSleepMS(ms);
 }
 
 extern void enableAlignCheck();
-/*
- * AA64CpuInitialize -- initialize aa64 cpu
+/**
+ * @brief AA64CpuInitialize -- initialize aa64 cpu
  */
 void AA64CpuInitialize() {
 	cpuFrequency = 0;
@@ -157,31 +220,34 @@ void AA64TimerSetup() {
 #ifdef __TARGET_BOARD_RPI3__
 	/* already enabled during bcm2836-armctl-ic initialization */
 	return;
-#endif
+#else
 	setupTimerIRQ();
 	GICEnableIRQ(27);
 	GICClearPendingIRQ(27);
 	isb_flush();
+#endif
 }
 
-/*
- * AA64CPUPostInitialize -- initilaize post cpu requirements
+/**
+ * @brief AA64CPUPostInitialize -- initilaize post cpu requirements
  * @param info -- Pointer to KERNEL BOOT INFORMATIONs
  */
 void AA64CPUPostInitialize(KERNEL_BOOT_INFO* info) {
 	AuACPIInitialise(info->acpi_table_pointer);
 	UARTInitialize();
+
 	//enable_irqs();
 	mask_irqs();
 	suspendTimer();
 	GICInitialize();
 	AA64TimerSetup();
+
 	//PS/2 Enable
 
 	uint32_t id = read_midr();
 	AA64CPUImplementer(id);
 	AA64PCIeInitialize();
 	AuTextOut("[aurora]: cpu post initialized \r\n");
-	AuPL031RTCInit();
-	mask_irqs();
+	//AuPL031RTCInit();
+	//mask_irqs();
 }

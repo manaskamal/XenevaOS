@@ -37,3 +37,12 @@ _fastcpy:
      b.ne .loop
 .done:
      ret
+
+.global _AuConOut
+_AuConOut:
+    mov x19,x8
+    mov x16, 45
+    svc #0
+	mov x0, x6
+	mov x8,x19
+    ret
