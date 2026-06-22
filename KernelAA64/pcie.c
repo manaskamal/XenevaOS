@@ -73,7 +73,7 @@ static int _pcie_check_and_map_dtb() {
 static bool _pcie_use_hard_code_ecam() {
 	AuTextOut("[aurora]: pcie getting hard code ecam address \r\n");
 #ifdef __TARGET_BOARD_QEMU_VIRT__
-	_ecamAddress = QEMU_VIRT_ECAM_BASE; // AuMapMMIO(QEMU_VIRT_ECAM_BASE, 0x10000000 / 0x1000);
+	_ecamAddress = (uint64_t)AuMapMMIO(QEMU_VIRT_ECAM_BASE, 0x10000000 / 0x1000);
 #elif __TARGET_BOARD_RPI3__
 	_ecamAddress = 0;
 #elif __TARGET_BOARD_IMX8MP_VERDIN_DAHLIA__
