@@ -31,7 +31,14 @@
 
 #include <_xeneva.h>
 
+#ifdef ARCH_RISCV64
+#define _JBLEN 28 /* 14 GPRs + space for floating point if needed */
+#elif defined(ARCH_ARM64)
+#define _JBLEN 32
+#else
 #define _JBLEN 9
+#endif
+
 typedef long long jmp_buf[_JBLEN];
 
 //#pragma pack(push,1)

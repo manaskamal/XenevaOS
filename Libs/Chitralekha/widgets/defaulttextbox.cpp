@@ -65,10 +65,15 @@ void ChDefaultTextboxPrint(ChCanvas* canv, ChTextBox* tb, char* text) {
 			break;
 		int w = ChFontGetWidthChar(tb->font, text[i]);
 		int h = ChFontGetHeightChar(tb->font, text[i]);
+#ifdef _USE_FREETYPE
 		int x_v = penx + tb->font->face->glyph->bitmap_left;
 		int y_v = peny - tb->font->face->glyph->bitmap_top;
 		int b_w = tb->font->face->glyph->bitmap.width;
 		int draw_width = tb->font->face->glyph->bitmap.width;
+#else
+		int x_v = penx;
+		int draw_width = w;
+#endif
 
 		if (x_v + draw_width >= (tb->wid.x + tb->wid.w)) {
 			tb->textCursorPosY += 1;
@@ -80,8 +85,12 @@ void ChDefaultTextboxPrint(ChCanvas* canv, ChTextBox* tb, char* text) {
 		ChFontDrawCharClipped(canv, tb->font, text[i], penx,
 			peny,
 			tb->textColor, &clipRect);
+#ifdef _USE_FREETYPE
 		penx += tb->font->face->glyph->advance.x >> 6;
 		peny += tb->font->face->glyph->advance.y >> 6;
+#else
+		penx += w;
+#endif
 		tb->textCursorPosX++;
 	}
 

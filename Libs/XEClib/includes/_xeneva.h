@@ -61,6 +61,8 @@
 #define INLINE __inline
 #else
 #define INLINE inline
+#define _cdecl
+#define __int64 long long
 #endif
 
 #ifdef __cplusplus

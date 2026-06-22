@@ -1635,7 +1635,7 @@ extern "C" void _AuConOut(const char* text, ...);
 /*
  * main -- deodhai compositor
  */
-int main(int argc, char* arv[]) {
+extern "C" int main(int argc, char* arv[]) {
 	int pid = _KeGetThreadID();
 	
 	_KePrint("Argc == 10 %x\r\n", argc);

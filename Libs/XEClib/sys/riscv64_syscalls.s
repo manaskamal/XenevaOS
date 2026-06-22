@@ -234,3 +234,52 @@ _KeProcessHeapUnmap:
     li a7, 34
     ecall
     ret
+
+.global _KeRemoveFile
+.type _KeRemoveFile, @function
+_KeRemoveFile:
+    li a7, 19
+    ecall
+    ret
+
+.global gettimeofday
+.type gettimeofday, @function
+gettimeofday:
+    li a7, 45
+    ecall
+    ret
+
+.global _KeGetEnvironmentBlock
+.type _KeGetEnvironmentBlock, @function
+_KeGetEnvironmentBlock:
+    li a7, 57
+    ecall
+    ret
+
+.global _KeCreateTTY
+.type _KeCreateTTY, @function
+_KeCreateTTY:
+    li a7, 31
+    ecall
+    ret
+
+.global _KeCreateThread
+.type _KeCreateThread, @function
+_KeCreateThread:
+    li a7, 32
+    ecall
+    ret
+
+.global _KeSetFileToProcess
+.type _KeSetFileToProcess, @function
+_KeSetFileToProcess:
+    li a7, 33
+    ecall
+    ret
+
+.global _KeSendSignal
+.type _KeSendSignal, @function
+_KeSendSignal:
+    li a7, 35
+    ecall
+    ret

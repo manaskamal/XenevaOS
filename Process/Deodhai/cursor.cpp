@@ -76,7 +76,7 @@ void CursorRead(Cursor* cur) {
 	int width = info->biWidth;
 	int height = info->biHeight;
 	int bpp = info->biBitCount;
-#elif ARCH_ARM64
+#elif defined(ARCH_ARM64) || defined(ARCH_RISCV64)
 	//BMP* bmp = (BMP*)buffer;
 	unsigned int offset; // = bmp->off_bits;
 	memcpy(&offset, (uint8_t*)buffer + 10, sizeof(int));

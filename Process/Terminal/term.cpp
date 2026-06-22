@@ -109,7 +109,7 @@ void TerminalDrawCell(int x, int y, bool dirty) {
 	int y_offset = 26;
 	TermCell* cell = (TermCell*)&term_buffer[(y* ws_col + x)];
 	int f_w = ChFontGetWidthChar(consolas, cell->c);
-	int f_h = consolas->face->size->metrics.ascender >> 6;//ChFontGetHeightChar(consolas, cell->c);
+	int f_h = ChFontGetHeightChar(consolas, cell->c);
 
 	if ((CHITRALEKHA_WINDOW_DEFAULT_PAD_X + x* cell_width + cell_width) >= win->info->width) 
 		return;
@@ -613,7 +613,7 @@ void TerminalThread() {
 /*
 * main -- terminal emulator
 */
-int main(int argc, char* arv[]){
+extern "C" int main(int argc, char* arv[]){
 	app = ChitralekhaStartApp(argc, arv);
 	win = ChCreateWindow(app, (WINDOW_FLAG_MOVABLE), "Xeneva Terminal", 300, 100, 650, 450);
 	win->info->alpha = false;
@@ -623,7 +623,7 @@ int main(int argc, char* arv[]){
 	consolas = ChInitialiseFont(CONSOLAS);
 	ChFontSetSize(consolas, 12);
 	int f_w = ChFontGetWidthChar(consolas,'M');
-	int f_h = consolas->face->size->metrics.height >> 6;//ChFontGetHeightChar(consolas, 'A');
+	int f_h = ChFontGetHeightChar(consolas, 'A');
 	cell_width = f_w;
 	cell_height = f_h;
 	int term_w = win->info->width - 1;

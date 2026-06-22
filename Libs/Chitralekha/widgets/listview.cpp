@@ -30,7 +30,9 @@
 **/
 
 #include "listview.h"
+#ifdef ARCH_ARM64
 #include <arm_neon.h>
+#endif
 
 #define LV_COLOR_BG 0xFF1E1E1E
 #define LV_COLOR_TEXT 0xFFE0E0E0
@@ -244,6 +246,8 @@ static void ListViewDrawHeader(ListView* lv, ChWindow* win) {
 void _neon_fill_rect32(ChCanvas* canv, int stride_px, int x, int y, int w, int h, uint32_t color) {
 	if (w <= 0 || h <= 0) return;
 	uint32_t* fb = canv->buffer;
+
+#ifdef ARCH_ARM64
 	uint32x4_t vcolor = vdupq_n_u32(color);
 
 	for (int row = 0; row < h; row++) {
@@ -260,9 +264,18 @@ void _neon_fill_rect32(ChCanvas* canv, int stride_px, int x, int y, int w, int h
 		for (; col < w; col++)
 			dst[col] = color;
 	}
+#else
+	for (int row = 0; row < h; row++) {
+		uint32_t* dst = fb + (size_t)(y + row) * stride_px + x;
+		for (int col = 0; col < w; col++) {
+			dst[col] = color;
+		}
+	}
+#endif
 }
 
 static inline void _neon_cpy_row32(uint32_t* dst, const uint32_t* src, int w) {
+#ifdef ARCH_ARM64
 	int col = 0;
 	for (; col + 16 <= w; col += 16) {
 		uint32x4_t a = vld1q_u32(src + col);
@@ -279,6 +292,11 @@ static inline void _neon_cpy_row32(uint32_t* dst, const uint32_t* src, int w) {
 		vst1q_u32(dst + col, vld1q_u32(src + col));
 	for (; col < w; col++)
 		dst[col] = src[col];
+#else
+	for (int col = 0; col < w; col++) {
+		dst[col] = src[col];
+	}
+#endif
 }
 
 void _neon_shift_rect_vertical(uint32_t* fb, int stride_px, int x, int y, int w, int h, int delta_y) {

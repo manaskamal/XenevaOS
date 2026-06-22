@@ -109,6 +109,9 @@ extern "C" KERNEL_BOOT_INFO* AuGetBootInfoStruc() {
 }
 
 
+extern "C" void AuVmmngrBootFree();
+extern "C" void AuPCIeInitialize();
+
 extern void debugLIBOn();
 
 /*
@@ -156,6 +159,8 @@ void AuKernelMain(KERNEL_BOOT_INFO* info) {
     // VirtIO init if supported
 	extern void AuVirtIOInputInitialize();
 	AuVirtIOInputInitialize();
+
+	AuPCIeInitialize();
 
 	/* required virtio-mouse and keyboard */
 	//Here goes board pre driver initialize
@@ -207,7 +212,7 @@ void AuKernelMain(KERNEL_BOOT_INFO* info) {
 	 * This is a known limitation of the fake-PE build approach.
 	 * TODO: Fix the linker/relocation pipeline to use only virtual addresses.
 	 */
-	// AuVmmngrBootFree();
+	AuVmmngrBootFree();
 
 	AuSchedulerStart();
 	while (1) {

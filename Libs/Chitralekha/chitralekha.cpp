@@ -40,7 +40,9 @@
 #include "_fastcpy.h"
 #include "color.h"
 
+#ifdef ARCH_X64
 extern "C" int _fltused = 1;
+#endif
 
 int ChPrintLibName() {
 	_KePrint("Chitralekha Graphics Library v1.0 \n");

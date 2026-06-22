@@ -333,12 +333,11 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) 
 	AuTextOut("AuLoadExecToProcess \n");
 	AuVFSNode* fsys = AuVFSFind(filename);
 	AuVFSNode* file = AuVFSOpen(filename);
-	AuTextOut("File found : %s \n", file->filename);
 	if (!file) {
 		AuTextOut("No File found -> %s \r\n", filename);
 		return -1;
 	}
-	AuTextOut("file found : %s \n", filename);
+	AuTextOut("File found : %s \n", file->filename);
 
 	int sbIndex = 0;
 	while (file->eof != 1) {

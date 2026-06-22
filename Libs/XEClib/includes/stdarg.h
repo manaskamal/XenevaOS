@@ -38,7 +38,11 @@ extern "C"
 
 
 	/* va list parameter list */
+#ifdef ARCH_RISCV64
+	typedef __builtin_va_list va_list;
+#else
 	typedef unsigned char *va_list;
+#endif
 
 
 	/* width of stack == width of int */
@@ -70,6 +74,12 @@ extern "C"
 
 #define va_end(ap) \
      ((ap) = (va_list)0)
+
+#elif ARCH_RISCV64
+typedef __builtin_va_list __gnuc_va_list;
+#define va_start(v, l)	__builtin_va_start(v, l)
+#define va_end(v)	__builtin_va_end(v)
+#define va_arg(v, l)	__builtin_va_arg(v, l)
 #endif
 
 #ifdef __cplusplus

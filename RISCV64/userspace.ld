@@ -36,8 +36,8 @@ SECTIONS
     . = ALIGN(4096);
     _etext = .;
 
-    /* .data section begins at ImageBase + 0x20000 */
-    . = ImageBase + 0x20000;
+    /* .data section begins at ImageBase + 0x200000 */
+    . = ImageBase + 0x200000;
     _data = .;
     .rodata : {
         *(.rodata)
@@ -59,8 +59,8 @@ SECTIONS
     . = ALIGN(4096);
     _edata = .;
 
-    /* .reloc section normally at ImageBase + 0x30000 if needed */
-    . = ImageBase + 0x30000;
+    /* .reloc section normally at ImageBase + 0x300000 if needed */
+    . = ImageBase + 0x300000;
     _reloc = .;
     _ereloc = .;
 

@@ -1,4 +1,6 @@
-﻿#include <arm_neon.h>
+#ifdef ARCH_ARM64
+#include <arm_neon.h>
+#endif
 #include <stdint.h>
 #include <chitralekha.h>
 
@@ -29,6 +31,7 @@ static inline uint32_t blend_over_scalar(uint32_t dst, uint32_t src)
 }
 
 
+#ifdef ARCH_ARM64
 static inline uint32x4_t blend_over_neon(uint32x4_t dst4, uint32x4_t src4,
     uint8x8_t alpha4)
 {
@@ -98,6 +101,7 @@ static inline uint32x4_t blend_over_neon(uint32x4_t dst4, uint32x4_t src4,
 
     return vreinterpretq_u32_u8(result8);
 }
+#endif
 
 
 void fill_rrect_neon(uint32_t* fb, int fb_stride,
@@ -119,11 +123,13 @@ void fill_rrect_neon(uint32_t* fb, int fb_stride,
     /* Fully opaque fast path: no blending needed, just store directly  */
     int opaque = (ca == 0xFF);
 
+#ifdef ARCH_ARM64
     /* NEON splat: four copies of the colour */
     uint32x4_t color4 = vdupq_n_u32(color | 0xFF000000u);
 
     /* Alpha splat for blending path */
     uint8x8_t  alpha4 = vdup_n_u8(ca);
+#endif
 
  
     int r = radius;
@@ -178,6 +184,7 @@ void fill_rrect_neon(uint32_t* fb, int fb_stride,
 
         if (opaque) {
             /* ---- Fully opaque: NEON store loop --------------------- */
+#ifdef ARCH_ARM64
             /* Head: align to 4-pixel boundary */
             while (count > 0 && (px & 3)) {
                 row[px++] = color | 0xFF000000u;
@@ -192,10 +199,15 @@ void fill_rrect_neon(uint32_t* fb, int fb_stride,
             /* Tail */
             while (count-- > 0)
                 row[px++] = color | 0xFF000000u;
+#else
+            while (count-- > 0)
+                row[px++] = color | 0xFF000000u;
+#endif
 
         }
         else {
             /* ---- Translucent: NEON blend loop ---------------------- */
+#ifdef ARCH_ARM64
             /* Head */
             while (count > 0 && (px & 3)) {
                 row[px] = blend_over_scalar(row[px], color);
@@ -214,6 +226,12 @@ void fill_rrect_neon(uint32_t* fb, int fb_stride,
                 row[px] = blend_over_scalar(row[px], color);
                 px++;
             }
+#else
+            while (count-- > 0) {
+                row[px] = blend_over_scalar(row[px], color);
+                px++;
+            }
+#endif
         }
     }
 }

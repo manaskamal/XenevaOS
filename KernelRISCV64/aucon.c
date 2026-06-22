@@ -37,7 +37,7 @@
 #include <Mm\pmmngr.h>
 #include <Mm\kmalloc.h>
 #include <string.h>
-#include <va_list.h>
+#include <stdarg.h>
 #include <stdio.h>
 #ifdef ARCH_ARM64
 #include <Hal/AA64/sched.h>
@@ -244,8 +244,8 @@ void AuConsolePostInitialise(PKERNEL_BOOT_INFO info) {
 #endif
 	aucon->width = info->X_Resolution;
 	aucon->height = info->Y_Resolution;
-	v_res = info->X_Resolution;
-	h_res = info->Y_Resolution;
+	v_res = info->Y_Resolution;
+	h_res = info->X_Resolution;
 	aucon->bpp = 32;
 	aucon->scanline = info->pixels_per_line;
 	aucon->pitch = 4 * info->pixels_per_line;
@@ -418,8 +418,10 @@ void AuPutS(char* str) {
 	/* Scroll */
 	if (console_y + 1 > v_res / 16)
 	{
-		for (int i = 16; i < v_res * h_res; i++)
+		for (int i = 0; i < (v_res - 16) * h_res; i++)
 			lfb[i] = lfb[i + h_res * 16];
+		for (int i = (v_res - 16) * h_res; i < v_res * h_res; i++)
+			lfb[i] = CONSOLE_BACKGROUND;
 		console_y--;
 	}
 }
@@ -434,9 +436,8 @@ void AuTextOut(const char* format, ...) {
     char buf[1024];
     int o = 0;
     
-	uint64_t val_buffer[7];
-    store_a0_a7(val_buffer);
-    int arg_ptr = 0;
+    va_list ap;
+    va_start(ap, format);
     
 	while (*format && o < 1020)
 	{
@@ -448,7 +449,7 @@ void AuTextOut(const char* format, ...) {
             
 			if (*format == 'd')
 			{
-				size_t i = (size_t)val_buffer[arg_ptr++];
+				size_t i = va_arg(ap, size_t);
 				char num_buf[32];
 				sztoa(i, num_buf, 10);
                 char* p = num_buf;
@@ -456,11 +457,11 @@ void AuTextOut(const char* format, ...) {
 			}
 			else if (*format == 'c')
 			{
-				buf[o++] = (char)val_buffer[arg_ptr++];
+				buf[o++] = (char)va_arg(ap, int);
 			}
 			else if (*format == 'x')
 			{
-				size_t x = (size_t)val_buffer[arg_ptr++];
+				size_t x = va_arg(ap, size_t);
 				char num_buf[32];
 				sztoa(x, num_buf, 16);
                 char* p = num_buf;
@@ -468,14 +469,14 @@ void AuTextOut(const char* format, ...) {
 			}
 			else if (*format == 's')
 			{
-				char* s = (char*)val_buffer[arg_ptr++];
+				char* s = va_arg(ap, char*);
                 if (!s) s = (char*)"(null)";
                 while(*s && o < 1020) buf[o++] = *s++;
 			}
             else if (*format == 'f')
             {
                 /* floats would need double from registers, skipping for now */
-                arg_ptr++; 
+                va_arg(ap, double); 
                 char* s = (char*)"<float>";
                 while(*s && o < 1020) buf[o++] = *s++;
             }
@@ -490,6 +491,7 @@ void AuTextOut(const char* format, ...) {
 		}
 		++format;
 	}
+    va_end(ap);
     buf[o] = 0;
     
     buf[o] = 0;

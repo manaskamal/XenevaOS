@@ -32,7 +32,9 @@
 #include <string.h>
 #include <stdio.h>
 
+#ifdef ARCH_X64
 extern "C" int _fltused = 1;
+#endif
 
 //extern "C" void* __cdecl ::operator new(size_t size) {
 //	return malloc(size);

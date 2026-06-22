@@ -104,6 +104,8 @@ search: ;
 	if (p) {
 		p++;
 		fbuf++;
+	} else {
+		return 0;
 	}
 	int entret = atoi(p);
 
@@ -386,15 +388,6 @@ void AuDrvMngrInitialize(KERNEL_BOOT_INFO* info) {
 			}
 		}
 	}
-
-#ifdef ARCH_RISCV64
-	/* Load the VirtIO MMIO GPU driver natively since it bypassed PCI enumeration */
-	AuDriver* virtio_mmio_drv = AuCreateDriverInstance("/A.DRV");
-	AuDriverLoad(virtio_mmio_drv->name, virtio_mmio_drv);
-	if (virtio_mmio_drv->entry) {
-		virtio_mmio_drv->entry(virtio_mmio_drv);
-	}
-#endif
 
 	AuTextOut("[aurora]: AuDrvManager initialized successfully \r\n");
 	kfree(file);

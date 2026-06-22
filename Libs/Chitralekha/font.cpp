@@ -89,7 +89,9 @@ void ChFontSetSize(ChFont* font, int size) {
 	if (!font)
 		return;
 	font->fontSz = size / 72.f * 96;
+#ifdef _USE_FREETYPE
 	FT_Set_Pixel_Sizes(font->face, 0, font->fontSz);
+#endif
 	font->fontHeight = font->fontSz;
 }
 
@@ -320,6 +322,7 @@ void ChFontDrawCharClipped(ChCanvas* canv, ChFont* font, char c, int penx, int p
 int64_t ChFontGetWidth(ChFont* font,char* string) {
 	if (!font)
 		return -1;
+#ifdef _USE_FREETYPE
 	size_t font_width = 0;
 	size_t penx = 0;
 	int string_width = 0;
@@ -339,6 +342,11 @@ int64_t ChFontGetWidth(ChFont* font,char* string) {
 		font_width = bbox_xmax - bbox_xmin;
 	}
 	return font_width;
+#else
+	size_t len = 0;
+	while(string[len]) len++;
+	return len * (font->fontSz / 2);
+#endif
 }
 
 /*
@@ -350,6 +358,7 @@ int64_t ChFontGetWidth(ChFont* font,char* string) {
 int64_t ChFontGetWidthChar(ChFont* font, char c) {
 	if (!font)
 		return -1;
+#ifdef _USE_FREETYPE
 	size_t font_width = 0;
 	size_t penx = 0;
 	int string_width = 0;
@@ -365,6 +374,9 @@ int64_t ChFontGetWidthChar(ChFont* font, char c) {
 		font_width = bbox_xmax - bbox_xmin;
 	}
 	return font_width;
+#else
+	return font->fontSz / 2;
+#endif
 }
 
 /*
@@ -376,6 +388,7 @@ int64_t ChFontGetWidthChar(ChFont* font, char c) {
 int64_t ChFontGetHeight(ChFont* font, char* string) {
 	if (!font)
 		return -1;
+#ifdef _USE_FREETYPE
 	size_t font_height = 0;
 	size_t peny = 0;
 	FT_Error err = 0;
@@ -393,6 +406,9 @@ int64_t ChFontGetHeight(ChFont* font, char* string) {
 		font_height = bbox_ymax - bbox_ymin;
 	}
 	return font_height;
+#else
+	return font->fontSz;
+#endif
 }
 
 /*
@@ -404,6 +420,7 @@ int64_t ChFontGetHeight(ChFont* font, char* string) {
 int64_t ChFontGetHeightChar(ChFont* font, char c) {
 	if (!font)
 		return -1;
+#ifdef _USE_FREETYPE
 	size_t font_h = 0;
 	size_t peny = 0;
 	int string_width = 0;
@@ -419,6 +436,9 @@ int64_t ChFontGetHeightChar(ChFont* font, char c) {
 		font_h = bbox_ymax - bbox_ymin;
 	}
 	return font_h;
+#else
+	return font->fontSz;
+#endif
 }
 
 int ChFontClamp(int val, int min, int max) {

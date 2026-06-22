@@ -6401,6 +6401,8 @@ History:
 */
 
 
+extern "C" {
+
 void* malloc(unsigned int size) {
     return dlmalloc(size);
 }
@@ -6431,3 +6433,5 @@ void* calloc(unsigned long long n_item, unsigned long long size) {
     _KePrint("Calloc : %d - sz : %d \r\n", n_item, size);
     return dlcalloc(n_item, size);
 }
+
+} // extern "C"

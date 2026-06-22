@@ -85,17 +85,17 @@ _start_header:
 /* .data */
 .ascii ".data\0\0\0"
 .long _edata - _data      /* VirtualSize */
-.long 0x20000             /* VirtualAddress (Hardcoded) */
+.long 0x200000             /* VirtualAddress (Hardcoded) */
 .long _edata - _data      /* SizeOfRawData */
-.long 0x20000             /* PointerToRawData */
+.long 0x200000             /* PointerToRawData */
 .long 0, 0, 0             /* PtrReloc, PtrLine, CoReloc/Line (12 bytes) */
 .long 0xC0000040          /* Characteristics (CNT_INIT_DATA | MEM_READ | MEM_WRITE) */
 
 /* .reloc */
 .ascii ".reloc\0\0"
 .long _ereloc - _reloc    /* VirtualSize */
-.long 0x30000             /* VirtualAddress (Hardcoded) */
+.long 0x300000             /* VirtualAddress (Hardcoded) */
 .long _ereloc - _reloc    /* SizeOfRawData */
-.long 0x30000             /* PointerToRawData */
+.long 0x300000             /* PointerToRawData */
 .long 0, 0, 0             /* PtrReloc, PtrLine, CoReloc/Line (12 bytes) */
 .long 0x42000040          /* Characteristics (CNT_INIT_DATA | DISCARDABLE | READ) */

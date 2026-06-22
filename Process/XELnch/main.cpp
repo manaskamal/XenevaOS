@@ -266,7 +266,7 @@ void xe_restart_action(ChWidget* wid, ChWindow* win) {
 /*
 * main -- xeneva launcher entry point
 */
-int main(int argc, char* arv[]){
+extern "C" int main(int argc, char* arv[]){
 	app = ChitralekhaStartApp(argc, arv);
 	ChFontSetSize(app->baseFont, 12);
 

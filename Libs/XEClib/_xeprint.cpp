@@ -778,7 +778,9 @@ int _xeprint(char* output, int outputlen, const char* format, va_list list) {
 		case 'g':
 		case 'G': {
 					  doubleArg = (double)va_arg(list, double);
+#ifndef ARCH_RISCV64
 					  list += sizeof(int);
+#endif
 
 					  if (fieldWidth)
 						  dtoa(doubleArg, (output + outCount), fieldWidth);

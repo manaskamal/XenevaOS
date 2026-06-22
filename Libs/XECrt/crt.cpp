@@ -30,8 +30,19 @@
 #include <stdlib.h>
 #include <stdint.h>
 
+#ifdef ARCH_X64
 extern "C" int _fltused = 1;
+#endif
 
+#ifdef ARCH_RISCV64
+void* __cdecl operator new(unsigned long size){
+	return malloc(size);
+}
+
+void* __cdecl operator new[](unsigned long size) {
+	return malloc(size);
+}
+#else
 void* __cdecl operator new(size_t size){
 	return malloc(size);
 }
@@ -39,6 +50,7 @@ void* __cdecl operator new(size_t size){
 void* __cdecl operator new[](size_t size) {
 	return malloc(size);
 }
+#endif
 
 void __cdecl operator delete (void* p) {
 	free(p);
@@ -47,3 +59,21 @@ void __cdecl operator delete (void* p) {
 void __cdecl operator delete[](void* p) {
 	free(p);
 }
+
+#ifdef ARCH_RISCV64
+void __cdecl operator delete(void* p, unsigned long size) {
+	free(p);
+}
+
+void __cdecl operator delete[](void* p, unsigned long size) {
+	free(p);
+}
+#else
+void __cdecl operator delete(void* p, size_t size) {
+	free(p);
+}
+
+void __cdecl operator delete[](void* p, size_t size) {
+	free(p);
+}
+#endif

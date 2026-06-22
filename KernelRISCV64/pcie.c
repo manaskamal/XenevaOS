@@ -61,47 +61,46 @@ bool AuLittleBootUsed() { return false; }
 uint64_t _ecamAddress;
 bool _pcieInitialized;
 /*
- * AA64PCIeInitialize -- intialize pcie controller
+ * AuPCIeInitialize -- intialize pcie controller
  */
-void AA64PCIeInitialize() {
-	if (!AuLittleBootUsed()) {
+void AuPCIeInitialize() {
+	uint32_t* pcie = AuDeviceTreeGetNode("pci");
+	if (!pcie) {
+		AuTextOut("[aurora]: pcie not found in DTB\r\n");
 		goto skipDTB;
 	}
+	AuTextOut("[aurora]: pcie found in DTB\r\n");
 
-	uint32_t* pcie = AuDeviceTreeGetNode("pcie");
-	if (!pcie) {
-		AuTextOut("[aurora]: pcie not found \r\n");
-		return;
-	}
-	AuTextOut("[aurora]: pcie found \r\n");
-#ifdef __TARGET_BOARD_QEMU_VIRT__
-	
-	/* else need to parse the DTB for */
-	uint32_t addressCell = AuDeviceTreeGetAddressCells(pcie);
-	uint32_t sizeCell = AuDeviceTreeGetSizeCells(pcie);
-	AuTextOut("[aurora]: pcie address cell : %d, size cell : %d \n", addressCell, sizeCell);
-	uint64_t ecamAddr = AuDeviceTreeGetRegAddress(pcie, 2);
-	uint64_t sizeValue = AuDeviceTreeGetRegSize(pcie,2, 2);
+	/* Parse the DTB for PCIe base and size */
+	/* We assume root node has #address-cells=2, #size-cells=2 on QEMU RISCV/ARM64 */
+	uint32_t addressCell = 2; // Default for root 
+	uint32_t sizeCell = 2;
+
+	uint64_t ecamAddr = AuDeviceTreeGetRegAddress(pcie, addressCell);
+	uint64_t sizeValue = AuDeviceTreeGetRegSize(pcie, addressCell, sizeCell);
 	AuTextOut("[aurora]: ecam address : %x, size value : %x \n", ecamAddr, sizeValue);
-	_ecamAddress = AuMapMMIO(ecamAddr, sizeValue / 0x1000);
-	_pcieInitialized = 1;
+	_ecamAddress = (uint64_t)AuMapMMIO(ecamAddr, sizeValue / 0x1000);
+	_pcieInitialized = true;
 	return;
-#endif
+
 skipDTB:
-	AuTextOut("[aurora]: PCIe no LittleBoot protocol used, falling back to UEFI mechanism \n");
+	AuTextOut("[aurora]: PCIe DTB mechanism failed, falling back to UEFI/ACPI mechanism \n");
 	_ecamAddress = 0;
+#ifndef ARCH_RISCV64
 	if (AuACPIPCIESupported()) {
 		AuTextOut("[aurora]: ACPI PCIe is supported \n");
 		acpiMcfg* mcfg = AuACPIGetMCFG();
 		acpiMcfgAlloc* allocs = MEM_AFTER(acpiMcfgAlloc*, mcfg);
 		//_ecamAddress = AuMapMMIO(allocs->baseAddress, 0x10000000/0x1000);
-		_pcieInitialized = 1;
+		_pcieInitialized = true;
 	}
-	else {
+	else
+#endif
+	{
 		AuTextOut("[aurora]: kernel can't continue boot, no device discovery mechanism supported \n");
 		AuTextOut("[aurora]: Ki koriba aru !! Eku dekhun device discovery mechanism support nokore !! Baad diya \n");
 		AuTextOut("[aurora]: Ponta Bhaat khuwa ge \n");
-		for (;;);
+		//for (;;); /* We shouldn't hang here if we have other discovery mechanisms like VirtIO MMIO */
 	}
 }
 

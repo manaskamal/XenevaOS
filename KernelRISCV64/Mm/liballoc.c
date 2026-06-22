@@ -627,6 +627,7 @@ int liballoc_unlock() {
 void* liballoc_alloc(int pages) {
 	void* p = AuPmmngrAllocBlocks(pages);
     void* ptr = (void*)P2V((uint64_t)p);
+    AuTextOut("[liballoc] P2V returned: %x \r\n", (uint64_t)ptr);
     return ptr;
 }
 

@@ -143,20 +143,24 @@ RISC-V 64 CPU Initialized
 [aurora]: CPU initialized 
 [PMM] Checking info pointer... 
 [PMM] Checking info pointer... 
-[PMM] info: FFFFFFFF80020290, map: FDB9F000, size: 1104, desc_sz: 48 
-[PMM] info: FFFFFFFF80020290, map: FDB9F000, size: 1104, desc_sz: 48 
-RAM Starts at -> 8020E000 end -> 83541000 
-RAM Starts at -> 8020E000 end -> 83541000 
-Total RAM : 82000000 
-Total RAM : 82000000 
+[PMM] PhysicalMemoryBase: 80060000
+[PMM] PhysicalMemoryBase: 80060000
+[PMM] TopAddress: FF911000
+[PMM] TopAddress: FF911000
+[PMM] _TotalRam: 522417 pages
+[PMM] _TotalRam: 522417 pages
+[PMM] BitmapSize: 65303 bytes
+[PMM] BitmapSize: 65303 bytes
+[PMM] BitmapArea: 8020E000
+[PMM] BitmapArea: 8020E000
 [aurora]: Initializing VMM (Sv39)...
 [aurora]: Initializing VMM (Sv39)...
 [VMM] Old Root: 90B2C000
 [VMM] Old Root: 90B2C000
-[VMM] New Root: 8031F000
-[VMM] New Root: 8031F000
-[VMM] Loop Start. RootTable: 8031F000, OldRoot: 90B2C000
-[VMM] Loop Start. RootTable: 8031F000, OldRoot: 90B2C000
+[VMM] New Root: 80060000
+[VMM] New Root: 80060000
+[VMM] Loop Start. RootTable: 80060000, OldRoot: 90B2C000
+[VMM] Loop Start. RootTable: 80060000, OldRoot: 90B2C000
 [VMM] Loop Done.
 [VMM] Loop Done.
 [VMM] Mapped Stack at FDBA3000 (Virt: FFFFFFC000F00000)
@@ -179,20 +183,90 @@ Total RAM : 82000000
 [aurora]: RISC-V board initialization complete
 [aurora]: RISC-V CPU post-initialization complete
 [aurora]: Global Interrupts Enabled 
+[PMM] AllocBlocks returning: 80487000 
+[liballoc] P2V returned: FFFFFFC080487000 
+[PMM] AllocBlocks returning: 80488000 
+[liballoc] P2V returned: FFFFFFC080488000 
+[PMM] AllocBlocks returning: 80489000 
+[liballoc] P2V returned: FFFFFFC080489000 
+[PMM] AllocBlocks returning: 8048A000 
+[liballoc] P2V returned: FFFFFFC08048A000 
+[PMM] AllocBlocks returning: 8048B000 
+[liballoc] P2V returned: FFFFFFC08048B000 
+[PMM] AllocBlocks returning: 8048C000 
+[liballoc] P2V returned: FFFFFFC08048C000 
+[PMM] AllocBlocks returning: 8048D000 
+[liballoc] P2V returned: FFFFFFC08048D000 
+[PMM] AllocBlocks returning: 8048E000 
+[liballoc] P2V returned: FFFFFFC08048E000 
+[PMM] AllocBlocks returning: 8048F000 
+[liballoc] P2V returned: FFFFFFC08048F000 
+[PMM] AllocBlocks returning: 80490000 
+[liballoc] P2V returned: FFFFFFC080490000 
+[PMM] AllocBlocks returning: 80491000 
+[liballoc] P2V returned: FFFFFFC080491000 
+[PMM] AllocBlocks returning: 80492000 
+[liballoc] P2V returned: FFFFFFC080492000 
 [aurora]: device input : kybrd and mouse fs registerd 
 [aurora]: devfs initialized 
 [aurora]: virtual disk system initialized 
+[PMM] AllocBlocks returning: 80493000 
+[liballoc] P2V returned: FFFFFFC080493000 
+[PMM] AllocBlocks returning: 80494000 
+[liballoc] P2V returned: FFFFFFC080494000 
+[PMM] AllocBlocks returning: 80495000 
+[liballoc] P2V returned: FFFFFFC080495000 
+[PMM] AllocBlocks returning: 80496000 
+[liballoc] P2V returned: FFFFFFC080496000 
 [aurora]: pipefs mounted 
+[PMM] AllocBlocks returning: 80497000 
+[liballoc] P2V returned: FFFFFFC080497000 
+[PMM] AllocBlocks returning: 80498000 
+[liballoc] P2V returned: FFFFFFC080498000 
+[PMM] AllocBlocks returning: 80499000 
+[liballoc] P2V returned: FFFFFFC080499000 
+[PMM] AllocBlocks returning: 8049A000 
+[liballoc] P2V returned: FFFFFFC08049A000 
+[PMM] AllocBlocks returning: 8049B000 
+[liballoc] P2V returned: FFFFFFC08049B000 
+[PMM] AllocBlocks returning: 8049C000 
+[liballoc] P2V returned: FFFFFFC08049C000 
 [aurora]: vdisk registered name : XERamdisc, serial :  
 [aurora]: vdisk XERamdisc doesn't have valid GPT partition 
+[PMM] AllocBlocks returning: 8049E000 
+[liballoc] P2V returned: FFFFFFC08049E000 
+[PMM] AllocBlocks returning: 8049F000 
+[liballoc] P2V returned: FFFFFFC08049F000 
 [aurora]: ramdisk mounted at /dev/disk0 full path : /dev/disk0/ramdisc 
+[PMM] AllocBlocks returning: 804A1000 
+[liballoc] P2V returned: FFFFFFC0804A1000 
 [aurora]: FAT32 OEM :MSWIN4.
 [aurora]: fat32 sector/cluster : 1 
 [aurora]: fat32 bytes/sector: 512 
 [aurora]: fat32 mounted at / 
+[PMM] AllocBlocks returning: 804A2000 
+[liballoc] P2V returned: FFFFFFC0804A2000 
+[PMM] AllocBlocks returning: 804A3000 
+[liballoc] P2V returned: FFFFFFC0804A3000 
 [aurora]: ramdisk initialized successfully 
+[PMM] AllocBlocks returning: 804A0000 
+[liballoc] P2V returned: FFFFFFC0804A0000 
 [aucon]: graphics framebuffer : FDBB7000 
 [aucon]: width : 800 px , height : 600 px 
+[PMM] AllocBlocks returning: 804A6000 
+[liballoc] P2V returned: FFFFFFC0804A6000 
+[PMM] AllocBlocks returning: 804A7000 
+[liballoc] P2V returned: FFFFFFC0804A7000 
+[PMM] AllocBlocks returning: 804A8000 
+[liballoc] P2V returned: FFFFFFC0804A8000 
+[PMM] AllocBlocks returning: 804A9000 
+[liballoc] P2V returned: FFFFFFC0804A9000 
+[PMM] AllocBlocks returning: 804AA000 
+[liballoc] P2V returned: FFFFFFC0804AA000 
+[PMM] AllocBlocks returning: 804AB000 
+[liballoc] P2V returned: FFFFFFC0804AB000 
+[PMM] AllocBlocks returning: 804AC000 
+[liballoc] P2V returned: FFFFFFC0804AC000 
 [virtio-input]: Scanning for VirtIO MMIO devices...
 [DTB-Iter] Scanning: reserved-memory
 [DTB-Iter] Scanning: poweroff
@@ -232,8 +306,10 @@ Total RAM : 82000000
 [virtio-input]: Reading Magic... Magic: 74726976, DevID: 18
 [virtio-input]: Found MMIO Input at FFFFFFD010006000 (IRQ 6)
 [virtio-input]: Version=1
+[PMM] AllocBlocks returning: 804AD000 
+[liballoc] P2V returned: FFFFFFC0804AD000 
 [virtio-input]: QueueNumMax=1024
-[virtio-input]: Queue PFN=0x8074F
+[virtio-input]: Queue PFN=0x804AE
 [virtio-input]: Registered IRQ 6. Waiting for interrupts.
 [DTB-Iter] Scanning: virtio_mmio@10005000
 [virtio-input]: Probing node...
@@ -273,15 +349,15 @@ Total RAM : 82000000
 [DTB-Iter] Scanning: plic@c000000
 [DTB-Iter] Scanning: clint@2000000
 [DTB-Iter] Scanning: pci@30000000
+[aurora]: pcie found in DTB
+[aurora]: ecam address : 30000000, size value : 10000000 
 [aurora]: initializing drivers, please wait... 
 VFSOpening filename : /audrv.cnf 
+[PMM] AllocBlocks returning: 80531000 
+[liballoc] P2V returned: FFFFFFC080531000 
 FAT ENTRY: [AUDRV   CNF]
 [aurora]: audrv.cnf read successfully audrv.cnf 
-[aurora]: Loading driver -> /A.DRV FFFFC00000A00000
-VFSOpening filename : /A.DRV 
-FAT ENTRY: [AUDRV   CNF]
-FAT ENTRY: [FTLST   CNF]
-[aurora]: audrvmngr failed to load driver : /A.DRV 
+[PMM] AllocBlocks returning: 80532000 
 [aurora]: AuDrvManager initialized successfully 
 [virtio-gpu]: hello from inside virtio gpu driver 
 [DTB-Iter] Scanning: reserved-memory
@@ -327,15 +403,16 @@ FAT ENTRY: [FTLST   CNF]
 [virtio-gpu]: After DRIVER, Status=0x3
 [virtio-gpu]: DeviceFeatures[0]=0x39000002
 [virtio-gpu]: After FEATURES_OK, Status=0xB
-[virtio-gpu]: CmdBuf=0xFFFFFFC080855000 (phys=0x80855000), RspBuf=0xFFFFFFC080855800
+[virtio-gpu]: CmdBuf=0xFFFFFFC080632000 (phys=0x80632000), RspBuf=0xFFFFFFC080632800
 [virtio-gpu]: QueueNumMax=1024, using 64
-[virtio-gpu]: Queue PFN=0x80856 (phys=0x80856000)
+[virtio-gpu]: Queue PFN=0x80633 (phys=0x80633000)
 [virtio-gpu]: Queue allocated, QueueSz=64
 [virtio-gpu]: After DRIVER_OK, Status=0xF
 [PLIC] Unhandled IRQ: 7
 [virtio-gpu]: CREATE_2D resp type=0x1100
 Virtio Response received, and was successfull 
-[virtio-gpu]: ATTACH_BACKING desc[0].Addr=0x80855800
+[PMM] AllocBlocks returning: 80634000 
+[virtio-gpu]: ATTACH_BACKING desc[0].Addr=0x80632800
 [PLIC] Unhandled IRQ: 7
 [virtio-gpu]: ATTACH_BACKING resp type=0x1100
 Response received successfully 
@@ -353,28 +430,48 @@ Response received successfully
 [virtio-gpu]: VirtioFillScreen complete.
 [aurora]: Loading system fonts 
 VFSOpening filename : /ftlst.cnf 
+[PMM] AllocBlocks returning: 8092E000 
+[liballoc] P2V returned: FFFFFFC08092E000 
 FAT ENTRY: [AUDRV   CNF]
 FAT ENTRY: [FTLST   CNF]
 Font this 512 bytes numPage: 1 
 Font Count ->0 
 [aurora]: FontManager initialized 
 [aurora]: Kernel-level loader initialized 
+[PMM] AllocBlocks returning: 80A31000 
+[liballoc] P2V returned: FFFFFFC080A31000 
+[PMM] AllocBlocks returning: 80A32000 
+[liballoc] P2V returned: FFFFFFC080A32000 
 [aurora]: PostBox IPC mounted and initialized to /dev/postbox 
-[aurora]: PostEvent size : 169 bytes 
+[aurora]: PostEvent size : 176 bytes 
 [aurora]: PostBox size aligned : 23 number 
 [aurora]: starting xeneva (RISC-V 64) please wait...
 [sched]: AuSchedulerInitialise entry
 [sched]: Creating virtual address space...
-[sched]: VAS created at phys 80C56000
+[sched]: VAS created at phys 80A33000
 [sched]: Creating idle kthread...
-[sched]: Idle thread created: FFFFFFC080C57030
+[PMM] AllocBlocks returning: 80A34000 
+[liballoc] P2V returned: FFFFFFC080A34000 
+[sched]: Idle thread created: FFFFFFC080A34030
 [aurora]: Scheduler initialized
 [aurora]: Scheduler initialized
+[PMM] AllocBlocks returning: 80A40000 
+[liballoc] P2V returned: FFFFFFC080A40000 
 PROCESS : init , stack : 2000080000 
-[init]: Process slot created, cr3=80C64000
+[PMM] AllocBlocks returning: 80AC4000 
+[liballoc] P2V returned: FFFFFFC080AC4000 
+[PMM] AllocBlocks returning: 80AC5000 
+[liballoc] P2V returned: FFFFFFC080AC5000 
+[PMM] AllocBlocks returning: 80AC6000 
+[liballoc] P2V returned: FFFFFFC080AC6000 
+[init]: Process slot created, cr3=80A41000
 [init]: Loading init.exe directly from Bootloader RAM buffer...
 Image base address : 5A4D 
 NT NumberOfSection : 3 for init
+[PMM] AllocBlocks returning: 80ACC000 
+[liballoc] P2V returned: FFFFFFC080ACC000 
+[PMM] AllocBlocks returning: 80AD7000 
+[liballoc] P2V returned: FFFFFFC080AD7000 
 Binary mapped , thread id : 1
 [init]: /init.exe loaded successfully.
 [aurora]: Scheduler started
@@ -382,16 +479,24 @@ Entering user 200007FFD0 10001000
 
 ==============================================
   XenevaOS RISC-V Init Process
-  Build: Mar 26 2026 07:23:29
+  Build: Jun 22 2026 20:41:36
   PID=1  TID=1
 ==============================================
 
 [init] Starting Deodhai compositor...
+[PMM] AllocBlocks returning: 80AD8000 
+[liballoc] P2V returned: FFFFFFC080AD8000 
 PROCESS : deodhai , stack : 2000080000 
+[PMM] AllocBlocks returning: 80B5C000 
+[liballoc] P2V returned: FFFFFFC080B5C000 
+[PMM] AllocBlocks returning: 80B5D000 
+[liballoc] P2V returned: FFFFFFC080B5D000 
+[PMM] AllocBlocks returning: 80B5E000 
+[liballoc] P2V returned: FFFFFFC080B5E000 
 
 === RISC-V Exception ===
 Cause: 13 (Load page fault)
-SEPC:  FFFFFFFF8000A3FA
-STVAL: FFFFFFC000F1C0A0
-[FAULT] Page fault at address: FFFFFFC000F1C0A0
+SEPC:  FFFFFFFF8000A4D6
+STVAL: FFFFFFC000F1C0E4
+[FAULT] Page fault at address: FFFFFFC000F1C0E4
 === System Halted ===
