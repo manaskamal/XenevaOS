@@ -1,9 +1,9 @@
 # XenevaOS Driver - Development
 
-Driver softwares are important part of Operating System as it allows the OS to communicate with a hardware device or a software component. Drivers act as a translator between the OS and the device or component, enabling them to exchange data and instructions. Drivers runs in high priviledge level or the Kernel Land. The Kernel land is highly priviledged level, means it has all the power over the hardware. In XenevaOS, the driver software uses Kernel provided functions to communicate with hardware and prepares an environment for the Kernel to control the hardware. Both are inter-dependent.
+Driver software is an important part of the operating system, allowing the OS to communicate with a hardware device or software component. Drivers act as translators between the OS and the device or component, enabling them to exchange data and instructions. Drivers run at a high privilege level (the Kernel Land), which grants them direct control over the hardware. In XenevaOS, driver software uses kernel-provided functions to communicate with hardware and prepares the environment for the kernel to control that hardware; both are interdependent.
 
 ## Project Configuration
-Development of XenevaOS is done purely under Windows environment. Xeneva project uses Visual Studio and its compiler collection. ***Visual Studio 2013, 2019 or later*** version are recommended. **[NOTE]:Before beginning driver development, please make sure to setup Xeneva development environment, visit [Build Instructions.](../BuildInstructions.md)**<br>
+Development of XenevaOS is done purely under a Windows environment. The XenevaOS project uses Visual Studio and its compiler toolchain. ***Visual Studio 2013, 2019, or later*** versions are recommended. **[NOTE]: Before beginning driver development, please make sure to set up the XenevaOS development environment; visit [Build Instructions](../BuildInstructions.md).**<br>
 - Get the XenevaOS repository
 - From the repository, open the Templates folder and copy ***"MyXenevaDriver.zip*** to ***C:/Users/YourUsername/Documents/Visual Studio YourVersion/Templates/ProjectTemplates***, Replace _YourUsername_ with actual user name of your PC and _YourVersion_ with your Visual Studio version (e.g. 2013, 2019, 2022 ...etc). For example, my Visual Studio version is 2019 and my user name is 'XenevaOS' so the path would look like - ***C:/Users/XenevaOS/Documents/Visual Studio 2019/Templates/ProjectTemplates***.
 - Start Visual Studio, and open ***Aurora.sln*** from the repository, or alternatively you can directly open ***Aurora.sln*** file from repository.
@@ -16,14 +16,14 @@ Development of XenevaOS is done purely under Windows environment. Xeneva project
 - Finally you can start coding your Xeneva driver.
 
 ## Driver Naming Convention
-XenevaOS project includes certain Naming conventions.In XenevaOS driver development naming conventions plays a crucial role in supporting Backward compatibility. Early XenevaOS supported FAT32 file system with no long name entry support. XenevaOS drivers names are limited to maximum 8 characters extra three characters are reserved for extension, as FAT File system without long file name entry supports maximum 11 characters in file name. _We recommend limiting the driver name up to 8 characters_.
+The XenevaOS project includes certain naming conventions. In XenevaOS driver development, naming conventions play a crucial role in supporting backward compatibility. Early versions of XenevaOS supported the FAT32 filesystem with no long file name (LFN) support. XenevaOS driver names are limited to a maximum of 8 characters (with an extra 3 characters reserved for the extension), because the FAT filesystem without LFN support allows a maximum of 11 characters in a filename. _We recommend limiting the driver name to up to 8 characters._
 
 ## Dependencies
 - XenevaOS base headers 
 - Kernel.lib (which is automatically created after building the Kernel 'Aurora')
 
 ## Xeneva Driver Types
-Current version of XenevaOS supports only Kernel mode drivers. The Kernel mode drivers are divided into two types:
+The current version of XenevaOS supports only kernel-mode drivers. Kernel-mode drivers are divided into two types:
 - Boot Time Drivers 
 - Runtime Drivers
 - USB Class Drivers
@@ -38,20 +38,20 @@ Information on Initialization and Unloading of XenevaOS drivers can be found [he
 See here for a [simple driver example.](../Kernel/Drivers.md#initialization)
 
 ## Memory Management
-Memory Management is very important part of XenevaOS driver development. It's the most critical aspect of the system stability, as improper handling of memory can lead to severe crashes or unpredicatable behavior. Since drivers operate at a low level with direct access to system resources, any mistake in ___Allocation, Deallocation, or Access___ can corrupt kernel memory, causing system instability or even a complete crash. Proper use of Physical Memory Allocation/Deallocation and kernel heap Allocation/Deallocation are recommended. Memory management are divided into three parts-
+Memory management is a very important part of XenevaOS driver development. It is the most critical aspect of system stability, as improper handling of memory can lead to severe crashes or unpredictable behavior. Since drivers operate at a low level with direct access to system resources, any mistake in ___Allocation, Deallocation, or Access___ can corrupt kernel memory, causing system instability or even a complete crash. The proper use of physical memory allocation/deallocation and kernel heap allocation/deallocation is recommended. Memory management is divided into three parts:
 - _MMIO memory mapping_ that maps hardware's physical address to Kernel virtual memory
-- _Kernel Heap memory management_ helps allocating and deallocating small objects
-- _Physical Memory management_ helps allocating direct physical memory allocation, as some hardware doesn't understand virtual memory. Here, P2V and V2P function plays important role, as kernel is mapped to higher half memory and lower memory mappings are cleared before entering user space. Entire physical memory is linearly mapped from 0xFFFF800000000000.
+- _Kernel Heap memory management_ helps allocate and deallocate small objects.
+- _Physical Memory management_ handles direct physical memory allocation, as some hardware does not understand virtual memory. Here, `P2V` and `V2P` functions play an important role, as the kernel is mapped to higher-half memory, and lower memory mappings are cleared before entering user space. The entire physical memory is linearly mapped from `0xFFFF800000000000`.
 
 ### MMIO Mappings
-Once the system enters userspace the physical addresses are not accessible, trying to access physical address will cause the system to enter _Page Fault Exception_. For example consider, '0xFE000000' a physical address and is an address of some hardware. Writing to this address will cause some commands to the hardware. Say, we write the value _"1"_ to offset 0x4 of the physical address _'0xFE000000'_ which looks like ``` *(0xFE000000 + 0x04) = 1```,which will cause the hardware to enter into reset state. And suppose this entire situation happened after Xeneva entered user space and starting of user services. This will cause the system to enter _Page Fault Exception_, because before the system transition into user world, the entire physical memory mappings are cleared from the Kernel address space and the physical memory mappings are always present in lower half of address space, the lower half is completely cleared for user space memory mappings. Somewhere we need a trick to map this hardware address so that we can access the hardware through this mapped address. And here we use Xeneva MMIO Mappings.
+Once the system enters user space, physical addresses are not directly accessible. Attempting to access a physical address will cause the system to enter a _Page Fault Exception_. For example, consider `0xFE000000` to be a physical address representing some hardware registers. Writing to this address sends commands to the hardware. Say we write the value `1` to offset `0x04` of physical address `0xFE000000` via `*(0xFE000000 + 0x04) = 1` to reset the hardware. If this write is attempted after XenevaOS has entered user space and user-space services have started, it will cause a _Page Fault Exception_. This happens because before transitioning to the user world, all physical memory mappings are cleared from the lower half of the kernel's address space to make room for user-space mappings. To access this hardware address after the transition, we must use XenevaOS MMIO Mappings.
 
-### _Why do we clear the Lower Half_
-There are two reason - 
-- The kernel code and its data's are always present in higher half of the kernel's address space, and the lower half is filled with physical memory mappings. Whenever new process are created in Xeneva, they get completely new address space, and when the process occupies the CPU i.e it get executed, the address space is also switched to process's address space, and if the process's address space's higher half is not filled with Kernel code and Kernel data, immediate system failure will happen. To prevent this, whenever a new address space is created for any process, the kernel address space is directly copied to it, so that the new address space doesn't lack the kernel code and data into it.
-- For security purpose, User space program will use memory from lower memory. When doing this, if it writes to any hardware area, it will cause the system to enter _Protection Fault_ or _Abort Exception_.
+### _Why do we clear the Lower Half?_
+There are two reasons:
+- The kernel code and its data are always present in the higher half of the kernel's address space, and the lower half is filled with physical memory mappings during boot. Whenever a new process is created in XenevaOS, it gets a completely new address space. When the process occupies the CPU (i.e., gets executed), the page directory is switched to the process's address space. If the higher half of the process's address space is not populated with kernel code and data, an immediate system crash will occur. To prevent this, whenever a new address space is created, the kernel's higher-half mappings are copied directly to it.
+- For security purposes, user-space programs use memory from the lower half. In doing so, if they attempt to write to any hardware area, it will cause the system to enter a _Protection Fault_ or _Abort Exception_.
 
-MMIO are mapped through '___AuMapMMIO'___  function call, ```AuMapMMIO(uint64_t physicalAddr, size_t sizeOfTheAddress)```, Once mapped successfully, it will return the virtual address where you can write to give command to or control the hardware.
+MMIO regions are mapped using the `AuMapMMIO` function call: `AuMapMMIO(uint64_t physicalAddr, size_t sizeOfTheAddress)`. Once mapped successfully, this function returns the virtual address through which you can read/write to control the hardware.
 
 ## Memory Flags Descriptions related to Driver development
 | _Flag_ | _Description_ |
@@ -70,17 +70,17 @@ MMIO are mapped through '___AuMapMMIO'___  function call, ```AuMapMMIO(uint64_t 
 This flag typically refers to the use of write-through caching policy. In a write-through enabled page, data is simultaneously updated in both the cache and the main memory, ensuring data consistency.
 
 ## Interrupt Handling
-Interrupt handling is the mechanism for responding to external events that require immediate attention from the CPU, such as USB interrupt transfer or I2C-slave interrupt. In Xeneva, interrupts are handles through MSI/MSI-X signal to processor both in x86_64 and ARM64 architecture. Generic interrupt id allocation through Device Tree is supported in ARM64 architecture. Legacy PCI-interrupt routing is not supported.
+Interrupt handling is the mechanism for responding to external events that require immediate attention from the CPU, such as a USB interrupt transfer or I2C slave interrupt. In XenevaOS, interrupts are handled through MSI/MSI-X signals to the processor on both the x86_64 and ARM64 architectures. Generic interrupt ID allocation through the Device Tree is supported on the ARM64 architecture. Legacy PCI interrupt routing is not supported.
 
-### SPI ID and Interrupt Vector allocation
-For Xeneva both the terms are similar only the difference is the architecture. The term SPI (Shared Peripheral Interrupt) is used in ARM64 architecture while the term Vector allocation is used in x86_64 architecture.
+### SPI ID and Interrupt Vector Allocation
+In XenevaOS, both terms are similar; the only difference is the architecture. The term SPI (Shared Peripheral Interrupt) is used in the ARM64 architecture, while the term Vector is used in the x86_64 architecture.
 
 | ***Function*** | ***Description*** |
 |----------|-------------|
-| ``int AuGICAllocateSPI`` | Allocates an SPI ID from Kernel and return it to driver |
-| ``void AuGICDeallocateSPI`` | Deallocate an used SPI ID from kernel and mark it as usable |
-| ``void setvect`` | Used in x86_64, to allocate a interrupt number within the IDT table |
-| ``bool AuPCIEAllocMSI`` | Allocate MSI/MSI-X with given SPI/Vector number. *NOTE: This function will automatically allocate MSI or MSI-X for particular device through its PCI configuration* |
+| ``int AuGICAllocateSPI`` | Allocates an SPI ID from the kernel and returns it to the driver. |
+| ``void AuGICDeallocateSPI`` | Deallocates a used SPI ID from the kernel and marks it as usable. |
+| ``void setvect`` | Used in x86_64 to allocate an interrupt number within the IDT table. |
+| ``bool AuPCIEAllocMSI`` | Allocates MSI/MSI-X with the given SPI/Vector number. *NOTE: This function automatically allocates MSI or MSI-X for a particular device through its PCI configuration.* |
 
 ### Interrupt Service Routine (ISR)
 In general definition, Interrupt Service Routine (ISR) is a piece of software that runs when an interrupt signal is received, causing the processor to pause its current task to handle an urgent event. 
