@@ -22,6 +22,7 @@ jobs:
 
       - name: Build GNU-EFI (AArch64)
         run: |
+          git clone https://github.com/vathpela/gnu-efi gnu-efi
           cd gnu-efi
           make ARCH=aarch64 CROSS_COMPILE=aarch64-linux-gnu-
 
@@ -57,7 +58,7 @@ jobs:
           if (-not (Test-Path $customizationsPath)) {
             $customizationsPath = Join-Path $vsPath "MSBuild\Microsoft\VC\v160\BuildCustomizations"
           }
-          Copy-Item nasmprops\nasmprops\* -Destination $customizationsPath -Force -Recurse
+          Copy-Item nasmprops\* -Destination $customizationsPath -Force -Recurse
 
       - name: Build Solution (Aurora.sln)
         run: |
