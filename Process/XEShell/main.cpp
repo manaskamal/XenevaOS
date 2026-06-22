@@ -27,9 +27,9 @@
 *
 **/
 
-#include <sys\_keproc.h>
-#include <sys\_kefile.h>
-#include <sys\_ketime.h>
+#include <sys/_keproc.h>
+#include <sys/_kefile.h>
+#include <sys/_ketime.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -187,6 +187,7 @@ void XEShellReadLine() {
 			index++;
 			return;
 		}
+		_KePrint("xeshell : %c \r\n", c);
 		printf("%c", c);
 		cmdBuf[index++] = c;
 	}
@@ -366,10 +367,14 @@ void XEShellProcessLine() {
 		
 		if (strcmp(cmdBuf, "systeminfo") == 0) {
 			printf("\nXeneva Shell v1.0\n");
-			printf("Copyright (C) Manas Kamal Choudhury 2023-2024\n");
+			printf("Copyright (C) Xeneva Private Limited 2023-2026\n");
 			printf("Operating System : Xeneva v1.1 -Genuine copy\n");
 			printf("Kernel Version: v1.1 \n");
+#ifdef ARCH_X64
 			printf("Platform: x86_64\n");
+#elif ARCH_ARM64
+			printf("Platform: ARMv8-A \n");
+#endif
 			printf("Terminal: Xeneva Terminal v1.0\n");
 			printf("Window Manager: Deodhai Compositor\n");
 			printf("Xeneva is made in Assam with Love \n");
@@ -439,12 +444,14 @@ void XEShellProcessLine() {
 * main -- terminal emulator
 */
 int main(int argc, char* arv[]){
-	printf("Xeneva Shell v1.1 \n");
+#ifdef ARCH_ARM64
+	printf("Xeneva Shell v1.1 (arm64 build)\n");
+#elif ARCH_X64
+	printf("Xeneva Shell v1.1 (x86_64 build) \n");
+#endif
 	
-	printf("Copyright (C) Manas Kamal Choudhury \n");
-	printf("\033[42m^[37mXeneva is an operating system\n");
-	printf("^[42m^[37mMade in North-East India,Assam\n");
-	_KeSetSignal(SIGINT, XEShellSigInterrupt);
+	printf("Copyright (C) Xeneva Private Limited \n");
+	//_KeSetSignal(SIGINT, XEShellSigInterrupt);
 	cmdBuf = (char*)malloc(1024);
 	memset(cmdBuf, 0, 1024);
 	currentDirectory = (char*)malloc(strlen("/"));
@@ -459,6 +466,6 @@ int main(int argc, char* arv[]){
 		XEShellWriteCurrentDir();
 		XEShellReadLine();	
 		XEShellProcessLine();
-		_KeProcessSleep(10);
+		_KeProcessSleep(2);
 	}
 }

@@ -98,6 +98,15 @@ XE_EXTERN{
 	XE_LIB void ChDrawPixel(ChCanvas* canvas, int x, int y, uint32_t color);
 
 	/*
+     * ChDrawPixelRAW -- draws a pixel to canvas buffer
+     * @param canvas -- pointer to canvas
+     * @param x -- x position
+     * @param y -- y position
+     * @param color -- color of the pixel
+     */
+	XE_LIB void ChDrawPixelRAW(ChCanvas* canvas, int x, int y, uint32_t color);
+
+	/*
      * ChDrawPixelAA -- draw anti-aliased pixel
      * @param canv - Pointer to canvas
      * @param x -- X location relative to window

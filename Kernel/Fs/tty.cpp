@@ -27,18 +27,18 @@
 *
 **/
 
-#include <Fs\tty.h>
-#include <Fs\vfs.h>
-#include <Fs\dev\devfs.h>
+#include <Fs/tty.h>
+#include <Fs/vfs.h>
+#include <Fs/dev/devfs.h>
 #include <_null.h>
-#include <Mm\kmalloc.h>
+#include <Mm/kmalloc.h>
 #include <string.h>
 #include <stdio.h>
-#include <Hal\x86_64_sched.h>
+#include <Hal/x86_64_sched.h>
 #include <process.h>
-#include <Hal\x86_64_signal.h>
-#include <Hal\x86_64_hal.h>
-#include <Hal\serial.h>
+#include <Hal/x86_64_signal.h>
+#include <Hal/x86_64_hal.h>
+#include <Hal/serial.h>
 #include <aucon.h>
 
 size_t master_count = 0;
@@ -162,7 +162,7 @@ size_t AuTTYMasterWrite(AuVFSNode* fs, AuVFSNode* file, uint64_t* buffer, uint32
 	TTY* type = (TTY*)file->device;
 	if (!type)
 		return 0;
-
+	SeTextOut("Writing caharacter len : %d \r\n", len);
 	for (int i = 0; i < len; i++) {
 		AuCircBufPut(type->slavebuf, aligned_buf[i]);
 	}

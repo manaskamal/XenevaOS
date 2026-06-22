@@ -32,8 +32,9 @@
 
 #include <list.h>
 
+#ifdef ARCH_X64
 #pragma pack(push,1)
-__declspec(align(2))
+#endif
 typedef struct _udpheader_ {
 	unsigned short srcPort;
 	unsigned short destPort;
@@ -41,7 +42,9 @@ typedef struct _udpheader_ {
 	unsigned short checksum;
 	unsigned char payload[];
 }UDPHeader;
+#ifdef ARCH_X64
 #pragma pack(pop)
+#endif
 
 /*
 * CreateUDPSocket -- create a new UDP

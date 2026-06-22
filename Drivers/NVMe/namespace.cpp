@@ -31,11 +31,11 @@
 #include "nvme.h"
 #include <Mm/kmalloc.h>
 #include <Mm/pmmngr.h>
-#include <Mm\vmmngr.h>
-#include <Hal\serial.h>
+#include <Mm/vmmngr.h>
+#include <Hal/serial.h>
 #include <aucon.h>
 #include <stdio.h>
-#include <Fs\vdisk.h>
+#include <Fs/vdisk.h>
 #include <Fs/Dev/devfs.h>
 
 enum NVMCommands{

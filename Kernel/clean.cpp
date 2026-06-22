@@ -28,18 +28,18 @@
 **/
 
 #include <clean.h>
-#include <Mm\vmmngr.h>
-#include <Mm\pmmngr.h>
-#include <Mm\vmarea.h>
-#include <Hal\x86_64_cpu.h>
-#include <Hal\x86_64_lowlevel.h>
-#include <Mm\kmalloc.h>
+#include <Mm/vmmngr.h>
+#include <Mm/pmmngr.h>
+#include <Mm/vmarea.h>
+#include <Hal/x86_64_cpu.h>
+#include <Hal/x86_64_lowlevel.h>
+#include <Mm/kmalloc.h>
 #include <aucon.h>
-#include <Hal\serial.h>
+#include <Hal/serial.h>
 #include <loader.h>
-#include <Sync\mutex.h>
-#include <Sound\sound.h>
-#include <Mm\shm.h>
+#include <Sync/mutex.h>
+#include <Sound/sound.h>
+#include <Mm/shm.h>
 
 /*
 * FreeUserStack -- free up allocated user stack

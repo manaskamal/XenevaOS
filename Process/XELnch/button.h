@@ -33,7 +33,7 @@
 #include <stdint.h>
 #include <stdarg.h>
 #include <chitralekha.h>
-#include <widgets\window.h>
+#include <widgets/window.h>
 
 typedef struct _ButtonIcon_ {
 	char* filename;
@@ -60,7 +60,11 @@ typedef struct _button_ {
 	bool kill_focus;
 	char* title;
 	char* appname;
+	char* param;
 	bool focused;
+	int scratch_x;
+	int scratch_y;
+	int page_number;
 	ButtonIcon *buttonIcon;
 	void(*actionHandler)(_button_* button, ChWindow*);
 	void(*mouseEvent)(_button_* button, ChWindow* win, int x, int y, int but);

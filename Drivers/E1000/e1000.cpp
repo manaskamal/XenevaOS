@@ -28,21 +28,21 @@
 **/
 
 #include "e1000.h"
-#include <Mm\kmalloc.h>
-#include <Mm\vmmngr.h>
-#include <Mm\pmmngr.h>
+#include <Mm/kmalloc.h>
+#include <Mm/vmmngr.h>
+#include <Mm/pmmngr.h>
 #include <pcie.h>
 #include <_null.h>
 #include <aucon.h>
 #include <string.h>
 #include <aurora.h>
-#include <Hal\x86_64_sched.h>
-#include <Hal\serial.h>
+#include <Hal/x86_64_sched.h>
+#include <Hal/serial.h>
 #include <audrv.h>
-#include <Net\aunet.h>
-#include <Net\ethernet.h>
-#include <Fs\Dev\devfs.h>
-#include <Net\arp.h>
+#include <Net/aunet.h>
+#include <Net/ethernet.h>
+#include <Fs/Dev/devfs.h>
+#include <Net/arp.h>
 
 #pragma pack(push,1)
 typedef struct _e1000_nic_ {
@@ -72,8 +72,8 @@ AuVFSNode* nic;
 #define CTRL_SLU      (1UL << 6UL)
 #define CTRL_LRST     (1UL << 3UL)
 
-/*
- * MMIORead32 -- reads a 32 bit value from 
+/**
+ * @brief MMIORead32 -- reads a 32 bit value from 
  * the given address
  * @param addr -- address from where to read
  */
@@ -81,8 +81,8 @@ uint32_t MMIORead32(uint64_t addr) {
 	return *((volatile uint32_t*)(addr));
 }
 
-/*
- * MMIOWrite32 -- write a 32 bit value to given
+/**
+ * @brief MMIOWrite32 -- write a 32 bit value to given
  * address
  * @param addr -- address where to write
  * @param val -- value to write
@@ -91,8 +91,8 @@ void MMIOWrite32(uint64_t addr, uint32_t val) {
 	(*((volatile uint32_t*)(addr))) = val;
 }
 
-/*
- * E1000WriteCmd -- write a command to given offset
+/**
+ * @brief E1000WriteCmd -- write a command to given offset
  * from mmio address
  * @param dev -- pointer to e1000 device
  * @param addr -- offset from mmio address
@@ -102,8 +102,8 @@ void E1000WriteCmd(E1000NIC* dev, uint16_t addr, uint32_t val) {
 	MMIOWrite32(dev->mmio_addr + addr, val);
 }
 
-/*
- * E1000ReadCmd -- read a command from given offset from
+/**
+ * @brief E1000ReadCmd -- read a command from given offset from
  * mmio address
  * @param dev -- pointer to e1000 device
  * @param addr -- offset from mmio address
@@ -330,8 +330,8 @@ void E1000Thread(uint64_t val) {
 	}
 }
 
-/*
-* AuDriverUnload -- Frees and clear up everthing from the
+/**
+* @brief AuDriverUnload -- Frees and clear up everthing from the
 * driver
 */
 AU_EXTERN AU_EXPORT int AuDriverUnload() {

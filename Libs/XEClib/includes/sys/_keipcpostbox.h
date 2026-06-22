@@ -1,4 +1,6 @@
 /**
+* @file _keipcpostbox.h
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2023, Manas Kamal Choudhury
@@ -43,7 +45,7 @@
 #define POSTBOX_ROOT_ID    1
 
 
-#pragma pack(push,1)
+//#pragma pack(push,1)
 /*
 * PostEvent -- event message structure
 */
@@ -65,6 +67,6 @@ typedef struct _post_event_ {
 	unsigned char* charValue2;
 	char charValue3[100];
 }PostEvent;
-#pragma pack(pop)
+//#pragma pack(pop)
 
 #endif

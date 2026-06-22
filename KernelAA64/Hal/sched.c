@@ -1,4 +1,6 @@
 /**
+* @file sched.c
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2025, Manas Kamal Choudhury
@@ -38,20 +40,21 @@
 #include <Hal/AA64/aa64lowlevel.h>
 #include <Drivers/uart.h>
 #include <Hal/AA64/gic.h>
+#include <aucon.h>
+#include <process.h>
 #include <aurora.h>
 
 extern void aa64_store_context(AA64Thread* thr);
 extern void store_syscall(AA64Thread* thr);
-extern void aa64_restore_context(AA64Thread* thr);
+extern bool aa64_restore_context(AA64Thread* thr);
 extern void ret_from_syscall(AA64Thread* thr);
 
 extern void first_time_sex(AA64Thread* thr);
 extern void first_time_sex2(AA64Thread* thr);
+extern uint64_t read_sp();
 
 AA64Thread* thread_list_head;
 AA64Thread* thread_list_last;
-AA64Thread* blocked_thr_head;
-AA64Thread* blocked_thr_last;
 AA64Thread* blocked_thr_head;
 AA64Thread* blocked_thr_last;
 AA64Thread* trash_thr_head;
@@ -63,7 +66,12 @@ AA64Thread* current_thread;
 AA64Thread* _idle_thr;
 uint64_t thread_id;
 bool _scheduler_initialized;
+uint64_t scheduler_tick;
 
+/**
+* @brief AuThreadInsert -- insert a thread into thread list
+* @param new_task -- pointer to thread that need to insert
+*/
 void AuThreadInsert(AA64Thread* new_task) {
 	new_task->next = NULL;
 	new_task->prev = NULL;
@@ -77,10 +85,11 @@ void AuThreadInsert(AA64Thread* new_task) {
 		new_task->prev = thread_list_last;
 	}
 	thread_list_last = new_task;
+	//aa64_data_cache_clean_range(new_task, sizeof(AA64Thread));
 }
 
 /**
-* AuThreadDelete -- remove a thread from thread list
+* @brief AuThreadDelete -- remove a thread from thread list
 * @param thread -- thread address to remove
 */
 void AuThreadDelete(AA64Thread* thread) {
@@ -107,11 +116,13 @@ void AuThreadDelete(AA64Thread* thread) {
 	* same address is used, rather call 'free'
 	* externally
 	*/
+	//aa64_data_cache_clean_range(thread_list_head, sizeof(AA64Thread));
+	//aa64_data_cache_clean_range(thread_list_last, sizeof(AA64Thread));
 }
 
 /**
-* Insert a thread to thread list
-* @param new_task -- new thread address
+* @brief AuThreadInsertBlock -- insert a thread to block thread list
+* @param new_task -- Pointer to thread
 */
 void AuThreadInsertBlock(AA64Thread* new_task) {
 	new_task->next = NULL;
@@ -126,10 +137,12 @@ void AuThreadInsertBlock(AA64Thread* new_task) {
 		new_task->prev = blocked_thr_last;
 	}
 	blocked_thr_last = new_task;
+	//aa64_data_cache_clean_range(thread_list_head, sizeof(AA64Thread));
+	//aa64_data_cache_clean_range(thread_list_last, sizeof(AA64Thread));
 }
 
 /**
-* AuThreadDeleteBlock -- remove a thread from thread list
+* @brief AuThreadDeleteBlock -- remove a thread from thread list
 * @param thread -- thread address to remove
 */
 void AuThreadDeleteBlock(AA64Thread* thread) {
@@ -153,7 +166,7 @@ void AuThreadDeleteBlock(AA64Thread* thread) {
 }
 
 /**
-* Insert a thread to trash list
+* @brief AuThreadInsertTrash -- Insert a thread to trash list
 * @param new_task -- new thread address
 */
 void AuThreadInsertTrash(AA64Thread* new_task) {
@@ -172,7 +185,7 @@ void AuThreadInsertTrash(AA64Thread* new_task) {
 }
 
 /**
-* AuThreadDeleteTrash -- remove a thread from thread list
+* @brief AuThreadDeleteTrash -- remove a thread from thread list
 * @param thread -- thread address to remove
 */
 void AuThreadDeleteTrash(AA64Thread* thread) {
@@ -197,7 +210,7 @@ void AuThreadDeleteTrash(AA64Thread* thread) {
 
 
 /**
-* Insert a thread to sleep list
+* @brief AuThreadInsertSleep -- Insert a thread to sleep list
 * @param new_task -- new thread address
 */
 void AuThreadInsertSleep(AA64Thread* new_task) {
@@ -216,7 +229,7 @@ void AuThreadInsertSleep(AA64Thread* new_task) {
 }
 
 /**
-* AuThreadDeleteSleep -- remove a thread from sleep list
+* @brief AuThreadDeleteSleep -- remove a thread from sleep list
 * @param thread -- thread address to remove
 */
 void AuThreadDeleteSleep(AA64Thread* thread) {
@@ -266,62 +279,116 @@ end:
 	current_thread = thread;
 }
 
-/*
- * AuCreateKthread -- create kernel thread 
+/**
+ * @brief AuCreateKthread -- create kernel thread 
  * @param entry -- Pointer to entry point
  * @param pml -- Pointer to Page directory
  * @param name -- Name of the thread
+ * @return Pointer to newly created thread
  */
 AA64Thread* AuCreateKthread(void(*entry) (uint64_t),uint64_t* pml, char* name){
+
 	AA64Thread* t = (AA64Thread*)kmalloc(sizeof(AA64Thread));
 	memset(t, 0, sizeof(AA64Thread));
 	strncpy(t->name, name,8);
+	t->name[8] = '\0';
 	t->elr_el1 = (uint64_t)entry;
 	t->x30 = (uint64_t)entry;
-	t->spsr_el1 = 0x245;
+	t->spsr_el1 = 0x3C4; //0x3C4; // 0x245;
 	//t->sp = stack;
 	t->pml = (uint64_t)pml;
-	t->sp = (uint64_t)AuCreateKernelStack((uint64_t*)t->pml);
-	t->sp -= 32;
+	t->sp = AuCreateKernelStack((uint64_t*)t->pml);
 	uint64_t kstack = t->sp;
-	t->sp = (((uint64_t)kstack + 15) & ~(uint64_t)0xF);
+	t->sp = ((uint64_t)kstack & ~(uint64_t)0xF);
+	t->sp -= 64;
+	t->originalKSp = t->sp;
 	t->state = THREAD_STATE_READY;
 	t->thread_id = thread_id++;
+	t->fpsr = 0;
+	t->fpcr = 0;
+	AuThreadInsert(t);
+	return t;
+}
+
+/**
+ * @brief AuCreateSubKthread -- create sub kernel thread of parent
+ * kthread
+ * @param entry -- Pointer to entry point
+ * @param pml -- Pointer to Page directory
+ * @param name -- Name of the thread
+ * @return Pointer to newly created thread
+ */
+AA64Thread* AuCreateSubKthread(void(*entry) (uint64_t),uint64_t stack, uint64_t* pml, char* name) {
+
+	AA64Thread* t = (AA64Thread*)kmalloc(sizeof(AA64Thread));
+	memset(t, 0, sizeof(AA64Thread));
+	strncpy(t->name, name, 8);
+	t->name[8] = '\0';
+	t->elr_el1 = (uint64_t)entry;
+	t->x30 = (uint64_t)entry;
+	t->spsr_el1 = 0x3C4; //0x3C4; // 0x245;
+	//t->sp = stack;
+	t->pml = (uint64_t)pml;
+	t->sp = stack;
+	t->originalKSp = t->sp;
+	t->state = THREAD_STATE_READY;
+	t->thread_id = thread_id++;
+	t->fpsr = 0;
+	t->fpcr = 0;
 	AuThreadInsert(t);
 	return t;
 }
 
 extern void PrintThreadInfo() {
 	AA64Thread* thr = current_thread;
-	UARTDebugOut("Saving thread : spsr %x \n", thr->spsr_el1);
+	UARTDebugOut("Saving thread : spsr %x \r\n", thr->spsr_el1);
+	UARTDebugOut("ELR_EL1 : %x \r\n", thr->elr_el1);
+	UARTDebugOut("SP : %x \r\n", thr->sp);
 }
+
 void AuIdleThread(uint64_t ctx) {
-	UARTDebugOut("Idle thread running \n");
+	mask_irqs();
+	UARTDebugOut("Idle thread running \r\n");
+	AuTextOut("Starting up Xeneva please wait...\r\n");
+	//uint64_t sp = read_sp();
+	//UARTDebugOut("SP : %x \r\n", sp);
+	UARTDebugOut("Current sp sel : %d \r\n", read_spsel());
+	uint64_t el = _getCurrentEL();
+	UARTDebugOut("IDLE CurrentEl : %d \n", el);
+	enable_irqs();
 	while (1) {
 		enable_irqs();
-		uint64_t el = _getCurrentEL();
-		UARTDebugOut("IDLE CurrentEl : %d \n", el);
+		//
+		//UARTDebugOut("IDLE \r\n");
 	}
 }
 
-extern void resume_user(AA64Thread* thr);
+extern void resume_user(AA64Thread* thr,void* ksp);
 void AuResumeUserThread() {
 	AA64Thread* thr = current_thread;
 	thr->x30 = thr->elr_el1;
-	resume_user(thr);
+	resume_user(thr, thr->sp);
 	//aa64_enter_user(thr->sp, thr->elr_el1);
 	while (1) {}
 }
 
 extern uint64_t read_x30();
 
+extern void settimerdebug();
+
+bool debug = 0;
+
+void enscheddebug() {
+	debug = 1;
+}
+
 
 void AuHandleSleepThreads() {
 	AA64Thread* sleep_thr;
 	for (sleep_thr = sleep_thr_head; sleep_thr != NULL; sleep_thr = sleep_thr->next) {
 		sleep_thr->sleepQuanta--;
-		UARTDebugOut("SLEEP THR : %d \n", sleep_thr->sleepQuanta);
 		if (sleep_thr->sleepQuanta == 0){
+			//settimerdebug();
 			sleep_thr->state = THREAD_STATE_READY;
 			AuThreadDeleteSleep(sleep_thr);
 			AuThreadInsert(sleep_thr);
@@ -330,93 +397,168 @@ void AuHandleSleepThreads() {
 	}
 }
 
-bool debug = 0;
-extern uint64_t read_sp();
 
+void PrintThrIn() {
+	if (debug) {
+		UARTDebugOut("Till here \r\n");
+	}
+}
+
+void AuThreadSafeReturn(uint64_t rcx) {
+	UARTDebugOut("Inside thread safe return \r\n");
+	mask_irqs();
+	AA64Thread* thr = current_thread;
+	UARTDebugOut("Executing the first time sex again %s\r\n", thr->name);
+	UARTDebugOut("Current EL : %d \r\n", _getCurrentEL());
+	first_time_sex(thr);
+	while (1) {}
+}
+
+extern void AuPrintStack(uint64_t st) {
+	UARTDebugOut("storing sp : %x \r\n", st);
+}
+/**
+ * @brief AuScheduleThread -- the core of multi-tasking. It schedules
+ * threads next to be runned
+ * @param regs -- Passed by Timer ISR
+ */
 void AuScheduleThread(AA64Registers* regs) {
+	mask_irqs();
 	if (_scheduler_initialized == 0) {
 		return;
 	}
 	AA64Thread* runThr = current_thread;
 
-	if (runThr->returnFromSyscall) {
-		store_syscall(runThr);
-		goto sched;
-	}
-	else 
+	//if (runThr->returnFromSyscall) {
+	//	UARTDebugOut("System call interrupted for thread : %s  %d\r\n", runThr->name, runThr->syscallNum);
+	//	store_syscall(runThr);
+	//	goto sched;
+	//}
+	//else {
 		aa64_store_context(runThr);
+		runThr->sp = (uint64_t)regs;
+	//}
 
 sched:
+	//AuTextOut("Schedule thread upto here sp: %x \r\n", regs->EL0SP);
+	aa64_store_fp(&runThr->fp_regs, &runThr->fpcr, &runThr->fpsr);
+	
+	//AuTextOut("Stored fp \r\n");
 	if (regs) {
+		runThr->x0 = regs->x0;
+		runThr->x1 = regs->x1;
 		runThr->x30 = regs->x30;
 		runThr->x29 = regs->x29;
 	}
-
-//	UARTDebugOut("SCHED_PREV: curr thr: %s, pml : %x \n", current_thread->name, current_thread->pml);
+	//AuTextOut("Registered stored \r\n");
+	scheduler_tick++;
 	AuHandleSleepThreads();
 	AA64NextThread();
 	write_both_ttbr(V2P(current_thread->pml));
-
+	//tlb_flush_vmalle1is();
+	aa64_restore_fp(&current_thread->fp_regs, &current_thread->fpcr, &current_thread->fpsr);
 	dsb_sy_barrier();
 
-//	UARTDebugOut("SCHED: Curr thread : %s , pml %x \n", current_thread->name, current_thread->pml);
-
-	if (current_thread->returnFromSyscall) {
+	uint64_t sp = read_sp();
+	/*UARTDebugOut("Scheduler sp : %x \r\n", sp);*/
+	/*if (debug) {
+		UARTDebugOut("next thread : %s \r\n", current_thread->name);
+	}*/
+	/*if (current_thread->returnFromSyscall) {
 		current_thread->justStored = 0;
 		ret_from_syscall(current_thread);
 		goto ret;
+	}*/
+
+	if ((current_thread->threadType & THREAD_LEVEL_USER) && current_thread->first_run == 1) {
+		uint64_t sp = current_thread->sp;
+		//current_thread->sp = current_thread->originalKSp;
+		resume_user(current_thread,sp);
 	}
 
-	if ((current_thread->threadType & THREAD_LEVEL_USER) && current_thread->first_run == 1) 
-		resume_user(current_thread);
-	
-	aa64_restore_context(current_thread);
+
+	current_thread->sp = current_thread->originalKSp;
+	current_thread->data = regs;
+	if (aa64_restore_context(current_thread)) {
+		return;
+	}
 ret:
 	return;
 }
 
+static int ke_stack_idx;
 
-uint64_t stack_index;
-
-/*
- * AuCreateKernelStack -- maps kernel stack and return the top
+/**
+ * @brief AuCreateKernelStack -- maps kernel stack and return the top
  * of the stack, it only maps 4KiB of stack
  * @param pml -- Pointer to page directory
+ * @return kernel stack address
  */
 uint64_t AuCreateKernelStack(uint64_t* pml) {
-	uint64_t idx = stack_index;
+	uint64_t location = KERNEL_STACK_LOCATION;
+	location += ke_stack_idx * KERNEL_STACK_SIZE;
+	UARTDebugOut("Creating kernel stack : %x %d\r\n", location, ke_stack_idx);
 	for (int i = 0; i < (KERNEL_STACK_SIZE) / 0x1000; i++) {
 		uint64_t addr = (uint64_t)P2V((uint64_t)AuPmmngrAlloc());
 		memset(addr, 0, PAGE_SIZE);
-		AuMapPageEx(pml, V2P(addr), (KERNEL_STACK_LOCATION + i * 4096), PTE_USER_NOT_EXECUTABLE | PTE_KERNEL_NOT_EXECUTABLE);
+		AuMapPage(V2P(addr), (location + i * 4096), PTE_AP_RW | PTE_NORMAL_MEM);
 	}
-	return (KERNEL_STACK_LOCATION + KERNEL_STACK_SIZE);
+	ke_stack_idx += 2;
+	return (location + KERNEL_STACK_SIZE);
 }
 
-/*
- *	AuSchedulerInitialize -- initialize the scheduler
+/**
+ * @brief AuCreateSubKernelStack -- maps sub kernel stack and return the top
+ * of the stack, it only maps 4KiB of stack
+ * @param pml -- Pointer to page directory
+ * @return kernel stack address
+ */
+uint64_t AuCreateSubKernelStack(AuProcess* proc, uint64_t* pml) {
+	uint64_t location = KERNEL_STACK_LOCATION;
+	location += proc->_kstack_index_ * KERNEL_STACK_SIZE;
+	UARTDebugOut("Creating Sub kernel stack : %d, %x \r\n", proc->_kstack_index_, location);
+	for (int i = 0; i < (KERNEL_STACK_SIZE) / 0x1000; i++) {
+		uint64_t addr = (uint64_t)P2V((uint64_t)AuPmmngrAlloc());
+		memset(addr, 0, PAGE_SIZE);
+		AuMapPage(V2P(addr), (location + i * 4096), PTE_AP_RW | PTE_NORMAL_MEM);
+	}
+
+	proc->_kstack_index_++;
+
+	return (location + KERNEL_STACK_SIZE);
+}
+/**
+ *	@brief AuSchedulerInitialize -- initialize the scheduler
  */
 void AuSchedulerInitialize() {
 	thread_list_head = NULL;
 	thread_list_last = NULL;
-	stack_index = 0;
 	thread_id = 0;
+	ke_stack_idx = 0;
 	uint64_t* idle_pd = AuCreateVirtualAddressSpace();
 	AA64Thread* idle_ = AuCreateKthread(AuIdleThread,idle_pd, "Idle");
 	//idle_->elr_el1 = (uint64_t)AuIdleThread;
 	_idle_thr = idle_;
 	current_thread = idle_;
 	_scheduler_initialized = false;
+	scheduler_tick = 0;
 }
 
-/*
- * AuSchedulerStart -- start the scheduler
+/**
+ * @brief AuSchedulerStart -- start the scheduler
  */
 void AuSchedulerStart() {
+	mask_irqs();
 	AA64Thread* idle = current_thread;
 	_scheduler_initialized = true;
+#ifndef __TARGET_BOARD_RPI3__
 	GICClearPendingIRQ(27);
+#endif
+	tlb_flush_vmalle1is();
 	write_both_ttbr(V2P(idle->pml));
+	aa64_restore_fp(&idle->fp_regs, &idle->fpcr, &idle->fpsr);
+	suspendTimer();
+	setupTimerIRQ();
 	first_time_sex(idle);
 }
 
@@ -428,8 +570,8 @@ AA64Thread* AuGetCurrentThread() {
 	return current_thread;
 }
 
-/*
- * AuForceScheduler -- force the scheduler
+/**
+ * @brief AuForceScheduler -- force the scheduler
  * to switch next thread
  */
 void AuForceScheduler() {
@@ -437,8 +579,8 @@ void AuForceScheduler() {
 //	UARTDebugOut("Back to force scheduler \n");
 }
 
-/*
- * AuBlockThread -- blocks a running thread 
+/**
+ * @brief AuBlockThread -- blocks a running thread 
  * @param thread -- Pointer to AA64 Thread
  */
 void AuBlockThread(AA64Thread* thread) {
@@ -447,8 +589,8 @@ void AuBlockThread(AA64Thread* thread) {
 	AuThreadInsertBlock(thread);
 }
 
-/*
-* AuUnblockThread -- unblocks a thread and insert it to
+/**
+* @brief AuUnblockThread -- unblocks a thread and insert it to
 * ready list
 * @param t -- pointer to thread
 */
@@ -463,24 +605,26 @@ void AuUnblockThread(AA64Thread* thread) {
 			break;
 		}
 	}
-	if (found_)
+	if (found_) {
 		AuThreadInsert(thread);
+	}
 }
 
-/*
- * AuSleepThread -- block a running thread
+/**
+ * @brief AuSleepThread -- block a running thread
  * and put it into sleep list
  * @param thread -- Pointer to AA64 Thread
  */
-void AuSleepThread(AA64Thread* thread) {
+void AuSleepThread(AA64Thread* thread, uint64_t ms) {
 	//UARTDebugOut("Inserting thread to sleep list : %s \n", thread->name);
 	thread->state = THREAD_STATE_SLEEP;
+	thread->sleepQuanta = ms;
 	AuThreadDelete(thread);
 	AuThreadInsertSleep(thread);
 }
 
-/*
- * AuThreadFindByID -- finds a thread by its id from
+/**
+ * @brief AuThreadFindByID -- finds a thread by its id from
  * ready queue
  * @param id -- id of the thread
  */
@@ -493,8 +637,8 @@ AA64Thread* AuThreadFindByID(uint64_t id) {
 	return NULL;
 }
 
-/*
- * AuThreadFindByIDBlockList -- finds a thread by its id from
+/**
+ * @brief AuThreadFindByIDBlockList -- finds a thread by its id from
  * the block queue
  * @param id -- id of the thread
  */
@@ -507,8 +651,8 @@ AA64Thread* AuThreadFindByIDBlockList(uint64_t id) {
 	return NULL;
 }
 
-/*
- * AuThreadMoveToTrash -- move given thread to
+/**
+ * @brief AuThreadMoveToTrash -- move given thread to
  * trash
  * @param t -- Thread to move to trash
  */
@@ -534,4 +678,30 @@ void AuThreadMoveToTrash(AA64Thread* t) {
 
 	/* insert it in the trash list */
 	AuThreadInsertTrash(t);
+}
+
+/**
+ * @brief AuThreadCleanTrash -- clean a thread from
+ * trash list
+ */
+void AuThreadCleanTrash(AA64Thread* t) {
+	AuThreadDeleteTrash(t);
+
+}
+
+/**
+ * @brief AuGetSystemTimerTick -- return the current system
+ * timer tick
+ */
+uint64_t AuGetSystemTimerTick() {
+	return scheduler_tick;
+}
+
+
+/** 
+*  @brief AuSetIdleThread -- change the idle thread pointer
+ * @param thr -- Pointer to idle thread
+ */
+void AuSetIdleThread(AA64Thread* thr) {
+	_idle_thr = thr;
 }

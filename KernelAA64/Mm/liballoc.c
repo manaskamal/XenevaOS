@@ -29,10 +29,14 @@
 
 #include <aurora.h>
 #include <string.h>
-#include <Mm\pmmngr.h>
-#include <Mm\vmmngr.h>
-#include <Mm\liballoc\liballoc.h>
+#include <Mm/pmmngr.h>
+#include <Mm/vmmngr.h>
+#include <Mm/liballoc/liballoc.h>
 #include <_null.h>
+#include <Hal/AA64/aa64lowlevel.h>
+#include <Drivers/uart.h>
+#include <Hal/AA64/profile.h>
+#include <Hal/AA64/aa64cpu.h>
 
 /**  Durand's Ridiculously Amazing Super Duper Memory functions.  */
 
@@ -65,7 +69,7 @@ unsigned int l_inuse = 0;			//< The amount of memory in use (malloc'ed).
 
 static int l_initialized = 0;			//< Flag to indicate initialization.
 static int l_pageSize = 4096;			//< Individual page size
-static int l_pageCount = 16;			//< Minimum number of pages to allocate.
+static int l_pageCount = 1;			//< Minimum number of pages to allocate.
 
 
 // ***********   HELPER FUNCTIONS  *******************************
@@ -193,6 +197,10 @@ static inline void insert_tag(struct boundary_tag* tag, int index)
 	}
 
 	l_freePages[realIndex] = tag;
+	dmb_sy();
+	dmb_ish();
+	dsb_sy_barrier();
+	dsb_ish();
 }
 
 static inline void remove_tag(struct boundary_tag* tag)
@@ -205,6 +213,10 @@ static inline void remove_tag(struct boundary_tag* tag)
 	tag->next = NULL;
 	tag->prev = NULL;
 	tag->index = -1;
+	dmb_sy();
+	dmb_ish();
+	dsb_sy_barrier();
+	dsb_ish();
 }
 
 
@@ -212,10 +224,20 @@ static inline struct boundary_tag* melt_left(struct boundary_tag* tag)
 {
 	struct boundary_tag* left = tag->split_left;
 
+	dmb_sy();
+	dmb_ish();
+	dsb_sy_barrier();
+	dsb_ish();
+
 	left->real_size += tag->real_size;
 	left->split_right = tag->split_right;
 
 	if (tag->split_right != NULL) tag->split_right->split_left = left;
+
+	dmb_sy();
+	dmb_ish();
+	dsb_sy_barrier();
+	dsb_ish();
 
 	return left;
 }
@@ -225,6 +247,11 @@ static inline struct boundary_tag* absorb_right(struct boundary_tag* tag)
 {
 	struct boundary_tag* right = tag->split_right;
 
+	dmb_sy();
+	dmb_ish();
+	dsb_sy_barrier();
+	dsb_ish();
+
 	remove_tag(right);		// Remove right from free pages.
 
 	tag->real_size += right->real_size;
@@ -233,14 +260,24 @@ static inline struct boundary_tag* absorb_right(struct boundary_tag* tag)
 	if (right->split_right != NULL)
 		right->split_right->split_left = tag;
 
+	dmb_sy();
+	dmb_ish();
+	dsb_sy_barrier();
+	dsb_ish();
+
 	return tag;
 }
 
 static inline struct boundary_tag* split_tag(struct boundary_tag* tag)
 {
-	unsigned int remainder = tag->real_size - sizeof(struct boundary_tag) - tag->size;
-	struct boundary_tag* new_tag =
-		(struct boundary_tag*)((size_t)tag + sizeof(struct boundary_tag) + tag->size);
+	unsigned int alignedSz = (tag->size + 7) & ~7;
+	unsigned int remainder = tag->real_size - sizeof(struct boundary_tag) - alignedSz;
+
+	size_t new_tag_addr = (size_t)tag + sizeof(struct boundary_tag) + alignedSz;
+	new_tag_addr = (new_tag_addr + 7) & ~7;
+	struct boundary_tag* new_tag = (struct boundary_tag*)new_tag_addr;
+
+		//(struct boundary_tag*)((size_t)tag + sizeof(struct boundary_tag) + tag->size);
 	new_tag->magic = LIBALLOC_MAGIC;
 	new_tag->real_size = remainder;
 
@@ -250,12 +287,20 @@ static inline struct boundary_tag* split_tag(struct boundary_tag* tag)
 	new_tag->split_left = tag;
 	new_tag->split_right = tag->split_right;
 
+	dmb_sy();
+	dsb_sy_barrier();
+	dsb_ish();
+
 	if (new_tag->split_right != NULL) new_tag->split_right->split_left = new_tag;
 	tag->split_right = new_tag;
 
 	tag->real_size -= new_tag->real_size;
-	insert_tag(new_tag, -1);
 
+	dmb_sy();
+	dsb_sy_barrier();
+	dsb_ish();
+
+	insert_tag(new_tag, -1);
 	return new_tag;
 }
 
@@ -263,10 +308,12 @@ static inline struct boundary_tag* split_tag(struct boundary_tag* tag)
 // ***************************************************************
 
 
-
+extern bool isSyscall();
 
 static struct boundary_tag* allocate_new_tag(unsigned int size)
 {
+	size = (size + 0xF) & ~0xF;
+
 	unsigned int pages;
 	unsigned int usage;
 	struct boundary_tag* tag;
@@ -280,8 +327,14 @@ static struct boundary_tag* allocate_new_tag(unsigned int size)
 
 	// Make sure it's >= the minimum size.
 	if (pages < l_pageCount) pages = l_pageCount;
-
+	/*if (isSyscall())
+		UARTDebugOut("allocate_new_tag calling liballoc_alloc \n");*/
 	tag = (struct boundary_tag*)liballoc_alloc(pages);
+
+	/*if (isSyscall()) {
+		UARTDebugOut("isSyscall() allocate_new_tag \n");
+		return;
+	}*/
 
 	if (tag == NULL) return NULL;	// uh oh, we ran out of memory.
 
@@ -304,19 +357,25 @@ static struct boundary_tag* allocate_new_tag(unsigned int size)
 	printf("Total memory usage = %i KB\n", (int)((l_allocated / (1024))));
 #endif
 
+	dmb_sy();
+	dmb_ish();
+	dsb_sy_barrier();
+	dsb_ish();
+
 	return tag;
 }
 
 
-
 void* port_malloc(unsigned int size)
 {
+	size = (size + 7) & ~7;
+
 	int index;
 	void* ptr;
 	struct boundary_tag* tag = NULL;
 
 	liballoc_lock();
-
+	
 	if (l_initialized == 0)
 	{
 #ifdef DEBUG
@@ -334,9 +393,9 @@ void* port_malloc(unsigned int size)
 
 	if (index < MINEXP) index = MINEXP;
 
-
 	// Find one big enough.
 	tag = l_freePages[index];				// Start at the front of the list.
+	
 	while (tag != NULL)
 	{
 		// If there's enough space in this tag.
@@ -352,7 +411,7 @@ void* port_malloc(unsigned int size)
 		tag = tag->next;
 	}
 
-
+	
 	// No page found. Make one.
 	if (tag == NULL)
 	{
@@ -361,6 +420,8 @@ void* port_malloc(unsigned int size)
 			liballoc_unlock();
 			return NULL;
 		}
+		/*if (isSyscall())
+			return;*/
 		index = getexp(tag->real_size - sizeof(struct boundary_tag));
 	}
 	else
@@ -373,7 +434,8 @@ void* port_malloc(unsigned int size)
 
 	// We have a free page.  Remove it from the free pages list.
 	tag->size = size;
-
+	
+	
 	// Removed... see if we can re-use the excess space.
 
 #ifdef DEBUG
@@ -402,16 +464,12 @@ void* port_malloc(unsigned int size)
 
 
 	ptr = (void*)((size_t)tag + sizeof(struct boundary_tag));
-
-	struct boundary_tag* test = (struct boundary_tag*)((size_t)ptr - sizeof(struct boundary_tag));
-
 #ifdef DEBUG
 	l_inuse += size;
 	printf("malloc: %x,  %i, %i\n", ptr, (int)l_inuse / 1024, (int)l_allocated / 1024);
 	dump_array();
 #endif
-
-
+	dmb_sy();
 	liballoc_unlock();
 	return ptr;
 }
@@ -427,10 +485,21 @@ void port_free(void* ptr)
 
 	if (ptr == NULL) return;
 
+	if (((size_t)ptr & 0xF) != 0) {
+		//liballoc_unlock();
+		UARTDebugOut("liballoc:free: unaligned pointer returning \n");
+		return;
+	}
 	liballoc_lock();
 
 
 	tag = (struct boundary_tag*)((size_t)ptr - sizeof(struct boundary_tag));
+
+	
+	if (((size_t)tag & 0xF) != 0) {
+		liballoc_unlock();
+		UARTDebugOut("liballoc:free: tag unaligned returning \n");
+	}
 
 	if (tag->magic != LIBALLOC_MAGIC)
 	{
@@ -467,6 +536,7 @@ void port_free(void* ptr)
 
 	// Where is it going back to?
 	index = getexp(tag->real_size - sizeof(struct boundary_tag));
+	//UARTDebugOut("liballoc free index : %d \n", index);
 	if (index < MINEXP) index = MINEXP;
 
 	// A whole, empty block?
@@ -479,16 +549,15 @@ void port_free(void* ptr)
 			unsigned int pages = tag->real_size / l_pageSize;
 
 			if ((tag->real_size % l_pageSize) != 0) pages += 1;
-			if (pages < l_pageCount) pages = l_pageCount;
-
+			//if (pages < l_pageCount) pages = l_pageCount;
+			//UARTDebugOut("liballoc: Freeing page for address : %x \n", ptr);
 			liballoc_free(tag, pages);
 
 #ifdef DEBUG
 			l_allocated -= pages * l_pageSize;
 			printf("Resource freeing %x of %i pages\n", tag, pages);
 			dump_array();
-#endif
-
+#endif  
 			liballoc_unlock();
 			return;
 		}
@@ -507,7 +576,6 @@ void port_free(void* ptr)
 	printf("Returning tag with %i bytes (requested %i bytes), which has exponent: %i\n", tag->real_size, tag->size, index);
 	dump_array();
 #endif
-
 	liballoc_unlock();
 }
 
@@ -566,29 +634,33 @@ int liballoc_unlock() {
 	return 0;
 }
 
+
 void* liballoc_alloc(int pages) {
 	size_t size = pages * 4096;
-	uint64_t* page = AuGetFreePage(0, false);
+	char* page = (char*)AuGetFreePage(0, false);
 	uint64_t page_ = (uint64_t)page;
-
 	for (size_t i = 0; i < pages; i++) {
 		void* p = AuPmmngrAlloc();
 		AuMapPage((uint64_t)p, page_ + i * 4096,PTE_NORMAL_MEM);
 	}
-	
 	memset(page, 0, pages * PAGE_SIZE);
 
+	/*if (isSyscall()) {
+		UARTDebugOut("LibAlloc : %x \n", page);
+		return;
+	}*/
+	//UARTDebugOut("New page allocated %x %d\n", page, pages);
 	if ((page_ % PAGE_SIZE) != 0) {
-		AuTextOut("Request page not aligned to page boundary \r\n");
+		//AuTextOut("Request page not aligned to page boundary \r\n");
 		for (;;);
 	}
-
+	isb_flush();
 	return page;
 }
 
 int liballoc_free(void* ptr, int pages) {
-	AuTextOut("LIBALLOC: freeing pages : %d \n", pages);
-	AuFreePages((uint64_t)ptr, true, pages);
+	UARTDebugOut("Liballoc free: %d \n", pages);
+	//AuFreePages((uint64_t)ptr, true, (pages*4096));
 	return 0;
 }
 

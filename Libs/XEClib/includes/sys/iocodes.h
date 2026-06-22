@@ -1,4 +1,6 @@
 /**
+* @file iocodes.h
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2023, Manas Kamal Choudhury
@@ -41,6 +43,9 @@
 #define SOUND_MUTE_DISABLE    109
 #define SOUND_READ_AVAIL      110
 #define SOUND_UNREGISTER_SNDPLR 111
+#define SOUND_REGISTER_CARD  112
+#define SOUND_GET_CARD_LIST  113
+#define SOUND_GET_CARD_TOTALNUM 114
 
 #define SCREEN_SETMODE    200
 #define SCREEN_GETWIDTH   201

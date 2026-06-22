@@ -28,11 +28,11 @@
 **/
 
 #include "window.h"
-#include "..\_fastcpy.h"
-#include <sys\_kefile.h>
-#include <sys\_keproc.h>
+#include "../_fastcpy.h"
+#include <sys/_kefile.h>
+#include <sys/_keproc.h>
 #include "menu.h"
-#include <sys\mman.h>
+#include <sys/mman.h>
 
 #define WINDOW_DEFAULT_TITLEBAR_HEIGHT  26
 #define WINDOW_DEFAULT_BACKGROUND 0xFFD2D2D2
@@ -43,6 +43,7 @@ extern void ChWindowPaintMaximButton(ChWindow* win, ChWinGlobalControl* button);
 extern void ChWindowPaintMinimButton(ChWindow* win, ChWinGlobalControl* button);
 extern void ChWindowPaintTitlebar(ChWindow* win);
 extern void ChDefaultPopupWinPaint(ChWindow* win);
+extern void _apply_rounded_corner(uint32_t* backbuff, int radius, int winw, int winh);
 
 /*
  * ChRequestWindow -- the base of window creation, it request window manager
@@ -56,6 +57,7 @@ extern void ChDefaultPopupWinPaint(ChWindow* win);
  * @param handle -- handle of parent window 
  */
 void ChRequestWindow(ChitralekhaApp* app, int x, int y, int w, int h, char* title, uint16_t attrib,int handle) {
+	_KePrint("[Chitralekha] : Requesting window \r\n");
 	PostEvent e;
 	e.type = DEODHAI_MESSAGE_CREATEWIN;
 	e.dword = x;
@@ -68,8 +70,10 @@ void ChRequestWindow(ChitralekhaApp* app, int x, int y, int w, int h, char* titl
 	strcpy(e.charValue3, title);
 	e.from_id = app->currentID;
 	_KeFileIoControl(app->postboxfd, POSTBOX_PUT_EVENT, &e);
+	_KePrint("[Chitralekha]: Request putted \r\n");
 	memset(&e, 0, sizeof(PostEvent));
 	while (1) {
+		//_KePrint("[Chitralekha]: Getting event \r\n");
 		int err = _KeFileIoControl(app->postboxfd, POSTBOX_GET_EVENT, &e);
 		if (e.type == DEODHAI_REPLY_WINCREATED){
 				uint16_t shkey = e.dword;
@@ -92,8 +96,11 @@ void ChRequestWindow(ChitralekhaApp* app, int x, int y, int w, int h, char* titl
 				break;
 			}
 
-		if (err == -1)
-			_KePauseThread();
+		if (err == -1) {
+			//_KePauseThread();
+			//_KePrint("Polling post event \r\n");
+			_KeProcessSleep(100);
+		}
 	}
 }
 
@@ -283,10 +290,17 @@ XE_EXTERN XE_EXPORT void ChWindowPaint(ChWindow* win) {
 		win->ChWinPaint(win);
 	}
 
+	if (win->flags & WINDOW_FLAG_GLASS)
+		_apply_rounded_corner(win->buffer, 4, win->info->width, win->info->height);
+	else
+		_apply_rounded_corner(win->buffer, 8, win->info->width, win->info->height);
+	int timeout = 5000;
 	/* Wait untill the window is ready on server side */
-	while (!win->info->windowReady)
+	while (!win->info->windowReady) {
 		_KeProcessSleep(10);
-
+		if (--timeout)
+			break;
+	}
 }
 
 /*
@@ -394,6 +408,7 @@ XE_EXTERN XE_EXPORT void ChWindowSetFocused(ChWindow* win) {
 	e.to_id = POSTBOX_ROOT_ID;
 	_KeFileIoControl(win->app->postboxfd, POSTBOX_PUT_EVENT, &e);
 }
+
 /*
  * ChWindowHandleMouse -- handle mouse event 
  * @param win -- Pointer to window
@@ -485,6 +500,98 @@ XE_EXTERN XE_EXPORT void ChWindowHandleMouse(ChWindow* win, int x, int y, int bu
 		win->focusedWidget = NULL;
 	}
 
+}
+
+
+/*
+ * ChWindowHandleTouch -- handle touch event
+ * @param win -- Pointer to window
+ * @param x -- X coord of the touch
+ * @param y -- Y coord of the touch
+ * @param button -- button state of the touch
+ */
+XE_EXTERN XE_EXPORT void ChWindowHandleTouch(ChWindow* win, int x, int y, int button) {
+	bool _popup_was_active = false;
+
+	if (button != 0) {
+		for (int i = 0; i < win->popup->pointer; i++) {
+			ChWindow* popup = (ChWindow*)list_get_at(win->popup, i);
+			if (popup->info->hide == 0) {
+				_KePrint("A popup window is not hidden \r\n");
+				ChWindowHide(popup);
+				_KeProcessSleep(5);
+				_popup_was_active = true;
+			}
+		}
+		if (_popup_was_active) {
+			ChWindowSetFlags(win, (win->flags & ~(WINDOW_FLAG_STATIC)));
+			_KeProcessSleep(500);
+			ChWindowSetFocused(win);
+			return;
+		}
+	}
+
+	for (int i = 0; i < win->popup->pointer; i++) {
+		ChWindow* popup = (ChWindow*)list_get_at(win->popup, i);
+		if (popup->info->hide == 0) {
+			return;
+		}
+	}
+
+	/* first check the title bar bound */
+	if (y > win->info->y && y < win->info->y + WINDOW_DEFAULT_TITLEBAR_HEIGHT) {
+		for (int i = 0; i < win->GlobalControls->pointer; i++) {
+			ChWinGlobalControl* globalCtrl = (ChWinGlobalControl*)list_get_at(win->GlobalControls, i);
+			if (x > win->info->x + globalCtrl->x && x < (win->info->x + globalCtrl->x + globalCtrl->w) &&
+				(y > win->info->y + globalCtrl->y && y < (win->info->y + globalCtrl->y + globalCtrl->h))) {
+				globalCtrl->hover = true;
+				if (button)
+					globalCtrl->clicked = true;
+				if (globalCtrl->ChGlobalMouseEvent)
+					globalCtrl->ChGlobalMouseEvent(win, globalCtrl, x, y, button);
+			}
+			else {
+				if (globalCtrl->hover) {
+					globalCtrl->hover = false;
+					globalCtrl->clicked = false;
+					if (globalCtrl->ChGlobalMouseEvent)
+						globalCtrl->ChGlobalMouseEvent(win, globalCtrl, x, y, button);
+				}
+			}
+		}
+	}
+
+	if (win->focusedWidget) {
+		ChWidget* focusedWidget = (ChWidget*)win->focusedWidget;
+		if (focusedWidget->ChTouchEvent)
+			focusedWidget->ChTouchEvent(focusedWidget, win, x, y);
+	}
+	else {
+		/* activity area */
+		if (y > win->info->y + 26 && y < (win->info->y + 26 + win->info->height - 26)) {
+			for (int i = 0; i < win->widgets->pointer; i++) {
+				ChWidget* widget = (ChWidget*)list_get_at(win->widgets, i);
+				if (x > win->info->x + widget->x && x < (win->info->x + widget->x + widget->w) &&
+					(y > win->info->y + widget->y && y < (win->info->y + widget->y + widget->h))) {
+					widget->hover = true;
+					widget->KillFocus = false;
+					if (widget->ChTouchEvent)
+						widget->ChTouchEvent(widget, win, x, y);
+				}
+				else {
+					if (widget->hover) {
+						widget->hover = false;
+						widget->KillFocus = true;
+						if (widget->ChTouchEvent)
+							widget->ChTouchEvent(widget, win, x, y);
+					}
+				}
+			}
+		}
+	}
+
+
+	win->focusedWidget = NULL;
 }
 
 /*
@@ -695,6 +802,29 @@ XE_EXTERN XE_EXPORT void ChWindowCloseWindow(ChWindow* win){
 
 	}
 
+	/* send close window command to deodhai */
+	int handle = win->handle;
+	PostEvent e;
+	e.type = DEODHAI_MESSAGE_CLOSE_WINDOW;
+	e.dword = handle;
+	e.from_id = win->app->currentID;
+	e.to_id = POSTBOX_ROOT_ID;
+	_KeFileIoControl(win->app->postboxfd, POSTBOX_PUT_EVENT, &e);
+	memset(&e, 0, sizeof(PostEvent));
+
+
+	/* wait for a closed reply window */
+	while (1) {
+		int err = _KeFileIoControl(win->app->postboxfd, POSTBOX_GET_EVENT, &e);
+		if (err == POSTBOX_NO_EVENT)
+			_KePauseThread();
+		if (e.type == DEODHAI_REPLY_WINDOW_CLOSED) {
+			break;
+		}
+	}
+
+	_KePrint("Closed reply received \r\n");
+
 	/* free up window's shared buffers, backbuffer and 
 	 * shared window info buffer
 	 */
@@ -716,30 +846,10 @@ XE_EXTERN XE_EXPORT void ChWindowCloseWindow(ChWindow* win){
 	/* free up window resources */
 	ChFreeWindowResources(win);
 
-	/* send close window command to deodhai */
-	int handle = win->handle;
-	PostEvent e;
-	e.type = DEODHAI_MESSAGE_CLOSE_WINDOW;
-	e.dword = handle;
-	e.from_id = win->app->currentID;
-	e.to_id = POSTBOX_ROOT_ID;
-	_KeFileIoControl(win->app->postboxfd, POSTBOX_PUT_EVENT, &e);
-	memset(&e, 0, sizeof(PostEvent));
-
-	
-	/* wait for a closed reply window */
-	while (1) {
-		int err = _KeFileIoControl(win->app->postboxfd, POSTBOX_GET_EVENT, &e);
-		if (err == POSTBOX_NO_EVENT)
-			_KePauseThread();
-		if (e.type == DEODHAI_REPLY_WINDOW_CLOSED){
-			break;
-		}
-	}
-	
 	free(win->app);
 	free(win);
 
+	_KePrint("Window freed \r\n");
 	/* just jump to post event loop of main
 	 * window */
 	if (subWindow && parent && !(flags & WINDOW_FLAG_POPUP))
@@ -748,8 +858,12 @@ XE_EXTERN XE_EXPORT void ChWindowCloseWindow(ChWindow* win){
 	/* if this window was the main window, simply exit the
 	 * application
 	 */
+#ifdef ARCH_X64
 	if (!subWindow && !(flags & WINDOW_FLAG_POPUP))
 		_KeProcessExit();
+#endif
+	_KePrint("about to exit \r\n");
+	_KeProcessExit();
 }
 
 /*

@@ -30,25 +30,25 @@
 #include <stdint.h>
 #include <_xeneva.h>
 #include <stdio.h>
-#include <sys\_keproc.h>
-#include <sys\_kefile.h>
-#include <sys\iocodes.h>
+#include <sys/_keproc.h>
+#include <sys/_kefile.h>
+#include <sys/iocodes.h>
 #include <chitralekha.h>
-#include <widgets\base.h>
-#include <widgets\button.h>
-#include <widgets\scrollpane.h>
-#include <widgets\slider.h>
-#include <widgets\progress.h>
+#include <widgets/base.h>
+#include <widgets/button.h>
+#include <widgets/scrollpane.h>
+#include <widgets/slider.h>
+#include <widgets/progress.h>
 #include <keycode.h>
-#include <widgets\window.h>
-#include <widgets\msgbox.h>
-#include <widgets\view.h>
+#include <widgets/window.h>
+#include <widgets/msgbox.h>
+#include <widgets/view.h>
 #include <string.h>
-#include <widgets\menubar.h>
+#include <widgets/menubar.h>
 #include <stdlib.h>
 #include <time.h>
 #include "partition.h"
-#include <widgets\menu.h>
+#include <widgets/menu.h>
 
 #define PARTITION_LIST_BUTTON_HEIGHT 55
 
@@ -65,7 +65,7 @@ void FileManagerPartitionButtonPaintHandler(ChWidget* wid, ChWindow* win) {
 		ChColorDrawVerticalGradient(win->canv, wid->x, wid->y, wid->w, wid->h,0xFF6E8BD9, 0xFF3561D6);
 	}
 	else {
-		ChDrawRect(win->canv, wid->x, wid->y, wid->w, wid->h, WHITE);
+		ChDrawRect(win->canv, wid->x, wid->y, wid->w, wid->h, 0xFFFFFFFF);
 	}
 
 	if (pbut->icon) {
@@ -88,13 +88,15 @@ void FileManagerPartitionButtonPaintHandler(ChWidget* wid, ChWindow* win) {
 	ChFontDrawTextClipped(win->canv, win->app->baseFont,pbut->guidString, text_x + 2 + last_text_length, pbut->wid.y + ((pbut->wid.h+25)/2),default_text_col, &limit);
 
 }
+
+#define PARTITION_VIEW_COLOR 0xFF808080
 /*
  * FileManagerPaintHandler -- paints the file manager
  * partition list
  */
 void FileManagerPartitionListPaintHandler(ChWidget* wid, ChWindow* win) {
 	FileManagerPartitionList* part = (FileManagerPartitionList*)wid;
-	ChDrawRect(win->canv, wid->x, wid->y, wid->w, wid->h, WHITE);
+	ChDrawRect(win->canv, wid->x, wid->y, wid->w, wid->h, PARTITION_VIEW_COLOR);
 	for (int i = 0; i < part->partitionButtons->pointer; i++) {
 		FileManagerPartitionButton* pbut = (FileManagerPartitionButton*)list_get_at(part->partitionButtons, i);
 		if (pbut->wid.ChPaintHandler)

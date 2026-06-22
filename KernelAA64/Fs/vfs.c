@@ -1,4 +1,6 @@
 /**
+* @file vfs.c
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2023, Manas Kamal Choudhury
@@ -35,10 +37,15 @@
 #include <Fs/Dev/devfs.h>
 #include <Fs/vdisk.h>
 #include <string.h>
+#include <Ipc/postbox.h>
 #include <Fs/pipe.h>
+#include <Board/RPI3bp/rpi3bp.h>
+#include <Hal/AA64/aa64lowlevel.h>
+#include <Mm/mmfile.h>
 
 AuVFSContainer* __RootContainer;
 AuVFSNode* __RootFS;
+static char _mount_letters[26];
 
 void AuVFSInitialise() {
 	AuVFSContainer* _root = (AuVFSContainer*)kmalloc(sizeof(AuVFSContainer));
@@ -48,12 +55,35 @@ void AuVFSInitialise() {
 	AuDeviceFsInitialize();
 	AuVDiskInitialise();
 	AuPipeFSInitialise();
+
+	for (int i = 0; i < 26; i++)
+		_mount_letters[i] = 0;
 }
 
-/*
- * AuVFSFind -- Searches a filesystem an return it to
+
+/**
+ * @brief AuVFSReserveMountPointLetter -- reserve a letter to
+ * mount a file system
+ */
+char* AuVFSReserveMountPointLetter() {
+	static char path[2];
+	for (int i = 0; i < 26; i++) {
+		if (_mount_letters[i] == 1)
+			continue;
+		_mount_letters[i] = 1;
+		path[0] = 'a' + i;
+		path[1] = '\0';
+		return path;
+	}
+	return NULL;
+}
+
+
+/**
+ * @brief AuVFSFind -- Searches a filesystem an return it to
  * the caller
  * @param path -- path of the file system
+ * @return pointer to file system extracted from path
  */
 AuVFSNode* AuVFSFind(char* path) {
 
@@ -73,7 +103,8 @@ AuVFSNode* AuVFSFind(char* path) {
 		pathname[i] = next[i];
 	}
 	pathname[i] = 0;
-
+	aa64_data_cache_clean_range(&pathname, 16);
+	
 	for (int j = 0; j < __RootContainer->childs->pointer; j++) {
 		AuVFSNode* node = (AuVFSNode*)list_get_at(__RootContainer->childs, j);
 		if ((strcmp(node->filename, pathname) == 0) && (node->flags & FS_FLAG_FILE_SYSTEM)) {
@@ -89,8 +120,8 @@ AuVFSNode* AuVFSFind(char* path) {
 }
 
 
-/*
- * AuVFSAddFileSystem -- adds a file system to the
+/**
+ * @brief AuVFSAddFileSystem -- adds a file system to the
  * vfs list
  * @param node -- file system node to add
  */
@@ -104,8 +135,8 @@ AU_EXTERN AU_EXPORT void AuVFSAddFileSystem(AuVFSNode* node) {
 }
 
 
-/*
- * AuVFSRegisterRoot -- register the root file
+/**
+ * @brief AuVFSRegisterRoot -- register the root file
  * system
  * @param fs -- fsnode to add
  */
@@ -115,21 +146,46 @@ void AuVFSRegisterRoot(AuVFSNode* fs) {
 	__RootFS = fs;
 }
 
-
-/*
- * AuVFSOpen -- Opens a file
+extern uint64_t read_sp();
+/**
+ * @brief AuVFSOpen -- Opens a file
  * @param path -- path to open
+ * @return pointer to file node, on success
  */
 AU_EXTERN AU_EXPORT AuVFSNode* AuVFSOpen(char* path) {
 	AuVFSNode* Returnable = NULL;
-	AuVFSNode* fs = AuVFSFind(path);
+	dmb_sy();
+	isb_flush();
 
+	AuVFSNode* fs = AuVFSFind(path);
+	//AA64SleepUS(200);
 	if (!fs) {
-		AuTextOut("[aurora-vfs]: failed to find filesystem assigned to path -> %s \n", path);
+		AuTextOut("[aurora-vfs]: failed to find filesystem assigned to path -> %s \r\n", path);
 		return NULL;
 	}
+
+	/* first go through file cache layer */
+	if (fs->flags & FS_FLAG_FILE_SYSTEM_GENERAL) {
+		AuMMFileBack *fileb = AuMmngrFileCacheLookup(path);
+		
+		/** Here check the eof bit, if EOF bit is not marked 1
+		 * this file is on used, we need to create a 
+		 * new file on memory, if eof is marked, already file 
+		 * is free on cache, we can reuse it, 
+		 * memory bachane ka clever technique broo/babe 
+		 */
+		if (fileb) {
+			Returnable = fileb->file;
+			if (Returnable->eof) {
+				Returnable->eof = 0;
+				Returnable->current = Returnable->first_block;
+				Returnable->fileCopyCount += 1;
+				return Returnable;
+			}
+		} 
+		//else executing rest of the code
+	}
 	if (fs == __RootFS) {
-		UARTDebugOut("VFSOpening filename : %s \n", path);
 		/* just skip the '/' from the path */
 		char* next = strchr(path, '/');
 		if (next)
@@ -137,37 +193,51 @@ AU_EXTERN AU_EXPORT AuVFSNode* AuVFSOpen(char* path) {
 
 		if (fs->open)
 			Returnable = fs->open(fs, path);
-
 	}
 	else {
 		char* next = strchr(path, '/');
 		if (next)
 			next++;
 
-		char pathname[16];
+
+		char pathname[16] ;
+		//UARTDebugOut("[aurora]: vfs pathname : %s \r\n", path);
 		int i = 0;
 		for (i = 0; i < 16; i++) {
 			if ((next[i] == '/') || (next[i] == '\0'))
 				break;
 			pathname[i] = next[i];
+			dsb_ish();
 		}
 		pathname[i] = 0;
-
+		aa64_data_cache_clean_range(&pathname, 16);
+		
 		/* skip the fs filename, from the path
 		 * and just pass the required path */
 		if (strcmp(fs->filename, pathname) == 0)
 			next += i;
-		if (fs->open)
+		dsb_ish();
+		dsb_sy_barrier();
+
+		if (fs->open) {
+			//AA64SleepUS(600);
 			Returnable = fs->open(fs, next);
+			/* wait for sometimes, let the cache things get completed
+			 * let it fetch the data from main memory  */
+			//AA64SleepUS(600);
+		}
 	}
+	data_cache_flush(Returnable);
 	return Returnable;
 }
 
-/*
- * AuVFSNodeIOControl -- Calls node's iocontrol pointer
+/**
+ * @brief AuVFSNodeIOControl -- Calls node's iocontrol pointer
  * @param node -- pointer to fsnode
  * @param code -- code to pass
  * @param arg -- extra arguments
+ * @return return value returned by specific iocontrol handler
+ * to the caller
  */
 AU_EXTERN AU_EXPORT int AuVFSNodeIOControl(AuVFSNode* node, int code, void* arg) {
 	if (node->iocontrol) {
@@ -177,12 +247,13 @@ AU_EXTERN AU_EXPORT int AuVFSNodeIOControl(AuVFSNode* node, int code, void* arg)
 	return 0;
 }
 
-/*
- * AuVFSNodeRead -- read from file system
+/**
+ * @brief AuVFSNodeRead -- read from file system
  * @param node -- file system node to use
  * @param file -- file information to use
  * @param buffer -- buffer to write to
  * @param length -- length of the file
+ * @return amount of data being read in bytes
  */
 AU_EXTERN AU_EXPORT size_t AuVFSNodeRead(AuVFSNode* node, AuVFSNode* file, uint64_t* buffer, uint32_t length) {
 	if (node) {
@@ -192,8 +263,8 @@ AU_EXTERN AU_EXPORT size_t AuVFSNodeRead(AuVFSNode* node, AuVFSNode* file, uint6
 	return -1;
 }
 
-/*
- * AuVFSNodeWrite -- write to file system
+/**
+ * @brief AuVFSNodeWrite -- write to file system
  * @param node -- file system node to use
  * @param file -- file node to use
  * @param buffer -- buffer to write
@@ -206,11 +277,12 @@ AU_EXTERN AU_EXPORT void AuVFSNodeWrite(AuVFSNode* node, AuVFSNode* file, uint64
 		node->write(node, file, buffer, length);
 }
 
-/*
- * AuVFSNodeReadBlock -- read a block size data from file system
+/**
+ * @brief AuVFSNodeReadBlock -- read a block size data from file system
  * @param node -- file system node to use
  * @param file -- file node to use
  * @param buffer -- buffer area to read to
+ * @return always <= 4kib
  */
 AU_EXTERN AU_EXPORT size_t AuVFSNodeReadBlock(AuVFSNode* node, AuVFSNode* file, uint64_t* buffer) {
 	size_t read_bytes = 0;
@@ -221,10 +293,11 @@ AU_EXTERN AU_EXPORT size_t AuVFSNodeReadBlock(AuVFSNode* node, AuVFSNode* file, 
 	return read_bytes;
 }
 
-/*
- * AuVFSCreateDir -- creates a new dir
+/**
+ * @brief AuVFSCreateDir -- creates a new dir
  * @param fsys -- Pointer to file system
  * @param dirname -- directory name
+ * @return pointer to newly created directory node
  */
 AU_EXTERN AU_EXPORT AuVFSNode* AuVFSCreateDir(AuVFSNode* fsys, char* dirname) {
 	if (!fsys)
@@ -235,10 +308,11 @@ AU_EXTERN AU_EXPORT AuVFSNode* AuVFSCreateDir(AuVFSNode* fsys, char* dirname) {
 	return ret;
 }
 
-/*
- * AuVFSCreateFile -- create a new file
+/**
+ * @brief AuVFSCreateFile -- create a new file
  * @param fsys -- Pointer to file system
  * @param filename -- filename
+ * @return pointer to newly created file node
  */
 AU_EXTERN AU_EXPORT AuVFSNode* AuVFSCreateFile(AuVFSNode* fsys, char* filename) {
 	if (!fsys)
@@ -249,10 +323,11 @@ AU_EXTERN AU_EXPORT AuVFSNode* AuVFSCreateFile(AuVFSNode* fsys, char* filename) 
 	return ret;
 }
 
-/*
- * AuVFSRemoveFile --remove a file from a file system
+/**
+ * @brief AuVFSRemoveFile --remove a file from a file system
  * @param fsys -- Pointer to file system
  * @param file -- Pointer to file to remove
+ * @return 0 on success, -1 on failure
  */
 int AuVFSRemoveFile(AuVFSNode* fsys, AuVFSNode* file) {
 	if (!fsys)
@@ -268,11 +343,12 @@ int AuVFSRemoveFile(AuVFSNode* fsys, AuVFSNode* file) {
 		ret = fsys->remove_file(fsys, file);
 }
 
-/*
- * AuVFSRemoveDir -- removes an empty directory
+/**
+ * @brief AuVFSRemoveDir -- removes an empty directory
  * @param fsys -- Pointer to file system
  * @param file -- Pointer to directory needs to
  * be deleted
+ * @return 0 on success, -1 on failure
  */
 int AuVFSRemoveDir(AuVFSNode* fsys, AuVFSNode* file) {
 	if (!fsys)
@@ -286,8 +362,8 @@ int AuVFSRemoveDir(AuVFSNode* fsys, AuVFSNode* file) {
 }
 
 
-/*
- * AuVFSNodeClose -- close a file system or file
+/**
+ * @brief AuVFSNodeClose -- close a file system or file
  * @param node -- file system node to use
  * @param file -- file to close
  */
@@ -296,8 +372,8 @@ AU_EXTERN AU_EXPORT void AuVFSNodeClose(AuVFSNode* node, AuVFSNode* file) {
 		node->close(node, file);
 }
 
-/*
- * AuVFSRemoveFileSystem -- removes a file system
+/**
+ * @brief AuVFSRemoveFileSystem -- removes a file system
  * @param node -- file system node to remove
  */
 AU_EXTERN AU_EXPORT int AuVFSRemoveFileSystem(AuVFSNode* node) {
@@ -319,12 +395,13 @@ AU_EXTERN AU_EXPORT int AuVFSRemoveFileSystem(AuVFSNode* node) {
 
 }
 
-/*
-* AuVFSGetBlockFor -- returns a block number for
+/**
+* @brief AuVFSGetBlockFor -- returns a block number for
 * certain byte offset of file
 * @param node -- file system node
 * @param file -- pointer to file structure
 * @param offset -- byte offset
+* @return block number of that offset
 */
 AU_EXTERN AU_EXPORT size_t AuVFSGetBlockFor(AuVFSNode* node, AuVFSNode* file, uint64_t offset) {
 	if (node) {
@@ -332,4 +409,20 @@ AU_EXTERN AU_EXPORT size_t AuVFSGetBlockFor(AuVFSNode* node, AuVFSNode* file, ui
 			return node->get_blockfor(node, file, offset);
 	}
 	return -1;
+}
+
+
+/**
+ * @brief AuVFSSetCred -- set gid/uid value for a file
+ * @param node -- file node
+ * @param uid -- user id 
+ * @param gid -- group id 
+ * @return zero on success, one on failure
+ */
+AU_EXTERN AU_EXPORT int AuVFSSetCred(AuVFSNode* node,UID_NUM uid, GID_NUM gid) {
+	if (!node)
+		return 1;
+	node->uid = uid;
+	node->gid = gid;
+	return 0;
 }

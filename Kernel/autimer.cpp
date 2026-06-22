@@ -29,10 +29,10 @@
 
 #include <autimer.h>
 #include <_null.h>
-#include <Mm\kmalloc.h>
+#include <Mm/kmalloc.h>
 #include <string.h>
 #include <aucon.h>
-#include <Ipc\postbox.h>
+#include <Ipc/postbox.h>
 
 AuTimer *timerFirst;
 AuTimer *timerLast;

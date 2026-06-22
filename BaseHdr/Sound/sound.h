@@ -1,4 +1,6 @@
 /**
+* @file sound.h
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2021, Manas Kamal Choudhury
@@ -33,55 +35,80 @@
 
 #include <stdint.h>
 #include <circbuf.h>
-#include <Hal\x86_64_sched.h>
+
+#ifdef ARCH_X64
+#include <Hal/x86_64_sched.h>
+#elif ARCH_ARM64
+#include <Hal/AA64/sched.h>
+#endif
+
 #include <aurora.h>
 
+#ifdef ARCH_X64
 #pragma pack(push,1)
+#endif
 typedef struct __au_dsp__ {
 	CircBuffer *buffer;
 	uint16_t _dsp_id;
+	int16_t _cardID;
+#ifdef ARCH_X64
 	AuThread *SndThread;
+#elif ARCH_ARM64
+	AA64Thread* SndThread;
+#endif
 	uint64_t sleep_time;
 	bool available;
 	struct __au_dsp__ *next;
 	struct __au_dsp__ *prev;
 }AuDSP;
+
+#ifdef ARCH_X64
 #pragma pack(pop)
+#endif
 
 
 typedef struct _SoundDev_ {
 	char name[32];
-	void(*write) (uint8_t* buffer, size_t length);
-	void(*read) (uint8_t* buffer, size_t length);
-	void(*stop_output)();
-	void(*start_output)();
-	void(*set_vol)(uint8_t vol);
+	int(*write) (uint8_t* buffer, size_t length);
+	int(*read) (uint8_t* buffer, size_t length);
+	int(*stop_output)();
+	int(*start_output)();
+	int(*set_vol)(uint8_t vol);
+	int(*control)(void* data, int code);
+	bool _force_write;
 }AuSound;
 
 
-/*
-* AuSoundInitialize -- Initialized the Aurora sound system
+/**
+* @brief AuSoundInitialize -- Initialized the Aurora sound system
 */
 extern void AuSoundInitialise();
 
-/*
-* AuSoundSetCard -- registers a new
+/**
+* @brief AuSoundSetCard -- registers a new
 * sound card
 * @param dev -- sound card device
 */
 AU_EXTERN AU_EXPORT void AuSoundSetCard(AuSound* dev);
 
-/*
-* AuSoundGetBlock -- the main heart of aurora sound
+/**
+* @brief AuSoundGetBlock -- the main heart of aurora sound
 * system -- called by sound card
 */
 AU_EXTERN AU_EXPORT void AuSoundGetBlock(uint64_t *buffer);
 
-/*
-* AuSoundRemoveDSP -- remove the dsp from
+/**
+* @brief AuSoundRemoveDSP -- remove the dsp from
 * dsp list
 */
 AU_EXTERN AU_EXPORT void AuSoundRemoveDSP(uint16_t id);
+
+/**
+ * @brief AuSoundRegisterCard -- register a new sound card
+ * to sound layer
+ * @param snd -- pointer to sound card
+ */
+AU_EXTERN AU_EXPORT int AuSoundRegisterCard(AuSound* snd);
 
 /*
 * AuSoundStart -- Starts the Sound card

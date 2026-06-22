@@ -25,22 +25,21 @@
 * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *
-*
 **/
 
-#include <Sound\sound.h>
+#include <Sound/sound.h>
 #include <_null.h>
-#include <Mm\kmalloc.h>
-#include <Mm\pmmngr.h>
-#include <Mm\vmmngr.h>
-#include <fs\vfs.h>
-#include <fs\dev\devfs.h>
+#include <Mm/kmalloc.h>
+#include <Mm/pmmngr.h>
+#include <Mm/vmmngr.h>
+#include <Fs/vfs.h>
+#include <Fs/dev/devfs.h>
 #include <aurora.h>
-#include <serv\sysserv.h>
+#include <Serv/sysserv.h>
 #include <string.h>
 #include <aucon.h>
-#include <Hal\serial.h>
-#include <Hal\x86_64_hal.h>
+#include <Hal/serial.h>
+#include <Hal/x86_64_hal.h>
 
 
 AuSound *_Registered_dev;
@@ -265,8 +264,8 @@ int AuSoundIOControl(AuVFSNode* node, int code, void* arg) {
 	return 0;
 }
 
-/*
-* AuSoundInitialize -- Initialized the Aurora sound system
+/**
+* @brief AuSoundInitialize -- Initialized the Aurora sound system
 */
 void AuSoundInitialise() {
 	AuVFSNode* fsys = AuVFSFind("/dev");

@@ -27,14 +27,14 @@
 *
 **/
 
-#include <Hal\x86_64_signal.h>
-#include <Hal\x86_64_gdt.h>
-#include <Mm\kmalloc.h>
-#include <Mm\vmmngr.h>
-#include <Mm\pmmngr.h>
+#include <Hal/x86_64_signal.h>
+#include <Hal/x86_64_gdt.h>
+#include <Mm/kmalloc.h>
+#include <Mm/vmmngr.h>
+#include <Mm/pmmngr.h>
 #include <string.h>
 #include <aucon.h>
-#include <Hal\serial.h>
+#include <Hal/serial.h>
 #include <_null.h>
 
 extern "C" void SigRet();

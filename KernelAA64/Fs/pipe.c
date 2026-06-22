@@ -1,4 +1,6 @@
 /**
+* @file pipe.c
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2023, Manas Kamal Choudhury
@@ -27,15 +29,24 @@
 *
 **/
 
-#include <Fs\pipe.h>
-#include <Mm\kmalloc.h>
-#include <Fs\vfs.h>
+#include <Fs/pipe.h>
+#include <Mm/kmalloc.h>
+#include <Fs/vfs.h>
 #include <_null.h>
 #include <string.h>
 #include <list.h>
+#include <Hal/AA64/sched.h>
+#include <process.h>
+#include <Drivers/uart.h>
+#include <aucon.h>
 
 AuVFSNode* pipeFS;
 
+/**
+ * @brief AuPipeUnread -- get the available read
+ * space from the pipe
+ * @param pipe -- Pointer to the pipe
+ */
 size_t AuPipeUnread(AuPipe* pipe) {
 	if (pipe->read_ptr == pipe->write_ptr)
 		return 0; //0 bytes difference
@@ -45,6 +56,13 @@ size_t AuPipeUnread(AuPipe* pipe) {
 		return (pipe->write_ptr - pipe->read_ptr);
 }
 
+/**
+ * @brief AuPipeGetAvailableBytes -- returns total 
+ * available bytes of the pipe
+ * @param pipe -- Pointer to pipe to get total available
+ * bytes
+ * @return number of bytes available in the pipe
+ */
 size_t AuPipeGetAvailableBytes(AuPipe* pipe) {
 	if (pipe->read_ptr == pipe->write_ptr)
 		return pipe->size - 1;
@@ -55,21 +73,32 @@ size_t AuPipeGetAvailableBytes(AuPipe* pipe) {
 		return (pipe->size - pipe->write_ptr) + pipe->read_ptr - 1;
 }
 
-
+/**
+ * @brief AuPipeIncrementRead -- increment the read 
+ * pointer of the pipe
+ * @param pipe -- Pointer to pipe to increment its read
+ * pointer
+ */
 void AuPipeIncrementRead(AuPipe* pipe) {
 	pipe->read_ptr++;
 	if (pipe->read_ptr == pipe->size)
 		pipe->read_ptr = 0;
 }
 
+/**
+ * @brief AuPipeIncrementWrite -- increment the write
+ * pointer of the given pipe
+ * @param pipe -- Pointer to pipe to increment its write 
+ * pointer
+ */
 void AuPipeIncrementWrite(AuPipe* pipe) {
 	pipe->write_ptr++;
 	if (pipe->write_ptr == pipe->size)
 		pipe->write_ptr = 0;
 }
 
-/*
- * AuPipeIncrementWriteAmount -- increments the write
+/**
+ * @brief AuPipeIncrementWriteAmount -- increments the write
  * ptr by amount in bytes
  * @param pipe -- Pointer to the pipe device
  * @param amount -- amount of bytes
@@ -78,8 +107,8 @@ void AuPipeIncrementWriteAmount(AuPipe* pipe, size_t amount) {
 	pipe->write_ptr = (pipe->write_ptr + amount) & pipe->size;
 }
 
-/*
- * AuPipeRead -- reads from pipe
+/**
+ * @brief AuPipeRead -- reads from pipe
  * @param fs -- Pointer to the file system node
  * @param file -- Pointer to the file, here we don't need it
  * @param buffer -- Pointer to buffer where to put the data
@@ -105,8 +134,8 @@ size_t AuPipeRead(AuVFSNode* fs, AuVFSNode* file, uint64_t* buffer, uint32_t len
 	return collected;
 }
 
-/*
-* AuPipeWrite -- write to pipe
+/**
+* @brief AuPipeWrite -- write to pipe
 * @param fs -- Pointer to the file system node
 * @param file -- Pointer to the file, here we don't need it
 * @param buffer -- Pointer to buffer where to put the data
@@ -131,13 +160,12 @@ size_t AuPipeWrite(AuVFSNode* fs, AuVFSNode* file, uint64_t* buffer, uint32_t le
 AuVFSNode* AuPipeOpen(AuVFSNode* node, char* path) {
 	AuPipe* pipe = (AuPipe*)node->device;
 	pipe->refcount++;
-	AuTextOut("[aurora]: Pipe opened refcount -> %d \n", pipe->refcount);
 	return node;
 }
 
 
-/*
-* AuPipeFSAddFile -- adds a file/directory
+/**
+* @brief AuPipeFSAddFile -- adds a file/directory
 * @param fs -- pointer to device file system
 * @param path -- path of the file
 * @param file -- file to add to dev fs
@@ -180,8 +208,8 @@ int AuPipeFSAddFile(AuVFSNode* fs, char* path, AuVFSNode* file) {
 	return 1;
 }
 
-/*
- * AuDevFSRemoveFile -- remove a file from device
+/**
+ * @brief AuDevFSRemoveFile -- remove a file from device
  * file system
  * @param fs -- pointer to the file system
  * @param path -- path of the file
@@ -240,15 +268,14 @@ int AuPipeFSRemoveFile(AuVFSNode* fs, char* path) {
 	return -1;
 }
 
-/*
- * AuPipeClose -- closes the pipe
+/**
+ * @brief AuPipeClose -- closes the pipe
  * @param fs -- Pointer to the pipe
  * @param file -- Pointer to file, not needed
  */
 int AuPipeClose(AuVFSNode* fs, AuVFSNode* file) {
 	AuPipe* pipe = (AuPipe*)fs->device;
 	pipe->refcount--;
-	AuTextOut("[aurora]: Pipe closed refcount -> %d \n", pipe->refcount);
 	if (pipe->refcount == 0) {
 		kfree(pipe->buffer);
 		kfree(pipe->readers_wait_queue);
@@ -260,63 +287,69 @@ int AuPipeClose(AuVFSNode* fs, AuVFSNode* file) {
 	return 1;
 }
 
-/*
- * AuCreatePipe -- creates a new pipe
+/**
+ * @brief AuCreatePipe -- creates a new pipe
  * @param name -- name of the pipe
  * @param sz -- Size of the pipe
  */
 int AuCreatePipe(char* name, size_t sz) {
-	//x64_cli();
+	UARTDebugOut("Creating PIPE \r\n");
+	AA64Thread* currentThr = AuGetCurrentThread();
+	if (!currentThr) {
+		UARTDebugOut("creating pipe !currentThr\r\n");
+		return -1;
+	}
+	AuProcess* proc = AuProcessFindThread(currentThr);
+	if (!proc) {
+		proc = AuProcessFindSubThread(currentThr);
+		if (!proc) {
+			UARTDebugOut("!proc \r\n");
+			return -1;
+		}
+	}
 
-	//AuThread* currentThr = AuGetCurrentThread();
-	//if (!currentThr)
-	//	return -1;
-	//AuProcess* proc = AuProcessFindThread(currentThr);
-	//if (!proc) {
-	//	proc = AuProcessFindSubThread(currentThr);
-	//	if (!proc)
-	//		return -1;
-	//}
+	if (sz == 0) {
+		UARTDebugOut("SZ == 0 \r\n");
+		return -1;
+	}
 
-	//if (sz == 0)
-	//	return -1;
+	int fd = AuProcessGetFileDesc(proc);
 
-	//int fd = AuProcessGetFileDesc(proc);
+	AuVFSNode* node = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
+	AuPipe* pipe = (AuPipe*)kmalloc(sizeof(AuPipe));
+	memset(node, 0, sizeof(AuVFSNode));
+	memset(pipe, 0, sizeof(AuPipe));
 
+	pipe->buffer = (uint8_t*)kmalloc(sz);
+	pipe->readers_wait_queue = initialize_list();
+	pipe->writers_wait_queue = initialize_list();
+	pipe->size = sz;
+	pipe->refcount = 1;
 
-	//AuVFSNode* node = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
-	//AuPipe* pipe = (AuPipe*)kmalloc(sizeof(AuPipe));
-	//memset(node, 0, sizeof(AuVFSNode));
-	//memset(pipe, 0, sizeof(AuPipe));
+	strcpy(node->filename, name);
+	node->flags = FS_FLAG_PIPE;
+	node->size = sz;
+	node->uid = proc->creds.uid;
+	node->gid = proc->creds.gid;
+	node->device = pipe; // pipe;
+	node->read = AuPipeRead;
+	node->write = AuPipeWrite;
+	node->open = AuPipeOpen;
+	node->close = AuPipeClose;
+	node->uid = proc->creds.uid;
+	node->gid = proc->creds.gid;
+	node->iocontrol = NULL;
 
-	//pipe->buffer = (uint8_t*)kmalloc(sz);
-	//pipe->readers_wait_queue = initialize_list();
-	//pipe->writers_wait_queue = initialize_list();
-	//pipe->size = sz;
-	//pipe->refcount = 1;
+	proc->fds[fd] = node;
 
-	//strcpy(node->filename, name);
-	//node->flags = FS_FLAG_PIPE;
-	//node->size = sz;
-	//node->device = pipe; // pipe;
-	//node->read = AuPipeRead;
-	//node->write = AuPipeWrite;
-	//node->open = AuPipeOpen;
-	//node->close = AuPipeClose;
-	//node->iocontrol = NULL;
-
-	//proc->fds[fd] = node;
-
-	//AuTextOut("[aurora]: Pipe proc -> %s \r\n", proc->name);
-	//AuPipeFSAddFile(pipeFS, "/", node);
-	//SeTextOut("Pipe Created -> %d %s\r\n", fd, proc->fds[fd]->filename);
-	////AuForceScheduler();
-	//return fd;
-	return 0;
+	AuPipeFSAddFile(pipeFS, "/", node);
+	UARTDebugOut("[aurora]: pipe created : %d name: %s\r\n", fd, proc->fds[fd]->filename);
+	//AuForceScheduler();
+	return fd;
 }
 
-/*
-* AuPipeFSOpen -- open a pipe file and return to the
+/**
+* @brief AuPipeFSOpen -- open a pipe file and return to the
 * caller
 * @param fs -- file system node
 * @param path -- path of the pipe file
@@ -361,8 +394,8 @@ AuVFSNode* AuPipeFSOpen(AuVFSNode* fs, char* path) {
 		return NULL;
 }
 
-/*
- * AuPipeFSInitialise -- initialise the pipe filesystem
+/**
+ * @brief AuPipeFSInitialise -- initialise the pipe filesystem
  */
 void AuPipeFSInitialise() {
 	AuVFSContainer* entries = (AuVFSContainer*)kmalloc(sizeof(AuVFSContainer));
@@ -375,7 +408,7 @@ void AuPipeFSInitialise() {
 	node->flags |= FS_FLAG_FILE_SYSTEM;
 	node->open = AuPipeFSOpen;
 	AuVFSAddFileSystem(node);
-	AuTextOut("[aurora]: pipefs mounted \n");
+	AuTextOut("[aurora]: pipefs mounted \r\n");
 	pipeFS = node;
 }
 

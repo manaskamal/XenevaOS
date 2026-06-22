@@ -30,7 +30,7 @@
 #ifndef __FCNTL_H__
 #define __FCNTL_H__
 
-#include <sys\types.h>
+#include <sys/types.h>
 
 #define F_DUPFD 0x01
 #define F_GETFD 0x02

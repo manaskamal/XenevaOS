@@ -30,20 +30,20 @@
 #include <stdint.h>
 #include <_xeneva.h>
 #include <stdio.h>
-#include <sys\_keproc.h>
-#include <sys\_kefile.h>
-#include <sys\iocodes.h>
+#include <sys/_keproc.h>
+#include <sys/_kefile.h>
+#include <sys/iocodes.h>
 #include <chitralekha.h>
-#include <widgets\base.h>
-#include <widgets\button.h>
-#include <widgets\window.h>
-#include <widgets\menubar.h>
-#include <widgets\msgbox.h>
-#include <widgets\menu.h>
-#include <widgets\scrollpane.h>
-#include <widgets\icon.h>
-#include <widgets\view.h>
-#include <sys\mman.h>
+#include <widgets/base.h>
+#include <widgets/button.h>
+#include <widgets/window.h>
+#include <widgets/menubar.h>
+#include <widgets/msgbox.h>
+#include <widgets/menu.h>
+#include <widgets/scrollpane.h>
+#include <widgets/icon.h>
+#include <widgets/view.h>
+#include <sys/mman.h>
 #include <nanojpg.h>
 #include <string.h>
 #include <stdlib.h>
@@ -414,7 +414,7 @@ int main(int argc, char* argv[]){
 	/* prepare the browser UI*/
 	PrepareBrowserUI();
 
-	int threadIdx = _KeCreateThread(PlayerThread,"accent");
+	//int threadIdx = _KeCreateThread(PlayerThread,"accent");
 
 	PostEvent e;
 	memset(&e, 0, sizeof(PostEvent));

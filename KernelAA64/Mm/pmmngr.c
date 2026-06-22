@@ -1,4 +1,6 @@
 /**
+* @file pmmngr.c
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2025, Manas Kamal Choudhury
@@ -30,33 +32,40 @@
 #include <Mm/pmmngr.h>
 #include <Hal/AA64/aa64lowlevel.h>
 #include <Mm/vmmngr.h>
+#include <Drivers/uart.h>
 #include <efi.h>
+#include <Hal/AA64/profile.h>
 
-uint64_t _FreeMemory;
-uint64_t _ReservedMemory;
-uint64_t _UsedMemory;
-uint64_t _RamBitmapIndex;
-uint64_t _TotalRam;
-uint64_t UsablePhysicalMemory;
-uint64_t _BitmapSize;
-bool _HigherHalf;
+#define PAGE_SHIFT 12
+
+
+static uint64_t _FreeMemory;
+static uint64_t _ReservedMemory;
+static uint64_t _UsedMemory;
+static uint64_t _RamBitmapIndex;
+static uint64_t _TotalRam;
+static uint64_t UsablePhysicalMemory;
+static uint64_t _BitmapSize;
+static bool _HigherHalf;
 bool debugon;
-uint8_t* BitmapBuffer;
+static uint8_t* BitmapBuffer;
+static AuPageDesc* page_desc;
+static uint32_t total_page_desc_count;
 
 typedef struct _lb_mem_rgn_ {
 	uint64_t base;
 	uint64_t size;
 	uint64_t pageCount;
 }LBMemoryRegion;
-/*
-* AuPmmngrInitBitmap -- Initialize the Ram bitmap with
+/**
+* @brief AuPmmngrInitBitmap -- Initialize the Ram bitmap with
 * all zeros
 * @param BitmapSize -- total bitmap size
 * @param Buffer -- Pointer to bitmap buffer
 */
 void AuPmmngrInitBitmap(size_t BSize, void* Buffer) {
 	BitmapBuffer = (uint8_t*)Buffer;
-	memset(BitmapBuffer, 0, BSize * 8);
+	memset(BitmapBuffer, 0, BSize);
 	_BitmapSize = BSize;
 }
 
@@ -88,12 +97,12 @@ bool AuPmmngrBitmapSet(uint64_t index, bool value) {
 }
 
 
-/*
-* AuPmmngrLockPage -- Lock a given page
+/**
+* @brief AuPmmngrLockPage -- Lock a given page
 * @param Address -- Pointer to page
 */
 void AuPmmngrLockPage(uint64_t Address) {
-	uint64_t Index = (Address / 4096);
+	uint64_t Index = Address >> PAGE_SHIFT;
 	if (AuPmmngrBitmapCheck(Index)) return;
 	if (AuPmmngrBitmapSet(Index, true)) {
 		_FreeMemory--;
@@ -103,8 +112,8 @@ void AuPmmngrLockPage(uint64_t Address) {
 
 
 
-/*
-* AuPmmngrLockPage -- locks a set of pages
+/**
+* @brief AuPmmngrLockPage -- locks a set of pages
 * @param Address -- Starting address of the first page
 * @param Size -- Size of the set
 */
@@ -115,8 +124,8 @@ void AuPmmngrLockPages(void* Address, size_t Size) {
 	}
 }
 
-/*
-* AuPmmngrUnreservePage -- Marks a page as free
+/**
+* @brief AuPmmngrUnreservePage -- Marks a page as free
 * @param Address -- Pointer to the page
 */
 void AuPmmngrUnreservePage(void* Address) {
@@ -129,8 +138,8 @@ void AuPmmngrUnreservePage(void* Address) {
 	}
 }
 
-/*
-* AuPmmngrInitialise -- initialise the physical memory
+/**
+* @brief AuPmmngrInitialise -- initialise the physical memory
 * manager
 * @param info -- Pointer to kernel boot info structure
 */
@@ -162,9 +171,9 @@ void AuPmmngrInitialize(KERNEL_BOOT_INFO* info) {
 		/* Scan a suitable area for the bitmap */
 		for (size_t i = 0; i < MemMapEntries; i++) {
 			EFI_MEMORY_DESCRIPTOR* EfiMem = (EFI_MEMORY_DESCRIPTOR*)((uint64_t)info->map + i * info->descriptor_size);
-			_TotalRam += EfiMem->num_pages;
-			//AuTextOut("EfiMem phys start -> %x size -> %d > 0x100000,attrib -  %d\n", EfiMem->phys_start, EfiMem->num_pages, EfiMem->attrib);
+		
 			if (EfiMem->type == 7) {
+				_TotalRam += EfiMem->num_pages;
 				if (((EfiMem->num_pages * 4096) > 0x1F0000) && BitmapArea == 0) {
 					if ((EfiMem->phys_start & (4096 - 1)) == 0) {
 						if (!print)
@@ -174,6 +183,19 @@ void AuPmmngrInitialize(KERNEL_BOOT_INFO* info) {
 					}
 				}
 			}
+			if (EfiMem->type == 1) {
+				_TotalRam += EfiMem->num_pages;
+			}
+			if (EfiMem->type == 2) {
+				_TotalRam += EfiMem->num_pages;
+			}
+			if (EfiMem->type == 3) {
+				_TotalRam += EfiMem->num_pages;
+			}
+
+			if (EfiMem->type == 4) {
+				_TotalRam += EfiMem->num_pages;
+			}
 		}
 	}
 	else {
@@ -181,8 +203,8 @@ void AuPmmngrInitialize(KERNEL_BOOT_INFO* info) {
 		LBMemoryRegion* memRegn = (LBMemoryRegion*)lb->usable_memory_map;
 
 		if (!lb) {
-			AuTextOut("[aurora]:Booting from non-UEFI boot environment but missing LittleBoot protocol \n");
-			AuTextOut("[aurora]:Unable to continue Kernel initialization \n");
+			AuTextOut("[aurora]:Booting from non-UEFI boot environment but missing LittleBoot protocol \r\n");
+			AuTextOut("[aurora]:Unable to continue Kernel initialization \r\n");
 			for (;;);
 		}
 		for (size_t i = 0; i < lb->usable_region_count; i++) {
@@ -191,33 +213,45 @@ void AuPmmngrInitialize(KERNEL_BOOT_INFO* info) {
 			if (((numPages * 4096) > 0x1F0000) && BitmapArea == 0) {
 				BitmapArea = (void*)base;
 			}
-			AuTextOut("[aurora]: Usable memory Base : %x , PageCount : %d \n", base, numPages);
+			AuTextOut("[aurora]: Usable memory Base : %x , PageCount : %d \r\n", base, numPages);
 		}
 		_TotalRam = lb->numberOfPages;
-		AuTextOut("Total Ram : %d Pages \n", _TotalRam);
-		AuTextOut("Memory Start : %x, Memory End : %x \n", lb->physicalStart, lb->physicalEnd);
+		AuTextOut("Total Ram : %d Pages \r\n", _TotalRam);
+		AuTextOut("Memory Start : %x, Memory End : %x \r\n", lb->physicalStart, lb->physicalEnd);
 	}
 
 	//AuPmmngrEarlyVMSetup(info);
 
 	_FreeMemory = _TotalRam;
-	AuTextOut("Total RAM : %x \n", (_TotalRam * 0x1000));
+	AuTextOut("Total RAM : %x \r\n", (_TotalRam * 0x1000));
+
+
 
 	uint64_t BitmapSize = (_TotalRam / 8) + 1; // (_TotalRam * 4096) / 4096 / 8 + 1;
-	UsablePhysicalMemory = ((uint64_t)BitmapArea + BitmapSize);
-	UsablePhysicalMemory = (UsablePhysicalMemory + 0xFFF) & ~0xFFF;
+	uint64_t page_desc_addr = (uint64_t)BitmapArea + BitmapSize;
+	page_desc_addr = ALIGN_UP(page_desc_addr, 64);
+	page_desc = (AuPageDesc*)page_desc_addr;
+	total_page_desc_count = _TotalRam;
+	size_t page_desc_len = total_page_desc_count * sizeof(AuPageDesc);
+	UsablePhysicalMemory = (uint64_t)page_desc_addr + page_desc_len;
+	UsablePhysicalMemory = (UsablePhysicalMemory + (PAGE_SIZE - 1)) & ~(uint64_t)(PAGE_SIZE - 1);
+
+
+	AuTextOut("Usable RAM Start : %x, TotalRAM : %x \r\n", UsablePhysicalMemory, _TotalRam);
+	AuTextOut("LastPage : %x \r\n", (_TotalRam * 4096));
 
 	/* now initialise the bitmap */
 	AuPmmngrInitBitmap(BitmapSize, BitmapArea);
-
-	AuPmmngrLockPages((void*)BitmapArea, BitmapSize);
-
+	AuTextOut("Bitmap Size : %x %d \r\n", BitmapSize, BitmapSize);
+	//AuPmmngrLockPages((void*)BitmapArea, BitmapSize);
+	//AuPmmngrLockPages((void*)page_desc_addr, total_page_desc_count);
 
 	if (info->boot_type != BOOT_LITTLEBOOT_ARM64) {
 		for (size_t i = 0; i < MemMapEntries; i++) {
 			EFI_MEMORY_DESCRIPTOR* EfiMem = (EFI_MEMORY_DESCRIPTOR*)((uint64_t)info->map + i * info->descriptor_size);
 			//_TotalRam += EfiMem->num_pages;
-			if (EfiMem->type != 7) {
+			if (EfiMem->type != 7 || EfiMem->type != 1 || EfiMem->type != 2 ||
+				EfiMem->type != 3 || EfiMem->type != 4) {
 				uint64_t PhysStart = EfiMem->phys_start;
 				for (size_t j = 0; j < EfiMem->num_pages; j++) {
 					AuPmmngrLockPage(PhysStart + j * 4096);
@@ -243,7 +277,7 @@ void AuPmmngrInitialize(KERNEL_BOOT_INFO* info) {
 	/* need more reservation of memory allocated by initrd and others*/
 	if (info->boot_type == BOOT_LITTLEBOOT_ARM64) {
 		/* reserving DTB area and Kernel INITRD area */
-		AuTextOut("[aurora]: Reserving LittleBoot data \n");
+		AuTextOut("[aurora]: Reserving LittleBoot data \r\n");
 		uint64_t pageCount = 0;
 		AuLittleBootProtocol* lb = (AuLittleBootProtocol*)info->driver_entry1;
 		uint64_t dtb_start = lb->device_tree_base;
@@ -251,6 +285,7 @@ void AuPmmngrInitialize(KERNEL_BOOT_INFO* info) {
 		dtb_end = (dtb_end + 0x1000 - 1) & ~(0x1000 - 1);
 
 		pageCount = (dtb_end - dtb_start) / 0x1000;
+
 		for (int i = 0; i < pageCount; i++) {
 			uint64_t addr = dtb_start + i * 0x1000; //  ((uint64_t)Address - UsablePhysicalMemory);
 			uint64_t Index = (addr - UsablePhysicalMemory);
@@ -272,12 +307,13 @@ void AuPmmngrInitialize(KERNEL_BOOT_INFO* info) {
 		uint64_t lbEnd = lb->littleBootEnd;
 		lbEnd = (lbEnd + 0x1000 - 1) & ~(0x1000 - 1);
 		pageCount = (lbEnd - lbStart) / 0x1000;
+
 		for (int i = 0; i < pageCount; i++) {
 			uint64_t addr = lbStart + i * 0x1000;
 			uint64_t Index = (addr - UsablePhysicalMemory);
 			AuPmmngrLockPage(Index);
 		}
-		AuTextOut("[aurora]: Pmmngr locked LittleBoot reserved memory\n");
+		AuTextOut("[aurora]: Pmmngr locked LittleBoot reserved memory\r\n");
 	}
 }
 
@@ -288,56 +324,72 @@ bool AuPmmngrAllocCheck(uint64_t address) {
 	return false;
 }
 
-/*
- * AuPmmngrAlloc -- Allocate a single physical page
+/**
+ * @brief AuPmmngrAlloc -- Allocate a single physical page
  * frame and return it to the caller
  */
 void* AuPmmngrAlloc() {
-	
-	//debugon = true;
 	for (; _RamBitmapIndex < _BitmapSize * 8; _RamBitmapIndex++) {
 		//AuTextOut("  RamBitmap[%d] -> %d   ",_RamBitmapIndex, RamBitmap[_RamBitmapIndex]);
 		if (AuPmmngrBitmapCheck(_RamBitmapIndex)) continue;
 		AuPmmngrLockPage(_RamBitmapIndex * 4096);
 		_UsedMemory++;
-		return (void*)(UsablePhysicalMemory + _RamBitmapIndex * 4096);
+		uint64_t index = _RamBitmapIndex;
+		//UARTDebugOut("AuPmmngrAlloc: RamBitmapIndex : %d %x \n", _RamBitmapIndex, (UsablePhysicalMemory + (index * 4096)));
+		page_desc[(UsablePhysicalMemory + (index * PAGE_SIZE)) >> PAGE_SHIFT].refcount = 1;
+		page_desc[(UsablePhysicalMemory + (index * PAGE_SIZE)) >> PAGE_SHIFT].phys_addr = 
+			(UsablePhysicalMemory + (index * PAGE_SIZE));
+		page_desc[(UsablePhysicalMemory + (index * PAGE_SIZE)) >> PAGE_SHIFT].diskblock = -1;
+	//	UARTDebugOut("Page desc : %x \r\n", &page_desc[(UsablePhysicalMemory + (index * PAGE_SIZE)) >> PAGE_SHIFT]);
+		return (void*)(UsablePhysicalMemory + (index * 4096));
 	}
 	AuTextOut("Kernel Panic!!! No more physical memory \n");
 	for (;;);
 }
 
-/*
- * AuPmmngrAllocBlocks -- Allocate multiple physical page frames
+/**
+ * @brief AuPmmngrAllocBlocks -- Allocate multiple physical page frames
  * and return the first page pointer to the caller
  * @param size -- Number of blocks to allocate
  */
 void* AuPmmngrAllocBlocks(int num) {
 	void* First = AuPmmngrAlloc();
-	for (int i = 1; i < num; i++)
-		AuPmmngrAlloc();
-
+	//UARTDebugOut("AuPmmngrAllocBlocks: %x \n", First);
+	for (int i = 1; i < num; i++) {
+		void* p = AuPmmngrAlloc();
+		//UARTDebugOut("AuPmmngrAllocBlocks: %x \n", p);
+	}
 	return First;
 }
 
-/*
- * AuPmmngrFree -- Free a physical page frame
+/**
+ * @brief AuPmmngrFree -- Free a physical page frame
  * @param Address -- Pointer to physical page
  */
 void AuPmmngrFree(void* Address) {
-	//uint64_t ShiftAddr = (uint64_t)Address >> PAGE_SHIFT;
+
+	uint64_t ShiftAddr = (uint64_t)Address >> PAGE_SHIFT;
+	if (page_desc[ShiftAddr].refcount > 1) {
+		page_desc[ShiftAddr].refcount -= 1;
+		return;
+	}
 	uint64_t addr = ((uint64_t)Address - UsablePhysicalMemory);
 	uint64_t Index = (uint64_t)addr / 4096;
 	if (AuPmmngrBitmapCheck(Index) == false) return;
 	if (AuPmmngrBitmapSet(Index, false)) {
+		//UARTDebugOut("Was not free actual address : %x\n", Address);
 		_FreeMemory++;
 		_UsedMemory--;
-		if (_RamBitmapIndex > Index)
+		if (_RamBitmapIndex > Index) {
+			//UARTDebugOut("RAMIndex was to : %d. set to : %d\n", _RamBitmapIndex, Index);
 			_RamBitmapIndex = Index;
+		}
 	}
+	dsb_ish();
 }
 
-/*
- * AuPmmngrFreeBlocks -- Free multiple page frames
+/**
+ * @brief AuPmmngrFreeBlocks -- Free multiple page frames
  * @param Addr -- Address of the first page frame
  * @param Count -- Number of blocks to be freed
  */
@@ -350,8 +402,8 @@ void AuPmmngrFreeBlocks(void* Addr, int Count) {
 }
 
 
-/*
- * P2V -- Physical to Virtual conversion
+/**
+ * @brief P2V -- Physical to Virtual conversion
  * @param addr -- Address to convert
  */
 uint64_t P2V(uint64_t addr) {
@@ -361,8 +413,8 @@ uint64_t P2V(uint64_t addr) {
 		return addr;
 }
 
-/*
- * V2P -- Virtual to Physical conversion
+/**
+ * @brief V2P -- Virtual to Physical conversion
  * @param vaddr -- Address to convert
  */
 uint64_t V2P(uint64_t vaddr) {
@@ -372,28 +424,89 @@ uint64_t V2P(uint64_t vaddr) {
 		return vaddr;
 }
 
-/*
-* AuPmmngrMoveHigher -- moves the kernel to higher half
+/**
+* @brief AuPmmngrMoveHigher -- moves the kernel to higher half
 * of memory
 */
 void AuPmmngrMoveHigher() {
 	_HigherHalf = true;
 	BitmapBuffer = (uint8_t*)P2V((uint64_t)BitmapBuffer);
+	page_desc = (AuPageDesc*)P2V((uint64_t)page_desc);
 }
 
-/*
- * AuPmmngrGetFreeMem -- returns the total free amount
+/**
+ * @brief AuPmmngrGetFreeMem -- returns the total free amount
  * of RAM
  */
 uint64_t AuPmmngrGetFreeMem() {
 	return _FreeMemory;
 }
 
-/*
- * AuPmmngrGetTotalMem -- returns the total amount of
+/**
+ * @brief AuPmmngrGetUsedMem -- return total used page count
+ */
+uint64_t AuPmmngrGetUsedMem() {
+	return _UsedMemory;
+}
+
+/**
+ * @brief AuPmmngrGetTotalMem -- returns the total amount of
  * RAM
  */
 uint64_t AuPmmngrGetTotalMem() {
 	return _TotalRam;
 }
 
+/**
+ * @brief AuPmmngrAddRefcount -- increment reference count
+ * of given page
+ * @param physaddr -- Physical address to increase reference
+ * count of
+ * @param count -- number of count to increase
+ */
+void AuPmmngrAddRefcount(uint64_t physaddr, uint16_t count) {
+	page_desc[physaddr >> PAGE_SHIFT].refcount += count;
+}
+
+/**
+ * @brief AuPmmngrGetRefcount -- returns the number of 
+ * reference count for given physical address
+ * @param physaddr -- physical address to check for reference
+ * count
+ * @return number of reference count
+ */
+uint16_t AuPmmngrGetRefcount(uint64_t physaddr) {
+	return page_desc[physaddr >> PAGE_SHIFT].refcount;
+}
+
+/**
+ * @brief AuPmmngrGetPageDesc -- return the correct
+ * page descriptor of given physical address
+ * @param physaddr -- physical address number
+ */
+AuPageDesc* AuPmmngrGetPageDesc(uint64_t physaddr) {
+	return &page_desc[physaddr >> PAGE_SHIFT];
+}
+
+/**
+ * @brief AuPmmngrSetPageType -- set page type
+ * @param physaddr -- Physical address to treat
+ * @param flags -- type flags
+ */
+void AuPmmngrSetPageType(uint64_t physaddr,uint8_t flags) {
+
+	/** check if page is kernel or dma, if yes then 
+	 * normal bit should be removed, because kernel
+	 * will treat kernel or dma pages differently
+	 */
+	if (flags & AURORA_PAGE_KERNEL)
+		flags &= ~AURORA_PAGE_NORMAL;
+	if (flags & AURORA_PAGE_DMA)
+		flags &= ~AURORA_PAGE_NORMAL;
+	page_desc[physaddr >> PAGE_SHIFT].page_type = flags;
+}
+
+void AuPmmngrDebugInfo() {
+	AuTextOut("Total ram page : %d --- %d GB \r\n", _TotalRam, (_TotalRam / 1024 / 1024 / 1024));
+	AuTextOut("UsablePhysical Start : %x \r\n", UsablePhysicalMemory);
+}

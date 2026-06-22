@@ -1,4 +1,6 @@
 /**
+* @file initrd.c
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2023, Manas Kamal Choudhury
@@ -48,8 +50,8 @@ uint64_t ramdisk_end;
 
 #define RAMDISK_MAPPING_START 0xFFFFC00000900000
 
-/*
- * AuRamdiskRead -- read data from ramdisk
+/**
+ * @brief AuRamdiskRead -- read data from ramdisk
  * @param lba -- LBA address
  * @param count -- number of sectors to read
  * @param buffer -- Pointer to buffer to write to
@@ -58,13 +60,14 @@ void AuRamdiskRead(uint64_t lba, size_t count, uint8_t* buffer) {
 	uint64_t offset = lba * RAMDISK_SECTOR_SIZE;
 	if (ramdisk_start + offset + (RAMDISK_SECTOR_SIZE * count) > ramdisk_end)
 		return;
+
 	const uint8_t* src = (const uint8_t*)(ramdisk_start + offset);
 	for (int i = 0; i < RAMDISK_SECTOR_SIZE * count; i++)
 		buffer[i] = src[i];
 }
 
-/*
- * AuRamdiskWrite -- write data to ramdisk
+/**
+ * @brief AuRamdiskWrite -- write data to ramdisk
  * @param lba -- LBA address
  * @param count -- number of sectors to write
  * @param buffer -- Pointer to buffer from write to 
@@ -87,19 +90,19 @@ int AuRamdiskWriteCallback(AuVDisk* vdisk, uint64_t lba, uint32_t count, uint64_
 	AuRamdiskWrite(vdisk->startingLBA + lba, count, (uint8_t*)buffer);
 	return (count * RAMDISK_SECTOR_SIZE);
 }
-/*
- * AuInitrdInitialize -- initialize ramdisk 
+/**
+ * @brief AuInitrdInitialize -- initialize ramdisk 
  * @param info -- Pointer to Kernel Boot information
  */
 void AuInitrdInitialize(KERNEL_BOOT_INFO* info) {
 	if (info->boot_type == BOOT_LITTLEBOOT_ARM64) {
 		AuLittleBootProtocol* lb = (AuLittleBootProtocol*)info->driver_entry1;
 		if (!lb) {
-			AuTextOut("[aurora]: initrd initialization failed !! invalid Littleboot protocol\n");
+			AuTextOut("[aurora]: initrd initialization failed !! invalid Littleboot protocol \r\n");
 			return;
 		}
-		ramdisk_start = lb->initrd_start;
-		ramdisk_end = lb->initrd_end;
+		ramdisk_start = P2V(lb->initrd_start);
+		ramdisk_end = P2V(lb->initrd_end);
 	}
 	else {
 		/* NOTE: Ramdisk is loaded by bootloader itself into EfiBootServiceData,
@@ -115,17 +118,18 @@ void AuInitrdInitialize(KERNEL_BOOT_INFO* info) {
 	}
 
 	if (ramdisk_start == 0) {
-		AuTextOut("[aurora]: ramdisk failed to initialize \n");
+		AuTextOut("[aurora]: ramdisk failed to initialize \r\n");
 		return;
 	}
-	/* okay before full initialization, we need to grab all the
+	/** okay before full initialization, we need to grab all the
 	 * physical address from the ramdisk pointer and map it to
 	 * kernel higher half address
 	 */
+	AuTextOut("Loading ramdisc : %x \r\n", ramdisk_start);
 	char* diskpath = (char*)kmalloc(32);
 	memset(diskpath, 0, 32);
 	AuVDiskCreateStorageFile(diskpath);
-
+	
 	AuVDisk* disk = AuCreateVDisk();
 	strcpy(disk->diskname, "XERamdisc");
 	disk->data = NULL;
@@ -155,8 +159,8 @@ void AuInitrdInitialize(KERNEL_BOOT_INFO* info) {
 	AuVFSNode* dev = AuVFSFind("/dev");
 	AuDevFSAddFile(dev, diskpath, file);
 
-	AuTextOut("[aurora]: ramdisk mounted at %s full path : %s \n", diskpath, disk->diskPath);
+	AuTextOut("[aurora]: ramdisk mounted at %s full path : %s \r\n", diskpath, disk->diskPath);
 	/* Mount FAT as root file system temporarily */
-	FatInitialise(disk, "/");
-	AuTextOut("[aurora]: ramdisk initialized successfully \n");
+	//FatInitialise(disk, "/");
+	AuTextOut("[aurora]: ramdisk initialized successfully \r\n");
 }

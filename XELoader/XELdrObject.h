@@ -32,18 +32,19 @@
 
 #include <stdint.h>
 
-#pragma pack(push,1)
+//#pragma pack(push,1)
 typedef struct _XELDR_OBJ_ {
-    char* objname;
+    char *objname;
 	bool loaded;
 	bool linked;
 	uint32_t len;
 	size_t load_addr;
 	size_t entry_addr;
-	_XELDR_OBJ_ *next;
-	_XELDR_OBJ_* prev;
+	struct _XELDR_OBJ_ *next;
+	struct _XELDR_OBJ_* prev;
 }XELoaderObject;
-#pragma pack(pop)
+//#pragma pack(pop)
+
 
 /*
 * XELdrInitObjectList -- initialise the object

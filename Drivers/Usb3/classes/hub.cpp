@@ -32,7 +32,7 @@
 #include <Mm/vmmngr.h>
 #include <string.h>
 #include <aucon.h>
-#include <Hal\serial.h>
+#include <Hal/serial.h>
 #include <_null.h>
 
 void HUBSetPortFeature(USBDevice* dev, XHCISlot* slot, uint8_t feature, uint8_t port) {

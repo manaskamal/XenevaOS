@@ -29,9 +29,9 @@
 
 #include <stdlib.h>
 #include <ctype.h>
-#include <sys\_heap.h>
-#include <sys\_keproc.h>
-#include <sys\utf.h>
+#include <sys/_heap.h>
+#include <sys/_keproc.h>
+#include <sys/utf.h>
 #include <string.h>
 #include <stdarg.h>
 #include <limits.h>
@@ -443,5 +443,10 @@ int atexit(void(*func)(void)) {
 void abort(void) {
 	_KeProcessExit();
 	while (1);
+}
+
+int system(const char* command) {
+	//NOT IMPLEMENTED YET
+	return 0;
 }
 

@@ -1,4 +1,6 @@
 /**
+* @file dtb.h
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2025, Manas Kamal Choudhury
@@ -53,75 +55,75 @@ typedef struct _fdt_prop_ {
     uint8_t value[];
 }fdt_property_t;
 
-/*
- * AuDTBSwap32 -- swaps 32 bit value
+/**
+ * @brief AuDTBSwap32 -- swaps 32 bit value
  * @param from -- value to swap
  */
 AU_EXTERN AU_EXPORT uint32_t AuDTBSwap32(uint32_t from);
 
 
-/*
- * AuDTBSwap64 -- swaps 64 bit value
+/**
+ * @brief AuDTBSwap64 -- swaps 64 bit value
  * @param from -- value to swap
  */
 AU_EXTERN AU_EXPORT uint64_t AuDTBSwap64(uint64_t from);
 
-/*
- * AuDTBSwap16 -- swaps 16 bit value
+/**
+ * @brief AuDTBSwap16 -- swaps 16 bit value
  * @param from -- value to swap
  */
 AU_EXTERN AU_EXPORT uint16_t AuDTBSwap16(uint16_t from);
-/*
- * AuDeviceTreeFindProperty -- searches for a property within a node
+/**
+ * @brief AuDeviceTreeFindProperty -- searches for a property within a node
  * @param node -- Pointer to node offset
  * @param property -- Property name
  */
 AU_EXTERN AU_EXPORT uint32_t* AuDeviceTreeFindProperty(uint32_t* node, const char* property);
 
-/*
- * AuDeviceTreeGetNode -- searches and get the offset of the node
+/**
+ * @brief AuDeviceTreeGetNode -- searches and get the offset of the node
  * @param name -- Node name
  */
 AU_EXTERN AU_EXPORT uint32_t* AuDeviceTreeGetNode(const char* name);
 
-/*
- * AuDeviceTreeGetAddressCells -- get the value from address cells
+/**
+ * @brief AuDeviceTreeGetAddressCells -- get the value from address cells
  * property
  * @param node -- Pointer to node
  */
 AU_EXTERN AU_EXPORT uint32_t AuDeviceTreeGetAddressCells(uint32_t* node);
 
-/*
- * AuDeviceTreeGetSizeCells -- get the value from size cells
+/**
+ * @brief AuDeviceTreeGetSizeCells -- get the value from size cells
  * property
  * @param node -- Pointer to node
  */
 AU_EXTERN AU_EXPORT uint32_t AuDeviceTreeGetSizeCells(uint32_t* node);
 
-/*
- * AuDeviceTreeGetRegAddress -- get the MMIO address from reg property
+/**
+ * @brief AuDeviceTreeGetRegAddress -- get the MMIO address from reg property
  * @param node -- Pointer to parent node
  * @param addressCell -- size of address cell
  */
 AU_EXTERN AU_EXPORT uint64_t AuDeviceTreeGetRegAddress(uint32_t* node, uint32_t addressCell);
 
-/*
- * AuDeviceTreeGetRegSize -- get the size value from reg property
+/**
+ * @brief AuDeviceTreeGetRegSize -- get the size value from reg property
  * @param node -- Pointer to parent node
  * @param addressCell -- size of address cell
  * @param sizeCell -- value of size cell
  */
 AU_EXTERN AU_EXPORT uint64_t AuDeviceTreeGetRegSize(uint32_t* node, uint32_t addressCell, uint32_t sizeCell);
-/*
- * AuDeviceTreeInitialize -- initialize the device tree
+/**
+ * @brief AuDeviceTreeInitialize -- initialize the device tree
  * @param fdt_address -- device tree address passed by
  * bootloader
  */
 extern void AuDeviceTreeInitialize(KERNEL_BOOT_INFO* info);
 
 
-/*
- * AuDeviceTreeMapMMIO -- Maps the physical device tree address
+/**
+ * @brief AuDeviceTreeMapMMIO -- Maps the physical device tree address
  * to MMIO address range
  */
 extern void AuDeviceTreeMapMMIO();

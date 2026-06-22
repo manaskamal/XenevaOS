@@ -30,17 +30,17 @@
 #include <stdint.h>
 #include <_xeneva.h>
 #include <stdio.h>
-#include <sys\_keproc.h>
-#include <sys\_kefile.h>
-#include <sys\iocodes.h>
+#include <sys/_keproc.h>
+#include <sys/_kefile.h>
+#include <sys/iocodes.h>
 #include <chitralekha.h>
-#include <widgets\base.h>
-#include <widgets\button.h>
-#include <widgets\window.h>
-#include <widgets\menu.h>
+#include <widgets/base.h>
+#include <widgets/button.h>
+#include <widgets/window.h>
+#include <widgets/menu.h>
 #include <keycode.h>
-#include <widgets\menubar.h>
-#include <widgets\msgbox.h>
+#include <widgets/menubar.h>
+#include <widgets/msgbox.h>
 #include <string.h>
 #include <stdlib.h>
 #include "calculator.h"
@@ -50,9 +50,9 @@ ChWindow* mainWin;
 ChFont* dispFont;
 CalculatorDisplay* mainDisp;
 
-#define CALCULATOR_BACK_COLOR 0xFF353535
-#define CALC_DISPLAY_DARK 0xFF6598DE
-#define CALC_DISPLAY_LIGHT 0xFF8BADDC
+#define CALCULATOR_BACK_COLOR 0xBF353535
+#define CALC_DISPLAY_DARK 0xBF6598DE
+#define CALC_DISPLAY_LIGHT 0xBF8BADDC
 
 
 
@@ -171,7 +171,7 @@ void CalculatorProcess(CalculatorDisplay* calc) {
 	int num2 = atoi(calc->inputnum);
 	calc->num2 = num2;
 	int result = 0;
-	if (calc->num1 > 0) {
+	if (calc->operator_ != 0) {
 		int num1 = calc->num1;
 		switch (calc->operator_) {
 		case CALC_OPERATOR_ADD:
@@ -226,9 +226,9 @@ void CalculatorProcess(CalculatorDisplay* calc) {
 void CalcAddDigit(CalculatorDisplay* disp, int number){
 	if (number > 9)
 		return;
-	char num[1];
+	char num[16];
 	itoa_s(number, 10, num);
-	if (disp->inputidx == 1024)
+	if (disp->inputidx >= 1023)
 		return;
 	disp->inputnum[disp->inputidx] = num[0];
 	disp->inputidx++;
@@ -335,6 +335,20 @@ void WindowHandleMessage(PostEvent *e) {
 									 memset(e, 0, sizeof(PostEvent));
 									 break;
 	}
+	case DEODHAI_REPLY_TOUCH_EVENT: {
+		int handle = e->dword4;
+		if (e->dword5 == WINDOW_HANDLE_TYPE_NORMAL) {
+			ChWindow* mouseWin = ChGetWindowByHandle(mainWin, handle);
+			ChWindowHandleTouch(mouseWin, e->dword, e->dword2, e->dword3);
+		}
+		else if (e->dword5 == WINDOW_HANDLE_TYPE_POPUP) {
+
+			ChWindow* pw = ChGetPopupWindowByHandle(mainWin, handle);
+			//ChPopupWindowHandleTouch(pw, e->dword, e->dword2, e->dword3);
+		}
+		memset(e, 0, sizeof(PostEvent));
+	}
+
 	case DEODHAI_REPLY_FOCUS_CHANGED:{
 										 int focus_val = e->dword;
 										 int handle = e->dword2;
@@ -474,12 +488,14 @@ void PopupWindowMouseEventTest(ChWidget* widget, ChWindow* win, int x, int y, in
 */
 int main(int argc, char* argv[]){
 
-	if (strcmp(argv[0], "-about") == 0)
-		printf("Calculator v1.0 for Xeneva OS \n");
+	/*if (strcmp(argv[0], "-about") == 0)
+		printf("Calculator v1.0 for Xeneva OS \n");*/
 
 	app = ChitralekhaStartApp(argc, argv);
-	mainWin = ChCreateWindow(app, WINDOW_FLAG_MOVABLE, "Calculator", 400,100, 380, 
+	_KePrint("Chitralekha app started \r\n");
+	mainWin = ChCreateWindow(app, WINDOW_FLAG_MOVABLE, "Calculator", 400,480/2 - 400/2, 380, 
 		400);
+	_KePrint("Window is created \r\n");
 	mainWin->color = CALCULATOR_BACK_COLOR;
 	for (int i = 0; i < mainWin->GlobalControls->pointer; i++) {
 		ChWinGlobalControl *ctl = (ChWinGlobalControl*)list_get_at(mainWin->GlobalControls, i);
@@ -490,9 +506,11 @@ int main(int argc, char* argv[]){
 		}
 	}
 
+
 	ChWindowBroadcastIcon(app, "/icons/calc.bmp");
 
-	dispFont = ChInitialiseFont(CALIBRI);
+
+	dispFont = ChInitialiseFont(FORTE);
 
 
 	mainDisp = CalcCreateDisplay(10,40, mainWin->info->width - 10*2 - CHITRALEKHA_WINDOW_DEFAULT_PAD_X, 75);
@@ -501,6 +519,7 @@ int main(int argc, char* argv[]){
 	ChWindowAddWidget(mainWin, (ChWidget*)mainDisp);
 	/* button grid */
 	ChWindowPaint(mainWin);
+
 
 	PostEvent e;
 	memset(&e, 0, sizeof(PostEvent));

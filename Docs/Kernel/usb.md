@@ -1,14 +1,14 @@
-# USB System in Xeneva
+# USB System in XenevaOS
 
-The USB system in Xeneva is designed with modularity and flexibility in mind, which allows the communication between higher-level applications with USB devices and the Kernel with USB devices. The system is composed of three different layer running separately from each other: the __Host Controller Driver__, the __Core USB Driver__ and the __USB Class Drivers__. Each components are loaded separately by the kernel as module to ensure clean separation and ease of development.
+The USB subsystem in XenevaOS is designed with modularity and flexibility in mind, allowing communication between higher-level applications and USB devices, as well as between the kernel and USB devices. The system is composed of three different layers running separately from each other: the __Host Controller Driver__, the __Core USB Driver__, and the __USB Class Drivers__. Each component is loaded separately by the kernel as a module to ensure clean separation and ease of development.
 
 ## Architecture Overview
 
-- **Host Controller Driver** : Host Controller Driver is responsible for directly interacting with the hardware. It handles tasks such as initializing the controller itself, managing port attach and dettach events, managing endpoint descriptors and transferring data to and from the USB devices to USB class drivers. This driver is separate from the USB core driver to maintain a clean abstraction layer.
+- **Host Controller Driver**: The Host Controller Driver is responsible for directly interacting with the hardware. It handles tasks such as initializing the controller, managing port attach and detach events, managing endpoint descriptors, and transferring data between USB devices and USB class drivers. This driver is separate from the USB core driver to maintain a clean abstraction layer.
 
-- **USB Core Driver** : The USB core driver acts as a glue layer between the USB class drivers and the host controller driver. It manages device enumeration, commnication protocols, and standard USB operations. When a class driver requests a USB operation, the USB core driver forwards these request to the appropriate host controller driver (e.g. xHCI).
+- **USB Core Driver**: The USB core driver acts as a glue layer between the USB class drivers and the host controller driver. It manages device enumeration, communication protocols, and standard USB operations. When a class driver requests a USB operation, the USB core driver forwards these requests to the appropriate host controller driver (e.g., xHCI).
 
-- **USB Class Driver** : USB class drivers implement functionalities specific to certain types of USB devices, such as mass storage devices, keyboards, or audio peripherals. These drivers rely on the USB core driver for performing operations like data transfers or sending control requests.
+- **USB Class Drivers**: USB class drivers implement functionality specific to certain types of USB devices, such as mass storage devices, keyboards, or audio peripherals. These drivers rely on the USB core driver for performing operations like data transfers or sending control requests.
 
 ## USB Device Structure
 
@@ -43,7 +43,6 @@ typedef struct _usb_dev_ {
 	usb_drv_unload ClassUnload;
 }AuUSBDevice;
 #pragma pack(pop)
-}
 ```
 
-USB device struct is the main structure through which communication between USB class driver, USB core driver and USB host controller take place. Whenever new USB device connection happens in host controller, the host controller initializes the device and allocates a new USB device struct for being used by Core driver and class driver. 
+The `AuUSBDevice` structure is the primary interface through which communication between the USB class drivers, the USB core driver, and the USB host controllers takes place. Whenever a new USB device connection is detected, the host controller initializes the device and allocates a new `AuUSBDevice` structure for use by the Core driver and class drivers.

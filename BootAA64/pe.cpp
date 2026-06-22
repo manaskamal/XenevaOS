@@ -28,10 +28,12 @@
 **/
 
 #include "pe.h"
+#include <aurora.h>
 #include "clib.h"
 #include "physm.h"
 #include "xnout.h"
 #include "paging.h"
+#include "uart0.h"
 
 static void copy_mem(void* dst, void* src, size_t length) {
 	uint8_t* dstp = (uint8_t*)dst;
@@ -52,38 +54,49 @@ static void zero_mem(void* dst, size_t length) {
  * @param filebuff -- pointer to the pe kernel buffer
  */
 void XEPELoadImage(void* filebuff) {
+	
 	uint8_t* filebuf = (uint8_t*)filebuff;
 
 	PIMAGE_DOS_HEADER dosHeader = (PIMAGE_DOS_HEADER)filebuf;
 	PIMAGE_NT_HEADERS ntHeaders = raw_offset<PIMAGE_NT_HEADERS>(dosHeader, dosHeader->e_lfanew);
+	
 
 	PSECTION_HEADER sectionHeader = raw_offset<PSECTION_HEADER>(&ntHeaders->OptionalHeader, ntHeaders->FileHeader.SizeOfOptionaHeader);
 	size_t ImageBase = 0xFFFFC00000000000;// 0xFFFFFFFC00000000;
 	void* ImBase = (void*)ImageBase;
 
+	paddr_t phys = XEPmmngrAllocate();
 
-	XEPagingMap(0xFFFFC00000000000, XEPmmngrAllocate());
+	XEPagingMap(ImageBase, phys);
+
+	XEUARTPrint("Paging mapped : %x -- %x \r\n", ImageBase, phys);
+	
 	copy_mem((void*)ImBase, filebuf, ntHeaders->OptionalHeader.SizeOfHeaders);
 
+	XEUARTPrint("Copied first 4KiB \r\n");
+	
 	for (size_t i = 0; i < ntHeaders->FileHeader.NumberOfSections; ++i) {
-		CHAR16 buf[9];
-		copy_mem(buf, sectionHeader[i].Name, 8);
-		buf[8] = 0;
+		//CHAR16 buf[9];
+		//copy_mem(buf, sectionHeader[i].Name, 8);
+		//ASCIIToChar16(sectionHeader[i].Name,(wchar_t*)buf);
+		//buf[8] = 0;
 		size_t load_addr = ImageBase + sectionHeader[i].VirtualAddress;
 		void* sect_addr = (void*)load_addr;
+		
 		size_t sectsz = sectionHeader[i].VirtualSize;
-		int req_pages = sectsz / 4096 +
-			((sectsz % 4096) ? 1 : 0);
+		size_t aligned_addr = load_addr & ~0xFFFULL;
+		int req_pages = (sectsz + (load_addr & 0xFFF)) / 4096 +
+			(((sectsz + (load_addr & 0xFFF)) % 4096) ? 1 : 0);
 		uint64_t* block = 0;
 		for (int j = 0; j < req_pages; j++) {
-			uint64_t alloc = (load_addr + j * PAGESIZE);
-			XEPagingMap(alloc, XEPmmngrAllocate());
-			memset((void*)alloc, 0, 4096);
+			uint64_t alloc = (aligned_addr + j * PAGESIZE);
+			if (!XEPagingIsMapped(alloc)) {
+				XEPagingMap(alloc, XEPmmngrAllocate());
+				memset((void*)alloc, 0, 4096);
+			}
 			if (!block)
 				block = (uint64_t*)alloc;
-
 		}
-		//XEGuiPrint("Section name -> %s %x\n", sectionHeader[i].Name, load_addr);
 
 		copy_mem(sect_addr, raw_offset<void*>(filebuf, sectionHeader[i].PointerToRawData), sectionHeader[i].SizeOfRawData);
 		if (sectionHeader[i].VirtualSize > sectionHeader[i].SizeOfRawData)

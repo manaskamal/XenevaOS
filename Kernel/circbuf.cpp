@@ -28,7 +28,7 @@
 **/
 
 #include <circbuf.h>
-#include <Mm\kmalloc.h>
+#include <Mm/kmalloc.h>
 
 /*
  * AuAdvancePointer -- advances the pointer

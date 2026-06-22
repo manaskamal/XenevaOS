@@ -30,7 +30,7 @@
 #include "view.h"
 #include "scrollpane.h"
 #include <math.h>
-#include "sys\_keproc.h"
+#include "sys/_keproc.h"
 
 extern void ChDefaultListViewPainter(ChWidget* wid, ChWindow* win);
 
@@ -48,7 +48,11 @@ void ChListViewMouseEvent(ChWidget* widget, ChWindow* win, int x, int y, int but
 			if (lv->scrollpane->wid.ChPaintHandler)
 				lv->scrollpane->wid.ChPaintHandler((ChWidget*)lv->scrollpane, win);
 			_view_update = true;
+#ifdef ARCH_X64
 			_KeProcessSleep(100);
+#elif ARCH_ARM64
+			_KeProcessSleep(1);
+#endif
 		}
 	}
 
@@ -61,7 +65,11 @@ void ChListViewMouseEvent(ChWidget* widget, ChWindow* win, int x, int y, int but
 			if (lv->scrollpane->wid.ChPaintHandler)
 				lv->scrollpane->wid.ChPaintHandler((ChWidget*)lv->scrollpane, win);
 			_view_update = true;
+#ifdef ARCH_X64
 			_KeProcessSleep(100);
+#elif ARCH_ARM64
+			_KeProcessSleep(1);
+#endif
 		}
 	}
 
@@ -270,10 +278,14 @@ void ChListViewRepaint(ChWindow* win, ChListView* lv) {
 		lv->scrollpane->wid.ChPaintHandler((ChWidget*)lv->scrollpane, win);
 	ChWindowUpdate(win, lv->scrollpane->vScrollBar.bar_x, lv->scrollpane->vScrollBar.bar_y, lv->scrollpane->vScrollBar.bar_w,
 		lv->scrollpane->vScrollBar.bar_h, 0, 1);
+#ifdef ARCH_X64
 	_KeProcessSleep(30);
+#endif
 	ChWindowUpdate(win, lv->scrollpane->hScrollBar.bar_x, lv->scrollpane->hScrollBar.bar_y, lv->scrollpane->hScrollBar.bar_w,
 		lv->scrollpane->hScrollBar.bar_h, 0, 1);
+#ifdef ARCH_X64
 	_KeProcessSleep(30);
+#endif
 	if (lv->wid.ChPaintHandler)
 		lv->wid.ChPaintHandler((ChWidget*)lv, win);
 	ChWindowUpdate(win, lv->wid.x, lv->wid.y, lv->wid.w, lv->wid.h, 0, 1);

@@ -1,0 +1,34 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="surface.cpp" />
+    <ClCompile Include="cursor.cpp" />
+    <ClCompile Include="dirty.cpp" />
+    <ClCompile Include="backdirty.cpp" />
+    <ClCompile Include="window.cpp" />
+    <ClCompile Include="clip.cpp" />
+    <ClCompile Include="rect.cpp" />
+    <ClCompile Include="animation.cpp" />
+    <ClCompile Include="alpha.cpp" />
+    <ClCompile Include="compose.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="crt_arm64.s" />
+    <CustomBuild Include="_fastcpy_arm64.s" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="deodxr.h" />
+    <ClInclude Include="_fastcpy.h" />
+    <ClInclude Include="surface.h" />
+    <ClInclude Include="cursor.h" />
+    <ClInclude Include="dirty.h" />
+    <ClInclude Include="backdirty.h" />
+    <ClInclude Include="window.h" />
+    <ClInclude Include="clip.h" />
+    <ClInclude Include="rect.h" />
+    <ClInclude Include="animation.h" />
+    <ClInclude Include="alpha.h" />
+    <ClInclude Include="compose.h" />
+  </ItemGroup>
+</Project>

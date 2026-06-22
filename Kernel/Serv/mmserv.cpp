@@ -27,14 +27,14 @@
 *
 **/
 
-#include <Mm\shm.h>
-#include <Mm\vmmngr.h>
-#include <Mm\pmmngr.h>
+#include <Mm/shm.h>
+#include <Mm/vmmngr.h>
+#include <Mm/pmmngr.h>
 #include <_null.h>
-#include <Mm\kmalloc.h>
+#include <Mm/kmalloc.h>
 #include <aucon.h>
-#include <Hal\x86_64_lowlevel.h>
-#include <Hal\serial.h>
+#include <Hal/x86_64_lowlevel.h>
+#include <Hal/serial.h>
 
 /* ============================================================
  *  Shared Memory

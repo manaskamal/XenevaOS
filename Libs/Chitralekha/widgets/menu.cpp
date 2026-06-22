@@ -28,8 +28,8 @@
 **/
 
 #include "menu.h"
-#include "..\font.h"
-#include <sys\_keproc.h>
+#include "../font.h"
+#include <sys/_keproc.h>
 
 /**
  * TODO : Needs reimplementation of menu widgets

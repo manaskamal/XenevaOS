@@ -30,7 +30,7 @@
 #include "scrollpane.h"
 #include <stdlib.h>
 #include <math.h>
-#include <sys\_keproc.h>
+#include <sys/_keproc.h>
 
 /*
 * ChDefaultScrollPanePainter -- default scroll pane painter
@@ -53,11 +53,20 @@ void ChDefaultScrollPaneMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, i
 		if (!sp->scrollableView)
 			ChWindowUpdate(win, sp->vScrollBar.bar_x, sp->vScrollBar.bar_y, sp->vScrollBar.bar_w, sp->vScrollBar.bar_h, 0, 1);
 
+#ifdef ARCH_X64
 		_KeProcessSleep(100);
+#elif ARCH_ARM64
+		_KeProcessSleep(1);
+#endif
 
 		if (sp->scrollableView)
 			sp->scrollableView->ChScrollEvent(sp->scrollableView, win, sp->vScrollBar.thumb_posy, CHITRALEKHA_SCROLL_TYPE_VERTICAL);
+
+#ifdef ARCH_X64
 		_KeProcessSleep(200);
+#elif ARCH_ARM64
+		_KeProcessSleep(1);
+#endif
 	}
 
 	if (button == DEODHAI_MOUSE_MSG_SCROLL_DOWN) {
@@ -78,11 +87,20 @@ void ChDefaultScrollPaneMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, i
 		if (!sp->scrollableView)
 			ChWindowUpdate(win, sp->vScrollBar.bar_x, sp->vScrollBar.bar_y, sp->vScrollBar.bar_w, sp->vScrollBar.bar_h, 0, 1);
 
+#ifdef ARCH_X64
 		_KeProcessSleep(100);
+#elif ARCH_ARM64
+		_KeProcessSleep(1);
+#endif
 
 		if (sp->scrollableView)
 			sp->scrollableView->ChScrollEvent(sp->scrollableView, win, sp->vScrollBar.thumb_posy, CHITRALEKHA_SCROLL_TYPE_VERTICAL);
+
+#ifdef ARCH_X64
 		_KeProcessSleep(200);
+#elif ARCH_ARM64
+		_KeProcessSleep(1);
+#endif
 	}
 
 
@@ -159,7 +177,11 @@ void ChDefaultScrollPaneMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, i
 			 * alternative solution is: we can use bitmap fonts for rendering
 			 * fast widgets
 			 */
+#ifdef ARCH_X64
 			_KeProcessSleep(200);
+#elif ARCH_ARM64
+			_KeProcessSleep(1);
+#endif
 		}
 	}
 
@@ -215,7 +237,11 @@ void ChDefaultScrollPaneMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, i
 			 * alternative solution : we can use bitmap fonts for
 			 * rendering fast widgets
 			 */
+#ifdef ARCH_X64
 			_KeProcessSleep(200);
+#elif ARCH_ARM64
+			_KeProcessSleep(1);
+#endif
 		}
 
 	}

@@ -31,9 +31,8 @@
 #include "xnldr.h"
 #include "clib.h"
 #include "video.h"
+#include "uart0.h"
 
-
-typedef unsigned char* va_list;
 
 /*
  * XEClearScreen -- clears the screen
@@ -87,7 +86,7 @@ void XEPutChar(const int ch) {
 	gSystemTable->ConOut->OutputString(gSystemTable->ConOut, text);
 }
 
-extern "C" void store_x0_x7(uint64_t * buffer);
+#include <stdarg.h>
 
 /*
  * XEPrintf -- print function that will
@@ -95,11 +94,10 @@ extern "C" void store_x0_x7(uint64_t * buffer);
  * @param fmt -- format to print
  */
 int XEPrintf(wchar_t* fmt, ...) {
-	uint64_t buffer[7];
-	store_x0_x7(buffer);
-	va_list vl = (va_list)buffer;//((uint8_t*)&fmt + sizeof(size_t*));
+	va_list vl;
+	va_start(vl, fmt);
 
-	unsigned short out[1024];
+	unsigned short out[256];
 	int o = 0;
 	int c, sign, width, precision, lmodifier;
 	unsigned char ljust, alt, lzeroes;
@@ -148,7 +146,7 @@ int XEPrintf(wchar_t* fmt, ...) {
 			}
 		}
 		else if (c == '*') {
-			width = *(int*)vl; vl += sizeof(int);
+			width = va_arg(vl, int);
 			if (width < 0) {
 				ljust = TRUE;
 				lzeroes = FALSE;
@@ -164,8 +162,7 @@ int XEPrintf(wchar_t* fmt, ...) {
 				gSystemTable->ConOut->OutputString(gSystemTable->ConOut, out);
 				o = 0;
 			}
-			/**uint32 attr = *(unsigned long*)vl;
-			vl += sizeof(unsigned long);**/
+			/**uint32 attr = va_arg(vl, unsigned long);**/
 			XESetTextAttribute(0x000000F0, 0x0000000F); //attr &
 			continue;
 		}
@@ -194,7 +191,7 @@ int XEPrintf(wchar_t* fmt, ...) {
 				}
 			}
 			else if (c == '*') {
-				precision = *(int*)vl; vl += sizeof(int);
+				precision = va_arg(vl, int);
 				if ((c = *fmt++) == '\0')
 					return -1;
 			}
@@ -221,7 +218,7 @@ int XEPrintf(wchar_t* fmt, ...) {
 			return -1;
 
 		if (c == 'c') {
-			int ch = (uint8_t) * (int*)vl; vl += sizeof(int);
+			int ch = (uint8_t)va_arg(vl, int);
 			if (!ljust)
 				while (width > 1) {
 					out[o++] = ' ';
@@ -238,7 +235,7 @@ int XEPrintf(wchar_t* fmt, ...) {
 		}
 		else if (c == 's') {
 			int len, i;
-			wchar_t* s = *(wchar_t**)vl; vl += sizeof(wchar_t*);
+			wchar_t* s = va_arg(vl, wchar_t*);
 
 			if (precision < 0)
 				len = wstrlen(s);
@@ -269,7 +266,7 @@ int XEPrintf(wchar_t* fmt, ...) {
 			continue;
 		}
 		else {
-			unsigned v = *(unsigned*)vl, tmp;
+			unsigned v = va_arg(vl, unsigned), tmp;
 			char s[11];
 			char* p = s + sizeof(s);
 			unsigned base = (c == 'p') ? 16 : 10;
@@ -277,7 +274,6 @@ int XEPrintf(wchar_t* fmt, ...) {
 			char* hexpfx = (char*)NULL;
 			int dcnt;
 			int len;
-			vl += sizeof(unsigned);
 
 			if (c == 'o')
 				base = 8;
@@ -370,20 +366,19 @@ int XEPrintf(wchar_t* fmt, ...) {
 	return 0;
 }
 
+extern bool _is_GraphicsEnabled();
 
 /*
  * XEGuiPrint -- print formated text using graphics
  * @param format -- formated string
  */
 void XEGuiPrint(const char* format, ...) {
-	/* Hacky, printf implementation, it doesn't automatically
-	 * store the registered in stack, rather in a shadow area
-	 * and i don't know how to access those
-	 */
-	uint64_t buffer[7];
-	store_x0_x7(buffer);
-
-	va_list args = (va_list)buffer;
+	if (!_is_GraphicsEnabled()) {
+		XEUARTPrint(format);
+		return;
+	}
+	va_list args;
+	va_start(args, format);
 	//va_start(args, format);
 	while (*format != '\0') {
 		if (*format == '%') {
@@ -401,14 +396,15 @@ void XEGuiPrint(const char* format, ...) {
 				char buffer[sizeof(size_t) * 8 + 1];
 				sztoa(i, buffer, 10);
 				size_t len = strlen(buffer);
-				while (len++ < width)
+				while (len++ < width) {
 					XEGraphicsPuts("0");
+				}
 				XEGraphicsPuts(buffer);
 			}
 			else if (*format == 'c') {
 
-				char c = va_arg(args, char);
-				XEGraphicsPutC(c);
+				int c = va_arg(args, int);
+				XEGraphicsPutC((char)c);
 			}
 			else if (*format == 'x') {
 				size_t x = va_arg(args, size_t);

@@ -2,8 +2,12 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="_init.cpp" />
+    <ClCompile Include="splash.cpp" />
   </ItemGroup>
   <ItemGroup>
     <NASM Include="crt0.asm" />
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="crt0arm64.s" />
   </ItemGroup>
 </Project>

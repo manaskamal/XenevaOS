@@ -1,20 +1,20 @@
 ## The Boot Process 
-Current versions of Xeneva follows simple boot steps to load the __'Kernel'__. From beginning itself, Xeneva boots under UEFI environment, where Xeneva has it's own bootloader, which prepares all the required steps for the kernel to boot properly. The required steps includes the _Memory Map_, _The Allocated Physical Memory Stack_ and _Boot Information struct_.
+Current versions of XenevaOS follow simple boot steps to load the __'Kernel'__. From the beginning, XenevaOS has booted under a UEFI environment, utilizing its own bootloader to prepare all the required steps for the kernel. These steps include setting up the _Memory Map_, _The Allocated Physical Memory Stack_, and _Boot Information Struct_.
 
 ## The Memory Map
-The Memory Map is a pointer to a buffer allocated by __XNLDR__ which includes all information related to __'EFI_MEMORY_DESCRIPTOR'__. Xeneva depends on EFI provided Memory Descriptor to get all the usable _'Physical Memory Blocks'_ excluding _Non Usable Memory_ blocks.<br><br>
-__Non Usable Memory Blocks__:  Non Usable Memory Blocks are regions of memory that the Operating System do not use for its regular operations. These regions are typically reserved for firmware, hardware, or other special purposes. Key types of non-usable memory blocks in EFI memory descriptors includes:
+The Memory Map is a pointer to a buffer allocated by __XNLDR__ which includes all information related to `EFI_MEMORY_DESCRIPTOR`. XenevaOS depends on the EFI-provided Memory Descriptor to obtain all usable _'Physical Memory Blocks'_ while excluding _Non-Usable Memory_ blocks.<br><br>
+__Non-Usable Memory Blocks__: Non-usable memory blocks are regions of memory that the operating system does not use for its regular operations. These regions are typically reserved for firmware, hardware, or other special purposes. Key types of non-usable memory blocks in EFI memory descriptors include:
 - __EfiReservedMemoryTypes__: This memory is reserved by the firmware.
-- __EfiLoaderCode and EfiLoaderData__: These regions are used by the firmware for storing code and data of the firmware itself. This regions are used during the boot process and should not be used by the Operating System.
+- __EfiLoaderCode and EfiLoaderData__: These regions are used by the firmware for storing its code and data. These regions are used during the boot process and should not be used by the operating system.
 - __EfiBootServicesCode and EfiBootServicesData__: These memory areas are used by UEFI boot services, which are no longer available once the OS has taken control.
 - __EfiRuntimeServicesCode and EfiRuntimeServicesData__: These regions are used by UEFI runtime services. Although they remain available after the OS has taken control, they are generally not usable for other purposes.
 - __EfiUnusableMemory__: This memory has been detected by the firmware as faulty and should not be used by the OS.
-- __EfiACPIReclaimMemory__: Memory that holds ACPI tables and an be reclaimed after the tables have been parsed by the OS.
+- __EfiACPIReclaimMemory__: Memory that holds ACPI tables and can be reclaimed after the tables have been parsed by the OS.
 - __EfiACPIMemoryNVS__: Non-volatile memory used by the firmware for storing ACPI information that should not be used by the OS.
 - __EfiMemoryMappedIO and EfiMemoryMappedIOPortSpace__: Memory-mapped I/O regions, including those used for memory mapped I/O devices and ports.
-- __Allocated Physical Memory for Kernel Code and Data__: This includes all the memory regions that is being used by the _XNLDR_ to load and the kernel and runtime drivers. This region also includes the _'Kernel Stack'_.
+- __Allocated Physical Memory for Kernel Code and Data__: This includes all the memory regions being used by _XNLDR_ to load the kernel and runtime drivers. This region also includes the _'Kernel Stack'_.
 
-The _'Allocated Physical Memory for Kernel Code and Data'_ is passed to the Kernel through dereferenced pointer operation along with number of allocated block count variable.<br>
+The _'Allocated Physical Memory for Kernel Code and Data'_ is passed to the kernel through a dereferenced pointer operation, along with the number of allocated blocks.<br>
 ```
 uint64_t allocated_blk_count = bootinfo->reserved_mem_count; 
 uint64_t* allocated_blk_stack = (uint64_t*)bootinfo->allocated_stack;
@@ -27,7 +27,7 @@ while(allocated_blk_count){
 The _'AuPmmngrLockPage'_ function is a kernel Physical Memory Manager function that marks a memory block as unusable.
 
 ## Boot Information Struct
-Xeneva has its own format of Boot Information that it expects to be passed as argument to the main entry of Kernel. The _'Boot Information Struct_ contains all the information for _Memory Management, UEFI GOP's framebuffer, Pointer to ACPI tables, formatted print function implemented by XNLDR and pointer to loaded runtime drivers memory area_. 
+XenevaOS has its own format of Boot Information that it expects to be passed as an argument to the main entry of the kernel. The _'Boot Information Struct'_ contains all the information for _Memory Management, UEFI GOP's framebuffer, pointers to ACPI tables, the formatted print function implemented by XNLDR, and pointers to loaded runtime drivers memory areas_. 
 
 ```
 /**
@@ -97,7 +97,7 @@ typedef struct _KERNEL_BOOT_INFO_ {
     /* multiprocessor initialisation code */
 	void*    apcode;
 
-    /* boot storage related informations */s  
+    /* boot storage related information */
 	uint32_t hid;
 	uint32_t uid;
 	uint32_t cid;
@@ -105,5 +105,5 @@ typedef struct _KERNEL_BOOT_INFO_ {
 #pragma pack(pop)
 ```
 File from _'BaseHdr/aurora.h'_ <br>
-Overall, the boot information passed by the bootloader to the kernel is crucial for the successful initialization and operation of the operating system. This information includes various parameters and settings that help the kernel understand the system's hardware and environment. The boot information ensures a smooth transition from the firmare/bootloader to a fully operational operating system. [More information can be find here](/Docs/Kernel/AboutKernel.md#technical-details-of-xeneva-kernel-boot-protocol).
+Overall, the boot information passed by the bootloader to the kernel is crucial for the successful initialization and operation of the operating system. This information includes various parameters and settings that help the kernel understand the system's hardware and environment. The boot information ensures a smooth transition from the firmware/bootloader to a fully operational operating system. [More information can be found here](AboutKernel.md#technical-details-of-xeneva-kernel-boot-protocol).
 

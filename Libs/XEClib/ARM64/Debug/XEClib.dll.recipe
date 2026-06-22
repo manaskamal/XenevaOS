@@ -1,0 +1,24 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  <ProjectOutputs>
+    <ProjectOutput>
+      <FullPath>E:\Xeneva_Project\Aurora\ARM64\Debug\XEClib.dll</FullPath>
+    </ProjectOutput>
+  </ProjectOutputs>
+  <ContentFiles>
+    <ContentFile>
+      <FullPath>E:\Xeneva_Project\Aurora\Libs\XEClib\sys\_procheap.cpp</FullPath>
+    </ContentFile>
+    <ContentFile>
+      <FullPath>E:\Xeneva_Project\Aurora\Libs\XEClib\_callbase_arm64.s</FullPath>
+    </ContentFile>
+    <ContentFile>
+      <FullPath>E:\Xeneva_Project\Aurora\Libs\XEClib\setjmp_arm64.s</FullPath>
+    </ContentFile>
+    <ContentFile>
+      <FullPath>E:\Xeneva_Project\Aurora\Libs\XEClib\store_stack_arm64.s</FullPath>
+    </ContentFile>
+  </ContentFiles>
+  <SatelliteDlls />
+  <NonRecipeFileRefs />
+</Project>

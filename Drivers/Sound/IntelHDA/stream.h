@@ -31,9 +31,9 @@
 #define __STREAM_H__
 
 #include "ihda.h"
-#include <Mm\vmmngr.h>
-#include <Mm\kmalloc.h>
-#include <Mm\pmmngr.h>
+#include <Mm/vmmngr.h>
+#include <Mm/kmalloc.h>
+#include <Mm/pmmngr.h>
 #include <string.h>
 
 /*

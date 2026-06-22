@@ -31,6 +31,7 @@
 #include <Guid/DebugImageInfoTable.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/UefiLib.h>
+#include <Guid/SystemResourceTable.h>
 #include "xnldr.h"
 #include "video.h"
 #include "file.h"
@@ -39,6 +40,9 @@
 #include "physm.h"
 #include "paging.h"
 #include "lowlevel.h"
+#include "uart0.h"
+#include "vector.h"
+#include <Board/imx8mp/imx8mp_uart.h>
 
 /* global variable */
 EFI_HANDLE   gImageHandle;
@@ -47,7 +51,7 @@ EFI_BOOT_SERVICES* gBS;
 EFI_RUNTIME_SERVICES* gRS;
 EFI_LOADED_IMAGE_PROTOCOL* xnldr2;
 EFI_GRAPHICS_OUTPUT_PROTOCOL* gop;
-
+static bool _is_graphics_enabled;
 
 #define ACPI_20_TABLE_GUID  {0x8868e871, 0xe4f1, 0x11d3, 0xbc, 0x22, 0x00, 0x80, 0xc7, 0x3c, 0x88, 0x81}
 
@@ -68,6 +72,20 @@ bool XEGUIDMatch(EFI_GUID guid1, EFI_GUID guid2) {
 	return true;
 }
 
+int XECompareGUID(const EFI_GUID* Guid1, const EFI_GUID* Guid2) {
+	if (Guid1->Data1 != Guid2->Data1 ||
+		Guid1->Data2 != Guid2->Data2 ||
+		Guid1->Data3 != Guid2->Data3)
+		return 1;
+
+	for (int i = 0; i < 8; i++) {
+		if (Guid1->Data4[i] != Guid2->Data4[i])
+			return 1;
+	}
+
+	return 0;
+}
+
 /*
  * XEInitialiseLib -- initialise the UEFI library
  * @param ImageHandle -- Pointer to EFI_HANDLE
@@ -78,7 +96,7 @@ EFI_STATUS XEInitialiseLib(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable
 	gSystemTable = SystemTable;
 	gBS = gSystemTable->BootServices;
 	gRS = gSystemTable->RuntimeServices;
-
+	_is_graphics_enabled = false;
 	EFI_STATUS Status;
 	EFI_GUID loadedimageprot = EFI_LOADED_IMAGE_PROTOCOL_GUID;
 	EFI_LOADED_IMAGE_PROTOCOL* loadedimage = nullptr;
@@ -190,6 +208,7 @@ UINTN XESetGraphicsMode(EFI_SYSTEM_TABLE* SystemTable, int index) {
 	Status = gBS->LocateProtocol(&gopguid, NULL, (VOID**)&GraphicsOutput);
 	if (EFI_ERROR(Status)) {
 		XEPrintf(const_cast<wchar_t*>(L"XNLDR 2.0 Failed to locate Graphics Output protocol \r\n"));
+		_is_graphics_enabled = false;
 		return Status;
 	}
 
@@ -207,6 +226,7 @@ UINTN XESetGraphicsMode(EFI_SYSTEM_TABLE* SystemTable, int index) {
 	Status = GraphicsOutput->SetMode(GraphicsOutput, Mode);
 	gop = GraphicsOutput;
 	Status = XEInitialiseGraphics(GraphicsOutput);
+	_is_graphics_enabled = true;
 	return Mode;
 }
 
@@ -217,7 +237,7 @@ typedef void (*kentry)(void* ptr);
 
 EFI_GUID FdtTableGuid = {
 	0xb1b621d5, 0xf19c, 0x41a5,
-	{0x83,0x06,0x73,0x0c,0xc1, 0x9b, 0x91, 0x6a}
+	{0x83,0x0b,0xd9,0x15,0x2c, 0x69, 0xaa, 0xe0}
 };
 
 
@@ -238,17 +258,92 @@ typedef struct _rsdp_
 } acpiRsdp;
 #pragma pack(pop)
 
+void Char16ToASCII(char* dest, CHAR16* src) {
+	while (*src) {
+		*dest++ = (char)(*src++ & 0xFF);
+	}
+	*dest = '\0';
+}
+
+void ASCIIToChar16(const char* src, wchar_t* dst) {
+	while (*src) {
+		*dst++ = (wchar_t)*src++;
+	}
+	*dst = L'\0';
+}
+
+extern "C" void prepare_el2_exit_phase1();
+extern "C" void prepare_el2_exit_phase2();
+
+
+
+void* kernelBuff;
+uint64_t keBuff;
+
+void XEExitEL2() {
+	uint64_t spsr_el2 = read_spsr_el2();
+	uint64_t sctlr_el1 = read_sctlr_el1();
+
+	prepare_el2_exit_phase1();
+	prepare_el2_exit_phase2();
+	XEUartInitialize();
+	XEUARTPrint("Heyyyyy %x\r\n",0x1234);
+	XEVectorInstall();
+	XEUARTPrint("Installed everything \r\n");
+	XEUARTPrint("Loading PE Image \r\n");
+	XEUARTPrint("KernelBUffer : %x \r\n", kernelBuff);
+	void* paddr = (void*)XEPmmngrAllocate();
+	void* paddr1 = (void*)XEPmmngrAllocate();
+	XEUARTPrint("Physical Address : %x \n", paddr);
+	XEUARTPrint("Physical Address2 : %x \r\n", paddr1);
+	IMAGE_DOS_HEADER* dos_ = (IMAGE_DOS_HEADER*)keBuff; //0x8000000000;
+	XEUARTPrint("DOS Magic : %d \r\n", dos_->e_magic);
+}
+
+typedef struct {
+	uint32_t magic;
+	uint32_t totalSize;
+	uint32_t off_dt_struct;
+	uint32_t off_dt_strings;
+	uint32_t off_mem_rsvmap;
+	uint32_t version;
+	uint32_t last_comp_version;
+	uint32_t boot_cpuid_phys;
+	uint32_t size_dt_strings;
+	uint32_t size_dt_struct;
+}fdt_header_t;
+
+/**
+ * @brief AuDTBSwap32 -- swaps 32 bit value
+ * @param from -- value to swap
+ */
+uint32_t AuDTBSwap32(uint32_t from) {
+	uint8_t a = from >> 24;
+	uint8_t b = from >> 16;
+	uint8_t c = from >> 8;
+	uint8_t d = from;
+	return (d << 24) | (c << 16) | (b << 8) | a;
+}
+
+
+extern void* XEDTBGetHardcodeAddress();
+extern void XEPagingInit2();
+
 /*
  * efi_main -- main entry of XNLDR 2.0
  * @param ImageHandle -- System parameter
  * @param SystemTable -- System parameter
  */
-EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
+extern "C" EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
+//	prepare_el2_exit_phase1();
+//	prepare_el2_exit_phase2();
+//	XEUartInitialize();
+//	XEVectorInstall();
+//	XEUARTPrint("Exit el2 \r\n");
 	EFI_STATUS Status;
-
 	Status = XEInitialiseLib(ImageHandle, SystemTable);
+	XEUARTPrint("Library initialized \r\n");
 	XEClearScreen();
-
 	XEBootInfo bootinfo;
 	/* Get user graphics resolution choice*/
 	int index = XEGetScreenResolutionMode(SystemTable);
@@ -256,23 +351,43 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
 	UINTN Mode = XESetGraphicsMode(SystemTable, index);
 	XEGuiPrint("XenevaOS Loader 2.0 (XNLDR) ARM64\n");
 	XEGuiPrint("Copyright (C) Manas Kamal Choudhury 2020-2025\n");
-	
+
 	XEGuiPrint("Loading system files.. please wait !! \n");
+
+	uint64_t adddr = 0x50000000;
+	EFI_CONFIGURATION_TABLE* configuration_tables = SystemTable->ConfigurationTable;
+
 	/* load all important files */
 	XEFile* krnl = XEOpenAndReadFile(ImageHandle, (CHAR16*)L"\\EFI\\XENEVA\\xnkrnl.exe");
 	uint8_t* alignedKBuf = (uint8_t*)krnl->kBuffer;
+	kernelBuff = krnl->kBuffer;
+	keBuff = (uint64_t)krnl->kBuffer;
 	IMAGE_DOS_HEADER* dosHeader = (IMAGE_DOS_HEADER*)alignedKBuf;
 	IMAGE_NT_HEADERS* ntHeader = (IMAGE_NT_HEADERS*)(alignedKBuf + dosHeader->e_lfanew);
 	bool isKernelValid = false;
-	if (dosHeader->e_magic == 0x5A4D) 
+	if (dosHeader->e_magic == 0x5A4D)
 		isKernelValid = true;
+
+	char ps[16];
+	sztoa(dosHeader->e_magic, ps, 16);
+	wchar_t ps16[16];
+	ASCIIToChar16(ps, ps16);
+	XEPrintf(const_cast<wchar_t*>(ps16));
+	XEPrintf(const_cast<wchar_t*>(L"\r\n"));
 	
-	if (!isKernelValid)
+	if (!isKernelValid) {
 		XEGuiPrint("XNLDR: kernel image corrupted \n");
+		XEPrintf(const_cast<wchar_t*>(L"Kernel image is corrupted \r\n"));
+		for (;;);
+	}
 
+#ifdef __TARGET_BOARD_QEMU_VIRT__
 	XEFile* initrd = XEOpenAndReadFile(ImageHandle, (CHAR16*)L"\\initrd2.img");
+#else
+	XEFile* initrd = XEOpenAndReadFile(ImageHandle, (CHAR16*)L"\\initrd.img");
+#endif
 
-	EFI_CONFIGURATION_TABLE* configuration_tables = gSystemTable->ConfigurationTable;
+	
 
 	/**
 	 *-------------------------------------------------------------------
@@ -289,62 +404,159 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
 
 
 	void* fdt_address = NULL;
+	for (unsigned i = 0; i < SystemTable->NumberOfTableEntries; i++) {
+		if (XEGUIDMatch(configuration_tables[i].VendorGuid, FdtTableGuid)) {
+			char magi[16];
+			sztoa((size_t)SystemTable->ConfigurationTable[i].VendorTable, magi, 16);
+			wchar_t mg_16[16];
+			ASCIIToChar16(magi, mg_16);
+			XEPrintf(const_cast<wchar_t*>(L"FDT Table pointer -- "));
+			XEPrintf(const_cast<wchar_t*>(mg_16));
+			XEPrintf(const_cast<wchar_t*>(L"\r\n"));
+			fdt_address = SystemTable->ConfigurationTable[i].VendorTable;
+		}
 	
-	for (unsigned i = 0; i < gSystemTable->NumberOfTableEntries; i++) {
-		if (XEGUIDMatch(configuration_tables[i].VendorGuid, FdtTableGuid))
-			fdt_address = configuration_tables[i].VendorTable;
 	}
 
+	bool _need_fdt_hardcode = false;
+	fdt_header_t* fd_ = (fdt_header_t*)fdt_address;
+	if (fd_) {
+		XEPrintf(const_cast<wchar_t*>(L"FDT Address gathered from EFI_CONFIGURATION_TABLES \r\n"));
+		if (AuDTBSwap32(fd_->magic) == 0xd00dfeed) {
+			XEPrintf(const_cast<wchar_t*>(L"Yess DTB was correct \r\n"));
+		}
+		else
+			_need_fdt_hardcode = true;
+	}
+
+	if (_need_fdt_hardcode) {
+		fdt_address = XEDTBGetHardcodeAddress();
+		XEPrintf(const_cast<wchar_t*>(L"Going through hardcoded DTB address \r\n"));
+		fdt_header_t* fdt = (fdt_header_t*)fdt_address;
+		char magic[16];
+		sztoa(read_ttbr0_el2(), magic, 16);
+		wchar_t mg16[16];
+		ASCIIToChar16(magic, mg16);
+		XEPrintf(const_cast<wchar_t*>(mg16));
+		XEPrintf(const_cast<wchar_t*>(L"\r\n"));
+	}
+
+
+	
 	const size_t EARLY_PAGE_STACK_SIZE = 1024 * 1024;
 	EFI_PHYSICAL_ADDRESS earlyPhyPageStack = 0;
-	if (!(SystemTable->BootServices->AllocatePages(AllocateAnyPages, EfiLoaderData, EARLY_PAGE_STACK_SIZE / EFI_PAGE_SIZE, (EFI_PHYSICAL_ADDRESS*)&earlyPhyPageStack)))
+	if (!(SystemTable->BootServices->AllocatePages(AllocateAnyPages, EfiLoaderData, EARLY_PAGE_STACK_SIZE / EFI_PAGE_SIZE, (EFI_PHYSICAL_ADDRESS*)&earlyPhyPageStack))) {
 		XEGuiPrint("Early Page Stack: allocation failed.....\n");
-
+	}
 
 	struct EfiMemoryMap map;
 	EFI_MEMORY_DESCRIPTOR* desc_ptr = nullptr;
 	map.MemMapSize = 0;
 	map.MapKey = map.DescriptorSize = map.DescriptorVersion = 0;
 	map.memmap = 0;
-	Status = gSystemTable->BootServices->GetMemoryMap(&map.MemMapSize, nullptr, &map.MapKey, &map.DescriptorSize, &map.DescriptorVersion);
+	Status = gSystemTable->BootServices->GetMemoryMap(&map.MemMapSize, map.memmap, &map.MapKey, &map.DescriptorSize, &map.DescriptorVersion);
 	if (Status == EFI_BUFFER_TOO_SMALL) {
-		XEGuiPrint("Failed memory map! Buffer to small \n");
-		XEGuiPrint("Required buffer -> %d bytes\n", map.MemMapSize);
+		/* Expected behavior: UEFI returns EFI_BUFFER_TOO_SMALL when querying the required buffer size. Muting to avoid console spam. */
+		// XEGuiPrint("Failed memory map! Buffer to small \n");
+		// XEPrintf(const_cast<wchar_t*>(L"Failed memory map ! Buffer to small \r\n"));
+		// XEGuiPrint("Required buffer -> %d bytes\n", map.MemMapSize);
+		// XEPrintf(const_cast<wchar_t*>(L"Required buffer size : %d \r\n"), map.MemMapSize);
 	}
-	else if (Status == EFI_INVALID_PARAMETER)
+	else if (Status == EFI_INVALID_PARAMETER) {
 		XEGuiPrint("EFI_Memory_Map failed!!, invalid parameter \n");
-	else if (Status != EFI_SUCCESS)
+		XEPrintf(const_cast<wchar_t*>(L"EFI_Memory_Map failed!! invalid parameter \r\n"));
+	}
+	else if (Status != EFI_SUCCESS) {
 		XEGuiPrint("Memory Map Failed \n");
+		XEPrintf(const_cast<wchar_t*>(L"Memory Map failed \r\n"));
+	}
 
-
+	
 	//give a nice bit of room to spare
-	map.MemMapSize += 16 * map.DescriptorSize; //sizeof(EFI_MEMORY_DESCRIPTOR);
-	XEGuiPrint("Memory Map size -> %d \n", map.MemMapSize);
-	map.memmap = (EFI_MEMORY_DESCRIPTOR*)XEAllocatePool(map.MemMapSize);
+	map.MemMapSize += 2 * map.DescriptorSize; //sizeof(EFI_MEMORY_DESCRIPTOR);
+	char magic[16];
+	sztoa(map.DescriptorSize, magic, 16);
+	wchar_t mg16[16];
+	ASCIIToChar16(magic, mg16);
+	XEPrintf(const_cast<wchar_t*>(mg16));
+	XEPrintf(const_cast<wchar_t*>(L"\r\n"));
+	XEGuiPrint("Descriptor size -> %d \n", map.MemMapSize);
+
+
+	if (map.MemMapSize == 0) {
+		map.MemMapSize = 1024;
+		XEGuiPrint("Memory Map Size was 0 \n");
+	}
+	VOID* Buffer;
+	Status = SystemTable->BootServices->AllocatePool(EfiLoaderData, map.MemMapSize, &Buffer);
+	if (EFI_ERROR(Status) != 0) {
+		XEGuiPrint("Failed to allocate pool memory \r\n");
+	}
+	map.memmap = (EFI_MEMORY_DESCRIPTOR*)Buffer; // XEAllocatePool(map.MemMapSize);
 
 	Status = gSystemTable->BootServices->GetMemoryMap(&map.MemMapSize, map.memmap, &map.MapKey, &map.DescriptorSize, &map.DescriptorVersion);
 	if (Status != EFI_SUCCESS)
 		XEGuiPrint("Failed to retrieve memory map \n");
 
+
 	Status = SystemTable->BootServices->ExitBootServices(ImageHandle, map.MapKey);
 	if (Status != EFI_SUCCESS) {
 		XEGuiPrint("Exit Boot Service Failed \n");
+		XEPrintf((wchar_t*)"Exit Boot Service Failed\n");
 		for (;;);
 	}
 
-	XEInitialisePmmngr(map, (void*)earlyPhyPageStack, EARLY_PAGE_STACK_SIZE);
+	/**
+	 * @brief after exit_boot_service, no serial printing function, available from 
+	 * efi tables, we need to set up our own
+	 */
+	XEUartInitialize();
 
+	XEGuiPrint("Exit bootloader successfull %x\r\n", 0x1000);
+	XEInitialisePmmngr(map, (void*)earlyPhyPageStack, EARLY_PAGE_STACK_SIZE);
 
 	XEPagingInitialize();
 
+	if (_getCurrentEL() != 1) {
+		prepare_el2_exit_phase1();
+		prepare_el2_exit_phase2();
+	}
+	/* install our vector table unconditionally */
+	XEVectorInstall();
+
+	uint64_t sctlr = read_sctlr_el1();
+
+	if (sctlr & (1UL << 0))
+		XEUARTPrint("MMU is turned ON \r\n");
+	else
+		XEUARTPrint("MMU is disabled \r\n");
+
+
+#if ! __TARGET_BOARD_QEMU_VIRT__
+	XEPagingInit2();
+#endif
+
+
+	//XEUARTPrint("MMU Enabled \r\n");
+
+	IMAGE_DOS_HEADER* dos_ = (IMAGE_DOS_HEADER*)krnl->kBuffer;
+	
+	//XEUARTPrint("DOS Magic : %x \r\n", dos_->e_magic);
+	
 
 	XEPELoadImage(krnl->kBuffer);
 
-	for (int i = 0; i < 0x100000 / PAGESIZE; i++) {
+	for (int i = 0; i <= 0x100000 / PAGESIZE; i++) {
 		XEPagingMap(0xFFFFA00000000000 + i * PAGESIZE, XEPmmngrAllocate());
 	}
 
 
+	/*
+	 * Changes are made according to RPI_EFI
+	 * kernel is mapped to 0x8000000000 due to there's
+	 * no EL2_TTBR1 for higher half mapping, and also need
+	 * to drop to EL1 before entering Kernel
+	 */
 	bootinfo.boot_type = BOOT_UEFI_ARM64;
 	bootinfo.allocated_mem = XEGetAlstackptr();
 	bootinfo.reserved_mem_count = XEReserveMemCount();
@@ -375,10 +587,17 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
 	bootinfo.uid = 0;
 	bootinfo.cid = 0;
 
+	uint64_t image_base = ntHeader->OptionalHeader.ImageBase;
+	if (image_base == 0) {
+		image_base = 0xFFFFC00000000000;
+	}
 
-	VOID* entry = (VOID*)(ntHeader->OptionalHeader.ImageBase + ntHeader->OptionalHeader.AddressOfEntryPoint);
-	kentry ke = (kentry)entry;
-
+	VOID* entry = (VOID*)(image_base + ntHeader->OptionalHeader.AddressOfEntryPoint);
+	XEGuiPrint("entry addr : %x bootinfo : %x \r\n", entry, &bootinfo);
 	callKernel(&bootinfo, 0xFFFFA00000000000, 0x100000, entry);
 	while (1);
+}
+
+bool _is_GraphicsEnabled() {
+	return _is_graphics_enabled;
 }

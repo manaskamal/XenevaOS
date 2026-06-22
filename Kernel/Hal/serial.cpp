@@ -29,8 +29,8 @@
 
 #include <Hal/serial.h>
 #include <aucon.h>
-#include <Hal\hal.h>
-#include <Hal\x86_64_hal.h>
+#include <Hal/hal.h>
+#include <Hal/x86_64_hal.h>
 #include <stdio.h>
 
 /*

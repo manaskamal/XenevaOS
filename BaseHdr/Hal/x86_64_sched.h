@@ -32,7 +32,7 @@
 
 #include <stdint.h>
 #include <aurora.h>
-#include <Ipc\signal.h>
+#include <Ipc/signal.h>
 
 #define  THREAD_STATE_READY     1
 #define  THREAD_STATE_BLOCKED   3

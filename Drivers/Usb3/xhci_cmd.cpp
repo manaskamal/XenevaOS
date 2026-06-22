@@ -29,11 +29,11 @@
 
 #include "xhci.h"
 #include "xhci_cmd.h"
-#include <Mm\vmmngr.h>
-#include <Mm\pmmngr.h>
+#include <Mm/vmmngr.h>
+#include <Mm/pmmngr.h>
 #include "usb3.h"
 #include <aucon.h>
-#include <Hal\serial.h>
+#include <Hal/serial.h>
 #include <stdint.h>
 
 /*

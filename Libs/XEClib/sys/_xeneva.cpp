@@ -93,7 +93,7 @@ XE_EXTERN XE_LIB void _XESetEnvironmentVariable(char* key, char* value, bool ove
 
 	if ((dest - temp) + totalLen + 2 >= maxEnvSize)
 		return;
-
+	
 	snprintf(dest, totalLen + 2, "%s=%s", key, value);
 	dest[totalLen + 1] = '\0';
 

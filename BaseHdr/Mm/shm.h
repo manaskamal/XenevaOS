@@ -35,7 +35,7 @@
 
 #define USER_SHARED_MEM_START 0x0000000080000000
 
-#pragma pack(push,1)
+//#pragma pack(push,1)
 /*
  * AuSHM -- shared memory segment
  */
@@ -46,19 +46,19 @@ typedef struct _shm_ {
 	uint64_t* frames;
 	uint16_t link_count;
 }AuSHM;
-#pragma pack(pop)
+//#pragma pack(pop)
 
-#pragma pack(push,1)
+//#pragma pack(push,1)
 typedef struct _shm_mapping_ {
 	uint64_t start_addr;
 	size_t length;
 	AuSHM* shm;
 }AuSHMMappings;
-#pragma pack(pop)
+//#pragma pack(pop)
 
-/*
-* AuInitialiseSHMMan -- initialise shm manager
-*/
+/**
+ * @brief AuInitialiseSHMMan -- initialise shm manager
+ */
 extern void AuInitialiseSHMMan();
 
 /*
@@ -68,38 +68,41 @@ extern void AuInitialiseSHMMan();
 */
 extern AuSHM * AuGetSHMByID(uint16_t id);
 
-/*
-* AuCreateSHM -- create a new shared memory segment
-* @param proc -- Creator process
-* @param key  --  unique key to use
-* @param sz   --  size in multiple of PAGE_SIZE
-* @param flags -- security flags
-*/
+/**
+ * @brief AuCreateSHM -- create a new shared memory segment or
+ * returns previously allocated one
+ * @param proc -- Creator process
+ * @param key  --  unique key to use
+ * @param sz   --  size in multiple of PAGE_SIZE
+ * @param flags -- security flags
+ * @return id of newly created SHM, -1 on failure
+ */
 extern int AuCreateSHM(AuProcess* proc, uint16_t key, size_t sz, uint8_t flags);
 
-/*
-* AuSHMObtainMem -- obtains a virtual memory from given
-* shm segment
-* @param proc -- Calling process
-* @param id -- shm segment id
-* @param shmaddr -- starting shared memory address to map
-* @parma shmflg -- flags
-*/
+/**
+ * @brief AuSHMObtainMem -- obtains a virtual memory from given
+ * shm segment
+ * @param proc -- Calling process
+ * @param id -- shm segment id
+ * @param shmaddr -- starting shared memory address to map
+ * @parma shmflg -- flags
+ * @return starting address of this shm on success, NULL on failure
+ */
 extern void* AuSHMObtainMem(AuProcess* proc, uint16_t id, void* shmaddr, int shmflg);
 
-/*
-* AuSHMUnmap -- unmaps a shared memory segment
-* @param key -- key to search
-* @param proc -- process to look
-*/
+/**
+ * @brief AuSHMUnmap -- unmaps a shared memory segment
+ * @param key -- key to search
+ * @param proc -- process to look
+ */
 extern void AuSHMUnmap(uint16_t key, AuProcess* proc);
 
-/*
-* AuSHMUnmapAll -- unmaps all mappings for this
-* process
-* @param proc -- Pointer to process that needs
-* unmapping
-*/
+/**
+ * @brief AuSHMUnmapAll -- unmaps all mappings for this
+ * process
+ * @param proc -- Pointer to process that needs
+ * unmapping
+ */
 extern void AuSHMUnmapAll(AuProcess* proc);
 
 #endif

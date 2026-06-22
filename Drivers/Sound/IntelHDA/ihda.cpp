@@ -30,7 +30,7 @@
 #include <aurora.h>
 #include <pcie.h>
 #include <stdio.h>
-#include <Hal\x86_64_hal.h>
+#include <Hal/x86_64_hal.h>
 #include <Hal/serial.h>
 #include "ihda.h"
 #include "stream.h"
@@ -40,7 +40,7 @@
 #include <Mm/pmmngr.h>
 #include <Mm/kmalloc.h>
 #include <aucon.h>
-#include <Sound\sound.h>
+#include <Sound/sound.h>
 
 HDAudio* _hdaudio;
 uint16_t rirbrp = 0;

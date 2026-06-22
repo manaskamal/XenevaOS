@@ -1,4 +1,6 @@
 /**
+* @file uart.c
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2025, Manas Kamal Choudhury
@@ -32,6 +34,9 @@
 #include <aucon.h>
 #include <va_list.h>
 #include <stdarg.h>
+#include <string.h>
+#include <stdio.h>
+#include <Board/imx8mp/imx8mp_uart.h>
 
 uint64_t* uartMMIO;
 bool _uart_mapped = false;
@@ -44,10 +49,14 @@ static inline void uart_write_reg(uint32_t reg_offset, uint32_t value) {
 	*(volatile uint32_t*)((uint64_t)uartMMIO + reg_offset) = value;
 }
 
+/**
+ * @brief UARTInitialize -- initialize uart serial output
+ */
 void UARTInitialize() {
 	uartMMIO = (uint64_t*)AuMapMMIO(UART0_BASE, 1);
 	AuTextOut("UART MMIO -> %x \n", uartMMIO);
 
+#ifdef __TARGET_BOARD_QEMU_VIRT__
 	uart_write_reg(UART_CR, 0);
 	uart_write_reg(UART_IBRD, 13);
 	uart_write_reg(UART_FBRD, 1);
@@ -60,23 +69,40 @@ void UARTInitialize() {
 
 	//enable irq
 	uart_write_reg(UART_IMSC, UART_IMSC_RXIM | UART_IMSC_RTIM);
+#elif __TARGET_BOARD_IMX8MP_VERDIN_DAHLIA__ || (__TARGET_BOARD_IMX8MP_SOC__)
+	au_imx8np_uart_initialize((uint64_t*)uartMMIO);
+#endif
+
 	_uart_mapped = true;
 }
 
 
+bool is_uart_initialized() {
+	return _uart_mapped;
+}
+
+/**
+ * @brief uartPutc -- put a single character to uart
+ * @param c -- character to print
+ */
 void uartPutc(char c) {
+#if defined(__TARGET_BOARD_IMX8MP_VERDIN_DAHLIA__) || defined(__TARGET_BOARD_IMX8MP_SOC__)
+	au_imx8mp_uart_putc(c);
+#else
+
 	uint64_t* mmioBase = 0;
 	if (_uart_mapped)
 		mmioBase = uartMMIO;
 	else
-		mmioBase = UART0_BASE;
+		mmioBase = (uint64_t*)UART0_BASE;
 	char* uart0 = (char*)mmioBase;
 	while ((*(uart0 + 0x18) & (1 << 5)));
 	*uart0 = c;
+#endif
 }
 
-/*
- * uartPuts --serial output interface
+/**
+ * @brief uartPuts --serial output interface
  * @param s -- String
  */
 void uartPuts(const char* s) {
@@ -84,17 +110,20 @@ void uartPuts(const char* s) {
 		uartPutc(*s++);
 }
 
-/*
- * UARTDebugOut -- standard text printing function
+extern void AuUartPutString(const char* s);
+/**
+ * @brief UARTDebugOut -- standard text printing function
  * for early kernel using UART
  * @param text -- text to output
  */
-void UARTDebugOut(const char* format, ...) {
-
-	uint64_t buffer[7];
-	store_x0_x7(buffer);
-
-	va_list args = (va_list)buffer;
+void UARTDebugOut_Call(const char* format, void* reg_save_area, void* entry_sp) {
+#ifdef __GNUC__
+	uint64_t* arg_ptr = (uint64_t*)((uint8_t*)reg_save_area + 8);
+#define AU_VA_ARG(type) ((type)(*arg_ptr++))
+#else
+	va_list args = ((va_list)reg_save_area + 8);
+#define AU_VA_ARG(type) va_arg(args, type)
+#endif
 	while (*format)
 	{
 		if (*format == '%')
@@ -111,7 +140,7 @@ void UARTDebugOut(const char* format, ...) {
 						width += format[i] - '0';
 					}
 				}
-				size_t i = va_arg(args, size_t);
+				size_t i = AU_VA_ARG(size_t);
 				char buffer[sizeof(size_t) * 8 + 1];
 				//	size_t len
 				if ((int)i < 0) {
@@ -129,7 +158,7 @@ void UARTDebugOut(const char* format, ...) {
 			}
 			else if (*format == 'c')
 			{
-				char c = va_arg(args, char);
+				int c = AU_VA_ARG(int);
 				//char buffer[sizeof(size_t) * 8 + 1];
 				//sztoa(c, buffer, 10);
 				//puts(buffer);
@@ -137,7 +166,7 @@ void UARTDebugOut(const char* format, ...) {
 			}
 			else if (*format == 'x')
 			{
-				size_t x = va_arg(args, size_t);
+				size_t x = AU_VA_ARG(size_t);
 				char buffer[sizeof(size_t) * 8 + 1];
 				sztoa(x, buffer, 16);
 				//puts("0x");
@@ -145,12 +174,12 @@ void UARTDebugOut(const char* format, ...) {
 			}
 			else if (*format == 's')
 			{
-				char* x = va_arg(args, char*);
+				char* x = AU_VA_ARG(char*);
 				uartPuts(x);
 			}
 			else if (*format == 'f')
 			{
-				double x = va_arg(args, double);
+				double x = AU_VA_ARG(double);
 				uartPuts(ftoa(x, 2));
 			}
 			else if (*format == '%')
@@ -172,6 +201,7 @@ void UARTDebugOut(const char* format, ...) {
 		}
 		++format;
 	}
+#ifndef __GNUC__
 	va_end(args);
-
+#endif
 }

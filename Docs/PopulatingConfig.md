@@ -1,0 +1,22 @@
+# Populating Runtime Configuration File
+
+Runtime configuration files are loaded by the kernel to obtain descriptions of the system files required to load. For example, they define which driver files are available in the build image and how they relate to each hardware device. 
+
+## Aurora Driver Configuration Files
+Aurora Driver configuration files are divided into two types: PCIe-based configuration files and board-based configuration files. Board-based configuration files need to be modified according to the target board; for example, an i.MX8MP-based board needs configuration matching its specific hardware. A PCIe-based configuration file can hold any driver file along with its PCIe subclass/class code or vendor ID/device ID entry.
+
+## The `audrv.cnf` File
+This file must be present in the root folder of the ramdisk image. It holds PCIe-based driver file entries. For example:
+```
+(1)[03,128]/virtgpu.dll |
+(2)[02,00]/virtnet.dll |
+(3)[6900,4185]/virtsnd.dll |
+(0)
+```
+Here, virtgpu.dll holds its _[classCode,subClassCode]_ value, while virtsnd.dll holds its _[vendorID,deviceID]_ value. Please note that entry numbers are in integer format, not hexadecimal format. The file path must be specified correctly; for instance, specifying "virtgpu.dll" will cause the entry to be skipped by the Aurora Driver Manager, whereas specifying "/virtgpu.dll" will succeed because the file resides in the root folder of the ramdisk. 
+### Marker Points:
+As you can see, there are certain marker points present in the configuration file. There are three types of marker points: numeric bullets, the [class/subclass] holder, and the end-of-entry marker. Numeric bullets start from (1) and end at (0), indicating there are no further entries and that the Driver Manager should stop parsing. The ClassSubClass holder holds either the subclass and class code values of the PCIe configuration or the vendor ID and device ID values for each device. The end-of-entry _"|"_ marker defines the end of an entry so that the Driver Manager can proceed to the next entry. 
+
+## The `board.cnf` File
+
+The board configuration file follows a slightly different format than the `audrv.cnf` file. This file also needs to be present in the root folder of the ramdisk. 

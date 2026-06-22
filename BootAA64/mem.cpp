@@ -28,6 +28,7 @@
 **/
 
 #include "xnldr.h"
+#include "xnout.h"
 
 /*
  * XEAllocatePool -- allocate pool memory
@@ -35,7 +36,13 @@
  */
 void* XEAllocatePool(const uint64_t sz) {
 	void* Buffer;
-	return (gBS->AllocatePool(EfiLoaderData, sz, &Buffer) < 0) ? NULL : Buffer;
+
+	EFI_STATUS Status = gBS->AllocatePool(EfiBootServicesData, sz, &Buffer);
+	if (EFI_ERROR(Status)) {
+		XEPrintf(const_cast<wchar_t*>(L"Failed to allocate pool : %x \r\n"), Status);
+		return NULL;
+	}
+	return Buffer;
 }
 
 /*

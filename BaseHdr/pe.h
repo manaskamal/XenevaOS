@@ -32,6 +32,9 @@
 
 
 #include <stdint.h>
+#ifndef __cplusplus
+#include <stdbool.h>
+#endif
 
 #pragma pack(push, 1)
 
@@ -261,6 +264,19 @@ static const enum PeMachineType   MACHINE_NATIVE = IMAGE_FILE_MACHINE_I386;
 #define IMAGE_IMPORT_LOOKUP_TABLE_FLAG  IMAGE_IMPORT_LOOKUP_TABLE_FLAG_PE32
 
 
+#pragma pack(push,1)
+typedef struct {
+	union {
+		char short_name[8];
+		struct { uint32_t zeros; uint32_t offset; } lng;
+	}name;
+	uint32_t value;
+	int16_t section;
+	uint16_t type;
+	uint8_t storage;
+	uint8_t aux_count;
+}IMAGE_COFF_SYMBOL;
+#pragma pack(pop)
 
 /*
 * AuGetProcAddress -- get procedure address in a dll image
@@ -302,4 +318,12 @@ extern void AuKernelRelocatePE(void* image, PIMAGE_NT_HEADERS nt, int diff);
 * @param image -- pointer to image address
 */
 extern bool AuPEFileIsDynamicallyLinked(void* image);
+
+/**
+ * @brief AuCoffResolveAddress -- print the symbol function name
+ * for specific pointing address
+ * @param imageBase - base address of the image
+ * @param paddr -- Pointing address, or instruction/function address
+ */
+extern bool AuCoffResolveAddress(uint8_t* imageBase, uint64_t paddr);
 #endif

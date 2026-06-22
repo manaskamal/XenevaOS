@@ -345,6 +345,9 @@
     <ClInclude Include="..\BaseHdr\Net\ipv6.h">
       <Filter>Include\Net</Filter>
     </ClInclude>
+    <ClInclude Include="..\BaseHdr\Fs\initrd.h">
+      <Filter>Include\Fs</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="init.cpp" />
@@ -544,6 +547,9 @@
     </ClCompile>
     <ClCompile Include="Net\ipv6.cpp">
       <Filter>Net</Filter>
+    </ClCompile>
+    <ClCompile Include="Fs\initrd.cpp">
+      <Filter>Fs</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

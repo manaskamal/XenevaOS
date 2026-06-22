@@ -63,4 +63,9 @@
 #define PCIE_ECAM 0x10000000ULL
 #endif
 
+
+/*
+ * AuVirtIOInputInitialize -- initialize virtIO input device
+ */
+extern void AuVirtIOInputInitialize();
 #endif

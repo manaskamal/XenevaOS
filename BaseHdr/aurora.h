@@ -33,10 +33,63 @@
 #pragma once
 
 #include <stdint.h>
+#ifndef __cplusplus
+#include <stdbool.h>
+#endif
+#include <stddef.h>
+
+#ifndef BOOL
+typedef bool BOOL;
+#endif
+
+#ifdef __cplusplus
+template <class T, class U> static inline T raw_offset(U p1, const intptr_t offset)
+{
+    return (T)((size_t)p1 + offset);
+}
+
+template <class T, class U> static inline T mem_after(U* p1)
+{
+    return (T)(&p1[1]);
+}
+
+template <class T, class U> static inline intptr_t raw_diff(T* p1, U* p2)
+{
+    return (intptr_t)p1 - (intptr_t)p2;
+}
+#endif
+
+#ifndef RAW_OFFSET
+#define RAW_OFFSET(type, x, offset)  (type)((size_t)(x) + (size_t)(offset))
+#endif
+
+#ifndef RAW_DIFF
+#define RAW_DIFF(a, b) ((size_t)(a) - (size_t)(b))
+#endif
+
+#ifndef MEM_AFTER
+#define MEM_AFTER(type, ptr) ((type)(&(ptr)[1]))
+#endif
+
+#ifndef DIV_ROUND_UP
+#define DIV_ROUND_UP(x, y) \
+	((x + y - 1) / y)
+#endif
+
+#ifndef ALIGN_UP
+#define ALIGN_UP(x, y) (DIV_ROUND_UP(x,y)*y)
+#endif
 
 
+#ifdef __GNUC__
+#define AU_EXPORT  __attribute__((visibility("default")))
+#define AU_IMPORT
+#define AU_ALIGN(x) __attribute__((aligned(x)))
+#else
 #define AU_EXPORT  __declspec(dllexport)
 #define AU_IMPORT  __declspec(dllimport)
+#define AU_ALIGN(x) __declspec(align(x))
+#endif
 
 #ifdef __AU_KERNEL__
 #define AU_FUNC AU_EXPORT
@@ -47,19 +100,19 @@
 #ifdef __cplusplus
 #define AU_EXTERN  extern "C"
 #else
-#define AU_EXTERN 
+#define AU_EXTERN extern
 #endif
 
 
 #ifdef ARCH_X64
 #define KERNEL_STACK_LOCATION   0xFFFFFB0000000000
 #elif ARCH_ARM64
-#define KERNEL_STACK_LOCATION 0x4000000000
+#define KERNEL_STACK_LOCATION  0xFFFFB00000000000    //0x0000000B00000000
 #endif
 
-#define KERNEL_STACK_SIZE 16384  //16KiB
+#define KERNEL_STACK_SIZE  40960//16384  //16KiB
 
-#pragma pack(push,1)
+
 typedef struct _lbprotocol_ {
 	uint64_t initrd_start;
 	uint64_t initrd_end;
@@ -87,7 +140,7 @@ typedef struct _lbprotocol_ {
 	uint64_t physicalEnd;
 	uint64_t numberOfPages;
 }AuLittleBootProtocol;
-#pragma pack(pop)
+
 
 
 #define BOOT_UEFI_x64 1
@@ -96,7 +149,7 @@ typedef struct _lbprotocol_ {
 /**
 * Kernel Boot information structure passed by XNLDR
 */
-#pragma pack (push,1)
+
 typedef struct _KERNEL_BOOT_INFO_ {
 	/* Boot type either UEFI_BOOT or BIOS_BOOT */
 	int boot_type;
@@ -161,6 +214,10 @@ typedef struct _KERNEL_BOOT_INFO_ {
 	uint32_t uid;
 	uint32_t cid;
 }KERNEL_BOOT_INFO, *PKERNEL_BOOT_INFO;
-#pragma pack(pop)
+
+/*
+ * AuGetBootInfoStruc -- return kernel boot information
+ */
+AU_EXTERN AU_EXPORT KERNEL_BOOT_INFO* AuGetBootInfoStruc();
 
 #endif

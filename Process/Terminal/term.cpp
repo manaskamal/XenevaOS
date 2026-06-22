@@ -28,18 +28,18 @@
 **/
 
 #include <_xeneva.h>
-#include <sys\_keproc.h>
-#include <sys\_kefile.h>
-#include <sys\iocodes.h>
+#include <sys/_keproc.h>
+#include <sys/_kefile.h>
+#include <sys/iocodes.h>
 #include <ctype.h>
 #include <chitralekha.h>
-#include <widgets\window.h>
+#include <widgets/window.h>
 #include <keycode.h>
 #include "term.h"
 #include "arrayfont.h"
-#include <sys\mman.h>
+#include <sys/mman.h>
 #include "esccode.h"
-#include <sys\_ketty.h>
+#include <sys/_ketty.h>
 
 ChWindow* win;
 ChitralekhaApp* app;
@@ -65,6 +65,7 @@ char* escBuf;
 int shell_id;
 uint32_t backColor;
 uint32_t fgColor;
+
 /*
  * TerminalDrawArrayFont -- draw bitmap fonts using defined array
  * @param canv -- Pointer to canvas 
@@ -115,7 +116,7 @@ void TerminalDrawCell(int x, int y, bool dirty) {
 	
 	if ((y*cell_height + cell_height) >= win->info->height)
 		return;
-	ChDrawRect(win->canv,CHITRALEKHA_WINDOW_DEFAULT_PAD_X + x* cell_width, y_offset + y * cell_height, cell_width, cell_height, cell->cellBgCol);
+	//ChDrawRect(win->canv,CHITRALEKHA_WINDOW_DEFAULT_PAD_X + x* cell_width, y_offset + y * cell_height, cell_width, cell_height, cell->cellBgCol);
 	ChFontDrawChar(win->canv, consolas, cell->c, CHITRALEKHA_WINDOW_DEFAULT_PAD_X + x * cell_width, y_offset + y * cell_height + f_h,//- f_h / 2,
 		0, cell->cellFgCol);
 	/*TerminalDrawArrayFont(win->canv, x * cell_width, y_offset + y * cell_height + 12 / 2, cell->c, cell->cellFgCol);*/
@@ -134,9 +135,9 @@ void TerminalDrawAllCells() {
 	}
 
 	
-	ChWindowUpdate(win, 0, 26, win->info->width - 1, win->info->height - 26, 0, 1);
+	ChWindowUpdate(win, 0, 26, win->info->width - 1, win->info->height - 26, 1, 0);
 
-	_KeProcessSleep(1600);
+	//_KeProcessSleep(10);
 }
 
 
@@ -550,7 +551,6 @@ void TerminalHandleMessage(PostEvent *e) {
 				ChWindowHide(win);
 			}
 		}
-
 		_KeWriteFile(master_fd, &c, 1);
 		/* else its a key release event */
 		memset(e, 0, sizeof(PostEvent));
@@ -580,9 +580,10 @@ void TerminalThread() {
 	int bytes_read = 0;
 	while (1) {
 		bytes_read = _KeReadFile(master_fd, buf, 512);
-
+		
 		if (bytes_read >= 512) {
 			bytes_read = 512;
+			_KePrint("Bytes read : %d \r\n", bytes_read);
 		}
 
 		for (int i = 0; i < bytes_read; i++){
@@ -601,7 +602,11 @@ void TerminalThread() {
 			_update_terminal_ = false;
 		}
 		
-		_KeProcessSleep(10); //
+#ifdef ARCH_ARM64
+		_KeProcessSleep(4);
+#elif ARCH_X64
+		_KeProcessSleep(10000);
+#endif
 	}
 }
 
@@ -610,17 +615,15 @@ void TerminalThread() {
 */
 int main(int argc, char* arv[]){
 	app = ChitralekhaStartApp(argc, arv);
-	win = ChCreateWindow(app, (WINDOW_FLAG_MOVABLE), "Xeneva Terminal", 300, 300, 650, 450);
-	ChWindowBroadcastIcon(app, "/icons/term.bmp");
+	win = ChCreateWindow(app, (WINDOW_FLAG_MOVABLE), "Xeneva Terminal", 300, 100, 650, 450);
 	win->info->alpha = false;
 	win->info->alphaValue = 0.7;
-	win->color = BLACK;
+	win->color = 0xE6373434;
 	
 	consolas = ChInitialiseFont(CONSOLAS);
 	ChFontSetSize(consolas, 12);
 	int f_w = ChFontGetWidthChar(consolas,'M');
 	int f_h = consolas->face->size->metrics.height >> 6;//ChFontGetHeightChar(consolas, 'A');
-
 	cell_width = f_w;
 	cell_height = f_h;
 	int term_w = win->info->width - 1;
@@ -635,14 +638,13 @@ int main(int argc, char* arv[]){
 	_cursor_blink = 0;
 	escBuf = (char*)malloc(256);
 	memset(escBuf, 0, 256);
-	backColor = BLACK;
+	backColor = 0xFF000000;// BLACK;
 	fgColor = WHITE;
 	_update_terminal_ = false;
 	master_fd = slave_fd = 0;
 	/* create the terminal */
 	int success = 0;
 	success = _KeCreateTTY(&master_fd, &slave_fd);
-
 	WinSize sz;
 	sz.ws_col = ws_col;
 	sz.ws_row = ws_row;
@@ -670,13 +672,17 @@ int main(int argc, char* arv[]){
 	_KeProcessLoadExec(shell_id, "/xesh.exe", 0, 0);
 
 
+
 	int thread_idx = _KeCreateThread(TerminalThread, "asyncthr");
+
+	ChWindowBroadcastIcon(app, "/icons/term.bmp");
 	PostEvent e;
 	memset(&e, 0, sizeof(PostEvent));
 	while (1) {
 		int err = _KeFileIoControl(app->postboxfd, POSTBOX_GET_EVENT, &e);
 		TerminalHandleMessage(&e);
-		if (err == POSTBOX_NO_EVENT)
+		if (err == POSTBOX_NO_EVENT) {
 			_KePauseThread();
+		}
 	}
 }

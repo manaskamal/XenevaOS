@@ -295,7 +295,7 @@ static const enum PeMachineType   MACHINE_NATIVE = IMAGE_FILE_MACHINE_I386;
 * @param nt -- nt headers
 * @param diff -- difference from its original
 */
-extern void XELdrRelocatePE(void* image, PIMAGE_NT_HEADERS nt, int diff);
+extern void XELdrRelocatePE(void* image, PIMAGE_NT_HEADERS nt, uint64_t diff);
 
 /*
 * XELdrLinkPE -- Links a dll library to its executable
@@ -310,6 +310,8 @@ extern void XELdrLinkPE(void* exec);
 * @param exporter -- executable image
 */
 extern void XELdrCreatePEObjects(void* exec);
+
+extern void XELdrGetIATBoundary(void* image, uint64_t* cowStart, uint64_t* cowEnd);
 
 /*
 * XELdrLinkDependencyPE -- link all dependencies except

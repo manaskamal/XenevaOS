@@ -187,6 +187,21 @@
     <ClInclude Include="includes\c++\new">
       <Filter>includes\c++</Filter>
     </ClInclude>
+    <ClInclude Include="includes\sys\_kecred.h">
+      <Filter>includes\sys</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\inttypes.h">
+      <Filter>includes</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\stdbool.h">
+      <Filter>includes</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\unistd.h">
+      <Filter>includes</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\strings.h">
+      <Filter>includes</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="string.cpp" />
@@ -243,5 +258,13 @@
     <ClCompile Include="ceilf.cpp" />
     <ClCompile Include="fmodf.cpp" />
     <ClCompile Include="roundf.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="_callbase_arm64.s" />
+    <CustomBuild Include="setjmp_arm64.s" />
+    <CustomBuild Include="store_stack_arm64.s" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="_export_arm64.def" />
   </ItemGroup>
 </Project>

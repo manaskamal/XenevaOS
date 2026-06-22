@@ -30,8 +30,8 @@
 #ifndef __X86_64_SIGNAL_H__
 #define __X86_64_SIGNAL_H__
 
-#include <Hal\x86_64_cpu.h>
-#include <Hal\x86_64_sched.h>
+#include <Hal/x86_64_cpu.h>
+#include <Hal/x86_64_sched.h>
 
 
 

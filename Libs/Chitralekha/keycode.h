@@ -256,6 +256,17 @@ XE_EXTERN{
 	*/
 	XE_LIB void ChitralekhaKeySetShift(bool bit);
 
+	/**
+     * @brief ChitralekhaKeySetCapslock -- set capslock bit forcefully
+     * @param bit -- bit to set
+     */
+	XE_LIB void ChitralekhaKeySetCapslock(bool bit);
+
+	/**
+     * @brief ChitralekhaKeyGetCapslock -- get capslock bit
+     */
+	XE_LIB bool ChitralekhaKeyGetCapslock();
+
 #ifdef __cplusplus
 }
 #endif

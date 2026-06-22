@@ -1,4 +1,6 @@
 /**
+* @file postbox.h
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2023, Manas Kamal Choudhury
@@ -31,7 +33,13 @@
 #define __POSTBOX_H__
 
 #include <stdint.h>
-#include <Hal\x86_64_sched.h>
+#ifdef ARCH_X64
+#include <Hal/x86_64_sched.h>
+#elif ARCH_ARM64
+#include <Hal/AA64/sched.h>
+#endif
+#include <Fs/vfs.h>
+
 
 #define POSTBOX_CREATE  401
 #define POSTBOX_DESTROY 402
@@ -43,7 +51,7 @@
 #define POSTBOX_NO_EVENT  -1
 #define POSTBOX_ROOT_ID    1
 
-#pragma pack(push,1)
+//#pragma pack(push,1)
 /*
  * PostEvent -- event message structure
  */
@@ -65,9 +73,11 @@ typedef struct _post_event_ {
 	unsigned char* charValue2;
 	char charValue3[100];
 }PostEvent;
-#pragma pack(pop)
+//#pragma pack(pop)
 
+#ifdef ARCH_X64
 #pragma pack(push,1)
+#endif
 typedef struct _postbox_ {
 	uint64_t* address;
 	uint16_t ownerID;
@@ -78,20 +88,23 @@ typedef struct _postbox_ {
 	struct _postbox_ *next;
 	struct _postbox_* prev;
 }PostBox;
+#ifdef ARCH_X64
 #pragma pack(pop)
+#endif
 
-/*
-* AuIPCPostBoxInitialise -- initialise
-* the post box ipc manager
-*/
+/**
+ * @brief AuIPCPostBoxInitialise -- initialise
+ * the post box ipc manager
+ */
 extern void AuIPCPostBoxInitialise();
 
-/*
-* PostBoxPutEvent -- put an event to a specific post box
-* @param event -- Event to put
-*/
+/**
+ * @brief PostBoxPutEvent -- put an event to a specific post box
+ * @param event -- Event to put
+ */
 extern void PostBoxPutEvent(PostEvent* event);
 
+#ifdef ARCH_X64
 /*
  * PostBoxGetEvent -- get an event from post box and copy it to a
  * memory area
@@ -100,20 +113,41 @@ extern void PostBoxPutEvent(PostEvent* event);
  * @param curr_thread -- Pointer to current thread
  */
 extern int PostBoxGetEvent(PostEvent* event, bool root, AuThread* curr_thread);
+#elif ARCH_ARM64
+/**
+ * @brief PostBoxGetEvent -- get an event from post box and copy it to a
+ * memory area
+ * @param event -- pointer to a memory area
+ * @param root -- is this post box is root
+ * @param curr_thread -- Pointer to current thread
+ */
+extern int PostBoxGetEvent(PostEvent* event, bool root, AA64Thread* curr_thread);
+#endif
 
-/*
-* PostBoxCreate -- creates a postbox
+extern AuVFSNode* AuPostBOXGetNode();
+
+/**
+* @brief PostBoxCreate -- creates a postbox
 * @param root -- is this post box root ?
 * @param tid -- thread id
 */
 extern void PostBoxCreate(bool root, uint16_t tid);
 
-/*
-* PostBoxDestroyByID -- destroys a post box identified by
+/**
+* @brief PostBoxDestroyByID -- destroys a post box identified by
 * an id
 * @param id -- id of the postbox
 */
 extern void PostBoxDestroyByID(uint16_t id);
+
+/**
+ * @brief PostBoxIOControl -- I/O Control function for
+ * post box manager
+ * @param file -- Pointer to postbox file
+ * @param code -- Post Box command
+ * @param arg -- extra data
+ */
+extern int PostBoxIOControl(AuVFSNode* file, int code, void* arg);
 
 
 #endif

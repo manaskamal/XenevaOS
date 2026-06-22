@@ -1,4 +1,6 @@
 /**
+* @file kernelAA64.h
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2025, Manas Kamal Choudhury
@@ -32,14 +34,14 @@
 
 #include <aurora.h>
 
-/*
- * AuLittleBootUsed -- check if little boot protocol
+/**
+ * @brief AuLittleBootUsed -- check if little boot protocol
  * is used
  */
 AU_EXTERN AU_EXPORT bool AuLittleBootUsed();
 
-/*
- * AA64PCIeInitialize -- intialize pcie controller
+/**
+ * @brief AA64PCIeInitialize -- intialize pcie controller
  */
 extern void AA64PCIeInitialize();
 #endif

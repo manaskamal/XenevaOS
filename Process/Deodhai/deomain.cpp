@@ -28,17 +28,17 @@
 **/
 
 #include <_xeneva.h>
-#include <sys\_keproc.h>
-#include <sys\_kefile.h>
-#include <sys\mman.h>
+#include <sys/_keproc.h>
+#include <sys/_kefile.h>
+#include <sys/mman.h>
 #include <stdlib.h>
-#include <sys\iocodes.h>
-#include <sys\_keipcpostbox.h>
+#include <sys/iocodes.h>
+#include <sys/_keipcpostbox.h>
 #include <time.h>
 #include <string.h>
 #include <chitralekha.h>
 #include <stdlib.h>
-#include <sys\_kesignal.h>
+#include <sys/_kesignal.h>
 #include "deodhai.h"
 #include "cursor.h"
 #include "nanojpg.h"
@@ -52,7 +52,7 @@
 #include "draw.h"
 #include "animation.h"
 #include "popup.h"
-#include <sys\socket.h>
+#include <sys/socket.h>
 #include <boxblur.h>
 #include <sys/types.h>
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
@@ -97,6 +97,9 @@ Cursor* resizeLeftRight;
 uint32_t* surfaceBuffer;
 bool _shadow_update;
 bool _clients_advice;
+int gpu_fd;
+int gpu_display_id;
+bool _gpu_enabled;
 uint64_t startTime;
 uint64_t startSubTime;
 
@@ -238,6 +241,7 @@ Window* DeodhaiCreateWindow(int x, int y, int w, int h, uint16_t flags, uint16_t
 		DeodhaiAddWindow(win);
 	return win;
 }
+
 
 /*
 * DeodhaiBrodcastMessage -- broadcast a message to every window
@@ -450,6 +454,8 @@ void DeodhaiWindowHide(Window* win) {
 	if (info->hide) {
 		/* UNHIDE the window , if its already hidden */
 		info->hide = false;
+		info->updateEntireWindow = true;
+		info->dirty = 1;
 		focusedWin = win;
 	}
 	else{
@@ -562,7 +568,7 @@ void CursorStoreBack(ChCanvas* canv,Cursor* cur,unsigned x, unsigned y) {
 void CursorDrawBack(ChCanvas* canv,Cursor* cur, unsigned x, unsigned y) {
 	for (int w = 0; w < 24; w++){
 		for (int h = 0; h < 24; h++){
-			ChDrawPixel(canv, x + w, y + h, cur->cursorBack[h * 24 + w]);
+			ChDrawPixelRAW(canv, x + w, y + h, cur->cursorBack[h * 24 + w]);
 		}
 	}
 }
@@ -649,11 +655,11 @@ void ComposeFrame(ChCanvas *canvas) {
 						for (int i = 0; i < r_w; i++) {
 							*(uint32_t*)(canvas->buffer + (static_cast<int64_t>(info->y) + r_y + j) * canvas->canvasWidth +
 								(static_cast<int64_t>(info->x) + r_x + i)) =
-								ChColorAlphaBlend2(*(uint32_t*)(canvas->buffer +
+								ChColorAlphaBlend(*(uint32_t*)(canvas->buffer +
 									(static_cast<int64_t>(info->y) + r_y + j) * canvas->canvasWidth +
 									(static_cast<int64_t>(info->x) + r_x + i)),
 									*(uint32_t*)(win->backBuffer + (static_cast<int64_t>(r_y) + j) * info->width +
-										(static_cast<int64_t>(r_x) + i))/*,info->alphaValue*/);
+										(static_cast<int64_t>(r_x) + i)),info->alphaValue);
 						}
 					}
 					AddDirtyClip(info->x + r_x, info->y + r_y, r_w, r_h);
@@ -843,11 +849,11 @@ void ComposeFrame(ChCanvas *canvas) {
 						for (int i = 0; i < width; i++) {
 							*(uint32_t*)(canvas->buffer + (static_cast<int64_t>(info->y) + j) * canvas->canvasWidth +
 								(static_cast<int64_t>(info->x) + i)) =
-								ChColorAlphaBlend2(*(uint32_t*)(canvas->buffer +
+								ChColorAlphaBlend(*(uint32_t*)(canvas->buffer +
 									(static_cast<int64_t>(info->y) + j) * canvas->canvasWidth +
 									(static_cast<int64_t>(info->x) + i)),
 									*(uint32_t*)(win->backBuffer + (static_cast<int64_t>(0) + j) * info->width +
-										(static_cast<int64_t>(0) + i)));
+										(static_cast<int64_t>(0) + i)), info->alphaValue);
 						}
 					}
 					AddDirtyClip(info->x, info->y, width, height);
@@ -930,9 +936,9 @@ void ComposeFrame(ChCanvas *canvas) {
 						if ((k_y + k_h) >= canvas->screenHeight)
 							k_h = canvas->screenHeight - k_y;
 
-						AddDirtyClip(k_x, k_y, k_w, k_h);
-						clipCount = 0;
+						AddDirtyClip(k_x, k_y, k_w, k_h);	
 					}
+					clipCount = 0;
 			}
 				if (!(win->flags & WINDOW_FLAG_ANIMATED)) {
 					if (info->updateEntireWindow)
@@ -1135,7 +1141,7 @@ void ComposeFrame(ChCanvas *canvas) {
 					for (int i = 0; i < width; i++) {
 						*(uint32_t*)(canvas->buffer + (static_cast<int64_t>(winy) + j) * canvas->canvasWidth + 
 							(static_cast<int64_t>(winx) + i)) =
-							ChColorAlphaBlend2(*(uint32_t*)(canvas->buffer + (static_cast<int64_t>(winy) + j)* canvas->canvasWidth + 
+							ChColorAlphaBlend2(*(uint32_t*)(surfaceBuffer + (static_cast<int64_t>(winy) + j)* canvas->canvasWidth + 
 								(static_cast<int64_t>(winx) + i)),
 							*(uint32_t*)(win->backBuffer + static_cast<int64_t>(j) * info->width + i));
 					}
@@ -1370,6 +1376,86 @@ broadcast:
 }
 
 
+
+/*
+ * DeodhaiBroadcastMouse -- broadcast mouse event to all window
+ * @param mouse_x -- mouse x location
+ * @param mouse_y -- mouse y location
+ * @param button -- mouse button state
+ */
+void DeodhaiBroadcastTouch(int t_x, int t_y) {
+	Window* mouseWin = NULL;
+
+	if (focusedWin) {
+		WinSharedInfo* info = (WinSharedInfo*)focusedWin->sharedInfo;
+		if (!info->hide) {
+			if (t_x >= info->x && (t_x < (info->x + info->width)) &&
+				t_y >= info->y && (t_y < (info->y + info->height))) {
+				mouseWin = focusedWin;
+				/* skip others */
+				goto broadcast;
+			}
+		}
+	}
+	if (!mouseWin) {
+		/* check for normal windows */
+		for (Window* win = rootWin; win != NULL; win = win->next) {
+			WinSharedInfo* info = (WinSharedInfo*)win->sharedInfo;
+			if (info->hide)
+				continue;
+			if (t_x >= info->x && (t_x < (info->x + info->width)) &&
+				t_y >= info->y && (t_y < (info->y + info->height))) {
+
+				if (DeodhaiCheckWindowPointOcclusion(win, t_x, t_y))
+					continue;
+				if (win->flags & WINDOW_FLAG_BLOCKED)
+					continue;
+
+				/* PHILOSOPHY: if mouse event was sent to unfocused window
+				 * and if the mouse points goes to some kind of widget or object
+				 * it will be an hover message, if mouse left button was clicked
+				 * within than hovered object of unfocused window, make that
+				 * window focused and bring it to front and update all window
+				 * and shadow effects
+				 */
+				if (focusedWin != win) {
+					DeodhaiWindowSetFocused(win, 1);
+					_window_update_all_ = true;
+					_shadow_update = true;
+				}
+				mouseWin = win;
+				break;
+			}
+		}
+
+
+		/* check for always on top windows */
+		for (Window* win = alwaysOnTop; win != NULL; win = win->next) {
+			WinSharedInfo* info = (WinSharedInfo*)win->sharedInfo;
+			if (info->hide)
+				continue;
+			if (t_x >= info->x && (t_x < (info->x + info->width)) &&
+				t_y >= info->y && (t_y < (info->y + info->height))) {
+				mouseWin = win;
+				break;
+			}
+		}
+	}
+
+broadcast:
+	if (mouseWin) {
+		WinSharedInfo* info = (WinSharedInfo*)mouseWin->sharedInfo;
+		
+		int handle = mouseWin->handle;
+		uint8_t handleType = HANDLE_TYPE_NORMAL_WINDOW;
+		if ((mouseWin->flags & WINDOW_FLAG_POPUP))
+			handleType = HANDLE_TYPE_POPUP_WINDOW;
+
+		DeodhaiSendMouseEvent(handle, mouseWin->ownerId, handleType, DEODHAI_REPLY_TOUCH_EVENT, t_x, t_y, 0x1);
+	}
+
+}
+
 /*
  * DeodhaiBrodcastKey -- sends key event
  * to focused window
@@ -1403,7 +1489,8 @@ void DeodhaiCloseWindow(Window* win) {
 	int height = info->height;
 	int x = info->x;
 	int y = info->y;
-	free(win->title);
+	_KePrint("[Deodhai]:CloseWindow : %s \r\n", win->title);
+	//free(win->title);
 
 	/* iterate all popup window and close them */
 	for (Window* popup = win->firstPopupWin; popup != NULL; popup = popup->next) {
@@ -1417,20 +1504,22 @@ void DeodhaiCloseWindow(Window* win) {
 		free(popup);
 	}
 
-
+	_KePrint("Unmapping shared mems \r\n");
 	_KeUnmapSharedMem(win->shWinKey);
 	_KeUnmapSharedMem(win->backBufferKey);
+	_KePrint("Unmapped all shared mems from deodhai side for process\r\n");
 #ifdef SHADOW_ENABLED
 	_KeMemUnmap(win->shadowBuffers, (static_cast<size_t>(width) + SHADOW_SIZE * 2) * (height + SHADOW_SIZE * 2) * 4);
 #endif
 	BackDirtyAdd(x - SHADOW_SIZE, y - SHADOW_SIZE, width + SHADOW_SIZE*2, height + SHADOW_SIZE*2);
 	DeodhaiRemoveWindow(win);
-	free(win);
+	_KePrint("Removing window \r\n");
+	//free(win);
 	PostEvent e;
 	e.to_id = ownerId;
 	e.type = DEODHAI_REPLY_WINDOW_CLOSED;
 	_KeFileIoControl(postbox_fd, POSTBOX_PUT_EVENT, &e);
-
+	_KePrint("Putting post box event \r\n");
 	if (!(flags & WINDOW_FLAG_MESSAGEBOX)) {
 		/* now broadcast this information, that a
 		 * specific window has been destroyed
@@ -1442,6 +1531,8 @@ void DeodhaiCloseWindow(Window* win) {
 		DeodhaiBroadcastMessage(&e, NULL);
 		_KeProcessSleep(100);
 	}
+	_always_on_top_update = 1;
+	_window_update_all_ = 1;
 }
 
 /* DrawWallpaper for getting jpeg image as wallpaper
@@ -1453,6 +1544,7 @@ void DrawWallpaper(ChCanvas *canv, char* filename) {
 	XEFileStatus stat;
 	memset(&stat, 0, sizeof(XEFileStatus));
 	_KeFileStat(image, &stat);
+	_KePrint("Wallpaper sz : %d \r\n", stat.size);
 	void* data_ = _KeMemMap(NULL, stat.size, 0, 0, -1, 0);
 	memset(data_, 0, ALIGN_UP(stat.size, 4096));
 	_KeReadFile(image, data_, ALIGN_UP(stat.size,4096));
@@ -1467,6 +1559,8 @@ void DrawWallpaper(ChCanvas *canv, char* filename) {
 	}
 	int w = decor->GetWidth();
 	int h = decor->GetHeight();
+	_KePrint("Wallpaper width : %d \r\n", w);
+	_KePrint("Wallpaper height : %d \r\n", h);
 	uint32_t* swapable_buff = canv->buffer;
 	canv->buffer = surfaceBuffer;
 	uint8_t* data = decor->GetImage();
@@ -1479,9 +1573,9 @@ void DrawWallpaper(ChCanvas *canv, char* filename) {
 			uint8_t r = data[j * 3];
 			uint8_t g = data[j * 3 + 1];
 			uint8_t b = data[j * 3 + 2];
-			uint32_t rgba = ((r << 16) | (g << 8) | (b)) & 0x00ffffff; 
+			uint32_t rgba = ((r << 16) | (g << 8) | (b)) & 0x00ffffff;
 			rgba = rgba | 0xff000000;
-			ChDrawPixel(canv,x + k, y + i, rgba);
+			ChDrawPixelRAW(canv,x + k, y + i, rgba);
 			j++;
 		}
 	}
@@ -1537,6 +1631,7 @@ void DeodhaiUpdateBits(bool window_update, bool skip_disable) {
 }
 
 
+extern "C" void _AuConOut(const char* text, ...);
 /*
  * main -- deodhai compositor
  */
@@ -1545,10 +1640,11 @@ int main(int argc, char* arv[]) {
 	
 	_KePrint("Argc == 10 %x\r\n", argc);
 	_KePrint("Deodhai v1.0 running %d\r\n", pid);
+
 	startTime = 0;
 	startSubTime = 0;
 	timeval tm;
-	gettimeofday(&tm);
+	//gettimeofday(&tm);
 	startTime = tm.tv_sec;
 	startSubTime = tm.tv_usec;
 
@@ -1559,9 +1655,12 @@ int main(int argc, char* arv[]) {
 
 	DeodhaiInitialiseData();
 	BackDirtyInitialise();
+
+	_KePrint("Deodhai : Till here we're initialized \r\n");
 	
 	int ret = 0;
 	int screen_w = 0;
+	_gpu_enabled = 0;
 	int screen_h = 0;
 	_window_moving_ = false;
 	_clients_advice = false;
@@ -1569,6 +1668,8 @@ int main(int argc, char* arv[]) {
 	 * file descriptor 
 	 */
 	ChCanvas* canv = ChCreateCanvas(100, 100);
+
+
 	
 	canvas = canv;
 	ret = _KeFileIoControl(canv->graphics_fd, SCREEN_GETWIDTH, &graphctl);
@@ -1580,6 +1681,14 @@ int main(int argc, char* arv[]) {
 	canv->canvasWidth = screen_w;
 	canv->canvasHeight = screen_h;
 
+	gpu_fd = _KeOpenFile("/dev/virtiogpu", FILE_OPEN_READ_ONLY);
+
+	if (gpu_fd != -1) {
+		_gpu_enabled = 1;
+		gpu_display_id = _KeFileIoControl(gpu_fd, 0x204, NULL);
+	}
+
+	_KePrint("Canv->screen_w -> %d, screenh -> %d \r\n", screen_w, screen_h);
 	/* now allocate a back buffer with respected canvas size
 	 * and fill it with light-black color */
 	ChAllocateBuffer(canv);
@@ -1590,35 +1699,59 @@ int main(int argc, char* arv[]) {
 		surfaceBuffer[j * canv->canvasWidth + i] = GRAY; //0xFF938585;
 
 	DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
-	if (screen_w == 1920 && screen_h == 1080) {
-		DrawWallpaper(canv, "/nature.jpg");
+	if (screen_w == 1024 && screen_h == 768) {
+		DrawWallpaper(canv, "/mtnr1.jpg");
+		DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
+	}else if (screen_w == 1920 && screen_h == 1080) {
+		DrawWallpaper(canv, "/mtnr2.jpg");
+		DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
+	}else if (screen_w == 480 && screen_h == 320) {
+		DrawWallpaper(canv, "/mntr1.jpg");
+		DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
+	}
+	else if (screen_w == 800 && screen_h == 480) {
+		DrawWallpaper(canv, "/flora1.jpg");
 		DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
 	}
 
 	ChCanvasScreenUpdate(canv, 0, 0, canv->canvasWidth, canv->canvasHeight);
-
+	if (_gpu_enabled) {
+		XEFileIOControl ctl;
+		ctl.uint_1 = gpu_display_id;
+		ctl.ushort_1 = 0;
+		ctl.ushort_2 = 0;
+		ctl.ulong_1 = canv->canvasWidth;
+		ctl.ulong_2 = canv->canvasHeight;
+		_KeFileIoControl(gpu_fd, 0x202, &ctl);
+		canv->buffer = canv->framebuff;
+	}
 
 	InitialiseDirtyClipList();
 
 	arrow = CursorOpen("/pointer.bmp", CURSOR_TYPE_POINTER);
 	CursorRead(arrow);
-	move = CursorOpen("/move.bmp", CURSOR_TYPE_MOVE);
+	/*move = CursorOpen("/move.bmp", CURSOR_TYPE_MOVE);
 	CursorRead(move);
 	resizeUpDown = CursorOpen("/rzupdn.bmp", CURSOR_TYPE_RESIZE_UPDOWN);
 	CursorRead(resizeUpDown);
 	resizeLeftRight = CursorOpen("/rzrl.bmp", CURSOR_TYPE_RESIZE_RIGHTLEFT);
-	CursorRead(resizeLeftRight);
+	CursorRead(resizeLeftRight);*/
 	currentCursor = arrow;
 	CursorStoreBack(canv, currentCursor, 0, 0);
 
 	/* Open all required device file */
 	mouse_fd = _KeOpenFile("/dev/mice", FILE_OPEN_READ_ONLY);
 	kybrd_fd = _KeOpenFile("/dev/kybrd", FILE_OPEN_READ_ONLY);
+
 	AuInputMessage mice_input;
 	AuInputMessage kybrd_input;
 	memset(&mice_input, 0, sizeof(AuInputMessage));
 	memset(&kybrd_input, 0, sizeof(AuInputMessage));
 	postbox_fd = _KeOpenFile("/dev/postbox", FILE_OPEN_READ_ONLY);
+	_KePrint("postboxfd : %d \r\n", postbox_fd);
+
+	
+//	postbox_fd = canv->graphics_fd;
 
 	_KeFileIoControl(postbox_fd, POSTBOX_CREATE_ROOT, NULL);
 
@@ -1630,25 +1763,61 @@ int main(int argc, char* arv[]) {
 	uint64_t last_click_time = 0;
 	uint64_t last_redraw = 0;
 
-	while (1) {
+	int proc = _KeCreateProcess(0, "xelnch");
+	_KeProcessLoadExec(proc, "/xelnch.exe", 0, NULL);
 
+	_KeProcessSleep(100);
+	proc = _KeCreateProcess(0, "nmdapha");
+	_KeProcessLoadExec(proc, "/nmdapha.exe", NULL, NULL);
+
+	//_KeProcessSleep(200);
+	/*int proc = _KeCreateProcess(0, "file");
+	_KeProcessLoadExec(proc, "/file.exe", NULL, NULL);
+
+	_KeProcessSleep(100);
+	proc = _KeCreateProcess(0, "calc");
+	_KeProcessLoadExec(proc, "/calc.exe", NULL, NULL);*/
+
+	/* launch the session manager directly from here */
+#ifdef ARCH_X64
+	int proc = _KeCreateProcess(0, "xelnch");
+	_KeProcessLoadExec(proc, "/xelnch.exe", 0, NULL);
+
+	_KeProcessSleep(100);
+
+	proc = _KeCreateProcess(0, "nmdapha");
+	_KeProcessLoadExec(proc, "/nmdapha.exe", 0, NULL);
+#endif
+
+
+
+	_KePrint("Postbox created for deodhai \r\n");
+	while (1) {
+#ifdef ARCH_X64
 		unsigned long frameTime = DeodhaiTimeSince(last_redraw);
 		if (frameTime > 15) {
 			ComposeFrame(canv);
 			last_redraw = DeodhaiCurrentTime();
 			frameTime = 0;
 		}
-
+#elif ARCH_ARM64
+		ComposeFrame(canv);
+#endif
 		
 		_KeFileIoControl(postbox_fd, POSTBOX_GET_EVENT_ROOT, &event);
 
 		_KeReadFile(mouse_fd, &mice_input, sizeof(AuInputMessage));
+
+
 		_KeReadFile(kybrd_fd, &kybrd_input, sizeof(AuInputMessage));
+
 		
 		
 		if (mice_input.type == AU_INPUT_MOUSE) {
 			int32_t cursor_x = mice_input.xpos;
 			int32_t cursor_y = mice_input.ypos;
+
+#ifdef ARCH_X64
 			double scale_x, scale_y;
 			if (mice_input.code4 != 0){
 				/*scaling is needed*/
@@ -1657,7 +1826,7 @@ int main(int argc, char* arv[]) {
 				scale_y = (double)canvas->screenHeight / (double)mice_input.code4;
 				cursor_y = mice_input.ypos * (double)scale_y;
 			}
-			
+#endif
 			currentCursor->xpos = cursor_x;
 			currentCursor->ypos = cursor_y;
 			int button = mice_input.button_state;
@@ -1680,11 +1849,12 @@ int main(int argc, char* arv[]) {
 			if (currentCursor->ypos >= canvas->screenHeight)
 				currentCursor->ypos = 0;
 
-			DeodhaiWindowCheckDraggable(currentCursor->xpos, currentCursor->ypos, button);
+		    DeodhaiWindowCheckDraggable(currentCursor->xpos, currentCursor->ypos, button);
 
 			/*
 			 * TODO: bug fixing
 			 */
+#ifdef ARCH_X64
 			if (button){
 				if (DeodhaiClickTimeSince(last_click_time) < 400) {
 					button = DEODHAI_MESSAGE_MOUSE_DBLCLK;
@@ -1694,9 +1864,10 @@ int main(int argc, char* arv[]) {
 					last_click_time = DeodhaiClickCurrentTime();
 				}
 			}
-
+#endif
 			if (_window_broadcast_mouse_) 
 				DeodhaiBroadcastMouse(currentCursor->xpos, currentCursor->ypos, button);
+			
 
 			
 			/* ensure clipping within the screen */
@@ -1711,11 +1882,65 @@ int main(int argc, char* arv[]) {
 			if (currentCursor->ypos + currentCursor->height >= screen_h)
 				currentCursor->ypos = screen_h - currentCursor->height;
 			
-		
+			memset(&mice_input, 0, sizeof(AuInputMessage));
+		}
+
+		/*
+		 * Handle touch screen events
+		 */
+		if (mice_input.type == AU_INPUT_TOUCH) {
+			int32_t cursor_x = mice_input.xpos;
+			int32_t cursor_y = mice_input.ypos;
+
+#ifdef ARCH_X64
+			double scale_x, scale_y;
+			if (mice_input.code4 != 0) {
+				/*scaling is needed*/
+				scale_x = (double)canvas->screenWidth / (double)mice_input.code4;
+				cursor_x = mice_input.xpos * (double)scale_x;
+				scale_y = (double)canvas->screenHeight / (double)mice_input.code4;
+				cursor_y = mice_input.ypos * (double)scale_y;
+			}
+#endif
+			currentCursor->xpos = cursor_x;
+			currentCursor->ypos = cursor_y;
+
+			if ((currentCursor->xpos) <= 0)
+				currentCursor->xpos = 0;
+
+			if ((currentCursor->ypos) <= 0)
+				currentCursor->ypos = 0;
+
+			if ((currentCursor->xpos + 24) >= canvas->screenWidth)
+				currentCursor->xpos = canvas->screenWidth - 24;
+
+			if ((currentCursor->ypos + 24) >= canvas->screenHeight)
+				currentCursor->ypos = canvas->screenHeight - 24;
+
+			if (currentCursor->xpos >= canvas->screenWidth)
+				currentCursor->xpos = 0;
+
+			if (currentCursor->ypos >= canvas->screenHeight)
+				currentCursor->ypos = 0;
+
+			DeodhaiBroadcastTouch(cursor_x, cursor_y);
+			/* ensure clipping within the screen */
+			if (currentCursor->xpos <= 0)
+				currentCursor->xpos = 0;
+			if (currentCursor->ypos <= 0)
+				currentCursor->ypos = 0;
+
+
+			if (currentCursor->xpos + currentCursor->width >= screen_w)
+				currentCursor->xpos = screen_w - currentCursor->width;
+			if (currentCursor->ypos + currentCursor->height >= screen_h)
+				currentCursor->ypos = screen_h - currentCursor->height;
+
 			memset(&mice_input, 0, sizeof(AuInputMessage));
 		}
 
 		if (kybrd_input.type == AU_INPUT_KEYBOARD) {
+			_KePrint("[Deodhai]: keyinput : %x \r\n", kybrd_input.code);
 			DeodhaiBroadcastKey(kybrd_input.code);
 			memset(&kybrd_input, 0, sizeof(AuInputMessage));
 		}
@@ -1725,6 +1950,9 @@ int main(int argc, char* arv[]) {
 			int y = event.dword2;
 			int w = event.dword3;
 			int h = event.dword4;
+			_KePrint("[Deodhai]: create win message received \r\n");
+			_KePrint("[Deodhai]: x : %d y : %d \r\n", x, y);
+			_KePrint("[Doedhai]: from id : %d \r\n", event.from_id);
 			/* if this create window is creating a popup window
 			 * then we will need it's parent window handle
 			 */
@@ -1754,8 +1982,8 @@ int main(int argc, char* arv[]) {
 			e.to_id = event.from_id;
 			
 			_KeFileIoControl(postbox_fd, POSTBOX_PUT_EVENT, &e);
-			
-		//	_KeProcessSleep(180);
+			_KePrint("Msg sent to e.toid : %d \n", e.to_id);
+			_KeProcessSleep(180);
 			if (!(win->flags & WINDOW_FLAG_MESSAGEBOX || win->flags & WINDOW_FLAG_POPUP || 
 				win->flags & WINDOW_FLAG_BROADCAST_LISTENER)){
 				/* broadcast it to all broadcast listener windows, about this news*/
@@ -1772,6 +2000,9 @@ int main(int argc, char* arv[]) {
 				win->animAlphaVal = 0;
 			}
 
+			_KePrint("[Deodhai]: Window created \r\n");
+		/*	_window_update_all_ = true;
+			_always_on_top_update = true;*/
 			focusedWin = win;
 			memset(&event, 0, sizeof(PostEvent));
 
@@ -1796,6 +2027,8 @@ int main(int argc, char* arv[]) {
 			
 			event.type = 174;
 			DeodhaiBroadcastMessage(&event, skippable);
+			_window_update_all_ = 1;
+			_always_on_top_update = 1;
 			_KeProcessSleep(20);
 			memset(&event, 0, sizeof(PostEvent));
 		}
@@ -1822,6 +2055,7 @@ int main(int argc, char* arv[]) {
 
 			if (hideable_win) 
 				DeodhaiWindowHide(hideable_win);
+			_KeProcessSleep(10);
 			memset(&event, 0, sizeof(PostEvent));
 		}
 
@@ -1900,8 +2134,8 @@ int main(int argc, char* arv[]) {
 				DeodhaiCloseWindow(removable);
 				focusedWin = NULL;
 				focusedLast = NULL;
-				_window_update_all_ = true;
-				_always_on_top_update = true;
+				//_window_update_all_ = true;
+				//_always_on_top_update = true;
 			}
 			memset(&event, 0, sizeof(PostEvent));
 		}
@@ -1949,6 +2183,22 @@ int main(int argc, char* arv[]) {
 			memset(&event, 0, sizeof(PostEvent));
 		}
 
+#ifdef ARCH_X64
 		_KeProcessSleep((16 - frameTime));
+#elif ARCH_ARM64
+		_KeProcessSleep(2);
+#endif
 	}
+}
+
+int _get_gpu_fd() {
+	return gpu_fd;
+}
+
+int _get_gpu_display_id() {
+	return gpu_display_id;
+}
+
+bool _is_gpu_enabled() {
+	return _gpu_enabled;
 }

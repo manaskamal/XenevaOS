@@ -36,23 +36,32 @@
 #include <Mm/liballoc/liballoc.h>
 #include <aucon.h>
 #include <Sync/spinlock.h>
+#include <Hal/AA64/profile.h>
 
-#ifndef _USE_LIBALLOC
+#if defined (_USE_CUSTOM_MALLOC)
 static meta_data_t* first_block;
 static meta_data_t* last_block;
 uint64_t last_mark;
 bool _debug_on;
 extern bool _vfs_debug_on;
 #endif
-void au_free_page(void* ptr, int pages);
+int au_free_page(void* ptr, int pages);
 void* au_request_page(int pages);
 
+#ifdef _USE_DLMALLOC 
+extern void* dlmalloc(size_t);
+extern void dlfree(void*);
+extern void* dlcalloc(size_t, size_t);
+extern void* dlrealloc(void*, size_t);
+static uint64_t _last_morecore_addr = 0;
+static uint64_t _brk_current = 0;
+#endif
 /*
 * AuHeapInitialize -- initialize
 * kernel malloc library with four pages (16KiB)
 */
 void AuHeapInitialize() {
-#ifndef _USE_LIBALLOC
+#if defined(_USE_CUSTOM_MALLOC) 
 	last_block = NULL;
 	first_block = NULL;
 	last_mark = 0;
@@ -73,6 +82,8 @@ void AuHeapInitialize() {
 
 	last_mark = ((uint64_t)page + (meta->size + sizeof(meta_data_t)));
 #endif
+	_last_morecore_addr = 0;
+	_brk_current = KERNEL_BASE_ADDRESS;
 }
 
 /*
@@ -101,7 +112,7 @@ size_t align24(size_t val) {
 * au_split_block -- split block into two block
 */
 int au_split_block(meta_data_t* splitable, size_t req_size) {
-#ifndef _USE_LIBALLOC
+#if defined(_USE_CUSTOM_MALLOC) 
 	uint8_t* meta_block_a = (uint8_t*)splitable;
 	size_t size = splitable->size - req_size - sizeof(meta_data_t);
 
@@ -154,7 +165,7 @@ int au_split_block(meta_data_t* splitable, size_t req_size) {
 * @param req_size -- requested size
 */
 void au_expand_kmalloc(size_t req_size) {
-#ifndef _USE_LIBALLOC
+#if defined(_USE_CUSTOM_MALLOC)
 	/*if ((req_size % 2) != 0)
 		req_size = next_power_of_two(req_size);*/
 
@@ -200,7 +211,7 @@ void au_expand_kmalloc(size_t req_size) {
 	last_mark = (uint64_t)(lm + (req_pages * 4096));
 #endif
 }
-
+extern bool isSyscall();
 /*
 * kmalloc -- allocate a small chunk of memory
 * @param size -- size in bytes
@@ -208,6 +219,8 @@ void au_expand_kmalloc(size_t req_size) {
 void* kmalloc(unsigned int size) {
 #ifdef _USE_LIBALLOC
 	return port_malloc(size);
+#elif _USE_DLMALLOC
+	return dlmalloc(size);
 #else
 	meta_data_t* meta = first_block;
 	void* ret = 0;
@@ -258,7 +271,7 @@ void* kmalloc(unsigned int size) {
 }
 
 void kheap_debug() {
-#ifndef _USE_LIBALLOC
+#if defined(_USE_CUSTOM_MALLOC)
 	for (meta_data_t* block = first_block; block != NULL; block = block->next) {
 		AuTextOut("Prev -> %x || Current -> %x | Next -> %x \r\n", block->prev, block, block->next);
 	}
@@ -271,7 +284,7 @@ void kheap_debug() {
 * @param meta -- current meta block
 */
 void merge_next(meta_data_t* meta) {
-#ifndef _USE_LIBALLOC
+#if defined (_USE_CUSTOM_MALLOC)
 	if (meta->next == NULL)
 		return;
 	uint64_t addr_valid = (uint64_t)meta->next;
@@ -309,7 +322,7 @@ void merge_next(meta_data_t* meta) {
 * @param meta -- current block
 */
 void merge_prev(meta_data_t* meta) {
-#ifndef _USE_LIBALLOC
+#if defined (_USE_CUSTOM_MALLOC)
 	if (meta->prev != NULL) {
 		uint64_t meta_prev = (uint64_t)meta->prev;
 		if (meta_prev < 0xFFFFE00000000000) {
@@ -352,6 +365,8 @@ void merge_prev(meta_data_t* meta) {
 void kfree(void* ptr) {
 #ifdef _USE_LIBALLOC
 	return port_free(ptr);
+#elif _USE_DLMALLOC
+	return dlfree(ptr);
 #else
 	if (!ptr)
 		return;
@@ -379,8 +394,10 @@ void kfree(void* ptr) {
 * @param new_size -- size of the new block
 */
 void* krealloc(void* ptr, unsigned int new_size) {
-#ifdef _USE_LIBALLOC
+#ifdef _USE_LIBALLOC 
 	return port_realloc(ptr, new_size);
+#elif _USE_DLMALLOC
+	return dlrealloc(ptr, new_size);
 #else
 	void* result = kmalloc(new_size);
 	if (ptr) {
@@ -403,6 +420,8 @@ void* krealloc(void* ptr, unsigned int new_size) {
 void* kcalloc(size_t n_item, size_t size) {
 #ifdef _USE_LIBALLOC
 	return port_calloc(n_item, size);
+#elif _USE_DLMALLOC
+	return dlcalloc(n_item, size);
 #else
 	size_t total = n_item * size;
 
@@ -417,20 +436,44 @@ void* kcalloc(size_t n_item, size_t size) {
 * @param pages -- number of pages needs to be mapped
 */
 void* au_request_page(int pages) {
-	uint64_t* page = AuGetFreePage(0, false);
-	uint64_t page_ = (uint64_t)page;
+#ifdef _USE_DLMALLOC
+	if (pages == 0) {
+		UARTDebugOut("[au_request_page]: last_core_address : %x \r\n", _brk_current);
+		return (void*)_brk_current;
+	}
 
+	if (pages < 0) {
+		UARTDebugOut("[au_request_page]: freeing up page because page < 0 \r\n");
+	}
+#endif
+
+	uint64_t page_ = 0;
+#if !defined (_USE_DLMALLOC)
+	uint64_t* page = AuGetFreePage(0, false);
+	page_ = (uint64_t)page;
+#else
+	page_ = _brk_current;
+#endif
+	
+#ifdef _USE_DLMALLOC
+	//UARTDebugOut("[au_request_page]: num_pages : %d, ptr : %x \r\n", pages, page_);
+	pages = (pages + 4095) / 4096;
+#endif
 	for (size_t i = 0; i < pages; i++) {
 		void* p = AuPmmngrAlloc();
 		AuMapPage((uint64_t)p, page_ + i * 4096, PTE_NORMAL_MEM);
 	}
 
 	if ((page_ % PAGE_SIZE) != 0) {
-		SeTextOut("Request page not aligned to page boundary \r\n");
+		UARTDebugOut("Request page not aligned to page boundary \r\n");
 		for (;;);
 	}
 
-	return page;
+#ifdef _USE_DLMALLOC
+	_last_morecore_addr = (uint64_t)page_ + pages * PAGE_SIZE;
+	_brk_current += pages * PAGE_SIZE;
+#endif
+	return (void*)page_;
 }
 
 /*
@@ -439,13 +482,18 @@ void* au_request_page(int pages) {
 * @param ptr -- pointer to the first page
 * @param pages --pages -- number of pages
 */
-void au_free_page(void* ptr, int pages) {
+int au_free_page(void* ptr, int pages) {
+#ifdef _USE_DLMALLOC
+	pages = (pages + 4095) / 4096;
+#endif
+	UARTDebugOut("[au_free_page]: num_pages: %d, ptr : %x \r\n", pages, ptr);
 	AuFreePages((uint64_t)ptr, true, pages);
+	return 0;
 }
 
 
 void kmalloc_debug_on(bool bit) {
-#ifndef _USE_LIBALLOC
+#if defined (_USE_CUSTOM_MALLOC)
 	_debug_on = bit;
 #endif
 }

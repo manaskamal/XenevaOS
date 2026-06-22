@@ -32,10 +32,10 @@
 
 #include <stdint.h>
 #ifdef ARCH_X64
-#include <Hal\x86_64_hal.h>
-#include <Hal\hal.h>
+#include <Hal/x86_64_hal.h>
+#include <Hal/hal.h>
 #endif
-#include <Fs\vfs.h>
+#include <Fs/vfs.h>
 
 #define DRIVER_CLASS_AUDIO 1
 #define DRIVER_CLASS_VIDEO 2
@@ -53,9 +53,9 @@
 
 #define AURORA_MAX_DRIVERS  256
 
+typedef int(*au_drv_entry)(void* drv);
+typedef int(*au_drv_unload)(void* drv);
 
-typedef int(*au_drv_entry)();
-typedef int(*au_drv_unload)();
 
 #pragma pack(push,1)
 typedef struct _aurora_driver_ {
@@ -65,12 +65,26 @@ typedef struct _aurora_driver_ {
 	bool present;
 	uint64_t base;
 	uint64_t end;
+	uint16_t vendorID;
+	uint16_t deviceID;
+	uint8_t classCode;
+	uint8_t subClassCode;
+	int bus;
+	int func;
+	int dev;
+	uint64_t device;
 	au_drv_entry entry;
 	au_drv_unload unload;
+	uint64_t original_load_base;
+	uint64_t new_load_base;
+	size_t image_sz;
 }AuDriver;
 #pragma pack(pop)
 
+
+
 #pragma pack(push,1)
+
 typedef struct _aurora_device_ {
 	uint16_t classCode;
 	uint16_t subClassCode;
@@ -79,7 +93,9 @@ typedef struct _aurora_device_ {
 	uint8_t aurora_dev_class;
 	uint8_t aurora_driver_class;
 }AuDevice;
+
 #pragma pack(pop)
+
 
 /*
 * AuDrvMngrInitialize -- Initialize the driver manager
@@ -140,7 +156,22 @@ extern char* AuGetConfEntry(uint32_t vendor_id, uint32_t device_id, uint8_t* buf
 * @param buffer -- configuration file buffer
 * @param entryoff -- entry offset from where search begins
 */
-extern void AuGetDriverName(uint32_t vendor_id, uint32_t device_id, uint8_t* buffer, int entryoff);
+extern AuDriver* AuGetDriverName(uint32_t vendor_id, uint32_t device_id, uint8_t* buffer, int entryoff);
+
+/**
+ * @brief AuDrvManagerCheckFault -- check if this driver contain the fault
+ * address, helpful for debugging
+ * @param fault_addr -- address of fault
+ */
+extern AuDriver* AuDrvManagerCheckFault(uint64_t fault_addr);
+
+/**
+ * @brief AuDrvCatchFault -- resolves original virtual address of the driver
+ * and relocate its symbol name
+ * @param drv -- Pointer to driver
+ * @param fault_addr -- istruction pointer address
+ */
+extern void AuDrvCatchFault(AuDriver* drv, uint64_t fault_addr);
 
 
 #endif

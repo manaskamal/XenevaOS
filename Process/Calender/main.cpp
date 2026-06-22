@@ -30,16 +30,16 @@
 #include <stdint.h>
 #include <_xeneva.h>
 #include <stdio.h>
-#include <sys\_keproc.h>
-#include <sys\_kefile.h>
-#include <sys\iocodes.h>
+#include <sys/_keproc.h>
+#include <sys/_kefile.h>
+#include <sys/iocodes.h>
 #include <sys/_ketime.h>
 #include <time.h>
 #include <chitralekha.h>
-#include <widgets\base.h>
-#include <widgets\button.h>
+#include <widgets/base.h>
+#include <widgets/button.h>
 #include <keycode.h>
-#include <widgets\window.h>
+#include <widgets/window.h>
 #include <string.h>
 #include <stdlib.h>
 
@@ -276,7 +276,7 @@ void CalenderRepaint(int year, int month, int num_days) {
 int main(int argc, char* argv[]){
 	_KePrint("Cal \r\n");
 	app = ChitralekhaStartApp(argc, argv);
-	mainWin = ChCreateWindow(app, WINDOW_FLAG_MOVABLE, "Calender", 100, 100, CHITRALEKHA_DEFAULT_WIN_WIDTH, 
+	mainWin = ChCreateWindow(app, WINDOW_FLAG_MOVABLE, "Calender", 100, 50, CHITRALEKHA_DEFAULT_WIN_WIDTH, 
 		400);
 	
 	_KePrint("Calender \r\n");
@@ -344,7 +344,7 @@ int main(int argc, char* argv[]){
 	 */
 	CalenderRepaint(t.year, t.month, days_in_month[t.month]);
 
-	ChWindowBroadcastIcon(app, "/icons/calndr.bmp");
+	//ChWindowBroadcastIcon(app, "/icons/calndr.bmp");
 
 	PostEvent e;
 	memset(&e, 0, sizeof(PostEvent));

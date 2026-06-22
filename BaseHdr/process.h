@@ -32,11 +32,17 @@
 
 
 #include <stdint.h>
-#include <Fs\vfs.h>
+#include <Fs/vfs.h>
+#include <Cred/group.h>
+#include <Cred/user.h>
+
+#ifdef ARCH_ARM64
 #include <Hal/AA64/sched.h>
+#endif
+
 #ifdef ARCH_X64
-#include <Hal\x86_64_sched.h>
-#include <Sync\mutex.h>
+#include <Hal/x86_64_sched.h>
+#include <Sync/mutex.h>
 #endif
 #include <list.h>
 
@@ -75,19 +81,32 @@
 #define PROCESS_TYPE_BACKGROUND   (1<<2)
 #define PROCESS_TYPE_NON_KILLABLE (1<<3)
 
-#define PROCESS_BREAK_ADDRESS   0x0000000300000000
+#define PROCESS_BREAK_ADDRESS   0x0000003000000000
+#ifdef ARCH_X64
 #define PROCESS_MMAP_ADDRESS    0x00000000C0000000
 #define PROCESS_SHM_ADDRESS     0x0000000080000000
+#elif ARCH_ARM64
+#define PROCESS_MMAP_ADDRESS    0x0000000C00000000
+#define PROCESS_SHM_ADDRESS     0x0000000800000000
+#endif
 
 typedef void(*entry) (void*);
 
-#pragma pack(push,1)
+typedef struct _au_proc_cred_ {
+	uint8_t caps;
+	UID_NUM uid;
+	GID_NUM gid;
+	GID_NUM sgid[AURORA_MAX_GROUPS];
+	uint16_t num_sgid;
+}AuProcCredentials;
+
+//#pragma pack(push,1)
 typedef struct _au_proc_ {
-	int proc_id;
 	char name[16];
+	int proc_id;
 	uint8_t state;
 	uint8_t type_flags;
-
+	
 	/* process image related stuff */
 	uint64_t  *cr3;
 	uint64_t _image_size_;
@@ -128,11 +147,16 @@ typedef struct _au_proc_ {
 	size_t proc_heapmem_len;
 	size_t proc_mmap_len;
 
+	/** credentials **/
+	AuProcCredentials creds;
+
 	/* data structure */
 	struct _au_proc_ *next;
 	struct _au_proc_ *prev;
 }AuProcess;
-#pragma pack(pop)
+
+
+//#pragma pack(pop)
 /*
 * AuAddProcess -- adds process to kernel data structure
 * @param root -- pointer to the root process
@@ -261,6 +285,22 @@ extern void AuProcessWaitForTermination(AuProcess *proc, int pid);
 extern AuMutex* AuProcessGetMutex();
 #endif
 
+#ifdef ARCH_ARM64
+/**
+ * @brief AuCreateSubKernelStack -- maps sub kernel stack and return the top
+ * of the stack, it only maps 4KiB of stack
+ * @param pml -- Pointer to page directory
+ * @return kernel stack address
+ */
+extern uint64_t AuCreateSubKernelStack(AuProcess* proc, uint64_t* pml);
+/*
+ * @brief CreateSubUserStack -- creates new user stack
+ * @param proc -- Pointer to process slot
+ * @param cr3 -- pointer to the address space where to
+ * map
+ */
+extern uint64_t* CreateSubUserStack(AuProcess* proc, uint64_t* cr3);
+#endif
 /**
 *  Creates a user mode thread
 *  @param entry -- Entry point address

@@ -31,8 +31,8 @@
 #define __PCIE_H__
 
 #include <stdint.h>
-#include <Hal\basicacpi.h>
-#include <Hal\hal.h>
+#include <Hal/basicacpi.h>
+#include <Hal/hal.h>
 
 
 #define PCI_VENDOR_ID  0x00
@@ -92,6 +92,16 @@ AU_EXTERN AU_EXPORT bool AuPCIEAllocMSI(uint64_t device, size_t vector, int bus,
 * @param progIf -- Programming interface
 */
 AU_EXTERN AU_EXPORT uint64_t AuPCIEScanClassIF(uint8_t classCode, uint8_t subClassCode, uint8_t progIf, int *bus_, int *dev_, int *func_);
+
+/*
+* AuPCIEScanVendorDevice -- scans and return pcie device with given vendor id and device id
+* @param vendor -- vendor id
+* @param device -- device id
+* @param bus -- address, where bus number will be stored
+* @param dev -- address, where device number will be stored
+* @param func -- address, where function number will be stored
+*/
+AU_EXTERN AU_EXPORT uint64_t AuPCIEScanVendorDevice(uint16_t vendor, uint16_t device, int* bus_, int* dev_, int* func_);
 
 /*
 * AuPCIEScanClass -- scans and return pcie device with given class code and sub class code

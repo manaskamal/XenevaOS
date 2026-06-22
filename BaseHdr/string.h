@@ -30,12 +30,14 @@
 #define __STRING_H__
 
 
-#include "stdint.h"
+#include <stddef.h>
+#include <stdint.h>
 #include <aurora.h>
 
 #ifdef __cplusplus
 AU_EXTERN{
 #endif
+
 	/*
 	 * Global Functions !!
 	 */
@@ -48,14 +50,16 @@ AU_EXTERN{
 	AU_EXPORT char* strchr(char* str, int character);
 	AU_EXPORT char *strcat(char *destString, const char *sourceString);
 	AU_EXPORT char *strncat(char *destString, const char *sourceString, size_t maxLength);
-	AU_EXPORT void memset(void *targ, uint8_t val, uint32_t len);
+	AU_EXPORT void memset(void *targ, int val, uint32_t len);
 	AU_EXPORT void  memcpy(void *targ, void *src, size_t len);
 	AU_EXPORT int memcmp(const void *first, const void *second, size_t length);
 	AU_EXPORT void* memmove(void*, const void*, size_t);
 	AU_EXPORT char* strdup(const char*  c);
+	AU_EXPORT char* strstr(const char* s1, const char* s2);
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif
+

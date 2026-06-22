@@ -1,4 +1,6 @@
 /**
+* @file stat.h
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2023, Manas Kamal Choudhury
@@ -30,7 +32,7 @@
 #ifndef __STAT_H__
 #define __STAT_H__
 
-#include <sys\types.h>
+#include <sys/types.h>
 #include <time.h>
 #include <_xeneva.h>
 

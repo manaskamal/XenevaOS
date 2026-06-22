@@ -1,4 +1,6 @@
 /**
+* @file boxblur.cpp
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2023, Manas Kamal Choudhury
@@ -29,8 +31,8 @@
 
 #include "boxblur.h"
 
-/*
- * ChBoxBlur -- make an image blurred
+/**
+ * @brief ChBoxBlur -- make an image blurred
  * @param canv -- Pointer to canvas
  * @param inputpix -- Input image buffer
  * @param outpix -- Output image buffer

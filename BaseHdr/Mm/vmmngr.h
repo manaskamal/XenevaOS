@@ -1,4 +1,6 @@
 /**
+* @file vmmngr.h
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2023, Manas Kamal Choudhury
@@ -54,7 +56,7 @@
 #define PTE_AF (1ULL << 10)
 #define PTE_SH_INNER (3ULL << 8)
 #define PTE_AP_RW (0ULL << 6)  //RW access
-#define PTE_AP_RW_USER (1ULL << 6)
+#define PTE_AP_RW_USER (1ULL << 6)  //1ULL << 6
 #define PTE_ATTR_IDX_0 (0ULL << 2)  //Device memory
 #define PTE_ATTR_IDX_1 (1ULL << 2)  //Normal memory
 #define PTE_USER_EXECUTABLE (0ULL << 54)
@@ -64,6 +66,7 @@
 
 #define PTE_NORMAL_MEM PTE_ATTR_IDX_1
 #define PTE_DEVICE_MEM PTE_ATTR_IDX_0
+#define PTE_NORMAL_NON_CACHEABLE  (2ULL << 2)
 #endif
 
 #define PHYSICAL_MEM_BASE  0xFFFF800000000000
@@ -81,7 +84,8 @@
 #ifdef ARCH_X64
 #define PAGE_SIZE 4096
 #else
-#define PAGE_SIZE 4096
+#define PAGE_SIZE (1ULL << PAGE_SHIFT) //4096
+#define PAGE_MASK (PAGE_SIZE - 1)
 #endif
 
 /* aligns a virtual address to its immediate page boundary */
@@ -89,6 +93,7 @@
 
 #define PAGE_ALIGN(value)  (((PAGE_SIZE-1)&value) ? ((value + PAGE_SIZE) & ~(PAGE_SIZE-1)) : value)
 
+#ifdef ARCH_X64	
 #pragma pack(push,1)
 /* 
  * AuVPage -- structure of virtual page
@@ -113,78 +118,126 @@ typedef union _AuVPage_ {
 	uint64_t raw;
 }AuVPage;
 #pragma pack(pop)
+#elif ARCH_ARM64
 
-/*
-* AuVmmngrInitialize -- initialize the virtual
-* memory manager
-*/
+#pragma pack(push,1)
+typedef union _AuVPage_ {
+	struct {
+		uint64_t present : 1;
+		uint64_t table_page : 1;
+		uint64_t attrindex : 3;
+		uint64_t ns : 1;
+		uint64_t ap : 2;
+		uint64_t sh : 2;
+		uint64_t af : 1;
+		uint64_t ng : 1;
+		uint64_t page : 36;
+		uint64_t reserved : 4;
+		uint64_t contiguous : 1;
+		uint64_t pxn : 1;
+		uint64_t uxn : 1;
+
+		/* software flags */
+		uint64_t cow : 1;
+		uint64_t file_backed : 1;
+		uint64_t avail : 2;
+
+		uint64_t ignored : 5;
+	}bits;
+
+	struct {
+		uint64_t valid : 1;
+		uint64_t table : 1;
+		uint64_t next : 46;
+		uint64_t reserved : 4;
+		uint64_t ignored : 7;
+		uint64_t pxntable : 1;
+		uint64_t xntable : 1;
+		uint64_t aptable : 2;
+		uint64_t nstable : 1;
+	}tableBits;
+	uint64_t raw;
+}AuVPage;
+#pragma pack(pop)
+#endif
+
+/**
+ * @brief AuVmmngrInitialize -- initialize the virtual memory manager
+ */
 extern void AuVmmngrInitialize();
 
-/*
-* AuVmmngrGetPage -- Returns virtual page from virtual address
-* in AuVPage format
-* @param virt_addr -- Virtual address
-* @param flags -- extra virtual page flags, this is set only if
-* mode is set to VMMNGR_GETPAGE_CREATE
-* @param mode -- specifies whether to create a virtual page if its
-* not present
-*/
+/**
+ * @breif AuVmmngrGetPage -- Returns virtual page from virtual address
+ * in AuVPage format
+ * @param virt_addr -- Virtual address
+ * @param _flags -- extra virtual page flags, this is set only if
+ * mode is set to VMMNGR_GETPAGE_CREATE
+ * @param mode -- specifies whether to create a virtual page if its
+ * not present
+ * @return virtual page from virtual address
+ * in AuVPage format
+ */
 AU_EXTERN AU_EXPORT AuVPage * AuVmmngrGetPage(uint64_t virt_addr, uint8_t flags, uint8_t mode);
 
-/*
-* AuMapPage -- Maps a virtual page to physical frame
-* @param phys_addr -- physical address
-* @param virt_addr -- virtual address
-* @param attrib -- Page attributes
-*/
+/**
+ * @brief AuMapPage -- Maps a virtual page to physical frame
+ * @param phys_addr -- physical address
+ * @param virt_addr -- virtual address
+ * @param attrib -- Page attributes
+ * @return 1 on success 0 on failure
+ */
 AU_EXTERN AU_EXPORT bool AuMapPage(uint64_t phys_addr, uint64_t virt_addr, uint8_t attrib);
 
-/*
-* AuMapPageEx -- Maps a virtual page to physical frame in given
+/**
+* @brief AuMapPageEx -- Maps a virtual page to physical frame in given
 * page level
 * @param pml4i -- root page level pointer
 * @param phys_addr -- physical address
 * @param virt_addr -- virtual address
 * @param attrib -- Page attributes
+* @return 1 on success, 0 on failure
 */
 AU_EXTERN AU_EXPORT bool AuMapPageEx(uint64_t *pml4i, uint64_t phys_addr, uint64_t virt_addr, uint8_t attrib);
 
-/*
-* AuMapMMIO -- Maps Memory Mapper I/O addresses
-* @param phys_addr -- MMIO physical address
-* @param page_count -- number of pages
-*/
+/**
+ * @brief AuMapMMIO -- Maps Memory Mapped I/O addresses
+ * @param phys_addr -- MMIO physical address
+ * @param page_count -- number of pages
+ * @return Pointer to newly mapped virtual mmio address
+ */
 AU_EXTERN AU_EXPORT void* AuMapMMIO(uint64_t phys_addr, size_t page_count);
 
-/*
-* AuGetFreePage -- Checks for free page
+/**
+* @brief AuGetFreePage -- Checks for free page
 * @param user -- specifies if it needs to look from
 * user base address
 * @param ptr -- if it is non-null, than lookup
 * begins from given pointer
+* @return pointer to free virtual page
 */
 AU_EXTERN AU_EXPORT uint64_t* AuGetFreePage(bool user, void* ptr);
 
-/*
-* AuFreePages -- frees up contiguous pages
-* @param virt_addr -- starting virtual address
-* @param free_physical -- free up physical frame
-* @param size_t s -- size of area to be freed
-*/
+/**
+ * @brief AuFreePages -- frees up contiguous pages
+ * @param virt_addr -- starting virtual address
+ * @param free_physical -- free up physical frame
+ * @param size_t s -- size of area to be freed
+ */
 AU_EXTERN AU_EXPORT void AuFreePages(uint64_t virt_addr, bool free_physical, size_t s);
 
-/*
- * AuFreePages -- frees up contiguous pages
+/**
+ * @brief AuFreePages -- frees up contiguous pages
  * @param virt_addr -- starting virtual address
  * @param flags -- flags to update
  */
 AU_EXTERN AU_EXPORT void AuUpdatePageFlags(uint64_t virt_addr, uint64_t flags);
 
-/*
-* AuGetPhysicalAddress -- translates logical address
-* to its physical address
-* @param virt_addr -- virtual address
-*/
+/**
+ * @brief AuGetPhysicalAddress -- returns the physical address
+ * from a virtual address
+ * @param virt_addr -- Virtual address
+ * @return the physical address of respected virtual address
+ */
 AU_EXTERN AU_EXPORT void* AuGetPhysicalAddress(uint64_t virt_addr);
 
 /*
@@ -195,11 +248,10 @@ AU_EXTERN AU_EXPORT void* AuGetPhysicalAddress(uint64_t virt_addr);
 */
 AU_EXTERN AU_EXPORT void* AuGetPhysicalAddressEx(uint64_t* cr3, uint64_t virt_addr);
 
-/*
-* AuCreateVirtualAddressSpace -- creates a new virtual address
-* space and return the new address space in a linear virtual
-* address form
-*/
+/**
+ * @brief AuCreateVirtualAddressSpace -- create a new virtual address space
+ * @return pointer to newly created address space
+ */
 AU_EXTERN AU_EXPORT uint64_t* AuCreateVirtualAddressSpace();
 
 /*
@@ -208,13 +260,14 @@ AU_EXTERN AU_EXPORT uint64_t* AuCreateVirtualAddressSpace();
 */
 AU_EXTERN AU_EXPORT uint64_t* AuGetRootPageTable();
 
-/*
-* AuVmmngrBootFree -- free up the lower half
-*/
+/**
+ * @breif AuVmmngrBootFree -- free up the lower half of
+ *  kernel address space
+ */
 extern void AuVmmngrBootFree();
 
-/*
-* AuVmmngrCloneAddressSpace -- clones a given address space
+/**
+* @brief AuVmmngrCloneAddressSpace -- clones a given address space
 * @param destcr3 -- destination cr3
 * @param srccr3 -- source cr3
 */

@@ -32,7 +32,11 @@
 
 #include "xnldr.h"
 #include "xnout.h"
-#include <Uefi.h>
+#ifdef _MSC_VER
+    #include <Uefi.h>
+#elif __GNUC__
+	#include <efi/efi.h>
+#endif
 
 typedef EFI_PHYSICAL_ADDRESS paddr_t;
 #define PAGESIZE 4096

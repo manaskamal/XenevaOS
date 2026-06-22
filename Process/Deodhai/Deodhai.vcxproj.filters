@@ -25,4 +25,7 @@
     <ClCompile Include="window.cpp" />
     <ClCompile Include="animation.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="_fastcpy_arm64.s" />
+  </ItemGroup>
 </Project>

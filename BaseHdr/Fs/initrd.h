@@ -1,4 +1,6 @@
 /**
+* @file initrd.h
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2023, Manas Kamal Choudhury
@@ -33,8 +35,8 @@
 #include <stdint.h>
 #include <aurora.h>
 
-/*
- * AuInitrdInitialize -- initialize ramdisk
+/**
+ * @brief AuInitrdInitialize -- initialize ramdisk
  * @param info -- Pointer to Kernel Boot information
  */
 extern void AuInitrdInitialize(KERNEL_BOOT_INFO* info);

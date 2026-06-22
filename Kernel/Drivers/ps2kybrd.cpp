@@ -27,17 +27,17 @@
 *
 **/
 
-#include <Hal\hal.h>
-#include <Hal\x86_64_cpu.h>
-#include <Hal\x86_64_hal.h>
-#include <Hal\x86_64_signal.h>
-#include <fs\vfs.h>
-#include <Mm\kmalloc.h>
-#include <fs\dev\devfs.h>
+#include <Hal/hal.h>
+#include <Hal/x86_64_cpu.h>
+#include <Hal/x86_64_hal.h>
+#include <Hal/x86_64_signal.h>
+#include <Fs/vfs.h>
+#include <Mm/kmalloc.h>
+#include <Fs/dev/devfs.h>
 #include <string.h>
-#include <Hal\serial.h>
+#include <Hal/serial.h>
 #include <aucon.h>
-#include <Fs\Dev\devinput.h>
+#include <Fs/Dev/devinput.h>
 #include <Drivers/ps2kybrd.h>
 
 
@@ -52,6 +52,7 @@ void AuPS2KybrdHandler(size_t v, void* p) {
 		 * a signal to deodhai thread which is
 		 * in thread id 4, in a hacky way
 		 */
+		SeTextOut("Keyboard code : %x \r\n", code);
 		AuInputMessage msg;
 		memset(&msg, 0, sizeof(AuInputMessage));
 		msg.type = AU_INPUT_KEYBOARD;

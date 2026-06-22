@@ -1,0 +1,28 @@
+{
+    "configurations": [
+        {
+            "name": "GCC Strict (Cross-Platform)",
+            "includePath": [
+                "${workspaceFolder}/**"
+            ],
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE",
+                "__GNUC__"
+            ],
+            "compilerPath": "",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "gcc-x64",
+            "compilerArgs": [
+                "-Wall",
+                "-Wextra",
+                "-pedantic",
+                "-Wno-unused-parameter",
+                "-Wshadow"
+            ]
+        }
+    ],
+    "version": 4
+}

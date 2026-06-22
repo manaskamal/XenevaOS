@@ -1,4 +1,6 @@
 /**
+* @file _ketimer.h
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2023, Manas Kamal Choudhury
@@ -47,26 +49,26 @@ XE_EXTERN{
 #define TIMER_MESSAGE_CODE 8
 
 
-	/*
-	* _KeCreateTimer -- create timer service
+	/**
+	* @brief _KeCreateTimer -- create timer service
 	* @param threadID -- current thread id
 	* @param maxTickLimit -- maximum tick limit
 	* @param updatemode -- Timer update mode
 	*/
 	XE_LIB int _KeCreateTimer(int threadID, int maxLimit, uint8_t updateMode);
 
-	/*
-	* _KeStartTimer -- starts the timer
+	/**
+	* @brief _KeStartTimer -- starts the timer
 	*/
 	XE_LIB int _KeStartTimer(int threadID);
 
-	/*
-	* _KeStopTimer-- stop the timer
+	/**
+	* @brief _KeStopTimer-- stop the timer
 	*/
 	XE_LIB int _KeStopTimer(int threadID);
 
-	/*
-	* _KeDestroyTimer -- remove the timer
+	/**
+	* @brief _KeDestroyTimer -- remove the timer
 	* @param threadID -- current thread id
 	*/
 	XE_LIB int _KeDestroyTimer(int threadID);

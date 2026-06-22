@@ -1,0 +1,6 @@
+{
+    "C_Cpp.default.intelliSenseMode": "gcc-x64",
+    "C_Cpp.codeAnalysis.runAutomatically": true,
+    "C_Cpp.codeAnalysis.clangTidy.enabled": true,
+    "C_Cpp.errorSquiggles": "enabled"
+}

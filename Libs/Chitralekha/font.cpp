@@ -27,12 +27,13 @@
 *
 **/
 
+
 #include "font.h"
-#include <sys\mman.h>
-#include <sys\_kefile.h>
+#include <sys/mman.h>
+#include <sys/_kefile.h>
 #include <stdlib.h>
 #include "ttf.h"
-#include <sys\_keftmngr.h>
+#include <sys/_keftmngr.h>
 #include <ft2build.h>
 #include "draw.h"
 #include "color.h"
@@ -68,6 +69,7 @@ ChFont *ChInitialiseFont(char* fontname) {
 	FT_Error err = 0;
 	err = FT_Init_FreeType(&font->lib);
 	err = FT_New_Memory_Face(font->lib, font->buffer, font->fileSz, 0, &font->face);
+
 	err = FT_Set_Pixel_Sizes(font->face, 0, 32);
 	font->slot = font->face->glyph;
 	font->lineHeight = font->face->size->metrics.height / 64;
@@ -84,6 +86,8 @@ ChFont *ChInitialiseFont(char* fontname) {
  * @param size -- size of the font
  */
 void ChFontSetSize(ChFont* font, int size) {
+	if (!font)
+		return;
 	font->fontSz = size / 72.f * 96;
 	FT_Set_Pixel_Sizes(font->face, 0, font->fontSz);
 	font->fontHeight = font->fontSz;
@@ -101,6 +105,8 @@ void ChFontSetSize(ChFont* font, int size) {
  */
 void ChFontDrawText(ChCanvas *canv, ChFont* font, char* string, int penx, int peny, uint32_t sz, uint32_t color){
 #ifdef _USE_FREETYPE
+	if (!font)
+		return;
 	int w = font->face->glyph->metrics.width;
 	int h = font->face->glyph->metrics.height;
 	FT_Bool use_kerning = FT_HAS_KERNING(font->face);
@@ -128,8 +134,8 @@ void ChFontDrawText(ChCanvas *canv, ChFont* font, char* string, int penx, int pe
 				q < font->face->glyph->bitmap.rows; j++, q++) {
 				if (font->face->glyph->bitmap.buffer[q * font->face->glyph->bitmap.width + p] > 0){
 					double val = font->face->glyph->bitmap.buffer[q * font->face->glyph->bitmap.width + p] * 1.0 / 255;
-					canv->buffer[i + j * canv->canvasWidth] = ChColorAlphaBlend(canv->buffer[i + j * canv->canvasWidth],
-						color,val);
+					canv->buffer[i + j * canv->canvasWidth] =ChColorAlphaBlend(canv->buffer[i + j * canv->canvasWidth],
+						color,val); //canv->buffer[i + j * canv->canvasWidth]
 				}
 				else if (font->face->glyph->bitmap.buffer[q * font->face->glyph->bitmap.width] == 255)
 					canv->buffer[i + j * canv->canvasWidth] = color;
@@ -156,6 +162,8 @@ void ChFontDrawText(ChCanvas *canv, ChFont* font, char* string, int penx, int pe
 */
 void ChFontDrawChar(ChCanvas *canv, ChFont* font, char c, int penx, int peny, uint32_t sz, uint32_t color){
 #ifdef _USE_FREETYPE
+	if (!font)
+		return;
 	if (penx >= canv->canvasWidth)
 		return;
 	if (peny >= canv->canvasHeight)
@@ -198,6 +206,111 @@ void ChFontDrawChar(ChCanvas *canv, ChFont* font, char c, int penx, int peny, ui
 #endif
 }
 
+
+/*
+* ChFontDrawCharClipped -- draws a character using desired font
+* @param canv -- Pointer to canvas
+* @param font -- Pointer to font
+* @param string -- string to draw
+* @param penx -- x coordinate
+* @param peny -- y coordinate
+* @param color -- color of the font
+* @param limit -- clipping limits
+*/
+void ChFontDrawCharClipped(ChCanvas* canv, ChFont* font, char c, int penx, int peny, uint32_t color, ChRect* limit) {
+#ifdef _USE_FREETYPE
+	if (!font)
+		return;
+	if (!limit)
+		return;
+	if (penx >= canv->canvasWidth)
+		return;
+	if (peny >= canv->canvasHeight)
+		return;
+
+	if (!font)
+		return;
+
+	/*if ((penx >= canv->canvasWidth) || (peny >= canv->canvasHeight))
+		return 1;*/
+
+	if (peny < limit->y)
+		return;
+
+	if (penx < limit->x)
+		return;
+
+	int w = font->face->glyph->metrics.width;
+	int h = font->face->glyph->metrics.height;
+	FT_Bool use_kerning = FT_HAS_KERNING(font->face);
+	FT_UInt glyfIndx;
+	FT_Error err = 0;
+	glyfIndx = FT_Get_Char_Index(font->face, c);
+	err = FT_Load_Glyph(font->face, glyfIndx, FT_LOAD_RENDER);
+	if (err)
+		return;
+
+	if (use_kerning && font->kern && glyfIndx) {
+		FT_Vector delta;
+		FT_Get_Kerning(font->face, font->kern, glyfIndx, FT_KERNING_DEFAULT, &delta);
+		penx += delta.x >> 6;
+	}
+
+	int x_v = penx + font->face->glyph->bitmap_left;
+	int y_v = peny - font->face->glyph->bitmap_top;
+	int b_w = font->face->glyph->bitmap.width;
+	int draw_width = font->face->glyph->bitmap.width;
+	int draw_height = font->face->glyph->bitmap.rows;
+
+	/* here p = x and q = y*/
+	int buff_p_off = 0;
+	int buff_q_off = 0;
+
+	/* Clip the text within clip boundary*/
+	if (limit->x > x_v) {
+		buff_p_off = limit->x - x_v;
+		x_v = limit->x;
+	}
+
+	if (limit->y > y_v) {
+		buff_q_off = limit->y - y_v;
+		y_v = limit->y;
+	}
+
+	/* Check width and height for limiting drawing */
+	if ((y_v + draw_height) > (limit->y + limit->h))
+		draw_height = (limit->y + limit->h) - peny;
+
+	if (draw_height < 0)
+		draw_height = 0;
+
+	if ((x_v + draw_width) > (limit->x + limit->w))
+		draw_width = (limit->x + limit->w) - x_v;
+
+	if (draw_width < 0)
+		draw_width = 0;
+
+	for (int j = y_v, q = buff_q_off; j < y_v + draw_height &&
+		q < draw_height; j++, q++) {
+		for (int i = x_v, p = buff_p_off; i < x_v + draw_width &&
+			p < draw_width; i++, p++) {
+			if (i < 0 || j < 0 || i >= canv->canvasWidth || j >= canv->canvasHeight)
+				continue;
+			if (font->face->glyph->bitmap.buffer[q * font->face->glyph->bitmap.width + p] > 0) {
+				double val = font->face->glyph->bitmap.buffer[q * font->face->glyph->bitmap.width + p] * 1.0 / 255;
+				canv->buffer[i + j * canv->canvasWidth] = ChColorAlphaBlend(canv->buffer[i + j * canv->canvasWidth],
+					color, val);
+			}
+			else if (font->face->glyph->bitmap.buffer[q * font->face->glyph->bitmap.width] == 255)
+				canv->buffer[i + j * canv->canvasWidth] = color;
+		}
+	}
+	font->kern = glyfIndx;
+	penx += font->face->glyph->advance.x >> 6;
+	peny += font->face->glyph->advance.y >> 6;
+#endif
+}
+
 /*
  * ChFontGetWidth -- return the total width of font in
  * pixel size
@@ -205,6 +318,8 @@ void ChFontDrawChar(ChCanvas *canv, ChFont* font, char c, int penx, int peny, ui
  * @param string -- total string
  */
 int64_t ChFontGetWidth(ChFont* font,char* string) {
+	if (!font)
+		return -1;
 	size_t font_width = 0;
 	size_t penx = 0;
 	int string_width = 0;
@@ -233,6 +348,8 @@ int64_t ChFontGetWidth(ChFont* font,char* string) {
 * @param c -- character
 */
 int64_t ChFontGetWidthChar(ChFont* font, char c) {
+	if (!font)
+		return -1;
 	size_t font_width = 0;
 	size_t penx = 0;
 	int string_width = 0;
@@ -257,6 +374,8 @@ int64_t ChFontGetWidthChar(ChFont* font, char c) {
  * @param string -- total string
  */
 int64_t ChFontGetHeight(ChFont* font, char* string) {
+	if (!font)
+		return -1;
 	size_t font_height = 0;
 	size_t peny = 0;
 	FT_Error err = 0;
@@ -283,6 +402,8 @@ int64_t ChFontGetHeight(ChFont* font, char* string) {
 * @param c -- character
 */
 int64_t ChFontGetHeightChar(ChFont* font, char c) {
+	if (!font)
+		return -1;
 	size_t font_h = 0;
 	size_t peny = 0;
 	int string_width = 0;
@@ -318,6 +439,8 @@ int ChFontClamp(int val, int min, int max) {
  */
 int ChFontDrawTextClipped(ChCanvas *canv, ChFont* font, char* string, int penx, int peny, uint32_t color, ChRect* limit){
 #ifdef _USE_FREETYPE
+	if (!font)
+		return 1;
 	if (!limit)
 		return 1;
 
@@ -403,7 +526,7 @@ int ChFontDrawTextClipped(ChCanvas *canv, ChFont* font, char* string, int penx, 
 		string++;
 	}
 #endif
-	return 0;
+
 }
 
 /*
@@ -411,9 +534,12 @@ int ChFontDrawTextClipped(ChCanvas *canv, ChFont* font, char* string, int penx, 
  * @param font -- Pointer to font
  */
 int ChFontClose(ChFont* font) {
+	if (!font)
+		return -1;
 	//FT_Done_Face(font->face);
 	//FT_Done_FreeType(font->lib);
 	_KeUnmapSharedMem(font->key);
 	free(font);
 	return 0;
 }
+

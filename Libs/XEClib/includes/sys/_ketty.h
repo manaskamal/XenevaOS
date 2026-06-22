@@ -1,4 +1,6 @@
 /**
+* @file _ketty.h
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2023, Manas Kamal Choudhury
@@ -53,8 +55,8 @@ XE_EXTERN{
 	}WinSize;
 
 
-	/*
-	 * _KeCreateTTY -- create a new terminal
+	/**
+	 * @brief _KeCreateTTY -- create a new terminal
 	 * @param master_fd -- Pointer to a memory area where to
 	 * store master file descriptor
 	 * @param slave_fd -- Pointer to a memory area where to

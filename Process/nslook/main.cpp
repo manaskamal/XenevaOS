@@ -30,12 +30,12 @@
 #include <stdint.h>
 #include <_xeneva.h>
 #include <stdio.h>
-#include <sys\_keproc.h>
-#include <sys\_kefile.h>
+#include <sys/_keproc.h>
+#include <sys/_kefile.h>
 #include <sys/socket.h>
 #include <sys/netdb.h>
 #include <arpa/inet.h>
-#include <sys\iocodes.h>
+#include <sys/iocodes.h>
 #include <string.h>
 #include <stdlib.h>
 
@@ -46,7 +46,7 @@
 */
 int main(int argc, char* argv[]) {
 	printf("\n");
-	char* s = (char*)malloc(strlen(argv[1]));
+	char* s = (char*)malloc(strlen(argv[1])+1);
 	strcpy(s, argv[1]);
 	printf("Getting nameserver info for %s DNS Pack -> %d \n", s, sizeof(DNSPacket));
 	hostent* ent = gethostbyname(s);

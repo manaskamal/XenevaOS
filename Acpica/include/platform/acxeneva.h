@@ -155,7 +155,7 @@
 #include <aurora.h>
 #include <string.h>
 #include <va_list.h>
-#include <Hal\hal.h>
+#include <Hal/hal.h>
 
 #define OS_DLL_FUNC AU_FUNC
 //#define ACPI_USE_STANDARD_HEADERS

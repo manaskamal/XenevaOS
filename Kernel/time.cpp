@@ -28,7 +28,7 @@
 **/
 
 #include <time.h>
-#include <Drivers\rtc.h>
+#include <Drivers/rtc.h>
 
 /*
  * AuGetCurrentTime -- get current time 

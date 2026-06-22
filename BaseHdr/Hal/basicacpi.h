@@ -207,6 +207,16 @@ typedef struct {
 	uint8_t gicVersion;
 }acpiGICDistributor;
 
+typedef struct {
+	acpiApicHeader header;
+	uint16_t reserved;
+	uint32_t gicMSIFrameID;
+	uint64_t physicalBaseAddress;
+	uint32_t flags;
+	uint16_t spiCount;
+	uint16_t spiBase;
+}acpiGICv2MFrame;
+
 typedef struct
 {
 	acpiApicHeader header;
@@ -379,7 +389,7 @@ typedef struct _acpi_sub_tab_
 	uint8_t    length;
 }acpi_sub_table;
 
-#pragma pack (pop)
+#pragma pack(pop)
 enum acpi_srat_type
 {
 	acpi_srat_type_cpu_affinity = 0,

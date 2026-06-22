@@ -74,11 +74,27 @@ extern void AuConsolePostInitialise(PKERNEL_BOOT_INFO info);
 */
 AU_EXTERN AU_EXPORT void AuTextOut(const char* text, ...);
 
+AU_EXTERN AU_EXPORT void AuTextOut_profiler(const char* text, ...);
+
 /*
 * AuConsoleEarlyEnable -- enables or disable early
 * mode text output
 * @param value -- boolean value
 */
 void AuConsoleEarlyEnable(bool value);
+
+/*
+ * AuConsoleGetScreenWidth -- return the screen
+ * width
+ */
+extern uint32_t AuConsoleGetScreenWidth();
+
+/*
+ * AuConsoleGetScreenHeight -- return the screen
+ * height
+ */
+extern uint32_t AuConsoleGetScreenHeight();
+
+AU_EXTERN AU_EXPORT void AuConsoleSetConInfo(uint64_t phys, uint64_t virt, size_t xres, size_t yres);
 
 #endif

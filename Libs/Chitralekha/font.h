@@ -31,8 +31,8 @@
 #define __FONT_H__
 
 #include <stdint.h>
-#include <sys\_keftmngr.h>
-#include <freetype\ftglyph.h>
+#include <sys/_keftmngr.h>
+#include <freetype/ftglyph.h>
 #include <_xeneva.h>
 #include "chitralekha.h"
 #include "draw.h"
@@ -52,8 +52,12 @@ XE_EXTERN{
 #define FORTE         "Forte"
 #define CONSOLAS      "Consolas"
 
+#ifdef ARCH_ARM64
+#define XENEVA_DEFAULT_FONT CALIBRI //FORTE
+#else
 	/* default font for xeneva */
 #define XENEVA_DEFAULT_FONT  CALIBRI
+#endif
 
 	typedef struct _ch_font_ {
 		int fileSz;
@@ -96,6 +100,19 @@ XE_EXTERN{
 	* @param color -- color of the font
 	*/
 	XE_LIB void ChFontDrawText(ChCanvas *canv, ChFont* font, char* string, int penx, int peny, uint32_t sz, uint32_t color);
+
+	/*
+    * ChFontDrawCharClipped -- draws a character using desired font
+    * @param canv -- Pointer to canvas
+    * @param font -- Pointer to font
+    * @param string -- string to draw
+    * @param penx -- x coordinate
+    * @param peny -- y coordinate
+    * @param sz -- font size
+    * @param color -- color of the font
+    * @param limit -- clippings
+    */
+	void ChFontDrawCharClipped(ChCanvas* canv, ChFont* font, char c, int penx, int peny, uint32_t color, ChRect* limit);
 
 	/*
 	* ChFontDrawChar -- draws a character using desired font

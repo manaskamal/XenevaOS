@@ -30,12 +30,12 @@
 #include <stdint.h>
 #include <_xeneva.h>
 #include <stdio.h>
-#include <sys\_keproc.h>
-#include <sys\_kefile.h>
+#include <sys/_keproc.h>
+#include <sys/_kefile.h>
 #include <sys/socket.h>
 #include <sys/netdb.h>
 #include <arpa/inet.h>
-#include <sys\iocodes.h>
+#include <sys/iocodes.h>
 #include <string.h>
 #include <sys/_ketime.h>
 #include <time.h>
@@ -69,7 +69,7 @@ static uint16_t ICMPCalculateChecksum(char* payload, size_t len) {
 */
 int main(int argc, char* argv[]){
 	printf("\n");
-	char* s = (char*)malloc(strlen(argv[1]));
+	char* s = (char*)malloc(strlen(argv[1])+1);
 	strcpy(s, argv[1]);
 	
 	hostent* ent = gethostbyname(s);

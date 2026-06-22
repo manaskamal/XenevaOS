@@ -38,6 +38,60 @@
 #include "../font.h"
 #include "textbox.h"
 
+
+
+void ChDefaultTextboxPrint(ChCanvas* canv, ChTextBox* tb, char* text) {
+	ChRect clipRect;
+	clipRect.x = tb->wid.x;
+	clipRect.y = tb->wid.y;
+	clipRect.w = tb->wid.w;
+	clipRect.h = tb->wid.h;
+	char buf[256];
+	int textOff = 0;
+	bool _has_newline = false;
+	int penx = tb->wid.x + (tb->textCursorPosX * 2);
+	int peny = tb->wid.y + (tb->textCursorPosY * 19);
+	for (int i = 0; i < strlen(text); i++) {
+		if (text[i] == '\n') {
+			_has_newline = true;
+			tb->textCursorPosY += 1;
+			tb->textCursorPosX = 1;
+			penx = tb->wid.x + (tb->textCursorPosX * 2);
+			peny = tb->wid.y + (tb->textCursorPosY * 19);
+			textOff = 0;
+			continue;
+		}
+		if (text[i] == '\0') 
+			break;
+		int w = ChFontGetWidthChar(tb->font, text[i]);
+		int h = ChFontGetHeightChar(tb->font, text[i]);
+		int x_v = penx + tb->font->face->glyph->bitmap_left;
+		int y_v = peny - tb->font->face->glyph->bitmap_top;
+		int b_w = tb->font->face->glyph->bitmap.width;
+		int draw_width = tb->font->face->glyph->bitmap.width;
+
+		if (x_v + draw_width >= (tb->wid.x + tb->wid.w)) {
+			tb->textCursorPosY += 1;
+			tb->textCursorPosX = 1;
+			penx = tb->wid.x + (tb->textCursorPosX * 2);
+			peny = tb->wid.y + (tb->textCursorPosY * 19);
+		}
+
+		ChFontDrawCharClipped(canv, tb->font, text[i], penx,
+			peny,
+			tb->textColor, &clipRect);
+		penx += tb->font->face->glyph->advance.x >> 6;
+		peny += tb->font->face->glyph->advance.y >> 6;
+		tb->textCursorPosX++;
+	}
+
+	//ChFontDrawTextClipped(canv, tb->font, buf, tb->wid.x + (tb->textCursorPosX * 2),
+	//	tb->wid.y + (tb->textCursorPosY * 22),
+	//	tb->textColor, &clipRect);
+	tb->textCursorPosX = 2;
+	tb->textCursorPosY = 2;
+}
+
 /*
  * ChDefaultTextbox -- default xeneva textbox painter
  * module
@@ -47,17 +101,15 @@
 void ChDefaultTextbox(ChWidget* wid, ChWindow* win) {
 	ChTextBox* tb = (ChTextBox*)wid;
 	ChDrawRect(win->canv, tb->wid.x, tb->wid.y, tb->wid.w, tb->wid.h, tb->textBackgroundColor);
-	ChDrawRectUnfilled(win->canv, tb->wid.x, tb->wid.y, tb->wid.w, tb->wid.h, GRAY);
-	ChFontSetSize(tb->font, 13);
+	//ChDrawRectUnfilled(win->canv, tb->wid.x, tb->wid.y, tb->wid.w, tb->wid.h, GRAY);
+	//ChFontSetSize(tb->font, 13);
 	ChRect clipRect;
 	clipRect.x = tb->wid.x;
 	clipRect.y = tb->wid.y;
 	clipRect.w = tb->wid.w;
 	clipRect.h = tb->wid.h;
 	if (tb->text) {
-		ChFontDrawTextClipped(win->canv, tb->font, tb->text, tb->wid.x + 2,
-			tb->wid.y + 22,
-			tb->textColor, &clipRect);
+		ChDefaultTextboxPrint(win->canv, tb, tb->text);
 	}
 	if (wid->hover) {
 		ChDrawRectUnfilled(win->canv, tb->wid.x, tb->wid.y,tb->wid.w,tb->wid.h, 0xFF4067BA);

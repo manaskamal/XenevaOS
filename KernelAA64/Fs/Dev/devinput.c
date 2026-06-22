@@ -27,12 +27,12 @@
 *
 **/
 
-#include <Fs\dev\devinput.h>
-#include <Fs\vfs.h>
+#include <Fs/Dev/devinput.h>
+#include <Fs/vfs.h>
 #include <_null.h>
-#include <Fs\dev\devfs.h>
+#include <Fs/Dev/devfs.h>
 #include <string.h>
-#include <Mm\kmalloc.h>
+#include <Mm/kmalloc.h>
 #include <aurora.h>
 #include <aucon.h>
 
@@ -189,7 +189,7 @@ int AuDevMouseIoControl(AuVFSNode* file, int code, void* arg) {
 void AuDevInputInitialise() {
 	AuVFSNode* devfs = AuVFSFind("/dev");
 	if (!devfs) {
-		AuTextOut("[aurora]: critical error in devinput, no dev file system found \n");
+		AuTextOut("[aurora]: critical error in devinput, no dev file system found \r\n");
 		return;
 	}
 	void* mice_input_buf = kmalloc(sizeof(AuInputMessage));
@@ -219,5 +219,5 @@ void AuDevInputInitialise() {
 	kybrd_->read = AuDevInputKybrdRead;
 	kybrd_->write = AuDevInputKybrdWrite;
 	AuDevFSAddFile(devfs, "/", kybrd_);
-	AuTextOut("[aurora]: device input : kybrd and mouse fs registerd \n");
+	AuTextOut("[aurora]: device input : kybrd and mouse fs registerd \r\n");
 }

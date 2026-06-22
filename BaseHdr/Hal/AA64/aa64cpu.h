@@ -1,4 +1,6 @@
 /**
+* @file aa64cpu.h
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2025, Manas Kamal Choudhury
@@ -42,55 +44,71 @@
 #define CPU_IMPLEMENTER_QUALCOMM 0x51
 #define CPU_IMPLEMENTER_MARVELL  0x56
 #define CPU_IMPLEMENTER_APPLE    0x61
+
+//#pragma pack(push,1)
 typedef struct _aa64_regs_ {
-	uint64_t x30;
-	uint64_t EL0SP;
-	uint64_t x28;
-	uint64_t x29;
-	uint64_t x26;
-	uint64_t x27;
-	uint64_t x24;
-	uint64_t x25;
-	uint64_t x22;
-	uint64_t x23;
-	uint64_t x20;
-	uint64_t x21;
-	uint64_t x18;
-	uint64_t x19;
-	uint64_t x16;
-	uint64_t x17;
-	uint64_t x14;
-	uint64_t x15;
-	uint64_t x12;
-	uint64_t x13;
-	uint64_t x10;
-	uint64_t x11;
-	uint64_t x8;
-	uint64_t x9;
-	uint64_t x6;
-	uint64_t x7;
-	uint64_t x4;
-	uint64_t x5;
-	uint64_t x2;
-	uint64_t x3;
-	uint64_t x0;
-	uint64_t x1;
+	int64_t x30;   //0
+	int64_t EL0SP; //8
+	int64_t x28;   //16
+	int64_t x29;   //24
+	int64_t x26;   //32
+	int64_t x27;   //40
+	int64_t x24;   //48
+	int64_t x25;   //56
+	int64_t x22;   //64
+	int64_t x23;   //72
+	int64_t x20;  //80
+	int64_t x21;  //88
+	int64_t x18;  //96
+	int64_t x19;  //104
+	int64_t x16;  //112
+	int64_t x17;  //120
+	int64_t x14;  //128
+	int64_t x15; //136
+	int64_t x12; //144
+	int64_t x13; //152
+	int64_t x10; //160
+	int64_t x11; //168
+	int64_t x8; //176
+	int64_t x9; //184
+	int64_t x6; //192
+	int64_t x7; //200
+	int64_t x4; //208
+	int64_t x5; //216
+	int64_t x2; //224
+	int64_t x3; //232
+	int64_t x0; //240
+	int64_t x1; //248
 }AA64Registers;
+//#pragma pack(pop)
 
 
-/*
- * AA64CpuInitialize -- initialize aa64 cpu
+
+/**
+ * @brief AA64CpuInitialize -- initialize aa64 cpu
  */
 extern void AA64CpuInitialize();
 
-/*
- * AA64CPUPostInitialize -- initilaize post cpu requirements
+/**
+ * @brief AA64CPUPostInitialize -- initilaize post cpu requirements
  * @param info -- Pointer to KERNEL BOOT INFORMATIONs
  */
 extern void AA64CPUPostInitialize(KERNEL_BOOT_INFO* info);
 
-/*
- * AuAA64SyscalHandler -- common system call handler for aarch64
+/**
+ * @brief AA64SleepUS -- sleep for sometimes
+ * @param us -- microseconds to sleep
+ */
+AU_EXTERN AU_EXPORT void AA64SleepUS(uint32_t us);
+
+/**
+ * @brief AA64SleepMS -- sleep for sometimes
+ * @param ms -- milliseconds to sleep
+ */
+AU_EXTERN AU_EXPORT void AA64SleepMS(uint32_t ms);
+
+/**
+ * @brief AuAA64SyscalHandler -- common system call handler for aarch64
  * @param regs -- Register information passed by sync_exception
  */
 extern void AuAA64SyscallHandler(AA64Registers* regs);

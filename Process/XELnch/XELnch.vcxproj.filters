@@ -5,10 +5,19 @@
     <ClCompile Include="button.cpp" />
     <ClCompile Include="AppGrid.cpp" />
     <ClCompile Include="lconfig.cpp" />
+    <ClCompile Include="searchbar.cpp" />
+    <ClCompile Include="rrect.cpp" />
+    <ClCompile Include="search.cpp" />
+    <ClCompile Include="pagebutton.cpp" />
+    <ClCompile Include="pwbutton.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="button.h" />
     <ClInclude Include="appgrid.h" />
     <ClInclude Include="launcher.h" />
+    <ClInclude Include="searchbar.h" />
+    <ClInclude Include="search.h" />
+    <ClInclude Include="pagebutton.h" />
+    <ClInclude Include="pwbutton.h" />
   </ItemGroup>
 </Project>

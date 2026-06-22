@@ -33,8 +33,9 @@
 #include <Net/ipv4.h>
 #include <Fs/vfs.h>
 
+#ifdef ARCH_X64
 #pragma pack(push,1)
-__declspec(align(2))
+#endif
 typedef struct _icmp_head_ {
 	unsigned char type;
 	unsigned char code;
@@ -43,7 +44,9 @@ typedef struct _icmp_head_ {
 	unsigned short sequenceNum;
 	unsigned char payload[];
 }ICMPHeader;
+#ifdef ARCH_X64
 #pragma pack(pop)
+#endif
 
  /*
  * ICMPInitialise -- initialise ICMP

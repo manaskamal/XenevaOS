@@ -56,10 +56,10 @@ void AuACPIParseMADT() {
 		}
 
 		case ACPI_MADTTYPE_GICC: {
-			AuTextOut("GIC CPU Interface found \n");
+			UARTDebugOut("GIC CPU Interface found \n");
 			acpiGICCpuInterface* gicc = (acpiGICCpuInterface*)apic_header;
-			AuTextOut("GIC CPU Interface Phys Base : %x \n", gicc->physicalBaseAddress);
-			AuTextOut("GICR Phys Base : %x \n", gicc->gicrBaseAddress);
+			UARTDebugOut("GIC CPU Interface Phys Base : %x \n", gicc->physicalBaseAddress);
+			UARTDebugOut("GICR Phys Base : %x \n", gicc->gicrBaseAddress);
 			GIC* gic = AuGetSystemGIC();
 			gic->gicCPhys = gicc->physicalBaseAddress;
 			break;
@@ -68,14 +68,21 @@ void AuACPIParseMADT() {
 		case ACPI_MADTTYPE_GICD: {
 			AuTextOut("GIC Distributor found \n");
 			acpiGICDistributor* gicd = (acpiGICDistributor*)apic_header;
-			AuTextOut("GIC Distributor Phys Base : %x \n", gicd->physicalBaseAddress);
-			AuTextOut("GIC Version : %x , GIC ID -> %d \n", gicd->gicVersion, gicd->gicID);
+			UARTDebugOut("GIC Distributor Phys Base : %x \n", gicd->physicalBaseAddress);
+			UARTDebugOut("GIC Version : %x , GIC ID -> %d \n", gicd->gicVersion, gicd->gicID);
 			GIC* gic = AuGetSystemGIC();
 			gic->gicDPhys = gicd->physicalBaseAddress;
 			break;
 		}
 		case ACPI_MADTTYPE_GICMSI: {
 			AuTextOut("GIC MSI Frame found \n"); 
+			acpiGICv2MFrame* msiframe = (acpiGICv2MFrame*)apic_header;
+			UARTDebugOut("GIC MSI Frame Base : %x \n", msiframe->physicalBaseAddress);
+			UARTDebugOut("GIC MSI SPI Base : %d, SPICount : %d \n", msiframe->spiBase, msiframe->spiCount);
+			GIC* gic = AuGetSystemGIC();
+			gic->gicMSIPhys = msiframe->physicalBaseAddress;
+			gic->spiBase = msiframe->spiBase;
+			gic->spiCount = msiframe->spiCount;
 			break;
 		}
 
@@ -112,9 +119,14 @@ typedef struct _rsdp2_
  */
 void AuACPIInitialise(void* acpi_base) {
 	if (!acpi_base) {
-		AuTextOut("Could not find ACPI base %x \n", acpi_base);
+		AuTextOut("Could not find ACPI base %x \r\n", acpi_base);
 		return;
 	}
+
+	/** bypassing acpi on qemu virt **/
+#ifdef __TARGET_BOARD_QEMU_VIRT__
+	return;
+#endif
 	/*AuUpdatePageFlags((uint64_t)acpi_base, PTE_VALID | PTE_TABLE |
 		PTE_AF | PTE_SH_INNER | PTE_AP_RW | PTE_NORMAL_MEM);*/
 	__AuroraBasicAcpi = (AuroraBasicACPI*)kmalloc(sizeof(AuroraBasicACPI));
@@ -123,7 +135,7 @@ void AuACPIInitialise(void* acpi_base) {
 	acpiRsdp2* rsdp = (acpiRsdp2*)acpi_base;
 	acpiRsdt* rsdt = (acpiRsdt*)rsdp->rsdtAddr;
 	acpiXsdt* xsdt = (acpiXsdt*)rsdp->xsdtAddr;
-	AuTextOut("Getting physical address of ACPIBASE \n");
+	AuTextOut("Getting physical address of ACPIBASE \r\n");
 	//AuFreePages(acpi_base, 0, 4096);
 	char sig[5];
 	AuTextOut("ACPI initializing -> %x\n", acpi_base);
@@ -141,10 +153,14 @@ void AuACPIInitialise(void* acpi_base) {
 	__PCIESupported = false;
 	
 	for (int count = 0; count < entries; count++) {
-		if (rsdt)
+		if (rsdt) {
 			header = (acpiSysDescHeader*)rsdt->entry[count];
-		else
+		}
+		else {
 			header = (acpiSysDescHeader*)xsdt->entry[count];
+		}
+
+
 		strncpy(sig, header->signature, 4);
 		sig[4] = '\0';
 
@@ -210,11 +226,13 @@ void AuACPIInitialise(void* acpi_base) {
 
 }
 
-/*
+/**
  * AuACPIGetMCFG -- Returns the mcfg table
  * from basic acpi
  */
 acpiMcfg* AuACPIGetMCFG() {
+	if (!__AuroraBasicAcpi)
+		return NULL;
 	return __AuroraBasicAcpi->mcfg;
 }
 

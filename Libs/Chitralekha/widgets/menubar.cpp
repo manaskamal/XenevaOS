@@ -29,7 +29,7 @@
 
 #include "menubar.h"
 #include <stdlib.h>
-#include <sys\_keproc.h>
+#include <sys/_keproc.h>
 
 extern void ChDefaultMenubarPainter(ChWidget* wid, ChWindow* win);
 

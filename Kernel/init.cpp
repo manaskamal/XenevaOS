@@ -31,40 +31,41 @@
 #include <_null.h>
 #include <aurora.h>
 #include <aucon.h>
-#include <Mm\pmmngr.h>
-#include <Mm\vmmngr.h>
-#include <Mm\shm.h>
-#include <Hal\hal.h>
-#include <Hal\x86_64_gdt.h>
-#include <Hal\x86_64_lowlevel.h>
-#include <Hal\x86_64_cpu.h>
+#include <Mm/pmmngr.h>
+#include <Mm/vmmngr.h>
+#include <Mm/shm.h>
+#include <Hal/hal.h>
+#include <Hal/x86_64_gdt.h>
+#include <Hal/x86_64_lowlevel.h>
+#include <Hal/x86_64_cpu.h>
 #include <Hal/apic.h>
-#include <Sync\spinlock.h>
-#include <Hal\serial.h>
-#include <Hal\pcpu.h>
-#include <Mm\kmalloc.h>
-#include <Mm\mmap.h>
+#include <Sync/spinlock.h>
+#include <Hal/serial.h>
+#include <Hal/pcpu.h>
+#include <Mm/kmalloc.h>
+#include <Mm/mmap.h>
 #include <string.h>
-#include <Mm\buddy.h>
+#include <Mm/buddy.h>
 #include <ahci.h>
-#include <Fs\vfs.h>
-#include <Fs\tty.h>
-#include <Fs\pipe.h>
-#include <Drivers\mouse.h>
-#include <Drivers\ps2kybrd.h>
-#include <Drivers\rtc.h>
-#include <Hal\x86_64_sched.h>
+#include <Fs/vfs.h>
+#include <Fs/tty.h>
+#include <Fs/pipe.h>
+#include <Fs/initrd.h>
+#include <Drivers/mouse.h>
+#include <Drivers/ps2kybrd.h>
+#include <Drivers/rtc.h>
+#include <Hal/x86_64_sched.h>
 #include <process.h>
-#include <Fs\Dev\devfs.h>
+#include <Fs/Dev/devfs.h>
 #include <pe.h>
 #include <audrv.h>
 #include <loader.h>
-#include <Fs\Fat\FatFile.h>
-#include <Fs\Fat\FatDir.h>
-#include <Sound\sound.h>
-#include <Net\aunet.h>
-#include <Net\arp.h>
-#include <Ipc\postbox.h>
+#include <Fs/Fat/FatFile.h>
+#include <Fs/Fat/FatDir.h>
+#include <Sound/sound.h>
+#include <Net/aunet.h>
+#include <Net/arp.h>
+#include <Ipc/postbox.h>
 #include <autimer.h>
 #include <ftmngr.h>
 #include <hashmap.h>
@@ -88,8 +89,9 @@ void _AuMain(KERNEL_BOOT_INFO *info) {
 	 * be included in boot time driver	
 	 */
 	AuPS2KybrdInitialize();
-	AuBootDriverInitialise(info);
+	//AuBootDriverInitialise(info);
 	AuConsolePostInitialise(info);
+	AuInitrdInitialize(info);
 	/* Here initialize all legacy bus system
 	 * like ps2.... using AuLegacyBusInitialize() */
 	AuPS2MouseInitialise();
@@ -135,6 +137,7 @@ void _AuMain(KERNEL_BOOT_INFO *info) {
 
 	/* make the kernel standalone*/
 	AuVmmngrBootFree();
+
 	/* Process initialisation begins here */
 	AuStartRootProc();
 

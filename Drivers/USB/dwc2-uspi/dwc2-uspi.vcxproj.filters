@@ -1,0 +1,47 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="devicenameservice.c" />
+    <ClCompile Include="dwhcidevice.c" />
+    <ClCompile Include="dwhciframeschednper.c" />
+    <ClCompile Include="dwhciframeschednsplit.c" />
+    <ClCompile Include="dwhciframeschedper.c" />
+    <ClCompile Include="dwhciregister.c" />
+    <ClCompile Include="dwhcirootport.c" />
+    <ClCompile Include="dwhcixferstagedata.c" />
+    <ClCompile Include="keymap.c" />
+    <ClCompile Include="lan7800.c" />
+    <ClCompile Include="macaddress.c" />
+    <ClCompile Include="smsc951x.c" />
+    <ClCompile Include="string.c" />
+    <ClCompile Include="synchronize.c" />
+    <ClCompile Include="usbconfigparser.c" />
+    <ClCompile Include="usbdevice.c" />
+    <ClCompile Include="usbdevicefactory.c" />
+    <ClCompile Include="usbendpoint.c" />
+    <ClCompile Include="usbfunction.c" />
+    <ClCompile Include="usbgamepad.c" />
+    <ClCompile Include="usbkeyboard.c" />
+    <ClCompile Include="usbmassdevice.c" />
+    <ClCompile Include="usbmidi.c" />
+    <ClCompile Include="usbmouse.c" />
+    <ClCompile Include="usbrequest.c" />
+    <ClCompile Include="usbstandardhub.c" />
+    <ClCompile Include="usbstring.c" />
+    <ClCompile Include="uspilibrary.c" />
+    <ClCompile Include="util.c" />
+    <ClCompile Include="uspios.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="keymap_de.h" />
+    <ClInclude Include="keymap_es.h" />
+    <ClInclude Include="keymap_fr.h" />
+    <ClInclude Include="keymap_it.h" />
+    <ClInclude Include="keymap_uk.h" />
+    <ClInclude Include="keymap_us.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="_chkstk.s" />
+  </ItemGroup>
+</Project>

@@ -28,42 +28,6 @@
 **/
 
 #include "file.h"
-#include <Protocol/SimpleFileSystem.h>
-#include <Protocol/LoadFile.h>
-#include <Protocol\LoadedImage.h>
-#include <Guid\FileInfo.h>
-
-EFI_GUID FileSystemProtocol = {
-	0x964E5B22,
-	0x6459,
-	0x11D2,
-	{
-		0x8E, 0x39, 0x00, 0xA0, 0xC9, 0x69, 0x72, 0x3B
-	}
-};
-
-EFI_GUID LoadFileProtocol = {
-	0x56EC3091,
-	0x954C,
-	0x11D2,
-	{
-		0x8E, 0x3F, 0x00, 0xA0, 0xC9, 0x69, 0x72, 0x3B
-	}
-};
-
-
-EFI_GUID GenericFileInfo = {
-	0x9576E92,
-	0x6D3F,
-	0x11D2,
-	{
-		0x8E, 0x39, 0x00, 0xA0, 0xC9, 0x69, 0x72, 0x3B
-	}
-};
-
-#define EFI_FILE_SYSTEM_INFO_ID \
-{0x9576e93, 0x6d3f, 0x11d2, {0x8e, 0x39, 0x0, 0xa0, 0xc9, 0x69, 0x72, 0x3b }}
-
 
 /*
  * XEOpenAndReadFile -- open and reads a file
@@ -79,8 +43,9 @@ XEFile* XEOpenAndReadFile(EFI_HANDLE ImageHandle,CHAR16* Filename) {
 	EFI_FILE_PROTOCOL* File;
 	EFI_FILE_INFO* FileInfo;
 	UINTN FileInfoSize = 0;
-	UINTN FileSize;
-	VOID* Buffer;
+	UINT64 FileSize;
+
+	EFI_PHYSICAL_ADDRESS Buffer = 0;
 	XEFile* xefile;
 
 	EFI_GUID sfsprotocol = EFI_SIMPLE_FILE_SYSTEM_PROTOCOL_GUID;
@@ -110,9 +75,9 @@ XEFile* XEOpenAndReadFile(EFI_HANDLE ImageHandle,CHAR16* Filename) {
 		return 0;
 	}
 
-	Status = File->GetInfo(File, &GenericFileInfo, &FileInfoSize, NULL);
+	Status = File->GetInfo(File, &gEfiFileInfoGuid, &FileInfoSize, NULL);
 	if (Status == EFI_BUFFER_TOO_SMALL) {
-		Status = gBS->AllocatePool(EfiBootServicesData, FileInfoSize, (VOID**)&FileInfo);
+		Status = gBS->AllocatePool(EfiLoaderData, FileInfoSize, (VOID**)&FileInfo);
 		if (EFI_ERROR(Status)) {
 			XEGuiPrint("Failed to allocate buffer for file metadata \n");
 			File->Close(File);
@@ -120,7 +85,7 @@ XEFile* XEOpenAndReadFile(EFI_HANDLE ImageHandle,CHAR16* Filename) {
 		}
 	}
 
-	Status = File->GetInfo(File, &GenericFileInfo, &FileInfoSize, FileInfo);
+	Status = File->GetInfo(File, &gEfiFileInfoGuid, &FileInfoSize, FileInfo);
 	if (EFI_ERROR(Status)) {
 		XEGuiPrint("Failed to get file metadata \n");
 		gBS->FreePool(FileInfo);
@@ -131,14 +96,16 @@ XEFile* XEOpenAndReadFile(EFI_HANDLE ImageHandle,CHAR16* Filename) {
 	FileSize = FileInfo->FileSize;
 	gBS->FreePool(FileInfo);
 
-	Status = gBS->AllocatePool(EfiBootServicesData, FileSize + 1, &Buffer);
+	XEGuiPrint("Loading file of num bytes : %d , pages : %d \r\n", FileSize, EFI_SIZE_TO_PAGES(FileSize));
+	Status = gBS->AllocatePages(AllocateAnyPages,EfiLoaderData,EFI_SIZE_TO_PAGES(FileSize), &Buffer);
 	if (EFI_ERROR(Status)) {
 		XEGuiPrint("Failed to allocate buffer for file content \n");
 		File->Close(File);
 		return 0;
 	}
 
-	Status = File->Read(File, &FileSize, Buffer);
+	XEGuiPrint("Reading file Buffer : %x \r\n", &Buffer);
+	Status = File->Read(File, &FileSize, (VOID*)Buffer);
 	if (EFI_ERROR(Status)) {
 		XEGuiPrint("Failed to read file \n");
 		File->Close(File);
@@ -152,7 +119,7 @@ XEFile* XEOpenAndReadFile(EFI_HANDLE ImageHandle,CHAR16* Filename) {
 		return 0;
 	}
 	memset(xefile, 0, sizeof(XEFile));
-	xefile->kBuffer = Buffer;
+	xefile->kBuffer = (void*)Buffer;
 	xefile->FileSize = FileSize;
 	File->Close(File);
 	Root->Close(Root);
