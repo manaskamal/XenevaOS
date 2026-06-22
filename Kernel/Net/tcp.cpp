@@ -85,7 +85,7 @@ uint16_t CalculateTCPChecksum(TCPCheckHeader* p, TCPHeader* h, void* d, size_t p
 	for (unsigned int i = 0; i < dwords; ++i) {
 		sum += ntohs(s[i]);
 		if (sum > 0xFFFF) 
-			sum = (sum >> 16) + (sum & 0xFFFFF);
+			sum = (sum >> 16) + (sum & 0xFFFF);
 	}
 
 	if (dwords * static_cast<uint64_t>(2) != payloadsz){
@@ -206,7 +206,7 @@ int AuTCPAcknowledge(AuVFSNode* nic, AuSocket* sock, IPv4Header* ippack, size_t 
 	checkhdr.protocol = IPV4_PROTOCOL_TCP;
 	checkhdr.tcpLen = htons(sizeof(TCPHeader));
 
-	tcppack->checksum = htons(CalculateTCPChecksum(&checkhdr, tcp, NULL, 0));
+	tcppack->checksum = htons(CalculateTCPChecksum(&checkhdr, tcppack, NULL, 0));
 	IPV4SendPacket(ipv4, nic);
 	SeTextOut("TCP-ACK Sent !! successfully \r\n");
 	kfree(ipv4);
