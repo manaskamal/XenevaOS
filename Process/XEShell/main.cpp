@@ -408,10 +408,12 @@ void XEShellProcessLine() {
 			_spawnable_process = false;
 		}
 
-		if (strstr(cmdBuf, "cd")) {
+		if (strncmp(cmdBuf, "cd ", 3) == 0 || strcmp(cmdBuf, "cd") == 0) {
 			char* path = cmdBuf + 2;
-			while (strstr(path, " "))
-				path++;
+			if (*path == ' ') {
+				while (*path == ' ')
+					path++;
+			}
 			XEShellCD(path);
 			printf("\n");
 			_spawnable_process = false;
@@ -422,8 +424,12 @@ void XEShellProcessLine() {
 			_spawnable_process = false;
 		}
 
-		if (strstr(cmdBuf, "echo")) {
+		if (strncmp(cmdBuf, "echo ", 5) == 0 || strcmp(cmdBuf, "echo") == 0) {
 			char* msg = cmdBuf + 4;
+			if (*msg == ' ') {
+				while (*msg == ' ')
+					msg++;
+			}
 			XEShellEcho(msg);
 			_spawnable_process = false;
 		}
