@@ -296,14 +296,12 @@ void AuDriverLoad(char* filename, AuDriver* driver) {
 		return;
 	}
 	
-	int sbIndex = 0;
+	size_t file_offset = 0;
 	while (file->eof != 1) {
-		uint64_t block = ((uint64_t)scratchBuffer + (sbIndex * 0x1000));
-		memset(block, 0, 4096);
-		AuVFSNodeReadBlock(fsys, file, block);
-		sbIndex++;
-		//AuMapPage((uint64_t)block, (driver_load_base + next_base_offset * 4096), 0);
-		//next_base_offset++;
+		uint64_t block = ((uint64_t)scratchBuffer + file_offset);
+		size_t bytes_read = AuVFSNodeReadBlock(fsys, file, block);
+		if (bytes_read == 0) break;
+		file_offset += bytes_read;
 	}
 
 	IMAGE_DOS_HEADER* dos_ = (IMAGE_DOS_HEADER*)scratchBuffer;
@@ -607,10 +605,11 @@ AuDriver* AuDrvManagerCheckFault(uint64_t fault_addr) {
 	for (int i = 0; i < 246; i++) {
 		AuDriver* drv = drivers[i];
 		if (drv) {
-			if (fault_addr > drv->new_load_base || fault_addr <= drv->new_load_base + drv->image_sz)
+			if (drv->new_load_base != 0 && fault_addr > drv->new_load_base && fault_addr <= drv->new_load_base + drv->image_sz)
 				return drv;
 		}
 	}
+	return NULL;
 }
 
 /**
