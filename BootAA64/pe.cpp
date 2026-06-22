@@ -84,13 +84,16 @@ void XEPELoadImage(void* filebuff) {
 		void* sect_addr = (void*)load_addr;
 		
 		size_t sectsz = sectionHeader[i].VirtualSize;
-		int req_pages = sectsz / 4096 +
-			((sectsz % 4096) ? 1 : 0);
+		size_t aligned_addr = load_addr & ~0xFFFULL;
+		int req_pages = (sectsz + (load_addr & 0xFFF)) / 4096 +
+			(((sectsz + (load_addr & 0xFFF)) % 4096) ? 1 : 0);
 		uint64_t* block = 0;
 		for (int j = 0; j < req_pages; j++) {
-			uint64_t alloc = (load_addr + j * PAGESIZE);
-			XEPagingMap(alloc, XEPmmngrAllocate());
-			memset((void*)alloc, 0, 4096);
+			uint64_t alloc = (aligned_addr + j * PAGESIZE);
+			if (!XEPagingIsMapped(alloc)) {
+				XEPagingMap(alloc, XEPmmngrAllocate());
+				memset((void*)alloc, 0, 4096);
+			}
 			if (!block)
 				block = (uint64_t*)alloc;
 		}

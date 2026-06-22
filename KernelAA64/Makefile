@@ -6,10 +6,18 @@ CROSS_COMPILE ?= aarch64-linux-gnu-
 CC = $(CROSS_COMPILE)gcc
 LD = $(CROSS_COMPILE)ld
 
+# Target Board selection (Default: qemu_virt)
+BOARD ?= qemu_virt
+ifeq ($(BOARD), rpi3)
+	BOARD_FLAG = -D__TARGET_BOARD_RPI3__
+else
+	BOARD_FLAG = -D__TARGET_BOARD_QEMU_VIRT__
+endif
+
 INCLUDES = -I../BaseHdr -I../Acpica/include -I../Acpica
 CFLAGS = -Wall -Wextra -ffreestanding -fno-stack-protector -fno-stack-check -fno-strict-aliasing \
          -O2 \
-         -DARCH_ARM64 -D__TARGET_BOARD_RPI3__ -D_USE_DLMALLOC -D__STDC_LIMIT_MACROS \
+         -DARCH_ARM64 $(BOARD_FLAG) -D_USE_DLMALLOC -D__STDC_LIMIT_MACROS \
          $(INCLUDES)
 
 OBJDIR = obj

@@ -18,11 +18,19 @@ GNU_EFI_DIR ?= ../gnu-efi
 # Include directories
 INCLUDES = -I../BaseHdr -I../Boot/include -I../Boot/include/AArch64 -I$(GNU_EFI_DIR)/inc -I$(GNU_EFI_DIR)/inc/aarch64
 
+# Target Board selection (Default: qemu_virt)
+BOARD ?= qemu_virt
+ifeq ($(BOARD), rpi3)
+	BOARD_FLAG = -D__TARGET_BOARD_RPI3__
+else
+	BOARD_FLAG = -D__TARGET_BOARD_QEMU_VIRT__
+endif
+
 # Compiler flags
 CXXFLAGS = -Wno-error=pragmas -fPIE \
 		   -Wall -Wextra -funsigned-char -fshort-wchar \
 		   -fno-strict-aliasing -ffreestanding -fno-stack-protector -fno-stack-check \
-		   -fno-merge-all-constants -std=c++17 -DGNU_EFI_USE_MS_ABI -D__TARGET_BOARD_QEMU_VIRT__ $(INCLUDES)
+		   -fno-merge-all-constants -std=c++17 -DGNU_EFI_USE_MS_ABI $(BOARD_FLAG) $(INCLUDES)
 
 # GNU-EFI link setup
 LDSCRIPT = ${GNU_EFI_DIR}/gnuefi/elf_aarch64_efi.lds

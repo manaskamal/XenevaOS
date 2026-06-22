@@ -270,8 +270,28 @@ void XEPagingMap(uint64_t virtualAddr, uint64_t physAddr) {
 
 	l3_table[l3_index] = (physAddr & ~0xFFFULL)| PAGE_FLAGS;
 
-	//tlb_flush(virtualAddr & ~0xFFFULL);
+	tlb_flush((virtualAddr & ~0xFFFULL) >> 12);
+	tlb_flush_all(); // Extra safety for AArch64
 	isb_flush();
 	dsb_ish();
+}
+
+// Checks if a virtual address is already mapped to prevent PE section overlaps
+bool XEPagingIsMapped(uint64_t virtualAddr) {
+	uint64_t l0_index = (virtualAddr >> 39) & 0x1FF;
+	uint64_t l1_index = (virtualAddr >> 30) & 0x1FF;
+	uint64_t l2_index = (virtualAddr >> 21) & 0x1FF;
+	uint64_t l3_index = (virtualAddr >> 12) & 0x1FF;
+
+	if (!(l0_table_base[l0_index] & 1)) return false;
+	uint64_t* l1_table = (uint64_t*)(l0_table_base[l0_index] & ~0xFFFULL);
+
+	if (!(l1_table[l1_index] & 1)) return false;
+	uint64_t* l2_table = (uint64_t*)(l1_table[l1_index] & ~0xFFFULL);
+
+	if (!(l2_table[l2_index] & 1)) return false;
+	uint64_t* l3_table = (uint64_t*)(l2_table[l2_index] & ~0xFFFULL);
+
+	return (l3_table[l3_index] & 1) != 0;
 }
 

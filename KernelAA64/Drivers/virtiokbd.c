@@ -139,7 +139,12 @@ void AuVirtioKbdInitialize(uint64_t device) {
 	cfg->subsel = 0;
 	isb_flush();
 	dsb_ish();
-	UARTDebugOut("VIRTIO Keyboard Name : %s \n", cfg->data.str);
+	char kbd_name[128];
+	memset(kbd_name, 0, 128);
+	int name_len = cfg->size;
+	if (name_len > 127) name_len = 127;
+	for (int i = 0; i < name_len; i++) kbd_name[i] = cfg->data.str[i];
+	UARTDebugOut("VIRTIO Keyboard Name : %s \n", kbd_name);
 
 	int spiID = AuGICAllocateSPI();
 	UARTDebugOut("VIRTIO Keyboard SPI ID: %d \n", spiID);

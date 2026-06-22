@@ -152,7 +152,12 @@ void AuVirtioTabletInitialize(uint64_t device) {
 	cfg->subsel = 0;
 	isb_flush();
 	dsb_ish();
-	UARTDebugOut("VIRTIO Tablet Name : %s \n", cfg->data.str);
+	char tablet_name[128];
+	memset(tablet_name, 0, 128);
+	int name_len2 = cfg->size;
+	if (name_len2 > 127) name_len2 = 127;
+	for (int i = 0; i < name_len2; i++) tablet_name[i] = cfg->data.str[i];
+	UARTDebugOut("VIRTIO Tablet Name : %s \n", tablet_name);
 
 	cfg->select = 0x12;
 	cfg->subsel = 0;
