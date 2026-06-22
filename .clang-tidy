@@ -1,0 +1,12 @@
+---
+Checks: >
+  -*,
+  clang-diagnostic-*,
+  clang-analyzer-*,
+  portability-*,
+  bugprone-*,
+  -bugprone-narrowing-conversions,
+  -bugprone-branch-clone
+WarningsAsErrors: ''
+HeaderFilterRegex: '.*'
+...

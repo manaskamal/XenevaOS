@@ -28,7 +28,7 @@
 **/
 
 #include "msgbox.h"
-#include <sys\_keproc.h>
+#include <sys/_keproc.h>
 #include "button.h"
 
 #define MESSAGEBOX_WIDTH 400

@@ -29,22 +29,22 @@
 *
 **/
 
-#include <Net\ethernet.h>
-#include <Net\aunet.h>
-#include <Mm\kmalloc.h>
+#include <Net/ethernet.h>
+#include <Net/aunet.h>
+#include <Mm/kmalloc.h>
 #include <string.h>
-#include <Drivers\uart.h>
-#include <Fs\Dev\devfs.h>
+#include <Drivers/uart.h>
+#include <Fs/Dev/devfs.h>
 #include <aucon.h>
 #include <Net/arp.h>
-#include <Net\ipv4.h>
+#include <Net/ipv4.h>
 #include <Net/udp.h>
-#include <Net\socket.h>
+#include <Net/socket.h>
 
 #ifdef ARCH_X64
 #pragma pack(push,1)
 #endif
-__declspec(align(2)) typedef struct _ethernet_ {
+typedef struct _ethernet_ {
 	uint8_t dest[6];
 	uint8_t src[6];
 	uint16_t typeLen;
@@ -89,7 +89,6 @@ AU_EXTERN AU_EXPORT void AuEthernetHandle(void* data, int size, AuVFSNode* nic) 
 #pragma pack(push,1)
 #endif
 
-__declspec(align(2))
 typedef struct _dns_ {
 	uint16_t qid;
 	uint16_t flags;

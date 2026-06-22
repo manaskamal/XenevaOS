@@ -34,7 +34,7 @@
 
 #include <stdint.h>
 #include <_xeneva.h>
-#include <sys\_kesignal.h>
+#include <sys/_kesignal.h>
 
 #ifdef __cplusplus
 XE_EXTERN{

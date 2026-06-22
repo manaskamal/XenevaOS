@@ -32,9 +32,9 @@
 
 #include <stdint.h>
 #include "xhci.h"
-#include <Hal\x86_64_sched.h>
+#include <Hal/x86_64_sched.h>
 #include <list.h>
-#include <Sync\spinlock.h>
+#include <Sync/spinlock.h>
 
 #pragma pack(push,1)
 typedef struct _usb_dev_ {

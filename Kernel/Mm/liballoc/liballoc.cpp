@@ -29,11 +29,11 @@
 
 #include <aurora.h>
 #include <string.h>
-#include <Mm\pmmngr.h>
-#include <Mm\vmmngr.h>
-#include <Mm\liballoc\liballoc.h>
+#include <Mm/pmmngr.h>
+#include <Mm/vmmngr.h>
+#include <Mm/liballoc/liballoc.h>
 #include <_null.h>
-#include <Hal\serial.h>
+#include <Hal/serial.h>
 
 /**  Durand's Ridiculously Amazing Super Duper Memory functions.  */
 

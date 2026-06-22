@@ -41,14 +41,14 @@ XE_EXTERN{
 #include <stdint.h>
 
 #include <stdio.h>
-#include <sys\_keproc.h>
-#include <sys\_kefile.h>
+#include <sys/_keproc.h>
+#include <sys/_kefile.h>
 #include <sys/mman.h>>
-#include <sys\iocodes.h>
+#include <sys/iocodes.h>
 #include <string.h>
 #include <stdlib.h>
-#include <sys\socket.h>
-#include <sys\_keipcpostbox.h>
+#include <sys/socket.h>
+#include <sys/_keipcpostbox.h>
 
 
 

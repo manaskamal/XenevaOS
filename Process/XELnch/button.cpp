@@ -30,12 +30,12 @@
 #include "button.h"
 #include "launcher.h"
 #include <stdlib.h>
-#include <sys\_kefile.h>
-#include <sys\_keipcpostbox.h>
-#include <sys\iocodes.h>
-#include <sys\mman.h>
-#include <sys\_keproc.h>
-#include <widgets\msgbox.h>
+#include <sys/_kefile.h>
+#include <sys/_keipcpostbox.h>
+#include <sys/iocodes.h>
+#include <sys/mman.h>
+#include <sys/_keproc.h>
+#include <widgets/msgbox.h>
 
 
 #define LAUNCHER_BUTTON_HOVER_DARK 0xCC658096

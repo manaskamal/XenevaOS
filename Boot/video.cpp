@@ -28,6 +28,7 @@
 **/
 
 #include "video.h"
+#include <Common.hpp>
 
 FRAMEBUFFER_INFORMATION fbinfo;
 size_t xpos;
@@ -91,24 +92,27 @@ EFI_STATUS XEInitialiseGraphics(EFI_GRAPHICS_OUTPUT_PROTOCOL* GraphicsOutput) {
 
 	switch (GraphicsOutput->Mode->Info->PixelFormat)
 	{
-	case PixelRedGreenBlueReserved8BitPerColor:
-		fbinfo.redmask = 0xFF;
-		fbinfo.greenmask = 0xFF00;
-		fbinfo.bluemask = 0xFF0000;
-		fbinfo.resvmask = 0xFF000000;
-		break;
-	case PixelBlueGreenRedReserved8BitPerColor:
-		fbinfo.redmask = 0xFF0000;
-		fbinfo.greenmask = 0xFF00;
-		fbinfo.bluemask = 0xFF;
-		fbinfo.resvmask = 0xFF000000;
-		break;
-	case PixelBitMask:
-		fbinfo.redmask = GraphicsOutput->Mode->Info->PixelInformation.RedMask;
-		fbinfo.greenmask = GraphicsOutput->Mode->Info->PixelInformation.GreenMask;
-		fbinfo.bluemask = GraphicsOutput->Mode->Info->PixelInformation.BlueMask;
-		fbinfo.resvmask = GraphicsOutput->Mode->Info->PixelInformation.ReservedMask;
-		break;
+		case PixelRedGreenBlueReserved8BitPerColor:
+			fbinfo.redmask = 0xFF;
+			fbinfo.greenmask = 0xFF00;
+			fbinfo.bluemask = 0xFF0000;
+			fbinfo.resvmask = 0xFF000000;
+			break;
+		case PixelBlueGreenRedReserved8BitPerColor:
+			fbinfo.redmask = 0xFF0000;
+			fbinfo.greenmask = 0xFF00;
+			fbinfo.bluemask = 0xFF;
+			fbinfo.resvmask = 0xFF000000;
+			break;
+		case PixelBitMask:
+			fbinfo.redmask = GraphicsOutput->Mode->Info->PixelInformation.RedMask;
+			fbinfo.greenmask = GraphicsOutput->Mode->Info->PixelInformation.GreenMask;
+			fbinfo.bluemask = GraphicsOutput->Mode->Info->PixelInformation.BlueMask;
+			fbinfo.resvmask = GraphicsOutput->Mode->Info->PixelInformation.ReservedMask;
+			break;
+		default:
+			// Do nothing?
+			break;
 	}
 
 	xpos = 0;
@@ -154,7 +158,7 @@ void XEGraphicsPutC(char str) {
 
 	for (size_t y = 0; y < 16; ++y) {
 		for (size_t x = 0; x < 8; ++x) {
-			const bx_fontcharbitmap_t& entry = bx_vgafont[str];
+			const bx_fontcharbitmap_t& entry = bx_vgafont[static_cast<uint8_t>(str)];
 			if (entry.data[y] & (1 << x)) {
 				XEPutPixel(x + xpos * 9, y + ypos * 16, foreground);
 			}
@@ -170,7 +174,7 @@ void XEGraphicsPutC(char str) {
 	uint32_t* lfb = fbinfo.phyaddr;
 	if (ypos + 1 > h_res / 16)
 	{
-		for (int i = 16; i < h_res * v_res; i++)
+		for (size_t i = 16; i < h_res * v_res; i++)
 			lfb[i] = lfb[i + v_res * 16];
 		ypos--;
 	}
@@ -184,11 +188,7 @@ void XEGraphicsPutC(char str) {
 void XEGraphicsPuts(const char* str){
 
 	while (*str){
-
-		if (*str > 0xFF){
-			//unicode
-		}
-		else if (*str == '\n') {
+		if (*str == '\n') {
 			++ypos;
 			xpos = 0;
 		}
@@ -199,8 +199,7 @@ void XEGraphicsPuts(const char* str){
 				--xpos;
 		}
 		else {
-
-			const bx_fontcharbitmap_t entry = bx_vgafont[*str];
+			const bx_fontcharbitmap_t entry = bx_vgafont[static_cast<uint8_t>(*str)];
 			for (size_t y = 0; y < 16; ++y){
 
 				for (size_t x = 0; x < 8; ++x){
@@ -228,7 +227,7 @@ void XEGraphicsPuts(const char* str){
 	/* Scroll */
 	if (ypos + 1 > v_res / 16)
 	{
-		for (int i = 16; i < v_res * h_res; i++)
+		for (size_t i = 16; i < v_res * h_res; i++)
 			fbinfo.phyaddr[i] = fbinfo.phyaddr[i + h_res * 16];
 		ypos--;
 	}

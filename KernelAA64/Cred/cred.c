@@ -43,7 +43,7 @@
 static GID_NUM _groups[AURORA_MAX_GROUPS];
 
 
-static inline uint64 _mix64(uint64_t x) {
+static inline uint64_t _mix64(uint64_t x) {
 	x ^= (x >> 30);
 	x *= 0xbf58476d1ce4e5b9ULL;
 	x ^= (x >> 27);

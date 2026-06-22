@@ -27,14 +27,14 @@
 *
 **/
 
-#include <Net\aunet.h>
+#include <Net/aunet.h>
 #include <Net/arp.h>
-#include <Mm\kmalloc.h>
+#include <Mm/kmalloc.h>
 #include <string.h>
 #include <_null.h>
 #include <hashmap.h>
-#include <Fs\dev\devfs.h>
-#include <Net\socket.h>
+#include <Fs/dev/devfs.h>
+#include <Net/socket.h>
 #include <Net/route.h>
 #include <Net/udp.h>
 #include <Net/icmp.h>

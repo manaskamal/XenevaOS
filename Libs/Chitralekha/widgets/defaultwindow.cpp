@@ -27,10 +27,10 @@
 *
 **/
 
-#include "..\color.h"
-#include "..\draw.h"
+#include "../color.h"
+#include "../draw.h"
 #include "window.h"
-#include "..\font.h"
+#include "../font.h"
 #include <math.h>
 
 #ifdef THEME_DEFAULT

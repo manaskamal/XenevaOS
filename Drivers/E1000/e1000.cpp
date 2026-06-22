@@ -28,21 +28,21 @@
 **/
 
 #include "e1000.h"
-#include <Mm\kmalloc.h>
-#include <Mm\vmmngr.h>
-#include <Mm\pmmngr.h>
+#include <Mm/kmalloc.h>
+#include <Mm/vmmngr.h>
+#include <Mm/pmmngr.h>
 #include <pcie.h>
 #include <_null.h>
 #include <aucon.h>
 #include <string.h>
 #include <aurora.h>
-#include <Hal\x86_64_sched.h>
-#include <Hal\serial.h>
+#include <Hal/x86_64_sched.h>
+#include <Hal/serial.h>
 #include <audrv.h>
-#include <Net\aunet.h>
-#include <Net\ethernet.h>
-#include <Fs\Dev\devfs.h>
-#include <Net\arp.h>
+#include <Net/aunet.h>
+#include <Net/ethernet.h>
+#include <Fs/Dev/devfs.h>
+#include <Net/arp.h>
 
 #pragma pack(push,1)
 typedef struct _e1000_nic_ {

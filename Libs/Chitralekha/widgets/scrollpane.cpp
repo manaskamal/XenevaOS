@@ -30,7 +30,7 @@
 #include "scrollpane.h"
 #include <stdlib.h>
 #include <math.h>
-#include <sys\_keproc.h>
+#include <sys/_keproc.h>
 
 /*
 * ChDefaultScrollPanePainter -- default scroll pane painter

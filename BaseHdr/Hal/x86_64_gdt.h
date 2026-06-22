@@ -31,6 +31,7 @@
 #define __X86_64_GDT_H__
 
 #include <stdint.h>
+#include <stddef.h>
 
 #define GDT_ENTRY_NULL 0
 #define GDT_ENTRY_KERNEL_CODE 1

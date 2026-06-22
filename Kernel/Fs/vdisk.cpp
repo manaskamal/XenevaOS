@@ -32,7 +32,7 @@
 #include <Mm/kmalloc.h>
 #include <_null.h>
 #include <aucon.h>
-#include <Hal\serial.h>
+#include <Hal/serial.h>
 #include <Mm/pmmngr.h>
 #include <Hal/x86_64_hal.h>
 #include <string.h>

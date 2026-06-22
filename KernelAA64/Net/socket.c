@@ -29,13 +29,13 @@
 *
 **/
 
-#include <net/socket.h>
-#include <net/ipv4.h>
+#include <Net/socket.h>
+#include <Net/ipv4.h>
 #include <Hal/AA64/aa64lowlevel.h>
 #include <Mm/kmalloc.h>
 #include <string.h>
 #include <_null.h>
-#include <net/AuNet.h>
+#include <Net/aunet.h>
 #include <list.h>
 #include <Drivers/uart.h>
 #include <aucon.h>

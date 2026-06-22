@@ -30,7 +30,7 @@
 #include "ihda.h"
 #include "widget.h"
 #include "codec.h"
-#include <Hal\serial.h>
+#include <Hal/serial.h>
 
 /*
  * SigmatelInit -- initialise sigmatel codec

@@ -31,8 +31,8 @@
 #define __FONT_H__
 
 #include <stdint.h>
-#include <sys\_keftmngr.h>
-#include <freetype\ftglyph.h>
+#include <sys/_keftmngr.h>
+#include <freetype/ftglyph.h>
 #include <_xeneva.h>
 #include "chitralekha.h"
 #include "draw.h"

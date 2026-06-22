@@ -32,9 +32,9 @@
 #include "icon.h"
 #include <_xeneva.h>
 #include <stdlib.h>
-#include <sys\_kefile.h>
-#include <sys\mman.h>
-#include "..\bmp.h"
+#include <sys/_kefile.h>
+#include <sys/mman.h>
+#include "../bmp.h"
 
 /**
  * @brief ChCreateIcon -- create a blank icon slot

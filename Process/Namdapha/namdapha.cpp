@@ -30,16 +30,16 @@
 #include <stdint.h>
 #include <stdarg.h>
 #include <stdlib.h>
-#include <sys\_keproc.h>
-#include <sys\_kefile.h>
-#include <sys\_ketimer.h>
-#include <sys\_ketime.h>
+#include <sys/_keproc.h>
+#include <sys/_kefile.h>
+#include <sys/_ketimer.h>
+#include <sys/_ketime.h>
 #include <chitralekha.h>
-#include <sys\iocodes.h>
-#include <sys\mman.h>
+#include <sys/iocodes.h>
+#include <sys/mman.h>
 #include "nmdapha.h"
 #include "section.h"
-#include <widgets\window.h>
+#include <widgets/window.h>
 
 ChitralekhaApp *app;
 ChWindow* win;

@@ -31,8 +31,7 @@
 #include "xnout.h"
 #include <Uefi.h>
 #include "physm.h"
-
-typedef uint64_t EFI_PHYSICAL_ADDRESS;
+#include <aurora.h>
 
 
 paddr_t* pagestack;

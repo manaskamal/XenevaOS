@@ -27,8 +27,8 @@
 *
 **/
 
-#include <Mm\vmarea.h>
-#include <Mm\kmalloc.h>
+#include <Mm/vmarea.h>
+#include <Mm/kmalloc.h>
 #include <list.h>
 
 /*

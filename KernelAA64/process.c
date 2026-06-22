@@ -31,10 +31,10 @@
 
 #include <process.h>
 #include <aucon.h>
-#include <Mm\vmmngr.h>
-#include <Mm\kmalloc.h>
+#include <Mm/vmmngr.h>
+#include <Mm/kmalloc.h>
 #include <pe.h>
-#include <Mm\pmmngr.h>
+#include <Mm/pmmngr.h>
 #include <string.h>
 #include <_null.h>
 #include <Hal/AA64/sched.h>

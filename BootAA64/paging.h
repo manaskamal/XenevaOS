@@ -60,6 +60,9 @@ extern void XEPagingInitialize();
  */
 extern void XEPagingMap(uint64_t virtualAddr, uint64_t physAddr);
 
+/* Checks if a virtual page is already mapped to prevent overwriting during PE section overlapping */
+extern bool XEPagingIsMapped(uint64_t virtualAddr);
+
 extern void XEMapMMIO(uint64_t* l1_table, uint64_t va, uint64_t pa);
 
 extern void XEPagingCopy();

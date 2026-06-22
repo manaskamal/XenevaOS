@@ -27,18 +27,18 @@
 *
 **/
 
-#include <Fs\vfs.h>
-#include <Fs\Fat\Fat.h>
-#include <Mm\pmmngr.h>
-#include <Mm\vmmngr.h>
-#include <Mm\kmalloc.h>
+#include <Fs/vfs.h>
+#include <Fs/Fat/Fat.h>
+#include <Mm/pmmngr.h>
+#include <Mm/vmmngr.h>
+#include <Mm/kmalloc.h>
 #include <process.h>
-#include <Hal\x86_64_sched.h>
-#include <Hal\serial.h>
+#include <Hal/x86_64_sched.h>
+#include <Hal/serial.h>
 #include <aucon.h>
 #include <_null.h>
-#include <Hal\x86_64_hal.h>
-#include <Fs\pipe.h>
+#include <Hal/x86_64_hal.h>
+#include <Fs/pipe.h>
 
 /*
  * OpenFile -- opens a file for user process

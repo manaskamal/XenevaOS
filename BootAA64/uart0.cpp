@@ -44,6 +44,8 @@ void XEUartInitialize() {
 #ifdef __TARGET_BOARD_RPI3__
 	//RPI3BUartInit();
 	_is_uart_initialized = 0;
+#elif __TARGET_BOARD_QEMU_VIRT__
+	_is_uart_initialized = 1;
 #elif __TARGET_BOARD_IMX8MP_VERDIN_DAHLIA__ || (__TARGET_BOARD_IMX8MP_SOC__)
 	XE_iMX8MP_UART_Initialize(IMX8MP_UART3_BASE_ADDRESS);
 	_is_uart_initialized = 1;
@@ -58,8 +60,12 @@ void XEUartInitialize() {
 void XEUartPutc(char c) {
 	if (_is_uart_initialized != 1)
 		return;
-#ifdef __TARGET_BOARD_IMX8MP_VERDIN_DAHLIA__ || (__TARGET_BOARD_IMX8MP_SOC__)
+#if defined(__TARGET_BOARD_IMX8MP_VERDIN_DAHLIA__) || defined(__TARGET_BOARD_IMX8MP_SOC__)
 	imx8mp_uart_putc(c);
+#elif __TARGET_BOARD_QEMU_VIRT__
+	volatile unsigned int* uart0 = (volatile unsigned int*)0x09000000;
+	while (*(uart0 + 6) & (1 << 5)); // Wait until FR_TXFF is clear
+	*uart0 = c;
 #elif __TARGET_BOARD_RPI3__
 	char* uart0 = (char*)UART_BASE;
 	while ((*(uart0 + 0x18) & (1 << 5)));
@@ -77,27 +83,20 @@ void XEUartPutString(const char* s) {
 		XEUartPutc(*s++);
 }
 
-extern "C" void store_x0_x7(uint64_t * buffer);
+#include <stdarg.h>
 
 /*
  * XEUARTPrint -- print formated text using graphics
  * @param format -- formated string
  */
 void XEUARTPrint(const char* format, ...) {
-	/* Hacky, printf implementation, it doesn't automatically
-	 * store the registered in stack, rather in a shadow area
-	 * and i don't know how to access those
-	 */
 #ifdef __TARGET_BOARD_RPI3__
 	XEGuiPrint(format);
 	return;
 #endif
 
-	uint64_t buffer[7];
-	store_x0_x7(buffer);
-
-	va_list args = (va_list)buffer;
-	//va_start(args, format);
+	va_list args;
+	va_start(args, format);
 	while (*format != '\0') {
 		if (*format == '%') {
 			++format;
@@ -120,8 +119,8 @@ void XEUARTPrint(const char* format, ...) {
 			}
 			else if (*format == 'c') {
 
-				char c = va_arg(args, char);
-				XEUartPutc(c);
+				int c = va_arg(args, int);
+				XEUartPutc((char)c);
 			}
 			else if (*format == 'x') {
 				size_t x = va_arg(args, size_t);

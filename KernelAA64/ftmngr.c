@@ -31,13 +31,13 @@
 
 #include <ftmngr.h>
 #include <_null.h>
-#include <Fs\vfs.h>
-#include <Mm\vmmngr.h>
-#include <Mm\pmmngr.h>
+#include <Fs/vfs.h>
+#include <Mm/vmmngr.h>
+#include <Mm/pmmngr.h>
 #include <Drivers/uart.h>
 #include <aucon.h>
-#include <Mm\kmalloc.h>
-#include <Mm\shm.h>
+#include <Mm/kmalloc.h>
+#include <Mm/shm.h>
 #include <stdio.h>
 #include <Hal/AA64/aa64lowlevel.h>
 

@@ -28,12 +28,12 @@
 **/
 
 #include "nmdapha.h"
-#include <sys\_kefile.h>
-#include <sys\_keproc.h>
-#include <sys\_keipcpostbox.h>
-#include <sys\_ketime.h>
+#include <sys/_kefile.h>
+#include <sys/_keproc.h>
+#include <sys/_keipcpostbox.h>
+#include <sys/_ketime.h>
 #include <chitralekha.h>
-#include <widgets\window.h>
+#include <widgets/window.h>
 
 
 int go_postboxfd;

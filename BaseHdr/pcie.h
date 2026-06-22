@@ -31,8 +31,8 @@
 #define __PCIE_H__
 
 #include <stdint.h>
-#include <Hal\basicacpi.h>
-#include <Hal\hal.h>
+#include <Hal/basicacpi.h>
+#include <Hal/hal.h>
 
 
 #define PCI_VENDOR_ID  0x00

@@ -36,7 +36,6 @@
 #ifdef ARCH_X64
 #pragma pack(push,1)
 #endif
-__declspec(align(2))
 typedef struct _icmp_head_ {
 	unsigned char type;
 	unsigned char code;

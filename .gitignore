@@ -1,0 +1,27 @@
+# C/C++ Build Artifacts
+*.o
+*.so
+*.efi
+obj/
+Build/
+gnu-efi/
+
+# Visual Studio specific files
+.vs/
+*.sdf
+*.suo
+*.user
+x64/
+ARM64/
+Debug/
+Release/
+KernelAA64/*.elf
+KernelAA64/*.exe
+KernelAA64/*.log
+KernelAA64/obj/
+fat.img
+initrd2.img
+qemu.pid
+dump.s
+*.s
+*.so

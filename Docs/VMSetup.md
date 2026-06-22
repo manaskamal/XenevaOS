@@ -1,64 +1,74 @@
-## Setting up Virtual Machine for Xeneva
+# Setting up the Virtual Machine for XenevaOS
 
 ## Notice
+XenevaOS is well-tested only on VMware Workstation and VirtualBox with a VMDK file mapping to a raw physical disk (_the USB Flash drive containing all required binaries_). Refer to [Setting up USB Flash Drive](BuildInstructions.md) for more information. Everything should be set up as described in that document. ***You can skip directly to [Virtual Machine Creation](#creating-the-virtual-machine-in-virtualbox) if you have downloaded the release VHD file***.
 
-Xeneva is well tested only on VMware Workstation and Virtual Box with vmdk file that maps PhysicalDisk (_The USB Flash drive containing all required binaries_). Refer to [Setting up USB Flash Drive](BuildInstructions.md) for more information. Everything should be set up as mentioned in this document. ***You can skip to [Virtual Machine Creation](#creating-the-virtual-machine-in-virtual-box) if you have downloaded the release vhd file***.
+## Creating the VMDK File
 
-## Creating the .vmdk file 
+In VirtualBox, the VMs will use the VMDK file on AHCI Controller Port 1. To create the VMDK, we use the VirtualBox tool `VBoxManage.exe` located at `C:\Program Files\Oracle\VirtualBox`. You can add this location to the Windows environment variable **PATH** to access the tool from any directory on your local machine.
 
-In VirtualBox, the VMs will use the .vmdk file in AHCI Controller Port 1. To Create vmdk we will use Virtual Box __VBoxManage.exe__ tool present in location ```C:\Program Files\Oracle\VirtualBox```. You can add this location to Windows Environment Variable __PATH__ for accessing the tool from any location inside your local Machine.<br>
-- Check for Drive Number of USB Flash Drive using ```diskmgmt.msc```. On Linux or macOS, you can use ```lsblk``` or ```diskutil list``` respectively. <br>
-- Start ```cmd.exe``` in _Run as administrator_ mode. <br>
-- Type ```VBoxManage createmedium -filename "Your\path\to\filename.vmdk" --variant RawDisk --format=VMDK --property RawDrive=\\.\PhysicalDriveX```.<br>
-Repace ```X``` with your drive number of USB Flash drive.
-- Example here:
-```VBoxManage createmedium -filename "E:\usb.vmdk" --variant RawDisk --format=VMDK --property RawDrive=\\.\PhysicalDrive1```. Here PhysicalDrive1 is my USB Flash Drive.<br>
-- Upto here you should be able to create __.vmdk__ file mapped to Physical Drive. 
+- Check the drive number of your USB Flash Drive using `diskmgmt.msc`. On Linux or macOS, use `lsblk` or `diskutil list`, respectively.
+- Start `cmd.exe` in **Run as administrator** mode.
+- Run the following command:
+  ```cmd
+  VBoxManage createmedium -filename "Your\path\to\filename.vmdk" --variant RawDisk --format=VMDK --property RawDrive=\\.\PhysicalDriveX
+  ```
+  Replace `X` with your USB drive number.
+- Example:
+  ```cmd
+  VBoxManage createmedium -filename "E:\usb.vmdk" --variant RawDisk --format=VMDK --property RawDrive=\\.\PhysicalDrive1
+  ```
+  (where `PhysicalDrive1` corresponds to the USB Flash Drive).
+- Up to this point, you should be able to create the VMDK file successfully mapped to your physical drive. 
 
-## Disabling VBS(Virtualization Based Security) on Windows (_~Important_)
-Before running XenevaOS on Windows Machine, we need to temporarily disable VBS feature of Windows. Xeneva fails to access virtualized hardware memory regions on VBS enabled Windows machine for which the OS cannot continue the boot process. VBS completely occupies all hardware resource to create an isolated region of memory. To turn off VBS, please follow the steps below :
+## Disabling VBS (Virtualization-Based Security) on Windows (*Important*)
 
-### - Turn off Memory integrity :
-- Open _**Windows Security**_.
-- Go to _**Device Security**_ : In the left panel of _**Windows Security**_, click _**Device Security**_.
-- Open _**Core Isolation**_ details : _Under _**Core Isolation**_, click _**Core Isolation**_ details_.
-- Turn off _**Memory Integrity**_ : _Toggle _**Memory Integrity**_ to Off_.
-- We're done, now _Restart_ the PC (_~~We can also restart all together after we turn off hypervisorlaunchtype_).
+Before running XenevaOS on a Windows machine, you need to temporarily disable the VBS feature of Windows. XenevaOS fails to access virtualized hardware memory regions on VBS-enabled Windows machines, which prevents the OS from booting. VBS completely occupies hardware resources to create an isolated memory region. 
 
-### - Turn off _hypervisorlaunchtype_
-- Open _**Command Prompt**_ as Administrator.
-- Type ` bcdedit /set hypervisorlaunchtype off ` and press _Enter_.
-- We're done, now _Restart_ the PC.
+To turn off VBS:
+
+### 1. Turn off Memory Integrity
+- Open **Windows Security**.
+- Click **Device Security** in the left panel.
+- Under **Core Isolation**, click **Core Isolation details**.
+- Toggle **Memory Integrity** to **Off**.
+- Restart the PC (or do a single restart after executing the command in the next step).
+
+### 2. Turn off `hypervisorlaunchtype`
+- Open the **Command Prompt** as Administrator.
+- Run `bcdedit /set hypervisorlaunchtype off` and press **Enter**.
+- Restart your PC to apply the changes.
 
 
-## Creating the Virtual Machine in Virtual Box
-- Create a new Virtual Machine in Virtual Box. ```{Machine - New}```
-- Give a suitable name to the VM and select ```Linux``` from Type and ```Ubuntu (64-bit)``` from Version and click __Next__.
-- Set Base Memory to __2048 MB__ and _Processor Count to 3_ and check the _Enable EFI(special OSses only)_ and click Next.
-- Select __Do Not Add a Virtual Hard Disk__ option and Click Next.
-- Click __Finish__ to complete the process.
-- Upto here the new Virtual Machine should appear inside Virtual Box. 
-- Now Open Settings of newly created Virtual Machine.
-- Go to System and select __ICH9__ from the _Chipset_ , __USB Tablet__ from the _Pointing Device_ and __Enable I/O APIC__ from _Extended Features_.
-- Go to Storage and _Add a controller_ of __AHCI(SATA)__. This should create a new controller in the _Storage Device_ list.
-- Now _Add a Hard disk_ inside newly created Controller then click _Add_ button from Hard Disk Selector window and select the __vmdk__ that is created using the steps mentioned above, or directly the downloaded __vhd__ file, if you have downloaded Xeneva from official release page.
+## Creating the Virtual Machine in VirtualBox
 
-- Go to _Audio_ and Windows Direct Sound in Host Audio Driver and Intel HD Audio from Audio Controller and check _Enable Audio Output_ and _Enable Audio Input_.
-- Go to USB and select _Enable USB Controller_ and select _USB 3.0 (XHCI) Controller_.
-- Upto here XenevaOS is ready to run.
+- Create a new Virtual Machine in VirtualBox via **Machine** -> **New**.
+- Give the VM a name, select **Linux** as the Type, select **Ubuntu (64-bit)** as the Version, and click **Next**.
+- Set the Base Memory to **2048 MB**, set the **Processor Count to 3**, check the **Enable EFI (special OSes only)** option, and click **Next**.
+- Select the **Do Not Add a Virtual Hard Disk** option and click **Next**.
+- Click **Finish** to complete the process.
+- The new Virtual Machine will now appear in VirtualBox. Open the **Settings** of the newly created Virtual Machine.
+- Under the **System** tab, select **ICH9** as the Chipset, **USB Tablet** as the Pointing Device, and check **Enable I/O APIC** in Extended Features.
+- Under **Storage**, add a new **AHCI (SATA)** controller.
+- Add a new **Hard Disk** to the AHCI controller, click the **Add** button in the Hard Disk Selector, and select the VMDK file created earlier (or the downloaded release VHD file).
+- Under **Audio**, select **Windows DirectSound** as the Host Audio Driver, select **Intel HD Audio** as the Audio Controller, and enable both input and output.
+- Under **USB**, select **Enable USB Controller** and choose **USB 3.0 (xHCI) Controller**.
+- XenevaOS is now configured and ready to boot.
 
-## Using Xeneva Terminal (_only for v1.0_)
-When the OS boots, up it automatically starts the Window Manager and launches Xeneva Terminal application. The desktop must be started manually. Follow the steps below to start the desktop :
-- Type ```xelnch``` and press _Enter_, this starts the _AppTray_ process.
-- Send a  ```CTRL+C``` signal to the terminal. 
-- Type ```nmdapha``` and press _Enter_, to start the Namdapha Desktop bar.
-- Now you should able open the _AppTray_ by clicking the Xeneva Logo on the Namdapha Bar. 
-- Now launch applications from the _AppTray_.
+## Using the Xeneva Terminal (*only for v1.0*)
 
-## Starting _play_ application to play audio
-XenevaOS has built-in play application which can play audio files of 48kHz - 16bit format .wav files.
-- In Xeneva Terminal, type ```play -file /music/folk.wav```. This will play the Xeneva default music file present in the music folder.
-- You can send a signal to the Terminal to return to the shell input.
+When the OS boots, it automatically starts the Window Manager and launches the Xeneva Terminal. The Desktop environment must be started manually:
+- Type `xelnch` and press **Enter** to start the **AppTray** process.
+- Send a `Ctrl+C` signal to the terminal.
+- Type `nmdapha` and press **Enter** to start the Namdapha Desktop bar.
+- You can now open the **AppTray** by clicking the Xeneva logo on the Namdapha Bar and launch applications.
+
+## Starting the `play` Application for Audio
+
+XenevaOS has a built-in `play` command to play raw wave audio files in 48kHz / 16-bit format:
+- In Xeneva Terminal, type `play -file /music/folk.wav`. This plays the default audio file in the `/music` folder.
+- Press `Ctrl+C` to return to the terminal input.
 
 ## Conclusion
-Currently components of Xeneva should be started separately, automatic starting of components is not supported. You can attach a serial terminal to print Xeneva's internal messages which helps debugging the system on various crashes. See [How to setup a serial Terminal for Xeneva](SerialTerminalAttach.md) for more information.
+
+Currently, XenevaOS components must be started separately. You can attach a serial terminal to print internal debugging logs and track kernel exceptions. See [How to set up a serial Terminal for XenevaOS](SerialTerminalAttach.md) for more information.

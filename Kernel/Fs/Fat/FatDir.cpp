@@ -27,14 +27,14 @@
 *
 **/
 
-#include <Fs\Fat\FatDir.h>
-#include <Fs\Fat\Fat.h>
-#include <Mm\kmalloc.h>
-#include <Mm\pmmngr.h>
-#include <Mm\vmmngr.h>
+#include <Fs/Fat/FatDir.h>
+#include <Fs/Fat/Fat.h>
+#include <Mm/kmalloc.h>
+#include <Mm/pmmngr.h>
+#include <Mm/vmmngr.h>
 #include <string.h>
 #include <_null.h>
-#include <Hal\serial.h>
+#include <Hal/serial.h>
 
 /*
  * FatCreateDir -- create an empty directory 

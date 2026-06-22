@@ -27,10 +27,10 @@
 *
 **/
 
-#include <Hal\x86_64_pic.h>
+#include <Hal/x86_64_pic.h>
 #include <aucon.h>
-#include <Hal\x86_64_hal.h>
-#include <Hal\serial.h>
+#include <Hal/x86_64_hal.h>
+#include <Hal/serial.h>
 
 #define COUNTER_2_DATAPORT 0x42
 #define COUNTER_2_CONTROLPORT 0x61

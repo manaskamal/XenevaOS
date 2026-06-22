@@ -28,18 +28,18 @@
 **/
 
 #include <_xeneva.h>
-#include <sys\_keproc.h>
-#include <sys\_kefile.h>
-#include <sys\iocodes.h>
+#include <sys/_keproc.h>
+#include <sys/_kefile.h>
+#include <sys/iocodes.h>
 #include <ctype.h>
 #include <chitralekha.h>
-#include <widgets\window.h>
+#include <widgets/window.h>
 #include <keycode.h>
 #include "term.h"
 #include "arrayfont.h"
-#include <sys\mman.h>
+#include <sys/mman.h>
 #include "esccode.h"
-#include <sys\_ketty.h>
+#include <sys/_ketty.h>
 
 ChWindow* win;
 ChitralekhaApp* app;

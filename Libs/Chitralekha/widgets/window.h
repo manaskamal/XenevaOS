@@ -31,9 +31,9 @@
 #define __CH_WINDOW_H__
 
 #include <stdint.h>
-#include "..\chitralekha.h"
-#include "..\color.h"
-#include "..\draw.h"
+#include "../chitralekha.h"
+#include "../color.h"
+#include "../draw.h"
 #include "base.h"
 #include "list.h"
 #include <setjmp.h>

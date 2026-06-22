@@ -28,8 +28,8 @@
 **/
 
 #include "launcher.h"
-#include <sys\_kefile.h>
-#include <sys\mman.h>
+#include <sys/_kefile.h>
+#include <sys/mman.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>

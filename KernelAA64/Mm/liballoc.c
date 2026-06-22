@@ -29,9 +29,9 @@
 
 #include <aurora.h>
 #include <string.h>
-#include <Mm\pmmngr.h>
-#include <Mm\vmmngr.h>
-#include <Mm\liballoc\liballoc.h>
+#include <Mm/pmmngr.h>
+#include <Mm/vmmngr.h>
+#include <Mm/liballoc/liballoc.h>
 #include <_null.h>
 #include <Hal/AA64/aa64lowlevel.h>
 #include <Drivers/uart.h>

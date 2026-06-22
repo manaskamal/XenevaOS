@@ -30,10 +30,10 @@
 #ifndef __FAT_DIR_H__
 #define __FAT_DIR_H__
 
-#include <Fs\Fat\Fat.h>
-#include <Fs\Fat\FatFile.h>
-#include <Fs\vfs.h>
-#include <Fs\vdisk.h>
+#include <Fs/Fat/Fat.h>
+#include <Fs/Fat/FatFile.h>
+#include <Fs/vfs.h>
+#include <Fs/vdisk.h>
 #include <stdint.h>
 
 

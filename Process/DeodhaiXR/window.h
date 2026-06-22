@@ -34,7 +34,7 @@
 #define __WINDOW_H__
 
 #include <stdint.h>
-#include <widgets\list.h>
+#include <widgets/list.h>
 #include "deodxr.h"
 
 #define WINDOW_FLAG_MOVABLE (1<<0)

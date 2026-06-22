@@ -29,9 +29,9 @@
 
 #include <stdlib.h>
 #include <ctype.h>
-#include <sys\_heap.h>
-#include <sys\_keproc.h>
-#include <sys\utf.h>
+#include <sys/_heap.h>
+#include <sys/_keproc.h>
+#include <sys/utf.h>
 #include <string.h>
 #include <stdarg.h>
 #include <limits.h>

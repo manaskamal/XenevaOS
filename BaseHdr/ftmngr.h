@@ -32,7 +32,7 @@
 
 #include <stdint.h>
 #include <string.h>
-#include <Mm\shm.h>
+#include <Mm/shm.h>
 /*
  * ftmngr -- font manager for aurora kernel, loads 
  * true type fonts from font.conf file

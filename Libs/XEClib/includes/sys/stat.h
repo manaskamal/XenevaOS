@@ -32,7 +32,7 @@
 #ifndef __STAT_H__
 #define __STAT_H__
 
-#include <sys\types.h>
+#include <sys/types.h>
 #include <time.h>
 #include <_xeneva.h>
 

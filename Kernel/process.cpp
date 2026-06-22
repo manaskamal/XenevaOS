@@ -29,24 +29,24 @@
 
 #include <process.h>
 #include <aucon.h>
-#include <Mm\vmmngr.h>
-#include <Mm\mmap.h>
-#include <Mm\kmalloc.h>
+#include <Mm/vmmngr.h>
+#include <Mm/mmap.h>
+#include <Mm/kmalloc.h>
 #include <pe.h>
-#include <Mm\pmmngr.h>
+#include <Mm/pmmngr.h>
 #include <string.h>
-#include <Hal\x86_64_gdt.h>
-#include <Hal\x86_64_lowlevel.h>
-#include <Hal\x86_64_cpu.h>
-#include <Hal\serial.h>
+#include <Hal/x86_64_gdt.h>
+#include <Hal/x86_64_lowlevel.h>
+#include <Hal/x86_64_cpu.h>
+#include <Hal/serial.h>
 #include <loader.h>
 #include <_null.h>
 #include <clean.h>
-#include <Mm\shm.h>
-#include <Sync\spinlock.h>
-#include <Sound\sound.h>
-#include <Hal\x86_64_signal.h>
-#include <Ipc\postbox.h>
+#include <Mm/shm.h>
+#include <Sync/spinlock.h>
+#include <Sound/sound.h>
+#include <Hal/x86_64_signal.h>
+#include <Ipc/postbox.h>
 #include <autimer.h>
 #include <Net/socket.h>
 

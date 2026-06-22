@@ -1,5 +1,5 @@
 # Virtual File System Layer in XenevaOS
-The Virtual File System (VFS) acts as an abstraction layer between applications and the underlying file system implementations for various applications like storage, device management in memory, etc. It provides a consistent, interface for file and directory operations such as open, read, write,close,etc. The VFS layer allows to mount multiple file system to the systems for example, block-based disk file systemms, memory-backed filesystems, and device or pseudo file systems. 
+The Virtual File System (VFS) acts as an abstraction layer between applications and the underlying filesystem implementations (such as storage, in-memory device management, etc.). It provides a consistent interface for file and directory operations like open, read, write, close, etc. The VFS layer allows mounting multiple filesystems to the system, such as block-based disk filesystems, memory-backed filesystems, and device or pseudo-filesystems. 
 
 ## Virtual File System Structure
 
@@ -44,7 +44,7 @@ typedef struct __VFS_NODE__ {
 | ``flags`` | Used both in files and file systems, describing the type of File or file system |
 | ``status`` | Used in files, describing current condition of the file |
 | ``device`` | Used both in files and filesystems, used for pointing file system's private data structure or file's private data structure |
-| ``fileCopyCount`` | Used in files,describes number of total copies of this file, this file is not closed until it reaches to zero |
+| ``fileCopyCount`` | Used in files; describes the total copies of this file. The file is not closed until this reaches zero. |
 | ``open`` | Used in file systems, used for open callback |
 | ``opendir`` | Used in file systems, used for open a directory callback |
 | ``read`` | Used in file systems, used for read callback |
@@ -52,18 +52,18 @@ typedef struct __VFS_NODE__ {
 | ``create_dir`` | Used in file systems, used for creating a directory |
 | ``remove_dir`` | Used in file systems, used for removing a directory |
 | ``remove_file`` | Used in file systems, used for removing file |
-| ``close`` | Used both in file systems and file, closing a specific file involves calling cleaner of that file, in case of file system, it unmounts the file system after cleaning every data structures of the file systems |
-| ``read_block`` | Used in filesystems, used for reading a single block, depends mostly in the file system configuration, whether it uses 4KiB block size, or other else |
-| ``read_dir`` | Used in filesystems, usef for reading entries of a directory |
-| ``get_blockfor`` | Used in filesystems, used for getting the desired block address, of given file position in bytes |
+| ``close`` | Used both in filesystems and files. Closing a specific file calls its cleanup handler. For a filesystem, it unmounts the filesystem after cleaning up its internal data structures. |
+| ``read_block`` | Used in filesystems; reads a single block. Depends on the filesystem configuration (e.g., whether it uses 4 KiB block size or another size). |
+| ``read_dir`` | Used in filesystems; used for reading the entries of a directory. |
+| ``get_blockfor`` | Used in filesystems; retrieves the desired block address corresponding to a given file position in bytes. |
 | ``iocontrol`` | Used both in filesystems and files for controlling the filesystem or file |
 
 ## Implementing File System Driver for XenevaOS
 
-In XenevaOS, File System driver can be implemented in two ways, either by implementing it as an external kernel module or by implementing it with the kernel code. But current version of kernel, lacks the process of installing file system driver as external kernel module. Current version of XenevaOS, only uses FAT32 as root file system implemented within the kernel code. Capability of the kernel to install file system from external kernel module is work in progress. <br>
+In XenevaOS, filesystem drivers can be implemented in two ways: either as external kernel modules or built directly into the kernel code. However, the current version of the kernel lacks the mechanism to load filesystem drivers as external kernel modules. The current version of XenevaOS only uses a built-in FAT32 driver for the root filesystem. Supporting filesystem drivers from external modules is work in progress. <br>
 
 ### Mounting the file system during initialization
-Mounting a new file system involves extracting all necessary information from its disk's root sector and creating necessary data structure and a new ``AuVFSNode`` structure with all file system information. File System driver can use ``AuVDisk`` service to read the disk sector. XenevaOS, firstly detects the storage medium connected to it using appropriate driver, then extract necessary information, and call AuVDisk to create an appropriate vdisk for it and mount the disk to device filesystem, and call appropriate file system mount it on that disk. 
+Mounting a new filesystem involves extracting all necessary information from the disk's root sector, creating the necessary data structures, and allocating a new `AuVFSNode` structure. Filesystem drivers can use the `AuVDisk` service to read disk sectors. XenevaOS first detects the storage medium using the appropriate driver, extracts the partition details, calls `AuCreateVDisk` to register a virtual disk, mounts it to the device filesystem, and finally mounts the target filesystem on it. 
 ```
 Storage Disk --> Approriate Driver --> VDisk registration --> 
 FileSystemInitialization(AuVDisk* vdisk, char* mountpoint);
@@ -74,16 +74,16 @@ FileSystemInitialization(AuVDisk* vdisk, char* mountpoint);
 |---------------|-------------|
 | ``AuAddFileSystem(AuVFSNode* node)`` | Used to add the file system to VFS layer |
 | ``AuVFSRegisterRoot(AuVFSNode* node)`` | Used to register a file system as a root file system |
-| ``AuDevFSAddFile(AuVFSNode* fs, char* path, AuVFSNode* file)`` | Used to add a device file to device file system, where fs points to device file system struct, path is the path to device file for exmple -- ``dev/nvme00``, file points to the device file |
-| ``AuDevFSOpen(AuVFSNode* fs, char* path)`` | Used to open a device file respected to the path, for example -- ``/dev/ttym0`` |
-| ``AuVFSFind(char* fsname)`` | Used to find a file system, from file system mounted list, for example - ``AuVFSFind("/dev")`` will return the device file system structure |
-| ``AuCreateVDisk`` | Creates a virtual disk service |
-| ``AuVDiskRegister`` | Register a new virtual disk to vdisk layer |
-| ``AuVDiskGetIndex`` | Returns a index for new virtual disk |
+| ``AuDevFSAddFile(AuVFSNode* fs, char* path, AuVFSNode* file)`` | Adds a device file to the device filesystem (where `fs` points to the device filesystem, `path` is the file path e.g., ``dev/nvme00``, and `file` points to the device file node). |
+| ``AuDevFSOpen(AuVFSNode* fs, char* path)`` | Opens a device file corresponding to the path (e.g., ``/dev/ttym0``). |
+| ``AuVFSFind(char* fsname)`` | Finds a filesystem from the mount list (e.g., ``AuVFSFind("/dev")`` returns the device filesystem node). |
+| ``AuCreateVDisk`` | Creates a virtual disk instance. |
+| ``AuVDiskRegister`` | Registers a new virtual disk to the vdisk layer. |
+| ``AuVDiskGetIndex`` | Returns a unique index for a new virtual disk. |
 
 
 ## Virtual Disk Service in XenevaOS
-Virtual Disk Service acts as single interface for multiple storage medium, providing robust and similar function calls for all type of storage medium unlike of its block size. Whenever new disk is detected, it immediately calls the vdisk service to register the new disk along with mounting the disk to device file system. It uses vdisk index number to number the disk within the same controller, for example an AHCI controller may have multiple SATA disk attached to it, which can be numbered as ``/dev/ahci/sata00``, ``/dev/ahci/sata01``, etc. 
+The Virtual Disk Service acts as a unified interface for multiple storage media, providing robust, standardized function calls regardless of the block size of the underlying storage. Whenever a new disk is detected, the kernel registers it with the vdisk service and mounts it to the device filesystem. It uses a vdisk index to identify disks attached to the same controller (for example, multiple SATA disks on an AHCI controller may be numbered as `/dev/ahci/sata00`, `/dev/ahci/sata01`, etc.). 
 
 ### Virtual Disk structure
 This describes the virtual disk.
@@ -117,7 +117,7 @@ typedef struct _VDISK_ {
 
 | Field Name | Description |
 |------------|-------------|
-|``diskname[40]``| name of the disk limited upto 40 character |
+|``diskname[40]``| Name of the disk (limited to 40 characters). |
 |``serialNumber[20]`` | serial number of the disk |
 |``diskPath[32]`` | path of the disk in device file system |
 |``data`` | Pointer to internal data structure of the disk |

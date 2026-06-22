@@ -31,13 +31,13 @@
 
 #include <Ipc/postbox.h>
 #include <Hal/AA64/sched.h>
-#include <Mm\kmalloc.h>
-#include <Mm\pmmngr.h>
-#include <Mm\vmmngr.h>
+#include <Mm/kmalloc.h>
+#include <Mm/pmmngr.h>
+#include <Mm/vmmngr.h>
 #include <string.h>
 #include <_null.h>
-#include <Fs\vfs.h>
-#include <Fs\dev\devfs.h>
+#include <Fs/vfs.h>
+#include <Fs/Dev/devfs.h>
 #include <Hal/AA64/aa64lowlevel.h>
 #include <Drivers/uart.h>
 #include <aucon.h>

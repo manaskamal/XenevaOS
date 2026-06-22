@@ -28,14 +28,14 @@
 **/
 
 #include <_xeneva.h>
-#include <sys\_keproc.h>
-#include <sys\_kefile.h>
+#include <sys/_keproc.h>
+#include <sys/_kefile.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys\mman.h>
+#include <sys/mman.h>
 #include <stdint.h>
-#include <sys\iocodes.h>
-#include <sys\_kesignal.h>
+#include <sys/iocodes.h>
+#include <sys/_kesignal.h>
 #include "pe_.h"
 #include <sys/_procheap.h>
 #include "XELdrObject.h"

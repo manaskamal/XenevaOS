@@ -33,7 +33,7 @@
 #include <string.h>
 #include <_null.h>
 #include <Drivers/uart.h>
-#include <Mm\kmalloc.h>
+#include <Mm/kmalloc.h>
 
 unsigned int hashmap_string_hash(const void* _key) {
 	unsigned int hash = 0;

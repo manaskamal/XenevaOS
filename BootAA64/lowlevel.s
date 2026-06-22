@@ -253,7 +253,7 @@ prepare_el2_exit_phase2:
     msr SPSR_EL2, x0
     mov x0, sp
     msr SP_EL1, x0
-    ldr x0, =in_el1
+    adr x0, in_el1
     msr ELR_EL2, x0
     eret
 in_el1:

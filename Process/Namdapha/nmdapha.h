@@ -31,8 +31,8 @@
 #define __NAMDAPHA_H__
 
 #include <stdint.h>
-#include <widgets\window.h>
-#include <widgets\list.h>
+#include <widgets/window.h>
+#include <widgets/list.h>
 
 #define NAMDAPHA_TIME_BUTTON_COLOR 0xFF7B7878
 #ifdef NAMDAPHA_HORIZONTAL

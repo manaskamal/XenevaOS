@@ -41,7 +41,7 @@
 #include <pe.h>
 #include <aurora.h>
 #include <acpi.h>
-#include <platform\acxeneva.h>
+#include <platform/acxeneva.h>
 
 #define ACPI_POWER_BUTTON_ENABLE (1<<8)
 #define ACPI_SCI_EN  (1<<0)

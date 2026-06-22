@@ -30,7 +30,7 @@
 #include <list.h>
 #include <Mm/kmalloc.h>
 #include <aucon.h>
-#include <Hal\serial.h>
+#include <Hal/serial.h>
 
 list_t* initialize_list() {
 	list_t *list = (list_t*)kmalloc(sizeof(list_t));

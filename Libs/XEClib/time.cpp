@@ -29,7 +29,7 @@
 
 #include <time.h>
 #include <string.h>
-#include <sys\_keproc.h>
+#include <sys/_keproc.h>
 
 int dayOfWeek(unsigned day, unsigned month, unsigned year) {
 	if (month < 3) {

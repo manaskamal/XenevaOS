@@ -32,8 +32,8 @@
 
 #include <stdint.h>
 #include <chitralekha.h>
-#include <widgets\base.h>
-#include <widgets\window.h>
+#include <widgets/base.h>
+#include <widgets/window.h>
 
 #define CALC_OPERATOR_DIVIDE 1
 #define CALC_OPERATOR_MULT 2

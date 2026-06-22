@@ -334,7 +334,7 @@ extern void XEPagingInit2();
  * @param ImageHandle -- System parameter
  * @param SystemTable -- System parameter
  */
-EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
+extern "C" EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
 //	prepare_el2_exit_phase1();
 //	prepare_el2_exit_phase2();
 //	XEUartInitialize();
@@ -456,10 +456,11 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
 	map.memmap = 0;
 	Status = gSystemTable->BootServices->GetMemoryMap(&map.MemMapSize, map.memmap, &map.MapKey, &map.DescriptorSize, &map.DescriptorVersion);
 	if (Status == EFI_BUFFER_TOO_SMALL) {
-		XEGuiPrint("Failed memory map! Buffer to small \n");
-		XEPrintf(const_cast<wchar_t*>(L"Failed memory map ! Buffer to small \r\n"));
-		XEGuiPrint("Required buffer -> %d bytes\n", map.MemMapSize);
-		XEPrintf(const_cast<wchar_t*>(L"Required buffer size : %d \r\n"), map.MemMapSize);
+		/* Expected behavior: UEFI returns EFI_BUFFER_TOO_SMALL when querying the required buffer size. Muting to avoid console spam. */
+		// XEGuiPrint("Failed memory map! Buffer to small \n");
+		// XEPrintf(const_cast<wchar_t*>(L"Failed memory map ! Buffer to small \r\n"));
+		// XEGuiPrint("Required buffer -> %d bytes\n", map.MemMapSize);
+		// XEPrintf(const_cast<wchar_t*>(L"Required buffer size : %d \r\n"), map.MemMapSize);
 	}
 	else if (Status == EFI_INVALID_PARAMETER) {
 		XEGuiPrint("EFI_Memory_Map failed!!, invalid parameter \n");
@@ -519,9 +520,9 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
 	if (_getCurrentEL() != 1) {
 		prepare_el2_exit_phase1();
 		prepare_el2_exit_phase2();
-		/* install our vector table */
-		XEVectorInstall();
 	}
+	/* install our vector table unconditionally */
+	XEVectorInstall();
 
 	uint64_t sctlr = read_sctlr_el1();
 
@@ -545,7 +546,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
 
 	XEPELoadImage(krnl->kBuffer);
 
-	for (int i = 0; i < 0x100000 / PAGESIZE; i++) {
+	for (int i = 0; i <= 0x100000 / PAGESIZE; i++) {
 		XEPagingMap(0xFFFFA00000000000 + i * PAGESIZE, XEPmmngrAllocate());
 	}
 
@@ -586,7 +587,12 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
 	bootinfo.uid = 0;
 	bootinfo.cid = 0;
 
-	VOID* entry = (VOID*)(ntHeader->OptionalHeader.ImageBase + ntHeader->OptionalHeader.AddressOfEntryPoint);
+	uint64_t image_base = ntHeader->OptionalHeader.ImageBase;
+	if (image_base == 0) {
+		image_base = 0xFFFFC00000000000;
+	}
+
+	VOID* entry = (VOID*)(image_base + ntHeader->OptionalHeader.AddressOfEntryPoint);
 	XEGuiPrint("entry addr : %x bootinfo : %x \r\n", entry, &bootinfo);
 	callKernel(&bootinfo, 0xFFFFA00000000000, 0x100000, entry);
 	while (1);

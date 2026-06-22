@@ -33,7 +33,6 @@
 #ifdef ARCH_X64
 #pragma pack(push,1)
 #endif
-__declspec(align(2))
 typedef struct _ipv4head_ {
 	unsigned char versionHeaderLen;
 	unsigned char typeOfService;

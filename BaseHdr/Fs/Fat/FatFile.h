@@ -30,9 +30,9 @@
 #ifndef __FAT_FILE_H__
 #define __FAT_FILE_H__
 
-#include <Fs\Fat\Fat.h>
-#include <Fs\vdisk.h>
-#include <Fs\vfs.h>
+#include <Fs/Fat/Fat.h>
+#include <Fs/vdisk.h>
+#include <Fs/vfs.h>
 
 /*
 * FatCreateFile -- Creates a blank file

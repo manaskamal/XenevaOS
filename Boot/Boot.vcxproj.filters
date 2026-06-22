@@ -10,6 +10,7 @@
     <ClCompile Include="physm.cpp" />
     <ClCompile Include="paging.cpp" />
     <ClCompile Include="pe.cpp" />
+    <ClCompile Include="guid.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="xnldr.h" />

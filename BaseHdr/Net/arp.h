@@ -31,7 +31,7 @@
 #define __ARP_H__
 
 #include <stdint.h>
-#include <fs/vfs.h>
+#include <Fs/vfs.h>
 
 #define ARP_OPERATION_REQUEST 0x0100
 #define ARP_OPERATION_RESPONSE 0x0200

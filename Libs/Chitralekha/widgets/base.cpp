@@ -30,10 +30,10 @@
 **/
 
 #include "base.h"
-#include <sys\_kefile.h>
-#include <sys\_keproc.h>
-#include "..\font.h"
-#include "..\keycode.h"
+#include <sys/_kefile.h>
+#include <sys/_keproc.h>
+#include "../font.h"
+#include "../keycode.h"
 #include "icon.h"
 
 ChitralekhaApp* baseapp;

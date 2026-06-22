@@ -32,7 +32,7 @@
 
 
 #include <stdint.h>
-#include <Fs\vfs.h>
+#include <Fs/vfs.h>
 #include <Cred/group.h>
 #include <Cred/user.h>
 
@@ -41,8 +41,8 @@
 #endif
 
 #ifdef ARCH_X64
-#include <Hal\x86_64_sched.h>
-#include <Sync\mutex.h>
+#include <Hal/x86_64_sched.h>
+#include <Sync/mutex.h>
 #endif
 #include <list.h>
 

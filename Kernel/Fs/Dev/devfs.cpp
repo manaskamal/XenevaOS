@@ -27,13 +27,13 @@
 *
 **/
 
-#include <Fs\Dev\devfs.h>
-#include <Fs\Dev\devinput.h>
-#include <Mm\kmalloc.h>
+#include <Fs/Dev/devfs.h>
+#include <Fs/Dev/devinput.h>
+#include <Mm/kmalloc.h>
 #include <list.h>
 #include <string.h>
 #include <_null.h>
-#include <Hal\serial.h>
+#include <Hal/serial.h>
 #include <stdint.h>
 
 

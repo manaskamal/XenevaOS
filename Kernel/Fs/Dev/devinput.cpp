@@ -27,18 +27,18 @@
 *
 **/
 
-#include <Fs\dev\devinput.h>
-#include <Fs\vfs.h>
-#include <Fs\pipe.h>
+#include <Fs/dev/devinput.h>
+#include <Fs/vfs.h>
+#include <Fs/pipe.h>
 #include <_null.h>
-#include <Fs\dev\devfs.h>
+#include <Fs/dev/devfs.h>
 #include <string.h>
-#include <Mm\kmalloc.h>
+#include <Mm/kmalloc.h>
 #include <aurora.h>
-#include <Serv\sysserv.h>
-#include <Drivers\mouse.h>
-#include <Hal\serial.h>
-#include <Hal\x86_64_hal.h>
+#include <Serv/sysserv.h>
+#include <Drivers/mouse.h>
+#include <Hal/serial.h>
+#include <Hal/x86_64_hal.h>
 
 
 AuVFSNode* mice_;

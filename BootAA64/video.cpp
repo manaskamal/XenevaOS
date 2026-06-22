@@ -28,6 +28,7 @@
 **/
 
 #include "video.h"
+#include <aurora.h>
 
 FRAMEBUFFER_INFORMATION fbinfo;
 size_t xpos;
@@ -78,7 +79,14 @@ EFI_STATUS XEInitialiseGraphics(EFI_GRAPHICS_OUTPUT_PROTOCOL* GraphicsOutput) {
 	pixel.Green = 115;
 	pixel.Red = 0;
 
-	GraphicsOutput->Blt(GraphicsOutput, &pixel, EfiBltVideoFill, 0, 0, 0, 0, info->HorizontalResolution, info->VerticalResolution, 0);
+	// GraphicsOutput->Blt(GraphicsOutput, &pixel, EfiBltVideoFill, 0, 0, 0, 0, info->HorizontalResolution, info->VerticalResolution, 0);
+	
+	// QEMU ramfb Blt can be buggy, so manually fill the framebuffer with the background color
+	uint32_t bg_color = RGB(0, 115, 164);
+	uint32_t* fb = (uint32_t*)GraphicsOutput->Mode->FrameBufferBase;
+	for (size_t i = 0; i < GraphicsOutput->Mode->FrameBufferSize / 4; i++) {
+		fb[i] = bg_color;
+	}
 	//now we need to emulate the console ourselves, as some UEFI implementations change mode back
 	fbinfo.phyaddr = (uint32_t*)GraphicsOutput->Mode->FrameBufferBase;
 	fbinfo.graphics_framebuffer = (uint32_t*)GraphicsOutput->Mode->FrameBufferBase;

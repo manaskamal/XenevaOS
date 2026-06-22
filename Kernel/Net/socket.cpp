@@ -27,13 +27,13 @@
 *
 **/
 
-#include <net/socket.h>
-#include <net/ipv4.h>
+#include <Net/socket.h>
+#include <Net/ipv4.h>
 #include <Hal/x86_64_hal.h>
 #include <Mm/kmalloc.h>
 #include <string.h>
 #include <_null.h>
-#include <net/AuNet.h>
+#include <Net/AuNet.h>
 #include <list.h>
 #include <Hal/serial.h>
 #include <aucon.h>

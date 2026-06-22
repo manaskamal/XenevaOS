@@ -29,7 +29,7 @@
 
 
 #include "widget.h""
-#include <Mm\kmalloc.h>
+#include <Mm/kmalloc.h>
 #include <string.h>
 #include "codec.h"
 #include "ihda.h"

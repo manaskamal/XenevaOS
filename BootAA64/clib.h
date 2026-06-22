@@ -32,29 +32,12 @@
 
 
 #include <stdint.h>
+#include <stddef.h>
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
-
-
-	typedef unsigned char* va_list;
-
-#define STACKITEM 8
-
-#define VA_SIZE(TYPE)  \
-	((sizeof(TYPE) + sizeof(STACKITEM) - 1) \
-	& ~(sizeof(STACKITEM) - 1))
-
-#define  va_start(AP, LASTARG) \
-	(AP=((va_list)&(LASTARG) + VA_SIZE(LASTARG)))
-
-#define va_end(AP) 
-
-#define va_arg(AP, TYPE)   \
-	(AP += VA_SIZE(TYPE), *((TYPE *)(AP - VA_SIZE(TYPE))))
-
 
 
 #ifdef __cplusplus

@@ -30,25 +30,25 @@
 #include <stdint.h>
 #include <_xeneva.h>
 #include <stdio.h>
-#include <sys\_keproc.h>
-#include <sys\_kefile.h>
-#include <sys\iocodes.h>
+#include <sys/_keproc.h>
+#include <sys/_kefile.h>
+#include <sys/iocodes.h>
 #include <chitralekha.h>
-#include <widgets\base.h>
-#include <widgets\button.h>
-#include <widgets\scrollpane.h>
-#include <widgets\slider.h>
-#include <widgets\progress.h>
+#include <widgets/base.h>
+#include <widgets/button.h>
+#include <widgets/scrollpane.h>
+#include <widgets/slider.h>
+#include <widgets/progress.h>
 #include <keycode.h>
-#include <widgets\window.h>
-#include <widgets\msgbox.h>
-#include <widgets\view.h>
+#include <widgets/window.h>
+#include <widgets/msgbox.h>
+#include <widgets/view.h>
 #include <string.h>
-#include <widgets\menubar.h>
+#include <widgets/menubar.h>
 #include <stdlib.h>
 #include <time.h>
 #include "partition.h"
-#include <widgets\menu.h>
+#include <widgets/menu.h>
 
 #define PARTITION_LIST_BUTTON_HEIGHT 55
 

@@ -51,7 +51,6 @@
 #ifdef ARCH_X64
 #pragma pack(push,1)
 #endif
-__declspec(align(2))
 typedef struct _tcphead_ {
 	unsigned short srcPort;
 	unsigned short destPort;

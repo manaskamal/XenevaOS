@@ -34,9 +34,9 @@
 
 #include <stdint.h>
 #include "base.h"
-#include "..\image.h"
+#include "../image.h"
 #include <_xeneva.h>
-#include "..\chitralekha.h"
+#include "../chitralekha.h"
 
 #ifdef __cplusplus
 XE_EXTERN{

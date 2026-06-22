@@ -35,7 +35,7 @@
 #include <process.h>
 
 #ifdef ARCH_X64
-#include <Sync\mutex.h>
+#include <Sync/mutex.h>
 #endif
 
 /* the base address from where every executable image

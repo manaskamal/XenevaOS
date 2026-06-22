@@ -30,10 +30,10 @@
 #ifndef __APP_GRID_H__
 #define __APP_GRID_H__
 
-#include <widgets\list.h>
+#include <widgets/list.h>
 #include <stdint.h>
 #include <chitralekha.h>
-#include <widgets\window.h>
+#include <widgets/window.h>
 #include "button.h"
 
 #define ENTRIES_PER_ROW 8

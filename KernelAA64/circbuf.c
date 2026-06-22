@@ -30,7 +30,7 @@
 **/
 
 #include <circbuf.h>
-#include <Mm\kmalloc.h>
+#include <Mm/kmalloc.h>
 
 /**
  * @brief AuAdvancePointer -- advances the pointer

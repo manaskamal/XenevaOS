@@ -32,7 +32,7 @@
 
 #include <stdint.h>
 #include <aurora.h>
-#include <Fs\vfs.h>
+#include <Fs/vfs.h>
 
 #define NETDEV_TYPE_ETHERNET 1
 #define NETDEV_TYPE_802_11 2

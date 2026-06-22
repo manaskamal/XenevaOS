@@ -32,7 +32,7 @@
 
 #include <stdint.h>
 #include <aurora.h>
-#include <Fs\vfs.h>
+#include <Fs/vfs.h>
 
 /* Device file system, where all driver registers
  * their own device node

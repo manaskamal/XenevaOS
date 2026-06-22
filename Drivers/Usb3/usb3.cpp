@@ -30,15 +30,15 @@
 #include "usb3.h"
 #include "xhci.h"
 #include "xhci_cmd.h"
-#include <Mm\pmmngr.h>
-#include <Mm\vmmngr.h>
-#include <Mm\kmalloc.h>
+#include <Mm/pmmngr.h>
+#include <Mm/vmmngr.h>
+#include <Mm/kmalloc.h>
 #include <aucon.h>
-#include <Hal\serial.h>
+#include <Hal/serial.h>
 #include <string.h>
 #include <_null.h>
-#include "classes\hid.h"
-#include "classes\hub.h"
+#include "classes/hid.h"
+#include "classes/hub.h"
 
 
 #define USB_SLOT_CTX_DWORD0(entries, hub, multi_tt, speed, route_string) \

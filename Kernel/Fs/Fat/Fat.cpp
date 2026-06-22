@@ -50,7 +50,7 @@
 #include <Mm/kmalloc.h>
 #include <Sync/spinlock.h>
 #include <pe.h>
-#include <Drivers\rtc.h>
+#include <Drivers/rtc.h>
 #include <Sync/mutex.h>
 
 extern bool _vfs_debug_on;

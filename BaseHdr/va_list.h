@@ -30,6 +30,10 @@
 #ifndef __VA_LIST_H__
 #define __VA_LIST_H__
 
+#ifdef __GNUC__
+#include <stdarg.h>
+typedef va_list _va_list_;
+#else
 #ifdef __cplusplus
 extern "C"
 {
@@ -59,5 +63,7 @@ extern "C"
 
 #define va_arg(AP, TYPE)  \
 	(AP += VA_SIZE(TYPE), *((TYPE *)(AP - VA_SIZE(TYPE))))
+
+#endif
 
 #endif

@@ -36,7 +36,8 @@ extern "C" void sync_el1_handler() {
     uint64_t faultAddr = read_far_el1();
     uint64_t elr = read_elr_el1();
   
-    XEUARTPrint("Fault address: %x \r\n",faultAddr );
+    XEUARTPrint("ESR: %x \r\n", esr);
+    XEUARTPrint("Fault address: %x \r\n", faultAddr);
     XEUARTPrint("Instruction: %x \r\n", elr);
  
     uint32_t dfsc = esr & 0x3F;
