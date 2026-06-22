@@ -38,7 +38,7 @@ jobs:
 
   build-windows-msvc:
     name: MSVC (Windows / x64)
-    runs-on: windows-latest
+    runs-on: windows-2022
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
@@ -54,12 +54,10 @@ jobs:
         run: |
           Expand-Archive -Path Resources/nasmprops.zip -DestinationPath nasmprops -Force
           $vsPath = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property installationPath
-          $customizationsPath = Join-Path $vsPath "MSBuild\Microsoft\VC\v170\BuildCustomizations"
-          if (-not (Test-Path $customizationsPath)) {
-            $customizationsPath = Join-Path $vsPath "MSBuild\Microsoft\VC\v160\BuildCustomizations"
-          }
+          $vcPath = Join-Path $vsPath "MSBuild\Microsoft\VC"
+          $customizationsPath = Get-ChildItem -Path $vcPath -Filter "BuildCustomizations" -Directory -Recurse | Select-Object -ExpandProperty FullName -First 1
           Copy-Item nasmprops\* -Destination $customizationsPath -Force -Recurse
 
       - name: Build Solution (Aurora.sln)
         run: |
-          msbuild Aurora.sln /p:Configuration=Debug /p:Platform=x64
+          msbuild Aurora.sln /p:Configuration=Debug /p:Platform=x64 /p:PlatformToolset=v143
