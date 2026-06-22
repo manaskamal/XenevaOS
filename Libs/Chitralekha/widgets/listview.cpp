@@ -476,6 +476,80 @@ static void _draw_column_strip(ListView* lv, ChWindow* win, int strip_x_local, i
 	}
 }
 
+static void _lv_draw_single_row_(ListView* lv, ChWindow* win, int index, ChRect* out_rect) {
+	if (index < 0 || index >= lv->itemCount) return;
+
+	int rows_y = lv->base.y + lv->headerHeight;
+	int rows_w = lv->viewport_width;
+
+	int row_top = rows_y - (lv->scroll_y % lv->itemHeight)
+		+ (index - lv->scroll_y / lv->itemHeight) * lv->itemHeight;
+
+	if (row_top + lv->itemHeight <= rows_y || row_top >= rows_y + lv->viewport_height)
+		return;
+
+	int draw_y = row_top, draw_h = lv->itemHeight;
+	if (draw_y < rows_y) {
+		int diff = rows_y - draw_y;
+		draw_y += diff;
+		draw_h -= diff;
+	}
+	if (draw_y + draw_h > rows_y + lv->viewport_height)
+		draw_h = (rows_y + lv->viewport_height) - draw_y;
+	if (draw_h <= 0) return;
+
+	uint32_t row_bg = LV_COLOR_BG;
+	uint32_t row_text = LV_COLOR_TEXT;
+	if (index == lv->selectedIndex)
+		row_bg = LV_SELECTED_BG;
+	else if (index == lv->hoverIndex)
+		row_bg = LV_COLOR_HOVER_BG;
+
+	_neon_fill_rect32(win->canv, win->canv->canvasWidth, lv->base.x, draw_y, rows_w, draw_h, row_bg);
+
+	ChRect rows_clip;
+	rows_clip.x = lv->base.x;
+	rows_clip.y = rows_y;
+	rows_clip.w = rows_w;
+	rows_clip.h = lv->viewport_height;
+
+	int cx = lv->base.x - lv->scroll_x;
+	int pen_y = _RowBaselineY(lv, row_top, lv->itemHeight);
+
+	for (int c = 0; c < lv->columnCount; c++) {
+		int col_w = lv->columns[c].width;
+
+		if (cx + col_w > lv->base.x && cx < lv->base.x + rows_w) {
+			int text_x = cx + 4;
+
+			if (c == 0) {
+				ListItem* item = &lv->item[index];
+				if (item->icon != NULL) {
+					int icon_x = cx + lv->icon_padding;
+					int icon_y = row_top + (lv->itemHeight - item->iconH) / 2;
+					if (icon_y < row_top) icon_y = row_top;
+					ChDrawIconClipped(win->canv,item->icon, icon_x, icon_y, &rows_clip);
+				}
+				text_x = cx + lv->icon_column_width;
+			}
+			ChFontSetSize(win->app->baseFont, 14);
+			ChFontDrawTextClipped(win->canv, win->app->baseFont, lv->item[index].cells[c], text_x, pen_y,
+				row_text, &rows_clip);
+		}
+
+		cx += col_w;
+		if (cx > lv->base.x && cx <lv->base.x + rows_w)
+			ChDrawVerticalLine(win->canv, cx, draw_y, lv->itemHeight, LV_COLOR_GRID_LINE);
+	}
+
+	if (out_rect) {
+		out_rect->x = lv->base.x;
+		out_rect->y = draw_y;
+		out_rect->w = rows_w;
+		out_rect->h = draw_h;
+	}
+}
+
 static int _find_column_start_before(ListView* lv, int local_x) {
 	int content_x_target = local_x + lv->scroll_x;
 	int cx = 0;
@@ -681,11 +755,17 @@ void ListViewMouseEvent(ChWidget* wid, ChWindow* win, int mx, int my, int button
 
 	if (!was_down && is_down) {
 		if (row != -1 && row != lv->selectedIndex) {
+			int old_selected = lv->selectedIndex;
 			lv->selectedIndex = row;
 			lv->force_full_redraw = true;
 			//(lv->onselect) call it
-			ListViewDraw(wid, win);
-			ChWindowUpdate(win, lv->base.x, lv->base.y, lv->base.w, lv->base.h, 0, 1);
+			ChRect dirty;
+			if (old_selected != -1) {
+				_lv_draw_single_row_(lv, win, old_selected, &dirty);
+				ChWindowUpdate(win, dirty.x, dirty.y,dirty.w,dirty.h, 0, 1);
+			}
+			_lv_draw_single_row_(lv, win, row, &dirty);
+			ChWindowUpdate(win, dirty.x, dirty.y, dirty.w, dirty.h, 0, 1);
 		}
 		lv->prev_button = is_down;
 		return;
@@ -693,10 +773,19 @@ void ListViewMouseEvent(ChWidget* wid, ChWindow* win, int mx, int my, int button
 
 	if (!was_down && !is_down) {
 		if (row != lv->hoverIndex) {
+			int old_hover = lv->hoverIndex;
 			lv->hoverIndex = row;
-			lv->force_full_redraw = true;
-			ListViewDraw(wid, win);
-			ChWindowUpdate(win, lv->base.x, lv->base.y, lv->base.w, lv->base.h, 0, 1);
+		//	lv->force_full_redraw = true;
+			//ListViewDraw(wid, win);
+			//ChWindowUpdate(win, lv->base.x, lv->base.y, lv->base.w, lv->base.h, 0, 1);
+			ChRect dirty;
+			if (old_hover != -1) {
+				_lv_draw_single_row_(lv, win, old_hover, &dirty);
+				ChWindowUpdate(win, dirty.x, dirty.y, dirty.w, dirty.h, 0, 1);
+			}
+
+			_lv_draw_single_row_(lv, win, row, &dirty);
+			ChWindowUpdate(win, dirty.x, dirty.y, dirty.w, dirty.h, 0, 1);
 		}
 	}
 

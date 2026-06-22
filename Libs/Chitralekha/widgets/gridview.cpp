@@ -287,6 +287,66 @@ static void _grid_draw_range(ChGridView* gv, ChWindow* win, int clip_y, int clip
 	}
 }
 
+static void _draw_single_cell(ChGridView* gv, ChWindow* win, int index, ChRect* out_rect) {
+	if (index < 0 || index >= gv->cell_count) return;
+
+	int row = index / gv->columns;
+	int col = index % gv->columns;
+	int row_pitch = gv->cell_h + gv->cell_padding;
+
+	int cell_top = gv->wid.y + gv->cell_padding + row * row_pitch - gv->scroll_y;
+	int cell_left = gv->wid.x + gv->cell_padding + col * (gv->cell_w + gv->cell_padding);
+
+	if (cell_top + gv->cell_h <= gv->wid.y || cell_top >= gv->wid.y + gv->viewport_height)
+		return;
+
+	int draw_y = cell_top, draw_h = gv->cell_h;
+	if (draw_y < gv->wid.y) {
+		int diff = gv->wid.y - draw_y;
+		draw_y += diff;
+		draw_h -= diff;
+	}
+	
+	if (draw_y + draw_h > gv->wid.y + gv->viewport_height)
+		draw_h = (gv->wid.y + gv->viewport_height) - draw_y;
+	if (draw_h <= 0) return;
+
+	uint32_t bg = gv->color_bg;
+	if (index == gv->selected_index) bg = gv->color_selected_bg;
+	else if (index == gv->hover_index)bg = gv->color_hover_bg;
+
+
+	_neon_fill_rect32(win->canv, win->canv->canvasWidth, cell_left, draw_y, gv->cell_w, draw_h, bg);
+
+	ChGridCell* cell = &gv->cells[index];
+	ChRect clip;
+	clip.x = gv->wid.x;
+	clip.y = gv->wid.y;
+	clip.w = gv->viewport_width;
+	clip.h = gv->viewport_height;
+
+	if (cell->type == GRIDCELL_THUMBNAIL) {
+		if (cell->thumbnail) {
+			int thumb_area_h = gv->cell_h - (cell->label[0] ? LABEL_HEIGHT : 0);
+			ChDrawIconClipped(win->canv,cell->thumbnail, cell_left, cell_top, &clip);
+
+			if (cell->label[0]) {
+				int pen_x = cell_left + 2;
+				int pen_y = _cell_baseline_y(cell_top + thumb_area_h, LABEL_HEIGHT);
+				ChFontDrawTextClipped(win->canv, win->app->baseFont, cell->label, pen_x, pen_y, gv->color_label_text,
+					&clip);
+			}
+		}
+	}
+
+	if (out_rect) {
+		out_rect->x = cell_left;
+		out_rect->y = draw_y;
+		out_rect->w = gv->cell_w;
+		out_rect->h = draw_h;
+	}
+}
+
 void ChGridViewDraw(ChWidget* wid, ChWindow* win) {
 	ChGridView* gv = (ChGridView*)wid;
 	int delta_y = gv->scroll_y - gv->prev_scroll_y;
@@ -385,11 +445,18 @@ void ChGridViewMouseEvent(ChWidget* wid, ChWindow* win, int mx, int my, int butt
 
 	if (!was_down && is_down) {
 		if (index != -1 && index != gv->selected_index) {
+			int old_selected = gv->selected_index;
 			gv->selected_index = index;
 			//call gv->onselect event
 			gv->force_full_redraw = true;
-			ChGridViewDraw(wid, win);
-			ChWindowUpdate(win, gv->wid.x, gv->wid.y, gv->wid.w, gv->wid.h, 0, 1);
+		//	ChGridViewDraw(wid, win);
+			ChRect dirty;
+			if (old_selected != 1) {
+				_draw_single_cell(gv, win, old_selected, &dirty);
+				ChWindowUpdate(win, dirty.x, dirty.y, dirty.w,dirty.h, 0, 1);
+			}
+			_draw_single_cell(gv, win, index, &dirty);
+			ChWindowUpdate(win, dirty.x, dirty.y, dirty.w, dirty.h, 0, 1);
 		}
 		gv->prev_button = is_down;
 		return;
@@ -397,10 +464,20 @@ void ChGridViewMouseEvent(ChWidget* wid, ChWindow* win, int mx, int my, int butt
 
 	if (!was_down && !is_down) {
 		if (index != gv->hover_index) {
+			int old_hover = gv->hover_index;
 			gv->hover_index = index;
 			gv->force_full_redraw = true;
-			ChGridViewDraw(wid, win);
-			ChWindowUpdate(win, gv->wid.x, gv->wid.y, gv->wid.w, gv->wid.h, 0, 1);
+
+			ChRect dirty;
+			if (old_hover != -1) {
+				_draw_single_cell(gv, win, old_hover, &dirty);
+				ChWindowUpdate(win, dirty.x, dirty.y, dirty.w, dirty.h, 0, 1);
+			}
+			if (index != -1) {
+				_draw_single_cell(gv, win, index, &dirty);
+				ChWindowUpdate(win, dirty.x, dirty.y, dirty.w, dirty.h, 0, 1);
+			}
+			//ChGridViewDraw(wid, win);
 		}
 	}
 

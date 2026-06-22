@@ -270,12 +270,12 @@ void AuDeviceTreeInitialize(KERNEL_BOOT_INFO* info) {
 	}
 
 	if (!fdt_address) {
-		//AuTextOut("Device Tree Blob not found \r\n");
+		AuTextOut("Device Tree Blob not found \r\n");
 		return;
 	}
 	fdt_header_t* dtb = (fdt_header_t*)fdt_address;
 	if (AuDTBSwap32(dtb->magic) != FDT_MAGIC) {
-		//AuTextOut("[Aurora]:Device Tree invalid magic \r\n");
+		AuTextOut("[Aurora]:Device Tree invalid magic \r\n");
 		return;
 	}
 	AuTextOut("DTB Magic : %x \r\n", AuDTBSwap32(dtb->magic));

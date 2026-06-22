@@ -42,6 +42,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "glimpse.h"
+#include <widgets/sidebar.h>
 
 ChitralekhaApp *app;
 ChWindow* mainWin;
@@ -107,10 +108,14 @@ int main(int argc, char* argv[]){
 	ChIconRead(ico3);
 
 
-	ChGridView* gv = ChGridViewCreate(10, 50, 780 - 20, 500 - 50, 4, 120, 140, 8);
+	ChGridView* gv = ChGridViewCreate(170, 50, 600, 500 - 50, 4, 120, 140, 8);
 	gv->color_bg = mainWin->color;
 	gv->color_label_text = LIGHTBLACK;
 	gv->color_hover_bg = LIGHTSILVER;
+	gv->vscroll.color_track = mainWin->color;
+	gv->vscroll.color_arrow_fg = gv->vscroll.color_thumb;
+	gv->vscroll.color_arrow_bg = mainWin->color;
+
 
 	
 	ChGridAddThumbnail(gv, ico, "dawki", NULL);
@@ -121,19 +126,29 @@ int main(int argc, char* argv[]){
 	ChGridAddThumbnail(gv, ico, "dawki-copy", NULL);
 	ChGridAddThumbnail(gv, ico3, "mountain-cpy", NULL);
 	
-	char buffer[32];
-	for (int i = 0; i < 20; i++) {
-		snprintf(buffer, sizeof(buffer), "image%02d", i);
-		ChGridAddThumbnail(gv, ico2, buffer, NULL);
-	}
+
+	gv->force_full_redraw = 1;
+
+	ChSidebar* sb = ChSidebarCreate(0, 50, 170, 500 - 50);
+	sb->bgColor = mainWin->color;
+	ChSidebarSection * sec1 = ChSidebarAddSection(sb, "Favourites");
+	ChSidebarAddItem(sec1, "Home", NULL, 0, 0, NULL);
+	ChSidebarAddItem(sec1, "Photos", NULL, 0, 0, NULL);
+	ChSidebarAddItem(sec1, "Downloads", NULL, 0, 0, NULL);
+	
+	ChSidebarSection* sec2 = ChSidebarAddSection(sb, "Xeneva");
+	ChSidebarAddItem(sec2, "Trash", NULL, 0, 0, NULL);
+	ChSidebarAddItem(sec2, "Gallery", NULL, 0, 0, NULL);
 
 	
 	ChWindowAddWidget(mainWin, (ChWidget*)gv);
+	ChWindowAddWidget(mainWin, (ChWidget*)sb);
+
 	ChWindowPaint(mainWin);
 	
-	ChFontSetSize(mainWin->app->baseFont, 23);
+	/*ChFontSetSize(mainWin->app->baseFont, 23);
 	ChFontDrawText(mainWin->canv, mainWin->app->baseFont, "Photos", 20, _baseline_y(26 + 2, 24), 20, LIGHTBLACK);
-	ChWindowUpdate(mainWin, 10, 26, 100,25, 0, 1);
+	ChWindowUpdate(mainWin, 10, 26, 100,25, 0, 1);*/
 
 	ChWindowBroadcastIcon(app, "/icons/glim.bmp");
 	PostEvent e;

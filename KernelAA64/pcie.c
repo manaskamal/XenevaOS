@@ -63,9 +63,10 @@ static int _pcie_check_and_map_dtb() {
 	uint64_t ecamAddr = AuDeviceTreeGetRegAddress(pcie, 2);
 	uint64_t sizeValue = AuDeviceTreeGetRegSize(pcie, 2, 2);
 	AuTextOut("[aurora]: ecam address : %x, size value : %x \n", ecamAddr, sizeValue);
-	_ecamAddress = AuMapMMIO(ecamAddr, sizeValue / 0x1000);
-#endif
 
+	/** in qemu, ecam address is 256 mb so 0x10000 number of pages */
+	_ecamAddress = AuMapMMIO(ecamAddr, 0x10000);
+#endif
 	_pcieInitialized = 1;
 	return 0;
 }
@@ -73,7 +74,7 @@ static int _pcie_check_and_map_dtb() {
 static bool _pcie_use_hard_code_ecam() {
 	AuTextOut("[aurora]: pcie getting hard code ecam address \r\n");
 #ifdef __TARGET_BOARD_QEMU_VIRT__
-	_ecamAddress = QEMU_VIRT_ECAM_BASE; // AuMapMMIO(QEMU_VIRT_ECAM_BASE, 0x10000000 / 0x1000);
+	_ecamAddress = AuMapMMIO(QEMU_VIRT_ECAM_BASE, 0x10000000 >> 12);
 #elif __TARGET_BOARD_RPI3__
 	_ecamAddress = 0;
 #elif __TARGET_BOARD_IMX8MP_VERDIN_DAHLIA__
@@ -126,6 +127,7 @@ void AA64PCIeInitialize() {
 	AuTextOut("[aurora]: Ki koriba aru !! Eku dekhun device discovery mechanism support nokore !! Baad diya \r\n");
 	AuTextOut("[aurora]: Ponta Bhaat khuwa ge \r\n");
 	_pcieInitialized = 0;
+	for (;;);
 	return;
 
 }
@@ -248,7 +250,6 @@ uint32_t AuPCIERead(uint64_t device, int reg, int bus, int dev, int func) {
 		size = 1;
 		break;
 	}
-
 	if (size == 1) {
 		result = *RAW_OFFSET(volatile uint8_t*, device, reg);
 		return result;

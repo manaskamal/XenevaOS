@@ -70,6 +70,9 @@
     <ClInclude Include="widgets\gridview.h">
       <Filter>widgets</Filter>
     </ClInclude>
+    <ClInclude Include="widgets\sidebar.h">
+      <Filter>widgets</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="chitralekha.cpp" />
@@ -158,6 +161,9 @@
       <Filter>widgets</Filter>
     </ClCompile>
     <ClCompile Include="widgets\gridview.cpp">
+      <Filter>widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="widgets\sidebar.cpp">
       <Filter>widgets</Filter>
     </ClCompile>
   </ItemGroup>
