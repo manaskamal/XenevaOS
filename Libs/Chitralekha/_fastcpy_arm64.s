@@ -29,12 +29,38 @@
 
 .global _fastcpy
 _fastcpy:
-     cbz x2, .done
-.loop:
-     ldrb w3, [x1],#1
-     strb w3, [x0], #1
-     subs x2,x2,#1
-     b.ne .loop
+    cbz x2, .done
+
+.blk64_loop:
+    cmp x2, #64
+    b.lt .blk16_check
+
+    ldp q0, q1, [x1], #32
+    ldp q2, q3, [x1], #32
+
+    stp q0, q1, [x0], #32
+    stp q2, q3, [x0], #32
+
+    sub x2,x2, #64
+    b .blk64_loop
+
+.blk16_check:
+    cmp x2, #16
+    b.lt .byte_loop
+
+.blk16_loop:
+    ldp q0, q1,[x1], #16
+    stp q0,q1,[x0],#16
+    sub x2, x2, #16
+    cmp x2, #16
+    b.ge .blk16_loop
+
+.byte_loop:
+    cbz x2, .done
+    ldrb w3, [x1], #1
+    strb w3, [x0], #1
+    subs x2, x2, #1
+    b.ne .byte_loop
 .done:
-     dmb sy
-     ret
+    dmb sy
+    ret

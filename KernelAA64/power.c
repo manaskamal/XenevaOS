@@ -74,14 +74,14 @@ void AuPowerReset() {
 	if (!proc) {
 		proc = AuProcessFindSubThread(thr);
 		if (!proc)
-			return 1;
+			return;
 	}
 
 	if (proc->creds.uid != 0)
-		return 1;
+		return;
 
 	if (proc->creds.gid != 0)
-		return 1;
+		return;
 
 	// call system_down for xeneva for freeing up resources
 	// call all driver to power off itself before restart

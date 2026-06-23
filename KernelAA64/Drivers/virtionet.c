@@ -214,7 +214,7 @@ void AuVirtioNetInitialize(uint64_t device) {
 	int func = 0;
 	int dev = 0;
 	if (device == 0xFFFFFFFF)
-		return 1;
+		return;
 
 	uint16_t command = AuPCIERead(device, PCI_COMMAND, bus, dev, func);
 	command |= 4;

@@ -65,7 +65,7 @@ static const uint8_t ext_key_map[256] = {
 void AuVirtioKbdHandler(int spinum) {
 	uint16_t them = queue->used.index;
 	for (; index < them; index++) {
-		dc_ivac(&input[index % queueSize]);
+		dc_ivac((uint64_t)&input[index % queueSize]);
 		dsb_sy_barrier();
 		struct VirtioInputEvent evt = input[index % queueSize];
 		while (evt.type == 0xFF) {
@@ -119,7 +119,7 @@ void AuVirtioKbdInitialize(uint64_t device) {
 	int dev = 0;
 	index = 0;
 	if (device == 0xFFFFFFFF)
-		return 1;
+		return;
 	UARTDebugOut("[aurora]: Virtio Keyboard device found \n");
 	uint16_t command = AuPCIERead(device, PCI_COMMAND, bus, dev, func);
 	command |= 4;

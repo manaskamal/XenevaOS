@@ -263,7 +263,7 @@ void AuDeviceTreeInitialize(KERNEL_BOOT_INFO* info) {
 		AuLittleBootProtocol* lb = (AuLittleBootProtocol*)info->driver_entry1;
 		if (!lb)
 			return;
-		fdt_address = lb->device_tree_base;
+		fdt_address = (void*)lb->device_tree_base;
 	}
 	else if (info->boot_type == BOOT_UEFI_ARM64) {
 		fdt_address = info->apcode;

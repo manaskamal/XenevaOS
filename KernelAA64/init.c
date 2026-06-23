@@ -178,25 +178,6 @@ void _AuroraTimerCallback(void* p) {
 }
 
 
-char* _dir_names[15] = {
-	"/c/heya1",
-	"/c/heya2",
-	"/c/heya3",
-	"/c/heya4",
-	"/c/heya5",
-	"/c/heya6",
-	"/c/heya7",
-	"/c/heya8",
-	"/c/heya10",
-	"/c/heya11",
-	"/c/heya12",
-	"/c/heya13",
-	"/c/heya14",
-	"/c/heya15",
-	"/c/heya16",
-};
-
-
 /**
  * @brief _AuMain -- the main entry point for kernel
  * @param info -- Kernel Boot information passed

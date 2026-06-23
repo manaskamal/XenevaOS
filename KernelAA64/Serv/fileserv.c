@@ -159,7 +159,7 @@ size_t ReadFile(int fd, void* buffer, size_t length) {
 		return 0;
 	if (!length)
 		return 0;
-	if (fd > FILE_DESC_PER_PROCESS)
+	if (fd >= FILE_DESC_PER_PROCESS)
 		return -1;
 	AA64Thread* current_thr = AuGetCurrentThread();
 	if (!current_thr)
@@ -170,7 +170,7 @@ size_t ReadFile(int fd, void* buffer, size_t length) {
 		if (!current_proc)
 			return 0;
 	}
-
+	
 	AuVFSNode* file = current_proc->fds[fd];
 	uint64_t* aligned_buffer = (uint64_t*)buffer;
 
@@ -218,6 +218,8 @@ size_t WriteFile(int fd, void* buffer, size_t length) {
 		return 0;
 	if (!length)
 		return 0;
+	if (fd >= FILE_DESC_PER_PROCESS)
+		return 0;
 	AA64Thread* current_thr = AuGetCurrentThread();
 	if (!current_thr)
 		return 0;
@@ -260,6 +262,7 @@ size_t WriteFile(int fd, void* buffer, size_t length) {
 		if (file->write)
 			return file->write(file, file, (uint64_t*)buffer, length);
 	}
+	return 0;
 }
 /**
  * @brief CloseFile -- closes a general file
@@ -267,6 +270,8 @@ size_t WriteFile(int fd, void* buffer, size_t length) {
  */
 int CloseFile(int fd) {
 	if (fd == -1)
+		return 0;
+	if (fd >= FILE_DESC_PER_PROCESS)
 		return 0;
 	AA64Thread* current_thr = AuGetCurrentThread();
 	if (!current_thr)
@@ -321,6 +326,8 @@ int CloseFile(int fd) {
 int FileIoControl(int fd, int code, void* arg) {
 	if (fd == -1)
 		return -1;
+	if (fd >= FILE_DESC_PER_PROCESS)
+		return 0;
 	AA64Thread* current_thr = AuGetCurrentThread();
 	if (!current_thr)
 		return 0;
@@ -348,6 +355,8 @@ int FileIoControl(int fd, int code, void* arg) {
  */
 int FileStat(int fd, void* buf) {
 	if (fd == -1)
+		return -1;
+	if (fd >= FILE_DESC_PER_PROCESS)
 		return -1;
 	AA64Thread* current_thr = AuGetCurrentThread();
 	if (!current_thr) {

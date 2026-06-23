@@ -237,7 +237,7 @@ void FatFileUpdateSize(AuVFSNode* fsys, AuVFSNode* file, size_t size) {
 	char fname[11];
 	memset(fname, 0, 11);
 	FatToDOSFilename(file->filename, fname, 11);
-	fname[11] = 0;
+	//fname[11] = 0;
 	uint64_t* buff = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
 	memset(buff, 0, PAGE_SIZE);
 
@@ -250,7 +250,7 @@ void FatFileUpdateSize(AuVFSNode* fsys, AuVFSNode* file, size_t size) {
 			for (int i = 0; i < 16; i++) {
 				char name[11];
 				memcpy(name, dirent->filename, 11);
-				name[11] = 0;
+				//name[11] = 0;
 
 				if (strcmp(fname, name) == 0) {
 					dirent->file_size += size;
@@ -412,7 +412,7 @@ size_t FatWrite(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint32_t len
 
 	FatFileUpdateSize(fsys, file, length);
 	//FatFileWriteDone(file);
-
+	return length;
 }
 
 /*
@@ -437,7 +437,7 @@ int FatFileClearDirEntry(AuVFSNode* fsys, AuVFSNode* file) {
 	char fname[11];
 	memset(fname, 0, 11);
 	FatToDOSFilename(file->filename, fname, 11);
-	fname[11] = 0;
+	//fname[11] = 0;
 	//SeTextOut("Dir clust -> %x \r\n", dir_clust);
 	uint64_t* buff = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
 	memset(buff, 0, PAGE_SIZE);
@@ -451,7 +451,7 @@ int FatFileClearDirEntry(AuVFSNode* fsys, AuVFSNode* file) {
 			for (int i = 0; i < 16; i++) {
 				char name[11];
 				memcpy(name, dirent->filename, 11);
-				name[11] = 0;
+				//name[11] = 0;
 				if (strcmp(name, fname) == 0) {
 					memset(dirent, 0, sizeof(FatDir));
 					//SeTextOut("Dir clearing found \r\n");

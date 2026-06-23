@@ -30,7 +30,6 @@
 #define __STRING_H__
 
 
-#include <stddef.h>
 #include <stdint.h>
 #include <aurora.h>
 

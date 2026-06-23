@@ -132,9 +132,9 @@ AuMMFileBack* AuMmngrFileCacheLookup(const char* filename) {
 			fname = filename + 1;
 		filename++;
 	}
-#ifdef __TARGET_BOARD_QEMU_VIRT__
-	data_cache_flush(fname);
-#endif
+//#ifdef __TARGET_BOARD_QEMU_VIRT__
+//	data_cache_flush(fname);
+//#endif
 	
 	AuMMFileBack* fileback = NULL;
 

@@ -30,55 +30,8 @@
 #ifndef __AURORA_H__
 #define __AURORA_H__
 
-#pragma once
 
 #include <stdint.h>
-#ifndef __cplusplus
-#include <stdbool.h>
-#endif
-#include <stddef.h>
-
-#ifndef BOOL
-typedef bool BOOL;
-#endif
-
-#ifdef __cplusplus
-template <class T, class U> static inline T raw_offset(U p1, const intptr_t offset)
-{
-    return (T)((size_t)p1 + offset);
-}
-
-template <class T, class U> static inline T mem_after(U* p1)
-{
-    return (T)(&p1[1]);
-}
-
-template <class T, class U> static inline intptr_t raw_diff(T* p1, U* p2)
-{
-    return (intptr_t)p1 - (intptr_t)p2;
-}
-#endif
-
-#ifndef RAW_OFFSET
-#define RAW_OFFSET(type, x, offset)  (type)((size_t)(x) + (size_t)(offset))
-#endif
-
-#ifndef RAW_DIFF
-#define RAW_DIFF(a, b) ((size_t)(a) - (size_t)(b))
-#endif
-
-#ifndef MEM_AFTER
-#define MEM_AFTER(type, ptr) ((type)(&(ptr)[1]))
-#endif
-
-#ifndef DIV_ROUND_UP
-#define DIV_ROUND_UP(x, y) \
-	((x + y - 1) / y)
-#endif
-
-#ifndef ALIGN_UP
-#define ALIGN_UP(x, y) (DIV_ROUND_UP(x,y)*y)
-#endif
 
 
 #ifdef __GNUC__

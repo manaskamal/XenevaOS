@@ -291,7 +291,7 @@ AA64Thread* AuCreateKthread(void(*entry) (uint64_t),uint64_t* pml, char* name){
 	AA64Thread* t = (AA64Thread*)kmalloc(sizeof(AA64Thread));
 	memset(t, 0, sizeof(AA64Thread));
 	strncpy(t->name, name,8);
-	t->name[8] = '\0';
+	t->name[7] = '\0';
 	t->elr_el1 = (uint64_t)entry;
 	t->x30 = (uint64_t)entry;
 	t->spsr_el1 = 0x3C4; //0x3C4; // 0x245;
@@ -323,7 +323,7 @@ AA64Thread* AuCreateSubKthread(void(*entry) (uint64_t),uint64_t stack, uint64_t*
 	AA64Thread* t = (AA64Thread*)kmalloc(sizeof(AA64Thread));
 	memset(t, 0, sizeof(AA64Thread));
 	strncpy(t->name, name, 8);
-	t->name[8] = '\0';
+	t->name[7] = '\0';
 	t->elr_el1 = (uint64_t)entry;
 	t->x30 = (uint64_t)entry;
 	t->spsr_el1 = 0x3C4; //0x3C4; // 0x245;

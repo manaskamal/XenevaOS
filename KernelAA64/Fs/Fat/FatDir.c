@@ -171,7 +171,7 @@ AuVFSNode* FatCreateDir(AuVFSNode* fsys, char* filename) {
 					aa64_data_cache_clean_range(entrybuf, PAGE_SIZE);
 
 
-					AuVDiskWrite(_fs->vdisk, FatClusterToSector32(_fs, cluster), 1, entrybuf);
+					AuVDiskWrite(_fs->vdisk, FatClusterToSector32(_fs, cluster), 1, (uint64_t*)entrybuf);
 
 					aa64_data_cache_clean_range(buff, PAGE_SIZE);
 					AuVDiskWrite(_fs->vdisk, FatClusterToSector32(_fs, parent_clust) + j, 1, buff);

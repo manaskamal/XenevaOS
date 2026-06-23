@@ -299,8 +299,8 @@ void AuDriverLoad(char* filename, AuDriver* driver) {
 	int sbIndex = 0;
 	while (file->eof != 1) {
 		uint64_t block = ((uint64_t)scratchBuffer + (sbIndex * 0x1000));
-		memset(block, 0, 4096);
-		AuVFSNodeReadBlock(fsys, file, block);
+		memset((void*)block, 0, 4096);
+		AuVFSNodeReadBlock(fsys, file, (uint64_t*)block);
 		sbIndex++;
 		//AuMapPage((uint64_t)block, (driver_load_base + next_base_offset * 4096), 0);
 		//next_base_offset++;
@@ -625,7 +625,7 @@ void AuDrvCatchFault(AuDriver* drv, uint64_t fault_addr) {
 	uint64_t original_va = drv->original_load_base + rva;
 
 	UARTDebugOut("[aurora]: relocated address: %x, original address : %x \r\n", fault_addr, original_va);
-	AuCoffResolveAddress(drv->new_load_base, fault_addr);
+	AuCoffResolveAddress((uint8_t*)drv->new_load_base, fault_addr);
 }
 
 

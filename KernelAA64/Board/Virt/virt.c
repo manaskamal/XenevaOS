@@ -52,6 +52,8 @@ uint8_t AuVirtIOInputCheck(uint64_t device, int bus,int dev,int func) {
 		return VIRTIO_INPUT_KEYBOARD;
 	else if (strstr(cfg->data.str, "Tablet"))
 		return VIRTIO_INPUT_TABLET;
+
+	return 0;
 }
 
 /**

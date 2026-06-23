@@ -272,7 +272,7 @@ void GICRInitialize(int cpu_num) {
 	uint64_t* sgi = (uint64_t*)((uint64_t)gicr + GICR_SGI_BASE);
 
 	uint64_t gicr_typer = gic_inl_(gicr, GICR_TYPER);
-	uint32_t proc_num = (uint32_t)((gicr_typer >> 80) & 0xFFFF);
+	uint32_t proc_num = (uint32_t)((gicr_typer >> 8) & 0xFFFF); // >>80
 	AuTextOut("GICR : %x , cpu num : %d \r\n", gicr, proc_num);
 	uint32_t waker = gic_inl_(gicr, GICR_WAKER);
 	waker &= ~GICR_WAKER_PS;
@@ -378,7 +378,7 @@ skip_:
 		return;
 	}
 
-	__gic.gicDMMIO = AuMapMMIO(__gic.gicDPhys, 16);
+	__gic.gicDMMIO = (uint64_t)AuMapMMIO(__gic.gicDPhys, 16);
 
 	uint32_t version = GICVerifyVersion();
 	__gic.version = version;
@@ -387,22 +387,22 @@ skip_:
 		_need_cpu_interface = false;
 
 	if (_need_cpu_interface)
-		__gic.gicCMMIO = AuMapMMIO(__gic.gicCPhys, 2);
+		__gic.gicCMMIO = (uint64_t)AuMapMMIO(__gic.gicCPhys, 2);
 
 	if (__gic.gicMSIPhys)
-		__gic.gicMSIMMIO = AuMapMMIO(__gic.gicMSIPhys, 2);
+		__gic.gicMSIMMIO = (uint64_t)AuMapMMIO(__gic.gicMSIPhys, 2);
 
 	/** map Redist to MMIO, for one redistributor 128 KiB, 
 	 * for 4 cores, it consumes 512 KiB 128 pages, for now
 	 * not supporting multi cores, only one core is needed
 	 */
 	if (version >= GIC_VERSION_3)
-		__gic.gicRMMIO = AuMapMMIO(__gic.gicRPhys, 128);
+		__gic.gicRMMIO = (uint64_t)AuMapMMIO(__gic.gicRPhys, 128);
 
 	gic_regs = (volatile uint32_t*)__gic.gicDMMIO;
 	gicc_regs = (volatile uint32_t*)__gic.gicCMMIO;
 
-	uint32_t typer = gic_inl_(GICD(__gic), GICD_TYPER);
+	uint32_t typer = gic_inl_((uint64_t*)GICD(__gic), GICD_TYPER);
 	uint32_t numirq = ((typer & 0x1f) + 1) * 32;
 	AuTextOut("GIC Number of supported IRQ -> %d \r\n", numirq);
 
@@ -422,7 +422,7 @@ skip_:
 	/* enable the cpu interface*/
 	/* writing 0xff means accepting all types of priority 0x0 -- 0xFF */
 	if (_need_cpu_interface) {
-		gic_outl_(__gic.gicCMMIO, GICC_PMR, 0x1ff);
+		gic_outl_((uint64_t*)__gic.gicCMMIO, GICC_PMR, 0x1ff);
 		gic_outl_(__gic.gicCMMIO, GICC_CTLR, 0x3);
 		isb_flush();
 	}

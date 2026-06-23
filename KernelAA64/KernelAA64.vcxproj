@@ -159,7 +159,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>Level1</WarningLevel>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>ARCH_ARM64;__TARGET_BOARD_QEMU_VIRT__;_USE_DLMALLOC;__STDC_LIMIT_MACROS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>Default</ConformanceMode>
@@ -377,6 +377,7 @@
     <ClInclude Include="..\BaseHdr\Mm\mmfile.h" />
     <ClInclude Include="..\BaseHdr\power.h" />
     <ClInclude Include="..\BaseHdr\proctoken.h" />
+    <ClInclude Include="..\BaseHdr\stdarg.h" />
     <ClInclude Include="..\BaseHdr\timer.h" />
     <ClInclude Include="..\BaseHdr\uart.h">
       <DeploymentContent>false</DeploymentContent>

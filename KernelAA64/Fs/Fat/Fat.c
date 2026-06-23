@@ -52,6 +52,7 @@
 #include <Mm/mmfile.h>
 #include <Cred/cred.h>
 #include <Cred/group.h>
+#include <Hal/AA64/profile.h>
 
 extern bool _vfs_debug_on;
 
@@ -176,12 +177,12 @@ uint32_t FatReadFAT(AuVFSNode* node, uint64_t cluster_index) {
 	uint64_t fat_sector = fs->__FatBeginLBA + (fat_offset / fs->__BytesPerSector);
 
 	size_t ent_offset = fat_offset % fs->__BytesPerSector;
-	uint64_t* BuffArea = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
-	memset(BuffArea, 0, 4096);
+	uint64_t* BuffArea = (uint64_t*)fs->_scratchBuffer;//P2V((size_t)AuPmmngrAlloc());
+	//memset(BuffArea, 0, 512);
 	AuVDiskRead(vdisk, fat_sector, 1,BuffArea);
 	unsigned char* buf = (unsigned char*)BuffArea;
 	uint32_t value = *(uint32_t*)&buf[ent_offset];
-	AuPmmngrFree((void*)V2P((size_t)BuffArea));
+	//AuPmmngrFree((void*)V2P((size_t)BuffArea));
 	return (value & 0x0FFFFFFF);
 }
 
@@ -247,7 +248,7 @@ void FatAllocCluster(AuVFSNode* fsys, int position, uint32_t n_value) {
 
 	uint32_t* buffer = (uint32_t*)P2V((size_t)AuPmmngrAlloc());
 	memset(buffer, 0, PAGE_SIZE);
-	AuVDiskRead(vdisk, fat_sector, 1, buffer);
+	AuVDiskRead(vdisk, fat_sector, 1, (uint64_t*)buffer);
 	uint8_t* buf = (uint8_t*)buffer;
 	
 
@@ -255,7 +256,7 @@ void FatAllocCluster(AuVFSNode* fsys, int position, uint32_t n_value) {
 
 	*(uint32_t*)&buf[ent_offset] = n_value & 0x0FFFFFFF;
 
-	AuVDiskWrite(vdisk, fat_sector, 1, buffer);
+	AuVDiskWrite(vdisk, fat_sector, 1, (uint64_t*)buffer);
 	AuPmmngrFree((void*)V2P((size_t)buffer));
 }
 
@@ -304,19 +305,19 @@ size_t FatRead(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buf) {
 	if (value >= (FAT_EOC_MARK & 0x0FFFFFFF)) {
 		file->eof = 1;
 		file->current = value;
-		data_cache_flush(file);
+		//data_cache_flush(file);
 		return (fs->__SectorPerCluster * fs->__BytesPerSector);
 	}
 
 	if (value >= 0x0FFFFFF7) {
 		file->eof = 1;
 		file->current = value;
-		data_cache_flush(file);
+		//data_cache_flush(file);
 		return (fs->__SectorPerCluster * fs->__BytesPerSector);
 	}
 
 	file->current = value;
-	data_cache_flush(file);
+	//data_cache_flush(file);
 	return (fs->__SectorPerCluster * fs->__BytesPerSector);
 }
 
@@ -348,7 +349,8 @@ size_t FatReadFile(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint32_t 
 	skip = 0;
 	size_t avail = 0;
 	size_t to_copy = 0;
-
+	
+	uint64_t* buff = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
 	for (int i = 0; i < num_blocks; i++) {
 		if (file->eof)
 			break;
@@ -356,13 +358,9 @@ size_t FatReadFile(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint32_t 
 		avail = fs->cluster_sz_in_bytes - skip;
 		to_copy = (length < avail) ? length : avail;
 
-		uint64_t* buff = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
-		memset(buff, 0, PAGE_SIZE);
+	//	memset(buff, 0, PAGE_SIZE);
 		read_bytes = FatRead(fsys, file, buff);
-
 		memcpy(aligned_buffer, (uint8_t*)buff + skip, to_copy);
-		
-		AuPmmngrFree((void*)V2P((size_t)buff));
 		aligned_buffer += to_copy;
 		length -= to_copy;
 		ret_bytes += read_bytes;
@@ -378,6 +376,7 @@ size_t FatReadFile(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint32_t 
 	if (length < ret_bytes)
 		ret_bytes = length;
 
+	AuPmmngrFree((void*)V2P((size_t)buff));
 	return ret_bytes;
 }
 
@@ -397,7 +396,7 @@ AuVFSNode* FatLocateSubDir(AuVFSNode* fsys, AuVFSNode* kfile, const char* filena
 			if (kfile->eof) {
 				break;
 			}
-			memset(buf, 0, PAGE_SIZE);
+			//memset(buf, 0, PAGE_SIZE);
 
 			FatRead(fsys, kfile, buf);
 
@@ -460,14 +459,14 @@ AuVFSNode* FatLocateDir(AuVFSNode* fsys, const char* dir) {
 	char dos_file_name[11];
 
 	FatToDOSFilename(dir, dos_file_name, 11);
-	dos_file_name[11] = '\0';
+	//dos_file_name[10] = '\0';
 
 	buf = (uint64_t*)P2V((uint64_t)AuPmmngrAlloc());
 	memset(buf, 0, PAGE_SIZE);
 
 	for (unsigned int sector = 0; sector < fs->__SectorPerCluster; sector++) {
 
-		memset(buf, 0, PAGE_SIZE);
+		//memset(buf, 0, 512);
 		//ata_read_28 (root_sector + sector,1, buf);
 		AuVDiskRead(vdisk, FatClusterToSector32(fs, fs->__RootDirFirstCluster) + sector, 1, buf);
 
@@ -498,7 +497,7 @@ AuVFSNode* FatLocateDir(AuVFSNode* fsys, const char* dir) {
 					file->flags |= FS_FLAG_DIRECTORY;
 				else
 					file->flags |= FS_FLAG_GENERAL;
-				aa64_data_cache_clean_range(file, sizeof(AuVFSNode));
+				//aa64_data_cache_clean_range(file, sizeof(AuVFSNode));
 				AuPmmngrFree((void*)V2P((size_t)buf));
 				return file;
 			}
@@ -612,7 +611,7 @@ size_t FatGetClusterFor(AuVFSNode* fs, AuVFSNode* file, uint64_t offset) {
 uint32_t FatGetDiskBlock(AuVFSNode* fs, AuVFSNode* file, uint64_t fs_block) {
 	FatFS* fatfs = (FatFS*)fs->device;
 	if (!fatfs)
-		return;
+		return 0;
 	return FatClusterToSector32(fatfs, fs_block);
 }
 
@@ -678,6 +677,8 @@ AuVFSNode* FatInitialise(AuVDisk* vdisk, char* mountname) {
 	fs->__TotalClusters = bpb.large_sector_count / fs->__SectorPerCluster;
 	fs->__LastIndexInFat = 0;
 	fs->__LastIndexSector = 0;
+	fs->_scratchBuffer = (void*)P2V((uint64_t)AuPmmngrAlloc());
+	memset(fs->_scratchBuffer, 0, PAGE_SIZE);
 	size_t _root_dir_sectors = ((bpb.num_dir_entries * 32) + bpb.bytes_per_sector - 1) / bpb.bytes_per_sector;
 	size_t _TotalSectors = (bpb.total_sectors_short == 0) ? bpb.large_sector_count : bpb.total_sectors_short;
 	size_t fatsize = (bpb.sectors_per_fat == 0) ? bpb.info.FAT32.sect_per_fat32 : bpb.sectors_per_fat;
