@@ -251,12 +251,15 @@ typedef struct {
 
 #define VIRTIO_PCM_BUFFER_MAXSZ  0x1000   //page size
 
+
+void virtio_snd_reset(VirtioCommonCfg* common);
+
 /*
 * AuDriverUnload -- deattach the driver from
 * aurora system
 */
 AU_EXTERN AU_EXPORT int AuDriverUnload() {
-
+	virtio_snd_reset(_config);
 	return 0;
 }
 

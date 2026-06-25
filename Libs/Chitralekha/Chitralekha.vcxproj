@@ -276,6 +276,7 @@
     <ClInclude Include="widgets\sidebar.h" />
     <ClInclude Include="widgets\slider.h" />
     <ClInclude Include="widgets\textbox.h" />
+    <ClInclude Include="widgets\toolbar.h" />
     <ClInclude Include="widgets\view.h" />
     <ClInclude Include="widgets\window.h" />
     <ClInclude Include="_fastcpy.h" />
@@ -316,6 +317,7 @@
     <ClCompile Include="widgets\sidebar.cpp" />
     <ClCompile Include="widgets\slider.cpp" />
     <ClCompile Include="widgets\textbox.cpp" />
+    <ClCompile Include="widgets\toolbar.cpp" />
     <ClCompile Include="widgets\view.cpp" />
     <ClCompile Include="widgets\window.cpp" />
   </ItemGroup>

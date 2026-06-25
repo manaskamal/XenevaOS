@@ -666,3 +666,22 @@ void GICCallSPIHandler(int spi) {
 }
 
 
+/**
+ * @brief GICDisable -- disable the GIC 
+ */
+void GICDisable() {
+	gic_outl_(__gic.gicDMMIO, GICD_CTLR, 0);
+
+	dsb_sy_barrier();
+	isb_flush();
+
+	if (__gic.version < GIC_VERSION_3) {
+		gic_outl_(__gic.gicCMMIO, GICC_CTLR, 0);
+		gic_outl_(__gic.gicCMMIO, GICC_PMR, 0xFF);
+		dsb_sy_barrier();
+		isb_flush();
+		UARTDebugOut("[aurora]: GIC version 2 disabling \r\n");
+	}
+	UARTDebugOut("[aurora]: GIC disabled \r\n");
+}
+

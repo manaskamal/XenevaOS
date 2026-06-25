@@ -173,5 +173,10 @@ extern AuDriver* AuDrvManagerCheckFault(uint64_t fault_addr);
  */
 extern void AuDrvCatchFault(AuDriver* drv, uint64_t fault_addr);
 
+/**
+ * @brief AuDrvUnloadAll -- call unload handler of all registered drivers
+ */
+extern void AuDrvUnloadAll();
+
 
 #endif

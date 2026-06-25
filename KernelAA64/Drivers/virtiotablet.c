@@ -55,6 +55,7 @@ int buttonRight;
 int buttonScrollUp;
 int buttonScrollDown;
 struct VirtioInputEvent* TabletInput;
+static struct VirtioCommonCfg* _tabletCfg;
 
 #define MOUSE_LEFT_CLICK   		  0x01
 #define MOUSE_RIGHT_CLICK  		  0x02
@@ -125,6 +126,24 @@ void AuVirtioTabletHandler(int spiNum) {
 		TabletQueue->available.index++;
 	}
 }
+
+void AuVirtioTabletDown() {
+	/* Reset the device */
+    _tabletCfg->DeviceStatus = 0;
+
+	isb_flush();
+	dsb_ish();
+
+	_tabletCfg->DeviceStatus = 0x1;
+	isb_flush();
+	dsb_ish();
+
+	_tabletCfg->DeviceStatus |= 0x2;
+	isb_flush();
+	dsb_ish();
+
+	UARTDebugOut("[virtio-tablet]: reset completed successfully \r\n");
+}
 /**
  * @brief AuVirtioKbdInitialize -- initialize the virtio keyboard
  */
@@ -148,6 +167,7 @@ void AuVirtioTabletInitialize(uint64_t device) {
 	uint64_t bar = ((uint64_t)barHi << 32) | (barLo & ~0xFULL);
 	uint64_t finalAddr = (uint64_t)AuMapMMIO(bar, 2);
 	struct VirtioDeviceConfig* cfg = (struct VirtioDeviceConfig*)(bar + 0x2000);
+	_tabletCfg = (struct VirtioCommonCfg*)finalAddr;
 	cfg->select = 1;
 	cfg->subsel = 0;
 	isb_flush();

@@ -129,7 +129,7 @@ AuMMFileBack* AuMmngrFileCacheLookup(const char* filename) {
 	char* fname = filename;
 	while (*filename) {
 		if (*filename == '/')
-			fname = filename + 1;
+			fname = (char*)filename + 1;
 		filename++;
 	}
 //#ifdef __TARGET_BOARD_QEMU_VIRT__

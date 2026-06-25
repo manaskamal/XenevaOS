@@ -45,6 +45,7 @@ struct VirtioQueue* queue;
 struct VirtioInputEvent* input;
 static uint16_t index;
 static int queueSize;
+static struct VirtioCommonCfg* _kybrdCfg;
 
 static const uint8_t ext_key_map[256] = {
 	[0x63] = 0x37, //print screen
@@ -110,6 +111,24 @@ void AuVirtioKbdHandler(int spinum) {
 	}
 	
 }
+
+void AuVirtioKbdDown() {
+	/* Reset the device */
+	_kybrdCfg->DeviceStatus = 0;
+
+	isb_flush();
+	dsb_ish();
+
+	_kybrdCfg->DeviceStatus = 0x01;
+	isb_flush();
+	dsb_ish();
+
+	_kybrdCfg->DeviceStatus |= 0x02;
+	isb_flush();
+	dsb_ish();
+
+	UARTDebugOut("[virtio-keyboard]: reset completed successfully \r\n");
+}
 /**
  * @brief AuVirtioKbdInitialize -- initialize the virtio keyboard
  */
@@ -134,6 +153,9 @@ void AuVirtioKbdInitialize(uint64_t device) {
 	uint64_t bar = ((uint64_t)barHi << 32) | (barLo & ~0xFULL);
 	uint64_t finalAddr = (uint64_t)AuMapMMIO(bar, 2);
 	struct VirtioDeviceConfig* cfg = (struct VirtioDeviceConfig*)(bar + 0x2000);
+
+	_kybrdCfg = (struct VirtioDeviceConfig*)finalAddr;
+
 	cfg->select = 1;
 	cfg->subsel = 0;
 	isb_flush();

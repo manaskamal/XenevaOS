@@ -113,7 +113,7 @@ int OpenFile(char* filename, int mode) {
  * @param offset -- offset in bytes
  */
 int FileSetOffset(int fd, size_t offset) {
-	if (fd > FILE_DESC_PER_PROCESS)
+	if (fd >= FILE_DESC_PER_PROCESS)
 		return -1;
 
 	if (fd < 0)

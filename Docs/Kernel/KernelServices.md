@@ -9,7 +9,7 @@ The system call number is placed in the `R12` register, and arguments are passed
 
 For ARM64, the system call number is placed in the `X16` register, and arguments are passed through registers `X0, X1, X2, X3, X4, and X5`. Upon completion, the return value is stored in the `X6` register. <br><br>
 
-Example (x86_64):
+### Example (x86_64):
 ```
 ExitProcess:
       mov r12, 5
@@ -21,7 +21,7 @@ ExitProcess:
 	  ret
 ```
 
-Example (ARM64):
+### Example (ARM64):
 ```
 ProcessSleep:
       mov x16, 23
@@ -49,6 +49,17 @@ The kernel maintains a service call dispatch table, which maps each kernel handl
 | 10 | ``ObtainSharedMem`` | _Maps and returns a pointer to the shared memory address mapped to the physical addresses of the provided shared memory segment_ |
 | 11 | ``UnmapSharedMem`` | _Unmaps a shared memory segment from the current process (the shared memory segment is not freed until it is detached from all processes)_ |
 | 12 | ``OpenFile`` | _Opens a file in the kernel and returns its file descriptor allocated in the current process slot_ |
+| 13 | ``CreateMemMapping`` | _Creates a memory mapping inside a process of memory, file or device_
+| 14 | ``UnmapMemMapping`` | _Unmaps a previously mapped memory within a process. It requires the memory pointer_ |
+| 15 | ``GetProcessHeapMem`` | _Process on Aurora maintains heap memory separately, i.e it uses separate address range from MemMappings_ |
+| 16 | ``ReadFile`` | _Reads a file to a given buffer, it requires the file descriptor number previously allocated using ``OpenFile`` call_ |
+| 17 | ``WriteFile`` | _Writes data to a file from given buffer, it requires the file descriptor number previously allocated using ``OpenFile`` call_ |
+|20 | ``CloseFile`` | _Closes a given file, requires the file descriptor allocated using ``OpenFile`` call_ |
+|21 | ``FileIoControl``| _Submit commands to a given file, mostly used in device files_ |
+|22 | ``FileStat`` | _Get metadata of a file to a given buffer, metadata holds information such as file size, creation/modificatin date, current position and EndOfFile bit_ |
+|23 | ``ProcessSleep`` | _Put a process on sleep for given amount of time, it accepts number of scheuler ticks_ |
+|24 | ``AuGetSystemTimerTick`` | _Get the current number of timer ticks passed since the system was booted_ |
+
 
 
 

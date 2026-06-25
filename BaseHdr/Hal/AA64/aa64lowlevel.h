@@ -167,6 +167,7 @@ extern void data_cache_flush(uint64_t* address);
 AU_EXTERN AU_EXPORT void aa64_data_cache_clean_range(void* addr, size_t size);
 AU_EXTERN AU_EXPORT void aa64_dc_cvac_range(void* addr, size_t sz);
 AU_EXTERN AU_EXPORT void aa64_dc_ivac_range(void* addr, size_t sz);
+extern void aa64_clean_invalidate_dcache();
 extern int gic_cpu_init();
 extern uint32_t gic_read_intid();
 extern void gic_icc_eoi(uint32_t intid);

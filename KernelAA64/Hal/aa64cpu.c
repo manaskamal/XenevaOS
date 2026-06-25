@@ -201,9 +201,11 @@ void AA64CpuInitialize() {
 	/* because little boot always enable align check 
 	 * so skip this
 	 */
-	if (!AuLittleBootUsed())
+	if (!AuLittleBootUsed()) {
 		enableAlignCheck();
+	}
 
+	
 	uint32_t id = read_midr();
 	AA64CPUImplementer(id);
 

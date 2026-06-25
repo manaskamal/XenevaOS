@@ -117,15 +117,6 @@ static uint64_t _req_buffer_ptr;
 static uint64_t last_req_idx;
 
 
-/*
-* AuDriverUnload -- deattach the driver from
-* aurora system
-*/
-AU_EXTERN AU_EXPORT int AuDriverUnload() {
-
-	return 0;
-}
-
 /**
  * @brief virtioblk_reset -- reset the device
  * @param cfg -- pointer to virtio common config
@@ -382,6 +373,17 @@ int virtblk_write_vdisk(AuVDisk* disk, uint64_t lba, uint32_t count, uint64_t* b
 	//}
 	return 512 * count;
 }
+
+
+/*
+* AuDriverUnload -- deattach the driver from
+* aurora system
+*/
+AU_EXTERN AU_EXPORT int AuDriverUnload() {
+	virtioblk_reset(_cfg);
+	return 0;
+}
+
 
 /*
 * AuDriverMain -- Main entry for virtio-blk device

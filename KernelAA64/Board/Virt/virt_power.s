@@ -31,7 +31,7 @@
 virt_power_down:
     hvc #0
 
+
 .global virt_power_reboot
 virt_power_reboot:
     hvc #0
-

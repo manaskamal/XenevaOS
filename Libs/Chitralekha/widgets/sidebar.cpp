@@ -76,12 +76,15 @@ ChSidebarSection* ChSidebarAddSection(ChSidebar* sb, const char* title) {
 	return sec;
 }
 
-#define BASELINE_RATIO_NUM 3
-#define BASELINE_RATIO_DEN 4
+#define BASELINE_RATIO_NUM 4
+#define BASELINE_RATIO_DEN 5
 
 static int _sidebar_baseline_y(int rowTop, int rowHeight, int fontSz) {
-	int ascent = (fontSz * BASELINE_RATIO_NUM) / BASELINE_RATIO_DEN;
-	return rowTop  +(rowHeight - fontSz) / 2 + ascent;
+	/*int ascent = (fontSz * BASELINE_RATIO_NUM) / BASELINE_RATIO_DEN;
+	return rowTop  +(rowHeight - fontSz) / 2 + ascent;*/
+	int ascent = (rowHeight * BASELINE_RATIO_NUM) / BASELINE_RATIO_DEN;
+	if (ascent > rowHeight) ascent = rowHeight;
+	return rowTop + ascent;
 }
 
 ChSidebarItem* ChSidebarAddItem(ChSidebarSection* sec, const char* label, ChIcon* icon,
@@ -202,6 +205,83 @@ void ChSidebarPaint(ChWidget* widget, ChWindow* win) {
 }
 
 
+static bool _sidebar_item_screen_y(ChSidebar* sb, int sectionIdx, int itemIdx, int* out_y) {
+
+	int curY = sb->base.y - sb->scrollOfsetY;
+
+	for (int s = 0; s <= sectionIdx; s++) {
+		curY += SIDEBAR_HEADER;
+		int itemLimit = (s == sectionIdx) ? itemIdx : sb->sections[s].itemCount;
+		curY += itemLimit * SIDEBAR_ROW_HEIGHT;
+	}
+
+	if (curY + SIDEBAR_ROW_HEIGHT <= sb->base.y ||
+		curY >= sb->base.y + sb->base.h)
+		return false;
+
+	*out_y = curY;
+	return true;
+}
+
+static bool _sidebar_draw_single_row_(ChSidebar* sb, ChWindow* win, int sIdx, int iIdx, ChRect* out_rect) {
+	
+	if (sIdx < 0 || sIdx >= sb->sectionCount) return false;
+	if (iIdx < 0 || iIdx >= sb->sections[sIdx].itemCount) return false;
+
+	int curY;
+	if (!_sidebar_item_screen_y(sb, sIdx, iIdx, &curY)) return false;
+
+	ChSidebarItem* item = &sb->sections[sIdx].items[iIdx];
+
+	int drawY = curY, drawH = SIDEBAR_ROW_HEIGHT;
+	if (drawY < sb->base.y) {
+		int d = sb->base.y - drawY;
+		drawY += d;
+		drawH -= d;
+	}
+
+	if (drawY + drawH > sb->base.y + sb->base.h)
+		drawH = (sb->base.y + sb->base.h) - drawY;
+	if (drawH <= 0) return false;
+
+	uint32_t row_col = sb->bgColor;
+	if (item->selected)
+		row_col = sb->selectedColor;
+	else if (sIdx == sb->hoverSectionIdx && iIdx == sb->hoverItemIdx)
+		row_col = sb->hoverColor;
+
+	ChDrawRect(win->canv, sb->base.x, drawY, sb->base.w, drawH, row_col);
+
+	if (curY >= sb->base.y) {
+		ChRect rowClip;
+		rowClip.x = sb->base.x;
+		rowClip.y = drawY;
+		rowClip.w = sb->base.w;
+		rowClip.h = drawH;
+
+		int textX = sb->base.x + SIDEBAR_INDENT;
+
+		if (item->icon) {
+			int iconY = curY + (SIDEBAR_ROW_HEIGHT - item->icon->image.height) / 2;
+			ChDrawIconClipped(win->canv, item->icon, textX, iconY, &rowClip);
+			textX += item->icon->image.width + 8;
+		}
+
+		uint32_t textCol = item->selected ? sb->selectedTextColor : sb->textColor;
+		int baseY = _sidebar_baseline_y(curY, SIDEBAR_ROW_HEIGHT, 13);
+		ChFontSetSize(win->app->baseFont, 13);
+		ChFontDrawTextClipped(win->canv, win->app->baseFont, item->label, textX, baseY, textCol, &rowClip);
+	}
+
+	if (out_rect) {
+		out_rect->x = sb->base.x;
+		out_rect->y = drawY;
+		out_rect->w = sb->base.w;
+		out_rect->h = drawH;
+	}
+	return true;
+}
+
 void ChSidebarMouseEvent(ChWidget* wid, ChWindow* win, int mx, int my, int button) {
 	ChSidebar* sb = (ChSidebar*)wid;
 	int lx = mx, ly = my;
@@ -211,10 +291,14 @@ void ChSidebarMouseEvent(ChWidget* wid, ChWindow* win, int mx, int my, int butto
 	if (mx < sb->base.x || mx > sb->base.x + sb->base.w ||
 		my < sb->base.y || my > sb->base.y + sb->base.h) {
 		if (sb->hoverSectionIdx != -1 || sb->hoverItemIdx != -1) {
+			int oldS = sb->hoverSectionIdx;
+			int OldI = sb->hoverItemIdx;
+
 			sb->hoverSectionIdx = -1;
 			sb->hoverItemIdx = -1;
-			sb->base.ChPaintHandler((ChWidget*)sb, win);
-			ChWindowUpdate(win, sb->base.x, sb->base.y, sb->base.w, sb->base.h, 0, 1);
+			ChRect r;
+			if (_sidebar_draw_single_row_(sb, win, oldS, OldI, &r))
+				ChWindowUpdate(win, r.x, r.y, r.w, r.h, 0, 1);
 		}
 		return;
 	}
@@ -237,19 +321,32 @@ void ChSidebarMouseEvent(ChWidget* wid, ChWindow* win, int mx, int my, int butto
 
 	if (button == 0) {
 		if (hitSection != sb->hoverSectionIdx || hitItem != sb->hoverItemIdx) {
+			int oldS = sb->hoverSectionIdx;
+			int oldI = sb->hoverItemIdx;
 			sb->hoverSectionIdx = hitSection;
 			sb->hoverItemIdx = hitItem;
-			sb->base.ChPaintHandler((ChWidget*)sb, win);
-			ChWindowUpdate(win, sb->base.x, sb->base.y, sb->base.w, sb->base.h, 0, 1);
+			_KePrint("Hover drawing \r\n");
+
+			ChRect r1;
+			bool has_r1 = _sidebar_draw_single_row_(sb, win, oldS, oldI, &r1);
+			if (has_r1)
+				ChWindowUpdate(win, r1.x, r1.y, r1.w, r1.h, 0, 1);
+			ChRect r2;
+			bool has_r2 = _sidebar_draw_single_row_(sb, win, hitSection, hitItem, &r2);
+			if (has_r2)
+				ChWindowUpdate(win, r2.x, r2.y, r2.w, r2.h, 0, 1);
 		}
 		return;
 	}
 
 	if (button == 1) {
 		if (hitSection >= 0 && hitItem >= 0) {
+			int prevSelS = -1, prevSelI = -1;
 			for (int s = 0; s < sb->sectionCount; s++) {
 				for (int i = 0; i < sb->sections[s].itemCount; i++) {
 					sb->sections[s].items[i].selected = 0;
+					prevSelS = s;
+					prevSelI = i;
 				}
 			}
 
@@ -259,8 +356,16 @@ void ChSidebarMouseEvent(ChWidget* wid, ChWindow* win, int mx, int my, int butto
 			if (item->OnSelect)
 				item->OnSelect(item, win);
 
-			sb->base.ChPaintHandler((ChWidget*)sb, win);
-			ChWindowUpdate(win, sb->base.x, sb->base.y, sb->base.w, sb->base.h, 0, 1);
+			ChRect r1;
+			bool has_r1 = _sidebar_draw_single_row_(sb, win, prevSelS, prevSelI, &r1);
+			if (has_r1)
+				ChWindowUpdate(win, r1.x, r1.y, r1.w, r1.h, 0, 1);
+
+			ChRect r2;
+			bool has_r2 = _sidebar_draw_single_row_(sb, win, hitSection, hitItem, &r2);
+			if (has_r2)
+				ChWindowUpdate(win, r2.x, r2.y, r2.w, r2.h, 0, 1);
+		
 		}
 		return;
 	}

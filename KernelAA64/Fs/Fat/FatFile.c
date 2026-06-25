@@ -161,7 +161,7 @@ AuVFSNode* FatCreateFile(AuVFSNode* fsys, char* filename) {
 
 	while (1) {
 		for (int j = 0; j < _fs->__SectorPerCluster; j++) {
-			memset(buff, 0, PAGE_SIZE);
+			memset(buff, 0, 512);
 			AuVDiskRead(_fs->vdisk, FatClusterToSector32(_fs, parent_cluster) + j, 1, buff);
 
 			FatDir* dirent = (FatDir*)buff;
@@ -243,7 +243,7 @@ void FatFileUpdateSize(AuVFSNode* fsys, AuVFSNode* file, size_t size) {
 
 	while (1) {
 		for (int j = 0; j < _fs->__SectorPerCluster; j++) {
-			memset(buff, 0, PAGE_SIZE);
+			memset(buff, 0, 512);
 			AuVDiskRead(_fs->vdisk, FatClusterToSector32(_fs, dir_cluster) + j, 1, buff);
 
 			FatDir* dirent = (FatDir*)buff;
@@ -303,7 +303,7 @@ int FatFileUpdateFilename(AuVFSNode* fsys, AuVFSNode* file, char* newname) {
 
 	while (1) {
 		for (int j = 0; j < _fs->__SectorPerCluster; j++) {
-			memset(buff, 0, PAGE_SIZE);
+			memset(buff, 0, 512);
 			AuVDiskRead(_fs->vdisk, FatClusterToSector32(_fs, dir_cluster) + j, 1, buff);
 
 			FatDir* dirent = (FatDir*)buff;

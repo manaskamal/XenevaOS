@@ -82,12 +82,15 @@ static bool _resp_ok;
 static uint16_t* notifyAddress;
 static VirtioCommonCfg* _cfg;
 AuVFSNode* fsnode;
+
+void gpu_reset_device(VirtioCommonCfg* cfg);
 /*
 * AuDriverUnload -- deattach the driver from
 * aurora system
 */
 AU_EXTERN AU_EXPORT int AuDriverUnload() {
-
+	gpu_reset_device(_cfg);
+	UARTDebugOut("[virtio-gpu]: reset completed \r\n");
 	return 0;
 }
 

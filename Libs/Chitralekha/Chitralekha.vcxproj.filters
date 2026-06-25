@@ -73,6 +73,9 @@
     <ClInclude Include="widgets\sidebar.h">
       <Filter>widgets</Filter>
     </ClInclude>
+    <ClInclude Include="widgets\toolbar.h">
+      <Filter>widgets</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="chitralekha.cpp" />
@@ -164,6 +167,9 @@
       <Filter>widgets</Filter>
     </ClCompile>
     <ClCompile Include="widgets\sidebar.cpp">
+      <Filter>widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="widgets\toolbar.cpp">
       <Filter>widgets</Filter>
     </ClCompile>
   </ItemGroup>
