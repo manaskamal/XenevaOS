@@ -36,6 +36,18 @@
 #include <stdint.h>
 #include <Drivers/uart.h>
 
+#define IMAGE_DOS_SIGNATURE 0x5A4D
+#define IMAGE_NT_SIGNATURE  0x00004550
+
+#ifdef __GNUC__
+struct kernel_export {
+    char* name;
+    void* addr;
+};
+extern struct kernel_export k_exports[];
+extern int k_exports_count;
+#endif
+
 /**
  * @brief AuGetProcAddress -- get procedure address in a dll image
  * @param image -- dll image
@@ -43,13 +55,32 @@
  * @return return the procedure address in memory
  */
 void* AuGetProcAddress(void* image, const char* procname) {
+#ifdef __GNUC__
+	if (image == (void*)0xFFFFC00000000000) {
+		for (int i = 0; i < k_exports_count; i++) {
+			if (strcmp(k_exports[i].name, procname) == 0) {
+				return k_exports[i].addr;
+			}
+		}
+		return NULL;
+	}
+#endif
+
 	IMAGE_DOS_HEADER* dos_header = (IMAGE_DOS_HEADER*)image;
+	if (dos_header->e_magic != IMAGE_DOS_SIGNATURE) {
+		return NULL;
+	}
 	PIMAGE_NT_HEADERS ntHeaders = RAW_OFFSET(IMAGE_NT_HEADERS*,dos_header, dos_header->e_lfanew);
-	if (IMAGE_DATA_DIRECTORY_EXPORT + 1 > ntHeaders->OptionalHeader.NumberOfRvaAndSizes)
+	if (ntHeaders->Signature != IMAGE_NT_SIGNATURE) {
 		return NULL;
+	}
+	if (IMAGE_DATA_DIRECTORY_EXPORT + 1 > ntHeaders->OptionalHeader.NumberOfRvaAndSizes) {
+		return NULL;
+	}
 	IMAGE_DATA_DIRECTORY datadir = ntHeaders->OptionalHeader.DataDirectory[IMAGE_DATA_DIRECTORY_EXPORT];
-	if (datadir.VirtualAddress == 0 || datadir.Size == 0)
+	if (datadir.VirtualAddress == 0 || datadir.Size == 0) {
 		return NULL;
+	}
 	PIMAGE_EXPORT_DIRECTORY exportdir = RAW_OFFSET(PIMAGE_EXPORT_DIRECTORY,image, datadir.VirtualAddress);
 	uint32_t* FuntionNameAddressArray = RAW_OFFSET(uint32_t*,image, exportdir->AddressOfNames);
 	uint16_t* FunctionOrdinalAddressArray = RAW_OFFSET(uint16_t*,image, exportdir->AddressOfNameOrdinal);
@@ -99,7 +130,9 @@ void AuPEPrintExports(void* image) {
 void AuKernelLinkDLL(void* image) {
 	uint8_t* imageAligned = (uint8_t*)image;
 	PIMAGE_DOS_HEADER dos_header = (PIMAGE_DOS_HEADER)imageAligned;
+	if (dos_header->e_magic != IMAGE_DOS_SIGNATURE) return;
 	PIMAGE_NT_HEADERS nt_headers = RAW_OFFSET(PIMAGE_NT_HEADERS,dos_header, dos_header->e_lfanew);
+	if (nt_headers->Signature != IMAGE_NT_SIGNATURE) return;
 	if (IMAGE_DATA_DIRECTORY_IMPORT + 1 > nt_headers->OptionalHeader.NumberOfRvaAndSizes)
 		return;
 	IMAGE_DATA_DIRECTORY datadir = nt_headers->OptionalHeader.DataDirectory[IMAGE_DATA_DIRECTORY_IMPORT];

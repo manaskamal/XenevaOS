@@ -42,7 +42,7 @@
 #include <Hal/AA64/aa64lowlevel.h>
 #include <Drivers/uart.h>
 
-#define QEMU_VIRT_ECAM_BASE 0x4010000000ULL
+#define QEMU_VIRT_ECAM_BASE 0x3f000000
 
 static uint64_t _ecamAddress;
 static bool _pcieInitialized;
