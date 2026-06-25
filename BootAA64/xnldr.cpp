@@ -128,6 +128,9 @@ MENU_ITEM MenuItem[] = {
  * @param SystemTable -- Pointer to EFI SYSTEM TABLE
  */
 int XEGetScreenResolutionMode(EFI_SYSTEM_TABLE* SystemTable) {
+#ifdef __TARGET_BOARD_QEMU_VIRT__
+	return 1;
+#endif
 	EFI_STATUS Status;
 	UINTN SelectedIndex = 0;
 	EFI_INPUT_KEY Key;
@@ -445,7 +448,7 @@ extern "C" EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemT
 	
 	const size_t EARLY_PAGE_STACK_SIZE = 1024 * 1024;
 	EFI_PHYSICAL_ADDRESS earlyPhyPageStack = 0;
-	if (!(SystemTable->BootServices->AllocatePages(AllocateAnyPages, EfiLoaderData, EARLY_PAGE_STACK_SIZE / EFI_PAGE_SIZE, (EFI_PHYSICAL_ADDRESS*)&earlyPhyPageStack))) {
+	if ((SystemTable->BootServices->AllocatePages(AllocateAnyPages, EfiLoaderData, EARLY_PAGE_STACK_SIZE / EFI_PAGE_SIZE, (EFI_PHYSICAL_ADDRESS*)&earlyPhyPageStack)) != EFI_SUCCESS) {
 		XEGuiPrint("Early Page Stack: allocation failed.....\n");
 	}
 
