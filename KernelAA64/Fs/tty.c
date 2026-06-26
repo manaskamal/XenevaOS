@@ -209,6 +209,7 @@ size_t AuTTYMasterWrite(AuVFSNode* fs, AuVFSNode* file, uint64_t* buffer, uint32
 	for (int i = 0; i < len; i++) {
 		AuCircBufPut(type->slavebuf, aligned_buf[i]);
 	}
+	return len;
 }
 
 size_t AuTTYSlaveRead(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint32_t len) {
@@ -258,6 +259,7 @@ size_t AuTTYSlaveWrite(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint3
 	 */
 	 //AuSleepThread(curr_th, );
 	 //AuScheduleThread(AA64GetCurrentRegCtx());
+	return len;
 }
 
 int AuTTYSlaveClose(AuVFSNode* fs, AuVFSNode* file) {

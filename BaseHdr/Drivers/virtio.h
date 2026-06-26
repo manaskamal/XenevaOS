@@ -158,6 +158,10 @@ extern void AuVirtioKbdInitialize(uint64_t device);
  */
 extern void AuVirtioTabletInitialize(uint64_t device);
 
+extern void AuVirtioKbdDown();
+
+extern void AuVirtioTabletDown();
+
 /**
  * @brief 
  */

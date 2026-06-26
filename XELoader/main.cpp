@@ -189,9 +189,6 @@ int XELdrStartProc(char* filename, XELoaderObject *obj) {
 	intptr_t original_base = nt->OptionalHeader.ImageBase;
 	intptr_t new_addr = _image_load_base_;
 	intptr_t diff = new_addr - original_base;
-	_KePrint("DOS Heade r: %x \r\n", dos_->e_magic);
-	_KePrint("FileAlignment: %d \r\n", nt->OptionalHeader.FileAlignment);
-	_KePrint("SectionAlignment : %d \r\n", nt->OptionalHeader.SectionAlignment);
 	
 	if (nt->OptionalHeader.SectionAlignment == 512) {
 		while (!stat->eof) {
@@ -208,10 +205,8 @@ int XELdrStartProc(char* filename, XELoaderObject *obj) {
 			int req_pages = sect_sz / 4096 +
 				((sect_sz % 4096) ? 1 : 0);
 			uint64_t* block = 0;
-			_KePrint("Reading the next section \r\n");
 			_KeFileSetOffset(file, secthdr[i].PointerToRawData);
 			int flags = 0;
-			_KePrint("Section Name : %s \r\n", secthdr[i].Name);
 		}
 
 		for (size_t i = 0; i < nt->FileHeader.NumberOfSections; ++i) {
@@ -222,15 +217,12 @@ int XELdrStartProc(char* filename, XELoaderObject *obj) {
 			uint64_t* block = 0;
 			_KeFileSetOffset(file, secthdr[i].PointerToRawData);
 			int flags = 0;
-			_KePrint("Section Name : %s , length : %x \r\n", secthdr[i].Name, secthdr[i].VirtualSize);
 			if ((secthdr[i].Characteristics & IMAGE_SCN_MEM_WRITE) &&
 				!(secthdr[i].Characteristics & IMAGE_SCN_MEM_SHARED))
 				flags |= MEMMAP_FLAG_COW;
 			if (secthdr[i].Characteristics & IMAGE_SCN_CNT_INITIALIZED_DATA)
 				flags |= MEMMAP_FLAG_COW;
 
-			_KePrint("Req pages : %d - %x \r\n", req_pages, req_pages);
-			_KePrint("Pointer to RAW data : %x , size of Raw Data : %x \r\n", secthdr[i].PointerToRawData, secthdr[i].SizeOfRawData);
 			for (int j = 0; j < req_pages; j++) {
 				uint64_t* alloc = (uint64_t*)_KeMemMap(NULL, 4096, 0, flags,file, obj->len);
 				if (!block)
@@ -249,7 +241,6 @@ int XELdrStartProc(char* filename, XELoaderObject *obj) {
 				memset(raw_offset<void*>(block, secthdr[i].SizeOfRawData), 0, secthdr[i].VirtualSize - secthdr[i].SizeOfRawData);
 		}
 	}
-	_KePrint("Read finished \r\n");
 	uint8_t* aligned_buff = (uint8_t*)first_ptr;
 	XELdrRelocatePE(aligned_buff, nt, diff);
 
@@ -300,7 +291,6 @@ extern "C" void main(int argc, char* argv[]) {
 	/* load the main object */
 	char* filename = argv[0];
 
-	_KePrint("Filename to load : %s \r\n", filename);
 	
 	XELoaderObject* mainobj = XELdrCreateObj(filename);
 	

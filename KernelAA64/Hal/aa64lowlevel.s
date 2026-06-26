@@ -442,3 +442,54 @@ gic_icc_eoi:
     isb
     ret
 
+
+.global aa64_clean_invalidate_dcache
+aa64_clean_invalidate_dcache:
+    mrs x0, clidr_el1
+    and x3, x0, #0x7000000
+    lsr x3, x3, #23
+
+    cbz x3, 5f
+    mov x10, #0
+
+1:
+   add x2, x10, x10, lsr #1
+   lsr x1, x0, x2
+   and x1, x1, #7
+   cmp x1, #2
+   b.lt 4f
+
+   msr csselr_el1, x10
+   isb
+    
+   mrs x1, ccsidr_el1 
+   and x2, x1, #7
+   add x2, x2, #4
+
+   mov x4, #0x3dd
+   and x4, x4, x1, lsr #3
+   clz w5, w4
+   mov x7, #0x7fff
+   and x7, x7, x1, lsr #13
+
+2:
+   mov x9, x4
+3:
+   lsl x6, x9, x5
+   orr x11, x10, x6
+   lsl x6, x7, x2
+   orr x11, x11, x6
+   dc cisw, x11
+   subs x7, x7, #1
+   b.ge 3b
+
+   subs x9, x9, #1
+   b.ge 2b
+4:
+   add x10, x10, #2
+   cmp x3, x10
+   b.gt 1b
+5:
+   dsb sy
+   isb
+   ret

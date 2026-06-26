@@ -84,7 +84,7 @@ void AuVmmngrInitialize() {
 	uint64_t* newL0 = AuPmmngrAlloc();
 	memset(newL0, 0, PAGE_SIZE);
 
-	AuTextOut("[aurora]: new l0 allocated %x\r\n", newL0);
+
 	for (int i = 0; i < 512; i++) {
 		newL0[i] = previousL0[i];
 	}
@@ -113,9 +113,11 @@ void AuVmmngrInitialize() {
 		kernelAS[i] = newL0[i];
 	}
 
+
 	write_ttbr0_el1(newL0);
 	write_ttbr1_el1(kernelAS);
 
+	
 	tlb_flush_vmalle1is();
 
 	dsb_sy_barrier();
@@ -126,8 +128,7 @@ void AuVmmngrInitialize() {
 
 	AuPmmngrMoveHigher();
 
-	tlb_flush_vmalle1is();
-
+	//tlb_flush_vmalle1is();
 	_MMIOBase = (uint64_t*)MMIO_BASE;
 }
 
@@ -557,7 +558,7 @@ void* AuGetPhysicalAddress(uint64_t virt_addr) {
 	uint64_t* page = (uint64_t*)P2V(pt[pt_index(virt_addr)] & ~0xFFFUL);
 
 	if (page)
-		return V2P((uint64_t)page);
+		return (void*)V2P((uint64_t)page);
 	return NULL;
 }
 
@@ -590,7 +591,7 @@ void* AuGetPhysicalAddressEx(uint64_t* pml4_, uint64_t virt_addr) {
 	uint64_t* page = (uint64_t*)P2V(pt[pt_index(virt_addr)] & ~0xFFFUL);
 
 	if (page)
-		return V2P((uint64_t)page);
+		return (void*)V2P((uint64_t)page);
 	return NULL;
 }
 
@@ -617,7 +618,7 @@ uint64_t* AuCreateVirtualAddressSpace() {
 }
 
 uint64_t* AuGetRootPageTable(){
-	return P2V((uint64_t)_RootPaging);
+	return (uint64_t*)P2V((uint64_t)_RootPaging);
 }
 
 extern void AuConsoleFlushFramebuffer();
@@ -638,7 +639,7 @@ void AuVmmngrBootFree() {
 	/*AuConsoleFlushFramebuffer();
 	dsb_ish();
 	isb_flush();*/
-	write_ttbr0_el1((uint64_t)_RootPaging);
+	write_ttbr0_el1(_RootPaging);
 	tlb_flush_vmalle1is();
 }
 

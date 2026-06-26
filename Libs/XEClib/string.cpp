@@ -39,18 +39,69 @@
 #define HASZERO(x) ((x)-ONES & ~(x) & HIGHS)
 
 void* _cdecl memset(void *targ, unsigned char val, size_t len){
-	uint8_t *t = (uint8_t*)targ;
+	/*uint8_t *t = (uint8_t*)targ;
 	while (len--)
-		*t++ = val;
+		*t++ = val;*/
+	uint8_t* t = (uint8_t*)targ;
+	uint8_t byte_val = (uint8_t)val;
 
+	while (len > 0 && ((uintptr_t)t & 7) != 0) {
+		*t++ = byte_val;
+		len--;
+	}
+
+	if (len >= 8) {
+		uint64_t bulk_val = byte_val;
+		bulk_val |= (bulk_val << 8);
+		bulk_val |= (bulk_val << 16);
+		bulk_val |= (bulk_val << 32);
+
+		uint64_t* t64 = (uint64_t*)t;
+		uint32_t blocks = len / 8;
+
+		while (blocks--)
+			*t64++ = bulk_val;
+
+		t = (uint8_t*)t64;
+		len %= 8;
+	}
+
+	while (len--)
+		*t++ = byte_val;
 	return t;
 }
 
 
 void memset(void *targ, unsigned char val, uint32_t len){
-	uint8_t *t = (uint8_t*)targ;
+	/*uint8_t *t = (uint8_t*)targ;
 	while (len--)
-		*t++ = val;
+		*t++ = val;*/
+	uint8_t* t = (uint8_t*)targ;
+	uint8_t byte_val = (uint8_t)val;
+
+	while (len > 0 && ((uintptr_t)t & 7) != 0) {
+		*t++ = byte_val;
+		len--;
+	}
+
+	if (len >= 8) {
+		uint64_t bulk_val = byte_val;
+		bulk_val |= (bulk_val << 8);
+		bulk_val |= (bulk_val << 16);
+		bulk_val |= (bulk_val << 32);
+
+		uint64_t* t64 = (uint64_t*)t;
+		uint32_t blocks = len / 8;
+
+		while (blocks--)
+			*t64++ = bulk_val;
+
+		t = (uint8_t*)t64;
+		len %= 8;
+	}
+
+	while (len--)
+		*t++ = byte_val;
 }
 
 
@@ -62,17 +113,120 @@ int memcmp(const void *vl, const void *vr, size_t n){
 }
 
 
-void *memcpy(void *dest, void *src, size_t count) {
-	const char *sp = (const char*)src;
-	char *dp = (char*)dest;
-	for (; count != 0; count--) *dp++ = *sp++;
+void *memcpy(void *dest, void *src, size_t len) {
+	uint8_t* t = (uint8_t*)dest;
+	const uint8_t* s = (const uint8_t*)src;
+
+	if (len == 0 || dest == src) return 0;
+
+	if ((t > s) && (t < (s + len))) {
+		t += len;
+		s += len;
+
+		while (len > 0 && ((uintptr_t)t & 7) != 0) {
+			len--;
+			*(--t) = *(--s);
+		}
+
+		if (len >= 8) {
+			uint32_t blocks = len / 8;
+			uint64_t* t64 = (uint64_t*)t;
+			const uint64_t* s64 = (const uint64_t*)s;
+
+			while (blocks--)
+				*(--t64) = *(--s64);
+
+			t = (uint8_t*)t64;
+			s = (uint8_t*)s64;
+			len %= 8;
+		}
+
+		while (len--)
+			*(--t) = *(--s);
+	}
+
+	else {
+		while (len > 0 && ((uintptr_t)t & 7) != 0) {
+			*t++ = *s++;
+			len--;
+		}
+
+		if (len >= 8) {
+			uint32_t blocks = len / 8;
+			uint64_t* t64 = (uint64_t*)t;
+			const uint64_t* s64 = (const uint64_t*)s;
+
+			while (blocks--)
+				*t64++ = *s64++;
+
+			t = (uint8_t*)t64;
+			s = (uint8_t*)s64;
+			len %= 8;
+		}
+
+		while (len--)
+			*t++ = *s++;
+	}
 	return dest;
 }
 
-void *memcpy(void *dest, void *src, uint32_t count) {
-	const char *sp = (const char*)src;
+void *memcpy(void *dest, void *src, uint32_t len) {
+	/*const char *sp = (const char*)src;
 	char *dp = (char*)dest;
-	for (; count != 0; count--) *dp++ = *sp++;
+	for (; count != 0; count--) *dp++ = *sp++;*/
+	uint8_t* t = (uint8_t*)dest;
+	const uint8_t* s = (const uint8_t*)src;
+
+	if (len == 0 || dest == src) return 0;
+
+	if ((t > s) && (t < (s + len))) {
+		t += len;
+		s += len;
+
+		while (len > 0 && ((uintptr_t)t & 7) != 0) {
+			len--;
+			*(--t) = *(--s);
+		}
+
+		if (len >= 8) {
+			uint32_t blocks = len / 8;
+			uint64_t* t64 = (uint64_t*)t;
+			const uint64_t* s64 = (const uint64_t*)s;
+
+			while (blocks--)
+				*(--t64) = *(--s64);
+
+			t = (uint8_t*)t64;
+			s = (uint8_t*)s64;
+			len %= 8;
+		}
+
+		while (len--)
+			*(--t) = *(--s);
+	}
+
+	else {
+		while (len > 0 && ((uintptr_t)t & 7) != 0) {
+			*t++ = *s++;
+			len--;
+		}
+
+		if (len >= 8) {
+			uint32_t blocks = len / 8;
+			uint64_t* t64 = (uint64_t*)t;
+			const uint64_t* s64 = (const uint64_t*)s;
+
+			while (blocks--)
+				*t64++ = *s64++;
+
+			t = (uint8_t*)t64;
+			s = (uint8_t*)s64;
+			len %= 8;
+		}
+
+		while (len--)
+			*t++ = *s++;
+	}
 	return dest;
 }
 

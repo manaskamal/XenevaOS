@@ -301,7 +301,7 @@ void AuPmmngrInitialize(KERNEL_BOOT_INFO* info) {
 		pageCount = (dtb_end - dtb_start) / 0x1000;
 
 		for (int i = 0; i < pageCount; i++) {
-			uint64_t addr = dtb_start + i * 0x1000; //  ((uint64_t)Address - UsablePhysicalMemory);
+			uint64_t addr = dtb_start + (uint64_t)i * 0x1000; //  ((uint64_t)Address - UsablePhysicalMemory);
 			uint64_t Index = (addr - UsablePhysicalMemory);
 			AuPmmngrLockPage(Index);
 		
@@ -312,7 +312,7 @@ void AuPmmngrInitialize(KERNEL_BOOT_INFO* info) {
 		initrdEnd = (initrdEnd + 0x1000 - 1) & ~(0x1000 - 1);
 		pageCount = (initrdEnd - initrdStart) / 0x1000;
 		for (int i = 0; i < pageCount; i++) {
-			uint64_t addr = initrdStart + i * 0x1000;
+			uint64_t addr = initrdStart + (uint64_t)i * 0x1000;
 			uint64_t Index = (addr - UsablePhysicalMemory);
 			AuPmmngrLockPage(Index);
 		}
@@ -323,7 +323,7 @@ void AuPmmngrInitialize(KERNEL_BOOT_INFO* info) {
 		pageCount = (lbEnd - lbStart) / 0x1000;
 
 		for (int i = 0; i < pageCount; i++) {
-			uint64_t addr = lbStart + i * 0x1000;
+			uint64_t addr = lbStart + (uint64_t)i * 0x1000;
 			uint64_t Index = (addr - UsablePhysicalMemory);
 			AuPmmngrLockPage(Index);
 		}

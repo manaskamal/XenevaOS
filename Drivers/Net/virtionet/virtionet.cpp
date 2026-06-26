@@ -475,7 +475,7 @@ void AuVirtioNetInitialize(uint64_t device) {
 * aurora system
 */
 AU_EXTERN AU_EXPORT int AuDriverUnload() {
-
+	AuVirtioNetReset(_cfg);
 	return 0;
 }
 

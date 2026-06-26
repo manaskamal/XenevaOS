@@ -133,13 +133,13 @@ void AuACPIInitialise(void* acpi_base) {
 	memset(__AuroraBasicAcpi, 0, sizeof(AuroraBasicACPI));
 	__ACPIRSDP = acpi_base;
 	acpiRsdp2* rsdp = (acpiRsdp2*)acpi_base;
-	acpiRsdt* rsdt = (acpiRsdt*)rsdp->rsdtAddr;
+	acpiRsdt* rsdt = (acpiRsdt*)(uintptr_t)rsdp->rsdtAddr;
 	acpiXsdt* xsdt = (acpiXsdt*)rsdp->xsdtAddr;
 	AuTextOut("Getting physical address of ACPIBASE \r\n");
 	//AuFreePages(acpi_base, 0, 4096);
 	char sig[5];
 	AuTextOut("ACPI initializing -> %x\n", acpi_base);
-	for (int i = 0; i < 8; i++)
+	for (int i = 0; i < 6; i++)
 		AuTextOut("%c", rsdp->oemId[i]);
 	AuTextOut("ACPI xsdt -> %x \n", rsdp->xsdtAddr);
 	int entries = 0;
@@ -154,7 +154,7 @@ void AuACPIInitialise(void* acpi_base) {
 	
 	for (int count = 0; count < entries; count++) {
 		if (rsdt) {
-			header = (acpiSysDescHeader*)rsdt->entry[count];
+			header = (acpiSysDescHeader*)(uintptr_t)rsdt->entry[count];
 		}
 		else {
 			header = (acpiSysDescHeader*)xsdt->entry[count];
@@ -195,10 +195,10 @@ void AuACPIInitialise(void* acpi_base) {
 	}
 
 	if (__AuroraBasicAcpi->fadt && __AuroraBasicAcpi->fadt->facsAddr)
-		__AuroraBasicAcpi->facs = (acpiFacs*)__AuroraBasicAcpi->fadt->facsAddr;
+		__AuroraBasicAcpi->facs = (acpiFacs*)(uintptr_t)__AuroraBasicAcpi->fadt->facsAddr;
 
 	if (__AuroraBasicAcpi->fadt && __AuroraBasicAcpi->fadt->dsdtAddr) {
-		__AuroraBasicAcpi->dsdt = (acpiDsdt*)__AuroraBasicAcpi->fadt->dsdtAddr;
+		__AuroraBasicAcpi->dsdt = (acpiDsdt*)(uintptr_t)__AuroraBasicAcpi->fadt->dsdtAddr;
 		//AuHalRegisterIRQ(__AuroraBasicAcpi->fadt->sciInt, AuFADTHandler, __AuroraBasicAcpi->fadt->sciInt, false);
 
 		uint8_t* S5Block = search_s5(__AuroraBasicAcpi->dsdt);

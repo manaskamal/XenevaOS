@@ -93,9 +93,6 @@
     <ClInclude Include="..\BaseHdr\_null.h">
       <Filter>Include</Filter>
     </ClInclude>
-    <ClInclude Include="..\BaseHdr\stdint.h">
-      <Filter>Include</Filter>
-    </ClInclude>
     <ClInclude Include="..\BaseHdr\stdarg.h">
       <Filter>Include</Filter>
     </ClInclude>
@@ -347,6 +344,9 @@
     </ClInclude>
     <ClInclude Include="..\BaseHdr\Fs\initrd.h">
       <Filter>Include\Fs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\stdint.h">
+      <Filter>Include</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

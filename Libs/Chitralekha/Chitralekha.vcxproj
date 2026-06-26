@@ -273,8 +273,10 @@
     <ClInclude Include="widgets\progress.h" />
     <ClInclude Include="widgets\scrollbar.h" />
     <ClInclude Include="widgets\scrollpane.h" />
+    <ClInclude Include="widgets\sidebar.h" />
     <ClInclude Include="widgets\slider.h" />
     <ClInclude Include="widgets\textbox.h" />
+    <ClInclude Include="widgets\toolbar.h" />
     <ClInclude Include="widgets\view.h" />
     <ClInclude Include="widgets\window.h" />
     <ClInclude Include="_fastcpy.h" />
@@ -312,8 +314,10 @@
     <ClCompile Include="widgets\progress.cpp" />
     <ClCompile Include="widgets\scrollbar.cpp" />
     <ClCompile Include="widgets\scrollpane.cpp" />
+    <ClCompile Include="widgets\sidebar.cpp" />
     <ClCompile Include="widgets\slider.cpp" />
     <ClCompile Include="widgets\textbox.cpp" />
+    <ClCompile Include="widgets\toolbar.cpp" />
     <ClCompile Include="widgets\view.cpp" />
     <ClCompile Include="widgets\window.cpp" />
   </ItemGroup>

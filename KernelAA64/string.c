@@ -13,9 +13,36 @@ typedef size_t WT;
 
 
 void memset(void* targ, int val, uint32_t len) {
-	uint8_t* t = (uint8_t*)targ;
+	/*uint8_t* t = (uint8_t*)targ;
 	while (len--)
-		*t++ = (unsigned char*)val;
+		*t++ = (unsigned char*)val;*/
+
+	uint8_t* t = (uint8_t*)targ;
+	uint8_t byte_val = (uint8_t)val;
+
+	while (len > 0 && ((uintptr_t)t & 7) != 0) {
+		*t++ = byte_val;
+		len--;
+	}
+
+	if (len >= 8) {
+		uint64_t bulk_val = byte_val;
+		bulk_val |= (bulk_val << 8);
+		bulk_val |= (bulk_val << 16);
+		bulk_val |= (bulk_val << 32);
+
+		uint64_t* t64 = (uint64_t*)t;
+		uint32_t blocks = len / 8;
+
+		while (blocks--)
+			*t64++ = bulk_val;
+
+		t = (uint8_t*)t64;
+		len %= 8;
+	}
+
+	while (len--)
+		*t++ = byte_val;
 }
 
 int memcmp(const void* first, const void* second, size_t length) {
@@ -41,20 +68,73 @@ int memcmp(const void* first, const void* second, size_t length) {
 
 void memcpy(void* __restrict dest, void* __restrict src, size_t len) {
 	//_fastcpy(dest, src, count);
+	//uint8_t* t = (uint8_t*)dest;
+	//uint8_t* s = (uint8_t*)src;
+	//if (len > 0) {
+	//	// check to see if target is in the range of src and if so, do a memmove() instead
+	//	if ((t > s) && (t < (s + len))) {
+	//		t += (len - 1);
+	//		s += (len - 1);
+	//		while (len--)
+	//			*t-- = *s++;
+	//	}
+	//	else {
+	//		while (len--)
+	//			*t++ = *s++;
+	//	}
+	//}
 	uint8_t* t = (uint8_t*)dest;
-	uint8_t* s = (uint8_t*)src;
-	if (len > 0) {
-		// check to see if target is in the range of src and if so, do a memmove() instead
-		if ((t > s) && (t < (s + len))) {
-			t += (len - 1);
-			s += (len - 1);
-			while (len--)
-				*t-- = *s++;
+	const uint8_t* s = (const uint8_t*)src;
+
+	if (len == 0 || dest == src) return;
+
+	if ((t > s) && (t < (s + len))) {
+		t += len;
+		s += len;
+
+		while (len > 0 && ((uintptr_t)t & 7) != 0) {
+			len--;
+			*(--t) = *(--s);
 		}
-		else {
-			while (len--)
-				*t++ = *s++;
+
+		if (len >= 8) {
+			uint32_t blocks = len / 8;
+			uint64_t* t64 = (uint64_t*)t;
+			const uint64_t* s64 = (const uint64_t*)s;
+
+			while (blocks--)
+				*(--t64) = *(--s64);
+
+			t = (uint8_t*)t64;
+			s = (uint8_t*)s64;
+			len %= 8;
 		}
+
+		while (len--)
+			*(--t) = *(--s);
+	}
+
+	else {
+		while (len > 0 && ((uintptr_t)t & 7) != 0) {
+			*t++ = *s++;
+			len--;
+		}
+
+		if (len >= 8) {
+			uint32_t blocks = len / 8;
+			uint64_t* t64 = (uint64_t*)t;
+			const uint64_t* s64 = (const uint64_t*)s;
+
+			while (blocks--)
+				*t64++ = *s64++;
+
+			t = (uint8_t*)t64;
+			s = (uint8_t*)s64;
+			len %= 8;
+		}
+
+		while (len--)
+			*t++ = *s++;
 	}
 }
 

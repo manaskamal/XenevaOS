@@ -32,8 +32,11 @@
 
 
 #include <stdint.h>
+
+#ifdef __GNUC__
 #ifndef __cplusplus
 #include <stdbool.h>
+#endif
 #endif
 
 #pragma pack(push, 1)

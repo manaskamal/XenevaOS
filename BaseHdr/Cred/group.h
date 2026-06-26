@@ -85,7 +85,7 @@ typedef enum _gid_entries_ {
     AURORA_GID_MISC_USERS,
     AURORA_GID_MISC_ADMIN,
     AURORA_GID_MISC_DAEMONS,
-};
+}GID_ENTRIES;
 
 /**
  * @brief AuCredGroupInitialize -- initialize default group

@@ -63,9 +63,10 @@ static int _pcie_check_and_map_dtb() {
 	uint64_t ecamAddr = AuDeviceTreeGetRegAddress(pcie, 2);
 	uint64_t sizeValue = AuDeviceTreeGetRegSize(pcie, 2, 2);
 	AuTextOut("[aurora]: ecam address : %x, size value : %x \n", ecamAddr, sizeValue);
-	_ecamAddress = AuMapMMIO(ecamAddr, sizeValue / 0x1000);
-#endif
 
+	/** in qemu, ecam address is 256 mb so 0x10000 number of pages */
+	_ecamAddress = AuMapMMIO(ecamAddr, 0x10000);
+#endif
 	_pcieInitialized = 1;
 	return 0;
 }
@@ -126,6 +127,7 @@ void AA64PCIeInitialize() {
 	AuTextOut("[aurora]: Ki koriba aru !! Eku dekhun device discovery mechanism support nokore !! Baad diya \r\n");
 	AuTextOut("[aurora]: Ponta Bhaat khuwa ge \r\n");
 	_pcieInitialized = 0;
+	for (;;);
 	return;
 
 }
@@ -176,7 +178,6 @@ uint64_t AuPCIEGetDevice(uint16_t seg, int bus, int dev, int func) {
  * @return return the result in DWORD
  */
 uint32_t AuPCIERead(uint64_t device, int reg, int bus, int dev, int func) {
-	
 	uint64_t result = 0;
 
 	int size = 0;
@@ -248,7 +249,6 @@ uint32_t AuPCIERead(uint64_t device, int reg, int bus, int dev, int func) {
 		size = 1;
 		break;
 	}
-
 	if (size == 1) {
 		result = *RAW_OFFSET(volatile uint8_t*, device, reg);
 		return result;

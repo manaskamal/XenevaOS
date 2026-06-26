@@ -42,6 +42,7 @@
 #include <aucon.h>
 #include <Mm/kmalloc.h>
 #include <Drivers/uart.h>
+#include <string.h>
 
 uint16_t IPv4CalculateChecksum(IPv4Header* p) {
 	uint32_t sum = 0;

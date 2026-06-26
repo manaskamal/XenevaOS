@@ -104,6 +104,9 @@ XE_EXTERN XE_LIB void ChDrawIcon(ChCanvas* canv, ChIcon* ico, int x, int y){
 	if (!ico)
 		return;
 
+	if (ico->image.fd == -1)
+		return;
+
 	uint32_t width = ico->image.width;
 	uint32_t height = ico->image.height;
 	uint32_t j = 0;
@@ -136,6 +139,9 @@ XE_EXTERN XE_LIB void ChDrawIcon(ChCanvas* canv, ChIcon* ico, int x, int y){
 */
 XE_EXTERN XE_LIB void ChDrawIconClipped(ChCanvas* canv, ChIcon* ico, int x, int y, ChRect *limit){
 	if (!ico)
+		return;
+
+	if (ico->image.fd == -1)
 		return;
 
 	uint32_t width = ico->image.width;
@@ -183,7 +189,7 @@ XE_EXTERN XE_LIB void ChDrawIconClipped(ChCanvas* canv, ChIcon* ico, int x, int 
 			uint32_t g = image_row[j++] & 0xff;
 			uint32_t r = image_row[j++] & 0xff;
 			uint32_t a = image_row[j++] & 0xff;
-			uint32_t rgb = ((a << 24) | (r << 16) | (g << 8) | (b));
+			uint32_t rgb = ((a << 24) | (r << 16) | (g << 8) | b);
 			if (rgb & 0xFF000000)
 				ChDrawPixel(canv, x + k, y + i, rgb);
 		}

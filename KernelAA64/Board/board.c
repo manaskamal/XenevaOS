@@ -34,6 +34,7 @@
 #include <Board/board.h>
 #include <stdint.h>
 #include <aucon.h>
+#include <Drivers/virtio.h>
 
 extern void imx8mp_gpc_init();
 
