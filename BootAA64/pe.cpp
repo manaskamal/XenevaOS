@@ -84,6 +84,9 @@ void XEPELoadImage(void* filebuff) {
 		void* sect_addr = (void*)load_addr;
 		
 		size_t sectsz = sectionHeader[i].VirtualSize;
+		if (sectionHeader[i].SizeOfRawData > sectsz) {
+			sectsz = sectionHeader[i].SizeOfRawData;
+		}
 		size_t aligned_addr = load_addr & ~0xFFFULL;
 		int req_pages = (sectsz + (load_addr & 0xFFF)) / 4096 +
 			(((sectsz + (load_addr & 0xFFF)) % 4096) ? 1 : 0);

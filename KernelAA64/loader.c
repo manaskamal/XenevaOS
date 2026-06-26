@@ -203,6 +203,10 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) 
 	else {
 		UARTDebugOut("[loader.c]: file : %s was not in cache adding it \r\n", filename);
 		file = AuVFSOpen(filename);
+		if (!file) {
+			UARTDebugOut("[loader.c]: Failed to open file %s\r\n", filename);
+			return -1;
+		}
 		fb = (AuMMFileBack*)kmalloc(sizeof(AuMMFileBack));
 		memset(fb, 0, sizeof(AuMMFileBack));
 		file->flags |= FS_FLAG_CACHED;
@@ -222,35 +226,39 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) 
 	if (file->eof == 1 && fb->readComplete == 1)
 		file->eof = 0;
 
-	int sbIndex = 0;
-	while (file->eof != 1) {
-		uint64_t physcache = NULL;
-		if (fb->readComplete == false) {
-			physcache = (uint64_t)AuPmmngrAlloc();
+	if (fb->readComplete == false) {
+		size_t file_offset = 0;
+		while (file->eof != 1) {
+			uint64_t block = ((uint64_t)_ldr_scratchBuffer + file_offset);
+			size_t bytes_read = AuVFSNodeReadBlock(fsys, file, block);
+			if (bytes_read == 0) break;
+			file_offset += bytes_read;
+		}
+
+		size_t total_pages = file_offset / PAGE_SIZE + ((file_offset % PAGE_SIZE) ? 1 : 0);
+		for (size_t i = 0; i < total_pages; i++) {
+			uint64_t physcache = (uint64_t)AuPmmngrAlloc();
 			AuMMPageCache* cache = AuMmngrPageCacheCreate();
 			cache->physicalPage = physcache;
-			cache->diskBlock = fsys->get_disk_block(fsys, file, file->current);
-			cache->pageIndex = sbIndex;
+			cache->diskBlock = 0;
+			cache->pageIndex = i;
 			AuMmngrFileBackAddPageCache(fb, cache);
-			uint64_t block = ((uint64_t)_ldr_scratchBuffer + (sbIndex * 0x1000));
-			memset(block, 0, 4096);
-			AuVFSNodeReadBlock(fsys, file, block);
-			if (physcache) {
-				memcpy(P2V(physcache), block, PAGE_SIZE);
-			}
+
+			memset((void*)P2V(physcache), 0, PAGE_SIZE);
+			size_t copy_sz = PAGE_SIZE;
+			if (i == total_pages - 1 && (file_offset % PAGE_SIZE) != 0)
+				copy_sz = file_offset % PAGE_SIZE;
+			memcpy(P2V(physcache), (void*)((uint64_t)_ldr_scratchBuffer + i * PAGE_SIZE), copy_sz);
 		}
-		else {
-			if (pcache == NULL) {
-				break;
-			}
-			uint64_t block = ((uint64_t)_ldr_scratchBuffer + (sbIndex * 0x1000));
-			memset(block, 0, 4096);
-			memcpy(block, P2V(pcache->physicalPage), PAGE_SIZE);
-			if (physcache)
-				memcpy(P2V(physcache), block, PAGE_SIZE);
+		fb->readComplete = true;
+	} else {
+		AuMMPageCache* pcache = fb->pageCache;
+		size_t file_offset = 0;
+		while (pcache != NULL) {
+			memcpy((void*)((uint64_t)_ldr_scratchBuffer + file_offset), P2V(pcache->physicalPage), PAGE_SIZE);
+			file_offset += PAGE_SIZE;
 			pcache = pcache->next;
 		}
-		sbIndex++;
 	}
 	
 	fb->readComplete = 1;

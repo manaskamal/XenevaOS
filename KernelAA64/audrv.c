@@ -296,14 +296,12 @@ void AuDriverLoad(char* filename, AuDriver* driver) {
 		return;
 	}
 	
-	int sbIndex = 0;
+	size_t file_offset = 0;
 	while (file->eof != 1) {
-		uint64_t block = ((uint64_t)scratchBuffer + (sbIndex * 0x1000));
-		memset(block, 0, 4096);
-		AuVFSNodeReadBlock(fsys, file, block);
-		sbIndex++;
-		//AuMapPage((uint64_t)block, (driver_load_base + next_base_offset * 4096), 0);
-		//next_base_offset++;
+		uint64_t block = ((uint64_t)scratchBuffer + file_offset);
+		size_t bytes_read = AuVFSNodeReadBlock(fsys, file, block);
+		if (bytes_read == 0) break;
+		file_offset += bytes_read;
 	}
 
 	IMAGE_DOS_HEADER* dos_ = (IMAGE_DOS_HEADER*)scratchBuffer;
@@ -323,15 +321,22 @@ void AuDriverLoad(char* filename, AuDriver* driver) {
 		size_t load_addr = (size_t)virtual_base + sectionHeader[i].VirtualAddress;
 		void* sect_addr = (void*)load_addr;
 		size_t sectsz = sectionHeader[i].VirtualSize;
-		int req_pages = sectsz / 4096 +
-			((sectsz % 4096) ? 1 : 0);
+		if (sectionHeader[i].SizeOfRawData > sectsz)
+			sectsz = sectionHeader[i].SizeOfRawData;
+			
+		size_t aligned_addr = load_addr & ~0xFFFULL;
+		int req_pages = (sectsz + (load_addr & 0xFFF)) / 4096 + 
+			(((sectsz + (load_addr & 0xFFF)) % 4096) ? 1 : 0);
 		uint64_t* block = 0;
 		for (int j = 0; j < req_pages; j++) {
-			uint64_t alloc = (load_addr + j * 0x1000);
-			AuMapPage((uint64_t)AuPmmngrAlloc(), alloc, PTE_NORMAL_MEM);
+			uint64_t alloc = (aligned_addr + j * 0x1000);
+			if (!AuGetPhysicalAddress(alloc)) {
+				AuMapPage((uint64_t)AuPmmngrAlloc(), alloc, PTE_NORMAL_MEM);
+				memset((void*)alloc, 0, 4096);
+				next_base_offset++;
+			}
 			if (!block)
 				block = (uint64_t*)alloc;
-			next_base_offset++;
 		}
 
 		memcpy(sect_addr, RAW_OFFSET(void*,scratchBuffer, sectionHeader[i].PointerToRawData), sectionHeader[i].SizeOfRawData);
@@ -607,10 +612,11 @@ AuDriver* AuDrvManagerCheckFault(uint64_t fault_addr) {
 	for (int i = 0; i < 246; i++) {
 		AuDriver* drv = drivers[i];
 		if (drv) {
-			if (fault_addr > drv->new_load_base || fault_addr <= drv->new_load_base + drv->image_sz)
+			if (drv->new_load_base != 0 && fault_addr > drv->new_load_base && fault_addr <= drv->new_load_base + drv->image_sz)
 				return drv;
 		}
 	}
+	return NULL;
 }
 
 /**

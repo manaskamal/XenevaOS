@@ -3,7 +3,10 @@
 Runtime configuration files are loaded by the kernel to obtain descriptions of the system files required to load. For example, they define which driver files are available in the build image and how they relate to each hardware device. 
 
 ## Aurora Driver Configuration Files
-Aurora Driver configuration files are divided into two types: PCIe-based configuration files and board-based configuration files. Board-based configuration files need to be modified according to the target board; for example, an i.MX8MP-based board needs configuration matching its specific hardware. A PCIe-based configuration file can hold any driver file along with its PCIe subclass/class code or vendor ID/device ID entry.
+Aurora Driver configuration files are divided into two types: PCIe-based configuration files and board-based configuration files. 
+
+- **`board.cnf` (Predefined Hardware):** Used for SoC boards (like Raspberry Pi) where hardware is fixed. It statically links predefined hardware directly to software drivers, making the boot process extremely fast and small in size. Board-based configuration files need to be modified according to the target board (e.g., an i.MX8MP-based board needs configuration matching its specific hardware).
+- **`audrv.cnf` (Dynamic Hardware):** Used for dynamic buses like PCIe. The kernel first discovers available hardware dynamically, then looks up this file to find the matching driver software location. A PCIe-based configuration file can hold any driver file along with its PCIe subclass/class code or vendor ID/device ID entry.
 
 ## The `audrv.cnf` File
 This file must be present in the root folder of the ramdisk image. It holds PCIe-based driver file entries. For example:
@@ -19,4 +22,4 @@ As you can see, there are certain marker points present in the configuration fil
 
 ## The `board.cnf` File
 
-The board configuration file follows a slightly different format than the `audrv.cnf` file. This file also needs to be present in the root folder of the ramdisk. 
+The board configuration file follows a slightly different format than the `audrv.cnf` file. This file also needs to be present in the root folder of the ramdisk. Since it deals with predefined hardware, it maps static hardware identifiers directly to their respective driver files, bypassing dynamic discovery for maximum boot speed and efficiency.

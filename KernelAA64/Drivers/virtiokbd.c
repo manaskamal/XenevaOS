@@ -133,8 +133,8 @@ void AuVirtioKbdInitialize(uint64_t device) {
 	uint64_t barLo = AuPCIERead(device, PCI_BAR4, bus, dev, func);
 	uint64_t barHi = AuPCIERead(device, PCI_BAR5, bus, dev, func);
 	uint64_t bar = ((uint64_t)barHi << 32) | (barLo & ~0xFULL);
-	uint64_t finalAddr = (uint64_t)AuMapMMIO(bar, 2);
-	struct VirtioDeviceConfig* cfg = (struct VirtioDeviceConfig*)(bar + 0x2000);
+	uint64_t finalAddr = (uint64_t)AuMapMMIO(bar, 16);
+	struct VirtioDeviceConfig* cfg = (struct VirtioDeviceConfig*)(finalAddr + 0x2000);
 	cfg->select = 1;
 	cfg->subsel = 0;
 	isb_flush();
@@ -164,7 +164,7 @@ void AuVirtioKbdInitialize(uint64_t device) {
 	isb_flush();
 	dsb_ish();
 
-	struct VirtioCommonCfg* common = (struct VirtioCommonCfg*)bar;
+	struct VirtioCommonCfg* common = (struct VirtioCommonCfg*)finalAddr;
 	common->DeviceStatus = 0;
 	
 	isb_flush();
