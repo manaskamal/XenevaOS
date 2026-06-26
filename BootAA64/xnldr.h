@@ -35,8 +35,9 @@
 #include <stdint.h>
 #include <Uefi.h>
 #include <stddef.h>
-
+#ifndef SIZE_MAX
 #define SIZE_MAX 0xFFFFFFFF
+#endif
 
 
 #define EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID \
