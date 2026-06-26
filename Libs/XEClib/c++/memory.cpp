@@ -33,7 +33,7 @@
 namespace std {
 
 	template <class T>
-	allocator<T>::allocator()
+	allocator<T>::allocator() throw()
 	{
 	}
 
@@ -45,7 +45,7 @@ namespace std {
 
 
 	template <class T>
-	allocator<T>::~allocator()
+	allocator<T>::~allocator() throw()
 	{
 	}
 
