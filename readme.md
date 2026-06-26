@@ -80,7 +80,7 @@ _And many more coming soon_
 
 # Building the project
 
-The project was originally built purely on a Windows Environment. Please visit [Build Instructions page (Windows)](Docs/BuildInstructions.md) for legacy information.
+The project natively supports both Windows and Linux environments. Please visit [Build Instructions page (Windows)](Docs/BuildInstructions.md) for the MSVC build information.
 We are actively porting the project to Linux using GCC. For the new Linux GCC build instructions, please visit [Linux Build Instructions](Docs/BuildInstructions(Linux).md).
 
 # Purpose and Goals

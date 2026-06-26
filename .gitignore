@@ -11,6 +11,9 @@ gnu-efi/
 *.sdf
 *.suo
 *.user
+*.ipch
+*.VC.db
+*.log
 x64/
 ARM64/
 Debug/
