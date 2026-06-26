@@ -457,7 +457,9 @@ void* au_request_page(int pages) {
 	
 #ifdef _USE_DLMALLOC
 	//UARTDebugOut("[au_request_page]: num_pages : %d, ptr : %x \r\n", pages, page_);
+	/* dlmalloc passes SIZE IN BYTES, convert to page count */
 	pages = (pages + 4095) / 4096;
+	if (pages < 1) pages = 1;
 #endif
 	for (size_t i = 0; i < pages; i++) {
 		void* p = AuPmmngrAlloc();

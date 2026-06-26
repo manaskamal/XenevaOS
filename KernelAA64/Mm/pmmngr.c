@@ -166,12 +166,19 @@ void AuPmmngrInitialize(KERNEL_BOOT_INFO* info) {
 	void* BitmapArea = 0;
 	bool print = 0;
 	
+	uint64_t HighestAddress = 0;
+	
 	if (info->boot_type != BOOT_LITTLEBOOT_ARM64) {
 		MemMapEntries = info->mem_map_size / info->descriptor_size;
 		/* Scan a suitable area for the bitmap */
 		for (size_t i = 0; i < MemMapEntries; i++) {
 			EFI_MEMORY_DESCRIPTOR* EfiMem = (EFI_MEMORY_DESCRIPTOR*)((uint64_t)info->map + i * info->descriptor_size);
 		
+			uint64_t end_addr = EfiMem->phys_start + (EfiMem->num_pages * 4096);
+			if (end_addr > HighestAddress) {
+				HighestAddress = end_addr;
+			}
+
 			if (EfiMem->type == 7) {
 				_TotalRam += EfiMem->num_pages;
 				if (((EfiMem->num_pages * 4096) > 0x1F0000) && BitmapArea == 0) {
@@ -210,6 +217,10 @@ void AuPmmngrInitialize(KERNEL_BOOT_INFO* info) {
 		for (size_t i = 0; i < lb->usable_region_count; i++) {
 			uint64_t base = memRegn[i].base;
 			uint64_t numPages = memRegn[i].pageCount;
+			uint64_t end_addr = base + (numPages * 4096);
+			if (end_addr > HighestAddress) {
+				HighestAddress = end_addr;
+			}
 			if (((numPages * 4096) > 0x1F0000) && BitmapArea == 0) {
 				BitmapArea = (void*)base;
 			}
@@ -224,14 +235,14 @@ void AuPmmngrInitialize(KERNEL_BOOT_INFO* info) {
 
 	_FreeMemory = _TotalRam;
 	AuTextOut("Total RAM : %x \r\n", (_TotalRam * 0x1000));
+	AuTextOut("Highest Address : %x \r\n", HighestAddress);
 
-
-
-	uint64_t BitmapSize = (_TotalRam / 8) + 1; // (_TotalRam * 4096) / 4096 / 8 + 1;
+	uint64_t TotalPagesCount = HighestAddress / 4096;
+	uint64_t BitmapSize = (TotalPagesCount / 8) + 1; // (_TotalRam * 4096) / 4096 / 8 + 1;
 	uint64_t page_desc_addr = (uint64_t)BitmapArea + BitmapSize;
 	page_desc_addr = ALIGN_UP(page_desc_addr, 64);
 	page_desc = (AuPageDesc*)page_desc_addr;
-	total_page_desc_count = _TotalRam;
+	total_page_desc_count = TotalPagesCount;
 	size_t page_desc_len = total_page_desc_count * sizeof(AuPageDesc);
 	UsablePhysicalMemory = (uint64_t)page_desc_addr + page_desc_len;
 	UsablePhysicalMemory = (UsablePhysicalMemory + (PAGE_SIZE - 1)) & ~(uint64_t)(PAGE_SIZE - 1);
@@ -250,8 +261,7 @@ void AuPmmngrInitialize(KERNEL_BOOT_INFO* info) {
 		for (size_t i = 0; i < MemMapEntries; i++) {
 			EFI_MEMORY_DESCRIPTOR* EfiMem = (EFI_MEMORY_DESCRIPTOR*)((uint64_t)info->map + i * info->descriptor_size);
 			//_TotalRam += EfiMem->num_pages;
-			if (EfiMem->type != 7 && EfiMem->type != 1 && EfiMem->type != 2 &&
-				EfiMem->type != 3 && EfiMem->type != 4) {
+			if (EfiMem->type != 7) {
 				uint64_t PhysStart = EfiMem->phys_start;
 				for (size_t j = 0; j < EfiMem->num_pages; j++) {
 					AuPmmngrLockPage(PhysStart + j * 4096);
@@ -269,10 +279,14 @@ void AuPmmngrInitialize(KERNEL_BOOT_INFO* info) {
 	uint64_t* AllocStack = (uint64_t*)info->allocated_stack;
 	while (AllocCount) {
 		uint64_t Address = *AllocStack--;
-		uint64_t index = (Address - UsablePhysicalMemory);
-		AuPmmngrLockPage(index);
+		AuPmmngrLockPage(Address);
 		AllocCount--;
 	}
+
+	for (uint64_t i = 0; i < (UsablePhysicalMemory >> PAGE_SHIFT); i++) {
+		AuPmmngrLockPage(i * PAGE_SIZE);
+	}
+	_RamBitmapIndex = UsablePhysicalMemory >> PAGE_SHIFT;
 
 	/* need more reservation of memory allocated by initrd and others*/
 	if (info->boot_type == BOOT_LITTLEBOOT_ARM64) {
@@ -332,16 +346,15 @@ void* AuPmmngrAlloc() {
 	for (; _RamBitmapIndex < _BitmapSize * 8; _RamBitmapIndex++) {
 		//AuTextOut("  RamBitmap[%d] -> %d   ",_RamBitmapIndex, RamBitmap[_RamBitmapIndex]);
 		if (AuPmmngrBitmapCheck(_RamBitmapIndex)) continue;
-		AuPmmngrLockPage(_RamBitmapIndex * 4096);
+		AuPmmngrLockPage(_RamBitmapIndex * PAGE_SIZE);
 		_UsedMemory++;
 		uint64_t index = _RamBitmapIndex;
 		//UARTDebugOut("AuPmmngrAlloc: RamBitmapIndex : %d %x \n", _RamBitmapIndex, (UsablePhysicalMemory + (index * 4096)));
-		page_desc[(UsablePhysicalMemory + (index * PAGE_SIZE)) >> PAGE_SHIFT].refcount = 1;
-		page_desc[(UsablePhysicalMemory + (index * PAGE_SIZE)) >> PAGE_SHIFT].phys_addr = 
-			(UsablePhysicalMemory + (index * PAGE_SIZE));
-		page_desc[(UsablePhysicalMemory + (index * PAGE_SIZE)) >> PAGE_SHIFT].diskblock = -1;
+		page_desc[index].refcount = 1;
+		page_desc[index].phys_addr = (index * PAGE_SIZE);
+		page_desc[index].diskblock = -1;
 	//	UARTDebugOut("Page desc : %x \r\n", &page_desc[(UsablePhysicalMemory + (index * PAGE_SIZE)) >> PAGE_SHIFT]);
-		return (void*)(UsablePhysicalMemory + (index * 4096));
+		return (void*)(index * PAGE_SIZE);
 	}
 	AuTextOut("Kernel Panic!!! No more physical memory \n");
 	for (;;);
@@ -373,8 +386,7 @@ void AuPmmngrFree(void* Address) {
 		page_desc[ShiftAddr].refcount -= 1;
 		return;
 	}
-	uint64_t addr = ((uint64_t)Address - UsablePhysicalMemory);
-	uint64_t Index = (uint64_t)addr / 4096;
+	uint64_t Index = ShiftAddr;
 	if (AuPmmngrBitmapCheck(Index) == false) return;
 	if (AuPmmngrBitmapSet(Index, false)) {
 		//UARTDebugOut("Was not free actual address : %x\n", Address);

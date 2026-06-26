@@ -412,7 +412,7 @@ AuVFSNode* FatLocateSubDir(AuVFSNode* fsys, AuVFSNode* kfile, const char* filena
 
 				if (strcmp(name, dos_file_name) == 0) {
 					strcpy(file->filename, filename);
-					file->current = pkDir->first_cluster;
+					file->current = (pkDir->first_cluster_hi_bytes << 16) | pkDir->first_cluster;
 					file->size = pkDir->file_size;
 					file->eof = 0;
 					file->pos = 0;
@@ -468,48 +468,50 @@ AuVFSNode* FatLocateDir(AuVFSNode* fsys, const char* dir) {
 	buf = (uint64_t*)P2V((uint64_t)AuPmmngrAlloc());
 	memset(buf, 0, PAGE_SIZE);
 
-	for (unsigned int sector = 0; sector < fs->__SectorPerCluster; sector++) {
+	uint32_t current_cluster = fs->__RootDirFirstCluster;
 
-		//memset(buf, 0, 512);
-		//ata_read_28 (root_sector + sector,1, buf);
-		AuVDiskRead(vdisk, FatClusterToSector32(fs, fs->__RootDirFirstCluster) + sector, 1, buf);
+	while (current_cluster < 0x0FFFFFF8 && current_cluster != 0) {
+		for (unsigned int sector = 0; sector < fs->__SectorPerCluster; sector++) {
 
-		dirent = (FatDir*)buf;
+			memset(buf, 0, PAGE_SIZE);
+			AuVDiskRead(vdisk, FatClusterToSector32(fs, current_cluster) + sector, 1, buf);
 
 		for (int i = 0; i < 16; i++) {
 		
 			if (strncmp(dos_file_name, dirent->filename,11) == 0) {
 				strcpy(file->filename, dir);
 				file->current = dirent->first_cluster;
-				file->size = dirent->file_size;
-				file->eof = 0;
-				file->status = FS_STATUS_FOUND;
-				file->close = 0;
-				file->first_block = file->current;
-				file->pos = 0;
-				file->device = fsys;
-				file->parent_block = fs->__RootDirFirstCluster;
-				file->open = 0;
-				file->write = 0;
-				file->create_file = 0;
+					file->current = (dirent->first_cluster_hi_bytes << 16) | dirent->first_cluster;
+					file->size = dirent->file_size;
+					file->eof = 0;
+					file->status = FS_STATUS_FOUND;
+					file->close = 0;
+					file->first_block = file->current;
+					file->pos = 0;
+					file->device = fsys;
+					file->parent_block = current_cluster;
+					file->open = 0;
+					file->write = 0;
+					file->create_file = 0;
 
-				/* FAT32 doesn't has UID/GID value stored in file, so
-				 * using global misc world gid 
-				 */
-				file->gid = AuCredGetGroupID(AURORA_GID_MISC_WORLD);
-				if (dirent->attrib == 0x10)
-					file->flags |= FS_FLAG_DIRECTORY;
-				else
-					file->flags |= FS_FLAG_GENERAL;
-				//aa64_data_cache_clean_range(file, sizeof(AuVFSNode));
-				AuPmmngrFree((void*)V2P((size_t)buf));
-				return file;
+					/* FAT32 doesn't has UID/GID value stored in file, so
+					 * using global misc world gid 
+					 */
+					file->gid = AuCredGetGroupID(AURORA_GID_MISC_WORLD);
+					if (dirent->attrib == 0x10)
+						file->flags |= FS_FLAG_DIRECTORY;
+					else
+						file->flags |= FS_FLAG_GENERAL;
+					aa64_data_cache_clean_range(file, sizeof(AuVFSNode));
+					AuPmmngrFree((void*)V2P((size_t)buf));
+					return file;
+				}
+				dirent++;
 			}
-			dirent++;
 		}
+		current_cluster = FatReadFAT(fsys, current_cluster);
 	}
 
-	AuPmmngrFree((void*)V2P((size_t)buf));
 	kfree(file);
 	return NULL;
 }

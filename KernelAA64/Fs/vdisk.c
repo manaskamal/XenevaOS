@@ -244,7 +244,7 @@ void AuVDiskRegister(AuVDisk* disk) {
 		char* mpt = AuVFSReserveMountPointLetter();
 		
 		/** make letter /a reserved for root '/' **/
-		if (strcmp(mpt, "/a") == 0)
+		if (strcmp(mpt, "a") == 0)
 			FatInitialise(disk, "/");
 		else
 			FatInitialise(disk, mpt);

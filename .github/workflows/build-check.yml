@@ -1,0 +1,63 @@
+name: XenevaOS Build Check (MSVC & GCC)
+
+on:
+  push:
+    branches: [ master, khrsgr ]
+  pull_request:
+    branches: [ master, khrsgr ]
+  workflow_dispatch:
+
+jobs:
+  build-linux-gcc:
+    name: GCC (Linux / ARM64)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Install Toolchains (GCC AArch64)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu binutils-aarch64-linux-gnu make mtools dosfstools
+
+      - name: Build GNU-EFI (AArch64)
+        run: |
+          git clone https://github.com/vathpela/gnu-efi gnu-efi
+          cd gnu-efi
+          make ARCH=aarch64 CROSS_COMPILE=aarch64-linux-gnu-
+
+      - name: Build Bootloader (BootAA64)
+        run: |
+          cd BootAA64
+          make
+
+      - name: Build Kernel (KernelAA64)
+        run: |
+          cd KernelAA64
+          make
+
+  build-windows-msvc:
+    name: MSVC (Windows / x64)
+    runs-on: windows-2022
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v1.1
+
+      - name: Install NASM
+        uses: ilammy/setup-nasm@v1
+
+      - name: Setup NASM Customizations for MSBuild
+        shell: pwsh
+        run: |
+          Expand-Archive -Path Resources/nasmprops.zip -DestinationPath nasmprops -Force
+          $vsPath = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property installationPath
+          $vcPath = Join-Path $vsPath "MSBuild\Microsoft\VC"
+          $customizationsPath = Get-ChildItem -Path $vcPath -Filter "BuildCustomizations" -Directory -Recurse | Select-Object -ExpandProperty FullName -First 1
+          Copy-Item nasmprops\* -Destination $customizationsPath -Force -Recurse
+
+      - name: Build Solution (Aurora.sln)
+        run: |
+          msbuild Aurora.sln /p:Configuration=Debug /p:Platform=x64 /p:PlatformToolset=v143

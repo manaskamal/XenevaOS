@@ -227,7 +227,7 @@ void AuVirtioNetInitialize(uint64_t device) {
 	uint64_t barLo = AuPCIERead(device, PCI_BAR4, bus, dev, func);
 	uint64_t barHi = AuPCIERead(device, PCI_BAR5, bus, dev, func);
 	uint64_t bar = ((uint64_t)barHi << 32) | (barLo & ~0xFULL);
-	uint64_t finalAddr = (uint64_t)AuMapMMIO(bar, 2);
+	uint64_t finalAddr = (uint64_t)AuMapMMIO(bar, 16);
 
 
 	uint8_t cap_ptr = AuPCIERead(device, PCI_CAPABILITIES_PTR, bus, dev, func);
@@ -241,7 +241,7 @@ void AuVirtioNetInitialize(uint64_t device) {
 				//break;
 			}
 			if (cap->cfg_type == 2) { //NOTIFY_CFG
-				notifyBase = (volatile uint8_t*)(bar + cap->offset);
+				notifyBase = (volatile uint8_t*)(finalAddr + cap->offset);
 				struct virtio_notifier_cap* notify = (struct virtio_notifier_cap*)cap;
 				notifyOffMultiplier = notify->notifer_mult_base;
 				UARTDebugOut("[virtio-net]: notify base : %x , off : %x\n", notifyBase, cap->offset);
@@ -251,10 +251,10 @@ void AuVirtioNetInitialize(uint64_t device) {
 		cap_ptr = cap->cap_next;
 	}
 
-	struct VirtioCommonCfg* common = (struct VirtioCommonCfg*)bar;
+	struct VirtioCommonCfg* common = (struct VirtioCommonCfg*)finalAddr;
 	AuVirtioNetReset(common);
 
-	struct VirtioNetCfg* netcfg = (struct VirtioNetCfg*)(bar + devcfg_offset);
+	struct VirtioNetCfg* netcfg = (struct VirtioNetCfg*)(finalAddr + devcfg_offset);
 	
 
 	/* acknowledge */

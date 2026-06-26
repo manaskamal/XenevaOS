@@ -64,6 +64,8 @@ void AuRamdiskRead(uint64_t lba, size_t count, uint8_t* buffer) {
 		return;
 
 	if (offset + bytes_to_read > ramdisk_size)
+	if (offset >= (ramdisk_end - ramdisk_start) || 
+	    (RAMDISK_SECTOR_SIZE * count) > (ramdisk_end - ramdisk_start - offset))
 		return;
 
 	const uint8_t* src = (const uint8_t*)(ramdisk_start + offset);
@@ -85,6 +87,8 @@ void AuRamdiskWrite(uint64_t lba, size_t count, uint8_t* buffer) {
 	if (offset + (RAMDISK_SECTOR_SIZE * count) > ramdisk_size)
 		return;
 	if (offset + bytes_to_read > ramdisk_size)
+	if (offset >= (ramdisk_end - ramdisk_start) || 
+	    (RAMDISK_SECTOR_SIZE * count) > (ramdisk_end - ramdisk_start - offset))
 		return;
 	uint8_t* src = (uint8_t*)(ramdisk_start + offset);
 	memcpy(src,buffer, bytes_to_read);
