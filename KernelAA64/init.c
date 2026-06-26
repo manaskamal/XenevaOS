@@ -247,7 +247,6 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	/* for qemu virt board, virtIO inputs are used */
 	AuVirtIOInputInitialize();
 #endif
-
 	/* required virtio-mouse and keyboard */
 	//Here goes board pre driver initialize
 	AuDrvMngrInitialize(info);

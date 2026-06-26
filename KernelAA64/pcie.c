@@ -178,7 +178,6 @@ uint64_t AuPCIEGetDevice(uint16_t seg, int bus, int dev, int func) {
  * @return return the result in DWORD
  */
 uint32_t AuPCIERead(uint64_t device, int reg, int bus, int dev, int func) {
-	
 	uint64_t result = 0;
 
 	int size = 0;

@@ -469,18 +469,17 @@ AuVFSNode* FatLocateDir(AuVFSNode* fsys, const char* dir) {
 	memset(buf, 0, PAGE_SIZE);
 
 	uint32_t current_cluster = fs->__RootDirFirstCluster;
-
 	while (current_cluster < 0x0FFFFFF8 && current_cluster != 0) {
 		for (unsigned int sector = 0; sector < fs->__SectorPerCluster; sector++) {
 
-			memset(buf, 0, PAGE_SIZE);
+			//memset(buf, 0, PAGE_SIZE);
 			AuVDiskRead(vdisk, FatClusterToSector32(fs, current_cluster) + sector, 1, buf);
 
-		for (int i = 0; i < 16; i++) {
-		
-			if (strncmp(dos_file_name, dirent->filename,11) == 0) {
-				strcpy(file->filename, dir);
-				file->current = dirent->first_cluster;
+			dirent = (FatDir*)buf;
+			for (int i = 0; i < 16; i++) {
+				if (strncmp(dos_file_name, dirent->filename, 11) == 0) {
+					strcpy(file->filename, dir);
+					file->current = dirent->first_cluster;
 					file->current = (dirent->first_cluster_hi_bytes << 16) | dirent->first_cluster;
 					file->size = dirent->file_size;
 					file->eof = 0;
@@ -495,7 +494,7 @@ AuVFSNode* FatLocateDir(AuVFSNode* fsys, const char* dir) {
 					file->create_file = 0;
 
 					/* FAT32 doesn't has UID/GID value stored in file, so
-					 * using global misc world gid 
+					 * using global misc world gid
 					 */
 					file->gid = AuCredGetGroupID(AURORA_GID_MISC_WORLD);
 					if (dirent->attrib == 0x10)
