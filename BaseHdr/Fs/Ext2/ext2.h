@@ -211,6 +211,6 @@ typedef struct _ext2_fs_ {
 /*
  * Ext2Initialise -- mount the file system
  */
-extern void Ext2Initialise(AuVDisk* vdisk, char* mountname);
+AuVFSNode Ext2Initialise(AuVDisk* vdisk, char* mountname);
 
 #endif
