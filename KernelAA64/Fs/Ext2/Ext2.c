@@ -41,12 +41,12 @@ uint32_t Ext2FindEntry(Ext2Fs* fs, Ext2Inode* dir_inode, const char* name) {
 		while (current_pos < block_size) {
 			Ext2Dir* entry = (Ext2Dir*)((uint8_t*)buffer + current_pos);
 
-			if (entry->rec_len == 0) break 0;
+			if (entry->rec_len == 0) return 0;
 
 			if (entry->inode != 0 && entry->name_len == target_len) {
 				if (strncmp(entry->name, name, entry->name_len)) {
 					uint32_t found_inode = entry->inode;
-					AuPmmngrFree((void*)V2P((uint64_t)block_buffer));
+					AuPmmngrFree((void*)V2P((uint64_t)buffer));
 					return found_inode;
 				}
 			}
@@ -83,7 +83,7 @@ int Ext2ReadInode(Ext2Fs* fs, uint32_t inode_num, Ext2Inode* out_inode) {
 	uint32_t target_lba = target_physical_block * sector_per_block;
 
 	uint64_t* buffer = (uint64_t*)P2V((uint64_t)AuPmmngrAlloc());
-	if (!bounce_buffer) {
+	if (!buffer) {
 		UARTDebugOut("[ext2]: Inode is out of physical memory pages.\r\n");
 		return -1;
 	}
@@ -100,8 +100,8 @@ int Ext2ReadInode(Ext2Fs* fs, uint32_t inode_num, Ext2Inode* out_inode) {
 	return 0;
 };
 
-size_t Ext2Read(AuVFSNode* node, AuVFSNode* file, uint64_t* buffer, uint32_t lenght) {
-	if (!node || !file || !buffer || !lenght) return 0;
+size_t Ext2Read(AuVFSNode* node, AuVFSNode* file, uint64_t* buffer, uint32_t length) {
+	if (!node || !file || !buffer || !length) return 0;
 
 	Ext2Fs* fs = (Ext2Fs*)node->device;
 	Ext2Inode* inode = (Ext2Inode*)file->private_data;
@@ -110,7 +110,7 @@ size_t Ext2Read(AuVFSNode* node, AuVFSNode* file, uint64_t* buffer, uint32_t len
 
 	if (current_pos >= file->size) return 0;
 
-	if (current_pos + lenght > file->size) lenght = file->size - current_pos;
+	if (current_pos + length > file->size) length = file->size - current_pos;
 
 	uint32_t block_size = fs->block_size;
 	uint32_t sector_per_block = block_size / 512;
@@ -134,7 +134,7 @@ size_t Ext2Read(AuVFSNode* node, AuVFSNode* file, uint64_t* buffer, uint32_t len
 
 		if (physical_block == 0) {
 			uint32_t chunk = block_size - internal_offset;
-			if (chunk > (lenght - bytes_read)) chunk = lenght - bytes_read;
+			if (chunk > (length - bytes_read)) chunk = length - bytes_read;
 			memset((uint8_t*)buffer + bytes_read, 0, chunk);
 			bytes_read += chunk;
 			continue;
@@ -249,7 +249,7 @@ AuVFSNode* Ext2Open(AuVFSNode* fsys, char* path) {
 	file_session->eof = 0;
 	file_session->fileCopyCount = 1;
 
-	file_session->read = NULL;
+	file_session->read = Ext2Read;
 	file_session->open = NULL;
 	file_session->device = fs;
 
@@ -328,8 +328,8 @@ AuVFSNode* Ext2Initialise(AuVDisk* vdisk, char* mountname) {
 	fsys->first_block = 2;
 	fsys->device = fs;
 
-	fsys->open = NULL;
-	fsys->read = NULL;
+	fsys->open = Ext2Open;
+	fsys->read = Ext2Read;
 	fsys->read_dir = NULL;
 
 	fsys->write = NULL;
