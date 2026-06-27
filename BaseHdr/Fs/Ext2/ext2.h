@@ -184,10 +184,10 @@ typedef struct _ext2_fs_ {
 	uint32_t block_size;
 	uint32_t pointers_per_block;
 	uint32_t inodes_per_group;
-	uint32_t blocks_group_count;
+	uint32_t block_group_count;
 
 	uint8_t bgd_block_span;
-	uint8_t bgt_offset;
+	uint8_t bgd_offset;
 	uint32_t inode_size;
 
 	uint8_t* cache_data;
