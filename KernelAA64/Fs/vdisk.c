@@ -1,6 +1,6 @@
 /**
 * @file vdisk.c
-* 
+*
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2023, Manas Kamal Choudhury
@@ -41,6 +41,7 @@
 #include <Drivers/uart.h>
 #include <Fs/fsprobe.h>
 #include <Fs/Fat/Fat.h>
+#include <Fs/Ext2/Ext2.h>
 
 AuVDisk* VdiskArray[MAX_VDISK_DEVICES];
 int _vdisk_num_;
@@ -69,7 +70,7 @@ AU_EXTERN AU_EXPORT int AuVDiskCreateStorageFile(char* output) {
 	char dirname[10];
 	memset(dirname, 0, 10);
 	strcpy(dirname, "disk");
-	dirname[strlen(dirname)+1] = '\0';
+	dirname[strlen(dirname) + 1] = '\0';
 	int offset = strlen(dirname);
 	char value_[5];
 	sztoa(value, value_, 10);
@@ -106,7 +107,7 @@ uint8_t AuVDiskGetIndex() {
 /**
  * @brief AuCreateVDisk -- creates a vdisk and
  * return to the caller
- * @return return the newly created empty vdisk 
+ * @return return the newly created empty vdisk
  * structure
  */
 AuVDisk* AuCreateVDisk() {
@@ -207,7 +208,7 @@ void AuVDiskRegisterPartition(AuVDisk* vdisk) {
 	/* call gpt file system verifier to load
 	 * the desired file system
 	 */
-	//AuGPTInitialise_FileSystem(vdisk);
+	 //AuGPTInitialise_FileSystem(vdisk);
 
 	AuTextOut("\r\n");
 	AuPmmngrFree(buffer);
@@ -242,9 +243,9 @@ void AuVDiskRegister(AuVDisk* disk) {
 	case AURORA_FS_FAT32:
 		AuTextOut("[aurora]: vdisk : %s, has FAT32 file system \r\n", disk->diskname);
 		char* mpt = AuVFSReserveMountPointLetter();
-		
+
 		/** make letter /a reserved for root '/' **/
-		if (strcmp(mpt, "a") == 0)
+		if (strcmp(mpt, "/a") == 0)
 			FatInitialise(disk, "/");
 		else
 			FatInitialise(disk, mpt);
@@ -254,6 +255,7 @@ void AuVDiskRegister(AuVDisk* disk) {
 		break;
 	case AURORA_FS_EXT2:
 		AuTextOut("[aurora]: vdisk : %s has Ext2 file system \r\n", disk->diskname);
+		Ext2Initialise(disk, "b");
 		break;
 	}
 }
@@ -346,7 +348,7 @@ int AuGetVDiskPartitionInfo(uint8_t vdiskID, uint8_t partition_ID, void* buffer)
  * @brief AuGetVDisk -- get a vdisk from the
  * vdisk array
  * @param vdisk_idx -- virtual disk index
- * @return the vidisk structure respected to 
+ * @return the vidisk structure respected to
  * the index
  */
 AuVDisk* AuGetVDisk(int vdisk_idx) {
