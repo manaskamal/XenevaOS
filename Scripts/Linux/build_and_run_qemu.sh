@@ -32,6 +32,7 @@ if [ "$FORCE_MANUAL_BUILD" -eq 1 ] || [ ! -f "initrd2.img" ]; then
     dd if=/dev/zero of=initrd2.img bs=1M count=64
     mkfs.vfat -F 32 initrd2.img
     mcopy -i initrd2.img Resources/resources/* ::/
+    mcopy -i initrd2.img Process/Init/init.exe ::/init.exe
 else
     echo "[+] Found pre-built initrd2.img, skipping manual creation."
     echo "    (Use --force-manual-build flag to override)"
