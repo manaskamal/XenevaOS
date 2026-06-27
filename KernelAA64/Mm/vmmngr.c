@@ -204,7 +204,8 @@ bool AuMapPage(uint64_t phys_addr, uint64_t virt_addr, uint8_t attrib) {
 
 	if (pml1[i1] & 1){
 		//AuPmmngrFree((void*)phys_addr);
-		AuTextOut("[aurora]: vmmngr page already present : %x \r\n", virt_addr);
+		AuTextOut("[aurora]: vmmngr page already present : virt=%x phys=%x \r\n", virt_addr, (pml1[i1] & ~0xFFFULL));
+		UARTDebugOut("[aurora]: vmmngr page already present : virt=%x phys=%x \r\n", virt_addr, (pml1[i1] & ~0xFFFULL));
 		return false;
 	}
 
@@ -275,7 +276,8 @@ bool AuMapPageEx(uint64_t* pml4i, uint64_t phys_addr, uint64_t virt_addr, uint8_
 	if (pml1[i1] & 1)
 	{
 		//AuPmmngrFree((void*)phys_addr);
-		AuTextOut("[aurora]: vmmngr page already present : %x \n", (pml1[i1] & ~0xFFFULL));
+		AuTextOut("[aurora]: vmmngr page already present : virt=%x phys=%x \n", virt_addr, (pml1[i1] & ~0xFFFULL));
+		UARTDebugOut("[aurora]: vmmngr page already present : virt=%x phys=%x \r\n", virt_addr, (pml1[i1] & ~0xFFFULL));
 		return false;
 	}
 
@@ -643,3 +645,18 @@ void AuVmmngrBootFree() {
 	tlb_flush_vmalle1is();
 }
 
+
+uint64_t AuVmmngrGetPhysicalAddressEx(uint64_t* pml4i, uint64_t virt_addr) {
+	const long i4 = (virt_addr >> 39) & 0x1FF;
+	const long i3 = (virt_addr >> 30) & 0x1FF;
+	const long i2 = (virt_addr >> 21) & 0x1FF;
+	const long i1 = (virt_addr >> 12) & 0x1FF;
+	if (!(pml4i[i4] & 1)) return 0;
+	uint64_t* pdpti = (uint64_t*)P2V(pml4i[i4] & ~0xFFFUL);
+	if (!(pdpti[i3] & 1)) return 0;
+	uint64_t* pdi = (uint64_t*)P2V(pdpti[i3] & ~0xFFFUL);
+	if (!(pdi[i2] & 1)) return 0;
+	uint64_t* pt = (uint64_t*)P2V(pdi[i2] & ~0xFFFUL);
+	if (!(pt[i1] & 1)) return 0;
+	return pt[i1] & ~0xFFFUL;
+}
