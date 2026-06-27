@@ -34,5 +34,4 @@ fat.img
 initrd2.img
 qemu.pid
 dump.s
-*.s
 *.so
