@@ -18,6 +18,10 @@
 [Icon]/icons/gearl.bmp|
 [App]/ctrl.exe}
 
+{[Title]XENotes|
+[Icon]/icons/notes.bmp|
+[App]/notes.exe}
+
 {[Title]Calender|
 [Icon]/icons/calndrl.bmp|
 [App]/calendr.exe>
