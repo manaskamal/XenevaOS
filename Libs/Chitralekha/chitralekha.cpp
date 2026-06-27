@@ -40,8 +40,7 @@
 #include "_fastcpy.h"
 #include "color.h"
 
-extern "C" int _fltused = 1;
-
+// removed _fltused here since it's in XEClib
 int ChPrintLibName() {
 	_KePrint("Chitralekha Graphics Library v1.0 \n");
 	return 0;

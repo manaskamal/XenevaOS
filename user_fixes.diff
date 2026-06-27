@@ -1,0 +1,641 @@
+diff --git a/BaseHdr/stdarg.h b/BaseHdr/stdarg.h
+index de602a9..167dd9a 100644
+--- a/BaseHdr/stdarg.h
++++ b/BaseHdr/stdarg.h
+@@ -38,8 +38,12 @@ extern "C"
+ #endif
+ 
+ 
++#ifdef __GNUC__
++	typedef __builtin_va_list va_list;
++#else
+ 	/* va list parameter list */
+ 	typedef unsigned char* va_list;
++#endif
+ 
+ 
+ 	/* width of stack == width of int */
+@@ -63,6 +67,11 @@ extern "C"
+ #define va_arg(AP, TYPE)	\
+ 	(AP += VA_SIZE(TYPE), *((TYPE *)(AP - VA_SIZE(TYPE))))
+ #elif defined(ARCH_ARM64) || defined(__aarch64__)
++#ifdef __GNUC__
++#define va_start(ap, last) __builtin_va_start(ap, last)
++#define va_arg(ap, type) __builtin_va_arg(ap, type)
++#define va_end(ap) __builtin_va_end(ap)
++#else
+ #define va_start(ap,last) \
+      ((ap) = (va_list)(&(last)) + 8)
+ 
+@@ -72,6 +81,7 @@ extern "C"
+ #define va_end(ap) \
+      ((ap) = (va_list)0)
+ #endif
++#endif
+ 
+ #ifdef __cplusplus
+ }
+diff --git a/BaseHdr/va_list.h b/BaseHdr/va_list.h
+index 3ff4f2c..872247e 100644
+--- a/BaseHdr/va_list.h
++++ b/BaseHdr/va_list.h
+@@ -50,6 +50,7 @@ extern "C"
+ #endif
+ 
+ 
++#ifndef __GNUC__
+ #define STACKITEM int
+ 
+ #define VA_SIZE(TYPE)   \
+@@ -63,6 +64,7 @@ extern "C"
+ 
+ #define va_arg(AP, TYPE)  \
+ 	(AP += VA_SIZE(TYPE), *((TYPE *)(AP - VA_SIZE(TYPE))))
++#endif
+ 
+ #endif
+ 
+diff --git a/KernelAA64/Mm/pmmngr.c b/KernelAA64/Mm/pmmngr.c
+index 46fda11..574b08b 100644
+--- a/KernelAA64/Mm/pmmngr.c
++++ b/KernelAA64/Mm/pmmngr.c
+@@ -301,9 +301,8 @@ void AuPmmngrInitialize(KERNEL_BOOT_INFO* info) {
+ 		pageCount = (dtb_end - dtb_start) / 0x1000;
+ 
+ 		for (int i = 0; i < pageCount; i++) {
+-			uint64_t addr = dtb_start + (uint64_t)i * 0x1000; //  ((uint64_t)Address - UsablePhysicalMemory);
+-			uint64_t Index = (addr - UsablePhysicalMemory);
+-			AuPmmngrLockPage(Index);
++			uint64_t addr = dtb_start + (uint64_t)i * 0x1000;
++			AuPmmngrLockPage(addr);
+ 		
+ 		}
+ 
+@@ -313,8 +312,7 @@ void AuPmmngrInitialize(KERNEL_BOOT_INFO* info) {
+ 		pageCount = (initrdEnd - initrdStart) / 0x1000;
+ 		for (int i = 0; i < pageCount; i++) {
+ 			uint64_t addr = initrdStart + (uint64_t)i * 0x1000;
+-			uint64_t Index = (addr - UsablePhysicalMemory);
+-			AuPmmngrLockPage(Index);
++			AuPmmngrLockPage(addr);
+ 		}
+ 	
+ 		uint64_t lbStart = lb->littleBootStart;
+@@ -324,8 +322,7 @@ void AuPmmngrInitialize(KERNEL_BOOT_INFO* info) {
+ 
+ 		for (int i = 0; i < pageCount; i++) {
+ 			uint64_t addr = lbStart + (uint64_t)i * 0x1000;
+-			uint64_t Index = (addr - UsablePhysicalMemory);
+-			AuPmmngrLockPage(Index);
++			AuPmmngrLockPage(addr);
+ 		}
+ 		AuTextOut("[aurora]: Pmmngr locked LittleBoot reserved memory\r\n");
+ 	}
+diff --git a/KernelAA64/aucon.c b/KernelAA64/aucon.c
+index dacc231..3debf05 100644
+--- a/KernelAA64/aucon.c
++++ b/KernelAA64/aucon.c
+@@ -290,6 +290,16 @@ void AuPutPixel(size_t x, size_t y, uint32_t col) {
+  * @param c -- character to print
+  */
+ void AuPutC(char c) {
++	if (early_) {
++		if (is_uart_initialized())
++			uartPutc(c);
++		else if (_print_func) {
++			char buf[2] = {c, 0};
++			_print_func(buf);
++		}
++		return;
++	}
++
+ 	if (console_x > v_res / 9) {
+ 		console_x = 0;
+ 		console_y++;
+@@ -311,10 +321,12 @@ void AuPutC(char c) {
+ 	console_x++;
+ 
+ 	uint32_t* lfb = aucon->buffer;
+-	if (console_y + 1 > h_res / 16)
++	if (console_y + 1 > v_res / 16)
+ 	{
+-		for (int i = 16; i < h_res * v_res; i++)
+-			lfb[i] = lfb[i + v_res * 16];
++		for (int i = 0; i < (v_res - 16) * h_res; i++)
++			lfb[i] = lfb[i + h_res * 16];
++		for (int i = (v_res - 16) * h_res; i < v_res * h_res; i++)
++			lfb[i] = CONSOLE_BACKGROUND;
+ 		console_y--;
+ 	}
+ 
+@@ -327,6 +339,14 @@ void AuPutC(char c) {
+  * @param str -- string to print
+  */
+ void AuPutS(char* str) {
++	if (early_) {
++		if (is_uart_initialized())
++			uartPuts(str);
++		else if (_print_func)
++			_print_func(str);
++		return;
++	}
++	
+ 	uint32_t* lfb = aucon->buffer;
+ 	while (*str) {
+ 
+@@ -373,8 +393,10 @@ void AuPutS(char* str) {
+ 	/* Scroll */
+ 	if (console_y + 1 > v_res / 16)
+ 	{
+-		for (int i = 16; i < v_res * h_res; i++)
++		for (int i = 0; i < (v_res - 16) * h_res; i++)
+ 			lfb[i] = lfb[i + h_res * 16];
++		for (int i = (v_res - 16) * h_res; i < v_res * h_res; i++)
++			lfb[i] = CONSOLE_BACKGROUND;
+ 		console_y--;
+ 	}
+ }
+@@ -385,13 +407,6 @@ void AuPutS(char* str) {
+  * @param text -- text to output
+  */
+ void AuTextOut(const char* format, ...) {
+-	if (early_) {
+-		if (is_uart_initialized())
+-			UARTDebugOut(format);
+-		else
+-			_print_func(format);
+-		return;
+-	}
+ 	if (bypass_autextout)
+ 		return;
+ 
+diff --git a/KernelAA64/audrv.c b/KernelAA64/audrv.c
+index 9f83ffe..e1a6722 100644
+--- a/KernelAA64/audrv.c
++++ b/KernelAA64/audrv.c
+@@ -378,25 +378,31 @@ extern int FontManagerGetFontCount(uint8_t* buffer);
+ * @param info -- kernel boot info
+ */
+ void AuDrvMngrInitialize(KERNEL_BOOT_INFO* info) {
++	UARTDebugOut("[aurora]: entering AuDrvMngrInitialize\r\n");
+ 	driver_class_unique_id = 0;
+ 	driver_boot_unique_id = 0;
+ 	driver_load_base = AU_DRIVER_BASE_START;
+ 	_dev_count_ = 0;
+ 
++	UARTDebugOut("[aurora]: allocating scratchBuffer\r\n");
+ 	scratchBuffer = (uint64_t*)P2V((uint64_t)AuPmmngrAllocBlocks((1024 * 1024) / 0x1000));
++	UARTDebugOut("[aurora]: memsetting scratchBuffer %x\r\n", scratchBuffer);
+ 	memset(scratchBuffer, 0, 1024 * 1024);
++	UARTDebugOut("[aurora]: memset complete\r\n");
+ 
+-	AuTextOut("[aurora]: initializing drivers, please wait... \r\n");
++	UARTDebugOut("[aurora]: initializing drivers, please wait... \r\n");
+ 	/* Load the conf data */
+ 	uint64_t* conf = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
+ 	uint64_t* boardcnf = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
+ 	memset(conf, 0, PAGE_SIZE);
+ 	memset(boardcnf, 0, PAGE_SIZE);
+ 
++	UARTDebugOut("[aurora]: AuDrvMngr finding / \r\n");
+ 	AuVFSNode* fsys = AuVFSFind("/");
++	UARTDebugOut("[aurora]: AuDrvMngr opening audrv.cnf \r\n");
+ 	AuVFSNode* file = AuVFSOpen("/audrv.cnf");
+ 	if (!file) {
+-		AuTextOut("[aurora]: Driver Manager failed to open audrv.cnf, file not found \r\n");
++		UARTDebugOut("[aurora]: Driver Manager failed to open audrv.cnf, file not found \r\n");
+ 		return;
+ 	}
+ 	int filesize = file->size / 1024;
+@@ -408,7 +414,7 @@ void AuDrvMngrInitialize(KERNEL_BOOT_INFO* info) {
+ 
+ 	bool proceed = 0;
+ 
+-	AuTextOut("[aurora]: audrv.cnf read successfully %s \r\n", file->filename);
++	UARTDebugOut("[aurora]: audrv.cnf read successfully %s \r\n", file->filename);
+ 
+ 	/** now initialize board specific driver list **/
+ 	AuVFSNode* board = AuVFSOpen("/board.cnf");
+@@ -417,10 +423,10 @@ void AuDrvMngrInitialize(KERNEL_BOOT_INFO* info) {
+ 		if (filesize < 4096) {
+ 			AuVFSNodeReadBlock(fsys, board, boardcnf);
+ 		}
+-		AuTextOut("[aurora]: board.cnf read successfully %s \r\n", board->filename);
++		UARTDebugOut("[aurora]: board.cnf read successfully %s \r\n", board->filename);
+ 
+ 	}else
+-		AuTextOut("[aurora] Driver Manager failed to open board.cnf, file not found \r\n");
++		UARTDebugOut("[aurora] Driver Manager failed to open board.cnf, file not found \r\n");
+ 	
+ 
+ 	AuDriver* drv = NULL;
+@@ -492,7 +498,7 @@ void AuDrvMngrInitialize(KERNEL_BOOT_INFO* info) {
+ 		}
+ 	}
+ 
+-	AuTextOut("[aurora]: AuDrvManager initialized successfully \r\n");
++	UARTDebugOut("[aurora]: AuDrvManager initialized successfully \r\n");
+ 	kfree(file);
+ }
+ 
+diff --git a/Libs/Chitralekha/chitralekha.cpp b/Libs/Chitralekha/chitralekha.cpp
+index 1e573ec..36630d7 100644
+--- a/Libs/Chitralekha/chitralekha.cpp
++++ b/Libs/Chitralekha/chitralekha.cpp
+@@ -40,8 +40,7 @@
+ #include "_fastcpy.h"
+ #include "color.h"
+ 
+-extern "C" int _fltused = 1;
+-
++// removed _fltused here since it's in XEClib
+ int ChPrintLibName() {
+ 	_KePrint("Chitralekha Graphics Library v1.0 \n");
+ 	return 0;
+diff --git a/Libs/Chitralekha/font.cpp b/Libs/Chitralekha/font.cpp
+index 0d0dc62..eb10996 100644
+--- a/Libs/Chitralekha/font.cpp
++++ b/Libs/Chitralekha/font.cpp
+@@ -89,7 +89,9 @@ void ChFontSetSize(ChFont* font, int size) {
+ 	if (!font)
+ 		return;
+ 	font->fontSz = size / 72.f * 96;
++#ifdef _USE_FREETYPE
+ 	FT_Set_Pixel_Sizes(font->face, 0, font->fontSz);
++#endif
+ 	font->fontHeight = font->fontSz;
+ }
+ 
+@@ -318,6 +320,7 @@ void ChFontDrawCharClipped(ChCanvas* canv, ChFont* font, char c, int penx, int p
+  * @param string -- total string
+  */
+ int64_t ChFontGetWidth(ChFont* font,char* string) {
++#ifdef _USE_FREETYPE
+ 	if (!font)
+ 		return -1;
+ 	size_t font_width = 0;
+@@ -339,6 +342,9 @@ int64_t ChFontGetWidth(ChFont* font,char* string) {
+ 		font_width = bbox_xmax - bbox_xmin;
+ 	}
+ 	return font_width;
++#else
++    return 8 * strlen(string);
++#endif
+ }
+ 
+ /*
+@@ -348,6 +354,7 @@ int64_t ChFontGetWidth(ChFont* font,char* string) {
+ * @param c -- character
+ */
+ int64_t ChFontGetWidthChar(ChFont* font, char c) {
++#ifdef _USE_FREETYPE
+ 	if (!font)
+ 		return -1;
+ 	size_t font_width = 0;
+@@ -365,6 +372,9 @@ int64_t ChFontGetWidthChar(ChFont* font, char c) {
+ 		font_width = bbox_xmax - bbox_xmin;
+ 	}
+ 	return font_width;
++#else
++    return 8;
++#endif
+ }
+ 
+ /*
+@@ -374,6 +384,7 @@ int64_t ChFontGetWidthChar(ChFont* font, char c) {
+  * @param string -- total string
+  */
+ int64_t ChFontGetHeight(ChFont* font, char* string) {
++#ifdef _USE_FREETYPE
+ 	if (!font)
+ 		return -1;
+ 	size_t font_height = 0;
+@@ -393,6 +404,9 @@ int64_t ChFontGetHeight(ChFont* font, char* string) {
+ 		font_height = bbox_ymax - bbox_ymin;
+ 	}
+ 	return font_height;
++#else
++    return 16;
++#endif
+ }
+ 
+ /*
+@@ -402,6 +416,7 @@ int64_t ChFontGetHeight(ChFont* font, char* string) {
+ * @param c -- character
+ */
+ int64_t ChFontGetHeightChar(ChFont* font, char c) {
++#ifdef _USE_FREETYPE
+ 	if (!font)
+ 		return -1;
+ 	size_t font_h = 0;
+@@ -419,6 +434,9 @@ int64_t ChFontGetHeightChar(ChFont* font, char c) {
+ 		font_h = bbox_ymax - bbox_ymin;
+ 	}
+ 	return font_h;
++#else
++    return 16;
++#endif
+ }
+ 
+ int ChFontClamp(int val, int min, int max) {
+@@ -525,6 +543,9 @@ int ChFontDrawTextClipped(ChCanvas *canv, ChFont* font, char* string, int penx,
+ 		prev = glyfIndx;
+ 		string++;
+ 	}
++	return 0;
++#else
++    return 0;
+ #endif
+ 
+ }
+diff --git a/Libs/Chitralekha/widgets/button.cpp b/Libs/Chitralekha/widgets/button.cpp
+index 3bbc9c2..0016801 100644
+--- a/Libs/Chitralekha/widgets/button.cpp
++++ b/Libs/Chitralekha/widgets/button.cpp
+@@ -221,8 +221,8 @@ XE_EXTERN XE_EXPORT ChButton* ChCreateButton(int x, int y, int w, int h, char *t
+ 	button->base.y =CHITRALEKHA_WINDOW_DEFAULT_PAD_Y + y;
+ 	button->base.w = w;
+ 	button->base.h = h;
+-	button->title = (char*)malloc(strlen(text));
+-	memset(button->title, 0, strlen(text));
++	button->title = (char*)malloc(strlen(text) + 1);
++	memset(button->title, 0, strlen(text) + 1);
+ 	strcpy(button->title, text);
+ 	button->base.ChMouseEvent = ChButtonMouseEvent;
+ 	button->base.ChPaintHandler = ChButtonDefaultPainter;
+diff --git a/Libs/Chitralekha/widgets/defaulttextbox.cpp b/Libs/Chitralekha/widgets/defaulttextbox.cpp
+index 36d1cc2..7bc2dbc 100644
+--- a/Libs/Chitralekha/widgets/defaulttextbox.cpp
++++ b/Libs/Chitralekha/widgets/defaulttextbox.cpp
+@@ -65,10 +65,17 @@ void ChDefaultTextboxPrint(ChCanvas* canv, ChTextBox* tb, char* text) {
+ 			break;
+ 		int w = ChFontGetWidthChar(tb->font, text[i]);
+ 		int h = ChFontGetHeightChar(tb->font, text[i]);
++#ifdef _USE_FREETYPE
+ 		int x_v = penx + tb->font->face->glyph->bitmap_left;
+ 		int y_v = peny - tb->font->face->glyph->bitmap_top;
+ 		int b_w = tb->font->face->glyph->bitmap.width;
+ 		int draw_width = tb->font->face->glyph->bitmap.width;
++#else
++        int x_v = penx;
++        int y_v = peny;
++        int b_w = w;
++        int draw_width = w;
++#endif
+ 
+ 		if (x_v + draw_width >= (tb->wid.x + tb->wid.w)) {
+ 			tb->textCursorPosY += 1;
+@@ -80,8 +87,12 @@ void ChDefaultTextboxPrint(ChCanvas* canv, ChTextBox* tb, char* text) {
+ 		ChFontDrawCharClipped(canv, tb->font, text[i], penx,
+ 			peny,
+ 			tb->textColor, &clipRect);
++#ifdef _USE_FREETYPE
+ 		penx += tb->font->face->glyph->advance.x >> 6;
+ 		peny += tb->font->face->glyph->advance.y >> 6;
++#else
++        penx += w;
++#endif
+ 		tb->textCursorPosX++;
+ 	}
+ 
+diff --git a/Libs/Chitralekha/widgets/menu.cpp b/Libs/Chitralekha/widgets/menu.cpp
+index 8815558..960cf72 100644
+--- a/Libs/Chitralekha/widgets/menu.cpp
++++ b/Libs/Chitralekha/widgets/menu.cpp
+@@ -151,7 +151,7 @@ ChMenuItem* ChCreateMenuItem(char* title,ChPopupMenu* pm) {
+ 	mi->wid.h = DEFAULT_MENU_ITEM_HEIGHT;
+ 	mi->wid.x = 0;
+ 	mi->wid.ChMouseEvent = ChMenuItemMouseEvent;
+-	mi->title = (char*)malloc(strlen(title));
++	mi->title = (char*)malloc(strlen(title) + 1);
+ 	strcpy(mi->title, title);
+ 	mi->menu = NULL;
+ 	list_add(pm->MenuItems, mi);
+diff --git a/Libs/Chitralekha/widgets/menubar.cpp b/Libs/Chitralekha/widgets/menubar.cpp
+index dbf6aca..41457ce 100644
+--- a/Libs/Chitralekha/widgets/menubar.cpp
++++ b/Libs/Chitralekha/widgets/menubar.cpp
+@@ -140,7 +140,7 @@ void ChMenuButtonDestroy(ChWidget* wid, ChWindow* win) {
+  * @param title -- title of the button
+  */
+ ChMenuButton *ChCreateMenubutton(ChMenubar* mb, char* title) {
+-	int title_len = strlen(title);
++	int title_len = strlen(title) + 1;
+ 	int mbut_w = title_len + 10;
+ 	ChMenuButton* mbut = (ChMenuButton*)malloc(sizeof(ChMenuButton));
+ 	memset(mbut, 0, sizeof(ChMenuButton));
+@@ -150,9 +150,9 @@ ChMenuButton *ChCreateMenubutton(ChMenubar* mb, char* title) {
+ 	mbut->wid.h = mb->wid.h;
+ 	mbut->wid.ChDestroy = ChMenuButtonDestroy;
+ 	mbut->wid.ChActionHandler = 0;
+-	mbut->title = (char*)malloc(strlen(title));
++	mbut->title = (char*)malloc(strlen(title) + 1);
+ 	mbut->popupMenu = NULL;
+-	memset(mbut->title, 0, strlen(title));
++	memset(mbut->title, 0, strlen(title) + 1);
+ 	strcpy(mbut->title, title);
+ 	return mbut;
+ }
+diff --git a/Libs/Chitralekha/widgets/msgbox.cpp b/Libs/Chitralekha/widgets/msgbox.cpp
+index fc6b1fa..2fee4eb 100644
+--- a/Libs/Chitralekha/widgets/msgbox.cpp
++++ b/Libs/Chitralekha/widgets/msgbox.cpp
+@@ -123,8 +123,8 @@ void ChMessageBoxPrepareButtons(ChWindow* win, ChMessageBox *mb,uint8_t buttons)
+ XE_EXTERN XE_EXPORT ChMessageBox* ChCreateMessageBox(ChWindow* mainWin,char* title, char* msg, uint8_t buttons, uint8_t icon) {
+ 	ChMessageBox* mb = (ChMessageBox*)malloc(sizeof(ChMessageBox));
+ 	memset(mb, 0, sizeof(ChMessageBox));
+-	mb->message = (char*)malloc(strlen(msg) - 1);
+-	memset(mb->message, 0, (strlen(msg) - 1));
++	mb->message = (char*)malloc(strlen(msg) + 1);
++	memset(mb->message, 0, (strlen(msg) + 1));
+ 	strcpy(mb->message, msg);
+ 	mb->icon = icon;
+ 	mb->type = buttons;
+diff --git a/Libs/Chitralekha/widgets/view.cpp b/Libs/Chitralekha/widgets/view.cpp
+index 0b1fd9a..86a7805 100644
+--- a/Libs/Chitralekha/widgets/view.cpp
++++ b/Libs/Chitralekha/widgets/view.cpp
+@@ -196,7 +196,7 @@ void ChListViewSetScrollpane(ChListView* view, ChScrollPane *pane){
+ ChListItem* ChListViewAddItem(ChWindow* win, ChListView* lv, char* itemText) {
+ 	ChListItem* li = (ChListItem*)malloc(sizeof(ChListItem));
+ 	memset(li, 0, sizeof(ChListItem));
+-	li->itemText = (char*)malloc(strlen(itemText));
++	li->itemText = (char*)malloc(strlen(itemText) + 1);
+ 	strcpy(li->itemText, itemText);
+ 	int xpos = 0;
+ 	int ypos = 0;
+diff --git a/Libs/Chitralekha/widgets/window.cpp b/Libs/Chitralekha/widgets/window.cpp
+index 2a5a728..5d1aad7 100644
+--- a/Libs/Chitralekha/widgets/window.cpp
++++ b/Libs/Chitralekha/widgets/window.cpp
+@@ -171,8 +171,8 @@ XE_EXTERN XE_EXPORT ChWindow* ChCreateWindow(ChitralekhaApp *app, uint16_t attri
+ 	win->canv = canv;
+ 	win->sharedwin = app->shwinbuf;
+ 	win->info = (ChSharedWinInfo*)win->sharedwin;
+-	win->title = (char*)malloc(strlen(title));
+-	memset(win->title, 0, strlen(title));
++	win->title = (char*)malloc(strlen(title) + 1);
++	memset(win->title, 0, strlen(title) + 1);
+ 	strcpy(win->title, title);
+ 	win->info->x = x;
+ 	win->info->y = y;
+@@ -901,8 +901,8 @@ XE_EXTERN XE_EXPORT ChWindow* ChCreatePopupWindow(ChWindow* win, int x, int y, i
+ 	popup->canv = canv;
+ 	popup->sharedwin = app->shwinbuf;
+ 	popup->info = (ChSharedWinInfo*)popup->sharedwin;
+-	popup->title = (char*)malloc(strlen(title));
+-	memset(popup->title, 0, strlen(title));
++	popup->title = (char*)malloc(strlen(title) + 1);
++	memset(popup->title, 0, strlen(title) + 1);
+ 	strcpy(popup->title, title);
+ 	popup->info->x = win->info->x + x;
+ 	popup->info->y = win->info->y + y;
+diff --git a/Process/DeodhaiXR/alpha.cpp b/Process/DeodhaiXR/alpha.cpp
+index c45b227..867ec50 100644
+--- a/Process/DeodhaiXR/alpha.cpp
++++ b/Process/DeodhaiXR/alpha.cpp
+@@ -324,19 +324,6 @@ void _shadow_compose_neon(uint32_t* canv, int canvas_w, int canvas_h, const uint
+ 
+ 		int x = 0;
+ 		for (; x <= row_w - 4; x += 4) {
+-			uint32x4_t s4 = vld1q_u32(src + x);
+-			uint32x4_t d4 = vld1q_u32(dst + x);
+-
+-			uint32x4_t sa4 = vshrq_n_u32(s4, 24);
+-			uint32x4_t inv4 = vsubq_u32(vdupq_n_u32(255), sa4);
+-
+-			uint8x16_t db = vreinterpretq_u8_u32(d4);
+-
+-			uint8x8_t inv_lo = vmovn_u16(vmovl_u32(vget_low_u32(inv4)));
+-			uint8x8_t inv_hi = vmovn_u16(vmovl_u32(vget_high_u32(inv4)));
+-
+-			uint8x8_t inv_lo4 = vzip1_u8(inv_lo, inv_lo);
+-
+ 			for (int i = x; i < x + 4; i++) {
+ 				uint32_t dp = dst[i];
+ 				uint8_t sa = (uint8_t)(src[i] >> 24);
+diff --git a/Process/DeodhaiXR/crt_arm64.s b/Process/DeodhaiXR/crt_arm64.s
+index e69de29..17b2d6c 100644
+--- a/Process/DeodhaiXR/crt_arm64.s
++++ b/Process/DeodhaiXR/crt_arm64.s
+@@ -0,0 +1,10 @@
++.extern main
++.extern _KeProcessExit
++
++.global _aumain
++_aumain:
++     ldp x0,x1, [sp], #16
++	 sub sp, sp,32
++	 bl main
++	 add sp, sp,32
++	 bl _KeProcessExit
+\ No newline at end of file
+diff --git a/Process/DeodhaiXR/window.cpp b/Process/DeodhaiXR/window.cpp
+index 354c34e..b1a5adb 100644
+--- a/Process/DeodhaiXR/window.cpp
++++ b/Process/DeodhaiXR/window.cpp
+@@ -122,8 +122,8 @@ Window* CreateWindow(int x, int y, int w, int h, uint16_t flags, uint16_t ownerI
+ 	win->backBufferKey = backBufferKey;
+ 	win->sharedInfo = CreateSharedWinSpace(&shKey, ownerId);
+ 	win->shWinKey = shKey;
+-	win->title = (char*)malloc(strlen(title));
+-	memset(win->title, 0, strlen(title));
++	win->title = (char*)malloc(strlen(title) + 1);
++	memset(win->title, 0, strlen(title) + 1);
+ 	strcpy(win->title, title);
+ 	WinSharedInfo* shwin = (WinSharedInfo*)win->sharedInfo;
+ 	shwin->x = x;
+diff --git a/Process/Init/_init.cpp b/Process/Init/_init.cpp
+index d339c2d..2a5f710 100644
+--- a/Process/Init/_init.cpp
++++ b/Process/Init/_init.cpp
+@@ -263,13 +263,11 @@ extern "C" void main(int argc, char* argv[]) {
+ 
+ 
+ #ifdef ARCH_ARM64
+-	int proc = _KeCreateProcess(0, "netmngr");
+-	_KeSetUID(proc, UAC_DEAMONS);
+-	_KeSetGID(proc, UAC_DEAMONS);
+-	_KeCredAddSGroup(proc, ggid_misc_world);
+-	_KeProcessLoadExec(proc, "/netmngr.exe\0", 0, NULL);
++	/* netmngr.exe is not yet ported to ARM64 -- skipping for now */
++	/* int proc_nm = _KeCreateProcess(0, "netmngr");
++	_KeProcessLoadExec(proc_nm, "/netmngr.exe", 0, NULL); */
++	_KeProcessSleep(100);
+ 
+-	_KeProcessSleep(500);
+ 
+ 
+ 	/** actually, design should be like that, each process after
+@@ -279,7 +277,7 @@ extern "C" void main(int argc, char* argv[]) {
+ 
+ 
+ 	/** from now, normal user's won't get system access */
+-	proc = _KeCreateProcess(0, "deodhaixr");
++	int proc = _KeCreateProcess(0, "deodhaixr");
+ 	_KeSetUID(proc, UAC_NORMAL_USER);
+ 	_KeSetGID(proc, UAC_NORMAL_USER);
+ 	_KeCredAddSGroup(proc, ggid_misc_world);
+diff --git a/Process/Init/splash.cpp b/Process/Init/splash.cpp
+index 6495811..b8bd1f5 100644
+--- a/Process/Init/splash.cpp
++++ b/Process/Init/splash.cpp
+@@ -103,6 +103,10 @@ void _fill_screen(unsigned x, unsigned y, unsigned w, unsigned h, uint32_t col)
+ void SplashScreenShow() {
+ 	int graphFd = _KeOpenFile("/dev/graph", FILE_OPEN_WRITE);
+ 	_KePrint("graphFD : %d \r\n", graphFd);
++	if (graphFd == -1) {
++		_KePrint("[splash]: /dev/graph not found, skipping splash\r\n");
++		return;
++	}
+ 	XEFileIOControl ioctl;
+ 	memset(&ioctl, 0, sizeof(XEFileIOControl));
+ 	ioctl.syscall_magic = AURORA_SYSCALL_MAGIC;
+@@ -112,18 +116,35 @@ void SplashScreenShow() {
+ 	screen_w = ioctl.uint_1;
+ 	ret = _KeFileIoControl(graphFd, SCREEN_GETHEIGHT, &ioctl);
+ 	screen_h = ioctl.uint_1;
+-	
++
+ 	ret = _KeFileIoControl(graphFd, SCREEN_GET_FB, &ioctl);
+ 	fb = (uint32_t*)ioctl.ulong_1;
+ 
++	if (!fb || screen_w == 0 || screen_h == 0) {
++		_KePrint("[splash]: invalid framebuffer, skipping splash\r\n");
++		return;
++	}
++
+ 	_fill_screen(0, 0, screen_w, screen_h, 0xFF0F0F0F);
+ 
+ 	int logo = _KeOpenFile("/xelogo.bmp", FILE_OPEN_READ_ONLY);
++	if (logo == -1) {
++		_KePrint("[splash]: xelogo.bmp not found, skipping logo draw\r\n");
++		return;
++	}
+ 
+ 	XEFileStatus stat;
+ 	_KeFileStat(logo, &stat);
++	if (stat.size == 0) {
++		_KePrint("[splash]: logo file size 0, skipping\r\n");
++		return;
++	}
+ 
+ 	uint8_t* buffer = (uint8_t*)_KeMemMap(NULL, stat.size, 0, 0, -1, 0);
++	if (!buffer) {
++		_KePrint("[splash]: mmap failed for logo\r\n");
++		return;
++	}
+ 
+ 	_KeReadFile(logo, buffer, stat.size);
+ 
+@@ -133,9 +154,8 @@ void SplashScreenShow() {
+ 	BMPInfo* info = (BMPInfo*)(buffer + sizeof(BMP));
+ 	int width = info->biWidth;
+ 	int height = info->biHeight;
+-	int bpp = info->biBitCount;
+ 
+ 	void* image_bytes = (void*)(buffer + offset);
+-	_draw_bitmap_(screen_w / 2 - width / 2, screen_h / 2 - height / 2, width, height,(uint8_t*)image_bytes);
++	_draw_bitmap_(screen_w / 2 - width / 2, screen_h / 2 - height / 2, width, height, (uint8_t*)image_bytes);
+ }
+ 

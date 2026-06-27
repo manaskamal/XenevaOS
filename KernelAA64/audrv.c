@@ -378,25 +378,31 @@ extern int FontManagerGetFontCount(uint8_t* buffer);
 * @param info -- kernel boot info
 */
 void AuDrvMngrInitialize(KERNEL_BOOT_INFO* info) {
+	UARTDebugOut("[aurora]: entering AuDrvMngrInitialize\r\n");
 	driver_class_unique_id = 0;
 	driver_boot_unique_id = 0;
 	driver_load_base = AU_DRIVER_BASE_START;
 	_dev_count_ = 0;
 
+	UARTDebugOut("[aurora]: allocating scratchBuffer\r\n");
 	scratchBuffer = (uint64_t*)P2V((uint64_t)AuPmmngrAllocBlocks((1024 * 1024) / 0x1000));
+	UARTDebugOut("[aurora]: memsetting scratchBuffer %x\r\n", scratchBuffer);
 	memset(scratchBuffer, 0, 1024 * 1024);
+	UARTDebugOut("[aurora]: memset complete\r\n");
 
-	AuTextOut("[aurora]: initializing drivers, please wait... \r\n");
+	UARTDebugOut("[aurora]: initializing drivers, please wait... \r\n");
 	/* Load the conf data */
 	uint64_t* conf = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
 	uint64_t* boardcnf = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
 	memset(conf, 0, PAGE_SIZE);
 	memset(boardcnf, 0, PAGE_SIZE);
 
+	UARTDebugOut("[aurora]: AuDrvMngr finding / \r\n");
 	AuVFSNode* fsys = AuVFSFind("/");
+	UARTDebugOut("[aurora]: AuDrvMngr opening audrv.cnf \r\n");
 	AuVFSNode* file = AuVFSOpen("/audrv.cnf");
 	if (!file) {
-		AuTextOut("[aurora]: Driver Manager failed to open audrv.cnf, file not found \r\n");
+		UARTDebugOut("[aurora]: Driver Manager failed to open audrv.cnf, file not found \r\n");
 		return;
 	}
 	int filesize = file->size / 1024;
@@ -408,7 +414,7 @@ void AuDrvMngrInitialize(KERNEL_BOOT_INFO* info) {
 
 	bool proceed = 0;
 
-	AuTextOut("[aurora]: audrv.cnf read successfully %s \r\n", file->filename);
+	UARTDebugOut("[aurora]: audrv.cnf read successfully %s \r\n", file->filename);
 
 	/** now initialize board specific driver list **/
 	AuVFSNode* board = AuVFSOpen("/board.cnf");
@@ -417,10 +423,10 @@ void AuDrvMngrInitialize(KERNEL_BOOT_INFO* info) {
 		if (filesize < 4096) {
 			AuVFSNodeReadBlock(fsys, board, boardcnf);
 		}
-		AuTextOut("[aurora]: board.cnf read successfully %s \r\n", board->filename);
+		UARTDebugOut("[aurora]: board.cnf read successfully %s \r\n", board->filename);
 
 	}else
-		AuTextOut("[aurora] Driver Manager failed to open board.cnf, file not found \r\n");
+		UARTDebugOut("[aurora] Driver Manager failed to open board.cnf, file not found \r\n");
 	
 
 	AuDriver* drv = NULL;
@@ -492,7 +498,7 @@ void AuDrvMngrInitialize(KERNEL_BOOT_INFO* info) {
 		}
 	}
 
-	AuTextOut("[aurora]: AuDrvManager initialized successfully \r\n");
+	UARTDebugOut("[aurora]: AuDrvManager initialized successfully \r\n");
 	kfree(file);
 }
 

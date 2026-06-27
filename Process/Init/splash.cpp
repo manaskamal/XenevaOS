@@ -103,6 +103,10 @@ void _fill_screen(unsigned x, unsigned y, unsigned w, unsigned h, uint32_t col) 
 void SplashScreenShow() {
 	int graphFd = _KeOpenFile("/dev/graph", FILE_OPEN_WRITE);
 	_KePrint("graphFD : %d \r\n", graphFd);
+	if (graphFd == -1) {
+		_KePrint("[splash]: /dev/graph not found, skipping splash\r\n");
+		return;
+	}
 	XEFileIOControl ioctl;
 	memset(&ioctl, 0, sizeof(XEFileIOControl));
 	ioctl.syscall_magic = AURORA_SYSCALL_MAGIC;
@@ -112,18 +116,35 @@ void SplashScreenShow() {
 	screen_w = ioctl.uint_1;
 	ret = _KeFileIoControl(graphFd, SCREEN_GETHEIGHT, &ioctl);
 	screen_h = ioctl.uint_1;
-	
+
 	ret = _KeFileIoControl(graphFd, SCREEN_GET_FB, &ioctl);
 	fb = (uint32_t*)ioctl.ulong_1;
+
+	if (!fb || screen_w == 0 || screen_h == 0) {
+		_KePrint("[splash]: invalid framebuffer, skipping splash\r\n");
+		return;
+	}
 
 	_fill_screen(0, 0, screen_w, screen_h, 0xFF0F0F0F);
 
 	int logo = _KeOpenFile("/xelogo.bmp", FILE_OPEN_READ_ONLY);
+	if (logo == -1) {
+		_KePrint("[splash]: xelogo.bmp not found, skipping logo draw\r\n");
+		return;
+	}
 
 	XEFileStatus stat;
 	_KeFileStat(logo, &stat);
+	if (stat.size == 0) {
+		_KePrint("[splash]: logo file size 0, skipping\r\n");
+		return;
+	}
 
 	uint8_t* buffer = (uint8_t*)_KeMemMap(NULL, stat.size, 0, 0, -1, 0);
+	if (!buffer) {
+		_KePrint("[splash]: mmap failed for logo\r\n");
+		return;
+	}
 
 	_KeReadFile(logo, buffer, stat.size);
 
@@ -133,9 +154,8 @@ void SplashScreenShow() {
 	BMPInfo* info = (BMPInfo*)(buffer + sizeof(BMP));
 	int width = info->biWidth;
 	int height = info->biHeight;
-	int bpp = info->biBitCount;
 
 	void* image_bytes = (void*)(buffer + offset);
-	_draw_bitmap_(screen_w / 2 - width / 2, screen_h / 2 - height / 2, width, height,(uint8_t*)image_bytes);
+	_draw_bitmap_(screen_w / 2 - width / 2, screen_h / 2 - height / 2, width, height, (uint8_t*)image_bytes);
 }
 

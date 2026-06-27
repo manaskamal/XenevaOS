@@ -89,7 +89,9 @@ void ChFontSetSize(ChFont* font, int size) {
 	if (!font)
 		return;
 	font->fontSz = size / 72.f * 96;
+#ifdef _USE_FREETYPE
 	FT_Set_Pixel_Sizes(font->face, 0, font->fontSz);
+#endif
 	font->fontHeight = font->fontSz;
 }
 
@@ -318,6 +320,7 @@ void ChFontDrawCharClipped(ChCanvas* canv, ChFont* font, char c, int penx, int p
  * @param string -- total string
  */
 int64_t ChFontGetWidth(ChFont* font,char* string) {
+#ifdef _USE_FREETYPE
 	if (!font)
 		return -1;
 	size_t font_width = 0;
@@ -339,6 +342,9 @@ int64_t ChFontGetWidth(ChFont* font,char* string) {
 		font_width = bbox_xmax - bbox_xmin;
 	}
 	return font_width;
+#else
+    return 8 * strlen(string);
+#endif
 }
 
 /*
@@ -348,6 +354,7 @@ int64_t ChFontGetWidth(ChFont* font,char* string) {
 * @param c -- character
 */
 int64_t ChFontGetWidthChar(ChFont* font, char c) {
+#ifdef _USE_FREETYPE
 	if (!font)
 		return -1;
 	size_t font_width = 0;
@@ -365,6 +372,9 @@ int64_t ChFontGetWidthChar(ChFont* font, char c) {
 		font_width = bbox_xmax - bbox_xmin;
 	}
 	return font_width;
+#else
+    return 8;
+#endif
 }
 
 /*
@@ -374,6 +384,7 @@ int64_t ChFontGetWidthChar(ChFont* font, char c) {
  * @param string -- total string
  */
 int64_t ChFontGetHeight(ChFont* font, char* string) {
+#ifdef _USE_FREETYPE
 	if (!font)
 		return -1;
 	size_t font_height = 0;
@@ -393,6 +404,9 @@ int64_t ChFontGetHeight(ChFont* font, char* string) {
 		font_height = bbox_ymax - bbox_ymin;
 	}
 	return font_height;
+#else
+    return 16;
+#endif
 }
 
 /*
@@ -402,6 +416,7 @@ int64_t ChFontGetHeight(ChFont* font, char* string) {
 * @param c -- character
 */
 int64_t ChFontGetHeightChar(ChFont* font, char c) {
+#ifdef _USE_FREETYPE
 	if (!font)
 		return -1;
 	size_t font_h = 0;
@@ -419,6 +434,9 @@ int64_t ChFontGetHeightChar(ChFont* font, char c) {
 		font_h = bbox_ymax - bbox_ymin;
 	}
 	return font_h;
+#else
+    return 16;
+#endif
 }
 
 int ChFontClamp(int val, int min, int max) {
@@ -525,6 +543,9 @@ int ChFontDrawTextClipped(ChCanvas *canv, ChFont* font, char* string, int penx, 
 		prev = glyfIndx;
 		string++;
 	}
+	return 0;
+#else
+    return 0;
 #endif
 
 }

@@ -324,19 +324,6 @@ void _shadow_compose_neon(uint32_t* canv, int canvas_w, int canvas_h, const uint
 
 		int x = 0;
 		for (; x <= row_w - 4; x += 4) {
-			uint32x4_t s4 = vld1q_u32(src + x);
-			uint32x4_t d4 = vld1q_u32(dst + x);
-
-			uint32x4_t sa4 = vshrq_n_u32(s4, 24);
-			uint32x4_t inv4 = vsubq_u32(vdupq_n_u32(255), sa4);
-
-			uint8x16_t db = vreinterpretq_u8_u32(d4);
-
-			uint8x8_t inv_lo = vmovn_u16(vmovl_u32(vget_low_u32(inv4)));
-			uint8x8_t inv_hi = vmovn_u16(vmovl_u32(vget_high_u32(inv4)));
-
-			uint8x8_t inv_lo4 = vzip1_u8(inv_lo, inv_lo);
-
 			for (int i = x; i < x + 4; i++) {
 				uint32_t dp = dst[i];
 				uint8_t sa = (uint8_t)(src[i] >> 24);

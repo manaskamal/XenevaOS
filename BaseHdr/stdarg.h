@@ -38,8 +38,12 @@ extern "C"
 #endif
 
 
+#ifdef __GNUC__
+	typedef __builtin_va_list va_list;
+#else
 	/* va list parameter list */
 	typedef unsigned char* va_list;
+#endif
 
 
 	/* width of stack == width of int */
@@ -63,6 +67,11 @@ extern "C"
 #define va_arg(AP, TYPE)	\
 	(AP += VA_SIZE(TYPE), *((TYPE *)(AP - VA_SIZE(TYPE))))
 #elif defined(ARCH_ARM64) || defined(__aarch64__)
+#ifdef __GNUC__
+#define va_start(ap, last) __builtin_va_start(ap, last)
+#define va_arg(ap, type) __builtin_va_arg(ap, type)
+#define va_end(ap) __builtin_va_end(ap)
+#else
 #define va_start(ap,last) \
      ((ap) = (va_list)(&(last)) + 8)
 
@@ -71,6 +80,7 @@ extern "C"
 
 #define va_end(ap) \
      ((ap) = (va_list)0)
+#endif
 #endif
 
 #ifdef __cplusplus
