@@ -41,6 +41,7 @@
 #include <Drivers/uart.h>
 #include <Fs/fsprobe.h>
 #include <Fs/Fat/Fat.h>
+#include <Fs/Ext2/Ext2.h>
 
 AuVDisk* VdiskArray[MAX_VDISK_DEVICES];
 int _vdisk_num_;
@@ -254,6 +255,7 @@ void AuVDiskRegister(AuVDisk* disk) {
 		break;
 	case AURORA_FS_EXT2:
 		AuTextOut("[aurora]: vdisk : %s has Ext2 file system \r\n", disk->diskname);
+		Ext2Initialise(disk, "b");
 		break;
 	}
 }
