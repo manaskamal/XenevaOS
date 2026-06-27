@@ -267,7 +267,7 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) 
 	PIMAGE_NT_HEADERS nt = RAW_OFFSET(PIMAGE_NT_HEADERS,dos, dos->e_lfanew);
 	PSECTION_HEADER secthdr = RAW_OFFSET(PSECTION_HEADER,&nt->OptionalHeader, nt->FileHeader.SizeOfOptionaHeader);
 
-	uint64_t _image_base_ = 0x60000000000;//   nt->OptionalHeader.ImageBase;
+	uint64_t _image_base_ = 0x600000000;//   nt->OptionalHeader.ImageBase;
 	entry ent = (entry)(nt->OptionalHeader.AddressOfEntryPoint + _image_base_);//nt->OptionalHeader.ImageBase);
 	//AuTextOut("Image base address : %x \n", dos->e_magic);
 	uint64_t* cr3 = proc->cr3;
