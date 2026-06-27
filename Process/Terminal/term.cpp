@@ -46,25 +46,29 @@ ChitralekhaApp* app;
 ChFont* consolas;
 int master_fd;
 int slave_fd;
-int x; 
-int ws_col, ws_row;
-int cell_width, cell_height;
-TermCell* term_buffer;
-uint8_t* psffont;
-int cursor_x;
-int cursor_y;
-int last_cursor_y;
-int last_cursor_x;
+Terminal term;
 bool dirty = false;
 bool _escape_seq = false;
 bool _seq_csi = false;
 bool _cursor_blink = 0;
 bool _update_terminal_ = false;
 bool _first_time = false;
-char* escBuf;
-int shell_id;
 uint32_t backColor;
 uint32_t fgColor;
+char* escBuf;
+int shell_id;
+
+#define TERMINAL_BLACK  0xFF373434
+
+
+
+static inline int _terminal_cell_to_pixelX(Terminal* t, int col) {
+	return t->originX + col * t->cellW;
+}
+
+static inline int _terminal_cell_to_pixelY(Terminal* t, int row) {
+	return t->originY + row * t->cellH;
+}
 
 /*
  * TerminalDrawArrayFont -- draw bitmap fonts using defined array
@@ -87,17 +91,23 @@ void TerminalDrawArrayFont(ChCanvas* canv, unsigned x,unsigned y, unsigned char 
 }
 
 
-/*
- * TerminalSetCellData -- set properties for perticular cell
- * @param x -- x coordinate of the cell
- * @param y -- y coordinate of the cell
- */
-void TerminalSetCellData(int x, int y, uint8_t c, uint32_t bg, uint32_t fg) {
-	TermCell* cell = (TermCell*)&term_buffer[y * ws_col + x];
-	cell->c = c;
-	cell->cellBgCol = bg;
-	cell->cellFgCol = fg;
+void TerminalPutChar(Terminal* t, char ch, uint32_t bg, uint32_t fg) {
+	TermCell* c = &t->cells[t->cursorY][t->cursorX];
+	c->c = ch;
+	c->fg = fg;
+	c->bg = bg;
+	c->flags |= 0x1;
 }
+
+
+void TerminalSetCellData(Terminal* t, int row, int col, char ch, uint32_t bg, uint32_t fg) {
+	TermCell* c = &t->cells[row][col];
+	c->c = ch;
+	c->fg = fg;
+	c->bg = bg;
+	c->flags |= 0x1;
+}
+
 
 /*
  * TerminalDrawCell -- draw a particular cell
@@ -105,90 +115,188 @@ void TerminalSetCellData(int x, int y, uint8_t c, uint32_t bg, uint32_t fg) {
  * @param y -- y position of the cell
  * @param dirty -- dirty specifies was this a single cell update?
  */
-void TerminalDrawCell(int x, int y, bool dirty) {
+void TerminalDrawCell(Terminal *t,int col, int row) {
 	int y_offset = 26;
-	TermCell* cell = (TermCell*)&term_buffer[(y* ws_col + x)];
-	int f_w = ChFontGetWidthChar(consolas, cell->c);
-	int f_h = consolas->face->size->metrics.ascender >> 6;//ChFontGetHeightChar(consolas, cell->c);
-
-	if ((CHITRALEKHA_WINDOW_DEFAULT_PAD_X + x* cell_width + cell_width) >= win->info->width) 
-		return;
+	TermCell* cell = &t->cells[row][col];
 	
-	if ((y*cell_height + cell_height) >= win->info->height)
-		return;
-	//ChDrawRect(win->canv,CHITRALEKHA_WINDOW_DEFAULT_PAD_X + x* cell_width, y_offset + y * cell_height, cell_width, cell_height, cell->cellBgCol);
-	ChFontDrawChar(win->canv, consolas, cell->c, CHITRALEKHA_WINDOW_DEFAULT_PAD_X + x * cell_width, y_offset + y * cell_height + f_h,//- f_h / 2,
-		0, cell->cellFgCol);
-	/*TerminalDrawArrayFont(win->canv, x * cell_width, y_offset + y * cell_height + 12 / 2, cell->c, cell->cellFgCol);*/
-	if (dirty)
-		ChWindowUpdate(win,x * cell_width, y_offset + y * cell_height, cell_width, cell_height, 0, 1);
+	int px = _terminal_cell_to_pixelX(t, col);
+	int py = _terminal_cell_to_pixelY(t, row);
+
+
+	if (cell->c && cell->c != ' ') {
+		char buf[2] = { cell->c, '\0' };
+		ChRect clip;
+		clip.x = px;
+		clip.y = py;
+		clip.w = t->cellW;
+		clip.h = t->cellH;
+
+		ChDrawRect(win->canv, px, py, t->cellW, t->cellH, cell->bg);
+		ChFontDrawTextClipped(win->canv, consolas, buf, px, py + t->baseine, cell->fg, &clip);
+	}
+}
+
+void TerminalFlush(Terminal* t) {
+	int minX = INT_MAX, minY = INT_MAX, maxX = 0, maxY = 0;
+	bool any_dirty = false;
+
+	for (int r = 0; r < t->rows; r++) {
+		for (int c = 0; c < t->cols; c++) {
+			TermCell* cell = &t->cells[r][c];
+			if (!(cell->flags & 0x1)) continue;
+			TerminalDrawCell(t, c, r);
+			cell->flags &= ~0x1;
+
+			int px = _terminal_cell_to_pixelX(t, c);
+			int py = _terminal_cell_to_pixelY(t, r);
+			if (px < minX) minX = px;
+			if (py < minY) minY = py;
+			if (px + t->cellW > maxX) maxX = px + t->cellW;
+			if (py + t->cellH > maxY) maxY = py + t->cellH;
+			any_dirty = true;
+		}
+	}
+
+	if (any_dirty) {
+		ChWindowUpdate(win, minX, minY, maxX - minX, maxY - minY, 0, 1);
+	}
 }
 
 /*
  * TerminalDrawAllCells -- update all the cells to canvas
  */
 void TerminalDrawAllCells() {
-	for (int x = 0; x < ws_col; x++) {
-		for (int y = 0; y < ws_row; y++) {
-			TerminalDrawCell(x, y, 0);
-		}
-	}
-
-	
-	ChWindowUpdate(win, 0, 26, win->info->width - 1, win->info->height - 26, 1, 0);
-
-	//_KeProcessSleep(10);
 }
 
 
 /* TerminalDrawCursor -- draws the cursor */
 void TerminalDrawCursor() {
-	TermCell* cell = (TermCell*)&term_buffer[cursor_y * ws_col + cursor_x];
-	int y_offset = 26;
-
-	if ((CHITRALEKHA_WINDOW_DEFAULT_PAD_X + cursor_x * cell_width) >= win->info->width)
-		return;
-	ChDrawHorizontalLine(win->canv,CHITRALEKHA_WINDOW_DEFAULT_PAD_X + cursor_x * cell_width,y_offset + cursor_y * cell_height + cell_height - 1, cell_width,GRAY);
-	ChDrawHorizontalLine(win->canv, CHITRALEKHA_WINDOW_DEFAULT_PAD_X + cursor_x * cell_width, y_offset + cursor_y * cell_height + cell_height - 2, cell_width, GRAY);
-	//ChWindowUpdate(win, cursor_x * cell_width,y_offset + cursor_y * cell_height + cell_height - 2, cell_width, 2, 0, 1);
-	//ChWindowUpdate(win, 0, 26, win->info->width, win->info->height - 26, 1, 0);
 }
 
 /* TerminalScroll -- scrolls the current terminal 
  * one line up
  */
-void TerminalScroll() {
+void TerminalScroll(Terminal* t, int lines) {
+	int regionRows = t->scrollBot - t->scrollTop + 1;
+	if (lines > regionRows) lines = regionRows;
 
-	/* scroll the screen one line up */
-	for (int c_y = 0; c_y < ws_row-1; c_y++) {
-		for (int c_x = 0; c_x < ws_col; c_x++) {
-			TermCell* destCell = (TermCell*)&term_buffer[c_y * ws_col + c_x];
-			TermCell* srcCell = (TermCell*)&term_buffer[(c_y+ 1) * ws_col + c_x];
-			memcpy(destCell, srcCell, sizeof(TermCell));
+
+	for (int r = t->scrollTop; r <= t->scrollBot - lines; r++)
+		memcpy(t->cells[r], t->cells[r + lines],t->cols * sizeof(TermCell));
+
+	for (int r = t->scrollBot - lines + 1; r <= t->scrollBot; r++) {
+		for (int c = 0; c < t->cols; c++) {
+			t->cells[r][c].c = ' ';
+			t->cells[r][c].fg = t->defaultFg;
+			t->cells[r][c].bg = t->defaultBG;
+			t->cells[r][c].flags &= ~0x1;
 		}
 	}
 
-	/* clear the last line */
-	for (int c_x = 0; c_x < ws_col; c_x++) {
-		TermCell* destCell = (TermCell*)&term_buffer[ws_row  * ws_col + c_x];
-		memset(destCell, 0, sizeof(TermCell));
+
+	uint32_t* pixels = win->canv->buffer;
+	int canvasW = win->canv->canvasWidth;
+
+	int regionPx = _terminal_cell_to_pixelX(t, 0);
+	int regionPy = _terminal_cell_to_pixelY(t, t->scrollTop);
+	int regionW = t->cols * t->cellW;
+	int regionH = regionRows * t->cellH;
+
+	int shiftRows = regionRows - lines;
+	int shiftH = shiftRows * t->cellH;
+
+	for (int y = 0; y < shiftH; y++) {
+		uint32_t* dst = pixels + (regionPy + y) * canvasW + regionPx;
+		uint32_t* src = pixels + (regionPy + y + lines * t->cellH) * canvasW + regionPx;
+		memmove(dst, src, regionW * sizeof(uint32_t));
 	}
-	_update_terminal_ = true;
+
+	int exposedRow = t->scrollBot - lines + 1;
+	int exposedPy = _terminal_cell_to_pixelY(t, exposedRow);
+	int exposedH = lines * t->cellH;
+
+	for (int y = 0; y < exposedH; y++) {
+		uint32_t* row = pixels + (exposedPy + y) * canvasW + regionPx;
+		for (int x = 0; x < regionW; x++)
+			row[x] = t->defaultBG;
+	}
+
+	for (int r = exposedRow; r <= t->scrollBot; r++)
+		for (int c = 0; c < t->cols; c++)
+			TerminalDrawCell(t, c, r);
+
+	ChWindowUpdate(win, regionPx, regionPy, regionW, regionH, 0, 1);
+	t->cursorY = t->scrollBot;
 }
 
 /* TerminalClearScreen -- clears entire screen area of
  * terminal
  */
-void TerminalClearScreen() {
-	last_cursor_x = cursor_x;
-	last_cursor_y = cursor_y;
-	for (int x = 0; x < ws_col; x++) {
-		for (int y = 0; y < ws_row; y++){
-			TerminalSetCellData(x, y, 0, BLACK, WHITE);
+void TerminalClearScreen(Terminal* t) {
+	t->lastCursorX = t->cursorX;
+	t->lastCursorY = t->cursorY;
+	for (int r = 0; r < t->rows; r++) {
+		for (int c = 0; c < t->cols; c++){
+			t->cells[r][c].c = ' ';
+			t->cells[r][c].fg = t->defaultFg;
+			t->cells[r][c].bg = t->defaultBG;
+			t->cells[r][c].flags |= 0x1;
 		}
 	}
-	cursor_x = 0;
-	cursor_y = 0;
+	t->cursorX = 0;
+	t->cursorY = 0;
+
+	int drawableH = t->rows * t->cellH;
+	ChDrawRect(win->canv, 0, t->originY, t->cols * t->cellW, drawableH, t->defaultBG);
+	ChWindowUpdate(win, 0, t->originY, t->cols * t->cellW, drawableH, 0, 1);
+}
+
+
+//ESC[2K - clear entire line
+void TerminalClearLine(Terminal* t) {
+	int r = t->cursorY;
+	for (int c = 0; c < t->cols; c++) {
+		t->cells[r][c].c = ' ';
+		t->cells[r][c].fg = t->defaultFg;
+		t->cells[r][c].bg = t->defaultBG;
+		t->cells[r][c].flags &= ~0x1;
+	}
+
+	int px = _terminal_cell_to_pixelX(t, 0);
+	int py = _terminal_cell_to_pixelY(t, r);
+
+	ChDrawRect(win->canv, px, py, t->cols * t->cellW, t->cellH, t->defaultBG);
+	ChWindowUpdate(win, px, py, t->cols * t->cellW, t->cellH, 0, 1);
+}
+
+void TerminalClearLineToCursor(Terminal* t) {
+	int r = t->cursorY;
+	for (int c = 0; c <= t->cursorX; c++) {
+		t->cells[r][c].c = ' ';
+		t->cells[r][c].fg = t->defaultFg;
+		t->cells[r][c].bg = t->defaultBG;
+		t->cells[r][c].flags &= ~0x1;
+	}
+	int px = _terminal_cell_to_pixelX(t, 0);
+	int py = _terminal_cell_to_pixelY(t, r);
+	int w = (t->cursorX + 1) * t->cellW;
+	ChDrawRect(win->canv, px, py, w, t->cellH, t->defaultBG);
+	ChWindowUpdate(win, px, py, w, t->cellH, 0, 1);
+}
+
+void TerminalClearLineFromCursor(Terminal* t) {
+	int r = t->cursorY;
+	for (int c = t->cursorX; c < t->cols; c++) {
+		t->cells[r][c].c = ' ';
+		t->cells[r][c].fg = t->defaultFg;
+		t->cells[r][c].bg = t->defaultBG;
+		t->cells[r][c].flags &= ~0x1;
+	}
+	int px = _terminal_cell_to_pixelX(t, t->cursorX);
+	int py = _terminal_cell_to_pixelY(t, r);
+	int w = (t->cols - t->cursorX) * t->cellW;
+	ChDrawRect(win->canv, px, py, w, t->cellH, t->defaultBG);
+	ChWindowUpdate(win, px, py, w, t->cellH, 0, 1);
 }
 
 /*
@@ -197,44 +305,45 @@ void TerminalClearScreen() {
  * @param fgcolor -- Foreground color
  * @param bgcolor -- Background color
  */
-void TerminalPrintChar(char c, uint32_t fgcolor, uint32_t bgcolor) {
+void TerminalPrintChar(Terminal* t,char c, uint32_t fgcolor, uint32_t bgcolor) {
 	if (c == '\n'){
 		fgColor = WHITE;
-		backColor = BLACK;
-		last_cursor_y = cursor_y;
-		last_cursor_x = cursor_x;
-		cursor_y++;
-		cursor_x = 0;
-		if (cursor_y >= ws_row-1){
-			TerminalScroll();
-			cursor_y--;
+		backColor = TERMINAL_BLACK;
+		t->lastCursorY = t->cursorY;
+		t->lastCursorX = t->cursorX;
+		t->cursorY++;
+		t->cursorX = 0;
+		if (t->cursorY >= t->scrollBot){
+			//t->cursorY = t->scrollBot;
+			TerminalScroll(t, 1);
+			//return;
 		}
 	}
 	else if (c == '\r') {
-		cursor_x = 0;
+		t->cursorX = 0;
+		//return;
 	}
 	else if (c == '\b') {
-		cursor_x--;
-		if (cursor_x < 0) {
-			cursor_y--;
-			cursor_x = ws_col - 1;
+		t->cursorX--;
+		if (t->cursorX < 0) {
+			t->cursorY--;
+			t->cursorX = t->cols;
 		}
-		TerminalSetCellData(cursor_x, cursor_y, 0, backColor, fgColor);
-		return;
+		//TerminalSetCellData(cursor_x, cursor_y, 0, backColor, fgColor);
+		if (t->cursorY < 0) t->cursorY = 0;
+		TerminalPutChar(t, ' ', backColor, fgColor);
+		//return;
 	}
 	else {
-		TerminalSetCellData(cursor_x, cursor_y, c, bgcolor, fgcolor);
-		last_cursor_x = cursor_x;
-		last_cursor_y = cursor_y;
-		cursor_x++;
-		if (cursor_x == ws_col - 1){
-			cursor_x = 0;
-			cursor_y++;
-		}
-
-		if (cursor_y >= ws_row-1) {
-			TerminalScroll();
-			cursor_y--;
+		TerminalPutChar(t, c, backColor, fgColor);
+		t->lastCursorX = t->cursorX;
+		t->lastCursorY = t->cursorY;
+		t->cursorX++;
+		if (t->cursorX == t->cols) {
+			t->cursorX = 0;
+			t->cursorY++;
+			if (t->cursorY >= t->scrollBot - 1)
+				TerminalScroll(t, 1);
 		}
 	}
 }
@@ -244,9 +353,9 @@ void TerminalPrintChar(char c, uint32_t fgcolor, uint32_t bgcolor) {
  * @param fgcolor -- foreground color
  * @param bgcolor -- background color
  */
-void TerminalPrintString(char* string, uint32_t fgcolor, uint32_t bgcolor) {
+void TerminalPrintString(Terminal* t,char* string, uint32_t fgcolor, uint32_t bgcolor) {
 	while (*string) {
-		TerminalPrintChar(*string, fgcolor, bgcolor);
+		TerminalPrintChar(t,*string, fgcolor, bgcolor);
 		string++;
 	}
 }
@@ -255,7 +364,7 @@ void TerminalPrintString(char* string, uint32_t fgcolor, uint32_t bgcolor) {
  * of ANSI Terminal
  * @param ch -- Character to emulate
  */
-void ProcessControlSequence(char ch) {
+void ProcessControlSequence(Terminal* term_,char ch) {
 	/* Emulates graphics rendition */
 	if (ch == CSI_SET_GRAPHICS_RENDITION) {
 		for (int i = 0; i < 256; i++) {
@@ -268,7 +377,7 @@ void ProcessControlSequence(char ch) {
 		switch (colorCode)
 		{
 		case CSI_SET_BG_BLACK:
-			backColor = BLACK;
+			backColor = TERMINAL_BLACK; // BLACK;
 			break;
 		case CSI_SET_BG_BLUE:
 			backColor = BLUE;
@@ -280,7 +389,7 @@ void ProcessControlSequence(char ch) {
 			backColor = CYAN;
 			break;
 		case CSI_SET_BG_DEFAULT:
-			backColor = BLACK;
+			backColor = TERMINAL_BLACK;// BLACK;
 			break;
 		case CSI_SET_BG_GREEN:
 			backColor = GREEN;
@@ -342,9 +451,9 @@ void ProcessControlSequence(char ch) {
 		int count = atoi(escBuf);
 		if (count == 0)
 			count = 1;
-		cursor_y -= count;
-		if (cursor_y <= 0)
-			cursor_y = 0;
+		term_->cursorY -= count;
+		if (term_->cursorY <= 0)
+			term_->cursorY = 0;
 		_escape_seq = false;
 		_seq_csi = false;
 		memset(escBuf, 0, 256);
@@ -360,9 +469,9 @@ void ProcessControlSequence(char ch) {
 		int count = atoi(escBuf);
 		if (count == 0)
 			count = 1;
-		cursor_x -= count;
-		if (cursor_x <= 0)
-			cursor_x = 0;
+		term_->cursorX -= count;
+		if (term_->cursorX <= 0)
+			term_->cursorX = 0;
 		_escape_seq = false;
 		_seq_csi = false;
 		memset(escBuf, 0, 256);
@@ -378,10 +487,10 @@ void ProcessControlSequence(char ch) {
 		int count = atoi(escBuf);
 		if (count == 0)
 			count = 1;
-		cursor_x += count;
-		if (cursor_x == ws_col - 1){
-			cursor_x = 0;
-			cursor_y++;
+		term_->cursorX += count;
+		if (term_->cursorX == term_->cols - 1){
+			term_->cursorX = 0;
+			term_->cursorY++;
 		}
 		_escape_seq = false;
 		_seq_csi = false;
@@ -398,9 +507,9 @@ void ProcessControlSequence(char ch) {
 		int count = atoi(escBuf);
 		if (count == 0)
 			count = 1;
-		cursor_y += count;
-		if (cursor_y >= ws_row)
-			cursor_y--;
+		term_->cursorY += count;
+		if (term_->cursorY >= term_->rows)
+			term_->cursorY--;
 		_escape_seq = false;
 		_seq_csi = false;
 		memset(escBuf, 0, 256);
@@ -418,22 +527,22 @@ void ProcessControlSequence(char ch) {
 		switch (value) {
 		case 2:
 			/* erase entire screen*/
-			TerminalClearScreen();
+			TerminalClearScreen(term_);
 			break;
 		case 1:
 			//erase upward
-			for (int y = 0; y < cursor_y; y++) {
-				for (int x = 0; x < ws_col; x++) {
-					TerminalSetCellData(x, y, 0, BLACK, WHITE);
+			for (int y = 0; y < term_->cursorY; y++) {
+				for (int x = 0; x < term_->cols; x++) {
+					TerminalSetCellData(term_,y, x, ' ',TERMINAL_BLACK, WHITE);
 				}
 			}
 			break;
 		}
 		if (value == 0){
 			/* erase downward */
-			for (int y = cursor_y; y < ws_row-1; y++) {
-				for (int x = 0; x < ws_col; x++) {
-					TerminalSetCellData(x, y, 0, BLACK, WHITE);
+			for (int y = term_->cursorY; y < term_->rows; y++) {
+				for (int x = 0; x < term_->cols; x++) {
+					TerminalSetCellData(term_,y,x, ' ', TERMINAL_BLACK, WHITE);
 				}
 			}
 		}
@@ -454,25 +563,16 @@ void ProcessControlSequence(char ch) {
 		switch (n) {
 		case 2:
 			/* clear the current line*/
-			for (int i =0; i < ws_col; i++) {
-				TermCell* destCell = (TermCell*)&term_buffer[cursor_y * ws_col + i];
-				memset(destCell, 0, sizeof(TermCell));
-			}
+			TerminalClearLine(term_);
 			break;
 		case 1:
 			/* clear the line from start to current cursor position*/
-			for (int i = 0; i < cursor_x; i++) {
-				TermCell* destCell = (TermCell*)&term_buffer[cursor_y * ws_col + i];
-				memset(destCell, 0, sizeof(TermCell));
-			}
+			TerminalClearLineToCursor(term_);
 			break;
 		case 0:
 		default:
 			/* clear the line from current cursor position */
-			for (int i = cursor_x; i < ws_col; i++) {
-				TermCell* destCell = (TermCell*)&term_buffer[cursor_y * ws_col + i];
-				memset(destCell, 0, sizeof(TermCell));
-			}
+			TerminalClearLineFromCursor(term_);
 			break;
 		}
 		_escape_seq = false;
@@ -486,7 +586,7 @@ void ProcessControlSequence(char ch) {
  * TerminalProcessLine -- emulates terminals
  * @param ch -- character to process
  */
-void TerminalProcessLine(char ch) {
+void TerminalProcessLine(Terminal* t,char ch) {
 	if (_escape_seq) {
 		if (ch == SEQUENCE_CSI) {
 			_seq_csi = true;
@@ -496,7 +596,7 @@ void TerminalProcessLine(char ch) {
 		if (_seq_csi) {
 			char s[] = { ch, 0 };
 			strncat(escBuf, s, 2);
-			ProcessControlSequence(ch);
+			ProcessControlSequence(t, ch);
 			return;
 		}
 	}
@@ -519,7 +619,7 @@ void TerminalProcessLine(char ch) {
 			return;
 		}
 
-		TerminalPrintChar(ch,fgColor,backColor);
+		TerminalPrintChar(t, ch,fgColor,backColor);
 	}
 }
 /*
@@ -580,14 +680,12 @@ void TerminalThread() {
 	int bytes_read = 0;
 	while (1) {
 		bytes_read = _KeReadFile(master_fd, buf, 512);
-		
 		if (bytes_read >= 512) {
 			bytes_read = 512;
-			_KePrint("Bytes read : %d \r\n", bytes_read);
 		}
 
 		for (int i = 0; i < bytes_read; i++){
-			TerminalProcessLine(buf[i]);
+			TerminalProcessLine(&term,buf[i]);
 		}
 	
 		/* now bytes_read tells the terminal
@@ -595,7 +693,7 @@ void TerminalThread() {
 		 * cells 
 		 */
 		if ((bytes_read > 0) || _update_terminal_) {
-				TerminalDrawAllCells();
+			TerminalFlush(&term);
 			
 			//TerminalDrawCursor();
 			bytes_read = 0;
@@ -615,45 +713,57 @@ void TerminalThread() {
 */
 int main(int argc, char* arv[]){
 	app = ChitralekhaStartApp(argc, arv);
-	win = ChCreateWindow(app, (WINDOW_FLAG_MOVABLE), "Xeneva Terminal", 300, 100, 650, 450);
+	win = ChCreateWindow(app, (WINDOW_FLAG_MOVABLE), "Xeneva Terminal", 300, 100, 680, 450);
 	win->info->alpha = false;
 	win->info->alphaValue = 0.7;
-	win->color = 0xE6373434;
+	win->color = 0xFF373434;
 	
 	consolas = ChInitialiseFont(CONSOLAS);
 	ChFontSetSize(consolas, 12);
+
 	int f_w = ChFontGetWidthChar(consolas,'M');
 	int f_h = consolas->face->size->metrics.height >> 6;//ChFontGetHeightChar(consolas, 'A');
-	cell_width = f_w;
-	cell_height = f_h;
-	int term_w = win->info->width - 1;
-	int term_h = win->info->height - 14; // -26 for titlebar height
+
+	term.cellW = f_w;
+	term.cellH = f_h;
+	term.baseine = consolas->face->size->metrics.ascender >> 6; 
+
+	int term_w = win->info->width;
+	int term_h = win->info->height - 16; // -26 for titlebar height
 	
-	ws_col = term_w / cell_width;
-	ws_row = term_h / cell_height;
-	cursor_x = 0;
-	cursor_y = 0;
-	last_cursor_y = cursor_y;
-	last_cursor_x = cursor_x;
+	term.cols = term_w / term.cellW;
+	term.rows = term_h / term.cellH;
+	term.cursorX = 0;
+	term.cursorY = 0;
+	term.lastCursorX = term.cursorX;
+	term.lastCursorY = term.cursorY;
 	_cursor_blink = 0;
 	escBuf = (char*)malloc(256);
 	memset(escBuf, 0, 256);
-	backColor = 0xFF000000;// BLACK;
-	fgColor = WHITE;
+	term.defaultBG = 0xFF373434; // 0xFF000000;// BLACK;
+	term.defaultFg = WHITE;
+	term.scrollTop = 0;
+	term.scrollBot = term.rows - 1;
+	term.originX = 0;
+	term.originY = 26;
+
+	backColor = term.defaultBG;
+	fgColor = term.defaultFg;
+
 	_update_terminal_ = false;
 	master_fd = slave_fd = 0;
 	/* create the terminal */
 	int success = 0;
 	success = _KeCreateTTY(&master_fd, &slave_fd);
 	WinSize sz;
-	sz.ws_col = ws_col;
-	sz.ws_row = ws_row;
+	sz.ws_col = term.cols;
+	sz.ws_row = term.rows;
 	sz.ws_xpixel = term_w;
 	sz.ws_ypixel = term_h;
 	_KeFileIoControl(master_fd, TIOCSWINSZ, &sz);
 
-	term_buffer = (TermCell*)malloc(ws_col * ws_row * sizeof(TermCell));
-	memset(term_buffer, 0x0, static_cast<uint64_t>(ws_col) * ws_row * sizeof(TermCell));
+	/*term_buffer = (TermCell*)malloc(ws_col * ws_row * sizeof(TermCell));
+	memset(term_buffer, 0x0, static_cast<uint64_t>(ws_col) * ws_row * sizeof(TermCell));*/
 
 	ChWindowPaint(win);
 

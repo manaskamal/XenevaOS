@@ -32,6 +32,10 @@
 #include <stdlib.h>
 #include <ctype.h>
 
+#ifdef ARCH_ARM64
+#include <arm64_neon.h>
+#endif
+
 #define SS (sizeof(size_t))
 #define ALIGN (sizeof(size_t)-1)
 #define ONES ((size_t)-1/UCHAR_MAX)
@@ -170,6 +174,7 @@ void *memcpy(void *dest, void *src, size_t len) {
 	return dest;
 }
 
+#if 0
 void *memcpy(void *dest, void *src, uint32_t len) {
 	/*const char *sp = (const char*)src;
 	char *dp = (char*)dest;
@@ -229,6 +234,7 @@ void *memcpy(void *dest, void *src, uint32_t len) {
 	}
 	return dest;
 }
+#endif
 
 int strcmp(const char* str1, const char* str2){
 	int res = 0;
@@ -777,27 +783,126 @@ int ffs(int i){
 	return (count);
 }
 
+void* memmove_x64(void* dest, const void* src, size_t n) {
+	char* d = (char*)dest;
+	const char* s = (const char*)src;
 
-void *memmove(void* dest, void const* src, unsigned __int64 bytes) {
-#if 0
-	unsigned dwords = (bytes >> 2);
-
-	if (!dest || !src) {
-	return dest;
+	if (d == s) {
+		return d;
 	}
 
-	if (bytes) {
-	if (dest < src) {
-	if (!dwords || ((src - dest) < 4) || ((unsigned) src % 4) ||
-	((unsigned) dest % 4) || (bytes % 4)) {
-	memcpy (src, dest, bytes);
+	if (s + n <= d || d + n <= s) {
+		return memcpy(d, (void*)s, n);
+	}
+
+	if (d < s) {
+		if ((uintptr_t)s % sizeof(size_t) == (uintptr_t)d % sizeof(size_t)) {
+			while ((uintptr_t)d % sizeof(size_t)) {
+				if (!n--) {
+					return dest;
+				}
+				*d++ = *s++;
+			}
+			for (; n >= sizeof(size_t); n -= sizeof(size_t), d += sizeof(size_t), s += sizeof(size_t)) {
+				*(size_t*)d = *(size_t*)s;
+			}
+		}
+		for (; n; n--) {
+			*d++ = *s++;
+		}
 	}
 	else {
-	memcpy (src, dest, dwords);
+		if ((uintptr_t)s % sizeof(size_t) == (uintptr_t)d % sizeof(size_t)) {
+			while ((uintptr_t)(d + n) % sizeof(size_t)) {
+				if (!n--) {
+					return dest;
+				}
+				d[n] = s[n];
+			}
+			while (n >= sizeof(size_t)) {
+				n -= sizeof(size_t);
+				*(size_t*)(d + n) = *(size_t*)(s + n);
+			}
+		}
+		while (n) {
+			n--;
+			d[n] = s[n];
+		}
 	}
+
+	return dest;
+}
+
+
+void* memmove_aarch64(void* dest, const void* src, size_t n) {
+	unsigned char* d = (unsigned char*)dest;
+	const unsigned char* s = (const unsigned char*)src;
+
+	if (d == s || n == 0) {
+		return dest;
 	}
+
+	if (d < s || d >= (s + n)) {
+		while (n >= 32) {
+			uint8x16x2_t bytes = vld1q_u8_x2(s);
+			vst1q_u8_x2(d, bytes);
+			s += 32;
+			d += 32;
+			n -= 32;
+		}
+
+		if (n >= 16) {
+			uint8x16_t bytes = vld1q_u8(s);
+			vst1q_u8(d, bytes);
+			s += 16;
+			d += 16;
+			n -= 16;
+		}
+
+		while (n > 0) {
+			*d++ = *s++;
+			n--;
+		}
+	}
+
+	else {
+		s += n;
+		d += n;
+
+		while (n >= 32) {
+			s -= 32;
+			d -= 32;
+			uint8x16x2_t bytes = vld1q_u8_x2(s);
+			vst1q_u8_x2(d, bytes);
+			n -= 32;
+		}
+		if (n >= 16) {
+			s -= 16;
+			d -= 16;
+			uint8x16_t bytes = vld1q_u8(s);
+			vst1q_u8(d, bytes);
+			n -= 16;
+		}
+
+		while (n > 0) {
+			s--;
+			d--;
+			*d = *s;
+			n--;
+		}
+	}
+
+	return dest;
+}
+
+
+void *memmove(void* dest, void const* src, unsigned __int64 bytes) {
+	unsigned dwords = (bytes >> 2);
+#ifdef ARCH_X64
+	memmove_x64(dest, src, bytes);
+#elif ARCH_ARM64
+	return memmove_aarch64(dest, src, bytes);
 #endif
-	return 0;
 }
 
 
