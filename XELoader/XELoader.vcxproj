@@ -196,7 +196,7 @@
       <AdditionalLibraryDirectories>..\x64\Debug</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>copy "..\Build\$(TargetName).exe" "M:\$(TargetName).exe</Command>
+      <Command>if exist M:\ ( copy "..\Build\$(TargetName).exe" "M:\$(TargetName).exe ) else ( echo M: drive not found, skipping copy )"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
@@ -245,7 +245,7 @@
       <AdditionalLibraryDirectories>..\ARM64\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>copy "..\Build\$(TargetName).exe" M:\$(TargetName).exe" </Command>
+      <Command>if exist M:\ ( copy "..\Build\$(TargetName).exe" M:\$(TargetName).exe" ) else ( echo M: drive not found, skipping copy )"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">

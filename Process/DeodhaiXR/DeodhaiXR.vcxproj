@@ -242,7 +242,7 @@
       <Command>clang --target=aarch64-windows-msvc -c -o "$(IntDir)%(Filename).obj" "%(FullPath)"</Command>
     </CustomBuild>
     <PostBuildEvent>
-      <Command>copy "..\..\Build\$(TargetName).exe" M:\$(TargetName).exe" </Command>
+      <Command>if exist M:\ ( copy "..\..\Build\$(TargetName).exe" M:\$(TargetName).exe" ) else ( echo M: drive not found, skipping copy )"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">

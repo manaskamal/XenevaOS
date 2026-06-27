@@ -203,7 +203,7 @@
       <AdditionalOptions>/filealign:4096 %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
-      <Command>copy "$(SolutionDir)Build\$(TargetName).exe" M:\$(TargetName).exe" </Command>
+      <Command>if exist M:\ ( copy "$(SolutionDir)Build\$(TargetName).exe" M:\$(TargetName).exe" ) else ( echo M: drive not found, skipping copy )"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
