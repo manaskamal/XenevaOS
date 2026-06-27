@@ -21,7 +21,7 @@ uint32_t Ext2FindEntry(Ext2Fs* fs, Ext2Inode* dir_inode, const char* name) {
 	uint32_t sector_per_block = block_size / 512;
 	uint32_t target_len = strlen(name);
 
-	uint64_t* buffer = (uint64_t*)PV((uint64_t)AuPmmngrAlloc());
+	uint64_t* buffer = (uint64_t*)P2V((uint64_t)AuPmmngrAlloc());
 	if (!buffer) {
 		UARTDebugOut("[ext2]: out of memory during directory scanning.\r\n");
 		return 0;
@@ -93,7 +93,7 @@ int Ext2ReadInode(Ext2Fs* fs, uint32_t inode_num, Ext2Inode* out_inode) {
 	AuVDiskRead((AuVDisk*)fs->vdisk, target_lba, sector_per_block, buffer);
 
 	uint8_t* target_adress = (uint8_t*)buffer + internal_byte_offset;
-	memccpy(out_inode, target_adress, sizeof(Ext2Inode));
+	memcpy(out_inode, target_adress, sizeof(Ext2Inode));
 
 	AuPmmngrFree((void*)V2P((uint64_t)buffer));
 
@@ -233,7 +233,7 @@ AuVFSNode* Ext2Open(AuVFSNode* fsys, char* path) {
 	file_session->first_block = current_inode_number;
 	file_session->size = current_inode.size;
 
-	char* raw_filename = strrchr(path, '/');
+	char* raw_filename = strchr(path, '/');
 	strcpy(file_session->filename, raw_filename ? (raw_filename + 1) : path);
 
 	if (current_inode.mode & EXT2_S_IFDIR) file_session->flags |= FS_FLAG_DIRECTORY;
