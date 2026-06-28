@@ -187,15 +187,15 @@ void NmButtonInfoRead(ButtonInfo* btninfo) {
 
 	uint8_t* buffer = (uint8_t*)btninfo->fileBuffer;
 
-	unsigned int offset;
+	unsigned int offset = 0;
 	memcpy(&offset, (uint8_t*)buffer + 10, sizeof(int));
 
 	uint8_t* info = (uint8_t*)(buffer + sizeof(BMP));
-	int width;
+	int width = 0;
 	memcpy(&width, (uint8_t*)info + 4, sizeof(int));
-	int height;
+	int height = 0;
 	memcpy(&height, (uint8_t*)info + 8, sizeof(int));
-	int bpp;
+	int bpp = 0;
 	memcpy(&bpp, (uint8_t*)info + 14, sizeof(unsigned short));
 
 	void* image_bytes = (void*)(buffer + offset);
@@ -230,7 +230,6 @@ void NmButtonInfoDrawIcon(ButtonInfo* info, ChCanvas* canv, int x, int y){
 	int bytes_per_pixel = info->iconBpp / 8;
 	if (bytes_per_pixel == 0) bytes_per_pixel = 3;
 	int row_pitch = ((info->iconWidth * info->iconBpp + 31) / 32) * 4;
-	uint32_t* fb = (uint32_t*)canv->buffer;
 
 	for (int i = 0; i < height; i++) {
 		int bmp_row = info->iconHeight - 1 - i;
@@ -245,12 +244,12 @@ void NmButtonInfoDrawIcon(ButtonInfo* info, ChCanvas* canv, int x, int y){
 			
 			if (bytes_per_pixel == 3) {
 				if (r == 255 && g == 255 && b == 255) continue;
-				fb[(y + i) * canv->screenWidth + (x + k)] = (r << 16) | (g << 8) | b;
+				ChDrawPixel(canv, x + k, y + i, (r << 16) | (g << 8) | b);
 			} else {
 				uint32_t a = pixel[3];
 				if (a > 0) {
 					uint32_t rgb = ((a << 24) | (r << 16) | (g << 8) | b);
-					fb[(y + i) * canv->screenWidth + (x + k)] = rgb;
+					ChDrawPixel(canv, x + k, y + i, rgb);
 				}
 			}
 		}
