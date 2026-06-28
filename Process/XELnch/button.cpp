@@ -219,21 +219,23 @@ void ButtonIconRead(ButtonIcon* btninfo) {
 
 	uint8_t* buffer = (uint8_t*)btninfo->fileBuffer;
 
-	BMP* bmp = (BMP*)buffer;
-	unsigned int offset = bmp->off_bits;
+	unsigned int offset = 0;
+	memcpy(&offset, buffer + 10, sizeof(int));
 
-	BMPInfo* info = (BMPInfo*)(buffer + sizeof(BMP));
+	uint8_t* info = (uint8_t*)(buffer + sizeof(BMP));
+	int width = 0;
+	memcpy(&width, info + 4, sizeof(int));
+	int height = 0;
+	memcpy(&height, info + 8, sizeof(int));
+	int bpp = 0;
+	memcpy(&bpp, info + 14, sizeof(unsigned short));
 
-	printf("ButtonIconRead: fd=%d size=%d read=%d width=%d height=%d offset=%d type=%x\n", 
-		btninfo->iconFd, btninfo->fileSize, read_bytes, info->biWidth, info->biHeight, offset, bmp->type);
+	printf("ButtonIconRead: fd=%d size=%d read=%d width=%d height=%d offset=%d\n", 
+		btninfo->iconFd, btninfo->fileSize, read_bytes, width, height, offset);
 
-	btninfo->iconBpp = info->biBitCount;
-	btninfo->iconWidth = info->biWidth;
-	btninfo->iconHeight = info->biHeight;
-	int bpp = info->biBitCount;
-
-	int width = info->biWidth;
-	int height = info->biHeight;
+	btninfo->iconBpp = bpp;
+	btninfo->iconWidth = width;
+	btninfo->iconHeight = height;
 
 	void* image_bytes = (void*)(buffer + offset);
 	btninfo->imageData = (uint8_t*)image_bytes;
