@@ -264,6 +264,7 @@
     <ClCompile Include="dtb.c" />
     <ClCompile Include="Fs\Dev\devfs.c" />
     <ClCompile Include="Fs\Dev\devinput.c" />
+    <ClCompile Include="Fs\Ext2\Ext2.c" />
     <ClCompile Include="Fs\Fat\Fat.c" />
     <ClCompile Include="Fs\Fat\FatDir.c" />
     <ClCompile Include="Fs\Fat\FatFile.c" />

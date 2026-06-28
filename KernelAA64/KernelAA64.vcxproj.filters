@@ -207,6 +207,9 @@
     <ClCompile Include="Fs\fsprobe.c">
       <Filter>Fs</Filter>
     </ClCompile>
+    <ClCompile Include="Fs\Ext2\Ext2.c">
+      <Filter>Fs\Ext2</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Hal">
@@ -289,6 +292,9 @@
     </Filter>
     <Filter Include="Sound">
       <UniqueIdentifier>{ca328030-92be-464f-86c9-47904d473330}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Fs\Ext2">
+      <UniqueIdentifier>{9e3c015e-2730-4f5a-b260-96fd6a826e4d}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
