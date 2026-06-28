@@ -187,13 +187,16 @@ void NmButtonInfoRead(ButtonInfo* btninfo) {
 
 	uint8_t* buffer = (uint8_t*)btninfo->fileBuffer;
 
-	BMP* bmp = (BMP*)buffer;
-	unsigned int offset = bmp->off_bits;
+	unsigned int offset;
+	memcpy(&offset, (uint8_t*)buffer + 10, sizeof(int));
 
-	BMPInfo* info = (BMPInfo*)(buffer + sizeof(BMP));
-	int width = info->biWidth;
-	int height = info->biHeight;
-	int bpp = info->biBitCount;
+	uint8_t* info = (uint8_t*)(buffer + sizeof(BMP));
+	int width;
+	memcpy(&width, (uint8_t*)info + 4, sizeof(int));
+	int height;
+	memcpy(&height, (uint8_t*)info + 8, sizeof(int));
+	int bpp;
+	memcpy(&bpp, (uint8_t*)info + 14, sizeof(unsigned short));
 
 	void* image_bytes = (void*)(buffer + offset);
 	btninfo->imageData = (uint8_t*)image_bytes;
@@ -214,21 +217,42 @@ void NmButtonInfoRead(ButtonInfo* btninfo) {
 void NmButtonInfoDrawIcon(ButtonInfo* info, ChCanvas* canv, int x, int y){
 	uint32_t width = info->iconWidth;
 	uint32_t height = info->iconHeight;
-	uint32_t j = 0;
+	
+	if (x < 0 || x >= canv->screenWidth) return;
+	if (y < 0 || y >= canv->screenHeight) return;
+
+	if ((x + width) > canv->screenWidth)
+		width = canv->screenWidth - x;
+	if ((y + height) > canv->screenHeight)
+		height = canv->screenHeight - y;
 
 	uint8_t* image = info->imageData;
+	int bytes_per_pixel = info->iconBpp / 8;
+	if (bytes_per_pixel == 0) bytes_per_pixel = 3;
+	int row_pitch = ((info->iconWidth * info->iconBpp + 31) / 32) * 4;
+	uint32_t* fb = (uint32_t*)canv->buffer;
+
 	for (int i = 0; i < height; i++) {
-		char* image_row = (char*)image + (static_cast<uint64_t>(height) - i - 1) * (static_cast<uint64_t>(width) * 4);
-		uint32_t h = height - 1 - i;
-		j = 0;
+		int bmp_row = info->iconHeight - 1 - i;
+		if (bmp_row < 0 || bmp_row >= info->iconHeight) continue;
+
+		uint8_t* image_row = image + bmp_row * row_pitch;
 		for (int k = 0; k < width; k++) {
-			uint32_t b = image_row[j++] & 0xff;
-			uint32_t g = image_row[j++] & 0xff;
-			uint32_t r = image_row[j++] & 0xff;
-			uint32_t a = image_row[j++] & 0xff;
-			uint32_t rgb = ((a << 24) | (r << 16) | (g << 8) | (b));
-			if (rgb & 0xFF000000)
-				ChDrawPixel(canv, x + k, y + i, rgb);
+			uint8_t* pixel = image_row + k * bytes_per_pixel;
+			uint32_t b = pixel[0];
+			uint32_t g = pixel[1];
+			uint32_t r = pixel[2];
+			
+			if (bytes_per_pixel == 3) {
+				if (r == 255 && g == 255 && b == 255) continue;
+				fb[(y + i) * canv->screenWidth + (x + k)] = (r << 16) | (g << 8) | b;
+			} else {
+				uint32_t a = pixel[3];
+				if (a > 0) {
+					uint32_t rgb = ((a << 24) | (r << 16) | (g << 8) | b);
+					fb[(y + i) * canv->screenWidth + (x + k)] = rgb;
+				}
+			}
 		}
 	}
 }
