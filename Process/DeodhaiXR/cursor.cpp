@@ -102,19 +102,30 @@ void CursorDraw(ChCanvas* canv, Cursor* cur, unsigned int x, unsigned int y) {
 	uint32_t height = cur_h;
 	uint32_t j = 0;
 	uint8_t* image = cur->imageData;
+	uint32_t* fb = (uint32_t*)canv->buffer;
+
 	for (int i = 0; i < height; i++) {
+		if ((y + i) >= canv->screenHeight) break;
+
 		unsigned char* image_row = (unsigned char*)(image + (static_cast<uint64_t>(height) - i - 1) *
 			(static_cast<uint64_t>(width) * 4));
 		uint32_t h = height - 1 - i;
 		j = 0;
 		for (int k = 0; k < width; k++) {
+			if ((x + k) >= canv->screenWidth) {
+				j += 4;
+				continue;
+			}
+
 			uint32_t b = image_row[j++] & 0xff;
 			uint32_t g = image_row[j++] & 0xff;
 			uint32_t r = image_row[j++] & 0xff;
 			uint32_t a = image_row[j++] & 0xff;
 			uint32_t rgb = ((a << 24) | (r << 16) | (g << 8) | (b));
-			if (rgb & 0xFF000000)
-				ChDrawPixel(canv, x + k, y + i, rgb);
+			
+			if (rgb & 0xFF000000) {
+				fb[(y + i) * canv->screenWidth + (x + k)] = rgb;
+			}
 		}
 	}
 }

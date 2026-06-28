@@ -229,7 +229,7 @@ void CursorDrawBack(ChCanvas* canv, Cursor* cur, unsigned x, unsigned y) {
 	}*/
 	for (int row = 0; row < 24; row++) {
 		int cy = y + row;
-		if (cy < 0 || cy >= canv->canvasWidth) continue;
+		if (cy < 0 || cy >= canv->canvasHeight) continue;
 
 		uint32_t* canvas_row = (uint32_t*)canv->buffer + cy * canv->canvasWidth + x;
 		uint32_t* back_row = (uint32_t*)cur->cursorBack + row * 24;
