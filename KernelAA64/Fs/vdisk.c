@@ -212,7 +212,7 @@ void AuVDiskRegisterPartition(AuVDisk* vdisk) {
 
 	AuTextOut("\r\n");
 	AuPmmngrFree(buffer);
-
+	
 }
 
 /**
