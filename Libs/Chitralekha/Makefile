@@ -10,7 +10,7 @@ AR = $(CROSS_COMPILE)ar
 INCLUDES = -I./ -I../XEClib/includes -I../../BaseHdr -I../XEClib/includes/c++ -I../../Ports/freetype2/include
 CXXFLAGS = -Wall -Wextra -ffreestanding -fno-stack-protector -fno-stack-check -fno-strict-aliasing \
            -O2 -fPIE -fno-exceptions -fno-rtti \
-           -DARCH_ARM64 -D__TARGET_BOARD_QEMU_VIRT__ -D_USE_DLMALLOC -D__STDC_LIMIT_MACROS -DTHEME_DEFAULT \
+           -DARCH_ARM64 -D__TARGET_BOARD_QEMU_VIRT__ -D_USE_DLMALLOC -D__STDC_LIMIT_MACROS -DTHEME_DEFAULT -DCOLOR_RGBA \
            $(INCLUDES)
 
 OBJDIR = obj
