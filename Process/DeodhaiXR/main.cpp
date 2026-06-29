@@ -239,7 +239,7 @@ void CursorDrawBack(ChCanvas* canv, Cursor* cur, unsigned x, unsigned y) {
 			copy_w = canv->canvasWidth - x;
 
 		if (copy_w > 0)
-			__pixel_blend_neon(canvas_row, back_row, 24);
+			__pixel_blend_neon(canvas_row, back_row, copy_w);
 			//_fastcpy(canvas_row, back_row, copy_w * sizeof(uint32_t));
 	}
 }

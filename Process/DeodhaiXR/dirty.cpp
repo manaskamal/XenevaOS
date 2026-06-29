@@ -35,7 +35,7 @@
 #include <sys/iocodes.h>
 
 static uint32_t _dirty_count = 0;
-Rect dirtyRect[100];
+Rect dirtyRect[512];
 XEFileIOControl ioctl;
 
 extern int _get_gpu_fd();
@@ -43,7 +43,7 @@ extern int _get_gpu_display_id();
 extern bool _is_gpu_enabled();
 
 void InitialiseDirtyClipList() {
-	for (int i = 0; i < 100; i++) {
+	for (int i = 0; i < 512; i++) {
 		dirtyRect[i].x = 0;
 		dirtyRect[i].y = 0;
 		dirtyRect[i].w = 0;
@@ -60,7 +60,7 @@ void InitialiseDirtyClipList() {
  * @param h -- height of the rect
  */
 void AddDirtyClip(int x, int y, int w, int h) {
-	if (_dirty_count >= 100)
+	if (_dirty_count >= 512)
 		_dirty_count = 0;
 
 	if (x < 0)
