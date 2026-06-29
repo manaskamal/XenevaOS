@@ -311,10 +311,12 @@ void AuPutC(char c) {
 	console_x++;
 
 	uint32_t* lfb = aucon->buffer;
-	if (console_y + 1 > h_res / 16)
+	if (console_y + 1 > v_res / 16)
 	{
-		for (int i = 16; i < h_res * v_res; i++)
-			lfb[i] = lfb[i + v_res * 16];
+		for (int i = 0; i < h_res * (v_res - 16); i++)
+			lfb[i] = lfb[i + h_res * 16];
+
+		memset(lfb + h_res * (v_res - 16), 0, h_res * 16 * sizeof(uint32_t));
 		console_y--;
 	}
 
@@ -373,12 +375,17 @@ void AuPutS(char* str) {
 	/* Scroll */
 	if (console_y + 1 > v_res / 16)
 	{
-		for (int i = 16; i < v_res * h_res; i++)
+		for (int i = 0; i < h_res * (v_res - 16); i++)
 			lfb[i] = lfb[i + h_res * 16];
+
+		memset(lfb + h_res * (v_res - 16), 0, h_res * 16 * sizeof(uint32_t));
 		console_y--;
 	}
 }
 
+#ifdef _MSC_VER
+extern void store_x0_x7(uint64_t* buffer);
+#endif
 /**
  * @brief AuTextOut -- standard text printing function
  * for entire kernel

@@ -79,7 +79,7 @@ EFI_STATUS XEInitialiseGraphics(EFI_GRAPHICS_OUTPUT_PROTOCOL* GraphicsOutput) {
 	pixel.Green = 115;
 	pixel.Red = 0;
 
-	// GraphicsOutput->Blt(GraphicsOutput, &pixel, EfiBltVideoFill, 0, 0, 0, 0, info->HorizontalResolution, info->VerticalResolution, 0);
+	//GraphicsOutput->Blt(GraphicsOutput, &pixel, EfiBltVideoFill, 0, 0, 0, 0, info->HorizontalResolution, info->VerticalResolution, 0);
 	
 	// QEMU ramfb Blt can be buggy, so manually fill the framebuffer with the background color
 	uint32_t bg_color = RGB(0, 115, 164);

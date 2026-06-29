@@ -92,7 +92,12 @@ void AuVirtioKbdHandler(int spinum) {
 				AuDevWriteKybrd(&msg);
 			}
 			else if (ext_key_map[evt.code]) {
-				uint32_t scancode = (0xE0 & 0xFF) << 16 | (ext_key_map[evt.code] & 0xFF) << 8 | (((evt.value == 0) ? 0x80 : 0) & 0xFF);
+				uint8_t make_code = ext_key_map[evt.code] & 0xFF;
+
+				if (evt.value == 0) {
+					make_code |= 0x80;
+				}
+				uint32_t scancode = (0xE0 << 8) | make_code;
 				// 0xE0 (extended code)  upper 16 bits | key code middle 8 bits | value: 0x80 for release, 0 press
 				/* write to xeneva key input msg box */
 				AuInputMessage msg;
@@ -100,7 +105,6 @@ void AuVirtioKbdHandler(int spinum) {
 				msg.type = AU_INPUT_KEYBOARD;
 				msg.code = scancode;
 				AuDevWriteKybrd(&msg);
-				UARTDebugOut("Extended key press \n");
 			}
 			else {
 				UARTDebugOut("virtio-kybrd: unmapped key code : %d \n", evt.code);

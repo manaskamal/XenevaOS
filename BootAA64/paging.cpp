@@ -87,10 +87,8 @@ void XEPagingInitialize() {
 	else
 		previousBase = read_ttbr0_el2();
 
-	XEGuiPrint("ttbr0: %x \n", previousBase);
 	bool required_sctrl = 0;
 	l0_table_base = (uint64_t*)previousBase;
-	XEGuiPrint("el value : %d \r\n", _getCurrentEL());
 	if (previousBase == 0) {
 		previousBase = XEPmmngrAllocate();
 		XEGuiPrint("pREVIOUS Base : %x \r\n", previousBase);

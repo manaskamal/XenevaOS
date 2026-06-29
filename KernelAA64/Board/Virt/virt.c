@@ -78,7 +78,7 @@ void AuVirtIOInputInitialize() {
 				uint8_t sub_ClassCode = AuPCIERead(address, PCI_SUBCLASS, bus, dev, func);
 				uint16_t vendID = AuPCIERead(address, PCI_VENDOR_ID, bus, dev, func);
 				uint16_t devID = AuPCIERead(address, PCI_DEVICE_ID, bus, dev, func);
-				UARTDebugOut("Vendor ID attached : %x devID : %x \r\n", vendID, devID);
+				//UARTDebugOut("Vendor ID attached : %x devID : %x \r\n", vendID, devID);
 				if (vendID == 0x1AF4 && devID == 0x1052) {
 					uint8_t devType = AuVirtIOInputCheck(address, bus, dev, func);
 					if (devType == VIRTIO_INPUT_KEYBOARD) {

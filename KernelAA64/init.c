@@ -285,7 +285,6 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 
 	AuSchedulerInitialize();
 
-	
 	AuProcess* proc = AuCreateProcessSlot(0, "exec");
 	int num_args = 1;
 	char* about = (char*)kmalloc(strlen("-about"));
@@ -302,7 +301,6 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 #ifdef __KERNEL_PROFILER_ON__
 	PROFILE_END("_AuMain");
 #endif
-
 	AuSchedulerStart();
 	while (1) {
 		//UARTDebugOut("Printing \n");
