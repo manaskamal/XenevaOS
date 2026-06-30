@@ -152,7 +152,7 @@ void AuVirtioTabletInitialize(uint64_t device) {
 	int func = 0;
 	int dev = 0;
 	if (device == 0xFFFFFFFF)
-		return 1;
+		return;
 
 	uint16_t command = AuPCIERead(device, PCI_COMMAND, bus, dev, func);
 	command |= 4;
@@ -167,7 +167,6 @@ void AuVirtioTabletInitialize(uint64_t device) {
 	uint64_t bar = ((uint64_t)barHi << 32) | (barLo & ~0xFULL);
 	uint64_t finalAddr = (uint64_t)AuMapMMIO(bar, 16);
 	struct VirtioDeviceConfig* cfg = (struct VirtioDeviceConfig*)(finalAddr + 0x2000);
-	_tabletCfg = cfg;
 	cfg->select = 1;
 	cfg->subsel = 0;
 	isb_flush();
@@ -212,6 +211,7 @@ void AuVirtioTabletInitialize(uint64_t device) {
 	GICRegisterSPIHandler(&AuVirtioTabletHandler, spiID);
 
 	struct VirtioCommonCfg* common = (struct VirtioCommonCfg*)finalAddr;
+	_tabletCfg = common;
 	common->DeviceStatus = 0;
 	isb_flush();
 
