@@ -34,3 +34,4 @@ Use the Table of Contents below to navigate through the project's documentation.
 - [**XELoader (Dynamic Linker)**](XELoader.md) — The XenevaOS user-space PE linker and dynamic loading mechanism.
 - [**Application Development**](Development/ApplicationDevelopment.md) — Writing user-space applications (GUI, Terminal) for XenevaOS.
 - [**Driver Development**](Development/DriverDevelopment.md) — Developing dynamic drivers and interacting with kernel APIs.
+- [**Project Architecture(MSVC)**](Development/ProjectArchitecture(MSVC).md)- Discusses various artifacts and project inter dependencies.
