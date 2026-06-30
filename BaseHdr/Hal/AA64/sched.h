@@ -59,7 +59,8 @@ typedef struct _uentry_ {
 	uint64_t cs;
 	uint64_t ss;
 	int num_args;
-	uint64_t argvaddr;
+	uint64_t argvaddr;    /* user-space VA of argv[] page (for crt0 via stack) */
+	uint64_t argvkernel;  /* kernel-space VA of argv[] page (for EL1 writes) */
 	char** argvs;
 	uint64_t stackBase;
 }AuUserEntry;
