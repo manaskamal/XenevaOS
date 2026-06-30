@@ -60,7 +60,10 @@ typedef struct __VFS_NODE__ {
 
 ## Implementing File System Driver for XenevaOS
 
-In XenevaOS, filesystem drivers can be implemented in two ways: either as external kernel modules or built directly into the kernel code. However, the current version of the kernel lacks the mechanism to load filesystem drivers as external kernel modules. The current version of XenevaOS only uses a built-in FAT32 driver for the root filesystem. Supporting filesystem drivers from external modules is work in progress. <br>
+In XenevaOS, filesystem drivers can be implemented in two ways: either as external kernel modules or built directly into the kernel code. However, the current version of the kernel lacks the mechanism to load filesystem drivers dynamically as external modules. Instead, the kernel includes built-in filesystem drivers for **FAT32** (typically used for the root boot filesystem) and **Ext2** (used for secondary storage access). Supporting filesystem drivers from dynamic external modules is work in progress. <br>
+
+### Ext2 File System Support
+The Ext2 file system module integrates directly into the VFS layer by providing the standard filesystem callback handlers. It is registered during kernel initialization and allows standard operations such as finding, opening, and reading files and directories on Ext2 partitions.
 
 ### Mounting the file system during initialization
 Mounting a new filesystem involves extracting all necessary information from the disk's root sector, creating the necessary data structures, and allocating a new `AuVFSNode` structure. Filesystem drivers can use the `AuVDisk` service to read disk sectors. XenevaOS first detects the storage medium using the appropriate driver, extracts the partition details, calls `AuCreateVDisk` to register a virtual disk, mounts it to the device filesystem, and finally mounts the target filesystem on it. 
