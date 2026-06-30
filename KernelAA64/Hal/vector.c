@@ -116,7 +116,7 @@ void sync_el1_handler(AA64Registers *regs) {
    // AuTextOut("SP_EL0 : %x \r\n", regs->EL0SP);
     UARTDebugOut("Current SPSel : %d \r\n", read_spsel());
     UARTDebugOut("EC class : %x \r\n", ec);
-
+    for (;;);
     /** check if the fault occured on drivers **/
     AuDriver* drv = AuDrvManagerCheckFault(read_elr_el1());
     if (drv) {

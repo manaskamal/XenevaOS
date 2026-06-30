@@ -157,6 +157,7 @@ typedef struct _FatFS_ {
 	unsigned int __LastIndexInFat;
 	uint16_t __BytesPerSector;
 	size_t cluster_sz_in_bytes;
+	void* _scratchBuffer;
 #ifdef ARCH_X64
 	AuMutex *fat_mutex;
 	AuMutex *fat_write_mutex;

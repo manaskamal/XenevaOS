@@ -430,6 +430,9 @@
     <ClInclude Include="..\BaseHdr\Fs\fsprobe.h">
       <Filter>Include\Fs</Filter>
     </ClInclude>
+    <ClInclude Include="..\BaseHdr\stdarg.h">
+      <Filter>Include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="exports.def" />

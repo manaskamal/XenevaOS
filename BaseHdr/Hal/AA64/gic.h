@@ -134,4 +134,9 @@ AU_EXTERN AU_EXPORT void GICRegisterSPIHandler(void* fptr, int spi);
  * @param spi -- SPI number
  */
 extern void GICCallSPIHandler(int spi);
+
+/**
+ * @brief GICDisable -- disable the GIC
+ */
+extern void GICDisable();
 #endif

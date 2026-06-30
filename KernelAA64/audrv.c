@@ -361,7 +361,7 @@ void AuDriverLoad(char* filename, AuDriver* driver) {
 	driver->base = AU_DRIVER_BASE_START;
 	driver->end = driver->base + file->size;
 	driver->present = true;
-	driver_load_base = driver_load_base + (next_base_offset * 4096);
+	driver_load_base = driver_load_base + ((uint64_t)next_base_offset * 4096);
 
 	kfree(file);
 }
@@ -631,7 +631,20 @@ void AuDrvCatchFault(AuDriver* drv, uint64_t fault_addr) {
 	uint64_t original_va = drv->original_load_base + rva;
 
 	UARTDebugOut("[aurora]: relocated address: %x, original address : %x \r\n", fault_addr, original_va);
-	AuCoffResolveAddress(drv->new_load_base, fault_addr);
+	AuCoffResolveAddress((uint8_t*)drv->new_load_base, fault_addr);
+}
+
+/**
+ * @brief AuDrvUnloadAll -- call unload handler of all registered drivers
+ */
+void AuDrvUnloadAll() {
+	for (int i = 0; i < 246; i++) {
+		AuDriver* drv = drivers[i];
+		if (drv) {
+			if (drv->unload)
+				drv->unload(drv);
+		}
+	}
 }
 
 

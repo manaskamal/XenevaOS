@@ -42,6 +42,9 @@
 #include <string.h>
 #include <stdlib.h>
 #include "glimpse.h"
+#include <widgets/sidebar.h>
+#include <widgets/toolbar.h>
+
 
 ChitralekhaApp *app;
 ChWindow* mainWin;
@@ -106,11 +109,35 @@ int main(int argc, char* argv[]){
 	ChIconOpen(ico3, "/thumb3.bmp");
 	ChIconRead(ico3);
 
+	ChIcon* homeDir = ChCreateIcon();
+	ChIconOpen(homeDir, "/appdata/glimpse/icons/home.bmp");
+	ChIconRead(homeDir);
 
-	ChGridView* gv = ChGridViewCreate(10, 50, 780 - 20, 500 - 50, 4, 120, 140, 8);
+	ChIcon* photoDir = ChCreateIcon();
+	ChIconOpen(photoDir, "/appdata/glimpse/icons/photo.bmp");
+	ChIconRead(photoDir);
+
+	ChIcon* download = ChCreateIcon();
+	ChIconOpen(download, "/appdata/glimpse/icons/dwnld.bmp");
+	ChIconRead(download);
+
+	ChIcon* trsh = ChCreateIcon();
+	ChIconOpen(trsh, "/appdata/glimpse/icons/trsh_t.bmp");
+	ChIconRead(trsh);
+
+	ChIcon* gallery = ChCreateIcon();
+	ChIconOpen(gallery, "/appdata/glimpse/icons/gllry.bmp");
+	ChIconRead(gallery);
+
+
+	ChGridView* gv = ChGridViewCreate(170, 80, 600, 500 - 80, 4, 120, 140, 8);
 	gv->color_bg = mainWin->color;
 	gv->color_label_text = LIGHTBLACK;
 	gv->color_hover_bg = LIGHTSILVER;
+	gv->vscroll.color_track = mainWin->color;
+	gv->vscroll.color_arrow_fg = gv->vscroll.color_thumb;
+	gv->vscroll.color_arrow_bg = mainWin->color;
+
 
 	
 	ChGridAddThumbnail(gv, ico, "dawki", NULL);
@@ -121,19 +148,67 @@ int main(int argc, char* argv[]){
 	ChGridAddThumbnail(gv, ico, "dawki-copy", NULL);
 	ChGridAddThumbnail(gv, ico3, "mountain-cpy", NULL);
 	
-	char buffer[32];
-	for (int i = 0; i < 20; i++) {
-		snprintf(buffer, sizeof(buffer), "image%02d", i);
-		ChGridAddThumbnail(gv, ico2, buffer, NULL);
-	}
+
+
+	gv->force_full_redraw = 1;
+
+	ChSidebar* sb = ChSidebarCreate(0, 80, 170, 500 - 80);
+	sb->bgColor = mainWin->color;
+	ChSidebarSection * sec1 = ChSidebarAddSection(sb, "Favourites");
+	ChSidebarAddItem(sec1, "Home", homeDir, 0, 0, NULL);
+	ChSidebarAddItem(sec1, "Photos", photoDir, 0, 0, NULL);
+	ChSidebarAddItem(sec1, "Downloads", download, 0, 0, NULL);
+	
+	ChSidebarSection* sec2 = ChSidebarAddSection(sb, "Xeneva");
+	ChSidebarAddItem(sec2, "Trash", trsh, 0, 0, NULL);
+	ChSidebarAddItem(sec2, "Gallery", gallery, 0, 0, NULL);
 
 	
 	ChWindowAddWidget(mainWin, (ChWidget*)gv);
+	ChWindowAddWidget(mainWin, (ChWidget*)sb);
+
+	ChToolbar* tb = ChToolbarCreate(0, 26, mainWin->info->width, 42, TOOLBAR_HORIZONTAL);
+	tb->color_bg = 0xFF949494;
+
+	ChIcon* doc = ChCreateIcon();
+	ChIconOpen(doc, "/appdata/glimpse/icons/fav_t.bmp");
+	ChIconRead(doc);
+
+
+	ChIcon* dll = ChCreateIcon();
+	ChIconOpen(dll, "/appdata/glimpse/icons/albm_t.bmp");
+	ChIconRead(dll);
+
+	ChIcon* exe = ChCreateIcon();
+	ChIconOpen(exe, "/appdata/glimpse/icons/view_t.bmp");
+	ChIconRead(exe);
+
+	
+
+	ChIcon* info = ChCreateIcon();
+	ChIconOpen(info, "/appdata/glimpse/icons/info_t.bmp");
+	ChIconRead(info);
+
+	ChIcon* arcv = ChCreateIcon();
+	ChIconOpen(arcv, "/appdata/glimpse/icons/arcv_t.bmp");
+	ChIconRead(arcv);
+
+	ChToolbarAddButton(tb, doc, doc->image.width, doc->image.height, "doc", NULL);
+	ChToolbarAddButton(tb, dll, dll->image.width, dll->image.height, "dll", NULL);
+	ChToolbarAddButton(tb, exe, exe->image.width, exe->image.height, "exe", NULL);
+	ChToolbarAddSeparator(tb);
+	ChToolbarAddButton(tb, trsh, trsh->image.width, trsh->image.height, "trash", NULL);
+	ChToolbarAddButton(tb, arcv, arcv->image.width, arcv->image.height, "import", NULL);
+	ChToolbarAddSeparator(tb);
+	ChToolbarAddButton(tb, info, info->image.width, info->image.height, "info", NULL);
+
+	ChWindowAddWidget(mainWin, (ChWidget*)tb);
+
 	ChWindowPaint(mainWin);
 	
-	ChFontSetSize(mainWin->app->baseFont, 23);
+	/*ChFontSetSize(mainWin->app->baseFont, 23);
 	ChFontDrawText(mainWin->canv, mainWin->app->baseFont, "Photos", 20, _baseline_y(26 + 2, 24), 20, LIGHTBLACK);
-	ChWindowUpdate(mainWin, 10, 26, 100,25, 0, 1);
+	ChWindowUpdate(mainWin, 10, 26, 100,25, 0, 1);*/
 
 	ChWindowBroadcastIcon(app, "/icons/glim.bmp");
 	PostEvent e;

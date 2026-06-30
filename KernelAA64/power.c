@@ -35,6 +35,10 @@
 #include <Cred/cred.h>
 #include <process.h>
 #include <Hal/AA64/sched.h>
+#include <audrv.h>
+#include <Hal/AA64/gic.h>
+#include <Drivers/uart.h>
+#include <Drivers/virtio.h>
 
 /**
  * @brief AuPowerDown -- power down system call
@@ -54,15 +58,31 @@ int AuPowerDown() {
 	if (proc->creds.gid != 0)
 		return 1;
 
-	// call system_down for xeneva for freeing up resources
-	// call all drivers to turn off itself before powering off
-
 	/** TODO : Flush all system resources that needs disk
 	 * writes and call board power down which will handle
 	 * powering down of the board
 	 */
-	AuAA64BoardPowerDown();
 
+
+#ifdef __TARGET_BOARD_QEMU_VIRT__
+	AuVirtioKbdDown();
+	AuVirtioTabletDown();
+#endif
+
+	// call system_down for xeneva for freeing up resources
+	// call all drivers to turn off itself before powering off
+	AuDrvUnloadAll();
+
+	/** suspend timers */
+	suspendTimer();
+
+	/* de-initialize the interrupt controller*/
+	GICDisable();
+
+	//aa64_clean_invalidate_dcache();
+	tlb_flush_vmalle1is();
+
+	AuAA64BoardPowerDown();
 }
 
 /**
@@ -74,21 +94,40 @@ void AuPowerReset() {
 	if (!proc) {
 		proc = AuProcessFindSubThread(thr);
 		if (!proc)
-			return 1;
+			return;
 	}
 
 	if (proc->creds.uid != 0)
-		return 1;
+		return;
 
 	if (proc->creds.gid != 0)
-		return 1;
+		return;
 
-	// call system_down for xeneva for freeing up resources
-	// call all driver to power off itself before restart
+
 
 	/** TODO : Flush all system resources that needs disk
 	 * writes and call board power down which will handle
 	 * powering down of the board
 	 */
+
+#ifdef __TARGET_BOARD_QEMU_VIRT__
+	AuVirtioKbdDown();
+	AuVirtioTabletDown();
+#endif
+	// call system_down for xeneva for freeing up resources
+	// call all driver to power off itself before restart
+	AuDrvUnloadAll();
+
+	/** suspend timers */
+	suspendTimer();
+	UARTDebugOut("[aurora]: timer suspended \r\n");
+
+	
+	/* de-initialize the interrupt controller */
+	GICDisable();
+
+	//aa64_clean_invalidate_dcache();
+	tlb_flush_vmalle1is();
+
 	AuAA64BoardReboot();
 }

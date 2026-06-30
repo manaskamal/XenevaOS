@@ -201,7 +201,7 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) 
 		file = fb->file;
 	}
 	else {
-		UARTDebugOut("[loader.c]: file : %s was not in cache adding it \r\n", filename);
+	//	UARTDebugOut("[loader.c]: file : %s was not in cache adding it \r\n", filename);
 		file = AuVFSOpen(filename);
 		if (!file) {
 			UARTDebugOut("[loader.c]: Failed to open file %s\r\n", filename);
@@ -274,7 +274,6 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) 
 
 	/* check if the binary is dynamically linked */
 	if (AuPEFileIsDynamicallyLinked(_ldr_scratchBuffer)) {
-		UARTDebugOut("The process %s is Dynamically Linked\n", filename);
 		/* free the current file*/
 		//UARTDebugOut("fb : %x \r\n", fb);
 		//aa64_data_cache_clean_range(fb, sizeof(AuMMFileBack));

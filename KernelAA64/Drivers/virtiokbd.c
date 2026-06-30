@@ -45,6 +45,7 @@ struct VirtioQueue* queue;
 struct VirtioInputEvent* input;
 static uint16_t index;
 static int queueSize;
+static struct VirtioCommonCfg* _kybrdCfg;
 
 static const uint8_t ext_key_map[256] = {
 	[0x63] = 0x37, //print screen
@@ -65,7 +66,7 @@ static const uint8_t ext_key_map[256] = {
 void AuVirtioKbdHandler(int spinum) {
 	uint16_t them = queue->used.index;
 	for (; index < them; index++) {
-		dc_ivac(&input[index % queueSize]);
+		dc_ivac((uint64_t)&input[index % queueSize]);
 		dsb_sy_barrier();
 		struct VirtioInputEvent evt = input[index % queueSize];
 		while (evt.type == 0xFF) {
@@ -110,17 +111,34 @@ void AuVirtioKbdHandler(int spinum) {
 	}
 	
 }
+
+void AuVirtioKbdDown() {
+	/* Reset the device */
+	_kybrdCfg->DeviceStatus = 0;
+
+	isb_flush();
+	dsb_ish();
+
+	_kybrdCfg->DeviceStatus = 0x01;
+	isb_flush();
+	dsb_ish();
+
+	_kybrdCfg->DeviceStatus |= 0x02;
+	isb_flush();
+	dsb_ish();
+
+	UARTDebugOut("[virtio-keyboard]: reset completed successfully \r\n");
+}
 /**
  * @brief AuVirtioKbdInitialize -- initialize the virtio keyboard
  */
 void AuVirtioKbdInitialize(uint64_t device) {
-	device = 0x4010008000;
 	int bus = 0;
 	int func = 0;
 	int dev = 0;
 	index = 0;
 	if (device == 0xFFFFFFFF)
-		return 1;
+		return;
 	UARTDebugOut("[aurora]: Virtio Keyboard device found \n");
 	uint16_t command = AuPCIERead(device, PCI_COMMAND, bus, dev, func);
 	command |= 4;
@@ -133,6 +151,7 @@ void AuVirtioKbdInitialize(uint64_t device) {
 	uint64_t barLo = AuPCIERead(device, PCI_BAR4, bus, dev, func);
 	uint64_t barHi = AuPCIERead(device, PCI_BAR5, bus, dev, func);
 	uint64_t bar = ((uint64_t)barHi << 32) | (barLo & ~0xFULL);
+
 	uint64_t finalAddr = (uint64_t)AuMapMMIO(bar, 16);
 	struct VirtioDeviceConfig* cfg = (struct VirtioDeviceConfig*)(finalAddr + 0x2000);
 	cfg->select = 1;

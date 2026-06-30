@@ -263,19 +263,19 @@ void AuDeviceTreeInitialize(KERNEL_BOOT_INFO* info) {
 		AuLittleBootProtocol* lb = (AuLittleBootProtocol*)info->driver_entry1;
 		if (!lb)
 			return;
-		fdt_address = lb->device_tree_base;
+		fdt_address = (void*)lb->device_tree_base;
 	}
 	else if (info->boot_type == BOOT_UEFI_ARM64) {
 		fdt_address = info->apcode;
 	}
 
 	if (!fdt_address) {
-		//AuTextOut("Device Tree Blob not found \r\n");
+		AuTextOut("Device Tree Blob not found \r\n");
 		return;
 	}
 	fdt_header_t* dtb = (fdt_header_t*)fdt_address;
 	if (AuDTBSwap32(dtb->magic) != FDT_MAGIC) {
-		//AuTextOut("[Aurora]:Device Tree invalid magic \r\n");
+		AuTextOut("[Aurora]:Device Tree invalid magic \r\n");
 		return;
 	}
 	AuTextOut("DTB Magic : %x \r\n", AuDTBSwap32(dtb->magic));

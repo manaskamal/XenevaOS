@@ -194,7 +194,7 @@ void AuDevFSList(AuVFSNode* fs) {
 			mode = "Pipe";
 		else
 			mode = "Unknown";
-		UARTDebugOut("\%s mode - %s \r\n", node_->filename, mode);
+		UARTDebugOut("%s mode - %s \r\n", node_->filename, mode);
 		if (node_->flags & FS_FLAG_DIRECTORY)
 			AuDevFSListDir(fs, node_);
 	}

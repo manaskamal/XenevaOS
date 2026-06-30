@@ -131,6 +131,7 @@ bool AuroraTimerIsActive(int tNum) {
 	if (tNum >= 0 && tNum < AURORA_MAX_TIMER) {
 		return _timers[tNum].active;
 	}
+	return 0;
 }
 
 /**
@@ -147,7 +148,7 @@ void AuroraTimerTick() {
 		if (now < _timers[i].expireUS)  continue;
 		AuroraTimerCallback handler = _timers[i].handler;
 		void* param = _timers[i].param;
-		UARTDebugOut("Timer fired : %d \r\n", i);
+	//	UARTDebugOut("Timer fired : %d \r\n", i);
 		if (_timers[i].intervalUS > 0) {
 			_timers[i].expireUS = now + _timers[i].intervalUS;
 		}

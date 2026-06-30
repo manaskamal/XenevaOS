@@ -42,6 +42,7 @@
 #include <loader.h>
 #include <Ipc/postbox.h>
 #include <Mm/mmap.h>
+#include <Drivers/uart.h>
 
 
 static int pid = 1;
