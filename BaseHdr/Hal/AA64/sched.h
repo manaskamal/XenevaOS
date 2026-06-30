@@ -190,6 +190,12 @@ extern void AuThreadCleanTrash(AA64Thread* t);
  */
 extern uint64_t AuGetSystemTimerTick();
 
+/**
+ * @brief AuHandleSleepThreads -- handle sleep thread, 
+ * rearrange all sleep threads
+ */
+extern void AuHandleSleepThreads();
+
 #endif
 
 #endif

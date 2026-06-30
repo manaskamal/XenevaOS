@@ -167,6 +167,7 @@ void AuVirtioTabletInitialize(uint64_t device) {
 	uint64_t bar = ((uint64_t)barHi << 32) | (barLo & ~0xFULL);
 	uint64_t finalAddr = (uint64_t)AuMapMMIO(bar, 16);
 	struct VirtioDeviceConfig* cfg = (struct VirtioDeviceConfig*)(finalAddr + 0x2000);
+	_tabletCfg = cfg;
 	cfg->select = 1;
 	cfg->subsel = 0;
 	isb_flush();

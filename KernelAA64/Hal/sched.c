@@ -254,28 +254,10 @@ void AuThreadDeleteSleep(AA64Thread* thread) {
 
 void AA64NextThread() {
 	AA64Thread* thread = current_thread;
-	bool _run_idle = false;
-run:
-	do {
-		thread = thread->next;
-		
-		if (!thread) {
-			thread = thread_list_head;
-		}
-	
-		if (thread == _idle_thr) {
-			thread = thread->next;
-		}
 
-		if (!thread) {
-			_run_idle = true;
-			break;
-		}
-	} while (thread->state != THREAD_STATE_READY);
-end:
-	if (_run_idle)
+	thread = thread->next;
+	if (!thread)
 		thread = _idle_thr;
-
 	current_thread = thread;
 }
 
@@ -429,21 +411,13 @@ void AuScheduleThread(AA64Registers* regs) {
 	}
 	AA64Thread* runThr = current_thread;
 
-	//if (runThr->returnFromSyscall) {
-	//	UARTDebugOut("System call interrupted for thread : %s  %d\r\n", runThr->name, runThr->syscallNum);
-	//	store_syscall(runThr);
-	//	goto sched;
-	//}
-	//else {
-		aa64_store_context(runThr);
-		runThr->sp = (uint64_t)regs;
-	//}
+	aa64_store_context(runThr);
+	runThr->sp = (uint64_t)regs;
+	
 
 sched:
-	//AuTextOut("Schedule thread upto here sp: %x \r\n", regs->EL0SP);
 	aa64_store_fp(&runThr->fp_regs, &runThr->fpcr, &runThr->fpsr);
 	
-	//AuTextOut("Stored fp \r\n");
 	if (regs) {
 		runThr->x0 = regs->x0;
 		runThr->x1 = regs->x1;
@@ -460,15 +434,6 @@ sched:
 	dsb_sy_barrier();
 
 	uint64_t sp = read_sp();
-	/*UARTDebugOut("Scheduler sp : %x \r\n", sp);*/
-	/*if (debug) {
-		UARTDebugOut("next thread : %s \r\n", current_thread->name);
-	}*/
-	/*if (current_thread->returnFromSyscall) {
-		current_thread->justStored = 0;
-		ret_from_syscall(current_thread);
-		goto ret;
-	}*/
 
 	if ((current_thread->threadType & THREAD_LEVEL_USER) && current_thread->first_run == 1) {
 		uint64_t sp = current_thread->sp;

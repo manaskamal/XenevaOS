@@ -199,14 +199,14 @@ void irq_el1_handler(AA64Registers* regs) {
     uint32_t irq = iar & 0x3FF;
     if (irq < 1020) {
         if (irq == 27) {
-            suspendTimer(); //<--- suspecting this line 
-            setupTimerIRQ();
+            //suspendTimer(); //<--- suspecting this line 
+            resetTimer();
+           // setupTimerIRQ();
             GICSendEOI(iar);
             GICCheckPending(irq);
 
             /** handle expired timers **/
             AuroraTimerTick();
-
             AuScheduleThread(regs);
         }
         /*else if (irq == 27) {

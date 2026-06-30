@@ -158,6 +158,7 @@ void AuVirtioKbdInitialize(uint64_t device) {
 
 	uint64_t finalAddr = (uint64_t)AuMapMMIO(bar, 16);
 	struct VirtioDeviceConfig* cfg = (struct VirtioDeviceConfig*)(finalAddr + 0x2000);
+	_kybrdCfg = cfg;
 	cfg->select = 1;
 	cfg->subsel = 0;
 	isb_flush();
