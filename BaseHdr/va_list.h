@@ -50,6 +50,7 @@ extern "C"
 #endif
 
 
+#ifndef __GNUC__
 #define STACKITEM int
 
 #define VA_SIZE(TYPE)   \
@@ -63,6 +64,7 @@ extern "C"
 
 #define va_arg(AP, TYPE)  \
 	(AP += VA_SIZE(TYPE), *((TYPE *)(AP - VA_SIZE(TYPE))))
+#endif
 
 #endif
 

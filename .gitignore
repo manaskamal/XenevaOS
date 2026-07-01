@@ -22,6 +22,9 @@ ipch/
 *.sdf
 *.suo
 *.user
+*.ipch
+*.VC.db
+*.log
 x64/
 ARM64/
 Debug/
@@ -35,3 +38,7 @@ initrd2.img
 qemu.pid
 dump.s
 *.so
+*.a
+Process/**/*.elf
+Process/**/*.exe
+Libs/**/*.a

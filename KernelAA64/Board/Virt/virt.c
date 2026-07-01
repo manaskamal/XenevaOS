@@ -43,7 +43,14 @@ uint8_t AuVirtIOInputCheck(uint64_t device, int bus,int dev,int func) {
 	uint64_t barLo = AuPCIERead(device, PCI_BAR4, bus, dev, func);
 	uint64_t barHi = AuPCIERead(device, PCI_BAR5, bus, dev, func);
 	uint64_t bar = ((uint64_t)barHi << 32) | (barLo & ~0xFULL);
-	uint64_t finalAddr = (uint64_t)AuMapMMIO(bar, 16);
+
+	/* we don't need to map the bar to MMIO range, because this function
+	 * is temporary one, won't be used later in the system. We have
+	 * long way to go when lower half address range is cleared. Till then
+	 * kernel has lower half of address range present, so taking advantage
+	 * of lower half till then
+	 */
+	uint64_t finalAddr = bar;
 	struct VirtioDeviceConfig* cfg = (struct VirtioDeviceConfig*)(finalAddr + 0x2000);
 	cfg->select = 1;
 	cfg->subsel = 0;
