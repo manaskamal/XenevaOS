@@ -3,6 +3,7 @@
 
 ## Changes
 ### [Module/Component Name]
+- **Before:** <!-- Describe the previous behavior or issue before this change -->
 - **What:** <!-- Describe what code was changed/added -->
 - **Why:** <!-- Explain the technical rationale behind the change -->
 

@@ -53,7 +53,7 @@ Code modifications must be verified for GCC compatibility before being merged.
 ## Pull Request (PR) Guidelines
 To ensure code quality and maintainability, all contributors must format their Pull Requests using the repository's standardized layout. A template is automatically provided on GitHub when opening a PR, and requires:
 1. **Summary:** A concise explanation of the PR's high-level objectives.
-2. **Changes:** A detailed bulleted list of modified modules, specifying exactly **What** changed and **Why** it was changed.
+2. **Changes:** A detailed bulleted list of modified modules, specifying exactly **Before** (previous behavior or issue), **What** changed, and **Why** it was changed.
 3. **Compatibility:** Verification checkboxes indicating that the changes do not break MSVC/Windows and GCC/Linux builds or cause runtime regressions.
 4. **Related:** Reference to any corresponding issue numbers (e.g., `Part of #44`).
 
