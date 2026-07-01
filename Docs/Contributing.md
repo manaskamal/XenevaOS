@@ -15,7 +15,7 @@ XenevaOS historically used Microsoft Visual Studio as the primary development pl
 
 - Always test kernel modifications in a controlled environment like QEMU or VirtualBox before pushing changes.
 
-- Follow memory management, system calls, and other subsystem guidelines as outlined in the documentation. For details on virtual filesystem development, refer to the [Virtual File System Guide](Development/VirtualFileSystem.md).
+- Follow memory management, system calls and other subsystem guidelines as outlined in the documentation.
 
 - Before making major changes, open an issue or discussion in the repository or on Discord to align with the project's direction and avoid duplicate work.
 
