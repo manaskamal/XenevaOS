@@ -17,6 +17,8 @@ XenevaOS historically used Microsoft Visual Studio as the primary development pl
 
 - Follow memory management, system calls and other subsystem guidelines as outlined in the documentation.
 
+- **VFS Mount Points:** For general file systems, always use `AuVFSReserveMountPointLetter()` to reserve a mount point letter. Note that this is only applicable to general file systems (like FAT32 or Ext2) and must not be used for memory-based or virtual file systems like `/proc`, `/tty`, or `/dev`.
+
 - Before making major changes, open an issue or discussion in the repository or on Discord to align with the project's direction and avoid duplicate work.
 
 ### *Coding Style*
@@ -32,9 +34,10 @@ The XenevaOS project follows a consistent coding style to maintain readability a
 ### *Cross-Platform & GCC Compatibility*
 To ensure that XenevaOS remains portable across Windows (MSVC) and Linux (GCC) environments, all contributors must adhere to strict C/C++ ISO standards. 
 - **Explicit Headers:** Do not rely on implicit headers. Always explicitly include standard headers (e.g., `#include <stddef.h>` for `size_t` and `#include <stdbool.h>` for `bool` in C).
+- **Compiler-Provided Definitions:** Prefer using compiler-provided or standard-library-provided macro definitions (such as standard constants like `SIZE_MAX` or NEON/SIMD built-ins) where available. However, when project-specific or custom definitions are required for target platforms or freestanding environments (such as UEFI bootloader paths on MSVC), define them defensively using `#ifndef` guards to prevent macro redefinition conflicts under GCC.
 - **Include Path Formatting (Forward Slashes):** Never use Windows-style backslashes (`\`) in include paths. Always use forward slashes (`/`) for cross-platform compatibility (e.g., `#include "BaseHdr/aurora.h"`).
 - **Case-Sensitive Include Paths:** Unlike Windows/MSVC, Linux/GCC is strictly case-sensitive. The casing in your `#include` statement must exactly match the actual folder and file names (e.g., use `Fs/` instead of `fs/`).
-- **Variadic Arguments (`va_list`):** Never use manual pointer arithmetic to parse variadic arguments. Always use the standard `<stdarg.h>` macros (`va_start`, `va_arg`, `va_end`) to ensure compatibility with AAPCS (ARM64) and GCC.
+- **Variadic Arguments (`va_list`):** Never use manual pointer arithmetic to parse variadic arguments. Always use the standard `<stdarg.h>` macros (`va_start`, `va_arg`, `va_end`) to ensure compatibility with AAPCS (ARM64) and GCC. 
 - **Strict Data Typing:** GCC is highly explicit about data types. Avoid MSVC-specific quirks.
 - **Variable Shadowing:** Do not name a structure member the same as a `typedef` in the same scope, as GCC strictly rejects this (`-Wchanges-meaning`).
 - **Standard Syntax:** Avoid MSVC-specific calling conventions like `__cdecl` directly in source code; use custom macros if needed. Ensure scope resolutions are standard (e.g., `operator new` instead of `::operator new`).
