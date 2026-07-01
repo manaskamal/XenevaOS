@@ -6,7 +6,7 @@ In XenevaOS, multitasking is entirely built on the concept of threads. XenevaOS 
 
 ## 🧵 Thread Representation in Kernel
 
-Each thread is represented by the `AA64Thread` structure (under AArch64) or `Thread` structure (under x86_64), which stores:
+Each thread is represented by the `AA64Thread` structure (under AArch64) or `AuThread` structure (under x86_64), which stores:
 - **Thread Context:** Saved CPU registers (e.g., `x19-x30`, `sp`, `elr_el1`, `spsr_el1` for AArch64).
 - **Scheduling State:** Ready, Blocked, Sleep, or Killable.
 - **Execution Level:** Kernel-mode thread (`THREAD_LEVEL_KERNEL`) or User-mode thread (`THREAD_LEVEL_USER`).
