@@ -50,6 +50,13 @@ Code modifications must be verified for GCC compatibility before being merged.
 - Mention your testing environment.
 - For feature requests, explain the purpose and potential benefits to the project.
 
+## Pull Request (PR) Guidelines
+To ensure code quality and maintainability, all contributors must format their Pull Requests using the repository's standardized layout. A template is automatically provided on GitHub when opening a PR, and requires:
+1. **Summary:** A concise explanation of the PR's high-level objectives.
+2. **Changes:** A detailed bulleted list of modified modules, specifying exactly **What** changed and **Why** it was changed.
+3. **Compatibility:** Verification checkboxes indicating that the changes do not break MSVC/Windows and GCC/Linux builds or cause runtime regressions.
+4. **Related:** Reference to any corresponding issue numbers (e.g., `Part of #44`).
+
 ### *Conclusion*
 Thank you for your interest in contributing to XenevaOS! Your contributions — whether in code, documentation, bug reports, or discussions — help shape the future of this project. If you have any questions or need guidance, feel free to open an issue or join the discussions on GitHub or Discord. Let's work together to make a powerful and efficient operating system!
 
