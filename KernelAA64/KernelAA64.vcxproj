@@ -199,7 +199,7 @@
       <AdditionalOptions> /def:exports.def %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
-      <Command>copy "$(SolutionDir)Build\EFI\XENEVA\$(TargetName).exe" "M:\EFI\XENEVA\$(TargetName).exe"</Command>
+      <Command>if exist M:\ ( copy "$(SolutionDir)Build\EFI\XENEVA\$(TargetName).exe" "M:\EFI\XENEVA\$(TargetName).exe" ) else ( echo M: drive not found, skipping copy )</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">

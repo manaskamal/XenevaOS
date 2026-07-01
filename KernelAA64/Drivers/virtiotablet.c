@@ -128,6 +128,9 @@ void AuVirtioTabletHandler(int spiNum) {
 }
 
 void AuVirtioTabletDown() {
+	if (!_tabletCfg)
+		return;
+
 	/* Reset the device */
     _tabletCfg->DeviceStatus = 0;
 
@@ -211,6 +214,7 @@ void AuVirtioTabletInitialize(uint64_t device) {
 	GICRegisterSPIHandler(&AuVirtioTabletHandler, spiID);
 
 	struct VirtioCommonCfg* common = (struct VirtioCommonCfg*)finalAddr;
+	_tabletCfg = common;
 	common->DeviceStatus = 0;
 	isb_flush();
 

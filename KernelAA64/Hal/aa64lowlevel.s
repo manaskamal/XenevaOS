@@ -493,3 +493,10 @@ aa64_clean_invalidate_dcache:
    dsb sy
    isb
    ret
+
+.global aa64_invalidate_icache
+aa64_invalidate_icache:
+    ic ialluis
+    dsb ish
+    isb
+    ret

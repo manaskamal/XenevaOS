@@ -290,6 +290,16 @@ void AuPutPixel(size_t x, size_t y, uint32_t col) {
  * @param c -- character to print
  */
 void AuPutC(char c) {
+	if (early_) {
+		if (is_uart_initialized())
+			uartPutc(c);
+		else if (_print_func) {
+			char buf[2] = {c, 0};
+			_print_func(buf);
+		}
+		return;
+	}
+
 	if (console_x > v_res / 9) {
 		console_x = 0;
 		console_y++;
@@ -311,10 +321,12 @@ void AuPutC(char c) {
 	console_x++;
 
 	uint32_t* lfb = aucon->buffer;
-	if (console_y + 1 > h_res / 16)
+	if (console_y + 1 > v_res / 16)
 	{
-		for (int i = 16; i < h_res * v_res; i++)
-			lfb[i] = lfb[i + v_res * 16];
+		for (int i = 0; i < (v_res - 16) * h_res; i++)
+			lfb[i] = lfb[i + h_res * 16];
+		for (int i = (v_res - 16) * h_res; i < v_res * h_res; i++)
+			lfb[i] = CONSOLE_BACKGROUND;
 		console_y--;
 	}
 
@@ -327,6 +339,14 @@ void AuPutC(char c) {
  * @param str -- string to print
  */
 void AuPutS(char* str) {
+	if (early_) {
+		if (is_uart_initialized())
+			uartPuts(str);
+		else if (_print_func)
+			_print_func(str);
+		return;
+	}
+	
 	uint32_t* lfb = aucon->buffer;
 	while (*str) {
 
@@ -373,8 +393,10 @@ void AuPutS(char* str) {
 	/* Scroll */
 	if (console_y + 1 > v_res / 16)
 	{
-		for (int i = 16; i < v_res * h_res; i++)
+		for (int i = 0; i < (v_res - 16) * h_res; i++)
 			lfb[i] = lfb[i + h_res * 16];
+		for (int i = (v_res - 16) * h_res; i < v_res * h_res; i++)
+			lfb[i] = CONSOLE_BACKGROUND;
 		console_y--;
 	}
 }
@@ -385,13 +407,6 @@ void AuPutS(char* str) {
  * @param text -- text to output
  */
 void AuTextOut(const char* format, ...) {
-	if (early_) {
-		if (is_uart_initialized())
-			UARTDebugOut(format);
-		else
-			_print_func(format);
-		return;
-	}
 	if (bypass_autextout)
 		return;
 

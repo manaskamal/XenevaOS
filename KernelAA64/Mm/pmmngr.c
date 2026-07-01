@@ -301,9 +301,8 @@ void AuPmmngrInitialize(KERNEL_BOOT_INFO* info) {
 		pageCount = (dtb_end - dtb_start) / 0x1000;
 
 		for (int i = 0; i < pageCount; i++) {
-			uint64_t addr = dtb_start + (uint64_t)i * 0x1000; //  ((uint64_t)Address - UsablePhysicalMemory);
-			uint64_t Index = (addr - UsablePhysicalMemory);
-			AuPmmngrLockPage(Index);
+			uint64_t addr = dtb_start + (uint64_t)i * 0x1000;
+			AuPmmngrLockPage(addr);
 		
 		}
 
@@ -313,8 +312,7 @@ void AuPmmngrInitialize(KERNEL_BOOT_INFO* info) {
 		pageCount = (initrdEnd - initrdStart) / 0x1000;
 		for (int i = 0; i < pageCount; i++) {
 			uint64_t addr = initrdStart + (uint64_t)i * 0x1000;
-			uint64_t Index = (addr - UsablePhysicalMemory);
-			AuPmmngrLockPage(Index);
+			AuPmmngrLockPage(addr);
 		}
 	
 		uint64_t lbStart = lb->littleBootStart;
@@ -324,8 +322,7 @@ void AuPmmngrInitialize(KERNEL_BOOT_INFO* info) {
 
 		for (int i = 0; i < pageCount; i++) {
 			uint64_t addr = lbStart + (uint64_t)i * 0x1000;
-			uint64_t Index = (addr - UsablePhysicalMemory);
-			AuPmmngrLockPage(Index);
+			AuPmmngrLockPage(addr);
 		}
 		AuTextOut("[aurora]: Pmmngr locked LittleBoot reserved memory\r\n");
 	}
