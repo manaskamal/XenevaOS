@@ -67,11 +67,19 @@ my_fs_node->create_dir = MyFSCreateDir;
 ```
 
 #### Node Flags (`flags`)
-Ensure you set the appropriate flags so the VFS handles the node correctly:
-* `FS_FLAG_DIRECTORY`: Node is a directory.
-* `FS_FLAG_FILE_SYSTEM_GENERAL`: Standard general-purpose block filesystem.
-* `FS_FLAG_DEVICE`: Virtual device node (like nodes inside `/dev`).
-* `FS_FLAG_PIPE`: Inter-process communication pipe.
+Ensure you set the appropriate flags so the VFS handles the node correctly. The following are the available VFS node flags:
+
+* `FS_FLAG_DIRECTORY` `(1<<1)` : Indicates the node is a directory. (Temporary/Freeable)
+* `FS_FLAG_GENERAL` `(1<<2)` : General purpose file node. (Temporary/Freeable)
+* `FS_FLAG_DEVICE` `(1<<3)` : Virtual device node (e.g., inside `/dev`). (Permanent/Non-freeable)
+* `FS_FLAG_DELETED` `(1<<4)` : State flag indicating the node has been deleted.
+* `FS_FLAG_INVALID` `(1<<5)` : State flag indicating the node is invalid.
+* `FS_FLAG_FILE_SYSTEM` `(1<<6)` : Indicates a file system mount node. (Permanent/Non-freeable). **Mainly needed when registering a file system module.**
+* `FS_FLAG_PIPE` `(1<<7)` : Inter-process communication pipe. (Temporary/Freeable)
+* `FS_FLAG_TTY` `(1<<8)` : Teletype/terminal node. (Temporary/Freeable with count)
+* `FS_FLAG_SOCKET` `(1<<9)` : Network socket node. (Temporary/Freeable)
+* `FS_FLAG_FILE_SYSTEM_GENERAL` `(1<<10)` : Identifies a standard general-purpose block file system. Can be used in conjunction with `FS_FLAG_FILE_SYSTEM`.
+* `FS_FLAG_CACHED` `(1<<11)` : Indicates that the file is being cached and has been added to the file cache manager.
 
 ### Step 3: Register the Filesystem
 To make your filesystem visible to the kernel and userspace applications, register it with the VFS:
