@@ -35,8 +35,13 @@
 #include <stdint.h>
 #include <Uefi.h>
 #include <stddef.h>
-
-#define SIZE_MAX 0xFFFFFFFF
+#ifndef SIZE_MAX
+#if defined(ARCH_ARM64) || defined(ARCH_X64) || defined(_M_AMD64) || defined(_M_ARM64) || defined(__x86_64__) || defined(__aarch64__)
+#define SIZE_MAX 0xFFFFFFFFFFFFFFFFULL
+#else
+#define SIZE_MAX 0xFFFFFFFFULL
+#endif
+#endif
 
 
 #define EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID \
