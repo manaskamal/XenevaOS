@@ -42,6 +42,9 @@ format M: /FS:FAT32 /A:4096 /Q /V:BOOTIMG /Y
 
 - Now that the image is usable, you can build XenevaOS projects directly, which will copy the required files to _M:_ automatically.
 
+> [!NOTE]
+> The MSVC project configurations (e.g., `Boot`, `BootAA64`, `XELoader`) utilize post-build copy scripts to deploy binaries to `M:\`. To prevent build failures on machines without a mounted `M:` drive, these copy steps are defensively guarded using conditional checks (`if exist M:\ ...`). Building the solutions will succeed regardless of whether the drive is mounted.
+
 ## Directory Structure of XenevaOS
 XenevaOS follows a fixed boot directory structure:<br>
 Your Boot partition : <br>
