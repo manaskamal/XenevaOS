@@ -33,11 +33,11 @@ __chkstk:
 
 .global _KePrint
 _KePrint:
-    mov x19,x8
+    str x8, [sp, #-16]!
     mov x16, 1
     svc #0
 	mov x0, x6
-	mov x8,x19
+	ldr x8, [sp], #16
     ret
 
 .global _KePauseThread

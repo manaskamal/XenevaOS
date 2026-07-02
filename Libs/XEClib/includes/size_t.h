@@ -31,7 +31,11 @@
 extern "C" {
 #endif
 
+#ifdef __SIZE_TYPE__
+	typedef __SIZE_TYPE__ size_t;
+#else
 	typedef unsigned long long size_t;
+#endif
 #ifdef __cplusplus
 }
 #endif
