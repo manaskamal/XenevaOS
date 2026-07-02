@@ -80,11 +80,11 @@ typedef long long  int_fast64_t;
 typedef unsigned long long   uint_fast64_t;
 
 /* 7.18.1.4  Integer types capable of holding object pointers */
-typedef int intptr_t;
-
-#if defined(ARCH_ARM64) || defined(ARCH_X64)
-typedef __int64 uintptr_t;
+#if defined(ARCH_ARM64) || defined(__aarch64__) || defined(ARCH_X64) || defined(__x86_64__)
+typedef long long intptr_t;
+typedef unsigned long long uintptr_t;
 #else
+typedef int intptr_t;
 typedef unsigned int uintptr_t;
 #endif
 

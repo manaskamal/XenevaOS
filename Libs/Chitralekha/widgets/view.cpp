@@ -196,7 +196,7 @@ void ChListViewSetScrollpane(ChListView* view, ChScrollPane *pane){
 ChListItem* ChListViewAddItem(ChWindow* win, ChListView* lv, char* itemText) {
 	ChListItem* li = (ChListItem*)malloc(sizeof(ChListItem));
 	memset(li, 0, sizeof(ChListItem));
-	li->itemText = (char*)malloc(strlen(itemText));
+	li->itemText = (char*)malloc(strlen(itemText) + 1);
 	strcpy(li->itemText, itemText);
 	int xpos = 0;
 	int ypos = 0;

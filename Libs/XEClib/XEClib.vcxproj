@@ -152,7 +152,7 @@
       <AdditionalOptions>/ALIGN:512 %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
-      <Command>copy "..\..\Build\$(TargetName).dll" "M:\$(TargetName).dll"</Command>
+      <Command>if exist M:\ ( copy "..\..\Build\$(TargetName).dll" "M:\$(TargetName).dll" ) else ( echo M: drive not found, skipping copy )</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
@@ -198,7 +198,7 @@
       <AdditionalOptions>/filealign:4096 /def:_export_arm64.def %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
-      <Command>copy "..\..\Build\$(TargetName).dll" M:\$(TargetName).dll" </Command>
+      <Command>if exist M:\ ( copy "..\..\Build\$(TargetName).dll" M:\$(TargetName).dll" ) else ( echo M: drive not found, skipping copy )"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">

@@ -41,7 +41,11 @@ XE_EXTERN{
 
 
 #pragma pack(push,1)
+#if defined(_MSC_VER)
 __declspec(align(2))
+#else
+__attribute__((aligned(2)))
+#endif
 typedef struct _dns_ {
 	uint16_t qid;
 	uint16_t flags;
