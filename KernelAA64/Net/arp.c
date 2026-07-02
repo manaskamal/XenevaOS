@@ -125,11 +125,7 @@ void ARPHandlePacket(void* data, AuVFSNode* nic) {
 		}
 	}
 	if (ntohs(packet->operation) == 1) {
-		UARTDebugOut("packet operation == 1 \r\n");
-		UARTDebugOut("Second operation %x\r\n", eth->ipv4addr);
-		//char spa[17];
 		ip_ntoa(ntohl(packet->arp_data.arp_eth_ipv4.arp_spa));
-		/*char tpa[17];*/
 		uint32_t tpa = 0;
 		memcpy(&tpa, &packet->arp_data.arp_eth_ipv4.arp_tpa, 4);
 		
