@@ -48,6 +48,43 @@ int UDPGetPort(AuSocket* sock) {
 	list_add(udp_socket_list, sock);
 	return out;
 }
+
+
+/**
+ * @brief AuUDPHandlePacket -- handle incoming packet
+ * @param packet -- pointer to ipv4 packet
+ */
+void UDPHandlePacket(char* packet) {
+	IPv4Header* ipv4 = (IPv4Header*)packet;
+	UDPHeader* udp = (UDPHeader*)&ipv4->payload;
+	uint16_t dest_port;
+	memcpy(&dest_port, &udp->destPort, 2);
+	uint16_t src_port;
+	memcpy(&src_port, &udp->srcPort, 2);
+
+	uint16_t totalLen = 0;
+	memcpy(&totalLen, &ipv4->totalLength, 2);
+
+#ifdef DEBUG_SERIAL
+	UARTDebugOut("UDP Packet received with dest_port : %d , src_port : %d \r\n", ntohs(dest_port), src_port);
+	UARTDebugOut("Data bytes (%d bytes): \r\n", ntohs(totalLen));
+	for (int i = 0; i < 15; i++) {
+		UARTDebugOut("%c", udp->payload[i]);
+	}
+#endif
+
+	/** add it to its destination socket **/
+	for (int i = 0; i < udp_socket_list->pointer; i++) {
+		AuSocket* sock = (AuSocket*)list_get_at(udp_socket_list, i);
+		if (sock->sessionPort == dest_port) {
+			AuSocketAdd(sock, packet, ntohs(totalLen));
+#ifdef DEBUG_SERIAL
+			UARTDebugOut("UDP Packet added \r\n");
+#endif
+			break;
+		}
+	}
+}
 /**
 * @brief AuUDPReceive -- UDP protocol receive interface
 * @param sock -- Pointer to socket

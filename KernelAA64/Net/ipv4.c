@@ -89,7 +89,7 @@ void IPv4HandlePacket(void* data, AuVFSNode* nic) {
 		break;
 	}
 	case IPV4_PROTOCOL_UDP: {
-		UARTDebugOut("[ipv4]: received UDP packet \r\n");
+		UDPHandlePacket(pack);
 		break;
 	}
 	case IPV4_PROTOCOL_TCP: {

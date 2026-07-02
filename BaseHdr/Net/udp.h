@@ -63,4 +63,6 @@ extern void UDPProtocolInstall();
  */
 extern list_t* UDPProtocolGetSockList();
 
+extern void UDPHandlePacket(char* packet);
+
 #endif
