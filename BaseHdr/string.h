@@ -47,6 +47,7 @@ AU_EXTERN{
 	AU_EXPORT int strncmp(const char* s1, const char *s2, size_t n);
 	AU_EXPORT char *strncpy(char *destString, const char* sourceString, size_t maxLength);
 	AU_EXPORT char* strchr(char* str, int character);
+	AU_EXPORT char* strrchr(const char* str, int c);
 	AU_EXPORT char *strcat(char *destString, const char *sourceString);
 	AU_EXPORT char *strncat(char *destString, const char *sourceString, size_t maxLength);
 	AU_EXPORT void memset(void *targ, int val, uint32_t len);
