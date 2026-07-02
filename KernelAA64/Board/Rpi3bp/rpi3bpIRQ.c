@@ -65,12 +65,11 @@ void RPI3_IRQ_handler(AA64Registers* regs) {
         UARTDebugOut("[aurora]:******* rpi3 timer irq++ %d\r\n", bit);
        /* if (bit == 1)
             for (;;);*/
-        suspendTimer();
-        setupTimerIRQ();
-
+       // suspendTimer();
+       // setupTimerIRQ();
+        resetTimer();
         /** handle kernel expired kernel timers */
         AuroraTimerTick();
-
         AuScheduleThread(regs);
     }
     if (pending & INT_SRC_CNTPSIRQ) {
@@ -80,11 +79,11 @@ void RPI3_IRQ_handler(AA64Registers* regs) {
         UARTDebugOut("[aurora]: rpi timer HPIRQ++ \r\n");
     }
     if (pending & (1ULL << 3)) {
-        suspendTimer();
-        setupTimerIRQ();
-        
+        //suspendTimer();
+        //setupTimerIRQ();
+        resetTimer();
         /** handle kernel's expired timers */
-        AuroraTimerTick();
+        AuroraTimerTick();       
         AuScheduleThread(regs);
     }
 

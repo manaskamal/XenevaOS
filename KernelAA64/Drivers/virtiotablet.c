@@ -152,7 +152,7 @@ void AuVirtioTabletInitialize(uint64_t device) {
 	int func = 0;
 	int dev = 0;
 	if (device == 0xFFFFFFFF)
-		return 1;
+		return;
 
 	uint16_t command = AuPCIERead(device, PCI_COMMAND, bus, dev, func);
 	command |= 4;
@@ -211,6 +211,7 @@ void AuVirtioTabletInitialize(uint64_t device) {
 	GICRegisterSPIHandler(&AuVirtioTabletHandler, spiID);
 
 	struct VirtioCommonCfg* common = (struct VirtioCommonCfg*)finalAddr;
+	_tabletCfg = common;
 	common->DeviceStatus = 0;
 	isb_flush();
 

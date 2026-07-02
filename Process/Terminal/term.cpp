@@ -70,6 +70,19 @@ static inline int _terminal_cell_to_pixelY(Terminal* t, int row) {
 	return t->originY + row * t->cellH;
 }
 
+static void _terminal_mouse_to_cell(Terminal* t, int mouseX, int mouseY, int* cellX, int* cellY) {
+	int relX = mouseX - t->originX;
+	int relY = mouseY - t->originY;
+
+	*cellX = relX / t->cellW;
+	*cellY = relY / t->cellH;
+
+	if (*cellX < 0) *cellX = 0;
+	if (*cellX >= t->cols) *cellX = t->cols - 1;
+	if (*cellY < 0) *cellY = 0;
+	if (*cellY >= t->rows) *cellY = t->rows - 1;
+}
+
 /*
  * TerminalDrawArrayFont -- draw bitmap fonts using defined array
  * @param canv -- Pointer to canvas 
@@ -116,14 +129,13 @@ void TerminalSetCellData(Terminal* t, int row, int col, char ch, uint32_t bg, ui
  * @param dirty -- dirty specifies was this a single cell update?
  */
 void TerminalDrawCell(Terminal *t,int col, int row) {
-	int y_offset = 26;
 	TermCell* cell = &t->cells[row][col];
 	
 	int px = _terminal_cell_to_pixelX(t, col);
 	int py = _terminal_cell_to_pixelY(t, row);
 
 
-	if (cell->c && cell->c != ' ') {
+	if (cell->c) {
 		char buf[2] = { cell->c, '\0' };
 		ChRect clip;
 		clip.x = px;
@@ -360,6 +372,114 @@ void TerminalPrintString(Terminal* t,char* string, uint32_t fgcolor, uint32_t bg
 	}
 }
 
+void TerminalReplaceInput(Terminal* t, const char* newText) {
+	int oldLen = t->intputLen;
+	char slave_buf[2];
+	slave_buf[0] = '\b';
+	slave_buf[1] = '\0';
+	int curX = t->cursorX;
+	int curY = t->cursorY;
+	for (int i = 0; i < oldLen; i++) {
+		if (curX > 0) {
+			curX--;
+		}
+		else if (curY > 0) {
+			curY--;
+			curX = t->cols - 1;
+		}
+		TermCell* c = &t->cells[curY][curX];
+		c->c = ' ';
+		c->fg = t->defaultFg;
+		c->bg = t->defaultBG;
+		c->flags |= 0x1;
+
+		/** drain the last character passed to slave buffer */
+		_KeWriteFile(master_fd, slave_buf, 1);
+	}
+
+	strncpy(t->inputBuffer, newText, 255);
+	t->inputBuffer[255] = '\0';
+	t->intputLen = strlen(t->inputBuffer);
+
+	for (int i = 0; i < t->intputLen; i++) {
+		//TerminalPrintChar(t, t->inputBuffer[i], t->defaultFg, t->defaultBG);
+		_KeWriteFile(master_fd, &t->inputBuffer[i], 1);
+	}
+
+	TerminalFlush(t);
+	//_update_terminal_ = 1;
+}
+
+
+void TerminalHistoryPush(Terminal* t, const char* cmd) {
+	if (!cmd || cmd[0] == '\0') return;
+
+	/*if (t->history.count > 0) {
+		int last = (t->history.head - 1 + TERMINAL_HISTORY_MAX) % TERMINAL_HISTORY_MAX;
+		if (strcmp(t->history.entries[last], cmd) == 0) {
+			t->history.browse = -1;
+			return;
+		}
+	}*/
+	for (int i = 0; i < t->history.count; i++) {
+		int idx = (t->history.head - 1 - i + TERMINAL_HISTORY_MAX * 2) % TERMINAL_HISTORY_MAX;
+		if (strcmp(t->history.entries[idx], cmd) == 0) {
+			for (int j = i; j > 0; j--) {
+				int dst = (t->history.head - 1 - j + TERMINAL_HISTORY_MAX * 2) % TERMINAL_HISTORY_MAX;
+				int src = (t->history.head - 1 - j + 1 + TERMINAL_HISTORY_MAX * 2) % TERMINAL_HISTORY_MAX;
+				memcpy(t->history.entries[dst], t->history.entries[src], 256);
+			}
+
+			t->history.head = (t->history.head - 1 + TERMINAL_HISTORY_MAX) % TERMINAL_HISTORY_MAX;
+			t->history.count--;
+			break;
+		}
+	}
+
+	strncpy(t->history.entries[t->history.head], cmd, 255);
+	t->history.entries[t->history.head][255] = '\0';
+	t->history.head = (t->history.head + 1) % TERMINAL_HISTORY_MAX;
+	if (t->history.count < TERMINAL_HISTORY_MAX)
+		t->history.count++;
+
+	t->history.browse = -1;
+}
+
+
+void TerminalHistoryUp(Terminal* t) {
+	if (t->history.count == 0) return;
+
+	if (t->history.browse == -1) {
+		strncpy(t->inputSaved, t->inputBuffer, 255);
+		t->history.browse = 0;
+	}
+	else {
+		if (t->history.browse < t->history.count - 1)
+			t->history.browse++;
+		else
+			return;
+	}
+
+	int idx = (t->history.head - 1 - t->history.browse + TERMINAL_HISTORY_MAX * 2)
+		% TERMINAL_HISTORY_MAX;
+
+	TerminalReplaceInput(t, t->history.entries[idx]);
+}
+
+void TerminalHistoryDown(Terminal* t) {
+	if (t->history.browse == -1) return;
+
+	if (t->history.browse > 0) {
+		t->history.browse--;
+		int idx = (t->history.head - 1 - t->history.browse + TERMINAL_HISTORY_MAX * 2)
+			% TERMINAL_HISTORY_MAX;
+		TerminalReplaceInput(t, t->history.entries[idx]);
+	}
+	else {
+		t->history.browse = -1;
+		TerminalReplaceInput(t, t->inputSaved);
+	}
+}
 /* ProcessControlSequence -- the main emulation function 
  * of ANSI Terminal
  * @param ch -- Character to emulate
@@ -622,6 +742,40 @@ void TerminalProcessLine(Terminal* t,char ch) {
 		TerminalPrintChar(t, ch,fgColor,backColor);
 	}
 }
+
+void TerminalHandleMouseClick(Terminal* t, int mouseX, int mouseY, int button) {
+	/** skip the titlebar **/
+	if (mouseY <= 26)
+		return;
+
+	int cellX = 0;
+	int cellY = 0;
+	_terminal_mouse_to_cell(t, mouseX, mouseY, &cellX, &cellY);
+
+	//if (t->lastCellXClicked == cellX && t->lastCellYClicked == cellY) {
+	//	t->lastCellXClicked = -1;
+	//	t->lastCellYClicked = -1;
+	//}
+
+	if (t->lastCellXClicked != -1 && t->lastCellYClicked != -1) {
+		TermCell* cell = &t->cells[t->lastCellYClicked][t->lastCellXClicked];
+		uint32_t bg = cell->bg;
+		cell->bg = cell->fg;
+		cell->fg = bg;
+		cell->flags |= 0x1;
+	}
+
+	TermCell* cell = &t->cells[cellY][cellX];
+	uint32_t bg = cell->bg;
+	cell->bg = cell->fg;
+	cell->fg = bg;
+	cell->flags |= 0x1;
+
+	t->lastCellXClicked = cellX;
+	t->lastCellYClicked = cellY;
+
+	TerminalFlush(t);
+}
 /*
  * TerminalHandleMessage -- handle incoming 'Deodhai' messages
  * @param e -- Pointer to PostEvent memory location where 
@@ -630,6 +784,9 @@ void TerminalProcessLine(Terminal* t,char ch) {
 void TerminalHandleMessage(PostEvent *e) {
 	switch (e->type) {
 	case DEODHAI_REPLY_MOUSE_EVENT:
+		if (e->dword3) {
+			TerminalHandleMouseClick(&term, e->dword - win->info->x, e->dword2 - win->info->y, e->dword3);
+		}
 		ChWindowHandleMouse(win, e->dword, e->dword2, e->dword3);
 		memset(e, 0, sizeof(PostEvent));
 		break;
@@ -637,10 +794,43 @@ void TerminalHandleMessage(PostEvent *e) {
 		int code = e->dword;
 		ChitralekhaProcessKey(code);
 		char rawkey = ChitralekhaGetKeyPress(code);
+		bool _pass_to_input = true;
 		char c = ChitralekhaKeyToASCII(code);
-		if (rawkey == KEY_RETURN)
+		if (rawkey == KEY_RETURN) {
+			TerminalHistoryPush(&term, term.inputBuffer);
 			c = '\n';
+			term.intputLen = 0;
+			term.inputBuffer[0] = '\0';
+			_pass_to_input = false;
+		}
 
+		if (rawkey == KEY_BACKSPACE) {
+			if (&term.intputLen > 0) {
+				term.intputLen--;
+				term.inputBuffer[term.intputLen] = '\0';
+				c = '\b';
+				_pass_to_input = false;
+			}
+		}
+
+		/** check from extended key code map **/
+		if (rawkey == KEY_KP_8) {
+			TerminalHistoryUp(&term);
+			memset(e, 0, sizeof(PostEvent));
+			return;
+		}
+
+		/** chec from extended key code map **/
+		if (rawkey == KEY_KP_2) {
+			TerminalHistoryDown(&term);
+			memset(e, 0, sizeof(PostEvent));
+			return;
+		}
+
+
+		/**
+		 * handle CTRL + combined keys 
+		 */
 		if (ChitralekhaKeyGetCTRL()) {
 			if (c == KEY_C) {
 				if (shell_id > 0)
@@ -650,6 +840,23 @@ void TerminalHandleMessage(PostEvent *e) {
 			if (c == KEY_H) {
 				ChWindowHide(win);
 			}
+
+			if (c == KEY_W) {
+				TerminalHistoryUp(&term);
+				memset(e, 0, sizeof(PostEvent));
+				return;
+			}
+
+			if (c == KEY_S) {
+				TerminalHistoryDown(&term);
+				memset(e, 0, sizeof(PostEvent));
+				return;
+			}
+		}
+
+		if (_pass_to_input && c >= 0x20 && c < 0x7F && term.intputLen < 255) {
+			term.inputBuffer[term.intputLen++] = c;
+			term.inputBuffer[term.intputLen] = '\0';
 		}
 		_KeWriteFile(master_fd, &c, 1);
 		/* else its a key release event */
@@ -746,6 +953,8 @@ int main(int argc, char* arv[]){
 	term.scrollBot = term.rows - 1;
 	term.originX = 0;
 	term.originY = 26;
+	term.lastCellXClicked = -1;
+	term.lastCellYClicked = -1;
 
 	backColor = term.defaultBG;
 	fgColor = term.defaultFg;

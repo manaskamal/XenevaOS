@@ -38,16 +38,16 @@
 
 
 #define RGB(r, g, b) \
-	         ((r & 0xFF) | ((g << 8)&0xFF00) | ((b << 16)&0xFF0000))
+	       (((b) & 0xFF) | (((g) << 8) & 0xFF00) | (((r) << 16) & 0xFF0000))  // ((r & 0xFF) | ((g << 8)&0xFF00) | ((b << 16)&0xFF0000))
 
 #define RED(col)\
-	         (col & 0xFF)
+	         ((col >> 16) & 0xFF)
 
 #define GREEN(col)\
 	((col>>8) & 0xFF)
 
 #define BLUE(col) \
-	((col>>16) & 0xFF)
+	(col & 0xFF)
 
 /*
  * XEInitialiseGraphics -- Initialise the screen and store graphics

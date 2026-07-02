@@ -212,7 +212,7 @@ void AuVDiskRegisterPartition(AuVDisk* vdisk) {
 
 	AuTextOut("\r\n");
 	AuPmmngrFree(buffer);
-
+	
 }
 
 /**
@@ -245,7 +245,7 @@ void AuVDiskRegister(AuVDisk* disk) {
 		char* mpt = AuVFSReserveMountPointLetter();
 
 		/** make letter /a reserved for root '/' **/
-		if (strcmp(mpt, "/a") == 0)
+		if (strcmp(mpt, "a") == 0)
 			FatInitialise(disk, "/");
 		else
 			FatInitialise(disk, mpt);
@@ -255,7 +255,8 @@ void AuVDiskRegister(AuVDisk* disk) {
 		break;
 	case AURORA_FS_EXT2:
 		AuTextOut("[aurora]: vdisk : %s has Ext2 file system \r\n", disk->diskname);
-		Ext2Initialise(disk, "b");
+		mpt = AuVFSReserveMountPointLetter();
+		Ext2Initialise(disk, mpt);
 		break;
 	}
 }

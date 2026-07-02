@@ -430,7 +430,6 @@ extern void NamdaphaGetOnlineTime();
 int main(int argc, char* arv[]){
 	
 	app = ChitralekhaStartApp(argc, arv);
-	_KePrint("Namdapha bar started basefont : %x \r\n", app->baseFont);
 	ChFontSetSize(app->baseFont, 13);
 	/* create a demo canvas just for getting the graphics
 	* file descriptor
@@ -489,12 +488,10 @@ int main(int argc, char* arv[]){
 	memset(&_time, 0, sizeof(XETime));
 	//_KeGetCurrentTime(&_time);
 
-	_KePrint("[namdapha]: go button creating \r\n");
     gobutton = NamdaphaInitialiseGoButton(win);
 	gobutton->actionHandler = NamdaphaGoButtonAction;
 	list_add(button_list, gobutton);
 
-	_KePrint("[namdapha]: go buttons icon loaded \r\n");
 	/* default application icon, if any application
 	 * fails to set an icon, this icon will appear
 	 */
@@ -521,15 +518,12 @@ int main(int argc, char* arv[]){
 
 	win->info->alpha = 0;
 	win->info->alphaValue = 0.3f;
-	_KePrint("Namdapha : all set, ready to paint itself \r\n");
 	ChWindowPaint(win);
-	_KePrint("Now getting xelnchr handle \r\n");
 	gomenuh = ChGetWindowHandle(app, "Xeneva Launcher");
 	gobutton->winHandle = gomenuh;
 	//NamdaphaGetOnlineTime();
 	
 	//NamdaphaPlayStartupSound();
-	_KePrint("[namdapha]: window got \r\n");
 	PostEvent e;
 	memset(&e, 0, sizeof(PostEvent));
 	while (1) {

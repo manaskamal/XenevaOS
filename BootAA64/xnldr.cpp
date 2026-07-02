@@ -128,9 +128,6 @@ MENU_ITEM MenuItem[] = {
  * @param SystemTable -- Pointer to EFI SYSTEM TABLE
  */
 int XEGetScreenResolutionMode(EFI_SYSTEM_TABLE* SystemTable) {
-#ifdef __TARGET_BOARD_QEMU_VIRT__
-	return 1;
-#endif
 	EFI_STATUS Status;
 	UINTN SelectedIndex = 0;
 	EFI_INPUT_KEY Key;
@@ -142,7 +139,7 @@ int XEGetScreenResolutionMode(EFI_SYSTEM_TABLE* SystemTable) {
 		XEPrintf(const_cast<wchar_t*>(L"Copyright (C) Manas Kamal Choudhury 2020-2025 \r\n"));
 		XEPrintf(const_cast<wchar_t*>(L"Select a screen resolution:\r\n"));
 		XEPrintf(const_cast<wchar_t*>(L"\r\n"));
-		for (UINTN i = 0; i < MENU_SIZE; i++) {
+		for (UINTN i = 0; i < 4; i++) {
 			if (i == SelectedIndex) {
 				SystemTable->ConOut->SetAttribute(SystemTable->ConOut, EFI_WHITE | EFI_BACKGROUND_BLUE);
 			}
@@ -195,15 +192,19 @@ UINTN XESetGraphicsMode(EFI_SYSTEM_TABLE* SystemTable, int index) {
 
 	switch (index) {
 	case 1:
+		XEPrintf(const_cast<wchar_t*>(L"index 1 selected \r\n"));
 		dwidth = 1024, dheight = 768;
 		break;
 	case 2:
+		XEPrintf(const_cast<wchar_t*>(L"index 2 selected \r\n"));
 		dwidth = 1280, dheight = 1024;
 		break;
 	case 3:
+		XEPrintf(const_cast<wchar_t*>(L"index 3 selected \r\n"));
 		dwidth = 1920, dheight = 1080;
 		break;
 	default:
+		XEPrintf(const_cast<wchar_t*>(L"index 0 selected \r\n"));
 		dwidth = 640, dheight = 480;
 		break;
 	}
@@ -219,11 +220,12 @@ UINTN XESetGraphicsMode(EFI_SYSTEM_TABLE* SystemTable, int index) {
 	MaxMode = GraphicsOutput->Mode->MaxMode;
 	XEPrintf(const_cast<wchar_t*>(L"Available Screen Resolution:\r\n"));
 	for (UINTN i = 0; i < MaxMode; i++) {
-		EFI_GRAPHICS_OUTPUT_MODE_INFORMATION* Info;
+		EFI_GRAPHICS_OUTPUT_MODE_INFORMATION *Info;
 		UINTN Size;
 		Status = GraphicsOutput->QueryMode(GraphicsOutput, i, &Size, &Info);
-		if (Info->HorizontalResolution == dwidth && Info->VerticalResolution == dheight)
+		if (Info->HorizontalResolution == dwidth && Info->VerticalResolution == dheight) {
 			Mode = i;
+		}
 	}
 
 	Status = GraphicsOutput->SetMode(GraphicsOutput, Mode);
