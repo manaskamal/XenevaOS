@@ -255,7 +255,11 @@ void AuVDiskRegister(AuVDisk* disk) {
 		break;
 	case AURORA_FS_EXT2:
 		AuTextOut("[aurora]: vdisk : %s has Ext2 file system \r\n", disk->diskname);
-		Ext2Initialise(disk, "b");
+<<<<<<< Updated upstream
+=======
+		mpt = AuVFSReserveMountPointLetter();
+		Ext2Initialise(disk, mpt);
+>>>>>>> Stashed changes
 		break;
 	}
 }

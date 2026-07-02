@@ -163,13 +163,15 @@ size_t Ext2Read(AuVFSNode* node, AuVFSNode* file, uint64_t* buffer, uint32_t len
 * @param path -- path to the file
 */
 AuVFSNode* Ext2Open(AuVFSNode* fsys, char* path) {
+	UARTDebugOut("Ext2Open \r\n");
 	if (!fsys || !path) return NULL;
 
 	Ext2Fs* fs = (Ext2Fs*)fsys->device;
 
+	UARTDebugOut("Ext2 opening file \r\n");
 	// edge case opening root directory
 	if (strlen(path) == 0 || strcmp(path, "/") == 0) {
-
+		UARTDebugOut("Opening : %s \r\n", path);
 		AuVFSNode* root_session = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
 		memset(root_session, 0, sizeof(AuVFSNode));
 

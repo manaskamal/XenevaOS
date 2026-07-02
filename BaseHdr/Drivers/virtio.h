@@ -126,6 +126,7 @@ typedef struct _virtio_net_hdr_ {
 	uint16_t gso_size;
 	uint16_t csum_start;
 	uint16_t csum_offset;
+	uint16_t padding;
 }virtio_net_hdr_t;
 
 

@@ -125,11 +125,16 @@ void ARPHandlePacket(void* data, AuVFSNode* nic) {
 		}
 	}
 	if (ntohs(packet->operation) == 1) {
-		char spa[17];
+		UARTDebugOut("packet operation == 1 \r\n");
+		UARTDebugOut("Second operation %x\r\n", eth->ipv4addr);
+		//char spa[17];
 		ip_ntoa(ntohl(packet->arp_data.arp_eth_ipv4.arp_spa));
-		char tpa[17];
-		ip_ntoa(ntohl(packet->arp_data.arp_eth_ipv4.arp_tpa));
-		if (eth->ipv4addr && packet->arp_data.arp_eth_ipv4.arp_tpa == eth->ipv4addr) {
+		/*char tpa[17];*/
+		uint32_t tpa = 0;
+		memcpy(&tpa, &packet->arp_data.arp_eth_ipv4.arp_tpa, 4);
+		
+		ip_ntoa(ntohl(tpa));
+		if (eth->ipv4addr && tpa == eth->ipv4addr) {
 			NetARP arp;
 			arp.hwAddressType = htons(1);
 			arp.hwProtocolType = htons(ETHERNET_TYPE_IPV4);
@@ -138,8 +143,16 @@ void ARPHandlePacket(void* data, AuVFSNode* nic) {
 			arp.operation = htons(2);
 			memcpy(arp.arp_data.arp_eth_ipv4.arp_sha, eth->mac, 6);
 			memcpy(arp.arp_data.arp_eth_ipv4.arp_tha, packet->arp_data.arp_eth_ipv4.arp_sha, 6);
-			arp.arp_data.arp_eth_ipv4.arp_spa = eth->ipv4addr;
-			arp.arp_data.arp_eth_ipv4.arp_tpa = packet->arp_data.arp_eth_ipv4.arp_spa;
+
+			//arp.arp_data.arp_eth_ipv4.arp_spa = eth->ipv4addr;
+			memcpy(&arp.arp_data.arp_eth_ipv4.arp_spa, &eth->ipv4addr, 4);
+			//arp.arp_data.arp_eth_ipv4.arp_tpa = packet->arp_data.arp_eth_ipv4.arp_spa;
+			memcpy(&arp.arp_data.arp_eth_ipv4.arp_tpa, &packet->arp_data.arp_eth_ipv4.arp_spa, 4);
+
+			uint32_t tpa, spa = 0;
+			memcpy(&tpa, &arp.arp_data.arp_eth_ipv4.arp_tpa, 4);
+			memcpy(&spa, &arp.arp_data.arp_eth_ipv4.arp_spa, 4);
+		
 			AuEthernetSend(nic, &arp, sizeof(NetARP), ETHERNET_TYPE_ARP, packet->arp_data.arp_eth_ipv4.arp_sha);
 		}
 	}

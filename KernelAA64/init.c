@@ -283,6 +283,7 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 
 	UARTDebugOut("[aurora]: boot freed up \r\n");
 
+
 	AuSchedulerInitialize();
 
 	AuProcess* proc = AuCreateProcessSlot(0, "exec");
