@@ -113,6 +113,9 @@ void AuVirtioKbdHandler(int spinum) {
 }
 
 void AuVirtioKbdDown() {
+	if (!_kybrdCfg)
+		return;
+
 	/* Reset the device */
 	_kybrdCfg->DeviceStatus = 0;
 
@@ -184,6 +187,7 @@ void AuVirtioKbdInitialize(uint64_t device) {
 	dsb_ish();
 
 	struct VirtioCommonCfg* common = (struct VirtioCommonCfg*)finalAddr;
+	_kybrdCfg = common;
 	common->DeviceStatus = 0;
 	
 	isb_flush();
