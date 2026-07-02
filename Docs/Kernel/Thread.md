@@ -4,7 +4,7 @@ In XenevaOS, multitasking is entirely built on the concept of threads. XenevaOS 
 
 ---
 
-## 🧵 Thread Representation in Kernel
+##  Thread Representation in Kernel
 
 Each thread is represented by the `AA64Thread` structure (under AArch64) or `AuThread` structure (under x86_64), which stores:
 - **Thread Context:** Saved CPU registers (e.g., `x19-x30`, `sp`, `elr_el1`, `spsr_el1` for AArch64).
@@ -14,7 +14,7 @@ Each thread is represented by the `AA64Thread` structure (under AArch64) or `AuT
 
 ---
 
-## 🚀 User Mode Entry & Transitions (`AuUserEntry`)
+##  User Mode Entry & Transitions (`AuUserEntry`)
 
 When a thread is scheduled to execute in user mode (EL0), the kernel uses the `AuUserEntry` structure to pass execution context, stack pointers, and command-line arguments to the user program's entry runtime (`crt0`).
 
@@ -35,7 +35,7 @@ typedef struct _uentry_ {
 
 ---
 
-## 📦 Argument Passing Architecture (`argvaddr` vs `argvkernel`)
+##  Argument Passing Architecture (`argvaddr` vs `argvkernel`)
 
 A critical challenge during process creation is writing the command-line arguments (like `/calc.exe --debug`) from kernel space (EL1) into the newly created user-space process space (EL0) stack or data page.
 
