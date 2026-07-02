@@ -109,7 +109,6 @@ int i_ = 1;
 extern void sub_rsp();
 
 void AuEntryTest(uint64_t test) {
-	//aa64_utest();
 	int c = 10;
 	//enable_irqs();
 	AuTextOut("[aurora]: test2 \r\n");
