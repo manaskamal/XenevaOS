@@ -180,8 +180,8 @@
       <GenerateDebugInformation>
       </GenerateDebugInformation>
       <OutputFile>..\..\Build\chlkha.dll</OutputFile>
-      <AdditionalLibraryDirectories>..\..\ARM64\Debug;..\..\Libs\XECrt</AdditionalLibraryDirectories>
-      <AdditionalDependencies>XEClib.lib;ftype.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\..\ARM64\Debug;..\..\Libs\XECrt; $(SolutionDir)Build;</AdditionalLibraryDirectories>
+      <AdditionalDependencies>XEClib.lib;ftype.lib;xecrt.lib;</AdditionalDependencies>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
       <EnableUAC>false</EnableUAC>
       <GenerateMapFile>true</GenerateMapFile>
