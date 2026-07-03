@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|ARM64">
@@ -196,7 +196,7 @@
       <AdditionalLibraryDirectories>..\x64\Debug</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>if exist M:\ ( copy "..\Build\$(TargetName).exe" "M:\$(TargetName).exe ) else ( echo M: drive not found, skipping copy )"</Command>
+      <Command>if exist M:\ ( copy "..\Build\$(TargetName).exe" "M:\$(TargetName).exe" ) else ( echo M: drive not found, skipping copy )</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
@@ -245,7 +245,7 @@
       <AdditionalLibraryDirectories>..\ARM64\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>if exist M:\ ( copy "..\Build\$(TargetName).exe" M:\$(TargetName).exe" ) else ( echo M: drive not found, skipping copy )"</Command>
+      <Command>if exist M:\ ( copy "..\Build\$(TargetName).exe" "M:\$(TargetName).exe" ) else ( echo M: drive not found, skipping copy )</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
