@@ -107,3 +107,14 @@ void AuVirtIOInputInitialize() {
 	}
 	UARTDebugOut("Virtio Input initialized \r\n");
 }
+
+#define GOOGLE_GOLDFISH_RTC_BASE 0x09010000
+#define RTC_TIME_LOW ((volatile uint32_t*)(GOOGLE_GOLDFISH_RTC_BASE + 0x00))
+#define RTC_TIME_HIGH ((volatile uint32_t*)(GOOGLE_GOLDFISH_RTC_BASE + 0x04))
+
+
+uint64_t AuVirtGetBootEpoch() {
+	uint32_t low = *RTC_TIME_LOW;
+	uint32_t high = *RTC_TIME_HIGH;
+	return (((uint64_t)high << 32) | low);
+}

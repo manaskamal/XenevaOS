@@ -210,6 +210,9 @@
     <ClCompile Include="Fs\Ext2\Ext2.c">
       <Filter>Fs\Ext2</Filter>
     </ClCompile>
+    <ClCompile Include="Net\tcp.c">
+      <Filter>Net</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Hal">

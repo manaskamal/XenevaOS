@@ -307,6 +307,7 @@
     <ClCompile Include="Net\netserv.c" />
     <ClCompile Include="Net\route.c" />
     <ClCompile Include="Net\socket.c" />
+    <ClCompile Include="Net\tcp.c" />
     <ClCompile Include="Net\udp.c" />
     <ClCompile Include="pcie.c" />
     <ClCompile Include="pe.c" />

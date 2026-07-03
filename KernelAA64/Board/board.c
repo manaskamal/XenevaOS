@@ -42,6 +42,7 @@ extern void imx8mp_gpc_init();
 #ifdef __TARGET_BOARD_QEMU_VIRT__
 extern void virt_power_down(uint64_t code);
 extern void virt_power_reboot(uint64_t code);
+extern uint64_t AuVirtGetBootEpoch();
 #endif
 
 
@@ -95,5 +96,15 @@ void AuAA64BoardReboot() {
 #ifdef __TARGET_BOARD_QEMU_VIRT__
 	UARTDebugOut("[aurora]: restarting your system \r\n");
 	virt_power_reboot(0x84000009);
+#endif
+}
+
+/**
+ * @brief AuAA64BoardGetBootEpoch -- returns the
+ * boot epoch time from board
+ */
+uint64_t AuAA64BoardGetBootEpoch() {
+#ifdef __TARGET_BOARD_QEMU_VIRT__
+	return AuVirtGetBootEpoch();
 #endif
 }

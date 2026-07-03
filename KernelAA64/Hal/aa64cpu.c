@@ -44,6 +44,7 @@
 
 uint64_t basisTime;
 uint64_t cpuFrequency;
+uint64_t bootTime;
 
 uint64_t AA64GetPhysicalTimerCount() {
 	uint64_t val = get_cntpct_el0();
@@ -69,6 +70,7 @@ void AA64ClockInitialize() {
 	cpuFrequency = val / 10000;
 
 	basisTime = AA64GetPhysicalTimerCount() / cpuFrequency;
+	bootTime = AuAA64BoardGetBootEpoch();
 	AuTextOut("[aurora]: using %d mHZ \r\n", cpuFrequency);
 }
 
@@ -163,6 +165,64 @@ void AA64CPUImplementer(uint32_t midr) {
 	//AuTextOut("CPU Architecture: ARMv8-A(%x) \r\n", arch);
 }
 
+#define SUBSECONDS_PER_SECOND 1000000
+
+void updateTicks(uint64_t ticks, uint64_t* timerTick, uint64_t* timerSubticks) {
+	*timerSubticks = ticks - basisTime;
+	*timerTick = *timerSubticks / SUBSECONDS_PER_SECOND;
+	*timerSubticks = *timerSubticks % SUBSECONDS_PER_SECOND;
+}
+
+int aa64_gettimeofday(timeval* t) {
+	uint64_t cur_cnt = AA64GetPhysicalTimerCount();
+	uint64_t timer_ticks, timer_subticks;
+	updateTicks(cur_cnt / cpuFrequency, &timer_ticks, &timer_subticks);
+	t->tv_sec = bootTime + timer_ticks;
+	t->tv_usec = timer_subticks;
+	return 0;
+}
+
+uint64_t aa64_now() {
+	timeval t;
+	aa64_gettimeofday(&t);
+	return t.tv_sec;
+}
+
+int aa64_settimeofday(timeval* t) {
+	if (!t) return -1;
+	if (t->tv_sec < 0 || t->tv_usec < 0 || t->tv_usec > 1000000) return -1;
+
+	//atomic lock
+	uint64_t clock = aa64_now();
+	bootTime += t->tv_sec - clock;
+	//atomic unlock
+	return 0;
+}
+
+/*
+ * aa64_calculate_ticks -- calculate the number of ticks from given milliseconds
+ * @param seconds -- amount of seconds
+ * @param out_milliseconds -- where to store the number of ticks
+ */
+void aa64_calculate_ticks(uint64_t seconds, uint64_t subsec, uint64_t* out_seconds, uint64_t* out_subsec) {
+	if (bootTime == 0) {
+		*out_seconds = 0;
+		*out_subsec = 0;
+		return;
+	}
+
+	uint64_t curr = AA64GetPhysicalTimerCount();
+	uint64_t timer_ticks, timer_subticks;
+	updateTicks(curr / cpuFrequency, &timer_ticks, &timer_subticks);
+	if (subsec + timer_subticks >= SUBSECONDS_PER_SECOND) {
+		*out_seconds = timer_ticks + seconds + (subsec + timer_subticks) / SUBSECONDS_PER_SECOND;
+		*out_subsec = (subsec + timer_subticks) % SUBSECONDS_PER_SECOND;
+	}
+	else {
+		*out_seconds = timer_ticks + seconds;
+		*out_subsec = timer_subticks + subsec;
+	}
+}
 /**
  * @brief AA64SleepUS -- sleep for sometimes
  * @param us -- microseconds to sleep

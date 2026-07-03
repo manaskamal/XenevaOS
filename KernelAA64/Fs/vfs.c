@@ -42,6 +42,7 @@
 #include <Board/RPI3bp/rpi3bp.h>
 #include <Hal/AA64/aa64lowlevel.h>
 #include <Mm/mmfile.h>
+#include <Serv/sysserv.h>
 
 AuVFSContainer* __RootContainer;
 AuVFSNode* __RootFS;
