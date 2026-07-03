@@ -171,8 +171,8 @@ XE_EXTERN XE_EXPORT ChWindow* ChCreateWindow(ChitralekhaApp *app, uint16_t attri
 	win->canv = canv;
 	win->sharedwin = app->shwinbuf;
 	win->info = (ChSharedWinInfo*)win->sharedwin;
-	win->title = (char*)malloc(strlen(title));
-	memset(win->title, 0, strlen(title));
+	win->title = (char*)malloc(strlen(title) + 1);
+	memset(win->title, 0, strlen(title) + 1);
 	strcpy(win->title, title);
 	win->info->x = x;
 	win->info->y = y;
@@ -901,8 +901,8 @@ XE_EXTERN XE_EXPORT ChWindow* ChCreatePopupWindow(ChWindow* win, int x, int y, i
 	popup->canv = canv;
 	popup->sharedwin = app->shwinbuf;
 	popup->info = (ChSharedWinInfo*)popup->sharedwin;
-	popup->title = (char*)malloc(strlen(title));
-	memset(popup->title, 0, strlen(title));
+	popup->title = (char*)malloc(strlen(title) + 1);
+	memset(popup->title, 0, strlen(title) + 1);
 	strcpy(popup->title, title);
 	popup->info->x = win->info->x + x;
 	popup->info->y = win->info->y + y;

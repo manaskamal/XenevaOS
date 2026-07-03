@@ -87,36 +87,56 @@ void AuProcessEntUser(uint64_t rcx) {
 	uentry->rsp -= 32;
 	PUSHALIGN(uentry->rsp, 16);
 	t->first_run = 1;
-	/* do all arguments passing stuff, arguments
-	 * are passed as strings to stack
+
+	/*
+	 * ARM64 ABI: argc and argv must be placed on the user stack so that
+	 * crt0arm64.s can pop them via: ldp x0, x1, [sp], #16
+	 *
+	 * Step 1: Push each argument string onto the user stack (grow downward).
+	 *         Record the resulting user-space SP as argv[i] in the
+	 *         user-mapped argvaddr page.
+	 * Step 2: Push argc and argv_ptr (argvaddr) onto the user stack.
+	 * Step 3: Free kernel-side copies AFTER we have finished reading them.
 	 */
 
-	char** argvs = (char**)uentry->argvaddr;
-	for (int i = 0; i < uentry->num_args; i++) {
+	/* Step 1 — push strings and record user-space pointers */
+	char** argvs = (char**)uentry->argvkernel;  /* kernel-accessible VA of argv[] page */
+	for (int i = uentry->num_args - 1; i >= 0; i--) {
 		char* str = uentry->argvs[i];
-		for (int j = strlen(str); j >= 0; j--) {
+		int slen = strlen(str);
+		/* push null terminator first, then chars in reverse so string
+		 * reads forward at lower address after push */
+		PUSH(uentry->rsp, char, '\0');
+		for (int j = slen - 1; j >= 0; j--) {
 			PUSH(uentry->rsp, char, str[j]);
 		}
+		/* record the user-space address of this string */
 		argvs[i] = (char*)uentry->rsp;
 	}
 
-	/* I think this code should be placed in _KeProcessExit */
+	/* Step 2 — align, then push argv_ptr and argc */
+	PUSHALIGN(uentry->rsp, 16);
+	PUSH(uentry->rsp, size_t, (size_t)uentry->argvaddr);  /* x1 = argv */
+	PUSH(uentry->rsp, size_t, (size_t)uentry->num_args);  /* x0 = argc */
+	PUSHALIGN(uentry->rsp, 16);
+
+	/* Step 3 — free kernel-side argv copies (no longer needed) */
 	if (uentry->argvs) {
 		for (int i = 0; i < uentry->num_args; i++) {
-			//uint64_t addr = (uint64_t)uentry->argvs[i];
 			kfree(uentry->argvs[i]);
 		}
-		void* address = (void*)uentry->argvs;
-		kfree(address);
+		kfree(uentry->argvs);
 	}
-	PUSHALIGN(uentry->rsp, 16);
 	uentry->argvs = 0;
-	PUSH(uentry->rsp, size_t, (size_t)uentry->argvaddr);
-	PUSH(uentry->rsp, size_t, (size_t)uentry->num_args);
-	PUSHALIGN(uentry->rsp, 16);
+
+	UARTDebugOut("[loader]: entering user: sp=%x entry=%x argc=%d argv=%x\r\n",
+		uentry->rsp, uentry->entrypoint, uentry->num_args, uentry->argvaddr);
+
+	uint64_t* check_sp = (uint64_t*)uentry->rsp;
+	UARTDebugOut("[loader]: stack check [0]: %x, [1]: %x\r\n", check_sp[0], check_sp[1]);
+
 	aa64_enter_user(uentry->rsp, uentry->entrypoint);
-	while (1) {
-	}
+	while (1) {}
 }
 
 /**
@@ -134,37 +154,42 @@ void AuLoaderMapExecFromCache(AuProcess* proc, AuMMFileBack *fb,PIMAGE_NT_HEADER
 		UARTDebugOut("Name : %s \r\n", fb->file->filename);
 	for (size_t i = 0; i < nt->FileHeader.NumberOfSections; ++i) {
 		size_t load_addr = _image_base_ + secthdr[i].VirtualAddress;
-		void* sect_addr = (void*)load_addr;
-		size_t sectsz = secthdr[i].VirtualSize;
-		int req_pages = sectsz / 4096 +
-			((sectsz % 4096) ? 1 : 0);
-		uint64_t* block = 0;
-		int physFrameIndex = 0;
-		size_t rawSize = secthdr[i].SizeOfRawData;
 		size_t virtSize = secthdr[i].VirtualSize;
+		size_t rawSize = secthdr[i].SizeOfRawData;
 		size_t fileOffset = secthdr[i].PointerToRawData;
-		int page_index = fileOffset / PAGE_SIZE;
-		AuMMPageCache* cache = AuMmngrFileCacheGetByIndex(fb, page_index);
-		if (secthdr[i].Characteristics & IMAGE_SCN_MEM_WRITE) {
-			for (int j = 0; j < req_pages; j++) {
-				uint64_t alloc = (load_addr + j * 0x1000);
-					uint64_t phys = P2V((size_t)AuPmmngrAlloc());
-					AuMapPageEx(proc->cr3, V2P(phys), alloc, PTE_USER_EXECUTABLE | PTE_AP_RW_USER | PTE_NORMAL_MEM);
-					if (!block)
-						block = (uint64_t*)phys;
-					memcpy(phys, (void*)P2V(cache->physicalPage), PAGE_SIZE);
-				physFrameIndex++;
-				cache = cache->next;
+
+		/* Ensure all pages for this section's virtual address range are mapped */
+		size_t end_addr = load_addr + virtSize;
+		for (size_t v_page = (load_addr & ~0xFFFULL); v_page < end_addr; v_page += PAGE_SIZE) {
+			void* phys = AuGetPhysicalAddressEx(proc->cr3, v_page);
+			if (!phys) {
+				phys = AuPmmngrAlloc();
+				memset((void*)P2V((size_t)phys), 0, PAGE_SIZE);
+				AuMapPageEx(proc->cr3, (uint64_t)phys, v_page, PTE_USER_EXECUTABLE | PTE_AP_RW_USER | PTE_NORMAL_MEM);
 			}
 		}
-		else {
-			for (int j = 0; j < req_pages; j++) {
-				uint64_t alloc = (load_addr + j * 0x1000);
-				uint64_t phys = cache->physicalPage; //P2V((size_t)AuPmmngrAlloc());
-				AuMapPageEx(proc->cr3, phys, alloc, PTE_USER_EXECUTABLE | PTE_AP_RW_USER | PTE_NORMAL_MEM);
-				physFrameIndex++;
-				cache = cache->next;
+
+		/* Copy data from the scratch buffer to the mapped pages, handling boundaries */
+		size_t bytes_to_copy = rawSize;
+		size_t current_vaddr = load_addr;
+		size_t current_file_offset = fileOffset;
+		while (bytes_to_copy > 0) {
+			size_t page_offset = current_vaddr & 0xFFF;
+			size_t bytes_in_this_page = PAGE_SIZE - page_offset;
+			if (bytes_in_this_page > bytes_to_copy) {
+				bytes_in_this_page = bytes_to_copy;
 			}
+			
+			void* phys = AuGetPhysicalAddressEx(proc->cr3, current_vaddr);
+			if (phys) {
+				void* dest = (void*)(P2V((size_t)phys) + page_offset);
+				void* src = (void*)((uint64_t)_ldr_scratchBuffer + current_file_offset);
+				memcpy(dest, src, bytes_in_this_page);
+			}
+			
+			current_vaddr += bytes_in_this_page;
+			current_file_offset += bytes_in_this_page;
+			bytes_to_copy -= bytes_in_this_page;
 		}
 	}
 }
@@ -267,7 +292,7 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) 
 	PIMAGE_NT_HEADERS nt = RAW_OFFSET(PIMAGE_NT_HEADERS,dos, dos->e_lfanew);
 	PSECTION_HEADER secthdr = RAW_OFFSET(PSECTION_HEADER,&nt->OptionalHeader, nt->FileHeader.SizeOfOptionaHeader);
 
-	uint64_t _image_base_ = 0x60000000000;//   nt->OptionalHeader.ImageBase;
+	uint64_t _image_base_ = 0x600000000;//   nt->OptionalHeader.ImageBase;
 	entry ent = (entry)(nt->OptionalHeader.AddressOfEntryPoint + _image_base_);//nt->OptionalHeader.ImageBase);
 	//AuTextOut("Image base address : %x \n", dos->e_magic);
 	uint64_t* cr3 = proc->cr3;
@@ -344,19 +369,23 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) 
 	uentry->stackBase = proc->_main_stack_;
 	int num_args = argc;
 	uint64_t argvaddr = 0;
+	uint64_t argvkernel = 0;
 	if (num_args) {
 		/* Allocate a memory for passing arguments */
 		uint64_t* args = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
 		memset(args, 0, PAGE_SIZE);
-		if (!AuMapPageEx(proc->cr3, (size_t)V2P((uint64_t)args), 0x40000000000,PTE_AP_RW_USER | PTE_NORMAL_MEM)) {
+		if (!AuMapPageEx(proc->cr3, (size_t)V2P((uint64_t)args), 0x40000000000, PTE_AP_RW_USER | PTE_NORMAL_MEM)) {
 			UARTDebugOut("Arguments address already mapped \n");
 			argvaddr = 0;
+			argvkernel = 0;
 		}
 		else {
-			argvaddr = 0x40000000000;
+			argvaddr = 0x40000000000;  /* user-space VA for crt0 */
+			argvkernel = (uint64_t)args; /* kernel-space VA for AuProcessEntUser to write */
 		}
 	}
 	uentry->argvaddr = argvaddr;
+	uentry->argvkernel = argvkernel;
 	uentry->num_args = num_args;
 	uentry->argvs = argv;
 	thr->uentry = uentry;

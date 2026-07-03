@@ -288,10 +288,10 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	
 	AuProcess* proc = AuCreateProcessSlot(0, "exec");
 	int num_args = 1;
-	char* about = (char*)kmalloc(strlen("-about"));
+	char* about = (char*)kmalloc(strlen("-about") + 1);
 	strcpy(about, "-about");
 	char** argvs = (char**)kmalloc(num_args * sizeof(char*));
-	memset(argvs, 0, num_args);
+	memset(argvs, 0, num_args * sizeof(char*));
 	argvs[0] = about;
 
 	/** make init process, as root of all */

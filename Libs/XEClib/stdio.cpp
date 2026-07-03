@@ -252,7 +252,7 @@ int puts(const char *s) {
 	_KePrint("Puts: %x , strlen: %d\r\n", stdout, strlen(s));
 	fwrite((void*)s, 1, strlen(s), stdout);
 	_KePrint("fwrite done \r\n");
-	fwrite("\n", 1, 1, stdout);
+	fwrite((void*)"\n", 1, 1, stdout);
 	return 0;
 }
 

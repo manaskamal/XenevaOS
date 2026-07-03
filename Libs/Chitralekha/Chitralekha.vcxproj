@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|ARM64">
@@ -153,7 +153,7 @@
       <AdditionalOptions>/ALIGN:512 %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
-      <Command>copy "..\..\Build\$(TargetName).dll" "M:\$(TargetName).dll"</Command>
+      <Command>if exist M:\ ( copy "..\..\Build\$(TargetName).dll" "M:\$(TargetName).dll" ) else ( echo M: drive not found, skipping copy )</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
@@ -180,8 +180,8 @@
       <GenerateDebugInformation>
       </GenerateDebugInformation>
       <OutputFile>..\..\Build\chlkha.dll</OutputFile>
-      <AdditionalLibraryDirectories>..\..\ARM64\Debug;..\..\Libs\XECrt</AdditionalLibraryDirectories>
-      <AdditionalDependencies>XEClib.lib;ftype.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\..\ARM64\Debug;..\..\Libs\XECrt; $(SolutionDir)Build;</AdditionalLibraryDirectories>
+      <AdditionalDependencies>XEClib.lib;ftype.lib;xecrt.lib;</AdditionalDependencies>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
       <EnableUAC>false</EnableUAC>
       <GenerateMapFile>true</GenerateMapFile>
@@ -199,7 +199,7 @@
       <AdditionalOptions>/filealign:4096 %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
-      <Command>copy "..\..\Build\$(TargetName).dll" M:\$(TargetName).dll" </Command>
+      <Command>if exist M:\ ( copy "..\..\Build\$(TargetName).dll" "M:\$(TargetName).dll" ) else ( echo M: drive not found, skipping copy )</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
