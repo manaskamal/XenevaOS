@@ -134,7 +134,7 @@
     <Link>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <OutputFile>..\..\Build\$(TargetName).dll</OutputFile>
-      <AdditionalLibraryDirectories>..\..\..\ARM64\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)Build\;..\..\..\ARM64\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>xnkrnl.lib</AdditionalDependencies>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
       <EnableUAC>false</EnableUAC>
@@ -175,7 +175,7 @@
     <Link>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <OutputFile>..\..\Build\$(TargetName).dll</OutputFile>
-      <AdditionalLibraryDirectories>..\..\..\ARM64\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)Build\;..\..\..\ARM64\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>xnkrnl.lib</AdditionalDependencies>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
       <EnableUAC>false</EnableUAC>

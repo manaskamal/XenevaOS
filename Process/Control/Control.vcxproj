@@ -133,7 +133,7 @@
       <SubSystem>Native</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <OutputFile>..\..\Build\ctrl.exe</OutputFile>
-      <AdditionalLibraryDirectories>..\..\x64\Debug;..\..\Libs\XECrt;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)Build\;..\..\x64\Debug;..\..\Libs\XECrt;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>XEClib.lib; xecrt.lib; chlkha.lib;ftype.lib;</AdditionalDependencies>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
       <EnableUAC>false</EnableUAC>
