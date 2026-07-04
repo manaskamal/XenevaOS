@@ -46,7 +46,7 @@ To ensure that XenevaOS remains portable across Windows (MSVC) and Linux (GCC) e
 Code modifications must be verified for GCC compatibility before being merged.
 
 ### *Bug Reports & Feature Requests*
-- Open an issue to report bugs or suggest new features.
+- Open an issue to report bugs or suggest new features using the provided GitHub Issue templates.
 - When reporting a bug, provide clear details about the issue, including system debug messages from the serial terminal, the processor state, and register values. If possible, describe the conditions under which the bug occurs.
 - Mention your testing environment.
 - For feature requests, explain the purpose and potential benefits to the project.
