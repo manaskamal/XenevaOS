@@ -38,7 +38,7 @@
 #define HIGHS (ONES * (UCHAR_MAX/2+1))
 #define HASZERO(x) ((x)-ONES & ~(x) & HIGHS)
 
-void* _cdecl memset(void *targ, unsigned char val, size_t len){
+void* memset(void *targ, int val, size_t len){
 	/*uint8_t *t = (uint8_t*)targ;
 	while (len--)
 		*t++ = val;*/
@@ -778,7 +778,7 @@ int ffs(int i){
 }
 
 
-void *memmove(void* dest, void const* src, unsigned __int64 bytes) {
+void *memmove(void* dest, void const* src, size_t bytes) {
 #if 0
 	unsigned dwords = (bytes >> 2);
 
