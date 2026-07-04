@@ -263,13 +263,11 @@ extern "C" void main(int argc, char* argv[]) {
 
 
 #ifdef ARCH_ARM64
-	int proc = _KeCreateProcess(0, "netmngr");
-	_KeSetUID(proc, UAC_DEAMONS);
-	_KeSetGID(proc, UAC_DEAMONS);
-	_KeCredAddSGroup(proc, ggid_misc_world);
-	_KeProcessLoadExec(proc, "/netmngr.exe\0", 0, NULL);
+	/* netmngr.exe is not yet ported to ARM64 -- skipping for now */
+	/* int proc_nm = _KeCreateProcess(0, "netmngr");
+	_KeProcessLoadExec(proc_nm, "/netmngr.exe", 0, NULL); */
+	_KeProcessSleep(100);
 
-	_KeProcessSleep(500);
 
 
 	/** actually, design should be like that, each process after
@@ -279,7 +277,7 @@ extern "C" void main(int argc, char* argv[]) {
 
 
 	/** from now, normal user's won't get system access */
-	proc = _KeCreateProcess(0, "deodhaixr");
+	int proc = _KeCreateProcess(0, "deodhaixr");
 	_KeSetUID(proc, UAC_NORMAL_USER);
 	_KeSetGID(proc, UAC_NORMAL_USER);
 	_KeCredAddSGroup(proc, ggid_misc_world);

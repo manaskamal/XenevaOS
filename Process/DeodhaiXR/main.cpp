@@ -229,7 +229,7 @@ void CursorDrawBack(ChCanvas* canv, Cursor* cur, unsigned x, unsigned y) {
 	}*/
 	for (int row = 0; row < 24; row++) {
 		int cy = y + row;
-		if (cy < 0 || cy >= canv->canvasWidth) continue;
+		if (cy < 0 || cy >= canv->canvasHeight) continue;
 
 		uint32_t* canvas_row = (uint32_t*)canv->buffer + cy * canv->canvasWidth + x;
 		uint32_t* back_row = (uint32_t*)cur->cursorBack + row * 24;
@@ -239,7 +239,7 @@ void CursorDrawBack(ChCanvas* canv, Cursor* cur, unsigned x, unsigned y) {
 			copy_w = canv->canvasWidth - x;
 
 		if (copy_w > 0)
-			__pixel_blend_neon(canvas_row, back_row, 24);
+			__pixel_blend_neon(canvas_row, back_row, copy_w);
 			//_fastcpy(canvas_row, back_row, copy_w * sizeof(uint32_t));
 	}
 }
@@ -250,12 +250,23 @@ void CursorDrawBack(ChCanvas* canv, Cursor* cur, unsigned x, unsigned y) {
  */
 void DrawWallpaper(ChCanvas* canv, char* filename) {
 	int image = _KeOpenFile(filename, FILE_OPEN_READ_ONLY);
+	_KePrint("DrawWallpaper: file %s fd = %d\r\n", filename, image);
+	if (image == -1) {
+		_KePrint("DrawWallpaper: FAILED to open file!\r\n");
+		return;
+	}
 	XEFileStatus stat;
 	memset(&stat, 0, sizeof(XEFileStatus));
 	_KeFileStat(image, &stat);
+	_KePrint("DrawWallpaper: size = %d\r\n", stat.size);
+	if (stat.size == 0) {
+		_KePrint("DrawWallpaper: file size is 0!\r\n");
+		return;
+	}
+
 	void* data_ = _KeMemMap(NULL, stat.size, 0, 0, -1, 0);
 	memset(data_, 0, ALIGN_UP(stat.size, 4096));
-	_KeReadFile(image, data_, ALIGN_UP(stat.size, 4096));
+	_KeReadFile(image, data_, stat.size);
 
 	uint8_t* data1 = (uint8_t*)data_;
 
@@ -267,26 +278,26 @@ void DrawWallpaper(ChCanvas* canv, char* filename) {
 	}
 	int w = decor->GetWidth();
 	int h = decor->GetHeight();
-	uint32_t* swapable_buff = canv->buffer;
-	canv->buffer = DeoGetBackSurface();
-	uint8_t* data = decor->GetImage();
+	_KePrint("DrawWallpaper: w = %d, h = %d\r\n", w, h);
 
-	unsigned x = 0;
-	unsigned y = 0;
-	for (int i = 0; i < h; i++) {
-		for (int k = 0; k < w; k++) {
+	uint8_t* imgdata = decor->GetImage();
+
+	/* Write DIRECTLY to backSurface, bypassing ChDrawPixel entirely.
+	 * Debug showed ChDrawPixel writes were not persisting on ARM64 —
+	 * this direct write tests if the issue is in ChDrawPixel or in memory. */
+	uint32_t* bs = DeoGetBackSurface();
+	int canvasW = canv->canvasWidth;
+
+	for (int i = 0; i < h && i < (int)canv->canvasHeight; i++) {
+		for (int k = 0; k < w && k < canvasW; k++) {
 			int j = k + i * w;
-			uint8_t r = data[j * 3];
-			uint8_t g = data[j * 3 + 1];
-			uint8_t b = data[j * 3 + 2];
-			uint32_t rgba = ((r << 16) | (g << 8) | (b)) & 0x00ffffff;
-			rgba = rgba | 0xff000000;
-			ChDrawPixel(canv, x + k, y + i, rgba);
-			j++;
+			uint8_t r = imgdata[j * 3];
+			uint8_t g = imgdata[j * 3 + 1];
+			uint8_t b = imgdata[j * 3 + 2];
+			uint32_t rgba = 0xFF000000 | ((uint32_t)r << 16) | ((uint32_t)g << 8) | (uint32_t)b;
+			bs[i * canvasW + k] = rgba;
 		}
 	}
-
-	canv->buffer = swapable_buff;
 }
 
 /**
@@ -329,7 +340,6 @@ void XRComposeFrame(ChCanvas* canvas) {
 
 		/** do either one -- dirty area tracking or else update all */
 		_compose_dirty_area_(canvas, win, focusedWin, info);
-
 		_compose_entire_window(canvas, win, _window_update_all_, info, focusedWin, _window_moving_, _shadow_update);
 	
 	}
@@ -344,8 +354,7 @@ void XRComposeFrame(ChCanvas* canvas) {
 			continue;
 
 		_compose_always_on_top_dirty(canvas, info, _window_moving_, focusedWin, win);
-
-		_compose_always_on_top_entire(canvas, win, _always_on_top_update, _window_moving_, info, rootWin);
+		_compose_always_on_top_entire(canvas, win, _always_on_top_update, _window_moving_, info, alwaysOnTop);
 	}
 
 	CursorStoreBack(canvas, currentCursor, currentCursor->xpos, currentCursor->ypos);
@@ -889,9 +898,10 @@ int main(int argc, char* argv[]){
 
 	_KePrint("Deodhai Initializaed back surface \r\n");
 	DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
+
 	if (screen_w == 1024 && screen_h == 768) {
 		_KePrint("Drawing wallpaper \r\n");
-		DrawWallpaper(canv, "/mtn.jpg");
+		DrawWallpaper(canv, "/XEArch.jpg");
 		DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
 	}
 	else if (screen_w == 1920 && screen_h == 1080) {
@@ -918,6 +928,7 @@ int main(int argc, char* argv[]){
 	_KePrint("Canvas updated \r\n");
 
 	gpu_fd = _KeOpenFile("/dev/virtiogpu", FILE_OPEN_READ_ONLY);
+	_KePrint("virtiogpu fd = %d\r\n", gpu_fd);
 
 	if (gpu_fd != -1) {
 		_gpu_enabled = 1;
@@ -952,6 +963,9 @@ int main(int argc, char* argv[]){
 
 	BackDirtyInitialise();
 	InitialiseDirtyClipList();
+
+	BackDirtyAdd(0, 0, screen_w, screen_h);
+	_window_update_all_ = true;
 
 	postbox_fd = _KeOpenFile("/dev/postbox", FILE_OPEN_READ_ONLY);
 	_KePrint("Postbox fd created : %d \n", postbox_fd);
@@ -1099,8 +1113,8 @@ int main(int argc, char* argv[]){
 			_KePrint("Msg sent to e.toid : %d \n", e.to_id);
 	
 			_KePrint("[Deodhai]: Window created \r\n");
-			/*	_window_update_all_ = true;
-				_always_on_top_update = true;*/
+				_window_update_all_ = true;
+			_always_on_top_update = true;
 			focusedWin = win;
 			memset(&event, 0, sizeof(PostEvent));
 

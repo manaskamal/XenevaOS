@@ -314,7 +314,6 @@ int main(int argc, char* arv[]){
 
 	win->color = LAUNCHER_BACKGROUND_COLOR;//0xCCBBBBBB;
 	win->ChWinPaint = XELauncherPaint;
-	win->info->hide = true;
 	win->info->alpha = false;
 
 	searchBar = XECreateSearchBar(launcher_w / 2 - 280 / 2, 40, 280, 35);
@@ -341,7 +340,11 @@ int main(int argc, char* arv[]){
 	restart->base.ChActionHandler = xe_restart_action;
 	ChWindowAddWidget(win, (ChWidget*)restart);
 
+	/* Paint the window into its back buffer first (populates content for later show),
+	 * then hide it. Order matters: if we hide first, ChWindowPaint -> ChWindowUpdate
+	 * re-marks the window dirty, causing the compositor to briefly render a ghost. */
 	ChWindowPaint(win);
+	ChWindowHide(win);
 
 	PostEvent e;
 	memset(&e, 0, sizeof(PostEvent));
