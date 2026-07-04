@@ -1,12 +1,11 @@
 #!/bin/bash
 set -e
 
-# Check for manual build flag
-FORCE_MANUAL_BUILD=0
-if [ "$1" == "--force-manual-build" ]; then
-    FORCE_MANUAL_BUILD=1
+# Check for legacy build flag
+FORCE_LEGACY_BUILD=0
+if [ "$1" == "--force-legacy-build" ]; then
+    FORCE_LEGACY_BUILD=1
 fi
-
 
 echo "[+] Creating 512MB FAT32 image..."
 dd if=/dev/zero of=fat.img bs=1M count=512
@@ -17,9 +16,9 @@ mmd -i fat.img ::/EFI
 mmd -i fat.img ::/EFI/BOOT
 mmd -i fat.img ::/EFI/XENEVA
 
-# [Note: (Temporary Dev Workaround)
-# During the active porting phase, you can place a pre-built initrd2.img
-# (with GUI/resources) at the root of the repository to skip manual building.
+# [Note: The default script will always build initrd2.img and pack resources.
+# Using a pre-built legacy initrd2.img is NOT RECOMMENDED, but can be forced
+# by passing the --force-legacy-build flag.
 # Example Directory Structure:
 #   XenevaOS/
 #   ├── KernelAA64/
@@ -27,7 +26,7 @@ mmd -i fat.img ::/EFI/XENEVA
 #   ├── Scripts/
 #   └── initrd2.img   <-- Place it exactly here
 # ]
-if [ "$FORCE_MANUAL_BUILD" -eq 1 ] || [ ! -f "initrd2.img" ]; then
+if [ "$FORCE_LEGACY_BUILD" -eq 0 ]; then
     echo "[+] Creating 64MB FAT32 initrd2.img and packing resources..."
     dd if=/dev/zero of=initrd2.img bs=1M count=64
     mkfs.vfat -F 32 initrd2.img
