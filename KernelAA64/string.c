@@ -165,6 +165,16 @@ char* strcpy(char* __restrict s1, const char* __restrict s2)
 	return s1_p;
 }
 
+char* strrchr(const char* str, int c) {
+	const char* last = NULL;
+
+	do {
+		if (*str == (char)c) {
+			last = str;
+		}
+	} while (*str++ != '\0');
+	return (char*)last;
+}
 
 size_t strlen(const char* s) {
 	const char* a = s;

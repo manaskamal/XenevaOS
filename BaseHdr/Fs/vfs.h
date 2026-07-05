@@ -1,6 +1,6 @@
 /**
 * @file vfs.h
-* 
+*
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2023, Manas Kamal Choudhury
@@ -79,19 +79,19 @@ typedef struct _AuDirectoryEnty_ {
 #pragma pack(pop)
 #endif
 
-typedef struct __VFS_NODE__* (*open_callback) (struct __VFS_NODE__ *node, char* path);
-typedef size_t(*read_callback) (struct __VFS_NODE__ *node, struct  __VFS_NODE__ *file, uint64_t* buffer, uint32_t length);
-typedef size_t(*read_block_callback) (struct __VFS_NODE__ *node, struct __VFS_NODE__ *file, uint64_t* buffer);
-typedef size_t (*write_callback) (struct __VFS_NODE__ *node, struct __VFS_NODE__ *file, uint64_t* buffer, uint32_t length);
-typedef struct __VFS_NODE__*(*create_dir_callback) (struct __VFS_NODE__ *node, char* dirname);
-typedef struct __VFS_NODE__*(*create_file_callback) (struct __VFS_NODE__ *node, char* filename);
-typedef int (*remove_dir_callback) (struct __VFS_NODE__* node, struct __VFS_NODE__ *file);
-typedef int (*remove_file_callback)(struct __VFS_NODE__* node, struct  __VFS_NODE__ *file);
-typedef int(*close_callback) (struct __VFS_NODE__ *node, struct __VFS_NODE__ *file);
-typedef int(*iocontrol_callback) (struct __VFS_NODE__ *file, int code, void *arg);
-typedef struct __VFS_NODE__* (*opendir_callback) (struct __VFS_NODE__ *fs, char* dirname);
+typedef struct __VFS_NODE__* (*open_callback) (struct __VFS_NODE__* node, char* path);
+typedef size_t(*read_callback) (struct __VFS_NODE__* node, struct  __VFS_NODE__* file, uint64_t* buffer, uint32_t length);
+typedef size_t(*read_block_callback) (struct __VFS_NODE__* node, struct __VFS_NODE__* file, uint64_t* buffer);
+typedef size_t(*write_callback) (struct __VFS_NODE__* node, struct __VFS_NODE__* file, uint64_t* buffer, uint32_t length);
+typedef struct __VFS_NODE__* (*create_dir_callback) (struct __VFS_NODE__* node, char* dirname);
+typedef struct __VFS_NODE__* (*create_file_callback) (struct __VFS_NODE__* node, char* filename);
+typedef int (*remove_dir_callback) (struct __VFS_NODE__* node, struct __VFS_NODE__* file);
+typedef int (*remove_file_callback)(struct __VFS_NODE__* node, struct  __VFS_NODE__* file);
+typedef int(*close_callback) (struct __VFS_NODE__* node, struct __VFS_NODE__* file);
+typedef int(*iocontrol_callback) (struct __VFS_NODE__* file, int code, void* arg);
+typedef struct __VFS_NODE__* (*opendir_callback) (struct __VFS_NODE__* fs, char* dirname);
 typedef int(*readdir_callback)(struct __VFS_NODE__* fs, struct __VFS_NODE__* dir, AuDirectoryEntry* dirent);
-typedef uint32_t(*get_disk_block_cb)(struct __VFS_NODE__* fs, struct __VFS_NODE__* file, uint64_t fs_block);
+typedef uint32_t(*get_disk_block)(struct __VFS_NODE__* fs, struct __VFS_NODE__* file, uint64_t fs_block);
 typedef size_t(*fs_getblockfor) (struct __VFS_NODE__* fs, struct  __VFS_NODE__* file, uint64_t offset);
 
 //#pragma pack(push,1)
@@ -108,6 +108,7 @@ typedef struct __VFS_NODE__ {
 	UID_NUM uid;
 	GID_NUM gid;
 	void* device;
+	void* private_data;
 	uint16_t fileCopyCount; //important for tty files
 	/* callback specific */
 	open_callback open;
@@ -121,7 +122,7 @@ typedef struct __VFS_NODE__ {
 	close_callback close;
 	read_block_callback read_block;
 	readdir_callback read_dir;
-	get_disk_block_cb get_disk_block;
+	get_disk_block get_disk_block;
 	fs_getblockfor get_blockfor;
 	iocontrol_callback iocontrol;
 }AuVFSNode;
@@ -161,7 +162,7 @@ typedef struct _FileControl_ {
  * another newly created container
  */
 typedef struct __VFS_Container__ {
-	list_t *childs;
+	list_t* childs;
 }AuVFSContainer;
 
 
@@ -206,7 +207,7 @@ AU_EXTERN AU_EXPORT void AuVFSAddFileSystem(AuVFSNode* node);
  * system
  * @param fs -- fsnode to add
  */
-AU_EXTERN AU_EXPORT void AuVFSRegisterRoot(AuVFSNode *fs);
+AU_EXTERN AU_EXPORT void AuVFSRegisterRoot(AuVFSNode* fs);
 
 /**
  * @brief AuVFSFind -- Searches a filesystem an return it to
@@ -233,7 +234,7 @@ AU_EXTERN AU_EXPORT size_t AuVFSNodeRead(AuVFSNode* node, AuVFSNode* file, uint6
  * @param buffer -- buffer area to read to
  * @return always <= 4kib
  */
-AU_EXTERN AU_EXPORT size_t AuVFSNodeReadBlock(AuVFSNode* node, AuVFSNode* file, uint64_t *buffer);
+AU_EXTERN AU_EXPORT size_t AuVFSNodeReadBlock(AuVFSNode* node, AuVFSNode* file, uint64_t* buffer);
 
 /**
  * @brief AuVFSCreateDir -- creates a new dir
@@ -274,7 +275,7 @@ extern int AuVFSRemoveDir(AuVFSNode* fsys, AuVFSNode* file);
  * @param buffer -- buffer to write
  * @param length -- length of the data
  */
-AU_EXTERN AU_EXPORT void AuVFSNodeWrite(AuVFSNode* node, AuVFSNode * file, uint64_t *buffer, uint32_t length);
+AU_EXTERN AU_EXPORT void AuVFSNodeWrite(AuVFSNode* node, AuVFSNode* file, uint64_t* buffer, uint32_t length);
 
 /**
  * @brief AuVFSNodeClose -- close a file system or file

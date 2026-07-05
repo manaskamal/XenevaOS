@@ -43,7 +43,14 @@ uint8_t AuVirtIOInputCheck(uint64_t device, int bus,int dev,int func) {
 	uint64_t barLo = AuPCIERead(device, PCI_BAR4, bus, dev, func);
 	uint64_t barHi = AuPCIERead(device, PCI_BAR5, bus, dev, func);
 	uint64_t bar = ((uint64_t)barHi << 32) | (barLo & ~0xFULL);
-	uint64_t finalAddr = (uint64_t)AuMapMMIO(bar, 16);
+
+	/* we don't need to map the bar to MMIO range, because this function
+	 * is temporary one, won't be used later in the system. We have
+	 * long way to go when lower half address range is cleared. Till then
+	 * kernel has lower half of address range present, so taking advantage
+	 * of lower half till then
+	 */
+	uint64_t finalAddr = bar;
 	struct VirtioDeviceConfig* cfg = (struct VirtioDeviceConfig*)(finalAddr + 0x2000);
 	cfg->select = 1;
 	cfg->subsel = 0;
@@ -79,6 +86,7 @@ void AuVirtIOInputInitialize() {
 				uint16_t vendID = AuPCIERead(address, PCI_VENDOR_ID, bus, dev, func);
 				uint16_t devID = AuPCIERead(address, PCI_DEVICE_ID, bus, dev, func);
 				// UARTDebugOut("Vendor ID attached : %x devID : %x \r\n", vendID, devID);
+				//UARTDebugOut("Vendor ID attached : %x devID : %x \r\n", vendID, devID);
 				if (vendID == 0x1AF4 && devID == 0x1052) {
 					uint8_t devType = AuVirtIOInputCheck(address, bus, dev, func);
 					if (devType == VIRTIO_INPUT_KEYBOARD) {
@@ -99,4 +107,15 @@ void AuVirtIOInputInitialize() {
 		}
 	}
 	UARTDebugOut("Virtio Input initialized \r\n");
+}
+
+#define GOOGLE_GOLDFISH_RTC_BASE 0x09010000
+#define RTC_TIME_LOW ((volatile uint32_t*)(GOOGLE_GOLDFISH_RTC_BASE + 0x00))
+#define RTC_TIME_HIGH ((volatile uint32_t*)(GOOGLE_GOLDFISH_RTC_BASE + 0x04))
+
+
+uint64_t AuVirtGetBootEpoch() {
+	uint32_t low = *RTC_TIME_LOW;
+	uint32_t high = *RTC_TIME_HIGH;
+	return (((uint64_t)high << 32) | low);
 }

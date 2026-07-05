@@ -42,6 +42,7 @@
 #include <Board/RPI3bp/rpi3bp.h>
 #include <Hal/AA64/aa64lowlevel.h>
 #include <Mm/mmfile.h>
+#include <Serv/sysserv.h>
 
 AuVFSContainer* __RootContainer;
 AuVFSNode* __RootFS;
@@ -210,7 +211,7 @@ AU_EXTERN AU_EXPORT AuVFSNode* AuVFSOpen(char* path) {
 			dsb_ish();
 		}
 		pathname[i] = 0;
-		aa64_data_cache_clean_range(&pathname, 16);
+		//aa64_data_cache_clean_range(&pathname, 16);
 		
 		/* skip the fs filename, from the path
 		 * and just pass the required path */
@@ -218,7 +219,6 @@ AU_EXTERN AU_EXPORT AuVFSNode* AuVFSOpen(char* path) {
 			next += i;
 		dsb_ish();
 		dsb_sy_barrier();
-
 		if (fs->open) {
 			//AA64SleepUS(600);
 			Returnable = fs->open(fs, next);
