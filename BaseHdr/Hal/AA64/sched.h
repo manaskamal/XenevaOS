@@ -41,6 +41,7 @@
 #define  THREAD_STATE_BLOCKED   3
 #define  THREAD_STATE_SLEEP     4
 #define  THREAD_STATE_KILLABLE  5
+#define  THREAD_STATE_LEFT_IN_KERNEL 6
 
 //! Thread levels =========================================================
 //! THREAD_LEVEL_KERNEL -- This bit is set when the thread given is kernel mode
@@ -129,6 +130,7 @@ AU_EXTERN AU_EXPORT AA64Thread* AuCreateKthread(void(*entry) (uint64_t),uint64_t
  */
 AU_EXTERN AU_EXPORT AA64Thread* AuCreateSubKthread(void(*entry) (uint64_t), uint64_t stack, uint64_t* pml, char* name);
 extern void AuScheduleThread(AA64Registers*regs);
+extern void AuScheduleNext();
 extern void AuSchedulerStart();
 extern AA64Thread* AuGetIdleThread();
 extern AA64Thread* AuGetCurrentThread();
