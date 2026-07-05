@@ -212,7 +212,7 @@ void AuVDiskRegisterPartition(AuVDisk* vdisk) {
 
 	AuTextOut("\r\n");
 	AuPmmngrFree(buffer);
-
+	
 }
 
 /**
@@ -256,6 +256,8 @@ void AuVDiskRegister(AuVDisk* disk) {
 	case AURORA_FS_EXT2:
 		AuTextOut("[aurora]: vdisk : %s has Ext2 file system \r\n", disk->diskname);
 		Ext2Initialise(disk, "b");
+		mpt = AuVFSReserveMountPointLetter();
+		Ext2Initialise(disk, mpt);
 		break;
 	}
 }

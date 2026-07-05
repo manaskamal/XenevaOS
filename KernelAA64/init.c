@@ -109,7 +109,6 @@ int i_ = 1;
 extern void sub_rsp();
 
 void AuEntryTest(uint64_t test) {
-	//aa64_utest();
 	int c = 10;
 	//enable_irqs();
 	AuTextOut("[aurora]: test2 \r\n");
@@ -276,16 +275,15 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 #endif
 	UARTDebugOut("[aurora]: starting xeneva (ARM64) please wait...\r\n");
 
-	
 	/* clear out the lower half memory */
 	AuVmmngrBootFree();
 	AuMmngrFileCacheEnable();
 
 	UARTDebugOut("[aurora]: boot freed up \r\n");
 
+
 	AuSchedulerInitialize();
 
-	
 	AuProcess* proc = AuCreateProcessSlot(0, "exec");
 	int num_args = 1;
 	char* about = (char*)kmalloc(strlen("-about") + 1);
@@ -302,7 +300,6 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 #ifdef __KERNEL_PROFILER_ON__
 	PROFILE_END("_AuMain");
 #endif
-
 	AuSchedulerStart();
 	while (1) {
 		//UARTDebugOut("Printing \n");

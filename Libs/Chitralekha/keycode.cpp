@@ -118,11 +118,16 @@ static int _kkybrd_scancode_std[] = {
 	KEY_KP_0,		//0x52	//keypad insert key
 	KEY_KP_DECIMAL,	//0x53	//keypad delete key
 	KEY_UNKNOWN,	//0x54
-	KEY_UNKNOWN,	//0x55
-	KEY_UNKNOWN,	//0x56
+	KEY_KP_2,	    //0x55   //mapped because, got fired by extended code keys
+	KEY_KP_2,	    //0x56   //mapped because extended key code fire this
 	KEY_F11,		//0x57
 	KEY_F12			//0x58
 };
+
+#define SCANCODE_EXTENDED_MASK 0xFF00
+#define SCANCODE_EXTENDED_FLAG 0xE000
+#define SCANCODE_KEY_MASK      0x7F
+#define SCANCODE_RELEASE_BIT   0x80
 
 /**
  * @brief ChitralekhaKeyInitialise -- initialise keycode
@@ -188,6 +193,8 @@ void ChitralekhaProcessKey(int code) {
 	}
 }
 
+
+
 /* ChitralekhaGetKeyPress -- Get pressed key information
  * @param code -- code to convert
  */
@@ -195,6 +202,16 @@ char ChitralekhaGetKeyPress(int code) {
 	int key = 0;
 	if (code < 128) {
 		key = _kkybrd_scancode_std[code];
+	}
+
+	bool ext = ((code & SCANCODE_EXTENDED_MASK) == SCANCODE_EXTENDED_FLAG);
+	if (ext) {
+		bool released = (code & SCANCODE_RELEASE_BIT) != 0;
+		uint8_t keycode = code & SCANCODE_KEY_MASK;
+		if (!released) {
+			key = _kkybrd_scancode_std[keycode];
+		}
+		
 	}
 	return key;
 }

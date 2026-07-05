@@ -140,6 +140,7 @@ extern void set_cntp_ctl_el0(uint64_t val);
 
 extern void setupTimerIRQ();
 extern void suspendTimer();
+extern void resetTimer();
 extern uint64_t readTimerCtl();
 
 extern uint64_t read_spsr_el1();
