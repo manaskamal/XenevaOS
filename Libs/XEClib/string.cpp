@@ -787,6 +787,12 @@ void* memmove_x64(void* dest, const void* src, size_t n) {
 	char* d = (char*)dest;
 	const char* s = (const char*)src;
 
+void *memmove(void* dest, void const* src, size_t bytes) {
+#if 0
+	unsigned dwords = (bytes >> 2);
+
+	if (!dest || !src) {
+	return dest;
 	if (d == s) {
 		return d;
 	}

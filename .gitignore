@@ -42,3 +42,6 @@ dump.s
 Process/**/*.elf
 Process/**/*.exe
 Libs/**/*.a
+
+# Exclude compiled user-space applications
+Resources/resources/*.exe
