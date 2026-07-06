@@ -65,7 +65,7 @@ $(EFI_OUTPUT): $(SO_OUTPUT)
 	@mkdir -p $(dir $@)
 	$(OBJCOPY) -j .text -j .sdata -j .data -j .dynamic -j .rodata -j .rel -j .rela \
 			   -j .rel.* -j .rela.* -j .rel* -j .rela* -j .areloc \
-	           -j .reloc --target=efi-app-aarch64 --subsystem=10 $< $@
+	           -j .reloc --target=pei-aarch64-little --subsystem=10 $< $@
 
 # Compile C++ source files
 $(OBJDIR)/%.o: %.cpp
