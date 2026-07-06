@@ -1,10 +1,61 @@
 #!/bin/bash
 set -e
 
-# Check for legacy build flag
+# Check for build flags
 FORCE_LEGACY_BUILD=0
-if [ "$1" == "--force-legacy-build" ]; then
-    FORCE_LEGACY_BUILD=1
+BUILD_USER_APPS=0
+
+for arg in "$@"; do
+    if [ "$arg" == "--force-legacy-build" ]; then
+        FORCE_LEGACY_BUILD=1
+    elif [ "$arg" == "--force-user-apps" ]; then
+        BUILD_USER_APPS=1
+    fi
+done
+
+if [ "$BUILD_USER_APPS" -eq 1 ]; then
+    echo "[+] Rebuilding Libraries and User Applications..."
+    
+    echo "    [-] Building XEClib..."
+    make -C Libs/XEClib clean
+    make -C Libs/XEClib
+    
+    echo "    [-] Building Chitralekha..."
+    make -C Libs/Chitralekha clean
+    make -C Libs/Chitralekha
+    
+    APPS=(
+        "Init"
+        "DeodhaiXR"
+        "Terminal"
+        "Namdapha"
+        "XELnch"
+        "DeodhaiAudio"
+        "Calender"
+        "Calculator"
+        "AudioPlayer"
+        "Files"
+        "Control"
+    )
+    
+    for app in "${APPS[@]}"; do
+        echo "    [-] Building $app..."
+        make -C Process/$app clean
+        make -C Process/$app
+    done
+    
+    echo "[+] Deploying newly built binaries to Resources/resources/..."
+    cp -f Process/Init/init.exe Resources/resources/
+    cp -f Process/DeodhaiXR/deodxr.exe Resources/resources/
+    cp -f Process/Terminal/term.exe Resources/resources/
+    cp -f Process/Namdapha/nmdapha.exe Resources/resources/
+    cp -f Process/XELnch/xelnch.exe Resources/resources/
+    cp -f Process/DeodhaiAudio/deoaud.exe Resources/resources/
+    cp -f Process/Calender/calendr.exe Resources/resources/
+    cp -f Process/Calculator/calc.exe Resources/resources/
+    cp -f Process/AudioPlayer/audplr.exe Resources/resources/
+    cp -f Process/Files/file.exe Resources/resources/
+    cp -f Process/Control/ctrl.exe Resources/resources/
 fi
 
 echo "[+] Creating 512MB FAT32 image..."
