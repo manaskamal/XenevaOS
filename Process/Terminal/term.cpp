@@ -136,7 +136,6 @@ void TerminalDrawCell(Terminal *t,int col, int row) {
 	int py = _terminal_cell_to_pixelY(t, row);
 
 
-	if (cell->c && cell->c != ' ') {
 	if (cell->c) {
 		char buf[2] = { cell->c, '\0' };
 		ChRect clip;
@@ -807,7 +806,7 @@ void TerminalHandleMessage(PostEvent *e) {
 		}
 
 		if (rawkey == KEY_BACKSPACE) {
-			if (&term.intputLen > 0) {
+			if (term.intputLen > 0) {
 				term.intputLen--;
 				term.inputBuffer[term.intputLen] = '\0';
 				c = '\b';

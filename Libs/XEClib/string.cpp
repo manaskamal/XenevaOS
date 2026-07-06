@@ -33,7 +33,11 @@
 #include <ctype.h>
 
 #ifdef ARCH_ARM64
+#ifdef _MSC_VER
 #include <arm64_neon.h>
+#else
+#include <arm_neon.h>
+#endif
 #endif
 
 #define SS (sizeof(size_t))
@@ -787,14 +791,8 @@ void* memmove_x64(void* dest, const void* src, size_t n) {
 	char* d = (char*)dest;
 	const char* s = (const char*)src;
 
-void *memmove(void* dest, void const* src, size_t bytes) {
-#if 0
-	unsigned dwords = (bytes >> 2);
-
-	if (!dest || !src) {
-	return dest;
-	if (d == s) {
-		return d;
+	if (d == s || n == 0) {
+		return dest;
 	}
 
 	if (s + n <= d || d + n <= s) {
@@ -902,10 +900,10 @@ void* memmove_aarch64(void* dest, const void* src, size_t n) {
 }
 
 
-void *memmove(void* dest, void const* src, unsigned __int64 bytes) {
+void *memmove(void* dest, void const* src, size_t bytes) {
 	unsigned dwords = (bytes >> 2);
 #ifdef ARCH_X64
-	memmove_x64(dest, src, bytes);
+	return memmove_x64(dest, src, bytes);
 #elif ARCH_ARM64
 	return memmove_aarch64(dest, src, bytes);
 #endif
