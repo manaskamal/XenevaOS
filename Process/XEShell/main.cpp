@@ -130,7 +130,7 @@ void XEShellSpawn(char* string) {
 		 * shell's file descriptors */
 		int file = _KeOpenFile(filename, FILE_OPEN_READ_ONLY);
 		if (file == -1){
-			printf("\n No command or program found \n");
+			printf("\n No command or program found %s\n", filename);
 			return;
 		}
 		int proc_id = _KeCreateProcess(0, string);
@@ -187,7 +187,6 @@ void XEShellReadLine() {
 			index++;
 			return;
 		}
-		_KePrint("xeshell : %c \r\n", c);
 		printf("%c", c);
 		cmdBuf[index++] = c;
 	}

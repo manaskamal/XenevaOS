@@ -116,7 +116,7 @@ void sync_el1_handler(AA64Registers *regs) {
    // AuTextOut("SP_EL0 : %x \r\n", regs->EL0SP);
     UARTDebugOut("Current SPSel : %d \r\n", read_spsel());
     UARTDebugOut("EC class : %x \r\n", ec);
-    for (;;);
+ 
     /** check if the fault occured on drivers **/
     AuDriver* drv = AuDrvManagerCheckFault(read_elr_el1());
     if (drv) {
@@ -161,23 +161,23 @@ void sync_el1_handler(AA64Registers *regs) {
 
     dfsc = esr & 0x3F;
 
-   /* switch (dfsc) {
-    case 0b000000: AuTextOut("Address size, fault level 0 \r\n"); break;
-    case 0b000001: AuTextOut("Address Size, fault level 1 \r\n"); break;
-    case 0b000010: AuTextOut("Address size, fault level 2 \r\n"); break;
-    case 0b000011: AuTextOut("Address size, fault level 3 \r\n"); break;
-    case 0b000100: AuTextOut("translation, fault level 0 \r\n"); break;
-    case 0b000101: AuTextOut("translation, fault level 1 \r\n"); break;
-    case 0b000110: AuTextOut("translation, fault level 2 \r\n"); break;
-    case 0b000111: AuTextOut("translation, fault level 3 \r\n"); break;
-    case 0b001001: AuTextOut("access flag, fault level 1 \r\n"); break;
-    case 0b001010: AuTextOut("access flag, fault level 2 \r\n"); break;
-    case 0b001011: AuTextOut("access flag, fault level 3 \r\n"); break;
-    case 0b001101: AuTextOut("permission fault, level 1 \r\n"); break;
-    case 0b001110: AuTextOut("permission fault, level 2 \r\n"); break;
-    case 0b001111: AuTextOut("permission fault, level 3 \r\n"); break;
-    default: AuTextOut("Unknown fault code \r\n"); break;
-    }*/
+    switch (dfsc) {
+    case 0b000000: UARTDebugOut("Address size, fault level 0 \r\n"); break;
+    case 0b000001: UARTDebugOut("Address Size, fault level 1 \r\n"); break;
+    case 0b000010: UARTDebugOut("Address size, fault level 2 \r\n"); break;
+    case 0b000011: UARTDebugOut("Address size, fault level 3 \r\n"); break;
+    case 0b000100: UARTDebugOut("translation, fault level 0 \r\n"); break;
+    case 0b000101: UARTDebugOut("translation, fault level 1 \r\n"); break;
+    case 0b000110: UARTDebugOut("translation, fault level 2 \r\n"); break;
+    case 0b000111: UARTDebugOut("translation, fault level 3 \r\n"); break;
+    case 0b001001: UARTDebugOut("access flag, fault level 1 \r\n"); break;
+    case 0b001010: UARTDebugOut("access flag, fault level 2 \r\n"); break;
+    case 0b001011: UARTDebugOut("access flag, fault level 3 \r\n"); break;
+    case 0b001101: UARTDebugOut("permission fault, level 1 \r\n"); break;
+    case 0b001110: UARTDebugOut("permission fault, level 2 \r\n"); break;
+    case 0b001111: UARTDebugOut("permission fault, level 3 \r\n"); break;
+    default: UARTDebugOut("Unknown fault code \r\n"); break;
+    }
 	while (1) {}
 }
 
@@ -199,14 +199,14 @@ void irq_el1_handler(AA64Registers* regs) {
     uint32_t irq = iar & 0x3FF;
     if (irq < 1020) {
         if (irq == 27) {
-            suspendTimer(); //<--- suspecting this line 
-            setupTimerIRQ();
+            //suspendTimer(); //<--- suspecting this line 
+            resetTimer();
+           // setupTimerIRQ();
             GICSendEOI(iar);
             GICCheckPending(irq);
 
             /** handle expired timers **/
             AuroraTimerTick();
-
             AuScheduleThread(regs);
         }
         /*else if (irq == 27) {
