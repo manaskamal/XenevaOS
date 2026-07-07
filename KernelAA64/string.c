@@ -5,6 +5,7 @@
 #include <_null.h>
 #include <string.h>
 #include <Mm/kmalloc.h>
+#include <Drivers/uart.h>
 
 #define MAX_STRING_LENGTH 4095
 

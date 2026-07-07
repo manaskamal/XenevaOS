@@ -39,6 +39,8 @@
 #include <aucon.h>
 #include <Mm/shm.h>
 #include <Mm/mmap.h>
+#include <signal.h>
+#include <timer.h>
 
 /**
  * @brief GetThreadID -- returns current id
@@ -300,4 +302,72 @@ size_t GetEnvironmenBlock() {
 	}
 	return proc->_envp_block_;
 
+}
+
+void SignalReturn(int signum) {
+	AA64Thread* thr = AuGetCurrentThread();
+	AA64Registers* regs = (AA64Registers*)thr->sp;
+	memcpy(regs, &thr->signal.regs, sizeof(AA64Registers));
+	thr->elr_el1 = thr->signal.elr_el1;
+	//thr->state = thr->signal.last_thread_state;
+	thr->x30 = regs->x30;
+}
+
+/**
+ * @brief SendSignal -- send a signal to destination 
+ * thread
+ * @param pid -- process id
+ * @param signum -- signal number
+ */
+int SendSignal(int pid, int signum) {
+	UARTDebugOut("Send signal called \r\n");
+	AuProcess* proc = AuProcessFindPID(pid);
+	if (!proc)
+		return 1;
+	UARTDebugOut("Sending Signal to proc : %s \r\n", proc->name);
+	AA64Thread* mainthr = proc->main_thread;
+	if (!mainthr)
+		return 1;
+	return AuAllocSignal(mainthr, signum);
+}
+
+/*
+ * SetSignal -- register a signal handler
+ * @param signo -- signal number
+ * @param handler -- handler to register
+ */
+int SetSignal(int signo, AuSignalHandler handler) {
+	AA64Thread* thr = AuGetCurrentThread();
+	if (!thr)
+		return 0;
+	thr->sigs[signo] = handler;
+}
+
+/**
+ * @brief Alarm -- schedules a timer for next one-shot
+ * @param seconds -- amount of second to consider
+ */
+int Alarm(uint64_t seconds) {
+	AA64Thread* thr = AuGetCurrentThread();
+	if (!thr)
+		return 0;
+	return AuTimerCalculateAlarm(thr, seconds);
+}
+
+int SetITimer(int which, const itimerval_t* new_value, itimerval_t* old_value) {
+	AA64Thread* thr = AuGetCurrentThread();
+	if (!thr)
+		return 0;
+	UARTDebugOut("ITIMERVAL : itval.tv_sec : %d \r\n", new_value->it_value.tv_sec);
+	UARTDebugOut("ITIMERVAL : itval.tv_usec: %d \r\n", new_value->it_value.tv_usec);
+	UARTDebugOut("ITIMERVAL : interval.tv_sec : %d \r\n", new_value->it_interval.tv_sec);
+	UARTDebugOut("ITIMERVAL : interval.tv_usec: %d \r\n", new_value->it_interval.tv_usec);
+	return AuTimerSetITimer(thr, which, new_value, old_value);
+}
+
+int GetITImer(int which, const itimerval_t* curr_value) {
+	AA64Thread* thr = AuGetCurrentThread();
+	if (!thr)
+		return 0;
+	return AuTimerGetITimer(thr, which, curr_value);
 }

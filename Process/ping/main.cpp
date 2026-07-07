@@ -69,26 +69,23 @@ static uint16_t ICMPCalculateChecksum(char* payload, size_t len) {
 */
 int main(int argc, char* argv[]){
 	printf("\n");
-	char* s = (char*)malloc(strlen(argv[1])+1);
-	strcpy(s, argv[1]);
+	char* s = (char*)malloc(strlen("www.getxeneva.com") + 1);
+	strcpy(s, "www.getxeneva.com");
 	
 	hostent* ent = gethostbyname(s);
 	if (!ent) {
 		free(s);
 		_KePauseThread();
 	}
-	printf("Hostent addr -> %x \r\n", ent->h_addr_list);
 	
 	char* addr = inet_ntoa(*(struct in_addr*)ent->h_addr_list[0]);
-	_KePrint("PING started \r\n");
-
+	
 	uint32_t ipaddr = *(uint32_t*)ent->h_addr_list[0];
 	in_addr inaddr;
 	inaddr.s_addr = ipaddr;
 
-	printf("IPAddr -> %s \n", inet_ntoa(inaddr));
 
-	char request[] = "GET / HTTP/1.1\r\nHost:google.com\r\nConnection: close\r\n\r\n";
+	/*char request[] = "GET / HTTP/1.1\r\nHost:google.com\r\nConnection: close\r\n\r\n";
 	
 	int sock = socket(AF_INET, SOCK_STREAM, 0);
 	sockaddr_in server_addr;
@@ -101,8 +98,8 @@ int main(int argc, char* argv[]){
 		return 0;
 	}
 	
-	printf("TCP connection to %s successfull \n", s);
-	/*int sock = socket(AF_INET, SOCK_DGRAM, IPPROTOCOL_ICMP);
+	printf("TCP connection to %s successfull \n", s);*/
+	int sock = socket(AF_INET, SOCK_DGRAM, IPPROTOCOL_ICMP);
 
 	if (sock < 0) {
 		fprintf(stderr, "ping: failed to create socket \n");
@@ -116,7 +113,7 @@ int main(int argc, char* argv[]){
 	
 	in_addr ad;
 	ad.s_addr = dest.sin_addr.s_addr;
-	printf("PINGING %s Address : %s \n",s, addr);
+	printf("ping: %s address : %s \n",s, addr);
 
 
 	ICMPHeader* ping = (ICMPHeader*)malloc(BYTES_TO_SEND);
@@ -163,13 +160,11 @@ int main(int argc, char* argv[]){
 			}
 		}
 
-		_KeProcessSleep(1000);
+		_KeProcessSleep(100);
 	}
 
-	printf("---statistics---- %s \n", argv[1]);
+	printf("---statistics----: %s \n", s);
 	printf("%d packets sent, %d packets received \n", pings_sent, response_recved);
-	_KeCloseFile(sock);*/
-	while (1)
-		_KePauseThread();
+	_KeCloseFile(sock);
 	return 0;
 }

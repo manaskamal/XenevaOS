@@ -1,9 +1,7 @@
 /**
-* @file stack.c
-* 
 * BSD 2-Clause License
 *
-* Copyright (c) 2022-2024, Manas Kamal Choudhury
+* Copyright (c) 2022-2026, Manas Kamal Choudhury
 * All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
@@ -29,50 +27,25 @@
 *
 **/
 
-#include <stack.h>
-#include <Mm/kmalloc.h>
-#include <string.h>
-#include <_null.h>
-#include <Drivers/uart.h>
+#ifndef __SIGNAL_H__
+#define __SIGNAL_H__
+
+#include <sys/_kesignal.h>
+#include <sys/_keproc.h>
+
 
 /**
- * @brief AuStackCreate -- create a new stack
+ * @brief signal -- register a signal handler to 
+ * a specific signal number
+ * @param signum -- signal number
+ * @param handler -- handler address
  */
-AuStack* AuStackCreate() {
-	AuStack* stack = (AuStack*)kmalloc(sizeof(AuStack));
-	memset(stack, 0, sizeof(AuStack));
-	return stack;
-}
+#define signal(signum,handler) _KeSetSignal(signum,handler)
 
-/**
- * @brief AuStackPush -- push a new item to the stack
- * @param stack -- pointer to the stack where to push
- * @param data -- data to be pushed
+/* @brief kill system call
+ *  @param pid -- process id
+ *  @param signum -- signal number
  */
-void AuStackPush(AuStack* stack, void* data) {
-	AuStackItem* newItem = (AuStackItem*)kmalloc(sizeof(AuStackItem));
-	newItem->data = data;
-	newItem->link = stack->top;
-	stack->top = newItem;
-	stack->itemCount += 1;
-	UARTDebugOut("Stack pushing : top : %x \r\n", stack->top);
-}
+#define kill(pid,signum) _KeSendSignal(pid,signum)
 
-/**
- * @brief AuStackPop -- pop a new item from the stack
- * @param stack -- pointer to the stack from where to pop
- */
-void* AuStackPop(AuStack* stack) {
-	void* data = NULL;
-	if (!stack->top)
-		return NULL;
-	UARTDebugOut("Stack Pop here \r\n");
-	AuStackItem* si;
-	si = stack->top;
-	stack->top = stack->top->link;
-	si->link = NULL;
-	data = si->data;
-	kfree(si);
-	stack->itemCount--;
-	return data;
-}
+#endif

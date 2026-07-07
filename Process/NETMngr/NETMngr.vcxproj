@@ -182,7 +182,7 @@
       </GenerateDebugInformation>
       <OutputFile>..\..\Build\netmngr.exe</OutputFile>
       <AdditionalLibraryDirectories>..\..\ARM64\Debug;..\..\Libs\XECrt;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>XEClib.lib; xecrt.lib; chlkha.lib;ftype.lib;</AdditionalDependencies>
+      <AdditionalDependencies>XEClib.lib; xecrt.lib; </AdditionalDependencies>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
       <EnableUAC>false</EnableUAC>
       <GenerateMapFile>true</GenerateMapFile>

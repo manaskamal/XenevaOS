@@ -43,6 +43,7 @@
 #include <aucon.h>
 #include <process.h>
 #include <aurora.h>
+#include <signal.h>
 
 extern void aa64_store_context(AA64Thread* thr);
 extern void store_syscall(AA64Thread* thr);
@@ -290,9 +291,11 @@ AA64Thread* AuCreateKthread(void(*entry) (uint64_t),uint64_t* pml, char* name){
 	t->thread_id = thread_id++;
 	t->fpsr = 0;
 	t->fpcr = 0;
+	AuSignalInitializeTrampoline(t);
 	AuThreadInsert(t);
 	return t;
 }
+
 
 /**
  * @brief AuCreateSubKthread -- create sub kernel thread of parent
@@ -319,6 +322,7 @@ AA64Thread* AuCreateSubKthread(void(*entry) (uint64_t),uint64_t stack, uint64_t*
 	t->thread_id = thread_id++;
 	t->fpsr = 0;
 	t->fpcr = 0;
+	//AuSignalInitializeTrampoline(t);
 	AuThreadInsert(t);
 	return t;
 }
@@ -441,7 +445,7 @@ sched:
 
 	
 	/** check if the thread was left somewhere in kernel space **/
-	if ((current_thread->state == THREAD_STATE_LEFT_IN_KERNEL)) {
+	if (current_thread->state == THREAD_STATE_LEFT_IN_KERNEL) {
 
 		current_thread->state = THREAD_STATE_READY;
 		aa64_restore_sp(current_thread);
@@ -449,7 +453,9 @@ sched:
 		for (;;);
 	}
 
-	uint64_t sp = read_sp();
+
+	AuSignalDeliver(current_thread);
+	
 
 	if ((current_thread->threadType & THREAD_LEVEL_USER) && current_thread->first_run == 1) {
 		uint64_t sp = current_thread->sp;
@@ -616,6 +622,21 @@ void AuSleepThread(AA64Thread* thread, uint64_t ms) {
 	AuThreadInsertSleep(thread);
 }
 
+/**
+ * @brief AuThreadMakeReady -- make a thread forcefully
+ * ready for next
+ * @param thread -- pointer to thread struct
+ */
+void AuThreadMakeReady(AA64Thread* thread) {
+	if (thread->state == THREAD_STATE_SLEEP) {
+		thread->sleepQuanta = 0;
+		AuThreadDeleteSleep(thread);
+		AuThreadInsert(thread);
+		thread->state = THREAD_STATE_READY;
+	}
+	else if (thread->state == THREAD_STATE_BLOCKED) 
+		AuUnblockThread(thread);
+}
 /**
  * @brief AuThreadFindByID -- finds a thread by its id from
  * ready queue

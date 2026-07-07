@@ -76,7 +76,7 @@ void UDPHandlePacket(char* packet) {
 	/** add it to its destination socket **/
 	for (int i = 0; i < udp_socket_list->pointer; i++) {
 		AuSocket* sock = (AuSocket*)list_get_at(udp_socket_list, i);
-		if (sock->sessionPort == dest_port) {
+		if (sock->sessionPort == ntohs(dest_port)) {
 			AuSocketAdd(sock, packet, ntohs(totalLen));
 #ifdef DEBUG_SERIAL
 			UARTDebugOut("UDP Packet added \r\n");
@@ -104,6 +104,7 @@ int AuUDPReceive(AuSocket* sock, msghdr* msg, int flags) {
 		return 0;
 
 	char* packet = (char*)AuSocketGet(sock);
+	UARTDebugOut("UDP socket packet receive buff : %x \r\n", packet);
 	if (!packet) return -1;
 	IPv4Header* ipv4 = (IPv4Header*)(packet + sizeof(size_t));
 	UDPHeader* udp = (UDPHeader*)&ipv4->payload;

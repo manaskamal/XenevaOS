@@ -279,6 +279,7 @@
     <ClInclude Include="includes\limits.h" />
     <ClInclude Include="includes\math.h" />
     <ClInclude Include="includes\setjmp.h" />
+    <ClInclude Include="includes\signal.h" />
     <ClInclude Include="includes\size_t.h" />
     <ClInclude Include="includes\stdarg.h" />
     <ClInclude Include="includes\stdbool.h" />
@@ -292,6 +293,7 @@
     <ClInclude Include="includes\sys\mman.h" />
     <ClInclude Include="includes\sys\socket.h" />
     <ClInclude Include="includes\sys\stat.h" />
+    <ClInclude Include="includes\sys\time.h" />
     <ClInclude Include="includes\sys\types.h" />
     <ClInclude Include="includes\sys\utf.h" />
     <ClInclude Include="includes\sys\netdb.h" />

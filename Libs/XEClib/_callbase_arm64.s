@@ -615,3 +615,24 @@ _KeGetCurrentMS:
 	svc #0
 	mov x0, x6
 	ret
+
+.global _KeSetAlarm
+_KeSetAlarm:
+    mov x16, 72
+	svc #0
+	mov x0, x6
+	ret
+
+.global _KeSetITimer
+_KeSetITimer:
+    mov x16, 73
+	svc #0
+	mov x0, x6
+	ret
+
+.global _KeGetITimer
+_KeGetITimer:
+    mov x16, 74
+	svc #0
+	mov x0, x6
+	ret

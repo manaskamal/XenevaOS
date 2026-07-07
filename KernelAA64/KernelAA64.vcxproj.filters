@@ -213,6 +213,7 @@
     <ClCompile Include="Net\tcp.c">
       <Filter>Net</Filter>
     </ClCompile>
+    <ClCompile Include="signal.c" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Hal">
@@ -441,6 +442,9 @@
     </ClInclude>
     <ClInclude Include="..\BaseHdr\stdarg.h">
       <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\signal.h">
+      <Filter>Include\Hal</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
