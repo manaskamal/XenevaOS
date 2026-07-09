@@ -45,3 +45,4 @@ Libs/**/*.a
 
 # Exclude compiled user-space applications
 Resources/resources/*.exe
+Resources/resources/ARCH_ARM64/*.exe
