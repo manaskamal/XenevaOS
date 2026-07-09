@@ -787,6 +787,8 @@ int ffs(int i){
 	return (count);
 }
 
+#if defined(_MSC_VER)
+
 void* memmove_x64(void* dest, const void* src, size_t n) {
 	char* d = (char*)dest;
 	const char* s = (const char*)src;
@@ -908,6 +910,60 @@ void *memmove(void* dest, void const* src, size_t bytes) {
 	return memmove_aarch64(dest, src, bytes);
 #endif
 }
+
+#else
+
+void *memmove(void* dest, void const* src, size_t n) {
+	char* d = (char*)dest;
+	const char* s = (const char*)src;
+
+	if (d == s) {
+		return d;
+	}
+
+	if (s + n <= d || d + n <= s) {
+		return memcpy(d, (void*)s, n);
+	}
+
+	if (d < s) {
+		if ((uintptr_t)s % sizeof(size_t) == (uintptr_t)d % sizeof(size_t)) {
+			while ((uintptr_t)d % sizeof(size_t)) {
+				if (!n--) {
+					return dest;
+				}
+				*d++ = *s++;
+			}
+			for (; n >= sizeof(size_t); n -= sizeof(size_t), d += sizeof(size_t), s += sizeof(size_t)) {
+				*(size_t*)d = *(size_t*)s;
+			}
+		}
+		for (; n; n--) {
+			*d++ = *s++;
+		}
+	}
+	else {
+		if ((uintptr_t)s % sizeof(size_t) == (uintptr_t)d % sizeof(size_t)) {
+			while ((uintptr_t)(d + n) % sizeof(size_t)) {
+				if (!n--) {
+					return dest;
+				}
+				d[n] = s[n];
+			}
+			while (n >= sizeof(size_t)) {
+				n -= sizeof(size_t);
+				*(size_t*)(d + n) = *(size_t*)(s + n);
+			}
+		}
+		while (n) {
+			n--;
+			d[n] = s[n];
+		}
+	}
+
+	return dest;
+}
+
+#endif
 
 
 

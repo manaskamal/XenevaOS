@@ -930,11 +930,16 @@ int main(int argc, char* arv[]){
 	ChFontSetSize(consolas, 12);
 
 	int f_w = ChFontGetWidthChar(consolas,'M');
-	int f_h = consolas->face->size->metrics.height >> 6;//ChFontGetHeightChar(consolas, 'A');
+#ifdef _USE_FREETYPE
+	int f_h = consolas->face->size->metrics.height >> 6;
+	term.baseine = consolas->face->size->metrics.ascender >> 6;
+#else
+	int f_h = ChFontGetHeightChar(consolas, 'A');
+	term.baseine = f_h - 4;
+#endif
 
 	term.cellW = f_w;
 	term.cellH = f_h;
-	term.baseine = consolas->face->size->metrics.ascender >> 6; 
 
 	int term_w = win->info->width;
 	int term_h = win->info->height - 16; // -26 for titlebar height
