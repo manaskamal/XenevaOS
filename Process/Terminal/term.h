@@ -40,6 +40,8 @@ typedef struct _cell_ {
 	uint32_t bg;
 	uint32_t fg;
 	uint8_t flags;
+	uint32_t cellBgCol;
+	uint32_t cellFgCol;
 }TermCell;
 
 typedef struct {
