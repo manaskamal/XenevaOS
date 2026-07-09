@@ -117,16 +117,7 @@ void TerminalSetCellData(Terminal* t, int row, int col, char ch, uint32_t bg, ui
  */
 void TerminalDrawCell(Terminal *t,int col, int row) {
 	int y_offset = 26;
-<<<<<<< HEAD
-	TermCell* cell = (TermCell*)&term_buffer[(y* ws_col + x)];
-	int f_w = ChFontGetWidthChar(consolas, cell->c);
-	int f_h = ChFontGetHeightChar(consolas, cell->c);
-
-	if ((CHITRALEKHA_WINDOW_DEFAULT_PAD_X + x* cell_width + cell_width) >= win->info->width) 
-		return;
-=======
 	TermCell* cell = &t->cells[row][col];
->>>>>>> 25cf9f2 (chore: force gitignore to apply and remove build artifacts)
 	
 	int px = _terminal_cell_to_pixelX(t, col);
 	int py = _terminal_cell_to_pixelY(t, row);
@@ -731,22 +722,19 @@ int main(int argc, char* arv[]){
 	ChFontSetSize(consolas, 12);
 
 	int f_w = ChFontGetWidthChar(consolas,'M');
-<<<<<<< HEAD
+#ifdef _USE_FREETYPE
+	int f_h = consolas->face->size->metrics.height >> 6;
+	term.baseine = consolas->face->size->metrics.ascender >> 6;
+#else
 	int f_h = ChFontGetHeightChar(consolas, 'A');
-	cell_width = f_w;
-	cell_height = f_h;
-	int term_w = win->info->width - 1;
-	int term_h = win->info->height - 14; // -26 for titlebar height
-=======
-	int f_h = consolas->face->size->metrics.height >> 6;//ChFontGetHeightChar(consolas, 'A');
+	term.baseine = f_h - 4;
+#endif
 
 	term.cellW = f_w;
 	term.cellH = f_h;
-	term.baseine = consolas->face->size->metrics.ascender >> 6; 
 
 	int term_w = win->info->width;
 	int term_h = win->info->height - 16; // -26 for titlebar height
->>>>>>> 25cf9f2 (chore: force gitignore to apply and remove build artifacts)
 	
 	term.cols = term_w / term.cellW;
 	term.rows = term_h / term.cellH;
