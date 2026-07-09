@@ -32,8 +32,10 @@
 #include <stdlib.h>
 #include <ctype.h>
 
-#ifdef ARCH_ARM64
+#if defined(_MSC_VER) // MSVC Compiler
 #include <arm64_neon.h>
+#elif defined(__GNUC__) || defined(__clang__) // GCC or Clang
+#include <arm_neon.h>
 #endif
 
 #define SS (sizeof(size_t))
