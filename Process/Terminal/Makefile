@@ -11,7 +11,7 @@ OBJCOPY = $(CROSS_COMPILE)objcopy
 INCLUDES = -I../../Libs/XEClib/includes -I../../Libs/XEClib/includes/c++ -I../../BaseHdr -I../../Libs/Chitralekha -I../../Ports/freetype2/include
 CXXFLAGS = -Wall -Wextra -ffreestanding -fno-stack-protector -fno-stack-check -fno-strict-aliasing \
            -O2 -fPIE -fno-exceptions -fno-rtti \
-           -DARCH_ARM64 -D__TARGET_BOARD_QEMU_VIRT__ -D_USE_DLMALLOC -D__STDC_LIMIT_MACROS  -DTHEME_DEFAULT \
+           -DARCH_ARM64 -D__TARGET_BOARD_QEMU_VIRT__ -D_USE_DLMALLOC -D__STDC_LIMIT_MACROS -D_USE_FREETYPE -DTHEME_DEFAULT \
            $(INCLUDES)
 
 OBJDIR = obj

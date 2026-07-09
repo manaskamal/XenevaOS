@@ -204,7 +204,8 @@ bool AuMapPage(uint64_t phys_addr, uint64_t virt_addr, uint8_t attrib) {
 
 	if (pml1[i1] & 1){
 		//AuPmmngrFree((void*)phys_addr);
-		AuTextOut("[aurora]: vmmngr page already present : %x \r\n", virt_addr);
+		AuTextOut("[aurora]: vmmngr page already present : virt=%x phys=%x \r\n", virt_addr, (pml1[i1] & ~0xFFFULL));
+		UARTDebugOut("[aurora]: vmmngr page already present : virt=%x phys=%x \r\n", virt_addr, (pml1[i1] & ~0xFFFULL));
 		return false;
 	}
 
@@ -275,7 +276,8 @@ bool AuMapPageEx(uint64_t* pml4i, uint64_t phys_addr, uint64_t virt_addr, uint8_
 	if (pml1[i1] & 1)
 	{
 		//AuPmmngrFree((void*)phys_addr);
-		AuTextOut("[aurora]: vmmngr page already present : %x \n", (pml1[i1] & ~0xFFFULL));
+		AuTextOut("[aurora]: vmmngr page already present : virt=%x phys=%x \n", virt_addr, (pml1[i1] & ~0xFFFULL));
+		UARTDebugOut("[aurora]: vmmngr page already present : virt=%x phys=%x \r\n", virt_addr, (pml1[i1] & ~0xFFFULL));
 		return false;
 	}
 

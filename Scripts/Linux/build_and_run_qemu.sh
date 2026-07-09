@@ -102,4 +102,5 @@ qemu-system-aarch64 -machine virt,gic-version=2,highmem=off \
     -device virtio-tablet-pci \
     -device usb-ehci \
     -device usb-kbd \
-    -serial stdio
+    -serial stdio \
+    -display gtk,zoom-to-fit=on
