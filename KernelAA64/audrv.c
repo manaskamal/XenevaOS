@@ -519,7 +519,7 @@ AU_EXTERN AU_EXPORT void AuRegisterDevice(AuDevice* dev) {
  * @param subclassC -- sub class code of the device to check
  * @param progIF -- programming interface of the device
  */
-AU_EXTERN AU_EXPORT BOOL AuCheckDevice(uint16_t classC, uint16_t subclassC, uint8_t progIF) {
+AU_EXTERN AU_EXPORT bool AuCheckDevice(uint16_t classC, uint16_t subclassC, uint8_t progIF) {
 	for (int i = 0; i < _dev_count_; i++) {
 		if (au_devices[i]->classCode == classC &&
 			au_devices[i]->subClassCode == subclassC &&
