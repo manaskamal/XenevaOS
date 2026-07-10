@@ -104,7 +104,6 @@ int AuUDPReceive(AuSocket* sock, msghdr* msg, int flags) {
 		return 0;
 
 	char* packet = (char*)AuSocketGet(sock);
-	UARTDebugOut("UDP socket packet receive buff : %x \r\n", packet);
 	if (!packet) return -1;
 	IPv4Header* ipv4 = (IPv4Header*)(packet + sizeof(size_t));
 	UDPHeader* udp = (UDPHeader*)&ipv4->payload;

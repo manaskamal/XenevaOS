@@ -239,13 +239,15 @@ size_t AuTTYSlaveWrite(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint3
 	TTY* tty = (TTY*)file->device;
 	if (!tty)
 		return 0;
-	if (len > 512)
-		len = 512;
+	if (len > 1024)
+		len = 1024;
 
 
 	if (CircBufFull(tty->masterbuf)) {
-		AA64Registers* regs = AA64GetCurrentRegCtx();
-		AuScheduleThread(regs);
+		/*AA64Registers* regs = AA64GetCurrentRegCtx();
+		AuScheduleThread(regs);*/
+		AuSleepThread(curr_th, 10);
+		AuScheduleNext();
 		return 0;
 	}
 
@@ -257,8 +259,9 @@ size_t AuTTYSlaveWrite(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint3
 	/* little bit slow down the slave process,
 	 * it's too fast
 	 */
-	 //AuSleepThread(curr_th, );
+	 //AuSleepThread(curr_th,10);
 	 //AuScheduleThread(AA64GetCurrentRegCtx());
+	 //AuScheduleNext();
 	return len;
 }
 
@@ -334,7 +337,7 @@ AuVFSNode* AuTTYCreateMaster(TTY* tty) {
 	sztoa(master_count, name + 4, 10);
 	strcpy(node->filename, name);
 
-	node->size = 512;
+	node->size = 1024;
 	node->flags |= FS_FLAG_TTY;
 	node->device = tty;
 	node->uid = 0;
@@ -366,7 +369,7 @@ AuVFSNode* AuTTYCreateSlave(TTY* tty) {
 	sztoa(slave_count, name + 4, 10);
 	strcpy(node->filename, name);
 
-	node->size = 512;
+	node->size = 1024;
 	node->flags |= FS_FLAG_TTY;
 	node->device = tty;
 	node->read = AuTTYSlaveRead;
@@ -400,13 +403,13 @@ int AuTTYCreate(int* master_fd, int* slave_fd) {
 	TTY* tty = (TTY*)kmalloc(sizeof(TTY));
 	memset(tty, 0, sizeof(TTY));
 
-	void* inbuffer = kmalloc(512);
-	memset(inbuffer, 0, 512);
-	void* outbuffer = kmalloc(512);
-	memset(outbuffer, 0, 512);
+	void* inbuffer = kmalloc(1024);
+	memset(inbuffer, 0, 1024);
+	void* outbuffer = kmalloc(1024);
+	memset(outbuffer, 0, 1024);
 
-	tty->masterbuf = AuCircBufInitialise((uint8_t*)inbuffer, 512);
-	tty->slavebuf = AuCircBufInitialise((uint8_t*)outbuffer, 512);
+	tty->masterbuf = AuCircBufInitialise((uint8_t*)inbuffer, 1024);
+	tty->slavebuf = AuCircBufInitialise((uint8_t*)outbuffer, 1024);
 
 	tty->id = slave_count;
 	tty->master_written = 0;

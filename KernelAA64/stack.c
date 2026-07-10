@@ -52,10 +52,15 @@ AuStack* AuStackCreate() {
 void AuStackPush(AuStack* stack, void* data) {
 	AuStackItem* newItem = (AuStackItem*)kmalloc(sizeof(AuStackItem));
 	newItem->data = data;
-	newItem->link = stack->top;
-	stack->top = newItem;
+	newItem->link = NULL;
+
+	if (stack->bottom)
+		stack->bottom->link = newItem;
+	else
+		stack->top = newItem;
+
+	stack->bottom = newItem;
 	stack->itemCount += 1;
-	UARTDebugOut("Stack pushing : top : %x \r\n", stack->top);
 }
 
 /**
@@ -69,10 +74,12 @@ void* AuStackPop(AuStack* stack) {
 	UARTDebugOut("Stack Pop here \r\n");
 	AuStackItem* si;
 	si = stack->top;
-	stack->top = stack->top->link;
+	stack->top = si->link;
+	if (!stack->top)
+		stack->bottom = NULL;
 	si->link = NULL;
+	stack->itemCount--;
 	data = si->data;
 	kfree(si);
-	stack->itemCount--;
 	return data;
 }

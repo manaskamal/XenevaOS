@@ -40,6 +40,7 @@
 static AuKernelTimer _timers[AURORA_MAX_TIMER];
 static uint64_t _system_current_us;
 static uint64_t _system_current_ms;
+static void AuWalltimeUpdate();
 
 static inline uint64_t _get_current_us() {
 	uint64_t cnt = get_cntpct_el0();
@@ -51,6 +52,16 @@ static inline uint64_t _get_current_ms() {
 	return _get_current_us() / 1000;
 }
 
+typedef struct _clock_state_ {
+	uint64_t cycle_last;
+	uint64_t mult;
+	uint32_t shift;
+	int64_t wall_sec;
+	int64_t wall_nsec;
+}AuClockState;
+
+static AuClockState wallClock;
+
 /**
  * @brief AuroraTimerInitialize -- initialize aurora
  * timer 
@@ -60,6 +71,8 @@ void AuroraTimerInitialize() {
 		memset(&_timers[i], 0, sizeof(AuKernelTimer));
 	_system_current_us = 0;
 	_system_current_ms = 0;
+	wallClock.shift = 32;
+	wallClock.mult = ((uint64_t)1000000000ULL << wallClock.shift) / (AA64CPUGetFreqencyHz() * 10000);
 }
 
 /**
@@ -145,6 +158,9 @@ void AuroraTimerTick() {
 	_system_current_us = now;
 	_system_current_ms = _get_current_ms();
 	
+	//update the wall time
+	AuWalltimeUpdate();
+
 	for (int i = 0; i < AURORA_MAX_TIMER; i++) {
 		if (!_timers[i].active) continue;
 		if (now < _timers[i].expireUS)  continue;
@@ -325,5 +341,47 @@ int AuTimerGetITimer(AA64Thread* thr, int which, itimerval_t* curr_value) {
 	curr_value->it_value.tv_sec = curr_value->it_value.tv_usec = 0;
 	curr_value->it_interval.tv_sec = curr_value->it_interval.tv_usec = 0;
 	return 0;
+}
+
+void AuSetWalltime(int64_t sec, int64_t nsec) {
+	//lock
+	/** need credential verifications too, for security **/
+	wallClock.cycle_last = get_cntpct_el0();
+	wallClock.wall_sec = sec;
+	wallClock.wall_nsec = nsec;
+}
+
+
+void AuGetWalltime(int64_t* out_sec, int64_t* out_ns) {
+	/** need credential verifications too, for security **/
+
+	uint64_t now = get_cntpct_el0();
+	uint64_t delta_cycles = now - wallClock.cycle_last;
+	uint64_t delta_ns = (delta_cycles * wallClock.mult) >> wallClock.shift;
+
+	int64_t sec = wallClock.wall_sec;
+	int64_t nsec = wallClock.wall_nsec + (int64_t)delta_ns;
+
+	sec += nsec / 1000000000LL;
+	nsec %= 1000000000LL;
+
+	*out_sec = sec;
+	*out_ns = nsec;
+}
+
+static void AuWalltimeUpdate() {
+	//lock 
+	uint64_t now = get_cntpct_el0();
+	uint64_t delta_cycles = now - wallClock.cycle_last;
+	uint64_t delta_ns = (delta_cycles * wallClock.mult) >> wallClock.shift;
+
+	wallClock.wall_nsec += (int64_t)delta_ns;
+	if (wallClock.wall_nsec >= 10000000000LL) {
+		wallClock.wall_sec += wallClock.wall_nsec / 1000000000LL;
+		wallClock.wall_nsec %= 1000000000LL;
+	}
+
+	wallClock.cycle_last = now;
+	//lock release
 }
 
