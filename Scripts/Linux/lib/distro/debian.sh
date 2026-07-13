@@ -12,6 +12,8 @@ v sudo apt upgrade
 # common for both llvm and gcc
 v sudo apt install make
 v sudo apt install dosfstools
+v sudo apt install mtools
+sudo apt install qemu-system-arm
 
 case $2 in 
 	--llvm|llvm)

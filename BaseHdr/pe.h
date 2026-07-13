@@ -32,6 +32,7 @@
 
 
 #include <stdint.h>
+#include <stdbool.h>
 
 #ifdef __GNUC__
 #ifndef __cplusplus

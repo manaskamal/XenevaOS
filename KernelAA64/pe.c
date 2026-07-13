@@ -34,6 +34,7 @@
 #include <string.h>
 #include <aucon.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <Drivers/uart.h>
 
 #define IMAGE_DOS_SIGNATURE 0x5A4D

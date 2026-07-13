@@ -31,6 +31,7 @@
 #define __CIRC_BUF_H__
 
 #include <stdint.h>
+#include <stdbool.h>
 
 #ifdef __GNUC__
 #include <stddef.h>

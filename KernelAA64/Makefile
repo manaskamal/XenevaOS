@@ -28,12 +28,18 @@ ifeq ($(TOOLCHAIN), llvm)
     LD      = ld.lld
     OBJCOPY = llvm-objcopy
     
-    LLVM_TARGET = -target aarch64-unknown-linux-gnu
+    LLVM_TARGET = -target aarch64-unknown-windows
     
     CFLAGS  = -Wall -Wextra -ffreestanding -fno-stack-protector -fno-stack-check -fno-strict-aliasing \
               -O2 $(LLVM_TARGET) -fno-builtin \
               -DARCH_ARM64 $(BOARD_FLAG) -D_USE_DLMALLOC -D__STDC_LIMIT_MACROS \
               $(INCLUDES)
+
+    LDFLAGS = $(LLVM_TARGET) -fuse-ld=lld -nostdlib \
+              -Wl,-entry:_AuMain \
+              -Wl,-base:0xFFFFFF8000000000 \
+              -Wl,-subsystem:native
+
 else
     # original gcc configuration
     CROSS_COMPILE ?= aarch64-linux-gnu-
@@ -60,11 +66,20 @@ OBJS = $(C_OBJS) $(S_OBJS)
 
 all: $(TARGET)
 
+ifeq ($(TOOLCHAIN), llvm)
+
 $(TARGET): $(OBJS)
-	@echo "Linking KernelAA64 using ($(TOOLCHAIN))..."
+	@echo "Linking native PE32+ Kernel using LLVM..."
+	$(CC) $(LDFLAGS) $(OBJS) -o KernelAA64.exe
+	@touch $(TARGET)
+else
+
+$(TARGET): $(OBJS)
+	@echo "Linking KernelAA64 using GCC..."
 	$(LD) -nostdlib -T linker.ld $(OBJS) -o $@
 	@echo "Converting ELF to PE32+..."
 	$(OBJCOPY) -O pei-aarch64-little $@ KernelAA64.exe
+endif
 
 # Compile C source files
 $(OBJDIR)/%.o: %.c
