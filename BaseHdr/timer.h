@@ -34,6 +34,7 @@
 
 #include <aurora.h>
 #include <Hal/AA64/sched.h>
+#include <stdbool.h>
 
 typedef void (*AuroraTimerCallback)(void* param);
 

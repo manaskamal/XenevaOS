@@ -30,6 +30,7 @@
 #ifndef __UART_H__
 #define __UART_H__
 
+#include <stdbool.h>
 #include <aa64hcode.h>
 #include <stdint.h>
 #include <aurora.h>

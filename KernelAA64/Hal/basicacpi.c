@@ -5,6 +5,9 @@
 #include <Mm/vmmngr.h>
 #include <Hal/AA64/gic.h>
 #include <aucon.h>
+#include <Drivers/uart.h>
+#include <string.h>
+#include <stdbool.h>
 
 
 AuroraBasicACPI* __AuroraBasicAcpi;

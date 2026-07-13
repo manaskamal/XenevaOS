@@ -31,36 +31,49 @@
 #include "clib.h"
 
 
-void memset(void* targ, uint8_t val, uint32_t len) {
-	uint8_t* t = (uint8_t*)targ;
-	while (len--)
-		*t++ = val;
-}
+#ifdef _MSC_VER
+#pragma function(memcpy, memset, strlen)
+#endif
 
-void _memcpy(void* targ, void* src, uint32_t len) {
-	uint8_t* t = (uint8_t*)targ;
-	uint8_t* s = (uint8_t*)src;
-	if (len > 0) {
-		// check to see if target is in the range of src and if so, do a memmove() instead
-		if ((t > s) && (t < (s + len))) {
-			t += (len - 1);
-			s += (len - 1);
-			while (len--)
-				*t-- = *s++;
-		}
-		else {
-			while (len--)
-				*t++ = *s++;
+
+extern "C" {
+	void* memset(void* targ, uint8_t val, uint32_t len) {
+		uint8_t* t = (uint8_t*)targ;
+		while (len--)
+			*t++ = val;
+	}
+
+	void* _memcpy(void* targ, void* src, uint32_t len) {
+		uint8_t* t = (uint8_t*)targ;
+		uint8_t* s = (uint8_t*)src;
+		if (len > 0) {
+			// check to see if target is in the range of src and if so, do a memmove() instead
+			if ((t > s) && (t < (s + len))) {
+				t += (len - 1);
+				s += (len - 1);
+				while (len--)
+					*t-- = *s++;
+			}
+			else {
+				while (len--)
+					*t++ = *s++;
+			}
 		}
 	}
-}
 
-void memcpy(void* targ, void* src, uint32_t len) {
-#ifdef EFI_1_10_SYSTEM_TABLE_REVISION
-	gBS->CopyMem(targ, src, len);
-#else
-	_memcpy(targ, src, len);
-#endif
+	void* memcpy(void* targ, void* src, uint32_t len) {
+	#ifdef EFI_1_10_SYSTEM_TABLE_REVISION
+		gBS->CopyMem(targ, src, len);
+	#else
+		_memcpy(targ, src, len);
+	#endif
+	}
+
+	size_t strlen(const char* s) {
+		size_t l = 0;
+		while (*s++)++l;
+		return l;
+	}
 }
 
 wchar_t* wstrchr(wchar_t* s, int c) {
@@ -121,11 +134,4 @@ char* sztoa(size_t value, char* str, int base) {
 		str[i] = tmp;
 	}
 	return str;
-}
-
-
-size_t strlen(const char* s) {
-	size_t l = 0;
-	while (*s++)++l;
-	return l;
 }

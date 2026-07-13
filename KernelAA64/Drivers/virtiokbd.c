@@ -39,6 +39,7 @@
 #include <aucon.h>
 #include <Mm/vmmngr.h>
 #include <Hal/AA64/sched.h>
+#include <string.h>
 
 
 struct VirtioQueue* queue;

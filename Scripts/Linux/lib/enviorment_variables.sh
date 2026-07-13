@@ -16,3 +16,5 @@ STY_UNDERLINE='\e[4m'
 STY_BLINK='\e[5m'
 STY_INVERT='\e[7m'
 STY_RST='\e[00m'
+
+declare -g SUDO_PID=""

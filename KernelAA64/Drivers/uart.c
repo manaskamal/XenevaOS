@@ -29,6 +29,7 @@
 *
 **/
 
+#include <stdbool.h>
 #include <Drivers/uart.h>
 #include <Mm/vmmngr.h>
 #include <aucon.h>

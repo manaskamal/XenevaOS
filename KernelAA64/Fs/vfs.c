@@ -32,6 +32,7 @@
 #include <Fs/vfs.h>
 #include <Fs/Dev/devfs.h>
 #include <_null.h>
+#include <aucon.h>
 #include <Mm/kmalloc.h>
 #include <Drivers/uart.h>
 #include <Fs/Dev/devfs.h>

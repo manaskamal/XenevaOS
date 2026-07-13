@@ -30,7 +30,7 @@
 **/
 
 #include <stdint.h>
-
+#include <stdbool.h>
 #include <aucon.h>
 #include <_null.h>
 #include "font.h"
@@ -43,6 +43,7 @@
 #include <Hal/AA64/sched.h>
 #include <process.h>
 #include <Fs/vfs.h>
+#include <Fs/Dev/devfs.h>
 #include <Drivers/uart.h>
 #include <Hal/AA64/aa64cpu.h>
 #include <Hal/AA64/aa64lowlevel.h>

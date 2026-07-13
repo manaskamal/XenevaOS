@@ -32,6 +32,7 @@
 
 #include <stdint.h>
 #include <aurora.h>
+#include <stdbool.h>
 
 //APIC structure types
 #define ACPI_APICTYPE_LAPIC  0

@@ -356,7 +356,7 @@ extern void resume_user(AA64Thread* thr,void* ksp);
 void AuResumeUserThread() {
 	AA64Thread* thr = current_thread;
 	thr->x30 = thr->elr_el1;
-	resume_user(thr, thr->sp);
+	resume_user(thr, (void*)thr->sp);
 	//aa64_enter_user(thr->sp, thr->elr_el1);
 	while (1) {}
 }
@@ -460,7 +460,7 @@ sched:
 	if ((current_thread->threadType & THREAD_LEVEL_USER) && current_thread->first_run == 1) {
 		uint64_t sp = current_thread->sp;
 		//current_thread->sp = current_thread->originalKSp;
-		resume_user(current_thread,sp);
+		resume_user(current_thread,(void*)sp);
 	}
 
 
@@ -501,7 +501,7 @@ uint64_t AuCreateKernelStack(uint64_t* pml) {
 	location += (uint64_t)ke_stack_idx * KERNEL_STACK_SIZE;
 	for (int i = 0; i < (KERNEL_STACK_SIZE) / 0x1000; i++) {
 		uint64_t addr = (uint64_t)P2V((uint64_t)AuPmmngrAlloc());
-		memset(addr, 0, PAGE_SIZE);
+		memset((void*)addr, 0, PAGE_SIZE);
 		AuMapPage(V2P(addr), (location + (uint64_t)i * 4096), PTE_AP_RW | PTE_NORMAL_MEM);
 	}
 	ke_stack_idx += 2;
@@ -519,7 +519,7 @@ uint64_t AuCreateSubKernelStack(AuProcess* proc, uint64_t* pml) {
 	location += proc->_kstack_index_ * KERNEL_STACK_SIZE;
 	for (int i = 0; i < (KERNEL_STACK_SIZE) / 0x1000; i++) {
 		uint64_t addr = (uint64_t)P2V((uint64_t)AuPmmngrAlloc());
-		memset(addr, 0, PAGE_SIZE);
+		memset((void*)addr, 0, PAGE_SIZE);
 		AuMapPage(V2P(addr), (location + i * 4096), PTE_AP_RW | PTE_NORMAL_MEM);
 	}
 

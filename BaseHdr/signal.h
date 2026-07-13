@@ -32,6 +32,7 @@
 
 #include <stdint.h>
 #include <Hal/AA64/sched.h>
+#include <stdbool.h>
 
 typedef enum _signal_num_ {
 	SIGHUP = 1,  /* Terminal closed or hangup*/
