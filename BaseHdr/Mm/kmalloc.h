@@ -31,6 +31,7 @@
 #define _KMALLOC_H
 
 #include <stdint.h>
+#include <stdbool.h>
 #include <aurora.h>
 
 
