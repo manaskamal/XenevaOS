@@ -103,6 +103,8 @@ void _fill_screen(unsigned x, unsigned y, unsigned w, unsigned h, uint32_t col) 
 void SplashScreenShow() {
 	int graphFd = _KeOpenFile("/dev/graph", FILE_OPEN_WRITE);
 	_KePrint("graphFD : %d \r\n", graphFd);
+	if (graphFd == -1)
+		return;
 	XEFileIOControl ioctl;
 	memset(&ioctl, 0, sizeof(XEFileIOControl));
 	ioctl.syscall_magic = AURORA_SYSCALL_MAGIC;

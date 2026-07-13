@@ -214,6 +214,9 @@
       <Filter>Net</Filter>
     </ClCompile>
     <ClCompile Include="signal.c" />
+    <ClCompile Include="Board\imx8mp\imx8mp_pll.c">
+      <Filter>Board\imx8mp</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Hal">
@@ -445,6 +448,12 @@
     </ClInclude>
     <ClInclude Include="..\BaseHdr\signal.h">
       <Filter>Include\Hal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\Board\imx8mp\imx8mp_pll.h">
+      <Filter>Include\Board\imx8mp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\bordoisila_io.h">
+      <Filter>Include</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

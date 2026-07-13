@@ -92,7 +92,6 @@ void* AuSocketGet(AuSocket* sock) {
  * @param flags -- flags to be cared about
  */
 int AuRawSocketReceive(AuSocket* sock, msghdr* msg, int flags) {
-	UARTDebugOut("Raw socket receiving \r\n");
 	if (!sock->binedDev) {
 		UARTDebugOut("No binded device \r\n");
 		return -1;

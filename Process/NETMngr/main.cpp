@@ -298,13 +298,17 @@ int main(int argc, char* argv[]){
 	rtentry->ifname = (char*)malloc(strlen("e1000"));
 	strcpy(rtentry->ifname, "virtio-net");
 	bool rt_entry_filled = false;
-	while (1) {
+	int timeout = 10000;
+	while (timeout--) {
 		int size = socket_receive(sock_fd, buf, 4096, 0);
-		if (size <= 0){
+		if (size == 0){
 			_KePrint("Socket didn't have data in it \r\n");
 			_KeProcessSleep(100);
 			continue;
 		}
+
+		if (size == -1)
+			break;
 
 		Ethernet* eth = (Ethernet*)buf;
 
