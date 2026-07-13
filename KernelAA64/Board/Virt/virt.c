@@ -35,6 +35,7 @@
 #include <string.h>
 #include <Drivers/uart.h>
 #include <Mm/vmmngr.h>
+#include <Hal/AA64/aa64lowlevel.h>
 
 #define VIRTIO_INPUT_KEYBOARD 1
 #define VIRTIO_INPUT_TABLET 2
