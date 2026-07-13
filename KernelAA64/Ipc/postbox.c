@@ -42,6 +42,7 @@
 #include <Drivers/uart.h>
 #include <aucon.h>
 #include <Cred/cred.h>
+#include <stdbool.h>
 
 /**
 * @brief
