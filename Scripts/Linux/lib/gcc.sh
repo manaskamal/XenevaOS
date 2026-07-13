@@ -5,3 +5,6 @@ printf "${STY_CYAN}compiling Xeneva for arm using gcc.${STY_RST}\n"
 cd ../../BootAA64
 make clean
 make
+
+cd ../KernelAA64
+make clean make
