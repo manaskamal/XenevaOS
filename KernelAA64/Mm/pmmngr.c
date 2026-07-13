@@ -35,6 +35,8 @@
 #include <Drivers/uart.h>
 #include <efi.h>
 #include <Hal/AA64/profile.h>
+#include <aucon.h>
+#include <string.h>
 
 #define PAGE_SHIFT 12
 
