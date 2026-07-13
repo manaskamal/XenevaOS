@@ -39,6 +39,7 @@
 #include <_null.h>
 #include <Drivers/uart.h>
 #include <Hal/AA64/profile.h>
+#include <stdbool.h>
 
 
 uint64_t* _RootPaging;
@@ -520,7 +521,7 @@ void AuUpdatePageFlags(uint64_t virt_addr, uint64_t flags) {
 
 	//AuTextOut("Your physical page is -> %x %x\n", page, V2P(page));
 	if (page) {
-		pt[pt_index(virt_addr)] = (V2P(page) & ~0xFFFULL) | flags;
+		pt[pt_index(virt_addr)] = (V2P(*page) & ~0xFFFULL) | flags;
 		data_cache_flush(&pt[pt_index(virt_addr)]);
 	}
 }
