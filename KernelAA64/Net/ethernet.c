@@ -44,7 +44,7 @@
 
 
 #pragma pack(push,1)
-__declspec(align(2)) typedef struct _ethernet_ {
+ALIGNED(2) typedef struct _ethernet_ {
 	uint8_t dest[6];
 	uint8_t src[6];
 	uint16_t typeLen;
