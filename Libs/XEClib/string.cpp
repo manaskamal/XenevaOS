@@ -33,7 +33,11 @@
 #include <ctype.h>
 
 #ifdef ARCH_ARM64
+#ifdef _MSC_VER
 #include <arm64_neon.h>
+#else
+#include <arm_neon.h>
+#endif
 #endif
 
 #define SS (sizeof(size_t))
@@ -783,18 +787,14 @@ int ffs(int i){
 	return (count);
 }
 
+#if defined(_MSC_VER)
+
 void* memmove_x64(void* dest, const void* src, size_t n) {
 	char* d = (char*)dest;
 	const char* s = (const char*)src;
 
-void *memmove(void* dest, void const* src, size_t bytes) {
-#if 0
-	unsigned dwords = (bytes >> 2);
-
-	if (!dest || !src) {
-	return dest;
-	if (d == s) {
-		return d;
+	if (d == s || n == 0) {
+		return dest;
 	}
 
 	if (s + n <= d || d + n <= s) {
@@ -902,14 +902,68 @@ void* memmove_aarch64(void* dest, const void* src, size_t n) {
 }
 
 
-void *memmove(void* dest, void const* src, unsigned __int64 bytes) {
+void *memmove(void* dest, void const* src, size_t bytes) {
 	unsigned dwords = (bytes >> 2);
 #ifdef ARCH_X64
-	memmove_x64(dest, src, bytes);
+	return memmove_x64(dest, src, bytes);
 #elif ARCH_ARM64
 	return memmove_aarch64(dest, src, bytes);
 #endif
 }
+
+#else
+
+void *memmove(void* dest, void const* src, size_t n) {
+	char* d = (char*)dest;
+	const char* s = (const char*)src;
+
+	if (d == s) {
+		return d;
+	}
+
+	if (s + n <= d || d + n <= s) {
+		return memcpy(d, (void*)s, n);
+	}
+
+	if (d < s) {
+		if ((uintptr_t)s % sizeof(size_t) == (uintptr_t)d % sizeof(size_t)) {
+			while ((uintptr_t)d % sizeof(size_t)) {
+				if (!n--) {
+					return dest;
+				}
+				*d++ = *s++;
+			}
+			for (; n >= sizeof(size_t); n -= sizeof(size_t), d += sizeof(size_t), s += sizeof(size_t)) {
+				*(size_t*)d = *(size_t*)s;
+			}
+		}
+		for (; n; n--) {
+			*d++ = *s++;
+		}
+	}
+	else {
+		if ((uintptr_t)s % sizeof(size_t) == (uintptr_t)d % sizeof(size_t)) {
+			while ((uintptr_t)(d + n) % sizeof(size_t)) {
+				if (!n--) {
+					return dest;
+				}
+				d[n] = s[n];
+			}
+			while (n >= sizeof(size_t)) {
+				n -= sizeof(size_t);
+				*(size_t*)(d + n) = *(size_t*)(s + n);
+			}
+		}
+		while (n) {
+			n--;
+			d[n] = s[n];
+		}
+	}
+
+	return dest;
+}
+
+#endif
 
 
 
