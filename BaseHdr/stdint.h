@@ -284,4 +284,6 @@ static inline uint32_t div_round_closest_u32(uint32_t x, uint32_t divisor) {
 )(x,divisor)
 
 #define CLAMP(val, lo, hi)  ((val) < (lo) ? (lo) : ((val) > (hi) ? (hi) : (val)))
+
+#define ABS(x) ((x) < 0 ? -(x) : (x))
 #endif

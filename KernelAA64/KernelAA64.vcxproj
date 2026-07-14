@@ -175,6 +175,7 @@
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
       <AssemblerOutput>AssemblyAndSourceCode</AssemblerOutput>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
     <Link>
       <SubSystem>Native</SubSystem>
@@ -239,6 +240,7 @@
     <ClCompile Include="audrv.c" />
     <ClCompile Include="Board\board.c" />
     <ClCompile Include="Board\imx8mp\imx8mp_clk.c" />
+    <ClCompile Include="Board\imx8mp\imx8mp_clk_gate.c" />
     <ClCompile Include="Board\imx8mp\imx8mp_gpc.c" />
     <ClCompile Include="Board\imx8mp\imx8mp_pll.c" />
     <ClCompile Include="Board\imx8mp\imx8mp_uart.c" />
@@ -347,6 +349,8 @@
     <ClInclude Include="..\BaseHdr\Board\board.h" />
     <ClInclude Include="..\BaseHdr\Board\imx8mp\imx8mp.h" />
     <ClInclude Include="..\BaseHdr\Board\imx8mp\imx8mp_clk.h" />
+    <ClInclude Include="..\BaseHdr\Board\imx8mp\imx8mp_clk_div.h" />
+    <ClInclude Include="..\BaseHdr\Board\imx8mp\imx8mp_clk_gate.h" />
     <ClInclude Include="..\BaseHdr\Board\imx8mp\imx8mp_pll.h" />
     <ClInclude Include="..\BaseHdr\Board\imx8mp\imx8mp_uart.h" />
     <ClInclude Include="..\BaseHdr\Board\RPI3bp\rpi3bp.h" />

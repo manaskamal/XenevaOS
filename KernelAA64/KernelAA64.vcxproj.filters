@@ -217,6 +217,9 @@
     <ClCompile Include="Board\imx8mp\imx8mp_pll.c">
       <Filter>Board\imx8mp</Filter>
     </ClCompile>
+    <ClCompile Include="Board\imx8mp\imx8mp_clk_gate.c">
+      <Filter>Board\imx8mp</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Hal">
@@ -454,6 +457,12 @@
     </ClInclude>
     <ClInclude Include="..\BaseHdr\bordoisila_io.h">
       <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\Board\imx8mp\imx8mp_clk_gate.h">
+      <Filter>Include\Board\imx8mp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\Board\imx8mp\imx8mp_clk_div.h">
+      <Filter>Include\Board\imx8mp</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

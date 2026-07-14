@@ -263,7 +263,7 @@ static void imx_pll14xx_calc_settings(uint64_t base, unsigned long rate, unsigne
 			kdiv = imx8mp_pll1443x_calc_kdiv(mdiv, pdiv, sdiv, rate, prate);
 			fout = imx8mp_pll14xx_calc_rate(mdiv, pdiv, sdiv, kdiv, prate);
 
-			dist = abs((long)rate - (long)fout);
+			dist = ABS((long)rate - (long)fout);
 			if (dist < best) {
 				best = dist;
 				t->rate = (unsigned int)fout;

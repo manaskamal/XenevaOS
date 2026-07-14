@@ -122,4 +122,6 @@ struct imx_pll14xx_rate_table {
 };
 
 
+extern void imx8mp_pll_init();
+
 #endif

@@ -30,6 +30,8 @@
 **/
 #include <Board/RPI3bp/rpi3bp.h>
 #include <Board/imx8mp/imx8mp_clk.h>
+#include <Board/imx8mp/imx8mp_pll.h>
+#include <Board/imx8mp/imx8mp_clk_gate.h>
 #include <Drivers/uart.h>
 #include <Board/board.h>
 #include <stdint.h>
@@ -57,6 +59,8 @@ void AuAA64BoardInitialize() {
 #elif __TARGET_BOARD_IMX8MP_VERDIN_DAHLIA__ || (__TARGET_BOARD_IMX8MP_SOC__)
 	/** initialize the ccm module **/
 	imx8mp_gpc_init();
+	imx8mp_pll_init();
+	imx8mp_gate_init();
 	imx8mp_ccm_init();
 #endif
 }
