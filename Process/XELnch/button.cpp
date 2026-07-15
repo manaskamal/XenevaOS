@@ -206,6 +206,7 @@ ButtonIcon* CreateLaunchButtonIcon(char* iconfile, LaunchButton* button) {
 	icon->usageCount = 0;
 	button->buttonIcon = icon;
 	ButtonIconRead(icon);
+	return icon;
 }
 
 /* ButtonIconRead-- read the button icon file
@@ -214,17 +215,26 @@ ButtonIcon* CreateLaunchButtonIcon(char* iconfile, LaunchButton* button) {
 void ButtonIconRead(ButtonIcon* btninfo) {
 	if (!btninfo)
 		return;
-	_KeReadFile(btninfo->iconFd, btninfo->fileBuffer, btninfo->fileSize);
+	int read_bytes = _KeReadFile(btninfo->iconFd, btninfo->fileBuffer, btninfo->fileSize);
 
 	uint8_t* buffer = (uint8_t*)btninfo->fileBuffer;
 
-	BMP* bmp = (BMP*)buffer;
-	unsigned int offset = bmp->off_bits;
+	unsigned int offset = 0;
+	memcpy(&offset, buffer + 10, sizeof(int));
 
-	BMPInfo* info = (BMPInfo*)(buffer + sizeof(BMP));
-	int width = info->biWidth;
-	int height = info->biHeight;
-	int bpp = info->biBitCount;
+	uint8_t* info = (uint8_t*)(buffer + sizeof(BMP));
+	int width = 0;
+	memcpy(&width, info + 4, sizeof(int));
+	int height = 0;
+	memcpy(&height, info + 8, sizeof(int));
+	int bpp = 0;
+	memcpy(&bpp, info + 14, sizeof(unsigned short));
+
+	// printf("ButtonIconRead: fd=%d size=%d read=%d width=%d height=%d offset=%d\n", btninfo->iconFd, btninfo->fileSize, read_bytes, width, height, offset);
+
+	btninfo->iconBpp = bpp;
+	btninfo->iconWidth = width;
+	btninfo->iconHeight = height;
 
 	void* image_bytes = (void*)(buffer + offset);
 	btninfo->imageData = (uint8_t*)image_bytes;
@@ -243,26 +253,14 @@ void ButtonIconRead(ButtonIcon* btninfo) {
 * @param y -- Y coordinate
 */
 void ButtonIconDraw(ButtonIcon* info, ChCanvas* canv, int x, int y, ChRect* limit){
-	uint32_t width = info->iconWidth;
-	uint32_t height = info->iconHeight;
-	uint32_t imageHeight = height;
-	uint32_t j = 0;
-
+	int width = info->iconWidth;
+	int height = info->iconHeight;
+	
 	if (x > (limit->x + limit->w))
 		return;
 
 	if (y > (limit->y + limit->h))
 		return;
-
-	if (y <= limit->y) {
-		int diff = limit->y - y;
-		y = limit->y;
-		height -= diff;
-		imageHeight -= diff;
-	}
-
-	if (x <= limit->x)
-		x = limit->x;
 
 	if ((y + height) <= limit->y)
 		return;
@@ -270,26 +268,56 @@ void ButtonIconDraw(ButtonIcon* info, ChCanvas* canv, int x, int y, ChRect* limi
 	if ((x + width) <= limit->x)
 		return;
 
+	int diff_y = 0;
+	if (y <= limit->y) {
+		diff_y = limit->y - y;
+		y = limit->y;
+		height -= diff_y;
+	}
+
+	int diff_x = 0;
+	if (x <= limit->x) {
+		diff_x = limit->x - x;
+		x = limit->x;
+		width -= diff_x;
+	}
+
 	if ((x + width) > (limit->x + limit->w))
 		width = (limit->x + limit->w) - x;
 
 	if ((y + height) > (limit->y + limit->h))
 		height = (limit->y + limit->h) - y;
 
-
 	uint8_t* image = info->imageData;
+	int bytes_per_pixel = info->iconBpp / 8;
+	if (bytes_per_pixel == 0) bytes_per_pixel = 3;
+	int row_pitch = ((info->iconWidth * info->iconBpp + 31) / 32) * 4;
+
 	for (int i = 0; i < height; i++) {
-		char* image_row = (char*)image + (static_cast<int64_t>(height) - i - 1) * (static_cast<int64_t>(width) * 4);
-		uint32_t h = height - 1 - i;
-		j = 0;
+		int image_y = diff_y + i;
+		int bmp_row = info->iconHeight - 1 - image_y;
+		if (bmp_row < 0 || bmp_row >= info->iconHeight) continue;
+
+		uint8_t* image_row = image + bmp_row * row_pitch;
 		for (int k = 0; k < width; k++) {
-			uint32_t b = image_row[j++] & 0xff;
-			uint32_t g = image_row[j++] & 0xff;
-			uint32_t r = image_row[j++] & 0xff;
-			uint32_t a = image_row[j++] & 0xff;
-			uint32_t rgb = ((a << 24) | (r << 16) | (g << 8) | (b));
-			if (rgb & 0xFF000000)
-				ChDrawPixel(canv, x + k, y + i, rgb);
+			int image_x = diff_x + k;
+			if (image_x < 0 || image_x >= info->iconWidth) continue;
+
+			uint8_t* pixel = image_row + image_x * bytes_per_pixel;
+			uint32_t b = pixel[0];
+			uint32_t g = pixel[1];
+			uint32_t r = pixel[2];
+			
+			if (bytes_per_pixel == 3) {
+				if (r == 255 && g == 255 && b == 255) continue;
+				ChDrawPixel(canv, x + k, y + i, (r << 16) | (g << 8) | b);
+			} else {
+				uint32_t a = pixel[3];
+				if (a > 0) {
+					uint32_t rgb = ((a << 24) | (r << 16) | (g << 8) | b);
+					ChDrawPixel(canv, x + k, y + i, rgb);
+				}
+			}
 		}
 	}
 }
