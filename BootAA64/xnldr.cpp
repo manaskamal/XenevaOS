@@ -358,10 +358,11 @@ extern "C" EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemT
 	XEGuiPrint("Copyright (C) Manas Kamal Choudhury 2020-2025\n");
 
 	XEGuiPrint("Loading system files.. please wait !! \n");
-
+	
+	
 	uint64_t adddr = 0x50000000;
 	EFI_CONFIGURATION_TABLE* configuration_tables = SystemTable->ConfigurationTable;
-
+	
 	/* load all important files */
 	XEFile* krnl = XEOpenAndReadFile(ImageHandle, (CHAR16*)L"\\EFI\\XENEVA\\xnkrnl.exe");
 	uint8_t* alignedKBuf = (uint8_t*)krnl->kBuffer;
@@ -599,7 +600,7 @@ extern "C" EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemT
 
 	VOID* entry = (VOID*)(image_base + ntHeader->OptionalHeader.AddressOfEntryPoint);
 	XEGuiPrint("entry addr : %x bootinfo : %x \r\n", entry, &bootinfo);
-	callKernel(&bootinfo, 0xFFFFA00000000000, 0x100000, entry);
+	callKernel(&bootinfo, 0xFFFFFF8000000000, 0x100000, entry);
 	while (1);
 }
 

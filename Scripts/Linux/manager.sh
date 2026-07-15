@@ -55,15 +55,18 @@ case $1 in
         mcopy -o -i fat.img initrd2.img ::/initrd2.img
         echo "[+] Image ready! Booting QEMU..."
         qemu-system-aarch64 -machine virt,gic-version=2,highmem=off \
-            -cpu cortex-a57 -m 1024M \
+            -cpu cortex-a72 \
+            -m 1024M \
             -bios /usr/share/qemu-efi-aarch64/QEMU_EFI.fd \
             -drive file=fat.img,format=raw,if=virtio \
             -device ramfb \
             -device virtio-keyboard-pci \
             -device virtio-tablet-pci \
+            -display gtk \
             -device usb-ehci \
             -device usb-kbd \
-            -serial stdio
+            -serial stdio 
+            # -d guest_errors,unzip,trace:virtio_gpu
     ;;
     *)printf "${STY_RED}Unknown subcommand \"$1\".${STY_RST}\n";show_help;exit 1;;
 esac

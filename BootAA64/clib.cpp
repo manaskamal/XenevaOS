@@ -41,6 +41,7 @@ extern "C" {
 		uint8_t* t = (uint8_t*)targ;
 		while (len--)
 			*t++ = val;
+		return targ;
 	}
 
 	void* _memcpy(void* targ, void* src, uint32_t len) {
@@ -59,14 +60,11 @@ extern "C" {
 					*t++ = *s++;
 			}
 		}
+		return targ;
 	}
 
 	void* memcpy(void* targ, void* src, uint32_t len) {
-	#ifdef EFI_1_10_SYSTEM_TABLE_REVISION
-		gBS->CopyMem(targ, src, len);
-	#else
-		_memcpy(targ, src, len);
-	#endif
+		return _memcpy(targ, src, len);
 	}
 
 	size_t strlen(const char* s) {

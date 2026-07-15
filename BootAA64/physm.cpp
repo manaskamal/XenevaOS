@@ -58,6 +58,7 @@ void XEInitialisePmmngr(const struct EfiMemoryMap memmap, void* buffer, size_t b
 	bufsize /= 2;
 	allocatedPtr = allocatedStack = raw_offset<paddr_t*>(buffer, bufsize);
 	allocatedCount = 1;
+	
 
 	EFI_MEMORY_DESCRIPTOR* current = memmap.memmap;
 	while (raw_diff(current, memmap.memmap) < memmap.MemMapSize)
