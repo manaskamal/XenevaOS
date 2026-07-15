@@ -316,6 +316,7 @@
     <ClCompile Include="proctoken.c" />
     <ClCompile Include="Serv\fileserv.c" />
     <ClCompile Include="Serv\thrserv.c" />
+    <ClCompile Include="signal.c" />
     <ClCompile Include="Sound\sndcore.c" />
     <ClCompile Include="stack.c" />
     <ClCompile Include="stdio.c" />
@@ -379,6 +380,7 @@
     <ClInclude Include="..\BaseHdr\Mm\mmfile.h" />
     <ClInclude Include="..\BaseHdr\power.h" />
     <ClInclude Include="..\BaseHdr\proctoken.h" />
+    <ClInclude Include="..\BaseHdr\signal.h" />
     <ClInclude Include="..\BaseHdr\stdarg.h" />
     <ClInclude Include="..\BaseHdr\timer.h" />
     <ClInclude Include="..\BaseHdr\uart.h">

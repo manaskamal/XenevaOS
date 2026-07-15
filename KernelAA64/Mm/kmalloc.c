@@ -30,6 +30,7 @@
 #include <Mm/kmalloc.h>
 #include <stdint.h>
 #include <string.h>
+#include <stdbool.h>
 #include <_null.h>
 #include <Mm/vmmngr.h>
 #include <Mm/pmmngr.h>

@@ -73,6 +73,15 @@ XE_EXTERN{
 	*/
 	XE_LIB int _KeDestroyTimer(int threadID);
 
+	/**
+	 * @brief _KeSetAlarm -- set one-shot alarm
+	 * @param seconds -- second to consider
+	 */
+	XE_LIB int _KeSetAlarm(unsigned long long seconds);
+
+	XE_LIB int _KeSetITimer(int which, const void*, const void*);
+
+	XE_LIB int _KeGetITimer(int which, const void*);
 
 #ifdef __cplusplus
 }

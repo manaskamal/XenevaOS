@@ -52,6 +52,7 @@
 #define GROUP_VIDEO  21
 #define GROUP_TTY    22
 #define GROUP_AUDIO  21
+#define GROUP_NETWORK 23
 
 /** hardcoded untill we get proper
  * login manager
@@ -113,7 +114,10 @@ void init_basic_gid_to_dev() {
 	if (fd != -1) {
 		_KeCredChangeID(fd, 0, GROUP_VIDEO);
 	}
-
+	fd = _KeOpenFile("/dev/net/virtio-net", FILE_OPEN_READ_ONLY);
+	if (fd != -1) {
+		_KeCredChangeID(fd, 0, GROUP_NETWORK);
+	}
 }
 
 /**

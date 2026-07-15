@@ -43,6 +43,7 @@
 #include <Mm/kmalloc.h>
 #include <Drivers/uart.h>
 #include <string.h>
+#include <Hal/AA64/sched.h>
 
 uint16_t IPv4CalculateChecksum(IPv4Header* p) {
 	uint32_t sum = 0;
@@ -85,7 +86,7 @@ void IPv4HandlePacket(void* data, AuVFSNode* nic) {
 	switch (protocol) {
 	case 1: {
 		UARTDebugOut("[ipv4]: received ICMP message \r\n");
-		//AuICMPHandle(pack, nic);
+		AuICMPHandle(pack, nic);
 		break;
 	}
 	case IPV4_PROTOCOL_UDP: {
@@ -153,7 +154,7 @@ void IPV4SendPacket(IPv4Header* packet, AuVFSNode* nic) {
 			cache = AuARPGet(ip_dest);
 			if (!cache) {
 				AuARPRequestMAC(nic, ip_dest);
-				UARTDebugOut("[aurora]:Requesting MAC \r\n");
+				UARTDebugOut("[aurora]:Requesting MAC #1 \r\n");
 
 				/* Not implemented yet */
 				AuSleepThread(AuGetCurrentThread(), 100);
@@ -166,12 +167,12 @@ void IPV4SendPacket(IPv4Header* packet, AuVFSNode* nic) {
 			cache = AuARPGet(ip_dest);
 			if (!cache) {
 				AuARPRequestMAC(nic, ip_dest);
-				UARTDebugOut("[aurora]: Requesting MAC \r\n");
+				UARTDebugOut("[aurora]: Requesting MAC #2\r\n");
 
 				/* Not implemented yet */
-				AuSleepThread(AuGetCurrentThread(), 10000);
+				AuSleepThread(AuGetCurrentThread(), 100);
 				AuForceScheduler();
-
+				UARTDebugOut("Rechecking ARP \r\n");
 				cache = AuARPGet(ip_dest);
 			}
 		}

@@ -31,6 +31,7 @@
 #define __AU_DRV_H__
 
 #include <stdint.h>
+#include <stdbool.h>
 #ifdef ARCH_X64
 #include <Hal/x86_64_hal.h>
 #include <Hal/hal.h>

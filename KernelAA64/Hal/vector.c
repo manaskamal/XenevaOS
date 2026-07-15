@@ -284,5 +284,5 @@ void sync_el0_handler(AA64Registers* regs) {
 extern char vectors[];
 
 void AA64InitializeVectorTable() {
-	set_vbar_el1(&vectors);
+	set_vbar_el1((uint64_t)&vectors);
 }

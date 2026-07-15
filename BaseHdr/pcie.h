@@ -33,6 +33,7 @@
 #include <stdint.h>
 #include <Hal/basicacpi.h>
 #include <Hal/hal.h>
+#include <stdbool.h>
 
 
 #define PCI_VENDOR_ID  0x00

@@ -41,6 +41,7 @@
 #include <aucon.h>
 #include <Net/route.h>
 #include <Hal/AA64/sched.h>
+#include <Hal/AA64/profile.h>
 #include <process.h>
 
 list_t* raw_socket_list;
@@ -62,7 +63,13 @@ void AuSocketAdd(AuSocket* sock, void* data, size_t sz) {
 	char* data_ = (char*)kmalloc(sizeof(size_t) + sz);
 	memset(data_, 0, sz + sizeof(size_t));
 	*(size_t*)data_ = sz;
-	memcpy(data_ + sizeof(size_t), data, sz);
+	UARTDebugOut("Adding data %x , sz : %d\r\n", data, sz);
+	//memcpy(data_ + sizeof(size_t), (char*)data, sz);
+	char* dest = data_ + sizeof(size_t);
+	const char* src = (const char*)data;
+	for (size_t i = 0; i < sz; i++) {
+		dest[i] = src[i];
+	}
 	UARTDebugOut("]aurora]: socket sock stack -> %x \r\n", sock->rxstack);
 	AuStackPush(sock->rxstack, data_);
 }
@@ -85,10 +92,17 @@ void* AuSocketGet(AuSocket* sock) {
  * @param flags -- flags to be cared about
  */
 int AuRawSocketReceive(AuSocket* sock, msghdr* msg, int flags) {
-	if (!sock->binedDev)
+	UARTDebugOut("Raw socket receiving \r\n");
+	if (!sock->binedDev) {
+		UARTDebugOut("No binded device \r\n");
 		return -1;
-	if (msg->msg_iovlen == 0) return 0;
+	}
+	if (msg->msg_iovlen == 0) {
+		UARTDebugOut("MSG_IOVLen : 0 \r\n");
+		return 0;
+	}
 	char* data = (char*)AuSocketGet(sock);
+	UARTDebugOut("Getting data : %x \r\n", data);
 	if (!data) return -1;
 	size_t pack_sz = *(size_t*)data;
 	if (msg->msg_iov[0].iov_len < pack_sz) return -1;

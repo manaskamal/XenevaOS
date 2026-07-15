@@ -78,6 +78,11 @@ XE_EXTERN{
 		long tv_usec;
 	}timeval;
 
+	struct timespec {
+		time_t tv_sec;
+		long tv_nsec;
+	};
+
 
 	XE_LIB char *asctime(const struct tm *);
 	XE_LIB clock_t clock(void);
@@ -87,7 +92,7 @@ XE_EXTERN{
 	XE_LIB time_t mktime(struct tm *);
 	XE_LIB time_t time(time_t *t);
 	XE_LIB int gettimeofday(timeval *val);
-
+	XE_LIB int nanosleep(const struct timespec* req, struct timespec* rem);
 #ifdef __cplusplus
 }
 #endif

@@ -40,10 +40,11 @@
 #include <Net/ipv4.h>
 #include <Net/udp.h>
 #include <Net/socket.h>
+#include <Hal/AA64/profile.h>
 
 
 #pragma pack(push,1)
-typedef struct _ethernet_ {
+ALIGNED(2) typedef struct _ethernet_ {
 	uint8_t dest[6];
 	uint8_t src[6];
 	uint16_t typeLen;
@@ -59,6 +60,7 @@ AU_EXTERN AU_EXPORT void AuEthernetHandle(void* data, int size, AuVFSNode* nic) 
 		return;
 
 	list_t* raw_sockets = AuRawSocketGetList();
+	UARTDebugOut("Adding to raw_sockets \r\n");
 	for (int i = 0; i < raw_sockets->pointer; i++) {
 		AuSocket* sock = (AuSocket*)list_get_at(raw_sockets, i);
 		AuSocketAdd(sock, frame, size);

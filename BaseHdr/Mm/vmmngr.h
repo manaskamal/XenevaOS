@@ -40,6 +40,7 @@
  */
 
 #include <stdint.h>
+#include <stdbool.h>
 #include <aurora.h>
 
 #ifdef ARCH_X64

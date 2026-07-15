@@ -183,6 +183,7 @@ void _AuroraTimerCallback(void* p) {
  * by bootloader
  **/
 void _AuMain(KERNEL_BOOT_INFO* info) {
+	AuUartPutString("ok \n");
     _littleboot_used = false;
     if (info->boot_type == BOOT_LITTLEBOOT_ARM64) {
         AuUartPutString("[aurora]:Kernel is booted using LittleBoot ARM64 \r\n");

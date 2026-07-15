@@ -219,7 +219,7 @@ int AuTCPAcknowledge(AuVFSNode* nic, AuSocket* sock, IPv4Header* ippack, size_t 
 */
 int AuTCPConnect(AuSocket* sock, sockaddr* addr, socklen_t addrlen) {
 	sockaddr_in* sockdata = (sockaddr_in*)addr;
-
+	UARTDebugOut("TCP connect call called \r\n");
 	AuTCPObtainPort(sock);
 	int sourcePort = sock->sessionPort;
 	sock->sockState = SOCK_STATE_WAITING_FOR_CONNECTION;

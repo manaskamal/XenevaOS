@@ -30,6 +30,7 @@
 #include <time.h>
 #include <string.h>
 #include <sys/_keproc.h>
+#include <unistd.h>
 
 int dayOfWeek(unsigned day, unsigned month, unsigned year) {
 	if (month < 3) {
@@ -160,5 +161,40 @@ time_t mktime(tm* timestruc) {
 	return timeSimple;
 }
 time_t time(time_t* t) {
+	return 0;
+}
+
+
+/**
+ * unistd.h sleep implementation 
+ */
+unsigned int sleep(unsigned int seconds) {
+	uint64_t ticks = (uint64_t)seconds * 1000ULL;
+	_KeProcessSleep(ticks);
+	return 0;
+}
+
+/**
+ * implementation of time.h nanosleep
+ */
+static inline uint64_t ns_to_ticks_ceil(uint64_t total_ns) {
+	return (total_ns + 999999ULL) / 1000000ULL;
+}
+
+static inline void ticks_to_timespec(uint64_t ticks, struct timespec* ts) {
+	uint64_t total_ns = ticks * 1000000ULL;
+	ts->tv_sec = total_ns / 1000000000ULL;
+	ts->tv_nsec = total_ns % 1000000000ULL;
+}
+
+
+int nanosleep(const struct timespec* req, struct timespec* rem) {
+	if (!req || req->tv_nsec < 0 || req->tv_nsec >= 1000000000L || req->tv_sec < 0)
+		return -1;
+
+	uint64_t total_ns = (uint64_t)req->tv_sec * 1000000000ULL + (uint64_t)req->tv_nsec;
+	uint64_t ticks = ns_to_ticks_ceil(total_ns);
+
+	_KeProcessSleep(ticks);
 	return 0;
 }

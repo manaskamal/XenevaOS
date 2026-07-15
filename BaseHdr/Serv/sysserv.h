@@ -32,10 +32,12 @@
 
 #include <stdint.h>
 #include <stdarg.h>
+#include <timer.h>
 #include <aurora.h>
 
 #ifdef ARCH_ARM64
 #include <Hal/AA64/aa64cpu.h>
+#include <signal.h>
 #endif
 
 #ifdef ARCH_X64
@@ -122,6 +124,13 @@ extern void SignalReturn(int num);
 * @param handler -- handler to register
 */
 extern int SetSignal(int signo, AuSigHandler handler);
+#elif ARCH_ARM64
+/*
+* SetSignal -- register a signal handler
+* @param signo -- signal number
+* @param handler -- handler to register
+*/
+extern int SetSignal(int signo, AuSignalHandler handler);
 #endif
 /**
 * @brief CreateSharedMem -- create a shared memory chunk
@@ -292,6 +301,7 @@ extern int StopTimer(int threadID);
 */
 extern int DestroyTimer(int threadID);
 
+
 /**
 * @brief ProcessGetFileDesc -- Searches all process file
 * descriptor entries for
@@ -332,6 +342,16 @@ extern int NetListen(int sockfd, int backlog);
  * block of this process
  */
 extern size_t GetEnvironmenBlock();
+
+/**
+ * @brief Alarm -- schedules a timer for next one-shot
+ * @param seconds -- amount of second to consider
+ */
+extern int Alarm(uint64_t seconds);
+
+extern int SetITimer(int which, const itimerval_t* new_value, itimerval_t* old_value);
+
+extern int GetITImer(int which, const itimerval_t* curr_value);
 
 #ifdef ARCH_ARM64
 extern AA64Registers* AA64GetCurrentRegCtx();
