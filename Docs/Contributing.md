@@ -42,6 +42,7 @@ To ensure that XenevaOS remains portable across Windows (MSVC) and Linux (GCC) e
 - **Strict Returns:** Every non-void function must explicitly return a value. Missing returns result in undefined behavior under GCC.
 - **Pragma Packing:** Always mathematically balance `#pragma pack(push, 1)` with `#pragma pack(pop)`.
 - **Export Macros:** Do not hardcode `__declspec(dllexport)`. Always use cross-platform macros (e.g., `AU_EXPORT` and `AU_IMPORT`).
+- **Minimal Fixes & TODO Offloading:** When fixing GCC/LLVM compatibility issues, apply only the strict minimum changes required to successfully compile and run the code without panics. Do not implement optional safeguards or heavy defensive guardrails immediately, as this expands the diff and risks breaking MSVC compatibility. Instead, defer these improvements by leaving a clear, capitalized `// TODO:` comment. This keeps PRs small and offloads non-critical enhancements to future contributors.
 
 Code modifications must be verified for GCC compatibility before being merged.
 
