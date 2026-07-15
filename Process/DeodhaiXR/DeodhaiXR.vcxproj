@@ -218,7 +218,7 @@
       <GenerateDebugInformation>
       </GenerateDebugInformation>
       <OutputFile>..\..\Build\$(TargetName).exe</OutputFile>
-      <AdditionalLibraryDirectories>$(SolutionDir)Build\;..\..\ARM64\Debug;..\..\Libs\XECrt</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\..\ARM64\Debug;..\..\Libs\XECrt; $(SolutionDir)Build;</AdditionalLibraryDirectories>
       <AdditionalDependencies>XEClib.lib; chlkha.lib;xecrt.lib;</AdditionalDependencies>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
       <EnableUAC>false</EnableUAC>

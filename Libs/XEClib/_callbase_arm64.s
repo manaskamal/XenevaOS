@@ -636,3 +636,31 @@ _KeGetITimer:
 	svc #0
 	mov x0, x6
 	ret
+
+.global _KeGetNumProcessCount
+_KeGetNumProcessCount:
+    mov x16, 75
+	svc #0
+	mov x0, x6
+	ret
+
+.global _KeProcessFetch
+_KeProcessFetch:
+    mov x16, 76
+	svc #0
+	mov x0, x6
+	ret
+
+.global _KeSetWalltime
+_KeSetWalltime:
+    mov x16, 77
+	svc #0
+	mov x0, x6
+	ret
+
+.global _KeGetWalltime
+_KeGetWalltime:
+    mov x16, 78
+	svc #0
+	mov x0, x6
+	ret

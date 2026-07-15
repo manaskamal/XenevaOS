@@ -66,3 +66,7 @@ EXPORTS
     _KeSetAlarm
     _KeGetITimer
     _KeSetITimer
+    _KeGetNumProcessCount
+    _KeProcessFetch
+    _KeSetWalltime
+    _KeGetWalltime

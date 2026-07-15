@@ -40,6 +40,7 @@ typedef struct _stack_item_ {
 
 typedef struct _stack_{
 	AuStackItem* top;
+	AuStackItem* bottom;
 	int itemCount;
 }AuStack;
 

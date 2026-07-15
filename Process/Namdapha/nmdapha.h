@@ -159,4 +159,22 @@ extern int NamdaphaGetScreenWidth();
 /* NamdaphaGetScreenHeight -- returns the screen height */
 extern int NamdaphaGetScreenHeight();
 
+/**
+ * @brief NamdaphaGetYOD -- get year, month and date
+ * @param year -- memory location where to store year
+ * @param month -- memory location where to store month
+ * @param day -- memory location where to store day
+ * @param tz_offset -- timezone offset in second
+ */
+extern void NamdaphaGetYMD(uint32_t* year, uint32_t* month, uint32_t* day, int32_t tz_offset);
+
+/**
+ * NamdaphaGetWallTime -- get the walltime update
+ * @param hour -- memory location to store hour
+ * @param minute -- memory location to store minute
+ * @param sec -- memory location to store second
+ * @param tz_offset -- timezone offset
+ */
+extern void NamdaphaGetWallTime(int* hour, int* minute, int* sec, int tz_offset);
+
 #endif

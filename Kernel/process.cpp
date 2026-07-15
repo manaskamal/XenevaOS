@@ -384,7 +384,7 @@ AuProcess* AuGetKillableProcess() {
  * @param pid -- pid of the process, if -1 then any child
  * process
  */
-void AuProcessWaitForTermination(AuProcess *proc, int pid) {
+int AuProcessWaitForTermination(AuProcess *proc, int pid) {
 	if (pid == -1) {
 		do {
 			AuProcess *killable = AuGetKillableProcess();

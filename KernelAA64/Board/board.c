@@ -30,11 +30,14 @@
 **/
 #include <Board/RPI3bp/rpi3bp.h>
 #include <Board/imx8mp/imx8mp_clk.h>
+#include <Board/imx8mp/imx8mp_pll.h>
+#include <Board/imx8mp/imx8mp_clk_gate.h>
 #include <Drivers/uart.h>
 #include <Board/board.h>
 #include <stdint.h>
 #include <aucon.h>
 #include <Drivers/virtio.h>
+#include <Hal/AA64/aa64lowlevel.h>
 
 extern void imx8mp_gpc_init();
 
@@ -56,6 +59,8 @@ void AuAA64BoardInitialize() {
 #elif __TARGET_BOARD_IMX8MP_VERDIN_DAHLIA__ || (__TARGET_BOARD_IMX8MP_SOC__)
 	/** initialize the ccm module **/
 	imx8mp_gpc_init();
+	imx8mp_pll_init();
+	imx8mp_gate_init();
 	imx8mp_ccm_init();
 #endif
 }
@@ -65,8 +70,14 @@ void AuAA64BoardInitialize() {
  */
 void AuAA64BoardSleepUS(uint32_t us) {
 #ifdef __TARGET_BOARD_RPI3__
-	AuRPI3DelayUS(us);
+	return AuRPI3DelayUS(us);
 #endif
+	uint64_t freq = get_cntfrq_el0();
+	uint64_t ticks = (freq / 1000000ULL) * us;
+	uint64_t start = get_cntpct_el0();
+	while ((get_cntpct_el0() - start) < ticks) {
+		_wfi();
+	}
 }
 
 /**
@@ -75,8 +86,9 @@ void AuAA64BoardSleepUS(uint32_t us) {
  */
 void AuAA64BoardSleepMS(uint32_t ms) {
 #ifdef __TARGET_BOARD_RPI3__
-	AuRPIDelayMS(ms);
+	return AuRPIDelayMS(ms);
 #endif
+	return AuAA64BoardSleepUS(ms * 1000ULL);
 }
 
 /**

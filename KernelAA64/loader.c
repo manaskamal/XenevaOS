@@ -44,6 +44,7 @@
 #include <Mm/mmfile.h>
 #include <_null.h>
 #include <Hal/AA64/profile.h>
+#include <timer.h>
 
 #define LOADER_SCRATCH_VIRT 0xFFFFC00000700000
 
@@ -83,6 +84,7 @@ void testFunc(uint64_t x0, uint64_t x1) {
 void AuProcessEntUser(uint64_t rcx) {
 	mask_irqs();
 	AA64Thread* t = AuGetCurrentThread();
+	t->start_time_us = AuGetCurrentUS();
 	AuUserEntry* uentry = t->uentry;
 	uentry->rsp -= 32;
 	PUSHALIGN(uentry->rsp, 16);
@@ -390,6 +392,7 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) 
 	uentry->argvs = argv;
 	thr->uentry = uentry;
 	proc->main_thread = thr;
+	thr->procSlot = proc;
 	file->current = file->first_block;
 	file->eof = 0;
 #ifdef __KERNEL_PROFILER_ON__

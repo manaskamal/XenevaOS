@@ -142,6 +142,7 @@ static void _terminal_erase_cursor(Terminal* t) {
  * @param signum -- signal number
  */
 static void _terminal_blink_cursor(int signum) {
+	if (term.cursor_hide) return;
 	if (!term.scrolling) {
 		if (term.blink_visible) {
 			_terminal_erase_cursor(&term);
@@ -720,6 +721,41 @@ void ProcessControlSequence(Terminal* term_,char ch) {
 		memset(escBuf, 0, 256);
 		return;
 	}
+
+	if (ch == CSI_CURSOR_HOME || ch == 'f') {
+		for (int i = 0; i < 256; i++) {
+			if (escBuf[i] == CSI_CURSOR_HOME || escBuf[i] == 'f') {
+				escBuf[i] = 0;
+				break;
+			}
+		}
+		int row = 0, col = 0;
+		char* semi = strchr(escBuf, ';');
+		if (semi) {
+			*semi = '\0';
+			row = atoi(escBuf);
+			col = atoi(semi + 1);
+		}else {
+			row = atoi(escBuf);
+			col = 0;
+		}
+
+		if (row > 0) row--;
+		if (col > 0) col--;
+
+		if (row < 0) row = 0;
+		if (row >= term.rows) row = term.rows - 1;
+		if (col < 0) col = 0;
+		if (col >= term.cols) col = term.cols - 1;
+
+		term.cursorX = row;
+		term.cursorY = col;
+
+		_escape_seq = false;
+		_seq_csi = false;
+		memset(escBuf, 0, 256);
+		return;
+	}
 	/* emulate erase text non line mode */
 	if (ch == CSI_ERASE_TEXT_NONLINE) {
 		for (int i = 0; i < 256; i++) {
@@ -785,7 +821,63 @@ void ProcessControlSequence(Terminal* term_,char ch) {
 		memset(escBuf, 0, 256);
 		return;
 	}
+
+	if (ch == CSI_SET_MODE || ch == CSI_RESET_MODE) {
+		for (int i = 0; i < 256; i++) {
+			if (escBuf[i] == ch) {
+				escBuf[i] = 0;
+				break;
+			}
+		}
+
+		int mode = 0;
+		if (escBuf[0] == '?')
+			mode = atoi(escBuf + 1);
+		else
+			mode = atoi(escBuf);
+
+		switch (mode) {
+		case 25:
+			term_->blink_visible = (ch == CSI_SET_MODE) ? 1 : 0;
+			term_->cursor_hide = !term_->blink_visible;
+			//if (term_->cursor_hide == 0)
+				//alarm(1);
+			_KePrint("Cursor blink change requested %d\r\n", term_->cursor_hide);
+			break;
+
+		case 1049:
+			break;
+		case 1000:
+			break;
+		default:
+			break;
+		}
+		_escape_seq = false;
+		_seq_csi = false;
+		memset(escBuf, 0, 256);
+		return;
+	}
+
+	if (ch == CSI_SAVE_CURSOR) {
+		term_->savedCursorX = term_->cursorX;
+		term_->savedCursorY = term_->cursorY;
+		_escape_seq = false;
+		_seq_csi = false;
+		memset(escBuf, 0, 256);
+		return;
+	}
+
+	if (ch == CSI_RESTORE_CURSOR) {
+		term_->cursorX = term_->savedCursorX;
+		term_->cursorY = term_->savedCursorY;
+		_escape_seq = false;
+		_seq_csi = false;
+		memset(escBuf, 0, 256);
+		return;
+	}
+
 }
+
 void ProcessOSCSequence(Terminal* t, const char* payload) {
 	//OSC 133 - shell integration/ semantic prompt markers
 	if (strncmp(payload, "133;", 4) == 0) {
@@ -1058,17 +1150,18 @@ void TerminalHandleMessage(PostEvent *e) {
  * asynchronous reads
  */
 void TerminalThread() {
-	char buf[512];
-	memset(&buf, 0, 512);
+	char* buf = (char*)malloc(1024);
+	memset(buf, 0, 1024);
 	int bytes_read = 0;
 	while (1) {
-		bytes_read = _KeReadFile(master_fd, buf, 512);
-		if (bytes_read >= 512) {
-			bytes_read = 512;
+		bytes_read = _KeReadFile(master_fd, buf, 1024);
+		if (bytes_read >= 1024) {
+			bytes_read = 1024;
 		}
 
 		for (int i = 0; i < bytes_read; i++){
 			TerminalProcessLine(&term,buf[i]);
+
 		}
 	
 		/* now bytes_read tells the terminal
@@ -1076,15 +1169,13 @@ void TerminalThread() {
 		 * cells 
 		 */
 		if ((bytes_read > 0) || _update_terminal_) {
-
 			TerminalFlush(&term);
-			
 			bytes_read = 0;
 			_update_terminal_ = false;
 		}
 		
 #ifdef ARCH_ARM64
-		_KeProcessSleep(10);
+		_KeProcessSleep(60);
 #elif ARCH_X64
 		_KeProcessSleep(10000);
 #endif
@@ -1132,14 +1223,16 @@ int main(int argc, char* arv[]){
 	term.defaultFg = WHITE;
 	term.scrollTop = 0;
 	term.scrollBot = term.rows - 1;
-	term.originX = 0;
+	term.originX = 1;
 	term.originY = 26;
 	term.lastCellXClicked = -1;
 	term.lastCellYClicked = -1;
 	term.inputStartX = 0;
 	term.inputStartY = 0;
 	term.scrolling = 0;
-
+	term.savedCursorX = 0;
+	term.savedCursorY = 0;
+	term.cursor_hide = 0;
 	backColor = term.defaultBG;
 	fgColor = term.defaultFg;
 

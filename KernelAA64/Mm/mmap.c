@@ -269,7 +269,7 @@ void* CreateMemMapping(void* address, size_t len, int prot, int flags, int fd,
 				fb->numPageIndex++;
 
 				if (file->eof) {
-					UARTDebugOut("File : %s , eof done : %d\r\n", file->filename, file->eof);
+					//UARTDebugOut("File : %s , eof done : %d\r\n", file->filename, file->eof);
 				}
 			}
 

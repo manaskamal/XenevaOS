@@ -120,4 +120,6 @@ extern void AuAA64SyscallHandler(AA64Registers* regs);
  * @param out_milliseconds -- where to store the number of ticks
  */
 extern void aa64_calculate_ticks(uint64_t seconds, uint64_t subsec, uint64_t* out_seconds, uint64_t* out_subsec);
+
+extern uint64_t AA64CPUGetFreqencyHz();
 #endif
