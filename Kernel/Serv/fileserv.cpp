@@ -46,7 +46,7 @@
  * @param file -- file path
  * @param mode -- mode of the file
  */
-int OpenFile(char* filename, int mode) {
+int OpenFile(char* filename, int mode) { SeTextOut("<<<<<<<<<< OPENFILE HIT >>>>>>>>>>\r\n");
 	x64_cli();
 	AuThread* current_thr = AuGetCurrentThread();
 	if (!current_thr)
@@ -96,7 +96,7 @@ int OpenFile(char* filename, int mode) {
     	rights |= CAP_READ;
 
 	if (mode & (FILE_OPEN_WRITE | FILE_OPEN_CREAT))
-   	 rights |= CAP_WRITE;
+    	rights |= CAP_WRITE;
 
 	/* Preserve existing default behaviour. */
 	if (mode == 0)
@@ -108,6 +108,8 @@ int OpenFile(char* filename, int mode) {
     	file,
     	CAP_OBJ_FILE,
     	rights);
+	
+	SeTextOut("[CAP] Capability created fd=%d rights=%x\r\n", fd, rights);
 
 	return fd;
 	}

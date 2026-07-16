@@ -30,7 +30,6 @@
 #ifndef __AURORA_H__
 #define __AURORA_H__
 
-
 #include <stdint.h>
 
 
@@ -56,6 +55,7 @@
 #define AU_EXTERN extern
 #endif
 
+typedef uint32_t CapRights;
 
 #ifdef ARCH_X64
 #define KERNEL_STACK_LOCATION   0xFFFFFB0000000000

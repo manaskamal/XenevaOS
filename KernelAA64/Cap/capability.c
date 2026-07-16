@@ -30,6 +30,9 @@
 #include <Cap/capability.h>
 #include <process.h>
 #include <string.h>
+#include <aucon.h>
+#include <_null.h>
+#include <stdint.h>
 
 /*
  * NOTE on concurrency: every existing syscall entry point in
@@ -44,19 +47,20 @@
  * should take it before touching proc->caps.
  */
 
-/* internal helper: is `fd` a valid index into the capability table? */
-static inline bool cap_slot_in_range(int fd) {
-	return (fd >= 0) && (fd < FILE_DESC_PER_PROCESS);
+ /* internal helper: is `fd` a valid index into the capability table? */
+static unsigned char  cap_slot_in_range(int rq) {
+	return (rq >= 0) && (rq < 63);
 }
 
 /* internal helper: slot pointer, or NULL if fd is out of range */
-static inline AuCapability* cap_slot(AuProcess* proc, int fd) {
+static AuCapability* cap_slot(AuProcess* proc, int fd) {
 	if (!proc || !cap_slot_in_range(fd))
 		return NULL;
 	return &proc->caps[fd];
 }
 
-int BordoisilaCapCreate(AuProcess* proc, int fd, void* object, uint8_t type, CapRights rights) {
+int BordoisilaCapCreate(void* procptr, int fd, void* object, uint8_t type, CapRights rights) {
+	AuProcess* proc = (AuProcess*)procptr;
 	AuCapability* cap = cap_slot(proc, fd);
 	if (!cap)
 		return CAP_ERR_INVALID;
@@ -79,7 +83,8 @@ int BordoisilaCapCreate(AuProcess* proc, int fd, void* object, uint8_t type, Cap
 	return CAP_OK;
 }
 
-AuCapability* BordoisilaCapLookup(AuProcess* proc, int fd) {
+AuCapability* BordoisilaCapLookup(AuProcess* procptr, int fd) {
+	AuProcess* proc = (AuProcess*)procptr;
 	AuCapability* cap = cap_slot(proc, fd);
 	if (!cap)
 		return NULL;
@@ -88,21 +93,23 @@ AuCapability* BordoisilaCapLookup(AuProcess* proc, int fd) {
 	return cap;
 }
 
-bool BordoisilaCapCheckRights(AuProcess* proc, int fd, CapRights required) {
+bool BordoisilaCapCheckRights(AuProcess* procptr, int fd, CapRights required) {
+	AuProcess* proc = (AuProcess*)procptr;
     AuCapability* cap = BordoisilaCapLookup(proc, fd);
 
     if (!cap) {
-        SeTextOut("[CAP] No capability fd=%d\r\n", fd);
+        AuTextOut("[CAP] No capability fd=%d\r\n", fd);
         return false;
     }
 
-    SeTextOut("[CAP] Check fd=%d req=%x have=%x\r\n",
-        fd, required, cap->rights);
+    AuTextOut("[CAP] Check fd=%d req=%x have=%x\r\n",
+    fd, required, cap->rights);
 
     return (cap->rights & required) == required;
 }
 
-int BordoisilaCapRestrict(AuProcess* proc, int fd, CapRights new_rights) {
+int BordoisilaCapRestrict(AuProcess* procptr, int fd, CapRights new_rights) {
+	AuProcess* proc = (AuProcess*)procptr;
 	AuCapability* cap = BordoisilaCapLookup(proc, fd);
 	if (!cap)
 		return CAP_ERR_INVALID;
@@ -114,7 +121,9 @@ int BordoisilaCapRestrict(AuProcess* proc, int fd, CapRights new_rights) {
 	return CAP_OK;
 }
 
-void BordoisilaCapDestroy(AuProcess* proc, int fd) {
+void BordoisilaCapDestroy(AuProcess* procptr, int fd) {
+	AuProcess* proc = (AuProcess*)procptr;
+
 	AuCapability* cap = cap_slot(proc, fd);
 	if (!cap || !cap->valid)
 		return;
@@ -127,7 +136,8 @@ void BordoisilaCapDestroy(AuProcess* proc, int fd) {
 	cap->valid = false;
 }
 
-void BordoisilaCapCleanupProcess(AuProcess* proc) {
+void BordoisilaCapCleanupProcess(AuProcess* procptr) {
+	AuProcess* proc = (AuProcess*)procptr;
 	if (!proc)
 		return;
 	for (int i = 0; i < FILE_DESC_PER_PROCESS; i++) {
@@ -143,9 +153,12 @@ void BordoisilaCapCleanupProcess(AuProcess* proc) {
 	}
 }
 
-void BordoisilaCapInheritTable(AuProcess* parent, AuProcess* child) {
-	if (!parent || !child)
+void BordoisilaCapInheritTable(void* parentptr , void* childptr) {
+
+	if (!parentptr || !childptr)
 		return;
+	AuProcess* parent = (AuProcess*)parentptr;
+	AuProcess* child = (AuProcess*)childptr;
 
 	/* NOTE: as of this writing AuCreateProcessSlot()/AuCreateProcess()
 	 * zero-initialize fds[] rather than copying the parent's open
