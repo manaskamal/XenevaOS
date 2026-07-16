@@ -250,6 +250,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Cap\capability.cpp" />
     <ClInclude Include="..\BaseHdr\ahci.h" />
     <ClInclude Include="..\BaseHdr\ahcidsk.h" />
     <ClInclude Include="..\BaseHdr\aucon.h" />
