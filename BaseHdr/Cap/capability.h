@@ -1,5 +1,5 @@
-#ifndef capability_h
-#define capability_h
+#ifndef CAPABILITY_H
+#define CAPABILITY_H
 
 
 
