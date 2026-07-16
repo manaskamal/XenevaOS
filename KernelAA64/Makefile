@@ -37,7 +37,7 @@ ifeq ($(TOOLCHAIN), llvm)
 
     LDFLAGS = $(LLVM_TARGET) -fuse-ld=lld -nostdlib \
               -Wl,-entry:_AuMain \
-              -Wl,-base:0xFFFFFF8000000000 \
+              -Wl,-base:0xFFFFC00000000000 \
               -Wl,-subsystem:native
 
 else
