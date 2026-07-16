@@ -184,7 +184,6 @@ void _AuroraTimerCallback(void* p) {
  * by bootloader
  **/
 void _AuMain(KERNEL_BOOT_INFO* info) {
-	AuUartPutString("ok \n");
     _littleboot_used = false;
     if (info->boot_type == BOOT_LITTLEBOOT_ARM64) {
         AuUartPutString("[aurora]:Kernel is booted using LittleBoot ARM64 \r\n");
@@ -208,7 +207,7 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	AuHeapInitialize();
 	AuDeviceTreeMapMMIO();
 	AuAA64BoardInitialize();
-	AA64CPUPostInitialize(info);
+	AA64CPUPostInitialize(info);	
 	AuTextOut("Initializing VFS \r\n");
 	AuVFSInitialise();
 	AuTextOut("[aurora]: VFS initialized \r\n");
