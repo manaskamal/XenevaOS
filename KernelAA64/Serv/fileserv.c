@@ -30,6 +30,7 @@
 **/
 
 #include <Serv/sysserv.h>
+#include <Cap/capability.h>
 #include <Fs/vfs.h>
 #include <Fs/Fat/Fat.h>
 #include <Hal/AA64/sched.h>
@@ -50,7 +51,7 @@ extern uint64_t read_sp_el1();
  * @param file -- file path
  * @param mode -- mode of the file
  */
-int OpenFile(char* filename, int mode) {
+int OpenFile(char* filename, int mode) { 
 	AA64Thread* current_thr = AuGetCurrentThread();
 	if (!current_thr)
 		return -1;
@@ -102,6 +103,26 @@ int OpenFile(char* filename, int mode) {
 	if (file->open)
 		file->open(file,NULL);
 	current_proc->fds[fd] = file;
+CapRights rights = CAP_SEEK;
+
+if (mode & FILE_OPEN_READ_ONLY)
+    rights |= CAP_READ;
+
+if (mode & (FILE_OPEN_WRITE | FILE_OPEN_CREAT))
+    rights |= CAP_WRITE;
+
+/* Preserve current default behaviour */
+if (mode == 0)
+    rights |= CAP_READ;
+
+BordoisilaCapCreate(
+    current_proc,
+    fd,
+    file,
+    CAP_OBJ_FILE,
+    rights);
+
+AuTextOut("[CAP] created fd=%d rights=%x\r\n", fd, rights);
 	//_setdebug = 1;
 	return fd;
 }

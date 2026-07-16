@@ -161,7 +161,7 @@
     <ClCompile>
       <WarningLevel>Level1</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>ARCH_ARM64;__TARGET_BOARD_IMX8MP_VERDIN_DAHLIA__;_USE_DLMALLOC;__STDC_LIMIT_MACROS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>ARCH_ARM64;__TARGET_BOARD_QEMU_VIRT__;_USE_DLMALLOC;__STDC_LIMIT_MACROS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>Default</ConformanceMode>
       <AdditionalIncludeDirectories>..\BaseHdr;..\Acpica\include;..\Acpica;$(SolutionDir)DCL\includes;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
@@ -175,7 +175,7 @@
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
       <AssemblerOutput>AssemblyAndSourceCode</AssemblerOutput>
-      <LanguageStandard_C>stdc17</LanguageStandard_C>
+      <LanguageStandard_C>Default</LanguageStandard_C>
     </ClCompile>
     <Link>
       <SubSystem>Native</SubSystem>
@@ -200,7 +200,7 @@
       <AdditionalOptions> /def:exports.def %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
-      <Command>copy "$(SolutionDir)Build\EFI\XENEVA\$(TargetName).exe" "F:\EFI\XENEVA\$(TargetName).exe"</Command>
+      <Command>copy "$(SolutionDir)Build\EFI\XENEVA\$(TargetName).exe" "M:\EFI\XENEVA\$(TargetName).exe"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -255,6 +255,7 @@
     <ClCompile Include="Board\Virt\fwcfg.c" />
     <ClCompile Include="Board\Virt\virt.c" />
     <ClCompile Include="Board\Virt\virtioblk.c" />
+    <ClCompile Include="Cap\capability.c" />
     <ClCompile Include="circbuf.c" />
     <ClCompile Include="clean.c" />
     <ClCompile Include="Cred\cred.c" />
@@ -358,6 +359,7 @@
     <ClInclude Include="..\BaseHdr\Board\RPI3bp\rpi3bp_spi.h" />
     <ClInclude Include="..\BaseHdr\Board\RPI3bp\rpi_ili9486.h" />
     <ClInclude Include="..\BaseHdr\bordoisila_io.h" />
+    <ClInclude Include="..\BaseHdr\Cap\capability.h" />
     <ClInclude Include="..\BaseHdr\Cred\cred.h" />
     <ClInclude Include="..\BaseHdr\Cred\group.h" />
     <ClInclude Include="..\BaseHdr\Cred\user.h" />
