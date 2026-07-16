@@ -121,5 +121,7 @@ typedef struct _timeval_t_ {
  */
 extern int AuTimerSetITimer(AA64Thread* thr, int which, const itimerval_t* newval, itimerval_t* oldval);
 extern int AuTimerGetITimer(AA64Thread* thr, int which, itimerval_t* curr_value);
+extern void AuSetWalltime(int64_t sec, int64_t nsec);
+extern void AuGetWalltime(int64_t* out_sec, int64_t* out_ns);
 
 #endif

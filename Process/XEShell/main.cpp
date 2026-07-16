@@ -86,6 +86,7 @@ void XEShellWriteCurrentDir() {
 		printf("\033[32m\033[40mXEShell /$:\033[37m\033[40m");
 		/* OSC 133;B = prompt end, input starts here*/
 		printf("\033]133;B\007");
+		fflush(stdout);
 		_draw_shell_curdir = false;
 	}
 }
@@ -209,6 +210,7 @@ void XEShellReadLine() {
 		cmdBuf[index++] = c;
 	}
 	cmdBuf[index] = '\0';
+	fflush(stdout);
 }
 
 /*
@@ -536,6 +538,6 @@ int main(int argc, char* arv[]){
 		XEShellWriteCurrentDir();
 		XEShellReadLine();	
 		XEShellProcessLine();
-		_KeProcessSleep(10);
+		_KeProcessSleep(60);
 	}
 }

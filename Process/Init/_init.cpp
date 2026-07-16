@@ -327,7 +327,9 @@ extern "C" void main(int argc, char* argv[]) {
 			memset(init_msg_buff, 0, sizeof(InitRequestMsg) + 1);
 		}
 		if (pid == 1)
-			_KeProcessWaitForTermination(-1);
+			if (_KeProcessWaitForTermination(-1) == -1) {
+				_KeProcessSleep(1000);
+			}
 	}
 
 	

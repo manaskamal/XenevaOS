@@ -51,6 +51,21 @@ XE_EXTERN{
 	   PROCESS_TOKEN_NETSERVER,
     };
 
+
+/**
+ * _sys_proc_list -- a way to report current status
+ * of information about all processes
+ */
+typedef struct _sys_proc_list_ {
+	int proc_id;
+	char name[16];
+	uint64_t total_runtime_us;
+	uint64_t window_runtime_us;
+	uint32_t num_threads;
+	uint32_t num_file_opened;
+	uint32_t cpu_usage;
+}XEProcessList;
+
 	/**
 	 * @brief _KePauseThread -- pause currently running
 	 * thread
@@ -188,6 +203,10 @@ XE_EXTERN{
      * @param category -- category to free
      */
 	XE_LIB int _KeProcessTokenRemoveSelf(uint8_t category);
+
+	XE_LIB int _KeGetNumProcessCount();
+
+	XE_LIB int _KeProcessFetch(XEProcessList* list, int num_proc_count);
 
 #ifdef __cplusplus
 }

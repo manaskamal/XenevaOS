@@ -313,3 +313,7 @@ void AA64CPUPostInitialize(KERNEL_BOOT_INFO* info) {
 	//AuPL031RTCInit();
 	//mask_irqs();
 }
+
+uint64_t AA64CPUGetFreqencyHz() {
+	return cpuFrequency;
+}

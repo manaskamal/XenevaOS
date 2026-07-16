@@ -182,7 +182,7 @@
       <GenerateDebugInformation>
       </GenerateDebugInformation>
       <OutputFile>$(SolutionDir)Build\glimpse.exe</OutputFile>
-      <AdditionalLibraryDirectories>$(SolutionDir)ARM64\Debug;$(SolutionDir)Libs\XECrt;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)ARM64\Debug;$(SolutionDir)Libs\XECrt;$(SolutionDir)Build;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>XEClib.lib; xecrt.lib; chlkha.lib;ftype.lib;</AdditionalDependencies>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
       <EnableUAC>false</EnableUAC>
