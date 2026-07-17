@@ -457,6 +457,13 @@ aa64_restore_sp:
    msr SPSR_EL1,x2
    ret
 
+.global aa64_signal_return
+aa64_signal_return:
+    mov x16, 24
+    svc #0
+    mov x0, x6
+    ret
+
 
     
 

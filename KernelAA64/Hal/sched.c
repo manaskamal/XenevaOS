@@ -43,6 +43,7 @@
 #include <aucon.h>
 #include <process.h>
 #include <aurora.h>
+#include <signal.h>
 
 extern void aa64_store_context(AA64Thread* thr);
 extern void store_syscall(AA64Thread* thr);
@@ -290,9 +291,11 @@ AA64Thread* AuCreateKthread(void(*entry) (uint64_t),uint64_t* pml, char* name){
 	t->thread_id = thread_id++;
 	t->fpsr = 0;
 	t->fpcr = 0;
+	AuSignalInitializeTrampoline(t);
 	AuThreadInsert(t);
 	return t;
 }
+
 
 /**
  * @brief AuCreateSubKthread -- create sub kernel thread of parent
@@ -319,6 +322,7 @@ AA64Thread* AuCreateSubKthread(void(*entry) (uint64_t),uint64_t stack, uint64_t*
 	t->thread_id = thread_id++;
 	t->fpsr = 0;
 	t->fpcr = 0;
+	//AuSignalInitializeTrampoline(t);
 	AuThreadInsert(t);
 	return t;
 }
@@ -352,7 +356,7 @@ extern void resume_user(AA64Thread* thr,void* ksp);
 void AuResumeUserThread() {
 	AA64Thread* thr = current_thread;
 	thr->x30 = thr->elr_el1;
-	resume_user(thr, thr->sp);
+	resume_user(thr, (void*)thr->sp);
 	//aa64_enter_user(thr->sp, thr->elr_el1);
 	while (1) {}
 }
@@ -441,7 +445,7 @@ sched:
 
 	
 	/** check if the thread was left somewhere in kernel space **/
-	if ((current_thread->state == THREAD_STATE_LEFT_IN_KERNEL)) {
+	if (current_thread->state == THREAD_STATE_LEFT_IN_KERNEL) {
 
 		current_thread->state = THREAD_STATE_READY;
 		aa64_restore_sp(current_thread);
@@ -449,12 +453,14 @@ sched:
 		for (;;);
 	}
 
-	uint64_t sp = read_sp();
+
+	AuSignalDeliver(current_thread);
+	
 
 	if ((current_thread->threadType & THREAD_LEVEL_USER) && current_thread->first_run == 1) {
 		uint64_t sp = current_thread->sp;
 		//current_thread->sp = current_thread->originalKSp;
-		resume_user(current_thread,sp);
+		resume_user(current_thread,(void*)sp);
 	}
 
 
@@ -495,7 +501,7 @@ uint64_t AuCreateKernelStack(uint64_t* pml) {
 	location += (uint64_t)ke_stack_idx * KERNEL_STACK_SIZE;
 	for (int i = 0; i < (KERNEL_STACK_SIZE) / 0x1000; i++) {
 		uint64_t addr = (uint64_t)P2V((uint64_t)AuPmmngrAlloc());
-		memset(addr, 0, PAGE_SIZE);
+		memset((void*)addr, 0, PAGE_SIZE);
 		AuMapPage(V2P(addr), (location + (uint64_t)i * 4096), PTE_AP_RW | PTE_NORMAL_MEM);
 	}
 	ke_stack_idx += 2;
@@ -513,7 +519,7 @@ uint64_t AuCreateSubKernelStack(AuProcess* proc, uint64_t* pml) {
 	location += proc->_kstack_index_ * KERNEL_STACK_SIZE;
 	for (int i = 0; i < (KERNEL_STACK_SIZE) / 0x1000; i++) {
 		uint64_t addr = (uint64_t)P2V((uint64_t)AuPmmngrAlloc());
-		memset(addr, 0, PAGE_SIZE);
+		memset((void*)addr, 0, PAGE_SIZE);
 		AuMapPage(V2P(addr), (location + i * 4096), PTE_AP_RW | PTE_NORMAL_MEM);
 	}
 
@@ -616,6 +622,21 @@ void AuSleepThread(AA64Thread* thread, uint64_t ms) {
 	AuThreadInsertSleep(thread);
 }
 
+/**
+ * @brief AuThreadMakeReady -- make a thread forcefully
+ * ready for next
+ * @param thread -- pointer to thread struct
+ */
+void AuThreadMakeReady(AA64Thread* thread) {
+	if (thread->state == THREAD_STATE_SLEEP) {
+		thread->sleepQuanta = 0;
+		AuThreadDeleteSleep(thread);
+		AuThreadInsert(thread);
+		thread->state = THREAD_STATE_READY;
+	}
+	else if (thread->state == THREAD_STATE_BLOCKED) 
+		AuUnblockThread(thread);
+}
 /**
  * @brief AuThreadFindByID -- finds a thread by its id from
  * ready queue

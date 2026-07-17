@@ -30,7 +30,11 @@
 #ifndef __PROCESS_H__
 #define __PROCESS_H__
 
-
+#if defined(__GNUC__) || defined(__clang__)
+#ifndef __cplusplus
+#include <stdbool.h>
+#endif
+#endif
 #include <stdint.h>
 #include <Fs/vfs.h>
 #include <Cred/group.h>

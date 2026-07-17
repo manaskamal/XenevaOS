@@ -38,6 +38,7 @@
 #define SEQUENCE_DCS 'P'
 #define SEQUENCE_CSI '[' //control 
 #define SEQUENCE_ST  '\\'
+#define SEQUENCE_OSC ']'
 
 #define CSI_CURSOR_UP  'A'
 #define CSI_CURSOR_DOWN 'B'

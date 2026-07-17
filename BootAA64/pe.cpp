@@ -58,8 +58,7 @@ void XEPELoadImage(void* filebuff) {
 	uint8_t* filebuf = (uint8_t*)filebuff;
 
 	PIMAGE_DOS_HEADER dosHeader = (PIMAGE_DOS_HEADER)filebuf;
-	PIMAGE_NT_HEADERS ntHeaders = raw_offset<PIMAGE_NT_HEADERS>(dosHeader, dosHeader->e_lfanew);
-	
+	struct _IMAGE_NT_HEADERS_PE32PLUS* ntHeaders = raw_offset<struct _IMAGE_NT_HEADERS_PE32PLUS*>(dosHeader, dosHeader->e_lfanew);	
 
 	PSECTION_HEADER sectionHeader = raw_offset<PSECTION_HEADER>(&ntHeaders->OptionalHeader, ntHeaders->FileHeader.SizeOfOptionaHeader);
 	size_t ImageBase = 0xFFFFC00000000000;// 0xFFFFFFFC00000000;

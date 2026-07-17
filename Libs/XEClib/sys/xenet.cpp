@@ -133,8 +133,16 @@ struct hostent* gethostbyname(const char* name) {
 		return NULL;
 	}
 
+	/** need someway to: get all available interfaces
+	 * rather than hardcoding it
+	 */
+#ifdef ARCH_X64
 	char ifname[5];
 	strcpy(ifname, "e1000");
+#else
+	char ifname[12];
+	strcpy(ifname, "virtio-net");
+#endif
 	socket_setopt(sock, SOL_SOCKET, SO_BINDTODEVICE, ifname, strlen(ifname) + 1);
 	
 	XEDNSEntry dns;
@@ -213,7 +221,8 @@ struct hostent* gethostbyname(const char* name) {
 		if (len > 0)
 			break;
 		/* sleep for 1s*/
-		_KeProcessSleep(10000);
+		_KeProcessSleep(100);
+		_KePrint("GetHostbyname looping \r\n");
 		timeout++;
 	}
 

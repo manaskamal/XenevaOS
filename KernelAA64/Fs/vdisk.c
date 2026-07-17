@@ -41,7 +41,7 @@
 #include <Drivers/uart.h>
 #include <Fs/fsprobe.h>
 #include <Fs/Fat/Fat.h>
-#include <Fs/Ext2/Ext2.h>
+#include <Fs/Ext2/ext2.h>
 
 AuVDisk* VdiskArray[MAX_VDISK_DEVICES];
 int _vdisk_num_;

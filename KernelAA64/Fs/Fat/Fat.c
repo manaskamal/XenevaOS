@@ -301,7 +301,7 @@ size_t FatRead(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buf) {
 	if (file->current == (FAT_EOC_MARK & 0x0FFFFFFF))
 		return 0;
 
-	auto lba = FatClusterToSector32(fs, file->current);
+	uint32 lba = FatClusterToSector32(fs, file->current);
 	AuVDiskRead(vdisk, lba, fs->__SectorPerCluster, buf);
 
 	uint32_t value = FatReadFAT(fsys, file->current);

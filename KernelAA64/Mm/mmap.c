@@ -42,6 +42,7 @@
 #include <Mm/pmmngr.h>
 #include <Mm/mmfile.h>
 #include <Serv/sysserv.h>
+#include <Hal/AA64/profile.h>
 
 
 #define PROTECTION_FLAG_READONLY  1<<0
@@ -131,7 +132,6 @@ void* CreateMemMapping(void* address, size_t len, int prot, int flags, int fd,
 	
 	if (!len)
 		return 0;
-
 
 	/* for now, memory mapping doesn't support lazy loading
 	 * so everything works at pre-paging */

@@ -29,15 +29,22 @@
 *
 **/
 
+#if defined(__GNUC__) || defined(__clang__)
+#ifndef __cplusplus
+#include <stdbool.h>
+#endif
+#endif
 #include <process.h>
 #include <aucon.h>
 #include <Mm/vmmngr.h>
 #include <Mm/kmalloc.h>
 #include <pe.h>
+#include <clean.h>
 #include <Mm/pmmngr.h>
 #include <string.h>
 #include <_null.h>
 #include <Hal/AA64/sched.h>
+#include <Hal/AA64/aa64lowlevel.h>
 #include <Mm/shm.h>
 #include <loader.h>
 #include <Ipc/postbox.h>
