@@ -32,7 +32,11 @@
 #include <pcie.h>
 #include <string.h>
 #include <stdint.h>
+#if defined(__GNUC__) || defined(__clang__)
+#ifndef __cplusplus
 #include <stdbool.h>
+#endif
+#endif
 #include <dtb.h>
 #include <aucon.h>
 #include <Hal/AA64/qemu.h>

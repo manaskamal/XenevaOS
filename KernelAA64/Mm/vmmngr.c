@@ -39,7 +39,11 @@
 #include <_null.h>
 #include <Drivers/uart.h>
 #include <Hal/AA64/profile.h>
+#if defined(__GNUC__) || defined(__clang__)
+#ifndef __cplusplus
 #include <stdbool.h>
+#endif
+#endif
 
 
 uint64_t* _RootPaging;

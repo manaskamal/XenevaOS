@@ -42,7 +42,11 @@
 #include <Drivers/uart.h>
 #include <aucon.h>
 #include <Cred/cred.h>
+#if defined(__GNUC__) || defined(__clang__)
+#ifndef __cplusplus
 #include <stdbool.h>
+#endif
+#endif
 
 /**
 * @brief

@@ -31,7 +31,11 @@
 #define __AU_CONSOLE_H__
 
 #include <aurora.h>
+#if defined(__GNUC__) || defined(__clang__)
+#ifndef __cplusplus
 #include <stdbool.h>
+#endif
+#endif
 
 #define SCREEN_SETMODE    200
 #define SCREEN_GETWIDTH   201

@@ -30,7 +30,11 @@
 #include <Mm/kmalloc.h>
 #include <stdint.h>
 #include <string.h>
+#if defined(__GNUC__) || defined(__clang__)
+#ifndef __cplusplus
 #include <stdbool.h>
+#endif
+#endif
 #include <_null.h>
 #include <Mm/vmmngr.h>
 #include <Mm/pmmngr.h>

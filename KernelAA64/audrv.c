@@ -34,7 +34,11 @@
 #include <Mm/vmmngr.h>
 #include <string.h>
 #include <pe.h>
+#if defined(__GNUC__) || defined(__clang__)
+#ifndef __cplusplus
 #include <stdbool.h>
+#endif
+#endif
 #include <stdio.h>
 #include <Mm/kmalloc.h>
 #include <pcie.h>
