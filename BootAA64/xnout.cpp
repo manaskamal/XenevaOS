@@ -299,12 +299,12 @@ int XEPrintf(wchar_t* fmt, ...) {
 			if (c != 'd') {
 				if (lmodifier == 'H')
 					v = (uint8_t)v;
-				else if (lmodifier = 'h')
+				else if (lmodifier == 'h')
 					v = (unsigned short)v;
 				sign = 0;
 			}
 			else {
-				if (lmodifier = 'H')
+				if (lmodifier == 'H')
 					v = (signed char)v;
 				else if (lmodifier == 'h')
 					v = (short)v;

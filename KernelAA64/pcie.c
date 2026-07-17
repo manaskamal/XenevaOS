@@ -60,7 +60,7 @@ static int _pcie_check_and_map_dtb() {
 		return 1;
 	}
 	AuTextOut("[aurora]: pcie found \r\n");
-#ifdef __TARGET_BOARD_QEMU_VIRT__
+#ifdef __TARGET_BOARD_QEMU_VIRT__ 
 	/* else need to parse the DTB for */
 	uint32_t addressCell = AuDeviceTreeGetAddressCells(pcie);
 	uint32_t sizeCell = AuDeviceTreeGetSizeCells(pcie);
@@ -70,10 +70,13 @@ static int _pcie_check_and_map_dtb() {
 	AuTextOut("[aurora]: ecam address : %x, size value : %x \n", ecamAddr, sizeValue);
 
 	/** in qemu, ecam address is 256 mb so 0x10000 number of pages */
-	_ecamAddress = (uint64_t)AuMapMMIO(ecamAddr, 0x10000);
-#endif
+	if (ecamAddr != 0)
+		_ecamAddress = (uint64_t)AuMapMMIO(ecamAddr, 0x10000);
+
 	_pcieInitialized = 1;
+#endif
 	return 0;
+
 }
 
 static bool _pcie_use_hard_code_ecam() {
@@ -132,7 +135,6 @@ void AA64PCIeInitialize() {
 	AuTextOut("[aurora]: Ki koriba aru !! Eku dekhun device discovery mechanism support nokore !! Baad diya \r\n");
 	AuTextOut("[aurora]: Ponta Bhaat khuwa ge \r\n");
 	_pcieInitialized = 0;
-	for (;;);
 	return;
 
 }

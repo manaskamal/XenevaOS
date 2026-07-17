@@ -104,6 +104,21 @@ typedef struct _au_proc_cred_ {
 	uint16_t num_sgid;
 }AuProcCredentials;
 
+/**
+ * _sys_proc_list -- a way to report current status
+ * of information about all processes
+ */
+typedef struct _sys_proc_list_ {
+	int proc_id;
+	char name[16];
+	uint64_t total_runtime_us;
+	uint64_t window_runtime_us;
+	uint32_t num_threads;
+	uint32_t num_file_opened;
+	uint32_t cpu_usage;
+}AuProcessList;
+
+
 //#pragma pack(push,1)
 typedef struct _au_proc_ {
 	char name[16];
@@ -119,7 +134,11 @@ typedef struct _au_proc_ {
 	size_t _user_stack_index_;
 	size_t _kstack_index_;
 	uint64_t _envp_block_;
-
+	uint64_t total_runtime_us;
+	uint64_t window_runtime_us;
+	uint32_t cpu_usage;
+	uint64_t prev_sample_runtime_us;
+	uint64_t prev_sample_time_us;
 #ifdef ARCH_X64
 	/* threading section */
 	AuThread* main_thread;
@@ -283,7 +302,7 @@ extern int AuProcessGetFileDesc(AuProcess* proc);
 * @param pid -- pid of the process, if -1 then any child
 * process
 */
-extern void AuProcessWaitForTermination(AuProcess *proc, int pid);
+extern int AuProcessWaitForTermination(AuProcess *proc, int pid);
 
 #ifdef ARCH_X64
 extern AuMutex* AuProcessGetMutex();
@@ -314,5 +333,19 @@ extern uint64_t* CreateSubUserStack(AuProcess* proc, uint64_t* cr3);
 *  @param priority -- (currently unused) thread's priority
 */
 extern int AuCreateUserthread(AuProcess* proc, void(*entry) (), char *name);
+
+/**
+ * @brief AuProcGetNumProcessCount -- returns the total number
+ * of process created
+ */
+extern int AuProcGetNumProcessCount();
+
+/**
+ * @brief AuProcessFetch -- fetch current process table
+ * status
+ * @param list -- Pointer to AuProcessList
+ * @param num_proc_count -- number of process count
+ */
+extern int AuProcessFetch(AuProcessList* list, int num_proc_count);
 
 #endif

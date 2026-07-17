@@ -52,7 +52,7 @@
 #include <power.h>
 #include <timer.h>
 
-#define AURORA_MAX_SYSCALL 75
+#define AURORA_MAX_SYSCALL 79
 
 AA64Registers* svcCurrentRegs;
 
@@ -154,7 +154,11 @@ static void* syscalls[AURORA_MAX_SYSCALL] = {
 	AuGetCurrentMS, //71
 	Alarm, //72
 	SetITimer, //73
-	GetITImer, //74
+	GetITimer, //74
+	AuProcGetNumProcessCount, //75
+	AuProcessFetch, //76
+	AuSetWalltime, //77
+	AuGetWalltime, //78
 };
 
 #ifdef __KERNEL_PROFILER_ON__
@@ -231,7 +235,9 @@ static char* syscall_name[AURORA_MAX_SYSCALL] = {
 	"AuPowerReset", //69
 	"AuGetCurrentUS", //70
 	"AuGetCurrentMS", //71
-	"Alarm", 72
+	"Alarm", //72
+	"AuProcGetNumProcessCount", //75
+	"AuProcessFetch", //76
 };
 #endif
 

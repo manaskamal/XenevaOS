@@ -44,6 +44,7 @@
 #include <process.h>
 #include <aurora.h>
 #include <signal.h>
+#include <timer.h>
 
 extern void aa64_store_context(AA64Thread* thr);
 extern void store_syscall(AA64Thread* thr);
@@ -70,6 +71,7 @@ AA64Thread* _idle_thr;
 uint64_t thread_id;
 bool _scheduler_initialized;
 uint64_t scheduler_tick;
+static uint64_t _global_idle_time;
 
 /**
 * @brief AuThreadInsert -- insert a thread into thread list
@@ -338,11 +340,7 @@ void AuIdleThread(uint64_t ctx) {
 	mask_irqs();
 	UARTDebugOut("Idle thread running \r\n");
 	AuTextOut("Starting up Xeneva please wait...\r\n");
-	//uint64_t sp = read_sp();
-	//UARTDebugOut("SP : %x \r\n", sp);
-	UARTDebugOut("Current sp sel : %d \r\n", read_spsel());
-	uint64_t el = _getCurrentEL();
-	UARTDebugOut("IDLE CurrentEl : %d \n", el);
+	_idle_thr->start_time_us = AuGetCurrentUS();
 	enable_irqs();
 	while (1) {
 		enable_irqs();
@@ -433,9 +431,32 @@ sched:
 		runThr->x29 = regs->x29;
 	}
 	
+	uint64_t now = AuGetCurrentUS();
+	uint64_t delta = now - runThr->start_time_us;
+
+	if (runThr->procSlot != NULL) {
+		AuProcess* proc = (AuProcess*)runThr->procSlot;
+		proc->total_runtime_us += delta;
+		proc->window_runtime_us += delta;
+	}
+	else {
+		_global_idle_time += delta;
+	}
+
+	/** change thread's running state to ready state */
+	if (runThr->state == THREAD_STATE_RUNNING)
+		runThr->state = THREAD_STATE_READY;
+
 	scheduler_tick++;
 	AuHandleSleepThreads();
 	AA64NextThread();
+
+	current_thread->start_time_us = now;
+
+	/* mark this thread as running */
+	if (current_thread->state == THREAD_STATE_READY)
+		current_thread->state = THREAD_STATE_RUNNING;
+
 	write_both_ttbr(V2P(current_thread->pml));
 
 
@@ -443,10 +464,9 @@ sched:
 	aa64_restore_fp(&current_thread->fp_regs, &current_thread->fpcr, &current_thread->fpsr);
 	dsb_sy_barrier();
 
-	
+
 	/** check if the thread was left somewhere in kernel space **/
 	if (current_thread->state == THREAD_STATE_LEFT_IN_KERNEL) {
-
 		current_thread->state = THREAD_STATE_READY;
 		aa64_restore_sp(current_thread);
 		/* should not reach here */
@@ -483,7 +503,7 @@ void AuScheduleNext() {
 
 	current_thread->state = THREAD_STATE_LEFT_IN_KERNEL;
 	AA64Thread* storeThr = current_thread;
-
+	aa64_store_fp(&storeThr->fp_regs, &storeThr->fpcr, &storeThr->fpsr);
 	current_thread = _idle_thr;
 	aa64_schedule_init(storeThr, current_thread, V2P(current_thread->pml));
 }
@@ -719,3 +739,4 @@ uint64_t AuGetSystemTimerTick() {
 void AuSetIdleThread(AA64Thread* thr) {
 	_idle_thr = thr;
 }
+
