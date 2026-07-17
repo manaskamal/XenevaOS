@@ -407,6 +407,7 @@ void AuProcessExit(AuProcess* proc, bool schedulable) {
 	}
 
 	/** free up all allocated files by this process **/
+	BordoisilaCapCleanupProcess(proc);
 	for (int i = 0; i < FILE_DESC_PER_PROCESS; i++) {
 		AuVFSNode* file = proc->fds[i];
 		if (file) {

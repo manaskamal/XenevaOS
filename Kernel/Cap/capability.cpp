@@ -30,6 +30,8 @@
 #include <Cap/capability.h>
 #include <process.h>
 #include <string.h>
+#include <_null.h>
+#include <Hal/serial.h>
 
 /*
  * NOTE on concurrency: every existing syscall entry point in
@@ -45,12 +47,12 @@
  */
 
 /* internal helper: is `fd` a valid index into the capability table? */
-static inline bool cap_slot_in_range(int fd) {
-	return (fd >= 0) && (fd < FILE_DESC_PER_PROCESS);
+static unsigned char cap_slot_in_range(int rq) {
+    return (rq >= 0) && (rq < 63);
 }
 
 /* internal helper: slot pointer, or NULL if fd is out of range */
-static inline AuCapability* cap_slot(AuProcess* proc, int fd) {
+static AuCapability* cap_slot(AuProcess* proc, int fd) {
 	if (!proc || !cap_slot_in_range(fd))
 		return NULL;
 	return &proc->caps[fd];
@@ -100,6 +102,38 @@ bool BordoisilaCapCheckRights(AuProcess* proc, int fd, CapRights required) {
         fd, required, cap->rights);
 
     return (cap->rights & required) == required;
+}
+
+int BordoisilaCapDup(AuProcess* proc, int oldfd, int newfd) {
+
+    AuCapability* src = BordoisilaCapLookup(proc, oldfd);
+    if (!src)
+        return CAP_ERR_INVALID;
+
+    if (!cap_slot_in_range(newfd))
+        return CAP_ERR_INVALID;
+
+    if (proc->caps[newfd].valid)
+        return CAP_ERR_INVALID;
+
+    if (proc->fds[newfd])
+        return CAP_ERR_INVALID;
+
+    proc->fds[newfd] = proc->fds[oldfd];
+
+    if (proc->fds[newfd])
+        proc->fds[newfd]->fileCopyCount++;
+
+    AuCapability* dst = &proc->caps[newfd];
+
+    dst->object = src->object;
+    dst->object_type = src->object_type;
+    dst->rights = src->rights;
+    dst->owner = src->owner;
+    dst->flags = src->flags;
+    dst->valid = true;
+
+    return CAP_OK;
 }
 
 int BordoisilaCapRestrict(AuProcess* proc, int fd, CapRights new_rights) {

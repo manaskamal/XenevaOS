@@ -4,10 +4,9 @@
 
 
 #include <aurora.h>
-//#include <Cred/cred.h>
 #include <Cred/user.h>
 #include <stdint.h>
-
+//#include <stdbool.h>
 
 
 
@@ -37,6 +36,8 @@
 
 #define CAP_FLAG_NO_INHERIT   (1 << 0)
 
+
+
 /* Capability entry */
 typedef struct _au_capability_ {
 
@@ -61,6 +62,7 @@ typedef struct _au_capability_ {
 extern int BordoisilaCapCreate(void* proc, int fd, void* object, uint8_t type, CapRights rights);
 extern AuCapability* BordoisilaCapLookup(void* proc, int fd);
 extern bool BordoisilaCapCheckRights(void* proc, int fd, CapRights required);
+extern int BordoisilaCapDup(void* proc, int oldfd, int newfd);
 extern int BordoisilaCapRestrict(void* proc, int fd, CapRights new_rights);
 extern void BordoisilaCapDestroy(void* proc, int fd);
 extern void BordoisilaCapCleanupProcess(void* proc);

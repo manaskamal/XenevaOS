@@ -122,7 +122,7 @@ BordoisilaCapCreate(
     CAP_OBJ_FILE,
     rights);
 
-AuTextOut("[CAP] created fd=%d rights=%x\r\n", fd, rights);
+
 	//_setdebug = 1;
 	return fd;
 }
@@ -199,6 +199,8 @@ size_t ReadFile(int fd, void* buffer, size_t length) {
 	if (!file) {
 		return 0;
 	}
+	if (!BordoisilaCapCheckRights(current_proc, fd, CAP_READ))
+    	return 0;
 	size_t ret_bytes = 0;
 
 	/* every general file will contain its
@@ -254,6 +256,8 @@ size_t WriteFile(int fd, void* buffer, size_t length) {
 	uint8_t* aligned_buffer = (uint8_t*)buffer;
 	if (!file)
 		return 0;
+	if (!BordoisilaCapCheckRights(current_proc, fd, CAP_WRITE))
+    		return 0;
 	size_t write_bytes = 0;
 	size_t ret_bytes;
 	/* every general file will contain its
@@ -307,15 +311,18 @@ int CloseFile(int fd) {
 	AuVFSNode* file = current_proc->fds[fd];
 	if (file->flags & FS_FLAG_FILE_SYSTEM) {
 		current_proc->fds[fd] = 0;
+		BordoisilaCapDestroy(current_proc, fd);
 		return -1;
 	}
 
 	if (file->flags & FS_FLAG_CACHED) {
 		current_proc->fds[fd] = 0;
+		BordoisilaCapDestroy(current_proc, fd);
 		return 0;
 	}
 	if (file->flags & FS_FLAG_GENERAL) {
 		current_proc->fds[fd] = 0;
+		BordoisilaCapDestroy(current_proc, fd);
 		/** NEED to fix, freeing the file causes crash **/
 		kfree(file);
 		return 0;
@@ -324,6 +331,7 @@ int CloseFile(int fd) {
 
 	if (file->flags & FS_FLAG_DIRECTORY) {
 		current_proc->fds[fd] = 0;
+		BordoisilaCapDestroy(current_proc, fd);
 		kfree(file);
 		return 0;
 	}
@@ -332,6 +340,7 @@ int CloseFile(int fd) {
 		if (file->close)
 			file->close(file, file);
 		current_proc->fds[fd] = 0;
+		BordoisilaCapDestroy(current_proc, fd);
 		return 0;
 	}
 
