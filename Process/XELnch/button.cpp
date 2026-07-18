@@ -198,6 +198,7 @@ ButtonIcon* CreateLaunchButtonIcon(char* iconfile, LaunchButton* button) {
 	_KeFileStat(fd, &stat);
 
 	icon->filename = (char*)malloc(strlen(iconfile));
+
 	memset(icon->filename, 0, strlen(iconfile));
 	strcpy(icon->filename, iconfile);
 	icon->fileBuffer = (uint8_t*)_KeMemMap(NULL, stat.size, 0, 0, MEMMAP_NO_FILEDESC, 0);
@@ -215,9 +216,7 @@ void ButtonIconRead(ButtonIcon* btninfo) {
 	if (!btninfo)
 		return;
 	_KeReadFile(btninfo->iconFd, btninfo->fileBuffer, btninfo->fileSize);
-
 	uint8_t* buffer = (uint8_t*)btninfo->fileBuffer;
-
 	BMP* bmp = (BMP*)buffer;
 	unsigned int offset = bmp->off_bits;
 

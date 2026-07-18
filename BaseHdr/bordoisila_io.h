@@ -78,6 +78,36 @@ static inline int _bordoisila_readl_poll_timeout(uintptr_t addr, uint32_t* val,
 	}
 }
 
+static inline void _bordoisila_update_bits(uintptr_t addr, uint32_t mask, uint32_t val) {
+	uint32_t current_val = *(volatile uint32_t*)addr;
+	current_val &= ~mask;
+	current_val |= (val & mask);
+	*(volatile uint32_t*)addr = current_val;
+}
+
+
+#define _bordoisila_read_poll_timeout(addr, val, cond, sleep_us, timeout_us) ({\
+     uint32_t __timeout_us = (timeout_us);\
+     uint32_t __elapsed_us = 0; \
+     int __ret = 0; \
+     while(1){ \
+         (val) = *(volatile uint32_t*)(addr);\
+         if (cond)\
+            break;\
+         if (__elapsed_us >= __timeout_us) {\
+             __ret = -1; \
+             break;\
+         } \
+         if (sleep_us) { \
+             AuAA64BoardSleepUS(sleep_us); \
+             __elapsed_us += (sleep_us); \
+         }else {\
+             __elapsed_us++; \
+         }\
+     }\
+     __ret; \
+})
+
 
 
 #endif

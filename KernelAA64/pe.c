@@ -364,4 +364,5 @@ bool AuCoffResolveAddress(uint8_t* imageBase, uint64_t paddr) {
 	else 
 		UARTDebugOut("[aurora]: pe symbol <?no match?>, offset : %x \r\n", rva);
 	
+	return 1;
 }

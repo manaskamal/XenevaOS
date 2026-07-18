@@ -86,9 +86,9 @@ void AuAA64BoardSleepUS(uint32_t us) {
  */
 void AuAA64BoardSleepMS(uint32_t ms) {
 #ifdef __TARGET_BOARD_RPI3__
-	return AuRPIDelayMS(ms);
+	AuRPIDelayMS(ms);
 #endif
-	return AuAA64BoardSleepUS(ms * 1000ULL);
+	AuAA64BoardSleepUS(ms * 1000ULL);
 }
 
 /**

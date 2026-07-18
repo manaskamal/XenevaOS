@@ -268,7 +268,8 @@ size_t AuTTYSlaveWrite(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint3
 int AuTTYSlaveClose(AuVFSNode* fs, AuVFSNode* file) {
 	AuVFSNode* _fs = AuVFSFind("/dev");
 	if (!_fs)
-		return 0;
+		return 1;
+	return 0;
 }
 
 int AuTTYMasterClose(AuVFSNode* fs, AuVFSNode* file) {

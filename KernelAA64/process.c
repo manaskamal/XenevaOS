@@ -508,12 +508,13 @@ int AuProcessWaitForTermination(AuProcess* proc, int pid) {
 	else {
 		AuProcess* proc = AuProcessFindByPID(0, pid);
 		if (!proc)
-			return;
+			return -1;
 		AA64Thread* thr = AuGetCurrentThread();
 		AuBlockThread(thr);
 		list_add(proc->waitlist, thr);
 		return 1;
 	}
+	return 0;
 }
 
 /**
@@ -561,7 +562,7 @@ static uint32_t AuProcessUpdateCPUPercent(AuProcess* proc, uint64_t now) {
 	uint64_t time_delta = now - proc->prev_sample_time_us;
 
 	if (time_delta == 0)
-		proc->cpu_usage = 0.0;
+		proc->cpu_usage = 0;
 	else
 		proc->cpu_usage = (uint32_t)((runtime_delta * 1000) / time_delta);// * num_cores );
 

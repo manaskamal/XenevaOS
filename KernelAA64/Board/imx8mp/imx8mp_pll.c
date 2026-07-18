@@ -34,7 +34,7 @@
 #include <bordoisila_io.h>
 #include <_null.h>
 
-#ifdef __TARGET_BOARD_IMX8MP_VERDIN_DAHLIA__ || (__TARGET_BOARD_IMX8MP_SOC__)
+#if defined(__TARGET_BOARD_IMX8MP_VERDIN_DAHLIA__) || defined(__TARGET_BOARD_IMX8MP_SOC__)
 
 #define PLL_1443X_RATE(_rate, _m, _p, _d, _k)\
    { (_rate), (_m), (_p), (_s), (_k)}

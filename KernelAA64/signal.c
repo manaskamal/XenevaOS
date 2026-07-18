@@ -100,7 +100,7 @@ bool AuSignalDeliver(AA64Thread* current_thread) {
 			AA64Registers* regs_ = (AA64Registers*)current_thread->sp;
 			memcpy(&current_thread->signal.regs, regs_, sizeof(AA64Registers));
 			current_thread->signal.elr_el1 = current_thread->elr_el1;
-			current_thread->elr_el1 = current_thread->sigs[signo];
+			current_thread->elr_el1 = (uint64_t)current_thread->sigs[signo];
 			regs_->x30 = current_thread->signal.sigret_address;
 			return true;
 		}
@@ -116,6 +116,6 @@ bool AuSignalDeliver(AA64Thread* current_thread) {
 void AuSignalInitializeTrampoline(AA64Thread* t) {
 	uint64_t* phys = (uint64_t*)P2V((uint64_t)AuPmmngrAlloc());
 	memcpy(phys, &aa64_signal_return, PAGE_SIZE);
-	AuMapPageEx(t->pml, V2P((uint64_t)phys), 0xD0000000, PTE_USER_EXECUTABLE | PTE_NORMAL_MEM | PTE_AP_RW_USER);
+	AuMapPageEx((uint64_t*)t->pml, V2P((uint64_t)phys), 0xD0000000, PTE_USER_EXECUTABLE | PTE_NORMAL_MEM | PTE_AP_RW_USER);
 	t->signal.sigret_address = 0xD0000000;
 }

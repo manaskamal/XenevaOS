@@ -251,6 +251,7 @@ static inline uint64_t _timeval_to_us(const timeval_t* tv) {
 static inline uint64_t _us_to_timeval(uint64_t us, timeval_t* tv) {
 	tv->tv_sec = us / 1000000ULL;
 	tv->tv_usec = us % 1000000ULL;
+	return 0;
 }
 
 #define ITIMER_REAL    0

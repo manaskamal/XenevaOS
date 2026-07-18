@@ -29,6 +29,9 @@
 *
 **/
 
+#if defined(__TARGET_BOARD_IMX8MP_VERDIN_DAHLIA__) || defined(__TARGET_BOARD_IMX8MP_SOC__)
+
+
 #include <Board/imx8mp/imx8mp_clk_gate.h>
 #include <Board/imx8mp/imx8mp_clk.h>
 #include <_null.h>
@@ -176,3 +179,5 @@ int imx8mp_clk_gate_disable(uint8_t clk_root_id) {
 	val &= ~CGC_MASK;
 	_bordoisila_writel(val, reg);
 }
+
+#endif

@@ -422,7 +422,7 @@ void AuScheduleThread(AA64Registers* regs) {
 	
 
 sched:
-	aa64_store_fp(&runThr->fp_regs, &runThr->fpcr, &runThr->fpsr);
+	aa64_store_fp(&runThr->fp_regs,(uint64_t*)&runThr->fpcr, (uint64_t*)&runThr->fpsr);
 	
 	if (regs) {
 		runThr->x0 = regs->x0;
@@ -461,7 +461,7 @@ sched:
 
 
 	//tlb_flush_vmalle1is();
-	aa64_restore_fp(&current_thread->fp_regs, &current_thread->fpcr, &current_thread->fpsr);
+	aa64_restore_fp(&current_thread->fp_regs, (uint64_t*)&current_thread->fpcr, (uint64_t*)&current_thread->fpsr);
 	dsb_sy_barrier();
 
 
@@ -576,7 +576,7 @@ void AuSchedulerStart() {
 #endif
 	tlb_flush_vmalle1is();
 	write_both_ttbr(V2P(idle->pml));
-	aa64_restore_fp(&idle->fp_regs, &idle->fpcr, &idle->fpsr);
+	aa64_restore_fp(&idle->fp_regs, (uint64_t*)&idle->fpcr,(uint64_t*)&idle->fpsr);
 	suspendTimer();
 	setupTimerIRQ();
 	first_time_sex(idle);

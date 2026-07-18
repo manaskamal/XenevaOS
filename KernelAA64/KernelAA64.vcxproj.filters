@@ -464,6 +464,9 @@
     <ClInclude Include="..\BaseHdr\Board\imx8mp\imx8mp_clk_div.h">
       <Filter>Include\Board\imx8mp</Filter>
     </ClInclude>
+    <ClInclude Include="..\BaseHdr\Board\imx8mp\imx8mp_gpc.h">
+      <Filter>Include\Board\imx8mp</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="exports.def" />

@@ -1,9 +1,9 @@
 /**
-* @file _xeprint.h
-* 
+* @file imx8mp_gpc.h
+*
 * BSD 2-Clause License
 *
-* Copyright (c) 2022-2023, Manas Kamal Choudhury
+* Copyright (c) 2022-2026, Manas Kamal Choudhury
 * All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
@@ -29,30 +29,28 @@
 *
 **/
 
-#ifndef __XE_PRINT_H__
-#define __XE_PRINT_H__
+#ifndef __IMX8MP_GPC_H__
+#define __IMX8MP_GPC_G__
 
-#include <_xeneva.h>
-#include <stdarg.h>
-
-#ifdef __cplusplus
-XE_EXTERN{
-#endif
-
-
-	XE_LIB int _ldigits(unsigned long long num, int base, int sign);
-	XE_LIB int _digits(unsigned num, int base, int sign);
-	XE_LIB unsigned long long _str2num(const char* string, unsigned base, int sign, int *consumed);
-	XE_LIB void _lnum2str(unsigned long long num, char *string, int base, int sign);
-	XE_LIB void _dbl2str(double num, char *string, int roundPlaces);
-	void _num2str(unsigned num, char *string, int base, int sign);
-	XE_LIB void _flt2str(float num, char *string, int roundPlaces);
-    double strtod(const char *nptr, char **endptr);
-	XE_LIB float strtof(const char *nptr, char **endptr);
-	int _xeprint(char* output, int outputlen, const char* format, va_list list);
-	int _xeinput(const char *input, const char *format, va_list list);
-#ifdef __cplusplus
-}
-#endif
-
+enum _power_domain_id_ {
+	IMX8MP_POWER_DOMAIN_MIPI_PHY1,
+	IMX8MP_POWER_DOMAIN_PCIE_PHY,
+	IMX8MP_POWER_DOMAIN_USB1_PHY,
+	IMX8MP_POWER_DOMAIN_USB2_PHY,
+	IMX8MP_POWER_DOMAIN_MLMIX,
+	IMX8MP_POWER_DOMAIN_AUDIOMIX,
+	IMX8MP_POWER_DOMAIN_GPU2D,
+	IMX8MP_POWER_DOMAIN_GPUMIX,
+	IMX8MP_POWER_DOMAIN_VPUMIX,
+	IMX8MP_POWER_DOMAIN_GPU3D,
+	IMX8MP_POWER_DOMAIN_MEDIAMIX,
+	IMX8MP_POWER_DOMAIN_VPU_G1,
+	IMX8MP_POWER_DOMAIN_VPU_G2,
+	IMX8MP_POWER_DOMAIN_VPU_VC8000E,
+	IMX8MP_POWER_DOMAIN_HDMIMIX,
+	IMX8MP_POWER_DOMAIN_HDMI_PHY,
+	IMX8MP_POWER_DOMAIN_MIPI_PHY2,
+	IMX8MP_POWER_DOMAIN_HSIOMIX,
+	IMX8MP_POWER_DOMAIN_MEDIAMIX_ISPDWP
+};
 #endif

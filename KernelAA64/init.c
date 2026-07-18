@@ -212,6 +212,7 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	AuVFSInitialise();
 	AuTextOut("[aurora]: VFS initialized \r\n");
 	AuInitrdInitialize(info);
+	AuTextOut("Console post initializing \r\n");
 	AuConsolePostInitialise(info);
 	//AuConsoleBypassAuTextOut();
 	AuroraTimerInitialize();

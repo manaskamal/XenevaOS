@@ -42,6 +42,10 @@
 #define HIGHS (ONES * (UCHAR_MAX/2+1))
 #define HASZERO(x) ((x)-ONES & ~(x) & HIGHS)
 
+#ifdef _MSC_VER
+#pragma function(memset)
+#endif
+
 void* _cdecl memset(void *targ, unsigned char val, size_t len){
 	/*uint8_t *t = (uint8_t*)targ;
 	while (len--)
@@ -109,13 +113,18 @@ void memset(void *targ, unsigned char val, uint32_t len){
 }
 
 
-
+#ifdef _MSC_VER
+#pragma function(memcmp)
+#endif
 int memcmp(const void *vl, const void *vr, size_t n){
 	const unsigned char *l = (unsigned char*)vl, *r = (unsigned char*)vr;
 	for (; n && *l == *r; n--, l++, r++);
 	return n ? *l - *r : 0;
 }
 
+#ifdef _MSC_VER
+#pragma function(memcpy)
+#endif
 
 void *memcpy(void *dest, void *src, size_t len) {
 	uint8_t* t = (uint8_t*)dest;
@@ -236,6 +245,10 @@ void *memcpy(void *dest, void *src, uint32_t len) {
 }
 #endif
 
+#ifdef _MSC_VER
+#pragma function(strcmp)
+#endif
+
 int strcmp(const char* str1, const char* str2){
 	int res = 0;
 	while (!(res = *(unsigned char*)str1 - *(unsigned char*)str2) && *str2)
@@ -249,17 +262,26 @@ int strcmp(const char* str1, const char* str2){
 	return res;
 }
 
+#ifdef _MSC_VER
+#pragma function(strcpy)
+#endif
+
 char *strcpy(char* __restrict s1, const char * __restrict s2){
 	char *s1_p = s1;
 	for (; (*s1 = *s2); s1++, s2++);
 	return s1_p;
 }
 
+#ifdef _MSC_VER
+#pragma function(strlen)
+#endif
+
 size_t strlen(const char* s){
 	const char* a = s;
 	for (; *s; s++);
 	return s - a;
 }
+
 
 size_t strnlen(const char *string, size_t maxlen){
 	size_t count = 0;

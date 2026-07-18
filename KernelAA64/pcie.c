@@ -66,7 +66,7 @@ static int _pcie_check_and_map_dtb() {
 
 	/** in qemu, ecam address is 256 mb so 0x10000 number of pages */
 	if (ecamAddr != 0)
-		_ecamAddress = AuMapMMIO(ecamAddr, 0x10000);
+		_ecamAddress = (uint64_t)AuMapMMIO(ecamAddr, 0x10000);
 
 	_pcieInitialized = 1;
 #endif

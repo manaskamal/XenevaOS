@@ -299,7 +299,7 @@ void AuDriverLoad(char* filename, AuDriver* driver) {
 	size_t file_offset = 0;
 	while (file->eof != 1) {
 		uint64_t block = ((uint64_t)scratchBuffer + file_offset);
-		size_t bytes_read = AuVFSNodeReadBlock(fsys, file, block);
+		size_t bytes_read = AuVFSNodeReadBlock(fsys, file, (uint64_t*)block);
 		if (bytes_read == 0) break;
 		file_offset += bytes_read;
 	}

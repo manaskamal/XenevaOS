@@ -342,7 +342,7 @@ int SetSignal(int signo, AuSignalHandler handler) {
 	AA64Thread* thr = AuGetCurrentThread();
 	if (!thr)
 		return 0;
-	thr->sigs[signo] = handler;
+	thr->sigs[signo] = (uint64_t*)handler;
 }
 
 /**
