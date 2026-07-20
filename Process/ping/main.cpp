@@ -39,6 +39,7 @@
 #include <string.h>
 #include <sys/_ketime.h>
 #include <time.h>
+#include <unistd.h>
 #include <stdlib.h>
 
 #define BYTES_TO_SEND 56
@@ -134,6 +135,7 @@ int main(int argc, char* argv[]){
 	sockaddr_in src;
 	socklen_t src_sz = 0;
 	size_t len = 0;
+	int timeout = 1000;
 	while (1) {
 		if (response_recved == 5)
 			break;
@@ -149,18 +151,22 @@ int main(int argc, char* argv[]){
 		pings_sent++;
 
 		src_sz = sizeof(sockaddr_in);
-		len = recvfrom(sock, data, 4096, 0, (sockaddr*)&src, &src_sz);
+		while (timeout--) {
+			len = recvfrom(sock, data, 4096, 0, (sockaddr*)&src, &src_sz);
 
-		if (len > 0) {
-			ICMPHeader* icmp = (ICMPHeader*)data;
-			if (icmp->type == 0) {
-				char* from = inet_ntoa(src.sin_addr);
-				printf("%d bytes from %s : sequence= %d \n", len, from, ntohs(icmp->sequenceNum));
-				response_recved++;
+			if (len > 0) {
+				ICMPHeader* icmp = (ICMPHeader*)data;
+				if (icmp->type == 0) {
+					char* from = inet_ntoa(src.sin_addr);
+					printf("%d bytes from %s : sequence= %d \n", len, from, ntohs(icmp->sequenceNum));
+					response_recved++;
+					break;
+				}
 			}
 		}
-
-		_KeProcessSleep(100);
+		timeout = 1000;
+		//_KeProcessSleep(100);
+		sleep(1);
 	}
 
 	printf("---statistics----: %s \n", s);

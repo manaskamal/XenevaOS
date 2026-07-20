@@ -52,7 +52,7 @@
 #include <power.h>
 #include <timer.h>
 
-#define AURORA_MAX_SYSCALL 75
+#define AURORA_MAX_SYSCALL 79
 
 AA64Registers* svcCurrentRegs;
 
@@ -154,7 +154,11 @@ static void* syscalls[AURORA_MAX_SYSCALL] = {
 	AuGetCurrentMS, //71
 	Alarm, //72
 	SetITimer, //73
-	GetITImer, //74
+	GetITimer, //74
+	AuProcGetNumProcessCount, //75
+	AuProcessFetch, //76
+	AuSetWalltime, //77
+	AuGetWalltime, //78
 };
 
 #ifdef __KERNEL_PROFILER_ON__
@@ -231,7 +235,9 @@ static char* syscall_name[AURORA_MAX_SYSCALL] = {
 	"AuPowerReset", //69
 	"AuGetCurrentUS", //70
 	"AuGetCurrentMS", //71
-	"Alarm", 72
+	"Alarm", //72
+	"AuProcGetNumProcessCount", //75
+	"AuProcessFetch", //76
 };
 #endif
 
@@ -274,7 +280,7 @@ skip_1:
 		PROFILE_END(syscall_name[vector]);
 	skip_2:
 #endif
-		return;
+		return 0;
 	}
 
 	retcode = func(regs->x0, regs->x1, regs->x2, regs->x3, regs->x4, regs->x5);
@@ -288,6 +294,6 @@ skip_1:
 	PROFILE_END(syscall_name[vector]);
 skip_3:
 #endif
-	return;
+	return 0;
 
 }

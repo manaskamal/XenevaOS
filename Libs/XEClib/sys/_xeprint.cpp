@@ -31,6 +31,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <_xeprint.h>
 
 int _ldigits(unsigned long long num, int base, int sign) {
 	int digits = 1;

@@ -27,7 +27,7 @@
 *
 **/
 
-#ifdef __TARGET_BOARD_RPI3__
+#if 0
 
 #include <Board/RPI3bp/rpi3bp_gpio.h>
 #include <Board/RPI3bp/rpi3bp_spi.h>

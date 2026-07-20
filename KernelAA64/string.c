@@ -13,7 +13,8 @@ typedef size_t WT;
 #define WS (sizeof(WT))
 
 
-void memset(void* targ, int val, uint32_t len) {
+
+void  memset(void* targ, int val, uint32_t len) {
 	/*uint8_t* t = (uint8_t*)targ;
 	while (len--)
 		*t++ = (unsigned char*)val;*/
@@ -46,6 +47,7 @@ void memset(void* targ, int val, uint32_t len) {
 		*t++ = byte_val;
 }
 
+
 int memcmp(const void* first, const void* second, size_t length) {
 	size_t count;
 	for (count = 0; count < length; count++)
@@ -67,10 +69,11 @@ int memcmp(const void* first, const void* second, size_t length) {
 }
 
 
-void memcpy(void* __restrict dest, void* __restrict src, size_t len) {
+void* memcpy(void* __restrict dest, void* __restrict src, size_t len) {
 	//_fastcpy(dest, src, count);
-	//uint8_t* t = (uint8_t*)dest;
-	//uint8_t* s = (uint8_t*)src;
+
+	//volatile uint8_t* t = (volatile uint8_t*)dest;
+	//const volatile uint8_t* s = (const volatile uint8_t*)src;
 	//if (len > 0) {
 	//	// check to see if target is in the range of src and if so, do a memmove() instead
 	//	if ((t > s) && (t < (s + len))) {
@@ -84,8 +87,8 @@ void memcpy(void* __restrict dest, void* __restrict src, size_t len) {
 	//			*t++ = *s++;
 	//	}
 	//}
-	uint8_t* t = (uint8_t*)dest;
-	const uint8_t* s = (const uint8_t*)src;
+	volatile uint8_t* t = (volatile uint8_t*)dest;
+	const volatile uint8_t* s = (const volatile uint8_t*)src;
 
 	if (len == 0 || dest == src) return;
 
@@ -100,8 +103,8 @@ void memcpy(void* __restrict dest, void* __restrict src, size_t len) {
 
 		if (len >= 8) {
 			uint32_t blocks = len / 8;
-			uint64_t* t64 = (uint64_t*)t;
-			const uint64_t* s64 = (const uint64_t*)s;
+			volatile uint64_t* t64 = (volatile uint64_t*)t;
+			const volatile uint64_t* s64 = (const volatile uint64_t*)s;
 
 			while (blocks--)
 				*(--t64) = *(--s64);
@@ -123,8 +126,8 @@ void memcpy(void* __restrict dest, void* __restrict src, size_t len) {
 
 		if (len >= 8) {
 			uint32_t blocks = len / 8;
-			uint64_t* t64 = (uint64_t*)t;
-			const uint64_t* s64 = (const uint64_t*)s;
+			volatile uint64_t* t64 = (volatile uint64_t*)t;
+			const volatile uint64_t* s64 = (const volatile uint64_t*)s;
 
 			while (blocks--)
 				*t64++ = *s64++;
@@ -176,6 +179,7 @@ char* strrchr(const char* str, int c) {
 	} while (*str++ != '\0');
 	return (char*)last;
 }
+
 
 size_t strlen(const char* s) {
 	const char* a = s;
@@ -264,6 +268,7 @@ char* strcat(char* destString, const char* sourceString)
 
 	return (destString);
 }
+
 
 char* strncat(char* destString, const char* sourceString, size_t maxLength)
 {

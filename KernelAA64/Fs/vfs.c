@@ -228,7 +228,7 @@ AU_EXTERN AU_EXPORT AuVFSNode* AuVFSOpen(char* path) {
 			//AA64SleepUS(600);
 		}
 	}
-	data_cache_flush(Returnable);
+	data_cache_flush((uint64_t*)Returnable);
 	return Returnable;
 }
 
@@ -360,6 +360,8 @@ int AuVFSRemoveDir(AuVFSNode* fsys, AuVFSNode* file) {
 		return -1;
 	if (fsys->remove_dir && (file->flags & FS_FLAG_DIRECTORY))
 		return fsys->remove_dir(fsys, file);
+
+	return 0;
 }
 
 

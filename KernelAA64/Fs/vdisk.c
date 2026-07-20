@@ -41,7 +41,8 @@
 #include <Drivers/uart.h>
 #include <Fs/fsprobe.h>
 #include <Fs/Fat/Fat.h>
-#include <Fs/Ext2/ext2.h>
+#include <Hal/AA64/profile.h>
+#include <Fs/Ext2/Ext2.h>
 
 AuVDisk* VdiskArray[MAX_VDISK_DEVICES];
 int _vdisk_num_;
@@ -101,6 +102,7 @@ uint8_t AuVDiskGetIndex() {
 		if (!VdiskArray[i])
 			return i;
 	}
+	return UINT8_MAX;
 }
 
 
@@ -153,13 +155,19 @@ size_t AuVDiskWrite(AuVDisk* disk, uint64_t lba, uint32_t count, uint64_t* buffe
  */
 void AuVDiskRegisterPartition(AuVDisk* vdisk) {
 	uint64_t* buffer = (uint64_t*)AuPmmngrAlloc();
+	UARTDebugOut("Memseting \r\n");
 	memset(buffer, 0, 4096);
+	UARTDebugOut("Memset done \r\n");
 	if (!vdisk->Read)
 		return;
+
+	UARTDebugOut("vdisk reading \r\n");
 	vdisk->Read(vdisk, 1, 1, buffer);
+	UARTDebugOut("Read done \r\n");
 	uint8_t* aligned_buf = (uint8_t*)buffer;
 
 	GPTHeader* header = (GPTHeader*)aligned_buf;
+	UARTDebugOut("GPT Header checking \r\n");
 
 	/* check if it's Efi partition */
 	if (strcmp(header->sig, "EFI PART") != 0) {
@@ -231,7 +239,10 @@ void AuVDiskRegister(AuVDisk* disk) {
 
 	disk->__VDiskID = _index;
 	/* Register a partition and initialise the file system*/
+	UARTDebugOut("Registering fs \r\n");
 	AuVDiskRegisterPartition(disk);
+
+	UARTDebugOut("Probing file system \r\n");
 
 	aurora_fs_type type = AuProbeFileSystem(disk);
 	AuTextOut("type : %d \r\n", type);

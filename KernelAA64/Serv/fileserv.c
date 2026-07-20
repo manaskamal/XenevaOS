@@ -229,6 +229,7 @@ size_t WriteFile(int fd, void* buffer, size_t length) {
 		if (!current_proc)
 			return 0;
 	}
+	
 	AuVFSNode* file = current_proc->fds[fd];
 	uint8_t* aligned_buffer = (uint8_t*)buffer;
 	if (!file)

@@ -43,6 +43,7 @@
 #define  THREAD_STATE_KILLABLE  5
 #define  THREAD_STATE_LEFT_IN_KERNEL 6
 #define  THREAD_STATE_PENDING_SIGNAL 7
+#define  THREAD_STATE_RUNNING 8
 
 //! Thread levels =========================================================
 //! THREAD_LEVEL_KERNEL -- This bit is set when the thread given is kernel mode
@@ -82,7 +83,6 @@ typedef struct _gp_context_ {
 typedef struct _signal_frame_ {
 	AA64Registers regs;
 	uint64_t elr_el1;
-	uint8_t last_thread_state;
 	uint64_t sigret_address;
 }_signal_frame_t;
 
@@ -132,7 +132,8 @@ typedef struct _aa64_task_ {
 	uint32_t syscallNum;
 	uint64_t sig_pending;
 	_signal_frame_t signal;
-	void* sigs[21];
+	uint64_t start_time_us;
+	uint64_t* sigs[21];
 	struct _aa64_task_* next;
 	struct _aa64_task_* prev;
 }AA64Thread;

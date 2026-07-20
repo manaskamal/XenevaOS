@@ -69,6 +69,7 @@
 #include <Fs/Fat/Fat.h>
 #include <Fs/Fat/FatFile.h>
 #include <Fs/Fat/FatDir.h>
+#include <linux/bitops.h>
 
 extern int _fltused = 1;
 static bool _littleboot_used;
@@ -211,6 +212,7 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	AuVFSInitialise();
 	AuTextOut("[aurora]: VFS initialized \r\n");
 	AuInitrdInitialize(info);
+	AuTextOut("Console post initializing \r\n");
 	AuConsolePostInitialise(info);
 	//AuConsoleBypassAuTextOut();
 	AuroraTimerInitialize();
@@ -249,6 +251,7 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	/* required virtio-mouse and keyboard */
 	//Here goes board pre driver initialize
 	AuDrvMngrInitialize(info);
+	UARTDebugOut("[aurora]: driver initialized \r\n");
 
 	FontManagerInitialise();
 

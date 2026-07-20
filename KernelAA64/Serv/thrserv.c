@@ -102,10 +102,12 @@ int ProcessWaitForTermination(int pid) {
 	//NOT IMPLEMENTED
 	AA64Thread* current_thr = AuGetCurrentThread();
 	AuProcess* proc = AuProcessFindThread(current_thr);
-	AuProcessWaitForTermination(proc, pid);
-	AA64Registers* regs = AA64GetCurrentRegCtx();
-	AuScheduleThread(regs);
-	return 0;
+	int ret = AuProcessWaitForTermination(proc, pid);
+	if (ret == 1) {
+		AA64Registers* regs = AA64GetCurrentRegCtx();
+		AuScheduleThread(regs);
+	}
+	return ret;
 }
 
 /**
@@ -340,7 +342,7 @@ int SetSignal(int signo, AuSignalHandler handler) {
 	AA64Thread* thr = AuGetCurrentThread();
 	if (!thr)
 		return 0;
-	thr->sigs[signo] = handler;
+	thr->sigs[signo] = (uint64_t*)handler;
 }
 
 /**
@@ -365,7 +367,7 @@ int SetITimer(int which, const itimerval_t* new_value, itimerval_t* old_value) {
 	return AuTimerSetITimer(thr, which, new_value, old_value);
 }
 
-int GetITImer(int which, const itimerval_t* curr_value) {
+int GetITimer(int which, const itimerval_t* curr_value) {
 	AA64Thread* thr = AuGetCurrentThread();
 	if (!thr)
 		return 0;

@@ -46,7 +46,7 @@
 #include <Net/socket.h>
 
 /* maximum supported system calls */
-#define AURORA_MAX_SYSCALL  58
+//#define AURORA_MAX_SYSCALL  58
 #define AURORA_SYSCALL_MAGIC  0x15062023 
 
 /* ==========================================
@@ -351,7 +351,7 @@ extern int Alarm(uint64_t seconds);
 
 extern int SetITimer(int which, const itimerval_t* new_value, itimerval_t* old_value);
 
-extern int GetITImer(int which, const itimerval_t* curr_value);
+extern int GetITimer(int which, const itimerval_t* curr_value);
 
 #ifdef ARCH_ARM64
 extern AA64Registers* AA64GetCurrentRegCtx();

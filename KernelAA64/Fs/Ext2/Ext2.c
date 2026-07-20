@@ -377,7 +377,7 @@ AuVFSNode* Ext2Initialise(AuVDisk* vdisk, char* mountname) {
 		return NULL;
 	}
 	memset(fs, 0, sizeof(Ext2Fs));
-	fs->vdisk = (AuVFSNode*)vdisk;
+	fs->vdisk = vdisk;
 
 	fs->superblock = (Ext2Superblock*)kmalloc(sizeof(Ext2Superblock));
 	if (!fs->superblock) {

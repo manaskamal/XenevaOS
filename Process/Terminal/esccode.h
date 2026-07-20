@@ -44,6 +44,7 @@
 #define CSI_CURSOR_DOWN 'B'
 #define CSI_CURSOR_FORWARD 'C'
 #define CSI_CURSOR_BACKWARD 'D'
+#define CSI_CURSOR_HOME 'H'
 #define CSI_CNL 'E'  //cursor next line
 #define CSI_CPL 'F'  //Cursor previous line
 #define CSI_CHA 'G' //Cursor horizontal absolute
@@ -81,4 +82,8 @@
 #define CSI_ERASE_TEXT_NONLINE 'J'
 #define CSI_ERASE_TEXT_LINE 'K'
 
+#define CSI_SET_MODE 'h'
+#define CSI_RESET_MODE 'l'
+#define CSI_SAVE_CURSOR 's'
+#define CSI_RESTORE_CURSOR 'u'
 #endif
