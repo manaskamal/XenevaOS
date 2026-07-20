@@ -30,6 +30,11 @@
 #ifndef __UART_H__
 #define __UART_H__
 
+#if defined(__GNUC__) || defined(__clang__)
+#ifndef __cplusplus
+#include <stdbool.h>
+#endif
+#endif
 #include <aa64hcode.h>
 #include <stdint.h>
 #include <aurora.h>

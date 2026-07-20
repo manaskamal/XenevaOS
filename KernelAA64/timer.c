@@ -36,6 +36,11 @@
 #include <Drivers/uart.h>
 #include <_null.h>
 #include <signal.h>
+#if defined(__GNUC__) || defined(__clang__)
+#ifndef __cplusplus
+#include <stdbool.h>
+#endif
+#endif
 
 static AuKernelTimer _timers[AURORA_MAX_TIMER];
 static uint64_t _system_current_us;

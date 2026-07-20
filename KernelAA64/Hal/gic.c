@@ -423,16 +423,16 @@ skip_:
 	/* writing 0xff means accepting all types of priority 0x0 -- 0xFF */
 	if (_need_cpu_interface) {
 		gic_outl_((uint64_t*)__gic.gicCMMIO, GICC_PMR, 0x1ff);
-		gic_outl_(__gic.gicCMMIO, GICC_CTLR, 0x3);
+		gic_outl_((uint64_t*)__gic.gicCMMIO, GICC_CTLR, 0x3);
 		isb_flush();
 	}
 
 	/* enable the distributor interface */
 	if (__gic.version >= GIC_VERSION_3) {
-		gic_outl_(__gic.gicDMMIO, GICD_CTLR, (1u << 5) | (1u << 1));
+		gic_outl_((uint64_t*)__gic.gicDMMIO, GICD_CTLR, (1u << 5) | (1u << 1));
 	}
 	else {
-		gic_outl_(__gic.gicDMMIO, GICD_CTLR, 0x3);
+		gic_outl_((uint64_t*)__gic.gicDMMIO, GICD_CTLR, 0x3);
 		isb_flush();
 	}
 

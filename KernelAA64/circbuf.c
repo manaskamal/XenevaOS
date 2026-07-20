@@ -31,6 +31,11 @@
 
 #include <circbuf.h>
 #include <Mm/kmalloc.h>
+#if defined(__GNUC__) || defined(__clang__)
+#ifndef __cplusplus
+#include <stdbool.h>
+#endif
+#endif
 
 /**
  * @brief AuAdvancePointer -- advances the pointer

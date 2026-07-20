@@ -29,15 +29,22 @@
 *
 **/
 
+#if defined(__GNUC__) || defined(__clang__)
+#ifndef __cplusplus
+#include <stdbool.h>
+#endif
+#endif
 #include <process.h>
 #include <aucon.h>
 #include <Mm/vmmngr.h>
 #include <Mm/kmalloc.h>
 #include <pe.h>
+#include <clean.h>
 #include <Mm/pmmngr.h>
 #include <string.h>
 #include <_null.h>
 #include <Hal/AA64/sched.h>
+#include <Hal/AA64/aa64lowlevel.h>
 #include <Mm/shm.h>
 #include <loader.h>
 #include <Ipc/postbox.h>
@@ -395,7 +402,7 @@ void AuProcessFreeKeResource(AA64Thread* thr) {
  * @param proc -- process to exit
  * @param schedulable -- schedule to next thread
  */
-void AuProcessExit(AuProcess* proc, bool schedulable) {
+void AuProcessExit(AuProcess* proc, BOOL schedulable) {
 	if (proc == root_proc) {
 		UARTDebugOut("[aurora]: cannot exit root process \r\n");
 		return;

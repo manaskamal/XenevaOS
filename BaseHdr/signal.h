@@ -32,6 +32,11 @@
 
 #include <stdint.h>
 #include <Hal/AA64/sched.h>
+#if defined(__GNUC__) || defined(__clang__)
+#ifndef __cplusplus
+#include <stdbool.h>
+#endif
+#endif
 
 typedef enum _signal_num_ {
 	SIGHUP = 1,  /* Terminal closed or hangup*/

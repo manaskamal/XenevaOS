@@ -39,6 +39,11 @@
 #include <_null.h>
 #include <Drivers/uart.h>
 #include <Hal/AA64/profile.h>
+#if defined(__GNUC__) || defined(__clang__)
+#ifndef __cplusplus
+#include <stdbool.h>
+#endif
+#endif
 
 
 uint64_t* _RootPaging;
@@ -204,7 +209,8 @@ bool AuMapPage(uint64_t phys_addr, uint64_t virt_addr, uint8_t attrib) {
 
 	if (pml1[i1] & 1){
 		//AuPmmngrFree((void*)phys_addr);
-		AuTextOut("[aurora]: vmmngr page already present : %x \r\n", virt_addr);
+		AuTextOut("[aurora]: vmmngr page already present : virt=%x phys=%x \r\n", virt_addr, (pml1[i1] & ~0xFFFULL));
+		UARTDebugOut("[aurora]: vmmngr page already present : virt=%x phys=%x \r\n", virt_addr, (pml1[i1] & ~0xFFFULL));
 		return false;
 	}
 
@@ -275,7 +281,8 @@ bool AuMapPageEx(uint64_t* pml4i, uint64_t phys_addr, uint64_t virt_addr, uint8_
 	if (pml1[i1] & 1)
 	{
 		//AuPmmngrFree((void*)phys_addr);
-		AuTextOut("[aurora]: vmmngr page already present : %x \n", (pml1[i1] & ~0xFFFULL));
+		AuTextOut("[aurora]: vmmngr page already present : virt=%x phys=%x \n", virt_addr, (pml1[i1] & ~0xFFFULL));
+		UARTDebugOut("[aurora]: vmmngr page already present : virt=%x phys=%x \r\n", virt_addr, (pml1[i1] & ~0xFFFULL));
 		return false;
 	}
 
@@ -520,7 +527,7 @@ void AuUpdatePageFlags(uint64_t virt_addr, uint64_t flags) {
 
 	//AuTextOut("Your physical page is -> %x %x\n", page, V2P(page));
 	if (page) {
-		pt[pt_index(virt_addr)] = (V2P((uint64_t)page) & ~0xFFFULL) | flags;
+		pt[pt_index(virt_addr)] = (V2P(*page) & ~0xFFFULL) | flags;
 		data_cache_flush(&pt[pt_index(virt_addr)]);
 	}
 }

@@ -1,11 +1,11 @@
 #include <Fs/vfs.h>
-#include <fs/vdisk.h>
+#include <Fs/vdisk.h>
 #include <Mm/kmalloc.h>
 #include <Mm/pmmngr.h>
 #include <Drivers/uart.h>
 #include <string.h>
 #include <aucon.h>
-#include <Fs/Ext2/Ext2.h>
+#include <Fs/Ext2/ext2.h>
 #include <_null.h>
 
 /**

@@ -28,6 +28,7 @@
 **/
 
 #include "uart0.h"
+#include <stdarg.h>
 #include "rpi3b/mbox.h"
 #include "clib.h"
 #include <Board/imx8mp/imx8mp_uart.h>
