@@ -69,7 +69,7 @@
 #include <Fs/Fat/Fat.h>
 #include <Fs/Fat/FatFile.h>
 #include <Fs/Fat/FatDir.h>
-#include <linux/bitops.h>
+// #include <linux/bitops.h>
 
 extern int _fltused = 1;
 static bool _littleboot_used;

@@ -42,7 +42,7 @@
 #include <Fs/fsprobe.h>
 #include <Fs/Fat/Fat.h>
 #include <Hal/AA64/profile.h>
-#include <Fs/Ext2/Ext2.h>
+#include <Fs/Ext2/ext2.h>
 
 AuVDisk* VdiskArray[MAX_VDISK_DEVICES];
 int _vdisk_num_;

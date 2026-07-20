@@ -280,7 +280,7 @@ skip_1:
 		PROFILE_END(syscall_name[vector]);
 	skip_2:
 #endif
-		return 0;
+		return ;
 	}
 
 	retcode = func(regs->x0, regs->x1, regs->x2, regs->x3, regs->x4, regs->x5);
@@ -294,6 +294,6 @@ skip_1:
 	PROFILE_END(syscall_name[vector]);
 skip_3:
 #endif
-	return 0;
+	return ;
 
 }
