@@ -39,6 +39,7 @@
 #include <Fs/vfs.h>
 #include <Cred/group.h>
 #include <Cred/user.h>
+#include <Cap/capability.h>
 
 #ifdef ARCH_ARM64
 #include <Hal/AA64/sched.h>
@@ -157,6 +158,8 @@ typedef struct _au_proc_ {
 
 	/* file descriptors */
 	AuVFSNode* fds[FILE_DESC_PER_PROCESS];
+	/* capability table -- parallel to fds[]*/
+	AuCapability caps[FILE_DESC_PER_PROCESS];
 	/*loader related data*/
 	AuVFSNode *file;
 	AuVFSNode *fsys;
