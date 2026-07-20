@@ -52,6 +52,7 @@
 #define GROUP_VIDEO  21
 #define GROUP_TTY    22
 #define GROUP_AUDIO  21
+#define GROUP_NETWORK 23
 
 /** hardcoded untill we get proper
  * login manager
@@ -113,7 +114,10 @@ void init_basic_gid_to_dev() {
 	if (fd != -1) {
 		_KeCredChangeID(fd, 0, GROUP_VIDEO);
 	}
-
+	fd = _KeOpenFile("/dev/net/virtio-net", FILE_OPEN_READ_ONLY);
+	if (fd != -1) {
+		_KeCredChangeID(fd, 0, GROUP_NETWORK);
+	}
 }
 
 /**
@@ -259,17 +263,19 @@ extern "C" void main(int argc, char* argv[]) {
 	/** TODO: add IPC system to track real system progress and animate the logo accordingly **/
 	_KeProcessSleep(100);
 
-	
+	int proc = 0;
 
 
 #ifdef ARCH_ARM64
-	int proc = _KeCreateProcess(0, "netmngr");
-	_KeSetUID(proc, UAC_DEAMONS);
-	_KeSetGID(proc, UAC_DEAMONS);
-	_KeCredAddSGroup(proc, ggid_misc_world);
-	_KeProcessLoadExec(proc, "/netmngr.exe\0", 0, NULL);
+	proc = _KeCreateProcess(0, "netmngr");
+	int ret_nm = _KeProcessLoadExec(proc, "/netmngr.exe", 0, NULL);
+	if (ret_nm != -1) {
+		_KeSetUID(proc, UAC_DEAMONS);
+		_KeSetGID(proc, UAC_DEAMONS);
+		_KeCredAddSGroup(proc, ggid_misc_world);
+		_KeProcessSleep(500);
+	}
 
-	_KeProcessSleep(500);
 
 
 	/** actually, design should be like that, each process after
@@ -304,7 +310,7 @@ extern "C" void main(int argc, char* argv[]) {
 
 	
 #elif ARCH_X64
-	int proc = _KeCreateProcess(0, "deodhai");
+	proc = _KeCreateProcess(0, "deodhai");
 	_KeProcessLoadExec(proc, "/deodhai.exe", 0, NULL);
 #endif
 

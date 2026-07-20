@@ -278,7 +278,7 @@ void AuDMAPoolDestroy(AuDMAPool* pool) {
 	while (page) {
 		AuDMAPage* next = page->next;
 		kfree(page->bitmap);
-		AuPmmngrFree(page->phys);
+		AuPmmngrFree((void*)page->phys);
 		kfree(page);
 		page = next;
 	}

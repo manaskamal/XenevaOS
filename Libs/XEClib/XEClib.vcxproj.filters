@@ -202,6 +202,12 @@
     <ClInclude Include="includes\strings.h">
       <Filter>includes</Filter>
     </ClInclude>
+    <ClInclude Include="includes\signal.h">
+      <Filter>includes</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\sys\time.h">
+      <Filter>includes\sys</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="string.cpp" />

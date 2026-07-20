@@ -30,6 +30,7 @@
 #ifndef __KE_SIGNAL_H__
 #define __KE_SIGNAL_H__
 
+#ifdef ARCH_X64
 #define SIGHUP  1
 #define SIGINT  2
 #define SIGQUIT 3
@@ -67,8 +68,38 @@
 #define SIGWINEVENT 35
 #define SIGCAT  36
 #define SIGTTOU 37
+#elif ARCH_ARM64
+/** in arch64 decided to go with minimal number of calls */
+#define SIGHUP  1     /* Terminal closed or hangup*/
+#define	SIGINT  2     /* Interrupt (CTRL+C) */
+#define	SIGQUIT 3     /* Quit (CTRL+), generate core dump */
+#define	SIGILL  4      /* Illegal instruction*/
+#define	SIGTRAP 5      /* Breakpoint or trace trap */
+#define	SIGABRT 6      /* Abort a process */
+#define	SIGBUS  7      /* Bus error */
+#define	SIGFPE  8      /* Floating-point exception */
+#define	SIGKILL 9     /* Forcefully terminate */
+#define	SIGUSR1 10     /* User-defined signal 1*/
+#define	SIGSEGV 11     /* Invalid memory access (segmentation fault) */
+#define	SIGUSR2 12     /* user-defined signal 2*/
+#define	SIGPIPE 13     /* Write to a broken pipe */
+#define	SIGALRM 14     /* Alarm timer expired */
+#define	SIGTERM 15     /* Graceful termination request */
+#define	SIGCHLD 17     /*Child process stopped or exited */
+#define	SIGCONT 18     /* Continue a stopped process */
+#define	SIGSTOP 19     /* Stop process */
+#define	SIGTSTP 20     /* Terminal stop */
+#define	SIGTTIN 21     /* Background process attempted terminal input */
+#define	SIGTTOU 22    /* Background process attempted terminal output */
 
+#endif
+
+#ifdef ARCH_X64
 #define NUMSIGNALS 38
+#elif ARCH_ARM64
+#define NUMSIGNALS 23
+#endif
+
 #define NSIG NUMSIGNALS
 
 

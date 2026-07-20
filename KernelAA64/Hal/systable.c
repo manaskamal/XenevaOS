@@ -52,7 +52,7 @@
 #include <power.h>
 #include <timer.h>
 
-#define AURORA_MAX_SYSCALL 72
+#define AURORA_MAX_SYSCALL 75
 
 AA64Registers* svcCurrentRegs;
 
@@ -104,8 +104,8 @@ static void* syscalls[AURORA_MAX_SYSCALL] = {
 	FileIoControl, //21
 	FileStat, //22
 	ProcessSleep, //23
-	0, //24
-	0, //25
+	SignalReturn, //24
+	SetSignal, //25
 	AuGetSystemTimerTick, //26
 	AuFTMngrGetFontID, //27
 	AuFTMngrGetNumFonts, //28
@@ -115,7 +115,7 @@ static void* syscalls[AURORA_MAX_SYSCALL] = {
 	CreateUserThread, //32
 	SetFileToProcess, //33
 	ProcessHeapUnmap, //34
-	0, //35
+	SendSignal, //35
 	0, //36
 	OpenDir, //37
 	ReadDir, //38
@@ -152,6 +152,9 @@ static void* syscalls[AURORA_MAX_SYSCALL] = {
     AuPowerReset, //69
 	AuGetCurrentUS, //70
 	AuGetCurrentMS, //71
+	Alarm, //72
+	SetITimer, //73
+	GetITImer, //74
 };
 
 #ifdef __KERNEL_PROFILER_ON__
@@ -228,6 +231,7 @@ static char* syscall_name[AURORA_MAX_SYSCALL] = {
 	"AuPowerReset", //69
 	"AuGetCurrentUS", //70
 	"AuGetCurrentMS", //71
+	"Alarm", 72
 };
 #endif
 
@@ -270,7 +274,7 @@ skip_1:
 		PROFILE_END(syscall_name[vector]);
 	skip_2:
 #endif
-		return 0;
+		return;
 	}
 
 	retcode = func(regs->x0, regs->x1, regs->x2, regs->x3, regs->x4, regs->x5);
@@ -284,6 +288,6 @@ skip_1:
 	PROFILE_END(syscall_name[vector]);
 skip_3:
 #endif
-	return 0;
+	return;
 
 }

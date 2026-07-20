@@ -32,21 +32,24 @@
 
 
 #include <stdint.h>
-#include <stddef.h>
+//#include <stddef.h>
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
+void* memset(void* targ, uint8_t val, uint32_t len);
+void* memcpy(void* targ, void* src, uint32_t len);
+size_t strlen(const char* s);
 
 #ifdef __cplusplus
 }
 #endif
 
 
-extern void memset(void* targ, uint8_t val, uint32_t len);
-extern void memcpy(void* targ, void* src, uint32_t len);
+// extern void memset(void* targ, uint8_t val, uint32_t len);
+// extern void memcpy(void* targ, void* src, uint32_t len);
 extern wchar_t* wstrchr(wchar_t* s, int c);
 extern int wstrlen(wchar_t* s);
 extern uint32_t wstrsize(wchar_t* s);
@@ -54,7 +57,7 @@ extern int to_upper(int c);
 extern int to_lower(int c);
 extern int is_digit(int c);
 extern char* sztoa(size_t value, char* str, int base);
-extern size_t strlen(const char* s);
+// extern size_t strlen(const char* s);
 #endif
 
 

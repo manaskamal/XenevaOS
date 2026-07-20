@@ -65,6 +65,17 @@
 
 #define KERNEL_STACK_SIZE  40960//16384  //16KiB
 
+// macro for llvm compatibility
+#ifndef ALIGNED
+#if defined(_MSC_VER)
+    #define ALIGNED(x) __declspec(align(x))
+#elif defined(__GNUC__) || defined(__clang__)
+    #define ALIGNED(x) __attribute__((aligned(x)))
+#else
+    #define ALIGNED(x)
+#endif
+#endif
+
 
 typedef struct _lbprotocol_ {
 	uint64_t initrd_start;

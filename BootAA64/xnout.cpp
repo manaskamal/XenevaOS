@@ -88,14 +88,25 @@ void XEPutChar(const int ch) {
 
 #include <stdarg.h>
 
+#ifdef _MSC_VER
+extern "C" void store_x0_x7(uint64_t * buff);
+#endif
+
 /*
  * XEPrintf -- print function that will
  * show output to the screen
  * @param fmt -- format to print
  */
 int XEPrintf(wchar_t* fmt, ...) {
+
+#if defined(__GNUC__) || defined(__GNUG__)
 	va_list vl;
 	va_start(vl, fmt);
+#elif defined(_MSC_VER)
+	uint64_t buffer[7];
+	store_x0_x7(buffer);
+	va_list vl = (va_list)buffer;
+#endif
 
 	unsigned short out[256];
 	int o = 0;
@@ -377,8 +388,16 @@ void XEGuiPrint(const char* format, ...) {
 		XEUARTPrint(format);
 		return;
 	}
+
+#if defined(__GNUC__) || defined(__GNUG__)
 	va_list args;
 	va_start(args, format);
+#elif defined(_MSC_VER)
+	uint64_t buffer[7];
+	store_x0_x7(buffer);
+	va_list args = (va_list)buffer;
+#endif
+
 	//va_start(args, format);
 	while (*format != '\0') {
 		if (*format == '%') {

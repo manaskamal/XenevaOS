@@ -180,7 +180,7 @@
       <SubSystem>Native</SubSystem>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <OutputFile>..\Build\EFI\XENEVA\xnkrnl.exe</OutputFile>
-      <AdditionalLibraryDirectories>..\x64\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)Build\;..\x64\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies />
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
       <EnableUAC>false</EnableUAC>
@@ -264,6 +264,7 @@
     <ClCompile Include="dtb.c" />
     <ClCompile Include="Fs\Dev\devfs.c" />
     <ClCompile Include="Fs\Dev\devinput.c" />
+    <ClCompile Include="Fs\Ext2\Ext2.c" />
     <ClCompile Include="Fs\Fat\Fat.c" />
     <ClCompile Include="Fs\Fat\FatDir.c" />
     <ClCompile Include="Fs\Fat\FatFile.c" />
@@ -306,6 +307,7 @@
     <ClCompile Include="Net\netserv.c" />
     <ClCompile Include="Net\route.c" />
     <ClCompile Include="Net\socket.c" />
+    <ClCompile Include="Net\tcp.c" />
     <ClCompile Include="Net\udp.c" />
     <ClCompile Include="pcie.c" />
     <ClCompile Include="pe.c" />
@@ -314,6 +316,7 @@
     <ClCompile Include="proctoken.c" />
     <ClCompile Include="Serv\fileserv.c" />
     <ClCompile Include="Serv\thrserv.c" />
+    <ClCompile Include="signal.c" />
     <ClCompile Include="Sound\sndcore.c" />
     <ClCompile Include="stack.c" />
     <ClCompile Include="stdio.c" />
@@ -377,6 +380,7 @@
     <ClInclude Include="..\BaseHdr\Mm\mmfile.h" />
     <ClInclude Include="..\BaseHdr\power.h" />
     <ClInclude Include="..\BaseHdr\proctoken.h" />
+    <ClInclude Include="..\BaseHdr\signal.h" />
     <ClInclude Include="..\BaseHdr\stdarg.h" />
     <ClInclude Include="..\BaseHdr\timer.h" />
     <ClInclude Include="..\BaseHdr\uart.h">

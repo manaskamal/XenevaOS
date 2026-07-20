@@ -42,6 +42,9 @@
 #define SIZE_MAX 0xFFFFFFFFULL
 #endif
 #endif
+//#include <stddef.h>
+
+#define SIZE_MAX 0xFFFFFFFF
 
 
 #define EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID \

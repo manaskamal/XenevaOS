@@ -34,6 +34,7 @@
 
 #include <stdint.h>
 #include <aurora.h>
+#include <time.h>
 
 #define CPU_IMPLEMENTER_ARM      0x41
 #define CPU_IMPLEMENTER_BROADCOM 0x42
@@ -112,4 +113,11 @@ AU_EXTERN AU_EXPORT void AA64SleepMS(uint32_t ms);
  * @param regs -- Register information passed by sync_exception
  */
 extern void AuAA64SyscallHandler(AA64Registers* regs);
+
+/**
+ * @brief aa64_calculate_ticks -- calculate the number of ticks from given milliseconds
+ * @param seconds -- amount of seconds
+ * @param out_milliseconds -- where to store the number of ticks
+ */
+extern void aa64_calculate_ticks(uint64_t seconds, uint64_t subsec, uint64_t* out_seconds, uint64_t* out_subsec);
 #endif

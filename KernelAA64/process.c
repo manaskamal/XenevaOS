@@ -29,15 +29,22 @@
 *
 **/
 
+#if defined(__GNUC__) || defined(__clang__)
+#ifndef __cplusplus
+#include <stdbool.h>
+#endif
+#endif
 #include <process.h>
 #include <aucon.h>
 #include <Mm/vmmngr.h>
 #include <Mm/kmalloc.h>
 #include <pe.h>
+#include <clean.h>
 #include <Mm/pmmngr.h>
 #include <string.h>
 #include <_null.h>
 #include <Hal/AA64/sched.h>
+#include <Hal/AA64/aa64lowlevel.h>
 #include <Mm/shm.h>
 #include <loader.h>
 #include <Ipc/postbox.h>
@@ -308,9 +315,7 @@ int AuCreateUserthread(AuProcess* proc, void(*entry) (), char* name)
 	uint64_t kstack = stack;
 	stack = ((uint64_t)kstack & ~(uint64_t)0xF);
 	stack -= 64;
-	UARTDebugOut("User stack created %x \r\n", stack);
 	AA64Thread* thr = AuCreateSubKthread(AuProcessEntUser,stack,proc->cr3, name);
-	UARTDebugOut("[aurora]: user thread created \r\n");
 	thr->threadType = THREAD_LEVEL_USER;
 	thr->first_run = 0;
 	thr->procSlot = proc;
@@ -320,9 +325,7 @@ int AuCreateUserthread(AuProcess* proc, void(*entry) (), char* name)
 	uentry->entrypoint = (uint64_t)entry;
 	uentry->argvs = 0;
 	uentry->num_args = 0;
-	UARTDebugOut("[aurora]: creating user stack for user thread cr3 : %x %x\r\n",proc->cr3, V2P((uint64_t)thr->pml));
 	uentry->rsp = (uint64_t)CreateSubUserStack(proc, proc->cr3);
-	UARTDebugOut("[aurora]:User stack created : %x main_stack : %x \r\n", uentry->rsp, proc->_main_stack_);
 	uentry->stackBase = uentry->rsp;
 	thr->uentry = uentry;
 	int thread_indx = proc->num_thread;

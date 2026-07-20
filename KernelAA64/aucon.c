@@ -30,7 +30,11 @@
 **/
 
 #include <stdint.h>
-
+#if defined(__GNUC__) || defined(__clang__)
+#ifndef __cplusplus
+#include <stdbool.h>
+#endif
+#endif
 #include <aucon.h>
 #include <_null.h>
 #include "font.h"
@@ -43,6 +47,7 @@
 #include <Hal/AA64/sched.h>
 #include <process.h>
 #include <Fs/vfs.h>
+#include <Fs/Dev/devfs.h>
 #include <Drivers/uart.h>
 #include <Hal/AA64/aa64cpu.h>
 #include <Hal/AA64/aa64lowlevel.h>
@@ -327,6 +332,10 @@ void AuPutC(char c) {
 			lfb[i] = lfb[i + h_res * 16];
 		for (int i = (v_res - 16) * h_res; i < v_res * h_res; i++)
 			lfb[i] = CONSOLE_BACKGROUND;
+		for (int i = 0; i < h_res * (v_res - 16); i++)
+			lfb[i] = lfb[i + h_res * 16];
+
+		memset(lfb + h_res * (v_res - 16), 0, h_res * 16 * sizeof(uint32_t));
 		console_y--;
 	}
 
@@ -397,10 +406,17 @@ void AuPutS(char* str) {
 			lfb[i] = lfb[i + h_res * 16];
 		for (int i = (v_res - 16) * h_res; i < v_res * h_res; i++)
 			lfb[i] = CONSOLE_BACKGROUND;
+		for (int i = 0; i < h_res * (v_res - 16); i++)
+			lfb[i] = lfb[i + h_res * 16];
+
+		memset(lfb + h_res * (v_res - 16), 0, h_res * 16 * sizeof(uint32_t));
 		console_y--;
 	}
 }
 
+#ifdef _MSC_VER
+extern void store_x0_x7(uint64_t* buffer);
+#endif
 /**
  * @brief AuTextOut -- standard text printing function
  * for entire kernel

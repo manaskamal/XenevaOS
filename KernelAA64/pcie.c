@@ -32,6 +32,11 @@
 #include <pcie.h>
 #include <string.h>
 #include <stdint.h>
+#if defined(__GNUC__) || defined(__clang__)
+#ifndef __cplusplus
+#include <stdbool.h>
+#endif
+#endif
 #include <dtb.h>
 #include <aucon.h>
 #include <Hal/AA64/qemu.h>
@@ -65,7 +70,7 @@ static int _pcie_check_and_map_dtb() {
 	AuTextOut("[aurora]: ecam address : %x, size value : %x \n", ecamAddr, sizeValue);
 
 	/** in qemu, ecam address is 256 mb so 0x10000 number of pages */
-	_ecamAddress = AuMapMMIO(ecamAddr, 0x10000);
+	_ecamAddress = (uint64_t)AuMapMMIO(ecamAddr, 0x10000);
 #endif
 	_pcieInitialized = 1;
 	return 0;

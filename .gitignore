@@ -6,6 +6,17 @@ obj/
 Build/
 gnu-efi/
 
+#MSVC Build Artifacts & Logs
+*.log
+*.Build.CppClean.log
+*.recipe
+*.exp
+
+#Intellisense and precompiled headers
+.vs/
+ipch/
+*.ipch
+
 # Visual Studio specific files
 .vs/
 *.sdf
@@ -31,3 +42,7 @@ dump.s
 Process/**/*.elf
 Process/**/*.exe
 Libs/**/*.a
+
+# Exclude compiled user-space applications
+Resources/resources/*.exe
+Resources/resources/ARCH_ARM64/*.exe

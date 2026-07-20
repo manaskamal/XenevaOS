@@ -43,6 +43,7 @@
 #include <Mm/kmalloc.h>
 #include <Drivers/uart.h>
 #include <string.h>
+#include <Hal/AA64/sched.h>
 
 uint16_t IPv4CalculateChecksum(IPv4Header* p) {
 	uint32_t sum = 0;
@@ -72,17 +73,24 @@ void ip_ntoa(const uint32_t src) {
 void IPv4HandlePacket(void* data, AuVFSNode* nic) {
 	char dest[16];
 	char src[16];
+	UARTDebugOut("Handling IPV4 packet \r\n");
 	IPv4Header* pack = (IPv4Header*)data;
-	ip_ntoa(ntohl(pack->destAddress));
-	ip_ntoa(ntohl(pack->srcAddress));
-	switch (pack->protocol) {
+	uint32_t destIP;
+	memcpy(&destIP, &pack->destAddress, 4);
+	uint32_t srcIP;
+	memcpy(&srcIP, &pack->srcAddress, 4);
+	ip_ntoa(ntohl(destIP));
+	ip_ntoa(ntohl(srcIP));
+	uint8_t protocol;
+	memcpy(&protocol, &pack->protocol, 1);
+	switch (protocol) {
 	case 1: {
 		UARTDebugOut("[ipv4]: received ICMP message \r\n");
-		//AuICMPHandle(pack, nic);
+		AuICMPHandle(pack, nic);
 		break;
 	}
 	case IPV4_PROTOCOL_UDP: {
-		UARTDebugOut("[ipv4]: received UDP packet \r\n");
+		UDPHandlePacket(pack);
 		break;
 	}
 	case IPV4_PROTOCOL_TCP: {
@@ -146,7 +154,7 @@ void IPV4SendPacket(IPv4Header* packet, AuVFSNode* nic) {
 			cache = AuARPGet(ip_dest);
 			if (!cache) {
 				AuARPRequestMAC(nic, ip_dest);
-				UARTDebugOut("[aurora]:Requesting MAC \r\n");
+				UARTDebugOut("[aurora]:Requesting MAC #1 \r\n");
 
 				/* Not implemented yet */
 				AuSleepThread(AuGetCurrentThread(), 100);
@@ -159,12 +167,12 @@ void IPV4SendPacket(IPv4Header* packet, AuVFSNode* nic) {
 			cache = AuARPGet(ip_dest);
 			if (!cache) {
 				AuARPRequestMAC(nic, ip_dest);
-				UARTDebugOut("[aurora]: Requesting MAC \r\n");
+				UARTDebugOut("[aurora]: Requesting MAC #2\r\n");
 
 				/* Not implemented yet */
-				AuSleepThread(AuGetCurrentThread(), 10000);
+				AuSleepThread(AuGetCurrentThread(), 100);
 				AuForceScheduler();
-
+				UARTDebugOut("Rechecking ARP \r\n");
 				cache = AuARPGet(ip_dest);
 			}
 		}

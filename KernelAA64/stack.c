@@ -33,6 +33,7 @@
 #include <Mm/kmalloc.h>
 #include <string.h>
 #include <_null.h>
+#include <Drivers/uart.h>
 
 /**
  * @brief AuStackCreate -- create a new stack
@@ -54,6 +55,7 @@ void AuStackPush(AuStack* stack, void* data) {
 	newItem->link = stack->top;
 	stack->top = newItem;
 	stack->itemCount += 1;
+	UARTDebugOut("Stack pushing : top : %x \r\n", stack->top);
 }
 
 /**
@@ -64,6 +66,7 @@ void* AuStackPop(AuStack* stack) {
 	void* data = NULL;
 	if (!stack->top)
 		return NULL;
+	UARTDebugOut("Stack Pop here \r\n");
 	AuStackItem* si;
 	si = stack->top;
 	stack->top = stack->top->link;

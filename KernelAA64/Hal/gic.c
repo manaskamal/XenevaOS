@@ -41,13 +41,13 @@
 #include <Board/RPI3bp/rpi3bp.h>
 
 GIC __gic;
-uint32_t* gic_regs;
-uint32_t* gicc_regs;
+volatile uint32_t* gic_regs;
+volatile uint32_t* gicc_regs;
 
 typedef void (*irq_callback)(int spi);
 
 /** distributor registers */
-#define GICD(n)  (n.gicDMMIO)
+#define GICD(n)  ((uint64_t*)(n.gicDMMIO))
 #define GICD_CTLR    0x0000
 #define GICD_TYPER   0x0004
 #define GICD_IIDR    0x0008
@@ -423,16 +423,16 @@ skip_:
 	/* writing 0xff means accepting all types of priority 0x0 -- 0xFF */
 	if (_need_cpu_interface) {
 		gic_outl_((uint64_t*)__gic.gicCMMIO, GICC_PMR, 0x1ff);
-		gic_outl_(__gic.gicCMMIO, GICC_CTLR, 0x3);
+		gic_outl_((uint64_t*)__gic.gicCMMIO, GICC_CTLR, 0x3);
 		isb_flush();
 	}
 
 	/* enable the distributor interface */
 	if (__gic.version >= GIC_VERSION_3) {
-		gic_outl_(__gic.gicDMMIO, GICD_CTLR, (1u << 5) | (1u << 1));
+		gic_outl_((uint64_t*)__gic.gicDMMIO, GICD_CTLR, (1u << 5) | (1u << 1));
 	}
 	else {
-		gic_outl_(__gic.gicDMMIO, GICD_CTLR, 0x3);
+		gic_outl_((uint64_t*)__gic.gicDMMIO, GICD_CTLR, 0x3);
 		isb_flush();
 	}
 
@@ -451,17 +451,17 @@ skip_:
 
 void GICREnablePPI(uint32_t cpu, uint32_t intid) {
 	size_t sgi = GICR(__gic) + (cpu * GICR_STRIDE) + GICR_SGI_BASE;
-	gic_outl_(sgi, 0x100, (1u << intid));
+	gic_outl_((uint64_t*)sgi, 0x100, (1u << intid));
 }
 
 void GICRSetPPIPriority(uint32_t cpu, uint32_t intid, uint8_t prio) {
 	size_t sgi = GICR(__gic) + (cpu * GICR_STRIDE) + GICR_SGI_BASE;
 	uint32_t reg = intid / 4;
 	uint32_t shift = (intid % 4) * 8;
-	uint32_t val = gic_inl_(sgi, 0x400 + reg * 4);
+	uint32_t val = gic_inl_((uint64_t*)sgi, 0x400 + reg * 4);
 	val &= ~(0xFFu << shift);
 	val |= ((uint32_t)prio << shift);
-	gic_outl_(sgi, 0x400 + reg * 4, val);
+	gic_outl_((uint64_t*)sgi, 0x400 + reg * 4, val);
 }
 
 /** @briefGICEnableIRQ -- enable an IRQ
@@ -670,14 +670,14 @@ void GICCallSPIHandler(int spi) {
  * @brief GICDisable -- disable the GIC 
  */
 void GICDisable() {
-	gic_outl_(__gic.gicDMMIO, GICD_CTLR, 0);
+	gic_outl_((uint64_t*)__gic.gicDMMIO, GICD_CTLR, 0);
 
 	dsb_sy_barrier();
 	isb_flush();
 
 	if (__gic.version < GIC_VERSION_3) {
-		gic_outl_(__gic.gicCMMIO, GICC_CTLR, 0);
-		gic_outl_(__gic.gicCMMIO, GICC_PMR, 0xFF);
+		gic_outl_((uint64_t*)__gic.gicCMMIO, GICC_CTLR, 0);
+		gic_outl_((uint64_t*)__gic.gicCMMIO, GICC_PMR, 0xFF);
 		dsb_sy_barrier();
 		isb_flush();
 		UARTDebugOut("[aurora]: GIC version 2 disabling \r\n");

@@ -147,7 +147,7 @@
       <DataExecutionPrevention />
       <EntryPointSymbol>_aumain</EntryPointSymbol>
       <AdditionalOptions>/filealign:4096 %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalLibraryDirectories>..\..\x64\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)Build\;..\..\x64\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
       <Command>if exist M:\ ( copy "..\..\Build\$(TargetName).exe" "M:\$(TargetName).exe" ) else ( echo M: drive not found, skipping copy )</Command>
@@ -192,7 +192,7 @@
       </DataExecutionPrevention>
       <EntryPointSymbol>_aumain</EntryPointSymbol>
       <AdditionalOptions>/filealign:4096 %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalLibraryDirectories>..\..\ARM64\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)Build\;..\..\ARM64\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
       <Command>if exist M:\ ( copy "..\..\Build\$(TargetName).exe" "M:\$(TargetName).exe" ) else ( echo M: drive not found, skipping copy )</Command>
