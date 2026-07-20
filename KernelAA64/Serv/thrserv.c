@@ -262,9 +262,28 @@ int SetFileToProcess(int fileno, int dest_fdidx, int proc_id) {
 		 * fileno to destination processes file
 		 * entry
 		 */
+		
+
+
+
 		destproc->fds[dest_fdidx] = file;
 		file->fileCopyCount += 1;
-	}
+
+		/* inherit the capability if inheritance is allowed */
+		AuCapability* src = BordoisilaCapLookup(proc, fileno);
+		if (src && !(src->flags & CAP_FLAG_NO_INHERIT)) {
+   		 BordoisilaCapCreate(
+       		 destproc,
+        		dest_fdidx,
+       		 file,
+       		 src->object_type,
+       		 src->rights);
+		} 
+
+
+	}     
+    return 0;
+
 }
 
 /**

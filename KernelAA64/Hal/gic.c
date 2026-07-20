@@ -47,7 +47,7 @@ volatile uint32_t* gicc_regs;
 typedef void (*irq_callback)(int spi);
 
 /** distributor registers */
-#define GICD(n)  ((uint8_t*)(n.gicDMMIO))
+#define GICD(n)  (n.gicDMMIO)
 #define GICD_CTLR    0x0000
 #define GICD_TYPER   0x0004
 #define GICD_IIDR    0x0008

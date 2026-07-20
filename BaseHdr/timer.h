@@ -34,7 +34,11 @@
 
 #include <aurora.h>
 #include <Hal/AA64/sched.h>
+#if defined(__GNUC__) || defined(__clang__)
+#ifndef __cplusplus
 #include <stdbool.h>
+#endif
+#endif
 
 typedef void (*AuroraTimerCallback)(void* param);
 

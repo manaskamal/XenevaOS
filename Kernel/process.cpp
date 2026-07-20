@@ -275,7 +275,9 @@ AuProcess* AuCreateRootProc() {
 	proc->proc_mmap_len = 0;
 	proc->waitlist = initialize_list();
 	for (int i = 0; i < FILE_DESC_PER_PROCESS; i++)
-		proc->fds[i] = 0;
+    	proc->fds[i] = 0;
+	memset(proc->caps, 0, sizeof(proc->caps));
+
 
 	/* create the main thread after loading the
 	 * image file to process, because just after
@@ -322,7 +324,14 @@ AuProcess* AuCreateProcessSlot(AuProcess* parent, char* name) {
 	proc->proc_mmap_len = 0;
 	proc->waitlist = initialize_list();
 	for (int i = 0; i < FILE_DESC_PER_PROCESS; i++)
-		proc->fds[i] = 0;
+    	proc->fds[i] = 0;
+
+	memset(proc->caps, 0, sizeof(proc->caps));
+
+	/*
+ 	* TODO: re-enable BordoisilaCapInheritTable(parent, proc)
+ 	* once fd inheritance is implemented.
+ 	*/
 
 	proc->main_thread = NULL;
 
@@ -528,6 +537,8 @@ void AuProcessExit(AuProcess* proc, bool schedulable) {
 			}
 		}
 	}
+
+	BordoisilaCapCleanupProcess(proc);
 
 	for (int i = 0; i < proc->waitlist->pointer; i++) {
 		AuThread* thr = (AuThread*)list_remove(proc->waitlist, i);

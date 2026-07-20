@@ -164,6 +164,10 @@ ButtonInfo* NmCreateButtonInfo(char* filename) {
 	ButtonInfo* btninfo = (ButtonInfo*)malloc(sizeof(ButtonInfo));
 	memset(btninfo, 0, sizeof(ButtonInfo));
 	int fd = _KeOpenFile(filename, FILE_OPEN_READ_ONLY);
+	if (fd == -1) {
+		free(btninfo);
+		return NULL;
+	}
 	XEFileStatus stat;
 	_KeFileStat(fd, &stat);
 
@@ -190,10 +194,13 @@ void NmButtonInfoRead(ButtonInfo* btninfo) {
 	BMP* bmp = (BMP*)buffer;
 	unsigned int offset = bmp->off_bits;
 
-	BMPInfo* info = (BMPInfo*)(buffer + sizeof(BMP));
-	int width = info->biWidth;
-	int height = info->biHeight;
-	int bpp = info->biBitCount;
+	uint8_t* info = (uint8_t*)(buffer + sizeof(BMP));
+	int width = 0;
+	memcpy(&width, (uint8_t*)info + 4, sizeof(int));
+	int height = 0;
+	memcpy(&height, (uint8_t*)info + 8, sizeof(int));
+	int bpp = 0;
+	memcpy(&bpp, (uint8_t*)info + 14, sizeof(unsigned short));
 
 	void* image_bytes = (void*)(buffer + offset);
 	btninfo->imageData = (uint8_t*)image_bytes;
@@ -212,6 +219,7 @@ void NmButtonInfoRead(ButtonInfo* btninfo) {
  * @param y -- Y coordinate
  */
 void NmButtonInfoDrawIcon(ButtonInfo* info, ChCanvas* canv, int x, int y){
+	if (!info || !info->imageData) return;
 	uint32_t width = info->iconWidth;
 	uint32_t height = info->iconHeight;
 	uint32_t j = 0;
@@ -228,7 +236,7 @@ void NmButtonInfoDrawIcon(ButtonInfo* info, ChCanvas* canv, int x, int y){
 			uint32_t a = image_row[j++] & 0xff;
 			uint32_t rgb = ((a << 24) | (r << 16) | (g << 8) | (b));
 			if (rgb & 0xFF000000)
-				ChDrawPixel(canv, x + k, y + i, rgb);
+					ChDrawPixel(canv, x + k, y + i, rgb);
 		}
 	}
 }

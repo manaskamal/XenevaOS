@@ -29,7 +29,11 @@
 *
 **/
 
+#if defined(__GNUC__) || defined(__clang__)
+#ifndef __cplusplus
 #include <stdbool.h>
+#endif
+#endif
 #include <process.h>
 #include <aucon.h>
 #include <Mm/vmmngr.h>
@@ -398,7 +402,7 @@ void AuProcessFreeKeResource(AA64Thread* thr) {
  * @param proc -- process to exit
  * @param schedulable -- schedule to next thread
  */
-void AuProcessExit(AuProcess* proc, bool schedulable) {
+void AuProcessExit(AuProcess* proc, BOOL schedulable) {
 	if (proc == root_proc) {
 		UARTDebugOut("[aurora]: cannot exit root process \r\n");
 		return;
@@ -410,6 +414,7 @@ void AuProcessExit(AuProcess* proc, bool schedulable) {
 	}
 
 	/** free up all allocated files by this process **/
+	BordoisilaCapCleanupProcess(proc);
 	for (int i = 0; i < FILE_DESC_PER_PROCESS; i++) {
 		AuVFSNode* file = proc->fds[i];
 		if (file) {

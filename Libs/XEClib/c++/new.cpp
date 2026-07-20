@@ -53,6 +53,10 @@ void operator delete[](void* ptr) {
 	free(ptr);
 }
 
-void operator delete(void* p, uint64_t s) {
+void operator delete(void* p, std::size_t s) {
+	free(p);
+}
 
+void operator delete[](void* p, std::size_t s) {
+	free(p);
 }

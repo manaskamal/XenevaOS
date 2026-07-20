@@ -31,7 +31,11 @@
 #define _KMALLOC_H
 
 #include <stdint.h>
+#if defined(__GNUC__) || defined(__clang__)
+#ifndef __cplusplus
 #include <stdbool.h>
+#endif
+#endif
 #include <aurora.h>
 
 

@@ -32,7 +32,7 @@
 #include <stdio.h>
 #include <sys/_keproc.h>
 #include <sys/_kefile.h>
-#include <sys/mman.h>>
+#include <sys/mman.h>
 #include <sys/iocodes.h>
 #include <string.h>
 #include <stdlib.h>

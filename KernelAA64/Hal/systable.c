@@ -294,6 +294,5 @@ skip_1:
 	PROFILE_END(syscall_name[vector]);
 skip_3:
 #endif
-	return ;
-
+	return;
 }

@@ -150,7 +150,7 @@
       <RandomizedBaseAddress />
       <FixedBaseAddress>false</FixedBaseAddress>
       <DataExecutionPrevention />
-      <AdditionalLibraryDirectories>..\x64\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)Build\;..\x64\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalOptions>/filealign:0x1000  %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
@@ -200,7 +200,7 @@
       <FixedBaseAddress>false</FixedBaseAddress>
       <DataExecutionPrevention>
       </DataExecutionPrevention>
-      <AdditionalLibraryDirectories>..\x64\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)Build\;..\x64\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalOptions>/filealign:0x1000  %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
@@ -250,6 +250,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Cap\capability.cpp" />
     <ClInclude Include="..\BaseHdr\ahci.h" />
     <ClInclude Include="..\BaseHdr\ahcidsk.h" />
     <ClInclude Include="..\BaseHdr\aucon.h" />

@@ -32,7 +32,6 @@
 #include <pcie.h>
 #include <string.h>
 #include <stdint.h>
-#include <stdbool.h>
 #include <dtb.h>
 #include <aucon.h>
 #include <Hal/AA64/qemu.h>

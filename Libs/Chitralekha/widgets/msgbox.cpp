@@ -123,8 +123,8 @@ void ChMessageBoxPrepareButtons(ChWindow* win, ChMessageBox *mb,uint8_t buttons)
 XE_EXTERN XE_EXPORT ChMessageBox* ChCreateMessageBox(ChWindow* mainWin,char* title, char* msg, uint8_t buttons, uint8_t icon) {
 	ChMessageBox* mb = (ChMessageBox*)malloc(sizeof(ChMessageBox));
 	memset(mb, 0, sizeof(ChMessageBox));
-	mb->message = (char*)malloc(strlen(msg) - 1);
-	memset(mb->message, 0, (strlen(msg) - 1));
+	mb->message = (char*)malloc(strlen(msg) + 1);
+	memset(mb->message, 0, (strlen(msg) + 1));
 	strcpy(mb->message, msg);
 	mb->icon = icon;
 	mb->type = buttons;

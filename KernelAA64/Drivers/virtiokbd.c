@@ -118,6 +118,9 @@ void AuVirtioKbdHandler(int spinum) {
 }
 
 void AuVirtioKbdDown() {
+	if (!_kybrdCfg)
+		return;
+
 	/* Reset the device */
 	_kybrdCfg->DeviceStatus = 0;
 

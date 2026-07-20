@@ -129,6 +129,9 @@ void AuVirtioTabletHandler(int spiNum) {
 }
 
 void AuVirtioTabletDown() {
+	if (!_tabletCfg)
+		return;
+
 	/* Reset the device */
     _tabletCfg->DeviceStatus = 0;
 
