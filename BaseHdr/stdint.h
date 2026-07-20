@@ -38,9 +38,7 @@ typedef unsigned char BOOL;
 
 #ifdef ARCH_ARM64
 #if !defined(bool)
-#define bool BOOL
-#define true 1
-#define false 0
+#include <stdbool.h>
 #endif
 #endif
 
@@ -99,6 +97,7 @@ typedef unsigned int uintptr_t;
 /* 7.18.1.5  Greatest-width integer types */
 typedef long long  intmax_t;
 typedef unsigned long long   uintmax_t;
+
 #ifdef __SIZE_TYPE__
 typedef __SIZE_TYPE__ size_t;
 #else

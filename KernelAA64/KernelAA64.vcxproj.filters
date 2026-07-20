@@ -220,6 +220,9 @@
     <ClCompile Include="Board\imx8mp\imx8mp_clk_gate.c">
       <Filter>Board\imx8mp</Filter>
     </ClCompile>
+    <ClCompile Include="Cap\capability.c">
+      <Filter>Cap</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Hal">
@@ -305,6 +308,9 @@
     </Filter>
     <Filter Include="Fs\Ext2">
       <UniqueIdentifier>{9e3c015e-2730-4f5a-b260-96fd6a826e4d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Cap">
+      <UniqueIdentifier>{ff284144-c4ef-46a6-8a98-d6967d078115}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -466,6 +472,12 @@
     </ClInclude>
     <ClInclude Include="..\BaseHdr\Board\imx8mp\imx8mp_gpc.h">
       <Filter>Include\Board\imx8mp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\stddef.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\stdbool.h">
+      <Filter>Include</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

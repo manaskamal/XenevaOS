@@ -33,6 +33,7 @@
 #include <aucon.h>
 #include <_null.h>
 #include <stdint.h>
+#include <Drivers/uart.h>
 
 /*
  * NOTE on concurrency: every existing syscall entry point in
@@ -99,17 +100,19 @@ bool BordoisilaCapCheckRights(void* procptr, int fd, CapRights required) {
 
     if (!cap) {
         //AuTextOut("[CAP] No capability fd=%d\r\n", fd);
+		//UARTDebugOut("[CAP] No capability fd = %d \r\n", fd);
         return false;
     }
 
     /*AuTextOut("[CAP] Check fd=%d req=%x have=%x\r\n",
     fd, required, cap->rights);*/
+	//UARTDebugOut("[CAP] Check fd=%d req=%x have=%x \r\n", fd, required, cap->rights);
 
     return (cap->rights & required) == required;
 }
 
-int BordoisilaCapDup(AuProcess* proc, int oldfd, int newfd) {
-
+int BordoisilaCapDup(void* procptr, int oldfd, int newfd) {
+	AuProcess* proc = (AuProcess*)procptr;
     AuCapability* src = BordoisilaCapLookup(proc, oldfd);
     if (!src)
         return CAP_ERR_INVALID;

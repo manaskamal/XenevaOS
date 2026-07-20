@@ -11,11 +11,13 @@ gnu-efi/
 *.Build.CppClean.log
 *.recipe
 *.exp
+*.db
 
 #Intellisense and precompiled headers
 .vs/
 ipch/
 *.ipch
+
 
 # Visual Studio specific files
 .vs/

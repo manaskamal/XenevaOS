@@ -287,6 +287,7 @@
     <ClCompile Include="Board\Virt\fwcfg.c" />
     <ClCompile Include="Board\Virt\virt.c" />
     <ClCompile Include="Board\Virt\virtioblk.c" />
+    <ClCompile Include="Cap\capability.c" />
     <ClCompile Include="circbuf.c" />
     <ClCompile Include="clean.c" />
     <ClCompile Include="Cred\cred.c" />
@@ -430,6 +431,8 @@
     <ClInclude Include="..\BaseHdr\proctoken.h" />
     <ClInclude Include="..\BaseHdr\signal.h" />
     <ClInclude Include="..\BaseHdr\stdarg.h" />
+    <ClInclude Include="..\BaseHdr\stdbool.h" />
+    <ClInclude Include="..\BaseHdr\stddef.h" />
     <ClInclude Include="..\BaseHdr\timer.h" />
     <ClInclude Include="..\BaseHdr\uart.h">
       <DeploymentContent>false</DeploymentContent>

@@ -199,8 +199,10 @@ size_t ReadFile(int fd, void* buffer, size_t length) {
 	if (!file) {
 		return 0;
 	}
-	if (!BordoisilaCapCheckRights(current_proc, fd, CAP_READ))
-    	return 0;
+	if (!BordoisilaCapCheckRights(current_proc, fd, CAP_READ)) {
+		//UARTDebugOut("Cap failed to mate \r\n");
+		return 0;
+	}
 	size_t ret_bytes = 0;
 
 	/* every general file will contain its
