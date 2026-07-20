@@ -90,7 +90,7 @@ void* memcpy(void* __restrict dest, void* __restrict src, size_t len) {
 	volatile uint8_t* t = (volatile uint8_t*)dest;
 	const volatile uint8_t* s = (const volatile uint8_t*)src;
 
-	if (len == 0 || dest == src) return;
+	if (len == 0 || dest == src) return NULL;
 
 	if ((t > s) && (t < (s + len))) {
 		t += len;
