@@ -31,7 +31,12 @@
 #include <process.h>
 #include <string.h>
 #include <_null.h>
+
+#ifdef ARCH_X64
 #include <Hal/serial.h>
+#elif defined(ARCH_ARM64)
+#include <Drivers/uart.h>
+#endif
 
 /*
  * NOTE on concurrency: every existing syscall entry point in
@@ -94,12 +99,21 @@ bool BordoisilaCapCheckRights(AuProcess* proc, int fd, CapRights required) {
     AuCapability* cap = BordoisilaCapLookup(proc, fd);
 
     if (!cap) {
+#ifdef ARCH_X64
         SeTextOut("[CAP] No capability fd=%d\r\n", fd);
+#elif defined(ARCH_ARM64)
+        UARTDebugOut("[CAP] No capability fd=%d\r\n", fd);
+#endif
         return false;
     }
 
+#ifdef ARCH_X64
     SeTextOut("[CAP] Check fd=%d req=%x have=%x\r\n",
-        fd, required, cap->rights);
+              fd, required, cap->rights);
+#elif defined(ARCH_ARM64)
+    UARTDebugOut("[CAP] Check fd=%d req=%x have=%x\r\n",
+                 fd, required, cap->rights);
+#endif
 
     return (cap->rights & required) == required;
 }
