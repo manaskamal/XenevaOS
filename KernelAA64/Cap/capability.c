@@ -83,7 +83,7 @@ int BordoisilaCapCreate(void* procptr, int fd, void* object, uint8_t type, CapRi
 	return CAP_OK;
 }
 
-AuCapability* BordoisilaCapLookup(AuProcess* procptr, int fd) {
+AuCapability* BordoisilaCapLookup(void* procptr, int fd) {
 	AuProcess* proc = (AuProcess*)procptr;
 	AuCapability* cap = cap_slot(proc, fd);
 	if (!cap)
@@ -93,23 +93,55 @@ AuCapability* BordoisilaCapLookup(AuProcess* procptr, int fd) {
 	return cap;
 }
 
-bool BordoisilaCapCheckRights(AuProcess* procptr, int fd, CapRights required) {
-	AuProcess* proc = (AuProcess*)procptr;
+bool BordoisilaCapCheckRights(void* procptr, int fd, CapRights required) {
+    AuProcess* proc = (AuProcess*)procptr;
     AuCapability* cap = BordoisilaCapLookup(proc, fd);
 
     if (!cap) {
-        AuTextOut("[CAP] No capability fd=%d\r\n", fd);
+        //AuTextOut("[CAP] No capability fd=%d\r\n", fd);
         return false;
     }
 
-    AuTextOut("[CAP] Check fd=%d req=%x have=%x\r\n",
-    fd, required, cap->rights);
+    /*AuTextOut("[CAP] Check fd=%d req=%x have=%x\r\n",
+    fd, required, cap->rights);*/
 
     return (cap->rights & required) == required;
 }
 
-int BordoisilaCapRestrict(AuProcess* procptr, int fd, CapRights new_rights) {
-	AuProcess* proc = (AuProcess*)procptr;
+int BordoisilaCapDup(AuProcess* proc, int oldfd, int newfd) {
+
+    AuCapability* src = BordoisilaCapLookup(proc, oldfd);
+    if (!src)
+        return CAP_ERR_INVALID;
+
+    if (!cap_slot_in_range(newfd))
+        return CAP_ERR_INVALID;
+
+    if (proc->caps[newfd].valid)
+        return CAP_ERR_INVALID;
+
+    if (proc->fds[newfd])
+        return CAP_ERR_INVALID;
+
+    proc->fds[newfd] = proc->fds[oldfd];
+
+    if (proc->fds[newfd])
+        proc->fds[newfd]->fileCopyCount++;
+
+    AuCapability* dst = &proc->caps[newfd];
+
+    dst->object = src->object;
+    dst->object_type = src->object_type;
+    dst->rights = src->rights;
+    dst->owner = src->owner;
+    dst->flags = src->flags;
+    dst->valid = true;
+
+    return CAP_OK;
+}
+
+int BordoisilaCapRestrict(void* procptr, int fd, CapRights new_rights) {
+    AuProcess* proc = (AuProcess*)procptr;
 	AuCapability* cap = BordoisilaCapLookup(proc, fd);
 	if (!cap)
 		return CAP_ERR_INVALID;
@@ -121,10 +153,10 @@ int BordoisilaCapRestrict(AuProcess* procptr, int fd, CapRights new_rights) {
 	return CAP_OK;
 }
 
-void BordoisilaCapDestroy(AuProcess* procptr, int fd) {
-	AuProcess* proc = (AuProcess*)procptr;
+void BordoisilaCapDestroy(void* procptr, int fd) {
+    AuProcess* proc = (AuProcess*)procptr;
 
-	AuCapability* cap = cap_slot(proc, fd);
+    AuCapability* cap = cap_slot(proc, fd);
 	if (!cap || !cap->valid)
 		return;
 
@@ -136,7 +168,7 @@ void BordoisilaCapDestroy(AuProcess* procptr, int fd) {
 	cap->valid = false;
 }
 
-void BordoisilaCapCleanupProcess(AuProcess* procptr) {
+void BordoisilaCapCleanupProcess(void* procptr) {
 	AuProcess* proc = (AuProcess*)procptr;
 	if (!proc)
 		return;
