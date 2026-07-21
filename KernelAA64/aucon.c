@@ -342,7 +342,6 @@ void AuPutC(char c) {
 }
 
 
-
 /**
  * @brief Prints string to console output
  * @param str -- string to print
@@ -381,6 +380,78 @@ void AuPutS(char* str) {
 
 					if (entry.data[y] & (1 << x)) {
 						AuPutPixel(x + console_x * 9, y + console_y * 16, CONSOLE_FOREGROUND);
+					}
+					else {
+						AuPutPixel(x + console_x * 9, y + console_y * 16, CONSOLE_BACKGROUND);
+					}
+				}
+				AuPutPixel(8 + console_x * 9, y + console_y * 16, CONSOLE_BACKGROUND);
+			}
+			++console_x;
+			if (console_x > h_res / 9) {
+				console_x = 0;
+				++console_y;
+			}
+		}
+
+		++str;
+	}
+
+
+	/* Scroll */
+	if (console_y + 1 > v_res / 16)
+	{
+		for (int i = 0; i < (v_res - 16) * h_res; i++)
+			lfb[i] = lfb[i + h_res * 16];
+		for (int i = (v_res - 16) * h_res; i < v_res * h_res; i++)
+			lfb[i] = CONSOLE_BACKGROUND;
+		for (int i = 0; i < h_res * (v_res - 16); i++)
+			lfb[i] = lfb[i + h_res * 16];
+
+		memset(lfb + h_res * (v_res - 16), 0, h_res * 16 * sizeof(uint32_t));
+		console_y--;
+	}
+}
+
+/**
+ * @brief Prints string to console output
+ * @param str -- string to print
+ * @param col -- foreground color
+ */
+void AuPutS_Color(char* str, uint32_t color) {
+	if (early_) {
+		if (is_uart_initialized())
+			uartPuts(str);
+		else if (_print_func)
+			_print_func(str);
+		return;
+	}
+
+	uint32_t* lfb = aucon->buffer;
+	while (*str) {
+
+		if (*str > 0xFF) {
+			//unicode
+		}
+		else if (*str == '\n') {
+			++console_y;
+			console_x = 0;
+		}
+		else if (*str == '\r') {
+		}
+		else if (*str == '\b') {
+			if (console_x > 0)
+				--console_x;
+		}
+		else {
+
+			const bx_fontcharbitmap_t entry = bx_vgafont[*str];
+			for (size_t y = 0; y < 16; ++y) {
+
+				for (size_t x = 0; x < 8; ++x) {
+
+					if (entry.data[y] & (1 << x)) {
+						AuPutPixel(x + console_x * 9, y + console_y * 16, color);
 					}
 					else {
 						AuPutPixel(x + console_x * 9, y + console_y * 16, CONSOLE_BACKGROUND);
