@@ -52,6 +52,7 @@
 #include <Drivers/uart.h>
 #include <timer.h>
 #include <clean.h>
+#include <Cap/capability.h>
 
 
 static int pid = 1;

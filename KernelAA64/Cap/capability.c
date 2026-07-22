@@ -50,7 +50,7 @@
 
  /* internal helper: is `fd` a valid index into the capability table? */
 static unsigned char  cap_slot_in_range(int rq) {
-	return (rq >= 0) && (rq < 63);
+	return (rq >= 0) && (rq < FILE_DESC_PER_PROCESS);
 }
 
 /* internal helper: slot pointer, or NULL if fd is out of range */
@@ -98,11 +98,9 @@ bool BordoisilaCapCheckRights(void* procptr, int fd, CapRights required) {
     AuProcess* proc = (AuProcess*)procptr;
     AuCapability* cap = BordoisilaCapLookup(proc, fd);
 
-    if (!cap) {
-        //AuTextOut("[CAP] No capability fd=%d\r\n", fd);
-		//UARTDebugOut("[CAP] No capability fd = %d \r\n", fd);
+    if (!cap) 
         return false;
-    }
+    
 
     /*AuTextOut("[CAP] Check fd=%d req=%x have=%x\r\n",
     fd, required, cap->rights);*/

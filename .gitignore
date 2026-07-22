@@ -27,6 +27,7 @@ ipch/
 *.ipch
 *.VC.db
 *.log
+.vs/Aurora/v16/*.db
 x64/
 ARM64/
 Debug/

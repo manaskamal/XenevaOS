@@ -43,6 +43,7 @@
 #include <Mm/vmmngr.h>
 #include <Cred/cred.h>
 #include <aucon.h>
+#include <Log/klog.h>
 
 extern uint64_t read_sp();
 extern uint64_t read_sp_el1();
@@ -106,7 +107,7 @@ int OpenFile(char* filename, int mode) {
 CapRights rights = CAP_SEEK;
 
 if (mode & FILE_OPEN_READ_ONLY)
-    rights |= CAP_READ;
+    rights |= CAP_READ | CAP_WRITE;
 
 if (mode & (FILE_OPEN_WRITE | FILE_OPEN_CREAT))
     rights |= CAP_WRITE;
@@ -114,6 +115,9 @@ if (mode & (FILE_OPEN_WRITE | FILE_OPEN_CREAT))
 /* Preserve current default behaviour */
 if (mode == 0)
     rights |= CAP_READ;
+
+if (rights & CAP_READ)
+    BPrintK(BORDOISILA_WARN, "Creating rights has read %s, %d, fname: %s\r\n", current_proc->name, fd, filename);
 
 BordoisilaCapCreate(
     current_proc,
@@ -200,7 +204,6 @@ size_t ReadFile(int fd, void* buffer, size_t length) {
 		return 0;
 	}
 	if (!BordoisilaCapCheckRights(current_proc, fd, CAP_READ)) {
-		//UARTDebugOut("Cap failed to mate \r\n");
 		return 0;
 	}
 	size_t ret_bytes = 0;

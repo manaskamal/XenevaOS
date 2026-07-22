@@ -210,7 +210,6 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	AuDeviceTreeMapMMIO();
 	AuAA64BoardInitialize();
 	AA64CPUPostInitialize(info);
-	AuTextOut("Initializing VFS \r\n");
 	AuVFSInitialise();
 	AuInitrdInitialize(info);
 	AuConsolePostInitialise(info);

@@ -45,9 +45,9 @@
 /** @brief master_count -- internal count value of total
  * master tty
  */
-size_t master_count = 0;
+static size_t master_count = 0;
 /** @brief slave_count -- internal slave tty count */
-size_t slave_count = 0;
+static size_t slave_count = 0;
 
 TTY* root = NULL;
 TTY* last = NULL;
@@ -436,18 +436,24 @@ int AuTTYCreate(int* master_fd, int* slave_fd) {
 	slave->uid = proc->creds.uid;
 	slave->gid = proc->creds.gid;
 
+	CapRights rights;
+	rights = CAP_READ | CAP_WRITE;
+
 	int fd = AuProcessGetFileDesc(proc);
 	if (fd == -1)
 		return 0;
 	proc->fds[fd] = master;
 	*master_fd = fd;
 
+	BordoisilaCapCreate(proc, fd, master, CAP_OBJ_FILE, rights);
+
 	fd = AuProcessGetFileDesc(proc);
 	if (fd == -1)
 		return 0;
 	proc->fds[fd] = slave;
 	*slave_fd = fd;
-
+	
+	BordoisilaCapCreate(proc, fd, slave, CAP_OBJ_FILE, rights);
 	return 1;
 }
 
