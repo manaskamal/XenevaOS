@@ -229,6 +229,12 @@
     <ClCompile Include="Log\_print.c">
       <Filter>Log</Filter>
     </ClCompile>
+    <ClCompile Include="Drivers\core.c">
+      <Filter>Drivers</Filter>
+    </ClCompile>
+    <ClCompile Include="Drivers\res.c">
+      <Filter>Drivers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Hal">
@@ -496,6 +502,12 @@
     </ClInclude>
     <ClInclude Include="..\BaseHdr\Log\_print.h">
       <Filter>Include\Log</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\Drivers\core.h">
+      <Filter>Include\Drivers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\Drivers\res.h">
+      <Filter>Include\Drivers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

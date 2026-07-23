@@ -292,6 +292,8 @@
     <ClCompile Include="clean.c" />
     <ClCompile Include="Cred\cred.c" />
     <ClCompile Include="ctype.c" />
+    <ClCompile Include="Drivers\core.c" />
+    <ClCompile Include="Drivers\res.c" />
     <ClCompile Include="Drivers\rtcmmio.c" />
     <ClCompile Include="Drivers\uart.c" />
     <ClCompile Include="Drivers\virtiokbd.c" />
@@ -405,6 +407,8 @@
     <ClInclude Include="..\BaseHdr\Cred\cred.h" />
     <ClInclude Include="..\BaseHdr\Cred\group.h" />
     <ClInclude Include="..\BaseHdr\Cred\user.h" />
+    <ClInclude Include="..\BaseHdr\Drivers\core.h" />
+    <ClInclude Include="..\BaseHdr\Drivers\res.h" />
     <ClInclude Include="..\BaseHdr\Drivers\rtcmmio.h" />
     <ClInclude Include="..\BaseHdr\Drivers\uart.h" />
     <ClInclude Include="..\BaseHdr\Drivers\virtio.h" />
