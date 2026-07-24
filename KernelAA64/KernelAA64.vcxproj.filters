@@ -220,6 +220,21 @@
     <ClCompile Include="Board\imx8mp\imx8mp_clk_gate.c">
       <Filter>Board\imx8mp</Filter>
     </ClCompile>
+    <ClCompile Include="Cap\capability.c">
+      <Filter>Cap</Filter>
+    </ClCompile>
+    <ClCompile Include="Log\klog.c">
+      <Filter>Log</Filter>
+    </ClCompile>
+    <ClCompile Include="Log\_print.c">
+      <Filter>Log</Filter>
+    </ClCompile>
+    <ClCompile Include="Drivers\core.c">
+      <Filter>Drivers</Filter>
+    </ClCompile>
+    <ClCompile Include="Drivers\res.c">
+      <Filter>Drivers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Hal">
@@ -305,6 +320,15 @@
     </Filter>
     <Filter Include="Fs\Ext2">
       <UniqueIdentifier>{9e3c015e-2730-4f5a-b260-96fd6a826e4d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Cap">
+      <UniqueIdentifier>{ff284144-c4ef-46a6-8a98-d6967d078115}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Log">
+      <UniqueIdentifier>{7e4e816a-cb9c-4b76-946f-97145714be4a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Include\Log">
+      <UniqueIdentifier>{a7372d49-db94-4f19-9769-96146f023dd9}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -466,6 +490,24 @@
     </ClInclude>
     <ClInclude Include="..\BaseHdr\Board\imx8mp\imx8mp_gpc.h">
       <Filter>Include\Board\imx8mp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\stddef.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\stdbool.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\Log\klog.h">
+      <Filter>Include\Log</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\Log\_print.h">
+      <Filter>Include\Log</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\Drivers\core.h">
+      <Filter>Include\Drivers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\Drivers\res.h">
+      <Filter>Include\Drivers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

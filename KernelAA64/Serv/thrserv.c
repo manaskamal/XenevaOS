@@ -41,6 +41,7 @@
 #include <Mm/mmap.h>
 #include <signal.h>
 #include <timer.h>
+#include <Log/klog.h>
 
 /**
  * @brief GetThreadID -- returns current id
@@ -272,6 +273,7 @@ int SetFileToProcess(int fileno, int dest_fdidx, int proc_id) {
 		/* inherit the capability if inheritance is allowed */
 		AuCapability* src = BordoisilaCapLookup(proc, fileno);
 		if (src && !(src->flags & CAP_FLAG_NO_INHERIT)) {
+			BPrintK(BORDOISILA_INFO, "Capability copied from proc : %s, fileno-> %d \r\n", proc->name, fileno);
    		 BordoisilaCapCreate(
        		 destproc,
         		dest_fdidx,

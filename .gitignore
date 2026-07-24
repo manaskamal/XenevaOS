@@ -11,11 +11,13 @@ gnu-efi/
 *.Build.CppClean.log
 *.recipe
 *.exp
+*.db
 
 #Intellisense and precompiled headers
 .vs/
 ipch/
 *.ipch
+
 
 # Visual Studio specific files
 .vs/
@@ -25,6 +27,7 @@ ipch/
 *.ipch
 *.VC.db
 *.log
+.vs/Aurora/v16/*.db
 x64/
 ARM64/
 Debug/

@@ -39,6 +39,30 @@ store_x0_x7:
     str x7, [x0, #48]
     ret
 
+.global store_x2_x7
+store_x2_x7:
+    stp x2, x3, [x0, #0]
+    stp x4, x5, [x0, #16]
+    stp x6, x7, [x0, #32]
+
+    stp q0, q1, [x0, #64]
+    stp q2, q3, [x0, #96]
+    stp q4, q5, [x0, #128]
+    stp q6,q7, [x0, #160]
+    ret
+
+.global store_x3_x7
+store_x3_x7:
+    stp x3, x4, [x0, #0]
+    stp x5, x6, [x0, #16]
+    str x7, [x0, #32]
+
+    stp q0, q1, [x0, #64]
+    stp q2, q3, [x0, #96]
+    stp q4, q5, [x0, #128]
+    stp q6, q7, [x0, #160]
+    ret
+
 .global _getCurrentEL
 _getCurrentEL:
     mrs x0, CurrentEL

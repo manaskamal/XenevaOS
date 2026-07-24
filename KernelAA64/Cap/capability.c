@@ -33,6 +33,7 @@
 #include <aucon.h>
 #include <_null.h>
 #include <stdint.h>
+#include <Drivers/uart.h>
 
 /*
  * NOTE on concurrency: every existing syscall entry point in
@@ -49,7 +50,7 @@
 
  /* internal helper: is `fd` a valid index into the capability table? */
 static unsigned char  cap_slot_in_range(int rq) {
-	return (rq >= 0) && (rq < 63);
+	return (rq >= 0) && (rq < FILE_DESC_PER_PROCESS);
 }
 
 /* internal helper: slot pointer, or NULL if fd is out of range */
@@ -97,19 +98,19 @@ bool BordoisilaCapCheckRights(void* procptr, int fd, CapRights required) {
     AuProcess* proc = (AuProcess*)procptr;
     AuCapability* cap = BordoisilaCapLookup(proc, fd);
 
-    if (!cap) {
-        //AuTextOut("[CAP] No capability fd=%d\r\n", fd);
+    if (!cap) 
         return false;
-    }
+    
 
     /*AuTextOut("[CAP] Check fd=%d req=%x have=%x\r\n",
     fd, required, cap->rights);*/
+	//UARTDebugOut("[CAP] Check fd=%d req=%x have=%x \r\n", fd, required, cap->rights);
 
     return (cap->rights & required) == required;
 }
 
-int BordoisilaCapDup(AuProcess* proc, int oldfd, int newfd) {
-
+int BordoisilaCapDup(void* procptr, int oldfd, int newfd) {
+	AuProcess* proc = (AuProcess*)procptr;
     AuCapability* src = BordoisilaCapLookup(proc, oldfd);
     if (!src)
         return CAP_ERR_INVALID;
