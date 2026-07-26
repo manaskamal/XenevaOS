@@ -34,7 +34,12 @@
 
 #include <bordoisila_bits.h>
 
-#define __IMX8MP_CCM_BASE__ 0x30360000 //hardcoded from IMX8MP reference PRM
+/** This file is all about PLL interface, which is used to 
+ *  change or modify PLL clock source from CCM module,
+ * by default, values are set according to the suitable environment
+ * so directly PLL can be used on target registers
+ */
+#define __IMX8MP_CCM_BASE__ 0x30360000 //hardcoded from IMX8MP reference PRM, CCM_ANALOG_BASE
 /** GROUP A table **/
 #define __IMX8MP_AUDIO_PLL1_GEN_CTRL   __IMX8MP_CCM_BASE__
 #define __IMX8MP_AUDIO_PLL1_FDIV_CTL0  (__IMX8MP_CCM_BASE__ + 0x4)
@@ -123,5 +128,17 @@ struct imx_pll14xx_rate_table {
 
 
 extern void imx8mp_pll_init();
+
+/**
+ * @brief imx8mp_pll_recalc_rate -- recalculate pll rate
+ * @param pllbase -- pll base source or entry
+ * @param parent_rate -- clock rate, if the target root is high powered
+ * device, it uses osc_24m sel otherwise osc_32k is used for low powered
+ * device
+ */
+extern unsigned long imx8mp_pll_recalc_rate(uint64_t pllbase, unsigned long parent_rate);
+
+
+extern uint32_t imx8mp_pll_get_parent_rate(uint64_t pll_base);
 
 #endif

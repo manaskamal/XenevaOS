@@ -33,6 +33,7 @@
 #include <aucon.h>
 #include <bordoisila_io.h>
 #include <_null.h>
+#include <Log/klog.h>
 
 #if defined(__TARGET_BOARD_IMX8MP_VERDIN_DAHLIA__) || defined(__TARGET_BOARD_IMX8MP_SOC__)
 
@@ -110,7 +111,7 @@ void _imx_pll14xx_fill_table() {
 
 void imx8mp_pll_init() {
 	_imx_pll14xx_fill_table();
-	AuTextOut("[aurora]: imx8mp pll14xx table initialized \r\n");
+	BPrintK(BORDOISILA_INFO, "PLL registry initialized can be used for manual configuration of PLLs \r\n");
 }
 
 /**
@@ -406,6 +407,23 @@ int imx8mp_pll1443x_set_rate(uint64_t base, unsigned long drate, unsigned long p
 
 	return 0;
 
+}
+
+#define PLL_REF_SEL_MASK   0x3
+#define PLL_REF_SEL_SHIFT  0
+
+uint32_t imx8mp_pll_get_parent_rate(uint64_t pll_base) {
+	uint32_t gnrl_ctl = _bordoisila_readl(pll_base + GNRL_CTL);
+	uint32_t ref_sel = BORDOISILA_GET_FIELD(PLL_REF_SEL_MASK, gnrl_ctl);
+
+	switch (ref_sel) {
+	case 0:
+		return IMX8MP_CLK_OSC_24M;
+	default:
+		BPrintK(BORDOISILA_WARN, "imx8mp pll_ref selection unexpected value : %u for base : %x \r\n",
+			ref_sel, pll_base);
+		return IMX8MP_CLK_OSC_24M;
+	}
 }
 
 int imx8mp_wait_lock(uint64_t base){

@@ -185,7 +185,6 @@ void _AuroraTimerCallback(void* p) {
  * by bootloader
  **/
 void _AuMain(KERNEL_BOOT_INFO* info) {
-	AuUartPutString("ok \n");
     _littleboot_used = false;
     if (info->boot_type == BOOT_LITTLEBOOT_ARM64) {
         AuUartPutString("[aurora]:Kernel is booted using LittleBoot ARM64 \r\n");
@@ -199,6 +198,7 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 #endif
 
 	AuConsoleInitialize(info, true);
+	B_KLogInit();
     AuDeviceTreeInitialize(info);
 	AA64CpuInitialize();
 	mask_irqs();
@@ -214,7 +214,7 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	AuInitrdInitialize(info);
 	AuConsolePostInitialise(info);
 	//AuConsoleBypassAuTextOut();
-	B_KLogInit();
+	
 
 	AuroraTimerInitialize();
 

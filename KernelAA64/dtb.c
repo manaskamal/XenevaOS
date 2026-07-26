@@ -252,6 +252,13 @@ uint64_t AuDeviceTreeGetRegSize(uint32_t* node, uint32_t addressCell, uint32_t s
 	return 0;
 }
 
+uint32_t AuDeviceTreeGetU32Property(uint32_t* node, const char* property, uint32_t default_val) {
+	if (!node) return default_val;
+	uint32_t* prop = AuDeviceTreeFindProperty(node, property);
+	if (!prop) return default_val;
+	return AuDTBSwap32(prop[2]);
+}
+
 /**
  * @brief AuDeviceTreeInitialize -- initialize the device tree
  * @param fdt_address -- device tree address passed by

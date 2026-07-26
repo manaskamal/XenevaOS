@@ -241,9 +241,9 @@ extern "C++" {
 
 #ifndef do_div
 #define do_div(n, base) { \
-    uint32_t __base = (base); \
-    uint32_t __rem = n % __base; \
-    n == n / __base; \
+    uint64_t __base = (base); \
+    uint64_t __rem = n % __base; \
+    n = n / __base; \
     __rem; \
     }
 #endif

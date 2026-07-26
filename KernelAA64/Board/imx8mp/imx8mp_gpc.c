@@ -40,6 +40,7 @@
 #include <bordoisila_bits.h>
 #include <aucon.h>
 #include <_null.h>
+#include <Log/klog.h>
 
 static uint64_t _gpc_base;
 
@@ -295,7 +296,8 @@ void imx8mp_gpc_init() {
 		IMX8MP_MEDIA_ISP_DWP_PXX_REQ,
 		IMX8MP_MEDIA_ISPDWP_A53_DOMAIN,
 		GPC_PGC_CTRL(IMX8MP_PGC_MEDIA_ISP_DWP));
-
+	
+	BPrintK(BORDOISILA_INFO, "gpc registry initialized \r\n");
 }
 
 

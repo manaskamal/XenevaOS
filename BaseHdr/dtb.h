@@ -114,6 +114,8 @@ AU_EXTERN AU_EXPORT uint64_t AuDeviceTreeGetRegAddress(uint32_t* node, uint32_t 
  * @param sizeCell -- value of size cell
  */
 AU_EXTERN AU_EXPORT uint64_t AuDeviceTreeGetRegSize(uint32_t* node, uint32_t addressCell, uint32_t sizeCell);
+
+AU_EXTERN AU_EXPORT uint32_t AuDeviceTreeGetU32Property(uint32_t* node, const char* property, uint32_t default_val);
 /**
  * @brief AuDeviceTreeInitialize -- initialize the device tree
  * @param fdt_address -- device tree address passed by
