@@ -252,6 +252,16 @@ uint64_t AuDeviceTreeGetRegSize(uint32_t* node, uint32_t addressCell, uint32_t s
 	return 0;
 }
 
+uint32_t AuDeviceTreeGetPropCells(uint32_t* node, const char* property, uint32_t* out_num_cells) {
+	uint32_t* prop = AuDeviceTreeFindProperty(node, property);
+	if (!prop) {
+		*out_num_cells = 0; return NULL;
+	}
+	uint32_t len_bytes = AuDTBSwap32(prop[0]);
+	*out_num_cells = len_bytes / 4;
+	return &prop[2];
+}
+
 uint32_t AuDeviceTreeGetU32Property(uint32_t* node, const char* property, uint32_t default_val) {
 	if (!node) return default_val;
 	uint32_t* prop = AuDeviceTreeFindProperty(node, property);
@@ -301,4 +311,76 @@ void AuDeviceTreeMapMMIO() {
 	void* mmio = (void*)P2V((uint64_t)dtbAddress); //AuMapMMIO((uint64_t)dtbAddress, pageCount);
 	dtbAddress = mmio;
 	AuTextOut("[aurora]: Device tree mmio %x mapped with page count : %d \r\n",mmio, pageCount);
+}
+
+
+uint32_t* dump_recursive_(uint32_t* node, int depth);
+
+void AuDeviceTreeDumpAll() {
+	fdt_header_t* fdt = (fdt_header_t*)dtbAddress;
+	uint32_t* node = (uint32_t*)((uint64_t)dtbAddress + AuDTBSwap32(fdt->off_dt_struct));
+	dump_recursive_(node, 0);
+}
+
+uint32_t* dump_recursive_(uint32_t* node, int depth){
+	while (AuDTBSwap32(*node) == 4) node++;
+	if (AuDTBSwap32(*node) != 1) return node;
+	node++;
+
+	char* name = (char*)node;
+	for (int i = 0; i < depth; i++) AuTextOut(" ");
+	AuTextOut("[aurora]: node: \%s \r\n", name);
+
+	while ((*node & 0xFF000000) && (*node & 0xFF0000) && (*node & 0xFF00) && (*node & 0xFF)) node++;
+	node++;
+
+	while (1) {
+		while (AuDTBSwap32(*node) == 4)node++;
+		uint32_t tag = AuDTBSwap32(*node);
+		if (tag == 2) return node + 1;
+		if (tag == 9) return node;
+		if (tag == 3) {
+			uint32_t len = AuDTBSwap32(node[1]);
+			node += 3;
+			node += (len + 3) / 4;
+		}
+		else if (tag == 1) {
+			node = dump_recursive_(node, depth + 1);
+		}
+		else {
+			AuTextOut("[aurora]: UNKNOWN TAG %x at node %x - DESYNC \r\n", tag, (void*)node);
+			return node;
+		}
+	}
+}
+
+void AuDeviceTreeDumpAllProps(const char* node_name) {
+	uint32_t* node = AuDeviceTreeGetNode(node_name);
+	if (!node) {
+		AuTextOut("[aurora]: AuDeviceTreeDumpAllProps: no node found : %s \r\n", node_name);
+		return;
+	}
+
+	fdt_header_t* fdt = (fdt_header_t*)dtbAddress;
+	char* strings = (char*)((uint64_t)dtbAddress + AuDTBSwap32(fdt->off_dt_strings));
+
+	while ((*node & 0xFF000000) && (*node & 0xFF0000) && (*node & 0xFF00) && (*node & 0xFF)) node++;
+	node++;
+
+	AuTextOut("[aurora]: properties of \%s: \r\n", node_name);
+	while (1) {
+		while (AuDTBSwap32(*node) == 4) node++;
+		uint32_t tag = AuDTBSwap32(*node);
+		if (tag == 2 || tag == 9)break;
+		if (tag == 3) {
+			uint32_t len = AuDTBSwap32(node[1]);
+			uint32_t nameoff = AuDTBSwap32(node[2]);
+			AuTextOut("[aurora]:  \%s\" (len=%d)\r\n", strings + nameoff, len);
+			node += 3;
+			node += (len + 3) / 4;
+		}
+		else {
+			break;
+		}
+	}
 }

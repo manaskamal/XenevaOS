@@ -222,7 +222,7 @@ void imx8mp_gate_init() {
 	BPrintK(BORDOISILA_INFO,"gate registry initialized \r\n");
 }
 
-_imx8mp_gate_t* imx8mp_find_gate(uint8_t id) {
+_imx8mp_gate_t* imx8mp_find_gate(uint32_t id) {
 	for (int i = 0; i < UINT8_MAX; i++) {
 		if (_gate_registry[i].root_id == id) {
 			return &_gate_registry[i];
@@ -233,7 +233,7 @@ _imx8mp_gate_t* imx8mp_find_gate(uint8_t id) {
 
 #define CGC_MASK 0x3;
 
-int imx8mp_glk_gate_enable(uint8_t clk_root_id) {
+int imx8mp_clk_gate_enable(uint32_t clk_root_id) {
 	_imx8mp_gate_t* gate = imx8mp_find_gate(clk_root_id);
 	if (!gate) {
 		AuTextOut("[imx8mp clk-gate]: didn't find dedicated gate to enable root : %d \r\n", clk_root_id);
@@ -244,9 +244,10 @@ int imx8mp_glk_gate_enable(uint8_t clk_root_id) {
 	uint32_t val = _bordoisila_readl(reg);
 	val |= CGC_MASK;
 	_bordoisila_writel(val, reg);
+	BPrintK(BORDOISILA_INFO, "imx8mp clk gate enabled for root offset : %x \r\n", reg);
 }
 
-int imx8mp_clk_gate_disable(uint8_t clk_root_id) {
+int imx8mp_clk_gate_disable(uint32_t clk_root_id) {
 	_imx8mp_gate_t* gate = imx8mp_find_gate(clk_root_id);
 	if (!gate) {
 		AuTextOut("[imx8mp clk-gate]: didn't find dedicated gate to enable root : %d \r\n", clk_root_id);
