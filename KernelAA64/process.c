@@ -402,7 +402,7 @@ void AuProcessFreeKeResource(AA64Thread* thr) {
  * @param proc -- process to exit
  * @param schedulable -- schedule to next thread
  */
-void AuProcessExit(AuProcess* proc, BOOL schedulable) {
+void AuProcessExit(AuProcess* proc, bool schedulable) {
 	if (proc == root_proc) {
 		UARTDebugOut("[aurora]: cannot exit root process \r\n");
 		return;
@@ -515,7 +515,7 @@ int AuProcessWaitForTermination(AuProcess* proc, int pid) {
 	else {
 		AuProcess* proc = AuProcessFindByPID(0, pid);
 		if (!proc)
-			return;
+			return -1;
 		AA64Thread* thr = AuGetCurrentThread();
 		AuBlockThread(thr);
 		list_add(proc->waitlist, thr);

@@ -1,4 +1,5 @@
 # Target EFI binary
+.DEFAULT_GOAL := all
 TARGET_EFI = BOOTAA64.efi
 TARGET_SO = BOOTAA64.so
 
@@ -84,7 +85,7 @@ $(EFI_OUTPUT): $(OBJS)
 else
 # Original GCC compilation
 $(SO_OUTPUT): $(CRT0) $(OBJS)
-	$(LD) -nostdlib --warn-common --no-undefined --build-id=sha1 -z noexecstack -z max-page-size=4096 \
+	$(LD) -nostdlib --warn-common --no-undefined --build-id=sha1 -z muldefs -z noexecstack -z max-page-size=4096 \
 	-shared -Bsymbolic $(LIBDIRS) -T$(LDSCRIPT) $(CRT0) $(OBJS) -o $@ $(LIBS)
 
 $(EFI_OUTPUT): $(SO_OUTPUT)

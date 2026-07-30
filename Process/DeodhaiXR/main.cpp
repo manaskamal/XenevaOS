@@ -51,7 +51,9 @@
 #include "animation.h"
 #include "alpha.h"
 #include "nanojpg.h"
+#ifdef ARCH_ARM64
 #include <arm_neon.h>
+#endif
 #include "compose.h"
 #include <sys/_ketime.h>
 

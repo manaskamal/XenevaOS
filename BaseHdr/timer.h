@@ -33,7 +33,11 @@
 #define __TIMER_H__
 
 #include <aurora.h>
+#ifdef ARCH_X64
+#include <Hal/x86_64_sched.h>
+#elif ARCH_ARM64
 #include <Hal/AA64/sched.h>
+#endif
 #if defined(__GNUC__) || defined(__clang__)
 #ifndef __cplusplus
 #include <stdbool.h>

@@ -1,4 +1,5 @@
 # XenevaOS KernelAA64 Makefile
+.DEFAULT_GOAL := all
 
 TARGET = KernelAA64.elf
 OBJDIR = obj
