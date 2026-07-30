@@ -251,15 +251,15 @@ uint32_t AuPCIERead(uint64_t device, int reg, int bus, int dev, int func) {
 		break;
 	}
 	if (size == 1) {
-		result = *RAW_OFFSET(volatile uint8_t*, device, reg);
+		result = *RAW_OFFSET(volatile uint8_t*, device, &reg);
 		return result;
 	}
 	else if (size == 2) {
-		result = *RAW_OFFSET(volatile uint16_t*, device, reg);
+		result = *RAW_OFFSET(volatile uint16_t*, device, &reg);
 		return result;
 	}
 	else if (size == 4) {
-		result = *RAW_OFFSET(volatile uint32_t*,device, reg);
+		result = *RAW_OFFSET(volatile uint32_t*,device, &reg);
 		return result;
 	}
 

@@ -69,7 +69,7 @@
 #include <Fs/Fat/Fat.h>
 #include <Fs/Fat/FatFile.h>
 #include <Fs/Fat/FatDir.h>
-#include <linux/bitops.h>
+// #include <linux/bitops.h>
 #include <Log/klog.h>
 
 extern int _fltused = 1;
@@ -281,6 +281,7 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 
 	/* clear out the lower half memory */
 	AuVmmngrBootFree();
+	UARTDebugOut("this");
 	AuMmngrFileCacheEnable();
 
 	UARTDebugOut("[aurora]: boot freed up \r\n");

@@ -54,7 +54,7 @@ case $1 in
         mcopy -o -i fat.img KernelAA64/KernelAA64.exe ::/EFI/XENEVA/xnkrnl.exe
         mcopy -o -i fat.img initrd2.img ::/initrd2.img
         echo "[+] Image ready! Booting QEMU..."
-        qemu-system-aarch64 -machine virt,gic-version=2,highmem=off \
+        qemu-system-aarch64 -machine virt,gic-version=2 \
             -cpu cortex-a57 -m 1024M \
             -bios /usr/share/qemu-efi-aarch64/QEMU_EFI.fd \
             -drive file=fat.img,format=raw,if=virtio \

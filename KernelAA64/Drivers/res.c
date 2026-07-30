@@ -32,6 +32,7 @@
 #include <Drivers/core.h>
 #include <hashmap.h>
 #include <_null.h>
+#include <string.h>
 
 static BordoisilaDriverResource* _gres;
 
