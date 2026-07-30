@@ -32,6 +32,9 @@
 #include <Board/imx8mp/imx8mp_clk.h>
 #include <Board/imx8mp/imx8mp_pll.h>
 #include <Board/imx8mp/imx8mp_clk_gate.h>
+#include <Board/imx8mp/imx8mp_blkctrl.h>
+#include <Board/imx8mp/imx8mp_gpc.h>
+#include <Strings/export_imx8mp.h>
 #include <Drivers/uart.h>
 #include <Board/board.h>
 #include <stdint.h>
@@ -39,8 +42,8 @@
 #include <Drivers/virtio.h>
 #include <Hal/AA64/aa64lowlevel.h>
 #include <Log/klog.h>
-
-extern void imx8mp_gpc_init();
+#include <bordoisila_io.h>
+#include <Drivers/res.h>
 
 
 #ifdef __TARGET_BOARD_QEMU_VIRT__
@@ -50,6 +53,8 @@ extern uint64_t AuVirtGetBootEpoch();
 #endif
 
 
+#define LCDIF1_BASE 0x32E80000UL
+#define LCDIF1_CTRL_OFFSET 0x0
 /**
  * @brief AuAA64BoardInitialize -- initialize board specific data
  */
@@ -61,8 +66,24 @@ void AuAA64BoardInitialize() {
 	/** initialize the ccm module **/
 	imx8mp_gpc_init();
 	imx8mp_pll_init();
+	imx8mp_blkctrl_init();
 	imx8mp_gate_init();
     imx8mp_ccm_init();
+
+	BordoisilaClk* axi = BordoisilaGetDriverResource(IMX8MP_MEDIA_AXI_NAME, BORDOISILA_DRIVER_RES_CLK);
+	BordoisilaClk* abp = BordoisilaGetDriverResource(IMX8MP_MEDIA_APB_NAME, BORDOISILA_DRIVER_RES_CLK);
+
+	axi->enable(axi, 500000000UL);
+	abp->enable(abp, 200000000UL);
+
+
+	imx8mp_gpc_powerup(IMX8MP_POWER_DOMAIN_MEDIAMIX);
+	imx8mp_blkctl_powerup(IMX8MP_MEDIABLK_PD_LCDIF_1);
+	imx8mp_blkctrl_release_reset(IMX8MP_MEDIABLK_PD_LCDIF_1);
+
+	uint32_t ctrl_reg = _bordoisila_readl(LCDIF1_BASE);
+
+	BPrintK(BORDOISILA_INFO, "LCDIF1 CTRL val : %x \r\n", ctrl_reg);
 #endif
 }
 

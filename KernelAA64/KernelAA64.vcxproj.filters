@@ -235,6 +235,9 @@
     <ClCompile Include="Drivers\res.c">
       <Filter>Drivers</Filter>
     </ClCompile>
+    <ClCompile Include="Board\imx8mp\imx8mp_blkctrl.c">
+      <Filter>Board\imx8mp</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Hal">
@@ -329,6 +332,9 @@
     </Filter>
     <Filter Include="Include\Log">
       <UniqueIdentifier>{a7372d49-db94-4f19-9769-96146f023dd9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Include\Strings">
+      <UniqueIdentifier>{7c046fea-8fe9-440d-94c7-346f981c2167}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -508,6 +514,12 @@
     </ClInclude>
     <ClInclude Include="..\BaseHdr\Drivers\res.h">
       <Filter>Include\Drivers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\Board\imx8mp\imx8mp_blkctrl.h">
+      <Filter>Include\Board\imx8mp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BaseHdr\Strings\export_imx8mp.h">
+      <Filter>Include\Strings</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

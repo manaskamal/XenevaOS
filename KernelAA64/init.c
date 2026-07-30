@@ -208,8 +208,8 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	AuTextOut("[aurora]: virtual memory manager initialized \r\n");
 	AuHeapInitialize();
 	AuDeviceTreeMapMMIO();
-	AuAA64BoardInitialize();
 	AA64CPUPostInitialize(info);
+	AuAA64BoardInitialize();
 	AuVFSInitialise();
 	AuInitrdInitialize(info);
 	AuConsolePostInitialise(info);

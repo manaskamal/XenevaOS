@@ -42,6 +42,10 @@
 #include <Board/imx8mp/imx8mp_clk_gate.h>
 #include <Hal/AA64/aa64cpu.h>
 #include <dtb.h>
+#include <Drivers/res.h>
+#include <Drivers/core.h>
+#include <Mm/kmalloc.h>
+#include <string.h>
 
 static uint64_t _ccm_base;
 
@@ -52,6 +56,7 @@ typedef struct _clk_node_ {
 	struct _clk_node_** parent;
 	uint32_t reg_offset;
 	uint32_t clk_slice;
+	uint32_t gate_slice;
 	uint32_t pre_podf;
 	uint32_t post_podf;
 	int is_composite;
@@ -145,6 +150,52 @@ static uint32_t AuDeviceTreeGetFixedClockRate(const char* node_name) {
 	uint32_t rate = AuDeviceTreeGetU32Property(node, "clock-frequency", 0);
 	BPrintK(BORDOISILA_INFO, "clock rate for node : %s is %u \r\n", node_name, rate);
 	return rate;
+}
+
+static void  imx8mp_clk_set_rate(imx8mp_clk* self, uint32_t target_hz);
+
+/*
+ * @brief kernel_res_clk_set_rate -- set rate of a clock, for this
+ * enable the entire clock
+ * @param clk -- pointer to kernel clock data structure
+ * @param rate -- rate to set in Hz
+ */
+int kernel_res_clk_set_rate(BordoisilaClk* clk, uint64_t rate) {
+	imx8mp_clk* sys_clk = (imx8mp_clk*)clk->res.data;
+	if (!sys_clk) {
+		BPrintK(BORDOISILA_ERROR, "failed to start clock : %s \r\n", sys_clk->name);
+		return 1;
+	}
+	if (clk->res.is_running) {
+		BPrintK(BORDOISILA_WARN, "clk : %s is already running \r\n", clk->res.name);
+		return 0;
+	}
+	imx8mp_clk_set_rate(sys_clk, rate); //500000000UL
+	imx8mp_clk_gate_enable(sys_clk->gate_slice);
+	clk->res.is_running = true;
+	clk->rate_hz = rate;
+}
+/**
+ * @brief imx8mp_alloc_kernel_resource -- allocate kernel resource
+ * @param name -- name of the resource
+ * @param data -- pointer to extra data
+ */
+ BordoisilaDriverResource* imx8mp_alloc_kernel_resource(char* name, void* data) {
+	BordoisilaClk* clk = (BordoisilaClk*)kmalloc(sizeof(BordoisilaClk));
+	strcpy(clk->res.name, name);
+	clk->res.res_type = BORDOISILA_DRIVER_RES_CLK;
+	clk->res.ref_count = 0;
+	clk->res.data = data;
+	clk->res.is_running = false;
+	clk->rate_hz = 0;
+	clk->enable = kernel_res_clk_set_rate;
+	clk->set_rate = kernel_res_clk_set_rate;
+	clk->disable = 0;
+	if (BordoisilaDriverResourceRegister((BordoisilaDriverResource*)clk)) {
+		BPrintK(BORDOISILA_ERROR, "failed to register kernel clock resource : %s \r\n", name);
+		return NULL;
+	}
+	return clk;
 }
 
 
@@ -336,52 +387,6 @@ void imx8mp_parse_assigned_clk(const char* nodename) {
 		_assigned_clk_cnt++;
 	}
 }
-/**
- * imx8mp_hdmi_ccm_init -- initialize hdmi root clocks
- */
-void imx8mp_hdmi_ccm_init() {
-	/** start HDMI APB + AXI clock root */
-	uint32_t setval = TARGET_ROOT_ENABLE | TARGET_ROOT_MUX(MUX_MEDIA_AXI_SYS_PLL2_500M) |
-		TARGET_ROOT_PRE(0) | TARGET_ROOT_POST(0);
-	imx8mp_ccm_write(HDMI_AXI_CLK_ROOT, 0x00, setval);
-	setval = TARGET_ROOT_ENABLE | TARGET_ROOT_MUX(MUX_MEDIA_APB_SYS_PLL1_133M) | TARGET_ROOT_PRE(0) |
-		TARGET_ROOT_POST(0);
-	imx8mp_ccm_write(HDMI_APB_CLK_ROOT, 0x00, setval);
-
-	setval = TARGET_ROOT_ENABLE | TARGET_ROOT_MUX(MUX_HDMI_FDCC_SYS_PLL1_266M) | TARGET_ROOT_PRE(0) |
-		TARGET_ROOT_POST(0);
-	imx8mp_ccm_write(HDMI_REF_266M_ROOT, 0x00, setval);
-
-	setval = TARGET_ROOT_ENABLE | TARGET_ROOT_MUX(MUX_HDMI_24M_OSC_24M) | TARGET_ROOT_PRE(0) |
-		TARGET_ROOT_POST(0);
-	imx8mp_ccm_write(HDMI_24M_ROOT, 0x00, setval);
-
-	setval = TARGET_ROOT_ENABLE | TARGET_ROOT_MUX(MUX_HDMI_FDCC_SYS_PLL1_266M) | TARGET_ROOT_PRE(0) |
-		TARGET_ROOT_POST(0);
-	imx8mp_ccm_write(HDMI_FDCC_TST_CLK_ROOT, 0x00, setval);
-
-}
-
-/**
- * imx8mp_lcdif_ccm_enable -- initialize lcdif ccm clocks
- */
-void imx8mp_lcdif_ccm_init() {
-	uint32_t setval = TARGET_ROOT_ENABLE | TARGET_ROOT_MUX(MUX_MEDIA_AXI_SYS_PLL2_500M) |
-		TARGET_ROOT_PRE(0) | TARGET_ROOT_POST(0);
-	imx8mp_ccm_write(MEDIA_AXI_CLK_ROOT, 0x00, setval);
-
-	AuTextOut("media axi clk root enabled \r\n");
-	setval = TARGET_ROOT_ENABLE | TARGET_ROOT_MUX(MUX_MEDIA_APB_SYS_PLL1_133M) |
-		TARGET_ROOT_PRE(0) | TARGET_ROOT_POST(0);
-	imx8mp_ccm_write(MEDIA_APB_CLK_ROOT, 0x00, setval);
-
-	AuTextOut("media apb clk root enabled \r\n");
-
-	/*setval = TARGET_ROOT_ENABLE | TARGET_ROOT_MUX(MUX_DISP2_PIX_VIDEO_PLL1) |
-		TARGET_ROOT_PRE(0) | TARGET_ROOT_POST(0);
-	imx8mp_ccm_write(MEDIA_DISP2_CLK_ROOT, 0x00, setval);*/
-}
-
 
 static bool is_imx8mp_clk_enabled(uint32_t clk_idx) {
 	volatile uint32_t* root = (volatile uint32_t*)CCM_ROOT_REG(_ccm_base, clk_idx);
@@ -427,6 +432,8 @@ void imx8mp_ccm_init() {
 	media_axi_parents[7] = g_sys_pll2_500m;
 	imx8mp_clk* media_axi_clk = FORM_CLK_COMPOSITE("media_axi_axi", media_axi_parents, 8);
 	media_axi_clk->clk_slice = MEDIA_AXI_CLK_ROOT;
+	media_axi_clk->gate_slice = IMX8MP_CLK_MEDIA_AXI_ROOT;
+	imx8mp_alloc_kernel_resource("media_axi", media_axi_clk);
 
 
 	static imx8mp_clk* media_apb_parents[8];
@@ -440,6 +447,8 @@ void imx8mp_ccm_init() {
 	media_apb_parents[7] = g_sys_pll1_133m;
 	imx8mp_clk* media_apb_clk = FORM_CLK_COMPOSITE("media_apb_axi", media_apb_parents, 8);
 	media_apb_clk->clk_slice = MEDIA_APB_CLK_ROOT;
+	media_apb_clk->gate_slice = IMX8MP_CLK_MEDIA_APB_ROOT;
+	imx8mp_alloc_kernel_resource("media_apb", media_apb_clk);
 
 
 	static imx8mp_clk* gpu3d_sels[8];
@@ -453,6 +462,8 @@ void imx8mp_ccm_init() {
 	gpu3d_sels[7] = g_audio_pll2_out;
 	imx8mp_clk* gpu3d_clk = FORM_CLK_COMPOSITE("gpu3d_core", gpu3d_sels, 8);
 	gpu3d_clk->clk_slice = GPU3D_CORE_CLK_ROOT;
+	gpu3d_clk->gate_slice = IMX8MP_CLK_GPU3D_ROOT;
+	imx8mp_alloc_kernel_resource("gpu3d_core", gpu3d_clk);
 
 
 	static imx8mp_clk* gpu3d_shader[8];
@@ -466,8 +477,8 @@ void imx8mp_ccm_init() {
 	gpu3d_shader[7] = g_audio_pll2_out;
 	imx8mp_clk* gpu3d_sel = FORM_CLK_COMPOSITE("gpu3d_shader", gpu3d_shader, 8);
 	gpu3d_sel->clk_slice = GPU3D_SHADER_CLK_ROOT;
-
-
+	gpu3d_sel->gate_slice = IMX8MP_CLK_GPU3D_ROOT;
+	imx8mp_alloc_kernel_resource("gpu3d_shader", gpu3d_sel);
 
 	/** by default let's only enable HDMI + LCDIF, because we need 
 	 * framebuffer output :) 
@@ -514,8 +525,13 @@ void imx8mp_ccm_init() {
 	//and gate them 
 
 	/** todo try setting the clr bits also */
-	imx8mp_clk_set_rate(media_axi_clk, 500000000);
+	/*imx8mp_clk_set_rate(media_axi_clk, 500000000UL);
 	imx8mp_clk_gate_enable(IMX8MP_CLK_MEDIA_AXI_ROOT);
+
+	imx8mp_clk_set_rate(media_apb_clk, 200000000UL);
+	imx8mp_clk_gate_enable(IMX8MP_CLK_MEDIA_APB_ROOT);*/
+
+
 }
 
 
@@ -537,7 +553,7 @@ static void imx8mp_write_target_root(uint32_t clk_root_idx, uint32_t offset,
 	val |= (pre_podf & 0x7u) << 16;
 	val &= ~(0x3Fu << 0);
 	val |= (post_podf & 0x3Fu) << 0;
-	*root = val;
+	
 
 	// enable the clock 
 	val |= (1u << 28);
@@ -545,6 +561,8 @@ static void imx8mp_write_target_root(uint32_t clk_root_idx, uint32_t offset,
 
 	dsb_ish();
 	isb_flush();
+
+
 	
 	BPrintK(BORDOISILA_WARN, "imx8mp target root written successfully address : %x \r\n", root);
 	//for safety :-) hihi

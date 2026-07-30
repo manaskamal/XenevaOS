@@ -42,6 +42,7 @@
 #include <aucon.h>
 #include <Sync/spinlock.h>
 #include <Hal/AA64/profile.h>
+#include <Log/klog.h>
 
 #if defined (_USE_CUSTOM_MALLOC)
 static meta_data_t* first_block;

@@ -32,8 +32,12 @@
 #include <Drivers/core.h>
 #include <hashmap.h>
 #include <_null.h>
+#include <string.h>
+#include <Log/klog.h>
+#include <Drivers/res.h>
 
 static BordoisilaDriverResource* _gres;
+
 
 /**
  * @brief BordoisilaDriverResourceRegister -- register a resource driver

@@ -271,6 +271,7 @@
     <ClCompile Include="aucon.c" />
     <ClCompile Include="audrv.c" />
     <ClCompile Include="Board\board.c" />
+    <ClCompile Include="Board\imx8mp\imx8mp_blkctrl.c" />
     <ClCompile Include="Board\imx8mp\imx8mp_clk.c" />
     <ClCompile Include="Board\imx8mp\imx8mp_clk_gate.c" />
     <ClCompile Include="Board\imx8mp\imx8mp_gpc.c" />
@@ -393,6 +394,7 @@
     <ClInclude Include="..\BaseHdr\aa64hcode.h" />
     <ClInclude Include="..\BaseHdr\Board\board.h" />
     <ClInclude Include="..\BaseHdr\Board\imx8mp\imx8mp.h" />
+    <ClInclude Include="..\BaseHdr\Board\imx8mp\imx8mp_blkctrl.h" />
     <ClInclude Include="..\BaseHdr\Board\imx8mp\imx8mp_clk.h" />
     <ClInclude Include="..\BaseHdr\Board\imx8mp\imx8mp_clk_div.h" />
     <ClInclude Include="..\BaseHdr\Board\imx8mp\imx8mp_clk_gate.h" />
@@ -441,6 +443,7 @@
     <ClInclude Include="..\BaseHdr\stdarg.h" />
     <ClInclude Include="..\BaseHdr\stdbool.h" />
     <ClInclude Include="..\BaseHdr\stddef.h" />
+    <ClInclude Include="..\BaseHdr\Strings\export_imx8mp.h" />
     <ClInclude Include="..\BaseHdr\timer.h" />
     <ClInclude Include="..\BaseHdr\uart.h">
       <DeploymentContent>false</DeploymentContent>

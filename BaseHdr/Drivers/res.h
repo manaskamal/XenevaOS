@@ -41,9 +41,9 @@ typedef struct _clk_ {
 	BordoisilaDriverResource res;
 	uint64_t rate_hz;
 
-	int (*enable)(struct _clk_* clk);
+	int (*enable)(struct _clk_* clk,  uint64_t rate);
 	int (*disable)(struct _clk_* clk);
-	int (*set_rate)(struct _clk_* clk);
+	int (*set_rate)(struct _clk_* clk,uint64_t rate);
 	uint64_t(*get_rate)(struct _clk_* clk);
 }BordoisilaClk;
 
