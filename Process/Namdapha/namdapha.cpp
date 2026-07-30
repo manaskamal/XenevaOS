@@ -41,6 +41,15 @@
 #include "section.h"
 #include <widgets/window.h>
 
+typedef struct _nm_time_ {
+	int day;
+	int year;
+	int month;
+	int hour;
+	int minute;
+	int second;
+}NamdaphaTime;
+
 ChitralekhaApp *app;
 ChWindow* win;
 list_t* button_list;
@@ -57,7 +66,7 @@ NamdaphaButton* timebutton;
 ButtonInfo* defaultappico;
 uint32_t gomenuh;
 NamdaphaButton *gobutton;
-XETime _time;
+NamdaphaTime _time;
 list_t* sectList;
 
 extern void GoMenuThread();
@@ -109,11 +118,11 @@ void NamdaphaTimeButtonPaint(NamdaphaButton* button, ChWindow* win) {
 	char date[20];
 	memset(&date, 0, 20);
 	
-	sprintf(date, "%02d-%02d-%d", _time.day, _time.month, _time.year);
+	sprintf(date, "%02d-%02d-%02d", _time.day, _time.month, _time.year);
 	ChFontSetSize(app->baseFont, 11);
 	int date_w = ChFontGetWidth(app->baseFont,date);
-	/*ChFontDrawText(win->canv, app->baseFont, date, button->x + button->w / 2 - date_w / 2,
-		button->y + button->h - 4, 10,WHITE);*/
+	ChFontDrawText(win->canv, app->baseFont, date, button->x + button->w / 2 - date_w / 2,
+		button->y + button->h - 4, 10,WHITE);
 }
 
 /*
@@ -486,6 +495,19 @@ int main(int argc, char* arv[]){
 	//_KeCreateTimer(threadID, _KE_TIMER_UNDIFINED_MAXCOUNT, _KE_TIMER_UPDATE_ORDER_MINUTE);
 	//_KeStartTimer(threadID);
 	memset(&_time, 0, sizeof(XETime));
+	uint32_t year, day, month;
+	NamdaphaGetYMD(&year, &month, &day, TZ_SEC_IST_INDIA);
+	_time.day = day;
+	_time.month = month;
+	_time.year = year;
+
+	int hour, min, sec;
+	NamdaphaGetWallTime(&hour, &min, &sec, TZ_SEC_IST_INDIA);
+	_time.hour = hour;
+	_time.minute = min;
+	_time.second = sec;
+
+
 	//_KeGetCurrentTime(&_time);
 
     gobutton = NamdaphaInitialiseGoButton(win);
@@ -502,6 +524,8 @@ int main(int argc, char* arv[]){
 	/* allocate memory for time string */
 	currenttime = (char*)malloc(strlen("00:00 CC"));
 	memset(currenttime, 0, strlen("00:00 CC"));
+	sprintf(currenttime, "%02d-%02d", _time.hour, _time.minute);
+
 
 	/* now initialise the time button */
 	timebutton = NmCreateButton(win->info->width - NAMDAPHA_WIDTH, 10, NAMDAPHA_WIDTH, 50, "06:51 PM");
@@ -521,7 +545,7 @@ int main(int argc, char* arv[]){
 	ChWindowPaint(win);
 	gomenuh = ChGetWindowHandle(app, "Xeneva Launcher");
 	gobutton->winHandle = gomenuh;
-	//NamdaphaGetOnlineTime();
+	NamdaphaGetOnlineTime();
 	
 	//NamdaphaPlayStartupSound();
 	PostEvent e;

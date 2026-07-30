@@ -61,7 +61,7 @@ void XEInitialisePmmngr(const struct EfiMemoryMap memmap, void* buffer, size_t b
 	
 
 	EFI_MEMORY_DESCRIPTOR* current = memmap.memmap;
-	while (raw_diff(current, memmap.memmap) < memmap.MemMapSize)
+	while ((size_t)raw_diff(current, memmap.memmap) < memmap.MemMapSize)
 	{
 
 		ramSize += current->NumberOfPages * 4096;

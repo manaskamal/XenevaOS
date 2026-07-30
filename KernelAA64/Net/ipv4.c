@@ -73,7 +73,6 @@ void ip_ntoa(const uint32_t src) {
 void IPv4HandlePacket(void* data, AuVFSNode* nic) {
 	char dest[16];
 	char src[16];
-	UARTDebugOut("Handling IPV4 packet \r\n");
 	IPv4Header* pack = (IPv4Header*)data;
 	uint32_t destIP;
 	memcpy(&destIP, &pack->destAddress, 4);

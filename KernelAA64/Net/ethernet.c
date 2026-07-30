@@ -66,8 +66,6 @@ AU_EXTERN AU_EXPORT void AuEthernetHandle(void* data, int size, AuVFSNode* nic) 
 		AuSocketAdd(sock, frame, size);
 	}
 
-	UARTDebugOut("ndev ipv4addr: %x \r\n", ndev->ipv4addr);
-	UARTDebugOut("ethernet type : %x \r\n", ntohs(frame->typeLen));
 	char broadcast_mac[6] = { 0xFF,0xFF,0xFF,0xFF,0xFF,0xFF };
 	if (!memcmp(frame->dest, ndev->mac, 6) || !memcmp(frame->dest, broadcast_mac, 6)) {
 		switch (ntohs(frame->typeLen)) {

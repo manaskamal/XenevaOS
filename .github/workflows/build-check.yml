@@ -2,25 +2,36 @@ name: XenevaOS Build Check (MSVC & GCC)
 
 on:
   push:
-    branches: [ master, khrsgr ]
+    branches: [ master, khrsgr, gcc-compat ]
   pull_request:
-    branches: [ master, khrsgr ]
+    branches: [ master, khrsgr, gcc-compat ]
   workflow_dispatch:
 
 jobs:
-  build-linux-gcc:
-    name: GCC (Linux / ARM64)
+  build-linux:
+    name: ${{ matrix.compiler }} (Linux / ARM64)
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        compiler: [GCC, LLVM]
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: Install Toolchains (GCC AArch64)
+      - name: Cache GNU-EFI
+        id: cache-gnu-efi
+        uses: actions/cache@v3
+        with:
+          path: gnu-efi
+          key: gnu-efi-aarch64-v1
+
+      - name: Install Toolchains
         run: |
           sudo apt-get update
-          sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu binutils-aarch64-linux-gnu make mtools dosfstools
+          sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu binutils-aarch64-linux-gnu clang lld make mtools dosfstools
 
       - name: Build GNU-EFI (AArch64)
+        if: steps.cache-gnu-efi.outputs.cache-hit != 'true'
         run: |
           git clone https://github.com/vathpela/gnu-efi gnu-efi
           cd gnu-efi
@@ -29,12 +40,22 @@ jobs:
       - name: Build Bootloader (BootAA64)
         run: |
           cd BootAA64
-          make
+          make clean
+          if [ "${{ matrix.compiler }}" = "LLVM" ]; then
+            make llvm
+          else
+            make
+          fi
 
       - name: Build Kernel (KernelAA64)
         run: |
           cd KernelAA64
-          make
+          make clean
+          if [ "${{ matrix.compiler }}" = "LLVM" ]; then
+            make llvm
+          else
+            make
+          fi
 
   build-windows-msvc:
     name: MSVC (Windows / x64)

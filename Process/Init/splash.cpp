@@ -103,11 +103,11 @@ void _fill_screen(unsigned x, unsigned y, unsigned w, unsigned h, uint32_t col) 
 void SplashScreenShow() {
 	int graphFd = _KeOpenFile((char*)"/dev/graph", FILE_OPEN_WRITE);
 	_KePrint((char*)"graphFD : %d \r\n", graphFd);
-	// TODO::: Validate graphFd to prevent kernel panic if /dev/graph fails to open
-	// if (graphFd == -1) {
-	// 	_KePrint("[splash]: /dev/graph not found, skipping splash\r\n");
-	// 	return;
-	// }
+	
+	if (graphFd == -1) {
+		_KePrint((char*)"[splash]: /dev/graph not found, skipping splash\r\n");
+		return;
+	}
 	XEFileIOControl ioctl;
 	memset(&ioctl, 0, sizeof(XEFileIOControl));
 	ioctl.syscall_magic = AURORA_SYSCALL_MAGIC;

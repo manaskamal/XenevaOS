@@ -222,7 +222,6 @@ struct hostent* gethostbyname(const char* name) {
 			break;
 		/* sleep for 1s*/
 		_KeProcessSleep(100);
-		_KePrint("GetHostbyname looping \r\n");
 		timeout++;
 	}
 
