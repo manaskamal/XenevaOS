@@ -46,8 +46,8 @@ typedef struct _imx8mp_gate_ {
  */
 extern void imx8mp_gate_init();
 
-extern int imx8mp_glk_gate_enable(uint8_t clk_root_id);
+extern int imx8mp_clk_gate_enable(uint32_t clk_root_id);
 
-extern int imx8mp_clk_gate_disable(uint8_t clk_root_id);
+extern int imx8mp_clk_gate_disable(uint32_t clk_root_id);
 
 #endif

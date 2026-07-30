@@ -38,6 +38,7 @@
 #include <aucon.h>
 #include <Drivers/virtio.h>
 #include <Hal/AA64/aa64lowlevel.h>
+#include <Log/klog.h>
 
 extern void imx8mp_gpc_init();
 
@@ -61,7 +62,7 @@ void AuAA64BoardInitialize() {
 	imx8mp_gpc_init();
 	imx8mp_pll_init();
 	imx8mp_gate_init();
-	imx8mp_ccm_init();
+    imx8mp_ccm_init();
 #endif
 }
 

@@ -198,6 +198,7 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 #endif
 
 	AuConsoleInitialize(info, true);
+	B_KLogInit();
     AuDeviceTreeInitialize(info);
 	AA64CpuInitialize();
 	mask_irqs();
@@ -214,7 +215,7 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	AuInitrdInitialize(info);
 	AuConsolePostInitialise(info);
 	//AuConsoleBypassAuTextOut();
-	B_KLogInit();
+	
 
 	AuroraTimerInitialize();
 
