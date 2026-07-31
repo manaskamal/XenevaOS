@@ -65,8 +65,9 @@ int memcmp(const void *first, const void *second, size_t length){
 }
 
 
-void memcpy(void *dest, void *src, size_t count){
+void* memcpy(void *dest, void *src, size_t count){
 	_fastcpy(dest, src, count);
+	return dest;
 }
 
 

@@ -19,7 +19,7 @@ else
     BOARD_FLAG = -D__TARGET_BOARD_QEMU_VIRT__
 endif
 
-INCLUDES = -I../BaseHdr -I../Acpica/include -I../Acpica -I.
+INCLUDES = -I../BaseHdr -I../Acpica/include -I../Acpica -I../DCL/includes -I.
 
 
 ifeq ($(TOOLCHAIN), llvm)

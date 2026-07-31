@@ -45,6 +45,7 @@
 #include <Hal/x86_64_signal.h>
 #include <Serv/sysserv.h>
 #include <Hal/serial.h>
+#include <Hal/fault.h>
 
 void panic(const char* msg, ...) {
 	SeTextOut("\r\n ***ARCH x86_64 : Kernel Panic!!! *** \r\n");
@@ -104,19 +105,96 @@ void bounds_check_fault(size_t v, void* p){
 	for (;;);
 }
 
+void AuFaultLogDiagnostics(AuFaultInfo* info) {
+	if (!info)
+		return;
+	SeTextOut("\r\n======================================================\r\n");
+	SeTextOut("[AuFault]: *** EXCEPTION DIAGNOSTIC REPORT ***\r\n");
+	SeTextOut("[AuFault]: Origin        : %s\r\n",
+		info->origin == FAULT_ORIGIN_USER ? "USER-SPACE" :
+		(info->origin == FAULT_ORIGIN_DRIVER ? "DRIVER" : "KERNEL"));
+	
+	const char* type_str = "UNKNOWN";
+	switch (info->fault_type) {
+		case FAULT_TYPE_PAGE_NOT_PRESENT:   type_str = "PAGE NOT PRESENT"; break;
+		case FAULT_TYPE_WRITE_VIOLATION:    type_str = "READ/WRITE VIOLATION"; break;
+		case FAULT_TYPE_USER_ACCESS:        type_str = "USER ACCESS VIOLATION"; break;
+		case FAULT_TYPE_RESERVED_BIT:       type_str = "RESERVED BIT SET"; break;
+		case FAULT_TYPE_INSTRUCTION_FETCH:  type_str = "INSTRUCTION FETCH FAULT"; break;
+		case FAULT_TYPE_GENERAL_PROTECTION: type_str = "GENERAL PROTECTION FAULT"; break;
+		case FAULT_TYPE_INVALID_OPCODE:     type_str = "INVALID OPCODE FAULT"; break;
+		case FAULT_TYPE_STACK_FAULT:        type_str = "STACK FAULT"; break;
+		default:                            type_str = "UNKNOWN FAULT"; break;
+	}
+	SeTextOut("[AuFault]: Fault Type    : %s (%d)\r\n", type_str, info->fault_type);
+	if (info->fault_address) {
+		SeTextOut("[AuFault]: Fault Address : 0x%x\r\n", info->fault_address);
+	}
+	SeTextOut("[AuFault]: Faulting PC   : 0x%x\r\n", info->fault_pc);
+	SeTextOut("[AuFault]: Process       : %s (PID: %d)\r\n", info->process_name[0] ? info->process_name : "N/A", info->process_id);
+	SeTextOut("[AuFault]: Thread        : %s (TID: %d)\r\n", info->thread_name[0] ? info->thread_name : "N/A", info->thread_id);
+	if (info->vma_start) {
+		SeTextOut("[AuFault]: VMA Range     : 0x%x - 0x%x\r\n", info->vma_start, info->vma_end);
+	}
+	SeTextOut("======================================================\r\n\r\n");
+}
+
+void AuFaultTerminateProcess(AuProcess* proc, AuFaultInfo* info) {
+	AuThread* curr_thr = AuGetCurrentThread();
+	
+	if (proc && proc != AuGetRootProcess()) {
+		SeTextOut("[AuFault]: Gracefully terminating user process '%s' (PID: %d)\r\n", proc->name, proc->proc_id);
+		AuProcessExit(proc, false);
+	} else if (curr_thr) {
+		SeTextOut("[AuFault]: Terminating user thread '%s' (TID: %d)\r\n", curr_thr->name, curr_thr->id);
+		curr_thr->state = THREAD_STATE_KILLABLE;
+		AuThreadMoveToTrash(curr_thr);
+	}
+	
+	x64_force_sched();
+}
+
 //! exception function -- invalid_opcode_fault
 void invalid_opcode_fault(size_t v, void* p){
 	x64_cli();
 	interrupt_stack_frame *frame = (interrupt_stack_frame*)p;
-	panic("Invalid Opcode Fault \r\n");
-	SeTextOut("Invalid Opcode Fault \r\n");
-	SeTextOut("__PROCESSOR TRACE__ \r\n");
-	SeTextOut("RIP -> %x\n", frame->rip);
-	SeTextOut("Stack -> %x\n", frame->rsp);
-	SeTextOut("RFLAGS -> %x\n", frame->rflags);
-	SeTextOut("CS -> %x\n", frame->cs);
-	SeTextOut("SS -> %x\n", frame->ss);
-	for (;;);
+	AuThread* thr = AuGetCurrentThread();
+	AuProcess* proc = NULL;
+	if (thr) {
+		proc = AuProcessFindThread(thr);
+		if (!proc)
+			proc = AuProcessFindSubThread(thr);
+	}
+
+	AuFaultInfo info;
+	memset(&info, 0, sizeof(AuFaultInfo));
+	info.fault_address = 0;
+	info.fault_pc = frame->rip;
+	info.fault_type = FAULT_TYPE_INVALID_OPCODE;
+	info.origin = ((frame->cs & 0x3) == 0x3) ? FAULT_ORIGIN_USER : FAULT_ORIGIN_KERNEL;
+
+	if (thr) {
+		info.thread_id = thr->id;
+		strncpy(info.thread_name, thr->name, 15);
+	}
+	if (proc) {
+		info.process_id = proc->proc_id;
+		strncpy(info.process_name, proc->name, 15);
+		AuVMArea* vma = AuVMAreaGet(proc, frame->rip);
+		if (vma) {
+			info.vma_start = vma->start;
+			info.vma_end = vma->end;
+		}
+	}
+
+	AuFaultLogDiagnostics(&info);
+
+	if (info.origin == FAULT_ORIGIN_USER && proc && proc != AuGetRootProcess()) {
+		AuFaultTerminateProcess(proc, &info);
+	} else {
+		panic("Invalid Opcode Fault !! Unrecoverable Kernel Fault");
+		for (;;);
+	}
 }
 
 //! exception function -- no device fault
@@ -151,14 +229,43 @@ void no_segment_fault(size_t v, void* p){
 void stack_fault(size_t v, void* p){
 	x64_cli();
 	interrupt_stack_frame *frame = (interrupt_stack_frame*)p;
-	panic("\nStack Fault at ");
-	SeTextOut("__PROCESSOR TRACE__ \r\n");
-	SeTextOut("RIP -> %x \r\n", frame->rip);
-	SeTextOut("Stack -> %x \r\n", frame->rsp);
-	SeTextOut("RFLAGS -> %x \r\n", frame->rflags);
-	SeTextOut("CS -> %x, SS -> %x \r\n", frame->cs, frame->ss);
-	SeTextOut("Current thread ->id %d , %s\r\n", AuGetCurrentThread()->id, AuGetCurrentThread()->name);
-	for (;;);
+	AuThread* thr = AuGetCurrentThread();
+	AuProcess* proc = NULL;
+	if (thr) {
+		proc = AuProcessFindThread(thr);
+		if (!proc)
+			proc = AuProcessFindSubThread(thr);
+	}
+
+	AuFaultInfo info;
+	memset(&info, 0, sizeof(AuFaultInfo));
+	info.fault_address = 0;
+	info.fault_pc = frame->rip;
+	info.fault_type = FAULT_TYPE_STACK_FAULT;
+	info.origin = ((frame->cs & 0x3) == 0x3) ? FAULT_ORIGIN_USER : FAULT_ORIGIN_KERNEL;
+
+	if (thr) {
+		info.thread_id = thr->id;
+		strncpy(info.thread_name, thr->name, 15);
+	}
+	if (proc) {
+		info.process_id = proc->proc_id;
+		strncpy(info.process_name, proc->name, 15);
+		AuVMArea* vma = AuVMAreaGet(proc, frame->rip);
+		if (vma) {
+			info.vma_start = vma->start;
+			info.vma_end = vma->end;
+		}
+	}
+
+	AuFaultLogDiagnostics(&info);
+
+	if (info.origin == FAULT_ORIGIN_USER && proc && proc != AuGetRootProcess()) {
+		AuFaultTerminateProcess(proc, &info);
+	} else {
+		panic("Stack Fault !! Unrecoverable Kernel Fault");
+		for (;;);
+	}
 }
 
 //! exception function --- general protection fault
@@ -166,7 +273,6 @@ void stack_fault(size_t v, void* p){
 void general_protection_fault(size_t v, void* p){
 	x64_cli();
 	interrupt_stack_frame *frame = (interrupt_stack_frame*)p;
-	panic("Genral Protection Fault \r\n");
 	AuThread* thr = AuGetCurrentThread();
 
 	AuProcess* proc = NULL;
@@ -176,23 +282,35 @@ void general_protection_fault(size_t v, void* p){
 			proc = AuProcessFindSubThread(thr);
 	}
 
-	SeTextOut("General Protection Fault \r\n");
-	SeTextOut("__PROCESSOR TRACE__ \r\n");
-	SeTextOut("RIP -> %x \r\n", frame->rip);
-	SeTextOut("Stack -> %x \r\n", frame->rsp);
-	SeTextOut("RFLAGS -> %x \r\n", frame->rflags);
-	SeTextOut("CS -> %x, SS -> %x \r\n", frame->cs, frame->ss);
-	SeTextOut("Current thread ->id %d , %s\r\n", thr->id, thr->name);
-	AuVMArea* vma = NULL;
-	if (proc)
-		vma = AuVMAreaGet(proc, frame->rip);
-	if (vma) {
-		SeTextOut("VMA Start -> %x \r\n", vma->start);
-		uint64_t offset = (frame->rip - vma->start);
-		uint64_t realAddress = 0x600000 + offset;
-		SeTextOut("origin address -> %x  %x\r\n", frame->rip, realAddress);
+	AuFaultInfo info;
+	memset(&info, 0, sizeof(AuFaultInfo));
+	info.fault_address = 0;
+	info.fault_pc = frame->rip;
+	info.fault_type = FAULT_TYPE_GENERAL_PROTECTION;
+	info.origin = ((frame->cs & 0x3) == 0x3) ? FAULT_ORIGIN_USER : FAULT_ORIGIN_KERNEL;
+
+	if (thr) {
+		info.thread_id = thr->id;
+		strncpy(info.thread_name, thr->name, 15);
 	}
-	for (;;);
+	if (proc) {
+		info.process_id = proc->proc_id;
+		strncpy(info.process_name, proc->name, 15);
+		AuVMArea* vma = AuVMAreaGet(proc, frame->rip);
+		if (vma) {
+			info.vma_start = vma->start;
+			info.vma_end = vma->end;
+		}
+	}
+
+	AuFaultLogDiagnostics(&info);
+
+	if (info.origin == FAULT_ORIGIN_USER && proc && proc != AuGetRootProcess()) {
+		AuFaultTerminateProcess(proc, &info);
+	} else {
+		panic("General Protection Fault !! Unrecoverable Kernel Fault");
+		for (;;);
+	}
 }
 
 extern "C" bool _signal_debug;
@@ -204,28 +322,15 @@ extern "C" bool syscall_debug;
 void page_fault(size_t vector, void* param){
 	x64_cli();
 	interrupt_stack_frame *frame = (interrupt_stack_frame*)param;
-	stack_frame *fr = (stack_frame*)param;
-
 
 	void* vaddr = (void*)x64_read_cr2();
 
-	int present = !(frame->error & 0x1);
-	int rw = frame->error & 0x2;
-	int us = frame->error & 0x4;
-	int resv = frame->error & 0x8;
-	int id = frame->error & 0x10;
-
-
 	AuThread* thr = AuGetCurrentThread();
 	
-	/* check for signal */
-	if (!thr) {
-		goto skip;
-	}
-	if (thr->returnableSignal) {
+	/* check for signal returnable frame */
+	if (thr && thr->returnableSignal) {
 		Signal* sig = (Signal*)thr->returnableSignal;
 		x86_64_cpu_regs_t* ctx = (x86_64_cpu_regs_t*)(thr->frame.kern_esp - sizeof(x86_64_cpu_regs_t));
-		x86_64_cpu_regs_t* srcCtx = (x86_64_cpu_regs_t*)sig->signalStack;
 		memcpy(ctx, sig->signalStack, sizeof(x86_64_cpu_regs_t));
 		memcpy(&thr->frame, sig->signalState, sizeof(AuThreadFrame));
 		kfree(sig->signalStack);
@@ -241,50 +346,48 @@ void page_fault(size_t vector, void* param){
 		proc = AuProcessFindThread(thr);
 		if (!proc)
 			proc = AuProcessFindSubThread(thr);
-		
-		SeTextOut("Thread name -> %s \r\n", thr->name);
-		if (proc) {
-			SeTextOut("Process pid -> %d \r\n", proc->proc_id);
-			SeTextOut("Process name -> %s \r\n", proc->name);
+	}
+
+	AuFaultInfo info;
+	memset(&info, 0, sizeof(AuFaultInfo));
+	info.fault_address = (uint64_t)vaddr;
+	info.fault_pc = frame->rip;
+
+	if (!(frame->error & 0x1))
+		info.fault_type = FAULT_TYPE_PAGE_NOT_PRESENT;
+	else if (frame->error & 0x2)
+		info.fault_type = FAULT_TYPE_WRITE_VIOLATION;
+	else if (frame->error & 0x4)
+		info.fault_type = FAULT_TYPE_USER_ACCESS;
+	else if (frame->error & 0x8)
+		info.fault_type = FAULT_TYPE_RESERVED_BIT;
+	else if (frame->error & 0x10)
+		info.fault_type = FAULT_TYPE_INSTRUCTION_FETCH;
+	else
+		info.fault_type = FAULT_TYPE_UNKNOWN;
+
+	info.origin = ((frame->cs & 0x3) == 0x3) ? FAULT_ORIGIN_USER : FAULT_ORIGIN_KERNEL;
+
+	if (thr) {
+		info.thread_id = thr->id;
+		strncpy(info.thread_name, thr->name, 15);
+	}
+	if (proc) {
+		info.process_id = proc->proc_id;
+		strncpy(info.process_name, proc->name, 15);
+		AuVMArea* vma = AuVMAreaGet(proc, frame->rip);
+		if (vma) {
+			info.vma_start = vma->start;
+			info.vma_end = vma->end;
 		}
 	}
-	
-skip:
-	panic("Page Fault !! \r\n");
-	uint64_t vaddr_ = (uint64_t)vaddr;
-	uint64_t vaddr_aligned = VIRT_ADDR_ALIGN(vaddr_);
-	bool _mapped = false;
-	if (present) {
-		SeTextOut("Page Not Present \r\n");
-	}
-	else if (rw) {
-		SeTextOut("Read/Write %x\r\n", vaddr);
-		SeTextOut("Virtual Address Aligned -> %x \r\n", vaddr_aligned);
-		//void* phys = AuGetPhysicalAddress(vaddr_aligned);
-	}
-	else if (us)
-		SeTextOut("User bit not set \r\n");
-	else if (resv)
-		SeTextOut("Reserved page \r\n");
-	else if (id)
-		SeTextOut("Invalid page \r\n");
 
-	AuVMArea* vma = NULL;
-	if (proc)
-		vma = AuVMAreaGet(proc, frame->rip);
+	AuFaultLogDiagnostics(&info);
 
-	SeTextOut("Virtual Address -> %x \r\n", vaddr_);
-	SeTextOut("Virtual Address aligned -> %x \r\n", vaddr_aligned);
-	SeTextOut("RSP -> %x \r\n", frame->rsp);
-	SeTextOut("RIP->%x\r\n", frame->rip);
-	if (vma) {
-		SeTextOut("VMA Start -> %x \r\n", vma->start);
-		uint64_t offset = (frame->rip - vma->start);
-		uint64_t realAddress = 0x600000 + offset;
-		SeTextOut("origin address -> %x  %x\r\n", frame->rip, realAddress);
-	}
-	SeTextOut("CS -> %x, SS -> %x \r\n", frame->cs, frame->ss);
-	if (!_mapped) {
+	if (info.origin == FAULT_ORIGIN_USER && proc && proc != AuGetRootProcess()) {
+		AuFaultTerminateProcess(proc, &info);
+	} else {
+		panic("Page Fault !! Unrecoverable Kernel Fault");
 		for (;;);
 	}
 }

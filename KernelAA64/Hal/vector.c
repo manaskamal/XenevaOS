@@ -43,10 +43,53 @@
 #include <Board/RPI3bp/rpi3bp.h>
 #include <Hal/AA64/profile.h>
 #include <audrv.h>
-#include <timer.h>
+#include <Hal/fault.h>
 
 extern uint64_t read_sp();
 extern uint64_t read_sp_el1();
+
+void AuFaultLogDiagnostics(AuFaultInfo* info) {
+    if (!info)
+        return;
+    UARTDebugOut("\r\n======================================================\r\n");
+    UARTDebugOut("[AuFault]: *** EXCEPTION DIAGNOSTIC REPORT (ARM64) ***\r\n");
+    UARTDebugOut("[AuFault]: Origin        : %s\r\n",
+        info->origin == FAULT_ORIGIN_USER ? "USER-SPACE" :
+        (info->origin == FAULT_ORIGIN_DRIVER ? "DRIVER" : "KERNEL"));
+    
+    const char* type_str = "UNKNOWN";
+    switch (info->fault_type) {
+        case FAULT_TYPE_PAGE_NOT_PRESENT:   type_str = "TRANSLATION FAULT"; break;
+        case FAULT_TYPE_WRITE_VIOLATION:    type_str = "PERMISSION / WRITE FAULT"; break;
+        case FAULT_TYPE_USER_ACCESS:        type_str = "ACCESS FLAG FAULT"; break;
+        case FAULT_TYPE_INSTRUCTION_FETCH:  type_str = "INSTRUCTION ABORT"; break;
+        default:                            type_str = "SYNCHRONOUS DATA/INSTR FAULT"; break;
+    }
+    UARTDebugOut("[AuFault]: Fault Type    : %s (%d)\r\n", type_str, info->fault_type);
+    UARTDebugOut("[AuFault]: Fault Address : 0x%x\r\n", info->fault_address);
+    UARTDebugOut("[AuFault]: Faulting PC   : 0x%x\r\n", info->fault_pc);
+    UARTDebugOut("[AuFault]: Process       : %s (PID: %d)\r\n", info->process_name[0] ? info->process_name : "N/A", info->process_id);
+    UARTDebugOut("[AuFault]: Thread        : %s (TID: %d)\r\n", info->thread_name[0] ? info->thread_name : "N/A", info->thread_id);
+    if (info->vma_start) {
+        UARTDebugOut("[AuFault]: VMA Range     : 0x%x - 0x%x\r\n", info->vma_start, info->vma_end);
+    }
+    UARTDebugOut("======================================================\r\n\r\n");
+}
+
+void AuFaultTerminateProcess(AuProcess* proc, AuFaultInfo* info) {
+    AA64Thread* curr_thr = AuGetCurrentThread();
+    
+    if (proc && proc != AuGetRootProcess()) {
+        UARTDebugOut("[AuFault]: Gracefully terminating user process '%s' (PID: %d)\r\n", proc->name, proc->proc_id);
+        AuProcessExit(proc, 0);
+    } else if (curr_thr) {
+        UARTDebugOut("[AuFault]: Terminating user thread '%s'\r\n", curr_thr->name);
+        curr_thr->state = THREAD_STATE_KILLABLE;
+        AuThreadMoveToTrash(curr_thr);
+    }
+    
+    AuForceScheduler();
+}
 
 void AuDumpRegisters(AA64Thread* thr, AA64Registers* regs) {
     UARTDebugOut("===REGISTER DUMP===\r\n");
@@ -71,77 +114,24 @@ void AuDumpRegisters(AA64Thread* thr, AA64Registers* regs) {
 }
 
 void sync_el1_handler(AA64Registers *regs) {
-
     uint64_t esr = read_esr_el1();
 
     if ((esr >> 26) == 0x15) {
         AuAA64SyscallHandler(regs);
-       // enable_irqs();
         return;
     }
 
     uint32_t ec = (esr >> 26) & 0x3F;
+    uint64_t far_val = read_far_el1();
+    uint64_t pc_val = read_elr_el1();
 
-   // AuTextOut("======Synch exception=======\r\n");
-   // AuTextOut("FAR: %x, PC: %x \r\n", read_far_el1(), read_elr_el1());
-
-
-
-    uint32_t dfsc = esr & 0x3F;
-
-  /*  switch (dfsc) {
-    case 0b000000: AuTextOut("Address size, fault level 0 \r\n"); break;
-    case 0b000001: AuTextOut("Address Size, fault level 1 \r\n"); break;
-    case 0b000010: AuTextOut("Address size, fault level 2 \r\n"); break;
-    case 0b000011: AuTextOut("Address size, fault level 3 \r\n"); break;
-    case 0b000100: AuTextOut("translation, fault level 0 \r\n"); break;
-    case 0b000101: AuTextOut("translation, fault level 1 \r\n"); break;
-    case 0b000110: AuTextOut("translation, fault level 2 \r\n"); break;
-    case 0b000111: AuTextOut("translation, fault level 3 \r\n"); break;
-    case 0b001001: AuTextOut("access flag, fault level 1 \r\n"); break;
-    case 0b001010: AuTextOut("access flag, fault level 2 \r\n"); break;
-    case 0b001011: AuTextOut("access flag, fault level 3 \r\n"); break;
-    case 0b001101: AuTextOut("permission fault, level 1 \r\n"); break;
-    case 0b001110: AuTextOut("permission fault, level 2 \r\n"); break;
-    case 0b001111: AuTextOut("permission fault, level 3 \r\n"); break;
-    default: AuTextOut("Unknown fault code \r\n"); break;
-    }*/
-    UARTDebugOut("=======Synchronous Exception occured========= \r\n");
-    //AuTextOut("Fault Address (FAR_EL1): %x \r\n", read_far_el1());
-    UARTDebugOut("Fault Address (FAR_EL1): %x \r\n", read_far_el1());
-    //UARTDebugOut("Fault Address String (FAR_EL1): %s \n", read_far_el1());
-    //AuTextOut("Fault Instruction (ELR_EL1): %x \r\n", read_elr_el1());
-    UARTDebugOut("Fault Instruction (ELR_EL1): %x \r\n", read_elr_el1());
-   // AuTextOut("SP_EL1: %x  \r\n", read_sp());
-   // AuTextOut("SP_EL0 : %x \r\n", regs->EL0SP);
-    UARTDebugOut("Current SPSel : %d \r\n", read_spsel());
-    UARTDebugOut("EC class : %x \r\n", ec);
- 
-    /** check if the fault occured on drivers **/
-    AuDriver* drv = AuDrvManagerCheckFault(read_elr_el1());
+    AuDriver* drv = AuDrvManagerCheckFault(pc_val);
     if (drv) {
         UARTDebugOut("======CRASH in Kernel Driver====== \r\n");
-        AuDrvCatchFault(drv, read_elr_el1());
+        AuDrvCatchFault(drv, pc_val);
     }
-    
 
     AA64Thread* currthr = AuGetCurrentThread();
-    if (currthr) {
-        UARTDebugOut("Current Thread: %s \r\n", currthr->name);
-       // AuTextOut("Current Thread: %s \r\n", currthr->name);
-        AuDumpRegisters(currthr, regs);
-    }
-
-    if (ec == 0x25) {
-       // AuTextOut("Stack alignment fault \r\n");
-        AuDumpRegisters(currthr, regs);
-    }
-
-    size_t totalRam = (AuPmmngrGetTotalMem()*0x1000) / 1024 / 1024;
-    size_t usedRam = (AuPmmngrGetUsedMem()*0x1000) / 1024 / 1024;
-    size_t freeRam = (AuPmmngrGetFreeMem()*0x1000) / 1024 / 1024;
-   // AuTextOut("Total RAM : %d MiB, Used RAM : %d MiB , Free RAM : %d MiB\r\n", totalRam, usedRam, freeRam);
-
     AuProcess* proc = NULL;
     if (currthr) {
         proc = AuProcessFindThread(currthr);
@@ -149,36 +139,57 @@ void sync_el1_handler(AA64Registers *regs) {
             proc = AuProcessFindSubThread(currthr);
     }
 
-    AuVMArea* vma = NULL;
-    if (proc)
-        vma = AuVMAreaGet(proc, read_elr_el1());
-    if (vma) {
-        UARTDebugOut("VMA Start -> %x \r\n", vma->start);
-        uint64_t offset = (read_elr_el1() - vma->start);
-        uint64_t realAddress = 0x600000000 + offset;
-        UARTDebugOut("original address of the process -> %x  %x\r\n", read_elr_el1(), realAddress);
+    AuFaultInfo info;
+    memset(&info, 0, sizeof(AuFaultInfo));
+    info.fault_address = far_val;
+    info.fault_pc = pc_val;
+
+    uint32_t dfsc = esr & 0x3F;
+    if ((dfsc & 0x3C) == 0x04)
+        info.fault_type = FAULT_TYPE_PAGE_NOT_PRESENT;
+    else if ((dfsc & 0x3C) == 0x0C)
+        info.fault_type = FAULT_TYPE_WRITE_VIOLATION;
+    else if ((dfsc & 0x3C) == 0x08)
+        info.fault_type = FAULT_TYPE_USER_ACCESS;
+    else if (ec == 0x20 || ec == 0x21)
+        info.fault_type = FAULT_TYPE_INSTRUCTION_FETCH;
+    else
+        info.fault_type = FAULT_TYPE_UNKNOWN;
+
+    if (ec == 0x20 || ec == 0x24)
+        info.origin = FAULT_ORIGIN_USER;
+    else if (drv)
+        info.origin = FAULT_ORIGIN_DRIVER;
+    else
+        info.origin = FAULT_ORIGIN_KERNEL;
+
+    if (currthr) {
+        info.thread_id = (uint16_t)currthr->thread_id;
+        strncpy(info.thread_name, currthr->name, 7);
+        info.thread_name[7] = '\0';
+    }
+    if (proc) {
+        info.process_id = proc->proc_id;
+        strncpy(info.process_name, proc->name, 15);
+        info.process_name[15] = '\0';
+        AuVMArea* vma = AuVMAreaGet(proc, pc_val);
+        if (vma) {
+            info.vma_start = vma->start;
+            info.vma_end = vma->end;
+        }
     }
 
-    dfsc = esr & 0x3F;
+    AuFaultLogDiagnostics(&info);
 
-    switch (dfsc) {
-    case 0b000000: UARTDebugOut("Address size, fault level 0 \r\n"); break;
-    case 0b000001: UARTDebugOut("Address Size, fault level 1 \r\n"); break;
-    case 0b000010: UARTDebugOut("Address size, fault level 2 \r\n"); break;
-    case 0b000011: UARTDebugOut("Address size, fault level 3 \r\n"); break;
-    case 0b000100: UARTDebugOut("translation, fault level 0 \r\n"); break;
-    case 0b000101: UARTDebugOut("translation, fault level 1 \r\n"); break;
-    case 0b000110: UARTDebugOut("translation, fault level 2 \r\n"); break;
-    case 0b000111: UARTDebugOut("translation, fault level 3 \r\n"); break;
-    case 0b001001: UARTDebugOut("access flag, fault level 1 \r\n"); break;
-    case 0b001010: UARTDebugOut("access flag, fault level 2 \r\n"); break;
-    case 0b001011: UARTDebugOut("access flag, fault level 3 \r\n"); break;
-    case 0b001101: UARTDebugOut("permission fault, level 1 \r\n"); break;
-    case 0b001110: UARTDebugOut("permission fault, level 2 \r\n"); break;
-    case 0b001111: UARTDebugOut("permission fault, level 3 \r\n"); break;
-    default: UARTDebugOut("Unknown fault code \r\n"); break;
+    if (info.origin == FAULT_ORIGIN_USER && proc && proc != AuGetRootProcess()) {
+        AuFaultTerminateProcess(proc, &info);
+    } else {
+        UARTDebugOut("=======Synchronous Exception Kernel Crash=========\r\n");
+        if (currthr) {
+            AuDumpRegisters(currthr, regs);
+        }
+        while (1) {}
     }
-	while (1) {}
 }
 
 extern bool aa64_restore_context(AA64Thread* thr);

@@ -175,7 +175,7 @@ int BordoisilaDriverRemove(BordoisilaDriver* driver) {
 
 	if (ref) {
 		driver->refcount--;
-		return;
+		return 0;
 	}
 
 

@@ -59,6 +59,13 @@ static int pid = 1;
 AuProcess* proc_first;
 AuProcess* proc_last;
 AuProcess* root_proc;
+
+/**
+ * @brief AuGetRootProcess -- returns the root process
+ */
+AuProcess* AuGetRootProcess() {
+	return root_proc;
+}
 /*
  * @brief AuAddProcess -- adds process to kernel data structure
  * @param root -- pointer to the root process
@@ -403,7 +410,7 @@ void AuProcessFreeKeResource(AA64Thread* thr) {
  * @param proc -- process to exit
  * @param schedulable -- schedule to next thread
  */
-void AuProcessExit(AuProcess* proc, BOOL schedulable) {
+void AuProcessExit(AuProcess* proc, bool schedulable) {
 	if (proc == root_proc) {
 		UARTDebugOut("[aurora]: cannot exit root process \r\n");
 		return;

@@ -32,8 +32,15 @@
 #ifndef __TIMER_H__
 #define __TIMER_H__
 
-#include <aurora.h>
+#ifdef ARCH_X64
+#include <Hal/x86_64_sched.h>
+typedef struct _au_thread_ AuThreadType;
+#elif defined(ARCH_ARM64)
 #include <Hal/AA64/sched.h>
+typedef AA64Thread AuThreadType;
+#else
+typedef void AuThreadType;
+#endif
 #if defined(__GNUC__) || defined(__clang__)
 #ifndef __cplusplus
 #include <stdbool.h>
@@ -48,7 +55,7 @@ typedef struct _kernel_timer_ {
 	AuroraTimerCallback handler;
 	void* param;
 	uint8_t active;
-	AA64Thread* owner;
+	AuThreadType* owner;
 }AuKernelTimer;
 
 #define AURORA_MAX_TIMER  32
@@ -105,7 +112,9 @@ AU_EXTERN AU_EXPORT uint64_t AuGetCurrentUS();
  * @param thr -- pointer to thread which requires one-shot timer
  * @param seconds -- amount of second to wait
  */
-extern int AuTimerCalculateAlarm(AA64Thread* thr, uint64_t seconds);
+extern int AuTimerCalculateAlarm(AuThreadType* thr, uint64_t seconds);
+
+#include <time.h>
 
 /* POSIX Timer API */
 typedef struct _itimerval_ {
@@ -113,19 +122,14 @@ typedef struct _itimerval_ {
 	timeval it_value;
 }itimerval_t;
 
-typedef struct _timeval_t_ {
-	long tv_sec;
-	long tv_usec;
-}timeval_t;
-
 
 
 /**
  *@brief AuTimerSetITimer -- posix standard implementation of
  * setting periodic timer
  */
-extern int AuTimerSetITimer(AA64Thread* thr, int which, const itimerval_t* newval, itimerval_t* oldval);
-extern int AuTimerGetITimer(AA64Thread* thr, int which, itimerval_t* curr_value);
+extern int AuTimerSetITimer(AuThreadType* thr, int which, const itimerval_t* newval, itimerval_t* oldval);
+extern int AuTimerGetITimer(AuThreadType* thr, int which, itimerval_t* curr_value);
 extern void AuSetWalltime(int64_t sec, int64_t nsec);
 extern void AuGetWalltime(int64_t* out_sec, int64_t* out_ns);
 

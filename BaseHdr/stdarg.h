@@ -55,7 +55,12 @@ extern "C"
 	((sizeof(TYPE)+sizeof(STACKITEM)-1)	\
 	& ~(sizeof(STACKITEM)-1))
 
-#if defined(ARCH_X64) || defined(__x86_64__)
+#if defined(__GNUC__) || defined(__clang__)
+#define va_start(ap, last) __builtin_va_start(ap, last)
+#define va_arg(ap, type) __builtin_va_arg(ap, type)
+#define va_end(ap) __builtin_va_end(ap)
+#define va_copy(dest, src) __builtin_va_copy(dest, src)
+#else
 	/* &(LASTARG) points to the LEFTMOST argument of the function call
 	(before the ...) */
 #define	va_start(AP, LASTARG)	\
@@ -66,21 +71,6 @@ extern "C"
 
 #define va_arg(AP, TYPE)	\
 	(AP += VA_SIZE(TYPE), *((TYPE *)(AP - VA_SIZE(TYPE))))
-#elif defined(ARCH_ARM64) || defined(__aarch64__)
-#ifdef __GNUC__
-#define va_start(ap, last) __builtin_va_start(ap, last)
-#define va_arg(ap, type) __builtin_va_arg(ap, type)
-#define va_end(ap) __builtin_va_end(ap)
-#else
-#define va_start(ap,last) \
-     ((ap) = (va_list)(&(last)) + 8)
-
-#define va_arg(ap,T) \
-     (*(T*)((ap) += 8, (ap) - 8))
-
-#define va_end(ap) \
-     ((ap) = (va_list)0)
-#endif
 #endif
 
 #ifdef __cplusplus
