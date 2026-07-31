@@ -47,26 +47,28 @@ volatile uint32_t* gicc_regs;
 typedef void (*irq_callback)(int spi);
 
 /** distributor registers */
-#define GICD(n)  (n.gicDMMIO)
+#define GICD(n)  ((uint8_t*)(n.gicDMMIO))
 #define GICD_CTLR    0x0000
 #define GICD_TYPER   0x0004
 #define GICD_IIDR    0x0008
 #define GICD_TYPER2  0x000C
-#define GICD_PIDR2  0xFFE8
-#define GICD_PIDR2_ARCHREV(x)  (((x) >> 4) & 0xF)
+#define GICD_PIDR2   0xFFE8
+#define GICD_PIDR2_ARCHREV(x)   (((x) >> 4) & 0xF)
 #define GIC_VERSION_1 0x1
 #define GIC_VERSION_2 0x2
 #define GIC_VERSION_3  0x3
 #define GIC_VERSION_4 0x4
-#define GICD_ISENABLER(n) (*(volatile uint32_t*)(GICD(__gic) + 0x100 + 4*(n)))
+
+// All of these macros will now automatically calculate the exact correct byte offsets!
+#define GICD_ISENABLER(n)  (*(volatile uint32_t*)(GICD(__gic) + 0x100 + 4*(n)))
 #define GICD_IPRIORITYR(n) (0x400 + (n))
-#define GICD_IGROUPR(n)  (*(volatile uint32_t*)(GICD(__gic) + 0x080 + 4*(n)))
-#define GICD_ICENABLE(n) (*(volatile uint32_t*)(GICD(__gic) + 0x180 + (n*4)))
-#define GICD_ICFGR(n) (*(volatile uint32_t*)(GICD(__gic) + 0x0C00 + (n*4)))
-#define GICD_ITARGETSR(n) (*(volatile uint32_t*)(GICD(__gic) + 0x0800 + (n*4)))
-#define GICD_IROUTER(n) (0x6000 + 8*(n))
-#define GICD_ICPENDR(n) (0x280 + (n/32)*4)
-#define ISPENDING0 0x200
+#define GICD_IGROUPR(n)    (*(volatile uint32_t*)(GICD(__gic) + 0x080 + 4*(n)))
+#define GICD_ICENABLE(n)   (*(volatile uint32_t*)(GICD(__gic) + 0x180 + (n*4)))
+#define GICD_ICFGR(n)      (*(volatile uint32_t*)(GICD(__gic) + 0x0C00 + (n*4)))
+#define GICD_ITARGETSR(n)  (*(volatile uint32_t*)(GICD(__gic) + 0x0800 + (n*4)))
+#define GICD_IROUTER(n)    (0x6000 + 8*(n))
+#define GICD_ICPENDR(n)    (0x280 + (n/32)*4)
+#define ISPENDING0         0x200
 
 
 /** cpu registers offsets */

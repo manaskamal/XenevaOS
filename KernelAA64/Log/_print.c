@@ -29,6 +29,7 @@
 #include <string.h>
 #include <stdarg.h>
 #include <ctype.h>
+#include <stdio.h>
 #include <_null.h>
 #include <Log/_print.h>
 

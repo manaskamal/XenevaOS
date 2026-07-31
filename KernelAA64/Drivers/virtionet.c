@@ -210,6 +210,7 @@ void AuVirtioNetTxinitialize(struct VirtioCommonCfg* common) {
  */
 void AuVirtioNetInitialize(uint64_t device) {
 	UARTDebugOut("[aurora]: virtio network device found \r\n");
+	UARTDebugOut("ok\r\n");
 	int bus = 0;
 	int func = 0;
 	int dev = 0;
