@@ -16,7 +16,8 @@
 */
 uint32_t Ext2FindEntry(Ext2Fs* fs, Ext2Inode* dir_inode, const char* name) {
 	if (!fs || !dir_inode || !name) {
-		AuTextOut("[Ext2]: parameters missing for directory scanning.\r\n");
+		const char* missing = !fs ? "fs" : !dir_inode ? "dir_inode" : "name";
+		AuTextOut("[Ext2]: %s parameter missing for directory scanning.\r\n", missing);
 		return 0;
 	}
 
@@ -72,8 +73,14 @@ uint32_t Ext2FindEntry(Ext2Fs* fs, Ext2Inode* dir_inode, const char* name) {
 * @param out_inode -- inode to place the readings
 */
 int Ext2ReadInode(Ext2Fs* fs, uint32_t inode_num, Ext2Inode* out_inode) {
-	if (!fs || !out_inode || inode_num == 0) {
-		AuTextOut("[Ext2]: parameters missing for inode reading.\r\n");
+	if (!fs || !out_inode) {
+		const char* missing = !fs ? "fs" : "out_inode";
+		AuTextOut("[Ext2]: %s parameter missing for inode reading.\r\n", missing);
+		return -1;
+	}
+
+	if (inode_num == 0) {
+		AuTextOut("[Ext2]: inode number is zero");
 		return -1;
 	}
 
@@ -115,9 +122,13 @@ int Ext2ReadInode(Ext2Fs* fs, uint32_t inode_num, Ext2Inode* out_inode) {
 * @param index -- the index within the block to read
 */
 uint32_t Ext2ReadBlockIndex(Ext2Fs* fs, uint32_t block_id, uint32_t index) {
-	if (!fs || block_id == 0) {
-		AuTextOut("[Ext2]: parameters missing for block index reading.\r\n");
+	if (!fs) {
+		AuTextOut("[Ext2]: fs missing for block index reading.\r\n");
 		return 0;
+	}
+
+	if (block_id == 0) {
+		AuTextOut("[Ext2]: block_id is zero");
 	}
 
 	uint32_t sector_per_block = fs->block_size / 512;
@@ -147,7 +158,8 @@ uint32_t Ext2ReadBlockIndex(Ext2Fs* fs, uint32_t block_id, uint32_t index) {
 */
 size_t Ext2Read(AuVFSNode* node, AuVFSNode* file, uint64_t* buffer, uint32_t length) {
 	if (!node || !file || !buffer || !length) {
-		AuTextOut("[Ext2]: parameters missing for file reading.\r\n");
+		const char* missing = !node ? "node" : !file ? "file" : !buffer ? "buffer" : "length";
+		AuTextOut("[Ext2]: %s parameter missing for file reading.\r\n", missing);
 		return 0;
 	}
 
@@ -250,7 +262,8 @@ size_t Ext2Read(AuVFSNode* node, AuVFSNode* file, uint64_t* buffer, uint32_t len
 */
 AuVFSNode* Ext2Open(AuVFSNode* fsys, char* path) {
 	if (!fsys || !path) {
-		AuTextOut("[Ext2]: parameters missing for file opening.\r\n");
+		const char* missing = !fsys ? "fsys" : "path";
+		AuTextOut("[Ext2]: %s parameter missing for file opening.\r\n", missing);
 		return NULL;
 	}
 	

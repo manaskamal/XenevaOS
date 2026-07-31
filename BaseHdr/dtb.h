@@ -117,7 +117,7 @@ AU_EXTERN AU_EXPORT uint64_t AuDeviceTreeGetRegSize(uint32_t* node, uint32_t add
 
 AU_EXTERN AU_EXPORT uint32_t AuDeviceTreeGetU32Property(uint32_t* node, const char* property, uint32_t default_val);
 
-AU_EXTERN AU_EXPORT uint32_t AuDeviceTreeGetPropCells(uint32_t* node, const char* property, uint32_t* out_num_cells);
+AU_EXTERN AU_EXPORT uint32_t* AuDeviceTreeGetPropCells(uint32_t* node, const char* property, uint32_t* out_num_cells);
 
 extern void AuDeviceTreeDumpAll();
 extern void AuDeviceTreeDumpAllProps(const char* node_name);

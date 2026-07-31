@@ -252,7 +252,7 @@ uint64_t AuDeviceTreeGetRegSize(uint32_t* node, uint32_t addressCell, uint32_t s
 	return 0;
 }
 
-uint32_t AuDeviceTreeGetPropCells(uint32_t* node, const char* property, uint32_t* out_num_cells) {
+uint32_t* AuDeviceTreeGetPropCells(uint32_t* node, const char* property, uint32_t* out_num_cells) {
 	uint32_t* prop = AuDeviceTreeFindProperty(node, property);
 	if (!prop) {
 		*out_num_cells = 0; return NULL;
