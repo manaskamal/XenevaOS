@@ -213,6 +213,7 @@ int ProcessLoadExec(int proc_id, char* filename, int argc, char** argv) {
 		//AuProcessExit(proc, true);
 		return -1;
 	}
+	return status;
 }
 
 /**

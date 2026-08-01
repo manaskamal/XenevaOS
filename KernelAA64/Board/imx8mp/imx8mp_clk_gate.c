@@ -245,6 +245,7 @@ int imx8mp_clk_gate_enable(uint32_t clk_root_id) {
 	val |= CGC_MASK;
 	_bordoisila_writel(val, reg);
 	BPrintK(BORDOISILA_INFO, "imx8mp clk gate enabled for root offset : %x \r\n", reg);
+	return 0;
 }
 
 int imx8mp_clk_gate_disable(uint32_t clk_root_id) {
@@ -258,6 +259,7 @@ int imx8mp_clk_gate_disable(uint32_t clk_root_id) {
 	uint32_t val = _bordoisila_readl(reg);
 	val &= ~CGC_MASK;
 	_bordoisila_writel(val, reg);
+	return 0;
 }
 
 #endif

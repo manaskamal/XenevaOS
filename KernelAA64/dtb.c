@@ -71,7 +71,7 @@ uint64_t AuDTBSwap64(uint64_t from) {
 	uint8_t g = from >> 8;
 	uint8_t h = from;
 	return ((uint64_t)h << 56) | ((uint64_t)g << 48) | ((uint64_t)f << 40) |
-		((uint64_t)e << 32) | (d << 24) | (c << 16) | (b << 8) | a;
+		((uint64_t)e << 32) | ((uint64_t)d << 24) | ((uint64_t)c << 16) | ((uint64_t)b << 8) | a;
 }
 
 /**
@@ -252,7 +252,7 @@ uint64_t AuDeviceTreeGetRegSize(uint32_t* node, uint32_t addressCell, uint32_t s
 	return 0;
 }
 
-uint32_t AuDeviceTreeGetPropCells(uint32_t* node, const char* property, uint32_t* out_num_cells) {
+uint32_t* AuDeviceTreeGetPropCells(uint32_t* node, const char* property, uint32_t* out_num_cells) {
 	uint32_t* prop = AuDeviceTreeFindProperty(node, property);
 	if (!prop) {
 		*out_num_cells = 0; return NULL;

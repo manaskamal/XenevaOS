@@ -63,9 +63,9 @@ typedef struct _pmdomain_ {
 	BordoisilaDriverResource res;
 	int (*power_on)(struct _pmdomain_* pmd);
 	int (*power_down)(struct _pmdomain_* pmd);
-	BordoisilaClk*       clk[100];
+	BordoisilaClk* clk[100];
 	BordoisilaRegulator* regulators[100];
-};
+}BordoisilaPower;
 
 
 /**

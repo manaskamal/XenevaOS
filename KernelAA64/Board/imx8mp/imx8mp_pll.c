@@ -142,6 +142,7 @@ uint8_t imx8mp_get_pll_type(uint64_t pllbase) {
 	case __IMX8MP_SYS_PLL3_GEN_CTRL:
 		return IMX_1416_PLL;
 	}
+	return 0;
 }
 
 static struct imx_pll14xx_rate_table * imx_get_pll_settings(uint64_t base, unsigned long rate) {
@@ -220,7 +221,7 @@ static void imx_pll14xx_calc_settings(uint64_t base, unsigned long rate, unsigne
 	uint32_t pll_div_ctl0, pll_div_ctl1;
 	int mdiv, pdiv, sdiv, kdiv;
 
-	long  fout, rate_min, rate_max, dist, best = INT64_MAX;
+	long  fout, rate_min, rate_max, dist, best = LONG_MAX;
 
 	const struct imx_pll14xx_rate_table* tt;
 	tt = imx_get_pll_settings(base, rate);
@@ -315,7 +316,7 @@ int imx8mp_pll1416x_set_rate(uint64_t base, unsigned long drate, unsigned long p
 	struct imx_pll14xx_rate_table* rate = imx_get_pll_settings(base, drate);
 	if (!rate) {
 		AuTextOut("[bordoisila]: imx8mp pll invalid rate %d \r\n", drate);
-		return;
+		return 0;
 	}
 
 	tmp = _bordoisila_readl(base + DIV_CTL0);
@@ -428,7 +429,7 @@ uint32_t imx8mp_pll_get_parent_rate(uint64_t pll_base) {
 
 int imx8mp_wait_lock(uint64_t base){
 	uint32_t val;
-	return _bordoisila_readl_poll_timeout(base + GNRL_CTL, val, val & LOCK_STATUS, 0, LOCK_TIMEOUT_US);
+	return _bordoisila_readl_poll_timeout(base + GNRL_CTL,  val & LOCK_STATUS, 0, LOCK_TIMEOUT_US);
 }
 
 void imx8mp_pll_prepare(uint64_t base) {

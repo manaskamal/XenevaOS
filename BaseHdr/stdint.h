@@ -116,6 +116,7 @@ typedef uint64_t size_t;
 #define INT16_MAX 32767
 #define INT32_MAX 2147483647
 #define INT64_MAX 9223372036854775807LL
+#define LONG_MAX  9223372036854775807L
 
 #define UINT8_MAX 0xff /* 255U */
 #define UINT16_MAX 0xffff /* 65535U */

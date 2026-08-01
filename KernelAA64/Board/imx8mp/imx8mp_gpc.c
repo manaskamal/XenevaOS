@@ -33,7 +33,10 @@
 
 #include <Board/imx8mp/imx8mp_clk.h>
 #include <Board/imx8mp/imx8mp_gpc.h>
+#include <Board/imx8mp/imx8mp_blkctrl.h>
 #include <Drivers/uart.h>
+#include <Drivers/core.h>
+#include <Drivers/res.h>
 #include <Mm/vmmngr.h>
 #include <Hal/AA64/aa64lowlevel.h>
 #include <bordoisila_io.h>
@@ -41,6 +44,7 @@
 #include <aucon.h>
 #include <_null.h>
 #include <Log/klog.h>
+#include <Mm/kmalloc.h>
 
 static uint64_t _gpc_base;
 
@@ -168,6 +172,58 @@ static _imx8mp_gpc_pdomain_t _pdomains[32];
 
 
 /**
+ * @brief imx8mp_pwr_on -- power on callback from each power domain
+ * @param pwr -- pointer to power domain
+ */
+int imx8mp_pwr_on(BordoisilaPower* pwr) {
+	if (!pwr) {
+		BPrintK(BORDOISILA_ERROR, "NULL! power domain ! \r\n");
+		return -1;
+	}
+
+	if (pwr->res.is_running) {
+		BPrintK(BORDOISILA_WARN, "power domain : %s is already running \r\n");
+		return 1;
+	}
+
+	_imx8mp_gpc_pdomain_t* domain = pwr->res.data;
+	if (!domain) {
+		BPrintK(BORDOISILA_ERROR, "kernel power domain : %s, no platform data \r\n", pwr->res.name);
+		return 1;
+	}
+	if (imx8mp_gpc_powerup(domain->pdomain_id) == -1) {
+		BPrintK(BORDOISILA_ERROR, "kernel power domain powerup failed in imx8mp_gpc \r\n");
+		return 1;
+	}
+	pwr->res.is_running = true;
+	return 0;
+}
+
+int imx8mp_pwr_down(BordoisilaPower* pwr) {
+	BPrintK(BORDOISILA_ERROR, "power domain -power down not implemented for GPCv2 \r\n");
+	return 0;
+}
+/**
+ * @brief imx8mp_alloc_kernel_resource -- allocate kernel resource
+ * @param name -- name of the resource
+ * @param data -- pointer to extra data
+ */
+BordoisilaDriverResource* imx8mp_gpc_kernel_resource(char* name, void* data) {
+	BordoisilaPower* pwr = (BordoisilaPower*)kmalloc(sizeof(BordoisilaPower));
+	strcpy(pwr->res.name, name);
+	pwr->res.res_type = BORDOISILA_DRIVER_RES_POWER;
+	pwr->res.ref_count = 0;
+	pwr->res.data = data;
+	pwr->res.is_running = false;
+	pwr->power_on = imx8mp_pwr_on;
+	pwr->power_down = imx8mp_pwr_down;
+	if (BordoisilaDriverResourceRegister((BordoisilaDriverResource*)pwr)) {
+		BPrintK(BORDOISILA_ERROR, "failed to register kernel power resource : %s \r\n", name);
+		return NULL;
+	}
+	return (BordoisilaDriverResource*)pwr;
+}
+/**
  * @brief imx8mp_gpc_init -- register each power domain
  * to the database
  */
@@ -176,6 +232,7 @@ void imx8mp_gpc_init() {
 	IMX8MP_PDOMAIN_REGISTER(n, IMX8MP_POWER_DOMAIN_MIPI_PHY1,
 		IMX8MP_MIPI_PHY1_SW_PXX_REQ, IMX8MP_MIPI_PHY1_A53_DOMAIN, GPC_PGC_CTRL(IMX8MP_PGC_MIPI1),
 		0,0);
+	imx8mp_gpc_kernel_resource("power_domain_mipi_phy1", &_pdomains[n]);
 	n++;
 
 	IMX8MP_PDOMAIN_REGISTER(n, IMX8MP_POWER_DOMAIN_PCIE_PHY,
@@ -183,7 +240,7 @@ void imx8mp_gpc_init() {
 		IMX8MP_PCIE_PHY_A53_DOMAIN,
 		GPC_PGC_CTRL(IMX8MP_PGC_PCIE),
 		0,0);
-
+	imx8mp_gpc_kernel_resource("power_domain_pcie_phy", &_pdomains[n]);
 	n++;
 
 	IMX8MP_PDOMAIN_REGISTER(n, IMX8MP_POWER_DOMAIN_USB1_PHY,
@@ -191,7 +248,7 @@ void imx8mp_gpc_init() {
 		IMX8MP_USB1_PHY_A53_DOMAIN,
 		GPC_PGC_CTRL(IMX8MP_PGC_USB1),
 		0,0);
-
+	imx8mp_gpc_kernel_resource("power_domain_usb1_phy", &_pdomains[n]);
 	n++;
 
 	IMX8MP_PDOMAIN_REGISTER(n, IMX8MP_POWER_DOMAIN_USB2_PHY,
@@ -199,7 +256,7 @@ void imx8mp_gpc_init() {
 		IMX8MP_USB2_PHY_A53_DOMAIN,
 		GPC_PGC_CTRL(IMX8MP_PGC_USB2),
 		0,0);
-
+	imx8mp_gpc_kernel_resource("power_domain_usb2_phy", &_pdomains[n]);
 	n++;
 
 	IMX8MP_PDOMAIN_REGISTER(n, IMX8MP_POWER_DOMAIN_MLMIX,
@@ -208,7 +265,7 @@ void imx8mp_gpc_init() {
 		GPC_PGC_CTRL(IMX8MP_PGC_MLMIX),
 		IMX8MP_MLMIX_PWRDNREQN,
 		IMX8MP_MLMIX_PWRDNACKN);
-
+	imx8mp_gpc_kernel_resource("power_domain_mlmix", &_pdomains[n]);
 	n++;
 
 	IMX8MP_PDOMAIN_REGISTER(n, IMX8MP_POWER_DOMAIN_AUDIOMIX,
@@ -217,7 +274,7 @@ void imx8mp_gpc_init() {
 		GPC_PGC_CTRL(IMX8MP_PGC_AUDIOMIX),
 		IMX8MP_AUDIOMIX_PWRDNREQN,
 		IMX8MP_AUDIOMIX_PWRDNACKN);
-
+	imx8mp_gpc_kernel_resource("power_domain_audiomix", &_pdomains[n]);
 	n++;
 
 	IMX8MP_PDOMAIN_REGISTER(n, IMX8MP_POWER_DOMAIN_GPU2D, 
@@ -225,7 +282,7 @@ void imx8mp_gpc_init() {
 		IMX8MP_GPU2D_A53_DOMAIN,
 		GPC_PGC_CTRL(IMX8MP_PGC_GPU2D),
 		0,0);
-
+	imx8mp_gpc_kernel_resource("power_domain_gpu2d", &_pdomains[n]);
 	n++;
 
 	IMX8MP_PDOMAIN_REGISTER(n, IMX8MP_POWER_DOMAIN_GPUMIX, 
@@ -234,7 +291,7 @@ void imx8mp_gpc_init() {
 		GPC_PGC_CTRL(IMX8MP_PGC_GPUMIX),
 		IMX8MP_GPUMIX_PWRDNREQN,
 		IMX8MP_GPUMIX_PWRDNACKN);
-
+	imx8mp_gpc_kernel_resource("power_domain_gpumix", &_pdomains[n]);
 	n++;
 
 	IMX8MP_PDOMAIN_REGISTER(n, IMX8MP_POWER_DOMAIN_VPUMIX,
@@ -243,7 +300,7 @@ void imx8mp_gpc_init() {
 		GPC_PGC_CTRL(IMX8MP_PGC_VPUMIX),
 		IMX8MP_VPUMIX_PWRDNREQN,
 		IMX8MP_VPUMIX_PWRDNACKN);
-
+	imx8mp_gpc_kernel_resource("power_domain_vpumix", &_pdomains[n]);
 	n++;
 
 	IMX8MP_PDOMAIN_REGISTER(n, IMX8MP_POWER_DOMAIN_GPU3D, 
@@ -251,7 +308,7 @@ void imx8mp_gpc_init() {
 		IMX8MP_GPU3D_A53_DOMAIN,
 		GPC_PGC_CTRL(IMX8MP_PGC_GPU3D),
 		0,0);
-
+	imx8mp_gpc_kernel_resource("power_domain_gpu3d", &_pdomains[n]);
 	n++;
 
 	IMX8MP_PDOMAIN_REGISTER(n, IMX8MP_POWER_DOMAIN_MEDIAMIX,
@@ -259,16 +316,17 @@ void imx8mp_gpc_init() {
 		IMX8MP_MEDIAMIX_A53_DOMAIN,
 		GPC_PGC_CTRL(IMX8MP_PGC_MEDIAMIX),
 		IMX8MP_MEDIAMIX_PWRDNREQN,
-		IMX8MP_MEDIAMIX_PWRDNACKN);
-
+		IMX8MP_MEDIAMIX_PWRDNACKN
+		);
+	imx8mp_gpc_kernel_resource("power_domain_mediamix", &_pdomains[n]);
 	n++;
 
 	IMX8MP_PDOMAIN_REGISTER(n, IMX8MP_POWER_DOMAIN_VPU_G1,
 		IMX8MP_VPU_G1_PXX_REQ,
 		IMX8MP_VPU_G1_A53_DOMAIN,
 		GPC_PGC_CTRL(IMX8MP_PGC_VPU_G1),
-		0,0);
-
+		0,0); //VPU block not added now
+	imx8mp_gpc_kernel_resource("power_domain_vpu_g1", &_pdomains[n]);
 	n++;
 
 	IMX8MP_PDOMAIN_REGISTER(n, IMX8MP_POWER_DOMAIN_VPU_G2,
@@ -276,7 +334,7 @@ void imx8mp_gpc_init() {
 		IMX8MP_VPU_G2_A53_DOMAIN,
 		GPC_PGC_CTRL(IMX8MP_PGC_VPU_G2),
 		0,0);
-
+	imx8mp_gpc_kernel_resource("power_domain_vpu_g2", &_pdomains[n]);
 	n++;
 
 	IMX8MP_PDOMAIN_REGISTER(n, IMX8MP_POWER_DOMAIN_VPU_VC8000E,
@@ -284,7 +342,7 @@ void imx8mp_gpc_init() {
 		IMX8MP_VPU_VC8000E_A53_DOMAIN,
 		GPC_PGC_CTRL(IMX8MP_PGC_VPU_VC8000E),
 		0,0);
-
+	imx8mp_gpc_kernel_resource("power_domain_vpu_vc8000e", &_pdomains[n]);
 	n++;
 
 	IMX8MP_PDOMAIN_REGISTER(n, IMX8MP_POWER_DOMAIN_HDMIMIX,
@@ -293,7 +351,7 @@ void imx8mp_gpc_init() {
 		GPC_PGC_CTRL(IMX8MP_PGC_HDMIMIX),
 		IMX8MP_HDMIMIX_PWRDNREQN,
 		IMX8MP_HDMIMIX_PWRDNACKN);
-
+	imx8mp_gpc_kernel_resource("power_domain_hdmimix", &_pdomains[n]);
 	n++;
 
 	IMX8MP_PDOMAIN_REGISTER(n, IMX8MP_POWER_DOMAIN_HDMI_PHY,
@@ -301,7 +359,7 @@ void imx8mp_gpc_init() {
 		IMX8MP_HDMI_PHY_A53_DOMAIN,
 		GPC_PGC_CTRL(IMX8MP_PGC_HDMI),
 		0,0);
-
+	imx8mp_gpc_kernel_resource("power_domain_hdmi_phy", &_pdomains[n]);
 	n++;
 
 	IMX8MP_PDOMAIN_REGISTER(n, IMX8MP_POWER_DOMAIN_MIPI_PHY2,
@@ -309,7 +367,7 @@ void imx8mp_gpc_init() {
 		IMX8MP_MIPI_PHY2_A53_DOMAIN,
 		GPC_PGC_CTRL(IMX8MP_PGC_MIPI2),
 		0,0);
-
+	imx8mp_gpc_kernel_resource("power_domain_mipi_phy2", &_pdomains[n]);
 	n++;
 
 	IMX8MP_PDOMAIN_REGISTER(n, IMX8MP_POWER_DOMAIN_HSIOMIX,
@@ -318,7 +376,7 @@ void imx8mp_gpc_init() {
 		GPC_PGC_CTRL(IMX8MP_PGC_HSIOMIX),
 		IMX8MP_HSIOMIX_PWRDNREQN,
 		IMX8MP_HSIOMIX_PWRDNACKN);
-
+	imx8mp_gpc_kernel_resource("power_domain_hsiomix", &_pdomains[n]);
 	n++;
 
 	IMX8MP_PDOMAIN_REGISTER(n, IMX8MP_POWER_DOMAIN_MEDIAMIX_ISPDWP,
@@ -326,7 +384,7 @@ void imx8mp_gpc_init() {
 		IMX8MP_MEDIA_ISPDWP_A53_DOMAIN,
 		GPC_PGC_CTRL(IMX8MP_PGC_MEDIA_ISP_DWP),
 		0,0);
-	
+	imx8mp_gpc_kernel_resource("power_domain_mediamix_ispdwp", &_pdomains[n]);
 	BPrintK(BORDOISILA_INFO, "gpc registry initialized \r\n");
 }
 
@@ -350,10 +408,11 @@ int imx8mp_gpc_powerup(uint8_t id) {
 
 	//set the cpu mapping
 	_bordoisila_update_bits(GPC_BASE + IMX8MP_GPC_PGC_CPU_MAPPING, domain->map_mask, domain->map_mask);
-	_bordoisila_update_bits(GPC_BASE + domain->pgc_offset, GPC_PGC_CTRL_PCR, GPC_PGC_CTRL_PCR);
-	_bordoisila_update_bits(GPC_BASE + IMX8MP_GPC_PU_PGC_SW_PUP_REQ, domain->pxx_req, domain->pxx_req);
+	_bordoisila_update_bits((uint64_t)GPC_BASE + domain->pgc_offset, GPC_PGC_CTRL_PCR, GPC_PGC_CTRL_PCR);
+	_bordoisila_update_bits((uint64_t)GPC_BASE + IMX8MP_GPC_PU_PGC_SW_PUP_REQ, domain->pxx_req, domain->pxx_req);
 
-	uint32_t val = _bordoisila_readl(GPC_BASE + domain->pgc_offset);
+
+	uint32_t val = _bordoisila_readl((uint64_t)GPC_BASE + domain->pgc_offset);
 	BPrintK(BORDOISILA_INFO, "imx8mp power domain %d id, power up requested \r\n");
 	BPrintK(BORDOISILA_INFO, "imx8mp pgc offset : %x, value : %d  \r\n", (GPC_BASE + domain->pgc_offset),val);
 
@@ -376,5 +435,7 @@ int imx8mp_gpc_powerup(uint8_t id) {
 		}
 		BPrintK(BORDOISILA_INFO, "imx8mp power domain - adb handshake completed \r\n");
 	}
+
+	return 0;
 }
 #endif

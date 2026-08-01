@@ -70,16 +70,18 @@ void AuAA64BoardInitialize() {
 	imx8mp_gate_init();
     imx8mp_ccm_init();
 
-	BordoisilaClk* axi = BordoisilaGetDriverResource(IMX8MP_MEDIA_AXI_NAME, BORDOISILA_DRIVER_RES_CLK);
-	BordoisilaClk* abp = BordoisilaGetDriverResource(IMX8MP_MEDIA_APB_NAME, BORDOISILA_DRIVER_RES_CLK);
+	BordoisilaClk* axi = (BordoisilaClk*)BordoisilaGetDriverResource(IMX8MP_MEDIA_AXI_NAME, BORDOISILA_DRIVER_RES_CLK);
+	BordoisilaClk* abp = (BordoisilaClk*)BordoisilaGetDriverResource(IMX8MP_MEDIA_APB_NAME, BORDOISILA_DRIVER_RES_CLK);
 
 	axi->enable(axi, 500000000UL);
 	abp->enable(abp, 200000000UL);
 
+	BordoisilaPower* pwr1 = (BordoisilaPower*)BordoisilaGetDriverResource(IMX8MP_POWER_MEDIAMIX_NAME, BORDOISILA_DRIVER_RES_POWER);
+	pwr1->power_on(pwr1);
 
-	imx8mp_gpc_powerup(IMX8MP_POWER_DOMAIN_MEDIAMIX);
-	imx8mp_blkctl_powerup(IMX8MP_MEDIABLK_PD_LCDIF_1);
-	imx8mp_blkctrl_release_reset(IMX8MP_MEDIABLK_PD_LCDIF_1);
+	BordoisilaPower* pwr2 = (BordoisilaPower*)BordoisilaGetDriverResource(IMX8MP_POWER_LCDIF1_NAME, BORDOISILA_DRIVER_RES_POWER);
+	pwr2->power_on(pwr2);
+
 
 	uint32_t ctrl_reg = _bordoisila_readl(LCDIF1_BASE);
 

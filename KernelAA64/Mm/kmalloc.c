@@ -372,7 +372,7 @@ void kfree(void* ptr) {
 #ifdef _USE_LIBALLOC
 	return port_free(ptr);
 #elif _USE_DLMALLOC
-	return dlfree(ptr);
+	 dlfree(ptr);
 #else
 	if (!ptr)
 		return;

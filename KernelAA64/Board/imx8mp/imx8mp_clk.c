@@ -163,7 +163,7 @@ static void  imx8mp_clk_set_rate(imx8mp_clk* self, uint32_t target_hz);
 int kernel_res_clk_set_rate(BordoisilaClk* clk, uint64_t rate) {
 	imx8mp_clk* sys_clk = (imx8mp_clk*)clk->res.data;
 	if (!sys_clk) {
-		BPrintK(BORDOISILA_ERROR, "failed to start clock : %s \r\n", sys_clk->name);
+		BPrintK(BORDOISILA_ERROR, "failed to start clock : %s \r\n", clk->res.name);
 		return 1;
 	}
 	if (clk->res.is_running) {
@@ -195,7 +195,7 @@ int kernel_res_clk_set_rate(BordoisilaClk* clk, uint64_t rate) {
 		BPrintK(BORDOISILA_ERROR, "failed to register kernel clock resource : %s \r\n", name);
 		return NULL;
 	}
-	return clk;
+	return (BordoisilaDriverResource*)clk;
 }
 
 
@@ -480,58 +480,7 @@ void imx8mp_ccm_init() {
 	gpu3d_sel->gate_slice = IMX8MP_CLK_GPU3D_ROOT;
 	imx8mp_alloc_kernel_resource("gpu3d_shader", gpu3d_sel);
 
-	/** by default let's only enable HDMI + LCDIF, because we need 
-	 * framebuffer output :) 
-	 */
-
-	// let's enable some clock roots by default, by setting mux/pre-podf/post-podf 
-	if (is_imx8mp_clk_enabled(AHB_CLK_ROOT)) {
-		BPrintK(BORDOISILA_WARN, "ccm ahb clock root enabled mux: %d\r\n", imx8mp_clk_get_mux(AHB_CLK_ROOT));
-	}
-	else
-		BPrintK(BORDOISILA_WARN, "ccm ahb clock is not enabled \r\n");
-
-	if (is_imx8mp_clk_enabled(HDMI_APB_CLK_ROOT)) {
-		BPrintK(BORDOISILA_WARN, "hdmi apb clock root enabled, mux: %d \r\n", imx8mp_clk_get_mux(HDMI_APB_CLK_ROOT));
-	}
-	else
-		BPrintK(BORDOISILA_WARN, "hdmi apb clock is not enabled \r\n");
-
-	if (is_imx8mp_clk_enabled(GPU_AHB_CLK_ROOT)) {
-		BPrintK(BORDOISILA_WARN, "GPU ahb clock root enabled , mux: %d\r\n", imx8mp_clk_get_mux(GPU_AHB_CLK_ROOT));
-	}
-	else
-		BPrintK(BORDOISILA_WARN, "GPU AHB Clock is not enabled \r\n");
-
-	if (is_imx8mp_clk_enabled(GPU_AXI_CLK_ROOT)) {
-		BPrintK(BORDOISILA_WARN, "GPU AXI clock root enabled, mux: %d\r\n", imx8mp_clk_get_mux(GPU_AXI_CLK_ROOT));
-	}
-	else
-		BPrintK(BORDOISILA_WARN, "GPU AXI Clock not enabled\r\n");
-
-	if (is_imx8mp_clk_enabled(MEDIA_APB_CLK_ROOT)) {
-		BPrintK(BORDOISILA_WARN, "MEDIA APB clock root enabled, mux: %d \r\n", imx8mp_clk_get_mux(MEDIA_APB_CLK_ROOT));
-	}
-	else
-		BPrintK(BORDOISILA_WARN, "MEDIA APB clock not enabled \r\n");
-
-	if (is_imx8mp_clk_enabled(MEDIA_AXI_CLK_ROOT)) {
-		BPrintK(BORDOISILA_WARN, "MEDIA AXI clock enabled, mux : %d \r\n", imx8mp_clk_get_mux(MEDIA_AXI_CLK_ROOT));
-	}
-	else
-		BPrintK(BORDOISILA_WARN, "MEDIA AXI clock not enabled \r\n");
-
-	
-	//and gate them 
-
-	/** todo try setting the clr bits also */
-	/*imx8mp_clk_set_rate(media_axi_clk, 500000000UL);
-	imx8mp_clk_gate_enable(IMX8MP_CLK_MEDIA_AXI_ROOT);
-
-	imx8mp_clk_set_rate(media_apb_clk, 200000000UL);
-	imx8mp_clk_gate_enable(IMX8MP_CLK_MEDIA_APB_ROOT);*/
-
-
+	//TODO: add more composite clocks
 }
 
 

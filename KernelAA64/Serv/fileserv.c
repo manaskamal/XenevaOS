@@ -486,6 +486,7 @@ int ReadDir(int dirfd, void* dirent) {
 		return -1;
 	if (fsys->read_dir)
 		return fsys->read_dir(fsys, dirfile, dire_);
+	return 1;
 }
 
 /**

@@ -29,11 +29,16 @@
 *
 **/
 
+#if defined(__TARGET_BOARD_IMX8MP_VERDIN_DAHLIA__) || defined(__TARGET_BOARD_IMX8MP_SOC__)
+
 #include <Board/imx8mp/imx8mp_blkctrl.h>
 #include <bordoisila_bits.h>
 #include <bordoisila_io.h>
 #include <_null.h>
 #include <Log/klog.h>
+#include <Drivers/core.h>
+#include <Drivers/res.h>
+#include <Mm/kmalloc.h>
 
 #define IMX8MP_BLK_CTRL_DDR 0x3D000000
 #define IMX8MP_BLK_CTRL_HSIO 0x32F10000
@@ -61,6 +66,45 @@ static imx8mp_blk_map _map[10];
       _map[n].clk_mask = _clk_mask; 
 
 
+static int _blkctrl_poweron(BordoisilaPower* pwr) {
+	if (!pwr)
+		return 1;
+
+	if (!pwr->res.data)
+		return 1;
+
+	if (pwr->res.is_running)
+		return 1;
+
+	imx8mp_blk_map* blk = (imx8mp_blk_map*)pwr->res.data;
+	if (imx8mp_blkctl_powerup(blk->blk_id))
+		return 1;
+
+	if (imx8mp_blkctrl_release_reset(blk->blk_id))
+		return 1;
+
+	pwr->res.is_running = 1;
+	return 0;
+}
+
+static int _blkctrl_powerdn(BordoisilaPower* pwr) {
+	BPrintK(BORDOISILA_WARN, "blkctrl imx8mp power down not implemented \r\n");
+	return 0;
+}
+
+static void imx8mp_blk_create_ke_resource(char* name, void* data) {
+	BordoisilaPower* pwr = (BordoisilaPower*)kmalloc(sizeof(BordoisilaPower));
+	strcpy(pwr->res.name, name);
+	pwr->res.is_running = false;
+	pwr->res.res_type = BORDOISILA_DRIVER_RES_POWER;
+	pwr->res.data = data;
+	pwr->power_on = _blkctrl_poweron;
+	pwr->power_down = _blkctrl_powerdn;
+	if (BordoisilaDriverResourceRegister((BordoisilaDriverResource*)pwr)) {
+		BPrintK(BORDOISILA_ERROR, "failed to register kernel power resource : %s \r\n", name);
+	}
+}
+
 /**
  * @brief imx8mp_blkctl_init -- register the block control
  * registry, for now, only MEDIA domain is entered
@@ -74,6 +118,7 @@ void imx8mp_blkctrl_init() {
 		BORDOISILA_BIT(0) | BORDOISILA_BIT(1),
 		BORDOISILA_BIT(0) | BORDOISILA_BIT(1));
 
+	imx8mp_blk_create_ke_resource("mediablk_pd_mipi_dsi_1", &_map[n]);
 	n++;
 
 	BLK_MAP_ENTRY(n,
@@ -81,7 +126,7 @@ void imx8mp_blkctrl_init() {
 		IMX8MP_BLK_CTRL_MEDIA,
 		BORDOISILA_BIT(2) | BORDOISILA_BIT(3),
 		BORDOISILA_BIT(2) | BORDOISILA_BIT(3));
-
+	imx8mp_blk_create_ke_resource("mediablk_pd_mipi_csi2_1", &_map[n]);
 	n++;
 
 	BLK_MAP_ENTRY(n,
@@ -90,6 +135,7 @@ void imx8mp_blkctrl_init() {
 		BORDOISILA_BIT(4) | BORDOISILA_BIT(5) | BORDOISILA_BIT(23),
 		BORDOISILA_BIT(4) | BORDOISILA_BIT(5) | BORDOISILA_BIT(23));
 
+	imx8mp_blk_create_ke_resource("mediablk_pd_lcdif1", &_map[n]);
 	n++;
 
 	BLK_MAP_ENTRY(n,
@@ -98,6 +144,7 @@ void imx8mp_blkctrl_init() {
 		BORDOISILA_BIT(6) | BORDOISILA_BIT(7),
 		BORDOISILA_BIT(6) | BORDOISILA_BIT(7));
 
+	imx8mp_blk_create_ke_resource("mediablk_pd_isi", &_map[n]);
 	n++;
 
 	BLK_MAP_ENTRY(n,
@@ -106,6 +153,7 @@ void imx8mp_blkctrl_init() {
 		BORDOISILA_BIT(9) | BORDOISILA_BIT(10),
 		BORDOISILA_BIT(9) | BORDOISILA_BIT(10));
 
+	imx8mp_blk_create_ke_resource("mediablk_pd_mipi_csi2_2", &_map[n]);
 	n++;
 
 	BLK_MAP_ENTRY(n,
@@ -113,7 +161,7 @@ void imx8mp_blkctrl_init() {
 		IMX8MP_BLK_CTRL_MEDIA,
 		BORDOISILA_BIT(11) | BORDOISILA_BIT(12) | BORDOISILA_BIT(24),
 		BORDOISILA_BIT(11) | BORDOISILA_BIT(12) | BORDOISILA_BIT(24));
-
+	imx8mp_blk_create_ke_resource("mediablk_pd_lcdif_2", &_map[n]);
 	n++;
 
 	BLK_MAP_ENTRY(n,
@@ -121,7 +169,7 @@ void imx8mp_blkctrl_init() {
 		IMX8MP_BLK_CTRL_MEDIA,
 		BORDOISILA_BIT(16) | BORDOISILA_BIT(17) | BORDOISILA_BIT(18),
 		BORDOISILA_BIT(16) | BORDOISILA_BIT(17) | BORDOISILA_BIT(18));
-
+	imx8mp_blk_create_ke_resource("mediablk_pd_isp", &_map[n]);
 	n++;
 
 	BLK_MAP_ENTRY(n,
@@ -129,14 +177,14 @@ void imx8mp_blkctrl_init() {
 		IMX8MP_BLK_CTRL_MEDIA,
 		BORDOISILA_BIT(19) | BORDOISILA_BIT(20) | BORDOISILA_BIT(21),
 		BORDOISILA_BIT(19) | BORDOISILA_BIT(20) | BORDOISILA_BIT(21));
-
+	imx8mp_blk_create_ke_resource("mediablk_pd_dwe", &_map[n]);
 	n++;
 
 	BLK_MAP_ENTRY(n,
 		IMX8MP_MEDIABLK_PD_MIPI_DSI_2,
 		IMX8MP_BLK_CTRL_MEDIA,
 		BORDOISILA_BIT(22), BORDOISILA_BIT(22));
-
+	imx8mp_blk_create_ke_resource("mediablk_pd_mipi_dsi_2", &_map[n]);
 }
 
 static imx8mp_blk_map* imx8mp_blkctl_find(uint32_t id) {
@@ -157,33 +205,34 @@ int imx8mp_blkctl_powerup(uint32_t id) {
 	}
 
 	BPrintK(BORDOISILA_DEBUG, "BLK CTRL power up : %x \r\n", domain->reg);
-	uint32_t bus_clk = _bordoisila_readl(domain->reg + BLK_CLK_EN);
+	uint32_t bus_clk = _bordoisila_readl((uint64_t)domain->reg + BLK_CLK_EN);
 	BPrintK(BORDOISILA_DEBUG, "blkctl bus val : %x, addr : %x \r\n", (domain->reg + BLK_CLK_EN));
 	bus_clk |= BORDOISILA_BIT(8);
-	_bordoisila_writel(bus_clk, domain->reg + BLK_CLK_EN);
+	_bordoisila_writel(bus_clk,(uint64_t)domain->reg + BLK_CLK_EN);
 
 
-	uint32_t bus_rstn = _bordoisila_readl(domain->reg + BLK_SFT_RSTN);
+	uint32_t bus_rstn = _bordoisila_readl((uint64_t)domain->reg + BLK_SFT_RSTN);
 	BPrintK(BORDOISILA_DEBUG, "bus rstn : %x , addr : %x \r\n", bus_rstn, (domain->reg + BLK_SFT_RSTN));
 	bus_rstn |= BORDOISILA_BIT(8);
-	_bordoisila_writel(bus_rstn, domain->reg + BLK_SFT_RSTN);
+	_bordoisila_writel(bus_rstn, (uint64_t)domain->reg + BLK_SFT_RSTN);
 
 
 	/** device reset assert **/
-	uint32_t rstn = _bordoisila_readl(domain->reg + BLK_SFT_RSTN);
+	uint32_t rstn = _bordoisila_readl((uint64_t)domain->reg + BLK_SFT_RSTN);
 	BPrintK(BORDOISILA_DEBUG, "rstn : %x , addr : %x \r\n", rstn, (domain->reg + BLK_SFT_RSTN));
 	rstn &= ~domain->rst_mask;
-	_bordoisila_writel(rstn,domain->reg + BLK_SFT_RSTN);
+	_bordoisila_writel(rstn,(uint64_t)domain->reg + BLK_SFT_RSTN);
 
-	uint32_t clken = _bordoisila_readl(domain->reg + BLK_CLK_EN);
+	uint32_t clken = _bordoisila_readl((uint64_t)domain->reg + BLK_CLK_EN);
 	clken |= domain->clk_mask;
-	_bordoisila_writel(clken,domain->reg + BLK_CLK_EN);
+	_bordoisila_writel(clken,(uint64_t)domain->reg + BLK_CLK_EN);
 
 	for (int i = 0; i < 100000; i++)
 		;
 
 
 	BPrintK(BORDOISILA_INFO, "imx8mp-blkctrl: id : %d powered properly \r\n", domain->blk_id);
+	return 0;
 }
 
 int imx8mp_blkctrl_release_reset(uint32_t id) {
@@ -193,10 +242,12 @@ int imx8mp_blkctrl_release_reset(uint32_t id) {
 		return 1;
 	}
 
-	uint32_t rstn = _bordoisila_readl(domain->reg + BLK_SFT_RSTN);
+	uint32_t rstn = _bordoisila_readl((uint64_t)domain->reg + BLK_SFT_RSTN);
 	rstn |= domain->rst_mask;
-	_bordoisila_writel(rstn, domain->reg + BLK_SFT_RSTN);
+	_bordoisila_writel(rstn, (uint64_t)domain->reg + BLK_SFT_RSTN);
 
 	BPrintK(BORDOISILA_INFO, "imx8mp-blkctrl: id : %d reset deasserted \r\n", domain->blk_id);
-
+	return 0;
 }
+
+#endif
