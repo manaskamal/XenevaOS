@@ -407,7 +407,7 @@ int AuProcessWaitForTermination(AuProcess *proc, int pid) {
 	else {
 		AuProcess* proc = AuProcessFindByPID(0,pid);
 		if (!proc)
-			return;
+			return -1;
 		AuThread* thr = AuGetCurrentThread();
 		AuBlockThread(thr);
 		list_add(proc->waitlist, thr);

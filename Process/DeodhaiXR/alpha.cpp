@@ -32,7 +32,9 @@
 #include "deodxr.h"
 #include "alpha.h"
 #if defined(ARCH_ARM64)
+#ifdef ARCH_ARM64
 #include <arm_neon.h>
+#endif
 #endif
 #include <math.h>
 #include "window.h"

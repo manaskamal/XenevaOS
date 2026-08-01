@@ -30,7 +30,11 @@
 
 
 #include <stdint.h>
+#if defined(__GNUC__) || defined(__clang__)
+#ifndef __cplusplus
 #include <stddef.h>
+#endif
+#endif
 
 extern "C" int _fltused = 1;
 

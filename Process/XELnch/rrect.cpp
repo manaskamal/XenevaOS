@@ -1,4 +1,6 @@
-﻿#include <arm_neon.h>
+#ifdef ARCH_ARM64
+#include <arm_neon.h>
+#endif
 #include <stdint.h>
 #include <chitralekha.h>
 

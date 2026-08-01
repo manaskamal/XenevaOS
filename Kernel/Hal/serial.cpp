@@ -80,7 +80,7 @@ void DebugSerial(char* string) {
  */
 AU_EXTERN AU_EXPORT void SeTextOut(char* format, ...) {
 
-	_va_list_ args;
+	va_list args;
 	va_start(args, format);
 
 	while (*format)
