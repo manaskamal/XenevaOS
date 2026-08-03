@@ -38,7 +38,7 @@ extern "C"
 #endif
 
 
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__clang__)
 	typedef __builtin_va_list va_list;
 #else
 	/* va list parameter list */

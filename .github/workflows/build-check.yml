@@ -59,6 +59,9 @@ jobs:
           foreach ($path in $customizationsPaths) {
               Copy-Item nasmprops\* -Destination $path -Force -Recurse
           }
+          $nasmPath = (Get-Command nasm.exe).Source
+          $vcDir = Join-Path $vsPath "VC"
+          Copy-Item $nasmPath -Destination $vcDir -Force
 
       - name: Build Solution (Aurora.sln)
         run: |
