@@ -260,7 +260,7 @@ EFI_STATUS efi_main_handler(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTabl
 	 *-------------------------------------------------------------------
 	 */
 	void* xdsp_address = NULL;
-#ifdef _MSC_VER
+#ifdef __MSC_VER
 	static EFI_GUID acpi_guid = EFI_ACPI_20_TABLE_GUID;
 #else
 	static EFI_GUID acpi_guid = ACPI_20_TABLE_GUID; 
