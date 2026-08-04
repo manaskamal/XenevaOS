@@ -36,7 +36,7 @@
 /*
  * Ext2Initialise -- mount the file system 
  */
-void Ext2Initialise(AuVDisk* vdisk, char* mountname) {
+AuVFSNode* Ext2Initialise(AuVDisk* vdisk, char* mountname) {
 	uint64_t* buffer = (uint64_t*)AuPmmngrAlloc();
 	memset(buffer, 0, 4096);
 	AuVDiskRead(vdisk, 0, 1, buffer);
@@ -44,4 +44,6 @@ void Ext2Initialise(AuVDisk* vdisk, char* mountname) {
 	Ext2Superblock* ext2sb = (Ext2Superblock*)buffer;
 	AuTextOut("Ext2 block count -> %d CreatorOS -> %d \n", ext2sb->blocks_count,
 		ext2sb->creator_os);
+	
+	return NULL;
 }

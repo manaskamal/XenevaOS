@@ -20,6 +20,7 @@ struct is_ptr_or_uint64 : std::disjunction<
     std::is_same<UINT64, std::remove_cv_t<T>>
 > {};
 
+/* 
 // raw_diff for pointers and uint64_t 
 template <typename T,
           std::enable_if_t<is_ptr_or_uint64<T>::value, int> = 0>
@@ -66,6 +67,7 @@ T mem_after(T p1)
         return p1 + 1;
     }
 }
+*/
 
 // Macros for the same
 #define RAW_OFFSET(type, x, offset)  (type)((size_t)x + offset)

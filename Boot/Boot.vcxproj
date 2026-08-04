@@ -166,7 +166,7 @@
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
       <AdditionalIncludeDirectories>..\BaseHdr;$(ProjectDir)include;$(ProjectDir)include\AArch64;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <IgnoreStandardIncludePath>false</IgnoreStandardIncludePath>
+      <IgnoreStandardIncludePath>true</IgnoreStandardIncludePath>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
