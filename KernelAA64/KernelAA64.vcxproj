@@ -428,6 +428,7 @@
     <ClInclude Include="..\BaseHdr\Hal\AA64\vector.h" />
     <ClInclude Include="..\BaseHdr\kernelAA64.h" />
     <ClInclude Include="..\BaseHdr\linux\bitmap.h" />
+    <ClInclude Include="..\BaseHdr\linux\compiler.h" />
     <ClInclude Include="..\BaseHdr\linux\kernel.h" />
     <ClInclude Include="..\BaseHdr\linux\list.h" />
     <ClInclude Include="..\BaseHdr\linux\timer.h" />

@@ -524,6 +524,9 @@
     <ClInclude Include="..\BaseHdr\Strings\export_imx8mp.h">
       <Filter>Include\Strings</Filter>
     </ClInclude>
+    <ClInclude Include="..\BaseHdr\linux\compiler.h">
+      <Filter>Include\linux</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="exports.def" />
