@@ -38,25 +38,32 @@
 #include <bordoisila_io.h>
 #include <aucon.h>
 #include <Log/klog.h>
+#include <string.h>
 
-static _imx8mp_gate_t _gate_registry[UINT8_MAX];
+static _imx8mp_gate_t _gate_registry[100];
 
 /** we are ignoring GATE4 entries for DDR and other devices */
 #define GATE2_SET_ENTRY(n,_id,_offset) \
       _gate_registry[n].root_id = _id;  \
       _gate_registry[n].base_addr = _offset; \
-      _gate_registry[n]._gate4 = 0; 
+      _gate_registry[n]._gate4 = 0; \
+      _gate_registry[n]._enabled = 0; 
 
 #define GATE4_SET_ENTRY(n,_id,_offset) \
       _gate_registry[n].root_id = _id; \
       _gate_registry[n].base_addr = _offset; \
-      _gate_registry[n]._gate4 = 1;
+      _gate_registry[n]._gate4 = 1; \
+      _gate_registry[n]._enabled = 0; 
 
 
 /**
  * @brief imx8mp_gate_init -- initialize gate data registry
  */
 void imx8mp_gate_init() {
+
+	for (int i = 0; i < 100; i++) 
+		memset(&_gate_registry[i], 0, sizeof(_imx8mp_gate_t));
+	
 	int n = 0;
 
 	GATE4_SET_ENTRY(n, IMX8MP_CLK_DRAM1_ROOT, 0x4050);
@@ -240,11 +247,17 @@ int imx8mp_clk_gate_enable(uint32_t clk_root_id) {
 		return -1;
 	}
 
+	if (gate->_enabled) {
+		BPrintK(BORDOISILA_WARN, "imx8mp gate : %d is already enabled \r\n", clk_root_id);
+		return 0;
+	}
+
 	uintptr_t reg = CCM_BASE + gate->base_addr;
 	uint32_t val = _bordoisila_readl(reg);
 	val |= CGC_MASK;
 	_bordoisila_writel(val, reg);
 	BPrintK(BORDOISILA_INFO, "imx8mp clk gate enabled for root offset : %x \r\n", reg);
+	gate->_enabled = 1;
 	return 0;
 }
 
@@ -259,6 +272,7 @@ int imx8mp_clk_gate_disable(uint32_t clk_root_id) {
 	uint32_t val = _bordoisila_readl(reg);
 	val &= ~CGC_MASK;
 	_bordoisila_writel(val, reg);
+	gate->_enabled = 0;
 	return 0;
 }
 

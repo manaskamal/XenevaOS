@@ -208,3 +208,14 @@ void BPrintK(BLogLevel level, const char* fmt, ...) {
 	else
 		uartPuts(line);
 }
+
+/**
+ * @brief _BlogBypassAuConsole -- if logging was using 
+ * framebuffer, bypass it to uart
+ */
+void _BlogBypassAuConsole() {
+	if (_Blog_use_uart)
+		return;
+	else
+		_Blog_use_uart = 1;
+}

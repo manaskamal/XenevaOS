@@ -527,6 +527,10 @@ void dwc2_initialize(struct dwc2_core_regs* regs) {
 
 	enable_irqs();
 
+	//lets wait for 1s to get device connection
+	//interrupt asserted 
+	AA64SleepMS(100);
+
 	int timeout = 500000;
 	while (1) {
 		if (_enable_root_port == 1)
@@ -539,6 +543,8 @@ void dwc2_initialize(struct dwc2_core_regs* regs) {
 		dwc2_enable_root_port(regs);
 
 	dsb_sy_barrier();
+
+	AA64SleepMS(100);
 	timeout = 500000;
 	while (1) {
 		if (_root_port_ready == 1)

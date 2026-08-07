@@ -100,7 +100,7 @@ void uartPutc(char c) {
 		mmioBase = uartMMIO;
 	else
 		mmioBase = (uint64_t*)UART0_BASE;
-	char* uart0 = (char*)mmioBase;
+	volatile char* uart0 = (volatile char*)mmioBase;
 	while ((*(uart0 + 0x18) & (1 << 5)));
 	*uart0 = c;
 #endif

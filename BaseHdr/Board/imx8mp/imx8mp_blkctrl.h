@@ -33,6 +33,7 @@
 #define __IMX8MP_BLKCTRL_H__
 
 #include <stdint.h>
+#include <Drivers/res.h>
 
 enum blk_map_id {
 	IMX8MP_MEDIABLK_PD_MIPI_DSI_1,
@@ -43,7 +44,15 @@ enum blk_map_id {
 	IMX8MP_MEDIABLK_PD_LCDIF_2,
 	IMX8MP_MEDIABLK_PD_ISP,
 	IMX8MP_MEDIABLK_PD_DWE,
-	IMX8MP_MEDIABLK_PD_MIPI_DSI_2
+	IMX8MP_MEDIABLK_PD_MIPI_DSI_2,
+	IMX8MP_HDMIBLK_PD_IRQSTEER,
+	IMX8MP_HDMIBLK_PD_LCDIF,
+	IMX8MP_HDMIBLK_PD_PAI,
+	IMX8MP_HDMIBLK_PD_PVI,
+	IMX8MP_HDMIBLK_PD_TRNG,
+	IMX8MP_HDMIBLK_PD_HDMI_TX,
+	IMX8MP_HDMIBLK_PD_HDMI_TX_PHY,
+	IMX8MP_HDMIBLK_PD_HRV
 };
 
 
@@ -56,4 +65,6 @@ extern void imx8mp_blkctrl_init();
 extern int imx8mp_blkctl_powerup(uint32_t id);
 
 extern int imx8mp_blkctrl_release_reset(uint32_t id);
+
+extern int hdmi_parent_bus_callback(BordoisilaPower* power);
 #endif

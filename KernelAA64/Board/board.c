@@ -50,11 +50,16 @@
 extern void virt_power_down(uint64_t code);
 extern void virt_power_reboot(uint64_t code);
 extern uint64_t AuVirtGetBootEpoch();
+#elif __TARGET_BOARD_IMX8MP_VERDIN_DAHLIA__ || (__TARGET_BOARD_IMX8MP_SOC__)
+/**
+ * @brief imx8mp_board_initiailze -- initialize required
+ * subsystems of board
+ */
+extern void imx8mp_board_initialize();
 #endif
 
 
-#define LCDIF1_BASE 0x32E80000UL
-#define LCDIF1_CTRL_OFFSET 0x0
+
 /**
  * @brief AuAA64BoardInitialize -- initialize board specific data
  */
@@ -63,29 +68,7 @@ void AuAA64BoardInitialize() {
 #ifdef __TARGET_BOARD_RPI3__
 	AuRPI3Initialize();
 #elif __TARGET_BOARD_IMX8MP_VERDIN_DAHLIA__ || (__TARGET_BOARD_IMX8MP_SOC__)
-	/** initialize the ccm module **/
-	imx8mp_gpc_init();
-	imx8mp_pll_init();
-	imx8mp_blkctrl_init();
-	imx8mp_gate_init();
-    imx8mp_ccm_init();
-
-	BordoisilaClk* axi = (BordoisilaClk*)BordoisilaGetDriverResource(IMX8MP_MEDIA_AXI_NAME, BORDOISILA_DRIVER_RES_CLK);
-	BordoisilaClk* abp = (BordoisilaClk*)BordoisilaGetDriverResource(IMX8MP_MEDIA_APB_NAME, BORDOISILA_DRIVER_RES_CLK);
-
-	axi->enable(axi, 500000000UL);
-	abp->enable(abp, 200000000UL);
-
-	BordoisilaPower* pwr1 = (BordoisilaPower*)BordoisilaGetDriverResource(IMX8MP_POWER_MEDIAMIX_NAME, BORDOISILA_DRIVER_RES_POWER);
-	pwr1->power_on(pwr1);
-
-	BordoisilaPower* pwr2 = (BordoisilaPower*)BordoisilaGetDriverResource(IMX8MP_POWER_LCDIF1_NAME, BORDOISILA_DRIVER_RES_POWER);
-	pwr2->power_on(pwr2);
-
-
-	uint32_t ctrl_reg = _bordoisila_readl(LCDIF1_BASE);
-
-	BPrintK(BORDOISILA_INFO, "LCDIF1 CTRL val : %x \r\n", ctrl_reg);
+	imx8mp_board_initialize();
 #endif
 }
 

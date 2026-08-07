@@ -39,6 +39,7 @@
 #include "usb_stdhub.h"
 #include "lan7800.h"
 #include "usb_hid.h"
+#include <Log/klog.h>
 
 /**
  * @brief dwc2_usbdev_setaddress -- set an address to the current device
@@ -72,7 +73,7 @@ static bool dwc2_usbdev_configure(dwc2_core_regs* regs, dwc2_usb_device* dev) {
 	}
 	
 	usb_config_desc_t* cdesc = (usb_config_desc_t*)desc;
-
+    
 	if (dwc2_control_transfer(regs, &dev->ep, 0x80, 0x06, 0x0200, 0x0000,(void*)config_desc_phys /*(void*)V2P((uint64_t)desc)*/, cdesc->wTotalLength)) {
 		UARTDebugOut("[dwc2-otg]: failed to get second stage configuration descriptor \r\n");
 		return 1;

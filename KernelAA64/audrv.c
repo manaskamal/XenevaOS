@@ -300,7 +300,8 @@ void AuDriverLoad(char* filename, AuDriver* driver) {
 		AuTextOut("[aurora]: audrvmngr failed to load driver : %s \n", filename);
 		return;
 	}
-	
+	UARTDebugOut("loading file : %s \r\n", file->filename);
+
 	size_t file_offset = 0;
 	while (file->eof != 1) {
 		uint64_t block = ((uint64_t)scratchBuffer + file_offset);
@@ -309,6 +310,7 @@ void AuDriverLoad(char* filename, AuDriver* driver) {
 		file_offset += bytes_read;
 	}
 
+	UARTDebugOut("File read complete : scratch buffer : %x \r\n", scratchBuffer);
 	IMAGE_DOS_HEADER* dos_ = (IMAGE_DOS_HEADER*)scratchBuffer;
 	PIMAGE_NT_HEADERS nt = RAW_OFFSET(PIMAGE_NT_HEADERS,dos_, dos_->e_lfanew);
 	driver->original_load_base = nt->OptionalHeader.ImageBase;
@@ -344,7 +346,7 @@ void AuDriverLoad(char* filename, AuDriver* driver) {
 				block = (uint64_t*)alloc;
 		}
 
-		memcpy(sect_addr, RAW_OFFSET(void*,scratchBuffer, sectionHeader[i].PointerToRawData), sectionHeader[i].SizeOfRawData);
+		memcpy(sect_addr, RAW_OFFSET(uint8_t*,scratchBuffer, sectionHeader[i].PointerToRawData), sectionHeader[i].SizeOfRawData);
 		if (sectionHeader[i].VirtualSize > sectionHeader[i].SizeOfRawData)
 			memset(RAW_OFFSET(void*,sect_addr, sectionHeader[i].SizeOfRawData),0, sectionHeader[i].VirtualSize - sectionHeader[i].SizeOfRawData);
 	}
@@ -356,10 +358,8 @@ void AuDriverLoad(char* filename, AuDriver* driver) {
 	uint64_t diff = new_addr - original_base;
 
 	AuKernelRelocatePE(relocatebuff, nt, diff);
-
 	void* entry_addr = AuGetProcAddress((void*)driver_load_base, "AuDriverMain");
 	void* unload_addr = AuGetProcAddress((void*)driver_load_base, "AuDriverUnload");
-
 	AuKernelLinkDLL((void*)virtual_base);
 	driver->entry = (au_drv_entry)entry_addr;
 	driver->unload = (au_drv_unload)unload_addr;
@@ -367,7 +367,6 @@ void AuDriverLoad(char* filename, AuDriver* driver) {
 	driver->end = driver->base + file->size;
 	driver->present = true;
 	driver_load_base = driver_load_base + ((uint64_t)next_base_offset * 4096);
-
 	kfree(file);
 }
 

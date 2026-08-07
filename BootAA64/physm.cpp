@@ -42,6 +42,7 @@ uint32_t allocatedCount;
 uint64_t usableRam;
 uint64_t usableSize;
 uint64_t ramSize;
+uint64_t _bufsz;
 
 /*
  * XEInitialisePmmngr - Initialise Physical Memory Manager
@@ -56,6 +57,7 @@ void XEInitialisePmmngr(const struct EfiMemoryMap memmap, void* buffer, size_t b
 	stackptr = pagestack = (paddr_t*)buffer;
 
 	bufsize /= 2;
+	_bufsz = bufsize;
 	allocatedPtr = allocatedStack = raw_offset<paddr_t*>(buffer, bufsize);
 	allocatedCount = 1;
 	
@@ -96,13 +98,20 @@ void XEInitialisePmmngr(const struct EfiMemoryMap memmap, void* buffer, size_t b
  * XEPmmngrAllocate -- Allocates a physical block
  */
 paddr_t XEPmmngrAllocate() {
-	if (stackptr == pagestack)
+	if (stackptr == pagestack) {
+		XEGuiPrint("XEPmmngrAlloc: returning zero \r\n");
 		return 0;
+	}
 	else
 	{
 		paddr_t allocated = *--stackptr;
-		*allocatedPtr++ = allocated;
-		allocatedCount++;
+		if (raw_diff(allocatedPtr, allocatedStack) < _bufsz) {
+			*allocatedPtr++ = allocated;
+			allocatedCount++;
+		}
+		else {
+			XEGuiPrint("xnldr warning: allocatedStack full, no longer tracking allocationg \r\n");
+		}
 		return allocated;
 	}
 

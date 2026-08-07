@@ -38,6 +38,7 @@ typedef struct _imx8mp_gate_ {
 	uint32_t root_id; //defined by the kernel
 	uint64_t base_addr;
 	bool _gate4;
+	bool _enabled;
 }_imx8mp_gate_t;
 
 

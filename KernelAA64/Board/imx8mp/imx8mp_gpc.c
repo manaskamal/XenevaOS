@@ -45,6 +45,7 @@
 #include <_null.h>
 #include <Log/klog.h>
 #include <Mm/kmalloc.h>
+#include <string.h>
 
 static uint64_t _gpc_base;
 
@@ -159,7 +160,7 @@ typedef struct _gpc_pdomain_ {
 #define GPC_WRITE(base, offset, val)   (*(volatile uint32_t*)(base + offset) = val)
 #define GPC_READ(base, offset)  (*(volatile uint32_t*)(base + offset))
 
-static _imx8mp_gpc_pdomain_t _pdomains[32];
+static _imx8mp_gpc_pdomain_t _pdomains[50];
 
 
 #define IMX8MP_PDOMAIN_REGISTER(n,_id,_pxx_req, _map_mask, _pgc_offset, _hskreq, _hskack) \
@@ -185,6 +186,13 @@ int imx8mp_pwr_on(BordoisilaPower* pwr) {
 		BPrintK(BORDOISILA_WARN, "power domain : %s is already running \r\n");
 		return 1;
 	}
+
+	if (pwr->parent_bus_enable) {
+		if (pwr->parent_bus_enable(pwr)) {
+			BPrintK(BORDOISILA_WARN, "parent bus for %s failed to enable itself, proceeding..\r\n", pwr->res.name);
+		}
+	}
+	
 
 	_imx8mp_gpc_pdomain_t* domain = pwr->res.data;
 	if (!domain) {
@@ -228,6 +236,9 @@ BordoisilaDriverResource* imx8mp_gpc_kernel_resource(char* name, void* data) {
  * to the database
  */
 void imx8mp_gpc_init() {
+	for (int i = 0; i < 50; i++) 
+		memset(&_pdomains[i], 0, sizeof(_imx8mp_gpc_pdomain_t));
+	
 	int n = 0;
 	IMX8MP_PDOMAIN_REGISTER(n, IMX8MP_POWER_DOMAIN_MIPI_PHY1,
 		IMX8MP_MIPI_PHY1_SW_PXX_REQ, IMX8MP_MIPI_PHY1_A53_DOMAIN, GPC_PGC_CTRL(IMX8MP_PGC_MIPI1),
@@ -351,7 +362,12 @@ void imx8mp_gpc_init() {
 		GPC_PGC_CTRL(IMX8MP_PGC_HDMIMIX),
 		IMX8MP_HDMIMIX_PWRDNREQN,
 		IMX8MP_HDMIMIX_PWRDNACKN);
-	imx8mp_gpc_kernel_resource("power_domain_hdmimix", &_pdomains[n]);
+	BordoisilaPower* hdmi_pwr = (BordoisilaPower*)imx8mp_gpc_kernel_resource("power_domain_hdmimix", &_pdomains[n]);
+	/** attach force bus enabling here, because HDMIMIX needs in order to receive
+	 * acknowledgement from HDMIMIX power domain
+	 */
+	hdmi_pwr->parent_bus_enable = hdmi_parent_bus_callback;
+
 	n++;
 
 	IMX8MP_PDOMAIN_REGISTER(n, IMX8MP_POWER_DOMAIN_HDMI_PHY,
@@ -406,6 +422,7 @@ int imx8mp_gpc_powerup(uint8_t id) {
 
 	/**TODO:  we need to enable parent clock in CCM **/
 
+
 	//set the cpu mapping
 	_bordoisila_update_bits(GPC_BASE + IMX8MP_GPC_PGC_CPU_MAPPING, domain->map_mask, domain->map_mask);
 	_bordoisila_update_bits((uint64_t)GPC_BASE + domain->pgc_offset, GPC_PGC_CTRL_PCR, GPC_PGC_CTRL_PCR);
@@ -413,27 +430,40 @@ int imx8mp_gpc_powerup(uint8_t id) {
 
 
 	uint32_t val = _bordoisila_readl((uint64_t)GPC_BASE + domain->pgc_offset);
-	BPrintK(BORDOISILA_INFO, "imx8mp power domain %d id, power up requested \r\n");
+	BPrintK(BORDOISILA_INFO, "imx8mp power domain %s id, power up requested \r\n", domain->pdomain_id);
 	BPrintK(BORDOISILA_INFO, "imx8mp pgc offset : %x, value : %d  \r\n", (GPC_BASE + domain->pgc_offset),val);
 
-	for (int i = 0; i < 10000; i++)
-		;
+	int timeout = 100000;
+	uint32_t req_val;
+	do {
+		req_val = _bordoisila_readl((uint64_t)GPC_BASE + IMX8MP_GPC_PU_PGC_SW_PUP_REQ);
+		if (!(req_val & domain->pxx_req))
+			break;
+	} while (--timeout);
+
+	if (timeout == 0) {
+		BPrintK(BORDOISILA_ERROR, "imx8mp domain : %d pxx_req never self -cleared \r\n", domain->pdomain_id);
+	}
+	else {
+		BPrintK(BORDOISILA_INFO, "imx8mp domain %d PGC pup cleared after %d iteration \r\n",
+			domain->pdomain_id, timeout);
+	}
 	//ADB-400 handshake : yayyyyy
 	if (domain->hskreq) {
 		uint32_t val = _bordoisila_readl(GPC_BASE + IMX8MP_GPC_PU_PWRHSK);
 		val |= domain->hskreq;
 		_bordoisila_writel(val,GPC_BASE + IMX8MP_GPC_PU_PWRHSK);
 
-		//_bordoisila_update_bits(GPC_BASE + IMX8MP_GPC_PU_PWRHSK, domain->hskreq, domain->hskreq);
-		val = _bordoisila_readl(GPC_BASE + IMX8MP_GPC_PU_PWRHSK);
-		for (int i = 0; i < 1000000; i++) {
-			if (val & domain->hskack) {
-				BPrintK(BORDOISILA_INFO, "imx8mp power domain - adb ack received \r\n");
+		timeout = 1000000000;
+		while (timeout--) {
+			uint32_t curr_hsk = _bordoisila_readl((uint64_t)GPC_BASE + IMX8MP_GPC_PU_PWRHSK);
+			if (curr_hsk & domain->hskack) {
+				BPrintK(BORDOISILA_INFO, "imx8mp power domain %s- adb ack received \r\n");
 				break;
 			}
-			val = _bordoisila_readl(GPC_BASE + IMX8MP_GPC_PU_PWRHSK);
 		}
-		BPrintK(BORDOISILA_INFO, "imx8mp power domain - adb handshake completed \r\n");
+
+		BPrintK(BORDOISILA_INFO, "imx8mp power domain - adb handshake completed at iteration : %d \r\n", timeout);
 	}
 
 	return 0;

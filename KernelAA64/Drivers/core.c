@@ -35,7 +35,7 @@
 #include <string.h>
 
 /* must also contain locking/unlocking */
-static BordoisilaDriver* _bdrivers;
+BordoisilaDriver* _bdrivers;
 
 /**
  * @brief BordoisilaDriverGetStateString -- return the driver state

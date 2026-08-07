@@ -146,7 +146,6 @@ void AuKernelLinkDLL(void* image) {
 	}
 	PIMAGE_IMPORT_DIRECTORY importdir = RAW_OFFSET(PIMAGE_IMPORT_DIRECTORY,imageAligned, datadir.VirtualAddress);
 	for (size_t n = 0; importdir[n].ThunkTableRva; ++n) {
-		const char* func = RAW_OFFSET(const char*,image, importdir[n].NameRva);
 		PIMAGE_IMPORT_LOOKUP_TABLE_PE32P iat = RAW_OFFSET(PIMAGE_IMPORT_LOOKUP_TABLE_PE32P,imageAligned, importdir[n].ThunkTableRva);
 		while (*iat) {
 			PIMAGE_IMPORT_HINT_TABLE hint = RAW_OFFSET(PIMAGE_IMPORT_HINT_TABLE,image, *iat);

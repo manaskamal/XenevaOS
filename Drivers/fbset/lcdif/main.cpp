@@ -32,9 +32,19 @@
 #include <aurora.h>
 #include "imx8mp_lcdif_reg.h"
 #include <Hal/AA64/aa64lowlevel.h>
+#include <bordoisila_bits.h>
+#include <bordoisila_io.h>
 #include <Drivers/uart.h>
 #include <Mm/vmmngr.h>
 #include <Mm/pmmngr.h>
+#include <Log/klog.h>
+#include <Drivers/core.h>
+#include <Drivers/res.h>
+#include <string.h>
+#include <audrv.h>
+#include <Mm/kmalloc.h>
+#include <Strings/export_imx8mp.h>
+
 
 static uint64_t _base;
 static uint64_t fb_phys;
@@ -49,9 +59,13 @@ static uint32_t vsw;
 static bool inv_hs;
 static bool inv_vs;
 
+static BordoisilaDriver _lcdif;
+
 
 void lcdif_write(uint64_t base, uint32_t reg, uint32_t value) {
 	(*(volatile uint32_t*)(base + reg) = value);
+	dsb_ish();
+	isb_flush();
 }
 
 uint32_t lcdif_read(uint64_t base, uint32_t reg) {
@@ -125,36 +139,161 @@ void lcdif_setmode() {
 
 }
 
-/*
-* AuDriverMain -- Main entry for LCD interface driver
-*/
-AU_EXTERN AU_EXPORT int AuDriverMain() {
-	UARTDebugOut("[imx8mp_lcdif3]: starting driver... \r\n");
-	uint32_t val = (1ul << 31) | (1ul << 30); //soft reset + clk_gate
-	_base = (uint64_t)AuMapMMIO(IMX8MP_LCDIF3_BASE, 4);
+/**
+ * @brief lcdif_check_upstream -- check all upstream requirements
+ * @param driver -- pointer to self
+ */
+int lcdif_check_upstream(BordoisilaDriver* driver) {
+	BordoisilaClk* media_axi = (BordoisilaClk*)BordoisilaGetDriverResource(IMX8MP_MEDIA_AXI_NAME, BORDOISILA_DRIVER_RES_CLK);
+	if (!media_axi) {
+		UARTDebugOut("upstream %s clock not available \r\n", IMX8MP_MEDIA_AXI_NAME);
+		return 1;
+	}
 
+	BordoisilaClk* media_abp = (BordoisilaClk*)BordoisilaGetDriverResource(IMX8MP_MEDIA_APB_NAME, BORDOISILA_DRIVER_RES_CLK);
+	if (!media_abp) {
+		UARTDebugOut("upstream %s clock not available \r\n", IMX8MP_MEDIA_APB_NAME);
+		return 1;
+	}
+
+	if (!media_axi->res.is_running) {
+		UARTDebugOut("upstream %s clock is not running \r\n", IMX8MP_MEDIA_AXI_NAME);
+		return 1;
+	}
+
+	if (!media_abp->res.is_running) {
+		UARTDebugOut("upstream %s clock is not running \r\n", IMX8MP_MEDIA_APB_NAME);
+		return 1;
+	}
+
+	BordoisilaClk* hdmi_axi = (BordoisilaClk*)BordoisilaGetDriverResource(IMX8MP_HDMI_AXI_NAME, BORDOISILA_DRIVER_RES_CLK);
+	if (!hdmi_axi) {
+		BPrintK(BORDOISILA_ERROR, "clock %s is not available \r\n", IMX8MP_HDMI_AXI_NAME);
+		return 1;
+	}
+
+	if (!hdmi_axi->res.is_running) {
+		BPrintK(BORDOISILA_ERROR, "upstream %s clock is not running \r\n", IMX8MP_HDMI_AXI_NAME);
+		return 1;
+	}
+
+	BordoisilaClk* hdmi_apb = (BordoisilaClk*)BordoisilaGetDriverResource(IMX8MP_HDMI_APB_NAME, BORDOISILA_DRIVER_RES_CLK);
+	if (!hdmi_apb) {
+		BPrintK(BORDOISILA_ERROR, "clock %s is not available \r\n", IMX8MP_HDMI_APB_NAME);
+		return 1;
+	}
+
+	if (!hdmi_apb->res.is_running) {
+		BPrintK(BORDOISILA_ERROR, "upstream %s is not running \r\n", hdmi_apb->res.name);
+		return 1;
+	}
+
+	BordoisilaClk* hdmi_24m = (BordoisilaClk*)BordoisilaGetDriverResource(IMX8MP_HDMI_24M_NAME, BORDOISILA_DRIVER_RES_CLK);
+	if (!hdmi_24m) {
+		BPrintK(BORDOISILA_ERROR, "clock %s is not available \r\n", IMX8MP_HDMI_24M_NAME);
+		return 1;
+	}
+
+
+	if (!hdmi_24m->res.is_running) {
+		BPrintK(BORDOISILA_ERROR, "upstream %s is not running \r\n", IMX8MP_HDMI_24M_NAME);
+		return 1;
+	}
+
+	BordoisilaClk* hdmi_266m = (BordoisilaClk*)BordoisilaGetDriverResource(IMX8MP_HDMI_266M_NAME, BORDOISILA_DRIVER_RES_CLK);
+	if (!hdmi_266m) {
+		BPrintK(BORDOISILA_ERROR, "clock %s is not available \r\n", IMX8MP_HDMI_266M_NAME);
+		return 1;
+	}
+
+	if (!hdmi_266m->res.is_running) {
+		BPrintK(BORDOISILA_ERROR, "upstream %s is not running \r\n", IMX8MP_HDMI_266M_NAME);
+		return 1;
+	}
+
+
+	BordoisilaPower* mediamix = (BordoisilaPower*)BordoisilaGetDriverResource(IMX8MP_POWER_MEDIAMIX_NAME, BORDOISILA_DRIVER_RES_POWER);
+	if (!mediamix) {
+		UARTDebugOut("upstream %s power is not available \r\n", IMX8MP_POWER_MEDIAMIX_NAME);
+		return 1;
+	}
+
+	if (!mediamix->res.is_running) {
+		UARTDebugOut("upstream %s power is not running \r\n", IMX8MP_POWER_MEDIAMIX_NAME);
+		return 1;
+	}
+
+	UARTDebugOut("upstream all checked [OK] \r\n");
+	return 0;
+}
+
+/**
+ * @brief lcdif_probe -- start probing lcdif
+ * @param driver -- pointer to self
+ */
+int lcdif_probe(BordoisilaDriver* driver) {
+	
+	BPrintK(BORDOISILA_DEBUG, "lcdif probing ..\r\n");
+	if (lcdif_check_upstream(driver)) 
+		return 1;
+	
+
+	uint32_t val = (1ul << 31) | (1ul << 30); //soft reset + clk_gate
+	_base = (uint64_t)AuMapMMIO(IMX8MP_LCDIF1_BASE, 4);
+
+	uint32_t ctrl_reg = _bordoisila_readl(IMX8MP_LCDIF1_BASE);
+	BPrintK(BORDOISILA_DEBUG, "[imx8mp lcdif]: ctrl val : %x \r\n", ctrl_reg);
+
+
+	uint32_t ctrl2_reg = _bordoisila_readl(IMX8MP_LCDIF3_BASE);
+	UARTDebugOut("[imx8mp lcdif]: lcdif3 ctrl val : %x \r\n", ctrl2_reg);
 
 	lcdif_write(_base, LCDIF_CTRL, val);
 	lcdif_wait();
-	
-	lcdif_write(_base, LCDIF_CTRL, 0x0);
-	UARTDebugOut("[imx8mp_lcdif3]: soft reset completed \r\n");
 
-	uint64_t phys = 0;
-	for (int i = 0; i < (1920 * 1080 * 4) / 0x1000; i++) {
-		uint64_t ph_ = (uint64_t)AuPmmngrAlloc();
-		if (phys == 0)
-			phys = ph_;
+	lcdif_write(_base, LCDIF_CTRL, 0x0);
+
+	UARTDebugOut("[imx8mp lcdif]: software reset completed \r\n");
+
+	
+	BPrintK(BORDOISILA_DEBUG, "[imx8mp_lcdif]: lcdif initialized \r\n");
+	return 0;
+}
+
+int lcdif_remove(BordoisilaDriver* driver) {
+	UARTDebugOut("lcdif removing ... \r\n");
+	return 0;
+}
+
+int lcdif_resume(BordoisilaDriver* driver) {
+	UARTDebugOut("lcdif resuming ... \r\n");
+	return 0;
+}
+
+int lcdif_suspend(BordoisilaDriver* driver) {
+	UARTDebugOut("lcdif suspending ... \r\n");
+	return 0;
+}
+
+/*
+* AuDriverMain -- Main entry for LCD interface driver
+*/
+AU_EXTERN AU_EXPORT int AuDriverMain(AuDriver* drv) {
+	UARTDebugOut("initializing lcdif .. \r\n");
+
+	_lcdif.name = (char*)kmalloc(strlen("imx8mp-lcdif"));
+	strcpy((char*)_lcdif.name, "imx8mp-lcdif");
+	_lcdif.type = BORDOISILA_DRIVER_NORMAL;
+	_lcdif.probe = &lcdif_probe;
+	_lcdif.remove = &lcdif_remove;
+	_lcdif.resume = &lcdif_resume;
+	_lcdif.suspend = &lcdif_suspend;
+
+	if (BordoisilaDriverRegister(&_lcdif)) {
+		UARTDebugOut("imx8mp-lcdif failed to register itself \r\n");
+		return 1;
 	}
 
-	fb_phys = phys;
-	hact = 1920, vact = 1080;
-	hfp = 88, hbp = 148, hsw = 44;
-	vfp = 4, vbp = 36, vsw = 5;
-	inv_vs = 0;
-	inv_hs = 0;
-	UARTDebugOut("[imx8mp_lcdif3]: mode setting \r\n");
-	lcdif_setmode();
-	UARTDebugOut("[imx8mp_lcdif3]: lcdif3 initialized \r\n");
-	return 0;
+	/* start the probing process */
+	return _lcdif.probe(&_lcdif);
 }

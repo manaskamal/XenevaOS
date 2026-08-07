@@ -36,7 +36,7 @@
 #include <Log/klog.h>
 #include <Drivers/res.h>
 
-static BordoisilaDriverResource* _gres;
+BordoisilaDriverResource* _gres;
 
 
 /**

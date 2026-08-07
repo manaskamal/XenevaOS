@@ -229,7 +229,7 @@
       </FunctionLevelLinking>
       <IntrinsicFunctions>false</IntrinsicFunctions>
       <SDLCheck>false</SDLCheck>
-      <PreprocessorDefinitions>ARCH_ARM64;__TARGET_BOARD_QEMU_VIRT__;_USE_DLMALLOC;__STDC_LIMIT_MACROS</PreprocessorDefinitions>
+      <PreprocessorDefinitions>ARCH_ARM64;__TARGET_BOARD_IMX8MP_VERDIN_DAHLIA__;_USE_DLMALLOC;__STDC_LIMIT_MACROS</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>..\BaseHdr;..\Acpica\include;..\Acpica;$(SolutionDir)DCL\includes;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
@@ -244,8 +244,8 @@
     </ClCompile>
     <Link>
       <SubSystem>Native</SubSystem>
-      <EnableCOMDATFolding>true</EnableCOMDATFolding>
-      <OptimizeReferences>true</OptimizeReferences>
+      <EnableCOMDATFolding>false</EnableCOMDATFolding>
+      <OptimizeReferences>false</OptimizeReferences>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <OutputFile>..\Build\EFI\XENEVA\xnkrnl.exe</OutputFile>
       <GenerateMapFile>true</GenerateMapFile>
@@ -272,6 +272,7 @@
     <ClCompile Include="audrv.c" />
     <ClCompile Include="Board\board.c" />
     <ClCompile Include="Board\imx8mp\imx8mp_blkctrl.c" />
+    <ClCompile Include="Board\imx8mp\imx8mp_board.c" />
     <ClCompile Include="Board\imx8mp\imx8mp_clk.c" />
     <ClCompile Include="Board\imx8mp\imx8mp_clk_gate.c" />
     <ClCompile Include="Board\imx8mp\imx8mp_gpc.c" />

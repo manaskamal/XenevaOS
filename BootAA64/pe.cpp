@@ -65,7 +65,8 @@ void XEPELoadImage(void* filebuff) {
 	void* ImBase = (void*)ImageBase;
 
 	paddr_t phys = XEPmmngrAllocate();
-
+	if (!phys)
+		XEGuiPrint("XELDR: phys returned zero \r\n");
 	XEPagingMap(ImageBase, phys);
 
 	XEUARTPrint("Paging mapped : %x -- %x \r\n", ImageBase, phys);
@@ -100,7 +101,8 @@ void XEPELoadImage(void* filebuff) {
 				block = (uint64_t*)alloc;
 		}
 
-		copy_mem(sect_addr, raw_offset<void*>(filebuf, sectionHeader[i].PointerToRawData), sectionHeader[i].SizeOfRawData);
+		if (sectionHeader[i].PointerToRawData != 0 && sectionHeader[i].SizeOfRawData != 0)
+			copy_mem(sect_addr, raw_offset<void*>(filebuf, sectionHeader[i].PointerToRawData), sectionHeader[i].SizeOfRawData);
 		if (sectionHeader[i].VirtualSize > sectionHeader[i].SizeOfRawData)
 			zero_mem(raw_offset<void*>(sect_addr, sectionHeader[i].SizeOfRawData), sectionHeader[i].VirtualSize - sectionHeader[i].SizeOfRawData);
 	}

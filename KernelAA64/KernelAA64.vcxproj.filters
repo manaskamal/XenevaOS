@@ -238,6 +238,9 @@
     <ClCompile Include="Board\imx8mp\imx8mp_blkctrl.c">
       <Filter>Board\imx8mp</Filter>
     </ClCompile>
+    <ClCompile Include="Board\imx8mp\imx8mp_board.c">
+      <Filter>Board\imx8mp</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Hal">

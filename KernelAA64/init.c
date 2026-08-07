@@ -282,6 +282,7 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	/* clear out the lower half memory */
 	AuVmmngrBootFree();
 	AuMmngrFileCacheEnable();
+	_BlogBypassAuConsole();
 
 	UARTDebugOut("[aurora]: boot freed up \r\n");
 

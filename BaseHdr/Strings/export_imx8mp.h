@@ -37,6 +37,16 @@
 #define IMX8MP_MEDIA_APB_NAME  "media_apb"
 #define IMX8MP_GPU3D_CORE_NAME "gpu3d_core"
 #define IMX8MP_GPU3D_SHADER_NAME "gpu3d_shader"
+#define IMX8MP_AUDIO_AXI_NAME    "audio_axi_clk"
+#define IMX8MP_HSIO_AXI_NAME     "hsio_axi_clk"
+#define IMX8MP_MEDIA_ISP_NAME    "media_isp_clk"
+#define IMX8MP_MEDIA_DISP1_PIX_NAME "media_disp1_pix_clk"
+#define IMX8MP_MEDIA_DISP2_PIX_NAME "media_disp2_pix_clk"
+#define IMX8MP_HDMI_APB_NAME     "hdmi_apb"
+#define IMX8MP_HDMI_AXI_NAME     "hdmi_axi"
+#define IMX8MP_HDMI_24M_NAME     "hdmi_24m"
+#define IMX8MP_HDMI_266M_NAME    "hdmi_ref_266m"
+
 
 
 /** POWER Domain Names **/
@@ -68,4 +78,13 @@
 #define IMX8MP_POWER_ISP_NAME            "mediablk_pd_isp"
 #define IMX8MP_POWER_DWE_NAME             "mediablk_pd_dwe"
 #define IMX8MP_POWER_MIPI_DSI_2_NAME      "mediablk_pd_mipi_dsi_2"
+#define IMX8MP_POWER_HDMI_IRQSTEER_NAME   "hdmiblk_pd_irqsteer"
+#define IMX8MP_POWER_HDMI_LCDIF_NAME      "hdmiblk_pd_lcdif"
+#define IMX8MP_POWER_HDMI_PD_PAI_NAME     "hdmiblk_pd_pai"
+#define IMX8MP_POWER_HDMI_PD_PVI_NAME     "hdmiblk_pd_pvi"
+#define IMX8MP_POWER_HDMI_PD_TRNG_NAME    "hdmiblk_pd_trng"
+#define IMX8MP_POWER_HDMI_TX_NAME         "hdmiblk_pd_hdmi_tx"
+#define IMX8MP_POWER_HDMI_TX_PHY_NAME     "hdmiblk_pd_hdmi_tx_phy"
+#define IMX8MP_POWER_HDMI_HRV_NAME        "hdmiblk_pd_hrv"
+
 #endif

@@ -89,3 +89,73 @@ On ARM64 systems, interrupts are disabled using `mark_irqs()` and enabled using 
 
  Before calling ``GICRegisterSPIHandler()``, the interrupt must be enabled at both the bus level and the interrupt controller level.
  At the interrupt controller level the interrupt can be enabled using : ``GICEnableSPIIRQ(uint32_t irq)`` where ``irq`` is the interrupt number.
+
+ ## Driver Framework
+ Drivers in XenevaOS can be caregorized into layers where each layers depends on the other. For example on arm based devices, a peripheral IP may not respond properly until it's clock and power source has been enabled. The peripheral's voltage can also be controlled using regulator devices. It's a good design decision to have a specific driver for each components and peripheral. For example having a proper driver for the clock controller or power controller can enable the kernel to power up specific clock and power to get desired peripheral working. This design introduces the dependency needs of each driver to the other within the kernel.
+
+ XenevaOS introduces two concepts of layer based driver:
+ - Bordoisila Platform Driver
+ - Bordoisila Resource Driver
+
+ ### Bordoisila Platform Driver:
+ Bordoisila Platform Driver defines the main peripheral driver, i.e each main driver register itself as a ___Bordoisila Platform Driver___. Within the driver structure, the kernel expects specific function pointers from the peripheral driver to manipulate the hardware over time based on demanding situation. For example, on power saving pressure kernel may put a specific hardware on suspend state, so it will call suspend function pointer of it's peripheral driver. Its upto the driver implementation how it manages its internal data structures and register writes to satisfy the kernel call. Below is the platform driver structure.
+
+ ```
+ typedef struct _bordoisila_driver_ {
+	const char* name;
+	const char* compat; //match list in DT/acpi bindings
+	BordoisilaDriverResource* resources;
+	int num_resource;
+	enum driver_type type;
+
+	/* Ops*/
+	int (*scan)(struct _bordoisila_driver_* dev);
+	int (*probe)(struct _bordoisila_driver_* dev);
+	int (*remove)(struct _bordoisila_driver_* dev);
+	int (*suspend)(struct _bordoisila_driver_* dev);
+	int (*resume)(struct _bordoisila_driver_* dev);
+
+	void* priv;
+	uint8_t driver_state;
+	int refcount;
+	struct _bordoisila_driver_* parent;
+	struct _bordoisila_driver_* next;
+}BordoisilaDriver;
+```
+|Field | Description |
+|------|-------------|
+| `name` | Name of the Platform Driver, for example _"dw_hdmi"_
+| `compat`| Compatible string matching within Device Tree or ACPI subsystem |
+| `resources` | Number of ___BordosiilaDriverResources___ this platform driver use, for example number of ___BordoisilaClk___ or ___BordoisilaPower___. This list helps the kernel to manage resources in an efficient way by not performing any removing or modification to the resource until it's completely free from every Platform drivers.
+| `num_resource` | Number of ___BordosiilaDriverResources___ this driver has allocated or used from the kernel |
+| `type` | Type of the platform driver, In the next table types are properly mentioned |
+| `scan` | Address of the scan function within the driver, this function is only important if the platform driver is a bus type driver 
+| `probe` | Address of the prob function within the driver, this function initializes all the data structures needed and put the hardware into initial state. This function needed to be called from `AuDriverMain()` entry of the driver.
+| `remove` | Address of the remove function within the driver, this function cleans all the allocated data structures and put the hardware into power down state if necessary. This function is needed to be called from `AuDriverUnload()` of the driver
+| `suspend` | Address of the suspend function within the driver, this function perform all the necessary operations to put the hardware into temporarily suspended state and notifies the kernel. This function will be called by kernel whenever necessary or in user demand, or hardware's own condition.
+| `resume` | Address of the resume function within the driver, this function resumes the driver if it was suspended early. This function will be called by kernel whenever necessary or in user demand, or hardware's own condition
+| `priv` | Pointer to driver's own internal data structure
+| `driver_state` | Current state of the platform driver, whether if it's probed/unprobed/suspended. Below code snippet describe all available state: ___B_DRIVER_STATE_PROBED___, ___B_DRIVER_STATE_FAILED___, ___B_DRIVER_STATE_UNBOUND___
+| `refcount` | Reference count is incremented by the number of the driver is shared between other drivers
+| `parent` | Pointer to parent platform driver node
+| `next`   | Pointer to next platform driver node
+
+### Platform Driver types
+
+```
+enum driver_type {
+	BORDOISILA_DRIVER_NORMAL,
+	BORDOISILA_DRIVER_BUS_I2C,
+	BORDOISILA_DRIVER_BUS_SPI,
+	BORDOISILA_DRIVER_BUS_USB,
+};
+```
+
+| `driver_type` | _Description_ 
+|---------------|---------------
+| `BORDOISILA_DRIVER_NORMAL` | _Driver is a normal peripheral driver_ 
+| `BORDOISILA_DRIVER_BUS_I2C` | _Driver is a i2c bus driver_ |
+| `BORDOISILA_DRIVER_BUS_SPI` | _Driver is a SPI bus driver_
+| `BORDOISILA_DRIVER_BUS_USB` | _Driver is a USB bus driver_ |
+
+
