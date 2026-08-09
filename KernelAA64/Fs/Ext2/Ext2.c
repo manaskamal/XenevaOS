@@ -6,6 +6,8 @@
 #include <string.h>
 #include <aucon.h>
 #include <Fs/Ext2/ext2.h>
+#include <Fs/Ext2/ext2file.h>
+#include <Fs/Ext2/ext2dir.h>
 #include <_null.h>
 
 /**
@@ -134,7 +136,7 @@ uint32_t Ext2ReadBlockIndex(Ext2Fs* fs, uint32_t block_id, uint32_t index) {
 	uint32_t sector_per_block = fs->block_size / 512;
 	uint64_t target_lba = (uint64_t)block_id * sector_per_block;
 
-	uint32_t* buffer = (uint32_t*)P2V((uint32_t)AuPmmngrAlloc());
+	uint32_t* buffer = (uint32_t*)P2V((uint64_t)AuPmmngrAlloc());
 	if (!buffer) {
 		AuTextOut("[Ext2]: out of memory during block index reading.\r\n");
 		return 0;
@@ -457,8 +459,8 @@ AuVFSNode* Ext2Initialise(AuVDisk* vdisk, char* mountname) {
 	fsys->read = Ext2Read;
 	fsys->read_dir = NULL;
 
-	fsys->write = NULL;
-	fsys->create_dir = NULL;
+	fsys->write = Ext2Write;
+	fsys->create_dir = Ext2CreateDir;
 	fsys->create_file = NULL;
 
 	vdisk->fsys = fsys;

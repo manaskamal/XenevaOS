@@ -106,7 +106,6 @@ XEFile* XEOpenAndReadFile(EFI_HANDLE ImageHandle, CHAR16* Filename) {
 
 	EFI_GUID sfsprotocol = EFI_SIMPLE_FILE_SYSTEM_PROTOCOL_GUID;
 
-	
 	Status = gBS->HandleProtocol(ImageHandle, &loadedImageProtocol, (void**)&loadedImage);
 	if (EFI_ERROR(Status)) {
 		XEGuiPrint("Failed to locate image handle \n");

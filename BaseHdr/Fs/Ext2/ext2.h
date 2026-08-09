@@ -213,4 +213,10 @@ typedef struct _ext2_fs_ {
  */
 AuVFSNode* Ext2Initialise(AuVDisk* vdisk, char* mountname);
 
+uint32_t Ext2ReadBlockIndex(Ext2Fs* fs, uint32_t block_id, uint32_t index);
+
+uint32_t Ext2FindEntry(Ext2Fs* fs, Ext2Inode* dir_inode, const char* name);
+
+AuVFSNode* Ext2Open(AuVFSNode* fsys, char* path);
+
 #endif

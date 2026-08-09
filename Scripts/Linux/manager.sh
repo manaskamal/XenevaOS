@@ -55,9 +55,12 @@ case $1 in
         mcopy -o -i fat.img initrd2.img ::/initrd2.img
         echo "[+] Image ready! Booting QEMU..."
         qemu-system-aarch64 -machine virt,gic-version=2 \
-            -cpu cortex-a57 -m 1024M \
+            -cpu cortex-a72 -m 1024M \
             -bios /usr/share/qemu-efi-aarch64/QEMU_EFI.fd \
-            -drive file=fat.img,format=raw,if=virtio \
+            -drive file=fat.img,format=raw,if=none,id=hd0 \
+            -device virtio-blk-pci,drive=hd0,disable-legacy=on \
+            -drive file=/home/og/ext2.img,format=raw,if=none,id=hd1 \
+            -device virtio-blk-pci,drive=hd1,disable-legacy=on \
             -device ramfb \
             -device virtio-keyboard-pci \
             -device virtio-tablet-pci \
