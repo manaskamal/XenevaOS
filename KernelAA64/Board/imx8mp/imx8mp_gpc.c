@@ -236,6 +236,7 @@ BordoisilaDriverResource* imx8mp_gpc_kernel_resource(char* name, void* data) {
  * to the database
  */
 void imx8mp_gpc_init() {
+	_gpc_base = (uint64_t)AuMapMMIO(GPC_BASE, 16);
 	for (int i = 0; i < 50; i++) 
 		memset(&_pdomains[i], 0, sizeof(_imx8mp_gpc_pdomain_t));
 	
@@ -421,22 +422,28 @@ int imx8mp_gpc_powerup(uint8_t id) {
 		return -1;
 
 	/**TODO:  we need to enable parent clock in CCM **/
-
+	UARTDebugOut("GPC Powering up : %d \r\n", domain->pdomain_id);
 
 	//set the cpu mapping
-	_bordoisila_update_bits(GPC_BASE + IMX8MP_GPC_PGC_CPU_MAPPING, domain->map_mask, domain->map_mask);
-	_bordoisila_update_bits((uint64_t)GPC_BASE + domain->pgc_offset, GPC_PGC_CTRL_PCR, GPC_PGC_CTRL_PCR);
-	_bordoisila_update_bits((uint64_t)GPC_BASE + IMX8MP_GPC_PU_PGC_SW_PUP_REQ, domain->pxx_req, domain->pxx_req);
+	_bordoisila_update_bits(_gpc_base + IMX8MP_GPC_PGC_CPU_MAPPING, domain->map_mask, domain->map_mask);
+	_bordoisila_update_bits((uint64_t)_gpc_base + domain->pgc_offset, GPC_PGC_CTRL_PCR, GPC_PGC_CTRL_PCR);
+	_bordoisila_update_bits((uint64_t)_gpc_base + IMX8MP_GPC_PU_PGC_SW_PUP_REQ, domain->pxx_req, domain->pxx_req);
+
+	if (domain->pdomain_id == IMX8MP_POWER_DOMAIN_HDMIMIX) {
+		BPrintK(BORDOISILA_DEBUG, "GPC HDMIMIX Polling for BIT(9) \r\n");
+		while (!(_bordoisila_readl(0x30390000 + 0x94) & BORDOISILA_BIT(8)))
+			;
+	}
 
 
-	uint32_t val = _bordoisila_readl((uint64_t)GPC_BASE + domain->pgc_offset);
-	BPrintK(BORDOISILA_INFO, "imx8mp power domain %s id, power up requested \r\n", domain->pdomain_id);
-	BPrintK(BORDOISILA_INFO, "imx8mp pgc offset : %x, value : %d  \r\n", (GPC_BASE + domain->pgc_offset),val);
+	uint32_t val = _bordoisila_readl((uint64_t)_gpc_base + domain->pgc_offset);
+	BPrintK(BORDOISILA_INFO, "imx8mp power domain id, power up requested \r\n", domain->pdomain_id);
+	BPrintK(BORDOISILA_INFO, "imx8mp pgc offset : %x, value : %d  \r\n", (_gpc_base + domain->pgc_offset),val);
 
 	int timeout = 100000;
 	uint32_t req_val;
 	do {
-		req_val = _bordoisila_readl((uint64_t)GPC_BASE + IMX8MP_GPC_PU_PGC_SW_PUP_REQ);
+		req_val = _bordoisila_readl((uint64_t)_gpc_base + IMX8MP_GPC_PU_PGC_SW_PUP_REQ);
 		if (!(req_val & domain->pxx_req))
 			break;
 	} while (--timeout);
@@ -450,15 +457,15 @@ int imx8mp_gpc_powerup(uint8_t id) {
 	}
 	//ADB-400 handshake : yayyyyy
 	if (domain->hskreq) {
-		uint32_t val = _bordoisila_readl(GPC_BASE + IMX8MP_GPC_PU_PWRHSK);
+		uint32_t val = _bordoisila_readl(_gpc_base + IMX8MP_GPC_PU_PWRHSK);
 		val |= domain->hskreq;
-		_bordoisila_writel(val,GPC_BASE + IMX8MP_GPC_PU_PWRHSK);
+		_bordoisila_writel(val, _gpc_base + IMX8MP_GPC_PU_PWRHSK);
 
 		timeout = 1000000000;
 		while (timeout--) {
-			uint32_t curr_hsk = _bordoisila_readl((uint64_t)GPC_BASE + IMX8MP_GPC_PU_PWRHSK);
+			uint32_t curr_hsk = _bordoisila_readl((uint64_t)_gpc_base + IMX8MP_GPC_PU_PWRHSK);
 			if (curr_hsk & domain->hskack) {
-				BPrintK(BORDOISILA_INFO, "imx8mp power domain %s- adb ack received \r\n");
+				BPrintK(BORDOISILA_INFO, "imx8mp power domain - adb ack received \r\n" );
 				break;
 			}
 		}

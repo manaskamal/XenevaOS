@@ -42,6 +42,8 @@ __Kernel__ :
 - [USB](Kernel/usb.md)
 - [Kernel Service Calls](Kernel/KernelServices.md)
 - [Virtual File System](Kernel/VirtualFileSystem.md)
+- [Driver Framework](Kernel/Drivers.md#driver-framework)
+- [Networking](Kernel/Network.md)
 
 __Components__ :
 - [XELoader](XELoader.md)

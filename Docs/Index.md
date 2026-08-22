@@ -30,6 +30,7 @@ Use the Table of Contents below to navigate through the project's documentation.
 - [**Drivers Subsystem**](Kernel/Drivers.md) — Core principles of the XenevaOS hardware driver model.
 - [**USB Stack**](Kernel/usb.md) — How USB buses and controllers are initialized.
 - [**Driver Framework**](Kernel/Drivers.md#driver-framework) --- Discusses the Driver framework model of XenevaOS and how it can be used to write Hardware Drivers.
+- [**Kernel Networking**](Kernel/Network.md) -- Discusses the networking model and implementation of different protocols in XenevaOS.
 
 ##  Development & User-Space
 - [**XELoader (Dynamic Linker)**](XELoader.md) — The XenevaOS user-space PE linker and dynamic loading mechanism.

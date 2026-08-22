@@ -65,7 +65,7 @@
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
@@ -107,6 +107,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
     <TargetName>hdmi</TargetName>
     <GenerateManifest>false</GenerateManifest>
+    <TargetExt>.dll</TargetExt>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -269,9 +270,11 @@
   <ItemGroup>
     <ClCompile Include="imx8mp-samsung-phy.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="synopsys\dw_hdmi.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="imx8mp_hdmi_tx_c.h" />
+    <ClInclude Include="synopsys\dw_hdmi.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

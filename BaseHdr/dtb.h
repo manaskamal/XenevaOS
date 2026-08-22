@@ -119,8 +119,8 @@ AU_EXTERN AU_EXPORT uint32_t AuDeviceTreeGetU32Property(uint32_t* node, const ch
 
 AU_EXTERN AU_EXPORT uint32_t* AuDeviceTreeGetPropCells(uint32_t* node, const char* property, uint32_t* out_num_cells);
 
-extern void AuDeviceTreeDumpAll();
-extern void AuDeviceTreeDumpAllProps(const char* node_name);
+AU_EXTERN AU_EXPORT void AuDeviceTreeDumpAll();
+AU_EXTERN AU_EXPORT void AuDeviceTreeDumpAllProps(const char* node_name);
 /**
  * @brief AuDeviceTreeInitialize -- initialize the device tree
  * @param fdt_address -- device tree address passed by

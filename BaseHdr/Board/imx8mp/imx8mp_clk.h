@@ -353,4 +353,10 @@ extern void imx8mp_ccm_init();
   */
 AU_EXTERN AU_EXPORT void imx8mp_ccm_write(uint32_t clk_root_idx,int offset, uint32_t value);
 
+
+/**
+ * @brief imx8mp_cmm_get_base -- return the mapped ccm base address
+ */
+extern uint64_t imx8mp_ccm_get_base();
+
 #endif

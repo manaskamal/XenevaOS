@@ -58,4 +58,6 @@ static inline int __bf_shf(uint32_t mask) {
 #define BORDOISILA_PREP_FIELD(_mask, _val) \
        (((_val) << __bf_shf(_mask)) & (_mask))
 
+#define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
+
 #endif

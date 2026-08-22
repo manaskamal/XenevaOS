@@ -35,7 +35,13 @@
 #include <bordoisila_bits.h>
 #include <bordoisila_io.h>
 #include <linux/compiler.h>
-
+#include <Log/klog.h>
+#include <_null.h>
+#include <Mm/kmalloc.h>
+#include <Drivers/uart.h>
+#include <string.h>
+#include <dtb.h>
+#include <Mm/vmmngr.h>
 
 /**
  * Reference Linux source code
@@ -177,7 +183,7 @@ static const struct reg_settings common_phy_cfg[] = {
 	{PHY_REG(23), 0x32},
 	{PHY_REG(24), 0x60},
 	{PHY_REG(25), 0x8f},
-	{PHY_REG(26), 0X00},
+	{PHY_REG(26), 0x00},
 	{PHY_REG(27), 0x00},
 	{PHY_REG(28), 0x08},
 	{PHY_REG(29), 0x00},
@@ -202,10 +208,12 @@ static const struct reg_settings common_phy_cfg[] = {
 };
 
 static uint64_t phy_reg;
+const struct phy_config* cur_cfg;
 
 static int fsl_samsung_phy_configure_pll_lock_det(const struct phy_config* cfg) {
 
 	uint32_t pclk = cfg->pixclk;
+	UARTDebugOut("pclk pll lock det : %d \r\n", pclk);
 	uint32_t fld_tg_code;
 	uint32_t int_pllclk;
 	uint8_t div;
@@ -224,20 +232,262 @@ static int fsl_samsung_phy_configure_pll_lock_det(const struct phy_config* cfg) 
 
 	fld_tg_code = BORDOISILA_DIV_ROUND_UP(24 * MHZ * 256, int_pllclk);
 
+	fld_tg_code = 166;
+	
 	_bordoisila_writeb(BORDOISILA_PREP_FIELD(REG13_TG_CODE_LOW_MASK, fld_tg_code),
 		phy_reg + PHY_REG(13));
+	
 	_bordoisila_writeb(BORDOISILA_PREP_FIELD(REG14_TOL_MASK, 2) |
-		BORDOISILA_PREP_FIELD(REG14_RP_CODE_MASK, 2) |
 		BORDOISILA_PREP_FIELD(REG14_RP_CODE_MASK, 2) |
 		BORDOISILA_PREP_FIELD(REG14_TG_CODE_HIGH_MASK, fld_tg_code >> 8),
 		phy_reg + PHY_REG(14));
-
+	
 	return 0;
 }
 
-static int fsl_samsung_phy_configure() {
+static unsigned long fsl_samsung_hdmi_phy_find_pms(unsigned long fout, uint8_t* p, uint16_t* m, uint8_t* s) {
+	
+	unsigned long best_freq = 0;
+	uint32_t min_delta = 0xffffffff;
+	uint8_t _p, best_p;
+	uint16_t _m, best_m;
+	uint8_t _s, best_s;
+
+	/*
+	 * Figure 13-78 of the reference manual states the PLL should be TMDS x 5
+	 * while the TMDS_CLKO should be the PLL / 5. So to calculate the PLL, 
+	 * take the pix clock x 5, then return the value of the PLL / 5/
+	 */
+	fout *= 5;
+
+	/* The ref manual sttes the values of 'p' range from 1 to 11 */
+	for (_p = 1; _p <= 11; ++_p) {
+		for (_s = 1; _s <= 16; ++_s) {
+			uint64_t tmp;
+			uint32_t delta;
+
+			/* s must be one or even */
+			if (_s > 1 && (_s & 0x01) == 1)
+				_s++;
+
+			if (_s == 14)
+				continue;
+
+			tmp = (uint64_t)fout * (_p * _s);
+			do_div(tmp, 24 * MHZ);
+			if (tmp > 255)
+				continue;
+			_m = tmp;
+
+			/*
+			 * Rev 2 of the Ref Manual states the
+			 * VCO can range between 750MHz and 
+			 * 3GHz. The VCO is assumed to be 
+			 * Fvco = (M * f_ref) / P,
+			 * where f_ref is 24MHz.
+			 */
+			tmp = div64_ul((uint64_t)_m * 24 * MHZ, _p);
+			if (tmp < 750 * MHZ ||
+				tmp > 3000 * MHZ)
+				continue;
+
+			/* final frequency after post-divider*/
+			do_div(tmp, _s);
+
+			delta = ABS(fout - tmp);
+			if (delta < min_delta) {
+				best_p = _p;
+				best_s = _s;
+				best_m = _m;
+				min_delta = delta;
+				best_freq = tmp;
+			}
+
+			/* if we have an exact match, stop locking for a better value */
+			if (!delta)
+				goto done;
+		}
+	}
+done:
+	if (best_freq) {
+		*p = best_p;
+		*m = best_m;
+		*s = best_s;
+	}
+
+	return best_freq / 5;
+}
+
+static int fsl_samsung_phy_configure(const struct phy_config* cfg) {
 	int i, ret;
 	uint8_t val;
 
-	_bordoisila_writeb(REG33_FIX_DA, PHY_REG(33));
+	cur_cfg = cfg;
+
+	BPrintK(BORDOISILA_DEBUG, "fsl-samsung-hdmi: using pix clock rate : %u \r\n", cfg->pixclk);
+
+	_bordoisila_writeb(REG33_FIX_DA,phy_reg + PHY_REG(33));
+
+	/* common PHY registers */
+	for (i = 0; i < ARRAY_SIZE(common_phy_cfg); i++) {
+		UARTDebugOut("Writing val : %x to reg :%x \r\n", common_phy_cfg[i].val, common_phy_cfg[i].reg);
+		_bordoisila_writeb(common_phy_cfg[i].val, phy_reg + common_phy_cfg[i].reg);
+	}
+	
+	UARTDebugOut("REG34 Value : %x \r\n", _bordoisila_readb(phy_reg + PHY_REG(34)));
+	
+	/* set individual PLL registers PHY_REG1 ... PHY_REG7 */
+	for (i = 0; i < PHY_PLL_DIV_REGS_NUM; i++) {
+		_bordoisila_writeb(cfg->pll_div_regs[i], phy_reg + PHY_REG(1) + i * 4);
+		UARTDebugOut("Pixel clock value : %x , reg : %x \r\n", cfg->pll_div_regs[i], (phy_reg + PHY_REG(1) + i * 4));
+	}
+
+	UARTDebugOut("REG34 Value : %x \r\n", _bordoisila_readb(phy_reg + PHY_REG(34)));
+
+	/* High nibble of PHY_REG3 and low nibble of PHY_REG21 both contain 'S' */
+	UARTDebugOut("PHYREG(21) before : %x \r\n", _bordoisila_readl(phy_reg + PHY_REG(21)));
+	_bordoisila_writeb(REG21_SEL_TX_CK_INV | BORDOISILA_PREP_FIELD(REG21_PMS_S_MASK,
+		cfg->pll_div_regs[2] >> 4), phy_reg + PHY_REG(21));
+	UARTDebugOut("PHYREG(21) after : %x \r\n", _bordoisila_readl(phy_reg + PHY_REG(21)));
+
+
+	ret = fsl_samsung_phy_configure_pll_lock_det(cfg);
+	if (ret) {
+		BPrintK(BORDOISILA_ERROR, "fsl-samsung-phy-hdmi : pixclock too large \r\n");
+		return ret;
+	}
+
+	UARTDebugOut("REG34 Value : %x \r\n", _bordoisila_readb(phy_reg + PHY_REG(34)));
+
+	_bordoisila_writeb(REG33_FIX_DA | REG33_MODE_SET_DONE, phy_reg + PHY_REG(33));
+
+	ret = 1;//_bordoisila_readb_poll_timeout(phy_reg + PHY_REG(34), val, val & REG34_PLL_LOCK, 50, 20000);
+
+	UARTDebugOut("REG33 Value : %x \r\n", _bordoisila_readl(phy_reg + PHY_REG(33)));
+
+	for (volatile int i = 0; i < 10000; i++)
+		;
+
+	int timeout = 10000000;
+	while (--timeout) {
+		uint32_t v = _bordoisila_readl(phy_reg + PHY_REG(34));
+		if (v & REG34_PLL_LOCK) {
+			BPrintK(BORDOISILA_DEBUG, "REG34 pll lock got \r\n");
+			ret = 0;
+			break;
+		}
+	}
+
+	if (ret) 
+		BPrintK(BORDOISILA_ERROR, "PLL failed to lock \r\n");
+	
+	return ret;
 }
+
+static unsigned long phy_clk_recalc_rate(unsigned long parent_rate) {
+	if (!cur_cfg)
+		return 74250000;
+	return cur_cfg->pixclk;
+}
+
+static const struct phy_config* fsl_samsung_hdmi_phy_lookup_rate(unsigned long rate) {
+	int i;
+
+	BPrintK(BORDOISILA_DEBUG, "fsl_samsung_hdmi_phy_lookup rate: ARRAY_SIZE: %d \r\n", ARRAY_SIZE(phy_pll_cfg));
+
+	for (i = ARRAY_SIZE(phy_pll_cfg) - 1; i >= 0; i--)
+		if (phy_pll_cfg[i].pixclk <= rate)
+			break;
+
+	if (phy_pll_cfg[i].pixclk == rate || i + 1 > ARRAY_SIZE(phy_pll_cfg) - 1)
+		return &phy_pll_cfg[i];
+
+	return (ABS((long)rate - (long)phy_pll_cfg[i].pixclk) <
+		ABS((long)rate - (long)phy_pll_cfg[i + 1].pixclk) ?
+		&phy_pll_cfg[i] : &phy_pll_cfg[i + 1]);
+}
+
+static void fsl_samsung_hdmi_calculate_phy(struct phy_config* cal_phy, unsigned long rate, uint8_t p, uint16_t m, uint8_t s) {
+	cal_phy->pixclk = rate;
+	cal_phy->pll_div_regs[0] = BORDOISILA_PREP_FIELD(REG01_PMS_P_MASK, p);
+	cal_phy->pll_div_regs[1] = m;
+	cal_phy->pll_div_regs[2] = BORDOISILA_PREP_FIELD(REG03_PMS_S_MASK, s - 1);
+	/* pll_div_regs 3-6 are fixed and pre-defined already */
+}
+
+static const struct phy_config* fsl_samsung_hdmi_phy_find_settings(unsigned long rate) {
+
+	const struct phy_config* fract_div_phy;
+	uint32_t int_div_clk;
+	uint16_t m;
+	uint8_t p, s;
+
+	/* if the clock is out of range return error instead of searching */
+	if (rate > 297000000 || rate < 22250000)
+		return NULL;
+
+	fract_div_phy = fsl_samsung_hdmi_phy_lookup_rate(rate);
+	if (fract_div_phy->pixclk == rate) {
+		BPrintK(BORDOISILA_DEBUG, "fsl-samsung-phy-hdmi: fractional divider match = %u \r\n", fract_div_phy->pixclk);
+		return fract_div_phy;
+	}
+
+	/* calculate the integer divider */
+	int_div_clk = fsl_samsung_hdmi_phy_find_pms(rate, &p, &m, &s);
+	fsl_samsung_hdmi_calculate_phy(&calculated_phy_pll_cfg, int_div_clk, p, m, s);
+	if (int_div_clk == rate) {
+		BPrintK(BORDOISILA_DEBUG, "fsl-samsung-phy-hdmi: integer divider match = %u \r\n", calculated_phy_pll_cfg.pixclk);
+		return &calculated_phy_pll_cfg;
+	}
+
+	/* Calculate the absolute value of the differences and return whichever is closest */
+	if (ABS((long)rate - (long)int_div_clk) < ABS((long)rate - (long)fract_div_phy->pixclk)) {
+		BPrintK(BORDOISILA_DEBUG, "fsl-samsung-phy-hdmi: integer divider = %u \r\n", calculated_phy_pll_cfg.pixclk);
+		return &calculated_phy_pll_cfg;
+	}
+
+	BPrintK(BORDOISILA_DEBUG, "fsl-samsung-phy-hdmi: fractional divider = %u\r\n", cur_cfg->pixclk);
+
+	return fract_div_phy;
+}
+
+static int fsl_samsung_hdmi_phy_probe(BordoisilaDriver* driver) {
+	BPrintK(BORDOISILA_DEBUG, "fsl-samsung-hdmi-phy initializing ...\r\n");
+	
+	phy_reg = 0x32FDFF00; //size 0x100
+
+	uint32_t val = _bordoisila_readl(phy_reg + PHY_REG(34));
+	UARTDebugOut("PHY_REG offset : %x, value : %x r\n", (phy_reg + PHY_REG(34)), val);
+
+	const phy_config* cfg = fsl_samsung_hdmi_phy_lookup_rate(148500000);
+	if (!cfg) {
+		BPrintK(BORDOISILA_ERROR, "[[fsl-samsung-phy]: failed to get suitable pll config \r\n");
+		return 1;
+	}
+	int ret = fsl_samsung_phy_configure(cfg);
+	BPrintK(BORDOISILA_DEBUG, "fsl-samsung-hdmi-phy initiailized : %u\r\n", ret);
+	for (;;);
+	return ret;
+}
+
+static BordoisilaDriver _samsung_hdmi;
+
+
+int fsl_samsung_hdmi_phy_init() {
+	_samsung_hdmi.name = (char*)kmalloc(strlen("imx8mp-samsung-phy"));
+	strcpy((char*)_samsung_hdmi.name, "imx8mp-samsung-phy");
+	_samsung_hdmi.type = BORDOISILA_DRIVER_NORMAL;
+	_samsung_hdmi.probe = &fsl_samsung_hdmi_phy_probe;
+	_samsung_hdmi.remove = 0;
+	_samsung_hdmi.resume = 0;
+	_samsung_hdmi.suspend = 0;
+
+	if (BordoisilaDriverRegister(&_samsung_hdmi)) {
+		BPrintK(BORDOISILA_ERROR,"fsl-samsung-hdmi-phy failed to register itself \r\n");
+		return 1;
+	}
+
+	/* start the probing process */
+	return _samsung_hdmi.probe(&_samsung_hdmi);
+}
+

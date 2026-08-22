@@ -62,6 +62,7 @@ typedef struct _clk_node_ {
 	int is_composite;
 	uint32_t anatop_base;
 	bool _pll_read;
+	uint64_t rate;
 	int current_parent_idx;
 }imx8mp_clk;
 
@@ -101,6 +102,7 @@ static imx8mp_clk* imx8mp_clk_fixed(const char* name, uint32_t fixed_hz) {
 	imx8mp_clk* n = _imx8mp_clk_alloc(name);
 	n->recalc_rate = _imx8mp_fixed_recalc;
 	n->pre_podf = fixed_hz;
+	n->rate = fixed_hz;
 	return n;
 }
 
@@ -169,7 +171,10 @@ int kernel_res_clk_set_rate(BordoisilaClk* clk, uint64_t rate) {
 		return 0;
 	}
 	imx8mp_clk_set_rate(sys_clk, rate); //500000000UL
-	imx8mp_clk_gate_enable(sys_clk->gate_slice);
+	if (sys_clk->gate_slice) {
+		imx8mp_clk_gate_enable(sys_clk->gate_slice);
+	}
+	clk->rate_hz = sys_clk->rate;
 	clk->res.is_running = true;
 	clk->rate_hz = rate;
 }
@@ -334,12 +339,12 @@ done:
 	if (self->current_parent_idx == 6)
 		self->current_parent_idx = 0;
 
+	self->pre_podf = best_pre;
+	self->post_podf = best_post;
+
 	/** hard coding it right now **/
 	/*if (self->clk_slice == MEDIA_DISP2_CLK_ROOT)
 		self->current_parent_idx = 0;
-
-	self->pre_podf = best_pre;
-	self->post_podf = best_post;
 
 	if (self->clk_slice == HDMI_APB_CLK_ROOT) {
 		self->current_parent_idx = 0;
@@ -353,12 +358,6 @@ done:
 		self->post_podf = 1;
 	}
 
-	if (self->clk_slice == HDMI_24M_ROOT) {
-		self->current_parent_idx = 0;
-		self->pre_podf = 0;
-		self->post_podf = 0;
-	}
-
 	if (self->clk_slice == HDMI_REF_266M_ROOT) {
 		self->current_parent_idx = 4;
 		self->pre_podf = 0;
@@ -370,7 +369,15 @@ done:
 		self->pre_podf = 0;
 		self->post_podf = 3;*/
 	//}
-	BPrintK(BORDOISILA_INFO, "using parent index : %d for clock : %s \r\n", self->current_parent_idx, self->name);
+
+	//if (self->clk_slice == HDMI_24M_ROOT) {
+	//	self->current_parent_idx = 0;
+	/*	self->pre_podf = 0;
+		self->post_podf = 0;*/
+	//}
+	self->rate = self->parent[self->current_parent_idx]->rate;
+	BPrintK(BORDOISILA_INFO, "using parent index : %d for clock : %s  \r\n", self->current_parent_idx, self->name);
+	UARTDebugOut("rate %d \r\n", self->rate);
 	BPrintK(BORDOISILA_INFO, "pre podf: %d, post podf : %d \r\n", self->pre_podf, self->post_podf);
 	imx8mp_write_target_root(self->clk_slice, 0x0, self->current_parent_idx, self->pre_podf, self->post_podf);
 
@@ -404,7 +411,7 @@ static uint32_t imx8mp_clk_get_mux(uint32_t clk_idx) {
  */
 void imx8mp_ccm_init() {
 	AuTextOut("[imx8mp_board]: initializing clock control module (ccm) \r\n");
-	_ccm_base = (uint64_t)CCM_BASE; // AuMapMMIO(CCM_BASE, 16);
+	_ccm_base = (uint64_t)AuMapMMIO(CCM_BASE, 16);
 	
 	for (int i = 0; i < 100; i++) {
 		memset(&_clk_node[i], 0, sizeof(imx8mp_clk));
@@ -575,7 +582,7 @@ void imx8mp_ccm_init() {
 	hdmi_24m_sels[7] = g_sys_pll1_133m;
 	imx8mp_clk* hdmi_24m = FORM_CLK_COMPOSITE("hdmi_24m", hdmi_24m_sels, 8);
 	hdmi_24m->clk_slice = HDMI_24M_ROOT;
-	hdmi_24m->gate_slice = IMX8MP_CLK_MEDIA_ISP_ROOT;
+	hdmi_24m->gate_slice = IMX8MP_CLK_XTAL_ROOT;
 	imx8mp_alloc_kernel_resource("hdmi_24m", hdmi_24m);
 
 	static imx8mp_clk* hdmi_ref_266m_sels[8];
@@ -589,7 +596,7 @@ void imx8mp_ccm_init() {
 	hdmi_ref_266m_sels[7] = g_video_pll1_out;
 	imx8mp_clk* hdmi_266m = FORM_CLK_COMPOSITE("hdmi_266m", hdmi_ref_266m_sels, 8);
 	hdmi_266m->clk_slice = HDMI_REF_266M_ROOT;
-	hdmi_266m->gate_slice = IMX8MP_CLK_USDHC3_ROOT;
+	hdmi_266m->gate_slice = IMX8MP_CLK_PLL_ROOT;
 	imx8mp_alloc_kernel_resource("hdmi_ref_266m", hdmi_266m);
 }
 
@@ -642,6 +649,10 @@ void imx8mp_ccm_write(uint32_t clk_root_idx, int offset, uint32_t value) {
 	(*(volatile uint32_t*)(CCM_ROOT_REG(_ccm_base, clk_root_idx) + offset)) = value;
 	dsb_sy_barrier();
 	isb_flush();
+}
+
+uint64_t imx8mp_ccm_get_base() {
+	return _ccm_base;
 }
 
 #endif

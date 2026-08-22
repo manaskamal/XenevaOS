@@ -40,6 +40,8 @@
 #include <Drivers/res.h>
 #include <Mm/kmalloc.h>
 #include <string.h>
+#include <Drivers/uart.h>
+#include <Mm/vmmngr.h>
 
 #define IMX8MP_BLK_CTRL_DDR 0x3D000000
 #define IMX8MP_BLK_CTRL_HSIO 0x32F10000
@@ -52,9 +54,11 @@
 #define BLK_CLK_EN    0x4
 #define BLK_MIPI_RESET_DIV  0x8
 
+static uint64_t blk_ctl_hdmi;
+
 typedef struct _imx8mp_blk_map_ {
 	int blk_id;
-	uint32_t reg;
+	uint64_t reg;
 	uint32_t rst_mask;
 	uint32_t clk_mask;
 }imx8mp_blk_map;
@@ -116,11 +120,27 @@ void imx8mp_blkctrl_init() {
 	for (int i = 0; i < 20; i++) 
 		memset(&_map[i], 0, sizeof(imx8mp_blk_map));
 	
+	uint64_t blk_ctl_ddr = (uint64_t)AuMapMMIO(IMX8MP_BLK_CTRL_DDR, 1);
+	uint64_t blk_ctl_audio = (uint64_t)AuMapMMIO(IMX8MP_BLK_CTRLAUDIO, 1);
+	blk_ctl_hdmi = (uint64_t)AuMapMMIO(IMX8MP_BLK_CTRL_HDMI, 1);
+	uint64_t blk_ctl_hsio = (uint64_t)AuMapMMIO(IMX8MP_BLK_CTRL_HSIO, 1);
+	uint64_t blk_ctl_media = (uint64_t)AuMapMMIO(IMX8MP_BLK_CTRL_MEDIA, 1);
+	uint64_t blk_ctl_vpu = (uint64_t)AuMapMMIO(IMX8MP_BLK_CTRL_VPU, 1);
+
+
+	UARTDebugOut("BLK_CTL_DDR : %x \r\n", blk_ctl_ddr);
+	UARTDebugOut("BLK_CTL_AUDIO : %x \r\n", blk_ctl_audio);
+	UARTDebugOut("BLK_CTL_HDMI : %x \r\n", blk_ctl_hdmi);
+	UARTDebugOut("BLK_CTL_HSIO : %x \r\n", blk_ctl_hsio);
+	UARTDebugOut("BLK_CTL_MEDIA : %x \r\n", blk_ctl_media);
+	UARTDebugOut("BLK_CTL_VPU : %x \r\n", blk_ctl_vpu);
+
+	
 	int n = 0;
 
 	BLK_MAP_ENTRY(n,
 		IMX8MP_MEDIABLK_PD_MIPI_DSI_1, 
-		IMX8MP_BLK_CTRL_MEDIA,
+		blk_ctl_media,
 		BORDOISILA_BIT(0) | BORDOISILA_BIT(1),
 		BORDOISILA_BIT(0) | BORDOISILA_BIT(1));
 
@@ -129,7 +149,7 @@ void imx8mp_blkctrl_init() {
 
 	BLK_MAP_ENTRY(n,
 		IMX8MP_MEDIABLK_PD_MIPI_CSI2_1,
-		IMX8MP_BLK_CTRL_MEDIA,
+		blk_ctl_media,
 		BORDOISILA_BIT(2) | BORDOISILA_BIT(3),
 		BORDOISILA_BIT(2) | BORDOISILA_BIT(3));
 	imx8mp_blk_create_ke_resource("mediablk_pd_mipi_csi2_1", &_map[n]);
@@ -137,7 +157,7 @@ void imx8mp_blkctrl_init() {
 
 	BLK_MAP_ENTRY(n,
 		IMX8MP_MEDIABLK_PD_LCDIF_1,
-		IMX8MP_BLK_CTRL_MEDIA,
+		blk_ctl_media,
 		BORDOISILA_BIT(4) | BORDOISILA_BIT(5) | BORDOISILA_BIT(23),
 		BORDOISILA_BIT(4) | BORDOISILA_BIT(5) | BORDOISILA_BIT(23));
 
@@ -146,7 +166,7 @@ void imx8mp_blkctrl_init() {
 
 	BLK_MAP_ENTRY(n,
 		IMX8MP_MEDIABLK_PD_ISI,
-		IMX8MP_BLK_CTRL_MEDIA,
+		blk_ctl_media,
 		BORDOISILA_BIT(6) | BORDOISILA_BIT(7),
 		BORDOISILA_BIT(6) | BORDOISILA_BIT(7));
 
@@ -155,7 +175,7 @@ void imx8mp_blkctrl_init() {
 
 	BLK_MAP_ENTRY(n,
 		IMX8MP_MEDIABLK_PD_MIPI_CSI2_2,
-		IMX8MP_BLK_CTRL_MEDIA,
+		blk_ctl_media,
 		BORDOISILA_BIT(9) | BORDOISILA_BIT(10),
 		BORDOISILA_BIT(9) | BORDOISILA_BIT(10));
 
@@ -164,7 +184,7 @@ void imx8mp_blkctrl_init() {
 
 	BLK_MAP_ENTRY(n,
 		IMX8MP_MEDIABLK_PD_LCDIF_2,
-		IMX8MP_BLK_CTRL_MEDIA,
+		blk_ctl_media,
 		BORDOISILA_BIT(11) | BORDOISILA_BIT(12) | BORDOISILA_BIT(24),
 		BORDOISILA_BIT(11) | BORDOISILA_BIT(12) | BORDOISILA_BIT(24));
 	imx8mp_blk_create_ke_resource("mediablk_pd_lcdif_2", &_map[n]);
@@ -172,7 +192,7 @@ void imx8mp_blkctrl_init() {
 
 	BLK_MAP_ENTRY(n,
 		IMX8MP_MEDIABLK_PD_ISP,
-		IMX8MP_BLK_CTRL_MEDIA,
+		blk_ctl_media,
 		BORDOISILA_BIT(16) | BORDOISILA_BIT(17) | BORDOISILA_BIT(18),
 		BORDOISILA_BIT(16) | BORDOISILA_BIT(17) | BORDOISILA_BIT(18));
 	imx8mp_blk_create_ke_resource("mediablk_pd_isp", &_map[n]);
@@ -180,7 +200,7 @@ void imx8mp_blkctrl_init() {
 
 	BLK_MAP_ENTRY(n,
 		IMX8MP_MEDIABLK_PD_DWE,
-		IMX8MP_BLK_CTRL_MEDIA,
+		blk_ctl_media,
 		BORDOISILA_BIT(19) | BORDOISILA_BIT(20) | BORDOISILA_BIT(21),
 		BORDOISILA_BIT(19) | BORDOISILA_BIT(20) | BORDOISILA_BIT(21));
 	imx8mp_blk_create_ke_resource("mediablk_pd_dwe", &_map[n]);
@@ -188,62 +208,62 @@ void imx8mp_blkctrl_init() {
 
 	BLK_MAP_ENTRY(n,
 		IMX8MP_MEDIABLK_PD_MIPI_DSI_2,
-		IMX8MP_BLK_CTRL_MEDIA,
+		blk_ctl_media,
 		BORDOISILA_BIT(22), BORDOISILA_BIT(22));
 	imx8mp_blk_create_ke_resource("mediablk_pd_mipi_dsi_2", &_map[n]);
 
 	n++;
 	BLK_MAP_ENTRY(n, IMX8MP_HDMIBLK_PD_IRQSTEER,
-		IMX8MP_BLK_CTRL_HDMI,
+		blk_ctl_hdmi,
 		0, 0);
 	imx8mp_blk_create_ke_resource("hdmiblk_pd_irqsteer", &_map[n]);
 
 	n++;
 
 	BLK_MAP_ENTRY(n, IMX8MP_HDMIBLK_PD_LCDIF,
-		IMX8MP_BLK_CTRL_HDMI,
+		blk_ctl_hdmi,
 		0, 0);
 	imx8mp_blk_create_ke_resource("hdmiblk_pd_lcdif", &_map[n]);
 
 	n++;
 
 	BLK_MAP_ENTRY(n, IMX8MP_HDMIBLK_PD_PAI,
-		IMX8MP_BLK_CTRL_HDMI,
+		blk_ctl_hdmi,
 		0, 0);
 	imx8mp_blk_create_ke_resource("hdmiblk_pd_pai", &_map[n]);
 
 	n++;
 
 	BLK_MAP_ENTRY(n, IMX8MP_HDMIBLK_PD_PVI,
-		IMX8MP_BLK_CTRL_HDMI,
+		blk_ctl_hdmi,
 		0, 0);
 	imx8mp_blk_create_ke_resource("hdmiblk_pd_pvi", &_map[n]);
 
 	n++;
 
 	BLK_MAP_ENTRY(n, IMX8MP_HDMIBLK_PD_TRNG,
-		IMX8MP_BLK_CTRL_HDMI,
+		blk_ctl_hdmi,
 		0, 0);
 	imx8mp_blk_create_ke_resource("hdmiblk_pd_trng", &_map[n]);
 
 	n++;
 
 	BLK_MAP_ENTRY(n, IMX8MP_HDMIBLK_PD_HDMI_TX,
-		IMX8MP_BLK_CTRL_HDMI,
+		blk_ctl_hdmi,
 		0, 0);
 	imx8mp_blk_create_ke_resource("hdmiblk_pd_hdmi_tx", &_map[n]);
 
 	n++;
 
 	BLK_MAP_ENTRY(n, IMX8MP_HDMIBLK_PD_HDMI_TX_PHY,
-		IMX8MP_BLK_CTRL_HDMI,
+		blk_ctl_hdmi,
 		0, 0);
 	imx8mp_blk_create_ke_resource("hdmiblk_pd_hdmi_tx_phy", &_map[n]);
 
 	n++;
 
 	BLK_MAP_ENTRY(n, IMX8MP_HDMIBLK_PD_HRV,
-		IMX8MP_BLK_CTRL_HDMI,
+		blk_ctl_hdmi,
 		0, 0);
 	imx8mp_blk_create_ke_resource("hdmiblk_pd_hrv", &_map[n]);
 }
@@ -269,7 +289,7 @@ int imx8mp_blkctl_powerup(uint32_t id) {
 	}
 
 	/** TODO: take care of the reg if it's mapped using AuMapMMIO **/
-	if (domain->reg == IMX8MP_BLK_CTRL_HDMI) {
+	if (domain->reg == blk_ctl_hdmi) {
 		return imx8mp_hdmi_poweron(domain,id);
 	}
 
@@ -338,18 +358,31 @@ int imx8mp_blkctrl_release_reset(uint32_t id) {
 #define HDMI_TX_CONTROL0     0x200
 #define HDMI_LCDIF_NOC_HURRY_MASK  BORDOISILA_GENMASK(14,12)
 
-static void imx8mp_hdmi_bus_init() {
-	_bordoisila_writel(0, IMX8MP_BLK_CTRL_HDMI + HDMI_RTX_RESET_CTL0);
-	_bordoisila_writel(0, IMX8MP_BLK_CTRL_HDMI + HDMI_RTX_CLK_CTL0);
-	_bordoisila_writel(0, IMX8MP_BLK_CTRL_HDMI + HDMI_RTX_CLK_CTL1);
+static void imx8mp_hdmi_bus_init(BordoisilaPower* power) {
+	if (!power)
+		return;
+	imx8mp_blk_map* domain = (imx8mp_blk_map*)power->res.data;
+	if (!domain)
+		return;
+	UARTDebugOut("HDMI domain reg : %x power name : %s\r\n", domain->reg, power->res.name);
+	_bordoisila_writel(0, blk_ctl_hdmi + HDMI_RTX_RESET_CTL0);
+	UARTDebugOut("First line written\r\n");
+	_bordoisila_writel(0, blk_ctl_hdmi + HDMI_RTX_CLK_CTL0);
+	UARTDebugOut("Second line written \r\n");
+	_bordoisila_writel(0, blk_ctl_hdmi + HDMI_RTX_CLK_CTL1);
+	UARTDebugOut("Third line written \r\n");
 
-	uint32_t v = _bordoisila_readl(IMX8MP_BLK_CTRL_HDMI + HDMI_RTX_CLK_CTL0);
-	v |= BORDOISILA_BIT(0) | BORDOISILA_BIT(1) | BORDOISILA_BIT(10);
-	_bordoisila_writel(v, IMX8MP_BLK_CTRL_HDMI + HDMI_RTX_CLK_CTL0);
+	uint32_t v = _bordoisila_readl(blk_ctl_hdmi + HDMI_RTX_CLK_CTL0);
+	UARTDebugOut("V read : %x \r\n");
+	v |= BORDOISILA_BIT(0) | BORDOISILA_BIT(1) | BORDOISILA_BIT(10) | BORDOISILA_BIT(11);
+	_bordoisila_writel(v, blk_ctl_hdmi + HDMI_RTX_CLK_CTL0);
+	UARTDebugOut("V written \r\n");
 
-	uint32_t r = _bordoisila_readl(IMX8MP_BLK_CTRL_HDMI + HDMI_RTX_RESET_CTL0);
+	uint32_t r = _bordoisila_readl(blk_ctl_hdmi + HDMI_RTX_RESET_CTL0);
+	UARTDebugOut("R read \r\n");
 	r |= BORDOISILA_BIT(0);
-	_bordoisila_writel(r, IMX8MP_BLK_CTRL_HDMI + HDMI_RTX_RESET_CTL0);
+	_bordoisila_writel(r, blk_ctl_hdmi + HDMI_RTX_RESET_CTL0);
+	UARTDebugOut("RESET CTL written \r\n");
 	for (int i = 0; i < 100000; i++)
 		;
 }
@@ -361,7 +394,7 @@ static void imx8mp_hdmi_bus_init() {
  */
 int hdmi_parent_bus_callback(BordoisilaPower* power) {
 	BPrintK(BORDOISILA_INFO, "imx8mp enabling hdmi parent bus \r\n");
-	imx8mp_hdmi_bus_init();
+	imx8mp_hdmi_bus_init(power);
 	return 0;
 }
 
@@ -459,17 +492,35 @@ static int imx8mp_hdmi_poweron(imx8mp_blk_map* domain,uint32_t id) {
 		bit |= BORDOISILA_BIT(7);
 		_bordoisila_writel(bit, (uint64_t)domain->reg + HDMI_RTX_CLK_CTL0);
 
+		bit = _bordoisila_readl((uint64_t)domain->reg + HDMI_RTX_CLK_CTL0);
+		UARTDebugOut("HDMI_RTX_CLK_CTL0 final : %x \r\n", bit);
+
 		bit = _bordoisila_readl((uint64_t)domain->reg + HDMI_RTX_CLK_CTL1);
 		bit |= BORDOISILA_BIT(22) | BORDOISILA_BIT(24);
 		_bordoisila_writel(bit, (uint64_t)domain->reg + HDMI_RTX_CLK_CTL1);
+
+		bit = _bordoisila_readl((uint64_t)domain->reg + HDMI_RTX_CLK_CTL1);
+		UARTDebugOut("HDMI_RTX_CLK_CTL1 final : %x \r\n", bit);
 
 		bit = _bordoisila_readl((uint64_t)domain->reg + HDMI_RTX_RESET_CTL0);
 		bit |= BORDOISILA_BIT(12);
 		_bordoisila_writel(bit, (uint64_t)domain->reg + HDMI_RTX_RESET_CTL0);
 
+		bit = _bordoisila_readl((uint64_t)domain->reg + HDMI_RTX_RESET_CTL0);
+		UARTDebugOut("HDMI_RTX_RESET_CTL0 final : %x \r\n", bit);
+
+
 		bit = _bordoisila_readl((uint64_t)domain->reg + HDMI_TX_CONTROL0);
 		bit &= ~BORDOISILA_BIT(3);
+		bit |= BORDOISILA_BIT(2);
+		bit |= BORDOISILA_BIT(1);
 		_bordoisila_writel(bit, (uint64_t)domain->reg + HDMI_TX_CONTROL0);
+		for (volatile int i = 0; i < 10000; i++)
+			;
+
+		bit = _bordoisila_readl((uint64_t)domain->reg + HDMI_TX_CONTROL0);
+		UARTDebugOut("HDMI_TX_CONTROL0 final : %x \r\n", bit);
+
 		BPrintK(BORDOISILA_DEBUG, "imx8mp hdmi tx phy powered up \r\n");
 		break;
 	}

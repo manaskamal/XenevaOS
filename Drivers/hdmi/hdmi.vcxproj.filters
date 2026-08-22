@@ -3,8 +3,19 @@
   <ItemGroup>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="imx8mp-samsung-phy.cpp" />
+    <ClCompile Include="synopsys\dw_hdmi.cpp">
+      <Filter>synopsys</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="imx8mp_hdmi_tx_c.h" />
+    <ClInclude Include="synopsys\dw_hdmi.h">
+      <Filter>synopsys</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="synopsys">
+      <UniqueIdentifier>{07ff6b8d-2048-4a14-9e59-bccf9ba1281c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
 </Project>
