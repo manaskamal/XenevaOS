@@ -123,12 +123,12 @@ Coneceptually, the relationship can be represented as:
 flowchart TD
 A[User-Space Application] --> B[socket syscall]
 B --> C[Socket subsystem] 
-C --> | Select protocol| D[Transport Protocol]
+C -->|Select protocol| D[Transport Protocol]
 D --> E[TCP]
 D --> F[UDP]
 E --> G[Protocol-specific socket operation]
 F --> G
-```
+````
 
 Each transport protocol maintains its own list of active sockets. When a socket is created through the socket interface, it is registered with the corresponding protocol and can be assigned a dedicated port number.
 
