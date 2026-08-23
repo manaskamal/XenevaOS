@@ -38,9 +38,7 @@ typedef unsigned char BOOL;
 
 #ifdef ARCH_ARM64
 #if !defined(bool)
-#define bool BOOL
-#define true 1
-#define false 0
+#include <stdbool.h>
 #endif
 #endif
 
@@ -88,12 +86,11 @@ typedef unsigned  int  uint_fast32_t;
 typedef long long  int_fast64_t;
 typedef unsigned long long   uint_fast64_t;
 
-/* 7.18.1.4  Integer types capable of holding object pointers */
-typedef int intptr_t;
-
-#if defined(ARCH_ARM64) || defined(ARCH_X64)
-typedef __int64 uintptr_t;
+#if defined(ARCH_ARM64) || defined(__aarch64__) || defined(ARCH_X64) || defined(__x86_64__)
+typedef long long intptr_t;
+typedef unsigned long long uintptr_t;
 #else
+typedef int intptr_t;
 typedef unsigned int uintptr_t;
 #endif
 
@@ -101,8 +98,11 @@ typedef unsigned int uintptr_t;
 typedef long long  intmax_t;
 typedef unsigned long long   uintmax_t;
 
+#ifdef __SIZE_TYPE__
+typedef __SIZE_TYPE__ size_t;
+#else
 typedef uint64_t size_t;
-
+#endif
 /* 7.18.2  Limits of specified-width integer types */
 #if defined ( __cplusplus) || defined (__STDC_LIMIT_MACROS)
 
@@ -171,9 +171,13 @@ object pointers */
 
 #define SIG_ATOMIC_MIN INT32_MIN
 #define SIG_ATOMIC_MAX INT32_MAX
-
-#define SIZE_MAX  0xFFFFF      //UINT32_MAX
-
+#ifndef SIZE_MAX
+#if defined(ARCH_ARM64) || defined(__aarch64__) || defined(ARCH_X64) || defined(__x86_64__)
+#define SIZE_MAX UINT64_MAX
+#else
+#define SIZE_MAX UINT32_MAX
+#endif
+#endif
 #ifndef WCHAR_MIN  /* also in wchar.h */ 
 #define WCHAR_MIN 0
 #define WCHAR_MAX ((wchar_t)-1) /* UINT16_MAX */
@@ -235,4 +239,50 @@ extern "C++" {
 
 #define ALIGN_UP(x, y) (DIV_ROUND_UP(x,y)*y)
 
+#ifndef do_div
+#define do_div(n, base) { \
+    uint64_t __base = (base); \
+    uint64_t __rem = n % __base; \
+    n = n / __base; \
+    __rem; \
+    }
+#endif
+
+#define clamp_t(type, val, lo, hi) \
+       ((type)(val) < (type)(lo) ? (type)(lo) : ((type)(val) > (type)(hi)? (type)(hi) : (type)(val)))
+
+static inline int64_t div_round_closest_s64(int64_t x, int64_t divisor) {
+	if ((x > 0) == (divisor > 0))
+		return (x + divisor / 2) / divisor;
+	else
+		return (x - divisor / 2) / divisor;
+}
+
+static inline uint64_t div_round_closest_u64(uint64_t x, uint64_t divisor) {
+	return (x + divisor / 2) / divisor;
+}
+
+static inline int32_t div_round_closest_s32(int32_t x, int32_t divisor) {
+	if ((x > 0) == (divisor > 0))
+		return (x + divisor / 2) / divisor;
+	else
+		return (x - divisor / 2) / divisor;
+}
+
+
+static inline uint32_t div_round_closest_u32(uint32_t x, uint32_t divisor) {
+	return (x + divisor / 2) / divisor;
+}
+
+#define DIV_ROUND_CLOSEST(x, divisor) _Generic((x), \
+      int64_t: div_round_closest_s64, \
+      uint64_t: div_round_closest_u64, \
+      int32_t: div_round_closest_s32, \
+      uint32_t: div_round_closest_u32, \
+      default: div_round_closest_s32 \
+)(x,divisor)
+
+#define CLAMP(val, lo, hi)  ((val) < (lo) ? (lo) : ((val) > (hi) ? (hi) : (val)))
+
+#define ABS(x) ((x) < 0 ? -(x) : (x))
 #endif

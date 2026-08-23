@@ -32,7 +32,7 @@
 #include <stdio.h>
 #include <sys/_keproc.h>
 #include <sys/_kefile.h>
-#include <sys/mman.h>>
+#include <sys/mman.h>
 #include <sys/iocodes.h>
 #include <string.h>
 #include <stdlib.h>
@@ -389,6 +389,10 @@ int main(int argc, char* argv[]) {
 			DeodhaiAudioHandleMessage(msg);
 			memset(buff, 0, sizeof(DeodhaiAudioMessage));
 		}
-		_KeProcessSleep(sleep_duration);
+		//_KeProcessSleep(sleep_duration);
+		/** actually, hardware should generate interrupt
+		 * and unblock this thread, we'll fix that in future
+		 */
+		_KePauseThread();
 	}
 }

@@ -678,14 +678,22 @@ int _xeprint(char* output, int outputlen, const char* format, va_list list) {
 					break;
 		}
 		case 's': {
-					  if (intArg) {
-						  strcpy((output + outCount), (char*)((uint64_t)intArg));
-						  outCount += strlen((char*)intArg);
-					  }
-					  else {
-						  strncpy((output + outCount), "(NULL)", 7);
-						  outCount += 6;
-					  }
+			const char* str = intArg ? (const char*)(uint64_t)intArg : "(NULL)";
+			int slen = strlen(str);
+			int pad = fieldWidth;
+
+			if (fieldWidth && !leftJust) {
+				while (pad-- > 0)
+					output[outCount++] = ' ';
+			}
+
+			strcpy(output + outCount, str);
+			outCount += slen;
+
+			if (fieldWidth && leftJust) {
+				while (pad-- > 0)
+					output[outCount++] = ' ';
+			}
 					  break;
 		}
 		case 'p':{

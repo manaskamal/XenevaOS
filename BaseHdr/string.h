@@ -37,6 +37,7 @@
 AU_EXTERN{
 #endif
 
+
 	/*
 	 * Global Functions !!
 	 */
@@ -47,10 +48,11 @@ AU_EXTERN{
 	AU_EXPORT int strncmp(const char* s1, const char *s2, size_t n);
 	AU_EXPORT char *strncpy(char *destString, const char* sourceString, size_t maxLength);
 	AU_EXPORT char* strchr(char* str, int character);
+	AU_EXPORT char* strrchr(const char* str, int c);
 	AU_EXPORT char *strcat(char *destString, const char *sourceString);
 	AU_EXPORT char *strncat(char *destString, const char *sourceString, size_t maxLength);
 	AU_EXPORT void memset(void *targ, int val, uint32_t len);
-	AU_EXPORT void  memcpy(void *targ, void *src, size_t len);
+	AU_EXPORT void*  memcpy(void *targ, void *src, size_t len);
 	AU_EXPORT int memcmp(const void *first, const void *second, size_t length);
 	AU_EXPORT void* memmove(void*, const void*, size_t);
 	AU_EXPORT char* strdup(const char*  c);

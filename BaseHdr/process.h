@@ -30,11 +30,16 @@
 #ifndef __PROCESS_H__
 #define __PROCESS_H__
 
-
+#if defined(__GNUC__) || defined(__clang__)
+#ifndef __cplusplus
+#include <stdbool.h>
+#endif
+#endif
 #include <stdint.h>
 #include <Fs/vfs.h>
 #include <Cred/group.h>
 #include <Cred/user.h>
+#include <Cap/capability.h>
 
 #ifdef ARCH_ARM64
 #include <Hal/AA64/sched.h>
@@ -100,6 +105,21 @@ typedef struct _au_proc_cred_ {
 	uint16_t num_sgid;
 }AuProcCredentials;
 
+/**
+ * _sys_proc_list -- a way to report current status
+ * of information about all processes
+ */
+typedef struct _sys_proc_list_ {
+	int proc_id;
+	char name[16];
+	uint64_t total_runtime_us;
+	uint64_t window_runtime_us;
+	uint32_t num_threads;
+	uint32_t num_file_opened;
+	uint32_t cpu_usage;
+}AuProcessList;
+
+
 //#pragma pack(push,1)
 typedef struct _au_proc_ {
 	char name[16];
@@ -115,7 +135,11 @@ typedef struct _au_proc_ {
 	size_t _user_stack_index_;
 	size_t _kstack_index_;
 	uint64_t _envp_block_;
-
+	uint64_t total_runtime_us;
+	uint64_t window_runtime_us;
+	uint32_t cpu_usage;
+	uint64_t prev_sample_runtime_us;
+	uint64_t prev_sample_time_us;
 #ifdef ARCH_X64
 	/* threading section */
 	AuThread* main_thread;
@@ -134,6 +158,8 @@ typedef struct _au_proc_ {
 
 	/* file descriptors */
 	AuVFSNode* fds[FILE_DESC_PER_PROCESS];
+	/* capability table -- parallel to fds[]*/
+	AuCapability caps[FILE_DESC_PER_PROCESS];
 	/*loader related data*/
 	AuVFSNode *file;
 	AuVFSNode *fsys;
@@ -279,7 +305,7 @@ extern int AuProcessGetFileDesc(AuProcess* proc);
 * @param pid -- pid of the process, if -1 then any child
 * process
 */
-extern void AuProcessWaitForTermination(AuProcess *proc, int pid);
+extern int AuProcessWaitForTermination(AuProcess *proc, int pid);
 
 #ifdef ARCH_X64
 extern AuMutex* AuProcessGetMutex();
@@ -310,5 +336,19 @@ extern uint64_t* CreateSubUserStack(AuProcess* proc, uint64_t* cr3);
 *  @param priority -- (currently unused) thread's priority
 */
 extern int AuCreateUserthread(AuProcess* proc, void(*entry) (), char *name);
+
+/**
+ * @brief AuProcGetNumProcessCount -- returns the total number
+ * of process created
+ */
+extern int AuProcGetNumProcessCount();
+
+/**
+ * @brief AuProcessFetch -- fetch current process table
+ * status
+ * @param list -- Pointer to AuProcessList
+ * @param num_proc_count -- number of process count
+ */
+extern int AuProcessFetch(AuProcessList* list, int num_proc_count);
 
 #endif

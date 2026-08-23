@@ -105,7 +105,7 @@
       <GenerateDebugInformation>
       </GenerateDebugInformation>
       <OutputFile>..\..\Build\nslook.exe</OutputFile>
-      <AdditionalLibraryDirectories>..\..\x64\Debug;..\..\Libs\XECrt;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)Build\;..\..\x64\Debug;..\..\Libs\XECrt;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>XEClib.lib; xecrt.lib; chlkha.lib;ftype.lib;</AdditionalDependencies>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
       <EnableUAC>false</EnableUAC>
@@ -124,7 +124,7 @@
       <AdditionalOptions>/ALIGN:512 %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
-      <Command>copy "..\..\Build\$(TargetName).exe" "%XENEVA_BUILDS%\$(TargetName).exe</Command>
+      <Command>copy "..\..\Build\$(TargetName).exe" "%XENEVA_BUILDS%\$(TargetName).exe"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">

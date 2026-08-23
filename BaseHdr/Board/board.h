@@ -60,4 +60,10 @@ extern void AuAA64BoardPowerDown();
  */
 extern void AuAA64BoardReboot();
 
+/**
+ * @brief AuAA64BoardGetBootEpoch -- returns the
+ * boot epoch time from board
+ */
+extern uint64_t AuAA64BoardGetBootEpoch();
+
 #endif

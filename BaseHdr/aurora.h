@@ -30,7 +30,6 @@
 #ifndef __AURORA_H__
 #define __AURORA_H__
 
-
 #include <stdint.h>
 
 
@@ -56,6 +55,7 @@
 #define AU_EXTERN extern
 #endif
 
+typedef uint32_t CapRights;
 
 #ifdef ARCH_X64
 #define KERNEL_STACK_LOCATION   0xFFFFFB0000000000
@@ -64,6 +64,17 @@
 #endif
 
 #define KERNEL_STACK_SIZE  40960//16384  //16KiB
+
+// macro for llvm compatibility
+#ifndef ALIGNED
+#if defined(_MSC_VER)
+    #define ALIGNED(x) __declspec(align(x))
+#elif defined(__GNUC__) || defined(__clang__)
+    #define ALIGNED(x) __attribute__((aligned(x)))
+#else
+    #define ALIGNED(x)
+#endif
+#endif
 
 
 typedef struct _lbprotocol_ {

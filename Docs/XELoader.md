@@ -30,8 +30,8 @@ Transferring control to the main executable is only performed after the loading 
 XELoader uses the PE image format for executables and libraries (meaning it is currently limited to loading PE binaries). ELF format support could be added in the future. XELoader itself is a statically linked binary, meaning it does not depend on shared libraries; everything is built statically inside XELoader. 
 
 There are two levels of loaders built into XenevaOS:
-- The kernel-level loader (_Kernel-space static executable loader_)
-- The XELoader (_User-space dynamic linker and loader_)
+- The kernel-level loader (_Kernel-space static executable loader_): Loads pure static binaries directly (e.g., `init.exe`, `xeldr.exe`).
+- The XELoader (_User-space dynamic linker and loader_): Loads dynamically linked binaries (e.g., terminals, GUI applications) and shares libraries using the Copy-On-Write (COW) mechanism.
 
 Whenever XenevaOS encounters the system call _```_KeProcessLoadExec```_ with the executable file path and name, it immediately loads the executable and verifies that it is a PE-formatted executable and not a library. The kernel-level loader is only capable of loading statically linked executable files, not dynamically linked executables or libraries. If it is an executable file, the loader checks if it is dynamically or statically linked. Static executable files are executed directly by the kernel-level loader, which maps each section of the executable to the process's address space and transfers control to the entry point. For dynamically linked files, XELoader acts as an intermediary. The kernel-level loader loads XELoader (_which is statically linked_), populates its argument list with the desired filename and path, and transfers control to it. XELoader then runs in user space, starts loading the executable provided by the kernel, and resolves external symbols by loading and linking the required shared libraries.
 For example here are the steps how it works:

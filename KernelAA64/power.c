@@ -83,6 +83,9 @@ int AuPowerDown() {
 	tlb_flush_vmalle1is();
 
 	AuAA64BoardPowerDown();
+
+	//false here
+	return 1;
 }
 
 /**

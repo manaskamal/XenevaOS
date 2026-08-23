@@ -39,6 +39,7 @@
 #include <aucon.h>
 #include <Mm/vmmngr.h>
 #include <Hal/AA64/sched.h>
+#include <string.h>
 
 struct VirtioQueue* TabletQueue;
 uint16_t tabletIndex;
@@ -73,7 +74,7 @@ void AuVirtioTabletHandler(int spiNum) {
 	uint16_t them = TabletQueue->used.index;
 
 	for (; tabletIndex < them; tabletIndex++) {
-		dc_ivac(&TabletInput[tabletIndex % tabletQueueSz]);
+		dc_ivac((uint64_t)&TabletInput[tabletIndex % tabletQueueSz]);
 		dsb_sy_barrier();
 		struct VirtioInputEvent evt = TabletInput[tabletIndex % tabletQueueSz];
 		while (evt.type == 0xFF) {
@@ -128,6 +129,9 @@ void AuVirtioTabletHandler(int spiNum) {
 }
 
 void AuVirtioTabletDown() {
+	if (!_tabletCfg)
+		return;
+
 	/* Reset the device */
     _tabletCfg->DeviceStatus = 0;
 
@@ -152,7 +156,7 @@ void AuVirtioTabletInitialize(uint64_t device) {
 	int func = 0;
 	int dev = 0;
 	if (device == 0xFFFFFFFF)
-		return 1;
+		return;
 
 	uint16_t command = AuPCIERead(device, PCI_COMMAND, bus, dev, func);
 	command |= 4;
@@ -211,6 +215,7 @@ void AuVirtioTabletInitialize(uint64_t device) {
 	GICRegisterSPIHandler(&AuVirtioTabletHandler, spiID);
 
 	struct VirtioCommonCfg* common = (struct VirtioCommonCfg*)finalAddr;
+	_tabletCfg = common;
 	common->DeviceStatus = 0;
 	isb_flush();
 

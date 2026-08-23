@@ -101,7 +101,7 @@ typedef struct __VFS_NODE__ {
 	uint8_t  eof;
 	uint32_t pos;
 	uint32_t parent_block;
-	uint64_t first_block;
+	uint32_t first_block;
 	uint64_t current;
 	uint16_t  flags;
 	uint8_t status;

@@ -30,11 +30,15 @@
 **/
 #include <Board/RPI3bp/rpi3bp.h>
 #include <Board/imx8mp/imx8mp_clk.h>
+#include <Board/imx8mp/imx8mp_pll.h>
+#include <Board/imx8mp/imx8mp_clk_gate.h>
 #include <Drivers/uart.h>
 #include <Board/board.h>
 #include <stdint.h>
 #include <aucon.h>
 #include <Drivers/virtio.h>
+#include <Hal/AA64/aa64lowlevel.h>
+#include <Log/klog.h>
 
 extern void imx8mp_gpc_init();
 
@@ -42,6 +46,7 @@ extern void imx8mp_gpc_init();
 #ifdef __TARGET_BOARD_QEMU_VIRT__
 extern void virt_power_down(uint64_t code);
 extern void virt_power_reboot(uint64_t code);
+extern uint64_t AuVirtGetBootEpoch();
 #endif
 
 
@@ -55,7 +60,9 @@ void AuAA64BoardInitialize() {
 #elif __TARGET_BOARD_IMX8MP_VERDIN_DAHLIA__ || (__TARGET_BOARD_IMX8MP_SOC__)
 	/** initialize the ccm module **/
 	imx8mp_gpc_init();
-	imx8mp_ccm_init();
+	imx8mp_pll_init();
+	imx8mp_gate_init();
+    imx8mp_ccm_init();
 #endif
 }
 
@@ -64,8 +71,14 @@ void AuAA64BoardInitialize() {
  */
 void AuAA64BoardSleepUS(uint32_t us) {
 #ifdef __TARGET_BOARD_RPI3__
-	AuRPI3DelayUS(us);
+	return AuRPI3DelayUS(us);
 #endif
+	uint64_t freq = get_cntfrq_el0();
+	uint64_t ticks = (freq / 1000000ULL) * us;
+	uint64_t start = get_cntpct_el0();
+	while ((get_cntpct_el0() - start) < ticks) {
+		_wfi();
+	}
 }
 
 /**
@@ -76,6 +89,7 @@ void AuAA64BoardSleepMS(uint32_t ms) {
 #ifdef __TARGET_BOARD_RPI3__
 	AuRPIDelayMS(ms);
 #endif
+	AuAA64BoardSleepUS(ms * 1000ULL);
 }
 
 /**
@@ -95,5 +109,15 @@ void AuAA64BoardReboot() {
 #ifdef __TARGET_BOARD_QEMU_VIRT__
 	UARTDebugOut("[aurora]: restarting your system \r\n");
 	virt_power_reboot(0x84000009);
+#endif
+}
+
+/**
+ * @brief AuAA64BoardGetBootEpoch -- returns the
+ * boot epoch time from board
+ */
+uint64_t AuAA64BoardGetBootEpoch() {
+#ifdef __TARGET_BOARD_QEMU_VIRT__
+	return AuVirtGetBootEpoch();
 #endif
 }

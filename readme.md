@@ -6,7 +6,8 @@
 XenevaOS is an operating system built from scratch targeted at modern hardware. The OS is designed for both x86 and ARM architectures with plans for RISC-V implementation in the near future as well. Our OS is built on our very own hybrid kernel known as _'Aurora'_.<br> Please visit [Build Instructions](Docs/BuildInstructions.md) to build the project
 
 ## Documentation
-Refer to [Documentation of XenevaOS](Docs/Introduction.md)<br>
+Refer to the [Comprehensive Documentation Portal (Table of Contents)](Docs/Index.md) for architecture, build instructions, and guidelines.<br>
+Refer to [Introduction to XenevaOS](Docs/Introduction.md) for a high-level overview.<br>
 Refer to [API Documentation of XenevaOS](https://bytejoseph.github.io/xeneva-source-reference/files.html). _Thanks to ByteJoseph for API docs_.
 
 ## Contributing to the project
@@ -79,7 +80,7 @@ _And many more coming soon_
 
 # Building the project
 
-The project was originally built purely on a Windows Environment. Please visit [Build Instructions page (Windows)](Docs/BuildInstructions.md) for legacy information.
+The project natively supports both Windows and Linux environments. Please visit [Build Instructions page (Windows)](Docs/BuildInstructions.md) for the MSVC build information.
 We are actively porting the project to Linux using GCC. For the new Linux GCC build instructions, please visit [Linux Build Instructions](Docs/BuildInstructions(Linux).md).
 
 # Purpose and Goals

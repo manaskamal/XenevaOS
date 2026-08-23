@@ -34,6 +34,8 @@
 #include <string.h>
 #include <Hal/AA64/aa64lowlevel.h>
 
+#if 0 // __TARGET_BOARD_RPI3__
+
 #define MAILBOX_BASE (RPI_MMIO_BASE + 0x00b880)
 #define DSI0_BASE (RPI_MMIO_BASE + 0x209000)
 #define DSI1_BASE (RPI_MMIO_BASE + 0x700000)
@@ -765,3 +767,5 @@ void AuVC4DSIInit() {
 
 	AuTextOut("[aurora]: VC4 DSI Display initialized \r\n");
 }
+
+#endif

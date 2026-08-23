@@ -283,28 +283,29 @@ aa64_store_fp:
    str q0, [x0, #(0*16)]
    str q1, [x0, #(1*16)]
    str q2, [x0, #(2*16)]
-   str q4, [x0, #(3*16)]
-   str q5, [x0, #(4*16)]
-   str q6, [x0, #(5*16)]
-   str q7, [x0, #(6*16)]
-   str q8, [x0, #(7*16)]
-   str q9, [x0, #(8*16)]
-   str q10, [x0, #(9*16)]
-   str q11, [x0, #(10*16)]
-   str q12, [x0, #(11*16)]
-   str q13, [x0, #(12*16)]
-   str q14, [x0, #(13*16)]
-   str q15, [x0, #(14*16)]
-   str q16, [x0, #(15*16)]
-   str q17, [x0, #(16*16)]
-   str q18, [x0, #(17*16)]
-   str q19, [x0, #(18*16)]
-   str q20, [x0, #(19*16)]
-   str q21, [x0, #(20*16)]
-   str q22, [x0, #(21*16)]
-   str q23, [x0, #(22*16)]
-   str q24, [x0, #(23*16)]
-   str q25, [x0, #(24*16)]
+   str q3, [x0, #(3*16)]
+   str q4, [x0, #(4*16)]
+   str q5, [x0, #(5*16)]
+   str q6, [x0, #(6*16)]
+   str q7, [x0, #(7*16)]
+   str q8, [x0, #(8*16)]
+   str q9, [x0, #(9*16)]
+   str q10, [x0, #(10*16)]
+   str q11, [x0, #(11*16)]
+   str q12, [x0, #(12*16)]
+   str q13, [x0, #(13*16)]
+   str q14, [x0, #(14*16)]
+   str q15, [x0, #(15*16)]
+   str q16, [x0, #(16*16)]
+   str q17, [x0, #(17*16)]
+   str q18, [x0, #(18*16)]
+   str q19, [x0, #(19*16)]
+   str q20, [x0, #(20*16)]
+   str q21, [x0, #(21*16)]
+   str q22, [x0, #(22*16)]
+   str q23, [x0, #(23*16)]
+   str q24, [x0, #(24*16)]
+   str q25, [x0, #(25*16)]
    str q26, [x0, #(26*16)]
    str q27, [x0, #(27*16)]
    str q28, [x0, #(28*16)]
@@ -353,5 +354,118 @@ aa64_restore_fp:
    msr fpsr, x2
    ret
 
+
+.global aa64_schedule_init
+aa64_schedule_init:
+   stp x29, x30, [sp, #-208]!
+   stp x27, x28, [sp, #16]
+   stp x25, x26, [sp, #32]
+   stp x23, x24, [sp, #48]
+   stp x21, x22, [sp, #64]
+   stp x19, x20, [sp, #80]
+   stp x17, x18, [sp, #96]
+   stp x15, x16, [sp, #112]
+   stp x13, x14, [sp, #128]
+   stp x11, x12, [sp, #144]
+   stp x9, x10, [sp, #160]
+   stp x7, x8, [sp, #176]
+   stp x5, x6, [sp, #192]
+   str x4, [sp, #200]
+
+   add x3, sp, #208
+   mov x3, sp
+   bic x3, x3, #15
+   str x3,[x0,#96]
+
+   mrs x3,ELR_EL1
+   str x3,[x0, #104]
+   mrs x3, spsr_el1
+   str x3, [x0,#112]
+
+   msr ttbr0_el1, x2
+   //msr ttbr1_el1, x0
+   isb sy
+   dsb ishst
+   tlbi vmalle1is 
+   dsb ish
+   isb 
+
+   ldp x19,x20,[x1, #0]
+   ldp x21,x22,[x1,#16]
+   ldp x23,x24,[x1,#32]
+   ldp x25,x26,[x1,#48]
+   ldp x27, x28,[x1,#64] 
+   ldp x29,x30, [x1,#80]
+
+   ldr x2, [x1, #96]
+   /* directly load the original stack 
+    * which is top of the stack
+    */
+   bic x2, x2, #15
+   mov sp, x2 
+   ldr x2,[x1,#104]
+   msr ELR_EL1,x2 
+   ldr x2, [x1,#112]
+   msr SPSR_EL1,x2
+
+   ldrb w2, [x1,#121]
+   cmp w2, #2
+   b.ne _skip_comp_sn
+   ldrb w3, [x1,#206]
+   cmp w3, #1
+   b.ne _skip_comp_sn
+   mov x30, 0
+_skip_comp_sn:
+   /* We must clear the IRQ bit from daifclr manually,
+    * because when exception is taken DAIF bits are masked */
+   ldp x2,x3, [x1,#136]
+   ldp x4,x5, [x1,#152]
+   ldp x6,x7,[x1,#168]
+   ldr x8, [x1,#184]
+ //  msr daifclr, #0x2
+   isb
+   mov x0, 1
+   ret
+
+.global aa64_restore_sp
+aa64_restore_sp:
+   ldr x2, [x0,#96]
+   bic x2, x2, #15
+   mov sp, x2
+
+   ldr x4, [sp, #200]
+   ldp x5, x6, [sp, #192]
+   ldp x7, x8, [sp, #176]
+   ldp x9, x10, [sp, #160]
+   ldp x11, x12, [sp, #144]
+   ldp x13, x14, [sp, #128]
+   ldp x15, x16, [sp, #112]
+   ldp x17, x18, [sp, #96]
+   ldp x19, x20, [sp, #80]
+   ldp x21, x22, [sp, #64]
+   ldp x23, x24, [sp, #48]
+   ldp x25, x26, [sp, #32]
+   ldp x27, x28, [sp, #16]
+   ldp x29, x30, [sp], #208
+   mov x2, sp
+   bic x2, x2, #15
+   str x2, [x0, #96]
+
+
+   ldr x2,[x0,#104]
+   msr ELR_EL1,x2 
+   ldr x2, [x0,#112]
+   msr SPSR_EL1,x2
+   ret
+
+.global aa64_signal_return
+aa64_signal_return:
+    mov x16, 24
+    svc #0
+    mov x0, x6
+    ret
+
+
+    
 
   

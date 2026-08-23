@@ -41,6 +41,9 @@
 #define  THREAD_STATE_BLOCKED   3
 #define  THREAD_STATE_SLEEP     4
 #define  THREAD_STATE_KILLABLE  5
+#define  THREAD_STATE_LEFT_IN_KERNEL 6
+#define  THREAD_STATE_PENDING_SIGNAL 7
+#define  THREAD_STATE_RUNNING 8
 
 //! Thread levels =========================================================
 //! THREAD_LEVEL_KERNEL -- This bit is set when the thread given is kernel mode
@@ -59,12 +62,29 @@ typedef struct _uentry_ {
 	uint64_t cs;
 	uint64_t ss;
 	int num_args;
-	uint64_t argvaddr;
+	uint64_t argvaddr;    /* user-space VA of argv[] page (for crt0 via stack) */
+	uint64_t argvkernel;  /* kernel-space VA of argv[] page (for EL1 writes) */
 	char** argvs;
 	uint64_t stackBase;
 }AuUserEntry;
 //#pragma pack(pop)
 
+
+#define MAX_SIGNAL_ENTRY  10
+
+
+typedef struct _gp_context_ {
+	uint64_t x[31];
+	uint64_t sp_el0;
+	uint64_t elr_el1;
+	uint64_t spsr_el1;
+}_gp_context_t;
+
+typedef struct _signal_frame_ {
+	AA64Registers regs;
+	uint64_t elr_el1;
+	uint64_t sigret_address;
+}_signal_frame_t;
 
 
 //#pragma pack(push,1)
@@ -110,9 +130,14 @@ typedef struct _aa64_task_ {
 	uint64_t fpcr;
 	uint64_t fpsr;
 	uint32_t syscallNum;
+	uint64_t sig_pending;
+	_signal_frame_t signal;
+	uint64_t start_time_us;
+	uint64_t* sigs[21];
 	struct _aa64_task_* next;
 	struct _aa64_task_* prev;
 }AA64Thread;
+
 
 //#pragma pack(pop)
 extern void AuSchedulerInitialize();
@@ -127,7 +152,9 @@ AU_EXTERN AU_EXPORT AA64Thread* AuCreateKthread(void(*entry) (uint64_t),uint64_t
  * @return Pointer to newly created thread
  */
 AU_EXTERN AU_EXPORT AA64Thread* AuCreateSubKthread(void(*entry) (uint64_t), uint64_t stack, uint64_t* pml, char* name);
+
 extern void AuScheduleThread(AA64Registers*regs);
+extern void AuScheduleNext();
 extern void AuSchedulerStart();
 extern AA64Thread* AuGetIdleThread();
 extern AA64Thread* AuGetCurrentThread();
@@ -189,6 +216,19 @@ extern void AuThreadCleanTrash(AA64Thread* t);
  * timer tick
  */
 extern uint64_t AuGetSystemTimerTick();
+
+/**
+ * @brief AuHandleSleepThreads -- handle sleep thread, 
+ * rearrange all sleep threads
+ */
+extern void AuHandleSleepThreads();
+
+/**
+ * @brief AuThreadMakeReady -- make a thread forcefully
+ * ready for next
+ * @param thread -- pointer to thread struct
+ */
+extern void AuThreadMakeReady(AA64Thread* thread);
 
 #endif
 

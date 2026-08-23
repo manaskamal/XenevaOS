@@ -42,6 +42,11 @@
 #include <Drivers/uart.h>
 #include <aucon.h>
 #include <Cred/cred.h>
+#if defined(__GNUC__) || defined(__clang__)
+#ifndef __cplusplus
+#include <stdbool.h>
+#endif
+#endif
 
 /**
 * @brief
@@ -331,7 +336,6 @@ void AuIPCPostBoxInitialise() {
 	node2->iocontrol = PostBoxIOControl;
 	dsb_sy_barrier();
 	AuDevFSAddFile(dev, "/", node2);
-	AuDevFSList(dev);
 
 	//aa64_data_cache_clean_range(node, sizeof(AuVFSNode));
 	pbox = node2;

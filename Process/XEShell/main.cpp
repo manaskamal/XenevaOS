@@ -30,10 +30,13 @@
 #include <sys/_keproc.h>
 #include <sys/_kefile.h>
 #include <sys/_ketime.h>
+#include <sys/time.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <keycode.h>
+#include <signal.h>
+#include <unistd.h>
 
 char *cmdBuf;
 int index;
@@ -61,13 +64,29 @@ void XEShellSigInterrupt(int signo) {
 	_KeProcessSleep(10);
 }
 
+void XEShellSignalTest(int signo) {
+	printf("[xeshell]: signal raised++ (SIGINT - CTRL+C)\r\n");
+}
+
+int timercount;
+void XEShellTimerCallback(int signo) {
+	printf("[xeshell]: signal raised++ (ALARM) tick : %d\r\n", timercount);
+	timercount++;
+//	alarm(3);
+}
+
 /*Write the current directory string
  * for now, only root directory is
  * current directory '/'
  */
 void XEShellWriteCurrentDir() {
 	if (_draw_shell_curdir){
+		//OSC 133;A = prompt start
+		printf("\033]133;A\007");
 		printf("\033[32m\033[40mXEShell /$:\033[37m\033[40m");
+		/* OSC 133;B = prompt end, input starts here*/
+		printf("\033]133;B\007");
+		fflush(stdout);
 		_draw_shell_curdir = false;
 	}
 }
@@ -130,7 +149,7 @@ void XEShellSpawn(char* string) {
 		 * shell's file descriptors */
 		int file = _KeOpenFile(filename, FILE_OPEN_READ_ONLY);
 		if (file == -1){
-			printf("\n No command or program found \n");
+			printf("\n No command or program found %s\n", filename);
 			return;
 		}
 		int proc_id = _KeCreateProcess(0, string);
@@ -187,11 +206,11 @@ void XEShellReadLine() {
 			index++;
 			return;
 		}
-		_KePrint("xeshell : %c \r\n", c);
 		printf("%c", c);
 		cmdBuf[index++] = c;
 	}
 	cmdBuf[index] = '\0';
+	fflush(stdout);
 }
 
 /*
@@ -467,11 +486,58 @@ int main(int argc, char* arv[]){
 	_sig_handled = false;
 	job = 0;
 	index = 0;
+	timercount = 0;
 	_XESetEnvironmentVariable("PWD", currentDirectory, 0);
+	_KeSetSignal(SIGINT, XEShellSignalTest);
+	signal(SIGALRM, XEShellTimerCallback);
+	//alarm(3);
+#if 0
+	struct itimerval one_shot;
+	one_shot.it_value.tv_sec = 2;
+	one_shot.it_value.tv_usec = 0;
+	one_shot.it_interval.tv_sec = 0;
+	one_shot.it_interval.tv_usec = 0;
+
+	printf("Arming one-shot timer for 2s....\r\n");
+	if (setitimer(ITIMER_REAL, &one_shot, NULL) < 0) {
+		printf("settimer error \r\n");
+	}
+
+	//_KeProcessSleep(6);
+	sleep(6);
+	printf("after one-shot test: tickcount: %d (expected 1) \r\n", timercount);
+
+	timercount = 0;
+	struct itimerval periodic;
+	periodic.it_value.tv_sec = 1;
+	periodic.it_value.tv_usec = 0;
+	periodic.it_interval.tv_sec = 1;
+	periodic.it_interval.tv_usec = 0;
+
+	printf("arming periodic timer (1s interval)...\r\n");
+	if (setitimer(ITIMER_REAL, &periodic, NULL) < 0) {
+		printf("settimer failed here \r\n");
+	}
+	//_KeProcessSleep(6);
+	sleep(10);
+	printf("after periodic-test : tick count %d, (expected ~5)\r\n", timercount);
+
+	struct itimerval curr;
+	if (getitimer(ITIMER_REAL, &curr) == 0) {
+		printf("current timer : value=%ld.%06ds interval=%ld.%06lds\r\n", (long)curr.it_value.tv_sec,
+			(long)curr.it_value.tv_usec, (long)curr.it_interval.tv_sec, (long)curr.it_interval.tv_usec);
+	}
+
+	struct itimerval disarm;
+	memset(&disarm, 0, sizeof(itimerval));
+	setitimer(ITIMER_REAL, &disarm, NULL);
+	timercount = 0;
+	//_KeProcessSleep(6);
+#endif
 	while (1){
 		XEShellWriteCurrentDir();
 		XEShellReadLine();	
 		XEShellProcessLine();
-		_KeProcessSleep(2);
+		_KeProcessSleep(60);
 	}
 }

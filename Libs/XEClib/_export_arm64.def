@@ -33,6 +33,7 @@ EXPORTS
     _KeSetFileToProcess
     _KeProcessHeapUnmap
     _KeSendSignal
+    _KeSetSignal
     _KeGetCurrentTime
     _KeOpenDir
     _KeReadDir
@@ -62,3 +63,10 @@ EXPORTS
     longjmp
     _KeGetCurrentUS
     _KeGetCurrentMS
+    _KeSetAlarm
+    _KeGetITimer
+    _KeSetITimer
+    _KeGetNumProcessCount
+    _KeProcessFetch
+    _KeSetWalltime
+    _KeGetWalltime

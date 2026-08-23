@@ -35,6 +35,9 @@
 #define TERMINAL_MAX_COLS 256
 #define TERMINAL_MAX_ROWS 128
 
+#define TERMINAL_HISTORY_MAX 100
+
+
 typedef struct _cell_ {
 	uint8_t c;
 	uint32_t bg;
@@ -42,11 +45,20 @@ typedef struct _cell_ {
 	uint8_t flags;
 }TermCell;
 
+typedef struct _term_history_ {
+	char entries[TERMINAL_HISTORY_MAX][256];
+	int count;
+	int head;
+	int browse;
+}TerminalHistory;
+
 typedef struct {
 	TermCell cells[TERMINAL_MAX_ROWS][TERMINAL_MAX_COLS];
 	int cols, rows;
 	int cursorX, cursorY;
 	int lastCursorX, lastCursorY;
+	int inputStartX, inputStartY;
+	int savedCursorX, savedCursorY;
 	int cellW, cellH;
 	int baseine;
 	int originX, originY;
@@ -54,6 +66,15 @@ typedef struct {
 	uint32_t defaultBG;
 	int scrollTop;
 	int scrollBot;
+	TerminalHistory history;
+	char inputBuffer[256];
+	char inputSaved[256];
+	int intputLen;
+	int lastCellXClicked;
+	int lastCellYClicked;
+	volatile bool blink_visible;
+	bool scrolling;
+	bool cursor_hide;
 }Terminal;
 
 #endif

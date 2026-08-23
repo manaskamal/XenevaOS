@@ -55,8 +55,10 @@ jobs:
           Expand-Archive -Path Resources/nasmprops.zip -DestinationPath nasmprops -Force
           $vsPath = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property installationPath
           $vcPath = Join-Path $vsPath "MSBuild\Microsoft\VC"
-          $customizationsPath = Get-ChildItem -Path $vcPath -Filter "BuildCustomizations" -Directory -Recurse | Select-Object -ExpandProperty FullName -First 1
-          Copy-Item nasmprops\* -Destination $customizationsPath -Force -Recurse
+          $customizationsPaths = Get-ChildItem -Path $vcPath -Filter "BuildCustomizations" -Directory -Recurse | Select-Object -ExpandProperty FullName
+          foreach ($path in $customizationsPaths) {
+              Copy-Item nasmprops\* -Destination $path -Force -Recurse
+          }
 
       - name: Build Solution (Aurora.sln)
         run: |
