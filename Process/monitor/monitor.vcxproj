@@ -178,7 +178,7 @@
       <GenerateDebugInformation>
       </GenerateDebugInformation>
       <OutputFile>..\..\Build\monitor.exe</OutputFile>
-      <AdditionalLibraryDirectories>..\..\ARM64\Debug;..\..\Libs\XECrt;$(SolutionDir)Build;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)..\Build\;..\..\ARM64\Debug;..\..\Libs\XECrt</AdditionalLibraryDirectories>
       <AdditionalDependencies>XEClib.lib; xecrt.lib; </AdditionalDependencies>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
       <EnableUAC>false</EnableUAC>
@@ -199,7 +199,7 @@
       <AdditionalOptions>/filealign:4096 %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
-      <Command>copy "$(SolutionDir)Build\$(TargetName).exe" "M:\$(TargetName).exe"</Command>
+      <Command>copy "$(SolutionDir)..\Build\$(TargetName).exe" "M:\$(TargetName).exe"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">

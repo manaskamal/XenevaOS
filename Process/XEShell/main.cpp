@@ -66,6 +66,11 @@ void XEShellSigInterrupt(int signo) {
 
 void XEShellSignalTest(int signo) {
 	printf("[xeshell]: signal raised++ (SIGINT - CTRL+C)\r\n");
+	_KePrint("Signo : %d \r\n", signo);
+	if (job > 0) {
+		_KeSendSignal(job, signo);
+		job = 0;
+	}
 }
 
 int timercount;

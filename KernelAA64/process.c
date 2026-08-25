@@ -53,13 +53,14 @@
 #include <timer.h>
 #include <clean.h>
 #include <Cap/capability.h>
+#include <timer.h>
 
 
 static int pid = 1;
 AuProcess* proc_first;
 AuProcess* proc_last;
 AuProcess* root_proc;
-/*
+/**
  * @brief AuAddProcess -- adds process to kernel data structure
  * @param root -- pointer to the root process
  * @param proc -- process to add
@@ -80,7 +81,7 @@ void AuAddProcess(AuProcess* parent, AuProcess* proc) {
 	//proc->parent = parent;
 }
 
-/*
+/**
  * @brief AuRemoveProcess -- removes a process from the process
  * data structure
  * @param parent -- pointer to the parent process
@@ -106,7 +107,7 @@ void AuRemoveProcess(AuProcess* parent, AuProcess* proc) {
 	kfree(proc);
 }
 
-/*
+/**
  * @brief AuProcessFindByPID -- finds a process by its pid
  * @param parent -- parent process to search in
  * @param pid -- process id to find
@@ -119,7 +120,7 @@ AuProcess* AuProcessFindByPID(AuProcess* proc, int pid) {
 	return NULL;
 }
 
-/*
+/**
 * @brief AuProcessFindByThread -- finds a process by its main thread
 * @param parent -- parent process to search in
 * @param thread -- thread to find
@@ -133,7 +134,7 @@ AuProcess* AuProcessFindByThread(AuProcess* proc, AA64Thread* thread) {
 	return NULL;
 }
 
-/*
+/**
  * @brief AuProcessFindPID -- finds a process by its pid from
  * the process tree
  * @param pid -- process id of the process
@@ -147,7 +148,7 @@ AuProcess* AuProcessFindPID(int pid) {
 	return NULL;
 }
 
-/*
+/**
  * @brief AuProcessFindThread -- finds a process by its
  * main thread
  * @param thread -- pointer to  main thread
@@ -162,7 +163,7 @@ AuProcess* AuProcessFindThread(AA64Thread* thread) {
 	return NULL;
 }
 
-/*
+/**
  * @brief AuProcessFindSubThread -- find a process from its
  * sub threads which contain a pointer to its process
  * slot
@@ -173,7 +174,7 @@ AuProcess* AuProcessFindSubThread(AA64Thread* thread) {
 	return proc;
 }
 
-/*
+/**
  * @brief AuAllocateProcessID -- allocates a new
  * pid and return
  */
@@ -185,7 +186,7 @@ int AuAllocateProcessID() {
 
 
 #define USER_STACK_FLAG  (1ULL<<54 | 2ULL<<6 | 1ULL<<10 | PTE_NORMAL_MEM | 1)
-/*
+/**
  * @brief CreateUserStack -- creates new user stack
  * @param proc -- Pointer to process slot
  * @param cr3 -- pointer to the address space where to
@@ -209,7 +210,7 @@ uint64_t* CreateUserStack(AuProcess* proc, uint64_t* cr3) {
 	return addr;
 }
 
-/*
+/**
  * @brief CreateSubUserStack -- creates new user stack
  * @param proc -- Pointer to process slot
  * @param cr3 -- pointer to the address space where to
@@ -233,7 +234,7 @@ uint64_t* CreateSubUserStack(AuProcess* proc, uint64_t* cr3) {
 	uint64_t* addr = (uint64_t*)(location + PROCESS_USER_STACK_SZ);
 	return addr;
 }
-/*
+/**
 * @brief AuCreateProcessSlot -- creates a blank process slot
 * @param parent -- pointer to the parent process
 */
@@ -289,7 +290,7 @@ AuProcess * AuCreateProcessSlot(AuProcess * parent, char* name) {
 	return proc;
 }
 
-/*
+/**
  * @brief AuProcessGetFileDesc -- returns a empty file descriptor
  * from process slot, 0, 1 & 2 are reserved for terminal
  * output
@@ -383,7 +384,7 @@ void AuProcessFreeKeResource(AA64Thread* thr) {
 
 	/* cleanup user related informations */
 
-	//AuSoundRemoveDSP(thr->id);
+	AuSoundRemoveDSP(thr->thread_id);
 
 	/* close allocated signals */
 	//AuSignalRemoveAll(thr);
@@ -392,8 +393,10 @@ void AuProcessFreeKeResource(AA64Thread* thr) {
 	PostBoxDestroyByID(thr->thread_id);
 
 	/* destroy allocated timer */
-	//AuTimerDestroy(thr->id);
-
+	int timer_id = AuGetTimerByThread(thr);
+	if (timer_id != -1) 
+		AuroraTimerCancel(timer_id);
+	
 	/* cleanup all network resources */
 
 }
@@ -475,8 +478,8 @@ void AuProcessExit(AuProcess* proc, BOOL schedulable) {
 	}
 }
 
-/*
- * AuGetKillableProcess -- returns a killable process
+/**
+ * @brief AuGetKillableProcess -- returns a killable process
  * @param proc -- process to kill
  */
 AuProcess* AuGetKillableProcess() {

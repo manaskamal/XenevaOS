@@ -42,11 +42,11 @@
 #define HIGHS (ONES * (UCHAR_MAX/2+1))
 #define HASZERO(x) ((x)-ONES & ~(x) & HIGHS)
 
-#ifdef _MSC_VER
-#pragma function(memset)
-#endif
+//#ifdef _MSC_VER
+//#pragma function(memset)
+//#endif
 
-void* _cdecl memset(void *targ, unsigned char val, size_t len){
+void* _cdecl memset(void *targ, int val, size_t len){
 	/*uint8_t *t = (uint8_t*)targ;
 	while (len--)
 		*t++ = val;*/
@@ -80,51 +80,51 @@ void* _cdecl memset(void *targ, unsigned char val, size_t len){
 }
 
 
-void memset(void *targ, unsigned char val, uint32_t len){
-	/*uint8_t *t = (uint8_t*)targ;
-	while (len--)
-		*t++ = val;*/
-	uint8_t* t = (uint8_t*)targ;
-	uint8_t byte_val = (uint8_t)val;
+//void memset(void *targ, unsigned char val, uint32_t len){
+//	/*uint8_t *t = (uint8_t*)targ;
+//	while (len--)
+//		*t++ = val;*/
+//	uint8_t* t = (uint8_t*)targ;
+//	uint8_t byte_val = (uint8_t)val;
+//
+//	while (len > 0 && ((uintptr_t)t & 7) != 0) {
+//		*t++ = byte_val;
+//		len--;
+//	}
+//
+//	if (len >= 8) {
+//		uint64_t bulk_val = byte_val;
+//		bulk_val |= (bulk_val << 8);
+//		bulk_val |= (bulk_val << 16);
+//		bulk_val |= (bulk_val << 32);
+//
+//		uint64_t* t64 = (uint64_t*)t;
+//		uint32_t blocks = len / 8;
+//
+//		while (blocks--)
+//			*t64++ = bulk_val;
+//
+//		t = (uint8_t*)t64;
+//		len %= 8;
+//	}
+//
+//	while (len--)
+//		*t++ = byte_val;
+//}
 
-	while (len > 0 && ((uintptr_t)t & 7) != 0) {
-		*t++ = byte_val;
-		len--;
-	}
 
-	if (len >= 8) {
-		uint64_t bulk_val = byte_val;
-		bulk_val |= (bulk_val << 8);
-		bulk_val |= (bulk_val << 16);
-		bulk_val |= (bulk_val << 32);
-
-		uint64_t* t64 = (uint64_t*)t;
-		uint32_t blocks = len / 8;
-
-		while (blocks--)
-			*t64++ = bulk_val;
-
-		t = (uint8_t*)t64;
-		len %= 8;
-	}
-
-	while (len--)
-		*t++ = byte_val;
-}
-
-
-#ifdef _MSC_VER
-#pragma function(memcmp)
-#endif
+//#ifdef _MSC_VER
+//#pragma function(memcmp)
+//#endif
 int memcmp(const void *vl, const void *vr, size_t n){
 	const unsigned char *l = (unsigned char*)vl, *r = (unsigned char*)vr;
 	for (; n && *l == *r; n--, l++, r++);
 	return n ? *l - *r : 0;
 }
 
-#ifdef _MSC_VER
-#pragma function(memcpy)
-#endif
+//#ifdef _MSC_VER
+//#pragma function(memcpy)
+//#endif
 
 void *memcpy(void *dest, void *src, size_t len) {
 	uint8_t* t = (uint8_t*)dest;
@@ -262,9 +262,9 @@ int strcmp(const char* str1, const char* str2){
 	return res;
 }
 
-#ifdef _MSC_VER
-#pragma function(strcpy)
-#endif
+//#ifdef _MSC_VER
+//#pragma function(strcpy)
+//#endif
 
 char *strcpy(char* __restrict s1, const char * __restrict s2){
 	char *s1_p = s1;
@@ -272,9 +272,9 @@ char *strcpy(char* __restrict s1, const char * __restrict s2){
 	return s1_p;
 }
 
-#ifdef _MSC_VER
-#pragma function(strlen)
-#endif
+//#ifdef _MSC_VER
+//#pragma function(strlen)
+//#endif
 
 size_t strlen(const char* s){
 	const char* a = s;

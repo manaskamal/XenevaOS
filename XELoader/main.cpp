@@ -318,10 +318,10 @@ extern "C" void main(int argc, char* argv[]) {
 	/* register the default signal handler to
 	 * all signal
 	 */
-#ifdef ARCH_X64
-	for (int i = 0; i < NUMSIGNALS; i++)
-		_KeSetSignal(i + 1, DefaultSignalHandler);
-#endif
+
+	//for (int i = 0; i < NUMSIGNALS; i++)
+	//	_KeSetSignal(i + 1, DefaultSignalHandler);
+
 
 	entrypoint e = (entrypoint)entry_addr;
 

@@ -52,7 +52,7 @@ extern uint64_t read_sp_el1();
  * @param file -- file path
  * @param mode -- mode of the file
  */
-int OpenFile(char* filename, int mode) { 
+int OpenFile(char* filename, int mode) {
 	AA64Thread* current_thr = AuGetCurrentThread();
 	if (!current_thr)
 		return -1;
@@ -74,10 +74,10 @@ int OpenFile(char* filename, int mode) {
 	if (AuCredCheckPermissions(file, &current_proc->creds)) {
 		if (!file)
 			return -1;
-		AuTextOut("[aurora]: file : %s is not accessible to this user with uid : %d \r\n", 
+		AuTextOut("[aurora]: file : %s is not accessible to this user with uid : %d \r\n",
 			file->filename, current_proc->creds.uid);
-		if (!(file->flags & FS_FLAG_CACHED)||
-			!(file->flags & FS_FLAG_DEVICE)||
+		if (!(file->flags & FS_FLAG_CACHED) ||
+			!(file->flags & FS_FLAG_DEVICE) ||
 			!(file->flags & FS_FLAG_FILE_SYSTEM))
 			kfree(file);
 		return -1;
@@ -102,29 +102,29 @@ int OpenFile(char* filename, int mode) {
 	if (file->flags & FS_FLAG_PIPE)
 		UARTDebugOut("Opening file -> %s \r\n", file->filename);
 	if (file->open)
-		file->open(file,NULL);
+		file->open(file, NULL);
 	current_proc->fds[fd] = file;
-CapRights rights = CAP_SEEK;
+	CapRights rights = CAP_SEEK;
 
-if (mode & FILE_OPEN_READ_ONLY)
-    rights |= CAP_READ | CAP_WRITE;
+	if (mode & FILE_OPEN_READ_ONLY)
+		rights |= CAP_READ | CAP_WRITE;
 
-if (mode & (FILE_OPEN_WRITE | FILE_OPEN_CREAT))
-    rights |= CAP_WRITE;
+	if (mode & (FILE_OPEN_WRITE | FILE_OPEN_CREAT))
+		rights |= CAP_WRITE;
 
-/* Preserve current default behaviour */
-if (mode == 0)
-    rights |= CAP_READ;
+	/* Preserve current default behaviour */
+	if (mode == 0)
+		rights |= CAP_READ;
 
-if (rights & CAP_READ)
-    BPrintK(BORDOISILA_WARN, "Creating rights has read %s, %d, fname: %s\r\n", current_proc->name, fd, filename);
+	if (rights & CAP_READ)
+		BPrintK(BORDOISILA_WARN, "Creating rights has read %s, %d, fname: %s\r\n", current_proc->name, fd, filename);
 
-BordoisilaCapCreate(
-    current_proc,
-    fd,
-    file,
-    CAP_OBJ_FILE,
-    rights);
+	BordoisilaCapCreate(
+		current_proc,
+		fd,
+		file,
+		CAP_OBJ_FILE,
+		rights);
 
 
 	//_setdebug = 1;
@@ -198,7 +198,7 @@ size_t ReadFile(int fd, void* buffer, size_t length) {
 	
 	AuVFSNode* file = current_proc->fds[fd];
 	uint64_t* aligned_buffer = (uint64_t*)buffer;
-
+	
 	//SeTextOut("Reading from file -> %d -> %x \r\n", fd, file);
 	if (!file) {
 		return 0;
@@ -262,8 +262,10 @@ size_t WriteFile(int fd, void* buffer, size_t length) {
 	uint8_t* aligned_buffer = (uint8_t*)buffer;
 	if (!file)
 		return 0;
-	if (!BordoisilaCapCheckRights(current_proc, fd, CAP_WRITE))
-    		return 0;
+	
+	if (!BordoisilaCapCheckRights(current_proc, fd, CAP_WRITE)) {
+		return 0;
+	}
 	size_t write_bytes = 0;
 	size_t ret_bytes;
 	/* every general file will contain its
@@ -293,6 +295,7 @@ size_t WriteFile(int fd, void* buffer, size_t length) {
 		if (file->write)
 			return file->write(file, file, (uint64_t*)buffer, length);
 	}
+
 	return 0;
 }
 /**

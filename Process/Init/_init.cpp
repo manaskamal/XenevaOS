@@ -255,6 +255,7 @@ extern "C" void main(int argc, char* argv[]) {
 	else
 		_KeCredChangeID(pipe,0, ggid_misc_world);
 
+
 	/** allocate a memory for init request msgs */
 	char* init_msg_buff = (char*)malloc(sizeof(InitRequestMsg) + 1);
 	memset(init_msg_buff, 0, sizeof(InitRequestMsg) + 1);
@@ -273,6 +274,7 @@ extern "C" void main(int argc, char* argv[]) {
 		_KeSetUID(proc, UAC_DEAMONS);
 		_KeSetGID(proc, UAC_DEAMONS);
 		_KeCredAddSGroup(proc, ggid_misc_world);
+		_KeCredAddSGroup(proc, GROUP_NETWORK);
 		_KeProcessSleep(500);
 	}
 

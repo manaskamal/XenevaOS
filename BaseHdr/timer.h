@@ -128,5 +128,15 @@ extern int AuTimerSetITimer(AA64Thread* thr, int which, const itimerval_t* newva
 extern int AuTimerGetITimer(AA64Thread* thr, int which, itimerval_t* curr_value);
 extern void AuSetWalltime(int64_t sec, int64_t nsec);
 extern void AuGetWalltime(int64_t* out_sec, int64_t* out_ns);
+/**
+ * @brief AuGetTimerByThread -- checks and return a timer id
+ * respective to its thread
+ */
+extern int AuGetTimerByThread(void* param);
+/**
+ * @brief AuroraTimerCancel -- cancel a timer
+ * @param tNum -- timer number
+ */
+extern void AuroraTimerCancel(int tNum);
 
 #endif

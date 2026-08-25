@@ -339,6 +339,9 @@
     <Filter Include="Include\Strings">
       <UniqueIdentifier>{7c046fea-8fe9-440d-94c7-346f981c2167}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Sync">
+      <UniqueIdentifier>{08fac635-2fb4-4ee0-9dec-51db0b5c2577}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="Hal\aa64vector.s">
@@ -355,6 +358,9 @@
     </CustomBuild>
     <CustomBuild Include="Board\Virt\virt_power.s">
       <Filter>Board\Virt</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Hal\aa64spinlock.s">
+      <Filter>Hal</Filter>
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>

@@ -391,3 +391,17 @@ static void AuWalltimeUpdate() {
 	//lock release
 }
 
+
+/**
+ * @brief AuGetTimerByThread -- checks and return a timer id
+ * respective to its thread
+ */
+int AuGetTimerByThread(void* param) {
+	for (int i = 0; i < AURORA_MAX_TIMER; i++) {
+		if (_timers[i].param == param) {
+			return i;
+		}
+	}
+
+	return -1;
+}

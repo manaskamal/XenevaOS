@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <sys/_keproc.h>
+#include <signal.h>
 
 
 #include <unistd.h>
@@ -87,6 +88,11 @@ static int RenderFrame(int prev_row_count) {
     return num_process;
 }
 
+void SignalHandler(int signo) {
+    _KePrint("Monitor received signal \r\n");
+    _KeProcessExit();
+}
+
 int DisplayProcessListLive() {
     printf(CLR_SCREEN CUR_HOME CUR_HIDE); /* one-time full clear at startup */
 
@@ -108,5 +114,7 @@ int DisplayProcessListLive() {
 }
 
 int main() {
+    signal(SIGINT, SignalHandler);
+    signal(SIGKILL, SignalHandler);
     DisplayProcessListLive();
 }

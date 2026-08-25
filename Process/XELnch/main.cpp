@@ -273,7 +273,7 @@ int main(int argc, char* arv[]){
 	ChFontSetSize(app->baseFont, 12);
 
 	/** open init pipe, for admin requests */
-	_initpipe = _KeOpenFile("/pipe/init", FILE_OPEN_READ_ONLY);
+	_initpipe = _KeOpenFile("/pipe/init", FILE_OPEN_READ_ONLY | FILE_OPEN_WRITE);
 	if (_initpipe == -1)
 		_KePrint("[XELaunch]: failed to initialize the pipe \r\n");
 
@@ -312,7 +312,6 @@ int main(int argc, char* arv[]){
 	LauncherConfigInitialise();
 	LauncherSetupByConfigFile();
 
-	_KePrint("Launcher config initialised \r\n");
 
 	win->color = LAUNCHER_BACKGROUND_COLOR;//0xCCBBBBBB;
 	win->ChWinPaint = XELauncherPaint;
@@ -343,7 +342,6 @@ int main(int argc, char* arv[]){
 	restart->base.ChActionHandler = xe_restart_action;
 	ChWindowAddWidget(win, (ChWidget*)restart);
 
-	_KePrint("Launcher paingint \r\n");
 	ChWindowPaint(win);
 
 	PostEvent e;
