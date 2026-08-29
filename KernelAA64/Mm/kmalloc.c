@@ -47,7 +47,6 @@ static tlsf_pool_t* g_kheap = NULL;
 static Spinlock* g_heap_lock = NULL;
 
 /* ---- Page-level allocation (brk-style) ---- */
-
 void* au_request_page(int pages) {
 	if (pages <= 0)
 		return NULL;
@@ -63,11 +62,11 @@ void* au_request_page(int pages) {
 
 	return (void*)page_addr;
 }
-
+// This shit is not good, mainly cause fixed size alloc. look into better way to do this. cant have a second buddy alloc... --axiss
 /*
- * au_free_page -- frees up contiguous pages
- * @ptr -- starting virtual address
- * @pages -- number of pages
+ * au_free_page frees up contiguous pages
+ * @ptr starting virtual address
+ * @pages number of pages
  */
 int au_free_page(void* ptr, int pages) {
 	if (!ptr || pages <= 0)
@@ -116,7 +115,7 @@ void* kmalloc(unsigned int size) {
 	void* ptr = tlsf_malloc(g_kheap, size);
 
 	if (!ptr) {
-		/* Pool exhausted — grow by 32 pages (128 KiB) and retry */
+		/* Pool exhausted so grow by 32 pages (128 KiB) and retry */
 		size_t more_pages = 32;
 		void* more_mem = au_request_page(more_pages);
 		if (more_mem) {
@@ -125,7 +124,7 @@ void* kmalloc(unsigned int size) {
 		ptr = tlsf_malloc(g_kheap, size);
 	}
 
-	AuReleaseSpinlock(g_heap_lock);
+	AuReleaseSpinlock(g_heap_lock); //might have to rewrite spinlock, right now its basic to prevent blocking at early stage of kernel init, but should be more robust for SMP safety --axiss
 
 	return ptr;
 }

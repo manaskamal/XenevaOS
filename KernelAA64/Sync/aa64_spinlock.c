@@ -32,6 +32,7 @@
 #include <stdbool.h>
 #endif
 //it is three am, please just work, ill expand this to be reentrant and SMP safe later --axiss
+//needs more stress testing, but it booted, 3:42am
 /* Low-level AArch64 assembly primitives */
 extern void aa64_spinlock_acquire(uint32_t* lock);
 extern void aa64_spinlock_release(uint32_t* lock);

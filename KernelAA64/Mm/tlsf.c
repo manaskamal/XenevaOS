@@ -26,6 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 //can we all agree to use clang-format, and something akin to clang-tidy to maintain code quality and style? --axiss
+//also, comments are autogen by the buildproc. im adding on wherever needed.
 #include <Mm/tlsf.h>
 #include <stdint.h>
 #include <string.h>
