@@ -34,7 +34,6 @@
 #include "lowlevel.h"
 #include <Board/imx8mp/imx8mp_uart.h>
 
-
 uint64_t* l0_table_base;
 
 void PRINTTCR(uint64_t rtc) {
@@ -68,9 +67,9 @@ size_t pdpt_index(uint64_t virt) {
 }
 void XEMapMMIO(uint64_t* l1_table, uint64_t va, uint64_t pa) {
 	uint64_t l1_index = pdpt_index(va);
-	l1_table[l1_index] = (pa & ~((1ULL << 30) - 1)) |
-		PAGE_TABLE_ENTRY_PRESENT | PAGE_TABLE_ENTRY_BLOCK | PAGE_TABLE_ENTRY_AP_RW |
-		PAGE_TABLE_ENTRY_SH | PAGE_TABLE_ENTRY_DEVICE | PAGE_TABLE_ENTRY_AF;
+	l1_table[l1_index] = (pa & ~((1ULL << 30) - 1)) | PAGE_TABLE_ENTRY_PRESENT |
+						 PAGE_TABLE_ENTRY_BLOCK | PAGE_TABLE_ENTRY_AP_RW | PAGE_TABLE_ENTRY_SH |
+						 PAGE_TABLE_ENTRY_DEVICE | PAGE_TABLE_ENTRY_AF;
 	dsb_ish();
 	isb_flush();
 }
@@ -80,7 +79,6 @@ extern "C" void tlb_flush_all();
  * XEPagingInitialize -- initialize paging
  */
 void XEPagingInitialize() {
-	
 	uint64_t previousBase = 0;
 	if (_getCurrentEL() == 1)
 		previousBase = read_ttbr0_el1();
@@ -102,7 +100,7 @@ void XEPagingInitialize() {
 			l0_table_base[i] = l0_el2_base[i];
 		}
 
-	/*	for (int i = 0; i < 16 * 1024 * 1024 / 0x1000; i++) {
+		/*	for (int i = 0; i < 16 * 1024 * 1024 / 0x1000; i++) {
 			uint64_t* l1_table = (uint64_t*)(l0_el2_base[pml4_index(0x3F000000 + i * 0x1000)] & ~0xFFFULL);
 			XEMapMMIO(l1_table, 0x3F000000 + i * 0x1000, 0x3F000000 + i * 0x1000);
 		}*/
@@ -110,7 +108,9 @@ void XEPagingInitialize() {
 	}
 
 #ifdef __TARGET_BOARD_IMX8MP_VERDIN_DAHLIA__
-	XEMapMMIO((uint64_t*)l0_table_base[pml4_index(IMX8MP_UART3_BASE_ADDRESS)], IMX8MP_UART3_BASE_ADDRESS, IMX8MP_UART3_BASE_ADDRESS);
+	XEMapMMIO((uint64_t*)l0_table_base[pml4_index(IMX8MP_UART3_BASE_ADDRESS)],
+			  IMX8MP_UART3_BASE_ADDRESS,
+			  IMX8MP_UART3_BASE_ADDRESS);
 #endif
 
 	if (_getCurrentEL() != 1) {
@@ -118,11 +118,10 @@ void XEPagingInitialize() {
 
 		XEGuiPrint("TCR1 : %x \r\n", tcr1);
 		write_tcr_el1(tcr1);
-	}
-	else {
-		uint64_t tcr = ((16UL << 0) | (0UL << 14) | (0b11UL << 12) |
-			(0b01UL << 10) | (0b01UL << 8) | (16UL << 16) | (0b10UL << 30) | (0b11UL << 28) |
-			(0b01UL << 26) | (0b01UL << 24) | (4ULL << 32)); 
+	} else {
+		uint64_t tcr = ((16UL << 0) | (0UL << 14) | (0b11UL << 12) | (0b01UL << 10) |
+						(0b01UL << 8) | (16UL << 16) | (0b10UL << 30) | (0b11UL << 28) |
+						(0b01UL << 26) | (0b01UL << 24) | (4ULL << 32));
 		write_tcr_el1(tcr);
 	}
 
@@ -135,9 +134,9 @@ void XEPagingInitialize() {
 
 	//if (required_sctrl) {
 	uint64_t sctlr = (1UL << 0) | (1UL << 2) | (1UL << 12) | (1UL << 23) | (1UL << 28) |
-			(1UL << 29) | (1UL << 20) | (1UL << 7);
+					 (1UL << 29) | (1UL << 20) | (1UL << 7);
 	write_sctlr_el1(sctlr);
-		//XEPrintf(const_cast<wchar_t*>(L"SCTLR_EL1 setup completed \n"));
+	//XEPrintf(const_cast<wchar_t*>(L"SCTLR_EL1 setup completed \n"));
 	//}
 
 	isb_flush();
@@ -157,9 +156,7 @@ void XEPagingInitialize() {
 	XEGuiPrint("Paging initialized \r\n");
 	/*if (_getCurrentEL() != 1) 
 		l0_table_base = (uint64_t*)read_ttbr0_el2();*/
-	
 }
-
 
 void XEPagingInit2() {
 	uint64_t* l0_table = (uint64_t*)XEPmmngrAllocate();
@@ -171,7 +168,8 @@ void XEPagingInit2() {
 
 	for (int i = 0; i < 512; ++i) {
 		uint64_t addr = (uint64_t)i << 30;
-		l1_table[i] = (addr | PAGE_TABLE_ENTRY_PRESENT | PAGE_TABLE_ENTRY_BLOCK | PAGE_TABLE_ENTRY_AF | PAGE_TABLE_ENTRY_SH | (1ULL << 2));
+		l1_table[i] = (addr | PAGE_TABLE_ENTRY_PRESENT | PAGE_TABLE_ENTRY_BLOCK |
+					   PAGE_TABLE_ENTRY_AF | PAGE_TABLE_ENTRY_SH | (1ULL << 2));
 		isb_flush();
 	}
 
@@ -180,14 +178,13 @@ void XEPagingInit2() {
 	XEMapMMIO(l1_table, IMX8MP_UART3_BASE_ADDRESS, IMX8MP_UART3_BASE_ADDRESS);
 #endif
 
-	uint64_t tcr1 = ((16UL << 0) | (0UL << 14) | (0b11UL << 12) |
-		(0b01UL << 10) | (0b01UL << 8) | (16UL << 16) | (0b10UL << 30) | (0b11UL << 28) |
-		(0b01UL << 26) | (0b01UL << 24) | (4ULL << 32));
+	uint64_t tcr1 = ((16UL << 0) | (0UL << 14) | (0b11UL << 12) | (0b01UL << 10) | (0b01UL << 8) |
+					 (16UL << 16) | (0b10UL << 30) | (0b11UL << 28) | (0b01UL << 26) |
+					 (0b01UL << 24) | (4ULL << 32));
 
 	XEGuiPrint("TCR1 : %x \r\n", tcr1);
 	uint64_t mair = 0x000000000044ff00;
 	write_mair_el1(mair);
-
 
 	write_tcr_el1(tcr1);
 
@@ -197,8 +194,8 @@ void XEPagingInit2() {
 
 	l0_table_base = l0_table;
 
-	uint64_t sctlr = (1ULL << 0) | (1ull << 2) | (1ull << 12) | (1ull << 23) |
-		(1ull << 28) | (1ull << 29) | (1ull << 20) | (1ull << 7);
+	uint64_t sctlr = (1ULL << 0) | (1ull << 2) | (1ull << 12) | (1ull << 23) | (1ull << 28) |
+					 (1ull << 29) | (1ull << 20) | (1ull << 7);
 	write_sctlr_el1(sctlr);
 	isb_flush();
 }
@@ -216,7 +213,6 @@ void XEPagingCopy() {
 
 	l0_table_base = (uint64_t*)previousBase;
 }
-
 
 /*
  * XEPagingMap -- maps a physical address to virtual address
@@ -236,37 +232,37 @@ void XEPagingMap(uint64_t virtualAddr, uint64_t physAddr) {
 	if (!(l0_table_base[l0_index] & 1)) {
 		l1_table = (uint64_t*)XEPmmngrAllocate();
 		memset(l1_table, 0, PAGESIZE);
-		l0_table_base[l0_index] = ((uint64_t)l1_table & ~0xFFFUL)| PAGE_TABLE_ENTRY_PRESENT | PAGE_TABLE_ENTRY_PAGE | PAGE_TABLE_ENTRY_AF;
+		l0_table_base[l0_index] = ((uint64_t)l1_table & ~0xFFFUL) | PAGE_TABLE_ENTRY_PRESENT |
+								  PAGE_TABLE_ENTRY_PAGE | PAGE_TABLE_ENTRY_AF;
 		isb_flush();
 		dsb_ish();
-	}
-	else {
+	} else {
 		l1_table = (uint64_t*)(l0_table_base[l0_index] & ~0xFFFULL);
 	}
 
 	if (!(l1_table[l1_index] & 1)) {
 		l2_table = (uint64_t*)XEPmmngrAllocate();
 		memset(l2_table, 0, PAGESIZE);
-		l1_table[l1_index] = ((uint64_t)l2_table & ~0xFFFUL) | PAGE_TABLE_ENTRY_PRESENT | PAGE_TABLE_ENTRY_PAGE | PAGE_TABLE_ENTRY_AF;
+		l1_table[l1_index] = ((uint64_t)l2_table & ~0xFFFUL) | PAGE_TABLE_ENTRY_PRESENT |
+							 PAGE_TABLE_ENTRY_PAGE | PAGE_TABLE_ENTRY_AF;
 		isb_flush();
 		dsb_ish();
-	}
-	else {
+	} else {
 		l2_table = (uint64_t*)(l1_table[l1_index] & ~0xFFFULL);
 	}
 
 	if (!(l2_table[l2_index] & 1)) {
 		l3_table = (uint64_t*)XEPmmngrAllocate();
 		memset(l3_table, 0, PAGESIZE);
-		l2_table[l2_index] = ((uint64_t)l3_table & ~0xFFFULL) | PAGE_TABLE_ENTRY_PRESENT | PAGE_TABLE_ENTRY_PAGE | PAGE_TABLE_ENTRY_AF ;
+		l2_table[l2_index] = ((uint64_t)l3_table & ~0xFFFULL) | PAGE_TABLE_ENTRY_PRESENT |
+							 PAGE_TABLE_ENTRY_PAGE | PAGE_TABLE_ENTRY_AF;
 		isb_flush();
 		dsb_ish();
-	}
-	else {
+	} else {
 		l3_table = (uint64_t*)(l2_table[l2_index] & ~0xFFFULL);
 	}
 
-	l3_table[l3_index] = (physAddr & ~0xFFFULL)| PAGE_FLAGS;
+	l3_table[l3_index] = (physAddr & ~0xFFFULL) | PAGE_FLAGS;
 
 	tlb_flush((virtualAddr & ~0xFFFULL) >> 12);
 	tlb_flush_all(); // Extra safety for AArch64
@@ -281,15 +277,17 @@ bool XEPagingIsMapped(uint64_t virtualAddr) {
 	uint64_t l2_index = (virtualAddr >> 21) & 0x1FF;
 	uint64_t l3_index = (virtualAddr >> 12) & 0x1FF;
 
-	if (!(l0_table_base[l0_index] & 1)) return false;
+	if (!(l0_table_base[l0_index] & 1))
+		return false;
 	uint64_t* l1_table = (uint64_t*)(l0_table_base[l0_index] & ~0xFFFULL);
 
-	if (!(l1_table[l1_index] & 1)) return false;
+	if (!(l1_table[l1_index] & 1))
+		return false;
 	uint64_t* l2_table = (uint64_t*)(l1_table[l1_index] & ~0xFFFULL);
 
-	if (!(l2_table[l2_index] & 1)) return false;
+	if (!(l2_table[l2_index] & 1))
+		return false;
 	uint64_t* l3_table = (uint64_t*)(l2_table[l2_index] & ~0xFFFULL);
 
 	return (l3_table[l3_index] & 1) != 0;
 }
-

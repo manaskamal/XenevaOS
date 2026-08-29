@@ -57,7 +57,7 @@ void InitialiseDirtyClipList() {
 void AddDirtyClip(int x, int y, int w, int h) {
 	if (_dirty_count >= 100)
 		_dirty_count = 0;
-	
+
 	if (x < 0)
 		_KePrint("AddDirtyClip: corrupted x value %d\r\n", x);
 	if (y < 0)
@@ -88,26 +88,27 @@ void DirtyScreenUpdate(ChCanvas* canvas) {
 	bool gpu_update = false;
 	for (int i = 0; i < _dirty_count; i++) {
 		gpu_update = 1;
-		if (dirtyRect[i].x < 0){
+		if (dirtyRect[i].x < 0) {
 			_KePrint("DirtyR -x %d\r\n", dirtyRect[i].x);
 			dirtyRect[i].x = 0;
 		}
-		if (dirtyRect[i].y < 0){
+		if (dirtyRect[i].y < 0) {
 			_KePrint("DirtyRect -y %d\r\n", dirtyRect[i].y);
 			dirtyRect[i].y = 0;
 		}
-		if (dirtyRect[i].w > canvas->canvasWidth){
+		if (dirtyRect[i].w > canvas->canvasWidth) {
 			_KePrint("Dirty Rect w - %d \r\n", dirtyRect[i].w);
 			dirtyRect[i].w = canvas->canvasWidth;
 		}
-		if (dirtyRect[i].h > canvas->canvasHeight){
+		if (dirtyRect[i].h > canvas->canvasHeight) {
 			_KePrint("Dirty Rect h - %d \r\n", dirtyRect[i].h);
 			dirtyRect[i].h = canvas->canvasHeight;
 		}
 
 		if (!_is_gpu_enabled())
-		    ChCanvasScreenUpdate(canvas, dirtyRect[i].x, dirtyRect[i].y, dirtyRect[i].w, dirtyRect[i].h);
-	
+			ChCanvasScreenUpdate(
+				canvas, dirtyRect[i].x, dirtyRect[i].y, dirtyRect[i].w, dirtyRect[i].h);
+
 		//ioctl.uint_1 = display_id;
 		//_KeFileIoControl(_get_gpu_fd(), 0x203, &ioctl);
 	}
@@ -120,7 +121,7 @@ void DirtyScreenUpdate(ChCanvas* canvas) {
 		ioctl.ulong_2 = canvas->screenHeight;
 		_KeFileIoControl(_get_gpu_fd(), 0x202, &ioctl);
 	}
-	
+
 	_dirty_count = 0;
 }
 

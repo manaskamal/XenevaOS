@@ -63,7 +63,7 @@ typedef struct _clock_state_ {
 	uint32_t shift;
 	int64_t wall_sec;
 	int64_t wall_nsec;
-}AuClockState;
+} AuClockState;
 
 static AuClockState wallClock;
 
@@ -72,12 +72,13 @@ static AuClockState wallClock;
  * timer 
  */
 void AuroraTimerInitialize() {
-	for (int i = 0; i < AURORA_MAX_TIMER; i++) 
+	for (int i = 0; i < AURORA_MAX_TIMER; i++)
 		memset(&_timers[i], 0, sizeof(AuKernelTimer));
 	_system_current_us = 0;
 	_system_current_ms = 0;
 	wallClock.shift = 32;
-	wallClock.mult = ((uint64_t)1000000000ULL << wallClock.shift) / (AA64CPUGetFreqencyHz() * 10000);
+	wallClock.mult =
+		((uint64_t)1000000000ULL << wallClock.shift) / (AA64CPUGetFreqencyHz() * 10000);
 }
 
 /**
@@ -96,10 +97,10 @@ int AuroraTimerStart(uint32_t delay_ms, AuroraTimerCallback handler, void* param
 		_timers[idx].param = param;
 		_timers[idx].active = 1;
 		return idx;
-	}
-	else {
+	} else {
 		for (int i = 0; i < AURORA_MAX_TIMER; i++) {
-			if (_timers[i].active) continue;
+			if (_timers[i].active)
+				continue;
 
 			_timers[i].expireUS = _get_current_us() + (delay_ms * 1000ULL);
 			_timers[i].intervalUS = 0;
@@ -120,8 +121,9 @@ int AuroraTimerStart(uint32_t delay_ms, AuroraTimerCallback handler, void* param
  */
 int AuroraTimerStartPeriodic(uint32_t interval_ms, AuroraTimerCallback handler, void* param) {
 	for (int i = 0; i < AURORA_MAX_TIMER; i++) {
-		if (_timers[i].active) continue;
-		
+		if (_timers[i].active)
+			continue;
+
 		_timers[i].expireUS = _get_current_us() + (interval_ms * 1000ULL);
 		_timers[i].intervalUS = interval_ms * 1000ULL;
 		_timers[i].handler = handler;
@@ -162,20 +164,21 @@ void AuroraTimerTick() {
 	uint64_t now = _get_current_us();
 	_system_current_us = now;
 	_system_current_ms = _get_current_ms();
-	
+
 	//update the wall time
 	AuWalltimeUpdate();
 
 	for (int i = 0; i < AURORA_MAX_TIMER; i++) {
-		if (!_timers[i].active) continue;
-		if (now < _timers[i].expireUS)  continue;
+		if (!_timers[i].active)
+			continue;
+		if (now < _timers[i].expireUS)
+			continue;
 		AuroraTimerCallback handler = _timers[i].handler;
 		void* param = _timers[i].param;
-	//	UARTDebugOut("Timer fired : %d \r\n", i);
+		//	UARTDebugOut("Timer fired : %d \r\n", i);
 		if (_timers[i].intervalUS > 0) {
 			_timers[i].expireUS = now + _timers[i].intervalUS;
-		}
-		else
+		} else
 			_timers[i].active = 0;
 
 		if (handler)
@@ -215,7 +218,7 @@ int AuTimerCalculateAlarm(AA64Thread* thr, uint64_t seconds) {
 		}
 	}
 
-	if(existing_idx != -1) {
+	if (existing_idx != -1) {
 		if (_timers[existing_idx].expireUS > now) {
 			uint64_t remaining_us = _timers[existing_idx].expireUS - now;
 			remaining_sec = (remaining_us + 999999) / 1000000;
@@ -235,9 +238,9 @@ int AuTimerCalculateAlarm(AA64Thread* thr, uint64_t seconds) {
 		}
 	}
 
-	if (free_idx == -1) 
+	if (free_idx == -1)
 		return remaining_sec;
-	
+
 	_timers[free_idx].expireUS = now + (seconds * 1000000ULL);
 	_timers[free_idx].intervalUS = 0;
 	_timers[free_idx].handler = __kernel_timer_alarm_callback;
@@ -247,7 +250,6 @@ int AuTimerCalculateAlarm(AA64Thread* thr, uint64_t seconds) {
 
 	return remaining_sec;
 }
-
 
 static inline uint64_t _timeval_to_us(const timeval_t* tv) {
 	return (uint64_t)tv->tv_sec * 1000000ULL;
@@ -259,9 +261,9 @@ static inline uint64_t _us_to_timeval(uint64_t us, timeval_t* tv) {
 	return 0;
 }
 
-#define ITIMER_REAL    0
+#define ITIMER_REAL	   0
 #define ITIMER_VIRTUAL 1
-#define ITIMER_PROF    2
+#define ITIMER_PROF	   2
 
 /**
  *@brief AuTimerSetITimer -- posix standard implementation of 
@@ -285,8 +287,7 @@ int AuTimerSetITimer(AA64Thread* thr, int which, const itimerval_t* newval, itim
 	if (oldval) {
 		if (idx != -1 && _timers[idx].expireUS > now) {
 			_us_to_timeval(_timers[idx].expireUS - now, &oldval->it_value);
-		}
-		else {
+		} else {
 			oldval->it_value.tv_sec = 0;
 			oldval->it_value.tv_usec = 0;
 		}
@@ -330,8 +331,10 @@ int AuTimerSetITimer(AA64Thread* thr, int which, const itimerval_t* newval, itim
 }
 
 int AuTimerGetITimer(AA64Thread* thr, int which, itimerval_t* curr_value) {
-	if(which != ITIMER_REAL) return -1;
-	if (!curr_value) return -1;
+	if (which != ITIMER_REAL)
+		return -1;
+	if (!curr_value)
+		return -1;
 	uint64_t now = _get_current_us();
 
 	for (int i = 0; i < AURORA_MAX_TIMER; i++) {
@@ -357,7 +360,6 @@ void AuSetWalltime(int64_t sec, int64_t nsec) {
 	wallClock.wall_nsec = nsec;
 }
 
-
 void AuGetWalltime(int64_t* out_sec, int64_t* out_ns) {
 	/** need credential verifications too, for security **/
 
@@ -376,7 +378,7 @@ void AuGetWalltime(int64_t* out_sec, int64_t* out_ns) {
 }
 
 static void AuWalltimeUpdate() {
-	//lock 
+	//lock
 	uint64_t now = get_cntpct_el0();
 	uint64_t delta_cycles = now - wallClock.cycle_last;
 	uint64_t delta_ns = (delta_cycles * wallClock.mult) >> wallClock.shift;
@@ -390,7 +392,6 @@ static void AuWalltimeUpdate() {
 	wallClock.cycle_last = now;
 	//lock release
 }
-
 
 /**
  * @brief AuGetTimerByThread -- checks and return a timer id

@@ -41,15 +41,15 @@
 #include <audio/audio.h>
 #include <math.h>
 
-typedef struct _note_{
+typedef struct _note_ {
 	float frequency;
 	float duration;
-}Note;
+} Note;
 
 #define SAMPLE_RATE 48000
-#define AMPLITUDE 32767
+#define AMPLITUDE	32767
 
-void PianoPlaySineWave(DeodhaiAudioBox *box,Note* note, int16_t* buffer) {
+void PianoPlaySineWave(DeodhaiAudioBox* box, Note* note, int16_t* buffer) {
 	int sampleCount = (int)(note->duration * SAMPLE_RATE);
 	memset(buffer, 0, 4096);
 
@@ -67,15 +67,14 @@ void PianoPlaySineWave(DeodhaiAudioBox *box,Note* note, int16_t* buffer) {
 * main -- piano applications main
 */
 int main(int argc, char* arv[]) {
-
 	printf("\nPiano v1.0 : Copyright (C) Manas Kamal Choudhury 2024 \n");
 	int thrID = _KeGetThreadID();
 
 	int postbox = _KeOpenFile("/dev/postbox", FILE_OPEN_READ_ONLY);
 	_KeFileIoControl(postbox, POSTBOX_CREATE, NULL);
 
-
-	DeodhaiAudioBox* audioBox = DeodhaiAudioOpenConnection(postbox, DEODHAI_AUDIO_STEREO, DEODHAI_CONNECTION_TYPE_NORMAL);
+	DeodhaiAudioBox* audioBox =
+		DeodhaiAudioOpenConnection(postbox, DEODHAI_AUDIO_STEREO, DEODHAI_CONNECTION_TYPE_NORMAL);
 	printf("piano : audio connection initiated successfully \n");
 
 	int sampleCount = (int)(1.0f * SAMPLE_RATE);
@@ -91,16 +90,55 @@ int main(int argc, char* arv[]) {
 		char key = getchar();
 		/*frequencies are from Standard tuning of Western Musical scale*/
 		switch (key) {
-		case 'w': note.frequency = 391.99; note.duration = 1.0; PianoPlaySineWave(audioBox, &note, buffer); break; //G4
-		case 'a': note.frequency = 440.0; note.duration = 1.0; PianoPlaySineWave(audioBox, &note,buffer); break; //A4
-		case 's': note.frequency = 493.88; note.duration = 1.0; PianoPlaySineWave(audioBox, &note, buffer); break; //B4
-		case 'd': note.frequency = 523.25; note.duration = 1.0; PianoPlaySineWave(audioBox, &note, buffer); break; //C5
-		case 'f': note.frequency = 587.33; note.duration = 1.0; PianoPlaySineWave(audioBox, &note, buffer); break; //D5
-		case 'g': note.frequency = 659.25; note.duration = 1.0; PianoPlaySineWave(audioBox, &note, buffer); break; //E5
-		case 'h': note.frequency = 698.46; note.duration = 1.0; PianoPlaySineWave(audioBox, &note, buffer); break; //F5
-		case 'j': note.frequency = 783.99; note.duration = 1.0; PianoPlaySineWave(audioBox, &note, buffer); break; //F5
-		case 'k': note.frequency = 880.00; note.duration = 1.0; PianoPlaySineWave(audioBox, &note, buffer); break; //G5
-		default: note.frequency = 0.0; note.duration = 0.0; break;
+		case 'w':
+			note.frequency = 391.99;
+			note.duration = 1.0;
+			PianoPlaySineWave(audioBox, &note, buffer);
+			break; //G4
+		case 'a':
+			note.frequency = 440.0;
+			note.duration = 1.0;
+			PianoPlaySineWave(audioBox, &note, buffer);
+			break; //A4
+		case 's':
+			note.frequency = 493.88;
+			note.duration = 1.0;
+			PianoPlaySineWave(audioBox, &note, buffer);
+			break; //B4
+		case 'd':
+			note.frequency = 523.25;
+			note.duration = 1.0;
+			PianoPlaySineWave(audioBox, &note, buffer);
+			break; //C5
+		case 'f':
+			note.frequency = 587.33;
+			note.duration = 1.0;
+			PianoPlaySineWave(audioBox, &note, buffer);
+			break; //D5
+		case 'g':
+			note.frequency = 659.25;
+			note.duration = 1.0;
+			PianoPlaySineWave(audioBox, &note, buffer);
+			break; //E5
+		case 'h':
+			note.frequency = 698.46;
+			note.duration = 1.0;
+			PianoPlaySineWave(audioBox, &note, buffer);
+			break; //F5
+		case 'j':
+			note.frequency = 783.99;
+			note.duration = 1.0;
+			PianoPlaySineWave(audioBox, &note, buffer);
+			break; //F5
+		case 'k':
+			note.frequency = 880.00;
+			note.duration = 1.0;
+			PianoPlaySineWave(audioBox, &note, buffer);
+			break; //G5
+		default:
+			note.frequency = 0.0;
+			note.duration = 0.0;
+			break;
 		}
 		//
 		_KeProcessSleep(500);

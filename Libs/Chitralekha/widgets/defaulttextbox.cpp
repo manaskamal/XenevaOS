@@ -38,8 +38,6 @@
 #include "../font.h"
 #include "textbox.h"
 
-
-
 void ChDefaultTextboxPrint(ChCanvas* canv, ChTextBox* tb, char* text) {
 	ChRect clipRect;
 	clipRect.x = tb->wid.x;
@@ -61,7 +59,7 @@ void ChDefaultTextboxPrint(ChCanvas* canv, ChTextBox* tb, char* text) {
 			textOff = 0;
 			continue;
 		}
-		if (text[i] == '\0') 
+		if (text[i] == '\0')
 			break;
 		int w = ChFontGetWidthChar(tb->font, text[i]);
 		int h = ChFontGetHeightChar(tb->font, text[i]);
@@ -71,10 +69,10 @@ void ChDefaultTextboxPrint(ChCanvas* canv, ChTextBox* tb, char* text) {
 		int b_w = tb->font->face->glyph->bitmap.width;
 		int draw_width = tb->font->face->glyph->bitmap.width;
 #else
-        int x_v = penx;
-        int y_v = peny;
-        int b_w = w;
-        int draw_width = w;
+		int x_v = penx;
+		int y_v = peny;
+		int b_w = w;
+		int draw_width = w;
 #endif
 
 		if (x_v + draw_width >= (tb->wid.x + tb->wid.w)) {
@@ -84,14 +82,12 @@ void ChDefaultTextboxPrint(ChCanvas* canv, ChTextBox* tb, char* text) {
 			peny = tb->wid.y + (tb->textCursorPosY * 19);
 		}
 
-		ChFontDrawCharClipped(canv, tb->font, text[i], penx,
-			peny,
-			tb->textColor, &clipRect);
+		ChFontDrawCharClipped(canv, tb->font, text[i], penx, peny, tb->textColor, &clipRect);
 #ifdef _USE_FREETYPE
 		penx += tb->font->face->glyph->advance.x >> 6;
 		peny += tb->font->face->glyph->advance.y >> 6;
 #else
-        penx += w;
+		penx += w;
 #endif
 		tb->textCursorPosX++;
 	}
@@ -123,7 +119,8 @@ void ChDefaultTextbox(ChWidget* wid, ChWindow* win) {
 		ChDefaultTextboxPrint(win->canv, tb, tb->text);
 	}
 	if (wid->hover) {
-		ChDrawRectUnfilled(win->canv, tb->wid.x, tb->wid.y,tb->wid.w,tb->wid.h, 0xFF4067BA);
-		ChDrawRectUnfilled(win->canv, tb->wid.x + 1,tb->wid.y + 1, tb->wid.w - 2, tb->wid.h - 2, 0xFF6689D5);
+		ChDrawRectUnfilled(win->canv, tb->wid.x, tb->wid.y, tb->wid.w, tb->wid.h, 0xFF4067BA);
+		ChDrawRectUnfilled(
+			win->canv, tb->wid.x + 1, tb->wid.y + 1, tb->wid.w - 2, tb->wid.h - 2, 0xFF6689D5);
 	}
 }

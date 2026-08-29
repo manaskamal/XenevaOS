@@ -44,18 +44,16 @@
 #include <Serv/sysserv.h>
 #include <Hal/AA64/profile.h>
 
+#define PROTECTION_FLAG_READONLY 1 << 0
+#define PROTECTION_FLAG_WRITE	 1 << 1
+#define PROTECTION_FLAG_NO_EXEC	 1 << 2
+#define PROTECTION_FLAG_NO_CACHE 1 << 3
 
-#define PROTECTION_FLAG_READONLY  1<<0
-#define PROTECTION_FLAG_WRITE 1<<1
-#define PROTECTION_FLAG_NO_EXEC  1<<2
-#define PROTECTION_FLAG_NO_CACHE 1<<3
-
-#define MEMMAP_FLAG_SHARED 1<<0
-#define MEMMAP_FLAG_COW  1<<1
-#define MEMMAP_FLAG_PRIVATE  1<<2
-#define MEMMAP_FLAG_DISCARD_FILE_READ 1<<3
-#define MEMMAP_FLAG_FILE_BACK 1<<4
-
+#define MEMMAP_FLAG_SHARED			  1 << 0
+#define MEMMAP_FLAG_COW				  1 << 1
+#define MEMMAP_FLAG_PRIVATE			  1 << 2
+#define MEMMAP_FLAG_DISCARD_FILE_READ 1 << 3
+#define MEMMAP_FLAG_FILE_BACK		  1 << 4
 
 //#pragma pack(push,1)
 /* shared memory map object */
@@ -64,10 +62,10 @@ typedef struct _sh_memap_object_ {
 	uint8_t flags;
 	uint8_t prot_flags;
 	uint64_t beginPhysicalAddr;
-	uint64_t len;  //length in bytes
+	uint64_t len; //length in bytes
 	uint16_t linkCount;
 	uint16_t ownerProc;
-}AuSharedMmapObject;
+} AuSharedMmapObject;
 //#pragma pack(pop)
 
 list_t* shmmaplist;
@@ -86,7 +84,7 @@ void SharedMemMapListInitialise() {
 AuSharedMmapObject* AuCreateSharedMmapObject(char* name) {
 	AuSharedMmapObject* obj = (AuSharedMmapObject*)kmalloc(sizeof(AuSharedMmapObject));
 	memset(obj, 0, sizeof(AuSharedMmapObject));
-	obj->objectName = (char*)kmalloc(strlen(name));
+	obj->objectName = (char*)kmalloc(strlen(name) + 1);
 	strcpy(obj->objectName, name);
 	obj->linkCount += 1;
 	return obj;
@@ -127,15 +125,13 @@ extern void aa64_schedule_init(AA64Thread* current, AA64Thread* init);
  * @param offset -- byte offset for file and device
  * @return Pointer to starting 
  */
-void* CreateMemMapping(void* address, size_t len, int prot, int flags, int fd,
-	uint64_t offset) {
-	
+void* CreateMemMapping(void* address, size_t len, int prot, int flags, int fd, uint64_t offset) {
 	if (!len)
 		return 0;
 
 	/* for now, memory mapping doesn't support lazy loading
 	 * so everything works at pre-paging */
-
+//I'll get on it soon-ish, because the unikernel plan would need it anyway. --axiss
 	AA64Thread* curr_thr = AuGetCurrentThread();
 	AuProcess* proc = AuProcessFindThread(curr_thr);
 	if (!proc) {
@@ -143,7 +139,6 @@ void* CreateMemMapping(void* address, size_t len, int prot, int flags, int fd,
 		if (!proc)
 			return NULL;
 	}
-
 
 	AuVFSNode* file = NULL;
 	AuVFSNode* fsys = NULL;
@@ -178,14 +173,16 @@ void* CreateMemMapping(void* address, size_t len, int prot, int flags, int fd,
 		fb = AuMmngrFileCacheLookup(file->filename);
 		if (!fb) {
 			UARTDebugOut("[mmap]: file %s is not in cache, we're caching it \r\n", file->filename);
-			UARTDebugOut("[mmap]: file starting address : %x , curr : %x\r\n", file->first_block, file->current);
+			UARTDebugOut("[mmap]: file starting address : %x , curr : %x\r\n",
+						 file->first_block,
+						 file->current);
 			fb = (AuMMFileBack*)kmalloc(sizeof(AuMMFileBack));
 			memset(fb, 0, sizeof(AuMMFileBack));
 			UARTDebugOut("mmap: file flag : %x \r\n", file->flags);
 			fb->file = file;
 			AuMmngrAddFileBack(fb);
 		}
-		
+
 		if (flags & MEMMAP_FLAG_SHARED) {
 			shobj = AuSharedMmapObjectFindByName(file->filename);
 			/* no shobject found with specified name, so we create
@@ -208,15 +205,13 @@ void* CreateMemMapping(void* address, size_t len, int prot, int flags, int fd,
 				 */
 				if (shobj->ownerProc == proc->proc_id) {
 					shobj_len_increase = true;
-				}
-				else {
+				} else {
 					/* we need to map that object here*/
 					startingPhysAddr = shobj->beginPhysicalAddr;
 				}
 			}
 		}
 	}
-
 
 	//UARTDebugOut("[mmap]: num pages reading : %d \r\n", (len / PAGE_SIZE));
 	for (int i = 0; i < len / PAGE_SIZE; i++) {
@@ -227,21 +222,18 @@ void* CreateMemMapping(void* address, size_t len, int prot, int flags, int fd,
 			if (fb) {
 				if (AuMmngrFileCacheGetPhysicalBlock(fb, offset) == UINT64_MAX) {
 					phys = (uint64_t)AuPmmngrAlloc();
-				}
-				else {
+				} else {
 					if (flags & MEMMAP_FLAG_COW) {
 						uint64_t datablk = AuMmngrFileCacheGetPhysicalBlock(fb, offset);
 						phys = (uint64_t)AuPmmngrAlloc();
 						memcpy((void*)P2V(phys), (void*)P2V(datablk), PAGE_SIZE);
 
-					}
-					else {
+					} else {
 						phys = AuMmngrFileCacheGetPhysicalBlock(fb, offset);
 					}
 				}
 
-			}
-			else {
+			} else {
 				phys = (uint64_t)AuPmmngrAlloc();
 			}
 		}
@@ -250,17 +242,16 @@ void* CreateMemMapping(void* address, size_t len, int prot, int flags, int fd,
 			startingPhysAddr = phys;
 
 		if (file && fb) {
-			if (AuMmngrFileCacheGetPhysicalBlock(fb,offset) == UINT64_MAX) {
+			if (AuMmngrFileCacheGetPhysicalBlock(fb, offset) == UINT64_MAX) {
 				uint64_t datablk = phys;
 				if (flags & MEMMAP_FLAG_COW) {
 					datablk = (uint64_t)AuPmmngrAlloc();
 					if (!file->eof)
 						AuVFSNodeReadBlock(fsys, file, (uint64_t*)P2V(datablk));
 					memcpy((void*)P2V(phys), (void*)P2V(datablk), PAGE_SIZE);
-				}
-				else 
+				} else
 					AuVFSNodeReadBlock(fsys, file, (uint64_t*)P2V(datablk));
-				
+
 				AuMMPageCache* cache = AuMmngrPageCacheCreate();
 				cache->physicalPage = datablk;
 				cache->pageIndex = fb->numPageIndex;
@@ -303,7 +294,7 @@ void* CreateMemMapping(void* address, size_t len, int prot, int flags, int fd,
 
 		/*if (flags & MEMMAP_FLAG_COW) 
 			page->bits.cow = 1;*/
-		
+
 		if (flags & MEMMAP_FLAG_FILE_BACK) {
 			//add to file mapping list
 		}
@@ -376,11 +367,11 @@ void MemMapDirty(void* startingVaddr, size_t len, int flags, int prot) {
 		}
 	}
 	if (!AuVMAreaGet(proc, (size_t)startingVaddr)) {
-		AuVMArea* area = AuVMAreaCreate((size_t)startingVaddr, ((uint64_t)startingVaddr + len), 0, len, VM_EXEC);
+		AuVMArea* area =
+			AuVMAreaCreate((size_t)startingVaddr, ((uint64_t)startingVaddr + len), 0, len, VM_EXEC);
 		list_add(proc->vmareas, area);
 	}
 }
-
 
 /**
  * @brief UnmapMemMapping -- unmaps a memory mapping
@@ -396,7 +387,8 @@ void UnmapMemMapping(void* address, size_t len) {
 	//SeTextOut("Mem Unmap len aligned -> %d \r\n", len);
 	uint64_t addr = (uint64_t)address;
 	for (int i = 0; i < len / PAGE_SIZE; i++) {
-		AuVPage* page = AuVmmngrGetPage(addr + i * PAGE_SIZE, VIRT_GETPAGE_ONLY_RET, VIRT_GETPAGE_ONLY_RET);
+		AuVPage* page =
+			AuVmmngrGetPage(addr + i * PAGE_SIZE, VIRT_GETPAGE_ONLY_RET, VIRT_GETPAGE_ONLY_RET);
 		if (page) {
 			uint64_t phys = page->bits.page << PAGE_SHIFT;
 			if (phys) {
@@ -411,5 +403,4 @@ void UnmapMemMapping(void* address, size_t len) {
 			isb_flush();
 		}
 	}
-
 }

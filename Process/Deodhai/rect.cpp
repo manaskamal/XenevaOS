@@ -42,18 +42,16 @@ int RectSetLeft(Rect* rect, int new_left) {
 	return rect->x;
 }
 
-
 /*
 * RectSetRight -- sets a new right edge value to
 * the given rect
 * @param rect -- pointer to the rect structure
 * @param new_right -- new right value
 */
-int RectSetRight(Rect * rect, int new_right) {
+int RectSetRight(Rect* rect, int new_right) {
 	rect->w = new_right - rect->x;
 	return rect->x + rect->w;
 }
-
 
 /*
 * RectSetTop -- set a new top edge value to the given
@@ -61,7 +59,7 @@ int RectSetRight(Rect * rect, int new_right) {
 * @param rect -- pointer to the rect structure
 * @param new_top -- top edge value
 */
-int RectSetTop(Rect *rect, int new_top) {
+int RectSetTop(Rect* rect, int new_top) {
 	rect->h += rect->y - new_top;
 	rect->y = new_top;
 	return rect->y;
@@ -73,7 +71,7 @@ int RectSetTop(Rect *rect, int new_top) {
 * @param rect -- pointer to the rect structure
 * @param new_bottom -- new bottom edge value
 */
-int RectSetBottom(Rect *rect, int new_bottom) {
+int RectSetBottom(Rect* rect, int new_bottom) {
 	rect->h = new_bottom - rect->y;
 	return (rect->y + rect->h);
 }
@@ -82,7 +80,7 @@ int RectSetBottom(Rect *rect, int new_bottom) {
 * RectGetLeft -- returns the left edge value
 * @param rect -- pointer to the rect structure
 */
-int RectGetLeft(Rect *rect) {
+int RectGetLeft(Rect* rect) {
 	return rect->x;
 }
 
@@ -90,7 +88,7 @@ int RectGetLeft(Rect *rect) {
 * RectGetRight -- returns the right edge value
 * @param rect -- pointer to the rect structure
 */
-int RectGetRight(Rect *rect) {
+int RectGetRight(Rect* rect) {
 	return (rect->x + rect->w);
 }
 
@@ -98,7 +96,7 @@ int RectGetRight(Rect *rect) {
 * RectGetTop -- returns the top edge value
 * @param rect -- pointer to the rect structure
 */
-int RectGetTop(Rect *rect) {
+int RectGetTop(Rect* rect) {
 	return rect->y;
 }
 
@@ -106,6 +104,6 @@ int RectGetTop(Rect *rect) {
 * RectGetBottom -- returns the bottom edge value
 * @param rect -- pointer to the rect structure
 */
-int RectGetBottom(Rect *rect) {
+int RectGetBottom(Rect* rect) {
 	return (rect->y + rect->h);
 }

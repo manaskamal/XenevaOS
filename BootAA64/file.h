@@ -35,11 +35,10 @@
 #include "xnout.h"
 #include <Uefi.h>
 
-
 typedef struct _XEFILE_ {
 	VOID* kBuffer;
 	UINTN FileSize;
-}XEFile;
+} XEFile;
 
 /*
  * XEOpenAndReadFile -- open and reads a file

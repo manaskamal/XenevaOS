@@ -43,13 +43,12 @@ typedef long long jmp_buf[_JBLEN];
 //#pragma pack(pop)
 
 #ifdef __cplusplus
-XE_EXTERN{
+XE_EXTERN {
 #endif
 	XE_LIB int setjmp(jmp_buf);
 	XE_LIB void longjmp(jmp_buf, int);
 #ifdef __cplusplus
 }
 #endif
-
 
 #endif

@@ -48,8 +48,7 @@ void draw_arrow_header(ChCanvas* canv, int cx, int cy, int r, int dir, uint32_t 
 		left_y = cy - tip_offset + height / 2;
 		right_x = cx + half_w;
 		right_y = cy - tip_offset + height / 2;
-	}
-	else {
+	} else {
 		/* down arrow */
 		tip_x = cx;
 		tip_y = cy + tip_offset + height / 2;
@@ -63,15 +62,14 @@ void draw_arrow_header(ChCanvas* canv, int cx, int cy, int r, int dir, uint32_t 
 	ChDrawLine(canv, tip_x, tip_y, right_x, right_y, col);
 }
 
-
-void XEPageButtonPaint(ChWidget* wid,ChWindow* win) {
+void XEPageButtonPaint(ChWidget* wid, ChWindow* win) {
 	XEPageButton* pb = (XEPageButton*)wid;
 
 	int cx = wid->x + wid->w / 2;
 	int cy = wid->y + wid->h / 2;
 
 	uint32_t outline = LIGHTSILVER;
-	if (pb->disabled) 
+	if (pb->disabled)
 		outline = GRAY;
 	if (wid->hover)
 		outline = DESKBLUE;
@@ -85,7 +83,7 @@ void XEPageButtonPaint(ChWidget* wid,ChWindow* win) {
 	else if (pb->type == PAGE_BUTTON_DOWN)
 		dir = 1;
 
-	draw_arrow_header(win->canv, cx, cy, r, dir,outline);
+	draw_arrow_header(win->canv, cx, cy, r, dir, outline);
 }
 
 void XEPageButtonMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, int button) {
@@ -105,8 +103,7 @@ void XEPageButtonMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, int butt
 	if (!wid->hoverPainted && wid->hover) {
 		if (wid->ChPaintHandler)
 			wid->ChPaintHandler(wid, win);
-		ChWindowUpdate(win, wid->x,
-			wid->y, wid->w, wid->h, false, true);
+		ChWindowUpdate(win, wid->x, wid->y, wid->w, wid->h, false, true);
 		wid->hoverPainted = true;
 	}
 
@@ -114,16 +111,14 @@ void XEPageButtonMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, int butt
 		wid->hoverPainted = false;
 		if (wid->ChPaintHandler)
 			wid->ChPaintHandler(wid, win);
-		ChWindowUpdate(win, wid->x,
-			wid->y, wid->w, wid->h, false, true);
+		ChWindowUpdate(win, wid->x, wid->y, wid->w, wid->h, false, true);
 	}
 
 	bool _action_required = false;
 	if (wid->clicked && wid->lastMouseX == x && wid->lastMouseY == y) {
 		if (wid->ChPaintHandler)
 			wid->ChPaintHandler(wid, win);
-		ChWindowUpdate(win, wid->x,
-			wid->y, wid->w, wid->h, false, true);
+		ChWindowUpdate(win, wid->x, wid->y, wid->w, wid->h, false, true);
 
 		_action_required = true;
 		win->focusedWidget = wid;

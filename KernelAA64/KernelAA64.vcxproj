@@ -163,7 +163,7 @@
     <ClCompile>
       <WarningLevel>Level1</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>ARCH_ARM64;__TARGET_BOARD_QEMU_VIRT__;_USE_DLMALLOC;__STDC_LIMIT_MACROS</PreprocessorDefinitions>
+      <PreprocessorDefinitions>ARCH_ARM64;__TARGET_BOARD_QEMU_VIRT__;_USE_TLSF;__STDC_LIMIT_MACROS</PreprocessorDefinitions>
       <ConformanceMode>Default</ConformanceMode>
       <AdditionalIncludeDirectories>..\BaseHdr;..\Acpica\include;..\Acpica;$(SolutionDir)DCL\includes;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
@@ -229,7 +229,7 @@
       </FunctionLevelLinking>
       <IntrinsicFunctions>false</IntrinsicFunctions>
       <SDLCheck>false</SDLCheck>
-      <PreprocessorDefinitions>ARCH_ARM64;__TARGET_BOARD_QEMU_VIRT__;_USE_DLMALLOC;__STDC_LIMIT_MACROS</PreprocessorDefinitions>
+      <PreprocessorDefinitions>ARCH_ARM64;__TARGET_BOARD_QEMU_VIRT__;_USE_TLSF;__STDC_LIMIT_MACROS</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>..\BaseHdr;..\Acpica\include;..\Acpica;$(SolutionDir)DCL\includes;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>

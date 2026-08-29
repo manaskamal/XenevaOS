@@ -58,11 +58,11 @@ int buttonScrollDown;
 struct VirtioInputEvent* TabletInput;
 static struct VirtioCommonCfg* _tabletCfg;
 
-#define MOUSE_LEFT_CLICK   		  0x01
-#define MOUSE_RIGHT_CLICK  		  0x02
-#define MOUSE_MIDDLE_CLICK 		  0x04
-#define MOUSE_MOUSE_SCROLL_UP     0x10
-#define MOUSE_MOUSE_SCROLL_DOWN   0x20
+#define MOUSE_LEFT_CLICK		0x01
+#define MOUSE_RIGHT_CLICK		0x02
+#define MOUSE_MIDDLE_CLICK		0x04
+#define MOUSE_MOUSE_SCROLL_UP	0x10
+#define MOUSE_MOUSE_SCROLL_DOWN 0x20
 
 /**
  * @brief AuVirtioTabletHandler -- interrupt handler for 
@@ -87,39 +87,31 @@ void AuVirtioTabletHandler(int spiNum) {
 		if (evt.type == 3) {
 			if (evt.code == 0) {
 				mouseX = (evt.value * resX) / maxX;
-			}
-			else if (evt.code == 1) {
+			} else if (evt.code == 1) {
 				mouseY = (evt.value * resY) / maxY;
 			}
-		}
-		else if (evt.type == 1) {
+		} else if (evt.type == 1) {
 			if (evt.code == 0x110) {
 				buttonLeft = evt.value;
-			}
-			else if (evt.code == 0x111) {
+			} else if (evt.code == 0x111) {
 				buttonRight = evt.value;
-			}
-			else if (evt.code == 0x112) {
+			} else if (evt.code == 0x112) {
 				buttonMiddle = evt.value;
-			}
-			else if (evt.code == 0x150) {
+			} else if (evt.code == 0x150) {
 				buttonScrollDown = 1;
-			}
-			else if (evt.code == 0x151) {
+			} else if (evt.code == 0x151) {
 				buttonScrollUp = 1;
 			}
-		}
-		else if (evt.type == 0) {
+		} else if (evt.type == 0) {
 			AuInputMessage newmsg;
 			memset(&newmsg, 0, sizeof(AuInputMessage));
 			newmsg.type = AU_INPUT_MOUSE;
 			newmsg.xpos = mouseX;
 			newmsg.ypos = mouseY;
-			newmsg.button_state |= (buttonLeft ? MOUSE_LEFT_CLICK : 0) |
-				(buttonRight ? MOUSE_RIGHT_CLICK : 0) |
+			newmsg.button_state |=
+				(buttonLeft ? MOUSE_LEFT_CLICK : 0) | (buttonRight ? MOUSE_RIGHT_CLICK : 0) |
 				(buttonMiddle ? MOUSE_MIDDLE_CLICK : 0) |
-				(buttonScrollDown ? MOUSE_SCROLL_DOWN : 0) |
-				(buttonScrollUp ? MOUSE_SCROLL_UP : 0);
+				(buttonScrollDown ? MOUSE_SCROLL_DOWN : 0) | (buttonScrollUp ? MOUSE_SCROLL_UP : 0);
 
 			AuDevWriteMice(&newmsg);
 		}
@@ -133,7 +125,7 @@ void AuVirtioTabletDown() {
 		return;
 
 	/* Reset the device */
-    _tabletCfg->DeviceStatus = 0;
+	_tabletCfg->DeviceStatus = 0;
 
 	isb_flush();
 	dsb_ish();
@@ -178,8 +170,10 @@ void AuVirtioTabletInitialize(uint64_t device) {
 	char tablet_name[128];
 	memset(tablet_name, 0, 128);
 	int name_len2 = cfg->size;
-	if (name_len2 > 127) name_len2 = 127;
-	for (int i = 0; i < name_len2; i++) tablet_name[i] = cfg->data.str[i];
+	if (name_len2 > 127)
+		name_len2 = 127;
+	for (int i = 0; i < name_len2; i++)
+		tablet_name[i] = cfg->data.str[i];
 	UARTDebugOut("VIRTIO Tablet Name : %s \n", tablet_name);
 
 	cfg->select = 0x12;
@@ -195,7 +189,6 @@ void AuVirtioTabletInitialize(uint64_t device) {
 
 	maxX = max_x;
 	maxY = max_y;
-
 
 	cfg->select = 0;
 	cfg->subsel = 0;
@@ -221,13 +214,15 @@ void AuVirtioTabletInitialize(uint64_t device) {
 
 	int queueSz = common->QueueSize;
 	tabletQueueSz = queueSz;
-	uint64_t queuePhys = (uint64_t)AuPmmngrAlloc();//AuPmmngrAllocBlocks(((sizeof(struct VirtioQueue) * queueSz)) / 0x1000);
-	TabletQueue = (struct VirtioQueue*)AuMapMMIO(queuePhys, 1/*((sizeof(struct VirtioQueue) * queueSz)) / 0x1000*/);
+	uint64_t queuePhys = (uint64_t)
+		AuPmmngrAlloc(); //AuPmmngrAllocBlocks(((sizeof(struct VirtioQueue) * queueSz)) / 0x1000);
+	TabletQueue = (struct VirtioQueue*)AuMapMMIO(
+		queuePhys, 1 /*((sizeof(struct VirtioQueue) * queueSz)) / 0x1000*/);
 	size_t desc_size = queueSz * sizeof(struct VirtioQueue);
 	common->QueueSelect = 0;
 	common->QueueDesc = queuePhys;
-	common->QueueAvail = (queuePhys)+OFFSETOF(struct VirtioQueue, available);
-	common->QueueUsed = (queuePhys)+OFFSETOF(struct VirtioQueue, used);
+	common->QueueAvail = (queuePhys) + OFFSETOF(struct VirtioQueue, available);
+	common->QueueUsed = (queuePhys) + OFFSETOF(struct VirtioQueue, used);
 	common->MSix = 0;
 	common->QueueMSixVector = 0;
 	isb_flush();
@@ -235,7 +230,6 @@ void AuVirtioTabletInitialize(uint64_t device) {
 
 	uint64_t bufferBase = (uint64_t)AuPmmngrAlloc();
 	TabletInput = (struct VirtioInputEvent*)AuMapMMIO(bufferBase, 1);
-
 
 	for (int i = 0; i < queueSz; ++i) {
 		TabletQueue->buffers[i].Addr = bufferBase + i * sizeof(struct VirtioInputEvent);

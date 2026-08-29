@@ -54,14 +54,14 @@
 #include <widgets/scrollbar.h>
 #include <widgets/listview.h>
 
-ChitralekhaApp *app;
+ChitralekhaApp* app;
 ChWindow* mainWin;
 ChWindow* win2;
 jmp_buf jmp;
 ChPopupMenu* pm;
 ChListView* lv;
-ChIcon *dirico;
-ChIcon *docico;
+ChIcon* dirico;
+ChIcon* docico;
 ChIcon* exeico;
 ChIcon* imgico;
 ChIcon* dllico;
@@ -70,9 +70,9 @@ char* history;
 
 typedef struct _address_bar_ {
 	ChWidget base;
-}FileAddressBar;
+} FileAddressBar;
 
-FileAddressBar *addressbar;
+FileAddressBar* addressbar;
 
 void DirListItemAction(ChListView* lv, ChListItem* li);
 void DocumentItemActionHandler(ChListView* lv, ChListItem* li);
@@ -100,33 +100,36 @@ void FileAddressBarMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, int bu
 	}
 }
 
-
 #define FILE_ADDRESS_BAR_COLOR 0xFFFFFFFF
 
 void FileAddressBarPaintHandler(ChWidget* wid, ChWindow* win) {
 	FileAddressBar* bar = (FileAddressBar*)wid;
-	ChDrawRect(win->canv, bar->base.x, bar->base.y, bar->base.w, bar->base.h, FILE_ADDRESS_BAR_COLOR);
+	ChDrawRect(
+		win->canv, bar->base.x, bar->base.y, bar->base.w, bar->base.h, FILE_ADDRESS_BAR_COLOR);
 	ChDrawRectUnfilled(win->canv, bar->base.x, bar->base.y, bar->base.w, bar->base.h, GRAY);
 	ChFontSetSize(win->app->baseFont, 13);
-	ChFontDrawText(win->canv, win->app->baseFont,path, bar->base.x + 10, 
-		bar->base.y + 22,
-		15,GRAY);
+	ChFontDrawText(
+		win->canv, win->app->baseFont, path, bar->base.x + 10, bar->base.y + 22, 15, GRAY);
 	if (wid->hover) {
-		ChDrawRectUnfilled(win->canv, bar->base.x, bar->base.y, bar->base.w, bar->base.h, 0xFF4067BA);
-		ChDrawRectUnfilled(win->canv, bar->base.x + 1, bar->base.y + 1, bar->base.w - 2, bar->base.h - 2,0xFF6689D5);
+		ChDrawRectUnfilled(
+			win->canv, bar->base.x, bar->base.y, bar->base.w, bar->base.h, 0xFF4067BA);
+		ChDrawRectUnfilled(win->canv,
+						   bar->base.x + 1,
+						   bar->base.y + 1,
+						   bar->base.w - 2,
+						   bar->base.h - 2,
+						   0xFF6689D5);
 	}
 }
 
 void FileAddressBarRepaint(FileAddressBar* bar) {
 	bar->base.ChPaintHandler((ChWidget*)bar, mainWin);
-	ChWindowUpdate(mainWin, bar->base.x, bar->base.y, bar->base.w, bar->base.h,0,1);
+	ChWindowUpdate(mainWin, bar->base.x, bar->base.y, bar->base.w, bar->base.h, 0, 1);
 }
 
-void FileAddressBarDestroy(ChWidget* wid, ChWindow* win) {
-
-}
-FileAddressBar * FileCreateAddressBar(int x, int y, int w, int h) {
-	FileAddressBar *addrbar = (FileAddressBar*)malloc(sizeof(FileAddressBar));
+void FileAddressBarDestroy(ChWidget* wid, ChWindow* win) {}
+FileAddressBar* FileCreateAddressBar(int x, int y, int w, int h) {
+	FileAddressBar* addrbar = (FileAddressBar*)malloc(sizeof(FileAddressBar));
 	memset(addrbar, 0, sizeof(FileAddressBar));
 	addrbar->base.x = CHITRALEKHA_WINDOW_DEFAULT_PAD_X + x;
 	addrbar->base.y = CHITRALEKHA_WINDOW_DEFAULT_PAD_Y + y;
@@ -154,38 +157,37 @@ void FileHandleKeyEvent(char c) {
  * WindowHandleMessage -- handles incoming deodhai messages
  * @param e -- PostBox event message structure
  */
-void WindowHandleMessage(PostEvent *e) {
+void WindowHandleMessage(PostEvent* e) {
 	switch (e->type) {
 	/* handle mouse event from deodhai */
-	case DEODHAI_REPLY_MOUSE_EVENT:{
-									   int handle = e->dword4;
-									   if (e->dword5 == WINDOW_HANDLE_TYPE_NORMAL){
-										   ChWindow* mouseWin = ChGetWindowByHandle(mainWin, handle);
-										   ChWindowHandleMouse(mouseWin, e->dword, e->dword2, e->dword3);
-									   }
-									   else if (e->dword5 == WINDOW_HANDLE_TYPE_POPUP) {
-										   ChWindow* pw = ChGetPopupWindowByHandle(mainWin, handle);
-										   ChPopupWindowHandleMouse(pw,  e->dword, e->dword2, e->dword3);
-									   }
-									   memset(e, 0, sizeof(PostEvent));
-									   break;
+	case DEODHAI_REPLY_MOUSE_EVENT: {
+		int handle = e->dword4;
+		if (e->dword5 == WINDOW_HANDLE_TYPE_NORMAL) {
+			ChWindow* mouseWin = ChGetWindowByHandle(mainWin, handle);
+			ChWindowHandleMouse(mouseWin, e->dword, e->dword2, e->dword3);
+		} else if (e->dword5 == WINDOW_HANDLE_TYPE_POPUP) {
+			ChWindow* pw = ChGetPopupWindowByHandle(mainWin, handle);
+			ChPopupWindowHandleMouse(pw, e->dword, e->dword2, e->dword3);
+		}
+		memset(e, 0, sizeof(PostEvent));
+		break;
 	}
 		/* handle key events from deodhai */
-	case DEODHAI_REPLY_KEY_EVENT:{
-									 int code = e->dword;
-									 ChitralekhaProcessKey(code);
-									 char c = ChitralekhaKeyToASCII(code);
-									 FileHandleKeyEvent(c);
-									 memset(e, 0, sizeof(PostEvent));
-									 break;
+	case DEODHAI_REPLY_KEY_EVENT: {
+		int code = e->dword;
+		ChitralekhaProcessKey(code);
+		char c = ChitralekhaKeyToASCII(code);
+		FileHandleKeyEvent(c);
+		memset(e, 0, sizeof(PostEvent));
+		break;
 	}
-	case DEODHAI_REPLY_FOCUS_CHANGED:{
-										 int focus_val = e->dword;
-										 int handle = e->dword2;
-										 ChWindow* focWin = ChGetWindowByHandle(mainWin, handle);
-										 ChWindowHandleFocus(focWin, focus_val, handle);
-										 memset(e, 0, sizeof(PostEvent));
-										 break;
+	case DEODHAI_REPLY_FOCUS_CHANGED: {
+		int focus_val = e->dword;
+		int handle = e->dword2;
+		ChWindow* focWin = ChGetWindowByHandle(mainWin, handle);
+		ChWindowHandleFocus(focWin, focus_val, handle);
+		memset(e, 0, sizeof(PostEvent));
+		break;
 	}
 	case DEODHAI_REPLY_MOUSE_LEAVE: {
 		memset(e, 0, sizeof(PostEvent));
@@ -205,15 +207,17 @@ bool VerifyDocExtension(char* filename, char* extension) {
 	int j = strlen(extension);
 
 	do {
-		if (filename[i] != extension[j]) break;
-		if (j == 0) return 1;
-		if (i == 0)break;
+		if (filename[i] != extension[j])
+			break;
+		if (j == 0)
+			return 1;
+		if (i == 0)
+			break;
 		i--;
 		j--;
 	} while (1);
 	return false;
 }
-
 
 void PrintParentDir(char* pathname) {
 	int len = strlen(pathname);
@@ -230,8 +234,7 @@ void PrintParentDir(char* pathname) {
 		if (subpath[i] == '/' && _opened_)
 			break;
 
-
-		if (subpath[i] == '/' && !_opened_){
+		if (subpath[i] == '/' && !_opened_) {
 			_opened_ = true;
 			continue;
 		}
@@ -241,11 +244,10 @@ void PrintParentDir(char* pathname) {
 
 	int offset = 0;
 	for (int i = 0; i < 16; i++) {
-		if (dir[i] != '\0'){
+		if (dir[i] != '\0') {
 			dir[offset] = dir[i];
 			offset++;
 		}
-
 	}
 	dir[offset] = '\0';
 	_KePrint("Dir %s \r\n", dir);
@@ -254,7 +256,8 @@ void PrintParentDir(char* pathname) {
 
 const char* get_extension(const char* filename) {
 	const char* dot = strrchr(filename, '.');
-	if (!dot || dot == filename) return "";
+	if (!dot || dot == filename)
+		return "";
 	return dot + 1;
 }
 
@@ -262,26 +265,24 @@ int stricmp_custom(const char* a, const char* b) {
 	while (*a && *b) {
 		if (tolower(*a) != tolower(*b))
 			return 0;
-		a++; b++;
+		a++;
+		b++;
 	}
 	return *a == *b;
 }
 
 ChIcon* GetIconByName(char* filename) {
 	const char* ext = get_extension(filename);
-	
-	if (stricmp_custom(ext, "bmp") ||
-		stricmp_custom(ext, "jpg") ||
-		stricmp_custom(ext, "png")) {
+
+	if (stricmp_custom(ext, "bmp") || stricmp_custom(ext, "jpg") || stricmp_custom(ext, "png")) {
 		return imgico;
 	}
 
-	if (stricmp_custom(ext, "exe")) 
+	if (stricmp_custom(ext, "exe"))
 		return exeico;
-	
-	if (stricmp_custom(ext, "dll")) 
+
+	if (stricmp_custom(ext, "dll"))
 		return dllico;
-	
 
 	return docico;
 }
@@ -291,7 +292,7 @@ ChIcon* GetIconByName(char* filename) {
  * @param dirfd -- directory file descriptor
  * @param lview -- Pointer to list view
  */
-void RefreshFileView(int dirfd, ChListView *lview) {
+void RefreshFileView(int dirfd, ChListView* lview) {
 	XEDirectoryEntry* dirent = (XEDirectoryEntry*)malloc(sizeof(XEDirectoryEntry));
 	memset(dirent, 0, sizeof(XEDirectoryEntry));
 
@@ -301,12 +302,12 @@ void RefreshFileView(int dirfd, ChListView *lview) {
 			break;
 		int code = _KeReadDir(dirfd, dirent);
 		if (code != -1) {
-			if (dirent->flags & FILE_DIRECTORY){
-				if ((strcmp(dirent->filename, ".") == 0) || (strcmp(dirent->filename, "..") == 0)){
+			if (dirent->flags & FILE_DIRECTORY) {
+				if ((strcmp(dirent->filename, ".") == 0) || (strcmp(dirent->filename, "..") == 0)) {
 					memset(dirent->filename, 0, 32);
 					continue;
 				}
-				ChListItem*li = ChListViewAddItem(mainWin, lview, dirent->filename);
+				ChListItem* li = ChListViewAddItem(mainWin, lview, dirent->filename);
 				ChListViewSetListItemIcon(li, dirico);
 				li->ChListItemAction = DirListItemAction;
 			}
@@ -322,8 +323,8 @@ void RefreshFileView(int dirfd, ChListView *lview) {
 			break;
 		int code = _KeReadDir(dirfd, dirent);
 		if (code != -1) {
-			if (dirent->flags & FILE_GENERAL){
-				if ((strcmp(dirent->filename, ".") == 0) || (strcmp(dirent->filename, "..") == 0)){
+			if (dirent->flags & FILE_GENERAL) {
+				if ((strcmp(dirent->filename, ".") == 0) || (strcmp(dirent->filename, "..") == 0)) {
 					memset(dirent->filename, 0, 32);
 					continue;
 				}
@@ -346,7 +347,7 @@ void RefreshFileView(int dirfd, ChListView *lview) {
  */
 void DirListItemAction(ChListView* lv, ChListItem* li) {
 	int len = strlen(path);
-	char *dirname = (char*)malloc(strlen(li->itemText) + len);
+	char* dirname = (char*)malloc(strlen(li->itemText) + len);
 	strcpy(dirname, path);
 	strcpy(dirname + len, li->itemText);
 	free(path);
@@ -399,7 +400,6 @@ void PathNavigateBack() {
 		subpath[i] = '\0';
 	}
 
-
 	ChListViewClear(lv);
 
 	/* bug : needs to sleep inorder to get
@@ -427,7 +427,7 @@ void PathEnterForward() {
 	ChListItem* li = ChListViewGetSelectedItem(lv);
 	if (li == NULL)
 		return;
-	
+
 	if (li->icon != NULL && li->icon == docico) {
 		/* handle it as document */
 		ExtensionManagerSpawn(li);
@@ -475,8 +475,11 @@ void DocumentItemActionHandler(ChListView* lv, ChListItem* li) {
 }
 
 void AboutClicked(ChWidget* wid, ChWindow* win) {
-	ChMessageBox* mb = ChCreateMessageBox(mainWin,"File Explorer v1.0", "File Explorer v1.0 for XenevaOS !!",
-		MSGBOX_TYPE_ONLYCLOSE, MSGBOX_ICON_SUCCESS);
+	ChMessageBox* mb = ChCreateMessageBox(mainWin,
+										  "File Explorer v1.0",
+										  "File Explorer v1.0 for XenevaOS !!",
+										  MSGBOX_TYPE_ONLYCLOSE,
+										  MSGBOX_ICON_SUCCESS);
 	ChMessageBoxShow(mb);
 }
 /*
@@ -489,7 +492,6 @@ void ExitItemClicked(ChWidget* wid, ChWindow* win) {
 	/* exit the application*/
 	ChWindowCloseWindow(mainWin);
 }
-
 
 void M2_2Clicked(ChWidget* wid, ChWindow* win) {
 	/* exit the application*/
@@ -522,10 +524,9 @@ void _FileMngrThr() {
 /*
 * main -- main entry
 */
-int main(int argc, char* argv[]){
+int main(int argc, char* argv[]) {
 	app = ChitralekhaStartApp(argc, argv);
-	mainWin = ChCreateWindow(app, WINDOW_FLAG_MOVABLE, "Files", 100, 100, 660, 
-		500);
+	mainWin = ChCreateWindow(app, WINDOW_FLAG_MOVABLE, "Files", 100, 100, 660, 500);
 
 	win2 = NULL;
 
@@ -533,8 +534,13 @@ int main(int argc, char* argv[]){
 
 	pm = NULL;
 
-	ChButton* backbut = ChCreateButton(10,34, 50, 35, "Back"); //mainWin->info->width / 2 - 100 / 2, mainWin->info->height / 2 - 75/2
-	ChWindowAddWidget(mainWin,(ChWidget*)backbut);
+	ChButton* backbut = ChCreateButton(
+		10,
+		34,
+		50,
+		35,
+		"Back"); //mainWin->info->width / 2 - 100 / 2, mainWin->info->height / 2 - 75/2
+	ChWindowAddWidget(mainWin, (ChWidget*)backbut);
 	backbut->base.ChActionHandler = BackButtonClicked;
 
 	ChButton* Enterbut = ChCreateButton(60 + 10, 34, 50, 35, "Enter");
@@ -546,9 +552,9 @@ int main(int argc, char* argv[]){
 
 	ChMenubar* mb = ChCreateMenubar(mainWin);
 
-	ChMenuButton *file = ChCreateMenubutton(mb, "File");
+	ChMenuButton* file = ChCreateMenubutton(mb, "File");
 	ChMenubarAddButton(mb, file);
-	ChMenuButton *edit = ChCreateMenubutton(mb, "Help");
+	ChMenuButton* edit = ChCreateMenubutton(mb, "Help");
 	ChMenubarAddButton(mb, edit);
 
 	pm = ChCreatePopupMenu(mainWin, 0);
@@ -562,53 +568,55 @@ int main(int argc, char* argv[]){
 	about->wid.ChActionHandler = AboutClicked;
 	ChMenuButtonAddMenu(edit, help);
 
-
-	ChScrollPane* sp = ChCreateScrollPane(mainWin, 170, 100, mainWin->info->width - (170+2), mainWin->info->height - 120);
-	lv = ChCreateListView(170, 100, mainWin->info->width - (170+2), mainWin->info->height - 120);
+	ChScrollPane* sp = ChCreateScrollPane(
+		mainWin, 170, 100, mainWin->info->width - (170 + 2), mainWin->info->height - 120);
+	lv = ChCreateListView(170, 100, mainWin->info->width - (170 + 2), mainWin->info->height - 120);
 	ChListViewSetScrollpane(lv, sp);
 
 	//ChScrollBar* sb = ChCreateScrollBar(mainWin->info->width - 16, 26, 16, mainWin->info->height - 26, SCROLLBAR_ORIENTATION_VERTICAL);
 	//ChScrollBarSetRange(sb, 0, 800, mainWin->info->height - 26);
 	//ChScrollBar* sb1 = ChCreateScrollBar(0, mainWin->info->height - 16, mainWin->info->width, 16, SCROLLBAR_ORIENTATION_HORIZONTAL);
 	//ChScrollBarSetRange(sb1, 0, 800, mainWin->info->width);
-	ListView* lv1 = ChListViewCreate(170, 100, mainWin->info->width - (170 + 2), mainWin->info->height - 120,24);
+	ListView* lv1 = ChListViewCreate(
+		170, 100, mainWin->info->width - (170 + 2), mainWin->info->height - 120, 24);
 	ListViewAddColumn(lv1, "Name", 200, 60);
 	ListViewAddColumn(lv1, "Size", 100, 50);
 	ListViewAddColumn(lv1, "Type", 100, 50);
 	ListViewAddColumn(lv1, "Modified", 220, 80);
 	ListViewAddColumn(lv1, "Access", 100, 50);
 
-	const char* row1[] = { "kernel.bin", "2.1 MB", "Binary", "2026-06-18 14:02", "root"};
+	const char* row1[] = {"kernel.bin", "2.1 MB", "Binary", "2026-06-18 14:02", "root"};
 	ListItem* l1 = ListViewAddItem(lv1, row1, 5, NULL);
 
-	const char* row2[] = { "doom.exe", "880 KB", "exec", "2026-06-17 09:41", "user" };
+	const char* row2[] = {"doom.exe", "880 KB", "exec", "2026-06-17 09:41", "user"};
 	ListItem* l2 = ListViewAddItem(lv1, row2, 5, NULL);
 
-	const char* row3[] = { "xeldr.exe", "78 KB", "exec", "2026-06-17 09:41", "root" };
+	const char* row3[] = {"xeldr.exe", "78 KB", "exec", "2026-06-17 09:41", "root"};
 	ListItem* l3 = ListViewAddItem(lv1, row3, 5, NULL);
 
-	const char* row4[] = { "audrv.cnf", "1 KB", "config", "2026-06-17 09:41", "user" };
+	const char* row4[] = {"audrv.cnf", "1 KB", "config", "2026-06-17 09:41", "user"};
 	ListItem* l4 = ListViewAddItem(lv1, row4, 5, NULL);
 
-	const char* row5[] = { "virtblk.dll", "55 KB", "system", "2026-06-17 09:41", "root" };
+	const char* row5[] = {"virtblk.dll", "55 KB", "system", "2026-06-17 09:41", "root"};
 	ListItem* l5 = ListViewAddItem(lv1, row5, 5, NULL);
 
-	const char* row6[] = { "virtnet.dll", "67 KB", "system", "2026-06-17 09:41", "root" };
+	const char* row6[] = {"virtnet.dll", "67 KB", "system", "2026-06-17 09:41", "root"};
 	ListItem* l6 = ListViewAddItem(lv1, row6, 5, NULL);
-
-	
 
 	ChWindowAddWidget(mainWin, (ChWidget*)mb);
 	//ChWindowAddWidget(mainWin, (ChWidget*)lv);
 	//ChWindowAddWidget(mainWin, (ChWidget*)sp);
 	ChWindowAddWidget(mainWin, (ChWidget*)lv1);
 
-	FileManagerPartitionList* partitionList = FileManagerCreatePartitionList(10, 100, mainWin->info->width - (20 + (mainWin->info->width - 170)),
-		mainWin->info->height - 120);
+	FileManagerPartitionList* partitionList =
+		FileManagerCreatePartitionList(10,
+									   100,
+									   mainWin->info->width - (20 + (mainWin->info->width - 170)),
+									   mainWin->info->height - 120);
 	ChWindowAddWidget(mainWin, (ChWidget*)partitionList);
 
 	int dirfd = _KeOpenDir("/");
-	
+
 	path = (char*)malloc(strlen("/"));
 	strcpy(path, "/");
 
@@ -632,22 +640,20 @@ int main(int argc, char* argv[]){
 	dllico = ChCreateIcon();
 	ChIconOpen(dllico, "/icons/dll.bmp");
 	ChIconRead(dllico);
-	ListViewSetItemIcon(lv1,4,dllico,dllico->image.width, dllico->image.height);
+	ListViewSetItemIcon(lv1, 4, dllico, dllico->image.width, dllico->image.height);
 	ListViewSetItemIcon(lv1, 5, dllico, dllico->image.width, dllico->image.height);
-
 
 	ChIcon* drive = ChCreateIcon();
 	ChIconOpen(drive, "/icons/drive.bmp");
 	ChIconRead(drive);
 
-
 	for (int i = 0; i < 20; i++) {
-		const char* row7[] = { "virus.dll", "67 KB", "system", "2026-06-17 09:41", "root" };
+		const char* row7[] = {"virus.dll", "67 KB", "system", "2026-06-17 09:41", "root"};
 		ListItem* l7 = ListViewAddItem(lv1, row7, 5, NULL);
 		int index = 6 + i;
 		ListViewSetItemIcon(lv1, index, dllico, dllico->image.width, dllico->image.height);
 	}
-	
+
 	_KePrint("refreshing file view \r\n");
 	RefreshFileView(dirfd, lv);
 
@@ -672,8 +678,10 @@ int main(int argc, char* argv[]){
 			if (ret2 == -1)
 				break;
 			printf("Partition Mounted to -> %s \r\n", partitionInfo.mountedName);
-			printf("GUID -> %x-%x-%x\r\n", partitionInfo.partitionGUID.Data1, partitionInfo.partitionGUID.Data2,
-				partitionInfo.partitionGUID.Data3);
+			printf("GUID -> %x-%x-%x\r\n",
+				   partitionInfo.partitionGUID.Data1,
+				   partitionInfo.partitionGUID.Data2,
+				   partitionInfo.partitionGUID.Data3);
 			for (int k = 0; k < 8; k++)
 				printf("-%x", partitionInfo.partitionGUID.Data4[k]);
 			FileManagerPartitionButton* pbut = FileManageCreatePartitionButton(partitionList);
@@ -690,7 +698,7 @@ int main(int argc, char* argv[]){
 			pbut->mounted = false;
 			strcpy(pbut->partitionName, diskInfo.diskname);
 			char buf[32];
-			strcpy(buf,"Raw Drive");
+			strcpy(buf, "Raw Drive");
 			memcpy(pbut->guidString, buf, 32);
 		}
 		memset(&diskInfo, 0, sizeof(XEVDiskInfo));
@@ -703,9 +711,6 @@ int main(int argc, char* argv[]){
 	PostEvent e;
 	memset(&e, 0, sizeof(PostEvent));
 
-
-
-	
 	/* needs to set jmp environment, if a subwindow
 	 * get closed it will jump here for continuing
 	 * the application

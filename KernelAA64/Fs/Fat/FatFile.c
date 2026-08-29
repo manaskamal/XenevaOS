@@ -56,7 +56,7 @@ AuVFSNode* FatFileGetParent(AuVFSNode* fsys, const char* filename) {
 		return NULL;
 	FatFS* _fs = (FatFS*)fsys->device;
 	AuVFSNode* parent = NULL;
-	
+
 	AuVFSNode* retfile = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
 
 	char* path = (char*)filename;
@@ -68,7 +68,6 @@ AuVFSNode* FatFileGetParent(AuVFSNode* fsys, const char* filename) {
 	//skip alphabet label
 	if (fsys != __RootFS)
 		p += 2;
-	
 
 	while (p) {
 		char pathname[16];
@@ -79,7 +78,7 @@ AuVFSNode* FatFileGetParent(AuVFSNode* fsys, const char* filename) {
 			pathname[i] = p[i];
 		}
 		pathname[i] = 0;
-	
+
 		if (is_root) {
 			parent = FatLocateDir(fsys, pathname);
 			if (!parent) {
@@ -87,8 +86,7 @@ AuVFSNode* FatFileGetParent(AuVFSNode* fsys, const char* filename) {
 				break;
 			}
 			is_root = false;
-		}
-		else {
+		} else {
 			memcpy(retfile, parent, sizeof(AuVFSNode));
 			parent = FatLocateSubDir(fsys, parent, pathname);
 			if (!parent) {
@@ -114,7 +112,7 @@ AuVFSNode* FatCreateFile(AuVFSNode* fsys, char* filename) {
 	if (!fsys)
 		return NULL;
 	FatFS* _fs = (FatFS*)fsys->device;
-	
+
 	AuVFSNode* parent = FatFileGetParent(fsys, filename);
 	if (!parent) {
 		UARTDebugOut("No parent \r\n");
@@ -124,7 +122,6 @@ AuVFSNode* FatCreateFile(AuVFSNode* fsys, char* filename) {
 	uint32_t parent_cluster = parent->current;
 	if (!parent_cluster)
 		parent_cluster = _fs->__RootDirFirstCluster;
-
 
 	AuVFSNode* file = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
 	memset(file, 0, sizeof(AuVFSNode));
@@ -158,7 +155,6 @@ AuVFSNode* FatCreateFile(AuVFSNode* fsys, char* filename) {
 	FatToDOSFilename(extract, fname, 11);
 	//fname[11] = 0;
 
-
 	while (1) {
 		for (int j = 0; j < _fs->__SectorPerCluster; j++) {
 			memset(buff, 0, 512);
@@ -172,7 +168,7 @@ AuVFSNode* FatCreateFile(AuVFSNode* fsys, char* filename) {
 					uint32_t cluster = FatFindFreeCluster(fsys);
 					FatAllocCluster(fsys, cluster, FAT_EOC_MARK);
 					FatClearCluster(fsys, cluster);
-				
+
 					dirent->attrib = FAT_ATTRIBUTE_ARCHIVE;
 					dirent->first_cluster = (uint16_t)(cluster & 0x0000FFFF);
 					dirent->first_cluster_hi_bytes = (uint16_t)((cluster & 0x0FFF0000) >> 16);
@@ -270,7 +266,6 @@ void FatFileUpdateSize(AuVFSNode* fsys, AuVFSNode* file, size_t size) {
 	return;
 }
 
-
 /*
 * FatFileUpdateFilename -- updates the current file name
 * @param fsys -- Pointer to file system
@@ -314,7 +309,7 @@ int FatFileUpdateFilename(AuVFSNode* fsys, AuVFSNode* file, char* newname) {
 
 				if (strcmp(name, fname) == 0) {
 					memcpy(dirent->filename, nname, 11);
-					AuVDiskWrite(_fs->vdisk, FatClusterToSector32(_fs, dir_cluster) + j, 1,buff);
+					AuVDiskWrite(_fs->vdisk, FatClusterToSector32(_fs, dir_cluster) + j, 1, buff);
 					AuPmmngrFree((void*)V2P((size_t)buff));
 					return 0;
 				}
@@ -330,7 +325,6 @@ int FatFileUpdateFilename(AuVFSNode* fsys, AuVFSNode* file, char* newname) {
 	return -1;
 }
 
-
 /*
  * FatFileWriteContent -- write contents to fat file (4kib)
  * @param fsys -- Pointer to file system node
@@ -340,7 +334,6 @@ int FatFileUpdateFilename(AuVFSNode* fsys, AuVFSNode* file, char* newname) {
 void FatFileWriteContent(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer) {
 	if (!fsys)
 		return;
-
 
 	FatFS* _fs = (FatFS*)fsys->device;
 
@@ -368,8 +361,7 @@ void FatFileWriteContent(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer) {
 	uint32_t return_cluster = FatReadFAT(fsys, cluster);
 	if (return_cluster == (FAT_EOC_MARK & 0x0FFFFFFF)) {
 		file->eof = 1;
-	}
-	else
+	} else
 		cluster = return_cluster;
 
 	file->current = cluster;
@@ -403,7 +395,7 @@ size_t FatWrite(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint32_t len
 	FatFS* _fs = (FatFS*)fsys->device;
 
 	size_t num_cluster = length / ((_fs->__BytesPerSector) * _fs->__SectorPerCluster) +
-		((length % (_fs->__BytesPerSector * _fs->__SectorPerCluster) ? 1 : 0));
+						 ((length % (_fs->__BytesPerSector * _fs->__SectorPerCluster) ? 1 : 0));
 
 	for (int i = 0; i < num_cluster; i++) {
 		FatFileWriteContent(fsys, file, buffer);
@@ -467,7 +459,6 @@ int FatFileClearDirEntry(AuVFSNode* fsys, AuVFSNode* file) {
 		dir_clust = FatReadFAT(fsys, dir_clust);
 		if (dir_clust == (FAT_EOC_MARK & 0x0FFFFFFF))
 			break;
-
 	}
 	return -1;
 }
@@ -500,8 +491,7 @@ int FatFileRemove(AuVFSNode* fsys, AuVFSNode* file) {
 			UARTDebugOut("EOC mark found in cluster -> %x \n", cluster);
 			FatAllocCluster(fsys, cluster, 0x00);
 			break;
-		}
-		else {
+		} else {
 			FatAllocCluster(fsys, cluster, 0x00);
 		}
 		cluster = next_cluster;
@@ -511,4 +501,3 @@ int FatFileRemove(AuVFSNode* fsys, AuVFSNode* file) {
 	FatFileClearDirEntry(fsys, file);
 	return 0;
 }
-

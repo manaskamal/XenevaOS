@@ -34,27 +34,25 @@
 #include <string.h>
 #include <sys/types.h>
 
-
-extern char * _argv_0;
+extern char* _argv_0;
 extern int __libc_debug;
 
 struct SortableArray {
-	void * data;
+	void* data;
 	size_t size;
-	int(*func)(const void *, const void *);
+	int (*func)(const void*, const void*);
 };
 
-static ssize_t partition(struct SortableArray * array, ssize_t lo, ssize_t hi) {
-
+static ssize_t partition(struct SortableArray* array, ssize_t lo, ssize_t hi) {
 	char* pivot = (char*)malloc(array->size);
-	memcpy(pivot, (char *)array->data + array->size * hi, array->size);
+	memcpy(pivot, (char*)array->data + array->size * hi, array->size);
 	ssize_t i = lo - 1;
 	for (ssize_t j = lo; j <= hi; ++j) {
-		uint8_t * obj_j = (uint8_t *)array->data + array->size * j;
+		uint8_t* obj_j = (uint8_t*)array->data + array->size * j;
 		if (array->func(obj_j, pivot) <= 0) {
 			i++;
 			if (j != i) {
-				uint8_t * obj_i = (uint8_t *)array->data + array->size * i;
+				uint8_t* obj_i = (uint8_t*)array->data + array->size * i;
 				for (size_t x = 0; x < array->size; ++x) {
 					uint8_t tmp = obj_i[x];
 					obj_i[x] = obj_j[x];
@@ -67,7 +65,7 @@ static ssize_t partition(struct SortableArray * array, ssize_t lo, ssize_t hi) {
 	return i;
 }
 
-static void quicksort(struct SortableArray * array, ssize_t lo, ssize_t hi) {
+static void quicksort(struct SortableArray* array, ssize_t lo, ssize_t hi) {
 	if (lo >= 0 && hi >= 0) {
 		if (lo < hi) {
 			ssize_t pivot = partition(array, lo, hi);
@@ -77,9 +75,11 @@ static void quicksort(struct SortableArray * array, ssize_t lo, ssize_t hi) {
 	}
 }
 
-void qsort(void * base, size_t nmemb, size_t size, int(*compar)(const void *, const void *)) {
-	if (nmemb < 2) return;
-	if (!size) return;
-	struct SortableArray array = { base, size, compar };
+void qsort(void* base, size_t nmemb, size_t size, int (*compar)(const void*, const void*)) {
+	if (nmemb < 2)
+		return;
+	if (!size)
+		return;
+	struct SortableArray array = {base, size, compar};
 	quicksort(&array, 0, nmemb - 1);
 }

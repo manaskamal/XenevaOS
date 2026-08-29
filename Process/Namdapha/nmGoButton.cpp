@@ -31,8 +31,6 @@
 #include <sys/_kefile.h>
 #include <sys/mman.h>
 
-
-
 ButtonInfo* gobtn;
 ButtonInfo* gobtnHover;
 ButtonInfo* gobtnClick;
@@ -57,12 +55,15 @@ void NamdaphaGoButtonPaint(NamdaphaButton* button, ChWindow* win) {
 	if (!button->clicked && !button->hover)
 		ChDrawRect(win->canv, button->x, button->y, button->w, button->h, NAMDAPHA_COLOR);
 
-	NmButtonInfoDrawIcon(icon, win->canv, button->x + button->w / 2 - gobtn->iconWidth / 2,
-		button->y + button->h / 2 - gobtn->iconHeight / 2);
+	NmButtonInfoDrawIcon(icon,
+						 win->canv,
+						 button->x + button->w / 2 - gobtn->iconWidth / 2,
+						 button->y + button->h / 2 - gobtn->iconHeight / 2);
 }
 
 NamdaphaButton* NamdaphaInitialiseGoButton(ChWindow* win) {
-	NamdaphaButton* gobutton = NmCreateButton(10, win->info->height - 60, NAMDAPHA_WIDTH - 20, 50, "Go");
+	NamdaphaButton* gobutton =
+		NmCreateButton(10, win->info->height - 60, NAMDAPHA_WIDTH - 20, 50, "Go");
 	gobtn = NmCreateButtonInfo("/icons/GoIcon.bmp");
 	gobtnHover = NmCreateButtonInfo("/icons/GoIconL.bmp");
 	gobtnClick = NmCreateButtonInfo("/icons/GoIconS.bmp");

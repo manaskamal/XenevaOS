@@ -48,30 +48,29 @@
 /** Let's hardcode,credentials
  * untill we get proper login manager
  */
-#define GROUP_INPUT  20
-#define GROUP_VIDEO  21
-#define GROUP_TTY    22
-#define GROUP_AUDIO  21
+#define GROUP_INPUT	  20
+#define GROUP_VIDEO	  21
+#define GROUP_TTY	  22
+#define GROUP_AUDIO	  21
 #define GROUP_NETWORK 23
 
 /** hardcoded untill we get proper
  * login manager
  */
-#define UAC_DEAMONS 40
+#define UAC_DEAMONS		40
 #define UAC_NORMAL_USER 1000
 
 int _sound;
 
 /** Init Request msgs **/
-#define INIT_REQUEST_PW_DOWN  "init.request.powerdown"
+#define INIT_REQUEST_PW_DOWN   "init.request.powerdown"
 #define INIT_REQUEST_PW_REBOOT "init.request.reboot"
-
 
 typedef struct _init_request_msg_ {
 	char message[60];
 	uint16_t fromProcessId;
 	uint16_t toProcessId;
-}InitRequestMsg;
+} InitRequestMsg;
 
 void initSetupBasicEnvironmentVars() {
 	setenv("HOME", "/", 1);
@@ -82,13 +81,11 @@ void initSetupBasicEnvironmentVars() {
 	setenv("OSNAME", "XenevaOS", 1);
 }
 
-
 typedef struct _sound_card_list {
 	char name[32];
 	int cardID;
 	struct _sound_card_list* next;
-}aurora_snd_card_list;
-
+} aurora_snd_card_list;
 
 extern void SplashScreenShow();
 
@@ -124,12 +121,11 @@ void init_basic_gid_to_dev() {
  * _play_startup_sound -- play the startup sound
  */
 void _play_startup_sound() {
-	if (_sound == -1) 
+	if (_sound == -1)
 		return;
-	
+
 	XEFileIOControl ioctl;
 	memset(&ioctl, 0, sizeof(XEFileIOControl));
-
 
 	/* uint_1 holds the millisecond to sleep after
 	* one frame playback */
@@ -142,7 +138,8 @@ void _play_startup_sound() {
 		return;
 
 	ioctl.uint_1 = num_card_count;
-	aurora_snd_card_list* list = (aurora_snd_card_list*)malloc(sizeof(aurora_snd_card_list) * num_card_count);
+	aurora_snd_card_list* list =
+		(aurora_snd_card_list*)malloc(sizeof(aurora_snd_card_list) * num_card_count);
 	ioctl.ulong_1 = (uint64_t)list;
 	if (_KeFileIoControl(_sound, SOUND_GET_CARD_LIST, &ioctl)) {
 		_KePrint("[init]: failed to get sound card list \r\n");
@@ -223,7 +220,6 @@ void _init_handle_request(InitRequestMsg* msg) {
  * _main -- main entry point
  */
 extern "C" void main(int argc, char* argv[]) {
-
 	int pid = _KeGetProcessID();
 
 	_KePrint("Init Process running ii %d\n", pid);
@@ -253,19 +249,16 @@ extern "C" void main(int argc, char* argv[]) {
 	if (pipe == -1)
 		_KePrint("[init]: pipe creation failed \r\n");
 	else
-		_KeCredChangeID(pipe,0, ggid_misc_world);
-
+		_KeCredChangeID(pipe, 0, ggid_misc_world);
 
 	/** allocate a memory for init request msgs */
 	char* init_msg_buff = (char*)malloc(sizeof(InitRequestMsg) + 1);
 	memset(init_msg_buff, 0, sizeof(InitRequestMsg) + 1);
 
-
 	/** TODO: add IPC system to track real system progress and animate the logo accordingly **/
 	_KeProcessSleep(100);
 
 	int proc = 0;
-
 
 #ifdef ARCH_ARM64
 	proc = _KeCreateProcess(0, "netmngr");
@@ -278,13 +271,10 @@ extern "C" void main(int argc, char* argv[]) {
 		_KeProcessSleep(500);
 	}
 
-
-
 	/** actually, design should be like that, each process after
 	 * finish its initialization, it should send a signal to 
 	 * init, so that it can continue next proccesses spawning
 	 */
-
 
 	/** from now, normal user's won't get system access */
 	proc = _KeCreateProcess(0, "deodhaixr");
@@ -299,7 +289,6 @@ extern "C" void main(int argc, char* argv[]) {
 
 	_KeProcessSleep(800);
 
-
 	proc = _KeCreateProcess(0, "deoaud");
 	_KePrint("deoaud proc id : %d \r\n", proc);
 	_KeSetUID(proc, UAC_DEAMONS);
@@ -309,8 +298,6 @@ extern "C" void main(int argc, char* argv[]) {
 	_KeCredAddSGroup(proc, ggid_misc_postbox);
 	_KeProcessLoadExec(proc, "/deoaud.exe", 0, NULL);
 
-
-	
 #elif ARCH_X64
 	proc = _KeCreateProcess(0, "deodhai");
 	_KeProcessLoadExec(proc, "/deodhai.exe", 0, NULL);
@@ -323,7 +310,7 @@ extern "C" void main(int argc, char* argv[]) {
 	_KePrint("Setting up env variable \r\n");
 	initSetupBasicEnvironmentVars();
 	int sz = 0;
-	while(1){
+	while (1) {
 		sz = _KeReadFile(pipe, init_msg_buff, sizeof(InitRequestMsg) + 1);
 		if (sz > 0) {
 			_init_handle_request((InitRequestMsg*)init_msg_buff);
@@ -335,14 +322,12 @@ extern "C" void main(int argc, char* argv[]) {
 			}
 	}
 
-	
-
 	///* just load all the background services */
 	int child = _KeCreateProcess(0, "deoaud");
 	_KeProcessLoadExec(child, "/deoaud.exe", 0, NULL);
 
 	_KeProcessSleep(1);
-		
+
 	child = _KeCreateProcess(0, "deodhai");
 	_KeProcessLoadExec(child, "/deodhai.exe", 0, NULL);
 

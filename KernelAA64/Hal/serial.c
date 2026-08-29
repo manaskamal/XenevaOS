@@ -1,4 +1,2 @@
 
-void SeTextOut(char* format, ...) {
-
-}
+void SeTextOut(char* format, ...) {}

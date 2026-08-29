@@ -29,7 +29,6 @@
 *
 **/
 
-
 #ifndef __KE_TTY_H__
 #define __KE_TTY_H__
 
@@ -37,23 +36,22 @@
 #include <_xeneva.h>
 
 #ifdef __cplusplus
-XE_EXTERN{
+XE_EXTERN {
 #endif
 
 	/* iocontrol codes */
-#define TIOCGWINSZ   0x5401
-#define TIOCSWINSZ   0x5402
-#define TIOCFLUSH    0x5403
-#define TIOCGATTR    0x5404
-#define TIOSPGRP     0x5405
+#define TIOCGWINSZ 0x5401
+#define TIOCSWINSZ 0x5402
+#define TIOCFLUSH  0x5403
+#define TIOCGATTR  0x5404
+#define TIOSPGRP   0x5405
 
 	typedef struct _win_size_ {
 		uint16_t ws_row;
 		uint16_t ws_col;
 		uint16_t ws_xpixel;
 		uint16_t ws_ypixel;
-	}WinSize;
-
+	} WinSize;
 
 	/**
 	 * @brief _KeCreateTTY -- create a new terminal
@@ -62,7 +60,7 @@ XE_EXTERN{
 	 * @param slave_fd -- Pointer to a memory area where to
 	 * store slave file descriptor
 	 */
-	XE_LIB int _KeCreateTTY(int *master_fd, int* slave_fd);
+	XE_LIB int _KeCreateTTY(int* master_fd, int* slave_fd);
 
 #ifdef __cplusplus
 }

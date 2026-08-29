@@ -43,7 +43,6 @@ static void copy_mem(void* dst, void* src, size_t length) {
 }
 
 static void zero_mem(void* dst, size_t length) {
-
 	uint8_t* dstp = (uint8_t*)dst;
 	while (length--)
 		*dstp++ = 0;
@@ -54,14 +53,15 @@ static void zero_mem(void* dst, size_t length) {
  * @param filebuff -- pointer to the pe kernel buffer
  */
 void XEPELoadImage(void* filebuff) {
-	
 	uint8_t* filebuf = (uint8_t*)filebuff;
 
 	PIMAGE_DOS_HEADER dosHeader = (PIMAGE_DOS_HEADER)filebuf;
-	struct _IMAGE_NT_HEADERS_PE32PLUS* ntHeaders = raw_offset<struct _IMAGE_NT_HEADERS_PE32PLUS*>(dosHeader, dosHeader->e_lfanew);	
+	struct _IMAGE_NT_HEADERS_PE32PLUS* ntHeaders =
+		raw_offset<struct _IMAGE_NT_HEADERS_PE32PLUS*>(dosHeader, dosHeader->e_lfanew);
 
-	PSECTION_HEADER sectionHeader = raw_offset<PSECTION_HEADER>(&ntHeaders->OptionalHeader, ntHeaders->FileHeader.SizeOfOptionaHeader);
-	size_t ImageBase = 0xFFFFC00000000000;// 0xFFFFFFFC00000000;
+	PSECTION_HEADER sectionHeader = raw_offset<PSECTION_HEADER>(
+		&ntHeaders->OptionalHeader, ntHeaders->FileHeader.SizeOfOptionaHeader);
+	size_t ImageBase = 0xFFFFC00000000000; // 0xFFFFFFFC00000000;
 	void* ImBase = (void*)ImageBase;
 
 	paddr_t phys = XEPmmngrAllocate();
@@ -70,11 +70,11 @@ void XEPELoadImage(void* filebuff) {
 	XEPagingMap(ImageBase, phys);
 
 	XEUARTPrint("Paging mapped : %x -- %x \r\n", ImageBase, phys);
-	
+
 	copy_mem((void*)ImBase, filebuf, ntHeaders->OptionalHeader.SizeOfHeaders);
 
 	XEUARTPrint("Copied first 4KiB \r\n");
-	
+
 	for (size_t i = 0; i < ntHeaders->FileHeader.NumberOfSections; ++i) {
 		//CHAR16 buf[9];
 		//copy_mem(buf, sectionHeader[i].Name, 8);
@@ -82,14 +82,14 @@ void XEPELoadImage(void* filebuff) {
 		//buf[8] = 0;
 		size_t load_addr = ImageBase + sectionHeader[i].VirtualAddress;
 		void* sect_addr = (void*)load_addr;
-		
+
 		size_t sectsz = sectionHeader[i].VirtualSize;
 		if (sectionHeader[i].SizeOfRawData > sectsz) {
 			sectsz = sectionHeader[i].SizeOfRawData;
 		}
 		size_t aligned_addr = load_addr & ~0xFFFULL;
 		int req_pages = (sectsz + (load_addr & 0xFFF)) / 4096 +
-			(((sectsz + (load_addr & 0xFFF)) % 4096) ? 1 : 0);
+						(((sectsz + (load_addr & 0xFFF)) % 4096) ? 1 : 0);
 		uint64_t* block = 0;
 		for (int j = 0; j < req_pages; j++) {
 			uint64_t alloc = (aligned_addr + j * PAGESIZE);
@@ -102,8 +102,11 @@ void XEPELoadImage(void* filebuff) {
 		}
 
 		if (sectionHeader[i].PointerToRawData != 0 && sectionHeader[i].SizeOfRawData != 0)
-			copy_mem(sect_addr, raw_offset<void*>(filebuf, sectionHeader[i].PointerToRawData), sectionHeader[i].SizeOfRawData);
+			copy_mem(sect_addr,
+					 raw_offset<void*>(filebuf, sectionHeader[i].PointerToRawData),
+					 sectionHeader[i].SizeOfRawData);
 		if (sectionHeader[i].VirtualSize > sectionHeader[i].SizeOfRawData)
-			zero_mem(raw_offset<void*>(sect_addr, sectionHeader[i].SizeOfRawData), sectionHeader[i].VirtualSize - sectionHeader[i].SizeOfRawData);
+			zero_mem(raw_offset<void*>(sect_addr, sectionHeader[i].SizeOfRawData),
+					 sectionHeader[i].VirtualSize - sectionHeader[i].SizeOfRawData);
 	}
 }

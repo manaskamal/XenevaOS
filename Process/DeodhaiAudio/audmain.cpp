@@ -69,31 +69,28 @@ uint16_t shControlPanelKey;
 uint16_t shSampleBufferKey;
 
 /* Standard Deodhai Request message defined*/
-#define DEODHAI_GET_AUDIO_CONNECTION "DeodhaiGetAudioConnection"
+#define DEODHAI_GET_AUDIO_CONNECTION  "DeodhaiGetAudioConnection"
 #define DEODHAI_GET_GLOBAL_CONNECTION "DeodhaiAudioGetGlobalConnection"
 
 #define DEODHAI_AUDIO_CONNECTION_HANDSHAKE 11
-#define DEODHAI_AUDIO_CONNECTION_CLOSED 12
+#define DEODHAI_AUDIO_CONNECTION_CLOSED	   12
 
 /* bytes per sample definitions */
-#define MONO_8_BIT    1
-#define MONO_16_BIT   2
+#define MONO_8_BIT	  1
+#define MONO_16_BIT	  2
 #define STEREO_16_BIT 4
 #define STEREO_32_BIT 8
-
 
 /* default configuration */
 #define SAMPLE_BUFFER_SZ 4096
 #define BYTES_PER_SAMPLE STEREO_16_BIT
-#define SAMPLE_FREQUENCY  48000
-
+#define SAMPLE_FREQUENCY 48000
 
 typedef struct _deodhai_audio_msg_ {
 	char message[60];
 	uint16_t fromProcessId;
 	uint16_t toProcessId;
-}DeodhaiAudioMessage;
-
+} DeodhaiAudioMessage;
 
 /*
  * AudioControlPanel is the main way to 
@@ -101,7 +98,7 @@ typedef struct _deodhai_audio_msg_ {
  * like attack, release, Eq, compression,
  * reverb to be added in future
  */
-#pragma pack(push,1)
+#pragma pack(push, 1)
 typedef struct _audio_control_panel_ {
 	uint8_t numChannel;
 	float gain;
@@ -112,7 +109,7 @@ typedef struct _audio_control_panel_ {
 	bool close;
 	bool global;
 	bool dirty;
-}AudioControlPanel;
+} AudioControlPanel;
 #pragma pack(pop)
 
 typedef struct _audio_box_ {
@@ -121,17 +118,15 @@ typedef struct _audio_box_ {
 	void* sampleBuffer;
 	int shSampleBuffKey;
 	int shControlPanelKey;
-}DeodhaiAudioBox;
-
+} DeodhaiAudioBox;
 
 DeodhaiAudioBox* globalBox;
-
 
 typedef struct _sound_card_list {
 	char name[32];
 	int cardID;
 	struct _sound_card_list* next;
-}aurora_snd_card_list;
+} aurora_snd_card_list;
 
 /*
  * DeodhaiGetNewControlPanelKey -- get a new key
@@ -152,7 +147,6 @@ uint16_t DeodhaiGetNewSampleBuffKey() {
 	shSampleBufferKey += 1;
 	return sampleKey;
 }
-
 
 /*
  * DeodhaiCreateAudioBox -- create a new audio box
@@ -200,7 +194,8 @@ void DeodhaiAudioBoxClose(DeodhaiAudioBox* box) {
  */
 void DeodhaiAudioHandleMessage(DeodhaiAudioMessage* message) {
 	if (strcmp(message->message, DEODHAI_GET_AUDIO_CONNECTION) == 0) {
-		printf("DeodhaiAudio: GetConnection request received from -> %d \n", message->fromProcessId);
+		printf("DeodhaiAudio: GetConnection request received from -> %d \n",
+			   message->fromProcessId);
 		DeodhaiAudioBox* audioBox = DeodhaiCreateAudioBox(message->fromProcessId);
 		audioBox->ctlPanel->global = false;
 		PostEvent e;
@@ -213,7 +208,8 @@ void DeodhaiAudioHandleMessage(DeodhaiAudioMessage* message) {
 	}
 
 	if (strcmp(message->message, DEODHAI_GET_GLOBAL_CONNECTION) == 0) {
-		printf("DeodhaiAudio: Global Connection request received from -> %d \n", message->fromProcessId);
+		printf("DeodhaiAudio: Global Connection request received from -> %d \n",
+			   message->fromProcessId);
 		if (globalBox == NULL) {
 			DeodhaiAudioBox* audioBox = DeodhaiCreateAudioBox(message->fromProcessId);
 			audioBox->ctlPanel->global = true;
@@ -230,7 +226,7 @@ void DeodhaiAudioHandleMessage(DeodhaiAudioMessage* message) {
 }
 
 void DeodhaiAudioComposeFrame() {
-	memset(mainOutput,0, 4096);
+	memset(mainOutput, 0, 4096);
 	int16_t* output = (int16_t*)mainOutput;
 	for (int i = 0; i < audioBoxList->pointer; i++) {
 		DeodhaiAudioBox* box = (DeodhaiAudioBox*)list_get_at(audioBoxList, i);
@@ -243,15 +239,14 @@ void DeodhaiAudioComposeFrame() {
 
 		/* handle panning and gaining for each channel type*/
 
-		if (box->ctlPanel->numChannel == 1) {   /* MONO Channel */
+		if (box->ctlPanel->numChannel == 1) { /* MONO Channel */
 
 			/* normalize and control the gain */
 			for (int j = 0; j < 4096 / sizeof(int16_t); j++) {
 				sample[j] /= 2;
 				sample[j] *= box->ctlPanel->gain;
 			}
-			for (int j = 0; j < 4096 / (2* sizeof(int16_t)); j++) {
-
+			for (int j = 0; j < 4096 / (2 * sizeof(int16_t)); j++) {
 				sample[j] /= 2;
 				/* adjust the sample with desired gain */
 				sample[j] *= box->ctlPanel->gain;
@@ -270,7 +265,6 @@ void DeodhaiAudioComposeFrame() {
 			}
 
 			for (int j = 0; j < 4096 / (2 * sizeof(int16_t)); j++) {
-			
 				int16_t leftSample = sample[2 * j];
 				int16_t rightSample = sample[2 * j + 1];
 				/* left channel */
@@ -284,12 +278,12 @@ void DeodhaiAudioComposeFrame() {
 		///* handle global controls */
 		//if (box->ctlPanel->global) {
 		//	if (box->ctlPanel->dirty) {
-				/* Normalize and control the gain*/
-	/*	}
+		/* Normalize and control the gain*/
+		/*	}
 		_KePrint("[DEODHAI AUDIO]: gian Control %f\r\n", box->ctlPanel->gain);
 		box->ctlPanel->dirty = false;
 	}*/
-		
+
 		/* close an opened deodhai box */
 		if (box->ctlPanel->close) {
 			list_remove(audioBoxList, i);
@@ -312,9 +306,9 @@ int main(int argc, char* argv[]) {
 	int process_ID = _KeGetProcessID();
 
 	_KePrint("DeodhaiAudio daemon running %d\r\n", process_ID);
-	
+
 	/* open all important files and configurations */
-	int pipe = _KeCreatePipe("DeodhaiAudio", (sizeof(DeodhaiAudioMessage)*4));
+	int pipe = _KeCreatePipe("DeodhaiAudio", (sizeof(DeodhaiAudioMessage) * 4));
 	if (pipe != -1)
 		printf("Pipe creation successful %d\n", pipe);
 	else
@@ -334,19 +328,19 @@ int main(int argc, char* argv[]) {
 	XEFileIOControl ioctl;
 	memset(&ioctl, 0, sizeof(XEFileIOControl));
 
-
 	/* uint_1 holds the millisecond to sleep after
 	* one frame playback */
 	ioctl.uint_1 = 0;
 	ioctl.syscall_magic = AURORA_SYSCALL_MAGIC;
 	/** uint_2 must hold the sound card number to use **/
-	ioctl.uint_2 = -1; 
+	ioctl.uint_2 = -1;
 	int num_card_count = _KeFileIoControl(sound, SOUND_GET_CARD_TOTALNUM, &ioctl);
 
 	_KePrint("[deodhai-audio]: total sound cards : %d \r\n", num_card_count);
 
 	ioctl.uint_1 = num_card_count;
-	aurora_snd_card_list* list = (aurora_snd_card_list*)malloc(sizeof(aurora_snd_card_list) * num_card_count);
+	aurora_snd_card_list* list =
+		(aurora_snd_card_list*)malloc(sizeof(aurora_snd_card_list) * num_card_count);
 	ioctl.ulong_1 = (uint64_t)list;
 	memset(list, 0, sizeof(aurora_snd_card_list) * num_card_count);
 	if (_KeFileIoControl(sound, SOUND_GET_CARD_LIST, &ioctl)) {
@@ -356,9 +350,9 @@ int main(int argc, char* argv[]) {
 
 	/** just print all card name once **/
 	for (int i = 0; i < num_card_count; i++) {
-		_KePrint("[deodhai-audio]: %s sound is installed, id : %d \r\n", list[i].name, list[i].cardID);
+		_KePrint(
+			"[deodhai-audio]: %s sound is installed, id : %d \r\n", list[i].name, list[i].cardID);
 	}
-
 
 	/** let's use default first sound card here **/
 	ioctl.uint_2 = list->cardID;
@@ -375,7 +369,7 @@ int main(int argc, char* argv[]) {
 	//int threadIdx = _KeCreateThread(FrameThread, "AudioThread");
 
 	int sz = 0;
-	char* buff = (char*)malloc(sizeof(DeodhaiAudioMessage)+1);
+	char* buff = (char*)malloc(sizeof(DeodhaiAudioMessage) + 1);
 
 	uint64_t sample_count = SAMPLE_BUFFER_SZ / BYTES_PER_SAMPLE;
 	float sample_div = (float)sample_count / (float)SAMPLE_FREQUENCY;
@@ -383,7 +377,7 @@ int main(int argc, char* argv[]) {
 	_KePrint("** deodhai audio sleep duration : %d \r\n", sleep_duration);
 	while (1) {
 		DeodhaiAudioComposeFrame();
-		sz = _KeReadFile(pipe, buff, sizeof(DeodhaiAudioMessage)+1);
+		sz = _KeReadFile(pipe, buff, sizeof(DeodhaiAudioMessage) + 1);
 		if (sz > 0) {
 			DeodhaiAudioMessage* msg = (DeodhaiAudioMessage*)buff;
 			DeodhaiAudioHandleMessage(msg);

@@ -41,16 +41,14 @@ bool ClipValueInRange(int value, int min, int max) {
 * @param r1 -- rectangle one
 * @param r2 -- rectangle two
 */
-bool ClipCheckIntersect(Rect *r1, Rect *r2) {
-
+bool ClipCheckIntersect(Rect* r1, Rect* r2) {
 	bool xOverlap = ClipValueInRange(r1->x, r2->x, r2->x + r2->w) ||
-		ClipValueInRange(r2->x, r1->x, r1->x + r1->w);
+					ClipValueInRange(r2->x, r1->x, r1->x + r1->w);
 
 	bool yOverlap = ClipValueInRange(r1->y, r2->y, r2->y + r2->h) ||
-		ClipValueInRange(r2->y, r1->y, r1->y + r1->h);
+					ClipValueInRange(r2->y, r1->y, r1->y + r1->h);
 
 	return xOverlap && yOverlap;
-
 }
 
 /*
@@ -61,8 +59,7 @@ bool ClipCheckIntersect(Rect *r1, Rect *r2) {
 * visible rectangles
 * @param count -- number of rectangles stored in the list
 */
-void ClipCalculateRect(Rect *sub_rect, Rect* cut_rect, Rect *list, int *count) {
-
+void ClipCalculateRect(Rect* sub_rect, Rect* cut_rect, Rect* list, int* count) {
 	int r_count = *count;
 
 	Rect subcopy;
@@ -80,9 +77,9 @@ void ClipCalculateRect(Rect *sub_rect, Rect* cut_rect, Rect *list, int *count) {
 		int bottom = RectSetBottom(&r, RectGetBottom(&subcopy));
 		int right = RectSetRight(&r, RectGetLeft(cut_rect));
 
-		list[r_count].x = left; 
-		list[r_count].y = top;  
-		list[r_count].w = right - left; 
+		list[r_count].x = left;
+		list[r_count].y = top;
+		list[r_count].w = right - left;
 		list[r_count].h = bottom - top;
 		r_count++;
 
@@ -92,7 +89,6 @@ void ClipCalculateRect(Rect *sub_rect, Rect* cut_rect, Rect *list, int *count) {
 
 	if (RectGetTop(cut_rect) >= RectGetTop(&subcopy) &&
 		RectGetTop(cut_rect) <= RectGetBottom(&subcopy)) {
-
 		Rect r;
 		memcpy(&r, &subcopy, sizeof(Rect));
 		int top = RectSetTop(&r, RectGetTop(&subcopy));
@@ -100,19 +96,17 @@ void ClipCalculateRect(Rect *sub_rect, Rect* cut_rect, Rect *list, int *count) {
 		int bottom = RectSetBottom(&r, RectGetTop(cut_rect));
 		int right = RectSetRight(&r, RectGetRight(&subcopy));
 
-		
 		list[r_count].x = left;
-		list[r_count].y = top; 
-		list[r_count].w = right - left; 
-		list[r_count].h = bottom - top; 
+		list[r_count].y = top;
+		list[r_count].w = right - left;
+		list[r_count].h = bottom - top;
 		r_count++;
-		int n_t =  RectSetTop(&subcopy, RectGetTop(cut_rect));
+		int n_t = RectSetTop(&subcopy, RectGetTop(cut_rect));
 		subcopy.y = n_t;
 	}
 
-	if (RectGetRight(cut_rect) >= RectGetLeft(&subcopy)
-		&& RectGetRight(cut_rect) < RectGetRight(&subcopy)) {
-
+	if (RectGetRight(cut_rect) >= RectGetLeft(&subcopy) &&
+		RectGetRight(cut_rect) < RectGetRight(&subcopy)) {
 		Rect r;
 		memcpy(&r, &subcopy, sizeof(Rect));
 		int top = RectSetTop(&r, RectGetTop(&subcopy));
@@ -120,18 +114,17 @@ void ClipCalculateRect(Rect *sub_rect, Rect* cut_rect, Rect *list, int *count) {
 		int bottom = RectSetBottom(&r, RectGetBottom(&subcopy));
 		int right = RectSetRight(&r, RectGetRight(&subcopy));
 
-
-		list[r_count].x = left; 
+		list[r_count].x = left;
 		list[r_count].y = top;
-		list[r_count].w = right - left; 
-		list[r_count].h = bottom - top; 
+		list[r_count].w = right - left;
+		list[r_count].h = bottom - top;
 		r_count++;
-		
+
 		RectSetRight(&subcopy, RectGetRight(cut_rect));
 	}
 
-	if (RectGetBottom(cut_rect) >= RectGetTop(&subcopy)
-		&& RectGetBottom(cut_rect) <= RectGetBottom(&subcopy)) {
+	if (RectGetBottom(cut_rect) >= RectGetTop(&subcopy) &&
+		RectGetBottom(cut_rect) <= RectGetBottom(&subcopy)) {
 		Rect r;
 		memcpy(&r, &subcopy, sizeof(Rect));
 		int top = RectSetTop(&r, RectGetBottom(cut_rect));
@@ -139,19 +132,16 @@ void ClipCalculateRect(Rect *sub_rect, Rect* cut_rect, Rect *list, int *count) {
 		int bottom = RectSetBottom(&r, RectGetBottom(&subcopy));
 		int right = RectSetRight(&r, RectGetRight(&subcopy));
 
-
-
 		list[r_count].x = left;
-		list[r_count].y = top; 
-		list[r_count].w = right - left; 
-		list[r_count].h = bottom - top; 
+		list[r_count].y = top;
+		list[r_count].w = right - left;
+		list[r_count].h = bottom - top;
 		r_count++;
 		RectSetBottom(&subcopy, RectGetBottom(cut_rect));
 	}
 
 	*count = r_count;
 }
-
 
 /*
 * ClipSubtractRect -- calculate visible rectanlges of current window
@@ -161,9 +151,7 @@ void ClipCalculateRect(Rect *sub_rect, Rect* cut_rect, Rect *list, int *count) {
 * visible rectangles
 * @param count -- number of rectangles stored in the list
 */
-void ClipSubtractRect(Rect *sub_rect, Rect* cut_rect, Rect *list, int r_count) {
-
-
+void ClipSubtractRect(Rect* sub_rect, Rect* cut_rect, Rect* list, int r_count) {
 	if (RectGetLeft(cut_rect) >= RectGetLeft(sub_rect) &&
 		RectGetLeft(cut_rect) <= RectGetRight(sub_rect)) {
 		Rect r;
@@ -177,7 +165,6 @@ void ClipSubtractRect(Rect *sub_rect, Rect* cut_rect, Rect *list, int r_count) {
 		list[r_count].y = top;
 		list[r_count].w = right - left;
 		list[r_count].h = bottom - top;
-		
 
 		int n_l = RectSetLeft(sub_rect, RectGetLeft(cut_rect));
 		sub_rect->x = n_l;
@@ -185,7 +172,6 @@ void ClipSubtractRect(Rect *sub_rect, Rect* cut_rect, Rect *list, int r_count) {
 
 	if (RectGetTop(cut_rect) >= RectGetTop(sub_rect) &&
 		RectGetTop(cut_rect) <= RectGetBottom(sub_rect)) {
-
 		Rect r;
 		memcpy(&r, sub_rect, sizeof(Rect));
 		int top = RectSetTop(&r, RectGetTop(sub_rect));
@@ -193,26 +179,23 @@ void ClipSubtractRect(Rect *sub_rect, Rect* cut_rect, Rect *list, int r_count) {
 		int bottom = RectSetBottom(&r, RectGetTop(cut_rect));
 		int right = RectSetRight(&r, RectGetRight(sub_rect));
 
-
 		list[r_count].x = left;
 		list[r_count].y = top;
 		list[r_count].w = right - left;
 		list[r_count].h = bottom - top;
-		
+
 		int n_t = RectSetTop(sub_rect, RectGetTop(cut_rect));
 		sub_rect->y = n_t;
 	}
 
-	if (RectGetRight(cut_rect) >= RectGetLeft(sub_rect)
-		&& RectGetRight(cut_rect) < RectGetRight(sub_rect)) {
-
+	if (RectGetRight(cut_rect) >= RectGetLeft(sub_rect) &&
+		RectGetRight(cut_rect) < RectGetRight(sub_rect)) {
 		Rect r;
 		memcpy(&r, sub_rect, sizeof(Rect));
 		int top = RectSetTop(&r, RectGetTop(sub_rect));
 		int left = RectSetLeft(&r, RectGetRight(cut_rect));
 		int bottom = RectSetBottom(&r, RectGetBottom(sub_rect));
 		int right = RectSetRight(&r, RectGetRight(sub_rect));
-
 
 		list[r_count].x = left;
 		list[r_count].y = top;
@@ -222,8 +205,8 @@ void ClipSubtractRect(Rect *sub_rect, Rect* cut_rect, Rect *list, int r_count) {
 		RectSetRight(sub_rect, RectGetRight(cut_rect));
 	}
 
-	if (RectGetBottom(cut_rect) >= RectGetTop(sub_rect)
-		&& RectGetBottom(cut_rect) <= RectGetBottom(sub_rect)) {
+	if (RectGetBottom(cut_rect) >= RectGetTop(sub_rect) &&
+		RectGetBottom(cut_rect) <= RectGetBottom(sub_rect)) {
 		Rect r;
 		memcpy(&r, sub_rect, sizeof(Rect));
 		int top = RectSetTop(&r, RectGetBottom(cut_rect));
@@ -231,14 +214,11 @@ void ClipSubtractRect(Rect *sub_rect, Rect* cut_rect, Rect *list, int r_count) {
 		int bottom = RectSetBottom(&r, RectGetBottom(sub_rect));
 		int right = RectSetRight(&r, RectGetRight(sub_rect));
 
-
-
 		list[r_count].x = left;
 		list[r_count].y = top;
 		list[r_count].w = right - left;
 		list[r_count].h = bottom - top;
-		
+
 		RectSetBottom(sub_rect, RectGetBottom(cut_rect));
 	}
-
 }

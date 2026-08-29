@@ -56,7 +56,6 @@
 #include <timer.h>
 #include <Sound/sound.h>
 
-
 static int pid = 1;
 AuProcess* proc_first;
 AuProcess* proc_last;
@@ -73,8 +72,7 @@ void AuAddProcess(AuProcess* parent, AuProcess* proc) {
 	if (proc_first == NULL) {
 		proc_last = proc;
 		proc_first = proc;
-	}
-	else {
+	} else {
 		proc_last->next = proc;
 		proc->prev = proc_last;
 	}
@@ -94,15 +92,13 @@ void AuRemoveProcess(AuProcess* parent, AuProcess* proc) {
 
 	if (proc == proc_first) {
 		proc_first = proc_first->next;
-	}
-	else {
+	} else {
 		proc->prev->next = proc->next;
 	}
 
 	if (proc == proc_last) {
 		proc_last = proc->prev;
-	}
-	else {
+	} else {
 		proc->next->prev = proc->prev;
 	}
 	kfree(proc);
@@ -185,8 +181,7 @@ int AuAllocateProcessID() {
 	return _pid;
 }
 
-
-#define USER_STACK_FLAG  (1ULL<<54 | 2ULL<<6 | 1ULL<<10 | PTE_NORMAL_MEM | 1)
+#define USER_STACK_FLAG (1ULL << 54 | 2ULL << 6 | 1ULL << 10 | PTE_NORMAL_MEM | 1)
 /**
  * @brief CreateUserStack -- creates new user stack
  * @param proc -- Pointer to process slot
@@ -194,16 +189,16 @@ int AuAllocateProcessID() {
  * map
  */
 uint64_t* CreateUserStack(AuProcess* proc, uint64_t* cr3) {
-#define USER_STACK 0x000000A000000000 
+#define USER_STACK 0x000000A000000000
 	uint64_t location = USER_STACK;
 	location += proc->_user_stack_index_;
 
 	for (int i = 0; i < (PROCESS_USER_STACK_SZ / PAGE_SIZE); ++i) {
 		uint64_t blk = (uint64_t)AuPmmngrAlloc();
-		if (!AuMapPageEx(cr3, blk, location + i * PAGE_SIZE, PTE_NORMAL_MEM | PTE_AP_RW_USER | PTE_AP_RW)){
+		if (!AuMapPageEx(
+				cr3, blk, location + i * PAGE_SIZE, PTE_NORMAL_MEM | PTE_AP_RW_USER | PTE_AP_RW)) {
 			UARTDebugOut("CreateUserStack: already mapped %x \r\n", (location + i * PAGE_SIZE));
 		}
-
 	}
 
 	proc->_user_stack_index_ += PROCESS_USER_STACK_SZ;
@@ -218,7 +213,7 @@ uint64_t* CreateUserStack(AuProcess* proc, uint64_t* cr3) {
  * map
  */
 uint64_t* CreateSubUserStack(AuProcess* proc, uint64_t* cr3) {
-#define USER_STACK 0x000000A000000000 
+#define USER_STACK 0x000000A000000000
 	uint64_t location = USER_STACK;
 	UARTDebugOut("User stack index : %x \r\n", proc->_user_stack_index_);
 	location += proc->_user_stack_index_;
@@ -228,7 +223,6 @@ uint64_t* CreateSubUserStack(AuProcess* proc, uint64_t* cr3) {
 		if (!AuMapPage(blk, location + i * PAGE_SIZE, PTE_AP_RW_USER | PTE_AP_RW)) {
 			UARTDebugOut("CreateUserStack: already mapped %x \r\n", (location + i * PAGE_SIZE));
 		}
-
 	}
 
 	proc->_user_stack_index_ += PROCESS_USER_STACK_SZ;
@@ -239,17 +233,16 @@ uint64_t* CreateSubUserStack(AuProcess* proc, uint64_t* cr3) {
 * @brief AuCreateProcessSlot -- creates a blank process slot
 * @param parent -- pointer to the parent process
 */
-AuProcess * AuCreateProcessSlot(AuProcess * parent, char* name) {
+AuProcess* AuCreateProcessSlot(AuProcess* parent, char* name) {
 	AuProcess* proc = (AuProcess*)kmalloc(sizeof(AuProcess));
 	memset(proc, 0, sizeof(AuProcess));
-	strncpy(proc->name, name,16);
-
+	strncpy(proc->name, name, 16);
 
 	proc->proc_id = AuAllocateProcessID();
 	/* create empty virtual address space */
 	uint64_t* cr3 = AuCreateVirtualAddressSpace();
 	/* create the process main thread stack */
-	uint64_t  main_thr_stack = (uint64_t)CreateUserStack(proc, cr3);
+	uint64_t main_thr_stack = (uint64_t)CreateUserStack(proc, cr3);
 	proc->state = PROCESS_STATE_NOT_READY;
 	proc->cr3 = cr3;
 	proc->shm_break = USER_SHARED_MEM_START;
@@ -263,7 +256,8 @@ AuProcess * AuCreateProcessSlot(AuProcess * parent, char* name) {
 	memset(envpBlock, 0, PAGE_SIZE);
 
 	/** confusing code :hehehehe **/
-	if (!AuMapPageEx(cr3, (uint64_t)V2P((size_t)envpBlock), 0x5000, PTE_AP_RW_USER | PTE_NORMAL_MEM))
+	if (!AuMapPageEx(
+			cr3, (uint64_t)V2P((size_t)envpBlock), 0x5000, PTE_AP_RW_USER | PTE_NORMAL_MEM))
 		UARTDebugOut("Failed to map environment block for proc %s \r\n", name);
 	else
 		proc->_envp_block_ = 0x5000;
@@ -306,7 +300,6 @@ int AuProcessGetFileDesc(AuProcess* proc) {
 	return -1;
 }
 
-
 /**
 *  @brief Creates a user mode thread
 *  @param entry -- Entry point address
@@ -315,14 +308,13 @@ int AuProcessGetFileDesc(AuProcess* proc) {
 *  @param name -- name of the thread
 *  @param priority -- (currently unused) thread's priority
 */
-int AuCreateUserthread(AuProcess* proc, void(*entry) (), char* name)
-{
+int AuCreateUserthread(AuProcess* proc, void (*entry)(), char* name) {
 	UARTDebugOut("[aurora]: user thread creating kmapping : %s \r\n", proc->name);
 	uint64_t stack = AuCreateKernelStack(proc->cr3);
 	uint64_t kstack = stack;
 	stack = ((uint64_t)kstack & ~(uint64_t)0xF);
 	stack -= 64;
-	AA64Thread* thr = AuCreateSubKthread(AuProcessEntUser,stack,proc->cr3, name);
+	AA64Thread* thr = AuCreateSubKthread(AuProcessEntUser, stack, proc->cr3, name);
 	thr->threadType = THREAD_LEVEL_USER;
 	thr->first_run = 0;
 	thr->procSlot = proc;
@@ -341,7 +333,6 @@ int AuCreateUserthread(AuProcess* proc, void(*entry) (), char* name)
 	return thread_indx;
 }
 
-
 /**
  * @brief AuProcessHeapMemDestroy -- destroys the heap area of process
  * @param proc -- Pointer to process
@@ -352,7 +343,8 @@ void AuProcessHeapMemDestroy(AuProcess* proc) {
 		proc->proc_heapmem_len++;
 
 	for (int i = 0; i < proc->proc_heapmem_len / 4096; i++) {
-		AuVPage* page = AuVmmngrGetPage(startaddr + i * PAGE_SIZE, VIRT_GETPAGE_ONLY_RET, VIRT_GETPAGE_ONLY_RET);
+		AuVPage* page = AuVmmngrGetPage(
+			startaddr + i * PAGE_SIZE, VIRT_GETPAGE_ONLY_RET, VIRT_GETPAGE_ONLY_RET);
 		if (page) {
 			uint64_t phys = page->bits.page << PAGE_SHIFT;
 			if (phys) {
@@ -395,11 +387,10 @@ void AuProcessFreeKeResource(AA64Thread* thr) {
 
 	/* destroy allocated timer */
 	int timer_id = AuGetTimerByThread(thr);
-	if (timer_id != -1) 
+	if (timer_id != -1)
 		AuroraTimerCancel(timer_id);
-	
-	/* cleanup all network resources */
 
+	/* cleanup all network resources */
 }
 
 /**
@@ -414,7 +405,7 @@ void AuProcessExit(AuProcess* proc, bool schedulable) {
 	}
 
 	if (proc->type_flags & PROCESS_TYPE_NON_KILLABLE) {
-		UARTDebugOut("[aurora]: process : %s cannot exit \r\n",proc->name);
+		UARTDebugOut("[aurora]: process : %s cannot exit \r\n", proc->name);
 		return;
 	}
 
@@ -423,10 +414,12 @@ void AuProcessExit(AuProcess* proc, bool schedulable) {
 	for (int i = 0; i < FILE_DESC_PER_PROCESS; i++) {
 		AuVFSNode* file = proc->fds[i];
 		if (file) {
-			UARTDebugOut("[AuProcessExit]: closing file : %s flags %x\r\n", file->filename,file->flags);
+			UARTDebugOut(
+				"[AuProcessExit]: closing file : %s flags %x\r\n", file->filename, file->flags);
 			/** conditional check for cache flag **/
 			if (file->flags & FS_FLAG_CACHED) {
-				UARTDebugOut("[AuProcessExit]: cached file skipped close : %s, flags : %x\r\n", file->filename);
+				UARTDebugOut("[AuProcessExit]: cached file skipped close : %s, flags : %x\r\n",
+							 file->filename);
 				if (file->fileCopyCount > 0)
 					file->fileCopyCount -= 1;
 				continue;
@@ -437,8 +430,7 @@ void AuProcessExit(AuProcess* proc, bool schedulable) {
 				if (file->fileCopyCount <= 0) {
 					UARTDebugOut("Freeing up file : %s \r\n", file->filename);
 					kfree(file);
-				}
-				else
+				} else
 					file->fileCopyCount -= 1;
 			}
 			if (file->flags & FS_FLAG_SOCKET) {
@@ -460,7 +452,7 @@ void AuProcessExit(AuProcess* proc, bool schedulable) {
 	/** unblock all waitlisted threads **/
 	for (int i = 0; i < proc->waitlist->pointer; i++) {
 		AA64Thread* thr = (AA64Thread*)list_remove(proc->waitlist, i);
-		if (thr) 
+		if (thr)
 			AuUnblockThread(thr);
 	}
 
@@ -510,15 +502,13 @@ int AuProcessWaitForTermination(AuProcess* proc, int pid) {
 				killable = NULL;
 			}
 
-
 			if (!killable) {
 				proc->state = PROCESS_STATE_SUSPENDED;
 				//AuScheduleNext();
 				return -1;
 			}
 		} while (1);
-	}
-	else {
+	} else {
 		AuProcess* proc = AuProcessFindByPID(0, pid);
 		if (!proc)
 			return -1;
@@ -536,7 +526,7 @@ int AuProcessWaitForTermination(AuProcess* proc, int pid) {
  */
 int AuProcGetNumProcessCount() {
 	int count = 0;
-	for (AuProcess* first = proc_first; first != NULL; first = first->next) 
+	for (AuProcess* first = proc_first; first != NULL; first = first->next)
 		count++;
 	return count;
 }
@@ -546,7 +536,7 @@ static int AuProcGetOpenFileCount(AuProcess* proc) {
 	for (int i = 0; i < FILE_DESC_PER_PROCESS; i++) {
 		if (!proc->fds[i])
 			continue;
-	
+
 		count += 1;
 	}
 	return count;
@@ -562,11 +552,9 @@ static uint64_t AuProcessGetLiveRuntime(AuProcess* proc, uint64_t now_us) {
 			continue;
 		if (thr->state == THREAD_STATE_RUNNING)
 			runtime += (now_us - thr->start_time_us);
-
 	}
 	return runtime;
 }
-
 
 static uint32_t AuProcessUpdateCPUPercent(AuProcess* proc, uint64_t now) {
 	uint64_t live_runtime = AuProcessGetLiveRuntime(proc, now);
@@ -577,7 +565,7 @@ static uint32_t AuProcessUpdateCPUPercent(AuProcess* proc, uint64_t now) {
 	if (time_delta == 0)
 		proc->cpu_usage = 0;
 	else
-		proc->cpu_usage = (uint32_t)((runtime_delta * 1000) / time_delta);// * num_cores );
+		proc->cpu_usage = (uint32_t)((runtime_delta * 1000) / time_delta); // * num_cores );
 
 	proc->prev_sample_runtime_us = live_runtime;
 	proc->prev_sample_time_us = now;
@@ -590,10 +578,9 @@ static uint32_t AuProcessUpdateCPUPercent(AuProcess* proc, uint64_t now) {
  * @param num_proc_count -- number of process count
  */
 int AuProcessFetch(AuProcessList* list, int num_proc_count) {
-
 	AuProcess* first = proc_first;
 	uint64_t now = AuGetCurrentUS();
-	
+
 	for (int i = 0; i < num_proc_count; i++) {
 		if (!first)
 			break;

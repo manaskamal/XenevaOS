@@ -58,10 +58,11 @@ uint16_t IPv4CalculateChecksum(IPv4Header* p) {
 }
 
 void ip_ntoa(const uint32_t src) {
-	UARTDebugOut("%d.%d.%d.", ((src & 0xFF000000) >> 24),
-		((src & 0xFF0000) >> 16),
-		((src & 0xFF00) >> 8),
-		((src & 0xFF)));
+	UARTDebugOut("%d.%d.%d.",
+				 ((src & 0xFF000000) >> 24),
+				 ((src & 0xFF0000) >> 16),
+				 ((src & 0xFF00) >> 8),
+				 ((src & 0xFF)));
 	UARTDebugOut("%d \r\n", (src & 0xFF));
 }
 
@@ -115,8 +116,9 @@ int CreateIPv4Socket(int type, int protocol) {
 	case SOCK_DGRAM:
 		if (protocol == 0 || protocol == IPPROTOCOL_UDP) {
 			UARTDebugOut("[aurora]: ipv4 udp protocol created \r\n");
-		    return CreateUDPSocket();
-		}if (protocol == IPPROTOCOL_ICMP) {
+			return CreateUDPSocket();
+		}
+		if (protocol == IPPROTOCOL_ICMP) {
 			UARTDebugOut("[aurora]: ipv4 icmp protocol created \r\n");
 			return CreateICMPSocket();
 		}
@@ -147,7 +149,8 @@ void IPV4SendPacket(IPv4Header* packet, AuVFSNode* nic) {
 	   forwarding this packet*/
 	if (ndev->type == NETDEV_TYPE_ETHERNET) {
 		AuARPCache* cache = NULL;
-		if (!ndev->ipv4subnet || ((ip_dest & ndev->ipv4subnet) != (ndev->ipv4addr & ndev->ipv4subnet))) {
+		if (!ndev->ipv4subnet ||
+			((ip_dest & ndev->ipv4subnet) != (ndev->ipv4addr & ndev->ipv4subnet))) {
 			ip_dest = ndev->ipv4gateway;
 			ip_ntoa(ip_dest);
 			cache = AuARPGet(ip_dest);
@@ -161,8 +164,7 @@ void IPV4SendPacket(IPv4Header* packet, AuVFSNode* nic) {
 
 				cache = AuARPGet(ip_dest);
 			}
-		}
-		else {
+		} else {
 			cache = AuARPGet(ip_dest);
 			if (!cache) {
 				AuARPRequestMAC(nic, ip_dest);
@@ -177,6 +179,10 @@ void IPV4SendPacket(IPv4Header* packet, AuVFSNode* nic) {
 		}
 		uint8_t broadcast_addr[6];
 		memset(broadcast_addr, 0xFF, 6);
-		AuEthernetSend(nic, packet, ntohs(packet->totalLength), ETHERNET_TYPE_IPV4, cache ? cache->hw_address : broadcast_addr);
+		AuEthernetSend(nic,
+					   packet,
+					   ntohs(packet->totalLength),
+					   ETHERNET_TYPE_IPV4,
+					   cache ? cache->hw_address : broadcast_addr);
 	}
 }

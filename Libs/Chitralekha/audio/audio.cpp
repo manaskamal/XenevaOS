@@ -36,7 +36,8 @@
  * @param numChannel -- number of channel -- 1 for MONO, 2 for STEREO
  * @param connectionType -- 0 -- NORMAL connection, 1 -- GLOBAL connection
  */
-DeodhaiAudioBox* DeodhaiAudioOpenConnection(int postbox, uint8_t numChannel, uint8_t connectionType) {
+DeodhaiAudioBox*
+DeodhaiAudioOpenConnection(int postbox, uint8_t numChannel, uint8_t connectionType) {
 	int pipe = _KeOpenFile("/pipe/DeodhaiAudio", FILE_OPEN_READ_ONLY);
 	if (pipe == -1) {
 		printf("DeodhaiAudo Connection failed : pipe -> %d \n", pipe);
@@ -60,7 +61,6 @@ DeodhaiAudioBox* DeodhaiAudioOpenConnection(int postbox, uint8_t numChannel, uin
 	msg->toProcessId = 0;
 	_KeWriteFile(pipe, msg, sizeof(DeodhaiAudioMessage));
 
-
 	PostEvent e;
 	while (1) {
 		_KeFileIoControl(postbox, POSTBOX_GET_EVENT, &e);
@@ -73,7 +73,7 @@ DeodhaiAudioBox* DeodhaiAudioOpenConnection(int postbox, uint8_t numChannel, uin
 				int id2 = _KeCreateSharedMem(sampleBufferKey, 0, 0);
 				void* controlPanelBuff = _KeObtainSharedMem(id, 0, 0);
 				void* sampleBuff = _KeObtainSharedMem(id2, 0, 0);
-				DeodhaiAudioControlPanel* panel= (DeodhaiAudioControlPanel*)controlPanelBuff;
+				DeodhaiAudioControlPanel* panel = (DeodhaiAudioControlPanel*)controlPanelBuff;
 				audioBox->sampleBuffer = sampleBuff;
 				audioBox->ctlPanelBuffer = controlPanelBuff;
 				audioBox->controlPanelKey = controlPanelKey;
@@ -91,7 +91,7 @@ DeodhaiAudioBox* DeodhaiAudioOpenConnection(int postbox, uint8_t numChannel, uin
 	audioBox->ctlPanel->rightSpeakerScale = 1.0;
 	audioBox->ctlPanel->Samplefull = false;
 	audioBox->ctlPanel->ready = true;
-	
+
 	return audioBox;
 }
 
@@ -117,5 +117,3 @@ void DeodhaiAudioCloseConnection(DeodhaiAudioBox* box) {
 	_KeUnmapSharedMem(box->controlPanelKey);
 	free(box);
 }
-
-

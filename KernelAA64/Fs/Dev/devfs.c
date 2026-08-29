@@ -79,12 +79,10 @@ int AuDevFSCreateFile(AuVFSNode* fs, char* path, uint8_t mode) {
 		list->childs = initialize_list();
 		file->flags |= FS_FLAG_DIRECTORY;
 		file->device = list;
-	}
-	else {
+	} else {
 		file->flags = FS_FLAG_GENERAL | FS_FLAG_DEVICE;
 		file->device = fs;
 	}
-
 
 	char* next = strchr(path, '/');
 	if (next)

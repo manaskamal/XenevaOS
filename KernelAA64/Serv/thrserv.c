@@ -83,7 +83,8 @@ int ProcessExit() {
 	UARTDebugOut("Proc : %x - %s\r\n", proc, current_thr->name);
 	if (!proc) {
 		UARTDebugOut("Process exit not found \r\n");
-		for (;;);
+		for (;;)
+			;
 	}
 
 	AuProcessExit(proc, false);
@@ -164,7 +165,6 @@ int PauseThread() {
 	return 1;
 }
 
-
 /**
  * @brief ProcessLoadExec -- loads an executable to a
  * process slot
@@ -239,7 +239,6 @@ int SetFileToProcess(int fileno, int dest_fdidx, int proc_id) {
 			return -1;
 	}
 
-
 	/* now try getting the destination process by its
 	* process id
 	*/
@@ -264,9 +263,6 @@ int SetFileToProcess(int fileno, int dest_fdidx, int proc_id) {
 		 * fileno to destination processes file
 		 * entry
 		 */
-		
-
-
 
 		destproc->fds[dest_fdidx] = file;
 		file->fileCopyCount += 1;
@@ -274,19 +270,14 @@ int SetFileToProcess(int fileno, int dest_fdidx, int proc_id) {
 		/* inherit the capability if inheritance is allowed */
 		AuCapability* src = BordoisilaCapLookup(proc, fileno);
 		if (src && !(src->flags & CAP_FLAG_NO_INHERIT)) {
-			BPrintK(BORDOISILA_INFO, "Capability copied from proc : %s, fileno-> %d \r\n", proc->name, fileno);
-   		 BordoisilaCapCreate(
-       		 destproc,
-        		dest_fdidx,
-       		 file,
-       		 src->object_type,
-       		 src->rights);
-		} 
-
-
-	}     
-    return 0;
-
+			BPrintK(BORDOISILA_INFO,
+					"Capability copied from proc : %s, fileno-> %d \r\n",
+					proc->name,
+					fileno);
+			BordoisilaCapCreate(destproc, dest_fdidx, file, src->object_type, src->rights);
+		}
+	}
+	return 0;
 }
 
 /**
@@ -294,7 +285,7 @@ int SetFileToProcess(int fileno, int dest_fdidx, int proc_id) {
 * @return the thread index within
 * the process
 */
-int CreateUserThread(void(*entry) (), char* name) {
+int CreateUserThread(void (*entry)(), char* name) {
 	AA64Thread* thr = AuGetCurrentThread();
 	if (!thr)
 		return 0;
@@ -311,7 +302,6 @@ int CreateUserThread(void(*entry) (), char* name) {
 	return idx;
 }
 
-
 /**
  * @brief GetEnvironmentBlock -- returns environment
  * block of this process
@@ -325,7 +315,6 @@ size_t GetEnvironmenBlock() {
 			return NULL;
 	}
 	return proc->_envp_block_;
-
 }
 
 void SignalReturn(int signum) {

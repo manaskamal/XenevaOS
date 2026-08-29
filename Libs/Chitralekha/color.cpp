@@ -70,14 +70,13 @@ uint32_t ChColorAlphaBlend(uint32_t dst, uint32_t src, double opacity) {
 	return (0xFF << 24) | (outR << 16) | (outG << 8) | outB;
 }
 
-
 uint32_t ChColorAlphaBlend2(uint32_t color1, uint32_t color2) {
 	uint32_t a = (color2 & AMASK) >> 24;
 	if (a == 0)
 		return color1;
 	else if (a == 255)
 		return color2;
-	else{
+	else {
 		uint32_t na = 255 - a;
 		uint32_t rb = ((na * (color1 & RBMASK)) + (a * (color2 & RBMASK))) >> 8;
 		uint32_t ag = (na * ((color1 & AGMASK) >> 8)) + (a * (ONEALPHA | ((color2 & GMASK) >> 8)));
@@ -85,7 +84,6 @@ uint32_t ChColorAlphaBlend2(uint32_t color1, uint32_t color2) {
 		return ((rb & RBMASK) | (ag & AGMASK));
 	}
 }
-
 
 uint32_t make_col(uint8_t red, uint8_t green, uint8_t blue) {
 	red = max(red, 0);
@@ -97,7 +95,6 @@ uint32_t make_col(uint8_t red, uint8_t green, uint8_t blue) {
 
 	uint32_t ret = (red << 16) | (green << 8) | (blue << 0);
 	return ret;
-
 }
 
 uint32_t make_col_a(uint8_t red, uint8_t green, uint8_t blue, uint8_t a) {
@@ -112,9 +109,7 @@ uint32_t make_col_a(uint8_t red, uint8_t green, uint8_t blue, uint8_t a) {
 
 	uint32_t ret = (a << 24) | (red << 16) | (green << 8) | (blue << 0);
 	return ret;
-
 }
-
 
 /*
  * ChColorDrawVerticalGradient -- draws vertical linear gradient
@@ -126,7 +121,8 @@ uint32_t make_col_a(uint8_t red, uint8_t green, uint8_t blue, uint8_t a) {
  * @param color1 -- starting color
  * @param color2 -- end color
  */
-void ChColorDrawVerticalGradient(ChCanvas* canv, int x, int y, int w, int h, uint32_t color1, uint32_t color2) {
+void ChColorDrawVerticalGradient(
+	ChCanvas* canv, int x, int y, int w, int h, uint32_t color1, uint32_t color2) {
 	uint8_t r1 = GET_RED(color1);
 	uint8_t g1 = GET_GREEN(color1);
 	uint8_t b1 = GET_BLUE(color1);
@@ -157,7 +153,8 @@ void ChColorDrawVerticalGradient(ChCanvas* canv, int x, int y, int w, int h, uin
 * @param color1 -- starting color
 * @param color2 -- end color
 */
-void ChColorDrawHorizontalGradient(ChCanvas *canv, int x, int y, int w, int h, uint32_t color1, uint32_t color2) {
+void ChColorDrawHorizontalGradient(
+	ChCanvas* canv, int x, int y, int w, int h, uint32_t color1, uint32_t color2) {
 	uint8_t r1 = GET_RED(color1);
 	uint8_t g1 = GET_GREEN(color1);
 	uint8_t b1 = GET_BLUE(color1);
@@ -178,19 +175,15 @@ void ChColorDrawHorizontalGradient(ChCanvas *canv, int x, int y, int w, int h, u
 	}
 }
 
-
-double clamp(double x, double upper, double lower){
+double clamp(double x, double upper, double lower) {
 	return min(upper, max(x, lower));
 }
-
 
 /*
  * ChColorRGBAtoBGRA -- convert RGBA pixels to BGRA888
  * @param col -- Color to convert
  */
 uint32_t ChColorRGBAtoBGRA(uint32_t col) {
-	return ((col & 0xFF000000)) |
-		((col & 0x00FF0000) >> 16) |
-		((col & 0x0000FF00)) |
-		((col & 0x000000FF) << 16);
+	return ((col & 0xFF000000)) | ((col & 0x00FF0000) >> 16) | ((col & 0x0000FF00)) |
+		   ((col & 0x000000FF) << 16);
 }

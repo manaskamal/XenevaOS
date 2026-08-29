@@ -33,7 +33,6 @@
 #include "video.h"
 #include "uart0.h"
 
-
 /*
  * XEClearScreen -- clears the screen
  */
@@ -78,7 +77,6 @@ EFI_STATUS XESetTextAttribute(const int Back, const int Fore) {
 	return gSystemTable->ConOut->SetAttribute(gSystemTable->ConOut, Fore | Back);
 }
 
-
 void XEPutChar(const int ch) {
 	unsigned short text[2];
 	text[0] = (unsigned short)ch;
@@ -89,7 +87,7 @@ void XEPutChar(const int ch) {
 #include <stdarg.h>
 
 #ifdef _MSC_VER
-extern "C" void store_x0_x7(uint64_t * buff);
+extern "C" void store_x0_x7(uint64_t* buff);
 #endif
 
 /*
@@ -98,7 +96,6 @@ extern "C" void store_x0_x7(uint64_t * buff);
  * @param fmt -- format to print
  */
 int XEPrintf(wchar_t* fmt, ...) {
-
 #if defined(__GNUC__) || defined(__GNUG__)
 	va_list vl;
 	va_start(vl, fmt);
@@ -127,20 +124,17 @@ int XEPrintf(wchar_t* fmt, ...) {
 			if (c == '-') {
 				ljust = TRUE;
 				lzeroes = FALSE;
-			}
-			else if (c == '+')
+			} else if (c == '+')
 				sign = '+';
 			else if (c == ' ') {
 				if (!sign)
 					sign = ' ';
-			}
-			else if (c == '#')
+			} else if (c == '#')
 				alt = TRUE;
 			else if (c == '0') {
 				if (!ljust)
 					lzeroes = TRUE;
-			}
-			else
+			} else
 				break;
 
 			if ((c = (uint8_t)*fmt++) == '\0')
@@ -155,8 +149,7 @@ int XEPrintf(wchar_t* fmt, ...) {
 				if ((c = (uint8_t)*fmt++) == '\0')
 					return -1;
 			}
-		}
-		else if (c == '*') {
+		} else if (c == '*') {
 			width = va_arg(vl, int);
 			if (width < 0) {
 				ljust = TRUE;
@@ -200,8 +193,7 @@ int XEPrintf(wchar_t* fmt, ...) {
 					if ((c = (uint8_t)*fmt++) == '\0')
 						return -1;
 				}
-			}
-			else if (c == '*') {
+			} else if (c == '*') {
 				precision = va_arg(vl, int);
 				if ((c = *fmt++) == '\0')
 					return -1;
@@ -213,11 +205,9 @@ int XEPrintf(wchar_t* fmt, ...) {
 			if (*fmt == 'h') {
 				fmt++;
 				lmodifier = 'H';
-			}
-			else
+			} else
 				lmodifier = c;
-		}
-		else if (wstrchr((wchar_t*)L"jzt", c))
+		} else if (wstrchr((wchar_t*)L"jzt", c))
 			lmodifier = c;
 		if (lmodifier)
 			if ((c = (uint8_t)*fmt++) == '\0')
@@ -243,8 +233,7 @@ int XEPrintf(wchar_t* fmt, ...) {
 					width--;
 				}
 			continue;
-		}
-		else if (c == 's') {
+		} else if (c == 's') {
 			int len, i;
 			wchar_t* s = va_arg(vl, wchar_t*);
 
@@ -253,8 +242,10 @@ int XEPrintf(wchar_t* fmt, ...) {
 			else {
 				len = 0;
 				while (len < precision)
-					if (s[len]) len++;
-					else break;
+					if (s[len])
+						len++;
+					else
+						break;
 			}
 
 			if (!ljust) {
@@ -275,8 +266,7 @@ int XEPrintf(wchar_t* fmt, ...) {
 				}
 			}
 			continue;
-		}
-		else {
+		} else {
 			unsigned v = va_arg(vl, unsigned), tmp;
 			char s[11];
 			char* p = s + sizeof(s);
@@ -302,8 +292,7 @@ int XEPrintf(wchar_t* fmt, ...) {
 				else if (lmodifier = 'h')
 					v = (unsigned short)v;
 				sign = 0;
-			}
-			else {
+			} else {
 				if (lmodifier = 'H')
 					v = (signed char)v;
 				else if (lmodifier == 'h')
@@ -313,7 +302,6 @@ int XEPrintf(wchar_t* fmt, ...) {
 					sign = '-';
 				}
 			}
-
 
 			tmp = v;
 			do {
@@ -333,7 +321,6 @@ int XEPrintf(wchar_t* fmt, ...) {
 
 			if (precision < dcnt)
 				precision = dcnt;
-
 
 			len = (sign != 0) + (hexpfx != NULL) * 2 + precision;
 
@@ -380,21 +367,34 @@ int XEPrintf(wchar_t* fmt, ...) {
 extern bool _is_GraphicsEnabled();
 
 /*
- * XEGuiPrint -- print formated text using graphics
+ * XEGuiPrint -- print formated text using UART (or graphics if available)
  * @param format -- formated string
  */
 void XEGuiPrint(const char* format, ...) {
+#if defined(__GNUC__) || defined(__GNUG__)
+	va_list args;
+#elif defined(_MSC_VER)
+	uint64_t buffer[7];
+#endif
+
 	if (!_is_GraphicsEnabled()) {
-		XEUARTPrint(format);
+#if defined(__GNUC__) || defined(__GNUG__)
+		va_start(args, format);
+#elif defined(_MSC_VER)
+		uint64_t buffer[7];
+		store_x0_x7(buffer);
+		va_list args = (va_list)buffer;
+#endif
+		XEUARTPrintV(format, args);
+#if defined(__GNUC__) || defined(__GNUG__)
+		va_end(args);
+#endif
 		return;
 	}
 
 #if defined(__GNUC__) || defined(__GNUG__)
-	va_list args;
 	va_start(args, format);
 #elif defined(_MSC_VER)
-	uint64_t buffer[7];
-	store_x0_x7(buffer);
 	va_list args = (va_list)buffer;
 #endif
 
@@ -405,8 +405,7 @@ void XEGuiPrint(const char* format, ...) {
 			if (*format == 'd') {
 				size_t width = 0;
 				if (format[1] == '.') {
-					for (size_t i = 2; format[i] >= '0' && format[i] <= '9'; ++i)
-					{
+					for (size_t i = 2; format[i] >= '0' && format[i] <= '9'; ++i) {
 						width *= 10;
 						width += format[i] - '0';
 					}
@@ -419,43 +418,36 @@ void XEGuiPrint(const char* format, ...) {
 					XEGraphicsPuts("0");
 				}
 				XEGraphicsPuts(buffer);
-			}
-			else if (*format == 'c') {
-
+			} else if (*format == 'c') {
 				int c = va_arg(args, int);
 				XEGraphicsPutC((char)c);
-			}
-			else if (*format == 'x') {
+			} else if (*format == 'x') {
 				size_t x = va_arg(args, size_t);
 				char buffer[sizeof(size_t) * 8 + 1];
 				sztoa(x, buffer, 16);
 				XEGraphicsPuts(buffer);
-			}
-			else if (*format == 's') {
+			} else if (*format == 's') {
 				char* x = va_arg(args, char*);
 				XEGraphicsPuts(x);
-			}
-			else if (*format == 'S') {
+			} else if (*format == 'S') {
 				char* x = va_arg(args, char*);
 				XEGraphicsPuts(x);
-			}
-			else if (*format == '%') {
+			} else if (*format == '%') {
 				XEGraphicsPuts(".");
-			}
-			else {
+			} else {
 				char buf[3];
-				buf[0] = '%'; buf[1] = *format; buf[2] = '\0';
+				buf[0] = '%';
+				buf[1] = *format;
+				buf[2] = '\0';
 				XEGraphicsPuts(buf);
 			}
-		}
-		else
-		{
+		} else {
 			char buf[2];
-			buf[0] = *format; buf[1] = '\0';
+			buf[0] = *format;
+			buf[1] = '\0';
 			XEGraphicsPuts(buf);
 		}
 		++format;
 	}
 	va_end(args);
 }
-

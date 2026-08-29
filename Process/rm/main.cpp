@@ -34,28 +34,25 @@
 #include <time.h>
 #include <stdlib.h>
 
-
-
 /*
 * main -- main entry
 */
 int main(int argc, char* argv[]) {
-    char* file = argv[1];
-    if (!file) {
-        printf("rm: no filename specified \n");
-        return 1;
-    }
+	char* file = argv[1];
+	if (!file) {
+		printf("rm: no filename specified \n");
+		return 1;
+	}
 
-    char* filename = (char*)malloc(strlen(file) + 1);
-    if (!strchr(file, '/')) {
-        sprintf(filename, "/%s", file);
-    }
-    else
-        sprintf(filename, "%s", file);
+	char* filename = (char*)malloc(strlen(file) + 1);
+	if (!strchr(file, '/')) {
+		sprintf(filename, "/%s", file);
+	} else
+		sprintf(filename, "%s", file);
 
-    if (remove(filename)) {
-        printf("\nfailed to remove file %s \n", filename);
-        return 1;
-    }
-    return 0;
+	if (remove(filename)) {
+		printf("\nfailed to remove file %s \n", filename);
+		return 1;
+	}
+	return 0;
 }

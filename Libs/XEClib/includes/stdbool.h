@@ -34,9 +34,9 @@
 
 #ifndef __cplusplus
 
-#define true 1
+#define true  1
 #define false 0
-#define bool _Bool
+#define bool  _Bool
 
 #endif
 

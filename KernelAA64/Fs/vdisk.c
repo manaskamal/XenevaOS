@@ -42,11 +42,10 @@
 #include <Fs/fsprobe.h>
 #include <Fs/Fat/Fat.h>
 #include <Hal/AA64/profile.h>
-#include <Fs/Ext2/Ext2.h>
+#include <Fs/Ext2/ext2.h>
 
 AuVDisk* VdiskArray[MAX_VDISK_DEVICES];
 int _vdisk_num_;
-
 
 /**
  * @brief AuVDiskInitialise -- initialise the vdisk
@@ -58,7 +57,6 @@ void AuVDiskInitialise() {
 	_vdisk_num_ = 0;
 	AuTextOut("[aurora]: virtual disk system initialized \r\n");
 }
-
 
 /**
  * @brief AuVDiskCreateStorageFile -- creates a storage
@@ -105,7 +103,6 @@ uint8_t AuVDiskGetIndex() {
 	return UINT8_MAX;
 }
 
-
 /**
  * @brief AuCreateVDisk -- creates a vdisk and
  * return to the caller
@@ -132,7 +129,6 @@ size_t AuVDiskRead(AuVDisk* disk, uint64_t lba, uint32_t count, uint64_t* buffer
 	return 0;
 }
 
-
 /**
 * @brief AuVDiskWrite -- reads a disk block from registered disk
 * @param disk -- Pointer to vdsik structure
@@ -146,7 +142,6 @@ size_t AuVDiskWrite(AuVDisk* disk, uint64_t lba, uint32_t count, uint64_t* buffe
 		return disk->Write(disk, disk->startingLBA + lba, count, buffer);
 	return 0;
 }
-
 
 /**
  * @brief AuVDiskRegisterPartition - Gether all informations about the partition
@@ -163,7 +158,7 @@ void AuVDiskRegisterPartition(AuVDisk* vdisk) {
 	uint8_t* aligned_buf = (uint8_t*)buffer;
 
 	GPTHeader* header = (GPTHeader*)aligned_buf;
-	
+
 	/* check if it's Efi partition */
 	if (strcmp(header->sig, "EFI PART") != 0) {
 		AuTextOut("[aurora]: vdisk %s doesn't have valid GPT partition \r\n", vdisk->diskname);
@@ -203,7 +198,10 @@ void AuVDiskRegisterPartition(AuVDisk* vdisk) {
 	AuTextOut("\r\n");
 	AuTextOut("VDisk partition created startLBA -> %d \r\n", vdisk->startingLBA);
 	AuTextOut("vDisk partition guid : ");
-	AuTextOut("0x%x-0x%x-0x%x-0x", vdisk->part_guid.Data1, vdisk->part_guid.Data2, vdisk->part_guid.Data3);
+	AuTextOut("0x%x-0x%x-0x%x-0x",
+			  vdisk->part_guid.Data1,
+			  vdisk->part_guid.Data2,
+			  vdisk->part_guid.Data3);
 	for (int k = 0; k < 8; k++)
 		AuTextOut("%x", vdisk->part_guid.Data4[k]);
 
@@ -211,11 +209,10 @@ void AuVDiskRegisterPartition(AuVDisk* vdisk) {
 	/* call gpt file system verifier to load
 	 * the desired file system
 	 */
-	 //AuGPTInitialise_FileSystem(vdisk);
+	//AuGPTInitialise_FileSystem(vdisk);
 
 	AuTextOut("\r\n");
 	AuPmmngrFree(buffer);
-	
 }
 
 /**
@@ -229,8 +226,9 @@ void AuVDiskRegister(AuVDisk* disk) {
 		return;
 
 	VdiskArray[_index] = disk;
-	AuTextOut("[aurora]: vdisk registered name : %s, serial : %s \r\n", disk->diskname,
-		disk->serialNumber);
+	AuTextOut("[aurora]: vdisk registered name : %s, serial : %s \r\n",
+			  disk->diskname,
+			  disk->serialNumber);
 
 	disk->__VDiskID = _index;
 	/* Register a partition and initialise the file system*/
@@ -282,7 +280,6 @@ void AuVDiskDestroy(AuVDisk* vdisk) {
 	VdiskArray[_index] = NULL;
 	kfree(vdisk);
 }
-
 
 /**
  * @brief AuGetVDiskInfo -- returns virtual disk information

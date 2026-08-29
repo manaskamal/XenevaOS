@@ -42,7 +42,7 @@ void ChMenubarDestroy(ChWidget* wid, ChWindow* win) {
 	ChMenubar* mb = (ChMenubar*)wid;
 	_KePrint("Destroying menubar \r\n");
 	for (int i = 0; i < mb->menubuttons->pointer; i++) {
-		ChMenuButton *mbut = (ChMenuButton*)list_get_at(mb->menubuttons, i);
+		ChMenuButton* mbut = (ChMenuButton*)list_get_at(mb->menubuttons, i);
 		if (mbut->wid.ChDestroy)
 			mbut->wid.ChDestroy((ChWidget*)mbut, win);
 	}
@@ -68,16 +68,18 @@ void ChMenubarMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, int button)
 	if (mb->allpainted) {
 		for (int i = 0; i < mb->menubuttons->pointer; i++) {
 			ChMenuButton* mbut = (ChMenuButton*)list_get_at(mb->menubuttons, i);
-			if (mbut->hover){
+			if (mbut->hover) {
 				mbut->hover = false;
 				_need_repaint_ = 1;
 			}
-			if (mbut->clicked){
+			if (mbut->clicked) {
 				mbut->clicked = false;
 				_need_repaint_ = 1;
 			}
-			if ((x >(win->info->x + mbut->wid.x) && x < (win->info->x + mbut->wid.x + mbut->wid.w)) &&
-				(y >(win->info->y + mbut->wid.y) && y < (win->info->y + mbut->wid.y + mbut->wid.h))) {
+			if ((x > (win->info->x + mbut->wid.x) &&
+				 x < (win->info->x + mbut->wid.x + mbut->wid.w)) &&
+				(y > (win->info->y + mbut->wid.y) &&
+				 y < (win->info->y + mbut->wid.y + mbut->wid.h))) {
 				mbut->hover = true;
 				if (button && mb->wid.lastMouseX == x && mb->wid.lastMouseY == y) {
 					clickedButton = mbut;
@@ -89,17 +91,16 @@ void ChMenubarMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, int button)
 	}
 
 	if (clickedButton) {
-		ChPopupMenu* pm = clickedButton->popupMenu;	
+		ChPopupMenu* pm = clickedButton->popupMenu;
 		if (pm) {
-			ChMenuShow(pm,clickedButton->wid.x, clickedButton->wid.y + 26);
+			ChMenuShow(pm, clickedButton->wid.x, clickedButton->wid.y + 26);
 			_KePrint("Popup menu availabled \r\n");
 		}
 	}
 
 	if (_need_repaint_) {
 		mb->wid.ChPaintHandler(wid, win);
-		ChWindowUpdate(win, wid->x,
-			wid->y, wid->w - 1, wid->h, false, true);
+		ChWindowUpdate(win, wid->x, wid->y, wid->w - 1, wid->h, false, true);
 	}
 
 	mb->wid.lastMouseX = x;
@@ -113,7 +114,7 @@ ChMenubar* ChCreateMenubar(ChWindow* win) {
 	ChMenubar* mb = (ChMenubar*)malloc(sizeof(ChMenubar));
 	memset(mb, 0, sizeof(ChMenubar));
 	mb->wid.x = 1;
-	mb->wid.y = 26; 
+	mb->wid.y = 26;
 	mb->wid.w = win->info->width - 1;
 	mb->wid.h = 26;
 	mb->wid.ChMouseEvent = ChMenubarMouseEvent;
@@ -129,7 +130,7 @@ ChMenubar* ChCreateMenubar(ChWindow* win) {
  * by menu button
  */
 void ChMenuButtonDestroy(ChWidget* wid, ChWindow* win) {
-	ChMenuButton *mbut = (ChMenuButton*)wid;
+	ChMenuButton* mbut = (ChMenuButton*)wid;
 	_KePrint("Menubutton destroyed \r\n");
 	free(mbut->title);
 	free(mbut);
@@ -139,7 +140,7 @@ void ChMenuButtonDestroy(ChWidget* wid, ChWindow* win) {
  * @param mb -- Pointer to menubar
  * @param title -- title of the button
  */
-ChMenuButton *ChCreateMenubutton(ChMenubar* mb, char* title) {
+ChMenuButton* ChCreateMenubutton(ChMenubar* mb, char* title) {
 	int title_len = strlen(title) + 1;
 	int mbut_w = title_len + 10;
 	ChMenuButton* mbut = (ChMenuButton*)malloc(sizeof(ChMenuButton));
@@ -160,7 +161,7 @@ ChMenuButton *ChCreateMenubutton(ChMenubar* mb, char* title) {
 /*
  * ChMenubarAddButton -- add a button to menubar button list
  */
-void ChMenubarAddButton(ChMenubar* mb, ChMenuButton *mbut) {
+void ChMenubarAddButton(ChMenubar* mb, ChMenuButton* mbut) {
 	list_add(mb->menubuttons, mbut);
 }
 

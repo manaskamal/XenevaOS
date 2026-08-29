@@ -49,11 +49,11 @@ typedef struct _text_box_ {
 	int textHeight;
 	//cursor
 	int textCursorPosX;
-	int textCursorPosY;// future use
-}ChTextBox;
+	int textCursorPosY; // future use
+} ChTextBox;
 
 #ifdef __cplusplus
-XE_EXTERN{
+XE_EXTERN {
 #endif
 
 	/*
@@ -63,14 +63,14 @@ XE_EXTERN{
 	 * @param width -- Width of the textbox
 	 * @param height -- Height of the textbox
 	 */
-	XE_EXPORT ChTextBox * ChCreateTextBox(ChWindow* win, int x, int y, int width, int height);
+	XE_EXPORT ChTextBox* ChCreateTextBox(ChWindow * win, int x, int y, int width, int height);
 
-    /*
+	/*
      * ChTextBoxSetText -- set text to textbox
      * @param tb -- Pointer to textbox
      * @param text -- text to set
      */
-    XE_EXPORT void ChTextBoxSetText(ChTextBox* tb, char* text);
+	XE_EXPORT void ChTextBoxSetText(ChTextBox * tb, char* text);
 
 	/*
     * ChTextBoxUpdate -- updates the textbox with
@@ -78,7 +78,7 @@ XE_EXTERN{
     * @param tb -- Pointer to textbox
     * @param mainWin -- Pointer to main window
     */
-	XE_EXPORT void ChTextBoxUpdate(ChTextBox* tb, ChWindow* mainWin);
+	XE_EXPORT void ChTextBoxUpdate(ChTextBox * tb, ChWindow * mainWin);
 
 	/*
      * ChTextBoxSetFont -- set font for particular given
@@ -86,16 +86,16 @@ XE_EXTERN{
      * @param tb -- Pointer to textbox
      * @param font -- Font to set
      */
-	XE_EXPORT void ChTextBoxSetFont(ChTextBox* tb, ChFont* font);
+	XE_EXPORT void ChTextBoxSetFont(ChTextBox * tb, ChFont * font);
 
 	/*
     * ChTextBoxSetFontSize -- set font size for the text box
     * @param tb -- Pointer to teh textbox
     * @param sz -- font sz in pixels
     */
-	XE_EXPORT void ChTextBoxSetFontSize(ChTextBox* tb, int sz);
+	XE_EXPORT void ChTextBoxSetFontSize(ChTextBox * tb, int sz);
 
-	#ifdef __cplusplus
+#ifdef __cplusplus
 }
 #endif
 

@@ -42,22 +42,10 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-/* Meta data magic */
-#define MAGIC_USED  0x16062002
-#define MAGIC_FREE  0x05212023   /* the year to remember */
-
-#pragma pack(push,1)
-typedef struct _meta_data_ {
-	int magic;
-	int size;
-	struct _meta_data_ *next;
-	struct _meta_data_ *prev;
-}meta_data_t;
-#pragma pack(pop)
     /*
-     * x86_64_kmalloc_initialize -- initialize
-     * kernel malloc library with two pages
-	 */
+     * AuHeapInitialize -- initialize
+     * kernel malloc library with initial pages
+     */
     void AuHeapInitialize();
 
 	AU_EXTERN AU_EXPORT void     *kmalloc(unsigned int);				//< The standard function.

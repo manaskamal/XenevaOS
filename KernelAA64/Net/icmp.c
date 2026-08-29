@@ -60,7 +60,6 @@ uint16_t AuICMPChecksum(IPv4Header* packet) {
 void AuICMPHandle(IPv4Header* ipv4, AuVFSNode* nic) {
 	ICMPHeader* header = (ICMPHeader*)&ipv4->payload;
 
-
 	AuNetworkDevice* netdev = (AuNetworkDevice*)nic->device;
 	if (!netdev) {
 		UARTDebugOut("[AuNet]: ICMP Handle no network device found \r\n");
@@ -98,14 +97,15 @@ void AuICMPHandle(IPv4Header* ipv4, AuVFSNode* nic) {
 
 		IPV4SendPacket(resp, nic);
 		kfree(resp);
-	}
-	else if (header->type == 0 && header->code == 0) {
+	} else if (header->type == 0 && header->code == 0) {
 		UARTDebugOut("[AuNet]:ICMP ping reply got \r\n");
 		if (current_icmp_sock)
 			AuSocketAdd(current_icmp_sock, ipv4, ntohs(ipv4->totalLength));
-	}
-	else {
-		UARTDebugOut("[AuNet]: NIC -> %s, ICMP type-%d code-%d \r\n", nic->filename, header->type, header->code);
+	} else {
+		UARTDebugOut("[AuNet]: NIC -> %s, ICMP type-%d code-%d \r\n",
+					 nic->filename,
+					 header->type,
+					 header->code);
 	}
 }
 /*
@@ -118,9 +118,11 @@ int AuICMPReceive(AuSocket* sock, msghdr* msg, int flags) {
 	if (msg->msg_iovlen > 1)
 		return -1;
 
-	if (msg->msg_iovlen == 0)return 0;
+	if (msg->msg_iovlen == 0)
+		return 0;
 	char* packet = (char*)AuSocketGet(sock);
-	if (!packet) return 0;
+	if (!packet)
+		return 0;
 	size_t packet_sz = *(size_t*)packet - sizeof(IPv4Header);
 	IPv4Header* src = (IPv4Header*)(packet + sizeof(size_t));
 	if (packet_sz > msg->msg_iov[0].iov_len)
@@ -149,13 +151,15 @@ int AuICMPReceive(AuSocket* sock, msghdr* msg, int flags) {
 int AuICMPSend(AuSocket* sock, msghdr* msg, int flags) {
 	if (msg->msg_iovlen > 1)
 		return -1;
-	if (msg->msg_iovlen == 0)return 0;
+	if (msg->msg_iovlen == 0)
+		return 0;
 	if (msg->msg_namelen != sizeof(sockaddr_in))
 		return -1;
 
 	sockaddr_in* name = (sockaddr_in*)msg->msg_name;
 	AuVFSNode* nic = AuNetworkRoute(name->sin_addr.s_addr);
-	if (!nic) return -1;
+	if (!nic)
+		return -1;
 	AuNetworkDevice* netdev = (AuNetworkDevice*)nic->device;
 	if (!netdev)
 		return -1;
@@ -190,11 +194,9 @@ void AuICMPClose(AuSocket* sock) {
 	return;
 }
 
-
 int AuICMPBind(AuSocket* sock, sockaddr* addr, socklen_t addrlen) {
 	return 0;
 }
-
 
 uint64_t AuICMPRead(AuVFSNode* node, AuVFSNode* file, uint64_t* buffer, uint32_t len) {
 	return 0;

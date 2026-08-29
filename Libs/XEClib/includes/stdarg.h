@@ -30,51 +30,39 @@
 #ifndef __STDARG_H__
 #define __STDARG_H__
 
-
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
+/* va list parameter list */
+typedef unsigned char* va_list;
 
-	/* va list parameter list */
-	typedef unsigned char *va_list;
+/* width of stack == width of int */
+#define STACKITEM int64_t
 
-
-	/* width of stack == width of int */
-#define	STACKITEM	int64_t
-
-	/* round up width of objects pushed on stack. The expression before the
+/* round up width of objects pushed on stack. The expression before the
 	& ensures that we get 0 for objects of size 0. */
-#define	VA_SIZE(TYPE)					\
-	((sizeof(TYPE)+sizeof(STACKITEM)-1)	\
-	& ~(sizeof(STACKITEM)-1))
+#define VA_SIZE(TYPE) ((sizeof(TYPE) + sizeof(STACKITEM) - 1) & ~(sizeof(STACKITEM) - 1))
 
 #ifdef ARCH_X64
-	/* &(LASTARG) points to the LEFTMOST argument of the function call
+/* &(LASTARG) points to the LEFTMOST argument of the function call
 	(before the ...) */
-#define	va_start(AP, LASTARG)	\
-	(AP = ((va_list)&(LASTARG)+VA_SIZE(LASTARG)))
+#define va_start(AP, LASTARG) (AP = ((va_list) & (LASTARG) + VA_SIZE(LASTARG)))
 
-	/* nothing for va_end */
+/* nothing for va_end */
 #define va_end(AP)
 
-#define va_arg(AP, TYPE)	\
-	(AP += VA_SIZE(TYPE), *((TYPE *)(AP - VA_SIZE(TYPE))))
+#define va_arg(AP, TYPE) (AP += VA_SIZE(TYPE), *((TYPE*)(AP - VA_SIZE(TYPE))))
 #elif ARCH_ARM64
-#define va_start(ap,last) \
-     ((ap) = (va_list)(&(last)) + 8)
+#define va_start(ap, last) ((ap) = (va_list)(&(last)) + 8)
 
-#define va_arg(ap,T) \
-     (*(T*)((ap) += 8, (ap) - 8))
+#define va_arg(ap, T) (*(T*)((ap) += 8, (ap) - 8))
 
-#define va_end(ap) \
-     ((ap) = (va_list)0)
+#define va_end(ap) ((ap) = (va_list)0)
 #endif
 
 #ifdef __cplusplus
 }
 #endif
-
 
 #endif

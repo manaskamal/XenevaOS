@@ -41,20 +41,30 @@ void ChDefaultSliderPainter(ChWidget* wid, ChWindow* win) {
 	ChSlider* slider = (ChSlider*)wid;
 
 	if (slider->type == CHITRALEKHA_SLIDER_VERTICAL) {
-		ChDrawRect(win->canv, slider->bound.x, slider->bound.y, slider->bound.w, slider->bound.h, ChWindowGetBackgroundColor(win));
+		ChDrawRect(win->canv,
+				   slider->bound.x,
+				   slider->bound.y,
+				   slider->bound.w,
+				   slider->bound.h,
+				   ChWindowGetBackgroundColor(win));
 		//ChDrawRect(win->canv, wid->x, wid->y, wid->w, wid->h, 0xFFDDDBDB);
 
 		/* draw the progress */
-		if (slider->currentVal != 0){
-			if (slider->progressPixel != 0){
+		if (slider->currentVal != 0) {
+			if (slider->progressPixel != 0) {
 				uint32_t col1 = 0xFF84C8EC;
 				uint32_t col2 = 0xFF3A96AC;
 				if (slider->useCustomColor) {
 					col1 = slider->customColor1;
 					col2 = slider->customColor2;
 				}
-				ChColorDrawHorizontalGradient(win->canv, wid->x, wid->y + slider->progressPixel, 9,
-					(wid->y + wid->h) - (wid->y + slider->progressPixel), col1, col2);
+				ChColorDrawHorizontalGradient(win->canv,
+											  wid->x,
+											  wid->y + slider->progressPixel,
+											  9,
+											  (wid->y + wid->h) - (wid->y + slider->progressPixel),
+											  col1,
+											  col2);
 			}
 		}
 
@@ -66,14 +76,19 @@ void ChDefaultSliderPainter(ChWidget* wid, ChWindow* win) {
 		/* ! Slider thumb */
 		if (slider->thumbVisible) {
 			ChDrawRect(win->canv, wid->x - 5, wid->y + slider->thumbY, wid->w + 5 * 2, 15, SILVER);
-			ChDrawRectUnfilled(win->canv, wid->x - 5, wid->y + slider->thumbY, wid->w + 5 * 2, 15, GRAY);
+			ChDrawRectUnfilled(
+				win->canv, wid->x - 5, wid->y + slider->thumbY, wid->w + 5 * 2, 15, GRAY);
 		}
-
 	}
 
 	if (slider->type == CHITRALEKHA_SLIDER_HORIZONTAL) {
-		ChDrawRect(win->canv, slider->bound.x, slider->bound.y, slider->bound.w, slider->bound.h, ChWindowGetBackgroundColor(win));
-		ChDrawRect(win->canv, wid->x, wid->y, wid->w, wid->h,ChWindowGetBackgroundColor(win));
+		ChDrawRect(win->canv,
+				   slider->bound.x,
+				   slider->bound.y,
+				   slider->bound.w,
+				   slider->bound.h,
+				   ChWindowGetBackgroundColor(win));
+		ChDrawRect(win->canv, wid->x, wid->y, wid->w, wid->h, ChWindowGetBackgroundColor(win));
 
 		/* draw the progress */
 		if (slider->currentVal != 0) {
@@ -83,10 +98,15 @@ void ChDefaultSliderPainter(ChWidget* wid, ChWindow* win) {
 				col1 = slider->customColor1;
 				col2 = slider->customColor2;
 			}
-			ChColorDrawVerticalGradient(win->canv, wid->x, wid->y, ((wid->x + slider->progressPixel) - wid->x),
-				9, col1, col2);
+			ChColorDrawVerticalGradient(win->canv,
+										wid->x,
+										wid->y,
+										((wid->x + slider->progressPixel) - wid->x),
+										9,
+										col1,
+										col2);
 		}
-		
+
 		uint32_t outlineColor = 0xFF545454;
 		if (slider->useCustomColor)
 			outlineColor = slider->outlineColor;
@@ -95,7 +115,8 @@ void ChDefaultSliderPainter(ChWidget* wid, ChWindow* win) {
 		/* ! Slider thumb */
 		if (slider->thumbVisible) {
 			ChDrawRect(win->canv, wid->x + slider->thumbX, wid->y - 5, 15, wid->h + 5 * 2, SILVER);
-			ChDrawRectUnfilled(win->canv, wid->x + slider->thumbX, wid->y - 5, 15, wid->h + 5 * 2, GRAY);
+			ChDrawRectUnfilled(
+				win->canv, wid->x + slider->thumbX, wid->y - 5, 15, wid->h + 5 * 2, GRAY);
 		}
 	}
 }

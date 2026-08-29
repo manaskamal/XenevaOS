@@ -48,9 +48,9 @@ typedef struct _nm_time_ {
 	int hour;
 	int minute;
 	int second;
-}NamdaphaTime;
+} NamdaphaTime;
 
-ChitralekhaApp *app;
+ChitralekhaApp* app;
 ChWindow* win;
 list_t* button_list;
 list_t* windowList;
@@ -65,7 +65,7 @@ char* currenttime;
 NamdaphaButton* timebutton;
 ButtonInfo* defaultappico;
 uint32_t gomenuh;
-NamdaphaButton *gobutton;
+NamdaphaButton* gobutton;
 NamdaphaTime _time;
 list_t* sectList;
 
@@ -74,7 +74,7 @@ extern void GoMenuThread();
  * NamdaphaChangeFocus -- changes a focus of window
  * @param button -- window's button
  */
-void NamdaphaChangeFocus(NamdaphaButton *button) {
+void NamdaphaChangeFocus(NamdaphaButton* button) {
 	PostEvent e;
 	memset(&e, 0, sizeof(PostEvent));
 	e.type = DEODHAI_MESSAGE_WINDOW_BRING_FRONT;
@@ -109,20 +109,30 @@ void NamdaphaHideWindow(NamdaphaButton* button) {
 
 /* NamdaphaTimeButtonPaint -- paint the time button */
 void NamdaphaTimeButtonPaint(NamdaphaButton* button, ChWindow* win) {
-	ChDrawRect(win->canv, button->x, button->y,button->w, button->h,NAMDAPHA_COLOR);
+	ChDrawRect(win->canv, button->x, button->y, button->w, button->h, NAMDAPHA_COLOR);
 	ChFontSetSize(app->baseFont, 13);
 	int font_w = ChFontGetWidth(app->baseFont, button->title);
 	int font_h = ChFontGetHeight(app->baseFont, button->title);
-	ChFontDrawText(win->canv, app->baseFont,currenttime, button->x + button->w/2 - font_w/2,
-		button->y + button->h / 2, 12, WHITE);
+	ChFontDrawText(win->canv,
+				   app->baseFont,
+				   currenttime,
+				   button->x + button->w / 2 - font_w / 2,
+				   button->y + button->h / 2,
+				   12,
+				   WHITE);
 	char date[20];
 	memset(&date, 0, 20);
-	
+
 	sprintf(date, "%02d-%02d-%02d", _time.day, _time.month, _time.year);
 	ChFontSetSize(app->baseFont, 11);
-	int date_w = ChFontGetWidth(app->baseFont,date);
-	ChFontDrawText(win->canv, app->baseFont, date, button->x + button->w / 2 - date_w / 2,
-		button->y + button->h - 4, 10,WHITE);
+	int date_w = ChFontGetWidth(app->baseFont, date);
+	ChFontDrawText(win->canv,
+				   app->baseFont,
+				   date,
+				   button->x + button->w / 2 - date_w / 2,
+				   button->y + button->h - 4,
+				   10,
+				   WHITE);
 }
 
 /*
@@ -142,8 +152,7 @@ void NamdaphaMouseHandler(ChWindow* win, int x, int y, int button, int scroll) {
 			widget->kill_focus = false;
 			if (widget->mouseEvent)
 				widget->mouseEvent(widget, win, x, y, button);
-		}
-		else {
+		} else {
 			if (widget->hover) {
 				widget->hover = false;
 				widget->kill_focus = true;
@@ -159,17 +168,17 @@ void NamdaphaGoButtonAction(NamdaphaButton* button, ChWindow* win) {
 }
 
 void NamdaphaPaint(ChWindow* win) {
-	
-	ChColorDrawHorizontalGradient(win->canv, 0, 0, win->info->width, win->info->height, NAMDAPHA_COLOR, NAMDAPHA_COLOR_DARK);
+	ChColorDrawHorizontalGradient(
+		win->canv, 0, 0, win->info->width, win->info->height, NAMDAPHA_COLOR, NAMDAPHA_COLOR_DARK);
 	ChDrawVerticalLine(win->canv, win->info->width - 1, 0, win->info->height, NAMDAPHA_COLOR_LIGHT);
 	ChDrawVerticalLine(win->canv, win->info->width - 2, 0, win->info->height, NAMDAPHA_COLOR_LIGHT);
-	for (int i = 0; i < button_list->pointer; i++){
+	for (int i = 0; i < button_list->pointer; i++) {
 		NamdaphaButton* button = (NamdaphaButton*)list_get_at(button_list, i);
 		if (button->drawNamdaphaButton)
 			button->drawNamdaphaButton(button, win);
 	}
 
-	ChDrawRectUnfilled(win->canv, 0, 0, win->info->width, win->info->height,GRAY);
+	ChDrawRectUnfilled(win->canv, 0, 0, win->info->width, win->info->height, GRAY);
 	ChWindowUpdate(win, 0, 0, win->info->width, win->info->height, 1, 0);
 }
 
@@ -178,46 +187,45 @@ void NamdaphaPaint(ChWindow* win) {
 * @param e -- Pointer to PostEvent memory location where
 * incoming messages are stored
 */
-void NamdaphaHandleMessage(PostEvent *e) {
+void NamdaphaHandleMessage(PostEvent* e) {
 	switch (e->type) {
 		/*handle timer message code */
-	case TIMER_MESSAGE_CODE:{
-								XETime time;
-								_KeGetCurrentTime(&time);
-								uint8_t hour_ = time.hour;
-								char hour[2];
-								if (hour_ > 12)
-									hour_ -= 12;
-								itoa_s(hour_, 10, hour);
-								if (hour_ < 10){
-									hour[1] = hour[0];
-									hour[0] = '0';
-								}
-								char minute[2];
-								itoa_s(time.minute, 10, minute);
-								if (time.minute < 10){
-									minute[1] = minute[0];
-									minute[0] = '0';
-								}
-								char code[2];
-								if (time.hour < 12){
-									code[0] = 'A';
-									code[1] = 'M';
-								}
-								else{
-									code[0] = 'P';
-									code[1] = 'M';
-								}
-								strcpy(currenttime, hour);
-								strcpy(currenttime + 2, ":");
-								strcpy(currenttime + 3, minute);
-								strcpy(currenttime + 5, " ");
-								strcpy(currenttime + 6, code);
-								currenttime[8] = '\0';
-								timebutton->drawNamdaphaButton(timebutton, win);
-								ChWindowUpdate(win, timebutton->x, timebutton->y, timebutton->w, timebutton->h, 0, 1);
-								memset(e, 0, sizeof(PostEvent));
-								break;
+	case TIMER_MESSAGE_CODE: {
+		XETime time;
+		_KeGetCurrentTime(&time);
+		uint8_t hour_ = time.hour;
+		char hour[2];
+		if (hour_ > 12)
+			hour_ -= 12;
+		itoa_s(hour_, 10, hour);
+		if (hour_ < 10) {
+			hour[1] = hour[0];
+			hour[0] = '0';
+		}
+		char minute[2];
+		itoa_s(time.minute, 10, minute);
+		if (time.minute < 10) {
+			minute[1] = minute[0];
+			minute[0] = '0';
+		}
+		char code[2];
+		if (time.hour < 12) {
+			code[0] = 'A';
+			code[1] = 'M';
+		} else {
+			code[0] = 'P';
+			code[1] = 'M';
+		}
+		strcpy(currenttime, hour);
+		strcpy(currenttime + 2, ":");
+		strcpy(currenttime + 3, minute);
+		strcpy(currenttime + 5, " ");
+		strcpy(currenttime + 6, code);
+		currenttime[8] = '\0';
+		timebutton->drawNamdaphaButton(timebutton, win);
+		ChWindowUpdate(win, timebutton->x, timebutton->y, timebutton->w, timebutton->h, 0, 1);
+		memset(e, 0, sizeof(PostEvent));
+		break;
 	}
 		/* handle mouse event from deodhai */
 	case DEODHAI_REPLY_MOUSE_EVENT: {
@@ -241,81 +249,85 @@ void NamdaphaHandleMessage(PostEvent *e) {
 		break;
 	}
 		/* handle key events from deodhai */
-	case DEODHAI_REPLY_KEY_EVENT:{
-									 int code = e->dword;
-									 memset(e, 0, sizeof(PostEvent));
-									 break;
+	case DEODHAI_REPLY_KEY_EVENT: {
+		int code = e->dword;
+		memset(e, 0, sizeof(PostEvent));
+		break;
 	}
 		/* handle icon message from deodhai */
-	case DEODHAI_BROADCAST_ICON:{
+	case DEODHAI_BROADCAST_ICON: {
 		_KePrint("[Namdapha]: broadcast icon received \r\n");
-									NamdaphaButton* nbutton = NULL;
-									for (int i = 0; i < button_list->pointer; i++) {
-										NamdaphaButton* nb = (NamdaphaButton*)list_get_at(button_list, i);
-										if (nb->ownerId == e->from_id){
-											nbutton = nb;
-											break;
-										}
-									}
-									
-									if (nbutton) {
-										nbutton->winHandle = e->dword;
-										bool _already_icon_was_there_ = false;
-										for (int i = 0; i < button_list->pointer; i++) {
-											NamdaphaButton* nb = (NamdaphaButton*)list_get_at(button_list, i);
-											ButtonInfo* info = (ButtonInfo*)nb->nmbuttoninfo;
-											if (info) {
-												if (strcmp(info->filename, e->charValue3) == 0) {
-													nbutton->nmbuttoninfo = info;
-													info->usageCount += 1;
-													_already_icon_was_there_ = true;
-													break;
-												}
-											}
-										}
-										if (!_already_icon_was_there_) {
-											ButtonInfo *info = NmCreateButtonInfo(e->charValue3);
-											NmButtonInfoRead(info);
-											nbutton->nmbuttoninfo = info;
-											info->usageCount += 1;
-										}
-										NamdaphaPaint(win);
-										
-										_KeProcessSleep(120);
-									}
-									skip3:
+		NamdaphaButton* nbutton = NULL;
+		for (int i = 0; i < button_list->pointer; i++) {
+			NamdaphaButton* nb = (NamdaphaButton*)list_get_at(button_list, i);
+			if (nb->ownerId == e->from_id) {
+				nbutton = nb;
+				break;
+			}
+		}
+
+		if (nbutton) {
+			nbutton->winHandle = e->dword;
+			bool _already_icon_was_there_ = false;
+			for (int i = 0; i < button_list->pointer; i++) {
+				NamdaphaButton* nb = (NamdaphaButton*)list_get_at(button_list, i);
+				ButtonInfo* info = (ButtonInfo*)nb->nmbuttoninfo;
+				if (info) {
+					if (strcmp(info->filename, e->charValue3) == 0) {
+						nbutton->nmbuttoninfo = info;
+						info->usageCount += 1;
+						_already_icon_was_there_ = true;
+						break;
+					}
+				}
+			}
+			if (!_already_icon_was_there_) {
+				ButtonInfo* info = NmCreateButtonInfo(e->charValue3);
+				NmButtonInfoRead(info);
+				nbutton->nmbuttoninfo = info;
+				info->usageCount += 1;
+			}
+			NamdaphaPaint(win);
+
+			_KeProcessSleep(120);
+		}
+	skip3:
 		NamdaphaPaint(win);
-									memset(e, 0, sizeof(PostEvent));
-									_KeProcessSleep(10);
-									break;
+		memset(e, 0, sizeof(PostEvent));
+		_KeProcessSleep(10);
+		break;
 	}
 		/* handle new window_created message */
-	case DEODHAI_BROADCAST_WINCREATED:{
+	case DEODHAI_BROADCAST_WINCREATED: {
 		_KePrint("[Namdapha]: new window created msg received \r\n");
-									for (int i = 0; i < button_list->pointer; i++) {
-										NamdaphaButton* nb = (NamdaphaButton*)list_get_at(button_list, i);
-										nb->focused = false;
-									}
-									NamdaphaButton* nbutton = NmCreateButton(nbutton_x_loc, nbutton_y_loc, NAMDAPHA_BUTTON_WIDTH, NAMDAPHA_BUTTON_HEIGHT, e->charValue3);
-									
-									nbutton->ownerId = e->dword;
-									nbutton->nmbuttoninfo = defaultappico;
-									nbutton->focused = true;
-									nbutton->winHandle = e->dword2;
-									
-									list_add(button_list, nbutton);
-									
-									//NamdaphaPaint(win);
+		for (int i = 0; i < button_list->pointer; i++) {
+			NamdaphaButton* nb = (NamdaphaButton*)list_get_at(button_list, i);
+			nb->focused = false;
+		}
+		NamdaphaButton* nbutton = NmCreateButton(nbutton_x_loc,
+												 nbutton_y_loc,
+												 NAMDAPHA_BUTTON_WIDTH,
+												 NAMDAPHA_BUTTON_HEIGHT,
+												 e->charValue3);
+
+		nbutton->ownerId = e->dword;
+		nbutton->nmbuttoninfo = defaultappico;
+		nbutton->focused = true;
+		nbutton->winHandle = e->dword2;
+
+		list_add(button_list, nbutton);
+
+		//NamdaphaPaint(win);
 #ifdef NAMDAPHA_VERTICAL
-									nbutton_y_loc += nbutton->h + NAMDAPHA_BUTTON_YPAD;
+		nbutton_y_loc += nbutton->h + NAMDAPHA_BUTTON_YPAD;
 #elif NAMDAPHA_HORIZONTAL
-									nbutton_x_loc += nbutton->w + NAMDAPHA_BUTTON_XPAD;
+		nbutton_x_loc += nbutton->w + NAMDAPHA_BUTTON_XPAD;
 #endif
-skip:									
+	skip:
 		NamdaphaPaint(win);
-									memset(e, 0, sizeof(PostEvent));
-									_KeProcessSleep(8);
-									break;
+		memset(e, 0, sizeof(PostEvent));
+		_KeProcessSleep(8);
+		break;
 	}
 	case DEODHAI_BROADCAST_FOCUS_CHANGED: {
 		//goto skip2;
@@ -327,68 +339,67 @@ skip:
 		//										  }
 		//									  }
 
-		//									 // 
+		//									 //
 		//								  skip2:
 		NamdaphaPaint(win);
-											  memset(e, 0, sizeof(PostEvent));
-											  _KeProcessSleep(10);
-											  break;
+		memset(e, 0, sizeof(PostEvent));
+		_KeProcessSleep(10);
+		break;
 	}
 
 	case DEODHAI_BROADCAST_WINDESTROYED: {
-											 //int ownerId = e->dword;
-											 //int handle = e->dword2;
-											 //NamdaphaButton* destroyable = NULL;
-											 //int index = 0;
-											 //for (int i = 0; i < button_list->pointer; i++) {
-												// NamdaphaButton* nb = (NamdaphaButton*)list_get_at(button_list, i);
-												// if (nb->ownerId == ownerId) {
-												//	 destroyable = nb;
-												//	 list_remove(button_list, i);
-												//	 index = i;
-												//	 /* if this index is the last of the list */
-												//	 if (index == button_list->pointer)
-												//		 nbutton_y_loc = nb->y;
-												//	 
-												//	 break;
-												// }
-											 //}
+		//int ownerId = e->dword;
+		//int handle = e->dword2;
+		//NamdaphaButton* destroyable = NULL;
+		//int index = 0;
+		//for (int i = 0; i < button_list->pointer; i++) {
+		// NamdaphaButton* nb = (NamdaphaButton*)list_get_at(button_list, i);
+		// if (nb->ownerId == ownerId) {
+		//	 destroyable = nb;
+		//	 list_remove(button_list, i);
+		//	 index = i;
+		//	 /* if this index is the last of the list */
+		//	 if (index == button_list->pointer)
+		//		 nbutton_y_loc = nb->y;
+		//
+		//	 break;
+		// }
+		//}
 
-											 //if (destroyable) {
-												// int pos_y = destroyable->y;
-												// for (int i = index; i < button_list->pointer; i++) {
-												//	 NamdaphaButton* nb = (NamdaphaButton*)list_get_at(button_list, i);
-												//	 nb->y = pos_y;
-												//	 nbutton_y_loc = (nb->y + nb->h) + NAMDAPHA_BUTTON_YPAD;
-												// }
-												// if (destroyable->nmbuttoninfo->usageCount > 1) {
-												//	 destroyable->nmbuttoninfo->usageCount -= 1;
-												// }
-												// else {
-			
-												//	 if (destroyable->nmbuttoninfo != defaultappico){
-												//		 _KeMemUnmap(destroyable->nmbuttoninfo->fileBuffer, destroyable->nmbuttoninfo->fileSize);
-												//		 free(destroyable->nmbuttoninfo->filename);
-												//		 free(destroyable->nmbuttoninfo);
-												//		 destroyable->nmbuttoninfo = NULL;
-												//	 }
-												// }
-												// free(destroyable->title);
-												// free(destroyable);
-											 //}
+		//if (destroyable) {
+		// int pos_y = destroyable->y;
+		// for (int i = index; i < button_list->pointer; i++) {
+		//	 NamdaphaButton* nb = (NamdaphaButton*)list_get_at(button_list, i);
+		//	 nb->y = pos_y;
+		//	 nbutton_y_loc = (nb->y + nb->h) + NAMDAPHA_BUTTON_YPAD;
+		// }
+		// if (destroyable->nmbuttoninfo->usageCount > 1) {
+		//	 destroyable->nmbuttoninfo->usageCount -= 1;
+		// }
+		// else {
 
-											 //if (nbutton_y_loc <= (timebutton->y + timebutton->h)) {
-												// nbutton_y_loc = (timebutton->y + timebutton->h) + NAMDAPHA_BUTTON_YPAD;
-											 //}
+		//	 if (destroyable->nmbuttoninfo != defaultappico){
+		//		 _KeMemUnmap(destroyable->nmbuttoninfo->fileBuffer, destroyable->nmbuttoninfo->fileSize);
+		//		 free(destroyable->nmbuttoninfo->filename);
+		//		 free(destroyable->nmbuttoninfo);
+		//		 destroyable->nmbuttoninfo = NULL;
+		//	 }
+		// }
+		// free(destroyable->title);
+		// free(destroyable);
+		//}
 
-											 NamdaphaPaint(win);
-											 memset(e, 0, sizeof(PostEvent));
-											 break;
+		//if (nbutton_y_loc <= (timebutton->y + timebutton->h)) {
+		// nbutton_y_loc = (timebutton->y + timebutton->h) + NAMDAPHA_BUTTON_YPAD;
+		//}
+
+		NamdaphaPaint(win);
+		memset(e, 0, sizeof(PostEvent));
+		break;
 	}
 	default:
 		memset(e, 0, sizeof(PostEvent));
 		break;
-
 	}
 }
 
@@ -403,12 +414,10 @@ void NamdaphaPlayStartupSound() {
 
 	_KeFileIoControl(sndfd, SOUND_REGISTER_SNDPLR, &ioctl);
 
-
 	int song = _KeOpenFile("/snd.wav", FILE_OPEN_READ_ONLY);
 	void* songbuf = malloc(4096);
 	memset(songbuf, 0, 4096);
 	_KeReadFile(song, songbuf, 4096);
-
 
 	XEFileStatus fs;
 	_KeFileStat(song, &fs);
@@ -422,7 +431,7 @@ void NamdaphaPlayStartupSound() {
 			_KeCloseFile(sndfd);
 			break;
 		}
-		
+
 		if (!finished) {
 			_KeWriteFile(sndfd, songbuf, 4096);
 			_KeReadFile(song, songbuf, 4096);
@@ -436,8 +445,7 @@ extern void NamdaphaGetOnlineTime();
 /*
 * main -- namdapha entry point
 */
-int main(int argc, char* arv[]){
-	
+int main(int argc, char* arv[]) {
 	app = ChitralekhaStartApp(argc, arv);
 	ChFontSetSize(app->baseFont, 13);
 	/* create a demo canvas just for getting the graphics
@@ -446,7 +454,7 @@ int main(int argc, char* arv[]){
 	XEFileIOControl graphctl;
 	memset(&graphctl, 0, sizeof(XEFileIOControl));
 	graphctl.syscall_magic = AURORA_SYSCALL_MAGIC;
-	
+
 	/* create a temporary canvas just to get
 	 * graphics file descriptor and screen resolution
 	 */
@@ -459,11 +467,16 @@ int main(int argc, char* arv[]){
 	free(canv);
 
 	nbutton_x_loc = NAMDAPHA_WIDTH / 2 - NAMDAPHA_BUTTON_WIDTH / 2;
-	
 
 #ifdef NAMDAPHA_VERTICAL
-	win = ChCreateWindow(app, WINDOW_FLAG_STATIC | WINDOW_FLAG_ALWAYS_ON_TOP | WINDOW_FLAG_BROADCAST_LISTENER | WINDOW_FLAG_ANIMATED, 
-		"switcher", 0, 0, NAMDAPHA_WIDTH, screen_h);
+	win = ChCreateWindow(app,
+						 WINDOW_FLAG_STATIC | WINDOW_FLAG_ALWAYS_ON_TOP |
+							 WINDOW_FLAG_BROADCAST_LISTENER | WINDOW_FLAG_ANIMATED,
+						 "switcher",
+						 0,
+						 0,
+						 NAMDAPHA_WIDTH,
+						 screen_h);
 	nbutton_y_loc = 0;
 #elif NAMDAPHA_HORIZONTAL
 	int nmw = screen_w - (100 * 2);
@@ -472,8 +485,14 @@ int main(int argc, char* arv[]){
 		nmx = 0;
 		nmw = screen_w;
 	}
-	win = ChCreateWindow(app, WINDOW_FLAG_STATIC | WINDOW_FLAG_ALWAYS_ON_TOP | WINDOW_FLAG_BROADCAST_LISTENER | WINDOW_FLAG_GLASS,
-		"switcher", nmx, screen_h - NAMDAPHA_WIDTH,nmw, NAMDAPHA_WIDTH);
+	win = ChCreateWindow(app,
+						 WINDOW_FLAG_STATIC | WINDOW_FLAG_ALWAYS_ON_TOP |
+							 WINDOW_FLAG_BROADCAST_LISTENER | WINDOW_FLAG_GLASS,
+						 "switcher",
+						 nmx,
+						 screen_h - NAMDAPHA_WIDTH,
+						 nmw,
+						 NAMDAPHA_WIDTH);
 	nbutton_y_loc = win->info->height - 60;
 #endif
 
@@ -486,7 +505,6 @@ int main(int argc, char* arv[]){
 	sectList = SectionsGetList();
 
 	NamdaphaSections* appsect = CreateSection(SECTION_TITLE_APPLIST);
-
 
 	list_add(windowList, win);
 
@@ -507,10 +525,9 @@ int main(int argc, char* arv[]){
 	_time.minute = min;
 	_time.second = sec;
 
-
 	//_KeGetCurrentTime(&_time);
 
-    gobutton = NamdaphaInitialiseGoButton(win);
+	gobutton = NamdaphaInitialiseGoButton(win);
 	gobutton->actionHandler = NamdaphaGoButtonAction;
 	list_add(button_list, gobutton);
 
@@ -526,9 +543,9 @@ int main(int argc, char* arv[]){
 	memset(currenttime, 0, strlen("00:00 CC"));
 	sprintf(currenttime, "%02d-%02d", _time.hour, _time.minute);
 
-
 	/* now initialise the time button */
-	timebutton = NmCreateButton(win->info->width - NAMDAPHA_WIDTH, 10, NAMDAPHA_WIDTH, 50, "06:51 PM");
+	timebutton =
+		NmCreateButton(win->info->width - NAMDAPHA_WIDTH, 10, NAMDAPHA_WIDTH, 50, "06:51 PM");
 	timebutton->mouseEvent = 0;
 	timebutton->drawNamdaphaButton = NamdaphaTimeButtonPaint;
 	timebutton->nmbuttoninfo = 0;
@@ -546,15 +563,14 @@ int main(int argc, char* arv[]){
 	gomenuh = ChGetWindowHandle(app, "Xeneva Launcher");
 	gobutton->winHandle = gomenuh;
 	NamdaphaGetOnlineTime();
-	
+
 	//NamdaphaPlayStartupSound();
 	PostEvent e;
 	memset(&e, 0, sizeof(PostEvent));
 	while (1) {
 		int err = _KeFileIoControl(app->postboxfd, POSTBOX_GET_EVENT, &e);
 		NamdaphaHandleMessage(&e);
-		if (err == POSTBOX_NO_EVENT) 
+		if (err == POSTBOX_NO_EVENT)
 			_KePauseThread();
 	}
 }
-

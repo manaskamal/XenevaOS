@@ -63,7 +63,6 @@ void AuInitialiseNet() {
 	AuTextOut("[aurora]: net system initialised \r\n");
 }
 
-
 /**
  * @brief AuAddNetAdapter -- add a net adapter to the adapter
  * list
@@ -97,6 +96,3 @@ AuVFSNode* AuNetworkRoute(uint32_t address) {
 		return AuGetNetworkAdapter("virtio-net");
 	return AuGetNetworkAdapter(rt->ifname);
 }
-
-
-

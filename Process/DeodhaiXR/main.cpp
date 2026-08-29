@@ -90,9 +90,8 @@ static int gpu_fd;
 static bool _gpu_enabled;
 static int gpu_display_id;
 
-
 #define DEODHAI_TARGET_FPS 60
-#define FRAME_TIME_MS (1000/ DEODHAI_TARGET_FPS)
+#define FRAME_TIME_MS	   (1000 / DEODHAI_TARGET_FPS)
 
 /**
  * @brief DeodhaiAllocateNewHandle -- get a new window handle
@@ -118,7 +117,6 @@ void DeodhaiInitialiseData() {
 	winHandles = 100;
 }
 
-
 /**
  * @brief DeodhaiAddWindow -- add a window to window list
  * @param win -- Pointer to window
@@ -129,8 +127,7 @@ void DeodhaiAddWindow(Window* win) {
 	if (rootWin == NULL) {
 		rootWin = win;
 		lastWin = win;
-	}
-	else {
+	} else {
 		lastWin->next = win;
 		win->prev = lastWin;
 		lastWin = win;
@@ -152,19 +149,17 @@ void DeodhaiRemoveWindow(Window* win) {
 		win->next->prev = win->prev;
 }
 
-
 /**
 * @brief DeodhaiAddWindow -- add a window to window list
 * @param win -- Pointer to window
 */
-void DeodhaiAddWindowAlwaysOnTop(Window * win) {
+void DeodhaiAddWindowAlwaysOnTop(Window* win) {
 	win->next = NULL;
 	win->prev = NULL;
 	if (alwaysOnTop == NULL) {
 		alwaysOnTop = win;
 		alwaysOnTopLast = win;
-	}
-	else {
+	} else {
 		alwaysOnTopLast->next = win;
 		win->prev = alwaysOnTopLast;
 		alwaysOnTopLast = win;
@@ -189,16 +184,15 @@ void DeodhaiRemoveWindowAlwaysOnTop(Window* win) {
 /**
  * @brief DeodhaiCreateWindow -- create a new deodhai window
  */
-Window* DeodhaiCreateWindow(int x, int y, int w, int h, uint16_t flags, uint16_t ownerId, char* title) {
+Window*
+DeodhaiCreateWindow(int x, int y, int w, int h, uint16_t flags, uint16_t ownerId, char* title) {
 	Window* win = CreateWindow(x, y, w, h, flags, ownerId, title);
 	if (flags & WINDOW_FLAG_ALWAYS_ON_TOP) {
 		DeodhaiAddWindowAlwaysOnTop(win);
-	}
-	else
+	} else
 		DeodhaiAddWindow(win);
 	return win;
 }
-
 
 void CursorStoreBack(ChCanvas* canv, Cursor* cur, unsigned x, unsigned y) {
 	/*for (int w = 0; w < 24; w++) {
@@ -208,7 +202,8 @@ void CursorStoreBack(ChCanvas* canv, Cursor* cur, unsigned x, unsigned y) {
 	}*/
 	for (int row = 0; row < 24; row++) {
 		int cy = y + row;
-		if (cy < 0 || cy >= canv->canvasHeight) continue;
+		if (cy < 0 || cy >= canv->canvasHeight)
+			continue;
 		uint32_t* canvas_row = (uint32_t*)canv->buffer + cy * canv->canvasWidth + x;
 		uint32_t* back_row = cur->cursorBack + row * 24;
 
@@ -229,7 +224,8 @@ void CursorDrawBack(ChCanvas* canv, Cursor* cur, unsigned x, unsigned y) {
 	}*/
 	for (int row = 0; row < 24; row++) {
 		int cy = y + row;
-		if (cy < 0 || cy >= canv->canvasWidth) continue;
+		if (cy < 0 || cy >= canv->canvasWidth)
+			continue;
 
 		uint32_t* canvas_row = (uint32_t*)canv->buffer + cy * canv->canvasWidth + x;
 		uint32_t* back_row = (uint32_t*)cur->cursorBack + row * 24;
@@ -240,7 +236,7 @@ void CursorDrawBack(ChCanvas* canv, Cursor* cur, unsigned x, unsigned y) {
 
 		if (copy_w > 0)
 			__pixel_blend_neon(canvas_row, back_row, 24);
-			//_fastcpy(canvas_row, back_row, copy_w * sizeof(uint32_t));
+		//_fastcpy(canvas_row, back_row, copy_w * sizeof(uint32_t));
 	}
 }
 
@@ -259,10 +255,12 @@ void DrawWallpaper(ChCanvas* canv, char* filename) {
 
 	uint8_t* data1 = (uint8_t*)data_;
 
-	Jpeg::Decoder* decor = new Jpeg::Decoder((uint8_t*)data1, ALIGN_UP(stat.size, 4096), malloc, free);
+	Jpeg::Decoder* decor =
+		new Jpeg::Decoder((uint8_t*)data1, ALIGN_UP(stat.size, 4096), malloc, free);
 	if (decor->GetResult() != Jpeg::Decoder::OK) {
 		_KePrint("Decoder error \n");
-		for (;;);
+		for (;;)
+			;
 		return;
 	}
 	int w = decor->GetWidth();
@@ -300,11 +298,10 @@ ChRect rectb;
 int x_;
 int y_;
 
-
 void XRComposeFrame(ChCanvas* canvas) {
 	CursorDrawBack(canvas, currentCursor, currentCursor->oldXPos, currentCursor->oldYPos);
 	AddDirtyClip(currentCursor->oldXPos, currentCursor->oldYPos, 24, 24);
-	
+
 	int _back_d_count_ = BackDirtyGetDirtyCount();
 
 	/* here we redraw all dirty surface area*/
@@ -330,8 +327,8 @@ void XRComposeFrame(ChCanvas* canvas) {
 		/** do either one -- dirty area tracking or else update all */
 		_compose_dirty_area_(canvas, win, focusedWin, info);
 
-		_compose_entire_window(canvas, win, _window_update_all_, info, focusedWin, _window_moving_, _shadow_update);
-	
+		_compose_entire_window(
+			canvas, win, _window_update_all_, info, focusedWin, _window_moving_, _shadow_update);
 	}
 
 	/**
@@ -345,7 +342,8 @@ void XRComposeFrame(ChCanvas* canvas) {
 
 		_compose_always_on_top_dirty(canvas, info, _window_moving_, focusedWin, win);
 
-		_compose_always_on_top_entire(canvas, win, _always_on_top_update, _window_moving_, info, rootWin);
+		_compose_always_on_top_entire(
+			canvas, win, _always_on_top_update, _window_moving_, info, rootWin);
 	}
 
 	CursorStoreBack(canvas, currentCursor, currentCursor->xpos, currentCursor->ypos);
@@ -367,11 +365,9 @@ void XRComposeFrame(ChCanvas* canvas) {
 	if (_skip_disable_)
 		_skip_disable_ = false;
 
-
 	currentCursor->oldXPos = currentCursor->xpos;
 	currentCursor->oldYPos = currentCursor->ypos;
 }
-
 
 /**
  * @brief DeodhaiWindowMakeTop -- brings a window to front
@@ -403,12 +399,13 @@ void DeodhaiWindowMakeTop(Window* win) {
 		if (y < 0)
 			y = 0;
 
-		BackDirtyAdd((backinfo->x - SHADOW_SIZE), (backinfo->y - SHADOW_SIZE),
-			(backinfo->width + SHADOW_SIZE * 2), (backinfo->height + SHADOW_SIZE * 2));
+		BackDirtyAdd((backinfo->x - SHADOW_SIZE),
+					 (backinfo->y - SHADOW_SIZE),
+					 (backinfo->width + SHADOW_SIZE * 2),
+					 (backinfo->height + SHADOW_SIZE * 2));
 	}
 #endif
 }
-
 
 /**
  * @brief DeodhaiWindowSetFocused -- cast focus to a new window
@@ -430,7 +427,7 @@ void DeodhaiWindowSetFocused(Window* win, bool notify) {
 		PostEvent e;
 		e.type = DEODHAI_BROADCAST_FOCUS_CHANGED;
 		e.dword = focusedWin->ownerId;
-	//	DeodhaiBroadcastMessage(&e, NULL);
+		//	DeodhaiBroadcastMessage(&e, NULL);
 
 		//_KeProcessSleep();
 
@@ -482,7 +479,6 @@ _move_win:
 	if (wx <= 0)
 		wx = SHADOW_SIZE + 5;
 
-
 	if (wy <= 0)
 		wy = SHADOW_SIZE + 5;
 
@@ -525,8 +521,8 @@ bool DeodhaiCheckWindowPointOcclusion(Window* win, int x, int y) {
 		WinSharedInfo* info = (WinSharedInfo*)check->sharedInfo;
 		if (check == win)
 			continue;
-		if (x >= info->x && x < (info->x + info->width) &&
-			y >= info->y && y < (info->y + info->height)) {
+		if (x >= info->x && x < (info->x + info->width) && y >= info->y &&
+			y < (info->y + info->height)) {
 			occluded = true;
 			break;
 		}
@@ -538,8 +534,8 @@ bool DeodhaiCheckWindowPointOcclusion(Window* win, int x, int y) {
 			continue;
 		if (info->hide)
 			continue;
-		if (x >= info->x && x < (info->x + info->width) &&
-			y >= info->y && y < (info->y + info->height)) {
+		if (x >= info->x && x < (info->x + info->width) && y >= info->y &&
+			y < (info->y + info->height)) {
 			occluded = true;
 			break;
 		}
@@ -557,8 +553,8 @@ void DeodhaiWindowCheckDraggable(int x, int y, int button) {
 	for (Window* win = lastWin; win != NULL; win = win->prev) {
 		WinSharedInfo* info = (WinSharedInfo*)win->sharedInfo;
 		//_KePrint("INFO->x %d, mx -> %d \r\n", info->x, x);
-		if (!(x >= (info->x + 10) && x < (info->x + info->width - 74) &&
-			y >= info->y && y < (info->y + info->height)))
+		if (!(x >= (info->x + 10) && x < (info->x + info->width - 74) && y >= info->y &&
+			  y < (info->y + info->height)))
 			continue;
 
 		if (button && !lastMouseButton) {
@@ -587,7 +583,7 @@ void DeodhaiWindowCheckDraggable(int x, int y, int button) {
 	}
 
 	if (!button) {
-	/*	if (dragWin)
+		/*	if (dragWin)
 			ChangeCursor(arrow);*/
 		dragWin = NULL;
 		reszWin = NULL;
@@ -595,10 +591,7 @@ void DeodhaiWindowCheckDraggable(int x, int y, int button) {
 	}
 
 	lastMouseButton = button;
-
-
 }
-
 
 /**
  * @brief DeodhaiSendMouseEvent -- send mouse event to desired window
@@ -608,7 +601,8 @@ void DeodhaiWindowCheckDraggable(int x, int y, int button) {
  * @param y -- Mouse y location
  * @param button -- Mouse button state
  */
-void DeodhaiSendMouseEvent(int handle, int ownerId, uint8_t handleType, uint8_t eventType, int x, int y, int button) {
+void DeodhaiSendMouseEvent(
+	int handle, int ownerId, uint8_t handleType, uint8_t eventType, int x, int y, int button) {
 	PostEvent e;
 	memset(&e, 0, sizeof(PostEvent));
 	e.type = eventType;
@@ -623,7 +617,6 @@ void DeodhaiSendMouseEvent(int handle, int ownerId, uint8_t handleType, uint8_t 
 	_KeFileIoControl(postbox_fd, POSTBOX_PUT_EVENT, &e);
 }
 
-
 /*
  * DeodhaiBroadcastMouse -- broadcast mouse event to all window
  * @param mouse_x -- mouse x location
@@ -637,8 +630,8 @@ void DeodhaiBroadcastMouse(int mouse_x, int mouse_y, int button) {
 	if (focusedWin) {
 		WinSharedInfo* info = (WinSharedInfo*)focusedWin->sharedInfo;
 		if (!info->hide) {
-			if (mouse_x >= info->x && (mouse_x < (info->x + info->width)) &&
-				mouse_y >= info->y && (mouse_y < (info->y + info->height))) {
+			if (mouse_x >= info->x && (mouse_x < (info->x + info->width)) && mouse_y >= info->y &&
+				(mouse_y < (info->y + info->height))) {
 				mouseWin = focusedWin;
 				/* skip others */
 				goto broadcast;
@@ -651,9 +644,8 @@ void DeodhaiBroadcastMouse(int mouse_x, int mouse_y, int button) {
 			WinSharedInfo* info = (WinSharedInfo*)win->sharedInfo;
 			if (info->hide)
 				continue;
-			if (mouse_x >= info->x && (mouse_x < (info->x + info->width)) &&
-				mouse_y >= info->y && (mouse_y < (info->y + info->height))) {
-
+			if (mouse_x >= info->x && (mouse_x < (info->x + info->width)) && mouse_y >= info->y &&
+				(mouse_y < (info->y + info->height))) {
 				if (DeodhaiCheckWindowPointOcclusion(win, mouse_x, mouse_y))
 					continue;
 				if (win->flags & WINDOW_FLAG_BLOCKED)
@@ -676,14 +668,13 @@ void DeodhaiBroadcastMouse(int mouse_x, int mouse_y, int button) {
 			}
 		}
 
-
 		/* check for always on top windows */
 		for (Window* win = alwaysOnTop; win != NULL; win = win->next) {
 			WinSharedInfo* info = (WinSharedInfo*)win->sharedInfo;
 			if (info->hide)
 				continue;
-			if (mouse_x >= info->x && (mouse_x < (info->x + info->width)) &&
-				mouse_y >= info->y && (mouse_y < (info->y + info->height))) {
+			if (mouse_x >= info->x && (mouse_x < (info->x + info->width)) && mouse_y >= info->y &&
+				(mouse_y < (info->y + info->height))) {
 				mouseWin = win;
 				break;
 			}
@@ -706,13 +697,24 @@ broadcast:
 				int lastWinHandleType = HANDLE_TYPE_NORMAL_WINDOW;
 				if ((mouseLastHovered->flags & WINDOW_FLAG_POPUP))
 					lastWinHandleType = HANDLE_TYPE_POPUP_WINDOW;
-				DeodhaiSendMouseEvent(mouseLastHovered->handle, mouseLastHovered->ownerId, lastWinHandleType,
-					DEODHAI_REPLY_MOUSE_LEAVE, mouse_x, mouse_y, button);
+				DeodhaiSendMouseEvent(mouseLastHovered->handle,
+									  mouseLastHovered->ownerId,
+									  lastWinHandleType,
+									  DEODHAI_REPLY_MOUSE_LEAVE,
+									  mouse_x,
+									  mouse_y,
+									  button);
 				//	_KeProcessSleep(100);
 			}
 		}
 		mouseLastHovered = mouseWin;
-		DeodhaiSendMouseEvent(handle, mouseWin->ownerId, handleType, DEODHAI_REPLY_MOUSE_EVENT, mouse_x, mouse_y, button);
+		DeodhaiSendMouseEvent(handle,
+							  mouseWin->ownerId,
+							  handleType,
+							  DEODHAI_REPLY_MOUSE_EVENT,
+							  mouse_x,
+							  mouse_y,
+							  button);
 	}
 
 	if (!mouseWin) {
@@ -735,8 +737,7 @@ void DeodhaiWindowHide(Window* win) {
 		info->updateEntireWindow = true;
 		info->dirty = 1;
 		focusedWin = win;
-	}
-	else {
+	} else {
 		/* HIDE the window, if its not hidden */
 		info->hide = true;
 		info->updateEntireWindow = 1;
@@ -747,7 +748,6 @@ void DeodhaiWindowHide(Window* win) {
 	_window_update_all_ = true;
 	_always_on_top_update = true;
 }
-
 
 /*
  * DeodhaiBrodcastKey -- sends key event
@@ -791,7 +791,6 @@ void DeodhaiBroadcastMessage(PostEvent* e, Window* skippablewin) {
 	}
 }
 
-
 /**
  * @brief DeodhaiCloseWindow -- closes and cleanup an opened
  * window
@@ -815,7 +814,9 @@ void DeodhaiCloseWindow(Window* win) {
 		_KeUnmapSharedMem(popup->shWinKey);
 		_KeUnmapSharedMem(popup->backBufferKey);
 #ifdef SHADOW_ENABLED
-		_KeMemUnmap(popup->shadowBuffers, (static_cast<size_t>(width) + SHADOW_SIZE * 2) * (height + SHADOW_SIZE * 2) * 4);
+		_KeMemUnmap(popup->shadowBuffers,
+					(static_cast<size_t>(width) + SHADOW_SIZE * 2) * (height + SHADOW_SIZE * 2) *
+						4);
 #endif
 		free(popup);
 	}
@@ -825,9 +826,11 @@ void DeodhaiCloseWindow(Window* win) {
 	_KeUnmapSharedMem(win->backBufferKey);
 	_KePrint("Unmapped all shared mems from deodhai side for process\r\n");
 #ifdef SHADOW_ENABLED
-	_KeMemUnmap(win->shadowBuffers, (static_cast<size_t>(width) + SHADOW_SIZE * 2) * (height + SHADOW_SIZE * 2) * 4);
+	_KeMemUnmap(win->shadowBuffers,
+				(static_cast<size_t>(width) + SHADOW_SIZE * 2) * (height + SHADOW_SIZE * 2) * 4);
 #endif
-	BackDirtyAdd(x - SHADOW_SIZE, y - SHADOW_SIZE, width + SHADOW_SIZE * 2, height + SHADOW_SIZE * 2);
+	BackDirtyAdd(
+		x - SHADOW_SIZE, y - SHADOW_SIZE, width + SHADOW_SIZE * 2, height + SHADOW_SIZE * 2);
 	DeodhaiRemoveWindow(win);
 	_KePrint("Removing window \r\n");
 	free(win->title);
@@ -854,7 +857,7 @@ void DeodhaiCloseWindow(Window* win) {
 /**
 * @brief main -- main entry
 */
-int main(int argc, char* argv[]){
+int main(int argc, char* argv[]) {
 	_KePrint("Hello DeodhaiXR \n");
 	_KePrint("DeodhaiXR - Copyright (C) Xeneva Pvt Ltd 2023-2026\n");
 
@@ -893,26 +896,23 @@ int main(int argc, char* argv[]){
 		_KePrint("Drawing wallpaper \r\n");
 		DrawWallpaper(canv, "/XE1_2.jpg");
 		DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
-	}
-	else if (screen_w == 1920 && screen_h == 1080) {
+	} else if (screen_w == 1920 && screen_h == 1080) {
 		DrawWallpaper(canv, "/mtnr2.jpg");
 		DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
-	}
-	else if (screen_w == 480 && screen_h == 320) {
+	} else if (screen_w == 480 && screen_h == 320) {
 		DrawWallpaper(canv, "/mntr1.jpg");
 		DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
-	}
-	else if (screen_w == 800 && screen_h == 480) {
+	} else if (screen_w == 800 && screen_h == 480) {
 		DrawWallpaper(canv, "/flora1.jpg");
 		DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
-	}else if (screen_w == 640 && screen_h == 480) {
+	} else if (screen_w == 640 && screen_h == 480) {
 		DrawWallpaper(canv, "/snow.jpg");
 		DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
 	}
 
 	_KePrint("Wallpaper ready \r\n");
 
-//	ChCanvasScreenUpdate(canv, 0, 0, canv->canvasWidth, canv->canvasHeight);
+	//	ChCanvasScreenUpdate(canv, 0, 0, canv->canvasWidth, canv->canvasHeight);
 	ChCanvasScreenUpdate(canv, 0, 0, screen_w, screen_h);
 
 	_KePrint("Canvas updated \r\n");
@@ -956,7 +956,6 @@ int main(int argc, char* argv[]){
 	postbox_fd = _KeOpenFile("/dev/postbox", FILE_OPEN_READ_ONLY);
 	_KePrint("Postbox fd created : %d \n", postbox_fd);
 	_KeFileIoControl(postbox_fd, POSTBOX_CREATE_ROOT, NULL);
-
 
 	arrow = CursorOpen("/pointer.bmp", CURSOR_TYPE_POINTER);
 	CursorRead(arrow);
@@ -1016,7 +1015,6 @@ int main(int argc, char* argv[]){
 
 			DeodhaiWindowCheckDraggable(currentCursor->xpos, currentCursor->ypos, button);
 
-
 			//if (_window_broadcast_mouse_)
 			DeodhaiBroadcastMouse(currentCursor->xpos, currentCursor->ypos, button);
 
@@ -1045,8 +1043,6 @@ int main(int argc, char* argv[]){
 			memset(&kybrd_input, 0, sizeof(AuInputMessage));
 		}
 
-
-
 		if (event.type == DEODHAI_MESSAGE_CREATEWIN) {
 			int x = event.dword;
 			int y = event.dword2;
@@ -1072,12 +1068,11 @@ int main(int argc, char* argv[]){
 					}
 				}
 				_KePrint("[Deodhai]:Popup window created \r\n");
-
 			}
 			PostEvent e;
 
 			if (!(win->flags & WINDOW_FLAG_MESSAGEBOX || win->flags & WINDOW_FLAG_POPUP ||
-				win->flags & WINDOW_FLAG_BROADCAST_LISTENER)) {
+				  win->flags & WINDOW_FLAG_BROADCAST_LISTENER)) {
 				/* broadcast it to all broadcast listener windows, about this news*/
 				memset(&e, 0, sizeof(PostEvent));
 				e.type = DEODHAI_BROADCAST_WINCREATED;
@@ -1097,13 +1092,12 @@ int main(int argc, char* argv[]){
 
 			_KeFileIoControl(postbox_fd, POSTBOX_PUT_EVENT, &e);
 			_KePrint("Msg sent to e.toid : %d \n", e.to_id);
-	
+
 			_KePrint("[Deodhai]: Window created \r\n");
 			/*	_window_update_all_ = true;
 				_always_on_top_update = true;*/
 			focusedWin = win;
 			memset(&event, 0, sizeof(PostEvent));
-
 		}
 
 		if (event.type == DEODHAI_MESSAGE_WINDOW_HIDE) {
@@ -1132,7 +1126,6 @@ int main(int argc, char* argv[]){
 			_KeProcessSleep(10);
 			memset(&event, 0, sizeof(PostEvent));
 		}
-
 
 		if (event.type == DEODHAI_MESSAGE_GETWINDOW) {
 			uint16_t ownerID = 0;
@@ -1222,14 +1215,12 @@ int main(int argc, char* argv[]){
 		if (frameTime < FRAME_TIME_MS) {
 			uint64_t remaining = FRAME_TIME_MS - frameTime;
 			_KeProcessSleep(remaining);
-		}
-		else {
+		} else {
 			_KeProcessSleep(1);
 			//_KePrint("[deodhaiXR]: frame overrun %d\r\n", frameTime);
 		}
 	}
 }
-
 
 /*
  * DeodhaiUpdateBits -- update specific deodhai bits
@@ -1238,7 +1229,6 @@ void DeodhaiUpdateBits(bool window_update, bool skip_disable) {
 	_window_update_all_ = window_update;
 	_skip_disable_ = skip_disable;
 }
-
 
 int _get_gpu_display_id() {
 	return gpu_display_id;

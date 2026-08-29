@@ -44,7 +44,7 @@ void SixAction(ChWidget* wid, ChWindow* win) {
 
 void FiveAction(ChWidget* wid, ChWindow* win) {
 	CalculatorDisplay* calc = CalculatorGetMainDisplay();
-	CalcAddDigit(calc,5);
+	CalcAddDigit(calc, 5);
 	CalcUpdateDisplay(calc);
 }
 
@@ -90,7 +90,6 @@ void ZeroAction(ChWidget* wid, ChWindow* win) {
 	CalcUpdateDisplay(calc);
 }
 
-
 void BackAction(ChWidget* wid, ChWindow* win) {
 	CalculatorDisplay* calc = CalculatorGetMainDisplay();
 	CalcRemoveDigit(calc);
@@ -111,11 +110,10 @@ void AllClearAction(ChWidget* wid, ChWindow* win) {
 
 void AddAction(ChWidget* wid, ChWindow* win) {
 	CalculatorDisplay* calc = CalculatorGetMainDisplay();
-	if (calc->operator_ == CALC_OPERATOR_ADD){
+	if (calc->operator_ == CALC_OPERATOR_ADD) {
 		CalculatorProcess(calc);
 		CalcUpdateDisplay(calc);
-	}
-	else {
+	} else {
 		if (calc->num1 == 0) {
 			calc->operator_ = CALC_OPERATOR_ADD;
 			calc->num1 = atoi(calc->inputnum);
@@ -123,8 +121,7 @@ void AddAction(ChWidget* wid, ChWindow* win) {
 			CalcAddToHistory(calc, NULL, calc->operator_);
 			CalcAllClear(calc);
 			CalcUpdateDisplay(calc);
-		}
-		else {
+		} else {
 			CalcClearHistory(calc);
 			calc->operator_ = CALC_OPERATOR_ADD;
 			itoa_s(calc->num1, 10, calc->historyBuf);
@@ -136,11 +133,10 @@ void AddAction(ChWidget* wid, ChWindow* win) {
 
 void DivideAction(ChWidget* wid, ChWindow* win) {
 	CalculatorDisplay* calc = CalculatorGetMainDisplay();
-	if (calc->operator_ == CALC_OPERATOR_DIVIDE){
+	if (calc->operator_ == CALC_OPERATOR_DIVIDE) {
 		CalculatorProcess(calc);
 		CalcUpdateDisplay(calc);
-	}
-	else {
+	} else {
 		if (calc->num1 == 0) {
 			calc->operator_ = CALC_OPERATOR_DIVIDE;
 			calc->num1 = atoi(calc->inputnum);
@@ -148,8 +144,7 @@ void DivideAction(ChWidget* wid, ChWindow* win) {
 			CalcAddToHistory(calc, NULL, calc->operator_);
 			CalcAllClear(calc);
 			CalcUpdateDisplay(calc);
-		}
-		else {
+		} else {
 			CalcClearHistory(calc);
 			calc->operator_ = CALC_OPERATOR_DIVIDE;
 			itoa_s(calc->num1, 10, calc->historyBuf);
@@ -161,18 +156,16 @@ void DivideAction(ChWidget* wid, ChWindow* win) {
 
 void MultAction(ChWidget* wid, ChWindow* win) {
 	CalculatorDisplay* calc = CalculatorGetMainDisplay();
-	if (calc->operator_ == CALC_OPERATOR_MULT){
+	if (calc->operator_ == CALC_OPERATOR_MULT) {
 		CalculatorProcess(calc);
 		CalcUpdateDisplay(calc);
-	}
-	else {
+	} else {
 		if (calc->num1 == 0) {
 			calc->operator_ = CALC_OPERATOR_MULT;
 			calc->num1 = atoi(calc->inputnum);
 			CalcAllClear(calc);
 			CalcUpdateDisplay(calc);
-		}
-		else {
+		} else {
 			CalcClearHistory(calc);
 			calc->operator_ = CALC_OPERATOR_MULT;
 			itoa_s(calc->num1, 10, calc->historyBuf);
@@ -184,11 +177,10 @@ void MultAction(ChWidget* wid, ChWindow* win) {
 
 void SubAction(ChWidget* wid, ChWindow* win) {
 	CalculatorDisplay* calc = CalculatorGetMainDisplay();
-	if (calc->operator_ == CALC_OPERATOR_SUB){
+	if (calc->operator_ == CALC_OPERATOR_SUB) {
 		CalculatorProcess(calc);
 		CalcUpdateDisplay(calc);
-	}
-	else{
+	} else {
 		if (calc->num1 == 0) {
 			calc->operator_ = CALC_OPERATOR_SUB;
 			calc->num1 = atoi(calc->inputnum);
@@ -196,8 +188,7 @@ void SubAction(ChWidget* wid, ChWindow* win) {
 			CalcAddToHistory(calc, NULL, calc->operator_);
 			CalcAllClear(calc);
 			CalcUpdateDisplay(calc);
-		}
-		else {
+		} else {
 			CalcClearHistory(calc);
 			calc->operator_ = CALC_OPERATOR_SUB;
 			itoa_s(calc->num1, 10, calc->historyBuf);
@@ -207,14 +198,12 @@ void SubAction(ChWidget* wid, ChWindow* win) {
 	}
 }
 
-
 void ModAction(ChWidget* wid, ChWindow* win) {
 	CalculatorDisplay* calc = CalculatorGetMainDisplay();
-	if (calc->operator_ == CALC_OPERATOR_MOD){
+	if (calc->operator_ == CALC_OPERATOR_MOD) {
 		CalculatorProcess(calc);
 		CalcUpdateDisplay(calc);
-	}
-	else {
+	} else {
 		if (calc->num1 == 0) {
 			calc->operator_ = CALC_OPERATOR_MOD;
 			calc->num1 = atoi(calc->inputnum);
@@ -222,8 +211,7 @@ void ModAction(ChWidget* wid, ChWindow* win) {
 			CalcAddToHistory(calc, NULL, calc->operator_);
 			CalcAllClear(calc);
 			CalcUpdateDisplay(calc);
-		}
-		else {
+		} else {
 			CalcClearHistory(calc);
 			calc->operator_ = CALC_OPERATOR_MOD;
 			itoa_s(calc->num1, 10, calc->historyBuf);
@@ -313,15 +301,13 @@ void HandleKeyEvents(int keycode) {
 		if (calc->operator_ == CALC_OPERATOR_MULT) {
 			CalculatorProcess(calc);
 			CalcUpdateDisplay(calc);
-		}
-		else {
+		} else {
 			if (calc->num1 == 0) {
 				calc->operator_ = CALC_OPERATOR_MULT;
 				calc->num1 = atoi(calc->inputnum);
 				CalcAllClear(calc);
 				CalcUpdateDisplay(calc);
-			}
-			else {
+			} else {
 				CalcClearHistory(calc);
 				calc->operator_ = CALC_OPERATOR_MULT;
 				itoa_s(calc->num1, 10, calc->historyBuf);
@@ -331,13 +317,12 @@ void HandleKeyEvents(int keycode) {
 		}
 		break;
 	}
-	case KEY_KP_DIVIDE:{
+	case KEY_KP_DIVIDE: {
 		CalculatorDisplay* calc = CalculatorGetMainDisplay();
 		if (calc->operator_ == CALC_OPERATOR_DIVIDE) {
 			CalculatorProcess(calc);
 			CalcUpdateDisplay(calc);
-		}
-		else {
+		} else {
 			if (calc->num1 == 0) {
 				calc->operator_ = CALC_OPERATOR_DIVIDE;
 				calc->num1 = atoi(calc->inputnum);
@@ -345,8 +330,7 @@ void HandleKeyEvents(int keycode) {
 				CalcAddToHistory(calc, NULL, calc->operator_);
 				CalcAllClear(calc);
 				CalcUpdateDisplay(calc);
-			}
-			else {
+			} else {
 				CalcClearHistory(calc);
 				calc->operator_ = CALC_OPERATOR_DIVIDE;
 				itoa_s(calc->num1, 10, calc->historyBuf);
@@ -354,15 +338,14 @@ void HandleKeyEvents(int keycode) {
 				CalcUpdateDisplay(calc);
 			}
 		}
-		break;			
+		break;
 	}
 	case KEY_KP_PLUS: {
 		CalculatorDisplay* calc = CalculatorGetMainDisplay();
 		if (calc->operator_ == CALC_OPERATOR_ADD) {
 			CalculatorProcess(calc);
 			CalcUpdateDisplay(calc);
-		}
-		else {
+		} else {
 			if (calc->num1 == 0) {
 				calc->operator_ = CALC_OPERATOR_ADD;
 				calc->num1 = atoi(calc->inputnum);
@@ -370,8 +353,7 @@ void HandleKeyEvents(int keycode) {
 				CalcAddToHistory(calc, NULL, calc->operator_);
 				CalcAllClear(calc);
 				CalcUpdateDisplay(calc);
-			}
-			else {
+			} else {
 				CalcClearHistory(calc);
 				calc->operator_ = CALC_OPERATOR_ADD;
 				itoa_s(calc->num1, 10, calc->historyBuf);
@@ -386,8 +368,7 @@ void HandleKeyEvents(int keycode) {
 		if (calc->operator_ == CALC_OPERATOR_SUB) {
 			CalculatorProcess(calc);
 			CalcUpdateDisplay(calc);
-		}
-		else {
+		} else {
 			if (calc->num1 == 0) {
 				calc->operator_ = CALC_OPERATOR_SUB;
 				calc->num1 = atoi(calc->inputnum);
@@ -395,8 +376,7 @@ void HandleKeyEvents(int keycode) {
 				CalcAddToHistory(calc, NULL, calc->operator_);
 				CalcAllClear(calc);
 				CalcUpdateDisplay(calc);
-			}
-			else {
+			} else {
 				CalcClearHistory(calc);
 				calc->operator_ = CALC_OPERATOR_SUB;
 				itoa_s(calc->num1, 10, calc->historyBuf);
@@ -411,8 +391,7 @@ void HandleKeyEvents(int keycode) {
 		if (calc->operator_ == CALC_OPERATOR_MOD) {
 			CalculatorProcess(calc);
 			CalcUpdateDisplay(calc);
-		}
-		else {
+		} else {
 			if (calc->num1 == 0) {
 				calc->operator_ = CALC_OPERATOR_MOD;
 				calc->num1 = atoi(calc->inputnum);
@@ -420,8 +399,7 @@ void HandleKeyEvents(int keycode) {
 				CalcAddToHistory(calc, NULL, calc->operator_);
 				CalcAllClear(calc);
 				CalcUpdateDisplay(calc);
-			}
-			else {
+			} else {
 				CalcClearHistory(calc);
 				calc->operator_ = CALC_OPERATOR_MOD;
 				itoa_s(calc->num1, 10, calc->historyBuf);

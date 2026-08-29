@@ -38,152 +38,155 @@
 #include "list.h"
 #include <setjmp.h>
 
-#define CHITRALEKHA_DEFAULT_WIN_WIDTH  400
-#define CHITRALEKHA_DEFAULT_WIN_HEIGHT 300
+#define CHITRALEKHA_DEFAULT_WIN_WIDTH	 400
+#define CHITRALEKHA_DEFAULT_WIN_HEIGHT	 300
 #define CHITRALEKHA_WINDOW_DEFAULT_PAD_Y 26
 #define CHITRALEKHA_WINDOW_DEFAULT_PAD_X 1
 
-#define WINDOW_GLOBAL_CONTROL_CLOSE 1
+#define WINDOW_GLOBAL_CONTROL_CLOSE	   1
 #define WINDOW_GLOBAL_CONTROL_MAXIMIZE 2
 #define WINDOW_GLOBAL_CONTROL_MINIMIZE 3
-#define WINDOW_GLOBAL_CONTROL_CUSTOM 4
+#define WINDOW_GLOBAL_CONTROL_CUSTOM   4
 
-#define WINDOW_FLAG_MOVABLE (1<<0)
-#define WINDOW_FLAG_STATIC  (1<<1)
-#define WINDOW_FLAG_ALWAYS_ON_TOP  (1<<2)
-#define WINDOW_FLAG_NON_RESIZABLE  (1<<3)
-#define WINDOW_FLAG_BROADCAST_LISTENER (1<<4)
-#define WINDOW_FLAG_ANIMATED (1<<5)
-#define WINDOW_FLAG_BLOCKED (1<<6)
-#define WINDOW_FLAG_MESSAGEBOX (1<<7)
-#define WINDOW_FLAG_DIALOGBOX (1<<8)
-#define WINDOW_FLAG_ANIMATION_FADE_IN (1<<9)
-#define WINDOW_FLAG_ANIMATION_FADE_OUT (1<<10)
-#define WINDOW_FLAG_POPUP (1<<11)
-#define WINDOW_FLAG_GLASS (1<<12)
+#define WINDOW_FLAG_MOVABLE			   (1 << 0)
+#define WINDOW_FLAG_STATIC			   (1 << 1)
+#define WINDOW_FLAG_ALWAYS_ON_TOP	   (1 << 2)
+#define WINDOW_FLAG_NON_RESIZABLE	   (1 << 3)
+#define WINDOW_FLAG_BROADCAST_LISTENER (1 << 4)
+#define WINDOW_FLAG_ANIMATED		   (1 << 5)
+#define WINDOW_FLAG_BLOCKED			   (1 << 6)
+#define WINDOW_FLAG_MESSAGEBOX		   (1 << 7)
+#define WINDOW_FLAG_DIALOGBOX		   (1 << 8)
+#define WINDOW_FLAG_ANIMATION_FADE_IN  (1 << 9)
+#define WINDOW_FLAG_ANIMATION_FADE_OUT (1 << 10)
+#define WINDOW_FLAG_POPUP			   (1 << 11)
+#define WINDOW_FLAG_GLASS			   (1 << 12)
 
-#define CHITRALEKHA_WIDGET_TYPE_CONTROL (1<<1)
-#define CHITRALEKHA_WIDGET_TYPE_POPUP (1<<2)
+#define CHITRALEKHA_WIDGET_TYPE_CONTROL (1 << 1)
+#define CHITRALEKHA_WIDGET_TYPE_POPUP	(1 << 2)
 
 #define CHITRALEKHA_WIDGET_SCROLL_HORIZONTAL 0
-#define CHITRALEKHA_WIDGET_SCROLL_VERTICAL 1
+#define CHITRALEKHA_WIDGET_SCROLL_VERTICAL	 1
 
 #define WINDOW_HANDLE_TYPE_NORMAL 1
-#define WINDOW_HANDLE_TYPE_POPUP 2
+#define WINDOW_HANDLE_TYPE_POPUP  2
 
 //#pragma pack(push,1)
-	typedef struct _ChSharedWin_ {
-		ChRect rect[256];
-		uint32_t rect_count;
-		bool dirty;
-		bool updateEntireWindow;
-		int x;
-		int y;
-		int width;
-		int height;
-		bool alpha;
-		bool hide;
-		double alphaValue;
-		bool windowReady;
-	}ChSharedWinInfo;
+typedef struct _ChSharedWin_ {
+	ChRect rect[256];
+	uint32_t rect_count;
+	bool dirty;
+	bool updateEntireWindow;
+	int x;
+	int y;
+	int width;
+	int height;
+	bool alpha;
+	bool hide;
+	double alphaValue;
+	bool windowReady;
+} ChSharedWinInfo;
 //#pragma pack(pop)
 
-	typedef struct _chwin_ {
-		uint16_t flags;
-		uint32_t *buffer;
-		void* sharedwin;
-		ChCanvas* canv;
-		char* title;
-		ChSharedWinInfo* info;
-		ChitralekhaApp* app;
-		uint32_t handle;
-		uint32_t color;
-		bool focused;
-		list_t* GlobalControls;
-		list_t* widgets;
-		list_t* subwindow;
-		list_t* popup;
-		struct _chwin_* parent;
-		void* currentPopupMenu; //points to currently working menu
-		void* selectedMenuItem;
-		void* focusedWidget;
-		jmp_buf jump;
-		void(*ChWinPaint)(struct _chwin_ *win);
-		void(*ChCloseWin)(struct _chwin_* win);
-	}ChWindow;
+typedef struct _chwin_ {
+	uint16_t flags;
+	uint32_t* buffer;
+	void* sharedwin;
+	ChCanvas* canv;
+	char* title;
+	ChSharedWinInfo* info;
+	ChitralekhaApp* app;
+	uint32_t handle;
+	uint32_t color;
+	bool focused;
+	list_t* GlobalControls;
+	list_t* widgets;
+	list_t* subwindow;
+	list_t* popup;
+	struct _chwin_* parent;
+	void* currentPopupMenu; //points to currently working menu
+	void* selectedMenuItem;
+	void* focusedWidget;
+	jmp_buf jump;
+	void (*ChWinPaint)(struct _chwin_* win);
+	void (*ChCloseWin)(struct _chwin_* win);
+} ChWindow;
 
-	typedef struct _ChWidget_{
-		int x;
-		int y;
-		int w;
-		int h;
-		int lastMouseX;
-		int lastMouseY;
-		bool clicked;
-		bool hover;
-		bool hoverPainted;
-		bool KillFocus;
-		bool visible;
-		bool touched;
-		uint8_t type;
-		void(*ChActionHandler)(struct _ChWidget_ *widget,ChWindow* win);
-		void(*ChMouseEvent)(struct _ChWidget_* widget,ChWindow* win, int x, int y, int button);
-		void(*ChTouchEvent)(struct _ChWidget_* widget, ChWindow* win, int x, int y);
-		void(*ChScrollEvent)(struct _ChWidget_* widget, ChWindow* win, int scrollval, uint8_t scrolltype);
-		void(*ChPaintHandler)(struct _ChWidget_* widget,ChWindow* win);
-		void(*ChDestroy)(struct _ChWidget_* widget,ChWindow* win);
-	}ChWidget;
+typedef struct _ChWidget_ {
+	int x;
+	int y;
+	int w;
+	int h;
+	int lastMouseX;
+	int lastMouseY;
+	bool clicked;
+	bool hover;
+	bool hoverPainted;
+	bool KillFocus;
+	bool visible;
+	bool touched;
+	uint8_t type;
+	void (*ChActionHandler)(struct _ChWidget_* widget, ChWindow* win);
+	void (*ChMouseEvent)(struct _ChWidget_* widget, ChWindow* win, int x, int y, int button);
+	void (*ChTouchEvent)(struct _ChWidget_* widget, ChWindow* win, int x, int y);
+	void (*ChScrollEvent)(struct _ChWidget_* widget,
+						  ChWindow* win,
+						  int scrollval,
+						  uint8_t scrolltype);
+	void (*ChPaintHandler)(struct _ChWidget_* widget, ChWindow* win);
+	void (*ChDestroy)(struct _ChWidget_* widget, ChWindow* win);
+} ChWidget;
 
-	typedef struct _global_ctrl_ {
-		int x;
-		int y;
-		int w;
-		int h;
-		uint8_t type;
-		bool hover;
-		bool clicked;
-		uint32_t fillColor;
-		uint32_t outlineColor;
-		uint32_t hoverOutlineColor;
-		uint32_t clickedFillColor;
-		uint32_t clickedOutlineColor;
-		void(*ChGlobalButtonPaint)(ChWindow* win, struct _global_ctrl_* glbl);
-		void(*ChGlobalMouseEvent) (ChWindow* win, struct _global_ctrl_* glbl, int x, int y, int button);
-		void(*ChGlobalTouchEvent) (ChWindow* win, struct _global_ctrl_* glbl, int x, int y);
-		void(*ChGlobalActionEvent)(ChWindow* win, struct _global_ctrl_* glbl);
-	}ChWinGlobalControl;
+typedef struct _global_ctrl_ {
+	int x;
+	int y;
+	int w;
+	int h;
+	uint8_t type;
+	bool hover;
+	bool clicked;
+	uint32_t fillColor;
+	uint32_t outlineColor;
+	uint32_t hoverOutlineColor;
+	uint32_t clickedFillColor;
+	uint32_t clickedOutlineColor;
+	void (*ChGlobalButtonPaint)(ChWindow* win, struct _global_ctrl_* glbl);
+	void (*ChGlobalMouseEvent)(ChWindow* win, struct _global_ctrl_* glbl, int x, int y, int button);
+	void (*ChGlobalTouchEvent)(ChWindow* win, struct _global_ctrl_* glbl, int x, int y);
+	void (*ChGlobalActionEvent)(ChWindow* win, struct _global_ctrl_* glbl);
+} ChWinGlobalControl;
 
-#pragma pack(push,1)
-	typedef struct _popup_sh_win_ {
-		ChRect rect[100];
-		uint32_t rect_count;
-		int x;
-		int y;
-		int w;
-		int h;
-		bool dirty;
-		bool close;
-		bool hide;
-		bool popuped;
-		bool alpha;
-	}ChPopupSharedWin;
+#pragma pack(push, 1)
+typedef struct _popup_sh_win_ {
+	ChRect rect[100];
+	uint32_t rect_count;
+	int x;
+	int y;
+	int w;
+	int h;
+	bool dirty;
+	bool close;
+	bool hide;
+	bool popuped;
+	bool alpha;
+} ChPopupSharedWin;
 #pragma pack(pop)
 
-	typedef struct _popup_win_ {
-		ChWidget wid;
-		ChPopupSharedWin* shwin;
-		uint32_t* buffer;
-		uint16_t shwinKey;
-		uint16_t buffWinKey;
-		list_t *widgets;
-		int handle;
-		ChCanvas* canv;
-		bool hidden;
-		void(*ChPopupWindowPaint)(struct _popup_win_ *pwin, ChWindow* win);
-	}ChPopupWindow;
+typedef struct _popup_win_ {
+	ChWidget wid;
+	ChPopupSharedWin* shwin;
+	uint32_t* buffer;
+	uint16_t shwinKey;
+	uint16_t buffWinKey;
+	list_t* widgets;
+	int handle;
+	ChCanvas* canv;
+	bool hidden;
+	void (*ChPopupWindowPaint)(struct _popup_win_* pwin, ChWindow* win);
+} ChPopupWindow;
 
 #ifdef __cplusplus
-	XE_EXTERN{
+XE_EXTERN {
 #endif
 
 	/*
@@ -196,14 +199,15 @@
 	* @param w -- width of the window
 	* @param h -- height of the window
 	*/
-	XE_LIB ChWindow* ChCreateWindow(ChitralekhaApp *app, uint16_t attrib, char* title, int x, int y, int w, int h);
+	XE_LIB ChWindow* ChCreateWindow(
+		ChitralekhaApp * app, uint16_t attrib, char* title, int x, int y, int w, int h);
 
 	/*
 	* ChWindowAddSubWindow -- add sub window to parent window list
 	* @param parent -- Pointer to main window
 	* @param win -- Pointer to sub window
 	*/
-	XE_LIB void ChWindowAddSubWindow(ChWindow* parent, ChWindow* win);
+	XE_LIB void ChWindowAddSubWindow(ChWindow * parent, ChWindow * win);
 
 	/*
 	* ChWindowBroadcastIcon -- broadcast icon information to
@@ -212,13 +216,13 @@
 	* @param iconfile -- path of the icon file, supported formats
 	* are : 32bit- bmp file
 	*/
-	XE_LIB void ChWindowBroadcastIcon(ChitralekhaApp* app, char* iconfile);
+	XE_LIB void ChWindowBroadcastIcon(ChitralekhaApp * app, char* iconfile);
 
 	/*
 	* ChWindowPaint -- paint the entire window
 	* @param win -- Pointer to window
 	*/
-	XE_LIB void ChWindowPaint(ChWindow* win);
+	XE_LIB void ChWindowPaint(ChWindow * win);
 
 	/*
 	* ChWindowUpdate -- update a portion or whole window
@@ -230,15 +234,15 @@
 	* @param updateEntireWin -- update entire window
 	* @param dirty -- dirty specifies small areas of the window
 	*/
-	XE_LIB void ChWindowUpdate(ChWindow* win, int x, int y, int w, int h, bool updateEntireWin, bool dirty);
-
+	XE_LIB void ChWindowUpdate(
+		ChWindow * win, int x, int y, int w, int h, bool updateEntireWin, bool dirty);
 
 	/*
 	* ChWindowHide -- hide the window
 	* basically it sends command to deodhai
 	* @param win -- Pointer to window structure
 	*/
-	XE_LIB void ChWindowHide(ChWindow* win);
+	XE_LIB void ChWindowHide(ChWindow * win);
 
 	/*
 	* ChGetWindowHandle -- get a specific window handle from
@@ -246,7 +250,7 @@
 	* @param app -- Pointer to application instance
 	* @param title -- desired window title
 	*/
-	XE_LIB uint32_t ChGetWindowHandle(ChitralekhaApp* app, char* title);
+	XE_LIB uint32_t ChGetWindowHandle(ChitralekhaApp * app, char* title);
 	/*
 	* ChWindowHandleMouse -- handle mouse event
 	* @param win -- Pointer to window
@@ -254,8 +258,7 @@
 	* @param y -- Y coord of the mouse
 	* @param button -- button state of the mouse
 	*/
-	XE_LIB void ChWindowHandleMouse(ChWindow* win, int x, int y, int button);
-
+	XE_LIB void ChWindowHandleMouse(ChWindow * win, int x, int y, int button);
 
 	/*
      * ChWindowHandleTouch -- handle touch event
@@ -264,56 +267,55 @@
      * @param y -- Y coord of the mouse
      * @param button -- button state of the mouse
      */
-	XE_LIB void ChWindowHandleTouch(ChWindow* win, int x, int y, int button);
+	XE_LIB void ChWindowHandleTouch(ChWindow * win, int x, int y, int button);
 
 	/*
  * ChWindowSetFocused -- bring a window to focused state
  * @param win -- Pointer to window
  */
-	XE_LIB void ChWindowSetFocused(ChWindow* win);
+	XE_LIB void ChWindowSetFocused(ChWindow * win);
 	/*
 	* ChWindowHandleFocus -- handle focus changed events
 	* @param win -- Pointer to window
 	* @param focus_val -- focus bit, 1 -- focused, 0 -- not focused
 	* @param handle -- handle number of the window
 	*/
-	XE_LIB void ChWindowHandleFocus(ChWindow* win, bool focus_val, uint32_t handle);
+	XE_LIB void ChWindowHandleFocus(ChWindow * win, bool focus_val, uint32_t handle);
 
 	/*
 	* ChWindowGetBackgroundColor -- returns the current
 	* background color
 	* @param win -- Pointer to Chitralekha Window
 	*/
-	XE_LIB uint32_t ChWindowGetBackgroundColor(ChWindow* win);
-
+	XE_LIB uint32_t ChWindowGetBackgroundColor(ChWindow * win);
 
 	/*
 	* ChWindowAddWidget -- adds a widget to window
 	* @param win -- Pointer to root window
 	* @param wid -- Pointer to widget needs to be added
 	*/
-	XE_LIB void ChWindowAddWidget(ChWindow* win, ChWidget* wid);
+	XE_LIB void ChWindowAddWidget(ChWindow * win, ChWidget * wid);
 
 	/*
 	* ChWindowAddSubWindow -- add sub window to parent window list
 	* @param parent -- Pointer to main window
 	* @param win -- Pointer to sub window
 	*/
-	XE_LIB void ChWindowAddSubWindow(ChWindow* parent, ChWindow* win);
+	XE_LIB void ChWindowAddSubWindow(ChWindow * parent, ChWindow * win);
 
 	/*
 	* ChGetWindowByHandle -- returns window by looking sub windows list
 	* @param mainWin -- pointer to main window
 	* @param handle -- Handle of the window
 	*/
-	XE_LIB ChWindow* ChGetWindowByHandle(ChWindow* mainWin, int handle);
+	XE_LIB ChWindow* ChGetWindowByHandle(ChWindow * mainWin, int handle);
 
 	/*
 	* ChGetPopupWindowByHandle -- looks for popup window by its handle
 	* @param mainWin -- Pointer to main window
 	* @param handle -- Handle of the popup window
 	*/
-    XE_LIB ChWindow* ChGetPopupWindowByHandle(ChWindow* mainWin, int handle);
+	XE_LIB ChWindow* ChGetPopupWindowByHandle(ChWindow * mainWin, int handle);
 
 	/*
 	* ChPopupWindowHandleMouse -- Handle popup window's mouse event externally
@@ -323,14 +325,14 @@
 	* @param y -- Mouse y coordinate
 	* @param button -- Mouse button state
 	*/
-	XE_LIB void ChPopupWindowHandleMouse(ChWindow* win,int x, int y, int button);
+	XE_LIB void ChPopupWindowHandleMouse(ChWindow * win, int x, int y, int button);
 
 	/*
 	* ChWindowSetFlags -- set window flags
 	* @param win -- Pointer to window
 	* @param flags -- flags to set
 	*/
-	XE_LIB void ChWindowSetFlags(ChWindow* win, uint16_t flags);
+	XE_LIB void ChWindowSetFlags(ChWindow * win, uint16_t flags);
 
 	/*
      * ChWindowMove -- moves target window to a new location
@@ -338,20 +340,20 @@
      * @param newX -- new x location relative to screen coord
      * @param newY -- new y location relative to screen coord
      */
-	XE_LIB void ChWindowMove(ChWindow* win, int newX, int newY);
+	XE_LIB void ChWindowMove(ChWindow * win, int newX, int newY);
 
 	/*
 	* ChWindowRegisterJump -- register long jump address
 	* @param win -- Pointer to main window
 	*/
-	XE_LIB void ChWindowRegisterJump(ChWindow* win);
+	XE_LIB void ChWindowRegisterJump(ChWindow * win);
 
 	/*
 	* ChWindowCloseWindow -- clears window related data and
 	* sends close message to deodhai
 	* @param win -- Pointer to window data
 	*/
-	XE_LIB void ChWindowCloseWindow(ChWindow* win);
+	XE_LIB void ChWindowCloseWindow(ChWindow * win);
 
 	/*
 	* ChCreatePopupWindow -- *Create a popup window
@@ -363,7 +365,8 @@
 	* @param h -- Height of the window
 	* @param type -- type of the window
 	*/
-	XE_LIB ChWindow* ChCreatePopupWindow(ChWindow* win, int x, int y, int w, int h, uint16_t flags, char* title);
+	XE_LIB ChWindow* ChCreatePopupWindow(
+		ChWindow * win, int x, int y, int w, int h, uint16_t flags, char* title);
 
 	/*
 	* ChPopupWindowUpdate -- update the popup window
@@ -373,14 +376,14 @@
 	* @param w -- Width of the popup window
 	* @param h -- Height of the popup window
 	*/
-	XE_LIB void ChPopupWindowUpdate(ChPopupWindow* pw, int x, int y, int w, int h);
+	XE_LIB void ChPopupWindowUpdate(ChPopupWindow * pw, int x, int y, int w, int h);
 
 	/*
 	* ChPopupWindowShow -- show the popup window
 	* @param pw -- Pointer to Popup Window
 	* @param win -- Pointer to Chitralekha Main Window
 	*/
-	XE_LIB void ChPopupWindowShow(ChWindow* pw, ChWindow* win);
+	XE_LIB void ChPopupWindowShow(ChWindow * pw, ChWindow * win);
 
 	/*
 	* ChPopupWindowUpdateLocation -- update the location of popup window relative to
@@ -390,14 +393,14 @@
 	* @param x -- X location
 	* @param y -- Y location
 	*/
-	XE_LIB void ChPopupWindowUpdateLocation(ChWindow* pwin, ChWindow* win, int x, int y);
+	XE_LIB void ChPopupWindowUpdateLocation(ChWindow * pwin, ChWindow * win, int x, int y);
 
 	/*
 	* ChPopupWindowHide -- hide the popup window
 	* @param pw -- Pointer to Popup Window
 	* @param perent -- Parent Window
 	*/
-	XE_LIB void ChPopupWindowHide(ChWindow* pw, ChWindow* parent);
+	XE_LIB void ChPopupWindowHide(ChWindow * pw, ChWindow * parent);
 
 #ifdef __cplusplus
 }

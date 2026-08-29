@@ -53,22 +53,22 @@ static uint8_t* mixbuf;
 static bool _audio_started_;
 static bool _audio_stopped_;
 
-#define SOUND_REGISTER_SNDPLR 100
-#define SOUND_START_OUTPUT    102
-#define SOUND_STOP_OUTPUT     103
-#define SOUND_START_INPUT     104
-#define SOUND_STOP_INPUT      105
-#define SOUND_SET_VOLUME      106
-#define SOUND_GET_VOLUME      107
-#define SOUND_MUTE_ENABLE     108
-#define SOUND_MUTE_DISABLE    109
-#define SOUND_READ_AVAIL      110
+#define SOUND_REGISTER_SNDPLR	100
+#define SOUND_START_OUTPUT		102
+#define SOUND_STOP_OUTPUT		103
+#define SOUND_START_INPUT		104
+#define SOUND_STOP_INPUT		105
+#define SOUND_SET_VOLUME		106
+#define SOUND_GET_VOLUME		107
+#define SOUND_MUTE_ENABLE		108
+#define SOUND_MUTE_DISABLE		109
+#define SOUND_READ_AVAIL		110
 #define SOUND_UNREGISTER_SNDPLR 111
-#define SOUND_REGISTER_CARD  112
-#define SOUND_GET_CARD_LIST  113
+#define SOUND_REGISTER_CARD		112
+#define SOUND_GET_CARD_LIST		113
 #define SOUND_GET_CARD_TOTALNUM 114
 
-#define SND_BUFF_SZ  PAGE_SIZE
+#define SND_BUFF_SZ PAGE_SIZE
 /**
  * TODO: Support for controlling jack pins
  * ADC/DAC add removal support
@@ -78,7 +78,7 @@ typedef struct _sound_card_list {
 	char name[32];
 	int cardID;
 	struct _sound_card_list* next;
-}aurora_snd_card_list;
+} aurora_snd_card_list;
 
 /**
 * @brief AuSoundAddDSP -- adds a dsp to the dsp list
@@ -90,8 +90,7 @@ void AuSoundAddDSP(AuDSP* dsp) {
 	if (dsp_first == NULL) {
 		dsp_first = dsp;
 		dsp_last = dsp;
-	}
-	else {
+	} else {
 		dsp_last->next = dsp;
 		dsp->prev = dsp_last;
 		dsp_last = dsp;
@@ -108,15 +107,13 @@ void AuRemoveDSP(AuDSP* dsp) {
 
 	if (dsp == dsp_first) {
 		dsp_first = dsp_first->next;
-	}
-	else {
+	} else {
 		dsp->prev->next = dsp->next;
 	}
 
 	if (dsp == dsp_last) {
 		dsp_last = dsp->prev;
-	}
-	else {
+	} else {
 		dsp->next->prev = dsp->prev;
 	}
 }
@@ -129,7 +126,6 @@ AuDSP* AuSoundGetDSP(uint16_t id) {
 
 	return NULL;
 }
-
 
 /**
  * @brief _AuSoundGetFreeID -- searches for free id
@@ -150,8 +146,7 @@ int AuSoundIOControl(AuVFSNode* node, int code, void* arg) {
 	AuFileIOControl* _ioctl = (AuFileIOControl*)arg;
 
 	AA64Thread* thr = AuGetCurrentThread();
-	switch (code)
-	{
+	switch (code) {
 	case SOUND_REGISTER_SNDPLR: {
 		UARTDebugOut("Registering sound player \r\n");
 		AuDSP* dsp = (AuDSP*)kmalloc(sizeof(AuDSP));
@@ -165,9 +160,9 @@ int AuSoundIOControl(AuVFSNode* node, int code, void* arg) {
 		dsp->sleep_time = _ioctl->uint_1;
 		dsp->available = true;
 		UARTDebugOut("UINT_2 value : %d \r\n", _ioctl->uint_2);
-		if (_ioctl->uint_2 != UINT32_MAX) 
+		if (_ioctl->uint_2 != UINT32_MAX)
 			dsp->_cardID = _ioctl->uint_2;
-		else 
+		else
 			dsp->_cardID = -1;
 		UARTDebugOut("Sound registered successfully \r\n");
 		AuSoundAddDSP(dsp);
@@ -237,7 +232,6 @@ size_t AuSoundWrite(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint32_t
 			}
 	}
 
-
 	if (CircBufFull(dsp->buffer)) {
 		/*AuBlockThread(dsp->SndThread);
 		AuForceScheduler();*/
@@ -258,7 +252,7 @@ void AuSoundInitialise() {
 	strcpy(dsp->filename, "sound");
 	dsp->flags = FS_FLAG_DEVICE;
 	dsp->uid = 0;
-	dsp->gid = 0; 
+	dsp->gid = 0;
 	dsp->device = fsys;
 	dsp->read = AuSoundRead;
 	dsp->write = AuSoundWrite;
@@ -274,7 +268,6 @@ void AuSoundInitialise() {
 
 	_audio_started_ = false;
 	_audio_stopped_ = false;
-
 
 	AuTextOut("[aurora]: sound initialized \r\n");
 }
@@ -307,4 +300,3 @@ int AuSoundRegisterCard(AuSound* snd) {
 	_cards[index] = snd;
 	return 0;
 }
-

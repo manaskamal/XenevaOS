@@ -38,7 +38,7 @@
 #include <time.h>
 #include <unistd.h>
 
-#pragma pack(push,1)
+#pragma pack(push, 1)
 typedef struct {
 	uint8_t mode : 3;
 	uint8_t vn : 3;
@@ -61,34 +61,33 @@ typedef struct {
 
 	uint32_t transmit_ts_sec;
 	uint32_t transmit_ts_frac;
-}ntp_packet_t;
+} ntp_packet_t;
 #pragma pack(pop)
 
-#define NTP_PORT 123
+#define NTP_PORT		123
 #define NTP_PACKET_SIZE 48
 
 #define NTP_UNIX_EPOCH_DELTA 2208988800UL
 
 static uint32_t swap32(uint32_t v) {
-	return ((v & 0x000000FFu) << 24) |
-		((v & 0x0000FF00u) << 8) |
-		((v & 0x00FF0000u) >> 8) |
-		((v & 0xFF000000u) >> 24);
+	return ((v & 0x000000FFu) << 24) | ((v & 0x0000FF00u) << 8) | ((v & 0x00FF0000u) >> 8) |
+		   ((v & 0xFF000000u) >> 24);
 }
 
 static int64_t floordiv(int64_t a, int64_t b) {
 	int64_t q = a / b;
 	int64_t r = a % b;
-	if ((r != 0) && ((r < 0) != (b < 0))) q--;
+	if ((r != 0) && ((r < 0) != (b < 0)))
+		q--;
 	return q;
 }
 
 static int64_t floormod(int64_t a, int64_t b) {
 	int64_t r = a % b;
-	if (r != 0 && (r < 0) != (b < 0)) r += b;
+	if (r != 0 && (r < 0) != (b < 0))
+		r += b;
 	return r;
 }
-
 
 /**
  * AI Generated code
@@ -110,7 +109,8 @@ static void print_human_time(uint32_t unix_sec, uint32_t nsec, int32_t offset_se
 	int64_t days = (int64_t)unix_sec / 86400;
 	uint32_t secs_of_day = unix_sec % 86400;
 
-	int y; unsigned mo, d;
+	int y;
+	unsigned mo, d;
 	civil_from_days(days, &y, &mo, &d);
 
 	unsigned hh = secs_of_day / 3600;
@@ -125,7 +125,8 @@ static void print_human_time(uint32_t unix_sec, uint32_t nsec, int32_t offset_se
 static void print_ist_time(int64_t utc_sec) {
 	int64_t local_sec = utc_sec + TZ_SEC_IST_INDIA;
 	int64_t secs_of_day = local_sec % 86400;
-	if (secs_of_day < 0) secs_of_day += 86400;
+	if (secs_of_day < 0)
+		secs_of_day += 86400;
 
 	unsigned hh = (unsigned)(secs_of_day / 3600);
 	unsigned mm = (unsigned)((secs_of_day % 3600) / 60);
@@ -141,8 +142,8 @@ static void ntp_build_request(ntp_packet_t* pack) {
 	pack->mode = 3;
 }
 
-static void ntp_ts_to_unix(uint32_t sec_be, uint32_t frac_be, uint32_t* unix_sec,
-	uint32_t* frac_out) {
+static void
+ntp_ts_to_unix(uint32_t sec_be, uint32_t frac_be, uint32_t* unix_sec, uint32_t* frac_out) {
 	uint32_t sec = swap32(sec_be);
 	uint32_t frac = swap32(frac_be);
 	*unix_sec = sec - (uint32_t)NTP_UNIX_EPOCH_DELTA;
@@ -170,16 +171,15 @@ int ntp_get_time(const char* server_ip, uint32_t* out_unix_sec, uint32_t* out_un
 	struct in_addr server_addr;
 	memcpy(&server_addr, he->h_addr_list[0], sizeof(in_addr));
 
-
 	sock = socket(AF_INET, SOCK_DGRAM, 0);
 	if (sock < 0)
 		return -1;
-	
+
 	sockaddr_in dest;
 	dest.sin_family = AF_INET;
 	dest.sin_port = htons(NTP_PORT);
 	dest.sin_addr = server_addr;
-	
+
 	for (int i = 0; i < 4; i++) {
 		ret = sendto(sock, &req, sizeof(req), 0, (sockaddr*)&dest, sizeof(sockaddr_in));
 		sockaddr_in from;
@@ -190,7 +190,7 @@ int ntp_get_time(const char* server_ip, uint32_t* out_unix_sec, uint32_t* out_un
 			_KePrint("kiss-o'-death \r\n");
 		}
 
-	/*	if (resp.mode == 4 || resp.stratum != 0)
+		/*	if (resp.mode == 4 || resp.stratum != 0)
 			break;*/
 
 		sleep(1);
@@ -198,7 +198,9 @@ int ntp_get_time(const char* server_ip, uint32_t* out_unix_sec, uint32_t* out_un
 	ntp_ts_to_unix(resp.transmit_ts_sec, resp.transmit_ts_frac, out_unix_sec, out_unix_ns);
 	timespec ss;
 
-	_KePrint("Raw UTC: Transmit_ts_sec : %d, ts_frac : %d \r\n", resp.transmit_ts_sec, resp.transmit_ts_frac);
+	_KePrint("Raw UTC: Transmit_ts_sec : %d, ts_frac : %d \r\n",
+			 resp.transmit_ts_sec,
+			 resp.transmit_ts_frac);
 
 	ntp_ts_to_tmespec(resp.transmit_ts_sec, resp.transmit_ts_frac, &ss);
 
@@ -240,7 +242,8 @@ void NamdaphaGetYMD(uint32_t* year, uint32_t* month, uint32_t* day, int32_t tz_o
 	int64_t days = (int64_t)sec_ / 86400;
 	uint32_t secs_of_day = sec_ % 86400;
 
-	int y; unsigned mo, d;
+	int y;
+	unsigned mo, d;
 	civil_from_days(days, &y, &mo, &d);
 	*year = y;
 	*month = mo;
@@ -260,7 +263,8 @@ void NamdaphaGetWallTime(int* hour, int* minute, int* sec, int tz_offset) {
 
 	int64_t local_sec = sec_ + tz_offset;
 	int64_t secs_of_day = local_sec % 86400;
-	if (secs_of_day < 0) secs_of_day += 86400;
+	if (secs_of_day < 0)
+		secs_of_day += 86400;
 
 	unsigned hh = (unsigned)(secs_of_day / 3600);
 	unsigned mm = (unsigned)((secs_of_day % 3600) / 60);

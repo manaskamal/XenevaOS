@@ -36,20 +36,19 @@
 #include <_xeneva.h>
 
 #ifdef __cplusplus
-XE_EXTERN{
+XE_EXTERN {
 #endif
 
 /* defined in seconds */
-#define TZ_SEC_IST_INDIA  19800   //+5:30 
-#define TZ_SEC_CHINA_STD  28800   //+8:00
-#define TZ_SEC_JAPAN_STD  32400   //+9:00
-#define TZ_SEC_NEPAL      20700   //+5:45
-#define TZ_SEC_PAKISTAN   18000   //+5:00
-#define TZ_SEC_UAE_GULF   14400   //+4:00
-#define TZ_SEC_BANGLADESH 21600   //+6:00
+#define TZ_SEC_IST_INDIA  19800 //+5:30
+#define TZ_SEC_CHINA_STD  28800 //+8:00
+#define TZ_SEC_JAPAN_STD  32400 //+9:00
+#define TZ_SEC_NEPAL	  20700 //+5:45
+#define TZ_SEC_PAKISTAN	  18000 //+5:00
+#define TZ_SEC_UAE_GULF	  14400 //+4:00
+#define TZ_SEC_BANGLADESH 21600 //+6:00
 
-
-#pragma pack(push,1)
+#pragma pack(push, 1)
 	typedef struct _xe_time_ {
 		uint8_t century;
 		uint8_t year;
@@ -58,14 +57,14 @@ XE_EXTERN{
 		uint8_t hour;
 		uint8_t minute;
 		uint8_t second;
-	}XETime;
+	} XETime;
 #pragma pack(pop)
 
 	/**
 	* @brief _KeGetCurrentTime -- get current time
 	* @param time -- pointer to time memory area
 	*/
-	XE_EXPORT int _KeGetCurrentTime(XETime *time);
+	XE_EXPORT int _KeGetCurrentTime(XETime * time);
 
 	XE_LIB uint64_t _KeGetCurrentUS();
 

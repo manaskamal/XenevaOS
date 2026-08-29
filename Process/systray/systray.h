@@ -35,10 +35,10 @@
 #include <widgets/icon.h>
 #include <widgets/window.h>
 
-#define TRAY_BUTTON_TYPE_ONOFF 1
+#define TRAY_BUTTON_TYPE_ONOFF	1
 #define TRAY_BUTTON_TYPE_NORMAL 0
 
-typedef struct _tray_but_{
+typedef struct _tray_but_ {
 	ChWidget base;
 	ChIcon* icon;
 	char* title;
@@ -46,7 +46,7 @@ typedef struct _tray_but_{
 	uint8_t currentFrame;
 	uint8_t type;
 	bool onoff;
-}TrayButton;
+} TrayButton;
 
 extern void TrayButtonInitialize();
 /*

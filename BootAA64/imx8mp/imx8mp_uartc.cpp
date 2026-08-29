@@ -31,16 +31,15 @@
 
 #ifdef __TARGET_BOARD_IMX8MP_VERDIN_DAHLIA__ || (__TARGET_BOARD_IMX8MP_SOC__)
 
-
 #include <Board/imx8mp/imx8mp_uart.h>
 #include "imx8mp/imx8mp_uartc.h"
 #include <stdint.h>
 
-#define UART2_BAUD_RATE 115200
-#define UART2_CLOCK_VAL 80000000
-#define UART2_DATA_BITS 8
-#define UART2_STOP_BITS 1
-#define UART2_PARITY_NONE  0
+#define UART2_BAUD_RATE	  115200
+#define UART2_CLOCK_VAL	  80000000
+#define UART2_DATA_BITS	  8
+#define UART2_STOP_BITS	  1
+#define UART2_PARITY_NONE 0
 
 static uint64_t __imx8mp_uart_base;
 static inline uint32_t imx8mp_uart_read(uint64_t base) {
@@ -60,10 +59,9 @@ static inline void imx8mp_uart_clr(uint64_t base, uint32_t mask) {
 }
 
 static void imx8mp_delay(volatile uint32_t n) {
-	while (n--);
+	while (n--)
+		;
 }
-
-
 
 /**
  * @brief XE_iMX8MP_UART_Initialize -- initialize the uart serial controller
@@ -84,7 +82,7 @@ void XE_iMX8MP_UART_Initialize(uint64_t base) {
 void imx8mp_uart_putc(char c) {
 	while (!(imx8mp_uart_read(IMX8MP_UART_USR1(__imx8mp_uart_base)) & USR1_TRDY))
 		;
-//	imx8mp_delay(100);
+	//	imx8mp_delay(100);
 	imx8mp_uart_write(IMX8MP_UART_UTXD(__imx8mp_uart_base), (uint32_t)(uint8_t)c);
 }
 
@@ -123,6 +121,5 @@ int imx8mp_uart_getc() {
 
 	return (int)(data & URXD_RX_DATA);
 }
-
 
 #endif

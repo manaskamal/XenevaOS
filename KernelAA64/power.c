@@ -63,7 +63,6 @@ int AuPowerDown() {
 	 * powering down of the board
 	 */
 
-
 #ifdef __TARGET_BOARD_QEMU_VIRT__
 	AuVirtioKbdDown();
 	AuVirtioTabletDown();
@@ -106,8 +105,6 @@ void AuPowerReset() {
 	if (proc->creds.gid != 0)
 		return;
 
-
-
 	/** TODO : Flush all system resources that needs disk
 	 * writes and call board power down which will handle
 	 * powering down of the board
@@ -125,7 +122,6 @@ void AuPowerReset() {
 	suspendTimer();
 	UARTDebugOut("[aurora]: timer suspended \r\n");
 
-	
 	/* de-initialize the interrupt controller */
 	GICDisable();
 

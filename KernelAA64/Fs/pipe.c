@@ -127,8 +127,7 @@ size_t AuPipeRead(AuVFSNode* fs, AuVFSNode* file, uint64_t* buffer, uint32_t len
 				collected++;
 			}
 
-		}
-		else
+		} else
 			break;
 	}
 
@@ -163,7 +162,6 @@ AuVFSNode* AuPipeOpen(AuVFSNode* node, char* path) {
 	pipe->refcount++;
 	return node;
 }
-
 
 /**
 * @brief AuPipeFSAddFile -- adds a file/directory
@@ -328,7 +326,7 @@ int AuCreatePipe(char* name, size_t sz) {
 	node->size = sz;
 	node->uid = proc->creds.uid;
 	node->gid = proc->creds.gid;
-	node->device = pipe; 
+	node->device = pipe;
 	node->read = AuPipeRead;
 	node->write = AuPipeWrite;
 	node->open = AuPipeOpen;
@@ -412,4 +410,3 @@ void AuPipeFSInitialise() {
 	AuTextOut("[aurora]: pipefs mounted \r\n");
 	pipeFS = node;
 }
-

@@ -36,7 +36,7 @@
 #include "window.h"
 
 #define CHITRALEKHA_SCROLL_TYPE_HORIZONTAL 1
-#define CHITRALEKHA_SCROLL_TYPE_VERTICAL 2
+#define CHITRALEKHA_SCROLL_TYPE_VERTICAL   2
 
 #define SCROLLBAR_SIZE 18
 
@@ -59,16 +59,16 @@ typedef struct _scrollbar_ {
 	double scrollAmount;
 	double scrollOffset;
 	int contentSize;
-}ChScrollbar;
+} ChScrollbar;
 
-typedef struct _scrollpane_{
+typedef struct _scrollpane_ {
 	ChWidget wid;
 	ChScrollbar hScrollBar;
 	ChScrollbar vScrollBar;
 	bool paintCallback;
 	int lastMouseButton;
 	ChWidget* scrollableView;
-}ChScrollPane;
+} ChScrollPane;
 
 /*
 * ChCreateScrollPane -- Create a new scroll pane
@@ -78,7 +78,8 @@ typedef struct _scrollpane_{
 * @param width -- Width of the scroll pane
 * @param height -- Height of the scroll pane
 */
-XE_EXTERN XE_LIB ChScrollPane* ChCreateScrollPane(ChWindow* win,int x, int y, int width, int height);
+XE_EXTERN XE_LIB ChScrollPane*
+ChCreateScrollPane(ChWindow* win, int x, int y, int width, int height);
 
 /*
 * ChScrollUpdateVerticalScroll -- updates the vertical scroll bur thumb
@@ -86,7 +87,8 @@ XE_EXTERN XE_LIB ChScrollPane* ChCreateScrollPane(ChWindow* win,int x, int y, in
 * @param viewport -- viewport
 * @param contentsz -- content size
 */
-XE_EXTERN XE_LIB void ChScrollUpdateVerticalScroll(ChScrollPane* sp, ChRect* viewport, int contentSz);
+XE_EXTERN XE_LIB void
+ChScrollUpdateVerticalScroll(ChScrollPane* sp, ChRect* viewport, int contentSz);
 
 /*
 * ChScrollUpdateHorizontalScroll -- updates the horizontal scroll bar thumb
@@ -94,6 +96,7 @@ XE_EXTERN XE_LIB void ChScrollUpdateVerticalScroll(ChScrollPane* sp, ChRect* vie
 * @param viewport -- Pointer to viewport geometry
 * @param contentSz -- content size
 */
-XE_EXTERN XE_LIB void ChScrollUpdateHorizontalScroll(ChScrollPane* sp, ChRect* viewport, int contentSz);
+XE_EXTERN XE_LIB void
+ChScrollUpdateHorizontalScroll(ChScrollPane* sp, ChRect* viewport, int contentSz);
 
 #endif

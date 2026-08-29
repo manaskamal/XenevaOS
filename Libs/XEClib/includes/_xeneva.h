@@ -43,19 +43,18 @@
 #define XE_IMPORT __declspec(dllimport)
 #else
 /* nothing to define here*/
-#define XE_EXPORT 
+#define XE_EXPORT
 #define XE_IMPORT
 #endif
 
 #define XE_EXTERN extern "C"
 
-#define XE_API  XE_EXTERN
+#define XE_API	XE_EXTERN
 #define XE_MAIN XE_EXPORT
 
 #define XE_LIB XE_EXPORT
 
-
-#define AURORA_SYSCALL_MAGIC  0x15062023
+#define AURORA_SYSCALL_MAGIC 0x15062023
 
 #ifdef _MSC_VER
 #define INLINE __inline
@@ -64,15 +63,15 @@
 #endif
 
 #ifdef __cplusplus
-XE_EXTERN{
+XE_EXTERN {
 #endif
 
 	/** @brief _KePrint -- kernel printing function, uses
 	 * kernel serial console to print strings
 	 */
-	XE_LIB void _KePrint(const char* text,...);
+	XE_LIB void _KePrint(const char* text, ...);
 
-    XE_LIB void _XESetEnvironmentVariable(char* key, char* value, bool overwrite);
+	XE_LIB void _XESetEnvironmentVariable(char* key, char* value, bool overwrite);
 
 	XE_LIB int _XEPutEnvironmentVariable(char* keyval);
 
@@ -84,6 +83,5 @@ XE_EXTERN{
 #ifdef __cplusplus
 }
 #endif
-
 
 #endif

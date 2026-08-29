@@ -36,86 +36,84 @@
 #include <stdint.h>
 
 #ifdef __cplusplus
-XE_EXTERN{
+XE_EXTERN {
 #endif
 
-
 	/* file open modes*/
-#define FILE_OPEN_READ_ONLY  (1<<1)
-#define FILE_OPEN_WRITE (1<<2)
-#define FILE_OPEN_CREAT (1<<3)
+#define FILE_OPEN_READ_ONLY (1 << 1)
+#define FILE_OPEN_WRITE		(1 << 2)
+#define FILE_OPEN_CREAT		(1 << 3)
 
-#define FILE_DIRECTORY  (1<<1)
-#define FILE_GENERAL    (1<<2)
-#define FILE_DEVICE     (1<<3)
-#define FILE_DELETED    (1<<4)
-#define FILE_INVALID    (1<<5)
-#define FILE_FILE_SYSTEM (1<<6)
-#define FILE_PIPE        (1<<7)
+#define FILE_DIRECTORY	 (1 << 1)
+#define FILE_GENERAL	 (1 << 2)
+#define FILE_DEVICE		 (1 << 3)
+#define FILE_DELETED	 (1 << 4)
+#define FILE_INVALID	 (1 << 5)
+#define FILE_FILE_SYSTEM (1 << 6)
+#define FILE_PIPE		 (1 << 7)
 
-#define XENEVA_STDIN 0
+#define XENEVA_STDIN  0
 #define XENEVA_STDOUT 1
 #define XENEVA_STDERR 2
 
 /*  number of supported storage device*/
 #define XE_MAX_STORAGE_DEVICE 26
 /* number of partitions in each storage device */
-#define XE_MAX_PARTITION     128
+#define XE_MAX_PARTITION 128
 
 #ifdef ARCH_X64
-#pragma pack (push,1)
+#pragma pack(push, 1)
 #endif
-typedef struct _GUID {
-	uint32_t Data1;
-	uint16_t Data2;
-	uint16_t Data3;
-	uint8_t Data4[8];
-}GUID;
+	typedef struct _GUID {
+		uint32_t Data1;
+		uint16_t Data2;
+		uint16_t Data3;
+		uint8_t Data4[8];
+	} GUID;
 #ifdef ARCH_X64
 #pragma pack(pop)
 #endif
 
 #ifdef ARCH_X64
-#pragma pack(push,1)
+#pragma pack(push, 1)
 #endif
-typedef struct _disk_info_ {
-	char diskname[40];
-	char serialNumber[20];
-	uint8_t vDiskID;
-	int num_partition;
-	uint64_t maxBlocks;
-	uint64_t blocksSize;
-}XEVDiskInfo;
+	typedef struct _disk_info_ {
+		char diskname[40];
+		char serialNumber[20];
+		uint8_t vDiskID;
+		int num_partition;
+		uint64_t maxBlocks;
+		uint64_t blocksSize;
+	} XEVDiskInfo;
 #ifdef ARCH_X64
 #pragma pack(pop)
 #endif
 
 #ifdef ARCH_X64
-#pragma pack(push,1)
+#pragma pack(push, 1)
 #endif
-typedef struct _disk_partition_info_ {
-	char mountedName[32];
-	GUID partitionGUID;
-	GUID uniqueGUID;
-	uint64_t startingLBA;
-}XEVDiskPartitionInfo;
+	typedef struct _disk_partition_info_ {
+		char mountedName[32];
+		GUID partitionGUID;
+		GUID uniqueGUID;
+		uint64_t startingLBA;
+	} XEVDiskPartitionInfo;
 #ifdef ARCH_X64
 #pragma pack(pop)
 #endif
 
 	typedef struct _XEFileStatus_ {
 		uint8_t filemode; //mode of the file
-		size_t size;  //size in bytes
+		size_t size;	  //size in bytes
 		uint32_t current_block;
 		uint32_t start_block;
-		uint32_t user_id; //for future use
+		uint32_t user_id;  //for future use
 		uint32_t group_id; //for future use
 		uint32_t num_links;
 		uint8_t eof;
-	}XEFileStatus;
+	} XEFileStatus;
 
-
-//#pragma pack(push,1)
+	//#pragma pack(push,1)
 	typedef struct _XEFileControl_ {
 		int syscall_magic;
 		uint8_t uchar_1;
@@ -126,10 +124,10 @@ typedef struct _disk_partition_info_ {
 		uint32_t uint_2;
 		uint64_t ulong_1;
 		uint64_t ulong_2;
-	}XEFileIOControl;
-//#pragma pack(pop)
+	} XEFileIOControl;
+	//#pragma pack(pop)
 
-//#pragma pack(push,1)
+	//#pragma pack(push,1)
 	typedef struct _XEDirectoryEnty_ {
 		char filename[32];
 		int index;
@@ -137,8 +135,8 @@ typedef struct _disk_partition_info_ {
 		int date;
 		int time;
 		uint8_t flags;
-	}XEDirectoryEntry;
-//#pragma pack(pop)
+	} XEDirectoryEntry;
+	//#pragma pack(pop)
 
 	XE_LIB int _KeOpenFile(char* pathname, int mode);
 	XE_LIB size_t _KeReadFile(int fd, void* buffer, size_t length);

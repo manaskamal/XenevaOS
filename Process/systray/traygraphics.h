@@ -44,9 +44,8 @@
  * @param searchColor -- color to replace
  * @param replaceColor -- color to replace with
  */
-void TrayDrawIconColorReplace(ChCanvas* canv, ChIcon* ico, int x, int y, uint32_t searchColor,
-	uint32_t replaceColor);
-
+void TrayDrawIconColorReplace(
+	ChCanvas* canv, ChIcon* ico, int x, int y, uint32_t searchColor, uint32_t replaceColor);
 
 void SoundWindowPainter(ChWindow* win);
 #endif

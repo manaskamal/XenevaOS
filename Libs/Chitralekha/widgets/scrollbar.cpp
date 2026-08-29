@@ -33,12 +33,10 @@
 #include <stdlib.h>
 #include <math.h>
 
-#define ARROW_SIZE 10
-#define MIN_THUMB_SIZE 20
+#define ARROW_SIZE				   10
+#define MIN_THUMB_SIZE			   20
 #define SCROLLBAR_CLAMP(v, lo, hi) ((v) < (lo) ? (lo) : (v) > (hi) ? (hi) : (v))
-#define SCROLLBAR_MAX(a, b)  ((a) > (b) ? (a) : (b))
-
-
+#define SCROLLBAR_MAX(a, b)		   ((a) > (b) ? (a) : (b))
 
 enum {
 	SB_HIT_NONE,
@@ -50,13 +48,12 @@ enum {
 };
 
 /* default color theme */
-#define COLOR_TRACK 0xFF2D2D2D
-#define COLOR_THUMB 0xFF666666
+#define COLOR_TRACK		  0xFF2D2D2D
+#define COLOR_THUMB		  0xFF666666
 #define COLOR_THUMB_HOVER 0xFF888888
-#define COLOR_THUMB_DRAG 0xFFAAAAAA
-#define COLOR_ARROW_BG 0xFF3A3A3A
-#define COLOR_ARROW_FG 0xFFCCCCCC
-
+#define COLOR_THUMB_DRAG  0xFFAAAAAA
+#define COLOR_ARROW_BG	  0xFF3A3A3A
+#define COLOR_ARROW_FG	  0xFFCCCCCC
 
 void ChScrollBarPaint(ChWidget* wid, ChWindow* win);
 void ScrollBarMouseEvent(ChWidget* wid, ChWindow* win, int mx, int my, int button);
@@ -145,7 +142,7 @@ ChScrollBar* ChCreateScrollBar(int x, int y, int width, int height, uint8_t orie
 	sb->pageSize = 10;
 	sb->currentValue = 0;
 	sb->prevButton = 0;
-	
+
 	sb->color_thumb = COLOR_THUMB;
 	sb->color_arrow_bg = COLOR_ARROW_BG;
 	sb->color_arrow_fg = COLOR_ARROW_FG;
@@ -156,7 +153,6 @@ ChScrollBar* ChCreateScrollBar(int x, int y, int width, int height, uint8_t orie
 	ScrollBarRecalcThumb(sb);
 	return sb;
 }
-
 
 void ChScrollBarInit(ChScrollBar* sb, int x, int y, int width, int height, uint8_t orientation) {
 	memset(sb, 0, sizeof(ChScrollBar));
@@ -195,13 +191,13 @@ void ChScrollBarSetRange(ChScrollBar* sb, int min_val, int max_val, int page_siz
 
 void ChScrollBarSetValue(ChScrollBar* sb, int value) {
 	int clamped = SCROLLBAR_CLAMP(value, sb->minValue, sb->maxValue - sb->pageSize);
-	if (clamped == sb->currentValue) return;
+	if (clamped == sb->currentValue)
+		return;
 	sb->currentValue = clamped;
 	ScrollBarRecalcThumb(sb);
 }
 
 static int ScrollBarHitTest(ChScrollBar* sb, ChWindow* win, int mx, int my) {
-
 	int lx = mx - win->info->x;
 	int ly = my - win->info->y;
 
@@ -215,16 +211,21 @@ static int ScrollBarHitTest(ChScrollBar* sb, ChWindow* win, int mx, int my) {
 
 	int total = (sb->orientation == SCROLLBAR_ORIENTATION_VERTICAL) ? wh : ww;
 
-	if (pos < ARROW_SIZE) return SB_HIT_ARROW_DEC;
-	if (pos >= total - ARROW_SIZE) return SB_HIT_ARROW_INC;
+	if (pos < ARROW_SIZE)
+		return SB_HIT_ARROW_DEC;
+	if (pos >= total - ARROW_SIZE)
+		return SB_HIT_ARROW_INC;
 
 	int track_pos = pos - ARROW_SIZE;
-	if (track_pos < sb->thumbPos) return SB_HIT_TRACK_DEC;
-	if (track_pos < sb->thumbPos + sb->thumbSize) return SB_HIT_THUMB;
+	if (track_pos < sb->thumbPos)
+		return SB_HIT_TRACK_DEC;
+	if (track_pos < sb->thumbPos + sb->thumbSize)
+		return SB_HIT_THUMB;
 	return SB_HIT_TRACK_INC;
 }
 
-static void _draw_arrow_(ChWindow* win, int bx, int by, int bw, int bh, int direction, uint32_t fg) {
+static void
+_draw_arrow_(ChWindow* win, int bx, int by, int bw, int bh, int direction, uint32_t fg) {
 	int aw = bw / 2;
 	int ah = bh / 2;
 
@@ -235,43 +236,44 @@ static void _draw_arrow_(ChWindow* win, int bx, int by, int bw, int bh, int dire
 		int tip_y = cy - ah / 2;
 		int base_y = cy + ah / 2;
 		int height = base_y - tip_y;
-		if (height < 1) height = 1;
+		if (height < 1)
+			height = 1;
 		for (int row = 0; row <= height; row++) {
 			int half = (aw * row) / height;
 			int y = base_y - row;
 			for (int dx = -half; dx <= half; dx++)
 				ChDrawPixel(win->canv, cx + dx, y, fg);
 		}
-	}
-	else if (direction == 1) {
+	} else if (direction == 1) {
 		int tip_y = cy + ah / 2;
 		int base_y = cy - ah / 2;
 		int height = tip_y - base_y;
-		if (height < 1) height = 1;
+		if (height < 1)
+			height = 1;
 		for (int row = 0; row <= height; row++) {
 			int half = (aw * row) / height;
 			int y = base_y + row;
 			for (int dx = -half; dx <= half; dx++)
 				ChDrawPixel(win->canv, cx + dx, y, fg);
 		}
-	}
-	else if (direction == 2) {
+	} else if (direction == 2) {
 		int tip_x = cx - aw / 2;
 		int base_x = cx + aw / 2;
 		int width = base_x - tip_x;
-		if (width < 1) width = 1;
+		if (width < 1)
+			width = 1;
 		for (int col = 0; col <= width; col++) {
 			int half = (ah * col) / width;
 			int x = base_x - col;
 			for (int dy = -half; dy <= half; dy++)
 				ChDrawPixel(win->canv, x, cy + dy, fg);
 		}
-	}
-	else {
+	} else {
 		int tip_x = cx + aw / 2;
 		int base_x = cx - aw / 2;
 		int width = tip_x - base_x;
-		if (width < 1) width = 1;
+		if (width < 1)
+			width = 1;
 		for (int col = 0; col <= width; col++) {
 			int half = (ah * col) / width;
 			int x = base_x + col;
@@ -290,23 +292,38 @@ void ChScrollBarPaint(ChWidget* wid, ChWindow* win) {
 
 	if (sb->orientation == SCROLLBAR_ORIENTATION_VERTICAL) {
 		ChDrawRect(win->canv, wx, wy, ww, ARROW_SIZE, sb->color_arrow_bg);
-		_draw_arrow_(win, (wx + ww / 2) - (ARROW_SIZE/2), wy, ARROW_SIZE, ARROW_SIZE, 1,sb->color_arrow_fg);
-		ChDrawRect(win->canv, wx, wy + wh - ARROW_SIZE, ww, ARROW_SIZE,sb->color_arrow_bg);
-		_draw_arrow_(win, (wx + ww /2) - (ARROW_SIZE/2), wy + wh - ARROW_SIZE, ARROW_SIZE, ARROW_SIZE, 0,sb->color_arrow_fg);
-	}
-	else {
-		ChDrawRect(win->canv, wx, wy, ARROW_SIZE, wh,sb->color_arrow_bg);
-		_draw_arrow_(win, wx, wy, ARROW_SIZE, wh, 3,sb->color_arrow_fg);
-		ChDrawRect(win->canv, wx + ww - ARROW_SIZE, wy, ARROW_SIZE, wh,sb->color_arrow_bg);
-		_draw_arrow_(win, wx + ww - ARROW_SIZE, wy, ARROW_SIZE, wh, 2,sb->color_arrow_fg);
+		_draw_arrow_(win,
+					 (wx + ww / 2) - (ARROW_SIZE / 2),
+					 wy,
+					 ARROW_SIZE,
+					 ARROW_SIZE,
+					 1,
+					 sb->color_arrow_fg);
+		ChDrawRect(win->canv, wx, wy + wh - ARROW_SIZE, ww, ARROW_SIZE, sb->color_arrow_bg);
+		_draw_arrow_(win,
+					 (wx + ww / 2) - (ARROW_SIZE / 2),
+					 wy + wh - ARROW_SIZE,
+					 ARROW_SIZE,
+					 ARROW_SIZE,
+					 0,
+					 sb->color_arrow_fg);
+	} else {
+		ChDrawRect(win->canv, wx, wy, ARROW_SIZE, wh, sb->color_arrow_bg);
+		_draw_arrow_(win, wx, wy, ARROW_SIZE, wh, 3, sb->color_arrow_fg);
+		ChDrawRect(win->canv, wx + ww - ARROW_SIZE, wy, ARROW_SIZE, wh, sb->color_arrow_bg);
+		_draw_arrow_(win, wx + ww - ARROW_SIZE, wy, ARROW_SIZE, wh, 2, sb->color_arrow_fg);
 	}
 
-	if (sb->thumbSize <= 0) return;
+	if (sb->thumbSize <= 0)
+		return;
 
 	uint32_t thumbColor;
-	if (sb->state == SB_STATE_DRAGGING) thumbColor = sb->color_thumb_drag;
-	else if (sb->state == SB_STATE_HOVER_THUMB) thumbColor = sb->color_thumb_hover;
-	else thumbColor = sb->color_thumb;
+	if (sb->state == SB_STATE_DRAGGING)
+		thumbColor = sb->color_thumb_drag;
+	else if (sb->state == SB_STATE_HOVER_THUMB)
+		thumbColor = sb->color_thumb_hover;
+	else
+		thumbColor = sb->color_thumb;
 
 	if (sb->orientation == SCROLLBAR_ORIENTATION_VERTICAL) {
 		int tx = wx;
@@ -318,8 +335,7 @@ void ChScrollBarPaint(ChWidget* wid, ChWindow* win) {
 		for (int i = 0; i < tw; i++)
 			ChDrawPixel(win->canv, tx + i, ty, 0xFF999999);
 
-	}
-	else {
+	} else {
 		int tx = wx + ARROW_SIZE + sb->thumbPos;
 		int ty = wy;
 		int tw = sb->thumbSize;
@@ -337,8 +353,8 @@ void ChScrollBarPaint(ChWidget* wid, ChWindow* win) {
 void ScrollBarMouseEvent(ChWidget* wid, ChWindow* win, int mx, int my, int button) {
 	ChScrollBar* sb = (ChScrollBar*)wid;
 
-	int mouse_coord = (sb->orientation == SCROLLBAR_ORIENTATION_VERTICAL) ? (my - win->info->y) :
-		(mx - win->info->x);
+	int mouse_coord = (sb->orientation == SCROLLBAR_ORIENTATION_VERTICAL) ? (my - win->info->y)
+																		  : (mx - win->info->x);
 
 	int hit = ScrollBarHitTest(sb, win, mx, my);
 
@@ -355,7 +371,6 @@ void ScrollBarMouseEvent(ChWidget* wid, ChWindow* win, int mx, int my, int butto
 		}
 		return;
 	}
-
 
 	if (!was_down && is_down) {
 		int old_value = sb->currentValue;
@@ -416,9 +431,10 @@ void ScrollBarMouseEvent(ChWidget* wid, ChWindow* win, int mx, int my, int butto
 			int scrollable_pixels = sb->trackLen - sb->thumbSize;
 			int scrollable_range = (sb->maxValue - sb->minValue) - sb->pageSize;
 
-			int start_thumb_px = (scrollable_range > 0 && scrollable_pixels > 0) ?
-				((sb->dragAnchorValue - sb->minValue) * scrollable_pixels) / scrollable_range
-				: 0;
+			int start_thumb_px =
+				(scrollable_range > 0 && scrollable_pixels > 0)
+					? ((sb->dragAnchorValue - sb->minValue) * scrollable_pixels) / scrollable_range
+					: 0;
 
 			int new_thumb_px = SCROLLBAR_CLAMP(start_thumb_px + mouse_delta, 0, scrollable_pixels);
 			int new_value = ScrollBarThumbPosToValue(sb, new_thumb_px);

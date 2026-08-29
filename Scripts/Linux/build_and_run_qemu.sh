@@ -16,13 +16,13 @@ done
 if [ "$BUILD_USER_APPS" -eq 1 ]; then
     echo "[+] Rebuilding Libraries and User Applications..."
     
-    echo "    [-] Building XEClib..."
+    echo "    [-] Building XEClib (clang/LLVM)..."
     make -C Libs/XEClib clean
-    make -C Libs/XEClib
+    make -C Libs/XEClib llvm
     
-    echo "    [-] Building Chitralekha..."
+    echo "    [-] Building Chitralekha (clang/LLVM)..."
     make -C Libs/Chitralekha clean
-    make -C Libs/Chitralekha
+    make -C Libs/Chitralekha llvm
     
     APPS=(
         "Init"
@@ -39,9 +39,9 @@ if [ "$BUILD_USER_APPS" -eq 1 ]; then
     )
     
     for app in "${APPS[@]}"; do
-        echo "    [-] Building $app..."
+        echo "    [-] Building $app (clang/LLVM)..."
         make -C Process/$app clean
-        make -C Process/$app
+        make -C Process/$app llvm
     done
     
     echo "[+] Deploying newly built binaries to Resources/resources/..."

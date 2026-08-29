@@ -49,12 +49,12 @@ int mp4_read_callb(int64_t offset, void* buffer, size_t sz, void* token) {
 	FILE* f = _file;
 	_KePrint("FILE f -> %d \r\n", f->size);
 	fseek(f, offset, SEEK_SET);
-	return fread(token, sz,1, f);
+	return fread(token, sz, 1, f);
 }
 /*
 * main -- main entry
 */
-int main(int argc, char* argv[]){
+int main(int argc, char* argv[]) {
 	FILE* f = fopen("/isr2.mp4", "rb");
 	if (!f) {
 		printf("Couldn't open mp4 file \n");
@@ -65,7 +65,7 @@ int main(int argc, char* argv[]){
 	size_t size = ftell(f);
 	printf("Size -> %d bytes \n", size);
 	_file = f;
-	
+
 	uint8_t* data = (uint8_t*)malloc(4096);
 	_KePrint("DATAA BUFFER -> %x \n", data);
 	//fread(data, 4096, 1, f);
@@ -75,8 +75,6 @@ int main(int argc, char* argv[]){
 	}
 
 	while (1) {
-		
-
 		_KePauseThread();
 	}
 }

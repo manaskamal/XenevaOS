@@ -45,38 +45,37 @@
 #include <stdlib.h>
 #include "calculator.h"
 
-ChitralekhaApp *app;
+ChitralekhaApp* app;
 ChWindow* mainWin;
 ChFont* dispFont;
 CalculatorDisplay* mainDisp;
 
 #define CALCULATOR_BACK_COLOR 0xBF353535
-#define CALC_DISPLAY_DARK 0xBF6598DE
-#define CALC_DISPLAY_LIGHT 0xBF8BADDC
-
-
+#define CALC_DISPLAY_DARK	  0xBF6598DE
+#define CALC_DISPLAY_LIGHT	  0xBF8BADDC
 
 #define MAX_DIGIT 1024
 
-
 void CalcDisplayDraw(ChWidget* wid, ChWindow* win) {
 	CalculatorDisplay* disp = (CalculatorDisplay*)wid;
-	ChDrawRect(win->canv, wid->x,wid->y, wid->w, wid->h, WHITE);
-	ChColorDrawHorizontalGradient(win->canv, wid->x, wid->y, wid->w, wid->h, CALC_DISPLAY_DARK, CALC_DISPLAY_LIGHT);
+	ChDrawRect(win->canv, wid->x, wid->y, wid->w, wid->h, WHITE);
+	ChColorDrawHorizontalGradient(
+		win->canv, wid->x, wid->y, wid->w, wid->h, CALC_DISPLAY_DARK, CALC_DISPLAY_LIGHT);
 	ChDrawRectUnfilled(win->canv, wid->x, wid->y, wid->w, wid->h, BLACK);
-	ChDrawRectUnfilled(win->canv, wid->x +1 , wid->y + 1, wid->w - 1, wid->h - 1, BLACK);
+	ChDrawRectUnfilled(win->canv, wid->x + 1, wid->y + 1, wid->w - 1, wid->h - 1, BLACK);
 	ChFontSetSize(dispFont, 23);
 	char* buff = disp->inputnum;
 	bool _clear_output = false;
-	if (disp->output){
+	if (disp->output) {
 		buff = disp->outputnum;
 		disp->output = false;
 		_clear_output = true;
 	}
 	int font_w = ChFontGetWidth(dispFont, buff);
-	ChFontDrawText(win->canv, dispFont, buff, wid->x + wid->w - font_w - 10, wid->y + wid->h / 2, 23, BLACK);
+	ChFontDrawText(
+		win->canv, dispFont, buff, wid->x + wid->w - font_w - 10, wid->y + wid->h / 2, 23, BLACK);
 
-	if (disp->operator_ != 0){
+	if (disp->operator_ != 0) {
 		ChFontSetSize(dispFont, 13);
 		char* string = 0;
 		switch (disp->operator_) {
@@ -101,7 +100,13 @@ void CalcDisplayDraw(ChWidget* wid, ChWindow* win) {
 		}
 		int op_w = ChFontGetWidth(dispFont, string);
 		int op_h = ChFontGetHeight(dispFont, string);
-		ChFontDrawText(win->canv, dispFont, string, wid->x + wid->w - op_w - 10, wid->y + wid->h - op_h, 13, BLACK);
+		ChFontDrawText(win->canv,
+					   dispFont,
+					   string,
+					   wid->x + wid->w - op_w - 10,
+					   wid->y + wid->h - op_h,
+					   13,
+					   BLACK);
 	}
 	if (_clear_output)
 		memset(disp->outputnum, 0, 1024);
@@ -110,7 +115,13 @@ void CalcDisplayDraw(ChWidget* wid, ChWindow* win) {
 		ChFontSetSize(dispFont, 11);
 		int hist_w = ChFontGetWidth(dispFont, disp->historyBuf);
 		int hist_h = ChFontGetHeight(dispFont, disp->historyBuf);
-		ChFontDrawText(win->canv, dispFont, disp->historyBuf, wid->x + wid->w - hist_w - 10, wid->y + 10, 13, LIGHTBLACK);
+		ChFontDrawText(win->canv,
+					   dispFont,
+					   disp->historyBuf,
+					   wid->x + wid->w - hist_w - 10,
+					   wid->y + 10,
+					   13,
+					   LIGHTBLACK);
 	}
 }
 
@@ -178,22 +189,22 @@ void CalculatorProcess(CalculatorDisplay* calc) {
 			result = num1 + num2;
 			break;
 		case CALC_OPERATOR_DIVIDE: {
-									   if (num2 == 0) {
-										   CalcAllClear(calc);
-										   CalcClearHistory(calc);
-										   CalcClearOutput(calc);
-										   calc->output = 0;
-										   strcpy(calc->inputnum, "Can't divide by 0");
-										   calc->inputidx += strlen(calc->inputnum) - 1;
-										   CalcUpdateDisplay(calc);
-										  /* CalcAllClear(calc);
+			if (num2 == 0) {
+				CalcAllClear(calc);
+				CalcClearHistory(calc);
+				CalcClearOutput(calc);
+				calc->output = 0;
+				strcpy(calc->inputnum, "Can't divide by 0");
+				calc->inputidx += strlen(calc->inputnum) - 1;
+				CalcUpdateDisplay(calc);
+				/* CalcAllClear(calc);
 										   CalcClearHistory(calc);
 										   CalcClearOutput(calc);*/
-										   calc->output = 0;
-										   return;
-									   }
-									   result = num1 / num2;
-									   break;
+				calc->output = 0;
+				return;
+			}
+			result = num1 / num2;
+			break;
 		}
 		case CALC_OPERATOR_MOD:
 			result = num1 % num2;
@@ -223,7 +234,7 @@ void CalculatorProcess(CalculatorDisplay* calc) {
  * @param disp -- Calculator display processor
  * @param number -- number with one digit
  */
-void CalcAddDigit(CalculatorDisplay* disp, int number){
+void CalcAddDigit(CalculatorDisplay* disp, int number) {
 	if (number > 9)
 		return;
 	char num[16];
@@ -260,10 +271,9 @@ void CalcRemoveDigit(CalculatorDisplay* disp) {
 void CalcAddToHistory(CalculatorDisplay* disp, char* num, uint8_t operator_) {
 	if (disp->historyIdx == 1024)
 		return;
-	if (operator_ != 0){
+	if (operator_ != 0) {
 		char opstr[1];
-		switch (operator_)
-		{
+		switch (operator_) {
 		case CALC_OPERATOR_ADD:
 			opstr[0] = '+';
 			break;
@@ -279,8 +289,7 @@ void CalcAddToHistory(CalculatorDisplay* disp, char* num, uint8_t operator_) {
 		}
 		disp->historyBuf[disp->historyIdx] = opstr[0];
 		disp->historyIdx++;
-	}
-	else {
+	} else {
 		int count = strlen(num) - 1;
 		strcpy(disp->historyBuf + disp->historyIdx, num);
 		disp->historyIdx += count;
@@ -309,53 +318,49 @@ void CalcAllClear(CalculatorDisplay* disp) {
  * WindowHandleMessage -- handles incoming deodhai messages
  * @param e -- PostBox event message structure
  */
-void WindowHandleMessage(PostEvent *e) {
+void WindowHandleMessage(PostEvent* e) {
 	switch (e->type) {
 	/* handle mouse event from deodhai */
-	case DEODHAI_REPLY_MOUSE_EVENT:{
-									   int handle = e->dword4;
-									   if (e->dword5 == WINDOW_HANDLE_TYPE_NORMAL) {
-										   ChWindow* mouseWin = ChGetWindowByHandle(mainWin, handle);
-										   ChWindowHandleMouse(mouseWin, e->dword, e->dword2, e->dword3);
-									   }
-									   else if (e->dword5 == WINDOW_HANDLE_TYPE_POPUP) {
-										  
-										   ChWindow* pw = ChGetPopupWindowByHandle(mainWin, handle); 
-										   ChPopupWindowHandleMouse(pw,e->dword, e->dword2, e->dword3);
-									   }
-									   memset(e, 0, sizeof(PostEvent));
-									   break;
+	case DEODHAI_REPLY_MOUSE_EVENT: {
+		int handle = e->dword4;
+		if (e->dword5 == WINDOW_HANDLE_TYPE_NORMAL) {
+			ChWindow* mouseWin = ChGetWindowByHandle(mainWin, handle);
+			ChWindowHandleMouse(mouseWin, e->dword, e->dword2, e->dword3);
+		} else if (e->dword5 == WINDOW_HANDLE_TYPE_POPUP) {
+			ChWindow* pw = ChGetPopupWindowByHandle(mainWin, handle);
+			ChPopupWindowHandleMouse(pw, e->dword, e->dword2, e->dword3);
+		}
+		memset(e, 0, sizeof(PostEvent));
+		break;
 	}
 		/* handle key events from deodhai */
-	case DEODHAI_REPLY_KEY_EVENT:{
-									 int code = e->dword;
-									 ChitralekhaProcessKey(code);
-									 int c = ChitralekhaKeyToASCII(code);
-									 HandleKeyEvents(c);
-									 memset(e, 0, sizeof(PostEvent));
-									 break;
+	case DEODHAI_REPLY_KEY_EVENT: {
+		int code = e->dword;
+		ChitralekhaProcessKey(code);
+		int c = ChitralekhaKeyToASCII(code);
+		HandleKeyEvents(c);
+		memset(e, 0, sizeof(PostEvent));
+		break;
 	}
 	case DEODHAI_REPLY_TOUCH_EVENT: {
 		int handle = e->dword4;
 		if (e->dword5 == WINDOW_HANDLE_TYPE_NORMAL) {
 			ChWindow* mouseWin = ChGetWindowByHandle(mainWin, handle);
 			ChWindowHandleTouch(mouseWin, e->dword, e->dword2, e->dword3);
-		}
-		else if (e->dword5 == WINDOW_HANDLE_TYPE_POPUP) {
-
+		} else if (e->dword5 == WINDOW_HANDLE_TYPE_POPUP) {
 			ChWindow* pw = ChGetPopupWindowByHandle(mainWin, handle);
 			//ChPopupWindowHandleTouch(pw, e->dword, e->dword2, e->dword3);
 		}
 		memset(e, 0, sizeof(PostEvent));
 	}
 
-	case DEODHAI_REPLY_FOCUS_CHANGED:{
-										 int focus_val = e->dword;
-										 int handle = e->dword2;
-										 ChWindow* focWin = ChGetWindowByHandle(mainWin, handle);
-										 ChWindowHandleFocus(focWin, focus_val, handle);
-										 memset(e, 0, sizeof(PostEvent));
-										 break;
+	case DEODHAI_REPLY_FOCUS_CHANGED: {
+		int focus_val = e->dword;
+		int handle = e->dword2;
+		ChWindow* focWin = ChGetWindowByHandle(mainWin, handle);
+		ChWindowHandleFocus(focWin, focus_val, handle);
+		memset(e, 0, sizeof(PostEvent));
+		break;
 	}
 	case DEODHAI_REPLY_MOUSE_LEAVE: {
 		memset(e, 0, sizeof(PostEvent));
@@ -378,17 +383,17 @@ void CalculatorCreateButtonGird(ChWindow* win) {
 
 	ChFontSetSize(app->baseFont, 24);
 	/* first row*/
-	ChButton *ac = ChCreateButton(x_start, y_start, butt_w, 35, "AC"); //All Clear
+	ChButton* ac = ChCreateButton(x_start, y_start, butt_w, 35, "AC"); //All Clear
 	ac->base.ChActionHandler = AllClearAction;
 	ChWindowAddWidget(win, (ChWidget*)ac);
-	ChButton *back = ChCreateButton(ac->base.x + ac->base.w + pad_x, y_start,butt_w, 35, "Back");
+	ChButton* back = ChCreateButton(ac->base.x + ac->base.w + pad_x, y_start, butt_w, 35, "Back");
 	back->base.ChActionHandler = BackAction;
 	ChWindowAddWidget(win, (ChWidget*)back);
 
-	ChButton *mod = ChCreateButton(back->base.x + back->base.w + pad_x, y_start, butt_w, 35, "%");
+	ChButton* mod = ChCreateButton(back->base.x + back->base.w + pad_x, y_start, butt_w, 35, "%");
 	mod->base.ChActionHandler = ModAction;
 	ChWindowAddWidget(win, (ChWidget*)mod);
-	ChButton *div = ChCreateButton(mod->base.x + mod->base.w + pad_x, y_start, butt_w, 35, "/");
+	ChButton* div = ChCreateButton(mod->base.x + mod->base.w + pad_x, y_start, butt_w, 35, "/");
 	div->base.ChActionHandler = DivideAction;
 	ChWindowAddWidget(win, (ChWidget*)div);
 
@@ -398,11 +403,13 @@ void CalculatorCreateButtonGird(ChWindow* win) {
 	seven->base.ChActionHandler = SevenAction;
 	ChWindowAddWidget(win, (ChWidget*)seven);
 
-	ChButton* eight = ChCreateButton(seven->base.x + seven->base.w + pad_x, y_start, butt_w, 35, "8");
+	ChButton* eight =
+		ChCreateButton(seven->base.x + seven->base.w + pad_x, y_start, butt_w, 35, "8");
 	eight->base.ChActionHandler = EightAction;
 	ChWindowAddWidget(win, (ChWidget*)eight);
 
-	ChButton* nine = ChCreateButton(eight->base.x + eight->base.w + pad_x, y_start, butt_w, 35, "9");
+	ChButton* nine =
+		ChCreateButton(eight->base.x + eight->base.w + pad_x, y_start, butt_w, 35, "9");
 	nine->base.ChActionHandler = NineAction;
 	ChWindowAddWidget(win, (ChWidget*)nine);
 
@@ -450,7 +457,8 @@ void CalculatorCreateButtonGird(ChWindow* win) {
 	y_start += add->base.h + pad_y;
 	ChButton* plusminus = ChCreateButton(x_start, y_start, butt_w, 35, "+/-");
 	ChWindowAddWidget(win, (ChWidget*)plusminus);
-	ChButton* zero = ChCreateButton(plusminus->base.x + plusminus->base.w + pad_x, y_start, butt_w, 35, "0");
+	ChButton* zero =
+		ChCreateButton(plusminus->base.x + plusminus->base.w + pad_x, y_start, butt_w, 35, "0");
 	zero->base.ChActionHandler = ZeroAction;
 	ChWindowAddWidget(win, (ChWidget*)zero);
 	ChButton* dot = ChCreateButton(zero->base.x + zero->base.w + pad_x, y_start, butt_w, 35, ".");
@@ -460,7 +468,7 @@ void CalculatorCreateButtonGird(ChWindow* win) {
 	ChWindowAddWidget(win, (ChWidget*)equal);
 }
 
-void CalculatorClose(ChWindow* win, ChWinGlobalControl *ctl) {
+void CalculatorClose(ChWindow* win, ChWinGlobalControl* ctl) {
 	/*ChFontClose(win->app->baseFont);
 	ChFontClose(dispFont);*/
 	ChWindowCloseWindow(win);
@@ -471,9 +479,12 @@ void CalculatorClose(ChWindow* win, ChWinGlobalControl *ctl) {
  * @param widget -- System parameter
  * @param win -- System parameter
  */
-void CalculatorAboutBox(ChWidget* widget, ChWindow* win){
-	ChMessageBox* mbox = ChCreateMessageBox(mainWin, "About Calculator v1.0",
-		"This program is part of Xeneva OS", MSGBOX_TYPE_ONLYCLOSE, MSGBOX_ICON_WARNING);
+void CalculatorAboutBox(ChWidget* widget, ChWindow* win) {
+	ChMessageBox* mbox = ChCreateMessageBox(mainWin,
+											"About Calculator v1.0",
+											"This program is part of Xeneva OS",
+											MSGBOX_TYPE_ONLYCLOSE,
+											MSGBOX_ICON_WARNING);
 	ChMessageBoxShow(mbox);
 }
 
@@ -486,19 +497,18 @@ void PopupWindowMouseEventTest(ChWidget* widget, ChWindow* win, int x, int y, in
 /*
 * main -- main entry
 */
-int main(int argc, char* argv[]){
-
+int main(int argc, char* argv[]) {
 	/*if (strcmp(argv[0], "-about") == 0)
 		printf("Calculator v1.0 for Xeneva OS \n");*/
 
 	app = ChitralekhaStartApp(argc, argv);
 	_KePrint("Chitralekha app started \r\n");
-	mainWin = ChCreateWindow(app, WINDOW_FLAG_MOVABLE, "Calculator", 400,480/2 - 400/2, 380, 
-		400);
+	mainWin =
+		ChCreateWindow(app, WINDOW_FLAG_MOVABLE, "Calculator", 400, 480 / 2 - 400 / 2, 380, 400);
 	_KePrint("Window is created \r\n");
 	mainWin->color = CALCULATOR_BACK_COLOR;
 	for (int i = 0; i < mainWin->GlobalControls->pointer; i++) {
-		ChWinGlobalControl *ctl = (ChWinGlobalControl*)list_get_at(mainWin->GlobalControls, i);
+		ChWinGlobalControl* ctl = (ChWinGlobalControl*)list_get_at(mainWin->GlobalControls, i);
 		if (ctl->type == WINDOW_GLOBAL_CONTROL_CLOSE) {
 			/* change the close action event */
 			ctl->ChGlobalActionEvent = CalculatorClose;
@@ -506,20 +516,17 @@ int main(int argc, char* argv[]){
 		}
 	}
 
-
 	ChWindowBroadcastIcon(app, "/icons/calc.bmp");
-
 
 	dispFont = ChInitialiseFont(FORTE);
 
+	mainDisp = CalcCreateDisplay(
+		10, 40, mainWin->info->width - 10 * 2 - CHITRALEKHA_WINDOW_DEFAULT_PAD_X, 75);
 
-	mainDisp = CalcCreateDisplay(10,40, mainWin->info->width - 10*2 - CHITRALEKHA_WINDOW_DEFAULT_PAD_X, 75);
-	
 	CalculatorCreateButtonGird(mainWin);
 	ChWindowAddWidget(mainWin, (ChWidget*)mainDisp);
 	/* button grid */
 	ChWindowPaint(mainWin);
-
 
 	PostEvent e;
 	memset(&e, 0, sizeof(PostEvent));

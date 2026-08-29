@@ -63,7 +63,6 @@ AuVFSNode* FatCreateDir(AuVFSNode* fsys, char* filename) {
 		parent_clust = parent->current;
 	}
 
-	
 	if (!parent_clust)
 		parent_clust = _fs->__RootDirFirstCluster;
 
@@ -95,7 +94,7 @@ AuVFSNode* FatCreateDir(AuVFSNode* fsys, char* filename) {
 			memset(extract, 0, 16);
 		}
 	}
-	
+
 	char fname[11];
 	memset(fname, 0, 11);
 	FatToDOSFilename(extract, fname, 11);
@@ -109,7 +108,6 @@ AuVFSNode* FatCreateDir(AuVFSNode* fsys, char* filename) {
 			FatDir* dirent = (FatDir*)buff;
 			for (int i = 0; i < 16; i++) {
 				if (dirent->filename[0] == 0x00 || dirent->filename[0] == 0xE5) {
-
 					/* fill this direntry*/
 					memset(dirent->filename, 0x20, 11);
 					memcpy(dirent->filename, fname, strlen(fname));
@@ -118,7 +116,7 @@ AuVFSNode* FatCreateDir(AuVFSNode* fsys, char* filename) {
 					uint32_t cluster = FatFindFreeCluster(fsys);
 					FatAllocCluster(fsys, cluster, FAT_EOC_MARK);
 					FatClearCluster(fsys, cluster);
-					
+
 					dirent->attrib = FAT_ATTRIBUTE_DIRECTORY;
 					dirent->first_cluster = cluster & 0x0000FFFF;
 					dirent->first_cluster_hi_bytes = (cluster & 0x0FFF0000) >> 16;
@@ -159,8 +157,7 @@ AuVFSNode* FatCreateDir(AuVFSNode* fsys, char* filename) {
 					if (parent_clust == _fs->__RootDirFirstCluster) {
 						dotdot->first_cluster = 0 & 0x0000FFFF;
 						dotdot->first_cluster_hi_bytes = (0 & 0x0FFF0000) >> 16;
-					}
-					else {
+					} else {
 						dotdot->first_cluster = parent_clust & 0x0000FFFF;
 						dotdot->first_cluster_hi_bytes = (parent_clust & 0x0FFF0000) >> 16;
 					}
@@ -170,8 +167,8 @@ AuVFSNode* FatCreateDir(AuVFSNode* fsys, char* filename) {
 
 					aa64_data_cache_clean_range(entrybuf, PAGE_SIZE);
 
-
-					AuVDiskWrite(_fs->vdisk, FatClusterToSector32(_fs, cluster), 1, (uint64_t*)entrybuf);
+					AuVDiskWrite(
+						_fs->vdisk, FatClusterToSector32(_fs, cluster), 1, (uint64_t*)entrybuf);
 
 					aa64_data_cache_clean_range(buff, PAGE_SIZE);
 					AuVDiskWrite(_fs->vdisk, FatClusterToSector32(_fs, parent_clust) + j, 1, buff);
@@ -262,7 +259,6 @@ int FatRemoveDir(AuVFSNode* fsys, AuVFSNode* file) {
 	return -1;
 }
 
-
 /**
 * @brief FatOpenDir -- opens a directory
 * @param fs -- Pointer to file system node
@@ -333,7 +329,6 @@ int FatDirectoryRead(AuVFSNode* fs, AuVFSNode* dir, AuDirectoryEntry* dirent) {
 		return -1;
 	}
 
-
 	uint8_t* aligned_buf = (uint8_t*)buf;
 	AuVDiskRead(vdisk, FatClusterToSector32(fatfs, dir->first_block) + index / 16, 1, buf);
 	FatDir* dir_ = (FatDir*)(aligned_buf + ((index % 16) * sizeof(FatDir)));
@@ -344,9 +339,7 @@ int FatDirectoryRead(AuVFSNode* fs, AuVFSNode* dir, AuDirectoryEntry* dirent) {
 		return -1;
 	}
 
-	if (dir_->filename[0] == 0xE5 ||
-		dir_->filename[0] == 0x05 ||
-		dir_->filename[0] == 0xFF) {
+	if (dir_->filename[0] == 0xE5 || dir_->filename[0] == 0x05 || dir_->filename[0] == 0xFF) {
 		AuPmmngrFree((void*)V2P((size_t)buf));
 		dirent->index += 1;
 		return -1;
@@ -387,7 +380,8 @@ int FatDirectoryRead(AuVFSNode* fs, AuVFSNode* dir, AuDirectoryEntry* dirent) {
 	dirent->date = dir_->date_created;
 
 	if ((dir_->attrib & FAT_ATTRIBUTE_MASK) == FAT_ATTRIBUTE_LONG_NAME)
-		UARTDebugOut("[aurora-fat]: DIRName -> %s attrib -> %x, LFN -> yes \r\n", filename, dir_->attrib);
+		UARTDebugOut(
+			"[aurora-fat]: DIRName -> %s attrib -> %x, LFN -> yes \r\n", filename, dir_->attrib);
 
 	if (dir_->attrib & 0x10)
 		dirent->flags = FS_FLAG_DIRECTORY;

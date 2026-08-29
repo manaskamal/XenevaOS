@@ -38,15 +38,15 @@
 DeodhaiAudioBox* TrayGetSoundControl(ChitralekhaApp* app) {
 	int threadID = app->currentID;
 	int postBox = app->postboxfd;
-	DeodhaiAudioBox* audioBox = DeodhaiAudioOpenConnection(postBox, DEODHAI_AUDIO_STEREO, 
-		DEODHAI_CONNECTION_TYPE_GLOBAL);
+	DeodhaiAudioBox* audioBox =
+		DeodhaiAudioOpenConnection(postBox, DEODHAI_AUDIO_STEREO, DEODHAI_CONNECTION_TYPE_GLOBAL);
 	if (audioBox->sampleBuffer != NULL) {
-		_KePrint("Global audio connection was successfull , global -> %d \r\n", audioBox->ctlPanel->global);
+		_KePrint("Global audio connection was successfull , global -> %d \r\n",
+				 audioBox->ctlPanel->global);
 
 		audioBox->ctlPanel->ready = 1;
 		return audioBox;
-	}
-	else
+	} else
 		return NULL;
 }
 

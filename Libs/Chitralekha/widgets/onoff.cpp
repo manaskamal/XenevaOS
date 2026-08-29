@@ -30,7 +30,6 @@
 #include "onoff.h"
 #include <stdlib.h>
 
-
 extern void ChDefaultOnOffPainter(ChWidget* wid, ChWindow* win);
 
 /*
@@ -74,9 +73,7 @@ void ChOnOffMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, int button) {
  * @param scrollval -- Scroll value
  * @param scrollType -- type of the scroll horiz-vert
  */
-void ChOnOffScrollEvent(ChWidget* wid, ChWindow* win, int scrollval, uint8_t scrollType) {
-
-}
+void ChOnOffScrollEvent(ChWidget* wid, ChWindow* win, int scrollval, uint8_t scrollType) {}
 
 /*
  * ChOnOffDestroy -- destroy the on off button

@@ -41,7 +41,8 @@
  */
 void AuCleanMMap(AuProcess* proc) {
 	for (int i = 0; i < proc->proc_mmap_len / 0x1000; i++) {
-		uint64_t phys = (uint64_t)AuGetPhysicalAddressEx(proc->cr3, PROCESS_MMAP_ADDRESS + i * 0x1000);
+		uint64_t phys =
+			(uint64_t)AuGetPhysicalAddressEx(proc->cr3, PROCESS_MMAP_ADDRESS + i * 0x1000);
 
 		/* also do check, if the physical address is backed by file, 
 		 * need to behave differently with file backed physical addresses 
@@ -62,10 +63,11 @@ void AuCleanMMap(AuProcess* proc) {
  */
 void AuCleanHeapMem(AuProcess* proc) {
 	for (int i = 0; i < proc->proc_heapmem_len / 0x1000; i++) {
-		uint64_t phys = (uint64_t)AuGetPhysicalAddressEx(proc->cr3, PROCESS_BREAK_ADDRESS + i * 0x1000);
+		uint64_t phys =
+			(uint64_t)AuGetPhysicalAddressEx(proc->cr3, PROCESS_BREAK_ADDRESS + i * 0x1000);
 		if (phys) {
 			AuPageDesc* desc = AuPmmngrGetPageDesc(phys);
-			if (desc->diskblock == -1) 
+			if (desc->diskblock == -1)
 				AuPmmngrFree((void*)phys);
 		}
 	}
@@ -95,14 +97,14 @@ void AuCleanUserStack(AuProcess* proc, AuUserEntry* uentry) {
  * @param proc -- Pointer to killable process
  * @param thr -- Pointer to thread that needs kernel stack cleanup
  */
-void AuCleanKernelStack(AuProcess* proc, AA64Thread *thr) {
+void AuCleanKernelStack(AuProcess* proc, AA64Thread* thr) {
 	uint64_t location = (thr->originalKSp + 64) - KERNEL_STACK_SIZE;
 	UARTDebugOut("kstack location to clean: %x \r\n", location);
 	for (int i = 0; i < KERNEL_STACK_SIZE / 0x1000; i++) {
 		uint64_t phys = (uint64_t)AuGetPhysicalAddress(location + i * 0x1000);
 		if (phys) {
 			AuPageDesc* desc = AuPmmngrGetPageDesc(phys);
-			if (desc->diskblock == -1) 
+			if (desc->diskblock == -1)
 				AuPmmngrFree((void*)phys);
 		}
 	}
@@ -121,8 +123,6 @@ void AuProcessClean(AuProcess* parent, AuProcess* killable) {
 	/** clean up heap areas **/
 	AuCleanHeapMem(killable);
 
-	
-
 	/** clean up user allocated areas **/
 
 	/** free up each sub thread's user stack **/
@@ -137,9 +137,8 @@ void AuProcessClean(AuProcess* parent, AuProcess* killable) {
 	/** free up the user stack **/
 	if (killable->main_thread) {
 		AuUserEntry* uentry = killable->main_thread->uentry;
-		if (uentry) 
+		if (uentry)
 			AuCleanUserStack(killable, uentry);
-		
 	}
 
 	/** clean up the kernel stack of sub threads **/
@@ -151,16 +150,15 @@ void AuProcessClean(AuProcess* parent, AuProcess* killable) {
 	}
 
 	/** free up the kernel stack of main thread **/
-	if (killable->main_thread) 
+	if (killable->main_thread)
 		AuCleanKernelStack(killable, killable->main_thread);
-	
 
 	/** check for argument blocks **/
 	AuUserEntry* uentry = killable->main_thread->uentry;
 	if (uentry) {
 		if (uentry->argvaddr != 0) {
 			void* phys = AuGetPhysicalAddressEx(killable->cr3, uentry->argvaddr);
-			if (phys) 
+			if (phys)
 				AuPmmngrFree((void*)phys);
 		}
 	}
@@ -173,7 +171,7 @@ void AuProcessClean(AuProcess* parent, AuProcess* killable) {
 				continue;
 			if (subthr->uentry->argvaddr != 0) {
 				void* phys = AuGetPhysicalAddressEx(killable->cr3, subthr->uentry->argvaddr);
-				if (phys) 
+				if (phys)
 					AuPmmngrFree((void*)phys);
 			}
 		}
@@ -181,9 +179,9 @@ void AuProcessClean(AuProcess* parent, AuProcess* killable) {
 
 	/** free up environment block **/
 	void* envBlock = AuGetPhysicalAddressEx(killable->cr3, 0x5000);
-	if (envBlock) 
+	if (envBlock)
 		AuPmmngrFree((void*)envBlock);
-	
+
 	/** free up uentry structs **/
 	if (uentry)
 		kfree(uentry);
@@ -194,7 +192,7 @@ void AuProcessClean(AuProcess* parent, AuProcess* killable) {
 		if (subthr) {
 			if (!subthr->uentry)
 				continue;
-			if (subthr->uentry) 
+			if (subthr->uentry)
 				kfree(subthr->uentry);
 		}
 	}
@@ -219,5 +217,6 @@ void AuProcessClean(AuProcess* parent, AuProcess* killable) {
 	size_t usedRam = (AuPmmngrGetUsedMem() * 0x1000) / 1024 / 1024;
 	size_t freeRam = (AuPmmngrGetFreeMem() * 0x1000) / 1024 / 1024;
 	UARTDebugOut("[aurora-clean]: process cleaned successfully \r\n");
-	UARTDebugOut("total mem : %d mb, used mem : %d mb , free mem : %d mb\r\n", totalRam, usedRam, freeRam);
+	UARTDebugOut(
+		"total mem : %d mb, used mem : %d mb , free mem : %d mb\r\n", totalRam, usedRam, freeRam);
 }

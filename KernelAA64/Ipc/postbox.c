@@ -56,7 +56,8 @@
  */
 
 #define POSTEVENT_ALIGN 8
-#define POSTEVENT_SIZE_ALIGNED (((sizeof(PostEvent) + (POSTEVENT_ALIGN - 1)) / POSTEVENT_ALIGN) * POSTEVENT_ALIGN)
+#define POSTEVENT_SIZE_ALIGNED                                                                     \
+	(((sizeof(PostEvent) + (POSTEVENT_ALIGN - 1)) / POSTEVENT_ALIGN) * POSTEVENT_ALIGN)
 
 PostBox* firstBox = NULL;
 PostBox* lastBox = NULL;
@@ -100,8 +101,7 @@ void PostBoxCreate(bool root, uint16_t tid) {
 	if (root && !_PostBoxRootCreated) {
 		box->ownerID = POSTBOX_ROOT_ID;
 		_PostBoxRootCreated = true;
-	}
-	else {
+	} else {
 		box->ownerID = tid;
 	}
 
@@ -112,14 +112,11 @@ void PostBoxCreate(bool root, uint16_t tid) {
 	box->full = false;
 
 	box->size = PAGE_SIZE / ALIGN_UP(sizeof(PostEvent), 8);
-	
-
 
 	if (firstBox == NULL) {
 		firstBox = box;
 		lastBox = box;
-	}
-	else {
+	} else {
 		lastBox->next = box;
 		box->prev = lastBox;
 		lastBox = box;
@@ -143,8 +140,7 @@ void PostBoxDestroy(PostBox* box) {
 
 	if (box == lastBox) {
 		lastBox = box->prev;
-	}
-	else {
+	} else {
 		box->next->prev = box->prev;
 	}
 
@@ -172,7 +168,6 @@ void PostBoxDestroyByID(uint16_t id) {
 	return;
 }
 
-
 extern void enscheddebug();
 /**
  * @brief PostBoxPutEvent -- put an event to a specific post box
@@ -193,7 +188,6 @@ void PostBoxPutEvent(PostEvent* event) {
 		}
 	}
 
-
 	AA64Thread* thread = AuThreadFindByID(owner_id);
 	if (!thread)
 		thread = AuThreadFindByIDBlockList(owner_id);
@@ -203,7 +197,6 @@ void PostBoxPutEvent(PostEvent* event) {
 		if (strcmp(thread->name, "exec") == 0)
 			return;
 		AuUnblockThread(thread);
-
 	}
 
 	return;
@@ -223,7 +216,7 @@ int PostBoxGetEvent(PostEvent* event, bool root, AA64Thread* curr_thread) {
 		owner_id = POSTBOX_ROOT_ID;
 	else
 		owner_id = curr_thread->thread_id;
-	
+
 	for (PostBox* box = firstBox; box != NULL; box = box->next) {
 		if (box->ownerID == owner_id) {
 			//UARTDebugOut("[postbox]: getting event : %d %d\r\n", box->ownerID, owner_id);
@@ -242,7 +235,6 @@ int PostBoxGetEvent(PostEvent* event, bool root, AA64Thread* curr_thread) {
 
 	return ret_code;
 }
-
 
 /**
  * @brief PostBoxIOControl -- I/O Control function for
@@ -323,7 +315,6 @@ void AuIPCPostBoxInitialise() {
 	dsb_sy_barrier();
 	AuDevFSAddFile(dev, "/", node);*/
 
-
 	AuVFSNode* node2 = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
 	memset(node2, 0, sizeof(AuVFSNode));
 	strcpy(node2->filename, "postbox");
@@ -342,5 +333,6 @@ void AuIPCPostBoxInitialise() {
 	_PostBoxRootCreated = false;
 	AuTextOut("[aurora]: PostBox IPC mounted and initialized to /dev/pbox \r\n");
 	AuTextOut("[aurora]: PostEvent size : %d bytes \r\n", sizeof(PostEvent));
-	AuTextOut("[aurora]: PostBox size aligned : %d number \r\n", (4096 / ALIGN_UP(sizeof(PostEvent), 8)));
+	AuTextOut("[aurora]: PostBox size aligned : %d number \r\n",
+			  (4096 / ALIGN_UP(sizeof(PostEvent), 8)));
 }

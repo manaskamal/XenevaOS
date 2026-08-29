@@ -111,16 +111,14 @@ void* AuHashmapSet(hashmap_t* map, const void* key, void* value) {
 		e->next = NULL;
 		map->entries[hash] = e;
 		return NULL;
-	}
-	else {
+	} else {
 		hashmap_entry_t* p = NULL;
 		do {
 			if (map->hash_comp(x->key, key)) {
 				void* out = x->value;
 				x->value = value;
 				return out;
-			}
-			else {
+			} else {
 				p = x;
 				x = x->next;
 			}
@@ -139,8 +137,7 @@ void* AuHashmapGet(hashmap_t* map, const void* key) {
 	hashmap_entry_t* x = map->entries[hash];
 	if (!x) {
 		return NULL;
-	}
-	else {
+	} else {
 		do {
 			if (map->hash_comp(x->key, key))
 				return x->value;
@@ -163,8 +160,7 @@ void* AuHashmapRemove(hashmap_t* map, const void* key) {
 			map->hash_key_free(x->key);
 			map->hash_val_free(x);
 			return out;
-		}
-		else {
+		} else {
 			hashmap_entry_t* p = x;
 			x = x->next;
 			do {
@@ -200,7 +196,7 @@ int AuHashmapHas(hashmap_t* map, const void* key) {
 
 void AuHashmapFree(hashmap_t* map) {
 	for (unsigned int i = 0; i < map->size; ++i) {
-		hashmap_entry_t* x = map->entries[i], * p;
+		hashmap_entry_t *x = map->entries[i], *p;
 		while (x) {
 			p = x;
 			x = x->next;
@@ -211,10 +207,10 @@ void AuHashmapFree(hashmap_t* map) {
 	kfree(map->entries);
 }
 
-
 int AuHashmapIsEmpty(hashmap_t* map) {
 	for (unsigned int i = 0; i < map->size; ++i) {
-		if (map->entries[i]) return 0;
+		if (map->entries[i])
+			return 0;
 	}
 	return 1;
 }

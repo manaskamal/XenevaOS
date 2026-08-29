@@ -33,8 +33,7 @@
 
 extern void ChDefaultProgressBarPainter(ChWidget* wid, ChWindow* win);
 
-
-void ChProgressBarDestroy(ChWidget* widget, ChWindow* win){
+void ChProgressBarDestroy(ChWidget* widget, ChWindow* win) {
 	ChProgressBar* pb = (ChProgressBar*)widget;
 	free(pb);
 	_KePrint("ChProgressBar destroy \r\n");
@@ -47,7 +46,7 @@ void ChProgressBarDestroy(ChWidget* widget, ChWindow* win){
  * @param h -- height of the progress bar
  * @param progress -- current progress step
  */
-ChProgressBar *ChCreateProgressBar(int x, int y, int w, int h, double progress) {
+ChProgressBar* ChCreateProgressBar(int x, int y, int w, int h, double progress) {
 	ChProgressBar* pb = (ChProgressBar*)malloc(sizeof(ChProgressBar));
 	memset(pb, 0, sizeof(ChProgressBar));
 	pb->base.x = x;
@@ -60,7 +59,7 @@ ChProgressBar *ChCreateProgressBar(int x, int y, int w, int h, double progress) 
 	pb->maximumProgress = 100;
 	pb->currentProgress = progress;
 	double progressValue = (pb->currentProgress / pb->maximumProgress) * pb->base.w;
-	pb->progressPixelWidth =  (int)progressValue;
+	pb->progressPixelWidth = (int)progressValue;
 	pb->progressPercent = (pb->currentProgress / pb->maximumProgress) * 100;
 	return pb;
 }
@@ -79,7 +78,7 @@ void ChProgressBarSetMax(ChProgressBar* pb, int max) {
  * @param pb -- Pointer to progress bar instance
  * @param min -- Minimum limit of the progress in step
  */
-void ChProgressBarSetMin(ChProgressBar* pb, int min){
+void ChProgressBarSetMin(ChProgressBar* pb, int min) {
 	pb->minimumProgress = min;
 }
 
@@ -105,7 +104,7 @@ int ChProgressBarGetMin(ChProgressBar* pb) {
  * @param win -- Pointer to main window object
  * @param value -- current step value
  */
-void ChProgressBarSetValue(ChProgressBar* pb,ChWindow* win,double value) {
+void ChProgressBarSetValue(ChProgressBar* pb, ChWindow* win, double value) {
 	pb->currentProgress = value;
 	double progressValue = (pb->currentProgress / pb->maximumProgress) * pb->base.w;
 	pb->progressPixelWidth = (int)progressValue;

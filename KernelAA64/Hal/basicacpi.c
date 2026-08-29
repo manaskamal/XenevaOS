@@ -13,12 +13,9 @@
 #endif
 #endif
 
-
 AuroraBasicACPI* __AuroraBasicAcpi;
 bool __PCIESupported;
 void* __ACPIRSDP;
-
-
 
 uint8_t* search_s5(acpiDsdt* header) {
 	uint32_t l;
@@ -36,13 +33,13 @@ uint8_t* search_s5(acpiDsdt* header) {
 	return (uint8_t*)NULL;
 }
 
-
 /*
  * AuACPIParseMADT -- Parses the MADT table
  */
 void AuACPIParseMADT() {
 	acpiApicHeader* apic_header = (acpiApicHeader*)__AuroraBasicAcpi->madt->entry;
-	while (RAW_DIFF(apic_header, __AuroraBasicAcpi->madt) < __AuroraBasicAcpi->madt->header.length) {
+	while (RAW_DIFF(apic_header, __AuroraBasicAcpi->madt) <
+		   __AuroraBasicAcpi->madt->header.length) {
 		switch (apic_header->type) {
 		case ACPI_APICTYPE_LAPIC: {
 			acpiLocalApic* lapic = (acpiLocalApic*)apic_header;
@@ -53,12 +50,15 @@ void AuACPIParseMADT() {
 		}
 		case ACPI_APICTYPE_IOAPIC: {
 			acpiIoApic* io_apic = (acpiIoApic*)apic_header;
-			AuTextOut("acpi ioapic base -> %x, gsi -> %d \n", io_apic->ioApicAddr, io_apic->gsiBase);
+			AuTextOut(
+				"acpi ioapic base -> %x, gsi -> %d \n", io_apic->ioApicAddr, io_apic->gsiBase);
 			break;
 		}
 		case ACPI_APICTYPE_ISOVER: {
 			apic_interrupt_override* over = (apic_interrupt_override*)apic_header;
-			AuTextOut("acpi interrupt source override gsi -> %d, src-> %d \n", over->interrupt, over->source);
+			AuTextOut("acpi interrupt source override gsi -> %d, src-> %d \n",
+					  over->interrupt,
+					  over->source);
 			break;
 		}
 
@@ -82,10 +82,11 @@ void AuACPIParseMADT() {
 			break;
 		}
 		case ACPI_MADTTYPE_GICMSI: {
-			AuTextOut("GIC MSI Frame found \n"); 
+			AuTextOut("GIC MSI Frame found \n");
 			acpiGICv2MFrame* msiframe = (acpiGICv2MFrame*)apic_header;
 			UARTDebugOut("GIC MSI Frame Base : %x \n", msiframe->physicalBaseAddress);
-			UARTDebugOut("GIC MSI SPI Base : %d, SPICount : %d \n", msiframe->spiBase, msiframe->spiCount);
+			UARTDebugOut(
+				"GIC MSI SPI Base : %d, SPICount : %d \n", msiframe->spiBase, msiframe->spiCount);
 			GIC* gic = AuGetSystemGIC();
 			gic->gicMSIPhys = msiframe->physicalBaseAddress;
 			gic->spiBase = msiframe->spiBase;
@@ -97,15 +98,13 @@ void AuACPIParseMADT() {
 			break;
 		}
 
-		apic_header = RAW_OFFSET(acpiApicHeader*,apic_header, apic_header->length);
+		apic_header = RAW_OFFSET(acpiApicHeader*, apic_header, apic_header->length);
 	}
 }
 
-
-#pragma pack(push,1)
+#pragma pack(push, 1)
 //! ACPI version 1.0 structures
-typedef struct _rsdp2_
-{
+typedef struct _rsdp2_ {
 	char signature[8];
 	unsigned char checksum;
 	char oemId[6];
@@ -152,21 +151,18 @@ void AuACPIInitialise(void* acpi_base) {
 	int entries = 0;
 	if (rsdt) {
 		entries = (rsdt->header.length - sizeof(rsdt->header)) / 4;
-	}
-	else if (xsdt) {
+	} else if (xsdt) {
 		entries = (xsdt->header.length - sizeof(xsdt->header)) / sizeof(uint64_t);
 	}
 	acpiSysDescHeader* header = NULL;
 	__PCIESupported = false;
-	
+
 	for (int count = 0; count < entries; count++) {
 		if (rsdt) {
 			header = (acpiSysDescHeader*)(uintptr_t)rsdt->entry[count];
-		}
-		else {
+		} else {
 			header = (acpiSysDescHeader*)xsdt->entry[count];
 		}
-
 
 		strncpy(sig, header->signature, 4);
 		sig[4] = '\0';
@@ -179,24 +175,19 @@ void AuACPIInitialise(void* acpi_base) {
 		else if (!strncmp(sig, ACPI_SIG_APIC, strlen("CIPA"))) {
 			__AuroraBasicAcpi->madt = (acpiMadt*)header;
 			AuTextOut("acpi madt supported \n");
-		}
-		else if (!strncmp(sig, ACPI_SIG_SRAT, strlen(ACPI_SIG_SRAT))) {
+		} else if (!strncmp(sig, ACPI_SIG_SRAT, strlen(ACPI_SIG_SRAT))) {
 			AuTextOut("acpi srat supported \n");
 			/* here needs to parse the srat table for
 			 * numa memory */
-		}
-		else if (!strncmp(sig, ACPI_SIG_SLIT, strlen(ACPI_SIG_SLIT))) {
+		} else if (!strncmp(sig, ACPI_SIG_SLIT, strlen(ACPI_SIG_SLIT))) {
 			AuTextOut("acpi slit supported \n");
-		}
-		else if (!strncmp(sig, ACPI_SIG_MCFG, strlen(ACPI_SIG_MCFG))) {
+		} else if (!strncmp(sig, ACPI_SIG_MCFG, strlen(ACPI_SIG_MCFG))) {
 			AuTextOut("acpi mcfg supported \n");
 			__AuroraBasicAcpi->mcfg = (acpiMcfg*)header;
 			__PCIESupported = true;
-		}
-		else if (!strncmp(sig, ACPI_SIG_HPET, strlen(ACPI_SIG_HPET))) {
+		} else if (!strncmp(sig, ACPI_SIG_HPET, strlen(ACPI_SIG_HPET))) {
 			AuTextOut("acpi hpet supported \n");
-		}
-		else if (!strncmp(sig, ACPI_SIG_MCHI, strlen(ACPI_SIG_MCHI))) {
+		} else if (!strncmp(sig, ACPI_SIG_MCHI, strlen(ACPI_SIG_MCHI))) {
 			AuTextOut("acpi management controller host interface supported\n");
 		}
 	}
@@ -222,7 +213,6 @@ void AuACPIInitialise(void* acpi_base) {
 				S5Block++;
 
 			__AuroraBasicAcpi->slp_typb = *S5Block;
-
 		}
 	}
 
@@ -230,7 +220,6 @@ void AuACPIInitialise(void* acpi_base) {
 		AuTextOut("ACPI Madt : %x \n", __AuroraBasicAcpi->madt);
 		AuACPIParseMADT();
 	}
-
 }
 
 /**

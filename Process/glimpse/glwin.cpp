@@ -34,8 +34,8 @@
 #include <widgets/window.h>
 #include "glimpse.h"
 
-#define GLIMPSE_TITLEBAR_LIGHT 0xFFd3d1d1
-#define GLIMPSE_TITLEBAR_DARK 0xFFB5B5B5
+#define GLIMPSE_TITLEBAR_LIGHT		0xFFd3d1d1
+#define GLIMPSE_TITLEBAR_DARK		0xFFB5B5B5
 #define GLIMPSE_TITLEBAR_FOCUS_DARK 0xFFA3AFBB
 
 #define FONT_BASELINE_RATIO_NUM 4
@@ -43,13 +43,14 @@
 
 static int _win_title_baselineY(int row_top_y, int row_height) {
 	int ascent = (row_height * FONT_BASELINE_RATIO_NUM) / FONT_BASELINE_RATIO_DEN;
-	if (ascent > row_height) ascent = row_height;
+	if (ascent > row_height)
+		ascent = row_height;
 	return row_top_y + ascent;
 }
 
 void GlimpsePaintTitlebar(ChWindow* win) {
 	uint32_t light_color = GLIMPSE_TITLEBAR_LIGHT;
-	uint32_t dark_color = win->color;  //GLIMPSE_TITLEBAR_DARK;
+	uint32_t dark_color = win->color; //GLIMPSE_TITLEBAR_DARK;
 	if (win->focused) {
 		light_color = GLIMPSE_TITLEBAR_LIGHT;
 		dark_color = GLIMPSE_TITLEBAR_FOCUS_DARK;
@@ -62,7 +63,8 @@ void GlimpsePaintTitlebar(ChWindow* win) {
 	int font_width = ChFontGetWidth(font, win->title);
 	int font_height = ChFontGetHeight(font, win->title);
 	int peny = _win_title_baselineY(0, 26);
-	ChFontDrawText(win->canv, font, win->title, win->info->width / 2 - font_width / 2, peny, 16, BLACK);
+	ChFontDrawText(
+		win->canv, font, win->title, win->info->width / 2 - font_width / 2, peny, 16, BLACK);
 	//ChDrawRectUnfilled(win->canv, 0, 0, win->info->width, 26, LIGHTBLACK);
 
 	for (int i = 0; i < win->GlobalControls->pointer; i++) {
@@ -74,13 +76,12 @@ void GlimpsePaintTitlebar(ChWindow* win) {
 	}
 }
 
-
 void GlimpseWindowPaint(ChWindow* win) {
 	GlimpBox* glimp = _Glimpse_get_main_glimp();
 
 	ChDrawRect(win->canv, 0, 0, win->info->width, win->info->height, win->color);
 
-	if (glimp) 
+	if (glimp)
 		_Glimpse_box_repaint(glimp, win);
 
 	/** draw all widgets */
@@ -89,7 +90,7 @@ void GlimpseWindowPaint(ChWindow* win) {
 		if (wid->ChPaintHandler)
 			wid->ChPaintHandler(wid, win);
 	}
-	
+
 	GlimpsePaintTitlebar(win);
 	ChWindowUpdate(win, 0, 0, win->info->width, win->info->height, 1, 0);
 }

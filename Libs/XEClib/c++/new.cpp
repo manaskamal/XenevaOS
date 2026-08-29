@@ -41,7 +41,7 @@ void* operator new[](std::size_t size) {
 	return (malloc(size));
 }
 
-void* operator new(std::size_t s, void* ptr){
+void* operator new(std::size_t s, void* ptr) {
 	return ptr;
 }
 

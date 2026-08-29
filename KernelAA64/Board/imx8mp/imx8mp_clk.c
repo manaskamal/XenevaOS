@@ -51,7 +51,7 @@ static uint64_t _ccm_base;
 
 typedef struct _clk_node_ {
 	char* name;
-	uint32_t(*recalc_rate)(struct _clk_node_* self);
+	uint32_t (*recalc_rate)(struct _clk_node_* self);
 	int num_parent;
 	struct _clk_node_** parent;
 	uint32_t reg_offset;
@@ -64,20 +64,23 @@ typedef struct _clk_node_ {
 	bool _pll_read;
 	uint64_t rate;
 	int current_parent_idx;
-}imx8mp_clk;
+} imx8mp_clk;
 
 typedef struct _dt_clk_bindings_ {
 	uint32_t clk_id;
 	int has_parent;
 	uint32_t parent_clk_id;
 	uint32_t rate_hz;
-}imx8mp_dt_clk;
+} imx8mp_dt_clk;
 
 static imx8mp_clk _clk_node[100];
 static int _clk_node_count = 0;
 
-static void imx8mp_write_target_root(uint32_t clk_root_idx, uint32_t offset,
-	uint32_t mux_val, uint32_t pre_podf, uint32_t post_podf);
+static void imx8mp_write_target_root(uint32_t clk_root_idx,
+									 uint32_t offset,
+									 uint32_t mux_val,
+									 uint32_t pre_podf,
+									 uint32_t post_podf);
 
 static imx8mp_clk* _imx8mp_clk_alloc(const char* name) {
 	if (_clk_node_count == 100) {
@@ -91,8 +94,6 @@ static imx8mp_clk* _imx8mp_clk_alloc(const char* name) {
 	n->is_composite = 0;
 	return n;
 }
-
-
 
 static uint32_t _imx8mp_fixed_recalc(imx8mp_clk* clk) {
 	return clk->pre_podf;
@@ -126,8 +127,8 @@ static imx8mp_clk* imx8mp_clk_composite(const char* name, imx8mp_clk** parent, i
 	return n;
 }
 
-
-static imx8mp_clk* imx8mp_clk_pll(const char* name, imx8mp_clk** parent, int n_parents, uint32_t anatop) {
+static imx8mp_clk*
+imx8mp_clk_pll(const char* name, imx8mp_clk** parent, int n_parents, uint32_t anatop) {
 	imx8mp_clk* n = _imx8mp_clk_alloc(name);
 	n->recalc_rate = 0;
 	n->num_parent = n_parents;
@@ -152,7 +153,7 @@ static uint32_t AuDeviceTreeGetFixedClockRate(const char* node_name) {
 	return rate;
 }
 
-static void  imx8mp_clk_set_rate(imx8mp_clk* self, uint32_t target_hz);
+static void imx8mp_clk_set_rate(imx8mp_clk* self, uint32_t target_hz);
 
 /*
  * @brief kernel_res_clk_set_rate -- set rate of a clock, for this
@@ -183,7 +184,7 @@ int kernel_res_clk_set_rate(BordoisilaClk* clk, uint64_t rate) {
  * @param name -- name of the resource
  * @param data -- pointer to extra data
  */
- BordoisilaDriverResource* imx8mp_alloc_kernel_resource(char* name, void* data) {
+BordoisilaDriverResource* imx8mp_alloc_kernel_resource(char* name, void* data) {
 	BordoisilaClk* clk = (BordoisilaClk*)kmalloc(sizeof(BordoisilaClk));
 	if (!clk) {
 		BPrintK(BORDOISILA_ERROR, "imx8mp-clk failed to allocate kernel resource \r\n");
@@ -203,7 +204,6 @@ int kernel_res_clk_set_rate(BordoisilaClk* clk, uint64_t rate) {
 	}
 	return (BordoisilaDriverResource*)clk;
 }
-
 
 #define IMX8MP_SYS_PLL1_RATE_HZ 800000000UL
 #define IMX8MP_SYS_PLL2_RATE_HZ 1000000000UL
@@ -250,8 +250,10 @@ static void imx8mp_config_fixed_clock() {
 
 	parent = imx8mp_pll_get_parent_rate(__IMX8MP_SYS_PLL3_GEN_CTRL);
 	uint64_t pll3_rate = imx8mp_pll_recalc_rate(__IMX8MP_SYS_PLL3_GEN_CTRL, parent);
-	BPrintK(BORDOISILA_INFO, "imx8mp: configuring clock rate database, pll1 rate: %u, pll3 rate: %u \r\n", 
-		pll1_rate, pll3_rate);
+	BPrintK(BORDOISILA_INFO,
+			"imx8mp: configuring clock rate database, pll1 rate: %u, pll3 rate: %u \r\n",
+			pll1_rate,
+			pll3_rate);
 
 	/**
 	 * DO NOTE: video pll1 rate and audio pll1 rate are in P-O-R (Power on Reset) values
@@ -309,8 +311,7 @@ static void imx8mp_config_fixed_clock() {
 	g_gpu_pll_out = imx8mp_clk_fixed("gpu_pll_out", gpu_pll_rate);
 }
 
-
-static void  imx8mp_clk_set_rate(imx8mp_clk* self, uint32_t target_hz) {
+static void imx8mp_clk_set_rate(imx8mp_clk* self, uint32_t target_hz) {
 	uint32_t best_err = UINT32_MAX;
 	int best_parent = 0, best_pre = 0, best_post = 0;
 
@@ -330,7 +331,8 @@ static void  imx8mp_clk_set_rate(imx8mp_clk* self, uint32_t target_hz) {
 						break;
 					}
 				}
-				if (err == 0) goto done;
+				if (err == 0)
+					goto done;
 			}
 		}
 	}
@@ -376,15 +378,15 @@ done:
 		self->post_podf = 0;*/
 	//}
 	self->rate = self->parent[self->current_parent_idx]->rate;
-	BPrintK(BORDOISILA_INFO, "using parent index : %d for clock : %s  \r\n", self->current_parent_idx, self->name);
+	BPrintK(BORDOISILA_INFO,
+			"using parent index : %d for clock : %s  \r\n",
+			self->current_parent_idx,
+			self->name);
 	UARTDebugOut("rate %d \r\n", self->rate);
 	BPrintK(BORDOISILA_INFO, "pre podf: %d, post podf : %d \r\n", self->pre_podf, self->post_podf);
-	imx8mp_write_target_root(self->clk_slice, 0x0, self->current_parent_idx, self->pre_podf, self->post_podf);
-
+	imx8mp_write_target_root(
+		self->clk_slice, 0x0, self->current_parent_idx, self->pre_podf, self->post_podf);
 }
-
-
-
 
 static bool is_imx8mp_clk_enabled(uint32_t clk_idx) {
 	volatile uint32_t* root = (volatile uint32_t*)CCM_ROOT_REG(_ccm_base, clk_idx);
@@ -402,9 +404,7 @@ static uint32_t imx8mp_clk_get_mux(uint32_t clk_idx) {
 	return (rval >> 24) & 0x7u;
 }
 
-
-#define FORM_CLK_COMPOSITE(name,parent,n_parent) imx8mp_clk_composite(name,parent,n_parent)
-
+#define FORM_CLK_COMPOSITE(name, parent, n_parent) imx8mp_clk_composite(name, parent, n_parent)
 
 /**
  *imx8mp_void_ccm_init -- map the ccm module
@@ -412,12 +412,12 @@ static uint32_t imx8mp_clk_get_mux(uint32_t clk_idx) {
 void imx8mp_ccm_init() {
 	AuTextOut("[imx8mp_board]: initializing clock control module (ccm) \r\n");
 	_ccm_base = (uint64_t)AuMapMMIO(CCM_BASE, 16);
-	
+
 	for (int i = 0; i < 100; i++) {
 		memset(&_clk_node[i], 0, sizeof(imx8mp_clk));
 		//memset(&_assigned_clk[i], 0, sizeof(imx8mp_clk));
 	}
-	
+
 	imx8mp_config_fixed_clock();
 
 	/**
@@ -438,7 +438,6 @@ void imx8mp_ccm_init() {
 	media_axi_clk->gate_slice = IMX8MP_CLK_MEDIA_AXI_ROOT;
 	imx8mp_alloc_kernel_resource("media_axi", media_axi_clk);
 
-
 	static imx8mp_clk* media_apb_parents[8];
 	media_apb_parents[0] = g_osc_24m;
 	media_apb_parents[1] = g_sys_pll2_125m;
@@ -453,7 +452,6 @@ void imx8mp_ccm_init() {
 	media_apb_clk->gate_slice = IMX8MP_CLK_MEDIA_APB_ROOT;
 	imx8mp_alloc_kernel_resource("media_apb", media_apb_clk);
 
-
 	static imx8mp_clk* gpu3d_sels[8];
 	gpu3d_sels[0] = g_osc_24m;
 	gpu3d_sels[1] = g_gpu_pll_out;
@@ -467,7 +465,6 @@ void imx8mp_ccm_init() {
 	gpu3d_clk->clk_slice = GPU3D_CORE_CLK_ROOT;
 	gpu3d_clk->gate_slice = IMX8MP_CLK_GPU3D_ROOT;
 	imx8mp_alloc_kernel_resource("gpu3d_core", gpu3d_clk);
-
 
 	static imx8mp_clk* gpu3d_shader[8];
 	gpu3d_shader[0] = g_osc_24m;
@@ -497,7 +494,6 @@ void imx8mp_ccm_init() {
 	gpu3d_sel->clk_slice = GPU2D_CLK_ROOT;
 	gpu3d_sel->gate_slice = IMX8MP_CLK_GPU3D_ROOT;
 	imx8mp_alloc_kernel_resource("gpu2d_clk", gpu2d_clk);
-
 
 	static imx8mp_clk* audio_axi_sels[8];
 	audio_axi_sels[0] = g_osc_24m;
@@ -537,7 +533,7 @@ void imx8mp_ccm_init() {
 	media_isp_sels[6] = g_clk_ext1;
 	media_isp_sels[7] = g_sys_pll2_500m;
 	imx8mp_clk* media_isp_clk = FORM_CLK_COMPOSITE("media_isp_clk", media_isp_sels, 8);
-    media_isp_clk->clk_slice = MEDIA_ISP_CLK_ROOT;
+	media_isp_clk->clk_slice = MEDIA_ISP_CLK_ROOT;
 	media_isp_clk->gate_slice = 0;
 	imx8mp_alloc_kernel_resource("media_isp_clk", media_isp_clk);
 
@@ -559,7 +555,6 @@ void imx8mp_ccm_init() {
 	media_disp1_clk->clk_slice = MEDIA_DISP1_PIX_CLK_ROOT; //0xbe00
 	media_disp1_clk->gate_slice = IMX8MP_CLK_MEDIA_DISP1_PIX_ROOT;
 	imx8mp_alloc_kernel_resource("media_disp1_pix_clk", media_disp1_clk);
-
 
 	imx8mp_clk* hdmi_apb = FORM_CLK_COMPOSITE("hdmi_apb", media_apb_parents, 8);
 	hdmi_apb->clk_slice = HDMI_APB_CLK_ROOT;
@@ -600,11 +595,13 @@ void imx8mp_ccm_init() {
 	imx8mp_alloc_kernel_resource("hdmi_ref_266m", hdmi_266m);
 }
 
-
-static void imx8mp_write_target_root(uint32_t clk_root_idx, uint32_t offset,
-	uint32_t mux_val, uint32_t pre_podf, uint32_t post_podf) {
+static void imx8mp_write_target_root(uint32_t clk_root_idx,
+									 uint32_t offset,
+									 uint32_t mux_val,
+									 uint32_t pre_podf,
+									 uint32_t post_podf) {
 	volatile uint32_t* root = (volatile uint32_t*)(CCM_ROOT_REG(_ccm_base, clk_root_idx) + offset);
-	
+
 	uint32_t val = *root;
 
 	val &= ~(1U << 28);
@@ -619,27 +616,26 @@ static void imx8mp_write_target_root(uint32_t clk_root_idx, uint32_t offset,
 	val |= (pre_podf & 0x7u) << 16;
 	val &= ~(0x3Fu << 0);
 	val |= (post_podf & 0x3Fu) << 0;
-	
 
-	// enable the clock 
+	// enable the clock
 	val |= (1u << 28);
 	*root = val;
 
 	dsb_ish();
 	isb_flush();
 
-
-	
 	BPrintK(BORDOISILA_WARN, "imx8mp target root written successfully address : %x \r\n", root);
 	//for safety :-) hihi
 	for (int i = 0; i < 100; i++)
 		;
 
 	uint32_t confirm = *root;
-	if (((confirm >> 24) & 0x7u) != mux_val ||
-		((confirm >> 28) & 0x1u) != 1u) {
-		BPrintK(BORDOISILA_WARN, "imx8mp target root write mismatch at offset : %x, wanted mux = %x got = %x \r\n",
-			root, mux_val, ((confirm >> 24) & 0x7u));
+	if (((confirm >> 24) & 0x7u) != mux_val || ((confirm >> 28) & 0x1u) != 1u) {
+		BPrintK(BORDOISILA_WARN,
+				"imx8mp target root write mismatch at offset : %x, wanted mux = %x got = %x \r\n",
+				root,
+				mux_val,
+				((confirm >> 24) & 0x7u));
 	}
 }
 /**
@@ -656,4 +652,3 @@ uint64_t imx8mp_ccm_get_base() {
 }
 
 #endif
-

@@ -34,18 +34,17 @@
 #include "color.h"
 #include <_xeneva.h>
 
-
 #ifdef __cplusplus
-XE_EXTERN{
+XE_EXTERN {
 #endif
 
-#pragma pack(push,1)
+#pragma pack(push, 1)
 	typedef struct _chrect_ {
 		int32_t x;
 		int32_t y;
 		int32_t w;
 		int32_t h;
-	}ChRect;
+	} ChRect;
 #pragma pack(pop)
 
 	/*
@@ -56,8 +55,8 @@ XE_EXTERN{
 	* @param w -- Width of the rect
 	* @param h -- Height of the rect
 	*/
-	XE_LIB void ChDrawRect(ChCanvas* canvas, unsigned x, unsigned y, unsigned w, unsigned h, uint32_t col);
-
+	XE_LIB void ChDrawRect(
+		ChCanvas * canvas, unsigned x, unsigned y, unsigned w, unsigned h, uint32_t col);
 
 	/*
 	* ChDrawRectClipped -- draw a rectangle within clipped boundary
@@ -69,7 +68,13 @@ XE_EXTERN{
 	* @param clip -- Pointer to clip rect
 	* @param col -- Color of the rectangle
 	*/
-	XE_LIB void ChDrawRectClipped(ChCanvas* canv, unsigned x, unsigned y, unsigned w, unsigned h, ChRect* clip, uint32_t col);
+	XE_LIB void ChDrawRectClipped(ChCanvas * canv,
+								  unsigned x,
+								  unsigned y,
+								  unsigned w,
+								  unsigned h,
+								  ChRect* clip,
+								  uint32_t col);
 
 	/*
 	* ChDrawVerticalLine -- draws a vertical line
@@ -79,7 +84,8 @@ XE_EXTERN{
 	* @param len -- length of the line
 	* @param col -- Color to use
 	*/
-	XE_LIB void ChDrawVerticalLine(ChCanvas* canv, unsigned x, unsigned y, unsigned len, uint32_t col);
+	XE_LIB void ChDrawVerticalLine(
+		ChCanvas * canv, unsigned x, unsigned y, unsigned len, uint32_t col);
 
 	/*
 	* ChDrawVerticalLine -- draws a horizontal line
@@ -89,8 +95,8 @@ XE_EXTERN{
 	* @param len -- length of the line
 	* @param col -- Color to use
 	*/
-	XE_LIB void ChDrawHorizontalLine(ChCanvas* canv, unsigned x, unsigned y, unsigned len, uint32_t col);
-
+	XE_LIB void ChDrawHorizontalLine(
+		ChCanvas * canv, unsigned x, unsigned y, unsigned len, uint32_t col);
 
 	/*
 	* ChDrawRectUnfilled -- draws a unfilled only outlined rectangle
@@ -100,7 +106,8 @@ XE_EXTERN{
 	* @param w -- Width of the rect
 	* @param h -- Height of the rect
 	*/
-	XE_LIB void ChDrawRectUnfilled(ChCanvas* canv, unsigned x, unsigned y, unsigned w, unsigned h, uint32_t color);
+	XE_LIB void ChDrawRectUnfilled(
+		ChCanvas * canv, unsigned x, unsigned y, unsigned w, unsigned h, uint32_t color);
 
 	/*
 	* ChDrawRectUnfilledClipped -- draw a unfilled rectangle within clipped boundary
@@ -112,7 +119,13 @@ XE_EXTERN{
 	* @param clip -- Pointer to clip rect
 	* @param col -- Color of the rectangle
 	*/
-	XE_LIB void ChDrawRectUnfilledClipped(ChCanvas* canv, unsigned x, unsigned y, unsigned w, unsigned h, ChRect* clip, uint32_t col);
+	XE_LIB void ChDrawRectUnfilledClipped(ChCanvas * canv,
+										  unsigned x,
+										  unsigned y,
+										  unsigned w,
+										  unsigned h,
+										  ChRect* clip,
+										  uint32_t col);
 
 	/*
 	* ChDrawFilledCircle -- draws a filled circle
@@ -122,7 +135,7 @@ XE_EXTERN{
 	* @param radius -- radius of the circle
 	* @param fill_col -- color to use while filling
 	*/
-	XE_LIB void ChDrawFilledCircle(ChCanvas* canv, int x, int y, int radius, uint32_t fill_col);
+	XE_LIB void ChDrawFilledCircle(ChCanvas * canv, int x, int y, int radius, uint32_t fill_col);
 
 	/*
      * ChDrawFilledCircleAA -- Draw antialiased filled cirlce
@@ -132,7 +145,7 @@ XE_EXTERN{
      * @param radius -- radius of the circle
      * @param color -- color of the circle
      */
-	XE_LIB void ChDrawFilledCircleAA(ChCanvas* canv, int cx, int cy, int radius, uint32_t color);
+	XE_LIB void ChDrawFilledCircleAA(ChCanvas * canv, int cx, int cy, int radius, uint32_t color);
 
 	/*
 	* ChDrawLine -- draws a line
@@ -143,7 +156,7 @@ XE_EXTERN{
 	* @param y2 -- Y coord of point two
 	* @param color -- color to use
 	*/
-	XE_LIB void ChDrawLine(ChCanvas* canv, int x1, int y1, int x2, int y2, uint32_t color);
+	XE_LIB void ChDrawLine(ChCanvas * canv, int x1, int y1, int x2, int y2, uint32_t color);
 
 	/*
 	* ChDrawCircleUnfilled -- Draws a circle without filling its internal
@@ -164,11 +177,19 @@ XE_EXTERN{
      * @param height -- Height of the capsule
      * @param color -- fill color of the capsule
      */
-	XE_LIB void ChDrawCapsule(ChCanvas* canv, int x, int y, int width, int height, uint32_t color);
+	XE_LIB void ChDrawCapsule(ChCanvas * canv, int x, int y, int width, int height, uint32_t color);
 
-
-	XE_LIB void ChDrawRoundedRect(ChCanvas* canv, int x, int y, int width, int height, uint32_t color, int topleftRadius,
-		int topRightRadius, int bottomRightRadius, int bottomLeftRadius, ChRect* mask);
+	XE_LIB void ChDrawRoundedRect(ChCanvas * canv,
+								  int x,
+								  int y,
+								  int width,
+								  int height,
+								  uint32_t color,
+								  int topleftRadius,
+								  int topRightRadius,
+								  int bottomRightRadius,
+								  int bottomLeftRadius,
+								  ChRect* mask);
 #ifdef __cplusplus
 }
 #endif

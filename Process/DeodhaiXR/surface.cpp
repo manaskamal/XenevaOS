@@ -63,8 +63,9 @@ void DeodhaiBackSurfaceUpdate(ChCanvas* canv, int x, int y, int w, int h) {
 		y = 0;
 
 	for (int j = 0; j < h; j++) {
-		_fastcpy(canv->buffer + (y_ + j) * canv->canvasWidth + x_, wallp + (y_ + j) * canv->canvasWidth + x_,
-			w_ * 4);
+		_fastcpy(canv->buffer + (y_ + j) * canv->canvasWidth + x_,
+				 wallp + (y_ + j) * canv->canvasWidth + x_,
+				 w_ * 4);
 	}
 }
 
@@ -75,7 +76,13 @@ void DeodhaiBackSurfaceUpdate(ChCanvas* canv, int x, int y, int w, int h) {
 void DeoInitializeBackSurface(ChCanvas* canv) {
 	backSurface = NULL;
 	/* allocate a surface buffer */
-	backSurface = (uint32_t*)_KeMemMap(NULL, static_cast<size_t>(canv->screenWidth) * canv->screenHeight * 4, 0, 0, MEMMAP_NO_FILEDESC, 0);
+	backSurface =
+		(uint32_t*)_KeMemMap(NULL,
+							 static_cast<size_t>(canv->screenWidth) * canv->screenHeight * 4,
+							 0,
+							 0,
+							 MEMMAP_NO_FILEDESC,
+							 0);
 	for (int i = 0; i < canv->screenWidth; i++)
 		for (int j = 0; j < canv->screenHeight; j++)
 			backSurface[j * canv->canvasWidth + i] = GRAY; //0xFF938585;
@@ -85,4 +92,3 @@ void DeoInitializeBackSurface(ChCanvas* canv) {
 uint32_t* DeoGetBackSurface() {
 	return backSurface;
 }
-

@@ -36,7 +36,6 @@
 #include "button.h"
 #include "appgrid.h"
 
-
 uint8_t* launcher_config_file;
 
 /*
@@ -66,7 +65,7 @@ void LauncherConfigInitialise() {
  * by config file
  */
 void LauncherSetupByConfigFile() {
-	if (!launcher_config_file){
+	if (!launcher_config_file) {
 		printf("Config file buffer is zero \n");
 		return;
 	}
@@ -76,7 +75,7 @@ void LauncherSetupByConfigFile() {
 	while (1) {
 		char* p = strchr(fbuf, '{'); //beginning of an entry
 		if (p)
-			p += 8; //skip '[' 
+			p += 8; //skip '['
 
 		fbuf = p;
 
@@ -84,15 +83,15 @@ void LauncherSetupByConfigFile() {
 		char title[42];
 		memset(title, 0, 42);
 		for (int i = 0; i < 42; i++) {
-			if (p[i] == '|'){
+			if (p[i] == '|') {
 				fbuf++;
 				break;
 			}
 			title[i] = p[i];
 			fbuf++;
 		}
-	
-		p = strchr(fbuf, ']');//end of a keyword line, skip to icon name
+
+		p = strchr(fbuf, ']'); //end of a keyword line, skip to icon name
 		if (p)
 			p++;
 
@@ -100,14 +99,14 @@ void LauncherSetupByConfigFile() {
 		char icon[42];
 		memset(icon, 0, 42);
 		for (int i = 0; i < 42; i++) {
-			if (p[i] == '|'){
+			if (p[i] == '|') {
 				fbuf++;
 				break;
 			}
 			icon[i] = p[i];
 			fbuf++;
 		}
-		
+
 		p = strchr(fbuf, ']');
 		if (p)
 			p++;
@@ -133,27 +132,26 @@ void LauncherSetupByConfigFile() {
 		char app[42];
 		memset(app, 0, 42);
 		for (int i = 0; i < 42; i++) {
-			if (p[i] == '}'){
+			if (p[i] == '}') {
 				fbuf++;
 				break;
 			}
-			if (p[i] == '>'){
+			if (p[i] == '>') {
 				_last_entry_ = true;
 				break;
 			}
 			app[i] = p[i];
 			fbuf++;
 		}
-		
-		LaunchButton* button = CreateLaunchButton(0, 0, LAUNCH_BUTTON_W, LAUNCH_BUTTON_H, title, app);
+
+		LaunchButton* button =
+			CreateLaunchButton(0, 0, LAUNCH_BUTTON_W, LAUNCH_BUTTON_H, title, app);
 		button->param = (char*)malloc(strlen(param));
 		strcpy(button->param, param);
 		ButtonIcon* ico = CreateLaunchButtonIcon(icon, button);
 		AppGridAddButton(grid, button);
-		
+
 		if (_last_entry_)
 			break;
 	}
-
-	
 }

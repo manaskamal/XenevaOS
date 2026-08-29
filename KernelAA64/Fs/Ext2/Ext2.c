@@ -63,10 +63,11 @@ uint32_t Ext2FindEntry(Ext2Fs* fs, Ext2Inode* dir_inode, const char* name) {
 		return 0;
 	}
 
-	for (int i = 0;i < 12;i++) {
+	for (int i = 0; i < 12; i++) {
 		uint32_t physical_block = dir_inode->block[i];
 
-		if (physical_block == 0) continue;
+		if (physical_block == 0)
+			continue;
 
 		uint64_t target_lba = physical_block * sector_per_block;
 		memset(buffer, 0, 4096);
@@ -82,7 +83,7 @@ uint32_t Ext2FindEntry(Ext2Fs* fs, Ext2Inode* dir_inode, const char* name) {
 				return 0;
 			}
 			if (entry->inode != 0 && entry->name_len == target_len) {
-				if (strncmp(entry->name, name, entry->name_len)==0) {
+				if (strncmp(entry->name, name, entry->name_len) == 0) {
 					uint32_t found_inode = entry->inode;
 					AuPmmngrFree((void*)V2P((uint64_t)buffer));
 					return found_inode;
@@ -96,7 +97,6 @@ uint32_t Ext2FindEntry(Ext2Fs* fs, Ext2Inode* dir_inode, const char* name) {
 	AuPmmngrFree((void*)V2P((uint64_t)buffer));
 	return 0;
 };
-
 
 /**
 * Ext2ReadInode -- reads the inode and updates the provided new inode
@@ -193,7 +193,8 @@ size_t Ext2Read(AuVFSNode* node, AuVFSNode* file, uint64_t* buffer, uint32_t len
 		AuTextOut("[Ext2]: System reached EOF.\r\n");
 		return 0;
 	}
-	if (current_pos + length > file->size) length = file->size - current_pos;
+	if (current_pos + length > file->size)
+		length = file->size - current_pos;
 
 	uint32_t block_size = fs->block_size;
 	uint32_t sector_per_block = block_size / 512;
@@ -212,48 +213,66 @@ size_t Ext2Read(AuVFSNode* node, AuVFSNode* file, uint64_t* buffer, uint32_t len
 
 		uint32_t physical_block = 0;
 
-		if (logical_block < 12) physical_block = inode->block[logical_block];
+		if (logical_block < 12)
+			physical_block = inode->block[logical_block];
 		else if (logical_block < (12 + fs->pointers_per_block)) {
 			uint32_t singly_block_id = inode->block[12];
-			if (singly_block_id == 0) physical_block = 0;
+			if (singly_block_id == 0)
+				physical_block = 0;
 			else {
 				uint32_t single_index = logical_block - 12;
 				physical_block = Ext2ReadBlockIndex(fs, singly_block_id, single_index);
 			}
-		}
-		else if(logical_block < (12 + fs->pointers_per_block + (fs->pointers_per_block * fs->pointers_per_block))) {
+		} else if (logical_block < (12 + fs->pointers_per_block +
+									(fs->pointers_per_block * fs->pointers_per_block))) {
 			uint32_t doubly_block_id = inode->block[13];
-			if (doubly_block_id == 0) physical_block = 0;
+			if (doubly_block_id == 0)
+				physical_block = 0;
 			else {
 				uint32_t double_index = logical_block - (12 + fs->pointers_per_block);
 				uint32_t first_level_index = double_index / fs->pointers_per_block;
 				uint32_t second_level_index = double_index % fs->pointers_per_block;
-				uint32_t first_level_physical = Ext2ReadBlockIndex(fs, doubly_block_id, first_level_index);
-				if (first_level_physical == 0) physical_block = 0;
-				else physical_block = Ext2ReadBlockIndex(fs, first_level_physical, second_level_index);
+				uint32_t first_level_physical =
+					Ext2ReadBlockIndex(fs, doubly_block_id, first_level_index);
+				if (first_level_physical == 0)
+					physical_block = 0;
+				else
+					physical_block =
+						Ext2ReadBlockIndex(fs, first_level_physical, second_level_index);
 			}
-		}
-		else {
+		} else {
 			uint32_t triply_block_id = inode->block[14];
-			if (triply_block_id == 0) physical_block = 0;
+			if (triply_block_id == 0)
+				physical_block = 0;
 			else {
-				uint32_t triple_index = logical_block - (12 + fs->pointers_per_block + (fs->pointers_per_block * fs->pointers_per_block));
-				uint32_t first_level_index = triple_index / (fs->pointers_per_block * fs->pointers_per_block);
-				uint32_t second_level_index = (triple_index / fs->pointers_per_block) % fs->pointers_per_block;
+				uint32_t triple_index =
+					logical_block - (12 + fs->pointers_per_block +
+									 (fs->pointers_per_block * fs->pointers_per_block));
+				uint32_t first_level_index =
+					triple_index / (fs->pointers_per_block * fs->pointers_per_block);
+				uint32_t second_level_index =
+					(triple_index / fs->pointers_per_block) % fs->pointers_per_block;
 				uint32_t third_level_index = triple_index % fs->pointers_per_block;
-				uint32_t first_level_physical = Ext2ReadBlockIndex(fs, triply_block_id, first_level_index);
-				if (first_level_physical == 0) physical_block = 0;
+				uint32_t first_level_physical =
+					Ext2ReadBlockIndex(fs, triply_block_id, first_level_index);
+				if (first_level_physical == 0)
+					physical_block = 0;
 				else {
-					uint32_t second_level_physical = Ext2ReadBlockIndex(fs, first_level_physical, second_level_index);
-					if (second_level_physical == 0) physical_block = 0;
-					else physical_block = Ext2ReadBlockIndex(fs, second_level_physical, third_level_index);
+					uint32_t second_level_physical =
+						Ext2ReadBlockIndex(fs, first_level_physical, second_level_index);
+					if (second_level_physical == 0)
+						physical_block = 0;
+					else
+						physical_block =
+							Ext2ReadBlockIndex(fs, second_level_physical, third_level_index);
 				}
 			}
 		}
 
 		if (physical_block == 0) {
 			uint32_t chunk = block_size - internal_offset;
-			if (chunk > (length - bytes_read)) chunk = length - bytes_read;
+			if (chunk > (length - bytes_read))
+				chunk = length - bytes_read;
 			memset((uint8_t*)buffer + bytes_read, 0, chunk);
 			bytes_read += chunk;
 			continue;
@@ -264,7 +283,8 @@ size_t Ext2Read(AuVFSNode* node, AuVFSNode* file, uint64_t* buffer, uint32_t len
 		AuVDiskRead((AuVDisk*)fs->vdisk, target_lba, sector_per_block, bounce_page);
 
 		uint32_t chunk = block_size - internal_offset;
-		if (chunk > (length - bytes_read)) chunk = length - bytes_read;
+		if (chunk > (length - bytes_read))
+			chunk = length - bytes_read;
 
 		memcpy((uint8_t*)buffer + bytes_read, (uint8_t*)bounce_page + internal_offset, chunk);
 		bytes_read += chunk;
@@ -286,12 +306,11 @@ AuVFSNode* Ext2Open(AuVFSNode* fsys, char* path) {
 		AuTextOut("[Ext2]: parameters missing for file opening.\r\n");
 		return NULL;
 	}
-	
+
 	Ext2Fs* fs = (Ext2Fs*)fsys->device;
 
 	// edge case opening root directory
 	if (strlen(path) == 0 || strcmp(path, "/") == 0) {
-
 		AuVFSNode* root_session = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
 		if (!root_session) {
 			AuTextOut("[Ext2]: out of memory during root directory opening.\r\n");
@@ -317,19 +336,19 @@ AuVFSNode* Ext2Open(AuVFSNode* fsys, char* path) {
 	strncpy(path_local, path, sizeof(path_local) - 1);
 	path_local[sizeof(path_local) - 1] = '\0';
 
-
 	char* token = path_local;
 	char* nxt_token = NULL;
 
 	while (token && *token != '\0') {
-		while (*token == '/') token++;
-		if (*token == '\0') break;
+		while (*token == '/')
+			token++;
+		if (*token == '\0')
+			break;
 		nxt_token = strchr(token, '/');
 		if (nxt_token) {
 			*nxt_token = '\0';
 			nxt_token++;
 		}
-
 
 		if (Ext2ReadInode(fs, current_inode_number, &current_inode) != 0) {
 			AuTextOut("[Ext2]: failed to read the inode sector during path sweep.\r\n");
@@ -371,8 +390,10 @@ AuVFSNode* Ext2Open(AuVFSNode* fsys, char* path) {
 	strncpy(file_session->filename, final_name, 31);
 	file_session->filename[31] = '\0';
 
-	if (current_inode.mode & EXT2_S_IFDIR) file_session->flags |= FS_FLAG_DIRECTORY;
-	else if (current_inode.mode & EXT2_S_IFREG)file_session->flags |= FS_FLAG_GENERAL;
+	if (current_inode.mode & EXT2_S_IFDIR)
+		file_session->flags |= FS_FLAG_DIRECTORY;
+	else if (current_inode.mode & EXT2_S_IFREG)
+		file_session->flags |= FS_FLAG_GENERAL;
 
 	Ext2Inode* cached_inode = (Ext2Inode*)kmalloc(sizeof(Ext2Inode));
 	if (cached_inode) {
@@ -390,7 +411,6 @@ AuVFSNode* Ext2Open(AuVFSNode* fsys, char* path) {
 
 	return file_session;
 };
-
 
 /**
 * Ext2Initialise -- initialize the ext2 file system
@@ -425,7 +445,8 @@ AuVFSNode* Ext2Initialise(AuVDisk* vdisk, char* mountname) {
 		kfree(fs->superblock);
 		kfree(fs);
 		AuTextOut("[ext2]: EXT2 magic mismatch \n");
-		for (;;);
+		for (;;)
+			;
 		return NULL;
 	}
 

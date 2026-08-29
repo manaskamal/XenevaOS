@@ -69,8 +69,7 @@ void AuMmngrAddFileBack(AuMMFileBack* fb) {
 	if (fb_first == NULL) {
 		fb_last = fb;
 		fb_first = fb;
-	}
-	else {
+	} else {
 		fb_last->next = fb;
 		fb->prev = fb_last;
 	}
@@ -85,13 +84,12 @@ void AuMmngrRemoveFileBack(AuMMFileBack* fb) {
 	UARTDebugOut("Removing file back :%s \r\n", fb->file->filename);
 	if (fb_first == NULL)
 		return;
-	
+
 	if (fb == fb_first) {
 		fb_first = fb_first->next;
 		if (fb_first)
 			fb_first->prev = NULL;
-	}
-	else {
+	} else {
 		if (fb->prev)
 			fb->prev->next = fb->next;
 	}
@@ -99,8 +97,7 @@ void AuMmngrRemoveFileBack(AuMMFileBack* fb) {
 		fb_last = fb->prev;
 		if (fb_last)
 			fb_last->next = NULL;
-	}
-	else {
+	} else {
 		if (fb->next)
 			fb->next->prev = fb->prev;
 	}
@@ -108,7 +105,6 @@ void AuMmngrRemoveFileBack(AuMMFileBack* fb) {
 	fb->next = (AuMMFileBack*)0xDEADDEADDEADDEADULL;
 	fb->prev = (AuMMFileBack*)0xDEADDEADDEADDEADULL;
 }
-
 
 /**
  * @brief AuMmngrFileCacheEnable -- enable file cache
@@ -132,10 +128,10 @@ AuMMFileBack* AuMmngrFileCacheLookup(const char* filename) {
 			fname = (char*)filename + 1;
 		filename++;
 	}
-//#ifdef __TARGET_BOARD_QEMU_VIRT__
-//	data_cache_flush(fname);
-//#endif
-	
+	//#ifdef __TARGET_BOARD_QEMU_VIRT__
+	//	data_cache_flush(fname);
+	//#endif
+
 	AuMMFileBack* fileback = NULL;
 
 	for (AuMMFileBack* fileb_ = fb_first; fileb_ != NULL; fileb_ = fileb_->next) {
@@ -167,7 +163,6 @@ uint64_t AuMmngrFileCacheGetPhysicalBlock(AuMMFileBack* fb, uint32_t fileoffset)
 	return UINT64_MAX;
 }
 
-
 AuMMPageCache* AuMmngrFileCacheGetByIndex(AuMMFileBack* fb, size_t pageIndex) {
 	if (!fb)
 		return NULL;
@@ -176,7 +171,6 @@ AuMMPageCache* AuMmngrFileCacheGetByIndex(AuMMFileBack* fb, size_t pageIndex) {
 			return cache;
 	}
 	return NULL;
-
 }
 /**
  * @brief AuMmngrPageCacheCreate -- create page cache
@@ -199,8 +193,7 @@ void AuMmngrFileBackAddPageCache(AuMMFileBack* fileb, AuMMPageCache* cache) {
 	if (fileb->pageCache == NULL) {
 		fileb->pageCacheLast = cache;
 		fileb->pageCache = cache;
-	}
-	else {
+	} else {
 		fileb->pageCacheLast->next = cache;
 		cache->prev = fileb->pageCacheLast;
 	}
@@ -211,7 +204,3 @@ void AuMmngrFileBackAddPageCache(AuMMFileBack* fileb, AuMMPageCache* cache) {
 
 	fileb->pageCacheLast = cache;
 }
-
-
-
-

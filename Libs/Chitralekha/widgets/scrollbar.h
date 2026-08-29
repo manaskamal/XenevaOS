@@ -38,58 +38,58 @@
 #include <_xeneva.h>
 
 #ifdef __cplusplus
-XE_EXTERN{
+XE_EXTERN {
 #endif
 
+	enum _orientation_ {
+		SCROLLBAR_ORIENTATION_VERTICAL,
+		SCROLLBAR_ORIENTATION_HORIZONTAL,
+	};
 
-enum _orientation_ {
-	SCROLLBAR_ORIENTATION_VERTICAL,
-	SCROLLBAR_ORIENTATION_HORIZONTAL,
-};
+	enum {
+		SB_STATE_IDLE,
+		SB_STATE_HOVER_THUMB,
+		SB_STATE_DRAGGING,
+		SB_STATE_HOVER_ARRDEC,
+		SB_STATE_HOVER_ARRINC
+	};
 
-enum {
-	SB_STATE_IDLE,
-	SB_STATE_HOVER_THUMB,
-	SB_STATE_DRAGGING,
-	SB_STATE_HOVER_ARRDEC,
-	SB_STATE_HOVER_ARRINC
-};
+	typedef struct _scroll_bar_ {
+		ChWidget base;
+		uint8_t orientation;
+		uint8_t state;
+		/* Range and value */
+		int minValue;
+		int maxValue;
+		int currentValue;
+		int pageSize;
 
-typedef struct _scroll_bar_ {
-	ChWidget base;
-	uint8_t orientation;
-	uint8_t state;
-	/* Range and value */
-	int minValue;
-	int maxValue;
-	int currentValue;
-	int pageSize;
+		// thumb
+		int thumbPos;
+		int thumbSize;
+		int trackLen;
 
-	// thumb
-	int thumbPos;
-	int thumbSize;
-	int trackLen;
+		int dragAnchor;
+		int dragAnchorValue;
 
-	int dragAnchor;
-	int dragAnchorValue;
+		uint8_t prevButton;
+		void* attachedTo;
 
-	uint8_t prevButton;
-	void* attachedTo;
+		//theming
+		uint32_t color_track;
+		uint32_t color_thumb;
+		uint32_t color_thumb_hover;
+		uint32_t color_thumb_drag;
+		uint32_t color_arrow_bg;
+		uint32_t color_arrow_fg;
+	} ChScrollBar;
 
-	//theming
-	uint32_t color_track;
-	uint32_t color_thumb;
-	uint32_t color_thumb_hover;
-	uint32_t color_thumb_drag;
-	uint32_t color_arrow_bg;
-	uint32_t color_arrow_fg;
-}ChScrollBar;
-
-XE_EXPORT ChScrollBar* ChCreateScrollBar(int x, int y, int width, int height, uint8_t orientation);
-XE_EXPORT void ChScrollBarInit(ChScrollBar* sb, int x, int y, int width, int height, uint8_t orientation);
-XE_EXPORT void ChScrollBarSetValue(ChScrollBar* sb, int value);
-XE_EXPORT void ChScrollBarSetRange(ChScrollBar* sb, int min_val, int max_val, int page_size);
-
+	XE_EXPORT ChScrollBar* ChCreateScrollBar(
+		int x, int y, int width, int height, uint8_t orientation);
+	XE_EXPORT void ChScrollBarInit(
+		ChScrollBar * sb, int x, int y, int width, int height, uint8_t orientation);
+	XE_EXPORT void ChScrollBarSetValue(ChScrollBar * sb, int value);
+	XE_EXPORT void ChScrollBarSetRange(ChScrollBar * sb, int min_val, int max_val, int page_size);
 
 #ifdef __cplusplus
 }

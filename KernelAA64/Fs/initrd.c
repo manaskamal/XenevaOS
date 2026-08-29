@@ -29,7 +29,6 @@
 *
 **/
 
-
 #include <Fs/initrd.h>
 #include <aucon.h>
 #include <Fs/vdisk.h>
@@ -60,7 +59,6 @@ void AuRamdiskRead(uint64_t lba, size_t count, uint8_t* buffer) {
 	uint64_t offset = lba * RAMDISK_SECTOR_SIZE;
 	uint64_t ramdisk_size = ramdisk_end - ramdisk_start;
 	uint64_t bytes_to_read = (uint64_t)count * RAMDISK_SECTOR_SIZE;
-
 
 	if (offset + (RAMDISK_SECTOR_SIZE * count) > ramdisk_size) {
 		return;
@@ -96,11 +94,11 @@ void AuRamdiskWrite(uint64_t lba, size_t count, uint8_t* buffer) {
 	if (offset + bytes_to_read > ramdisk_size)
 		return;
 
-	if (offset >= (ramdisk_end - ramdisk_start) || 
-	    (RAMDISK_SECTOR_SIZE * count) > (ramdisk_end - ramdisk_start - offset))
+	if (offset >= (ramdisk_end - ramdisk_start) ||
+		(RAMDISK_SECTOR_SIZE * count) > (ramdisk_end - ramdisk_start - offset))
 		return;
 	uint8_t* src = (uint8_t*)(ramdisk_start + offset);
-	memcpy(src,buffer, bytes_to_read);
+	memcpy(src, buffer, bytes_to_read);
 }
 
 int AuRamdiskReadCallback(AuVDisk* vdisk, uint64_t lba, uint32_t count, uint64_t* buffer) {
@@ -125,8 +123,7 @@ void AuInitrdInitialize(KERNEL_BOOT_INFO* info) {
 		}
 		ramdisk_start = P2V(lb->initrd_start);
 		ramdisk_end = P2V(lb->initrd_end);
-	}
-	else {
+	} else {
 		/* NOTE: Ramdisk is loaded by bootloader itself into EfiBootServiceData,
 		 * memory areas other than EfiConventionalMemory area locaked by Physical
 		 * memory manager during Kernel memory initialization phase, which is safe
@@ -151,7 +148,7 @@ void AuInitrdInitialize(KERNEL_BOOT_INFO* info) {
 	char* diskpath = (char*)kmalloc(32);
 	memset(diskpath, 0, 32);
 	AuVDiskCreateStorageFile(diskpath);
-	
+
 	AuVDisk* disk = AuCreateVDisk();
 	strcpy(disk->diskname, "XERamdisc");
 	disk->data = NULL;

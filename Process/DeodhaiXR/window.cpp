@@ -39,7 +39,6 @@
 uint16_t shared_win_key_prefix = 1000;
 uint16_t back_buffer_key_prefix = 400;
 
-
 /*
  * CreateSharedWinSpace -- Create a shared window space
  * @param shkey -- location where to store the window key
@@ -117,7 +116,8 @@ Window* CreateWindow(int x, int y, int w, int h, uint16_t flags, uint16_t ownerI
 	Window* win = (Window*)malloc(sizeof(Window));
 	memset(win, 0, sizeof(Window));
 	win->flags = flags;
-	win->backBuffer = (uint32_t*)CreateNewBackBuffer(ownerId, ((w_ * h_ * 4 + 0x1F) & (~0x1FULL)), &backBufferKey);
+	win->backBuffer = (uint32_t*)CreateNewBackBuffer(
+		ownerId, ((w_ * h_ * 4 + 0x1F) & (~0x1FULL)), &backBufferKey);
 	win->ownerId = ownerId;
 	win->backBufferKey = backBufferKey;
 	win->sharedInfo = CreateSharedWinSpace(&shKey, ownerId);
@@ -136,25 +136,31 @@ Window* CreateWindow(int x, int y, int w, int h, uint16_t flags, uint16_t ownerI
 	shwin->windowReady = false;
 	win->handle = DeodhaiAllocateNewHandle();
 	if (flags & WINDOW_FLAG_GLASS) {
-		win->glassBlur = (uint32_t*)_KeMemMap(NULL, (((w_ + SHADOW_SIZE_S * 2) * (h_ + SHADOW_SIZE_S * 2) * 4 + 0x1F) & (~0x1FULL)),
-			0, 0, MEMMAP_NO_FILEDESC, 0);
-		win->glassTmp = (uint32_t*)_KeMemMap(NULL, (((w_ + SHADOW_SIZE_S * 2) * (h_ + SHADOW_SIZE_S * 2) * 4 + 0x1F) & (~0x1FULL)),
-			0, 0, MEMMAP_NO_FILEDESC, 0);
+		win->glassBlur = (uint32_t*)_KeMemMap(
+			NULL,
+			(((w_ + SHADOW_SIZE_S * 2) * (h_ + SHADOW_SIZE_S * 2) * 4 + 0x1F) & (~0x1FULL)),
+			0,
+			0,
+			MEMMAP_NO_FILEDESC,
+			0);
+		win->glassTmp = (uint32_t*)_KeMemMap(
+			NULL,
+			(((w_ + SHADOW_SIZE_S * 2) * (h_ + SHADOW_SIZE_S * 2) * 4 + 0x1F) & (~0x1FULL)),
+			0,
+			0,
+			MEMMAP_NO_FILEDESC,
+			0);
 	}
 #ifdef SHADOW_ENABLED
 	int sw = w + 2 * SHADOW_SIZE;
 	int sh = h + 2 * SHADOW_SIZE;
-	win->shadowBuffers = (uint32_t*)_KeMemMap(NULL, ((sw * sh * 4 + 0x1F) & (~0x1FULL)),
-		0, 0, MEMMAP_NO_FILEDESC, 0);
+	win->shadowBuffers = (uint32_t*)_KeMemMap(
+		NULL, ((sw * sh * 4 + 0x1F) & (~0x1FULL)), 0, 0, MEMMAP_NO_FILEDESC, 0);
 
-	win->shadowTmp = (uint32_t*)_KeMemMap(NULL, ((sw * sh * 4 + 0x1F) & (~0x1FULL)),
-		0, 0, MEMMAP_NO_FILEDESC, 0);
+	win->shadowTmp = (uint32_t*)_KeMemMap(
+		NULL, ((sw * sh * 4 + 0x1F) & (~0x1FULL)), 0, 0, MEMMAP_NO_FILEDESC, 0);
 
 	_window_generate_shadow(win, w, h);
 #endif
 	return win;
 }
-
-
-
-

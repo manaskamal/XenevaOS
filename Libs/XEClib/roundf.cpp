@@ -2,20 +2,21 @@
 #include <stdint.h>
 #include <float.h>
 
-#if FLT_EVAL_METHOD==0
+#if FLT_EVAL_METHOD == 0
 #define EPS FLT_EPSILON
-#elif FLT_EVAL_METHOD==1
+#elif FLT_EVAL_METHOD == 1
 #define EPS DBL_EPSILON
-#elif FLT_EVAL_METHOD==2
+#elif FLT_EVAL_METHOD == 2
 #define EPS LDBL_EPSILON
 #endif
 
-
 static const float toint = 1 / EPS;
 
-float roundf(float x)
-{
-	union { float f; uint32_t i; } u = { x };
+float roundf(float x) {
+	union {
+		float f;
+		uint32_t i;
+	} u = {x};
 	int e = u.i >> 23 & 0xff;
 	float y;
 

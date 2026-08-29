@@ -44,7 +44,8 @@ void ChSidebarMouseEvent(ChWidget* wid, ChWindow* win, int mx, int my, int butto
  */
 ChSidebar* ChSidebarCreate(int x, int y, int w, int h) {
 	ChSidebar* sb = (ChSidebar*)malloc(sizeof(ChSidebar));
-	if (!sb) return NULL;
+	if (!sb)
+		return NULL;
 
 	memset(sb, 0, sizeof(ChSidebar));
 
@@ -67,9 +68,9 @@ ChSidebar* ChSidebarCreate(int x, int y, int w, int h) {
 	return sb;
 }
 
-
 ChSidebarSection* ChSidebarAddSection(ChSidebar* sb, const char* title) {
-	sb->sections = (ChSidebarSection*)realloc(sb->sections, sizeof(ChSidebarSection) * (sb->sectionCount + 1));
+	sb->sections =
+		(ChSidebarSection*)realloc(sb->sections, sizeof(ChSidebarSection) * (sb->sectionCount + 1));
 	ChSidebarSection* sec = &sb->sections[sb->sectionCount++];
 	memset(sec, 0, sizeof(ChSidebarSection));
 	strncpy(sec->title, title, SIDEBAR_MAX_LABEL - 1);
@@ -83,12 +84,13 @@ static int _sidebar_baseline_y(int rowTop, int rowHeight, int fontSz) {
 	/*int ascent = (fontSz * BASELINE_RATIO_NUM) / BASELINE_RATIO_DEN;
 	return rowTop  +(rowHeight - fontSz) / 2 + ascent;*/
 	int ascent = (rowHeight * BASELINE_RATIO_NUM) / BASELINE_RATIO_DEN;
-	if (ascent > rowHeight) ascent = rowHeight;
+	if (ascent > rowHeight)
+		ascent = rowHeight;
 	return rowTop + ascent;
 }
 
-ChSidebarItem* ChSidebarAddItem(ChSidebarSection* sec, const char* label, ChIcon* icon,
-	int iconW, int iconH,void* udata) {
+ChSidebarItem* ChSidebarAddItem(
+	ChSidebarSection* sec, const char* label, ChIcon* icon, int iconW, int iconH, void* udata) {
 	sec->items = (ChSidebarItem*)realloc(sec->items, sizeof(ChSidebarItem) * (sec->itemCount + 1));
 	ChSidebarItem* item = &sec->items[sec->itemCount++];
 	memset(item, 0, sizeof(ChSidebarItem));
@@ -126,7 +128,6 @@ static int _rect_intersect(ChRect* dst, const ChRect* a, const ChRect* b) {
 	return 1;
 }
 
-
 void ChSidebarPaint(ChWidget* widget, ChWindow* win) {
 	ChSidebar* sb = (ChSidebar*)widget;
 	int curY = sb->base.y - sb->scrollOfsetY;
@@ -138,12 +139,11 @@ void ChSidebarPaint(ChWidget* widget, ChWindow* win) {
 	sidebarClip.h = sb->base.h;
 
 	ChDrawRect(win->canv, sb->base.x, sb->base.y, sb->base.w, sb->base.h, sb->bgColor);
-	
+
 	for (int s = 0; s < sb->sectionCount; s++) {
 		ChSidebarSection* sec = &sb->sections[s];
 
-		if (curY + SIDEBAR_HEADER > sb->base.y &&
-			curY < sb->base.y + sb->base.h) {
+		if (curY + SIDEBAR_HEADER > sb->base.y && curY < sb->base.y + sb->base.h) {
 			ChRect headerClip;
 			headerClip.x = sb->base.x;
 			headerClip.y = curY;
@@ -154,16 +154,20 @@ void ChSidebarPaint(ChWidget* widget, ChWindow* win) {
 			//_rect_intersect(&headerClip, &sidebarClip, &headerClip);
 			ChFontSetSize(win->app->baseFont, 13);
 			int baseY = _sidebar_baseline_y(curY, SIDEBAR_HEADER, 13);
-			ChFontDrawTextClipped(win->canv, win->app->baseFont, sec->title, sb->base.x + SIDEBAR_INDENT,
-				baseY, sb->headerTextColor, &headerClip);
+			ChFontDrawTextClipped(win->canv,
+								  win->app->baseFont,
+								  sec->title,
+								  sb->base.x + SIDEBAR_INDENT,
+								  baseY,
+								  sb->headerTextColor,
+								  &headerClip);
 		}
 		curY += SIDEBAR_HEADER;
 
 		for (int i = 0; i < sec->itemCount; i++) {
 			ChSidebarItem* item = &sec->items[i];
 
-			if (curY + SIDEBAR_ROW_HEIGHT < sb->base.y ||
-				curY > sb->base.y + sb->base.h) {
+			if (curY + SIDEBAR_ROW_HEIGHT < sb->base.y || curY > sb->base.y + sb->base.h) {
 				curY += SIDEBAR_ROW_HEIGHT;
 				continue;
 			}
@@ -195,7 +199,8 @@ void ChSidebarPaint(ChWidget* widget, ChWindow* win) {
 			uint32_t textCol = item->selected ? sb->selectedTextColor : sb->textColor;
 
 			int baseY = _sidebar_baseline_y(curY, SIDEBAR_ROW_HEIGHT, 13);
-			ChFontDrawTextClipped(win->canv, win->app->baseFont, item->label, textX, baseY, textCol, &rowClip);
+			ChFontDrawTextClipped(
+				win->canv, win->app->baseFont, item->label, textX, baseY, textCol, &rowClip);
 
 			curY += SIDEBAR_ROW_HEIGHT;
 		}
@@ -204,9 +209,7 @@ void ChSidebarPaint(ChWidget* widget, ChWindow* win) {
 	sb->contentHeight = curY - (sb->base.y - sb->scrollOfsetY);
 }
 
-
 static bool _sidebar_item_screen_y(ChSidebar* sb, int sectionIdx, int itemIdx, int* out_y) {
-
 	int curY = sb->base.y - sb->scrollOfsetY;
 
 	for (int s = 0; s <= sectionIdx; s++) {
@@ -215,21 +218,23 @@ static bool _sidebar_item_screen_y(ChSidebar* sb, int sectionIdx, int itemIdx, i
 		curY += itemLimit * SIDEBAR_ROW_HEIGHT;
 	}
 
-	if (curY + SIDEBAR_ROW_HEIGHT <= sb->base.y ||
-		curY >= sb->base.y + sb->base.h)
+	if (curY + SIDEBAR_ROW_HEIGHT <= sb->base.y || curY >= sb->base.y + sb->base.h)
 		return false;
 
 	*out_y = curY;
 	return true;
 }
 
-static bool _sidebar_draw_single_row_(ChSidebar* sb, ChWindow* win, int sIdx, int iIdx, ChRect* out_rect) {
-	
-	if (sIdx < 0 || sIdx >= sb->sectionCount) return false;
-	if (iIdx < 0 || iIdx >= sb->sections[sIdx].itemCount) return false;
+static bool
+_sidebar_draw_single_row_(ChSidebar* sb, ChWindow* win, int sIdx, int iIdx, ChRect* out_rect) {
+	if (sIdx < 0 || sIdx >= sb->sectionCount)
+		return false;
+	if (iIdx < 0 || iIdx >= sb->sections[sIdx].itemCount)
+		return false;
 
 	int curY;
-	if (!_sidebar_item_screen_y(sb, sIdx, iIdx, &curY)) return false;
+	if (!_sidebar_item_screen_y(sb, sIdx, iIdx, &curY))
+		return false;
 
 	ChSidebarItem* item = &sb->sections[sIdx].items[iIdx];
 
@@ -242,7 +247,8 @@ static bool _sidebar_draw_single_row_(ChSidebar* sb, ChWindow* win, int sIdx, in
 
 	if (drawY + drawH > sb->base.y + sb->base.h)
 		drawH = (sb->base.y + sb->base.h) - drawY;
-	if (drawH <= 0) return false;
+	if (drawH <= 0)
+		return false;
 
 	uint32_t row_col = sb->bgColor;
 	if (item->selected)
@@ -270,7 +276,8 @@ static bool _sidebar_draw_single_row_(ChSidebar* sb, ChWindow* win, int sIdx, in
 		uint32_t textCol = item->selected ? sb->selectedTextColor : sb->textColor;
 		int baseY = _sidebar_baseline_y(curY, SIDEBAR_ROW_HEIGHT, 13);
 		ChFontSetSize(win->app->baseFont, 13);
-		ChFontDrawTextClipped(win->canv, win->app->baseFont, item->label, textX, baseY, textCol, &rowClip);
+		ChFontDrawTextClipped(
+			win->canv, win->app->baseFont, item->label, textX, baseY, textCol, &rowClip);
 	}
 
 	if (out_rect) {
@@ -288,8 +295,8 @@ void ChSidebarMouseEvent(ChWidget* wid, ChWindow* win, int mx, int my, int butto
 	mx = lx - win->info->x;
 	my = ly - win->info->y;
 
-	if (mx < sb->base.x || mx > sb->base.x + sb->base.w ||
-		my < sb->base.y || my > sb->base.y + sb->base.h) {
+	if (mx < sb->base.x || mx > sb->base.x + sb->base.w || my < sb->base.y ||
+		my > sb->base.y + sb->base.h) {
 		if (sb->hoverSectionIdx != -1 || sb->hoverItemIdx != -1) {
 			int oldS = sb->hoverSectionIdx;
 			int OldI = sb->hoverItemIdx;
@@ -302,7 +309,7 @@ void ChSidebarMouseEvent(ChWidget* wid, ChWindow* win, int mx, int my, int butto
 		}
 		return;
 	}
-		
+
 	int curY = sb->base.y - sb->scrollOfsetY;
 	int hitSection = -1, hitItem = -1;
 
@@ -365,7 +372,6 @@ void ChSidebarMouseEvent(ChWidget* wid, ChWindow* win, int mx, int my, int butto
 			bool has_r2 = _sidebar_draw_single_row_(sb, win, hitSection, hitItem, &r2);
 			if (has_r2)
 				ChWindowUpdate(win, r2.x, r2.y, r2.w, r2.h, 0, 1);
-		
 		}
 		return;
 	}

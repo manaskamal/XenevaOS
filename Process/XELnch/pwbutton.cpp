@@ -35,14 +35,14 @@
 #include <math.h>
 #include "launcher.h"
 
-
 void power_button_paint(ChWidget* wid, ChWindow* win) {
 	power_button* pb = (power_button*)wid;
 
-	ChDrawRect(win->canv, pb->base.x, pb->base.y, pb->base.w, pb->base.h, LAUNCHER_BACKGROUND_COLOR);
+	ChDrawRect(
+		win->canv, pb->base.x, pb->base.y, pb->base.w, pb->base.h, LAUNCHER_BACKGROUND_COLOR);
 	if (pb->base.hover)
-		ChColorDrawHorizontalGradient(win->canv, pb->base.x, pb->base.y, pb->base.w, pb->base.h, 0xCC658096, 0xCC8CA2B4);
-	
+		ChColorDrawHorizontalGradient(
+			win->canv, pb->base.x, pb->base.y, pb->base.w, pb->base.h, 0xCC658096, 0xCC8CA2B4);
 
 	if (pb->type == POWER_BUTTON_TYPE_SHUTDOWN)
 		ChDrawIcon(win->canv, pb->icon, pb->base.x, pb->base.y);
@@ -53,7 +53,6 @@ void power_button_paint(ChWidget* wid, ChWindow* win) {
 
 void power_button_mouse_event(ChWidget* wid, ChWindow* win, int x, int y, int button) {
 	power_button* pb = (power_button*)wid;
-	
 
 	if (button && !wid->KillFocus)
 		wid->clicked = true;
@@ -67,8 +66,7 @@ void power_button_mouse_event(ChWidget* wid, ChWindow* win, int x, int y, int bu
 	if (!wid->hoverPainted && wid->hover) {
 		if (wid->ChPaintHandler)
 			wid->ChPaintHandler(wid, win);
-		ChWindowUpdate(win, wid->x,
-			wid->y, wid->w, wid->h, false, true);
+		ChWindowUpdate(win, wid->x, wid->y, wid->w, wid->h, false, true);
 		wid->hoverPainted = true;
 	}
 
@@ -76,16 +74,14 @@ void power_button_mouse_event(ChWidget* wid, ChWindow* win, int x, int y, int bu
 		wid->hoverPainted = false;
 		if (wid->ChPaintHandler)
 			wid->ChPaintHandler(wid, win);
-		ChWindowUpdate(win, wid->x,
-			wid->y, wid->w, wid->h, false, true);
+		ChWindowUpdate(win, wid->x, wid->y, wid->w, wid->h, false, true);
 	}
 
 	bool _action_required = false;
 	if (wid->clicked && wid->lastMouseX == x && wid->lastMouseY == y) {
 		if (wid->ChPaintHandler)
 			wid->ChPaintHandler(wid, win);
-		ChWindowUpdate(win, wid->x,
-			wid->y, wid->w, wid->h, false, true);
+		ChWindowUpdate(win, wid->x, wid->y, wid->w, wid->h, false, true);
 
 		_action_required = true;
 		win->focusedWidget = wid;
