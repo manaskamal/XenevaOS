@@ -19,21 +19,21 @@ Kernel-mode drivers and other components that depend on kernel-exported function
 
 # Binary output and their Dependencies table
 
-| Project Name | Build Output | Dependency |
-|--------------|--------------|-------------|
-| Boot         | .efi /.lib   | _None_        |
-| BootAA64   | .efi/.lib    | _None_        |
-| Kernel       | xnkrnl.exe/Kernel.lib | _None_ |
-| KernelAA64   | xnkrnl.exe/xnkrnl.lib | _None_ |
-| AHCI(Driver) | .dll/.lib  | _xnkrnl.lib/Kernel.lib_ |
-| E1000(Driver) | .dll/.lib | _xnkrnl.lib/Kernel.lib_ |
-| All Drivers..  | .dll/.lib | _xnkrnl.lib/Kernel.lib_ |
-| init           | .exe/.lib | _None (static binary)_ |
-| DeodhaiXR      | .exe/.lib | _chlkha.lib/ftype.lib/xecrt.lib/xeclib.lib_|
-|Glimpse | .exe/.lib | _chlkha.lib/ftype.lib/xecrt.lib/xeclib.lib_|
-| Chitralekha(Userspace Library) | .dll/.lib| _xecrt.lib/xeclib.lib_|
-| XEClib(Userspace Clibrary) | .dll/.lib | _None_ | 
-| XECrt(Userspace static library) | .lib | _None_ |
+| Project Name | Build Output | Dependency | Architecture|
+|--------------|--------------|-------------|--------|
+| Boot         | .efi /.lib   | _None_        | x86_64 |
+| BootAA64   | .efi/.lib    | _None_        | ARM64 |
+| Kernel       | xnkrnl.exe/Kernel.lib | _None_ | x86_64|
+| KernelAA64   | xnkrnl.exe/xnkrnl.lib | _None_ | ARM64|
+| AHCI(Driver) | .dll/.lib  | _xnkrnl.lib/Kernel.lib_ | _Multi-architecture_|
+| E1000(Driver) | .dll/.lib | _xnkrnl.lib/Kernel.lib_ | _Multi-architecture_|
+| All Drivers..  | .dll/.lib | _xnkrnl.lib/Kernel.lib_ | _Multi-architecture_|
+| init           | .exe/.lib | _None (static binary)_ | _Multi-architecture_|
+| DeodhaiXR      | .exe/.lib | _chlkha.lib/ftype.lib/xecrt.lib/xeclib.lib_| _Multi-architecture_|
+|Glimpse | .exe/.lib | _chlkha.lib/ftype.lib/xecrt.lib/xeclib.lib_| _Multi-architecture_|
+| Chitralekha(Userspace Library) | .dll/.lib| _xecrt.lib/xeclib.lib_| _Multi-architecture_|
+| XEClib(Userspace Clibrary) | .dll/.lib | _None_ | _Multi-architecture_|
+| XECrt(Userspace static library) | .lib | _None_ |_Multi-architecture_|
 
 ## Static Library vs Dynamic Library in XenevaOS
 Both static and dynamic library has important role in XenevaOS runtime environment. Static libraries are mostly used for standalone binary build while Dynamic libraries are used for Dynamically linked binary and can be used as shared library among all binaries that depend on the same library.

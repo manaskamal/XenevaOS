@@ -1,8 +1,13 @@
 /**
+* @file capability.c
+* 
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2026, Manas Kamal Choudhury
 * All rights reserved.
+* 
+* Author:
+*      Saankhya Srikanth, saankhyas18@gmail.com
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted provided that the following conditions are met:
@@ -26,6 +31,7 @@
 * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *
 **/
+
 
 #include <Cap/capability.h>
 #include <process.h>

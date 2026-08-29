@@ -29,7 +29,7 @@
 *
 **/
 
-#if defined(__GNUC__) || defined(__clang__)
+#if defined(__GNUC__)
 #ifndef __cplusplus
 #include <stdbool.h>
 #endif
@@ -54,6 +54,7 @@
 #include <clean.h>
 #include <Cap/capability.h>
 #include <timer.h>
+#include <Sound/sound.h>
 
 static int pid = 1;
 AuProcess* proc_first;

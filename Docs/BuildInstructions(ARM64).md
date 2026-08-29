@@ -47,14 +47,13 @@ format M: /FS:FAT32 /A:4096 /Q /V:BOOTIMG /Y
 
 ## Directory Structure of XenevaOS
 XenevaOS follows a fixed boot directory structure:<br>
-Your Boot partition : <br>
-|| <br>
-/EFI/BOOT/BOOTAA64.EFI <br>
-|| <br>
-/EFI/XENEVA/xnkrnl.exe <br>
-|| <br>
-/initrd2.img (_ramdisk file containing all system files in its root dir_)
 
+```mermaid
+flowchart TD
+A[Boot Partition or Root Directory] --> B["/EFI/BOOT/BOOTAA64/EFI"]
+B --> C["/EFI/XENEVA/xnkrnl.exe"]
+C --> D["/initrd2.img (_ramdisk file containing all system files in its root dir_)"]
+```
 ## NOTE
 Visual Studio might fail to build if the Platform of each required project is not set to ARM64. This can be verified by right-clicking the project and opening the properties dialog. The Platform combo box must be set to ARM64 in the properties dialog.
 

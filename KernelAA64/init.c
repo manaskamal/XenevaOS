@@ -246,7 +246,7 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 #endif
 	/* required virtio-mouse and keyboard */
 	//Here goes board pre driver initialize
-	AuDrvMngrInitialize(info);
+	//AuDrvMngrInitialize(info);
 	UARTDebugOut("[aurora]: driver initialized \r\n");
 
 	FontManagerInitialise();
