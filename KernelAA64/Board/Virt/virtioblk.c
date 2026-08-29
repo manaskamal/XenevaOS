@@ -40,6 +40,4 @@
 #include <Mm/kmalloc.h>
 #include <pcie.h>
 
-void AuVirtioBlkInitialize() {
-
-}
+void AuVirtioBlkInitialize() {}

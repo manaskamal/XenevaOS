@@ -33,7 +33,6 @@
 #include "physm.h"
 #include <aurora.h>
 
-
 paddr_t* pagestack;
 paddr_t* stackptr;
 paddr_t* allocatedStack;
@@ -60,16 +59,13 @@ void XEInitialisePmmngr(const struct EfiMemoryMap memmap, void* buffer, size_t b
 	_bufsz = bufsize;
 	allocatedPtr = allocatedStack = raw_offset<paddr_t*>(buffer, bufsize);
 	allocatedCount = 1;
-	
 
 	EFI_MEMORY_DESCRIPTOR* current = memmap.memmap;
-	while (raw_diff(current, memmap.memmap) < memmap.MemMapSize)
-	{
-
+	while (raw_diff(current, memmap.memmap) < memmap.MemMapSize) {
 		ramSize += current->NumberOfPages * 4096;
-		if (current->Type == EfiConventionalMemory) {//|| current->Type == EfiPersistentMemory){
+		if (current->Type == EfiConventionalMemory) { //|| current->Type == EfiPersistentMemory){
 			paddr_t addr = current->PhysicalStart;
-			size_t  numpages = current->NumberOfPages;
+			size_t numpages = current->NumberOfPages;
 			usableRam = current->PhysicalStart;
 			usableSize = current->NumberOfPages * 4096;
 
@@ -89,9 +85,7 @@ void XEInitialisePmmngr(const struct EfiMemoryMap memmap, void* buffer, size_t b
 				break;
 		}
 		current = raw_offset<EFI_MEMORY_DESCRIPTOR*>(current, memmap.DescriptorSize);
-
 	}
-
 }
 
 /*
@@ -101,20 +95,16 @@ paddr_t XEPmmngrAllocate() {
 	if (stackptr == pagestack) {
 		XEGuiPrint("XEPmmngrAlloc: returning zero \r\n");
 		return 0;
-	}
-	else
-	{
+	} else {
 		paddr_t allocated = *--stackptr;
 		if (raw_diff(allocatedPtr, allocatedStack) < _bufsz) {
 			*allocatedPtr++ = allocated;
 			allocatedCount++;
-		}
-		else {
+		} else {
 			XEGuiPrint("xnldr warning: allocatedStack full, no longer tracking allocationg \r\n");
 		}
 		return allocated;
 	}
-
 }
 
 /*
@@ -143,7 +133,7 @@ static struct _pmmngr_boot_info_ {
 	//paddr_t* pgstack;
 	paddr_t* alstack;
 	paddr_t* alstackptr;
-}pmmngr_boot_info;
+} pmmngr_boot_info;
 
 /*
  *XEGetAlstack -- return the allocated stack ptr
@@ -174,7 +164,6 @@ uint64_t XEReserveMemCount() {
 paddr_t* XEGetPgStack() {
 	return pagestack;
 }
-
 
 paddr_t* XEGetStackPtr() {
 	return stackptr;

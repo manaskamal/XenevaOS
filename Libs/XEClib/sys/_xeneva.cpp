@@ -93,14 +93,12 @@ XE_EXTERN XE_LIB void _XESetEnvironmentVariable(char* key, char* value, bool ove
 
 	if ((dest - temp) + totalLen + 2 >= maxEnvSize)
 		return;
-	
+
 	snprintf(dest, totalLen + 2, "%s=%s", key, value);
 	dest[totalLen + 1] = '\0';
 
 	memcpy(envp, temp, maxEnvSize);
-
 }
-
 
 XE_EXTERN XE_LIB int _XEPutEnvironmentVariable(char* keyval) {
 	uint64_t* envptr = (uint64_t*)_KeGetEnvironmentBlock();
@@ -110,7 +108,8 @@ XE_EXTERN XE_LIB int _XEPutEnvironmentVariable(char* keyval) {
 	size_t maxEnvSize = 4096;
 
 	char* eq = strchr(keyval, '=');
-	if (!eq) return -1;
+	if (!eq)
+		return -1;
 
 	size_t keyLen = eq - keyval;
 
@@ -135,7 +134,6 @@ XE_EXTERN XE_LIB int _XEPutEnvironmentVariable(char* keyval) {
 	scan[newLen] = '\0';
 	return 0;
 }
-
 
 XE_EXTERN XE_LIB const char* _XEGetEnvironmentVariable(const char* key) {
 	uint64_t* envptr = (uint64_t*)_KeGetEnvironmentBlock();

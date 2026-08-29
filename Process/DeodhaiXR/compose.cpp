@@ -49,11 +49,10 @@ bool is_window_fully_overlapped(WinSharedInfo* curInfo, Window* alwaysOnTop) {
 /**
  * @brief Check for small area updates !! not entire window
 */
-void _compose_dirty_area_(ChCanvas* canvas,Window* win, Window* focusedWin, WinSharedInfo* info) {
+void _compose_dirty_area_(ChCanvas* canvas, Window* win, Window* focusedWin, WinSharedInfo* info) {
 	Window* alwaysOnTop = _get_always_on_top();
 
 	if ((info->rect_count > 0) && (info->dirty)) {
-
 		if (is_window_fully_overlapped(info, alwaysOnTop)) {
 			info->rect_count = 0;
 			info->dirty = 0;
@@ -76,7 +75,7 @@ void _compose_dirty_area_(ChCanvas* canvas,Window* win, Window* focusedWin, WinS
 				r_w = canvas->canvasWidth - (info->x + r_x);
 
 			if ((info->y + r_y + r_h) >= (canvas->canvasHeight - 70))
-				r_h = (canvas->canvasHeight-70) - (info->y + r_y);
+				r_h = (canvas->canvasHeight - 70) - (info->y + r_y);
 
 			/* from here, we check if the small rectangle is
 			 * covered by a window or another rectangle */
@@ -93,25 +92,27 @@ void _compose_dirty_area_(ChCanvas* canvas,Window* win, Window* focusedWin, WinS
 			Window* clipWin = NULL;
 			WinSharedInfo* clipInfo = NULL;
 
-
-
 			if (info->alpha) {
 				for (int j = 0; j < r_h; j++) {
 					for (int i = 0; i < r_w; i++) {
-						*(uint32_t*)(canvas->buffer + (static_cast<int64_t>(info->y) + r_y + j) * canvas->canvasWidth +
-							(static_cast<int64_t>(info->x) + r_x + i)) =
-							ChColorAlphaBlend(*(uint32_t*)(canvas->buffer +
-								(static_cast<int64_t>(info->y) + r_y + j) * canvas->canvasWidth +
-								(static_cast<int64_t>(info->x) + r_x + i)),
-								*(uint32_t*)(win->backBuffer + (static_cast<int64_t>(r_y) + j) * info->width +
-									(static_cast<int64_t>(r_x) + i)), info->alphaValue);
+						*(uint32_t*)(canvas->buffer +
+									 (static_cast<int64_t>(info->y) + r_y + j) *
+										 canvas->canvasWidth +
+									 (static_cast<int64_t>(info->x) + r_x + i)) =
+							ChColorAlphaBlend(
+								*(uint32_t*)(canvas->buffer +
+											 (static_cast<int64_t>(info->y) + r_y + j) *
+												 canvas->canvasWidth +
+											 (static_cast<int64_t>(info->x) + r_x + i)),
+								*(uint32_t*)(win->backBuffer +
+											 (static_cast<int64_t>(r_y) + j) * info->width +
+											 (static_cast<int64_t>(r_x) + i)),
+								info->alphaValue);
 					}
 				}
 				AddDirtyClip(info->x + r_x, info->y + r_y, r_w, r_h);
-			}
-			else {
+			} else {
 				if (focusedWin != win) {
-
 					/* first check for normal windows */
 					for (clipWin = win; clipWin != NULL; clipWin = clipWin->next) {
 						clipInfo = (WinSharedInfo*)clipWin->sharedInfo;
@@ -126,11 +127,10 @@ void _compose_dirty_area_(ChCanvas* canvas,Window* win, Window* focusedWin, WinS
 							overlap = true;
 							ClipCalculateRect(&r1, &r2, clipRect, &clipCount);
 						}
-
 					}
 
 					/* always on top list */
-				/*	for (clipWin = alwaysOnTop; clipWin != NULL; clipWin = clipWin->next) {
+					/*	for (clipWin = alwaysOnTop; clipWin != NULL; clipWin = clipWin->next) {
 						clipInfo = (WinSharedInfo*)clipWin->sharedInfo;
 						if (clipWin == win)
 							continue;
@@ -144,7 +144,7 @@ void _compose_dirty_area_(ChCanvas* canvas,Window* win, Window* focusedWin, WinS
 						}
 					}*/
 
-				/*	for (Window* cutt = win; cutt != NULL; cutt = cutt->next) {
+					/*	for (Window* cutt = win; cutt != NULL; cutt = cutt->next) {
 						WinSharedInfo* cuttinfo = (WinSharedInfo*)cutt->sharedInfo;
 						if (cutt == win)
 							continue;
@@ -169,9 +169,8 @@ void _compose_dirty_area_(ChCanvas* canvas,Window* win, Window* focusedWin, WinS
 					}*/
 				}
 
-
 				if (clipCount == 0 && !overlap) {
-				/*	for (int i = 0; i < r_h; i++) {
+					/*	for (int i = 0; i < r_h; i++) {
 						void* canvas_mem = (canvas->buffer + (info->y + r_y + i) * canvas->canvasWidth + info->x + r_x);
 						void* win_mem = (win->backBuffer + (r_y + i) * info->width + r_x);
 						_fastcpy(canvas_mem,
@@ -179,26 +178,42 @@ void _compose_dirty_area_(ChCanvas* canvas,Window* win, Window* focusedWin, WinS
 					}*/
 					if (win->flags & WINDOW_FLAG_GLASS) {
 						uint32_t* backSurface = DeoGetBackSurface();
-						glass_precompute_blur(win->glassBlur, win->glassTmp, backSurface, canvas->canvasWidth, canvas->canvasHeight,
-							info->x + r_x, info->y + r_y, r_w, r_h, 4);
+						glass_precompute_blur(win->glassBlur,
+											  win->glassTmp,
+											  backSurface,
+											  canvas->canvasWidth,
+											  canvas->canvasHeight,
+											  info->x + r_x,
+											  info->y + r_y,
+											  r_w,
+											  r_h,
+											  4);
 					}
 
 					for (int64_t i = 0; i < r_h; i++) {
 						//_fastcpy(canvas->buffer + (winy + i) * canvas->canvasWidth + winx,
 						//	win->backBuffer + (0 + i) * info->width + 0, width * 4);
-						uint32_t* canvas_row = (uint32_t*)(canvas->buffer + (info->y + r_y + i) * canvas->canvasWidth + (info->x + r_x));
-						uint32_t* backbuff = (uint32_t*)(win->backBuffer + (r_y + i) * info->width + r_x);
+						uint32_t* canvas_row =
+							(uint32_t*)(canvas->buffer + (info->y + r_y + i) * canvas->canvasWidth +
+										(info->x + r_x));
+						uint32_t* backbuff =
+							(uint32_t*)(win->backBuffer + (r_y + i) * info->width + r_x);
 
 #ifdef SHADOW_ENABLED
-						_shadow_compose_neon(canvas_row, canvas->canvasWidth, canvas->canvasHeight, win->shadowBuffers,
-							width + 2 * SHADOW_SIZE, height + 2 * SHADOW_SIZE, winx, winy);
+						_shadow_compose_neon(canvas_row,
+											 canvas->canvasWidth,
+											 canvas->canvasHeight,
+											 win->shadowBuffers,
+											 width + 2 * SHADOW_SIZE,
+											 height + 2 * SHADOW_SIZE,
+											 winx,
+											 winy);
 #endif
 						if (win->flags & WINDOW_FLAG_GLASS) {
 							uint32_t* blur_row = win->glassBlur + i * r_w;
 							_blend_scanline_glass_neon(canvas_row, backbuff, blur_row, r_w);
-						}else
+						} else
 							__pixel_blend_neon(canvas_row, backbuff, r_w);
-
 					}
 					AddDirtyClip(info->x + r_x, info->y + r_y, r_w, r_h);
 				}
@@ -227,7 +242,6 @@ void _compose_dirty_area_(ChCanvas* canvas,Window* win, Window* focusedWin, WinS
 					int diffy = k_y - offset_y;
 					int64_t update_r_y = r_y + diffy;
 
-
 					/*for (int64_t j = 0; j < k_h; j++) {
 						void* canvas_mem = (canvas->buffer + (k_y + j) * canvas->canvasWidth + k_x);
 						void* win_mem = (win->backBuffer + (update_r_y + j) * info->width + update_r_x);
@@ -236,34 +250,50 @@ void _compose_dirty_area_(ChCanvas* canvas,Window* win, Window* focusedWin, WinS
 					}*/
 					if (win->flags & WINDOW_FLAG_GLASS) {
 						uint32_t* backSurface = DeoGetBackSurface();
-						glass_precompute_blur(win->glassBlur, win->glassTmp, backSurface, canvas->canvasWidth, canvas->canvasHeight,
-							k_x, k_y, info->width, info->height, 4);
+						glass_precompute_blur(win->glassBlur,
+											  win->glassTmp,
+											  backSurface,
+											  canvas->canvasWidth,
+											  canvas->canvasHeight,
+											  k_x,
+											  k_y,
+											  info->width,
+											  info->height,
+											  4);
 					}
 
 					for (int64_t i = 0; i < k_h; i++) {
 						//_fastcpy(canvas->buffer + (winy + i) * canvas->canvasWidth + winx,
 						//	win->backBuffer + (0 + i) * info->width + 0, width * 4);
-						uint32_t* canvas_row = (uint32_t*)(canvas->buffer + (k_y + i) * canvas->canvasWidth + k_x);
-						uint32_t* backbuff = (uint32_t*)(win->backBuffer + (update_r_y + i) * info->width + update_r_x);
+						uint32_t* canvas_row =
+							(uint32_t*)(canvas->buffer + (k_y + i) * canvas->canvasWidth + k_x);
+						uint32_t* backbuff =
+							(uint32_t*)(win->backBuffer + (update_r_y + i) * info->width +
+										update_r_x);
 
 #ifdef SHADOW_ENABLED
-						_shadow_compose_neon(canvas_row, canvas->canvasWidth, canvas->canvasHeight, win->shadowBuffers,
-							width + 2 * SHADOW_SIZE, height + 2 * SHADOW_SIZE, winx, winy);
+						_shadow_compose_neon(canvas_row,
+											 canvas->canvasWidth,
+											 canvas->canvasHeight,
+											 win->shadowBuffers,
+											 width + 2 * SHADOW_SIZE,
+											 height + 2 * SHADOW_SIZE,
+											 winx,
+											 winy);
 #endif
 						if (win->flags & WINDOW_FLAG_GLASS) {
 							uint32_t* blur_row = win->glassBlur + i * k_w;
 							//
 							_blend_scanline_glass_neon(canvas_row, backbuff, blur_row, k_w);
-						}else
+						} else
 							__pixel_blend_neon(canvas_row, backbuff, k_w);
-
 					}
 
 					AddDirtyClip(k_x, k_y, k_w, k_h);
-					info->rect[k].x = 0, info->rect[k].y = 0, info->rect[k].w = 0, info->rect[k].h = 0;
+					info->rect[k].x = 0, info->rect[k].y = 0, info->rect[k].w = 0,
+					info->rect[k].h = 0;
 				}
 				clipCount = 0;
-			
 			}
 		}
 		info->rect_count = 0;
@@ -283,13 +313,18 @@ void _compose_dirty_area_(ChCanvas* canvas,Window* win, Window* focusedWin, WinS
  * @param _shadow_update -- shadow update bit which tells if we need to update
  * shadows or not
  */
-void _compose_entire_window(ChCanvas* canvas, Window* win, bool _window_update_all_, WinSharedInfo* info, Window* focusedWin,
-	bool _window_moving_, bool _shadow_update) {
+void _compose_entire_window(ChCanvas* canvas,
+							Window* win,
+							bool _window_update_all_,
+							WinSharedInfo* info,
+							Window* focusedWin,
+							bool _window_moving_,
+							bool _shadow_update) {
 	Window* alwaysOnTop = _get_always_on_top();
-		
-	/* If no small areas, update entire window */
-	if (win != NULL && _window_update_all_ || (info->rect_count == 0 && info->updateEntireWindow == 1)) {
 
+	/* If no small areas, update entire window */
+	if (win != NULL && _window_update_all_ ||
+		(info->rect_count == 0 && info->updateEntireWindow == 1)) {
 		if (is_window_fully_overlapped(info, alwaysOnTop)) {
 			if (info->updateEntireWindow)
 				info->updateEntireWindow = 0;
@@ -309,7 +344,6 @@ void _compose_entire_window(ChCanvas* canvas, Window* win, bool _window_update_a
 		int snap_w = width;
 		int snap_h = height;
 
-
 		if ((info->x + info->width) >= canvas->screenWidth)
 			width = static_cast<int64_t>(canvas->screenWidth) - info->x;
 
@@ -318,8 +352,7 @@ void _compose_entire_window(ChCanvas* canvas, Window* win, bool _window_update_a
 				height = static_cast<int64_t>(canvas->screenHeight) - info->y;
 				shad_h = height + SHADOW_SIZE * 2;
 			}
-		}
-		else {
+		} else {
 			if ((info->y + info->height) >= (canvas->screenHeight - 70)) {
 				height = static_cast<int64_t>(canvas->screenHeight - 70) - info->y;
 				shad_h = height + SHADOW_SIZE * 2;
@@ -336,7 +369,6 @@ void _compose_entire_window(ChCanvas* canvas, Window* win, bool _window_update_a
 			winy = info->y;
 		}
 
-
 		if ((info->x + 24) >= canvas->screenWidth)
 			info->x = canvas->screenWidth - 24;
 
@@ -345,11 +377,12 @@ void _compose_entire_window(ChCanvas* canvas, Window* win, bool _window_update_a
 
 #ifdef SHADOW_ENABLED
 		if (((static_cast<int64_t>(info->x) - SHADOW_SIZE) + shad_w) >= canvas->screenWidth)
-			shad_w = static_cast<int64_t>(canvas->screenWidth) - (static_cast<int64_t>(info->x) - SHADOW_SIZE);
-
+			shad_w = static_cast<int64_t>(canvas->screenWidth) -
+					 (static_cast<int64_t>(info->x) - SHADOW_SIZE);
 
 		if (((static_cast<int64_t>(info->y) - SHADOW_SIZE) + shad_h) >= canvas->screenHeight)
-			shad_h = static_cast<int64_t>(canvas->screenHeight) - (static_cast<int64_t>(info->y) - SHADOW_SIZE);
+			shad_h = static_cast<int64_t>(canvas->screenHeight) -
+					 (static_cast<int64_t>(info->y) - SHADOW_SIZE);
 #endif
 		if ((win->flags & WINDOW_FLAG_ANIMATED)) {
 			if (win->flags & WINDOW_FLAG_ANIMATION_FADE_IN)
@@ -357,8 +390,7 @@ void _compose_entire_window(ChCanvas* canvas, Window* win, bool _window_update_a
 
 			if (win->flags & WINDOW_FLAG_ANIMATION_FADE_OUT)
 				FadeOutAnimationWindow(canvas, win, info, winx, winy, shad_w, shad_h);
-		}
-		else {
+		} else {
 			Rect r1;
 			Rect r2;
 			r1.x = winx - SHADOW_SIZE;
@@ -371,7 +403,6 @@ void _compose_entire_window(ChCanvas* canvas, Window* win, bool _window_update_a
 			int clipCount = 0;
 			Window* clipWin = NULL;
 			WinSharedInfo* clipInfo = NULL;
-
 
 			for (clipWin = win; clipWin != NULL; clipWin = clipWin->next) {
 				clipInfo = (WinSharedInfo*)clipWin->sharedInfo;
@@ -393,7 +424,7 @@ void _compose_entire_window(ChCanvas* canvas, Window* win, bool _window_update_a
 			}
 
 			/* always on top list */
-		/*	for (clipWin = alwaysOnTop; clipWin != NULL; clipWin = clipWin->next) {
+			/*	for (clipWin = alwaysOnTop; clipWin != NULL; clipWin = clipWin->next) {
 				clipInfo = (WinSharedInfo*)clipWin->sharedInfo;
 				if (clipWin == win)
 					continue;
@@ -412,9 +443,17 @@ void _compose_entire_window(ChCanvas* canvas, Window* win, bool _window_update_a
 #ifdef SHADOW_ENABLED
 					for (int64_t j = 0; j < shad_h; j++) {
 						for (int64_t q = 0; q < shad_w; q++) {
-							*(uint32_t*)(canvas->buffer + ((winy - SHADOW_SIZE) + j) * canvas->canvasWidth + ((winx - SHADOW_SIZE) + q)) =
-								ChColorAlphaBlend2(*(uint32_t*)(canvas->buffer + ((winy - SHADOW_SIZE) + j) * canvas->canvasWidth + ((winx - SHADOW_SIZE) + q)),
-									*(uint32_t*)(win->shadowBuffers + j * (static_cast<int64_t>(info->width) + SHADOW_SIZE * 2) + q));
+							*(uint32_t*)(canvas->buffer +
+										 ((winy - SHADOW_SIZE) + j) * canvas->canvasWidth +
+										 ((winx - SHADOW_SIZE) + q)) =
+								ChColorAlphaBlend2(
+									*(uint32_t*)(canvas->buffer +
+												 ((winy - SHADOW_SIZE) + j) * canvas->canvasWidth +
+												 ((winx - SHADOW_SIZE) + q)),
+									*(uint32_t*)(win->shadowBuffers +
+												 j * (static_cast<int64_t>(info->width) +
+													  SHADOW_SIZE * 2) +
+												 q));
 						}
 					}
 #endif
@@ -433,32 +472,46 @@ void _compose_entire_window(ChCanvas* canvas, Window* win, bool _window_update_a
 				if (win->flags & WINDOW_FLAG_STATIC) {
 					if ((winy + height) >= canvas->screenHeight)
 						height = canvas->screenHeight - winy;
-				}
-				else {
+				} else {
 					if ((winy + height) >= (canvas->screenHeight - 70))
 						height = (canvas->screenHeight - 70) - winy;
 				}
 
 				if (win->flags & WINDOW_FLAG_GLASS) {
 					uint32_t* backSurface = DeoGetBackSurface();
-					glass_precompute_blur(win->glassBlur, win->glassTmp, backSurface, canvas->canvasWidth, canvas->canvasHeight,
-						winx, winy, width, height, 4);
+					glass_precompute_blur(win->glassBlur,
+										  win->glassTmp,
+										  backSurface,
+										  canvas->canvasWidth,
+										  canvas->canvasHeight,
+										  winx,
+										  winy,
+										  width,
+										  height,
+										  4);
 				}
 
 				for (int64_t i = 0; i < height; i++) {
 					//_fastcpy(canvas->buffer + (winy + i) * canvas->canvasWidth + winx,
 					//	win->backBuffer + (0 + i) * info->width + 0, width * 4);
-					uint32_t* canvas_row = (uint32_t*)(canvas->buffer + (winy + i) * canvas->canvasWidth + winx);
+					uint32_t* canvas_row =
+						(uint32_t*)(canvas->buffer + (winy + i) * canvas->canvasWidth + winx);
 					uint32_t* backbuff = (uint32_t*)(win->backBuffer + (0 + i) * info->width + 0);
 
 #ifdef SHADOW_ENABLED
-					_shadow_compose_neon(canvas_row, canvas->canvasWidth, canvas->canvasHeight, win->shadowBuffers,
-						width + 2 * SHADOW_SIZE, height + 2 * SHADOW_SIZE, winx, winy);
+					_shadow_compose_neon(canvas_row,
+										 canvas->canvasWidth,
+										 canvas->canvasHeight,
+										 win->shadowBuffers,
+										 width + 2 * SHADOW_SIZE,
+										 height + 2 * SHADOW_SIZE,
+										 winx,
+										 winy);
 #endif
 					if (win->flags & WINDOW_FLAG_GLASS) {
 						uint32_t* blur_row = win->glassBlur + i * width;
 						_blend_scanline_glass_neon(canvas_row, backbuff, blur_row, width);
-					}else
+					} else
 						__pixel_blend_neon(canvas_row, backbuff, width);
 				}
 			}
@@ -489,8 +542,7 @@ void _compose_entire_window(ChCanvas* canvas, Window* win, bool _window_update_a
 				if (win->flags & WINDOW_FLAG_STATIC) {
 					if ((k_y + k_h) >= canvas->screenHeight)
 						k_h = canvas->screenHeight - k_y;
-				}
-				else {
+				} else {
 					if ((k_y + k_h) >= canvas->screenHeight - 70)
 						k_h = (canvas->screenHeight - 70) - k_y;
 				}
@@ -503,28 +555,42 @@ void _compose_entire_window(ChCanvas* canvas, Window* win, bool _window_update_a
 				int diffy = k_y - info->y;
 				if (win->flags & WINDOW_FLAG_GLASS) {
 					uint32_t* backSurface = DeoGetBackSurface();
-					glass_precompute_blur(win->glassBlur, win->glassTmp, backSurface, canvas->canvasWidth, canvas->canvasHeight,
-						winx, winy, k_w, k_h, 4);
+					glass_precompute_blur(win->glassBlur,
+										  win->glassTmp,
+										  backSurface,
+										  canvas->canvasWidth,
+										  canvas->canvasHeight,
+										  winx,
+										  winy,
+										  k_w,
+										  k_h,
+										  4);
 				}
 
 				for (int64_t i = 0; i < height; i++) {
 					//_fastcpy(canvas->buffer + (winy + i) * canvas->canvasWidth + winx,
 					//	win->backBuffer + (0 + i) * info->width + 0, width * 4);
-					uint32_t* canvas_row = (uint32_t*)(canvas->buffer + (winy + i) * canvas->canvasWidth + winx);
-					uint32_t* backbuff = (uint32_t*)(win->backBuffer + (diffy + i) * info->width + diffx);
+					uint32_t* canvas_row =
+						(uint32_t*)(canvas->buffer + (winy + i) * canvas->canvasWidth + winx);
+					uint32_t* backbuff =
+						(uint32_t*)(win->backBuffer + (diffy + i) * info->width + diffx);
 
 #ifdef SHADOW_ENABLED
-					_shadow_compose_neon(canvas_row, canvas->canvasWidth, canvas->canvasHeight, win->shadowBuffers,
-						width + 2 * SHADOW_SIZE, height + 2 * SHADOW_SIZE, winx, winy);
+					_shadow_compose_neon(canvas_row,
+										 canvas->canvasWidth,
+										 canvas->canvasHeight,
+										 win->shadowBuffers,
+										 width + 2 * SHADOW_SIZE,
+										 height + 2 * SHADOW_SIZE,
+										 winx,
+										 winy);
 #endif
 					if (win->flags & WINDOW_FLAG_GLASS) {
 						uint32_t* blur_row = win->glassBlur + i * width;
 						//__pixel_blend_neon(canvas_row, backbuff, width);
 						_blend_scanline_glass_neon(canvas_row, backbuff, blur_row, width);
-					}
-					else 
+					} else
 						__pixel_blend_neon(canvas_row, backbuff, width);
-					
 				}
 
 				AddDirtyClip(k_x, k_y, k_w, k_h);
@@ -538,9 +604,7 @@ void _compose_entire_window(ChCanvas* canvas, Window* win, bool _window_update_a
 				info->windowReady = 1;
 			}
 		}
-
 	}
-
 }
 
 /**
@@ -551,7 +615,8 @@ void _compose_entire_window(ChCanvas* canvas, Window* win, bool _window_update_a
  * @param focusedWin -- Pointer to focused Window
  * @param win -- Pointer to main window
  */
-void _compose_always_on_top_dirty(ChCanvas* canvas, WinSharedInfo* info, bool _window_moving_, Window* focusedWin, Window* win) {
+void _compose_always_on_top_dirty(
+	ChCanvas* canvas, WinSharedInfo* info, bool _window_moving_, Window* focusedWin, Window* win) {
 	/*
 		* Check for small area updates !! not entire window
 		*/
@@ -592,19 +657,22 @@ void _compose_always_on_top_dirty(ChCanvas* canvas, WinSharedInfo* info, bool _w
 			if (info->alpha && !_window_moving_) {
 				for (int j = 0; j < r_h; j++) {
 					for (int i = 0; i < r_w; i++) {
-						*(uint32_t*)(canvas->buffer + (static_cast<int64_t>(info->y) + r_y + j) * canvas->canvasWidth +
-							(static_cast<int64_t>(info->x) + r_x + i)) =
-							ChColorAlphaBlend2(*(uint32_t*)(surfaceBuffer +
-								(static_cast<int64_t>(info->y) + r_y + j) * canvas->canvasWidth +
-								(static_cast<int64_t>(info->x) + r_x + i)),
-								*(uint32_t*)(win->backBuffer + (static_cast<int64_t>(r_y) + j) * info->width +
-									(static_cast<int64_t>(r_x) + i)));
-
+						*(uint32_t*)(canvas->buffer +
+									 (static_cast<int64_t>(info->y) + r_y + j) *
+										 canvas->canvasWidth +
+									 (static_cast<int64_t>(info->x) + r_x + i)) =
+							ChColorAlphaBlend2(
+								*(uint32_t*)(surfaceBuffer +
+											 (static_cast<int64_t>(info->y) + r_y + j) *
+												 canvas->canvasWidth +
+											 (static_cast<int64_t>(info->x) + r_x + i)),
+								*(uint32_t*)(win->backBuffer +
+											 (static_cast<int64_t>(r_y) + j) * info->width +
+											 (static_cast<int64_t>(r_x) + i)));
 					}
 				}
 				AddDirtyClip(info->x + r_x, info->y + r_y, r_w, r_h);
-			}
-			else {
+			} else {
 				if (focusedWin != win) {
 					for (clipWin = win; clipWin != NULL; clipWin = clipWin->next) {
 						clipInfo = (WinSharedInfo*)clipWin->sharedInfo;
@@ -623,30 +691,44 @@ void _compose_always_on_top_dirty(ChCanvas* canvas, WinSharedInfo* info, bool _w
 				}
 
 				if (clipCount == 0 && !overlap) {
-					
 					if (win->flags & WINDOW_FLAG_GLASS) {
 						uint32_t* backSurface = DeoGetBackSurface();
-						glass_precompute_blur(win->glassBlur, win->glassTmp, backSurface, canvas->canvasWidth, canvas->canvasHeight,
-							info->x + r_x, info->y + r_y, r_w, r_h, 4);
+						glass_precompute_blur(win->glassBlur,
+											  win->glassTmp,
+											  backSurface,
+											  canvas->canvasWidth,
+											  canvas->canvasHeight,
+											  info->x + r_x,
+											  info->y + r_y,
+											  r_w,
+											  r_h,
+											  4);
 					}
 
 					for (uint64_t i = 0; i < r_h; i++) {
 						//_fastcpy(canvas->buffer + (winy + i) * canvas->canvasWidth + winx,
 						//	win->backBuffer + (0 + i) * info->width + 0, width * 4);
-						uint32_t* canvas_row = (uint32_t*)(canvas->buffer + (info->y + r_y + i) * canvas->canvasWidth + (info->x + r_x));
-						uint32_t* backbuff = (uint32_t*)(win->backBuffer + (r_y + i) * info->width + r_x);
+						uint32_t* canvas_row =
+							(uint32_t*)(canvas->buffer + (info->y + r_y + i) * canvas->canvasWidth +
+										(info->x + r_x));
+						uint32_t* backbuff =
+							(uint32_t*)(win->backBuffer + (r_y + i) * info->width + r_x);
 
 #ifdef SHADOW_ENABLED
-						_shadow_compose_neon(canvas_row, canvas->canvasWidth, canvas->canvasHeight, win->shadowBuffers,
-							width + 2 * SHADOW_SIZE, height + 2 * SHADOW_SIZE, winx, winy);
+						_shadow_compose_neon(canvas_row,
+											 canvas->canvasWidth,
+											 canvas->canvasHeight,
+											 win->shadowBuffers,
+											 width + 2 * SHADOW_SIZE,
+											 height + 2 * SHADOW_SIZE,
+											 winx,
+											 winy);
 #endif
 						if (win->flags & WINDOW_FLAG_GLASS) {
 							uint32_t* blur_row = win->glassBlur + i * r_w;
 							_blend_scanline_glass_neon(canvas_row, backbuff, blur_row, r_w);
-						}
-						else 
+						} else
 							__pixel_blend_neon(canvas_row, backbuff, r_w);
-						
 					}
 					AddDirtyClip(info->x + r_x, info->y + r_y, r_w, r_h);
 				}
@@ -677,27 +759,43 @@ void _compose_always_on_top_dirty(ChCanvas* canvas, WinSharedInfo* info, bool _w
 
 					if (win->flags & WINDOW_FLAG_GLASS) {
 						uint32_t* backSurface = DeoGetBackSurface();
-						glass_precompute_blur(win->glassBlur, win->glassTmp, backSurface, canvas->canvasWidth, canvas->canvasHeight,
-							k_x, k_y, info->width, info->height, 4);
+						glass_precompute_blur(win->glassBlur,
+											  win->glassTmp,
+											  backSurface,
+											  canvas->canvasWidth,
+											  canvas->canvasHeight,
+											  k_x,
+											  k_y,
+											  info->width,
+											  info->height,
+											  4);
 					}
 
 					for (int64_t i = 0; i < k_h; i++) {
 						//_fastcpy(canvas->buffer + (winy + i) * canvas->canvasWidth + winx,
 						//	win->backBuffer + (0 + i) * info->width + 0, width * 4);
-						uint32_t* canvas_row = (uint32_t*)(canvas->buffer + (k_y + i) * canvas->canvasWidth + k_x);
-						uint32_t* backbuff = (uint32_t*)(win->backBuffer + (update_r_y + i) * info->width + update_r_x);
+						uint32_t* canvas_row =
+							(uint32_t*)(canvas->buffer + (k_y + i) * canvas->canvasWidth + k_x);
+						uint32_t* backbuff =
+							(uint32_t*)(win->backBuffer + (update_r_y + i) * info->width +
+										update_r_x);
 
 #ifdef SHADOW_ENABLED
-						_shadow_compose_neon(canvas_row, canvas->canvasWidth, canvas->canvasHeight, win->shadowBuffers,
-							width + 2 * SHADOW_SIZE, height + 2 * SHADOW_SIZE, winx, winy);
+						_shadow_compose_neon(canvas_row,
+											 canvas->canvasWidth,
+											 canvas->canvasHeight,
+											 win->shadowBuffers,
+											 width + 2 * SHADOW_SIZE,
+											 height + 2 * SHADOW_SIZE,
+											 winx,
+											 winy);
 #endif
 						if (win->flags & WINDOW_FLAG_GLASS) {
 							uint32_t* blur_row = win->glassBlur + i * k_w;
 							_blend_scanline_glass_neon(canvas_row, backbuff, blur_row, k_w);
-						}
-						else 
+						} else
 							__pixel_blend_neon(canvas_row, backbuff, k_w);
-						
+
 						clipRect[l].x = clipRect[l].y = clipRect[l].w = clipRect[l].h = 0;
 					}
 					AddDirtyClip(k_x, k_y, k_w, k_h);
@@ -718,10 +816,16 @@ void _compose_always_on_top_dirty(ChCanvas* canvas, WinSharedInfo* info, bool _w
 /**
  * @brief _compose_always_on_top_entire -- compose entire always on top window
  */
-void _compose_always_on_top_entire(ChCanvas* canvas, Window* win, bool _always_on_top_update,bool _window_moving_, WinSharedInfo* info,Window* rootWin) {
+void _compose_always_on_top_entire(ChCanvas* canvas,
+								   Window* win,
+								   bool _always_on_top_update,
+								   bool _window_moving_,
+								   WinSharedInfo* info,
+								   Window* rootWin) {
 	/* If no small areas, update entire window */
 
-	if (win != NULL && _always_on_top_update || (info->rect_count == 0 && info->updateEntireWindow == 1)) {
+	if (win != NULL && _always_on_top_update ||
+		(info->rect_count == 0 && info->updateEntireWindow == 1)) {
 		int winx = 0;
 		int winy = 0;
 		winx = info->x;
@@ -777,16 +881,19 @@ void _compose_always_on_top_entire(ChCanvas* canvas, Window* win, bool _always_o
 		if ((info->alpha && info->updateEntireWindow) || (info->alpha && _intersected_)) {
 			for (int j = 0; j < height; j++) {
 				for (int i = 0; i < width; i++) {
-					*(uint32_t*)(canvas->buffer + (static_cast<int64_t>(winy) + j) * canvas->canvasWidth +
-						(static_cast<int64_t>(winx) + i)) =
-						ChColorAlphaBlend2(*(uint32_t*)(surfaceBuffer + (static_cast<int64_t>(winy) + j) * canvas->canvasWidth +
-							(static_cast<int64_t>(winx) + i)),
-							*(uint32_t*)(win->backBuffer + static_cast<int64_t>(j) * info->width + i));
+					*(uint32_t*)(canvas->buffer +
+								 (static_cast<int64_t>(winy) + j) * canvas->canvasWidth +
+								 (static_cast<int64_t>(winx) + i)) =
+						ChColorAlphaBlend2(
+							*(uint32_t*)(surfaceBuffer +
+										 (static_cast<int64_t>(winy) + j) * canvas->canvasWidth +
+										 (static_cast<int64_t>(winx) + i)),
+							*(uint32_t*)(win->backBuffer + static_cast<int64_t>(j) * info->width +
+										 i));
 				}
 			}
 			AddDirtyClip(winx, winy, width, height);
-		}
-		else {
+		} else {
 			for (clipWin = rootWin; clipWin != NULL; clipWin = clipWin->next) {
 				clipInfo = (WinSharedInfo*)clipWin->sharedInfo;
 				if (clipWin == win)
@@ -798,7 +905,7 @@ void _compose_always_on_top_entire(ChCanvas* canvas, Window* win, bool _always_o
 
 				if (ClipCheckIntersect(&r1, &r2)) {
 					_intersected_ = true;
-					
+
 					/** for AOT windows, we don't need visible rect due to occlusion
 					 * of normal behind windows, rather we need the behind window
 					 * rect for which only update that portion
@@ -817,42 +924,53 @@ void _compose_always_on_top_entire(ChCanvas* canvas, Window* win, bool _always_o
 				}
 			}
 
-
-			if ((clipCount == 0 && info->updateEntireWindow) || (clipCount == 0 && !_window_moving_)||
+			if ((clipCount == 0 && info->updateEntireWindow) ||
+				(clipCount == 0 && !_window_moving_) ||
 				/** but the situation is, we need urgent entire window update here, becuase
 				 * maybe window was hidden but the algorithm above detected the AOT window and
 				 * normal window, because algorithm doesn't care about hidden or non-hidden **/
 				(clipCount > 0 && info->updateEntireWindow)) {
 				if (win->flags & WINDOW_FLAG_GLASS) {
 					uint32_t* backSurface = DeoGetBackSurface();
-					glass_precompute_blur(win->glassBlur, win->glassTmp, backSurface, canvas->canvasWidth, canvas->canvasHeight,
-						winx, winy, width, height, 4);
+					glass_precompute_blur(win->glassBlur,
+										  win->glassTmp,
+										  backSurface,
+										  canvas->canvasWidth,
+										  canvas->canvasHeight,
+										  winx,
+										  winy,
+										  width,
+										  height,
+										  4);
 				}
 
 				for (int64_t i = 0; i < height; i++) {
 					//_fastcpy(canvas->buffer + (winy + i) * canvas->canvasWidth + winx,
 					//	win->backBuffer + (0 + i) * info->width + 0, width * 4);
-					uint32_t* canvas_row = (uint32_t*)(canvas->buffer + (winy + i) * canvas->canvasWidth + winx);
+					uint32_t* canvas_row =
+						(uint32_t*)(canvas->buffer + (winy + i) * canvas->canvasWidth + winx);
 					uint32_t* backbuff = (uint32_t*)(win->backBuffer + (0 + i) * info->width + 0);
 
 #ifdef SHADOW_ENABLED
-					_shadow_compose_neon(canvas_row, canvas->canvasWidth, canvas->canvasHeight, win->shadowBuffers,
-						width + 2 * SHADOW_SIZE, height + 2 * SHADOW_SIZE, winx, winy);
+					_shadow_compose_neon(canvas_row,
+										 canvas->canvasWidth,
+										 canvas->canvasHeight,
+										 win->shadowBuffers,
+										 width + 2 * SHADOW_SIZE,
+										 height + 2 * SHADOW_SIZE,
+										 winx,
+										 winy);
 #endif
 					if (win->flags & WINDOW_FLAG_GLASS) {
 						uint32_t* blur_row = win->glassBlur + i * width;
 						_blend_scanline_glass_neon(canvas_row, backbuff, blur_row, width);
-					}
-					else 
+					} else
 						__pixel_blend_neon(canvas_row, backbuff, width);
-					
 				}
 				if (clipCount > 0)
 					clipCount = 0;
 				AddDirtyClip(winx, winy, width, height);
 			}
-
-
 
 			for (int m = 0; m < clipCount; m++) {
 				int k_x = clip[m].x;
@@ -878,34 +996,47 @@ void _compose_always_on_top_entire(ChCanvas* canvas, Window* win, bool _always_o
 
 				if (win->flags & WINDOW_FLAG_GLASS) {
 					uint32_t* backSurface = DeoGetBackSurface();
-					glass_precompute_blur(win->glassBlur, win->glassTmp, backSurface, canvas->canvasWidth, canvas->canvasHeight,
-						winx, winy, k_w, k_h, 4);
+					glass_precompute_blur(win->glassBlur,
+										  win->glassTmp,
+										  backSurface,
+										  canvas->canvasWidth,
+										  canvas->canvasHeight,
+										  winx,
+										  winy,
+										  k_w,
+										  k_h,
+										  4);
 				}
 
 				for (uint64_t i = 0; i < height; i++) {
 					//_fastcpy(canvas->buffer + (winy + i) * canvas->canvasWidth + winx,
 					//	win->backBuffer + (0 + i) * info->width + 0, width * 4);
-					uint32_t* canvas_row = (uint32_t*)(canvas->buffer + (winy + i) * canvas->canvasWidth + winx);
-					uint32_t* backbuff = (uint32_t*)(win->backBuffer + (diffy + i) * info->width + diffx);
+					uint32_t* canvas_row =
+						(uint32_t*)(canvas->buffer + (winy + i) * canvas->canvasWidth + winx);
+					uint32_t* backbuff =
+						(uint32_t*)(win->backBuffer + (diffy + i) * info->width + diffx);
 
 #ifdef SHADOW_ENABLED
-					_shadow_compose_neon(canvas_row, canvas->canvasWidth, canvas->canvasHeight, win->shadowBuffers,
-						width + 2 * SHADOW_SIZE, height + 2 * SHADOW_SIZE, winx, winy);
+					_shadow_compose_neon(canvas_row,
+										 canvas->canvasWidth,
+										 canvas->canvasHeight,
+										 win->shadowBuffers,
+										 width + 2 * SHADOW_SIZE,
+										 height + 2 * SHADOW_SIZE,
+										 winx,
+										 winy);
 #endif
 					if (win->flags & WINDOW_FLAG_GLASS) {
 						uint32_t* blur_row = win->glassBlur + i * width;
-						
+
 						_blend_scanline_glass_neon(canvas_row, backbuff, blur_row, width);
-					}
-					else 
-					    __pixel_blend_neon(canvas_row, backbuff, width);
-					
+					} else
+						__pixel_blend_neon(canvas_row, backbuff, width);
 				}
 			}
 			AddDirtyClip(info->x, info->y, info->width, info->height);
 			clipCount = 0;
 		}
-
 
 		if (win->animFrameCount == 0)
 			info->updateEntireWindow = 0;

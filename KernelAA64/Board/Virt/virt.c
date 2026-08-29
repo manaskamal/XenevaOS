@@ -29,7 +29,6 @@
 *
 **/
 
-
 #include <pcie.h>
 #include <Drivers/virtio.h>
 #include <string.h>
@@ -38,9 +37,9 @@
 #include <Hal/AA64/aa64lowlevel.h>
 
 #define VIRTIO_INPUT_KEYBOARD 1
-#define VIRTIO_INPUT_TABLET 2
+#define VIRTIO_INPUT_TABLET	  2
 
-uint8_t AuVirtIOInputCheck(uint64_t device, int bus,int dev,int func) {
+uint8_t AuVirtIOInputCheck(uint64_t device, int bus, int dev, int func) {
 	uint64_t barLo = AuPCIERead(device, PCI_BAR4, bus, dev, func);
 	uint64_t barHi = AuPCIERead(device, PCI_BAR5, bus, dev, func);
 	uint64_t bar = ((uint64_t)barHi << 32) | (barLo & ~0xFULL);
@@ -81,7 +80,7 @@ void AuVirtIOInputInitialize() {
 					continue;
 				if (address == 0xFFFFFFFF)
 					continue;
-			
+
 				uint8_t class_code = AuPCIERead(address, PCI_CLASS, bus, dev, func);
 				uint8_t sub_ClassCode = AuPCIERead(address, PCI_SUBCLASS, bus, dev, func);
 				uint16_t vendID = AuPCIERead(address, PCI_VENDOR_ID, bus, dev, func);
@@ -93,8 +92,7 @@ void AuVirtIOInputInitialize() {
 					if (devType == VIRTIO_INPUT_KEYBOARD) {
 						numVirtIODevice++;
 						AuVirtioKbdInitialize(address);
-					}
-					else if (devType == VIRTIO_INPUT_TABLET) {
+					} else if (devType == VIRTIO_INPUT_TABLET) {
 						numVirtIODevice++;
 						AuVirtioTabletInitialize(address);
 					}
@@ -111,9 +109,8 @@ void AuVirtIOInputInitialize() {
 }
 
 #define GOOGLE_GOLDFISH_RTC_BASE 0x09010000
-#define RTC_TIME_LOW ((volatile uint32_t*)(GOOGLE_GOLDFISH_RTC_BASE + 0x00))
-#define RTC_TIME_HIGH ((volatile uint32_t*)(GOOGLE_GOLDFISH_RTC_BASE + 0x04))
-
+#define RTC_TIME_LOW			 ((volatile uint32_t*)(GOOGLE_GOLDFISH_RTC_BASE + 0x00))
+#define RTC_TIME_HIGH			 ((volatile uint32_t*)(GOOGLE_GOLDFISH_RTC_BASE + 0x04))
 
 uint64_t AuVirtGetBootEpoch() {
 	uint32_t low = *RTC_TIME_LOW;

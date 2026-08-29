@@ -42,7 +42,6 @@
 /** global group ID's for kernel use **/
 static GID_NUM _groups[AURORA_MAX_GROUPS];
 
-
 static inline uint64_t _mix64(uint64_t x) {
 	x ^= (x >> 30);
 	x *= 0xbf58476d1ce4e5b9ULL;
@@ -71,8 +70,9 @@ static uint32_t _cred_gen_gid(uint32_t min, uint32_t max, uint64_t* seed) {
  * in the table
  */
 static int _collision_check_gid(int count, GID_NUM val) {
-	for (int i = 0; i < count; i++) 
-		if (_groups[i] == val) return 1;
+	for (int i = 0; i < count; i++)
+		if (_groups[i] == val)
+			return 1;
 	return 0;
 }
 
@@ -95,7 +95,6 @@ void AuCredGroupInitialize() {
 	seed = _mix64(seed);
 
 	int filled = 0;
-
 
 #define GID_GROUP_NET_MIN 0x1000
 #define GID_GROUP_NET_MAX 0x1FFF
@@ -175,7 +174,7 @@ uint8_t AuCredGetGroupCategory(const char* string) {
 		return AURORA_GID_GRAPHICS;
 	else if (strcmp(string, GROUP_NAME_IPC_POSTBOX) == 0)
 		return AURORA_GID_IPC_POSTBOX;*/
-	
+
 	return AURORA_MAX_GROUPS + 1;
 }
 
@@ -189,8 +188,6 @@ GID_NUM AuCredGetGroupID(uint8_t category) {
 		return 0;
 	return _groups[category];
 }
-
-
 
 /**
  * @brief AuCredChangeID -- change credential ids
@@ -206,8 +203,8 @@ int AuCredChangeID(int fd, UID_NUM uid, GID_NUM gid) {
 		return 1;
 
 	/** check capabilities **/
-	if (!CRED_IS_CAPABLE(proc->creds.caps, CRED_CAP_SETUID) && 
-		!CRED_IS_CAPABLE(proc->creds.caps, CRED_CAP_SETGID)) 
+	if (!CRED_IS_CAPABLE(proc->creds.caps, CRED_CAP_SETUID) &&
+		!CRED_IS_CAPABLE(proc->creds.caps, CRED_CAP_SETGID))
 		return 1;
 
 	AuVFSNode* file = proc->fds[fd];
@@ -225,7 +222,7 @@ int AuCredChangeID(int fd, UID_NUM uid, GID_NUM gid) {
  * @param proc_id -- process id number
  * @param sgid -- sgid number
  */
-int AuCredAddSGroup(int proc_id,int sgid) {
+int AuCredAddSGroup(int proc_id, int sgid) {
 	AA64Thread* current_thr = AuGetCurrentThread();
 	AuProcess* proc = AuProcessFindThread(current_thr);
 
@@ -261,7 +258,7 @@ int AuCredSetCap(int proc_id, int cap) {
 	if (!CRED_IS_CAPABLE(proc->creds.caps, CRED_CAP_SETCAP))
 		return 1;
 
-	if (proc_id != 0) 
+	if (proc_id != 0)
 		proc = AuProcessFindPID(proc_id);
 
 	proc->creds.caps = cap;
@@ -296,13 +293,13 @@ int AuCredGetCap(int proc_id) {
  * @param node -- File node
  * @param cred -- Process's credential
  */
-int AuCredCheckPermissions(AuVFSNode* node, AuProcCredentials *cred) {
+int AuCredCheckPermissions(AuVFSNode* node, AuProcCredentials* cred) {
 	if (!node)
 		return 1;
 	/** root get access to everything */
 	if (cred->uid == 0)
 		return 0;
-	
+
 	/** maybe this process's user, created the file and owner 
 	 * of this file
 	 */
@@ -320,8 +317,7 @@ int AuCredCheckPermissions(AuVFSNode* node, AuProcCredentials *cred) {
 			return 0;
 	}
 
-	AuTextOut("[aurora]: file : %s is not accessible to uid : %d \r\n", node->filename,
-		cred->uid);
+	AuTextOut("[aurora]: file : %s is not accessible to uid : %d \r\n", node->filename, cred->uid);
 	/** sorry,kela, no access to the file **/
 	return 1;
 }
@@ -335,9 +331,9 @@ int AuSetUID(int proc_id, UID_NUM uid) {
 	AA64Thread* current_thr = AuGetCurrentThread();
 	AuProcess* proc = AuProcessFindThread(current_thr);
 
-	if (!proc) 
+	if (!proc)
 		proc = AuProcessFindSubThread(current_thr);
-	
+
 	if (!proc)
 		return 1;
 
@@ -353,7 +349,7 @@ int AuSetUID(int proc_id, UID_NUM uid) {
 		return 1;
 	}
 
-	if (proc_id != 0) 
+	if (proc_id != 0)
 		proc = AuProcessFindPID(proc_id);
 
 	proc->creds.uid = uid;

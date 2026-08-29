@@ -36,7 +36,7 @@
 #include <_xeneva.h>
 
 #ifdef __cplusplus
-XE_EXTERN{
+XE_EXTERN {
 #endif
 
 #define PAGE_SIZE 4096
@@ -44,15 +44,15 @@ XE_EXTERN{
 #define MEMMAP_NO_FILEDESC -1
 
 	/* memmap -- flags */
-#define PROTECTION_FLAG_READONLY  1<<0
-#define PROTECTION_FLAG_WRITE 1<<1
-#define PROTECTION_FLAG_NO_EXEC  1<<2
-#define PROTECTION_FLAG_NO_CACHE 1<<3
+#define PROTECTION_FLAG_READONLY 1 << 0
+#define PROTECTION_FLAG_WRITE	 1 << 1
+#define PROTECTION_FLAG_NO_EXEC	 1 << 2
+#define PROTECTION_FLAG_NO_CACHE 1 << 3
 
-#define MEMMAP_FLAG_SHARED 1<<0
-#define MEMMAP_FLAG_COW  1<<1
-#define MEMMAP_FLAG_PRIVATE  1<<2
-#define MEMMAP_FLAG_DISCARD_FILE_READ 1<<3
+#define MEMMAP_FLAG_SHARED			  1 << 0
+#define MEMMAP_FLAG_COW				  1 << 1
+#define MEMMAP_FLAG_PRIVATE			  1 << 2
+#define MEMMAP_FLAG_DISCARD_FILE_READ 1 << 3
 
 	/**
 	* @brief _KeMemMap -- memory map
@@ -63,7 +63,8 @@ XE_EXTERN{
 	* @param filedesc -- file descriptor to map
 	* @param offset -- offset from where to begin, it should be multiple of PAGE_SIZE
 	*/
-	XE_LIB void* _KeMemMap(void* address, size_t length, int protect, int flags, int filedesc, uint64_t offset);
+	XE_LIB void* _KeMemMap(
+		void* address, size_t length, int protect, int flags, int filedesc, uint64_t offset);
 
 	/**
 	 * @brief _KeMemUnmap -- unmaps a memory segment

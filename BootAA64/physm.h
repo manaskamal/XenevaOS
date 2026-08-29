@@ -35,7 +35,7 @@
 #include <Uefi.h>
 
 typedef EFI_PHYSICAL_ADDRESS paddr_t;
-#define PAGESIZE 4096
+#define PAGESIZE	4096
 #define PADDR_T_MAX UINT64_MAX
 
 /*

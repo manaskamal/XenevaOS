@@ -29,10 +29,8 @@
 
 #include <ctype.h>
 
-
 int isspace(int c) {
-	return (c == '\f' || c == '\n' || c == '\r' || c == '\t' ||
-		c == '\v' || c == ' ');
+	return (c == '\f' || c == '\n' || c == '\r' || c == '\t' || c == '\v' || c == ' ');
 }
 int isascii(int c) {
 	return (c <= 0x7f);
@@ -75,7 +73,7 @@ int ispunct(int c) {
 }
 
 int tolower(int c) {
-	if (c >= 'A' && c <= 'Z'){
+	if (c >= 'A' && c <= 'Z') {
 		return c - 'A' + 'a';
 	}
 	return c;

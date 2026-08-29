@@ -51,30 +51,32 @@
 uint64_t* _ldr_scratchBuffer;
 uint64_t physFrames[64];
 
-/* push item on the stack */  //
-#define PUSH(stack, type, item) do { \
-	stack -= sizeof(type); \
-    while (stack & (sizeof(type)-1))stack--; \
-	*((type*)(stack)) = (item); \
-}while (0);
+/* push item on the stack */ //
+#define PUSH(stack, type, item)                                                                    \
+	do {                                                                                           \
+		stack -= sizeof(type);                                                                     \
+		while (stack & (sizeof(type) - 1))                                                         \
+			stack--;                                                                               \
+		*((type*)(stack)) = (item);                                                                \
+	} while (0);
 
-#define PUSHALIGN(stack, align) do {\
-   stack &= ~((align)-1); \
-}while(0)
+#define PUSHALIGN(stack, align)                                                                    \
+	do {                                                                                           \
+		stack &= ~((align) - 1);                                                                   \
+	} while (0)
 
-#define PUSHSTRING(stack, s) do { \
-	size_t l = strlen(s) - 1; \
-    do {\
-       PUSH2(stack, char, s[l]); \
-	   l--; \
-	} while (l >= 0); \
-}while (0)
-
+#define PUSHSTRING(stack, s)                                                                       \
+	do {                                                                                           \
+		size_t l = strlen(s) - 1;                                                                  \
+		do {                                                                                       \
+			PUSH2(stack, char, s[l]);                                                              \
+			l--;                                                                                   \
+		} while (l >= 0);                                                                          \
+	} while (0)
 
 void testFunc(uint64_t x0, uint64_t x1) {
 	UARTDebugOut("x0: %x x1 : %x \r\n", x0, x1);
 }
-
 
 /**
 * @brief AuProcessEntUser -- main kernel thread call
@@ -102,7 +104,7 @@ void AuProcessEntUser(uint64_t rcx) {
 	 */
 
 	/* Step 1 — push strings and record user-space pointers */
-	char** argvs = (char**)uentry->argvkernel;  /* kernel-accessible VA of argv[] page */
+	char** argvs = (char**)uentry->argvkernel; /* kernel-accessible VA of argv[] page */
 	for (int i = uentry->num_args - 1; i >= 0; i--) {
 		char* str = uentry->argvs[i];
 		int slen = strlen(str);
@@ -118,8 +120,8 @@ void AuProcessEntUser(uint64_t rcx) {
 
 	/* Step 2 — align, then push argv_ptr and argc */
 	PUSHALIGN(uentry->rsp, 16);
-	PUSH(uentry->rsp, size_t, (size_t)uentry->argvaddr);  /* x1 = argv */
-	PUSH(uentry->rsp, size_t, (size_t)uentry->num_args);  /* x0 = argc */
+	PUSH(uentry->rsp, size_t, (size_t)uentry->argvaddr); /* x1 = argv */
+	PUSH(uentry->rsp, size_t, (size_t)uentry->num_args); /* x0 = argc */
 	PUSHALIGN(uentry->rsp, 16);
 
 	/* Step 3 — free kernel-side argv copies (no longer needed) */
@@ -132,7 +134,10 @@ void AuProcessEntUser(uint64_t rcx) {
 	uentry->argvs = 0;
 
 	UARTDebugOut("[loader]: entering user: sp=%x entry=%x argc=%d argv=%x\r\n",
-		uentry->rsp, uentry->entrypoint, uentry->num_args, uentry->argvaddr);
+				 uentry->rsp,
+				 uentry->entrypoint,
+				 uentry->num_args,
+				 uentry->argvaddr);
 
 	uint64_t* check_sp = (uint64_t*)uentry->rsp;
 	UARTDebugOut("[loader]: stack check [0]: %x, [1]: %x\r\n", check_sp[0], check_sp[1]);
@@ -150,7 +155,11 @@ void AuProcessEntUser(uint64_t rcx) {
  * @param secthdr -- Pointer to Image sect header
  * @param _image_base_ -- Image base address
  */
-void AuLoaderMapExecFromCache(AuProcess* proc, AuMMFileBack *fb,PIMAGE_NT_HEADERS nt, PSECTION_HEADER secthdr, uint64_t _image_base_) {
+void AuLoaderMapExecFromCache(AuProcess* proc,
+							  AuMMFileBack* fb,
+							  PIMAGE_NT_HEADERS nt,
+							  PSECTION_HEADER secthdr,
+							  uint64_t _image_base_) {
 	UARTDebugOut("AuLoaderMapExecFromCache : %x, %x %xr\n", proc, fb, fb->file);
 	if (fb->file)
 		UARTDebugOut("Name : %s \r\n", fb->file->filename);
@@ -167,7 +176,10 @@ void AuLoaderMapExecFromCache(AuProcess* proc, AuMMFileBack *fb,PIMAGE_NT_HEADER
 			if (!phys) {
 				phys = AuPmmngrAlloc();
 				memset((void*)P2V((size_t)phys), 0, PAGE_SIZE);
-				AuMapPageEx(proc->cr3, (uint64_t)phys, v_page, PTE_USER_EXECUTABLE | PTE_AP_RW_USER | PTE_NORMAL_MEM);
+				AuMapPageEx(proc->cr3,
+							(uint64_t)phys,
+							v_page,
+							PTE_USER_EXECUTABLE | PTE_AP_RW_USER | PTE_NORMAL_MEM);
 			}
 		}
 
@@ -181,14 +193,14 @@ void AuLoaderMapExecFromCache(AuProcess* proc, AuMMFileBack *fb,PIMAGE_NT_HEADER
 			if (bytes_in_this_page > bytes_to_copy) {
 				bytes_in_this_page = bytes_to_copy;
 			}
-			
+
 			void* phys = AuGetPhysicalAddressEx(proc->cr3, current_vaddr);
 			if (phys) {
 				void* dest = (void*)(P2V((size_t)phys) + page_offset);
 				void* src = (void*)((uint64_t)_ldr_scratchBuffer + current_file_offset);
 				memcpy(dest, src, bytes_in_this_page);
 			}
-			
+
 			current_vaddr += bytes_in_this_page;
 			current_file_offset += bytes_in_this_page;
 			bytes_to_copy -= bytes_in_this_page;
@@ -226,9 +238,8 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) 
 	AuVFSNode* file = NULL;
 	if (fb) {
 		file = fb->file;
-	}
-	else {
-	//	UARTDebugOut("[loader.c]: file : %s was not in cache adding it \r\n", filename);
+	} else {
+		//	UARTDebugOut("[loader.c]: file : %s was not in cache adding it \r\n", filename);
 		file = AuVFSOpen(filename);
 		if (!file) {
 			UARTDebugOut("[loader.c]: Failed to open file %s\r\n", filename);
@@ -249,7 +260,7 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) 
 		return -1;
 	}
 	AuMMPageCache* pcache = fb->pageCache;
-	
+
 	if (file->eof == 1 && fb->readComplete == 1)
 		file->eof = 0;
 
@@ -258,7 +269,8 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) 
 		while (file->eof != 1) {
 			uint64_t block = ((uint64_t)_ldr_scratchBuffer + file_offset);
 			size_t bytes_read = AuVFSNodeReadBlock(fsys, file, (uint64_t*)block);
-			if (bytes_read == 0) break;
+			if (bytes_read == 0)
+				break;
 			file_offset += bytes_read;
 		}
 
@@ -275,27 +287,33 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) 
 			size_t copy_sz = PAGE_SIZE;
 			if (i == total_pages - 1 && (file_offset % PAGE_SIZE) != 0)
 				copy_sz = file_offset % PAGE_SIZE;
-			memcpy((void*)P2V(physcache), (void*)((uint64_t)_ldr_scratchBuffer + i * PAGE_SIZE), copy_sz);
+			memcpy((void*)P2V(physcache),
+				   (void*)((uint64_t)_ldr_scratchBuffer + i * PAGE_SIZE),
+				   copy_sz);
 		}
 		fb->readComplete = true;
 	} else {
 		AuMMPageCache* pcache = fb->pageCache;
 		size_t file_offset = 0;
 		while (pcache != NULL) {
-			memcpy((void*)((uint64_t)_ldr_scratchBuffer + file_offset), (void*)P2V(pcache->physicalPage), PAGE_SIZE);
+			memcpy((void*)((uint64_t)_ldr_scratchBuffer + file_offset),
+				   (void*)P2V(pcache->physicalPage),
+				   PAGE_SIZE);
 			file_offset += PAGE_SIZE;
 			pcache = pcache->next;
 		}
 	}
-	
+
 	fb->readComplete = 1;
 
 	IMAGE_DOS_HEADER* dos = (IMAGE_DOS_HEADER*)_ldr_scratchBuffer;
-	PIMAGE_NT_HEADERS nt = RAW_OFFSET(PIMAGE_NT_HEADERS,dos, dos->e_lfanew);
-	PSECTION_HEADER secthdr = RAW_OFFSET(PSECTION_HEADER,&nt->OptionalHeader, nt->FileHeader.SizeOfOptionaHeader);
+	PIMAGE_NT_HEADERS nt = RAW_OFFSET(PIMAGE_NT_HEADERS, dos, dos->e_lfanew);
+	PSECTION_HEADER secthdr =
+		RAW_OFFSET(PSECTION_HEADER, &nt->OptionalHeader, nt->FileHeader.SizeOfOptionaHeader);
 
-	uint64_t _image_base_ = 0x600000000;//   nt->OptionalHeader.ImageBase;
-	entry ent = (entry)(nt->OptionalHeader.AddressOfEntryPoint + _image_base_);//nt->OptionalHeader.ImageBase);
+	uint64_t _image_base_ = 0x600000000; //   nt->OptionalHeader.ImageBase;
+	entry ent = (entry)(nt->OptionalHeader.AddressOfEntryPoint +
+						_image_base_); //nt->OptionalHeader.ImageBase);
 	//AuTextOut("Image base address : %x \n", dos->e_magic);
 	uint64_t* cr3 = proc->cr3;
 
@@ -324,9 +342,9 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) 
 		 */
 		int num_args_ = 1 + argc;
 		int string_len = strlen(filename);
-		char* file__ = (char*)kmalloc(string_len+1);
+		char* file__ = (char*)kmalloc(string_len + 1);
 		strcpy(file__, filename);
-	
+
 		/* BUGG: if kmalloc allocates smaller memory below than 15 bytes,
 		 * it crashes while freeing the allocated memory, that's why we
 		 * allocate memory of size (string_len + char_cnt) * sizeof(char) for
@@ -337,18 +355,17 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) 
 		argvs[0] = file__;
 
 		for (int i = 0; i < argc; i++) {
-			char* argpass = (char*)kmalloc(strlen(argv[i])+1);
-			memset(argpass, 0, strlen(argv[i])+1);
+			char* argpass = (char*)kmalloc(strlen(argv[i]) + 1);
+			memset(argpass, 0, strlen(argv[i]) + 1);
 			strcpy(argpass, argv[i]);
 			argvs[1 + i] = argpass;
 		}
-
 
 		if (argc > 0) {
 			kfree(argv);
 		}
 
-	//	setStk();
+		//	setStk();
 		//AuReleaseSpinlock(loader_lock);
 
 #ifdef __KERNEL_PROFILER_ON__
@@ -358,11 +375,9 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) 
 		return AuLoadExecToProcess(proc, "/xeldr.exe", num_args_, argvs);
 	}
 
-	
 	AuLoaderMapExecFromCache(proc, fb, nt, secthdr, _image_base_);
-	
 
-	AA64Thread* thr = AuCreateKthread(AuProcessEntUser, cr3,proc->name);
+	AA64Thread* thr = AuCreateKthread(AuProcessEntUser, cr3, proc->name);
 	thr->threadType = THREAD_LEVEL_USER;
 	AuUserEntry* uentry = (AuUserEntry*)kmalloc(sizeof(AuUserEntry));
 	memset(uentry, 0, sizeof(AuUserEntry));
@@ -376,13 +391,15 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) 
 		/* Allocate a memory for passing arguments */
 		uint64_t* args = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
 		memset(args, 0, PAGE_SIZE);
-		if (!AuMapPageEx(proc->cr3, (size_t)V2P((uint64_t)args), 0x40000000000, PTE_AP_RW_USER | PTE_NORMAL_MEM)) {
+		if (!AuMapPageEx(proc->cr3,
+						 (size_t)V2P((uint64_t)args),
+						 0x40000000000,
+						 PTE_AP_RW_USER | PTE_NORMAL_MEM)) {
 			UARTDebugOut("Arguments address already mapped \n");
 			argvaddr = 0;
 			argvkernel = 0;
-		}
-		else {
-			argvaddr = 0x40000000000;  /* user-space VA for crt0 */
+		} else {
+			argvaddr = 0x40000000000;	 /* user-space VA for crt0 */
 			argvkernel = (uint64_t)args; /* kernel-space VA for AuProcessEntUser to write */
 		}
 	}
@@ -408,7 +425,8 @@ void AuInitialiseLoader() {
 	for (int i = 0; i < (1024 * 1024) / 0x1000; i++) {
 		AuMapPage((size_t)AuPmmngrAlloc(), LOADER_SCRATCH_VIRT + i * 0x1000, PTE_NORMAL_MEM);
 	}
-	_ldr_scratchBuffer = (uint64_t*)LOADER_SCRATCH_VIRT; // (uint64_t*)P2V((uint64_t)AuPmmngrAllocBlocks((1024 * 1024) / 0x1000));
+	_ldr_scratchBuffer = (uint64_t*)
+		LOADER_SCRATCH_VIRT; // (uint64_t*)P2V((uint64_t)AuPmmngrAllocBlocks((1024 * 1024) / 0x1000));
 	memset(_ldr_scratchBuffer, 0, 1024 * 1024);
 	for (int i = 0; i < 64; i++)
 		physFrames[i] = 0;

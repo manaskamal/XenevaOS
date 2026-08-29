@@ -41,7 +41,6 @@
 #include <Hal/AA64/sched.h>
 #include <string.h>
 
-
 struct VirtioQueue* queue;
 struct VirtioInputEvent* input;
 static uint16_t index;
@@ -91,8 +90,7 @@ void AuVirtioKbdHandler(int spinum) {
 				msg.type = AU_INPUT_KEYBOARD;
 				msg.code = scancode & 0xFF;
 				AuDevWriteKybrd(&msg);
-			}
-			else if (ext_key_map[evt.code]) {
+			} else if (ext_key_map[evt.code]) {
 				uint8_t make_code = ext_key_map[evt.code] & 0xFF;
 
 				if (evt.value == 0) {
@@ -106,15 +104,13 @@ void AuVirtioKbdHandler(int spinum) {
 				msg.type = AU_INPUT_KEYBOARD;
 				msg.code = scancode;
 				AuDevWriteKybrd(&msg);
-			}
-			else {
+			} else {
 				UARTDebugOut("virtio-kybrd: unmapped key code : %d \n", evt.code);
 			}
 		}
 		isb_flush();
 		queue->available.index++;
 	}
-	
 }
 
 void AuVirtioKbdDown() {
@@ -169,8 +165,10 @@ void AuVirtioKbdInitialize(uint64_t device) {
 	char kbd_name[128];
 	memset(kbd_name, 0, 128);
 	int name_len = cfg->size;
-	if (name_len > 127) name_len = 127;
-	for (int i = 0; i < name_len; i++) kbd_name[i] = cfg->data.str[i];
+	if (name_len > 127)
+		name_len = 127;
+	for (int i = 0; i < name_len; i++)
+		kbd_name[i] = cfg->data.str[i];
 	UARTDebugOut("VIRTIO Keyboard Name : %s \n", kbd_name);
 
 	int spiID = AuGICAllocateSPI();
@@ -194,7 +192,7 @@ void AuVirtioKbdInitialize(uint64_t device) {
 	struct VirtioCommonCfg* common = (struct VirtioCommonCfg*)finalAddr;
 	_kybrdCfg = common;
 	common->DeviceStatus = 0;
-	
+
 	isb_flush();
 	dsb_ish();
 
@@ -202,15 +200,16 @@ void AuVirtioKbdInitialize(uint64_t device) {
 	queueSize = queueSz;
 	UARTDebugOut("virtio: queue sz : %d \n", queueSz);
 
-
-	uint64_t queuePhys = (uint64_t)AuPmmngrAlloc();//AuPmmngrAllocBlocks(((sizeof(struct VirtioQueue) * queueSz))/0x1000);
-	queue = (struct VirtioQueue*)AuMapMMIO(queuePhys,1 /*((sizeof(struct VirtioQueue)*queueSz))/0x1000*/);
+	uint64_t queuePhys = (uint64_t)
+		AuPmmngrAlloc(); //AuPmmngrAllocBlocks(((sizeof(struct VirtioQueue) * queueSz))/0x1000);
+	queue = (struct VirtioQueue*)AuMapMMIO(queuePhys,
+										   1 /*((sizeof(struct VirtioQueue)*queueSz))/0x1000*/);
 
 	size_t desc_size = queueSz * sizeof(struct VirtioQueue);
 	common->QueueSelect = 0;
 	common->QueueDesc = queuePhys;
-	common->QueueAvail = (queuePhys)+OFFSETOF(struct VirtioQueue, available);
-	common->QueueUsed = (queuePhys)+OFFSETOF(struct VirtioQueue, used);
+	common->QueueAvail = (queuePhys) + OFFSETOF(struct VirtioQueue, available);
+	common->QueueUsed = (queuePhys) + OFFSETOF(struct VirtioQueue, used);
 	common->MSix = 0;
 	common->QueueMSixVector = 0;
 	isb_flush();
@@ -218,7 +217,6 @@ void AuVirtioKbdInitialize(uint64_t device) {
 
 	uint64_t bufferBase = (uint64_t)AuPmmngrAlloc();
 	input = (struct VirtioInputEvent*)AuMapMMIO(bufferBase, 1);
-
 
 	for (int i = 0; i < queueSz; ++i) {
 		queue->buffers[i].Addr = bufferBase + i * sizeof(struct VirtioInputEvent);
@@ -243,4 +241,3 @@ void AuVirtioKbdInitialize(uint64_t device) {
 	isb_flush();
 	dsb_ish();
 }
-

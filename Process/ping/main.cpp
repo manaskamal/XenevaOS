@@ -44,7 +44,6 @@
 
 #define BYTES_TO_SEND 56
 
-
 struct ICMPHeader {
 	uint8_t type, code;
 	uint16_t checksum;
@@ -52,7 +51,6 @@ struct ICMPHeader {
 	uint16_t sequenceNum;
 	uint8_t payload[];
 };
-
 
 static uint16_t ICMPCalculateChecksum(char* payload, size_t len) {
 	uint32_t sum = 0;
@@ -68,23 +66,22 @@ static uint16_t ICMPCalculateChecksum(char* payload, size_t len) {
 /*
 * main -- main entry
 */
-int main(int argc, char* argv[]){
+int main(int argc, char* argv[]) {
 	printf("\n");
 	char* s = (char*)malloc(strlen("www.getxeneva.com") + 1);
 	strcpy(s, "www.getxeneva.com");
-	
+
 	hostent* ent = gethostbyname(s);
 	if (!ent) {
 		free(s);
 		_KePauseThread();
 	}
-	
+
 	char* addr = inet_ntoa(*(struct in_addr*)ent->h_addr_list[0]);
-	
+
 	uint32_t ipaddr = *(uint32_t*)ent->h_addr_list[0];
 	in_addr inaddr;
 	inaddr.s_addr = ipaddr;
-
 
 	/*char request[] = "GET / HTTP/1.1\r\nHost:google.com\r\nConnection: close\r\n\r\n";
 	
@@ -111,11 +108,9 @@ int main(int argc, char* argv[]){
 	dest.sin_family = AF_INET;
 	dest.sin_addr.s_addr = htonl(ipaddr);
 
-	
 	in_addr ad;
 	ad.s_addr = dest.sin_addr.s_addr;
-	printf("ping: %s address : %s \n",s, addr);
-
+	printf("ping: %s address : %s \n", s, addr);
 
 	ICMPHeader* ping = (ICMPHeader*)malloc(BYTES_TO_SEND);
 	memset(ping, 0, BYTES_TO_SEND);
@@ -143,7 +138,8 @@ int main(int argc, char* argv[]){
 		ping->sequenceNum = htons(pings_sent + 1);
 		ping->checksum = htons(ICMPCalculateChecksum((char*)ping, BYTES_TO_SEND));
 
-		if (sendto(sock, (void*)ping, BYTES_TO_SEND, 0, (sockaddr*)&dest, sizeof(sockaddr_in)) < 0) {
+		if (sendto(sock, (void*)ping, BYTES_TO_SEND, 0, (sockaddr*)&dest, sizeof(sockaddr_in)) <
+			0) {
 			printf("failed to send icmp data \n");
 			break;
 		}
@@ -158,7 +154,8 @@ int main(int argc, char* argv[]){
 				ICMPHeader* icmp = (ICMPHeader*)data;
 				if (icmp->type == 0) {
 					char* from = inet_ntoa(src.sin_addr);
-					printf("%d bytes from %s : sequence= %d \n", len, from, ntohs(icmp->sequenceNum));
+					printf(
+						"%d bytes from %s : sequence= %d \n", len, from, ntohs(icmp->sequenceNum));
 					response_recved++;
 					break;
 				}

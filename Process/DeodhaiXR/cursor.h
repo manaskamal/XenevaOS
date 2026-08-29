@@ -33,14 +33,12 @@
 #include <stdint.h>
 #include <chitralekha.h>
 
-#define CURSOR_TYPE_POINTER  1
-#define CURSOR_TYPE_LOADING  2
-#define CURSOR_TYPE_TEXT 3
-#define CURSOR_TYPE_MOVE 4
-#define CURSOR_TYPE_RESIZE_UPDOWN 5
+#define CURSOR_TYPE_POINTER			 1
+#define CURSOR_TYPE_LOADING			 2
+#define CURSOR_TYPE_TEXT			 3
+#define CURSOR_TYPE_MOVE			 4
+#define CURSOR_TYPE_RESIZE_UPDOWN	 5
 #define CURSOR_TYPE_RESIZE_RIGHTLEFT 6
-
-
 
 typedef struct _cursor_ {
 	uint8_t type;
@@ -56,8 +54,7 @@ typedef struct _cursor_ {
 	uint8_t* fileBuffer;
 	uint32_t* cursorBack;
 	size_t cursorFileSize;
-}Cursor;
-
+} Cursor;
 
 /*
 * CursorOpen -- open a cursor from file

@@ -36,11 +36,10 @@
 #include <widgets/window.h>
 
 #define CALC_OPERATOR_DIVIDE 1
-#define CALC_OPERATOR_MULT 2
-#define CALC_OPERATOR_ADD 3
-#define CALC_OPERATOR_SUB 4
-#define CALC_OPERATOR_MOD 5
-
+#define CALC_OPERATOR_MULT	 2
+#define CALC_OPERATOR_ADD	 3
+#define CALC_OPERATOR_SUB	 4
+#define CALC_OPERATOR_MOD	 5
 
 typedef struct _display_widget_ {
 	ChWidget wid;
@@ -53,7 +52,7 @@ typedef struct _display_widget_ {
 	int num1;
 	int num2;
 	bool output;
-}CalculatorDisplay;
+} CalculatorDisplay;
 
 /*
 * CalculatorGetMainDisplay -- returns the main display

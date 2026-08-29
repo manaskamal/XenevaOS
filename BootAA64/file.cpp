@@ -35,36 +35,16 @@
 #include "lowlevel.h"
 
 EFI_GUID FileSystemProtocol = {
-	0x964E5B22,
-	0x6459,
-	0x11D2,
-	{
-		0x8E, 0x39, 0x00, 0xA0, 0xC9, 0x69, 0x72, 0x3B
-	}
-};
+	0x964E5B22, 0x6459, 0x11D2, {0x8E, 0x39, 0x00, 0xA0, 0xC9, 0x69, 0x72, 0x3B}};
 
 EFI_GUID LoadFileProtocol = {
-	0x56EC3091,
-	0x954C,
-	0x11D2,
-	{
-		0x8E, 0x3F, 0x00, 0xA0, 0xC9, 0x69, 0x72, 0x3B
-	}
-};
-
+	0x56EC3091, 0x954C, 0x11D2, {0x8E, 0x3F, 0x00, 0xA0, 0xC9, 0x69, 0x72, 0x3B}};
 
 EFI_GUID GenericFileInfo = {
-	0x9576E92,
-	0x6D3F,
-	0x11D2,
-	{
-		0x8E, 0x39, 0x00, 0xA0, 0xC9, 0x69, 0x72, 0x3B
-	}
-};
+	0x9576E92, 0x6D3F, 0x11D2, {0x8E, 0x39, 0x00, 0xA0, 0xC9, 0x69, 0x72, 0x3B}};
 
-#define EFI_FILE_SYSTEM_INFO_ID \
-{0x9576e93, 0x6d3f, 0x11d2, {0x8e, 0x39, 0x0, 0xa0, 0xc9, 0x69, 0x72, 0x3b }}
-
+#define EFI_FILE_SYSTEM_INFO_ID                                                                    \
+	{0x9576e93, 0x6d3f, 0x11d2, {0x8e, 0x39, 0x0, 0xa0, 0xc9, 0x69, 0x72, 0x3b}}
 
 void cleandcache_to_pou_by_va(size_t va_start, UINTN size) {
 	size_t a = va_start & ~(size_t)63;
@@ -106,32 +86,31 @@ XEFile* XEOpenAndReadFile(EFI_HANDLE ImageHandle, CHAR16* Filename) {
 
 	EFI_GUID sfsprotocol = EFI_SIMPLE_FILE_SYSTEM_PROTOCOL_GUID;
 
-	
 	Status = gBS->HandleProtocol(ImageHandle, &loadedImageProtocol, (void**)&loadedImage);
 	if (EFI_ERROR(Status)) {
 		XEGuiPrint("Failed to locate image handle \n");
 		return 0;
 	}
-	
-	
-	Status = gBS->HandleProtocol(loadedImage->DeviceHandle, &sfsprotocol, (VOID**)&SimpleFileSystem);
+
+	Status =
+		gBS->HandleProtocol(loadedImage->DeviceHandle, &sfsprotocol, (VOID**)&SimpleFileSystem);
 	if (EFI_ERROR(Status)) {
 		XEGuiPrint("Failed to locate file system protocol \n");
 		return 0;
 	}
-	
+
 	Status = SimpleFileSystem->OpenVolume(SimpleFileSystem, &Root);
 	if (EFI_ERROR(Status)) {
 		XEGuiPrint("Failed to open the root directory \n");
 		return 0;
 	}
-	
+
 	Status = Root->Open(Root, &File, Filename, EFI_FILE_MODE_READ, 0);
 	if (EFI_ERROR(Status)) {
 		XEGuiPrint("Failed to open file \n");
 		return 0;
 	}
-	
+
 	Status = File->GetInfo(File, &GenericFileInfo, &FileInfoSize, NULL);
 	if (Status == EFI_BUFFER_TOO_SMALL) {
 		Status = gBS->AllocatePool(EfiBootServicesData, FileInfoSize, (VOID**)&FileInfo);
@@ -141,7 +120,7 @@ XEFile* XEOpenAndReadFile(EFI_HANDLE ImageHandle, CHAR16* Filename) {
 			return 0;
 		}
 	}
-	
+
 	Status = File->GetInfo(File, &GenericFileInfo, &FileInfoSize, FileInfo);
 	if (EFI_ERROR(Status)) {
 		XEGuiPrint("Failed to get file metadata \n");
@@ -153,7 +132,7 @@ XEFile* XEOpenAndReadFile(EFI_HANDLE ImageHandle, CHAR16* Filename) {
 	gBS->FreePool(FileInfo);
 
 	//Status = gBS->AllocatePool(EfiBootServicesData, FileSize + 1, &Buffer);
-	Status = gBS->AllocatePages(AllocateAnyPages, EfiLoaderData, (FileSize + 1)/0x1000, &Buffer);
+	Status = gBS->AllocatePages(AllocateAnyPages, EfiLoaderData, (FileSize + 1) / 0x1000, &Buffer);
 	if (EFI_ERROR(Status)) {
 		XEGuiPrint("Failed to allocate buffer for file content \n");
 		File->Close(File);

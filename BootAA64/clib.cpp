@@ -30,48 +30,46 @@
 #include <stdint.h>
 #include "clib.h"
 
-
 #ifdef _MSC_VER
 #pragma function(memcpy, memset, strlen)
 #endif
 
-
 extern "C" {
-	void* memset(void* targ, uint8_t val, uint32_t len) {
-		uint8_t* t = (uint8_t*)targ;
-		while (len--)
-			*t++ = val;
-		return targ;
-	}
+void* memset(void* targ, uint8_t val, uint32_t len) {
+	uint8_t* t = (uint8_t*)targ;
+	while (len--)
+		*t++ = val;
+	return targ;
+}
 
-	void* _memcpy(void* targ, void* src, uint32_t len) {
-		uint8_t* t = (uint8_t*)targ;
-		uint8_t* s = (uint8_t*)src;
-		if (len > 0) {
-			// check to see if target is in the range of src and if so, do a memmove() instead
-			if ((t > s) && (t < (s + len))) {
-				t += (len - 1);
-				s += (len - 1);
-				while (len--)
-					*t-- = *s++;
-			}
-			else {
-				while (len--)
-					*t++ = *s++;
-			}
+void* _memcpy(void* targ, void* src, uint32_t len) {
+	uint8_t* t = (uint8_t*)targ;
+	uint8_t* s = (uint8_t*)src;
+	if (len > 0) {
+		// check to see if target is in the range of src and if so, do a memmove() instead
+		if ((t > s) && (t < (s + len))) {
+			t += (len - 1);
+			s += (len - 1);
+			while (len--)
+				*t-- = *s++;
+		} else {
+			while (len--)
+				*t++ = *s++;
 		}
-		return targ;
 	}
+	return targ;
+}
 
-	void* memcpy(void* targ, void* src, uint32_t len) {
-		return _memcpy(targ, src, len);
-	}
+void* memcpy(void* targ, void* src, uint32_t len) {
+	return _memcpy(targ, src, len);
+}
 
-	size_t strlen(const char* s) {
-		size_t l = 0;
-		while (*s++)++l;
-		return l;
-	}
+size_t strlen(const char* s) {
+	size_t l = 0;
+	while (*s++)
+		++l;
+	return l;
+}
 }
 
 wchar_t* wstrchr(wchar_t* s, int c) {
@@ -83,7 +81,6 @@ wchar_t* wstrchr(wchar_t* s, int c) {
 
 	return 0;
 }
-
 
 int wstrlen(wchar_t* s) {
 	int i = 0;
@@ -112,11 +109,9 @@ int is_digit(int c) {
 	return ((c >= '0') && (c <= '9'));
 }
 
-
 char* chars = (char*)"0123456789ABCDEF";
 
 char* sztoa(size_t value, char* str, int base) {
-
 	if (base < 2 || base > 16)
 		return nullptr;
 	unsigned int i = 0;
@@ -125,8 +120,7 @@ char* sztoa(size_t value, char* str, int base) {
 		value /= base;
 	} while (value != 0);
 	str[0] = '\0';
-	for (unsigned int z = 0; z < i; ++z, --i)
-	{
+	for (unsigned int z = 0; z < i; ++z, --i) {
 		char tmp = str[z];
 		str[z] = str[i];
 		str[i] = tmp;

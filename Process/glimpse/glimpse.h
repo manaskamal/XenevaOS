@@ -43,8 +43,7 @@ typedef struct _thumbox_ {
 	uint32_t width;
 	uint32_t height;
 	uint8_t* fullImagePixels;
-}thumbnail_t;
-
+} thumbnail_t;
 
 typedef struct _glimparea_ {
 	int xloc;
@@ -55,7 +54,7 @@ typedef struct _glimparea_ {
 	int cur_yloc;
 	bool draw_thumbs;
 	list_t* thumblist;
-}GlimpBox;
+} GlimpBox;
 /** 
  * @brief GlimpseWindowPaint -- paint the glimpse window
  * @param win -- Pointer to window
@@ -72,9 +71,7 @@ extern void GlimpseWindowPaint(ChWindow* win);
  * @param out_w -- best possible width
  * @param out_h -- best possible height
  */
-void compute_thumb_size(int src_w, int src_h, int max_w, int max_h,
-	int* out_w, int* out_h);
-
+void compute_thumb_size(int src_w, int src_h, int max_w, int max_h, int* out_w, int* out_h);
 
 /**
  * @brief thumbnail_box -- calculate and prepare the thumbnail
@@ -87,9 +84,15 @@ void compute_thumb_size(int src_w, int src_h, int max_w, int max_h,
  * @param dst_w -- destination image width
  * @param dst_h -- destination image height
  */
-extern void thumbnail_box(ChCanvas* canvas,uint8_t* src, int src_w, int src_h,
-	uint8_t* dst,int dst_x, int dst_y, int dst_w, int dst_h);
-
+extern void thumbnail_box(ChCanvas* canvas,
+						  uint8_t* src,
+						  int src_w,
+						  int src_h,
+						  uint8_t* dst,
+						  int dst_x,
+						  int dst_y,
+						  int dst_w,
+						  int dst_h);
 
 /**
  * @brief _Glimpse_draw_thumb -- load and draw thumbnail to canvas
@@ -100,7 +103,8 @@ extern void thumbnail_box(ChCanvas* canvas,uint8_t* src, int src_w, int src_h,
  * @param max_w -- maximum width
  * @param max_h -- maximum height
  */
-extern void _Glimpse_draw_thumb(ChCanvas* canv, char* path, int dst_x, int dst_y, int max_w, int max_h);
+extern void
+_Glimpse_draw_thumb(ChCanvas* canv, char* path, int dst_x, int dst_y, int max_w, int max_h);
 
 /**
  * _Glimpse_create_glimbox -- creates a glimbox bounding area

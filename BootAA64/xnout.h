@@ -65,7 +65,6 @@ extern EFI_STATUS XESetCurrentCursorPos(const int Col, const int Row);
  */
 extern EFI_STATUS XESetTextAttribute(const int Back, const int Fore);
 
-
 /*
  * XEPrintf -- print function that will
  * show output to the screen

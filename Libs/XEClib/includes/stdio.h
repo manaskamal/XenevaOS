@@ -35,7 +35,7 @@
 #include <stdarg.h>
 
 #ifdef __cplusplus
-XE_EXTERN{
+XE_EXTERN {
 #endif
 
 	typedef struct _IO_FILE_ {
@@ -46,16 +46,15 @@ XE_EXTERN{
 		int eof;
 		int size;
 		int curr_pos;
-	}FILE;
+	} FILE;
 
 #define SEEK_SET 0
 #define SEEK_CUR 1
 #define SEEK_END 2
 
-#define stdin (FILE*)(1)
-#define stdout (FILE*)(1+1)
-#define stderr (FILE*)(2+1)
-
+#define stdin  (FILE*)(1)
+#define stdout (FILE*)(1 + 1)
+#define stderr (FILE*)(2 + 1)
 
 	XE_LIB int fprintf(FILE*, const char*, ...);
 	XE_LIB int printf(const char*, ...);
@@ -100,7 +99,7 @@ XE_EXTERN{
 	* the file
 	* @param fp -- pointer to FILE structure
 	*/
-	XE_LIB long ftell(FILE* fp);
+	XE_LIB long ftell(FILE * fp);
 
 	/*
 	* fseek -- moves or changes the position of
@@ -111,7 +110,7 @@ XE_EXTERN{
 	* @param offset -- offset in bytes
 	* @param pos -- position mode
 	*/
-	XE_LIB int fseek(FILE* fp, long int offset, int pos);
+	XE_LIB int fseek(FILE * fp, long int offset, int pos);
 
 	/*
 	* fgetc -- reads a single character from the
@@ -119,23 +118,23 @@ XE_EXTERN{
 	* and increases the file pointer.
 	* @param fp -- pointer to FILE structure
 	*/
-	XE_LIB int fgetc(FILE *fp);
+	XE_LIB int fgetc(FILE * fp);
 
 	/*
 	* fclose -- closes a file
 	* @param fp -- pointer to FILE structure
 	*/
-	XE_LIB int fclose(FILE* fp);
+	XE_LIB int fclose(FILE * fp);
 
-	XE_LIB int fflush(FILE* stream);
+	XE_LIB int fflush(FILE * stream);
 
 	XE_LIB int fputc(int c, FILE* stream);
 
 	XE_LIB int fputs(const char* s, FILE* stream);
 
-	XE_LIB int puts(const char *s);
+	XE_LIB int puts(const char* s);
 
-	XE_LIB int vfprintf(FILE* stream, const char* format, va_list arg);
+	XE_LIB int vfprintf(FILE * stream, const char* format, va_list arg);
 	XE_LIB int vsnprintf(char* output, size_t sz, const char* format, va_list ap);
 	XE_LIB int vsprintf(char* output, const char* format, va_list list);
 	XE_LIB int vprintf(const char* format, va_list list);

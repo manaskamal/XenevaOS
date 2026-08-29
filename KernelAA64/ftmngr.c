@@ -41,7 +41,7 @@
 #include <stdio.h>
 #include <Hal/AA64/aa64lowlevel.h>
 
-#define FONTMGR_KEY  0x1234
+#define FONTMGR_KEY 0x1234
 static FontSeg* firstSeg = NULL;
 static FontSeg* lastSeg = NULL;
 uint8_t* font_conf_data;
@@ -59,8 +59,7 @@ void FontManagerAddSegment(FontSeg* seg) {
 		lastSeg = seg;
 		firstSeg = seg;
 		dmb_ish();
-	}
-	else {
+	} else {
 		lastSeg->next = seg;
 		dmb_ish();
 		seg->prev = lastSeg;
@@ -79,15 +78,13 @@ void FontManagerRemoveSegment(FontSeg* seg) {
 
 	if (seg == firstSeg) {
 		firstSeg = firstSeg->next;
-	}
-	else {
+	} else {
 		seg->prev->next = seg->next;
 	}
 
 	if (seg == lastSeg) {
 		lastSeg = seg->prev;
-	}
-	else {
+	} else {
 		seg->next->prev = seg->prev;
 	}
 }
@@ -101,8 +98,6 @@ uint16_t FontManagerGetKey() {
 	fontKey = fontKey + 10;
 	return key;
 }
-
-
 
 /**
  * @brief FontManagerAllocateSegment -- allocate a font segment
@@ -152,8 +147,7 @@ search:
 	if (p) {
 		p++;
 		fbuf++;
-	}
-	else {
+	} else {
 		return;
 	}
 
@@ -187,11 +181,12 @@ search:
 		FontSeg* seg = FontManagerAllocateSegment(fontfile, fontname);
 		uint64_t* firstFrame = (uint64_t*)seg->sharedSeg->frames[0];
 		UARTDebugOut("fontfile -> %s sz : %d \r\n", fontfile->filename, fontfile->size);
-		size_t ret = AuVFSNodeRead(fs, fontfile, (uint64_t*)P2V((size_t)firstFrame), ALIGN_UP(fontfile->size, 4096));
+		size_t ret = AuVFSNodeRead(
+			fs, fontfile, (uint64_t*)P2V((size_t)firstFrame), ALIGN_UP(fontfile->size, 4096));
 		fcount++;
-		kfree(fontfile); //avoiding this, because we need more powerful heap memory allocator 
+		kfree(fontfile); //avoiding this, because we need more powerful heap memory allocator
 	}
-	
+
 	goto search;
 }
 
@@ -205,8 +200,7 @@ int FontManagerGetFontCount(uint8_t* fontlst) {
 	char* p = strchr(fbuf, '(');
 	if (p) {
 		p++;
-	}
-	else {
+	} else {
 		return 0;
 	}
 	char num[3];
@@ -256,7 +250,6 @@ void FontManagerInitialise() {
 	UARTDebugOut("Font Count ->%d \r\n", totalSysFonts);
 	FontManagerIterateFontList(font_conf_data);
 }
-
 
 /**
  * @brief AuFTMngrGetFontID -- returns the font id of 

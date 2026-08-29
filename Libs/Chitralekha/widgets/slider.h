@@ -35,7 +35,7 @@
 #include "window.h"
 
 #define CHITRALEKHA_SLIDER_HORIZONTAL 1
-#define CHITRALEKHA_SLIDER_VERTICAL 2
+#define CHITRALEKHA_SLIDER_VERTICAL	  2
 
 typedef struct _slider_ {
 	ChWidget base;
@@ -56,13 +56,13 @@ typedef struct _slider_ {
 	uint32_t customColor2;
 	uint32_t outlineColor;
 	uint8_t type;
-}ChSlider;
+} ChSlider;
 
 /*
 * ChCreateSlider -- create a slider widget
 * @param sliderType -- type of the slider
 */
-XE_EXTERN XE_LIB ChSlider *ChCreateSlider(uint8_t sliderType, int x, int y, int length);
+XE_EXTERN XE_LIB ChSlider* ChCreateSlider(uint8_t sliderType, int x, int y, int length);
 
 /*
 * ChSliderSetStepSize -- set the step size for given slider
@@ -120,7 +120,5 @@ XE_EXTERN XE_LIB void ChSliderSetMin(ChSlider* slider, float min);
 * @param slider -- Pointer to slider
 */
 XE_EXTERN XE_LIB float ChSliderGetMin(ChSlider* slider);
-
-
 
 #endif

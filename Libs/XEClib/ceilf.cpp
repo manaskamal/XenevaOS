@@ -1,11 +1,10 @@
 #include <math.h>
 
-float ceilf(float x)
-{
+float ceilf(float x) {
 	typedef union {
 		float f;
 		uint32_t i;
-	}ubits;
+	} ubits;
 	ubits u;
 	memset(&u, 0, sizeof(ubits));
 	u.f = x;
@@ -23,8 +22,7 @@ float ceilf(float x)
 		if (u.i >> 31 == 0)
 			u.i += m;
 		u.i &= ~m;
-	}
-	else {
+	} else {
 		FORCE_EVAL(x + 0x1p120f);
 		if (u.i >> 31)
 			u.f = -0.0;

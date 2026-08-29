@@ -55,7 +55,6 @@ static char* BordoisilaDriverGetStateString(BordoisilaDriver* driver) {
 	}
 }
 
-
 /**
  * @brief BordoisilaDriverRegister -- register a driver
  * to core registry
@@ -65,8 +64,10 @@ int BordoisilaDriverRegister(BordoisilaDriver* driver) {
 		return 1;
 	/** check for pre-registered driver with same compat string */
 	if (BordoisilaGetDriverByCompat(driver->compat)) {
-		BPrintK(BORDOISILA_WARN, "driver : %s is already registered, current state : %s \r\n", driver->name, 
-			BordoisilaDriverGetStateString(driver));
+		BPrintK(BORDOISILA_WARN,
+				"driver : %s is already registered, current state : %s \r\n",
+				driver->name,
+				BordoisilaDriverGetStateString(driver));
 		return BORDOISILA_DRIVER_ALREADY_REGISTERED;
 	}
 	driver->driver_state = B_DRIVER_STATE_UNBOUND;
@@ -82,12 +83,11 @@ int BordoisilaDriverRegister(BordoisilaDriver* driver) {
  */
 BordoisilaDriver* BordoisilaGetDriverByCompat(char* compat) {
 	for (BordoisilaDriver* drv = _bdrivers; drv != NULL; drv = drv->next)
-		if (strcmp(drv->compat, compat) == 0) 
+		if (strcmp(drv->compat, compat) == 0)
 			return drv;
-		
+
 	return NULL;
 }
-
 
 /**
  * @brief BordoisilaGetDriverByName -- match a driver by its name
@@ -112,10 +112,16 @@ void BordoisilaDriverProbeAll() {
 			continue;
 
 		if (drv->probe) {
-			BPrintK(BORDOISILA_INFO, "probing bordoisila driver : %s, compat : %s \r\n", _bdrivers->name, _bdrivers->compat);
+			BPrintK(BORDOISILA_INFO,
+					"probing bordoisila driver : %s, compat : %s \r\n",
+					_bdrivers->name,
+					_bdrivers->compat);
 			ret = drv->probe(drv);
-			BPrintK(BORDOISILA_WARN, "driver %s probe completed with return value : %d \r\n",_bdrivers->name, ret);
-		}	
+			BPrintK(BORDOISILA_WARN,
+					"driver %s probe completed with return value : %d \r\n",
+					_bdrivers->name,
+					ret);
+		}
 	}
 }
 
@@ -141,9 +147,7 @@ int BordoisilaDriverScan(BordoisilaDriver* driver) {
 		rc = driver->scan(driver);
 
 	return rc;
-
 }
-
 
 int BordoisilaDriverProbe(BordoisilaDriver* driver) {
 	if (!driver)
@@ -151,7 +155,6 @@ int BordoisilaDriverProbe(BordoisilaDriver* driver) {
 	if (driver->probe)
 		return driver->probe(driver);
 	return 0;
-
 }
 
 /**
@@ -175,15 +178,15 @@ int BordoisilaDriverRemove(BordoisilaDriver* driver) {
 
 	if (ref) {
 		driver->refcount--;
-		return;
+		return 0;
 	}
-
 
 	int ret = 0;
 	if (driver->remove)
-		ret =  driver->remove(driver);
+		ret = driver->remove(driver);
 
-	if (ret == 0) driver->driver_state = B_DRIVER_STATE_UNBOUND;
+	if (ret == 0)
+		driver->driver_state = B_DRIVER_STATE_UNBOUND;
 
 	return 0;
 }

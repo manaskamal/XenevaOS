@@ -34,8 +34,8 @@
 
 #define MAX_STRING_LENGTH 4095
 
-#define max(a, b)  ((a) > (b) ? (a) : (b))
-#define min(a, b)  ((a) < (b) ? (a) : (b))
+#define max(a, b) ((a) > (b) ? (a) : (b))
+#define min(a, b) ((a) < (b) ? (a) : (b))
 
 static double floor(double d) {
 	int i = (int)d;
@@ -111,8 +111,7 @@ static unsigned long long _str2num(const char* string, unsigned base, int sign, 
 	if (count >= length)
 		goto out;
 
-	if ((string[count] == '+') || (string[count] == '-'))
-	{
+	if ((string[count] == '+') || (string[count] == '-')) {
 		if (sign && (string[count] == '-'))
 			negative = 1;
 		count += 1;
@@ -137,11 +136,9 @@ static unsigned long long _str2num(const char* string, unsigned base, int sign, 
 		if (string[count] == '0') {
 			base = 8;
 			count += 1;
-		}
-		else {
+		} else {
 			base = 10;
 		}
-
 	}
 
 	if (count >= length)
@@ -158,8 +155,7 @@ static unsigned long long _str2num(const char* string, unsigned base, int sign, 
 		case 8:
 		case 9:
 		case 10:
-			if (!isdigit(string[count]) ||
-				((string[count] - '0') >= (int)base)) {
+			if (!isdigit(string[count]) || ((string[count] - '0') >= (int)base)) {
 				goto out;
 			}
 			result *= base;
@@ -194,32 +190,28 @@ out:
 	return result;
 }
 
-static void _lnum2str(unsigned long long num, char* string, int base, int sign)
-{
+static void _lnum2str(unsigned long long num, char* string, int base, int sign) {
 	int digits = _ldigits(num, base, sign);
 	int charCount = 0;
 	unsigned long long place = 1;
 	unsigned long long rem = 0;
 	int count;
 
-	if (!string)
-	{
+	if (!string) {
 		return;
 	}
 
 	// Negative?
-	if (sign && ((long long)num < 0))
-	{
+	if (sign && ((long long)num < 0)) {
 		string[charCount++] = '-';
 		num = ((long long)num * -1);
 		digits -= 1;
 	}
 
 	for (count = 0; count < (digits - 1); count++)
-		place *= (unsigned long long) base;
+		place *= (unsigned long long)base;
 
-	while (place)
-	{
+	while (place) {
 		rem = (num % place);
 		num = (num / place);
 
@@ -228,7 +220,7 @@ static void _lnum2str(unsigned long long num, char* string, int base, int sign)
 		else
 			string[charCount++] = ('a' + (num - 10));
 		num = rem;
-		place /= (unsigned long long) base;
+		place /= (unsigned long long)base;
 	}
 
 	string[charCount] = '\0';
@@ -237,10 +229,7 @@ static void _lnum2str(unsigned long long num, char* string, int base, int sign)
 	return;
 }
 
-
-
-static void _dbl2str(double num, char* string, int roundPlaces)
-{
+static void _dbl2str(double num, char* string, int roundPlaces) {
 	int charCount = 0;
 	unsigned long long* u = NULL;
 	int sign = 0;
@@ -252,14 +241,13 @@ static void _dbl2str(double num, char* string, int roundPlaces)
 	unsigned long long rem = 0;
 	unsigned long long count;
 
-	if (!string)
-	{
+	if (!string) {
 		return;
 	}
 
 	string[0] = '\0';
 
-	u = (unsigned long long*) & num;
+	u = (unsigned long long*)&num;
 	sign = (int)(*u >> 63);
 	exponent = (((*u & (0x7FFULL << 52)) >> 52) - 1023);
 	intPart = 1;
@@ -270,24 +258,19 @@ static void _dbl2str(double num, char* string, int roundPlaces)
 		string[charCount++] = '-';
 
 	// Special case exponents
-	if (exponent == 0x7FF)
-	{
+	if (exponent == 0x7FF) {
 		strcat((string + charCount), "Infinity");
 		return;
 	}
 
-	while (exponent)
-	{
-		if (exponent > 0)
-		{
+	while (exponent) {
+		if (exponent > 0) {
 			intPart <<= 1;
 			if (fractPart & (0x1ULL << 63))
 				intPart |= 1;
 			fractPart <<= 1;
 			exponent -= 1;
-		}
-		else
-		{
+		} else {
 			fractPart >>= 1;
 			if (intPart & 0x1ULL)
 				fractPart |= (0x1ULL << 63);
@@ -304,8 +287,7 @@ static void _dbl2str(double num, char* string, int roundPlaces)
 
 	// Calculate the fraction part
 	place = 10000000000000000000ULL;
-	for (count = 2; fractPart; count *= 2)
-	{
+	for (count = 2; fractPart; count *= 2) {
 		if (!count)
 			break;
 
@@ -317,18 +299,14 @@ static void _dbl2str(double num, char* string, int roundPlaces)
 
 	// Output the fraction part
 	place = 1000000000000000000ULL;
-	while (place)
-	{
+	while (place) {
 		rem = (outputFraction % place);
 		outputFraction = (outputFraction / place);
 
-		if (roundPlaces)
-		{
+		if (roundPlaces) {
 			string[charCount++] = ('0' + outputFraction);
 			roundPlaces -= 1;
-		}
-		else
-		{
+		} else {
 			if ((string[charCount - 1] < '9') && (outputFraction > 4))
 				string[charCount - 1] += 1;
 			break;
@@ -342,8 +320,7 @@ static void _dbl2str(double num, char* string, int roundPlaces)
 	return;
 }
 
-static void _num2str(unsigned num, char* string, int base, int sign)
-{
+static void _num2str(unsigned num, char* string, int base, int sign) {
 	int digits = _digits(num, base, sign);
 	int charCount = 0;
 	unsigned place = 1;
@@ -354,8 +331,7 @@ static void _num2str(unsigned num, char* string, int base, int sign)
 		return;
 
 	// Negative?
-	if (sign && ((int)num < 0))
-	{
+	if (sign && ((int)num < 0)) {
 		string[charCount++] = '-';
 		num = ((int)num * -1);
 		digits -= 1;
@@ -364,8 +340,7 @@ static void _num2str(unsigned num, char* string, int base, int sign)
 	for (count = 0; count < (digits - 1); count++)
 		place *= (unsigned)base;
 
-	while (place)
-	{
+	while (place) {
 		rem = (num % place);
 		num = (num / place);
 
@@ -382,8 +357,7 @@ static void _num2str(unsigned num, char* string, int base, int sign)
 	//errno = 0;
 }
 
-static void _flt2str(float num, char* string, int roundPlaces)
-{
+static void _flt2str(float num, char* string, int roundPlaces) {
 	int charCount = 0;
 	unsigned* u = NULL;
 	int sign = 0;
@@ -395,8 +369,7 @@ static void _flt2str(float num, char* string, int roundPlaces)
 	unsigned rem = 0;
 	unsigned count;
 
-	if (!string)
-	{
+	if (!string) {
 		return;
 	}
 
@@ -413,24 +386,19 @@ static void _flt2str(float num, char* string, int roundPlaces)
 		string[charCount++] = '-';
 
 	// Special case exponents
-	if (exponent == 0xFF)
-	{
+	if (exponent == 0xFF) {
 		strcat((string + charCount), "Infinity");
 		return;
 	}
 
-	while (exponent)
-	{
-		if (exponent > 0)
-		{
+	while (exponent) {
+		if (exponent > 0) {
 			intPart <<= 1;
 			if (fractPart & (0x1 << 31))
 				intPart |= 1;
 			fractPart <<= 1;
 			exponent -= 1;
-		}
-		else
-		{
+		} else {
 			fractPart >>= 1;
 			if (intPart & 0x01)
 				fractPart |= (0x1 << 31);
@@ -447,8 +415,7 @@ static void _flt2str(float num, char* string, int roundPlaces)
 
 	// Calculate the fraction part
 	place = 1000000000;
-	for (count = 2; fractPart; count *= 2)
-	{
+	for (count = 2; fractPart; count *= 2) {
 		if (!count)
 			break;
 
@@ -460,18 +427,14 @@ static void _flt2str(float num, char* string, int roundPlaces)
 
 	// Output the fraction part
 	place = 100000000;
-	while (place)
-	{
+	while (place) {
 		rem = (outputFraction % place);
 		outputFraction = (outputFraction / place);
 
-		if (roundPlaces)
-		{
+		if (roundPlaces) {
 			string[charCount++] = ('0' + outputFraction);
 			roundPlaces -= 1;
-		}
-		else
-		{
+		} else {
 			if ((string[charCount - 1] < '9') && (outputFraction > 4))
 				string[charCount - 1] += 1;
 			break;
@@ -529,8 +492,7 @@ static double strtod(const char* nptr, char** endptr) {
 
 		if (*nptr == '+') {
 			nptr++;
-		}
-		else if (*nptr == '-') {
+		} else if (*nptr == '-') {
 			exponent_sign = -1;
 			nptr++;
 		}
@@ -560,24 +522,24 @@ static float strtof(const char* nptr, char** endptr) {
 	return strtod(nptr, endptr);
 }
 
-#define atou(string) ((unsigned) _str2num(string, 10, 0, NULL))
-#define atoull(string) _str2num(string, 10, 0, NULL)
-#define atoo(string) ((unsigned)_str2num(string, 8, 0, NULL))
-#define atooll(string) _str2num(string, 8, 0, NULL)
+#define atou(string)			 ((unsigned)_str2num(string, 10, 0, NULL))
+#define atoull(string)			 _str2num(string, 10, 0, NULL)
+#define atoo(string)			 ((unsigned)_str2num(string, 8, 0, NULL))
+#define atooll(string)			 _str2num(string, 8, 0, NULL)
 #define dtoa(num, string, round) _dbl2str(num, string, round)
-#define ftoa(num, string) _flt2str(num, string, round)
-#define itoa(num, string) _num2str(num, string, 10, 1)
-#define itouo(num, string) _num2str(num,string, 10, 1)
-#define itoux(num,string) _num2str(num, string, 16,0);
-#define itox(num, string) _num2str(num, string, 16, 1)
-#define lltoa(num, string) _lnum2str(num, string, 10,1)
-#define lltouo(num, string) _lnum2str(num, string, 8, 0)
-#define lltoux(num, string) _lnum2str(num, string, 16,0)
-#define lltox(num, string) _lnum2str(num, string, 16, 1)
-#define xtoi(string) ((int)_str2num(string, 16, 1, NULL))
-#define xtoll(string) ((long long) _str2num(string, 16,1, NULL))
-#define ulltoa(num, string) _lnum2str(num, string, 10, 0)
-#define utoa(num, string) _num2str(num, string, 10, 0)
+#define ftoa(num, string)		 _flt2str(num, string, round)
+#define itoa(num, string)		 _num2str(num, string, 10, 1)
+#define itouo(num, string)		 _num2str(num, string, 10, 1)
+#define itoux(num, string)		 _num2str(num, string, 16, 0);
+#define itox(num, string)		 _num2str(num, string, 16, 1)
+#define lltoa(num, string)		 _lnum2str(num, string, 10, 1)
+#define lltouo(num, string)		 _lnum2str(num, string, 8, 0)
+#define lltoux(num, string)		 _lnum2str(num, string, 16, 0)
+#define lltox(num, string)		 _lnum2str(num, string, 16, 1)
+#define xtoi(string)			 ((int)_str2num(string, 16, 1, NULL))
+#define xtoll(string)			 ((long long)_str2num(string, 16, 1, NULL))
+#define ulltoa(num, string)		 _lnum2str(num, string, 10, 0)
+#define utoa(num, string)		 _num2str(num, string, 10, 0)
 
 /**
  * @brief _xeprint -- copied from XEClib implementation
@@ -610,14 +572,11 @@ int _xeprint(char* output, int outputlen, const char* format, va_list list) {
 
 	formatLen = min(formatLen, MAX_STRING_LENGTH);
 
-	for (inCount = 0; ((inCount < formatLen) &&
-		(outCount < outputlen));)
-	{
+	for (inCount = 0; ((inCount < formatLen) && (outCount < outputlen));) {
 		if (format[inCount] != '%') {
 			output[outCount++] = format[inCount++];
 			continue;
-		}
-		else if ((format[inCount] == '%') && (format[inCount + 1] == '%')) {
+		} else if ((format[inCount] == '%') && (format[inCount + 1] == '%')) {
 			output[outCount++] = format[inCount];
 			inCount += 2;
 			continue;
@@ -655,13 +614,10 @@ int _xeprint(char* output, int outputlen, const char* format, va_list list) {
 		if (isLong) {
 			intArg = (long long)va_arg(list, unsigned);
 			intArg |= (((long long)va_arg(list, unsigned)) << 32);
-		}
-		else if ((format[inCount] == 'e') || (format[inCount] == 'E') ||
-			(format[inCount] == 'f') || (format[inCount] == 'F') ||
-			(format[inCount] == 'g') || (format[inCount] == 'G')) {
-
-		}
-		else {
+		} else if ((format[inCount] == 'e') || (format[inCount] == 'E') ||
+				   (format[inCount] == 'f') || (format[inCount] == 'F') ||
+				   (format[inCount] == 'g') || (format[inCount] == 'G')) {
+		} else {
 			intArg = va_arg(list, unsigned long long);
 		}
 		switch (format[inCount]) {
@@ -673,12 +629,10 @@ int _xeprint(char* output, int outputlen, const char* format, va_list list) {
 				else
 					digits = _digits(intArg, 10, 1);
 
-
 				if (!leftJust) {
 					while (digits++ < fieldWidth)
 						output[outCount++] = (zeroPad ? '0' : ' ');
 				}
-
 			}
 			if (isLong)
 				lltoa(intArg, (output + outCount));
@@ -721,8 +675,7 @@ int _xeprint(char* output, int outputlen, const char* format, va_list list) {
 			}
 			break;
 		}
-		case 'c':
-		{
+		case 'c': {
 			output[outCount++] = (unsigned char)intArg;
 			break;
 		}
@@ -800,8 +753,7 @@ int _xeprint(char* output, int outputlen, const char* format, va_list list) {
 			break;
 		}
 		case 'x':
-		case 'X':
-		{
+		case 'X': {
 			if (fieldWidth) {
 				if (isLong)
 					digits = _ldigits(intArg, 16, 0);
@@ -857,11 +809,10 @@ int _xeprint(char* output, int outputlen, const char* format, va_list list) {
 	return (outCount);
 }
 
-
 int _vsnprintf(char* output, size_t sz, const char* format, va_list ap) {
 	int len = 0;
 	sz = min(sz, MAX_STRING_LENGTH);
-	
+
 	memset(output, 0, sz);
 
 	len = _xeprint(output, sz, format, ap);
@@ -893,4 +844,3 @@ int _snprintf(char* output, size_t sz, const char* format, ...) {
 	va_end(list);
 	return len;
 }
-

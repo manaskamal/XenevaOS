@@ -31,14 +31,14 @@
 #include <sys/_kefile.h>
 #include <sys/mman.h>
 
-#pragma pack(push,1)
+#pragma pack(push, 1)
 typedef struct _bmp_ {
 	unsigned short type;
 	unsigned int size;
 	unsigned short resv1;
 	unsigned short resv2;
 	unsigned int off_bits;
-}BMP;
+} BMP;
 
 typedef struct _info_ {
 	unsigned int biSize;
@@ -52,7 +52,7 @@ typedef struct _info_ {
 	long biYPelsPerMeter;
 	unsigned int biClrUsed;
 	unsigned int biClrImportant;
-}BMPInfo;
+} BMPInfo;
 #pragma pack(pop)
 
 /*
@@ -77,14 +77,14 @@ void NmButtonMouseEvent(NamdaphaButton* wid, ChWindow* win, int x, int y, int bu
 		wid->hover_painted = true;
 	}
 
-	if (!wid->hover && wid->clicked == false){
+	if (!wid->hover && wid->clicked == false) {
 		wid->hover_painted = false;
 		if (wid->drawNamdaphaButton)
 			wid->drawNamdaphaButton(wid, win);
-		ChWindowUpdate(win, wid->x, wid->y, wid->w, wid->h, 0,1);
+		ChWindowUpdate(win, wid->x, wid->y, wid->w, wid->h, 0, 1);
 	}
 
-	if (wid->clicked && wid->last_mouse_x == x && wid->last_mouse_y == y){
+	if (wid->clicked && wid->last_mouse_x == x && wid->last_mouse_y == y) {
 		if (wid->drawNamdaphaButton)
 			wid->drawNamdaphaButton(wid, win);
 		ChWindowUpdate(win, wid->x, wid->y, wid->w, wid->h, 0, 1);
@@ -100,7 +100,7 @@ void NmButtonMouseEvent(NamdaphaButton* wid, ChWindow* win, int x, int y, int bu
 	wid->last_mouse_y = y;
 }
 
-void NmButtonDefaultPaint(NamdaphaButton* button, ChWindow* win){
+void NmButtonDefaultPaint(NamdaphaButton* button, ChWindow* win) {
 	//if (button->focused){
 	//	ChColorDrawHorizontalGradient(win->canv, button->x, button->y, button->w, button->h, NAMDAPHA_FOCUSED_BUTTON_DARK, NAMDAPHA_FOCUSED_BUTTON_LIGHT);
 	//}
@@ -115,18 +115,18 @@ void NmButtonDefaultPaint(NamdaphaButton* button, ChWindow* win){
 	//	}
 	//}
 	if (button->nmbuttoninfo) {
-		NmButtonInfoDrawIcon(button->nmbuttoninfo, win->canv, button->x + button->w / 2 - button->nmbuttoninfo->iconWidth / 2,
-			button->y + button->h / 2 - button->nmbuttoninfo->iconHeight / 2);
+		NmButtonInfoDrawIcon(button->nmbuttoninfo,
+							 win->canv,
+							 button->x + button->w / 2 - button->nmbuttoninfo->iconWidth / 2,
+							 button->y + button->h / 2 - button->nmbuttoninfo->iconHeight / 2);
 	}
 }
 
-
 void NamdaphaDefaultAction(NamdaphaButton* button, ChWindow* win) {
 	/* just change the focus of the window, for now */
-	if (button->focused){
+	if (button->focused) {
 		NamdaphaHideWindow(button);
-	}
-	else {
+	} else {
 		NamdaphaChangeFocus(button);
 	}
 }
@@ -138,7 +138,7 @@ void NamdaphaDefaultAction(NamdaphaButton* button, ChWindow* win) {
  * @param h -- Height of the button bound
  * @param text -- title of the button
  */
-NamdaphaButton* NmCreateButton(int x, int y, int w, int h, char *text) {
+NamdaphaButton* NmCreateButton(int x, int y, int w, int h, char* text) {
 	NamdaphaButton* button = (NamdaphaButton*)malloc(sizeof(NamdaphaButton));
 	memset(button, 0, sizeof(NamdaphaButton));
 	button->x = x;
@@ -187,7 +187,7 @@ ButtonInfo* NmCreateButtonInfo(char* filename) {
 void NmButtonInfoRead(ButtonInfo* btninfo) {
 	if (!btninfo)
 		return;
-	_KeReadFile(btninfo->iconFd, btninfo->fileBuffer,btninfo->fileSize);
+	_KeReadFile(btninfo->iconFd, btninfo->fileBuffer, btninfo->fileSize);
 
 	uint8_t* buffer = (uint8_t*)btninfo->fileBuffer;
 
@@ -218,15 +218,17 @@ void NmButtonInfoRead(ButtonInfo* btninfo) {
  * @param x -- X coordinate
  * @param y -- Y coordinate
  */
-void NmButtonInfoDrawIcon(ButtonInfo* info, ChCanvas* canv, int x, int y){
-	if (!info || !info->imageData) return;
+void NmButtonInfoDrawIcon(ButtonInfo* info, ChCanvas* canv, int x, int y) {
+	if (!info || !info->imageData)
+		return;
 	uint32_t width = info->iconWidth;
 	uint32_t height = info->iconHeight;
 	uint32_t j = 0;
 
 	uint8_t* image = info->imageData;
 	for (int i = 0; i < height; i++) {
-		char* image_row = (char*)image + (static_cast<uint64_t>(height) - i - 1) * (static_cast<uint64_t>(width) * 4);
+		char* image_row = (char*)image + (static_cast<uint64_t>(height) - i - 1) *
+											 (static_cast<uint64_t>(width) * 4);
 		uint32_t h = height - 1 - i;
 		j = 0;
 		for (int k = 0; k < width; k++) {
@@ -236,7 +238,7 @@ void NmButtonInfoDrawIcon(ButtonInfo* info, ChCanvas* canv, int x, int y){
 			uint32_t a = image_row[j++] & 0xff;
 			uint32_t rgb = ((a << 24) | (r << 16) | (g << 8) | (b));
 			if (rgb & 0xFF000000)
-					ChDrawPixel(canv, x + k, y + i, rgb);
+				ChDrawPixel(canv, x + k, y + i, rgb);
 		}
 	}
 }

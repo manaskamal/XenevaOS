@@ -35,7 +35,6 @@ int section_start_y;
 list_t* sectionsList;
 int section_default_h;
 
-
 void SectionPaint(NamdaphaSections* sect, ChWindow* win);
 
 /*
@@ -73,8 +72,8 @@ void SectionPaint(NamdaphaSections* sect, ChWindow* win) {
 void SectionsDraw(ChWindow* win) {
 	for (int i = 0; i < sectionsList->pointer; i++) {
 		NamdaphaSections* sect = (NamdaphaSections*)list_get_at(sectionsList, i);
-		if(sect->paint)
-			sect->paint(sect,win);
+		if (sect->paint)
+			sect->paint(sect, win);
 	}
 	ChWindowUpdate(win, win->info->x, win->info->y, win->info->width, win->info->height, 1, 0);
 }

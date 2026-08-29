@@ -35,9 +35,8 @@
 #include <_xeneva.h>
 
 #ifdef __cplusplus
-XE_EXTERN{
+XE_EXTERN {
 #endif
-
 
 	/* font manager api */
 

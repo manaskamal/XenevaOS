@@ -31,14 +31,15 @@ ifeq ($(TOOLCHAIN), llvm)
     LLVM_TARGET = -target aarch64-unknown-windows
     
     CFLAGS  = -Wall -Wextra -ffreestanding -fno-stack-protector -fno-stack-check -fno-strict-aliasing \
-              -O2 $(LLVM_TARGET) -fno-builtin \
-              -DARCH_ARM64 $(BOARD_FLAG) -D_USE_DLMALLOC -D__STDC_LIMIT_MACROS \
-              $(INCLUDES)
+              -O0 -g -gdwarf-4 $(LLVM_TARGET) -fno-builtin \
+              -DARCH_ARM64 $(BOARD_FLAG) -D__STDC_LIMIT_MACROS \
+              -Wno-error=incompatible-pointer-types -Wno-error=int-conversion \
+              -Wno-implicit-function-declaration -Wno-error=conflicting-types $(INCLUDES)
 
     LDFLAGS = $(LLVM_TARGET) -fuse-ld=lld -nostdlib \
               -Wl,-entry:_AuMain \
-              -Wl,-base:0xFFFFFF8000000000 \
-              -Wl,-subsystem:native
+            -Wl,-base:0xFFFFC00000000000 \
+            -Wl,-subsystem:native
 
 else
     # original gcc configuration
@@ -49,13 +50,14 @@ else
     
     CFLAGS  = -Wall -Wextra -ffreestanding -fno-stack-protector -fno-stack-check -fno-strict-aliasing \
               -O2 \
-              -DARCH_ARM64 $(BOARD_FLAG) -D_USE_DLMALLOC -D__STDC_LIMIT_MACROS \
+              -DARCH_ARM64 $(BOARD_FLAG) -D__STDC_LIMIT_MACROS \
               $(INCLUDES)
 endif
 
 
 C_SRCS_ALL = $(shell find . -name '*.c')
-C_SRCS = $(filter-out ./Board/Rpi3bp/vc4dsi.c, $(C_SRCS_ALL))
+# Exclude dead allocator code (replaced by TLSF)
+C_SRCS = $(filter-out ./Mm/dlmalloc.c ./Mm/liballoc.c, $(filter-out ./Board/Rpi3bp/vc4dsi.c, $(C_SRCS_ALL)))
 S_SRCS = $(shell find . -name '*.s')
 
 C_OBJS = $(patsubst %.c,$(OBJDIR)/%.o,$(C_SRCS))

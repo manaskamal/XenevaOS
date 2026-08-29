@@ -39,14 +39,12 @@
 #include <string.h>
 #include <stdlib.h>
 
-
-
 /*
 * main -- main entry
 */
 int main(int argc, char* argv[]) {
 	printf("\n");
-	char* s = (char*)malloc(strlen(argv[1])+1);
+	char* s = (char*)malloc(strlen(argv[1]) + 1);
 	strcpy(s, argv[1]);
 	printf("Getting nameserver info for %s DNS Pack -> %d \n", s, sizeof(DNSPacket));
 	hostent* ent = gethostbyname(s);

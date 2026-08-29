@@ -151,8 +151,7 @@ int AuCircBufPut(CircBuffer* cbuf, uint8_t data) {
  * @param data -- Pointer to the buffer
  * where to put the data
  */
-int AuCircBufGet(CircBuffer* cbuf, uint8_t* data)
-{
+int AuCircBufGet(CircBuffer* cbuf, uint8_t* data) {
 	int r = -1;
 
 	if (!CircBufEmpty(cbuf)) {
@@ -169,8 +168,7 @@ int AuCircBufGet(CircBuffer* cbuf, uint8_t* data)
  * @param cbuf -- Pointer to the circular
  * buffer
  */
-bool CircBufEmpty(CircBuffer* cbuf)
-{
+bool CircBufEmpty(CircBuffer* cbuf) {
 	return (!cbuf->full && (cbuf->head == cbuf->tail));
 }
 
@@ -180,7 +178,6 @@ bool CircBufEmpty(CircBuffer* cbuf)
  * @param cbuf -- Pointer to the circular
  * buffer
  */
-bool CircBufFull(CircBuffer* cbuf)
-{
+bool CircBufFull(CircBuffer* cbuf) {
 	return cbuf->full;
 }

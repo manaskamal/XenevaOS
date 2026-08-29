@@ -46,7 +46,7 @@ extern int RectSetLeft(Rect* rect, int new_left);
 * @param rect -- pointer to the rect structure
 * @param new_right -- new right value
 */
-extern int RectSetRight(Rect * rect, int new_right);
+extern int RectSetRight(Rect* rect, int new_right);
 
 /*
 * RectSetTop -- set a new top edge value to the given
@@ -54,7 +54,7 @@ extern int RectSetRight(Rect * rect, int new_right);
 * @param rect -- pointer to the rect structure
 * @param new_top -- top edge value
 */
-extern int RectSetTop(Rect *rect, int new_top);
+extern int RectSetTop(Rect* rect, int new_top);
 
 /*
 * RectSetBottom -- set a new bottom edge value to the given
@@ -62,31 +62,30 @@ extern int RectSetTop(Rect *rect, int new_top);
 * @param rect -- pointer to the rect structure
 * @param new_bottom -- new bottom edge value
 */
-extern int RectSetBottom(Rect *rect, int new_bottom);
+extern int RectSetBottom(Rect* rect, int new_bottom);
 
 /*
 * RectGetLeft -- returns the left edge value
 * @param rect -- pointer to the rect structure
 */
-extern int RectGetLeft(Rect *rect);
+extern int RectGetLeft(Rect* rect);
 
 /*
 * RectGetRight -- returns the right edge value
 * @param rect -- pointer to the rect structure
 */
-extern int RectGetRight(Rect *rect);
+extern int RectGetRight(Rect* rect);
 
 /*
 * RectGetTop -- returns the top edge value
 * @param rect -- pointer to the rect structure
 */
-extern int RectGetTop(Rect *rect);
+extern int RectGetTop(Rect* rect);
 
 /*
 * RectGetBottom -- returns the bottom edge value
 * @param rect -- pointer to the rect structure
 */
-extern int RectGetBottom(Rect *rect);
-
+extern int RectGetBottom(Rect* rect);
 
 #endif

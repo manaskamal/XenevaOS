@@ -39,16 +39,16 @@
 #include "menu.h"
 
 #ifdef __cplusplus
-XE_EXTERN{
+XE_EXTERN {
 #endif
-	
-#pragma pack(push,1)
+
+#pragma pack(push, 1)
 	typedef struct _menubar_ {
 		ChWidget wid;
 		list_t* menubuttons;
 		bool allpainted;
 		ChPopupMenu* lastActiveMenu;
-	}ChMenubar;
+	} ChMenubar;
 #pragma pack(pop)
 
 	typedef struct _menubutton_ {
@@ -57,25 +57,24 @@ XE_EXTERN{
 		bool hover;
 		bool clicked;
 		ChPopupMenu* popupMenu;
-	}ChMenuButton;
+	} ChMenuButton;
 
 	/*
 	* ChCreateMenubar -- create a new menubar
 	* @param win -- Pointer to the parent window
 	*/
-	XE_LIB ChMenubar* ChCreateMenubar(ChWindow* win);
-	XE_LIB ChMenuButton *ChCreateMenubutton(ChMenubar* mb, char* title);
-	XE_LIB void ChMenubarAddButton(ChMenubar* mb, ChMenuButton *mbut);
+	XE_LIB ChMenubar* ChCreateMenubar(ChWindow * win);
+	XE_LIB ChMenuButton* ChCreateMenubutton(ChMenubar * mb, char* title);
+	XE_LIB void ChMenubarAddButton(ChMenubar * mb, ChMenuButton * mbut);
 	/*
 	* ChMenuButtonAddMenu -- add popup menu to given menubutton
 	* @param mbutton -- Pointer to Menu Button
 	* @param popup -- Pointer to Popup Menu
 	*/
-	XE_LIB void ChMenuButtonAddMenu(ChMenuButton* mbutton, ChPopupMenu* popup);
+	XE_LIB void ChMenuButtonAddMenu(ChMenuButton * mbutton, ChPopupMenu * popup);
 
 #ifdef __cplusplus
 }
 #endif
-
 
 #endif

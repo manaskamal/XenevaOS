@@ -43,11 +43,11 @@ AuRTC __rtc;
 #define PL031_RTC_LR 0x08
 #define PL031_RTC_CR 0x0C
 
-#define PL031_RTC_CR_EN_BIT (1<<0)
-#define PL031_RTC_CR_IE_BIT (1<<1)
+#define PL031_RTC_CR_EN_BIT (1 << 0)
+#define PL031_RTC_CR_IE_BIT (1 << 1)
 
 #define rtc_write32(addr, value) (*(volatile uint32_t*)(addr) = (value))
-#define rtc_read32(addr) (*(volatile uint32_t*)(addr))
+#define rtc_read32(addr)		 (*(volatile uint32_t*)(addr))
 
 /**
  * @brief AuRTCEnableInterrupt -- enable pl031 rtc
@@ -81,7 +81,7 @@ int is_leap(int year) {
  * @param epoch -- unix epoch value
  */
 void epoch_to_tm(uint32_t epoch) {
-	static const int days_in_month[] = { 31, 28, 31, 30, 31,30, 31, 31, 30, 31, 30, 31 };
+	static const int days_in_month[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 	uint32_t days = epoch / 86400;
 	uint32_t rem = epoch % 86400;
 
@@ -96,20 +96,20 @@ void epoch_to_tm(uint32_t epoch) {
 		if (days >= dim) {
 			days -= dim;
 			year++;
-		}
-		else break;
+		} else
+			break;
 	}
 	__rtc.year = year;
 	int month = 0;
 	while (1) {
 		int dim = days_in_month[month];
-		if (month == 1 && is_leap(year)) dim++;
+		if (month == 1 && is_leap(year))
+			dim++;
 		if (days >= dim) {
 			days -= dim;
 			month++;
-		}
-		else break;
-
+		} else
+			break;
 	}
 	__rtc.month = month + 1;
 	__rtc.day = days + 1;

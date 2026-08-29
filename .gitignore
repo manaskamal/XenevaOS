@@ -49,3 +49,9 @@ Libs/**/*.a
 # Exclude compiled user-space applications
 Resources/resources/*.exe
 Resources/resources/ARCH_ARM64/*.exe
+
+# clangd / IDE tooling (regenerate via Scripts/Linux/gen_compile_commands.sh)
+compile_commands.json
+
+# Personal notes / drafts, not meant for the repo
+notes/

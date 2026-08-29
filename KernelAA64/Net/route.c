@@ -42,14 +42,13 @@ list_t* _kernelRouteList;
  * in future, currently linked list is used
  */
 
- /**
+/**
   * @brief AuRouteTableInitialise -- initialise the kernel route
   * table
   */
 void AuRouteTableInitialise() {
 	_kernelRouteList = initialize_list();
 }
-
 
 /**
  * @brief AuRouteTableCreateEntry -- create a new route table

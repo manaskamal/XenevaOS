@@ -50,15 +50,15 @@
 #include "minimp3.h"
 #include "minimp4.h"
 
-ChitralekhaApp *app;
+ChitralekhaApp* app;
 ChWindow* mainWin;
 ChCanvas* mainCanvas;
 ChCanvas* browserCanvas;
-list_t *mainWidgetList;
+list_t* mainWidgetList;
 list_t* browserWidgetList;
-ChListView *browseList;
+ChListView* browseList;
 ChIcon* musicIcon;
-ChMenubar *mainMenubar;
+ChMenubar* mainMenubar;
 bool _music_library_drawn;
 char* selectedFile;
 int snd;
@@ -73,7 +73,6 @@ bool _auto_start;
 * RegisterSound -- create a new instance of sound
 */
 void RegisterSound() {
-
 	/* open the sound device-file, it is in /dev directory */
 	snd = _KeOpenFile("/dev/sound", FILE_OPEN_WRITE);
 
@@ -81,7 +80,7 @@ void RegisterSound() {
 	/* allocate an ioctl structure where required information
 	* will be putted */
 	XEFileIOControl ioctl;
-	
+
 	memset(&ioctl, 0, sizeof(XEFileIOControl));
 
 	/* uint_1 holds the millisecond to sleep after
@@ -96,7 +95,6 @@ void RegisterSound() {
 	* a private dsp-box for this app */
 	_KeFileIoControl(snd, SOUND_REGISTER_SNDPLR, &ioctl);
 }
-
 
 void PlayerThread() {
 	/* register the sound */
@@ -113,58 +111,59 @@ void PlayerThread() {
 			if (stat.eof) {
 				_KeCloseFile(_file);
 				_start_player = false;
-			}
-			else{
+			} else {
 				_KeReadFile(_file, soundbuff, 4096);
 				_KeWriteFile(snd, soundbuff, 4096);
 			}
 		}
 
-		if (!_start_player) 
+		if (!_start_player)
 			_KeProcessSleep(1000);
 	}
 }
-
 
 /*
  * WindowHandleMessage -- handles incoming deodhai messages
  * @param e -- PostBox event message structure
  */
-void WindowHandleMessage(PostEvent *e) {
+void WindowHandleMessage(PostEvent* e) {
 	switch (e->type) {
 	/* handle mouse event from deodhai */
-	case DEODHAI_REPLY_MOUSE_EVENT:{
-									   int handle = e->dword4;
-									   if (e->dword5 == WINDOW_HANDLE_TYPE_NORMAL){
-										   ChWindow* mouseWin = ChGetWindowByHandle(mainWin, handle);
-										   ChWindowHandleMouse(mouseWin, e->dword, e->dword2, e->dword3);
-									   }
-									   else if (e->dword5 == WINDOW_HANDLE_TYPE_POPUP) {
-										   ChWindow* pw = ChGetPopupWindowByHandle(mainWin, handle);
-										   ChPopupWindowHandleMouse(pw, e->dword, e->dword2, e->dword3);
-									   }
-									   memset(e, 0, sizeof(PostEvent));
-									   break;
+	case DEODHAI_REPLY_MOUSE_EVENT: {
+		int handle = e->dword4;
+		if (e->dword5 == WINDOW_HANDLE_TYPE_NORMAL) {
+			ChWindow* mouseWin = ChGetWindowByHandle(mainWin, handle);
+			ChWindowHandleMouse(mouseWin, e->dword, e->dword2, e->dword3);
+		} else if (e->dword5 == WINDOW_HANDLE_TYPE_POPUP) {
+			ChWindow* pw = ChGetPopupWindowByHandle(mainWin, handle);
+			ChPopupWindowHandleMouse(pw, e->dword, e->dword2, e->dword3);
+		}
+		memset(e, 0, sizeof(PostEvent));
+		break;
 	}
 		/* handle key events from deodhai */
-	case DEODHAI_REPLY_KEY_EVENT:{
-									 int code = e->dword;
-									 memset(e, 0, sizeof(PostEvent));
-									 break;
+	case DEODHAI_REPLY_KEY_EVENT: {
+		int code = e->dword;
+		memset(e, 0, sizeof(PostEvent));
+		break;
 	}
-	case DEODHAI_REPLY_FOCUS_CHANGED:{
-										 int focus_val = e->dword;
-										 int handle = e->dword2;
-										 ChWindow* focWin = ChGetWindowByHandle(mainWin, handle);
-										 ChWindowHandleFocus(focWin, focus_val, handle);
-										 memset(e, 0, sizeof(PostEvent));
-										 break;
+	case DEODHAI_REPLY_FOCUS_CHANGED: {
+		int focus_val = e->dword;
+		int handle = e->dword2;
+		ChWindow* focWin = ChGetWindowByHandle(mainWin, handle);
+		ChWindowHandleFocus(focWin, focus_val, handle);
+		memset(e, 0, sizeof(PostEvent));
+		break;
 	}
 	}
 }
 
 void AboutClicked(ChWidget* wid, ChWindow* win) {
-	ChMessageBox* mb = ChCreateMessageBox(mainWin, "Accent v1.0", "Accent Player v1.0 for XenevaOS !!", MSGBOX_TYPE_ONLYCLOSE, MSGBOX_ICON_SUCCESS);
+	ChMessageBox* mb = ChCreateMessageBox(mainWin,
+										  "Accent v1.0",
+										  "Accent Player v1.0 for XenevaOS !!",
+										  MSGBOX_TYPE_ONLYCLOSE,
+										  MSGBOX_ICON_SUCCESS);
 	ChMessageBoxShow(mb);
 }
 
@@ -180,7 +179,7 @@ void ExitItemClicked(ChWidget* wid, ChWindow* win) {
 /* DrawWallpaper -- code copied from deodhai wallpaper
  * painter
 */
-void DrawWallpaper(ChCanvas *canv, char* filename, int x, int y) {
+void DrawWallpaper(ChCanvas* canv, char* filename, int x, int y) {
 	int image = _KeOpenFile(filename, FILE_OPEN_READ_ONLY);
 	XEFileStatus stat;
 	memset(&stat, 0, sizeof(XEFileStatus));
@@ -191,10 +190,12 @@ void DrawWallpaper(ChCanvas *canv, char* filename, int x, int y) {
 
 	uint8_t* data1 = (uint8_t*)data_;
 
-	Jpeg::Decoder *decor = new Jpeg::Decoder((uint8_t*)data1, ALIGN_UP(stat.size, 4096), malloc, free);
+	Jpeg::Decoder* decor =
+		new Jpeg::Decoder((uint8_t*)data1, ALIGN_UP(stat.size, 4096), malloc, free);
 	if (decor->GetResult() != Jpeg::Decoder::OK) {
 		_KePrint("Decoder error \n");
-		for (;;);
+		for (;;)
+			;
 		return;
 	}
 	int w = decor->GetWidth();
@@ -212,7 +213,7 @@ void DrawWallpaper(ChCanvas *canv, char* filename, int x, int y) {
 			j++;
 		}
 	}
-	
+
 	_KeMemUnmap(data_, stat.size);
 	_KeCloseFile(image);
 }
@@ -229,26 +230,29 @@ void UpdateBrowserUI() {
 	ChWindowUpdate(mainWin, 0, 0, mainWin->info->width, mainWin->info->height, 1, 0);
 }
 
-
 void BrowseMenuActionHandler(ChWidget* wid, ChWindow* win) {
-	if (_music_library_drawn == false){
+	if (_music_library_drawn == false) {
 		mainWin->widgets = browserWidgetList;
 		mainWin->canv = browserCanvas;
 		ChWindowPaint(mainWin);
 
 		ChFontSetSize(mainWin->app->baseFont, 18);
-		ChFontDrawText(browserCanvas, mainWin->app->baseFont, "Your Music library.....", 10, 88, 18, LIGHTBLACK);
+		ChFontDrawText(browserCanvas,
+					   mainWin->app->baseFont,
+					   "Your Music library.....",
+					   10,
+					   88,
+					   18,
+					   LIGHTBLACK);
 
 		ChWindowUpdate(mainWin, 0, 0, mainWin->info->width, mainWin->info->height, 1, 0);
 		_music_library_drawn = true;
-	}
-	else{
+	} else {
 		_KePrint("Updating the browsing \r\n");
 		UpdateBrowserUI();
 		_KeProcessSleep(100);
 	}
 }
-
 
 void SelectButtonActionHandler(ChWidget* wid, ChWindow* win) {
 	ChListItem* li = ChListViewGetSelectedItem(browseList);
@@ -260,8 +264,7 @@ void SelectButtonActionHandler(ChWidget* wid, ChWindow* win) {
 	_KeProcessSleep(100);
 }
 
-
-void MusicPrepareLibrary(ChListView *lv) {
+void MusicPrepareLibrary(ChListView* lv) {
 	int dirfd = _KeOpenDir("/music");
 	XEDirectoryEntry* dirent = (XEDirectoryEntry*)malloc(sizeof(XEDirectoryEntry));
 	memset(dirent, 0, sizeof(XEDirectoryEntry));
@@ -270,11 +273,10 @@ void MusicPrepareLibrary(ChListView *lv) {
 			break;
 		int code = _KeReadDir(dirfd, dirent);
 		if (code != -1) {
-			if (dirent->flags & FILE_GENERAL){
-				ChListItem*li = ChListViewAddItem(mainWin, lv, dirent->filename);
+			if (dirent->flags & FILE_GENERAL) {
+				ChListItem* li = ChListViewAddItem(mainWin, lv, dirent->filename);
 				ChListViewSetListItemIcon(li, musicIcon);
 			}
-
 		}
 		memset(dirent->filename, 0, 32);
 	}
@@ -296,8 +298,7 @@ void PlayPauseButtonAction(ChWidget* wid, ChWindow* mainWin) {
 	}
 }
 
-
-void PrepareBrowserUI(){
+void PrepareBrowserUI() {
 	/* allocate the browser canvas */
 	browserCanvas = ChCreateCanvas(mainWin->canv->canvasWidth, mainWin->canv->canvasHeight);
 	ChAllocateBuffer(browserCanvas);
@@ -314,7 +315,7 @@ void PrepareBrowserUI(){
 
 	MusicPrepareLibrary(browseList);
 
-	ChButton *selectButt = ChCreateButton(mainWin->info->width - 75, 36, 65, 35, "Select");
+	ChButton* selectButt = ChCreateButton(mainWin->info->width - 75, 36, 65, 35, "Select");
 	selectButt->base.ChActionHandler = SelectButtonActionHandler;
 	list_add(browserWidgetList, mainMenubar);
 	list_add(browserWidgetList, browseList);
@@ -331,10 +332,9 @@ void PrepareBrowserUI(){
 void AudioPlayerClose(ChWindow* win) {
 	for (int i = 0; i < browserWidgetList->pointer; i++) {
 		ChWidget* wid = (ChWidget*)list_get_at(browserWidgetList, i);
-		if (wid == (ChWidget*)mainMenubar){
+		if (wid == (ChWidget*)mainMenubar) {
 			list_remove(browserWidgetList, i);
-		}
-		else {
+		} else {
 			if (wid->ChDestroy)
 				wid->ChDestroy(wid, win);
 		}
@@ -348,11 +348,10 @@ void AudioPlayerClose(ChWindow* win) {
 /*
 * main -- main entry
 */
-int main(int argc, char* argv[]){
-
+int main(int argc, char* argv[]) {
 	app = ChitralekhaStartApp(argc, argv);
-	mainWin = ChCreateWindow(app, WINDOW_FLAG_MOVABLE, "Accent", 100, 100, CHITRALEKHA_DEFAULT_WIN_WIDTH, 
-		500);
+	mainWin = ChCreateWindow(
+		app, WINDOW_FLAG_MOVABLE, "Accent", 100, 100, CHITRALEKHA_DEFAULT_WIN_WIDTH, 500);
 
 	_music_library_drawn = false;
 	_start_player = false;
@@ -364,17 +363,17 @@ int main(int argc, char* argv[]){
 		_file = _KeOpenFile(selectedFile, FILE_OPEN_READ_ONLY);
 		_start_player = true;
 	}
-	
+
 	mainWin->ChCloseWin = AudioPlayerClose;
 
 	mainMenubar = ChCreateMenubar(mainWin);
 
-	ChMenuButton *file = ChCreateMenubutton(mainMenubar, "File");
+	ChMenuButton* file = ChCreateMenubutton(mainMenubar, "File");
 	ChMenubarAddButton(mainMenubar, file);
-	ChMenuButton *edit = ChCreateMenubutton(mainMenubar, "Help");
+	ChMenuButton* edit = ChCreateMenubutton(mainMenubar, "Help");
 	ChMenubarAddButton(mainMenubar, edit);
 
-	ChPopupMenu* pm = ChCreatePopupMenu(mainWin,NULL);
+	ChPopupMenu* pm = ChCreatePopupMenu(mainWin, NULL);
 	ChMenuItem* browse = ChCreateMenuItem("Select Song...", pm);
 	browse->wid.ChActionHandler = BrowseMenuActionHandler;
 	ChMenuItem* item = ChCreateMenuItem("Exit", pm);
@@ -388,28 +387,27 @@ int main(int argc, char* argv[]){
 
 	ChWindowAddWidget(mainWin, (ChWidget*)mainMenubar);
 
-	
-	ChButton *prevbutt = ChCreateButton(10, mainWin->info->height - 100, 100,65, "Previous");
+	ChButton* prevbutt = ChCreateButton(10, mainWin->info->height - 100, 100, 65, "Previous");
 	ChWindowAddWidget(mainWin, (ChWidget*)prevbutt);
 
-	ChButton *playbutt = ChCreateButton(mainWin->info->width / 2 - 140/2, mainWin->info->height - 100, 140, 65, "Play/Pause");
+	ChButton* playbutt = ChCreateButton(
+		mainWin->info->width / 2 - 140 / 2, mainWin->info->height - 100, 140, 65, "Play/Pause");
 	playbutt->base.ChActionHandler = PlayPauseButtonAction;
 	ChWindowAddWidget(mainWin, (ChWidget*)playbutt);
 
-	ChButton *nextbutt = ChCreateButton((playbutt->base.x + playbutt->base.w) + 18, mainWin->info->height - 100, 100, 65, "Next");
+	ChButton* nextbutt = ChCreateButton(
+		(playbutt->base.x + playbutt->base.w) + 18, mainWin->info->height - 100, 100, 65, "Next");
 	ChWindowAddWidget(mainWin, (ChWidget*)nextbutt);
 
 	ChWindowPaint(mainWin);
 
 	DrawWallpaper(mainWin->canv, "/musicbk.jpg", 10, 64);
-	ChWindowUpdate(mainWin, 0, 0, mainWin->info->width,
-	mainWin->info->height, 1, 0);
-	
+	ChWindowUpdate(mainWin, 0, 0, mainWin->info->width, mainWin->info->height, 1, 0);
+
 	mainCanvas = mainWin->canv;
 
 	soundbuff = malloc(4096);
 	memset(soundbuff, 0, 4096);
-
 
 	/* prepare the browser UI*/
 	PrepareBrowserUI();

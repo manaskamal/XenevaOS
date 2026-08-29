@@ -41,15 +41,15 @@
 #define NAMDAPHA_WIDTH 75
 #endif
 
-#define NAMDAPHA_COLOR 0x00404040 // 0xFF87A3AC
-#define NAMDAPHA_COLOR_DARK 0x33322D2D
-#define NAMDAPHA_COLOR_LIGHT 0x33646262
-#define GO_BUTTON_WIDTH (NAMDAPHA_WIDTH-20)
-#define GO_BUTTON_XCOORD 10
-#define GO_BUTTON_COLOR  0xFF7B7878
-#define GO_BUTTON_HOVER 0xFFCDE8F0
-#define GO_BUTTON_PRESSED 0xFF345862
-#define NAMDAPHA_FOCUSED_BUTTON_DARK 0xFF658096
+#define NAMDAPHA_COLOR				  0x00404040 // 0xFF87A3AC
+#define NAMDAPHA_COLOR_DARK			  0x33322D2D
+#define NAMDAPHA_COLOR_LIGHT		  0x33646262
+#define GO_BUTTON_WIDTH				  (NAMDAPHA_WIDTH - 20)
+#define GO_BUTTON_XCOORD			  10
+#define GO_BUTTON_COLOR				  0xFF7B7878
+#define GO_BUTTON_HOVER				  0xFFCDE8F0
+#define GO_BUTTON_PRESSED			  0xFF345862
+#define NAMDAPHA_FOCUSED_BUTTON_DARK  0xFF658096
 #define NAMDAPHA_FOCUSED_BUTTON_LIGHT 0xFF8CA2B4
 
 /* GEOMETRY information*/
@@ -60,12 +60,12 @@
 #define NAMDAPHA_BUTTON_XPAD 15
 #endif
 
-#define NAMDAPHA_BUTTON_WIDTH 55
+#define NAMDAPHA_BUTTON_WIDTH  55
 #define NAMDAPHA_BUTTON_HEIGHT 50
 
 /* tasklet definitions */
-#define NAMDAPHA_TASKLET_AUDIO 1
-#define NAMDAPHA_TASKLET_WEATHER 2
+#define NAMDAPHA_TASKLET_AUDIO		 1
+#define NAMDAPHA_TASKLET_WEATHER	 2
 #define NAMDAPHA_TASKLET_GEOLOCATION 3
 
 typedef struct _buttoninfo_ {
@@ -78,7 +78,7 @@ typedef struct _buttoninfo_ {
 	uint8_t* imageData;
 	uint32_t fileSize;
 	int usageCount;
-}ButtonInfo;
+} ButtonInfo;
 
 /* Namdapha Button structure
  * very similar to Chitralekha Widget
@@ -98,15 +98,12 @@ typedef struct _NamdaphaButton_ {
 	uint32_t winHandle;
 	char* title;
 	bool focused;
-	ButtonInfo *nmbuttoninfo;
-	void(*actionHandler)(_NamdaphaButton_* button, ChWindow*);
-	void(*mouseEvent)(_NamdaphaButton_* button, ChWindow* win, int x, int y, int but);
-	void(*drawNamdaphaButton)(_NamdaphaButton_* button, ChWindow* win);
-	void(*destroy)(_NamdaphaButton_* button, ChWindow* win);
-}NamdaphaButton;
-
-
-
+	ButtonInfo* nmbuttoninfo;
+	void (*actionHandler)(_NamdaphaButton_* button, ChWindow*);
+	void (*mouseEvent)(_NamdaphaButton_* button, ChWindow* win, int x, int y, int but);
+	void (*drawNamdaphaButton)(_NamdaphaButton_* button, ChWindow* win);
+	void (*destroy)(_NamdaphaButton_* button, ChWindow* win);
+} NamdaphaButton;
 
 /*
 * NmCreateButton -- creates a namdapha button
@@ -116,7 +113,7 @@ typedef struct _NamdaphaButton_ {
 * @param h -- Height of the button bound
 * @param text -- title of the button
 */
-extern NamdaphaButton* NmCreateButton(int x, int y, int w, int h, char *text);
+extern NamdaphaButton* NmCreateButton(int x, int y, int w, int h, char* text);
 
 /*
 * NmCreateButtonInfo -- create a button info, here button
@@ -146,7 +143,7 @@ extern NamdaphaButton* NamdaphaInitialiseGoButton(ChWindow* win);
 * NamdaphaChangeFocus -- changes a focus of window
 * @param button -- window's button
 */
-extern void NamdaphaChangeFocus(NamdaphaButton *button);
+extern void NamdaphaChangeFocus(NamdaphaButton* button);
 
 /* NamdaphaHideWindow -- send a hide command to deodhai
 * @param button -- window's button

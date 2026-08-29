@@ -34,20 +34,19 @@
 #include <sys/socket.h>
 #include <_xeneva.h>
 
-#ifdef __cplusplus 
-XE_EXTERN{
+#ifdef __cplusplus
+XE_EXTERN {
 #endif
 
-XE_LIB uint32_t htonl(uint32_t hostlong);
-XE_LIB uint16_t htons(uint16_t hostshort);
-XE_LIB uint32_t ntohl(uint32_t netlong);
-XE_LIB uint16_t ntohs(uint16_t netshort);
-XE_LIB in_addr_t inet_addr(const char* in);
-XE_LIB char* inet_ntoa(struct in_addr in);
+	XE_LIB uint32_t htonl(uint32_t hostlong);
+	XE_LIB uint16_t htons(uint16_t hostshort);
+	XE_LIB uint32_t ntohl(uint32_t netlong);
+	XE_LIB uint16_t ntohs(uint16_t netshort);
+	XE_LIB in_addr_t inet_addr(const char* in);
+	XE_LIB char* inet_ntoa(struct in_addr in);
 
 #ifdef __cplusplus
 }
 #endif
-
 
 #endif

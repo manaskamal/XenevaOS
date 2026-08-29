@@ -35,12 +35,10 @@
 #include <chitralekha.h>
 #include <widgets/window.h>
 
-
 int go_postboxfd;
 
-
 void GoMenuThread() {
-	ChitralekhaApp *goapp = ChitralekhaStartApp(NULL, NULL);
+	ChitralekhaApp* goapp = ChitralekhaStartApp(NULL, NULL);
 	_KePrint("GOo App started %d \n", goapp->postboxfd);
 	ChWindow* gowindow = ChCreateWindow(goapp, WINDOW_FLAG_MOVABLE, "gomenu", 0, 0, 100, 100);
 	printf("Window created \n");

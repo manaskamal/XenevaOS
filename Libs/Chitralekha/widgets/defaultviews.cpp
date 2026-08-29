@@ -38,7 +38,7 @@
 * ChDefaultListViewPainter -- default list view painter
 */
 void ChDefaultListViewPainter(ChWidget* wid, ChWindow* win) {
-	ChListView *lv = (ChListView*)wid;
+	ChListView* lv = (ChListView*)wid;
 	ChDrawRect(win->canv, lv->wid.x, lv->wid.y, lv->wid.w, lv->wid.h, WHITE);
 	ChRect viewRect;
 	viewRect.x = lv->wid.x;
@@ -47,36 +47,52 @@ void ChDefaultListViewPainter(ChWidget* wid, ChWindow* win) {
 	viewRect.h = lv->wid.h;
 	ChFontSetSize(win->app->baseFont, 14);
 	int nodePaddingHeight = LIST_VIEW_ITEM_HEIGHT;
-	int max_visible_items = lv->currentStartIndex + lv->wid.h / LIST_VIEW_ITEM_HEIGHT + 2 * nodePaddingHeight;
+	int max_visible_items =
+		lv->currentStartIndex + lv->wid.h / LIST_VIEW_ITEM_HEIGHT + 2 * nodePaddingHeight;
 
-	
-	int ypos = -((int)lv->scrollpane->vScrollBar.scrollOffset % LIST_VIEW_ITEM_HEIGHT); //(lv->wid.y + win->app->baseFont->fontHeight) +
+	int ypos = -((int)lv->scrollpane->vScrollBar.scrollOffset %
+				 LIST_VIEW_ITEM_HEIGHT); //(lv->wid.y + win->app->baseFont->fontHeight) +
 	int xpos = (int)lv->scrollpane->hScrollBar.scrollOffset;
 #define PADDING_Y 5
-	
+
 	int totalYpos = lv->wid.y + PADDING_Y + ypos;
 	/*if ((lv->lastNodeIndex == lv->currentStartIndex))
 		ypos  -= (int)lv->scrollpane->vScrollBar.scrollAmount;*/
-		
 
-
-	for (int i = lv->currentStartIndex; i < lv->itemList->pointer /*&& i < max_visible_items*/; i++) {
+	for (int i = lv->currentStartIndex; i < lv->itemList->pointer /*&& i < max_visible_items*/;
+		 i++) {
 		ChListItem* li = (ChListItem*)list_get_at(lv->itemList, i);
 		int originalXpos = li->xPos;
 		//li->xPos = originalXpos - xpos;
 		if (li) {
 			li->yPos = totalYpos;
 			if (li->selected)
-				ChDrawRectClipped(win->canv, lv->wid.x + li->xPos, li->yPos, li->width, li->height - 2, &viewRect, 0xFF6982B7);
+				ChDrawRectClipped(win->canv,
+								  lv->wid.x + li->xPos,
+								  li->yPos,
+								  li->width,
+								  li->height - 2,
+								  &viewRect,
+								  0xFF6982B7);
 
-			if (li->icon){
-				ChDrawIconClipped(win->canv, li->icon, lv->wid.x + li->xPos + 10, li->yPos , &viewRect);
-				ChFontDrawTextClipped(win->canv, win->app->baseFont,li->itemText, lv->wid.x + li->xPos + 40,
-					totalYpos + (li->height/2) + 5, BLACK, &viewRect); //
-			}
-			else
-				ChFontDrawTextClipped(win->canv, win->app->baseFont,li->itemText, lv->wid.x + li->xPos + 10,
-				totalYpos , BLACK, &viewRect); //
+			if (li->icon) {
+				ChDrawIconClipped(
+					win->canv, li->icon, lv->wid.x + li->xPos + 10, li->yPos, &viewRect);
+				ChFontDrawTextClipped(win->canv,
+									  win->app->baseFont,
+									  li->itemText,
+									  lv->wid.x + li->xPos + 40,
+									  totalYpos + (li->height / 2) + 5,
+									  BLACK,
+									  &viewRect); //
+			} else
+				ChFontDrawTextClipped(win->canv,
+									  win->app->baseFont,
+									  li->itemText,
+									  lv->wid.x + li->xPos + 10,
+									  totalYpos,
+									  BLACK,
+									  &viewRect); //
 			totalYpos += LIST_VIEW_ITEM_HEIGHT;
 		}
 	}

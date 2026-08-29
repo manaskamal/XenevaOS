@@ -168,8 +168,7 @@ int AuDevMouseIoControl(AuVFSNode* file, int code, void* arg) {
 	/*if (ioctl->syscall_magic != AURORA_SYSCALL_MAGIC)
 		return 0;*/
 
-	switch (code)
-	{
+	switch (code) {
 	case MOUSE_IOCODE_SETPOS:
 #ifdef ARCH_X64
 		AuPS2MouseSetPos(ioctl->uint_1, ioctl->uint_2);
@@ -201,7 +200,7 @@ void AuDevInputInitialise() {
 	node->flags |= FS_FLAG_DEVICE;
 	node->device = mice_input_buf;
 	node->read = AuDevInputMiceRead;
-	node->write =AuDevInputMiceWrite;
+	node->write = AuDevInputMiceWrite;
 	node->open = 0;
 	node->close = 0;
 	node->iocontrol = AuDevMouseIoControl;

@@ -33,19 +33,18 @@
 #include <sys/_kesignal.h>
 #include <sys/_keproc.h>
 
-
 /**
  * @brief signal -- register a signal handler to 
  * a specific signal number
  * @param signum -- signal number
  * @param handler -- handler address
  */
-#define signal(signum,handler) _KeSetSignal(signum,handler)
+#define signal(signum, handler) _KeSetSignal(signum, handler)
 
 /* @brief kill system call
  *  @param pid -- process id
  *  @param signum -- signal number
  */
-#define kill(pid,signum) _KeSendSignal(pid,signum)
+#define kill(pid, signum) _KeSendSignal(pid, signum)
 
 #endif

@@ -39,23 +39,22 @@
 
 extern void ChPopupMenuPaint(ChPopupMenu* popup);
 
-void ChPopupMenuMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, int button){
+void ChPopupMenuMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, int button) {
 	ChPopupMenu* pm = (ChPopupMenu*)wid;
 	if (!pm->backWindow)
 		return;
 	bool _need_paint = false;
-	ChMenuItem *selectedItem = NULL;
+	ChMenuItem* selectedItem = NULL;
 	for (int i = 0; i < pm->MenuItems->pointer; i++) {
 		ChMenuItem* mi = (ChMenuItem*)list_get_at(pm->MenuItems, i);
 		if (x >= (win->info->x + mi->wid.x) && x < (win->info->x + mi->wid.x + mi->wid.w) &&
-		    y >= (win->info->y + mi->wid.y) && y < (win->info->y + mi->wid.y + mi->wid.h)){
+			y >= (win->info->y + mi->wid.y) && y < (win->info->y + mi->wid.y + mi->wid.h)) {
 			mi->wid.hover = true;
 			mi->wid.KillFocus = false;
 			if (mi->wid.ChMouseEvent)
 				mi->wid.ChMouseEvent((ChWidget*)mi, win, x, y, button);
 			_need_paint = true;
-		}
-		else {
+		} else {
 			if (mi->wid.hover) {
 				mi->wid.hover = false;
 				mi->wid.KillFocus = true;
@@ -92,7 +91,7 @@ void ChPopupMenuDestroy(ChWidget* widget, ChWindow* win) {
  * ChCreatePopupMenu -- create a new popup menu
  * @param mainWin -- Pointer to Main Window
  */
-ChPopupMenu* ChCreatePopupMenu(ChWindow* mainWin,ChPopupMenu* parent) {
+ChPopupMenu* ChCreatePopupMenu(ChWindow* mainWin, ChPopupMenu* parent) {
 	ChPopupMenu* pm = (ChPopupMenu*)malloc(sizeof(ChPopupMenu));
 	memset(pm, 0, sizeof(ChPopupMenu));
 	pm->mainWindow = mainWin;
@@ -103,12 +102,11 @@ ChPopupMenu* ChCreatePopupMenu(ChWindow* mainWin,ChPopupMenu* parent) {
 	return pm;
 }
 
-
 void ChMenuItemDestroy(ChWidget* wid, ChWindow* win) {
 	ChMenuItem* mi = (ChMenuItem*)wid;
 	_KePrint("MenuItem destroying %s\r\n", mi->title);
 	free(mi->title);
-	if (mi->menu){
+	if (mi->menu) {
 		if (mi->menu->wid.ChDestroy)
 			mi->menu->wid.ChDestroy((ChWidget*)mi->menu, win);
 	}
@@ -118,14 +116,15 @@ void ChMenuItemDestroy(ChWidget* wid, ChWindow* win) {
 void ChMenuItemMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, int button) {
 	ChMenuItem* item = (ChMenuItem*)wid;
 	ChPopupMenu* pm = item->parent;
-	
+
 	bool _action_required = false;
 	if (button) {
 		_KePrint("Item clicked %s \r\n", item->title);
 		if (item->menu) {
-			ChMenuShow(item->menu, item->parent->x_loc + item->wid.x + item->wid.w,
-				item->parent->y_loc + item->wid.y);
-		}else {
+			ChMenuShow(item->menu,
+					   item->parent->x_loc + item->wid.x + item->wid.w,
+					   item->parent->y_loc + item->wid.y);
+		} else {
 			ChMenuHide(pm);
 			ChWindowSetFlags(pm->mainWindow, (pm->mainWindow->flags & ~(WINDOW_FLAG_STATIC)));
 			_KeProcessSleep(1000);
@@ -145,7 +144,7 @@ void ChMenuItemMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, int button
  * @param title -- title of the menu item
  * @param pm -- Pointer to popup menu
  */
-ChMenuItem* ChCreateMenuItem(char* title,ChPopupMenu* pm) {
+ChMenuItem* ChCreateMenuItem(char* title, ChPopupMenu* pm) {
 	ChMenuItem* mi = (ChMenuItem*)malloc(sizeof(ChMenuItem));
 	memset(mi, 0, sizeof(ChMenuItem));
 	mi->wid.h = DEFAULT_MENU_ITEM_HEIGHT;
@@ -160,7 +159,7 @@ ChMenuItem* ChCreateMenuItem(char* title,ChPopupMenu* pm) {
 	return mi;
 }
 
-void ChMenuRecalculateDimensions(ChPopupMenu * pm) {
+void ChMenuRecalculateDimensions(ChPopupMenu* pm) {
 	int w = 0;
 	int h = 0;
 	if (!pm->mainWindow)
@@ -178,15 +177,13 @@ void ChMenuRecalculateDimensions(ChPopupMenu * pm) {
 		else
 			h += DEFAULT_MENU_ITEM_HEIGHT + DEFAULT_MENU_ITEM_BUTTON_PADY;
 	}
-	if (!w && !h){
+	if (!w && !h) {
 		w = DEFAULT_POPUP_MENU_WIDTH;
 		h = DEFAULT_POPUP_MENU_HEIGHT;
-	}
-	else 
-		w += 20*2;
+	} else
+		w += 20 * 2;
 
-
-	if (!pm->x_loc && !pm->y_loc){
+	if (!pm->x_loc && !pm->y_loc) {
 		pm->x_loc = 5;
 		pm->y_loc = 62;
 	}
@@ -207,17 +204,20 @@ void ChMenuShow(ChPopupMenu* menu, int x, int y) {
 		ChPopupWindowShow(menu->backWindow, menu->mainWindow);
 		_KeProcessSleep(1000);
 		ChWindowSetFocused(menu->backWindow);
-	}
-	else {
+	} else {
 		ChMenuRecalculateDimensions(menu);
 		menu->x_loc = x + 5;
 		menu->y_loc = y;
-		menu->backWindow = ChCreatePopupWindow(
-			menu->mainWindow, menu->x_loc, menu->y_loc, menu->wid.w, menu->wid.h,WINDOW_FLAG_POPUP,
-			"Popup");
+		menu->backWindow = ChCreatePopupWindow(menu->mainWindow,
+											   menu->x_loc,
+											   menu->y_loc,
+											   menu->wid.w,
+											   menu->wid.h,
+											   WINDOW_FLAG_POPUP,
+											   "Popup");
 		ChPopupMenuPaint(menu);
-		ChWindowUpdate(menu->backWindow,0,0,menu->wid.w, menu->wid.h, 1,0 );
-		ChPopupWindowShow(menu->backWindow,menu->mainWindow);
+		ChWindowUpdate(menu->backWindow, 0, 0, menu->wid.w, menu->wid.h, 1, 0);
+		ChPopupWindowShow(menu->backWindow, menu->mainWindow);
 		list_add(menu->backWindow->widgets, menu);
 	}
 }

@@ -35,13 +35,19 @@
  * @param wid -- Pointer to this widget
  * @param win -- Pointer to main application window
  */
-void ChDefaultProgressBarPainter(ChWidget* wid, ChWindow* win){
+void ChDefaultProgressBarPainter(ChWidget* wid, ChWindow* win) {
 	ChProgressBar* pb = (ChProgressBar*)wid;
 
 	ChDrawRect(win->canv, pb->base.x, pb->base.y, pb->base.w, pb->base.h, 0xFFB9B9B9);
 
 	//draw progress width
-	ChColorDrawVerticalGradient(win->canv, pb->base.x, pb->base.y, pb->progressPixelWidth, pb->base.h,0xFF2DBD11,0xFF217A10);
+	ChColorDrawVerticalGradient(win->canv,
+								pb->base.x,
+								pb->base.y,
+								pb->progressPixelWidth,
+								pb->base.h,
+								0xFF2DBD11,
+								0xFF217A10);
 
 	ChFontSetSize(win->app->baseFont, 13);
 	char num[100];
@@ -49,7 +55,13 @@ void ChDefaultProgressBarPainter(ChWidget* wid, ChWindow* win){
 	int symbolIndex = strlen(num);
 	num[symbolIndex - 1] = '%';
 	int text_len = ChFontGetWidth(win->app->baseFont, num);
-	ChFontDrawText(win->canv, win->app->baseFont, num, pb->base.x + pb->base.w / 2 - text_len / 2, pb->base.y + pb->base.h / 2, 13, BLACK);
+	ChFontDrawText(win->canv,
+				   win->app->baseFont,
+				   num,
+				   pb->base.x + pb->base.w / 2 - text_len / 2,
+				   pb->base.y + pb->base.h / 2,
+				   13,
+				   BLACK);
 
 	ChDrawRectUnfilled(win->canv, pb->base.x, pb->base.y, pb->base.w, pb->base.h, 0xFF827474);
 }

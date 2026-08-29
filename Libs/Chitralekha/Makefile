@@ -1,17 +1,43 @@
-# XenevaOS Chitralekha Library Makefile (GCC Build)
+# XenevaOS Chitralekha Library Makefile (GCC / LLVM Build)
 
 TARGET = libChitralekha.a
-CROSS_COMPILE ?= aarch64-linux-gnu-
 
-CXX = $(CROSS_COMPILE)g++
-CC = $(CROSS_COMPILE)gcc
-AR = $(CROSS_COMPILE)ar
+# Default toolchain is GCC
+TOOLCHAIN ?= gcc
+
+# Triggered when you run "make llvm"
+.PHONY: all clean llvm
+llvm:
+	@$(MAKE) TOOLCHAIN=llvm all
 
 INCLUDES = -I./ -I../XEClib/includes -I../../BaseHdr -I../XEClib/includes/c++ -I../../Ports/freetype2/include
-CXXFLAGS = -Wall -Wextra -ffreestanding -fno-stack-protector -fno-stack-check -fno-strict-aliasing \
-           -O2 -fPIE -fno-exceptions -fno-rtti \
-           -DARCH_ARM64 -D__TARGET_BOARD_QEMU_VIRT__ -D_USE_DLMALLOC -D__STDC_LIMIT_MACROS -DTHEME_DEFAULT -DCOLOR_RGBA \
-           $(INCLUDES)
+
+ifeq ($(TOOLCHAIN), llvm)
+	# LLVM / Clang configuration
+	CXX = clang++
+	CC  = clang
+	AR  = llvm-ar
+
+	LLVM_TARGET = -target aarch64-unknown-windows
+
+	CXXFLAGS = -Wall -Wextra -ffreestanding -fno-stack-protector -fno-stack-check \
+	           -fno-strict-aliasing -O2 -fno-exceptions -fno-rtti $(LLVM_TARGET) \
+	           -DARCH_ARM64 -D__TARGET_BOARD_QEMU_VIRT__ -D_USE_DLMALLOC -D__STDC_LIMIT_MACROS -DTHEME_DEFAULT -DCOLOR_RGBA \
+	           -Wno-error=incompatible-pointer-types -Wno-error=int-conversion \
+	           -Wno-implicit-function-declaration -Wno-c++11-narrowing \
+	           $(INCLUDES)
+else
+	# GCC configuration
+	CROSS_COMPILE ?= aarch64-linux-gnu-
+	CXX = $(CROSS_COMPILE)g++
+	CC  = $(CROSS_COMPILE)gcc
+	AR  = $(CROSS_COMPILE)ar
+
+	CXXFLAGS = -Wall -Wextra -ffreestanding -fno-stack-protector -fno-stack-check -fno-strict-aliasing \
+	           -O2 -fPIE -fno-exceptions -fno-rtti \
+	           -DARCH_ARM64 -D__TARGET_BOARD_QEMU_VIRT__ -D_USE_DLMALLOC -D__STDC_LIMIT_MACROS -DTHEME_DEFAULT -DCOLOR_RGBA \
+	           $(INCLUDES)
+endif
 
 OBJDIR = obj
 
@@ -60,8 +86,6 @@ S_OBJS = $(patsubst %.s,$(OBJDIR)/%.o,$(S_SRCS))
 
 OBJS = $(CPP_OBJS) $(S_OBJS)
 
-.PHONY: all clean
-
 all: $(TARGET)
 
 $(TARGET): $(OBJS)
@@ -74,7 +98,7 @@ $(OBJDIR)/%.o: %.cpp
 
 $(OBJDIR)/%.o: %.s
 	@mkdir -p $(dir $@)
-	$(CC) $(CXXFLAGS) -c $< -o $@
+	$(CC) $(CXXFLAGS) -Wno-unused-command-line-argument -c $< -o $@
 
 clean:
 	rm -rf $(OBJDIR) $(TARGET)

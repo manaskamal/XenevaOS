@@ -57,18 +57,20 @@
 AA64Registers* svcCurrentRegs;
 
 /* Syscall function format */
-typedef int64_t(*syscall_func) (int64_t param1, int64_t param2, int64_t param3, int64_t
-	param4, int64_t param5, int64_t param6);
+typedef int64_t (*syscall_func)(
+	int64_t param1, int64_t param2, int64_t param3, int64_t param4, int64_t param5, int64_t param6);
 
-uint64_t null_call(int64_t param1, int64_t param2, int64_t param3, int64_t
-	param4, int64_t param5, int64_t param6) {
+uint64_t null_call(int64_t param1,
+				   int64_t param2,
+				   int64_t param3,
+				   int64_t param4,
+				   int64_t param5,
+				   int64_t param6) {
 	UARTDebugOut("Null call initiated \r\n");
 	return 1;
 }
 
 extern uint64_t read_sp();
-
-
 
 uint64_t test_call() {
 	UARTDebugOut("Test call initiated \r\n");
@@ -80,164 +82,164 @@ AA64Registers* AA64GetCurrentRegCtx() {
 }
 
 static void* syscalls[AURORA_MAX_SYSCALL] = {
-	null_call, //0
-	UARTDebugOut, //1
-	PauseThread, //2
-	GetThreadID, //3
-	GetProcessID, //4
-	ProcessExit, //5
+	null_call,				   //0
+	UARTDebugOut,			   //1
+	PauseThread,			   //2
+	GetThreadID,			   //3
+	GetProcessID,			   //4
+	ProcessExit,			   //5
 	ProcessWaitForTermination, //6
-	CreateProcess, //7
-	ProcessLoadExec, //8
-	CreateSharedMem, //9
-	ObtainSharedMem, //10
-	UnmapSharedMem, //11
-	OpenFile, //12
-	CreateMemMapping, //13
-	UnmapMemMapping, //14
-	GetProcessHeapMem, //15
-	ReadFile, //16
-	WriteFile, //17
-	0, //18
-	0, //19
-	CloseFile, //20
-	FileIoControl, //21
-	FileStat, //22
-	ProcessSleep, //23
-	SignalReturn, //24
-	SetSignal, //25
-	AuGetSystemTimerTick, //26
-	AuFTMngrGetFontID, //27
-	AuFTMngrGetNumFonts, //28
-	AuFTMngrGetFontSize, //29
-	MemMapDirty, //30
-	AuTTYCreate, //31
-	CreateUserThread, //32
-	SetFileToProcess, //33
-	ProcessHeapUnmap, //34
-	SendSignal, //35
-	0, //36
-	OpenDir, //37
-	ReadDir, //38
-	0, //39
-	0, //40
-	0, //41
-	0, //42
-	ProcessGetFileDesc, //43
-	FileSetOffset, //44
-	0, //45
-	AuCreateSocket, //46
-	NetConnect, //47
-	NetSend, //48
-	NetReceive, //49
-	AuSocketSetOpt, //50
-	NetBind, //51
-	NetAccept, //52
-	NetListen, //53
-	AuCreatePipe, //54
-	AuGetVDiskInfo, //55, 
-	AuGetVDiskPartitionInfo, //56
-	GetEnvironmenBlock, //57
-	AuCredChangeID, //58
-	AuCredAddSGroup, //59
-	AuCredSetCap, //60
-	AuCredGetCap, //61
-	AuSetUID, //62
-	AuSetGID, //63
-	AuCredGetGroupID, //64
-	AuProcessTokenAddSelf, //65
+	CreateProcess,			   //7
+	ProcessLoadExec,		   //8
+	CreateSharedMem,		   //9
+	ObtainSharedMem,		   //10
+	UnmapSharedMem,			   //11
+	OpenFile,				   //12
+	CreateMemMapping,		   //13
+	UnmapMemMapping,		   //14
+	GetProcessHeapMem,		   //15
+	ReadFile,				   //16
+	WriteFile,				   //17
+	0,						   //18
+	0,						   //19
+	CloseFile,				   //20
+	FileIoControl,			   //21
+	FileStat,				   //22
+	ProcessSleep,			   //23
+	SignalReturn,			   //24
+	SetSignal,				   //25
+	AuGetSystemTimerTick,	   //26
+	AuFTMngrGetFontID,		   //27
+	AuFTMngrGetNumFonts,	   //28
+	AuFTMngrGetFontSize,	   //29
+	MemMapDirty,			   //30
+	AuTTYCreate,			   //31
+	CreateUserThread,		   //32
+	SetFileToProcess,		   //33
+	ProcessHeapUnmap,		   //34
+	SendSignal,				   //35
+	0,						   //36
+	OpenDir,				   //37
+	ReadDir,				   //38
+	0,						   //39
+	0,						   //40
+	0,						   //41
+	0,						   //42
+	ProcessGetFileDesc,		   //43
+	FileSetOffset,			   //44
+	0,						   //45
+	AuCreateSocket,			   //46
+	NetConnect,				   //47
+	NetSend,				   //48
+	NetReceive,				   //49
+	AuSocketSetOpt,			   //50
+	NetBind,				   //51
+	NetAccept,				   //52
+	NetListen,				   //53
+	AuCreatePipe,			   //54
+	AuGetVDiskInfo,			   //55,
+	AuGetVDiskPartitionInfo,   //56
+	GetEnvironmenBlock,		   //57
+	AuCredChangeID,			   //58
+	AuCredAddSGroup,		   //59
+	AuCredSetCap,			   //60
+	AuCredGetCap,			   //61
+	AuSetUID,				   //62
+	AuSetGID,				   //63
+	AuCredGetGroupID,		   //64
+	AuProcessTokenAddSelf,	   //65
 	AuProcessTokenGetThreadID, //66
-	AuProcessTokenRemoveSelf, //67
-	AuPowerDown, //68
-    AuPowerReset, //69
-	AuGetCurrentUS, //70
-	AuGetCurrentMS, //71
-	Alarm, //72
-	SetITimer, //73
-	GetITimer, //74
-	AuProcGetNumProcessCount, //75
-	AuProcessFetch, //76
-	AuSetWalltime, //77
-	AuGetWalltime, //78
+	AuProcessTokenRemoveSelf,  //67
+	AuPowerDown,			   //68
+	AuPowerReset,			   //69
+	AuGetCurrentUS,			   //70
+	AuGetCurrentMS,			   //71
+	Alarm,					   //72
+	SetITimer,				   //73
+	GetITimer,				   //74
+	AuProcGetNumProcessCount,  //75
+	AuProcessFetch,			   //76
+	AuSetWalltime,			   //77
+	AuGetWalltime,			   //78
 };
 
 #ifdef __KERNEL_PROFILER_ON__
 static char* syscall_name[AURORA_MAX_SYSCALL] = {
-	"null_call", //0
-	"UARTDebugOut", //1
-	"PauseThread", //2
-	"GetThreadID", //3
-	"GetProcessID", //4
-	"ProcessExit", //5
+	"null_call",				 //0
+	"UARTDebugOut",				 //1
+	"PauseThread",				 //2
+	"GetThreadID",				 //3
+	"GetProcessID",				 //4
+	"ProcessExit",				 //5
 	"ProcessWaitForTermination", //6
-	"CreateProcess", //7
-	"ProcessLoadExec", //8
-	"CreateSharedMem", //9
-	"ObtainSharedMem", //10
-	"UnmapSharedMem", //11
-	"OpenFile", //12
-	"CreateMemMapping", //13
-	"UnmapMemMapping", //14
-	"GetProcessHeapMem", //15
-	0, //16
-	"WriteFile", //17
-	0, //18
-	0, //19
-	"CloseFile", //20
-	0, //21
-	"FileStat", //22
-	0, //23
-	0, //24
-	0, //25
-	"AuGetSystemTimerTick", //26
-	"AuFTMngrGetFontID", //27
-	"AuFTMngrGetNumFonts", //28
-	"AuFTMngrGetFontSize", //29
-	"MemMapDirty", //30
-	"AuTTYCreate", //31
-	"CreateUserThread", //32
-	"SetFileToProcess", //33
-	"ProcessHeapUnmap", //34
-	0, //35
-	0, //36
-	"OpenDir", //37
-	"ReadDir", //38
-	0, //39
-	0, //40
-	0, //41
-	0, //42
-	"ProcessGetFileDesc", //43
-	"FileSetOffset", //44
-	0, //45
-	"AuCreateSocket", //46
-	"NetConnect", //47
-	"NetSend", //48
-	"NetReceive", //49
-	"AuSocketSetOpt", //50
-	"NetBind", //51
-	"NetAccept", //52
-	"NetListen", //53
-	0, //54
-	"AuGetVDiskInfo", //55, 
-	"AuGetVDiskPartitionInfo", //56
-	"GetEnvironmenBlock", //57
-	"AuCredChangeID", //58
-	"AuCredAddSGroup", //59
-	"AuCredSetCap", //60
-	"AuCredGetCap", //61
-	"AuSetUID", //62
-	"AuSetGID", //63
-	"AuCredGetGroupID", //64
-	"AuProcessTokenAddSelf", //65
+	"CreateProcess",			 //7
+	"ProcessLoadExec",			 //8
+	"CreateSharedMem",			 //9
+	"ObtainSharedMem",			 //10
+	"UnmapSharedMem",			 //11
+	"OpenFile",					 //12
+	"CreateMemMapping",			 //13
+	"UnmapMemMapping",			 //14
+	"GetProcessHeapMem",		 //15
+	0,							 //16
+	"WriteFile",				 //17
+	0,							 //18
+	0,							 //19
+	"CloseFile",				 //20
+	0,							 //21
+	"FileStat",					 //22
+	0,							 //23
+	0,							 //24
+	0,							 //25
+	"AuGetSystemTimerTick",		 //26
+	"AuFTMngrGetFontID",		 //27
+	"AuFTMngrGetNumFonts",		 //28
+	"AuFTMngrGetFontSize",		 //29
+	"MemMapDirty",				 //30
+	"AuTTYCreate",				 //31
+	"CreateUserThread",			 //32
+	"SetFileToProcess",			 //33
+	"ProcessHeapUnmap",			 //34
+	0,							 //35
+	0,							 //36
+	"OpenDir",					 //37
+	"ReadDir",					 //38
+	0,							 //39
+	0,							 //40
+	0,							 //41
+	0,							 //42
+	"ProcessGetFileDesc",		 //43
+	"FileSetOffset",			 //44
+	0,							 //45
+	"AuCreateSocket",			 //46
+	"NetConnect",				 //47
+	"NetSend",					 //48
+	"NetReceive",				 //49
+	"AuSocketSetOpt",			 //50
+	"NetBind",					 //51
+	"NetAccept",				 //52
+	"NetListen",				 //53
+	0,							 //54
+	"AuGetVDiskInfo",			 //55,
+	"AuGetVDiskPartitionInfo",	 //56
+	"GetEnvironmenBlock",		 //57
+	"AuCredChangeID",			 //58
+	"AuCredAddSGroup",			 //59
+	"AuCredSetCap",				 //60
+	"AuCredGetCap",				 //61
+	"AuSetUID",					 //62
+	"AuSetGID",					 //63
+	"AuCredGetGroupID",			 //64
+	"AuProcessTokenAddSelf",	 //65
 	"AuProcessTokenGetThreadID", //66
-	"AuProcessTokenRemoveSelf", //67
-	"AuPowerDown", //68
-	"AuPowerReset", //69
-	"AuGetCurrentUS", //70
-	"AuGetCurrentMS", //71
-	"Alarm", //72
-	"AuProcGetNumProcessCount", //75
-	"AuProcessFetch", //76
+	"AuProcessTokenRemoveSelf",	 //67
+	"AuPowerDown",				 //68
+	"AuPowerReset",				 //69
+	"AuGetCurrentUS",			 //70
+	"AuGetCurrentMS",			 //71
+	"Alarm",					 //72
+	"AuProcGetNumProcessCount",	 //75
+	"AuProcessFetch",			 //76
 };
 #endif
 

@@ -45,7 +45,6 @@
 #include <bordoisila_io.h>
 #include <Drivers/res.h>
 
-
 #ifdef __TARGET_BOARD_QEMU_VIRT__
 extern void virt_power_down(uint64_t code);
 extern void virt_power_reboot(uint64_t code);
@@ -57,8 +56,6 @@ extern uint64_t AuVirtGetBootEpoch();
  */
 extern void imx8mp_board_initialize();
 #endif
-
-
 
 /**
  * @brief AuAA64BoardInitialize -- initialize board specific data

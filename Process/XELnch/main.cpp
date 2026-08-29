@@ -23,8 +23,7 @@
 #define NANOSVGRAST_IMPLEMENTATION
 #include <nanosvgrast.h>
 
-
-ChitralekhaApp *app;
+ChitralekhaApp* app;
 ChWindow* win;
 AppGrid* mainGrid;
 int screen_h;
@@ -53,7 +52,6 @@ void XELauncherPaint(ChWindow* win) {
 	ChWindowUpdate(win, 0, 0, win->info->width, win->info->height, 1, 0);
 }
 
-
 /*
 * NamdaphaMouseHandler -- handles mouse events
 * @param win -- Pointer to Chitralekha Window
@@ -76,8 +74,7 @@ void XELauncherMouseHandler(ChWindow* win, int x, int y, int button, int scroll)
 			widget->kill_focus = false;
 			if (widget->mouseEvent)
 				widget->mouseEvent(widget, win, x, y, button);
-		}
-		else {
+		} else {
 			if (widget->hover) {
 				widget->hover = false;
 				widget->kill_focus = true;
@@ -95,8 +92,7 @@ void XELauncherMouseHandler(ChWindow* win, int x, int y, int button, int scroll)
 			wid->KillFocus = false;
 			if (wid->ChMouseEvent)
 				wid->ChMouseEvent(wid, win, x, y, button);
-		}
-		else {
+		} else {
 			if (wid->hover) {
 				wid->hover = false;
 				wid->KillFocus = true;
@@ -130,23 +126,23 @@ bool isControlKeyPressed(int key) {
 * XenevaLauncherHandleMessage -- handle incoming messages
 *
 */
-void XenevaLauncherHandleMessage(PostEvent *e) {
+void XenevaLauncherHandleMessage(PostEvent* e) {
 	switch (e->type) {
 		/*handle timer message code */
-	case TIMER_MESSAGE_CODE:{
-								memset(e, 0, sizeof(PostEvent));
-								break;
+	case TIMER_MESSAGE_CODE: {
+		memset(e, 0, sizeof(PostEvent));
+		break;
 	}
 		/* handle mouse event from deodhai */
-	case DEODHAI_REPLY_MOUSE_EVENT:{
-									   int handle = e->dword4;
-									   ChWindow* mouseWin = ChGetWindowByHandle(win, handle);
-									   if (mouseWin == win)
-										   XELauncherMouseHandler(mouseWin, e->dword, e->dword2, e->dword3, 0);
-									   else
-										   ChWindowHandleMouse(mouseWin, e->dword, e->dword2, e->dword3);
-									   memset(e, 0, sizeof(PostEvent));
-									   break;
+	case DEODHAI_REPLY_MOUSE_EVENT: {
+		int handle = e->dword4;
+		ChWindow* mouseWin = ChGetWindowByHandle(win, handle);
+		if (mouseWin == win)
+			XELauncherMouseHandler(mouseWin, e->dword, e->dword2, e->dword3, 0);
+		else
+			ChWindowHandleMouse(mouseWin, e->dword, e->dword2, e->dword3);
+		memset(e, 0, sizeof(PostEvent));
+		break;
 	}
 	case DEODHAI_REPLY_KEY_EVENT: {
 		if (!isControlKeyPressed(e->dword)) {
@@ -160,15 +156,15 @@ void XenevaLauncherHandleMessage(PostEvent *e) {
 						AppGridSearchReset(mainGrid);
 						if (mainGrid->PaintAppGrid) {
 							mainGrid->PaintAppGrid(mainGrid, win);
-							ChWindowUpdate(win, mainGrid->x, mainGrid->y, mainGrid->w, mainGrid->h, 0, 1);
+							ChWindowUpdate(
+								win, mainGrid->x, mainGrid->y, mainGrid->w, mainGrid->h, 0, 1);
 						}
 						memset(e, 0, sizeof(PostEvent));
 						break;
 					}
 					searchBar->textPos--;
 					searchBar->text[searchBar->textPos] = '\0';
-				}
-				else {
+				} else {
 					if (ChitralekhaKeyGetCapslock())
 						c = toupper(c);
 					if (searchBar->textPos == 1024) {
@@ -182,7 +178,13 @@ void XenevaLauncherHandleMessage(PostEvent *e) {
 				}
 				if (searchBar->wid.ChPaintHandler) {
 					searchBar->wid.ChPaintHandler((ChWidget*)searchBar, win);
-					ChWindowUpdate(win, searchBar->wid.x, searchBar->wid.y, searchBar->wid.w, searchBar->wid.h, 0, 1);
+					ChWindowUpdate(win,
+								   searchBar->wid.x,
+								   searchBar->wid.y,
+								   searchBar->wid.w,
+								   searchBar->wid.h,
+								   0,
+								   1);
 				}
 				AppGridSearchReset(mainGrid);
 				_match_string(searchBar->text, mainGrid->lbbuttonlist);
@@ -201,7 +203,6 @@ void XenevaLauncherHandleMessage(PostEvent *e) {
 	}
 	}
 }
-
 
 static int _total_page_count;
 /*
@@ -245,8 +246,7 @@ void xe_shutdown_action(ChWidget* wid, ChWindow* win) {
 		InitRequestMsg* msg = (InitRequestMsg*)malloc(sizeof(InitRequestMsg));
 		strcpy(msg->message, INIT_REQUEST_PW_DOWN);
 		_KeWriteFile(xelaunch_get_pipe(), msg, sizeof(InitRequestMsg));
-	}
-	else {
+	} else {
 		_KePrint("****xelauncg piipe : %d \r\n", xelaunch_get_pipe());
 	}
 }
@@ -259,8 +259,7 @@ void xe_restart_action(ChWidget* wid, ChWindow* win) {
 		InitRequestMsg* msg = (InitRequestMsg*)malloc(sizeof(InitRequestMsg));
 		strcpy(msg->message, INIT_REQUEST_PW_REBOOT);
 		_KeWriteFile(xelaunch_get_pipe(), msg, sizeof(InitRequestMsg));
-	}
-	else {
+	} else {
 		_KePrint("****xelauncg piipe : %d \r\n", xelaunch_get_pipe());
 	}
 }
@@ -268,7 +267,7 @@ void xe_restart_action(ChWidget* wid, ChWindow* win) {
 /*
 * main -- xeneva launcher entry point
 */
-int main(int argc, char* arv[]){
+int main(int argc, char* arv[]) {
 	app = ChitralekhaStartApp(argc, arv);
 	ChFontSetSize(app->baseFont, 12);
 
@@ -295,15 +294,20 @@ int main(int argc, char* arv[]){
 	_total_page_count = 1;
 	free(canv);
 
-	win = ChCreateWindow(app, WINDOW_FLAG_STATIC | WINDOW_FLAG_ALWAYS_ON_TOP | WINDOW_FLAG_GLASS,
-		"Xeneva Launcher", 10, 10, screen_w - 10*2, screen_h - 85);
-	launcher_w = screen_w - (10 * 2); //90; 
+	win = ChCreateWindow(app,
+						 WINDOW_FLAG_STATIC | WINDOW_FLAG_ALWAYS_ON_TOP | WINDOW_FLAG_GLASS,
+						 "Xeneva Launcher",
+						 10,
+						 10,
+						 screen_w - 10 * 2,
+						 screen_h - 85);
+	launcher_w = screen_w - (10 * 2); //90;
 	launcher_h = screen_h - 40;
-	int grid_w = launcher_w /2;
-	int grid_h = launcher_h /2;
+	int grid_w = launcher_w / 2;
+	int grid_h = launcher_h / 2;
 
-	mainGrid = LauncherCreateAppGrid(launcher_w / 2 - (grid_w / 2), launcher_h / 2 - (grid_h/2),
-		grid_w+50, grid_h+50);
+	mainGrid = LauncherCreateAppGrid(
+		launcher_w / 2 - (grid_w / 2), launcher_h / 2 - (grid_h / 2), grid_w + 50, grid_h + 50);
 
 	mainGrid->activePageNumber = 1;
 	/* now read the launcher config file
@@ -312,33 +316,36 @@ int main(int argc, char* arv[]){
 	LauncherConfigInitialise();
 	LauncherSetupByConfigFile();
 
-
-	win->color = LAUNCHER_BACKGROUND_COLOR;//0xCCBBBBBB;
+	win->color = LAUNCHER_BACKGROUND_COLOR; //0xCCBBBBBB;
 	win->ChWinPaint = XELauncherPaint;
 	win->info->hide = true;
 	win->info->alpha = false;
 
 	searchBar = XECreateSearchBar(launcher_w / 2 - 280 / 2, 40, 280, 35);
-	XEPageButton* up = CreatePageButton(launcher_w - 70, launcher_h / 2 - (55 / 2) - 60, 40, 55, PAGE_BUTTON_UP);
+	XEPageButton* up =
+		CreatePageButton(launcher_w - 70, launcher_h / 2 - (55 / 2) - 60, 40, 55, PAGE_BUTTON_UP);
 	up->wid.ChActionHandler = XEUpPageButtonAction;
-	XEPageButton* down = CreatePageButton(launcher_w - 70, launcher_h / 2 - 55 / 2, 40, 55, PAGE_BUTTON_DOWN);
+	XEPageButton* down =
+		CreatePageButton(launcher_w - 70, launcher_h / 2 - 55 / 2, 40, 55, PAGE_BUTTON_DOWN);
 	ChWindowAddWidget(win, (ChWidget*)up);
 	down->wid.ChActionHandler = XEDownPageButtonAction;
 	ChWindowAddWidget(win, (ChWidget*)down);
 
 	ChWindowAddWidget(win, (ChWidget*)searchBar);
 
-	_total_page_count =  AppGridGetTotalNumberOfPage(mainGrid);
+	_total_page_count = AppGridGetTotalNumberOfPage(mainGrid);
 	if (_total_page_count == 1) {
 		up->disabled = true;
 		down->disabled = true;
 	}
 
-	power_button* shutdown = create_power_button(POWER_BUTTON_TYPE_SHUTDOWN, launcher_w - 70 * 2 + 20, 40);
+	power_button* shutdown =
+		create_power_button(POWER_BUTTON_TYPE_SHUTDOWN, launcher_w - 70 * 2 + 20, 40);
 	shutdown->base.ChActionHandler = xe_shutdown_action;
 	ChWindowAddWidget(win, (ChWidget*)shutdown);
 
-	power_button* restart = create_power_button(POWER_BUTTON_TYPE_RESTART, launcher_w - 70 + 20, 40);
+	power_button* restart =
+		create_power_button(POWER_BUTTON_TYPE_RESTART, launcher_w - 70 + 20, 40);
 	restart->base.ChActionHandler = xe_restart_action;
 	ChWindowAddWidget(win, (ChWidget*)restart);
 

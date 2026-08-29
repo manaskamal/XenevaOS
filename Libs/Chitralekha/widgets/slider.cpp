@@ -29,12 +29,10 @@
 
 #include "slider.h"
 
-
 extern void ChDefaultSliderPainter(ChWidget* wid, ChWindow* win);
 
-
 void ChSliderDestroy(ChWidget* widget, ChWindow* win) {
-	ChSlider *slider = (ChSlider*)widget;
+	ChSlider* slider = (ChSlider*)widget;
 	if (win->focusedWidget == widget)
 		win->focusedWidget = NULL;
 	free(slider);
@@ -48,14 +46,14 @@ void ChSliderMouseEvent(ChWidget* widget, ChWindow* win, int x, int y, int butto
 	ChSlider* slider = (ChSlider*)widget;
 	bool actionRequired = false;
 	if (button) {
-		if (slider->type == CHITRALEKHA_SLIDER_VERTICAL){
+		if (slider->type == CHITRALEKHA_SLIDER_VERTICAL) {
 			slider->thumbY = y - (win->info->y + widget->y + 15 / 2);
 			if (slider->thumbY <= 0)
 				slider->thumbY = 0;
 			slider->progressPixel = slider->thumbY;
 			if (slider->progressPixel == 0)
 				slider->progressPixel = 1;
-			
+
 			//! update the current values
 			//if (slider->thumbY < slider->lastThumbY) {
 			//	slider->currentVal = ((float)slider->thumbY / (float)slider->base.h); //+= slider->stepSize;
@@ -71,17 +69,19 @@ void ChSliderMouseEvent(ChWidget* widget, ChWindow* win, int x, int y, int butto
 
 			if ((win->info->y + widget->y + slider->thumbY) <= (win->info->y + widget->y))
 				slider->thumbY = 0;
-			
 
-			if ((win->info->y + widget->y + slider->thumbY + 15) >= (win->info->y + widget->y + widget->h)){
-				slider->thumbY = (win->info->y + widget->y + widget->h) - (win->info->y + widget->y + 15);
+			if ((win->info->y + widget->y + slider->thumbY + 15) >=
+				(win->info->y + widget->y + widget->h)) {
+				slider->thumbY =
+					(win->info->y + widget->y + widget->h) - (win->info->y + widget->y + 15);
 				slider->progressPixel = 0;
 			}
 
 			slider->lastThumbY = slider->thumbY;
 			if (slider->base.ChPaintHandler)
 				slider->base.ChPaintHandler((ChWidget*)slider, win);
-			ChWindowUpdate(win, slider->bound.x, slider->bound.y, slider->bound.w, slider->bound.h, 0, 1);
+			ChWindowUpdate(
+				win, slider->bound.x, slider->bound.y, slider->bound.w, slider->bound.h, 0, 1);
 
 			win->focusedWidget = widget;
 			actionRequired = true;
@@ -91,30 +91,32 @@ void ChSliderMouseEvent(ChWidget* widget, ChWindow* win, int x, int y, int butto
 			slider->thumbX = x - (win->info->x + widget->x + 15 / 2);
 			slider->progressPixel = slider->thumbX;
 
-			if (slider->thumbX > slider->lastThumbX){
+			if (slider->thumbX > slider->lastThumbX) {
 				slider->currentVal += slider->stepSize;
 				if (slider->currentVal >= slider->max)
 					slider->currentVal = slider->max;
-			}
-			else if (slider->lastThumbX > slider->thumbX){
+			} else if (slider->lastThumbX > slider->thumbX) {
 				slider->currentVal -= slider->stepSize;
 				if (slider->currentVal <= slider->min)
 					slider->currentVal = slider->min;
 			}
 
-			if ((win->info->x + widget->x + slider->thumbX) <= (win->info->x + widget->x)){
+			if ((win->info->x + widget->x + slider->thumbX) <= (win->info->x + widget->x)) {
 				slider->thumbX = 0;
 				slider->progressPixel = 0;
 			}
 
-			if ((win->info->x + widget->x + slider->thumbX + 15) >= (win->info->x + widget->x + widget->w)){
-				slider->thumbX = (win->info->x + widget->x + widget->w) - (win->info->x + widget->x + 15);
+			if ((win->info->x + widget->x + slider->thumbX + 15) >=
+				(win->info->x + widget->x + widget->w)) {
+				slider->thumbX =
+					(win->info->x + widget->x + widget->w) - (win->info->x + widget->x + 15);
 			}
 
 			slider->lastThumbX = slider->thumbX;
 			if (slider->base.ChPaintHandler)
 				slider->base.ChPaintHandler((ChWidget*)slider, win);
-			ChWindowUpdate(win, slider->bound.x, slider->bound.y, slider->bound.w, slider->bound.h, 0, 1);
+			ChWindowUpdate(
+				win, slider->bound.x, slider->bound.y, slider->bound.w, slider->bound.h, 0, 1);
 			win->focusedWidget = widget;
 			actionRequired = true;
 		}
@@ -131,14 +133,14 @@ void ChSliderMouseEvent(ChWidget* widget, ChWindow* win, int x, int y, int butto
  * ChCreateSlider -- create a slider widget
  * @param sliderType -- type of the slider
  */
-ChSlider *ChCreateSlider(uint8_t sliderType, int x, int y, int length) {
+ChSlider* ChCreateSlider(uint8_t sliderType, int x, int y, int length) {
 	ChSlider* slider = (ChSlider*)malloc(sizeof(ChSlider));
 	memset(slider, 0, sizeof(ChSlider));
 	slider->base.x = x;
 	slider->base.y = 26 + y;
 	slider->thumbVisible = true;
 	slider->useCustomColor = 0;
-	switch (sliderType){
+	switch (sliderType) {
 	case CHITRALEKHA_SLIDER_VERTICAL:
 		slider->base.w = 10;
 		slider->base.h = length;
@@ -148,8 +150,7 @@ ChSlider *ChCreateSlider(uint8_t sliderType, int x, int y, int length) {
 			slider->bound.w = slider->base.w + 5 * 2;
 			slider->bound.y = slider->base.y;
 			slider->bound.h = slider->base.h;
-		}
-		else {
+		} else {
 			slider->bound.x = slider->base.x;
 			slider->bound.w = slider->base.w; // +5 * 2;
 			slider->bound.y = slider->base.y;
@@ -165,8 +166,7 @@ ChSlider *ChCreateSlider(uint8_t sliderType, int x, int y, int length) {
 			slider->bound.w = slider->base.w;
 			slider->bound.y = slider->base.y - 5;
 			slider->bound.h = slider->base.h + 5 * 2;
-		}
-		else {
+		} else {
 			slider->bound.x = slider->base.x;
 			slider->bound.w = slider->base.w; // +5 * 2;
 			slider->bound.y = slider->base.y;
@@ -191,7 +191,7 @@ ChSlider *ChCreateSlider(uint8_t sliderType, int x, int y, int length) {
  * @param slider -- Pointer to slider
  * @param stepSz -- step size in float
  */
-void ChSliderSetStepSize(ChSlider* slider, float stepSz){
+void ChSliderSetStepSize(ChSlider* slider, float stepSz) {
 	slider->stepSize = stepSz;
 }
 
@@ -250,7 +250,7 @@ void ChSliderSetMax(ChSlider* slider, float max) {
  * ChSliderGetMax -- return the maximum value limit
  * @param slider -- Pointer to slider
  */
-float ChSliderGetMax(ChSlider* slider){
+float ChSliderGetMax(ChSlider* slider) {
 	return slider->max;
 }
 
@@ -273,5 +273,3 @@ void ChSliderSetMin(ChSlider* slider, float min) {
 float ChSliderGetMin(ChSlider* slider) {
 	return slider->min;
 }
-
-

@@ -36,59 +36,57 @@
 #include "../widgets/list.h"
 
 #ifdef __cplusplus
-XE_EXTERN{
+XE_EXTERN {
 #endif
 
-
-#define DEFAULT_POPUP_MENU_WIDTH 100
-#define DEFAULT_POPUP_MENU_HEIGHT 15
+#define DEFAULT_POPUP_MENU_WIDTH	  100
+#define DEFAULT_POPUP_MENU_HEIGHT	  15
 #define DEFAULT_MENU_ITEM_BUTTON_PADY 0
-#define DEFAULT_MENU_ITEM_HEIGHT 28
+#define DEFAULT_MENU_ITEM_HEIGHT	  28
 
-typedef struct _popup_menu_ {
-	ChWidget wid;
-	ChWindow* mainWindow;
-	ChWindow* backWindow;
-	list_t* MenuItems;
-	int x_loc;
-	int y_loc;
-	void* lastSelectedMenuItem;
-	struct _popup_menu_* parent;
-}ChPopupMenu;
+	typedef struct _popup_menu_ {
+		ChWidget wid;
+		ChWindow* mainWindow;
+		ChWindow* backWindow;
+		list_t* MenuItems;
+		int x_loc;
+		int y_loc;
+		void* lastSelectedMenuItem;
+		struct _popup_menu_* parent;
+	} ChPopupMenu;
 
-typedef struct _menu_item_ {
-	ChWidget wid;
-	char* title;
-	ChPopupMenu* menu;
-	ChPopupMenu* parent;
-	bool seperator;
-}ChMenuItem;
+	typedef struct _menu_item_ {
+		ChWidget wid;
+		char* title;
+		ChPopupMenu* menu;
+		ChPopupMenu* parent;
+		bool seperator;
+	} ChMenuItem;
 
-/*
+	/*
 * ChCreatePopupMenu -- create a new popup menu
 * @param mainWin -- Pointer to Main Window
 * @param parent -- Parent popup menu
 */
-XE_EXPORT ChPopupMenu* ChCreatePopupMenu(ChWindow* mainWin, ChPopupMenu* parent);
+	XE_EXPORT ChPopupMenu* ChCreatePopupMenu(ChWindow * mainWin, ChPopupMenu * parent);
 
-/*
+	/*
 * ChCreateMenuItem -- create a new menu item
 * @param title -- title of the menu item
 * @param pm -- Pointer to popup menu
 */
-XE_EXPORT ChMenuItem* ChCreateMenuItem(char* title, ChPopupMenu* pm);
+	XE_EXPORT ChMenuItem* ChCreateMenuItem(char* title, ChPopupMenu* pm);
 
-XE_EXPORT void ChMenuShow(ChPopupMenu* menu, int x, int y);
+	XE_EXPORT void ChMenuShow(ChPopupMenu * menu, int x, int y);
 
-/*
+	/*
 * ChMenuHide -- Hide a popup menu and its sub menus
 * @param menu -- Pointer to popup menu
 */
-XE_EXPORT void ChMenuHide(ChPopupMenu* menu);
+	XE_EXPORT void ChMenuHide(ChPopupMenu * menu);
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif
-

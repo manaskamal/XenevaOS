@@ -32,18 +32,18 @@
 #include "button.h"
 
 #ifdef THEME_DEFAULT
-#define BUTTON_NORMAL_DARK 0xFF252525
-#define BUTTON_NORMAL_LIGHT 0xFF454343
-#define BUTTON_HOVER_DARK 0xFF0463C0
-#define BUTTON_HOVER_LIGHT 0xFF3F8EDA
-#define BUTTON_CLICKED_DARK 0xFF374E64
+#define BUTTON_NORMAL_DARK	 0xFF252525
+#define BUTTON_NORMAL_LIGHT	 0xFF454343
+#define BUTTON_HOVER_DARK	 0xFF0463C0
+#define BUTTON_HOVER_LIGHT	 0xFF3F8EDA
+#define BUTTON_CLICKED_DARK	 0xFF374E64
 #define BUTTON_CLICKED_LIGHT 0xFF485A6C
 #elif THEME_PURPLE
-#define BUTTON_NORMAL_DARK  0xFF252525
-#define BUTTON_NORMAL_LIGHT 0xFF454343
-#define BUTTON_HOVER_DARK 0xFF0463C0
-#define BUTTON_HOVER_LIGHT 0xFF1E9D97
-#define BUTTON_CLICKED_DARK 0xFF014D4E
+#define BUTTON_NORMAL_DARK	 0xFF252525
+#define BUTTON_NORMAL_LIGHT	 0xFF454343
+#define BUTTON_HOVER_DARK	 0xFF0463C0
+#define BUTTON_HOVER_LIGHT	 0xFF1E9D97
+#define BUTTON_CLICKED_DARK	 0xFF014D4E
 #define BUTTON_CLICKED_LIGHT 0xFF014D4E
 #endif
 
@@ -68,8 +68,7 @@ void ChButtonMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, int button) 
 	if (!wid->hoverPainted && wid->hover) {
 		if (wid->ChPaintHandler)
 			wid->ChPaintHandler(wid, win);
-		ChWindowUpdate(win,wid->x,
-			wid->y, wid->w, wid->h, false, true);
+		ChWindowUpdate(win, wid->x, wid->y, wid->w, wid->h, false, true);
 		wid->hoverPainted = true;
 	}
 
@@ -77,16 +76,14 @@ void ChButtonMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, int button) 
 		wid->hoverPainted = false;
 		if (wid->ChPaintHandler)
 			wid->ChPaintHandler(wid, win);
-		ChWindowUpdate(win,wid->x,
-			wid->y, wid->w, wid->h, false, true);
+		ChWindowUpdate(win, wid->x, wid->y, wid->w, wid->h, false, true);
 	}
 
 	bool _action_required = false;
 	if (wid->clicked && wid->lastMouseX == x && wid->lastMouseY == y) {
 		if (wid->ChPaintHandler)
 			wid->ChPaintHandler(wid, win);
-		ChWindowUpdate(win,wid->x,
-			wid->y, wid->w, wid->h, false, true);
+		ChWindowUpdate(win, wid->x, wid->y, wid->w, wid->h, false, true);
 
 		_action_required = true;
 		win->focusedWidget = wid;
@@ -94,7 +91,7 @@ void ChButtonMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, int button) 
 		wid->clicked = false;
 	}
 
-	if (_action_required){
+	if (_action_required) {
 		/* call the action handler */
 		if (wid->ChActionHandler)
 			wid->ChActionHandler(wid, win);
@@ -118,8 +115,7 @@ void ChButtonTouchEvent(ChWidget* wid, ChWindow* win, int x, int y) {
 	if (!wid->hoverPainted && wid->hover) {
 		if (wid->ChPaintHandler)
 			wid->ChPaintHandler(wid, win);
-		ChWindowUpdate(win, wid->x,
-			wid->y, wid->w, wid->h, false, true);
+		ChWindowUpdate(win, wid->x, wid->y, wid->w, wid->h, false, true);
 		wid->hoverPainted = true;
 	}
 
@@ -127,16 +123,14 @@ void ChButtonTouchEvent(ChWidget* wid, ChWindow* win, int x, int y) {
 		wid->hoverPainted = false;
 		if (wid->ChPaintHandler)
 			wid->ChPaintHandler(wid, win);
-		ChWindowUpdate(win, wid->x,
-			wid->y, wid->w, wid->h, false, true);
+		ChWindowUpdate(win, wid->x, wid->y, wid->w, wid->h, false, true);
 	}
 
 	bool _action_required = false;
 	if (wid->clicked) {
 		if (wid->ChPaintHandler)
 			wid->ChPaintHandler(wid, win);
-		ChWindowUpdate(win, wid->x,
-			wid->y, wid->w, wid->h, false, true);
+		ChWindowUpdate(win, wid->x, wid->y, wid->w, wid->h, false, true);
 
 		_action_required = true;
 		win->focusedWidget = wid;
@@ -154,8 +148,7 @@ void ChButtonTouchEvent(ChWidget* wid, ChWindow* win, int x, int y) {
 	wid->lastMouseY = y;
 }
 
-
-void ChButtonDestroy(ChWidget *widget, ChWindow* win) {
+void ChButtonDestroy(ChWidget* widget, ChWindow* win) {
 	ChButton* but = (ChButton*)widget;
 	if (win->focusedWidget == widget)
 		win->focusedWidget = NULL;
@@ -190,21 +183,25 @@ void ChButtonDefaultPainter(ChWidget* widget, ChWindow* win) {
 		color2 = BUTTON_HOVER_DARK;
 	}
 
-	ChDrawRect(win->canv, widget->x, widget->y,
-		widget->w, widget->h, color1);
+	ChDrawRect(win->canv, widget->x, widget->y, widget->w, widget->h, color1);
 	/*ChColorDrawVerticalGradient(win->canv,widget->x, widget->y, 
 		widget->w, widget->h, color1, color2);*/
-	ChFontSetSize(win->app->baseFont,11);
+	ChFontSetSize(win->app->baseFont, 11);
 	int font_w = ChFontGetWidth(win->app->baseFont, button->title);
-	int font_h = win->app->baseFont->fontHeight;//ChFontGetHeight(win->app->baseFont, button->title);
-	ChFontDrawText(win->canv, win->app->baseFont, button->title,widget->x + widget->w/2 - font_w/2,
-		widget->y + widget->h/2 + 4 , 11, WHITE);
-	ChDrawRectUnfilled(win->canv, widget->x, widget->y,
-		widget->w, widget->h, GRAY);
-	ChDrawRectUnfilled(win->canv, widget->x+1, widget->y+1,
-		widget->w-2, widget->h-2, 0xFF9A9A9A);
-	ChDrawRectUnfilled(win->canv, widget->x + 2, widget->y + 2,
-		widget->w - 4, widget->h - 4, 0xFF9A9A9A);
+	int font_h =
+		win->app->baseFont->fontHeight; //ChFontGetHeight(win->app->baseFont, button->title);
+	ChFontDrawText(win->canv,
+				   win->app->baseFont,
+				   button->title,
+				   widget->x + widget->w / 2 - font_w / 2,
+				   widget->y + widget->h / 2 + 4,
+				   11,
+				   WHITE);
+	ChDrawRectUnfilled(win->canv, widget->x, widget->y, widget->w, widget->h, GRAY);
+	ChDrawRectUnfilled(
+		win->canv, widget->x + 1, widget->y + 1, widget->w - 2, widget->h - 2, 0xFF9A9A9A);
+	ChDrawRectUnfilled(
+		win->canv, widget->x + 2, widget->y + 2, widget->w - 4, widget->h - 4, 0xFF9A9A9A);
 }
 /**
  * @brief ChCreateButton -- Create a button widget
@@ -214,11 +211,11 @@ void ChButtonDefaultPainter(ChWidget* widget, ChWindow* win) {
  * @param h -- height of the button
  * @param text -- button text
  */
-XE_EXTERN XE_EXPORT ChButton* ChCreateButton(int x, int y, int w, int h, char *text) {
+XE_EXTERN XE_EXPORT ChButton* ChCreateButton(int x, int y, int w, int h, char* text) {
 	ChButton* button = (ChButton*)malloc(sizeof(ChButton));
 	memset(button, 0, sizeof(ChButton));
-	button->base.x =CHITRALEKHA_WINDOW_DEFAULT_PAD_X + x;
-	button->base.y =CHITRALEKHA_WINDOW_DEFAULT_PAD_Y + y;
+	button->base.x = CHITRALEKHA_WINDOW_DEFAULT_PAD_X + x;
+	button->base.y = CHITRALEKHA_WINDOW_DEFAULT_PAD_Y + y;
 	button->base.w = w;
 	button->base.h = h;
 	button->title = (char*)malloc(strlen(text) + 1);

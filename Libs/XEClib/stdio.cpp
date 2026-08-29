@@ -62,7 +62,7 @@ FILE* fopen(const char* name, const char* mode) {
 	char filename[32];
 	memset(filename, 0, 32);
 	int index = 0;
-	if (name[0] != '/'){
+	if (name[0] != '/') {
 		filename[index] = '/';
 		index++;
 	}
@@ -93,7 +93,7 @@ FILE* fopen(const char* name, const char* mode) {
  * @param stream -- pointer to a FILE object
  */
 size_t fread(void* ptr, size_t sz, size_t nmemb, FILE* stream) {
-	if (stream->base == NULL){
+	if (stream->base == NULL) {
 		stream->base = (unsigned char*)ptr;
 		stream->ptr = stream->base;
 	}
@@ -127,25 +127,22 @@ size_t fwrite(void* ptr, size_t sz, size_t nmemb, FILE* stream) {
 		return 0;
 	char* aligned_ = (char*)ptr;
 	size_t ret_bytes = 0;
-	if (stream == stdout){
-		ret_bytes = _KeWriteFile(XENEVA_STDOUT, aligned_, sz*nmemb);
-	}
-	else if(stream == stderr) {
-		ret_bytes = _KeWriteFile(XENEVA_STDERR, aligned_, sz*nmemb);
-	}
-	else if (stream == stdin){
-		ret_bytes = _KeWriteFile(XENEVA_STDIN, aligned_, sz*nmemb);
-	}
-	else {
+	if (stream == stdout) {
+		ret_bytes = _KeWriteFile(XENEVA_STDOUT, aligned_, sz * nmemb);
+	} else if (stream == stderr) {
+		ret_bytes = _KeWriteFile(XENEVA_STDERR, aligned_, sz * nmemb);
+	} else if (stream == stdin) {
+		ret_bytes = _KeWriteFile(XENEVA_STDIN, aligned_, sz * nmemb);
+	} else {
 		if (stream->_file_num == -1)
 			return 0;
-		size_t ret_bytes = _KeWriteFile(stream->_file_num, aligned_, sz*nmemb);
+		size_t ret_bytes = _KeWriteFile(stream->_file_num, aligned_, sz * nmemb);
 	}
 	return ret_bytes;
 }
 
 int fputc(int c, FILE* stream) {
-	char data[] = { c };
+	char data[] = {c};
 	int fd = -1;
 	if (stream == stdout || stream == stderr)
 		fd = XENEVA_STDOUT;
@@ -240,12 +237,11 @@ int fclose(FILE* fp) {
 	return ret;
 }
 
-
 int putchar(int c) {
 	return fputc(c, stdout);
 }
 
-int puts(const char *s) {
+int puts(const char* s) {
 	_KePrint("Puts: %x , strlen: %d\r\n", stdout, strlen(s));
 	fwrite((void*)s, 1, strlen(s), stdout);
 	_KePrint("fwrite done \r\n");
@@ -261,9 +257,9 @@ int rename(const char* oldpath, const char* newpath) {
 	return -1;
 }
 
-extern "C" void _store_stack_param(uint8_t * buffer);
-extern "C" void _store_stack_param_snprintf(uint8_t * buffer);
-extern "C" void _store_stack_param_sprintf(uint8_t * buffer);
+extern "C" void _store_stack_param(uint8_t* buffer);
+extern "C" void _store_stack_param_snprintf(uint8_t* buffer);
+extern "C" void _store_stack_param_sprintf(uint8_t* buffer);
 
 int sprintf(char* output, const char* format, ...) {
 	va_list list;
@@ -293,7 +289,6 @@ int snprintf(char* output, size_t sz, const char* format, ...) {
 	va_end(list);
 	return len;
 }
-
 
 static void __stdout_flush_raw() {
 	if (output_printf_len > 0) {
@@ -333,18 +328,16 @@ int printf(const char* format, ...) {
 	return len;
 }
 
-
 int fflush(FILE* stream) {
 	//_KeWriteFile(stream->_file_num,stream->ptr, )
 	//not implemented
-	if (stream != stdout) 
+	if (stream != stdout)
 		return 1;
 	__stdout_flush_raw();
 	return 0;
 }
 
-
-int vfprintf(FILE *stream, const char* format, va_list list) {
+int vfprintf(FILE* stream, const char* format, va_list list) {
 	int status = 0;
 	int len = 0;
 	char output[MAX_STRING_LENGTH + 1];
@@ -355,7 +348,7 @@ int vfprintf(FILE *stream, const char* format, va_list list) {
 	len = _xeprint(output, MAX_STRING_LENGTH, format, list);
 	va_end(list);
 	if (len > 0) {
-		_KeWriteFile(XENEVA_STDIN, output, strlen(output)-1);
+		_KeWriteFile(XENEVA_STDIN, output, strlen(output) - 1);
 	}
 }
 
@@ -388,7 +381,6 @@ int vprintf(const char* format, va_list list) {
 	return size_written;
 }
 
-
 int fprintf(FILE* stream, const char* format, ...) {
 	int status = 0;
 	va_list list;
@@ -403,7 +395,7 @@ int fprintf(FILE* stream, const char* format, ...) {
 	len = _xeprint(output, MAX_STRING_LENGTH, format, list);
 	va_end(list);
 	if (len > 0) {
-		_KeWriteFile(stream->_file_num, output, strlen(output)-1);
+		_KeWriteFile(stream->_file_num, output, strlen(output) - 1);
 	}
 	return len;
 }

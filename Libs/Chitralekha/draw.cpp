@@ -45,8 +45,8 @@
  */
 void ChDrawRect(ChCanvas* canvas, unsigned x, unsigned y, unsigned w, unsigned h, uint32_t col) {
 	for (int i = 0; i < w; i++)
-	for (int j = 0; j < h; j++)
-		ChDrawPixel(canvas, x + i, y + j, col);
+		for (int j = 0; j < h; j++)
+			ChDrawPixel(canvas, x + i, y + j, col);
 }
 
 /*
@@ -59,28 +59,27 @@ void ChDrawRect(ChCanvas* canvas, unsigned x, unsigned y, unsigned w, unsigned h
  * @param clip -- Pointer to clip rect
  * @param col -- Color of the rectangle
  */
-void ChDrawRectClipped(ChCanvas* canv, unsigned x, unsigned y, unsigned w, unsigned h, ChRect* clip, uint32_t col) {
+void ChDrawRectClipped(
+	ChCanvas* canv, unsigned x, unsigned y, unsigned w, unsigned h, ChRect* clip, uint32_t col) {
 	int r_x = x;
 	int r_y = y;
 	int r_w = w;
 	int r_h = h;
-	
-	if (x >(clip->x + clip->w))
+
+	if (x > (clip->x + clip->w))
 		return;
 
 	if (y > (clip->y + clip->h))
 		return;
 
-	if (y <= clip->y){
+	if (y <= clip->y) {
 		int diffy = clip->y - r_y;
 		r_y = clip->y;
 		r_h -= diffy;
 	}
-	
 
 	if (x <= clip->x)
 		r_x = clip->x;
-	
 
 	if ((x + w) > (clip->x + clip->w))
 		r_w = (clip->x + clip->w) - x;
@@ -123,7 +122,8 @@ void ChDrawHorizontalLine(ChCanvas* canv, unsigned x, unsigned y, unsigned len, 
  * @param w -- Width of the rect
  * @param h -- Height of the rect
  */
-void ChDrawRectUnfilled(ChCanvas* canv, unsigned x, unsigned y, unsigned w, unsigned h, uint32_t color) {
+void ChDrawRectUnfilled(
+	ChCanvas* canv, unsigned x, unsigned y, unsigned w, unsigned h, uint32_t color) {
 	ChDrawHorizontalLine(canv, x, y, w, color);
 	ChDrawVerticalLine(canv, x, y + 1, h - 2, color);
 	ChDrawHorizontalLine(canv, x, y + h - 1, w, color);
@@ -140,13 +140,14 @@ void ChDrawRectUnfilled(ChCanvas* canv, unsigned x, unsigned y, unsigned w, unsi
 * @param clip -- Pointer to clip rect
 * @param col -- Color of the rectangle
 */
-void ChDrawRectUnfilledClipped(ChCanvas* canv, unsigned x, unsigned y, unsigned w, unsigned h, ChRect* clip, uint32_t col) {
+void ChDrawRectUnfilledClipped(
+	ChCanvas* canv, unsigned x, unsigned y, unsigned w, unsigned h, ChRect* clip, uint32_t col) {
 	int r_x = x;
 	int r_y = y;
 	int r_w = w;
 	int r_h = h;
 
-	if (x >(clip->x + clip->w))
+	if (x > (clip->x + clip->w))
 		return;
 
 	if (y > (clip->y + clip->h))
@@ -232,11 +233,10 @@ void ChDrawLine(ChCanvas* canv, int x1, int y1, int x2, int y2, uint32_t color) 
 			px += sdx;
 			ChDrawPixel(canv, px, py, color);
 		}
-	}
-	else {
+	} else {
 		for (int i = 0; i < dyabs; i++) {
 			x += dxabs;
-			if (x >= dyabs){
+			if (x >= dyabs) {
 				x -= dyabs;
 				px += sdx;
 			}
@@ -254,7 +254,7 @@ void ChDrawLine(ChCanvas* canv, int x1, int y1, int x2, int y2, uint32_t color) 
  * @param radius -- radius of the circle
  * @param color -- outline color
  */
-void ChDrawCircleUnfilled(ChCanvas * canvas, int x, int y, int radius, uint32_t color) {
+void ChDrawCircleUnfilled(ChCanvas* canvas, int x, int y, int radius, uint32_t color) {
 	int f = 1 - radius;
 	int ddF_x = 1;
 	int ddF_y = -2 * radius;
@@ -294,7 +294,7 @@ void ChDrawCircleUnfilled(ChCanvas * canvas, int x, int y, int radius, uint32_t 
  * @param radius -- radius of the circle
  * @param color -- color of the circle
  */
-void ChDrawFilledCircleAA(ChCanvas *canv, int cx, int cy, int radius, uint32_t color) {
+void ChDrawFilledCircleAA(ChCanvas* canv, int cx, int cy, int radius, uint32_t color) {
 	for (int y = -radius; y <= radius; y++) {
 		for (int x = -radius; x <= radius; x++) {
 			double dist = sqrt(x * x + y * y);
@@ -319,14 +319,13 @@ void ChDrawCapsule(ChCanvas* canv, int x, int y, int width, int height, uint32_t
 	int radius = height / 2;
 	for (int i = 0; i < width - (2 * radius); i++) {
 		for (int j = 0; j < height; j++) {
-			ChDrawPixel(canv,x + radius + i, y + j, color);
+			ChDrawPixel(canv, x + radius + i, y + j, color);
 		}
 	}
 
 	ChDrawFilledCircle(canv, x + radius, y + radius, radius, color);
 	ChDrawFilledCircle(canv, x + width - radius - 1, y + radius, radius, color);
 }
-
 
 /**
 * acrylic_box_blur -- Adds box blur filter to a given image using 3x3 matrix kernel
@@ -338,11 +337,10 @@ void ChDrawCapsule(ChCanvas* canv, int x, int y, int width, int height, uint32_t
 * @param w -- box boundary width
 * @param h -- box boundary height
 */
-void ChDrawBoxBlur(ChCanvas * canv, uint32_t* inputBuf, uint32_t* outputBuf, int cx, int cy, int w, int h) {
-
-	for (int j = 0; j < h; j++){
+void ChDrawBoxBlur(
+	ChCanvas* canv, uint32_t* inputBuf, uint32_t* outputBuf, int cx, int cy, int w, int h) {
+	for (int j = 0; j < h; j++) {
 		for (int i = 0; i < w; i++) {
-
 			int redTotal = 0;
 			int greenTotal = 0;
 			int blueTotal = 0;
@@ -353,8 +351,8 @@ void ChDrawBoxBlur(ChCanvas * canv, uint32_t* inputBuf, uint32_t* outputBuf, int
 					int currentX = cx + i + col;
 					int currentY = cy + j + row;
 
-					if (currentX >= 0 && currentX < canv->canvasWidth &&
-						currentY >= 0 && currentY < canv->canvasHeight) {
+					if (currentX >= 0 && currentX < canv->canvasWidth && currentY >= 0 &&
+						currentY < canv->canvasHeight) {
 						uint32_t color = inputBuf[(currentY * canv->canvasWidth + currentX)];
 
 						uint8_t red = GET_RED(color);
@@ -375,11 +373,8 @@ void ChDrawBoxBlur(ChCanvas * canv, uint32_t* inputBuf, uint32_t* outputBuf, int
 			uint8_t blue = blueTotal / 9;
 			uint8_t alpha = alphaTotal / 9;
 
-			outputBuf[(cy + j) * canv->canvasWidth + (cx + i)] = make_col_a(red, green, blue, alpha);
-			
+			outputBuf[(cy + j) * canv->canvasWidth + (cx + i)] =
+				make_col_a(red, green, blue, alpha);
 		}
 	}
 }
-
-
-

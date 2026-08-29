@@ -1,0 +1,67 @@
+---
+# XenevaOS code style (clang-format)
+#
+# The codebase is predominantly tab-indented (4-wide) with attached braces
+# and type-bound pointers (`void* p`), matching the MSVC heritage.
+# Applies to the C/C++ sources. Assembly (.s), large binary data tables
+# (font.h, arrayfont.h) and vendored third-party headers are left out of
+# clang-format runs. The vendored dlmalloc copies (Mm/dlmalloc.c,
+# XEClib/sys/_heap.cpp) are excluded too -- their macro-heavy layout defeats
+# clang-format and is not part of the hand-maintained sources.
+---
+BasedOnStyle: LLVM
+Language:        Cpp
+Standard:        c++17
+ColumnLimit:     100
+
+# Indentation: tabs (4-wide), matching the existing kernel/boot/apps style.
+IndentWidth:     4
+TabWidth:        4
+UseTab:          Always
+ContinuationIndentWidth: 4
+AccessModifierOffset: -4
+
+# Braces: attach (e.g. `void f() {`).
+BreakBeforeBraces: Attach
+
+# Pointers bound to the type, like `void* p`.
+PointerAlignment: Left
+DerivePointerAlignment: false
+
+# Alignment
+AlignAfterOpenBracket: Align
+AlignTrailingComments: true
+AlignConsecutiveAssignments: false
+AlignConsecutiveDeclarations: false
+AlignConsecutiveMacros: true
+
+# Line breaking
+AllowShortBlocksOnASingleLine: Empty
+AllowShortFunctionsOnASingleLine: Empty
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+AllowShortCaseLabelsOnASingleLine: false
+AllowShortLambdasOnASingleLine: Empty
+BinPackArguments: false
+BinPackParameters: false
+
+# Spacing
+SpaceAfterCStyleCast: false
+SpacesInCStyleCastParentheses: false
+SpaceBeforeParens: ControlStatements
+SpaceBeforeSquareBrackets: false
+SpaceAroundPointerQualifiers: Default
+SpacesInParentheses: false
+
+# Includes are kept exactly as written.
+IncludeBlocks: Preserve
+SortIncludes: false
+
+# Comments are preserved as-is (the codebase uses a hand-maintained block
+# comment style for license headers); only code structure is reformatted.
+ReflowComments: false
+
+# Misc
+NamespaceIndentation: None
+KeepEmptyLinesAtTheStartOfBlocks: false
+MaxEmptyLinesToKeep: 1

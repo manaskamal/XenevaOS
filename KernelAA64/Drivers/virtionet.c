@@ -29,7 +29,6 @@
 *
 **/
 
-
 #include <pcie.h>
 #include <Hal/AA64/aa64lowlevel.h>
 #include <Hal/AA64/gic.h>
@@ -41,10 +40,10 @@
 #include <Mm/vmmngr.h>
 #include <Hal/AA64/sched.h>
 
-#define VIRTIO_F_VERSION_1 (1ull << 32)
-#define RX_BUFFER_COUNT 8
-#define RX_BUFFER_SIZE 2048
-#define VIRTIO_PCI_CAP_ID 0x09
+#define VIRTIO_F_VERSION_1		  (1ull << 32)
+#define RX_BUFFER_COUNT			  8
+#define RX_BUFFER_SIZE			  2048
+#define VIRTIO_PCI_CAP_ID		  0x09
 #define VIRTIO_PCI_CAP_COMMON_CFG 1
 #define VIRTIO_PCI_CAP_DEVICE_CFG 4
 
@@ -100,7 +99,8 @@ void AuVirtioNetNotifyQueue(struct VirtioCommonCfg* cfg, uint16_t queueIdx) {
 	cfg->QueueSelect = queueIdx;
 	uint16_t notify_off = cfg->QueueNotifyOff;
 
-	volatile uint16_t* notifyAddr = (volatile uint16_t*)((uint64_t)notifyBase + notify_off * notifyOffMultiplier);
+	volatile uint16_t* notifyAddr =
+		(volatile uint16_t*)((uint64_t)notifyBase + notify_off * notifyOffMultiplier);
 	*notifyAddr = queueIdx;
 
 	isb_flush();
@@ -154,12 +154,13 @@ void AuVirtioNetRxinitialize(struct VirtioCommonCfg* common) {
 	dsb_ish();
 	uint16_t qsize = common->QueueSize;
 	UARTDebugOut("[aurora]: rx queue size : %d \r\n", qsize);
-	uint64_t queuePhys = (uint64_t)AuPmmngrAlloc();//AuPmmngrAllocBlocks(((sizeof(struct VirtioQueue) * queueSz)) / 0x1000);
+	uint64_t queuePhys = (uint64_t)
+		AuPmmngrAlloc(); //AuPmmngrAllocBlocks(((sizeof(struct VirtioQueue) * queueSz)) / 0x1000);
 	rxqueue = (struct VirtioQueue*)AuMapMMIO(queuePhys, 1);
 
 	common->QueueDesc = queuePhys;
-	common->QueueAvail = (queuePhys)+OFFSETOF(struct VirtioQueue, available);
-	common->QueueUsed = (queuePhys)+OFFSETOF(struct VirtioQueue, used);
+	common->QueueAvail = (queuePhys) + OFFSETOF(struct VirtioQueue, available);
+	common->QueueUsed = (queuePhys) + OFFSETOF(struct VirtioQueue, used);
 	common->MSix = 0;
 	common->QueueMSixVector = 0;
 	common->QueueEnable = 1;
@@ -191,11 +192,12 @@ void AuVirtioNetTxinitialize(struct VirtioCommonCfg* common) {
 	dsb_ish();
 	uint16_t qsize = common->QueueSize;
 	UARTDebugOut("[aurora]: tx queue size : %d \r\n", qsize);
-	uint64_t queuePhys = (uint64_t)AuPmmngrAlloc();//AuPmmngrAllocBlocks(((sizeof(struct VirtioQueue) * queueSz)) / 0x1000);
+	uint64_t queuePhys = (uint64_t)
+		AuPmmngrAlloc(); //AuPmmngrAllocBlocks(((sizeof(struct VirtioQueue) * queueSz)) / 0x1000);
 	txqueue = (struct VirtioQueue*)AuMapMMIO(queuePhys, 1);
 	common->QueueDesc = queuePhys;
-	common->QueueAvail = (queuePhys)+OFFSETOF(struct VirtioQueue, available);
-	common->QueueUsed = (queuePhys)+OFFSETOF(struct VirtioQueue, used);
+	common->QueueAvail = (queuePhys) + OFFSETOF(struct VirtioQueue, available);
+	common->QueueUsed = (queuePhys) + OFFSETOF(struct VirtioQueue, used);
 	common->MSix = 0;
 	common->QueueMSixVector = 0;
 	common->QueueEnable = 1;
@@ -229,7 +231,6 @@ void AuVirtioNetInitialize(uint64_t device) {
 	uint64_t bar = ((uint64_t)barHi << 32) | (barLo & ~0xFULL);
 	uint64_t finalAddr = (uint64_t)AuMapMMIO(bar, 16);
 
-
 	uint8_t cap_ptr = AuPCIERead(device, PCI_CAPABILITIES_PTR, bus, dev, func);
 	uint32_t devcfg_offset = 0;
 	while (cap_ptr != 0) {
@@ -244,7 +245,8 @@ void AuVirtioNetInitialize(uint64_t device) {
 				notifyBase = (volatile uint8_t*)(finalAddr + cap->offset);
 				struct virtio_notifier_cap* notify = (struct virtio_notifier_cap*)cap;
 				notifyOffMultiplier = notify->notifer_mult_base;
-				UARTDebugOut("[virtio-net]: notify base : %x , off : %x\n", notifyBase, cap->offset);
+				UARTDebugOut(
+					"[virtio-net]: notify base : %x , off : %x\n", notifyBase, cap->offset);
 				UARTDebugOut("notify_mult : %x, cap : %x \n", notifyOffMultiplier, cap);
 			}
 		}
@@ -255,7 +257,6 @@ void AuVirtioNetInitialize(uint64_t device) {
 	AuVirtioNetReset(common);
 
 	struct VirtioNetCfg* netcfg = (struct VirtioNetCfg*)(finalAddr + devcfg_offset);
-	
 
 	/* acknowledge */
 	common->DeviceStatus |= 0x01;
@@ -269,7 +270,7 @@ void AuVirtioNetInitialize(uint64_t device) {
 
 	/** feature negotiation **/
 	AuVirtioNetFeatureNegotiate(common);
-	
+
 	common->DeviceStatus |= 0x08;
 	isb_flush();
 	dsb_ish();

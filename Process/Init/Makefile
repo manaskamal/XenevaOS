@@ -1,19 +1,9 @@
-# XenevaOS init.exe Makefile (GCC Build)
+# XenevaOS init.exe Makefile (GCC/LLVM Build)
 
 TARGET = init.elf
 CROSS_COMPILE ?= aarch64-linux-gnu-
 
-CXX = $(CROSS_COMPILE)g++
-CC = $(CROSS_COMPILE)gcc
-LD = $(CROSS_COMPILE)ld
-OBJCOPY = $(CROSS_COMPILE)objcopy
-
 INCLUDES = -I../../Libs/XEClib/includes -I../../Libs/XEClib/includes/c++ -I../../BaseHdr
-CXXFLAGS = -Wall -Wextra -ffreestanding -fno-stack-protector -fno-stack-check -fno-strict-aliasing \
-           -O2 -fPIE \
-           -DARCH_ARM64 -D__TARGET_BOARD_QEMU_VIRT__ -D_USE_DLMALLOC -D__STDC_LIMIT_MACROS \
-           $(INCLUDES)
-
 OBJDIR = obj
 
 CPP_SRCS = _init.cpp splash.cpp
@@ -24,25 +14,71 @@ S_OBJS = $(patsubst %.s,$(OBJDIR)/%.o,$(S_SRCS))
 
 OBJS = $(CPP_OBJS) $(S_OBJS)
 
-.PHONY: all clean
+.PHONY: all clean llvm
+llvm:
+	@$(MAKE) TOOLCHAIN=llvm all
 
-all: init.exe
+ifeq ($(TOOLCHAIN), llvm)
+    CXX = clang++
+    CC = clang
+    LD = clang++
+    OBJCOPY = llvm-objcopy
+    LLVM_TARGET = -target aarch64-unknown-windows
 
-init.exe: $(TARGET)
-	@echo "Converting ELF to PE32+ (init.exe)..."
-	$(OBJCOPY) -O pei-aarch64-little $(TARGET) init.exe
+    CXXFLAGS = -Wall -Wextra -ffreestanding -fno-stack-protector -fno-stack-check -fno-strict-aliasing \
+               -O2 $(LLVM_TARGET) \
+               -DARCH_ARM64 -D__TARGET_BOARD_QEMU_VIRT__ -D_USE_DLMALLOC -D__STDC_LIMIT_MACROS \
+               -Wno-error=incompatible-pointer-types -Wno-error=int-conversion \
+               -Wno-implicit-function-declaration -Wno-c++11-narrowing \
+               $(INCLUDES)
 
-$(TARGET): $(OBJS)
-	@echo "Linking init.elf..."
-	$(LD) -nostdlib -T linker.ld $(OBJS) ../../Libs/XEClib/libXEClib.a -o $@
+    LDFLAGS = $(LLVM_TARGET) -fuse-ld=lld -nostdlib -Wl,-entry:_aumain -Wl,-base:0x600000000 -Wl,-subsystem:native
 
-$(OBJDIR)/%.o: %.cpp
+    all: init.exe
+
+    init.exe: $(OBJS)
+	@echo "Linking init.exe (LLVM)..."
+	$(LD) $(LDFLAGS) $(OBJS) ../../Libs/XEClib/libXEClib.a -o $@
+
+    $(OBJDIR)/%.o: %.cpp
 	@mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-$(OBJDIR)/%.o: %.s
+    $(OBJDIR)/%.o: %.s
 	@mkdir -p $(dir $@)
 	$(CC) $(CXXFLAGS) -c $< -o $@
 
-clean:
+    clean:
+	rm -rf $(OBJDIR) init.exe
+else
+    CXX = $(CROSS_COMPILE)g++
+    CC = $(CROSS_COMPILE)gcc
+    LD = $(CROSS_COMPILE)ld
+    OBJCOPY = $(CROSS_COMPILE)objcopy
+
+    CXXFLAGS = -Wall -Wextra -ffreestanding -fno-stack-protector -fno-stack-check -fno-strict-aliasing \
+               -O2 -fPIE \
+               -DARCH_ARM64 -D__TARGET_BOARD_QEMU_VIRT__ -D_USE_DLMALLOC -D__STDC_LIMIT_MACROS \
+               $(INCLUDES)
+
+    all: init.exe
+
+    init.exe: $(TARGET)
+	@echo "Converting ELF to PE32+ (init.exe)..."
+	$(OBJCOPY) -O pei-aarch64-little $(TARGET) init.exe
+
+    $(TARGET): $(OBJS)
+	@echo "Linking init.elf..."
+	$(LD) -nostdlib -T linker.ld $(OBJS) ../../Libs/XEClib/libXEClib.a -o $@
+
+    $(OBJDIR)/%.o: %.cpp
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+    $(OBJDIR)/%.o: %.s
+	@mkdir -p $(dir $@)
+	$(CC) $(CXXFLAGS) -c $< -o $@
+
+    clean:
 	rm -rf $(OBJDIR) $(TARGET) init.exe
+endif

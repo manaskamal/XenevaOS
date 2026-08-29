@@ -40,7 +40,7 @@
  * @brief ChCreateIcon -- create a blank icon slot
  * @return icon slot
  */
-XE_EXTERN XE_LIB ChIcon *ChCreateIcon(){
+XE_EXTERN XE_LIB ChIcon* ChCreateIcon() {
 	ChIcon* ico = (ChIcon*)malloc(sizeof(ChIcon));
 	memset(ico, 0, sizeof(ChIcon));
 	ico->image.fd = -1;
@@ -52,7 +52,7 @@ XE_EXTERN XE_LIB ChIcon *ChCreateIcon(){
  * @param ico -- pointer to icon file
  * @param filename -- icon file's path
  */
-XE_EXTERN XE_LIB void ChIconOpen(ChIcon* ico, char* filename){
+XE_EXTERN XE_LIB void ChIconOpen(ChIcon* ico, char* filename) {
 	int fd = _KeOpenFile(filename, FILE_OPEN_READ_ONLY);
 
 	if (fd == -1)
@@ -100,7 +100,7 @@ XE_EXTERN XE_LIB void ChIconRead(ChIcon* ico) {
 * @param x -- X coord
 * @param y -- Y coord
 */
-XE_EXTERN XE_LIB void ChDrawIcon(ChCanvas* canv, ChIcon* ico, int x, int y){
+XE_EXTERN XE_LIB void ChDrawIcon(ChCanvas* canv, ChIcon* ico, int x, int y) {
 	if (!ico)
 		return;
 
@@ -114,7 +114,7 @@ XE_EXTERN XE_LIB void ChDrawIcon(ChCanvas* canv, ChIcon* ico, int x, int y){
 	uint8_t* image = ico->image.data;
 	for (int i = 0; i < height; i++) {
 		char* image_row = ((char*)image + (static_cast<uint64_t>(height) - i - 1) *
-			(static_cast<uint64_t>(width) * 4));
+											  (static_cast<uint64_t>(width) * 4));
 		uint32_t h = height - 1 - i;
 		j = 0;
 		for (int k = 0; k < width; k++) {
@@ -137,7 +137,7 @@ XE_EXTERN XE_LIB void ChDrawIcon(ChCanvas* canv, ChIcon* ico, int x, int y){
 * @param y -- Y coord
 * @param limit -- Pointer to limit rect
 */
-XE_EXTERN XE_LIB void ChDrawIconClipped(ChCanvas* canv, ChIcon* ico, int x, int y, ChRect *limit){
+XE_EXTERN XE_LIB void ChDrawIconClipped(ChCanvas* canv, ChIcon* ico, int x, int y, ChRect* limit) {
 	if (!ico)
 		return;
 
@@ -155,8 +155,7 @@ XE_EXTERN XE_LIB void ChDrawIconClipped(ChCanvas* canv, ChIcon* ico, int x, int 
 	if (y > (limit->y + limit->h))
 		return;
 
-
-	if (y <= limit->y){
+	if (y <= limit->y) {
 		int diff = limit->y - y;
 		y = limit->y;
 		height -= diff;
@@ -180,8 +179,8 @@ XE_EXTERN XE_LIB void ChDrawIconClipped(ChCanvas* canv, ChIcon* ico, int x, int 
 
 	uint8_t* image = ico->image.data;
 	for (int i = 0; i < height; i++) {
-		char* image_row = (char*)image + (static_cast<uint64_t>(imageHeight) - i - 1) * (
-			static_cast<uint64_t>(width) * 4);
+		char* image_row = (char*)image + (static_cast<uint64_t>(imageHeight) - i - 1) *
+											 (static_cast<uint64_t>(width) * 4);
 		uint32_t h = imageHeight - 1 - i;
 		j = 0;
 		for (int k = 0; k < width; k++) {
@@ -221,7 +220,7 @@ void ChInitialiseDefaultIcons() {
  * icons
  * @param iconnum -- Icon code number
  */
-ChIcon* ChIconGetSystemIcon(uint8_t iconnum){
+ChIcon* ChIconGetSystemIcon(uint8_t iconnum) {
 	switch (iconnum) {
 	case CHITRALEKHA_ICON_WARNING:
 		return 0;

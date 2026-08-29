@@ -61,7 +61,6 @@ static inline int __bitmap_test(const uint8_t* bm, uint32_t bit) {
 	return (bm[bit / 8] >> (bit % 8)) & 1;
 }
 
-
 /**
  * @brief _dma_pool_add_page -- add a backing page to pool
  * @param pool -- pointer to dma pool
@@ -71,7 +70,7 @@ static AuDMAPage* _dma_pool_add_page(AuDMAPool* pool) {
 	if (!page)
 		return NULL;
 	memset(page, 0, sizeof(AuDMAPage));
-	
+
 	/**
 	 * design should be such that, allocate a physical page
 	 * map it to dma virtual address, with non cacheable bit
@@ -190,8 +189,8 @@ void* AuDMAPoolAlloc(AuDMAPool* pool, uint64_t* phys_out) {
 	int slot = -1;
 
 	while (page) {
-		if (page->in_use < page->slots) { 
-			slot = _dma_page_find_slot(page, pool); 
+		if (page->in_use < page->slots) {
+			slot = _dma_page_find_slot(page, pool);
 			if (slot >= 0)
 				break;
 		}
@@ -204,7 +203,7 @@ void* AuDMAPoolAlloc(AuDMAPool* pool, uint64_t* phys_out) {
 			return NULL;
 
 		slot = _dma_page_find_slot(page, pool);
-		if (slot < 0) 
+		if (slot < 0)
 			return NULL;
 	}
 
@@ -260,8 +259,6 @@ void AuDMAPoolFree(AuDMAPool* pool, void* virt, uint64_t phys) {
 	__bitmap_clear(page->bitmap, slot);
 	page->in_use--;
 	pool->total_frees++;
-
-	
 }
 
 /**
@@ -289,9 +286,7 @@ void AuDMAPoolDestroy(AuDMAPool* pool) {
 	kfree(pool);
 }
 
-static const size_t szClasses[DMA_NUM_CLASSES] = {
-	8,16,32,64,128,256,512
-};
+static const size_t szClasses[DMA_NUM_CLASSES] = {8, 16, 32, 64, 128, 256, 512};
 
 /**
  * @brief AuDMAGlobalClassInitialize -- initialize and populate global
@@ -335,7 +330,8 @@ static int _dma_gclass_find_class(AuDMAGlobalClass* gClass, size_t sz) {
 	size |= size >> 32;
 	size++;
 
-	if (size < 8) size = 8;
+	if (size < 8)
+		size = 8;
 
 	if (size > DMA_MAX_POOL_SIZE)
 		return -1;
@@ -368,7 +364,6 @@ void* AuDMAGClassAlloc(AuDMAGlobalClass* gClass, size_t sz, uint64_t* physOut) {
 	return AuDMAPoolAlloc(gClass->pools[idx], physOut);
 }
 
-
 /**
  * @brief AuDMAGClassFree -- free a memory and put it to gclass pool
  * @param gClass -- pointer to global class
@@ -377,7 +372,8 @@ void* AuDMAGClassAlloc(AuDMAGlobalClass* gClass, size_t sz, uint64_t* physOut) {
  * @param sz -- size of the allocated memory
  */
 void AuDMAGClassFree(AuDMAGlobalClass* gClass, void* virt, uint64_t physOut, size_t sz) {
-	if (!virt) return;
+	if (!virt)
+		return;
 
 	int idx = _dma_gclass_find_class(gClass, sz);
 
@@ -387,7 +383,6 @@ void AuDMAGClassFree(AuDMAGlobalClass* gClass, void* virt, uint64_t physOut, siz
 	}
 
 	AuDMAPoolFree(gClass->pools[idx], virt, physOut);
-	
 }
 
 /**

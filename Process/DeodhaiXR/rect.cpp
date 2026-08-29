@@ -44,7 +44,6 @@ int RectSetLeft(Rect* rect, int new_left) {
 	return rect->x;
 }
 
-
 /**
 * @breif RectSetRight -- sets a new right edge value to
 * the given rect
@@ -55,7 +54,6 @@ int RectSetRight(Rect* rect, int new_right) {
 	rect->w = new_right - rect->x;
 	return rect->x + rect->w;
 }
-
 
 /**
 * @brief RectSetTop -- set a new top edge value to the given

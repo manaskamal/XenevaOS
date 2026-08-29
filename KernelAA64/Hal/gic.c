@@ -29,7 +29,6 @@
 *
 **/
 
-
 #include <Hal/AA64/gic.h>
 #include <aucon.h>
 #include <Mm/vmmngr.h>
@@ -47,27 +46,26 @@ volatile uint32_t* gicc_regs;
 typedef void (*irq_callback)(int spi);
 
 /** distributor registers */
-#define GICD(n)  (n.gicDMMIO)
-#define GICD_CTLR    0x0000
-#define GICD_TYPER   0x0004
-#define GICD_IIDR    0x0008
-#define GICD_TYPER2  0x000C
-#define GICD_PIDR2  0xFFE8
-#define GICD_PIDR2_ARCHREV(x)  (((x) >> 4) & 0xF)
-#define GIC_VERSION_1 0x1
-#define GIC_VERSION_2 0x2
-#define GIC_VERSION_3  0x3
-#define GIC_VERSION_4 0x4
-#define GICD_ISENABLER(n) (*(volatile uint32_t*)(GICD(__gic) + 0x100 + 4*(n)))
-#define GICD_IPRIORITYR(n) (0x400 + (n))
-#define GICD_IGROUPR(n)  (*(volatile uint32_t*)(GICD(__gic) + 0x080 + 4*(n)))
-#define GICD_ICENABLE(n) (*(volatile uint32_t*)(GICD(__gic) + 0x180 + (n*4)))
-#define GICD_ICFGR(n) (*(volatile uint32_t*)(GICD(__gic) + 0x0C00 + (n*4)))
-#define GICD_ITARGETSR(n) (*(volatile uint32_t*)(GICD(__gic) + 0x0800 + (n*4)))
-#define GICD_IROUTER(n) (0x6000 + 8*(n))
-#define GICD_ICPENDR(n) (0x280 + (n/32)*4)
-#define ISPENDING0 0x200
-
+#define GICD(n)				  (n.gicDMMIO)
+#define GICD_CTLR			  0x0000
+#define GICD_TYPER			  0x0004
+#define GICD_IIDR			  0x0008
+#define GICD_TYPER2			  0x000C
+#define GICD_PIDR2			  0xFFE8
+#define GICD_PIDR2_ARCHREV(x) (((x) >> 4) & 0xF)
+#define GIC_VERSION_1		  0x1
+#define GIC_VERSION_2		  0x2
+#define GIC_VERSION_3		  0x3
+#define GIC_VERSION_4		  0x4
+#define GICD_ISENABLER(n)	  (*(volatile uint32_t*)(GICD(__gic) + 0x100 + 4 * (n)))
+#define GICD_IPRIORITYR(n)	  (0x400 + (n))
+#define GICD_IGROUPR(n)		  (*(volatile uint32_t*)(GICD(__gic) + 0x080 + 4 * (n)))
+#define GICD_ICENABLE(n)	  (*(volatile uint32_t*)(GICD(__gic) + 0x180 + (n * 4)))
+#define GICD_ICFGR(n)		  (*(volatile uint32_t*)(GICD(__gic) + 0x0C00 + (n * 4)))
+#define GICD_ITARGETSR(n)	  (*(volatile uint32_t*)(GICD(__gic) + 0x0800 + (n * 4)))
+#define GICD_IROUTER(n)		  (0x6000 + 8 * (n))
+#define GICD_ICPENDR(n)		  (0x280 + (n / 32) * 4)
+#define ISPENDING0			  0x200
 
 /** cpu registers offsets */
 #define GICC_CTLR  0x0000
@@ -78,30 +76,27 @@ typedef void (*irq_callback)(int spi);
 #define GICC_HPPIR 0x0018
 #define GICC_ABPR  0x001C
 #define GICC_IIDR  0x00FC
-#define GICC(n)  (n.gicCMMIO)
+#define GICC(n)	   (n.gicCMMIO)
 
-
-#define GICR_CTLR  0x0000
-#define GICR_IIDR  0x0004
-#define GICR_WAKER 0x0014
-#define GICR_TYPER 0x008
-#define GICR_STRIDE 0x20000UL
-#define GICR_IGROUPR0  0x10080
-#define GICR_ISENABLER0 0x10100
-#define GICR_ICENABLER0 0x10180
-#define GICR_IPRIORITYR(n) (0x10400 + (n)*4)
-#define GICR_SGI_BASE 0x10000
+#define GICR_CTLR		   0x0000
+#define GICR_IIDR		   0x0004
+#define GICR_WAKER		   0x0014
+#define GICR_TYPER		   0x008
+#define GICR_STRIDE		   0x20000UL
+#define GICR_IGROUPR0	   0x10080
+#define GICR_ISENABLER0	   0x10100
+#define GICR_ICENABLER0	   0x10180
+#define GICR_IPRIORITYR(n) (0x10400 + (n) * 4)
+#define GICR_SGI_BASE	   0x10000
 
 #define GICR_WAKER_PS (1u << 1)
 #define GICR_WAKER_CA (1u << 2)
 #define GICR_CTLR_RWP (1u << 3)
 
-
-#define GICR(n)  (n.gicRMMIO)
+#define GICR(n) (n.gicRMMIO)
 
 uint64_t* gic_dist_mmio;
 uint64_t* gic_redist_mmio;
-
 
 #define MAX_SPIS 1024
 
@@ -122,7 +117,7 @@ void gic_outqw(uint64_t* mmio_, int reg, uint64_t value) {
  * @param reg -- register
  * @param value -- value to write
  */
-void gic_outl_(uint64_t* mmio_,int reg, uint32_t value) {
+void gic_outl_(uint64_t* mmio_, int reg, uint32_t value) {
 	volatile uint32_t* mmio = (volatile uint32_t*)((uint64_t)mmio_ + reg);
 	*mmio = value;
 }
@@ -152,11 +147,10 @@ void gic_outw_(uint64_t* mmio_, int reg, uint16_t value) {
  * @param reg -- register
  * @return value read from the mmio address in WORD 
  */
-uint16_t gic_inw_(uint64_t* mmio_,int reg) {
+uint16_t gic_inw_(uint64_t* mmio_, int reg) {
 	volatile uint16_t* mmio = (volatile uint16_t*)(mmio_ + reg);
 	return *mmio;
 }
-
 
 /**
  * @brief gic_outb_ -- writes a value to mmio register in byte
@@ -164,7 +158,6 @@ uint16_t gic_inw_(uint64_t* mmio_,int reg) {
  * @param value -- value to write
  */
 void gic_outb_(uint64_t* mmio_, int reg, uint8_t value) {
-
 	volatile uint8_t* mmio = (volatile uint8_t*)((uint64_t)mmio_ + reg);
 	*mmio = value;
 }
@@ -229,15 +222,12 @@ void AuGICDeallocateSPI(int spiID) {
 	spiBitMap[index] = 0;
 }
 
-
-#define GICV2M_MSI_TYPER  0x008
+#define GICV2M_MSI_TYPER	 0x008
 #define GICV2M_MSI_SETSPI_NS 0x040
-#define GICV2M_MSI_IIDR  0xFCC
+#define GICV2M_MSI_IIDR		 0xFCC
 void GICv2MInitialize() {
 	uint32_t typer = *(volatile uint32_t*)__gic.gicMSIPhys;
-	
 }
-
 
 /**
  * @brief GICVerifyVersion -- getting the version detail
@@ -261,7 +251,6 @@ uint32_t GICVerifyVersion() {
 #endif
 }
 
-
 /**
  * @brief GICRInitialize -- initialize GIC redistributor
  * @param cpu_num -- desired cpu core number
@@ -277,16 +266,17 @@ void GICRInitialize(int cpu_num) {
 	uint32_t waker = gic_inl_(gicr, GICR_WAKER);
 	waker &= ~GICR_WAKER_PS;
 	gic_outl_(gicr, GICR_WAKER, waker);
-	while (gic_inl_(gicr, GICR_WAKER) & GICR_WAKER_CA);
+	while (gic_inl_(gicr, GICR_WAKER) & GICR_WAKER_CA)
+		;
 
 	gic_outl_(gicr, GICR_IGROUPR0, 0xFFFFFFFF);
 
 	gic_outl_(sgi, 0x0D00, 0x00000000);
 
-
 	gic_outl_(gicr, GICR_ICENABLER0, 0xFFFF0000);
-	
-	while (gic_inl_(gicr, GICR_CTLR) & GICR_CTLR_RWP);
+
+	while (gic_inl_(gicr, GICR_CTLR) & GICR_CTLR_RWP)
+		;
 
 	for (int i = 0; i < 8; i++)
 		gic_outl_(sgi, GICR_IPRIORITYR(i), 0xA0A0A0A0);
@@ -320,7 +310,6 @@ void GICInitialize() {
 	 * from LittleBoot 
 	 */
 	if (__gic.gicCPhys == 0 && __gic.gicDPhys == 0) {
-
 #ifdef __TARGET_BOARD_RPI3__
 		AuTextOut("[aurora]: Raspberry Pi 3b+ doesn't use traditional GIC \r\n");
 		/* Initialize BCM2836-ARMCTL-IC */
@@ -337,7 +326,6 @@ void GICInitialize() {
 				AuTextOut("Interrupt controller node not found on second fallback \r\n");
 				return;
 			}
-			
 		}
 
 		uint32_t* compat = AuDeviceTreeFindProperty(ic, "compatible");
@@ -359,17 +347,14 @@ void GICInitialize() {
 			AuTextOut("GICD : %x, GICC : %x \r\n", gicd, gicc);
 			AuTextOut("GIC Addrsz : %d, sizesz : %d \r\n", addrS, sizeS);
 
-
 			/**
 			 * @TODO : we need to rely on DTB, here we're doing it manually according
 			 * to SOC_TARGET build
 			 */
-			__gic.gicDPhys = GIC_DIST;// gicd;
+			__gic.gicDPhys = GIC_DIST; // gicd;
 			__gic.gicCPhys = gicc;
 			__gic.gicRPhys = GIC_REDIST;
 		}
-
-
 	}
 skip_:
 
@@ -409,7 +394,7 @@ skip_:
 	uint32_t icc_iidr = gic_inl_(GICD(__gic), GICD_IIDR);
 	uint32_t imp = (icc_iidr & 0xFFF);
 	uint32_t rev = (icc_iidr >> 16) & 0xFF;
-	
+
 	for (int i = 0; i < (numirq / 32); i++)
 		GICD_ICENABLE(i) = 0xFFFFFFFF;
 
@@ -430,8 +415,7 @@ skip_:
 	/* enable the distributor interface */
 	if (__gic.version >= GIC_VERSION_3) {
 		gic_outl_((uint64_t*)__gic.gicDMMIO, GICD_CTLR, (1u << 5) | (1u << 1));
-	}
-	else {
+	} else {
 		gic_outl_((uint64_t*)__gic.gicDMMIO, GICD_CTLR, 0x3);
 		isb_flush();
 	}
@@ -447,7 +431,6 @@ skip_:
 
 	AuTextOut("GIC Initialized \r\n");
 }
-
 
 void GICREnablePPI(uint32_t cpu, uint32_t intid) {
 	size_t sgi = GICR(__gic) + (cpu * GICR_STRIDE) + GICR_SGI_BASE;
@@ -474,8 +457,7 @@ void GICEnableIRQ(uint32_t irq) {
 			GICREnablePPI(0, irq);
 			GICRSetPPIPriority(0, irq, 0xA0);
 		}
-	}
-	else {
+	} else {
 		uint32_t reg = irq / 32;
 		uint32_t bit = irq % 32;
 		//GICClearPendingIRQ(irq);
@@ -484,11 +466,9 @@ void GICEnableIRQ(uint32_t irq) {
 		uint32_t config_bits = (icfgr >> shift) & 0b11;
 		if (config_bits == 0b00) {
 			UARTDebugOut("IRQ : %d is level-sensitive \r\n", irq);
-		}
-		else if (config_bits == 0b10) {
+		} else if (config_bits == 0b10) {
 			UARTDebugOut("IRQ : %d is edge-trigggered \r\n", irq);
-		}
-		else {
+		} else {
 			UARTDebugOut("IRQ: %d is reserved or invalid config : %x \r\n", irq, config_bits);
 		}
 		//GICD_IGROUPR(reg) |= (1u << bit);
@@ -519,16 +499,13 @@ void GICIsIRQEdgeTriggered(uint32_t irq) {
 	uint32_t config_bits = (icfgr >> shift) & 0b11;
 	if (config_bits == 0b00) {
 		UARTDebugOut("IRQ : %d is level-sensitive \r\n", irq);
-	}
-	else if (config_bits == 0b10) {
+	} else if (config_bits == 0b10) {
 		UARTDebugOut("IRQ : %d is edge-trigggered \r\n", irq);
-	}
-	else {
+	} else {
 		UARTDebugOut("IRQ: %d is reserved or invalid config : %x \r\n", irq, config_bits);
 	}
 	UARTDebugOut("ICFGR : %x \r\n", icfgr);
 }
-
 
 /** @brief GICEnableIRQ -- enable an IRQ
  * @param irq -- IRQ number
@@ -539,9 +516,7 @@ void GICEnableSPIIRQ(uint32_t irq) {
 		gic_outl_(GICD(__gic), 0x6000 + irq * 8, 0ULL);
 		GICREnablePPI(0, irq);
 		GICRSetPPIPriority(0, irq, 0xA0);
-	}
-	else {
-
+	} else {
 		uint32_t reg = irq / 32;
 		uint32_t bit = irq % 32;
 		//GICClearPendingIRQ(irq);
@@ -559,7 +534,6 @@ void GICEnableSPIIRQ(uint32_t irq) {
 		*(volatile uint8_t*)(GICD(__gic) + GICD_IPRIORITYR(irq)) = 0x80;
 		GICD_ISENABLER(reg) |= (1u << bit);
 	}
-
 }
 
 void GICSetTargetCPU(int spi) {
@@ -601,7 +575,7 @@ uint32_t GICReadIAR() {
 	if (__gic.version >= GIC_VERSION_3)
 		iar = gic_read_intid();
 	else
-	    iar = *(volatile uint32_t*)(GICC(__gic) + 0x0C);
+		iar = *(volatile uint32_t*)(GICC(__gic) + 0x0C);
 	return iar;
 }
 
@@ -617,7 +591,7 @@ void GICSendEOI(uint32_t irqnum) {
 #define GICV2_CPUID_SHIFT 10
 		//UARTDebugOut("GICEOI REG : %x \n", (GICC(__gic) + 0x10));
 		//GICClearPendingIRQ(irqnum);
-		* (volatile uint32_t*)(GICC(__gic) + 0x10) = irqnum;
+		*(volatile uint32_t*)(GICC(__gic) + 0x10) = irqnum;
 		//UARTDebugOut("3N : %d \n", (*(volatile uint32_t*)(GICC(__gic) + 0x10)));
 		dsb_ish();
 		isb_flush();
@@ -659,12 +633,11 @@ void GICRegisterSPIHandler(void* fptr, int spi) {
  * @param spi -- SPI number
  */
 void GICCallSPIHandler(int spi) {
-	if (!callbacks[spi]) 
+	if (!callbacks[spi])
 		return;
 	irq_callback call = callbacks[spi];
 	call(spi);
 }
-
 
 /**
  * @brief GICDisable -- disable the GIC 
@@ -684,4 +657,3 @@ void GICDisable() {
 	}
 	UARTDebugOut("[aurora]: GIC disabled \r\n");
 }
-

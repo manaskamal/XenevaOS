@@ -37,8 +37,8 @@
 #include <Drivers/uart.h>
 #include <stdbool.h>
 
-#define LOG_BUFFER_SIZE (128*1024)
-#define LOG_LINE_MAX    256
+#define LOG_BUFFER_SIZE (128 * 1024)
+#define LOG_LINE_MAX	256
 
 typedef struct _blog_ring_ {
 	char buffer[LOG_BUFFER_SIZE];
@@ -47,32 +47,19 @@ typedef struct _blog_ring_ {
 	uint32_t len;
 	uint64_t seq;
 	//lock
-}BLogRing;
+} BLogRing;
 
-static  bool _Blog_use_uart;
+static bool _Blog_use_uart;
 
 /** level tags */
 static const char* level_tag[BORDOISILA_DEBUG_LEVEL_COUNT] = {
-	"EMERG",
-	"ERROR",
-	"WARN",
-	"INFO",
-	"DEBUG"
-};
-
+	"EMERG", "ERROR", "WARN", "INFO", "DEBUG"};
 
 static const uint32_t level_col[BORDOISILA_DEBUG_LEVEL_COUNT] = {
-	0xFFFF3B30,
-	0xFFD9534F,
-	0xFFFFC107,
-	0xFFE6E6E6,
-	0xFF888888
-};
-
+	0xFFFF3B30, 0xFFD9534F, 0xFFFFC107, 0xFFE6E6E6, 0xFF888888};
 
 static BLogRing _log_ring;
 BLogLevel _log_console_level = BORDOISILA_DEBUG;
-
 
 /**
  * @brief B_KLogInit -- initialize bordoisila
@@ -98,8 +85,7 @@ static void _BLog_Write_Locked(const char* data, uint32_t n) {
 
 		if (_log_ring.len < LOG_BUFFER_SIZE) {
 			_log_ring.len++;
-		}
-		else {
+		} else {
 			_log_ring.tail = (_log_ring.tail + 1) % LOG_BUFFER_SIZE;
 		}
 	}
@@ -113,8 +99,9 @@ static void _BlogRingWrite(const char* data, uint32_t n) {
 	//spin unlock
 }
 
-void  BlogDump(BLogSinkFunc sink, void* ctx) {
-	if (!sink) return;
+void BlogDump(BLogSinkFunc sink, void* ctx) {
+	if (!sink)
+		return;
 
 	//lock
 
@@ -127,7 +114,7 @@ void  BlogDump(BLogSinkFunc sink, void* ctx) {
 	while (left > 0) {
 		uint32_t chunk = left < sizeof(snapshot) ? left : sizeof(snapshot);
 
-		//lock 
+		//lock
 		for (uint32_t i = 0; i < chunk; i++) {
 			snapshot[i] = _log_ring.buffer[(pos + i) % LOG_BUFFER_SIZE];
 		}
@@ -169,7 +156,6 @@ void BPrintK(BLogLevel level, const char* fmt, ...) {
 
 	char line[LOG_LINE_MAX];
 
-
 	uint64_t sec;
 	uint32_t usec;
 
@@ -178,20 +164,21 @@ void BPrintK(BLogLevel level, const char* fmt, ...) {
 
 	_blog_get_uptime(&sec, &usec);
 
-	int prefix_len = _snprintf(line, sizeof(line), "[%d.%d] [%s] ",
-		(unsigned long long)sec, usec, level_tag[level]);
+	int prefix_len = _snprintf(
+		line, sizeof(line), "[%d.%d] [%s] ", (unsigned long long)sec, usec, level_tag[level]);
 
-	if (prefix_len < 0) prefix_len = 0;
-	
-	if ((uint32_t)prefix_len >= sizeof(line)) prefix_len = sizeof(line) - 1;
+	if (prefix_len < 0)
+		prefix_len = 0;
 
-
+	if ((uint32_t)prefix_len >= sizeof(line))
+		prefix_len = sizeof(line) - 1;
 
 	va_list args = (va_list)buffer;
 	int body_len = _vsnprintf(line + prefix_len, sizeof(line) - prefix_len, fmt, args);
 	va_end(args);
 
-	if (body_len < 0) body_len = 0;
+	if (body_len < 0)
+		body_len = 0;
 	int total = prefix_len + body_len;
 	if (total >= (int)sizeof(line)) {
 		total = sizeof(line) - 1;

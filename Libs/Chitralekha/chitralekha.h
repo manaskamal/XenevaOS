@@ -33,12 +33,9 @@
 #include <stdint.h>
 #include <_xeneva.h>
 
-
 #ifdef __cplusplus
-XE_EXTERN{
+XE_EXTERN {
 #endif
-
-
 
 	typedef struct _ChCanvas_ {
 		int graphics_fd;
@@ -50,10 +47,9 @@ XE_EXTERN{
 		uint32_t canvasWidth;
 		uint32_t canvasHeight;
 		uint32_t* buffer;
-		size_t   bufferSz;
+		size_t bufferSz;
 		uint32_t* framebuff;
-	}ChCanvas;
-
+	} ChCanvas;
 
 	XE_LIB int ChPrintLibName();
 
@@ -68,14 +64,14 @@ XE_EXTERN{
 	* ChAllocateBuffer -- allocates buffers for graphics
 	* @param canvas -- Pointer to canvas
 	*/
-	XE_LIB int ChAllocateBuffer(ChCanvas* canvas);
+	XE_LIB int ChAllocateBuffer(ChCanvas * canvas);
 
 	/*
 	* ChDeAllocateBuffer -- de-allocates buffers from
 	* canvas
 	* @param canvas -- pointer to canvas structure
 	*/
-	XE_LIB int ChDeAllocateBuffer(ChCanvas* canvas);
+	XE_LIB int ChDeAllocateBuffer(ChCanvas * canvas);
 
 	/*
 	* ChCanvasScreenUpdate -- updates screen buffer with canvas buffer
@@ -86,7 +82,7 @@ XE_EXTERN{
 	* @param w -- width of the canvas
 	* @param h -- height of the canvas
 	*/
-	XE_LIB void ChCanvasScreenUpdate(ChCanvas* canvas, int x, int y, int w, int h);
+	XE_LIB void ChCanvasScreenUpdate(ChCanvas * canvas, int x, int y, int w, int h);
 
 	/*
 	* ChDrawPixel -- draws a pixel to canvas buffer
@@ -95,7 +91,7 @@ XE_EXTERN{
 	* @param y -- y position
 	* @param color -- color of the pixel
 	*/
-	XE_LIB void ChDrawPixel(ChCanvas* canvas, int x, int y, uint32_t color);
+	XE_LIB void ChDrawPixel(ChCanvas * canvas, int x, int y, uint32_t color);
 
 	/*
      * ChDrawPixelRAW -- draws a pixel to canvas buffer
@@ -104,7 +100,7 @@ XE_EXTERN{
      * @param y -- y position
      * @param color -- color of the pixel
      */
-	XE_LIB void ChDrawPixelRAW(ChCanvas* canvas, int x, int y, uint32_t color);
+	XE_LIB void ChDrawPixelRAW(ChCanvas * canvas, int x, int y, uint32_t color);
 
 	/*
      * ChDrawPixelAA -- draw anti-aliased pixel
@@ -114,7 +110,7 @@ XE_EXTERN{
      * @param color -- Color of the pixel
      * @param alpha -- Alpha value
      */
-	XE_LIB void ChDrawPixelAA(ChCanvas* canv, int x, int y, uint32_t color, double alpha);
+	XE_LIB void ChDrawPixelAA(ChCanvas * canv, int x, int y, uint32_t color, double alpha);
 
 	/*
 	* ChGetPixel -- retuns a pixel from canvas
@@ -122,7 +118,7 @@ XE_EXTERN{
 	* @param x -- x position
 	* @param y -- y position
 	*/
-	XE_LIB uint32_t ChGetPixel(ChCanvas* canvas, int x, int y);
+	XE_LIB uint32_t ChGetPixel(ChCanvas * canvas, int x, int y);
 
 	/*
 	* ChCanvasFill -- fill the canvas with specific color
@@ -131,28 +127,28 @@ XE_EXTERN{
 	* @param h -- height to fill
 	* @param color -- color to be filled with
 	*/
-	XE_LIB void ChCanvasFill(ChCanvas* canvas, int w, int h, uint32_t color);
+	XE_LIB void ChCanvasFill(ChCanvas * canvas, int w, int h, uint32_t color);
 
 	/*
 	* ChGetScreenDiagonal -- get screen diagonal using
 	* pythagorean theorem in centimetre
 	* @param canv -- Pointer to canvas
 	*/
-	XE_LIB float ChGetScreenDiagonal(ChCanvas* canv);
+	XE_LIB float ChGetScreenDiagonal(ChCanvas * canv);
 
 	/*
 	* ChGetScreenDPI -- converts screen resolution into
 	* dot-per-inch in centimetre
 	* @param canv -- Pointer to canvas
 	*/
-	XE_LIB float ChGetScreenDPI(ChCanvas* canv);
+	XE_LIB float ChGetScreenDPI(ChCanvas * canv);
 
 	/*
 	* ChGetScreenAspectRatio -- returns the aspect ration of the
 	* screen
 	* @param canv -- Pointer to canvas
 	*/
-	XE_LIB int ChGetScreenAspectRatio(ChCanvas* canv);
+	XE_LIB int ChGetScreenAspectRatio(ChCanvas * canv);
 
 #ifdef __cplusplus
 }

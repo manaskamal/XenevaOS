@@ -36,12 +36,12 @@
 #include <Mm/vmmngr.h>
 #include <Mm/pmmngr.h>
 
-#define FDT_MAGIC  0xd00dfeed
+#define FDT_MAGIC	   0xd00dfeed
 #define FDT_BEGIN_NODE 0x1
 #define FDT_END_NODE   0x2
-#define FDT_PROP       0x3
-#define FDT_NOP        0x4
-#define FDT_END        0x9
+#define FDT_PROP	   0x3
+#define FDT_NOP		   0x4
+#define FDT_END		   0x9
 
 uint64_t* dtbAddress;
 
@@ -70,8 +70,8 @@ uint64_t AuDTBSwap64(uint64_t from) {
 	uint8_t f = from >> 16;
 	uint8_t g = from >> 8;
 	uint8_t h = from;
-	return ((uint64_t)h << 56) | ((uint64_t)g << 48) | ((uint64_t)f << 40) |
-		((uint64_t)e << 32) | ((uint64_t)d << 24) | ((uint64_t)c << 16) | ((uint64_t)b << 8) | a;
+	return ((uint64_t)h << 56) | ((uint64_t)g << 48) | ((uint64_t)f << 40) | ((uint64_t)e << 32) |
+		   ((uint64_t)d << 24) | ((uint64_t)c << 16) | ((uint64_t)b << 8) | a;
 }
 
 /**
@@ -84,11 +84,17 @@ uint16_t AuDTBSwap16(uint16_t from) {
 	return (b << 8) | a;
 }
 
-uint32_t* AuDeviceTreeGetSubNode(uint32_t* node, char* strings, const char* name, uint32_t** node_out,
-	int (*cmp)(const char* a, const char* b)) {
-	while (AuDTBSwap32(*node) == 4)node++;
-	if (AuDTBSwap32(*node) == 9) return NULL;
-	if (AuDTBSwap32(*node) != 1) return NULL;
+uint32_t* AuDeviceTreeGetSubNode(uint32_t* node,
+								 char* strings,
+								 const char* name,
+								 uint32_t** node_out,
+								 int (*cmp)(const char* a, const char* b)) {
+	while (AuDTBSwap32(*node) == 4)
+		node++;
+	if (AuDTBSwap32(*node) == 9)
+		return NULL;
+	if (AuDTBSwap32(*node) != 1)
+		return NULL;
 	node++;
 
 	char* nodename = (char*)node;
@@ -97,31 +103,39 @@ uint32_t* AuDeviceTreeGetSubNode(uint32_t* node, char* strings, const char* name
 		return NULL;
 	}
 
-	while ((*node & 0xFF000000) && (*node & 0xFF0000) && (*node & 0xFF00) && (*node & 0xFF))node++;
+	while ((*node & 0xFF000000) && (*node & 0xFF0000) && (*node & 0xFF00) && (*node & 0xFF))
+		node++;
 	node++;
 	while (1) {
-		while (AuDTBSwap32(*node) == 4) node++;
-		if (AuDTBSwap32(*node) == 2) return node + 1;
+		while (AuDTBSwap32(*node) == 4)
+			node++;
+		if (AuDTBSwap32(*node) == 2)
+			return node + 1;
 		if (AuDTBSwap32(*node) == 3) {
 			uint32_t len = AuDTBSwap32(node[1]);
 			node += 3;
 			node += (len + 3) / 4;
-		}
-		else if (AuDTBSwap32(*node) == 1) {
+		} else if (AuDTBSwap32(*node) == 1) {
 			node = AuDeviceTreeGetSubNode(node, strings, name, node_out, cmp);
-			if (!node) return NULL;
+			if (!node)
+				return NULL;
 		}
 	}
 }
 
-uint32_t* AuDeviceTreeFindPropertyInternal(uint32_t* node, char* strings, const char* property,
-	uint32_t** out) {
-	while ((*node & 0xFF000000) && (*node & 0xFF0000) && (*node & 0xFF00) && (*node & 0xFF))node++;
+uint32_t* AuDeviceTreeFindPropertyInternal(uint32_t* node,
+										   char* strings,
+										   const char* property,
+										   uint32_t** out) {
+	while ((*node & 0xFF000000) && (*node & 0xFF0000) && (*node & 0xFF00) && (*node & 0xFF))
+		node++;
 	node++;
 
 	while (1) {
-		while (AuDTBSwap32(*node) == 4) node++;
-		if (AuDTBSwap32(*node) == 2) return node + 1;
+		while (AuDTBSwap32(*node) == 4)
+			node++;
+		if (AuDTBSwap32(*node) == 2)
+			return node + 1;
 		if (AuDTBSwap32(*node) == 3) {
 			uint32_t len = AuDTBSwap32(node[1]);
 			uint32_t nameoff = AuDTBSwap32(node[2]);
@@ -132,10 +146,10 @@ uint32_t* AuDeviceTreeFindPropertyInternal(uint32_t* node, char* strings, const 
 			node += 3;
 			node += (len + 3) / 4;
 
-		}
-		else if (AuDTBSwap32(*node) == 1) {
+		} else if (AuDTBSwap32(*node) == 1) {
 			node = AuDeviceTreeFindPropertyInternal(node + 1, strings, property, out);
-			if (!node) return NULL;
+			if (!node)
+				return NULL;
 		}
 	}
 }
@@ -158,7 +172,6 @@ uint32_t* AuDeviceTreeGetNode(const char* name) {
 	AuDeviceTreeGetSubNode(dtb_struct, dtb_strings, name, &out, prefix_cmp);
 	return out;
 }
-
 
 /**
  * @brief AuDeviceTreeFindProperty -- searches for a property within a node
@@ -191,8 +204,6 @@ uint32_t AuDeviceTreeGetAddressCells(uint32_t* node) {
 	return 0;
 }
 
-
-
 /**
  * @brief AuDeviceTreeGetSizeCells -- get the value from size cells
  * property
@@ -210,10 +221,8 @@ uint32_t AuDeviceTreeGetSizeCells(uint32_t* node) {
 }
 
 static inline uint32_t _swap32(uint32_t x) {
-	return ((x & 0x000000FFU) << 24) |
-		((x & 0x0000FF00U) << 8) |
-		((x & 0x00FF0000U) >> 8) |
-		((x & 0xFF000000U) >> 24);
+	return ((x & 0x000000FFU) << 24) | ((x & 0x0000FF00U) << 8) | ((x & 0x00FF0000U) >> 8) |
+		   ((x & 0xFF000000U) >> 24);
 }
 /**
  * @brief AuDeviceTreeGetRegAddress -- get the MMIO address from reg property
@@ -226,7 +235,7 @@ uint64_t AuDeviceTreeGetRegAddress(uint32_t* node, uint32_t addressCell) {
 		uint64_t addr = 0;
 		for (int i = 0; i < addressCell; i++) {
 			addr <<= 32;
-			addr |= AuDTBSwap32(reg[i+2]);
+			addr |= AuDTBSwap32(reg[i + 2]);
 		}
 		return addr;
 	}
@@ -255,7 +264,8 @@ uint64_t AuDeviceTreeGetRegSize(uint32_t* node, uint32_t addressCell, uint32_t s
 uint32_t* AuDeviceTreeGetPropCells(uint32_t* node, const char* property, uint32_t* out_num_cells) {
 	uint32_t* prop = AuDeviceTreeFindProperty(node, property);
 	if (!prop) {
-		*out_num_cells = 0; return NULL;
+		*out_num_cells = 0;
+		return NULL;
 	}
 	uint32_t len_bytes = AuDTBSwap32(prop[0]);
 	*out_num_cells = len_bytes / 4;
@@ -263,9 +273,11 @@ uint32_t* AuDeviceTreeGetPropCells(uint32_t* node, const char* property, uint32_
 }
 
 uint32_t AuDeviceTreeGetU32Property(uint32_t* node, const char* property, uint32_t default_val) {
-	if (!node) return default_val;
+	if (!node)
+		return default_val;
 	uint32_t* prop = AuDeviceTreeFindProperty(node, property);
-	if (!prop) return default_val;
+	if (!prop)
+		return default_val;
 	return AuDTBSwap32(prop[2]);
 }
 
@@ -275,14 +287,13 @@ uint32_t AuDeviceTreeGetU32Property(uint32_t* node, const char* property, uint32
  * bootloader
  */
 void AuDeviceTreeInitialize(KERNEL_BOOT_INFO* info) {
-	void* fdt_address = NULL; 
+	void* fdt_address = NULL;
 	if (info->boot_type == BOOT_LITTLEBOOT_ARM64) {
 		AuLittleBootProtocol* lb = (AuLittleBootProtocol*)info->driver_entry1;
 		if (!lb)
 			return;
 		fdt_address = (void*)lb->device_tree_base;
-	}
-	else if (info->boot_type == BOOT_UEFI_ARM64) {
+	} else if (info->boot_type == BOOT_UEFI_ARM64) {
 		fdt_address = info->apcode;
 	}
 
@@ -310,9 +321,8 @@ void AuDeviceTreeMapMMIO() {
 	int pageCount = AuDTBSwap32(fdt->totalSize) / 0x1000;
 	void* mmio = (void*)P2V((uint64_t)dtbAddress); //AuMapMMIO((uint64_t)dtbAddress, pageCount);
 	dtbAddress = mmio;
-	AuTextOut("[aurora]: Device tree mmio %x mapped with page count : %d \r\n",mmio, pageCount);
+	AuTextOut("[aurora]: Device tree mmio %x mapped with page count : %d \r\n", mmio, pageCount);
 }
-
 
 uint32_t* dump_recursive_(uint32_t* node, int depth);
 
@@ -322,32 +332,37 @@ void AuDeviceTreeDumpAll() {
 	dump_recursive_(node, 0);
 }
 
-uint32_t* dump_recursive_(uint32_t* node, int depth){
-	while (AuDTBSwap32(*node) == 4) node++;
-	if (AuDTBSwap32(*node) != 1) return node;
+uint32_t* dump_recursive_(uint32_t* node, int depth) {
+	while (AuDTBSwap32(*node) == 4)
+		node++;
+	if (AuDTBSwap32(*node) != 1)
+		return node;
 	node++;
 
 	char* name = (char*)node;
-	for (int i = 0; i < depth; i++) AuTextOut(" ");
+	for (int i = 0; i < depth; i++)
+		AuTextOut(" ");
 	AuTextOut("[aurora]: node: \%s \r\n", name);
 
-	while ((*node & 0xFF000000) && (*node & 0xFF0000) && (*node & 0xFF00) && (*node & 0xFF)) node++;
+	while ((*node & 0xFF000000) && (*node & 0xFF0000) && (*node & 0xFF00) && (*node & 0xFF))
+		node++;
 	node++;
 
 	while (1) {
-		while (AuDTBSwap32(*node) == 4)node++;
+		while (AuDTBSwap32(*node) == 4)
+			node++;
 		uint32_t tag = AuDTBSwap32(*node);
-		if (tag == 2) return node + 1;
-		if (tag == 9) return node;
+		if (tag == 2)
+			return node + 1;
+		if (tag == 9)
+			return node;
 		if (tag == 3) {
 			uint32_t len = AuDTBSwap32(node[1]);
 			node += 3;
 			node += (len + 3) / 4;
-		}
-		else if (tag == 1) {
+		} else if (tag == 1) {
 			node = dump_recursive_(node, depth + 1);
-		}
-		else {
+		} else {
 			AuTextOut("[aurora]: UNKNOWN TAG %x at node %x - DESYNC \r\n", tag, (void*)node);
 			return node;
 		}
@@ -364,22 +379,24 @@ void AuDeviceTreeDumpAllProps(const char* node_name) {
 	fdt_header_t* fdt = (fdt_header_t*)dtbAddress;
 	char* strings = (char*)((uint64_t)dtbAddress + AuDTBSwap32(fdt->off_dt_strings));
 
-	while ((*node & 0xFF000000) && (*node & 0xFF0000) && (*node & 0xFF00) && (*node & 0xFF)) node++;
+	while ((*node & 0xFF000000) && (*node & 0xFF0000) && (*node & 0xFF00) && (*node & 0xFF))
+		node++;
 	node++;
 
 	AuTextOut("[aurora]: properties of \%s: \r\n", node_name);
 	while (1) {
-		while (AuDTBSwap32(*node) == 4) node++;
+		while (AuDTBSwap32(*node) == 4)
+			node++;
 		uint32_t tag = AuDTBSwap32(*node);
-		if (tag == 2 || tag == 9)break;
+		if (tag == 2 || tag == 9)
+			break;
 		if (tag == 3) {
 			uint32_t len = AuDTBSwap32(node[1]);
 			uint32_t nameoff = AuDTBSwap32(node[2]);
 			AuTextOut("[aurora]:  \%s\" (len=%d)\r\n", strings + nameoff, len);
 			node += 3;
 			node += (len + 3) / 4;
-		}
-		else {
+		} else {
 			break;
 		}
 	}

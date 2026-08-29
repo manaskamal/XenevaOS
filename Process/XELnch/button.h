@@ -45,7 +45,7 @@ typedef struct _ButtonIcon_ {
 	uint8_t* imageData;
 	uint32_t fileSize;
 	int usageCount;
-}ButtonIcon;
+} ButtonIcon;
 
 typedef struct _button_ {
 	int x;
@@ -65,12 +65,12 @@ typedef struct _button_ {
 	int scratch_x;
 	int scratch_y;
 	int page_number;
-	ButtonIcon *buttonIcon;
-	void(*actionHandler)(_button_* button, ChWindow*);
-	void(*mouseEvent)(_button_* button, ChWindow* win, int x, int y, int but);
-	void(*drawLaunchButton)(_button_* button, ChWindow* win);
-	void(*destroy)(_button_* button, ChWindow* win);
-}LaunchButton;
+	ButtonIcon* buttonIcon;
+	void (*actionHandler)(_button_* button, ChWindow*);
+	void (*mouseEvent)(_button_* button, ChWindow* win, int x, int y, int but);
+	void (*drawLaunchButton)(_button_* button, ChWindow* win);
+	void (*destroy)(_button_* button, ChWindow* win);
+} LaunchButton;
 
 /*
 * CreateLaunchButton -- creates a new launch button
@@ -82,7 +82,7 @@ typedef struct _button_ {
 * @param appname -- name of the application associated with this
 * button
 */
-LaunchButton *CreateLaunchButton(int x, int y, int w, int h, char* title, char* appname);
+LaunchButton* CreateLaunchButton(int x, int y, int w, int h, char* title, char* appname);
 
 ButtonIcon* CreateLaunchButtonIcon(char* iconfile, LaunchButton* button);
 

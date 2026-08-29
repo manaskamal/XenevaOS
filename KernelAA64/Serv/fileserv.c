@@ -75,9 +75,9 @@ int OpenFile(char* filename, int mode) {
 		if (!file)
 			return -1;
 		AuTextOut("[aurora]: file : %s is not accessible to this user with uid : %d \r\n",
-			file->filename, current_proc->creds.uid);
-		if (!(file->flags & FS_FLAG_CACHED) ||
-			!(file->flags & FS_FLAG_DEVICE) ||
+				  file->filename,
+				  current_proc->creds.uid);
+		if (!(file->flags & FS_FLAG_CACHED) || !(file->flags & FS_FLAG_DEVICE) ||
 			!(file->flags & FS_FLAG_FILE_SYSTEM))
 			kfree(file);
 		return -1;
@@ -87,8 +87,7 @@ int OpenFile(char* filename, int mode) {
 		if (mode & FILE_OPEN_CREAT || mode & FILE_OPEN_WRITE) {
 			file = AuVFSCreateFile(fsys, filename);
 			created = true;
-		}
-		else
+		} else
 			return -1;
 	}
 	/* check for last time, if any error occured */
@@ -117,15 +116,13 @@ int OpenFile(char* filename, int mode) {
 		rights |= CAP_READ;
 
 	if (rights & CAP_READ)
-		BPrintK(BORDOISILA_WARN, "Creating rights has read %s, %d, fname: %s\r\n", current_proc->name, fd, filename);
+		BPrintK(BORDOISILA_WARN,
+				"Creating rights has read %s, %d, fname: %s\r\n",
+				current_proc->name,
+				fd,
+				filename);
 
-	BordoisilaCapCreate(
-		current_proc,
-		fd,
-		file,
-		CAP_OBJ_FILE,
-		rights);
-
+	BordoisilaCapCreate(current_proc, fd, file, CAP_OBJ_FILE, rights);
 
 	//_setdebug = 1;
 	return fd;
@@ -157,15 +154,15 @@ int FileSetOffset(int fd, size_t offset) {
 	AuVFSNode* file = current_proc->fds[fd];
 	if (!file)
 		return -1;
-	if (!((file->flags & FS_FLAG_FILE_SYSTEM) || (file->flags & FS_FLAG_DEVICE) || (file->flags & FS_FLAG_PIPE)
-		|| (file->flags & FS_FLAG_DIRECTORY) || (file->flags & FS_FLAG_TTY))) {
+	if (!((file->flags & FS_FLAG_FILE_SYSTEM) || (file->flags & FS_FLAG_DEVICE) ||
+		  (file->flags & FS_FLAG_PIPE) || (file->flags & FS_FLAG_DIRECTORY) ||
+		  (file->flags & FS_FLAG_TTY))) {
 		AuVFSNode* fsys = AuVFSFind("/");
 		if (!fsys)
 			return -1;
 		size_t block = AuVFSGetBlockFor(fsys, file, offset);
 		file->current = block;
-	}
-	else
+	} else
 		file->pos = offset;
 
 	return 0;
@@ -195,10 +192,10 @@ size_t ReadFile(int fd, void* buffer, size_t length) {
 		if (!current_proc)
 			return 0;
 	}
-	
+
 	AuVFSNode* file = current_proc->fds[fd];
 	uint64_t* aligned_buffer = (uint64_t*)buffer;
-	
+
 	//SeTextOut("Reading from file -> %d -> %x \r\n", fd, file);
 	if (!file) {
 		return 0;
@@ -257,12 +254,12 @@ size_t WriteFile(int fd, void* buffer, size_t length) {
 		if (!current_proc)
 			return 0;
 	}
-	
+
 	AuVFSNode* file = current_proc->fds[fd];
 	uint8_t* aligned_buffer = (uint8_t*)buffer;
 	if (!file)
 		return 0;
-	
+
 	if (!BordoisilaCapCheckRights(current_proc, fd, CAP_WRITE)) {
 		return 0;
 	}
@@ -337,7 +334,6 @@ int CloseFile(int fd) {
 		return 0;
 	}
 
-
 	if (file->flags & FS_FLAG_DIRECTORY) {
 		current_proc->fds[fd] = 0;
 		BordoisilaCapDestroy(current_proc, fd);
@@ -352,9 +348,7 @@ int CloseFile(int fd) {
 		BordoisilaCapDestroy(current_proc, fd);
 		return 0;
 	}
-
 }
-
 
 /**
  * @brief FileIoControl -- controls the file through I/O code
@@ -421,7 +415,6 @@ int FileStat(int fd, void* buf) {
 	status->group_id = 0;
 	return 0;
 }
-
 
 /**
  * @brief OpenDir -- opens a directory

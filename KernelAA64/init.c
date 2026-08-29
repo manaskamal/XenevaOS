@@ -69,12 +69,10 @@
 #include <Fs/Fat/Fat.h>
 #include <Fs/Fat/FatFile.h>
 #include <Fs/Fat/FatDir.h>
-#include <linux/bitops.h>
 #include <Log/klog.h>
 
 extern int _fltused = 1;
 static bool _littleboot_used;
-
 
 /**
  * @brief LBUartPutc -- put a character to UART
@@ -82,7 +80,8 @@ static bool _littleboot_used;
  */
 void AuUartPutc(char c) {
 	char* uart0 = (char*)UART0;
-	while ((*(uart0 + 0x18) & (1 << 5)));
+	while ((*(uart0 + 0x18) & (1 << 5)))
+		;
 	*uart0 = c;
 }
 
@@ -96,14 +95,12 @@ void AuUartPutString(const char* s) {
 		AuUartPutc(*s++);
 }
 
-
-
 /**
  * @brief AuLittleBootUsed -- check if little boot protocol
  * is used
  */
 bool AuLittleBootUsed() {
-    return _littleboot_used;
+	return _littleboot_used;
 }
 
 int i_ = 1;
@@ -165,7 +162,6 @@ KERNEL_BOOT_INFO* AuGetBootInfoStruc() {
 	return bootinfo;
 }
 
-
 extern void debugLIBOn();
 extern void* dlmalloc(size_t sz);
 extern void dlfree(void* p);
@@ -178,18 +174,18 @@ void _AuroraTimerCallback(void* p) {
 	UARTDebugOut("from inside timer++ \r\n");
 }
 
-
 /**
  * @brief _AuMain -- the main entry point for kernel
  * @param info -- Kernel Boot information passed
  * by bootloader
  **/
 void _AuMain(KERNEL_BOOT_INFO* info) {
-    _littleboot_used = false;
-    if (info->boot_type == BOOT_LITTLEBOOT_ARM64) {
-        AuUartPutString("[aurora]:Kernel is booted using LittleBoot ARM64 \r\n");
-        _littleboot_used = true;
-    }
+	_littleboot_used = false;
+	AuUartPutString("[aurora]: kernel entry reached \r\n");
+	if (info->boot_type == BOOT_LITTLEBOOT_ARM64) {
+		AuUartPutString("[aurora]:Kernel is booted using LittleBoot ARM64 \r\n");
+		_littleboot_used = true;
+	}
 
 	bootinfo = info;
 
@@ -199,7 +195,7 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 
 	AuConsoleInitialize(info, true);
 	B_KLogInit();
-    AuDeviceTreeInitialize(info);
+	AuDeviceTreeInitialize(info);
 	AA64CpuInitialize();
 	mask_irqs();
 	AuTextOut("[aurora]: CPU initialized \r\n");
@@ -214,7 +210,6 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	AuInitrdInitialize(info);
 	AuConsolePostInitialise(info);
 	//AuConsoleBypassAuTextOut();
-	
 
 	AuroraTimerInitialize();
 
@@ -269,13 +264,16 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	/* initialize the deodhai's communication protocol */
 	AuIPCPostBoxInitialise();
 
-	
 #ifdef __TARGET_BOARD_IMX8MP_VERDIN_DAHLIA__
-	AuTextOut("[aurora]: Board model : Toradex imx8M Plus Verdin Dahlia (Xeneva Build %s - %s)\r\n", __DATE__, __TIME__);
+	AuTextOut("[aurora]: Board model : Toradex imx8M Plus Verdin Dahlia (Xeneva Build %s - %s)\r\n",
+			  __DATE__,
+			  __TIME__);
 #elif __TARGET_BOARD_RPI3__
-	AuTextOut("[aurora]: Board Model : Raspberry Pi 3B+ (Xeneva Build %s - %s)\r\n", __DATE__, __TIME__);
+	AuTextOut(
+		"[aurora]: Board Model : Raspberry Pi 3B+ (Xeneva Build %s - %s)\r\n", __DATE__, __TIME__);
 #elif __TARGET_BOARD_QEMU_VIRT__
-	UARTDebugOut("[aurora]: Board Model : QEMU Virt Machine (Xeneva Build %s - %s)\r\n", __DATE__, __TIME__);
+	UARTDebugOut(
+		"[aurora]: Board Model : QEMU Virt Machine (Xeneva Build %s - %s)\r\n", __DATE__, __TIME__);
 #endif
 	UARTDebugOut("[aurora]: starting xeneva (ARM64) please wait...\r\n");
 
@@ -300,7 +298,7 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	CRED_SET_CAP_ROOT(proc);
 	CRED_MARK_ROOT(proc);
 	AuLoadExecToProcess(proc, "/init.exe", num_args, argvs);
-	
+
 #ifdef __KERNEL_PROFILER_ON__
 	PROFILE_END("_AuMain");
 #endif

@@ -36,24 +36,24 @@
 #include <widgets/list.h>
 #include "deodhai.h"
 
-#define WINDOW_FLAG_MOVABLE (1<<0)
-#define WINDOW_FLAG_STATIC  (1<<1)
-#define WINDOW_FLAG_ALWAYS_ON_TOP  (1<<2)
-#define WINDOW_FLAG_NON_RESIZABLE  (1<<3)
-#define WINDOW_FLAG_BROADCAST_LISTENER (1<<4)
-#define WINDOW_FLAG_ANIMATED (1<<5)
-#define WINDOW_FLAG_BLOCKED (1<<6)
-#define WINDOW_FLAG_MESSAGEBOX (1<<7)
-#define WINDOW_FLAG_DIALOGBOX (1<<8)
-#define WINDOW_FLAG_ANIMATION_FADE_IN (1<<9)
-#define WINDOW_FLAG_ANIMATION_FADE_OUT (1<<10)
-#define WINDOW_FLAG_POPUP (1<<11)
+#define WINDOW_FLAG_MOVABLE			   (1 << 0)
+#define WINDOW_FLAG_STATIC			   (1 << 1)
+#define WINDOW_FLAG_ALWAYS_ON_TOP	   (1 << 2)
+#define WINDOW_FLAG_NON_RESIZABLE	   (1 << 3)
+#define WINDOW_FLAG_BROADCAST_LISTENER (1 << 4)
+#define WINDOW_FLAG_ANIMATED		   (1 << 5)
+#define WINDOW_FLAG_BLOCKED			   (1 << 6)
+#define WINDOW_FLAG_MESSAGEBOX		   (1 << 7)
+#define WINDOW_FLAG_DIALOGBOX		   (1 << 8)
+#define WINDOW_FLAG_ANIMATION_FADE_IN  (1 << 9)
+#define WINDOW_FLAG_ANIMATION_FADE_OUT (1 << 10)
+#define WINDOW_FLAG_POPUP			   (1 << 11)
 
 #ifdef SHADOW_ENABLED
-#define SHADOW_SIZE 11
+#define SHADOW_SIZE	 11
 #define SHADOW_COLOR 0xFF827474
 #else
-#define SHADOW_SIZE 0 //11
+#define SHADOW_SIZE	 0 //11
 #define SHADOW_COLOR 0
 #endif
 
@@ -71,7 +71,7 @@ typedef struct _win_info_ {
 	bool hide;
 	double alphaValue;
 	bool windowReady;
-}WinSharedInfo;
+} WinSharedInfo;
 //#pragma pack(pop)
 
 typedef struct _win_ {
@@ -90,22 +90,21 @@ typedef struct _win_ {
 	bool markForClose;
 	uint8_t animFrameCount;
 	int animAlphaVal;
-	bool animdirection; 
+	bool animdirection;
 	char* title;
 	struct _win_* firstPopupWin;
 	struct _win_* lastPopupWin;
 	struct _win_* parent;
-	_win_ * next;
-	_win_ * prev;
-}Window;
-
+	_win_* next;
+	_win_* prev;
+} Window;
 
 /**
 * @brief CreateSharedWinSpace -- Create a shared window space
 * @param shkey -- location where to store the window key
 * @param ownerId -- owning process id
 */
-extern uint32_t* CreateSharedWinSpace(uint16_t *shkey, uint16_t ownerId);
+extern uint32_t* CreateSharedWinSpace(uint16_t* shkey, uint16_t ownerId);
 
 /**
 * @brief CreateNewBackBuffer --Create a back buffer window
@@ -113,7 +112,7 @@ extern uint32_t* CreateSharedWinSpace(uint16_t *shkey, uint16_t ownerId);
 * @param sz -- Size of the buffer
 * @param key -- location where to store the buffer key
 */
-extern void* CreateNewBackBuffer(uint16_t ownerId, uint32_t sz, uint16_t *key);
+extern void* CreateNewBackBuffer(uint16_t ownerId, uint32_t sz, uint16_t* key);
 /**
 * @brief CreateWindow -- create a new window
 * @param x -- X position of the window
@@ -124,5 +123,6 @@ extern void* CreateNewBackBuffer(uint16_t ownerId, uint32_t sz, uint16_t *key);
 * @param ownerId -- process owner id of the window
 * @param title -- title of the window
 */
-extern Window* CreateWindow(int x, int y, int w, int h, uint16_t flags, uint16_t ownerId, char* title);
+extern Window*
+CreateWindow(int x, int y, int w, int h, uint16_t flags, uint16_t ownerId, char* title);
 #endif

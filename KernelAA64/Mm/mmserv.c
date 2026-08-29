@@ -43,7 +43,7 @@
  *  Shared Memory
  * ============================================================
  */
- /**
+/**
   * @brief CreateSharedMem -- create a shared memory chunk
   * @param key -- key to use
   * @param sz -- memory size
@@ -89,7 +89,7 @@ void* ObtainSharedMem(uint16_t id, void* shmaddr, int shmflg) {
  */
 void UnmapSharedMem(uint16_t key) {
 	AA64Thread* thr = AuGetCurrentThread();
-	if (!thr)  //some serious memory problem
+	if (!thr) //some serious memory problem
 		return;
 	AuProcess* proc = AuProcessFindThread(thr);
 	if (!proc) {
@@ -99,7 +99,6 @@ void UnmapSharedMem(uint16_t key) {
 	}
 	AuSHMUnmap(key, proc);
 }
-
 
 /**
  * @brief GetProcessHeapMem -- get a memory from
@@ -125,11 +124,11 @@ uint64_t GetProcessHeapMem(size_t sz) {
 
 	if (sz < 0)
 		UARTDebugOut("[GetProcessHeapMem]: dlmalloc is asking to free up pages \r\n");
-	
+
 	uint64_t start_addr = (uint64_t)AuGetFreePage(false, (void*)proc->proc_mem_heap);
 	for (int i = 0; i < sz / PAGE_SIZE; i++) {
 		uint64_t phys = (uint64_t)AuPmmngrAlloc();
-		if (!AuMapPage(phys, start_addr + i * PAGE_SIZE,PTE_AP_RW_USER | PTE_NORMAL_MEM)) {
+		if (!AuMapPage(phys, start_addr + i * PAGE_SIZE, PTE_AP_RW_USER | PTE_NORMAL_MEM)) {
 			UARTDebugOut("already present %x \r\n", (start_addr + i * 0x1000));
 			AuPmmngrFree((void*)phys);
 		}
@@ -170,7 +169,8 @@ int ProcessHeapUnmap(void* ptr, size_t sz) {
 	}
 	uint64_t start_addr = (uint64_t)ptr;
 	for (int i = 0; i < sz / PAGE_SIZE; i++) {
-		AuVPage* page_ = AuVmmngrGetPage(start_addr + i * PAGE_SIZE, VIRT_GETPAGE_ONLY_RET, VIRT_GETPAGE_ONLY_RET);
+		AuVPage* page_ = AuVmmngrGetPage(
+			start_addr + i * PAGE_SIZE, VIRT_GETPAGE_ONLY_RET, VIRT_GETPAGE_ONLY_RET);
 		if (page_) {
 			uint64_t phys_page = page_->bits.page << PAGE_SHIFT;
 			//UARTDebugOut("Unmap phys page : %x \n", phys_page);
@@ -182,10 +182,8 @@ int ProcessHeapUnmap(void* ptr, size_t sz) {
 				page_->bits.page = 0;
 				isb_flush();
 				/* flush all PTE entries in TLB*/
-				
 			}
 		}
-	
 	}
 
 	tlb_flush_vmalle1is();

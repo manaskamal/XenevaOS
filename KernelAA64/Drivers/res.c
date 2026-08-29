@@ -38,7 +38,6 @@
 
 BordoisilaDriverResource* _gres;
 
-
 /**
  * @brief BordoisilaDriverResourceRegister -- register a resource driver
  * @param res_ -- pointer to resource driver struct

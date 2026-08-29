@@ -65,7 +65,7 @@ size_t h_res, v_res;
 BOOL early_;
 bool bypass_autextout;
 
-void(*_print_func) (const char* text, ...);
+void (*_print_func)(const char* text, ...);
 
 #define CONSOLE_BACKGROUND 0x00000000
 #define CONSOLE_FOREGROUND 0xFFFFFFFF
@@ -147,12 +147,12 @@ int AuConsoleIoControl(AuVFSNode* file, int code, void* arg) {
 			if (!proc)
 				break;
 		}
-		uint64_t vmaddr= (uint64_t)AuGetFreePage(1, NULL);
+		uint64_t vmaddr = (uint64_t)AuGetFreePage(1, NULL);
 		uint64_t fbaddr = (uint64_t)__framebuffer;
 		for (int i = 0; i < aucon->size / PAGE_SIZE; i++) {
 			AuMapPage((uint64_t)fbaddr + (i * PAGE_SIZE),
-				vmaddr + (i * PAGE_SIZE), PTE_NORMAL_NON_CACHEABLE | PTE_AP_RW_USER);
-
+					  vmaddr + (i * PAGE_SIZE),
+					  PTE_NORMAL_NON_CACHEABLE | PTE_AP_RW_USER);
 		}
 		//uint64_t buffaddr = (uint64_t)aucon->buffer;
 		ioctl->ulong_1 = vmaddr;
@@ -163,11 +163,9 @@ int AuConsoleIoControl(AuVFSNode* file, int code, void* arg) {
 		return 1;
 		break;
 	}
-
 	}
 	return ret;
 }
-
 
 /**
  * @brief AuConsolePostInitialise -- initialise the post console process
@@ -181,7 +179,8 @@ void AuConsolePostInitialise(PKERNEL_BOOT_INFO info) {
 	//	info->graphics_framebuffer =
 	//}
 	if (!info->graphics_framebuffer) {
-		AuTextOut("[aurora]: tur luck nai, framebuffer daalu napali, iss iss beya lagi jai deii \r\n");
+		AuTextOut(
+			"[aurora]: tur luck nai, framebuffer daalu napali, iss iss beya lagi jai deii \r\n");
 		AuTextOut("[aurora]: return marisu deii, byee byee \r\n");
 		return;
 	}
@@ -190,10 +189,12 @@ void AuConsolePostInitialise(PKERNEL_BOOT_INFO info) {
 	size_t fb_sz = (info->fb_size + PAGE_SIZE - 1) / PAGE_SIZE;
 	for (int i = 0; i < fb_sz; i++)
 		AuMapPage((uint64_t)info->graphics_framebuffer + (i * PAGE_SIZE),
-			0xFFFFD00000200000 +  (i * 4096), PTE_NORMAL_NON_CACHEABLE);
+				  0xFFFFD00000200000 + (i * 4096),
+				  PTE_NORMAL_NON_CACHEABLE);
 
 	AuTextOut("[aucon]: graphics framebuffer : %x \r\n", info->graphics_framebuffer);
-	AuTextOut("[aucon]: width : %d px , height : %d px \r\n", info->X_Resolution, info->Y_Resolution);
+	AuTextOut(
+		"[aucon]: width : %d px , height : %d px \r\n", info->X_Resolution, info->Y_Resolution);
 	early_ = false;
 	aucon->buffer = (uint32_t*)0xFFFFD00000200000;
 	aucon->width = info->X_Resolution;
@@ -214,7 +215,8 @@ void AuConsolePostInitialise(PKERNEL_BOOT_INFO info) {
 	redmask = info->redmask;
 	greenmask = info->greenmask;
 	bluemask = info->bluemask;
-	h_res = info->X_Resolution; v_res = info->Y_Resolution;
+	h_res = info->X_Resolution;
+	v_res = info->Y_Resolution;
 	for (int w = 0; w < info->X_Resolution; w++) {
 		for (int h = 0; h < info->Y_Resolution; h++) {
 			aucon->buffer[h * info->X_Resolution + w] = CONSOLE_BACKGROUND;
@@ -233,9 +235,7 @@ void AuConsolePostInitialise(PKERNEL_BOOT_INFO info) {
 	file->write = 0;
 	file->iocontrol = AuConsoleIoControl;
 	AuDevFSAddFile(fsys, "/", file);
-
 }
-
 
 int_fast8_t high_set_bit(size_t sz) {
 	int_fast8_t count = -1;
@@ -257,17 +257,13 @@ int_fast8_t low_set_bit(size_t sz) {
 	return count;
 }
 
-#define RGB(r, g, b) \
-	         ((r & 0xFF) | ((g << 8)&0xFF00) | ((b << 16)&0xFF0000))
+#define RGB(r, g, b) ((r & 0xFF) | ((g << 8) & 0xFF00) | ((b << 16) & 0xFF0000))
 
-#define RED(col)\
-	         (col & 0xFF)
+#define RED(col) (col & 0xFF)
 
-#define GREEN(col)\
-	((col>>8) & 0xFF)
+#define GREEN(col) ((col >> 8) & 0xFF)
 
-#define BLUE(col) \
-	((col>>16) & 0xFF)
+#define BLUE(col) ((col >> 16) & 0xFF)
 
 /**
  * @brief AuPutPixel -- puts a pixel on the screen
@@ -276,7 +272,6 @@ int_fast8_t low_set_bit(size_t sz) {
  * @param col -- color of the pixel
  */
 void AuPutPixel(size_t x, size_t y, uint32_t col) {
-
 	uint32_t* framebuffer = aucon->buffer;
 	uint32_t bpp = aucon->bpp;
 	uint32_t pixelPerLine = aucon->scanline;
@@ -315,8 +310,7 @@ void AuPutC(char c) {
 			const bx_fontcharbitmap_t entry = bx_vgafont[c];
 			if (entry.data[y] & (1 << x)) {
 				AuPutPixel(x + console_x * 9, y + console_y * 16, CONSOLE_FOREGROUND);
-			}
-			else {
+			} else {
 				AuPutPixel(x + console_x * 9, y + console_y * 16, CONSOLE_BACKGROUND);
 			}
 		}
@@ -326,8 +320,7 @@ void AuPutC(char c) {
 	console_x++;
 
 	uint32_t* lfb = aucon->buffer;
-	if (console_y + 1 > v_res / 16)
-	{
+	if (console_y + 1 > v_res / 16) {
 		for (int i = 0; i < (v_res - 16) * h_res; i++)
 			lfb[i] = lfb[i + h_res * 16];
 		for (int i = (v_res - 16) * h_res; i < v_res * h_res; i++)
@@ -338,9 +331,7 @@ void AuPutC(char c) {
 		memset(lfb + h_res * (v_res - 16), 0, h_res * 16 * sizeof(uint32_t));
 		console_y--;
 	}
-
 }
-
 
 /**
  * @brief Prints string to console output
@@ -354,34 +345,25 @@ void AuPutS(char* str) {
 			_print_func(str);
 		return;
 	}
-	
+
 	uint32_t* lfb = aucon->buffer;
 	while (*str) {
-
 		if (*str > 0xFF) {
 			//unicode
-		}
-		else if (*str == '\n') {
+		} else if (*str == '\n') {
 			++console_y;
 			console_x = 0;
-		}
-		else if (*str == '\r') {
-		}
-		else if (*str == '\b') {
+		} else if (*str == '\r') {
+		} else if (*str == '\b') {
 			if (console_x > 0)
 				--console_x;
-		}
-		else {
-
+		} else {
 			const bx_fontcharbitmap_t entry = bx_vgafont[*str];
 			for (size_t y = 0; y < 16; ++y) {
-
 				for (size_t x = 0; x < 8; ++x) {
-
 					if (entry.data[y] & (1 << x)) {
 						AuPutPixel(x + console_x * 9, y + console_y * 16, CONSOLE_FOREGROUND);
-					}
-					else {
+					} else {
 						AuPutPixel(x + console_x * 9, y + console_y * 16, CONSOLE_BACKGROUND);
 					}
 				}
@@ -397,10 +379,8 @@ void AuPutS(char* str) {
 		++str;
 	}
 
-
 	/* Scroll */
-	if (console_y + 1 > v_res / 16)
-	{
+	if (console_y + 1 > v_res / 16) {
 		for (int i = 0; i < (v_res - 16) * h_res; i++)
 			lfb[i] = lfb[i + h_res * 16];
 		for (int i = (v_res - 16) * h_res; i < v_res * h_res; i++)
@@ -429,31 +409,22 @@ void AuPutS_Color(char* str, uint32_t color) {
 
 	uint32_t* lfb = aucon->buffer;
 	while (*str) {
-
 		if (*str > 0xFF) {
 			//unicode
-		}
-		else if (*str == '\n') {
+		} else if (*str == '\n') {
 			++console_y;
 			console_x = 0;
-		}
-		else if (*str == '\r') {
-		}
-		else if (*str == '\b') {
+		} else if (*str == '\r') {
+		} else if (*str == '\b') {
 			if (console_x > 0)
 				--console_x;
-		}
-		else {
-
+		} else {
 			const bx_fontcharbitmap_t entry = bx_vgafont[*str];
 			for (size_t y = 0; y < 16; ++y) {
-
 				for (size_t x = 0; x < 8; ++x) {
-
 					if (entry.data[y] & (1 << x)) {
 						AuPutPixel(x + console_x * 9, y + console_y * 16, color);
-					}
-					else {
+					} else {
 						AuPutPixel(x + console_x * 9, y + console_y * 16, CONSOLE_BACKGROUND);
 					}
 				}
@@ -469,10 +440,8 @@ void AuPutS_Color(char* str, uint32_t color) {
 		++str;
 	}
 
-
 	/* Scroll */
-	if (console_y + 1 > v_res / 16)
-	{
+	if (console_y + 1 > v_res / 16) {
 		for (int i = 0; i < (v_res - 16) * h_res; i++)
 			lfb[i] = lfb[i + h_res * 16];
 		for (int i = (v_res - 16) * h_res; i < v_res * h_res; i++)
@@ -506,18 +475,13 @@ void AuTextOut(const char* format, ...) {
 
 	va_list args = (va_list)buffer;
 #endif
-	while (*format)
-	{
-		if (*format == '%')
-		{
+	while (*format) {
+		if (*format == '%') {
 			++format;
-			if (*format == 'd')
-			{
+			if (*format == 'd') {
 				size_t width = 0;
-				if (format[1] == '.')
-				{
-					for (size_t i = 2; format[i] >= '0' && format[i] <= '9'; ++i)
-					{
+				if (format[1] == '.') {
+					for (size_t i = 2; format[i] >= '0' && format[i] <= '9'; ++i) {
 						width *= 10;
 						width += format[i] - '0';
 					}
@@ -529,64 +493,50 @@ void AuTextOut(const char* format, ...) {
 					AuPutS("-");
 					i = ((int)i * -1);
 					sztoa(i, buffer, 10);
-				}
-				else {
+				} else {
 					sztoa(i, buffer, 10);
 					size_t len = strlen(buffer);
 				}
 				/*	while (len++ < width)
 				puts("0");*/
 				AuPutS(buffer);
-			}
-			else if (*format == 'c')
-			{
+			} else if (*format == 'c') {
 				int c = va_arg(args, int);
 				//char buffer[sizeof(size_t) * 8 + 1];
 				//sztoa(c, buffer, 10);
 				//puts(buffer);
 				AuPutC(c);
-			}
-			else if (*format == 'x')
-			{
+			} else if (*format == 'x') {
 				size_t x = va_arg(args, size_t);
 				char buffer[sizeof(size_t) * 8 + 1];
 				sztoa(x, buffer, 16);
 				//puts("0x");
 				AuPutS(buffer);
-			}
-			else if (*format == 's')
-			{
+			} else if (*format == 's') {
 				char* x = va_arg(args, char*);
 				AuPutS(x);
-			}
-			else if (*format == 'f')
-			{
+			} else if (*format == 'f') {
 				double x = va_arg(args, double);
 				AuPutS(ftoa(x, 2));
-			}
-			else if (*format == '%')
-			{
+			} else if (*format == '%') {
 				AuPutS(".");
-			}
-			else
-			{
+			} else {
 				char buf[3];
-				buf[0] = '%'; buf[1] = *format; buf[2] = '\0';
+				buf[0] = '%';
+				buf[1] = *format;
+				buf[2] = '\0';
 				AuPutS(buf);
 			}
-		}
-		else
-		{
+		} else {
 			char buf[2];
-			buf[0] = *format; buf[1] = '\0';
+			buf[0] = *format;
+			buf[1] = '\0';
 			AuPutS(buf);
 		}
 		++format;
 	}
 	va_end(args);
-
 }
-
 
 /**
  * @brief AuTextOut -- standard text printing function
@@ -601,18 +551,13 @@ void AuTextOutpro_Call(const char* format, void* reg_save_area, void* entry_sp) 
 	va_list args = ((va_list)reg_save_area + 8);
 #define AU_VA_ARG(type) va_arg(args, type)
 #endif
-	while (*format)
-	{
-		if (*format == '%')
-		{
+	while (*format) {
+		if (*format == '%') {
 			++format;
-			if (*format == 'd')
-			{
+			if (*format == 'd') {
 				size_t width = 0;
-				if (format[1] == '.')
-				{
-					for (size_t i = 2; format[i] >= '0' && format[i] <= '9'; ++i)
-					{
+				if (format[1] == '.') {
+					for (size_t i = 2; format[i] >= '0' && format[i] <= '9'; ++i) {
 						width *= 10;
 						width += format[i] - '0';
 					}
@@ -624,56 +569,44 @@ void AuTextOutpro_Call(const char* format, void* reg_save_area, void* entry_sp) 
 					AuPutS("-");
 					i = ((int)i * -1);
 					sztoa(i, buffer, 10);
-				}
-				else {
+				} else {
 					sztoa(i, buffer, 10);
 					size_t len = strlen(buffer);
 				}
 				/*	while (len++ < width)
 				puts("0");*/
 				AuPutS(buffer);
-			}
-			else if (*format == 'c')
-			{
+			} else if (*format == 'c') {
 				int c = AU_VA_ARG(int);
 				//char buffer[sizeof(size_t) * 8 + 1];
 				//sztoa(c, buffer, 10);
 				//puts(buffer);
 				AuPutC(c);
-			}
-			else if (*format == 'x')
-			{
+			} else if (*format == 'x') {
 				size_t x = AU_VA_ARG(size_t);
 				char buffer[sizeof(size_t) * 8 + 1];
 				sztoa(x, buffer, 16);
 				//puts("0x");
 				AuPutS(buffer);
-			}
-			else if (*format == 's')
-			{
+			} else if (*format == 's') {
 				char* x = AU_VA_ARG(char*);
 				AuPutS(x);
-			}
-			else if (*format == 'f')
-			{
+			} else if (*format == 'f') {
 				double x = AU_VA_ARG(double);
 				AuPutS(ftoa(x, 2));
-			}
-			else if (*format == '%')
-			{
+			} else if (*format == '%') {
 				AuPutS(".");
-			}
-			else
-			{
+			} else {
 				char buf[3];
-				buf[0] = '%'; buf[1] = *format; buf[2] = '\0';
+				buf[0] = '%';
+				buf[1] = *format;
+				buf[2] = '\0';
 				AuPutS(buf);
 			}
-		}
-		else
-		{
+		} else {
 			char buf[2];
-			buf[0] = *format; buf[1] = '\0';
+			buf[0] = *format;
+			buf[1] = '\0';
 			AuPutS(buf);
 		}
 		++format;
@@ -681,9 +614,7 @@ void AuTextOutpro_Call(const char* format, void* reg_save_area, void* entry_sp) 
 #ifndef __GNUC__
 	va_end(args);
 #endif
-
 }
-
 
 /**
  * @brief AuConsoleEarlyEnable -- enables or disable early

@@ -49,7 +49,6 @@ int UDPGetPort(AuSocket* sock) {
 	return out;
 }
 
-
 /**
  * @brief AuUDPHandlePacket -- handle incoming packet
  * @param packet -- pointer to ipv4 packet
@@ -66,7 +65,8 @@ void UDPHandlePacket(char* packet) {
 	memcpy(&totalLen, &ipv4->totalLength, 2);
 
 #ifdef DEBUG_SERIAL
-	UARTDebugOut("UDP Packet received with dest_port : %d , src_port : %d \r\n", ntohs(dest_port), src_port);
+	UARTDebugOut(
+		"UDP Packet received with dest_port : %d , src_port : %d \r\n", ntohs(dest_port), src_port);
 	UARTDebugOut("Data bytes (%d bytes): \r\n", ntohs(totalLen));
 	for (int i = 0; i < 15; i++) {
 		UARTDebugOut("%c", udp->payload[i]);
@@ -104,13 +104,15 @@ int AuUDPReceive(AuSocket* sock, msghdr* msg, int flags) {
 		return 0;
 
 	char* packet = (char*)AuSocketGet(sock);
-	if (!packet) return -1;
+	if (!packet)
+		return -1;
 	IPv4Header* ipv4 = (IPv4Header*)(packet + sizeof(size_t));
 	UDPHeader* udp = (UDPHeader*)&ipv4->payload;
 
 	UARTDebugOut("[aurora]: UDP: Got Response %d \r\n", ntohs(ipv4->totalLength));
-	memcpy(msg->msg_iov[0].iov_base, udp->payload, ntohs(ipv4->totalLength) - sizeof(IPv4Header) -
-		sizeof(UDPHeader));
+	memcpy(msg->msg_iov[0].iov_base,
+		   udp->payload,
+		   ntohs(ipv4->totalLength) - sizeof(IPv4Header) - sizeof(UDPHeader));
 
 	if (msg->msg_namelen == sizeof(sockaddr_in)) {
 		if (msg->msg_name) {
@@ -125,7 +127,6 @@ int AuUDPReceive(AuSocket* sock, msghdr* msg, int flags) {
 	return len;
 	return 0;
 }
-
 
 /**
 * @brief AuUDPSend -- UDP protocol send interface
@@ -201,7 +202,6 @@ void AuUDPClose(AuSocket* sock) {
 	return;
 }
 
-
 /**
  * @brief AuUDPBind -- bind a local address to the current
  * socket, it also verifies if there is already a socket
@@ -229,7 +229,6 @@ int AuUDPBind(AuSocket* sock, sockaddr* addr, socklen_t addrlen) {
 	UARTDebugOut("UDP Socket added \r\n");
 	return 0;
 }
-
 
 uint64_t AuUDPRead(AuVFSNode* node, AuVFSNode* file, uint64_t* buffer, uint32_t len) {
 	return 0;

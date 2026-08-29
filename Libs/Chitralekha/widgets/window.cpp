@@ -34,8 +34,8 @@
 #include "menu.h"
 #include <sys/mman.h>
 
-#define WINDOW_DEFAULT_TITLEBAR_HEIGHT  26
-#define WINDOW_DEFAULT_BACKGROUND 0xFFD2D2D2
+#define WINDOW_DEFAULT_TITLEBAR_HEIGHT 26
+#define WINDOW_DEFAULT_BACKGROUND	   0xFFD2D2D2
 
 extern void ChDefaultWinPaint(ChWindow* win);
 extern void ChWindowPaintCloseButton(ChWindow* win, ChWinGlobalControl* button);
@@ -56,7 +56,8 @@ extern void _apply_rounded_corner(uint32_t* backbuff, int radius, int winw, int 
  * @param title -- title of the window
  * @param handle -- handle of parent window 
  */
-void ChRequestWindow(ChitralekhaApp* app, int x, int y, int w, int h, char* title, uint16_t attrib,int handle) {
+void ChRequestWindow(
+	ChitralekhaApp* app, int x, int y, int w, int h, char* title, uint16_t attrib, int handle) {
 	_KePrint("[Chitralekha] : Requesting window \r\n");
 	PostEvent e;
 	e.type = DEODHAI_MESSAGE_CREATEWIN;
@@ -75,26 +76,26 @@ void ChRequestWindow(ChitralekhaApp* app, int x, int y, int w, int h, char* titl
 	while (1) {
 		//_KePrint("[Chitralekha]: Getting event \r\n");
 		int err = _KeFileIoControl(app->postboxfd, POSTBOX_GET_EVENT, &e);
-		if (e.type == DEODHAI_REPLY_WINCREATED){
-				uint16_t shkey = e.dword;
-				uint32_t buffKey = e.dword2;
-				if (buffKey < 100)
-					_KePrint("Chitralekha: buffer key problem \n");
-				uint32_t handle = e.dword3;
-				uint16_t shid = _KeCreateSharedMem(shkey, 0, 0);
-				uint16_t backid = _KeCreateSharedMem(buffKey, NULL, 0);
-				void* sharedwinaddr = _KeObtainSharedMem(shid, NULL, 0);
-				void* backbuff = _KeObtainSharedMem(backid, NULL, 0);
-				app->sharedWinkey = shkey;
-				app->backbufkey = buffKey;
-				app->buffer_width = w;
-				app->buffer_height = h;
-				app->fb = backbuff;
-				app->shwinbuf = sharedwinaddr;
-				app->windowHandle = handle;
-				memset(&e, 0, sizeof(PostEvent));
-				break;
-			}
+		if (e.type == DEODHAI_REPLY_WINCREATED) {
+			uint16_t shkey = e.dword;
+			uint32_t buffKey = e.dword2;
+			if (buffKey < 100)
+				_KePrint("Chitralekha: buffer key problem \n");
+			uint32_t handle = e.dword3;
+			uint16_t shid = _KeCreateSharedMem(shkey, 0, 0);
+			uint16_t backid = _KeCreateSharedMem(buffKey, NULL, 0);
+			void* sharedwinaddr = _KeObtainSharedMem(shid, NULL, 0);
+			void* backbuff = _KeObtainSharedMem(backid, NULL, 0);
+			app->sharedWinkey = shkey;
+			app->backbufkey = buffKey;
+			app->buffer_width = w;
+			app->buffer_height = h;
+			app->fb = backbuff;
+			app->shwinbuf = sharedwinaddr;
+			app->windowHandle = handle;
+			memset(&e, 0, sizeof(PostEvent));
+			break;
+		}
 
 		if (err == -1) {
 			//_KePauseThread();
@@ -104,18 +105,17 @@ void ChRequestWindow(ChitralekhaApp* app, int x, int y, int w, int h, char* titl
 	}
 }
 
-
-void ChGlobalCtlMouseHandler(ChWindow* win, ChWinGlobalControl* global, int x, int y, int button){
+void ChGlobalCtlMouseHandler(ChWindow* win, ChWinGlobalControl* global, int x, int y, int button) {
 	/* handle painting */
 	if (global->ChGlobalButtonPaint) {
 		global->ChGlobalButtonPaint(win, global);
-		ChWindowUpdate(win, global->x, global->y, global->w, global->h,false, true);
+		ChWindowUpdate(win, global->x, global->y, global->w, global->h, false, true);
 	}
 
 	/* handle action event */
 	if (button)
-	if (global->ChGlobalActionEvent)
-		global->ChGlobalActionEvent(win, global);
+		if (global->ChGlobalActionEvent)
+			global->ChGlobalActionEvent(win, global);
 }
 
 /*
@@ -126,7 +126,8 @@ void ChGlobalCtlMouseHandler(ChWindow* win, ChWinGlobalControl* global, int x, i
  * @param w -- width of the rectangular bound
  * @param h -- height of the rectangular bound
  */
-XE_EXTERN XE_EXPORT ChWinGlobalControl* ChCreateGlobalButton(ChWindow* win, int x, int y, int w, int h, uint8_t type) {
+XE_EXTERN XE_EXPORT ChWinGlobalControl*
+ChCreateGlobalButton(ChWindow* win, int x, int y, int w, int h, uint8_t type) {
 	ChWinGlobalControl* glbl = (ChWinGlobalControl*)malloc(sizeof(ChWinGlobalControl));
 	glbl->x = x;
 	glbl->y = y;
@@ -139,7 +140,7 @@ XE_EXTERN XE_EXPORT ChWinGlobalControl* ChCreateGlobalButton(ChWindow* win, int 
 	return glbl;
 }
 
-void ChGlobalCloseAction(ChWindow* win, ChWinGlobalControl *ctl) {
+void ChGlobalCloseAction(ChWindow* win, ChWinGlobalControl* ctl) {
 	//ChFontClose(win->app->baseFont);
 	ChWindowCloseWindow(win);
 }
@@ -158,9 +159,10 @@ void ChGlobalMinimiseAction(ChWindow* win, ChWinGlobalControl* ctl) {
  * @param w -- width of the window
  * @param h -- height of the window
  */
-XE_EXTERN XE_EXPORT ChWindow* ChCreateWindow(ChitralekhaApp *app, uint16_t attrib, char* title, int x, int y, int w, int h) {
+XE_EXTERN XE_EXPORT ChWindow*
+ChCreateWindow(ChitralekhaApp* app, uint16_t attrib, char* title, int x, int y, int w, int h) {
 	/* request a new window from window manager */
-	ChRequestWindow(app, x, y, w, h, title,attrib,0);
+	ChRequestWindow(app, x, y, w, h, title, attrib, 0);
 	ChWindow* win = (ChWindow*)malloc(sizeof(ChWindow));
 	memset(win, 0, sizeof(ChWindow));
 	ChCanvas* canv = ChCreateCanvas(w, h);
@@ -189,8 +191,12 @@ XE_EXTERN XE_EXPORT ChWindow* ChCreateWindow(ChitralekhaApp *app, uint16_t attri
 	win->popup = initialize_list();
 	win->ChWinPaint = ChDefaultWinPaint;
 	win->handle = app->windowHandle;
-	ChWinGlobalControl* close = ChCreateGlobalButton(win, win->info->width - 25,
-		WINDOW_DEFAULT_TITLEBAR_HEIGHT / 2 - 20 / 2, 20, 20, WINDOW_GLOBAL_CONTROL_CLOSE);
+	ChWinGlobalControl* close = ChCreateGlobalButton(win,
+													 win->info->width - 25,
+													 WINDOW_DEFAULT_TITLEBAR_HEIGHT / 2 - 20 / 2,
+													 20,
+													 20,
+													 WINDOW_GLOBAL_CONTROL_CLOSE);
 	close->ChGlobalButtonPaint = ChWindowPaintCloseButton;
 	close->ChGlobalMouseEvent = ChGlobalCtlMouseHandler;
 	close->outlineColor = 0xFF868686;
@@ -198,16 +204,24 @@ XE_EXTERN XE_EXPORT ChWindow* ChCreateWindow(ChitralekhaApp *app, uint16_t attri
 	close->clickedOutlineColor = 0xFF63291F;
 	close->ChGlobalActionEvent = ChGlobalCloseAction;
 
-	ChWinGlobalControl* maxim = ChCreateGlobalButton(win, win->info->width - 25 - 20,
-		WINDOW_DEFAULT_TITLEBAR_HEIGHT / 2 - 20 / 2, 20, 20, WINDOW_GLOBAL_CONTROL_MAXIMIZE);
+	ChWinGlobalControl* maxim = ChCreateGlobalButton(win,
+													 win->info->width - 25 - 20,
+													 WINDOW_DEFAULT_TITLEBAR_HEIGHT / 2 - 20 / 2,
+													 20,
+													 20,
+													 WINDOW_GLOBAL_CONTROL_MAXIMIZE);
 	maxim->ChGlobalButtonPaint = ChWindowPaintMaximButton;
 	maxim->outlineColor = 0xFF868686;
 	maxim->hoverOutlineColor = 0xFFAFA3A3;
 	maxim->clickedOutlineColor = 0xFF444444;
 	maxim->ChGlobalMouseEvent = ChGlobalCtlMouseHandler;
 
-	ChWinGlobalControl* minim = ChCreateGlobalButton(win, win->info->width - 25 - 20*2,
-		WINDOW_DEFAULT_TITLEBAR_HEIGHT / 2 - 20 / 2, 20, 20, WINDOW_GLOBAL_CONTROL_MAXIMIZE);
+	ChWinGlobalControl* minim = ChCreateGlobalButton(win,
+													 win->info->width - 25 - 20 * 2,
+													 WINDOW_DEFAULT_TITLEBAR_HEIGHT / 2 - 20 / 2,
+													 20,
+													 20,
+													 WINDOW_GLOBAL_CONTROL_MAXIMIZE);
 	minim->ChGlobalButtonPaint = ChWindowPaintMinimButton;
 	minim->outlineColor = 0xFF868686;
 	minim->hoverOutlineColor = 0xFFAFA3A3;
@@ -243,8 +257,9 @@ XE_EXTERN XE_EXPORT void ChWindowBroadcastIcon(ChitralekhaApp* app, char* iconfi
  * @param w - width of the dirty area
  * @param h -- height of the dirty area
  */
-XE_EXTERN XE_EXPORT void ChWindowUpdate(ChWindow* win, int x, int y, int w, int h,bool updateEntireWin, bool dirty) {
-	uint32_t *lfb = win->buffer;
+XE_EXTERN XE_EXPORT void
+ChWindowUpdate(ChWindow* win, int x, int y, int w, int h, bool updateEntireWin, bool dirty) {
+	uint32_t* lfb = win->buffer;
 	uint32_t* canvaddr = win->canv->buffer;
 	if (x < 0) {
 		_KePrint("Corrupted x -> %d \r\n", x);
@@ -264,10 +279,11 @@ XE_EXTERN XE_EXPORT void ChWindowUpdate(ChWindow* win, int x, int y, int w, int 
 		_KePrint("Corrupted h -> %d \r\n", h);
 		h = win->info->height;
 	}
-	
+
 	for (int i = 0; i < h; i++)
-		_fastcpy(lfb + (static_cast<int64_t>(y) + i) * win->info->width + x, 
-			canvaddr + (static_cast<int64_t>(y) + i) * win->info->width + x, (static_cast<int64_t>(w) * 4));
+		_fastcpy(lfb + (static_cast<int64_t>(y) + i) * win->info->width + x,
+				 canvaddr + (static_cast<int64_t>(y) + i) * win->info->width + x,
+				 (static_cast<int64_t>(w) * 4));
 
 	win->info->updateEntireWindow = updateEntireWin;
 
@@ -286,7 +302,7 @@ XE_EXTERN XE_EXPORT void ChWindowUpdate(ChWindow* win, int x, int y, int w, int 
  * @param win -- Pointer to window
  */
 XE_EXTERN XE_EXPORT void ChWindowPaint(ChWindow* win) {
-	if (win->ChWinPaint){
+	if (win->ChWinPaint) {
 		win->ChWinPaint(win);
 	}
 
@@ -320,11 +336,11 @@ XE_EXTERN XE_EXPORT void ChWindowAddSubWindow(ChWindow* parent, ChWindow* win) {
  * @param mainWin -- pointer to main window
  * @param handle -- Handle of the window
  */
-XE_EXTERN XE_EXPORT ChWindow* ChGetWindowByHandle(ChWindow* mainWin,int handle) {
+XE_EXTERN XE_EXPORT ChWindow* ChGetWindowByHandle(ChWindow* mainWin, int handle) {
 	ChWindow* returnable = NULL;
 	for (int i = 0; i < mainWin->subwindow->pointer; i++) {
 		ChWindow* sub = (ChWindow*)list_get_at(mainWin->subwindow, i);
-		if (sub->handle == handle){
+		if (sub->handle == handle) {
 			returnable = sub;
 			break;
 		}
@@ -341,10 +357,10 @@ XE_EXTERN XE_EXPORT ChWindow* ChGetWindowByHandle(ChWindow* mainWin,int handle) 
  * @param mainWin -- Pointer to main window
  * @param handle -- Handle of the popup window
  */
-XE_EXTERN XE_EXPORT ChWindow* ChGetPopupWindowByHandle(ChWindow* mainWin, int handle){
+XE_EXTERN XE_EXPORT ChWindow* ChGetPopupWindowByHandle(ChWindow* mainWin, int handle) {
 	for (int i = 0; i < mainWin->popup->pointer; i++) {
 		ChWindow* pw = (ChWindow*)list_get_at(mainWin->popup, i);
-		if (pw->handle == handle){
+		if (pw->handle == handle) {
 			return pw;
 		}
 	}
@@ -364,7 +380,6 @@ XE_EXTERN XE_EXPORT void ChWindowHide(ChWindow* win) {
 	e.to_id = POSTBOX_ROOT_ID;
 	_KeFileIoControl(win->app->postboxfd, POSTBOX_PUT_EVENT, &e);
 }
-
 
 /*
  * ChGetWindowHandle -- get a specific window handle from
@@ -447,16 +462,18 @@ XE_EXTERN XE_EXPORT void ChWindowHandleMouse(ChWindow* win, int x, int y, int bu
 	/* first check the title bar bound */
 	if (y > win->info->y && y < win->info->y + WINDOW_DEFAULT_TITLEBAR_HEIGHT) {
 		for (int i = 0; i < win->GlobalControls->pointer; i++) {
-			ChWinGlobalControl* globalCtrl = (ChWinGlobalControl*)list_get_at(win->GlobalControls, i);
-			if (x > win->info->x + globalCtrl->x  && x < (win->info->x + globalCtrl->x + globalCtrl->w) &&
-				(y > win->info->y + globalCtrl->y && y < (win->info->y + globalCtrl->y + globalCtrl->h))){
+			ChWinGlobalControl* globalCtrl =
+				(ChWinGlobalControl*)list_get_at(win->GlobalControls, i);
+			if (x > win->info->x + globalCtrl->x &&
+				x < (win->info->x + globalCtrl->x + globalCtrl->w) &&
+				(y > win->info->y + globalCtrl->y &&
+				 y < (win->info->y + globalCtrl->y + globalCtrl->h))) {
 				globalCtrl->hover = true;
 				if (button)
 					globalCtrl->clicked = true;
 				if (globalCtrl->ChGlobalMouseEvent)
 					globalCtrl->ChGlobalMouseEvent(win, globalCtrl, x, y, button);
-			}
-			else {
+			} else {
 				if (globalCtrl->hover) {
 					globalCtrl->hover = false;
 					globalCtrl->clicked = false;
@@ -471,8 +488,7 @@ XE_EXTERN XE_EXPORT void ChWindowHandleMouse(ChWindow* win, int x, int y, int bu
 		ChWidget* focusedWidget = (ChWidget*)win->focusedWidget;
 		if (focusedWidget->ChMouseEvent)
 			focusedWidget->ChMouseEvent(focusedWidget, win, x, y, button);
-	}
-	else {
+	} else {
 		/* activity area */
 		if (y > win->info->y + 26 && y < (win->info->y + 26 + win->info->height - 26)) {
 			for (int i = 0; i < win->widgets->pointer; i++) {
@@ -483,8 +499,7 @@ XE_EXTERN XE_EXPORT void ChWindowHandleMouse(ChWindow* win, int x, int y, int bu
 					widget->KillFocus = false;
 					if (widget->ChMouseEvent)
 						widget->ChMouseEvent(widget, win, x, y, button);
-				}
-				else {
+				} else {
 					if (widget->hover) {
 						widget->hover = false;
 						widget->KillFocus = true;
@@ -499,9 +514,7 @@ XE_EXTERN XE_EXPORT void ChWindowHandleMouse(ChWindow* win, int x, int y, int bu
 	if (!button) {
 		win->focusedWidget = NULL;
 	}
-
 }
-
 
 /*
  * ChWindowHandleTouch -- handle touch event
@@ -541,16 +554,18 @@ XE_EXTERN XE_EXPORT void ChWindowHandleTouch(ChWindow* win, int x, int y, int bu
 	/* first check the title bar bound */
 	if (y > win->info->y && y < win->info->y + WINDOW_DEFAULT_TITLEBAR_HEIGHT) {
 		for (int i = 0; i < win->GlobalControls->pointer; i++) {
-			ChWinGlobalControl* globalCtrl = (ChWinGlobalControl*)list_get_at(win->GlobalControls, i);
-			if (x > win->info->x + globalCtrl->x && x < (win->info->x + globalCtrl->x + globalCtrl->w) &&
-				(y > win->info->y + globalCtrl->y && y < (win->info->y + globalCtrl->y + globalCtrl->h))) {
+			ChWinGlobalControl* globalCtrl =
+				(ChWinGlobalControl*)list_get_at(win->GlobalControls, i);
+			if (x > win->info->x + globalCtrl->x &&
+				x < (win->info->x + globalCtrl->x + globalCtrl->w) &&
+				(y > win->info->y + globalCtrl->y &&
+				 y < (win->info->y + globalCtrl->y + globalCtrl->h))) {
 				globalCtrl->hover = true;
 				if (button)
 					globalCtrl->clicked = true;
 				if (globalCtrl->ChGlobalMouseEvent)
 					globalCtrl->ChGlobalMouseEvent(win, globalCtrl, x, y, button);
-			}
-			else {
+			} else {
 				if (globalCtrl->hover) {
 					globalCtrl->hover = false;
 					globalCtrl->clicked = false;
@@ -565,8 +580,7 @@ XE_EXTERN XE_EXPORT void ChWindowHandleTouch(ChWindow* win, int x, int y, int bu
 		ChWidget* focusedWidget = (ChWidget*)win->focusedWidget;
 		if (focusedWidget->ChTouchEvent)
 			focusedWidget->ChTouchEvent(focusedWidget, win, x, y);
-	}
-	else {
+	} else {
 		/* activity area */
 		if (y > win->info->y + 26 && y < (win->info->y + 26 + win->info->height - 26)) {
 			for (int i = 0; i < win->widgets->pointer; i++) {
@@ -577,8 +591,7 @@ XE_EXTERN XE_EXPORT void ChWindowHandleTouch(ChWindow* win, int x, int y, int bu
 					widget->KillFocus = false;
 					if (widget->ChTouchEvent)
 						widget->ChTouchEvent(widget, win, x, y);
-				}
-				else {
+				} else {
 					if (widget->hover) {
 						widget->hover = false;
 						widget->KillFocus = true;
@@ -589,7 +602,6 @@ XE_EXTERN XE_EXPORT void ChWindowHandleTouch(ChWindow* win, int x, int y, int bu
 			}
 		}
 	}
-
 
 	win->focusedWidget = NULL;
 }
@@ -602,10 +614,10 @@ XE_EXTERN XE_EXPORT void ChWindowHandleTouch(ChWindow* win, int x, int y, int bu
  * @param y -- Mouse y coordinate
  * @param button -- Mouse button state
  */
-XE_EXTERN XE_EXPORT void ChPopupWindowHandleMouse(ChWindow* win,int x, int y, int button) {
+XE_EXTERN XE_EXPORT void ChPopupWindowHandleMouse(ChWindow* win, int x, int y, int button) {
 	if (!win)
 		return;
-	for (int i = 0; i < win->widgets->pointer; i++){
+	for (int i = 0; i < win->widgets->pointer; i++) {
 		ChWidget* pwid = (ChWidget*)list_get_at(win->widgets, i);
 		if (x >= (win->info->x + pwid->x) && x < (win->info->x + pwid->x + pwid->w) &&
 			y >= (win->info->y + pwid->y) && y < (win->info->y + pwid->y + pwid->h)) {
@@ -613,8 +625,7 @@ XE_EXTERN XE_EXPORT void ChPopupWindowHandleMouse(ChWindow* win,int x, int y, in
 			pwid->KillFocus = false;
 			if (pwid->ChMouseEvent)
 				pwid->ChMouseEvent(pwid, win, x, y, button);
-		}
-		else {
+		} else {
 			if (pwid->hover) {
 				pwid->hover = false;
 				pwid->KillFocus = true;
@@ -635,7 +646,6 @@ XE_EXTERN XE_EXPORT void ChPopupWindowHandleMouse(ChWindow* win,int x, int y, in
 	}*/
 }
 
-
 /*
  * ChWindowHandleFocus -- handle focus changed events
  * @param win -- Pointer to window
@@ -650,7 +660,6 @@ XE_EXTERN XE_EXPORT void ChWindowHandleFocus(ChWindow* win, bool focus_val, uint
 	ChDrawVerticalLine(win->canv, win->info->width - 1, 0, 26, GRAY);
 	ChWindowUpdate(win, 0, 0, win->info->width, 26, 0, 1);
 }
-
 
 /*
  * ChWindowAddWidget -- adds a widget to window
@@ -706,7 +715,7 @@ XE_EXTERN XE_EXPORT void ChWindowMove(ChWindow* win, int newX, int newY) {
  * including global controls, widgets.. etc
  * @param win -- Pointer to window
  */
-void ChFreeWindowResources(ChWindow *win) {
+void ChFreeWindowResources(ChWindow* win) {
 	/* free up global controls*/
 	for (int i = 0; i < win->GlobalControls->pointer; i++) {
 		ChWinGlobalControl* glbl_ = (ChWinGlobalControl*)list_remove(win->GlobalControls, i);
@@ -749,7 +758,7 @@ XE_EXTERN XE_EXPORT void ChPopupWindowClose(ChWindow* win) {
 	_KePrint("Popup Window closed \r\n");
 	/* free up window resources */
 	ChFreeWindowResources(win);
-	
+
 	/* send close window command to deodhai */
 	int handle = win->handle;
 	PostEvent e;
@@ -759,7 +768,6 @@ XE_EXTERN XE_EXPORT void ChPopupWindowClose(ChWindow* win) {
 	e.to_id = POSTBOX_ROOT_ID;
 	_KeFileIoControl(win->app->postboxfd, POSTBOX_PUT_EVENT, &e);
 	memset(&e, 0, sizeof(PostEvent));
-
 
 	/* wait for a closed reply window */
 	while (1) {
@@ -779,14 +787,13 @@ XE_EXTERN XE_EXPORT void ChPopupWindowClose(ChWindow* win) {
  * sends close message to deodhai
  * @param win -- Pointer to window data
  */
-XE_EXTERN XE_EXPORT void ChWindowCloseWindow(ChWindow* win){
+XE_EXTERN XE_EXPORT void ChWindowCloseWindow(ChWindow* win) {
 	bool subWindow = false;
 	ChWindow* parent = NULL;
 	uint16_t flags = win->flags;
 	/* call the close callback before closing the window*/
 	if (win->ChCloseWin)
 		win->ChCloseWin(win);
-
 
 	/* check if this was a sub window */
 	if (win->parent && !(win->flags & WINDOW_FLAG_POPUP)) {
@@ -799,7 +806,6 @@ XE_EXTERN XE_EXPORT void ChWindowCloseWindow(ChWindow* win){
 				break;
 			}
 		}
-
 	}
 
 	/* send close window command to deodhai */
@@ -811,7 +817,6 @@ XE_EXTERN XE_EXPORT void ChWindowCloseWindow(ChWindow* win){
 	e.to_id = POSTBOX_ROOT_ID;
 	_KeFileIoControl(win->app->postboxfd, POSTBOX_PUT_EVENT, &e);
 	memset(&e, 0, sizeof(PostEvent));
-
 
 	/* wait for a closed reply window */
 	while (1) {
@@ -854,7 +859,7 @@ XE_EXTERN XE_EXPORT void ChWindowCloseWindow(ChWindow* win){
 	 * window */
 	if (subWindow && parent && !(flags & WINDOW_FLAG_POPUP))
 		longjmp(parent->jump, 1);
-	
+
 	/* if this window was the main window, simply exit the
 	 * application
 	 */
@@ -875,7 +880,6 @@ uint32_t ChWindowGetBackgroundColor(ChWindow* win) {
 	return win->color;
 }
 
-
 /*
  * ChCreatePopupWindow -- *Create a popup window 
  * @param app -- Pointer to application
@@ -886,11 +890,12 @@ uint32_t ChWindowGetBackgroundColor(ChWindow* win) {
  * @param h -- Height of the window
  * @param type -- type of the window
  */
-XE_EXTERN XE_EXPORT ChWindow* ChCreatePopupWindow(ChWindow* win, int x, int y, int w, int h, uint16_t flags, char* title){
+XE_EXTERN XE_EXPORT ChWindow*
+ChCreatePopupWindow(ChWindow* win, int x, int y, int w, int h, uint16_t flags, char* title) {
 	if (!(flags & WINDOW_FLAG_POPUP))
 		flags |= WINDOW_FLAG_POPUP;
 	ChitralekhaApp* app = ChitralekhaStartSubApp(win->app);
-	ChRequestWindow(app, (win->info->x + x), (win->info->y + y), w, h, title,flags, win->handle);
+	ChRequestWindow(app, (win->info->x + x), (win->info->y + y), w, h, title, flags, win->handle);
 	ChWindow* popup = (ChWindow*)malloc(sizeof(ChWindow));
 	memset(popup, 0, sizeof(ChWindow));
 	ChCanvas* canv = ChCreateCanvas(w, h);
@@ -922,7 +927,6 @@ XE_EXTERN XE_EXPORT ChWindow* ChCreatePopupWindow(ChWindow* win, int x, int y, i
 	return popup;
 }
 
-
 /*
  * ChPopupWindowUpdate -- update the popup window
  * @param pw -- Pointer to Chitralekha Popup Window
@@ -932,7 +936,7 @@ XE_EXTERN XE_EXPORT ChWindow* ChCreatePopupWindow(ChWindow* win, int x, int y, i
  * @param h -- Height of the popup window
  */
 XE_EXTERN XE_EXPORT void ChPopupWindowUpdate(ChPopupWindow* pw, int x, int y, int w, int h) {
-	uint32_t *lfb = pw->buffer;
+	uint32_t* lfb = pw->buffer;
 	uint32_t* canvaddr = pw->canv->buffer;
 	if (x < 0)
 		x = 0;
@@ -949,12 +953,11 @@ XE_EXTERN XE_EXPORT void ChPopupWindowUpdate(ChPopupWindow* pw, int x, int y, in
 		return;
 
 	for (int i = 0; i < h; i++)
-		_fastcpy(lfb + (static_cast<int64_t>(y) + i) * pw->shwin->w + x, 
-			canvaddr + (static_cast<int64_t>(y) + i) * pw->shwin->w + x, (static_cast<int64_t>(w) * 4));
+		_fastcpy(lfb + (static_cast<int64_t>(y) + i) * pw->shwin->w + x,
+				 canvaddr + (static_cast<int64_t>(y) + i) * pw->shwin->w + x,
+				 (static_cast<int64_t>(w) * 4));
 	pw->shwin->dirty = 1;
 }
-
-
 
 /*
  * ChPopupWindowShow -- show the popup window
@@ -963,7 +966,7 @@ XE_EXTERN XE_EXPORT void ChPopupWindowUpdate(ChPopupWindow* pw, int x, int y, in
  */
 XE_EXTERN XE_EXPORT void ChPopupWindowShow(ChWindow* pw, ChWindow* win) {
 	pw->info->hide = 0;
-	ChWindowSetFlags(win,(win->flags | WINDOW_FLAG_STATIC));
+	ChWindowSetFlags(win, (win->flags | WINDOW_FLAG_STATIC));
 	/* give some time slice to deodhai,
 	 * to update itself and get ready for
 	 * next events
@@ -979,11 +982,10 @@ XE_EXTERN XE_EXPORT void ChPopupWindowShow(ChWindow* pw, ChWindow* win) {
  * @param x -- X location
  * @param y -- Y location
  */
-XE_EXTERN XE_EXPORT void ChPopupWindowUpdateLocation(ChWindow* pwin,ChWindow* win, int x, int y) {
+XE_EXTERN XE_EXPORT void ChPopupWindowUpdateLocation(ChWindow* pwin, ChWindow* win, int x, int y) {
 	pwin->info->x = win->info->x + x;
 	pwin->info->y = win->info->y + y;
 }
-
 
 /*
  * ChPopupWindowHide -- hide the popup window

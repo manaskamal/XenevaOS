@@ -30,7 +30,6 @@
 #include "backdirty.h"
 #include <string.h>
 
-
 int _back_dirty_count;
 
 Rect _back_dirty_rect[512];
@@ -89,7 +88,6 @@ void BackDirtyGetRect(int* x, int* y, int* w, int* h, int index) {
 	*w = _back_dirty_rect[index].w;
 	*h = _back_dirty_rect[index].h;
 }
-
 
 int BackDirtyGetDirtyCount() {
 	return _back_dirty_count;

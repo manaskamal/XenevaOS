@@ -107,7 +107,8 @@ void DirtyScreenUpdate(ChCanvas* canvas) {
 
 		gpu_update = 1;
 		if (!_is_gpu_enabled())
-			ChCanvasScreenUpdate(canvas, dirtyRect[i].x, dirtyRect[i].y, dirtyRect[i].w, dirtyRect[i].h);
+			ChCanvasScreenUpdate(
+				canvas, dirtyRect[i].x, dirtyRect[i].y, dirtyRect[i].w, dirtyRect[i].h);
 	}
 	if (gpu_update && _is_gpu_enabled()) {
 		ioctl.uint_1 = display_id;

@@ -13,7 +13,7 @@
 #endif
 
 #ifdef _MSC_VER
-#define INLINE __forceinline
+#define INLINE	 __forceinline
 #define FASTCALL __fastcall
 #ifdef NOLIBC
 #ifdef MAIN_PROGRAM
@@ -21,7 +21,7 @@ int _fltused = 0;
 #endif
 #endif
 #else
-#define INLINE inline
+#define INLINE	 inline
 #define FASTCALL __attribute__((fastcall))
 #include <stdint.h>
 #endif
@@ -50,22 +50,21 @@ int _fltused = 0;
 #ifdef _NO_STDINT
 #ifndef __int8_t_defined
 #define __int8_t_defined
-typedef unsigned char  uint8_t;
-typedef   signed char   int8_t;
+typedef unsigned char uint8_t;
+typedef signed char int8_t;
 typedef unsigned short uint16_t;
-typedef   signed short  int16_t;
-typedef unsigned int   uint32_t;
-typedef   signed int    int32_t;
+typedef signed short int16_t;
+typedef unsigned int uint32_t;
+typedef signed int int32_t;
 #ifdef _MSC_VER
 typedef unsigned __int64 uint64_t;
-typedef   signed __int64  int64_t;
+typedef signed __int64 int64_t;
 #else
 typedef unsigned long long uint64_t;
-typedef   signed long long  int64_t;
+typedef signed long long int64_t;
 #endif
 #endif
 #endif
-
 
 #ifndef NULL
 #define NULL 0
@@ -77,10 +76,11 @@ typedef   signed long long  int64_t;
 
 ///////////////////////////////////////////////////////////////////////////////
 
-#if NEED_MINILIBC 
+#if NEED_MINILIBC
 
-static INLINE void libc_memset(void *dest, int value, int count) {
-	if (!count) return;
+static INLINE void libc_memset(void* dest, int value, int count) {
+	if (!count)
+		return;
 	__asm {
 		cld
 			mov edi, dest
@@ -90,8 +90,9 @@ static INLINE void libc_memset(void *dest, int value, int count) {
 	}
 }
 
-static INLINE void libc_memcpy(void *dest, const void *src, int count) {
-	if (!count) return;
+static INLINE void libc_memcpy(void* dest, const void* src, int count) {
+	if (!count)
+		return;
 	__asm {
 		cld
 			mov esi, src
@@ -113,19 +114,20 @@ static INLINE void* libc_calloc(int size, int nmemb) {
 
 static INLINE void* libc_realloc(void* old, int size) {
 	int oldsize = (int)LocalSize((HLOCAL)old);
-	void *mem;
-	if (size <= oldsize) return old;
+	void* mem;
+	if (size <= oldsize)
+		return old;
 	mem = LocalAlloc(LMEM_FIXED, size);
 	libc_memcpy(mem, old, oldsize);
 	LocalFree((HLOCAL)old);
 	return mem;
 }
 
-static INLINE void libc_free(void *mem) {
+static INLINE void libc_free(void* mem) {
 	LocalFree((HLOCAL)mem);
 }
 
-static INLINE double libc_frexp(double x, int *e) {
+static INLINE double libc_frexp(double x, int* e) {
 	double res = -9999.999;
 	unsigned __int64 i = *(unsigned __int64*)(&x);
 	if (!(i & 0x7F00000000000000UL)) {
@@ -155,7 +157,6 @@ static INLINE double __declspec(naked) libc_exp(double x) {
 	}
 }
 
-
 static INLINE double __declspec(naked) libc_pow(double b, double e) {
 	__asm {
 		fld qword ptr[esp + 12]
@@ -174,23 +175,21 @@ static INLINE double __declspec(naked) libc_pow(double b, double e) {
 	}
 }
 
-
-
 #else // NEED_MINILIBC == 0
 
-#define libc_malloc  malloc
-#define libc_calloc  calloc
+#define libc_malloc	 malloc
+#define libc_calloc	 calloc
 #define libc_realloc realloc
-#define libc_free    free
+#define libc_free	 free
 
-#define libc_memset  memset
-#define libc_memcpy  memcpy
+#define libc_memset	 memset
+#define libc_memcpy	 memcpy
 #define libc_memmove memmove
 
-#define libc_frexp   frexp
-#define libc_exp     exp
-#define libc_pow     pow
+#define libc_frexp frexp
+#define libc_exp   exp
+#define libc_pow   pow
 
 #endif // NEED_MINILIBC
 
-#endif//__LIBC_H_INCLUDED__
+#endif //__LIBC_H_INCLUDED__

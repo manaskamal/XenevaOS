@@ -50,10 +50,9 @@ typedef struct _tcpcheckheader_ {
 	uint8_t protocol;
 	uint16_t tcpLen;
 	uint8_t tcpHeader[];
-}TCPCheckHeader;
+} TCPCheckHeader;
 
 /**  Implementation needed **/
-
 
 /*
  * CalculateTCPChecksum -- calculate tcp checksum
@@ -161,7 +160,6 @@ int AuTCPAcknowledge(AuVFSNode* nic, AuSocket* sock, IPv4Header* ippack, size_t 
 	AuNetworkDevice* nicdev = (AuNetworkDevice*)nic->device;
 	if (!nicdev)
 		return -1;
-
 
 	/*  need to implement three way ack to handle
 	 * packet loss or errors
@@ -308,11 +306,9 @@ int AuTCPConnect(AuSocket* sock, sockaddr* addr, socklen_t addrlen) {
 	return 0;
 }
 
-
 int AuTCPBind(AuSocket* sock, sockaddr* addr, socklen_t addrlen) {
 	return 0;
 }
-
 
 uint64_t AuTCPRead(AuVFSNode* node, AuVFSNode* file, uint64_t* buffer, uint32_t len) {
 	return 0;

@@ -52,8 +52,6 @@
 
 #define PARTITION_LIST_BUTTON_HEIGHT 55
 
-
-
 void FileManagerPartitionButtonPaintHandler(ChWidget* wid, ChWindow* win) {
 	FileManagerPartitionButton* pbut = (FileManagerPartitionButton*)wid;
 	int text_x = 2;
@@ -62,14 +60,17 @@ void FileManagerPartitionButtonPaintHandler(ChWidget* wid, ChWindow* win) {
 	if (wid->hover) {
 		default_text_col = WHITE;
 		mounted_text_col = WHITE;
-		ChColorDrawVerticalGradient(win->canv, wid->x, wid->y, wid->w, wid->h,0xFF6E8BD9, 0xFF3561D6);
-	}
-	else {
+		ChColorDrawVerticalGradient(
+			win->canv, wid->x, wid->y, wid->w, wid->h, 0xFF6E8BD9, 0xFF3561D6);
+	} else {
 		ChDrawRect(win->canv, wid->x, wid->y, wid->w, wid->h, 0xFFFFFFFF);
 	}
 
 	if (pbut->icon) {
-		ChDrawIcon(win->canv, pbut->icon, pbut->wid.x + 2, (pbut->wid.y + (pbut->wid.h - pbut->icon->image.height) / 2));
+		ChDrawIcon(win->canv,
+				   pbut->icon,
+				   pbut->wid.x + 2,
+				   (pbut->wid.y + (pbut->wid.h - pbut->icon->image.height) / 2));
 		text_x += pbut->icon->image.width + 10;
 	}
 	ChFontSetSize(win->app->baseFont, 12);
@@ -78,15 +79,32 @@ void FileManagerPartitionButtonPaintHandler(ChWidget* wid, ChWindow* win) {
 	limit.y = wid->y;
 	limit.w = wid->w;
 	limit.h = wid->h;
-	ChFontDrawTextClipped(win->canv, win->app->baseFont, pbut->partitionName, text_x, pbut->wid.y + ((pbut->wid.h-5)/2),default_text_col, &limit);
+	ChFontDrawTextClipped(win->canv,
+						  win->app->baseFont,
+						  pbut->partitionName,
+						  text_x,
+						  pbut->wid.y + ((pbut->wid.h - 5) / 2),
+						  default_text_col,
+						  &limit);
 	ChFontSetSize(win->app->baseFont, 10);
 	int last_text_length = 0;
 	if (pbut->mounted) {
-		ChFontDrawTextClipped(win->canv, win->app->baseFont, "Location: ", text_x + 2, pbut->wid.y + ((pbut->wid.h + 25) / 2),mounted_text_col, &limit);
+		ChFontDrawTextClipped(win->canv,
+							  win->app->baseFont,
+							  "Location: ",
+							  text_x + 2,
+							  pbut->wid.y + ((pbut->wid.h + 25) / 2),
+							  mounted_text_col,
+							  &limit);
 		last_text_length = ChFontGetWidth(win->app->baseFont, "Location: ") + 2;
 	}
-	ChFontDrawTextClipped(win->canv, win->app->baseFont,pbut->guidString, text_x + 2 + last_text_length, pbut->wid.y + ((pbut->wid.h+25)/2),default_text_col, &limit);
-
+	ChFontDrawTextClipped(win->canv,
+						  win->app->baseFont,
+						  pbut->guidString,
+						  text_x + 2 + last_text_length,
+						  pbut->wid.y + ((pbut->wid.h + 25) / 2),
+						  default_text_col,
+						  &limit);
 }
 
 #define PARTITION_VIEW_COLOR 0xFF808080
@@ -98,7 +116,8 @@ void FileManagerPartitionListPaintHandler(ChWidget* wid, ChWindow* win) {
 	FileManagerPartitionList* part = (FileManagerPartitionList*)wid;
 	ChDrawRect(win->canv, wid->x, wid->y, wid->w, wid->h, PARTITION_VIEW_COLOR);
 	for (int i = 0; i < part->partitionButtons->pointer; i++) {
-		FileManagerPartitionButton* pbut = (FileManagerPartitionButton*)list_get_at(part->partitionButtons, i);
+		FileManagerPartitionButton* pbut =
+			(FileManagerPartitionButton*)list_get_at(part->partitionButtons, i);
 		if (pbut->wid.ChPaintHandler)
 			pbut->wid.ChPaintHandler((ChWidget*)pbut, win);
 	}
@@ -107,15 +126,15 @@ void FileManagerPartitionListPaintHandler(ChWidget* wid, ChWindow* win) {
 void FileManagerPartitionListMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, int button) {
 	FileManagerPartitionList* plist = (FileManagerPartitionList*)wid;
 	for (int i = 0; i < plist->partitionButtons->pointer; i++) {
-		FileManagerPartitionButton* pbut = (FileManagerPartitionButton*)list_get_at(plist->partitionButtons, i);
-		if ((x >=(win->info->x + pbut->wid.x) && x < (win->info->x + pbut->wid.x + pbut->wid.w)) &&
-			(y >=  (win->info->y + pbut->wid.y) && y < (win->info->y + pbut->wid.y + pbut->wid.h)) ){
+		FileManagerPartitionButton* pbut =
+			(FileManagerPartitionButton*)list_get_at(plist->partitionButtons, i);
+		if ((x >= (win->info->x + pbut->wid.x) && x < (win->info->x + pbut->wid.x + pbut->wid.w)) &&
+			(y >= (win->info->y + pbut->wid.y) && y < (win->info->y + pbut->wid.y + pbut->wid.h))) {
 			pbut->wid.hover = true;
 			if (pbut->wid.ChPaintHandler)
 				pbut->wid.ChPaintHandler((ChWidget*)pbut, win);
 			ChWindowUpdate(win, wid->x, wid->y, wid->w, wid->h, 0, 1);
-		}
-		else {
+		} else {
 			if (pbut->wid.hover) {
 				pbut->wid.hover = false;
 				if (pbut->wid.ChPaintHandler)
@@ -135,7 +154,8 @@ void FileManagerPartitionListMouseEvent(ChWidget* wid, ChWindow* win, int x, int
  * @param h -- Height of the widget
  */
 FileManagerPartitionList* FileManagerCreatePartitionList(int x, int y, int w, int h) {
-	FileManagerPartitionList* list = (FileManagerPartitionList*)malloc(sizeof(FileManagerPartitionList));
+	FileManagerPartitionList* list =
+		(FileManagerPartitionList*)malloc(sizeof(FileManagerPartitionList));
 	memset(list, 0, sizeof(FileManagerPartitionList));
 	list->wid.x = x;
 	list->wid.y = y;
@@ -149,8 +169,10 @@ FileManagerPartitionList* FileManagerCreatePartitionList(int x, int y, int w, in
 	return list;
 }
 
-FileManagerPartitionButton* FileManageCreatePartitionButton(FileManagerPartitionList* partitionList) {
-	FileManagerPartitionButton* pbut = (FileManagerPartitionButton*)malloc(sizeof(FileManagerPartitionButton));
+FileManagerPartitionButton*
+FileManageCreatePartitionButton(FileManagerPartitionList* partitionList) {
+	FileManagerPartitionButton* pbut =
+		(FileManagerPartitionButton*)malloc(sizeof(FileManagerPartitionButton));
 	pbut->wid.x = partitionList->wid.x + partitionList->button_pos_x;
 	pbut->wid.y = partitionList->wid.y + partitionList->button_pos_y;
 	pbut->wid.w = partitionList->wid.w - partitionList->button_pos_x * 2;

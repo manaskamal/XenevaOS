@@ -64,8 +64,7 @@ void AuTTYInsert(TTY* tty) {
 	if (root == NULL) {
 		last = tty;
 		root = tty;
-	}
-	else {
+	} else {
 		last->next = tty;
 		tty->prev = last;
 	}
@@ -139,7 +138,7 @@ void AuTTYProcessLine(TTY* tty, uint8_t c) {
 			}
 			//clear_input_buf
 			//if foreground process group or process exist
-				//send signal to foreground process, the sig number
+			//send signal to foreground process, the sig number
 			return;
 		}
 	}
@@ -242,7 +241,6 @@ size_t AuTTYSlaveWrite(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint3
 	if (len > 1024)
 		len = 1024;
 
-
 	if (CircBufFull(tty->masterbuf)) {
 		/*AA64Registers* regs = AA64GetCurrentRegCtx();
 		AuScheduleThread(regs);*/
@@ -259,9 +257,9 @@ size_t AuTTYSlaveWrite(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint3
 	/* little bit slow down the slave process,
 	 * it's too fast
 	 */
-	 //AuSleepThread(curr_th,10);
-	 //AuScheduleThread(AA64GetCurrentRegCtx());
-	 //AuScheduleNext();
+	//AuSleepThread(curr_th,10);
+	//AuScheduleThread(AA64GetCurrentRegCtx());
+	//AuScheduleNext();
 	return len;
 }
 
@@ -273,7 +271,6 @@ int AuTTYSlaveClose(AuVFSNode* fs, AuVFSNode* file) {
 }
 
 int AuTTYMasterClose(AuVFSNode* fs, AuVFSNode* file) {
-
 	return 0;
 }
 
@@ -395,7 +392,6 @@ AuVFSNode* AuTTYCreateSlave(TTY* tty) {
  * @return 1 on success and -1 on failure
  */
 int AuTTYCreate(int* master_fd, int* slave_fd) {
-
 	AA64Thread* thr = AuGetCurrentThread();
 	AuProcess* proc = AuProcessFindThread(thr);
 	if (!proc)
@@ -452,7 +448,7 @@ int AuTTYCreate(int* master_fd, int* slave_fd) {
 		return 0;
 	proc->fds[fd] = slave;
 	*slave_fd = fd;
-	
+
 	BordoisilaCapCreate(proc, fd, slave, CAP_OBJ_FILE, rights);
 	return 1;
 }
@@ -469,4 +465,3 @@ void AuTTYInitialise() {
 	AuVFSNode* fs = AuVFSFind("/dev");
 	AuDevFSCreateFile(fs, "/dev/tty", FS_FLAG_DIRECTORY);
 }
-

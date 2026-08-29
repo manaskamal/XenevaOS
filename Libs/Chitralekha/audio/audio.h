@@ -33,10 +33,8 @@
 #include <_xeneva.h>
 
 #ifdef __cplusplus
-XE_EXTERN{
+XE_EXTERN {
 #endif
-
-
 
 #include <stdint.h>
 
@@ -50,25 +48,23 @@ XE_EXTERN{
 #include <sys/socket.h>
 #include <sys/_keipcpostbox.h>
 
+/* Standard Deodhai Request message defined*/
+#define DEODHAI_GET_AUDIO_CONNECTION		"DeodhaiGetAudioConnection"
+#define DEODHAI_AUDIO_GET_GLOBAL_CONNECTION "DeodhaiAudioGetGlobalConnection"
 
-
-	/* Standard Deodhai Request message defined*/
-	#define DEODHAI_GET_AUDIO_CONNECTION "DeodhaiGetAudioConnection"
-	#define DEODHAI_AUDIO_GET_GLOBAL_CONNECTION "DeodhaiAudioGetGlobalConnection"
-
-	#define DEODHAI_AUDIO_MONO   1
-	#define DEODHAI_AUDIO_STEREO 2
+#define DEODHAI_AUDIO_MONO	 1
+#define DEODHAI_AUDIO_STEREO 2
 
 #define DEODHAI_CONNECTION_TYPE_NORMAL 0
 #define DEODHAI_CONNECTION_TYPE_GLOBAL 1
 
-	#pragma pack(push,1)
+#pragma pack(push, 1)
 	typedef struct _deodhai_audio_msg_ {
 		char message[60];
 		uint16_t fromProcessId;
 		uint16_t toProcessId;
-	}DeodhaiAudioMessage;
-	#pragma pack(pop)
+	} DeodhaiAudioMessage;
+#pragma pack(pop)
 
 /*
  * AudioControlPanel is the main way to
@@ -76,52 +72,51 @@ XE_EXTERN{
  * like attack, release, Eq, compression,
  * reverb to be added in future
  */
-#pragma pack(push,1)
-typedef struct _audio_control_panel_ {
-	uint8_t numChannel;
-	float gain;
-	float leftSpeakerScale;
-	float rightSpeakerScale;
-	bool Samplefull;
-	bool ready;
-	bool close;
-	bool global;
-	bool dirty;
-}DeodhaiAudioControlPanel;
+#pragma pack(push, 1)
+	typedef struct _audio_control_panel_ {
+		uint8_t numChannel;
+		float gain;
+		float leftSpeakerScale;
+		float rightSpeakerScale;
+		bool Samplefull;
+		bool ready;
+		bool close;
+		bool global;
+		bool dirty;
+	} DeodhaiAudioControlPanel;
 #pragma pack(pop)
 
+	typedef struct _deodhai_audio_box_ {
+		DeodhaiAudioControlPanel* ctlPanel;
+		uint16_t controlPanelKey;
+		uint16_t sampleBufferKey;
+		void* sampleBuffer;
+		void* ctlPanelBuffer;
+		int pipe;
+	} DeodhaiAudioBox;
 
-typedef struct _deodhai_audio_box_ {
-	DeodhaiAudioControlPanel* ctlPanel;
-	uint16_t controlPanelKey;
-	uint16_t sampleBufferKey;
-	void* sampleBuffer;
-	void* ctlPanelBuffer;
-	int pipe;
-}DeodhaiAudioBox;
-
-
-/*
+	/*
  * DeodhaiAudioOpenConnection -- Creates a new connection with Deodhai
  * audio server
  * @param postbox -- postbox file descriptor
  * @param numChannel -- number of channel -- 1 for MONO, 2 for STEREO
  * @param connType -- 0 - NORMAL connection, 1 -- GLOBAL connection
  */
-XE_LIB DeodhaiAudioBox* DeodhaiAudioOpenConnection(int postbox, uint8_t numChannel, uint8_t connType);
+	XE_LIB DeodhaiAudioBox* DeodhaiAudioOpenConnection(
+		int postbox, uint8_t numChannel, uint8_t connType);
 
-/*
+	/*
  * DeodhaiAudioWrite -- write audio samples to
  * audio box
  * @param box -- Pointer to audio box
  * @param buffer -- sample buffer
  */
-XE_LIB void DeodhaiAudioWrite(DeodhaiAudioBox* box, void* buffer);
-/*
+	XE_LIB void DeodhaiAudioWrite(DeodhaiAudioBox * box, void* buffer);
+	/*
  * DeodhaiAudioCloseConnection -- close an opened audio connection
  * @param box -- Pointer to Deodhai Audio box
  */
-XE_LIB void DeodhaiAudioCloseConnection(DeodhaiAudioBox* box);
+	XE_LIB void DeodhaiAudioCloseConnection(DeodhaiAudioBox * box);
 
 #ifdef __cplusplus
 }

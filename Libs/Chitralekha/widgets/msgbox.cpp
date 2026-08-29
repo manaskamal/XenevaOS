@@ -31,8 +31,8 @@
 #include <sys/_keproc.h>
 #include "button.h"
 
-#define MESSAGEBOX_WIDTH 400
-#define MESSAGEBOX_HEIGHT 150
+#define MESSAGEBOX_WIDTH	  400
+#define MESSAGEBOX_HEIGHT	  150
 #define MESSAGEBOX_BACKGROUND 0xFFD2D2D2
 /*
  * ChMessageBoxDestroy -- destroy message box
@@ -48,22 +48,27 @@ void ChMessageBoxDestroy(ChWidget* wid, ChWindow* win) {
 /*
  * ChMessageBoxPaint -- draw the content of message box
  */
-void ChMessageBoxPaint(ChWidget* wid,ChWindow* win) {
+void ChMessageBoxPaint(ChWidget* wid, ChWindow* win) {
 	ChMessageBox* mb = (ChMessageBox*)wid;
 	ChDrawRect(win->canv, 0, mb->wid.y, mb->wid.w, mb->wid.h, MESSAGEBOX_BACKGROUND);
 	ChFontSetSize(win->app->baseFont, 13);
 	int msgw = ChFontGetWidth(win->app->baseFont, mb->message);
 	int msgh = ChFontGetHeight(win->app->baseFont, mb->message);
-	ChFontDrawText(win->canv, win->app->baseFont, mb->message, mb->wid.w / 2 - msgw / 2,
-		mb->wid.h / 2 /*- msgh / 2*/, 12, BLACK);
-	ChDrawRect(win->canv, 0,mb->wid.y + mb->wid.h - 60, mb->wid.w, 60,0xFFC0C8CF);
-	ChIcon *icon = ChIconGetSystemIcon(mb->icon);
+	ChFontDrawText(win->canv,
+				   win->app->baseFont,
+				   mb->message,
+				   mb->wid.w / 2 - msgw / 2,
+				   mb->wid.h / 2 /*- msgh / 2*/,
+				   12,
+				   BLACK);
+	ChDrawRect(win->canv, 0, mb->wid.y + mb->wid.h - 60, mb->wid.w, 60, 0xFFC0C8CF);
+	ChIcon* icon = ChIconGetSystemIcon(mb->icon);
 	if (icon)
-		ChDrawIcon(win->canv, icon, 10, ((mb->wid.y + 60)/ 2) - 15);
+		ChDrawIcon(win->canv, icon, 10, ((mb->wid.y + 60) / 2) - 15);
 	ChDrawRectUnfilled(win->canv, 0, mb->wid.y + mb->wid.h - 60, mb->wid.w, 60, 0xFF324352);
 }
 
-void ChMessageBoxClose(ChWindow* win, ChWinGlobalControl *ctl){
+void ChMessageBoxClose(ChWindow* win, ChWinGlobalControl* ctl) {
 	uint8_t flags = WINDOW_FLAG_MOVABLE;
 	ChWindowSetFlags(win->parent, flags);
 	_KeProcessSleep(50);
@@ -76,40 +81,38 @@ void ChMessageBoxClose(ChWindow* win, ChWinGlobalControl *ctl){
  * @param mb -- Pointer to message box widget
  * @param buttons -- type of buttons
  */
-void ChMessageBoxPrepareButtons(ChWindow* win, ChMessageBox *mb,uint8_t buttons) {
+void ChMessageBoxPrepareButtons(ChWindow* win, ChMessageBox* mb, uint8_t buttons) {
 	switch (buttons) {
-	case MSGBOX_TYPE_YESNO:{
-							   ChButton *yes = ChCreateButton(mb->wid.x + mb->wid.w - 100*2 - 10, mb->wid.y + mb->wid.h - 60,
-								   100, 30, "Yes"); //
-							   ChWindowAddWidget(win, (ChWidget*)yes);
-							   ChButton* no = ChCreateButton(mb->wid.x + mb->wid.w - 100 - 5, mb->wid.y + mb->wid.h - 60,
-								   100, 30, "No");
-							   ChWindowAddWidget(win, (ChWidget*)no);
-							   break;
+	case MSGBOX_TYPE_YESNO: {
+		ChButton* yes = ChCreateButton(
+			mb->wid.x + mb->wid.w - 100 * 2 - 10, mb->wid.y + mb->wid.h - 60, 100, 30, "Yes"); //
+		ChWindowAddWidget(win, (ChWidget*)yes);
+		ChButton* no = ChCreateButton(
+			mb->wid.x + mb->wid.w - 100 - 5, mb->wid.y + mb->wid.h - 60, 100, 30, "No");
+		ChWindowAddWidget(win, (ChWidget*)no);
+		break;
 	}
-	case MSGBOX_TYPE_OKCANCEL:{
-								  ChButton *Ok = ChCreateButton(mb->wid.x + mb->wid.w - 100 * 2 - 10, mb->wid.y + mb->wid.h - 60,
-									  100, 30, "Okay"); //
-								  ChWindowAddWidget(win, (ChWidget*)Ok);
-								  ChButton* cancel = ChCreateButton(mb->wid.x + mb->wid.w - 100 - 5, mb->wid.y + mb->wid.h - 60,
-									  100, 30, "Cancel");
-								  ChWindowAddWidget(win, (ChWidget*)cancel);
-								  break;
+	case MSGBOX_TYPE_OKCANCEL: {
+		ChButton* Ok = ChCreateButton(
+			mb->wid.x + mb->wid.w - 100 * 2 - 10, mb->wid.y + mb->wid.h - 60, 100, 30, "Okay"); //
+		ChWindowAddWidget(win, (ChWidget*)Ok);
+		ChButton* cancel = ChCreateButton(
+			mb->wid.x + mb->wid.w - 100 - 5, mb->wid.y + mb->wid.h - 60, 100, 30, "Cancel");
+		ChWindowAddWidget(win, (ChWidget*)cancel);
+		break;
 	}
 	case MSGBOX_TYPE_ONLYCLOSE: {
-									ChButton *Close = ChCreateButton(mb->wid.x + mb->wid.w - 100 - 5, mb->wid.y + mb->wid.h - 60,
-										100, 30, "Close");
-									ChWindowAddWidget(win, (ChWidget*)Close);
-									break;
+		ChButton* Close = ChCreateButton(
+			mb->wid.x + mb->wid.w - 100 - 5, mb->wid.y + mb->wid.h - 60, 100, 30, "Close");
+		ChWindowAddWidget(win, (ChWidget*)Close);
+		break;
 	}
 	case MSGBOX_TYPE_ONLYCANCEL: {
-									 ChButton* cancel = ChCreateButton(mb->wid.x + mb->wid.w - 100 - 5, mb->wid.y + mb->wid.h - 60,
-										 100, 30, "Cancel");
-									 ChWindowAddWidget(win, (ChWidget*)cancel);
-									 break;
-
+		ChButton* cancel = ChCreateButton(
+			mb->wid.x + mb->wid.w - 100 - 5, mb->wid.y + mb->wid.h - 60, 100, 30, "Cancel");
+		ChWindowAddWidget(win, (ChWidget*)cancel);
+		break;
 	}
-
 	}
 }
 /*
@@ -120,7 +123,8 @@ void ChMessageBoxPrepareButtons(ChWindow* win, ChMessageBox *mb,uint8_t buttons)
  * @param buttons -- button type
  * @param icon -- icon to show
  */
-XE_EXTERN XE_EXPORT ChMessageBox* ChCreateMessageBox(ChWindow* mainWin,char* title, char* msg, uint8_t buttons, uint8_t icon) {
+XE_EXTERN XE_EXPORT ChMessageBox*
+ChCreateMessageBox(ChWindow* mainWin, char* title, char* msg, uint8_t buttons, uint8_t icon) {
 	ChMessageBox* mb = (ChMessageBox*)malloc(sizeof(ChMessageBox));
 	memset(mb, 0, sizeof(ChMessageBox));
 	mb->message = (char*)malloc(strlen(msg) + 1);
@@ -136,17 +140,22 @@ XE_EXTERN XE_EXPORT ChMessageBox* ChCreateMessageBox(ChWindow* mainWin,char* tit
 	ChFontSetSize(mainWin->app->baseFont, 13);
 
 	/* calculate message box width */
-	int msgboxWidth = ChFontGetWidth(mainWin->app->baseFont, msg) + 65*2;
+	int msgboxWidth = ChFontGetWidth(mainWin->app->baseFont, msg) + 65 * 2;
 	if (msgboxWidth <= 100)
 		msgboxWidth = MESSAGEBOX_WIDTH;
 
-	ChWindow *msgwin = ChCreateWindow(app, WINDOW_FLAG_MOVABLE | WINDOW_FLAG_MESSAGEBOX, title, mainWin->info->x + mainWin->info->width / 2 - msgboxWidth / 2,
-		mainWin->info->y + mainWin->info->height / 2 - MESSAGEBOX_HEIGHT / 2, msgboxWidth, MESSAGEBOX_HEIGHT);
+	ChWindow* msgwin =
+		ChCreateWindow(app,
+					   WINDOW_FLAG_MOVABLE | WINDOW_FLAG_MESSAGEBOX,
+					   title,
+					   mainWin->info->x + mainWin->info->width / 2 - msgboxWidth / 2,
+					   mainWin->info->y + mainWin->info->height / 2 - MESSAGEBOX_HEIGHT / 2,
+					   msgboxWidth,
+					   MESSAGEBOX_HEIGHT);
 	mb->wid.w = msgboxWidth;
 	mb->wid.h = MESSAGEBOX_HEIGHT - 26;
 	ChWindowAddSubWindow(mainWin, msgwin);
 	ChWindowAddWidget(msgwin, (ChWidget*)mb);
-
 
 	for (int i = 0; i < msgwin->GlobalControls->pointer; i++) {
 		ChWinGlobalControl* glbl = (ChWinGlobalControl*)list_get_at(msgwin->GlobalControls, i);

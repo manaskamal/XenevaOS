@@ -45,8 +45,7 @@
 #include <widgets/sidebar.h>
 #include <widgets/toolbar.h>
 
-
-ChitralekhaApp *app;
+ChitralekhaApp* app;
 ChWindow* mainWin;
 static GlimpBox* glimp;
 
@@ -54,37 +53,37 @@ static GlimpBox* glimp;
  * WindowHandleMessage -- handles incoming deodhai messages
  * @param e -- PostBox event message structure
  */
-void WindowHandleMessage(PostEvent *e) {
+void WindowHandleMessage(PostEvent* e) {
 	switch (e->type) {
 	/* handle mouse event from deodhai */
-	case DEODHAI_REPLY_MOUSE_EVENT:{
-									   ChWindowHandleMouse(mainWin, e->dword, e->dword2, e->dword3);
-									   memset(e, 0, sizeof(PostEvent));
-									   break;
+	case DEODHAI_REPLY_MOUSE_EVENT: {
+		ChWindowHandleMouse(mainWin, e->dword, e->dword2, e->dword3);
+		memset(e, 0, sizeof(PostEvent));
+		break;
 	}
 		/* handle key events from deodhai */
-	case DEODHAI_REPLY_KEY_EVENT:{
-									 int code = e->dword;
-									 memset(e, 0, sizeof(PostEvent));
-									 break;
+	case DEODHAI_REPLY_KEY_EVENT: {
+		int code = e->dword;
+		memset(e, 0, sizeof(PostEvent));
+		break;
 	}
 	}
 }
 
 int _baseline_y(int topy, int h) {
 	int ascent = (h * 4) / 5;
-	if (ascent > h) ascent = h;
+	if (ascent > h)
+		ascent = h;
 	return topy + ascent;
 }
 
 /*
 * main -- main entry
 */
-int main(int argc, char* argv[]){
+int main(int argc, char* argv[]) {
 	app = ChitralekhaStartApp(argc, argv);
-	mainWin = ChCreateWindow(app, WINDOW_FLAG_MOVABLE, "Glimpse", 100, 100, 780, 
-		500);
-	
+	mainWin = ChCreateWindow(app, WINDOW_FLAG_MOVABLE, "Glimpse", 100, 100, 780, 500);
+
 	mainWin->color = 0xFFB5B5B5;
 	mainWin->info->alpha = false;
 	mainWin->ChWinPaint = GlimpseWindowPaint;
@@ -129,7 +128,6 @@ int main(int argc, char* argv[]){
 	ChIconOpen(gallery, "/appdata/glimpse/icons/gllry.bmp");
 	ChIconRead(gallery);
 
-
 	ChGridView* gv = ChGridViewCreate(170, 80, 600, 500 - 80, 4, 120, 140, 8);
 	gv->color_bg = mainWin->color;
 	gv->color_label_text = LIGHTBLACK;
@@ -138,8 +136,6 @@ int main(int argc, char* argv[]){
 	gv->vscroll.color_arrow_fg = gv->vscroll.color_thumb;
 	gv->vscroll.color_arrow_bg = mainWin->color;
 
-
-	
 	ChGridAddThumbnail(gv, ico, "dawki", NULL);
 
 	ChGridAddThumbnail(gv, ico1, "founder", NULL);
@@ -147,23 +143,20 @@ int main(int argc, char* argv[]){
 	ChGridAddThumbnail(gv, ico3, "mountain", NULL);
 	ChGridAddThumbnail(gv, ico, "dawki-copy", NULL);
 	ChGridAddThumbnail(gv, ico3, "mountain-cpy", NULL);
-	
-
 
 	gv->force_full_redraw = 1;
 
 	ChSidebar* sb = ChSidebarCreate(0, 80, 170, 500 - 80);
 	sb->bgColor = mainWin->color;
-	ChSidebarSection * sec1 = ChSidebarAddSection(sb, "Favourites");
+	ChSidebarSection* sec1 = ChSidebarAddSection(sb, "Favourites");
 	ChSidebarAddItem(sec1, "Home", homeDir, 0, 0, NULL);
 	ChSidebarAddItem(sec1, "Photos", photoDir, 0, 0, NULL);
 	ChSidebarAddItem(sec1, "Downloads", download, 0, 0, NULL);
-	
+
 	ChSidebarSection* sec2 = ChSidebarAddSection(sb, "Xeneva");
 	ChSidebarAddItem(sec2, "Trash", trsh, 0, 0, NULL);
 	ChSidebarAddItem(sec2, "Gallery", gallery, 0, 0, NULL);
 
-	
 	ChWindowAddWidget(mainWin, (ChWidget*)gv);
 	ChWindowAddWidget(mainWin, (ChWidget*)sb);
 
@@ -174,7 +167,6 @@ int main(int argc, char* argv[]){
 	ChIconOpen(doc, "/appdata/glimpse/icons/fav_t.bmp");
 	ChIconRead(doc);
 
-
 	ChIcon* dll = ChCreateIcon();
 	ChIconOpen(dll, "/appdata/glimpse/icons/albm_t.bmp");
 	ChIconRead(dll);
@@ -182,8 +174,6 @@ int main(int argc, char* argv[]){
 	ChIcon* exe = ChCreateIcon();
 	ChIconOpen(exe, "/appdata/glimpse/icons/view_t.bmp");
 	ChIconRead(exe);
-
-	
 
 	ChIcon* info = ChCreateIcon();
 	ChIconOpen(info, "/appdata/glimpse/icons/info_t.bmp");
@@ -205,7 +195,7 @@ int main(int argc, char* argv[]){
 	ChWindowAddWidget(mainWin, (ChWidget*)tb);
 
 	ChWindowPaint(mainWin);
-	
+
 	/*ChFontSetSize(mainWin->app->baseFont, 23);
 	ChFontDrawText(mainWin->canv, mainWin->app->baseFont, "Photos", 20, _baseline_y(26 + 2, 24), 20, LIGHTBLACK);
 	ChWindowUpdate(mainWin, 10, 26, 100,25, 0, 1);*/

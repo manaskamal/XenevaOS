@@ -34,16 +34,15 @@
 #ifndef __KE_IPC_POSTBOX_H__
 #define __KE_IPC_POSTBOX_H__
 
-#define POSTBOX_CREATE  401
-#define POSTBOX_DESTROY 402
-#define POSTBOX_PUT_EVENT  403
-#define POSTBOX_GET_EVENT  404
-#define POSTBOX_CREATE_ROOT  405
-#define POSTBOX_GET_EVENT_ROOT  406
+#define POSTBOX_CREATE		   401
+#define POSTBOX_DESTROY		   402
+#define POSTBOX_PUT_EVENT	   403
+#define POSTBOX_GET_EVENT	   404
+#define POSTBOX_CREATE_ROOT	   405
+#define POSTBOX_GET_EVENT_ROOT 406
 
-#define POSTBOX_NO_EVENT  -1
-#define POSTBOX_ROOT_ID    1
-
+#define POSTBOX_NO_EVENT -1
+#define POSTBOX_ROOT_ID	 1
 
 //#pragma pack(push,1)
 /*
@@ -62,11 +61,11 @@ typedef struct _post_event_ {
 	uint32_t dword7;
 	uint32_t dword8;
 	uint32_t* pValue;
-	uint32_t *pValue1;
+	uint32_t* pValue1;
 	char* charValue;
 	unsigned char* charValue2;
 	char charValue3[100];
-}PostEvent;
+} PostEvent;
 //#pragma pack(pop)
 
 #endif

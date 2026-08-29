@@ -37,51 +37,49 @@
 #include <_xeneva.h>
 
 #ifdef __cplusplus
-XE_EXTERN{
+XE_EXTERN {
 #endif
 
-
 	// mode_t values for st_mode - values in octal
-#define S_IFMT		0170000	// bit mask for the file type
-#define S_IFSOCK	0140000	// socket
-#define S_IFLNK		0120000	// symbolic link
-#define S_IFREG		0100000	// regular file
-#define S_IFBLK		0060000	// block device
-#define S_IFDIR		0040000	// directory
-#define S_IFCHR		0020000	// character device
-#define S_IFIFO		0010000	// FIFO
-#define S_ISUID		0004000	// set UID bit
-#define S_ISGID		0002000	// set-group-ID bit
-#define S_ISVTX		0001000	// sticky bit
+#define S_IFMT	 0170000 // bit mask for the file type
+#define S_IFSOCK 0140000 // socket
+#define S_IFLNK	 0120000 // symbolic link
+#define S_IFREG	 0100000 // regular file
+#define S_IFBLK	 0060000 // block device
+#define S_IFDIR	 0040000 // directory
+#define S_IFCHR	 0020000 // character device
+#define S_IFIFO	 0010000 // FIFO
+#define S_ISUID	 0004000 // set UID bit
+#define S_ISGID	 0002000 // set-group-ID bit
+#define S_ISVTX	 0001000 // sticky bit
 
 	// Macros for interpreting st_mode
-#define S_ISREG(m)	(((m) & S_IFREG) == S_IFREG)	// regular file?
-#define S_ISDIR(m)  (((m) & S_IFDIR) == S_IFDIR)	// directory?
-#define S_ISCHR(m)  (((m) & S_IFCHR) == S_IFCHR)	// character device?
-#define S_ISBLK(m)  (((m) & S_IFBLK) == S_IFBLK)	// block device?
-#define S_ISFIFO(m) (((m) & S_IFIFO) == S_IFIFO)	// FIFO (named pipe)?
-#define S_ISLNK(m)  (((m) & S_IFLNK) == S_IFLNK)	// symbolic link?
-#define S_ISSOCK(m) (((m) & S_IFSOCK) == S_IFSOCK)	// socket?
+#define S_ISREG(m)	(((m) & S_IFREG) == S_IFREG)   // regular file?
+#define S_ISDIR(m)	(((m) & S_IFDIR) == S_IFDIR)   // directory?
+#define S_ISCHR(m)	(((m) & S_IFCHR) == S_IFCHR)   // character device?
+#define S_ISBLK(m)	(((m) & S_IFBLK) == S_IFBLK)   // block device?
+#define S_ISFIFO(m) (((m) & S_IFIFO) == S_IFIFO)   // FIFO (named pipe)?
+#define S_ISLNK(m)	(((m) & S_IFLNK) == S_IFLNK)   // symbolic link?
+#define S_ISSOCK(m) (((m) & S_IFSOCK) == S_IFSOCK) // socket?
 
 	struct stat {
-		dev_t st_dev;			// device
-		ino_t st_ino;			// inode
-		mode_t st_mode;			// protection
-		nlink_t st_nlink;		// number of hard links
-		uid_t st_uid;			// user ID of owner
-		gid_t st_gid;			// group ID of owner
-		dev_t st_rdev;			// device type (if inode device)
-		off_t st_size;			// total size, in bytes
-		blksize_t st_blksize;	// blocksize for filesystem I/O
-		blkcnt_t st_blocks;		// number of blocks allocated
-		time_t st_atime;		// time of last access
-		time_t st_mtime;		// time of last modification
-		time_t st_ctime;		// time of last change
+		dev_t st_dev;		  // device
+		ino_t st_ino;		  // inode
+		mode_t st_mode;		  // protection
+		nlink_t st_nlink;	  // number of hard links
+		uid_t st_uid;		  // user ID of owner
+		gid_t st_gid;		  // group ID of owner
+		dev_t st_rdev;		  // device type (if inode device)
+		off_t st_size;		  // total size, in bytes
+		blksize_t st_blksize; // blocksize for filesystem I/O
+		blkcnt_t st_blocks;	  // number of blocks allocated
+		time_t st_atime;	  // time of last access
+		time_t st_mtime;	  // time of last modification
+		time_t st_ctime;	  // time of last change
 	};
 
-	XE_LIB int mkdir(const char *, mode_t);
-	XE_LIB int stat(const char *, struct stat *);
-
+	XE_LIB int mkdir(const char*, mode_t);
+	XE_LIB int stat(const char*, struct stat*);
 
 #ifdef __cplusplus
 }

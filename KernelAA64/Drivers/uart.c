@@ -81,7 +81,6 @@ void UARTInitialize() {
 	_uart_mapped = true;
 }
 
-
 bool is_uart_initialized() {
 	return _uart_mapped;
 }
@@ -101,7 +100,8 @@ void uartPutc(char c) {
 	else
 		mmioBase = (uint64_t*)UART0_BASE;
 	volatile char* uart0 = (volatile char*)mmioBase;
-	while ((*(uart0 + 0x18) & (1 << 5)));
+	while ((*(uart0 + 0x18) & (1 << 5)))
+		;
 	*uart0 = c;
 #endif
 }
@@ -129,18 +129,13 @@ void UARTDebugOut_Call(const char* format, void* reg_save_area, void* entry_sp) 
 	va_list args = ((va_list)reg_save_area + 8);
 #define AU_VA_ARG(type) va_arg(args, type)
 #endif
-	while (*format)
-	{
-		if (*format == '%')
-		{
+	while (*format) {
+		if (*format == '%') {
 			++format;
-			if (*format == 'd')
-			{
+			if (*format == 'd') {
 				size_t width = 0;
-				if (format[1] == '.')
-				{
-					for (size_t i = 2; format[i] >= '0' && format[i] <= '9'; ++i)
-					{
+				if (format[1] == '.') {
+					for (size_t i = 2; format[i] >= '0' && format[i] <= '9'; ++i) {
 						width *= 10;
 						width += format[i] - '0';
 					}
@@ -152,56 +147,44 @@ void UARTDebugOut_Call(const char* format, void* reg_save_area, void* entry_sp) 
 					uartPuts("-");
 					i = ((int)i * -1);
 					sztoa(i, buffer, 10);
-				}
-				else {
+				} else {
 					sztoa(i, buffer, 10);
 					size_t len = strlen(buffer);
 				}
 				/*	while (len++ < width)
 				puts("0");*/
 				uartPuts(buffer);
-			}
-			else if (*format == 'c')
-			{
+			} else if (*format == 'c') {
 				int c = AU_VA_ARG(int);
 				//char buffer[sizeof(size_t) * 8 + 1];
 				//sztoa(c, buffer, 10);
 				//puts(buffer);
 				uartPutc(c);
-			}
-			else if (*format == 'x')
-			{
+			} else if (*format == 'x') {
 				size_t x = AU_VA_ARG(size_t);
 				char buffer[sizeof(size_t) * 8 + 1];
 				sztoa(x, buffer, 16);
 				//puts("0x");
 				uartPuts(buffer);
-			}
-			else if (*format == 's')
-			{
+			} else if (*format == 's') {
 				char* x = AU_VA_ARG(char*);
 				uartPuts(x);
-			}
-			else if (*format == 'f')
-			{
+			} else if (*format == 'f') {
 				double x = AU_VA_ARG(double);
 				uartPuts(ftoa(x, 2));
-			}
-			else if (*format == '%')
-			{
+			} else if (*format == '%') {
 				uartPuts(".");
-			}
-			else
-			{
+			} else {
 				char buf[3];
-				buf[0] = '%'; buf[1] = *format; buf[2] = '\0';
+				buf[0] = '%';
+				buf[1] = *format;
+				buf[2] = '\0';
 				uartPuts(buf);
 			}
-		}
-		else
-		{
+		} else {
 			char buf[2];
-			buf[0] = *format; buf[1] = '\0';
+			buf[0] = *format;
+			buf[1] = '\0';
 			uartPuts(buf);
 		}
 		++format;

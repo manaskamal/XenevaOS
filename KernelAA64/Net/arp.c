@@ -120,7 +120,9 @@ void ARPHandlePacket(void* data, AuVFSNode* nic) {
 		if (packet->arp_data.arp_eth_ipv4.arp_spa) {
 			if (!AuARPGet(packet->arp_data.arp_eth_ipv4.arp_spa)) {
 				UARTDebugOut("[aurora]: net ARP added \r\n");
-				ARPProtocolAdd(nic, packet->arp_data.arp_eth_ipv4.arp_spa, packet->arp_data.arp_eth_ipv4.arp_sha);
+				ARPProtocolAdd(nic,
+							   packet->arp_data.arp_eth_ipv4.arp_spa,
+							   packet->arp_data.arp_eth_ipv4.arp_sha);
 			}
 		}
 	}
@@ -128,7 +130,7 @@ void ARPHandlePacket(void* data, AuVFSNode* nic) {
 		ip_ntoa(ntohl(packet->arp_data.arp_eth_ipv4.arp_spa));
 		uint32_t tpa = 0;
 		memcpy(&tpa, &packet->arp_data.arp_eth_ipv4.arp_tpa, 4);
-		
+
 		ip_ntoa(ntohl(tpa));
 		if (eth->ipv4addr && tpa == eth->ipv4addr) {
 			NetARP arp;
@@ -148,11 +150,14 @@ void ARPHandlePacket(void* data, AuVFSNode* nic) {
 			uint32_t tpa, spa = 0;
 			memcpy(&tpa, &arp.arp_data.arp_eth_ipv4.arp_tpa, 4);
 			memcpy(&spa, &arp.arp_data.arp_eth_ipv4.arp_spa, 4);
-		
-			AuEthernetSend(nic, &arp, sizeof(NetARP), ETHERNET_TYPE_ARP, packet->arp_data.arp_eth_ipv4.arp_sha);
+
+			AuEthernetSend(nic,
+						   &arp,
+						   sizeof(NetARP),
+						   ETHERNET_TYPE_ARP,
+						   packet->arp_data.arp_eth_ipv4.arp_sha);
 		}
-	}
-	else if (ntohs(packet->operation) == 2) {
+	} else if (ntohs(packet->operation) == 2) {
 		char spa[17];
 		ip_ntoa(ntohl(packet->arp_data.arp_eth_ipv4.arp_spa));
 	}
