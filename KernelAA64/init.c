@@ -69,7 +69,6 @@
 #include <Fs/Fat/Fat.h>
 #include <Fs/Fat/FatFile.h>
 #include <Fs/Fat/FatDir.h>
-#include <linux/bitops.h>
 #include <Log/klog.h>
 
 extern int _fltused = 1;
@@ -251,7 +250,7 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 #endif
 	/* required virtio-mouse and keyboard */
 	//Here goes board pre driver initialize
-	AuDrvMngrInitialize(info);
+	//AuDrvMngrInitialize(info);
 	UARTDebugOut("[aurora]: driver initialized \r\n");
 
 	FontManagerInitialise();

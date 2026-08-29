@@ -320,6 +320,7 @@
     <ClCompile Include="Hal\gic.c" />
     <ClCompile Include="Hal\profile.c" />
     <ClCompile Include="Hal\sched.c" />
+    <ClCompile Include="Hal\sched_edf.c" />
     <ClCompile Include="Hal\serial.c" />
     <ClCompile Include="Hal\systable.c" />
     <ClCompile Include="Hal\vector.c" />

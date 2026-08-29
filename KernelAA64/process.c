@@ -29,7 +29,7 @@
 *
 **/
 
-#if defined(__GNUC__) || defined(__clang__)
+#if defined(__GNUC__)
 #ifndef __cplusplus
 #include <stdbool.h>
 #endif
@@ -54,6 +54,7 @@
 #include <clean.h>
 #include <Cap/capability.h>
 #include <timer.h>
+#include <Sound/sound.h>
 
 
 static int pid = 1;
@@ -406,7 +407,7 @@ void AuProcessFreeKeResource(AA64Thread* thr) {
  * @param proc -- process to exit
  * @param schedulable -- schedule to next thread
  */
-void AuProcessExit(AuProcess* proc, BOOL schedulable) {
+void AuProcessExit(AuProcess* proc, bool schedulable) {
 	if (proc == root_proc) {
 		UARTDebugOut("[aurora]: cannot exit root process \r\n");
 		return;

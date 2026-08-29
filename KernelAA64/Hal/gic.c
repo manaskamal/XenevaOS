@@ -406,14 +406,14 @@ skip_:
 	uint32_t numirq = ((typer & 0x1f) + 1) * 32;
 	AuTextOut("GIC Number of supported IRQ -> %d \r\n", numirq);
 
-	uint32_t icc_iidr = gic_inl_(GICD(__gic), GICD_IIDR);
+	uint32_t icc_iidr = gic_inl_((uint64_t*)GICD(__gic), GICD_IIDR);
 	uint32_t imp = (icc_iidr & 0xFFF);
 	uint32_t rev = (icc_iidr >> 16) & 0xFF;
 	
 	for (int i = 0; i < (numirq / 32); i++)
 		GICD_ICENABLE(i) = 0xFFFFFFFF;
 
-	uint32_t val = gic_inl_(GICD(__gic), GICD_CTLR);
+	uint32_t val = gic_inl_((uint64_t*)GICD(__gic), GICD_CTLR);
 	if ((val & 1))
 		AuTextOut("GIC already enabled \r\n");
 
@@ -470,7 +470,7 @@ void GICRSetPPIPriority(uint32_t cpu, uint32_t intid, uint8_t prio) {
 void GICEnableIRQ(uint32_t irq) {
 	if (__gic.version >= GIC_VERSION_3) {
 		if (irq < 32) {
-			gic_outl_(GICD(__gic), 0x6000 + irq * 8, 0ULL);
+			gic_outl_((uint64_t*)GICD(__gic), 0x6000 + irq * 8, 0ULL);
 			GICREnablePPI(0, irq);
 			GICRSetPPIPriority(0, irq, 0xA0);
 		}
@@ -536,7 +536,7 @@ void GICIsIRQEdgeTriggered(uint32_t irq) {
 void GICEnableSPIIRQ(uint32_t irq) {
 	//if (__gic.version >= GIC_VERSION_3) {
 	if (irq < 32) {
-		gic_outl_(GICD(__gic), 0x6000 + irq * 8, 0ULL);
+		gic_outl_((uint64_t*)GICD(__gic), 0x6000 + irq * 8, 0ULL);
 		GICREnablePPI(0, irq);
 		GICRSetPPIPriority(0, irq, 0xA0);
 	}

@@ -31,6 +31,7 @@
 #include <ctype.h>
 #include <_null.h>
 #include <Log/_print.h>
+#include <stdio.h>
 
 #define MAX_STRING_LENGTH 4095
 
