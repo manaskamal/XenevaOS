@@ -100,14 +100,14 @@ void _USBDevice (TUSBDevice *pThis)
 	if (pThis->m_pConfigDesc != 0)
 	{
 		//free (pThis->m_pConfigDesc);
-		AuPmmngrFree(pThis->m_pConfigDesc);
+		AuPmmngrReleasePage((uint64_t)pThis->m_pConfigDesc);
 		pThis->m_pConfigDesc = 0;
 	}
 
 	if (pThis->m_pDeviceDesc != 0)
 	{
 		//free (pThis->m_pDeviceDesc);
-		AuPmmngrFree(pThis->m_pDeviceDesc);
+		AuPmmngrReleasePage((uint64_t)pThis->m_pDeviceDesc);
 		pThis->m_pDeviceDesc = 0;
 	}
 
@@ -129,7 +129,7 @@ boolean USBDeviceInitialize (TUSBDevice *pThis)
 	assert (pThis != 0);
 
 	assert (pThis->m_pDeviceDesc == 0);
-	pThis->m_pDeviceDesc = (TUSBDeviceDescriptor*)AuPmmngrAlloc(); // malloc(sizeof(TUSBDeviceDescriptor));
+	pThis->m_pDeviceDesc = (TUSBDeviceDescriptor*)AuPmmngrAllocPage(AURORA_PAGE_NORMAL); // malloc(sizeof(TUSBDeviceDescriptor));
 	assert (pThis->m_pDeviceDesc != 0);
 
 	assert (pThis->m_pHost != 0);
@@ -144,7 +144,7 @@ boolean USBDeviceInitialize (TUSBDevice *pThis)
 		USBDeviceLogWrite (pThis, LOG_ERROR, "Cannot get device descriptor (short)");
 
 		//free (pThis->m_pDeviceDesc);
-		AuPmmngrFree(pThis->m_pDeviceDesc);
+		AuPmmngrReleasePage((uint64_t)pThis->m_pDeviceDesc);
 		pThis->m_pDeviceDesc = 0;
 
 		return FALSE;
@@ -171,7 +171,7 @@ boolean USBDeviceInitialize (TUSBDevice *pThis)
 		USBDeviceLogWrite (pThis, LOG_ERROR, "Cannot get device descriptor");
 
 		//free (pThis->m_pDeviceDesc);
-		AuPmmngrFree(pThis->m_pDeviceDesc);
+		AuPmmngrReleasePage((uint64_t)pThis->m_pDeviceDesc);
 		pThis->m_pDeviceDesc = 0;
 
 		return FALSE;
@@ -218,7 +218,7 @@ boolean USBDeviceInitialize (TUSBDevice *pThis)
 	}
 
 	assert (pThis->m_pConfigDesc == 0);
-	pThis->m_pConfigDesc = (TUSBConfigurationDescriptor*)AuPmmngrAlloc(); // malloc(sizeof(TUSBConfigurationDescriptor));
+	pThis->m_pConfigDesc = (TUSBConfigurationDescriptor*)AuPmmngrAllocPage(AURORA_PAGE_NORMAL); // malloc(sizeof(TUSBConfigurationDescriptor));
 	assert (pThis->m_pConfigDesc != 0);
 
 	if (DWHCIDeviceGetDescriptor (pThis->m_pHost, pThis->m_pEndpoint0,
@@ -229,7 +229,7 @@ boolean USBDeviceInitialize (TUSBDevice *pThis)
 		USBDeviceLogWrite (pThis, LOG_ERROR, "Cannot get configuration descriptor (short)");
 
 		//free (pThis->m_pConfigDesc);
-		AuPmmngrFree(pThis->m_pConfigDesc);
+		AuPmmngrReleasePage((uint64_t)pThis->m_pConfigDesc);
 		pThis->m_pConfigDesc = 0;
 
 		return FALSE;
@@ -243,7 +243,7 @@ boolean USBDeviceInitialize (TUSBDevice *pThis)
 		USBDeviceLogWrite (pThis, LOG_ERROR, "Invalid configuration descriptor");
 		
 		//free (pThis->m_pConfigDesc);
-		AuPmmngrFree(pThis->m_pConfigDesc);
+		AuPmmngrReleasePage((uint64_t)pThis->m_pConfigDesc);
 		pThis->m_pConfigDesc = 0;
 
 		return FALSE;
@@ -254,7 +254,7 @@ boolean USBDeviceInitialize (TUSBDevice *pThis)
 	//free(pThis->m_pConfigDesc);
 	AuPmmngrFree (pThis->m_pConfigDesc);
 
-	pThis->m_pConfigDesc = (TUSBConfigurationDescriptor*)AuPmmngrAlloc();// malloc (nTotalLength);
+	pThis->m_pConfigDesc = (TUSBConfigurationDescriptor*)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);// malloc (nTotalLength);
 	assert (pThis->m_pConfigDesc != 0);
 
 	if (DWHCIDeviceGetDescriptor (pThis->m_pHost, pThis->m_pEndpoint0,
@@ -265,7 +265,7 @@ boolean USBDeviceInitialize (TUSBDevice *pThis)
 		USBDeviceLogWrite (pThis, LOG_ERROR, "Cannot get configuration descriptor");
 
 		//free (pThis->m_pConfigDesc);
-		AuPmmngrFree(pThis->m_pConfigDesc);
+		AuPmmngrReleasePage((uint64_t)pThis->m_pConfigDesc);
 		pThis->m_pConfigDesc = 0;
 
 		return FALSE;

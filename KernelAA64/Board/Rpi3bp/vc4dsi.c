@@ -602,7 +602,7 @@ typedef struct {
 static vc4_fb_t fb;
 
 bool vc4InitDisplay(uint32_t width, uint32_t height, uint32_t depth, display_type_t display_type) {
-	uint64_t pa = (uint64_t)AuPmmngrAlloc();
+	uint64_t pa = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
 	pa = (pa + 0xFULL) & ~0xFULL;
 	mailBOX = (uint32_t*)pa;
 	memset(mailBOX, 0, 4096);

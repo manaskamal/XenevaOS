@@ -133,9 +133,11 @@ void sync_el1_handler(AA64Registers* regs) {
 		AuDumpRegisters(currthr, regs);
 	}
 
-	size_t totalRam = (AuPmmngrGetTotalMem() * 0x1000) / 1024 / 1024;
-	size_t usedRam = (AuPmmngrGetUsedMem() * 0x1000) / 1024 / 1024;
-	size_t freeRam = (AuPmmngrGetFreeMem() * 0x1000) / 1024 / 1024;
+	AuPmmStats pmm_stats;
+	AuPmmngrGetStats(&pmm_stats);
+	size_t totalRam = (pmm_stats.managed_pages * 0x1000) / 1024 / 1024;
+	size_t usedRam = (pmm_stats.allocated_pages * 0x1000) / 1024 / 1024;
+	size_t freeRam = (pmm_stats.free_pages * 0x1000) / 1024 / 1024;
 	// AuTextOut("Total RAM : %d MiB, Used RAM : %d MiB , Free RAM : %d MiB\r\n", totalRam, usedRam, freeRam);
 
 	AuProcess* proc = NULL;

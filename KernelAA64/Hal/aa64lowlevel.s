@@ -494,11 +494,10 @@ aa64_clean_invalidate_dcache:
    msr csselr_el1, x10
    isb
     
-   mrs x1, ccsidr_el1 
+   mrs x1, ccsidr_el1
    and x2, x1, #7
    add x2, x2, #4
-
-   mov x4, #0x3dd
+   mov x4, #0x3ff
    and x4, x4, x1, lsr #3
    clz w5, w4
    mov x7, #0x7fff

@@ -197,10 +197,8 @@ void AuMmngrFileBackAddPageCache(AuMMFileBack* fileb, AuMMPageCache* cache) {
 		fileb->pageCacheLast->next = cache;
 		cache->prev = fileb->pageCacheLast;
 	}
-	AuPageDesc* desc = AuPmmngrGetPageDesc(cache->physicalPage);
-
-	if (desc && (cache->diskBlock != -1))
-		desc->diskblock = cache->diskBlock;
+	if (cache->diskBlock != -1)
+		AuPmmngrSetBackingBlock(cache->physicalPage, cache->diskBlock);
 
 	fileb->pageCacheLast = cache;
 }

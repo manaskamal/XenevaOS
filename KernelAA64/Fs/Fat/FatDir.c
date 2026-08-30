@@ -69,7 +69,7 @@ AuVFSNode* FatCreateDir(AuVFSNode* fsys, char* filename) {
 	AuVFSNode* file = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
 	memset(file, 0, sizeof(AuVFSNode));
 
-	uint64_t* buff = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
+	uint64_t* buff = (uint64_t*)P2V((size_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 	memset(buff, 0, PAGE_SIZE);
 
 	/* now extract only the filename from
@@ -127,7 +127,7 @@ AuVFSNode* FatCreateDir(AuVFSNode* fsys, char* filename) {
 					dirent->date_last_accessed = 0;
 					dirent->file_size = 0;
 
-					uint8_t* entrybuf = (uint8_t*)P2V((size_t)AuPmmngrAlloc());
+					uint8_t* entrybuf = (uint8_t*)P2V((size_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 					memset(entrybuf, 0, PAGE_SIZE);
 
 					FatDir* dot_entry = (FatDir*)entrybuf;
@@ -173,8 +173,8 @@ AuVFSNode* FatCreateDir(AuVFSNode* fsys, char* filename) {
 					aa64_data_cache_clean_range(buff, PAGE_SIZE);
 					AuVDiskWrite(_fs->vdisk, FatClusterToSector32(_fs, parent_clust) + j, 1, buff);
 
-					AuPmmngrFree((void*)V2P((size_t)entrybuf));
-					AuPmmngrFree((void*)V2P((size_t)buff));
+					AuPmmngrReleasePage((uint64_t)V2P((size_t)entrybuf));
+					AuPmmngrReleasePage((uint64_t)V2P((size_t)buff));
 
 					strcpy(file->filename, extract);
 					file->size = 0;
@@ -199,7 +199,7 @@ AuVFSNode* FatCreateDir(AuVFSNode* fsys, char* filename) {
 			break;
 	}
 
-	AuPmmngrFree((void*)V2P((size_t)buff));
+	AuPmmngrReleasePage((uint64_t)V2P((size_t)buff));
 	kfree(parent);
 	kfree(file);
 	return NULL;
@@ -223,7 +223,7 @@ int FatRemoveDir(AuVFSNode* fsys, AuVFSNode* file) {
 
 	bool _is_empty = true;
 
-	uint64_t* buff = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
+	uint64_t* buff = (uint64_t*)P2V((size_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 	memset(buff, 0, PAGE_SIZE);
 	/* verify, if the directory is empty*/
 	while (1) {
@@ -238,7 +238,7 @@ int FatRemoveDir(AuVFSNode* fsys, AuVFSNode* file) {
 				name[10] = 0;
 
 				if ((dirent->filename[0] != 0x00) && (dirent->filename[0] != 0xE5)) {
-					AuPmmngrFree((void*)V2P((size_t)buff));
+					AuPmmngrReleasePage((uint64_t)V2P((size_t)buff));
 					_is_empty = false;
 					break;
 				}
@@ -320,12 +320,12 @@ int FatDirectoryRead(AuVFSNode* fs, AuVFSNode* dir, AuDirectoryEntry* dirent) {
 	FatFS* fatfs = (FatFS*)fs->device;
 	AuVDisk* vdisk = (AuVDisk*)fatfs->vdisk;
 
-	uint64_t* buf = (uint64_t*)P2V((uint64_t)AuPmmngrAlloc());
+	uint64_t* buf = (uint64_t*)P2V((uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 	memset(buf, 0, PAGE_SIZE);
 
 	if ((index / 16) > fatfs->__SectorPerCluster) {
 		dirent->index = -1;
-		AuPmmngrFree((void*)V2P((size_t)buf));
+		AuPmmngrReleasePage((uint64_t)V2P((size_t)buf));
 		return -1;
 	}
 
@@ -335,36 +335,36 @@ int FatDirectoryRead(AuVFSNode* fs, AuVFSNode* dir, AuDirectoryEntry* dirent) {
 
 	if (dir_->filename[0] == 0x00) {
 		dirent->index = -1;
-		AuPmmngrFree((void*)V2P((size_t)buf));
+		AuPmmngrReleasePage((uint64_t)V2P((size_t)buf));
 		return -1;
 	}
 
 	if (dir_->filename[0] == 0xE5 || dir_->filename[0] == 0x05 || dir_->filename[0] == 0xFF) {
-		AuPmmngrFree((void*)V2P((size_t)buf));
+		AuPmmngrReleasePage((uint64_t)V2P((size_t)buf));
 		dirent->index += 1;
 		return -1;
 	}
 
 	if (dir_->attrib & 0x02) {
-		AuPmmngrFree((void*)V2P((size_t)buf));
+		AuPmmngrReleasePage((uint64_t)V2P((size_t)buf));
 		dirent->index += 1;
 		return -1;
 	}
 
 	if (dir_->attrib & 0x04) {
-		AuPmmngrFree((void*)V2P((size_t)buf));
+		AuPmmngrReleasePage((uint64_t)V2P((size_t)buf));
 		dirent->index += 1;
 		return -1;
 	}
 
 	if (dir_->attrib & 0x08) {
-		AuPmmngrFree((void*)V2P((size_t)buf));
+		AuPmmngrReleasePage((uint64_t)V2P((size_t)buf));
 		dirent->index += 1;
 		return -1;
 	}
 
 	if (dir_->attrib & 0x01) {
-		AuPmmngrFree((void*)V2P((size_t)buf));
+		AuPmmngrReleasePage((uint64_t)V2P((size_t)buf));
 		dirent->index += 1;
 		return -1;
 	}
@@ -387,7 +387,7 @@ int FatDirectoryRead(AuVFSNode* fs, AuVFSNode* dir, AuDirectoryEntry* dirent) {
 		dirent->flags = FS_FLAG_DIRECTORY;
 	if (dir_->attrib & 0x20)
 		dirent->flags = FS_FLAG_GENERAL;
-	AuPmmngrFree((void*)V2P((size_t)buf));
+	AuPmmngrReleasePage((uint64_t)V2P((size_t)buf));
 	dirent->index += 1;
 	return 0;
 }

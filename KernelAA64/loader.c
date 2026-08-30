@@ -174,7 +174,7 @@ void AuLoaderMapExecFromCache(AuProcess* proc,
 		for (size_t v_page = (load_addr & ~0xFFFULL); v_page < end_addr; v_page += PAGE_SIZE) {
 			void* phys = AuGetPhysicalAddressEx(proc->cr3, v_page);
 			if (!phys) {
-				phys = AuPmmngrAlloc();
+				phys = (void*)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
 				memset((void*)P2V((size_t)phys), 0, PAGE_SIZE);
 				AuMapPageEx(proc->cr3,
 							(uint64_t)phys,
@@ -276,7 +276,7 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) 
 
 		size_t total_pages = file_offset / PAGE_SIZE + ((file_offset % PAGE_SIZE) ? 1 : 0);
 		for (size_t i = 0; i < total_pages; i++) {
-			uint64_t physcache = (uint64_t)AuPmmngrAlloc();
+			uint64_t physcache = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
 			AuMMPageCache* cache = AuMmngrPageCacheCreate();
 			cache->physicalPage = physcache;
 			cache->diskBlock = 0;
@@ -325,7 +325,7 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) 
 		//AuMmngrRemoveFileBack(fb);
 		//aa64_data_cache_clean_range(file, sizeof(AuVFSNode));
 		//kfree(file);
-		//AuPmmngrFree((void*)V2P((sizeof(buf))));
+		//AuPmmngrReleasePage((uint64_t)V2P((sizeof(buf))));
 
 		/* now load XELoader process, which'll further
 		 * link this dynamic process with its shared
@@ -389,7 +389,7 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) 
 	uint64_t argvkernel = 0;
 	if (num_args) {
 		/* Allocate a memory for passing arguments */
-		uint64_t* args = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
+		uint64_t* args = (uint64_t*)P2V((size_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 		memset(args, 0, PAGE_SIZE);
 		if (!AuMapPageEx(proc->cr3,
 						 (size_t)V2P((uint64_t)args),
@@ -423,7 +423,7 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) 
  */
 void AuInitialiseLoader() {
 	for (int i = 0; i < (1024 * 1024) / 0x1000; i++) {
-		AuMapPage((size_t)AuPmmngrAlloc(), LOADER_SCRATCH_VIRT + i * 0x1000, PTE_NORMAL_MEM);
+		AuMapPage((size_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL), LOADER_SCRATCH_VIRT + i * 0x1000, PTE_NORMAL_MEM);
 	}
 	_ldr_scratchBuffer = (uint64_t*)
 		LOADER_SCRATCH_VIRT; // (uint64_t*)P2V((uint64_t)AuPmmngrAllocBlocks((1024 * 1024) / 0x1000));

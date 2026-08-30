@@ -114,7 +114,7 @@ void XHCIReset(XHCIDevice* dev) {
  * structure
  */
 void XHCIDeviceContextInit(XHCIDevice* dev) {
-	uint64_t phys = (uint64_t)AuPmmngrAlloc();
+	uint64_t phys = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
 	memset((void*)phys, 0, PAGE_SIZE);
 	uint64_t* dcbaa = (uint64_t*)AuMapMMIO(phys, 1);
 	dev->dev_ctx_base_array = dcbaa;
@@ -125,11 +125,11 @@ void XHCIDeviceContextInit(XHCIDevice* dev) {
 	uint32_t max_scratchpad = (scratch_hi << 5) | scratch_lo;
 
 	if (max_scratchpad) {
-		uint64_t* spad = (uint64_t*)AuPmmngrAlloc();
+		uint64_t* spad = (uint64_t*)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
 		memset(spad, 0, PAGE_SIZE);
 
 		for (unsigned i = 0; i < max_scratchpad; i++) {
-			spad[i] = (uint64_t)AuPmmngrAlloc();
+			spad[i] = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
 			memset(&spad[i], 0, PAGE_SIZE);
 		}
 	}
@@ -142,7 +142,7 @@ void XHCIDeviceContextInit(XHCIDevice* dev) {
  * @param dev -- Pointer to usb device
  */
 void XHCICommandRingInit(XHCIDevice* dev) {
-	uint64_t cmd_ring_phys = (uint64_t)AuPmmngrAlloc();
+	uint64_t cmd_ring_phys = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
 	memset((void*)cmd_ring_phys, 0, PAGE_SIZE);
 	dev->cmd_ring = (xhci_trb_t*)AuMapMMIO(cmd_ring_phys, 1);
 
@@ -168,11 +168,11 @@ void XHCICommandRingInit(XHCIDevice* dev) {
 * @param dev -- Pointer to usb device
 */
 void XHCIEventRingInit(XHCIDevice* dev) {
-	uint64_t e_ring_seg_table = (uint64_t)AuPmmngrAlloc();
+	uint64_t e_ring_seg_table = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
 	uint64_t* event_ring_seg_table_v = (uint64_t*)AuMapMMIO(e_ring_seg_table, 1);
 	memset(event_ring_seg_table_v, 0, PAGE_SIZE);
 
-	uint64_t event_ring_seg = (uint64_t)AuPmmngrAlloc();
+	uint64_t event_ring_seg = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
 	uint64_t* event_ring_seg_v = (uint64_t*)AuMapMMIO(event_ring_seg, 1);
 	memset(event_ring_seg_v, 0, PAGE_SIZE);
 	dev->event_ring_segment = event_ring_seg_v;
@@ -538,7 +538,7 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 	
 	XHCIStartDefaultPorts(xhcidev);
 
-	AuThread* t = AuCreateKthread(AnuvabUSB3Thread, P2V((uint64_t)AuPmmngrAlloc() + 4096), (uint64_t)AuGetRootPageTable(), "AnubhavUsb");
+	AuThread* t = AuCreateKthread(AnuvabUSB3Thread, P2V((uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL) + 4096), (uint64_t)AuGetRootPageTable(), "AnubhavUsb");
 	xhcidev->usbThread = t;
 
 	/* Disable all interrupts again because

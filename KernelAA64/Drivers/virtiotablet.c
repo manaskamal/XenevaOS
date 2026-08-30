@@ -215,7 +215,7 @@ void AuVirtioTabletInitialize(uint64_t device) {
 	int queueSz = common->QueueSize;
 	tabletQueueSz = queueSz;
 	uint64_t queuePhys = (uint64_t)
-		AuPmmngrAlloc(); //AuPmmngrAllocBlocks(((sizeof(struct VirtioQueue) * queueSz)) / 0x1000);
+		AuPmmngrAllocPage(AURORA_PAGE_NORMAL); //AuPmmngrAllocBlocks(((sizeof(struct VirtioQueue) * queueSz)) / 0x1000);
 	TabletQueue = (struct VirtioQueue*)AuMapMMIO(
 		queuePhys, 1 /*((sizeof(struct VirtioQueue) * queueSz)) / 0x1000*/);
 	size_t desc_size = queueSz * sizeof(struct VirtioQueue);
@@ -228,7 +228,7 @@ void AuVirtioTabletInitialize(uint64_t device) {
 	isb_flush();
 	dsb_ish();
 
-	uint64_t bufferBase = (uint64_t)AuPmmngrAlloc();
+	uint64_t bufferBase = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
 	TabletInput = (struct VirtioInputEvent*)AuMapMMIO(bufferBase, 1);
 
 	for (int i = 0; i < queueSz; ++i) {

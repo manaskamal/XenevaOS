@@ -36,6 +36,7 @@
 #include "video.h"
 #include "file.h"
 #include "xnout.h"
+
 #include "pe.h"
 #include "physm.h"
 #include "paging.h"
@@ -590,6 +591,7 @@ extern "C" EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemT
 	for (int i = 0; i <= 0x100000 / PAGESIZE; i++) {
 		XEPagingMap(0xFFFFA00000000000 + i * PAGESIZE, XEPmmngrAllocate());
 	}
+	XEPagingInstallPhysicalDirectMap();
 
 	/*
 	 * Changes are made according to RPI_EFI
@@ -598,11 +600,13 @@ extern "C" EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemT
 	 * to drop to EL1 before entering Kernel
 	 */
 	bootinfo.boot_type = BOOT_UEFI_ARM64;
-	bootinfo.allocated_mem = XEGetAlstackptr();
+	bootinfo.allocated_stack = XEGetAlstackptr();
 	bootinfo.reserved_mem_count = XEReserveMemCount();
 	bootinfo.map = map.memmap;
 	bootinfo.descriptor_size = map.DescriptorSize;
 	bootinfo.mem_map_size = map.MemMapSize;
+	bootinfo.physical_direct_map_base = 0xFFFF800000000000ULL;
+	bootinfo.physical_direct_map_size = 512ULL << 30;
 	bootinfo.graphics_framebuffer = XEGetFramebuffer();
 	bootinfo.X_Resolution = XEGetScreenWidth();
 	bootinfo.Y_Resolution = XEGetScreenHeight();
@@ -615,14 +619,14 @@ extern "C" EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemT
 	bootinfo.acpi_table_pointer = xdsp_address;
 	bootinfo.kernel_size = krnl->FileSize;
 	bootinfo.printf_gui = XEGuiPrint;
-	bootinfo.font_binary_address = 0;
+	bootinfo.psf_font_data = 0;
 	bootinfo.driver_entry1 = (uint8_t*)initrd->kBuffer;
 	bootinfo.driver_entry2 = 0;
 	bootinfo.driver_entry3 = 0; // (uint8_t*)xhciAddr;// usbAddr;
 	bootinfo.driver_entry4 = 0;
 	bootinfo.driver_entry5 = 0;
 	bootinfo.driver_entry6 = 0;
-	bootinfo.ap_code = fdt_address;
+	bootinfo.apcode = fdt_address;
 	bootinfo.hid = initrd->FileSize;
 	bootinfo.uid = 0;
 	bootinfo.cid = 0;

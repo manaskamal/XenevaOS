@@ -33,6 +33,7 @@
 #include <stdint.h>
 #include <Uefi.h>
 #include <stddef.h>
+#include <aurora.h>
 #ifndef SIZE_MAX
 #if defined(ARCH_ARM64) || defined(ARCH_X64) || defined(_M_AMD64) || defined(_M_ARM64) ||          \
 	defined(__x86_64__) || defined(__aarch64__)
@@ -71,44 +72,9 @@ typedef struct _FB_INFO_ {
 	uint32_t resvmask;
 } FRAMEBUFFER_INFORMATION, *PFRAMEBUFFER_INFORMATION;
 
-#define BOOT_UEFI_X64	1
-#define BOOT_UEFI_ARM64 2
-/* XEBootInfo, Xeneva Boot information
- * structure passed to the kernel
- */
-typedef struct _XE_BOOT_INFO_ {
-	int boot_type;
-	void* allocated_mem;
-	uint64_t reserved_mem_count;
-	void* map;
-	uint64_t descriptor_size;
-	uint64_t mem_map_size;
-	uint32_t* graphics_framebuffer;
-	size_t fb_size;
-	uint16_t X_Resolution;
-	uint16_t Y_Resolution;
-	uint16_t pixels_per_line;
-	uint32_t redmask;
-	uint32_t greenmask;
-	uint32_t bluemask;
-	uint32_t resvmask;
-	void* acpi_table_pointer;
-	size_t kernel_size;
-	uint8_t* font_binary_address;
-	void (*printf_gui)(const char* text, ...);
-	uint8_t* driver_entry1; //!OTHER
-	uint8_t* driver_entry2; //!NVME
-	uint8_t* driver_entry3; //!AHCI
-	uint8_t* driver_entry4; //!FLOPPY
-	uint8_t* driver_entry5; //!ATA
-	uint8_t* driver_entry6; //!USB
-	void* ap_code;
-
-	/*Boot device specific */
-	uint32_t hid;
-	uint32_t uid;
-	uint32_t cid;
-} XEBootInfo, *XEPBootInfo;
+/* I intentionally have the loader and kernel share one hand-off structure, better not fragment it --axiss */
+typedef KERNEL_BOOT_INFO XEBootInfo;
+typedef KERNEL_BOOT_INFO* XEPBootInfo;
 
 //#pragma pack(pop)
 

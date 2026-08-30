@@ -351,7 +351,7 @@ boolean LAN7800DeviceConfigure (TUSBFunction *pUSBFunction)
 
 	// check chip ID
 
-	u32* nValue = (uint32_t*)AuPmmngrAlloc();
+	u32* nValue = (uint32_t*)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
 	if (   !LAN7800DeviceReadReg (pThis, ID_REV, nValue)
 	    || (*nValue & ID_REV_CHIP_ID_MASK) >> 16 != ID_REV_CHIP_ID_7800)
 	{

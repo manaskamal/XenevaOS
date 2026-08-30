@@ -82,7 +82,7 @@ void XHCIReset(USBDevice *dev) {
  * structure
  */
 void XHCIDeviceContextInit(USBDevice *dev) {
-	uint64_t phys = (uint64_t)AuPmmngrAlloc();
+	uint64_t phys = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
 	memset((void*)phys, 0, PAGE_SIZE);
 	uint64_t* dcbaa = (uint64_t*)AuMapMMIO(phys, 1);
 	dev->dev_ctx_base_array = dcbaa;
@@ -93,11 +93,11 @@ void XHCIDeviceContextInit(USBDevice *dev) {
 	uint32_t max_scratchpad = (scratch_hi << 5) | scratch_lo;
 
 	if (max_scratchpad) {
-		uint64_t *spad = (uint64_t*)AuPmmngrAlloc();
+		uint64_t *spad = (uint64_t*)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
 		memset(spad, 0, PAGE_SIZE);
 
 		for (unsigned i = 0; i < max_scratchpad; i++) {
-			spad[i] = (uint64_t)AuPmmngrAlloc();
+			spad[i] = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
 			memset(&spad[i], 0, PAGE_SIZE);
 		}
 	}
@@ -109,7 +109,7 @@ void XHCIDeviceContextInit(USBDevice *dev) {
  * @param dev -- Pointer to usb device
  */
 void XHCICommandRingInit(USBDevice *dev) {
-	uint64_t cmd_ring_phys = (uint64_t)AuPmmngrAlloc();
+	uint64_t cmd_ring_phys = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
 	memset((void*)cmd_ring_phys, 0, PAGE_SIZE);
 	dev->cmd_ring = (xhci_trb_t*)AuMapMMIO(cmd_ring_phys, 1);
 
@@ -233,11 +233,11 @@ XHCISlot* XHCICreateDeviceCtx(USBDevice* dev, uint8_t slot_num, uint8_t port_spe
 	slot->endpoints = initialize_list();
 
 
-	uint64_t output_ctx = (uint64_t)P2V((uint64_t)AuPmmngrAlloc());
+	uint64_t output_ctx = (uint64_t)P2V((uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 	uint64_t* output_ctx_ptr = (uint64_t*)output_ctx;
 	memset((void*)output_ctx, 0, PAGE_SIZE);
 
-	uint64_t input_ctx = (uint64_t)P2V((uint64_t)AuPmmngrAlloc());
+	uint64_t input_ctx = (uint64_t)P2V((uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 	uint8_t *input_ctx_ptr = (uint8_t*)input_ctx;
 	memset((void*)input_ctx, 0, 4096);
 
@@ -252,7 +252,7 @@ XHCISlot* XHCICreateDeviceCtx(USBDevice* dev, uint8_t slot_num, uint8_t port_spe
 	*raw_offset<volatile uint32_t*>(input_ctx, 0x40) = USB_ENDPOINT_CTX_DWORD0(0, 0, 0, 0, 0, 0);
 	*raw_offset<volatile uint32_t*>(input_ctx, 0x40 + 4) = USB_ENDPOINT_CTX_DWORD1(XHCIGetMaxPacketSize(port_speed), 0, 0, 4, 3);
 
-	uint64_t cmd_ring = (uint64_t)P2V((uint64_t)AuPmmngrAlloc());
+	uint64_t cmd_ring = (uint64_t)P2V((uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 	memset((void*)cmd_ring, 0, 4096);
 
 	uint64_t* cmd_ring_virt = (uint64_t*)AuMapMMIO(V2P(cmd_ring), 1);
@@ -341,11 +341,11 @@ void XHCIProtocolInit(USBDevice *dev) {
 * @param dev -- Pointer to usb device
 */
 void XHCIEventRingInit(USBDevice *dev) {
-	uint64_t e_ring_seg_table = (uint64_t)AuPmmngrAlloc();
+	uint64_t e_ring_seg_table = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
 	uint64_t* event_ring_seg_table_v = (uint64_t*)AuMapMMIO(e_ring_seg_table, 1);
 	memset(event_ring_seg_table_v, 0, PAGE_SIZE);
 
-	uint64_t event_ring_seg = (uint64_t)AuPmmngrAlloc();
+	uint64_t event_ring_seg = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
 	uint64_t* event_ring_seg_v = (uint64_t*)AuMapMMIO(event_ring_seg, 1);
 	memset(event_ring_seg_v, 0, PAGE_SIZE);
 	dev->event_ring_segment = event_ring_seg_v;
@@ -612,9 +612,9 @@ void XHCIPortInitialize(USBDevice *dev, unsigned int port) {
 
 		dev->dev_ctx_base_array[slot_id] = 0;
 
-		AuPmmngrFree((void*)slot->input_context_phys);
-		AuPmmngrFree((void*)slot->output_context_phys);
-		AuPmmngrFree((void*)slot->cmd_ring_base);
+		AuPmmngrReleasePage((uint64_t)slot->input_context_phys);
+		AuPmmngrReleasePage((uint64_t)slot->output_context_phys);
+		AuPmmngrReleasePage((uint64_t)slot->cmd_ring_base);
 
 		XHCISlotRemove(dev, slot_id);
 
@@ -654,7 +654,7 @@ void XHCIPortInitialize(USBDevice *dev, unsigned int port) {
 
 		slot->port_speed = port_speed;
 
-		uint64_t* buffer = (uint64_t*)P2V((uint64_t)AuPmmngrAlloc());
+		uint64_t* buffer = (uint64_t*)P2V((uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 		memset(buffer, 0, 4096);
 
 		USBGetDeviceDesc(dev, slot, slot_id, V2P((uint64_t)buffer), 18);
@@ -695,7 +695,7 @@ void XHCIPortInitialize(USBDevice *dev, unsigned int port) {
 		/* Now we have fully operational endpoint 0 pipe */
 
 		/* Get the product (device) name using string descriptor */
-		uint64_t* string_buf = (uint64_t*)P2V((uint64_t)AuPmmngrAlloc());
+		uint64_t* string_buf = (uint64_t*)P2V((uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 		memset(string_buf, 0, PAGE_SIZE);
 
 		USBGetStringDesc(dev,slot,slot_id,V2P((uint64_t)string_buf),dev_desc->iProduct);
@@ -820,7 +820,7 @@ void XHCIPortInitialize(USBDevice *dev, unsigned int port) {
 			auto max_esit = max_packet_sz * (max_burst_sz + 1);
 			*raw_offset<volatile uint32_t*>(input_ctx_virt, addr + 0) = USB_ENDPOINT_CTX_DWORD0(max_esit >> 16, interval, 0, 0, 0, 0);
 			*raw_offset<volatile uint32_t*>(input_ctx_virt, addr + 0x04) = USB_ENDPOINT_CTX_DWORD1(max_packet_sz, max_burst_sz, 1, ep_type, cerr);
-			uint64_t cmd_ring = (uint64_t)P2V((uint64_t)AuPmmngrAlloc());
+			uint64_t cmd_ring = (uint64_t)P2V((uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 			memset((void*)cmd_ring, 0, 4096);
 			*raw_offset<volatile uint32_t*>(input_ctx_virt, addr + 0x08) = USB_ENDPOINT_CTX_DWORD2(V2P(cmd_ring), 1);
 			*raw_offset<volatile uint32_t*>(input_ctx_virt, addr + 0x0C) = USB_ENDPOINT_CTX_DWORD3(V2P(cmd_ring));
@@ -893,8 +893,8 @@ void XHCIPortInitialize(USBDevice *dev, unsigned int port) {
 		* usb keyboard, mice and flash drive
 		*/
 
-		AuPmmngrFree((void*)V2P((size_t)string_buf));
-		//AuPmmngrFree((void*)V2P((size_t)buffer));
+		AuPmmngrReleasePage((uint64_t)V2P((size_t)string_buf));
+		//AuPmmngrReleasePage((uint64_t)V2P((size_t)buffer));
 		AuReleaseSpinlock(dev->usb_lock);
 	}
 }

@@ -199,7 +199,7 @@ void gpu_initialize_controlq(VirtioCommonCfg* cfg) {
 
 	int queueSz = cfg->QueueSize;
 	controlq_sz = queueSz;
-	uint64_t queuePhys = (uint64_t)AuPmmngrAlloc();//AuPmmngrAllocBlocks(((sizeof(struct VirtioQueue) * queueSz)) / 0x1000);
+	uint64_t queuePhys = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);//AuPmmngrAllocBlocks(((sizeof(struct VirtioQueue) * queueSz)) / 0x1000);
 	controlq = (struct VirtioQueue*)AuMapMMIO(queuePhys, 1);
 	UARTDebugOut("[virtio-gpu]: controlq size : %d \r\n", queueSz);
 	cfg->QueueDesc = queuePhys;
@@ -225,7 +225,7 @@ void gpu_initialize_cursorq(VirtioCommonCfg* cfg) {
 	int queueSz = cfg->QueueSize;
 	UARTDebugOut("[virtio-gpu]: cursorq size : %d \r\n", queueSz);
 	cursorq_sz = queueSz;
-	uint64_t queuePhys = (uint64_t)AuPmmngrAlloc();
+	uint64_t queuePhys = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
 	cursorq = (struct VirtioQueue*)AuMapMMIO(queuePhys, 1);
 	UARTDebugOut("[virtio-gpu]: controlq size : %d \r\n", queueSz);
 	cfg->QueueDesc = queuePhys;
@@ -454,7 +454,7 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 	_is_virgl_supported = false;
 	_resp_ok = false;
 	gpu_resource_id = 1;
-	command_phys = (void*)P2V((uint64_t)AuPmmngrAlloc());
+	command_phys = (void*)P2V((uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 	resp_phys = (void*)((uint64_t)command_phys + 2048);
 	memset(command_phys, 0, PAGE_SIZE);
 

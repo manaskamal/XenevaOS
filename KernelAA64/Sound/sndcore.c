@@ -151,7 +151,7 @@ int AuSoundIOControl(AuVFSNode* node, int code, void* arg) {
 		UARTDebugOut("Registering sound player \r\n");
 		AuDSP* dsp = (AuDSP*)kmalloc(sizeof(AuDSP));
 		memset(dsp, 0, sizeof(AuDSP));
-		uint8_t* buffer = (uint8_t*)P2V((size_t)AuPmmngrAlloc());
+		uint8_t* buffer = (uint8_t*)P2V((size_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 		UARTDebugOut("buffer : %x \r\n", buffer);
 		memset(buffer, 0, PAGE_SIZE);
 		dsp->buffer = AuCircBufInitialise(buffer, SND_BUFF_SZ);
@@ -279,7 +279,7 @@ void AuSoundInitialise() {
 void AuSoundRemoveDSP(uint16_t id) {
 	AuDSP* dsp_ = AuSoundGetDSP(id);
 	if (dsp_) {
-		AuPmmngrFree((void*)V2P((size_t)dsp_->buffer->buffer));
+		AuPmmngrReleasePage((uint64_t)V2P((size_t)dsp_->buffer->buffer));
 		AuCircBufFree(dsp_->buffer);
 		AuRemoveDSP(dsp_);
 		kfree(dsp_);

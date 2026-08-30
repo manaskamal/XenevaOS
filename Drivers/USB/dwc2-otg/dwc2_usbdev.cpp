@@ -65,7 +65,7 @@ static bool dwc2_usbdev_configure(dwc2_core_regs* regs, dwc2_usb_device* dev) {
 
 	uint64_t config_desc_phys = 0;
 
-	void* desc = AuDMAGClassAlloc(dwc2_get_dma_class(), sizeof(usb_config_desc_t), &config_desc_phys);//(void*)P2V((uint64_t)AuPmmngrAlloc());
+	void* desc = AuDMAGClassAlloc(dwc2_get_dma_class(), sizeof(usb_config_desc_t), &config_desc_phys);//(void*)P2V((uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 
 	if (dwc2_control_transfer(regs, &dev->ep, 0x80, 0x06, 0x0200, 0x0000, (void*)config_desc_phys, 9)) {
 		UARTDebugOut("[dwc2-otg]: failed to get configuration descriptor \r\n");
@@ -184,7 +184,7 @@ bool dwc2_usbdev_initialize(dwc2_core_regs* regs, uint8_t port, uint8_t hub_addr
 
 	uint64_t dev_desc_phys = 0;
 	/** get the first device descriptor **/
-	void* desc = (void*)AuDMAGClassAlloc(dwc2_get_dma_class(), sizeof(usb_dev_desc_t), &dev_desc_phys);   //P2V((uint64_t)AuPmmngrAlloc());
+	void* desc = (void*)AuDMAGClassAlloc(dwc2_get_dma_class(), sizeof(usb_dev_desc_t), &dev_desc_phys);   //P2V((uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 	memset(desc, 0, 4096);
 	if (dwc2_control_transfer(regs, &usb->ep, 0x80, 0x06, 0x0100, 0, (void*)dev_desc_phys, 0x0008)) {
 		UARTDebugOut("[dwc2_otg]: failed to device descriptor \r\n");
@@ -198,7 +198,7 @@ bool dwc2_usbdev_initialize(dwc2_core_regs* regs, uint8_t port, uint8_t hub_addr
 
 	if (dwc2_usbdev_setaddress(regs, usb, address)) {
 		kfree(usb);
-		AuPmmngrFree((void*)V2P((uint64_t)desc));
+		AuPmmngrReleasePage((uint64_t)V2P((uint64_t)desc));
 		return 1;
 	}
 
@@ -233,12 +233,12 @@ bool dwc2_usbdev_initialize(dwc2_core_regs* regs, uint8_t port, uint8_t hub_addr
 	dwc2_usb_get_string(regs, usb, desc_->iManufacturer, lang_id, product);
 	UARTDebugOut("manufactured by : %s \r\n", product);
 
-	//AuPmmngrFree(strdesc);
+	//AuPmmngrReleasePage(strdesc);
 
 	if (dwc2_usbdev_configure(regs, usb)) {
 		kfree(usb);
 		UARTDebugOut("[dwc2-otg]: failed to configure the device \r\n");
-		//AuPmmngrFree((void*)V2P((uint64_t)desc));
+		//AuPmmngrReleasePage((uint64_t)V2P((uint64_t)desc));
 		return 1;
 	}
 	return 0;

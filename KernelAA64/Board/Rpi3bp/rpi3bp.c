@@ -261,7 +261,7 @@ void AuRPI3ICInit() {
  */
 void AuRPI3Initialize() {
 	vcmbox_mmio = (uint64_t)AuMapMMIO(VIDEOCORE_MBOX, 1);
-	uint64_t pa = (uint64_t)AuPmmngrAlloc();
+	uint64_t pa = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
 	pa = (pa + 0xFULL) & ~0xFULL;
 	mbox = (uint32_t*)pa;
 	AuTextOut("[aurora]: Rasperry Pi 3b+ board initialized \r\n");

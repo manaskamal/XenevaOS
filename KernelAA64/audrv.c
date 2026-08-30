@@ -317,7 +317,7 @@ void AuDriverLoad(char* filename, AuDriver* driver) {
 	PSECTION_HEADER sectionHeader =
 		RAW_OFFSET(PSECTION_HEADER, &nt->OptionalHeader, nt->FileHeader.SizeOfOptionaHeader);
 
-	uint64_t first_block = (uint64_t)AuPmmngrAlloc();
+	uint64_t first_block = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
 	memset((void*)first_block, 0, 4096);
 	AuMapPage(first_block, driver_load_base, PTE_NORMAL_MEM);
 	memcpy((void*)driver_load_base, scratchBuffer, nt->OptionalHeader.SizeOfHeaders);
@@ -337,7 +337,7 @@ void AuDriverLoad(char* filename, AuDriver* driver) {
 		for (int j = 0; j < req_pages; j++) {
 			uint64_t alloc = (aligned_addr + j * 0x1000);
 			if (!AuGetPhysicalAddress(alloc)) {
-				AuMapPage((uint64_t)AuPmmngrAlloc(), alloc, PTE_NORMAL_MEM);
+				AuMapPage((uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL), alloc, PTE_NORMAL_MEM);
 				memset((void*)alloc, 0, 4096);
 				next_base_offset++;
 			}
@@ -390,13 +390,19 @@ void AuDrvMngrInitialize(KERNEL_BOOT_INFO* info) {
 	driver_load_base = AU_DRIVER_BASE_START;
 	_dev_count_ = 0;
 
-	scratchBuffer = (uint64_t*)P2V((uint64_t)AuPmmngrAllocBlocks((1024 * 1024) / 0x1000));
+	/* I copy driver images through this 1 MiB physically contiguous area, fragile but works? --axiss */
+	scratchBuffer = (uint64_t*)P2V((uint64_t)AuPmmngrAllocPages(
+		(1024 * 1024) / 0x1000, 1, 0, AURORA_PAGE_KERNEL));
+	if (!scratchBuffer) {
+		AuTextOut("[aurora]: unable to allocate driver scratch memory\r\n");
+		return;
+	}
 	memset(scratchBuffer, 0, 1024 * 1024);
 
 	AuTextOut("[aurora]: initializing drivers, please wait... \r\n");
 	/* Load the conf data */
-	uint64_t* conf = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
-	uint64_t* boardcnf = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
+	uint64_t* conf = (uint64_t*)P2V((size_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
+	uint64_t* boardcnf = (uint64_t*)P2V((size_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 	memset(conf, 0, PAGE_SIZE);
 	memset(boardcnf, 0, PAGE_SIZE);
 

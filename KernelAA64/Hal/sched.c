@@ -52,6 +52,8 @@ extern bool aa64_restore_context(AA64Thread* thr);
 extern void aa64_restore_sp(AA64Thread* thr);
 extern void aa64_schedule_init(AA64Thread* current, AA64Thread* init, uint64_t va);
 extern void ret_from_syscall(AA64Thread* thr);
+extern void aa64_resume_exception_frame(AA64Registers* regs,
+	uint64_t elr_el1, uint64_t spsr_el1) __attribute__((noreturn));
 
 extern void first_time_sex(AA64Thread* thr);
 extern void first_time_sex2(AA64Thread* thr);
@@ -263,7 +265,10 @@ AA64Thread* AuCreateKthread(void (*entry)(uint64_t), uint64_t* pml, char* name) 
 	t->name[7] = '\0';
 	t->elr_el1 = (uint64_t)entry;
 	t->x30 = (uint64_t)entry;
-	t->spsr_el1 = 0x3C4; //0x3C4; // 0x245;
+	/* running kernel trampolines at EL1h on their own kernel SP. EL1t wouldve
+	 * run on SP_EL0 and aa64_enter_user would yank that stack out from
+	 * under it before eret --axiss */
+	t->spsr_el1 = 0x3C5;
 	//t->sp = stack;
 	t->pml = (uint64_t)pml;
 	t->sp = AuCreateKernelStack((uint64_t*)t->pml);
@@ -295,7 +300,7 @@ AA64Thread* AuCreateSubKthread(void (*entry)(uint64_t), uint64_t stack, uint64_t
 	t->name[7] = '\0';
 	t->elr_el1 = (uint64_t)entry;
 	t->x30 = (uint64_t)entry;
-	t->spsr_el1 = 0x3C4; //0x3C4; // 0x245;
+	t->spsr_el1 = 0x3C5;
 	//t->sp = stack;
 	t->pml = (uint64_t)pml;
 	t->sp = stack;
@@ -385,23 +390,31 @@ void AuThreadSafeReturn(uint64_t rcx) {
  */
 void AuScheduleThread(AA64Registers* regs) {
 	mask_irqs();
-	if (_scheduler_initialized == 0) {
+	if (_scheduler_initialized == 0 || !regs) {
 		return;
 	}
 	AA64Thread* runThr = current_thread;
 
-	aa64_store_context(runThr);
+	/* the vector wrapper already captured the full interrupted register set,
+	 * so i treat this frame as the only valid resume point for a preempted
+	 * thread, not a C call frame and not originalKSp --axiss */
 	runThr->sp = (uint64_t)regs;
+	runThr->elr_el1 = read_elr_el1();
+	runThr->spsr_el1 = read_spsr_el1();
+	runThr->x0 = regs->x0; runThr->x1 = regs->x1;
+	runThr->x2 = regs->x2; runThr->x3 = regs->x3;
+	runThr->x4 = regs->x4; runThr->x5 = regs->x5;
+	runThr->x6 = regs->x6; runThr->x7 = regs->x7;
+	runThr->x8 = regs->x8;
+	runThr->x19 = regs->x19; runThr->x20 = regs->x20;
+	runThr->x21 = regs->x21; runThr->x22 = regs->x22;
+	runThr->x23 = regs->x23; runThr->x24 = regs->x24;
+	runThr->x25 = regs->x25; runThr->x26 = regs->x26;
+	runThr->x27 = regs->x27; runThr->x28 = regs->x28;
+	runThr->x29 = regs->x29; runThr->x30 = regs->x30;
+	runThr->justStored = true;
 
-sched:
 	aa64_store_fp(runThr->fp_regs, (uint64_t*)&runThr->fpcr, (uint64_t*)&runThr->fpsr);
-
-	if (regs) {
-		runThr->x0 = regs->x0;
-		runThr->x1 = regs->x1;
-		runThr->x30 = regs->x30;
-		runThr->x29 = regs->x29;
-	}
 
 	uint64_t now = AuGetCurrentUS();
 	uint64_t delta = now - runThr->start_time_us;
@@ -447,19 +460,20 @@ sched:
 
 	AuSignalDeliver(current_thread);
 
-	if ((current_thread->threadType & THREAD_LEVEL_USER) && current_thread->first_run == 1) {
-		uint64_t sp = current_thread->sp;
-		//current_thread->sp = current_thread->originalKSp;
-		resume_user(current_thread, (void*)sp);
+	if (!current_thread->justStored) {
+		/* first_time_sex (lol) installs the initial kernel entry, stack and
+		 * PSTATE and never returns. user threads go through
+		 * AuProcessEntUser instead, which builds their EL0 stack before
+		 * its own eret --axiss */
+		first_time_sex(current_thread); //unskippable function name holy shit --axiss
+		__builtin_unreachable();
 	}
 
-	current_thread->sp = current_thread->originalKSp;
-	current_thread->data = regs;
-	if (aa64_restore_context(current_thread)) {
-		return;
-	}
-ret:
-	return;
+	AA64Registers* return_frame = (AA64Registers*)current_thread->sp;
+	current_thread->data = return_frame;
+	aa64_resume_exception_frame(return_frame,
+		current_thread->elr_el1, current_thread->spsr_el1);
+	__builtin_unreachable();
 }
 
 /**
@@ -489,7 +503,7 @@ uint64_t AuCreateKernelStack(uint64_t* pml) {
 	uint64_t location = KERNEL_STACK_LOCATION;
 	location += (uint64_t)ke_stack_idx * KERNEL_STACK_SIZE;
 	for (int i = 0; i < (KERNEL_STACK_SIZE) / 0x1000; i++) {
-		uint64_t addr = (uint64_t)P2V((uint64_t)AuPmmngrAlloc());
+		uint64_t addr = (uint64_t)P2V((uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 		memset((void*)addr, 0, PAGE_SIZE);
 		AuMapPage(V2P(addr), (location + (uint64_t)i * 4096), PTE_AP_RW | PTE_NORMAL_MEM);
 	}
@@ -507,7 +521,7 @@ uint64_t AuCreateSubKernelStack(AuProcess* proc, uint64_t* pml) {
 	uint64_t location = KERNEL_STACK_LOCATION;
 	location += proc->_kstack_index_ * KERNEL_STACK_SIZE;
 	for (int i = 0; i < (KERNEL_STACK_SIZE) / 0x1000; i++) {
-		uint64_t addr = (uint64_t)P2V((uint64_t)AuPmmngrAlloc());
+		uint64_t addr = (uint64_t)P2V((uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 		memset((void*)addr, 0, PAGE_SIZE);
 		AuMapPage(V2P(addr), (location + i * 4096), PTE_AP_RW | PTE_NORMAL_MEM);
 	}

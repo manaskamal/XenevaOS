@@ -39,50 +39,55 @@
 #define AURORA_PAGE_SHM     (1ULL<<1)
 #define AURORA_PAGE_DMA     (1ULL<<2)
 #define AURORA_PAGE_NORMAL (1ULL << 3)
-/**
- * AuPageDesc -- stores metadata
- * about each physical page
- */
+extern void AuPmmngrInitialize(KERNEL_BOOT_INFO *info);
+
+#define PMM_INVALID_PHYS UINT64_MAX
+
+typedef struct _au_pmm_stats_ {
+	uint64_t managed_pages;
+	uint64_t free_pages;
+	uint64_t allocated_pages;
+	uint64_t reserved_pages;
+	uint64_t unmanaged_pages;
+} AuPmmStats;
+
+#ifdef ARCH_ARM64
+AU_EXTERN AU_EXPORT uint64_t AuPmmngrAllocPage(uint8_t page_type);
+AU_EXTERN AU_EXPORT uint64_t AuPmmngrAllocPages(uint32_t pages,
+	uint32_t alignment_pages, uint64_t max_phys_inclusive, uint8_t page_type);
+AU_EXTERN AU_EXPORT bool AuPmmngrReleasePage(uint64_t physaddr);
+AU_EXTERN AU_EXPORT bool AuPmmngrReleasePages(uint64_t physaddr);
+AU_EXTERN AU_EXPORT bool AuPmmngrRetainPage(uint64_t physaddr);
+AU_EXTERN AU_EXPORT uint16_t AuPmmngrPageRefcount(uint64_t physaddr);
+AU_EXTERN AU_EXPORT bool AuPmmngrSetBackingBlock(uint64_t physaddr, int64_t block);
+AU_EXTERN AU_EXPORT int64_t AuPmmngrGetBackingBlock(uint64_t physaddr);
+AU_EXTERN AU_EXPORT void AuPmmngrGetStats(AuPmmStats* stats);
+extern bool AuPmmngrValidate(void);
+#else
 typedef struct _au_page_desc_ {
 	uint64_t phys_addr;
 	uint16_t refcount;
 	uint64_t last_accessed;
 	uint8_t page_type;
 	int64_t diskblock;
-}AuPageDesc;
-
-/**
-* @brief AuPmmngrInitialise -- initialise the physical memory
-* manager
-* @param info -- Pointer to kernel boot info structure
-*/
-extern void AuPmmngrInitialize(KERNEL_BOOT_INFO *info);
-
-/**
- * @brief AuPmmngrAlloc -- Allocate a single physical page
- * frame and return it to the caller
- */
+} AuPageDesc;
 AU_EXTERN AU_EXPORT void* AuPmmngrAlloc();
-
-/**
- * @brief AuPmmngrAllocBlocks -- Allocate multiple physical page frames
- * and return the first page pointer to the caller
- * @param size -- Number of blocks to allocate
- */
 AU_EXTERN AU_EXPORT void* AuPmmngrAllocBlocks(int num);
-
-/**
- * @brief AuPmmngrFree -- Free a physical page frame
- * @param Address -- Pointer to physical page
- */
 AU_EXTERN AU_EXPORT void AuPmmngrFree(void* Address);
-
-/**
- * @brief AuPmmngrFreeBlocks -- Free multiple page frames
- * @param Addr -- Address of the first page frame
- * @param Count -- Number of blocks to be freed
- */
 AU_EXTERN AU_EXPORT void AuPmmngrFreeBlocks(void* Addr, int Count);
+extern uint64_t AuPmmngrGetFreeMem();
+extern uint64_t AuPmmngrGetUsedMem();
+extern uint64_t AuPmmngrGetTotalMem();
+extern void AuPmmngrAddRefcount(uint64_t physaddr, uint16_t count);
+extern uint16_t AuPmmngrGetRefcount(uint64_t physaddr);
+extern AuPageDesc* AuPmmngrGetPageDesc(uint64_t physaddr);
+extern void AuPmmngrSetPageType(uint64_t physaddr, uint8_t flags);
+#define AuPmmngrAllocPage(type) ((uint64_t)AuPmmngrAlloc())
+#define AuPmmngrAllocPages(pages, alignment, ceiling, type) \
+	((uint64_t)AuPmmngrAllocBlocks((int)(pages)))
+#define AuPmmngrReleasePage(physaddr) \
+	(AuPmmngrFree((void*)(uint64_t)(physaddr)), true)
+#endif
 
 /**
  * @brief P2V -- Physical to Virtual conversion
@@ -101,53 +106,4 @@ AU_EXTERN AU_EXPORT uint64_t V2P(uint64_t vaddr);
 * of memory
 */
 extern void AuPmmngrMoveHigher();
-
-/**
- * @brief AuPmmngrGetFreeMem -- returns the total free amount
- * of RAM
- */
-extern uint64_t AuPmmngrGetFreeMem();
-
-/**
- * @brief AuPmmngrGetUsedMem -- return total used page count
- */
-extern uint64_t AuPmmngrGetUsedMem();
-
-/**
- * @brief AuPmmngrGetTotalMem -- returns the total amount of
- * RAM
- */
-extern uint64_t AuPmmngrGetTotalMem();
-
-/**
- * @brief AuPmmngrAddRefcount -- increment reference count
- * of given page
- * @param physaddr -- Physical address to increase reference
- * count of
- * @param count -- number of count to increase
- */
-extern void AuPmmngrAddRefcount(uint64_t physaddr, uint16_t count);
-
-/**
- * @brief AuPmmngrGetRefcount -- returns the number of
- * reference count for given physical address
- * @param physaddr -- physical address to check for reference
- * count
- * @return number of reference count
- */
-extern uint16_t AuPmmngrGetRefcount(uint64_t physaddr);
-
-/**
- * @brief AuPmmngrGetPageDesc -- return the correct
- * page descriptor of given physical address
- * @param physaddr -- physical address number
- */
-extern AuPageDesc* AuPmmngrGetPageDesc(uint64_t physaddr);
-
-/**
- * @brief AuPmmngrSetPageType -- set page type
- * @param physaddr -- Physical address to treat
- * @param flags -- type flags
- */
-extern void AuPmmngrSetPageType(uint64_t physaddr, uint8_t flags);
 #endif

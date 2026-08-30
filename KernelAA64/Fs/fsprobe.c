@@ -57,7 +57,7 @@ aurora_fs_type AuProbeFileSystem(AuVDisk* vdisk) {
 	if (!vdisk->Read)
 		return 0;
 
-	uint8_t* sector = (uint8_t*)P2V((uint64_t)AuPmmngrAlloc());
+	uint8_t* sector = (uint8_t*)P2V((uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 	memset(sector, 0, 512);
 
 	vdisk->Read(vdisk, 0, 1, sector);
@@ -67,19 +67,19 @@ aurora_fs_type AuProbeFileSystem(AuVDisk* vdisk) {
 	// 9 characters
 	if (memcmp(sector + 0x03, "NTFS    ", 8) == 0) {
 		UARTDebugOut("ntfs \r\n");
-		AuPmmngrFree((void*)V2P((uint64_t)sector));
+		AuPmmngrReleasePage((uint64_t)V2P((uint64_t)sector));
 		return AURORA_FS_NTFS;
 	}
 
 	if (memcmp(sector + 0x52, "FAT32   ", 8) == 0) {
 		UARTDebugOut("fat32 \r\n");
-		AuPmmngrFree((void*)V2P((uint64_t)sector));
+		AuPmmngrReleasePage((uint64_t)V2P((uint64_t)sector));
 		return AURORA_FS_FAT32;
 	}
 
 	if (memcmp(sector + 0x36, "FAT16   ", 8) == 0) {
 		UARTDebugOut("fat16 \r\n");
-		AuPmmngrFree((void*)V2P((uint64_t)sector));
+		AuPmmngrReleasePage((uint64_t)V2P((uint64_t)sector));
 		return AURORA_FS_FAT16;
 	}
 
@@ -90,10 +90,10 @@ aurora_fs_type AuProbeFileSystem(AuVDisk* vdisk) {
 
 	uint16_t ext_magic = *(uint16_t*)(sector + 0x38);
 	if (ext_magic == 0xEF53) {
-		AuPmmngrFree((void*)V2P((uint64_t)sector));
+		AuPmmngrReleasePage((uint64_t)V2P((uint64_t)sector));
 		return AURORA_FS_EXT2;
 	}
 
-	AuPmmngrFree((void*)V2P((uint64_t)sector));
+	AuPmmngrReleasePage((uint64_t)V2P((uint64_t)sector));
 	return AURORA_FS_UNKNOWN;
 }

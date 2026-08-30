@@ -208,7 +208,7 @@ void AuVirtioNetRxinitialize(struct VirtioCommonCfg* common) {
 	isb_flush();
 	dsb_ish();
 
-	uint64_t queuePhys = (uint64_t)AuPmmngrAlloc();//AuPmmngrAllocBlocks(((sizeof(struct VirtioQueue) * queueSz)) / 0x1000);
+	uint64_t queuePhys = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);//AuPmmngrAllocBlocks(((sizeof(struct VirtioQueue) * queueSz)) / 0x1000);
 	rxqueue = (struct VirtioQueue*)AuMapMMIO(queuePhys, 1);
 
 	common->QueueDesc = queuePhys;
@@ -220,7 +220,7 @@ void AuVirtioNetRxinitialize(struct VirtioCommonCfg* common) {
 	dsb_ish();
 
 
-	uint64_t rxbuff = (uint64_t)AuPmmngrAllocBlocks(4);
+	uint64_t rxbuff = AuPmmngrAllocPages(4, 1, 0, AURORA_PAGE_DMA);
 	rx_hdrs = (virtio_net_hdr_t*)AuMapMMIO(rxbuff, 4);
 	for (int i = 0; i < RX_BUFFER_COUNT; i++) {
 		rxqueue->buffers[i].Addr = rxbuff + (i * 2048);
@@ -254,7 +254,7 @@ void AuVirtioNetTxinitialize(struct VirtioCommonCfg* common) {
 	common->QueueSize = TX_BUFFER_COUNT;
 	isb_flush();
 	dsb_ish();
-	uint64_t queuePhys = (uint64_t)AuPmmngrAlloc();
+	uint64_t queuePhys = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
 	txqueue = (struct VirtioQueue*)AuMapMMIO(queuePhys, 1);
 	common->QueueDesc = queuePhys;
 	common->QueueAvail = (queuePhys)+OFFSETOF(struct VirtioQueue, available);
@@ -266,7 +266,7 @@ void AuVirtioNetTxinitialize(struct VirtioCommonCfg* common) {
 	isb_flush();
 	dsb_ish();
 
-	uint64_t txbuff = (uint64_t)AuPmmngrAllocBlocks(4);
+	uint64_t txbuff = AuPmmngrAllocPages(4, 1, 0, AURORA_PAGE_DMA);
 	for (int i = 0; i < TX_BUFFER_COUNT; i++) {
 		txqueue->buffers[i].Addr = txbuff + (i * 2048);
 		txqueue->buffers[i].Length = TX_BUFFER_SIZE;

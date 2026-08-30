@@ -19,8 +19,10 @@ extern void GICEnableSPIIRQ(void);
 extern void AuGICAllocateSPI(void);
 extern void GICRegisterSPIHandler(void);
 extern void UARTDebugOut(void);
-extern void AuPmmngrAlloc(void);
-extern void AuPmmngrAllocBlocks(void);
+extern void AuPmmngrAllocPage(void);
+extern void AuPmmngrAllocPages(void);
+extern void AuPmmngrReleasePage(void);
+extern void AuPmmngrReleasePages(void);
 extern void AuTextOut(void);
 extern void AuAddNetAdapter(void);
 extern void AuMapMMIO(void);
@@ -42,8 +44,10 @@ struct kernel_export k_exports[] = {
 	{"AuGICAllocateSPI", (void*)AuGICAllocateSPI},
 	{"GICRegisterSPIHandler", (void*)GICRegisterSPIHandler},
 	{"UARTDebugOut", (void*)UARTDebugOut},
-	{"AuPmmngrAlloc", (void*)AuPmmngrAlloc},
-	{"AuPmmngrAllocBlocks", (void*)AuPmmngrAllocBlocks},
+	{"AuPmmngrAllocPage", (void*)AuPmmngrAllocPage},
+	{"AuPmmngrAllocPages", (void*)AuPmmngrAllocPages},
+	{"AuPmmngrReleasePage", (void*)AuPmmngrReleasePage},
+	{"AuPmmngrReleasePages", (void*)AuPmmngrReleasePages},
 	{"P2V", (void*)P2V},
 	{"AuTextOut", (void*)AuTextOut},
 	{"AuAddNetAdapter", (void*)AuAddNetAdapter},
