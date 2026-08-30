@@ -120,7 +120,7 @@ bool AuSignalDeliver(AA64Thread* current_thread) {
  * @param t -- pointer to thread struct
  */
 void AuSignalInitializeTrampoline(AA64Thread* t) {
-	uint64_t* phys = (uint64_t*)P2V((uint64_t)AuPmmngrAlloc());
+	uint64_t* phys = (uint64_t*)P2V((uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 	memcpy(phys, &aa64_signal_return, PAGE_SIZE);
 	AuMapPageEx((uint64_t*)t->pml,
 				V2P((uint64_t)phys),

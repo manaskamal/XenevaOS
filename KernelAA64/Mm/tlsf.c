@@ -60,6 +60,12 @@ static inline int tlsf_ffs32(uint32_t word) {
 	return (int)__builtin_ffs((int)word) - 1;
 }
 
+static inline int tlsf_ffs64(uint64_t word) {
+	if (word == 0)
+		return -1;
+	return (int)__builtin_ffsll((long long)word) - 1;
+}
+
 /* ---- Block helpers ---- */
 
 static inline size_t blk_size(const block_header_t* hdr) {
@@ -124,7 +130,7 @@ static void tlsf_remove_free_block(tlsf_pool_t* pool, free_block_t* blk, int fl,
 	if (pool->blocks[fl][sl] == NULL) {
 		pool->sl_bitmap[fl] &= ~(1U << sl);
 		if (pool->sl_bitmap[fl] == 0)
-			pool->fl_bitmap &= ~(1U << fl);
+			pool->fl_bitmap &= ~(UINT64_C(1) << fl);
 	}
 }
 
@@ -138,7 +144,7 @@ static void tlsf_insert_free_block(tlsf_pool_t* pool, free_block_t* blk, int fl,
 	pool->blocks[fl][sl] = blk;
 
 	pool->sl_bitmap[fl] |= (1U << sl);
-	pool->fl_bitmap |= (1U << fl);
+	pool->fl_bitmap |= (UINT64_C(1) << fl);
 }
 
 /* ---- Find best-fit free block ---- */
@@ -153,9 +159,15 @@ static free_block_t* tlsf_find_free_block(tlsf_pool_t* pool, size_t size) {
 		return pool->blocks[fl][found_sl];
 	}
 
-	uint32_t fl_masked = pool->fl_bitmap & ~((1U << fl) - 1);
+	/* no suitable second-level bucket left in this first-level class, so i
+	 * search strictly larger fl classes. including `fl` here wouldve let a
+	 * lower SL bucket win and return a block smaller than `size`, thats an
+	 * instant heap overflow in the caller --axiss */
+	uint64_t fl_masked = 0;
+	if ((size_t)(fl + 1) < FL_INDEX_COUNT)
+		fl_masked = pool->fl_bitmap & (~UINT64_C(0) << (fl + 1));
 	if (fl_masked) {
-		int found_fl = tlsf_ffs32(fl_masked);
+		int found_fl = tlsf_ffs64(fl_masked);
 		int found_sl = tlsf_ffs32(pool->sl_bitmap[found_fl]);
 		return pool->blocks[found_fl][found_sl];
 	}
@@ -214,6 +226,8 @@ int tlsf_add_memory(tlsf_pool_t* pool, void* mem, size_t size) {
 void* tlsf_malloc(tlsf_pool_t* pool, size_t size) {
 	if (!pool || !size)
 		return NULL;
+	if (size > (size_t)-1 - TLSF_HEADER_SIZE - TLSF_ALIGN_MASK)
+		return NULL;
 
 	/* `size` is the caller's requested *payload* size. The block we carve
 	 * out must also hold its own header, or the payload the caller actually
@@ -255,9 +269,14 @@ void* tlsf_malloc(tlsf_pool_t* pool, size_t size) {
 
 		blk_set_size(&blk->hdr, size, false, prev_free);
 
-		block_header_t* next = blk_next(&blk->hdr);
-		next->prev_size = size;
-		next->size &= ~BLOCK_FLAG_PREV_FREE;
+		/* the allocated block is followed by new_hdr, whose predecessor is
+		 * allocated. i make the block after the remainder point back by
+		 * the remainder's size and mark its predecessor as free --axiss */
+		new_hdr->prev_size = size;
+		new_hdr->size &= ~BLOCK_FLAG_PREV_FREE;
+		block_header_t* successor = blk_next(new_hdr);
+		successor->prev_size = new_size;
+		successor->size |= BLOCK_FLAG_PREV_FREE;
 
 		int nfl, nsl;
 		tlsf_mapping(new_size, &nfl, &nsl);
@@ -281,6 +300,11 @@ void tlsf_free(tlsf_pool_t* pool, void* ptr) {
 
 	block_header_t* hdr = blk_from_payload(ptr);
 	size_t cur_size = blk_size(hdr);
+	size_t allocated_size = cur_size;
+	/* not letting a repeated free unlink an allocated payload like its
+	 * first words were free-list pointers --axiss */
+	if (blk_is_free(hdr))
+		return;
 	bool was_prev_free = blk_prev_free(hdr);
 	size_t saved_prev_size = hdr->prev_size;
 
@@ -293,6 +317,15 @@ void tlsf_free(tlsf_pool_t* pool, void* ptr) {
 	if (was_prev_free && saved_prev_size > 0) {
 		block_header_t* prev = (block_header_t*)((char*)hdr - saved_prev_size);
 		size_t prev_sz = blk_size(prev);
+		/* merged block inherits the predecessor's PREV_FREE bit here, not
+		 * hdr's. hdr's bit only says `prev` is free, which we already know
+		 * in this branch. propagating it made the merged block claim the
+		 * block before `prev` was free even when it was actually
+		 * allocated, then on ITS next free TLSF unlinked that allocated
+		 * block like it was a free-list node. the resulting
+		 * next_free/prev_free garbage is exactly the 0x2000 -> 0x2010
+		 * translation fault i saw in Namdapha --axiss */
+		bool prev_prev_free = blk_prev_free(prev);
 
 		int fl, sl;
 		tlsf_mapping(prev_sz, &fl, &sl);
@@ -302,7 +335,7 @@ void tlsf_free(tlsf_pool_t* pool, void* ptr) {
 		cur_size += prev_sz;
 		hdr = prev;
 		/* hdr->prev_size stays the same (it was prev's prev_size) */
-		blk_set_size(hdr, cur_size, true, was_prev_free);
+		blk_set_size(hdr, cur_size, true, prev_prev_free);
 	}
 
 	/* 3. Coalesce(lol) forward */
@@ -329,7 +362,9 @@ void tlsf_free(tlsf_pool_t* pool, void* ptr) {
 	tlsf_mapping(blk_size(hdr), &fl, &sl);
 	tlsf_insert_free_block(pool, (free_block_t*)hdr, fl, sl);
 
-	pool->used_size -= (cur_size - TLSF_HEADER_SIZE);
+	size_t payload_size = allocated_size - TLSF_HEADER_SIZE;
+	pool->used_size = pool->used_size >= payload_size ?
+		pool->used_size - payload_size : 0;
 }
 
 void* tlsf_realloc(tlsf_pool_t* pool, void* ptr, size_t size) {
@@ -345,6 +380,8 @@ void* tlsf_realloc(tlsf_pool_t* pool, void* ptr, size_t size) {
 	 * block size (header included) that must actually be carved out — see
 	 * the same fix in tlsf_malloc(). Keep `size` untouched so the fallback
 	 * path below can still pass the original payload size to tlsf_malloc(). */
+	if (size > (size_t)-1 - TLSF_HEADER_SIZE - TLSF_ALIGN_MASK)
+		return NULL;
 	size_t need = TLSF_ALIGN_UP(size + TLSF_HEADER_SIZE);
 	if (need < TLSF_MIN_BLOCK_SIZE)
 		need = TLSF_MIN_BLOCK_SIZE;
@@ -365,13 +402,16 @@ void* tlsf_realloc(tlsf_pool_t* pool, void* ptr, size_t size) {
 			bool pf = blk_prev_free(hdr);
 			blk_set_size(hdr, need, false, pf);
 
-			block_header_t* next = blk_next(hdr);
-			next->prev_size = need;
+			/* hdr + need is the newly-created free block itself, its prev_size
+			 * already got set above, so updating the block after it instead --axiss */
+			block_header_t* next = blk_next(new_block);
+			next->prev_size = rem_size;
 			next->size |= BLOCK_FLAG_PREV_FREE;
 
 			int fl, sl;
 			tlsf_mapping(rem_size, &fl, &sl);
 			tlsf_insert_free_block(pool, (free_block_t*)new_block, fl, sl);
+			pool->used_size -= remaining;
 		}
 		return ptr;
 	}
@@ -396,8 +436,10 @@ void* tlsf_realloc(tlsf_pool_t* pool, void* ptr, size_t size) {
 				bool pf = blk_prev_free(hdr);
 				blk_set_size(hdr, need, false, pf);
 
-				block_header_t* next2 = blk_next(hdr);
-				next2->prev_size = need;
+				/* same as the shrink path, keeping new_block's metadata as is and
+				 * just updating the physical successor of the new free remainder --axiss */
+				block_header_t* next2 = blk_next(new_block);
+				next2->prev_size = rem_size;
 				next2->size |= BLOCK_FLAG_PREV_FREE;
 
 				int nfl, nsl;
@@ -433,6 +475,7 @@ void* tlsf_realloc(tlsf_pool_t* pool, void* ptr, size_t size) {
 		if (copy_size > 0)
 			memcpy(new_ptr, ptr, copy_size);
 	}
-	tlsf_free(pool, ptr);
+	if (new_ptr)
+		tlsf_free(pool, ptr);
 	return new_ptr;
 }

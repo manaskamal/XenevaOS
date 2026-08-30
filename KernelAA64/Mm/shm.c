@@ -125,7 +125,7 @@ int AuCreateSHM(AuProcess* proc, uint16_t key, size_t sz, uint8_t flags) {
 		shm->link_count = 0;
 		shm->frames = (uint64_t*)kmalloc(sizeof(uint64_t) * shm->num_frames);
 		for (int i = 0; i < shm->num_frames; i++)
-			shm->frames[i] = (uint64_t)AuPmmngrAlloc();
+			shm->frames[i] = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
 
 		list_add(shm_list, shm);
 	}
@@ -153,7 +153,7 @@ void AuSHMDelete(AuSHM* shm) {
 	if (shm->link_count == 0) {
 		for (int i = 0; i < shm->num_frames; i++) {
 			size_t phys = shm->frames[i];
-			AuPmmngrFree((void*)phys);
+			AuPmmngrReleasePage((uint64_t)phys);
 		}
 
 		for (int j = 0; j <= shm_list->pointer; j++) {
@@ -303,7 +303,8 @@ void* AuSHMObtainMem(AuProcess* proc, uint16_t id, void* shmaddr, int shmflg) {
 			if (gap >= mem->num_frames * PAGE_SIZE) {
 				for (int j = 0; j < mem->num_frames; j++) {
 					size_t phys = mem->frames[j];
-					AuPmmngrAddRefcount(phys, 1);
+					if (!AuPmmngrRetainPage(phys))
+						return NULL;
 					AuMapPage(phys, last_addr + j * PAGE_SIZE, PTE_AP_RW_USER);
 					isb_flush();
 					dsb_ish();

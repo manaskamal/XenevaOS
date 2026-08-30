@@ -36,7 +36,7 @@ To automate the creation of the FAT32 boot image and launch the OS in QEMU, use 
 3. Run the script:
    `./Scripts/Linux/build_and_run_qemu.sh`
 
-*Note: The GCC build for ARM64 automatically defines `__TARGET_BOARD_QEMU_VIRT__`, which tells the bootloader to bypass the interactive screen resolution menu. This allows QEMU to boot directly into the OS without hanging for user input.*
+*Note: Both the GCC and LLVM/Clang ARM64 builds define `__TARGET_BOARD_QEMU_VIRT__` by default (`BOARD ?= qemu_virt` in `BootAA64/Makefile` and `KernelAA64/Makefile`, independent of toolchain). This controls which ramdisk filename the bootloader loads (`initrd2.img` vs `initrd.img`), UART port selection, and whether a second paging-init pass runs — it does **not** skip the interactive screen-resolution menu (`XEGetScreenResolutionMode` in `BootAA64/xnldr.cpp` runs unconditionally). That menu currently only accepts input from the emulated USB/virtio keyboard, so QEMU always needs one keypress (Enter) to proceed past it; there is no confirmed way to automate this non-interactively yet (`Scripts/Linux/build_and_run_qemu.sh --headless` only bounds the wait with a timeout instead of hanging forever).*
 
 ### Building `initrd2.img` Manually
 If you do not have a pre-built `initrd2.img` or want to generate a fresh one from the `Resources/resources/` directory, you can pass a flag to force a manual build:

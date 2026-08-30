@@ -47,10 +47,9 @@ void AuCleanMMap(AuProcess* proc) {
 		/* also do check, if the physical address is backed by file, 
 		 * need to behave differently with file backed physical addresses 
 		 */
-		AuPageDesc* desc = AuPmmngrGetPageDesc(phys);
 		if (phys != 0) {
-			if (desc->diskblock == -1) {
-				AuPmmngrFree((void*)phys);
+			if (AuPmmngrGetBackingBlock(phys) == -1) {
+				AuPmmngrReleasePage((uint64_t)phys);
 			}
 		}
 	}
@@ -66,9 +65,8 @@ void AuCleanHeapMem(AuProcess* proc) {
 		uint64_t phys =
 			(uint64_t)AuGetPhysicalAddressEx(proc->cr3, PROCESS_BREAK_ADDRESS + i * 0x1000);
 		if (phys) {
-			AuPageDesc* desc = AuPmmngrGetPageDesc(phys);
-			if (desc->diskblock == -1)
-				AuPmmngrFree((void*)phys);
+			if (AuPmmngrGetBackingBlock(phys) == -1)
+				AuPmmngrReleasePage((uint64_t)phys);
 		}
 	}
 	proc->proc_heapmem_len = 0;
@@ -85,9 +83,8 @@ void AuCleanUserStack(AuProcess* proc, AuUserEntry* uentry) {
 	for (int i = 0; i < PROCESS_USER_STACK_SZ / 0x1000; i++) {
 		uint64_t phys = (uint64_t)AuGetPhysicalAddressEx(proc->cr3, location + i * 0x1000);
 		if (phys) {
-			AuPageDesc* desc = AuPmmngrGetPageDesc(phys);
-			if (desc->diskblock == -1)
-				AuPmmngrFree((void*)phys);
+			if (AuPmmngrGetBackingBlock(phys) == -1)
+				AuPmmngrReleasePage((uint64_t)phys);
 		}
 	}
 }
@@ -103,9 +100,8 @@ void AuCleanKernelStack(AuProcess* proc, AA64Thread* thr) {
 	for (int i = 0; i < KERNEL_STACK_SIZE / 0x1000; i++) {
 		uint64_t phys = (uint64_t)AuGetPhysicalAddress(location + i * 0x1000);
 		if (phys) {
-			AuPageDesc* desc = AuPmmngrGetPageDesc(phys);
-			if (desc->diskblock == -1)
-				AuPmmngrFree((void*)phys);
+			if (AuPmmngrGetBackingBlock(phys) == -1)
+				AuPmmngrReleasePage((uint64_t)phys);
 		}
 	}
 }
@@ -159,7 +155,7 @@ void AuProcessClean(AuProcess* parent, AuProcess* killable) {
 		if (uentry->argvaddr != 0) {
 			void* phys = AuGetPhysicalAddressEx(killable->cr3, uentry->argvaddr);
 			if (phys)
-				AuPmmngrFree((void*)phys);
+				AuPmmngrReleasePage((uint64_t)phys);
 		}
 	}
 
@@ -172,7 +168,7 @@ void AuProcessClean(AuProcess* parent, AuProcess* killable) {
 			if (subthr->uentry->argvaddr != 0) {
 				void* phys = AuGetPhysicalAddressEx(killable->cr3, subthr->uentry->argvaddr);
 				if (phys)
-					AuPmmngrFree((void*)phys);
+					AuPmmngrReleasePage((uint64_t)phys);
 			}
 		}
 	}
@@ -180,7 +176,7 @@ void AuProcessClean(AuProcess* parent, AuProcess* killable) {
 	/** free up environment block **/
 	void* envBlock = AuGetPhysicalAddressEx(killable->cr3, 0x5000);
 	if (envBlock)
-		AuPmmngrFree((void*)envBlock);
+		AuPmmngrReleasePage((uint64_t)envBlock);
 
 	/** free up uentry structs **/
 	if (uentry)
@@ -213,9 +209,11 @@ void AuProcessClean(AuProcess* parent, AuProcess* killable) {
 	/** clear up the process data structure **/
 	AuRemoveProcess(parent, killable);
 
-	size_t totalRam = (AuPmmngrGetTotalMem() * 0x1000) / 1024 / 1024;
-	size_t usedRam = (AuPmmngrGetUsedMem() * 0x1000) / 1024 / 1024;
-	size_t freeRam = (AuPmmngrGetFreeMem() * 0x1000) / 1024 / 1024;
+	AuPmmStats pmm_stats;
+	AuPmmngrGetStats(&pmm_stats);
+	size_t totalRam = (pmm_stats.managed_pages * 0x1000) / 1024 / 1024;
+	size_t usedRam = (pmm_stats.allocated_pages * 0x1000) / 1024 / 1024;
+	size_t freeRam = (pmm_stats.free_pages * 0x1000) / 1024 / 1024;
 	UARTDebugOut("[aurora-clean]: process cleaned successfully \r\n");
 	UARTDebugOut(
 		"total mem : %d mb, used mem : %d mb , free mem : %d mb\r\n", totalRam, usedRam, freeRam);

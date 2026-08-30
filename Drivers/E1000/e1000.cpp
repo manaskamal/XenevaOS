@@ -421,22 +421,22 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 		nic_thread_required = true;
 	}
 
-	e1000_nic->rx_phys = (uint64_t)P2V((size_t)AuPmmngrAlloc());
+	e1000_nic->rx_phys = (uint64_t)P2V((size_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 	e1000_nic->rx = (e1000_rx_desc*)e1000_nic->rx_phys;
-	e1000_nic->tx_phys = (uint64_t)P2V((size_t)AuPmmngrAlloc());
+	e1000_nic->tx_phys = (uint64_t)P2V((size_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 	e1000_nic->tx = (e1000_tx_desc*)e1000_nic->tx_phys;
 
 	memset(e1000_nic->rx, 0, sizeof(e1000_rx_desc)* 512);
 	memset(e1000_nic->tx, 0, sizeof(e1000_tx_desc)* 512);
 
 	for (int i = 0; i < 512; i++) {
-		e1000_nic->rx[i].addr = (uint64_t)AuPmmngrAlloc();
+		e1000_nic->rx[i].addr = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
 		e1000_nic->rx_virt[i] = (uint8_t*)AuMapMMIO(e1000_nic->rx[i].addr, 1);
 		e1000_nic->rx[i].status = 0;
 	}
 
 	for (int i = 0; i < E1000_NUM_TX_DESC; ++i) {
-		e1000_nic->tx[i].addr = (uint64_t)AuPmmngrAlloc();
+		e1000_nic->tx[i].addr = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
 		e1000_nic->tx_virt[i] = (uint8_t*)AuMapMMIO(e1000_nic->tx[i].addr, 1);
 		memset(e1000_nic->tx_virt[i], 0, PAGE_SIZE);
 		e1000_nic->tx[i].status = 0;
@@ -523,7 +523,7 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 	}
 	else {
 		AuTextOut("[E1000]: No MSI/MSI-X supported, Spawning e1000 worker thread \n");
-		AuThread* nic_thr = AuCreateKthread(E1000Thread, (uint64_t)P2V((size_t)AuPmmngrAlloc() + PAGE_SIZE),
+		AuThread* nic_thr = AuCreateKthread(E1000Thread, (uint64_t)P2V((size_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL) + PAGE_SIZE),
 			(uint64_t)AuGetRootPageTable(), "E1000Thr");
 	}
 

@@ -49,6 +49,7 @@
 #include <Fs/vfs.h>
 #include <Fs/Dev/devfs.h>
 #include <Drivers/uart.h>
+#include <Drivers/uart.h>
 #include <Hal/AA64/aa64cpu.h>
 #include <Hal/AA64/aa64lowlevel.h>
 #include <Ipc/postbox.h>
@@ -82,12 +83,12 @@ void AuTestPrint() {
  */
 void AuConsoleInitialize(PKERNEL_BOOT_INFO info, bool early) {
 	if (early) {
-		_print_func = info->printf_gui;
+		/* the UEFI loader callback points into XNLDR's image, cant rely on
+		 * that bs mapping once VM bootstrap kicks in since its not part
+		 * of the kernel address space --axiss */
+		_print_func = UARTDebugOut;
 		early_ = early;
-		if (info->boot_type == BOOT_LITTLEBOOT_ARM64) {
-			_print_func = UARTDebugOut;
-			AuUartPutString("[aurora]: printf function set to UARTDebugOut \r\n");
-		}
+		AuUartPutString("[aurora]: early console set to UARTDebugOut \r\n");
 	}
 	aucon = NULL;
 	bypass_autextout = false;

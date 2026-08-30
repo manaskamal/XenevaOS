@@ -152,7 +152,7 @@ void AuUSBMSCSendCommand(AuUSBDeviceStruc *dev, void* bulkIn, void* bulkOut, SCS
 		dev->AuBulkTranfer(dev, (uint64_t)resp, respSize, bulkIn);
 		dev->AuUSBWait(dev, USB_WAIT_EVENT_TRANSFER);
 	}
-	SCSIStatus* csw = (SCSIStatus*)P2V((uint64_t)AuPmmngrAlloc());
+	SCSIStatus* csw = (SCSIStatus*)P2V((uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 	memset(csw, 0, sizeof(SCSIStatus));
 	dev->AuBulkTranfer(dev, V2P((uint64_t)csw), sizeof(SCSIStatus), bulkIn);
 	dev->AuUSBWait(dev, USB_WAIT_EVENT_TRANSFER);
@@ -160,7 +160,7 @@ void AuUSBMSCSendCommand(AuUSBDeviceStruc *dev, void* bulkIn, void* bulkOut, SCS
 	if (csw->signature == SCSI_CMD_STATUS_SIGNATURE) {
 		SeTextOut("USB MSC -- Command submitted successfully \r\n");
 	}
-	AuPmmngrFree((void*)V2P((uint64_t)csw));
+	AuPmmngrReleasePage((uint64_t)V2P((uint64_t)csw));
 }
 
 uint32_t convEndian(uint32_t value) {
@@ -186,7 +186,7 @@ uint32_t cpuBe32(uint32_t value) {
  * @param buffer -- Buffer address where to store the data
  */
 void AuUSBMSCRead(AuUSBDeviceStruc* dev, uint32_t lba, uint16_t numBlocks, uint32_t blockSz, uint64_t* buffer) {
-	SCSICommand* cbw = (SCSICommand*)P2V((uint64_t)AuPmmngrAlloc());
+	SCSICommand* cbw = (SCSICommand*)P2V((uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 	memset(cbw, 0, 4096);
 	cbw->signature = SCSI_CMD_BLK_SIGNATURE;
 	cbw->tag = 0x12345678;
@@ -203,7 +203,7 @@ void AuUSBMSCRead(AuUSBDeviceStruc* dev, uint32_t lba, uint16_t numBlocks, uint3
 
 	AuUSBMSCSendCommand(dev, bulkIn, bulkOut, (SCSICommand*)V2P((uint64_t)cbw), buffer, numBlocks * blockSz);
 
-	AuPmmngrFree((void*)V2P((uint64_t)cbw));
+	AuPmmngrReleasePage((uint64_t)V2P((uint64_t)cbw));
 
 }
 
@@ -216,7 +216,7 @@ void AuUSBMSCRead(AuUSBDeviceStruc* dev, uint32_t lba, uint16_t numBlocks, uint3
  * @param buffer -- buffer to write
  */
 void AuUSBMSCWrite(AuUSBDeviceStruc* dev, uint32_t lba, uint16_t numBlocks, uint32_t blockSz, uint64_t* buffer) {
-	SCSICommand* cbw = (SCSICommand*)P2V((uint64_t)AuPmmngrAlloc());
+	SCSICommand* cbw = (SCSICommand*)P2V((uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 	memset(cbw, 0, 4096);
 	cbw->signature = SCSI_CMD_BLK_SIGNATURE;
 	cbw->tag = 0x12345678;
@@ -240,7 +240,7 @@ void AuUSBMSCWrite(AuUSBDeviceStruc* dev, uint32_t lba, uint16_t numBlocks, uint
 	dev->AuUSBWait(dev, USB_WAIT_EVENT_TRANSFER);
 
 	/* read the status from bulkIn */
-	SCSIStatus* csw = (SCSIStatus*)P2V((uint64_t)AuPmmngrAlloc());
+	SCSIStatus* csw = (SCSIStatus*)P2V((uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 	memset(csw, 0, sizeof(SCSIStatus));
 	dev->AuBulkTranfer(dev, V2P((uint64_t)csw), sizeof(SCSIStatus), bulkIn);
 	dev->AuUSBWait(dev, USB_WAIT_EVENT_TRANSFER);
@@ -249,8 +249,8 @@ void AuUSBMSCWrite(AuUSBDeviceStruc* dev, uint32_t lba, uint16_t numBlocks, uint
 		SeTextOut("USB MSC -- write successfull \r\n");
 	};
 
-	AuPmmngrFree((void*)V2P((uint64_t)cbw));
-	AuPmmngrFree((void*)V2P((uint64_t)csw));
+	AuPmmngrReleasePage((uint64_t)V2P((uint64_t)cbw));
+	AuPmmngrReleasePage((uint64_t)V2P((uint64_t)csw));
 
 }
 
@@ -358,8 +358,8 @@ AU_EXTERN AU_EXPORT int AuUSBDriverMain(AuUSBDeviceStruc* dev) {
 	int t_idx = -1;
 	t_idx = dev->AuUSBWait(dev, USB_WAIT_EVENT_TRANSFER);
 
-	SCSICommand* cbw = (SCSICommand*)P2V((uint64_t)AuPmmngrAlloc());
-	SCSIInquiryResponse* resp = (SCSIInquiryResponse*)P2V((uint64_t)AuPmmngrAlloc());
+	SCSICommand* cbw = (SCSICommand*)P2V((uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
+	SCSIInquiryResponse* resp = (SCSIInquiryResponse*)P2V((uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 	memset(resp, 0, sizeof(SCSIInquiryResponse));
 	memset(cbw, 0, sizeof(SCSICommand));
 
@@ -447,8 +447,8 @@ AU_EXTERN AU_EXPORT int AuUSBDriverMain(AuUSBDeviceStruc* dev) {
 	AuVDiskRegister(disk);
 
 
-	AuPmmngrFree((void*)V2P((uint64_t)resp));
-	AuPmmngrFree((void*)V2P((uint64_t)cbw));
+	AuPmmngrReleasePage((uint64_t)V2P((uint64_t)resp));
+	AuPmmngrReleasePage((uint64_t)V2P((uint64_t)cbw));
 	AuTextOut("USB MSC driver initialised %d \n", t_idx);
 
 	return 0;

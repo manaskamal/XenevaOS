@@ -131,6 +131,10 @@ typedef struct _KERNEL_BOOT_INFO_ {
 	/* mem_map_size -- UEFI memory map size */
 	uint64_t mem_map_size;
 
+	/* Install the physical direct map here from the loader itself --axiss */
+	uint64_t physical_direct_map_base;
+	uint64_t physical_direct_map_size;
+
 	/* graphics_framebuffer -- framebuffer address passed by XNLDR */
 	uint32_t* graphics_framebuffer;
 

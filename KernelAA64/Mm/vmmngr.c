@@ -78,53 +78,41 @@ void envmdebug() {
 	_vmdebug = 0;
 }
 
+/* a table has to be fully initialized and visible to the page-table walker
+ * before its parent descriptor gets published. cleaning only the parent
+ * PTE wouldve left stale contents sitting in a newly allocated child table
+ * on non-coherent table walks --axiss */
+static void vmm_prepare_table(uint64_t page) {
+	void* table = (void*)P2V(page);
+	memset(table, 0, 4096);
+	aa64_data_cache_clean_range(table, 4096);
+	dsb_ish();
+}
+
 /**
  * @brief AuVmmngrInitialize -- initialize the virtual memory manager
  */
 void AuVmmngrInitialize() {
 	AuTextOut("[aurora]: initializing virtual memory manager \r\n");
-	uint64_t* previousL0 = (uint64_t*)read_ttbr0_el1();
-	uint64_t* newL0 = AuPmmngrAlloc();
-	memset(newL0, 0, PAGE_SIZE);
-
-	for (int i = 0; i < 512; i++) {
-		newL0[i] = previousL0[i];
-	}
-
-	if (!AuLittleBootUsed()) {}
-
-	uint64_t* newL1 = AuPmmngrAlloc();
-	memset(newL1, 0, PAGE_SIZE);
-	newL0[pml4_index(PHYSICAL_MEM_BASE)] =
-		(uint64_t)newL1 | 0x3; // | PTE_VALID | PTE_TABLE | PTE_AF;
-	data_cache_flush(&newL0[pml4_index(PHYSICAL_MEM_BASE)]);
-
-	for (int i = 0; i < 512; i++) {
-		uint64_t addr = (uint64_t)i << 30;
-		newL1[pdpt_index(PHYSICAL_MEM_BASE) + i] =
-			(addr | (0ULL << 54) | (0ULL << 53) | (1ULL << 10) | (3ULL << 8) | (0ULL << 6) |
-			 (1UL << 2) | 0b01);
-		//data_cache_flush(&newL1[pdpt_index(PHYSICAL_MEM_BASE) + i]);
-	}
-	uint64_t* kernelAS = AuPmmngrAlloc();
-	memset(kernelAS, 0, PAGE_SIZE);
-
-	for (int i = 0; i < 512; i++) {
-		kernelAS[i] = newL0[i];
-	}
-
-	write_ttbr0_el1(newL0);
-	write_ttbr1_el1(kernelAS);
-
+	/* XNLDR installs the direct physical map while it still owns the
+	 * inherited firmware root, so i leave that active root alone here --axiss */
+	uint64_t* userRoot = (uint64_t*)read_ttbr0_el1();
+	uint64_t* kernelRoot = (uint64_t*)read_ttbr1_el1();
+	/* accessing the live root through the just-installed direct map here,
+	 * since the inherited low alias might point at a different firmware
+	 * translation --axiss */
+	uint64_t* liveKernelRoot =
+		(uint64_t*)(PHYSICAL_MEM_BASE + ((uint64_t)kernelRoot & ~0xFFFULL));
+	liveKernelRoot[pml4_index(KERNEL_BASE_ADDRESS)] = 0;
+	aa64_data_cache_clean_range(&liveKernelRoot[pml4_index(KERNEL_BASE_ADDRESS)],
+		sizeof(uint64_t));
 	tlb_flush_vmalle1is();
 
-	dsb_sy_barrier();
-	isb_flush();
-
-	_RootPaging = newL0;
-	_RootPagingKe = kernelAS;
+	_RootPaging = userRoot;
+	_RootPagingKe = kernelRoot;
 
 	AuPmmngrMoveHigher();
+	UARTDebugOut("[vmm]: direct map online\r\n");
 
 	//tlb_flush_vmalle1is();
 	_MMIOBase = (uint64_t*)MMIO_BASE;
@@ -154,51 +142,77 @@ bool AuMapPage(uint64_t phys_addr, uint64_t virt_addr, uint8_t attrib) {
 	}
 
 	if (!(pml4i[i4] & 1)) {
-		const uint64_t page = (uint64_t)AuPmmngrAlloc();
+		const uint64_t page = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
 		if (_vmdebug)
 			UARTDebugOut("Creating pm4 entry : %x \r\n", page);
+		vmm_prepare_table(page);
 		pml4i[i4] = (page & ~0xFFFUL) | PTE_VALID | PTE_TABLE;
-		memset((void*)P2V(page), 0, 4096);
 		/*dsb_ish();
 		isb_flush();*/
 		void* address = &pml4i[i4];
 		//data_cache_flush((uint64_t*)address);
-		aa64_data_cache_clean_range(address, 4096);
+		/* only this one 8-byte entry got dirtied, not the whole parent
+		 * table page. cleaning all 4096 bytes here was flushing 63 clean
+		 * cache lines nobody even touched, every single time a new table
+		 * level got created during boot --axiss */
+		aa64_data_cache_clean_range(address, sizeof(uint64_t));
 	}
 	uint64_t* pml3 = (uint64_t*)P2V((pml4i[i4] & ~0xFFFULL));
 
 	if (!(pml3[i3] & 1)) {
-		const uint64_t page = (uint64_t)AuPmmngrAlloc();
+		const uint64_t page = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
 		if (_vmdebug)
 			UARTDebugOut("Creating PML3 Entry : %x \r\n", page);
+		vmm_prepare_table(page);
 		pml3[i3] = (page & ~0xFFFUL) | PTE_VALID | PTE_TABLE;
-		memset((void*)P2V(page), 0, 4096);
 		/*dsb_ish();
 		isb_flush();*/
 		void* address = &pml3[i3];
 		//data_cache_flush((uint64_t*)address);
-		aa64_data_cache_clean_range(address, 4096);
+		/* same as the PML4 case above, only this entry is dirty --axiss */
+		aa64_data_cache_clean_range(address, sizeof(uint64_t));
 	}
 
-	uint64_t* pml2 = (uint64_t*)P2V((pml3[i3] & ~0xFFFULL));
+	uint64_t pml3e = pml3[i3];
+	/* a table descriptor carries a physical address, catching caller/table
+	 * corruption here before P2V wraps a high virtual value into FFFF7... --axiss */
+	if ((pml3e & PTE_VALID) && (pml3e & 0x0000FF0000000000ULL)) {
+		UARTDebugOut("[vmm]: invalid L1 descriptor va=%x desc=%x\r\n", virt_addr, pml3e);
+		return false;
+	}
+	if ((pml3e & 0x3) == PTE_VALID) {
+		UARTDebugOut("[vmm]: L1 block cannot be split va=%x desc=%x\r\n", virt_addr, pml3e);
+		return false;
+	}
+	uint64_t* pml2 = (uint64_t*)P2V((pml3e & ~0xFFFULL));
 
 	if (!(pml2[i2] & 1)) {
-		const uint64_t page = (uint64_t)AuPmmngrAlloc();
+		const uint64_t page = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
 		if (_vmdebug)
 			UARTDebugOut("Creating PML2 Entry %x\r\n", page);
+		vmm_prepare_table(page);
 		pml2[i2] = (page & ~0xFFFUL) | PTE_VALID | PTE_TABLE;
-		memset((void*)P2V(page), 0, 4096);
 		/*dsb_ish();
 		isb_flush();*/
 		void* address = &pml2[i2];
 		//data_cache_flush((uint64_t*)address);
-		aa64_data_cache_clean_range(address, 4096);
+		/* same as the PML4 case above, only this entry is dirty --axiss */
+		aa64_data_cache_clean_range(address, sizeof(uint64_t));
 	}
 
-	uint64_t* pml1 = (uint64_t*)P2V((pml2[i2] & ~0xFFFULL));
+	uint64_t pml2e = pml2[i2];
+	if ((pml2e & PTE_VALID) && (pml2e & 0x0000FF0000000000ULL)) {
+		UARTDebugOut("[vmm]: invalid L2 descriptor va=%x desc=%x\r\n", virt_addr, pml2e);
+		return false;
+	}
+	if ((pml2e & 0x3) == PTE_VALID) {
+		UARTDebugOut("[vmm]: L2 block cannot be split va=%x desc=%x\r\n", virt_addr, pml2e);
+		return false;
+	}
+	uint64_t* pml1 = (uint64_t*)P2V((pml2e & ~0xFFFULL));
 
 	if (pml1[i1] & 1) {
-		//AuPmmngrFree((void*)phys_addr);
+		//AuPmmngrReleasePage((uint64_t)phys_addr);
 		AuTextOut("[aurora]: vmmngr page already present : virt=%x phys=%x \r\n",
 				  virt_addr,
 				  (pml1[i1] & ~0xFFFULL));
@@ -211,7 +225,11 @@ bool AuMapPage(uint64_t phys_addr, uint64_t virt_addr, uint8_t attrib) {
 	pml1[i1] = (phys_addr & ~0xFFFULL) | flags;
 	virt_addr &= ~0xFFFULL;
 	void* address = &pml1[i1];
-	aa64_data_cache_clean_range(address, 4096);
+	/* a single leaf PTE changed here, so i clean just its cache line before
+	 * invalidating the corresponding translation. cleaning the whole 4 KiB
+	 * table made every ordinary page map pay for 64 cache lines it didnt
+	 * need to --axiss */
+	aa64_data_cache_clean_range(address, sizeof(uint64_t));
 	dsb_ish();
 	isb_flush();
 
@@ -243,29 +261,32 @@ bool AuMapPageEx(uint64_t* pml4i, uint64_t phys_addr, uint64_t virt_addr, uint8_
 	//uint64_t* pml4i = (uint64_t*)pml4;
 
 	if (!(pml4i[i4] & 1)) {
-		const uint64_t page = (uint64_t)AuPmmngrAlloc();
+		const uint64_t page = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
+		vmm_prepare_table(page);
 		pml4i[i4] = (page & ~0xFFFUL) | PTE_VALID | PTE_TABLE | PTE_AF;
-		memset((void*)P2V(page), 0, 4096);
+		aa64_data_cache_clean_range(&pml4i[i4], sizeof(uint64_t));
 	}
 	uint64_t* pml3 = (uint64_t*)P2V((pml4i[i4] & ~0xFFFULL));
 
 	if (!(pml3[i3] & 1)) {
-		const uint64_t page = (uint64_t)AuPmmngrAlloc();
+		const uint64_t page = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
+		vmm_prepare_table(page);
 		pml3[i3] = (page & ~0xFFFUL) | PTE_VALID | PTE_TABLE | PTE_AF;
-		memset((void*)P2V(page), 0, 4096);
+		aa64_data_cache_clean_range(&pml3[i3], sizeof(uint64_t));
 	}
 
 	uint64_t* pml2 = (uint64_t*)P2V((pml3[i3] & ~0xFFFULL));
 
 	if (!(pml2[i2] & 1)) {
-		const uint64_t page = (uint64_t)AuPmmngrAlloc();
+		const uint64_t page = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
+		vmm_prepare_table(page);
 		pml2[i2] = (page & ~0xFFFUL) | PTE_VALID | PTE_TABLE | PTE_AF;
-		memset((void*)P2V(page), 0, 4096);
+		aa64_data_cache_clean_range(&pml2[i2], sizeof(uint64_t));
 	}
 
 	uint64_t* pml1 = (uint64_t*)P2V((pml2[i2] & ~0xFFFULL));
 	if (pml1[i1] & 1) {
-		//AuPmmngrFree((void*)phys_addr);
+		//AuPmmngrReleasePage((uint64_t)phys_addr);
 		AuTextOut("[aurora]: vmmngr page already present : virt=%x phys=%x \n",
 				  virt_addr,
 				  (pml1[i1] & ~0xFFFULL));
@@ -308,29 +329,29 @@ AuVPage* AuVmmngrGetPage(uint64_t virt_addr, uint8_t _flags, uint8_t mode) {
 		pml4i = (uint64_t*)P2V(read_ttbr1_el1());
 
 	if (!(pml4i[i4] & 1)) {
-		const uint64_t page = (uint64_t)AuPmmngrAlloc();
+		const uint64_t page = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
+		vmm_prepare_table(page);
 		pml4i[i4] = page | flags;
-		data_cache_flush(&pml4i[i4]);
-		memset((void*)P2V(page), 0, 4096);
+		aa64_data_cache_clean_range(&pml4i[i4], sizeof(uint64_t));
 		//tlb_flush((void*)pml4i);
 	}
 	uint64_t* pml3 = (uint64_t*)P2V(pml4i[i4] & ~0xFFFULL);
 
 	if (!(pml3[i3] & 1)) {
-		const uint64_t page = (uint64_t)AuPmmngrAlloc();
+		const uint64_t page = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
+		vmm_prepare_table(page);
 		pml3[i3] = page | flags;
-		data_cache_flush(&pml3[i3]);
-		memset((void*)P2V(page), 0, 4096);
+		aa64_data_cache_clean_range(&pml3[i3], sizeof(uint64_t));
 		//tlb_flush((void*)pml3);
 	}
 
 	uint64_t* pml2 = (uint64_t*)P2V(pml3[i3] & ~0xFFFULL);
 
 	if (!(pml2[i2] & 1)) {
-		const uint64_t page = (uint64_t)AuPmmngrAlloc();
+		const uint64_t page = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
+		vmm_prepare_table(page);
 		pml2[i2] = page | flags;
-		data_cache_flush(&pml2[i2]);
-		memset((void*)P2V(page), 0, 4096);
+		aa64_data_cache_clean_range(&pml2[i2], sizeof(uint64_t));
 		//tlb_flush((void*)pml2);
 	}
 
@@ -340,7 +361,7 @@ AuVPage* AuVmmngrGetPage(uint64_t virt_addr, uint8_t _flags, uint8_t mode) {
 		return page;
 	} else {
 		if (mode & VIRT_GETPAGE_CREATE && !(mode & VIRT_GETPAGE_ONLY_RET)) {
-			uint64_t phys_addr = (uint64_t)AuPmmngrAlloc();
+			uint64_t phys_addr = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
 			memset((void*)P2V(phys_addr), 0, 4096);
 			pml1[i1] = phys_addr & ~0xFFFULL | flags;
 			data_cache_flush(&pml1[i1]);
@@ -481,7 +502,7 @@ void AuFreePages(uint64_t virt_addr, bool free_physical, size_t s) {
 
 		if (free_physical && page != 0) {
 			UARTDebugOut("AuFreePages: Free physical : %x \r\n", V2P((uint64_t)page));
-			AuPmmngrFree((void*)V2P((size_t)page));
+			AuPmmngrReleasePage((uint64_t)V2P((size_t)page));
 		}
 		//data_cache_flush(virt_addr);
 		virt_addr += 4096;
@@ -583,7 +604,7 @@ void* AuGetPhysicalAddressEx(uint64_t* pml4_, uint64_t virt_addr) {
  */
 uint64_t* AuCreateVirtualAddressSpace() {
 	uint64_t* root_pml = (uint64_t*)P2V((size_t)_RootPagingKe);
-	uint64_t* new_pml = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
+	uint64_t* new_pml = (uint64_t*)P2V((size_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 	memset(new_pml, 0, PAGE_SIZE);
 
 	for (int i = 0; i < 512; i++) {

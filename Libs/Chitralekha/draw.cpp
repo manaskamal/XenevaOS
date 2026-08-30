@@ -44,9 +44,20 @@
  * @param h -- Height of the rect
  */
 void ChDrawRect(ChCanvas* canvas, unsigned x, unsigned y, unsigned w, unsigned h, uint32_t col) {
-	for (int i = 0; i < w; i++)
-		for (int j = 0; j < h; j++)
-			ChDrawPixel(canvas, x + i, y + j, col);
+	if (!canvas || !canvas->buffer || x >= canvas->canvasWidth || y >= canvas->canvasHeight)
+		return;
+	if (w > canvas->canvasWidth - x)
+		w = canvas->canvasWidth - x;
+	if (h > canvas->canvasHeight - y)
+		h = canvas->canvasHeight - y;
+#ifdef COLOR_BGRA
+	col = ChColorRGBAtoBGRA(col);
+#endif
+	for (unsigned row = 0; row < h; ++row) {
+		uint32_t* dst = canvas->buffer + (uint64_t)(y + row) * canvas->canvasWidth + x;
+		for (unsigned column = 0; column < w; ++column)
+			dst[column] = col;
+	}
 }
 
 /*

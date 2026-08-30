@@ -212,7 +212,7 @@ void virtioblk_alloc_requestQ(VirtioCommonCfg* cfg) {
 	int queueSz = cfg->QueueSize;
 	requestQ_sz = queueSz;
 	UARTDebugOut("[virtio-blk]: requestQ_sz : %d  - sizeof(VirtioQueue) -> %d \r\n", requestQ_sz, sizeof(VirtioQueue));
-	uint64_t queuePhys = (uint64_t)AuPmmngrAllocBlocks(2);//AuPmmngrAllocBlocks(((sizeof(struct VirtioQueue) * queueSz)) / 0x1000);
+	uint64_t queuePhys = AuPmmngrAllocPages(2, 1, 0, AURORA_PAGE_DMA);
 	requestQ = (struct VirtioBLKQueue*)AuMapMMIO(queuePhys, 2);
 
 	cfg->QueueDesc = queuePhys;
