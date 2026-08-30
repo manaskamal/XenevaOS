@@ -16,6 +16,7 @@ Once the installation is completed, the Clang directory needs to be added to Win
 
 ## ImDisk as disk imager
 The XenevaOS bootloader expects a ramdisk image to be present inside the boot partition. The boot partition is a regular FAT32 partition that UEFI expects. The ramdisk image __"initrd2.img"__ contains all the system files that XenevaOS needs to boot smoothly. The image should be formatted with the FAT32 filesystem with a size of at least 358 MB and an allocation unit of 4 KiB. <br><br>
+*Note: 358 MB is a safe fixed size for manually creating the image by hand (e.g. with ImDisk, below). `Scripts/Linux/build_and_run_qemu.sh` no longer uses a fixed size — it sizes `initrd2.img` automatically from the actual contents of `Resources/resources/` (with headroom), since that tree is currently much smaller than 358 MB. Use `--initrd-size-mb=N` to override it.*<br><br>
 To create a blank image file, follow here:
 
 - Create a blank batch file, copy the following code, and run it in the Command Prompt:

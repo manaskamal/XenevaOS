@@ -84,14 +84,22 @@ $(EFI_OUTPUT): $(OBJS)
 else
 # Original GCC compilation
 $(SO_OUTPUT): $(CRT0) $(OBJS)
-	$(LD) -nostdlib --warn-common --no-undefined --build-id=sha1 -z noexecstack -z max-page-size=4096 \
+	# clib.o and gnu-efi's libefi.a both define memset/memcpy, and that's
+	# always a hard link error, not a -fno-common thing. clib.o links before
+	# the archive so its copy wins; I just needed to tell ld to allow it
+	# instead of aborting on the duplicate --axiss
+	$(LD) -nostdlib --warn-common --no-undefined --allow-multiple-definition --build-id=sha1 -z noexecstack -z max-page-size=4096 \
 	-shared -Bsymbolic $(LIBDIRS) -T$(LDSCRIPT) $(CRT0) $(OBJS) -o $@ $(LIBS)
 
 $(EFI_OUTPUT): $(SO_OUTPUT)
 	@mkdir -p $(dir $@)
+	# used to pass --target=efi-app-aarch64 here but this binutils (2.47)
+	# doesn't ship that BFD target at all, objcopy just said "file format
+	# not recognized". pei-aarch64-little is the real one for aarch64 here
+	# (same target KernelAA64/Makefile already uses) --axiss
 	$(OBJCOPY) -j .text -j .sdata -j .data -j .dynamic -j .rodata -j .rel -j .rela \
 	           -j .rel.* -j .rela.* -j .rel* -j .rela* -j .areloc \
-	           -j .reloc --target=efi-app-aarch64 --subsystem=10 $< $@
+	           -j .reloc -O pei-aarch64-little --subsystem=10 $< $@
 endif
 
 # Compile C++ source files

@@ -20,3 +20,30 @@ fi
 if [[ -z "${PACMAN_AUTH:-}" ]]; then
   export PACMAN_AUTH="sudo"
 fi
+
+# update the system
+v sudo pacman -Syu --noconfirm
+
+# common for both llvm and gcc
+v sudo pacman -S --needed --noconfirm make
+v sudo pacman -S --needed --noconfirm dosfstools
+v sudo pacman -S --needed --noconfirm mtools
+v sudo pacman -S --needed --noconfirm qemu-system-aarch64
+v sudo pacman -S --needed --noconfirm edk2-aarch64
+
+case $2 in
+	--llvm|llvm)
+		v sudo pacman -S --needed --noconfirm clang
+		v sudo pacman -S --needed --noconfirm lld
+		v sudo pacman -S --needed --noconfirm llvm
+	;;
+	--gcc|gcc)
+		v sudo pacman -S --needed --noconfirm aarch64-linux-gnu-gcc
+		v sudo pacman -S --needed --noconfirm aarch64-linux-gnu-binutils
+		cd ../..
+		v git clone https://github.com/vathpela/gnu-efi
+	;;
+	*)
+		printf "${STY_RED}Plese choose from llvm and gcc. Aborting ...${STY_RST}\n"
+	;;
+esac
