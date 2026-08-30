@@ -31,7 +31,7 @@ ifeq ($(TOOLCHAIN), llvm)
     LLVM_TARGET = -target aarch64-unknown-windows
     
     CFLAGS  = -Wall -Wextra -ffreestanding -fno-stack-protector -fno-stack-check -fno-strict-aliasing \
-              -O0 -g -gdwarf-4 $(LLVM_TARGET) -fno-builtin \
+              -O2 -g -gdwarf-4 $(LLVM_TARGET) -fno-builtin \
               -DARCH_ARM64 $(BOARD_FLAG) -D__STDC_LIMIT_MACROS \
               -Wno-error=incompatible-pointer-types -Wno-error=int-conversion \
               -Wno-implicit-function-declaration -Wno-error=conflicting-types $(INCLUDES)

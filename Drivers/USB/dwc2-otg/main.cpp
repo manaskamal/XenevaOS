@@ -651,7 +651,7 @@ void dwc2_add_to_used_dma_list(void* phys) {
 void dwc2_free_used_dma_list() {
 	for (int i = 0; i < setupPacketBuffers->pointer; i++) {
 		void* phys = (void*)list_remove(setupPacketBuffers, i);
-		AuPmmngrFree((void*)V2P((uint64_t)phys));
+		AuPmmngrReleasePage((uint64_t)V2P((uint64_t)phys));
 	}
 }
 

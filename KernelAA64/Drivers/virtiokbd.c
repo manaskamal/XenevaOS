@@ -201,7 +201,7 @@ void AuVirtioKbdInitialize(uint64_t device) {
 	UARTDebugOut("virtio: queue sz : %d \n", queueSz);
 
 	uint64_t queuePhys = (uint64_t)
-		AuPmmngrAlloc(); //AuPmmngrAllocBlocks(((sizeof(struct VirtioQueue) * queueSz))/0x1000);
+		AuPmmngrAllocPage(AURORA_PAGE_NORMAL); //AuPmmngrAllocBlocks(((sizeof(struct VirtioQueue) * queueSz))/0x1000);
 	queue = (struct VirtioQueue*)AuMapMMIO(queuePhys,
 										   1 /*((sizeof(struct VirtioQueue)*queueSz))/0x1000*/);
 
@@ -215,7 +215,7 @@ void AuVirtioKbdInitialize(uint64_t device) {
 	isb_flush();
 	dsb_ish();
 
-	uint64_t bufferBase = (uint64_t)AuPmmngrAlloc();
+	uint64_t bufferBase = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
 	input = (struct VirtioInputEvent*)AuMapMMIO(bufferBase, 1);
 
 	for (int i = 0; i < queueSz; ++i) {

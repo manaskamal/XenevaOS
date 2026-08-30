@@ -285,7 +285,7 @@ static void virtio_snd_alloc_controlq(VirtioCommonCfg* cfg) {
 
 	int queueSz = cfg->QueueSize;
 	controlq_sz = queueSz;
-	uint64_t queuePhys = (uint64_t)AuPmmngrAlloc();//AuPmmngrAllocBlocks(((sizeof(struct VirtioQueue) * queueSz)) / 0x1000);
+	uint64_t queuePhys = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);//AuPmmngrAllocBlocks(((sizeof(struct VirtioQueue) * queueSz)) / 0x1000);
 	controlq = (struct VirtioQueue*)AuMapMMIO(queuePhys, 1);
 #if DEBUG
 	UARTDebugOut("[virtio-snd]: controlq size : %d \r\n", queueSz);
@@ -319,7 +319,7 @@ static void virtio_snd_alloc_eventq(struct VirtioCommonCfg* cfg) {
 
 	int queueSz = cfg->QueueSize;
 	eventq_sz = queueSz;
-	uint64_t queuePhys = (uint64_t)AuPmmngrAlloc();//AuPmmngrAllocBlocks(((sizeof(struct VirtioQueue) * queueSz)) / 0x1000);
+	uint64_t queuePhys = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);//AuPmmngrAllocBlocks(((sizeof(struct VirtioQueue) * queueSz)) / 0x1000);
 	eventq = (struct VirtioQueue*)AuMapMMIO(queuePhys, 1);
 
 #if DEBUG
@@ -352,7 +352,7 @@ static void virtio_snd_alloc_txq(VirtioCommonCfg* cfg) {
 
 	int queueSz = cfg->QueueSize;
 	txq_sz = queueSz;
-	uint64_t queuePhys = (uint64_t)AuPmmngrAlloc();//AuPmmngrAllocBlocks(((sizeof(struct VirtioQueue) * queueSz)) / 0x1000);
+	uint64_t queuePhys = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);//AuPmmngrAllocBlocks(((sizeof(struct VirtioQueue) * queueSz)) / 0x1000);
 	txq = (struct VirtioQueue*)AuMapMMIO(queuePhys, 1);
 #if DEBUG
 	UARTDebugOut("[virtio-snd]: txq size : %d \r\n", queueSz);
@@ -852,7 +852,7 @@ AU_EXTERN AU_EXPORT int AuDriverMain(AuDriver* drv) {
 	_output_running = false;
 	_input_running = false;
 
-	command_phys = (uint64_t*)P2V((uint64_t)AuPmmngrAlloc());
+	command_phys = (uint64_t*)P2V((uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 	resp_phys = (void*)((uint64_t)command_phys + 2048);
 	memset(command_phys, 0, PAGE_SIZE);
 	controlq_lst_idx = 0;
@@ -860,7 +860,7 @@ AU_EXTERN AU_EXPORT int AuDriverMain(AuDriver* drv) {
 	txq_lst_idx = 0;
 	_force_hardware = false;
 
-	pcm_buffer = (void*)P2V((uint64_t)AuPmmngrAlloc());
+	pcm_buffer = (void*)P2V((uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 	memset(pcm_buffer, 0, 0x1000);
 
 	/** change the class/subclass value **/

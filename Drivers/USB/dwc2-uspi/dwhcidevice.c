@@ -228,7 +228,7 @@ int DWHCIDeviceControlMessage (TDWHCIDevice *pThis, TUSBEndpoint *pEndpoint,
 {
 	assert (pThis != 0);
 
-	TSetupData* SetupData = (TSetupData*)AuPmmngrAlloc();	// DMA buffer
+	TSetupData* SetupData = (TSetupData*)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);	// DMA buffer
 
 	SetupData->bmRequestType = ucRequestType;
 	SetupData->bRequest      = ucRequest;
@@ -246,7 +246,7 @@ int DWHCIDeviceControlMessage (TDWHCIDevice *pThis, TUSBEndpoint *pEndpoint,
 		nResult = USBRequestGetResultLength (&URB);
 	}
 	
-	AuPmmngrFree(SetupData);
+	AuPmmngrReleasePage((uint64_t)SetupData);
 	_USBRequest (&URB);
 
 	return nResult;

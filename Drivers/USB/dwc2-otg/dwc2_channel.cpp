@@ -359,7 +359,7 @@ bool dwc2_control_transfer(struct dwc2_core_regs* regs, dwc2_usb_endpoint_t* ep,
 	uint16_t wValue, uint16_t wIndex, void* data, uint16_t wLength) {
 
 	uint64_t setup_phys = 0;
-	usb_setup_packet_t* setup = (usb_setup_packet_t*)AuDMAGClassAlloc(dwc2_get_dma_class(), sizeof(usb_setup_packet_t), &setup_phys); //P2V((uint64_t)AuPmmngrAlloc());
+	usb_setup_packet_t* setup = (usb_setup_packet_t*)AuDMAGClassAlloc(dwc2_get_dma_class(), sizeof(usb_setup_packet_t), &setup_phys); //P2V((uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 	//aa64_data_cache_clean_range(setup, 4096);
 	setup->bmRequestType = bmRequestType;
 	setup->bmRequest = b_request;
@@ -467,7 +467,7 @@ bool dwc2_control_transfer(struct dwc2_core_regs* regs, dwc2_usb_endpoint_t* ep,
 	}
 
 	AuDMAGClassFree(dwc2_get_dma_class(), setup, setup_phys, sizeof(usb_setup_packet_t));
-	//AuPmmngrFree((void*)V2P((uint64_t)setup));
+	//AuPmmngrReleasePage((uint64_t)V2P((uint64_t)setup));
 
 	return 0;
 	/** free up the channel **/

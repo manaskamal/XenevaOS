@@ -158,6 +158,30 @@ void XEPagingInitialize() {
 		l0_table_base = (uint64_t*)read_ttbr0_el2();*/
 }
 
+void XEPagingInstallPhysicalDirectMap() {
+	const uint64_t directBase = 0xFFFF800000000000ULL;
+	const uint64_t l0Index = pml4_index(directBase);
+	uint64_t* l1_table = (uint64_t*)XEPmmngrAllocate();
+	if (!l1_table)
+		return;
+	memset(l1_table, 0, PAGESIZE);
+	for (uint64_t i = 0; i < 512; ++i) {
+		uint64_t phys = i << 30;
+		l1_table[i] = phys | PAGE_TABLE_ENTRY_PRESENT | PAGE_TABLE_ENTRY_BLOCK |
+			PAGE_TABLE_ENTRY_AF | PAGE_TABLE_ENTRY_SH | PAGE_TABLE_ENTRY_AP_RW |
+			PAGE_TABLE_ENTRY_MEMATTR | PAGE_TABLE_ENTRY_PXN | PAGE_TABLE_ENTRY_UXN;
+	}
+	l0_table_base[l0Index] = ((uint64_t)l1_table & ~0xFFFULL) |
+		PAGE_TABLE_ENTRY_PRESENT | PAGE_TABLE_ENTRY_PAGE;
+	/* the heap slot is owned by Aurora, make sure it doesnt inherit some
+	 * arbitrary firmware mapping just because its L0 entry has the valid
+	 * bit set --axiss */
+	l0_table_base[pml4_index(0xFFFFE00000000000ULL)] = 0;
+	dsb_ish();
+	tlb_flush_all();
+	isb_flush();
+}
+
 void XEPagingInit2() {
 	uint64_t* l0_table = (uint64_t*)XEPmmngrAllocate();
 	memset(l0_table, 0, 4096);

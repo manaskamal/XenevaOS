@@ -112,7 +112,7 @@ boolean USBStandardHubConfigure (TUSBFunction *pUSBFunction)
 	assert (pHost != 0);
 
 	assert (pThis->m_pHubDesc == 0);
-	pThis->m_pHubDesc = (TUSBHubDescriptor*)AuPmmngrAlloc(); // malloc(sizeof(TUSBHubDescriptor));
+	pThis->m_pHubDesc = (TUSBHubDescriptor*)AuPmmngrAllocPage(AURORA_PAGE_NORMAL); // malloc(sizeof(TUSBHubDescriptor));
 	assert (pThis->m_pHubDesc != 0);
 
 	if (DWHCIDeviceGetDescriptor (pHost, USBFunctionGetEndpoint0 (&pThis->m_USBFunction),
@@ -188,7 +188,7 @@ boolean USBStandardHubEnumeratePorts (TUSBStandardHub *pThis)
 	for (unsigned nPort = 0; nPort < pThis->m_nPorts; nPort++)
 	{
 		assert (pThis->m_pStatus[nPort] == 0);
-		pThis->m_pStatus[nPort] = AuPmmngrAlloc();// malloc (sizeof (TUSBPortStatus));
+		pThis->m_pStatus[nPort] = (void*)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);// malloc (sizeof (TUSBPortStatus));
 		assert (pThis->m_pStatus[nPort] != 0);
 
 		if (DWHCIDeviceControlMessage (pHost, pEndpoint0,

@@ -544,7 +544,7 @@ void USBHidInitialise(USBDevice* dev, XHCISlot* slot, uint8_t classC, uint8_t su
 		ep_->callback = HIDCallback;
 
 
-	uint64_t buff = (uint64_t)AuPmmngrAlloc();
+	uint64_t buff = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
 	memset((void*)buff, 0, PAGE_SIZE);
 	uint8_t* report = (uint8_t*)buff;
 
@@ -560,10 +560,10 @@ void USBHidInitialise(USBDevice* dev, XHCISlot* slot, uint8_t classC, uint8_t su
 	t_idx = XHCIPollEvent(dev, TRB_EVENT_TRANSFER);
 
 
-	mouse_data = (uint64_t)P2V((uint64_t)AuPmmngrAlloc());
+	mouse_data = (uint64_t)P2V((uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 	memset((void*)mouse_data, 0, ep_->max_packet_sz);
 
 	XHCISendNormalTRB(dev, slot, V2P(mouse_data), ep_->max_packet_sz,ep_);
 	
-	AuPmmngrFree((void*)buff);
+	AuPmmngrReleasePage((uint64_t)buff);
 }

@@ -41,8 +41,8 @@
 #define PAGE_TABLE_ENTRY_SH_NONE (0UL << 8)
 #define PAGE_TABLE_ENTRY_AP_RW	 (0UL << 6)
 #define PAGE_TABLE_ENTRY_MEMATTR (1UL << 2)
-#define PAGE_TABLE_ENTRY_PXN	 (1UL << 53)
-#define PAGE_TABLE_ENTRY_UXN	 (1UL << 54)
+#define PAGE_TABLE_ENTRY_PXN	 (1ULL << 53)
+#define PAGE_TABLE_ENTRY_UXN	 (1ULL << 54)
 #define PAGE_TABLE_ENTRY_DEVICE	 (0ULL << 2)
 
 #define PAGE_FLAGS                                                                                 \
@@ -60,6 +60,7 @@ extern void XEPagingInitialize();
  * @param physAddr -- physical address
  */
 extern void XEPagingMap(uint64_t virtualAddr, uint64_t physAddr);
+extern void XEPagingInstallPhysicalDirectMap();
 
 /* Checks if a virtual page is already mapped to prevent overwriting during PE section overlapping */
 extern bool XEPagingIsMapped(uint64_t virtualAddr);

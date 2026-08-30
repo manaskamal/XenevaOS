@@ -34,10 +34,12 @@ Debug/
 Release/
 KernelAA64/*.elf
 KernelAA64/*.exe
+KernelAA64/*.lib
 KernelAA64/*.log
 KernelAA64/obj/
 fat.img
 initrd2.img
+fat-*.img
 qemu.pid
 dump.s
 *.so
@@ -49,6 +51,9 @@ Libs/**/*.a
 # Exclude compiled user-space applications
 Resources/resources/*.exe
 Resources/resources/ARCH_ARM64/*.exe
+
+# One-off debug/comparison binaries from investigation sessions, not regular build output
+/KernelAA64-*.exe
 
 # clangd / IDE tooling (regenerate via Scripts/Linux/gen_compile_commands.sh)
 compile_commands.json

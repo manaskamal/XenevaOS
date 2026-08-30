@@ -95,7 +95,7 @@ extern uint64_t read_sp();
 void PostBoxCreate(bool root, uint16_t tid) {
 	PostBox* box = (PostBox*)kmalloc(sizeof(PostBox));
 	memset(box, 0, sizeof(PostBox));
-	box->address = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
+	box->address = (uint64_t*)P2V((size_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 	memset(box->address, 0, PAGE_SIZE);
 
 	if (root && !_PostBoxRootCreated) {
@@ -144,7 +144,7 @@ void PostBoxDestroy(PostBox* box) {
 		box->next->prev = box->prev;
 	}
 
-	AuPmmngrFree((void*)V2P((size_t)box->address));
+	AuPmmngrReleasePage((uint64_t)V2P((size_t)box->address));
 	kfree(box);
 	UARTDebugOut("[postbox]: destroyed for id \r\n");
 }

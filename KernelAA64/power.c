@@ -39,6 +39,7 @@
 #include <Hal/AA64/gic.h>
 #include <Drivers/uart.h>
 #include <Drivers/virtio.h>
+#include <Fs/vdisk.h>
 
 /**
  * @brief AuPowerDown -- power down system call
@@ -58,10 +59,10 @@ int AuPowerDown() {
 	if (proc->creds.gid != 0)
 		return 1;
 
-	/** TODO : Flush all system resources that needs disk
-	 * writes and call board power down which will handle
-	 * powering down of the board
-	 */
+	/* flush every registered disk's write cache before tearing anything
+	 * down. still a no-op per disk til some storage driver actually
+	 * populates AuVDisk::Flush --axiss */
+	AuVDiskFlushAll();
 
 #ifdef __TARGET_BOARD_QEMU_VIRT__
 	AuVirtioKbdDown();
@@ -78,8 +79,10 @@ int AuPowerDown() {
 	/* de-initialize the interrupt controller*/
 	GICDisable();
 
-	//aa64_clean_invalidate_dcache();
-	tlb_flush_vmalle1is();
+	/* dirty cache lines were getting lost across power-off/reset
+	 * with this commented out --axiss */
+	aa64_clean_invalidate_dcache();
+	tlb_flush_vmalle1is(); //need better naming schems boss --axiss
 
 	AuAA64BoardPowerDown();
 
@@ -105,10 +108,10 @@ void AuPowerReset() {
 	if (proc->creds.gid != 0)
 		return;
 
-	/** TODO : Flush all system resources that needs disk
-	 * writes and call board power down which will handle
-	 * powering down of the board
-	 */
+	/* flush every registered disk's write cache before tearing anything
+	 * down, still a no-op per disk since no storage driver actually
+	 * populates AuVDisk::Flush yet --axiss */
+	AuVDiskFlushAll();
 
 #ifdef __TARGET_BOARD_QEMU_VIRT__
 	AuVirtioKbdDown();
@@ -125,7 +128,9 @@ void AuPowerReset() {
 	/* de-initialize the interrupt controller */
 	GICDisable();
 
-	//aa64_clean_invalidate_dcache();
+	/* dirty cache lines, disk I/O buffers included, were getting lost
+	 * across power-off/reset with this commented out --axiss */
+	aa64_clean_invalidate_dcache();
 	tlb_flush_vmalle1is();
 
 	AuAA64BoardReboot();

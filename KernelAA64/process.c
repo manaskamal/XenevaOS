@@ -194,7 +194,7 @@ uint64_t* CreateUserStack(AuProcess* proc, uint64_t* cr3) {
 	location += proc->_user_stack_index_;
 
 	for (int i = 0; i < (PROCESS_USER_STACK_SZ / PAGE_SIZE); ++i) {
-		uint64_t blk = (uint64_t)AuPmmngrAlloc();
+		uint64_t blk = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
 		if (!AuMapPageEx(
 				cr3, blk, location + i * PAGE_SIZE, PTE_NORMAL_MEM | PTE_AP_RW_USER | PTE_AP_RW)) {
 			UARTDebugOut("CreateUserStack: already mapped %x \r\n", (location + i * PAGE_SIZE));
@@ -219,7 +219,7 @@ uint64_t* CreateSubUserStack(AuProcess* proc, uint64_t* cr3) {
 	location += proc->_user_stack_index_;
 
 	for (int i = 0; i < (PROCESS_USER_STACK_SZ / PAGE_SIZE); ++i) {
-		uint64_t blk = (uint64_t)AuPmmngrAlloc();
+		uint64_t blk = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
 		if (!AuMapPage(blk, location + i * PAGE_SIZE, PTE_AP_RW_USER | PTE_AP_RW)) {
 			UARTDebugOut("CreateUserStack: already mapped %x \r\n", (location + i * PAGE_SIZE));
 		}
@@ -252,7 +252,7 @@ AuProcess* AuCreateProcessSlot(AuProcess* parent, char* name) {
 	proc->_main_stack_ = main_thr_stack;
 	proc->prev_sample_time_us = AuGetCurrentUS();
 	proc->prev_sample_runtime_us = 0;
-	uint64_t* envpBlock = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
+	uint64_t* envpBlock = (uint64_t*)P2V((size_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 	memset(envpBlock, 0, PAGE_SIZE);
 
 	/** confusing code :hehehehe **/
@@ -351,7 +351,7 @@ void AuProcessHeapMemDestroy(AuProcess* proc) {
 #if 0
 				UARTDebugOut("Heap mem destroy -> %x \r\n", phys);
 #endif
-				AuPmmngrFree((void*)phys);
+				AuPmmngrReleasePage((uint64_t)phys);
 			}
 			page->bits.page = 0;
 			isb_flush();

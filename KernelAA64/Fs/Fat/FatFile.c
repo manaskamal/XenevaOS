@@ -58,6 +58,11 @@ AuVFSNode* FatFileGetParent(AuVFSNode* fsys, const char* filename) {
 	AuVFSNode* parent = NULL;
 
 	AuVFSNode* retfile = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
+	/* retfile gets memcpy'd into and dereferenced below with no NULL check,
+	 * on kmalloc exhaustion that was a guaranteed NULL deref and a
+	 * system crash --axiss */
+	if (!retfile)
+		return NULL;
 
 	char* path = (char*)filename;
 	char* p = strchr(path, '/');
@@ -65,8 +70,11 @@ AuVFSNode* FatFileGetParent(AuVFSNode* fsys, const char* filename) {
 		p++;
 	bool is_root = true;
 
-	//skip alphabet label
-	if (fsys != __RootFS)
+	/* skip alphabet label. this ran unconditionally, so on a filename with
+	 * no '/' at all (p == NULL here) it walked p up to (char*)0x2 and the
+	 * while(p) loop below happily treated that garbage as a valid pointer
+	 * and dereferenced it --axiss */
+	if (fsys != __RootFS && p)
 		p += 2;
 
 	while (p) {
@@ -126,7 +134,7 @@ AuVFSNode* FatCreateFile(AuVFSNode* fsys, char* filename) {
 	AuVFSNode* file = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
 	memset(file, 0, sizeof(AuVFSNode));
 
-	uint64_t* buff = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
+	uint64_t* buff = (uint64_t*)P2V((size_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 	memset(buff, 0, PAGE_SIZE);
 
 	char* path = (char*)filename;
@@ -183,7 +191,7 @@ AuVFSNode* FatCreateFile(AuVFSNode* fsys, char* filename) {
 
 					AuVDiskWrite(_fs->vdisk, sector + j, 1, buff);
 
-					AuPmmngrFree((void*)V2P((size_t)buff));
+					AuPmmngrReleasePage((uint64_t)V2P((size_t)buff));
 
 					strcpy(file->filename, extract);
 					file->size = dirent->file_size;
@@ -234,7 +242,7 @@ void FatFileUpdateSize(AuVFSNode* fsys, AuVFSNode* file, size_t size) {
 	memset(fname, 0, 11);
 	FatToDOSFilename(file->filename, fname, 11);
 	//fname[11] = 0;
-	uint64_t* buff = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
+	uint64_t* buff = (uint64_t*)P2V((size_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 	memset(buff, 0, PAGE_SIZE);
 
 	while (1) {
@@ -251,7 +259,7 @@ void FatFileUpdateSize(AuVFSNode* fsys, AuVFSNode* file, size_t size) {
 				if (strcmp(fname, name) == 0) {
 					dirent->file_size += size;
 					AuVDiskWrite(_fs->vdisk, FatClusterToSector32(_fs, dir_cluster) + j, 1, buff);
-					AuPmmngrFree((void*)V2P((size_t)buff));
+					AuPmmngrReleasePage((uint64_t)V2P((size_t)buff));
 					return;
 				}
 				dirent++;
@@ -293,7 +301,7 @@ int FatFileUpdateFilename(AuVFSNode* fsys, AuVFSNode* file, char* newname) {
 	FatToDOSFilename(newname, nname, 11);
 	//nname[11] = 0;
 
-	uint64_t* buff = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
+	uint64_t* buff = (uint64_t*)P2V((size_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 	memset(buff, 0, PAGE_SIZE);
 
 	while (1) {
@@ -310,7 +318,7 @@ int FatFileUpdateFilename(AuVFSNode* fsys, AuVFSNode* file, char* newname) {
 				if (strcmp(name, fname) == 0) {
 					memcpy(dirent->filename, nname, 11);
 					AuVDiskWrite(_fs->vdisk, FatClusterToSector32(_fs, dir_cluster) + j, 1, buff);
-					AuPmmngrFree((void*)V2P((size_t)buff));
+					AuPmmngrReleasePage((uint64_t)V2P((size_t)buff));
 					return 0;
 				}
 				dirent++;
@@ -337,7 +345,7 @@ void FatFileWriteContent(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer) {
 
 	FatFS* _fs = (FatFS*)fsys->device;
 
-	uint64_t* buff = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
+	uint64_t* buff = (uint64_t*)P2V((size_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 	memset(buff, 0, PAGE_SIZE);
 
 	uint32_t cluster = file->current;
@@ -353,7 +361,9 @@ void FatFileWriteContent(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer) {
 		file->eof = 0;
 	}
 
-	if ((cluster != (FAT_EOC_MARK & 0x0FFFFFFF)) || (cluster != (FAT_BAD_CLUSTER & 0x0fffffff))) {
+	/* this was || before, which can never be false, so EOC/BAD clusters
+	 * never actually got skipped here --axiss */
+	if ((cluster != (FAT_EOC_MARK & 0x0FFFFFFF)) && (cluster != (FAT_BAD_CLUSTER & 0x0fffffff))) {
 		memcpy(buff, buffer, PAGE_SIZE);
 		AuVDiskWrite(_fs->vdisk, FatClusterToSector32(_fs, cluster), _fs->__SectorPerCluster, buff);
 		file->pos++;
@@ -368,7 +378,7 @@ void FatFileWriteContent(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer) {
 	file->size = file->pos * _fs->__SectorPerCluster * _fs->__BytesPerSector;
 	size_t sz = file->size;
 
-	AuPmmngrFree((void*)V2P((size_t)buff));
+	AuPmmngrReleasePage((uint64_t)V2P((size_t)buff));
 }
 
 /*
@@ -382,8 +392,8 @@ void FatFileWriteDone(AuVFSNode* file) {
 	file->pos = 0;
 }
 
-/*
- * FatWrite -- write callback
+/**
+ * @brief FatWrite -- write callback
  * @param fsys -- pointer to file system
  * @param file -- pointer to file
  * @param buffer -- buffer to write
@@ -397,18 +407,21 @@ size_t FatWrite(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint32_t len
 	size_t num_cluster = length / ((_fs->__BytesPerSector) * _fs->__SectorPerCluster) +
 						 ((length % (_fs->__BytesPerSector * _fs->__SectorPerCluster) ? 1 : 0));
 
+	/* buffer is a uint64_t*, so a plain `buffer += clusterSize` advanced
+	 * 8x too far since pointer arithmetic scales by sizeof(uint64_t),
+	 * corrupted every cluster after the first on any write > 4KB --axiss */
+	uint8_t* byte_buffer = (uint8_t*)buffer;
 	for (int i = 0; i < num_cluster; i++) {
-		FatFileWriteContent(fsys, file, buffer);
-		buffer += (_fs->__BytesPerSector * _fs->__SectorPerCluster);
+		FatFileWriteContent(fsys, file, (uint64_t*)byte_buffer);
+		byte_buffer += (_fs->__BytesPerSector * _fs->__SectorPerCluster);
 	}
 
 	FatFileUpdateSize(fsys, file, length);
 	//FatFileWriteDone(file);
 	return length;
 }
-
-/*
- * FatFileClearDirEntry -- clears an entry of a directory
+/**
+ * @brief FatFileClearDirEntry -- clears an entry of a directory
  * @param fsys -- Pointer to file system node
  * @param file -- Pointer to file
  */
@@ -422,7 +435,8 @@ int FatFileClearDirEntry(AuVFSNode* fsys, AuVFSNode* file) {
 
 	uint32_t dir_clust = file->parent_block;
 	if (!dir_clust) {
-		//SeTextOut("FatFileClearDirEntry: no parent directory %x \r\n", dir_clust);
+		// If no parent directory, we can't clear the entry
+		UARTDebugOut("FatFileClearDirEntry: no parent directory %x \r\n", dir_clust);
 		return 1;
 	}
 
@@ -431,7 +445,7 @@ int FatFileClearDirEntry(AuVFSNode* fsys, AuVFSNode* file) {
 	FatToDOSFilename(file->filename, fname, 11);
 	//fname[11] = 0;
 	//SeTextOut("Dir clust -> %x \r\n", dir_clust);
-	uint64_t* buff = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
+	uint64_t* buff = (uint64_t*)P2V((size_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 	memset(buff, 0, PAGE_SIZE);
 
 	while (1) {
@@ -449,7 +463,7 @@ int FatFileClearDirEntry(AuVFSNode* fsys, AuVFSNode* file) {
 					//SeTextOut("Dir clearing found \r\n");
 					dirent->filename[0] = 0xE5;
 					AuVDiskWrite(_fs->vdisk, FatClusterToSector32(_fs, dir_clust) + j, 1, buff);
-					AuPmmngrFree((void*)V2P((size_t)buff));
+					AuPmmngrReleasePage((uint64_t)V2P((size_t)buff));
 					return 0;
 				}
 				dirent++;
@@ -462,9 +476,8 @@ int FatFileClearDirEntry(AuVFSNode* fsys, AuVFSNode* file) {
 	}
 	return -1;
 }
-
-/*
- * FatFileRemove -- remove a file
+/**
+ * @brief FatFileRemove -- remove a file
  * @param fsys -- Pointer to file
  * @param file -- file to remove
  */

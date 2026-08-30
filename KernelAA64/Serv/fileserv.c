@@ -65,6 +65,17 @@ int OpenFile(char* filename, int mode) {
 	char fname[128];
 	memset(fname, 0, 128);
 	fname[127] = '\0';
+	/* filename is a raw user pointer with no length guarantee, strcpy into
+	 * this fixed 128 byte kernel stack buffer with no bound check is a
+	 * straight up stack smash for anything >= 128 bytes, and any
+	 * unprivileged process can hit it (open() is syscall #12, anyone can
+	 * call it). found this chasing an unrelated crash in nmdapha, its a
+	 * real bug on its own either way but i couldnt confirm it actually
+	 * caused that crash (register dump at fault time didnt line up with
+	 * this call site), so dont treat this as "the fix" for that. rejecting
+	 * rather than overflowing regardless --axiss */
+	if (!filename || strlen(filename) >= sizeof(fname))
+		return -1;
 	strcpy(fname, filename);
 	AuVFSNode* fsys = AuVFSFind(fname);
 	int fd = AuProcessGetFileDesc(current_proc);
@@ -175,7 +186,7 @@ int FileSetOffset(int fd, size_t offset) {
  * @param length -- length in bytes
  */
 size_t ReadFile(int fd, void* buffer, size_t length) {
-	if (fd == -1)
+	if (fd < 0)
 		return 0;
 	if (!buffer)
 		return 0;
@@ -237,7 +248,7 @@ size_t ReadFile(int fd, void* buffer, size_t length) {
  * @param length -- length in bytes
  */
 size_t WriteFile(int fd, void* buffer, size_t length) {
-	if (fd == -1)
+	if (fd < 0)
 		return 0;
 	if (!buffer)
 		return 0;
@@ -270,11 +281,31 @@ size_t WriteFile(int fd, void* buffer, size_t length) {
 	AuVFSNode* fsys = (AuVFSNode*)file->device;
 
 	if (file->flags & FS_FLAG_GENERAL && !(file->flags & FS_FLAG_TTY)) {
-		uint64_t* buff = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
-		memset(buff, 0, PAGE_SIZE);
-		memcpy(buff, aligned_buffer, PAGE_SIZE);
-		AuVFSNodeWrite(fsys, file, buff, length);
-		AuPmmngrFree((void*)V2P((size_t)buff));
+		/* the staging buffer is one physical page and FatWrite only ever
+		 * sees that single page, but this used to hand it the *full*
+		 * length in one shot. for length > PAGE_SIZE that walked the
+		 * cluster loop right off the end of the staged page. it also
+		 * always memcpy'd a full PAGE_SIZE from the caller's buffer no
+		 * matter what length was, over-reading past shorter buffers.
+		 * fixed by feeding FatWrite one page at a time so each call
+		 * stays inside the page it actually has. FatFileWriteContent
+		 * tracks the write cursor on the node itself and
+		 * FatFileUpdateSize adds its size arg to the on-disk entry
+		 * instead of overwriting it, so the per-chunk calls here add up
+		 * correctly across the loop --axiss */
+		size_t remaining = length;
+		uint8_t* src = aligned_buffer;
+		while (remaining > 0) {
+			size_t chunk = remaining > PAGE_SIZE ? PAGE_SIZE : remaining;
+			uint64_t* buff = (uint64_t*)P2V((size_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
+			memset(buff, 0, PAGE_SIZE);
+			memcpy(buff, src, chunk);
+			AuVFSNodeWrite(fsys, file, buff, chunk);
+			AuPmmngrReleasePage((uint64_t)V2P((size_t)buff));
+			src += chunk;
+			remaining -= chunk;
+		}
+		return length;
 	}
 
 	if (file->flags & FS_FLAG_TTY) {
@@ -300,7 +331,7 @@ size_t WriteFile(int fd, void* buffer, size_t length) {
  * @param fd -- file descriptor to close
  */
 int CloseFile(int fd) {
-	if (fd == -1)
+	if (fd < 0)
 		return 0;
 	if (fd >= FILE_DESC_PER_PROCESS)
 		return 0;
@@ -315,6 +346,9 @@ int CloseFile(int fd) {
 	}
 
 	AuVFSNode* file = current_proc->fds[fd];
+	/* closing an fd that was never opened used to just crash here, no NULL check --axiss */
+	if (!file)
+		return -1;
 	if (file->flags & FS_FLAG_FILE_SYSTEM) {
 		current_proc->fds[fd] = 0;
 		BordoisilaCapDestroy(current_proc, fd);
@@ -329,15 +363,35 @@ int CloseFile(int fd) {
 	if (file->flags & FS_FLAG_GENERAL) {
 		current_proc->fds[fd] = 0;
 		BordoisilaCapDestroy(current_proc, fd);
-		/** NEED to fix, freeing the file causes crash **/
-		kfree(file);
+		/* this used to kfree() unconditionally (there was a TODO here
+		 * that just said "NEED to fix, freeing the file causes crash").
+		 * a dup'd fd, a fork-inherited fd, or a second open() of the
+		 * same path hitting the AuVFSOpen cache all bump fileCopyCount
+		 * and share the same AuVFSNode*, so freeing on the first
+		 * close() left every other reference dangling. AuProcessExit
+		 * already uses this same "<=0 means free" check for these
+		 * flags so at least this is consistent with that. heads up
+		 * though, FAT leaves a fresh node's fileCopyCount at 0 (memset)
+		 * while Ext2.c:406 sets it to 1, so the two filesystems dont
+		 * agree on what the field even means at open time. on an Ext2
+		 * node with no dups this never frees, same one-node-per-close
+		 * leak AuProcessExit already has. not fixing that here, out of
+		 * scope for this pass and theres no Ext2 image on this board
+		 * anyway --axiss */
+		if (file->fileCopyCount <= 0)
+			kfree(file);
+		else
+			file->fileCopyCount -= 1;
 		return 0;
 	}
 
 	if (file->flags & FS_FLAG_DIRECTORY) {
 		current_proc->fds[fd] = 0;
 		BordoisilaCapDestroy(current_proc, fd);
-		kfree(file);
+		if (file->fileCopyCount <= 0)
+			kfree(file);
+		else
+			file->fileCopyCount -= 1;
 		return 0;
 	}
 
@@ -348,6 +402,10 @@ int CloseFile(int fd) {
 		BordoisilaCapDestroy(current_proc, fd);
 		return 0;
 	}
+
+	/* flags matched none of the known types above, this used to just
+	 * fall off the end of the function with no return --axiss */
+	return -1;
 }
 
 /**
@@ -357,7 +415,7 @@ int CloseFile(int fd) {
  * @param arg -- argument to pass
  */
 int FileIoControl(int fd, int code, void* arg) {
-	if (fd == -1)
+	if (fd < 0)
 		return -1;
 	if (fd >= FILE_DESC_PER_PROCESS)
 		return 0;
@@ -387,7 +445,7 @@ int FileIoControl(int fd, int code, void* arg) {
  * @param buf -- Pointer to file structure
  */
 int FileStat(int fd, void* buf) {
-	if (fd == -1)
+	if (fd < 0)
 		return -1;
 	if (fd >= FILE_DESC_PER_PROCESS)
 		return -1;
@@ -458,7 +516,11 @@ int OpenDir(char* filename) {
 int ReadDir(int dirfd, void* dirent) {
 	if (!dirent)
 		return -1;
-	if (dirfd == -1)
+	if (dirfd < 0)
+		return -1;
+	/* only checked == -1 here before, no upper bound at all, so any
+	 * dirfd >= FILE_DESC_PER_PROCESS indexed straight past fds[] --axiss */
+	if (dirfd >= FILE_DESC_PER_PROCESS)
 		return -1;
 
 	AA64Thread* current_thr = AuGetCurrentThread();

@@ -608,7 +608,7 @@ void* liballoc_alloc(int pages) {
 	char* page = (char*)AuGetFreePage(0, false);
 	uint64_t page_ = (uint64_t)page;
 	for (size_t i = 0; i < pages; i++) {
-		void* p = AuPmmngrAlloc();
+		void* p = AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
 		AuMapPage((uint64_t)p, page_ + i * 4096, PTE_NORMAL_MEM);
 	}
 	memset(page, 0, pages * PAGE_SIZE);

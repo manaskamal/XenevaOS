@@ -54,7 +54,7 @@ void* au_request_page(int pages) {
 	uint64_t page_addr = _brk_current;
 
 	for (int i = 0; i < pages; i++) {
-		void* p = AuPmmngrAlloc();
+		void* p = (void*)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
 		AuMapPage((uint64_t)(size_t)p, page_addr + (size_t)(i * 4096), PTE_NORMAL_MEM);
 	}
 
