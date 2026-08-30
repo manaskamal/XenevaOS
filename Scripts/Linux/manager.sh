@@ -25,48 +25,22 @@ case $1 in
         source ./lib/distro/${OS_GROUP_ID}.sh
     ;;
     --llvm|--gcc|llvm|gcc)
-        echo "[+] Creating 512MB FAT32 image..."
-        cd ../..
-        dd if=/dev/zero of=fat.img bs=1M count=512
-        mkfs.vfat fat.img
-        echo "[+] Copying EFI Bootloader and Kernel via mtools..."
-        mmd -i fat.img ::/EFI
-        mmd -i fat.img ::/EFI/BOOT
-        mmd -i fat.img ::/EFI/XENEVA
-        cd Scripts/Linux
+        printf "${STY_YELLOW}[$0]: This subcommand is deprecated. build_and_run_qemu.sh is now the\n"
+        printf "single build+image+QEMU script and builds the bootloader/kernel itself.\n"
+        printf "Handing off to ./build_and_run_qemu.sh ...${STY_RST}\n"
+        # manager.sh used to always rebuild userspace apps unconditionally
+        # (via lib/llvm.sh), and its "build" sub-arg meant "also (re)build
+        # initrd2.img" — the opposite of no-arg. translating both to the new
+        # script's flags, which default to rebuilding the initrd every run --axiss
+        NEW_ARGS=(--force-user-apps)
         case $1 in
-            --llvm|llvm)
-                source ./lib/llvm.sh
-            ;;
-            --gcc|gcc)
-                source ./lib/gcc.sh
-            ;;
+            --llvm|llvm) NEW_ARGS+=(--llvm) ;;
+            --gcc|gcc) NEW_ARGS+=(--gcc) ;;
         esac
-        if [[ $2 =~ ^(--build|build)$ ]]; then
-            echo "[+] Creating 64MB FAT32 initrd2.img and packing resources..."
-            cd ../..
-            dd if=/dev/zero of=initrd2.img bs=1M count=64
-            mkfs.vfat -F 32 initrd2.img
-            mcopy -o -i initrd2.img Resources/resources/* ::/
-            mcopy -o -i initrd2.img Process/Init/init.exe ::/init.exe
+        if [[ ! $2 =~ ^(--build|build)$ ]]; then
+            NEW_ARGS+=(--force-legacy-build)
         fi
-        mcopy -o -i fat.img BootAA64/Build/EFI/BOOT/BOOTAA64.efi ::/EFI/BOOT/BOOTAA64.EFI
-        mcopy -o -i fat.img KernelAA64/KernelAA64.exe ::/EFI/XENEVA/xnkrnl.exe
-        mcopy -o -i fat.img initrd2.img ::/initrd2.img
-        echo "[+] Image ready! Booting QEMU..."
-        qemu-system-aarch64 -machine virt,gic-version=2,highmem=off \
-            -cpu cortex-a72 \
-            -m 1024M \
-            -bios /usr/share/qemu-efi-aarch64/QEMU_EFI.fd \
-            -drive file=fat.img,format=raw,if=virtio \
-            -device ramfb \
-            -device virtio-keyboard-pci \
-            -device virtio-tablet-pci \
-            -display gtk \
-            -device usb-ehci \
-            -device usb-kbd \
-            -serial stdio 
-            # -d guest_errors,unzip,trace:virtio_gpu
+        exec ./build_and_run_qemu.sh "${NEW_ARGS[@]}"
     ;;
     *)printf "${STY_RED}Unknown subcommand \"$1\".${STY_RST}\n";show_help;exit 1;;
 esac

@@ -38,13 +38,109 @@
 #include "color.h"
 #include FT_FREETYPE_H
 
+#ifndef _USE_FREETYPE
+/* our libc only has acosf (float), no acos (double). stb hides STBTT_cos
+ * and STBTT_acos behind the same #ifndef STBTT_cos guard so if you only
+ * define one, stb silently clobbers the other with its default.
+ * learned that one the hard way --axiss */
+#define STBTT_cos(x) cos(x)
+#define STBTT_acos(x) ((double)acosf((float)(x)))
+#define STBTT_assert(x) ((void)0)
+#define STB_TRUETYPE_IMPLEMENTATION
+#include "stb_truetype.h"
+#endif
+
+#ifndef _USE_FREETYPE
+static void ChFontClearGlyphCache(ChFont* font) {
+	for (int i = 0; i < CH_FONT_GLYPH_CACHE_SIZE; ++i) {
+		if (font->glyphCache[i].bitmap)
+			stbtt_FreeBitmap(font->glyphCache[i].bitmap, NULL);
+		memset(&font->glyphCache[i], 0, sizeof(font->glyphCache[i]));
+	}
+}
+
+static ChFontGlyphCacheEntry* ChFontGetCachedGlyph(ChFont* font, unsigned char codepoint) {
+	ChFontGlyphCacheEntry* glyph = &font->glyphCache[codepoint];
+	if (glyph->loaded)
+		return glyph;
+
+	int advance = 0;
+	int lsb = 0;
+	stbtt_GetCodepointHMetrics(&font->stbFont, codepoint, &advance, &lsb);
+	int width = 0;
+	int height = 0;
+	int xOffset = 0;
+	int yOffset = 0;
+	glyph->bitmap = stbtt_GetCodepointBitmap(
+		&font->stbFont, font->stbScale, font->stbScale, codepoint, &width, &height, &xOffset, &yOffset);
+	glyph->width = (int16_t)width;
+	glyph->height = (int16_t)height;
+	glyph->xOffset = (int16_t)xOffset;
+	glyph->yOffset = (int16_t)yOffset;
+	glyph->advance = (int16_t)(advance * font->stbScale);
+	glyph->loaded = 1;
+	return glyph;
+}
+
+static inline uint32_t ChFontBlendCoverage(uint32_t dst, uint32_t src, uint8_t coverage) {
+	if (coverage == 255)
+		return 0xFF000000U | (src & 0x00FFFFFFU);
+	uint32_t inv = 255U - coverage;
+	uint32_t red = ((((src >> 16) & 0xFFU) * coverage) + (((dst >> 16) & 0xFFU) * inv) + 127U) / 255U;
+	uint32_t green = ((((src >> 8) & 0xFFU) * coverage) + (((dst >> 8) & 0xFFU) * inv) + 127U) / 255U;
+	uint32_t blue = (((src & 0xFFU) * coverage) + ((dst & 0xFFU) * inv) + 127U) / 255U;
+	return 0xFF000000U | (red << 16) | (green << 8) | blue;
+}
+
+static void ChFontBlitGlyph(
+	ChCanvas* canv, const ChFontGlyphCacheEntry* glyph, int penx, int peny, uint32_t color, const ChRect* clip) {
+	if (!glyph->bitmap || glyph->width <= 0 || glyph->height <= 0)
+		return;
+
+	int left = penx + glyph->xOffset;
+	int top = peny + glyph->yOffset;
+	int right = left + glyph->width;
+	int bottom = top + glyph->height;
+	int clipLeft = 0;
+	int clipTop = 0;
+	int clipRight = canv->canvasWidth;
+	int clipBottom = canv->canvasHeight;
+	if (clip) {
+		if (clip->x > clipLeft) clipLeft = clip->x;
+		if (clip->y > clipTop) clipTop = clip->y;
+		if (clip->x + clip->w < clipRight) clipRight = clip->x + clip->w;
+		if (clip->y + clip->h < clipBottom) clipBottom = clip->y + clip->h;
+	}
+	if (left < clipLeft) left = clipLeft;
+	if (top < clipTop) top = clipTop;
+	if (right > clipRight) right = clipRight;
+	if (bottom > clipBottom) bottom = clipBottom;
+	if (left >= right || top >= bottom)
+		return;
+
+	for (int y = top; y < bottom; ++y) {
+		const uint8_t* source = glyph->bitmap + (y - (peny + glyph->yOffset)) * glyph->width + (left - (penx + glyph->xOffset));
+		uint32_t* destination = canv->buffer + y * canv->canvasWidth + left;
+		for (int x = left; x < right; ++x, ++source, ++destination) {
+			if (*source)
+				*destination = ChFontBlendCoverage(*destination, color, *source);
+		}
+	}
+}
+#endif
+
 /* 
  * ChInitialiseFont -- initialise a font by a name
  * @param fontname -- name of the font
  */
 ChFont* ChInitialiseFont(char* fontname) {
 	int id = _KeGetFontID(fontname);
-	if (id == 0)
+	/* AuFTMngrGetFontID returns -1 when it cant find the font, not 0. this
+	 * was only checking == 0 so -1 slipped right through as "valid", then
+	 * unpacked into garbage _font_id/_font_key. _KeObtainSharedMem usually
+	 * failed on that garbage but not always, which made this a fun one to
+	 * chase down --axiss */
+	if (id <= 0)
 		return NULL;
 	int _font_id = (id >> 16) & UINT16_MAX;
 	int _font_key = id & UINT16_MAX;
@@ -52,9 +148,13 @@ ChFont* ChInitialiseFont(char* fontname) {
 	if (!buff)
 		return NULL;
 
-	uint32_t fileSz = _KeGetFontSize(fontname);
-	if (!fileSz)
+	/* same -1 vs 0 bug as above. AuFTMngrGetFontSize returns -1 on failure
+	 * but it was getting shoved straight into a uint32_t, so -1 becomes
+	 * 0xFFFFFFFF. never zero, so the `!fileSz` check below never caught it --axiss */
+	int _fileSz = _KeGetFontSize(fontname);
+	if (_fileSz <= 0)
 		return NULL;
+	uint32_t fileSz = (uint32_t)_fileSz;
 
 	ChFont* font = (ChFont*)malloc(sizeof(ChFont));
 	memset(font, 0, sizeof(ChFont));
@@ -64,14 +164,41 @@ ChFont* ChInitialiseFont(char* fontname) {
 	font->key = _font_key;
 	font->kern = 0;
 #ifdef _USE_FREETYPE
+	/* none of these three error checks existed before. if any of them failed,
+	 * font->face (or ->size) stays NULL and the code below just dereferenced
+	 * it anyway, crashing whatever app happened to be loading a font right
+	 * then --axiss */
 	FT_Error err = 0;
 	err = FT_Init_FreeType(&font->lib);
+	if (err) {
+		free(font);
+		return NULL;
+	}
 	err = FT_New_Memory_Face(font->lib, font->buffer, font->fileSz, 0, &font->face);
+	if (err) {
+		free(font);
+		return NULL;
+	}
 
 	err = FT_Set_Pixel_Sizes(font->face, 0, 32);
+	if (err) {
+		free(font);
+		return NULL;
+	}
 	font->slot = font->face->glyph;
 	font->lineHeight = font->face->size->metrics.height / 64;
 	font->fontHeight = 32 / 72.f * 96;
+#else
+	int stbOffset = stbtt_GetFontOffsetForIndex(font->buffer, 0);
+	if (stbOffset < 0 || !stbtt_InitFont(&font->stbFont, font->buffer, stbOffset)) {
+		free(font);
+		return NULL;
+	}
+	font->fontHeight = (uint32_t)(32 / 72.f * 96);
+	font->stbScale = stbtt_ScaleForPixelHeight(&font->stbFont, (float)font->fontHeight);
+	stbtt_GetFontVMetrics(&font->stbFont, &font->stbAscent, &font->stbDescent, &font->stbLineGap);
+	font->lineHeight =
+		(uint32_t)((font->stbAscent - font->stbDescent + font->stbLineGap) * font->stbScale);
 #endif
 	/* start decoding true type font */
 	//TTFLoadFont(canv,font->buffer);
@@ -86,9 +213,19 @@ ChFont* ChInitialiseFont(char* fontname) {
 void ChFontSetSize(ChFont* font, int size) {
 	if (!font)
 		return;
-	font->fontSz = size / 72.f * 96;
+	uint32_t pixelSize = (uint32_t)(size / 72.f * 96);
+	if (pixelSize == 0)
+		pixelSize = 1;
+	if (font->fontSz == pixelSize)
+		return;
+	font->fontSz = pixelSize;
 #ifdef _USE_FREETYPE
 	FT_Set_Pixel_Sizes(font->face, 0, font->fontSz);
+#else
+	ChFontClearGlyphCache(font);
+	font->stbScale = stbtt_ScaleForPixelHeight(&font->stbFont, (float)font->fontSz);
+	font->lineHeight =
+		(uint32_t)((font->stbAscent - font->stbDescent + font->stbLineGap) * font->stbScale);
 #endif
 	font->fontHeight = font->fontSz;
 }
@@ -154,6 +291,22 @@ void ChFontDrawText(
 		prev = glyfIndx;
 		string++;
 	}
+#else
+	if (!font)
+		return;
+	int prevCp = 0;
+	while (*string) {
+		unsigned char cp = (unsigned char)*string;
+		if (prevCp) {
+			int kern = stbtt_GetCodepointKernAdvance(&font->stbFont, prevCp, cp);
+			penx += (int)(kern * font->stbScale);
+		}
+		ChFontGlyphCacheEntry* glyph = ChFontGetCachedGlyph(font, cp);
+		ChFontBlitGlyph(canv, glyph, penx, peny, color, NULL);
+		penx += glyph->advance;
+		prevCp = cp;
+		string++;
+	}
 #endif
 }
 
@@ -212,6 +365,22 @@ void ChFontDrawChar(
 		}
 	}
 	font->kern = glyfIndx;
+#else
+	if (!font)
+		return;
+	if (penx >= canv->canvasWidth)
+		return;
+	if (peny >= canv->canvasHeight)
+		return;
+
+	unsigned char cp = (unsigned char)c;
+	if (font->kern) {
+		int kern = stbtt_GetCodepointKernAdvance(&font->stbFont, (int)font->kern, cp);
+		penx += (int)(kern * font->stbScale);
+	}
+	ChFontGlyphCacheEntry* glyph = ChFontGetCachedGlyph(font, cp);
+	ChFontBlitGlyph(canv, glyph, penx, peny, color, NULL);
+	font->kern = (uint32_t)cp;
 #endif
 }
 
@@ -316,6 +485,19 @@ void ChFontDrawCharClipped(
 	font->kern = glyfIndx;
 	penx += font->face->glyph->advance.x >> 6;
 	peny += font->face->glyph->advance.y >> 6;
+#else
+	if (!font)
+		return;
+	if (!limit)
+		return;
+	unsigned char cp = (unsigned char)c;
+	if (font->kern) {
+		int kern = stbtt_GetCodepointKernAdvance(&font->stbFont, (int)font->kern, cp);
+		penx += (int)(kern * font->stbScale);
+	}
+	ChFontGlyphCacheEntry* glyph = ChFontGetCachedGlyph(font, cp);
+	ChFontBlitGlyph(canv, glyph, penx, peny, color, limit);
+	font->kern = (uint32_t)cp;
 #endif
 }
 
@@ -350,7 +532,21 @@ int64_t ChFontGetWidth(ChFont* font, char* string) {
 	}
 	return font_width;
 #else
-	return 8 * strlen(string);
+	if (!font)
+		return -1;
+	int64_t width = 0;
+	int prevCp = 0;
+	while (*string) {
+		int cp = (unsigned char)*string;
+		if (prevCp)
+			width += (int)(stbtt_GetCodepointKernAdvance(&font->stbFont, prevCp, cp) * font->stbScale);
+		int advance, lsb;
+		stbtt_GetCodepointHMetrics(&font->stbFont, cp, &advance, &lsb);
+		width += (int64_t)(advance * font->stbScale);
+		prevCp = cp;
+		string++;
+	}
+	return width;
 #endif
 }
 
@@ -382,7 +578,11 @@ int64_t ChFontGetWidthChar(ChFont* font, char c) {
 	}
 	return font_width;
 #else
-	return 8;
+	if (!font)
+		return -1;
+	int advance, lsb;
+	stbtt_GetCodepointHMetrics(&font->stbFont, (unsigned char)c, &advance, &lsb);
+	return (int64_t)(advance * font->stbScale);
 #endif
 }
 
@@ -416,7 +616,9 @@ int64_t ChFontGetHeight(ChFont* font, char* string) {
 	}
 	return font_height;
 #else
-	return 16;
+	if (!font)
+		return -1;
+	return font->lineHeight;
 #endif
 }
 
@@ -448,7 +650,9 @@ int64_t ChFontGetHeightChar(ChFont* font, char c) {
 	}
 	return font_h;
 #else
-	return 16;
+	if (!font)
+		return -1;
+	return font->lineHeight;
 #endif
 }
 
@@ -565,6 +769,24 @@ int ChFontDrawTextClipped(
 	}
 	return 0;
 #else
+	if (!font)
+		return 1;
+	if (!limit)
+		return 1;
+
+	int prevCp = 0;
+	while (*string) {
+		unsigned char cp = (unsigned char)*string;
+		if (prevCp) {
+			int kern = stbtt_GetCodepointKernAdvance(&font->stbFont, prevCp, cp);
+			penx += (int)(kern * font->stbScale);
+		}
+		ChFontGlyphCacheEntry* glyph = ChFontGetCachedGlyph(font, cp);
+		ChFontBlitGlyph(canv, glyph, penx, peny, color, limit);
+		penx += glyph->advance;
+		prevCp = cp;
+		string++;
+	}
 	return 0;
 #endif
 }
@@ -578,6 +800,9 @@ int ChFontClose(ChFont* font) {
 		return -1;
 	//FT_Done_Face(font->face);
 	//FT_Done_FreeType(font->lib);
+#ifndef _USE_FREETYPE
+	ChFontClearGlyphCache(font);
+#endif
 	_KeUnmapSharedMem(font->key);
 	free(font);
 	return 0;

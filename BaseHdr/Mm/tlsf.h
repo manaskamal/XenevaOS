@@ -47,8 +47,7 @@ extern "C" {
 #define SL_INDEX_MASK          (SL_INDEX_COUNT - 1)
 
 /* First-level bitmap: one bit per power-of-two range */
-#define FL_INDEX_MAX           (8 * sizeof(size_t) - SL_INDEX_COUNT_LOG2)  /* 59 on 64-bit */
-#define FL_INDEX_COUNT         (FL_INDEX_MAX + 1)
+#define FL_INDEX_COUNT         (8 * sizeof(size_t))
 
 /* ---- Block header layout ---- */
 /* Block header: 2 × size_t = 16 bytes on 64-bit.
@@ -82,7 +81,7 @@ typedef struct free_block {
 
 /* ---- TLSF pool / control structure ---- */
 typedef struct tlsf_pool {
-    uint32_t  fl_bitmap;
+    uint64_t  fl_bitmap;
     uint32_t  sl_bitmap[FL_INDEX_COUNT];
     free_block_t *blocks[FL_INDEX_COUNT][SL_INDEX_COUNT];
     size_t    pool_size;

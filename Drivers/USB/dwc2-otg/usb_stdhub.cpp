@@ -48,7 +48,7 @@ bool usb_hub_initialize(dwc2_core_regs* regs, dwc2_usb_device* dev) {
 	UARTDebugOut("usb hub initializing.... \r\n");
 
 	uint64_t hub_phys_out = 0;
-	void* hub = (void*)AuDMAGClassAlloc(dwc2_get_dma_class(), sizeof(usb_hub_desc_t), &hub_phys_out); //P2V((uint64_t)AuPmmngrAlloc());
+	void* hub = (void*)AuDMAGClassAlloc(dwc2_get_dma_class(), sizeof(usb_hub_desc_t), &hub_phys_out); //P2V((uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 	//memset(hub, 0, 4096);
 	if (dwc2_control_transfer(regs, &dev->ep, 0xA0, 0x06, 0x2900, 0, (void*)hub_phys_out/*V2P((uint64_t)hub)*/, 8)) {
 		UARTDebugOut("failed to get hub descriptor \r\n");
@@ -71,7 +71,7 @@ bool usb_hub_initialize(dwc2_core_regs* regs, dwc2_usb_device* dev) {
 	
 	
 	uint64_t status_phys = 0;
-	void* scratchBuff = (void*)AuDMAGClassAlloc(dwc2_get_dma_class(), 8, &status_phys);//AuPmmngrAlloc();
+	void* scratchBuff = (void*)AuDMAGClassAlloc(dwc2_get_dma_class(), 8, &status_phys);//AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
 	
 	// Time to RESET all ports yaayyy
 	int numPorts = desc->bNbrPorts;

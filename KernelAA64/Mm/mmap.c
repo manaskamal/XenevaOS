@@ -221,11 +221,11 @@ void* CreateMemMapping(void* address, size_t len, int prot, int flags, int fd, u
 		else {
 			if (fb) {
 				if (AuMmngrFileCacheGetPhysicalBlock(fb, offset) == UINT64_MAX) {
-					phys = (uint64_t)AuPmmngrAlloc();
+					phys = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
 				} else {
 					if (flags & MEMMAP_FLAG_COW) {
 						uint64_t datablk = AuMmngrFileCacheGetPhysicalBlock(fb, offset);
-						phys = (uint64_t)AuPmmngrAlloc();
+						phys = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
 						memcpy((void*)P2V(phys), (void*)P2V(datablk), PAGE_SIZE);
 
 					} else {
@@ -234,7 +234,7 @@ void* CreateMemMapping(void* address, size_t len, int prot, int flags, int fd, u
 				}
 
 			} else {
-				phys = (uint64_t)AuPmmngrAlloc();
+				phys = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
 			}
 		}
 
@@ -245,7 +245,7 @@ void* CreateMemMapping(void* address, size_t len, int prot, int flags, int fd, u
 			if (AuMmngrFileCacheGetPhysicalBlock(fb, offset) == UINT64_MAX) {
 				uint64_t datablk = phys;
 				if (flags & MEMMAP_FLAG_COW) {
-					datablk = (uint64_t)AuPmmngrAlloc();
+					datablk = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
 					if (!file->eof)
 						AuVFSNodeReadBlock(fsys, file, (uint64_t*)P2V(datablk));
 					memcpy((void*)P2V(phys), (void*)P2V(datablk), PAGE_SIZE);
@@ -392,7 +392,7 @@ void UnmapMemMapping(void* address, size_t len) {
 		if (page) {
 			uint64_t phys = page->bits.page << PAGE_SHIFT;
 			if (phys) {
-				AuPmmngrFree((void*)phys);
+				AuPmmngrReleasePage((uint64_t)phys);
 			}
 			page->bits.page = 0;
 			isb_flush();

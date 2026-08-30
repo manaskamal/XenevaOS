@@ -144,12 +144,37 @@ size_t AuVDiskWrite(AuVDisk* disk, uint64_t lba, uint32_t count, uint64_t* buffe
 }
 
 /**
+ * @brief AuVDiskFlush -- flushes a single registered disk's write
+ * cache, if its driver provides one (no-op otherwise)
+ * @param disk -- Pointer to vdisk structure
+ */
+int AuVDiskFlush(AuVDisk* disk) {
+	if (!disk)
+		return 0;
+	if (disk->Flush)
+		return disk->Flush(disk);
+	return 0;
+}
+
+/**
+ * @brief AuVDiskFlushAll -- flushes every registered disk's write
+ * cache; called before power-down/reset so no dirty device-side
+ * cache is lost
+ */
+void AuVDiskFlushAll() {
+	for (int i = 0; i < MAX_VDISK_DEVICES; i++) {
+		if (VdiskArray[i])
+			AuVDiskFlush(VdiskArray[i]);
+	}
+}
+
+/**
  * @brief AuVDiskRegisterPartition - Gether all informations about the partition
  * for now, only GUID Partition is supported
  * @param vdisk -- VDisk structure pointer
  */
 void AuVDiskRegisterPartition(AuVDisk* vdisk) {
-	uint64_t* buffer = (uint64_t*)AuPmmngrAlloc();
+	uint64_t* buffer = (uint64_t*)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
 	memset(buffer, 0, 4096);
 	if (!vdisk->Read)
 		return;
@@ -212,7 +237,7 @@ void AuVDiskRegisterPartition(AuVDisk* vdisk) {
 	//AuGPTInitialise_FileSystem(vdisk);
 
 	AuTextOut("\r\n");
-	AuPmmngrFree(buffer);
+	AuPmmngrReleasePage((uint64_t)buffer);
 }
 
 /**

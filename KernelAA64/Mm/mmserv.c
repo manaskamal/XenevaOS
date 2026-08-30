@@ -127,10 +127,10 @@ uint64_t GetProcessHeapMem(size_t sz) {
 
 	uint64_t start_addr = (uint64_t)AuGetFreePage(false, (void*)proc->proc_mem_heap);
 	for (int i = 0; i < sz / PAGE_SIZE; i++) {
-		uint64_t phys = (uint64_t)AuPmmngrAlloc();
+		uint64_t phys = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
 		if (!AuMapPage(phys, start_addr + i * PAGE_SIZE, PTE_AP_RW_USER | PTE_NORMAL_MEM)) {
 			UARTDebugOut("already present %x \r\n", (start_addr + i * 0x1000));
-			AuPmmngrFree((void*)phys);
+			AuPmmngrReleasePage((uint64_t)phys);
 		}
 	}
 	isb_flush();
@@ -175,7 +175,7 @@ int ProcessHeapUnmap(void* ptr, size_t sz) {
 			uint64_t phys_page = page_->bits.page << PAGE_SHIFT;
 			//UARTDebugOut("Unmap phys page : %x \n", phys_page);
 			if (phys_page) {
-				AuPmmngrFree((void*)phys_page);
+				AuPmmngrReleasePage((uint64_t)phys_page);
 				//page_->raw = 0;
 				page_->bits.present = 0;
 				isb_flush();

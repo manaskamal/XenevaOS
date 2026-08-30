@@ -58,7 +58,8 @@ void XEInitialisePmmngr(const struct EfiMemoryMap memmap, void* buffer, size_t b
 	bufsize /= 2;
 	_bufsz = bufsize;
 	allocatedPtr = allocatedStack = raw_offset<paddr_t*>(buffer, bufsize);
-	allocatedCount = 1;
+	/* I keep allocatedPtr one-past-the-last allocated page, just in case --axiss */
+	allocatedCount = 0;
 
 	EFI_MEMORY_DESCRIPTOR* current = memmap.memmap;
 	while (raw_diff(current, memmap.memmap) < memmap.MemMapSize) {
@@ -99,7 +100,7 @@ paddr_t XEPmmngrAllocate() {
 		paddr_t allocated = *--stackptr;
 		if (raw_diff(allocatedPtr, allocatedStack) < _bufsz) {
 			*allocatedPtr++ = allocated;
-			allocatedCount++;
+			++allocatedCount;
 		} else {
 			XEGuiPrint("xnldr warning: allocatedStack full, no longer tracking allocationg \r\n");
 		}

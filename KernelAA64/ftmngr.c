@@ -121,6 +121,34 @@ FontSeg* FontManagerAllocateSegment(AuVFSNode* fontfile, char* fontname) {
 }
 
 /**
+ * @brief FontManagerReadSegment -- read a font segment
+ * @param fs -- file system
+ * @param file -- font file
+ * @param seg -- font segment
+ * @return true if successful, false otherwise
+ */
+ // need better rasterization algorithm for font rendering, currently it is just a simple bitmap rendering --axiss
+static bool FontManagerReadSegment(AuVFSNode* fs, AuVFSNode* file, FontSeg* seg) {
+	if (!fs || !file || !seg || !seg->sharedSeg)
+		return false;
+
+	uint64_t remaining = file->size;
+	for (uint64_t i = 0; i < seg->sharedSeg->num_frames && remaining; ++i) {
+		uint64_t chunk = remaining > PAGE_SIZE ? PAGE_SIZE : remaining;
+		uint64_t phys = seg->sharedSeg->frames[i];
+		if (phys == PMM_INVALID_PHYS)
+			return false;
+		void* destination = (void*)P2V(phys);
+		memset(destination, 0, PAGE_SIZE);
+		size_t read = AuVFSNodeRead(fs, file, destination, chunk);
+		if (read != chunk)
+			return false;
+		remaining -= chunk;
+	}
+	return remaining == 0;
+}
+
+/**
  * @brief FontManagerOpenFontFile-- opens a font file
  * from disk
  * @return font file opened by font manager
@@ -179,10 +207,12 @@ search:
 	if (fontfile) {
 		UARTDebugOut("Font file present \r\n");
 		FontSeg* seg = FontManagerAllocateSegment(fontfile, fontname);
-		uint64_t* firstFrame = (uint64_t*)seg->sharedSeg->frames[0];
 		UARTDebugOut("fontfile -> %s sz : %d \r\n", fontfile->filename, fontfile->size);
-		size_t ret = AuVFSNodeRead(
-			fs, fontfile, (uint64_t*)P2V((size_t)firstFrame), ALIGN_UP(fontfile->size, 4096));
+		if (!FontManagerReadSegment(fs, fontfile, seg)) {
+			UARTDebugOut("[ftmngr]: failed to populate %s\r\n", fontfile->filename);
+			kfree(fontfile);
+			return;
+		}
 		fcount++;
 		kfree(fontfile); //avoiding this, because we need more powerful heap memory allocator
 	}
@@ -237,7 +267,7 @@ void FontManagerInitialise() {
 	UARTDebugOut("Font this %d bytes numPage: %d \r\n", fontconf->size, num_pages);
 	uint64_t* first_addr = NULL;
 	for (int i = 0; i < num_pages; i++) {
-		uint64_t* addr = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
+		uint64_t* addr = (uint64_t*)P2V((size_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 		if (!first_addr)
 			first_addr = addr;
 	}

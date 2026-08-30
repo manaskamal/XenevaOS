@@ -38,6 +38,7 @@
 #include "draw.h"
 #include <ft2build.h>
 #include FT_FREETYPE_H
+#include "stb_truetype.h"
 
 #ifdef __cplusplus
 XE_EXTERN{
@@ -51,6 +52,22 @@ XE_EXTERN{
 #define CALIBRI       "Calibri"
 #define FORTE         "Forte"
 #define CONSOLAS      "Consolas"
+
+#ifndef _USE_FREETYPE
+#define CH_FONT_GLYPH_CACHE_SIZE 256
+
+	/* caching the rasterized glyph + metrics here so we're not
+	 * re-rasterizing the same char every repaint, thats wasteful as hell --axiss */
+	typedef struct _ch_font_glyph_cache_entry_ {
+		uint8_t* bitmap;
+		int16_t width;
+		int16_t height;
+		int16_t xOffset;
+		int16_t yOffset;
+		int16_t advance;
+		uint8_t loaded;
+	} ChFontGlyphCacheEntry;
+#endif
 
 #ifdef ARCH_ARM64
 #define XENEVA_DEFAULT_FONT CALIBRI //FORTE
@@ -71,6 +88,16 @@ XE_EXTERN{
 		FT_Library lib;
 		FT_Face face;
 		FT_GlyphSlot slot;
+#else
+		/* fallback path for when freetype isnt built for the target (aa64/llvm rn).
+		 * reusing font->kern up above as the "previous codepoint" for kerning
+		 * lookups here too, didnt want another field just for that --axiss */
+		stbtt_fontinfo stbFont;
+		float stbScale;
+		int stbAscent;
+		int stbDescent;
+		int stbLineGap;
+		ChFontGlyphCacheEntry glyphCache[CH_FONT_GLYPH_CACHE_SIZE];
 #endif
 	}ChFont;
 

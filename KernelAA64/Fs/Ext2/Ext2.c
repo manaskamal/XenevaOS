@@ -57,7 +57,7 @@ uint32_t Ext2FindEntry(Ext2Fs* fs, Ext2Inode* dir_inode, const char* name) {
 	uint32_t sector_per_block = block_size / 512;
 	uint32_t target_len = strlen(name);
 
-	uint64_t* buffer = (uint64_t*)P2V((uint64_t)AuPmmngrAlloc());
+	uint64_t* buffer = (uint64_t*)P2V((uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 	if (!buffer) {
 		AuTextOut("[Ext2]: out of memory during directory scanning.\r\n");
 		return 0;
@@ -79,13 +79,13 @@ uint32_t Ext2FindEntry(Ext2Fs* fs, Ext2Inode* dir_inode, const char* name) {
 			Ext2Dir* entry = (Ext2Dir*)((uint8_t*)buffer + current_pos);
 
 			if (entry->rec_len == 0) {
-				AuPmmngrFree((void*)V2P((uint64_t)buffer));
+				AuPmmngrReleasePage((uint64_t)V2P((uint64_t)buffer));
 				return 0;
 			}
 			if (entry->inode != 0 && entry->name_len == target_len) {
 				if (strncmp(entry->name, name, entry->name_len) == 0) {
 					uint32_t found_inode = entry->inode;
-					AuPmmngrFree((void*)V2P((uint64_t)buffer));
+					AuPmmngrReleasePage((uint64_t)V2P((uint64_t)buffer));
 					return found_inode;
 				}
 			}
@@ -94,7 +94,7 @@ uint32_t Ext2FindEntry(Ext2Fs* fs, Ext2Inode* dir_inode, const char* name) {
 		}
 	}
 
-	AuPmmngrFree((void*)V2P((uint64_t)buffer));
+	AuPmmngrReleasePage((uint64_t)V2P((uint64_t)buffer));
 	return 0;
 };
 
@@ -123,7 +123,7 @@ int Ext2ReadInode(Ext2Fs* fs, uint32_t inode_num, Ext2Inode* out_inode) {
 	uint32_t sector_per_block = fs->block_size / 512;
 	uint32_t target_lba = target_physical_block * sector_per_block;
 
-	uint64_t* buffer = (uint64_t*)P2V((uint64_t)AuPmmngrAlloc());
+	uint64_t* buffer = (uint64_t*)P2V((uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 	if (!buffer) {
 		AuTextOut("[Ext2]: out of memory during inode reading.\r\n");
 		return -1;
@@ -136,7 +136,7 @@ int Ext2ReadInode(Ext2Fs* fs, uint32_t inode_num, Ext2Inode* out_inode) {
 	uint8_t* target_adress = (uint8_t*)buffer + internal_byte_offset;
 	memcpy(out_inode, target_adress, sizeof(Ext2Inode));
 
-	AuPmmngrFree((void*)V2P((uint64_t)buffer));
+	AuPmmngrReleasePage((uint64_t)V2P((uint64_t)buffer));
 
 	return 0;
 };
@@ -156,7 +156,7 @@ uint32_t Ext2ReadBlockIndex(Ext2Fs* fs, uint32_t block_id, uint32_t index) {
 	uint32_t sector_per_block = fs->block_size / 512;
 	uint64_t target_lba = (uint64_t)block_id * sector_per_block;
 
-	uint32_t* buffer = (uint32_t*)P2V((uint32_t)AuPmmngrAlloc());
+	uint32_t* buffer = (uint32_t*)P2V((uint32_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 	if (!buffer) {
 		AuTextOut("[Ext2]: out of memory during block index reading.\r\n");
 		return 0;
@@ -166,7 +166,7 @@ uint32_t Ext2ReadBlockIndex(Ext2Fs* fs, uint32_t block_id, uint32_t index) {
 	AuVDiskRead((AuVDisk*)fs->vdisk, target_lba, sector_per_block, (uint64_t*)buffer);
 	uint32_t resolved_physical_block = buffer[index];
 
-	AuPmmngrFree((void*)V2P((uint64_t)buffer));
+	AuPmmngrReleasePage((uint64_t)V2P((uint64_t)buffer));
 
 	return resolved_physical_block;
 };
@@ -200,7 +200,7 @@ size_t Ext2Read(AuVFSNode* node, AuVFSNode* file, uint64_t* buffer, uint32_t len
 	uint32_t sector_per_block = block_size / 512;
 	uint32_t bytes_read = 0;
 
-	uint64_t* bounce_page = (uint64_t*)P2V((uint64_t)AuPmmngrAlloc());
+	uint64_t* bounce_page = (uint64_t*)P2V((uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 	if (!bounce_page) {
 		AuTextOut("[Ext2]: out of memory during file reading.\r\n");
 		return 0;
@@ -290,7 +290,7 @@ size_t Ext2Read(AuVFSNode* node, AuVFSNode* file, uint64_t* buffer, uint32_t len
 		bytes_read += chunk;
 	}
 
-	AuPmmngrFree((void*)V2P((uint64_t)bounce_page));
+	AuPmmngrReleasePage((uint64_t)V2P((uint64_t)bounce_page));
 	file->pos += bytes_read;
 
 	return bytes_read;
@@ -418,7 +418,7 @@ AuVFSNode* Ext2Open(AuVFSNode* fsys, char* path) {
 * @param mountname -- mount file system name
 */
 AuVFSNode* Ext2Initialise(AuVDisk* vdisk, char* mountname) {
-	uint64_t* buffer = (uint64_t*)P2V((uint64_t)AuPmmngrAlloc());
+	uint64_t* buffer = (uint64_t*)P2V((uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 	memset(buffer, 0, 4096);
 
 	AuVDiskRead(vdisk, 2, 2, buffer);
@@ -441,7 +441,7 @@ AuVFSNode* Ext2Initialise(AuVDisk* vdisk, char* mountname) {
 	memcpy(fs->superblock, buffer, sizeof(Ext2Superblock));
 
 	if (fs->superblock->magic != EXT2_SUPER_BLOCK_MAGIC) {
-		AuPmmngrFree((void*)V2P((uint64_t)buffer));
+		AuPmmngrReleasePage((uint64_t)V2P((uint64_t)buffer));
 		kfree(fs->superblock);
 		kfree(fs);
 		AuTextOut("[ext2]: EXT2 magic mismatch \n");
@@ -508,7 +508,7 @@ AuVFSNode* Ext2Initialise(AuVDisk* vdisk, char* mountname) {
 	AuVFSAddFileSystem(fsys);
 	AuVFSRegisterRoot(fsys);
 
-	AuPmmngrFree((void*)V2P((uint64_t)buffer));
+	AuPmmngrReleasePage((uint64_t)V2P((uint64_t)buffer));
 
 	return fsys;
 }
