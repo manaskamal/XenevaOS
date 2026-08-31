@@ -45,7 +45,7 @@
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'" Label="Configuration">
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
@@ -65,9 +65,9 @@
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
@@ -100,9 +100,14 @@
     <TargetName>XEClib</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
-    <TargetExt>.dll</TargetExt>
+    <TargetExt>.lib</TargetExt>
     <GenerateManifest>false</GenerateManifest>
     <TargetName>XEClib</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
+    <TargetName>XEClib</TargetName>
+    <GenerateManifest>false</GenerateManifest>
+    <TargetExt>.dll</TargetExt>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -198,7 +203,8 @@
       <AdditionalOptions>/filealign:4096 /def:_export_arm64.def %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
-      <Command>copy "..\..\Build\$(TargetName).dll" M:\$(TargetName).dll" </Command>
+      <Command>
+      </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -233,24 +239,56 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>MaxSpeed</Optimization>
-      <FunctionLevelLinking>true</FunctionLevelLinking>
-      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <FunctionLevelLinking>
+      </FunctionLevelLinking>
+      <IntrinsicFunctions>false</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>..\..\Libs\XEClib\includes; includes\c++</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>ARCH_ARM64; YES_DYNAMIC; DYNAMIC_EXPORTER;</PreprocessorDefinitions>
+      <ExceptionHandling>false</ExceptionHandling>
+      <BasicRuntimeChecks />
+      <RuntimeLibrary />
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+      <RuntimeTypeInfo>false</RuntimeTypeInfo>
+      <AdditionalOptions>/Oi- %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
+      <OutputFile>..\..\Build\XEClib.dll</OutputFile>
+      <AdditionalDependencies />
+      <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
+      <EnableUAC>false</EnableUAC>
+      <GenerateMapFile>true</GenerateMapFile>
+      <MapExports>true</MapExports>
+      <SubSystem>Native</SubSystem>
+      <LargeAddressAware>true</LargeAddressAware>
+      <Driver>Driver</Driver>
+      <StackCommitSize>0x10000</StackCommitSize>
+      <BaseAddress>0x0000000400000000</BaseAddress>
+      <RandomizedBaseAddress />
+      <FixedBaseAddress>false</FixedBaseAddress>
+      <DataExecutionPrevention />
+      <AdditionalOptions>/filealign:4096 /def:_export_arm64.def %(AdditionalOptions)</AdditionalOptions>
     </Link>
+    <PostBuildEvent>
+      <Command>copy "..\..\Build\$(TargetName).dll" M:\$(TargetName).dll" </Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <NASM Include="setjmp.asm">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">true</ExcludedFromBuild>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">false</DeploymentContent>
     </NASM>
     <NASM Include="_callbase.asm">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</DeploymentContent>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">true</ExcludedFromBuild>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">false</DeploymentContent>
     </NASM>
   </ItemGroup>
   <ItemGroup>
@@ -279,6 +317,7 @@
     <ClInclude Include="includes\limits.h" />
     <ClInclude Include="includes\math.h" />
     <ClInclude Include="includes\setjmp.h" />
+    <ClInclude Include="includes\signal.h" />
     <ClInclude Include="includes\size_t.h" />
     <ClInclude Include="includes\stdarg.h" />
     <ClInclude Include="includes\stdbool.h" />
@@ -292,6 +331,7 @@
     <ClInclude Include="includes\sys\mman.h" />
     <ClInclude Include="includes\sys\socket.h" />
     <ClInclude Include="includes\sys\stat.h" />
+    <ClInclude Include="includes\sys\time.h" />
     <ClInclude Include="includes\sys\types.h" />
     <ClInclude Include="includes\sys\utf.h" />
     <ClInclude Include="includes\sys\netdb.h" />
@@ -343,7 +383,9 @@
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">true</DeploymentContent>
     </ClCompile>
     <ClCompile Include="sys\_xeneva.cpp" />
-    <ClCompile Include="sys\_xeprint.cpp" />
+    <ClCompile Include="sys\_xeprint.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="time.cpp" />
     <ClCompile Include="_xeinput.cpp" />
     <ClCompile Include="_xeprint.cpp" />
@@ -356,6 +398,10 @@
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">$(IntDir)%(Filename).obj</Outputs>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</DeploymentContent>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">clang --target=aarch64-windows-msvc -fms-compatibility -fms-extensions  -c -o "$(IntDir)%(Filename).obj" "%(FullPath)"</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">$(IntDir)%(Filename).obj</Outputs>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">false</ExcludedFromBuild>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">true</DeploymentContent>
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
@@ -365,6 +411,10 @@
       <FileType>Document</FileType>
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">clang --target=aarch64-windows-msvc -c -o "$(IntDir)%(Filename).obj" "%(FullPath)"</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">$(IntDir)%(Filename).obj</Outputs>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">false</ExcludedFromBuild>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">true</DeploymentContent>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">clang --target=aarch64-windows-msvc -c -o "$(IntDir)%(Filename).obj" "%(FullPath)"</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">$(IntDir)%(Filename).obj</Outputs>
     </CustomBuild>
     <CustomBuild Include="store_stack_arm64.s">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">false</ExcludedFromBuild>
@@ -372,6 +422,10 @@
       <FileType>Document</FileType>
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">clang --target=aarch64-windows-msvc -c -o "$(IntDir)%(Filename).obj" "%(FullPath)"</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">$(IntDir)%(Filename).obj</Outputs>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">false</ExcludedFromBuild>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">true</DeploymentContent>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">clang --target=aarch64-windows-msvc -c -o "$(IntDir)%(Filename).obj" "%(FullPath)"</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">$(IntDir)%(Filename).obj</Outputs>
     </CustomBuild>
     <None Include="_export_arm64.def" />
   </ItemGroup>

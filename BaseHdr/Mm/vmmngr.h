@@ -40,6 +40,11 @@
  */
 
 #include <stdint.h>
+#if defined(__GNUC__) || defined(__clang__)
+#ifndef __cplusplus
+#include <stdbool.h>
+#endif
+#endif
 #include <aurora.h>
 
 #ifdef ARCH_X64

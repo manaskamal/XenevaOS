@@ -56,7 +56,7 @@ typedef struct _IMAGE_DOS_HEADER_ {
 	uint16_t e_oemid;
 	uint16_t e_oeminfo;
 	uint16_t e_res2[10];
-	uint16_t e_lfanew;
+	uint32_t e_lfanew;
 } IMAGE_DOS_HEADER, * PIMAGE_DOS_HEADER;
 
 typedef struct _IMAGE_NT_HEADERS_PE32_ IMAGE_NT_HEADERS_PE32, * PIMAGE_NT_HEADERS_PE32;

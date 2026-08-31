@@ -39,6 +39,15 @@
 XE_EXTERN{
 #endif
 
+/* defined in seconds */
+#define TZ_SEC_IST_INDIA  19800   //+5:30 
+#define TZ_SEC_CHINA_STD  28800   //+8:00
+#define TZ_SEC_JAPAN_STD  32400   //+9:00
+#define TZ_SEC_NEPAL      20700   //+5:45
+#define TZ_SEC_PAKISTAN   18000   //+5:00
+#define TZ_SEC_UAE_GULF   14400   //+4:00
+#define TZ_SEC_BANGLADESH 21600   //+6:00
+
 
 #pragma pack(push,1)
 	typedef struct _xe_time_ {
@@ -61,6 +70,10 @@ XE_EXTERN{
 	XE_LIB uint64_t _KeGetCurrentUS();
 
 	XE_LIB uint64_t _KeGetCurrentMS();
+
+	XE_LIB void _KeSetWalltime(int64_t sec, int64_t nsec);
+
+	XE_LIB void _KeGetWalltime(int64_t* sec, int64_t* nsec);
 
 #ifdef __cplusplus
 }

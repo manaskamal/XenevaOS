@@ -220,7 +220,7 @@
       <DataExecutionPrevention>false</DataExecutionPrevention>
     </Link>
     <PostBuildEvent>
-      <Command>copy "$(SolutionDir)Build\EFI\BOOT\$(TargetName).efi" "M:\EFI\BOOT\$(TargetName).efi"</Command>
+      <Command>if exist M:\ ( copy "$(SolutionDir)Build\EFI\BOOT\$(TargetName).efi" "M:\EFI\BOOT\$(TargetName).efi" ) else ( echo M: drive not found, skipping copy )</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">

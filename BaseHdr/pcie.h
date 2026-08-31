@@ -33,6 +33,11 @@
 #include <stdint.h>
 #include <Hal/basicacpi.h>
 #include <Hal/hal.h>
+#if defined(__GNUC__) || defined(__clang__)
+#ifndef __cplusplus
+#include <stdbool.h>
+#endif
+#endif
 
 
 #define PCI_VENDOR_ID  0x00

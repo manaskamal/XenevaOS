@@ -40,6 +40,10 @@
 #include <sys/mman.h>
 #include "esccode.h"
 #include <sys/_ketty.h>
+#include <signal.h>
+#include <sys/time.h>
+#include <unistd.h>
+#include <time.h>
 
 ChWindow* win;
 ChitralekhaApp* app;
@@ -50,12 +54,15 @@ Terminal term;
 bool dirty = false;
 bool _escape_seq = false;
 bool _seq_csi = false;
+bool _seq_osc = false;
 bool _cursor_blink = 0;
 bool _update_terminal_ = false;
 bool _first_time = false;
 uint32_t backColor;
 uint32_t fgColor;
 char* escBuf;
+char oscBuf[64];
+int oscLen;
 int shell_id;
 
 #define TERMINAL_BLACK  0xFF373434
@@ -83,6 +90,71 @@ static void _terminal_mouse_to_cell(Terminal* t, int mouseX, int mouseY, int* ce
 	if (*cellY >= t->rows) *cellY = t->rows - 1;
 }
 
+void TerminalDrawCell(Terminal* t, int col, int row);
+
+static void _terminal_redraw_cursor(Terminal* t) {
+	if (!t->blink_visible) return;
+	if (t->scrolling) return;
+	TermCell* c = &t->cells[t->cursorY][t->cursorX];
+	int px = _terminal_cell_to_pixelX(t, t->cursorX);
+	int py = _terminal_cell_to_pixelY(t, t->cursorY);
+
+	uint32_t cursor_col = 0xFFAEAEAE;  //c->bg;
+
+	uint32_t* pixels = win->canv->buffer;
+	for (int y = 0; y < t->cellH; y++) {
+		uint32_t* row = pixels + (py + y) * win->canv->canvasWidth + px;
+		for (int x = 0; x < t->cellW; x++)
+			row[x] = cursor_col;
+	}
+
+
+	if (c->c && c->c != ' ') {
+		char buf[2] = { c->c, '\0' };
+		ChRect clip;
+		clip.x = px;
+		clip.y = py;
+		clip.w = t->cellW;
+		clip.h = t->cellH;
+		ChFontDrawTextClipped(win->canv, consolas, buf, px, py + t->baseine, TERMINAL_BLACK, &clip);
+	}
+	// draw the character here
+	ChWindowUpdate(win, px, py, t->cellW, t->cellH, 0, 1);
+}
+
+
+static void _terminal_erase_cursor(Terminal* t) {
+	if (t->scrolling) return;
+	TermCell* cell = &term.cells[t->cursorY][t->cursorX];
+	cell->flags |= (1 << 1);
+	if (!cell->bg)
+		cell->bg = TERMINAL_BLACK;
+	TerminalDrawCell(t, t->cursorX,t->cursorY);
+	cell->flags &= ~(1 << 1);
+	int px = _terminal_cell_to_pixelX(t, t->cursorX);
+	int py = _terminal_cell_to_pixelY(t, t->cursorY);
+	ChWindowUpdate(win, px, py, t->cellW, t->cellH, 0, 1);
+}
+
+
+/**
+ * @brief _terminal_blink_cursor -- blinks the cursor
+ * @param signum -- signal number
+ */
+static void _terminal_blink_cursor(int signum) {
+	if (term.cursor_hide) return;
+	if (!term.scrolling) {
+		if (term.blink_visible) {
+			_terminal_erase_cursor(&term);
+			term.blink_visible = false;
+		}
+		else {
+			term.blink_visible = true;
+			_terminal_redraw_cursor(&term);
+		}
+	}
+	alarm(1);
+}
 /*
  * TerminalDrawArrayFont -- draw bitmap fonts using defined array
  * @param canv -- Pointer to canvas 
@@ -129,22 +201,25 @@ void TerminalSetCellData(Terminal* t, int row, int col, char ch, uint32_t bg, ui
  * @param dirty -- dirty specifies was this a single cell update?
  */
 void TerminalDrawCell(Terminal *t,int col, int row) {
+	int y_offset = 26;
 	TermCell* cell = &t->cells[row][col];
 	
 	int px = _terminal_cell_to_pixelX(t, col);
 	int py = _terminal_cell_to_pixelY(t, row);
 
 
-	if (cell->c) {
-		char buf[2] = { cell->c, '\0' };
-		ChRect clip;
-		clip.x = px;
-		clip.y = py;
-		clip.w = t->cellW;
-		clip.h = t->cellH;
-
+	if (cell->c || cell->flags & (1<<1)) {
 		ChDrawRect(win->canv, px, py, t->cellW, t->cellH, cell->bg);
-		ChFontDrawTextClipped(win->canv, consolas, buf, px, py + t->baseine, cell->fg, &clip);
+		if (cell->c) {
+			char buf[2] = { cell->c, '\0' };
+			ChRect clip;
+			clip.x = px;
+			clip.y = py;
+			clip.w = t->cellW;
+			clip.h = t->cellH;
+
+			ChFontDrawTextClipped(win->canv, consolas, buf, px, py + t->baseine, cell->fg, &clip);
+		}
 	}
 }
 
@@ -158,6 +233,7 @@ void TerminalFlush(Terminal* t) {
 			if (!(cell->flags & 0x1)) continue;
 			TerminalDrawCell(t, c, r);
 			cell->flags &= ~0x1;
+			cell->flags &= ~(1 << 1);
 
 			int px = _terminal_cell_to_pixelX(t, c);
 			int py = _terminal_cell_to_pixelY(t, r);
@@ -189,9 +265,11 @@ void TerminalDrawCursor() {
  * one line up
  */
 void TerminalScroll(Terminal* t, int lines) {
+	t->scrolling = true;
 	int regionRows = t->scrollBot - t->scrollTop + 1;
 	if (lines > regionRows) lines = regionRows;
 
+//	_terminal_erase_cursor(t);
 
 	for (int r = t->scrollTop; r <= t->scrollBot - lines; r++)
 		memcpy(t->cells[r], t->cells[r + lines],t->cols * sizeof(TermCell));
@@ -239,6 +317,7 @@ void TerminalScroll(Terminal* t, int lines) {
 
 	ChWindowUpdate(win, regionPx, regionPy, regionW, regionH, 0, 1);
 	t->cursorY = t->scrollBot;
+	t->scrolling = false;
 }
 
 /* TerminalClearScreen -- clears entire screen area of
@@ -247,6 +326,7 @@ void TerminalScroll(Terminal* t, int lines) {
 void TerminalClearScreen(Terminal* t) {
 	t->lastCursorX = t->cursorX;
 	t->lastCursorY = t->cursorY;
+	_terminal_erase_cursor(t);
 	for (int r = 0; r < t->rows; r++) {
 		for (int c = 0; c < t->cols; c++){
 			t->cells[r][c].c = ' ';
@@ -323,6 +403,7 @@ void TerminalPrintChar(Terminal* t,char c, uint32_t fgcolor, uint32_t bgcolor) {
 		backColor = TERMINAL_BLACK;
 		t->lastCursorY = t->cursorY;
 		t->lastCursorX = t->cursorX;
+		_terminal_erase_cursor(t);
 		t->cursorY++;
 		t->cursorX = 0;
 		if (t->cursorY >= t->scrollBot){
@@ -350,6 +431,7 @@ void TerminalPrintChar(Terminal* t,char c, uint32_t fgcolor, uint32_t bgcolor) {
 		TerminalPutChar(t, c, backColor, fgColor);
 		t->lastCursorX = t->cursorX;
 		t->lastCursorY = t->cursorY;
+		_terminal_erase_cursor(t);
 		t->cursorX++;
 		if (t->cursorX == t->cols) {
 			t->cursorX = 0;
@@ -379,6 +461,8 @@ void TerminalReplaceInput(Terminal* t, const char* newText) {
 	slave_buf[1] = '\0';
 	int curX = t->cursorX;
 	int curY = t->cursorY;
+	t->lastCursorX = curX;
+	t->lastCursorY = curY;
 	for (int i = 0; i < oldLen; i++) {
 		if (curX > 0) {
 			curX--;
@@ -462,7 +546,7 @@ void TerminalHistoryUp(Terminal* t) {
 
 	int idx = (t->history.head - 1 - t->history.browse + TERMINAL_HISTORY_MAX * 2)
 		% TERMINAL_HISTORY_MAX;
-
+	_terminal_erase_cursor(t);
 	TerminalReplaceInput(t, t->history.entries[idx]);
 }
 
@@ -473,10 +557,12 @@ void TerminalHistoryDown(Terminal* t) {
 		t->history.browse--;
 		int idx = (t->history.head - 1 - t->history.browse + TERMINAL_HISTORY_MAX * 2)
 			% TERMINAL_HISTORY_MAX;
+		_terminal_erase_cursor(t);
 		TerminalReplaceInput(t, t->history.entries[idx]);
 	}
 	else {
 		t->history.browse = -1;
+		_terminal_erase_cursor(t);
 		TerminalReplaceInput(t, t->inputSaved);
 	}
 }
@@ -635,6 +721,41 @@ void ProcessControlSequence(Terminal* term_,char ch) {
 		memset(escBuf, 0, 256);
 		return;
 	}
+
+	if (ch == CSI_CURSOR_HOME || ch == 'f') {
+		for (int i = 0; i < 256; i++) {
+			if (escBuf[i] == CSI_CURSOR_HOME || escBuf[i] == 'f') {
+				escBuf[i] = 0;
+				break;
+			}
+		}
+		int row = 0, col = 0;
+		char* semi = strchr(escBuf, ';');
+		if (semi) {
+			*semi = '\0';
+			row = atoi(escBuf);
+			col = atoi(semi + 1);
+		}else {
+			row = atoi(escBuf);
+			col = 0;
+		}
+
+		if (row > 0) row--;
+		if (col > 0) col--;
+
+		if (row < 0) row = 0;
+		if (row >= term.rows) row = term.rows - 1;
+		if (col < 0) col = 0;
+		if (col >= term.cols) col = term.cols - 1;
+
+		term.cursorX = row;
+		term.cursorY = col;
+
+		_escape_seq = false;
+		_seq_csi = false;
+		memset(escBuf, 0, 256);
+		return;
+	}
 	/* emulate erase text non line mode */
 	if (ch == CSI_ERASE_TEXT_NONLINE) {
 		for (int i = 0; i < 256; i++) {
@@ -700,6 +821,99 @@ void ProcessControlSequence(Terminal* term_,char ch) {
 		memset(escBuf, 0, 256);
 		return;
 	}
+
+	if (ch == CSI_SET_MODE || ch == CSI_RESET_MODE) {
+		for (int i = 0; i < 256; i++) {
+			if (escBuf[i] == ch) {
+				escBuf[i] = 0;
+				break;
+			}
+		}
+
+		int mode = 0;
+		if (escBuf[0] == '?')
+			mode = atoi(escBuf + 1);
+		else
+			mode = atoi(escBuf);
+
+		switch (mode) {
+		case 25:
+			term_->blink_visible = (ch == CSI_SET_MODE) ? 1 : 0;
+			term_->cursor_hide = !term_->blink_visible;
+			//if (term_->cursor_hide == 0)
+				//alarm(1);
+			_KePrint("Cursor blink change requested %d\r\n", term_->cursor_hide);
+			break;
+
+		case 1049:
+			break;
+		case 1000:
+			break;
+		default:
+			break;
+		}
+		_escape_seq = false;
+		_seq_csi = false;
+		memset(escBuf, 0, 256);
+		return;
+	}
+
+	if (ch == CSI_SAVE_CURSOR) {
+		term_->savedCursorX = term_->cursorX;
+		term_->savedCursorY = term_->cursorY;
+		_escape_seq = false;
+		_seq_csi = false;
+		memset(escBuf, 0, 256);
+		return;
+	}
+
+	if (ch == CSI_RESTORE_CURSOR) {
+		term_->cursorX = term_->savedCursorX;
+		term_->cursorY = term_->savedCursorY;
+		_escape_seq = false;
+		_seq_csi = false;
+		memset(escBuf, 0, 256);
+		return;
+	}
+
+}
+
+void ProcessOSCSequence(Terminal* t, const char* payload) {
+	//OSC 133 - shell integration/ semantic prompt markers
+	if (strncmp(payload, "133;", 4) == 0) {
+		char marker = payload[4];
+		switch (marker) {
+		case 'A': {
+			t->inputStartX = t->cursorX;
+			t->inputStartY = t->cursorY;
+			break;
+		}
+
+		case 'B': {
+			t->inputStartX = t->cursorX;
+			t->inputStartY = t->cursorY;
+			t->intputLen = 0;
+			t->inputBuffer[0] = '\0';
+			break;
+		}
+
+		case 'C': {
+			//input startX = -1;
+			t->inputStartX = -1;
+			break;
+		}
+		case 'D': {
+			//command done, parse exit code from OSC payload, 
+			//e.g. 133;D;0-> exit code = atoi(payload+6)
+			break;
+		}
+		}
+
+		if (strncmp(payload, "0;", 2) == 0 || strncmp(payload, "2;", 2) == 0) {
+			//Set window title (win, payload+2);
+			return;
+		}
+	}
 }
 
 /*
@@ -719,10 +933,43 @@ void TerminalProcessLine(Terminal* t,char ch) {
 			ProcessControlSequence(t, ch);
 			return;
 		}
+
+		if (ch == SEQUENCE_OSC) {
+			_seq_osc = true;
+			oscLen = 0;
+			oscBuf[0] = '\0';
+			return;
+		}
+
+		if (_seq_osc) {
+			if (ch == '\007') {
+				oscBuf[oscLen] = '\0';
+				ProcessOSCSequence(t, oscBuf);
+				_seq_osc = false;
+				_escape_seq = false;
+				oscLen = 0;
+				return;
+			}
+
+			if (ch == '\\') {
+				oscBuf[oscLen] = '\0';
+				ProcessOSCSequence(t, oscBuf);
+				_seq_osc = false;
+				_escape_seq = false;
+				oscLen = 0;
+				return;
+			}
+
+			if (oscLen < 64) //increase it to 255 in future
+				oscBuf[oscLen++] = ch;
+			return;
+		}
 	}
 	else {
 		/* process default state */
 		if (ch == ASCII_ESC_CHAR) {
+			if (_seq_osc)
+				return;
 			_escape_seq = true;
 			return;
 		}
@@ -776,6 +1023,10 @@ void TerminalHandleMouseClick(Terminal* t, int mouseX, int mouseY, int button) {
 
 	TerminalFlush(t);
 }
+
+/* custom key mappings, it's a bug */
+#define TERMINAL_KEY_RIGHT 0x2E
+#define TERMINAL_KEY_LEFT 0x33
 /*
  * TerminalHandleMessage -- handle incoming 'Deodhai' messages
  * @param e -- Pointer to PostEvent memory location where 
@@ -805,7 +1056,7 @@ void TerminalHandleMessage(PostEvent *e) {
 		}
 
 		if (rawkey == KEY_BACKSPACE) {
-			if (&term.intputLen > 0) {
+			if (term.intputLen > 0) {
 				term.intputLen--;
 				term.inputBuffer[term.intputLen] = '\0';
 				c = '\b';
@@ -827,14 +1078,31 @@ void TerminalHandleMessage(PostEvent *e) {
 			return;
 		}
 
+		if (rawkey == TERMINAL_KEY_LEFT) {
+			if (term.cursorX > term.inputStartX) {
+				_terminal_erase_cursor(&term);
+				term.cursorX--;
+				_terminal_redraw_cursor(&term);
+			}
+			memset(e, 0, sizeof(PostEvent));
+		}
 
+		if (rawkey == TERMINAL_KEY_RIGHT) {
+			if (term.cursorX < term.inputStartX + term.intputLen) {
+				_terminal_erase_cursor(&term);
+				term.cursorX++;
+				_terminal_redraw_cursor(&term);
+			}
+			memset(e, 0, sizeof(PostEvent));
+		}
 		/**
 		 * handle CTRL + combined keys 
 		 */
 		if (ChitralekhaKeyGetCTRL()) {
 			if (c == KEY_C) {
+				_KePrint("Sending signal to id : %d \r\n", shell_id);
 				if (shell_id > 0)
-					_KeSendSignal(shell_id, SIGINT);
+					kill(shell_id, SIGINT);
 				c = '\n';
 			}
 			if (c == KEY_H) {
@@ -882,17 +1150,18 @@ void TerminalHandleMessage(PostEvent *e) {
  * asynchronous reads
  */
 void TerminalThread() {
-	char buf[512];
-	memset(&buf, 0, 512);
+	char* buf = (char*)malloc(1024);
+	memset(buf, 0, 1024);
 	int bytes_read = 0;
 	while (1) {
-		bytes_read = _KeReadFile(master_fd, buf, 512);
-		if (bytes_read >= 512) {
-			bytes_read = 512;
+		bytes_read = _KeReadFile(master_fd, buf, 1024);
+		if (bytes_read >= 1024) {
+			bytes_read = 1024;
 		}
 
 		for (int i = 0; i < bytes_read; i++){
 			TerminalProcessLine(&term,buf[i]);
+
 		}
 	
 		/* now bytes_read tells the terminal
@@ -901,14 +1170,12 @@ void TerminalThread() {
 		 */
 		if ((bytes_read > 0) || _update_terminal_) {
 			TerminalFlush(&term);
-			
-			//TerminalDrawCursor();
 			bytes_read = 0;
 			_update_terminal_ = false;
 		}
 		
 #ifdef ARCH_ARM64
-		_KeProcessSleep(4);
+		_KeProcessSleep(60);
 #elif ARCH_X64
 		_KeProcessSleep(10000);
 #endif
@@ -929,11 +1196,16 @@ int main(int argc, char* arv[]){
 	ChFontSetSize(consolas, 12);
 
 	int f_w = ChFontGetWidthChar(consolas,'M');
-	int f_h = consolas->face->size->metrics.height >> 6;//ChFontGetHeightChar(consolas, 'A');
+#ifdef _USE_FREETYPE
+	int f_h = consolas->face->size->metrics.height >> 6;
+	term.baseine = consolas->face->size->metrics.ascender >> 6;
+#else
+	int f_h = ChFontGetHeightChar(consolas, 'A');
+	term.baseine = f_h - 4;
+#endif
 
 	term.cellW = f_w;
 	term.cellH = f_h;
-	term.baseine = consolas->face->size->metrics.ascender >> 6; 
 
 	int term_w = win->info->width;
 	int term_h = win->info->height - 16; // -26 for titlebar height
@@ -951,11 +1223,16 @@ int main(int argc, char* arv[]){
 	term.defaultFg = WHITE;
 	term.scrollTop = 0;
 	term.scrollBot = term.rows - 1;
-	term.originX = 0;
+	term.originX = 1;
 	term.originY = 26;
 	term.lastCellXClicked = -1;
 	term.lastCellYClicked = -1;
-
+	term.inputStartX = 0;
+	term.inputStartY = 0;
+	term.scrolling = 0;
+	term.savedCursorX = 0;
+	term.savedCursorY = 0;
+	term.cursor_hide = 0;
 	backColor = term.defaultBG;
 	fgColor = term.defaultFg;
 
@@ -973,6 +1250,8 @@ int main(int argc, char* arv[]){
 
 	/*term_buffer = (TermCell*)malloc(ws_col * ws_row * sizeof(TermCell));
 	memset(term_buffer, 0x0, static_cast<uint64_t>(ws_col) * ws_row * sizeof(TermCell));*/
+
+	signal(SIGALRM, _terminal_blink_cursor);
 
 	ChWindowPaint(win);
 
@@ -995,6 +1274,17 @@ int main(int argc, char* arv[]){
 	int thread_idx = _KeCreateThread(TerminalThread, "asyncthr");
 
 	ChWindowBroadcastIcon(app, "/icons/term.bmp");
+
+	term.blink_visible = 1;
+	/** setup periodic timer for cursor **/
+	/*struct itimerval blink_timer;
+	blink_timer.it_value.tv_sec = 0;
+	blink_timer.it_value.tv_usec = 500000;
+	blink_timer.it_interval.tv_sec = 0;
+	blink_timer.it_interval.tv_usec = 500000;
+	setitimer(ITIMER_REAL, &blink_timer, NULL);*/
+	alarm(1);
+
 	PostEvent e;
 	memset(&e, 0, sizeof(PostEvent));
 	while (1) {

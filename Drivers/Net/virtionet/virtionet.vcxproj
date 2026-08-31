@@ -134,7 +134,7 @@
     <Link>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <OutputFile>..\..\Build\$(TargetName).dll</OutputFile>
-      <AdditionalLibraryDirectories>..\..\..\ARM64\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)Build\;..\..\..\ARM64\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>xnkrnl.lib</AdditionalDependencies>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
       <EnableUAC>false</EnableUAC>
@@ -162,7 +162,7 @@
       </SDLCheck>
       <AdditionalIncludeDirectories>..\..\..\BaseHdr;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OmitFramePointers>true</OmitFramePointers>
-      <PreprocessorDefinitions>ARCH_X64;USE_APIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>ARCH_ARM64;USE_APIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <IgnoreStandardIncludePath>true</IgnoreStandardIncludePath>
       <ExceptionHandling>false</ExceptionHandling>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
@@ -175,7 +175,7 @@
     <Link>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <OutputFile>..\..\Build\$(TargetName).dll</OutputFile>
-      <AdditionalLibraryDirectories>..\..\..\ARM64\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)Build\;..\..\..\ARM64\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>xnkrnl.lib</AdditionalDependencies>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
       <EnableUAC>false</EnableUAC>
@@ -192,7 +192,7 @@
       <FixedBaseAddress>false</FixedBaseAddress>
     </Link>
     <PostBuildEvent>
-      <Command>copy "..\..\Build\$(TargetName).dll" "M:\$(TargetName).dll"</Command>
+      <Command>if exist M:\ ( copy "..\..\Build\$(TargetName).dll" "M:\$(TargetName).dll" ) else ( echo M: drive not found, skipping copy )</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">

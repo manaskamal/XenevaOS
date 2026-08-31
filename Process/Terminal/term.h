@@ -57,6 +57,8 @@ typedef struct {
 	int cols, rows;
 	int cursorX, cursorY;
 	int lastCursorX, lastCursorY;
+	int inputStartX, inputStartY;
+	int savedCursorX, savedCursorY;
 	int cellW, cellH;
 	int baseine;
 	int originX, originY;
@@ -70,6 +72,9 @@ typedef struct {
 	int intputLen;
 	int lastCellXClicked;
 	int lastCellYClicked;
+	volatile bool blink_visible;
+	bool scrolling;
+	bool cursor_hide;
 }Terminal;
 
 #endif

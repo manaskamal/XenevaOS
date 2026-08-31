@@ -33,6 +33,11 @@
 #define __POSTBOX_H__
 
 #include <stdint.h>
+#if defined(__GNUC__) || defined(__clang__)
+#ifndef __cplusplus
+#include <stdbool.h>
+#endif
+#endif
 #ifdef ARCH_X64
 #include <Hal/x86_64_sched.h>
 #elif ARCH_ARM64

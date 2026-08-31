@@ -33,6 +33,8 @@
 #include <stdlib.h>
 #include <_xeprint.h>
 
+static char output_printf[512];
+static size_t output_printf_len = 0;
 /*
  * fopen -- opens the file specified by name and associates a
  * stream with it.
@@ -238,11 +240,6 @@ int fclose(FILE* fp) {
 	return ret;
 }
 
-int fflush(FILE* stream) {
-	//_KeWriteFile(stream->_file_num,stream->ptr, )
-	//not implemented
-	return 0;
-}
 
 int putchar(int c) {
 	return fputc(c, stdout);
@@ -252,7 +249,7 @@ int puts(const char *s) {
 	_KePrint("Puts: %x , strlen: %d\r\n", stdout, strlen(s));
 	fwrite((void*)s, 1, strlen(s), stdout);
 	_KePrint("fwrite done \r\n");
-	fwrite("\n", 1, 1, stdout);
+	fwrite((void*)"\n", 1, 1, stdout);
 	return 0;
 }
 
@@ -280,8 +277,6 @@ int sprintf(char* output, const char* format, ...) {
 	len = _xeprint(output, MAX_STRING_LENGTH, format, list);
 	va_end(list);
 	return len;
-
-	return 0;
 }
 
 int snprintf(char* output, size_t sz, const char* format, ...) {
@@ -299,6 +294,27 @@ int snprintf(char* output, size_t sz, const char* format, ...) {
 	return len;
 }
 
+
+static void __stdout_flush_raw() {
+	if (output_printf_len > 0) {
+		_KeWriteFile(XENEVA_STDOUT, output_printf, output_printf_len);
+		output_printf_len = 0;
+	}
+}
+
+static void __stdout_putc(char c) {
+	output_printf[output_printf_len++] = c;
+	if (c == '\n' || output_printf_len >= 512) {
+		_KeWriteFile(XENEVA_STDOUT, output_printf, output_printf_len);
+		output_printf_len = 0;
+	}
+}
+
+static void __stdout_write(const char* data, size_t len) {
+	for (size_t i = 0; i < len; i++)
+		__stdout_putc(data[i]);
+}
+
 int printf(const char* format, ...) {
 	va_list list;
 	va_start(list, format);
@@ -307,14 +323,25 @@ int printf(const char* format, ...) {
 	_store_stack_param(buffer);
 	list = (va_list)buffer;
 #endif
-	char output[MAX_STRING_LENGTH + 1];
-	memset(output, '\0', MAX_STRING_LENGTH);
-	int len = _xeprint(output, MAX_STRING_LENGTH, format, list);
+	char _output[MAX_STRING_LENGTH + 1];
+	memset(_output, '\0', MAX_STRING_LENGTH);
+	int len = _xeprint(_output, MAX_STRING_LENGTH, format, list);
 	va_end(list);
-	_KeWriteFile(XENEVA_STDOUT, output, strlen(output));
+	//if (strchr(_output, '\n') == 0)
+	//_KeWriteFile(XENEVA_STDOUT, _output, strlen(_output));
+	__stdout_write(_output, len);
 	return len;
 }
 
+
+int fflush(FILE* stream) {
+	//_KeWriteFile(stream->_file_num,stream->ptr, )
+	//not implemented
+	if (stream != stdout) 
+		return 1;
+	__stdout_flush_raw();
+	return 0;
+}
 
 
 int vfprintf(FILE *stream, const char* format, va_list list) {

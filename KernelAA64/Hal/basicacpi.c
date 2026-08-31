@@ -5,6 +5,13 @@
 #include <Mm/vmmngr.h>
 #include <Hal/AA64/gic.h>
 #include <aucon.h>
+#include <Drivers/uart.h>
+#include <string.h>
+#if defined(__GNUC__) || defined(__clang__)
+#ifndef __cplusplus
+#include <stdbool.h>
+#endif
+#endif
 
 
 AuroraBasicACPI* __AuroraBasicAcpi;

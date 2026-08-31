@@ -37,6 +37,7 @@
 #include <Mm/vmmngr.h>
 #include <_null.h>
 #include <Drivers/uart.h>
+#include <aucon.h>
 
 /* ============================================================
  *  Shared Memory

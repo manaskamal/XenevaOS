@@ -32,6 +32,7 @@
 #include <Sound/sound.h>
 #include <Mm/kmalloc.h>
 #include <Fs/vfs.h>
+#include <Fs/Dev/devfs.h>
 #include <Cred/cred.h>
 #include <Cred/group.h>
 #include <aucon.h>
@@ -39,6 +40,7 @@
 #include <Drivers/uart.h>
 #include <Mm/vmmngr.h>
 #include <Mm/pmmngr.h>
+#include <string.h>
 
 #define AURORA_MAX_SOUND_CARDS 256
 

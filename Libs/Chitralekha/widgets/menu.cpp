@@ -151,7 +151,7 @@ ChMenuItem* ChCreateMenuItem(char* title,ChPopupMenu* pm) {
 	mi->wid.h = DEFAULT_MENU_ITEM_HEIGHT;
 	mi->wid.x = 0;
 	mi->wid.ChMouseEvent = ChMenuItemMouseEvent;
-	mi->title = (char*)malloc(strlen(title));
+	mi->title = (char*)malloc(strlen(title) + 1);
 	strcpy(mi->title, title);
 	mi->menu = NULL;
 	list_add(pm->MenuItems, mi);

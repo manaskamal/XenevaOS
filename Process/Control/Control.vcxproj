@@ -133,7 +133,7 @@
       <SubSystem>Native</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <OutputFile>..\..\Build\ctrl.exe</OutputFile>
-      <AdditionalLibraryDirectories>..\..\x64\Debug;..\..\Libs\XECrt;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)Build\;..\..\x64\Debug;..\..\Libs\XECrt;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>XEClib.lib; xecrt.lib; chlkha.lib;ftype.lib;</AdditionalDependencies>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
       <EnableUAC>false</EnableUAC>
@@ -151,7 +151,7 @@
       <AdditionalOptions>/ALIGN:512 %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
-      <Command>copy "..\..\Build\$(TargetName).exe" "M:\$(TargetName).exe"</Command>
+      <Command>if exist M:\ ( copy "..\..\Build\$(TargetName).exe" "M:\$(TargetName).exe" ) else ( echo M: drive not found, skipping copy )</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">

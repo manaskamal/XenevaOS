@@ -270,6 +270,38 @@ void CalenderRepaint(int year, int month, int num_days) {
 
 	ChWindowUpdate(mainWin, 0, 0, mainWin->info->width, mainWin->info->height, 1, 0);
 }
+
+/**
+ * AI Generated code
+ */
+static void civil_from_days(int64_t z, int* y, unsigned* m, unsigned* d) {
+	z += 719468;
+	int64_t era = (z >= 0 ? z : z - 146096) / 146097;
+	unsigned doe = (unsigned)(z - era * 146097);
+	unsigned yoe = (doe - doe / 1460 + doe / 36524 - doe / 146096) / 365;
+	int64_t y0 = (int64_t)yoe + era * 400;
+	unsigned doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
+	unsigned mp = (5 * doy + 2) / 153;
+	*d = doy - (153 * mp + 2) / 5 + 1;
+	*m = mp + (mp < 10 ? 3 : -9);
+	*y = (int)(y0 + (*m <= 2));
+}
+
+void CalenderGetYMD(uint32_t* year, uint32_t* month, uint32_t* day, int32_t tz_offset) {
+	int64_t sec_, nsec_;
+	_KeGetWalltime(&sec_, &nsec_);
+	sec_ += tz_offset;
+
+	int64_t days = (int64_t)sec_ / 86400;
+	uint32_t secs_of_day = sec_ % 86400;
+
+	int y; unsigned mo, d;
+	civil_from_days(days, &y, &mo, &d);
+	*year = y;
+	*month = mo;
+	*day = d;
+}
+
 /*
 * main -- main entry
 */
@@ -284,10 +316,14 @@ int main(int argc, char* argv[]){
 	calenderBuffer = (uint8_t*)malloc(sizeof(DateBox) * 42);
 	memset(calenderBuffer, 0, sizeof(DateBox) * 42);
 
-	_KeGetCurrentTime(&t);
+	//_KeGetCurrentTime(&t);
+
 	current_month = t.month;
 	current_year = t.year;
 	current_day = t.day;
+	CalenderGetYMD((uint32_t*)&current_year,
+		(uint32_t*)&current_month,(uint32_t*)&current_day,
+		TZ_SEC_IST_INDIA);
 
 	monthText = ChInitialiseFont(FORTE);
 	
@@ -344,7 +380,7 @@ int main(int argc, char* argv[]){
 	 */
 	CalenderRepaint(t.year, t.month, days_in_month[t.month]);
 
-	//ChWindowBroadcastIcon(app, "/icons/calndr.bmp");
+	ChWindowBroadcastIcon(app, "/icons/calndr.bmp");
 
 	PostEvent e;
 	memset(&e, 0, sizeof(PostEvent));

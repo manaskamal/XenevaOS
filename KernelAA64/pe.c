@@ -34,6 +34,11 @@
 #include <string.h>
 #include <aucon.h>
 #include <stdint.h>
+#if defined(__GNUC__) || defined(__clang__)
+#ifndef __cplusplus
+#include <stdbool.h>
+#endif
+#endif
 #include <Drivers/uart.h>
 
 #define IMAGE_DOS_SIGNATURE 0x5A4D
@@ -364,4 +369,5 @@ bool AuCoffResolveAddress(uint8_t* imageBase, uint64_t paddr) {
 	else 
 		UARTDebugOut("[aurora]: pe symbol <?no match?>, offset : %x \r\n", rva);
 	
+	return 1;
 }

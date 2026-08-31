@@ -33,6 +33,19 @@
 #include "_fastcpy.h"
 
 extern Window* _get_always_on_top();
+
+bool is_window_fully_overlapped(WinSharedInfo* curInfo, Window* alwaysOnTop) {
+	for (Window* check = alwaysOnTop; check != NULL; check = check->next) {
+		WinSharedInfo* info = (WinSharedInfo*)check->sharedInfo;
+		if (info->hide)
+			continue;
+		if (curInfo->x >= info->x && (curInfo->x + curInfo->width <= info->x + info->width) &&
+			curInfo->y >= info->y && (curInfo->y + curInfo->height <= info->y + info->height)) {
+			return true;
+		}
+	}
+	return false;
+}
 /**
  * @brief Check for small area updates !! not entire window
 */
@@ -40,6 +53,13 @@ void _compose_dirty_area_(ChCanvas* canvas,Window* win, Window* focusedWin, WinS
 	Window* alwaysOnTop = _get_always_on_top();
 
 	if ((info->rect_count > 0) && (info->dirty)) {
+
+		if (is_window_fully_overlapped(info, alwaysOnTop)) {
+			info->rect_count = 0;
+			info->dirty = 0;
+			return;
+		}
+
 		for (int k = 0; k < info->rect_count; k++) {
 			int64_t r_x = info->rect[k].x;
 			int64_t r_y = info->rect[k].y;
@@ -72,6 +92,8 @@ void _compose_dirty_area_(ChCanvas* canvas,Window* win, Window* focusedWin, WinS
 			int clipCount = 0;
 			Window* clipWin = NULL;
 			WinSharedInfo* clipInfo = NULL;
+
+
 
 			if (info->alpha) {
 				for (int j = 0; j < r_h; j++) {
@@ -107,6 +129,20 @@ void _compose_dirty_area_(ChCanvas* canvas,Window* win, Window* focusedWin, WinS
 
 					}
 
+					/* always on top list */
+				/*	for (clipWin = alwaysOnTop; clipWin != NULL; clipWin = clipWin->next) {
+						clipInfo = (WinSharedInfo*)clipWin->sharedInfo;
+						if (clipWin == win)
+							continue;
+						r2.x = clipInfo->x;
+						r2.y = clipInfo->y;
+						r2.w = clipInfo->width;
+						r2.h = clipInfo->height;
+
+						if (ClipCheckIntersect(&r1, &r2)) {
+							ClipCalculateRect(&r1, &r2, clipRect, &clipCount);
+						}
+					}*/
 
 				/*	for (Window* cutt = win; cutt != NULL; cutt = cutt->next) {
 						WinSharedInfo* cuttinfo = (WinSharedInfo*)cutt->sharedInfo;
@@ -250,8 +286,15 @@ void _compose_dirty_area_(ChCanvas* canvas,Window* win, Window* focusedWin, WinS
 void _compose_entire_window(ChCanvas* canvas, Window* win, bool _window_update_all_, WinSharedInfo* info, Window* focusedWin,
 	bool _window_moving_, bool _shadow_update) {
 	Window* alwaysOnTop = _get_always_on_top();
+		
 	/* If no small areas, update entire window */
 	if (win != NULL && _window_update_all_ || (info->rect_count == 0 && info->updateEntireWindow == 1)) {
+
+		if (is_window_fully_overlapped(info, alwaysOnTop)) {
+			if (info->updateEntireWindow)
+				info->updateEntireWindow = 0;
+			return;
+		}
 		int64_t winx = 0;
 		int64_t winy = 0;
 		winx = info->x;

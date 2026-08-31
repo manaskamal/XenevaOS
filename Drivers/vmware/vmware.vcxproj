@@ -100,7 +100,7 @@
     <Link>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <OutputFile>F:/vmware.dll</OutputFile>
-      <AdditionalLibraryDirectories>E:\Xeneva Project\Aurora\x64\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)Build\;E:\Xeneva Project\Aurora\x64\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>Kernel.lib;</AdditionalDependencies>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
       <EnableUAC>false</EnableUAC>

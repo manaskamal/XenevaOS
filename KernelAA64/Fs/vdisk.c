@@ -41,7 +41,8 @@
 #include <Drivers/uart.h>
 #include <Fs/fsprobe.h>
 #include <Fs/Fat/Fat.h>
-#include <Fs/Ext2/Ext2.h>
+#include <Hal/AA64/profile.h>
+#include <Fs/Ext2/ext2.h>
 
 AuVDisk* VdiskArray[MAX_VDISK_DEVICES];
 int _vdisk_num_;
@@ -101,6 +102,7 @@ uint8_t AuVDiskGetIndex() {
 		if (!VdiskArray[i])
 			return i;
 	}
+	return UINT8_MAX;
 }
 
 
@@ -156,11 +158,12 @@ void AuVDiskRegisterPartition(AuVDisk* vdisk) {
 	memset(buffer, 0, 4096);
 	if (!vdisk->Read)
 		return;
+
 	vdisk->Read(vdisk, 1, 1, buffer);
 	uint8_t* aligned_buf = (uint8_t*)buffer;
 
 	GPTHeader* header = (GPTHeader*)aligned_buf;
-
+	
 	/* check if it's Efi partition */
 	if (strcmp(header->sig, "EFI PART") != 0) {
 		AuTextOut("[aurora]: vdisk %s doesn't have valid GPT partition \r\n", vdisk->diskname);
@@ -231,6 +234,7 @@ void AuVDiskRegister(AuVDisk* disk) {
 
 	disk->__VDiskID = _index;
 	/* Register a partition and initialise the file system*/
+
 	AuVDiskRegisterPartition(disk);
 
 	aurora_fs_type type = AuProbeFileSystem(disk);

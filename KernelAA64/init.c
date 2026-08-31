@@ -69,6 +69,8 @@
 #include <Fs/Fat/Fat.h>
 #include <Fs/Fat/FatFile.h>
 #include <Fs/Fat/FatDir.h>
+// #include <linux/bitops.h>
+#include <Log/klog.h>
 
 extern int _fltused = 1;
 static bool _littleboot_used;
@@ -109,7 +111,6 @@ int i_ = 1;
 extern void sub_rsp();
 
 void AuEntryTest(uint64_t test) {
-	//aa64_utest();
 	int c = 10;
 	//enable_irqs();
 	AuTextOut("[aurora]: test2 \r\n");
@@ -197,6 +198,7 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 #endif
 
 	AuConsoleInitialize(info, true);
+	B_KLogInit();
     AuDeviceTreeInitialize(info);
 	AA64CpuInitialize();
 	mask_irqs();
@@ -210,10 +212,11 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	AA64CPUPostInitialize(info);
 	AuTextOut("Initializing VFS \r\n");
 	AuVFSInitialise();
-	AuTextOut("[aurora]: VFS initialized \r\n");
 	AuInitrdInitialize(info);
 	AuConsolePostInitialise(info);
 	//AuConsoleBypassAuTextOut();
+	
+
 	AuroraTimerInitialize();
 
 	/* initialize the tty service */
@@ -250,6 +253,7 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	/* required virtio-mouse and keyboard */
 	//Here goes board pre driver initialize
 	AuDrvMngrInitialize(info);
+	UARTDebugOut("[aurora]: driver initialized \r\n");
 
 	FontManagerInitialise();
 
@@ -286,10 +290,10 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 
 	AuProcess* proc = AuCreateProcessSlot(0, "exec");
 	int num_args = 1;
-	char* about = (char*)kmalloc(strlen("-about"));
+	char* about = (char*)kmalloc(strlen("-about") + 1);
 	strcpy(about, "-about");
 	char** argvs = (char**)kmalloc(num_args * sizeof(char*));
-	memset(argvs, 0, num_args);
+	memset(argvs, 0, num_args * sizeof(char*));
 	argvs[0] = about;
 
 	/** make init process, as root of all */

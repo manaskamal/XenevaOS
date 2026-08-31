@@ -37,8 +37,10 @@ XESearchBar* searchBar;
 
 /* the main painting code */
 void XELauncherPaint(ChWindow* win) {
+	_KePrint("Paining launcher \r\n");
 	ChDrawRect(win->canv, 0, 0, win->info->width, win->info->height, LAUNCHER_BACKGROUND_COLOR);
 
+	_KePrint("Painging all widgets \r\n");
 	for (int i = 0; i < win->widgets->pointer; i++) {
 		ChWidget* wid = (ChWidget*)list_get_at(win->widgets, i);
 		if (wid)
@@ -341,6 +343,7 @@ int main(int argc, char* arv[]){
 	restart->base.ChActionHandler = xe_restart_action;
 	ChWindowAddWidget(win, (ChWidget*)restart);
 
+	_KePrint("Launcher paingint \r\n");
 	ChWindowPaint(win);
 
 	PostEvent e;

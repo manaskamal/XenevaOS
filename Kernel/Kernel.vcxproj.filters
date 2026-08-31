@@ -551,6 +551,7 @@
     <ClCompile Include="Fs\initrd.cpp">
       <Filter>Fs</Filter>
     </ClCompile>
+    <ClCompile Include="Cap\capability.cpp" />
   </ItemGroup>
   <ItemGroup>
     <NASM Include="__fstcpy.asm" />

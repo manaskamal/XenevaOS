@@ -39,6 +39,7 @@
 #include <aucon.h>
 #include <Mm/vmmngr.h>
 #include <Hal/AA64/sched.h>
+#include <string.h>
 
 
 struct VirtioQueue* queue;
@@ -117,6 +118,9 @@ void AuVirtioKbdHandler(int spinum) {
 }
 
 void AuVirtioKbdDown() {
+	if (!_kybrdCfg)
+		return;
+
 	/* Reset the device */
 	_kybrdCfg->DeviceStatus = 0;
 

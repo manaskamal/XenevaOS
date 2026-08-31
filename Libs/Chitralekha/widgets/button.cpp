@@ -221,8 +221,8 @@ XE_EXTERN XE_EXPORT ChButton* ChCreateButton(int x, int y, int w, int h, char *t
 	button->base.y =CHITRALEKHA_WINDOW_DEFAULT_PAD_Y + y;
 	button->base.w = w;
 	button->base.h = h;
-	button->title = (char*)malloc(strlen(text));
-	memset(button->title, 0, strlen(text));
+	button->title = (char*)malloc(strlen(text) + 1);
+	memset(button->title, 0, strlen(text) + 1);
 	strcpy(button->title, text);
 	button->base.ChMouseEvent = ChButtonMouseEvent;
 	button->base.ChPaintHandler = ChButtonDefaultPainter;

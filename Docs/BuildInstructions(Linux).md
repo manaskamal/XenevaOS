@@ -5,6 +5,18 @@ To build XenevaOS natively on Linux without relying on MSVC, ensure you have the
 - For x86_64 Kernel: `g++` and `make` (multilib support may be required).
 - For ARM64 (KernelAA64): `aarch64-linux-gnu-gcc` and `aarch64-linux-gnu-binutils`.
 
+## Compiling GNU-EFI (Required for Bootloader)
+The `BootAA64` bootloader relies on `gnu-efi` libraries and object files. Because this directory is ignored in `.gitignore`, you must manually clone and build it first.
+1. Navigate to the root of the `XenevaOS` repository.
+2. Clone the official `gnu-efi` repository:
+   `git clone https://github.com/vathpela/gnu-efi.git`
+3. Build the library for AArch64:
+   ```bash
+   cd gnu-efi
+   make ARCH=aarch64 CROSS_COMPILE=aarch64-linux-gnu-
+   cd ..
+   ```
+
 ## Building the ARM64 Kernel (KernelAA64)
 1. Open a terminal and navigate to the `KernelAA64/` directory.
 2. Run `make clean` to clear any old MSVC objects or stale binaries.

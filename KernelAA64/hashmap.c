@@ -136,14 +136,12 @@ void* AuHashmapSet(hashmap_t* map, const void* key, void* value) {
 
 void* AuHashmapGet(hashmap_t* map, const void* key) {
 	unsigned int hash = map->hash_func(key) % map->size;
-	UARTDebugOut("Hashget hash : %d \r\n", hash);
 	hashmap_entry_t* x = map->entries[hash];
 	if (!x) {
 		return NULL;
 	}
 	else {
 		do {
-			UARTDebugOut("Hasmap hash key : %x \r\n", x->key);
 			if (map->hash_comp(x->key, key))
 				return x->value;
 			x = x->next;

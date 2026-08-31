@@ -111,26 +111,26 @@ XEFile* XEOpenAndReadFile(EFI_HANDLE ImageHandle, CHAR16* Filename) {
 		XEGuiPrint("Failed to locate image handle \n");
 		return 0;
 	}
-
-
+	
+	
 	Status = gBS->HandleProtocol(loadedImage->DeviceHandle, &sfsprotocol, (VOID**)&SimpleFileSystem);
 	if (EFI_ERROR(Status)) {
 		XEGuiPrint("Failed to locate file system protocol \n");
 		return 0;
 	}
-
+	
 	Status = SimpleFileSystem->OpenVolume(SimpleFileSystem, &Root);
 	if (EFI_ERROR(Status)) {
 		XEGuiPrint("Failed to open the root directory \n");
 		return 0;
 	}
-
+	
 	Status = Root->Open(Root, &File, Filename, EFI_FILE_MODE_READ, 0);
 	if (EFI_ERROR(Status)) {
 		XEGuiPrint("Failed to open file \n");
 		return 0;
 	}
-
+	
 	Status = File->GetInfo(File, &GenericFileInfo, &FileInfoSize, NULL);
 	if (Status == EFI_BUFFER_TOO_SMALL) {
 		Status = gBS->AllocatePool(EfiBootServicesData, FileInfoSize, (VOID**)&FileInfo);
@@ -140,7 +140,7 @@ XEFile* XEOpenAndReadFile(EFI_HANDLE ImageHandle, CHAR16* Filename) {
 			return 0;
 		}
 	}
-
+	
 	Status = File->GetInfo(File, &GenericFileInfo, &FileInfoSize, FileInfo);
 	if (EFI_ERROR(Status)) {
 		XEGuiPrint("Failed to get file metadata \n");
@@ -148,7 +148,6 @@ XEFile* XEOpenAndReadFile(EFI_HANDLE ImageHandle, CHAR16* Filename) {
 		File->Close(File);
 		return 0;
 	}
-
 	FileSize = FileInfo->FileSize;
 	gBS->FreePool(FileInfo);
 

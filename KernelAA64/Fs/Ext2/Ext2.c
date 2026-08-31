@@ -1,12 +1,76 @@
 #include <Fs/vfs.h>
-#include <fs/vdisk.h>
+#include <Fs/vdisk.h>
 #include <Mm/kmalloc.h>
 #include <Mm/pmmngr.h>
 #include <Drivers/uart.h>
 #include <string.h>
 #include <aucon.h>
-#include <Fs/Ext2/Ext2.h>
+#include <Fs/Ext2/ext2.h>
+#include <Fs/Ext2/ext2file.h>
+#include <Fs/Ext2/ext2dir.h>
 #include <_null.h>
+
+int Ext2FreeBlock(Ext2Fs* fs, uint32_t block_num) {
+	if (!fs || block_num == 0) return -1;
+
+	uint32_t block_size = fs->block_size;
+	uint32_t sector_per_block = block_size / 512;
+	uint32_t first_data_block = (block_size == 1024) ? 1 : 0;
+	uint32_t adjusted_block = block_num - first_data_block;
+	uint32_t group = adjusted_block / fs->superblock->blocks_per_group;
+	uint32_t relative_block = adjusted_block % fs->superblock->blocks_per_group;
+	uint32_t byte_idx = relative_block / 8;
+	uint8_t bit_idx = relative_block % 8;
+	uint32_t bitmap_block = fs->block_desc[group].block_bitmap;
+	uint64_t bitmap_lba = (uint64_t)bitmap_block * sector_per_block;
+
+	uint8_t* bitmap_buf = (uint8_t*)P2V((uint64_t)AuPmmngrAlloc());
+	if (!bitmap_buf) return -1;
+
+	AuVDiskRead((AuVDisk*)fs->vdisk, bitmap_lba, sector_per_block, (uint64_t*)bitmap_buf);
+
+	bitmap_buf[byte_idx] &= ~(1 << bit_idx);
+
+	AuVDiskWrite((AuVDisk*)fs->vdisk, bitmap_lba, sector_per_block, (uint64_t*)bitmap_buf);
+	AuPmmngrFree((void*)V2P((uint64_t)bitmap_buf));
+
+	fs->superblock->free_blocks_count++;
+	fs->block_desc[group].free_blocks_count++;
+
+	Ext2FlushSuperblock(fs);
+	Ext2FlushBgdt(fs);
+	return 0;
+}
+
+int Ext2FreeInode(Ext2Fs* fs, uint32_t inode_num) {
+	if (!fs || inode_num == 0) return -1;
+
+	uint32_t block_size = fs->block_size;
+	uint32_t sector_per_block = block_size / 512;
+	uint32_t group = (inode_num - 1) / fs->inodes_per_group;
+	uint32_t relative_inode = (inode_num - 1) % fs->inodes_per_group;
+	uint32_t byte_idx = relative_inode / 8;
+	uint8_t bit_idx = relative_inode % 8;
+	uint32_t bitmap_block = fs->block_desc[group].inode_bitmap;
+	uint64_t bitmap_lba = (uint64_t)bitmap_block * sector_per_block;
+
+	uint8_t* bitmap_buf = (uint8_t*)P2V((uint64_t)AuPmmngrAlloc());
+	if (!bitmap_buf) return -1;
+
+	AuVDiskRead((AuVDisk*)fs->vdisk, bitmap_lba, sector_per_block, (uint64_t*)bitmap_buf);
+
+	bitmap_buf[byte_idx] &= ~(1 << bit_idx);
+
+	AuVDiskWrite((AuVDisk*)fs->vdisk, bitmap_lba, sector_per_block, (uint64_t*)bitmap_buf);
+	AuPmmngrFree((void*)V2P((uint64_t)bitmap_buf));
+
+	fs->superblock->free_inodes_count++;
+	fs->block_desc[group].free_inodes_count++;
+
+	Ext2FlushSuperblock(fs);
+	Ext2FlushBgdt(fs);
+	return 0;
+}
 
 /**
 * Ext2FindEntry -- scans the directory data block for matching name string
@@ -16,7 +80,8 @@
 */
 uint32_t Ext2FindEntry(Ext2Fs* fs, Ext2Inode* dir_inode, const char* name) {
 	if (!fs || !dir_inode || !name) {
-		AuTextOut("[Ext2]: parameters missing for directory scanning.\r\n");
+		const char* missing = !fs ? "fs" : !dir_inode ? "dir_inode" : "name";
+		AuTextOut("[Ext2]: %s parameter missing for directory scanning.\r\n", missing);
 		return 0;
 	}
 
@@ -72,8 +137,14 @@ uint32_t Ext2FindEntry(Ext2Fs* fs, Ext2Inode* dir_inode, const char* name) {
 * @param out_inode -- inode to place the readings
 */
 int Ext2ReadInode(Ext2Fs* fs, uint32_t inode_num, Ext2Inode* out_inode) {
-	if (!fs || !out_inode || inode_num == 0) {
-		AuTextOut("[Ext2]: parameters missing for inode reading.\r\n");
+	if (!fs || !out_inode) {
+		const char* missing = !fs ? "fs" : "out_inode";
+		AuTextOut("[Ext2]: %s parameter missing for inode reading.\r\n", missing);
+		return -1;
+	}
+
+	if (inode_num == 0) {
+		AuTextOut("[Ext2]: inode number is zero");
 		return -1;
 	}
 
@@ -115,15 +186,19 @@ int Ext2ReadInode(Ext2Fs* fs, uint32_t inode_num, Ext2Inode* out_inode) {
 * @param index -- the index within the block to read
 */
 uint32_t Ext2ReadBlockIndex(Ext2Fs* fs, uint32_t block_id, uint32_t index) {
-	if (!fs || block_id == 0) {
-		AuTextOut("[Ext2]: parameters missing for block index reading.\r\n");
+	if (!fs) {
+		AuTextOut("[Ext2]: fs missing for block index reading.\r\n");
 		return 0;
+	}
+
+	if (block_id == 0) {
+		AuTextOut("[Ext2]: block_id is zero");
 	}
 
 	uint32_t sector_per_block = fs->block_size / 512;
 	uint64_t target_lba = (uint64_t)block_id * sector_per_block;
 
-	uint32_t* buffer = (uint32_t*)P2V((uint32_t)AuPmmngrAlloc());
+	uint32_t* buffer = (uint32_t*)P2V((uint64_t)AuPmmngrAlloc());
 	if (!buffer) {
 		AuTextOut("[Ext2]: out of memory during block index reading.\r\n");
 		return 0;
@@ -147,7 +222,8 @@ uint32_t Ext2ReadBlockIndex(Ext2Fs* fs, uint32_t block_id, uint32_t index) {
 */
 size_t Ext2Read(AuVFSNode* node, AuVFSNode* file, uint64_t* buffer, uint32_t length) {
 	if (!node || !file || !buffer || !length) {
-		AuTextOut("[Ext2]: parameters missing for file reading.\r\n");
+		const char* missing = !node ? "node" : !file ? "file" : !buffer ? "buffer" : "length";
+		AuTextOut("[Ext2]: %s parameter missing for file reading.\r\n", missing);
 		return 0;
 	}
 
@@ -250,7 +326,8 @@ size_t Ext2Read(AuVFSNode* node, AuVFSNode* file, uint64_t* buffer, uint32_t len
 */
 AuVFSNode* Ext2Open(AuVFSNode* fsys, char* path) {
 	if (!fsys || !path) {
-		AuTextOut("[Ext2]: parameters missing for file opening.\r\n");
+		const char* missing = !fsys ? "fsys" : "path";
+		AuTextOut("[Ext2]: %s parameter missing for file opening.\r\n", missing);
 		return NULL;
 	}
 	
@@ -377,7 +454,7 @@ AuVFSNode* Ext2Initialise(AuVDisk* vdisk, char* mountname) {
 		return NULL;
 	}
 	memset(fs, 0, sizeof(Ext2Fs));
-	fs->vdisk = (AuVFSNode*)vdisk;
+	fs->vdisk = vdisk;
 
 	fs->superblock = (Ext2Superblock*)kmalloc(sizeof(Ext2Superblock));
 	if (!fs->superblock) {
@@ -441,12 +518,15 @@ AuVFSNode* Ext2Initialise(AuVDisk* vdisk, char* mountname) {
 	fsys->device = fs;
 
 	fsys->open = Ext2Open;
+	fsys->close = Ext2Close;
 	fsys->read = Ext2Read;
-	fsys->read_dir = NULL;
+	fsys->read_dir = Ext2ReadDir;
 
-	fsys->write = NULL;
-	fsys->create_dir = NULL;
-	fsys->create_file = NULL;
+	fsys->write = Ext2Write;
+	fsys->create_dir = Ext2CreateDir;
+	fsys->create_file = Ext2CreateFile;
+	fsys->remove_file = Ext2Unlink;
+	fsys->remove_dir = Ext2Rmdir;
 
 	vdisk->fsys = fsys;
 	fs->root_node = fsys;

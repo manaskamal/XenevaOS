@@ -32,6 +32,11 @@
 
 #include <stdint.h>
 #include <aurora.h>
+#if defined(__GNUC__) || defined(__clang__)
+#ifndef __cplusplus
+#include <stdbool.h>
+#endif
+#endif
 
 //APIC structure types
 #define ACPI_APICTYPE_LAPIC  0

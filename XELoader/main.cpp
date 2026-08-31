@@ -124,7 +124,7 @@ int XELdrLoadObject(XELoaderObject *obj){
 				//int bytes = _KeReadFile(file, alloc, 4096);
 				_KeFileStat(file, stat);
 				if (stat->eof) {
-					_KePrint("File already ended \n");
+					//_KePrint("File already ended \n");
 					//break;
 				}
 				//ret_bytes += bytes;
@@ -231,7 +231,7 @@ int XELdrStartProc(char* filename, XELoaderObject *obj) {
 				//int bytes = _KeReadFile(file, alloc, 4096);
 				_KeFileStat(file, stat);
 				if (stat->eof) {
-					_KePrint("File already ended \n");
+					//_KePrint("File already ended \n");
 					
 				}
 				//ret_bytes += bytes;

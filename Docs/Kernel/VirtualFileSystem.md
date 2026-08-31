@@ -41,7 +41,7 @@ typedef struct __VFS_NODE__ {
 | ``parent_block`` | Used in files, describes the parent block address of the file, for example - directory cluster of the file in FAT32 fs |
 | ``first_block`` | Used in files, describes the very first block address of the file, for example - first cluster of the file in FAT32 fs |
 | ``current`` | Used in files, describes the current block address of the file, for example - current read cluster of the file in FAT32 fs |
-| ``flags`` | Used both in files and file systems, describing the type of File or file system |
+| ``flags`` | Node flags defining the node type and properties. See the **Node Flags** section below for details. |
 | ``status`` | Used in files, describing current condition of the file |
 | ``device`` | Used both in files and filesystems, used for pointing file system's private data structure or file's private data structure |
 | ``fileCopyCount`` | Used in files; describes the total copies of this file. The file is not closed until this reaches zero. |
@@ -58,9 +58,36 @@ typedef struct __VFS_NODE__ {
 | ``get_blockfor`` | Used in filesystems; retrieves the desired block address corresponding to a given file position in bytes. |
 | ``iocontrol`` | Used both in filesystems and files for controlling the filesystem or file |
 
+### Node Flags (`flags`)
+Ensure you set the appropriate flags so the VFS handles the node correctly. The following are the available VFS node flags:
+* `FS_FLAG_DIRECTORY` `(1<<1)` : Indicates the node is a directory. (Temporary/Freeable)
+* `FS_FLAG_GENERAL` `(1<<2)` : General purpose file node. (Temporary/Freeable)
+* `FS_FLAG_DEVICE` `(1<<3)` : Virtual device node (e.g., inside `/dev`). (Permanent/Non-freeable)
+* `FS_FLAG_DELETED` `(1<<4)` : State flag indicating the node has been deleted.
+* `FS_FLAG_INVALID` `(1<<5)` : State flag indicating the node is invalid.
+* `FS_FLAG_FILE_SYSTEM` `(1<<6)` : Indicates a file system mount node. (Permanent/Non-freeable). **Mainly needed when registering a file system module.**
+* `FS_FLAG_PIPE` `(1<<7)` : Inter-process communication pipe. (Temporary/Freeable)
+* `FS_FLAG_TTY` `(1<<8)` : Teletype/terminal node. (Temporary/Freeable with count)
+* `FS_FLAG_SOCKET` `(1<<9)` : Network socket node. (Temporary/Freeable)
+* `FS_FLAG_FILE_SYSTEM_GENERAL` `(1<<10)` : Identifies a standard general-purpose block file system. Can be used in conjunction with `FS_FLAG_FILE_SYSTEM`.
+* `FS_FLAG_CACHED` `(1<<11)` : Indicates that the file is being cached and has been added to the file cache manager.
+
+## VFS Mount Point Rules
+XenevaOS differentiates between **General (Block-based) Filesystems** (such as FAT32, Ext2) and **Virtual/Memory-based Filesystems** (such as `/dev`, `/proc`, `/tty`).
+
+### Mount Point Letter Reservation
+For general, block-backed filesystems that require mounting to a specific drive/volume hierarchy:
+* **Function:** Always call `AuVFSReserveMountPointLetter()` during mounting to reserve a mount letter.
+* **Limitation:** This function is **only** applicable to general filesystems.
+* **Prohibition:** Do **NOT** use `AuVFSReserveMountPointLetter()` for virtual or memory-based filesystems like `/proc`, `/tty`, or `/dev`. These are mounted directly to fixed virtual paths within the VFS structure during early kernel boot and do not require volume letter mapping.
+
+
 ## Implementing File System Driver for XenevaOS
 
-In XenevaOS, filesystem drivers can be implemented in two ways: either as external kernel modules or built directly into the kernel code. However, the current version of the kernel lacks the mechanism to load filesystem drivers as external kernel modules. The current version of XenevaOS only uses a built-in FAT32 driver for the root filesystem. Supporting filesystem drivers from external modules is work in progress. <br>
+In XenevaOS, filesystem drivers can be implemented in two ways: either as external kernel modules or built directly into the kernel code. However, the current version of the kernel lacks the mechanism to load filesystem drivers dynamically as external modules. Instead, the kernel includes built-in filesystem drivers for **FAT32** (typically used for the root boot filesystem) and **Ext2** (used for secondary storage access). Supporting filesystem drivers from dynamic external modules is work in progress. <br>
+
+### Ext2 File System Support
+The Ext2 file system module integrates directly into the VFS layer by providing the standard filesystem callback handlers. It is registered during kernel initialization and allows standard operations such as finding, opening, and reading files and directories on Ext2 partitions.
 
 ### Mounting the file system during initialization
 Mounting a new filesystem involves extracting all necessary information from the disk's root sector, creating the necessary data structures, and allocating a new `AuVFSNode` structure. Filesystem drivers can use the `AuVDisk` service to read disk sectors. XenevaOS first detects the storage medium using the appropriate driver, extracts the partition details, calls `AuCreateVDisk` to register a virtual disk, mounts it to the device filesystem, and finally mounts the target filesystem on it. 

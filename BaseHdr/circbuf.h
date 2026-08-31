@@ -32,7 +32,7 @@
 
 #include <stdint.h>
 
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__clang__)
 #include <stddef.h>
 #ifndef __cplusplus
 #include <stdbool.h>

@@ -31,6 +31,11 @@
 #define __AU_CONSOLE_H__
 
 #include <aurora.h>
+#if defined(__GNUC__) || defined(__clang__)
+#ifndef __cplusplus
+#include <stdbool.h>
+#endif
+#endif
 
 #define SCREEN_SETMODE    200
 #define SCREEN_GETWIDTH   201
@@ -67,6 +72,19 @@ extern void AuConsoleInitialize(PKERNEL_BOOT_INFO info, bool early);
 */
 extern void AuConsolePostInitialise(PKERNEL_BOOT_INFO info);
 
+
+/**
+ * @brief Prints string to console output
+ * @param str -- string to print
+ */
+extern void AuPutS(char* str);
+
+/**
+ * @brief Prints string to console output
+ * @param str -- string to print
+ * @param col -- foreground color
+ */
+extern void AuPutS_Color(char* str, uint32_t color);
 /*
 * AuTextOut -- standard text printing function
 * for entire kernel

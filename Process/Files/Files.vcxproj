@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|ARM64">
@@ -141,7 +141,7 @@
       <GenerateDebugInformation>
       </GenerateDebugInformation>
       <OutputFile>..\..\Build\file.exe</OutputFile>
-      <AdditionalLibraryDirectories>..\..\x64\Debug;E:\Xeneva Project\Aurora\Libs\XECrt;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)Build\;..\..\x64\Debug;E:\Xeneva Project\Aurora\Libs\XECrt;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>XEClib.lib; xecrt.lib;chlkha.lib;ftype.lib;</AdditionalDependencies>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
       <EnableUAC>false</EnableUAC>
@@ -160,7 +160,7 @@
       <AdditionalOptions>/ALIGN:512 %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
-      <Command>copy "..\..\Build\$(TargetName).exe" "M:\$(TargetName).exe"</Command>
+      <Command>if exist M:\ ( copy "..\..\Build\$(TargetName).exe" "M:\$(TargetName).exe" ) else ( echo M: drive not found, skipping copy )</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
@@ -186,7 +186,7 @@
       <GenerateDebugInformation>
       </GenerateDebugInformation>
       <OutputFile>..\..\Build\file.exe</OutputFile>
-      <AdditionalLibraryDirectories>..\..\ARM64\Debug;..\..\Libs\XECrt</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)Build\;..\..\ARM64\Debug;..\..\Libs\XECrt</AdditionalLibraryDirectories>
       <AdditionalDependencies>XEClib.lib; xecrt.lib;chlkha.lib;ftype.lib;</AdditionalDependencies>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
       <EnableUAC>false</EnableUAC>
@@ -207,7 +207,7 @@
       <AdditionalOptions>/filealign:4096 %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
-      <Command>copy "..\..\Build\$(TargetName).exe" M:\$(TargetName).exe" </Command>
+      <Command>if exist M:\ ( copy "..\..\Build\$(TargetName).exe" "M:\$(TargetName).exe" ) else ( echo M: drive not found, skipping copy )</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">

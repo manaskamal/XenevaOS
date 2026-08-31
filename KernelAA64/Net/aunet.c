@@ -42,6 +42,7 @@
 #include <Net/icmp.h>
 #include <Net/tcp.h>
 #include <aucon.h>
+#include <Drivers/uart.h>
 
 static hashmap_t* netadapters;
 

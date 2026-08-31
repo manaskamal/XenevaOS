@@ -40,8 +40,7 @@
 #include "_fastcpy.h"
 #include "color.h"
 
-extern "C" int _fltused = 1;
-
+// removed _fltused here since it's in XEClib
 int ChPrintLibName() {
 	_KePrint("Chitralekha Graphics Library v1.0 \n");
 	return 0;
@@ -159,7 +158,11 @@ void ChCanvasScreenUpdate(ChCanvas* canvas, int _x, int _y, int _w, int _h) {
 		y = 0;
 
 	for (int64_t i = 0; i < h; i++){
-		void* fb_mem = (fb + (y + i) * (canvas->screenWidth) + x);
+		// Use canvas->pitch instead of screenWidth to handle padding/alignment in hardware framebuffer
+		uint32_t pitch_pixels = canvas->pitch / (canvas->bpp / 8);
+		if (canvas->pitch == 0) pitch_pixels = canvas->screenWidth; // fallback
+
+		void* fb_mem = (fb + (y + i) * pitch_pixels + x);
 		void* canvas_mem = (canvas->buffer + (y + i) * (canvas->canvasWidth) + x);
 		_fastcpy(fb_mem,
 			canvas_mem, w*4);

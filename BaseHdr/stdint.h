@@ -38,9 +38,7 @@ typedef unsigned char BOOL;
 
 #ifdef ARCH_ARM64
 #if !defined(bool)
-#define bool BOOL
-#define true 1
-#define false 0
+#include <stdbool.h>
 #endif
 #endif
 
@@ -99,6 +97,7 @@ typedef unsigned int uintptr_t;
 /* 7.18.1.5  Greatest-width integer types */
 typedef long long  intmax_t;
 typedef unsigned long long   uintmax_t;
+
 #ifdef __SIZE_TYPE__
 typedef __SIZE_TYPE__ size_t;
 #else
@@ -240,4 +239,50 @@ extern "C++" {
 
 #define ALIGN_UP(x, y) (DIV_ROUND_UP(x,y)*y)
 
+#ifndef do_div
+#define do_div(n, base) { \
+    uint64_t __base = (base); \
+    uint64_t __rem = n % __base; \
+    n = n / __base; \
+    __rem; \
+    }
+#endif
+
+#define clamp_t(type, val, lo, hi) \
+       ((type)(val) < (type)(lo) ? (type)(lo) : ((type)(val) > (type)(hi)? (type)(hi) : (type)(val)))
+
+static inline int64_t div_round_closest_s64(int64_t x, int64_t divisor) {
+	if ((x > 0) == (divisor > 0))
+		return (x + divisor / 2) / divisor;
+	else
+		return (x - divisor / 2) / divisor;
+}
+
+static inline uint64_t div_round_closest_u64(uint64_t x, uint64_t divisor) {
+	return (x + divisor / 2) / divisor;
+}
+
+static inline int32_t div_round_closest_s32(int32_t x, int32_t divisor) {
+	if ((x > 0) == (divisor > 0))
+		return (x + divisor / 2) / divisor;
+	else
+		return (x - divisor / 2) / divisor;
+}
+
+
+static inline uint32_t div_round_closest_u32(uint32_t x, uint32_t divisor) {
+	return (x + divisor / 2) / divisor;
+}
+
+#define DIV_ROUND_CLOSEST(x, divisor) _Generic((x), \
+      int64_t: div_round_closest_s64, \
+      uint64_t: div_round_closest_u64, \
+      int32_t: div_round_closest_s32, \
+      uint32_t: div_round_closest_u32, \
+      default: div_round_closest_s32 \
+)(x,divisor)
+
+#define CLAMP(val, lo, hi)  ((val) < (lo) ? (lo) : ((val) > (hi) ? (hi) : (val)))
+
+#define ABS(x) ((x) < 0 ? -(x) : (x))
 #endif

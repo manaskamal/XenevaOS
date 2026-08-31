@@ -27,8 +27,8 @@
 *
 **/
 
-#ifndef __STRING_H__
-#define __STRING_H__
+#ifndef __XE_STRING_H__
+#define __XE_STRING_H__
 
 #include <stdint.h>
 #include <_xeneva.h>
@@ -69,7 +69,7 @@ XE_EXTERN{
 	//!=====================================================
 	//! M E M O R Y  G L O B A L   F U N C T I O N S
 	//!=====================================================
-	XE_LIB void* _cdecl memset(void *targ, unsigned char val, size_t len);
+	XE_LIB void* memset(void *targ, int val, size_t len);
 
 	XE_LIB void *memcpy(void *targ, void *src, size_t len);
 	XE_LIB int memcmp(const void *first, const void *second, size_t length);
@@ -78,7 +78,7 @@ XE_EXTERN{
 	XE_LIB int ffs(int);
 	XE_LIB int fls(int);
 	XE_LIB size_t mbslen(const char*);
-	XE_LIB void* memmove(void* dest, void const *src, unsigned __int64 bytes);
+	XE_LIB void* memmove(void* dest, void const *src, size_t bytes);
 	XE_LIB void *memchr(const void *src, int c, size_t n);
 
 #ifdef __cplusplus

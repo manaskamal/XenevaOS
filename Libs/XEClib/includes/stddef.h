@@ -36,10 +36,10 @@
 
 #include <stdint.h>
 
-typedef int       	ptrdiff_t;
+typedef int64_t       	ptrdiff_t;
 
-typedef int       	ssize_t;
-typedef unsigned	wint_t;
+typedef int64_t       	ssize_t;
+typedef unsigned int	wint_t;
 
 #if !defined(__cplusplus)
 typedef unsigned	wchar_t;

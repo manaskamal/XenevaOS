@@ -140,7 +140,7 @@ void ChMenuButtonDestroy(ChWidget* wid, ChWindow* win) {
  * @param title -- title of the button
  */
 ChMenuButton *ChCreateMenubutton(ChMenubar* mb, char* title) {
-	int title_len = strlen(title);
+	int title_len = strlen(title) + 1;
 	int mbut_w = title_len + 10;
 	ChMenuButton* mbut = (ChMenuButton*)malloc(sizeof(ChMenuButton));
 	memset(mbut, 0, sizeof(ChMenuButton));
@@ -150,9 +150,9 @@ ChMenuButton *ChCreateMenubutton(ChMenubar* mb, char* title) {
 	mbut->wid.h = mb->wid.h;
 	mbut->wid.ChDestroy = ChMenuButtonDestroy;
 	mbut->wid.ChActionHandler = 0;
-	mbut->title = (char*)malloc(strlen(title));
+	mbut->title = (char*)malloc(strlen(title) + 1);
 	mbut->popupMenu = NULL;
-	memset(mbut->title, 0, strlen(title));
+	memset(mbut->title, 0, strlen(title) + 1);
 	strcpy(mbut->title, title);
 	return mbut;
 }

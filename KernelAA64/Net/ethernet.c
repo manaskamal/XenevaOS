@@ -40,19 +40,17 @@
 #include <Net/ipv4.h>
 #include <Net/udp.h>
 #include <Net/socket.h>
+#include <Hal/AA64/profile.h>
 
-#ifdef ARCH_X64
+
 #pragma pack(push,1)
-#endif
-typedef struct _ethernet_ {
+ALIGNED(2) typedef struct _ethernet_ {
 	uint8_t dest[6];
 	uint8_t src[6];
 	uint16_t typeLen;
 	uint8_t payload[];
 }Ethernet;
-#ifdef ARCH_X64
 #pragma pack(pop)
-#endif
 
 
 AU_EXTERN AU_EXPORT void AuEthernetHandle(void* data, int size, AuVFSNode* nic) {
@@ -60,8 +58,8 @@ AU_EXTERN AU_EXPORT void AuEthernetHandle(void* data, int size, AuVFSNode* nic) 
 	AuNetworkDevice* ndev = (AuNetworkDevice*)nic->device;
 	if (!ndev)
 		return;
-
 	list_t* raw_sockets = AuRawSocketGetList();
+	UARTDebugOut("Adding to raw_sockets \r\n");
 	for (int i = 0; i < raw_sockets->pointer; i++) {
 		AuSocket* sock = (AuSocket*)list_get_at(raw_sockets, i);
 		AuSocketAdd(sock, frame, size);
@@ -116,13 +114,13 @@ void AuEthernetSend(AuVFSNode* nic, void* data, size_t len, uint16_t type, uint8
 	Ethernet* pacl = (Ethernet*)kmalloc(totalSz);
 	memset(pacl, 0, totalSz);
 	memcpy(&pacl->payload, data, len);
-	memcpy(pacl->dest, dest, 6);
+	memcpy(&pacl->dest, dest, 6);
 	uint8_t* src_mac = ndev->mac;
-	memcpy(pacl->src, src_mac, 6);
+	memcpy(&pacl->src, src_mac, 6);
 	pacl->typeLen = htons(type);
-
-	if (nic->write) {
+	UARTDebugOut("PaclTypelen : %d \r\n", pacl->typeLen);
+	if (nic->write) 
 		nic->write(nic, nic, (uint64_t*)pacl, totalSz);
-	}
+	
 	kfree(pacl);
 }

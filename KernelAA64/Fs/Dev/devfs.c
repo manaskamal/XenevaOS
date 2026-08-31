@@ -28,7 +28,7 @@
 **/
 
 #include <Fs/Dev/devfs.h>
-//#include <Fs\Dev\devinput.h>
+#include <Fs/Dev/devinput.h>
 #include <Hal/AA64/aa64cpu.h>
 #include <Mm/kmalloc.h>
 #include <list.h>

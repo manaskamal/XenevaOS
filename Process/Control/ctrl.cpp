@@ -152,7 +152,7 @@ int main(int argc, char* argv[]) {
        "making  them a \nfull-fledged standalone device capable of replacing smartphones by doing everything \nthey do.";
 	char* android = "We're working towards adding an Android Compatibility Layer which will bring support for all"
 		" android apps on XenevaOS.";
-	char* default = "Default text for Control App ";
+	char* default_text = "Default text for Control App ";
 	if (argc > 1) {
 		char* param = argv[1];
 		if (strcmp(param, "about") == 0) {
@@ -163,7 +163,7 @@ int main(int argc, char* argv[]) {
 			_add_buttons = false;
 		}
 		else if (strcmp(param, "default") == 0) {
-			ChTextBoxSetText(tb, default);
+			ChTextBoxSetText(tb, default_text);
 			_add_buttons = false;
 		}
 	}

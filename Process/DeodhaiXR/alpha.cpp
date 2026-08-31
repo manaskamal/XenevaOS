@@ -31,7 +31,9 @@
 
 #include "deodxr.h"
 #include "alpha.h"
+#if defined(ARCH_ARM64)
 #include <arm_neon.h>
+#endif
 #include <math.h>
 #include "window.h"
 #include <stdlib.h>
@@ -44,6 +46,7 @@ static const uint8_t alpha_shuffle[16] = {
 };
 
 void __pixel_blend_neon(uint32_t* dst, const uint32_t* src, int width) {
+#if defined(ARCH_ARM64)
 	int x = 0;
 	uint8x16_t shuf = vld1q_u8(alpha_shuffle);
 	for (; x <= width - 4; x += 4) {
@@ -84,7 +87,7 @@ void __pixel_blend_neon(uint32_t* dst, const uint32_t* src, int width) {
 		}
 	}
 
-	// scaler tail
+	// scalar tail
 	for (; x < width; x++) {
 		uint32_t sp = src[x], dp = dst[x];
 		uint8_t sa = sp >> 24;
@@ -95,9 +98,21 @@ void __pixel_blend_neon(uint32_t* dst, const uint32_t* src, int width) {
 			uint8_t g = ((uint32_t)((sp >> 8) & 0xFF) * sa + (uint32_t)((dp >> 8) & 0xFF) * inv) >> 8;
 			uint8_t b = ((uint32_t)((sp) & 0xFF) * sa + (uint32_t)((dp) & 0xFF) * inv) >> 8;
 			dst[x] = (0xFF << 24) | (r << 16) | (g << 8) | b;
-
 		}
 	}
+#else
+	for (int x = 0; x < width; x++) {
+		uint32_t sp = src[x], dp = dst[x];
+		uint8_t sa = sp >> 24;
+		if (sa == 255) { dst[x] = sp; continue; }
+		if (sa == 0) { continue; }
+		uint32_t inv = 255 - sa;
+		uint8_t r = ((uint32_t)((sp >> 16) & 0xFF) * sa + (uint32_t)((dp >> 16) & 0xFF) * inv) >> 8;
+		uint8_t g = ((uint32_t)((sp >> 8) & 0xFF) * sa + (uint32_t)((dp >> 8) & 0xFF) * inv) >> 8;
+		uint8_t b = ((uint32_t)((sp) & 0xFF) * sa + (uint32_t)((dp) & 0xFF) * inv) >> 8;
+		dst[x] = (0xFF << 24) | (r << 16) | (g << 8) | b;
+	}
+#endif
 }
 
 #define GLASS_BLUR_RADIUS 6
@@ -185,6 +200,7 @@ void glass_precompute_blur(uint32_t* out_blur, uint32_t* tmp, const uint32_t* ca
 }
 
 void _blend_scanline_glass_neon(uint32_t* canvas_row, const uint32_t* win_row, const uint32_t* blur_row, int width) {
+#if defined(ARCH_ARM64)
 	uint8x16_t shuf = vld1q_u8(alpha_shuffle);
 	int x = 0;
 
@@ -192,7 +208,6 @@ void _blend_scanline_glass_neon(uint32_t* canvas_row, const uint32_t* win_row, c
 		uint8x16_t s = vld1q_u8((const uint8_t*)(win_row + x));
 		uint8x16_t b = vld1q_u8((const uint8_t*)(blur_row + x));
 		uint8x16_t d = vld1q_u8((const uint8_t*)(canvas_row + x));
-
 
 		uint8x16_t sa = vqtbl1q_u8(s, shuf);
 		uint8x16_t inv = vsubq_u8(vdupq_n_u8(255), sa);
@@ -208,14 +223,15 @@ void _blend_scanline_glass_neon(uint32_t* canvas_row, const uint32_t* win_row, c
 		uint8x16_t is_zero = vceqq_u8(sa, zero);
 		uint8x16_t is_nonzero = vmvnq_u8(is_zero);
 
-		uint8x16_t result = vorrq_u8(vandq_u8(blended, is_nonzero), vandq_u8(d, is_zero));  // vcombine_u8(vshrn_n_u16(lo, 8), vshrn_n_u16(hi, 8));
-
+		uint8x16_t result = vorrq_u8(vandq_u8(blended, is_nonzero), vandq_u8(d, is_zero));
 		vst1q_u8((uint8_t*)(canvas_row + x), result);
-
 	}
 
-	/** scaler tail*/
+	/** scalar tail */
 	for (; x < width; x++) {
+#else
+	for (int x = 0; x < width; x++) {
+#endif
 		uint32_t sp = win_row[x];
 		uint32_t bp = blur_row[x];
 		uint8_t sa = (uint8_t)(sp >> 24);
@@ -224,7 +240,7 @@ void _blend_scanline_glass_neon(uint32_t* canvas_row, const uint32_t* win_row, c
 			canvas_row[x] = sp;
 		}
 		else if (sa == 0) {
-			//canvas_row[x] = bp;
+			canvas_row[x] = bp;
 		}
 		else {
 			uint32_t inv = 255 - sa;
@@ -324,6 +340,7 @@ void _shadow_compose_neon(uint32_t* canv, int canvas_w, int canvas_h, const uint
 
 		int x = 0;
 		for (; x <= row_w - 4; x += 4) {
+			#if 0 /* WIP: NEON shadow compose path — unused scaffolding, type errors pending fix */
 			uint32x4_t s4 = vld1q_u32(src + x);
 			uint32x4_t d4 = vld1q_u32(dst + x);
 
@@ -336,6 +353,7 @@ void _shadow_compose_neon(uint32_t* canv, int canvas_w, int canvas_h, const uint
 			uint8x8_t inv_hi = vmovn_u16(vmovl_u32(vget_high_u32(inv4)));
 
 			uint8x8_t inv_lo4 = vzip1_u8(inv_lo, inv_lo);
+			#endif
 
 			for (int i = x; i < x + 4; i++) {
 				uint32_t dp = dst[i];
@@ -347,7 +365,6 @@ void _shadow_compose_neon(uint32_t* canv, int canvas_w, int canvas_h, const uint
 				uint8_t b = (uint8_t)(((dp >> 0 & 0xFF) * inv) >> 8);
 				dst[i] = (0xFFu << 24) | ((uint32_t)r << 16) |
 					((uint32_t)g << 8) | b;
-
 			}
 		}
 

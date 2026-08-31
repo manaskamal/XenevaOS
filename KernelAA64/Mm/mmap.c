@@ -41,6 +41,8 @@
 #include <Mm/kmalloc.h>
 #include <Mm/pmmngr.h>
 #include <Mm/mmfile.h>
+#include <Serv/sysserv.h>
+#include <Hal/AA64/profile.h>
 
 
 #define PROTECTION_FLAG_READONLY  1<<0
@@ -113,6 +115,7 @@ AuSharedMmapObject* AuSharedMmapObjectFindByName(char* name) {
 	return NULL;
 }
 
+extern void aa64_schedule_init(AA64Thread* current, AA64Thread* init);
 /**
  * @brief CreateMemMapping -- Create a memory mapping of just memory, file or device
  * @param address -- address from where mapping start, if null, kernel will
@@ -130,7 +133,6 @@ void* CreateMemMapping(void* address, size_t len, int prot, int flags, int fd,
 	if (!len)
 		return 0;
 
-
 	/* for now, memory mapping doesn't support lazy loading
 	 * so everything works at pre-paging */
 
@@ -141,6 +143,8 @@ void* CreateMemMapping(void* address, size_t len, int prot, int flags, int fd,
 		if (!proc)
 			return NULL;
 	}
+
+
 	AuVFSNode* file = NULL;
 	AuVFSNode* fsys = NULL;
 	uint64_t startingPhysAddr = NULL;
@@ -265,7 +269,7 @@ void* CreateMemMapping(void* address, size_t len, int prot, int flags, int fd,
 				fb->numPageIndex++;
 
 				if (file->eof) {
-					UARTDebugOut("File : %s , eof done : %d\r\n", file->filename, file->eof);
+					//UARTDebugOut("File : %s , eof done : %d\r\n", file->filename, file->eof);
 				}
 			}
 

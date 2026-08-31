@@ -29,20 +29,30 @@
 *
 **/
 
+#if defined(__GNUC__) || defined(__clang__)
+#ifndef __cplusplus
+#include <stdbool.h>
+#endif
+#endif
 #include <process.h>
 #include <aucon.h>
 #include <Mm/vmmngr.h>
 #include <Mm/kmalloc.h>
 #include <pe.h>
+#include <clean.h>
 #include <Mm/pmmngr.h>
 #include <string.h>
 #include <_null.h>
 #include <Hal/AA64/sched.h>
+#include <Hal/AA64/aa64lowlevel.h>
 #include <Mm/shm.h>
 #include <loader.h>
 #include <Ipc/postbox.h>
 #include <Mm/mmap.h>
 #include <Drivers/uart.h>
+#include <timer.h>
+#include <clean.h>
+#include <Cap/capability.h>
 
 
 static int pid = 1;
@@ -245,6 +255,8 @@ AuProcess * AuCreateProcessSlot(AuProcess * parent, char* name) {
 	proc->proc_heapmem_len = 0;
 	proc->_kstack_index_ = 1;
 	proc->_main_stack_ = main_thr_stack;
+	proc->prev_sample_time_us = AuGetCurrentUS();
+	proc->prev_sample_runtime_us = 0;
 	uint64_t* envpBlock = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
 	memset(envpBlock, 0, PAGE_SIZE);
 
@@ -403,6 +415,7 @@ void AuProcessExit(AuProcess* proc, bool schedulable) {
 	}
 
 	/** free up all allocated files by this process **/
+	BordoisilaCapCleanupProcess(proc);
 	for (int i = 0; i < FILE_DESC_PER_PROCESS; i++) {
 		AuVFSNode* file = proc->fds[i];
 		if (file) {
@@ -483,7 +496,7 @@ AuProcess* AuGetKillableProcess() {
  * @param pid -- pid of the process, if -1 then any child
  * process
  */
-void AuProcessWaitForTermination(AuProcess* proc, int pid) {
+int AuProcessWaitForTermination(AuProcess* proc, int pid) {
 	if (pid == -1) {
 		do {
 			AuProcess* killable = AuGetKillableProcess();
@@ -495,19 +508,105 @@ void AuProcessWaitForTermination(AuProcess* proc, int pid) {
 
 
 			if (!killable) {
-				AuSleepThread(proc->main_thread, 10);
 				proc->state = PROCESS_STATE_SUSPENDED;
-				return;
+				//AuScheduleNext();
+				return -1;
 			}
 		} while (1);
 	}
 	else {
 		AuProcess* proc = AuProcessFindByPID(0, pid);
 		if (!proc)
-			return;
+			return -1;
 		AA64Thread* thr = AuGetCurrentThread();
 		AuBlockThread(thr);
 		list_add(proc->waitlist, thr);
-		return;
+		return 1;
 	}
+	return 0;
+}
+
+/**
+ * @brief AuProcGetNumProcessCount -- returns the total number
+ * of process created 
+ */
+int AuProcGetNumProcessCount() {
+	int count = 0;
+	for (AuProcess* first = proc_first; first != NULL; first = first->next) 
+		count++;
+	return count;
+}
+
+static int AuProcGetOpenFileCount(AuProcess* proc) {
+	int count = 0;
+	for (int i = 0; i < FILE_DESC_PER_PROCESS; i++) {
+		if (!proc->fds[i])
+			continue;
+	
+		count += 1;
+	}
+	return count;
+}
+
+static uint64_t AuProcessGetLiveRuntime(AuProcess* proc, uint64_t now_us) {
+	uint64_t runtime = proc->total_runtime_us;
+	if (proc->main_thread->state == THREAD_STATE_RUNNING)
+		runtime += (now_us - proc->main_thread->start_time_us);
+	for (int i = 0; i < proc->num_thread; i++) {
+		AA64Thread* thr = proc->threads[i];
+		if (!thr)
+			continue;
+		if (thr->state == THREAD_STATE_RUNNING)
+			runtime += (now_us - thr->start_time_us);
+
+	}
+	return runtime;
+}
+
+
+static uint32_t AuProcessUpdateCPUPercent(AuProcess* proc, uint64_t now) {
+	uint64_t live_runtime = AuProcessGetLiveRuntime(proc, now);
+
+	uint64_t runtime_delta = live_runtime - proc->prev_sample_runtime_us;
+	uint64_t time_delta = now - proc->prev_sample_time_us;
+
+	if (time_delta == 0)
+		proc->cpu_usage = 0;
+	else
+		proc->cpu_usage = (uint32_t)((runtime_delta * 1000) / time_delta);// * num_cores );
+
+	proc->prev_sample_runtime_us = live_runtime;
+	proc->prev_sample_time_us = now;
+	return proc->cpu_usage;
+}
+/**
+ * @brief AuProcessFetch -- fetch current process table
+ * status
+ * @param list -- Pointer to AuProcessList
+ * @param num_proc_count -- number of process count
+ */
+int AuProcessFetch(AuProcessList* list, int num_proc_count) {
+
+	AuProcess* first = proc_first;
+	uint64_t now = AuGetCurrentUS();
+	
+	for (int i = 0; i < num_proc_count; i++) {
+		if (!first)
+			break;
+		size_t namelen = strlen(first->name);
+		if (namelen >= sizeof(list[i].name))
+			namelen = sizeof(list[i].name) - 1;
+		memcpy(list[i].name, first->name, namelen);
+		list[i].name[namelen] = '\0';
+		list[i].num_file_opened = AuProcGetOpenFileCount(first);
+		list[i].num_threads = first->num_thread;
+		list[i].proc_id = first->proc_id;
+		list[i].total_runtime_us = first->total_runtime_us;
+		list[i].window_runtime_us = first->window_runtime_us;
+		first->cpu_usage = AuProcessUpdateCPUPercent(first, now);
+		list[i].cpu_usage = first->cpu_usage;
+		first = first->next;
+	}
+
+	return 0;
 }

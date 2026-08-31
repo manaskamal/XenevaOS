@@ -33,11 +33,11 @@ __chkstk:
 
 .global _KePrint
 _KePrint:
-    mov x19,x8
+    str x8, [sp, #-16]!
     mov x16, 1
     svc #0
 	mov x0, x6
-	mov x8,x19
+	ldr x8, [sp], #16
     ret
 
 .global _KePauseThread
@@ -612,6 +612,55 @@ _KeGetCurrentUS:
 .global _KeGetCurrentMS
 _KeGetCurrentMS:
     mov x16, 71
+	svc #0
+	mov x0, x6
+	ret
+
+.global _KeSetAlarm
+_KeSetAlarm:
+    mov x16, 72
+	svc #0
+	mov x0, x6
+	ret
+
+.global _KeSetITimer
+_KeSetITimer:
+    mov x16, 73
+	svc #0
+	mov x0, x6
+	ret
+
+.global _KeGetITimer
+_KeGetITimer:
+    mov x16, 74
+	svc #0
+	mov x0, x6
+	ret
+
+.global _KeGetNumProcessCount
+_KeGetNumProcessCount:
+    mov x16, 75
+	svc #0
+	mov x0, x6
+	ret
+
+.global _KeProcessFetch
+_KeProcessFetch:
+    mov x16, 76
+	svc #0
+	mov x0, x6
+	ret
+
+.global _KeSetWalltime
+_KeSetWalltime:
+    mov x16, 77
+	svc #0
+	mov x0, x6
+	ret
+
+.global _KeGetWalltime
+_KeGetWalltime:
+    mov x16, 78
 	svc #0
 	mov x0, x6
 	ret

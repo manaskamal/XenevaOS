@@ -34,6 +34,11 @@
 #include <Mm/vmmngr.h>
 #include <string.h>
 #include <pe.h>
+#if defined(__GNUC__) || defined(__clang__)
+#ifndef __cplusplus
+#include <stdbool.h>
+#endif
+#endif
 #include <stdio.h>
 #include <Mm/kmalloc.h>
 #include <pcie.h>
@@ -299,7 +304,7 @@ void AuDriverLoad(char* filename, AuDriver* driver) {
 	size_t file_offset = 0;
 	while (file->eof != 1) {
 		uint64_t block = ((uint64_t)scratchBuffer + file_offset);
-		size_t bytes_read = AuVFSNodeReadBlock(fsys, file, block);
+		size_t bytes_read = AuVFSNodeReadBlock(fsys, file, (uint64_t*)block);
 		if (bytes_read == 0) break;
 		file_offset += bytes_read;
 	}

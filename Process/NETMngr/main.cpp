@@ -262,7 +262,6 @@ void ip_ntoa(uint32_t src_addr, char* out) {
 int main(int argc, char* argv[]){
 	printf("\nNetwork Manager Started ...\n");
 	printf("Identifying Network...\n");
-	_KePauseThread();
 
 	/* for now we have only ethernet driver, so
 	 * we will use that
@@ -299,12 +298,17 @@ int main(int argc, char* argv[]){
 	rtentry->ifname = (char*)malloc(strlen("e1000"));
 	strcpy(rtentry->ifname, "virtio-net");
 	bool rt_entry_filled = false;
-	while (1) {
+	int timeout = 10000;
+	while (timeout--) {
 		int size = socket_receive(sock_fd, buf, 4096, 0);
-		if (size <= 0){
+		if (size == 0){
+			_KePrint("Socket didn't have data in it \r\n");
 			_KeProcessSleep(100);
 			continue;
 		}
+
+		if (size == -1)
+			break;
 
 		Ethernet* eth = (Ethernet*)buf;
 
@@ -323,21 +327,25 @@ int main(int argc, char* argv[]){
 
 		if (ntohl(dhcp->xid) != xid) {
 			printf("DHCP not out transaction of xid : %d \n", xid);
+			_KePrint("DHCP not out transaction of xid : %d \r\n", xid);
 			continue;
 		}
 
 		if (stage == 1) {
+			_KePrint("DHCP Received %x stage1\r\n", ntohl(dhcp->xid));
 			uint32_t yiaddr = dhcp->yiaddr;
 			uint8_t payload2[] = { 53,1,3,50,4,(yiaddr) & 0xFF,(yiaddr >> 8) & 0xFF,
 			(yiaddr >> 16) & 0xFF, (yiaddr >> 24) & 0xFF, 55,2,3,6,255,0 };
 			Ethernet* eth2 = fillDHCP(payload2, 14);
 			uint32_t totalsz2 = (sizeof(Ethernet) + sizeof(IPV4) + sizeof(UDPPack) + sizeof(DHCPPack) + 32);
+			_KePrint("Sending another DHCP \r\n");
 			socket_send(sock_fd, eth2, totalsz2, 0);
 			stage = 2;
 		}else if (stage == 2) {
 			char src_ip[16];
 			ip_ntoa(ntohl(ip->source), src_ip);
 			printf("DHCP Packet received from -> %s \r\n", src_ip);
+			_KePrint("DHCP Packet received from -> %s \r\n", src_ip);
 			uint32_t yiaddr = dhcp->yiaddr;
 			char yiaddr_ip[16];
 			ip_ntoa(ntohl(yiaddr), yiaddr_ip);
@@ -359,6 +367,7 @@ int main(int argc, char* argv[]){
 					ip_ntoa(ntohl(ip_data), addr);
 					_KeFileIoControl(e1000, NET_SET_SUBNET_MASK, &ip_data);
 					printf("Subnet mask %s %x\n", addr, ip_data);
+					_KePrint("Subnet mask %s %x \n", addr, ip_data);
 					rtentry->netmask = ip_data;
 					rt_entry_filled = true;
 				}
@@ -370,6 +379,7 @@ int main(int argc, char* argv[]){
 					ip_ntoa(ntohl(ip_data), addr);
 					_KeFileIoControl(e1000, NET_SET_GATEWAY_ADDRESS, &ip_data);
 					printf("Gateway : %s %x\n", addr, ip_data);
+					_KePrint("Gateway : %s - %x \r\n", addr, ip_data);
 					rtentry->gateway = ip_data;
 					rt_entry_filled = true;
 				}
@@ -384,6 +394,7 @@ int main(int argc, char* argv[]){
 					dns.address = ip_data;
 					_KeFileIoControl(sock_fd, SOCK_ADD_DNS_SERVER, &dns);
 					printf("DNS server %s\n", addr);
+					_KePrint("DNS server %s \r\n", addr);
 				}
 				opt += len;
 			}
@@ -392,6 +403,7 @@ int main(int argc, char* argv[]){
 				int ret = _KeFileIoControl(sock_fd, SOCK_ROUTE_TABLE_ADD, rtentry);
 				if (ret) {
 					printf("[NetManager]: Failed to add Route Entry \n");
+					_KePrint("[netmanagr]: failed to add route entry \r\n");
 				}
 				free(rtentry->ifname);
 				free(rtentry);

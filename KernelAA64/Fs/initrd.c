@@ -76,7 +76,7 @@ void AuRamdiskRead(uint64_t lba, size_t count, uint8_t* buffer) {
 	}
 
 	const uint8_t* src = (const uint8_t*)(ramdisk_start + offset);
-	memcpy(buffer, src, bytes_to_read);
+	memcpy(buffer, (void*)src, bytes_to_read);
 	/*for (int i = 0; i < RAMDISK_SECTOR_SIZE * count; i++)
 		buffer[i] = src[i];*/
 }

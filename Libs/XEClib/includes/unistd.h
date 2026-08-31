@@ -33,9 +33,10 @@
 #define __UNISTD_H__
 
 #include <_xeneva.h>
+#include <sys/_ketimer.h>
 
 #ifdef __cplusplus
-XE_EXTERN {
+XE_EXTERN{
 #endif
 
 #define STDIN_FILENO 0
@@ -60,6 +61,10 @@ XE_EXTERN {
 #define __NEED_pid_t
 #define __NEED_intptr_t
 #define __NEED_useconds_t
+
+#define alarm(x) _KeSetAlarm((unsigned long long)x)
+
+	XE_LIB unsigned int sleep(unsigned int seconds);
 
 #ifdef __cplusplus
 }

@@ -1,23 +1,29 @@
 {[Title]Xeneva Terminal|
 [Icon]/icons/terml.bmp|
+[Param]|
 [App]/term.exe}
 
 {[Title]Calculator|
 [Icon]/icons/calcl.bmp|
+[Param]|
 [App]/calc.exe}
 
 {[Title]Files|
 [Icon]/icons/filel.bmp|
+[Param]|
 [App]/file.exe}
 
 {[Title]Accent Player|
 [Icon]/icons/medial.bmp|
+[Param]|
 [App]/audplr.exe}
 
 {[Title]Controls|
 [Icon]/icons/gearl.bmp|
+[Param]|
 [App]/ctrl.exe}
 
 {[Title]Calender|
 [Icon]/icons/calndrl.bmp|
+[Param]|
 [App]/calendr.exe>
