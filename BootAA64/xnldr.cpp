@@ -553,7 +553,7 @@ extern "C" EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemT
 	}
 	XEGuiPrint("Exit bootloader successfull %x\r\n", 0x1000);
 	XEInitialisePmmngr(map, (void*)earlyPhyPageStack, EARLY_PAGE_STACK_SIZE);
-
+    XEGuiPrint("Initialized PMMngr \r\n");
 	XEPagingInitialize();
 
 	if (_getCurrentEL() != 1) {
