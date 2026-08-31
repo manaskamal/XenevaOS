@@ -207,6 +207,9 @@ typedef struct _ext2_fs_ {
 #define EXT2_FLAG_READWRITE  0x00002
 #define EXT2_FLAG_LOUD  0x0004
 
+int Ext2FreeBlock(Ext2Fs* fs, uint32_t block_num);
+
+int Ext2FreeInode(Ext2Fs* fs, uint32_t inode_num);
 
 /*
  * Ext2Initialise -- mount the file system
@@ -218,5 +221,7 @@ uint32_t Ext2ReadBlockIndex(Ext2Fs* fs, uint32_t block_id, uint32_t index);
 uint32_t Ext2FindEntry(Ext2Fs* fs, Ext2Inode* dir_inode, const char* name);
 
 AuVFSNode* Ext2Open(AuVFSNode* fsys, char* path);
+
+int Ext2ReadInode(Ext2Fs* fs, uint32_t inode_num, Ext2Inode* out_inode);
 
 #endif
