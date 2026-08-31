@@ -1,10 +1,13 @@
 #include <Fs/vfs.h>
 #include <Fs/vdisk.h>
 #include <Fs/Ext2/ext2file.h>
+#include <Fs/Ext2/ext2dir.h>
 #include <Fs/Ext2/ext2.h>
 #include <string.h>
 #include <Mm/pmmngr.h>
 #include <aucon.h>
+#include <_null.h>
+#include <Mm/kmalloc.h>
 
 void Ext2FlushSuperblock(Ext2Fs* fs) {
     if (!fs || !fs->superblock) return;
@@ -256,6 +259,124 @@ static uint32_t Ext2GetBlock(Ext2Fs* fs, Ext2Inode* inode, uint32_t inode_num, u
     AuTextOut("[Ext2]: Logical block exceeds maximum supported Ext2 file boundary.\r\n");
 	return 0;
 };
+
+AuVFSNode* Ext2CreateFile(AuVFSNode* parent, char* name) {
+	if (!parent || !name) return NULL;
+
+	Ext2Fs* fs = (Ext2Fs*)parent->device;
+	Ext2Inode* parent_inode = (Ext2Inode*)parent->private_data;
+	if (!fs || !parent_inode) return NULL;
+
+	if (Ext2FindEntry(fs, parent_inode, name) != 0) {
+		AuTextOut("[Ext2]: File already exists.\r\n");
+		return NULL;
+	}
+
+	uint32_t new_inode_num = Ext2AllocInode(fs);
+	if (new_inode_num == 0) return NULL;
+
+	Ext2Inode new_inode;
+	memset(&new_inode, 0, sizeof(Ext2Inode));
+	new_inode.mode = EXT2_S_IFREG | 0644; 
+	new_inode.size = 0;
+	new_inode.blocks = 0;
+	new_inode.links_count = 1;
+
+	if (Ext2InodeWrite(fs, new_inode_num, &new_inode) != 0) {
+		Ext2FreeInode(fs, new_inode_num);
+		return NULL;
+	}
+
+	if (Ext2AddDirEntry(fs, parent_inode, parent->first_block, new_inode_num, name, 1) != 0) {
+		Ext2FreeInode(fs, new_inode_num);
+		return NULL;
+	}
+
+	return Ext2Open(parent, name);
+}
+
+int Ext2Close(AuVFSNode* fsys, AuVFSNode* file) {
+    (void)fsys;
+	if (!file) return -1;
+
+	if (file->private_data) {
+		kfree(file->private_data);
+		file->private_data = NULL;
+	}
+
+	kfree(file);
+	return 0;
+}
+
+int Ext2Unlink(AuVFSNode* parent, AuVFSNode* file) {
+	if (!parent || !file) return -1;
+
+	Ext2Fs* fs = (Ext2Fs*)parent->device;
+	Ext2Inode* parent_inode = (Ext2Inode*)parent->private_data;
+	if (!fs || !parent_inode) return -1;
+
+	uint32_t target_inode_num = file->first_block;
+	Ext2Inode target_inode;
+	if (Ext2ReadInode(fs, target_inode_num, &target_inode) != 0) return -1;
+
+	if (target_inode.mode & EXT2_S_IFDIR) {
+		AuTextOut("[Ext2]: Cannot unlink directory via remove_file.\r\n");
+		return -1;
+	}
+
+	if (Ext2RemoveDirEntry(fs, parent_inode, parent->first_block, file->filename) != 0) return -1;
+
+	if (target_inode.links_count > 0) target_inode.links_count--;
+
+	if (target_inode.links_count == 0) {
+		Ext2Truncate(fs, &target_inode, target_inode_num);
+		Ext2FreeInode(fs, target_inode_num);
+	} else {
+		Ext2InodeWrite(fs, target_inode_num, &target_inode);
+	}
+
+	return 0;
+}
+
+int Ext2Rename(AuVFSNode* old_parent, char* old_name, AuVFSNode* new_parent, char* new_name) {
+	if (!old_parent || !old_name || !new_parent || !new_name) return -1;
+
+	Ext2Fs* fs = (Ext2Fs*)old_parent->device;
+	Ext2Inode* old_p_inode = (Ext2Inode*)old_parent->private_data;
+	Ext2Inode* new_p_inode = (Ext2Inode*)new_parent->private_data;
+
+	uint32_t target_inode_num = Ext2FindEntry(fs, old_p_inode, old_name);
+	if (target_inode_num == 0) return -1;
+
+	Ext2Inode target_inode;
+	Ext2ReadInode(fs, target_inode_num, &target_inode);
+	uint8_t file_type = (target_inode.mode & EXT2_S_IFDIR) ? 2 : 1;
+
+	if (Ext2AddDirEntry(fs, new_p_inode, new_parent->first_block, target_inode_num, new_name, file_type) != 0) {
+		return -1;
+	}
+
+	Ext2RemoveDirEntry(fs, old_p_inode, old_parent->first_block, old_name);
+
+	if (file_type == 2 && old_parent->first_block != new_parent->first_block) {
+		uint32_t sector_per_block = fs->block_size / 512;
+		uint8_t* block_buf = (uint8_t*)P2V((uint64_t)AuPmmngrAlloc());
+		if (block_buf) {
+			AuVDiskRead((AuVDisk*)fs->vdisk, (uint64_t)target_inode.block[0] * sector_per_block, sector_per_block, (uint64_t*)block_buf);
+			Ext2Dir* dotdot = (Ext2Dir*)(block_buf + 12);
+			dotdot->inode = new_parent->first_block;
+			AuVDiskWrite((AuVDisk*)fs->vdisk, (uint64_t)target_inode.block[0] * sector_per_block, sector_per_block, (uint64_t*)block_buf);
+			AuPmmngrFree((void*)V2P((uint64_t)block_buf));
+		}
+
+		old_p_inode->links_count--;
+		new_p_inode->links_count++;
+		Ext2InodeWrite(fs, old_parent->first_block, old_p_inode);
+		Ext2InodeWrite(fs, new_parent->first_block, new_p_inode);
+	}
+
+	return 0;
+}
 
 /**
  * Ext2Wrtie -- writes data to a file in the ext2 filesystem
