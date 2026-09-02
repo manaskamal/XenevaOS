@@ -70,6 +70,7 @@ static int _pcie_check_and_map_dtb() {
 
 	_pcieInitialized = 1;
 #endif
+for(;;);
 	return 0;
 }
 
@@ -83,6 +84,7 @@ static bool _pcie_use_hard_code_ecam() {
 	_ecamAddress = 0;
 #endif
 
+for(;;);
 	if (_ecamAddress != 0) {
 		_pcieInitialized = 1;
 		return 0;
@@ -129,6 +131,7 @@ void AA64PCIeInitialize() {
 	AuTextOut("[aurora]: Ki koriba aru !! Eku dekhun device discovery mechanism support nokore !! Baad diya \r\n");
 	AuTextOut("[aurora]: Ponta Bhaat khuwa ge \r\n");
 	_pcieInitialized = 0;
+
 	return;
 
 }
