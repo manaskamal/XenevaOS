@@ -52,10 +52,10 @@ bool is_window_fully_overlapped(WinSharedInfo* curInfo, Window* alwaysOnTop) {
 void _compose_dirty_area_(ChCanvas* canvas, Window* win, Window* focusedWin, WinSharedInfo* info) {
 	Window* alwaysOnTop = _get_always_on_top();
 
-	if ((info->rect_count > 0) && (info->dirty)) {
+	if (WinSharedFlagLoad(&info->dirty) && info->rect_count > 0) {
 		if (is_window_fully_overlapped(info, alwaysOnTop)) {
 			info->rect_count = 0;
-			info->dirty = 0;
+			WinSharedFlagStore(&info->dirty, false);
 			return;
 		}
 
@@ -297,7 +297,7 @@ void _compose_dirty_area_(ChCanvas* canvas, Window* win, Window* focusedWin, Win
 			}
 		}
 		info->rect_count = 0;
-		info->dirty = 0;
+		WinSharedFlagStore(&info->dirty, false);
 		//info->updateEntireWindow = 0;
 	}
 }
@@ -324,10 +324,10 @@ void _compose_entire_window(ChCanvas* canvas,
 
 	/* If no small areas, update entire window */
 	if (win != NULL && _window_update_all_ ||
-		(info->rect_count == 0 && info->updateEntireWindow == 1)) {
+		(info->rect_count == 0 && WinSharedFlagLoad(&info->updateEntireWindow))) {
 		if (is_window_fully_overlapped(info, alwaysOnTop)) {
-			if (info->updateEntireWindow)
-				info->updateEntireWindow = 0;
+			if (WinSharedFlagLoad(&info->updateEntireWindow))
+				WinSharedFlagStore(&info->updateEntireWindow, false);
 			return;
 		}
 		int64_t winx = 0;
@@ -598,8 +598,8 @@ void _compose_entire_window(ChCanvas* canvas,
 			clipCount = 0;
 		}
 		if (!(win->flags & WINDOW_FLAG_ANIMATED)) {
-			if (info->updateEntireWindow)
-				info->updateEntireWindow = 0;
+			if (WinSharedFlagLoad(&info->updateEntireWindow))
+				WinSharedFlagStore(&info->updateEntireWindow, false);
 			if (!info->windowReady) {
 				info->windowReady = 1;
 			}
@@ -620,7 +620,7 @@ void _compose_always_on_top_dirty(
 	/*
 		* Check for small area updates !! not entire window
 		*/
-	if (info->rect_count > 0) {
+	if (WinSharedFlagLoad(&info->dirty) && info->rect_count > 0) {
 		for (int k = 0; k < info->rect_count; k++) {
 			int r_x = info->rect[k].x;
 			int r_y = info->rect[k].y;
@@ -804,7 +804,7 @@ void _compose_always_on_top_dirty(
 			}
 		}
 		info->rect_count = 0;
-		info->dirty = 0;
+		WinSharedFlagStore(&info->dirty, false);
 		/** don't modify the update entire window, entire window update will handle
 		 * all the clipping optimizations there, this function is responsible for dirty rect
 		 * only, not entire window update
@@ -825,7 +825,7 @@ void _compose_always_on_top_entire(ChCanvas* canvas,
 	/* If no small areas, update entire window */
 
 	if (win != NULL && _always_on_top_update ||
-		(info->rect_count == 0 && info->updateEntireWindow == 1)) {
+		(info->rect_count == 0 && WinSharedFlagLoad(&info->updateEntireWindow))) {
 		int winx = 0;
 		int winy = 0;
 		winx = info->x;
@@ -878,7 +878,8 @@ void _compose_always_on_top_entire(ChCanvas* canvas,
 		}
 		uint32_t* surfaceBuffer = DeoGetBackSurface();
 		/* alpha is only used for fade animation right now */
-		if ((info->alpha && info->updateEntireWindow) || (info->alpha && _intersected_)) {
+		if ((info->alpha && WinSharedFlagLoad(&info->updateEntireWindow)) ||
+			(info->alpha && _intersected_)) {
 			for (int j = 0; j < height; j++) {
 				for (int i = 0; i < width; i++) {
 					*(uint32_t*)(canvas->buffer +
@@ -920,16 +921,16 @@ void _compose_always_on_top_entire(ChCanvas* canvas,
 					info->rect[info->rect_count].w = r2.w;
 					info->rect[info->rect_count].h = r2.h;
 					info->rect_count++;
-					info->dirty = 1;
+					WinSharedFlagStore(&info->dirty, true);
 				}
 			}
 
-			if ((clipCount == 0 && info->updateEntireWindow) ||
+			if ((clipCount == 0 && WinSharedFlagLoad(&info->updateEntireWindow)) ||
 				(clipCount == 0 && !_window_moving_) ||
 				/** but the situation is, we need urgent entire window update here, becuase
 				 * maybe window was hidden but the algorithm above detected the AOT window and
 				 * normal window, because algorithm doesn't care about hidden or non-hidden **/
-				(clipCount > 0 && info->updateEntireWindow)) {
+				(clipCount > 0 && WinSharedFlagLoad(&info->updateEntireWindow))) {
 				if (win->flags & WINDOW_FLAG_GLASS) {
 					uint32_t* backSurface = DeoGetBackSurface();
 					glass_precompute_blur(win->glassBlur,
@@ -1039,7 +1040,7 @@ void _compose_always_on_top_entire(ChCanvas* canvas,
 		}
 
 		if (win->animFrameCount == 0)
-			info->updateEntireWindow = 0;
+			WinSharedFlagStore(&info->updateEntireWindow, false);
 
 		if (!info->windowReady)
 			info->windowReady = 1;

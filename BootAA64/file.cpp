@@ -32,7 +32,6 @@
 #include <Protocol/LoadFile.h>
 #include <Protocol/LoadedImage.h>
 #include <Guid/FileInfo.h>
-#include "lowlevel.h"
 
 EFI_GUID FileSystemProtocol = {
 	0x964E5B22, 0x6459, 0x11D2, {0x8E, 0x39, 0x00, 0xA0, 0xC9, 0x69, 0x72, 0x3B}};
@@ -46,26 +45,6 @@ EFI_GUID GenericFileInfo = {
 #define EFI_FILE_SYSTEM_INFO_ID                                                                    \
 	{0x9576e93, 0x6d3f, 0x11d2, {0x8e, 0x39, 0x0, 0xa0, 0xc9, 0x69, 0x72, 0x3b}}
 
-void cleandcache_to_pou_by_va(size_t va_start, UINTN size) {
-	size_t a = va_start & ~(size_t)63;
-	size_t end = (va_start + size + 63) & ~(size_t)63;
-	for (; a < end; a += 64) {
-		dc_cvau(a);
-	}
-	dsb_ish();
-	isb_flush();
-}
-
-void invalidate_icache_by_va(size_t va_start, UINTN size) {
-	uintptr_t a = va_start & ~(size_t)63;
-	uintptr_t end = (va_start + size + 63) & ~(size_t)63;
-	for (; a < end; a += 64) {
-		ic_ivau(a);
-	}
-
-	dsb_ish();
-	isb_flush();
-}
 /*
  * XEOpenAndReadFile -- open and reads a file
  * @param ImageHandle -- Image handle passed by EFI firmware
@@ -73,14 +52,15 @@ void invalidate_icache_by_va(size_t va_start, UINTN size) {
  */
 XEFile* XEOpenAndReadFile(EFI_HANDLE ImageHandle, CHAR16* Filename) {
 	EFI_STATUS Status;
-	EFI_SIMPLE_FILE_SYSTEM_PROTOCOL* SimpleFileSystem;
+	EFI_SIMPLE_FILE_SYSTEM_PROTOCOL* SimpleFileSystem = nullptr;
 	EFI_GUID loadedImageProtocol = EFI_LOADED_IMAGE_PROTOCOL_GUID;
-	EFI_LOADED_IMAGE* loadedImage;
-	EFI_FILE_PROTOCOL* Root;
-	EFI_FILE_PROTOCOL* File;
-	EFI_FILE_INFO* FileInfo;
+	EFI_LOADED_IMAGE* loadedImage = nullptr;
+	EFI_FILE_PROTOCOL* Root = nullptr;
+	EFI_FILE_PROTOCOL* File = nullptr;
+	EFI_FILE_INFO* FileInfo = nullptr;
 	UINTN FileInfoSize = 0;
 	UINTN FileSize;
+	UINTN PageCount = 0;
 	EFI_PHYSICAL_ADDRESS Buffer;
 	XEFile* xefile;
 
@@ -108,17 +88,23 @@ XEFile* XEOpenAndReadFile(EFI_HANDLE ImageHandle, CHAR16* Filename) {
 	Status = Root->Open(Root, &File, Filename, EFI_FILE_MODE_READ, 0);
 	if (EFI_ERROR(Status)) {
 		XEGuiPrint("Failed to open file \n");
+		Root->Close(Root);
 		return 0;
 	}
 
 	Status = File->GetInfo(File, &GenericFileInfo, &FileInfoSize, NULL);
-	if (Status == EFI_BUFFER_TOO_SMALL) {
-		Status = gBS->AllocatePool(EfiBootServicesData, FileInfoSize, (VOID**)&FileInfo);
-		if (EFI_ERROR(Status)) {
-			XEGuiPrint("Failed to allocate buffer for file metadata \n");
-			File->Close(File);
-			return 0;
-		}
+	if (Status != EFI_BUFFER_TOO_SMALL || FileInfoSize == 0) {
+		XEGuiPrint("Failed to query file metadata size \n");
+		File->Close(File);
+		Root->Close(Root);
+		return 0;
+	}
+	Status = gBS->AllocatePool(EfiBootServicesData, FileInfoSize, (VOID**)&FileInfo);
+	if (EFI_ERROR(Status)) {
+		XEGuiPrint("Failed to allocate buffer for file metadata \n");
+		File->Close(File);
+		Root->Close(Root);
+		return 0;
 	}
 
 	Status = File->GetInfo(File, &GenericFileInfo, &FileInfoSize, FileInfo);
@@ -126,41 +112,53 @@ XEFile* XEOpenAndReadFile(EFI_HANDLE ImageHandle, CHAR16* Filename) {
 		XEGuiPrint("Failed to get file metadata \n");
 		gBS->FreePool(FileInfo);
 		File->Close(File);
+		Root->Close(Root);
 		return 0;
 	}
 	FileSize = FileInfo->FileSize;
 	gBS->FreePool(FileInfo);
+	if (FileSize == 0) {
+		XEGuiPrint("Refusing to load an empty file \n");
+		File->Close(File);
+		Root->Close(Root);
+		return 0;
+	}
 
-	//Status = gBS->AllocatePool(EfiBootServicesData, FileSize + 1, &Buffer);
-	Status = gBS->AllocatePages(AllocateAnyPages, EfiLoaderData, (FileSize + 1) / 0x1000, &Buffer);
+	PageCount = (FileSize + 0xFFF) / 0x1000;
+	Status = gBS->AllocatePages(AllocateAnyPages, EfiLoaderData, PageCount, &Buffer);
 	if (EFI_ERROR(Status)) {
 		XEGuiPrint("Failed to allocate buffer for file content \n");
 		File->Close(File);
+		Root->Close(Root);
 		return 0;
 	}
 
 	void* readBuff = (void*)Buffer;
-	Status = File->Read(File, &FileSize, readBuff);
-	if (EFI_ERROR(Status)) {
+	UINTN bytesRead = FileSize;
+	Status = File->Read(File, &bytesRead, readBuff);
+	if (EFI_ERROR(Status) || bytesRead != FileSize) {
 		XEGuiPrint("Failed to read file \n");
+		gBS->FreePages(Buffer, PageCount);
 		File->Close(File);
+		Root->Close(Root);
 		return 0;
 	}
 
 	xefile = (XEFile*)XEAllocatePool(sizeof(XEFile));
 	if (!xefile) {
 		XEGuiPrint("Failed to allocate file data structure \n");
+		gBS->FreePages(Buffer, PageCount);
 		File->Close(File);
+		Root->Close(Root);
 		return 0;
 	}
 	memset(xefile, 0, sizeof(XEFile));
 	xefile->kBuffer = (void*)Buffer;
 	xefile->FileSize = FileSize;
+	xefile->PageCount = PageCount;
 	File->Close(File);
 	Root->Close(Root);
 
-	cleandcache_to_pou_by_va((size_t)readBuff, (FileSize + 1) / 0x1000);
-	invalidate_icache_by_va((size_t)readBuff, (FileSize + 1) / 0x1000);
 	return xefile;
 }
 
@@ -170,6 +168,9 @@ XEFile* XEOpenAndReadFile(EFI_HANDLE ImageHandle, CHAR16* Filename) {
  * @param file -- Pointer to the file structure
  */
 VOID XECloseFile(XEFile* file) {
-	gBS->FreePool(file->kBuffer);
+	if (!file)
+		return;
+	if (file->kBuffer && file->PageCount)
+		gBS->FreePages((EFI_PHYSICAL_ADDRESS)file->kBuffer, file->PageCount);
 	XEFreePool(file);
 }

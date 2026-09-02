@@ -84,6 +84,11 @@ XE_EXTERN {
 	*/
 	XE_LIB void ChCanvasScreenUpdate(ChCanvas * canvas, int x, int y, int w, int h);
 
+	/* Orders a completed batch of framebuffer stores. Keep this outside the
+	 * scanline copy primitive so one presentation does not issue a full-system
+	 * barrier for every row. */
+	XE_LIB void ChCanvasScreenCommit();
+
 	/*
 	* ChDrawPixel -- draws a pixel to canvas buffer
 	* @param canvas -- pointer to canvas

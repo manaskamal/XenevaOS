@@ -51,7 +51,7 @@ void* _memcpy(void* targ, void* src, uint32_t len) {
 			t += (len - 1);
 			s += (len - 1);
 			while (len--)
-				*t-- = *s++;
+				*t-- = *s--;
 		} else {
 			while (len--)
 				*t++ = *s++;

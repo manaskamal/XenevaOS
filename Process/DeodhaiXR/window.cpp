@@ -110,6 +110,11 @@ void _window_generate_shadow(Window* win, int winw, int winh) {
  * @param title -- title of the window
  */
 Window* CreateWindow(int x, int y, int w, int h, uint16_t flags, uint16_t ownerId, char* title) {
+#ifdef __XENEVA_BLEED__
+	/* Glass windows allocate two additional full-window blur surfaces. The
+	 * low-memory profile keeps the window opaque and avoids both buffers. */
+	flags &= ~WINDOW_FLAG_GLASS;
+#endif
 	uint16_t shKey = 0;
 	uint16_t backBufferKey = 0;
 	int64_t w_ = w, h_ = h, x_ = x, y_ = y;

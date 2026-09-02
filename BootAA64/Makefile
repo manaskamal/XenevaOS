@@ -2,8 +2,18 @@
 TARGET_EFI = BOOTAA64.efi
 TARGET_SO = BOOTAA64.so
 
-# Default toolchain is GCC
+# MSYS2 shells (MINGW64/CLANG64/UCRT64/MSYS/...) set $MSYSTEM. There's no
+# aarch64-linux-gnu-gcc cross toolchain packaged for MSYS2, so default to
+# llvm there; everywhere else (Linux) keeps defaulting to gcc.
+ifdef MSYSTEM
+    TOOLCHAIN ?= llvm
+endif
 TOOLCHAIN ?= gcc
+
+BLEED ?= 0
+ifeq ($(BLEED),1)
+    BLEED_FLAGS = -D__XENEVA_BLEED__ -O2
+endif
 
 # Triggered when you run "make llvm"
 .PHONY: all clean llvm
@@ -51,13 +61,24 @@ ifeq ($(TOOLCHAIN),llvm)
 	CXXFLAGS = $(LLVM_TARGET) -Wno-error=pragmas \
                -Wall -Wextra -funsigned-char -fshort-wchar \
                -ffreestanding -fno-stack-protector \
-               -std=c++17 $(BOARD_FLAG) $(INCLUDES)
+               -std=c++17 $(BLEED_FLAGS) $(BOARD_FLAG) $(INCLUDES)
 
 	LDFLAGS  = $(LLVM_TARGET) -fuse-ld=lld -nostdlib -Wl,-entry:efi_main -Wl,-subsystem:efi_application
+
+ifeq ($(shell command -v $(CXX) 2>/dev/null),)
+    $(error $(CXX) not found on PATH. On MSYS2: pacman -S mingw-w64-clang-x86_64-toolchain (or the clangarm64/ucrt64 package matching your shell), then reopen the shell)
+endif
+ifeq ($(shell command -v ld.lld 2>/dev/null),)
+    $(error ld.lld not found on PATH. It ships with the clang toolchain package above)
+endif
 
 else
 
 #* original gcc configuration
+ifdef MSYSTEM
+    $(error TOOLCHAIN=gcc needs aarch64-linux-gnu-gcc/g++, which MSYS2 doesn't package. Run "make llvm" instead (MSYS2 already defaults to it))
+endif
+
 	CC      = aarch64-linux-gnu-gcc
     CXX     = aarch64-linux-gnu-g++
     LD      = aarch64-linux-gnu-ld
@@ -66,7 +87,7 @@ else
     CXXFLAGS = -Wno-error=pragmas -fPIE \
                -Wall -Wextra -funsigned-char -fshort-wchar \
                -fno-strict-aliasing -ffreestanding -fno-stack-protector -fno-stack-check \
-               -fno-merge-all-constants -std=c++17 -DGNU_EFI_USE_MS_ABI $(BOARD_FLAG) $(INCLUDES)
+               -fno-merge-all-constants -std=c++17 -DGNU_EFI_USE_MS_ABI $(BLEED_FLAGS) $(BOARD_FLAG) $(INCLUDES)
 
     LDSCRIPT = ${GNU_EFI_DIR}/gnuefi/elf_aarch64_efi.lds
     CRT0     = ${GNU_EFI_DIR}/aarch64/gnuefi/crt0-efi-aarch64.o

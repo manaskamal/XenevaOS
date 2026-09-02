@@ -167,10 +167,14 @@ AuVFSNode* FontManagerOpenFontFile(char* filename) {
  */
 void FontManagerIterateFontList(uint8_t* fontlst) {
 	char* fbuf = (char*)fontlst;
-	int fcount = 0;
+	int configured_count = totalSysFonts;
+	int parsed_count = 0;
+	int loaded_count = 0;
 search:
-	if (fcount >= totalSysFonts)
+	if (parsed_count >= configured_count) {
+		totalSysFonts = loaded_count;
 		return;
+	}
 	char* p = strchr(fbuf, '[');
 	if (p) {
 		p++;
@@ -201,6 +205,17 @@ search:
 		fbuf++;
 	}
 	filename[i] = 0;
+	parsed_count++;
+
+#ifdef __XENEVA_BLEED__
+	/* Keep the UI and bundled optional applications usable without pinning every
+	 * configured typeface in physical memory during boot. */
+	if (strcmp(fontname, "Calibri") != 0 &&
+		strcmp(fontname, "Forte") != 0 &&
+		strcmp(fontname, "Consolas") != 0)
+		goto search;
+#endif
+
 	UARTDebugOut("Opening font file : %s \r\n", filename);
 	AuVFSNode* fs = AuVFSFind("/");
 	AuVFSNode* fontfile = AuVFSOpen(filename); //FontManagerOpenFontFile(filename);
@@ -213,7 +228,7 @@ search:
 			kfree(fontfile);
 			return;
 		}
-		fcount++;
+		loaded_count++;
 		kfree(fontfile); //avoiding this, because we need more powerful heap memory allocator
 	}
 

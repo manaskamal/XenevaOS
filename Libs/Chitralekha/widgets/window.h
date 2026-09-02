@@ -86,6 +86,14 @@ typedef struct _ChSharedWin_ {
 	double alphaValue;
 	bool windowReady;
 } ChSharedWinInfo;
+
+static inline bool ChSharedFlagLoad(const bool* flag) {
+	return __atomic_load_n(flag, __ATOMIC_ACQUIRE);
+}
+
+static inline void ChSharedFlagStore(bool* flag, bool value) {
+	__atomic_store_n(flag, value, __ATOMIC_RELEASE);
+}
 //#pragma pack(pop)
 
 typedef struct _chwin_ {

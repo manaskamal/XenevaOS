@@ -734,13 +734,13 @@ void DeodhaiWindowHide(Window* win) {
 	if (info->hide) {
 		/* UNHIDE the window , if its already hidden */
 		info->hide = false;
-		info->updateEntireWindow = true;
-		info->dirty = 1;
+		WinSharedFlagStore(&info->updateEntireWindow, true);
+		WinSharedFlagStore(&info->dirty, true);
 		focusedWin = win;
 	} else {
 		/* HIDE the window, if its not hidden */
 		info->hide = true;
-		info->updateEntireWindow = 1;
+		WinSharedFlagStore(&info->updateEntireWindow, true);
 		info->rect_count = 0;
 		focusedWin = NULL;
 	}
@@ -887,7 +887,21 @@ int main(int argc, char* argv[]) {
 
 	_KePrint("canvas width : %d, canvas height : %d \r\n", screen_w, screen_h);
 
+#ifdef __XENEVA_DIRECT_SCANOUT__
+	/* GOP exposes one fixed scanout surface rather than page flipping. Direct
+	 * composition is safe only when the compositor's tightly packed row layout
+	 * exactly matches the firmware pitch. Otherwise retain the cached canvas. */
+	if (canv->framebuff && canv->bpp == 32 && canv->pitch == (uint32_t)screen_w * 4) {
+		canv->buffer = canv->framebuff;
+		canv->bufferSz = 0;
+		_KePrint("[deodhaiXR]: direct GOP scanout enabled\r\n");
+	} else {
+		_KePrint("[deodhaiXR]: direct GOP scanout unavailable; using cached canvas\r\n");
+		ChAllocateBuffer(canv);
+	}
+#else
 	ChAllocateBuffer(canv);
+#endif
 	DeoInitializeBackSurface(canv);
 
 	_KePrint("Deodhai Initializaed back surface \r\n");
@@ -914,6 +928,7 @@ int main(int argc, char* argv[]) {
 
 	//	ChCanvasScreenUpdate(canv, 0, 0, canv->canvasWidth, canv->canvasHeight);
 	ChCanvasScreenUpdate(canv, 0, 0, screen_w, screen_h);
+	ChCanvasScreenCommit();
 
 	_KePrint("Canvas updated \r\n");
 
@@ -967,7 +982,9 @@ int main(int argc, char* argv[]) {
 	CursorStoreBack(canv, currentCursor, 0, 0);
 	CursorDraw(canv, arrow, 0, 0);
 
+#ifndef __XENEVA_BLEED__
 	_KeProcessSleep(100);
+#endif
 
 	mouse_fd = _KeOpenFile("/dev/mice", FILE_OPEN_READ_ONLY);
 	kybrd_fd = _KeOpenFile("/dev/kybrd", FILE_OPEN_READ_ONLY);
@@ -985,15 +1002,21 @@ int main(int argc, char* argv[]) {
 	int proc = _KeCreateProcess(0, "xelnch");
 	_KeProcessLoadExec(proc, "/xelnch.exe", NULL, NULL);
 
+#ifndef __XENEVA_BLEED__
 	_KeProcessSleep(500);
+#endif
 
 	proc = _KeCreateProcess(0, "nmdapha");
 	_KeProcessLoadExec(proc, "/nmdapha.exe", NULL, NULL);
 
+#ifndef __XENEVA_BLEED__
+	/* Retained for ordinary-build behavior; bleed removes this historical
+	 * compositor reservation from the benchmark path. */
 	void* p1 = malloc(6 * 1024 * 1024);
 	memset(p1, 0, 6 * 1024 * 1024);
 	void* p2 = malloc(50560);
 	memset(p2, 0, 50560);
+#endif
 
 	uint64_t frameTime = 0;
 	uint64_t frameStart = 0;

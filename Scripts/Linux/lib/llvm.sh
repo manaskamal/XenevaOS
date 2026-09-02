@@ -11,15 +11,15 @@ if [ ! -d ../../gnu-efi ]; then
 fi
 
 # EFI bootloader
-( cd ../../BootAA64 && make clean && make llvm )
+( cd ../../BootAA64 && make clean && make BLEED="${BLEED:-0}" llvm )
 
 # AArch64 kernel
-( cd ../../KernelAA64 && make clean && make llvm )
+( cd ../../KernelAA64 && make clean && make BLEED="${BLEED:-0}" llvm )
 
 if [ "${BUILD_USER_APPS:-0}" -eq 1 ]; then
     # Userspace C++ runtime + graphics library
-    ( cd ../../Libs/XEClib && make clean && make llvm )
-    ( cd ../../Libs/Chitralekha && make clean && make llvm )
+    ( cd ../../Libs/XEClib && make clean && make BLEED="${BLEED:-0}" llvm )
+    ( cd ../../Libs/Chitralekha && make clean && make BLEED="${BLEED:-0}" llvm )
 
     # All AArch64 user-space applications
     APPS=(
@@ -27,7 +27,7 @@ if [ "${BUILD_USER_APPS:-0}" -eq 1 ]; then
         Calender Calculator AudioPlayer Files Control
     )
     for app in "${APPS[@]}"; do
-        ( cd "../../Process/$app" && make clean && make llvm )
+        ( cd "../../Process/$app" && make clean && make BLEED="${BLEED:-0}" llvm )
     done
 
     # Deploy the freshly built application binaries into the resources tree so
