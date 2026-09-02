@@ -34,6 +34,28 @@ int _back_dirty_count;
 
 Rect _back_dirty_rect[512];
 
+static bool back_rects_touch_or_overlap(const Rect* a, const Rect* b) {
+	int64_t a_right = (int64_t)a->x + a->w;
+	int64_t a_bottom = (int64_t)a->y + a->h;
+	int64_t b_right = (int64_t)b->x + b->w;
+	int64_t b_bottom = (int64_t)b->y + b->h;
+	return (int64_t)a->x <= b_right && (int64_t)b->x <= a_right &&
+		   (int64_t)a->y <= b_bottom && (int64_t)b->y <= a_bottom;
+}
+
+static Rect back_rect_union(const Rect* a, const Rect* b) {
+	int64_t left = a->x < b->x ? a->x : b->x;
+	int64_t top = a->y < b->y ? a->y : b->y;
+	int64_t right_a = (int64_t)a->x + a->w;
+	int64_t right_b = (int64_t)b->x + b->w;
+	int64_t bottom_a = (int64_t)a->y + a->h;
+	int64_t bottom_b = (int64_t)b->y + b->h;
+	int64_t right = right_a > right_b ? right_a : right_b;
+	int64_t bottom = bottom_a > bottom_b ? bottom_a : bottom_b;
+	Rect result = {(int)left, (int)top, (int)(right - left), (int)(bottom - top)};
+	return result;
+}
+
 /*
  * BackDirtyInitialise -- initialise the back
  * dirty count
@@ -56,22 +78,29 @@ void BackDirtyInitialise() {
  * @param h -- Height of the rect
  */
 void BackDirtyAdd(int x, int y, int w, int h) {
-	if (_back_dirty_count >= 512)
-		_back_dirty_count = 0;
-	if (x < 0)
-		_KePrint("BackDirty x < 0 -> %d \r\n", x);
-	if (y < 0)
-		_KePrint("BackDirty y < 0 -> %d \r\n", y);
-	if (w < 0)
-		_KePrint("BackDirty w is corrupted \r\n");
-	if (h < 0)
-		_KePrint("BackDirty h is corrupted \r\n");
+	if (w <= 0 || h <= 0)
+		return;
 
-	_back_dirty_rect[_back_dirty_count].x = x;
-	_back_dirty_rect[_back_dirty_count].y = y;
-	_back_dirty_rect[_back_dirty_count].w = w;
-	_back_dirty_rect[_back_dirty_count].h = h;
-	_back_dirty_count++;
+	Rect incoming = {x, y, w, h};
+	for (int i = 0; i < _back_dirty_count;) {
+		if (!back_rects_touch_or_overlap(&incoming, &_back_dirty_rect[i])) {
+			i++;
+			continue;
+		}
+		incoming = back_rect_union(&incoming, &_back_dirty_rect[i]);
+		_back_dirty_rect[i] = _back_dirty_rect[--_back_dirty_count];
+		i = 0;
+	}
+
+	if (_back_dirty_count < 512) {
+		_back_dirty_rect[_back_dirty_count++] = incoming;
+		return;
+	}
+
+	for (int i = 0; i < _back_dirty_count; i++)
+		incoming = back_rect_union(&incoming, &_back_dirty_rect[i]);
+	_back_dirty_rect[0] = incoming;
+	_back_dirty_count = 1;
 }
 
 /*

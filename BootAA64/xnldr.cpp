@@ -103,7 +103,8 @@ EFI_STATUS XEInitialiseLib(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable
 	EFI_STATUS Status;
 	EFI_GUID loadedimageprot = EFI_LOADED_IMAGE_PROTOCOL_GUID;
 	EFI_LOADED_IMAGE_PROTOCOL* loadedimage = nullptr;
-	if (Status = gBS->HandleProtocol(gImageHandle, &loadedimageprot, (void**)&loadedimage)) {
+	Status = gBS->HandleProtocol(gImageHandle, &loadedimageprot, (void**)&loadedimage);
+	if (EFI_ERROR(Status)) {
 		return Status;
 	}
 	xnldr2 = loadedimage;
@@ -112,14 +113,43 @@ EFI_STATUS XEInitialiseLib(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable
 
 typedef struct {
 	CHAR16* Label;
+	UINT32 Width;
+	UINT32 Height;
 } MENU_ITEM;
 
-MENU_ITEM MenuItem[] = {{(CHAR16*)L"640x480"},
-						{(CHAR16*)L"1024x768"},
-						{(CHAR16*)L"1280x1024"},
-						{(CHAR16*)L"1920x1080"}};
+MENU_ITEM MenuItem[] = {{(CHAR16*)L"640x480", 640, 480},
+						{(CHAR16*)L"1024x768", 1024, 768},
+						{(CHAR16*)L"1280x1024", 1280, 1024},
+						{(CHAR16*)L"1920x1080", 1920, 1080}};
 
 #define MENU_SIZE (sizeof(MenuItem) / sizeof(MenuItem[0]))
+
+static bool XEGetSupportedMenuModes(bool* supported) {
+	EFI_GRAPHICS_OUTPUT_PROTOCOL* graphicsOutput = nullptr;
+	EFI_GUID gopGuid = EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID;
+	EFI_STATUS status = gBS->LocateProtocol(&gopGuid, NULL, (VOID**)&graphicsOutput);
+	if (EFI_ERROR(status) || !graphicsOutput || !graphicsOutput->Mode)
+		return false;
+
+	bool anySupported = false;
+	for (UINTN mode = 0; mode < graphicsOutput->Mode->MaxMode; mode++) {
+		EFI_GRAPHICS_OUTPUT_MODE_INFORMATION* info = nullptr;
+		UINTN infoSize = 0;
+		status = graphicsOutput->QueryMode(graphicsOutput, mode, &infoSize, &info);
+		if (!EFI_ERROR(status) && info) {
+			for (UINTN item = 0; item < MENU_SIZE; item++) {
+				if (info->HorizontalResolution == MenuItem[item].Width &&
+					info->VerticalResolution == MenuItem[item].Height) {
+					supported[item] = true;
+					anySupported = true;
+				}
+			}
+		}
+		if (info)
+			gBS->FreePool(info);
+	}
+	return anySupported;
+}
 
 /*
  * XEGetScreenResolutionMode -- Provides a selection based menu
@@ -127,45 +157,75 @@ MENU_ITEM MenuItem[] = {{(CHAR16*)L"640x480"},
  * @param SystemTable -- Pointer to EFI SYSTEM TABLE
  */
 int XEGetScreenResolutionMode(EFI_SYSTEM_TABLE* SystemTable) {
-	EFI_STATUS Status;
+	EFI_STATUS Status = EFI_SUCCESS;
 	UINTN SelectedIndex = 0;
-	EFI_INPUT_KEY Key;
+	EFI_INPUT_KEY Key = {};
+	bool supported[MENU_SIZE] = {};
+	bool hasSupportedMode = XEGetSupportedMenuModes(supported);
+	BOOLEAN cursorWasVisible = SystemTable->ConOut->Mode->CursorVisible;
+
+	if (!hasSupportedMode) {
+		/* XESetGraphicsMode will retain the firmware mode when the preferred
+		 * 640x480 mode is unavailable. There is nothing useful to select here. */
+		XEPrintf(const_cast<wchar_t*>(
+			L"No listed GOP resolution is available; keeping the firmware mode.\r\n"));
+		return 0;
+	}
+
+	while (!supported[SelectedIndex])
+		SelectedIndex++;
+
+	SystemTable->ConIn->Reset(SystemTable->ConIn, FALSE);
+	SystemTable->ConOut->ClearScreen(SystemTable->ConOut);
+	SystemTable->ConOut->EnableCursor(SystemTable->ConOut, FALSE);
 	while (1) {
 		SystemTable->ConOut->SetCursorPosition(SystemTable->ConOut, 0, 0);
 		XESetTextAttribute(0, EFI_WHITE);
 		XEPrintf(const_cast<wchar_t*>(L"XenevaOS loader (XNLDR) 2.0 ARM64 \r\n"));
 		XESetTextAttribute(0, EFI_LIGHTGRAY);
-		XEPrintf(const_cast<wchar_t*>(L"Copyright (C) Manas Kamal Choudhury 2020-2025 \r\n"));
-		XEPrintf(const_cast<wchar_t*>(L"Select a screen resolution:\r\n"));
+		XEPrintf(const_cast<wchar_t*>(L"Copyright (C) Manas Kamal Choudhury 2020-2026 \r\n"));
+		XEPrintf(const_cast<wchar_t*>(L"Select a screen resolution with Up/Down, then press Enter:\r\n"));
 		XEPrintf(const_cast<wchar_t*>(L"\r\n"));
-		for (UINTN i = 0; i < 4; i++) {
+		for (UINTN i = 0; i < MENU_SIZE; i++) {
 			if (i == SelectedIndex) {
 				SystemTable->ConOut->SetAttribute(SystemTable->ConOut,
 												  EFI_WHITE | EFI_BACKGROUND_BLUE);
-			} else {
+				XEPrintf(const_cast<wchar_t*>(L"> %-16s\r\n"), MenuItem[i].Label);
+			} else if (supported[i]) {
 				SystemTable->ConOut->SetAttribute(SystemTable->ConOut, EFI_LIGHTGRAY);
+				XEPrintf(const_cast<wchar_t*>(L"  %-16s\r\n"), MenuItem[i].Label);
+			} else {
+				SystemTable->ConOut->SetAttribute(SystemTable->ConOut, EFI_DARKGRAY);
+				XEPrintf(const_cast<wchar_t*>(L"  %-16s (unavailable)\r\n"), MenuItem[i].Label);
 			}
-			XEPrintf(const_cast<wchar_t*>(L"%s\r\n"), MenuItem[i].Label);
 		}
+		SystemTable->ConOut->SetAttribute(SystemTable->ConOut, EFI_LIGHTGRAY);
 
-		do {
-			Status = SystemTable->ConIn->ReadKeyStroke(SystemTable->ConIn, &Key);
-		} while (Status == EFI_NOT_READY);
+		EFI_EVENT keyEvent = SystemTable->ConIn->WaitForKey;
+		UINTN eventIndex = 0;
+		Status = gBS->WaitForEvent(1, &keyEvent, &eventIndex);
+		if (EFI_ERROR(Status))
+			break;
+		Key = {};
+		Status = SystemTable->ConIn->ReadKeyStroke(SystemTable->ConIn, &Key);
+		if (EFI_ERROR(Status))
+			continue;
 
 		if (Key.ScanCode == SCAN_UP) {
-			if (SelectedIndex > 0)
-				SelectedIndex--;
+			do {
+				SelectedIndex = (SelectedIndex + MENU_SIZE - 1) % MENU_SIZE;
+			} while (!supported[SelectedIndex]);
 		} else if (Key.ScanCode == SCAN_DOWN) {
-			if (SelectedIndex < MENU_SIZE - 1) {
-				SelectedIndex++;
-			}
+			do {
+				SelectedIndex = (SelectedIndex + 1) % MENU_SIZE;
+			} while (!supported[SelectedIndex]);
 		} else if (Key.UnicodeChar == CHAR_CARRIAGE_RETURN) {
 			break;
 		}
-
-		SystemTable->ConOut->ClearScreen(SystemTable->ConOut);
 	}
 
+	SystemTable->ConOut->SetAttribute(SystemTable->ConOut, EFI_LIGHTGRAY);
+	SystemTable->ConOut->EnableCursor(SystemTable->ConOut, cursorWasVisible);
 	return SelectedIndex;
 }
 
@@ -179,11 +239,10 @@ UINTN XESetGraphicsMode(EFI_SYSTEM_TABLE* SystemTable, int index) {
 	EFI_GRAPHICS_OUTPUT_PROTOCOL* GraphicsOutput;
 	EFI_GUID gopguid = EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID;
 	EFI_STATUS Status;
-	UINTN Mode, MaxMode = 0;
-	EFI_INPUT_KEY Key;
+	UINTN Mode = 0, MaxMode = 0;
 
-	int dwidth = 0;
-	int dheight = 0;
+	UINT32 dwidth = 0;
+	UINT32 dheight = 0;
 
 	switch (index) {
 	case 1:
@@ -212,20 +271,32 @@ UINTN XESetGraphicsMode(EFI_SYSTEM_TABLE* SystemTable, int index) {
 	}
 
 	MaxMode = GraphicsOutput->Mode->MaxMode;
+	Mode = GraphicsOutput->Mode->Mode;
+	bool requestedModeFound = false;
 	XEPrintf(const_cast<wchar_t*>(L"Available Screen Resolution:\r\n"));
 	for (UINTN i = 0; i < MaxMode; i++) {
-		EFI_GRAPHICS_OUTPUT_MODE_INFORMATION* Info;
-		UINTN Size;
+		EFI_GRAPHICS_OUTPUT_MODE_INFORMATION* Info = nullptr;
+		UINTN Size = 0;
 		Status = GraphicsOutput->QueryMode(GraphicsOutput, i, &Size, &Info);
+		if (EFI_ERROR(Status) || Info == NULL)
+			continue;
 		if (Info->HorizontalResolution == dwidth && Info->VerticalResolution == dheight) {
 			Mode = i;
+			requestedModeFound = true;
 		}
+		gBS->FreePool(Info);
+		if (requestedModeFound)
+			break;
 	}
 
 	Status = GraphicsOutput->SetMode(GraphicsOutput, Mode);
+	if (EFI_ERROR(Status)) {
+		_is_graphics_enabled = false;
+		return Mode;
+	}
 	gop = GraphicsOutput;
 	Status = XEInitialiseGraphics(GraphicsOutput);
-	_is_graphics_enabled = true;
+	_is_graphics_enabled = !EFI_ERROR(Status);
 	return Mode;
 }
 
@@ -334,8 +405,14 @@ extern "C" EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemT
 	XEUARTPrint("Library initialized \r\n");
 	XEClearScreen();
 	XEBootInfo bootinfo;
+	/* The low-memory benchmark profile uses the smallest supported mode and
+	 * avoids blocking automated boots on the interactive resolution menu. */
+#ifdef __XENEVA_BLEED__
+	int index = 0;
+#else
 	/* Get user graphics resolution choice*/
 	int index = XEGetScreenResolutionMode(SystemTable);
+#endif
 	/* Set the graphics resolution based on user selection */
 	UINTN Mode = XESetGraphicsMode(SystemTable, index);
 	XEGuiPrint("XenevaOS Loader 2.0 (XNLDR) ARM64\n");
@@ -534,7 +611,7 @@ extern "C" EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemT
 	}
 	if (Status != EFI_SUCCESS) {
 		XEGuiPrint("Exit Boot Service Failed \n");
-		XEPrintf((wchar_t*)"Exit Boot Service Failed\n");
+		XEPrintf(const_cast<wchar_t*>(L"Exit Boot Services failed\r\n"));
 		for (;;)
 			;
 	}

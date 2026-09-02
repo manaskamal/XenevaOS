@@ -12,21 +12,25 @@ set -e
 #                           exist on disk.
 #   --force-user-apps       Also rebuild userspace libs/apps and redeploy them
 #                           into Resources/resources/ before packing.
+#   --bleed                 Benchmark-oriented AArch64 LLVM build: rebuild all
+#                           userspace, remove deliberate startup waits and boot
+#                           self-tests, and omit non-AArch64/media initrd payloads.
+#   --direct-scanout        Rebuild userspace with the compositor drawing into
+#                           the GOP framebuffer when its pitch permits it.
 #   --force-legacy-build    Reuse an existing initrd2.img instead of rebuilding it.
 #   --install-deps          Install required host packages for this distro.
 #   --initrd-size-mb=N      Override the auto-computed initrd2.img size.
 #   --headless              Run QEMU with -display none, bounded by a timeout,
-#                           instead of opening a GTK window. Known limitation:
-#                           the bootloader's screen-resolution menu only
-#                           accepts USB/virtio keyboard input, so a headless
-#                           run cannot reach kernel entry today — this flag
-#                           only prevents an unbounded hang.
+#                           instead of opening a GTK window. Ordinary builds
+#                           stop at the interactive resolution menu; bleed
+#                           selects 640x480 automatically and boots through it.
 #   -h, --help              Show this help and exit.
 #
 # Known gap: x86_64 (Boot/Kernel) has no QEMU boot path here yet.
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 SCRIPT_DIR="$REPO_ROOT/Scripts/Linux"
+USERSPACE_PROFILE_STAMP="$REPO_ROOT/Build/aarch64-userspace.profile"
 
 source "$SCRIPT_DIR/lib/enviorment_variables.sh"
 source "$SCRIPT_DIR/lib/functions.sh"
@@ -37,11 +41,13 @@ BUILD_USER_APPS=0
 FORCE_LEGACY_BUILD=0
 INSTALL_DEPS=0
 HEADLESS=0
+BLEED=0
+DIRECT_SCANOUT=0
 INITRD_SIZE_MB=""
 
 print_help(){
     printf "${STY_CYAN}"
-    sed -n '3,22p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
+    sed -n '3,27p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
     printf "${STY_RST}\n"
 }
 
@@ -51,6 +57,8 @@ for arg in "$@"; do
         --gcc) TOOLCHAIN=gcc ;;
         --skip-build) SKIP_BUILD=1 ;;
         --force-user-apps) BUILD_USER_APPS=1 ;;
+		--bleed) BLEED=1 ;;
+		--direct-scanout) DIRECT_SCANOUT=1 ;;
         --force-legacy-build) FORCE_LEGACY_BUILD=1 ;;
         --install-deps) INSTALL_DEPS=1 ;;
         --headless) HEADLESS=1 ;;
@@ -63,6 +71,69 @@ for arg in "$@"; do
         ;;
     esac
 done
+
+if [ "$BLEED" -eq 1 ]; then
+    if [ "$TOOLCHAIN" != llvm ]; then
+        printf "${STY_RED}[$0]: --bleed is supported only by the AArch64 LLVM build.${STY_RST}\n"
+        exit 1
+    fi
+    if [ "$SKIP_BUILD" -eq 1 ]; then
+        printf "${STY_RED}[$0]: --bleed cannot be combined with --skip-build.${STY_RST}\n"
+        exit 1
+    fi
+    if [ "$FORCE_LEGACY_BUILD" -eq 1 ]; then
+        printf "${STY_RED}[$0]: --bleed cannot be combined with --force-legacy-build.${STY_RST}\n"
+        printf "${STY_YELLOW}[$0]: Bleed requires a freshly packed, profile-matched initrd.${STY_RST}\n"
+        exit 1
+    fi
+    BUILD_USER_APPS=1
+fi
+
+if [ "$DIRECT_SCANOUT" -eq 1 ]; then
+	if [ "$SKIP_BUILD" -eq 1 ]; then
+		printf "${STY_RED}[$0]: --direct-scanout cannot be combined with --skip-build.${STY_RST}\n"
+		exit 1
+	fi
+	if [ "$FORCE_LEGACY_BUILD" -eq 1 ]; then
+		printf "${STY_RED}[$0]: --direct-scanout cannot be combined with --force-legacy-build.${STY_RST}\n"
+		exit 1
+	fi
+	BUILD_USER_APPS=1
+fi
+
+requested_userspace_profile="${TOOLCHAIN}-normal"
+if [ "$BLEED" -eq 1 ]; then
+	requested_userspace_profile="${TOOLCHAIN}-bleed"
+fi
+if [ "$DIRECT_SCANOUT" -eq 1 ]; then
+	requested_userspace_profile="${requested_userspace_profile}-direct-scanout"
+fi
+
+if [ -f "$USERSPACE_PROFILE_STAMP" ]; then
+    previous_userspace_profile="$(<"$USERSPACE_PROFILE_STAMP")"
+    if [ "$previous_userspace_profile" != "$requested_userspace_profile" ]; then
+        if [ "$SKIP_BUILD" -eq 1 ]; then
+            printf "${STY_RED}[$0]: --skip-build cannot reuse ${previous_userspace_profile} user space for ${requested_userspace_profile}.${STY_RST}\n"
+            printf "${STY_YELLOW}[$0]: Rerun without --skip-build so user space can be cleaned and rebuilt.${STY_RST}\n"
+            exit 1
+        fi
+        echo "[+] User-space profile changed: ${previous_userspace_profile} -> ${requested_userspace_profile}; forcing a clean rebuild."
+        BUILD_USER_APPS=1
+    fi
+fi
+
+if [ -n "$INITRD_SIZE_MB" ]; then
+    case "$INITRD_SIZE_MB" in
+        *[!0-9]*)
+            printf "${STY_RED}[$0]: --initrd-size-mb must be a whole number.${STY_RST}\n"
+            exit 1
+        ;;
+    esac
+    if [ "$BLEED" -eq 1 ] && [ "$INITRD_SIZE_MB" -lt 36 ]; then
+        printf "${STY_RED}[$0]: bleed initrds must be at least 36 MiB for the FAT32 driver.${STY_RST}\n"
+        exit 1
+    fi
+fi
 
 cd "$REPO_ROOT"
 
@@ -128,7 +199,7 @@ echo "[+] Using QEMU firmware: $QEMU_FIRMWARE"
 
 if [ "$SKIP_BUILD" -eq 0 ]; then
     echo "[+] Building bootloader + kernel (+ apps if requested) with $TOOLCHAIN..."
-    export BUILD_USER_APPS
+	export BUILD_USER_APPS BLEED DIRECT_SCANOUT
     pushd "$SCRIPT_DIR" >/dev/null
     if [ "$TOOLCHAIN" == llvm ]; then
         source ./lib/llvm.sh
@@ -136,6 +207,10 @@ if [ "$SKIP_BUILD" -eq 0 ]; then
         source ./lib/gcc.sh
     fi
     popd >/dev/null
+    if [ "$BUILD_USER_APPS" -eq 1 ]; then
+        mkdir -p "$(dirname "$USERSPACE_PROFILE_STAMP")"
+        printf '%s\n' "$requested_userspace_profile" > "$USERSPACE_PROFILE_STAMP"
+    fi
 else
     echo "[+] --skip-build passed, reusing existing build artifacts."
 fi
@@ -153,6 +228,8 @@ done
 if [ "$FORCE_LEGACY_BUILD" -eq 0 ]; then
     if [ -n "$INITRD_SIZE_MB" ]; then
         initrd_size_mb="$INITRD_SIZE_MB"
+    elif [ "$BLEED" -eq 1 ]; then
+        initrd_size_mb=36
     else
         resources_mb=$(du -sm Resources/resources | cut -f1)
         computed_mb=$(( (resources_mb * 3 + 1) / 2 ))  # ceil(resources_mb * 1.5)
@@ -161,7 +238,17 @@ if [ "$FORCE_LEGACY_BUILD" -eq 0 ]; then
     echo "[+] Creating ${initrd_size_mb}MB FAT32 initrd2.img and packing resources..."
     dd if=/dev/zero of=initrd2.img bs=1M count="$initrd_size_mb"
     mkfs.vfat -F 32 initrd2.img
-    mcopy -o -s -i initrd2.img Resources/resources/* ::/
+    if [ "$BLEED" -eq 1 ]; then
+        echo "[bleed] Omitting unused architectures, media, and nonessential fonts from the initrd."
+        for resource in Resources/resources/*; do
+            case "$(basename "$resource")" in
+                MUSIC|ARCH_X64|snd.wav|RoLight.ttf|RoLiIta.ttf|RoThin.ttf|corbel.ttf) continue ;;
+            esac
+            mcopy -o -s -i initrd2.img "$resource" ::/
+        done
+    else
+        mcopy -o -s -i initrd2.img Resources/resources/* ::/
+    fi
     mcopy -o -i initrd2.img Process/Init/init.exe ::/init.exe
 else
     echo "[+] Found pre-built initrd2.img, skipping manual creation."
@@ -185,11 +272,18 @@ mcopy -o -i fat.img initrd2.img ::/initrd2.img
 
 # --- Launch QEMU ---
 
+if [ "$BLEED" -eq 1 ]; then
+    qemu_memory="${XENEVA_QEMU_MEMORY:-256M}"
+else
+    qemu_memory="${XENEVA_QEMU_MEMORY:-1024M}"
+fi
 echo "[+] Image ready! Booting QEMU..."
+echo "[+] Guest memory: $qemu_memory"
+
 QEMU_ARGS=(
     -machine virt,gic-version=2,highmem=off
     -cpu cortex-a72
-    -m 1024M
+    -m "$qemu_memory"
     -bios "$QEMU_FIRMWARE"
     -drive file=fat.img,format=raw,if=virtio
     -device ramfb
@@ -203,14 +297,9 @@ QEMU_ARGS=(
 if [ "$HEADLESS" -eq 1 ]; then
     QEMU_ARGS+=(-display none -no-reboot)
 
-    # the bootloader's screen-resolution menu (XEGetScreenResolutionMode in
-    # BootAA64/xnldr.cpp) always blocks on a keystroke before handing off to
-    # the kernel, and it only listens to the emulated USB/virtio keyboard —
-    # I tried both a QMP send-key and feeding input over the -serial stdio
-    # UART and neither reached it, so headless can't get to kernel entry yet.
-    # this still bounds the run with a timeout instead of hanging forever,
-    # which is the main point for CI/automation. actually skipping the menu
-    # non-interactively needs a bootloader-side fix, out of scope here --axiss
+    # Ordinary builds still block at the interactive resolution menu. Bleed
+    # selects its low-memory mode in the bootloader and can therefore complete
+    # an automated headless boot; the timeout bounds both cases for CI.
     timeout "${QEMU_TIMEOUT:-120}" qemu-system-aarch64 "${QEMU_ARGS[@]}"
 else
     QEMU_ARGS+=(-display gtk,zoom-to-fit=on)

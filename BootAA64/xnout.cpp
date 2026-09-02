@@ -110,7 +110,7 @@ int XEPrintf(wchar_t* fmt, ...) {
 	int c, sign, width, precision, lmodifier;
 	unsigned char ljust, alt, lzeroes;
 
-	while (c = *fmt++) {
+	while ((c = *fmt++)) {
 		if (c != '%' || *fmt == '%') {
 			out[o++] = c;
 			fmt += (c == '%');
@@ -289,11 +289,11 @@ int XEPrintf(wchar_t* fmt, ...) {
 			if (c != 'd') {
 				if (lmodifier == 'H')
 					v = (uint8_t)v;
-				else if (lmodifier = 'h')
+				else if (lmodifier == 'h')
 					v = (unsigned short)v;
 				sign = 0;
 			} else {
-				if (lmodifier = 'H')
+				if (lmodifier == 'H')
 					v = (signed char)v;
 				else if (lmodifier == 'h')
 					v = (short)v;
@@ -361,6 +361,9 @@ int XEPrintf(wchar_t* fmt, ...) {
 
 	out[o++] = 0;
 	gSystemTable->ConOut->OutputString(gSystemTable->ConOut, out);
+#if defined(__GNUC__) || defined(__GNUG__)
+	va_end(vl);
+#endif
 	return 0;
 }
 

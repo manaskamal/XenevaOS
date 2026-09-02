@@ -34,6 +34,19 @@
 #include "xnout.h"
 #include "paging.h"
 #include "uart0.h"
+#include "lowlevel.h"
+
+static void synchronize_executable_image(size_t address, size_t size) {
+	size_t start = address & ~(size_t)63;
+	size_t end = (address + size + 63) & ~(size_t)63;
+	for (size_t line = start; line < end; line += 64)
+		dc_cvau(line);
+	dsb_ish();
+	for (size_t line = start; line < end; line += 64)
+		ic_ivau(line);
+	dsb_ish();
+	isb_flush();
+}
 
 static void copy_mem(void* dst, void* src, size_t length) {
 	uint8_t* dstp = (uint8_t*)dst;
@@ -109,4 +122,8 @@ void XEPELoadImage(void* filebuff) {
 			zero_mem(raw_offset<void*>(sect_addr, sectionHeader[i].SizeOfRawData),
 					 sectionHeader[i].VirtualSize - sectionHeader[i].SizeOfRawData);
 	}
+
+	/* The PE source buffer is data. Synchronize the final mapped image only,
+	 * after every section has been copied, before control can transfer to it. */
+	synchronize_executable_image(ImageBase, ntHeaders->OptionalHeader.SizeOfImage);
 }

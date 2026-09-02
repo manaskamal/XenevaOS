@@ -32,6 +32,7 @@
 
 #include <stdint.h>
 #include <Uefi.h>
+#include <Protocol/GraphicsOutput.h>
 #include <stddef.h>
 #include <aurora.h>
 #ifndef SIZE_MAX
@@ -43,11 +44,6 @@
 #endif
 #endif
 //#include <stddef.h>
-
-#define SIZE_MAX 0xFFFFFFFF
-
-#define EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID                                                          \
-	{0x9042a9de, 0x23dc, 0x4a38, {0x96, 0xfb, 0x7a, 0xde, 0xd0, 0x80, 0x51, 0x6a}}
 
 #ifdef __TARGET_BOARD_RPI3__
 #define MMIO_BASE 0x3F000000

@@ -43,7 +43,7 @@ void FadeInAnimationWindow(ChCanvas* canv,
 	if (win->animAlphaVal == 10) {
 		win->flags &= ~WINDOW_FLAG_ANIMATION_FADE_IN;
 		win->flags &= ~WINDOW_FLAG_ANIMATED;
-		info->updateEntireWindow = 1;
+		WinSharedFlagStore(&info->updateEntireWindow, true);
 	}
 
 	for (int j = 0; j < win_h; j++) {
@@ -60,7 +60,7 @@ void FadeInAnimationWindow(ChCanvas* canv,
 
 	if (win->animAlphaVal != 10) {
 		win->animAlphaVal += 1;
-		info->updateEntireWindow = 1;
+		WinSharedFlagStore(&info->updateEntireWindow, true);
 		AddDirtyClip(win_x, win_y, win_w, win_h);
 	}
 }
@@ -94,7 +94,7 @@ void FadeOutAnimationWindow(ChCanvas* canv,
 
 	if (win->animAlphaVal != 0) {
 		win->animAlphaVal -= 1;
-		info->updateEntireWindow = 1;
+		WinSharedFlagStore(&info->updateEntireWindow, true);
 		AddDirtyClip(win_x, win_y, win_w, win_h);
 	}
 	DeodhaiUpdateBits(true, true);
