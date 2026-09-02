@@ -166,7 +166,14 @@ ChCreateWindow(ChitralekhaApp* app, uint16_t attrib, char* title, int x, int y, 
 	ChWindow* win = (ChWindow*)malloc(sizeof(ChWindow));
 	memset(win, 0, sizeof(ChWindow));
 	ChCanvas* canv = ChCreateCanvas(w, h);
+#ifdef __XENEVA_BLEED__
+	/* The shared compositor backbuffer is already writable by the client. Draw
+	 * into it directly instead of allocating a same-sized staging buffer. */
+	canv->buffer = (uint32_t*)app->fb;
+	canv->bufferSz = 0;
+#else
 	ChAllocateBuffer(canv);
+#endif
 	win->app = app;
 	win->flags = attrib;
 	win->buffer = (uint32_t*)app->fb;
@@ -280,21 +287,42 @@ ChWindowUpdate(ChWindow* win, int x, int y, int w, int h, bool updateEntireWin, 
 		h = win->info->height;
 	}
 
-	for (int i = 0; i < h; i++)
-		_fastcpy(lfb + (static_cast<int64_t>(y) + i) * win->info->width + x,
-				 canvaddr + (static_cast<int64_t>(y) + i) * win->info->width + x,
-				 (static_cast<int64_t>(w) * 4));
-
-	win->info->updateEntireWindow = updateEntireWin;
+	if (lfb != canvaddr) {
+		for (int i = 0; i < h; i++)
+			_fastcpy(lfb + (static_cast<int64_t>(y) + i) * win->info->width + x,
+					 canvaddr + (static_cast<int64_t>(y) + i) * win->info->width + x,
+					 (static_cast<int64_t>(w) * 4));
+	}
 
 	if (dirty) {
-		win->info->rect[win->info->rect_count].x = x;
-		win->info->rect[win->info->rect_count].y = y;
-		win->info->rect[win->info->rect_count].w = w;
-		win->info->rect[win->info->rect_count].h = h;
-		win->info->rect_count++;
-		win->info->dirty = 1;
+		uint32_t rectIndex = win->info->rect_count;
+		if (rectIndex < 256) {
+			win->info->rect[rectIndex].x = x;
+			win->info->rect[rectIndex].y = y;
+			win->info->rect[rectIndex].w = w;
+			win->info->rect[rectIndex].h = h;
+			win->info->rect_count = rectIndex + 1;
+		}
 	}
+
+	/* Publish metadata only after every pixel and dirty rectangle write is
+	 * visible to the compositor. */
+	ChSharedFlagStore(&win->info->updateEntireWindow, updateEntireWin);
+	if (dirty)
+		ChSharedFlagStore(&win->info->dirty, true);
+
+#ifdef __XENEVA_BLEED__
+	/* With a single shared draw/scanout buffer, wait for the compositor to
+	 * acknowledge this update before the client can start painting the next
+	 * one. This keeps the memory saving without racing a later frame. */
+	if (dirty || updateEntireWin) {
+		int timeout = 250;
+		while (timeout-- > 0 &&
+			   (ChSharedFlagLoad(&win->info->dirty) ||
+				ChSharedFlagLoad(&win->info->updateEntireWindow)))
+			_KeProcessSleep(1);
+	}
+#endif
 }
 
 /*
@@ -899,7 +927,12 @@ ChCreatePopupWindow(ChWindow* win, int x, int y, int w, int h, uint16_t flags, c
 	ChWindow* popup = (ChWindow*)malloc(sizeof(ChWindow));
 	memset(popup, 0, sizeof(ChWindow));
 	ChCanvas* canv = ChCreateCanvas(w, h);
+#ifdef __XENEVA_BLEED__
+	canv->buffer = (uint32_t*)app->fb;
+	canv->bufferSz = 0;
+#else
 	ChAllocateBuffer(canv);
+#endif
 	popup->app = app;
 	popup->flags = flags;
 	popup->buffer = (uint32_t*)app->fb;

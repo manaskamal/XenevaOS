@@ -80,6 +80,14 @@ typedef struct _win_info_ {
 	double alphaValue;
 	bool windowReady;
 } WinSharedInfo;
+
+static inline bool WinSharedFlagLoad(const bool* flag) {
+	return __atomic_load_n(flag, __ATOMIC_ACQUIRE);
+}
+
+static inline void WinSharedFlagStore(bool* flag, bool value) {
+	__atomic_store_n(flag, value, __ATOMIC_RELEASE);
+}
 //#pragma pack(pop)
 
 typedef struct _win_ {

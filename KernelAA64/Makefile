@@ -3,8 +3,18 @@
 TARGET = KernelAA64.elf
 OBJDIR = obj
 
-# Default toolchain is GCC
+# MSYS2 shells (MINGW64/CLANG64/UCRT64/MSYS/...) set $MSYSTEM. There's no
+# aarch64-linux-gnu-gcc cross toolchain packaged for MSYS2, so default to
+# llvm there; everywhere else (Linux) keeps defaulting to gcc.
+ifdef MSYSTEM
+    TOOLCHAIN ?= llvm
+endif
 TOOLCHAIN ?= gcc
+
+BLEED ?= 0
+ifeq ($(BLEED),1)
+    BLEED_FLAGS = -D__XENEVA_BLEED__
+endif
 
 # Triggered when you run "make llvm"
 .PHONY: all clean llvm
@@ -32,7 +42,7 @@ ifeq ($(TOOLCHAIN), llvm)
     
     CFLAGS  = -Wall -Wextra -ffreestanding -fno-stack-protector -fno-stack-check -fno-strict-aliasing \
               -O2 -g -gdwarf-4 $(LLVM_TARGET) -fno-builtin \
-              -DARCH_ARM64 $(BOARD_FLAG) -D__STDC_LIMIT_MACROS \
+              -DARCH_ARM64 $(BOARD_FLAG) -D__STDC_LIMIT_MACROS $(BLEED_FLAGS) \
               -Wno-error=incompatible-pointer-types -Wno-error=int-conversion \
               -Wno-implicit-function-declaration -Wno-error=conflicting-types $(INCLUDES)
 
@@ -41,16 +51,27 @@ ifeq ($(TOOLCHAIN), llvm)
             -Wl,-base:0xFFFFC00000000000 \
             -Wl,-subsystem:native
 
+    ifeq ($(shell command -v $(CC) 2>/dev/null),)
+        $(error $(CC) not found on PATH. On MSYS2: pacman -S mingw-w64-clang-x86_64-toolchain (or the clangarm64/ucrt64 package matching your shell), then reopen the shell)
+    endif
+    ifeq ($(shell command -v ld.lld 2>/dev/null),)
+        $(error ld.lld not found on PATH. It ships with the clang toolchain package above)
+    endif
+
 else
     # original gcc configuration
+    ifdef MSYSTEM
+        $(error TOOLCHAIN=gcc needs aarch64-linux-gnu-gcc, which MSYS2 doesn't package. Run "make llvm" instead (MSYS2 already defaults to it))
+    endif
+
     CROSS_COMPILE ?= aarch64-linux-gnu-
     CC      = $(CROSS_COMPILE)gcc
     LD      = $(CROSS_COMPILE)ld
     OBJCOPY = $(CROSS_COMPILE)objcopy
-    
+
     CFLAGS  = -Wall -Wextra -ffreestanding -fno-stack-protector -fno-stack-check -fno-strict-aliasing \
               -O2 \
-              -DARCH_ARM64 $(BOARD_FLAG) -D__STDC_LIMIT_MACROS \
+              -DARCH_ARM64 $(BOARD_FLAG) -D__STDC_LIMIT_MACROS $(BLEED_FLAGS) \
               $(INCLUDES)
 endif
 

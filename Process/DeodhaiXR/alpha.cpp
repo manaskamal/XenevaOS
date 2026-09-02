@@ -43,33 +43,25 @@ static const uint8_t alpha_shuffle[16] = {3, 3, 3, 3, 7, 7, 7, 7, 11, 11, 11, 11
 void __pixel_blend_neon(uint32_t* dst, const uint32_t* src, int width) {
 #if defined(ARCH_ARM64)
 	int x = 0;
-	uint8x16_t shuf = vld1q_u8(alpha_shuffle);
 	for (; x <= width - 4; x += 4) {
-		/** Load 4 src and 4 dst pixels **/
-		uint8x16_t s = vld1q_u8((uint8_t*)(src + x));
-		uint8x16_t d = vld1q_u8((uint8_t*)(dst + x));
-
-		uint8x16_t sa = vqtbl1q_u8(s, shuf);
-		uint8x16_t inv = vsubq_u8(vdupq_n_u8(255), sa);
-
-		uint16x8_t lo =
-			vmlal_u8(vmull_u8(vget_low_u8(s), vget_low_u8(sa)), vget_low_u8(d), vget_low_u8(inv));
-		uint16x8_t hi = vmlal_u8(
-			vmull_u8(vget_high_u8(s), vget_high_u8(sa)), vget_high_u8(d), vget_high_u8(inv));
-
-		uint8x16_t result = vcombine_u8(vshrn_n_u16(lo, 8), vshrn_n_u16(hi, 8));
-		vst1q_u8((uint8_t*)(dst + x), result);
-
 		uint32x4_t src4 = vld1q_u32(src + x);
-		uint32x4_t alpha_mask = vshrq_n_u32(src4, 24);
-		uint64_t all_opaque =
-			vgetq_lane_u64(vreinterpretq_u64_u32(vceqq_u32(alpha_mask, vdupq_n_u32(255))), 0);
-
-		if (all_opaque == 0xffffffffffffffff) {
+		uint32x4_t alpha = vshrq_n_u32(src4, 24);
+		uint64x2_t opaque_pairs =
+			vreinterpretq_u64_u32(vceqq_u32(alpha, vdupq_n_u32(255)));
+		if (vgetq_lane_u64(opaque_pairs, 0) == UINT64_MAX &&
+			vgetq_lane_u64(opaque_pairs, 1) == UINT64_MAX) {
 			vst1q_u32(dst + x, src4);
 			continue;
 		}
+		uint64x2_t transparent_pairs =
+			vreinterpretq_u64_u32(vceqq_u32(alpha, vdupq_n_u32(0)));
+		if (vgetq_lane_u64(transparent_pairs, 0) == UINT64_MAX &&
+			vgetq_lane_u64(transparent_pairs, 1) == UINT64_MAX)
+			continue;
 
+		/* Mixed-alpha groups are uncommon in the mostly opaque desktop. Handle
+		 * them once from the original destination; the old path first stored a
+		 * vector blend and then blended the same pixels a second time. */
 		for (int i = x; i < x + 4 && i < width; i++) {
 			uint32_t sp = src[i], dp = dst[i];
 			uint8_t sa = sp >> 24;

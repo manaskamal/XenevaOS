@@ -234,12 +234,16 @@ extern "C" void main(int argc, char* argv[]) {
 #endif
 	}
 
+#ifndef __XENEVA_BLEED__
 	SplashScreenShow();
+#endif
 	_sound = -1;
 	init_basic_gid_to_dev();
 
 	/** play the startup sound, for better experience */
+#ifndef __XENEVA_BLEED__
 	_play_startup_sound();
+#endif
 
 	int ggid_misc_world = _KeGetGlobalGroupID(AURORA_GID_MISC_WORLD);
 	int ggid_misc_postbox = _KeGetGlobalGroupID(AURORA_GID_IPC_POSTBOX);
@@ -256,11 +260,14 @@ extern "C" void main(int argc, char* argv[]) {
 	memset(init_msg_buff, 0, sizeof(InitRequestMsg) + 1);
 
 	/** TODO: add IPC system to track real system progress and animate the logo accordingly **/
+#ifndef __XENEVA_BLEED__
 	_KeProcessSleep(100);
+#endif
 
 	int proc = 0;
 
 #ifdef ARCH_ARM64
+#ifndef __XENEVA_BLEED__
 	proc = _KeCreateProcess(0, "netmngr");
 	int ret_nm = _KeProcessLoadExec(proc, "/netmngr.exe", 0, NULL);
 	if (ret_nm != -1) {
@@ -270,6 +277,7 @@ extern "C" void main(int argc, char* argv[]) {
 		_KeCredAddSGroup(proc, GROUP_NETWORK);
 		_KeProcessSleep(500);
 	}
+#endif
 
 	/** actually, design should be like that, each process after
 	 * finish its initialization, it should send a signal to 
@@ -287,6 +295,8 @@ extern "C" void main(int argc, char* argv[]) {
 	_KeCredSetCap(proc, 0);
 	_KeProcessLoadExec(proc, "/deodxr.exe", 0, NULL);
 
+
+#ifndef __XENEVA_BLEED__
 	_KeProcessSleep(800);
 
 	proc = _KeCreateProcess(0, "deoaud");
@@ -297,6 +307,7 @@ extern "C" void main(int argc, char* argv[]) {
 	_KeCredAddSGroup(proc, GROUP_AUDIO);
 	_KeCredAddSGroup(proc, ggid_misc_postbox);
 	_KeProcessLoadExec(proc, "/deoaud.exe", 0, NULL);
+#endif
 
 #elif ARCH_X64
 	proc = _KeCreateProcess(0, "deodhai");

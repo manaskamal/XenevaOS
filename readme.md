@@ -80,8 +80,7 @@ _And many more coming soon_
 
 # Building the project
 
-The project natively supports both Windows and Linux environments. Please visit [Build Instructions page (Windows)](Docs/BuildInstructions.md) for the MSVC build information.
-We are actively porting the project to Linux using GCC. For the new Linux GCC build instructions, please visit [Linux Build Instructions](Docs/BuildInstructions(Linux).md).
+The project supports Windows and Linux development environments. See [Build Instructions for Windows](Docs/BuildInstructions.md) for the MSVC workflow, [AArch64 Build Instructions for Windows/MSYS2](Docs/BuildInstructions(ARM64).md) for the Windows AArch64 paths, and [AArch64 LLVM/Clang Build on Linux](Docs/BuildInstructions(Linux).md) for the maintained Linux/QEMU compatibility workflow.
 
 # Purpose and Goals
 While writing an Operating System from scratch is a very fun and knowledgeable journey, at the same time it is a deeply challenging one. The project was not started with a specific goal or purpose in mind; rather, it began as a passionate solo developer project that aims to learn and address what existing Operating Systems lack. As the project grew over time, it became necessary to have a clear purpose and goal. Even though it once was a solo development project, XenevaOS has now evolved from a one-person effort to a collaborative team with a shared interest. The strategies and execution of the project are planned and carried out carefully with a deliberate intention.

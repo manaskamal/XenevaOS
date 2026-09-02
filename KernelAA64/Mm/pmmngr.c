@@ -293,6 +293,7 @@ bool AuPmmngrValidate(void) {
 	unlock(); return ok;
 }
 
+#ifndef __XENEVA_BLEED__
 static void boot_self_test(void) {
 	AuPmmStats before, after; uint64_t singles[384], runs[6];
 	const uint32_t sizes[6] = { 2, 3, 4, 17, 128, 256 };
@@ -318,6 +319,7 @@ static void boot_self_test(void) {
 		fatal("self-test restore", PMM_NO_PAGE, after.free_pages);
 	AuTextOut("[pmm]: boot self-test passed\r\n");
 }
+#endif
 
 void AuPmmngrInitialize(KERNEL_BOOT_INFO* info) {
 	uint64_t highest = 0, metadata_start = 0;
@@ -350,9 +352,14 @@ void AuPmmngrInitialize(KERNEL_BOOT_INFO* info) {
 	for (uint32_t i = 0; i < usable_count; ++i)
 		for (uint64_t p = usable[i].first; p < usable[i].last; ++p) page_desc[p].state = PMM_PAGE_RESERVED;
 	for (uint32_t i = 0; i < usable_count; ++i) add_usable_minus_reservations(usable[i].first, usable[i].last);
-	recount(); if (!AuPmmngrValidate()) fatal("initial validation", PMM_NO_PAGE, 0);
+	recount();
+#ifndef __XENEVA_BLEED__
+	if (!AuPmmngrValidate()) fatal("initial validation", PMM_NO_PAGE, 0);
+#endif
 	AuTextOut("[pmm]: buddy online, free=%d pages reserved=%d pages\r\n", pmm_stats.free_pages, pmm_stats.reserved_pages);
+#ifndef __XENEVA_BLEED__
 	boot_self_test();
+#endif
 }
 
 uint64_t AuPmmngrAllocPages(uint32_t pages, uint32_t alignment, uint64_t ceiling, uint8_t type) {

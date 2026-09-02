@@ -111,6 +111,8 @@ int ChDeAllocateBuffer(ChCanvas* canvas) {
 	if (!canvas)
 		return 0;
 	size_t sz = canvas->bufferSz;
+	if (!sz)
+		return 1;
 	_KeMemUnmap(canvas->buffer, sz);
 	return 1;
 }
@@ -125,47 +127,51 @@ int ChDeAllocateBuffer(ChCanvas* canvas) {
  * @param h -- height of the canvas
  */
 void ChCanvasScreenUpdate(ChCanvas* canvas, int _x, int _y, int _w, int _h) {
+	if (!canvas)
+		return;
 	uint32_t* fb = canvas->framebuff;
+	if (!fb || canvas->buffer == fb)
+		return;
 
 	int64_t x = _x, y = _y, w = _w, h = _h;
 
-	if (x > canvas->screenWidth)
-		return;
-	if (y > canvas->screenHeight)
+	if (w <= 0 || h <= 0 || x >= canvas->screenWidth || y >= canvas->screenHeight)
 		return;
 
-	if (x >= canvas->screenWidth)
+	if (x < 0) {
+		w += x;
+		x = 0;
+	}
+	if (y < 0) {
+		h += y;
+		y = 0;
+	}
+	if (w <= 0 || h <= 0)
 		return;
-
-	if (y >= canvas->screenHeight)
-		return;
-
-	if ((x + w) >= canvas->screenWidth)
+	if (x + w > canvas->screenWidth)
 		w = canvas->screenWidth - x;
-
-	if ((y + h) >= canvas->screenHeight)
+	if (y + h > canvas->screenHeight)
 		h = canvas->screenHeight - y;
 
-	if (w > canvas->screenWidth)
-		w = canvas->screenWidth;
-	if (h > canvas->screenHeight)
-		h = canvas->screenHeight;
-
-	if (x < 0)
-		x = 0;
-	if (y < 0)
-		y = 0;
+	uint32_t bytes_per_pixel = canvas->bpp / 8;
+	uint32_t pitch_pixels = canvas->pitch && bytes_per_pixel
+		? canvas->pitch / bytes_per_pixel
+		: canvas->screenWidth;
 
 	for (int64_t i = 0; i < h; i++) {
-		// Use canvas->pitch instead of screenWidth to handle padding/alignment in hardware framebuffer
-		uint32_t pitch_pixels = canvas->pitch / (canvas->bpp / 8);
-		if (canvas->pitch == 0)
-			pitch_pixels = canvas->screenWidth; // fallback
-
 		void* fb_mem = (fb + (y + i) * pitch_pixels + x);
 		void* canvas_mem = (canvas->buffer + (y + i) * (canvas->canvasWidth) + x);
 		_fastcpy(fb_mem, canvas_mem, w * 4);
 	}
+}
+
+void ChCanvasScreenCommit() {
+#if defined(ARCH_ARM64)
+	/* The GOP framebuffer is Normal Non-cacheable memory. One system-scope
+	 * store barrier after the complete damage batch is sufficient; _fastcpy
+	 * is also used for ordinary RAM and must not carry device ordering. */
+	__asm__ volatile("dmb sy" ::: "memory");
+#endif
 }
 
 /**

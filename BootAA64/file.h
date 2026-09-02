@@ -38,6 +38,7 @@
 typedef struct _XEFILE_ {
 	VOID* kBuffer;
 	UINTN FileSize;
+	UINTN PageCount;
 } XEFile;
 
 /*

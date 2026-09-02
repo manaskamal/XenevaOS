@@ -49,9 +49,9 @@ _fastcpy:
     b.lt .byte_loop
 
 .blk16_loop:
-    ldp q0, q1,[x1], #16
-    stp q0,q1,[x0],#16
-    sub x2, x2, #16
+	ldr q0, [x1], #16
+	str q0, [x0], #16
+	sub x2, x2, #16
     cmp x2, #16
     b.ge .blk16_loop
 
@@ -62,5 +62,4 @@ _fastcpy:
     subs x2, x2, #1
     b.ne .byte_loop
 .done:
-    dmb sy
-    ret
+	ret

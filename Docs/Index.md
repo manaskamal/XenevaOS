@@ -13,8 +13,8 @@ Use the Table of Contents below to navigate through the project's documentation.
 
 ## ️ Build & Setup
 - [**Build Instructions (Windows/MSVC)**](BuildInstructions.md) — How to build XenevaOS on Windows using Visual Studio.
-- [**Build Instructions (Linux/GCC)**](BuildInstructions(Linux).md) — How to compile the OS on Linux environments.
-- [**Build Instructions (ARM64)**](BuildInstructions(ARM64).md) — Specific instructions for cross-compiling the ARM64 port.
+- [**AArch64 LLVM Build (Linux)**](BuildInstructions(Linux).md) — Build the AArch64 PE/COFF port with Clang and run it under QEMU.
+- [**AArch64 Build (Windows/MSYS2)**](BuildInstructions(ARM64).md) — Build the AArch64 bootloader and kernel with MSVC or LLVM.
 - [**Populating Config**](PopulatingConfig.md) — Setting up the bootloader and kernel configuration files.
 - [**VM Setup**](VMSetup.md) — Guide to configuring VirtualBox, VMWare, or QEMU manually.
 - [**QEMU Automation**](QemuAutomation.md) — Using scripts for automated boot and testing on QEMU.
