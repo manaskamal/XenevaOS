@@ -47,13 +47,13 @@
 #include <Hal/AA64/sched.h>
 #include <process.h>
 #include <Fs/vfs.h>
+#include <Fs/tty.h>
 #include <Fs/Dev/devfs.h>
-#include <Drivers/uart.h>
+#include <Fs/Dev/devinput.h>
 #include <Drivers/uart.h>
 #include <Hal/AA64/aa64cpu.h>
 #include <Hal/AA64/aa64lowlevel.h>
 #include <Ipc/postbox.h>
-#include <Drivers/uart.h>
 
 uint8_t* font_data;
 uint32_t console_x;
@@ -104,13 +104,25 @@ void AuConsoleInitialize(PKERNEL_BOOT_INFO info, bool early) {
 int AuConsoleIoControl(AuVFSNode* file, int code, void* arg) {
 	int ret = 0;
 	AuFileIOControl* ioctl = (AuFileIOControl*)arg;
-	/*if (ioctl->syscall_magic != AURORA_SYSCALL_MAGIC)
-		return 0;*/
+	(void)file;
 
 	if (!aucon)
 		return 0;
 
 	switch (code) {
+	case TIOCGWINSZ: {
+		WinSize* sz = (WinSize*)arg;
+		if (!sz)
+			return 0;
+		sz->ws_col = (uint16_t)(aucon->width / 9);
+		sz->ws_row = (uint16_t)(aucon->height / 16);
+		sz->ws_xpixel = (uint16_t)aucon->width;
+		sz->ws_ypixel = (uint16_t)aucon->height;
+		return 0;
+	}
+	case TIOCSWINSZ:
+	case TIOSPGRP:
+		return 0;
 	case SCREEN_GETWIDTH: {
 		uint32_t width = aucon->width;
 		ioctl->uint_1 = width;
@@ -166,6 +178,119 @@ int AuConsoleIoControl(AuVFSNode* file, int code, void* arg) {
 	}
 	}
 	return ret;
+}
+
+static int _con_shift;
+static int _con_esc;
+
+static const char _con_map[58] = {
+	0,	 0,	  '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', '\b',
+	'\t', 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']', '\n', 0,
+	'a',  's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', '\'', '`', 0,	 '\\',
+	'z',  'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '/', 0,	0,	 0,	 ' '
+};
+
+static const char _con_map_s[58] = {
+	0,	 0,	  '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '_', '+', '\b',
+	'\t', 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '{', '}', '\n', 0,
+	'A',  'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', ':', '"', '~', 0,	 '|',
+	'Z',  'X', 'C', 'V', 'B', 'N', 'M', '<', '>', '?', 0,	0,	 0,	 ' '
+};
+
+/**
+ * @brief AuConsoleMapKey -- map a virtio/XT scancode to ASCII
+ * @param code -- scancode from /dev/kybrd
+ */
+static char AuConsoleMapKey(uint32_t code) {
+	uint8_t sc = (uint8_t)(code & 0xFF);
+	if (sc == 0x2a || sc == 0x36) {
+		_con_shift = 1;
+		return 0;
+	}
+	if (sc == 0xaa || sc == 0xb6) {
+		_con_shift = 0;
+		return 0;
+	}
+	if (sc & 0x80)
+		return 0;
+	if (sc >= sizeof(_con_map))
+		return 0;
+	return _con_shift ? _con_map_s[sc] : _con_map[sc];
+}
+
+/**
+ * @brief AuConsoleRead -- read ASCII from the virtio keyboard
+ * @param node -- unused
+ * @param file -- unused
+ * @param buffer -- destination
+ * @param length -- max bytes
+ */
+static size_t AuConsoleRead(AuVFSNode* node, AuVFSNode* file, uint64_t* buffer, uint32_t length) {
+	uint8_t* out;
+	uint32_t n;
+	(void)node;
+	(void)file;
+	if (!buffer || !length)
+		return 0;
+	out = (uint8_t*)buffer;
+	n = 0;
+	while (n < length) {
+		AuInputMessage msg;
+		char c;
+		memset(&msg, 0, sizeof(msg));
+		AuDevReadKybrd(&msg);
+		c = 0;
+		if (msg.type == AU_INPUT_KEYBOARD)
+			c = AuConsoleMapKey(msg.code);
+		if (c) {
+			out[n++] = (uint8_t)c;
+			if (c == '\n')
+				break;
+		} else {
+			if (n)
+				break;
+			AA64Thread* thr = AuGetCurrentThread();
+			if (thr) {
+				AuSleepThread(thr, 10);
+				AuScheduleNext();
+			}
+		}
+	}
+	return n;
+}
+
+/**
+ * @brief AuConsoleWrite -- draw bytes on the GOP/ramfb console
+ * @param node -- unused
+ * @param file -- unused
+ * @param buffer -- source
+ * @param length -- byte count
+ */
+static size_t AuConsoleWrite(AuVFSNode* node, AuVFSNode* file, uint64_t* buffer, uint32_t length) {
+	uint8_t* in;
+	uint32_t i;
+	(void)node;
+	(void)file;
+	if (!buffer)
+		return 0;
+	in = (uint8_t*)buffer;
+	for (i = 0; i < length; i++) {
+		char c = (char)in[i];
+		char tmp[2];
+		if (_con_esc) {
+			if (c == 0x07 || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z'))
+				_con_esc = 0;
+			continue;
+		}
+		if (c == 0x1b) {
+			_con_esc = 1;
+			continue;
+		}
+		tmp[0] = c;
+		tmp[1] = 0;
+		AuPutS(tmp);
+	}
+	return length;
 }
 
 /**
@@ -234,6 +359,15 @@ void AuConsolePostInitialise(PKERNEL_BOOT_INFO info) {
 	file->device = fsys;
 	file->read = 0;
 	file->write = 0;
+	file->iocontrol = AuConsoleIoControl;
+	AuDevFSAddFile(fsys, "/", file);
+
+	file = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
+	memset(file, 0, sizeof(AuVFSNode));
+	strcpy(file->filename, "console");
+	file->flags = FS_FLAG_DEVICE;
+	file->read = AuConsoleRead;
+	file->write = AuConsoleWrite;
 	file->iocontrol = AuConsoleIoControl;
 	AuDevFSAddFile(fsys, "/", file);
 }

@@ -136,6 +136,7 @@ int main(int argc, char* argv[]) {
 			break;
 
 		ping->sequenceNum = htons(pings_sent + 1);
+		ping->checksum = 0;
 		ping->checksum = htons(ICMPCalculateChecksum((char*)ping, BYTES_TO_SEND));
 
 		if (sendto(sock, (void*)ping, BYTES_TO_SEND, 0, (sockaddr*)&dest, sizeof(sockaddr_in)) <
@@ -147,6 +148,7 @@ int main(int argc, char* argv[]) {
 		pings_sent++;
 
 		src_sz = sizeof(sockaddr_in);
+		timeout = 1000;
 		while (timeout--) {
 			len = recvfrom(sock, data, 4096, 0, (sockaddr*)&src, &src_sz);
 
@@ -160,9 +162,8 @@ int main(int argc, char* argv[]) {
 					break;
 				}
 			}
+			_KeProcessSleep(10);
 		}
-		timeout = 1000;
-		//_KeProcessSleep(100);
 		sleep(1);
 	}
 
