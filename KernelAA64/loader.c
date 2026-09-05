@@ -406,6 +406,26 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) 
 	uentry->argvaddr = argvaddr;
 	uentry->argvkernel = argvkernel;
 	uentry->num_args = num_args;
+	/*
+	 * argv[] from ProcessLoadExec still points at the parent's user heap.
+	 * AuProcessEntUser runs on the child's TTBR0, so those addresses are
+	 * unmapped there (translation fault). Copy each string into kernel
+	 * memory while we still have the parent's address space.
+	 */
+	if (num_args && argv) {
+		char** kargv = (char**)kmalloc(num_args * sizeof(char*));
+		memset(kargv, 0, num_args * sizeof(char*));
+		for (int i = 0; i < num_args; i++) {
+			size_t l = argv[i] ? strlen(argv[i]) : 0;
+			kargv[i] = (char*)kmalloc(l + 1);
+			if (argv[i])
+				strcpy(kargv[i], argv[i]);
+			else
+				kargv[i][0] = 0;
+		}
+		kfree(argv);
+		argv = kargv;
+	}
 	uentry->argvs = argv;
 	thr->uentry = uentry;
 	proc->main_thread = thr;
