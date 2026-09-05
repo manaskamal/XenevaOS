@@ -234,14 +234,14 @@ extern "C" void main(int argc, char* argv[]) {
 #endif
 	}
 
-#ifndef __XENEVA_BLEED__
+#if !defined(__XENEVA_BLEED__) && !defined(__XENEVA_TERM__)
 	SplashScreenShow();
 #endif
 	_sound = -1;
 	init_basic_gid_to_dev();
 
 	/** play the startup sound, for better experience */
-#ifndef __XENEVA_BLEED__
+#if !defined(__XENEVA_BLEED__) && !defined(__XENEVA_TERM__)
 	_play_startup_sound();
 #endif
 
@@ -267,6 +267,32 @@ extern "C" void main(int argc, char* argv[]) {
 	int proc = 0;
 
 #ifdef ARCH_ARM64
+#ifdef __XENEVA_TERM__
+	_KePrint("[init]: tty, skipping compositor \r\n");
+	proc = _KeCreateProcess(0, "netmngr");
+	int ret_nm = _KeProcessLoadExec(proc, "/netmngr.exe", 0, NULL);
+	if (ret_nm != -1) {
+		_KeSetUID(proc, UAC_DEAMONS);
+		_KeSetGID(proc, UAC_DEAMONS);
+		_KeCredAddSGroup(proc, ggid_misc_world);
+		_KeCredAddSGroup(proc, GROUP_NETWORK);
+		_KeProcessSleep(500);
+	}
+	int con = _KeOpenFile("/dev/console", FILE_OPEN_READ_ONLY);
+	if (con == -1)
+		_KePrint("[init]: failed to open /dev/console \r\n");
+	proc = _KeCreateProcess(0, "xesh");
+	_KeSetUID(proc, UAC_NORMAL_USER);
+	_KeSetGID(proc, UAC_NORMAL_USER);
+	_KeCredAddSGroup(proc, ggid_misc_world);
+	_KeCredAddSGroup(proc, GROUP_NETWORK);
+	if (con != -1) {
+		_KeSetFileToProcess(con, XENEVA_STDIN, proc);
+		_KeSetFileToProcess(con, XENEVA_STDOUT, proc);
+		_KeSetFileToProcess(con, XENEVA_STDERR, proc);
+	}
+	_KeProcessLoadExec(proc, "/xesh.exe", 0, NULL);
+#else
 #ifndef __XENEVA_BLEED__
 	proc = _KeCreateProcess(0, "netmngr");
 	int ret_nm = _KeProcessLoadExec(proc, "/netmngr.exe", 0, NULL);
@@ -307,6 +333,7 @@ extern "C" void main(int argc, char* argv[]) {
 	_KeCredAddSGroup(proc, GROUP_AUDIO);
 	_KeCredAddSGroup(proc, ggid_misc_postbox);
 	_KeProcessLoadExec(proc, "/deoaud.exe", 0, NULL);
+#endif
 #endif
 
 #elif ARCH_X64

@@ -97,10 +97,9 @@ void AuVirtIOInputInitialize() {
 						AuVirtioTabletInitialize(address);
 					}
 				}
-				if (vendID == 0x1AF4 && devID == 0x1041) {
-					/* initialize network device */
+				if (vendID == 0x1AF4 && (devID == 0x1041 || devID == 0x1000)) {
 					numVirtIODevice++;
-					//AuVirtioNetInitialize(address);
+					AuVirtioNetInitialize(address);
 				}
 			}
 		}

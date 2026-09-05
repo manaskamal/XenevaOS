@@ -24,6 +24,8 @@ set -e
 #                           instead of opening a GTK window. Ordinary builds
 #                           stop at the interactive resolution menu; bleed
 #                           selects 640x480 automatically and boots through it.
+#   --term                  Open the QEMU window with a framebuffer TTY (no
+#                           compositor). Init starts xesh.exe on /dev/console.
 #   -h, --help              Show this help and exit.
 #
 # Known gap: x86_64 (Boot/Kernel) has no QEMU boot path here yet.
@@ -43,11 +45,12 @@ INSTALL_DEPS=0
 HEADLESS=0
 BLEED=0
 DIRECT_SCANOUT=0
+TERM=0
 INITRD_SIZE_MB=""
 
 print_help(){
     printf "${STY_CYAN}"
-    sed -n '3,27p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
+    sed -n '3,29p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
     printf "${STY_RST}\n"
 }
 
@@ -62,6 +65,7 @@ for arg in "$@"; do
         --force-legacy-build) FORCE_LEGACY_BUILD=1 ;;
         --install-deps) INSTALL_DEPS=1 ;;
         --headless) HEADLESS=1 ;;
+        --term) TERM=1 ;;
         --initrd-size-mb=*) INITRD_SIZE_MB="${arg#--initrd-size-mb=}" ;;
         -h|--help) print_help; exit 0 ;;
         *)
@@ -211,6 +215,17 @@ if [ "$SKIP_BUILD" -eq 0 ]; then
         mkdir -p "$(dirname "$USERSPACE_PROFILE_STAMP")"
         printf '%s\n' "$requested_userspace_profile" > "$USERSPACE_PROFILE_STAMP"
     fi
+    if [ "$TERM" -eq 1 ]; then
+        echo "[+] Rebuilding init.exe and ping.exe for framebuffer TTY..."
+        term_flags="-D__XENEVA_TERM__"
+        if [ "$BLEED" -eq 1 ]; then
+            term_flags="-D__XENEVA_BLEED__ -D__XENEVA_TERM__"
+        fi
+        ( cd "$REPO_ROOT/Process/Init" && make clean && make BLEED_FLAGS="$term_flags" llvm )
+        ( cd "$REPO_ROOT/Process/ping" && make clean && make llvm )
+        cp -f "$REPO_ROOT/Process/Init/init.exe" "$REPO_ROOT/Resources/resources/"
+        cp -f "$REPO_ROOT/Process/ping/ping.exe" "$REPO_ROOT/Resources/resources/"
+    fi
 else
     echo "[+] --skip-build passed, reusing existing build artifacts."
 fi
@@ -286,6 +301,8 @@ QEMU_ARGS=(
     -m "$qemu_memory"
     -bios "$QEMU_FIRMWARE"
     -drive file=fat.img,format=raw,if=virtio
+    -netdev user,id=net0
+    -device virtio-net-pci,netdev=net0
     -device ramfb
     -device virtio-keyboard-pci
     -device virtio-tablet-pci
@@ -296,7 +313,6 @@ QEMU_ARGS=(
 
 if [ "$HEADLESS" -eq 1 ]; then
     QEMU_ARGS+=(-display none -no-reboot)
-
     # Ordinary builds still block at the interactive resolution menu. Bleed
     # selects its low-memory mode in the bootloader and can therefore complete
     # an automated headless boot; the timeout bounds both cases for CI.
