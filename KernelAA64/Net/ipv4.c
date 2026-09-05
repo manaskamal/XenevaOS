@@ -94,12 +94,7 @@ void IPv4HandlePacket(void* data, AuVFSNode* nic) {
 		break;
 	}
 	case IPV4_PROTOCOL_TCP: {
-		UARTDebugOut("[ipv4] : received TCP packet \r\n");
-		TCPHeader* tcp = (TCPHeader*)&pack->payload;
-		uint16_t destPort = ntohs(tcp->destPort);
-		uint16_t srcPort = ntohs(tcp->srcPort);
-		UARTDebugOut("destination port : %d \n", destPort);
-		UARTDebugOut("source port : %d \n", srcPort);
+		TCPHandlePacket(pack, nic);
 		break;
 	}
 	}
@@ -122,10 +117,13 @@ int CreateIPv4Socket(int type, int protocol) {
 			UARTDebugOut("[aurora]: ipv4 icmp protocol created \r\n");
 			return CreateICMPSocket();
 		}
-	case SOCK_STREAM: {
-		UARTDebugOut("[aurora]: tcp protocol created \r\n");
-		return 0; // CreateTCPSocket();
-	}
+		return -1;
+	case SOCK_STREAM:
+		if (protocol == 0 || protocol == IPPROTOCOL_TCP) {
+			UARTDebugOut("[aurora]: tcp protocol created \r\n");
+			return CreateTCPSocket();
+		}
+		return -1;
 	default:
 		return -1;
 	}
