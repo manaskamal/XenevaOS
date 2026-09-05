@@ -86,11 +86,7 @@ void XEShellTimerCallback(int signo) {
  */
 void XEShellWriteCurrentDir() {
 	if (_draw_shell_curdir) {
-		//OSC 133;A = prompt start
-		printf("\033]133;A\007");
-		printf("\033[32m\033[40mXEShell /$:\033[37m\033[40m");
-		/* OSC 133;B = prompt end, input starts here*/
-		printf("\033]133;B\007");
+		printf("\nXEShell %s$: ", currentDirectory ? currentDirectory : "/");
 		fflush(stdout);
 		_draw_shell_curdir = false;
 	}
@@ -112,22 +108,22 @@ void XEShellSpawn(char* string) {
 		int index = 0;
 		int j = 0;
 		int totalCharacterCount = strlen(string);
-		char** argv = (char**)malloc(10);
-		memset(argv, 0, 10);
+		char** argv = (char**)malloc(10 * sizeof(char*));
+		memset(argv, 0, 10 * sizeof(char*));
 		/* here we mainly prepare for the arguments to pass */
 		for (int i = 0; i < strlen(string) + 1; i++) {
 			if (string[i] == ' ' || string[i] == '\0') {
 				index = i;
 
-				if (_first_string_skipped) {
-					char* str = (char*)malloc(strlen(arguments));
-					memset(str, 0, strlen(arguments));
+				if (_first_string_skipped && arguments[0] != '\0') {
+					char* str = (char*)malloc(strlen(arguments) + 1);
+					memset(str, 0, strlen(arguments) + 1);
 					strcpy(str, arguments);
 					argv[argcount] = str;
 					argcount += 1;
-					j = 0;
-					memset(arguments, 0, 32);
 				}
+				j = 0;
+				memset(arguments, 0, 32);
 
 				if (!_first_string_skipped)
 					_first_string_skipped = true;
@@ -181,7 +177,9 @@ void XEShellSpawn(char* string) {
  */
 void XEShellReadLine() {
 	char c = getchar();
-	if (c == '\n') {
+	if (c == '\n' || c == '\r') {
+		printf("\n");
+		fflush(stdout);
 		_process_needed = true;
 		return;
 	}
@@ -473,13 +471,14 @@ int main(int argc, char* arv[]) {
 #endif
 
 	printf("Copyright (C) Xeneva Private Limited \n");
-	//_KeSetSignal(SIGINT, XEShellSigInterrupt);
+	fflush(stdout);
 	cmdBuf = (char*)malloc(1024);
 	memset(cmdBuf, 0, 1024);
-	currentDirectory = (char*)malloc(strlen("/"));
+	currentDirectory = (char*)malloc(2);
 	strcpy(currentDirectory, "/");
-	_process_needed = true;
+	_process_needed = false;
 	_spawnable_process = true;
+	_draw_shell_curdir = true;
 	_sig_handled = false;
 	job = 0;
 	index = 0;

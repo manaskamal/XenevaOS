@@ -216,15 +216,20 @@ if [ "$SKIP_BUILD" -eq 0 ]; then
         printf '%s\n' "$requested_userspace_profile" > "$USERSPACE_PROFILE_STAMP"
     fi
     if [ "$TERM" -eq 1 ]; then
-        echo "[+] Rebuilding init.exe and ping.exe for framebuffer TTY..."
+        echo "[+] Rebuilding init.exe, xesh.exe, ping.exe, and curl.exe for framebuffer TTY..."
         term_flags="-D__XENEVA_TERM__"
         if [ "$BLEED" -eq 1 ]; then
             term_flags="-D__XENEVA_BLEED__ -D__XENEVA_TERM__"
         fi
         ( cd "$REPO_ROOT/Process/Init" && make clean && make BLEED_FLAGS="$term_flags" llvm )
+        ( cd "$REPO_ROOT/Process/XEShell" && make clean && make llvm )
         ( cd "$REPO_ROOT/Process/ping" && make clean && make llvm )
+        ( cd "$REPO_ROOT/Process/http" && make clean && make llvm )
         cp -f "$REPO_ROOT/Process/Init/init.exe" "$REPO_ROOT/Resources/resources/"
+        cp -f "$REPO_ROOT/Process/XEShell/xesh.exe" "$REPO_ROOT/Resources/resources/"
         cp -f "$REPO_ROOT/Process/ping/ping.exe" "$REPO_ROOT/Resources/resources/"
+        cp -f "$REPO_ROOT/Process/http/curl.exe" "$REPO_ROOT/Resources/resources/"
+        rm -f "$REPO_ROOT/Resources/resources/http.exe"
     fi
 else
     echo "[+] --skip-build passed, reusing existing build artifacts."
