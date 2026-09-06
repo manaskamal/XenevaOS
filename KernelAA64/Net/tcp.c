@@ -436,17 +436,12 @@ static void TCPQueueAccept(AuSocket* listener, AuSocket* child) {
 }
 
 static int TCPWriteRx(TCPControlBlock* pcb, const uint8_t* data, size_t len) {
-	size_t i;
 	CircBuffer* buf;
 
 	if (!pcb || !pcb->rxbuf || !data || !len)
 		return 0;
 	buf = (CircBuffer*)pcb->rxbuf;
-	for (i = 0; i < len; i++) {
-		if (AuCircBufPut(buf, data[i]) != 0)
-			return (int)i;
-	}
-	return (int)len;
+	return (int)AuCircBufWrite(buf, data, len);
 }
 
 static int TCPSendAck(AuSocket* sock) {
@@ -491,11 +486,7 @@ int AuTCPReceive(AuSocket* sock, msghdr* msg, int flags) {
 		return -1;
 	}
 
-	while (got < want && !CircBufEmpty(buf)) {
-		if (AuCircBufGet(buf, dest + got) != 0)
-			break;
-		got++;
-	}
+	got = AuCircBufRead(buf, dest, want);
 
 	if (msg->msg_name && msg->msg_namelen >= sizeof(sockaddr_in)) {
 		sockaddr_in* in = (sockaddr_in*)msg->msg_name;

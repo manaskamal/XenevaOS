@@ -112,8 +112,13 @@ extern void AuCircBufPutData(CircBuffer* cbuf, uint8_t data);
 extern int AuCircBufPut(CircBuffer* cbuf, uint8_t data);
 
 /*
-* AuCircBufGet -- gets a data from circular
-* buffer
+ * AuCircBufWrite -- bulk write up to 'len' bytes, returns bytes written
+ */
+extern size_t AuCircBufWrite(CircBuffer* cbuf, const uint8_t* src, size_t len);
+
+/*
+ * AuCircBufGet -- gets a data from circular
+ * buffer
 * @param cbuf -- Pointer to the circular buffer
 * @param data -- Pointer to the buffer
 * where to put the data
@@ -121,7 +126,12 @@ extern int AuCircBufPut(CircBuffer* cbuf, uint8_t data);
 extern int AuCircBufGet(CircBuffer *cbuf, uint8_t *data);
 
 /*
-* CircBufEmpty -- checks if the circular
+ * AuCircBufRead -- bulk read up to 'len' bytes, returns bytes read
+ */
+extern size_t AuCircBufRead(CircBuffer* cbuf, uint8_t* dst, size_t len);
+
+/*
+ * CircBufEmpty -- checks if the circular
 * buffer is empty
 * @param cbuf -- Pointer to the circular
 * buffer
