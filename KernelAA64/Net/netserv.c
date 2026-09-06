@@ -118,9 +118,51 @@ int NetBind(int sockfd, sockaddr* addr, socklen_t addrlen) {
 }
 
 int NetAccept(int sockfd, sockaddr* addr, socklen_t* addrlen) {
-	return 0;
+	AA64Thread* thr = AuGetCurrentThread();
+	AuProcess* proc;
+	AuVFSNode* node;
+	AuSocket* sock;
+
+	if (!thr)
+		return -1;
+	proc = AuProcessFindThread(thr);
+	if (!proc) {
+		proc = AuProcessFindSubThread(thr);
+		if (!proc)
+			return -1;
+	}
+	node = proc->fds[sockfd];
+	if (!node)
+		return -1;
+	sock = (AuSocket*)node->device;
+	if (!sock)
+		return -1;
+	if (sock->accept)
+		return sock->accept(sock, addr, addrlen);
+	return -1;
 }
 
 int NetListen(int sockfd, int backlog) {
-	return 0;
+	AA64Thread* thr = AuGetCurrentThread();
+	AuProcess* proc;
+	AuVFSNode* node;
+	AuSocket* sock;
+
+	if (!thr)
+		return -1;
+	proc = AuProcessFindThread(thr);
+	if (!proc) {
+		proc = AuProcessFindSubThread(thr);
+		if (!proc)
+			return -1;
+	}
+	node = proc->fds[sockfd];
+	if (!node)
+		return -1;
+	sock = (AuSocket*)node->device;
+	if (!sock)
+		return -1;
+	if (sock->listen)
+		return sock->listen(sock, backlog);
+	return -1;
 }

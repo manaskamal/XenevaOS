@@ -242,10 +242,15 @@ static size_t AuConsoleRead(AuVFSNode* node, AuVFSNode* file, uint64_t* buffer, 
 		c = 0;
 		if (msg.type == AU_INPUT_KEYBOARD)
 			c = AuConsoleMapKey(msg.code);
+		if (c == '\r')
+			c = '\n';
 		if (c) {
 			out[n++] = (uint8_t)c;
 			if (c == '\n')
 				break;
+		} else if (msg.type != 0) {
+			/* key-up / modifier: drain the queue, do not sleep */
+			continue;
 		} else {
 			if (n)
 				break;

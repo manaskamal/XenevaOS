@@ -30,7 +30,7 @@
 #ifndef __IPV4_H__
 #define __IPV4_H__
 
-#ifdef ARCH_X64
+#if defined(ARCH_X64) || defined(ARCH_ARM64)
 #pragma pack(push,1)
 #endif
 typedef struct _ipv4head_ {
@@ -46,7 +46,7 @@ typedef struct _ipv4head_ {
 	unsigned destAddress;
 	uint8_t payload[];
 }IPv4Header;
-#ifdef ARCH_X64
+#if defined(ARCH_X64) || defined(ARCH_ARM64)
 #pragma pack(pop)
 #endif
 

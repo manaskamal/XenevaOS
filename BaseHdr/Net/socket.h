@@ -92,8 +92,10 @@ typedef struct _msghdr_ {
 }msghdr;
 
 
-#define SOCK_STATE_WAITING_FOR_CONNECTION 1
 #define SOCK_STATE_CONNECTION_RST 0
+#define SOCK_STATE_WAITING_FOR_CONNECTION 1
+#define SOCK_STATE_CONNECTED 2
+#define SOCK_STATE_CLOSED 3
 
 #ifdef ARCH_X64
 #pragma pack(push,1)
@@ -110,6 +112,9 @@ typedef struct _socket_ {
 	void(*close)(struct _socket_* sock);
 	int(*connect)(struct _socket_* sock, sockaddr* addr, socklen_t addrlen);
 	int(*bind)(struct _socket_* sock, sockaddr* addr, socklen_t addrlen);
+	int(*listen)(struct _socket_* sock, int backlog);
+	int(*accept)(struct _socket_* sock, sockaddr* addr, socklen_t* addrlen);
+	void* proto;
 }AuSocket;
 #ifdef ARCH_X64
 #pragma pack(pop)

@@ -68,13 +68,33 @@ static uint16_t ICMPCalculateChecksum(char* payload, size_t len) {
 */
 int main(int argc, char* argv[]) {
 	printf("\n");
-	char* s = (char*)malloc(strlen("www.getxeneva.com") + 1);
-	strcpy(s, "www.getxeneva.com");
+	const char* host = NULL;
+	for (int i = 0; i < argc; i++) {
+		if (!argv[i] || argv[i][0] == '\0')
+			continue;
+		if (argv[i][0] == '/' || strstr(argv[i], ".exe"))
+			continue;
+		host = argv[i];
+		break;
+	}
+	if (!host) {
+		printf("usage: ping <host>\n");
+		printf("  ping 10.0.2.2\n");
+		printf("  ping 8.8.8.8\n");
+		printf("  ping www.getxeneva.com\n");
+		return 1;
+	}
+
+	char* s = (char*)malloc(strlen(host) + 1);
+	if (!s)
+		return 1;
+	strcpy(s, host);
 
 	hostent* ent = gethostbyname(s);
 	if (!ent) {
+		printf("ping: unknown host %s\n", s);
 		free(s);
-		_KePauseThread();
+		return 1;
 	}
 
 	char* addr = inet_ntoa(*(struct in_addr*)ent->h_addr_list[0]);

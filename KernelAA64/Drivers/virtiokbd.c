@@ -64,52 +64,62 @@ static const uint8_t ext_key_map[256] = {
  * @brief Virtio-keyboard interrupt handler
  */
 void AuVirtioKbdHandler(int spinum) {
-	uint16_t them = queue->used.index;
-	for (; index < them; index++) {
-		dc_ivac((uint64_t)&input[index % queueSize]);
+	uint16_t them;
+	(void)spinum;
+	if (!queue || !input || queueSize <= 0)
+		return;
+	them = queue->used.index;
+	for (; index != them; index++) {
+		uint16_t slot = index % (uint16_t)queueSize;
+		uint16_t buf_id;
+		uint16_t avail;
+		struct VirtioInputEvent evt;
+
+		dc_ivac((uint64_t)&queue->used.ring[slot]);
+		dc_ivac((uint64_t)&input[slot]);
 		dsb_sy_barrier();
-		struct VirtioInputEvent evt = input[index % queueSize];
-		while (evt.type == 0xFF) {
-			evt = input[index % queueSize];
-			UARTDebugOut("VirtioInput: bad packet : %d (them=%d)\n", index, them);
-		}
-		input[index % queueSize].type = 0xFF;
+		buf_id = (uint16_t)(queue->used.ring[slot].index % (uint32_t)queueSize);
+		evt = input[buf_id];
+		input[buf_id].type = 0xFF;
 		isb_flush();
 		dsb_sy_barrier();
 		if (evt.type == 1) {
-			if (evt.code < 0x49) {
-				uint8_t scancode = evt.code;
-				// Key Release: value |= 0x80;
-				// Key Release: value = code
-				if (evt.value == 0) {
+			/* Linux KEY_ENTER=28, KEY_KPENTER=96 */
+			if (evt.code == 28 || evt.code == 96) {
+				uint8_t scancode = 0x1c;
+				if (evt.value == 0)
 					scancode |= 0x80;
-				}
-				/* write to xeneva key input msg box */
-				AuInputMessage msg;
-				memset(&msg, 0, sizeof(AuInputMessage));
-				msg.type = AU_INPUT_KEYBOARD;
-				msg.code = scancode & 0xFF;
-				AuDevWriteKybrd(&msg);
-			} else if (ext_key_map[evt.code]) {
-				uint8_t make_code = ext_key_map[evt.code] & 0xFF;
-
-				if (evt.value == 0) {
-					make_code |= 0x80;
-				}
-				uint32_t scancode = (0xE0 << 8) | make_code;
-				// 0xE0 (extended code)  upper 16 bits | key code middle 8 bits | value: 0x80 for release, 0 press
-				/* write to xeneva key input msg box */
 				AuInputMessage msg;
 				memset(&msg, 0, sizeof(AuInputMessage));
 				msg.type = AU_INPUT_KEYBOARD;
 				msg.code = scancode;
 				AuDevWriteKybrd(&msg);
-			} else {
-				UARTDebugOut("virtio-kybrd: unmapped key code : %d \n", evt.code);
+			} else if (evt.code < 0x49) {
+				uint8_t scancode = (uint8_t)evt.code;
+				if (evt.value == 0)
+					scancode |= 0x80;
+				AuInputMessage msg;
+				memset(&msg, 0, sizeof(AuInputMessage));
+				msg.type = AU_INPUT_KEYBOARD;
+				msg.code = scancode;
+				AuDevWriteKybrd(&msg);
+			} else if (ext_key_map[evt.code]) {
+				uint8_t make_code = ext_key_map[evt.code];
+				if (evt.value == 0)
+					make_code |= 0x80;
+				AuInputMessage msg;
+				memset(&msg, 0, sizeof(AuInputMessage));
+				msg.type = AU_INPUT_KEYBOARD;
+				msg.code = (0xE0u << 8) | make_code;
+				AuDevWriteKybrd(&msg);
 			}
 		}
+		avail = queue->available.index;
+		queue->available.ring[avail % (uint16_t)queueSize] = buf_id;
+		dsb_ish();
+		queue->available.index = avail + 1;
 		isb_flush();
-		queue->available.index++;
+		dsb_sy_barrier();
 	}
 }
 
@@ -197,6 +207,13 @@ void AuVirtioKbdInitialize(uint64_t device) {
 	dsb_ish();
 
 	int queueSz = common->QueueSize;
+	if (queueSz > 64)
+		queueSz = 64;
+	if (queueSz < 1)
+		queueSz = 1;
+	common->QueueSize = (uint16_t)queueSz;
+	isb_flush();
+	dsb_ish();
 	queueSize = queueSz;
 	UARTDebugOut("virtio: queue sz : %d \n", queueSz);
 
@@ -236,8 +253,7 @@ void AuVirtioKbdInitialize(uint64_t device) {
 	isb_flush();
 	dsb_ish();
 
-	uint16_t index = 0;
-	queue->available.index = queueSz - 1;
+	queue->available.index = (uint16_t)queueSz;
 	isb_flush();
 	dsb_ish();
 }

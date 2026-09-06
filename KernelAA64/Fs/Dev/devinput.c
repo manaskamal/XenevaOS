@@ -39,6 +39,10 @@
 AuVFSNode* mice_;
 AuVFSNode* kybrd_;
 
+static AuInputMessage kbd_q[NUM_KEYBOARD_PACKETS];
+static uint32_t kbd_r;
+static uint32_t kbd_w;
+
 /*
  * AuDevReadMice -- reads packets from pipe
  * to buffer
@@ -67,10 +71,13 @@ void AuDevWriteMice(AuInputMessage* outmsg) {
 * @para, inputmsg -- Pointer to the buffer
 */
 void AuDevReadKybrd(AuInputMessage* inputmsg) {
-	if (!kybrd_)
+	if (!inputmsg)
 		return;
-	memcpy(inputmsg, kybrd_->device, sizeof(AuInputMessage));
-	memset(kybrd_->device, 0, sizeof(AuInputMessage));
+	memset(inputmsg, 0, sizeof(AuInputMessage));
+	if (kbd_r == kbd_w)
+		return;
+	memcpy(inputmsg, &kbd_q[kbd_r], sizeof(AuInputMessage));
+	kbd_r = (kbd_r + 1) % NUM_KEYBOARD_PACKETS;
 }
 
 /*
@@ -78,9 +85,14 @@ void AuDevReadKybrd(AuInputMessage* inputmsg) {
 * @param outmsg -- packet to write
 */
 void AuDevWriteKybrd(AuInputMessage* outmsg) {
-	if (!kybrd_)
+	uint32_t next;
+	if (!outmsg)
 		return;
-	memcpy(kybrd_->device, outmsg, sizeof(AuInputMessage));
+	next = (kbd_w + 1) % NUM_KEYBOARD_PACKETS;
+	if (next == kbd_r)
+		kbd_r = (kbd_r + 1) % NUM_KEYBOARD_PACKETS;
+	memcpy(&kbd_q[kbd_w], outmsg, sizeof(AuInputMessage));
+	kbd_w = next;
 }
 
 /*
@@ -130,8 +142,7 @@ size_t AuDevInputKybrdWrite(AuVFSNode* fs, AuVFSNode* file, uint64_t* buffer, ui
 		return 0;
 	if (!buffer)
 		return 0;
-	void* key_buf = file->device;
-	memcpy(key_buf, buffer, sizeof(AuInputMessage));
+	AuDevWriteKybrd((AuInputMessage*)buffer);
 	return (sizeof(AuInputMessage));
 }
 
@@ -147,9 +158,7 @@ size_t AuDevInputKybrdRead(AuVFSNode* fs, AuVFSNode* file, uint64_t* buffer, uin
 		return 0;
 	if (!buffer)
 		return 0;
-	void* key_buf = file->device;
-	memcpy(buffer, key_buf, sizeof(AuInputMessage));
-	memset(key_buf, 0, sizeof(AuInputMessage));
+	AuDevReadKybrd((AuInputMessage*)buffer);
 	return (sizeof(AuInputMessage));
 }
 

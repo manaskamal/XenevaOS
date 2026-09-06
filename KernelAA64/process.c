@@ -509,12 +509,12 @@ int AuProcessWaitForTermination(AuProcess* proc, int pid) {
 			}
 		} while (1);
 	} else {
-		AuProcess* proc = AuProcessFindByPID(0, pid);
-		if (!proc)
-			return -1;
+		AuProcess* child = AuProcessFindByPID(0, pid);
+		if (!child || (child->state & PROCESS_STATE_DIED) || !child->waitlist)
+			return 0;
 		AA64Thread* thr = AuGetCurrentThread();
 		AuBlockThread(thr);
-		list_add(proc->waitlist, thr);
+		list_add(child->waitlist, thr);
 		return 1;
 	}
 	return 0;

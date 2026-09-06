@@ -59,7 +59,7 @@ void AuInitialiseNet() {
 	ARPProtocolInitialise();
 	UDPProtocolInstall();
 	ICMPInitialise();
-	//TCPProtocolInstall();
+	TCPProtocolInstall();
 	AuTextOut("[aurora]: net system initialised \r\n");
 }
 

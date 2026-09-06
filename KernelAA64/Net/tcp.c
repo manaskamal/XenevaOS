@@ -1,7 +1,7 @@
 /**
 * BSD 2-Clause License
 *
-* Copyright (c) 2022-2024, Manas Kamal Choudhury
+* Copyright (c) 2022-2026, Manas Kamal Choudhury
 * All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
@@ -35,14 +35,21 @@
 #include <stack.h>
 #include <Net/tcp.h>
 #include <Net/ipv4.h>
-#include <stdio.h>
-#include <aucon.h>
 #include <Hal/AA64/aa64lowlevel.h>
+#include <Hal/AA64/aa64cpu.h>
 #include <Hal/AA64/sched.h>
 #include <Drivers/uart.h>
+#include <circbuf.h>
+#include <_null.h>
+
+extern int rand();
 
 list_t* tcpSocketList;
+static int _tcp_port_ = 49152;
 
+#if defined(ARCH_X64) || defined(ARCH_ARM64)
+#pragma pack(push, 1)
+#endif
 typedef struct _tcpcheckheader_ {
 	uint32_t source;
 	uint32_t destination;
@@ -51,276 +58,909 @@ typedef struct _tcpcheckheader_ {
 	uint16_t tcpLen;
 	uint8_t tcpHeader[];
 } TCPCheckHeader;
+#if defined(ARCH_X64) || defined(ARCH_ARM64)
+#pragma pack(pop)
+#endif
 
-/**  Implementation needed **/
-
-/*
- * CalculateTCPChecksum -- calculate tcp checksum
- * @param p -- Pointer to TCP Checksum header
- * @param h -- Pointer to TCP header
- * @param d -- Payload
- * @param payloadsz -- size of the payload
- */
-uint16_t CalculateTCPChecksum(TCPCheckHeader* p, TCPHeader* h, void* d, size_t payloadsz) {
+static uint16_t CalculateTCPChecksum(TCPCheckHeader* p, TCPHeader* h, void* d, size_t payloadsz) {
 	uint32_t sum = 0;
 	uint16_t* s = (uint16_t*)p;
+	int i;
 
-	for (int i = 0; i < 6; ++i) {
+	for (i = 0; i < 6; ++i) {
 		sum += ntohs(s[i]);
 		if (sum > 0xFFFF)
 			sum = (sum >> 16) + (sum & 0xFFFF);
 	}
 
 	s = (uint16_t*)h;
-	for (int i = 0; i < 10; ++i) {
+	for (i = 0; i < 10; ++i) {
 		sum += ntohs(s[i]);
 		if (sum > 0xFFFF)
 			sum = (sum >> 16) + (sum & 0xFFFF);
 	}
 
-	uint16_t dwords = payloadsz / 2;
-	s = (uint16_t*)d;
-	for (unsigned int i = 0; i < dwords; ++i) {
-		sum += ntohs(s[i]);
-		if (sum > 0xFFFF)
-			sum = (sum >> 16) + (sum & 0xFFFF);
-	}
+	if (d && payloadsz) {
+		uint16_t dwords = payloadsz / 2;
+		s = (uint16_t*)d;
+		for (unsigned int n = 0; n < dwords; ++n) {
+			sum += ntohs(s[n]);
+			if (sum > 0xFFFF)
+				sum = (sum >> 16) + (sum & 0xFFFF);
+		}
 
-	if (dwords * 2 != payloadsz) {
-		uint8_t* t = (uint8_t*)d;
-		uint8_t tmp[2];
-		tmp[0] = t[dwords * sizeof(uint16_t)];
-		tmp[1] = 0;
-
-		uint16_t* f = (uint16_t*)tmp;
-
-		sum += ntohs(f[0]);
-		if (sum > 0xFFFF)
-			sum = (sum >> 16) + (sum & 0xFFFF);
+		if (dwords * 2 != payloadsz) {
+			uint8_t* t = (uint8_t*)d;
+			uint8_t tmp[2];
+			tmp[0] = t[dwords * sizeof(uint16_t)];
+			tmp[1] = 0;
+			sum += ntohs(*(uint16_t*)tmp);
+			if (sum > 0xFFFF)
+				sum = (sum >> 16) + (sum & 0xFFFF);
+		}
 	}
 
 	return ~(sum & 0xFFFF) & 0xFFFF;
 }
-/*
- * AuTCPReceive -- TCP protocol receive interface
- * @param sock -- Pointer to socket
- * @param msghdr -- Message header containing every information
- * @param flags -- extra flags
- */
-int AuTCPReceive(AuSocket* sock, msghdr* msg, int flags) {
+
+static TCPControlBlock* TCPGetPCB(AuSocket* sock) {
+	if (!sock)
+		return NULL;
+	return (TCPControlBlock*)sock->proto;
+}
+
+static uint16_t TCPFlagsOf(TCPHeader* tcp) {
+	return ntohs(tcp->dataOffsetFlags) & 0x01FF;
+}
+
+static int TCPHdrBytes(TCPHeader* tcp) {
+	return ((ntohs(tcp->dataOffsetFlags) >> 12) & 0xF) * 4;
+}
+
+static uint16_t TCPWindowOf(AuSocket* sock) {
+	TCPControlBlock* pcb = TCPGetPCB(sock);
+	size_t used;
+
+	if (!pcb || !pcb->rxbuf)
+		return TCP_DEFAULT_WIN_SZ;
+	used = AuCircBufSize((CircBuffer*)pcb->rxbuf);
+	if (used >= TCP_RX_BUF_SZ)
+		return 0;
+	return (uint16_t)(TCP_RX_BUF_SZ - used);
+}
+
+static int TCPPortInUse(uint16_t port) {
+	int i;
+
+	if (!tcpSocketList)
+		return 0;
+	for (i = 0; i < (int)tcpSocketList->pointer; i++) {
+		AuSocket* sock = (AuSocket*)list_get_at(tcpSocketList, i);
+		if (sock && sock->sessionPort == port)
+			return 1;
+	}
 	return 0;
 }
 
-/*
-* AuTCPSend -- TCP protocol send interface
-* @param sock -- Pointer to socket
-* @param msghdr -- Message header containing every information
-* @param flags -- extra flags
-*/
-int AuTCPSend(AuSocket* sock, msghdr* msg, int flags) {
-	return 0;
-}
+static void TCPRegisterSocket(AuSocket* sock) {
+	int i;
 
-/*
-* AuTCPClose -- TCP protocol close call
-* @param sock -- Pointer to socket
-*/
-void AuTCPClose(AuSocket* sock) {
-	return;
-}
-
-static int _tcp_port_ = 49152;
-/*
- * AuTCPObtainPort -- obtains a new port for
- * a session, port number 0 - 1024 are reserved
- * for services and protocols like HTTP(port 80)
- * FTP(port 21), SSH(port 22)..etc
- * Rage from 1024 to 49151 are assigned by Internet
- * Assigned Numbers Authority for specific services
- * upon application by a requesting entity.
- * Dynamic/Private ports ranges from 49152 - 65535
- * this ports are not assigned and can be used
- * dynamically by applications and services
- * @param sock -- Pointer to socket session
- */
-void AuTCPObtainPort(AuSocket* sock) {
-	int port = _tcp_port_++;
-	sock->sessionPort = port;
+	if (!tcpSocketList || !sock)
+		return;
+	for (i = 0; i < (int)tcpSocketList->pointer; i++) {
+		if (list_get_at(tcpSocketList, i) == sock)
+			return;
+	}
 	list_add(tcpSocketList, sock);
 }
 
-/*
- * AuTCPAcknowledge -- send ack packets
- * @param nic -- Pointer to NIC device
- * @param sock -- Pointer to session socket
- * @param ippack -- Pointer to IPv4 packet
- * @param payloadLen -- length of the payload
-*/
-int AuTCPAcknowledge(AuVFSNode* nic, AuSocket* sock, IPv4Header* ippack, size_t payloadLen) {
-	AuNetworkDevice* nicdev = (AuNetworkDevice*)nic->device;
-	if (!nicdev)
+static void TCPUnregisterSocket(AuSocket* sock) {
+	int i;
+
+	if (!tcpSocketList || !sock)
+		return;
+	for (i = 0; i < (int)tcpSocketList->pointer; i++) {
+		if (list_get_at(tcpSocketList, i) == sock) {
+			list_remove(tcpSocketList, i);
+			return;
+		}
+	}
+}
+
+static void AuTCPObtainPort(AuSocket* sock) {
+	int tries = 0;
+
+	while (tries < 16384) {
+		int port = _tcp_port_++;
+		if (_tcp_port_ > 65535)
+			_tcp_port_ = 49152;
+		if (!TCPPortInUse((uint16_t)port)) {
+			sock->sessionPort = (uint16_t)port;
+			TCPRegisterSocket(sock);
+			return;
+		}
+		tries++;
+	}
+	sock->sessionPort = (uint16_t)_tcp_port_++;
+	TCPRegisterSocket(sock);
+}
+
+static int TCPSendSegment(AuSocket* sock, uint16_t flags, const void* payload, size_t payloadLen) {
+	TCPControlBlock* pcb = TCPGetPCB(sock);
+	AuNetworkDevice* ndev;
+	IPv4Header* ipv4;
+	TCPHeader* tcp;
+	TCPCheckHeader checkhdr;
+	size_t totalLen;
+	uint32_t seq;
+
+	if (!pcb || !pcb->nic)
+		return -1;
+	ndev = (AuNetworkDevice*)pcb->nic->device;
+	if (!ndev)
 		return -1;
 
-	/*  need to implement three way ack to handle
-	 * packet loss or errors
-	 */
-	TCPHeader* tcp = (TCPHeader*)&ippack->payload;
-	int windowsz = TCP_DEFAULT_WIN_SZ;
+	totalLen = sizeof(IPv4Header) + sizeof(TCPHeader) + payloadLen;
+	ipv4 = (IPv4Header*)kmalloc(totalLen);
+	if (!ipv4)
+		return -1;
+	memset(ipv4, 0, totalLen);
 
-	unsigned seq_num = sock->packID + 1;
-	unsigned ack_num = (tcp->sequenceNum + payloadLen);
-	size_t totalLen = sizeof(IPv4Header) + sizeof(TCPHeader);
-	IPv4Header* ipv4 = (IPv4Header*)kmalloc(totalLen);
-	ipv4->totalLength = htons(totalLen);
-	ipv4->destAddress = ippack->srcAddress;
-	ipv4->srcAddress = nicdev->ipv4addr;
-	ipv4->timeToLive = 64;
-	ipv4->protocol = IPV4_PROTOCOL_TCP;
+	ipv4->versionHeaderLen = 0x45;
+	ipv4->typeOfService = 0;
+	ipv4->totalLength = htons((uint16_t)totalLen);
 	sock->ipv4Iden++;
 	ipv4->identification = htons(sock->ipv4Iden);
-	ipv4->flagsFragOffset = htons(0x0);
-	ipv4->versionHeaderLen = 0x45;
-	ipv4->typeOfService = 0;
-	ipv4->headerChecksum = htons(IPv4CalculateChecksum(ipv4));
-
-	/* handle fin packets */
-	int flags = TCP_FLAGS_ACK;
-
-	TCPHeader* tcppack = (TCPHeader*)&ipv4->payload;
-	tcppack->srcPort = htons(sock->sessionPort);
-	tcppack->destPort = tcp->srcPort;
-	tcppack->sequenceNum = htonl(seq_num);
-	tcppack->ackNum = htonl(ack_num);
-	tcppack->dataOffsetFlags = htons(flags | 0x5000);
-	tcppack->window = htons(windowsz);
-	tcppack->checksum = 0;
-	tcppack->urgentPointer = 0;
-
-	TCPCheckHeader checkhdr;
-	checkhdr.source = ipv4->srcAddress;
-	checkhdr.destination = ipv4->destAddress;
-	checkhdr.zeros = 0;
-	checkhdr.protocol = IPV4_PROTOCOL_TCP;
-	checkhdr.tcpLen = htons(sizeof(TCPHeader));
-
-	tcppack->checksum = htons(CalculateTCPChecksum(&checkhdr, tcppack, NULL, 0));
-	IPV4SendPacket(ipv4, nic);
-	UARTDebugOut("TCP-ACK Sent !! successfully \r\n");
-	kfree(ipv4);
-	return 0;
-}
-/*
-* AuTCPConnect -- TCP protocol connect interface
-* @param sock -- Pointer to socket
-* @param addr -- socket address information
-* @param addrlen -- address length
-*/
-int AuTCPConnect(AuSocket* sock, sockaddr* addr, socklen_t addrlen) {
-	sockaddr_in* sockdata = (sockaddr_in*)addr;
-	UARTDebugOut("TCP connect call called \r\n");
-	AuTCPObtainPort(sock);
-	int sourcePort = sock->sessionPort;
-	sock->sockState = SOCK_STATE_WAITING_FOR_CONNECTION;
-	sock->ipv4Iden = rand();
-	AuVFSNode* nic = AuNetworkRoute(sockdata->sin_addr.s_addr);
-	if (!nic) {
-		UARTDebugOut("[Aurora-net]: TCP failed to connect, no NIC\r\n");
-		return 1;
-	}
-
-	AuNetworkDevice* ndev = (AuNetworkDevice*)nic->device;
-	if (!ndev) {
-		UARTDebugOut("[Aurora-net]: TCP No Netword device data \r\n");
-		return 1;
-	}
-
-	size_t totalLen = sizeof(IPv4Header) + sizeof(TCPHeader);
-
-	/* IPV4 Header */
-	IPv4Header* ipv4 = (IPv4Header*)kmalloc(totalLen);
-	ipv4->totalLength = htons(totalLen);
-	ipv4->destAddress = sockdata->sin_addr.s_addr;
-	ipv4->srcAddress = ndev->ipv4addr;
+	ipv4->flagsFragOffset = htons(0x4000);
 	ipv4->timeToLive = 64;
 	ipv4->protocol = IPV4_PROTOCOL_TCP;
-	ipv4->identification = htons(sock->ipv4Iden);
-	ipv4->flagsFragOffset = htons(0x0);
-	ipv4->versionHeaderLen = 0x45;
-	ipv4->typeOfService = 0;
+	ipv4->srcAddress = ndev->ipv4addr;
+	ipv4->destAddress = pcb->remote_ip;
+	ipv4->headerChecksum = 0;
 	ipv4->headerChecksum = htons(IPv4CalculateChecksum(ipv4));
 
-	TCPHeader* tcp = (TCPHeader*)&ipv4->payload;
+	seq = pcb->snd_nxt;
+	tcp = (TCPHeader*)&ipv4->payload;
 	tcp->srcPort = htons(sock->sessionPort);
-	tcp->destPort = sockdata->sin_port;
-	tcp->sequenceNum = 0;
-	tcp->ackNum = 0;
-	tcp->dataOffsetFlags = htons((1 << 1) | 0x5000);
-	tcp->window = htons(TCP_DEFAULT_WIN_SZ);
+	tcp->destPort = htons(pcb->remote_port);
+	tcp->sequenceNum = htonl(seq);
+	tcp->ackNum = htonl(pcb->rcv_nxt);
+	tcp->dataOffsetFlags = htons(flags | 0x5000);
+	tcp->window = htons(TCPWindowOf(sock));
 	tcp->checksum = 0;
 	tcp->urgentPointer = 0;
-	sock->packID = tcp->sequenceNum;
+	if (payload && payloadLen)
+		memcpy(&ipv4->payload[sizeof(TCPHeader)], (void*)payload, payloadLen);
 
-	TCPHeader* tcpch = (TCPHeader*)ipv4->payload;
-	UARTDebugOut("TCP Check SRC -> %d \r\n", tcpch->srcPort);
+	checkhdr.source = ipv4->srcAddress;
+	checkhdr.destination = ipv4->destAddress;
+	checkhdr.zeros = 0;
+	checkhdr.protocol = IPV4_PROTOCOL_TCP;
+	checkhdr.tcpLen = htons((uint16_t)(sizeof(TCPHeader) + payloadLen));
+	tcp->checksum = htons(CalculateTCPChecksum(&checkhdr, tcp,
+		payloadLen ? &ipv4->payload[sizeof(TCPHeader)] : NULL, payloadLen));
 
+	IPV4SendPacket(ipv4, pcb->nic);
+	kfree(ipv4);
+
+	if (flags & TCP_FLAGS_SYN)
+		pcb->snd_nxt = seq + 1;
+	else {
+		pcb->snd_nxt = seq + (uint32_t)payloadLen;
+		if (flags & TCP_FLAGS_FIN)
+			pcb->snd_nxt += 1;
+	}
+	return 0;
+}
+
+static void TCPSendReset(AuVFSNode* nic, IPv4Header* ip, TCPHeader* tcp, size_t segLen) {
+	AuNetworkDevice* ndev;
+	IPv4Header* ipv4;
+	TCPHeader* rst;
 	TCPCheckHeader checkhdr;
+	uint16_t flags;
+	uint32_t seq;
+	uint32_t ack;
+	size_t totalLen;
+
+	if (!nic)
+		return;
+	ndev = (AuNetworkDevice*)nic->device;
+	if (!ndev)
+		return;
+
+	flags = TCPFlagsOf(tcp);
+	if (flags & TCP_FLAGS_RST)
+		return;
+
+	totalLen = sizeof(IPv4Header) + sizeof(TCPHeader);
+	ipv4 = (IPv4Header*)kmalloc(totalLen);
+	if (!ipv4)
+		return;
+	memset(ipv4, 0, totalLen);
+
+	ipv4->versionHeaderLen = 0x45;
+	ipv4->totalLength = htons((uint16_t)totalLen);
+	ipv4->identification = 0;
+	ipv4->flagsFragOffset = htons(0x4000);
+	ipv4->timeToLive = 64;
+	ipv4->protocol = IPV4_PROTOCOL_TCP;
+	ipv4->srcAddress = ndev->ipv4addr;
+	ipv4->destAddress = ip->srcAddress;
+	ipv4->headerChecksum = 0;
+	ipv4->headerChecksum = htons(IPv4CalculateChecksum(ipv4));
+
+	if (flags & TCP_FLAGS_ACK) {
+		seq = ntohl(tcp->ackNum);
+		ack = 0;
+		flags = TCP_FLAGS_RST;
+	} else {
+		seq = 0;
+		ack = ntohl(tcp->sequenceNum) + (uint32_t)segLen;
+		flags = TCP_FLAGS_RST | TCP_FLAGS_ACK;
+	}
+
+	rst = (TCPHeader*)&ipv4->payload;
+	rst->srcPort = tcp->destPort;
+	rst->destPort = tcp->srcPort;
+	rst->sequenceNum = htonl(seq);
+	rst->ackNum = htonl(ack);
+	rst->dataOffsetFlags = htons(flags | 0x5000);
+	rst->window = 0;
+	rst->checksum = 0;
+	rst->urgentPointer = 0;
+
 	checkhdr.source = ipv4->srcAddress;
 	checkhdr.destination = ipv4->destAddress;
 	checkhdr.zeros = 0;
 	checkhdr.protocol = IPV4_PROTOCOL_TCP;
 	checkhdr.tcpLen = htons(sizeof(TCPHeader));
-
-	tcp->checksum = htons(CalculateTCPChecksum(&checkhdr, tcp, NULL, 0));
-
+	rst->checksum = htons(CalculateTCPChecksum(&checkhdr, rst, NULL, 0));
 	IPV4SendPacket(ipv4, nic);
+	kfree(ipv4);
+}
 
+static void TCPFreePCB(TCPControlBlock* pcb) {
+	if (!pcb)
+		return;
+	if (pcb->rxbuf) {
+		AuCircBufFree((CircBuffer*)pcb->rxbuf);
+		pcb->rxbuf = NULL;
+	}
+	if (pcb->rxmem) {
+		kfree(pcb->rxmem);
+		pcb->rxmem = NULL;
+	}
+	if (pcb->acceptq) {
+		while (pcb->acceptq->pointer)
+			list_remove(pcb->acceptq, 0);
+		kfree(pcb->acceptq);
+		pcb->acceptq = NULL;
+	}
+	kfree(pcb);
+}
+
+static TCPControlBlock* TCPAllocPCB(void) {
+	TCPControlBlock* pcb = (TCPControlBlock*)kmalloc(sizeof(TCPControlBlock));
+	if (!pcb)
+		return NULL;
+	memset(pcb, 0, sizeof(TCPControlBlock));
+	pcb->state = TCP_STATE_CLOSED;
+	pcb->mss = TCP_MSS;
+	pcb->snd_wnd = TCP_DEFAULT_WIN_SZ;
+	pcb->rcv_wnd = TCP_RX_BUF_SZ;
+	pcb->rxmem = (uint8_t*)kmalloc(TCP_RX_BUF_SZ);
+	if (!pcb->rxmem) {
+		kfree(pcb);
+		return NULL;
+	}
+	memset(pcb->rxmem, 0, TCP_RX_BUF_SZ);
+	pcb->rxbuf = AuCircBufInitialise(pcb->rxmem, TCP_RX_BUF_SZ);
+	if (!pcb->rxbuf) {
+		kfree(pcb->rxmem);
+		kfree(pcb);
+		return NULL;
+	}
+	return pcb;
+}
+
+static AuSocket* TCPAllocSocket(void);
+int AuTCPBind(AuSocket* sock, sockaddr* addr, socklen_t addrlen);
+int AuTCPListen(AuSocket* sock, int backlog);
+int AuTCPAccept(AuSocket* sock, sockaddr* addr, socklen_t* addrlen);
+int AuTCPReceive(AuSocket* sock, msghdr* msg, int flags);
+int AuTCPSend(AuSocket* sock, msghdr* msg, int flags);
+void AuTCPClose(AuSocket* sock);
+int AuTCPConnect(AuSocket* sock, sockaddr* addr, socklen_t addrlen);
+int AuTCPFileClose(AuVFSNode* fsys, AuVFSNode* file);
+
+static AuSocket* TCPAllocSocket(void) {
+	AuSocket* sock = AuNetCreateSocket();
+	TCPControlBlock* pcb;
+
+	if (!sock)
+		return NULL;
+	pcb = TCPAllocPCB();
+	if (!pcb) {
+		if (sock->rxstack)
+			kfree(sock->rxstack);
+		kfree(sock);
+		return NULL;
+	}
+	sock->send = AuTCPSend;
+	sock->receive = AuTCPReceive;
+	sock->connect = AuTCPConnect;
+	sock->bind = AuTCPBind;
+	sock->close = AuTCPClose;
+	sock->listen = AuTCPListen;
+	sock->accept = AuTCPAccept;
+	sock->proto = pcb;
+	sock->sockState = SOCK_STATE_CLOSED;
+	return sock;
+}
+
+static AuSocket* TCPFindSocket(uint32_t srcIP, uint16_t srcPort, uint16_t destPort) {
+	AuSocket* listener = NULL;
+	int i;
+
+	if (!tcpSocketList)
+		return NULL;
+	for (i = 0; i < (int)tcpSocketList->pointer; i++) {
+		AuSocket* sock = (AuSocket*)list_get_at(tcpSocketList, i);
+		TCPControlBlock* pcb;
+
+		if (!sock || sock->sessionPort != destPort)
+			continue;
+		pcb = TCPGetPCB(sock);
+		if (!pcb)
+			continue;
+		if (pcb->state == TCP_STATE_LISTEN) {
+			listener = sock;
+			continue;
+		}
+		if (pcb->remote_ip == srcIP && pcb->remote_port == srcPort)
+			return sock;
+	}
+	return listener;
+}
+
+static void TCPQueueAccept(AuSocket* listener, AuSocket* child) {
+	TCPControlBlock* pcb = TCPGetPCB(listener);
+
+	if (!pcb)
+		return;
+	if (!pcb->acceptq)
+		pcb->acceptq = initialize_list();
+	if (pcb->acceptq)
+		list_add(pcb->acceptq, child);
+}
+
+static int TCPWriteRx(TCPControlBlock* pcb, const uint8_t* data, size_t len) {
+	size_t i;
+	CircBuffer* buf;
+
+	if (!pcb || !pcb->rxbuf || !data || !len)
+		return 0;
+	buf = (CircBuffer*)pcb->rxbuf;
+	for (i = 0; i < len; i++) {
+		if (AuCircBufPut(buf, data[i]) != 0)
+			return (int)i;
+	}
+	return (int)len;
+}
+
+static int TCPSendAck(AuSocket* sock) {
+	return TCPSendSegment(sock, TCP_FLAGS_ACK, NULL, 0);
+}
+
+int AuTCPAcknowledge(AuVFSNode* nic, AuSocket* sock, IPv4Header* ippack, size_t payloadLen) {
+	TCPControlBlock* pcb = TCPGetPCB(sock);
+	TCPHeader* tcp;
+
+	if (!pcb || !ippack)
+		return -1;
+	if (!pcb->nic)
+		pcb->nic = nic;
+	tcp = (TCPHeader*)&ippack->payload;
+	pcb->rcv_nxt = ntohl(tcp->sequenceNum) + (uint32_t)payloadLen;
+	return TCPSendAck(sock);
+}
+
+int AuTCPReceive(AuSocket* sock, msghdr* msg, int flags) {
+	TCPControlBlock* pcb = TCPGetPCB(sock);
+	CircBuffer* buf;
+	size_t want;
+	size_t got = 0;
+	uint8_t* dest;
+
+	(void)flags;
+	if (!pcb)
+		return -1;
+	if (!msg || msg->msg_iovlen == 0)
+		return 0;
+	if (msg->msg_iovlen > 1)
+		return -1;
+
+	buf = (CircBuffer*)pcb->rxbuf;
+	want = msg->msg_iov[0].iov_len;
+	dest = (uint8_t*)msg->msg_iov[0].iov_base;
+	if (!buf || CircBufEmpty(buf)) {
+		if (pcb->fin_recvd || pcb->state == TCP_STATE_CLOSE_WAIT ||
+			pcb->state == TCP_STATE_CLOSED)
+			return 0;
+		return -1;
+	}
+
+	while (got < want && !CircBufEmpty(buf)) {
+		if (AuCircBufGet(buf, dest + got) != 0)
+			break;
+		got++;
+	}
+
+	if (msg->msg_name && msg->msg_namelen >= sizeof(sockaddr_in)) {
+		sockaddr_in* in = (sockaddr_in*)msg->msg_name;
+		in->sin_family = AF_INET;
+		in->sin_port = htons(pcb->remote_port);
+		in->sin_addr.s_addr = pcb->remote_ip;
+		msg->msg_namelen = sizeof(sockaddr_in);
+	}
+	return (int)got;
+}
+
+int AuTCPSend(AuSocket* sock, msghdr* msg, int flags) {
+	TCPControlBlock* pcb = TCPGetPCB(sock);
+	const uint8_t* src;
+	size_t remaining;
+	size_t sent = 0;
+
+	(void)flags;
+	if (!pcb)
+		return -1;
+	if (pcb->state != TCP_STATE_ESTABLISHED && pcb->state != TCP_STATE_CLOSE_WAIT)
+		return -1;
+	if (!msg || msg->msg_iovlen == 0)
+		return 0;
+	if (msg->msg_iovlen > 1)
+		return -1;
+
+	src = (const uint8_t*)msg->msg_iov[0].iov_base;
+	remaining = msg->msg_iov[0].iov_len;
+	while (remaining) {
+		size_t chunk = remaining;
+		uint16_t sendFlags = TCP_FLAGS_ACK | TCP_FLAGS_PSH;
+		if (chunk > pcb->mss)
+			chunk = pcb->mss;
+		if (TCPSendSegment(sock, sendFlags, src + sent, chunk) != 0)
+			break;
+		sent += chunk;
+		remaining -= chunk;
+	}
+	return (int)sent;
+}
+
+void AuTCPClose(AuSocket* sock) {
+	TCPControlBlock* pcb = TCPGetPCB(sock);
+
+	if (!pcb)
+		return;
+	if (pcb->state == TCP_STATE_ESTABLISHED || pcb->state == TCP_STATE_SYN_RECEIVED) {
+		TCPSendSegment(sock, TCP_FLAGS_FIN | TCP_FLAGS_ACK, NULL, 0);
+		pcb->state = TCP_STATE_FIN_WAIT_1;
+	} else if (pcb->state == TCP_STATE_CLOSE_WAIT) {
+		TCPSendSegment(sock, TCP_FLAGS_FIN | TCP_FLAGS_ACK, NULL, 0);
+		pcb->state = TCP_STATE_LAST_ACK;
+	} else if (pcb->state == TCP_STATE_LISTEN) {
+		int i;
+		pcb->state = TCP_STATE_CLOSED;
+		if (tcpSocketList) {
+			for (i = (int)tcpSocketList->pointer - 1; i >= 0; i--) {
+				AuSocket* child = (AuSocket*)list_get_at(tcpSocketList, i);
+				TCPControlBlock* childpcb = TCPGetPCB(child);
+				if (childpcb && childpcb->parent == sock) {
+					TCPSendSegment(child, TCP_FLAGS_RST | TCP_FLAGS_ACK, NULL, 0);
+					childpcb->state = TCP_STATE_CLOSED;
+				}
+			}
+		}
+	} else if (pcb->state != TCP_STATE_CLOSED && pcb->state != TCP_STATE_TIME_WAIT) {
+		TCPSendSegment(sock, TCP_FLAGS_RST | TCP_FLAGS_ACK, NULL, 0);
+		pcb->state = TCP_STATE_CLOSED;
+	}
+}
+
+int AuTCPConnect(AuSocket* sock, sockaddr* addr, socklen_t addrlen) {
+	sockaddr_in* sockdata = (sockaddr_in*)addr;
+	TCPControlBlock* pcb = TCPGetPCB(sock);
+	AuVFSNode* nic;
+	AuNetworkDevice* ndev;
 	uint64_t s, ss = 0;
 	uint64_t ns, nss = 0;
-	aa64_calculate_ticks(1, 0, &s, &ss);
 	int attempts = 0;
-	while (!sock->rxstack->itemCount) {
+
+	(void)addrlen;
+	if (!pcb || !sockdata)
+		return -1;
+
+	UARTDebugOut("[aurora]: TCP connect \r\n");
+	if (sock->sessionPort == 0)
+		AuTCPObtainPort(sock);
+	else
+		TCPRegisterSocket(sock);
+
+	nic = AuNetworkRoute(sockdata->sin_addr.s_addr);
+	if (!nic) {
+		UARTDebugOut("[aurora]: TCP connect, no NIC\r\n");
+		return -1;
+	}
+	ndev = (AuNetworkDevice*)nic->device;
+	if (!ndev) {
+		UARTDebugOut("[aurora]: TCP connect, no NIC data\r\n");
+		return -1;
+	}
+
+	pcb->nic = nic;
+	pcb->remote_ip = sockdata->sin_addr.s_addr;
+	pcb->remote_port = ntohs(sockdata->sin_port);
+	pcb->iss = ((uint32_t)rand() << 16) ^ (uint32_t)rand();
+	if (pcb->iss == 0)
+		pcb->iss = 1;
+	pcb->snd_una = pcb->iss;
+	pcb->snd_nxt = pcb->iss;
+	pcb->rcv_nxt = 0;
+	sock->ipv4Iden = (uint16_t)rand();
+	sock->sockState = SOCK_STATE_WAITING_FOR_CONNECTION;
+	pcb->state = TCP_STATE_SYN_SENT;
+
+	if (TCPSendSegment(sock, TCP_FLAGS_SYN, NULL, 0) != 0)
+		return -1;
+
+	aa64_calculate_ticks(1, 0, &s, &ss);
+	while (pcb->state == TCP_STATE_SYN_SENT) {
 		AuSleepThread(AuGetCurrentThread(), 20);
 		AuScheduleNext();
-
 		aa64_calculate_ticks(0, 0, &ns, &nss);
-		//connection refused
+
 		if (sock->sockState == SOCK_STATE_CONNECTION_RST) {
-			UARTDebugOut("Sock state reset \r\n");
-			kfree(ipv4);
+			UARTDebugOut("[aurora]: TCP connection reset\r\n");
 			return -1;
 		}
 		if ((ns > s || (ns == s && nss > ss))) {
 			if (attempts == 3) {
-				UARTDebugOut("Attempts == 3 \r\n");
-				kfree(ipv4);
-				return -1; //timeout
+				UARTDebugOut("[aurora]: TCP connect timeout\r\n");
+				pcb->state = TCP_STATE_CLOSED;
+				return -1;
 			}
-			UARTDebugOut("[aurora]: TCP retrying connection \r\n");
-			IPV4SendPacket(ipv4, nic);
+			UARTDebugOut("[aurora]: TCP retrying connection\r\n");
+			pcb->snd_nxt = pcb->iss;
+			TCPSendSegment(sock, TCP_FLAGS_SYN, NULL, 0);
 			aa64_calculate_ticks(1, 0, &s, &ss);
 			attempts++;
 		}
 	}
-	kfree(ipv4);
-	UARTDebugOut("[aurora]: TCP connection succeeded \r\n");
+
+	if (pcb->state != TCP_STATE_ESTABLISHED) {
+		UARTDebugOut("[aurora]: TCP connect failed, state %d\r\n", pcb->state);
+		return -1;
+	}
+	sock->sockState = SOCK_STATE_CONNECTED;
+	UARTDebugOut("[aurora]: TCP connection succeeded\r\n");
 	return 0;
 }
 
 int AuTCPBind(AuSocket* sock, sockaddr* addr, socklen_t addrlen) {
+	sockaddr_in* addr_in = (sockaddr_in*)addr;
+	int port;
+	int i;
+
+	(void)addrlen;
+	if (!addr_in)
+		return -1;
+	if (sock->sessionPort != 0)
+		return -1;
+
+	port = ntohs(addr_in->sin_port);
+	if (port == 0) {
+		AuTCPObtainPort(sock);
+		return 0;
+	}
+	if (!tcpSocketList)
+		return -1;
+	for (i = 0; i < (int)tcpSocketList->pointer; i++) {
+		AuSocket* other = (AuSocket*)list_get_at(tcpSocketList, i);
+		TCPControlBlock* pcb = TCPGetPCB(other);
+		if (other && other->sessionPort == (uint16_t)port && pcb &&
+			pcb->state == TCP_STATE_LISTEN)
+			return -1;
+	}
+	sock->sessionPort = (uint16_t)port;
+	TCPRegisterSocket(sock);
+	UARTDebugOut("[aurora]: TCP bound to port %d\r\n", port);
 	return 0;
 }
 
-uint64_t AuTCPRead(AuVFSNode* node, AuVFSNode* file, uint64_t* buffer, uint32_t len) {
+int AuTCPListen(AuSocket* sock, int backlog) {
+	TCPControlBlock* pcb = TCPGetPCB(sock);
+
+	if (!pcb)
+		return -1;
+	if (sock->sessionPort == 0)
+		return -1;
+	if (backlog <= 0)
+		backlog = 1;
+	pcb->backlog = backlog;
+	if (!pcb->acceptq)
+		pcb->acceptq = initialize_list();
+	pcb->state = TCP_STATE_LISTEN;
+	sock->sockState = SOCK_STATE_CONNECTED;
+	UARTDebugOut("[aurora]: TCP listen on %d\r\n", sock->sessionPort);
 	return 0;
 }
 
-uint64_t AuTCPWrite(AuVFSNode* node, AuVFSNode* file, uint64_t* buffer, uint32_t len) {
-	return 0;
+int AuTCPAccept(AuSocket* sock, sockaddr* addr, socklen_t* addrlen) {
+	TCPControlBlock* pcb = TCPGetPCB(sock);
+	AuSocket* child = NULL;
+	TCPControlBlock* childpcb;
+	AA64Thread* thread;
+	AuProcess* proc;
+	AuVFSNode* node;
+	int fd;
+	uint64_t s, ss = 0;
+	uint64_t ns, nss = 0;
+
+	if (!pcb || pcb->state != TCP_STATE_LISTEN || !pcb->acceptq)
+		return -1;
+
+	aa64_calculate_ticks(30, 0, &s, &ss);
+	while (pcb->acceptq->pointer == 0) {
+		AuSleepThread(AuGetCurrentThread(), 20);
+		AuScheduleNext();
+		aa64_calculate_ticks(0, 0, &ns, &nss);
+		if (ns > s || (ns == s && nss > ss))
+			return -1;
+	}
+
+	child = (AuSocket*)list_remove(pcb->acceptq, 0);
+	if (!child)
+		return -1;
+	childpcb = TCPGetPCB(child);
+	thread = AuGetCurrentThread();
+	if (!thread)
+		return -1;
+	proc = AuProcessFindThread(thread);
+	if (!proc)
+		proc = AuProcessFindSubThread(thread);
+	if (!proc)
+		return -1;
+
+	fd = AuProcessGetFileDesc(proc);
+	node = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
+	if (!node)
+		return -1;
+	memset(node, 0, sizeof(AuVFSNode));
+	strcpy(node->filename, "tcp");
+	node->flags |= FS_FLAG_SOCKET;
+	node->device = child;
+	node->close = AuTCPFileClose;
+	node->iocontrol = SocketIOControl;
+	proc->fds[fd] = node;
+
+	if (addr && addrlen && *addrlen >= sizeof(sockaddr_in) && childpcb) {
+		sockaddr_in* in = (sockaddr_in*)addr;
+		in->sin_family = AF_INET;
+		in->sin_port = htons(childpcb->remote_port);
+		in->sin_addr.s_addr = childpcb->remote_ip;
+		*addrlen = sizeof(sockaddr_in);
+	}
+	return fd;
+}
+
+static void TCPHandleListenSyn(AuSocket* listener, IPv4Header* pack, TCPHeader* tcp, AuVFSNode* nic) {
+	TCPControlBlock* lpcb = TCPGetPCB(listener);
+	AuSocket* child;
+	TCPControlBlock* pcb;
+	uint32_t seq;
+
+	if (!lpcb)
+		return;
+	if (lpcb->acceptq && (int)lpcb->acceptq->pointer >= lpcb->backlog) {
+		TCPSendReset(nic, pack, tcp, 1);
+		return;
+	}
+
+	child = TCPAllocSocket();
+	if (!child) {
+		TCPSendReset(nic, pack, tcp, 1);
+		return;
+	}
+	pcb = TCPGetPCB(child);
+	seq = ntohl(tcp->sequenceNum);
+	child->sessionPort = listener->sessionPort;
+	child->ipv4Iden = (uint16_t)rand();
+	pcb->nic = nic;
+	pcb->parent = listener;
+	pcb->remote_ip = pack->srcAddress;
+	pcb->remote_port = ntohs(tcp->srcPort);
+	pcb->irs = seq;
+	pcb->rcv_nxt = seq + 1;
+	pcb->iss = ((uint32_t)rand() << 16) ^ (uint32_t)rand();
+	if (pcb->iss == 0)
+		pcb->iss = 1;
+	pcb->snd_una = pcb->iss;
+	pcb->snd_nxt = pcb->iss;
+	pcb->snd_wnd = ntohs(tcp->window);
+	pcb->state = TCP_STATE_SYN_RECEIVED;
+	child->sockState = SOCK_STATE_WAITING_FOR_CONNECTION;
+	TCPRegisterSocket(child);
+	TCPSendSegment(child, TCP_FLAGS_SYN | TCP_FLAGS_ACK, NULL, 0);
+}
+
+static void TCPHandleEstablished(AuSocket* sock, IPv4Header* pack, TCPHeader* tcp,
+	const uint8_t* payload, size_t payloadLen, uint16_t flags) {
+	TCPControlBlock* pcb = TCPGetPCB(sock);
+	uint32_t seq;
+	uint32_t ack;
+	int wrote;
+	int needAck = 0;
+
+	(void)pack;
+	if (!pcb)
+		return;
+	seq = ntohl(tcp->sequenceNum);
+	ack = ntohl(tcp->ackNum);
+
+	if (flags & TCP_FLAGS_ACK) {
+		if ((int32_t)(ack - pcb->snd_una) > 0 && (int32_t)(pcb->snd_nxt - ack) >= 0)
+			pcb->snd_una = ack;
+		pcb->snd_wnd = ntohs(tcp->window);
+
+		if (pcb->state == TCP_STATE_SYN_RECEIVED && ack == pcb->snd_nxt) {
+			pcb->state = TCP_STATE_ESTABLISHED;
+			sock->sockState = SOCK_STATE_CONNECTED;
+			if (pcb->parent)
+				TCPQueueAccept(pcb->parent, sock);
+		}
+		if (pcb->state == TCP_STATE_FIN_WAIT_1 && ack == pcb->snd_nxt)
+			pcb->state = TCP_STATE_FIN_WAIT_2;
+		if (pcb->state == TCP_STATE_LAST_ACK && ack == pcb->snd_nxt)
+			pcb->state = TCP_STATE_CLOSED;
+		if (pcb->state == TCP_STATE_CLOSING && ack == pcb->snd_nxt)
+			pcb->state = TCP_STATE_TIME_WAIT;
+	}
+
+	if (pcb->state == TCP_STATE_SYN_SENT)
+		return;
+
+	if (payloadLen) {
+		if (seq != pcb->rcv_nxt) {
+			TCPSendAck(sock);
+			return;
+		}
+		wrote = TCPWriteRx(pcb, payload, payloadLen);
+		if (wrote > 0) {
+			pcb->rcv_nxt += (uint32_t)wrote;
+			needAck = 1;
+		}
+	}
+
+	if (flags & TCP_FLAGS_FIN) {
+		if (seq + (uint32_t)payloadLen == pcb->rcv_nxt || seq == pcb->rcv_nxt) {
+			pcb->rcv_nxt += 1;
+			pcb->fin_recvd = 1;
+			needAck = 1;
+			if (pcb->state == TCP_STATE_ESTABLISHED)
+				pcb->state = TCP_STATE_CLOSE_WAIT;
+			else if (pcb->state == TCP_STATE_FIN_WAIT_1)
+				pcb->state = TCP_STATE_CLOSING;
+			else if (pcb->state == TCP_STATE_FIN_WAIT_2)
+				pcb->state = TCP_STATE_TIME_WAIT;
+		}
+	}
+
+	if (needAck)
+		TCPSendAck(sock);
+}
+
+void TCPHandlePacket(IPv4Header* pack, AuVFSNode* nic) {
+	int ihl;
+	int doff;
+	uint16_t tot;
+	uint16_t destPort;
+	uint16_t srcPort;
+	uint16_t flags;
+	size_t payloadLen;
+	size_t segLen;
+	TCPHeader* tcp;
+	AuSocket* sock;
+	TCPControlBlock* pcb;
+	const uint8_t* payload;
+
+	if (!pack)
+		return;
+	ihl = (pack->versionHeaderLen & 0x0F) * 4;
+	if (ihl < 20)
+		return;
+	tcp = (TCPHeader*)((uint8_t*)pack + ihl);
+	doff = TCPHdrBytes(tcp);
+	if (doff < 20)
+		return;
+	tot = ntohs(pack->totalLength);
+	if (tot < (uint16_t)(ihl + doff))
+		return;
+	payloadLen = (size_t)tot - (size_t)ihl - (size_t)doff;
+	payload = (const uint8_t*)tcp + doff;
+	flags = TCPFlagsOf(tcp);
+	destPort = ntohs(tcp->destPort);
+	srcPort = ntohs(tcp->srcPort);
+	segLen = payloadLen;
+	if (flags & TCP_FLAGS_SYN)
+		segLen++;
+	if (flags & TCP_FLAGS_FIN)
+		segLen++;
+
+	sock = TCPFindSocket(pack->srcAddress, srcPort, destPort);
+	if (!sock) {
+		if (!(flags & TCP_FLAGS_RST))
+			TCPSendReset(nic, pack, tcp, segLen);
+		return;
+	}
+	pcb = TCPGetPCB(sock);
+	if (!pcb)
+		return;
+
+	if (flags & TCP_FLAGS_RST) {
+		sock->sockState = SOCK_STATE_CONNECTION_RST;
+		pcb->state = TCP_STATE_CLOSED;
+		return;
+	}
+
+	if (pcb->state == TCP_STATE_LISTEN) {
+		if (flags & TCP_FLAGS_SYN)
+			TCPHandleListenSyn(sock, pack, tcp, nic);
+		return;
+	}
+
+	if (pcb->state == TCP_STATE_SYN_SENT) {
+		if ((flags & (TCP_FLAGS_SYN | TCP_FLAGS_ACK)) == (TCP_FLAGS_SYN | TCP_FLAGS_ACK)) {
+			uint32_t ack = ntohl(tcp->ackNum);
+			if (ack != pcb->iss + 1) {
+				TCPSendReset(nic, pack, tcp, segLen);
+				return;
+			}
+			pcb->irs = ntohl(tcp->sequenceNum);
+			pcb->rcv_nxt = pcb->irs + 1;
+			pcb->snd_una = ack;
+			pcb->snd_wnd = ntohs(tcp->window);
+			if (!pcb->nic)
+				pcb->nic = nic;
+			pcb->state = TCP_STATE_ESTABLISHED;
+			sock->sockState = SOCK_STATE_CONNECTED;
+			TCPSendAck(sock);
+			return;
+		}
+		if (flags & TCP_FLAGS_SYN) {
+			pcb->irs = ntohl(tcp->sequenceNum);
+			pcb->rcv_nxt = pcb->irs + 1;
+			pcb->state = TCP_STATE_SYN_RECEIVED;
+			pcb->snd_nxt = pcb->iss;
+			TCPSendSegment(sock, TCP_FLAGS_SYN | TCP_FLAGS_ACK, NULL, 0);
+			return;
+		}
+		return;
+	}
+
+	TCPHandleEstablished(sock, pack, tcp, payload, payloadLen, flags);
 }
 
 int AuTCPFileClose(AuVFSNode* fsys, AuVFSNode* file) {
-	AuSocket* sock = (AuSocket*)file->device;
+	AuSocket* sock;
+
+	(void)fsys;
+	if (!file)
+		return 0;
+	sock = (AuSocket*)file->device;
 	if (sock) {
+		AuTCPClose(sock);
+		TCPUnregisterSocket(sock);
 		if (sock->rxstack) {
 			while (sock->rxstack->itemCount) {
 				void* data = AuStackPop(sock->rxstack);
@@ -328,56 +968,50 @@ int AuTCPFileClose(AuVFSNode* fsys, AuVFSNode* file) {
 			}
 			kfree(sock->rxstack);
 		}
+		TCPFreePCB(TCPGetPCB(sock));
+		sock->proto = NULL;
 		kfree(sock);
 	}
 	kfree(file);
-	UARTDebugOut("TCP/IP Socket Closed \r\n");
+	UARTDebugOut("[aurora]: TCP socket closed\r\n");
 	return 0;
 }
-/*
- * CreateTCPSocket -- creates a new TCP Socket
- */
+
 int CreateTCPSocket() {
 	int fd = -1;
 	AA64Thread* thread = AuGetCurrentThread();
+	AuProcess* proc;
+	AuSocket* sock;
+	AuVFSNode* node;
+
 	if (!thread)
 		return -1;
-	AuProcess* proc = AuProcessFindThread(thread);
+	proc = AuProcessFindThread(thread);
 	if (!proc)
 		proc = AuProcessFindSubThread(thread);
 	if (!proc)
 		return -1;
-	AuSocket* sock = (AuSocket*)kmalloc(sizeof(AuSocket));
-	memset(sock, 0, sizeof(AuSocket));
-	sock->send = AuTCPSend;
-	sock->receive = AuTCPReceive;
-	sock->connect = AuTCPConnect;
-	sock->bind = AuTCPBind;
-	sock->close = AuTCPClose;
-	sock->rxstack = AuStackCreate();
+	sock = TCPAllocSocket();
+	if (!sock)
+		return -1;
 	fd = AuProcessGetFileDesc(proc);
-	AuVFSNode* node = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
+	node = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
 	memset(node, 0, sizeof(AuVFSNode));
+	strcpy(node->filename, "tcp");
 	node->flags |= FS_FLAG_SOCKET;
 	node->device = sock;
 	node->close = AuTCPFileClose;
 	node->iocontrol = SocketIOControl;
 	proc->fds[fd] = node;
-	UARTDebugOut("TCP Socket created \r\n");
+	UARTDebugOut("[aurora]: TCP socket created\r\n");
 	return fd;
 }
 
-/*
- * TCPGetSocketList -- return the current socket
- * list of TCP
- */
 list_t* TCPGetSocketList() {
 	return tcpSocketList;
 }
 
-/*
- * TCPProtocolInstall -- initialize the TCP protocol
- */
 void TCPProtocolInstall() {
 	tcpSocketList = initialize_list();
+	UARTDebugOut("[aurora]: TCP protocol installed\r\n");
 }

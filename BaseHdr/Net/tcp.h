@@ -47,8 +47,22 @@
 #define TCP_DATA_OFFSET_5 (0x5 << 12)
 
 #define TCP_DEFAULT_WIN_SZ 65535
+#define TCP_MSS 1460
+#define TCP_RX_BUF_SZ 16384
 
-#ifdef ARCH_X64
+#define TCP_STATE_CLOSED       0
+#define TCP_STATE_LISTEN       1
+#define TCP_STATE_SYN_SENT     2
+#define TCP_STATE_SYN_RECEIVED 3
+#define TCP_STATE_ESTABLISHED  4
+#define TCP_STATE_FIN_WAIT_1   5
+#define TCP_STATE_FIN_WAIT_2   6
+#define TCP_STATE_CLOSE_WAIT   7
+#define TCP_STATE_CLOSING      8
+#define TCP_STATE_LAST_ACK     9
+#define TCP_STATE_TIME_WAIT    10
+
+#if defined(ARCH_X64) || defined(ARCH_ARM64)
 #pragma pack(push,1)
 #endif
 typedef struct _tcphead_ {
@@ -61,9 +75,30 @@ typedef struct _tcphead_ {
 	unsigned short checksum;
 	unsigned short urgentPointer;
 }TCPHeader;
-#ifdef ARCH_X64
+#if defined(ARCH_X64) || defined(ARCH_ARM64)
 #pragma pack(pop)
 #endif
+
+typedef struct _tcp_pcb_ {
+	uint8_t state;
+	uint8_t fin_recvd;
+	uint32_t iss;
+	uint32_t irs;
+	uint32_t snd_una;
+	uint32_t snd_nxt;
+	uint32_t rcv_nxt;
+	uint32_t remote_ip;
+	uint16_t remote_port;
+	uint16_t snd_wnd;
+	uint16_t rcv_wnd;
+	uint16_t mss;
+	int backlog;
+	AuVFSNode* nic;
+	struct _socket_* parent;
+	void* rxbuf;
+	uint8_t* rxmem;
+	list_t* acceptq;
+} TCPControlBlock;
 
 /*
 * CreateTCPSocket -- creates a new TCP Socket
@@ -84,6 +119,11 @@ extern list_t* TCPGetSocketList();
  * @param payloadLen -- length of the payload
 */
 extern int AuTCPAcknowledge(AuVFSNode* nic, AuSocket* sock, IPv4Header* ippack, size_t payloadLen);
+
+/*
+ * TCPHandlePacket -- dispatch an incoming TCP segment
+ */
+extern void TCPHandlePacket(IPv4Header* pack, AuVFSNode* nic);
 
 /*
  * TCPProtocolInstall -- initialize the TCP protocol
