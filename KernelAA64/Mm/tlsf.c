@@ -2,6 +2,10 @@
  * BSD 2-Clause License
  *
  * Copyright (c) 2022-2023, Manas Kamal Choudhury
+ * 
+ * Author:
+ *      Karthik Ramanathan Lakshmanan,
+ *      karthik20066002@gmail.com
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -31,6 +35,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <_null.h>
+#include <Log/klog.h>
 #if defined(__GNUC__) || defined(__clang__)
 #include <stdbool.h>
 #endif

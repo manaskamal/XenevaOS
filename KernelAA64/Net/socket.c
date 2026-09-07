@@ -91,7 +91,7 @@ void* AuSocketGet(AuSocket* sock) {
  */
 int AuRawSocketReceive(AuSocket* sock, msghdr* msg, int flags) {
 	if (!sock->binedDev) {
-		UARTDebugOut("No binded device \r\n");
+		//UARTDebugOut("No binded device \r\n");
 		return -1;
 	}
 	if (msg->msg_iovlen == 0) {
