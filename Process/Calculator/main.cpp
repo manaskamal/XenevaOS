@@ -179,6 +179,9 @@ CalculatorDisplay* CalcCreateDisplay(int x, int y, int w, int h) {
  * @param calc -- Pointer to calculator display
  */
 void CalculatorProcess(CalculatorDisplay* calc) {
+        if(calc->operator_ == 0){
+        return;
+	}
 	int num2 = atoi(calc->inputnum);
 	calc->num2 = num2;
 	int result = 0;
