@@ -31,6 +31,7 @@ endif
 
 INCLUDES = -I../BaseHdr -I../Acpica/include -I../Acpica -I.
 
+EXPORTS_DEF = exports.def
 
 ifeq ($(TOOLCHAIN), llvm)
     # llvm configuration
@@ -49,7 +50,8 @@ ifeq ($(TOOLCHAIN), llvm)
     LDFLAGS = $(LLVM_TARGET) -fuse-ld=lld -nostdlib \
               -Wl,-entry:_AuMain \
             -Wl,-base:0xFFFFC00000000000 \
-            -Wl,-subsystem:native
+            -Wl,-subsystem:native \
+            -Wl,-def:$(EXPORTS_DEF)
 
     ifeq ($(shell command -v $(CC) 2>/dev/null),)
         $(error $(CC) not found on PATH. On MSYS2: pacman -S mingw-w64-clang-x86_64-toolchain (or the clangarm64/ucrt64 package matching your shell), then reopen the shell)
