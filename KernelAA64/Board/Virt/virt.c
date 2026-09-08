@@ -99,7 +99,11 @@ void AuVirtIOInputInitialize() {
 				}
 				if (vendID == 0x1AF4 && (devID == 0x1041 || devID == 0x1000)) {
 					numVirtIODevice++;
-					AuVirtioNetInitialize(address);
+					/* this was built-in kernel for test purpose, it is always
+					 * a good decision to fallback to external module
+					 */
+					UARTDebugOut("[aurora]: skipping virtionet initialization inside kernel \r\n");
+					//AuVirtioNetInitialize(address);
 				}
 			}
 		}

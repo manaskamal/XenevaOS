@@ -106,7 +106,6 @@ typedef struct _lbprotocol_ {
 }AuLittleBootProtocol;
 
 
-
 #define BOOT_UEFI_x64 1
 #define BOOT_UEFI_ARM64 2
 #define BOOT_LITTLEBOOT_ARM64 3
