@@ -211,6 +211,15 @@ if [ "$SKIP_BUILD" -eq 0 ]; then
         source ./lib/gcc.sh
     fi
     popd >/dev/null
+
+    # Build external drivers (requires kernel to be built first for KernelAA64.lib)
+    if [ "$TOOLCHAIN" == llvm ]; then
+        echo "[+] Building external drivers..."
+        ( cd "$REPO_ROOT/Drivers/Net/virtionet" && make clean && make )
+        cp -f "$REPO_ROOT/Drivers/Net/virtionet/virtnet.dll" "$REPO_ROOT/Resources/resources/"
+        echo "[+] External drivers built and deployed."
+    fi
+
     if [ "$BUILD_USER_APPS" -eq 1 ]; then
         mkdir -p "$(dirname "$USERSPACE_PROFILE_STAMP")"
         printf '%s\n' "$requested_userspace_profile" > "$USERSPACE_PROFILE_STAMP"
