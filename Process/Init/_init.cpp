@@ -81,6 +81,86 @@ void initSetupBasicEnvironmentVars() {
 	setenv("OSNAME", "XenevaOS", 1);
 }
 
+/**
+ * @brief init_run_term_command -- in TERM mode, read /shell.cnf and
+ * launch the specified app with its arguments on /dev/console.
+ * Falls back to xesh.exe if no config or exec fails.
+ */
+void init_run_term_command(int ggid_misc_world, int con) {
+	char cmd[128] = {0};
+	int cfg = _KeOpenFile("/shell.cnf", FILE_OPEN_READ_ONLY);
+	if (cfg != -1) {
+		_KeReadFile(cfg, cmd, sizeof(cmd) - 1);
+		_KeCloseFile(cfg);
+	}
+
+	/* trim trailing newline/carriage-return */
+	int len = strlen(cmd);
+	while (len > 0 && (cmd[len - 1] == '\n' || cmd[len - 1] == '\r'))
+		cmd[--len] = '\0';
+
+	if (len == 0) {
+		/* no command -- fall back to interactive shell */
+		int proc = _KeCreateProcess(0, "xesh");
+		_KeSetUID(proc, UAC_NORMAL_USER);
+		_KeSetGID(proc, UAC_NORMAL_USER);
+		_KeCredAddSGroup(proc, ggid_misc_world);
+		_KeCredAddSGroup(proc, GROUP_NETWORK);
+		if (con != -1) {
+			_KeSetFileToProcess(con, XENEVA_STDIN, proc);
+			_KeSetFileToProcess(con, XENEVA_STDOUT, proc);
+			_KeSetFileToProcess(con, XENEVA_STDERR, proc);
+		}
+		_KeProcessLoadExec(proc, "/xesh.exe", 0, NULL);
+		return;
+	}
+
+	/* tokenize command line into argc/argv */
+	char* argv[16];
+	int argc = 0;
+	char* tok = strtok(cmd, " ");
+	while (tok && argc < 16) {
+		argv[argc++] = tok;
+		tok = strtok(NULL, " ");
+	}
+
+	if (argc == 0)
+		return;
+
+	/* build executable path: /<argv[0]>.exe */
+	char path[64];
+	path[0] = '/';
+	strcpy(path + 1, argv[0]);
+	strcat(path, ".exe");
+
+	int proc = _KeCreateProcess(0, argv[0]);
+	_KeSetUID(proc, UAC_NORMAL_USER);
+	_KeSetGID(proc, UAC_NORMAL_USER);
+	_KeCredAddSGroup(proc, ggid_misc_world);
+	_KeCredAddSGroup(proc, GROUP_NETWORK);
+	if (con != -1) {
+		_KeSetFileToProcess(con, XENEVA_STDIN, proc);
+		_KeSetFileToProcess(con, XENEVA_STDOUT, proc);
+		_KeSetFileToProcess(con, XENEVA_STDERR, proc);
+	}
+	/* skip argv[0] (command name) — kernel uses path as argv[0] */
+	int ret = _KeProcessLoadExec(proc, path, argc > 1 ? argc - 1 : 0, argc > 1 ? argv + 1 : NULL);
+	if (ret == -1) {
+		_KePrint("[init]: failed to load %s, falling back to xesh\r\n", path);
+		proc = _KeCreateProcess(0, "xesh");
+		_KeSetUID(proc, UAC_NORMAL_USER);
+		_KeSetGID(proc, UAC_NORMAL_USER);
+		_KeCredAddSGroup(proc, ggid_misc_world);
+		_KeCredAddSGroup(proc, GROUP_NETWORK);
+		if (con != -1) {
+			_KeSetFileToProcess(con, XENEVA_STDIN, proc);
+			_KeSetFileToProcess(con, XENEVA_STDOUT, proc);
+			_KeSetFileToProcess(con, XENEVA_STDERR, proc);
+		}
+		_KeProcessLoadExec(proc, "/xesh.exe", 0, NULL);
+	}
+}
+
 typedef struct _sound_card_list {
 	char name[32];
 	int cardID;
@@ -281,17 +361,7 @@ extern "C" void main(int argc, char* argv[]) {
 	int con = _KeOpenFile("/dev/console", FILE_OPEN_READ_ONLY);
 	if (con == -1)
 		_KePrint("[init]: failed to open /dev/console \r\n");
-	proc = _KeCreateProcess(0, "xesh");
-	_KeSetUID(proc, UAC_NORMAL_USER);
-	_KeSetGID(proc, UAC_NORMAL_USER);
-	_KeCredAddSGroup(proc, ggid_misc_world);
-	_KeCredAddSGroup(proc, GROUP_NETWORK);
-	if (con != -1) {
-		_KeSetFileToProcess(con, XENEVA_STDIN, proc);
-		_KeSetFileToProcess(con, XENEVA_STDOUT, proc);
-		_KeSetFileToProcess(con, XENEVA_STDERR, proc);
-	}
-	_KeProcessLoadExec(proc, "/xesh.exe", 0, NULL);
+	init_run_term_command(ggid_misc_world, con);
 #else
 #ifndef __XENEVA_BLEED__
 	proc = _KeCreateProcess(0, "netmngr");

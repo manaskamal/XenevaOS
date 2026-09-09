@@ -24,8 +24,10 @@ set -e
 #                           instead of opening a GTK window. Ordinary builds
 #                           stop at the interactive resolution menu; bleed
 #                           selects 640x480 automatically and boots through it.
-#   --term                  Open the QEMU window with a framebuffer TTY (no
-#                           compositor). Init starts xesh.exe on /dev/console.
+#   --term [cmd args...]    Open the QEMU window with a framebuffer TTY (no
+#                           compositor). Without extra args, init starts
+#                           xesh.exe on /dev/console. With extra args, init
+#                           runs the specified app (e.g. --term ping 1.1.1.1).
 #   -h, --help              Show this help and exit.
 #
 # Known gap: x86_64 (Boot/Kernel) has no QEMU boot path here yet.
@@ -46,6 +48,7 @@ HEADLESS=0
 BLEED=0
 DIRECT_SCANOUT=0
 TERM=0
+TERM_CMD=""
 INITRD_SIZE_MB=""
 
 print_help(){
@@ -54,8 +57,8 @@ print_help(){
     printf "${STY_RST}\n"
 }
 
-for arg in "$@"; do
-    case "$arg" in
+while [ $# -gt 0 ]; do
+    case "$1" in
         --llvm) TOOLCHAIN=llvm ;;
         --gcc) TOOLCHAIN=gcc ;;
         --skip-build) SKIP_BUILD=1 ;;
@@ -65,15 +68,30 @@ for arg in "$@"; do
         --force-legacy-build) FORCE_LEGACY_BUILD=1 ;;
         --install-deps) INSTALL_DEPS=1 ;;
         --headless) HEADLESS=1 ;;
-        --term) TERM=1 ;;
-        --initrd-size-mb=*) INITRD_SIZE_MB="${arg#--initrd-size-mb=}" ;;
+        --term)
+            TERM=1
+            shift
+            # collect remaining args until next flag or end
+            TERM_CMD=""
+            while [ $# -gt 0 ] && [[ ! "$1" =~ ^-- ]]; do
+                if [ -n "$TERM_CMD" ]; then
+                    TERM_CMD="$TERM_CMD $1"
+                else
+                    TERM_CMD="$1"
+                fi
+                shift
+            done
+            continue
+            ;;
+        --initrd-size-mb=*) INITRD_SIZE_MB="${1#--initrd-size-mb=}" ;;
         -h|--help) print_help; exit 0 ;;
         *)
-            printf "${STY_RED}[$0]: Unknown option \"$arg\".${STY_RST}\n"
+            printf "${STY_RED}[$0]: Unknown option \"$1\".${STY_RST}\n"
             print_help
             exit 1
         ;;
     esac
+    shift
 done
 
 if [ "$BLEED" -eq 1 ]; then
@@ -225,20 +243,22 @@ if [ "$SKIP_BUILD" -eq 0 ]; then
         printf '%s\n' "$requested_userspace_profile" > "$USERSPACE_PROFILE_STAMP"
     fi
     if [ "$TERM" -eq 1 ]; then
-        echo "[+] Rebuilding init.exe, xesh.exe, ping.exe, and curl.exe for framebuffer TTY..."
         term_flags="-D__XENEVA_TERM__"
         if [ "$BLEED" -eq 1 ]; then
             term_flags="-D__XENEVA_BLEED__ -D__XENEVA_TERM__"
         fi
+        echo "[+] Rebuilding init.exe for framebuffer TTY..."
         ( cd "$REPO_ROOT/Process/Init" && make clean && make BLEED_FLAGS="$term_flags" llvm )
-        ( cd "$REPO_ROOT/Process/XEShell" && make clean && make llvm )
-        ( cd "$REPO_ROOT/Process/ping" && make clean && make llvm )
-        ( cd "$REPO_ROOT/Process/http" && make clean && make llvm )
         cp -f "$REPO_ROOT/Process/Init/init.exe" "$REPO_ROOT/Resources/resources/"
-        cp -f "$REPO_ROOT/Process/XEShell/xesh.exe" "$REPO_ROOT/Resources/resources/"
-        cp -f "$REPO_ROOT/Process/ping/ping.exe" "$REPO_ROOT/Resources/resources/"
-        cp -f "$REPO_ROOT/Process/http/curl.exe" "$REPO_ROOT/Resources/resources/"
-        rm -f "$REPO_ROOT/Resources/resources/http.exe"
+        if [ -n "$TERM_CMD" ]; then
+            echo "[+] Writing /shell.cnf -> \"$TERM_CMD\""
+            printf '%s\n' "$TERM_CMD" > "$REPO_ROOT/Resources/resources/shell.cnf"
+        else
+            echo "[+] No command specified, init will launch xesh.exe"
+            rm -f "$REPO_ROOT/Resources/resources/shell.cnf"
+            ( cd "$REPO_ROOT/Process/XEShell" && make clean && make llvm )
+            cp -f "$REPO_ROOT/Process/XEShell/xesh.exe" "$REPO_ROOT/Resources/resources/"
+        fi
     fi
 else
     echo "[+] --skip-build passed, reusing existing build artifacts."
