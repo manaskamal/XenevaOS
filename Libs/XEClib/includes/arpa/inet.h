@@ -44,6 +44,8 @@ XE_EXTERN {
 	XE_LIB uint16_t ntohs(uint16_t netshort);
 	XE_LIB in_addr_t inet_addr(const char* in);
 	XE_LIB char* inet_ntoa(struct in_addr in);
+	XE_LIB int inet_pton(int af, const char* src, void* dst);
+	XE_LIB const char* inet_ntop(int af, const void* src, char* dst, size_t size);
 
 #ifdef __cplusplus
 }

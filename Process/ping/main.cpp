@@ -63,99 +63,80 @@ static uint16_t ICMPCalculateChecksum(char* payload, size_t len) {
 	return ~(sum & UINT16_MAX) & UINT16_MAX;
 }
 
-/*
-* main -- main entry
-*/
-int main(int argc, char* argv[]) {
-	printf("\n");
-	const char* host = NULL;
-	for (int i = 0; i < argc; i++) {
-		if (!argv[i] || argv[i][0] == '\0')
-			continue;
-		if (argv[i][0] == '/' || strstr(argv[i], ".exe"))
-			continue;
-		host = argv[i];
-		break;
-	}
-	if (!host) {
-		printf("usage: ping <host>\n");
-		printf("  ping 10.0.2.2\n");
-		printf("  ping 8.8.8.8\n");
-		printf("  ping www.getxeneva.com\n");
-		return 1;
-	}
+static void print_usage(void) {
+	printf("usage: ping [-6] <host>\n");
+	printf("  ping 10.0.2.2\n");
+	printf("  ping 8.8.8.8\n");
+	printf("  ping www.getxeneva.com\n");
+	printf("  ping -6 2606:4700:4700::1111\n");
+	printf("  ping -6 fd00::2\n");
+}
 
+static int host_looks_ipv6(const char* host) {
+	return host && strchr(host, ':') != NULL;
+}
+
+static int ping4(const char* host) {
 	char* s = (char*)malloc(strlen(host) + 1);
+	hostent* ent;
+	char* addr;
+	uint32_t ipaddr;
+	int sock;
+	sockaddr_in dest;
+	ICMPHeader* ping;
+	int response_recved = 0;
+	char* data;
+	int pings_sent = 0;
+	sockaddr_in src;
+	socklen_t src_sz = 0;
+	size_t len = 0;
+	int timeout;
+
 	if (!s)
 		return 1;
 	strcpy(s, host);
 
-	hostent* ent = gethostbyname(s);
+	ent = gethostbyname(s);
 	if (!ent) {
 		printf("ping: unknown host %s\n", s);
 		free(s);
 		return 1;
 	}
 
-	char* addr = inet_ntoa(*(struct in_addr*)ent->h_addr_list[0]);
+	addr = inet_ntoa(*(struct in_addr*)ent->h_addr_list[0]);
+	ipaddr = *(uint32_t*)ent->h_addr_list[0];
 
-	uint32_t ipaddr = *(uint32_t*)ent->h_addr_list[0];
-	in_addr inaddr;
-	inaddr.s_addr = ipaddr;
-
-	/*char request[] = "GET / HTTP/1.1\r\nHost:google.com\r\nConnection: close\r\n\r\n";
-	
-	int sock = socket(AF_INET, SOCK_STREAM, 0);
-	sockaddr_in server_addr;
-	server_addr.sin_family = AF_INET;
-	server_addr.sin_port = htons(80);
-	memcpy(&server_addr.sin_addr, &ipaddr, sizeof(uint32_t));
-	printf("server port -> %d \n", server_addr.sin_port);
-	if (connect(sock, (sockaddr_*)&server_addr, sizeof(server_addr)) < 0) {
-		printf("error connecting to %s \n", s);
-		return 0;
-	}
-	
-	printf("TCP connection to %s successfull \n", s);*/
-	int sock = socket(AF_INET, SOCK_DGRAM, IPPROTOCOL_ICMP);
-
+	sock = socket(AF_INET, SOCK_DGRAM, IPPROTOCOL_ICMP);
 	if (sock < 0) {
 		fprintf(stderr, "ping: failed to create socket \n");
+		free(s);
 		return 1;
 	}
 
-	sockaddr_in dest;
+	memset(&dest, 0, sizeof(dest));
 	dest.sin_family = AF_INET;
 	dest.sin_addr.s_addr = htonl(ipaddr);
 
-	in_addr ad;
-	ad.s_addr = dest.sin_addr.s_addr;
 	printf("ping: %s address : %s \n", s, addr);
 
-	ICMPHeader* ping = (ICMPHeader*)malloc(BYTES_TO_SEND);
+	ping = (ICMPHeader*)malloc(BYTES_TO_SEND);
 	memset(ping, 0, BYTES_TO_SEND);
 	ping->type = 8;
 	ping->code = 0;
 	ping->identifier = 0;
 	ping->sequenceNum = 0;
 
-	for (int i = 0; i < BYTES_TO_SEND - 8; ++i) {
-		ping->payload[i] = i;
-	}
+	for (int i = 0; i < BYTES_TO_SEND - 8; ++i)
+		ping->payload[i] = (uint8_t)i;
 
-	int response_recved = 0;
-	char* data = (char*)malloc(4096);
+	data = (char*)malloc(4096);
 	memset(data, 0, 4096);
-	int pings_sent = 0;
-	sockaddr_in src;
-	socklen_t src_sz = 0;
-	size_t len = 0;
-	int timeout = 1000;
+
 	while (1) {
 		if (response_recved == 5)
 			break;
 
-		ping->sequenceNum = htons(pings_sent + 1);
+		ping->sequenceNum = htons((uint16_t)(pings_sent + 1));
 		ping->checksum = 0;
 		ping->checksum = htons(ICMPCalculateChecksum((char*)ping, BYTES_TO_SEND));
 
@@ -177,7 +158,7 @@ int main(int argc, char* argv[]) {
 				if (icmp->type == 0) {
 					char* from = inet_ntoa(src.sin_addr);
 					printf(
-						"%d bytes from %s : sequence= %d \n", len, from, ntohs(icmp->sequenceNum));
+						"%d bytes from %s : sequence= %d \n", (int)len, from, ntohs(icmp->sequenceNum));
 					response_recved++;
 					break;
 				}
@@ -190,5 +171,168 @@ int main(int argc, char* argv[]) {
 	printf("---statistics----: %s \n", s);
 	printf("%d packets sent, %d packets received \n", pings_sent, response_recved);
 	_KeCloseFile(sock);
+	free(ping);
+	free(data);
+	free(s);
 	return 0;
+}
+
+static int ping6(const char* host) {
+	struct in6_addr addr6;
+	char addrstr[64];
+	int sock;
+	sockaddr_in6 dest;
+	ICMPHeader* ping;
+	int response_recved = 0;
+	char* data;
+	int pings_sent = 0;
+	sockaddr_in6 src;
+	socklen_t src_sz = 0;
+	ssize_t len = 0;
+	int timeout;
+
+	memset(&addr6, 0, sizeof(addr6));
+	if (inet_pton(AF_INET6, host, &addr6) != 1) {
+		printf("ping: invalid IPv6 address %s\n", host);
+		return 1;
+	}
+
+	if (!inet_ntop(AF_INET6, &addr6, addrstr, sizeof(addrstr)))
+		strcpy(addrstr, host);
+
+	sock = socket(AF_INET6, SOCK_DGRAM, IPPROTOCOL_ICMPV6);
+	if (sock < 0) {
+		fprintf(stderr, "ping: failed to create IPv6 ICMP socket\n");
+		return 1;
+	}
+
+	memset(&dest, 0, sizeof(dest));
+	dest.sin6_family = AF_INET6;
+	dest.sin6_port = 0;
+	dest.sin6_flowinfo = 0;
+	dest.sin6_scope_id = 0;
+	memcpy(dest.sin6_addr.s6_addr, addr6.s6_addr, 16);
+
+	printf("ping: %s address : %s\n", host, addrstr);
+
+	ping = (ICMPHeader*)malloc(BYTES_TO_SEND);
+	if (!ping) {
+		_KeCloseFile(sock);
+		return 1;
+	}
+	memset(ping, 0, BYTES_TO_SEND);
+	ping->type = ICMPV6_ECHO_REQUEST;
+	ping->code = 0;
+	ping->identifier = htons(0x5845); /* 'XE' */
+	ping->sequenceNum = 0;
+	/* Leave checksum 0 — kernel fills IPv6 pseudo-header checksum */
+	ping->checksum = 0;
+
+	for (int i = 0; i < BYTES_TO_SEND - 8; ++i)
+		ping->payload[i] = (uint8_t)i;
+
+	data = (char*)malloc(4096);
+	if (!data) {
+		free(ping);
+		_KeCloseFile(sock);
+		return 1;
+	}
+	memset(data, 0, 4096);
+
+	while (1) {
+		if (response_recved == 5)
+			break;
+
+		ping->sequenceNum = htons((uint16_t)(pings_sent + 1));
+		ping->checksum = 0;
+
+		if (sendto(sock, (void*)ping, BYTES_TO_SEND, 0, (sockaddr*)&dest, sizeof(sockaddr_in6)) <
+			0) {
+			printf("failed to send icmpv6 data\n");
+			break;
+		}
+
+		pings_sent++;
+
+		src_sz = sizeof(sockaddr_in6);
+		timeout = 1000;
+		while (timeout--) {
+			len = recvfrom(sock, data, 4096, 0, (sockaddr*)&src, &src_sz);
+
+			if (len > 0) {
+				ICMPHeader* icmp = (ICMPHeader*)data;
+				if (icmp->type == ICMPV6_ECHO_REPLY) {
+					char from[64];
+					if (!inet_ntop(AF_INET6, src.sin6_addr.s6_addr, from, sizeof(from)))
+						strcpy(from, "?");
+					printf("%d bytes from %s : sequence= %d\n",
+						   (int)len,
+						   from,
+						   ntohs(icmp->sequenceNum));
+					response_recved++;
+					break;
+				}
+			}
+			_KeProcessSleep(10);
+		}
+		sleep(1);
+	}
+
+	printf("---statistics----: %s\n", host);
+	printf("%d packets sent, %d packets received\n", pings_sent, response_recved);
+	_KeCloseFile(sock);
+	free(ping);
+	free(data);
+	return 0;
+}
+
+/*
+* main -- main entry
+*
+* Aurora argv layout varies by launcher:
+*   Init/--term: argv[0] is the first user arg (command name already stripped)
+*   XEShell:     same — LoadExec receives only trailing args
+*   Some loaders may still pass the executable path as argv[0]
+* So scan from argv[0], skip paths/.exe, then accept -6/-4 and the host.
+*/
+int main(int argc, char* argv[]) {
+	printf("\n");
+	const char* host = NULL;
+	int use_ipv6 = 0;
+
+	for (int i = 0; i < argc; i++) {
+		if (!argv[i] || argv[i][0] == '\0')
+			continue;
+		/* Skip executable path / name if present */
+		if (argv[i][0] == '/' || strstr(argv[i], ".exe") || strcmp(argv[i], "ping") == 0)
+			continue;
+		if (strcmp(argv[i], "-6") == 0) {
+			use_ipv6 = 1;
+			continue;
+		}
+		if (strcmp(argv[i], "-4") == 0) {
+			use_ipv6 = 0;
+			continue;
+		}
+		if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "--help") == 0) {
+			print_usage();
+			return 0;
+		}
+		if (argv[i][0] == '-') {
+			printf("ping: unknown option %s\n", argv[i]);
+			print_usage();
+			return 1;
+		}
+		host = argv[i];
+		break;
+	}
+
+	if (!host) {
+		print_usage();
+		return 1;
+	}
+
+	if (use_ipv6 || host_looks_ipv6(host))
+		return ping6(host);
+	return ping4(host);
 }
