@@ -185,9 +185,12 @@ void IPV6SendPacket(IPv6Header* packet, AuVFSNode* nic) {
 
 		cache = AuNDGet(&next_hop);
 		if (!cache) {
+			/*
+			 * Fire NS but do not block the sender (ARP-style sleep inflated
+			 * ping RTT by ~100ms+). Retry cache once; else broadcast MAC —
+			 * QEMU/user-net still delivers; NA will fill the cache for later.
+			 */
 			AuNDRequestMAC(nic, &next_hop);
-			AuSleepThread(AuGetCurrentThread(), 100);
-			AuForceScheduler();
 			cache = AuNDGet(&next_hop);
 		}
 

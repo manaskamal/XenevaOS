@@ -140,7 +140,8 @@ static int AuICMPv6Receive(AuSocket* sock, msghdr* msg, int flags) {
 		name->sin6_port = 0;
 		name->sin6_flowinfo = 0;
 		memcpy(name->sin6_addr.s6_addr, src->srcIP.s6_addr, 16);
-		name->sin6_scope_id = 0;
+		/* Carry hop limit for ping (same idea as IPv4 sin_zero[0] = TTL) */
+		name->sin6_scope_id = src->hopLimit;
 		msg->msg_namelen = sizeof(sockaddr_in6);
 	}
 

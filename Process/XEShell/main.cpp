@@ -95,11 +95,11 @@ void XEShellWriteCurrentDir() {
 void XEShellSpawn(char* string) {
 	if ((strlen(string)) > 0) {
 		/* allocate separate memories for each strings */
-		char filename[32];
-		char arguments[32];
+		char filename[64];
+		char arguments[128];
 		char execname[32];
-		memset(arguments, 0, 32);
-		memset(execname, 0, 32);
+		memset(arguments, 0, sizeof(arguments));
+		memset(execname, 0, sizeof(execname));
 
 		/* _first_string_skipped is only for executable
 		 * name thats why we skip early character counting */
@@ -123,7 +123,7 @@ void XEShellSpawn(char* string) {
 					argcount += 1;
 				}
 				j = 0;
-				memset(arguments, 0, 32);
+				memset(arguments, 0, sizeof(arguments));
 
 				if (!_first_string_skipped)
 					_first_string_skipped = true;
@@ -131,16 +131,19 @@ void XEShellSpawn(char* string) {
 				continue;
 			}
 			if (_first_string_skipped) {
-				arguments[j] = string[i];
-				j++;
+				if (j < (int)sizeof(arguments) - 1) {
+					arguments[j] = string[i];
+					j++;
+				}
 			}
 
 			if (!_first_string_skipped) {
-				execname[i] = string[i];
+				if (i < (int)sizeof(execname) - 1)
+					execname[i] = string[i];
 			}
 		}
 
-		memset(filename, 0, 32);
+		memset(filename, 0, sizeof(filename));
 		strcpy(filename, currentDirectory);
 		strcpy(filename + 1, execname);
 		strcpy(filename + 1 + strlen(execname), ".exe");

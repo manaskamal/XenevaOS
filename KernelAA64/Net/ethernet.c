@@ -115,7 +115,6 @@ void AuEthernetSend(AuVFSNode* nic, void* data, size_t len, uint16_t type, uint8
 	uint8_t* src_mac = ndev->mac;
 	memcpy(&pacl->src, src_mac, 6);
 	pacl->typeLen = htons(type);
-	UARTDebugOut("PaclTypelen : %d \r\n", pacl->typeLen);
 	if (nic->write)
 		nic->write(nic, nic, (uint64_t*)pacl, totalSz);
 
