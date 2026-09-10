@@ -1,7 +1,7 @@
 /**
 * BSD 2-Clause License
 *
-* Copyright (c) 2022-2024, Manas Kamal Choudhury
+* Copyright (c) 2022-2025, Manas Kamal Choudhury
 * All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
@@ -27,44 +27,36 @@
 *
 **/
 
-#ifndef __UDP_H__
-#define __UDP_H__
+#ifndef __ICMPV6_H__
+#define __ICMPV6_H__
 
-#include <list.h>
 #include <Net/ipv6.h>
+#include <Fs/vfs.h>
 
-#ifdef ARCH_X64
+#define ICMPV6_ECHO_REQUEST 128
+#define ICMPV6_ECHO_REPLY   129
+#define ICMPV6_ND_RS        133
+#define ICMPV6_ND_RA        134
+#define ICMPV6_ND_NS        135
+#define ICMPV6_ND_NA        136
+
+#if defined(ARCH_X64) || defined(ARCH_ARM64)
 #pragma pack(push,1)
 #endif
-typedef struct _udpheader_ {
-	unsigned short srcPort;
-	unsigned short destPort;
-	unsigned short length;
-	unsigned short checksum;
-	unsigned char payload[];
-}UDPHeader;
-#ifdef ARCH_X64
+typedef struct _icmpv6_head_ {
+	uint8_t type;
+	uint8_t code;
+	uint16_t checksum;
+	uint16_t identifier;
+	uint16_t sequenceNum;
+	uint8_t payload[];
+} ICMPv6Header;
+#if defined(ARCH_X64) || defined(ARCH_ARM64)
 #pragma pack(pop)
 #endif
 
-/*
-* CreateUDPSocket -- create a new UDP
-* socket
-*/
-extern int CreateUDPSocket();
-
-/*
- * UDPSocketInstall -- initialize the UDP socket
- */
-extern void UDPProtocolInstall();
-
-/*
- * UDPProtocolGetSockList -- returns the socket
- * list
- */
-extern list_t* UDPProtocolGetSockList();
-
-extern void UDPHandlePacket(char* packet);
-extern void UDPHandlePacket6(IPv6Header* ipv6);
+extern void ICMPv6Initialise();
+extern void AuICMPv6Handle(IPv6Header* ipv6, AuVFSNode* nic);
+extern int CreateICMPv6Socket();
 
 #endif
