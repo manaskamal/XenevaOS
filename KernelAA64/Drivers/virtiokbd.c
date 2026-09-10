@@ -41,8 +41,8 @@
 #include <Hal/AA64/sched.h>
 #include <string.h>
 
-struct VirtioQueue* queue;
-struct VirtioInputEvent* input;
+volatile struct VirtioQueue* queue;
+volatile struct VirtioInputEvent* input;
 static uint16_t index;
 static int queueSize;
 static struct VirtioCommonCfg* _kybrdCfg;
@@ -74,7 +74,6 @@ void AuVirtioKbdHandler(int spinum) {
 		uint16_t buf_id;
 		uint16_t avail;
 		struct VirtioInputEvent evt;
-
 		dc_ivac((uint64_t)&queue->used.ring[slot]);
 		dc_ivac((uint64_t)&input[slot]);
 		dsb_sy_barrier();
@@ -219,7 +218,7 @@ void AuVirtioKbdInitialize(uint64_t device) {
 
 	uint64_t queuePhys = (uint64_t)
 		AuPmmngrAllocPage(AURORA_PAGE_NORMAL); //AuPmmngrAllocBlocks(((sizeof(struct VirtioQueue) * queueSz))/0x1000);
-	queue = (struct VirtioQueue*)AuMapMMIO(queuePhys,
+	queue = (volatile struct VirtioQueue*)AuMapMMIO(queuePhys,
 										   1 /*((sizeof(struct VirtioQueue)*queueSz))/0x1000*/);
 
 	size_t desc_size = queueSz * sizeof(struct VirtioQueue);
@@ -233,7 +232,7 @@ void AuVirtioKbdInitialize(uint64_t device) {
 	dsb_ish();
 
 	uint64_t bufferBase = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
-	input = (struct VirtioInputEvent*)AuMapMMIO(bufferBase, 1);
+	input = (volatile struct VirtioInputEvent*)AuMapMMIO(bufferBase, 1);
 
 	for (int i = 0; i < queueSz; ++i) {
 		queue->buffers[i].Addr = bufferBase + i * sizeof(struct VirtioInputEvent);

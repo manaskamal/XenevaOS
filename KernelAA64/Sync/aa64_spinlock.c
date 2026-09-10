@@ -28,6 +28,7 @@
 
 #include <Sync/spinlock.h>
 #include <_null.h>
+#include <Mm/kmalloc.h>
 #if defined(__GNUC__) || defined(__clang__)
 #include <stdbool.h>
 #endif
@@ -45,9 +46,13 @@ static uint8_t early_spinlock_cnt = 0;
  * @param early -- if true, use a static early spinlock (no kmalloc dependency)
  */
 AU_EXTERN AU_EXPORT Spinlock* AuCreateSpinlock(bool early) {
+	Spinlock* spinlock = NULL;
 	if (early && early_spinlock_cnt < 8) {
 		early_spin[early_spinlock_cnt].value = 0;
 		return &early_spin[early_spinlock_cnt++];
+	}else {
+		spinlock = (Spinlock*)kmalloc(sizeof(Spinlock));
+		spinlock->value = 0;
 	}
 	return NULL;
 }
@@ -63,6 +68,8 @@ AU_EXTERN AU_EXPORT void AuDeleteSpinlock(Spinlock* lock) {
  * AuAcquireSpinlock -- acquire spinlock via AArch64 WFE-based primitive
  */
 AU_EXTERN AU_EXPORT void AuAcquireSpinlock(Spinlock* lock) {
+	if (!lock)
+	   return;
 	aa64_spinlock_acquire((uint32_t*)&lock->value);
 }
 
@@ -70,5 +77,7 @@ AU_EXTERN AU_EXPORT void AuAcquireSpinlock(Spinlock* lock) {
  * AuReleaseSpinlock -- release spinlock via AArch64 STLR
  */
 AU_EXTERN AU_EXPORT void AuReleaseSpinlock(Spinlock* lock) {
+	if (!lock)
+	   return;
 	aa64_spinlock_release((uint32_t*)&lock->value);
 }

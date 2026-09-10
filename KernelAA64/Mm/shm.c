@@ -224,7 +224,6 @@ extern void envmdebug();
 void* AuSHMObtainMem(AuProcess* proc, uint16_t id, void* shmaddr, int shmflg) {
 	//AuAcquireSpinlock(shmlock);
 	AuSHM* mem = NULL;
-
 	/* search for shm memory segment */
 	mem = AuGetSHMByID(id);
 

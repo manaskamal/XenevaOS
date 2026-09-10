@@ -219,6 +219,8 @@ void AuDevInputInitialise() {
 	void* keybuf = kmalloc(sizeof(AuInputMessage));
 	memset(keybuf, 0, sizeof(AuInputMessage));
 
+	kbd_r = kbd_w = 0;
+	
 	kybrd_ = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
 	memset(kybrd_, 0, sizeof(AuVFSNode));
 	strcpy(kybrd_->filename, "kybrd");

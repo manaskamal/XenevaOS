@@ -54,6 +54,7 @@
 #define GROUP_AUDIO	  21
 #define GROUP_NETWORK 23
 
+
 /** hardcoded untill we get proper
  * login manager
  */
@@ -215,6 +216,7 @@ void _init_handle_request(InitRequestMsg* msg) {
 		// no return
 	}
 }
+
 
 /*
  * _main -- main entry point
