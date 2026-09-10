@@ -348,6 +348,24 @@ static int AuVirtioNetIOCtl(AuVFSNode* file, int code, void* arg) {
 	case AUNET_GET_LINK_STATUS:
 		memcpy(arg, &ndev->linkStatus, sizeof(ndev->linkStatus));
 		return 0;
+	case AUNET_GET_IPV6_ADDRESS:
+		memcpy(arg, &ndev->ipv6addr, sizeof(ndev->ipv6addr));
+		return 0;
+	case AUNET_SET_IPV6_ADDRESS:
+		memcpy(&ndev->ipv6addr, arg, sizeof(ndev->ipv6addr));
+		return 0;
+	case AUNET_GET_IPV6_GATEWAY:
+		memcpy(arg, &ndev->ipv6gateway, sizeof(ndev->ipv6gateway));
+		return 0;
+	case AUNET_SET_IPV6_GATEWAY:
+		memcpy(&ndev->ipv6gateway, arg, sizeof(ndev->ipv6gateway));
+		return 0;
+	case AUNET_GET_IPV6_PREFIX:
+		memcpy(arg, &ndev->ipv6prefixLen, sizeof(ndev->ipv6prefixLen));
+		return 0;
+	case AUNET_SET_IPV6_PREFIX:
+		memcpy(&ndev->ipv6prefixLen, arg, sizeof(ndev->ipv6prefixLen));
+		return 0;
 	default:
 		return 1;
 	}
@@ -455,6 +473,14 @@ void AuVirtioNetInitialize(uint64_t device) {
 	ndev->ipv4gateway = MAKE_IP(10, 0, 2, 2);
 	ndev->ipv4subnet = MAKE_IP(255, 255, 255, 0);
 	ndev->dns_ipv4_1 = MAKE_IP(10, 0, 2, 3);
+	/* QEMU user-net style ULA defaults (mirror IPv4 10.0.2.x) */
+	ndev->ipv6addr.s6_addr[0] = 0xfd;
+	ndev->ipv6addr.s6_addr[1] = 0x00;
+	ndev->ipv6addr.s6_addr[15] = 0x15;
+	ndev->ipv6gateway.s6_addr[0] = 0xfd;
+	ndev->ipv6gateway.s6_addr[1] = 0x00;
+	ndev->ipv6gateway.s6_addr[15] = 0x02;
+	ndev->ipv6prefixLen = 64;
 	for (int i = 0; i < 6; i++) {
 		AuTextOut("%x::", netcfg->mac[i]);
 		ndev->mac[i] = netcfg->mac[i];

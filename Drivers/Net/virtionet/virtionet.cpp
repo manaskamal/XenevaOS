@@ -348,6 +348,24 @@ static int AuVirtioNetIOCtl(AuVFSNode* file, int code, void* arg) {
 	case AUNET_GET_LINK_STATUS:
 		memcpy(arg, &ndev->linkStatus, sizeof(ndev->linkStatus));
 		return 0;
+	case AUNET_GET_IPV6_ADDRESS:
+		memcpy(arg, &ndev->ipv6addr, sizeof(ndev->ipv6addr));
+		return 0;
+	case AUNET_SET_IPV6_ADDRESS:
+		memcpy(&ndev->ipv6addr, arg, sizeof(ndev->ipv6addr));
+		return 0;
+	case AUNET_GET_IPV6_GATEWAY:
+		memcpy(arg, &ndev->ipv6gateway, sizeof(ndev->ipv6gateway));
+		return 0;
+	case AUNET_SET_IPV6_GATEWAY:
+		memcpy(&ndev->ipv6gateway, arg, sizeof(ndev->ipv6gateway));
+		return 0;
+	case AUNET_GET_IPV6_PREFIX:
+		memcpy(arg, &ndev->ipv6prefixLen, sizeof(ndev->ipv6prefixLen));
+		return 0;
+	case AUNET_SET_IPV6_PREFIX:
+		memcpy(&ndev->ipv6prefixLen, arg, sizeof(ndev->ipv6prefixLen));
+		return 0;
 	default:
 		return 1;
 	}
