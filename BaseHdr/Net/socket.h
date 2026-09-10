@@ -38,6 +38,7 @@
 #define AF_UNSPEC 0
 #define AF_INET 1
 #define AF_RAW 2
+#define AF_INET6 3
 
 #define SOCK_STREAM 1
 #define SOCK_DGRAM  2
@@ -46,6 +47,7 @@
 #define IPPROTOCOL_ICMP 1
 #define IPPROTOCOL_TCP  6
 #define IPPROTOCOL_UDP  17
+#define IPPROTOCOL_ICMPV6 58
 
 /* IO Control Codes */
 //Routing Table codes
@@ -133,6 +135,18 @@ typedef struct _sockaddr_in_ {
 	struct in_addr sin_addr;
 	char sin_zero[8];
 }sockaddr_in;
+
+struct in6_addr {
+	uint8_t s6_addr[16];
+};
+
+typedef struct _sockaddr_in6_ {
+	short sin6_family;
+	unsigned short sin6_port;
+	uint32_t sin6_flowinfo;
+	struct in6_addr sin6_addr;
+	uint32_t sin6_scope_id;
+}sockaddr_in6;
 
 
 extern AuSocket* AuNetCreateSocket();

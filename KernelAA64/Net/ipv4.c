@@ -141,8 +141,6 @@ void IPV4SendPacket(IPv4Header* packet, AuVFSNode* nic) {
 
 	uint32_t ip_dest = packet->destAddress;
 
-	UARTDebugOut("[aurora]: IPV4 Sending %x\r\n", nic->device);
-
 	/* Decide which data link layer to use for
 	   forwarding this packet*/
 	if (ndev->type == NETDEV_TYPE_ETHERNET) {
@@ -150,28 +148,16 @@ void IPV4SendPacket(IPv4Header* packet, AuVFSNode* nic) {
 		if (!ndev->ipv4subnet ||
 			((ip_dest & ndev->ipv4subnet) != (ndev->ipv4addr & ndev->ipv4subnet))) {
 			ip_dest = ndev->ipv4gateway;
-			ip_ntoa(ip_dest);
 			cache = AuARPGet(ip_dest);
 			if (!cache) {
+				/* Non-blocking: sleep-wait here added ~100ms to ping RTT */
 				AuARPRequestMAC(nic, ip_dest);
-				UARTDebugOut("[aurora]:Requesting MAC #1 \r\n");
-
-				/* Not implemented yet */
-				AuSleepThread(AuGetCurrentThread(), 100);
-				AuForceScheduler();
-
 				cache = AuARPGet(ip_dest);
 			}
 		} else {
 			cache = AuARPGet(ip_dest);
 			if (!cache) {
 				AuARPRequestMAC(nic, ip_dest);
-				UARTDebugOut("[aurora]: Requesting MAC #2\r\n");
-
-				/* Not implemented yet */
-				AuSleepThread(AuGetCurrentThread(), 100);
-				AuForceScheduler();
-				UARTDebugOut("Rechecking ARP \r\n");
 				cache = AuARPGet(ip_dest);
 			}
 		}

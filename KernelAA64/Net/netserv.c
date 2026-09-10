@@ -48,7 +48,6 @@ int NetSend(int sockfd, msghdr* msg, int flags) {
 	}
 	AuVFSNode* node = proc->fds[sockfd];
 	AuSocket* sock = (AuSocket*)node->device;
-	UARTDebugOut("[NetSend]: sock : %x , send: %x\r\n", sock, sock->send);
 	if (!sock)
 		return -1;
 	if (sock->send)
