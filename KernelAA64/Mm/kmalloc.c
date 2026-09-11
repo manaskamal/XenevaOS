@@ -38,6 +38,7 @@
 #include <Mm/pmmngr.h>
 #include <Sync/spinlock.h>
 #include <aucon.h>
+#include <Hal/AA64/aa64lowlevel.h>
 
 /* ---- Brk pointer for the TLSF pool ---- */
 static uint64_t _brk_current = KERNEL_BASE_ADDRESS;
@@ -110,21 +111,39 @@ void* kmalloc(unsigned int size) {
 	if (!g_kheap || !size)
 		return NULL;
 
+	/* The heap spinlock does not mask IRQs. A timer tick in the middle of
+	 * tlsf_malloc/free can schedule another thread that also kmallocs, or
+	 * an IRQ path can re-enter TLSF, and the free-list walks off into
+	 * payload bytes (the "ctrl.exe" next_free smash). Save DAIF and keep
+	 * the allocator atomic on this CPU. --axiss */
+	uint64_t daif = read_daif();
+	mask_irqs();
 	AuAcquireSpinlock(g_heap_lock);
-
 	void* ptr = tlsf_malloc(g_kheap, size);
+	AuReleaseSpinlock(g_heap_lock);
+	restore_daif(daif);
 
 	if (!ptr) {
-		/* Pool exhausted so grow by 32 pages (128 KiB) and retry */
+		/* Pool exhausted, grow by 32 pages (128 KiB) and retry. This has to
+		 * happen outside the lock/mask above: au_request_page walks the
+		 * physical allocator and page tables once per page, which is slow
+		 * enough (under QEMU/TCG especially) that doing it with IRQs
+		 * masked was stalling the *entire system's* timer tick for several
+		 * ms every time the heap grew -- visible as system-wide stutter,
+		 * not just a slow allocation. Only the actual free-list surgery
+		 * (tlsf_add_memory/tlsf_malloc) needs the lock+mask --axiss */
 		size_t more_pages = 32;
 		void* more_mem = au_request_page(more_pages);
 		if (more_mem) {
+			uint64_t daif2 = read_daif();
+			mask_irqs();
+			AuAcquireSpinlock(g_heap_lock);
 			tlsf_add_memory(g_kheap, more_mem, more_pages * 4096);
+			ptr = tlsf_malloc(g_kheap, size);
+			AuReleaseSpinlock(g_heap_lock);
+			restore_daif(daif2);
 		}
-		ptr = tlsf_malloc(g_kheap, size);
 	}
-
-	AuReleaseSpinlock(g_heap_lock); //might have to rewrite spinlock, right now its basic to prevent blocking at early stage of kernel init, but should be more robust for SMP safety --axiss
 
 	return ptr;
 }
@@ -133,30 +152,40 @@ void kfree(void* ptr) {
 	if (!ptr || !g_kheap)
 		return;
 
+	uint64_t daif = read_daif();
+	mask_irqs();
 	AuAcquireSpinlock(g_heap_lock);
 	tlsf_free(g_kheap, ptr);
 	AuReleaseSpinlock(g_heap_lock);
+	restore_daif(daif);
 }
 
 void* krealloc(void* ptr, unsigned int new_size) {
 	if (!g_kheap)
 		return NULL;
 
+	uint64_t daif = read_daif();
+	mask_irqs();
 	AuAcquireSpinlock(g_heap_lock);
-
 	void* result = tlsf_realloc(g_kheap, ptr, new_size);
+	AuReleaseSpinlock(g_heap_lock);
+	restore_daif(daif);
 
 	if (!result && new_size > 0) {
-		/* Pool exhausted — grow and retry */
+		/* see kmalloc: grow outside the lock/mask, only the free-list
+		 * surgery needs it --axiss */
 		size_t more_pages = 32;
 		void* more_mem = au_request_page(more_pages);
 		if (more_mem) {
+			uint64_t daif2 = read_daif();
+			mask_irqs();
+			AuAcquireSpinlock(g_heap_lock);
 			tlsf_add_memory(g_kheap, more_mem, more_pages * 4096);
+			result = tlsf_realloc(g_kheap, ptr, new_size);
+			AuReleaseSpinlock(g_heap_lock);
+			restore_daif(daif2);
 		}
-		result = tlsf_realloc(g_kheap, ptr, new_size);
 	}
-
-	AuReleaseSpinlock(g_heap_lock);
 
 	return result;
 }

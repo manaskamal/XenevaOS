@@ -112,43 +112,87 @@ EFI_STATUS XEInitialiseLib(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable
 }
 
 typedef struct {
-	CHAR16* Label;
+	CHAR16 Label[24];
 	UINT32 Width;
 	UINT32 Height;
 } MENU_ITEM;
 
-MENU_ITEM MenuItem[] = {{(CHAR16*)L"640x480", 640, 480},
-						{(CHAR16*)L"1024x768", 1024, 768},
-						{(CHAR16*)L"1280x1024", 1280, 1024},
-						{(CHAR16*)L"1920x1080", 1920, 1080}};
+#define RES_MENU_MAX 12
 
-#define MENU_SIZE (sizeof(MenuItem) / sizeof(MenuItem[0]))
+static MENU_ITEM MenuItem[RES_MENU_MAX];
+static UINTN MenuItemCount = 0;
 
-static bool XEGetSupportedMenuModes(bool* supported) {
+static void XEUintToChar16(UINT32 value, CHAR16* buf) {
+	CHAR16 tmp[12];
+	UINTN i = 0;
+	if (value == 0) {
+		buf[0] = L'0';
+		buf[1] = L'\0';
+		return;
+	}
+	while (value > 0) {
+		tmp[i++] = (CHAR16)(L'0' + (value % 10));
+		value /= 10;
+	}
+	UINTN j = 0;
+	while (i > 0)
+		buf[j++] = tmp[--i];
+	buf[j] = L'\0';
+}
+
+static void XEFormatResolutionLabel(CHAR16* dest, UINT32 w, UINT32 h) {
+	CHAR16 wbuf[12], hbuf[12];
+	XEUintToChar16(w, wbuf);
+	XEUintToChar16(h, hbuf);
+	UINTN idx = 0;
+	for (UINTN i = 0; wbuf[i]; i++)
+		dest[idx++] = wbuf[i];
+	dest[idx++] = L'x';
+	for (UINTN i = 0; hbuf[i]; i++)
+		dest[idx++] = hbuf[i];
+	dest[idx] = L'\0';
+}
+
+/*
+ * XEDiscoverGraphicsModes -- build the resolution menu from every mode the
+ * firmware's GOP actually reports, instead of a hardcoded guess list that
+ * could offer resolutions the firmware doesn't have (1280x1024, 1920x1080
+ * were never in QEMU's edk2-aarch64 GOP mode list, hence permanently
+ * "unavailable") while omitting ones it does (800x600) --axiss
+ */
+static void XEDiscoverGraphicsModes() {
+	MenuItemCount = 0;
 	EFI_GRAPHICS_OUTPUT_PROTOCOL* graphicsOutput = nullptr;
 	EFI_GUID gopGuid = EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID;
 	EFI_STATUS status = gBS->LocateProtocol(&gopGuid, NULL, (VOID**)&graphicsOutput);
 	if (EFI_ERROR(status) || !graphicsOutput || !graphicsOutput->Mode)
-		return false;
+		return;
 
-	bool anySupported = false;
-	for (UINTN mode = 0; mode < graphicsOutput->Mode->MaxMode; mode++) {
+	for (UINTN mode = 0; mode < graphicsOutput->Mode->MaxMode && MenuItemCount < RES_MENU_MAX;
+		 mode++) {
 		EFI_GRAPHICS_OUTPUT_MODE_INFORMATION* info = nullptr;
 		UINTN infoSize = 0;
 		status = graphicsOutput->QueryMode(graphicsOutput, mode, &infoSize, &info);
 		if (!EFI_ERROR(status) && info) {
-			for (UINTN item = 0; item < MENU_SIZE; item++) {
-				if (info->HorizontalResolution == MenuItem[item].Width &&
-					info->VerticalResolution == MenuItem[item].Height) {
-					supported[item] = true;
-					anySupported = true;
+			bool alreadyListed = false;
+			for (UINTN i = 0; i < MenuItemCount; i++) {
+				if (MenuItem[i].Width == info->HorizontalResolution &&
+					MenuItem[i].Height == info->VerticalResolution) {
+					alreadyListed = true;
+					break;
 				}
+			}
+			if (!alreadyListed) {
+				MenuItem[MenuItemCount].Width = info->HorizontalResolution;
+				MenuItem[MenuItemCount].Height = info->VerticalResolution;
+				XEFormatResolutionLabel(
+					MenuItem[MenuItemCount].Label, info->HorizontalResolution, info->VerticalResolution);
+				MenuItemCount++;
 			}
 		}
 		if (info)
 			gBS->FreePool(info);
 	}
-	return anySupported;
 }
 
 /*
@@ -160,20 +204,16 @@ int XEGetScreenResolutionMode(EFI_SYSTEM_TABLE* SystemTable) {
 	EFI_STATUS Status = EFI_SUCCESS;
 	UINTN SelectedIndex = 0;
 	EFI_INPUT_KEY Key = {};
-	bool supported[MENU_SIZE] = {};
-	bool hasSupportedMode = XEGetSupportedMenuModes(supported);
+	XEDiscoverGraphicsModes();
 	BOOLEAN cursorWasVisible = SystemTable->ConOut->Mode->CursorVisible;
 
-	if (!hasSupportedMode) {
-		/* XESetGraphicsMode will retain the firmware mode when the preferred
-		 * 640x480 mode is unavailable. There is nothing useful to select here. */
+	if (MenuItemCount == 0) {
+		/* XESetGraphicsMode will retain the firmware mode when nothing was
+		 * discovered. There is nothing useful to select here. */
 		XEPrintf(const_cast<wchar_t*>(
 			L"No listed GOP resolution is available; keeping the firmware mode.\r\n"));
 		return 0;
 	}
-
-	while (!supported[SelectedIndex])
-		SelectedIndex++;
 
 	SystemTable->ConIn->Reset(SystemTable->ConIn, FALSE);
 	SystemTable->ConOut->ClearScreen(SystemTable->ConOut);
@@ -186,17 +226,14 @@ int XEGetScreenResolutionMode(EFI_SYSTEM_TABLE* SystemTable) {
 		XEPrintf(const_cast<wchar_t*>(L"Copyright (C) Manas Kamal Choudhury 2020-2026 \r\n"));
 		XEPrintf(const_cast<wchar_t*>(L"Select a screen resolution with Up/Down, then press Enter:\r\n"));
 		XEPrintf(const_cast<wchar_t*>(L"\r\n"));
-		for (UINTN i = 0; i < MENU_SIZE; i++) {
+		for (UINTN i = 0; i < MenuItemCount; i++) {
 			if (i == SelectedIndex) {
 				SystemTable->ConOut->SetAttribute(SystemTable->ConOut,
 												  EFI_WHITE | EFI_BACKGROUND_BLUE);
 				XEPrintf(const_cast<wchar_t*>(L"> %-16s\r\n"), MenuItem[i].Label);
-			} else if (supported[i]) {
+			} else {
 				SystemTable->ConOut->SetAttribute(SystemTable->ConOut, EFI_LIGHTGRAY);
 				XEPrintf(const_cast<wchar_t*>(L"  %-16s\r\n"), MenuItem[i].Label);
-			} else {
-				SystemTable->ConOut->SetAttribute(SystemTable->ConOut, EFI_DARKGRAY);
-				XEPrintf(const_cast<wchar_t*>(L"  %-16s (unavailable)\r\n"), MenuItem[i].Label);
 			}
 		}
 		SystemTable->ConOut->SetAttribute(SystemTable->ConOut, EFI_LIGHTGRAY);
@@ -212,13 +249,9 @@ int XEGetScreenResolutionMode(EFI_SYSTEM_TABLE* SystemTable) {
 			continue;
 
 		if (Key.ScanCode == SCAN_UP) {
-			do {
-				SelectedIndex = (SelectedIndex + MENU_SIZE - 1) % MENU_SIZE;
-			} while (!supported[SelectedIndex]);
+			SelectedIndex = (SelectedIndex + MenuItemCount - 1) % MenuItemCount;
 		} else if (Key.ScanCode == SCAN_DOWN) {
-			do {
-				SelectedIndex = (SelectedIndex + 1) % MENU_SIZE;
-			} while (!supported[SelectedIndex]);
+			SelectedIndex = (SelectedIndex + 1) % MenuItemCount;
 		} else if (Key.UnicodeChar == CHAR_CARRIAGE_RETURN) {
 			break;
 		}
@@ -226,7 +259,7 @@ int XEGetScreenResolutionMode(EFI_SYSTEM_TABLE* SystemTable) {
 
 	SystemTable->ConOut->SetAttribute(SystemTable->ConOut, EFI_LIGHTGRAY);
 	SystemTable->ConOut->EnableCursor(SystemTable->ConOut, cursorWasVisible);
-	return SelectedIndex;
+	return (int)SelectedIndex;
 }
 
 /*
@@ -241,27 +274,17 @@ UINTN XESetGraphicsMode(EFI_SYSTEM_TABLE* SystemTable, int index) {
 	EFI_STATUS Status;
 	UINTN Mode = 0, MaxMode = 0;
 
-	UINT32 dwidth = 0;
-	UINT32 dheight = 0;
-
-	switch (index) {
-	case 1:
-		XEPrintf(const_cast<wchar_t*>(L"index 1 selected \r\n"));
-		dwidth = 1024, dheight = 768;
-		break;
-	case 2:
-		XEPrintf(const_cast<wchar_t*>(L"index 2 selected \r\n"));
-		dwidth = 1280, dheight = 1024;
-		break;
-	case 3:
-		XEPrintf(const_cast<wchar_t*>(L"index 3 selected \r\n"));
-		dwidth = 1920, dheight = 1080;
-		break;
-	default:
-		XEPrintf(const_cast<wchar_t*>(L"index 0 selected \r\n"));
-		dwidth = 640, dheight = 480;
-		break;
+	/* dwidth/dheight now come from the menu discovered off the real GOP
+	 * mode list (XEDiscoverGraphicsModes), not a hardcoded per-index
+	 * switch that could disagree with what the menu actually offered --axiss */
+	UINT32 dwidth = 640;
+	UINT32 dheight = 480;
+	if (index >= 0 && (UINTN)index < MenuItemCount) {
+		dwidth = MenuItem[index].Width;
+		dheight = MenuItem[index].Height;
 	}
+	XEPrintf(
+		const_cast<wchar_t*>(L"index %d selected : %dx%d\r\n"), index, (int)dwidth, (int)dheight);
 
 	Status = gBS->LocateProtocol(&gopguid, NULL, (VOID**)&GraphicsOutput);
 	if (EFI_ERROR(Status)) {

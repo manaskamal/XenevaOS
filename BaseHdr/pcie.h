@@ -31,6 +31,7 @@
 #define __PCIE_H__
 
 #include <stdint.h>
+#include <stddef.h>
 #include <Hal/basicacpi.h>
 #include <Hal/hal.h>
 #if defined(__GNUC__) || defined(__clang__)
@@ -153,4 +154,16 @@ AU_EXTERN AU_EXPORT uint64_t AuPCIERead64(uint64_t device, int reg, int size, in
 
 // {@private use|
 AU_EXTERN AU_EXPORT void AuPCIEWrite64(uint64_t device, int reg, int size, uint64_t val, int bus, int dev, int func);
+
+/*
+* AuPCIEReadBAR -- resolves a BAR index to its mapped base address (handling
+* 32-bit, 64-bit and I/O BARs), optionally probing its size
+* @param device -- device address
+* @param bus -- bus number
+* @param dev -- device number
+* @param func -- function number
+* @param BAR -- BAR index (0-5)
+* @param barsz -- if non-null, receives the BAR's size in bytes
+*/
+AU_EXTERN AU_EXPORT uint64_t AuPCIEReadBAR(uint64_t device, uint16_t bus, uint16_t dev, uint16_t func, size_t BAR, size_t* barsz);
 #endif

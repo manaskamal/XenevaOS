@@ -30,12 +30,11 @@
 #include <sys/_keproc.h>
 #include <sys/_kefile.h>
 #include <sys/_ketime.h>
-#include <sys/time.h>
+#include <sys/_kesignal.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <keycode.h>
-#include <signal.h>
 #include <unistd.h>
 
 char* cmdBuf;
@@ -47,37 +46,43 @@ int job;
 bool _sig_handled = false;
 char* currentDirectory;
 char* lastDirectory;
+int g_console_fd = -1;
 
 void XEShellSigInterrupt(int signo) {
-	/* signal is little buggy so, so it won't
-	 * work for now
-	 */
-	printf("Signal is buggy, won't work properly");
+	/* Handle SIGINT (CTRL+C) properly */
+	printf("\n[xeshell]: Received signal %d (SIGINT - CTRL+C)\r\n", signo);
 	_draw_shell_curdir = true;
 	if (job > 0) {
-		_KeSendSignal(job, signo);
+		int result = _KeSendSignal(job, signo);
+		if (result == 0) {
+			printf("[xeshell]: Signal sent to process %d\r\n", job);
+		} else {
+			printf("[xeshell]: Failed to send signal to process %d (error: %d)\r\n", job, result);
+		}
 		job = 0;
 	}
-	/* here is the bug, we need a system call to 
-	 * handle it properly
-	 */
-	_KeProcessSleep(10);
+	fflush(stdout);
 }
 
 void XEShellSignalTest(int signo) {
-	printf("[xeshell]: signal raised++ (SIGINT - CTRL+C)\r\n");
-	_KePrint("Signo : %d \r\n", signo);
+	printf("[xeshell]: Signal %d received (SIGINT - CTRL+C)\r\n", signo);
+	fflush(stdout);
+	
 	if (job > 0) {
+		printf("[xeshell]: Sending signal to process %d\r\n", job);
+		fflush(stdout);
 		_KeSendSignal(job, signo);
 		job = 0;
 	}
+	
+	printf("[xeshell]: Signal handler completed\r\n");
+	fflush(stdout);
 }
 
 int timercount;
+// Timer callback disabled - not available in XenevaOS
 void XEShellTimerCallback(int signo) {
-	printf("[xeshell]: signal raised++ (ALARM) tick : %d\r\n", timercount);
-	timercount++;
-	//	alarm(3);
+	// Not implemented in XenevaOS
 }
 
 /*Write the current directory string
@@ -95,7 +100,7 @@ void XEShellWriteCurrentDir() {
 void XEShellSpawn(char* string) {
 	if ((strlen(string)) > 0) {
 		/* allocate separate memories for each strings */
-		char filename[64];
+		char filename[128];
 		char arguments[128];
 		char execname[32];
 		memset(arguments, 0, sizeof(arguments));
@@ -105,22 +110,36 @@ void XEShellSpawn(char* string) {
 		 * name thats why we skip early character counting */
 		bool _first_string_skipped = false;
 		int argcount = 0;
-		int index = 0;
 		int j = 0;
-		int totalCharacterCount = strlen(string);
 		char** argv = (char**)malloc(10 * sizeof(char*));
 		memset(argv, 0, 10 * sizeof(char*));
+		
+		/* Validate input string length */
+		if (strlen(string) > 127) {
+			printf("\n[xeshell]: Command too long (max 127 characters)\r\n");
+			return;
+		}
+		
 		/* here we mainly prepare for the arguments to pass */
 		for (int i = 0; i < strlen(string) + 1; i++) {
 			if (string[i] == ' ' || string[i] == '\0') {
-				index = i;
-
 				if (_first_string_skipped && arguments[0] != '\0') {
 					char* str = (char*)malloc(strlen(arguments) + 1);
 					memset(str, 0, strlen(arguments) + 1);
 					strcpy(str, arguments);
 					argv[argcount] = str;
 					argcount += 1;
+					
+					/* Check argument count limit */
+					if (argcount >= 9) {
+						printf("\n[xeshell]: Too many arguments (max 9)\r\n");
+						/* Free allocated memory */
+						for (int k = 0; k < argcount; k++) {
+							free(argv[k]);
+						}
+						free(argv);
+						return;
+					}
 				}
 				j = 0;
 				memset(arguments, 0, sizeof(arguments));
@@ -135,9 +154,7 @@ void XEShellSpawn(char* string) {
 					arguments[j] = string[i];
 					j++;
 				}
-			}
-
-			if (!_first_string_skipped) {
+			} else {
 				if (i < (int)sizeof(execname) - 1)
 					execname[i] = string[i];
 			}
@@ -145,30 +162,64 @@ void XEShellSpawn(char* string) {
 
 		memset(filename, 0, sizeof(filename));
 		strcpy(filename, currentDirectory);
-		strcpy(filename + 1, execname);
-		strcpy(filename + 1 + strlen(execname), ".exe");
+		strcat(filename, execname);
+		strcat(filename, ".exe");
 
 		/* before spawning the process, make an entry to
 		 * shell's file descriptors */
 		int file = _KeOpenFile(filename, FILE_OPEN_READ_ONLY);
 		if (file == -1) {
-			printf("\n No command or program found %s\n", filename);
+			printf("\n[xeshell]: No command or program found: %s\r\n", filename);
 			return;
 		}
+		
 		int proc_id = _KeCreateProcess(0, string);
-		_KeSetFileToProcess(XENEVA_STDIN, XENEVA_STDIN, proc_id);
-		_KeSetFileToProcess(XENEVA_STDOUT, XENEVA_STDOUT, proc_id);
-		_KeSetFileToProcess(XENEVA_STDERR, XENEVA_STDERR, proc_id);
+		if (proc_id == -1) {
+			printf("\n[xeshell]: Failed to create process for: %s\r\n", string);
+			_KeCloseFile(file);
+			return;
+		}
+		
+		/* Set file descriptors for the process */
+		if (_KeSetFileToProcess(XENEVA_STDIN, XENEVA_STDIN, proc_id) != 0) {
+			printf("\n[xeshell]: Failed to set stdin for process %d\r\n", proc_id);
+			_KeCloseFile(file);
+			return;
+		}
+		if (_KeSetFileToProcess(XENEVA_STDOUT, XENEVA_STDOUT, proc_id) != 0) {
+			printf("\n[xeshell]: Failed to set stdout for process %d\r\n", proc_id);
+			_KeCloseFile(file);
+			return;
+		}
+		if (_KeSetFileToProcess(XENEVA_STDERR, XENEVA_STDERR, proc_id) != 0) {
+			printf("\n[xeshell]: Failed to set stderr for process %d\r\n", proc_id);
+			_KeCloseFile(file);
+			return;
+		}
+		
 		int status = _KeProcessLoadExec(proc_id, filename, argcount, argv);
+		if (status != 0) {
+			printf("\n[xeshell]: Failed to load executable %s (error: %d)\r\n", filename, status);
+			_KeCloseFile(file);
+			/* Free allocated memory */
+			for (int k = 0; k < argcount; k++) {
+				free(argv[k]);
+			}
+			free(argv);
+			return;
+		}
 
 		job = proc_id;
+		printf("\n[xeshell]: Started process %d for: %s\r\n", proc_id, string);
 		_KeProcessWaitForTermination(proc_id);
+		printf("\n[xeshell]: Process %d terminated\r\n", proc_id);
 		_KeCloseFile(file);
 
-		while (argcount) {
-			argv++;
-			argcount--;
+		/* Free allocated memory */
+		for (int k = 0; k < argcount; k++) {
+			free(argv[k]);
 		}
+		free(argv);
 		printf("\n");
 		job = 0;
 	}
@@ -179,8 +230,35 @@ void XEShellSpawn(char* string) {
  * and end-of-line or new line character
  */
 void XEShellReadLine() {
-	char c = getchar();
+	// Only process if we have a command to process
+	// Note: We don't check _process_needed here - we always try to read
+	// The flag is used in the main loop to know when to process the command
+	
+	// Don't clear buffer if we're in the middle of reading
+	if (index == 0) {
+		// Clear the command buffer only at start of new command
+		memset(cmdBuf, 0, 1024);
+	}
+	
+	// Use stdin provided by init. Init already opened /dev/console
+	// and set it as XENEVA_STDIN for the shell.
+	int read_fd = g_console_fd;
+	
+	// Read one character from console (blocks in kernel until a key arrives)
+	char buf[2];
+	memset(buf, 0, 2);
+	int bytes_read = _KeReadFile(read_fd, buf, 1);
+	if (bytes_read <= 0) {
+		// No data (should be rare since kernel blocks); just return
+		// and let the main loop sleep briefly before retrying.
+		cmdBuf[index] = '\0';
+		return;
+	}
+	
+	char c = buf[0];
+	
 	if (c == '\n' || c == '\r') {
+		// End of line - process the command
 		printf("\n");
 		fflush(stdout);
 		_process_needed = true;
@@ -188,7 +266,13 @@ void XEShellReadLine() {
 	}
 
 	if (c > 0) {
-		if (index == 1024) {
+		// Check bounds before writing to buffer
+		if (index >= 1023) {
+			printf("\n[xeshell]: Command too long (max 1023 characters)\r\n");
+			fflush(stdout);
+			// Clear the buffer
+			memset(cmdBuf, 0, 1024);
+			index = 0;
 			_process_needed = true;
 			return;
 		}
@@ -196,25 +280,31 @@ void XEShellReadLine() {
 		if (c == KEY_BACKSPACE) {
 			if (index > 0) {
 				printf("%c", c);
+				fflush(stdout);
 				cmdBuf[index--] = 0;
-			}
-			if (index <= 0) {
-				//_draw_shell_curdir = true;
-				return;
 			}
 			return;
 		}
+		
 		if (c == KEY_SPACE) {
 			printf("%c", c);
+			fflush(stdout);
 			cmdBuf[index] = ' ';
 			index++;
 			return;
 		}
-		printf("%c", c);
-		cmdBuf[index++] = c;
+		
+		// Only print printable characters
+		if (c >= 32 && c <= 126) {
+			printf("%c", c);
+			fflush(stdout);
+			cmdBuf[index++] = c;
+		}
 	}
+	
+	// Null-terminate the current buffer
 	cmdBuf[index] = '\0';
-	fflush(stdout);
+	return;
 }
 
 /*
@@ -224,30 +314,50 @@ void XEShellReadLine() {
  * absolute path changing not implemented
  */
 void XEShellCD(char* path) {
-	if (!currentDirectory)
+	if (!currentDirectory || !path) {
+		printf("\n[xeshell]: Invalid path or current directory\r\n");
 		return;
-	char* prevPath;
+	}
+
+	char* newPath = NULL;
 	int prevPathLen = strlen(currentDirectory);
 
 	/* navigate back to parent directory */
 	if (strcmp(path, "..") == 0) {
-		if (prevPathLen == 1 && (strcmp(currentDirectory, "/") == 0))
+		if (prevPathLen == 1 && (strcmp(currentDirectory, "/") == 0)) {
+			printf("\n[xeshell]: Already at root directory\r\n");
 			return;
-		for (int i = strlen(currentDirectory); i > 0; i--) {
+		}
+		
+		// Find the last '/' and truncate
+		int last_slash = -1;
+		for (int i = prevPathLen - 1; i >= 0; i--) {
 			if (currentDirectory[i] == '/') {
-				currentDirectory[i] = '\0';
+				last_slash = i;
 				break;
 			}
-			currentDirectory[i] = '\0';
 		}
+		
+		if (last_slash != -1) {
+			currentDirectory[last_slash] = '\0';
+		} else {
+			strcpy(currentDirectory, "/");
+		}
+		
+		printf("\n[xeshell]: Changed to parent directory: %s\r\n", currentDirectory);
+		// Update environment variable
+		_XESetEnvironmentVariable("PWD", currentDirectory, 1);
+		printf("[xeshell]: PWD environment variable updated to: %s\r\n", currentDirectory);
 		return;
 	}
 
 	/*
 	 * nothing to do, this simple switch to current directory
 	 */
-	if (strcmp(path, "./") == 0)
+	if (strcmp(path, "./") == 0) {
+		printf("\n[xeshell]: Already in current directory\r\n");
 		return;
+	}
 
 	/*
 	 * This should be the home directory that is being set on
@@ -257,27 +367,61 @@ void XEShellCD(char* path) {
 	 */
 	if (strcmp(path, "~") == 0) {
 		free(currentDirectory);
-		currentDirectory = (char*)malloc(strlen("/"));
+		currentDirectory = (char*)malloc(2);
 		strcpy(currentDirectory, "/");
+		printf("\n[xeshell]: Changed to home directory: %s\r\n", currentDirectory);
+		// Update environment variable
+		_XESetEnvironmentVariable("PWD", currentDirectory, 1);
+		printf("[xeshell]: PWD environment variable updated to: %s\r\n", currentDirectory);
 		return;
 	}
-	if (currentDirectory[prevPathLen] != '/' && prevPathLen > 1) {
-		prevPath = (char*)malloc(prevPathLen + 1);
-		strcpy(prevPath, currentDirectory);
-		strcpy(prevPath + prevPathLen, "/");
-	} else {
-		prevPath = (char*)malloc(prevPathLen);
-		strcpy(prevPath, currentDirectory);
+	
+	// Validate path length
+	if (strlen(path) > 127) {
+		printf("\n[xeshell]: Path too long (max 127 characters)\r\n");
+		return;
 	}
+	
+	// Check if the path exists
+	char testPath[256];
+	if (currentDirectory[prevPathLen - 1] == '/' && prevPathLen > 1) {
+		snprintf(testPath, sizeof(testPath), "%s%s", currentDirectory, path);
+	} else {
+		snprintf(testPath, sizeof(testPath), "%s/%s", currentDirectory, path);
+	}
+	
+	int testDirfd = _KeOpenDir(testPath);
+	if (testDirfd == -1) {
+		printf("\n[xeshell]: Directory not found: %s\r\n", testPath);
+		return;
+	}
+	_KeCloseFile(testDirfd);
+	
+	// Construct new path
+	if (currentDirectory[prevPathLen - 1] == '/' && prevPathLen > 1) {
+		newPath = (char*)malloc(prevPathLen + strlen(path) + 1);
+		strcpy(newPath, currentDirectory);
+		strcat(newPath, path);
+	} else {
+		newPath = (char*)malloc(prevPathLen + strlen(path) + 2);
+		strcpy(newPath, currentDirectory);
+		strcat(newPath, "/");
+		strcat(newPath, path);
+	}
+	
 	free(currentDirectory);
+	currentDirectory = newPath;
+	
+	// Remove trailing slash if not root
+	if (strlen(currentDirectory) > 1 && currentDirectory[strlen(currentDirectory) - 1] == '/') {
+		currentDirectory[strlen(currentDirectory) - 1] = '\0';
+	}
+	
+	printf("\n[xeshell]: Changed directory to: %s\r\n", currentDirectory);
 
-	currentDirectory = (char*)malloc(strlen(prevPath) + strlen(path));
-	strcpy(currentDirectory, prevPath);
-	strcpy(currentDirectory + strlen(currentDirectory), path);
-
+		// Update environment variable
 	_XESetEnvironmentVariable("PWD", currentDirectory, 1);
-	free(prevPath);
-	free(lastDirectory);
+	printf("[xeshell]: PWD environment variable updated to: %s\r\n", currentDirectory);
 }
 
 /*
@@ -285,36 +429,69 @@ void XEShellCD(char* path) {
  */
 void XEShellLS() {
 	int dirfd = _KeOpenDir(currentDirectory);
-	XEDirectoryEntry* dirent = (XEDirectoryEntry*)malloc(sizeof(XEDirectoryEntry));
-	memset(dirent, 0, sizeof(XEDirectoryEntry));
-	int addr = (int)dirent->filename;
-	while (1) {
-		if (dirent->index == -1)
-			break;
-		int code = _KeReadDir(dirfd, dirent);
-		if (code != -1) {
-			if (dirent->flags & FILE_DIRECTORY) {
-				printf("\033[36m %s\n", dirent->filename);
-			} else {
-				printf("%s \n", dirent->filename);
-			}
-		}
-		memset(dirent->filename, 0, 32);
+	if (dirfd == -1) {
+		printf("\n[xeshell]: Failed to open directory: %s\r\n", currentDirectory);
+		return;
 	}
+	
+	XEDirectoryEntry* dirent = (XEDirectoryEntry*)malloc(sizeof(XEDirectoryEntry));
+	if (!dirent) {
+		printf("\n[xeshell]: Memory allocation failed for directory entry\r\n");
+		_KeCloseFile(dirfd);
+		return;
+	}
+	memset(dirent, 0, sizeof(XEDirectoryEntry));
+	
+	int file_count = 0;
+	printf("\n[xeshell]: Contents of %s:\r\n", currentDirectory);
+	
+	while (1) {
+		memset(dirent->filename, 0, 32);
+		int code = _KeReadDir(dirfd, dirent);
+		if (code == -1) {
+			break;
+		}
+		if (dirent->index == -1) {
+			break;
+		}
+		
+		file_count++;
+		if (dirent->flags & FILE_DIRECTORY) {
+			printf("\033[36m%s/\033[0m\r\n", dirent->filename);
+		} else {
+			printf("%s\r\n", dirent->filename);
+		}
+	}
+	
+	printf("\n[xeshell]: %d items found\r\n", file_count);
+	_KeCloseFile(dirfd);
+	free(dirent);
 }
 
 void XEShellPrintHelp() {
-	printf("\nWelcome to Xeneva shell v1.1 \n");
-	printf("cd -- Change current working directory \n");
-	printf("ls -- List file and folders of current working directory \n");
-	printf("echo -- Displays text or print to a file\n");
-	printf("pwd -- Display current working directory \n");
-	printf("clrscr -- Clear entire terminal screen \n");
-	printf("help -- Prints all command with their descriptions\n");
-	printf("systeminfo -- Prints about message \n");
-	printf("time -- Displays the current time \n");
-	printf("cat -- Display contents of a file \n");
-	printf("rm -- remove a file \n");
+	printf("\n");
+	printf("╔════════════════════════════════════════════════════════════╗\n");
+	printf("║                    Xeneva Shell v1.1 Help                  ║\n");
+	printf("╠════════════════════════════════════════════════════════════╣\n");
+	printf("║ Command     Description                                    ║\n");
+	printf("║────────────────────────────────────────────────────────────║\n");
+	printf("║ cd [path]   Change current working directory               ║\n");
+	printf("║ ls          List files and folders in current directory    ║\n");
+	printf("║ echo [text]  Display text or write to file (echo text>file)║\n");
+	printf("║ pwd         Display current working directory             ║\n");
+	printf("║ clrscr      Clear entire terminal screen                   ║\n");
+	printf("║ help        Show this help message                        ║\n");
+	printf("║ systeminfo  Display system information                    ║\n");
+	printf("║ time        Display current time                           ║\n");
+	printf("║ exit        Exit the shell                                 ║\n");
+	printf("╚════════════════════════════════════════════════════════════╝\n");
+	printf("\n");
+	printf("Examples:\n");
+	printf("  cd /usr           - Change to /usr directory\n");
+	printf("  cd ..             - Go to parent directory\n");
+	printf("  echo Hello World   - Display Hello World\n");
+	printf("  echo Test>file.txt - Write 'Test' to file.txt\n");
+	printf("  ls -              - List current directory\n");
 	printf("\n");
 }
 
@@ -323,8 +500,7 @@ void XEShellPrintHelp() {
  * directory
  */
 void XEShellPrintWorkingDirectory() {
-	printf("\n");
-	printf("%s\n", currentDirectory);
+	printf("\n[xeshell]: Current working directory: %s\r\n", currentDirectory);
 }
 
 /*
@@ -332,44 +508,68 @@ void XEShellPrintWorkingDirectory() {
  * @param msg -- text to output
  */
 void XEShellEcho(char* msg) {
-	printf("\n");
-	char* p = strchr(msg, '\"');
-	if (p) {
-		p++;
-		msg = p;
-	} else {
-		printf("%s\n", msg);
+	if (!msg) {
+		printf("\n[xeshell]: Missing message for echo command\r\n");
 		return;
 	}
-	char file[32];
-	bool _filename_exist = false;
+	
+	printf("\n");
+	
+	// Handle output redirection
 	char* filename = strchr(msg, '>');
 	if (filename) {
-		filename++;
-		for (int i = 0; i < strlen(filename); i++) {
-			if (filename[i] == ' ')
-				filename++;
-			if (filename[i] != ' ')
-				break;
+		filename++; // Skip '>'
+		
+		// Skip whitespace after '>'
+		while (*filename == ' ') {
+			filename++;
 		}
-		strcpy(file, filename);
-		_filename_exist = true;
-	}
-
-	for (int j = strlen(msg); j > 0; j--) {
-		if (msg[j] == '\"') {
-			msg[j] = '\0';
-			break;
+		
+		if (*filename == '\0') {
+			printf("[xeshell]: Missing filename after '>'\r\n");
+			return;
 		}
-	}
-
-	if (_filename_exist) {
+		
+		// Extract filename (until space or end of string)
+		char file[128];
+		int i = 0;
+		while (filename[i] != ' ' && filename[i] != '\0' && i < 127) {
+			file[i] = filename[i];
+			i++;
+		}
+		file[i] = '\0';
+		
+		// Extract message text (before '>')
+		char* msg_end = msg;
+		while (*msg_end != '>' && *msg_end != '\0') {
+			msg_end++;
+		}
+		*msg_end = '\0'; // Terminate message at '>'
+		
+		// Trim leading whitespace from message
+		while (*msg == ' ') {
+			msg++;
+		}
+		
+		if (*msg == '\0') {
+			printf("[xeshell]: No message to write to file\r\n");
+			return;
+		}
+		
+		// Write to file
 		FILE* f = fopen(file, "w+");
 		if (f) {
-			fprintf(f, msg);
+			fprintf(f, "%s", msg);
+			fclose(f);
+			printf("[xeshell]: Text written to file: %s\r\n", file);
+		} else {
+			printf("[xeshell]: Failed to write to file: %s\r\n", file);
 		}
-	} else
-		printf("%s\n", msg);
+		return;
+	}
+	
+	// Simple echo - just print the message
+	printf("%s\r\n", msg);
 }
 
 /*
@@ -378,12 +578,16 @@ void XEShellEcho(char* msg) {
  */
 void XEShellProcessLine() {
 	if (_process_needed) {
+		if (strlen(cmdBuf) == 0) {
+			// Empty command, just show prompt again
+			_draw_shell_curdir = true;
+			goto cleanup;
+		}
+
 		if (strcmp(cmdBuf, "help") == 0) {
 			XEShellPrintHelp();
 			_spawnable_process = false;
-		}
-
-		if (strcmp(cmdBuf, "systeminfo") == 0) {
+		} else if (strcmp(cmdBuf, "systeminfo") == 0) {
 			printf("\nXeneva Shell v1.0\n");
 			printf("Copyright (C) Xeneva Private Limited 2023-2026\n");
 			printf("Operating System : Xeneva v1.1 -Genuine copy\n");
@@ -397,52 +601,51 @@ void XEShellProcessLine() {
 			printf("Window Manager: Deodhai Compositor\n");
 			printf("Xeneva is made in Assam with Love \n");
 			_spawnable_process = false;
-		}
-
-		if (strcmp(cmdBuf, "clrscr") == 0) {
-			printf("\033[2J");
+		} else if (strcmp(cmdBuf, "clrscr") == 0) {
+			printf("\033[2J\033[H"); // Clear screen and move cursor to home
+			printf("[xeshell]: Screen cleared\r\n");
 			_spawnable_process = false;
-		}
-
-		if (strcmp(cmdBuf, "time") == 0) {
+		} else if (strcmp(cmdBuf, "time") == 0) {
 			printf("\nCurrent time is : ");
 			XETime time;
 			memset(&time, 0, sizeof(XETime));
-			_KeGetCurrentTime(&time);
-			uint8_t hour = time.hour;
-			char* pmam = "AM";
-			if (hour > 12) {
-				hour -= 12;
-				pmam = "PM";
+			if (_KeGetCurrentTime(&time) == 0) {
+				uint8_t hour = time.hour;
+				char* pmam = "AM";
+				if (hour > 12) {
+					hour -= 12;
+					pmam = "PM";
+				} else if (hour == 0) {
+					hour = 12;
+				} else if (hour == 12) {
+					pmam = "PM";
+				}
+				printf("%d:%02d %s\r\n", hour, time.minute, pmam);
+			} else {
+				printf("[xeshell]: Failed to get current time\r\n");
 			}
-			printf("\%d:", hour);
-			printf("%d ", time.minute);
-			printf("%s\n", pmam);
 			_spawnable_process = false;
-		}
-
-		if (strcmp(cmdBuf, "ls") == 0) {
+		} else if (strcmp(cmdBuf, "ls") == 0) {
 			XEShellLS();
 			_spawnable_process = false;
-		}
-
-		if (strncmp(cmdBuf, "cd ", 3) == 0 || strcmp(cmdBuf, "cd") == 0) {
+		} else if (strncmp(cmdBuf, "cd ", 3) == 0 || strcmp(cmdBuf, "cd") == 0) {
 			char* path = cmdBuf + 2;
 			if (*path == ' ') {
 				while (*path == ' ')
 					path++;
 			}
-			XEShellCD(path);
+			if (*path == '\0') {
+				// No path provided, show current directory
+				XEShellPrintWorkingDirectory();
+			} else {
+				XEShellCD(path);
+			}
 			printf("\n");
 			_spawnable_process = false;
-		}
-
-		if (strcmp(cmdBuf, "pwd") == 0) {
+		} else if (strcmp(cmdBuf, "pwd") == 0) {
 			XEShellPrintWorkingDirectory();
 			_spawnable_process = false;
-		}
-
-		if (strncmp(cmdBuf, "echo ", 5) == 0 || strcmp(cmdBuf, "echo") == 0) {
+		} else if (strncmp(cmdBuf, "echo ", 5) == 0 || strcmp(cmdBuf, "echo") == 0) {
 			char* msg = cmdBuf + 4;
 			if (*msg == ' ') {
 				while (*msg == ' ')
@@ -450,11 +653,14 @@ void XEShellProcessLine() {
 			}
 			XEShellEcho(msg);
 			_spawnable_process = false;
+		} else if (strcmp(cmdBuf, "exit") == 0) {
+			printf("[xeshell]: Exiting shell...\r\n");
+			_KeProcessExit();
+		} else if (_spawnable_process) {
+			XEShellSpawn(cmdBuf);
 		}
 
-		if (_spawnable_process)
-			XEShellSpawn(cmdBuf);
-
+cleanup:
 		memset(cmdBuf, 0, 1024);
 		index = 0;
 		_process_needed = false;
@@ -475,10 +681,25 @@ int main(int argc, char* arv[]) {
 
 	printf("Copyright (C) Xeneva Private Limited \n");
 	fflush(stdout);
+	
+	// Initialize command buffer
 	cmdBuf = (char*)malloc(1024);
+	if (!cmdBuf) {
+		printf("[xeshell]: Failed to allocate command buffer\r\n");
+		return 1;
+	}
 	memset(cmdBuf, 0, 1024);
+	
+	// Initialize current directory
 	currentDirectory = (char*)malloc(2);
+	if (!currentDirectory) {
+		printf("[xeshell]: Failed to allocate current directory buffer\r\n");
+		free(cmdBuf);
+		return 1;
+	}
 	strcpy(currentDirectory, "/");
+	
+	// Initialize shell state
 	_process_needed = false;
 	_spawnable_process = true;
 	_draw_shell_curdir = true;
@@ -486,57 +707,35 @@ int main(int argc, char* arv[]) {
 	job = 0;
 	index = 0;
 	timercount = 0;
+	g_console_fd = XENEVA_STDIN;
+	
+	// Set environment variable
 	_XESetEnvironmentVariable("PWD", currentDirectory, 0);
-	_KeSetSignal(SIGINT, XEShellSignalTest);
-	signal(SIGALRM, XEShellTimerCallback);
-	//alarm(3);
+	printf("[xeshell]: PWD environment variable initialized to: %s\r\n", currentDirectory);
+	
+	// Set up signal handling
+	if (_KeSetSignal(SIGINT, XEShellSignalTest) != 0) {
+		printf("[xeshell]: Warning: Failed to set up signal handler\r\n");
+	}
+	// Timer functionality disabled - not available in XenevaOS
+	
+	printf("[xeshell]: Shell initialized successfully\r\n");
+	fflush(stdout);
+	
+	// Timer test code disabled - not available in XenevaOS
 #if 0
-	struct itimerval one_shot;
-	one_shot.it_value.tv_sec = 2;
-	one_shot.it_value.tv_usec = 0;
-	one_shot.it_interval.tv_sec = 0;
-	one_shot.it_interval.tv_usec = 0;
-
-	printf("Arming one-shot timer for 2s....\r\n");
-	if (setitimer(ITIMER_REAL, &one_shot, NULL) < 0) {
-		printf("settimer error \r\n");
-	}
-
-	//_KeProcessSleep(6);
-	sleep(6);
-	printf("after one-shot test: tickcount: %d (expected 1) \r\n", timercount);
-
-	timercount = 0;
-	struct itimerval periodic;
-	periodic.it_value.tv_sec = 1;
-	periodic.it_value.tv_usec = 0;
-	periodic.it_interval.tv_sec = 1;
-	periodic.it_interval.tv_usec = 0;
-
-	printf("arming periodic timer (1s interval)...\r\n");
-	if (setitimer(ITIMER_REAL, &periodic, NULL) < 0) {
-		printf("settimer failed here \r\n");
-	}
-	//_KeProcessSleep(6);
-	sleep(10);
-	printf("after periodic-test : tick count %d, (expected ~5)\r\n", timercount);
-
-	struct itimerval curr;
-	if (getitimer(ITIMER_REAL, &curr) == 0) {
-		printf("current timer : value=%ld.%06ds interval=%ld.%06lds\r\n", (long)curr.it_value.tv_sec,
-			(long)curr.it_value.tv_usec, (long)curr.it_interval.tv_sec, (long)curr.it_interval.tv_usec);
-	}
-
-	struct itimerval disarm;
-	memset(&disarm, 0, sizeof(itimerval));
-	setitimer(ITIMER_REAL, &disarm, NULL);
-	timercount = 0;
-	//_KeProcessSleep(6);
+	// Unix/Linux timer functions not available in XenevaOS
+	// This code is commented out
 #endif
+	
 	while (1) {
 		XEShellWriteCurrentDir();
 		XEShellReadLine();
-		XEShellProcessLine();
-		_KeProcessSleep(60);
+		if (_process_needed) {
+			XEShellProcessLine();
+			_process_needed = false;
+			index = 0; // Reset index for next command
+		}
+		_KeProcessSleep(10); // Increased sleep for better responsiveness
 	}
 }

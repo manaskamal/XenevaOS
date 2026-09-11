@@ -109,8 +109,6 @@ int OpenFile(char* filename, int mode) {
 		return -1;
 
 	/* just to increase the reference count */
-	if (file->flags & FS_FLAG_PIPE)
-		UARTDebugOut("Opening file -> %s \r\n", file->filename);
 	if (file->open)
 		file->open(file, NULL);
 	current_proc->fds[fd] = file;
@@ -125,13 +123,6 @@ int OpenFile(char* filename, int mode) {
 	/* Preserve current default behaviour */
 	if (mode == 0)
 		rights |= CAP_READ;
-
-	if (rights & CAP_READ)
-		BPrintK(BORDOISILA_WARN,
-				"Creating rights has read %s, %d, fname: %s\r\n",
-				current_proc->name,
-				fd,
-				filename);
 
 	BordoisilaCapCreate(current_proc, fd, file, CAP_OBJ_FILE, rights);
 

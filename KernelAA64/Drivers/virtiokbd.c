@@ -46,6 +46,8 @@ struct VirtioInputEvent* input;
 static uint16_t index;
 static int queueSize;
 static struct VirtioCommonCfg* _kybrdCfg;
+/* temporary input-freeze diagnostics counter */
+volatile uint32_t kbd_dbg_irqs;
 
 static const uint8_t ext_key_map[256] = {
 	[0x63] = 0x37, //print screen
@@ -64,23 +66,21 @@ static const uint8_t ext_key_map[256] = {
  * @brief Virtio-keyboard interrupt handler
  */
 void AuVirtioKbdHandler(int spinum) {
-	uint16_t them;
 	(void)spinum;
-	if (!queue || !input || queueSize <= 0)
-		return;
-	them = queue->used.index;
-	for (; index != them; index++) {
-		uint16_t slot = index % (uint16_t)queueSize;
-		uint16_t buf_id;
-		uint16_t avail;
-		struct VirtioInputEvent evt;
-
-		dc_ivac((uint64_t)&queue->used.ring[slot]);
+	kbd_dbg_irqs++;
+	dc_ivac((uint64_t)&queue->used.index);
+	dsb_sy_barrier();
+	uint16_t them = queue->used.index;
+	for (; index < them; index++) {
+		uint16_t slot = index % queueSize;
 		dc_ivac((uint64_t)&input[slot]);
 		dsb_sy_barrier();
-		buf_id = (uint16_t)(queue->used.ring[slot].index % (uint32_t)queueSize);
-		evt = input[buf_id];
-		input[buf_id].type = 0xFF;
+		struct VirtioInputEvent evt = input[slot];
+		if (evt.type == 0xFF) {
+			/* already consumed, spurious IRQ -- do not leak a buffer */
+			continue;
+		}
+		input[slot].type = 0xFF;
 		isb_flush();
 		dsb_sy_barrier();
 		if (evt.type == 1) {
@@ -103,7 +103,7 @@ void AuVirtioKbdHandler(int spinum) {
 				msg.type = AU_INPUT_KEYBOARD;
 				msg.code = scancode;
 				AuDevWriteKybrd(&msg);
-			} else if (ext_key_map[evt.code]) {
+			} else if (evt.code < 256 && ext_key_map[evt.code]) {
 				uint8_t make_code = ext_key_map[evt.code];
 				if (evt.value == 0)
 					make_code |= 0x80;
@@ -114,13 +114,22 @@ void AuVirtioKbdHandler(int spinum) {
 				AuDevWriteKybrd(&msg);
 			}
 		}
-		avail = queue->available.index;
-		queue->available.ring[avail % (uint16_t)queueSize] = buf_id;
-		dsb_ish();
-		queue->available.index = avail + 1;
-		isb_flush();
+		/* recycle the buffer or the device runs out after queueSize events
+		 * and the keyboard appears to "freeze after a few seconds" */
+		queue->available.ring[queue->available.index % queueSize] = slot;
+		dsb_sy_barrier();
+		queue->available.index++;
 		dsb_sy_barrier();
 	}
+}
+
+/* temporary input-freeze diagnostics: thread-context only, never call from IRQ */
+void AuVirtioKbdDebug() {
+	dc_ivac((uint64_t)&queue->used.index);
+	dsb_sy_barrier();
+	UARTDebugOut("[kbd-dbg]: idx=%d used=%d avail=%d qsz=%d irqs=%d \n",
+		(int)index, (int)queue->used.index,
+		(int)queue->available.index, (int)queueSize, (int)kbd_dbg_irqs);
 }
 
 void AuVirtioKbdDown() {
@@ -146,12 +155,9 @@ void AuVirtioKbdDown() {
 /**
  * @brief AuVirtioKbdInitialize -- initialize the virtio keyboard
  */
-void AuVirtioKbdInitialize(uint64_t device) {
-	int bus = 0;
-	int func = 0;
-	int dev = 0;
+void AuVirtioKbdInitialize(uint64_t device, int bus, int dev, int func) {
 	index = 0;
-	if (device == 0xFFFFFFFF)
+	if (device == 0 || device == 0xFFFFFFFF)
 		return;
 	UARTDebugOut("[aurora]: Virtio Keyboard device found \n");
 	uint16_t command = AuPCIERead(device, PCI_COMMAND, bus, dev, func);

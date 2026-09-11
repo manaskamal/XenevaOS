@@ -101,15 +101,15 @@ int AuSignalDispatch(AA64Thread* thr) {
 bool AuSignalDeliver(AA64Thread* current_thread) {
 	int signo;
 	while ((signo = AuSignalDispatch(current_thread)) != 0) {
-		if (signo > SIGHUP || signo < SIGTTOU) {
-			AA64Registers* regs_ = (AA64Registers*)current_thread->sp;
-			memcpy(&current_thread->signal.regs, regs_, sizeof(AA64Registers));
-			current_thread->signal.elr_el1 = current_thread->elr_el1;
-			regs_->x0 = signo;
-			current_thread->elr_el1 = (uint64_t)current_thread->sigs[signo];
-			regs_->x30 = current_thread->signal.sigret_address;
-			return true;
-		}
+		if (signo <= 0 || signo >= 32 || !current_thread->sigs[signo])
+			continue;
+		AA64Registers* regs_ = (AA64Registers*)current_thread->sp;
+		memcpy(&current_thread->signal.regs, regs_, sizeof(AA64Registers));
+		current_thread->signal.elr_el1 = current_thread->elr_el1;
+		regs_->x0 = signo;
+		current_thread->elr_el1 = (uint64_t)current_thread->sigs[signo];
+		regs_->x30 = current_thread->signal.sigret_address;
+		return true;
 	}
 	return false;
 }

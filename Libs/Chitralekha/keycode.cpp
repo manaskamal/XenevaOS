@@ -128,6 +128,8 @@ static int _kkybrd_scancode_std[] = {
 #define SCANCODE_KEY_MASK	   0x7F
 #define SCANCODE_RELEASE_BIT   0x80
 
+#define KEYCODE_TABLE_SIZE (sizeof(_kkybrd_scancode_std) / sizeof(_kkybrd_scancode_std[0]))
+
 /**
  * @brief ChitralekhaKeyInitialise -- initialise keycode
  * library, this is automatically called during starting of
@@ -143,10 +145,17 @@ void ChitralekhaKeyInitialise() {
  * @param code -- scancode
  */
 void ChitralekhaProcessKey(int code) {
-	if (code & 0x80) { //released key
-		code -= 0x80;
-		int key = _kkybrd_scancode_std[code];
+	/* virtio-kbd tags extended keys (arrows, Home/End, Super, ...) as
+	 * (0xE0 << 8) | make_code -- mask down to the low 7 bits like
+	 * ChitralekhaGetKeyPress already does, instead of indexing the raw
+	 * tagged value straight into the table --axiss */
+	bool released = (code & SCANCODE_RELEASE_BIT) != 0;
+	unsigned index = code & SCANCODE_KEY_MASK;
+	if (index >= KEYCODE_TABLE_SIZE)
+		return;
+	int key = _kkybrd_scancode_std[index];
 
+	if (released) {
 		switch (key) {
 		case KEY_LCTRL:
 		case KEY_RCTRL:
@@ -162,7 +171,6 @@ void ChitralekhaProcessKey(int code) {
 			break;
 		}
 	} else {
-		int key = _kkybrd_scancode_std[code];
 		switch (key) {
 		case KEY_LCTRL:
 		case KEY_RCTRL:
@@ -194,7 +202,8 @@ void ChitralekhaProcessKey(int code) {
  */
 char ChitralekhaGetKeyPress(int code) {
 	int key = 0;
-	if (code < 128) {
+	/* the array only has KEYCODE_TABLE_SIZE entries, not 128 -- axiss */
+	if ((unsigned)code < KEYCODE_TABLE_SIZE) {
 		key = _kkybrd_scancode_std[code];
 	}
 
@@ -202,7 +211,7 @@ char ChitralekhaGetKeyPress(int code) {
 	if (ext) {
 		bool released = (code & SCANCODE_RELEASE_BIT) != 0;
 		uint8_t keycode = code & SCANCODE_KEY_MASK;
-		if (!released) {
+		if (!released && keycode < KEYCODE_TABLE_SIZE) {
 			key = _kkybrd_scancode_std[keycode];
 		}
 	}
@@ -218,7 +227,7 @@ char ChitralekhaKeyToASCII(int code) {
 	int scode = code;
 
 	/* for now only xt standard mapping is supported */
-	if (code < 128) { //key press events
+	if ((unsigned)code < KEYCODE_TABLE_SIZE) { //key press events
 		key = _kkybrd_scancode_std[scode];
 
 		/*switch (key) {
