@@ -455,7 +455,6 @@ AU_EXTERN AU_EXPORT int AuDriverMain(AuDriver * drv) {
 	uint64_t size_mb = storage_sz_in_bytes / (1024 * 1024);
 	uint64_t size_gb = storage_sz_in_bytes / (1024 * 1024 * 1024);
 
-
 	/** reset the virtio block device **/
 	virtioblk_reset(cfg);
 
