@@ -146,7 +146,7 @@ void LauncherSetupByConfigFile() {
 
 		LaunchButton* button =
 			CreateLaunchButton(0, 0, LAUNCH_BUTTON_W, LAUNCH_BUTTON_H, title, app);
-		button->param = (char*)malloc(strlen(param));
+		button->param = (char*)malloc(strlen(param) + 1);
 		strcpy(button->param, param);
 		ButtonIcon* ico = CreateLaunchButtonIcon(icon, button);
 		AppGridAddButton(grid, button);

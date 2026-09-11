@@ -35,6 +35,8 @@
 #include <Mm/vmmngr.h>
 #include <Mm/pmmngr.h>
 #include <Mm/kmalloc.h>
+#include <Hal/AA64/sched.h>
+#include <_null.h>
 /**
  * @brief AuCleanMMap -- clean default mmap addresses
  * @param proc -- Pointer to killable process
@@ -194,16 +196,25 @@ void AuProcessClean(AuProcess* parent, AuProcess* killable) {
 	}
 
 	/** now free up thread data structures **/
+	AA64Thread* current = AuGetCurrentThread();
 	AA64Thread* mainThr = killable->main_thread;
-	AuThreadCleanTrash(mainThr);
-	kfree(mainThr);
+	if (mainThr && mainThr != current) {
+		if (mainThr->state != THREAD_STATE_KILLABLE)
+			AuThreadMoveToTrash(mainThr);
+		AuThreadCleanTrash(mainThr);
+		kfree(mainThr);
+		killable->main_thread = NULL;
+	}
 
 	for (int i = 0; i < killable->num_thread; i++) {
 		AA64Thread* subthr = killable->threads[i];
-		if (subthr) {
-			AuThreadCleanTrash(subthr);
-			kfree(subthr);
-		}
+		if (!subthr || subthr == current)
+			continue;
+		if (subthr->state != THREAD_STATE_KILLABLE)
+			AuThreadMoveToTrash(subthr);
+		AuThreadCleanTrash(subthr);
+		kfree(subthr);
+		killable->threads[i] = NULL;
 	}
 
 	/** clear up the process data structure **/

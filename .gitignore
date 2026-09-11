@@ -40,6 +40,7 @@ KernelAA64/obj/
 fat.img
 initrd2.img
 fat-*.img
+*.iso
 qemu.pid
 dump.s
 *.so

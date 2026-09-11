@@ -28,6 +28,11 @@ set -e
 #                           compositor). Without extra args, init starts
 #                           xesh.exe on /dev/console. With extra args, init
 #                           runs the specified app (e.g. --term ping 1.1.1.1).
+#   --iso[=PATH]            Package the assembled ESP (fat.img) as a UEFI
+#                           El Torito bootable ISO instead of launching QEMU.
+#                           Defaults to xeneva.iso at the repo root. Test it
+#                           with: qemu-system-aarch64 -bios <firmware> -cdrom
+#                           <iso> ... (same other flags as the -drive form).
 #   -h, --help              Show this help and exit.
 #
 # Known gap: x86_64 (Boot/Kernel) has no QEMU boot path here yet.
@@ -50,10 +55,12 @@ DIRECT_SCANOUT=0
 TERM=0
 TERM_CMD=""
 INITRD_SIZE_MB=""
+ISO=0
+ISO_OUTPUT=""
 
 print_help(){
     printf "${STY_CYAN}"
-    sed -n '3,29p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
+    sed -n '3,38p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
     printf "${STY_RST}\n"
 }
 
@@ -84,6 +91,8 @@ while [ $# -gt 0 ]; do
             continue
             ;;
         --initrd-size-mb=*) INITRD_SIZE_MB="${1#--initrd-size-mb=}" ;;
+        --iso) ISO=1 ;;
+        --iso=*) ISO=1; ISO_OUTPUT="${1#--iso=}" ;;
         -h|--help) print_help; exit 0 ;;
         *)
             printf "${STY_RED}[$0]: Unknown option \"$1\".${STY_RST}\n"
@@ -174,7 +183,13 @@ fi
 
 echo "[+] Checking required host tools..."
 MISSING_TOOLS=()
-for tool in mkfs.vfat mcopy mmd qemu-system-aarch64; do
+REQUIRED_TOOLS=(mkfs.vfat mcopy mmd)
+if [ "$ISO" -eq 1 ]; then
+    REQUIRED_TOOLS+=(xorriso)
+else
+    REQUIRED_TOOLS+=(qemu-system-aarch64)
+fi
+for tool in "${REQUIRED_TOOLS[@]}"; do
     command -v "$tool" >/dev/null 2>&1 || MISSING_TOOLS+=("$tool")
 done
 if [ "$TOOLCHAIN" == llvm ]; then
@@ -209,13 +224,15 @@ resolve_qemu_firmware(){
     return 1
 }
 
-QEMU_FIRMWARE="$(resolve_qemu_firmware)" || {
-    printf "${STY_RED}[$0]: Could not find AArch64 UEFI firmware (QEMU_EFI.fd).${STY_RST}\n"
-    printf "${STY_YELLOW}[$0]: Install it (Arch: edk2-aarch64, Debian/Ubuntu: qemu-efi-aarch64),\n"
-    printf "    or point XENEVA_QEMU_FIRMWARE at the .fd file.${STY_RST}\n"
-    exit 1
-}
-echo "[+] Using QEMU firmware: $QEMU_FIRMWARE"
+if [ "$ISO" -eq 0 ]; then
+    QEMU_FIRMWARE="$(resolve_qemu_firmware)" || {
+        printf "${STY_RED}[$0]: Could not find AArch64 UEFI firmware (QEMU_EFI.fd).${STY_RST}\n"
+        printf "${STY_YELLOW}[$0]: Install it (Arch: edk2-aarch64, Debian/Ubuntu: qemu-efi-aarch64),\n"
+        printf "    or point XENEVA_QEMU_FIRMWARE at the .fd file.${STY_RST}\n"
+        exit 1
+    }
+    echo "[+] Using QEMU firmware: $QEMU_FIRMWARE"
+fi
 
 # --- Build ---
 
@@ -319,6 +336,48 @@ mcopy -o -i fat.img BootAA64/Build/EFI/BOOT/BOOTAA64.efi ::/EFI/BOOT/BOOTAA64.EF
 mcopy -o -i fat.img KernelAA64/KernelAA64.exe ::/EFI/XENEVA/xnkrnl.exe
 mcopy -o -i fat.img initrd2.img ::/initrd2.img
 
+# --- Package as a bootable ISO instead of launching QEMU ---
+
+if [ "$ISO" -eq 1 ]; then
+    iso_output="${ISO_OUTPUT:-$REPO_ROOT/xeneva.iso}"
+    iso_staging="$(mktemp -d)"
+    trap 'rm -rf "$iso_staging"' EXIT
+
+    # fat.img *is* the ESP: it already has /EFI/BOOT/BOOTAA64.EFI at the path
+    # UEFI firmware looks for by default, so it doubles as the El Torito
+    # "no emulation" EFI boot image -- no separate boot loader stage needed.
+    cp -f fat.img "$iso_staging/efiboot.img"
+
+    # Some UEFI firmware (mainly real hardware, not QEMU/OVMF) reads
+    # \EFI\BOOT\BOOTAA64.EFI straight off the ISO9660 filesystem instead of
+    # loading the El Torito image above -- mirror the same tree so that path
+    # also finds xnkrnl.exe/initrd2.img via the loader's usual relative
+    # lookup, not just a boot stub that immediately fails to find them --axiss
+    mkdir -p "$iso_staging/EFI/BOOT" "$iso_staging/EFI/XENEVA"
+    cp -f BootAA64/Build/EFI/BOOT/BOOTAA64.efi "$iso_staging/EFI/BOOT/BOOTAA64.EFI"
+    cp -f KernelAA64/KernelAA64.exe "$iso_staging/EFI/XENEVA/xnkrnl.exe"
+    cp -f initrd2.img "$iso_staging/initrd2.img"
+
+    echo "[+] Writing bootable ISO to $iso_output ..."
+    xorriso -as mkisofs \
+        -V "XENEVAOS" \
+        -o "$iso_output" \
+        -eltorito-alt-boot \
+        -e efiboot.img \
+        -no-emul-boot \
+        -isohybrid-gpt-basdat \
+        "$iso_staging"
+
+    rm -rf "$iso_staging"
+    trap - EXIT
+
+    echo "[+] ISO ready: $iso_output"
+    echo "[+] Test it with:"
+    echo "    qemu-system-aarch64 -machine virt,gic-version=2,highmem=off -cpu cortex-a72 -m 1024M \\"
+    echo "        -bios <path-to-QEMU_EFI.fd> -cdrom \"$iso_output\" -serial stdio"
+    exit 0
+fi
+
 # --- Launch QEMU ---
 
 if [ "$BLEED" -eq 1 ]; then
@@ -334,7 +393,12 @@ QEMU_ARGS=(
     -cpu cortex-a72
     -m "$qemu_memory"
     -bios "$QEMU_FIRMWARE"
-    -drive file=fat.img,format=raw,if=virtio
+    # explicit modern-only virtio-blk-pci (disable-legacy=on) instead of the
+    # if=virtio shorthand, so it always shows up at PCI ID 1af4:1042 -- the
+    # kernel's virtio-blk driver matches that ID, not the transitional
+    # 1af4:1001 the shorthand defaults to --axiss
+    -drive file=fat.img,format=raw,if=none,id=blk0
+    -device virtio-blk-pci,drive=blk0,disable-legacy=on
     -netdev user,id=net0
     -device virtio-net-pci,netdev=net0
     -device ramfb

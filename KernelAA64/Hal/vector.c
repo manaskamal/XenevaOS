@@ -59,15 +59,14 @@ void AuDumpRegisters(AA64Thread* thr, AA64Registers* regs) {
 	UARTDebugOut("x12: %x x13: %x \r\n", regs->x12, regs->x13);
 	UARTDebugOut("x14: %x x15: %x \r\n", regs->x14, regs->x15);
 	UARTDebugOut("x16: %x x17: %x \r\n", regs->x16, regs->x17);
-	UARTDebugOut("x18: %x \r\n", regs->x18);
-	if (thr) {
-		UARTDebugOut("x19: %x x20: %x \r\n", thr->x19, thr->x20);
-		UARTDebugOut("x21: %x X22: %x \r\n", thr->x21, thr->x22);
-		UARTDebugOut("x23: %x x24: %x \r\n", thr->x23, thr->x24);
-		UARTDebugOut("x25: %x x26: %x \r\n", thr->x25, thr->x26);
-		UARTDebugOut("x27: %x x28: %x \r\n", thr->x27, thr->x28);
-		UARTDebugOut("x29: %x x30: %x \r\n", thr->x29, thr->x30);
-	}
+	UARTDebugOut("x18: %x x19: %x \r\n", regs->x18, regs->x19);
+	UARTDebugOut("x20: %x x21: %x \r\n", regs->x20, regs->x21);
+	UARTDebugOut("x22: %x x23: %x \r\n", regs->x22, regs->x23);
+	UARTDebugOut("x24: %x x25: %x \r\n", regs->x24, regs->x25);
+	UARTDebugOut("x26: %x x27: %x \r\n", regs->x26, regs->x27);
+	UARTDebugOut("x28: %x x29: %x \r\n", regs->x28, regs->x29);
+	UARTDebugOut("x30: %x \r\n", regs->x30);
+	(void)thr;
 }
 
 void sync_el1_handler(AA64Registers* regs) {
@@ -159,6 +158,25 @@ void sync_el1_handler(AA64Registers* regs) {
 
 	dfsc = esr & 0x3F;
 
+	/* 0x20 insn abort / 0x24 data abort, both "from a lower exception level"
+	 * i.e. EL0 -- kill the process instead of hanging the whole machine in
+	 * while(1). 0x21/0x25 are aborts taken WITHOUT a change in EL (the
+	 * kernel itself faulted) -- leave those falling through to the switch
+	 * below and the halt, don't paper over a kernel bug --axiss */
+	if (ec == 0x20 || ec == 0x24) {
+		UARTDebugOut("[aurora]: EL0 abort, killing the faulting process \r\n");
+		if (currthr) {
+			if (!proc)
+				proc = AuProcessFindSubThread(currthr);
+			if (proc)
+				AuProcessExit(proc, false);
+			if (currthr->state != THREAD_STATE_KILLABLE)
+				AuThreadMoveToTrash(currthr);
+		}
+		AuScheduleThread(regs);
+		return;
+	}
+
 	switch (dfsc) {
 	case 0b000000:
 		UARTDebugOut("Address size, fault level 0 \r\n");
@@ -211,6 +229,13 @@ void sync_el1_handler(AA64Registers* regs) {
 
 extern bool aa64_restore_context(AA64Thread* thr);
 
+/* temporary freeze diagnostics: written by sync_el1_wrapper in aa64vector.s
+ * before any stack use, so they survive a trashed SP --axiss */
+uint64_t dbg_last_esr;
+uint64_t dbg_last_far;
+uint64_t dbg_last_elr;
+uint32_t dbg_fault_count;
+
 bool _userprint = 0;
 
 void setuprint() {
@@ -239,11 +264,9 @@ void irq_el1_handler(AA64Registers* regs) {
             AuTextOut("Virtual Timer IRQ fired %d \n", irq);
         }*/
 		else if (irq == 33) {
-			AuTextOut("PS/2 Keyboard irq fired %d\n", irq);
 			GICSendEOI(iar);
 			GICCheckPending(irq);
 		} else if (irq == UART0_IRQ) {
-			AuTextOut("UART0 IRQ fired %d \n", irq);
 			GICSendEOI(iar);
 			GICCheckPending(irq);
 		} else if (irq == 2) {

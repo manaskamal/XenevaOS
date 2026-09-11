@@ -467,14 +467,20 @@ XE_EXTERN XE_EXPORT void ChWindowHandleMouse(ChWindow* win, int x, int y, int bu
 			ChWindow* popup = (ChWindow*)list_get_at(win->popup, i);
 			if (popup->info->hide == 0) {
 				_KePrint("A popup window is not hidden \r\n");
+				/* ChWindowHide flips info->hide in shared memory, which
+				 * the compositor reads directly every frame (60fps) --
+				 * no IPC round-trip to wait out here --axiss */
 				ChWindowHide(popup);
-				_KeProcessSleep(5);
 				_popup_was_active = true;
 			}
 		}
 		if (_popup_was_active) {
+			/* ChWindowSetFlags/ChWindowSetFocused send DEODHAI_MESSAGE_SET_FLAGS
+			 * / WINDOW_BRING_FRONT, which DeodhaiXR's event loop does not
+			 * handle at all (dropped on the floor) -- the sleeps here used
+			 * to wait ~0.5-2s for a compositor round-trip that never
+			 * happens, on every single popup dismissal --axiss */
 			ChWindowSetFlags(win, (win->flags & ~(WINDOW_FLAG_STATIC)));
-			_KeProcessSleep(500);
 			ChWindowSetFocused(win);
 			return;
 		}
@@ -559,14 +565,20 @@ XE_EXTERN XE_EXPORT void ChWindowHandleTouch(ChWindow* win, int x, int y, int bu
 			ChWindow* popup = (ChWindow*)list_get_at(win->popup, i);
 			if (popup->info->hide == 0) {
 				_KePrint("A popup window is not hidden \r\n");
+				/* ChWindowHide flips info->hide in shared memory, which
+				 * the compositor reads directly every frame (60fps) --
+				 * no IPC round-trip to wait out here --axiss */
 				ChWindowHide(popup);
-				_KeProcessSleep(5);
 				_popup_was_active = true;
 			}
 		}
 		if (_popup_was_active) {
+			/* ChWindowSetFlags/ChWindowSetFocused send DEODHAI_MESSAGE_SET_FLAGS
+			 * / WINDOW_BRING_FRONT, which DeodhaiXR's event loop does not
+			 * handle at all (dropped on the floor) -- the sleeps here used
+			 * to wait ~0.5-2s for a compositor round-trip that never
+			 * happens, on every single popup dismissal --axiss */
 			ChWindowSetFlags(win, (win->flags & ~(WINDOW_FLAG_STATIC)));
-			_KeProcessSleep(500);
 			ChWindowSetFocused(win);
 			return;
 		}
@@ -998,13 +1010,12 @@ XE_EXTERN XE_EXPORT void ChPopupWindowUpdate(ChPopupWindow* pw, int x, int y, in
  * @param win -- Pointer to Chitralekha Main Window
  */
 XE_EXTERN XE_EXPORT void ChPopupWindowShow(ChWindow* pw, ChWindow* win) {
+	/* info->hide is shared memory the compositor reads every frame
+	 * (60fps); DEODHAI_MESSAGE_SET_FLAGS isn't handled by DeodhaiXR at
+	 * all, so the second call is currently a no-op on the compositor
+	 * side either way. Neither needs a 1s wait --axiss */
 	pw->info->hide = 0;
 	ChWindowSetFlags(win, (win->flags | WINDOW_FLAG_STATIC));
-	/* give some time slice to deodhai,
-	 * to update itself and get ready for
-	 * next events
-	 */
-	_KeProcessSleep(1000);
 }
 
 /*

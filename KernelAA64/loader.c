@@ -65,15 +65,6 @@ uint64_t physFrames[64];
 		stack &= ~((align) - 1);                                                                   \
 	} while (0)
 
-#define PUSHSTRING(stack, s)                                                                       \
-	do {                                                                                           \
-		size_t l = strlen(s) - 1;                                                                  \
-		do {                                                                                       \
-			PUSH2(stack, char, s[l]);                                                              \
-			l--;                                                                                   \
-		} while (l >= 0);                                                                          \
-	} while (0)
-
 void testFunc(uint64_t x0, uint64_t x1) {
 	UARTDebugOut("x0: %x x1 : %x \r\n", x0, x1);
 }

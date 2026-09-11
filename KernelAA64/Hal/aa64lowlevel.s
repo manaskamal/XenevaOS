@@ -309,6 +309,11 @@ read_daif:
    mrs x0,daif
    ret
 
+.global restore_daif
+restore_daif:
+   msr daif, x0
+   ret
+
 .extern testFunc
 .global aa64_enter_user
 aa64_enter_user:
@@ -360,11 +365,6 @@ read_sp_el1:
 .global sub_rsp
 sub_rsp:
    sub sp,sp, #256
-   ret
-
-.global set_kstack
-set_kstack:
-   msr SP_EL1, x0
    ret
 
 .global dc_ivac

@@ -98,29 +98,27 @@ void AuThreadInsert(AA64Thread* new_task) {
 * @brief AuThreadDelete -- remove a thread from thread list
 * @param thread -- thread address to remove
 */
-void AuThreadDelete(AA64Thread* thread) {
-	if (thread_list_head == NULL)
+static void AuThreadUnlink(AA64Thread** head, AA64Thread** last, AA64Thread* thread) {
+	if (!thread || !head || !last || *head == NULL)
 		return;
-
-	if (thread == thread_list_head) {
-		thread_list_head = thread_list_head->next;
-	} else {
+	if (thread->prev)
 		thread->prev->next = thread->next;
-	}
-
-	if (thread == thread_list_last) {
-		thread_list_last = thread->prev;
-	} else {
+	else if (*head == thread)
+		*head = thread->next;
+	if (thread->next)
 		thread->next->prev = thread->prev;
-	}
+	else if (*last == thread)
+		*last = thread->prev;
+	/* do NOT null out thread->next/prev here: AuHandleSleepThreads walks
+	 * sleep_thr_head with `for (...; sleep_thr = sleep_thr->next)` and calls
+	 * AuThreadDeleteSleep() mid-walk without saving next first -- clearing
+	 * next here would truncate that traversal and skip threads later in the
+	 * list on the same tick, same as the old per-list delete functions left
+	 * these fields untouched --axiss */
+}
 
-	/* donot free the thread, cuz when thread needs
-	* to move from runnable queue to blocked queue
-	* same address is used, rather call 'free'
-	* externally
-	*/
-	//aa64_data_cache_clean_range(thread_list_head, sizeof(AA64Thread));
-	//aa64_data_cache_clean_range(thread_list_last, sizeof(AA64Thread));
+void AuThreadDelete(AA64Thread* thread) {
+	AuThreadUnlink(&thread_list_head, &thread_list_last, thread);
 }
 
 /**
@@ -148,20 +146,7 @@ void AuThreadInsertBlock(AA64Thread* new_task) {
 * @param thread -- thread address to remove
 */
 void AuThreadDeleteBlock(AA64Thread* thread) {
-	if (blocked_thr_head == NULL)
-		return;
-
-	if (thread == blocked_thr_head) {
-		blocked_thr_head = blocked_thr_head->next;
-	} else {
-		thread->prev->next = thread->next;
-	}
-
-	if (thread == blocked_thr_last) {
-		blocked_thr_last = thread->prev;
-	} else {
-		thread->next->prev = thread->prev;
-	}
+	AuThreadUnlink(&blocked_thr_head, &blocked_thr_last, thread);
 }
 
 /**
@@ -187,20 +172,7 @@ void AuThreadInsertTrash(AA64Thread* new_task) {
 * @param thread -- thread address to remove
 */
 void AuThreadDeleteTrash(AA64Thread* thread) {
-	if (trash_thr_head == NULL)
-		return;
-
-	if (thread == trash_thr_head) {
-		trash_thr_head = trash_thr_head->next;
-	} else {
-		thread->prev->next = thread->next;
-	}
-
-	if (thread == trash_thr_last) {
-		trash_thr_last = thread->prev;
-	} else {
-		thread->next->prev = thread->prev;
-	}
+	AuThreadUnlink(&trash_thr_head, &trash_thr_last, thread);
 }
 
 /**
@@ -226,20 +198,7 @@ void AuThreadInsertSleep(AA64Thread* new_task) {
 * @param thread -- thread address to remove
 */
 void AuThreadDeleteSleep(AA64Thread* thread) {
-	if (sleep_thr_head == NULL)
-		return;
-
-	if (thread == sleep_thr_head) {
-		sleep_thr_head = sleep_thr_head->next;
-	} else {
-		thread->prev->next = thread->next;
-	}
-
-	if (thread == sleep_thr_last) {
-		sleep_thr_last = thread->prev;
-	} else {
-		thread->next->prev = thread->prev;
-	}
+	AuThreadUnlink(&sleep_thr_head, &sleep_thr_last, thread);
 }
 
 void AA64NextThread() {
@@ -321,16 +280,65 @@ extern void PrintThreadInfo() {
 	UARTDebugOut("SP : %x \r\n", thr->sp);
 }
 
+/* temporary freeze diagnostics: runs in idle thread context */
+static void AuSchedHeartbeat(void) {
+	static uint32_t idle_iters;
+	if ((++idle_iters % 20000) != 0)
+		return;
+	int ready = 0, sleep = 0, blocked = 0, leftk = 0, other = 0;
+	for (AA64Thread* t = thread_list_head; t != NULL; t = t->next) {
+		if (t == _idle_thr)
+			continue;
+		switch (t->state) {
+		case THREAD_STATE_READY: ready++; break;
+		case THREAD_STATE_SLEEP: sleep++; break;
+		case THREAD_STATE_BLOCKED: blocked++; break;
+		case THREAD_STATE_LEFT_IN_KERNEL: leftk++; break;
+		default: other++; break;
+		}
+	}
+	int sleeplist = 0;
+	for (AA64Thread* t = sleep_thr_head; t != NULL; t = t->next)
+		sleeplist++;
+	UARTDebugOut("[sched-dbg]: tick=%d ms=%d ready=%d sleep=%d blocked=%d leftk=%d other=%d sleeplist=%d \n",
+		(int)scheduler_tick, (int)AuGetCurrentMS(),
+		ready, sleep, blocked, leftk, other, sleeplist);
+	int shown = 0;
+	for (AA64Thread* t = thread_list_head; t != NULL && shown < 5; t = t->next) {
+		if (t == _idle_thr)
+			continue;
+		UARTDebugOut("[sched-dbg]: thr %s state=%d quanta=%d \n",
+			t->name ? t->name : "?", (int)t->state, (int)t->sleepQuanta);
+		shown++;
+	}
+}
+
+/* the idle loop body, factored out of AuIdleThread so aa64_schedule_init can
+ * jump straight back into it on originalKSp instead of restoring idle's
+ * thread->sp: idle gets preempted by every timer tick, which constantly
+ * overwrites thread->sp with a 256-byte eret-style exception-frame pointer
+ * (see AuScheduleThread). aa64_schedule_init's own handoff format is a
+ * completely different 208-byte callee-saved/ret-style frame. Idle was the
+ * target of both, so whichever one last wrote thread->sp left the other
+ * reading it as the wrong shape -- misinterpreting an eret frame as saved
+ * x19-x30/ELR/SPSR and `ret`-ing to garbage. Idle has no meaningful
+ * mid-loop state to preserve across a cooperative handoff, so the fix is to
+ * stop trying to restore it at all and just re-enter fresh --axiss */
+void AuIdleLoop(void) {
+	while (1) {
+		enable_irqs();
+		AuSchedHeartbeat();
+		_wfi();
+	}
+}
+
 void AuIdleThread(uint64_t ctx) {
 	mask_irqs();
 	UARTDebugOut("Idle thread running \r\n");
 	AuTextOut("Starting up Xeneva please wait...\r\n");
 	_idle_thr->start_time_us = AuGetCurrentUS();
 	enable_irqs();
-	while (1) {
-		enable_irqs();
-		_wfi();
-	}
+	AuIdleLoop();
 }
 
 extern void resume_user(AA64Thread* thr, void* ksp);
@@ -675,21 +683,35 @@ AA64Thread* AuThreadFindByIDBlockList(uint64_t id) {
 void AuThreadMoveToTrash(AA64Thread* t) {
 	if (!t)
 		return;
+	if (t->state == THREAD_STATE_KILLABLE)
+		return;
 
 	t->state = THREAD_STATE_KILLABLE;
 
 	AA64Thread* ready_queue_ = NULL;
 	/* search the thread in ready queue*/
 	for (ready_queue_ = thread_list_head; ready_queue_ != NULL; ready_queue_ = ready_queue_->next) {
-		if (ready_queue_ == t)
+		if (ready_queue_ == t) {
 			AuThreadDelete(t);
+			break;
+		}
 	}
 
 	AA64Thread* block_queue_ = NULL;
 	/* search the thread in block queue*/
 	for (block_queue_ = blocked_thr_head; block_queue_ != NULL; block_queue_ = block_queue_->next) {
-		if (block_queue_ == t)
+		if (block_queue_ == t) {
 			AuThreadDeleteBlock(t);
+			break;
+		}
+	}
+
+	AA64Thread* sleep_queue_ = NULL;
+	for (sleep_queue_ = sleep_thr_head; sleep_queue_ != NULL; sleep_queue_ = sleep_queue_->next) {
+		if (sleep_queue_ == t) {
+			AuThreadDeleteSleep(t);
+			break;
+		}
 	}
 
 	/* insert it in the trash list */

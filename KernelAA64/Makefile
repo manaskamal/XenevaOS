@@ -51,7 +51,8 @@ ifeq ($(TOOLCHAIN), llvm)
               -Wl,-entry:_AuMain \
             -Wl,-base:0xFFFFC00000000000 \
             -Wl,-subsystem:native \
-            -Wl,-def:$(EXPORTS_DEF)
+            -Wl,-def:$(EXPORTS_DEF) \
+            -Wl,/MAP:/tmp/opencode/kernel.map
 
     ifeq ($(shell command -v $(CC) 2>/dev/null),)
         $(error $(CC) not found on PATH. On MSYS2: pacman -S mingw-w64-clang-x86_64-toolchain (or the clangarm64/ucrt64 package matching your shell), then reopen the shell)

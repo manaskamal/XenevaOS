@@ -33,11 +33,30 @@
 .extern sync_el0_handler
 .extern PrintX0
 .extern syscall
+.extern dbg_last_esr
+.extern dbg_last_far
+.extern dbg_last_elr
+.extern dbg_fault_count
 
 sync_el1_wrapper:
    //mov x9, sp
    //bic x9, x9, #15
    //mov sp, x9
+   /* temporary freeze diagnostics: stash fault syndrome before touching
+    * the stack, so a trashed SP still leaves evidence --axiss */
+   mrs x9, ESR_EL1
+   mrs x10, FAR_EL1
+   mrs x11, ELR_EL1
+   adrp x12, dbg_last_esr
+   str x9, [x12, #:lo12:dbg_last_esr]
+   adrp x12, dbg_last_far
+   str x10, [x12, #:lo12:dbg_last_far]
+   adrp x12, dbg_last_elr
+   str x11, [x12, #:lo12:dbg_last_elr]
+   adrp x12, dbg_fault_count
+   ldr w13, [x12, #:lo12:dbg_fault_count]
+   add w13, w13, #1
+   str w13, [x12, #:lo12:dbg_fault_count]
    stp x0, x1, [sp, #-16]!
    stp x2, x3, [sp, #-16]!
    stp x4, x5, [sp, #-16]!

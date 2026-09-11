@@ -55,6 +55,9 @@
 #include <Hal/AA64/aa64lowlevel.h>
 #include <Ipc/postbox.h>
 
+/* temporary input-freeze diagnostics */
+extern void AuVirtioKbdDebug(void);
+
 uint8_t* font_data;
 uint32_t console_x;
 uint32_t console_y;
@@ -234,16 +237,24 @@ static size_t AuConsoleRead(AuVFSNode* node, AuVFSNode* file, uint64_t* buffer, 
 		return 0;
 	out = (uint8_t*)buffer;
 	n = 0;
+	/* temporary input-freeze diagnostics */
+	static uint32_t con_dbg_polls;
+	static uint32_t con_dbg_msgs;
 	while (n < length) {
 		AuInputMessage msg;
 		char c;
 		memset(&msg, 0, sizeof(msg));
-		AuDevReadKybrd(&msg);
+		AuDevReadConsoleKybrd(&msg);
 		c = 0;
 		if (msg.type == AU_INPUT_KEYBOARD)
 			c = AuConsoleMapKey(msg.code);
 		if (c == '\r')
 			c = '\n';
+		if (msg.type != 0) {
+			con_dbg_msgs++;
+			UARTDebugOut("[con-dbg]: type=%d code=%x ch=%c \n",
+				(int)msg.type, (int)msg.code, c ? c : '.');
+		}
 		if (c) {
 			out[n++] = (uint8_t)c;
 			if (c == '\n')
@@ -254,6 +265,12 @@ static size_t AuConsoleRead(AuVFSNode* node, AuVFSNode* file, uint64_t* buffer, 
 		} else {
 			if (n)
 				break;
+			con_dbg_polls++;
+			if ((con_dbg_polls % 500) == 0) {
+				UARTDebugOut("[con-dbg]: polls=%d msgs=%d \n",
+					(int)con_dbg_polls, (int)con_dbg_msgs);
+				AuVirtioKbdDebug();
+			}
 			AA64Thread* thr = AuGetCurrentThread();
 			if (thr) {
 				AuSleepThread(thr, 10);

@@ -831,7 +831,13 @@ void DeodhaiCloseWindow(Window* win) {
 #endif
 	BackDirtyAdd(
 		x - SHADOW_SIZE, y - SHADOW_SIZE, width + SHADOW_SIZE * 2, height + SHADOW_SIZE * 2);
-	DeodhaiRemoveWindow(win);
+	/* an always-on-top window lives in the alwaysOnTop list, not rootWin;
+	 * removing it via the rootWin-only helper corrupts both lists
+	 * (leaves alwaysOnTop/alwaysOnTopLast dangling to freed memory) --axiss */
+	if (flags & WINDOW_FLAG_ALWAYS_ON_TOP)
+		DeodhaiRemoveWindowAlwaysOnTop(win);
+	else
+		DeodhaiRemoveWindow(win);
 	_KePrint("Removing window \r\n");
 	free(win->title);
 	free(win);
@@ -1020,10 +1026,17 @@ int main(int argc, char* argv[]) {
 
 	uint64_t frameTime = 0;
 	uint64_t frameStart = 0;
+	uint64_t fpsFrameCount = 0;
+	uint64_t fpsComposeMsAccum = 0;
+	uint64_t fpsWindowStart = _KeGetCurrentMS();
 	while (1) {
 		frameStart = _KeGetCurrentMS();
 
-		XRComposeFrame(canv);
+		/* read input and update currentCursor before composing --
+		 * XRComposeFrame draws the cursor from currentCursor->xpos/ypos,
+		 * which used to only get updated *after* the frame was already
+		 * composed, so every frame drew the pointer a full frame behind
+		 * the actual mouse position --axiss */
 		_KeReadFile(mouse_fd, &mice_input, sizeof(AuInputMessage));
 		_KeReadFile(kybrd_fd, &kybrd_input, sizeof(AuInputMessage));
 		_KeFileIoControl(postbox_fd, POSTBOX_GET_EVENT_ROOT, &event);
@@ -1060,6 +1073,10 @@ int main(int argc, char* argv[]) {
 				currentCursor->ypos = 0;
 			memset(&mice_input, 0, sizeof(AuInputMessage));
 		}
+
+		uint64_t composeStart = _KeGetCurrentMS();
+		XRComposeFrame(canv);
+		fpsComposeMsAccum += (_KeGetCurrentMS() - composeStart);
 
 		if (kybrd_input.type == AU_INPUT_KEYBOARD) {
 			DeodhaiBroadcastKey(kybrd_input.code);
@@ -1223,17 +1240,57 @@ int main(int argc, char* argv[]) {
 					break;
 				}
 			}
+			/* always-on-top windows (systray, launcher, ...) live in a
+			 * separate list; without this fallback they were never
+			 * matched, so DeodhaiCloseWindow never ran, the closing app's
+			 * busy-wait for the close reply never got one, and the
+			 * window just sat there forever --axiss */
+			if (!removable) {
+				for (Window* win = alwaysOnTop; win != NULL; win = win->next) {
+					if (win->handle == handle && win->ownerId == ownerId) {
+						removable = win;
+						break;
+					}
+				}
+			}
 
 			if (removable) {
 				_KePrint("Close request for window : %s \r\n", removable->title);
+				/* clear stale references before the window is freed --
+				 * doing it unconditionally here (rather than after) also
+				 * stops a close for one window from blanking focus that
+				 * belongs to a different, still-open window --axiss */
+				if (focusedWin == removable)
+					focusedWin = NULL;
+				if (focusedLast == removable)
+					focusedLast = NULL;
+				if (mouseLastHovered == removable)
+					mouseLastHovered = NULL;
 				DeodhaiCloseWindow(removable);
 			}
-			focusedWin = NULL;
-			focusedLast = NULL;
 			memset(&event, 0, sizeof(PostEvent));
 		}
 
 		frameTime = _KeGetCurrentMS() - frameStart;
+		fpsFrameCount++;
+
+		{
+			uint64_t nowMs = _KeGetCurrentMS();
+			uint64_t windowMs = nowMs - fpsWindowStart;
+			if (windowMs >= 1000) {
+				uint64_t fps = (fpsFrameCount * 1000) / (windowMs ? windowMs : 1);
+				uint64_t avgComposeMs = fpsFrameCount ? (fpsComposeMsAccum / fpsFrameCount) : 0;
+				_KePrint("[deodhaiXR]: fps=%d avg_compose_ms=%d frames=%d window_ms=%d frame_ms=%d\r\n",
+						 (int)fps,
+						 (int)avgComposeMs,
+						 (int)fpsFrameCount,
+						 (int)windowMs,
+						 (int)frameTime);
+				fpsFrameCount = 0;
+				fpsComposeMsAccum = 0;
+				fpsWindowStart = nowMs;
+			}
+		}
 
 		if (frameTime < FRAME_TIME_MS) {
 			uint64_t remaining = FRAME_TIME_MS - frameTime;
