@@ -64,11 +64,7 @@ typedef struct _info_ {
  * @param button -- Mouse event button code
  */
 void NmButtonMouseEvent(NamdaphaButton* wid, ChWindow* win, int x, int y, int button) {
-	if (button && !wid->kill_focus)
-		wid->clicked = true;
-
-	if (wid->kill_focus)
-		wid->clicked = false;
+	bool pressed = button && !wid->kill_focus;
 
 	if (!wid->hover_painted && wid->hover) {
 		if (wid->drawNamdaphaButton)
@@ -77,24 +73,26 @@ void NmButtonMouseEvent(NamdaphaButton* wid, ChWindow* win, int x, int y, int bu
 		wid->hover_painted = true;
 	}
 
-	if (!wid->hover && wid->clicked == false) {
+	if (!wid->hover && !pressed) {
 		wid->hover_painted = false;
 		if (wid->drawNamdaphaButton)
 			wid->drawNamdaphaButton(wid, win);
 		ChWindowUpdate(win, wid->x, wid->y, wid->w, wid->h, 0, 1);
 	}
 
-	if (wid->clicked && wid->last_mouse_x == x && wid->last_mouse_y == y) {
+	/* rising edge only -- the old "clicked && same x,y" test re-fired the
+	 * Go-button hide toggle on every tablet sample at the same pixel, which
+	 * stalled Deodhai with UART + sleep(10) and made the desktop lag --axiss */
+	if (pressed && !wid->clicked) {
+		wid->clicked = true;
 		if (wid->drawNamdaphaButton)
 			wid->drawNamdaphaButton(wid, win);
 		ChWindowUpdate(win, wid->x, wid->y, wid->w, wid->h, 0, 1);
-
 		if (wid->actionHandler)
 			wid->actionHandler(wid, win);
-
-		wid->hover_painted = false;
-		wid->clicked = false;
 	}
+	if (!pressed)
+		wid->clicked = false;
 
 	wid->last_mouse_x = x;
 	wid->last_mouse_y = y;

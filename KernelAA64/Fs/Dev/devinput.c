@@ -43,6 +43,10 @@ static AuInputMessage kbd_q[NUM_KEYBOARD_PACKETS];
 static uint32_t kbd_r;
 static uint32_t kbd_w;
 
+static AuInputMessage console_kbd_q[NUM_KEYBOARD_PACKETS];
+static uint32_t console_kbd_r;
+static uint32_t console_kbd_w;
+
 /*
  * AuDevReadMice -- reads packets from pipe
  * to buffer
@@ -81,6 +85,20 @@ void AuDevReadKybrd(AuInputMessage* inputmsg) {
 }
 
 /*
+ * AuDevReadConsoleKybrd -- reads packets from console-specific keyboard queue
+ * @para, inputmsg -- Pointer to the buffer
+ */
+void AuDevReadConsoleKybrd(AuInputMessage* inputmsg) {
+	if (!inputmsg)
+		return;
+	memset(inputmsg, 0, sizeof(AuInputMessage));
+	if (console_kbd_r == console_kbd_w)
+		return;
+	memcpy(inputmsg, &console_kbd_q[console_kbd_r], sizeof(AuInputMessage));
+	console_kbd_r = (console_kbd_r + 1) % NUM_KEYBOARD_PACKETS;
+}
+
+/*
 * AuDevWritekybrd -- writes a packet to pipe
 * @param outmsg -- packet to write
 */
@@ -93,6 +111,13 @@ void AuDevWriteKybrd(AuInputMessage* outmsg) {
 		kbd_r = (kbd_r + 1) % NUM_KEYBOARD_PACKETS;
 	memcpy(&kbd_q[kbd_w], outmsg, sizeof(AuInputMessage));
 	kbd_w = next;
+
+	/* Duplicate for console input to avoid race with /dev/kybrd consumers */
+	uint32_t cnext = (console_kbd_w + 1) % NUM_KEYBOARD_PACKETS;
+	if (cnext == console_kbd_r)
+		console_kbd_r = (console_kbd_r + 1) % NUM_KEYBOARD_PACKETS;
+	memcpy(&console_kbd_q[console_kbd_w], outmsg, sizeof(AuInputMessage));
+	console_kbd_w = cnext;
 }
 
 /*

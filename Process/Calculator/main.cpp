@@ -71,6 +71,8 @@ void CalcDisplayDraw(ChWidget* wid, ChWindow* win) {
 		disp->output = false;
 		_clear_output = true;
 	}
+	if (!buff[0])
+		buff = "0";
 	int font_w = ChFontGetWidth(dispFont, buff);
 	ChFontDrawText(
 		win->canv, dispFont, buff, wid->x + wid->w - font_w - 10, wid->y + wid->h / 2, 23, BLACK);
@@ -229,7 +231,20 @@ void CalculatorProcess(CalculatorDisplay* calc) {
 	CalcClearHistory(calc);
 	CalcAddToHistory(calc, calc->inputnum, 0);
 	/*calc->operator_ = 0;*/
-	CalcAllClear(calc);
+
+	/* keep the result in inputnum too, not just outputnum -- the display
+	 * only shows outputnum for a single paint before falling back to
+	 * inputnum, so wiping inputnum here (the old CalcAllClear) left the
+	 * value in no buffer at all: Back/AC had nothing left to clear --axiss */
+	memset(calc->inputnum, 0, 1024);
+	strcpy(calc->inputnum, calc->outputnum);
+	calc->inputidx = strlen(calc->inputnum);
+
+	/* mark this as a just-computed result: the next digit typed should
+	 * replace it (a new number), not append to it, and num1 must not be
+	 * left stale for the operator handlers' "num1 == 0 means unset"
+	 * check -- both handled in CalcAddDigit --axiss */
+	calc->freshResult = true;
 }
 
 /* CalcAddDigit -- adds a digit to the calculator
@@ -240,6 +255,18 @@ void CalculatorProcess(CalculatorDisplay* calc) {
 void CalcAddDigit(CalculatorDisplay* disp, int number) {
 	if (number > 9)
 		return;
+	if (disp->freshResult) {
+		/* starting fresh entry after a shown result: always replace the
+		 * displayed value instead of appending. Only drop num1 too if no
+		 * operator has been chosen yet -- if the user pressed an operator
+		 * first (chaining off the previous result, e.g. "5+3=" then "+2="),
+		 * num1 must survive so the upcoming '=' still computes from it --axiss */
+		memset(disp->inputnum, 0, 1024);
+		disp->inputidx = 0;
+		if (disp->operator_ == 0)
+			disp->num1 = 0;
+		disp->freshResult = false;
+	}
 	char num[16];
 	itoa_s(number, 10, num);
 	if (disp->inputidx >= 1023)
@@ -253,6 +280,9 @@ void CalcAddDigit(CalculatorDisplay* disp, int number) {
  * @param disp -- Calculator display
  */
 void CalcRemoveDigit(CalculatorDisplay* disp) {
+	/* editing the shown value directly -- a digit typed after this should
+	 * append, not replace it --axiss */
+	disp->freshResult = false;
 	if (disp->inputidx == 0)
 		return;
 
@@ -286,6 +316,12 @@ void CalcAddToHistory(CalculatorDisplay* disp, char* num, uint8_t operator_) {
 		case CALC_OPERATOR_MOD:
 			opstr[0] = '%';
 			break;
+		case CALC_OPERATOR_MULT:
+			opstr[0] = '*';
+			break;
+		case CALC_OPERATOR_SUB:
+			opstr[0] = '-';
+			break;
 		default:
 			opstr[0] = '\0';
 			break;
@@ -293,7 +329,10 @@ void CalcAddToHistory(CalculatorDisplay* disp, char* num, uint8_t operator_) {
 		disp->historyBuf[disp->historyIdx] = opstr[0];
 		disp->historyIdx++;
 	} else {
-		int count = strlen(num) - 1;
+		/* was "strlen(num) - 1": a 1-digit num left historyIdx
+		 * unchanged, and an empty num underflowed this uint16_t to
+		 * 65535 --axiss */
+		int count = strlen(num);
 		strcpy(disp->historyBuf + disp->historyIdx, num);
 		disp->historyIdx += count;
 	}
@@ -315,6 +354,7 @@ void CalcClearHistory(CalculatorDisplay* disp) {
 void CalcAllClear(CalculatorDisplay* disp) {
 	memset(disp->inputnum, 0, 1024);
 	disp->inputidx = 0;
+	disp->freshResult = false;
 }
 
 /*

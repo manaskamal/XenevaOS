@@ -173,7 +173,7 @@ void AboutClicked(ChWidget* wid, ChWindow* win) {
  * @param win -- Pointer to main Window
  */
 void ExitItemClicked(ChWidget* wid, ChWindow* win) {
-	ChWindowCloseWindow(mainWin);
+	if (mainWin) ChWindowCloseWindow(mainWin);
 }
 
 /* DrawWallpaper -- code copied from deodhai wallpaper

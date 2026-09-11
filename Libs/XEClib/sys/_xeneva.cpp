@@ -70,15 +70,15 @@ XE_EXTERN XE_LIB void _XESetEnvironmentVariable(char* key, char* value, bool ove
 	char* dest = temp;
 	int found = 0;
 
-	char* insert = NULL;
 	char* scan = envp;
 	while (*scan) {
 		if (strncmp(scan, key, keyLen) == 0 && scan[keyLen] == '=') {
 			found = 1;
 			if (!overwrite) {
-				memcpy(envp, temp, maxEnvSize);
+				// Variable already exists and overwrite is false, do nothing
 				return;
 			}
+			// Skip this variable since we'll replace it
 			scan += strlen(scan) + 1;
 			continue;
 		}
@@ -94,10 +94,12 @@ XE_EXTERN XE_LIB void _XESetEnvironmentVariable(char* key, char* value, bool ove
 	if ((dest - temp) + totalLen + 2 >= maxEnvSize)
 		return;
 
+	// Add the new key-value pair
 	snprintf(dest, totalLen + 2, "%s=%s", key, value);
 	dest[totalLen + 1] = '\0';
 
-	memcpy(envp, temp, maxEnvSize);
+	// Copy the complete environment back
+	memcpy(envp, temp, dest - temp + 1);
 }
 
 XE_EXTERN XE_LIB int _XEPutEnvironmentVariable(char* keyval) {

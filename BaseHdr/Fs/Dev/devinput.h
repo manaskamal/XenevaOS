@@ -92,6 +92,13 @@ AU_EXTERN AU_EXPORT void AuDevWriteMice(AuInputMessage* outmsg);
 * @para, inputmsg -- Pointer to the buffer
 */
 AU_EXTERN AU_EXPORT void AuDevReadKybrd(AuInputMessage* inputmsg);
+
+/*
+* AuDevReadConsoleKybrd -- reads packets from console-specific keyboard queue
+* @para, inputmsg -- Pointer to the buffer
+*/
+AU_EXTERN AU_EXPORT void AuDevReadConsoleKybrd(AuInputMessage* inputmsg);
+
 /*
 * AuDevWritekybrd -- writes a packet to pipe
 * @param outmsg -- packet to write

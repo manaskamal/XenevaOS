@@ -52,6 +52,7 @@ typedef struct _display_widget_ {
 	int num1;
 	int num2;
 	bool output;
+	bool freshResult;
 } CalculatorDisplay;
 
 /*

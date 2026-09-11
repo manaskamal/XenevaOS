@@ -33,6 +33,12 @@
 #define __VIRTIO_H__
 
 #include <stdint.h>
+#include <stddef.h>
+#if defined(__GNUC__) || defined(__clang__)
+#ifndef __cplusplus
+#include <stdbool.h>
+#endif
+#endif
 
 struct VirtioCommonCfg {
 	volatile uint32_t DevFeatureSelect;
@@ -148,16 +154,116 @@ struct virtio_notifier_cap {
 	uint32_t notifer_mult_base;
 };
 
+/* modern virtio-pci capability types, virtio-v1.1 sec 4.1.4 */
+#define VIRTIO_PCI_CAP_VENDOR_ID  0x09 /* PCI capability ID for "vendor specific" */
+#define VIRTIO_PCI_CAP_COMMON_CFG 1
+#define VIRTIO_PCI_CAP_NOTIFY_CFG 2
+#define VIRTIO_PCI_CAP_ISR_CFG	  3
+#define VIRTIO_PCI_CAP_DEVICE_CFG 4
+#define VIRTIO_PCI_CAP_PCI_CFG	  5
+
+/* device status register bits, virtio-v1.1 sec 2.1 */
+#define VIRTIO_STATUS_ACKNOWLEDGE		  0x01
+#define VIRTIO_STATUS_DRIVER			  0x02
+#define VIRTIO_STATUS_DRIVER_OK		  0x04
+#define VIRTIO_STATUS_FEATURES_OK		  0x08
+#define VIRTIO_STATUS_DEVICE_NEEDS_RESET 0x40
+#define VIRTIO_STATUS_FAILED			  0x80
+
+/* bit 32 of the feature bitmap (high half, feature-select 1) --
+ * required on every modern (non-transitional-legacy) negotiation --axiss */
+#define VIRTIO_F_VERSION_1_BIT 32
+
+#define VIRTQ_DESC_F_NEXT  1
+#define VIRTQ_DESC_F_WRITE 2
+#define VIRTIO_MSI_NO_VECTOR 0xFFFF
+
+/* split-ring layout, sized to whatever queue size the device reports --
+ * NOT the fixed 64-entry VirtioQueue above. Modern virtio-pci gives
+ * QueueDesc/QueueAvail/QueueUsed as independent 64-bit addresses, so
+ * these don't need to be contiguous or share a struct --axiss */
+struct VirtqDesc {
+	volatile uint64_t addr;
+	volatile uint32_t len;
+	volatile uint16_t flags;
+	volatile uint16_t next;
+};
+
+struct VirtqAvailHdr {
+	volatile uint16_t flags;
+	volatile uint16_t idx;
+	volatile uint16_t ring[];
+};
+
+struct VirtqUsedElem {
+	volatile uint32_t id;
+	volatile uint32_t len;
+};
+
+struct VirtqUsedHdr {
+	volatile uint16_t flags;
+	volatile uint16_t idx;
+	volatile struct VirtqUsedElem ring[];
+};
+
+/**
+ * @brief a mapped, reset-and-negotiated modern virtio-pci device. Per-device
+ * drivers build their own virtqueues and config parsing on top of this.
+ */
+struct VirtioPCIDevice {
+	uint64_t address;
+	int bus, dev, func;
+	struct VirtioCommonCfg* common;
+	volatile uint8_t* isr;
+	void* deviceCfg;
+	uint8_t* notifyBase;
+	uint32_t notifyOffMultiplier;
+};
+
+/**
+ * @brief AuVirtioPCIInit -- walks the PCI capability list of a modern
+ * virtio-pci device, maps its common/notify/isr/device config BARs, resets
+ * it and negotiates VIRTIO_F_VERSION_1 plus wantedFeaturesLow (bits 0-31).
+ * @return false (device left reset) if the capability walk or the
+ * ACKNOWLEDGE->DRIVER->FEATURES_OK handshake fails
+ */
+extern bool AuVirtioPCIInit(uint64_t address, int bus, int dev, int func,
+							 uint32_t wantedFeaturesLow, struct VirtioPCIDevice* out);
+
+/**
+ * @brief AuVirtioPCISetupQueue -- selects queue qidx, allocates desc/avail/used
+ * rings sized to the device-reported queue size and enables the queue.
+ * @param msixVector -- MSI-X table index to bind the queue to, or
+ * VIRTIO_MSI_NO_VECTOR for polling (no queue interrupt)
+ * @return the negotiated queue size, or 0 on failure (queue too large for
+ * one page, or the device reports size 0/unavailable)
+ */
+extern uint16_t AuVirtioPCISetupQueue(struct VirtioPCIDevice* dev,
+									   uint16_t qidx,
+									   struct VirtqDesc** outDesc,
+									   struct VirtqAvailHdr** outAvail,
+									   struct VirtqUsedHdr** outUsed,
+									   uint16_t msixVector);
+
+/**
+ * @brief AuVirtioPCINotifyQueue -- kicks the device for queue qidx
+ */
+extern void AuVirtioPCINotifyQueue(struct VirtioPCIDevice* dev, uint16_t qidx);
+
+/**
+ * @brief AuVirtioBlkInitialize -- initialize the virtio block device
+ */
+extern void AuVirtioBlkInitialize(uint64_t device, int bus, int dev, int func);
 
 /**
  * @brief AuVirtioKbdInitialize -- initialize the virtio keyboard
  */
-extern void AuVirtioKbdInitialize(uint64_t device);
+extern void AuVirtioKbdInitialize(uint64_t device, int bus, int dev, int func);
 
 /**
  * @brief AuVirtioTabletInitialize -- initialize virtio tablet
  */
-extern void AuVirtioTabletInitialize(uint64_t device);
+extern void AuVirtioTabletInitialize(uint64_t device, int bus, int dev, int func);
 
 extern void AuVirtioKbdDown();
 

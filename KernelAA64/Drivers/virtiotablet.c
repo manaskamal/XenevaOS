@@ -71,23 +71,26 @@ static struct VirtioCommonCfg* _tabletCfg;
  * passed by system
  */
 void AuVirtioTabletHandler(int spiNum) {
+	dc_ivac((uint64_t)&TabletQueue->used.index);
+	dsb_sy_barrier();
 	uint16_t them = TabletQueue->used.index;
 
 	for (; tabletIndex < them; tabletIndex++) {
 		dc_ivac((uint64_t)&TabletInput[tabletIndex % tabletQueueSz]);
 		dsb_sy_barrier();
 		struct VirtioInputEvent evt = TabletInput[tabletIndex % tabletQueueSz];
-		while (evt.type == 0xFF) {
-			evt = TabletInput[tabletIndex % tabletQueueSz];
-			UARTDebugOut("VirtioInput: bad packet : %d (them=%d)\n", tabletIndex, them);
+		/* never spin or UART in IRQ: a 0xFF slot is already consumed --axiss */
+		if (evt.type == 0xFF) {
+			TabletQueue->available.index++;
+			continue;
 		}
 		TabletInput[tabletIndex % tabletQueueSz].type = 0xFF;
 		isb_flush();
 		dsb_sy_barrier();
 		if (evt.type == 3) {
-			if (evt.code == 0) {
+			if (maxX != 0 && evt.code == 0) {
 				mouseX = (evt.value * resX) / maxX;
-			} else if (evt.code == 1) {
+			} else if (maxY != 0 && evt.code == 1) {
 				mouseY = (evt.value * resY) / maxY;
 			}
 		} else if (evt.type == 1) {
@@ -114,6 +117,7 @@ void AuVirtioTabletHandler(int spiNum) {
 				(buttonScrollDown ? MOUSE_SCROLL_DOWN : 0) | (buttonScrollUp ? MOUSE_SCROLL_UP : 0);
 
 			AuDevWriteMice(&newmsg);
+			buttonScrollDown = buttonScrollUp = 0;
 		}
 		isb_flush();
 		TabletQueue->available.index++;
@@ -141,13 +145,10 @@ void AuVirtioTabletDown() {
 	UARTDebugOut("[virtio-tablet]: reset completed successfully \r\n");
 }
 /**
- * @brief AuVirtioKbdInitialize -- initialize the virtio keyboard
+ * @brief AuVirtioTabletInitialize -- initialize the virtio tablet
  */
-void AuVirtioTabletInitialize(uint64_t device) {
-	int bus = 0;
-	int func = 0;
-	int dev = 0;
-	if (device == 0xFFFFFFFF)
+void AuVirtioTabletInitialize(uint64_t device, int bus, int dev, int func) {
+	if (device == 0 || device == 0xFFFFFFFF)
 		return;
 
 	uint16_t command = AuPCIERead(device, PCI_COMMAND, bus, dev, func);

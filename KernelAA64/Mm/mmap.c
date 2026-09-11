@@ -113,7 +113,6 @@ AuSharedMmapObject* AuSharedMmapObjectFindByName(char* name) {
 	return NULL;
 }
 
-extern void aa64_schedule_init(AA64Thread* current, AA64Thread* init);
 /**
  * @brief CreateMemMapping -- Create a memory mapping of just memory, file or device
  * @param address -- address from where mapping start, if null, kernel will
