@@ -103,6 +103,9 @@ uint64_t* gic_redist_mmio;
 static uint8_t spiBitMap[MAX_SPIS];
 static irq_callback callbacks[MAX_SPIS];
 
+/* forward: GICv2 SPIs need an explicit CPU target, see GICEnableSPIIRQ */
+void GICSetTargetCPU(int spi);
+
 /**
  * @brief gic_outqw -- writes a value to mmio registers in qword
  * @param reg -- register
@@ -523,12 +526,16 @@ void GICEnableSPIIRQ(uint32_t irq) {
 		//GICD_ICFGR(spi_id / 16) |= (1u << bit);
 		GICSetEdgeTriggered(irq);
 		GICIsIRQEdgeTriggered(irq);
-		/*uint8_t* gicd_itargetsr = (uint8_t*)GICD_ITARGETSR(irq);
-		*gicd_itargetsr = 0x01;*/
 
 		if (__gic.version >= GIC_VERSION_3) {
 			/** route it to cpu0 **/
 			gic_outqw((uint64_t*)GICD(__gic), 0x6000 + irq * 8, 0ULL);
+		} else {
+			/* GICv2 SPIs power up with no CPU target: without this
+			 * the distributor never forwards them to the CPU IF,
+			 * so IAR never reports the SPI even though the device
+			 * raises it (used.idx advances, no IRQ). --axiss */
+			GICSetTargetCPU((int)irq);
 		}
 
 		*(volatile uint8_t*)(GICD(__gic) + GICD_IPRIORITYR(irq)) = 0x80;
@@ -544,7 +551,9 @@ void GICSetTargetCPU(int spi) {
 	uint32_t byteShift = spi % 4;
 
 	uint32_t val = GICD_ITARGETSR(reg_index);
-	uint8_t cpu_mask = 1 << 0x01; //cpu0
+	/* CPU0 mask is bit 0. The old (1 << 0x01) targeted CPU1, on which
+	 * nothing is scheduled under QEMU - so the SPI never fired --axiss */
+	uint8_t cpu_mask = (1u << 0);
 	val &= ~(0xFF << (byteShift * 8));
 	val |= (cpu_mask << (byteShift * 8));
 	GICD_ITARGETSR(reg_index) = val;
@@ -560,10 +569,38 @@ void GICClearPendingIRQ(uint32_t irq) {
 }
 
 void GICCheckPending(uint32_t irq) {
-	uint32_t pend = *(volatile uint32_t*)(GICD(__gic) + ISPENDING0);
-	if (pend & (1 << irq)) {
+	/* ISPENDR0 only covers IDs 0-31. SPIs live in ISPENDR1+.
+	 * The old code always read bank 0 and shifted by the full ID,
+	 * so any SPI >= 32 reported the wrong state. --axiss */
+	uint32_t reg = irq / 32;
+	uint32_t bit = irq % 32;
+	uint32_t pend = *(volatile uint32_t*)(GICD(__gic) + ISPENDING0 + reg * 4);
+	if (pend & (1u << bit)) {
 		//UARTDebugOut("IRQ : %d is still pending \n", irq);
 	}
+}
+
+/**
+ * @brief GICDumpSPI -- one-line GICv2/v3 distributor+CPU view for an SPI.
+ * Call after AuVirtIOInputInitialize() or from a debugger when an MSI
+ * device raises (used.idx advances) but IAR never reports it.
+ */
+void GICDumpSPI(uint32_t irq) {
+	uint32_t reg = irq / 32;
+	uint32_t bit = irq % 32;
+	uint32_t en = *(volatile uint32_t*)(GICD(__gic) + 0x100 + reg * 4);
+	uint32_t pend = *(volatile uint32_t*)(GICD(__gic) + ISPENDING0 + reg * 4);
+	uint32_t act = *(volatile uint32_t*)(GICD(__gic) + 0x300 + reg * 4);
+	uint8_t pri = *(volatile uint8_t*)(GICD(__gic) + GICD_IPRIORITYR(irq));
+	uint8_t tgt = *(volatile uint8_t*)(GICD(__gic) + 0x800 + irq);
+	uint32_t cfgr = GICD_ICFGR(irq / 16);
+	uint32_t ctlr = gic_inl_((uint64_t*)GICD(__gic), GICD_CTLR);
+	uint32_t pmr = *(volatile uint32_t*)(GICC(__gic) + GICC_PMR);
+	uint32_t cctlr = *(volatile uint32_t*)(GICC(__gic) + GICC_CTLR);
+	UARTDebugOut("GICD_CTLR=%x GICC_CTLR=%x GICC_PMR=%x\n", ctlr, cctlr, pmr);
+	UARTDebugOut("SPI%d EN=%d PEND=%d ACT=%d PRI=%x TGT=%x CFG=%x\n", irq, (en >> bit) & 1u,
+				  (pend >> bit) & 1u, (act >> bit) & 1u, pri, tgt,
+				  (cfgr >> ((irq % 16u) * 2u)) & 3u);
 }
 
 /**

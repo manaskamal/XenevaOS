@@ -82,6 +82,9 @@ extern uint32_t GICReadIAR();
 
 extern void GICCheckPending(uint32_t irq);
 
+/* one-line distributor+CPU view for an SPI, see gic.c */
+extern void GICDumpSPI(uint32_t irq);
+
 /**
  * @brief AuGICGetMSIAddress -- calculate and return MSI address
  * for given spi offset

@@ -235,8 +235,8 @@ extern bool AuVirtioPCIInit(uint64_t address, int bus, int dev, int func,
  * rings sized to the device-reported queue size and enables the queue.
  * @param msixVector -- MSI-X table index to bind the queue to, or
  * VIRTIO_MSI_NO_VECTOR for polling (no queue interrupt)
- * @return the negotiated queue size, or 0 on failure (queue too large for
- * one page, or the device reports size 0/unavailable)
+ * @return the negotiated queue size, or 0 on allocation/mapping failure or
+ * when the device reports size 0/unavailable
  */
 extern uint16_t AuVirtioPCISetupQueue(struct VirtioPCIDevice* dev,
 									   uint16_t qidx,
