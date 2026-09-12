@@ -71,7 +71,8 @@ uint8_t AuVirtIOInputCheck(uint64_t device, int bus, int dev, int func) {
  * see BaseHdr/Drivers/virtio.h for the rest of the 0x1AF4:0x10xx scheme */
 #define VIRTIO_PCI_DEVICE_ID_BLK 0x1042
 
-#define MAX_VIRTIO_DEVICES 4
+/* headroom for blk+net+kbd+tablet+gpu/snd without silently dropping inputs */
+#define MAX_VIRTIO_DEVICES 8
 
 void AuVirtIOInputInitialize() {
 	UARTDebugOut("AuVirtIO initializing inputs \r\n");
@@ -103,10 +104,9 @@ void AuVirtIOInputInitialize() {
 					}
 				}
 				if (vendID == 0x1AF4 && (devID == 0x1041 || devID == 0x1000)) {
-					numVirtIODevice++;
-					/* this was built-in kernel for test purpose, it is always
-					 * a good decision to fallback to external module
-					 */
+					/* external virtnet.dll owns this device; do NOT consume
+					 * a MAX_VIRTIO_DEVICES slot or later inputs (tablet)
+					 * get skipped depending on PCI order --axiss */
 					UARTDebugOut("[aurora]: skipping virtionet initialization inside kernel \r\n");
 					//AuVirtioNetInitialize(address);
 				}

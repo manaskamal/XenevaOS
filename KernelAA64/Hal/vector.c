@@ -248,41 +248,45 @@ void irq_el1_handler(AA64Registers* regs) {
 #else
 	uint32_t iar = GICReadIAR();
 	uint32_t irq = iar & 0x3FF;
-	if (irq < 1020) {
-		if (irq == 27) {
-			//suspendTimer(); //<--- suspecting this line
-			resetTimer();
-			// setupTimerIRQ();
-			GICSendEOI(iar);
-			GICCheckPending(irq);
-
-			/** handle expired timers **/
-			AuroraTimerTick();
-			AuScheduleThread(regs);
-		}
-		/*else if (irq == 27) {
-            AuTextOut("Virtual Timer IRQ fired %d \n", irq);
-        }*/
-		else if (irq == 33) {
-			GICSendEOI(iar);
-			GICCheckPending(irq);
-		} else if (irq == UART0_IRQ) {
-			GICSendEOI(iar);
-			GICCheckPending(irq);
-		} else if (irq == 2) {
-			AuTextOut("PL031 RTC IRQ %d \n", irq);
-			AuPL031RTCIRQHandle();
-			GICSendEOI(iar);
-			GICCheckPending(irq);
-		}
-	}
-	// GICClearPendingIRQ(irq);
 	if (irq >= 1020) {
 		UARTDebugOut("Spurious irq %d\n", irq);
 		return;
 	}
+	if (irq == 27) {
+		//suspendTimer(); //<--- suspecting this line
+		resetTimer();
+		// setupTimerIRQ();
+		GICSendEOI(iar);
+		GICCheckPending(irq);
 
-	if (irq >= 32 && irq < 1022) {
+		/** handle expired timers **/
+		AuroraTimerTick();
+		AuScheduleThread(regs);
+		return;
+	}
+	/*else if (irq == 27) {
+            AuTextOut("Virtual Timer IRQ fired %d \n", irq);
+        }*/
+	if (irq == 33) {
+		GICSendEOI(iar);
+		GICCheckPending(irq);
+		return;
+	}
+	if (irq == UART0_IRQ) {
+		GICSendEOI(iar);
+		GICCheckPending(irq);
+		return;
+	}
+	if (irq == 2) {
+		AuTextOut("PL031 RTC IRQ %d \n", irq);
+		AuPL031RTCIRQHandle();
+		GICSendEOI(iar);
+		GICCheckPending(irq);
+		return;
+	}
+	// GICClearPendingIRQ(irq);
+
+	if (irq >= 32 && irq < 1020) {
 		GICCallSPIHandler(irq);
 		GICSendEOI(iar);
 	}

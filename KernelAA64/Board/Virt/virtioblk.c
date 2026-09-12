@@ -156,6 +156,12 @@ static bool AuVirtioBlkRequest(uint32_t type, uint64_t sector, void* dataVirt, u
 			break;
 		if (++spins > 50000000) {
 			UARTDebugOut("virtio-blk: request timed out (sector %d) \r\n", (uint32_t)sector);
+			/* Do not allow later callers to reuse a queue whose completion state
+			 * is unknown. The device is reset by the next initialization attempt. */
+			blkReady = false;
+			blkDev.common->DeviceStatus |= VIRTIO_STATUS_FAILED;
+			isb_flush();
+			dsb_ish();
 			return false;
 		}
 	}
