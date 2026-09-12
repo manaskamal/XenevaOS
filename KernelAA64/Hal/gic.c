@@ -624,6 +624,7 @@ void GICSetupTimer() {
 void GICRegisterSPIHandler(void* fptr, int spi) {
 	if (callbacks[spi])
 		return;
+	UARTDebugOut("Registering SPI Handler: %d - %x \r\n", spi, fptr);
 	callbacks[spi] = fptr;
 }
 

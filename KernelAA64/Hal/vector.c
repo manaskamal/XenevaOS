@@ -283,6 +283,7 @@ void irq_el1_handler(AA64Registers* regs) {
 	}
 
 	if (irq >= 32 && irq < 1022) {
+		UARTDebugOut("IRQ num : %d \r\n", irq);
 		GICCallSPIHandler(irq);
 		GICSendEOI(iar);
 	}

@@ -53,6 +53,8 @@
 #include <Drivers/virtio.h>
 #include <Drivers/uart.h>
 
+
+
 #define VIRTIO_BLK_T_IN	 0
 #define VIRTIO_BLK_T_OUT 1
 
@@ -246,3 +248,4 @@ void AuVirtioBlkInitialize(uint64_t device, int bus, int dev, int func) {
 		UARTDebugOut("virtio-blk: sector 0 self-test read FAILED \r\n");
 	}
 }
+

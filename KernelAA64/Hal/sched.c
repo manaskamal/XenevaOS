@@ -397,10 +397,10 @@ void AuThreadSafeReturn(uint64_t rcx) {
  * @param regs -- Passed by Timer ISR
  */
 void AuScheduleThread(AA64Registers* regs) {
-	mask_irqs();
 	if (_scheduler_initialized == 0 || !regs) {
 		return;
 	}
+	mask_irqs();
 	AA64Thread* runThr = current_thread;
 
 	/* the vector wrapper already captured the full interrupted register set,
