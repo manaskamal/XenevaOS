@@ -124,14 +124,14 @@ void AuProcessEntUser(uint64_t rcx) {
 	}
 	uentry->argvs = 0;
 
-	UARTDebugOut("[loader]: entering user: sp=%x entry=%x argc=%d argv=%x\r\n",
+	/*UARTDebugOut("[loader]: entering user: sp=%x entry=%x argc=%d argv=%x\r\n",
 				 uentry->rsp,
 				 uentry->entrypoint,
 				 uentry->num_args,
-				 uentry->argvaddr);
+				 uentry->argvaddr);*/
 
 	uint64_t* check_sp = (uint64_t*)uentry->rsp;
-	UARTDebugOut("[loader]: stack check [0]: %x, [1]: %x\r\n", check_sp[0], check_sp[1]);
+	//UARTDebugOut("[loader]: stack check [0]: %x, [1]: %x\r\n", check_sp[0], check_sp[1]);
 
 	aa64_enter_user(uentry->rsp, uentry->entrypoint);
 	while (1) {}

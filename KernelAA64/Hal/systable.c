@@ -285,6 +285,10 @@ skip_1:
 		return;
 	}
 
+	if (vector == 31){
+	    UARTDebugOut("Enterring function x0: %x, x1 : %x \r\n", regs->x0, regs->x1);
+		UARTDebugOut("Current sp : %x \r\n", read_sp());
+	}
 	retcode = func(regs->x0, regs->x1, regs->x2, regs->x3, regs->x4, regs->x5);
 	regs->x0 = retcode;
 	regs->x6 = retcode;

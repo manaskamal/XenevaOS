@@ -225,6 +225,8 @@ void AuVirtioKbdInitialize(uint64_t device, int bus, int dev, int func) {
 
 	uint64_t queuePhys = (uint64_t)
 		AuPmmngrAllocPage(AURORA_PAGE_NORMAL); //AuPmmngrAllocBlocks(((sizeof(struct VirtioQueue) * queueSz))/0x1000);
+	memset((void*)queuePhys, 0, 0x1000);
+	
 	queue = (struct VirtioQueue*)AuMapMMIO(queuePhys,
 										   1 /*((sizeof(struct VirtioQueue)*queueSz))/0x1000*/);
 

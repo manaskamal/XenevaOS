@@ -217,6 +217,7 @@ void AuVirtioTabletInitialize(uint64_t device, int bus, int dev, int func) {
 	tabletQueueSz = queueSz;
 	uint64_t queuePhys = (uint64_t)
 		AuPmmngrAllocPage(AURORA_PAGE_NORMAL); //AuPmmngrAllocBlocks(((sizeof(struct VirtioQueue) * queueSz)) / 0x1000);
+	memset((void*)queuePhys, 0, 0x1000);
 	TabletQueue = (struct VirtioQueue*)AuMapMMIO(
 		queuePhys, 1 /*((sizeof(struct VirtioQueue) * queueSz)) / 0x1000*/);
 	UARTDebugOut("Queue Phys : %x \r\n", queuePhys);

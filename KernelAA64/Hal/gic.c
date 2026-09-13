@@ -557,6 +557,8 @@ void GICSetTargetCPU(int spi) {
 	val &= ~(0xFF << (byteShift * 8));
 	val |= (cpu_mask << (byteShift * 8));
 	GICD_ITARGETSR(reg_index) = val;
+	isb_flush();
+	dsb_ish();
 }
 void GICClearPendingIRQ(uint32_t irq) {
 	if (__gic.version >= GIC_VERSION_3)
@@ -661,7 +663,6 @@ void GICSetupTimer() {
 void GICRegisterSPIHandler(void* fptr, int spi) {
 	if (callbacks[spi])
 		return;
-	UARTDebugOut("Registering SPI Handler: %d - %x \r\n", spi, fptr);
 	callbacks[spi] = fptr;
 }
 
