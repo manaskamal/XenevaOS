@@ -107,6 +107,11 @@ void AuEthernetSend(AuVFSNode* nic, void* data, size_t len, uint16_t type, uint8
 	AuNetworkDevice* ndev = (AuNetworkDevice*)nic->device;
 	if (!ndev)
 		return;
+	/* Acceptance: loopback / local delivery must never hit L2. */
+	if (ndev->type == NETDEV_TYPE_LOOPBACK) {
+		UARTDebugOut("[aurora]: AuEthernetSend blocked on lo\r\n");
+		return;
+	}
 	size_t totalSz = sizeof(Ethernet) + len;
 	Ethernet* pacl = (Ethernet*)kmalloc(totalSz);
 	memset(pacl, 0, totalSz);
