@@ -126,11 +126,12 @@ void ChMenuItemMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, int button
 					   item->parent->y_loc + item->wid.y);
 		} else {
 			ChMenuHide(pm);
+			/* SET_FLAGS/BRING_FRONT aren't handled by DeodhaiXR and the
+			 * menu's hide is shared-memory/frame-synced -- these sleeps
+			 * used to block every menu click for ~1.5s waiting on
+			 * nothing --axiss */
 			ChWindowSetFlags(pm->mainWindow, (pm->mainWindow->flags & ~(WINDOW_FLAG_STATIC)));
-			_KeProcessSleep(1000);
 			ChWindowSetFocused(pm->mainWindow);
-			_KeProcessSleep(500);
-			//_KeProcessSleep(500);
 			_action_required = true;
 		}
 	}
@@ -202,7 +203,6 @@ void ChMenuShow(ChPopupMenu* menu, int x, int y) {
 		menu->y_loc = y;
 		ChPopupWindowUpdateLocation(menu->backWindow, menu->mainWindow, x + 5, y);
 		ChPopupWindowShow(menu->backWindow, menu->mainWindow);
-		_KeProcessSleep(1000);
 		ChWindowSetFocused(menu->backWindow);
 	} else {
 		ChMenuRecalculateDimensions(menu);
@@ -231,8 +231,9 @@ void ChMenuHide(ChPopupMenu* menu) {
 		return;
 	if (!menu->backWindow)
 		return;
+	/* frame-synced via shared memory, not a compositor round-trip -- was
+	 * blocking 500ms per level, recursively up the whole submenu chain --axiss */
 	ChWindowHide(menu->backWindow);
-	_KeProcessSleep(500);
 	if (menu->parent) {
 		ChMenuHide(menu->parent);
 	}

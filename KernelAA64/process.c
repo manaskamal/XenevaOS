@@ -218,10 +218,14 @@ uint64_t* CreateSubUserStack(AuProcess* proc, uint64_t* cr3) {
 	UARTDebugOut("User stack index : %x \r\n", proc->_user_stack_index_);
 	location += proc->_user_stack_index_;
 
+	/* must match CreateUserStack: Normal memory + map into the process
+	 * address space. Device-mapped stacks fault on unaligned STP/STUR
+	 * (term.exe asyncth: stur d0, [sp,#0x14] -> FAR A0000FFF34) --axiss */
 	for (int i = 0; i < (PROCESS_USER_STACK_SZ / PAGE_SIZE); ++i) {
 		uint64_t blk = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
-		if (!AuMapPage(blk, location + i * PAGE_SIZE, PTE_AP_RW_USER | PTE_AP_RW)) {
-			UARTDebugOut("CreateUserStack: already mapped %x \r\n", (location + i * PAGE_SIZE));
+		if (!AuMapPageEx(
+				cr3, blk, location + i * PAGE_SIZE, PTE_NORMAL_MEM | PTE_AP_RW_USER | PTE_AP_RW)) {
+			UARTDebugOut("CreateSubUserStack: already mapped %x \r\n", (location + i * PAGE_SIZE));
 		}
 	}
 
@@ -236,7 +240,9 @@ uint64_t* CreateSubUserStack(AuProcess* proc, uint64_t* cr3) {
 AuProcess* AuCreateProcessSlot(AuProcess* parent, char* name) {
 	AuProcess* proc = (AuProcess*)kmalloc(sizeof(AuProcess));
 	memset(proc, 0, sizeof(AuProcess));
-	strncpy(proc->name, name, 16);
+	if (name)
+		strncpy(proc->name, name, sizeof(proc->name) - 1);
+	proc->name[sizeof(proc->name) - 1] = '\0';
 
 	proc->proc_id = AuAllocateProcessID();
 	/* create empty virtual address space */
@@ -413,30 +419,39 @@ void AuProcessExit(AuProcess* proc, bool schedulable) {
 	BordoisilaCapCleanupProcess(proc);
 	for (int i = 0; i < FILE_DESC_PER_PROCESS; i++) {
 		AuVFSNode* file = proc->fds[i];
-		if (file) {
-			UARTDebugOut(
-				"[AuProcessExit]: closing file : %s flags %x\r\n", file->filename, file->flags);
-			/** conditional check for cache flag **/
-			if (file->flags & FS_FLAG_CACHED) {
-				UARTDebugOut("[AuProcessExit]: cached file skipped close : %s, flags : %x\r\n",
-							 file->filename);
-				if (file->fileCopyCount > 0)
-					file->fileCopyCount -= 1;
-				continue;
-			}
-			if (file->flags & FS_FLAG_DEVICE || file->flags & FS_FLAG_FILE_SYSTEM)
-				continue;
-			if ((file->flags & FS_FLAG_GENERAL) || (file->flags & FS_FLAG_DIRECTORY)) {
-				if (file->fileCopyCount <= 0) {
-					UARTDebugOut("Freeing up file : %s \r\n", file->filename);
-					kfree(file);
-				} else
-					file->fileCopyCount -= 1;
-			}
-			if (file->flags & FS_FLAG_SOCKET) {
-				if (file->close)
-					file->close(file, file);
-			}
+		if (!file)
+			continue;
+		proc->fds[i] = NULL;
+		UARTDebugOut(
+			"[AuProcessExit]: closing file : %s flags %x\r\n", file->filename, file->flags);
+		/** conditional check for cache flag **/
+		if (file->flags & FS_FLAG_CACHED) {
+			UARTDebugOut("[AuProcessExit]: cached file skipped close : %s, flags : %x\r\n",
+						 file->filename);
+			if (file->fileCopyCount > 0)
+				file->fileCopyCount -= 1;
+			continue;
+		}
+		if (file->flags & FS_FLAG_DEVICE || file->flags & FS_FLAG_FILE_SYSTEM)
+			continue;
+		if ((file->flags & FS_FLAG_GENERAL) || (file->flags & FS_FLAG_DIRECTORY)) {
+			if (file->fileCopyCount <= 0) {
+				UARTDebugOut("Freeing up file : %s \r\n", file->filename);
+				kfree(file);
+				/* same AuVFSNode* can sit in several fd slots (dup/tty
+				 * copy). after the free those slots are dangling and the
+				 * next iteration kfree's a live heap object. drop the
+				 * aliases here. --axiss */
+				for (int j = i + 1; j < FILE_DESC_PER_PROCESS; j++) {
+					if (proc->fds[j] == file)
+						proc->fds[j] = NULL;
+				}
+			} else
+				file->fileCopyCount -= 1;
+		}
+		if (file->flags & FS_FLAG_SOCKET) {
+			if (file->close)
+				file->close(file, file);
 		}
 	}
 
@@ -458,16 +473,15 @@ void AuProcessExit(AuProcess* proc, bool schedulable) {
 
 	kfree(proc->waitlist);
 
-	///* mark all the threads as blocked */
-	for (int i = 1; i < proc->num_thread; i++) {
+	/* threads[0] is the first sub-thread (term.exe asyncth). starting at
+	 * i=1 left it on the ready/block/sleep list, then AuProcessClean
+	 * kfree'd it and the scheduler wrote into a TLSF free block. --axiss */
+	for (int i = 0; i < proc->num_thread; i++) {
 		AA64Thread* killable = proc->threads[i];
-		if (killable) {
-			/* here we should cleanup sub postbox
-			 * sound, timer resources also
-			 */
-			AuProcessFreeKeResource(killable);
-			AuThreadMoveToTrash(killable);
-		}
+		if (!killable || killable == proc->main_thread)
+			continue;
+		AuProcessFreeKeResource(killable);
+		AuThreadMoveToTrash(killable);
 	}
 }
 

@@ -90,14 +90,7 @@ void LaunchButtonPaint(LaunchButton* lb, ChWindow* win) {
  * @param y -- mouse y information
  */
 void LaunchButtonMouseEvent(LaunchButton* wid, ChWindow* win, int x, int y, int button) {
-	if (button && !wid->kill_focus)
-		wid->clicked = true;
-
-	if (button == 0)
-		wid->clicked = 0;
-
-	if (wid->kill_focus)
-		wid->clicked = false;
+	bool pressed = button && !wid->kill_focus;
 
 	if (!wid->hover_painted && wid->hover) {
 		if (wid->drawLaunchButton)
@@ -106,25 +99,24 @@ void LaunchButtonMouseEvent(LaunchButton* wid, ChWindow* win, int x, int y, int 
 		wid->hover_painted = true;
 	}
 
-	if (!wid->hover && wid->clicked == false) {
+	if (!wid->hover && !pressed) {
 		wid->hover_painted = false;
 		if (wid->drawLaunchButton)
 			wid->drawLaunchButton(wid, win);
 		ChWindowUpdate(win, wid->x, wid->y, wid->w, wid->h, false, true);
 	}
 
-	if (wid->clicked && wid->last_mouse_x == x && wid->last_mouse_y == y) {
+	/* rising edge only; do not sleep here -- the compositor is waiting --axiss */
+	if (pressed && !wid->clicked) {
+		wid->clicked = true;
 		if (wid->drawLaunchButton)
 			wid->drawLaunchButton(wid, win);
 		ChWindowUpdate(win, wid->x, wid->y, wid->w, wid->h, false, true);
-		_KeProcessSleep(500);
-
-		wid->hover_painted = false;
-		wid->clicked = false;
-
 		if (wid->actionHandler)
 			wid->actionHandler(wid, win);
 	}
+	if (!pressed)
+		wid->clicked = false;
 
 	wid->last_mouse_x = x;
 	wid->last_mouse_y = y;
@@ -145,7 +137,7 @@ void LauncherButtonDefaultAction(LaunchButton* lbutton, ChWindow* win) {
 	char** argvs = NULL;
 	int numarg = 0;
 	if (strcmp(lbutton->param, "Null") == 1) {
-		char* p = (char*)malloc(strlen(lbutton->param));
+		char* p = (char*)malloc(strlen(lbutton->param) + 1);
 		strcpy(p, lbutton->param);
 		numarg++;
 		argvs = (char**)malloc(numarg * sizeof(char*));
@@ -178,11 +170,9 @@ LaunchButton* CreateLaunchButton(int x, int y, int w, int h, char* title, char* 
 	lb->h = h;
 	lb->scratch_x = x;
 	lb->scratch_y = y;
-	lb->title = (char*)malloc(strlen(title));
-	lb->appname = (char*)malloc(strlen(appname));
-	memset(lb->title, 0, strlen(title));
+	lb->title = (char*)malloc(strlen(title) + 1);
+	lb->appname = (char*)malloc(strlen(appname) + 1);
 	strcpy(lb->title, title);
-	memset(lb->appname, 0, strlen(appname));
 	strcpy(lb->appname, appname);
 	lb->buttonIcon = 0;
 	lb->drawLaunchButton = LaunchButtonPaint;
@@ -210,8 +200,7 @@ ButtonIcon* CreateLaunchButtonIcon(char* iconfile, LaunchButton* button) {
 	XEFileStatus stat;
 	_KeFileStat(fd, &stat);
 
-	icon->filename = (char*)malloc(strlen(iconfile));
-	memset(icon->filename, 0, strlen(iconfile));
+	icon->filename = (char*)malloc(strlen(iconfile) + 1);
 	strcpy(icon->filename, iconfile);
 	icon->fileBuffer = (uint8_t*)_KeMemMap(NULL, stat.size, 0, 0, MEMMAP_NO_FILEDESC, 0);
 	icon->iconFd = fd;

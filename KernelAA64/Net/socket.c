@@ -31,6 +31,7 @@
 
 #include <Net/socket.h>
 #include <Net/ipv4.h>
+#include <Net/ipv6.h>
 #include <Hal/AA64/aa64lowlevel.h>
 #include <Mm/kmalloc.h>
 #include <string.h>
@@ -357,6 +358,8 @@ int AuCreateSocket(int domain, int type, int protocol) {
 	switch (domain) {
 	case AF_INET:
 		return CreateIPv4Socket(type, protocol);
+	case AF_INET6:
+		return CreateIPv6Socket(type, protocol);
 	case AF_RAW:
 		return AuCreateRawSocket(type, protocol);
 	default:

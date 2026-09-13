@@ -35,6 +35,7 @@
 #include <Net/aunet.h>
 #include <string.h>
 #include <Net/ipv4.h>
+#include <Net/ipv6.h>
 #include <Net/udp.h>
 #include <Net/ethernet.h>
 #include <Drivers/uart.h>
@@ -85,6 +86,30 @@ void UDPHandlePacket(char* packet) {
 		}
 	}
 }
+
+void UDPHandlePacket6(IPv6Header* ipv6) {
+	UDPHeader* udp;
+	uint16_t dest_port;
+	uint16_t payloadLen;
+	size_t totalLen;
+	int i;
+
+	if (!ipv6)
+		return;
+	udp = (UDPHeader*)&ipv6->payload;
+	memcpy(&dest_port, &udp->destPort, 2);
+	payloadLen = ntohs(ipv6->payloadLen);
+	totalLen = sizeof(IPv6Header) + payloadLen;
+
+	for (i = 0; i < udp_socket_list->pointer; i++) {
+		AuSocket* sock = (AuSocket*)list_get_at(udp_socket_list, i);
+		if (sock->sessionPort == ntohs(dest_port)) {
+			AuSocketAdd(sock, ipv6, totalLen);
+			break;
+		}
+	}
+}
+
 /**
 * @brief AuUDPReceive -- UDP protocol receive interface
 * @param sock -- Pointer to socket
@@ -92,6 +117,11 @@ void UDPHandlePacket(char* packet) {
 * @param flags -- extra flags
 */
 int AuUDPReceive(AuSocket* sock, msghdr* msg, int flags) {
+	char* packet;
+	size_t stored;
+	uint8_t version;
+
+	(void)flags;
 	if (sock->sessionPort == 0)
 		return -1;
 
@@ -103,29 +133,55 @@ int AuUDPReceive(AuSocket* sock, msghdr* msg, int flags) {
 	if (msg->msg_iovlen == 0)
 		return 0;
 
-	char* packet = (char*)AuSocketGet(sock);
+	packet = (char*)AuSocketGet(sock);
 	if (!packet)
 		return -1;
-	IPv4Header* ipv4 = (IPv4Header*)(packet + sizeof(size_t));
-	UDPHeader* udp = (UDPHeader*)&ipv4->payload;
 
-	UARTDebugOut("[aurora]: UDP: Got Response %d \r\n", ntohs(ipv4->totalLength));
-	memcpy(msg->msg_iov[0].iov_base,
-		   udp->payload,
-		   ntohs(ipv4->totalLength) - sizeof(IPv4Header) - sizeof(UDPHeader));
+	stored = *(size_t*)packet;
+	version = ((uint8_t*)(packet + sizeof(size_t)))[0] >> 4;
 
-	if (msg->msg_namelen == sizeof(sockaddr_in)) {
-		if (msg->msg_name) {
-			((sockaddr_in*)msg->msg_name)->sin_family = AF_INET;
-			((sockaddr_in*)msg->msg_name)->sin_port = udp->srcPort;
-			((sockaddr_in*)msg->msg_name)->sin_addr.s_addr = ipv4->srcAddress;
+	if (version == 6) {
+		IPv6Header* ipv6 = (IPv6Header*)(packet + sizeof(size_t));
+		UDPHeader* udp = (UDPHeader*)&ipv6->payload;
+		long len = (long)ntohs(ipv6->payloadLen) - (long)sizeof(UDPHeader);
+		if (len < 0)
+			len = 0;
+		if ((size_t)len > msg->msg_iov[0].iov_len)
+			len = (long)msg->msg_iov[0].iov_len;
+		memcpy(msg->msg_iov[0].iov_base, udp->payload, (size_t)len);
+		if (msg->msg_name && msg->msg_namelen >= sizeof(sockaddr_in6)) {
+			sockaddr_in6* name = (sockaddr_in6*)msg->msg_name;
+			name->sin6_family = AF_INET6;
+			name->sin6_port = udp->srcPort;
+			name->sin6_flowinfo = 0;
+			memcpy(name->sin6_addr.s6_addr, ipv6->srcIP.s6_addr, 16);
+			name->sin6_scope_id = 0;
+			msg->msg_namelen = sizeof(sockaddr_in6);
 		}
-	}
+		kfree(packet);
+		(void)stored;
+		return (int)len;
+	} else {
+		IPv4Header* ipv4 = (IPv4Header*)(packet + sizeof(size_t));
+		UDPHeader* udp = (UDPHeader*)&ipv4->payload;
 
-	long len = ntohs(ipv4->totalLength) - sizeof(IPv4Header) - sizeof(UDPHeader);
-	kfree(packet);
-	return len;
-	return 0;
+		UARTDebugOut("[aurora]: UDP: Got Response %d \r\n", ntohs(ipv4->totalLength));
+		memcpy(msg->msg_iov[0].iov_base,
+			   udp->payload,
+			   ntohs(ipv4->totalLength) - sizeof(IPv4Header) - sizeof(UDPHeader));
+
+		if (msg->msg_namelen == sizeof(sockaddr_in)) {
+			if (msg->msg_name) {
+				((sockaddr_in*)msg->msg_name)->sin_family = AF_INET;
+				((sockaddr_in*)msg->msg_name)->sin_port = udp->srcPort;
+				((sockaddr_in*)msg->msg_name)->sin_addr.s_addr = ipv4->srcAddress;
+			}
+		}
+
+		long len = ntohs(ipv4->totalLength) - sizeof(IPv4Header) - sizeof(UDPHeader);
+		kfree(packet);
+		return (int)len;
+	}
 }
 
 /**
@@ -136,62 +192,112 @@ int AuUDPReceive(AuSocket* sock, msghdr* msg, int flags) {
 */
 int AuUDPSend(AuSocket* sock, msghdr* msg, int flags) {
 	UARTDebugOut("[aurora]: UDP: Send -> %d \r\n", sizeof(UDPHeader));
+	(void)flags;
 	if (msg->msg_iovlen > 1) {
 		UARTDebugOut("UDP: Multiple IOV is not supported \r\n");
 		return 1;
 	}
 	if (msg->msg_iovlen == 0)
 		return 0;
-	if (msg->msg_namelen != sizeof(sockaddr_in)) {
-		UARTDebugOut("UDP: invalid destination address size \r\n");
-		return 0;
-	}
 
 	if (sock->sessionPort == 0) {
 		UDPGetPort(sock);
 		UARTDebugOut("[aurora]:UDP: assigning port %d to socket \r\n", sock->sessionPort);
 	}
 
-	sockaddr_in* sockin = (sockaddr_in*)msg->msg_name;
+	if (msg->msg_namelen == sizeof(sockaddr_in6)) {
+		sockaddr_in6* sockin6 = (sockaddr_in6*)msg->msg_name;
+		AuVFSNode* nic = AuNetworkRoute6((const ip6_addr*)&sockin6->sin6_addr);
+		AuNetworkDevice* netdev;
+		size_t total_len;
+		uint16_t udpLen;
+		IPv6Header* ipv6;
+		UDPHeader* udp;
 
-	AuVFSNode* nic = AuNetworkRoute(sockin->sin_addr.s_addr);
-	if (!nic) {
-		UARTDebugOut("[aurora]:UDP: Failed to route address \r\n");
+		if (!nic)
+			return 0;
+		netdev = (AuNetworkDevice*)nic->device;
+		if (!netdev)
+			return 0;
+
+		udpLen = (uint16_t)(sizeof(UDPHeader) + msg->msg_iov[0].iov_len);
+		total_len = sizeof(IPv6Header) + udpLen;
+		ipv6 = (IPv6Header*)kmalloc(total_len);
+		if (!ipv6)
+			return 0;
+		memset(ipv6, 0, total_len);
+		IPv6SetVerTcFl(ipv6, 6, 0, sockin6->sin6_flowinfo & 0xFFFFF);
+		ipv6->payloadLen = htons(udpLen);
+		ipv6->nextHeader = IPV6_NEXT_UDP;
+		ipv6->hopLimit = 64;
+		ip6_addr_copy(&ipv6->srcIP, &netdev->ipv6addr);
+		memcpy(ipv6->destIP.s6_addr, sockin6->sin6_addr.s6_addr, 16);
+
+		udp = (UDPHeader*)&ipv6->payload;
+		udp->srcPort = htons(sock->sessionPort);
+		udp->destPort = sockin6->sin6_port;
+		udp->length = htons(udpLen);
+		udp->checksum = 0;
+		memcpy(&udp->payload, msg->msg_iov[0].iov_base, msg->msg_iov[0].iov_len);
+		udp->checksum = htons(IPv6PseudoChecksum(&ipv6->srcIP, &ipv6->destIP,
+			udpLen, IPV6_NEXT_UDP, udp, udpLen));
+		if (udp->checksum == 0)
+			udp->checksum = 0xFFFF;
+
+		IPV6SendPacket(ipv6, nic);
+		kfree(ipv6);
+		return (int)msg->msg_iov[0].iov_len;
+	}
+
+	if (msg->msg_namelen != sizeof(sockaddr_in)) {
+		UARTDebugOut("UDP: invalid destination address size \r\n");
 		return 0;
 	}
-	AuNetworkDevice* netdev = (AuNetworkDevice*)nic->device;
-	if (!netdev) {
-		UARTDebugOut("[aurora]: UDP: No network device found \r\n");
-		return 0;
+
+	{
+		sockaddr_in* sockin = (sockaddr_in*)msg->msg_name;
+		AuVFSNode* nic = AuNetworkRoute(sockin->sin_addr.s_addr);
+		AuNetworkDevice* netdev;
+		size_t total_len;
+		IPv4Header* ipv4;
+		UDPHeader* udp;
+
+		if (!nic) {
+			UARTDebugOut("[aurora]:UDP: Failed to route address \r\n");
+			return 0;
+		}
+		netdev = (AuNetworkDevice*)nic->device;
+		if (!netdev) {
+			UARTDebugOut("[aurora]: UDP: No network device found \r\n");
+			return 0;
+		}
+
+		total_len = sizeof(IPv4Header) + msg->msg_iov[0].iov_len + sizeof(UDPHeader);
+		ipv4 = (IPv4Header*)kmalloc(total_len);
+		memset(ipv4, 0, total_len);
+		ipv4->totalLength = htons((uint16_t)total_len);
+		ipv4->destAddress = sockin->sin_addr.s_addr;
+		ipv4->srcAddress = netdev->ipv4addr;
+		ipv4->timeToLive = 64;
+		ipv4->protocol = IPV4_PROTOCOL_UDP;
+		ipv4->identification = 0;
+		ipv4->flagsFragOffset = htons(0x4000);
+		ipv4->versionHeaderLen = 0x45;
+		ipv4->typeOfService = 0;
+		ipv4->headerChecksum = 0;
+		ipv4->headerChecksum = htons(IPv4CalculateChecksum(ipv4));
+
+		udp = (UDPHeader*)&ipv4->payload;
+		udp->srcPort = htons(sock->sessionPort);
+		udp->destPort = sockin->sin_port;
+		udp->length = htons((uint16_t)(sizeof(UDPHeader) + msg->msg_iov[0].iov_len));
+		udp->checksum = 0;
+		memcpy(&udp->payload, msg->msg_iov[0].iov_base, msg->msg_iov[0].iov_len);
+
+		IPV4SendPacket(ipv4, nic);
+		kfree(ipv4);
+		return (int)msg->msg_iov[0].iov_len;
 	}
-
-	size_t total_len = sizeof(IPv4Header) + msg->msg_iov[0].iov_len + sizeof(UDPHeader);
-
-	IPv4Header* ipv4 = (IPv4Header*)kmalloc(total_len);
-	memset(ipv4, 0, total_len);
-	ipv4->totalLength = htons(total_len);
-	ipv4->destAddress = sockin->sin_addr.s_addr;
-	ipv4->srcAddress = netdev->ipv4addr;
-	ipv4->timeToLive = 64;
-	ipv4->protocol = IPV4_PROTOCOL_UDP;
-	ipv4->identification = 0;
-	ipv4->flagsFragOffset = htons(0x4000);
-	ipv4->versionHeaderLen = 0x45;
-	ipv4->typeOfService = 0;
-	ipv4->headerChecksum = 0;
-	ipv4->headerChecksum = htons(IPv4CalculateChecksum(ipv4));
-
-	UDPHeader* udp = (UDPHeader*)&ipv4->payload;
-	udp->srcPort = htons(sock->sessionPort);
-	udp->destPort = sockin->sin_port;
-	udp->length = htons(sizeof(UDPHeader) + msg->msg_iov[0].iov_len);
-	udp->checksum = 0;
-
-	memcpy(&udp->payload, msg->msg_iov[0].iov_base, msg->msg_iov[0].iov_len);
-
-	IPV4SendPacket(ipv4, nic);
-	kfree(ipv4);
-	return msg->msg_iov[0].iov_len;
 }
 
 /**
@@ -210,21 +316,30 @@ void AuUDPClose(AuSocket* sock) {
  * for listening to incoming communication
  */
 int AuUDPBind(AuSocket* sock, sockaddr* addr, socklen_t addrlen) {
+	int port = 0;
+	int i;
+
 	if (sock->sessionPort != 0)
 		return -1;
 
 	UARTDebugOut("[aurora]: binding udp  \r\n");
-	sockaddr_in* addr_in = (sockaddr_in*)addr;
-	int port = ntohs(addr_in->sin_port);
-	UARTDebugOut("[aurora]: port -> %d \r\n", port);
-	UARTDebugOut("UDP Protocol List -> %x \r\n", udp_socket_list);
+	if (addrlen >= sizeof(sockaddr_in6) && addr && addr->sa_family == AF_INET6) {
+		sockaddr_in6* addr6 = (sockaddr_in6*)addr;
+		port = ntohs(addr6->sin6_port);
+	} else if (addrlen >= sizeof(sockaddr_in) && addr) {
+		sockaddr_in* addr_in = (sockaddr_in*)addr;
+		port = ntohs(addr_in->sin_port);
+	} else {
+		return -1;
+	}
 
-	for (int i = 0; i < udp_socket_list->pointer; i++) {
-		AuSocket* sock = (AuSocket*)list_get_at(udp_socket_list, i);
-		if (sock->sessionPort == port)
+	UARTDebugOut("[aurora]: port -> %d \r\n", port);
+	for (i = 0; i < udp_socket_list->pointer; i++) {
+		AuSocket* existing = (AuSocket*)list_get_at(udp_socket_list, i);
+		if (existing->sessionPort == port)
 			return -1;
 	}
-	sock->sessionPort = port;
+	sock->sessionPort = (uint16_t)port;
 	list_add(udp_socket_list, sock);
 	UARTDebugOut("UDP Socket added \r\n");
 	return 0;

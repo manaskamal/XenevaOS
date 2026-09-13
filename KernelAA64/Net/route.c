@@ -37,6 +37,7 @@
 #include <_null.h>
 
 list_t* _kernelRouteList;
+list_t* _kernelRouteList6;
 
 /** @TODO: use different data structure for performance demands
  * in future, currently linked list is used
@@ -149,6 +150,44 @@ AuRouteEntry* AuRouteTableDoRouteLookup(uint32_t address) {
 		AuRouteEntry* _entry = (AuRouteEntry*)list_get_at(_kernelRouteList, i);
 		if ((address & _entry->netmask) == (_entry->dest & _entry->netmask)) {
 			if (!bestRoute || _entry->netmask > bestRoute->netmask)
+				bestRoute = _entry;
+		}
+	}
+	return bestRoute;
+}
+
+void AuRouteTable6Initialise() {
+	_kernelRouteList6 = initialize_list();
+}
+
+AuRouteEntry6* AuRouteTable6CreateEntry() {
+	AuRouteEntry6* entry = (AuRouteEntry6*)kmalloc(sizeof(AuRouteEntry6));
+	if (!entry)
+		return NULL;
+	memset(entry, 0, sizeof(AuRouteEntry6));
+	return entry;
+}
+
+void AuRouteTable6Add(AuRouteEntry6* entry) {
+	if (!entry)
+		return;
+	if (ip6_addr_is_zero(&entry->dest) && entry->prefixLen == 0)
+		return;
+	list_add(_kernelRouteList6, entry);
+}
+
+AuRouteEntry6* AuRouteTableDoRouteLookup6(const ip6_addr* address) {
+	AuRouteEntry6* bestRoute = NULL;
+	int i;
+
+	if (!address || !_kernelRouteList6)
+		return NULL;
+	for (i = 0; i < _kernelRouteList6->pointer; i++) {
+		AuRouteEntry6* _entry = (AuRouteEntry6*)list_get_at(_kernelRouteList6, i);
+		if (!_entry)
+			continue;
+		if (ip6_prefix_equal(address, &_entry->dest, _entry->prefixLen)) {
+			if (!bestRoute || _entry->prefixLen > bestRoute->prefixLen)
 				bestRoute = _entry;
 		}
 	}

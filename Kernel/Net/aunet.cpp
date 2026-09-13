@@ -92,5 +92,10 @@ AuVFSNode* AuNetworkRoute(uint32_t address){
 	return AuGetNetworkAdapter(rt->ifname);
 }
 
+AuVFSNode* AuNetworkRoute6(const ip6_addr* address) {
+	(void)address;
+	return AuGetNetworkAdapter("e1000");
+}
+
 
 

@@ -25,42 +25,107 @@
 * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *
+* Note: Full IPv6 (NDP/ICMPv6/UDP6/TCP6) lives in KernelAA64/Net/.
+* This x86 twin keeps EtherType dispatch and shared helpers compiling.
 **/
 
+#include <Net/socket.h>
 #include <Net/ipv6.h>
-#include <Fs/vfs.h>
+#include <Net/aunet.h>
+#include <Net/ethernet.h>
+#include <_null.h>
+#include <Mm/kmalloc.h>
 #include <Hal/serial.h>
+#include <string.h>
+#include <Hal/x86_64_cpu.h>
 
-#define IPV6_NEXT_HEADER_HOPOPT 0
-#define IPV6_NEXT_HEADER_ICMPV6 58
-#define IPV6_NEXT_HEADER_TCP 6
-#define IPV6_NEXT_HEADER_UDP 17
+uint16_t IPv6PseudoChecksum(const ip6_addr* src, const ip6_addr* dst,
+	uint32_t length, uint8_t nextHeader, const void* data, size_t dataLen) {
+	uint32_t sum = 0;
+	const uint16_t* s;
+	uint32_t len_be;
+	size_t i;
+	size_t words;
 
-/*
- * IPv6HandlePacket -- receive and decode ipv6 packet
- * @param data -- raw packet received by aurora net
- * @param nic -- Pointer to network interface card
- */
+	s = (const uint16_t*)src->s6_addr;
+	for (i = 0; i < 8; i++) {
+		sum += ntohs(s[i]);
+		if (sum > 0xFFFF)
+			sum = (sum >> 16) + (sum & 0xFFFF);
+	}
+	s = (const uint16_t*)dst->s6_addr;
+	for (i = 0; i < 8; i++) {
+		sum += ntohs(s[i]);
+		if (sum > 0xFFFF)
+			sum = (sum >> 16) + (sum & 0xFFFF);
+	}
+
+	len_be = htonl(length);
+	s = (const uint16_t*)&len_be;
+	sum += ntohs(s[0]);
+	if (sum > 0xFFFF)
+		sum = (sum >> 16) + (sum & 0xFFFF);
+	sum += ntohs(s[1]);
+	if (sum > 0xFFFF)
+		sum = (sum >> 16) + (sum & 0xFFFF);
+
+	{
+		uint32_t nh_word = htonl((uint32_t)nextHeader);
+		s = (const uint16_t*)&nh_word;
+		sum += ntohs(s[0]);
+		if (sum > 0xFFFF)
+			sum = (sum >> 16) + (sum & 0xFFFF);
+		sum += ntohs(s[1]);
+		if (sum > 0xFFFF)
+			sum = (sum >> 16) + (sum & 0xFFFF);
+	}
+
+	words = dataLen / 2;
+	s = (const uint16_t*)data;
+	for (i = 0; i < words; i++) {
+		sum += ntohs(s[i]);
+		if (sum > 0xFFFF)
+			sum = (sum >> 16) + (sum & 0xFFFF);
+	}
+	if (dataLen & 1) {
+		uint8_t tmp[2];
+		const uint8_t* t = (const uint8_t*)data;
+		tmp[0] = t[dataLen - 1];
+		tmp[1] = 0;
+		sum += ntohs(*(uint16_t*)tmp);
+		if (sum > 0xFFFF)
+			sum = (sum >> 16) + (sum & 0xFFFF);
+	}
+
+	return (uint16_t)(~(sum & 0xFFFF) & 0xFFFF);
+}
+
 void IPv6HandlePacket(void* data, AuVFSNode* nic) {
 	IPv6Header* ipv6 = (IPv6Header*)data;
-	const void* data_ = ipv6 + 1;
-	uint8_t nextHeader = ipv6->nextHeader;
-	switch (nextHeader) {
-	case IPV6_NEXT_HEADER_HOPOPT:
-		SeTextOut("IPv6 Hop-by-Hop options received \r\n");
-		break;
-	case IPV6_NEXT_HEADER_ICMPV6:
-		SeTextOut("IPv6 ICMPv6 packet received \r\n");
-		break;
-	case IPV6_NEXT_HEADER_TCP:
-		SeTextOut("IPv6 TCP packet received \r\n");
-		break;
-	case IPV6_NEXT_HEADER_UDP:
-		SeTextOut("IPv6 UDP packet received \r\n");
-		break;
-	default:
-		SeTextOut("IPv6 unknown next header \r\n");
-		break;
-	
-	}
+	(void)nic;
+	if (!ipv6 || IPv6GetVersion(ipv6) != 6)
+		return;
+	/* Full demux is implemented on KernelAA64; keep RX path safe on x86. */
+	SeTextOut("IPv6 packet next=%d\r\n", ipv6->nextHeader);
+}
+
+int CreateIPv6Socket(int type, int protocol) {
+	(void)type;
+	(void)protocol;
+	return -1;
+}
+
+void IPV6SendPacket(IPv6Header* packet, AuVFSNode* nic) {
+	AuNetworkDevice* ndev;
+	uint8_t broadcast_addr[6];
+	size_t totalLen;
+
+	if (!packet || !nic)
+		return;
+	ndev = (AuNetworkDevice*)nic->device;
+	if (!ndev || ndev->type != NETDEV_TYPE_ETHERNET)
+		return;
+	memset(broadcast_addr, 0xFF, 6);
+	totalLen = sizeof(IPv6Header) + ntohs(packet->payloadLen);
+	AuEthernetSend(nic, packet, totalLen, ETHERNET_TYPE_IPV6, broadcast_addr);
 }

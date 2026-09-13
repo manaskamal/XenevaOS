@@ -33,6 +33,7 @@
 #include <list.h>
 #include <Net/socket.h>
 #include <Net/ipv4.h>
+#include <Net/ipv6.h>
 #include <Fs/vfs.h>
 
 #define TCP_FLAGS_FIN (1<<0)
@@ -82,12 +83,14 @@ typedef struct _tcphead_ {
 typedef struct _tcp_pcb_ {
 	uint8_t state;
 	uint8_t fin_recvd;
+	uint8_t is_ipv6;
 	uint32_t iss;
 	uint32_t irs;
 	uint32_t snd_una;
 	uint32_t snd_nxt;
 	uint32_t rcv_nxt;
 	uint32_t remote_ip;
+	ip6_addr remote_ip6;
 	uint16_t remote_port;
 	uint16_t snd_wnd;
 	uint16_t rcv_wnd;
@@ -124,6 +127,11 @@ extern int AuTCPAcknowledge(AuVFSNode* nic, AuSocket* sock, IPv4Header* ippack, 
  * TCPHandlePacket -- dispatch an incoming TCP segment
  */
 extern void TCPHandlePacket(IPv4Header* pack, AuVFSNode* nic);
+
+/*
+ * TCPHandlePacket6 -- dispatch an incoming TCP segment over IPv6
+ */
+extern void TCPHandlePacket6(IPv6Header* pack, AuVFSNode* nic);
 
 /*
  * TCPProtocolInstall -- initialize the TCP protocol

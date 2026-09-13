@@ -1189,15 +1189,27 @@ void TerminalThread() {
 int main(int argc, char* arv[]) {
 	app = ChitralekhaStartApp(argc, arv);
 	win = ChCreateWindow(app, (WINDOW_FLAG_MOVABLE), "Xeneva Terminal", 300, 100, 680, 450);
+	if (!win || !win->info) {
+		_KePrint("term: failed to create window \r\n");
+		return 1;
+	}
 	win->info->alpha = false;
 	win->info->alphaValue = 0.7;
 	win->color = 0xFF373434;
 
 	consolas = ChInitialiseFont(CONSOLAS);
+	if (!consolas) {
+		_KePrint("term: failed to load CONSOLAS \r\n");
+		return 1;
+	}
 	ChFontSetSize(consolas, 12);
 
 	int f_w = ChFontGetWidthChar(consolas, 'M');
 #ifdef _USE_FREETYPE
+	if (!consolas->face || !consolas->face->size) {
+		_KePrint("term: freetype face not ready \r\n");
+		return 1;
+	}
 	int f_h = consolas->face->size->metrics.height >> 6;
 	term.baseine = consolas->face->size->metrics.ascender >> 6;
 #else
@@ -1205,6 +1217,10 @@ int main(int argc, char* arv[]) {
 	term.baseine = f_h - 4;
 #endif
 
+	if (f_w <= 0)
+		f_w = 8;
+	if (f_h <= 0)
+		f_h = 12;
 	term.cellW = f_w;
 	term.cellH = f_h;
 

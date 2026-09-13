@@ -35,6 +35,7 @@
 #include <stack.h>
 #include <Net/tcp.h>
 #include <Net/ipv4.h>
+#include <Net/ipv6.h>
 #include <Hal/AA64/aa64lowlevel.h>
 #include <Hal/AA64/aa64cpu.h>
 #include <Hal/AA64/sched.h>
@@ -188,9 +189,7 @@ static void AuTCPObtainPort(AuSocket* sock) {
 static int TCPSendSegment(AuSocket* sock, uint16_t flags, const void* payload, size_t payloadLen) {
 	TCPControlBlock* pcb = TCPGetPCB(sock);
 	AuNetworkDevice* ndev;
-	IPv4Header* ipv4;
 	TCPHeader* tcp;
-	TCPCheckHeader checkhdr;
 	size_t totalLen;
 	uint32_t seq;
 
@@ -200,48 +199,86 @@ static int TCPSendSegment(AuSocket* sock, uint16_t flags, const void* payload, s
 	if (!ndev)
 		return -1;
 
-	totalLen = sizeof(IPv4Header) + sizeof(TCPHeader) + payloadLen;
-	ipv4 = (IPv4Header*)kmalloc(totalLen);
-	if (!ipv4)
-		return -1;
-	memset(ipv4, 0, totalLen);
-
-	ipv4->versionHeaderLen = 0x45;
-	ipv4->typeOfService = 0;
-	ipv4->totalLength = htons((uint16_t)totalLen);
-	sock->ipv4Iden++;
-	ipv4->identification = htons(sock->ipv4Iden);
-	ipv4->flagsFragOffset = htons(0x4000);
-	ipv4->timeToLive = 64;
-	ipv4->protocol = IPV4_PROTOCOL_TCP;
-	ipv4->srcAddress = ndev->ipv4addr;
-	ipv4->destAddress = pcb->remote_ip;
-	ipv4->headerChecksum = 0;
-	ipv4->headerChecksum = htons(IPv4CalculateChecksum(ipv4));
-
 	seq = pcb->snd_nxt;
-	tcp = (TCPHeader*)&ipv4->payload;
-	tcp->srcPort = htons(sock->sessionPort);
-	tcp->destPort = htons(pcb->remote_port);
-	tcp->sequenceNum = htonl(seq);
-	tcp->ackNum = htonl(pcb->rcv_nxt);
-	tcp->dataOffsetFlags = htons(flags | 0x5000);
-	tcp->window = htons(TCPWindowOf(sock));
-	tcp->checksum = 0;
-	tcp->urgentPointer = 0;
-	if (payload && payloadLen)
-		memcpy(&ipv4->payload[sizeof(TCPHeader)], (void*)payload, payloadLen);
 
-	checkhdr.source = ipv4->srcAddress;
-	checkhdr.destination = ipv4->destAddress;
-	checkhdr.zeros = 0;
-	checkhdr.protocol = IPV4_PROTOCOL_TCP;
-	checkhdr.tcpLen = htons((uint16_t)(sizeof(TCPHeader) + payloadLen));
-	tcp->checksum = htons(CalculateTCPChecksum(&checkhdr, tcp,
-		payloadLen ? &ipv4->payload[sizeof(TCPHeader)] : NULL, payloadLen));
+	if (pcb->is_ipv6) {
+		IPv6Header* ipv6;
+		uint16_t tcpLen = (uint16_t)(sizeof(TCPHeader) + payloadLen);
 
-	IPV4SendPacket(ipv4, pcb->nic);
-	kfree(ipv4);
+		totalLen = sizeof(IPv6Header) + tcpLen;
+		ipv6 = (IPv6Header*)kmalloc(totalLen);
+		if (!ipv6)
+			return -1;
+		memset(ipv6, 0, totalLen);
+		IPv6SetVerTcFl(ipv6, 6, 0, 0);
+		ipv6->payloadLen = htons(tcpLen);
+		ipv6->nextHeader = IPV6_NEXT_TCP;
+		ipv6->hopLimit = 64;
+		ip6_addr_copy(&ipv6->srcIP, &ndev->ipv6addr);
+		ip6_addr_copy(&ipv6->destIP, &pcb->remote_ip6);
+
+		tcp = (TCPHeader*)&ipv6->payload;
+		tcp->srcPort = htons(sock->sessionPort);
+		tcp->destPort = htons(pcb->remote_port);
+		tcp->sequenceNum = htonl(seq);
+		tcp->ackNum = htonl(pcb->rcv_nxt);
+		tcp->dataOffsetFlags = htons(flags | 0x5000);
+		tcp->window = htons(TCPWindowOf(sock));
+		tcp->checksum = 0;
+		tcp->urgentPointer = 0;
+		if (payload && payloadLen)
+			memcpy(&ipv6->payload[sizeof(TCPHeader)], (void*)payload, payloadLen);
+
+		tcp->checksum = htons(IPv6PseudoChecksum(&ipv6->srcIP, &ipv6->destIP,
+			tcpLen, IPV6_NEXT_TCP, tcp, tcpLen));
+		IPV6SendPacket(ipv6, pcb->nic);
+		kfree(ipv6);
+	} else {
+		IPv4Header* ipv4;
+		TCPCheckHeader checkhdr;
+
+		totalLen = sizeof(IPv4Header) + sizeof(TCPHeader) + payloadLen;
+		ipv4 = (IPv4Header*)kmalloc(totalLen);
+		if (!ipv4)
+			return -1;
+		memset(ipv4, 0, totalLen);
+
+		ipv4->versionHeaderLen = 0x45;
+		ipv4->typeOfService = 0;
+		ipv4->totalLength = htons((uint16_t)totalLen);
+		sock->ipv4Iden++;
+		ipv4->identification = htons(sock->ipv4Iden);
+		ipv4->flagsFragOffset = htons(0x4000);
+		ipv4->timeToLive = 64;
+		ipv4->protocol = IPV4_PROTOCOL_TCP;
+		ipv4->srcAddress = ndev->ipv4addr;
+		ipv4->destAddress = pcb->remote_ip;
+		ipv4->headerChecksum = 0;
+		ipv4->headerChecksum = htons(IPv4CalculateChecksum(ipv4));
+
+		tcp = (TCPHeader*)&ipv4->payload;
+		tcp->srcPort = htons(sock->sessionPort);
+		tcp->destPort = htons(pcb->remote_port);
+		tcp->sequenceNum = htonl(seq);
+		tcp->ackNum = htonl(pcb->rcv_nxt);
+		tcp->dataOffsetFlags = htons(flags | 0x5000);
+		tcp->window = htons(TCPWindowOf(sock));
+		tcp->checksum = 0;
+		tcp->urgentPointer = 0;
+		if (payload && payloadLen)
+			memcpy(&ipv4->payload[sizeof(TCPHeader)], (void*)payload, payloadLen);
+
+		checkhdr.source = ipv4->srcAddress;
+		checkhdr.destination = ipv4->destAddress;
+		checkhdr.zeros = 0;
+		checkhdr.protocol = IPV4_PROTOCOL_TCP;
+		checkhdr.tcpLen = htons((uint16_t)(sizeof(TCPHeader) + payloadLen));
+		tcp->checksum = htons(CalculateTCPChecksum(&checkhdr, tcp,
+			payloadLen ? &ipv4->payload[sizeof(TCPHeader)] : NULL, payloadLen));
+
+		IPV4SendPacket(ipv4, pcb->nic);
+		kfree(ipv4);
+	}
 
 	if (flags & TCP_FLAGS_SYN)
 		pcb->snd_nxt = seq + 1;
@@ -412,13 +449,40 @@ static AuSocket* TCPFindSocket(uint32_t srcIP, uint16_t srcPort, uint16_t destPo
 		if (!sock || sock->sessionPort != destPort)
 			continue;
 		pcb = TCPGetPCB(sock);
-		if (!pcb)
+		if (!pcb || pcb->is_ipv6)
 			continue;
 		if (pcb->state == TCP_STATE_LISTEN) {
 			listener = sock;
 			continue;
 		}
 		if (pcb->remote_ip == srcIP && pcb->remote_port == srcPort)
+			return sock;
+	}
+	return listener;
+}
+
+static AuSocket* TCPFindSocket6(const ip6_addr* srcIP, uint16_t srcPort, uint16_t destPort) {
+	AuSocket* listener = NULL;
+	int i;
+
+	if (!tcpSocketList || !srcIP)
+		return NULL;
+	for (i = 0; i < (int)tcpSocketList->pointer; i++) {
+		AuSocket* sock = (AuSocket*)list_get_at(tcpSocketList, i);
+		TCPControlBlock* pcb;
+
+		if (!sock || sock->sessionPort != destPort)
+			continue;
+		pcb = TCPGetPCB(sock);
+		if (!pcb)
+			continue;
+		if (pcb->state == TCP_STATE_LISTEN) {
+			/* Prefer IPv6 listeners; also accept dual use of listen sockets */
+			listener = sock;
+			continue;
+		}
+		if (pcb->is_ipv6 && ip6_addr_equal(&pcb->remote_ip6, srcIP) &&
+			pcb->remote_port == srcPort)
 			return sock;
 	}
 	return listener;
@@ -488,12 +552,22 @@ int AuTCPReceive(AuSocket* sock, msghdr* msg, int flags) {
 
 	got = AuCircBufRead(buf, dest, want);
 
-	if (msg->msg_name && msg->msg_namelen >= sizeof(sockaddr_in)) {
-		sockaddr_in* in = (sockaddr_in*)msg->msg_name;
-		in->sin_family = AF_INET;
-		in->sin_port = htons(pcb->remote_port);
-		in->sin_addr.s_addr = pcb->remote_ip;
-		msg->msg_namelen = sizeof(sockaddr_in);
+	if (msg->msg_name) {
+		if (pcb->is_ipv6 && msg->msg_namelen >= sizeof(sockaddr_in6)) {
+			sockaddr_in6* in6 = (sockaddr_in6*)msg->msg_name;
+			in6->sin6_family = AF_INET6;
+			in6->sin6_port = htons(pcb->remote_port);
+			in6->sin6_flowinfo = 0;
+			memcpy(in6->sin6_addr.s6_addr, pcb->remote_ip6.s6_addr, 16);
+			in6->sin6_scope_id = 0;
+			msg->msg_namelen = sizeof(sockaddr_in6);
+		} else if (msg->msg_namelen >= sizeof(sockaddr_in)) {
+			sockaddr_in* in = (sockaddr_in*)msg->msg_name;
+			in->sin_family = AF_INET;
+			in->sin_port = htons(pcb->remote_port);
+			in->sin_addr.s_addr = pcb->remote_ip;
+			msg->msg_namelen = sizeof(sockaddr_in);
+		}
 	}
 	return (int)got;
 }
@@ -560,7 +634,6 @@ void AuTCPClose(AuSocket* sock) {
 }
 
 int AuTCPConnect(AuSocket* sock, sockaddr* addr, socklen_t addrlen) {
-	sockaddr_in* sockdata = (sockaddr_in*)addr;
 	TCPControlBlock* pcb = TCPGetPCB(sock);
 	AuVFSNode* nic;
 	AuNetworkDevice* ndev;
@@ -568,8 +641,7 @@ int AuTCPConnect(AuSocket* sock, sockaddr* addr, socklen_t addrlen) {
 	uint64_t ns, nss = 0;
 	int attempts = 0;
 
-	(void)addrlen;
-	if (!pcb || !sockdata)
+	if (!pcb || !addr)
 		return -1;
 
 	UARTDebugOut("[aurora]: TCP connect \r\n");
@@ -578,20 +650,37 @@ int AuTCPConnect(AuSocket* sock, sockaddr* addr, socklen_t addrlen) {
 	else
 		TCPRegisterSocket(sock);
 
-	nic = AuNetworkRoute(sockdata->sin_addr.s_addr);
-	if (!nic) {
-		UARTDebugOut("[aurora]: TCP connect, no NIC\r\n");
-		return -1;
-	}
-	ndev = (AuNetworkDevice*)nic->device;
-	if (!ndev) {
-		UARTDebugOut("[aurora]: TCP connect, no NIC data\r\n");
-		return -1;
+	if (addr->sa_family == AF_INET6) {
+		sockaddr_in6* sockdata6 = (sockaddr_in6*)addr;
+		(void)addrlen;
+		pcb->is_ipv6 = 1;
+		nic = AuNetworkRoute6((const ip6_addr*)&sockdata6->sin6_addr);
+		if (!nic)
+			return -1;
+		ndev = (AuNetworkDevice*)nic->device;
+		if (!ndev)
+			return -1;
+		pcb->nic = nic;
+		memcpy(pcb->remote_ip6.s6_addr, sockdata6->sin6_addr.s6_addr, 16);
+		pcb->remote_port = ntohs(sockdata6->sin6_port);
+	} else {
+		sockaddr_in* sockdata = (sockaddr_in*)addr;
+		pcb->is_ipv6 = 0;
+		nic = AuNetworkRoute(sockdata->sin_addr.s_addr);
+		if (!nic) {
+			UARTDebugOut("[aurora]: TCP connect, no NIC\r\n");
+			return -1;
+		}
+		ndev = (AuNetworkDevice*)nic->device;
+		if (!ndev) {
+			UARTDebugOut("[aurora]: TCP connect, no NIC data\r\n");
+			return -1;
+		}
+		pcb->nic = nic;
+		pcb->remote_ip = sockdata->sin_addr.s_addr;
+		pcb->remote_port = ntohs(sockdata->sin_port);
 	}
 
-	pcb->nic = nic;
-	pcb->remote_ip = sockdata->sin_addr.s_addr;
-	pcb->remote_port = ntohs(sockdata->sin_port);
 	pcb->iss = ((uint32_t)rand() << 16) ^ (uint32_t)rand();
 	if (pcb->iss == 0)
 		pcb->iss = 1;
@@ -639,17 +728,26 @@ int AuTCPConnect(AuSocket* sock, sockaddr* addr, socklen_t addrlen) {
 }
 
 int AuTCPBind(AuSocket* sock, sockaddr* addr, socklen_t addrlen) {
-	sockaddr_in* addr_in = (sockaddr_in*)addr;
-	int port;
+	TCPControlBlock* pcb = TCPGetPCB(sock);
+	int port = 0;
 	int i;
 
-	(void)addrlen;
-	if (!addr_in)
+	if (!addr || !pcb)
 		return -1;
 	if (sock->sessionPort != 0)
 		return -1;
 
-	port = ntohs(addr_in->sin_port);
+	(void)addrlen;
+	if (addr->sa_family == AF_INET6) {
+		sockaddr_in6* addr6 = (sockaddr_in6*)addr;
+		pcb->is_ipv6 = 1;
+		port = ntohs(addr6->sin6_port);
+	} else {
+		sockaddr_in* addr_in = (sockaddr_in*)addr;
+		pcb->is_ipv6 = 0;
+		port = ntohs(addr_in->sin_port);
+	}
+
 	if (port == 0) {
 		AuTCPObtainPort(sock);
 		return 0;
@@ -658,9 +756,9 @@ int AuTCPBind(AuSocket* sock, sockaddr* addr, socklen_t addrlen) {
 		return -1;
 	for (i = 0; i < (int)tcpSocketList->pointer; i++) {
 		AuSocket* other = (AuSocket*)list_get_at(tcpSocketList, i);
-		TCPControlBlock* pcb = TCPGetPCB(other);
-		if (other && other->sessionPort == (uint16_t)port && pcb &&
-			pcb->state == TCP_STATE_LISTEN)
+		TCPControlBlock* otherpcb = TCPGetPCB(other);
+		if (other && other->sessionPort == (uint16_t)port && otherpcb &&
+			otherpcb->state == TCP_STATE_LISTEN)
 			return -1;
 	}
 	sock->sessionPort = (uint16_t)port;
@@ -735,12 +833,22 @@ int AuTCPAccept(AuSocket* sock, sockaddr* addr, socklen_t* addrlen) {
 	node->iocontrol = SocketIOControl;
 	proc->fds[fd] = node;
 
-	if (addr && addrlen && *addrlen >= sizeof(sockaddr_in) && childpcb) {
-		sockaddr_in* in = (sockaddr_in*)addr;
-		in->sin_family = AF_INET;
-		in->sin_port = htons(childpcb->remote_port);
-		in->sin_addr.s_addr = childpcb->remote_ip;
-		*addrlen = sizeof(sockaddr_in);
+	if (addr && addrlen && childpcb) {
+		if (childpcb->is_ipv6 && *addrlen >= sizeof(sockaddr_in6)) {
+			sockaddr_in6* in6 = (sockaddr_in6*)addr;
+			in6->sin6_family = AF_INET6;
+			in6->sin6_port = htons(childpcb->remote_port);
+			in6->sin6_flowinfo = 0;
+			memcpy(in6->sin6_addr.s6_addr, childpcb->remote_ip6.s6_addr, 16);
+			in6->sin6_scope_id = 0;
+			*addrlen = sizeof(sockaddr_in6);
+		} else if (*addrlen >= sizeof(sockaddr_in)) {
+			sockaddr_in* in = (sockaddr_in*)addr;
+			in->sin_family = AF_INET;
+			in->sin_port = htons(childpcb->remote_port);
+			in->sin_addr.s_addr = childpcb->remote_ip;
+			*addrlen = sizeof(sockaddr_in);
+		}
 	}
 	return fd;
 }
@@ -940,6 +1048,112 @@ void TCPHandlePacket(IPv4Header* pack, AuVFSNode* nic) {
 	}
 
 	TCPHandleEstablished(sock, pack, tcp, payload, payloadLen, flags);
+}
+
+static void TCPHandleListenSyn6(AuSocket* listener, IPv6Header* pack, TCPHeader* tcp, AuVFSNode* nic) {
+	TCPControlBlock* lpcb = TCPGetPCB(listener);
+	AuSocket* child;
+	TCPControlBlock* pcb;
+	uint32_t seq;
+
+	if (!lpcb)
+		return;
+	if (lpcb->acceptq && (int)lpcb->acceptq->pointer >= lpcb->backlog)
+		return;
+
+	child = TCPAllocSocket();
+	if (!child)
+		return;
+	pcb = TCPGetPCB(child);
+	seq = ntohl(tcp->sequenceNum);
+	child->sessionPort = listener->sessionPort;
+	child->ipv4Iden = (uint16_t)rand();
+	pcb->nic = nic;
+	pcb->parent = listener;
+	pcb->is_ipv6 = 1;
+	ip6_addr_copy(&pcb->remote_ip6, &pack->srcIP);
+	pcb->remote_port = ntohs(tcp->srcPort);
+	pcb->irs = seq;
+	pcb->rcv_nxt = seq + 1;
+	pcb->iss = ((uint32_t)rand() << 16) ^ (uint32_t)rand();
+	if (pcb->iss == 0)
+		pcb->iss = 1;
+	pcb->snd_una = pcb->iss;
+	pcb->snd_nxt = pcb->iss;
+	pcb->snd_wnd = ntohs(tcp->window);
+	pcb->state = TCP_STATE_SYN_RECEIVED;
+	child->sockState = SOCK_STATE_WAITING_FOR_CONNECTION;
+	TCPRegisterSocket(child);
+	TCPSendSegment(child, TCP_FLAGS_SYN | TCP_FLAGS_ACK, NULL, 0);
+}
+
+void TCPHandlePacket6(IPv6Header* pack, AuVFSNode* nic) {
+	int doff;
+	uint16_t destPort;
+	uint16_t srcPort;
+	uint16_t flags;
+	size_t payloadLen;
+	TCPHeader* tcp;
+	AuSocket* sock;
+	TCPControlBlock* pcb;
+	const uint8_t* payload;
+
+	if (!pack)
+		return;
+	tcp = (TCPHeader*)&pack->payload;
+	doff = TCPHdrBytes(tcp);
+	if (doff < 20)
+		return;
+	payloadLen = (size_t)ntohs(pack->payloadLen);
+	if (payloadLen < (size_t)doff)
+		return;
+	payloadLen -= (size_t)doff;
+	payload = (const uint8_t*)tcp + doff;
+	flags = TCPFlagsOf(tcp);
+	destPort = ntohs(tcp->destPort);
+	srcPort = ntohs(tcp->srcPort);
+
+	sock = TCPFindSocket6(&pack->srcIP, srcPort, destPort);
+	if (!sock)
+		return;
+	pcb = TCPGetPCB(sock);
+	if (!pcb)
+		return;
+
+	if (flags & TCP_FLAGS_RST) {
+		sock->sockState = SOCK_STATE_CONNECTION_RST;
+		pcb->state = TCP_STATE_CLOSED;
+		return;
+	}
+
+	if (pcb->state == TCP_STATE_LISTEN) {
+		if (flags & TCP_FLAGS_SYN)
+			TCPHandleListenSyn6(sock, pack, tcp, nic);
+		return;
+	}
+
+	if (pcb->state == TCP_STATE_SYN_SENT) {
+		if ((flags & (TCP_FLAGS_SYN | TCP_FLAGS_ACK)) == (TCP_FLAGS_SYN | TCP_FLAGS_ACK)) {
+			uint32_t ack = ntohl(tcp->ackNum);
+			if (ack != pcb->iss + 1)
+				return;
+			pcb->irs = ntohl(tcp->sequenceNum);
+			pcb->rcv_nxt = pcb->irs + 1;
+			pcb->snd_una = ack;
+			pcb->snd_wnd = ntohs(tcp->window);
+			if (!pcb->nic)
+				pcb->nic = nic;
+			pcb->is_ipv6 = 1;
+			ip6_addr_copy(&pcb->remote_ip6, &pack->srcIP);
+			pcb->state = TCP_STATE_ESTABLISHED;
+			sock->sockState = SOCK_STATE_CONNECTED;
+			TCPSendAck(sock);
+			return;
+		}
+		return;
+	}
+
+	TCPHandleEstablished(sock, NULL, tcp, payload, payloadLen, flags);
 }
 
 int AuTCPFileClose(AuVFSNode* fsys, AuVFSNode* file) {

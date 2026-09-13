@@ -31,6 +31,7 @@
 
 #include <Net/aunet.h>
 #include <Net/arp.h>
+#include <Net/ndp.h>
 #include <Mm/kmalloc.h>
 #include <string.h>
 #include <_null.h>
@@ -40,6 +41,7 @@
 #include <Net/route.h>
 #include <Net/udp.h>
 #include <Net/icmp.h>
+#include <Net/icmpv6.h>
 #include <Net/tcp.h>
 #include <aucon.h>
 #include <Drivers/uart.h>
@@ -55,10 +57,13 @@ void AuInitialiseNet() {
 	AuDevFSCreateFile(fs, "/dev/net", FS_FLAG_DIRECTORY);
 	AuSocketInstall();
 	AuRouteTableInitialise();
-	/* ARP Protocol for Ethernet devices */
+	AuRouteTable6Initialise();
+	/* ARP / NDP for Ethernet devices */
 	ARPProtocolInitialise();
+	NDProtocolInitialise();
 	UDPProtocolInstall();
 	ICMPInitialise();
+	ICMPv6Initialise();
 	TCPProtocolInstall();
 	AuTextOut("[aurora]: net system initialised \r\n");
 }
@@ -92,6 +97,17 @@ AuVFSNode* AuGetNetworkAdapter(char* name) {
 AuVFSNode* AuNetworkRoute(uint32_t address) {
 	/*if (address == 0x0100007F)*/ /* loop device */
 	AuRouteEntry* rt = AuRouteTableDoRouteLookup(address);
+	if (!rt)
+		return AuGetNetworkAdapter("virtio-net");
+	return AuGetNetworkAdapter(rt->ifname);
+}
+
+AuVFSNode* AuNetworkRoute6(const ip6_addr* address) {
+	AuRouteEntry6* rt;
+
+	if (!address)
+		return AuGetNetworkAdapter("virtio-net");
+	rt = AuRouteTableDoRouteLookup6(address);
 	if (!rt)
 		return AuGetNetworkAdapter("virtio-net");
 	return AuGetNetworkAdapter(rt->ifname);

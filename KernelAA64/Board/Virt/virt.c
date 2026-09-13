@@ -67,14 +67,20 @@ uint8_t AuVirtIOInputCheck(uint64_t device, int bus, int dev, int func) {
 /**
  * @brief AuVirtIOInputInitialize -- initialize virtIO input device
  */
+/* virtio-blk-pci, modern-only (disable-legacy=on in the qemu launch args) --
+ * see BaseHdr/Drivers/virtio.h for the rest of the 0x1AF4:0x10xx scheme */
+#define VIRTIO_PCI_DEVICE_ID_BLK 0x1042
+
+/* headroom for blk+net+kbd+tablet+gpu/snd without silently dropping inputs */
+#define MAX_VIRTIO_DEVICES 8
+
 void AuVirtIOInputInitialize() {
 	UARTDebugOut("AuVirtIO initializing inputs \r\n");
 	int numVirtIODevice = 0;
-	for (int bus = 0; bus < 255; bus++) {
-		for (int dev = 0; dev < PCI_DEVICE_PER_BUS; dev++) {
-			for (int func = 0; func < PCI_FUNCTION_PER_DEVICE; func++) {
-				if (numVirtIODevice == 3)
-					break;
+	for (int bus = 0; bus < 255 && numVirtIODevice < MAX_VIRTIO_DEVICES; bus++) {
+		for (int dev = 0; dev < PCI_DEVICE_PER_BUS && numVirtIODevice < MAX_VIRTIO_DEVICES; dev++) {
+			for (int func = 0; func < PCI_FUNCTION_PER_DEVICE && numVirtIODevice < MAX_VIRTIO_DEVICES;
+				 func++) {
 				uint64_t address = AuPCIEGetDevice(0, bus, dev, func);
 				if (address == 0)
 					continue;
@@ -91,19 +97,22 @@ void AuVirtIOInputInitialize() {
 					uint8_t devType = AuVirtIOInputCheck(address, bus, dev, func);
 					if (devType == VIRTIO_INPUT_KEYBOARD) {
 						numVirtIODevice++;
-						AuVirtioKbdInitialize(address);
+						AuVirtioKbdInitialize(address, bus, dev, func);
 					} else if (devType == VIRTIO_INPUT_TABLET) {
 						numVirtIODevice++;
-						AuVirtioTabletInitialize(address);
+						AuVirtioTabletInitialize(address, bus, dev, func);
 					}
 				}
 				if (vendID == 0x1AF4 && (devID == 0x1041 || devID == 0x1000)) {
-					numVirtIODevice++;
-					/* this was built-in kernel for test purpose, it is always
-					 * a good decision to fallback to external module
-					 */
+					/* external virtnet.dll owns this device; do NOT consume
+					 * a MAX_VIRTIO_DEVICES slot or later inputs (tablet)
+					 * get skipped depending on PCI order --axiss */
 					UARTDebugOut("[aurora]: skipping virtionet initialization inside kernel \r\n");
 					//AuVirtioNetInitialize(address);
+				}
+				if (vendID == 0x1AF4 && devID == VIRTIO_PCI_DEVICE_ID_BLK) {
+					numVirtIODevice++;
+					AuVirtioBlkInitialize(address, bus, dev, func);
 				}
 			}
 		}

@@ -31,6 +31,7 @@
 #define __UDP_H__
 
 #include <list.h>
+#include <Net/ipv6.h>
 
 #ifdef ARCH_X64
 #pragma pack(push,1)
@@ -64,5 +65,6 @@ extern void UDPProtocolInstall();
 extern list_t* UDPProtocolGetSockList();
 
 extern void UDPHandlePacket(char* packet);
+extern void UDPHandlePacket6(IPv6Header* ipv6);
 
 #endif

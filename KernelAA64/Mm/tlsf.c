@@ -39,6 +39,7 @@
 #if defined(__GNUC__) || defined(__clang__)
 #include <stdbool.h>
 #endif
+#include <Drivers/uart.h>
 
 /* ---- Global pool (statically allocated; no circular dependency) ---- */
 static tlsf_pool_t g_tlsf_pool_obj;
@@ -100,6 +101,30 @@ static inline void blk_set_size(block_header_t* hdr, size_t sz, bool free, bool 
 	hdr->size = sz | (free ? BLOCK_FLAG_FREE : 0U) | (prev_free ? BLOCK_FLAG_PREV_FREE : 0U);
 }
 
+/* Free-list smash from a kfree'd-then-overwritten filename shows up as
+ * next_free = ASCII ("ctrl.exe" was 0x6578652E6C727463). Kernel heap
+ * pointers are TTBR1 VAs. Refuse to follow anything else. */
+static bool tlsf_ptr_sane(const void* p) {
+	uintptr_t a = (uintptr_t)p;
+	if (a == 0)
+		return true;
+	if (a & (uintptr_t)TLSF_ALIGN_MASK)
+		return false;
+	if (a < 0xFFFF000000000000ULL)
+		return false;
+	return true;
+}
+
+static bool tlsf_free_block_ok(const free_block_t* blk) {
+	if (!blk || !tlsf_ptr_sane(blk))
+		return false;
+	if (!blk_is_free(&blk->hdr))
+		return false;
+	if (!tlsf_ptr_sane(blk->next_free) || !tlsf_ptr_sane(blk->prev_free))
+		return false;
+	return true;
+}
+
 /* ---- TLSF size mapping ---- */
 
 static void tlsf_mapping(size_t size, int* fl, int* sl) {
@@ -115,9 +140,34 @@ static void tlsf_mapping(size_t size, int* fl, int* sl) {
 
 /* ---- Free-list management ---- */
 
+static void tlsf_drop_bucket(tlsf_pool_t* pool, int fl, int sl) {
+	if (fl < 0 || sl < 0 || fl >= (int)FL_INDEX_COUNT || sl >= (int)SL_INDEX_COUNT)
+		return;
+	pool->blocks[fl][sl] = NULL;
+	pool->sl_bitmap[fl] &= ~(1U << sl);
+	if (pool->sl_bitmap[fl] == 0)
+		pool->fl_bitmap &= ~(UINT64_C(1) << fl);
+}
+
 static void tlsf_remove_free_block(tlsf_pool_t* pool, free_block_t* blk, int fl, int sl) {
+	if (!tlsf_free_block_ok(blk)) {
+		UARTDebugOut("[tlsf]: corrupt free block %x (next=%x prev=%x), dropping bucket %d/%d\r\n",
+					 blk,
+					 blk && tlsf_ptr_sane(blk) ? (void*)blk->next_free : (void*)0,
+					 blk && tlsf_ptr_sane(blk) ? (void*)blk->prev_free : (void*)0,
+					 fl,
+					 sl);
+		tlsf_drop_bucket(pool, fl, sl);
+		return;
+	}
+
 	free_block_t* prev = blk->prev_free;
 	free_block_t* next = blk->next_free;
+
+	if (prev && !tlsf_free_block_ok(prev))
+		prev = NULL;
+	if (next && !tlsf_free_block_ok(next))
+		next = NULL;
 
 	if (prev)
 		prev->next_free = next;
@@ -135,11 +185,18 @@ static void tlsf_remove_free_block(tlsf_pool_t* pool, free_block_t* blk, int fl,
 }
 
 static void tlsf_insert_free_block(tlsf_pool_t* pool, free_block_t* blk, int fl, int sl) {
-	blk->next_free = (free_block_t*)pool->blocks[fl][sl];
+	free_block_t* head = pool->blocks[fl][sl];
+	if (head && !tlsf_free_block_ok(head)) {
+		UARTDebugOut("[tlsf]: corrupt list head %x in bucket %d/%d, replacing\r\n", head, fl, sl);
+		head = NULL;
+		tlsf_drop_bucket(pool, fl, sl);
+	}
+
+	blk->next_free = head;
 	blk->prev_free = NULL;
 
-	if (pool->blocks[fl][sl])
-		pool->blocks[fl][sl]->prev_free = blk;
+	if (head)
+		head->prev_free = blk;
 
 	pool->blocks[fl][sl] = blk;
 
@@ -156,7 +213,14 @@ static free_block_t* tlsf_find_free_block(tlsf_pool_t* pool, size_t size) {
 	uint32_t sl_masked = pool->sl_bitmap[fl] & ~((1U << sl) - 1);
 	if (sl_masked) {
 		int found_sl = tlsf_ffs32(sl_masked);
-		return pool->blocks[fl][found_sl];
+		free_block_t* blk = pool->blocks[fl][found_sl];
+		if (blk && !tlsf_free_block_ok(blk)) {
+			UARTDebugOut("[tlsf]: corrupt bucket %d/%d head %x\r\n", fl, found_sl, blk);
+			tlsf_drop_bucket(pool, fl, found_sl);
+			blk = NULL;
+		}
+		if (blk)
+			return blk;
 	}
 
 	/* no suitable second-level bucket left in this first-level class, so i
@@ -169,7 +233,13 @@ static free_block_t* tlsf_find_free_block(tlsf_pool_t* pool, size_t size) {
 	if (fl_masked) {
 		int found_fl = tlsf_ffs64(fl_masked);
 		int found_sl = tlsf_ffs32(pool->sl_bitmap[found_fl]);
-		return pool->blocks[found_fl][found_sl];
+		free_block_t* blk = pool->blocks[found_fl][found_sl];
+		if (blk && !tlsf_free_block_ok(blk)) {
+			UARTDebugOut("[tlsf]: corrupt bucket %d/%d head %x\r\n", found_fl, found_sl, blk);
+			tlsf_drop_bucket(pool, found_fl, found_sl);
+			return NULL;
+		}
+		return blk;
 	}
 
 	return NULL;
@@ -240,7 +310,7 @@ void* tlsf_malloc(tlsf_pool_t* pool, size_t size) {
 		size = TLSF_MIN_BLOCK_SIZE;
 
 	free_block_t* blk = tlsf_find_free_block(pool, size);
-	if (!blk)
+	if (!blk || !tlsf_free_block_ok(blk))
 		return NULL;
 
 	size_t block_size = blk_size(&blk->hdr);

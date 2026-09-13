@@ -65,15 +65,6 @@ uint64_t physFrames[64];
 		stack &= ~((align) - 1);                                                                   \
 	} while (0)
 
-#define PUSHSTRING(stack, s)                                                                       \
-	do {                                                                                           \
-		size_t l = strlen(s) - 1;                                                                  \
-		do {                                                                                       \
-			PUSH2(stack, char, s[l]);                                                              \
-			l--;                                                                                   \
-		} while (l >= 0);                                                                          \
-	} while (0)
-
 void testFunc(uint64_t x0, uint64_t x1) {
 	UARTDebugOut("x0: %x x1 : %x \r\n", x0, x1);
 }
@@ -133,14 +124,14 @@ void AuProcessEntUser(uint64_t rcx) {
 	}
 	uentry->argvs = 0;
 
-	UARTDebugOut("[loader]: entering user: sp=%x entry=%x argc=%d argv=%x\r\n",
+	/*UARTDebugOut("[loader]: entering user: sp=%x entry=%x argc=%d argv=%x\r\n",
 				 uentry->rsp,
 				 uentry->entrypoint,
 				 uentry->num_args,
-				 uentry->argvaddr);
+				 uentry->argvaddr);*/
 
 	uint64_t* check_sp = (uint64_t*)uentry->rsp;
-	UARTDebugOut("[loader]: stack check [0]: %x, [1]: %x\r\n", check_sp[0], check_sp[1]);
+	//UARTDebugOut("[loader]: stack check [0]: %x, [1]: %x\r\n", check_sp[0], check_sp[1]);
 
 	aa64_enter_user(uentry->rsp, uentry->entrypoint);
 	while (1) {}

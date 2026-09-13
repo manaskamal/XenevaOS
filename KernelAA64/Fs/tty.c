@@ -331,10 +331,12 @@ AuVFSNode* AuTTYCreateMaster(TTY* tty) {
 
 	AuVFSNode* node = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
 	memset(node, 0, sizeof(AuVFSNode));
-	char name[5];
+	char name[32]; // = (char*)kmalloc(10);
 	strcpy(name, "ttym");
 	sztoa(master_count, name + 4, 10);
 	strcpy(node->filename, name);
+
+	//kfree(name);
 
 	node->size = 1024;
 	node->flags |= FS_FLAG_TTY;
@@ -363,10 +365,12 @@ AuVFSNode* AuTTYCreateSlave(TTY* tty) {
 
 	AuVFSNode* node = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
 	memset(node, 0, sizeof(AuVFSNode));
-	char name[5];
+	char name[32];
 	strcpy(name, "ttys");
 	sztoa(slave_count, name + 4, 10);
 	strcpy(node->filename, name);
+
+	//kfree(name);
 
 	node->size = 1024;
 	node->flags |= FS_FLAG_TTY;
@@ -440,7 +444,6 @@ int AuTTYCreate(int* master_fd, int* slave_fd) {
 		return 0;
 	proc->fds[fd] = master;
 	*master_fd = fd;
-
 	BordoisilaCapCreate(proc, fd, master, CAP_OBJ_FILE, rights);
 
 	fd = AuProcessGetFileDesc(proc);

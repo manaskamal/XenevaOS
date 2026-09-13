@@ -77,6 +77,7 @@ FileAddressBar* addressbar;
 void DirListItemAction(ChListView* lv, ChListItem* li);
 void DocumentItemActionHandler(ChListView* lv, ChListItem* li);
 extern void ExtensionManagerSpawn(ChListItem* li);
+void HandleDirectoryNavigation(ChListView* lv, ChListItem* li);
 void PathNavigateBack();
 void PathEnterForward();
 /*
@@ -223,33 +224,18 @@ void PrintParentDir(char* pathname) {
 	int len = strlen(pathname);
 	char dir[16];
 	memset(dir, 0, 16);
-	char* subpath = (char*)malloc(strlen(pathname));
+	char* subpath = (char*)malloc(strlen(pathname) + 1);
 	strcpy(subpath, pathname);
-	subpath[len - 2] = '\0';
-	bool _opened_ = false;
-	char* historypath = (char*)malloc(512);
-	memset(historypath, 0, 512);
-	int k = 0;
-	for (int i = len; i >= 0; i--) {
-		if (subpath[i] == '/' && _opened_)
-			break;
+    if (len > 1 && subpath[len - 1] == '/')
+        subpath[len - 1] = '\0';
 
-		if (subpath[i] == '/' && !_opened_) {
-			_opened_ = true;
-			continue;
-		}
-		if (_opened_)
-			dir[i] = subpath[i];
-	}
+    char* last_slash = strrchr(subpath, '/');
+    if (last_slash) {
+        strncpy(dir, last_slash + 1, 15);
+    } else {
+        strncpy(dir, subpath, 15);
+    }
 
-	int offset = 0;
-	for (int i = 0; i < 16; i++) {
-		if (dir[i] != '\0') {
-			dir[offset] = dir[i];
-			offset++;
-		}
-	}
-	dir[offset] = '\0';
 	_KePrint("Dir %s \r\n", dir);
 	free(subpath);
 }
@@ -340,40 +326,52 @@ void RefreshFileView(int dirfd, ChListView* lview) {
 	free(dirent);
 }
 
-/*
- * DirListItemAction -- directory item action handler
+/* DirListItemAction -- directory item action handler
  * this handler is called whenever directory is encountered
  * by double click or keyboard return key event
  */
 void DirListItemAction(ChListView* lv, ChListItem* li) {
+    HandleDirectoryNavigation(lv, li);
+    /* just jump to window event handler or
+    * else, the app will crash --axiss */
+    longjmp(mainWin->jump, 1);
+}
+
+/*
+ * HandleDirectoryNavigation -- core logic for navigation
+ */
+void HandleDirectoryNavigation(ChListView* lv, ChListItem* li) {
+	if (li == NULL)
+		return;
+
+	if (li->icon != NULL && li->icon == docico) {
+		/* handle it as document */
+		ExtensionManagerSpawn(li);
+		return;
+	}
+
 	int len = strlen(path);
-	char* dirname = (char*)malloc(strlen(li->itemText) + len);
+	char* dirname = (char*)malloc(strlen(li->itemText) + len + 2);
 	strcpy(dirname, path);
 	strcpy(dirname + len, li->itemText);
 	free(path);
-	path = (char*)malloc(strlen(dirname) + 1);
+	path = (char*)malloc(strlen(dirname) + 2);
 	strcpy(path, dirname);
 
-	strcpy(path + strlen(dirname), "/");
+	strcat(path, "/");
 	ChListViewClear(lv);
 
 	PrintParentDir(path);
 	/* bug : needs to sleep inorder to get
 	* the file descriptor for the desired path */
-	_KeProcessSleep(1);
+	_KeProcessSleep(10);
 
 	int dirfd = _KeOpenDir(dirname);
-
-	/* refresh the file view */
 	RefreshFileView(dirfd, lv);
-
 	_KeCloseFile(dirfd);
 	free(dirname);
 	ChListViewRepaint(mainWin, lv);
 	FileAddressBarRepaint(addressbar);
-	/* just jump to window event handler or
-	* else, the app will crash */
-	longjmp(mainWin->jump, 1);
 }
 
 /*
@@ -387,17 +385,14 @@ void PathNavigateBack() {
 	if (len == 1 && (strcmp(path, "/") == 0))
 		return;
 
-	char* subpath = (char*)malloc(strlen(path));
+	char* subpath = (char*)malloc(strlen(path) + 1);
 	strcpy(subpath, path);
-	subpath[len - 1] = '\0';
-	int endoffset = 0;
-	for (int i = len; i > 0; i--) {
-		if (subpath[i] == '/') {
-			subpath[i] = '\0';
-			endoffset = i;
-			break;
-		}
-		subpath[i] = '\0';
+	if (len > 1 && subpath[len - 1] == '/')
+		subpath[len - 1] = '\0';
+	char* last_slash = strrchr(subpath, '/');
+	if (last_slash) {
+		*last_slash = '\0';
+		if (strlen(subpath) == 0) strcpy(subpath, "/");
 	}
 
 	ChListViewClear(lv);
@@ -411,10 +406,16 @@ void PathNavigateBack() {
 
 	_KeCloseFile(dirfd);
 	ChListViewRepaint(mainWin, lv);
+
 	free(path);
-	subpath[endoffset] = '/';
-	path = (char*)malloc(strlen(subpath));
-	strcpy(path, subpath);
+	if (strcmp(subpath, "/") != 0) {
+		path = (char*)malloc(strlen(subpath) + 2);
+		strcpy(path, subpath);
+		strcat(path, "/");
+	} else {
+		path = (char*)malloc(2);
+		strcpy(path, "/");
+	}
 	FileAddressBarRepaint(addressbar);
 	free(subpath);
 }
@@ -424,37 +425,7 @@ void PathNavigateBack() {
  * to the directory from selected item
  */
 void PathEnterForward() {
-	ChListItem* li = ChListViewGetSelectedItem(lv);
-	if (li == NULL)
-		return;
-
-	if (li->icon != NULL && li->icon == docico) {
-		/* handle it as document */
-		ExtensionManagerSpawn(li);
-		return;
-	}
-
-	int len = strlen(path);
-	char* dirname = (char*)malloc(strlen(li->itemText) + len);
-	strcpy(dirname, path);
-	strcpy(dirname + len, li->itemText);
-	free(path);
-	path = (char*)malloc(strlen(dirname) + 1);
-	strcpy(path, dirname);
-
-	strcpy(path + strlen(dirname), "/");
-	ChListViewClear(lv);
-
-	/* bug : needs to sleep inorder to get
-	* the file descriptor for the desired path */
-	_KeProcessSleep(10);
-
-	int dirfd = _KeOpenDir(dirname);
-	RefreshFileView(dirfd, lv);
-	_KeCloseFile(dirfd);
-	free(dirname);
-	ChListViewRepaint(mainWin, lv);
-	FileAddressBarRepaint(addressbar);
+	HandleDirectoryNavigation(lv, ChListViewGetSelectedItem(lv));
 }
 
 /*
@@ -617,7 +588,7 @@ int main(int argc, char* argv[]) {
 
 	int dirfd = _KeOpenDir("/");
 
-	path = (char*)malloc(strlen("/"));
+	path = (char*)malloc(strlen("/") + 1);
 	strcpy(path, "/");
 
 	dirico = ChCreateIcon();
@@ -658,7 +629,7 @@ int main(int argc, char* argv[]) {
 	RefreshFileView(dirfd, lv);
 
 	/* first store the root address */
-	history = (char*)malloc(strlen("/"));
+	history = (char*)malloc(strlen("/") + 1);
 	strcpy(history, "/");
 
 	_KeCloseFile(dirfd);
