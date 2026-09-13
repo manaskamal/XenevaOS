@@ -246,9 +246,10 @@ static size_t AuConsoleRead(AuVFSNode* node, AuVFSNode* file, uint64_t* buffer, 
 		memset(&msg, 0, sizeof(msg));
 		AuDevReadConsoleKybrd(&msg);
 		c = 0;
-		if (msg.type == AU_INPUT_KEYBOARD)
+		if (msg.type == AU_INPUT_KEYBOARD){
 			c = AuConsoleMapKey(msg.code);
-		if (c == '\r')
+			UARTDebugOut("Reading console key++ \r\n");
+		}if (c == '\r')
 			c = '\n';
 		if (msg.type != 0) {
 			con_dbg_msgs++;

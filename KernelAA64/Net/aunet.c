@@ -3,7 +3,7 @@
 * 
 * BSD 2-Clause License
 *
-* Copyright (c) 2022-2023, Manas Kamal Choudhury
+* Copyright (c) 2022-2026, Manas Kamal Choudhury
 * All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
@@ -48,6 +48,145 @@
 
 static hashmap_t* netadapters;
 
+static size_t AuLoopbackWrite(AuVFSNode* node, AuVFSNode* file, uint64_t* buffer, uint32_t length) {
+	(void)node;
+	(void)file;
+	(void)buffer;
+	(void)length;
+	/* IP local delivery must never reach L2 write on lo. */
+	UARTDebugOut("[aurora]: lo write ignored (local path should skip L2)\r\n");
+	return 0;
+}
+
+static int AuLoopbackIOCtl(AuVFSNode* file, int code, void* arg) {
+	AuNetworkDevice* ndev;
+
+	if (!file || !file->device || !arg)
+		return 1;
+	ndev = (AuNetworkDevice*)file->device;
+	switch (code) {
+	case AUNET_GET_HARDWARE_ADDRESS:
+		memcpy(arg, ndev->mac, 6);
+		return 0;
+	case AUNET_GET_IPV4_ADDRESS:
+		memcpy(arg, &ndev->ipv4addr, sizeof(ndev->ipv4addr));
+		return 0;
+	case AUNET_SET_IPV4_ADDRESS:
+		memcpy(&ndev->ipv4addr, arg, sizeof(ndev->ipv4addr));
+		return 0;
+	case AUNET_GET_GATEWAY_ADDRESS:
+		memcpy(arg, &ndev->ipv4gateway, sizeof(ndev->ipv4gateway));
+		return 0;
+	case AUNET_SET_GATEWAY_ADDRESS:
+		memcpy(&ndev->ipv4gateway, arg, sizeof(ndev->ipv4gateway));
+		return 0;
+	case AUNET_GET_SUBNET_MASK:
+		memcpy(arg, &ndev->ipv4subnet, sizeof(ndev->ipv4subnet));
+		return 0;
+	case AUNET_SET_SUBNET_MASK:
+		memcpy(&ndev->ipv4subnet, arg, sizeof(ndev->ipv4subnet));
+		return 0;
+	case AUNET_GET_LINK_STATUS:
+		memcpy(arg, &ndev->linkStatus, sizeof(ndev->linkStatus));
+		return 0;
+	case AUNET_GET_IPV6_ADDRESS:
+		memcpy(arg, &ndev->ipv6addr, sizeof(ndev->ipv6addr));
+		return 0;
+	case AUNET_SET_IPV6_ADDRESS:
+		memcpy(&ndev->ipv6addr, arg, sizeof(ndev->ipv6addr));
+		return 0;
+	case AUNET_GET_IPV6_GATEWAY:
+		memcpy(arg, &ndev->ipv6gateway, sizeof(ndev->ipv6gateway));
+		return 0;
+	case AUNET_SET_IPV6_GATEWAY:
+		memcpy(&ndev->ipv6gateway, arg, sizeof(ndev->ipv6gateway));
+		return 0;
+	case AUNET_GET_IPV6_PREFIX:
+		memcpy(arg, &ndev->ipv6prefixLen, sizeof(ndev->ipv6prefixLen));
+		return 0;
+	case AUNET_SET_IPV6_PREFIX:
+		memcpy(&ndev->ipv6prefixLen, arg, sizeof(ndev->ipv6prefixLen));
+		return 0;
+	default:
+		return 1;
+	}
+}
+
+static void AuNetSeedLoopbackRoutes(void) {
+	AuRouteEntry* r4;
+	AuRouteEntry6* r6;
+	char* name4;
+	char* name6;
+
+	r4 = AuRouteTableCreateEntry();
+	if (r4) {
+		name4 = (char*)kmalloc(3);
+		if (name4) {
+			strcpy(name4, "lo");
+			r4->ifname = name4;
+			r4->dest = MAKE_IP(127, 0, 0, 0);
+			r4->netmask = MAKE_IP(255, 0, 0, 0);
+			r4->ifaddress = MAKE_IP(127, 0, 0, 1);
+			r4->gateway = 0;
+			r4->flags = 0;
+			AuRouteTableAdd(r4);
+		} else {
+			kfree(r4);
+		}
+	}
+
+	r6 = AuRouteTable6CreateEntry();
+	if (r6) {
+		name6 = (char*)kmalloc(3);
+		if (name6) {
+			strcpy(name6, "lo");
+			r6->ifname = name6;
+			memset(&r6->dest, 0, sizeof(ip6_addr));
+			r6->dest.s6_addr[15] = 1; /* ::1 */
+			r6->prefixLen = 128;
+			memset(&r6->ifaddress, 0, sizeof(ip6_addr));
+			r6->ifaddress.s6_addr[15] = 1;
+			memset(&r6->gateway, 0, sizeof(ip6_addr));
+			r6->flags = 0;
+			AuRouteTable6Add(r6);
+		} else {
+			kfree(r6);
+		}
+	}
+}
+
+static void AuNetCreateLoopback(void) {
+	AuNetworkDevice* ndev;
+	AuVFSNode* lo;
+
+	ndev = (AuNetworkDevice*)kmalloc(sizeof(AuNetworkDevice));
+	if (!ndev)
+		return;
+	memset(ndev, 0, sizeof(AuNetworkDevice));
+	ndev->type = NETDEV_TYPE_LOOPBACK;
+	ndev->linkStatus = 1;
+	ndev->ipv4addr = MAKE_IP(127, 0, 0, 1);
+	ndev->ipv4subnet = MAKE_IP(255, 0, 0, 0);
+	ndev->ipv4gateway = 0;
+	memset(&ndev->ipv6addr, 0, sizeof(ip6_addr));
+	ndev->ipv6addr.s6_addr[15] = 1; /* ::1 */
+	ndev->ipv6prefixLen = 128;
+
+	lo = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
+	if (!lo) {
+		kfree(ndev);
+		return;
+	}
+	memset(lo, 0, sizeof(AuVFSNode));
+	strcpy(lo->filename, "lo");
+	lo->flags = FS_FLAG_DEVICE;
+	lo->write = AuLoopbackWrite;
+	lo->iocontrol = AuLoopbackIOCtl;
+	lo->device = ndev;
+	AuAddNetAdapter(lo, "lo");
+	AuTextOut("[aurora]: loopback lo 127.0.0.1/8 ::1/128\r\n");
+}
+
 /**
  * @brief AuInitialiseNet -- initialise network data structures
  */
@@ -65,6 +204,8 @@ void AuInitialiseNet() {
 	ICMPInitialise();
 	ICMPv6Initialise();
 	TCPProtocolInstall();
+	AuNetCreateLoopback();
+	AuNetSeedLoopbackRoutes();
 	AuTextOut("[aurora]: net system initialised \r\n");
 }
 
@@ -88,18 +229,173 @@ AuVFSNode* AuGetNetworkAdapter(char* name) {
 	return node;
 }
 
+static int AuNicAddrEquals4(uint32_t address, uint32_t nicaddr) {
+	if (!nicaddr)
+		return 0;
+	/* Wire/MAKE_IP form or host-order sockaddr (ping does htonl(inet_addr)). */
+	if (address == nicaddr)
+		return 1;
+	if (address == htonl(nicaddr))
+		return 1;
+	return 0;
+}
+
+static int AuCheckNicLocal4(const char* name, uint32_t address) {
+	AuVFSNode* n = AuGetNetworkAdapter((char*)name);
+	AuNetworkDevice* ndev;
+
+	if (!n || !n->device)
+		return 0;
+	ndev = (AuNetworkDevice*)n->device;
+	return AuNicAddrEquals4(address, ndev->ipv4addr);
+}
+
+int AuAddrIsLocal4(uint32_t address) {
+	/* 127/8 in MAKE_IP/wire form (low octet 127) */
+	if ((address & MAKE_IP(255, 0, 0, 0)) == MAKE_IP(127, 0, 0, 0))
+		return 1;
+	/* 127/8 in host-order form (high octet 127), e.g. ping sockaddr */
+	if ((address & 0xFF000000u) == 0x7F000000u)
+		return 1;
+	if (AuCheckNicLocal4("lo", address))
+		return 1;
+	if (AuCheckNicLocal4("virtio-net", address))
+		return 1;
+	if (AuCheckNicLocal4("e1000", address))
+		return 1;
+	return 0;
+}
+
+static int AuIsIpv6Loopback(const ip6_addr* a) {
+	int i;
+
+	if (!a)
+		return 0;
+	for (i = 0; i < 15; i++) {
+		if (a->s6_addr[i] != 0)
+			return 0;
+	}
+	return a->s6_addr[15] == 1;
+}
+
+static int AuCheckNicLocal6(const char* name, const ip6_addr* address) {
+	AuVFSNode* n = AuGetNetworkAdapter((char*)name);
+	AuNetworkDevice* ndev;
+
+	if (!n || !n->device || !address)
+		return 0;
+	ndev = (AuNetworkDevice*)n->device;
+	if (ip6_addr_is_zero(&ndev->ipv6addr))
+		return 0;
+	return ip6_addr_equal(address, &ndev->ipv6addr);
+}
+
+int AuAddrIsLocal6(const ip6_addr* address) {
+	if (!address)
+		return 0;
+	if (AuIsIpv6Loopback(address))
+		return 1;
+	if (AuCheckNicLocal6("lo", address))
+		return 1;
+	if (AuCheckNicLocal6("virtio-net", address))
+		return 1;
+	if (AuCheckNicLocal6("e1000", address))
+		return 1;
+	return 0;
+}
+
+void AuNetAddConnectedRoute4(AuVFSNode* nic, const char* ifname) {
+	AuNetworkDevice* ndev;
+	AuRouteEntry* entry;
+	char* name;
+	size_t nlen;
+
+	if (!nic || !nic->device || !ifname)
+		return;
+	ndev = (AuNetworkDevice*)nic->device;
+	if (!ndev->ipv4addr || !ndev->ipv4subnet)
+		return;
+
+	entry = AuRouteTableCreateEntry();
+	if (!entry)
+		return;
+	nlen = strlen(ifname) + 1;
+	name = (char*)kmalloc(nlen);
+	if (!name) {
+		kfree(entry);
+		return;
+	}
+	strcpy(name, ifname);
+	entry->ifname = name;
+	entry->dest = ndev->ipv4addr & ndev->ipv4subnet;
+	entry->netmask = ndev->ipv4subnet;
+	entry->ifaddress = ndev->ipv4addr;
+	entry->gateway = 0;
+	entry->flags = 0;
+	AuRouteTableAdd(entry);
+}
+
+void AuNetAddConnectedRoute6(AuVFSNode* nic, const char* ifname) {
+	AuNetworkDevice* ndev;
+	AuRouteEntry6* entry;
+	char* name;
+	size_t nlen;
+	int i;
+	uint8_t b;
+	uint8_t bits;
+
+	if (!nic || !nic->device || !ifname)
+		return;
+	ndev = (AuNetworkDevice*)nic->device;
+	if (ip6_addr_is_zero(&ndev->ipv6addr) || ndev->ipv6prefixLen == 0)
+		return;
+
+	entry = AuRouteTable6CreateEntry();
+	if (!entry)
+		return;
+	nlen = strlen(ifname) + 1;
+	name = (char*)kmalloc(nlen);
+	if (!name) {
+		kfree(entry);
+		return;
+	}
+	strcpy(name, ifname);
+	entry->ifname = name;
+	ip6_addr_copy(&entry->ifaddress, &ndev->ipv6addr);
+	memset(&entry->dest, 0, sizeof(ip6_addr));
+	bits = ndev->ipv6prefixLen;
+	for (i = 0; i < 16 && bits > 0; i++) {
+		if (bits >= 8) {
+			entry->dest.s6_addr[i] = ndev->ipv6addr.s6_addr[i];
+			bits -= 8;
+		} else {
+			b = (uint8_t)(0xFFu << (8 - bits));
+			entry->dest.s6_addr[i] = (uint8_t)(ndev->ipv6addr.s6_addr[i] & b);
+			bits = 0;
+		}
+	}
+	entry->prefixLen = ndev->ipv6prefixLen;
+	memset(&entry->gateway, 0, sizeof(ip6_addr));
+	entry->flags = 0;
+	AuRouteTable6Add(entry);
+}
+
 /** 
- * @brief AuNetworkRoute -- For now, route table is
- * is not implemented, simply return the default
- * network card installed in Xeneva
- * @param address -- Address to consider
+ * @brief AuNetworkRoute -- select NIC for an IPv4 destination
+ * @param address -- Address to consider (MAKE_IP/wire or host-order sockaddr)
  */
 AuVFSNode* AuNetworkRoute(uint32_t address) {
-	/*if (address == 0x0100007F)*/ /* loop device */
-	AuRouteEntry* rt = AuRouteTableDoRouteLookup(address);
-	if (!rt)
-		return AuGetNetworkAdapter("virtio-net");
-	return AuGetNetworkAdapter(rt->ifname);
+	AuRouteEntry* rt;
+
+	if (AuAddrIsLocal4(address))
+		return AuGetNetworkAdapter("lo");
+
+	rt = AuRouteTableDoRouteLookup(address);
+	if (rt)
+		return AuGetNetworkAdapter(rt->ifname);
+
+	/* Non-local FIB miss: last-resort default NIC (not for 127/8). */
+	return AuGetNetworkAdapter("virtio-net");
 }
 
 AuVFSNode* AuNetworkRoute6(const ip6_addr* address) {
@@ -107,8 +403,13 @@ AuVFSNode* AuNetworkRoute6(const ip6_addr* address) {
 
 	if (!address)
 		return AuGetNetworkAdapter("virtio-net");
+
+	if (AuAddrIsLocal6(address))
+		return AuGetNetworkAdapter("lo");
+
 	rt = AuRouteTableDoRouteLookup6(address);
-	if (!rt)
-		return AuGetNetworkAdapter("virtio-net");
-	return AuGetNetworkAdapter(rt->ifname);
+	if (rt)
+		return AuGetNetworkAdapter(rt->ifname);
+
+	return AuGetNetworkAdapter("virtio-net");
 }

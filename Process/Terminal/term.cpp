@@ -1257,18 +1257,24 @@ int main(int argc, char* arv[]) {
 	master_fd = slave_fd = 0;
 	/* create the terminal */
 	int success = 0;
+	_KePrint("Creating TTY : %x - %x \r\n", &master_fd, &slave_fd);
 	success = _KeCreateTTY(&master_fd, &slave_fd);
 	WinSize sz;
 	sz.ws_col = term.cols;
 	sz.ws_row = term.rows;
 	sz.ws_xpixel = term_w;
 	sz.ws_ypixel = term_h;
+	_KePrint("TTY Created \r\n");
 	_KeFileIoControl(master_fd, TIOCSWINSZ, &sz);
+
+	_KePrint("TIOCSWINSZ done \r\n");
 
 	/*term_buffer = (TermCell*)malloc(ws_col * ws_row * sizeof(TermCell));
 	memset(term_buffer, 0x0, static_cast<uint64_t>(ws_col) * ws_row * sizeof(TermCell));*/
 
 	signal(SIGALRM, _terminal_blink_cursor);
+
+	_KePrint("Signal alarm created \r\n");
 
 	ChWindowPaint(win);
 

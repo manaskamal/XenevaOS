@@ -282,6 +282,7 @@ int AuTTYMasterClose(AuVFSNode* fs, AuVFSNode* file) {
  * @return requested value on success, -1 on failure
  */
 int AuTTYIoControl(AuVFSNode* file, int code, void* arg) {
+	UARTDebugOut("TTYIoControl : %x \r\n", file);
 	TTY* tty = (TTY*)file->device;
 	if (!tty)
 		return 0;
@@ -403,7 +404,6 @@ int AuTTYCreate(int* master_fd, int* slave_fd) {
 
 	TTY* tty = (TTY*)kmalloc(sizeof(TTY));
 	memset(tty, 0, sizeof(TTY));
-
 	void* inbuffer = kmalloc(1024);
 	memset(inbuffer, 0, 1024);
 	void* outbuffer = kmalloc(1024);
@@ -411,7 +411,7 @@ int AuTTYCreate(int* master_fd, int* slave_fd) {
 
 	tty->masterbuf = AuCircBufInitialise((uint8_t*)inbuffer, 1024);
 	tty->slavebuf = AuCircBufInitialise((uint8_t*)outbuffer, 1024);
-
+	
 	tty->id = slave_count;
 	tty->master_written = 0;
 	tty->slave_written = 0;

@@ -53,8 +53,6 @@
 #define VIRTIO_PCI_CAP_ID		  0x09
 #define VIRTIO_PCI_CAP_COMMON_CFG 1
 #define VIRTIO_PCI_CAP_DEVICE_CFG 4
-#define MAKE_IP(a, b, c, d) \
-	((uint32_t)(d) << 24 | (uint32_t)(c) << 16 | (uint32_t)(b) << 8 | (uint32_t)(a))
 
 struct VirtioQueue* rxqueue;
 struct VirtioQueue* txqueue;
@@ -332,6 +330,7 @@ static int AuVirtioNetIOCtl(AuVFSNode* file, int code, void* arg) {
 		return 0;
 	case AUNET_SET_IPV4_ADDRESS:
 		memcpy(&ndev->ipv4addr, arg, sizeof(ndev->ipv4addr));
+		AuNetAddConnectedRoute4(nic, "virtio-net");
 		return 0;
 	case AUNET_GET_GATEWAY_ADDRESS:
 		memcpy(arg, &ndev->ipv4gateway, sizeof(ndev->ipv4gateway));
@@ -344,6 +343,7 @@ static int AuVirtioNetIOCtl(AuVFSNode* file, int code, void* arg) {
 		return 0;
 	case AUNET_SET_SUBNET_MASK:
 		memcpy(&ndev->ipv4subnet, arg, sizeof(ndev->ipv4subnet));
+		AuNetAddConnectedRoute4(nic, "virtio-net");
 		return 0;
 	case AUNET_GET_LINK_STATUS:
 		memcpy(arg, &ndev->linkStatus, sizeof(ndev->linkStatus));
@@ -353,6 +353,7 @@ static int AuVirtioNetIOCtl(AuVFSNode* file, int code, void* arg) {
 		return 0;
 	case AUNET_SET_IPV6_ADDRESS:
 		memcpy(&ndev->ipv6addr, arg, sizeof(ndev->ipv6addr));
+		AuNetAddConnectedRoute6(nic, "virtio-net");
 		return 0;
 	case AUNET_GET_IPV6_GATEWAY:
 		memcpy(arg, &ndev->ipv6gateway, sizeof(ndev->ipv6gateway));
@@ -365,6 +366,7 @@ static int AuVirtioNetIOCtl(AuVFSNode* file, int code, void* arg) {
 		return 0;
 	case AUNET_SET_IPV6_PREFIX:
 		memcpy(&ndev->ipv6prefixLen, arg, sizeof(ndev->ipv6prefixLen));
+		AuNetAddConnectedRoute6(nic, "virtio-net");
 		return 0;
 	default:
 		return 1;
@@ -504,5 +506,7 @@ void AuVirtioNetInitialize(uint64_t device) {
 		alias->iocontrol = AuVirtioNetIOCtl;
 		alias->device = ndev;
 		AuAddNetAdapter(alias, "virtio-net");
+		AuNetAddConnectedRoute4(alias, "virtio-net");
+		AuNetAddConnectedRoute6(alias, "virtio-net");
 	}
 }

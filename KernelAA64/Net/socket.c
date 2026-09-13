@@ -62,14 +62,11 @@ void AuSocketAdd(AuSocket* sock, void* data, size_t sz) {
 	char* data_ = (char*)kmalloc(sizeof(size_t) + sz);
 	memset(data_, 0, sz + sizeof(size_t));
 	*(size_t*)data_ = sz;
-	UARTDebugOut("Adding data %x , sz : %d\r\n", data, sz);
-	//memcpy(data_ + sizeof(size_t), (char*)data, sz);
 	char* dest = data_ + sizeof(size_t);
 	const char* src = (const char*)data;
 	for (size_t i = 0; i < sz; i++) {
 		dest[i] = src[i];
 	}
-	UARTDebugOut("]aurora]: socket sock stack -> %x \r\n", sock->rxstack);
 	AuStackPush(sock->rxstack, data_);
 }
 
@@ -100,7 +97,6 @@ int AuRawSocketReceive(AuSocket* sock, msghdr* msg, int flags) {
 		return 0;
 	}
 	char* data = (char*)AuSocketGet(sock);
-	UARTDebugOut("Getting data : %x \r\n", data);
 	if (!data)
 		return -1;
 	size_t pack_sz = *(size_t*)data;

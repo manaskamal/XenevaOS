@@ -311,6 +311,7 @@ int AuFTMngrGetFontID(char* fontname) {
 		if (strcmp(fontname, seg->fontname) == 0) {
 			UARTDebugOut("Found font id : %d \n", seg->sharedSeg->id);
 			font_id = (seg->sharedSeg->id << 16) | seg->sharedSeg->key & UINT16_MAX;
+			UARTDebugOut("Font ID value : %x \r\n", font_id);
 			return font_id;
 		}
 	}

@@ -38,6 +38,13 @@
 #define NETDEV_TYPE_ETHERNET 1
 #define NETDEV_TYPE_802_11 2
 #define NETDEV_TYPE_BLUETOOTH 3
+#define NETDEV_TYPE_LOOPBACK 4
+
+/* Wire/MAKE_IP form used by NIC ipv4addr and on-wire headers (LE host). */
+#ifndef MAKE_IP
+#define MAKE_IP(a, b, c, d) \
+	((uint32_t)(d) << 24 | (uint32_t)(c) << 16 | (uint32_t)(b) << 8 | (uint32_t)(a))
+#endif
 
 #ifdef ARCH_X64
 #pragma pack(push,1)
@@ -111,5 +118,13 @@ extern AuVFSNode* AuNetworkRoute(uint32_t address);
  * @param address -- IPv6 destination
  */
 extern AuVFSNode* AuNetworkRoute6(const ip6_addr* address);
+
+/* Local-address checks (127/8, ::1, or any configured NIC address). */
+extern int AuAddrIsLocal4(uint32_t address);
+extern int AuAddrIsLocal6(const ip6_addr* address);
+
+/* Install connected route for a NIC after its address/mask is set. */
+extern void AuNetAddConnectedRoute4(AuVFSNode* nic, const char* ifname);
+extern void AuNetAddConnectedRoute6(AuVFSNode* nic, const char* ifname);
 
 #endif
