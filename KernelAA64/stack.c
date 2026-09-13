@@ -71,7 +71,6 @@ void* AuStackPop(AuStack* stack) {
 	void* data = NULL;
 	if (!stack->top)
 		return NULL;
-	UARTDebugOut("Stack Pop here \r\n");
 	AuStackItem* si;
 	si = stack->top;
 	stack->top = si->link;
