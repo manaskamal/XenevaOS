@@ -400,6 +400,7 @@ QEMU_ARGS=(
     -drive file=fat.img,format=raw,if=none,id=blk0
     -device virtio-blk-pci,drive=blk0,disable-legacy=on
     -netdev user,id=net0
+    -netdev user,id=net0,ipv6=on,ipv6-net=fec0::/64,ipv6-host=fec0::2
     -device virtio-net-pci,netdev=net0
     -device ramfb
     -device virtio-keyboard-pci
