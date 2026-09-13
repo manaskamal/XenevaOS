@@ -38,6 +38,7 @@
 #include <Net/ethernet.h>
 #include <Net/arp.h>
 #include <Net/udp.h>
+#include <Net/packet.h>
 #include <_null.h>
 #include <aucon.h>
 #include <Mm/kmalloc.h>
@@ -75,17 +76,10 @@ void IPv4HandlePacket(void* data, AuVFSNode* nic) {
 	char dest[16];
 	char src[16];
 	IPv4Header* pack = (IPv4Header*)data;
-	uint32_t destIP;
-	memcpy(&destIP, &pack->destAddress, 4);
-	uint32_t srcIP;
-	memcpy(&srcIP, &pack->srcAddress, 4);
-	ip_ntoa(ntohl(destIP));
-	ip_ntoa(ntohl(srcIP));
 	uint8_t protocol;
 	memcpy(&protocol, &pack->protocol, 1);
 	switch (protocol) {
 	case 1: {
-		UARTDebugOut("[ipv4]: received ICMP message \r\n");
 		AuICMPHandle(pack, nic);
 		break;
 	}
@@ -135,16 +129,34 @@ int CreateIPv4Socket(int type, int protocol) {
  * @param nic -- Pointer to NIC device
  */
 void IPV4SendPacket(IPv4Header* packet, AuVFSNode* nic) {
-	AuNetworkDevice* ndev = (AuNetworkDevice*)nic->device;
+	AuNetworkDevice* ndev;
+	AuVFSNode* deliver;
+	uint32_t ip_dest;
+	AuARPCache* cache;
+	uint8_t broadcast_addr[6];
+
+	if (!packet || !nic)
+		return;
+	ndev = (AuNetworkDevice*)nic->device;
 	if (!ndev)
 		return;
 
-	uint32_t ip_dest = packet->destAddress;
+	ip_dest = packet->destAddress;
 
-	/* Decide which data link layer to use for
-	   forwarding this packet*/
+	/* Loopback / local delivery: reinject at IP (never AuEthernetSend). */
+	if (ndev->type == NETDEV_TYPE_LOOPBACK || AuAddrIsLocal4(ip_dest)) {
+		deliver = AuGetNetworkAdapter("lo");
+		if (!deliver)
+			deliver = nic;
+		if (!AuPacketLocalEnter())
+			return;
+		IPv4HandlePacket(packet, deliver);
+		AuPacketLocalLeave();
+		return;
+	}
+
 	if (ndev->type == NETDEV_TYPE_ETHERNET) {
-		AuARPCache* cache = NULL;
+		cache = NULL;
 		if (!ndev->ipv4subnet ||
 			((ip_dest & ndev->ipv4subnet) != (ndev->ipv4addr & ndev->ipv4subnet))) {
 			ip_dest = ndev->ipv4gateway;
@@ -161,7 +173,6 @@ void IPV4SendPacket(IPv4Header* packet, AuVFSNode* nic) {
 				cache = AuARPGet(ip_dest);
 			}
 		}
-		uint8_t broadcast_addr[6];
 		memset(broadcast_addr, 0xFF, 6);
 		AuEthernetSend(nic,
 					   packet,

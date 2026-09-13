@@ -37,6 +37,7 @@
 #include <Net/aunet.h>
 #include <Net/ethernet.h>
 #include <Net/ndp.h>
+#include <Net/packet.h>
 #include <_null.h>
 #include <Mm/kmalloc.h>
 #include <Drivers/uart.h>
@@ -147,6 +148,7 @@ int CreateIPv6Socket(int type, int protocol) {
 
 void IPV6SendPacket(IPv6Header* packet, AuVFSNode* nic) {
 	AuNetworkDevice* ndev;
+	AuVFSNode* deliver;
 	ip6_addr next_hop;
 	AuNDCache* cache;
 	uint8_t broadcast_addr[6];
@@ -157,6 +159,18 @@ void IPV6SendPacket(IPv6Header* packet, AuVFSNode* nic) {
 	ndev = (AuNetworkDevice*)nic->device;
 	if (!ndev)
 		return;
+
+	/* Loopback / local delivery: reinject at IP (never AuEthernetSend). */
+	if (ndev->type == NETDEV_TYPE_LOOPBACK || AuAddrIsLocal6(&packet->destIP)) {
+		deliver = AuGetNetworkAdapter("lo");
+		if (!deliver)
+			deliver = nic;
+		if (!AuPacketLocalEnter())
+			return;
+		IPv6HandlePacket(packet, deliver);
+		AuPacketLocalLeave();
+		return;
+	}
 
 	ip6_addr_copy(&next_hop, &packet->destIP);
 
