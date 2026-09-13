@@ -68,10 +68,6 @@ void AuICMPHandle(IPv4Header* ipv4, AuVFSNode* nic) {
 
 	/* PING */
 	if (header->type == 8 && header->code == 0) {
-		UARTDebugOut("[AuNet]: Ping with %d bytes of payload \r\n", ntohs(ipv4->totalLength));
-		UARTDebugOut("From -> ");
-		ip_ntoa(ntohl(ipv4->srcAddress));
-		UARTDebugOut("\r\n");
 		if (ntohs(ipv4->totalLength) & 1)
 			ipv4->totalLength = htons(ntohs(ipv4->totalLength) + 1);
 
@@ -79,7 +75,8 @@ void AuICMPHandle(IPv4Header* ipv4, AuVFSNode* nic) {
 		memcpy(resp, ipv4, ntohs(ipv4->totalLength));
 		resp->totalLength = ipv4->totalLength;
 		resp->destAddress = ipv4->srcAddress;
-		resp->srcAddress = htonl(netdev->ipv4addr);
+		/* ipv4addr is already MAKE_IP/wire form — do not htonl again. */
+		resp->srcAddress = netdev->ipv4addr;
 		resp->timeToLive = 64;
 		resp->protocol = 1;
 		resp->identification = ipv4->identification;
@@ -92,20 +89,14 @@ void AuICMPHandle(IPv4Header* ipv4, AuVFSNode* nic) {
 		ICMPHeader* reply = (ICMPHeader*)&resp->payload;
 		reply->checksum = 0;
 		reply->type = 0;
-		UARTDebugOut("reply->code -> %d \r\n", reply->code);
+		reply->code = 0;
 		reply->checksum = htons(AuICMPChecksum(resp));
 
 		IPV4SendPacket(resp, nic);
 		kfree(resp);
 	} else if (header->type == 0 && header->code == 0) {
-		UARTDebugOut("[AuNet]:ICMP ping reply got \r\n");
 		if (current_icmp_sock)
 			AuSocketAdd(current_icmp_sock, ipv4, ntohs(ipv4->totalLength));
-	} else {
-		UARTDebugOut("[AuNet]: NIC -> %s, ICMP type-%d code-%d \r\n",
-					 nic->filename,
-					 header->type,
-					 header->code);
 	}
 }
 /*
@@ -115,6 +106,7 @@ void AuICMPHandle(IPv4Header* ipv4, AuVFSNode* nic) {
 * @param flags -- extra flags
 */
 int AuICMPReceive(AuSocket* sock, msghdr* msg, int flags) {
+	(void)flags;
 	if (msg->msg_iovlen > 1)
 		return -1;
 
@@ -132,6 +124,7 @@ int AuICMPReceive(AuSocket* sock, msghdr* msg, int flags) {
 		if (msg->msg_name) {
 			((sockaddr_in*)msg->msg_name)->sin_family = AF_INET;
 			((sockaddr_in*)msg->msg_name)->sin_port = 0;
+			/* Network/wire form — inet_ntoa expects this (not host-order). */
 			((sockaddr_in*)msg->msg_name)->sin_addr.s_addr = src->srcAddress;
 			((sockaddr_in*)msg->msg_name)->sin_zero[0] = src->timeToLive;
 		}
@@ -139,7 +132,7 @@ int AuICMPReceive(AuSocket* sock, msghdr* msg, int flags) {
 
 	memcpy(msg->msg_iov[0].iov_base, src->payload, packet_sz);
 	kfree(packet);
-	return packet_sz;
+	return (int)packet_sz;
 }
 
 /*

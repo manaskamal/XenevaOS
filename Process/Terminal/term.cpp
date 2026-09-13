@@ -1074,11 +1074,11 @@ void TerminalHandleMessage(PostEvent* e) {
 		}
 
 		/** chec from extended key code map **/
-		if (rawkey == KEY_KP_2) {
+		/**if (rawkey == KEY_KP_2) {
 			TerminalHistoryDown(&term);
 			memset(e, 0, sizeof(PostEvent));
 			return;
-		}
+		}**/
 
 		if (rawkey == TERMINAL_KEY_LEFT) {
 			if (term.cursorX > term.inputStartX) {

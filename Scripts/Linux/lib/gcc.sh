@@ -40,7 +40,7 @@ if [ "${BUILD_USER_APPS:-0}" -eq 1 ]; then
     APPS=(
         Init DeodhaiXR Terminal Namdapha XELnch DeodhaiAudio
         Calender Calculator AudioPlayer Files Control
-        ping XEShell
+        ping udpecho XEShell
     )
     for app in "${APPS[@]}"; do
         ( cd "../../Process/$app" && make clean && make all )
@@ -60,6 +60,7 @@ if [ "${BUILD_USER_APPS:-0}" -eq 1 ]; then
     cp -f ../../Process/Files/file.exe            ../../Resources/resources/
     cp -f ../../Process/Control/ctrl.exe          ../../Resources/resources/
     cp -f ../../Process/ping/ping.exe             ../../Resources/resources/
+    cp -f ../../Process/udpecho/udpecho.exe       ../../Resources/resources/
     cp -f ../../Process/XEShell/xesh.exe          ../../Resources/resources/
 fi
 
