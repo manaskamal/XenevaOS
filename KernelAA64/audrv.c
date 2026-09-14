@@ -53,7 +53,7 @@
 /** @brief 0xFFFFC00000400000 - 0xFFFFC00000A00000 -- Kernel Boot Drivers
  *  0xFFFFC00000A00000 - Kernel Runtime Drivers
  */
-#define AU_DRIVER_BASE_START  0xFFFFC00000A00000
+#define AU_DRIVER_BASE_START	0xFFFFC00000A00000
 #define AU_MAX_SUPPORTED_DEVICE 256
 
 AuDriver* drivers[246];
@@ -123,7 +123,6 @@ search:
 
 	if (entret != entry_num)
 		goto search;
-
 
 	/* Search for vendor id of the product */
 	fbuf = p;
@@ -251,8 +250,7 @@ search:
 	if (p) {
 		p++;
 		fbuf++;
-	}
-	else {
+	} else {
 		return;
 	}
 
@@ -300,43 +298,46 @@ void AuDriverLoad(char* filename, AuDriver* driver) {
 		AuTextOut("[aurora]: audrvmngr failed to load driver : %s \n", filename);
 		return;
 	}
-	
+	UARTDebugOut("loading file : %s \r\n", file->filename);
+
 	size_t file_offset = 0;
 	while (file->eof != 1) {
 		uint64_t block = ((uint64_t)scratchBuffer + file_offset);
 		size_t bytes_read = AuVFSNodeReadBlock(fsys, file, (uint64_t*)block);
-		if (bytes_read == 0) break;
+		if (bytes_read == 0)
+			break;
 		file_offset += bytes_read;
 	}
 
+	UARTDebugOut("File read complete : scratch buffer : %x \r\n", scratchBuffer);
 	IMAGE_DOS_HEADER* dos_ = (IMAGE_DOS_HEADER*)scratchBuffer;
-	PIMAGE_NT_HEADERS nt = RAW_OFFSET(PIMAGE_NT_HEADERS,dos_, dos_->e_lfanew);
+	PIMAGE_NT_HEADERS nt = RAW_OFFSET(PIMAGE_NT_HEADERS, dos_, dos_->e_lfanew);
 	driver->original_load_base = nt->OptionalHeader.ImageBase;
 	driver->image_sz = nt->OptionalHeader.SizeOfImage;
-	PSECTION_HEADER sectionHeader = RAW_OFFSET(PSECTION_HEADER,&nt->OptionalHeader, nt->FileHeader.SizeOfOptionaHeader);
-	
-	uint64_t first_block = (uint64_t)AuPmmngrAlloc();
+	PSECTION_HEADER sectionHeader =
+		RAW_OFFSET(PSECTION_HEADER, &nt->OptionalHeader, nt->FileHeader.SizeOfOptionaHeader);
+
+	uint64_t first_block = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
 	memset((void*)first_block, 0, 4096);
 	AuMapPage(first_block, driver_load_base, PTE_NORMAL_MEM);
-	memcpy((void*)driver_load_base, scratchBuffer,nt->OptionalHeader.SizeOfHeaders);
+	memcpy((void*)driver_load_base, scratchBuffer, nt->OptionalHeader.SizeOfHeaders);
 	next_base_offset++;
 
 	for (size_t i = 0; i < nt->FileHeader.NumberOfSections; ++i) {
-	
 		size_t load_addr = (size_t)virtual_base + sectionHeader[i].VirtualAddress;
 		void* sect_addr = (void*)load_addr;
 		size_t sectsz = sectionHeader[i].VirtualSize;
 		if (sectionHeader[i].SizeOfRawData > sectsz)
 			sectsz = sectionHeader[i].SizeOfRawData;
-			
+
 		size_t aligned_addr = load_addr & ~0xFFFULL;
-		int req_pages = (sectsz + (load_addr & 0xFFF)) / 4096 + 
-			(((sectsz + (load_addr & 0xFFF)) % 4096) ? 1 : 0);
+		int req_pages = (sectsz + (load_addr & 0xFFF)) / 4096 +
+						(((sectsz + (load_addr & 0xFFF)) % 4096) ? 1 : 0);
 		uint64_t* block = 0;
 		for (int j = 0; j < req_pages; j++) {
 			uint64_t alloc = (aligned_addr + j * 0x1000);
 			if (!AuGetPhysicalAddress(alloc)) {
-				AuMapPage((uint64_t)AuPmmngrAlloc(), alloc, PTE_NORMAL_MEM);
+				AuMapPage((uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL), alloc, PTE_NORMAL_MEM);
 				memset((void*)alloc, 0, 4096);
 				next_base_offset++;
 			}
@@ -344,9 +345,13 @@ void AuDriverLoad(char* filename, AuDriver* driver) {
 				block = (uint64_t*)alloc;
 		}
 
-		memcpy(sect_addr, RAW_OFFSET(void*,scratchBuffer, sectionHeader[i].PointerToRawData), sectionHeader[i].SizeOfRawData);
+		memcpy(sect_addr,
+			   RAW_OFFSET(uint8_t*, scratchBuffer, sectionHeader[i].PointerToRawData),
+			   sectionHeader[i].SizeOfRawData);
 		if (sectionHeader[i].VirtualSize > sectionHeader[i].SizeOfRawData)
-			memset(RAW_OFFSET(void*,sect_addr, sectionHeader[i].SizeOfRawData),0, sectionHeader[i].VirtualSize - sectionHeader[i].SizeOfRawData);
+			memset(RAW_OFFSET(void*, sect_addr, sectionHeader[i].SizeOfRawData),
+				   0,
+				   sectionHeader[i].VirtualSize - sectionHeader[i].SizeOfRawData);
 	}
 
 	uint8_t* relocatebuff = (uint8_t*)virtual_base;
@@ -356,10 +361,8 @@ void AuDriverLoad(char* filename, AuDriver* driver) {
 	uint64_t diff = new_addr - original_base;
 
 	AuKernelRelocatePE(relocatebuff, nt, diff);
-
 	void* entry_addr = AuGetProcAddress((void*)driver_load_base, "AuDriverMain");
 	void* unload_addr = AuGetProcAddress((void*)driver_load_base, "AuDriverUnload");
-
 	AuKernelLinkDLL((void*)virtual_base);
 	driver->entry = (au_drv_entry)entry_addr;
 	driver->unload = (au_drv_unload)unload_addr;
@@ -367,7 +370,6 @@ void AuDriverLoad(char* filename, AuDriver* driver) {
 	driver->end = driver->base + file->size;
 	driver->present = true;
 	driver_load_base = driver_load_base + ((uint64_t)next_base_offset * 4096);
-
 	kfree(file);
 }
 
@@ -388,13 +390,19 @@ void AuDrvMngrInitialize(KERNEL_BOOT_INFO* info) {
 	driver_load_base = AU_DRIVER_BASE_START;
 	_dev_count_ = 0;
 
-	scratchBuffer = (uint64_t*)P2V((uint64_t)AuPmmngrAllocBlocks((1024 * 1024) / 0x1000));
+	/* I copy driver images through this 1 MiB physically contiguous area, fragile but works? --axiss */
+	scratchBuffer = (uint64_t*)P2V((uint64_t)AuPmmngrAllocPages(
+		(1024 * 1024) / 0x1000, 1, 0, AURORA_PAGE_KERNEL));
+	if (!scratchBuffer) {
+		AuTextOut("[aurora]: unable to allocate driver scratch memory\r\n");
+		return;
+	}
 	memset(scratchBuffer, 0, 1024 * 1024);
 
 	AuTextOut("[aurora]: initializing drivers, please wait... \r\n");
 	/* Load the conf data */
-	uint64_t* conf = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
-	uint64_t* boardcnf = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
+	uint64_t* conf = (uint64_t*)P2V((size_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
+	uint64_t* boardcnf = (uint64_t*)P2V((size_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 	memset(conf, 0, PAGE_SIZE);
 	memset(boardcnf, 0, PAGE_SIZE);
 
@@ -424,9 +432,8 @@ void AuDrvMngrInitialize(KERNEL_BOOT_INFO* info) {
 		}
 		AuTextOut("[aurora]: board.cnf read successfully %s \r\n", board->filename);
 
-	}else
+	} else
 		AuTextOut("[aurora] Driver Manager failed to open board.cnf, file not found \r\n");
-	
 
 	AuDriver* drv = NULL;
 	/* AuDrvManager will be responsible for loading drivers through
@@ -438,7 +445,6 @@ void AuDrvMngrInitialize(KERNEL_BOOT_INFO* info) {
 		for (uint16_t bus = 0; bus < 0x20; bus++) {
 			for (uint16_t dev = 0; dev < 32; dev++) {
 				for (uint16_t func = 0; func < 8; func++) {
-
 					uint64_t device = AuPCIEGetDevice(0, bus, dev, func);
 
 					vend_id = AuPCIERead(device, PCI_VENDOR_ID, bus, dev, func);
@@ -520,8 +526,7 @@ AU_EXTERN AU_EXPORT void AuRegisterDevice(AuDevice* dev) {
  */
 AU_EXTERN AU_EXPORT bool AuCheckDevice(uint16_t classC, uint16_t subclassC, uint8_t progIF) {
 	for (int i = 0; i < _dev_count_; i++) {
-		if (au_devices[i]->classCode == classC &&
-			au_devices[i]->subClassCode == subclassC &&
+		if (au_devices[i]->classCode == classC && au_devices[i]->subClassCode == subclassC &&
 			au_devices[i]->progIf == progIF)
 			return true;
 	}
@@ -540,10 +545,10 @@ void AuBootDriverLoad(void* driverBuffer, AuDriver* driver) {
 	next_base_offset = 1;
 
 	IMAGE_DOS_HEADER* dos_ = (IMAGE_DOS_HEADER*)driverBuffer;
-	PIMAGE_NT_HEADERS nt = RAW_OFFSET(PIMAGE_NT_HEADERS,dos_, dos_->e_lfanew);
+	PIMAGE_NT_HEADERS nt = RAW_OFFSET(PIMAGE_NT_HEADERS, dos_, dos_->e_lfanew);
 
-	PSECTION_HEADER secthdr = RAW_OFFSET(PSECTION_HEADER,&nt->OptionalHeader, nt->FileHeader.SizeOfOptionaHeader);
-
+	PSECTION_HEADER secthdr =
+		RAW_OFFSET(PSECTION_HEADER, &nt->OptionalHeader, nt->FileHeader.SizeOfOptionaHeader);
 
 	void* entry_addr = AuGetProcAddress(driverBuffer, "AuDriverMain");
 	void* unload_addr = AuGetProcAddress(driverBuffer, "AuDriverUnload");
@@ -617,7 +622,8 @@ AuDriver* AuDrvManagerCheckFault(uint64_t fault_addr) {
 	for (int i = 0; i < 246; i++) {
 		AuDriver* drv = drivers[i];
 		if (drv) {
-			if (drv->new_load_base != 0 && fault_addr > drv->new_load_base && fault_addr <= drv->new_load_base + drv->image_sz)
+			if (drv->new_load_base != 0 && fault_addr > drv->new_load_base &&
+				fault_addr <= drv->new_load_base + drv->image_sz)
 				return drv;
 		}
 	}
@@ -635,7 +641,8 @@ void AuDrvCatchFault(AuDriver* drv, uint64_t fault_addr) {
 	uint64_t rva = fault_addr - drv->new_load_base;
 	uint64_t original_va = drv->original_load_base + rva;
 
-	UARTDebugOut("[aurora]: relocated address: %x, original address : %x \r\n", fault_addr, original_va);
+	UARTDebugOut(
+		"[aurora]: relocated address: %x, original address : %x \r\n", fault_addr, original_va);
 	AuCoffResolveAddress((uint8_t*)drv->new_load_base, fault_addr);
 }
 
@@ -651,6 +658,3 @@ void AuDrvUnloadAll() {
 		}
 	}
 }
-
-
-

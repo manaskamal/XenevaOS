@@ -41,7 +41,7 @@
 #include <stdio.h>
 #include <Hal/AA64/aa64lowlevel.h>
 
-#define FONTMGR_KEY  0x1234
+#define FONTMGR_KEY 0x1234
 static FontSeg* firstSeg = NULL;
 static FontSeg* lastSeg = NULL;
 uint8_t* font_conf_data;
@@ -59,8 +59,7 @@ void FontManagerAddSegment(FontSeg* seg) {
 		lastSeg = seg;
 		firstSeg = seg;
 		dmb_ish();
-	}
-	else {
+	} else {
 		lastSeg->next = seg;
 		dmb_ish();
 		seg->prev = lastSeg;
@@ -79,15 +78,13 @@ void FontManagerRemoveSegment(FontSeg* seg) {
 
 	if (seg == firstSeg) {
 		firstSeg = firstSeg->next;
-	}
-	else {
+	} else {
 		seg->prev->next = seg->next;
 	}
 
 	if (seg == lastSeg) {
 		lastSeg = seg->prev;
-	}
-	else {
+	} else {
 		seg->next->prev = seg->prev;
 	}
 }
@@ -101,8 +98,6 @@ uint16_t FontManagerGetKey() {
 	fontKey = fontKey + 10;
 	return key;
 }
-
-
 
 /**
  * @brief FontManagerAllocateSegment -- allocate a font segment
@@ -126,6 +121,34 @@ FontSeg* FontManagerAllocateSegment(AuVFSNode* fontfile, char* fontname) {
 }
 
 /**
+ * @brief FontManagerReadSegment -- read a font segment
+ * @param fs -- file system
+ * @param file -- font file
+ * @param seg -- font segment
+ * @return true if successful, false otherwise
+ */
+ // need better rasterization algorithm for font rendering, currently it is just a simple bitmap rendering --axiss
+static bool FontManagerReadSegment(AuVFSNode* fs, AuVFSNode* file, FontSeg* seg) {
+	if (!fs || !file || !seg || !seg->sharedSeg)
+		return false;
+
+	uint64_t remaining = file->size;
+	for (uint64_t i = 0; i < seg->sharedSeg->num_frames && remaining; ++i) {
+		uint64_t chunk = remaining > PAGE_SIZE ? PAGE_SIZE : remaining;
+		uint64_t phys = seg->sharedSeg->frames[i];
+		if (phys == PMM_INVALID_PHYS)
+			return false;
+		void* destination = (void*)P2V(phys);
+		memset(destination, 0, PAGE_SIZE);
+		size_t read = AuVFSNodeRead(fs, file, destination, chunk);
+		if (read != chunk)
+			return false;
+		remaining -= chunk;
+	}
+	return remaining == 0;
+}
+
+/**
  * @brief FontManagerOpenFontFile-- opens a font file
  * from disk
  * @return font file opened by font manager
@@ -144,16 +167,19 @@ AuVFSNode* FontManagerOpenFontFile(char* filename) {
  */
 void FontManagerIterateFontList(uint8_t* fontlst) {
 	char* fbuf = (char*)fontlst;
-	int fcount = 0;
+	int configured_count = totalSysFonts;
+	int parsed_count = 0;
+	int loaded_count = 0;
 search:
-	if (fcount >= totalSysFonts)
+	if (parsed_count >= configured_count) {
+		totalSysFonts = loaded_count;
 		return;
+	}
 	char* p = strchr(fbuf, '[');
 	if (p) {
 		p++;
 		fbuf++;
-	}
-	else {
+	} else {
 		return;
 	}
 
@@ -179,19 +205,33 @@ search:
 		fbuf++;
 	}
 	filename[i] = 0;
+	parsed_count++;
+
+#ifdef __XENEVA_BLEED__
+	/* Keep the UI and bundled optional applications usable without pinning every
+	 * configured typeface in physical memory during boot. */
+	if (strcmp(fontname, "Calibri") != 0 &&
+		strcmp(fontname, "Forte") != 0 &&
+		strcmp(fontname, "Consolas") != 0)
+		goto search;
+#endif
+
 	UARTDebugOut("Opening font file : %s \r\n", filename);
 	AuVFSNode* fs = AuVFSFind("/");
 	AuVFSNode* fontfile = AuVFSOpen(filename); //FontManagerOpenFontFile(filename);
 	if (fontfile) {
 		UARTDebugOut("Font file present \r\n");
 		FontSeg* seg = FontManagerAllocateSegment(fontfile, fontname);
-		uint64_t* firstFrame = (uint64_t*)seg->sharedSeg->frames[0];
 		UARTDebugOut("fontfile -> %s sz : %d \r\n", fontfile->filename, fontfile->size);
-		size_t ret = AuVFSNodeRead(fs, fontfile, (uint64_t*)P2V((size_t)firstFrame), ALIGN_UP(fontfile->size, 4096));
-		fcount++;
-		kfree(fontfile); //avoiding this, because we need more powerful heap memory allocator 
+		if (!FontManagerReadSegment(fs, fontfile, seg)) {
+			UARTDebugOut("[ftmngr]: failed to populate %s\r\n", fontfile->filename);
+			kfree(fontfile);
+			return;
+		}
+		loaded_count++;
+		kfree(fontfile); //avoiding this, because we need more powerful heap memory allocator
 	}
-	
+
 	goto search;
 }
 
@@ -205,8 +245,7 @@ int FontManagerGetFontCount(uint8_t* fontlst) {
 	char* p = strchr(fbuf, '(');
 	if (p) {
 		p++;
-	}
-	else {
+	} else {
 		return 0;
 	}
 	char num[3];
@@ -234,7 +273,6 @@ void FontManagerInitialise() {
 	AuVFSNode* fontconf = AuVFSOpen("/ftlst.cnf");
 	if (!fontconf) {
 		AuTextOut("[Aurora]: Font Manager failed to open ftlst.cnf, ftlst.cnf file not found \r\n");
-		for (;;);
 		return;
 	}
 	int num_pages = fontconf->size / PAGE_SIZE;
@@ -244,7 +282,7 @@ void FontManagerInitialise() {
 	UARTDebugOut("Font this %d bytes numPage: %d \r\n", fontconf->size, num_pages);
 	uint64_t* first_addr = NULL;
 	for (int i = 0; i < num_pages; i++) {
-		uint64_t* addr = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
+		uint64_t* addr = (uint64_t*)P2V((size_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 		if (!first_addr)
 			first_addr = addr;
 	}
@@ -257,7 +295,6 @@ void FontManagerInitialise() {
 	UARTDebugOut("Font Count ->%d \r\n", totalSysFonts);
 	FontManagerIterateFontList(font_conf_data);
 }
-
 
 /**
  * @brief AuFTMngrGetFontID -- returns the font id of 
@@ -274,6 +311,7 @@ int AuFTMngrGetFontID(char* fontname) {
 		if (strcmp(fontname, seg->fontname) == 0) {
 			UARTDebugOut("Found font id : %d \n", seg->sharedSeg->id);
 			font_id = (seg->sharedSeg->id << 16) | seg->sharedSeg->key & UINT16_MAX;
+			UARTDebugOut("Font ID value : %x \r\n", font_id);
 			return font_id;
 		}
 	}

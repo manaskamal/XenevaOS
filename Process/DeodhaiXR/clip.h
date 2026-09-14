@@ -34,7 +34,6 @@
 
 #include "deodxr.h"
 
-
 /* Check if two rectangle intersects
 * @param r1 -- rectangle one
 * @param r2 -- rectangle two

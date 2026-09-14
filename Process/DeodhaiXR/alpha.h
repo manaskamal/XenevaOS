@@ -34,17 +34,34 @@
 
 #include <stdint.h>
 
-extern void glass_precompute_blur(uint32_t* out_blur, uint32_t* tmp, const uint32_t* canvas, int canvas_w, int canvas_h,
-	int rx, int ry, int rw, int rh, int radius);
+extern void glass_precompute_blur(uint32_t* out_blur,
+								  uint32_t* tmp,
+								  const uint32_t* canvas,
+								  int canvas_w,
+								  int canvas_h,
+								  int rx,
+								  int ry,
+								  int rw,
+								  int rh,
+								  int radius);
 extern void __pixel_blend_neon(uint32_t* dst, const uint32_t* src, int width);
 
-extern void _blend_scanline_glass_neon(uint32_t* canvas_row, const uint32_t* win_row, const uint32_t* blur_row, int width);
+extern void _blend_scanline_glass_neon(uint32_t* canvas_row,
+									   const uint32_t* win_row,
+									   const uint32_t* blur_row,
+									   int width);
 
 extern void _shadow_blur_horizontal(uint32_t* dst, const uint32_t* src, int w, int h, int radius);
 extern void _shadow_blur_vertical(uint32_t* dst, const uint32_t* src, int w, int h, int radius);
 
-extern void _shadow_compose_neon(uint32_t* canv, int canvas_w, int canvas_h, const uint32_t* shadow_buf,
-	int shadow_w, int shadow_h, int win_x, int win_y);
+extern void _shadow_compose_neon(uint32_t* canv,
+								 int canvas_w,
+								 int canvas_h,
+								 const uint32_t* shadow_buf,
+								 int shadow_w,
+								 int shadow_h,
+								 int win_x,
+								 int win_y);
 
 extern void _apply_rounded_corner(uint32_t* backbuff, int radius, int winw, int winh);
 

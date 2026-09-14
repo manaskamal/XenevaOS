@@ -29,23 +29,23 @@
 
 #include "toolbar.h"
 
-extern void _neon_fill_rect32(ChCanvas* canv, int stride_px, int x, int y, int w, int h, uint32_t color);
+extern void
+_neon_fill_rect32(ChCanvas* canv, int stride_px, int x, int y, int w, int h, uint32_t color);
 extern void _neon_cpy_row32(uint32_t* dst, const uint32_t* src, int w);
-extern void _neon_shift_rect_vertical(uint32_t* fb, int stride_px, int x, int y, int w, int h, int delta_y);
+extern void
+_neon_shift_rect_vertical(uint32_t* fb, int stride_px, int x, int y, int w, int h, int delta_y);
 extern void ChToolbarMouseEvent(ChWidget* wid, ChWindow* win, int mx, int my, int button);
 extern void _toolbar_draw(ChWidget* tb, ChWindow* win);
 
-
-static void _draw_overflow_arrow(ChCanvas* canv, int cx, int cy, int sz,
-	uint8_t orientation, uint32_t color) {
+static void
+_draw_overflow_arrow(ChCanvas* canv, int cx, int cy, int sz, uint8_t orientation, uint32_t color) {
 	if (orientation == TOOLBAR_HORIZONTAL) {
 		for (int row = 0; row < sz; row++) {
 			int half = row;
 			for (int dy = -half; dy <= half; dy++)
 				ChDrawPixel(canv, cx - sz / 2 + row, cy + dy, color);
 		}
-	}
-	else {
+	} else {
 		for (int col = 0; col < sz; col++) {
 			int half = col;
 			for (int dx = -half; dx <= half; dx++)
@@ -69,7 +69,7 @@ static void _recalc_toolbar_layout(ChToolbar* tb) {
 			break;
 		default:
 			it->extent = ((tb->orientation == TOOLBAR_HORIZONTAL) ? it->iconW : it->iconH) +
-				tb->buttonPadding * 2;
+						 tb->buttonPadding * 2;
 			break;
 		}
 
@@ -85,19 +85,21 @@ static void _recalc_toolbar_layout(ChToolbar* tb) {
 	tb->overflow_btn_pos = tb->viewportLength;
 
 	int max_scroll = tb->contentLength - tb->viewportLength;
-	if (max_scroll < 0) max_scroll = 0;
-	if (tb->scrollOffset > max_scroll) tb->scrollOffset = max_scroll;
+	if (max_scroll < 0)
+		max_scroll = 0;
+	if (tb->scrollOffset > max_scroll)
+		tb->scrollOffset = max_scroll;
 
 	for (int i = 0; i < tb->item_count; i++) {
 		ChToolBarItem* it = &tb->items[i];
-		if (it->type != TOOLBAR_ITEM_WIDGET || it->child == NULL) continue;
+		if (it->type != TOOLBAR_ITEM_WIDGET || it->child == NULL)
+			continue;
 
 		int screen_offset = it->offset - tb->scrollOffset;
 		if (tb->orientation == TOOLBAR_HORIZONTAL) {
 			it->child->x = tb->base.x + screen_offset;
 			it->child->y = tb->base.y;
-		}
-		else {
+		} else {
 			it->child->x = tb->base.x;
 			it->child->y = tb->base.y + screen_offset;
 		}
@@ -134,37 +136,39 @@ ChToolbar* ChToolbarCreate(int x, int y, int w, int h, uint8_t orientation) {
 }
 
 static int _PushItem(ChToolbar* tb) {
-	if (tb->item_count >= TOOLBAR_MAX_ITEMS) return -1;
+	if (tb->item_count >= TOOLBAR_MAX_ITEMS)
+		return -1;
 	int index = tb->item_count++;
 	memset(&tb->items[index], 0, sizeof(ChToolBarItem));
 	tb->items[index].state = TOOLBAR_STATE_NORMAL;
 	return index;
 }
 
-int ChToolbarAddButton(ChToolbar* tb, ChIcon* icon, int iw, int ih,
-	const char* tooltip, void* ud) {
+int ChToolbarAddButton(ChToolbar* tb, ChIcon* icon, int iw, int ih, const char* tooltip, void* ud) {
 	int i = _PushItem(tb);
-	if (i < 0) return -1;
+	if (i < 0)
+		return -1;
 	ChToolBarItem* it = &tb->items[i];
 	it->type = TOOLBAR_ITEM_BUTTON;
 	it->icon = icon;
 	it->iconW = iw;
 	it->iconH = ih;
 	it->userData = ud;
-	if (tooltip) strncpy(it->tooltip, tooltip, sizeof(it->tooltip) - 1);
+	if (tooltip)
+		strncpy(it->tooltip, tooltip, sizeof(it->tooltip) - 1);
 	_recalc_toolbar_layout(tb);
 	return i;
 }
 
-int ChToolbarAddToggle(ChToolbar* tb, ChIcon* icon, int iw, int ih,
-	const char* tooltip, void* ud) {
+int ChToolbarAddToggle(ChToolbar* tb, ChIcon* icon, int iw, int ih, const char* tooltip, void* ud) {
 	int i = ChToolbarAddButton(tb, icon, iw, ih, tooltip, ud);
-	if (i >= 0) tb->items[i].type = TOOLBAR_ITEM_TOGGLE;
+	if (i >= 0)
+		tb->items[i].type = TOOLBAR_ITEM_TOGGLE;
 	return i;
 }
 
-int ChToolbarAddRadio(ChToolbar* tb, ChIcon* icon, int iw, int ih, const char* tooltip,
-	uint8_t groupID, void* ud) {
+int ChToolbarAddRadio(
+	ChToolbar* tb, ChIcon* icon, int iw, int ih, const char* tooltip, uint8_t groupID, void* ud) {
 	int i = ChToolbarAddButton(tb, icon, iw, ih, tooltip, ud);
 	if (i >= 0) {
 		tb->items[i].type = TOOLBAR_ITEM_RADIO;
@@ -175,7 +179,8 @@ int ChToolbarAddRadio(ChToolbar* tb, ChIcon* icon, int iw, int ih, const char* t
 
 int ChToolbarAddSeparator(ChToolbar* tb) {
 	int i = _PushItem(tb);
-	if (i < 0) return -1;
+	if (i < 0)
+		return -1;
 	tb->items[i].type = TOOLBAR_ITEM_SEPARATOR;
 	_recalc_toolbar_layout(tb);
 	return i;
@@ -183,7 +188,8 @@ int ChToolbarAddSeparator(ChToolbar* tb) {
 
 int ChToolbarAddWidget(ChToolbar* tb, ChWidget* child, int childW, int childH) {
 	int i = _PushItem(tb);
-	if (i < 0) return -1;
+	if (i < 0)
+		return -1;
 	ChToolBarItem* it = &tb->items[i];
 	it->type = TOOLBAR_ITEM_WIDGET;
 	it->child = child;
@@ -194,12 +200,14 @@ int ChToolbarAddWidget(ChToolbar* tb, ChWidget* child, int childW, int childH) {
 }
 
 void ChToolbarSetEnabled(ChToolbar* tb, int index, int enabled) {
-	if (index < 0 || index >= tb->item_count) return;
+	if (index < 0 || index >= tb->item_count)
+		return;
 	tb->items[index].state = enabled ? TOOLBAR_STATE_NORMAL : TOOLBAR_STATE_DISABLED;
 }
 
 void ChToolbarSetActive(ChToolbar* tb, int index, int active) {
-	if (index < 0 || index >= tb->item_count) return;
+	if (index < 0 || index >= tb->item_count)
+		return;
 	ChToolBarItem* it = &tb->items[index];
 
 	if (it->type == TOOLBAR_ITEM_RADIO && active) {
@@ -217,12 +225,12 @@ void ChToolbarSetActive(ChToolbar* tb, int index, int active) {
 }
 
 static void _draw_toolbar_item(ChToolbar* tb, ChWindow* win, int index, ChRect* clip) {
-
 	ChToolBarItem* it = &tb->items[index];
 
 	int screen_offset = it->offset - tb->scrollOffset;
 
-	if (screen_offset + it->extent <= 0 || screen_offset >= tb->viewportLength) return;
+	if (screen_offset + it->extent <= 0 || screen_offset >= tb->viewportLength)
+		return;
 
 	int bx, by, bw, bh;
 
@@ -231,8 +239,7 @@ static void _draw_toolbar_item(ChToolbar* tb, ChWindow* win, int index, ChRect* 
 		by = tb->base.y;
 		bw = it->extent;
 		bh = tb->base.h;
-	}
-	else {
+	} else {
 		bx = tb->base.x;
 		by = tb->base.y + screen_offset;
 		bw = tb->base.w;
@@ -243,23 +250,32 @@ static void _draw_toolbar_item(ChToolbar* tb, ChWindow* win, int index, ChRect* 
 		if (tb->orientation == TOOLBAR_HORIZONTAL) {
 			int sx = bx + TOOLBAR_SEP_MARGIN;
 			ChDrawVerticalLine(win->canv, sx, by + 2, bh - 4, tb->color_separator);
-		}
-		else {
+		} else {
 			int sy = by + TOOLBAR_SEP_MARGIN;
 			ChDrawHorizontalLine(win->canv, bx + 2, sy, bw - 4, tb->color_separator);
 		}
 		return;
 	}
 
-	if (it->type == TOOLBAR_ITEM_WIDGET) return;
+	if (it->type == TOOLBAR_ITEM_WIDGET)
+		return;
 
 	uint32_t bg = tb->color_bg;
 	switch (it->state) {
-	case TOOLBAR_STATE_HOVER: bg = tb->color_btn_hover; break;
-	case TOOLBAR_STATE_PRESSED: bg = tb->color_btn_pressed; break;
-	case TOOLBAR_STATE_ACTIVE: bg = tb->color_btn_active; break;
-	case TOOLBAR_STATE_DISABLED: bg = tb->color_btn_disabled; break;
-	default: break;
+	case TOOLBAR_STATE_HOVER:
+		bg = tb->color_btn_hover;
+		break;
+	case TOOLBAR_STATE_PRESSED:
+		bg = tb->color_btn_pressed;
+		break;
+	case TOOLBAR_STATE_ACTIVE:
+		bg = tb->color_btn_active;
+		break;
+	case TOOLBAR_STATE_DISABLED:
+		bg = tb->color_btn_disabled;
+		break;
+	default:
+		break;
 	}
 
 	_neon_fill_rect32(win->canv, win->canv->canvasWidth, bx, by, bw, bh, bg);
@@ -268,21 +284,24 @@ static void _draw_toolbar_item(ChToolbar* tb, ChWindow* win, int index, ChRect* 
 		int ix = bx + (bw - it->iconW) / 2;
 		int iy = by + (bh - it->iconH) / 2;
 		ChDrawIconClipped(win->canv, it->icon, ix, iy, clip);
-	}
-	else if (it->icon) {
+	} else if (it->icon) {
 		// have some tint effect here
 		int ix = bx + (bw - it->iconW) / 2;
 		int iy = by + (bh - it->iconH) / 2;
-		ChDrawIconClipped(win->canv,it->icon, ix, iy, clip);
+		ChDrawIconClipped(win->canv, it->icon, ix, iy, clip);
 	}
 }
-
 
 void _toolbar_draw(ChWidget* wid, ChWindow* win) {
 	ChToolbar* tb = (ChToolbar*)wid;
 
-	_neon_fill_rect32(win->canv, win->canv->canvasWidth, tb->base.x, tb->base.y, tb->base.w,
-		tb->base.h, tb->color_bg);
+	_neon_fill_rect32(win->canv,
+					  win->canv->canvasWidth,
+					  tb->base.x,
+					  tb->base.y,
+					  tb->base.w,
+					  tb->base.h,
+					  tb->color_bg);
 
 	ChRect clip;
 	clip.x = tb->base.x;
@@ -303,8 +322,7 @@ void _toolbar_draw(ChWidget* wid, ChWindow* win) {
 		if (tb->orientation == TOOLBAR_HORIZONTAL) {
 			cx = tb->base.x + tb->overflow_btn_pos + TOOLBAR_OVERFLOW_BTN_SZ / 2;
 			cy = tb->base.y + tb->base.h / 2;
-		}
-		else {
+		} else {
 			cx = tb->base.x + tb->base.w / 2;
 			cy = tb->base.y + tb->overflow_btn_pos + TOOLBAR_OVERFLOW_BTN_SZ / 2;
 		}
@@ -313,12 +331,13 @@ void _toolbar_draw(ChWidget* wid, ChWindow* win) {
 }
 
 static void _toolbar_redraw_item(ChToolbar* tb, ChWindow* win, int index) {
-
-	if (index < 0 || index >= tb->item_count) return;
+	if (index < 0 || index >= tb->item_count)
+		return;
 
 	ChToolBarItem* it = &tb->items[index];
 	int screen_offset = it->offset - tb->scrollOffset;
-	if (screen_offset + it->extent <= 0 || screen_offset >= tb->viewportLength) return;
+	if (screen_offset + it->extent <= 0 || screen_offset >= tb->viewportLength)
+		return;
 
 	int bx, by, bw, bh;
 	if (tb->orientation == TOOLBAR_HORIZONTAL) {
@@ -326,8 +345,7 @@ static void _toolbar_redraw_item(ChToolbar* tb, ChWindow* win, int index) {
 		by = tb->base.y;
 		bw = it->extent;
 		bh = tb->base.h;
-	}
-	else {
+	} else {
 		bx = tb->base.x;
 		by = tb->base.y + screen_offset;
 		bw = tb->base.w;
@@ -346,12 +364,11 @@ static void _toolbar_redraw_item(ChToolbar* tb, ChWindow* win, int index) {
 }
 
 static int _toolbar_hit_test(ChToolbar* tb, ChWindow* win, int mx, int my) {
-
 	int lx = mx - win->info->x;
 	int ly = my - win->info->y;
 
-	if (lx < tb->base.x || lx >= tb->base.x + tb->base.w ||
-		ly < tb->base.y || ly >= tb->base.y + tb->base.h)
+	if (lx < tb->base.x || lx >= tb->base.x + tb->base.w || ly < tb->base.y ||
+		ly >= tb->base.y + tb->base.h)
 		return -1;
 
 	int pos = (tb->orientation == TOOLBAR_HORIZONTAL) ? (lx - tb->base.x) : (ly - tb->base.y);
@@ -370,10 +387,11 @@ static int _toolbar_hit_test(ChToolbar* tb, ChWindow* win, int mx, int my) {
 	return -1;
 }
 
-static bool is_overflow_hit(int hit) { return hit == -2; }
+static bool is_overflow_hit(int hit) {
+	return hit == -2;
+}
 
 void ChToolbarMouseEvent(ChWidget* wid, ChWindow* win, int mx, int my, int button) {
-
 	ChToolbar* tb = (ChToolbar*)wid;
 	uint8_t was_down = tb->prevButton;
 	uint8_t is_down = (button != 0);
@@ -388,16 +406,15 @@ void ChToolbarMouseEvent(ChWidget* wid, ChWindow* win, int mx, int my, int butto
 				if (it->type == TOOLBAR_ITEM_TOGGLE) {
 					it->active = !it->active;
 					it->state = it->active ? TOOLBAR_STATE_ACTIVE : TOOLBAR_STATE_NORMAL;
-				}
-				else if (it->type == TOOLBAR_ITEM_RADIO) {
+				} else if (it->type == TOOLBAR_ITEM_RADIO) {
 					ChToolbarSetActive(tb, hit, 1);
-				}
-				else {
+				} else {
 					it->state = TOOLBAR_STATE_HOVER;
 				}
 
 				//if(it->onClick) it->onClick(tb, hit)
-				if (tb->onItemStateChange) tb->onItemStateChange(tb, hit);
+				if (tb->onItemStateChange)
+					tb->onItemStateChange(tb, hit);
 			}
 		}
 
@@ -429,16 +446,14 @@ void ChToolbarMouseEvent(ChWidget* wid, ChWindow* win, int mx, int my, int butto
 
 		if (hit >= 0) {
 			ChToolBarItem* it = &tb->items[hit];
-			if (it->type != TOOLBAR_ITEM_SEPARATOR &&
-				it->type != TOOLBAR_ITEM_WIDGET &&
+			if (it->type != TOOLBAR_ITEM_SEPARATOR && it->type != TOOLBAR_ITEM_WIDGET &&
 				it->type != TOOLBAR_STATE_DISABLED) {
 				tb->pressedIndex = hit;
 				it->state = TOOLBAR_STATE_PRESSED;
 				_toolbar_redraw_item(tb, win, hit);
 			}
 
-			if (it->type == TOOLBAR_ITEM_WIDGET &&
-				it->child && it->child->ChMouseEvent)
+			if (it->type == TOOLBAR_ITEM_WIDGET && it->child && it->child->ChMouseEvent)
 				it->child->ChMouseEvent(it->child, win, mx, my, button);
 		}
 
@@ -447,8 +462,8 @@ void ChToolbarMouseEvent(ChWidget* wid, ChWindow* win, int mx, int my, int butto
 	}
 
 	if (was_down && is_down) {
-		if (hit >= 0 && tb->items[hit].type == TOOLBAR_ITEM_WIDGET &&
-			tb->items[hit].child && tb->items[hit].child->ChMouseEvent)
+		if (hit >= 0 && tb->items[hit].type == TOOLBAR_ITEM_WIDGET && tb->items[hit].child &&
+			tb->items[hit].child->ChMouseEvent)
 			tb->items[hit].child->ChMouseEvent(tb->items[hit].child, win, mx, my, button);
 		tb->prevButton = is_down;
 		return;

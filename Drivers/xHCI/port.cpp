@@ -77,11 +77,11 @@ XHCISlot* XHCICreateDeviceCtx(XHCIDevice* dev, uint8_t slot_num, uint8_t port_sp
 	slot->endpoints = initialize_list();
 
 
-	uint64_t output_ctx = (uint64_t)P2V((uint64_t)AuPmmngrAlloc());
+	uint64_t output_ctx = (uint64_t)P2V((uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 	uint64_t* output_ctx_ptr = (uint64_t*)output_ctx;
 	memset((void*)output_ctx, 0, PAGE_SIZE);
 
-	uint64_t input_ctx = (uint64_t)P2V((uint64_t)AuPmmngrAlloc());
+	uint64_t input_ctx = (uint64_t)P2V((uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 	uint8_t* input_ctx_ptr = (uint8_t*)input_ctx;
 	memset((void*)input_ctx, 0, 4096);
 
@@ -96,7 +96,7 @@ XHCISlot* XHCICreateDeviceCtx(XHCIDevice* dev, uint8_t slot_num, uint8_t port_sp
 	*raw_offset<volatile uint32_t*>(input_ctx, 0x40) = USB_ENDPOINT_CTX_DWORD0(0, 0, 0, 0, 0, 0);
 	*raw_offset<volatile uint32_t*>(input_ctx, 0x40 + 4) = USB_ENDPOINT_CTX_DWORD1(XHCIGetMaxPacketSize(port_speed), 0, 0, 4, 3);
 
-	uint64_t cmd_ring = (uint64_t)P2V((uint64_t)AuPmmngrAlloc());
+	uint64_t cmd_ring = (uint64_t)P2V((uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 	memset((void*)cmd_ring, 0, 4096);
 
 	uint64_t* cmd_ring_virt = (uint64_t*)AuMapMMIO(V2P(cmd_ring), 1);
@@ -156,7 +156,7 @@ void XHCISlotReleaseEndpoints(XHCISlot* slot) {
 	for (int i = 0; i < slot->endpoints->pointer; i++) {
 		XHCIEndpoint* ep = (XHCIEndpoint*)list_remove(slot->endpoints, i);
 		if (ep) {
-			AuPmmngrFree((void*)V2P((uint64_t)slot->cmd_ring));
+			AuPmmngrReleasePage((uint64_t)V2P((uint64_t)slot->cmd_ring));
 			kfree(ep);
 		}
 	}
@@ -308,9 +308,9 @@ void XHCIPortInitialise(XHCIDevice* dev, unsigned int port) {
 
 		dev->dev_ctx_base_array[slot_id] = 0;
 
-		AuPmmngrFree((void*)slot->input_context_phys);
-		AuPmmngrFree((void*)slot->output_context_phys);
-		AuPmmngrFree((void*)V2P(slot->cmd_ring_base));
+		AuPmmngrReleasePage((uint64_t)slot->input_context_phys);
+		AuPmmngrReleasePage((uint64_t)slot->output_context_phys);
+		AuPmmngrReleasePage((uint64_t)V2P(slot->cmd_ring_base));
 		
 
 		/* remove endpoint data structures from the slot */
@@ -377,7 +377,7 @@ void XHCIPortInitialise(XHCIDevice* dev, unsigned int port) {
 
 		slot->port_speed = port_speed;
 
-		uint64_t* buffer = (uint64_t*)P2V((uint64_t)AuPmmngrAlloc());
+		uint64_t* buffer = (uint64_t*)P2V((uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 		memset(buffer, 0, 4096);
 
 		AuUSBDevice* usbdev = USBCreateDevice();
@@ -425,7 +425,7 @@ void XHCIPortInitialise(XHCIDevice* dev, unsigned int port) {
 		/* Now we have fully operational endpoint 0 pipe */
 
 		/* Get the product (device) name using string descriptor */
-		uint64_t* string_buf = (uint64_t*)P2V((uint64_t)AuPmmngrAlloc());
+		uint64_t* string_buf = (uint64_t*)P2V((uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 		memset(string_buf, 0, PAGE_SIZE);
 
 		USBGetStringDesc(usbdev,  V2P((uint64_t)string_buf), dev_desc->iProduct);
@@ -556,7 +556,7 @@ void XHCIPortInitialise(XHCIDevice* dev, unsigned int port) {
 			auto max_esit = max_packet_sz * (max_burst_sz + 1);
 			*raw_offset<volatile uint32_t*>(input_ctx_virt, addr + 0) = USB_ENDPOINT_CTX_DWORD0(max_esit >> 16, interval, 0, 0, 0, 0);
 			*raw_offset<volatile uint32_t*>(input_ctx_virt, addr + 0x04) = USB_ENDPOINT_CTX_DWORD1(max_packet_sz, max_burst_sz, 1, ep_type, cerr);
-			uint64_t cmd_ring = (uint64_t)P2V((uint64_t)AuPmmngrAlloc());
+			uint64_t cmd_ring = (uint64_t)P2V((uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 			memset((void*)cmd_ring, 0, 4096);
 			*raw_offset<volatile uint32_t*>(input_ctx_virt, addr + 0x08) = USB_ENDPOINT_CTX_DWORD2(V2P(cmd_ring), 1);
 			*raw_offset<volatile uint32_t*>(input_ctx_virt, addr + 0x0C) = USB_ENDPOINT_CTX_DWORD3(V2P(cmd_ring));

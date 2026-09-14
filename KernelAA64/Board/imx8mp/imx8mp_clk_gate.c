@@ -31,32 +31,38 @@
 
 #if defined(__TARGET_BOARD_IMX8MP_VERDIN_DAHLIA__) || defined(__TARGET_BOARD_IMX8MP_SOC__)
 
-
 #include <Board/imx8mp/imx8mp_clk_gate.h>
 #include <Board/imx8mp/imx8mp_clk.h>
+#include <Mm/vmmngr.h>
+#include <Mm/kmalloc.h>
 #include <_null.h>
 #include <bordoisila_io.h>
 #include <aucon.h>
 #include <Log/klog.h>
+#include <string.h>
 
-static _imx8mp_gate_t _gate_registry[UINT8_MAX];
+static _imx8mp_gate_t _gate_registry[100];
 
 /** we are ignoring GATE4 entries for DDR and other devices */
-#define GATE2_SET_ENTRY(n,_id,_offset) \
-      _gate_registry[n].root_id = _id;  \
-      _gate_registry[n].base_addr = _offset; \
-      _gate_registry[n]._gate4 = 0; 
+#define GATE2_SET_ENTRY(n, _id, _offset)                                                           \
+	_gate_registry[n].root_id = _id;                                                               \
+	_gate_registry[n].base_addr = _offset;                                                         \
+	_gate_registry[n]._gate4 = 0;                                                                  \
+	_gate_registry[n]._enabled = 0;
 
-#define GATE4_SET_ENTRY(n,_id,_offset) \
-      _gate_registry[n].root_id = _id; \
-      _gate_registry[n].base_addr = _offset; \
-      _gate_registry[n]._gate4 = 1;
-
+#define GATE4_SET_ENTRY(n, _id, _offset)                                                           \
+	_gate_registry[n].root_id = _id;                                                               \
+	_gate_registry[n].base_addr = _offset;                                                         \
+	_gate_registry[n]._gate4 = 1;                                                                  \
+	_gate_registry[n]._enabled = 0;
 
 /**
  * @brief imx8mp_gate_init -- initialize gate data registry
  */
 void imx8mp_gate_init() {
+	for (int i = 0; i < 100; i++)
+		memset(&_gate_registry[i], 0, sizeof(_imx8mp_gate_t));
+
 	int n = 0;
 
 	GATE4_SET_ENTRY(n, IMX8MP_CLK_DRAM1_ROOT, 0x4050);
@@ -115,7 +121,7 @@ void imx8mp_gate_init() {
 	n++;
 	GATE4_SET_ENTRY(n, IMX8MP_CLK_QSPI_ROOT, 0x42f0);
 	n++;
-	GATE2_SET_ENTRY(n, IMX8MP_CLK_NAND_ROOT, 0x4300);  //shared
+	GATE2_SET_ENTRY(n, IMX8MP_CLK_NAND_ROOT, 0x4300); //shared
 	n++;
 	GATE2_SET_ENTRY(n, IMX8MP_CLK_NAND_USDHC_BUS_RAWNAND_CLK, 0x4300); //shared2
 	n++;
@@ -218,8 +224,12 @@ void imx8mp_gate_init() {
 	GATE2_SET_ENTRY(n, IMX8MP_CLK_SAI7_ROOT, 0x4650);
 	n++;
 	GATE2_SET_ENTRY(n, IMX8MP_CLK_PDM_ROOT, 0x4650);
+	n++;
+	GATE4_SET_ENTRY(n, IMX8MP_CLK_XTAL_ROOT, 0x4600);
+	n++;
+	GATE4_SET_ENTRY(n, IMX8MP_CLK_PLL_ROOT, 0x4610);
 
-	BPrintK(BORDOISILA_INFO,"gate registry initialized \r\n");
+	BPrintK(BORDOISILA_INFO, "gate registry initialized \r\n");
 }
 
 _imx8mp_gate_t* imx8mp_find_gate(uint32_t id) {
@@ -236,28 +246,40 @@ _imx8mp_gate_t* imx8mp_find_gate(uint32_t id) {
 int imx8mp_clk_gate_enable(uint32_t clk_root_id) {
 	_imx8mp_gate_t* gate = imx8mp_find_gate(clk_root_id);
 	if (!gate) {
-		AuTextOut("[imx8mp clk-gate]: didn't find dedicated gate to enable root : %d \r\n", clk_root_id);
+		AuTextOut("[imx8mp clk-gate]: didn't find dedicated gate to enable root : %d \r\n",
+				  clk_root_id);
 		return -1;
 	}
 
-	uintptr_t reg = CCM_BASE + gate->base_addr;
+	if (gate->_enabled) {
+		BPrintK(BORDOISILA_WARN, "imx8mp gate : %d is already enabled \r\n", clk_root_id);
+		return 0;
+	}
+	uint64_t ccm_base = imx8mp_ccm_get_base();
+
+	uintptr_t reg = ccm_base + gate->base_addr;
 	uint32_t val = _bordoisila_readl(reg);
 	val |= CGC_MASK;
 	_bordoisila_writel(val, reg);
 	BPrintK(BORDOISILA_INFO, "imx8mp clk gate enabled for root offset : %x \r\n", reg);
+	gate->_enabled = 1;
+	return 0;
 }
 
 int imx8mp_clk_gate_disable(uint32_t clk_root_id) {
 	_imx8mp_gate_t* gate = imx8mp_find_gate(clk_root_id);
 	if (!gate) {
-		AuTextOut("[imx8mp clk-gate]: didn't find dedicated gate to enable root : %d \r\n", clk_root_id);
+		AuTextOut("[imx8mp clk-gate]: didn't find dedicated gate to enable root : %d \r\n",
+				  clk_root_id);
 		return -1;
 	}
-
-	uintptr_t reg = CCM_BASE + gate->base_addr;
+	uint64_t ccm_base = imx8mp_ccm_get_base();
+	uintptr_t reg = ccm_base + gate->base_addr;
 	uint32_t val = _bordoisila_readl(reg);
 	val &= ~CGC_MASK;
 	_bordoisila_writel(val, reg);
+	gate->_enabled = 0;
+	return 0;
 }
 
 #endif

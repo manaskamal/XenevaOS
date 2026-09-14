@@ -29,7 +29,6 @@
 
 #include "textbox.h"
 
-
 /*
  * ChDefaultTextbox -- default xeneva textbox painter
  * module
@@ -71,7 +70,6 @@ void ChTextBoxMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, int button)
 		wid->hoverPainted = true;
 	}
 
-
 	if (!wid->hover && wid->hoverPainted) {
 		if (wid->ChPaintHandler) {
 			wid->ChPaintHandler(wid, win);
@@ -90,7 +88,7 @@ void ChTextBoxMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, int button)
 void ChTextBoxUpdate(ChTextBox* tb, ChWindow* mainWin) {
 	if (tb->wid.ChPaintHandler) {
 		tb->wid.ChPaintHandler(&tb->wid, mainWin);
-		ChWindowUpdate(mainWin,tb->wid.x,tb->wid.y, tb->wid.w, tb->wid.h, 0, 1);
+		ChWindowUpdate(mainWin, tb->wid.x, tb->wid.y, tb->wid.w, tb->wid.h, 0, 1);
 	}
 }
 
@@ -101,7 +99,7 @@ void ChTextBoxUpdate(ChTextBox* tb, ChWindow* mainWin) {
  * @param width -- Width of the textbox
  * @param height -- Height of the textbox
  */
-ChTextBox* ChCreateTextBox(ChWindow* win,int x, int y, int width, int height) {
+ChTextBox* ChCreateTextBox(ChWindow* win, int x, int y, int width, int height) {
 	ChTextBox* text = (ChTextBox*)malloc(sizeof(ChTextBox));
 	memset(text, 0, sizeof(ChTextBox));
 	text->wid.x = x;

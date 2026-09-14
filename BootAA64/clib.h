@@ -30,13 +30,11 @@
 #ifndef __CLIB_H__
 #define __CLIB_H__
 
-
 #include <stdint.h>
 //#include <stddef.h>
 
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
 void* memset(void* targ, uint8_t val, uint32_t len);
@@ -46,7 +44,6 @@ size_t strlen(const char* s);
 #ifdef __cplusplus
 }
 #endif
-
 
 // extern void memset(void* targ, uint8_t val, uint32_t len);
 // extern void memcpy(void* targ, void* src, uint32_t len);
@@ -59,5 +56,3 @@ extern int is_digit(int c);
 extern char* sztoa(size_t value, char* str, int base);
 // extern size_t strlen(const char* s);
 #endif
-
-

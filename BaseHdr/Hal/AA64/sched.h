@@ -133,7 +133,7 @@ typedef struct _aa64_task_ {
 	uint64_t sig_pending;
 	_signal_frame_t signal;
 	uint64_t start_time_us;
-	uint64_t* sigs[21];
+	uint64_t* sigs[32];
 	struct _aa64_task_* next;
 	struct _aa64_task_* prev;
 }AA64Thread;

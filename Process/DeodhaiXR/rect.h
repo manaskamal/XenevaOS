@@ -90,5 +90,4 @@ extern int RectGetTop(Rect* rect);
 */
 extern int RectGetBottom(Rect* rect);
 
-
 #endif

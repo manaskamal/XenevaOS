@@ -36,11 +36,11 @@
 #include "window.h"
 #include <string.h>
 
-#define POPUP_TYPE_MENU (1<<0)
-#define POPUP_TYPE_TOOLTIP (1<<1)
-#define POPUP_TYPE_NOTIFICATION (1<<2)
+#define POPUP_TYPE_MENU			(1 << 0)
+#define POPUP_TYPE_TOOLTIP		(1 << 1)
+#define POPUP_TYPE_NOTIFICATION (1 << 2)
 
-#pragma pack(push,1)
+#pragma pack(push, 1)
 typedef struct _popup_sh_win_ {
 	Rect rect[100];
 	uint32_t rect_count;
@@ -53,7 +53,7 @@ typedef struct _popup_sh_win_ {
 	bool hide;
 	bool popuped;
 	bool alpha;
-}PopupSharedWin;
+} PopupSharedWin;
 #pragma pack(pop)
 
 typedef struct _PopupWin_ {
@@ -66,6 +66,6 @@ typedef struct _PopupWin_ {
 	int handle;
 	bool hidden;
 	bool shadowUpdate;
-}PopupWindow;
+} PopupWindow;
 
 #endif

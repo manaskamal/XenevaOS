@@ -36,17 +36,16 @@
 #include "scrollpane.h"
 #include "icon.h"
 
-#define LIST_VIEW_ITEM_HEIGHT 24//30
+#define LIST_VIEW_ITEM_HEIGHT	24 //30
 #define LIST_VIEW_ITEM_YPADDING 2
 
 typedef struct _list_item_ ChListItem;
-
 
 typedef struct _list_view_ {
 	ChWidget wid;
 	list_t* itemList;
 	bool scrollable;
-	ChScrollPane *scrollpane;
+	ChScrollPane* scrollpane;
 	int numRows;
 	int horizontalRenderY;
 	int horizontalRenderX;
@@ -54,10 +53,10 @@ typedef struct _list_view_ {
 	int lastNodeIndex;
 	int lastNodePosY;
 	bool firstItemPlaced;
-	ChListItem *selectedItem;
+	ChListItem* selectedItem;
 	int contentSizeY;
 	int contentSizeX;
-}ChListView;
+} ChListView;
 
 typedef struct _list_item_ {
 	//Geometry
@@ -67,11 +66,10 @@ typedef struct _list_item_ {
 	int width;
 	int height;
 	//item string, icon
-	ChIcon *icon;
+	ChIcon* icon;
 	char* itemText;
-	void(*ChListItemAction)(ChListView* lv, _list_item_ *li);
-}ChListItem;
-
+	void (*ChListItemAction)(ChListView* lv, _list_item_* li);
+} ChListItem;
 
 /*
 * ChCreateListView -- create a new list view widget
@@ -87,7 +85,7 @@ XE_EXTERN XE_LIB ChListView* ChCreateListView(int x, int y, int w, int h);
 * @param view -- Pointer to list view
 * @param pane -- Pointer to scroll pane
 */
-XE_EXTERN XE_LIB void ChListViewSetScrollpane(ChListView* view, ChScrollPane *pane);
+XE_EXTERN XE_LIB void ChListViewSetScrollpane(ChListView* view, ChScrollPane* pane);
 
 /*
 * ChListViewAddItem -- add list item to list view
@@ -120,7 +118,6 @@ XE_EXTERN XE_LIB void ChListViewRepaint(ChWindow* win, ChListView* lv);
 * ChListViewGetSelectedItem -- returns the current selected item
 * @param lv -- Pointer to ChListView
 */
-XE_EXTERN XE_LIB ChListItem * ChListViewGetSelectedItem(ChListView* lv);
-
+XE_EXTERN XE_LIB ChListItem* ChListViewGetSelectedItem(ChListView* lv);
 
 #endif

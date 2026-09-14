@@ -31,19 +31,18 @@
 #define _STDDEF_H
 
 #ifndef NULL
-#define NULL	0
+#define NULL 0
 #endif
 
 #include <stdint.h>
 
-typedef int64_t       	ptrdiff_t;
+typedef int64_t ptrdiff_t;
 
-typedef int64_t       	ssize_t;
-typedef unsigned int	wint_t;
+typedef int64_t ssize_t;
+typedef unsigned int wint_t;
 
 #if !defined(__cplusplus)
-typedef unsigned	wchar_t;
+typedef unsigned wchar_t;
 #endif
 
 #endif
-

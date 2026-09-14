@@ -86,6 +86,17 @@ typedef enum _clock_root_select_ {
 	HDMI_FDCC_TST_CLK_ROOT = 118,
 	HDMI_24M_ROOT,
 	HDMI_REF_266M_ROOT,
+	USDHC3_CLK_ROOT,
+	MEDIA_CAM1_PIX_CLK_ROOT,
+	MEDIA_MIPI_PHY1_REF_CLK_ROOT,
+	MEDIA_DISP1_PIX_CLK_ROOT,
+	MEDIA_CAM2_PIX_CLK_ROOT,
+	MEDIA_LDB_CLK_ROOT,
+	MEDIA_MIPI_TEST_BYTE_CLK = 130,
+	ECSPI3_CLK_ROOT,
+	PDM_CLK_ROOT,
+	VPU_VC8000E_CLK_ROOT,
+	SAI7_CLK_ROOT
 	/* incomplete */
 }imx8mp_clock_root_select;
 
@@ -341,5 +352,11 @@ extern void imx8mp_ccm_init();
   * @brief imx8mp_ccm_write -- write value to clock indexed register
   */
 AU_EXTERN AU_EXPORT void imx8mp_ccm_write(uint32_t clk_root_idx,int offset, uint32_t value);
+
+
+/**
+ * @brief imx8mp_cmm_get_base -- return the mapped ccm base address
+ */
+extern uint64_t imx8mp_ccm_get_base();
 
 #endif

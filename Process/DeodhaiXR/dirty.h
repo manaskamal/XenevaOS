@@ -34,8 +34,6 @@
 #include "deodxr.h"
 #include <chitralekha.h>
 
-
-
 extern void InitialiseDirtyClipList();
 
 /*

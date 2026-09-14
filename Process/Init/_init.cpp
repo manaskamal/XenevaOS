@@ -48,30 +48,30 @@
 /** Let's hardcode,credentials
  * untill we get proper login manager
  */
-#define GROUP_INPUT  20
-#define GROUP_VIDEO  21
-#define GROUP_TTY    22
-#define GROUP_AUDIO  21
+#define GROUP_INPUT	  20
+#define GROUP_VIDEO	  21
+#define GROUP_TTY	  22
+#define GROUP_AUDIO	  21
 #define GROUP_NETWORK 23
+
 
 /** hardcoded untill we get proper
  * login manager
  */
-#define UAC_DEAMONS 40
+#define UAC_DEAMONS		40
 #define UAC_NORMAL_USER 1000
 
 int _sound;
 
 /** Init Request msgs **/
-#define INIT_REQUEST_PW_DOWN  "init.request.powerdown"
+#define INIT_REQUEST_PW_DOWN   "init.request.powerdown"
 #define INIT_REQUEST_PW_REBOOT "init.request.reboot"
-
 
 typedef struct _init_request_msg_ {
 	char message[60];
 	uint16_t fromProcessId;
 	uint16_t toProcessId;
-}InitRequestMsg;
+} InitRequestMsg;
 
 void initSetupBasicEnvironmentVars() {
 	setenv("HOME", "/", 1);
@@ -82,13 +82,91 @@ void initSetupBasicEnvironmentVars() {
 	setenv("OSNAME", "XenevaOS", 1);
 }
 
+/**
+ * @brief init_run_term_command -- in TERM mode, read /shell.cnf and
+ * launch the specified app with its arguments on /dev/console.
+ * Falls back to xesh.exe if no config or exec fails.
+ */
+void init_run_term_command(int ggid_misc_world, int con) {
+	char cmd[128] = {0};
+	int cfg = _KeOpenFile("/shell.cnf", FILE_OPEN_READ_ONLY);
+	if (cfg != -1) {
+		_KeReadFile(cfg, cmd, sizeof(cmd) - 1);
+		_KeCloseFile(cfg);
+	}
+
+	/* trim trailing newline/carriage-return */
+	int len = strlen(cmd);
+	while (len > 0 && (cmd[len - 1] == '\n' || cmd[len - 1] == '\r'))
+		cmd[--len] = '\0';
+
+	if (len == 0) {
+		/* no command -- fall back to interactive shell */
+		int proc = _KeCreateProcess(0, "xesh");
+		_KeSetUID(proc, UAC_NORMAL_USER);
+		_KeSetGID(proc, UAC_NORMAL_USER);
+		_KeCredAddSGroup(proc, ggid_misc_world);
+		_KeCredAddSGroup(proc, GROUP_NETWORK);
+		if (con != -1) {
+			_KeSetFileToProcess(con, XENEVA_STDIN, proc);
+			_KeSetFileToProcess(con, XENEVA_STDOUT, proc);
+			_KeSetFileToProcess(con, XENEVA_STDERR, proc);
+		}
+		_KeProcessLoadExec(proc, "/xesh.exe", 0, NULL);
+		return;
+	}
+
+	/* tokenize command line into argc/argv */
+	char* argv[16];
+	int argc = 0;
+	char* tok = strtok(cmd, " ");
+	while (tok && argc < 16) {
+		argv[argc++] = tok;
+		tok = strtok(NULL, " ");
+	}
+
+	if (argc == 0)
+		return;
+
+	/* build executable path: /<argv[0]>.exe */
+	char path[64];
+	path[0] = '/';
+	strcpy(path + 1, argv[0]);
+	strcat(path, ".exe");
+
+	int proc = _KeCreateProcess(0, argv[0]);
+	_KeSetUID(proc, UAC_NORMAL_USER);
+	_KeSetGID(proc, UAC_NORMAL_USER);
+	_KeCredAddSGroup(proc, ggid_misc_world);
+	_KeCredAddSGroup(proc, GROUP_NETWORK);
+	if (con != -1) {
+		_KeSetFileToProcess(con, XENEVA_STDIN, proc);
+		_KeSetFileToProcess(con, XENEVA_STDOUT, proc);
+		_KeSetFileToProcess(con, XENEVA_STDERR, proc);
+	}
+	/* skip argv[0] (command name) — kernel uses path as argv[0] */
+	int ret = _KeProcessLoadExec(proc, path, argc > 1 ? argc - 1 : 0, argc > 1 ? argv + 1 : NULL);
+	if (ret == -1) {
+		_KePrint("[init]: failed to load %s, falling back to xesh\r\n", path);
+		proc = _KeCreateProcess(0, "xesh");
+		_KeSetUID(proc, UAC_NORMAL_USER);
+		_KeSetGID(proc, UAC_NORMAL_USER);
+		_KeCredAddSGroup(proc, ggid_misc_world);
+		_KeCredAddSGroup(proc, GROUP_NETWORK);
+		if (con != -1) {
+			_KeSetFileToProcess(con, XENEVA_STDIN, proc);
+			_KeSetFileToProcess(con, XENEVA_STDOUT, proc);
+			_KeSetFileToProcess(con, XENEVA_STDERR, proc);
+		}
+		_KeProcessLoadExec(proc, "/xesh.exe", 0, NULL);
+	}
+}
 
 typedef struct _sound_card_list {
 	char name[32];
 	int cardID;
 	struct _sound_card_list* next;
-}aurora_snd_card_list;
-
+} aurora_snd_card_list;
 
 extern void SplashScreenShow();
 
@@ -124,12 +202,11 @@ void init_basic_gid_to_dev() {
  * _play_startup_sound -- play the startup sound
  */
 void _play_startup_sound() {
-	if (_sound == -1) 
+	if (_sound == -1)
 		return;
-	
+
 	XEFileIOControl ioctl;
 	memset(&ioctl, 0, sizeof(XEFileIOControl));
-
 
 	/* uint_1 holds the millisecond to sleep after
 	* one frame playback */
@@ -142,7 +219,8 @@ void _play_startup_sound() {
 		return;
 
 	ioctl.uint_1 = num_card_count;
-	aurora_snd_card_list* list = (aurora_snd_card_list*)malloc(sizeof(aurora_snd_card_list) * num_card_count);
+	aurora_snd_card_list* list =
+		(aurora_snd_card_list*)malloc(sizeof(aurora_snd_card_list) * num_card_count);
 	ioctl.ulong_1 = (uint64_t)list;
 	if (_KeFileIoControl(_sound, SOUND_GET_CARD_LIST, &ioctl)) {
 		_KePrint("[init]: failed to get sound card list \r\n");
@@ -219,11 +297,11 @@ void _init_handle_request(InitRequestMsg* msg) {
 	}
 }
 
+
 /*
  * _main -- main entry point
  */
 extern "C" void main(int argc, char* argv[]) {
-
 	int pid = _KeGetProcessID();
 
 	_KePrint("Init Process running ii %d\n", pid);
@@ -238,12 +316,16 @@ extern "C" void main(int argc, char* argv[]) {
 #endif
 	}
 
+#if !defined(__XENEVA_BLEED__) && !defined(__XENEVA_TERM__)
 	SplashScreenShow();
+#endif
 	_sound = -1;
 	init_basic_gid_to_dev();
 
 	/** play the startup sound, for better experience */
+#if !defined(__XENEVA_BLEED__) && !defined(__XENEVA_TERM__)
 	_play_startup_sound();
+#endif
 
 	int ggid_misc_world = _KeGetGlobalGroupID(AURORA_GID_MISC_WORLD);
 	int ggid_misc_postbox = _KeGetGlobalGroupID(AURORA_GID_IPC_POSTBOX);
@@ -253,36 +335,52 @@ extern "C" void main(int argc, char* argv[]) {
 	if (pipe == -1)
 		_KePrint("[init]: pipe creation failed \r\n");
 	else
-		_KeCredChangeID(pipe,0, ggid_misc_world);
+		_KeCredChangeID(pipe, 0, ggid_misc_world);
 
 	/** allocate a memory for init request msgs */
 	char* init_msg_buff = (char*)malloc(sizeof(InitRequestMsg) + 1);
 	memset(init_msg_buff, 0, sizeof(InitRequestMsg) + 1);
 
-
 	/** TODO: add IPC system to track real system progress and animate the logo accordingly **/
+#ifndef __XENEVA_BLEED__
 	_KeProcessSleep(100);
+#endif
 
 	int proc = 0;
 
-
 #ifdef ARCH_ARM64
+#ifdef __XENEVA_TERM__
+	_KePrint("[init]: tty, skipping compositor \r\n");
 	proc = _KeCreateProcess(0, "netmngr");
 	int ret_nm = _KeProcessLoadExec(proc, "/netmngr.exe", 0, NULL);
 	if (ret_nm != -1) {
 		_KeSetUID(proc, UAC_DEAMONS);
 		_KeSetGID(proc, UAC_DEAMONS);
 		_KeCredAddSGroup(proc, ggid_misc_world);
+		_KeCredAddSGroup(proc, GROUP_NETWORK);
 		_KeProcessSleep(500);
 	}
-
-
+	int con = _KeOpenFile("/dev/console", FILE_OPEN_READ_ONLY);
+	if (con == -1)
+		_KePrint("[init]: failed to open /dev/console \r\n");
+	init_run_term_command(ggid_misc_world, con);
+#else
+#ifndef __XENEVA_BLEED__
+	proc = _KeCreateProcess(0, "netmngr");
+	int ret_nm = _KeProcessLoadExec(proc, "/netmngr.exe", 0, NULL);
+	if (ret_nm != -1) {
+		_KeSetUID(proc, UAC_DEAMONS);
+		_KeSetGID(proc, UAC_DEAMONS);
+		_KeCredAddSGroup(proc, ggid_misc_world);
+		_KeCredAddSGroup(proc, GROUP_NETWORK);
+		_KeProcessSleep(500);
+	}
+#endif
 
 	/** actually, design should be like that, each process after
 	 * finish its initialization, it should send a signal to 
 	 * init, so that it can continue next proccesses spawning
 	 */
-
 
 	/** from now, normal user's won't get system access */
 	proc = _KeCreateProcess(0, "deodhaixr");
@@ -295,8 +393,9 @@ extern "C" void main(int argc, char* argv[]) {
 	_KeCredSetCap(proc, 0);
 	_KeProcessLoadExec(proc, "/deodxr.exe", 0, NULL);
 
-	_KeProcessSleep(800);
 
+#ifndef __XENEVA_BLEED__
+	_KeProcessSleep(800);
 
 	proc = _KeCreateProcess(0, "deoaud");
 	_KePrint("deoaud proc id : %d \r\n", proc);
@@ -306,9 +405,9 @@ extern "C" void main(int argc, char* argv[]) {
 	_KeCredAddSGroup(proc, GROUP_AUDIO);
 	_KeCredAddSGroup(proc, ggid_misc_postbox);
 	_KeProcessLoadExec(proc, "/deoaud.exe", 0, NULL);
+#endif
+#endif
 
-
-	
 #elif ARCH_X64
 	proc = _KeCreateProcess(0, "deodhai");
 	_KeProcessLoadExec(proc, "/deodhai.exe", 0, NULL);
@@ -321,7 +420,7 @@ extern "C" void main(int argc, char* argv[]) {
 	_KePrint("Setting up env variable \r\n");
 	initSetupBasicEnvironmentVars();
 	int sz = 0;
-	while(1){
+	while (1) {
 		sz = _KeReadFile(pipe, init_msg_buff, sizeof(InitRequestMsg) + 1);
 		if (sz > 0) {
 			_init_handle_request((InitRequestMsg*)init_msg_buff);
@@ -333,14 +432,12 @@ extern "C" void main(int argc, char* argv[]) {
 			}
 	}
 
-	
-
 	///* just load all the background services */
 	int child = _KeCreateProcess(0, "deoaud");
 	_KeProcessLoadExec(child, "/deoaud.exe", 0, NULL);
 
 	_KeProcessSleep(1);
-		
+
 	child = _KeCreateProcess(0, "deodhai");
 	_KeProcessLoadExec(child, "/deodhai.exe", 0, NULL);
 

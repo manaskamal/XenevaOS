@@ -42,14 +42,14 @@ static int screen_w;
 static int screen_h;
 static uint32_t* fb;
 
-#pragma pack(push,1)
+#pragma pack(push, 1)
 typedef struct _bmp_ {
 	unsigned short type;
 	unsigned int size;
 	unsigned short resv1;
 	unsigned short resv2;
 	unsigned int off_bits;
-}BMP;
+} BMP;
 
 typedef struct _info_ {
 	unsigned int biSize;
@@ -63,7 +63,7 @@ typedef struct _info_ {
 	long biYPelsPerMeter;
 	unsigned int biClrUsed;
 	unsigned int biClrImportant;
-}BMPInfo;
+} BMPInfo;
 #pragma pack(pop)
 
 void _fb_draw_pixel(int x, int y, uint32_t color) {
@@ -79,7 +79,8 @@ void _draw_bitmap_(int x, int y, int w, int h, uint8_t* imageData) {
 
 	uint8_t* image = imageData;
 	for (int i = 0; i < height; i++) {
-		char* image_row = (char*)image + (static_cast<int64_t>(height) - i - 1) * (static_cast<int64_t>(width) * 4);
+		char* image_row = (char*)image + (static_cast<int64_t>(height) - i - 1) *
+											 (static_cast<int64_t>(width) * 4);
 		uint32_t h = height - 1 - i;
 		j = 0;
 		for (int k = 0; k < width; k++) {
@@ -114,18 +115,24 @@ void SplashScreenShow() {
 	screen_w = ioctl.uint_1;
 	ret = _KeFileIoControl(graphFd, SCREEN_GETHEIGHT, &ioctl);
 	screen_h = ioctl.uint_1;
-	
+
 	ret = _KeFileIoControl(graphFd, SCREEN_GET_FB, &ioctl);
 	fb = (uint32_t*)ioctl.ulong_1;
 
 	_fill_screen(0, 0, screen_w, screen_h, 0xFF0F0F0F);
 
 	int logo = _KeOpenFile("/xelogo.bmp", FILE_OPEN_READ_ONLY);
+	if (logo == -1)
+		return;
 
 	XEFileStatus stat;
-	_KeFileStat(logo, &stat);
+	memset(&stat, 0, sizeof(stat));
+	if (_KeFileStat(logo, &stat) == -1 || stat.size < sizeof(BMP) + sizeof(BMPInfo))
+		return;
 
 	uint8_t* buffer = (uint8_t*)_KeMemMap(NULL, stat.size, 0, 0, -1, 0);
+	if (!buffer)
+		return;
 
 	_KeReadFile(logo, buffer, stat.size);
 
@@ -137,7 +144,10 @@ void SplashScreenShow() {
 	int height = info->biHeight;
 	int bpp = info->biBitCount;
 
-	void* image_bytes = (void*)(buffer + offset);
-	_draw_bitmap_(screen_w / 2 - width / 2, screen_h / 2 - height / 2, width, height,(uint8_t*)image_bytes);
-}
+	if (offset >= stat.size)
+		return;
 
+	void* image_bytes = (void*)(buffer + offset);
+	_draw_bitmap_(
+		screen_w / 2 - width / 2, screen_h / 2 - height / 2, width, height, (uint8_t*)image_bytes);
+}

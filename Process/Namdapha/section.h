@@ -36,7 +36,6 @@
 #define SECTION_TITLE_APPLIST "applist"
 #define SECTION_TITLE_TASKLET "tasklet"
 
-
 typedef struct _namdapha_sect_ {
 	int x;
 	int y;
@@ -46,9 +45,7 @@ typedef struct _namdapha_sect_ {
 	bool scrollable;
 	list_t* buttonList;
 	void (*paint)(_namdapha_sect_* sect, ChWindow* win);
-}NamdaphaSections;
-
-
+} NamdaphaSections;
 
 /*
  * SectionModuleInitialize -- initialize the

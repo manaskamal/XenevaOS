@@ -39,16 +39,14 @@
 #include <_xeneva.h>
 
 #ifdef __cplusplus
-XE_EXTERN{
+XE_EXTERN {
 #endif
-
-
 
 	/* grid type */
 	typedef enum {
 		GRIDCELL_THUMBNAIL,
 		GRIDCELL_WIDGET,
-	}ChGridCellType;
+	} ChGridCellType;
 
 	typedef struct _grid_cell_ {
 		ChGridCellType type;
@@ -57,7 +55,7 @@ XE_EXTERN{
 
 		ChWidget* child;
 		void* data;
-	}ChGridCell;
+	} ChGridCell;
 
 	typedef struct _grid_view_ {
 		ChWidget wid;
@@ -91,16 +89,17 @@ XE_EXTERN{
 		uint32_t color_label_text;
 
 		//OnSelect
-	}ChGridView;
+	} ChGridView;
 
-
-	XE_EXPORT ChGridView* ChGridViewCreate(int x, int y, int w, int h, int columns, int cell_w, int cell_h, int padding);
+	XE_EXPORT ChGridView* ChGridViewCreate(
+		int x, int y, int w, int h, int columns, int cell_w, int cell_h, int padding);
 	/**
 	 * @brief ChGridAddThumbnail -- add a thumbnail to the grid view
 	 */
-	XE_EXPORT int ChGridAddThumbnail(ChGridView* gv, ChIcon* icon, const char* label, void* user_data);
+	XE_EXPORT int ChGridAddThumbnail(
+		ChGridView * gv, ChIcon * icon, const char* label, void* user_data);
 
-	XE_EXPORT int ChGridAddWidget(ChGridView* gv, ChWidget* child, void* data);
+	XE_EXPORT int ChGridAddWidget(ChGridView * gv, ChWidget * child, void* data);
 
 #ifdef __cplusplus
 }

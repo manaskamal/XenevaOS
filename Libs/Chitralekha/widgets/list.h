@@ -34,27 +34,25 @@
 #include <_xeneva.h>
 
 #ifdef __cplusplus
-XE_EXTERN{
+XE_EXTERN {
 #endif
 
-
 	typedef struct _data_ {
-		struct _data_ *next;
-		struct _data_ *prev;
+		struct _data_* next;
+		struct _data_* prev;
 		void* data;
-	}dataentry;
-
+	} dataentry;
 
 	typedef struct _list_ {
 		unsigned int pointer;
-		dataentry *entry_current;
-	}list_t;
+		dataentry* entry_current;
+	} list_t;
 
 	XE_EXPORT list_t* initialize_list();
-	XE_EXPORT void list_add(list_t* list, void* data);
-	XE_EXPORT void* list_remove(list_t* list, unsigned int);
-	XE_EXPORT void * list_get_at(list_t* list, unsigned int index);
-	XE_EXPORT void list_clear_all(list_t* list);
+	XE_EXPORT void list_add(list_t * list, void* data);
+	XE_EXPORT void* list_remove(list_t * list, unsigned int);
+	XE_EXPORT void* list_get_at(list_t * list, unsigned int index);
+	XE_EXPORT void list_clear_all(list_t * list);
 
 #ifdef __cplusplus
 }

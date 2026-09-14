@@ -30,7 +30,6 @@
 #include "backdirty.h"
 #include <string.h>
 
-
 int _back_dirty_count;
 
 Rect _back_dirty_rect[512];
@@ -41,7 +40,7 @@ Rect _back_dirty_rect[512];
  */
 void BackDirtyInitialise() {
 	_back_dirty_count = 0;
-	for (int i = 0; i < 512; i++){
+	for (int i = 0; i < 512; i++) {
 		_back_dirty_rect[i].x = 0;
 		_back_dirty_rect[i].y = 0;
 		_back_dirty_rect[i].w = 0;
@@ -67,7 +66,7 @@ void BackDirtyAdd(int x, int y, int w, int h) {
 		_KePrint("BackDirty w is corrupted \r\n");
 	if (h < 0)
 		_KePrint("BackDirty h is corrupted \r\n");
-	
+
 	_back_dirty_rect[_back_dirty_count].x = x;
 	_back_dirty_rect[_back_dirty_count].y = y;
 	_back_dirty_rect[_back_dirty_count].w = w;
@@ -83,13 +82,12 @@ void BackDirtyAdd(int x, int y, int w, int h) {
  * @param h -- mem pointer where to store h
  * @param index -- index 
  */
-void BackDirtyGetRect(int *x, int *y, int *w, int *h, int index) {
+void BackDirtyGetRect(int* x, int* y, int* w, int* h, int index) {
 	*x = _back_dirty_rect[index].x;
 	*y = _back_dirty_rect[index].y;
 	*w = _back_dirty_rect[index].w;
 	*h = _back_dirty_rect[index].h;
 }
-
 
 int BackDirtyGetDirtyCount() {
 	return _back_dirty_count;

@@ -27,17 +27,20 @@ ipch/
 *.ipch
 *.VC.db
 *.log
-.vs/Aurora/v16/*.db
+.vs/Aurora/v16/Browse.VC.db
 x64/
 ARM64/
 Debug/
 Release/
 KernelAA64/*.elf
 KernelAA64/*.exe
+KernelAA64/*.lib
 KernelAA64/*.log
 KernelAA64/obj/
 fat.img
 initrd2.img
+fat-*.img
+*.iso
 qemu.pid
 dump.s
 *.so
@@ -49,3 +52,12 @@ Libs/**/*.a
 # Exclude compiled user-space applications
 Resources/resources/*.exe
 Resources/resources/ARCH_ARM64/*.exe
+
+# One-off debug/comparison binaries from investigation sessions, not regular build output
+/KernelAA64-*.exe
+
+# clangd / IDE tooling (regenerate via Scripts/Linux/gen_compile_commands.sh)
+compile_commands.json
+
+# Personal notes / drafts, not meant for the repo
+notes/

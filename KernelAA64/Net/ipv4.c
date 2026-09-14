@@ -38,6 +38,7 @@
 #include <Net/ethernet.h>
 #include <Net/arp.h>
 #include <Net/udp.h>
+#include <Net/packet.h>
 #include <_null.h>
 #include <aucon.h>
 #include <Mm/kmalloc.h>
@@ -58,10 +59,11 @@ uint16_t IPv4CalculateChecksum(IPv4Header* p) {
 }
 
 void ip_ntoa(const uint32_t src) {
-	UARTDebugOut("%d.%d.%d.", ((src & 0xFF000000) >> 24),
-		((src & 0xFF0000) >> 16),
-		((src & 0xFF00) >> 8),
-		((src & 0xFF)));
+	UARTDebugOut("%d.%d.%d.",
+				 ((src & 0xFF000000) >> 24),
+				 ((src & 0xFF0000) >> 16),
+				 ((src & 0xFF00) >> 8),
+				 ((src & 0xFF)));
 	UARTDebugOut("%d \r\n", (src & 0xFF));
 }
 
@@ -74,17 +76,10 @@ void IPv4HandlePacket(void* data, AuVFSNode* nic) {
 	char dest[16];
 	char src[16];
 	IPv4Header* pack = (IPv4Header*)data;
-	uint32_t destIP;
-	memcpy(&destIP, &pack->destAddress, 4);
-	uint32_t srcIP;
-	memcpy(&srcIP, &pack->srcAddress, 4);
-	ip_ntoa(ntohl(destIP));
-	ip_ntoa(ntohl(srcIP));
 	uint8_t protocol;
 	memcpy(&protocol, &pack->protocol, 1);
 	switch (protocol) {
 	case 1: {
-		UARTDebugOut("[ipv4]: received ICMP message \r\n");
 		AuICMPHandle(pack, nic);
 		break;
 	}
@@ -93,12 +88,7 @@ void IPv4HandlePacket(void* data, AuVFSNode* nic) {
 		break;
 	}
 	case IPV4_PROTOCOL_TCP: {
-		UARTDebugOut("[ipv4] : received TCP packet \r\n");
-		TCPHeader* tcp = (TCPHeader*)&pack->payload;
-		uint16_t destPort = ntohs(tcp->destPort);
-		uint16_t srcPort = ntohs(tcp->srcPort);
-		UARTDebugOut("destination port : %d \n", destPort);
-		UARTDebugOut("source port : %d \n", srcPort);
+		TCPHandlePacket(pack, nic);
 		break;
 	}
 	}
@@ -115,15 +105,19 @@ int CreateIPv4Socket(int type, int protocol) {
 	case SOCK_DGRAM:
 		if (protocol == 0 || protocol == IPPROTOCOL_UDP) {
 			UARTDebugOut("[aurora]: ipv4 udp protocol created \r\n");
-		    return CreateUDPSocket();
-		}if (protocol == IPPROTOCOL_ICMP) {
+			return CreateUDPSocket();
+		}
+		if (protocol == IPPROTOCOL_ICMP) {
 			UARTDebugOut("[aurora]: ipv4 icmp protocol created \r\n");
 			return CreateICMPSocket();
 		}
-	case SOCK_STREAM: {
-		UARTDebugOut("[aurora]: tcp protocol created \r\n");
-		return 0; // CreateTCPSocket();
-	}
+		return -1;
+	case SOCK_STREAM:
+		if (protocol == 0 || protocol == IPPROTOCOL_TCP) {
+			UARTDebugOut("[aurora]: tcp protocol created \r\n");
+			return CreateTCPSocket();
+		}
+		return -1;
 	default:
 		return -1;
 	}
@@ -135,48 +129,55 @@ int CreateIPv4Socket(int type, int protocol) {
  * @param nic -- Pointer to NIC device
  */
 void IPV4SendPacket(IPv4Header* packet, AuVFSNode* nic) {
-	AuNetworkDevice* ndev = (AuNetworkDevice*)nic->device;
+	AuNetworkDevice* ndev;
+	AuVFSNode* deliver;
+	uint32_t ip_dest;
+	AuARPCache* cache;
+	uint8_t broadcast_addr[6];
+
+	if (!packet || !nic)
+		return;
+	ndev = (AuNetworkDevice*)nic->device;
 	if (!ndev)
 		return;
 
-	uint32_t ip_dest = packet->destAddress;
+	ip_dest = packet->destAddress;
 
-	UARTDebugOut("[aurora]: IPV4 Sending %x\r\n", nic->device);
+	/* Loopback / local delivery: reinject at IP (never AuEthernetSend). */
+	if (ndev->type == NETDEV_TYPE_LOOPBACK || AuAddrIsLocal4(ip_dest)) {
+		deliver = AuGetNetworkAdapter("lo");
+		if (!deliver)
+			deliver = nic;
+		if (!AuPacketLocalEnter())
+			return;
+		IPv4HandlePacket(packet, deliver);
+		AuPacketLocalLeave();
+		return;
+	}
 
-	/* Decide which data link layer to use for
-	   forwarding this packet*/
 	if (ndev->type == NETDEV_TYPE_ETHERNET) {
-		AuARPCache* cache = NULL;
-		if (!ndev->ipv4subnet || ((ip_dest & ndev->ipv4subnet) != (ndev->ipv4addr & ndev->ipv4subnet))) {
+		cache = NULL;
+		if (!ndev->ipv4subnet ||
+			((ip_dest & ndev->ipv4subnet) != (ndev->ipv4addr & ndev->ipv4subnet))) {
 			ip_dest = ndev->ipv4gateway;
-			ip_ntoa(ip_dest);
+			cache = AuARPGet(ip_dest);
+			if (!cache) {
+				/* Non-blocking: sleep-wait here added ~100ms to ping RTT */
+				AuARPRequestMAC(nic, ip_dest);
+				cache = AuARPGet(ip_dest);
+			}
+		} else {
 			cache = AuARPGet(ip_dest);
 			if (!cache) {
 				AuARPRequestMAC(nic, ip_dest);
-				UARTDebugOut("[aurora]:Requesting MAC #1 \r\n");
-
-				/* Not implemented yet */
-				AuSleepThread(AuGetCurrentThread(), 100);
-				AuForceScheduler();
-
 				cache = AuARPGet(ip_dest);
 			}
 		}
-		else {
-			cache = AuARPGet(ip_dest);
-			if (!cache) {
-				AuARPRequestMAC(nic, ip_dest);
-				UARTDebugOut("[aurora]: Requesting MAC #2\r\n");
-
-				/* Not implemented yet */
-				AuSleepThread(AuGetCurrentThread(), 100);
-				AuForceScheduler();
-				UARTDebugOut("Rechecking ARP \r\n");
-				cache = AuARPGet(ip_dest);
-			}
-		}
-		uint8_t broadcast_addr[6];
 		memset(broadcast_addr, 0xFF, 6);
-		AuEthernetSend(nic, packet, ntohs(packet->totalLength), ETHERNET_TYPE_IPV4, cache ? cache->hw_address : broadcast_addr);
+		AuEthernetSend(nic,
+					   packet,
+					   ntohs(packet->totalLength),
+					   ETHERNET_TYPE_IPV4,
+					   cache ? cache->hw_address : broadcast_addr);
 	}
 }

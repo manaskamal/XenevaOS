@@ -41,11 +41,11 @@
 #include "clip.h"
 #include "surface.h"
 
-
 /**
  * @brief Check for small area updates !! not entire window
 */
-extern void _compose_dirty_area_(ChCanvas* canvas, Window* win, Window* focusedWin, WinSharedInfo* info);
+extern void
+_compose_dirty_area_(ChCanvas* canvas, Window* win, Window* focusedWin, WinSharedInfo* info);
 /**
  * @brief _compose_entire_window_ -- composes an entire window to canvas
  * @param canvas -- Pointer to Deodhai canvas
@@ -57,8 +57,13 @@ extern void _compose_dirty_area_(ChCanvas* canvas, Window* win, Window* focusedW
  * @param _shadow_update -- shadow update bit which tells if we need to update
  * shadows or not
  */
-extern void _compose_entire_window(ChCanvas* canvas, Window* win, bool _window_update_all_, WinSharedInfo* info, Window* focusedWin,
-	bool _window_moving_, bool _shadow_update);
+extern void _compose_entire_window(ChCanvas* canvas,
+								   Window* win,
+								   bool _window_update_all_,
+								   WinSharedInfo* info,
+								   Window* focusedWin,
+								   bool _window_moving_,
+								   bool _shadow_update);
 
 /**
  * @brief _compose_always_on_top_dirty -- compose always on top window's dirty rectangles
@@ -68,11 +73,17 @@ extern void _compose_entire_window(ChCanvas* canvas, Window* win, bool _window_u
  * @param focusedWin -- Pointer to focused Window
  * @param win -- Pointer to main window
  */
-extern void _compose_always_on_top_dirty(ChCanvas* canvas, WinSharedInfo* info, bool _window_moving_, Window* focusedWin, Window* win);
+extern void _compose_always_on_top_dirty(
+	ChCanvas* canvas, WinSharedInfo* info, bool _window_moving_, Window* focusedWin, Window* win);
 
 /**
  * @brief _compose_always_on_top_entire -- compose entire always on top window
  */
-extern void _compose_always_on_top_entire(ChCanvas* canvas, Window* win, bool _always_on_top_update, bool _window_moving_, WinSharedInfo* info, Window* rootWin);
+extern void _compose_always_on_top_entire(ChCanvas* canvas,
+										  Window* win,
+										  bool _always_on_top_update,
+										  bool _window_moving_,
+										  WinSharedInfo* info,
+										  Window* rootWin);
 
 #endif

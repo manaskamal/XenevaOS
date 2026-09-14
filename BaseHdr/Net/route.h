@@ -31,6 +31,7 @@
 #define __ROUTE_H__
 
 #include <stdint.h>
+#include <Net/ipv6.h>
 
 /* Simple Route table entry structure */
 typedef struct _route_entry_ {
@@ -41,6 +42,15 @@ typedef struct _route_entry_ {
 	uint32_t gateway;
 	uint8_t flags;
 }AuRouteEntry;
+
+typedef struct _route_entry6_ {
+	char* ifname;
+	ip6_addr dest;
+	uint8_t prefixLen;
+	ip6_addr ifaddress;
+	ip6_addr gateway;
+	uint8_t flags;
+}AuRouteEntry6;
 
 typedef struct _route_entry_info_ {
 	int index;
@@ -95,4 +105,13 @@ extern void AuRouteTablePopulate(AuRouteEntry* whereToPopulate, int entryIndex);
  * @param address -- address to take for routing
  */
 extern AuRouteEntry* AuRouteTableDoRouteLookup(uint32_t address);
+
+/*
+ * AuRouteTable6Initialise -- initialise IPv6 route table
+ */
+extern void AuRouteTable6Initialise();
+
+extern AuRouteEntry6* AuRouteTable6CreateEntry();
+extern void AuRouteTable6Add(AuRouteEntry6* entry);
+extern AuRouteEntry6* AuRouteTableDoRouteLookup6(const ip6_addr* address);
 #endif

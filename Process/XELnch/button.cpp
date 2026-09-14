@@ -37,38 +37,50 @@
 #include <sys/_keproc.h>
 #include <widgets/msgbox.h>
 
-
-#define LAUNCHER_BUTTON_HOVER_DARK 0xCC658096
+#define LAUNCHER_BUTTON_HOVER_DARK	0xCC658096
 #define LAUNCHER_BUTTON_HOVER_LIGHT 0xCC8CA2B4
-#define LAUNCHER_BUTTON_CLICKED 0xCC1D1D1D
+#define LAUNCHER_BUTTON_CLICKED		0xCC1D1D1D
 
 void ButtonIconRead(ButtonIcon* btninfo);
-void ButtonIconDraw(ButtonIcon* info, ChCanvas* canv, int x, int y, ChRect *limit);
+void ButtonIconDraw(ButtonIcon* info, ChCanvas* canv, int x, int y, ChRect* limit);
 
 /* LaunchButtonPaint -- default paint handler for launch button */
 void LaunchButtonPaint(LaunchButton* lb, ChWindow* win) {
 	ChDrawRect(win->canv, lb->x, lb->y, lb->w, lb->h, LAUNCHER_BACKGROUND_COLOR);
 	if (lb->hover)
-		ChColorDrawHorizontalGradient(win->canv, lb->x, lb->y, lb->w, lb->h, LAUNCHER_BUTTON_HOVER_DARK, LAUNCHER_BUTTON_HOVER_LIGHT);
+		ChColorDrawHorizontalGradient(win->canv,
+									  lb->x,
+									  lb->y,
+									  lb->w,
+									  lb->h,
+									  LAUNCHER_BUTTON_HOVER_DARK,
+									  LAUNCHER_BUTTON_HOVER_LIGHT);
 
-	if (lb->clicked) 
+	if (lb->clicked)
 		ChDrawRect(win->canv, lb->x, lb->y, lb->w, lb->h, LAUNCHER_BUTTON_CLICKED);
-		
+
 	AppGrid* grid = XELauncherGetAppGrid();
 	ChRect limit;
 	limit.x = grid->x;
 	limit.y = grid->y;
 	limit.w = grid->w;
 	limit.h = grid->h;
-	ButtonIconDraw(lb->buttonIcon, win->canv, lb->x + lb->w / 2 - lb->buttonIcon->iconWidth / 2,
-		lb->y + lb->h / 2 - lb->buttonIcon->iconHeight / 2, &limit);
-	ChFontSetSize(win->app->baseFont,11);
+	ButtonIconDraw(lb->buttonIcon,
+				   win->canv,
+				   lb->x + lb->w / 2 - lb->buttonIcon->iconWidth / 2,
+				   lb->y + lb->h / 2 - lb->buttonIcon->iconHeight / 2,
+				   &limit);
+	ChFontSetSize(win->app->baseFont, 11);
 	int font_length = ChFontGetWidth(win->app->baseFont, lb->title);
 	int font_height = ChFontGetHeight(win->app->baseFont, lb->title);
-	ChFontDrawTextClipped(win->canv, win->app->baseFont, lb->title, lb->x + lb->w / 2 - font_length / 2,
-		lb->y + lb->h - 5, LIGHTSILVER, &limit);
+	ChFontDrawTextClipped(win->canv,
+						  win->app->baseFont,
+						  lb->title,
+						  lb->x + lb->w / 2 - font_length / 2,
+						  lb->y + lb->h - 5,
+						  LIGHTSILVER,
+						  &limit);
 }
-
 
 /*
  * LaunchButtonMouseEvent -- mouse event handler
@@ -78,14 +90,7 @@ void LaunchButtonPaint(LaunchButton* lb, ChWindow* win) {
  * @param y -- mouse y information
  */
 void LaunchButtonMouseEvent(LaunchButton* wid, ChWindow* win, int x, int y, int button) {
-	if (button && !wid->kill_focus)
-		wid->clicked = true;
-
-	if (button == 0) 
-		wid->clicked = 0;
-
-	if (wid->kill_focus)
-		wid->clicked = false;
+	bool pressed = button && !wid->kill_focus;
 
 	if (!wid->hover_painted && wid->hover) {
 		if (wid->drawLaunchButton)
@@ -94,25 +99,24 @@ void LaunchButtonMouseEvent(LaunchButton* wid, ChWindow* win, int x, int y, int 
 		wid->hover_painted = true;
 	}
 
-	if (!wid->hover && wid->clicked == false){
+	if (!wid->hover && !pressed) {
 		wid->hover_painted = false;
 		if (wid->drawLaunchButton)
 			wid->drawLaunchButton(wid, win);
 		ChWindowUpdate(win, wid->x, wid->y, wid->w, wid->h, false, true);
 	}
 
-	if (wid->clicked && wid->last_mouse_x == x && wid->last_mouse_y == y){
+	/* rising edge only; do not sleep here -- the compositor is waiting --axiss */
+	if (pressed && !wid->clicked) {
+		wid->clicked = true;
 		if (wid->drawLaunchButton)
 			wid->drawLaunchButton(wid, win);
 		ChWindowUpdate(win, wid->x, wid->y, wid->w, wid->h, false, true);
-		_KeProcessSleep(500);
-		
-		wid->hover_painted = false;
-		wid->clicked = false;
-
 		if (wid->actionHandler)
 			wid->actionHandler(wid, win);
 	}
+	if (!pressed)
+		wid->clicked = false;
 
 	wid->last_mouse_x = x;
 	wid->last_mouse_y = y;
@@ -123,7 +127,7 @@ void LaunchButtonMouseEvent(LaunchButton* wid, ChWindow* win, int x, int y, int 
  * @param lbutton -- Pointer to launcher button passed by system
  * @param win -- Pointer to window structure
  */
-void LauncherButtonDefaultAction(LaunchButton* lbutton, ChWindow *win){
+void LauncherButtonDefaultAction(LaunchButton* lbutton, ChWindow* win) {
 	ChWindowHide(win);
 	_KeProcessSleep(100);
 	int id = _KeCreateProcess(0, lbutton->title);
@@ -133,7 +137,7 @@ void LauncherButtonDefaultAction(LaunchButton* lbutton, ChWindow *win){
 	char** argvs = NULL;
 	int numarg = 0;
 	if (strcmp(lbutton->param, "Null") == 1) {
-		char* p = (char*)malloc(strlen(lbutton->param));
+		char* p = (char*)malloc(strlen(lbutton->param) + 1);
 		strcpy(p, lbutton->param);
 		numarg++;
 		argvs = (char**)malloc(numarg * sizeof(char*));
@@ -157,7 +161,7 @@ void LauncherButtonDefaultAction(LaunchButton* lbutton, ChWindow *win){
  * @param appname -- name of the application associated with this
  * button
  */
-LaunchButton *CreateLaunchButton(int x, int y, int w, int h, char* title, char* appname){
+LaunchButton* CreateLaunchButton(int x, int y, int w, int h, char* title, char* appname) {
 	LaunchButton* lb = (LaunchButton*)malloc(sizeof(LaunchButton));
 	memset(lb, 0, sizeof(LaunchButton));
 	lb->x = x;
@@ -166,11 +170,9 @@ LaunchButton *CreateLaunchButton(int x, int y, int w, int h, char* title, char* 
 	lb->h = h;
 	lb->scratch_x = x;
 	lb->scratch_y = y;
-	lb->title = (char*)malloc(strlen(title));
-	lb->appname = (char*)malloc(strlen(appname));
-	memset(lb->title, 0, strlen(title));
+	lb->title = (char*)malloc(strlen(title) + 1);
+	lb->appname = (char*)malloc(strlen(appname) + 1);
 	strcpy(lb->title, title);
-	memset(lb->appname, 0, strlen(appname));
 	strcpy(lb->appname, appname);
 	lb->buttonIcon = 0;
 	lb->drawLaunchButton = LaunchButtonPaint;
@@ -189,16 +191,16 @@ ButtonIcon* CreateLaunchButtonIcon(char* iconfile, LaunchButton* button) {
 	ButtonIcon* icon = (ButtonIcon*)malloc(sizeof(ButtonIcon));
 	memset(icon, 0, sizeof(ButtonIcon));
 	int fd = _KeOpenFile(iconfile, FILE_OPEN_READ_ONLY);
-	if (fd == -1){
-		for (;;);
+	if (fd == -1) {
+		for (;;)
+			;
 	}
 
 	_KePrint("Icon fd : %d \r\n", fd);
 	XEFileStatus stat;
 	_KeFileStat(fd, &stat);
 
-	icon->filename = (char*)malloc(strlen(iconfile));
-	memset(icon->filename, 0, strlen(iconfile));
+	icon->filename = (char*)malloc(strlen(iconfile) + 1);
 	strcpy(icon->filename, iconfile);
 	icon->fileBuffer = (uint8_t*)_KeMemMap(NULL, stat.size, 0, 0, MEMMAP_NO_FILEDESC, 0);
 	icon->iconFd = fd;
@@ -252,10 +254,10 @@ void ButtonIconRead(ButtonIcon* btninfo) {
 * @param x -- X coordinate
 * @param y -- Y coordinate
 */
-void ButtonIconDraw(ButtonIcon* info, ChCanvas* canv, int x, int y, ChRect* limit){
+void ButtonIconDraw(ButtonIcon* info, ChCanvas* canv, int x, int y, ChRect* limit) {
 	int width = info->iconWidth;
 	int height = info->iconHeight;
-	
+
 	if (x > (limit->x + limit->w))
 		return;
 
@@ -290,26 +292,30 @@ void ButtonIconDraw(ButtonIcon* info, ChCanvas* canv, int x, int y, ChRect* limi
 
 	uint8_t* image = info->imageData;
 	int bytes_per_pixel = info->iconBpp / 8;
-	if (bytes_per_pixel == 0) bytes_per_pixel = 3;
+	if (bytes_per_pixel == 0)
+		bytes_per_pixel = 3;
 	int row_pitch = ((info->iconWidth * info->iconBpp + 31) / 32) * 4;
 
 	for (int i = 0; i < height; i++) {
 		int image_y = diff_y + i;
 		int bmp_row = info->iconHeight - 1 - image_y;
-		if (bmp_row < 0 || bmp_row >= info->iconHeight) continue;
+		if (bmp_row < 0 || bmp_row >= info->iconHeight)
+			continue;
 
 		uint8_t* image_row = image + bmp_row * row_pitch;
 		for (int k = 0; k < width; k++) {
 			int image_x = diff_x + k;
-			if (image_x < 0 || image_x >= info->iconWidth) continue;
+			if (image_x < 0 || image_x >= info->iconWidth)
+				continue;
 
 			uint8_t* pixel = image_row + image_x * bytes_per_pixel;
 			uint32_t b = pixel[0];
 			uint32_t g = pixel[1];
 			uint32_t r = pixel[2];
-			
+
 			if (bytes_per_pixel == 3) {
-				if (r == 255 && g == 255 && b == 255) continue;
+				if (r == 255 && g == 255 && b == 255)
+					continue;
 				ChDrawPixel(canv, x + k, y + i, (r << 16) | (g << 8) | b);
 			} else {
 				uint32_t a = pixel[3];

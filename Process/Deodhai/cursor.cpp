@@ -119,8 +119,9 @@ void CursorDraw(ChCanvas* canv, Cursor* cur, unsigned int x, unsigned int y) {
 
 	uint8_t* image = cur->imageData;
 	for (int i = 0; i < height; i++) {
-		unsigned char* image_row = (unsigned char*)(image + (static_cast<uint64_t>(height) - i - 1) * 
-			(static_cast<uint64_t>(width) * 4));
+		unsigned char* image_row =
+			(unsigned char*)(image + (static_cast<uint64_t>(height) - i - 1) *
+										 (static_cast<uint64_t>(width) * 4));
 		uint32_t h = height - 1 - i;
 		j = 0;
 		for (int k = 0; k < width; k++) {

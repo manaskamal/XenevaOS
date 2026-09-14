@@ -61,7 +61,6 @@ static inline int __bitmap_test(const uint8_t* bm, uint32_t bit) {
 	return (bm[bit / 8] >> (bit % 8)) & 1;
 }
 
-
 /**
  * @brief _dma_pool_add_page -- add a backing page to pool
  * @param pool -- pointer to dma pool
@@ -71,21 +70,25 @@ static AuDMAPage* _dma_pool_add_page(AuDMAPool* pool) {
 	if (!page)
 		return NULL;
 	memset(page, 0, sizeof(AuDMAPage));
-	
+
 	/**
 	 * design should be such that, allocate a physical page
 	 * map it to dma virtual address, with non cacheable bit
 	 * and return, but for now aurora following very straigt
 	 * forward method
 	 */
-	page->phys = (uint64_t)AuPmmngrAlloc();
+	page->phys = (uint64_t)AuPmmngrAllocPages(1, 1, 0, AURORA_PAGE_DMA);
+	if (!page->phys) {
+		kfree(page);
+		return NULL;
+	}
 	page->virt = (void*)P2V((uint64_t)page->phys);
 
 	page->slots = pool->slots_per_page;
 	page->bitmap = (uint8_t*)kmalloc(__bitmap_bytes(page->slots));
 	if (!page->bitmap) {
 		UARTDebugOut("[aurora]: dma-pool failed to allocate bitmap \r\n");
-		AuPmmngrFree((void*)page->phys);
+		AuPmmngrReleasePage((uint64_t)page->phys);
 		kfree(page);
 		return NULL;
 	}
@@ -190,8 +193,8 @@ void* AuDMAPoolAlloc(AuDMAPool* pool, uint64_t* phys_out) {
 	int slot = -1;
 
 	while (page) {
-		if (page->in_use < page->slots) { 
-			slot = _dma_page_find_slot(page, pool); 
+		if (page->in_use < page->slots) {
+			slot = _dma_page_find_slot(page, pool);
 			if (slot >= 0)
 				break;
 		}
@@ -204,7 +207,7 @@ void* AuDMAPoolAlloc(AuDMAPool* pool, uint64_t* phys_out) {
 			return NULL;
 
 		slot = _dma_page_find_slot(page, pool);
-		if (slot < 0) 
+		if (slot < 0)
 			return NULL;
 	}
 
@@ -260,8 +263,6 @@ void AuDMAPoolFree(AuDMAPool* pool, void* virt, uint64_t phys) {
 	__bitmap_clear(page->bitmap, slot);
 	page->in_use--;
 	pool->total_frees++;
-
-	
 }
 
 /**
@@ -278,7 +279,7 @@ void AuDMAPoolDestroy(AuDMAPool* pool) {
 	while (page) {
 		AuDMAPage* next = page->next;
 		kfree(page->bitmap);
-		AuPmmngrFree((void*)page->phys);
+		AuPmmngrReleasePage((uint64_t)page->phys);
 		kfree(page);
 		page = next;
 	}
@@ -289,9 +290,7 @@ void AuDMAPoolDestroy(AuDMAPool* pool) {
 	kfree(pool);
 }
 
-static const size_t szClasses[DMA_NUM_CLASSES] = {
-	8,16,32,64,128,256,512
-};
+static const size_t szClasses[DMA_NUM_CLASSES] = {8, 16, 32, 64, 128, 256, 512};
 
 /**
  * @brief AuDMAGlobalClassInitialize -- initialize and populate global
@@ -335,7 +334,8 @@ static int _dma_gclass_find_class(AuDMAGlobalClass* gClass, size_t sz) {
 	size |= size >> 32;
 	size++;
 
-	if (size < 8) size = 8;
+	if (size < 8)
+		size = 8;
 
 	if (size > DMA_MAX_POOL_SIZE)
 		return -1;
@@ -361,13 +361,16 @@ void* AuDMAGClassAlloc(AuDMAGlobalClass* gClass, size_t sz, uint64_t* physOut) {
 
 	if (idx < 0) {
 		/** return a full 4KiB page for larger than MAX_POOL_SZ */
-		return AuPmmngrAlloc();
+		uint64_t phys = (uint64_t)AuPmmngrAllocPages(1, 1, 0, AURORA_PAGE_DMA);
+		if (!phys)
+			return NULL;
+		*physOut = phys;
+		return (void*)P2V(phys);
 	}
 
 	/** or allocate it using pool allocator */
 	return AuDMAPoolAlloc(gClass->pools[idx], physOut);
 }
-
 
 /**
  * @brief AuDMAGClassFree -- free a memory and put it to gclass pool
@@ -377,17 +380,17 @@ void* AuDMAGClassAlloc(AuDMAGlobalClass* gClass, size_t sz, uint64_t* physOut) {
  * @param sz -- size of the allocated memory
  */
 void AuDMAGClassFree(AuDMAGlobalClass* gClass, void* virt, uint64_t physOut, size_t sz) {
-	if (!virt) return;
+	if (!virt)
+		return;
 
 	int idx = _dma_gclass_find_class(gClass, sz);
 
 	if (idx < 0) {
-		AuPmmngrFree((void*)physOut);
+		AuPmmngrReleasePage((uint64_t)physOut);
 		return;
 	}
 
 	AuDMAPoolFree(gClass->pools[idx], virt, physOut);
-	
 }
 
 /**

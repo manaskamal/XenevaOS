@@ -37,34 +37,33 @@
 #include <sys/_kesignal.h>
 
 #ifdef __cplusplus
-XE_EXTERN{
+XE_EXTERN {
 #endif
 
 	/**
 	 * process token definitions
 	 */
 	enum _proc_tokens_ {
-	   PROCESS_TOKEN_NETWORK,
-	   PROCESS_TOKEN_DISPLAY,
-	   PROCESS_TOKEN_AUDIO,
-	   PROCESS_TOKEN_DEV,
-	   PROCESS_TOKEN_NETSERVER,
-    };
+		PROCESS_TOKEN_NETWORK,
+		PROCESS_TOKEN_DISPLAY,
+		PROCESS_TOKEN_AUDIO,
+		PROCESS_TOKEN_DEV,
+		PROCESS_TOKEN_NETSERVER,
+	};
 
-
-/**
+	/**
  * _sys_proc_list -- a way to report current status
  * of information about all processes
  */
-typedef struct _sys_proc_list_ {
-	int proc_id;
-	char name[16];
-	uint64_t total_runtime_us;
-	uint64_t window_runtime_us;
-	uint32_t num_threads;
-	uint32_t num_file_opened;
-	uint32_t cpu_usage;
-}XEProcessList;
+	typedef struct _sys_proc_list_ {
+		int proc_id;
+		char name[16];
+		uint64_t total_runtime_us;
+		uint64_t window_runtime_us;
+		uint32_t num_threads;
+		uint32_t num_file_opened;
+		uint32_t cpu_usage;
+	} XEProcessList;
 
 	/**
 	 * @brief _KePauseThread -- pause currently running
@@ -125,7 +124,6 @@ typedef struct _sys_proc_list_ {
 	*/
 	XE_LIB uint64_t _KeGetProcessHeapMem(size_t sz);
 
-
 	/**
 	 * @brief _KeProcessSleep -- put the current process main thread
 	 *  to sleep mode
@@ -152,7 +150,7 @@ typedef struct _sys_proc_list_ {
 	 * @brief _KeCreateThread -- creates a new thread
 	 * inside current process slot
 	 */
-	XE_LIB int _KeCreateThread(void(*entry) (), char *name);
+	XE_LIB int _KeCreateThread(void (*entry)(), char* name);
 
 	/**
 	* @brief _KeSetFileToProcess -- copies a file from one process
@@ -206,11 +204,10 @@ typedef struct _sys_proc_list_ {
 
 	XE_LIB int _KeGetNumProcessCount();
 
-	XE_LIB int _KeProcessFetch(XEProcessList* list, int num_proc_count);
+	XE_LIB int _KeProcessFetch(XEProcessList * list, int num_proc_count);
 
 #ifdef __cplusplus
 }
 #endif
-
 
 #endif

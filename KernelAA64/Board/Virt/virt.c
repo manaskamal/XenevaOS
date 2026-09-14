@@ -29,7 +29,6 @@
 *
 **/
 
-
 #include <pcie.h>
 #include <Drivers/virtio.h>
 #include <string.h>
@@ -38,9 +37,9 @@
 #include <Hal/AA64/aa64lowlevel.h>
 
 #define VIRTIO_INPUT_KEYBOARD 1
-#define VIRTIO_INPUT_TABLET 2
+#define VIRTIO_INPUT_TABLET	  2
 
-uint8_t AuVirtIOInputCheck(uint64_t device, int bus,int dev,int func) {
+uint8_t AuVirtIOInputCheck(uint64_t device, int bus, int dev, int func) {
 	uint64_t barLo = AuPCIERead(device, PCI_BAR4, bus, dev, func);
 	uint64_t barHi = AuPCIERead(device, PCI_BAR5, bus, dev, func);
 	uint64_t bar = ((uint64_t)barHi << 32) | (barLo & ~0xFULL);
@@ -68,20 +67,26 @@ uint8_t AuVirtIOInputCheck(uint64_t device, int bus,int dev,int func) {
 /**
  * @brief AuVirtIOInputInitialize -- initialize virtIO input device
  */
+/* virtio-blk-pci, modern-only (disable-legacy=on in the qemu launch args) --
+ * see BaseHdr/Drivers/virtio.h for the rest of the 0x1AF4:0x10xx scheme */
+#define VIRTIO_PCI_DEVICE_ID_BLK 0x1042
+
+/* headroom for blk+net+kbd+tablet+gpu/snd without silently dropping inputs */
+#define MAX_VIRTIO_DEVICES 8
+
 void AuVirtIOInputInitialize() {
 	UARTDebugOut("AuVirtIO initializing inputs \r\n");
 	int numVirtIODevice = 0;
-	for (int bus = 0; bus < 255; bus++) {
-		for (int dev = 0; dev < PCI_DEVICE_PER_BUS; dev++) {
-			for (int func = 0; func < PCI_FUNCTION_PER_DEVICE; func++) {
-				if (numVirtIODevice == 3)
-					break;
+	for (int bus = 0; bus < 255 && numVirtIODevice < MAX_VIRTIO_DEVICES; bus++) {
+		for (int dev = 0; dev < PCI_DEVICE_PER_BUS && numVirtIODevice < MAX_VIRTIO_DEVICES; dev++) {
+			for (int func = 0; func < PCI_FUNCTION_PER_DEVICE && numVirtIODevice < MAX_VIRTIO_DEVICES;
+				 func++) {
 				uint64_t address = AuPCIEGetDevice(0, bus, dev, func);
 				if (address == 0)
 					continue;
 				if (address == 0xFFFFFFFF)
 					continue;
-			
+
 				uint8_t class_code = AuPCIERead(address, PCI_CLASS, bus, dev, func);
 				uint8_t sub_ClassCode = AuPCIERead(address, PCI_SUBCLASS, bus, dev, func);
 				uint16_t vendID = AuPCIERead(address, PCI_VENDOR_ID, bus, dev, func);
@@ -92,17 +97,22 @@ void AuVirtIOInputInitialize() {
 					uint8_t devType = AuVirtIOInputCheck(address, bus, dev, func);
 					if (devType == VIRTIO_INPUT_KEYBOARD) {
 						numVirtIODevice++;
-						AuVirtioKbdInitialize(address);
-					}
-					else if (devType == VIRTIO_INPUT_TABLET) {
+						AuVirtioKbdInitialize(address, bus, dev, func);
+					} else if (devType == VIRTIO_INPUT_TABLET) {
 						numVirtIODevice++;
-						AuVirtioTabletInitialize(address);
+						AuVirtioTabletInitialize(address, bus, dev, func);
 					}
 				}
-				if (vendID == 0x1AF4 && devID == 0x1041) {
-					/* initialize network device */
-					numVirtIODevice++;
+				if (vendID == 0x1AF4 && (devID == 0x1041 || devID == 0x1000)) {
+					/* external virtnet.dll owns this device; do NOT consume
+					 * a MAX_VIRTIO_DEVICES slot or later inputs (tablet)
+					 * get skipped depending on PCI order --axiss */
+					UARTDebugOut("[aurora]: skipping virtionet initialization inside kernel \r\n");
 					//AuVirtioNetInitialize(address);
+				}
+				if (vendID == 0x1AF4 && devID == VIRTIO_PCI_DEVICE_ID_BLK) {
+					numVirtIODevice++;
+					AuVirtioBlkInitialize(address, bus, dev, func);
 				}
 			}
 		}
@@ -111,9 +121,8 @@ void AuVirtIOInputInitialize() {
 }
 
 #define GOOGLE_GOLDFISH_RTC_BASE 0x09010000
-#define RTC_TIME_LOW ((volatile uint32_t*)(GOOGLE_GOLDFISH_RTC_BASE + 0x00))
-#define RTC_TIME_HIGH ((volatile uint32_t*)(GOOGLE_GOLDFISH_RTC_BASE + 0x04))
-
+#define RTC_TIME_LOW			 ((volatile uint32_t*)(GOOGLE_GOLDFISH_RTC_BASE + 0x00))
+#define RTC_TIME_HIGH			 ((volatile uint32_t*)(GOOGLE_GOLDFISH_RTC_BASE + 0x04))
 
 uint64_t AuVirtGetBootEpoch() {
 	uint32_t low = *RTC_TIME_LOW;

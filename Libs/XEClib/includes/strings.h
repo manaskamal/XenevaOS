@@ -39,16 +39,15 @@
 extern "C" {
 #endif
 
-	XE_LIB int bcmp(const void*, const void*, size_t);
-	XE_LIB void bcopy(const void*, void*, size_t);
-	XE_LIB void bzero(void*, size_t);
-	XE_LIB char* index(const char*, int);
-	XE_LIB char* rindex(const char*, int);
+XE_LIB int bcmp(const void*, const void*, size_t);
+XE_LIB void bcopy(const void*, void*, size_t);
+XE_LIB void bzero(void*, size_t);
+XE_LIB char* index(const char*, int);
+XE_LIB char* rindex(const char*, int);
 
-	XE_LIB int ffs(int);
-	XE_LIB int strcasecmp(const char*, const char*);
-	XE_LIB int strncasecmp(const char*, const char*, size_t);
-
+XE_LIB int ffs(int);
+XE_LIB int strcasecmp(const char*, const char*);
+XE_LIB int strncasecmp(const char*, const char*, size_t);
 
 #ifdef __cplusplus
 }

@@ -36,7 +36,7 @@
 #include <_null.h>
 
 void HUBSetPortFeature(USBDevice* dev, XHCISlot* slot, uint8_t feature, uint8_t port) {
-	uint64_t buf = (uint64_t)P2V((size_t)AuPmmngrAlloc());
+	uint64_t buf = (uint64_t)P2V((size_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 	memset((void*)buf, 0, 4096);
 
 	USB_REQUEST_PACKET pack;
@@ -62,7 +62,7 @@ void HUBGetDescriptor(USBDevice* dev, XHCISlot* slot, uint64_t buffer, uint16_t 
 
 
 void USBHubInitialise(USBDevice* dev, XHCISlot* slot) {
-	uint64_t buffer = (uint64_t)P2V((size_t)AuPmmngrAlloc());
+	uint64_t buffer = (uint64_t)P2V((size_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 	memset((void*)buffer, 0, PAGE_SIZE);
 
 	uint8_t hub_def_numports = 4;

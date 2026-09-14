@@ -212,7 +212,7 @@ void virtioblk_alloc_requestQ(VirtioCommonCfg* cfg) {
 	int queueSz = cfg->QueueSize;
 	requestQ_sz = queueSz;
 	UARTDebugOut("[virtio-blk]: requestQ_sz : %d  - sizeof(VirtioQueue) -> %d \r\n", requestQ_sz, sizeof(VirtioQueue));
-	uint64_t queuePhys = (uint64_t)AuPmmngrAllocBlocks(2);//AuPmmngrAllocBlocks(((sizeof(struct VirtioQueue) * queueSz)) / 0x1000);
+	uint64_t queuePhys = AuPmmngrAllocPages(2, 1, 0, AURORA_PAGE_DMA);
 	requestQ = (struct VirtioBLKQueue*)AuMapMMIO(queuePhys, 2);
 
 	cfg->QueueDesc = queuePhys;
@@ -454,7 +454,6 @@ AU_EXTERN AU_EXPORT int AuDriverMain(AuDriver * drv) {
 	uint64_t storage_sz_in_bytes = total_sect * 512;
 	uint64_t size_mb = storage_sz_in_bytes / (1024 * 1024);
 	uint64_t size_gb = storage_sz_in_bytes / (1024 * 1024 * 1024);
-
 
 	/** reset the virtio block device **/
 	virtioblk_reset(cfg);

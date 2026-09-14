@@ -42,6 +42,7 @@
 #include <signal.h>
 #include <timer.h>
 #include <Log/klog.h>
+#include <string.h>
 
 /**
  * @brief GetThreadID -- returns current id
@@ -83,7 +84,8 @@ int ProcessExit() {
 	UARTDebugOut("Proc : %x - %s\r\n", proc, current_thr->name);
 	if (!proc) {
 		UARTDebugOut("Process exit not found \r\n");
-		for (;;);
+		for (;;)
+			;
 	}
 
 	AuProcessExit(proc, false);
@@ -124,7 +126,17 @@ int CreateProcess(int parent_id, char* name) {
 		if (!parent)
 			return -1;
 	}
-	AuProcess* slot = AuCreateProcessSlot(parent, name);
+	char pname[16];
+	memset(pname, 0, sizeof(pname));
+	if (name) {
+		for (int i = 0; i < (int)sizeof(pname) - 1; i++) {
+			char c = name[i];
+			pname[i] = c;
+			if (!c)
+				break;
+		}
+	}
+	AuProcess* slot = AuCreateProcessSlot(parent, pname);
 	if (!slot)
 		return -1;
 	return slot->proc_id;
@@ -164,7 +176,6 @@ int PauseThread() {
 	return 1;
 }
 
-
 /**
  * @brief ProcessLoadExec -- loads an executable to a
  * process slot
@@ -176,6 +187,22 @@ int ProcessLoadExec(int proc_id, char* filename, int argc, char** argv) {
 		UARTDebugOut("No process found for proc_id : %d\n", proc_id);
 		return -1;
 	}
+
+	/* filename is a raw user pointer. copy it first so a malloc(strlen)
+	 * overflow in the launcher (no NUL) can't make kernel strlen walk
+	 * off into neighbouring user chunks. --axiss */
+	char fname[128];
+	memset(fname, 0, sizeof(fname));
+	if (!filename)
+		return -1;
+	for (int i = 0; i < (int)sizeof(fname) - 1; i++) {
+		char c = filename[i];
+		fname[i] = c;
+		if (!c)
+			break;
+	}
+	if (!fname[0])
+		return -1;
 
 	/* prepare stuffs for passing arguments */
 	int char_cnt = 0;
@@ -204,15 +231,16 @@ int ProcessLoadExec(int proc_id, char* filename, int argc, char** argv) {
 		}
 	}
 
-	int status = AuLoadExecToProcess(proc, filename, argc, allocated_argv);
+	int status = AuLoadExecToProcess(proc, fname, argc, allocated_argv);
 	if (status == -1) {
 		if (allocated_argv)
 			kfree(allocated_argv);
-		UARTDebugOut("Process launched failed %s\r\n", filename);
+		UARTDebugOut("Process launched failed %s\r\n", fname);
 		//exit the process
 		//AuProcessExit(proc, true);
 		return -1;
 	}
+	return status;
 }
 
 /**
@@ -238,7 +266,6 @@ int SetFileToProcess(int fileno, int dest_fdidx, int proc_id) {
 			return -1;
 	}
 
-
 	/* now try getting the destination process by its
 	* process id
 	*/
@@ -263,9 +290,6 @@ int SetFileToProcess(int fileno, int dest_fdidx, int proc_id) {
 		 * fileno to destination processes file
 		 * entry
 		 */
-		
-
-
 
 		destproc->fds[dest_fdidx] = file;
 		file->fileCopyCount += 1;
@@ -273,19 +297,14 @@ int SetFileToProcess(int fileno, int dest_fdidx, int proc_id) {
 		/* inherit the capability if inheritance is allowed */
 		AuCapability* src = BordoisilaCapLookup(proc, fileno);
 		if (src && !(src->flags & CAP_FLAG_NO_INHERIT)) {
-			BPrintK(BORDOISILA_INFO, "Capability copied from proc : %s, fileno-> %d \r\n", proc->name, fileno);
-   		 BordoisilaCapCreate(
-       		 destproc,
-        		dest_fdidx,
-       		 file,
-       		 src->object_type,
-       		 src->rights);
-		} 
-
-
-	}     
-    return 0;
-
+			BPrintK(BORDOISILA_INFO,
+					"Capability copied from proc : %s, fileno-> %d \r\n",
+					proc->name,
+					fileno);
+			BordoisilaCapCreate(destproc, dest_fdidx, file, src->object_type, src->rights);
+		}
+	}
+	return 0;
 }
 
 /**
@@ -293,7 +312,7 @@ int SetFileToProcess(int fileno, int dest_fdidx, int proc_id) {
 * @return the thread index within
 * the process
 */
-int CreateUserThread(void(*entry) (), char* name) {
+int CreateUserThread(void (*entry)(), char* name) {
 	AA64Thread* thr = AuGetCurrentThread();
 	if (!thr)
 		return 0;
@@ -310,7 +329,6 @@ int CreateUserThread(void(*entry) (), char* name) {
 	return idx;
 }
 
-
 /**
  * @brief GetEnvironmentBlock -- returns environment
  * block of this process
@@ -324,7 +342,6 @@ size_t GetEnvironmenBlock() {
 			return NULL;
 	}
 	return proc->_envp_block_;
-
 }
 
 void SignalReturn(int signum) {
@@ -363,7 +380,10 @@ int SetSignal(int signo, AuSignalHandler handler) {
 	AA64Thread* thr = AuGetCurrentThread();
 	if (!thr)
 		return 0;
+	if (signo <= 0 || signo >= 32)
+		return 0;
 	thr->sigs[signo] = (uint64_t*)handler;
+	return 0;
 }
 
 /**

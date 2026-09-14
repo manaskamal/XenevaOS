@@ -116,6 +116,7 @@ typedef uint64_t size_t;
 #define INT16_MAX 32767
 #define INT32_MAX 2147483647
 #define INT64_MAX 9223372036854775807LL
+#define LONG_MAX  9223372036854775807L
 
 #define UINT8_MAX 0xff /* 255U */
 #define UINT16_MAX 0xffff /* 65535U */
@@ -285,4 +286,6 @@ static inline uint32_t div_round_closest_u32(uint32_t x, uint32_t divisor) {
 #define CLAMP(val, lo, hi)  ((val) < (lo) ? (lo) : ((val) > (hi) ? (hi) : (val)))
 
 #define ABS(x) ((x) < 0 ? -(x) : (x))
+
+#define div64_ul(dividend, divisor)   ((uint64_t)(dividend) / (unsigned long)(divisor))
 #endif

@@ -44,8 +44,7 @@ void LauncherPaintAppGrid(AppGrid* grid, ChWindow* win) {
 					button->drawLaunchButton(button, win);
 			}
 		}
-	}
-	else {
+	} else {
 		ChDrawRect(win->canv, grid->x, grid->y, grid->w, grid->h, 0x1A48494B);
 		for (int i = 0; i < grid->lbbuttonlist->pointer; i++) {
 			LaunchButton* button = (LaunchButton*)list_get_at(grid->lbbuttonlist, i);
@@ -93,7 +92,7 @@ AppGrid* LauncherCreateAppGrid(int x, int y, int w, int h) {
 void AppGridAddButtonToPage(AppGrid* grid, LaunchButton* button) {
 	button->x = grid->page[button->page_number].start_x;
 	button->y = grid->page[button->page_number].start_y;
-	
+
 	if ((button->x + button->w) >= (grid->x + grid->w)) {
 		grid->page[button->page_number].start_x = grid->x + BUTTONS_PAD_X;
 		grid->page[button->page_number].start_y += button->h + ROWS_PAD_Y;
@@ -105,7 +104,6 @@ void AppGridAddButtonToPage(AppGrid* grid, LaunchButton* button) {
 		_KePrint("Button %s striked app grid \r\n", button->title);
 		button->page_number += 1;
 		AppGridAddButtonToPage(grid, button);
-
 	}
 	grid->page[button->page_number].start_x += button->w + BUTTONS_PAD_X;
 	grid->page[button->page_number].hasItem = 1;
@@ -122,7 +120,7 @@ void AppGridAddButtonToPage(AppGrid* grid, LaunchButton* button) {
 void AppGridAddButton(AppGrid* grid, LaunchButton* button) {
 	button->x = grid->start_pos_x;
 	button->y = grid->start_pos_y;
-	if ((button->x + button->w) >= (grid->x + grid->w)){
+	if ((button->x + button->w) >= (grid->x + grid->w)) {
 		grid->start_pos_x = grid->x + BUTTONS_PAD_X;
 		grid->start_pos_y += button->h + ROWS_PAD_Y;
 		button->x = grid->start_pos_x;
@@ -133,14 +131,12 @@ void AppGridAddButton(AppGrid* grid, LaunchButton* button) {
 		_KePrint("Button %s striked app grid \r\n", button->title);
 		button->page_number += 1;
 		AppGridAddButtonToPage(grid, button);
-		
 	}
 	grid->start_pos_x += button->w + BUTTONS_PAD_X;
 	button->scratch_x = button->x;
 	button->scratch_y = button->y;
 	list_add(grid->lbbuttonlist, button);
 }
-
 
 /*
  * AppGridAddButtonInSearch -- adds a button to specific grid
@@ -190,7 +186,6 @@ void AppGridPaint(AppGrid* grid, ChWindow* win) {
 	if (grid->PaintAppGrid)
 		grid->PaintAppGrid(grid, win);
 }
-
 
 int AppGridGetTotalNumberOfPage(AppGrid* grid) {
 	int numPage = 1;

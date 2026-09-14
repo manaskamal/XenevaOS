@@ -27,28 +27,23 @@
 *
 **/
 
-
 #ifndef __XNLDR2_H__
 #define __XNLDR2_H__
 
 #include <stdint.h>
 #include <Uefi.h>
+#include <Protocol/GraphicsOutput.h>
 #include <stddef.h>
+#include <aurora.h>
 #ifndef SIZE_MAX
-#if defined(ARCH_ARM64) || defined(ARCH_X64) || defined(_M_AMD64) || defined(_M_ARM64) || defined(__x86_64__) || defined(__aarch64__)
+#if defined(ARCH_ARM64) || defined(ARCH_X64) || defined(_M_AMD64) || defined(_M_ARM64) ||          \
+	defined(__x86_64__) || defined(__aarch64__)
 #define SIZE_MAX 0xFFFFFFFFFFFFFFFFULL
 #else
 #define SIZE_MAX 0xFFFFFFFFULL
 #endif
 #endif
 //#include <stddef.h>
-
-#define SIZE_MAX 0xFFFFFFFF
-
-
-#define EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID \
-{0x9042a9de,0x23dc,0x4a38,\
-{0x96,0xfb,0x7a,0xde,0xd0,0x80,0x51,0x6a}}
 
 #ifdef __TARGET_BOARD_RPI3__
 #define MMIO_BASE 0x3F000000
@@ -71,52 +66,15 @@ typedef struct _FB_INFO_ {
 	uint32_t greenmask;
 	uint32_t bluemask;
 	uint32_t resvmask;
-} FRAMEBUFFER_INFORMATION, * PFRAMEBUFFER_INFORMATION;
+} FRAMEBUFFER_INFORMATION, *PFRAMEBUFFER_INFORMATION;
 
-
-#define BOOT_UEFI_X64   1
-#define BOOT_UEFI_ARM64 2
-/* XEBootInfo, Xeneva Boot information
- * structure passed to the kernel
- */
-typedef struct _XE_BOOT_INFO_ {
-	int boot_type;
-	void* allocated_mem;
-	uint64_t reserved_mem_count;
-	void* map;
-	uint64_t descriptor_size;
-	uint64_t mem_map_size;
-	uint32_t* graphics_framebuffer;
-	size_t   fb_size;
-	uint16_t  X_Resolution;
-	uint16_t  Y_Resolution;
-	uint16_t  pixels_per_line;
-	uint32_t redmask;
-	uint32_t greenmask;
-	uint32_t bluemask;
-	uint32_t resvmask;
-	void* acpi_table_pointer;
-	size_t   kernel_size;
-	uint8_t* font_binary_address;
-	void (*printf_gui) (const char* text, ...);
-	uint8_t* driver_entry1;   //!OTHER
-	uint8_t* driver_entry2;   //!NVME
-	uint8_t* driver_entry3;   //!AHCI
-	uint8_t* driver_entry4;   //!FLOPPY
-	uint8_t* driver_entry5;   //!ATA
-	uint8_t* driver_entry6;   //!USB
-	void* ap_code;
-
-	/*Boot device specific */
-	uint32_t hid;
-	uint32_t uid;
-	uint32_t cid;
-}XEBootInfo, * XEPBootInfo;
+/* I intentionally have the loader and kernel share one hand-off structure, better not fragment it --axiss */
+typedef KERNEL_BOOT_INFO XEBootInfo;
+typedef KERNEL_BOOT_INFO* XEPBootInfo;
 
 //#pragma pack(pop)
 
-typedef void(*XEImageEntry)(XEBootInfo*);
-
+typedef void (*XEImageEntry)(XEBootInfo*);
 
 struct EfiMemoryMap {
 	EFI_MEMORY_DESCRIPTOR* memmap;
@@ -126,7 +84,7 @@ struct EfiMemoryMap {
 	UINT32 DescriptorVersion;
 };
 
-extern EFI_HANDLE   gImageHandle;
+extern EFI_HANDLE gImageHandle;
 extern EFI_SYSTEM_TABLE* gSystemTable;
 extern EFI_BOOT_SERVICES* gBS;
 extern EFI_RUNTIME_SERVICES* gRS;

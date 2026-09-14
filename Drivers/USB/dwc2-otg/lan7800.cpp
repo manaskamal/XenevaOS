@@ -113,7 +113,7 @@ void lan7800_read_mac_from_eeprom(dwc2_core_regs* regs, dwc2_usb_device* dev, ui
  */
 void lan7800_initialize(dwc2_core_regs* regs, dwc2_usb_device* dev) {
 	uint32_t timeout = 100;
-	dev->scratchBuff = AuPmmngrAlloc();
+	dev->scratchBuff = (void*)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
 	while (timeout--) {
 		uint32_t hw_cfg = lan7800_read_reg(regs, dev, 0x010);
 		if (hw_cfg & 0x2) break;

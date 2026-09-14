@@ -38,20 +38,19 @@
 #include <aucon.h>
 #include <Net/arp.h>
 #include <Net/ipv4.h>
+#include <Net/ipv6.h>
 #include <Net/udp.h>
 #include <Net/socket.h>
 #include <Hal/AA64/profile.h>
 
-
-#pragma pack(push,1)
+#pragma pack(push, 1)
 ALIGNED(2) typedef struct _ethernet_ {
 	uint8_t dest[6];
 	uint8_t src[6];
 	uint16_t typeLen;
 	uint8_t payload[];
-}Ethernet;
+} Ethernet;
 #pragma pack(pop)
-
 
 AU_EXTERN AU_EXPORT void AuEthernetHandle(void* data, int size, AuVFSNode* nic) {
 	Ethernet* frame = (Ethernet*)data;
@@ -65,7 +64,7 @@ AU_EXTERN AU_EXPORT void AuEthernetHandle(void* data, int size, AuVFSNode* nic) 
 		AuSocketAdd(sock, frame, size);
 	}
 
-	char broadcast_mac[6] = { 0xFF,0xFF,0xFF,0xFF,0xFF,0xFF };
+	char broadcast_mac[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 	if (!memcmp(frame->dest, ndev->mac, 6) || !memcmp(frame->dest, broadcast_mac, 6)) {
 		switch (ntohs(frame->typeLen)) {
 		case ETHERNET_TYPE_ARP:
@@ -75,16 +74,14 @@ AU_EXTERN AU_EXPORT void AuEthernetHandle(void* data, int size, AuVFSNode* nic) 
 			IPv4HandlePacket((void*)&frame->payload, nic);
 			break;
 		case ETHERNET_TYPE_IPV6:
-			UARTDebugOut("[aurora net]: ipv6 packet received \r\n");
-			//IPv6 Handle packet
-			//IPv6HandlePacket((void*)&frame->payload, nic);
+			IPv6HandlePacket((void*)&frame->payload, nic);
 			break;
 		}
 	}
 }
 
 #ifdef ARCH_X64
-#pragma pack(push,1)
+#pragma pack(push, 1)
 #endif
 
 typedef struct _dns_ {
@@ -95,7 +92,7 @@ typedef struct _dns_ {
 	uint16_t authorities;
 	uint16_t additional;
 	uint8_t data[];
-}DNSPacket;
+} DNSPacket;
 #ifdef ARCH_X64
 #pragma pack(pop)
 #endif
@@ -110,6 +107,11 @@ void AuEthernetSend(AuVFSNode* nic, void* data, size_t len, uint16_t type, uint8
 	AuNetworkDevice* ndev = (AuNetworkDevice*)nic->device;
 	if (!ndev)
 		return;
+	/* Acceptance: loopback / local delivery must never hit L2. */
+	if (ndev->type == NETDEV_TYPE_LOOPBACK) {
+		UARTDebugOut("[aurora]: AuEthernetSend blocked on lo\r\n");
+		return;
+	}
 	size_t totalSz = sizeof(Ethernet) + len;
 	Ethernet* pacl = (Ethernet*)kmalloc(totalSz);
 	memset(pacl, 0, totalSz);
@@ -118,9 +120,8 @@ void AuEthernetSend(AuVFSNode* nic, void* data, size_t len, uint16_t type, uint8
 	uint8_t* src_mac = ndev->mac;
 	memcpy(&pacl->src, src_mac, 6);
 	pacl->typeLen = htons(type);
-	UARTDebugOut("PaclTypelen : %d \r\n", pacl->typeLen);
-	if (nic->write) 
+	if (nic->write)
 		nic->write(nic, nic, (uint64_t*)pacl, totalSz);
-	
+
 	kfree(pacl);
 }

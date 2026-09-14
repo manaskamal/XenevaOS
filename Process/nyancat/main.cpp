@@ -8,14 +8,13 @@
 
 #define STAR_COUNT 12
 
-static const char starGlyphs[] = { '.', '+', '*', '+' };
+static const char starGlyphs[] = {'.', '+', '*', '+'};
 
 typedef struct {
 	uint8_t x, y;
 	uint8_t phase;
 	uint8_t speed;
-}Star;
-
+} Star;
 
 static Star stars[STAR_COUNT];
 

@@ -79,12 +79,10 @@ int AuDevFSCreateFile(AuVFSNode* fs, char* path, uint8_t mode) {
 		list->childs = initialize_list();
 		file->flags |= FS_FLAG_DIRECTORY;
 		file->device = list;
-	}
-	else {
+	} else {
 		file->flags = FS_FLAG_GENERAL | FS_FLAG_DEVICE;
 		file->device = fs;
 	}
-
 
 	char* next = strchr(path, '/');
 	if (next)
@@ -115,7 +113,7 @@ int AuDevFSCreateFile(AuVFSNode* fs, char* path, uint8_t mode) {
 	}
 	strcpy(file->filename, pathname);
 	list_add(first_list->childs, file);
-	aa64_data_cache_clean_range(first_list, sizeof(list_t));
+	//aa64_data_cache_clean_range(first_list, sizeof(list_t));
 	return 1;
 }
 

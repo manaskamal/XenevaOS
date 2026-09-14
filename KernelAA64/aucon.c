@@ -47,12 +47,16 @@
 #include <Hal/AA64/sched.h>
 #include <process.h>
 #include <Fs/vfs.h>
+#include <Fs/tty.h>
 #include <Fs/Dev/devfs.h>
+#include <Fs/Dev/devinput.h>
 #include <Drivers/uart.h>
 #include <Hal/AA64/aa64cpu.h>
 #include <Hal/AA64/aa64lowlevel.h>
 #include <Ipc/postbox.h>
-#include <Drivers/uart.h>
+
+/* temporary input-freeze diagnostics */
+extern void AuVirtioKbdDebug(void);
 
 uint8_t* font_data;
 uint32_t console_x;
@@ -65,7 +69,7 @@ size_t h_res, v_res;
 BOOL early_;
 bool bypass_autextout;
 
-void(*_print_func) (const char* text, ...);
+void (*_print_func)(const char* text, ...);
 
 #define CONSOLE_BACKGROUND 0x00000000
 #define CONSOLE_FOREGROUND 0xFFFFFFFF
@@ -82,12 +86,12 @@ void AuTestPrint() {
  */
 void AuConsoleInitialize(PKERNEL_BOOT_INFO info, bool early) {
 	if (early) {
-		_print_func = info->printf_gui;
+		/* the UEFI loader callback points into XNLDR's image, cant rely on
+		 * that bs mapping once VM bootstrap kicks in since its not part
+		 * of the kernel address space --axiss */
+		_print_func = UARTDebugOut;
 		early_ = early;
-		if (info->boot_type == BOOT_LITTLEBOOT_ARM64) {
-			_print_func = UARTDebugOut;
-			AuUartPutString("[aurora]: printf function set to UARTDebugOut \r\n");
-		}
+		AuUartPutString("[aurora]: early console set to UARTDebugOut \r\n");
 	}
 	aucon = NULL;
 	bypass_autextout = false;
@@ -103,13 +107,25 @@ void AuConsoleInitialize(PKERNEL_BOOT_INFO info, bool early) {
 int AuConsoleIoControl(AuVFSNode* file, int code, void* arg) {
 	int ret = 0;
 	AuFileIOControl* ioctl = (AuFileIOControl*)arg;
-	/*if (ioctl->syscall_magic != AURORA_SYSCALL_MAGIC)
-		return 0;*/
+	(void)file;
 
 	if (!aucon)
 		return 0;
 
 	switch (code) {
+	case TIOCGWINSZ: {
+		WinSize* sz = (WinSize*)arg;
+		if (!sz)
+			return 0;
+		sz->ws_col = (uint16_t)(aucon->width / 9);
+		sz->ws_row = (uint16_t)(aucon->height / 16);
+		sz->ws_xpixel = (uint16_t)aucon->width;
+		sz->ws_ypixel = (uint16_t)aucon->height;
+		return 0;
+	}
+	case TIOCSWINSZ:
+	case TIOSPGRP:
+		return 0;
 	case SCREEN_GETWIDTH: {
 		uint32_t width = aucon->width;
 		ioctl->uint_1 = width;
@@ -147,12 +163,12 @@ int AuConsoleIoControl(AuVFSNode* file, int code, void* arg) {
 			if (!proc)
 				break;
 		}
-		uint64_t vmaddr= (uint64_t)AuGetFreePage(1, NULL);
+		uint64_t vmaddr = (uint64_t)AuGetFreePage(1, NULL);
 		uint64_t fbaddr = (uint64_t)__framebuffer;
 		for (int i = 0; i < aucon->size / PAGE_SIZE; i++) {
 			AuMapPage((uint64_t)fbaddr + (i * PAGE_SIZE),
-				vmaddr + (i * PAGE_SIZE), PTE_NORMAL_NON_CACHEABLE | PTE_AP_RW_USER);
-
+					  vmaddr + (i * PAGE_SIZE),
+					  PTE_NORMAL_NON_CACHEABLE | PTE_AP_RW_USER);
 		}
 		//uint64_t buffaddr = (uint64_t)aucon->buffer;
 		ioctl->ulong_1 = vmaddr;
@@ -163,11 +179,142 @@ int AuConsoleIoControl(AuVFSNode* file, int code, void* arg) {
 		return 1;
 		break;
 	}
-
 	}
 	return ret;
 }
 
+static int _con_shift;
+static int _con_esc;
+
+static const char _con_map[58] = {
+	0,	 0,	  '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', '\b',
+	'\t', 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']', '\n', 0,
+	'a',  's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', '\'', '`', 0,	 '\\',
+	'z',  'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '/', 0,	0,	 0,	 ' '
+};
+
+static const char _con_map_s[58] = {
+	0,	 0,	  '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '_', '+', '\b',
+	'\t', 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '{', '}', '\n', 0,
+	'A',  'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', ':', '"', '~', 0,	 '|',
+	'Z',  'X', 'C', 'V', 'B', 'N', 'M', '<', '>', '?', 0,	0,	 0,	 ' '
+};
+
+/**
+ * @brief AuConsoleMapKey -- map a virtio/XT scancode to ASCII
+ * @param code -- scancode from /dev/kybrd
+ */
+static char AuConsoleMapKey(uint32_t code) {
+	uint8_t sc = (uint8_t)(code & 0xFF);
+	if (sc == 0x2a || sc == 0x36) {
+		_con_shift = 1;
+		return 0;
+	}
+	if (sc == 0xaa || sc == 0xb6) {
+		_con_shift = 0;
+		return 0;
+	}
+	if (sc & 0x80)
+		return 0;
+	if (sc >= sizeof(_con_map))
+		return 0;
+	return _con_shift ? _con_map_s[sc] : _con_map[sc];
+}
+
+/**
+ * @brief AuConsoleRead -- read ASCII from the virtio keyboard
+ * @param node -- unused
+ * @param file -- unused
+ * @param buffer -- destination
+ * @param length -- max bytes
+ */
+static size_t AuConsoleRead(AuVFSNode* node, AuVFSNode* file, uint64_t* buffer, uint32_t length) {
+	uint8_t* out;
+	uint32_t n;
+	(void)node;
+	(void)file;
+	if (!buffer || !length)
+		return 0;
+	out = (uint8_t*)buffer;
+	n = 0;
+	/* temporary input-freeze diagnostics */
+	static uint32_t con_dbg_polls;
+	static uint32_t con_dbg_msgs;
+	while (n < length) {
+		AuInputMessage msg;
+		char c;
+		memset(&msg, 0, sizeof(msg));
+		AuDevReadConsoleKybrd(&msg);
+		c = 0;
+		if (msg.type == AU_INPUT_KEYBOARD){
+			c = AuConsoleMapKey(msg.code);
+			UARTDebugOut("Reading console key++ \r\n");
+		}if (c == '\r')
+			c = '\n';
+		if (msg.type != 0) {
+			con_dbg_msgs++;
+			UARTDebugOut("[con-dbg]: type=%d code=%x ch=%c \n",
+				(int)msg.type, (int)msg.code, c ? c : '.');
+		}
+		if (c) {
+			out[n++] = (uint8_t)c;
+			if (c == '\n')
+				break;
+		} else if (msg.type != 0) {
+			/* key-up / modifier: drain the queue, do not sleep */
+			continue;
+		} else {
+			if (n)
+				break;
+			con_dbg_polls++;
+			if ((con_dbg_polls % 500) == 0) {
+				UARTDebugOut("[con-dbg]: polls=%d msgs=%d \n",
+					(int)con_dbg_polls, (int)con_dbg_msgs);
+				AuVirtioKbdDebug();
+			}
+			AA64Thread* thr = AuGetCurrentThread();
+			if (thr) {
+				AuSleepThread(thr, 10);
+				AuScheduleNext();
+			}
+		}
+	}
+	return n;
+}
+
+/**
+ * @brief AuConsoleWrite -- draw bytes on the GOP/ramfb console
+ * @param node -- unused
+ * @param file -- unused
+ * @param buffer -- source
+ * @param length -- byte count
+ */
+static size_t AuConsoleWrite(AuVFSNode* node, AuVFSNode* file, uint64_t* buffer, uint32_t length) {
+	uint8_t* in;
+	uint32_t i;
+	(void)node;
+	(void)file;
+	if (!buffer)
+		return 0;
+	in = (uint8_t*)buffer;
+	for (i = 0; i < length; i++) {
+		char c = (char)in[i];
+		char tmp[2];
+		if (_con_esc) {
+			if (c == 0x07 || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z'))
+				_con_esc = 0;
+			continue;
+		}
+		if (c == 0x1b) {
+			_con_esc = 1;
+			continue;
+		}
+		tmp[0] = c;
+		tmp[1] = 0;
+		AuPutS(tmp);
+	}
+	return length;
+}
 
 /**
  * @brief AuConsolePostInitialise -- initialise the post console process
@@ -181,7 +328,8 @@ void AuConsolePostInitialise(PKERNEL_BOOT_INFO info) {
 	//	info->graphics_framebuffer =
 	//}
 	if (!info->graphics_framebuffer) {
-		AuTextOut("[aurora]: tur luck nai, framebuffer daalu napali, iss iss beya lagi jai deii \r\n");
+		AuTextOut(
+			"[aurora]: tur luck nai, framebuffer daalu napali, iss iss beya lagi jai deii \r\n");
 		AuTextOut("[aurora]: return marisu deii, byee byee \r\n");
 		return;
 	}
@@ -190,10 +338,12 @@ void AuConsolePostInitialise(PKERNEL_BOOT_INFO info) {
 	size_t fb_sz = (info->fb_size + PAGE_SIZE - 1) / PAGE_SIZE;
 	for (int i = 0; i < fb_sz; i++)
 		AuMapPage((uint64_t)info->graphics_framebuffer + (i * PAGE_SIZE),
-			0xFFFFD00000200000 +  (i * 4096), PTE_NORMAL_NON_CACHEABLE);
+				  0xFFFFD00000200000 + (i * 4096),
+				  PTE_NORMAL_NON_CACHEABLE);
 
 	AuTextOut("[aucon]: graphics framebuffer : %x \r\n", info->graphics_framebuffer);
-	AuTextOut("[aucon]: width : %d px , height : %d px \r\n", info->X_Resolution, info->Y_Resolution);
+	AuTextOut(
+		"[aucon]: width : %d px , height : %d px \r\n", info->X_Resolution, info->Y_Resolution);
 	early_ = false;
 	aucon->buffer = (uint32_t*)0xFFFFD00000200000;
 	aucon->width = info->X_Resolution;
@@ -214,7 +364,8 @@ void AuConsolePostInitialise(PKERNEL_BOOT_INFO info) {
 	redmask = info->redmask;
 	greenmask = info->greenmask;
 	bluemask = info->bluemask;
-	h_res = info->X_Resolution; v_res = info->Y_Resolution;
+	h_res = info->X_Resolution;
+	v_res = info->Y_Resolution;
 	for (int w = 0; w < info->X_Resolution; w++) {
 		for (int h = 0; h < info->Y_Resolution; h++) {
 			aucon->buffer[h * info->X_Resolution + w] = CONSOLE_BACKGROUND;
@@ -234,8 +385,15 @@ void AuConsolePostInitialise(PKERNEL_BOOT_INFO info) {
 	file->iocontrol = AuConsoleIoControl;
 	AuDevFSAddFile(fsys, "/", file);
 
+	file = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
+	memset(file, 0, sizeof(AuVFSNode));
+	strcpy(file->filename, "console");
+	file->flags = FS_FLAG_DEVICE;
+	file->read = AuConsoleRead;
+	file->write = AuConsoleWrite;
+	file->iocontrol = AuConsoleIoControl;
+	AuDevFSAddFile(fsys, "/", file);
 }
-
 
 int_fast8_t high_set_bit(size_t sz) {
 	int_fast8_t count = -1;
@@ -257,17 +415,13 @@ int_fast8_t low_set_bit(size_t sz) {
 	return count;
 }
 
-#define RGB(r, g, b) \
-	         ((r & 0xFF) | ((g << 8)&0xFF00) | ((b << 16)&0xFF0000))
+#define RGB(r, g, b) ((r & 0xFF) | ((g << 8) & 0xFF00) | ((b << 16) & 0xFF0000))
 
-#define RED(col)\
-	         (col & 0xFF)
+#define RED(col) (col & 0xFF)
 
-#define GREEN(col)\
-	((col>>8) & 0xFF)
+#define GREEN(col) ((col >> 8) & 0xFF)
 
-#define BLUE(col) \
-	((col>>16) & 0xFF)
+#define BLUE(col) ((col >> 16) & 0xFF)
 
 /**
  * @brief AuPutPixel -- puts a pixel on the screen
@@ -276,7 +430,6 @@ int_fast8_t low_set_bit(size_t sz) {
  * @param col -- color of the pixel
  */
 void AuPutPixel(size_t x, size_t y, uint32_t col) {
-
 	uint32_t* framebuffer = aucon->buffer;
 	uint32_t bpp = aucon->bpp;
 	uint32_t pixelPerLine = aucon->scanline;
@@ -315,8 +468,7 @@ void AuPutC(char c) {
 			const bx_fontcharbitmap_t entry = bx_vgafont[c];
 			if (entry.data[y] & (1 << x)) {
 				AuPutPixel(x + console_x * 9, y + console_y * 16, CONSOLE_FOREGROUND);
-			}
-			else {
+			} else {
 				AuPutPixel(x + console_x * 9, y + console_y * 16, CONSOLE_BACKGROUND);
 			}
 		}
@@ -326,8 +478,7 @@ void AuPutC(char c) {
 	console_x++;
 
 	uint32_t* lfb = aucon->buffer;
-	if (console_y + 1 > v_res / 16)
-	{
+	if (console_y + 1 > v_res / 16) {
 		for (int i = 0; i < (v_res - 16) * h_res; i++)
 			lfb[i] = lfb[i + h_res * 16];
 		for (int i = (v_res - 16) * h_res; i < v_res * h_res; i++)
@@ -338,9 +489,7 @@ void AuPutC(char c) {
 		memset(lfb + h_res * (v_res - 16), 0, h_res * 16 * sizeof(uint32_t));
 		console_y--;
 	}
-
 }
-
 
 /**
  * @brief Prints string to console output
@@ -354,34 +503,25 @@ void AuPutS(char* str) {
 			_print_func(str);
 		return;
 	}
-	
+
 	uint32_t* lfb = aucon->buffer;
 	while (*str) {
-
 		if (*str > 0xFF) {
 			//unicode
-		}
-		else if (*str == '\n') {
+		} else if (*str == '\n') {
 			++console_y;
 			console_x = 0;
-		}
-		else if (*str == '\r') {
-		}
-		else if (*str == '\b') {
+		} else if (*str == '\r') {
+		} else if (*str == '\b') {
 			if (console_x > 0)
 				--console_x;
-		}
-		else {
-
+		} else {
 			const bx_fontcharbitmap_t entry = bx_vgafont[*str];
 			for (size_t y = 0; y < 16; ++y) {
-
 				for (size_t x = 0; x < 8; ++x) {
-
 					if (entry.data[y] & (1 << x)) {
 						AuPutPixel(x + console_x * 9, y + console_y * 16, CONSOLE_FOREGROUND);
-					}
-					else {
+					} else {
 						AuPutPixel(x + console_x * 9, y + console_y * 16, CONSOLE_BACKGROUND);
 					}
 				}
@@ -397,10 +537,8 @@ void AuPutS(char* str) {
 		++str;
 	}
 
-
 	/* Scroll */
-	if (console_y + 1 > v_res / 16)
-	{
+	if (console_y + 1 > v_res / 16) {
 		for (int i = 0; i < (v_res - 16) * h_res; i++)
 			lfb[i] = lfb[i + h_res * 16];
 		for (int i = (v_res - 16) * h_res; i < v_res * h_res; i++)
@@ -429,31 +567,22 @@ void AuPutS_Color(char* str, uint32_t color) {
 
 	uint32_t* lfb = aucon->buffer;
 	while (*str) {
-
 		if (*str > 0xFF) {
 			//unicode
-		}
-		else if (*str == '\n') {
+		} else if (*str == '\n') {
 			++console_y;
 			console_x = 0;
-		}
-		else if (*str == '\r') {
-		}
-		else if (*str == '\b') {
+		} else if (*str == '\r') {
+		} else if (*str == '\b') {
 			if (console_x > 0)
 				--console_x;
-		}
-		else {
-
+		} else {
 			const bx_fontcharbitmap_t entry = bx_vgafont[*str];
 			for (size_t y = 0; y < 16; ++y) {
-
 				for (size_t x = 0; x < 8; ++x) {
-
 					if (entry.data[y] & (1 << x)) {
 						AuPutPixel(x + console_x * 9, y + console_y * 16, color);
-					}
-					else {
+					} else {
 						AuPutPixel(x + console_x * 9, y + console_y * 16, CONSOLE_BACKGROUND);
 					}
 				}
@@ -469,10 +598,8 @@ void AuPutS_Color(char* str, uint32_t color) {
 		++str;
 	}
 
-
 	/* Scroll */
-	if (console_y + 1 > v_res / 16)
-	{
+	if (console_y + 1 > v_res / 16) {
 		for (int i = 0; i < (v_res - 16) * h_res; i++)
 			lfb[i] = lfb[i + h_res * 16];
 		for (int i = (v_res - 16) * h_res; i < v_res * h_res; i++)
@@ -506,18 +633,13 @@ void AuTextOut(const char* format, ...) {
 
 	va_list args = (va_list)buffer;
 #endif
-	while (*format)
-	{
-		if (*format == '%')
-		{
+	while (*format) {
+		if (*format == '%') {
 			++format;
-			if (*format == 'd')
-			{
+			if (*format == 'd') {
 				size_t width = 0;
-				if (format[1] == '.')
-				{
-					for (size_t i = 2; format[i] >= '0' && format[i] <= '9'; ++i)
-					{
+				if (format[1] == '.') {
+					for (size_t i = 2; format[i] >= '0' && format[i] <= '9'; ++i) {
 						width *= 10;
 						width += format[i] - '0';
 					}
@@ -529,64 +651,50 @@ void AuTextOut(const char* format, ...) {
 					AuPutS("-");
 					i = ((int)i * -1);
 					sztoa(i, buffer, 10);
-				}
-				else {
+				} else {
 					sztoa(i, buffer, 10);
 					size_t len = strlen(buffer);
 				}
 				/*	while (len++ < width)
 				puts("0");*/
 				AuPutS(buffer);
-			}
-			else if (*format == 'c')
-			{
+			} else if (*format == 'c') {
 				int c = va_arg(args, int);
 				//char buffer[sizeof(size_t) * 8 + 1];
 				//sztoa(c, buffer, 10);
 				//puts(buffer);
 				AuPutC(c);
-			}
-			else if (*format == 'x')
-			{
+			} else if (*format == 'x') {
 				size_t x = va_arg(args, size_t);
 				char buffer[sizeof(size_t) * 8 + 1];
 				sztoa(x, buffer, 16);
 				//puts("0x");
 				AuPutS(buffer);
-			}
-			else if (*format == 's')
-			{
+			} else if (*format == 's') {
 				char* x = va_arg(args, char*);
 				AuPutS(x);
-			}
-			else if (*format == 'f')
-			{
+			} else if (*format == 'f') {
 				double x = va_arg(args, double);
 				AuPutS(ftoa(x, 2));
-			}
-			else if (*format == '%')
-			{
+			} else if (*format == '%') {
 				AuPutS(".");
-			}
-			else
-			{
+			} else {
 				char buf[3];
-				buf[0] = '%'; buf[1] = *format; buf[2] = '\0';
+				buf[0] = '%';
+				buf[1] = *format;
+				buf[2] = '\0';
 				AuPutS(buf);
 			}
-		}
-		else
-		{
+		} else {
 			char buf[2];
-			buf[0] = *format; buf[1] = '\0';
+			buf[0] = *format;
+			buf[1] = '\0';
 			AuPutS(buf);
 		}
 		++format;
 	}
 	va_end(args);
-
 }
-
 
 /**
  * @brief AuTextOut -- standard text printing function
@@ -601,18 +709,13 @@ void AuTextOutpro_Call(const char* format, void* reg_save_area, void* entry_sp) 
 	va_list args = ((va_list)reg_save_area + 8);
 #define AU_VA_ARG(type) va_arg(args, type)
 #endif
-	while (*format)
-	{
-		if (*format == '%')
-		{
+	while (*format) {
+		if (*format == '%') {
 			++format;
-			if (*format == 'd')
-			{
+			if (*format == 'd') {
 				size_t width = 0;
-				if (format[1] == '.')
-				{
-					for (size_t i = 2; format[i] >= '0' && format[i] <= '9'; ++i)
-					{
+				if (format[1] == '.') {
+					for (size_t i = 2; format[i] >= '0' && format[i] <= '9'; ++i) {
 						width *= 10;
 						width += format[i] - '0';
 					}
@@ -624,56 +727,44 @@ void AuTextOutpro_Call(const char* format, void* reg_save_area, void* entry_sp) 
 					AuPutS("-");
 					i = ((int)i * -1);
 					sztoa(i, buffer, 10);
-				}
-				else {
+				} else {
 					sztoa(i, buffer, 10);
 					size_t len = strlen(buffer);
 				}
 				/*	while (len++ < width)
 				puts("0");*/
 				AuPutS(buffer);
-			}
-			else if (*format == 'c')
-			{
+			} else if (*format == 'c') {
 				int c = AU_VA_ARG(int);
 				//char buffer[sizeof(size_t) * 8 + 1];
 				//sztoa(c, buffer, 10);
 				//puts(buffer);
 				AuPutC(c);
-			}
-			else if (*format == 'x')
-			{
+			} else if (*format == 'x') {
 				size_t x = AU_VA_ARG(size_t);
 				char buffer[sizeof(size_t) * 8 + 1];
 				sztoa(x, buffer, 16);
 				//puts("0x");
 				AuPutS(buffer);
-			}
-			else if (*format == 's')
-			{
+			} else if (*format == 's') {
 				char* x = AU_VA_ARG(char*);
 				AuPutS(x);
-			}
-			else if (*format == 'f')
-			{
+			} else if (*format == 'f') {
 				double x = AU_VA_ARG(double);
 				AuPutS(ftoa(x, 2));
-			}
-			else if (*format == '%')
-			{
+			} else if (*format == '%') {
 				AuPutS(".");
-			}
-			else
-			{
+			} else {
 				char buf[3];
-				buf[0] = '%'; buf[1] = *format; buf[2] = '\0';
+				buf[0] = '%';
+				buf[1] = *format;
+				buf[2] = '\0';
 				AuPutS(buf);
 			}
-		}
-		else
-		{
+		} else {
 			char buf[2];
-			buf[0] = *format; buf[1] = '\0';
+			buf[0] = *format;
+			buf[1] = '\0';
 			AuPutS(buf);
 		}
 		++format;
@@ -681,9 +772,7 @@ void AuTextOutpro_Call(const char* format, void* reg_save_area, void* entry_sp) 
 #ifndef __GNUC__
 	va_end(args);
 #endif
-
 }
-
 
 /**
  * @brief AuConsoleEarlyEnable -- enables or disable early

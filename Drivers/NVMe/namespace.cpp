@@ -208,7 +208,7 @@ void NVMeInitialiseNamespace(NVMeDev* nvme, NVMeControllerIdentity* controller, 
 		namespace_->maxBlocks = ni->namespaceSize;
 		namespace_->totalSizeInMiB = diskSizeInMiB;
 		namespace_->blockSize = blockSize;
-		namespace_->physDataBuffer = (uint64_t)AuPmmngrAlloc();
+		namespace_->physDataBuffer = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
 		namespace_->physMMIOBuffer = (uint64_t)AuMapMMIO(namespace_->physDataBuffer, 1);
 		memset((void*)namespace_->physMMIOBuffer, 0, PAGE_SIZE);
 

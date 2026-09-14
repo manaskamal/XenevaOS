@@ -33,15 +33,16 @@
 #include <sys/_heap.h>
 #include <sys/mman.h>
 
-#define PROC_HEAP_AREA_DEFAULT_SZ (16*4096)
+#define PROC_HEAP_AREA_DEFAULT_SZ (16 * 4096)
 
 static uint64_t process_heap_end = 0;
 static uint64_t process_heap_start = 0;
 static size_t proc_heap_max = 0;
 static size_t proc_heap_len = 0;
-bool _initialized= 0;
+bool _initialized = 0;
 
-#define PAGE_ALIGN(value)  (((PAGE_SIZE-1)&value) ? ((value + PAGE_SIZE) & ~(PAGE_SIZE-1)) : value)
+#define PAGE_ALIGN(value)                                                                          \
+	(((PAGE_SIZE - 1) & value) ? ((value + PAGE_SIZE) & ~(PAGE_SIZE - 1)) : value)
 
 /*
  * _ProcCreateHeap -- create a new process heap area 
@@ -83,10 +84,9 @@ void _ProcHeapAreaExpand(int sz) {
  * heap area
  * @param sz -- size in bytes
  */
-uint64_t  _ProcGetHeapMem(size_t sz) {
+uint64_t _ProcGetHeapMem(size_t sz) {
 	if (!_initialized) {
 		ProcCreateHeapArea(PROC_HEAP_AREA_DEFAULT_SZ);
-
 	}
 	/* check if size is page aligned */
 	if ((sz % PAGE_SIZE) != 0) {
@@ -103,13 +103,13 @@ uint64_t  _ProcGetHeapMem(size_t sz) {
 	if (start_addr == 0) {
 		_KePrint("ProcHeap end -> %d \r\n", process_heap_end);
 		_KePrint("Proc Heap len -> %d \r\n", proc_heap_len);
-		for (;;);
+		for (;;)
+			;
 	}
 	process_heap_end += sz;
 	proc_heap_len += sz;
 	return start_addr;
 }
-
 
 void _ProcHeapMemUnmap(void* ptr, size_t sz) {
 	proc_heap_len -= sz;
@@ -117,6 +117,7 @@ void _ProcHeapMemUnmap(void* ptr, size_t sz) {
 	if (process_heap_end == 0) {
 		_KePrint("_ProcHeapMem is 0 -> %d %d\r\n", proc_heap_len, sz);
 		_KePrint("ptr -> %x  %x\r\n", ptr, process_heap_end);
-		for (;;);
+		for (;;)
+			;
 	}
 }

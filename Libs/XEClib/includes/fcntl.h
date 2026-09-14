@@ -32,13 +32,13 @@
 
 #include <sys/types.h>
 
-#define F_DUPFD 0x01
-#define F_GETFD 0x02
-#define F_SETFD 0x04
-#define F_GETFL 0x08
-#define F_SETFL 0x10
-#define F_GETLK 0x11
-#define F_SETLK 0x12
+#define F_DUPFD	 0x01
+#define F_GETFD	 0x02
+#define F_SETFD	 0x04
+#define F_GETFL	 0x08
+#define F_SETFL	 0x10
+#define F_GETLK	 0x11
+#define F_SETLK	 0x12
 #define F_SETLKW 0x14
 
 #define FD_CLOEXEC 0x01
@@ -47,22 +47,22 @@
 #define F_UNLCK 0x02
 #define F_WRLCK 0x04
 
-#define O_CREAT 0x0001
-#define O_EXCL  0x0002
-#define O_NOCTTY 0x0004
-#define O_TRUNC  0x0008
+#define O_CREAT		0x0001
+#define O_EXCL		0x0002
+#define O_NOCTTY	0x0004
+#define O_TRUNC		0x0008
 #define O_DIRECTORY 0x0010
 
-#define O_APPEND  0x0020
-#define O_DSYNC 0x0040
+#define O_APPEND 0x0020
+#define O_DSYNC	 0x0040
 
 #define O_NONBLOCK 0x0080
-#define O_RSYNC 0x0100
-#define O_SYNC 0x0200
+#define O_RSYNC	   0x0100
+#define O_SYNC	   0x0200
 
-#define O_RDONLY 0x0400
-#define O_RDWR 0x0800
-#define O_WRONLY 0x1000
+#define O_RDONLY  0x0400
+#define O_RDWR	  0x0800
+#define O_WRONLY  0x1000
 #define O_ACCMODE 0x1C00
 
 typedef struct {
@@ -71,6 +71,6 @@ typedef struct {
 	off_t l_start;
 	off_t l_len;
 	pid_t l_pid;
-}flock;
+} flock;
 
 #endif

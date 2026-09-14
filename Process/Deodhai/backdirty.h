@@ -57,7 +57,7 @@ extern void BackDirtyAdd(int x, int y, int w, int h);
 * @param h -- mem pointer where to store h
 * @param index -- index
 */
-extern void BackDirtyGetRect(int *x, int *y, int *w, int *h, int index);
+extern void BackDirtyGetRect(int* x, int* y, int* w, int* h, int index);
 
 extern int BackDirtyGetDirtyCount();
 

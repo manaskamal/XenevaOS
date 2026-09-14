@@ -49,14 +49,13 @@
 #include <time.h>
 #include <widgets/menu.h>
 
-
 typedef struct _partition_button_ {
 	ChWidget wid;
 	ChIcon* icon;
 	char partitionName[32];
 	char guidString[32];
 	bool mounted;
-}FileManagerPartitionButton;
+} FileManagerPartitionButton;
 
 typedef struct _partitionList_ {
 	ChWidget wid;
@@ -64,8 +63,7 @@ typedef struct _partitionList_ {
 	list_t* partitionButtons;
 	int button_pos_y;
 	int button_pos_x;
-}FileManagerPartitionList;
-
+} FileManagerPartitionList;
 
 /*
  * FileManagerCreatePartitionList -- create a new partition list widget
@@ -76,4 +74,5 @@ typedef struct _partitionList_ {
  * @param h -- Height of the widget
  */
 FileManagerPartitionList* FileManagerCreatePartitionList(int x, int y, int w, int h);
-FileManagerPartitionButton* FileManageCreatePartitionButton(FileManagerPartitionList* partitionList);
+FileManagerPartitionButton*
+FileManageCreatePartitionButton(FileManagerPartitionList* partitionList);

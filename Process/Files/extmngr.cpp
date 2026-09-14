@@ -63,7 +63,7 @@ extern bool VerifyDocExtension(char* filename, char* extension);
  */
 extern char* FileManagerGetCurrentPath();
 
-void ExtensionManagerLaunch(char* pname,char* app_path, char* filename) {
+void ExtensionManagerLaunch(char* pname, char* app_path, char* filename) {
 	char** argv = (char**)malloc(sizeof(char*));
 	memset(argv, 0, sizeof(char*));
 	char* path = FileManagerGetCurrentPath();
@@ -85,30 +85,25 @@ void ExtensionManagerLaunch(char* pname,char* app_path, char* filename) {
  * that is related to desired extension 
  */
 void ExtensionManagerSpawn(ChListItem* li) {
-	if (VerifyDocExtension(li->itemText, ".JPG") ||
-		VerifyDocExtension(li->itemText, ".jpg")) {
+	if (VerifyDocExtension(li->itemText, ".JPG") || VerifyDocExtension(li->itemText, ".jpg")) {
 		_KePrint("Launching ImageViewer for %s \r\n", li->itemText);
-	}
-	else if (VerifyDocExtension(li->itemText, ".BMP") ||
-		VerifyDocExtension(li->itemText, ".bmp")) {
+	} else if (VerifyDocExtension(li->itemText, ".BMP") ||
+			   VerifyDocExtension(li->itemText, ".bmp")) {
 		_KePrint("Launching ImageViewer for %s \r\n", li->itemText);
-	}
-	else if (VerifyDocExtension(li->itemText, ".WAV") ||
-		VerifyDocExtension(li->itemText, ".wav")) {
+	} else if (VerifyDocExtension(li->itemText, ".WAV") ||
+			   VerifyDocExtension(li->itemText, ".wav")) {
 		_KePrint("Launching Accent for %s \r\n", li->itemText);
 		ExtensionManagerLaunch("accent", "/audplr.exe", li->itemText);
-	}
-	else if (VerifyDocExtension(li->itemText, ".MP3") ||
-		VerifyDocExtension(li->itemText, ".mp3")) {
+	} else if (VerifyDocExtension(li->itemText, ".MP3") ||
+			   VerifyDocExtension(li->itemText, ".mp3")) {
 		_KePrint("Launching Accent for %s \r\n", li->itemText);
-	}
-	else if (VerifyDocExtension(li->itemText, ".EXE") ||
-		VerifyDocExtension(li->itemText, ".exe")) {
+	} else if (VerifyDocExtension(li->itemText, ".EXE") ||
+			   VerifyDocExtension(li->itemText, ".exe")) {
 		char* path = FileManagerGetCurrentPath();
 		char* filename = (char*)malloc(strlen(path) + strlen(li->itemText));
 		strcpy(filename, path);
 		int offset = strlen(filename);
-		strcpy(filename+offset, li->itemText);
+		strcpy(filename + offset, li->itemText);
 
 		for (int i = 0; i < strlen(filename); i++) {
 			if (isupper(filename[i]))

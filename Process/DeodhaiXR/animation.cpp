@@ -31,53 +31,70 @@
 #include "backdirty.h"
 #include "animation.h"
 
-void FadeInAnimationWindow(ChCanvas* canv, Window* win, WinSharedInfo* info, int64_t win_x, int64_t win_y, int64_t win_w, int64_t win_h) {
+void FadeInAnimationWindow(ChCanvas* canv,
+						   Window* win,
+						   WinSharedInfo* info,
+						   int64_t win_x,
+						   int64_t win_y,
+						   int64_t win_w,
+						   int64_t win_h) {
 	/* just to avoid floating point arithmetic issues */
 	double opacity = win->animAlphaVal / 10.0;
 	if (win->animAlphaVal == 10) {
 		win->flags &= ~WINDOW_FLAG_ANIMATION_FADE_IN;
 		win->flags &= ~WINDOW_FLAG_ANIMATED;
-		info->updateEntireWindow = 1;
+		WinSharedFlagStore(&info->updateEntireWindow, true);
 	}
 
 	for (int j = 0; j < win_h; j++) {
 		for (int i = 0; i < win_w; i++) {
-			*(uint32_t*)(canv->buffer + ((win_y - SHADOW_SIZE) + j) * canv->canvasWidth + ((win_x - SHADOW_SIZE) + i)) =
-				ChColorAlphaBlend(*(uint32_t*)(canv->buffer + ((win_y - SHADOW_SIZE) + j) * canv->canvasWidth + ((win_x - SHADOW_SIZE) + i)),
-					*(uint32_t*)(win->backBuffer + j * (win_w + SHADOW_SIZE * 2) + i), opacity);
+			*(uint32_t*)(canv->buffer + ((win_y - SHADOW_SIZE) + j) * canv->canvasWidth +
+						 ((win_x - SHADOW_SIZE) + i)) =
+				ChColorAlphaBlend(*(uint32_t*)(canv->buffer +
+											   ((win_y - SHADOW_SIZE) + j) * canv->canvasWidth +
+											   ((win_x - SHADOW_SIZE) + i)),
+								  *(uint32_t*)(win->backBuffer + j * (win_w + SHADOW_SIZE * 2) + i),
+								  opacity);
 		}
 	}
 
 	if (win->animAlphaVal != 10) {
 		win->animAlphaVal += 1;
-		info->updateEntireWindow = 1;
+		WinSharedFlagStore(&info->updateEntireWindow, true);
 		AddDirtyClip(win_x, win_y, win_w, win_h);
 	}
-
 }
 
-
-void FadeOutAnimationWindow(ChCanvas* canv, Window* win, WinSharedInfo* info, int64_t win_x, int64_t win_y, int64_t win_w, int64_t win_h) {
+void FadeOutAnimationWindow(ChCanvas* canv,
+							Window* win,
+							WinSharedInfo* info,
+							int64_t win_x,
+							int64_t win_y,
+							int64_t win_w,
+							int64_t win_h) {
 	/* just to avoid floating point arithmetic issues */
 	double opacity = win->animAlphaVal / 10.0;
 	BackDirtyAdd(win_x, win_y, win_w, win_h);
 	if (win->animAlphaVal == 0) {
 		win->flags &= ~WINDOW_FLAG_ANIMATION_FADE_OUT;
 		win->flags &= ~WINDOW_FLAG_ANIMATED;
-
 	}
 
 	for (int j = 0; j < win_h; j++) {
 		for (int i = 0; i < win_w; i++) {
-			*(uint32_t*)(canv->buffer + ((win_y - SHADOW_SIZE) + j) * canv->canvasWidth + ((win_x - SHADOW_SIZE) + i)) =
-				ChColorAlphaBlend(*(uint32_t*)(canv->buffer + ((win_y - SHADOW_SIZE) + j) * canv->canvasWidth + ((win_x - SHADOW_SIZE) + i)),
-					*(uint32_t*)(win->backBuffer + j * (win_w + SHADOW_SIZE * 2) + i), opacity);
+			*(uint32_t*)(canv->buffer + ((win_y - SHADOW_SIZE) + j) * canv->canvasWidth +
+						 ((win_x - SHADOW_SIZE) + i)) =
+				ChColorAlphaBlend(*(uint32_t*)(canv->buffer +
+											   ((win_y - SHADOW_SIZE) + j) * canv->canvasWidth +
+											   ((win_x - SHADOW_SIZE) + i)),
+								  *(uint32_t*)(win->backBuffer + j * (win_w + SHADOW_SIZE * 2) + i),
+								  opacity);
 		}
 	}
 
 	if (win->animAlphaVal != 0) {
 		win->animAlphaVal -= 1;
-		info->updateEntireWindow = 1;
+		WinSharedFlagStore(&info->updateEntireWindow, true);
 		AddDirtyClip(win_x, win_y, win_w, win_h);
 	}
 	DeodhaiUpdateBits(true, true);

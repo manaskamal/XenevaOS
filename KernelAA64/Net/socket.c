@@ -31,6 +31,7 @@
 
 #include <Net/socket.h>
 #include <Net/ipv4.h>
+#include <Net/ipv6.h>
 #include <Hal/AA64/aa64lowlevel.h>
 #include <Mm/kmalloc.h>
 #include <string.h>
@@ -46,12 +47,10 @@
 
 list_t* raw_socket_list;
 
-
 typedef struct _dns_entry_ {
 	int index;
 	uint32_t address;
-}AuDNSEntry;
-
+} AuDNSEntry;
 
 /**
  * @brief AuSocketAdd -- add some data to socket
@@ -63,14 +62,11 @@ void AuSocketAdd(AuSocket* sock, void* data, size_t sz) {
 	char* data_ = (char*)kmalloc(sizeof(size_t) + sz);
 	memset(data_, 0, sz + sizeof(size_t));
 	*(size_t*)data_ = sz;
-	UARTDebugOut("Adding data %x , sz : %d\r\n", data, sz);
-	//memcpy(data_ + sizeof(size_t), (char*)data, sz);
 	char* dest = data_ + sizeof(size_t);
 	const char* src = (const char*)data;
 	for (size_t i = 0; i < sz; i++) {
 		dest[i] = src[i];
 	}
-	UARTDebugOut("]aurora]: socket sock stack -> %x \r\n", sock->rxstack);
 	AuStackPush(sock->rxstack, data_);
 }
 
@@ -93,7 +89,7 @@ void* AuSocketGet(AuSocket* sock) {
  */
 int AuRawSocketReceive(AuSocket* sock, msghdr* msg, int flags) {
 	if (!sock->binedDev) {
-		UARTDebugOut("No binded device \r\n");
+		//UARTDebugOut("No binded device \r\n");
 		return -1;
 	}
 	if (msg->msg_iovlen == 0) {
@@ -101,10 +97,11 @@ int AuRawSocketReceive(AuSocket* sock, msghdr* msg, int flags) {
 		return 0;
 	}
 	char* data = (char*)AuSocketGet(sock);
-	UARTDebugOut("Getting data : %x \r\n", data);
-	if (!data) return -1;
+	if (!data)
+		return -1;
 	size_t pack_sz = *(size_t*)data;
-	if (msg->msg_iov[0].iov_len < pack_sz) return -1;
+	if (msg->msg_iov[0].iov_len < pack_sz)
+		return -1;
 	memcpy(msg->msg_iov[0].iov_base, data + sizeof(size_t), pack_sz);
 	kfree(data);
 	return pack_sz;
@@ -112,8 +109,10 @@ int AuRawSocketReceive(AuSocket* sock, msghdr* msg, int flags) {
 
 int AuRawSocketSend(AuSocket* sock, msghdr* msg, int flags) {
 	UARTDebugOut("Socket sending : %x \r\n", sock->binedDev);
-	if (!sock->binedDev) return -1;
-	if (msg->msg_iovlen == 0) return 0;
+	if (!sock->binedDev)
+		return -1;
+	if (msg->msg_iovlen == 0)
+		return 0;
 	AuVFSNode* device = (AuVFSNode*)sock->binedDev;
 	UARTDebugOut("****/////******socket device name : %s \r\n", device->filename);
 	device->write(device, device, (uint64_t*)msg->msg_iov[0].iov_base, msg->msg_iov[0].iov_len);
@@ -122,17 +121,19 @@ int AuRawSocketSend(AuSocket* sock, msghdr* msg, int flags) {
 
 #define SOL_SOCKET 0
 
-#define SO_KEEPALIVE 1
-#define SO_REUSEADDR 2
+#define SO_KEEPALIVE	1
+#define SO_REUSEADDR	2
 #define SO_BINDTODEVICE 3
 
 int AuSocketSOSocket(AuSocket* sock, int optname, const void* optval, socklen_t optlen) {
 	switch (optname) {
-	case SO_BINDTODEVICE: {   UARTDebugOut("Device binding ->%s \r\n", ((char*)optval));
-		//if (optlen < 1 || optlen > 32 || ((const char*)optval)[optlen - 1] != 0) return -1;  
+	case SO_BINDTODEVICE: {
+		UARTDebugOut("Device binding ->%s \r\n", ((char*)optval));
+		//if (optlen < 1 || optlen > 32 || ((const char*)optval)[optlen - 1] != 0) return -1;
 		AuVFSNode* nic = AuGetNetworkAdapter((char*)optval);
 		UARTDebugOut("NIC : %x \r\n", nic);
-		if (!nic) return -1;
+		if (!nic)
+			return -1;
 		sock->binedDev = nic;
 		UARTDebugOut("Device binded \r\n");
 		return 0;
@@ -151,8 +152,7 @@ int AuSocketSetOpt(int sockfd, int level, int optname, const void* optval, sockl
 	}
 	AuVFSNode* node = proc->fds[sockfd];
 	AuSocket* sock = (AuSocket*)node->device;
-	switch (level)
-	{
+	switch (level) {
 	case SOL_SOCKET:
 		return AuSocketSOSocket(sock, optname, optval, optlen);
 	default:
@@ -166,7 +166,6 @@ AuSocket* AuNetCreateSocket() {
 	sock->rxstack = AuStackCreate();
 	return sock;
 }
-
 
 int AuRawSocketClose(AuVFSNode* fs, AuVFSNode* file) {
 	/* here both fs and file points to socket file , better
@@ -210,7 +209,7 @@ int SocketIOControl(AuVFSNode* file, int code, void* arg) {
 			return 1;
 		AuRouteEntry* data = (AuRouteEntry*)arg;
 		AuRouteEntry* entry = AuRouteTableCreateEntry();
-		entry->ifname = (char*)kmalloc(strlen(data->ifname));
+		entry->ifname = (char*)kmalloc(strlen(data->ifname) + 1);
 		strcpy(entry->ifname, data->ifname);
 		entry->flags = data->flags;
 		entry->ifaddress = data->ifaddress;
@@ -261,7 +260,9 @@ int SocketIOControl(AuVFSNode* file, int code, void* arg) {
 		switch (dnsentry->index) {
 		case 1:
 			netdev->dns_ipv4_1 = dnsentry->address;
-			UARTDebugOut("[aurora]: net DNS Server added -> %d  %d\r\n", netdev->dns_ipv4_1, dnsentry->address);
+			UARTDebugOut("[aurora]: net DNS Server added -> %d  %d\r\n",
+						 netdev->dns_ipv4_1,
+						 dnsentry->address);
 			return 0;
 		case 2:
 			netdev->dns_ipv4_2 = dnsentry->address;
@@ -272,7 +273,7 @@ int SocketIOControl(AuVFSNode* file, int code, void* arg) {
 			UARTDebugOut("DNS Server 3 added -> %d \r\n", netdev->dns_ipv4_3);
 			return 0;
 		default:
-		    UARTDebugOut("[aurora]: failed to add dns entry to index -> %d \r\n", dnsentry->index);
+			UARTDebugOut("[aurora]: failed to add dns entry to index -> %d \r\n", dnsentry->index);
 			break;
 		}
 	}
@@ -316,7 +317,8 @@ int SocketIOControl(AuVFSNode* file, int code, void* arg) {
  * @param protocol -- unused
  */
 int AuCreateRawSocket(int type, int protocol) {
-	if (type != SOCK_RAW)return -1;
+	if (type != SOCK_RAW)
+		return -1;
 	AA64Thread* curr_thr = AuGetCurrentThread();
 	AuProcess* proc = AuProcessFindThread(curr_thr);
 	if (!proc) {
@@ -352,6 +354,8 @@ int AuCreateSocket(int domain, int type, int protocol) {
 	switch (domain) {
 	case AF_INET:
 		return CreateIPv4Socket(type, protocol);
+	case AF_INET6:
+		return CreateIPv6Socket(type, protocol);
 	case AF_RAW:
 		return AuCreateRawSocket(type, protocol);
 	default:
@@ -373,4 +377,3 @@ void AuSocketInstall() {
 list_t* AuRawSocketGetList() {
 	return raw_socket_list;
 }
-

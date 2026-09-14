@@ -108,7 +108,7 @@ function sudo_stop(){
 # Help output for the scipt and information on how to use it
 function show_help(){
     printf "${STY_CYAN}
-Script for checking dependency and ruuning XenevaOS with llvm.
+Script for checking dependencies for XenevaOS.
 
 ${STY_UNDERLINE}Usage:${STY_RST}${STY_CYAN} $0 [OPTION] <sub-option>
 
@@ -120,11 +120,13 @@ ${STY_UNDERLINE}Options:${STY_RST}${STY_CYAN}
         --llvm, llvm      install dependencis for llvm build.
         --gcc, gcc        install dependencies for gcc build.
 
---llvm, llvm              compile the XenevaOS for arm(for now) using llvm toolchain (needs llvm deps)
---gcc, gcc                compile the XenevaOS for arm(for now) using gcc toolchain (needs gcc deps)
+--llvm, llvm              ${STY_YELLOW}deprecated${STY_CYAN}: hands off to ./build_and_run_qemu.sh --llvm
+--gcc, gcc                ${STY_YELLOW}deprecated${STY_CYAN}: hands off to ./build_and_run_qemu.sh --gcc
 	both gcc and llvm supports sub option for:
-		--build, build	  builds initrd2 image for XenevaOS
+		--build, build	  also (re)builds initrd2.img, not just the ESP image
 
+${STY_UNDERLINE}For building and booting XenevaOS in QEMU, use:${STY_RST}${STY_CYAN}
+    ./build_and_run_qemu.sh --help
 
 ${STY_BOLD}${STY_CYAN}Access https://github.com/manaskamal/XenevaOS/blob/master/Docs/Index.md${STY_RST} ${STY_BOLD}${STY_CYAN}for documentation about XenevaOS.${STY_RST}
 "

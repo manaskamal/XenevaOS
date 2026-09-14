@@ -41,55 +41,52 @@
 #include <time.h>
 #include <stdlib.h>
 
-
-
 /*
 * main -- main entry
 */
-int main(int argc, char* argv[]){
-    char* file = argv[1];
-    if (!file) {
-        printf("cat: no filename specified \n");
-        return 1;
-    }
+int main(int argc, char* argv[]) {
+	char* file = argv[1];
+	if (!file) {
+		printf("cat: no filename specified \n");
+		return 1;
+	}
 
-    char* filename = (char*)malloc(strlen(file) + 1);
-    if (!strchr(file, '/')) {
-        sprintf(filename, "/%s", file);
-    }
-    else
-        sprintf(filename, "%s", file);
+	char* filename = (char*)malloc(strlen(file) + 1);
+	if (!strchr(file, '/')) {
+		sprintf(filename, "/%s", file);
+	} else
+		sprintf(filename, "%s", file);
 
-    int f = _KeOpenFile(filename, FILE_OPEN_READ_ONLY);
-    if (f == -1) {
-        /* once again try in, using PWD */
-        char* pwd = getenv("PWD");
-        int totalLen = strlen(filename) + strlen(pwd);
-        free(filename);
-        filename = (char*)malloc(totalLen);
-        memset(filename, 0, totalLen);
-        if (!strchr(file, '/'))
-            sprintf(filename, "%s/%s", pwd, file);
-        else
-            sprintf(filename, "%s%s", pwd, file);
-        f = _KeOpenFile(filename, FILE_OPEN_READ_ONLY);
-        if (f == -1) {
-            printf("\nNo file found %s \n", filename);
-            return 1;
-        }
-    }
+	int f = _KeOpenFile(filename, FILE_OPEN_READ_ONLY);
+	if (f == -1) {
+		/* once again try in, using PWD */
+		char* pwd = getenv("PWD");
+		int totalLen = strlen(filename) + strlen(pwd);
+		free(filename);
+		filename = (char*)malloc(totalLen);
+		memset(filename, 0, totalLen);
+		if (!strchr(file, '/'))
+			sprintf(filename, "%s/%s", pwd, file);
+		else
+			sprintf(filename, "%s%s", pwd, file);
+		f = _KeOpenFile(filename, FILE_OPEN_READ_ONLY);
+		if (f == -1) {
+			printf("\nNo file found %s \n", filename);
+			return 1;
+		}
+	}
 
-    XEFileStatus stat;
-    _KeFileStat(f, &stat);
-    char* buffer = (char*)malloc(stat.size);
-    memset(buffer, 0, stat.size);
+	XEFileStatus stat;
+	_KeFileStat(f, &stat);
+	char* buffer = (char*)malloc(stat.size);
+	memset(buffer, 0, stat.size);
 
-    size_t read_bytes = _KeReadFile(f, buffer, stat.size);
-    printf("\n");
-    if (read_bytes > 0) {
-        printf("%s", buffer);
-    }
-    free(filename);
-    free(buffer);
-    return 0;
+	size_t read_bytes = _KeReadFile(f, buffer, stat.size);
+	printf("\n");
+	if (read_bytes > 0) {
+		printf("%s", buffer);
+	}
+	free(filename);
+	free(buffer);
+	return 0;
 }

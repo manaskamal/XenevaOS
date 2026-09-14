@@ -39,6 +39,14 @@
 AuVFSNode* mice_;
 AuVFSNode* kybrd_;
 
+static AuInputMessage kbd_q[NUM_KEYBOARD_PACKETS];
+static uint32_t kbd_r;
+static uint32_t kbd_w;
+
+static AuInputMessage console_kbd_q[NUM_KEYBOARD_PACKETS];
+static uint32_t console_kbd_r;
+static uint32_t console_kbd_w;
+
 /*
  * AuDevReadMice -- reads packets from pipe
  * to buffer
@@ -67,10 +75,27 @@ void AuDevWriteMice(AuInputMessage* outmsg) {
 * @para, inputmsg -- Pointer to the buffer
 */
 void AuDevReadKybrd(AuInputMessage* inputmsg) {
-	if (!kybrd_)
+	if (!inputmsg)
 		return;
-	memcpy(inputmsg, kybrd_->device, sizeof(AuInputMessage));
-	memset(kybrd_->device, 0, sizeof(AuInputMessage));
+	memset(inputmsg, 0, sizeof(AuInputMessage));
+	if (kbd_r == kbd_w)
+		return;
+	memcpy(inputmsg, &kbd_q[kbd_r], sizeof(AuInputMessage));
+	kbd_r = (kbd_r + 1) % NUM_KEYBOARD_PACKETS;
+}
+
+/*
+ * AuDevReadConsoleKybrd -- reads packets from console-specific keyboard queue
+ * @para, inputmsg -- Pointer to the buffer
+ */
+void AuDevReadConsoleKybrd(AuInputMessage* inputmsg) {
+	if (!inputmsg)
+		return;
+	memset(inputmsg, 0, sizeof(AuInputMessage));
+	if (console_kbd_r == console_kbd_w)
+		return;
+	memcpy(inputmsg, &console_kbd_q[console_kbd_r], sizeof(AuInputMessage));
+	console_kbd_r = (console_kbd_r + 1) % NUM_KEYBOARD_PACKETS;
 }
 
 /*
@@ -78,9 +103,21 @@ void AuDevReadKybrd(AuInputMessage* inputmsg) {
 * @param outmsg -- packet to write
 */
 void AuDevWriteKybrd(AuInputMessage* outmsg) {
-	if (!kybrd_)
+	uint32_t next;
+	if (!outmsg)
 		return;
-	memcpy(kybrd_->device, outmsg, sizeof(AuInputMessage));
+	next = (kbd_w + 1) % NUM_KEYBOARD_PACKETS;
+	if (next == kbd_r)
+		kbd_r = (kbd_r + 1) % NUM_KEYBOARD_PACKETS;
+	memcpy(&kbd_q[kbd_w], outmsg, sizeof(AuInputMessage));
+	kbd_w = next;
+
+	/* Duplicate for console input to avoid race with /dev/kybrd consumers */
+	uint32_t cnext = (console_kbd_w + 1) % NUM_KEYBOARD_PACKETS;
+	if (cnext == console_kbd_r)
+		console_kbd_r = (console_kbd_r + 1) % NUM_KEYBOARD_PACKETS;
+	memcpy(&console_kbd_q[console_kbd_w], outmsg, sizeof(AuInputMessage));
+	console_kbd_w = cnext;
 }
 
 /*
@@ -130,8 +167,7 @@ size_t AuDevInputKybrdWrite(AuVFSNode* fs, AuVFSNode* file, uint64_t* buffer, ui
 		return 0;
 	if (!buffer)
 		return 0;
-	void* key_buf = file->device;
-	memcpy(key_buf, buffer, sizeof(AuInputMessage));
+	AuDevWriteKybrd((AuInputMessage*)buffer);
 	return (sizeof(AuInputMessage));
 }
 
@@ -147,9 +183,7 @@ size_t AuDevInputKybrdRead(AuVFSNode* fs, AuVFSNode* file, uint64_t* buffer, uin
 		return 0;
 	if (!buffer)
 		return 0;
-	void* key_buf = file->device;
-	memcpy(buffer, key_buf, sizeof(AuInputMessage));
-	memset(key_buf, 0, sizeof(AuInputMessage));
+	AuDevReadKybrd((AuInputMessage*)buffer);
 	return (sizeof(AuInputMessage));
 }
 
@@ -168,8 +202,7 @@ int AuDevMouseIoControl(AuVFSNode* file, int code, void* arg) {
 	/*if (ioctl->syscall_magic != AURORA_SYSCALL_MAGIC)
 		return 0;*/
 
-	switch (code)
-	{
+	switch (code) {
 	case MOUSE_IOCODE_SETPOS:
 #ifdef ARCH_X64
 		AuPS2MouseSetPos(ioctl->uint_1, ioctl->uint_2);
@@ -201,7 +234,7 @@ void AuDevInputInitialise() {
 	node->flags |= FS_FLAG_DEVICE;
 	node->device = mice_input_buf;
 	node->read = AuDevInputMiceRead;
-	node->write =AuDevInputMiceWrite;
+	node->write = AuDevInputMiceWrite;
 	node->open = 0;
 	node->close = 0;
 	node->iocontrol = AuDevMouseIoControl;
@@ -211,6 +244,8 @@ void AuDevInputInitialise() {
 	void* keybuf = kmalloc(sizeof(AuInputMessage));
 	memset(keybuf, 0, sizeof(AuInputMessage));
 
+	kbd_r = kbd_w = 0;
+	
 	kybrd_ = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
 	memset(kybrd_, 0, sizeof(AuVFSNode));
 	strcpy(kybrd_->filename, "kybrd");

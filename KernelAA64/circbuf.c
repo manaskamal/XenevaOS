@@ -31,6 +31,7 @@
 
 #include <circbuf.h>
 #include <Mm/kmalloc.h>
+#include <string.h>
 #if defined(__GNUC__) || defined(__clang__)
 #ifndef __cplusplus
 #include <stdbool.h>
@@ -144,6 +145,27 @@ int AuCircBufPut(CircBuffer* cbuf, uint8_t data) {
 	return r;
 }
 
+size_t AuCircBufWrite(CircBuffer* cbuf, const uint8_t* src, size_t len) {
+	size_t written = 0;
+	while (written < len && !CircBufFull(cbuf)) {
+		size_t avail = cbuf->max - AuCircBufSize(cbuf);
+		size_t chunk = len - written;
+		if (chunk > avail) chunk = avail;
+		if (chunk == 0) break;
+		size_t run = cbuf->max - cbuf->head;
+		if (chunk > run) {
+			memcpy(cbuf->buffer + cbuf->head, src + written, run);
+			memcpy(cbuf->buffer, src + written + run, chunk - run);
+		} else {
+			memcpy(cbuf->buffer + cbuf->head, src + written, chunk);
+		}
+		cbuf->head = (cbuf->head + chunk) % cbuf->max;
+		cbuf->full = (cbuf->head == cbuf->tail);
+		written += chunk;
+	}
+	return written;
+}
+
 /**
  * @brief AuCircBufGet -- gets a data from circular
  * buffer
@@ -151,8 +173,7 @@ int AuCircBufPut(CircBuffer* cbuf, uint8_t data) {
  * @param data -- Pointer to the buffer
  * where to put the data
  */
-int AuCircBufGet(CircBuffer* cbuf, uint8_t* data)
-{
+int AuCircBufGet(CircBuffer* cbuf, uint8_t* data) {
 	int r = -1;
 
 	if (!CircBufEmpty(cbuf)) {
@@ -163,14 +184,34 @@ int AuCircBufGet(CircBuffer* cbuf, uint8_t* data)
 	return r;
 }
 
+size_t AuCircBufRead(CircBuffer* cbuf, uint8_t* dst, size_t len) {
+	size_t got = 0;
+	while (got < len && !CircBufEmpty(cbuf)) {
+		size_t avail = AuCircBufSize(cbuf);
+		size_t chunk = len - got;
+		if (chunk > avail) chunk = avail;
+		if (chunk == 0) break;
+		size_t run = cbuf->max - cbuf->tail;
+		if (chunk > run) {
+			memcpy(dst + got, cbuf->buffer + cbuf->tail, run);
+			memcpy(dst + got + run, cbuf->buffer, chunk - run);
+		} else {
+			memcpy(dst + got, cbuf->buffer + cbuf->tail, chunk);
+		}
+		cbuf->tail = (cbuf->tail + chunk) % cbuf->max;
+		cbuf->full = false;
+		got += chunk;
+	}
+	return got;
+}
+
 /**
  * @brief CircBufEmpty -- checks if the circular
  * buffer is empty
  * @param cbuf -- Pointer to the circular
  * buffer
  */
-bool CircBufEmpty(CircBuffer* cbuf)
-{
+bool CircBufEmpty(CircBuffer* cbuf) {
 	return (!cbuf->full && (cbuf->head == cbuf->tail));
 }
 
@@ -180,7 +221,6 @@ bool CircBufEmpty(CircBuffer* cbuf)
  * @param cbuf -- Pointer to the circular
  * buffer
  */
-bool CircBufFull(CircBuffer* cbuf)
-{
+bool CircBufFull(CircBuffer* cbuf) {
 	return cbuf->full;
 }

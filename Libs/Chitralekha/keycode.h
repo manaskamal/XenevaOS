@@ -33,9 +33,8 @@
 #include <_xeneva.h>
 
 #ifdef __cplusplus
-XE_EXTERN{
+XE_EXTERN {
 #endif
-
 
 	enum KEYCODE {
 
@@ -78,7 +77,7 @@ XE_EXTERN{
 		KEY_Y = 'y',
 		KEY_Z = 'z',
 
-		KEY_RETURN = '\n', //Enter key in general term 
+		KEY_RETURN = '\n', //Enter key in general term
 		KEY_ESCAPE = 0x1001,
 		KEY_BACKSPACE = '\b',
 
@@ -189,7 +188,6 @@ XE_EXTERN{
 		KEY_NUMKEYCODES
 	};
 
-
 	typedef struct _chitralekha_key_ {
 		bool _numlock;
 		bool _scrolllock;
@@ -197,8 +195,7 @@ XE_EXTERN{
 		bool _shift;
 		bool _alt;
 		bool _ctrl;
-	}ChitralekhaKey;
-
+	} ChitralekhaKey;
 
 	/* ChitralekhaKeyInitialise -- initialise keycode
 	* library

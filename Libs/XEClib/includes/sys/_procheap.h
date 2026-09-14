@@ -51,7 +51,7 @@ extern void _ProcHeapAreaDestroy();
  * heap area
  * @param sz -- size in bytes
  */
-extern uint64_t  _ProcGetHeapMem(size_t sz);
+extern uint64_t _ProcGetHeapMem(size_t sz);
 
 extern void _ProcHeapMemUnmap(void* ptr, size_t sz);
 

@@ -33,8 +33,6 @@
 #include "deodhai.h"
 #include <chitralekha.h>
 
-
-
 extern void InitialiseDirtyClipList();
 
 /*

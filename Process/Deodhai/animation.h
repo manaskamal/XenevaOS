@@ -33,6 +33,18 @@
 #include "dirty.h"
 #include "color.h"
 
-void FadeInAnimationWindow(ChCanvas* canv, Window* win, WinSharedInfo* info, int64_t win_x, int64_t win_y, int64_t win_w, int64_t win_h);
+void FadeInAnimationWindow(ChCanvas* canv,
+						   Window* win,
+						   WinSharedInfo* info,
+						   int64_t win_x,
+						   int64_t win_y,
+						   int64_t win_w,
+						   int64_t win_h);
 
-void FadeOutAnimationWindow(ChCanvas* canv, Window* win, WinSharedInfo* info, int64_t win_x, int64_t win_y, int64_t win_w, int64_t win_h);
+void FadeOutAnimationWindow(ChCanvas* canv,
+							Window* win,
+							WinSharedInfo* info,
+							int64_t win_x,
+							int64_t win_y,
+							int64_t win_w,
+							int64_t win_h);

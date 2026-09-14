@@ -111,6 +111,8 @@ int ChDeAllocateBuffer(ChCanvas* canvas) {
 	if (!canvas)
 		return 0;
 	size_t sz = canvas->bufferSz;
+	if (!sz)
+		return 1;
 	_KeMemUnmap(canvas->buffer, sz);
 	return 1;
 }
@@ -125,51 +127,52 @@ int ChDeAllocateBuffer(ChCanvas* canvas) {
  * @param h -- height of the canvas
  */
 void ChCanvasScreenUpdate(ChCanvas* canvas, int _x, int _y, int _w, int _h) {
+	if (!canvas)
+		return;
 	uint32_t* fb = canvas->framebuff;
+	if (!fb || canvas->buffer == fb)
+		return;
 
 	int64_t x = _x, y = _y, w = _w, h = _h;
 
-	if (x > canvas->screenWidth)
-		return;
-	if (y > canvas->screenHeight)
+	if (w <= 0 || h <= 0 || x >= canvas->screenWidth || y >= canvas->screenHeight)
 		return;
 
-	if (x >= canvas->screenWidth)
+	if (x < 0) {
+		w += x;
+		x = 0;
+	}
+	if (y < 0) {
+		h += y;
+		y = 0;
+	}
+	if (w <= 0 || h <= 0)
 		return;
-
-	if (y >= canvas->screenHeight)
-		return;
-
-	if ((x + w) >= canvas->screenWidth)
+	if (x + w > canvas->screenWidth)
 		w = canvas->screenWidth - x;
-
-	if ((y + h) >= canvas->screenHeight)
+	if (y + h > canvas->screenHeight)
 		h = canvas->screenHeight - y;
 
-	if (w > canvas->screenWidth)
-		w = canvas->screenWidth;
-	if (h > canvas->screenHeight)
-		h = canvas->screenHeight;
+	uint32_t bytes_per_pixel = canvas->bpp / 8;
+	uint32_t pitch_pixels = canvas->pitch && bytes_per_pixel
+		? canvas->pitch / bytes_per_pixel
+		: canvas->screenWidth;
 
-
-	if (x < 0)
-		x = 0;
-	if (y < 0)
-		y = 0;
-
-	for (int64_t i = 0; i < h; i++){
-		// Use canvas->pitch instead of screenWidth to handle padding/alignment in hardware framebuffer
-		uint32_t pitch_pixels = canvas->pitch / (canvas->bpp / 8);
-		if (canvas->pitch == 0) pitch_pixels = canvas->screenWidth; // fallback
-
+	for (int64_t i = 0; i < h; i++) {
 		void* fb_mem = (fb + (y + i) * pitch_pixels + x);
 		void* canvas_mem = (canvas->buffer + (y + i) * (canvas->canvasWidth) + x);
-		_fastcpy(fb_mem,
-			canvas_mem, w*4);
-
+		_fastcpy(fb_mem, canvas_mem, w * 4);
 	}
 }
 
+void ChCanvasScreenCommit() {
+#if defined(ARCH_ARM64)
+	/* The GOP framebuffer is Normal Non-cacheable memory. One system-scope
+	 * store barrier after the complete damage batch is sufficient; _fastcpy
+	 * is also used for ordinary RAM and must not carry device ordering. */
+	__asm__ volatile("dmb sy" ::: "memory");
+#endif
+}
 
 /**
  * @brief ChDrawPixel -- draws a pixel to canvas buffer
@@ -181,7 +184,7 @@ void ChCanvasScreenUpdate(ChCanvas* canvas, int _x, int _y, int _w, int _h) {
 void ChDrawPixel(ChCanvas* canvas, int x, int y, uint32_t color) {
 	if (((uint64_t)canvas >> 48) == 0xFFFF)
 		_KePrint("ChDrawPixel : suspected canvas address : %x \n", canvas);
-	unsigned int *lfb = canvas->buffer;
+	unsigned int* lfb = canvas->buffer;
 	if (((uint64_t)lfb >> 48) == 0xFFFF)
 		_KePrint("ChDrawPixel : suspected lfb address : %x \n", lfb);
 	if (x < 0) {
@@ -211,7 +214,6 @@ void ChDrawPixel(ChCanvas* canvas, int x, int y, uint32_t color) {
 	lfb[static_cast<uint64_t>(y) * canvas->canvasWidth + x] = color;
 #endif
 }
-
 
 /**
  * @brief ChDrawPixelRAW -- draws a pixel to canvas buffer
@@ -248,7 +250,6 @@ void ChDrawPixelRAW(ChCanvas* canvas, int x, int y, uint32_t color) {
 	lfb[static_cast<uint64_t>(y) * canvas->canvasWidth + x] = color;
 }
 
-
 /**
  * @brief ChDrawPixelAA -- draw anti-aliased pixel
  * @param canv - Pointer to canvas
@@ -270,7 +271,7 @@ void ChDrawPixelAA(ChCanvas* canv, int x, int y, uint32_t color, double alpha) {
  * @param y -- y position
  */
 uint32_t ChGetPixel(ChCanvas* canvas, int x, int y) {
-	unsigned int *lfb = canvas->buffer;
+	unsigned int* lfb = canvas->buffer;
 	if (x < 0) {
 		_KePrint("ChGetPixel : corrupted x -> %d \r\n", x);
 		x = 0;
@@ -303,10 +304,9 @@ uint32_t ChGetPixel(ChCanvas* canvas, int x, int y) {
  */
 void ChCanvasFill(ChCanvas* canvas, int w, int h, uint32_t color) {
 	for (int i = 0; i < w; i++)
-	for (int j = 0; j < h; j++)
-		ChDrawPixel(canvas, 0 + i, 0 + j, color);
+		for (int j = 0; j < h; j++)
+			ChDrawPixel(canvas, 0 + i, 0 + j, color);
 }
-
 
 /**
  * @brief ChGetScreenDiagonal -- get screen diagonal using
@@ -314,7 +314,8 @@ void ChCanvasFill(ChCanvas* canvas, int w, int h, uint32_t color) {
  * @param canv -- Pointer to canvas
  */
 float ChGetScreenDiagonal(ChCanvas* canv) {
-	float diagonal = sqrtf(canv->screenWidth * canv->screenWidth + canv->screenHeight * canv->screenHeight);
+	float diagonal =
+		sqrtf(canv->screenWidth * canv->screenWidth + canv->screenHeight * canv->screenHeight);
 	return diagonal;
 }
 
@@ -324,7 +325,9 @@ float ChGetScreenDiagonal(ChCanvas* canv) {
  * @param canv -- Pointer to canvas
  */
 float ChGetScreenDPI(ChCanvas* canv) {
-	float dpi = sqrtf(canv->screenWidth * canv->screenWidth + canv->screenHeight * canv->screenHeight) / ChGetScreenDiagonal(canv);
+	float dpi =
+		sqrtf(canv->screenWidth * canv->screenWidth + canv->screenHeight * canv->screenHeight) /
+		ChGetScreenDiagonal(canv);
 	return dpi;
 }
 

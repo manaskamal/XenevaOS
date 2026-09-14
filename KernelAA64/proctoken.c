@@ -69,7 +69,6 @@ char* _token_id_to_string(uint8_t category) {
 	}
 }
 
-
 /**
  * AuProcessTokenAddSelf -- add current process
  * to its belonging category
@@ -77,7 +76,8 @@ char* _token_id_to_string(uint8_t category) {
  */
 int AuProcessTokenAddSelf(uint8_t category) {
 	if (_tokens[category].proc) {
-		UARTDebugOut("[aurora]: token manager already has registered token to id : %s \r\n", _token_id_to_string(category));
+		UARTDebugOut("[aurora]: token manager already has registered token to id : %s \r\n",
+					 _token_id_to_string(category));
 		return 1;
 	}
 	AA64Thread* current_thr = AuGetCurrentThread();
@@ -109,7 +109,6 @@ AuProcess* AuProcessTokenGetProc(uint8_t category) {
 int AuProcessTokenGetThreadID(uint8_t category) {
 	return _tokens[category].thread_id;
 }
-
 
 /**
  * @brief AuProcessTokenRemoveSelf -- remove self from a token

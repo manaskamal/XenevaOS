@@ -33,26 +33,26 @@
 #include <Board/RPI3bp/rpi3bp_spi.h>
 #include <Board/RPI3bp/rpi_ili9486.h>
 
-#define GPIO_DC 25
-#define GPIO_RST 24 //25
-#define GPIO_LED 23 //18
+#define GPIO_DC						 25
+#define GPIO_RST					 24 //25
+#define GPIO_LED					 23 //18
 
 /* MIPI DSI Processor to Peripheral transaction types */
-#define MIPI_DSI_V_SYNC_START 0x01
-#define MIPI_DSI_V_SYNC_END 0x11
-#define MIPI_DSI_H_SYNC_START 0x21
-#define MIPI_DSI_H_SYNC_END 0x31
-#define MIPI_DSI_COMPRESSION_MODE 0x07
+#define MIPI_DSI_V_SYNC_START		 0x01
+#define MIPI_DSI_V_SYNC_END			 0x11
+#define MIPI_DSI_H_SYNC_START		 0x21
+#define MIPI_DSI_H_SYNC_END			 0x31
+#define MIPI_DSI_COMPRESSION_MODE	 0x07
 #define MIPI_DSI_END_OF_TRANSMISSION 0x08
-#define MIPI_DSI_COLOR_MODE_OFF 0x02
-#define MIPI_DSI_COLOR_MODE_ON 0x12
+#define MIPI_DSI_COLOR_MODE_OFF		 0x02
+#define MIPI_DSI_COLOR_MODE_ON		 0x12
 #define MIPI_DSI_SHUTDOWN_PERIPHERAL 0x22
-#define MIPI_DSI_TURN_ON_PERIPHERAL 0x32
-#define MIPI_DCS_ENTER_SLEEP_MODE 0x10
-#define MIPI_DCS_EXIT_SLEEP_MODE 0x11
-#define MIPI_DCS_SET_PIXEL_FORMAT 0x3A
+#define MIPI_DSI_TURN_ON_PERIPHERAL	 0x32
+#define MIPI_DCS_ENTER_SLEEP_MODE	 0x10
+#define MIPI_DCS_EXIT_SLEEP_MODE	 0x11
+#define MIPI_DCS_SET_PIXEL_FORMAT	 0x3A
 
-#define LBTFT_WIDTH 320
+#define LBTFT_WIDTH	 320
 #define LBTFT_HEIGHT 480
 
 void LCDWriteCommand(uint8_t cmd) {
@@ -263,4 +263,3 @@ void AuLCDInit() {
 }
 
 #endif
-

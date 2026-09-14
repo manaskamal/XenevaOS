@@ -39,6 +39,7 @@
 #include <process.h>
 #include <Drivers/uart.h>
 #include <aucon.h>
+#include <Cap/capability.h>
 
 AuVFSNode* pipeFS;
 
@@ -126,8 +127,7 @@ size_t AuPipeRead(AuVFSNode* fs, AuVFSNode* file, uint64_t* buffer, uint32_t len
 				collected++;
 			}
 
-		}
-		else
+		} else
 			break;
 	}
 
@@ -162,7 +162,6 @@ AuVFSNode* AuPipeOpen(AuVFSNode* node, char* path) {
 	pipe->refcount++;
 	return node;
 }
-
 
 /**
 * @brief AuPipeFSAddFile -- adds a file/directory
@@ -293,23 +292,19 @@ int AuPipeClose(AuVFSNode* fs, AuVFSNode* file) {
  * @param sz -- Size of the pipe
  */
 int AuCreatePipe(char* name, size_t sz) {
-	UARTDebugOut("Creating PIPE \r\n");
 	AA64Thread* currentThr = AuGetCurrentThread();
 	if (!currentThr) {
-		UARTDebugOut("creating pipe !currentThr\r\n");
 		return -1;
 	}
 	AuProcess* proc = AuProcessFindThread(currentThr);
 	if (!proc) {
 		proc = AuProcessFindSubThread(currentThr);
 		if (!proc) {
-			UARTDebugOut("!proc \r\n");
 			return -1;
 		}
 	}
 
 	if (sz == 0) {
-		UARTDebugOut("SZ == 0 \r\n");
 		return -1;
 	}
 
@@ -331,7 +326,7 @@ int AuCreatePipe(char* name, size_t sz) {
 	node->size = sz;
 	node->uid = proc->creds.uid;
 	node->gid = proc->creds.gid;
-	node->device = pipe; // pipe;
+	node->device = pipe;
 	node->read = AuPipeRead;
 	node->write = AuPipeWrite;
 	node->open = AuPipeOpen;
@@ -341,6 +336,10 @@ int AuCreatePipe(char* name, size_t sz) {
 	node->iocontrol = NULL;
 
 	proc->fds[fd] = node;
+
+	CapRights rights;
+	rights = CAP_READ | CAP_WRITE;
+	BordoisilaCapCreate(proc, fd, node, CAP_OBJ_FILE, rights);
 
 	AuPipeFSAddFile(pipeFS, "/", node);
 	UARTDebugOut("[aurora]: pipe created : %d name: %s\r\n", fd, proc->fds[fd]->filename);
@@ -411,4 +410,3 @@ void AuPipeFSInitialise() {
 	AuTextOut("[aurora]: pipefs mounted \r\n");
 	pipeFS = node;
 }
-

@@ -60,7 +60,7 @@ void AuInitialiseSHMMan() {
 uint16_t AuSHMGetID() {
 	uint16_t _id = shm_id;
 	shm_id = shm_id + 1;
-	return  _id;
+	return _id;
 }
 
 /**
@@ -124,10 +124,9 @@ int AuCreateSHM(AuProcess* proc, uint16_t key, size_t sz, uint8_t flags) {
 		shm->num_frames = (sz / 0x1000) + ((sz % 0x1000) ? 1 : 0);
 		shm->link_count = 0;
 		shm->frames = (uint64_t*)kmalloc(sizeof(uint64_t) * shm->num_frames);
-		for (int i = 0; i < shm->num_frames; i++) 
-			shm->frames[i] = (uint64_t)AuPmmngrAlloc();
-	
-		
+		for (int i = 0; i < shm->num_frames; i++)
+			shm->frames[i] = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
+
 		list_add(shm_list, shm);
 	}
 
@@ -154,7 +153,7 @@ void AuSHMDelete(AuSHM* shm) {
 	if (shm->link_count == 0) {
 		for (int i = 0; i < shm->num_frames; i++) {
 			size_t phys = shm->frames[i];
-			AuPmmngrFree((void*)phys);
+			AuPmmngrReleasePage((uint64_t)phys);
 		}
 
 		for (int j = 0; j <= shm_list->pointer; j++) {
@@ -212,7 +211,6 @@ void AuSHMProcOrderList(AuProcess* proc) {
 	}
 }
 
-
 extern void envmdebug();
 /**
  * @brief AuSHMObtainMem -- obtains a virtual memory from given
@@ -226,13 +224,11 @@ extern void envmdebug();
 void* AuSHMObtainMem(AuProcess* proc, uint16_t id, void* shmaddr, int shmflg) {
 	//AuAcquireSpinlock(shmlock);
 	AuSHM* mem = NULL;
-
 	/* search for shm memory segment */
 	mem = AuGetSHMByID(id);
 
 	if (!mem)
 		return NULL;
-
 
 	AuSHMMappings* mappings = (AuSHMMappings*)kmalloc(sizeof(AuSHMMappings));
 	memset(mappings, 0, sizeof(AuSHMMappings));
@@ -255,7 +251,7 @@ void* AuSHMObtainMem(AuProcess* proc, uint16_t id, void* shmaddr, int shmflg) {
 			if (gap >= mem->num_frames * PAGE_SIZE) {
 				for (int j = 0; j < mem->num_frames; j++) {
 					size_t phys = mem->frames[j];
-					AuMapPage(phys, last_addr + j * PAGE_SIZE,PTE_NORMAL_MEM | PTE_AP_RW_USER);
+					AuMapPage(phys, last_addr + j * PAGE_SIZE, PTE_NORMAL_MEM | PTE_AP_RW_USER);
 					isb_flush();
 					dsb_ish();
 				}
@@ -306,7 +302,8 @@ void* AuSHMObtainMem(AuProcess* proc, uint16_t id, void* shmaddr, int shmflg) {
 			if (gap >= mem->num_frames * PAGE_SIZE) {
 				for (int j = 0; j < mem->num_frames; j++) {
 					size_t phys = mem->frames[j];
-					AuPmmngrAddRefcount(phys, 1);
+					if (!AuPmmngrRetainPage(phys))
+						return NULL;
 					AuMapPage(phys, last_addr + j * PAGE_SIZE, PTE_AP_RW_USER);
 					isb_flush();
 					dsb_ish();
@@ -327,7 +324,7 @@ void* AuSHMObtainMem(AuProcess* proc, uint16_t id, void* shmaddr, int shmflg) {
 	for (int i = 0; i < mem->num_frames; i++) {
 		uint64_t phys_addr = mem->frames[i];
 		uint64_t current_virt = AuSHMProcBreak(proc, 1);
-		AuMapPage((uint64_t)phys_addr, current_virt,PTE_NORMAL_MEM | PTE_AP_RW_USER);
+		AuMapPage((uint64_t)phys_addr, current_virt, PTE_NORMAL_MEM | PTE_AP_RW_USER);
 		if (mappings->start_addr == 0)
 			mappings->start_addr = current_virt;
 	}
@@ -362,7 +359,9 @@ void AuSHMUnmap(uint16_t key, AuProcess* proc) {
 		if (maps->shm == shm) {
 			mapping = maps;
 			for (int i = 0; i < mapping->length / PAGE_SIZE; i++) {
-				AuVPage* vpage = AuVmmngrGetPage(mapping->start_addr + i * PAGE_SIZE, VIRT_GETPAGE_ONLY_RET, VIRT_GETPAGE_ONLY_RET);
+				AuVPage* vpage = AuVmmngrGetPage(mapping->start_addr + i * PAGE_SIZE,
+												 VIRT_GETPAGE_ONLY_RET,
+												 VIRT_GETPAGE_ONLY_RET);
 				if (vpage) {
 					vpage->bits.page = 0;
 					dsb_ish();
@@ -378,7 +377,6 @@ void AuSHMUnmap(uint16_t key, AuProcess* proc) {
 			break;
 		}
 	}
-
 
 	AuSHMDelete(shm);
 	UARTDebugOut("%s Unmapping shm ->%d count \r\n", proc->name, shm->link_count);
@@ -396,8 +394,8 @@ void AuSHMUnmapAll(AuProcess* proc) {
 	for (int i = 0; i < proc->shmmaps->pointer; i++) {
 		AuSHMMappings* mapping = (AuSHMMappings*)list_remove(proc->shmmaps, i);
 		for (int j = 0; j < mapping->length / PAGE_SIZE; j++) {
-			AuVPage* vpage = AuVmmngrGetPage(mapping->start_addr +
-				j * PAGE_SIZE, VIRT_GETPAGE_ONLY_RET, VIRT_GETPAGE_ONLY_RET);
+			AuVPage* vpage = AuVmmngrGetPage(
+				mapping->start_addr + j * PAGE_SIZE, VIRT_GETPAGE_ONLY_RET, VIRT_GETPAGE_ONLY_RET);
 			vpage->bits.page = 0;
 			isb_flush();
 			vpage->bits.present = 0;
@@ -413,4 +411,3 @@ void AuSHMUnmapAll(AuProcess* proc) {
 	kfree(proc->shmmaps);
 	//AuReleaseSpinlock(shmlock);
 }
-

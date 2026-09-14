@@ -1,31 +1,28 @@
-TARGET = virtioblk.dll
-SRC    = virtioblk.cpp
+TARGET = virtblk.dll
+SRC = virtioblk.cpp
 
-CXX           = clang++
+CXX = clang++
 TARGET_TRIPLE = -target aarch64-unknown-windows
 
-# Root include directories
-INCLUDES = -I../../BaseHdr \
-           -I../../LibC/include \
-           -I../../Kernel/include \
-           -I./include \
-           -I.
+#Root include directories
+INCLUDES = -I../../BaseHdr 
 
-# Driver compilation flags
+KERNEL_LIB = ../../KernelAA64/KernelAA64.lib 
+
 CXXFLAGS = -Wall -Wextra -O2 -ffreestanding -fno-builtin \
            -nostdinc -DARCH_ARM64 $(INCLUDES) $(TARGET_TRIPLE)
 
-# Linker flags for freestanding PE/COFF DLL
-LDFLAGS  = -shared -fuse-ld=lld -nostdlib $(TARGET_TRIPLE) \
-           -Wl,-noentry \
-           -Wl,-force:unresolved
+#Linker flags for freestanding PE/COFF DLL
+LDFLAGS = -shared -fuse-ld=lld -nostdlib $(TARGET_TRIPLE) \
+          -Wl,-noentry \
+		  -Wl,-force:unresolved
 
 .PHONY: all clean
 
 all: $(TARGET)
 
-$(TARGET): $(SRC)
-	$(CXX) $(CXXFLAGS) $(SRC) $(LDFLAGS) -o $@
+$(TARGET):$(SRC)
+	$(CXX) $(CXXFLAGS) $(SRC) $(LDFLAGS) $(KERNEL_LIB) -o $@
 
 clean:
 	rm -f $(TARGET)

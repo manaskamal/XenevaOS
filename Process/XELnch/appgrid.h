@@ -37,20 +37,19 @@
 #include "button.h"
 
 #define ENTRIES_PER_ROW 8
-#define ROWS_PER_PAGE 4
-#define ROWS_PAD_Y  20
-#define BUTTONS_PAD_X 20
+#define ROWS_PER_PAGE	4
+#define ROWS_PAD_Y		20
+#define BUTTONS_PAD_X	20
 
-#define APP_GRID_DEFAULT_WIDTH 500
+#define APP_GRID_DEFAULT_WIDTH	500
 #define APP_GRID_DEFAULT_HEIGHT 500
-
 
 typedef struct _page_ {
 	int start_x;
 	int start_y;
 	int pageNumber;
 	bool hasItem;
-}Page;
+} Page;
 
 #define MAX_PAGE_COUNT 8
 
@@ -75,9 +74,8 @@ typedef struct _app_grid_ {
 	Page page[MAX_PAGE_COUNT];
 	list_t* searchResultList;
 	bool show_search;
-	void(*PaintAppGrid)(_app_grid_* grid, ChWindow* win);
-}AppGrid;
-
+	void (*PaintAppGrid)(_app_grid_* grid, ChWindow* win);
+} AppGrid;
 
 /*
 * LauncherCreateAppGrid -- creates app grid

@@ -44,38 +44,35 @@
 
 static uint64_t* spi0Base;
 
-#define SPI0_CS  0x00
+#define SPI0_CS	  0x00
 #define SPI0_FIFO 0x04
-#define SPI0_CLK 0x08
+#define SPI0_CLK  0x08
 
-#define SPI_CS_TXD (1ULL<<18)
-#define SPI_CS_RXD (1ULL<<17)
-#define SPI_CS_DONE (1ULL<<16)
-#define SPI_CS_TA (1ULL<<7)
-#define SPI_CS_CLEAR_RX (1ULL<<5)
-#define SPI_CS_CLEAR_TX (1ULL<<4)
-#define SPI_CS_CS (3ULL<<0)
-#define SPI_CS_CS0 (0ULL<<0)
-#define SPI_CS_CS1 (1ULL<<0)
-#define SPI_CS_CS2 (2ULL<<0)
-#define SPI_CS_CPOL 0x00000008
-#define SPI_CS_CPHA 0x00000004
+#define SPI_CS_TXD		(1ULL << 18)
+#define SPI_CS_RXD		(1ULL << 17)
+#define SPI_CS_DONE		(1ULL << 16)
+#define SPI_CS_TA		(1ULL << 7)
+#define SPI_CS_CLEAR_RX (1ULL << 5)
+#define SPI_CS_CLEAR_TX (1ULL << 4)
+#define SPI_CS_CS		(3ULL << 0)
+#define SPI_CS_CS0		(0ULL << 0)
+#define SPI_CS_CS1		(1ULL << 0)
+#define SPI_CS_CS2		(2ULL << 0)
+#define SPI_CS_CPOL		0x00000008
+#define SPI_CS_CPHA		0x00000004
 
-
-
-#define SPI0_GPIO_DC 25
+#define SPI0_GPIO_DC  25
 #define SPI0_GPIO_RST 24 //25
 #define SPI0_GPIO_LED 23 //18
 
+#define SPI_MMIO_READ(off) *(volatile uint32_t*)((uint64_t)spi0Base + off)
 
-#define SPI_MMIO_READ(off)   *(volatile uint32_t*)((uint64_t)spi0Base + off)
-
-#define SPI_MMIO_WRITE(off, val) \
-do { \
-	(*(volatile uint32_t*)((uint64_t)spi0Base + off)) = (val); \
-		dsb_sy_barrier(); \
-		isb_flush(); \
-}while(0)
+#define SPI_MMIO_WRITE(off, val)                                                                   \
+	do {                                                                                           \
+		(*(volatile uint32_t*)((uint64_t)spi0Base + off)) = (val);                                 \
+		dsb_sy_barrier();                                                                          \
+		isb_flush();                                                                               \
+	} while (0)
 
 /**
  * @brief AuRPI3SPI0Map -- map the spi0 to kernel higher half address
@@ -100,7 +97,6 @@ void AuRPI3SPI0Init() {
 	AuRPIGPIOSetFunction(SPI0_GPIO_DC, 1);
 	AuRPIGPIOSetFunction(SPI0_GPIO_RST, 1);
 	AuRPIGPIOSetFunction(SPI0_GPIO_LED, 1);
-
 
 	uint32_t cs_1 = SPI_MMIO_READ(SPI0_CS);
 	AuTextOut("[aurora]:RPI3 SPI0 default cs-- %x\r\n", cs_1);
@@ -138,14 +134,10 @@ void AuRPI3SPI0Init() {
 	cs = SPI_MMIO_READ(SPI0_CS);
 	SPI_MMIO_WRITE(SPI0_CS, cs | SPI_CS_DONE | SPI_CS_TXD);
 	AuTextOut("SPI CS Set to : %x \r\n", cs);
-	
+
 	uint32_t cs_ = SPI_MMIO_READ(SPI0_CS);
-	AuTextOut("[aurora]:RPI3 SPI0 initialized cs-- %x\r\n",cs_);
-
+	AuTextOut("[aurora]:RPI3 SPI0 initialized cs-- %x\r\n", cs_);
 }
-
-
-
 
 /**
  * @brief AuRPISPITransfer -- transfer a single
@@ -154,8 +146,8 @@ void AuRPI3SPI0Init() {
  * @param data -- data to transfer
  */
 void AuRPISPITransfer(uint8_t data) {
-	
-	while (!((SPI_MMIO_READ(SPI0_CS) & SPI_CS_TXD)));
+	while (!((SPI_MMIO_READ(SPI0_CS) & SPI_CS_TXD)))
+		;
 	AuTextOut("TXD is empty \r\n");
 
 	SPI_MMIO_WRITE(SPI0_FIFO, data);
@@ -170,7 +162,6 @@ void AuRPISPITransfer(uint8_t data) {
 
 	while (SPI_MMIO_READ(SPI0_CS) & SPI_CS_RXD)
 		SPI_MMIO_READ(SPI0_FIFO);
-
 }
 
 /**
@@ -183,20 +174,22 @@ void AuRPISPITransferBuffer(const uint8_t* data, uint32_t len) {
 	uint32_t cs = 0;
 	SPI_MMIO_WRITE(SPI0_CS, cs);
 	cs = SPI_CS_CLEAR_TX | SPI_CS_CLEAR_RX;
-	SPI_MMIO_WRITE(SPI0_CS,cs);
+	SPI_MMIO_WRITE(SPI0_CS, cs);
 	for (int i = 0; i < 1000000; i++)
 		;
 	cs = SPI_CS_TA | SPI_CS_CS0; // SPI_CS_CLEAR_TX | SPI_CS_CLEAR_RX;
 	SPI_MMIO_WRITE(SPI0_CS, cs);
 
 	for (uint32_t i = 0; i < len; i++) {
-		while (!(SPI_MMIO_READ(SPI0_CS) & SPI_CS_TXD));
+		while (!(SPI_MMIO_READ(SPI0_CS) & SPI_CS_TXD))
+			;
 		SPI_MMIO_WRITE(SPI0_FIFO, data[i]);
 		if (SPI_MMIO_READ(SPI0_CS) & SPI_CS_RXD)
 			SPI_MMIO_READ(SPI0_FIFO);
 	}
 
-	while (!(SPI_MMIO_READ(SPI0_CS) & SPI_CS_DONE));
+	while (!(SPI_MMIO_READ(SPI0_CS) & SPI_CS_DONE))
+		;
 
 	while (SPI_MMIO_READ(SPI0_CS) & SPI_CS_RXD)
 		SPI_MMIO_READ(SPI0_FIFO);
@@ -217,18 +210,18 @@ void AuRPISPITransferStart() {
 	uint32_t css = SPI_MMIO_READ(SPI0_CS);
 	if (!(css & SPI_CS_TXD))
 		AuTextOut("TXD is full \r\n");
-	uint32_t cs = css; 
+	uint32_t cs = css;
 	cs |= SPI_CS_CLEAR_RX | SPI_CS_CLEAR_TX;
 	cs &= ~0x3;
-	cs |= 1ULL; 
+	cs |= 1ULL;
 	cs |= SPI_CS_TA;
 	SPI_MMIO_WRITE(SPI0_CS, cs);
 }
 
 void AuRPISPITrasnferWrite(uint32_t data) {
-	while (!(SPI_MMIO_READ(SPI0_CS) & SPI_CS_TXD)) 
+	while (!(SPI_MMIO_READ(SPI0_CS) & SPI_CS_TXD))
 		;
-	
+
 	/*if ((SPI_MMIO_READ(SPI0_CS) & SPI_CS_TA)) {
 		AuTextOut("[aurora]: ## spi0 ta is already active \r\n");
 	}*/
@@ -237,8 +230,8 @@ void AuRPISPITrasnferWrite(uint32_t data) {
 	if (SPI_MMIO_READ(SPI0_CS) & SPI_CS_RXD)
 		SPI_MMIO_READ(SPI0_FIFO);
 
-	while (!(SPI_MMIO_READ(SPI0_CS) & SPI_CS_DONE));
-
+	while (!(SPI_MMIO_READ(SPI0_CS) & SPI_CS_DONE))
+		;
 }
 
 void AuRPISPITransferStop() {
@@ -250,47 +243,46 @@ void AuRPISPITransferStop() {
 	SPI_MMIO_WRITE(SPI0_CS, cs);
 }
 
+#define ADS_START		 (1 << 7)
+#define ADS_A2A1A0_d_y	 (1 << 4)
+#define ADS_A2A1A0_D_Z1	 (3 << 4)
+#define ADS_A2A1A0_D_Z2	 (4 << 4)
+#define ADS_A2A1A0_D_X	 (5 << 4)
+#define ADS_A2A1A0_TEMP0 (0 << 4)
+#define ADS_A2A1A0_VBATT (2 << 4)
+#define ADS_A2A1A0_VAUX	 (6 << 4)
+#define ADS_A2A1A0_TEMP1 (7 << 4)
+#define ADS_8_BIT		 (1 << 3)
+#define ADS_12_BIT		 (0 << 3)
+#define ADS_SER			 (1 << 2)
+#define ADS_DFR			 (0 << 2)
+#define ADS_PD10_PDOWN	 (0 << 0)
+#define ADS_PD10_ADC_ON	 (1 << 0)
+#define ADS_PD10_REF_ON	 (2 << 0)
+#define ADS_PD10_ALL_ON	 (3 << 0)
+#define MAX_12BIT		 ((1 << 12) - 1)
 
-#define ADS_START (1<<7)
-#define ADS_A2A1A0_d_y (1<<4)
-#define ADS_A2A1A0_D_Z1 (3<<4)
-#define ADS_A2A1A0_D_Z2 (4<<4)
-#define ADS_A2A1A0_D_X (5<<4)
-#define ADS_A2A1A0_TEMP0 (0<<4)
-#define ADS_A2A1A0_VBATT (2<<4)
-#define ADS_A2A1A0_VAUX (6<<4)
-#define ADS_A2A1A0_TEMP1 (7 <<4 )
-#define ADS_8_BIT (1<<3)
-#define ADS_12_BIT (0<<3)
-#define ADS_SER (1<<2)
-#define ADS_DFR (0<<2)
-#define ADS_PD10_PDOWN (0<<0)
-#define ADS_PD10_ADC_ON (1<<0)
-#define ADS_PD10_REF_ON (2<<0)
-#define ADS_PD10_ALL_ON (3<<0)
-#define MAX_12BIT ((1<<12)-1)
+#define READ_12BIT_DFR (x, adc, cref)(A)
 
-#define READ_12BIT_DFR (x, adc, cref) (A)
-
-
-#define XPT2046_CMD_TEMP0 0x84
-#define XPT2046_CMD_TEMP1 0xF4
-#define XPT2046_CMD_XPOS 0xD1 // 0x90
-#define XPT2046_CMD_YPOS 0x91 //0xD0
+#define XPT2046_CMD_TEMP0  0x84
+#define XPT2046_CMD_TEMP1  0xF4
+#define XPT2046_CMD_XPOS   0xD1 // 0x90
+#define XPT2046_CMD_YPOS   0x91 //0xD0
 #define XPT2046_CMD_Z1_POS 0xB1
 #define XPT2046_CMD_Z2_POS 0xC1
 
 static inline void spi_wait_txd() {
-	while (!(SPI_MMIO_READ(SPI0_CS) & SPI_CS_TXD));
+	while (!(SPI_MMIO_READ(SPI0_CS) & SPI_CS_TXD))
+		;
 }
 
 static inline void spi_wait_rxd() {
-	while (!(SPI_MMIO_READ(SPI0_CS) & SPI_CS_RXD));
+	while (!(SPI_MMIO_READ(SPI0_CS) & SPI_CS_RXD))
+		;
 }
 
 static inline uint8_t spi_fifo_read() {
 	return *(volatile uint32_t*)((uint64_t)spi0Base + SPI0_FIFO);
-
 }
 
 static inline void spi_fifo_write(uint8_t v) {
@@ -305,7 +297,7 @@ uint16_t XPT2046Read(uint8_t command) {
 	SPI_MMIO_WRITE(SPI0_CS, cs);
 
 	AuRPISPITransferStart();
-	
+
 	spi_wait_txd();
 	spi_fifo_write(command);
 
@@ -322,7 +314,8 @@ uint16_t XPT2046Read(uint8_t command) {
 	spi_wait_rxd();
 	lo = spi_fifo_read();
 
-	while (!(SPI_MMIO_READ(SPI0_CS) & SPI_CS_DONE));
+	while (!(SPI_MMIO_READ(SPI0_CS) & SPI_CS_DONE))
+		;
 	AuRPISPITransferStop();
 
 	for (int i = 0; i < 200; i++)
@@ -331,7 +324,6 @@ uint16_t XPT2046Read(uint8_t command) {
 	uint16_t v = ((hi << 8) | lo) >> 3;
 	return v & 0x0FFF;
 }
-
 
 uint16_t XPT2046ReadSimple(uint8_t command) {
 	uint8_t buffer[3];
@@ -344,7 +336,7 @@ uint16_t XPT2046ReadSimple(uint8_t command) {
 	return 0;
 }
 
-#define PENIRQ_PIN 25
+#define PENIRQ_PIN	25
 #define TOUCH_X_MIN 300
 #define TOUCH_X_MAX 3900
 #define TOUCH_Y_MIN 300
@@ -373,14 +365,13 @@ void XPT2046Initialise() {
 	AuRPIGPIOPullUP(PENIRQ_PIN);
 	AuRPIGPIOEnableInterrupt(PENIRQ_PIN);
 	AuRPI3PeripheralIRQEnable(49);
-
 }
 
-#define Z_MIN 80
-#define Z_MAX 2000
+#define Z_MIN			   80
+#define Z_MAX			   2000
 #define PRESSURE_THRESHOLD 300
-#define PRESSURE_MAX 3000
-#define NUM_SAMPLES 7
+#define PRESSURE_MAX	   3000
+#define NUM_SAMPLES		   7
 
 static inline int pressurevalid(int z) {
 	return (z > Z_MIN && z < Z_MAX);
@@ -393,15 +384,19 @@ static inline int pressurevalid(int z) {
 #define RAW_Y_MAX 4095
 
 static inline int touchToScrX(uint16_t rx) {
-	if (rx < RAW_X_MIN) rx = RAW_X_MIN;
-	if (rx > RAW_X_MAX) rx = RAW_X_MAX;
+	if (rx < RAW_X_MIN)
+		rx = RAW_X_MIN;
+	if (rx > RAW_X_MAX)
+		rx = RAW_X_MAX;
 
 	return ((RAW_X_MAX - rx) * 800) / (RAW_X_MAX - RAW_X_MIN);
 }
 
 static inline int touchToScrY(uint16_t ry) {
-	if (ry < RAW_Y_MIN) ry = RAW_Y_MIN;
-	if (ry > RAW_Y_MAX) ry = RAW_Y_MAX;
+	if (ry < RAW_Y_MIN)
+		ry = RAW_Y_MIN;
+	if (ry > RAW_Y_MAX)
+		ry = RAW_Y_MAX;
 
 	return ((RAW_Y_MAX - ry) * 420) / (RAW_Y_MAX - RAW_Y_MIN);
 }
@@ -412,7 +407,7 @@ static inline void swap(uint16_t* a, uint16_t* b) {
 	*b = t;
 }
 
-static inline void sort(uint16_t *arr, int n) {
+static inline void sort(uint16_t* arr, int n) {
 	for (int i = 0; i < n - 1; i++) {
 		for (int j = 0; j < n - i - 1; j++) {
 			if (arr[j] > arr[j + 1]) {
@@ -476,7 +471,6 @@ void XPT2046ReadSamples(uint16_t* x_out, uint16_t* y_out, int32_t* pressout) {
 	//else {
 	//	*pressout = 0;
 	//}
-
 }
 void XPT2046ReadTouch() {
 	AA64SleepMS(20);
@@ -493,7 +487,7 @@ void XPT2046ReadTouch() {
 	//int screen_y = ((y - TOUCH_Y_MIN) * 480) / (TOUCH_Y_MAX - TOUCH_Y_MIN);
 	//if (z > PRESSURE_THRESHOLD && z < PRESSURE_MAX) {
 	if (z > PRESSURE_THRESHOLD) {
-		touch_x = touchToScrX(x); 
+		touch_x = touchToScrX(x);
 		touch_y = touchToScrY(y);
 		/*touch_x = 800 - 1 - touch_x;
 		touch_y = 420 - 1 - touch_y;*/

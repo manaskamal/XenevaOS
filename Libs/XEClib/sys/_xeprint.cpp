@@ -35,7 +35,7 @@
 
 int _ldigits(unsigned long long num, int base, int sign) {
 	int digits = 1;
-	if (base < 2){
+	if (base < 2) {
 		return (digits = -1);
 	}
 
@@ -44,7 +44,7 @@ int _ldigits(unsigned long long num, int base, int sign) {
 		digits += 1;
 	}
 
-	while (num >= (unsigned long long)base){
+	while (num >= (unsigned long long)base) {
 		digits += 1;
 		num /= (unsigned long long)base;
 	}

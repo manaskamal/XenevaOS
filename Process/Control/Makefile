@@ -1,33 +1,62 @@
-# XenevaOS Control Makefile (GCC Build)
+# XenevaOS Control Makefile (GCC / LLVM Build)
+
+# Default toolchain is GCC
+TOOLCHAIN ?= gcc
 
 TARGET = ctrl.elf
 CROSS_COMPILE ?= aarch64-linux-gnu-
 
-CXX = $(CROSS_COMPILE)g++
-CC = $(CROSS_COMPILE)gcc
-LD = $(CROSS_COMPILE)ld
-OBJCOPY = $(CROSS_COMPILE)objcopy
-
 INCLUDES = -I../../Libs/XEClib/includes -I../../Libs/XEClib/includes/c++ -I../../BaseHdr -I../../Libs/Chitralekha -I../../Ports/freetype2/include
-CXXFLAGS = -Wall -Wextra -ffreestanding -fno-stack-protector -fno-stack-check -fno-strict-aliasing \
-           -O2 -fPIE -fno-exceptions -fno-rtti \
-           -DARCH_ARM64 -D__TARGET_BOARD_QEMU_VIRT__ -D_USE_DLMALLOC -D__STDC_LIMIT_MACROS  -DTHEME_DEFAULT \
-           $(INCLUDES)
-
-OBJDIR = obj
 
 CPP_SRCS = ctrl.cpp
 S_SRCS = crt_arm64.s
 
+OBJDIR = obj
 CPP_OBJS = $(patsubst %.cpp,$(OBJDIR)/%.o,$(CPP_SRCS))
 S_OBJS = $(patsubst %.s,$(OBJDIR)/%.o,$(S_SRCS))
-
 OBJS = $(CPP_OBJS) $(S_OBJS)
 
-.PHONY: all clean
+ifeq ($(TOOLCHAIN), llvm)
+    # LLVM / Clang configuration
+    CXX = clang++
+    CC  = clang
+    LD  = clang++
+
+    LLVM_TARGET = -target aarch64-unknown-windows
+
+    CXXFLAGS = -Wall -Wextra -ffreestanding -fno-stack-protector -fno-stack-check -fno-strict-aliasing \
+               -O2 -fno-exceptions -fno-rtti $(LLVM_TARGET) \
+               -DARCH_ARM64 -D__TARGET_BOARD_QEMU_VIRT__ -D_USE_DLMALLOC -D__STDC_LIMIT_MACROS -DTHEME_DEFAULT \
+               -Wno-error=incompatible-pointer-types -Wno-error=int-conversion \
+               -Wno-implicit-function-declaration -Wno-c++11-narrowing \
+               $(INCLUDES)
+
+    LDFLAGS = $(LLVM_TARGET) -fuse-ld=lld -nostdlib -Wl,-entry:_aumain -Wl,-base:0x600000000 -Wl,-subsystem:native
+else
+    # GCC configuration
+    CXX = $(CROSS_COMPILE)g++
+    CC = $(CROSS_COMPILE)gcc
+    LD = $(CROSS_COMPILE)ld
+    OBJCOPY = $(CROSS_COMPILE)objcopy
+
+    CXXFLAGS = -Wall -Wextra -ffreestanding -fno-stack-protector -fno-stack-check -fno-strict-aliasing \
+               -O2 -fPIE -fno-exceptions -fno-rtti \
+               -DARCH_ARM64 -D__TARGET_BOARD_QEMU_VIRT__ -D_USE_DLMALLOC -D__STDC_LIMIT_MACROS -DTHEME_DEFAULT \
+               $(INCLUDES)
+endif
+
+# Triggered when you run "make llvm"
+.PHONY: all clean llvm
+llvm:
+	@$(MAKE) TOOLCHAIN=llvm all
 
 all: ctrl.exe
 
+ifeq ($(TOOLCHAIN), llvm)
+ctrl.exe: $(OBJS)
+	@echo "Linking ctrl.exe (LLVM)..."
+	$(LD) $(LDFLAGS) $(OBJS) ../../Libs/Chitralekha/libChitralekha.a ../../Libs/XEClib/libXEClib.a -o $@
+else
 ctrl.exe: $(TARGET)
 	@echo "Converting ELF to PE32+ (ctrl.exe)..."
 	$(OBJCOPY) -O pei-aarch64-little $(TARGET) ctrl.exe
@@ -35,6 +64,7 @@ ctrl.exe: $(TARGET)
 $(TARGET): $(OBJS)
 	@echo "Linking ctrl.elf..."
 	$(LD) -nostdlib -T linker.ld $(OBJS) ../../Libs/Chitralekha/libChitralekha.a ../../Libs/XEClib/libXEClib.a -o $@
+endif
 
 $(OBJDIR)/%.o: %.cpp
 	@mkdir -p $(dir $@)
@@ -42,7 +72,7 @@ $(OBJDIR)/%.o: %.cpp
 
 $(OBJDIR)/%.o: %.s
 	@mkdir -p $(dir $@)
-	$(CC) $(CXXFLAGS) -c $< -o $@
+	$(CC) $(CXXFLAGS) -Wno-unused-command-line-argument -c $< -o $@
 
 clean:
-	rm -rf $(OBJDIR) $(TARGET) ctrl.exe
+	rm -rf $(OBJDIR) ctrl.exe $(TARGET)

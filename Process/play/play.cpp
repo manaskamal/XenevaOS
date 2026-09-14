@@ -40,7 +40,6 @@
 #include <sys/socket.h>
 #include <audio/audio.h>
 
-
 void drawAnim() {
 	int i = 0;
 	while (1) {
@@ -52,8 +51,7 @@ void drawAnim() {
 /*
 * main -- terminal emulator
 */
-int main(int argc, char* arv[]){
-	
+int main(int argc, char* arv[]) {
 	//char* filename = "/Ss.wav"; //NULL;
 	/*if (argc > 1){
 		if (strcmp(arv[1], "-help") == 0){
@@ -72,7 +70,7 @@ int main(int argc, char* arv[]){
 			filename = arv[2];
 		}
 	}*/
-	
+
 	/*if (filename == NULL){
 		printf("\n No filename specified \n");		
 		return -1;
@@ -82,17 +80,17 @@ int main(int argc, char* arv[]){
 	int postbox = _KeOpenFile("/dev/postbox", FILE_OPEN_READ_ONLY);
 	_KeFileIoControl(postbox, POSTBOX_CREATE, NULL);
 	printf("\n");
-	
-	DeodhaiAudioBox* audioBox = DeodhaiAudioOpenConnection(postbox, DEODHAI_AUDIO_STEREO, DEODHAI_CONNECTION_TYPE_NORMAL);
-	printf("play: audio connection initiated successfully \n");
 
+	DeodhaiAudioBox* audioBox =
+		DeodhaiAudioOpenConnection(postbox, DEODHAI_AUDIO_STEREO, DEODHAI_CONNECTION_TYPE_NORMAL);
+	printf("play: audio connection initiated successfully \n");
 
 	/* now open your sound file, note that here demo is playing
 	* a raw wave file with 48kHZ-16bit format, to play mp3 or
 	* other format, one needs another conversion layer of samples */
 
 	int song = _KeOpenFile("/Ss.wav", FILE_OPEN_READ_ONLY);
-	if (song == -1){
+	if (song == -1) {
 		printf("No file found \n");
 		return -1;
 	}
@@ -105,7 +103,7 @@ int main(int argc, char* arv[]){
 	XEFileStatus fs;
 	_KeFileStat(song, &fs);
 	bool finished = 0;
-	
+
 	while (1) {
 		/* with each frame read the sound, write it
 		* to sound device, the sound device will automatically
@@ -126,8 +124,7 @@ int main(int argc, char* arv[]){
 			if (!audioBox->ctlPanel->Samplefull) {
 				_KeReadFile(song, songbuf, 4096);
 				DeodhaiAudioWrite(audioBox, songbuf);
-			}
-			else {
+			} else {
 				_KeProcessSleep(120);
 			}
 		}

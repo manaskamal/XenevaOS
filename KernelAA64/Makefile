@@ -3,8 +3,18 @@
 TARGET = KernelAA64.elf
 OBJDIR = obj
 
-# Default toolchain is GCC
+# MSYS2 shells (MINGW64/CLANG64/UCRT64/MSYS/...) set $MSYSTEM. There's no
+# aarch64-linux-gnu-gcc cross toolchain packaged for MSYS2, so default to
+# llvm there; everywhere else (Linux) keeps defaulting to gcc.
+ifdef MSYSTEM
+    TOOLCHAIN ?= llvm
+endif
 TOOLCHAIN ?= gcc
+
+BLEED ?= 0
+ifeq ($(BLEED),1)
+    BLEED_FLAGS = -D__XENEVA_BLEED__
+endif
 
 # Triggered when you run "make llvm"
 .PHONY: all clean llvm
@@ -21,6 +31,7 @@ endif
 
 INCLUDES = -I../BaseHdr -I../Acpica/include -I../Acpica -I.
 
+EXPORTS_DEF = exports.def
 
 ifeq ($(TOOLCHAIN), llvm)
     # llvm configuration
@@ -31,31 +42,46 @@ ifeq ($(TOOLCHAIN), llvm)
     LLVM_TARGET = -target aarch64-unknown-windows
     
     CFLAGS  = -Wall -Wextra -ffreestanding -fno-stack-protector -fno-stack-check -fno-strict-aliasing \
-              -O2 $(LLVM_TARGET) -fno-builtin \
-              -DARCH_ARM64 $(BOARD_FLAG) -D_USE_DLMALLOC -D__STDC_LIMIT_MACROS \
-              $(INCLUDES)
+              -O2 -g -gdwarf-4 $(LLVM_TARGET) -fno-builtin \
+              -DARCH_ARM64 $(BOARD_FLAG) -D__STDC_LIMIT_MACROS $(BLEED_FLAGS) \
+              -Wno-error=incompatible-pointer-types -Wno-error=int-conversion \
+              -Wno-implicit-function-declaration -Wno-error=conflicting-types $(INCLUDES)
 
     LDFLAGS = $(LLVM_TARGET) -fuse-ld=lld -nostdlib \
               -Wl,-entry:_AuMain \
-              -Wl,-base:0xFFFFC00000000000 \
-              -Wl,-subsystem:native
+            -Wl,-base:0xFFFFC00000000000 \
+            -Wl,-subsystem:native \
+            -Wl,-def:$(EXPORTS_DEF) \
+            -Wl,-map:KernelAA64.map
+
+    ifeq ($(shell command -v $(CC) 2>/dev/null),)
+        $(error $(CC) not found on PATH. On MSYS2: pacman -S mingw-w64-clang-x86_64-toolchain (or the clangarm64/ucrt64 package matching your shell), then reopen the shell)
+    endif
+    ifeq ($(shell command -v ld.lld 2>/dev/null),)
+        $(error ld.lld not found on PATH. It ships with the clang toolchain package above)
+    endif
 
 else
     # original gcc configuration
+    ifdef MSYSTEM
+        $(error TOOLCHAIN=gcc needs aarch64-linux-gnu-gcc, which MSYS2 doesn't package. Run "make llvm" instead (MSYS2 already defaults to it))
+    endif
+
     CROSS_COMPILE ?= aarch64-linux-gnu-
     CC      = $(CROSS_COMPILE)gcc
     LD      = $(CROSS_COMPILE)ld
     OBJCOPY = $(CROSS_COMPILE)objcopy
-    
+
     CFLAGS  = -Wall -Wextra -ffreestanding -fno-stack-protector -fno-stack-check -fno-strict-aliasing \
               -O2 \
-              -DARCH_ARM64 $(BOARD_FLAG) -D_USE_DLMALLOC -D__STDC_LIMIT_MACROS \
+              -DARCH_ARM64 $(BOARD_FLAG) -D__STDC_LIMIT_MACROS $(BLEED_FLAGS) \
               $(INCLUDES)
 endif
 
 
 C_SRCS_ALL = $(shell find . -name '*.c')
-C_SRCS = $(filter-out ./Board/Rpi3bp/vc4dsi.c, $(C_SRCS_ALL))
+# Exclude dead allocator code (replaced by TLSF)
+C_SRCS = $(filter-out ./Mm/dlmalloc.c ./Mm/liballoc.c, $(filter-out ./Board/Rpi3bp/vc4dsi.c, $(C_SRCS_ALL)))
 S_SRCS = $(shell find . -name '*.s')
 
 C_OBJS = $(patsubst %.c,$(OBJDIR)/%.o,$(C_SRCS))

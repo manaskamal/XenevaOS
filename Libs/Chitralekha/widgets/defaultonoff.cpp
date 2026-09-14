@@ -56,19 +56,23 @@ void ChDefaultOnOffPainter(ChWidget* wid, ChWindow* win) {
 	int off_posx = onoff->wid.x + onoff->wid.w / 2 - handle_radius - 2;
 	int on_posx = onoff->wid.x + onoff->wid.w / 2 + handle_radius + 2;
 
-
 	int button_posx = off_posx;
 	if (onoff->value) {
 		button_posx = on_posx;
 		capsule_col = capsule_on_col;
 	}
 
-	ChDrawCapsule(win->canv, onoff->wid.x, onoff->wid.y, onoff->wid.w, onoff->wid.h,0xFF5B6A59);
-	ChDrawCapsule(win->canv, onoff->wid.x+1, onoff->wid.y+1, onoff->wid.w-2, onoff->wid.h-2, capsule_col);
+	ChDrawCapsule(win->canv, onoff->wid.x, onoff->wid.y, onoff->wid.w, onoff->wid.h, 0xFF5B6A59);
+	ChDrawCapsule(win->canv,
+				  onoff->wid.x + 1,
+				  onoff->wid.y + 1,
+				  onoff->wid.w - 2,
+				  onoff->wid.h - 2,
+				  capsule_col);
 
 	//button handle
-	ChDrawFilledCircle(win->canv, button_posx, onoff->wid.y + onoff->wid.h / 2,
-		handle_radius, 0xFF3E4B4C);
-	ChDrawFilledCircle(win->canv, button_posx, onoff->wid.y + onoff->wid.h / 2,
-		handle_radius - 1,button_color);
+	ChDrawFilledCircle(
+		win->canv, button_posx, onoff->wid.y + onoff->wid.h / 2, handle_radius, 0xFF3E4B4C);
+	ChDrawFilledCircle(
+		win->canv, button_posx, onoff->wid.y + onoff->wid.h / 2, handle_radius - 1, button_color);
 }

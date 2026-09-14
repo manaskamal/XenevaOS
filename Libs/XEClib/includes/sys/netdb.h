@@ -36,37 +36,35 @@
 #include <_xeneva.h>
 
 #ifdef __cplusplus
-XE_EXTERN{
+XE_EXTERN {
 #endif
 
-
-#pragma pack(push,1)
+#pragma pack(push, 1)
 #if defined(_MSC_VER)
-__declspec(align(2))
+	__declspec(align(2))
 #else
 __attribute__((aligned(2)))
 #endif
-typedef struct _dns_ {
-	uint16_t qid;
-	uint16_t flags;
-	uint16_t questions;
-	uint16_t answers;
-	uint16_t authorities;
-	uint16_t additional;
-	uint8_t data[];
-}DNSPacket;
+	typedef struct _dns_ {
+		uint16_t qid;
+		uint16_t flags;
+		uint16_t questions;
+		uint16_t answers;
+		uint16_t authorities;
+		uint16_t additional;
+		uint8_t data[];
+	} DNSPacket;
 #pragma pack(pop)
 
-struct hostent {
-	char* h_name;
-	char** h_aliases;
-	int h_addrtype;
-	int h_length;
-	char** h_addr_list;
-};
+	struct hostent {
+		char* h_name;
+		char** h_aliases;
+		int h_addrtype;
+		int h_length;
+		char** h_addr_list;
+	};
 
-XE_LIB hostent* gethostbyname(const char* name);
-
+	XE_LIB hostent* gethostbyname(const char* name);
 
 #ifdef __cplusplus
 }

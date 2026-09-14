@@ -29,12 +29,11 @@
 
 #include "deodhai.h"
 
-
 /* Check if two rectangle intersects
 * @param r1 -- rectangle one
 * @param r2 -- rectangle two
 */
-extern bool ClipCheckIntersect(Rect *r1, Rect *r2);
+extern bool ClipCheckIntersect(Rect* r1, Rect* r2);
 
 /*
 * ClipCalculateRect -- calculate visible rectanlges of current window
@@ -44,7 +43,7 @@ extern bool ClipCheckIntersect(Rect *r1, Rect *r2);
 * visible rectangles
 * @param count -- number of rectangles stored in the list
 */
-extern void ClipCalculateRect(Rect *sub_rect, Rect* cut_rect, Rect *list, int *count);
+extern void ClipCalculateRect(Rect* sub_rect, Rect* cut_rect, Rect* list, int* count);
 
 /*
 * ClipSubtractRect -- calculate visible rectanlges of current window
@@ -54,4 +53,4 @@ extern void ClipCalculateRect(Rect *sub_rect, Rect* cut_rect, Rect *list, int *c
 * visible rectangles
 * @param count -- number of rectangles stored in the list
 */
-extern void ClipSubtractRect(Rect *sub_rect, Rect* cut_rect, Rect *list, int r_count);
+extern void ClipSubtractRect(Rect* sub_rect, Rect* cut_rect, Rect* list, int r_count);

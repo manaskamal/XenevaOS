@@ -37,14 +37,13 @@
 #include <_xeneva.h>
 
 #ifdef __cplusplus
-XE_EXTERN{
+XE_EXTERN {
 #endif
-
 
 	typedef struct _CHButton_ {
 		ChWidget base;
 		char* title;
-	}ChButton;
+	} ChButton;
 
 	/**
 	* @brief ChCreateButton -- Create a button widget
@@ -54,7 +53,7 @@ XE_EXTERN{
 	* @param h -- height of the button
 	* @param text -- button text
 	*/
-	XE_EXPORT ChButton* ChCreateButton(int x, int y, int w, int h, char *text);
+	XE_EXPORT ChButton* ChCreateButton(int x, int y, int w, int h, char* text);
 
 #ifdef __cplusplus
 }

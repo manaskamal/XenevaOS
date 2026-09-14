@@ -37,14 +37,17 @@
 
 list_t* initialize_list() {
 	list_t* list = (list_t*)kmalloc(sizeof(list_t));
+	if (!list)
+		return NULL;
 	list->entry_current = NULL;
 	list->pointer = 0;
 	return list;
 }
 
-
 void list_add(list_t* list, void* data) {
 	dataentry* current_data = (dataentry*)kmalloc(sizeof(dataentry));
+	if (!current_data)
+		return;
 	current_data->next = NULL;
 	current_data->prev = NULL;
 	current_data->data = data;
@@ -56,8 +59,7 @@ void list_add(list_t* list, void* data) {
 
 	if (!list->entry_current) {
 		list->entry_current = current_data;
-	}
-	else {
+	} else {
 		dataentry* current_entry = list->entry_current;
 		while (current_entry->next) {
 			current_entry = current_entry->next;
@@ -76,7 +78,6 @@ void list_add(list_t* list, void* data) {
 }
 
 void* list_get_at(list_t* list, unsigned int index) {
-
 	if (list->pointer == 0 || index >= list->pointer)
 		return NULL;
 
@@ -95,7 +96,6 @@ void* list_get_at(list_t* list, unsigned int index) {
 }
 
 void* list_remove(list_t* list, unsigned int index) {
-
 	void* payload;
 
 	if (list->pointer == 0 || index >= list->pointer)
@@ -125,8 +125,6 @@ void* list_remove(list_t* list, unsigned int index) {
 	dsb_ish();
 
 	kfree(current_node);
-
-
 
 	list->pointer--;
 

@@ -35,11 +35,10 @@
 #include <string.h>
 #include <ctype.h>
 
-
 typedef struct _button_match_ {
 	LaunchButton* lb;
 	int score;
-}ButtonMatch;
+} ButtonMatch;
 
 extern AppGrid* xelaunch_get_app_grid();
 
@@ -84,13 +83,12 @@ int compute_score(const char* title, const char* query) {
 }
 
 int compare(const void* a, const void* b) {
-    ButtonMatch* lb = (ButtonMatch*)a;
+	ButtonMatch* lb = (ButtonMatch*)a;
 	ButtonMatch* lb2 = (ButtonMatch*)b;
 	return lb->score - lb2->score;
 }
 
 void _match_string(char* string, list_t* lbutton_list) {
-
 	ButtonMatch* bm = (ButtonMatch*)malloc(lbutton_list->pointer * sizeof(ButtonMatch));
 	for (int i = 0; i < lbutton_list->pointer; i++) {
 		LaunchButton* lb = (LaunchButton*)list_get_at(lbutton_list, i);
@@ -100,7 +98,7 @@ void _match_string(char* string, list_t* lbutton_list) {
 
 	qsort(bm, lbutton_list->pointer, sizeof(ButtonMatch), compare);
 
-	for (int i = lbutton_list->pointer-1; i > 0; i--) {
+	for (int i = lbutton_list->pointer - 1; i > 0; i--) {
 		if (bm[i].score > 0) {
 			//_KePrint("%s (score : %d) \r\n", bm[i].lb->title, bm[i].score);
 			AppGridAddButtonInSearch(xelaunch_get_app_grid(), bm[i].lb);

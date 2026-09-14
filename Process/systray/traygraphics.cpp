@@ -41,8 +41,8 @@
  * @param searchColor -- color to replace
  * @param replaceColor -- color to replace with
  */
-void TrayDrawIconColorReplace(ChCanvas* canv, ChIcon* ico, int x, int y, uint32_t searchColor, 
-	uint32_t replaceColor) {
+void TrayDrawIconColorReplace(
+	ChCanvas* canv, ChIcon* ico, int x, int y, uint32_t searchColor, uint32_t replaceColor) {
 	if (!ico)
 		return;
 
@@ -63,7 +63,7 @@ void TrayDrawIconColorReplace(ChCanvas* canv, ChIcon* ico, int x, int y, uint32_
 	uint8_t* image = ico->image.data;
 	for (int i = 0; i < height; i++) {
 		char* image_row = ((char*)image + (static_cast<uint64_t>(height) - i - 1) *
-			(static_cast<uint64_t>(width) * 4));
+											  (static_cast<uint64_t>(width) * 4));
 		uint32_t h = height - 1 - i;
 		j = 0;
 		for (int k = 0; k < width; k++) {
@@ -71,17 +71,16 @@ void TrayDrawIconColorReplace(ChCanvas* canv, ChIcon* ico, int x, int y, uint32_
 			uint32_t g = image_row[j++] & 0xff;
 			uint32_t r = image_row[j++] & 0xff;
 			uint32_t a = image_row[j++] & 0xff;
-			
+
 			if (r == scR || g == scG || b == scB)
 				r = rR, g = rG, b = rB;
-			
+
 			uint32_t rgb = ((a << 24) | (r << 16) | (g << 8) | (b));
 			if (rgb & 0xFF000000)
 				ChDrawPixel(canv, x + k, y + i, rgb);
 		}
 	}
 }
-
 
 void SoundWindowPainter(ChWindow* win) {
 	ChDrawRect(win->canv, 0, 0, win->info->width, win->info->height, win->color);
@@ -90,7 +89,6 @@ void SoundWindowPainter(ChWindow* win) {
 		if (wid)
 			if (wid->ChPaintHandler)
 				wid->ChPaintHandler(wid, win);
-
 	}
 	ChDrawRectUnfilled(win->canv, 0, 0, win->info->width, win->info->height, DESKBLUE);
 	ChWindowUpdate(win, 0, 0, win->info->width, win->info->height, 1, 0);

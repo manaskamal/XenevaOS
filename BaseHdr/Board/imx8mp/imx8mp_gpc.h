@@ -53,4 +53,11 @@ enum _power_domain_id_ {
 	IMX8MP_POWER_DOMAIN_HSIOMIX,
 	IMX8MP_POWER_DOMAIN_MEDIAMIX_ISPDWP
 };
+
+/**
+ * @brief imx8mp_gpc_init -- register each power domain
+ * to the database
+ */
+extern void imx8mp_gpc_init();
+extern int imx8mp_gpc_powerup(uint8_t id);
 #endif

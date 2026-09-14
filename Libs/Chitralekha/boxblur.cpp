@@ -41,10 +41,9 @@
  * @param w -- width of the image
  * @param h -- height of the image
  */
-void ChBoxBlur(ChCanvas* canv, uint32_t *inputpix, uint32_t* outpix, int cx, int cy, int w, int h){
-	for (int j = 0; j < h; j++){
+void ChBoxBlur(ChCanvas* canv, uint32_t* inputpix, uint32_t* outpix, int cx, int cy, int w, int h) {
+	for (int j = 0; j < h; j++) {
 		for (int i = 0; i < w; i++) {
-
 			int redTotal = 0;
 			int greenTotal = 0;
 			int blueTotal = 0;
@@ -55,8 +54,8 @@ void ChBoxBlur(ChCanvas* canv, uint32_t *inputpix, uint32_t* outpix, int cx, int
 					int currentX = cx + i + col;
 					int currentY = cy + j + row;
 
-					if (currentX >= 0 && currentX < canv->canvasWidth &&
-						currentY >= 0 && currentY < canv->canvasHeight) {
+					if (currentX >= 0 && currentX < canv->canvasWidth && currentY >= 0 &&
+						currentY < canv->canvasHeight) {
 						uint32_t color = inputpix[(currentY * w + currentX)];
 
 						uint8_t red = GET_RED(color);

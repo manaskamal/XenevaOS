@@ -56,6 +56,15 @@ struct _VDISK_;
 
 typedef int(*vdisk_read) (struct _VDISK_ *disk, uint64_t lba, uint32_t count ,uint64_t* buffer);
 typedef int(*vdisk_write) (struct _VDISK_ *disk, uint64_t lba, uint32_t count, uint64_t *buffer);
+/* driver-level write-cache flush (VIRTIO_BLK_T_FLUSH / ATA_CMD_CACHE_FLUSH
+ * type thing), left NULL by drivers that dont implement one yet. added at
+ * the end of AuVDisk so existing field offsets dont move, but every
+ * AuVDiskRegister() caller still has to get its struct from
+ * AuCreateVDisk() (kernel-side alloc+memset, so this field comes back
+ * NULL) instead of kmalloc'ing or declaring its own AuVDisk. otherwise a
+ * driver built against an older copy of this header leaves Flush
+ * uninitialized and AuVDiskFlushAll() jumps to garbage on shutdown --axiss */
+typedef int(*vdisk_flush) (struct _VDISK_ *disk);
 
 /* will needed in future */
 typedef struct _au_partition_data_ {
@@ -103,7 +112,8 @@ typedef struct _VDISK_ {
 	//=======================//
 	vdisk_read Read;
 	vdisk_write Write;
-	/* more device specific functions 
+	vdisk_flush Flush;
+	/* more device specific functions
 	 * needs to be added like eject
 	 */
 }AuVDisk;
@@ -185,6 +195,21 @@ AU_EXTERN AU_EXPORT size_t AuVDiskRead(AuVDisk *disk, uint64_t lba, uint32_t cou
 * @return the amount of data being written in bytes
 */
 AU_EXTERN AU_EXPORT size_t AuVDiskWrite(AuVDisk* disk, uint64_t lba, uint32_t count, uint64_t* buffer);
+
+/**
+* @brief AuVDiskFlush -- flushes a single registered disk's write
+* cache, if its driver provides one (no-op otherwise)
+* @param disk -- Pointer to vdisk structure
+* @return 0 on success/no-op, driver-defined non-zero on failure
+*/
+AU_EXTERN AU_EXPORT int AuVDiskFlush(AuVDisk* disk);
+
+/**
+* @brief AuVDiskFlushAll -- flushes every registered disk's write
+* cache; meant to be called before power-down/reset so no dirty
+* device-side cache is lost
+*/
+AU_EXTERN AU_EXPORT void AuVDiskFlushAll();
 
 /**
  * @brief AuVDiskDestroy -- destroy's a vdisk

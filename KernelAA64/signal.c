@@ -39,7 +39,6 @@
 #endif
 #endif
 
-
 extern void aa64_signal_return();
 /**
  * @brief AuAllocSignal -- allocate a signal for destination
@@ -58,7 +57,7 @@ int AuAllocSignal(AA64Thread* thr, int signum) {
 		return 1;
 
 	/* check if all tokens are sold out !!*/
-	
+
 	/** let's go with standard posix signal **/
 	thr->sig_pending |= (1UL << signum);
 
@@ -67,7 +66,8 @@ int AuAllocSignal(AA64Thread* thr, int signum) {
 }
 
 static inline int ctzl(uint64_t x) {
-	if (x == 0) return 64;
+	if (x == 0)
+		return 64;
 	int n = 0;
 	while (!(x & 1UL)) {
 		x >>= 1;
@@ -101,14 +101,15 @@ int AuSignalDispatch(AA64Thread* thr) {
 bool AuSignalDeliver(AA64Thread* current_thread) {
 	int signo;
 	while ((signo = AuSignalDispatch(current_thread)) != 0) {
-		if (signo > SIGHUP || signo < SIGTTOU) {
-			AA64Registers* regs_ = (AA64Registers*)current_thread->sp;
-			memcpy(&current_thread->signal.regs, regs_, sizeof(AA64Registers));
-			current_thread->signal.elr_el1 = current_thread->elr_el1;
-			current_thread->elr_el1 = (uint64_t)current_thread->sigs[signo];
-			regs_->x30 = current_thread->signal.sigret_address;
-			return true;
-		}
+		if (signo <= 0 || signo >= 32 || !current_thread->sigs[signo])
+			continue;
+		AA64Registers* regs_ = (AA64Registers*)current_thread->sp;
+		memcpy(&current_thread->signal.regs, regs_, sizeof(AA64Registers));
+		current_thread->signal.elr_el1 = current_thread->elr_el1;
+		regs_->x0 = signo;
+		current_thread->elr_el1 = (uint64_t)current_thread->sigs[signo];
+		regs_->x30 = current_thread->signal.sigret_address;
+		return true;
 	}
 	return false;
 }
@@ -119,8 +120,11 @@ bool AuSignalDeliver(AA64Thread* current_thread) {
  * @param t -- pointer to thread struct
  */
 void AuSignalInitializeTrampoline(AA64Thread* t) {
-	uint64_t* phys = (uint64_t*)P2V((uint64_t)AuPmmngrAlloc());
+	uint64_t* phys = (uint64_t*)P2V((uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 	memcpy(phys, &aa64_signal_return, PAGE_SIZE);
-	AuMapPageEx((uint64_t*)t->pml, V2P((uint64_t)phys), 0xD0000000, PTE_USER_EXECUTABLE | PTE_NORMAL_MEM | PTE_AP_RW_USER);
+	AuMapPageEx((uint64_t*)t->pml,
+				V2P((uint64_t)phys),
+				0xD0000000,
+				PTE_USER_EXECUTABLE | PTE_NORMAL_MEM | PTE_AP_RW_USER);
 	t->signal.sigret_address = 0xD0000000;
 }

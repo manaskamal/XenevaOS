@@ -37,7 +37,7 @@
 #include <stdlib.h>
 #include "glimpse.h"
 
-#define THUMB_MAX 128
+#define THUMB_MAX	 128
 #define GLIMPX_PAD_X 5
 #define GLIMPX_PAD_Y 5
 
@@ -53,7 +53,6 @@ void _Glimpse_box_repaint(GlimpBox* box, ChWindow* win) {
 			ChDrawRect(win->canv, thumb->xloc, thumb->yloc, thumb->width, thumb->height, SILVER);
 		}
 	}
-
 }
 /**
  * _Glimpse_create_glimbox -- creates a glimbox bounding area
@@ -84,7 +83,7 @@ GlimpBox* _Glimpse_create_glimbox(int xloc, int yloc, int width, int height) {
 void _Glimpse_add_thumbnail(GlimpBox* box, thumbnail_t* thumb) {
 	thumb->xloc = box->cur_xloc;
 	thumb->yloc = box->cur_yloc;
-	
+
 	if ((thumb->xloc + thumb->width) >= (box->xloc + box->width)) {
 		box->cur_xloc = box->xloc + GLIMPX_PAD_X;
 		box->cur_yloc += thumb->height + GLIMPX_PAD_Y;
@@ -113,8 +112,6 @@ thumbnail_t* _Glimpse_create_thumbnail(int xloc, int yloc, int width, int height
 	return thumb;
 }
 
-
-
 /**
  * @brief compute_thumb_size -- computes the best possible thumbnail
  * size out of given image width and height
@@ -125,13 +122,11 @@ thumbnail_t* _Glimpse_create_thumbnail(int xloc, int yloc, int width, int height
  * @param out_w -- best possible width
  * @param out_h -- best possible height
  */
-void compute_thumb_size(int src_w, int src_h, int max_w, int max_h,
-	int* out_w, int* out_h) {
+void compute_thumb_size(int src_w, int src_h, int max_w, int max_h, int* out_w, int* out_h) {
 	if (src_w * max_h > src_h * max_w) {
 		*out_w = max_w;
 		*out_h = src_h * max_w / src_w;
-	}
-	else {
+	} else {
 		*out_h = max_h;
 		*out_w = src_w * max_h / src_h;
 	}
@@ -145,9 +140,8 @@ uint32_t _RGB(uint8_t red, uint8_t green, uint8_t blue) {
 	//blue = max(blue, 0);
 	//blue = min(blue, 255);*/
 
-	uint32_t ret =  (0xFF << 24) | (red << 16) | (green << 8) | (blue << 0);
+	uint32_t ret = (0xFF << 24) | (red << 16) | (green << 8) | (blue << 0);
 	return ret;
-
 }
 
 /**
@@ -161,9 +155,15 @@ uint32_t _RGB(uint8_t red, uint8_t green, uint8_t blue) {
  * @param dst_w -- destination image width
  * @param dst_h -- destination image height
  */
-void thumbnail_box(ChCanvas* canvas, uint8_t* src, int src_w, int src_h,
-	uint8_t* dst,int dst_x, int dst_y, int dst_w, int dst_h) {
-
+void thumbnail_box(ChCanvas* canvas,
+				   uint8_t* src,
+				   int src_w,
+				   int src_h,
+				   uint8_t* dst,
+				   int dst_x,
+				   int dst_y,
+				   int dst_w,
+				   int dst_h) {
 	for (int dy = 0; dy < dst_h; dy++) {
 		for (int dx = 0; dx < dst_w; dx++) {
 			int sx0 = dx * src_w / dst_w;
@@ -171,8 +171,10 @@ void thumbnail_box(ChCanvas* canvas, uint8_t* src, int src_w, int src_h,
 			int sy0 = dy * src_h / dst_h;
 			int sy1 = (dy + 1) * src_h / dst_h;
 
-			if (sx1 <= sx0) sx1 = sx0 + 1;
-			if (sy1 <= sy0) sy1 = sy0 + 1;
+			if (sx1 <= sx0)
+				sx1 = sx0 + 1;
+			if (sy1 <= sy0)
+				sy1 = sy0 + 1;
 
 			uint32_t r = 0, g = 0, b = 0, count = 0;
 
@@ -190,13 +192,12 @@ void thumbnail_box(ChCanvas* canvas, uint8_t* src, int src_w, int src_h,
 			d[0] = (uint8_t)(r / count);
 			d[1] = (uint8_t)(g / count);
 			d[2] = (uint8_t)(b / count);
-		
+
 #endif
 			/* rather than rendering to buffer, why not to the canvas buffer */
-			uint32_t color =_RGB(r / count, g / count, b / count);
+			uint32_t color = _RGB(r / count, g / count, b / count);
 			ChDrawPixel(canvas, dst_x + dx, dst_y + dy, color);
 		}
-
 	}
 }
 
@@ -218,13 +219,14 @@ void _Glimpse_draw_thumb(ChCanvas* canv, char* path, int dst_x, int dst_y, int m
 	_KeFileStat(fd, &stat);
 
 	uint8_t* filebuf = (uint8_t*)_KeMemMap(0, stat.size, 0, 0, -1, 0);
-	_KeReadFile(fd, filebuf, ALIGN_UP(stat.size,4096));
+	_KeReadFile(fd, filebuf, ALIGN_UP(stat.size, 4096));
 
-
-	Jpeg::Decoder* decor = new Jpeg::Decoder((uint8_t*)filebuf, ALIGN_UP(stat.size, 4096), malloc, free);
+	Jpeg::Decoder* decor =
+		new Jpeg::Decoder((uint8_t*)filebuf, ALIGN_UP(stat.size, 4096), malloc, free);
 	if (decor->GetResult() != Jpeg::Decoder::OK) {
 		_KePrint("Decoder error \n");
-		for (;;);
+		for (;;)
+			;
 		return;
 	}
 	int src_w = decor->GetWidth();
@@ -236,7 +238,7 @@ void _Glimpse_draw_thumb(ChCanvas* canv, char* path, int dst_x, int dst_y, int m
 	compute_thumb_size(src_w, src_h, max_w, max_h, &tw, &th);
 	//_KePrint("tw : %d, th : %d \r\n", tw, th);
 
-	thumbnail_box(canv, pixels, src_w, src_h,0, dst_x, dst_y,tw,th);
+	thumbnail_box(canv, pixels, src_w, src_h, 0, dst_x, dst_y, tw, th);
 	_KeMemUnmap(filebuf, stat.size);
 	_KeCloseFile(fd);
 }

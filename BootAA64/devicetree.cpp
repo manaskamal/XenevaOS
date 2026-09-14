@@ -27,7 +27,6 @@
 *
 **/
 
-
 #include <stdint.h>
 #include "xnout.h"
 

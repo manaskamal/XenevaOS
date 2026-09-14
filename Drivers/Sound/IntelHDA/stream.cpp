@@ -39,7 +39,7 @@ int HDAInitOutput() {
 	uint64_t phys_buf = 0;
 	strm_buf = (uint64_t*)pos;
 	for (int i = 0; i < (BDL_SIZE*BUFFER_SIZE / PAGE_SIZE); i++) {
-		void*p = AuPmmngrAlloc();
+		void* p = (void*)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
 		if (phys_buf == 0)
 			phys_buf = (uint64_t)p;
 		AuMapPage((size_t)p, pos + static_cast<uint64_t>(i) * 4096, X86_64_PAGING_NO_CACHING | X86_64_PAGING_NO_EXECUTE |
@@ -65,7 +65,7 @@ int HDAInitOutput() {
 
 	_aud_outb_(REG_O0_STS, HDAC_SDSTS_DESE | HDAC_SDSTS_FIFOE | HDAC_SDSTS_BCIS);
 
-	uint64_t bdl_base = (uint64_t)AuPmmngrAlloc();   //get_physical_address  ((uint64_t) 0x0000000000000000);
+	uint64_t bdl_base = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);   //get_physical_address  ((uint64_t) 0x0000000000000000);
 	HDABDLEntry *bdl = (HDABDLEntry*)bdl_base;  //(_ihd_audio.corb + 3072);
 
 	int j = 0;
@@ -91,7 +91,7 @@ int HDAInitOutput() {
 	_aud_outw_(REG_O0_FMT, format);
 
 
-	uint64_t* dma_pos = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
+	uint64_t* dma_pos = (uint64_t*)P2V((size_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 	memset(dma_pos, 0, 4096);
 
 	//_ihd_audio.dma_pos = dma_pos;
@@ -120,7 +120,7 @@ int HDAInitInputStream() {
 	uint64_t phys_buf = 0;
 	
 	for (int i = 0; i < (4 * BUFFER_SIZE / 4096); i++) {
-		void *p = AuPmmngrAlloc();
+		void* p = (void*)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
 		if (phys_buf == 0)
 			phys_buf = (uint64_t)p;
 		AuMapPage((uint64_t)p, pos + static_cast<uint64_t>(i) * 4096, (1 << 4));
@@ -142,7 +142,7 @@ int HDAInitInputStream() {
 
 	_aud_outb_(REG_I0_STS, HDAC_SDSTS_DESE | HDAC_SDSTS_FIFOE | HDAC_SDSTS_BCIS);
 
-	uint64_t bdl_base = (uint64_t)AuPmmngrAlloc();   //get_physical_address  ((uint64_t) 0x0000000000000000);
+	uint64_t bdl_base = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);   //get_physical_address  ((uint64_t) 0x0000000000000000);
 	HDABDLEntry *bdl = (HDABDLEntry*)bdl_base;  //(_ihd_audio.corb + 3072);
 
 	int j = 0;
@@ -166,7 +166,7 @@ int HDAInitInputStream() {
 
 
 
-	uint64_t* dma_pos = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
+	uint64_t* dma_pos = (uint64_t*)P2V((size_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 	memset(dma_pos, 0, 4096);
 
 	//_ihd_audio.dma_pos = dma_pos;

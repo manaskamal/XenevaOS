@@ -12,9 +12,13 @@ The Kernel project is divided into three categories: __*Kernel, KernelAA64, and 
  (_More board supports are work in progress_)
 
 ## `_USE_XALLOC` Definitions
- XenevaOS supports both `dlmalloc` and `liballoc` for kernel heap memory, though only one can be active at a time:
- - `_USE_DLMALLOC` - will use Doug Lea's memory allocator for kernel heap memory
- - `_USE_LIBALLOC` - will use liballoc memory allocator for kernel heap memory
+
+The legacy kernel trees contain selection macros for `dlmalloc` and `liballoc`, though only one can be active at a time:
+
+- `_USE_DLMALLOC` — selects Doug Lea's allocator where that allocator is still compiled.
+- `_USE_LIBALLOC` — selects liballoc where that allocator is still compiled.
+
+These macros do not select the AArch64 kernel's current heap. `KernelAA64` excludes both legacy implementations and uses TLSF through `Mm/kmalloc.c`.
 
 ## `ARCH_X` Definitions
  Architecture-specific definitions are mostly used in header files shared across `x86_64`, `arm64`, and `riscv64` targets:
@@ -25,8 +29,16 @@ The Kernel project is divided into three categories: __*Kernel, KernelAA64, and 
 Kernel uses inbuilt profiler to measure the latency values while performing certain tasks. Profiling heavily uses serial output to print profiling results. Profiler can be enabled or disabled as per need. 
 - `__KERNEL_PROFILER_ON__` -- will tell the kernel to use profiler, without this kernel will bypass profiling outputs.
 
+## AArch64 benchmark profile
+
+- `__XENEVA_BLEED__` — selects the AArch64 LLVM benchmark and low-memory profile. It removes deliberate boot delays and selected diagnostics, enables the reduced startup configuration, and activates the direct shared compositor-buffer path.
+- `__XENEVA_DIRECT_SCANOUT__` — makes DeodhaiXR use the mapped GOP framebuffer as its canvas when the framebuffer is 32-bit and tightly pitched. Select it through `--direct-scanout`; it is independent of bleed and falls back to the cached canvas when the mode is incompatible.
+
+Use `Scripts/Linux/build_and_run_qemu.sh --bleed` to select this profile. The script propagates the macro consistently to the bootloader, kernel, Chitralekha, init, DeodhaiXR, XELnch, and Namdapha and records the deployed user-space profile. Do not define it manually for only part of the system or mix normal and bleed binaries.
+
 ## Default Kernel expected macros
 - `ARCH_ARM64` -- for arm64 build
 - `__TARGET_BOARD_QEMU_VIRT__` - can be modified as per need.
-- `_USE_DLMALLOC` - Uses Doug Lea's memory allocator
 - `__STDC_LIMIT_MACROS` -- Default kernel expected
+
+`__XENEVA_BLEED__` is not a normal default; it is defined only by the explicit bleed workflow.

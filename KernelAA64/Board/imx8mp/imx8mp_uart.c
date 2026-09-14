@@ -29,17 +29,16 @@
 *
 **/
 
-#if  defined(__TARGET_BOARD_IMX8MP_VERDIN_DAHLIA__) || defined(__TARGET_BOARD_IMX8MP_SOC__)
-
+#if defined(__TARGET_BOARD_IMX8MP_VERDIN_DAHLIA__) || defined(__TARGET_BOARD_IMX8MP_SOC__)
 
 #include <Board/imx8mp/imx8mp_uart.h>
 #include <stdint.h>
 
-#define UART2_BAUD_RATE 115200
-#define UART2_CLOCK_VAL 80000000
-#define UART2_DATA_BITS 8
-#define UART2_STOP_BITS 1
-#define UART2_PARITY_NONE  0
+#define UART2_BAUD_RATE	  115200
+#define UART2_CLOCK_VAL	  80000000
+#define UART2_DATA_BITS	  8
+#define UART2_STOP_BITS	  1
+#define UART2_PARITY_NONE 0
 
 static uint64_t __imx8mp_uart_base;
 static inline uint32_t imx8mp_uart_read(uint64_t base) {
@@ -59,9 +58,9 @@ static inline void imx8mp_uart_clr(uint64_t base, uint32_t mask) {
 }
 
 static void imx8mp_delay(volatile uint32_t n) {
-	while (n--);
+	while (n--)
+		;
 }
-
 
 void au_imx8np_uart_initialize(uint64_t base) {
 	__imx8mp_uart_base = base;
@@ -113,6 +112,5 @@ int au_imx8mp_uart_getc() {
 
 	return (int)(data & URXD_RX_DATA);
 }
-
 
 #endif

@@ -48,8 +48,7 @@ void TrayButtonMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, int button
 	if (!wid->hoverPainted && wid->hover) {
 		if (wid->ChPaintHandler)
 			wid->ChPaintHandler(wid, win);
-		ChWindowUpdate(win, wid->x,
-			wid->y, wid->w, wid->h, false, true);
+		ChWindowUpdate(win, wid->x, wid->y, wid->w, wid->h, false, true);
 		wid->hoverPainted = true;
 	}
 
@@ -57,23 +56,20 @@ void TrayButtonMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, int button
 		wid->hoverPainted = false;
 		if (wid->ChPaintHandler)
 			wid->ChPaintHandler(wid, win);
-		ChWindowUpdate(win, wid->x,
-			wid->y, wid->w, wid->h, false, true);
+		ChWindowUpdate(win, wid->x, wid->y, wid->w, wid->h, false, true);
 	}
 
 	bool _action_required = false;
 	if (wid->clicked && wid->lastMouseX == x && wid->lastMouseY == y) {
-		if (tb->type == TRAY_BUTTON_TYPE_ONOFF) 
+		if (tb->type == TRAY_BUTTON_TYPE_ONOFF)
 			if (tb->onoff)
 				tb->onoff = 0;
 			else
 				tb->onoff = 1;
-		
+
 		if (wid->ChPaintHandler)
-		    wid->ChPaintHandler(wid, win);
-		ChWindowUpdate(win, wid->x,
-			wid->y, wid->w, wid->h, false, true);
-		
+			wid->ChPaintHandler(wid, win);
+		ChWindowUpdate(win, wid->x, wid->y, wid->w, wid->h, false, true);
 
 		_action_required = true;
 
@@ -91,14 +87,12 @@ void TrayButtonMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, int button
 	wid->lastMouseY = y;
 }
 
-
 void TrayButtonPaint(ChWidget* wid, ChWindow* win) {
 #define ICON_ON_COLOR 0xFF96ACF2
 
 	TrayButton* tb = (TrayButton*)wid;
 	uint32_t col = LIGHTBLACK;
 	uint32_t icoColor = LIGHTSILVER;
-
 
 	if (wid->hover) {
 		col = LIGHTSILVER;
@@ -111,7 +105,6 @@ void TrayButtonPaint(ChWidget* wid, ChWindow* win) {
 	if (tb->type == TRAY_BUTTON_TYPE_ONOFF)
 		if (tb->onoff)
 			icoColor = ICON_ON_COLOR;
-
 
 	ChDrawRect(win->canv, wid->x, wid->y, wid->w, wid->h, col);
 
@@ -144,7 +137,6 @@ TrayButton* TrayCreateButton(char* title, int x, int y, int width, int height) {
 	_tray_y_loc += tb->base.h + 15;
 	return tb;
 }
-
 
 void TrayButtonInitialize() {
 	_tray_y_loc = 15;

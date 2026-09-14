@@ -40,11 +40,11 @@ struct itimerval {
 	timeval it_value;
 };
 
-#define ITIMER_REAL    0
+#define ITIMER_REAL	   0
 #define ITIMER_VIRTUAL 1
-#define ITIMER_PROF    2
+#define ITIMER_PROF	   2
 
-#define setitimer(which,newval,oldval) _KeSetITimer(which, newval, oldval)
-#define getitimer(which,curval)        _KeGetITimer(which, curval)
+#define setitimer(which, newval, oldval) _KeSetITimer(which, newval, oldval)
+#define getitimer(which, curval)		 _KeGetITimer(which, curval)
 
 #endif

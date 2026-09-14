@@ -40,12 +40,12 @@ int _ldigits(unsigned long long num, int base, int sign) {
 		return (digits = -1);
 	}
 
-	if (sign && ((long long)num < 0)){
+	if (sign && ((long long)num < 0)) {
 		num = ((long long)num * -1);
 		digits += 1;
 	}
 
-	while (num >= (unsigned long long)base){
+	while (num >= (unsigned long long)base) {
 		digits += 1;
 		num /= (unsigned long long)base;
 	}
@@ -55,9 +55,9 @@ int _ldigits(unsigned long long num, int base, int sign) {
 
 int _digits(unsigned num, int base, int sign) {
 	int digits = 1;
-	if (base < 2) 
+	if (base < 2)
 		return (digits = -1);
-	
+
 	if (sign && ((int)num < 0)) {
 		num = ((int)num * -1);
 		digits += 1;
@@ -71,7 +71,7 @@ int _digits(unsigned num, int base, int sign) {
 	return digits;
 }
 
-unsigned long long _str2num(const char* string, unsigned base, int sign, int *consumed) {
+unsigned long long _str2num(const char* string, unsigned base, int sign, int* consumed) {
 	unsigned long long result = 0;
 	int length = 0;
 	int negative = 0;
@@ -89,8 +89,7 @@ unsigned long long _str2num(const char* string, unsigned base, int sign, int *co
 	if (count >= length)
 		goto out;
 
-	if ((string[count] == '+') || (string[count] == '-'))
-	{
+	if ((string[count] == '+') || (string[count] == '-')) {
 		if (sign && (string[count] == '-'))
 			negative = 1;
 		count += 1;
@@ -101,13 +100,13 @@ unsigned long long _str2num(const char* string, unsigned base, int sign, int *co
 	}
 
 	if ((count < (length - 1)) && (!base || (base == 16))) {
-		if ((string[count] == '0') && (string[count + 1] == 'x')){
+		if ((string[count] == '0') && (string[count + 1] == 'x')) {
 			base = 16;
 			count += 2;
 		}
 	}
 
-	if (count >= length){
+	if (count >= length) {
 		goto out;
 	}
 
@@ -115,11 +114,9 @@ unsigned long long _str2num(const char* string, unsigned base, int sign, int *co
 		if (string[count] == '0') {
 			base = 8;
 			count += 1;
-		}
-		else {
+		} else {
 			base = 10;
 		}
-
 	}
 
 	if (count >= length)
@@ -136,8 +133,7 @@ unsigned long long _str2num(const char* string, unsigned base, int sign, int *co
 		case 8:
 		case 9:
 		case 10:
-			if (!isdigit(string[count]) ||
-				((string[count] - '0') >= (int)base)){
+			if (!isdigit(string[count]) || ((string[count] - '0') >= (int)base)) {
 				goto out;
 			}
 			result *= base;
@@ -172,32 +168,28 @@ out:
 	return result;
 }
 
-void _lnum2str(unsigned long long num, char *string, int base, int sign)
-{
+void _lnum2str(unsigned long long num, char* string, int base, int sign) {
 	int digits = _ldigits(num, base, sign);
 	int charCount = 0;
 	unsigned long long place = 1;
 	unsigned long long rem = 0;
 	int count;
 
-	if (!string)
-	{
+	if (!string) {
 		return;
 	}
 
 	// Negative?
-	if (sign && ((long long)num < 0))
-	{
+	if (sign && ((long long)num < 0)) {
 		string[charCount++] = '-';
 		num = ((long long)num * -1);
 		digits -= 1;
 	}
 
 	for (count = 0; count < (digits - 1); count++)
-		place *= (unsigned long long) base;
+		place *= (unsigned long long)base;
 
-	while (place)
-	{
+	while (place) {
 		rem = (num % place);
 		num = (num / place);
 
@@ -206,7 +198,7 @@ void _lnum2str(unsigned long long num, char *string, int base, int sign)
 		else
 			string[charCount++] = ('a' + (num - 10));
 		num = rem;
-		place /= (unsigned long long) base;
+		place /= (unsigned long long)base;
 	}
 
 	string[charCount] = '\0';
@@ -215,12 +207,9 @@ void _lnum2str(unsigned long long num, char *string, int base, int sign)
 	return;
 }
 
-
-
-void _dbl2str(double num, char *string, int roundPlaces)
-{
+void _dbl2str(double num, char* string, int roundPlaces) {
 	int charCount = 0;
-	unsigned long long *u = NULL;
+	unsigned long long* u = NULL;
 	int sign = 0;
 	long long exponent = 0;
 	unsigned long long intPart = 0;
@@ -230,14 +219,13 @@ void _dbl2str(double num, char *string, int roundPlaces)
 	unsigned long long rem = 0;
 	unsigned long long count;
 
-	if (!string)
-	{
+	if (!string) {
 		return;
 	}
 
 	string[0] = '\0';
 
-	u = (unsigned long long *) &num;
+	u = (unsigned long long*)&num;
 	sign = (int)(*u >> 63);
 	exponent = (((*u & (0x7FFULL << 52)) >> 52) - 1023);
 	intPart = 1;
@@ -248,24 +236,19 @@ void _dbl2str(double num, char *string, int roundPlaces)
 		string[charCount++] = '-';
 
 	// Special case exponents
-	if (exponent == 0x7FF)
-	{
+	if (exponent == 0x7FF) {
 		strcat((string + charCount), "Infinity");
 		return;
 	}
 
-	while (exponent)
-	{
-		if (exponent > 0)
-		{
+	while (exponent) {
+		if (exponent > 0) {
 			intPart <<= 1;
 			if (fractPart & (0x1ULL << 63))
 				intPart |= 1;
 			fractPart <<= 1;
 			exponent -= 1;
-		}
-		else
-		{
+		} else {
 			fractPart >>= 1;
 			if (intPart & 0x1ULL)
 				fractPart |= (0x1ULL << 63);
@@ -282,8 +265,7 @@ void _dbl2str(double num, char *string, int roundPlaces)
 
 	// Calculate the fraction part
 	place = 10000000000000000000ULL;
-	for (count = 2; fractPart; count *= 2)
-	{
+	for (count = 2; fractPart; count *= 2) {
 		if (!count)
 			break;
 
@@ -295,18 +277,14 @@ void _dbl2str(double num, char *string, int roundPlaces)
 
 	// Output the fraction part
 	place = 1000000000000000000ULL;
-	while (place)
-	{
+	while (place) {
 		rem = (outputFraction % place);
 		outputFraction = (outputFraction / place);
 
-		if (roundPlaces)
-		{
+		if (roundPlaces) {
 			string[charCount++] = ('0' + outputFraction);
 			roundPlaces -= 1;
-		}
-		else
-		{
+		} else {
 			if ((string[charCount - 1] < '9') && (outputFraction > 4))
 				string[charCount - 1] += 1;
 			break;
@@ -320,8 +298,7 @@ void _dbl2str(double num, char *string, int roundPlaces)
 	return;
 }
 
-void _num2str(unsigned num, char *string, int base, int sign)
-{
+void _num2str(unsigned num, char* string, int base, int sign) {
 	int digits = _digits(num, base, sign);
 	int charCount = 0;
 	unsigned place = 1;
@@ -332,8 +309,7 @@ void _num2str(unsigned num, char *string, int base, int sign)
 		return;
 
 	// Negative?
-	if (sign && ((int)num < 0))
-	{
+	if (sign && ((int)num < 0)) {
 		string[charCount++] = '-';
 		num = ((int)num * -1);
 		digits -= 1;
@@ -342,8 +318,7 @@ void _num2str(unsigned num, char *string, int base, int sign)
 	for (count = 0; count < (digits - 1); count++)
 		place *= (unsigned)base;
 
-	while (place)
-	{
+	while (place) {
 		rem = (num % place);
 		num = (num / place);
 
@@ -360,10 +335,9 @@ void _num2str(unsigned num, char *string, int base, int sign)
 	errno = 0;
 }
 
-void _flt2str(float num, char *string, int roundPlaces)
-{
+void _flt2str(float num, char* string, int roundPlaces) {
 	int charCount = 0;
-	unsigned *u = NULL;
+	unsigned* u = NULL;
 	int sign = 0;
 	int exponent = 0;
 	unsigned intPart = 0;
@@ -373,14 +347,13 @@ void _flt2str(float num, char *string, int roundPlaces)
 	unsigned rem = 0;
 	unsigned count;
 
-	if (!string)
-	{
+	if (!string) {
 		return;
 	}
 
 	string[0] = '\0';
 
-	u = (unsigned *)&num;
+	u = (unsigned*)&num;
 	sign = (*u >> 31);
 	exponent = (((*u & 0x7F800000) >> 23) - 127);
 	intPart = 1;
@@ -391,24 +364,19 @@ void _flt2str(float num, char *string, int roundPlaces)
 		string[charCount++] = '-';
 
 	// Special case exponents
-	if (exponent == 0xFF)
-	{
+	if (exponent == 0xFF) {
 		strcat((string + charCount), "Infinity");
 		return;
 	}
 
-	while (exponent)
-	{
-		if (exponent > 0)
-		{
+	while (exponent) {
+		if (exponent > 0) {
 			intPart <<= 1;
 			if (fractPart & (0x1 << 31))
 				intPart |= 1;
 			fractPart <<= 1;
 			exponent -= 1;
-		}
-		else
-		{
+		} else {
 			fractPart >>= 1;
 			if (intPart & 0x01)
 				fractPart |= (0x1 << 31);
@@ -425,8 +393,7 @@ void _flt2str(float num, char *string, int roundPlaces)
 
 	// Calculate the fraction part
 	place = 1000000000;
-	for (count = 2; fractPart; count *= 2)
-	{
+	for (count = 2; fractPart; count *= 2) {
 		if (!count)
 			break;
 
@@ -438,18 +405,14 @@ void _flt2str(float num, char *string, int roundPlaces)
 
 	// Output the fraction part
 	place = 100000000;
-	while (place)
-	{
+	while (place) {
 		rem = (outputFraction % place);
 		outputFraction = (outputFraction / place);
 
-		if (roundPlaces)
-		{
+		if (roundPlaces) {
 			string[charCount++] = ('0' + outputFraction);
 			roundPlaces -= 1;
-		}
-		else
-		{
+		} else {
 			if ((string[charCount - 1] < '9') && (outputFraction > 4))
 				string[charCount - 1] += 1;
 			break;
@@ -463,7 +426,7 @@ void _flt2str(float num, char *string, int roundPlaces)
 	return;
 }
 
-double strtod(const char *nptr, char **endptr) {
+double strtod(const char* nptr, char** endptr) {
 	int sign = 1;
 	if (*nptr == '-') {
 		sign = -1;
@@ -507,8 +470,7 @@ double strtod(const char *nptr, char **endptr) {
 
 		if (*nptr == '+') {
 			nptr++;
-		}
-		else if (*nptr == '-') {
+		} else if (*nptr == '-') {
 			exponent_sign = -1;
 			nptr++;
 		}
@@ -528,13 +490,13 @@ double strtod(const char *nptr, char **endptr) {
 	}
 
 	if (endptr) {
-		*endptr = (char *)nptr;
+		*endptr = (char*)nptr;
 	}
 	double result = ((double)decimal_part + sub_part) * expn;
 	return result;
 }
 
-float strtof(const char *nptr, char **endptr) {
+float strtof(const char* nptr, char** endptr) {
 	return strtod(nptr, endptr);
 }
 
@@ -556,19 +518,16 @@ int _xeprint(char* output, int outputlen, const char* format, va_list list) {
 		return (outCount = 0);
 	}
 
-	if (formatLen > outputlen) 
+	if (formatLen > outputlen)
 		return (outCount = 0);
 
 	formatLen = min(formatLen, MAX_STRING_LENGTH);
 
-	for (inCount = 0; ((inCount < formatLen) &&
-		(outCount < outputlen));)
-	{
+	for (inCount = 0; ((inCount < formatLen) && (outCount < outputlen));) {
 		if (format[inCount] != '%') {
 			output[outCount++] = format[inCount++];
 			continue;
-		} 
-		else if ((format[inCount] == '%') && (format[inCount + 1] == '%')) {
+		} else if ((format[inCount] == '%') && (format[inCount + 1] == '%')) {
 			output[outCount++] = format[inCount];
 			inCount += 2;
 			continue;
@@ -597,85 +556,79 @@ int _xeprint(char* output, int outputlen, const char* format, va_list list) {
 		isLong = 0;
 		if (format[inCount] == 'l') {
 			inCount += 1;
-			if (format[inCount] == 'l'){
+			if (format[inCount] == 'l') {
 				isLong = 1;
 				inCount += 1;
 			}
 		}
-		
+
 		if (isLong) {
 			intArg = (long long)va_arg(list, unsigned);
 			intArg |= (((long long)va_arg(list, unsigned)) << 32);
-		}
-		else if ((format[inCount] == 'e') || (format[inCount] == 'E') ||
-			(format[inCount] == 'f') || (format[inCount] == 'F') ||
-			(format[inCount] == 'g') || (format[inCount] == 'G')){
-
-		}
-		else {
+		} else if ((format[inCount] == 'e') || (format[inCount] == 'E') ||
+				   (format[inCount] == 'f') || (format[inCount] == 'F') ||
+				   (format[inCount] == 'g') || (format[inCount] == 'G')) {
+		} else {
 			intArg = va_arg(list, unsigned long long);
 		}
-		switch (format[inCount]){
+		switch (format[inCount]) {
 		case 'd':
-		case 'i':{
-					 if (fieldWidth) {
-						 if (isLong)
-							 digits = _ldigits(intArg, 10, 1);
-						 else
-							 digits = _digits(intArg, 10, 1);
-						
+		case 'i': {
+			if (fieldWidth) {
+				if (isLong)
+					digits = _ldigits(intArg, 10, 1);
+				else
+					digits = _digits(intArg, 10, 1);
 
-						 if (!leftJust){
-							 while (digits++ < fieldWidth)
-								 output[outCount++] = (zeroPad ? '0' : ' ');
-						 }
+				if (!leftJust) {
+					while (digits++ < fieldWidth)
+						output[outCount++] = (zeroPad ? '0' : ' ');
+				}
+			}
+			if (isLong)
+				lltoa(intArg, (output + outCount));
+			else
+				itoa(intArg, (output + outCount));
 
-					 }
-					 if (isLong)
-						 lltoa(intArg, (output + outCount));
-					 else
-						 itoa(intArg, (output + outCount));
-					 
-					 outCount = strlen(output);
-				
-					 if (fieldWidth && leftJust) {
-						 while (digits++ < fieldWidth){
-							 output[outCount++] = ' ';
-						 }
-					 }
-					 break;
+			outCount = strlen(output);
+
+			if (fieldWidth && leftJust) {
+				while (digits++ < fieldWidth) {
+					output[outCount++] = ' ';
+				}
+			}
+			break;
 		}
 
-		case 'u':{
-					 if (fieldWidth) {
-						 if (isLong)
-							 digits = _ldigits(intArg, 10, 0);
-						 else
-							 digits = _digits(intArg, 10, 0);
+		case 'u': {
+			if (fieldWidth) {
+				if (isLong)
+					digits = _ldigits(intArg, 10, 0);
+				else
+					digits = _digits(intArg, 10, 0);
 
-						 if (!leftJust) {
-							 while (digits++ < fieldWidth)
-								 output[outCount++] = (zeroPad ? '0' : ' ');
-						 }
-					 }
+				if (!leftJust) {
+					while (digits++ < fieldWidth)
+						output[outCount++] = (zeroPad ? '0' : ' ');
+				}
+			}
 
-					 if (isLong)
-						 ulltoa(intArg, (output + outCount));
-					 else
-						 utoa(intArg, (output + outCount));
+			if (isLong)
+				ulltoa(intArg, (output + outCount));
+			else
+				utoa(intArg, (output + outCount));
 
-					 outCount = strlen(output);
+			outCount = strlen(output);
 
-					 if (fieldWidth && leftJust) {
-						 while (digits++ < fieldWidth)
-							 output[outCount++] = ' ';
-					 }
-					 break;
+			if (fieldWidth && leftJust) {
+				while (digits++ < fieldWidth)
+					output[outCount++] = ' ';
+			}
+			break;
 		}
-		case 'c':
-		{
-					output[outCount++] = (unsigned char)intArg;
-					break;
+		case 'c': {
+			output[outCount++] = (unsigned char)intArg;
+			break;
 		}
 		case 's': {
 			const char* str = intArg ? (const char*)(uint64_t)intArg : "(NULL)";
@@ -694,89 +647,88 @@ int _xeprint(char* output, int outputlen, const char* format, va_list list) {
 				while (pad-- > 0)
 					output[outCount++] = ' ';
 			}
-					  break;
+			break;
 		}
-		case 'p':{
-					 output[outCount++] = '0';
-					 output[outCount++] = 'x';
-					 fieldWidth = (2 * sizeof(void*));
+		case 'p': {
+			output[outCount++] = '0';
+			output[outCount++] = 'x';
+			fieldWidth = (2 * sizeof(void*));
 
-					 if (isLong)
-						 digits = _ldigits(intArg, 16, 0);
-					 else
-						 digits = _digits(intArg, 16, 0);
+			if (isLong)
+				digits = _ldigits(intArg, 16, 0);
+			else
+				digits = _digits(intArg, 16, 0);
 
-					 if (!leftJust) {
-						 while (digits++ < fieldWidth)
-							 output[outCount++] = '0';
-					 }
+			if (!leftJust) {
+				while (digits++ < fieldWidth)
+					output[outCount++] = '0';
+			}
 
-					 if (isLong)
-						 lltoux(intArg, (output + outCount));
-					 else
-						 itoux(intArg, (output + outCount));
+			if (isLong)
+				lltoux(intArg, (output + outCount));
+			else
+				itoux(intArg, (output + outCount));
 
-					 outCount = strlen(output);
+			outCount = strlen(output);
 
-					 if (fieldWidth && leftJust){
-						 while (digits++ < fieldWidth)
-							 output[outCount++] = ' ';
-					 }
-					 break;
+			if (fieldWidth && leftJust) {
+				while (digits++ < fieldWidth)
+					output[outCount++] = ' ';
+			}
+			break;
 		}
-		case 'o':{
-					 if (fieldWidth){
-						 if (isLong)
-							 digits = _ldigits(intArg, 8, 0);
-						 else
-							 digits = _digits(intArg, 8, 0);
+		case 'o': {
+			if (fieldWidth) {
+				if (isLong)
+					digits = _ldigits(intArg, 8, 0);
+				else
+					digits = _digits(intArg, 8, 0);
 
-						 if (!leftJust){
-							 while (digits++ < fieldWidth)
-								 output[outCount++] = (zeroPad ? '0' : ' ');
-						 }
-					 }
+				if (!leftJust) {
+					while (digits++ < fieldWidth)
+						output[outCount++] = (zeroPad ? '0' : ' ');
+				}
+			}
 
-					 if (isLong)
-						 lltouo(intArg, (output + outCount));
-					 else
-						 itouo(intArg, (output + outCount));
+			if (isLong)
+				lltouo(intArg, (output + outCount));
+			else
+				itouo(intArg, (output + outCount));
 
-					 outCount = strlen(output);
+			outCount = strlen(output);
 
-					 if (fieldWidth && leftJust) {
-						 while (digits++ < fieldWidth)
-							 output[outCount++] = ' ';
-					 }
-					 break;
+			if (fieldWidth && leftJust) {
+				while (digits++ < fieldWidth)
+					output[outCount++] = ' ';
+			}
+			break;
 		}
 		case 'x':
-		case 'X':
-		{
-					if (fieldWidth) {
-						if (isLong)
-							digits = _ldigits(intArg, 16, 0);
-						else
-							digits = _digits(intArg, 16, 0);
+		case 'X': {
+			if (fieldWidth) {
+				if (isLong)
+					digits = _ldigits(intArg, 16, 0);
+				else
+					digits = _digits(intArg, 16, 0);
 
-						if (!leftJust) {
-							while (digits++ < fieldWidth)
-								output[outCount++] = (zeroPad ? '0' : ' ');
-						}
-					}
+				if (!leftJust) {
+					while (digits++ < fieldWidth)
+						output[outCount++] = (zeroPad ? '0' : ' ');
+				}
+			}
 
-					if (isLong)
-						lltoux(intArg, (output + outCount));
-					else
-						itoux(intArg, (output + outCount));
+			if (isLong)
+				lltoux(intArg, (output + outCount));
+			else
+				itoux(intArg, (output + outCount));
 
-					outCount = strlen(output);
+			outCount = strlen(output);
 
-					if (fieldWidth && leftJust) {
-						while (digits++ < fieldWidth)
-							output[outCount++] = ' ';
-					}
-					break;
+			if (fieldWidth && leftJust) {
+				while (digits++ < fieldWidth)
+					output[outCount++] = ' ';
+			}
+			break;
 		}
 
 		case 'e':
@@ -785,26 +737,25 @@ int _xeprint(char* output, int outputlen, const char* format, va_list list) {
 		case 'F':
 		case 'g':
 		case 'G': {
-					  doubleArg = (double)va_arg(list, double);
-					  list += sizeof(int);
+			doubleArg = (double)va_arg(list, double);
+			list += sizeof(int);
 
-					  if (fieldWidth)
-						  dtoa(doubleArg, (output + outCount), fieldWidth);
-					  else
-						  dtoa(doubleArg, (output + outCount), 6);
+			if (fieldWidth)
+				dtoa(doubleArg, (output + outCount), fieldWidth);
+			else
+				dtoa(doubleArg, (output + outCount), 6);
 
-					  outCount = strlen(output);
-					  break;
+			outCount = strlen(output);
+			break;
 		}
 		default: {
-				output[outCount++] = format[inCount - 1];
-				output[outCount++] = format[inCount];
-				break;
-			}
+			output[outCount++] = format[inCount - 1];
+			output[outCount++] = format[inCount];
+			break;
+		}
 		}
 		inCount += 1;
 	}
 	output[outCount] = '\0';
 	return (outCount);
 }
-

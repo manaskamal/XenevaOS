@@ -36,18 +36,17 @@
 #include <Mm/pmmngr.h>
 #include <aucon.h>
 
-
 #ifdef __TARGET_BOARD_RPI3__
 
 static uint64_t* gpioBase;
 
-#define GPFSEL0  0x00
-#define GPFSEL1  0x04
-#define GPFSEL2  0x08
-#define GPSET0   0x1C
-#define GPCLR0   0x28
-#define GPFEN0  0x58
-#define GPEDS0 0x40
+#define GPFSEL0 0x00
+#define GPFSEL1 0x04
+#define GPFSEL2 0x08
+#define GPSET0	0x1C
+#define GPCLR0	0x28
+#define GPFEN0	0x58
+#define GPEDS0	0x40
 
 /**
  * @brief AuRPI3BPGpioMap -- map the GPIO base to kernel
@@ -71,7 +70,7 @@ void AuRPIGPIOSetFunction(uint8_t pin, uint8_t function) {
 	uint32_t reg = pin / 10;
 	uint32_t shift = (pin % 10) * 3;
 	uint64_t addr = (uint64_t)gpioBase + GPFSEL0 + (reg * 4);
-	uint32_t val = *(volatile uint32_t*)addr; 
+	uint32_t val = *(volatile uint32_t*)addr;
 	val &= ~(7 << shift);
 	val |= (function << shift);
 	*(volatile uint32_t*)addr = val;
@@ -106,8 +105,8 @@ void AuRPIGPIOPullUpsDown() {
 	(*(volatile uint32_t*)((uint64_t)gpioBase + 0x94)) = 0;
 	for (int i = 0; i < 15000; i++)
 		;
-	(*(volatile uint32_t*)((uint64_t)gpioBase + 0x98)) = (1 << 8) |
-		(1 << 9) | (1 << 10) | (1 << 11);
+	(*(volatile uint32_t*)((uint64_t)gpioBase + 0x98)) =
+		(1 << 8) | (1 << 9) | (1 << 10) | (1 << 11);
 
 	for (int i = 0; i < 15000; i++)
 		;
@@ -138,7 +137,6 @@ void AuRPIGPIOPullUP(uint8_t pin) {
 
 	dsb_sy_barrier();
 	isb_flush();
-
 }
 
 /**
@@ -151,8 +149,8 @@ void AuRPIGPIOEnableInterrupt(uint8_t pin) {
 	uint32_t shift = pin % 32;
 
 	*(volatile uint32_t*)((uint64_t)gpioBase + GPEDS0 + (reg * 4)) = (1 << shift);
-	*(volatile uint32_t*)((uint64_t)gpioBase + GPFEN0 + (reg*4)) |= (1 << shift);
-	
+	*(volatile uint32_t*)((uint64_t)gpioBase + GPFEN0 + (reg * 4)) |= (1 << shift);
+
 	dsb_sy_barrier();
 	isb_flush();
 }
@@ -255,6 +253,3 @@ void AuRPIGPIOWrite(uint8_t pin, bool value) {
 }
 
 #endif
-
-
-

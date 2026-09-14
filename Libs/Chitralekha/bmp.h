@@ -29,15 +29,14 @@
 *
 **/
 
-
-#pragma pack(push,1)
+#pragma pack(push, 1)
 typedef struct _bmp_ {
 	unsigned short type;
 	unsigned int size;
 	unsigned short resv1;
 	unsigned short resv2;
 	unsigned int off_bits;
-}BMP;
+} BMP;
 
 typedef struct _info_ {
 	unsigned int biSize;
@@ -51,5 +50,5 @@ typedef struct _info_ {
 	long biYPelsPerMeter;
 	unsigned int biClrUsed;
 	unsigned int biClrImportant;
-}BMPInfo;
+} BMPInfo;
 #pragma pack(pop)

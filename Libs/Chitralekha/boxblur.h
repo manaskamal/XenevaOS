@@ -37,7 +37,7 @@
 #include <_xeneva.h>
 
 #ifdef __cplusplus
-XE_EXTERN{
+XE_EXTERN {
 #endif
 
 	/**
@@ -50,7 +50,8 @@ XE_EXTERN{
 	* @param w -- width of the image
 	* @param h -- height of the image
 	*/
-	XE_LIB void ChBoxBlur(ChCanvas* canv, uint32_t *inputpix, uint32_t* outpix, int cx, int cy, int w, int h);
+	XE_LIB void ChBoxBlur(
+		ChCanvas * canv, uint32_t* inputpix, uint32_t* outpix, int cx, int cy, int w, int h);
 
 #ifdef __cplusplus
 }

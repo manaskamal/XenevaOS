@@ -38,7 +38,7 @@
 #define AU_IMPORT
 #define AU_ALIGN(x) __attribute__((aligned(x)))
 #else
-#define AU_EXPORT  __declspec(dllexport)
+#define AU_EXPORT  __declspec(dllexport) __declspec(noinline)
 #define AU_IMPORT  __declspec(dllimport)
 #define AU_ALIGN(x) __declspec(align(x))
 #endif
@@ -106,7 +106,6 @@ typedef struct _lbprotocol_ {
 }AuLittleBootProtocol;
 
 
-
 #define BOOT_UEFI_x64 1
 #define BOOT_UEFI_ARM64 2
 #define BOOT_LITTLEBOOT_ARM64 3
@@ -130,6 +129,10 @@ typedef struct _KERNEL_BOOT_INFO_ {
 
 	/* mem_map_size -- UEFI memory map size */
 	uint64_t mem_map_size;
+
+	/* Install the physical direct map here from the loader itself --axiss */
+	uint64_t physical_direct_map_base;
+	uint64_t physical_direct_map_size;
 
 	/* graphics_framebuffer -- framebuffer address passed by XNLDR */
 	uint32_t* graphics_framebuffer;

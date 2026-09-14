@@ -33,26 +33,22 @@
 #include <stdlib.h>
 
 list_t* initialize_list() {
-	list_t *list = (list_t*)malloc(sizeof(list_t));
+	list_t* list = (list_t*)malloc(sizeof(list_t));
 	list->entry_current = nullptr;
 	list->pointer = 0;
 	return list;
 }
 
-
 void list_add(list_t* list, void* data) {
-	dataentry *current_data = (dataentry*)malloc(sizeof(dataentry));
+	dataentry* current_data = (dataentry*)malloc(sizeof(dataentry));
 	current_data->next = nullptr;
 	current_data->prev = nullptr;
 	current_data->data = data;
 
-
-
 	if (!list->entry_current) {
 		list->entry_current = current_data;
-	}
-	else {
-		dataentry * current_entry = list->entry_current;
+	} else {
+		dataentry* current_entry = list->entry_current;
 		while (current_entry->next) {
 			current_entry = current_entry->next;
 		}
@@ -63,12 +59,11 @@ void list_add(list_t* list, void* data) {
 	list->pointer++;
 }
 
-void * list_get_at(list_t* list, unsigned int index) {
-
+void* list_get_at(list_t* list, unsigned int index) {
 	if (list->pointer == 0 || index >= list->pointer)
 		return nullptr;
 
-	dataentry * current_node = list->entry_current;
+	dataentry* current_node = list->entry_current;
 
 	for (unsigned int current_index = 0; (current_index < index) && current_node; current_index++)
 		current_node = current_node->next;
@@ -77,7 +72,6 @@ void * list_get_at(list_t* list, unsigned int index) {
 }
 
 void* list_remove(list_t* list, unsigned int index) {
-
 	void* payload;
 
 	if (list->pointer == 0 || index >= list->pointer)
@@ -112,7 +106,7 @@ void* list_remove(list_t* list, unsigned int index) {
  * list_clear_all -- clear all nodes 
  */
 void list_clear_all(list_t* list) {
-	dataentry *de = list->entry_current;
+	dataentry* de = list->entry_current;
 	dataentry* current = de;
 	while (current) {
 		de = de->next;

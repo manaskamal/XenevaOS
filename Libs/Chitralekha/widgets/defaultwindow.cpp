@@ -34,25 +34,25 @@
 #include <math.h>
 
 #ifdef THEME_DEFAULT
-#define DEFAULT_TITLEBAR_DARK  0xFF252525
-#define DEFAULT_TITLEBAR_LIGHT 0xFF454343
+#define DEFAULT_TITLEBAR_DARK		 0xFF252525
+#define DEFAULT_TITLEBAR_LIGHT		 0xFF454343
 #define DEFAULT_TITLEBAR_FOCUS_LIGHT 0xFF576674
-#define DEFAULT_TITLEBAR_FOCUS_DARK  0xFF454F58
+#define DEFAULT_TITLEBAR_FOCUS_DARK	 0xFF454F58
 #elif THEME_PURPLE
-#define DEFAULT_TITLEBAR_DARK  0xFF252525
-#define DEFAULT_TITLEBAR_LIGHT 0xFF454343
-#define DEFAULT_TITLEBAR_FOCUS_LIGHT  0xFF1E9D97 //0x33576674
-#define DEFAULT_TITLEBAR_FOCUS_DARK  0xFF454F58
+#define DEFAULT_TITLEBAR_DARK		 0xFF252525
+#define DEFAULT_TITLEBAR_LIGHT		 0xFF454343
+#define DEFAULT_TITLEBAR_FOCUS_LIGHT 0xFF1E9D97 //0x33576674
+#define DEFAULT_TITLEBAR_FOCUS_DARK	 0xFF454F58
 #endif
 
 /*
  * ChWindowPaintCloseButton -- close button painter
  */
-void ChWindowPaintCloseButton(ChWindow* win, ChWinGlobalControl* button){
+void ChWindowPaintCloseButton(ChWindow* win, ChWinGlobalControl* button) {
 	//ChDrawCircleUnfilled(win->canv, button->x + button->w / 2,button->y + button->h / 2, 8, button->outlineColor);
 	/* draw the actual symbol */
 	uint32_t outline_col = button->outlineColor;
-	if (button->hover){
+	if (button->hover) {
 		outline_col = button->hoverOutlineColor;
 	}
 
@@ -61,18 +61,28 @@ void ChWindowPaintCloseButton(ChWindow* win, ChWinGlobalControl* button){
 		button->clicked = false;
 	}
 
-	ChDrawLine(win->canv, button->x + 7, button->y + 7, button->x + button->w - 7, button->y + button->h - 7, outline_col);
-	ChDrawLine(win->canv, button->x + button->w - 7, button->y + 7, button->x + 7, button->y + button->h - 7, outline_col);
+	ChDrawLine(win->canv,
+			   button->x + 7,
+			   button->y + 7,
+			   button->x + button->w - 7,
+			   button->y + button->h - 7,
+			   outline_col);
+	ChDrawLine(win->canv,
+			   button->x + button->w - 7,
+			   button->y + 7,
+			   button->x + 7,
+			   button->y + button->h - 7,
+			   outline_col);
 }
 
 /*
  * ChWindowPaintMaximButton -- maximize button painter
  */
-void ChWindowPaintMaximButton(ChWindow* win, ChWinGlobalControl* button){
+void ChWindowPaintMaximButton(ChWindow* win, ChWinGlobalControl* button) {
 	//ChDrawCircleUnfilled(win->canv, button->x + button->w / 2, button->y + button->h / 2, 8, button->outlineColor);
 	/* draw the actual symbol */
 	uint32_t outline_col = button->outlineColor;
-	if (button->hover){
+	if (button->hover) {
 		outline_col = button->hoverOutlineColor;
 	}
 
@@ -80,7 +90,6 @@ void ChWindowPaintMaximButton(ChWindow* win, ChWinGlobalControl* button){
 		outline_col = button->clickedOutlineColor;
 		button->clicked = false;
 	}
-
 
 	ChDrawRectUnfilled(win->canv, button->x + 7, button->y + 7, 7, 7, outline_col);
 	ChDrawHorizontalLine(win->canv, button->x + 7, button->y + 7 + 1, 7, outline_col);
@@ -91,7 +100,7 @@ void ChWindowPaintMaximButton(ChWindow* win, ChWinGlobalControl* button){
  */
 void ChWindowPaintMinimButton(ChWindow* win, ChWinGlobalControl* button) {
 	uint32_t outline_col = button->outlineColor;
-	if (button->hover){
+	if (button->hover) {
 		outline_col = button->hoverOutlineColor;
 	}
 
@@ -99,7 +108,6 @@ void ChWindowPaintMinimButton(ChWindow* win, ChWinGlobalControl* button) {
 		outline_col = button->clickedOutlineColor;
 		button->clicked = false;
 	}
-
 
 	ChDrawHorizontalLine(win->canv, button->x + 7, button->y + button->h / 2, 7, outline_col);
 	ChDrawHorizontalLine(win->canv, button->x + 7, button->y + button->h / 2 + 1, 7, outline_col);
@@ -116,10 +124,11 @@ void ChWindowPaintTitlebar(ChWindow* win) {
 	ChDrawRect(win->canv, 0, 0, win->info->width, 26, light_color);
 	ChFont* font = win->app->baseFont;
 	ChFontSetSize(win->app->baseFont, 10);
-	int font_width = ChFontGetWidth(font,win->title);
-	int font_height = ChFontGetHeight(font,win->title);
-	ChFontDrawText(win->canv,font, win->title, win->info->width / 2 - font_width / 2, 26 / 2 + 4, 16, WHITE);
-	ChDrawRectUnfilled(win->canv, 0, 0, win->info->width, 26,	LIGHTBLACK);
+	int font_width = ChFontGetWidth(font, win->title);
+	int font_height = ChFontGetHeight(font, win->title);
+	ChFontDrawText(
+		win->canv, font, win->title, win->info->width / 2 - font_width / 2, 26 / 2 + 4, 16, WHITE);
+	ChDrawRectUnfilled(win->canv, 0, 0, win->info->width, 26, LIGHTBLACK);
 
 	for (int i = 0; i < win->GlobalControls->pointer; i++) {
 		ChWinGlobalControl* global = (ChWinGlobalControl*)list_get_at(win->GlobalControls, i);
@@ -139,14 +148,14 @@ void ChWindowPaintMainActivity(ChWindow* win) {
 		if (wid->ChPaintHandler)
 			wid->ChPaintHandler(wid, win);
 	}
-	ChDrawRectUnfilled(win->canv, 0,0, win->info->width, win->info->height, GRAY);
+	ChDrawRectUnfilled(win->canv, 0, 0, win->info->width, win->info->height, GRAY);
 }
 
-void ChDefaultWinPaint(ChWindow* win){
-	ChDrawRect(win->canv, 0, 0, win->info->width, win->info->height,win->color);
+void ChDefaultWinPaint(ChWindow* win) {
+	ChDrawRect(win->canv, 0, 0, win->info->width, win->info->height, win->color);
 	ChWindowPaintTitlebar(win);
 	ChWindowPaintMainActivity(win);
-	ChWindowUpdate(win, 0, 0, win->info->width, win->info->height, 1,0);
+	ChWindowUpdate(win, 0, 0, win->info->width, win->info->height, 1, 0);
 }
 
 void ChDefaultPopupWinPaint(ChWindow* popup) {
@@ -159,7 +168,6 @@ void ChDefaultPopupWinPaint(ChWindow* popup) {
 	ChDrawRectUnfilled(popup->canv, 0, 0, popup->info->width, popup->info->height, GRAY);
 }
 
-
 #define CORNER_RADIUS 12
 
 void _apply_rounded_corner(uint32_t* backbuff, int radius, int winw, int winh) {
@@ -167,7 +175,6 @@ void _apply_rounded_corner(uint32_t* backbuff, int radius, int winw, int winh) {
 	int h = winh;
 	for (int y = 0; y < radius; y++) {
 		for (int x = 0; x < radius; x++) {
-
 			float dx = (float)(radius - 1 - x);
 			float dy = (float)(radius - 1 - y);
 			float dist = sqrtf(dx * dx + dy * dy) - (float)(radius - 1);

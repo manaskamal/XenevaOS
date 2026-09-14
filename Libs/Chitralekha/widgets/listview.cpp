@@ -32,16 +32,16 @@
 #include "listview.h"
 #include <arm_neon.h>
 
-#define LV_COLOR_BG 0xFF1E1E1E
-#define LV_COLOR_TEXT 0xFFE0E0E0
-#define LV_SELECTED_BG 0xFF3A6EA5
-#define LV_SELECTED_TEXT 0xFFFFFFFF
-#define LV_COLOR_HOVER_BG  0xFF2A2A2A
-#define LV_COLOR_HEADER_TEXT 0xFFCCCCCC
-#define LV_COLOR_HEADER_BG 0xFF2D2D2D
-#define LV_COLOR_GRID_LINE 0xFF3A3A3A
+#define LV_COLOR_BG				0xFF1E1E1E
+#define LV_COLOR_TEXT			0xFFE0E0E0
+#define LV_SELECTED_BG			0xFF3A6EA5
+#define LV_SELECTED_TEXT		0xFFFFFFFF
+#define LV_COLOR_HOVER_BG		0xFF2A2A2A
+#define LV_COLOR_HEADER_TEXT	0xFFCCCCCC
+#define LV_COLOR_HEADER_BG		0xFF2D2D2D
+#define LV_COLOR_GRID_LINE		0xFF3A3A3A
 #define COLUMN_RESIZE_HANDLE_PX 4
-#define MAX_SCANLINE_PX 4096
+#define MAX_SCANLINE_PX			4096
 
 void OnListViewScroll(ChWidget* wid, ChWindow* win, int currentVal, uint8_t orientation);
 void OnListViewHScroll(ChWidget* wid, ChWindow* win, int currentVal, uint8_t orientation);
@@ -62,13 +62,16 @@ static void lv_recalc_content_metric(ListView* lv) {
 	ChScrollBarSetRange(&lv->hscroll, 0, lv->content_width, lv->viewport_width);
 
 	int max_scroll = lv->content_height - lv->viewport_height;
-	if (max_scroll < 0) max_scroll = 0;
-	if (lv->scroll_y > max_scroll) lv->scroll_y = max_scroll;
+	if (max_scroll < 0)
+		max_scroll = 0;
+	if (lv->scroll_y > max_scroll)
+		lv->scroll_y = max_scroll;
 
 	int max_scroll_x = lv->content_width - lv->viewport_width;
-	if (max_scroll_x < 0) max_scroll_x = 0;
-	if (lv->scroll_x > max_scroll_x) lv->scroll_x = max_scroll_x;
-
+	if (max_scroll_x < 0)
+		max_scroll_x = 0;
+	if (lv->scroll_x > max_scroll_x)
+		lv->scroll_x = max_scroll_x;
 }
 
 ListView* ChListViewCreate(int x, int y, int w, int h, int itemHeight) {
@@ -97,13 +100,17 @@ ListView* ChListViewCreate(int x, int y, int w, int h, int itemHeight) {
 	lv->item = (ListItem*)malloc(sizeof(ListItem) * lv->itemCapacity);
 	lv->itemCount = 0;
 	lv->columnCount = 0;
-	
+
 	lv->icon_column_width = LIST_VIEW_ICON_COLUMN_DEFAULT_W;
 	lv->icon_padding = LIST_VIEW_ICON_PADDING;
 	//lv->visibleCount = h / itemHeight;
 
-	ChScrollBarInit(&lv->vscroll, x + w - 16, y + lv->headerHeight, 16,
-		h - lv->headerHeight - 16, SCROLLBAR_ORIENTATION_VERTICAL);
+	ChScrollBarInit(&lv->vscroll,
+					x + w - 16,
+					y + lv->headerHeight,
+					16,
+					h - lv->headerHeight - 16,
+					SCROLLBAR_ORIENTATION_VERTICAL);
 	lv->vscroll.base.ChScrollEvent = OnListViewScroll;
 	lv->vscroll.attachedTo = lv;
 
@@ -116,7 +123,8 @@ ListView* ChListViewCreate(int x, int y, int w, int h, int itemHeight) {
 }
 
 void ListViewAddColumn(ListView* lv, const char* header, int width, int minWidth) {
-	if (lv->columnCount >= LIST_VIEW_MAX_COMUMNS) return;
+	if (lv->columnCount >= LIST_VIEW_MAX_COMUMNS)
+		return;
 	ListColumn* col = &lv->columns[lv->columnCount++];
 	strncpy(col->header, header, sizeof(col->header) - 1);
 	col->header[sizeof(col->header) - 1] = '\0';
@@ -133,7 +141,7 @@ ListItem* ListViewAddItem(ListView* lv, const char** cell_texts, int cell_count,
 
 	ListItem* it = &lv->item[lv->itemCount++];
 	memset(it->cells, 0, sizeof(it->cells));
-	
+
 	int n = cell_count < lv->columnCount ? cell_count : lv->columnCount;
 	for (int c = 0; c < n; c++) {
 		strncpy(it->cells[c], cell_texts[c], LIST_VIEW_MAX_TEXT - 1);
@@ -148,9 +156,9 @@ ListItem* ListViewAddItem(ListView* lv, const char** cell_texts, int cell_count,
 	return it;
 }
 
-
 void ListViewSetItemIcon(ListView* lv, int index, ChIcon* icon, int iconW, int iconH) {
-	if (index < 0 || index >= lv->itemCount) return;
+	if (index < 0 || index >= lv->itemCount)
+		return;
 
 	ListItem* it = &lv->item[index];
 	it->icon = icon;
@@ -165,13 +173,16 @@ void ListViewSetItemIcon(ListView* lv, int index, ChIcon* icon, int iconW, int i
 }
 
 void ListViewRemoveItem(ListView* lv, int index) {
-	if (index < 0 || index >= lv->itemCount) return;
+	if (index < 0 || index >= lv->itemCount)
+		return;
 
 	memmove(&lv->item[index], &lv->item[index + 1], sizeof(ListItem) * (lv->itemCount - index - 1));
 	lv->itemCount--;
 
-	if (lv->selectedIndex == index) lv->selectedIndex = -1;
-	else if (lv->selectedIndex > index) lv->selectedIndex--;
+	if (lv->selectedIndex == index)
+		lv->selectedIndex = -1;
+	else if (lv->selectedIndex > index)
+		lv->selectedIndex--;
 	lv->force_full_redraw = true;
 	lv_recalc_content_metric(lv);
 }
@@ -202,13 +213,15 @@ void OnListViewHScroll(ChWidget* wid, ChWindow* win, int currentVal, uint8_t ori
 
 static int _RowBaselineY(ListView* lv, int row_top_y, int row_height) {
 	int ascent = (row_height * BASELINE_RATIO_NUM) / BASELINE_RATIO_DEN;
-	if (ascent > row_height) ascent = row_height;
+	if (ascent > row_height)
+		ascent = row_height;
 	return row_top_y + ascent;
 }
 
 static int ColumnContentX(ListView* lv, int colIdx) {
 	int x = 0;
-	for (int c = 0; c < colIdx; c++) x += lv->columns[c].width;
+	for (int c = 0; c < colIdx; c++)
+		x += lv->columns[c].width;
 	return x;
 }
 
@@ -229,8 +242,13 @@ static void ListViewDrawHeader(ListView* lv, ChWindow* win) {
 			int pen_x = cx + 4;
 			int pen_y = _RowBaselineY(lv, lv->base.y, lv->headerHeight);
 			ChFontSetSize(win->app->baseFont, 14);
-			ChFontDrawTextClipped(win->canv, win->app->baseFont, lv->columns[c].header,
-				pen_x, pen_y, LV_COLOR_HEADER_TEXT, &hclip);
+			ChFontDrawTextClipped(win->canv,
+								  win->app->baseFont,
+								  lv->columns[c].header,
+								  pen_x,
+								  pen_y,
+								  LV_COLOR_HEADER_TEXT,
+								  &hclip);
 		}
 
 		cx += col_w;
@@ -240,9 +258,9 @@ static void ListViewDrawHeader(ListView* lv, ChWindow* win) {
 	}
 }
 
-
 void _neon_fill_rect32(ChCanvas* canv, int stride_px, int x, int y, int w, int h, uint32_t color) {
-	if (w <= 0 || h <= 0) return;
+	if (w <= 0 || h <= 0)
+		return;
 	uint32_t* fb = canv->buffer;
 	uint32x4_t vcolor = vdupq_n_u32(color);
 
@@ -281,9 +299,12 @@ static inline void _neon_cpy_row32(uint32_t* dst, const uint32_t* src, int w) {
 		dst[col] = src[col];
 }
 
-void _neon_shift_rect_vertical(uint32_t* fb, int stride_px, int x, int y, int w, int h, int delta_y) {
-	if (delta_y == 0 || w <= 0 | h <= 0) return;
-	if (delta_y >= h || -delta_y >= h) return;
+void _neon_shift_rect_vertical(
+	uint32_t* fb, int stride_px, int x, int y, int w, int h, int delta_y) {
+	if (delta_y == 0 || w <= 0 | h <= 0)
+		return;
+	if (delta_y >= h || -delta_y >= h)
+		return;
 
 	if (delta_y > 0) {
 		for (int row = h - 1; row >= delta_y; row--) {
@@ -291,8 +312,7 @@ void _neon_shift_rect_vertical(uint32_t* fb, int stride_px, int x, int y, int w,
 			uint32_t* src = fb + (size_t)(y + row - delta_y) * stride_px + x;
 			_neon_cpy_row32(dst, src, w);
 		}
-	}
-	else {
+	} else {
 		int up = -delta_y;
 		for (int row = 0; row < h - up; row++) {
 			uint32_t* dst = fb + (size_t)(y + row) * stride_px + x;
@@ -303,11 +323,14 @@ void _neon_shift_rect_vertical(uint32_t* fb, int stride_px, int x, int y, int w,
 }
 
 static uint32_t g_scanline_tmp[MAX_SCANLINE_PX];
-static void _neon_shift_rect_horiz(uint32_t* fb, int stride_px, int x, int y, int w, int h,
-	int delta_x) {
-	if (delta_x == 0 || w <= 0 || h <= 0) return;
-	if (delta_x >= w || -delta_x >= w) return;
-	if (w > MAX_SCANLINE_PX) return;
+static void
+_neon_shift_rect_horiz(uint32_t* fb, int stride_px, int x, int y, int w, int h, int delta_x) {
+	if (delta_x == 0 || w <= 0 || h <= 0)
+		return;
+	if (delta_x >= w || -delta_x >= w)
+		return;
+	if (w > MAX_SCANLINE_PX)
+		return;
 
 	int abs_delta = delta_x > 0 ? delta_x : -delta_x;
 	int copy_w = w - abs_delta;
@@ -318,8 +341,7 @@ static void _neon_shift_rect_horiz(uint32_t* fb, int stride_px, int x, int y, in
 		if (delta_x > 0) {
 			_neon_cpy_row32(g_scanline_tmp, line, copy_w);
 			_neon_cpy_row32(line + delta_x, g_scanline_tmp, copy_w);
-		}
-		else {
+		} else {
 			_neon_cpy_row32(g_scanline_tmp, line + abs_delta, copy_w);
 			_neon_cpy_row32(line, g_scanline_tmp, copy_w);
 		}
@@ -330,13 +352,18 @@ static void _draw_row_range(ListView* lv, ChWindow* win, int clip_y, int clip_h)
 	int rows_y = lv->base.y + lv->headerHeight;
 	int rows_w = lv->viewport_width;
 
-	if (clip_y < rows_y) { clip_h -= (rows_y - clip_y); clip_y = rows_y; }
+	if (clip_y < rows_y) {
+		clip_h -= (rows_y - clip_y);
+		clip_y = rows_y;
+	}
 	if (clip_y + clip_h > rows_y + lv->viewport_height)
 		clip_h = (rows_y + lv->viewport_height) - clip_y;
-	if (clip_h <= 0) return;
+	if (clip_h <= 0)
+		return;
 
-	//shall i convert it to neon ? out of algorithms, feed me 
-	_neon_fill_rect32(win->canv, win->canv->canvasWidth, lv->base.x, clip_y, rows_w, clip_h, LV_COLOR_BG);
+	//shall i convert it to neon ? out of algorithms, feed me
+	_neon_fill_rect32(
+		win->canv, win->canv->canvasWidth, lv->base.x, clip_y, rows_w, clip_h, LV_COLOR_BG);
 
 	int first_index = lv->scroll_y / lv->itemHeight;
 	int first_row_offset = lv->scroll_y % lv->itemHeight;
@@ -349,7 +376,6 @@ static void _draw_row_range(ListView* lv, ChWindow* win, int clip_y, int clip_h)
 	rows_clip.h = lv->viewport_height;
 
 	for (int i = first_index; i < lv->itemCount && ry < rows_y + lv->viewport_height; i++) {
-
 		if (ry + lv->itemHeight <= clip_y || ry >= clip_y + clip_h) {
 			ry += lv->itemHeight;
 			continue;
@@ -358,19 +384,24 @@ static void _draw_row_range(ListView* lv, ChWindow* win, int clip_y, int clip_h)
 		uint32_t row_bg = LV_COLOR_BG;
 		uint32_t row_text = LV_COLOR_TEXT;
 		if (i == lv->selectedIndex) {
-			row_bg = LV_SELECTED_BG; row_text = LV_SELECTED_TEXT;
-		}
-		else if (i == lv->hoverIndex) {
+			row_bg = LV_SELECTED_BG;
+			row_text = LV_SELECTED_TEXT;
+		} else if (i == lv->hoverIndex) {
 			row_bg = LV_COLOR_HOVER_BG;
 		}
 
 		int draw_y = ry, draw_h = lv->itemHeight;
-		if (draw_y < clip_y) { int d = clip_y - draw_y; draw_y += d; draw_h -= d; }
-		if (draw_y + draw_h > clip_y + clip_h) draw_h = (clip_y + clip_h) - draw_y;
+		if (draw_y < clip_y) {
+			int d = clip_y - draw_y;
+			draw_y += d;
+			draw_h -= d;
+		}
+		if (draw_y + draw_h > clip_y + clip_h)
+			draw_h = (clip_y + clip_h) - draw_y;
 
 		if (draw_h > 0 && row_bg != LV_COLOR_BG)
-			_neon_fill_rect32(win->canv, win->canv->canvasWidth, lv->base.x, draw_y, rows_w, 
-				draw_h, row_bg);
+			_neon_fill_rect32(
+				win->canv, win->canv->canvasWidth, lv->base.x, draw_y, rows_w, draw_h, row_bg);
 
 		int cx = lv->base.x - lv->scroll_x;
 		int pen_y = _RowBaselineY(lv, ry, lv->itemHeight);
@@ -387,7 +418,8 @@ static void _draw_row_range(ListView* lv, ChWindow* win, int clip_y, int clip_h)
 					if (item->icon != NULL) {
 						int icon_x = cx + lv->icon_padding;
 						int icon_y = ry + (lv->itemHeight - item->iconH) / 2;
-						if (icon_y < ry) icon_y = ry;
+						if (icon_y < ry)
+							icon_y = ry;
 
 						ChDrawIconClipped(win->canv, item->icon, icon_x, icon_y, &rows_clip);
 					}
@@ -397,12 +429,17 @@ static void _draw_row_range(ListView* lv, ChWindow* win, int clip_y, int clip_h)
 
 				/* draw the text here */
 				ChFontSetSize(win->app->baseFont, 14);
-				ChFontDrawTextClipped(win->canv, win->app->baseFont, lv->item[i].cells[c], text_x, pen_y,
-					row_text, &rows_clip);
+				ChFontDrawTextClipped(win->canv,
+									  win->app->baseFont,
+									  lv->item[i].cells[c],
+									  text_x,
+									  pen_y,
+									  row_text,
+									  &rows_clip);
 			}
 			cx += col_w;
 			if (cx > lv->base.x && cx < lv->base.x + rows_w)
-				ChDrawVerticalLine(win->canv, cx, draw_y,lv->itemHeight, LV_COLOR_GRID_LINE);
+				ChDrawVerticalLine(win->canv, cx, draw_y, lv->itemHeight, LV_COLOR_GRID_LINE);
 		}
 		ry += lv->itemHeight;
 	}
@@ -412,9 +449,14 @@ static void _draw_column_strip(ListView* lv, ChWindow* win, int strip_x_local, i
 	int rows_y = lv->base.y + lv->headerHeight;
 	int rows_w = lv->viewport_width;
 
-	if (strip_x_local < 0) { strip_w += strip_x_local; strip_x_local = 0; }
-	if (strip_x_local + strip_w > rows_w) strip_w = rows_w - strip_x_local;
-	if (strip_w <= 0) return;
+	if (strip_x_local < 0) {
+		strip_w += strip_x_local;
+		strip_x_local = 0;
+	}
+	if (strip_x_local + strip_w > rows_w)
+		strip_w = rows_w - strip_x_local;
+	if (strip_w <= 0)
+		return;
 
 	int strip_x = lv->base.x + strip_x_local;
 
@@ -432,21 +474,26 @@ static void _draw_column_strip(ListView* lv, ChWindow* win, int strip_x_local, i
 		uint32_t row_bg = LV_COLOR_BG;
 		uint32_t row_text = LV_COLOR_TEXT;
 		if (i == lv->selectedIndex) {
-			row_bg = LV_SELECTED_BG; row_text = LV_SELECTED_TEXT;
-		}
-		else if (i == lv->hoverIndex) 
+			row_bg = LV_SELECTED_BG;
+			row_text = LV_SELECTED_TEXT;
+		} else if (i == lv->hoverIndex)
 			row_bg = LV_COLOR_HOVER_BG;
-		
+
 		int draw_y = ry, draw_h = lv->itemHeight;
-		if (draw_y < rows_y) { int diff = rows_y - draw_y; draw_y += diff; draw_h -= diff; }
+		if (draw_y < rows_y) {
+			int diff = rows_y - draw_y;
+			draw_y += diff;
+			draw_h -= diff;
+		}
 		if (draw_y + draw_h > rows_y + lv->viewport_height)
 			draw_h = (rows_y + lv->viewport_height) - draw_y;
 
 		if (draw_h > 0)
-			_neon_fill_rect32(win->canv, win->canv->canvasWidth, strip_x, draw_y, strip_w, draw_h, row_bg);
+			_neon_fill_rect32(
+				win->canv, win->canv->canvasWidth, strip_x, draw_y, strip_w, draw_h, row_bg);
 
 		int cx = lv->base.x - lv->scroll_x;
-		int pen_y = _RowBaselineY(lv,ry, lv->itemHeight);
+		int pen_y = _RowBaselineY(lv, ry, lv->itemHeight);
 
 		for (int c = 0; c < lv->columnCount; c++) {
 			int col_w = lv->columns[c].width;
@@ -461,29 +508,37 @@ static void _draw_column_strip(ListView* lv, ChWindow* win, int strip_x_local, i
 					if (item->icon != NULL) {
 						int icon_x = cx + lv->icon_padding;
 						int icon_y = ry + (lv->itemHeight - item->iconH) / 2;
-						if (icon_y < ry) icon_y = ry;
+						if (icon_y < ry)
+							icon_y = ry;
 						ChDrawIconClipped(win->canv, item->icon, icon_x, icon_y, &strip_clip);
 					}
 					text_x = cx + lv->icon_column_width;
 				}
 				ChFontSetSize(win->app->baseFont, 14);
-				ChFontDrawTextClipped(win->canv, win->app->baseFont, lv->item[i].cells[c], text_x, pen_y, row_text, &strip_clip);
+				ChFontDrawTextClipped(win->canv,
+									  win->app->baseFont,
+									  lv->item[i].cells[c],
+									  text_x,
+									  pen_y,
+									  row_text,
+									  &strip_clip);
 			}
 			cx += col_w;
 		}
-		
+
 		ry += lv->itemHeight;
 	}
 }
 
 static void _lv_draw_single_row_(ListView* lv, ChWindow* win, int index, ChRect* out_rect) {
-	if (index < 0 || index >= lv->itemCount) return;
+	if (index < 0 || index >= lv->itemCount)
+		return;
 
 	int rows_y = lv->base.y + lv->headerHeight;
 	int rows_w = lv->viewport_width;
 
-	int row_top = rows_y - (lv->scroll_y % lv->itemHeight)
-		+ (index - lv->scroll_y / lv->itemHeight) * lv->itemHeight;
+	int row_top = rows_y - (lv->scroll_y % lv->itemHeight) +
+				  (index - lv->scroll_y / lv->itemHeight) * lv->itemHeight;
 
 	if (row_top + lv->itemHeight <= rows_y || row_top >= rows_y + lv->viewport_height)
 		return;
@@ -496,7 +551,8 @@ static void _lv_draw_single_row_(ListView* lv, ChWindow* win, int index, ChRect*
 	}
 	if (draw_y + draw_h > rows_y + lv->viewport_height)
 		draw_h = (rows_y + lv->viewport_height) - draw_y;
-	if (draw_h <= 0) return;
+	if (draw_h <= 0)
+		return;
 
 	uint32_t row_bg = LV_COLOR_BG;
 	uint32_t row_text = LV_COLOR_TEXT;
@@ -505,7 +561,8 @@ static void _lv_draw_single_row_(ListView* lv, ChWindow* win, int index, ChRect*
 	else if (index == lv->hoverIndex)
 		row_bg = LV_COLOR_HOVER_BG;
 
-	_neon_fill_rect32(win->canv, win->canv->canvasWidth, lv->base.x, draw_y, rows_w, draw_h, row_bg);
+	_neon_fill_rect32(
+		win->canv, win->canv->canvasWidth, lv->base.x, draw_y, rows_w, draw_h, row_bg);
 
 	ChRect rows_clip;
 	rows_clip.x = lv->base.x;
@@ -527,18 +584,24 @@ static void _lv_draw_single_row_(ListView* lv, ChWindow* win, int index, ChRect*
 				if (item->icon != NULL) {
 					int icon_x = cx + lv->icon_padding;
 					int icon_y = row_top + (lv->itemHeight - item->iconH) / 2;
-					if (icon_y < row_top) icon_y = row_top;
-					ChDrawIconClipped(win->canv,item->icon, icon_x, icon_y, &rows_clip);
+					if (icon_y < row_top)
+						icon_y = row_top;
+					ChDrawIconClipped(win->canv, item->icon, icon_x, icon_y, &rows_clip);
 				}
 				text_x = cx + lv->icon_column_width;
 			}
 			ChFontSetSize(win->app->baseFont, 14);
-			ChFontDrawTextClipped(win->canv, win->app->baseFont, lv->item[index].cells[c], text_x, pen_y,
-				row_text, &rows_clip);
+			ChFontDrawTextClipped(win->canv,
+								  win->app->baseFont,
+								  lv->item[index].cells[c],
+								  text_x,
+								  pen_y,
+								  row_text,
+								  &rows_clip);
 		}
 
 		cx += col_w;
-		if (cx > lv->base.x && cx <lv->base.x + rows_w)
+		if (cx > lv->base.x && cx < lv->base.x + rows_w)
 			ChDrawVerticalLine(win->canv, cx, draw_y, lv->itemHeight, LV_COLOR_GRID_LINE);
 	}
 
@@ -568,7 +631,7 @@ static int find_column_end_after(ListView* lv, int local_x) {
 	int content_x_target = local_x + lv->scroll_x;
 	int cx = 0;
 	for (int c = 0; c < lv->columnCount; c++) {
-		int next = cx + lv->columns[c].width; 
+		int next = cx + lv->columns[c].width;
 		if (content_x_target <= next) {
 			int col_end_local = next - lv->scroll_x;
 			return col_end_local;
@@ -587,21 +650,23 @@ void ListViewDraw(ChWidget* wid, ChWindow* win) {
 	int delta_y = lv->scroll_y - lv->prev_scroll_y;
 	int delta_x = lv->scroll_x - lv->prev_scroll_x;
 
-	int full_redraw = (lv->prev_scroll_y < 0) ||
-		(lv->force_full_redraw) ||
-		(abs(delta_y) >= rows_h) ||
-		(abs(delta_x) >= rows_w) ||
-		(rows_w > MAX_SCANLINE_PX);
+	int full_redraw = (lv->prev_scroll_y < 0) || (lv->force_full_redraw) ||
+					  (abs(delta_y) >= rows_h) || (abs(delta_x) >= rows_w) ||
+					  (rows_w > MAX_SCANLINE_PX);
 
 	ListViewDrawHeader(lv, win);
 
 	if (full_redraw) {
 		_draw_row_range(lv, win, rows_y, rows_h);
-	}
-	else {
+	} else {
 		if (delta_y != 0) {
-			_neon_shift_rect_vertical(win->canv->buffer, win->canv->canvasWidth, lv->base.x,
-				rows_y, rows_w, rows_h, -delta_y);
+			_neon_shift_rect_vertical(win->canv->buffer,
+									  win->canv->canvasWidth,
+									  lv->base.x,
+									  rows_y,
+									  rows_w,
+									  rows_h,
+									  -delta_y);
 			if (delta_y > 0)
 				_draw_row_range(lv, win, rows_y + rows_h - delta_y, delta_y);
 			else
@@ -609,20 +674,23 @@ void ListViewDraw(ChWidget* wid, ChWindow* win) {
 		}
 
 		if (delta_x != 0) {
-			_neon_shift_rect_horiz(win->canv->buffer, win->canv->canvasWidth, lv->base.x,
-				rows_y, rows_w, rows_h, -delta_x);
+			_neon_shift_rect_horiz(win->canv->buffer,
+								   win->canv->canvasWidth,
+								   lv->base.x,
+								   rows_y,
+								   rows_w,
+								   rows_h,
+								   -delta_x);
 
 			if (delta_x > 0) {
 				int dirty_start = rows_w - delta_x;
 				int col_start = _find_column_start_before(lv, dirty_start);
 				_draw_column_strip(lv, win, col_start, rows_w - col_start);
-			}
-			else {
+			} else {
 				int dirty_end = -delta_x;
 				int col_end = find_column_end_after(lv, dirty_end);
-				_draw_column_strip(lv, win, 0,col_end);
+				_draw_column_strip(lv, win, 0, col_end);
 			}
-
 		}
 	}
 
@@ -630,11 +698,10 @@ void ListViewDraw(ChWidget* wid, ChWindow* win) {
 	lv->prev_scroll_x = lv->scroll_x;
 	lv->force_full_redraw = false;
 
-
-	if (lv->vscroll.base.ChPaintHandler) 
+	if (lv->vscroll.base.ChPaintHandler)
 		lv->vscroll.base.ChPaintHandler((ChWidget*)&lv->vscroll, win);
 
-	if (lv->hscroll.base.ChPaintHandler) 
+	if (lv->hscroll.base.ChPaintHandler)
 		lv->hscroll.base.ChPaintHandler((ChWidget*)&lv->hscroll, win);
 }
 
@@ -643,15 +710,16 @@ static int lv_row_at(ListView* lv, ChWindow* win, int mx, int my) {
 	int ly = my - win->info->y;
 
 	int rows_y = lv->base.y + lv->headerHeight;
-	
-	if (lx < lv->base.x || lx >= lv->base.x + lv->viewport_width ||
-		ly < rows_y || ly >= rows_y + lv->viewport_height)
+
+	if (lx < lv->base.x || lx >= lv->base.x + lv->viewport_width || ly < rows_y ||
+		ly >= rows_y + lv->viewport_height)
 		return -1;
 
 	int content_y = (ly - rows_y) + lv->scroll_y;
 	int index = content_y / lv->itemHeight;
 
-	if (index < 0 || index >= lv->itemCount) return -1;
+	if (index < 0 || index >= lv->itemCount)
+		return -1;
 	return index;
 }
 
@@ -664,9 +732,10 @@ static int lv_column_at(ListView* lv, ChWindow* win, int mx, int* out_on_handle)
 		int next = cx + lv->columns[c].width;
 		if (out_on_handle)
 			*out_on_handle = (content_x >= next - COLUMN_RESIZE_HANDLE_PX &&
-				content_x <= next + COLUMN_RESIZE_HANDLE_PX);
+							  content_x <= next + COLUMN_RESIZE_HANDLE_PX);
 
-		if (content_x >= cx && content_x < next) return c;
+		if (content_x >= cx && content_x < next)
+			return c;
 
 		cx = next;
 	}
@@ -676,21 +745,19 @@ static int lv_column_at(ListView* lv, ChWindow* win, int mx, int* out_on_handle)
 static int lv_is_over_vscrollbar(ListView* lv, ChWindow* win, int mx, int my) {
 	int lx = mx - win->info->x, ly = my - win->info->y;
 	return (lx >= lv->vscroll.base.x && lx < lv->vscroll.base.x + lv->vscroll.base.w &&
-		ly >= lv->vscroll.base.y && ly < lv->vscroll.base.y + lv->vscroll.base.h);
+			ly >= lv->vscroll.base.y && ly < lv->vscroll.base.y + lv->vscroll.base.h);
 }
-
 
 static int lv_is_over_hscrollbar(ListView* lv, ChWindow* win, int mx, int my) {
 	int lx = mx - win->info->x, ly = my - win->info->y;
 	return (lx >= lv->hscroll.base.x && lx < lv->hscroll.base.x + lv->hscroll.base.w &&
-		ly >= lv->hscroll.base.y && ly < lv->hscroll.base.y + lv->hscroll.base.h);
+			ly >= lv->hscroll.base.y && ly < lv->hscroll.base.y + lv->hscroll.base.h);
 }
 
 static int lv_is_over_header(ListView* lv, ChWindow* win, int mx, int my) {
 	int ly = my - win->info->y;
 	return (ly >= lv->base.y && ly < lv->base.y + lv->headerHeight);
 }
-
 
 void ListViewMouseEvent(ChWidget* wid, ChWindow* win, int mx, int my, int button) {
 	ListView* lv = (ListView*)wid;
@@ -703,7 +770,8 @@ void ListViewMouseEvent(ChWidget* wid, ChWindow* win, int mx, int my, int button
 			int delta = lx - lv->resizeStartMouseX;
 			int new_w = lv->resizeStartWidth + delta;
 			ListColumn* col = &lv->columns[lv->resizingColumn];
-			if (new_w < col->minWidth) new_w = col->minWidth;
+			if (new_w < col->minWidth)
+				new_w = col->minWidth;
 
 			if (new_w != col->width) {
 				col->width = new_w;
@@ -712,8 +780,7 @@ void ListViewMouseEvent(ChWidget* wid, ChWindow* win, int mx, int my, int button
 				ListViewDraw(wid, win);
 				ChWindowUpdate(win, lv->base.x, lv->base.y, lv->base.w, lv->base.h, 0, 1);
 			}
-		}
-		else
+		} else
 			lv->resizingColumn = -1;
 		lv->prev_button = is_down;
 		return;
@@ -739,7 +806,6 @@ void ListViewMouseEvent(ChWidget* wid, ChWindow* win, int mx, int my, int button
 		int on_handle = 0;
 		int col = lv_column_at(lv, win, mx, &on_handle);
 
-
 		if (!was_down && is_down && on_handle && col != -1) {
 			lv->resizingColumn = col;
 			lv->resizeStartMouseX = mx - win->info->x;
@@ -762,7 +828,7 @@ void ListViewMouseEvent(ChWidget* wid, ChWindow* win, int mx, int my, int button
 			ChRect dirty;
 			if (old_selected != -1) {
 				_lv_draw_single_row_(lv, win, old_selected, &dirty);
-				ChWindowUpdate(win, dirty.x, dirty.y,dirty.w,dirty.h, 0, 1);
+				ChWindowUpdate(win, dirty.x, dirty.y, dirty.w, dirty.h, 0, 1);
 			}
 			_lv_draw_single_row_(lv, win, row, &dirty);
 			ChWindowUpdate(win, dirty.x, dirty.y, dirty.w, dirty.h, 0, 1);
@@ -775,7 +841,7 @@ void ListViewMouseEvent(ChWidget* wid, ChWindow* win, int mx, int my, int button
 		if (row != lv->hoverIndex) {
 			int old_hover = lv->hoverIndex;
 			lv->hoverIndex = row;
-		//	lv->force_full_redraw = true;
+			//	lv->force_full_redraw = true;
 			//ListViewDraw(wid, win);
 			//ChWindowUpdate(win, lv->base.x, lv->base.y, lv->base.w, lv->base.h, 0, 1);
 			ChRect dirty;

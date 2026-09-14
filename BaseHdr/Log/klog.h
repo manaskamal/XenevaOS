@@ -59,4 +59,10 @@ extern void B_KLogInit();
  */
 AU_EXTERN AU_EXPORT void BPrintK(BLogLevel level, const char* fmt, ...);
 
+/**
+ * @brief _BlogBypassAuConsole -- if logging was using
+ * framebuffer, bypass it to uart
+ */
+extern void _BlogBypassAuConsole();
+
 #endif

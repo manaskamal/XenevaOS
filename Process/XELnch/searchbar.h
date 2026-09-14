@@ -48,7 +48,7 @@ typedef struct _searchbar_ {
 	uint16_t prevTextPos;
 	bool _need_scroll;
 	uint16_t scrollOffset;
-}XESearchBar;
+} XESearchBar;
 
 /**
  * @brief XECreateSearchBar -- create the app search bar

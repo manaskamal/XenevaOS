@@ -41,7 +41,7 @@
 typedef struct _onoff_ {
 	ChWidget wid;
 	uint8_t value;
-}ChOnOffButton;
+} ChOnOffButton;
 
 /*
  * ChCreateOnOffButton -- creates a onoff button

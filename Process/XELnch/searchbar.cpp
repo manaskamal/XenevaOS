@@ -33,7 +33,6 @@
 #include <stdlib.h>
 #include <font.h>
 
-
 /**
  * @brief draw_rrect_filled -- draws rounded rectangle filled
  * @param canv -- Pointer to canvas
@@ -42,10 +41,8 @@
  * @param w -- width of the rounded rect
  * @param h -- Height of the rounded rectangle
  */
-extern void draw_rrect_filled(ChCanvas* canv, int x, int y,
-	int w, int h,
-	int radius, uint32_t color);
-
+extern void
+draw_rrect_filled(ChCanvas* canv, int x, int y, int w, int h, int radius, uint32_t color);
 
 /**
  * XESearchBarPaint -- paint the search bar 
@@ -54,16 +51,17 @@ extern void draw_rrect_filled(ChCanvas* canv, int x, int y,
  */
 void XESearchBarPaint(ChWidget* wid, ChWindow* win) {
 	XESearchBar* search = (XESearchBar*)wid;
-	ChFontSetSize(win->app->baseFont, 16); 
+	ChFontSetSize(win->app->baseFont, 16);
 	uint32_t fontcol = LIGHTSILVER;
 	if (wid->hover) {
 		draw_rrect_filled(win->canv, wid->x, wid->y, wid->w, wid->h, 16, GRAY);
-		draw_rrect_filled(win->canv, wid->x + 2, wid->y + 2, wid->w - 4, wid->h - 4, 16, win->color);
+		draw_rrect_filled(
+			win->canv, wid->x + 2, wid->y + 2, wid->w - 4, wid->h - 4, 16, win->color);
 		fontcol = WHITE;
-	}
-	else {
+	} else {
 		draw_rrect_filled(win->canv, wid->x, wid->y, wid->w, wid->h, 16, LIGHTBLACK);
-		draw_rrect_filled(win->canv, wid->x + 2, wid->y + 2, wid->w - 4, wid->h - 4, 16, win->color);
+		draw_rrect_filled(
+			win->canv, wid->x + 2, wid->y + 2, wid->w - 4, wid->h - 4, 16, win->color);
 	}
 	ChRect rect;
 	rect.x = wid->x;
@@ -75,7 +73,7 @@ void XESearchBarPaint(ChWidget* wid, ChWindow* win) {
 		if (width >= (wid->w - 10)) {
 			search->_need_scroll = 1;
 		}
-		if (search->_need_scroll) 
+		if (search->_need_scroll)
 			search->scrollOffset += (search->textPos) - (search->prevTextPos);
 		else {
 			/** check once if scrolling is turned off, but scrolloffset still is in 1, **/
@@ -83,9 +81,21 @@ void XESearchBarPaint(ChWidget* wid, ChWindow* win) {
 				search->scrollOffset = 0;
 		}
 
-		ChFontDrawTextClipped(win->canv, win->app->baseFont, search->text + search->scrollOffset, wid->x + 10, wid->y + wid->h - 10, fontcol, &rect);
-	}else
-		ChFontDrawTextClipped(win->canv, win->app->baseFont, "Search Apps..", wid->x + 30, wid->y + wid->h - 10, fontcol, &rect);
+		ChFontDrawTextClipped(win->canv,
+							  win->app->baseFont,
+							  search->text + search->scrollOffset,
+							  wid->x + 10,
+							  wid->y + wid->h - 10,
+							  fontcol,
+							  &rect);
+	} else
+		ChFontDrawTextClipped(win->canv,
+							  win->app->baseFont,
+							  "Search Apps..",
+							  wid->x + 30,
+							  wid->y + wid->h - 10,
+							  fontcol,
+							  &rect);
 
 	search->_need_scroll = 0;
 }
@@ -111,8 +121,7 @@ void XESearchMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, int button) 
 	if (!wid->hoverPainted && wid->hover) {
 		if (wid->ChPaintHandler)
 			wid->ChPaintHandler(wid, win);
-		ChWindowUpdate(win, wid->x,
-			wid->y, wid->w, wid->h, false, true);
+		ChWindowUpdate(win, wid->x, wid->y, wid->w, wid->h, false, true);
 		wid->hoverPainted = true;
 	}
 
@@ -120,16 +129,14 @@ void XESearchMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, int button) 
 		wid->hoverPainted = false;
 		if (wid->ChPaintHandler)
 			wid->ChPaintHandler(wid, win);
-		ChWindowUpdate(win, wid->x,
-			wid->y, wid->w, wid->h, false, true);
+		ChWindowUpdate(win, wid->x, wid->y, wid->w, wid->h, false, true);
 	}
 
 	bool _action_required = false;
 	if (wid->clicked && wid->lastMouseX == x && wid->lastMouseY == y) {
 		if (wid->ChPaintHandler)
 			wid->ChPaintHandler(wid, win);
-		ChWindowUpdate(win, wid->x,
-			wid->y, wid->w, wid->h, false, true);
+		ChWindowUpdate(win, wid->x, wid->y, wid->w, wid->h, false, true);
 
 		_action_required = true;
 		win->focusedWidget = wid;

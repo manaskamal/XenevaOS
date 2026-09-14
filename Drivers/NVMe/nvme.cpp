@@ -305,8 +305,8 @@ void NVMeAllocateQueues(uint16_t num) {
 
 NVMeQueue* NVMeCreateIOQueue(){
 	NVMeQueue* queue = NULL;
-	uint64_t sqPhysBase = (uint64_t)AuPmmngrAlloc();
-	uint64_t cqPhysBase = (uint64_t)AuPmmngrAlloc();
+	uint64_t sqPhysBase = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
+	uint64_t cqPhysBase = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
 
 	uint16_t queueID = nvme->queueAllocatedID;
 
@@ -330,8 +330,8 @@ NVMeQueue* NVMeCreateIOQueue(){
 
 	if (completion.status > 0) {
 		SeTextOut("[NVMe]: Creating I/O comp QUEUE status %d %x\r\n", completion.status, completion.status);
-		AuPmmngrFree((void*)cqPhysBase);
-		AuPmmngrFree((void*)sqPhysBase);
+		AuPmmngrReleasePage((uint64_t)cqPhysBase);
+		AuPmmngrReleasePage((uint64_t)sqPhysBase);
 		kfree(queue);
 		return NULL;
 		
@@ -356,7 +356,7 @@ NVMeQueue* NVMeCreateIOQueue(){
 	NVMeSubmitCommand(Admin, &command, &completion);
 
 	if (completion.status > 0){
-		AuPmmngrFree((void*)sqPhysBase);
+		AuPmmngrReleasePage((uint64_t)sqPhysBase);
 		SeTextOut("[NVMe]: I/O Sq creation failed %d \r\n", completion.status);
 		kfree(queue);
 		return NULL;
@@ -381,7 +381,7 @@ NVMeQueue* NVMeCreateIOQueue(){
  * NVMeIdentifyController -- identify controller command
  */
 void NVMeIdentifyController() {
-	uint64_t* controlphys = (uint64_t*)AuPmmngrAlloc();
+	uint64_t* controlphys = (uint64_t*)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
 	memset(controlphys, 0, PAGE_SIZE);
 
 	NVMeCommand iden;
@@ -408,7 +408,7 @@ void NVMeIdentifyController() {
 	}
 	
 	for (unsigned i = 0; i < ci->numNamespaces; i++) {
-		uint64_t* physAddr = (uint64_t*)AuPmmngrAlloc();
+		uint64_t* physAddr = (uint64_t*)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
 		memset(physAddr, 0, PAGE_SIZE);
 		
 		NVMeCommand identifyNS;
@@ -422,16 +422,16 @@ void NVMeIdentifyController() {
 		NVMeSubmitCommand(admin, &identifyNS, &comp);
 		
 		if (comp.status > 0) {
-			AuPmmngrFree((void*)physAddr);
+			AuPmmngrReleasePage((uint64_t)physAddr);
 			continue;
 		}
 		NamespaceIdentity *ni = (NamespaceIdentity*)physAddr;
 		NVMeInitialiseNamespace(nvme,ci, ni, i + 1);
 
-		AuPmmngrFree((void*)physAddr);
+		AuPmmngrReleasePage((uint64_t)physAddr);
 	}
 
-	AuPmmngrFree((void*)controlphys);
+	AuPmmngrReleasePage((uint64_t)controlphys);
 }
 /*
 * NVMeInitialise -- start nvme storage class
@@ -502,9 +502,9 @@ int NVMeInitialise() {
 	config |= NVME_CFG_DEFAULT_IOCQES | NVME_CFG_DEFAULT_IOSQES;
 	NVMeOutl(NVME_REGISTER_CC, config);
 
-	uint64_t adminSQ = (uint64_t)AuPmmngrAlloc();
+	uint64_t adminSQ = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
 	memset((void*)adminSQ, 0, PAGE_SIZE);
-	uint64_t adminCQ = (uint64_t)AuPmmngrAlloc();
+	uint64_t adminCQ = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
 	memset((void*)adminCQ, 0, PAGE_SIZE);
 
 	uint64_t adminSQMMIOBase = (uint64_t)AuMapMMIO(adminSQ, 1);

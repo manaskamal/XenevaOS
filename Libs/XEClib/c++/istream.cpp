@@ -32,55 +32,35 @@
 
 using namespace std;
 
-
-
 namespace std {
 
-	template <class charT, class traits>
-	basic_istream<charT, traits>::basic_istream(
-		basic_streambuf<charT, traits> *)
-	{
-	}
+template <class charT, class traits>
+basic_istream<charT, traits>::basic_istream(basic_streambuf<charT, traits>*) {}
 
+template <class charT, class traits> basic_istream<charT, traits>::~basic_istream() {}
 
-	template <class charT, class traits>
-	basic_istream<charT, traits>::~basic_istream()
-	{
-	}
+template <> istream& istream::operator>>(char& c) {
+	unsigned unicode = 0;
 
+	c = (char)unicode;
 
-	template <>
-	istream& istream::operator>>(char& c)
-	{
-		unsigned unicode = 0;
-
-
-		c = (char)unicode;
-
-		return (*this);
-	}
-
-
-	template <>
-	istream& istream::operator>>(char *s)
-	{
-		int count = 0;
-
-		do
-		{
-			unsigned unicode = 0;
-
-
-			s[count] = (char)unicode;
-
-		} while (!isspace(s[count++]));
-
-		s[count] = 0;
-
-		return (*this);
-	}
-
-
-	template class basic_istream<char, char_traits<char> >;
+	return (*this);
 }
 
+template <> istream& istream::operator>>(char* s) {
+	int count = 0;
+
+	do {
+		unsigned unicode = 0;
+
+		s[count] = (char)unicode;
+
+	} while (!isspace(s[count++]));
+
+	s[count] = 0;
+
+	return (*this);
+}
+
+template class basic_istream<char, char_traits<char>>;
+} // namespace std

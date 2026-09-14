@@ -42,8 +42,7 @@ typedef struct _progressbar_ {
 	double currentProgress;
 	double progressPercent;
 	int progressPixelWidth;
-}ChProgressBar;
-
+} ChProgressBar;
 
 /*
 * ChCreateProgressBar -- creates a progress bar
@@ -52,7 +51,7 @@ typedef struct _progressbar_ {
 * @param w -- width of the progress bar
 * @param h -- height of the progress bar
 */
-XE_EXTERN XE_LIB ChProgressBar *ChCreateProgressBar(int x, int y, int w, int h, double progress);
+XE_EXTERN XE_LIB ChProgressBar* ChCreateProgressBar(int x, int y, int w, int h, double progress);
 
 /*
 * ChProgressBarSetMax -- set maximum limit of the progress

@@ -529,7 +529,7 @@ AU_EXTERN AU_EXPORT int AuUSBDriverMain(AuUSBDeviceStruc* dev) {
 	}
 
 
-	uint64_t buff = (uint64_t)AuPmmngrAlloc();
+	uint64_t buff = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
 	memset((void*)buff, 0, PAGE_SIZE);
 	uint8_t* report = (uint8_t*)buff;
 
@@ -544,7 +544,7 @@ AU_EXTERN AU_EXPORT int AuUSBDriverMain(AuUSBDeviceStruc* dev) {
 	t_idx = -1;
 	t_idx = dev->AuUSBWait(dev, USB_WAIT_EVENT_TRANSFER);
 
-	mouse_data = (uint64_t)P2V((uint64_t)AuPmmngrAlloc());
+	mouse_data = (uint64_t)P2V((uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 	memset((void*)mouse_data, 0, PAGE_SIZE);
 
 	void* ep = dev->AuGetEndpoint(dev, ENDPOINT_TRANSFER_TYPE_INT);

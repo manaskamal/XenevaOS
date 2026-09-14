@@ -32,7 +32,6 @@
 
 #include <stdint.h>
 
-
 typedef struct _ch_image_ {
 	unsigned char* data;
 	int width;
@@ -40,6 +39,6 @@ typedef struct _ch_image_ {
 	int fd;
 	int filesz;
 	uint8_t* image;
-}ChImage;
+} ChImage;
 
 #endif

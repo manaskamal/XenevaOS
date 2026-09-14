@@ -443,8 +443,8 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 
 	uintptr_t mmio = AuPCIERead(device, PCI_BAR0, bus, dev, func);
 	_hdaudio->mmio = (uint64_t)AuMapMMIO(mmio, 1);
-	_hdaudio->corb = (uint32_t*)P2V((size_t)AuPmmngrAlloc());
-	_hdaudio->rirb = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
+	_hdaudio->corb = (uint32_t*)P2V((size_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
+	_hdaudio->rirb = (uint64_t*)P2V((size_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 	memset((void*)_hdaudio->corb, 0, PAGE_SIZE);
 	memset((void*)_hdaudio->rirb, 0, PAGE_SIZE);
 

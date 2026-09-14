@@ -51,7 +51,6 @@ void XEUartInitialize() {
 	XE_iMX8MP_UART_Initialize(IMX8MP_UART3_BASE_ADDRESS);
 	_is_uart_initialized = 1;
 #endif
-
 }
 
 /*
@@ -65,11 +64,13 @@ void XEUartPutc(char c) {
 	imx8mp_uart_putc(c);
 #elif __TARGET_BOARD_QEMU_VIRT__
 	volatile unsigned int* uart0 = (volatile unsigned int*)0x09000000;
-	while (*(uart0 + 6) & (1 << 5)); // Wait until FR_TXFF is clear
+	while (*(uart0 + 6) & (1 << 5))
+		; // Wait until FR_TXFF is clear
 	*uart0 = c;
 #elif __TARGET_BOARD_RPI3__
 	char* uart0 = (char*)UART_BASE;
-	while ((*(uart0 + 0x18) & (1 << 5)));
+	while ((*(uart0 + 0x18) & (1 << 5)))
+		;
 	*uart0 = c;
 #endif
 }
@@ -87,25 +88,23 @@ void XEUartPutString(const char* s) {
 #include <stdarg.h>
 
 /*
- * XEUARTPrint -- print formated text using graphics
+ * XEUARTPrintV -- core formatted output to UART using va_list
  * @param format -- formated string
+ * @param args -- va_list of arguments
  */
-void XEUARTPrint(const char* format, ...) {
+void XEUARTPrintV(const char* format, va_list args) {
 #ifdef __TARGET_BOARD_RPI3__
 	XEGuiPrint(format);
 	return;
 #endif
 
-	va_list args;
-	va_start(args, format);
 	while (*format != '\0') {
 		if (*format == '%') {
 			++format;
 			if (*format == 'd') {
 				size_t width = 0;
 				if (format[1] == '.') {
-					for (size_t i = 2; format[i] >= '0' && format[i] <= '9'; ++i)
-					{
+					for (size_t i = 2; format[i] >= '0' && format[i] <= '9'; ++i) {
 						width *= 10;
 						width += format[i] - '0';
 					}
@@ -117,44 +116,46 @@ void XEUARTPrint(const char* format, ...) {
 				while (len++ < width)
 					XEUartPutString("0");
 				XEUartPutString(buffer);
-			}
-			else if (*format == 'c') {
-
+			} else if (*format == 'c') {
 				int c = va_arg(args, int);
 				XEUartPutc((char)c);
-			}
-			else if (*format == 'x') {
+			} else if (*format == 'x') {
 				size_t x = va_arg(args, size_t);
 				char buffer[sizeof(size_t) * 8 + 1];
 				sztoa(x, buffer, 16);
 				XEUartPutString(buffer);
-			}
-			else if (*format == 's') {
+			} else if (*format == 's') {
 				char* x = va_arg(args, char*);
 				XEUartPutString(x);
-			}
-			else if (*format == 'S') {
+			} else if (*format == 'S') {
 				char* x = va_arg(args, char*);
 				XEUartPutString(x);
-			}
-			else if (*format == '%') {
+			} else if (*format == '%') {
 				XEUartPutString(".");
-			}
-			else {
+			} else {
 				char buf[3];
-				buf[0] = '%'; buf[1] = *format; buf[2] = '\0';
+				buf[0] = '%';
+				buf[1] = *format;
+				buf[2] = '\0';
 				XEUartPutString(buf);
 			}
-		}
-		else
-		{
+		} else {
 			char buf[2];
-			buf[0] = *format; buf[1] = '\0';
+			buf[0] = *format;
+			buf[1] = '\0';
 			XEUartPutString(buf);
 		}
 		++format;
 	}
-	va_end(args);
 }
 
-
+/*
+ * XEUARTPrint -- print formated text using graphics
+ * @param format -- formated string
+ */
+void XEUARTPrint(const char* format, ...) {
+	va_list args;
+	va_start(args, format);
+	XEUARTPrintV(format, args);
+	va_end(args);
+}

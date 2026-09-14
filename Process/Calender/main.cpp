@@ -43,7 +43,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-ChitralekhaApp *app;
+ChitralekhaApp* app;
 ChWindow* mainWin;
 uint8_t* calenderBuffer;
 int box_width;
@@ -55,7 +55,7 @@ XETime t;
 int current_year;
 int current_month;
 int current_day;
-int days_in_month[] = { 0,31,28,31,30,31,30,31,31,30,31,30,31 };
+int days_in_month[] = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 
 typedef struct _datebox_ {
 	int x;
@@ -64,7 +64,7 @@ typedef struct _datebox_ {
 	int h;
 	uint16_t dateValue;
 	bool today;
-}DateBox;
+} DateBox;
 
 void CalenderRepaint(int year, int month, int num_days);
 
@@ -73,7 +73,7 @@ void CalenderHandleKeys(int c) {
 	case KEY_W:
 		current_month--;
 		current_day = 1;
-		
+
 		if (current_month < 0) {
 			current_month = 12;
 			current_year--;
@@ -100,22 +100,22 @@ void CalenderHandleKeys(int c) {
  * WindowHandleMessage -- handles incoming deodhai messages
  * @param e -- PostBox event message structure
  */
-void WindowHandleMessage(PostEvent *e) {
+void WindowHandleMessage(PostEvent* e) {
 	switch (e->type) {
 	/* handle mouse event from deodhai */
-	case DEODHAI_REPLY_MOUSE_EVENT:{
-									   ChWindowHandleMouse(mainWin, e->dword, e->dword2, e->dword3);
-									   memset(e, 0, sizeof(PostEvent));
-									   break;
+	case DEODHAI_REPLY_MOUSE_EVENT: {
+		ChWindowHandleMouse(mainWin, e->dword, e->dword2, e->dword3);
+		memset(e, 0, sizeof(PostEvent));
+		break;
 	}
 		/* handle key events from deodhai */
-	case DEODHAI_REPLY_KEY_EVENT:{
-									 int code = e->dword;
-									 ChitralekhaProcessKey(code);
-									 char c = ChitralekhaKeyToASCII(code);
-									 CalenderHandleKeys(c);
-									 memset(e, 0, sizeof(PostEvent));
-									 break;
+	case DEODHAI_REPLY_KEY_EVENT: {
+		int code = e->dword;
+		ChitralekhaProcessKey(code);
+		char c = ChitralekhaKeyToASCII(code);
+		CalenderHandleKeys(c);
+		memset(e, 0, sizeof(PostEvent));
+		break;
 	}
 	}
 }
@@ -226,7 +226,7 @@ void CalenderRepaint(int year, int month, int num_days) {
 		db->today = 0;
 	}
 
-	int offset = GetDayOfWeek(1,month, year);
+	int offset = GetDayOfWeek(1, month, year);
 
 	for (int j = 0; j < num_days; j++) {
 		DateBox* db = (DateBox*)&calenderBuffer[offset * sizeof(DateBox)];
@@ -241,7 +241,7 @@ void CalenderRepaint(int year, int month, int num_days) {
 	DateBox* db = (DateBox*)&calenderBuffer[0 * sizeof(DateBox)];
 	start_y = db->y;
 	int max_h = mainWin->info->height - start_y;
-	ChDrawRect(mainWin->canv, 5, start_y, mainWin->info->width - 10, max_h- 50, mainWin->color);
+	ChDrawRect(mainWin->canv, 5, start_y, mainWin->info->width - 10, max_h - 50, mainWin->color);
 	for (int i = 0; i < 42; i++) {
 		DateBox* db = (DateBox*)&calenderBuffer[i * sizeof(DateBox)];
 		if (db->dateValue == 0)
@@ -255,18 +255,33 @@ void CalenderRepaint(int year, int month, int num_days) {
 			ChDrawRect(mainWin->canv, db->x, db->y, box_width, box_height, 0xFFAE5C22);
 		if (db->today)
 			textcol = WHITE;
-		ChFontDrawText(mainWin->canv, app->baseFont, str, db->x + (db->w / 2) - text_len / 2,
-			db->y + db->h / 2, 10, textcol);
+		ChFontDrawText(mainWin->canv,
+					   app->baseFont,
+					   str,
+					   db->x + (db->w / 2) - text_len / 2,
+					   db->y + db->h / 2,
+					   10,
+					   textcol);
 	}
 
 	char monthName[20];
 	sprintf(monthName, "%s %d", GetMonthText(month), year);
-	
+
 	ChFontSetSize(monthText, 18);
 	int monthLen = ChFontGetWidth(monthText, monthName);
-	ChDrawRect(mainWin->canv,((mainWin->info->width / 2) - monthLen/2)-20, 26,monthLen + 40, box_height,mainWin->color);
-	ChFontDrawText(mainWin->canv, monthText, monthName, 
-		(mainWin->info->width/2) - monthLen/2, 26 + 30, 18, BLACK);
+	ChDrawRect(mainWin->canv,
+			   ((mainWin->info->width / 2) - monthLen / 2) - 20,
+			   26,
+			   monthLen + 40,
+			   box_height,
+			   mainWin->color);
+	ChFontDrawText(mainWin->canv,
+				   monthText,
+				   monthName,
+				   (mainWin->info->width / 2) - monthLen / 2,
+				   26 + 30,
+				   18,
+				   BLACK);
 
 	ChWindowUpdate(mainWin, 0, 0, mainWin->info->width, mainWin->info->height, 1, 0);
 }
@@ -295,7 +310,8 @@ void CalenderGetYMD(uint32_t* year, uint32_t* month, uint32_t* day, int32_t tz_o
 	int64_t days = (int64_t)sec_ / 86400;
 	uint32_t secs_of_day = sec_ % 86400;
 
-	int y; unsigned mo, d;
+	int y;
+	unsigned mo, d;
 	civil_from_days(days, &y, &mo, &d);
 	*year = y;
 	*month = mo;
@@ -305,12 +321,12 @@ void CalenderGetYMD(uint32_t* year, uint32_t* month, uint32_t* day, int32_t tz_o
 /*
 * main -- main entry
 */
-int main(int argc, char* argv[]){
+int main(int argc, char* argv[]) {
 	_KePrint("Cal \r\n");
 	app = ChitralekhaStartApp(argc, argv);
-	mainWin = ChCreateWindow(app, WINDOW_FLAG_MOVABLE, "Calender", 100, 50, CHITRALEKHA_DEFAULT_WIN_WIDTH, 
-		400);
-	
+	mainWin = ChCreateWindow(
+		app, WINDOW_FLAG_MOVABLE, "Calender", 100, 50, CHITRALEKHA_DEFAULT_WIN_WIDTH, 400);
+
 	_KePrint("Calender \r\n");
 	/* Create the main calender buffer */
 	calenderBuffer = (uint8_t*)malloc(sizeof(DateBox) * 42);
@@ -322,37 +338,42 @@ int main(int argc, char* argv[]){
 	current_year = t.year;
 	current_day = t.day;
 	CalenderGetYMD((uint32_t*)&current_year,
-		(uint32_t*)&current_month,(uint32_t*)&current_day,
-		TZ_SEC_IST_INDIA);
+				   (uint32_t*)&current_month,
+				   (uint32_t*)&current_day,
+				   TZ_SEC_IST_INDIA);
 
 	monthText = ChInitialiseFont(FORTE);
-	
+
 	box_width = (mainWin->info->width - 2 * 5) / 7;
 	box_height = (mainWin->info->height - (26 + 30)) / 8;
 	box_height -= 5;
 
 	ChWindowPaint(mainWin);
-	ChFontSetSize(app->baseFont,14);
-
+	ChFontSetSize(app->baseFont, 14);
 
 	/*
 	 * Prepare the calender grid for dates to be shown
 	 */
 	int x = 5;
 	int y = 26 + 40;
-	
+
 	for (int i = 0; i < 7; i++) {
 		char* day = GetDayText(i);
 		int text_len = ChFontGetWidth(app->baseFont, day);
-		ChFontDrawText(mainWin->canv, app->baseFont, day, x + (box_width / 2) - text_len / 2,
-			y + box_height/2, 10, LIGHTBLACK);
+		ChFontDrawText(mainWin->canv,
+					   app->baseFont,
+					   day,
+					   x + (box_width / 2) - text_len / 2,
+					   y + box_height / 2,
+					   10,
+					   LIGHTBLACK);
 		x += box_width;
 	}
 	y += box_height;
 	x = 5;
 	int cal_off = 0;
 	for (int j = 0; j < 42; j++) {
-		DateBox* db = (DateBox*)&calenderBuffer[j* sizeof(DateBox)];
+		DateBox* db = (DateBox*)&calenderBuffer[j * sizeof(DateBox)];
 		db->x = x;
 		db->y = y;
 		db->w = box_width;
@@ -371,9 +392,13 @@ int main(int argc, char* argv[]){
 	 */
 	ChFontSetSize(app->baseFont, 12);
 	int msglen = ChFontGetWidth(app->baseFont, "Press 'W' for Up and 'S' for Down");
-	ChFontDrawText(mainWin->canv, app->baseFont,
-		"Press 'W' for Up and 'S' for Down"
-		, (mainWin->info->width/2) - msglen/2, mainWin->info->height - 10, 10,LIGHTBLACK);
+	ChFontDrawText(mainWin->canv,
+				   app->baseFont,
+				   "Press 'W' for Up and 'S' for Down",
+				   (mainWin->info->width / 2) - msglen / 2,
+				   mainWin->info->height - 10,
+				   10,
+				   LIGHTBLACK);
 
 	/*
 	 * Repaint the calender

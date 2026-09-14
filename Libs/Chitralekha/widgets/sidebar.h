@@ -37,68 +37,65 @@
 #include "icon.h"
 
 #ifdef __cplusplus
-XE_EXTERN{
+XE_EXTERN {
 #endif
 
 #define SIDEBAR_MAX_LABEL  64
 #define SIDEBAR_ROW_HEIGHT 28
-#define SIDEBAR_HEADER    22
-#define SIDEBAR_ICON_SIZE 16
-#define SIDEBAR_INDENT    10
+#define SIDEBAR_HEADER	   22
+#define SIDEBAR_ICON_SIZE  16
+#define SIDEBAR_INDENT	   10
 
-typedef struct _sidebar_item_ {
-	char label[SIDEBAR_MAX_LABEL];
-	ChIcon* icon;
-	int iconW, iconH;
+	typedef struct _sidebar_item_ {
+		char label[SIDEBAR_MAX_LABEL];
+		ChIcon* icon;
+		int iconW, iconH;
 
-	void* data;
-	void (*OnSelect)(struct _sidebar_item_* item, ChWindow* win);
-	int selected;
-}ChSidebarItem;
+		void* data;
+		void (*OnSelect)(struct _sidebar_item_* item, ChWindow* win);
+		int selected;
+	} ChSidebarItem;
 
-typedef struct _sidebar_section_ {
-	char title[SIDEBAR_MAX_LABEL];
-	ChSidebarItem* items;
-	int itemCount;
-	int collapsed;
-}ChSidebarSection;
+	typedef struct _sidebar_section_ {
+		char title[SIDEBAR_MAX_LABEL];
+		ChSidebarItem* items;
+		int itemCount;
+		int collapsed;
+	} ChSidebarSection;
 
-typedef struct _sidebar_ {
-	ChWidget base;
+	typedef struct _sidebar_ {
+		ChWidget base;
 
-	ChSidebarSection* sections;
-	int sectionCount;
+		ChSidebarSection* sections;
+		int sectionCount;
 
-	int scrollOfsetY;
-	int contentHeight;
+		int scrollOfsetY;
+		int contentHeight;
 
-	uint32_t bgColor;
-	uint32_t selectedColor;
-	uint32_t hoverColor;
-	uint32_t textColor;
-	uint32_t headerTextColor;
-	uint32_t selectedTextColor;
+		uint32_t bgColor;
+		uint32_t selectedColor;
+		uint32_t hoverColor;
+		uint32_t textColor;
+		uint32_t headerTextColor;
+		uint32_t selectedTextColor;
 
+		int hoverSectionIdx;
+		int hoverItemIdx;
+	} ChSidebar;
 
-	int hoverSectionIdx;
-	int hoverItemIdx;
-}ChSidebar;
-
-
-/**
+	/**
  * @brief ChSidebarCreate -- create a new sidebar
  * @param x -- x location of the sidebar
  * @param y -- y location of the sidebar
  * @param w -- width of the sidebar
  * @param h -- height of the sidebar
  */
-XE_EXPORT ChSidebar* ChSidebarCreate(int x, int y, int w, int h);
+	XE_EXPORT ChSidebar* ChSidebarCreate(int x, int y, int w, int h);
 
-XE_EXPORT ChSidebarSection* ChSidebarAddSection(ChSidebar* sb, const char* title);
+	XE_EXPORT ChSidebarSection* ChSidebarAddSection(ChSidebar * sb, const char* title);
 
-XE_EXPORT ChSidebarItem* ChSidebarAddItem(ChSidebarSection* sec, const char* label, ChIcon* icon,
-	int iconW, int iconH, void* udata);
-
+	XE_EXPORT ChSidebarItem* ChSidebarAddItem(
+		ChSidebarSection * sec, const char* label, ChIcon* icon, int iconW, int iconH, void* udata);
 
 #ifdef __cplusplus
 }

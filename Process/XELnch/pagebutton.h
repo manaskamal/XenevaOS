@@ -37,7 +37,7 @@
 #include <widgets/base.h>
 #include <widgets/window.h>
 
-#define PAGE_BUTTON_UP    1
+#define PAGE_BUTTON_UP	  1
 #define PAGE_BUTTON_DOWN  2
 #define PAGE_BUTTON_RIGHT 3
 #define PAGE_BUTTON_LEFT  4
@@ -46,8 +46,7 @@ typedef struct _pagebutton_ {
 	ChWidget wid;
 	bool disabled;
 	uint8_t type;
-}XEPageButton;
-
+} XEPageButton;
 
 extern XEPageButton* CreatePageButton(int x, int y, int w, int h, uint8_t type);
 #endif

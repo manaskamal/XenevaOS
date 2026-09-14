@@ -39,21 +39,16 @@
 
 static char* chars = "0123456789ABCDEF";
 
-
-
-char* sztoa(uint64_t value, char* str, int base)
-{
+char* sztoa(uint64_t value, char* str, int base) {
 	if (base < 2 || base > 16)
 		return NULL;
 	unsigned int i = 0;
-	do
-	{
+	do {
 		str[++i] = chars[value % base];
 		value /= base;
 	} while (value != 0);
 	str[0] = '\0';
-	for (unsigned int z = 0; z < i; ++z, --i)
-	{
+	for (unsigned int z = 0; z < i; ++z, --i) {
 		char tmp = str[z];
 		str[z] = str[i];
 		str[i] = tmp;
@@ -61,8 +56,9 @@ char* sztoa(uint64_t value, char* str, int base)
 	return str;
 }
 
-void atow(char* buf, const char* source){
-	while (*source != 0)*buf++ = *source++;
+void atow(char* buf, const char* source) {
+	while (*source != 0)
+		*buf++ = *source++;
 	*buf = '\0';
 }
 
@@ -99,7 +95,6 @@ char* ftoa(float value, uint8_t decimal_places) {
 		value *= -1;
 	}
 
-
 	while (*int_ptr != 0) {
 		*float_ptr = *int_ptr;
 		int_ptr++;
@@ -123,14 +118,15 @@ char* ftoa(float value, uint8_t decimal_places) {
 	return float_to_string_output;
 }
 
-
 int atoi(const char* s) {
-
 	int n = 0, neg = 0;
-	while (isspace(*s)) s++;
+	while (isspace(*s))
+		s++;
 	switch (*s) {
-	case '-': neg = 1;
-	case '+': s++;
+	case '-':
+		neg = 1;
+	case '+':
+		s++;
 	}
 
 	while (isdigit(*s))
@@ -153,7 +149,9 @@ int rand() {
 	uint32_t t;
 
 	t = r_x ^ (r_x << 11);
-	r_x = r_y; r_y = r_z; r_z = r_w;
+	r_x = r_y;
+	r_y = r_z;
+	r_z = r_w;
 	r_w = r_w ^ (r_w >> 19) ^ t ^ (t >> 8);
 
 	return (r_w & RAND_MAX);

@@ -62,5 +62,4 @@ _fastcpy:
     subs x2, x2, #1
     b.ne .byte_loop
 .done:
-    dmb sy
-    ret
+	ret

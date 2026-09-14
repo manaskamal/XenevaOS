@@ -41,12 +41,13 @@
 #include <Hal/AA64/sched.h>
 #include <string.h>
 
-
 struct VirtioQueue* queue;
 struct VirtioInputEvent* input;
 static uint16_t index;
 static int queueSize;
 static struct VirtioCommonCfg* _kybrdCfg;
+/* temporary input-freeze diagnostics counter */
+volatile uint32_t kbd_dbg_irqs;
 
 static const uint8_t ext_key_map[256] = {
 	[0x63] = 0x37, //print screen
@@ -65,56 +66,70 @@ static const uint8_t ext_key_map[256] = {
  * @brief Virtio-keyboard interrupt handler
  */
 void AuVirtioKbdHandler(int spinum) {
+	(void)spinum;
+	kbd_dbg_irqs++;
+	dc_ivac((uint64_t)&queue->used.index);
+	dsb_sy_barrier();
 	uint16_t them = queue->used.index;
 	for (; index < them; index++) {
-		dc_ivac((uint64_t)&input[index % queueSize]);
+		uint16_t slot = index % queueSize;
+		dc_ivac((uint64_t)&input[slot]);
 		dsb_sy_barrier();
-		struct VirtioInputEvent evt = input[index % queueSize];
-		while (evt.type == 0xFF) {
-			evt = input[index % queueSize];
-			UARTDebugOut("VirtioInput: bad packet : %d (them=%d)\n", index, them);
+		struct VirtioInputEvent evt = input[slot];
+		if (evt.type == 0xFF) {
+			/* already consumed, spurious IRQ -- do not leak a buffer */
+			continue;
 		}
-		input[index % queueSize].type = 0xFF;
+		input[slot].type = 0xFF;
 		isb_flush();
 		dsb_sy_barrier();
 		if (evt.type == 1) {
-			if (evt.code < 0x49) {
-				uint8_t scancode = evt.code;
-				// Key Release: value |= 0x80;
-				// Key Release: value = code
-				if (evt.value == 0) {
+			/* Linux KEY_ENTER=28, KEY_KPENTER=96 */
+			if (evt.code == 28 || evt.code == 96) {
+				uint8_t scancode = 0x1c;
+				if (evt.value == 0)
 					scancode |= 0x80;
-				}
-				/* write to xeneva key input msg box */
-				AuInputMessage msg;
-				memset(&msg, 0, sizeof(AuInputMessage));
-				msg.type = AU_INPUT_KEYBOARD;
-				msg.code = scancode & 0xFF;
-				AuDevWriteKybrd(&msg);
-			}
-			else if (ext_key_map[evt.code]) {
-				uint8_t make_code = ext_key_map[evt.code] & 0xFF;
-
-				if (evt.value == 0) {
-					make_code |= 0x80;
-				}
-				uint32_t scancode = (0xE0 << 8) | make_code;
-				// 0xE0 (extended code)  upper 16 bits | key code middle 8 bits | value: 0x80 for release, 0 press
-				/* write to xeneva key input msg box */
 				AuInputMessage msg;
 				memset(&msg, 0, sizeof(AuInputMessage));
 				msg.type = AU_INPUT_KEYBOARD;
 				msg.code = scancode;
 				AuDevWriteKybrd(&msg);
-			}
-			else {
-				UARTDebugOut("virtio-kybrd: unmapped key code : %d \n", evt.code);
+			} else if (evt.code < 0x49) {
+				uint8_t scancode = (uint8_t)evt.code;
+				if (evt.value == 0)
+					scancode |= 0x80;
+				AuInputMessage msg;
+				memset(&msg, 0, sizeof(AuInputMessage));
+				msg.type = AU_INPUT_KEYBOARD;
+				msg.code = scancode;
+				AuDevWriteKybrd(&msg);
+			} else if (evt.code < 256 && ext_key_map[evt.code]) {
+				uint8_t make_code = ext_key_map[evt.code];
+				if (evt.value == 0)
+					make_code |= 0x80;
+				AuInputMessage msg;
+				memset(&msg, 0, sizeof(AuInputMessage));
+				msg.type = AU_INPUT_KEYBOARD;
+				msg.code = (0xE0u << 8) | make_code;
+				AuDevWriteKybrd(&msg);
 			}
 		}
-		isb_flush();
+		/* recycle the buffer or the device runs out after queueSize events
+		 * and the keyboard appears to "freeze after a few seconds" */
+		queue->available.ring[queue->available.index % queueSize] = slot;
+		dsb_sy_barrier();
 		queue->available.index++;
+		dsb_sy_barrier();
 	}
-	
+}
+
+/* temporary input-freeze diagnostics: thread-context only, never call from IRQ */
+void AuVirtioKbdDebug() {
+	dc_ivac((uint64_t)&queue->used.index);
+	dsb_sy_barrier();
+	UARTDebugOut("[kbd-dbg]: idx=%d used=%d avail=%d qsz=%d irqs=%d \n",
+		(int)index, (int)queue->used.index,
+		(int)queue->available.index, (int)queueSize, (int)kbd_dbg_irqs);
 }
 
 void AuVirtioKbdDown() {
@@ -140,12 +155,9 @@ void AuVirtioKbdDown() {
 /**
  * @brief AuVirtioKbdInitialize -- initialize the virtio keyboard
  */
-void AuVirtioKbdInitialize(uint64_t device) {
-	int bus = 0;
-	int func = 0;
-	int dev = 0;
+void AuVirtioKbdInitialize(uint64_t device, int bus, int dev, int func) {
 	index = 0;
-	if (device == 0xFFFFFFFF)
+	if (device == 0 || device == 0xFFFFFFFF)
 		return;
 	UARTDebugOut("[aurora]: Virtio Keyboard device found \n");
 	uint16_t command = AuPCIERead(device, PCI_COMMAND, bus, dev, func);
@@ -169,8 +181,10 @@ void AuVirtioKbdInitialize(uint64_t device) {
 	char kbd_name[128];
 	memset(kbd_name, 0, 128);
 	int name_len = cfg->size;
-	if (name_len > 127) name_len = 127;
-	for (int i = 0; i < name_len; i++) kbd_name[i] = cfg->data.str[i];
+	if (name_len > 127)
+		name_len = 127;
+	for (int i = 0; i < name_len; i++)
+		kbd_name[i] = cfg->data.str[i];
 	UARTDebugOut("VIRTIO Keyboard Name : %s \n", kbd_name);
 
 	int spiID = AuGICAllocateSPI();
@@ -194,31 +208,40 @@ void AuVirtioKbdInitialize(uint64_t device) {
 	struct VirtioCommonCfg* common = (struct VirtioCommonCfg*)finalAddr;
 	_kybrdCfg = common;
 	common->DeviceStatus = 0;
-	
+
 	isb_flush();
 	dsb_ish();
 
 	int queueSz = common->QueueSize;
+	if (queueSz > 64)
+		queueSz = 64;
+	if (queueSz < 1)
+		queueSz = 1;
+	common->QueueSize = (uint16_t)queueSz;
+	isb_flush();
+	dsb_ish();
 	queueSize = queueSz;
 	UARTDebugOut("virtio: queue sz : %d \n", queueSz);
 
-
-	uint64_t queuePhys = (uint64_t)AuPmmngrAlloc();//AuPmmngrAllocBlocks(((sizeof(struct VirtioQueue) * queueSz))/0x1000);
-	queue = (struct VirtioQueue*)AuMapMMIO(queuePhys,1 /*((sizeof(struct VirtioQueue)*queueSz))/0x1000*/);
+	uint64_t queuePhys = (uint64_t)
+		AuPmmngrAllocPage(AURORA_PAGE_NORMAL); //AuPmmngrAllocBlocks(((sizeof(struct VirtioQueue) * queueSz))/0x1000);
+	memset((void*)queuePhys, 0, 0x1000);
+	
+	queue = (struct VirtioQueue*)AuMapMMIO(queuePhys,
+										   1 /*((sizeof(struct VirtioQueue)*queueSz))/0x1000*/);
 
 	size_t desc_size = queueSz * sizeof(struct VirtioQueue);
 	common->QueueSelect = 0;
 	common->QueueDesc = queuePhys;
-	common->QueueAvail = (queuePhys)+OFFSETOF(struct VirtioQueue, available);
-	common->QueueUsed = (queuePhys)+OFFSETOF(struct VirtioQueue, used);
+	common->QueueAvail = (queuePhys) + OFFSETOF(struct VirtioQueue, available);
+	common->QueueUsed = (queuePhys) + OFFSETOF(struct VirtioQueue, used);
 	common->MSix = 0;
 	common->QueueMSixVector = 0;
 	isb_flush();
 	dsb_ish();
 
-	uint64_t bufferBase = (uint64_t)AuPmmngrAlloc();
+	uint64_t bufferBase = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
 	input = (struct VirtioInputEvent*)AuMapMMIO(bufferBase, 1);
-
 
 	for (int i = 0; i < queueSz; ++i) {
 		queue->buffers[i].Addr = bufferBase + i * sizeof(struct VirtioInputEvent);
@@ -238,9 +261,7 @@ void AuVirtioKbdInitialize(uint64_t device) {
 	isb_flush();
 	dsb_ish();
 
-	uint16_t index = 0;
-	queue->available.index = queueSz - 1;
+	queue->available.index = (uint16_t)queueSz;
 	isb_flush();
 	dsb_ish();
 }
-

@@ -82,7 +82,7 @@ void virt_gpu_alloc_fb(VirtioCommonCfg* cfg, int resource_id) {
 	size_t fb_sz = (len + PAGE_SIZE - 1) / PAGE_SIZE;
 	uint64_t fb_phys = 0;
 	for (int i = 0; i < fb_sz; i++) {
-		uint64_t phys = (uint64_t)AuPmmngrAlloc();
+		uint64_t phys = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
 		AuMapPage(phys, GPU_FB_BUFFER + i * PAGE_SIZE, PTE_NORMAL_NON_CACHEABLE);
 		if (fb_phys == 0)
 			fb_phys = phys;

@@ -50,8 +50,7 @@ tm* gmtime(time_t timeSimple) {
 	int count;
 
 	tm timeStruc;
-	static int monthDays[12] = {
-		31, 00, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+	static int monthDays[12] = {31, 00, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 	memset(&timeStruc, 0, sizeof(tm));
 
 	timeStruc.tm_sec = (timeSimple % SECS_PER_MIN);
@@ -65,13 +64,12 @@ tm* gmtime(time_t timeSimple) {
 
 	year = 1970;
 	while (timeSimple >= SECS_PER_YR) {
-		if (!(year % 4) && ((year % 100) || !(year % 400))){
+		if (!(year % 4) && ((year % 100) || !(year % 400))) {
 			if (timeSimple >= (SECS_PER_YR + SECS_PER_DAY))
 				timeSimple -= (SECS_PER_YR + SECS_PER_DAY);
 			else
 				break;
-		}
-		else {
+		} else {
 			timeSimple -= SECS_PER_YR;
 		}
 		year += 1;
@@ -95,7 +93,8 @@ tm* gmtime(time_t timeSimple) {
 
 	timeStruc.tm_mday = ((timeSimple / SECS_PER_DAY) + 1);
 
-	timeStruc.tm_wday = ((dayOfWeek((timeStruc.tm_mday + 1), (timeStruc.tm_mon + 1), year) + 1) % 7);
+	timeStruc.tm_wday =
+		((dayOfWeek((timeStruc.tm_mday + 1), (timeStruc.tm_mon + 1), year) + 1) % 7);
 
 	return (&timeStruc);
 }
@@ -123,13 +122,12 @@ time_t mktime(tm* timestruc) {
 	time_t timeSimple = 0;
 	int count;
 
-	static const int monthDays[12] = {
-		31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+	static const int monthDays[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 	if (!timestruc)
 		return -1;
 
 	year = (1900 + timestruc->tm_year);
-	if (year < 1970){
+	if (year < 1970) {
 		return -1;
 	}
 
@@ -146,9 +144,7 @@ time_t mktime(tm* timestruc) {
 	timeSimple += ((timestruc->tm_mday - 1) * SECS_PER_DAY);
 
 	if (!(year % 4) && ((year % 100) || !(year % 400))) {
-		if ((timestruc->tm_mon > 1) ||
-			((timestruc->tm_mon == 1) &&
-			(timestruc->tm_mday > 28))){
+		if ((timestruc->tm_mon > 1) || ((timestruc->tm_mon == 1) && (timestruc->tm_mday > 28))) {
 			timeSimple += SECS_PER_DAY;
 		}
 	}
@@ -163,7 +159,6 @@ time_t mktime(tm* timestruc) {
 time_t time(time_t* t) {
 	return 0;
 }
-
 
 /**
  * unistd.h sleep implementation 
@@ -186,7 +181,6 @@ static inline void ticks_to_timespec(uint64_t ticks, struct timespec* ts) {
 	ts->tv_sec = total_ns / 1000000000ULL;
 	ts->tv_nsec = total_ns % 1000000000ULL;
 }
-
 
 int nanosleep(const struct timespec* req, struct timespec* rem) {
 	if (!req || req->tv_nsec < 0 || req->tv_nsec >= 1000000000L || req->tv_sec < 0)

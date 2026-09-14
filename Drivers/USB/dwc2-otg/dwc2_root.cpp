@@ -93,7 +93,7 @@ void dwc2_enumerate_root_device(struct dwc2_core_regs* regs) {
 	//ep.speed = speed;
 	//ep.max_packet_sz = 8;
 
-	//void* desc = (void*)AuPmmngrAlloc();
+	//void* desc = (void*)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
 	//memset(desc, 0, 4096);
 	//UARTDebugOut("Desc addr : %x \r\n", desc);
 	//dwc2_control_transfer(regs, &ep, 0x80, 0x06, 0x0100, 0, desc, 0x0008);
@@ -146,7 +146,7 @@ void dwc2_enumerate_root_device(struct dwc2_core_regs* regs) {
 	//}
 	//
 
-	//void* desc2 = (void*)AuPmmngrAlloc();
+	//void* desc2 = (void*)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
 	//memset(desc2, 0, 4096);
 	//dwc2_control_transfer(regs, &ep, 0xA0, 0x06, 0x2900, 0, desc2, 8);
 	//usb_hub_desc_t* hub = (usb_hub_desc_t*)desc2;
@@ -161,7 +161,7 @@ void dwc2_enumerate_root_device(struct dwc2_core_regs* regs) {
 	//UARTDebugOut("Port powered up \r\n");
 
 	//return;
-	//void* desc3 = (void*)AuPmmngrAlloc();
+	//void* desc3 = (void*)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
 	//memset(desc3, 0, 4096);
 
 	//for (int i = 1; i <= hub->bNbrPorts; i++) {
@@ -186,14 +186,14 @@ void dwc2_enumerate_root_device(struct dwc2_core_regs* regs) {
 	//intep.speed = ep.speed;
 	//intep.type = USB_EP_TYPE_INTERRUPT;
 
-	//void* inbuf = AuPmmngrAlloc();
+	//void* inbuf = AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
 	//memset(inbuf, 0, 4096);
 	//intb = inbuf;
 	//dwc2_interrupt_transfer(regs, &intep, inbuf, 0, 0, USB_PID_DATA0);
 
-	//AuPmmngrFree(desc3);
-	//AuPmmngrFree(desc2);
-	//AuPmmngrFree(desc);
+	//AuPmmngrReleasePage(desc3);
+	//AuPmmngrReleasePage(desc2);
+	//AuPmmngrReleasePage(desc);
 	//dwc2_free_used_dma_list();
 
 	_all_init = true;
@@ -224,7 +224,7 @@ void* root_hub_get_interrupt_buffer() {
 #define PORT_CHANGE_RESET (1<<4)
 
 void root_hub_handle_port_change(dwc2_core_regs* regs, uint8_t port) {
-	void* p = AuPmmngrAlloc();
+	void* p = (void*)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
 	usb_hub_get_port_status(regs, port, p, 1, speed_);
 	AA64SleepMS(10);
 

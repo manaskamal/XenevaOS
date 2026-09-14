@@ -38,6 +38,7 @@
 #define AF_UNSPEC 0
 #define AF_INET 1
 #define AF_RAW 2
+#define AF_INET6 3
 
 #define SOCK_STREAM 1
 #define SOCK_DGRAM  2
@@ -46,6 +47,7 @@
 #define IPPROTOCOL_ICMP 1
 #define IPPROTOCOL_TCP  6
 #define IPPROTOCOL_UDP  17
+#define IPPROTOCOL_ICMPV6 58
 
 /* IO Control Codes */
 //Routing Table codes
@@ -92,8 +94,10 @@ typedef struct _msghdr_ {
 }msghdr;
 
 
-#define SOCK_STATE_WAITING_FOR_CONNECTION 1
 #define SOCK_STATE_CONNECTION_RST 0
+#define SOCK_STATE_WAITING_FOR_CONNECTION 1
+#define SOCK_STATE_CONNECTED 2
+#define SOCK_STATE_CLOSED 3
 
 #ifdef ARCH_X64
 #pragma pack(push,1)
@@ -110,6 +114,9 @@ typedef struct _socket_ {
 	void(*close)(struct _socket_* sock);
 	int(*connect)(struct _socket_* sock, sockaddr* addr, socklen_t addrlen);
 	int(*bind)(struct _socket_* sock, sockaddr* addr, socklen_t addrlen);
+	int(*listen)(struct _socket_* sock, int backlog);
+	int(*accept)(struct _socket_* sock, sockaddr* addr, socklen_t* addrlen);
+	void* proto;
 }AuSocket;
 #ifdef ARCH_X64
 #pragma pack(pop)
@@ -128,6 +135,18 @@ typedef struct _sockaddr_in_ {
 	struct in_addr sin_addr;
 	char sin_zero[8];
 }sockaddr_in;
+
+struct in6_addr {
+	uint8_t s6_addr[16];
+};
+
+typedef struct _sockaddr_in6_ {
+	short sin6_family;
+	unsigned short sin6_port;
+	uint32_t sin6_flowinfo;
+	struct in6_addr sin6_addr;
+	uint32_t sin6_scope_id;
+}sockaddr_in6;
 
 
 extern AuSocket* AuNetCreateSocket();

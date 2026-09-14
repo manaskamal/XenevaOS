@@ -68,7 +68,7 @@ int toupper(int c) {
 }
 
 int tolower(int c) {
-	return ((c)+0x20 * (((c) >= 'A') && ((c) <= 'Z')));
+	return ((c) + 0x20 * (((c) >= 'A') && ((c) <= 'Z')));
 }
 
 int toascii(int c) {

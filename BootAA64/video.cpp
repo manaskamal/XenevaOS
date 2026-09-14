@@ -38,8 +38,6 @@ size_t h_res, v_res;
 uint32_t background;
 uint32_t foreground;
 
-
-
 int_fast8_t high_set_bit(size_t sz) {
 	int_fast8_t count = -1;
 	while (sz) {
@@ -60,14 +58,12 @@ int_fast8_t low_set_bit(size_t sz) {
 	return count;
 }
 
-
 /*
  * XEInitialiseGraphics -- Initialise the screen and store graphics
  * information in fbinfo structure
  * @GraphicsOutput -- Pointer to Graphics Output protocol
  */
 EFI_STATUS XEInitialiseGraphics(EFI_GRAPHICS_OUTPUT_PROTOCOL* GraphicsOutput) {
-
 	gSystemTable->ConOut->SetAttribute(gSystemTable->ConOut, EFI_BACKGROUND_BLUE | EFI_WHITE);
 	gSystemTable->ConOut->SetCursorPosition(gSystemTable->ConOut, 0, 0);
 
@@ -80,7 +76,7 @@ EFI_STATUS XEInitialiseGraphics(EFI_GRAPHICS_OUTPUT_PROTOCOL* GraphicsOutput) {
 	pixel.Red = 0;
 
 	//GraphicsOutput->Blt(GraphicsOutput, &pixel, EfiBltVideoFill, 0, 0, 0, 0, info->HorizontalResolution, info->VerticalResolution, 0);
-	
+
 	// QEMU ramfb Blt can be buggy, so manually fill the framebuffer with the background color
 	uint32_t bg_color = RGB(0, 115, 164);
 	uint32_t* fb = (uint32_t*)GraphicsOutput->Mode->FrameBufferBase;
@@ -95,10 +91,7 @@ EFI_STATUS XEInitialiseGraphics(EFI_GRAPHICS_OUTPUT_PROTOCOL* GraphicsOutput) {
 	fbinfo.X_Resolution = GraphicsOutput->Mode->Info->HorizontalResolution;
 	fbinfo.Y_Resolution = GraphicsOutput->Mode->Info->VerticalResolution;
 
-
-
-	switch (GraphicsOutput->Mode->Info->PixelFormat)
-	{
+	switch (GraphicsOutput->Mode->Info->PixelFormat) {
 	case PixelRedGreenBlueReserved8BitPerColor:
 		fbinfo.redmask = 0xFF;
 		fbinfo.greenmask = 0xFF00;
@@ -122,14 +115,13 @@ EFI_STATUS XEInitialiseGraphics(EFI_GRAPHICS_OUTPUT_PROTOCOL* GraphicsOutput) {
 	xpos = 0;
 	ypos = 0;
 	size_t mergemasks = fbinfo.redmask | fbinfo.greenmask | fbinfo.bluemask | fbinfo.resvmask;
-	h_res = fbinfo.X_Resolution; v_res = fbinfo.Y_Resolution;
+	h_res = fbinfo.X_Resolution;
+	v_res = fbinfo.Y_Resolution;
 	bpp = high_set_bit(mergemasks) + 1;
 	foreground = RGB(255, 255, 255);
 	background = RGB(0, 115, 164);
 	return EFI_SUCCESS;
 }
-
-
 
 /*
  * XEPutPixel -- puts a pixel on the screen
@@ -138,14 +130,14 @@ EFI_STATUS XEInitialiseGraphics(EFI_GRAPHICS_OUTPUT_PROTOCOL* GraphicsOutput) {
  * @param col -- color of the pixel
  */
 void XEPutPixel(size_t x, size_t y, uint32_t col) {
-
 	uint32_t* framebuffer = fbinfo.phyaddr;
 
-	uint32_t* pixelloc = raw_offset<uint32_t*>(framebuffer, (fbinfo.pixelsPerLine * y + x) * (bpp / 8));
+	uint32_t* pixelloc =
+		raw_offset<uint32_t*>(framebuffer, (fbinfo.pixelsPerLine * y + x) * (bpp / 8));
 	size_t pixel = ((RED(col) << low_set_bit(fbinfo.redmask)) & fbinfo.redmask) |
-		((GREEN(col) << low_set_bit(fbinfo.greenmask)) & fbinfo.greenmask) |
-		((BLUE(col) << low_set_bit(fbinfo.bluemask)) & fbinfo.bluemask) |
-		(*pixelloc & fbinfo.resvmask);
+				   ((GREEN(col) << low_set_bit(fbinfo.greenmask)) & fbinfo.greenmask) |
+				   ((BLUE(col) << low_set_bit(fbinfo.bluemask)) & fbinfo.bluemask) |
+				   (*pixelloc & fbinfo.resvmask);
 	*pixelloc = pixel;
 }
 
@@ -154,7 +146,6 @@ void XEPutPixel(size_t x, size_t y, uint32_t col) {
  * @param str -- character to print
  */
 void XEGraphicsPutC(char str) {
-
 	if (xpos > v_res / 9) {
 		xpos = 0;
 		ypos++;
@@ -165,8 +156,7 @@ void XEGraphicsPutC(char str) {
 			const bx_fontcharbitmap_t& entry = bx_vgafont[str];
 			if (entry.data[y] & (1 << x)) {
 				XEPutPixel(x + xpos * 9, y + ypos * 16, foreground);
-			}
-			else {
+			} else {
 				XEPutPixel(x + xpos * 9, y + ypos * 16, background);
 			}
 		}
@@ -176,13 +166,11 @@ void XEGraphicsPutC(char str) {
 	xpos++;
 
 	uint32_t* lfb = fbinfo.phyaddr;
-	if (ypos + 1 > h_res / 16)
-	{
+	if (ypos + 1 > h_res / 16) {
 		for (int i = 16; i < h_res * v_res; i++)
 			lfb[i] = lfb[i + v_res * 16];
 		ypos--;
 	}
-
 }
 
 /*
@@ -190,33 +178,23 @@ void XEGraphicsPutC(char str) {
  * @param str -- string to put
  */
 void XEGraphicsPuts(const char* str) {
-
 	while (*str) {
-
 		if (*str > 0xFF) {
 			//unicode
-		}
-		else if (*str == '\n') {
+		} else if (*str == '\n') {
 			++ypos;
 			xpos = 0;
-		}
-		else if (*str == '\r') {
-		}
-		else if (*str == '\b') {
+		} else if (*str == '\r') {
+		} else if (*str == '\b') {
 			if (xpos > 0)
 				--xpos;
-		}
-		else {
-
+		} else {
 			const bx_fontcharbitmap_t entry = bx_vgafont[*str];
 			for (size_t y = 0; y < 16; ++y) {
-
 				for (size_t x = 0; x < 8; ++x) {
-
 					if (entry.data[y] & (1 << x)) {
 						XEPutPixel(x + xpos * 9, y + ypos * 16, foreground);
-					}
-					else {
+					} else {
 						XEPutPixel(x + xpos * 9, y + ypos * 16, background);
 					}
 				}
@@ -232,10 +210,8 @@ void XEGraphicsPuts(const char* str) {
 		++str;
 	}
 
-
 	/* Scroll */
-	if (ypos + 1 > v_res / 16)
-	{
+	if (ypos + 1 > v_res / 16) {
 		for (int i = 16; i < v_res * h_res; i++)
 			fbinfo.phyaddr[i] = fbinfo.phyaddr[i + h_res * 16];
 		ypos--;
@@ -255,7 +231,6 @@ void XEGraphicsClearScreen(EFI_GRAPHICS_OUTPUT_PROTOCOL* gop) {
 
 	gop->Blt(gop, &pixel, EfiBltVideoFill, 0, 0, 0, 0, fbinfo.X_Resolution, fbinfo.Y_Resolution, 0);
 }
-
 
 uint32_t* XEGetFramebuffer() {
 	return fbinfo.phyaddr;
@@ -289,8 +264,6 @@ uint32_t XEGetGreenMask() {
 	return fbinfo.greenmask;
 }
 
-
 uint32_t XEGetResvMask() {
 	return fbinfo.resvmask;
 }
-

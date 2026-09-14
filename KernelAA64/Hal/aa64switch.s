@@ -31,6 +31,7 @@
 .extern AuResumeUserThread
 .extern AuScheduleThread
 .extern AuPrintStack
+.extern AuIdleLoop
 
 .global aa64_store_context
 aa64_store_context:
@@ -390,42 +391,23 @@ aa64_schedule_init:
    dsb ish
    isb 
 
-   ldp x19,x20,[x1, #0]
-   ldp x21,x22,[x1,#16]
-   ldp x23,x24,[x1,#32]
-   ldp x25,x26,[x1,#48]
-   ldp x27, x28,[x1,#64] 
-   ldp x29,x30, [x1,#80]
-
-   ldr x2, [x1, #96]
-   /* directly load the original stack 
-    * which is top of the stack
-    */
+   /* x1 is always _idle_thr here (AuScheduleNext's only caller of this
+    * routine hands off to idle). Idle gets preempted by every timer tick,
+    * which constantly overwrites idle->sp (offset 96) with a 256-byte
+    * eret-style exception-frame pointer -- a completely different shape
+    * than the x19-x30/ELR/SPSR struct-field layout this tail used to
+    * restore from. Reading one format as the other and `ret`-ing to
+    * whatever garbage sat in the "saved x30" slot is what corrupted
+    * SP_EL1 and, over repeated handoffs, walked it off the bottom of
+    * idle's kernel stack. Idle has no mid-loop state worth preserving
+    * across a cooperative yield, so just re-enter it fresh on its
+    * stable, never-clobbered originalKSp (offset 0x100) instead --axiss */
+   ldr x2, [x1, #0x100]
    bic x2, x2, #15
-   mov sp, x2 
-   ldr x2,[x1,#104]
-   msr ELR_EL1,x2 
-   ldr x2, [x1,#112]
-   msr SPSR_EL1,x2
-
-   ldrb w2, [x1,#121]
-   cmp w2, #2
-   b.ne _skip_comp_sn
-   ldrb w3, [x1,#206]
-   cmp w3, #1
-   b.ne _skip_comp_sn
-   mov x30, 0
-_skip_comp_sn:
-   /* We must clear the IRQ bit from daifclr manually,
-    * because when exception is taken DAIF bits are masked */
-   ldp x2,x3, [x1,#136]
-   ldp x4,x5, [x1,#152]
-   ldp x6,x7,[x1,#168]
-   ldr x8, [x1,#184]
- //  msr daifclr, #0x2
-   isb
-   mov x0, 1
-   ret
+   mov sp, x2
+   adrp x3, AuIdleLoop
+   add x3, x3, :lo12:AuIdleLoop
+   br x3
 
 .global aa64_restore_sp
 aa64_restore_sp:
@@ -458,14 +440,36 @@ aa64_restore_sp:
    msr SPSR_EL1,x2
    ret
 
+/* This resumes a thread captured by an exception vector.  Switching SP inside
+ * a C call and then returning through that call mixes two threads' call
+ * frames, so we need to restore the architectural frame directly and finish with eret instead --axiss */
+.global aa64_resume_exception_frame
+aa64_resume_exception_frame:
+   mov sp, x0
+   msr ELR_EL1, x1
+   msr SPSR_EL1, x2
+   ldp x30, x0, [sp], #16
+   msr SP_EL0, x0
+   ldp x28, x29, [sp], #16
+   ldp x26, x27, [sp], #16
+   ldp x24, x25, [sp], #16
+   ldp x22, x23, [sp], #16
+   ldp x20, x21, [sp], #16
+   ldp x18, x19, [sp], #16
+   ldp x16, x17, [sp], #16
+   ldp x14, x15, [sp], #16
+   ldp x12, x13, [sp], #16
+   ldp x10, x11, [sp], #16
+   ldp x8, x9, [sp], #16
+   ldp x6, x7, [sp], #16
+   ldp x4, x5, [sp], #16
+   ldp x2, x3, [sp], #16
+   ldp x0, x1, [sp], #16
+   eret
+
 .global aa64_signal_return
 aa64_signal_return:
     mov x16, 24
     svc #0
     mov x0, x6
     ret
-
-
-    
-
-  

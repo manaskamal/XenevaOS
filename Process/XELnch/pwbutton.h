@@ -37,7 +37,7 @@
 #include <widgets/window.h>
 #include <widgets/icon.h>
 
-enum _power_button_type_{
+enum _power_button_type_ {
 	POWER_BUTTON_TYPE_SHUTDOWN,
 	POWER_BUTTON_TYPE_LOCK,
 	POWER_BUTTON_TYPE_RESTART,
@@ -48,8 +48,7 @@ typedef struct _pw_button_ {
 	ChWidget base;
 	uint8_t type;
 	ChIcon* icon;
-}power_button;
-
+} power_button;
 
 /**
  * @brief create_power_button -- create a new power button

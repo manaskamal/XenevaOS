@@ -289,11 +289,11 @@ size_t AHCIDiskWrite(AuVFSNode* _node_, AuVFSNode* file, uint64_t* buffer, uint3
     uint64_t lba = file->pos / 512;
 	uint64_t lba_bytes = static_cast<uint64_t>(len) * 512;
 	AuVDisk* disk = (AuVDisk*)file->device;
-	uint64_t* buff = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
+	uint64_t* buff = (uint64_t*)P2V((size_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 	memset(buff, 0, PAGE_SIZE);
 	memcpy(buff, buffer, lba_bytes);
 	AuAHCIVDiskWrite(disk, lba, len,(uint64_t*)V2P((size_t)buff));
-	AuPmmngrFree((void*)V2P((size_t)buff));
+	AuPmmngrReleasePage((uint64_t)V2P((size_t)buff));
 	return lba_bytes;
 }
 
@@ -309,12 +309,12 @@ size_t AHCIDiskRead(AuVFSNode* _node_, AuVFSNode* file, uint64_t* buffer, uint32
 	uint64_t lba = file->pos / 512;
 	uint64_t lba_bytes = static_cast<uint64_t>(len) * 512;
 	AuVDisk* disk = (AuVDisk*)file->device;
-	uint64_t* buff = (uint64_t*)P2V((size_t)AuPmmngrAlloc());
+	uint64_t* buff = (uint64_t*)P2V((size_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 	memset(buff, 0, PAGE_SIZE);
 	AuAHCIVDiskRead(disk, lba, len, (uint64_t*)V2P((size_t)buff));
 	memcpy(buffer,buff, lba_bytes);
 	
-	AuPmmngrFree((void*)V2P((size_t)buff));
+	AuPmmngrReleasePage((uint64_t)V2P((size_t)buff));
 	return lba_bytes;
 }
 
@@ -331,7 +331,7 @@ void AHCIDiskInitialise(AHCIController *controller,HBA_PORT* port) {
 	uint64_t phys;
 
 	/* Allocate command list */
-	phys = (uint64_t)AuPmmngrAlloc();
+	phys = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
 	port->clb = phys & 0xffffffff;
 	port->clbu = phys >> 32;
 
@@ -339,7 +339,7 @@ void AHCIDiskInitialise(AHCIController *controller,HBA_PORT* port) {
 	memset((void*)phys, 0, 4096);
 
 	/* Allocate FIS */
-	phys = (uint64_t)AuPmmngrAlloc();
+	phys = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
 	port->fb = phys & 0xffffffff;
 	port->fbu = (phys >> 32);
 
@@ -353,7 +353,7 @@ void AHCIDiskInitialise(AHCIController *controller,HBA_PORT* port) {
 
 	for (int i = 0; i < 31; i++) {
 		cmd_list[i].prdtl = 1;
-		phys = (uint64_t)AuPmmngrAlloc();
+		phys = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
 		cmd_list[i].ctba = phys & 0xffffffff;
 		cmd_list[i].ctbau = phys >> 32;
 		cmd_list[i].p = 1;
@@ -376,7 +376,7 @@ void AHCIDiskInitialise(AHCIController *controller,HBA_PORT* port) {
 
 	uint8_t current_slot = port->cmd & (1 << 8);
 
-	uint64_t* addr = (uint64_t*)AuPmmngrAlloc();
+	uint64_t* addr = (uint64_t*)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
 	memset(addr, 0, 4096);
 	AuAHCIDiskIdentify(port, 0, 1, addr);
 	char ata_device_name[40];
@@ -433,5 +433,5 @@ void AHCIDiskInitialise(AHCIController *controller,HBA_PORT* port) {
 	AuDevFSAddFile(controller->devfs, controller->controllerpath, file);
 	controller->CurrentPortID++;
 
-	AuPmmngrFree((void*)addr);
+	AuPmmngrReleasePage((uint64_t)addr);
 }

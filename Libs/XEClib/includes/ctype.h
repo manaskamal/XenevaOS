@@ -33,22 +33,21 @@
 #include <_xeneva.h>
 
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
-	XE_LIB int isspace(int c);
-	XE_LIB int isascii(int c);     
-	XE_LIB int isupper(int c);
-	XE_LIB int islower(int c);
-	XE_LIB int isalpha(int c);
-	XE_LIB int isdigit(int c);
-	XE_LIB int isxdigit(int c);
-	XE_LIB int isprint(int c);
-	XE_LIB int toupper(int c);
-	XE_LIB int tolower(int c);
+XE_LIB int isspace(int c);
+XE_LIB int isascii(int c);
+XE_LIB int isupper(int c);
+XE_LIB int islower(int c);
+XE_LIB int isalpha(int c);
+XE_LIB int isdigit(int c);
+XE_LIB int isxdigit(int c);
+XE_LIB int isprint(int c);
+XE_LIB int toupper(int c);
+XE_LIB int tolower(int c);
 
-#define toascii(c)	((unsigned)(c) & 0x7F)
+#define toascii(c) ((unsigned)(c) & 0x7F)
 
 #if 0
 
@@ -56,17 +55,17 @@ extern "C"
 
 	/* Constants */
 
-#define _LEADBYTE       0x8000                      // Multibyte leadbyte
-#define _ALPHA          (0x0100 | _UPPER| _LOWER)   // Alphabetic character
+#define _LEADBYTE 0x8000					 // Multibyte leadbyte
+#define _ALPHA	  (0x0100 | _UPPER | _LOWER) // Alphabetic character
 
-#define CT_UP	0x01	/* upper case */
-#define CT_LOW	0x02	/* lower case */
-#define CT_DIG	0x04	/* digit */
-#define CT_CTL	0x08	/* control */
-#define CT_PUN	0x10	/* punctuation */
-#define CT_WHT	0x20	/* white space (space/cr/lf/tab) */
-#define CT_HEX	0x40	/* hex digit */
-#define CT_SP	0x80	/* hard space (0x20) */
+#define CT_UP  0x01 /* upper case */
+#define CT_LOW 0x02 /* lower case */
+#define CT_DIG 0x04 /* digit */
+#define CT_CTL 0x08 /* control */
+#define CT_PUN 0x10 /* punctuation */
+#define CT_WHT 0x20 /* white space (space/cr/lf/tab) */
+#define CT_HEX 0x40 /* hex digit */
+#define CT_SP  0x80 /* hard space (0x20) */
 
 	/* Basic macros */
 
@@ -80,8 +79,7 @@ extern "C"
 #define ispunct(c)	((_ctype + 1)[(unsigned)(c)] & (CT_PUN))
 #define isspace(c)	((_ctype + 1)[(unsigned)(c)] & (CT_WHT))
 #define isupper(c)	((_ctype + 1)[(unsigned)(c)] & (CT_UP))
-#define isxdigit(c)	((_ctype + 1)[(unsigned)(c)] & (CT_DIG | CT_HEX))
-
+#define isxdigit(c) ((_ctype + 1)[(unsigned)(c)] & (CT_DIG | CT_HEX))
 
 #endif
 

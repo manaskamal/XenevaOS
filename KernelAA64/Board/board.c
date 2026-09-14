@@ -32,6 +32,9 @@
 #include <Board/imx8mp/imx8mp_clk.h>
 #include <Board/imx8mp/imx8mp_pll.h>
 #include <Board/imx8mp/imx8mp_clk_gate.h>
+#include <Board/imx8mp/imx8mp_blkctrl.h>
+#include <Board/imx8mp/imx8mp_gpc.h>
+#include <Strings/export_imx8mp.h>
 #include <Drivers/uart.h>
 #include <Board/board.h>
 #include <stdint.h>
@@ -39,16 +42,20 @@
 #include <Drivers/virtio.h>
 #include <Hal/AA64/aa64lowlevel.h>
 #include <Log/klog.h>
-
-extern void imx8mp_gpc_init();
-
+#include <bordoisila_io.h>
+#include <Drivers/res.h>
 
 #ifdef __TARGET_BOARD_QEMU_VIRT__
 extern void virt_power_down(uint64_t code);
 extern void virt_power_reboot(uint64_t code);
 extern uint64_t AuVirtGetBootEpoch();
+#elif __TARGET_BOARD_IMX8MP_VERDIN_DAHLIA__ || (__TARGET_BOARD_IMX8MP_SOC__)
+/**
+ * @brief imx8mp_board_initiailze -- initialize required
+ * subsystems of board
+ */
+extern void imx8mp_board_initialize();
 #endif
-
 
 /**
  * @brief AuAA64BoardInitialize -- initialize board specific data
@@ -58,11 +65,7 @@ void AuAA64BoardInitialize() {
 #ifdef __TARGET_BOARD_RPI3__
 	AuRPI3Initialize();
 #elif __TARGET_BOARD_IMX8MP_VERDIN_DAHLIA__ || (__TARGET_BOARD_IMX8MP_SOC__)
-	/** initialize the ccm module **/
-	imx8mp_gpc_init();
-	imx8mp_pll_init();
-	imx8mp_gate_init();
-    imx8mp_ccm_init();
+	imx8mp_board_initialize();
 #endif
 }
 

@@ -39,6 +39,8 @@ static uint64_t _base;
 
 #define HDMI_REG(base,off)  (*(volatile uint8_t*)(base + off))
 
+extern int fsl_samsung_hdmi_phy_init();
+
 /*
 * AuDriverUnload -- deattach the driver from
 * aurora system
@@ -61,6 +63,8 @@ AU_EXTERN AU_EXPORT int AuDriverMain() {
 	//uint8_t productID1 = HDMI_REG(_base, 0x0003);
 
 	//UARTDebugOut("[aurora_hdmi]: design id : %x,  revision : %x \r\n", designID, revID);
+	fsl_samsung_hdmi_phy_init();
+
 	UARTDebugOut("[aurora_hdmi]: hdmi initialized \r\n");
 	return 0;
 }

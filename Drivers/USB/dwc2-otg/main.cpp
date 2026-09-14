@@ -527,6 +527,10 @@ void dwc2_initialize(struct dwc2_core_regs* regs) {
 
 	enable_irqs();
 
+	//lets wait for 1s to get device connection
+	//interrupt asserted 
+	AA64SleepMS(100);
+
 	int timeout = 500000;
 	while (1) {
 		if (_enable_root_port == 1)
@@ -539,6 +543,8 @@ void dwc2_initialize(struct dwc2_core_regs* regs) {
 		dwc2_enable_root_port(regs);
 
 	dsb_sy_barrier();
+
+	AA64SleepMS(100);
 	timeout = 500000;
 	while (1) {
 		if (_root_port_ready == 1)
@@ -645,7 +651,7 @@ void dwc2_add_to_used_dma_list(void* phys) {
 void dwc2_free_used_dma_list() {
 	for (int i = 0; i < setupPacketBuffers->pointer; i++) {
 		void* phys = (void*)list_remove(setupPacketBuffers, i);
-		AuPmmngrFree((void*)V2P((uint64_t)phys));
+		AuPmmngrReleasePage((uint64_t)V2P((uint64_t)phys));
 	}
 }
 

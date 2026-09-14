@@ -41,7 +41,6 @@
 #include <kernelAA64.h>
 #include <Board/board.h>
 
-
 uint64_t basisTime;
 uint64_t cpuFrequency;
 uint64_t bootTime;
@@ -108,7 +107,6 @@ void aa64_dc_cvac_range(void* addr, size_t sz) {
 	isb_flush();
 	AA64SleepUS(100);
 }
-
 
 void aa64_dc_ivac_range(void* addr, size_t sz) {
 	size_t start = (size_t)addr;
@@ -189,8 +187,10 @@ uint64_t aa64_now() {
 }
 
 int aa64_settimeofday(timeval* t) {
-	if (!t) return -1;
-	if (t->tv_sec < 0 || t->tv_usec < 0 || t->tv_usec > 1000000) return -1;
+	if (!t)
+		return -1;
+	if (t->tv_sec < 0 || t->tv_usec < 0 || t->tv_usec > 1000000)
+		return -1;
 
 	//atomic lock
 	uint64_t clock = aa64_now();
@@ -204,7 +204,10 @@ int aa64_settimeofday(timeval* t) {
  * @param seconds -- amount of seconds
  * @param out_milliseconds -- where to store the number of ticks
  */
-void aa64_calculate_ticks(uint64_t seconds, uint64_t subsec, uint64_t* out_seconds, uint64_t* out_subsec) {
+void aa64_calculate_ticks(uint64_t seconds,
+						  uint64_t subsec,
+						  uint64_t* out_seconds,
+						  uint64_t* out_subsec) {
 	if (bootTime == 0) {
 		*out_seconds = 0;
 		*out_subsec = 0;
@@ -217,8 +220,7 @@ void aa64_calculate_ticks(uint64_t seconds, uint64_t subsec, uint64_t* out_secon
 	if (subsec + timer_subticks >= SUBSECONDS_PER_SECOND) {
 		*out_seconds = timer_ticks + seconds + (subsec + timer_subticks) / SUBSECONDS_PER_SECOND;
 		*out_subsec = (subsec + timer_subticks) % SUBSECONDS_PER_SECOND;
-	}
-	else {
+	} else {
 		*out_seconds = timer_ticks + seconds;
 		*out_subsec = timer_subticks + subsec;
 	}
@@ -265,15 +267,13 @@ void AA64CpuInitialize() {
 		enableAlignCheck();
 	}
 
-	
 	uint32_t id = read_midr();
 	AA64CPUImplementer(id);
 
 	enable_irqs();
 
-	// 
-	//initialize Interrupt controller GIC 
-	
+	//
+	//initialize Interrupt controller GIC
 
 	//if smp, set per core datas
 }

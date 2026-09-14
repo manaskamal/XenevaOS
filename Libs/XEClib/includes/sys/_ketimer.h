@@ -35,19 +35,17 @@
 #include <_xeneva.h>
 
 #ifdef __cplusplus
-XE_EXTERN{
+XE_EXTERN {
 #endif
-
 
 #define _KE_TIMER_UNDIFINED_MAXCOUNT -1
 
-#define _KE_TIMER_UPDATE_ORDER_SECOND 1
-#define _KE_TIMER_UPDATE_ORDER_MINUTE 2
-#define _KE_TIMER_UPDATE_ORDER_HOUR 3
+#define _KE_TIMER_UPDATE_ORDER_SECOND	1
+#define _KE_TIMER_UPDATE_ORDER_MINUTE	2
+#define _KE_TIMER_UPDATE_ORDER_HOUR		3
 #define _KE_TIMER_UPDATE_ORDER_INTERVAL 4
 
 #define TIMER_MESSAGE_CODE 8
-
 
 	/**
 	* @brief _KeCreateTimer -- create timer service

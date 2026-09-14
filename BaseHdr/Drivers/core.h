@@ -49,7 +49,7 @@
 #define BORDOISILA_DRIVER_ALREADY_REGISTERED -2
 
 typedef struct _bordoisila_drvcore_res_ {
-	const char* name;
+	const char name[42];
 	uint8_t res_type;
 	void* data;
 	int ref_count;

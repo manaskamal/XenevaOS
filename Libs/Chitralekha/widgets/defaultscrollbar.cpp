@@ -31,57 +31,73 @@
 #include "../draw.h"
 #include "../color.h"
 
-
 #define SCROLLBAR_BACKGROUND_COLOR 0xFF3D3A3A
-#define SCROLLTHUMB_COLOR_DARK 0xFF425C95
-#define SCROLLTHUMB_COLOR_LIGHT 0xFF6982B7
-#define SCROLLTHUMB_HOVER_LIGHT 0xFF879CCB
-#define SCROLLTHUMB_HOVER_DARK 0xFF718DCA
+#define SCROLLTHUMB_COLOR_DARK	   0xFF425C95
+#define SCROLLTHUMB_COLOR_LIGHT	   0xFF6982B7
+#define SCROLLTHUMB_HOVER_LIGHT	   0xFF879CCB
+#define SCROLLTHUMB_HOVER_DARK	   0xFF718DCA
 /*
  * ChDefaultScrollPanePainter -- default scroll pane painter
  */
 void ChDefaultScrollPanePainter(ChWidget* wid, ChWindow* win) {
-	ChScrollPane *sp = (ChScrollPane*)wid;
+	ChScrollPane* sp = (ChScrollPane*)wid;
 
 	if (sp->hScrollBar.update) {
 		/* draw the horizontal scroll bar first*/
-		ChDrawRect(win->canv, sp->hScrollBar.bar_x, sp->hScrollBar.bar_y, sp->hScrollBar.bar_w,
-			sp->hScrollBar.bar_h, SCROLLBAR_BACKGROUND_COLOR);
+		ChDrawRect(win->canv,
+				   sp->hScrollBar.bar_x,
+				   sp->hScrollBar.bar_y,
+				   sp->hScrollBar.bar_w,
+				   sp->hScrollBar.bar_h,
+				   SCROLLBAR_BACKGROUND_COLOR);
 
 		/* thumb */
 		if (sp->hScrollBar.thumbHover) {
-			ChColorDrawVerticalGradient(win->canv, sp->hScrollBar.bar_x +
-				sp->hScrollBar.thumb_posx, sp->hScrollBar.bar_y + sp->hScrollBar.thumb_posy,
-				sp->hScrollBar.thumb_width, sp->hScrollBar.thumb_height,
-				SCROLLTHUMB_HOVER_LIGHT,SCROLLTHUMB_HOVER_DARK);
-		}
-		else {
-			ChColorDrawVerticalGradient(win->canv, sp->hScrollBar.bar_x +
-				sp->hScrollBar.thumb_posx, sp->hScrollBar.bar_y + sp->hScrollBar.thumb_posy,
-				sp->hScrollBar.thumb_width, sp->hScrollBar.thumb_height,
-				SCROLLTHUMB_COLOR_LIGHT, SCROLLTHUMB_COLOR_DARK);
+			ChColorDrawVerticalGradient(win->canv,
+										sp->hScrollBar.bar_x + sp->hScrollBar.thumb_posx,
+										sp->hScrollBar.bar_y + sp->hScrollBar.thumb_posy,
+										sp->hScrollBar.thumb_width,
+										sp->hScrollBar.thumb_height,
+										SCROLLTHUMB_HOVER_LIGHT,
+										SCROLLTHUMB_HOVER_DARK);
+		} else {
+			ChColorDrawVerticalGradient(win->canv,
+										sp->hScrollBar.bar_x + sp->hScrollBar.thumb_posx,
+										sp->hScrollBar.bar_y + sp->hScrollBar.thumb_posy,
+										sp->hScrollBar.thumb_width,
+										sp->hScrollBar.thumb_height,
+										SCROLLTHUMB_COLOR_LIGHT,
+										SCROLLTHUMB_COLOR_DARK);
 		}
 		sp->hScrollBar.update = false;
 	}
-	
 
-	if (sp->vScrollBar.update){
+	if (sp->vScrollBar.update) {
 		/* draw the vertical scroll bar*/
-		ChDrawRect(win->canv, sp->vScrollBar.bar_x, sp->vScrollBar.bar_y, sp->vScrollBar.bar_w,
-			sp->vScrollBar.bar_h, SCROLLBAR_BACKGROUND_COLOR);
+		ChDrawRect(win->canv,
+				   sp->vScrollBar.bar_x,
+				   sp->vScrollBar.bar_y,
+				   sp->vScrollBar.bar_w,
+				   sp->vScrollBar.bar_h,
+				   SCROLLBAR_BACKGROUND_COLOR);
 
 		/* thumb */
 		if (sp->vScrollBar.thumbHover) {
-			ChColorDrawHorizontalGradient(win->canv, sp->vScrollBar.bar_x +
-				sp->vScrollBar.thumb_posx, sp->vScrollBar.bar_y + sp->vScrollBar.thumb_posy,
-				sp->vScrollBar.thumb_width, sp->vScrollBar.thumb_height,
-				SCROLLTHUMB_HOVER_LIGHT, SCROLLTHUMB_HOVER_DARK);
-		}
-		else {
-			ChColorDrawHorizontalGradient(win->canv, sp->vScrollBar.bar_x +
-				sp->vScrollBar.thumb_posx, sp->vScrollBar.bar_y + sp->vScrollBar.thumb_posy,
-				sp->vScrollBar.thumb_width, sp->vScrollBar.thumb_height,
-				SCROLLTHUMB_COLOR_LIGHT, SCROLLTHUMB_COLOR_DARK);
+			ChColorDrawHorizontalGradient(win->canv,
+										  sp->vScrollBar.bar_x + sp->vScrollBar.thumb_posx,
+										  sp->vScrollBar.bar_y + sp->vScrollBar.thumb_posy,
+										  sp->vScrollBar.thumb_width,
+										  sp->vScrollBar.thumb_height,
+										  SCROLLTHUMB_HOVER_LIGHT,
+										  SCROLLTHUMB_HOVER_DARK);
+		} else {
+			ChColorDrawHorizontalGradient(win->canv,
+										  sp->vScrollBar.bar_x + sp->vScrollBar.thumb_posx,
+										  sp->vScrollBar.bar_y + sp->vScrollBar.thumb_posy,
+										  sp->vScrollBar.thumb_width,
+										  sp->vScrollBar.thumb_height,
+										  SCROLLTHUMB_COLOR_LIGHT,
+										  SCROLLTHUMB_COLOR_DARK);
 		}
 		sp->vScrollBar.update = false;
 	}

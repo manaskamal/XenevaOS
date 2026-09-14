@@ -33,10 +33,18 @@
 #include <stdint.h>
 #include <aurora.h>
 #include <Fs/vfs.h>
+#include <Net/ipv6.h>
 
 #define NETDEV_TYPE_ETHERNET 1
 #define NETDEV_TYPE_802_11 2
 #define NETDEV_TYPE_BLUETOOTH 3
+#define NETDEV_TYPE_LOOPBACK 4
+
+/* Wire/MAKE_IP form used by NIC ipv4addr and on-wire headers (LE host). */
+#ifndef MAKE_IP
+#define MAKE_IP(a, b, c, d) \
+	((uint32_t)(d) << 24 | (uint32_t)(c) << 16 | (uint32_t)(b) << 8 | (uint32_t)(a))
+#endif
 
 #ifdef ARCH_X64
 #pragma pack(push,1)
@@ -51,6 +59,10 @@ typedef struct _netdev_{
 	uint32_t dns_ipv4_1;
 	uint32_t dns_ipv4_2;
 	uint32_t dns_ipv4_3;
+	ip6_addr ipv6addr;
+	ip6_addr ipv6gateway;
+	uint8_t ipv6prefixLen;
+	ip6_addr dns_ipv6_1;
 }AuNetworkDevice;
 #ifdef ARCH_X64
 #pragma pack(pop)
@@ -71,6 +83,12 @@ typedef struct _netdev_{
 #define AUNET_GET_SUBNET_MASK 0x105
 #define AUNET_SET_SUBNET_MASK 0x106
 #define AUNET_GET_LINK_STATUS 0x107
+#define AUNET_GET_IPV6_ADDRESS 0x108
+#define AUNET_SET_IPV6_ADDRESS 0x109
+#define AUNET_GET_IPV6_GATEWAY 0x10A
+#define AUNET_SET_IPV6_GATEWAY 0x10B
+#define AUNET_GET_IPV6_PREFIX 0x10C
+#define AUNET_SET_IPV6_PREFIX 0x10D
 
 /*
 * AuInitialiseNet -- initialise network data structures
@@ -94,5 +112,19 @@ AU_EXTERN AU_EXPORT AuVFSNode* AuGetNetworkAdapter(char* name);
 * @param address -- Address to consider
 */
 extern AuVFSNode* AuNetworkRoute(uint32_t address);
+
+/*
+ * AuNetworkRoute6 -- select NIC for an IPv6 destination
+ * @param address -- IPv6 destination
+ */
+extern AuVFSNode* AuNetworkRoute6(const ip6_addr* address);
+
+/* Local-address checks (127/8, ::1, or any configured NIC address). */
+extern int AuAddrIsLocal4(uint32_t address);
+extern int AuAddrIsLocal6(const ip6_addr* address);
+
+/* Install connected route for a NIC after its address/mask is set. */
+extern void AuNetAddConnectedRoute4(AuVFSNode* nic, const char* ifname);
+extern void AuNetAddConnectedRoute6(AuVFSNode* nic, const char* ifname);
 
 #endif
