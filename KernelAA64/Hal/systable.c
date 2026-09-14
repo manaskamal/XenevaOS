@@ -282,7 +282,7 @@ skip_1:
 		PROFILE_END(syscall_name[vector]);
 	skip_2:
 #endif
-		return;
+		return ;
 	}
 
 	if (vector == 31){
