@@ -300,6 +300,7 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	CRED_MARK_ROOT(proc);
 	AuLoadExecToProcess(proc, "/init.exe", num_args, argvs);
 
+
 #ifdef __KERNEL_PROFILER_ON__
 	PROFILE_END("_AuMain");
 #endif
