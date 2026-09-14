@@ -12,7 +12,7 @@
 void Ext2FlushSuperblock(Ext2Fs* fs) {
     if (!fs || !fs->superblock) return;
 
-    int8_t* buffer = (uint8_t*)P2V((uint64_t)AuPmmngrAlloc());
+    int8_t* buffer = (uint8_t*)P2V((uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 	if (!buffer) return;
 
     memset(buffer, 0, 4096);
@@ -21,7 +21,7 @@ void Ext2FlushSuperblock(Ext2Fs* fs) {
     memcpy(buffer, fs->superblock, sizeof(Ext2Superblock));
     AuVDiskWrite((AuVDisk*)fs->vdisk, 2, 2, (uint64_t*)buffer);
 
-    AuPmmngrFree((void*)V2P((uint64_t)buffer));
+    AuPmmngrReleasePage((uint64_t)V2P((uint64_t)buffer));
 };
 
 void Ext2FlushBgdt(Ext2Fs* fs) {
@@ -34,7 +34,7 @@ void Ext2FlushBgdt(Ext2Fs* fs) {
 	uint32_t bgd_table_size = fs->block_group_count * sizeof(Ext2BlockDescriptor);
 	uint32_t blocks_needed = (bgd_table_size + fs->block_size - 1) / fs->block_size;
 
-	uint8_t* buffer = (uint8_t*)P2V((uint64_t)AuPmmngrAlloc());
+	uint8_t* buffer = (uint8_t*)P2V((uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 	if (!buffer) return;
 
 	memset(buffer, 0, fs->block_size);
@@ -42,7 +42,7 @@ void Ext2FlushBgdt(Ext2Fs* fs) {
 
 	AuVDiskWrite((AuVDisk*)fs->vdisk, bgd_lba, blocks_needed * sector_per_block, (uint64_t*)buffer);
 
-	AuPmmngrFree((void*)V2P((uint64_t)buffer));
+	AuPmmngrReleasePage((uint64_t)V2P((uint64_t)buffer));
 };
 
 uint32_t Ext2AllocBlock(Ext2Fs* fs) {
@@ -60,7 +60,7 @@ uint32_t Ext2AllocBlock(Ext2Fs* fs) {
 	uint32_t sector_per_block = block_size / 512;
 	uint32_t group_count = fs->block_group_count;
 
-    uint8_t* buffer = (uint8_t*)P2V((uint8_t)AuPmmngrAlloc());
+    uint8_t* buffer = (uint8_t*)P2V((uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
     if (!buffer) {
 		AuTextOut("[Ext2]: Out of memory allocating bitmap buffer.\r\n");
 		return 0;
@@ -93,7 +93,7 @@ uint32_t Ext2AllocBlock(Ext2Fs* fs) {
         }
     }
 success:
-    AuPmmngrFree((void*)V2P((uint64_t)buffer));
+    AuPmmngrReleasePage((uint64_t)V2P((uint64_t)buffer));
     if (allocated_block_id == 0) {
         AuTextOut("[Ext2]: failed to locate a free bit in bitmap.\r\n");
         return 0;
@@ -125,14 +125,14 @@ int Ext2InodeWrite(Ext2Fs* fs, uint32_t inode_num, Ext2Inode* inode) {
 	uint32_t sector_per_block = fs->block_size / 512;
 	uint64_t target_lba = (uint64_t)target_block * sector_per_block;
 
-    uint8_t* buffer = (uint8_t*)P2V((uint64_t)AuPmmngrAlloc());
+    uint8_t* buffer = (uint8_t*)P2V((uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 	if (!buffer) return -1;
 
 	AuVDiskRead((AuVDisk*)fs->vdisk, target_lba, sector_per_block, (uint64_t*)buffer);
 	memcpy(buffer + internal_offset, inode, inode_size);
 	AuVDiskWrite((AuVDisk*)fs->vdisk, target_lba, sector_per_block, (uint64_t*)buffer);
 
-	AuPmmngrFree((void*)V2P((uint64_t)buffer));
+	AuPmmngrReleasePage((uint64_t)V2P((uint64_t)buffer));
 
 	return 0;
 };
@@ -141,7 +141,7 @@ static uint32_t Ext2AssignTable(Ext2Fs* fs, uint32_t table_block_id, uint32_t in
     if(table_block_id == 0) return 0;
     uint32_t sector_per_block = fs->block_size / 512;
 
-    uint32_t* table_buffer = (uint32_t*)P2V((uint64_t)AuPmmngrAlloc());
+    uint32_t* table_buffer = (uint32_t*)P2V((uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
     if (!table_buffer) return 0;
 
     AuVDiskRead((AuVDisk*)fs->vdisk, (uint64_t)table_block_id * sector_per_block, sector_per_block, (uint64_t*)table_buffer);
@@ -154,16 +154,16 @@ static uint32_t Ext2AssignTable(Ext2Fs* fs, uint32_t table_block_id, uint32_t in
 
             AuVDiskWrite((AuVDisk*)fs->vdisk, (uint64_t)table_block_id * sector_per_block, sector_per_block, (uint64_t*)table_buffer);
 
-            uint32_t* zero_buffer = (uint32_t*)P2V((uint64_t)AuPmmngrAlloc());
+            uint32_t* zero_buffer = (uint32_t*)P2V((uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
             if (zero_buffer) {
                 memset(zero_buffer, 0, fs->block_size);
                 AuVDiskWrite((AuVDisk*)fs->vdisk, (uint64_t)table_block_id * sector_per_block, sector_per_block, (uint64_t*)zero_buffer);
-                AuPmmngrFree((void*)V2P((uint64_t)zero_buffer));
+                AuPmmngrReleasePage((void*)V2P((uint64_t)zero_buffer));
             }
         }
     }
 
-    AuPmmngrFree((void*)V2P((uint64_t)table_buffer));
+    AuPmmngrReleasePage((void*)V2P((uint64_t)table_buffer));
     return target_block;
 };
 
@@ -194,10 +194,10 @@ static uint32_t Ext2GetBlock(Ext2Fs* fs, Ext2Inode* inode, uint32_t inode_num, u
 			Ext2InodeWrite(fs, inode_num, inode);
 
 			
-			uint8_t* buffer = (uint8_t*)P2V((uint64_t)AuPmmngrAlloc());
+			uint8_t* buffer = (uint8_t*)P2V((uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 			memset(buffer, 0, fs->block_size);
 			AuVDiskWrite((AuVDisk*)fs->vdisk, (uint64_t)new_table_block * sector_per_block, sector_per_block, (uint64_t*)buffer);
-			AuPmmngrFree((void*)V2P((uint64_t)buffer));
+			AuPmmngrReleasePage((void*)V2P((uint64_t)buffer));
 		}
 
 		return Ext2AssignTable(fs, inode->block[12], single_index);
@@ -216,10 +216,10 @@ static uint32_t Ext2GetBlock(Ext2Fs* fs, Ext2Inode* inode, uint32_t inode_num, u
 			Ext2InodeWrite(fs, inode_num, inode);
 
 			
-			uint8_t* buffer = (uint8_t*)P2V((uint64_t)AuPmmngrAlloc());
+			uint8_t* buffer = (uint8_t*)P2V((uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 			memset(buffer, 0, fs->block_size);
 			AuVDiskWrite((AuVDisk*)fs->vdisk, (uint64_t)new_table_block * sector_per_block, sector_per_block, (uint64_t*)buffer);
-			AuPmmngrFree((void*)V2P((uint64_t)buffer));
+			AuPmmngrReleasePage((void*)V2P((uint64_t)buffer));
 		}
 
         uint32 single_table = Ext2AssignTable(fs, inode->block[13], lvl1_index);
@@ -241,10 +241,10 @@ static uint32_t Ext2GetBlock(Ext2Fs* fs, Ext2Inode* inode, uint32_t inode_num, u
 			inode->block[14] = new_table_block;
 			Ext2InodeWrite(fs, inode_num, inode);
 
-			uint8_t* zero_buffer = (uint8_t*)P2V((uint64_t)AuPmmngrAlloc());
+			uint8_t* zero_buffer = (uint8_t*)P2V((uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 			memset(zero_buffer, 0, fs->block_size);
 			AuVDiskWrite((AuVDisk*)fs->vdisk, (uint64_t)new_table_block * sector_per_block, sector_per_block, (uint64_t*)zero_buffer);
-			AuPmmngrFree((void*)V2P((uint64_t)zero_buffer));
+			AuPmmngrReleasePage((void*)V2P((uint64_t)zero_buffer));
         }
 
         uint32 double_table = Ext2AssignTable(fs, inode->block[14], lvl1_index);
@@ -360,13 +360,13 @@ int Ext2Rename(AuVFSNode* old_parent, char* old_name, AuVFSNode* new_parent, cha
 
 	if (file_type == 2 && old_parent->first_block != new_parent->first_block) {
 		uint32_t sector_per_block = fs->block_size / 512;
-		uint8_t* block_buf = (uint8_t*)P2V((uint64_t)AuPmmngrAlloc());
+		uint8_t* block_buf = (uint8_t*)P2V((uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 		if (block_buf) {
 			AuVDiskRead((AuVDisk*)fs->vdisk, (uint64_t)target_inode.block[0] * sector_per_block, sector_per_block, (uint64_t*)block_buf);
 			Ext2Dir* dotdot = (Ext2Dir*)(block_buf + 12);
 			dotdot->inode = new_parent->first_block;
 			AuVDiskWrite((AuVDisk*)fs->vdisk, (uint64_t)target_inode.block[0] * sector_per_block, sector_per_block, (uint64_t*)block_buf);
-			AuPmmngrFree((void*)V2P((uint64_t)block_buf));
+			AuPmmngrReleasePage((void*)V2P((uint64_t)block_buf));
 		}
 
 		old_p_inode->links_count--;
@@ -411,7 +411,7 @@ size_t Ext2Write(AuVFSNode* node, AuVFSNode* file, uint64_t* buffer, uint32_t le
 		return 0;
 	}
 
-    uint64_t* bounce_page = (uint64_t*)P2V((uint64_t)AuPmmngrAlloc());
+    uint64_t* bounce_page = (uint64_t*)P2V((uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
     if (!bounce_page) {
 		AuTextOut("[Ext2]: out of memory during file write.\r\n");
 		return 0;
@@ -445,7 +445,7 @@ size_t Ext2Write(AuVFSNode* node, AuVFSNode* file, uint64_t* buffer, uint32_t le
 
         bytes_written += chunk;
     }
-    AuPmmngrFree((void*)V2P((uint64_t)bounce_page));
+    AuPmmngrReleasePage((void*)V2P((uint64_t)bounce_page));
 
     if ((current_pos + bytes_written) > file->size) {
 		file->size = current_pos + bytes_written;

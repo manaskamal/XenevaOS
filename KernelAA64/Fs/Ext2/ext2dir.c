@@ -23,7 +23,7 @@ uint32_t Ext2AllocInode(Ext2Fs* fs) {
 	uint32_t sector_per_block = block_size / 512;
 	uint32_t group_count = fs->block_group_count;
 
-    uint8_t* bitmap_buffer = (uint8_t*)P2V((uint64_t)AuPmmngrAlloc());
+    uint8_t* bitmap_buffer = (uint8_t*)P2V((uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
     if (!bitmap_buffer) return 0;
 
     uint32_t allocated_inode_id = 0;
@@ -58,7 +58,7 @@ uint32_t Ext2AllocInode(Ext2Fs* fs) {
         }
     }
 success:
-    AuPmmngrFree((void*)V2P((uint64_t)bitmap_buffer));
+     AuPmmngrReleasePage((void*)V2P((uint64_t)bitmap_buffer));
 
 	if (allocated_inode_id == 0) return 0;
 
@@ -80,7 +80,7 @@ int Ext2AddDirEntry(Ext2Fs* fs, Ext2Inode* parent_inode, uint32_t parent_inode_n
 	uint32_t name_len = strlen(child_name);
 	uint16_t required_rec_len = EXT2_DIR_REC_LEN(name_len);
 
-	uint8_t* block_buf = (uint8_t*)P2V((uint64_t)AuPmmngrAlloc());
+	uint8_t* block_buf = (uint8_t*)P2V((uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 	if (!block_buf) return -1;
 
 	for (uint32_t i = 0; i < 12; i++) {
@@ -89,7 +89,7 @@ int Ext2AddDirEntry(Ext2Fs* fs, Ext2Inode* parent_inode, uint32_t parent_inode_n
 		if (physical_block == 0) {
 			physical_block = Ext2AllocBlock(fs);
 			if (physical_block == 0) {
-				AuPmmngrFree((void*)V2P((uint64_t)block_buf));
+				AuPmmngrReleasePage((void*)V2P((uint64_t)block_buf));
 				return -1;
 			}
 
@@ -107,7 +107,7 @@ int Ext2AddDirEntry(Ext2Fs* fs, Ext2Inode* parent_inode, uint32_t parent_inode_n
 			memcpy(new_entry->name, (void*)child_name, name_len);
 
 			AuVDiskWrite((AuVDisk*)fs->vdisk, (uint64_t)physical_block * sector_per_block, sector_per_block, (uint64_t*)block_buf);
-			AuPmmngrFree((void*)V2P((uint64_t)block_buf));
+			AuPmmngrReleasePage((void*)V2P((uint64_t)block_buf));
 			return 0;
 		}
 
@@ -136,7 +136,7 @@ int Ext2AddDirEntry(Ext2Fs* fs, Ext2Inode* parent_inode, uint32_t parent_inode_n
 				memcpy(new_entry->name, (void*)child_name, name_len);
 
 				AuVDiskWrite((AuVDisk*)fs->vdisk, target_lba, sector_per_block, (uint64_t*)block_buf);
-				AuPmmngrFree((void*)V2P((uint64_t)block_buf));
+				 AuPmmngrReleasePage((void*)V2P((uint64_t)block_buf));
 				return 0;
 			}
 
@@ -144,7 +144,7 @@ int Ext2AddDirEntry(Ext2Fs* fs, Ext2Inode* parent_inode, uint32_t parent_inode_n
 		}
 	}
 
-	AuPmmngrFree((void*)V2P((uint64_t)block_buf));
+	AuPmmngrReleasePage((void*)V2P((uint64_t)block_buf));
 	return -1;
 };
 
@@ -175,7 +175,7 @@ int Ext2Mkdir(AuVFSNode* parent_node, const char* name, uint16_t permissions) {
 	uint32_t block_size = fs->block_size;
 	uint32_t sector_per_block = block_size / 512;
 
-	uint8_t* dir_block = (uint8_t*)P2V((uint64_t)AuPmmngrAlloc());
+	uint8_t* dir_block = (uint8_t*)P2V((uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 	if (!dir_block) return -1;
 
 	memset(dir_block, 0, block_size);
@@ -196,7 +196,7 @@ int Ext2Mkdir(AuVFSNode* parent_node, const char* name, uint16_t permissions) {
 	dotdot->name[1] = '.';
 
 	AuVDiskWrite((AuVDisk*)fs->vdisk, (uint64_t)new_block_num * sector_per_block, sector_per_block, (uint64_t*)dir_block);
-	AuPmmngrFree((void*)V2P((uint64_t)dir_block));
+	AuPmmngrReleasePage((void*)V2P((uint64_t)dir_block));
 
 	Ext2Inode new_inode;
 	memset(&new_inode, 0, sizeof(Ext2Inode));
@@ -232,7 +232,7 @@ int Ext2ReadDir(AuVFSNode* fsys, AuVFSNode* dir_node, AuDirectoryEntry* entry) {
 	uint32_t block_size = fs->block_size;
 	uint32_t sector_per_block = block_size / 512;
 
-	uint8_t* block_buf = (uint8_t*)P2V((uint64_t)AuPmmngrAlloc());
+	uint8_t* block_buf = (uint8_t*)P2V((uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 	if (!block_buf) return -1;
 
 	while (dir_node->pos < inode->size) {
@@ -272,11 +272,11 @@ int Ext2ReadDir(AuVFSNode* fsys, AuVFSNode* dir_node, AuDirectoryEntry* entry) {
 			entry->flags = FS_FLAG_GENERAL;
 		}
 
-		AuPmmngrFree((void*)V2P((uint64_t)block_buf));
+		AuPmmngrReleasePage((void*)V2P((uint64_t)block_buf));
 		return 1;
 	}
 
-	AuPmmngrFree((void*)V2P((uint64_t)block_buf));
+	AuPmmngrReleasePage((void*)V2P((uint64_t)block_buf));
 	return 0;
 }
 
@@ -294,7 +294,7 @@ int Ext2RemoveDirEntry(Ext2Fs* fs, Ext2Inode* parent_inode, uint32_t parent_inod
 	uint32_t sector_per_block = block_size / 512;
 	uint32_t target_len = strlen(name);
 
-	uint8_t* block_buf = (uint8_t*)P2V((uint64_t)AuPmmngrAlloc());
+	uint8_t* block_buf = (uint8_t*)P2V((uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 	if (!block_buf) return -1;
 
 	for (int i = 0; i < 12; i++) {
@@ -321,7 +321,7 @@ int Ext2RemoveDirEntry(Ext2Fs* fs, Ext2Inode* parent_inode, uint32_t parent_inod
 				}
 
 				AuVDiskWrite((AuVDisk*)fs->vdisk, target_lba, sector_per_block, (uint64_t*)block_buf);
-				AuPmmngrFree((void*)V2P((uint64_t)block_buf));
+				AuPmmngrReleasePage((void*)V2P((uint64_t)block_buf));
 				return 0;
 			}
 
@@ -330,7 +330,7 @@ int Ext2RemoveDirEntry(Ext2Fs* fs, Ext2Inode* parent_inode, uint32_t parent_inod
 		}
 	}
 
-	AuPmmngrFree((void*)V2P((uint64_t)block_buf));
+	AuPmmngrReleasePage((void*)V2P((uint64_t)block_buf));
 	return -1;
 }
 
@@ -348,21 +348,21 @@ int Ext2Truncate(Ext2Fs* fs, Ext2Inode* inode, uint32_t inode_num) {
 	}
 
 	if (inode->block[12] != 0) {
-		uint32_t* table = (uint32_t*)P2V((uint64_t)AuPmmngrAlloc());
+		uint32_t* table = (uint32_t*)P2V((uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 		if (table) {
 			AuVDiskRead((AuVDisk*)fs->vdisk, (uint64_t)inode->block[12] * sector_per_block, sector_per_block, (uint64_t*)table);
 			for (uint32_t i = 0; i < N; i++) {
 				if (table[i] != 0) Ext2FreeBlock(fs, table[i]);
 			}
-			AuPmmngrFree((void*)V2P((uint64_t)table));
+			AuPmmngrReleasePage((void*)V2P((uint64_t)table));
 		}
 		Ext2FreeBlock(fs, inode->block[12]);
 		inode->block[12] = 0;
 	}
 
 	if (inode->block[13] != 0) {
-		uint32_t* dtable = (uint32_t*)P2V((uint64_t)AuPmmngrAlloc());
-		uint32_t* stable = (uint32_t*)P2V((uint64_t)AuPmmngrAlloc());
+		uint32_t* dtable = (uint32_t*)P2V((uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
+		uint32_t* stable = (uint32_t*)P2V((uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 		if (dtable && stable) {
 			AuVDiskRead((AuVDisk*)fs->vdisk, (uint64_t)inode->block[13] * sector_per_block, sector_per_block, (uint64_t*)dtable);
 			for (uint32_t i = 0; i < N; i++) {
@@ -375,8 +375,8 @@ int Ext2Truncate(Ext2Fs* fs, Ext2Inode* inode, uint32_t inode_num) {
 				}
 			}
 		}
-		if (dtable) AuPmmngrFree((void*)V2P((uint64_t)dtable));
-		if (stable) AuPmmngrFree((void*)V2P((uint64_t)stable));
+		if (dtable) AuPmmngrReleasePage((void*)V2P((uint64_t)dtable));
+		if (stable) AuPmmngrReleasePage((void*)V2P((uint64_t)stable));
 		Ext2FreeBlock(fs, inode->block[13]);
 		inode->block[13] = 0;
 	}
@@ -400,7 +400,7 @@ int Ext2Rmdir(AuVFSNode* parent, AuVFSNode* dir) {
 	if (!(target_inode.mode & EXT2_S_IFDIR)) return -1;
 
 	uint32_t sector_per_block = fs->block_size / 512;
-	uint8_t* block_buf = (uint8_t*)P2V((uint64_t)AuPmmngrAlloc());
+	uint8_t* block_buf = (uint8_t*)P2V((uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 	if (!block_buf) return -1;
 
 	AuVDiskRead((AuVDisk*)fs->vdisk, (uint64_t)target_inode.block[0] * sector_per_block, sector_per_block, (uint64_t*)block_buf);
@@ -413,7 +413,7 @@ int Ext2Rmdir(AuVFSNode* parent, AuVFSNode* dir) {
 		if (entry->inode != 0) entry_count++;
 		current_pos += entry->rec_len;
 	}
-	AuPmmngrFree((void*)V2P((uint64_t)block_buf));
+	AuPmmngrReleasePage((void*)V2P((uint64_t)block_buf));
 
 	if (entry_count > 2) {
 		AuTextOut("[Ext2]: Directory not empty.\r\n");
