@@ -79,23 +79,58 @@ AuVFSNode* AuGetNetworkAdapter(char* name) {
 	return node;
 }
 
-/* AuNetworkRoute -- For now, route table is
- * is not implemented, simply return the default
- * network card installed in Xeneva 
- * @param address -- Address to consider
- */
-AuVFSNode* AuNetworkRoute(uint32_t address){
-	/*if (address == 0x0100007F)*/ /* loop device */
-	AuRouteEntry* rt = AuRouteTableDoRouteLookup(address);
-	if (!rt)
-		return AuGetNetworkAdapter("e1000");
-	return AuGetNetworkAdapter(rt->ifname);
+int AuAddrIsLocal4(uint32_t address) {
+	if ((address & MAKE_IP(255, 0, 0, 0)) == MAKE_IP(127, 0, 0, 0))
+		return 1;
+	if ((address & 0xFF000000u) == 0x7F000000u)
+		return 1;
+	return 0;
+}
+
+int AuAddrIsLocal6(const ip6_addr* address) {
+	int i;
+	if (!address)
+		return 0;
+	for (i = 0; i < 15; i++) {
+		if (address->s6_addr[i] != 0)
+			return 0;
+	}
+	return address->s6_addr[15] == 1;
+}
+
+void AuNetAddConnectedRoute4(AuVFSNode* nic, const char* ifname) {
+	(void)nic;
+	(void)ifname;
+}
+
+void AuNetAddConnectedRoute6(AuVFSNode* nic, const char* ifname) {
+	(void)nic;
+	(void)ifname;
+}
+
+void AuNetAddDefaultRoute4(AuVFSNode* nic, const char* ifname) {
+	(void)nic;
+	(void)ifname;
+}
+
+void AuNetAddDefaultRoute6(AuVFSNode* nic, const char* ifname) {
+	(void)nic;
+	(void)ifname;
+}
+
+AuVFSNode* AuNetworkRoute(uint32_t address) {
+	AuRouteResult rr;
+
+	if (AuAddrIsLocal4(address))
+		return AuGetNetworkAdapter("lo");
+	if (AuRouteLookup4(address, &rr) == 0 && rr.nic)
+		return rr.nic;
+	/* x86 stub: keep e1000 fallback so old images still boot. */
+	return AuGetNetworkAdapter("e1000");
 }
 
 AuVFSNode* AuNetworkRoute6(const ip6_addr* address) {
 	(void)address;
 	return AuGetNetworkAdapter("e1000");
 }
-
-
 
