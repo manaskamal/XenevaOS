@@ -10,11 +10,14 @@ VHD_PATH = r"C:\XenevaOS\Xeneva.vhd"
 #QEMU command that will be run
 QEMU_COMMAND = [
     "qemu-system-aarch64",
-    "-machine", "virt,gic-version=2",
+    "-machine", "virt,gic-version=2,acpi=off",
     "-cpu", "cortex-a72",
     "-m", "1024M",
     "-bios", "edk2-aarch64-code.fd",
-    "-drive", f"file={VHD_PATH},format=raw,if=virtio",
+    "-drive", f"file={VHD_PATH},format=raw,if=none,id=hd0",
+    "-device", "virtio-blk-pci,drive=hd0,disable-legacy=on",
+    "-drive", "file=C:\\XenevaOS\\ext2_disk.img,format=raw,if=none,id=hd1",
+    "-device", "virtio-blk-pci,drive=hd1,disable-legacy=on",
     "-device", "ramfb",
     "-device", "virtio-keyboard-pci",
     "-device", "virtio-tablet-pci",

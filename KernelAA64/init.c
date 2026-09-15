@@ -286,6 +286,10 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 
 
 	AuSchedulerInitialize();
+	AuEDFSelfTestStart();
+#ifdef __XENEVA_SOAK__
+	AuSoakStart();
+#endif
 
 	AuProcess* proc = AuCreateProcessSlot(0, "exec");
 	int num_args = 1;
@@ -299,6 +303,7 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	CRED_SET_CAP_ROOT(proc);
 	CRED_MARK_ROOT(proc);
 	AuLoadExecToProcess(proc, "/init.exe", num_args, argvs);
+
 
 #ifdef __KERNEL_PROFILER_ON__
 	PROFILE_END("_AuMain");

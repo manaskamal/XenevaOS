@@ -76,15 +76,21 @@ void AuVirtioTabletHandler(int spiNum) {
 	uint16_t them = TabletQueue->used.index;
 
 	for (; tabletIndex < them; tabletIndex++) {
-		dc_ivac((uint64_t)&TabletInput[tabletIndex % tabletQueueSz]);
+		uint16_t slot = tabletIndex % tabletQueueSz;
+		dc_ivac((uint64_t)&TabletInput[slot]);
 		dsb_sy_barrier();
-		struct VirtioInputEvent evt = TabletInput[tabletIndex % tabletQueueSz];
+		struct VirtioInputEvent evt = TabletInput[slot];
 		/* never spin or UART in IRQ: a 0xFF slot is already consumed --axiss */
 		if (evt.type == 0xFF) {
+			/* recycle the buffer or the device runs out after
+			 * tabletQueueSz events and the mouse dies */
+			TabletQueue->available.ring[TabletQueue->available.index % tabletQueueSz] = slot;
+			dsb_sy_barrier();
 			TabletQueue->available.index++;
+			dsb_sy_barrier();
 			continue;
 		}
-		TabletInput[tabletIndex % tabletQueueSz].type = 0xFF;
+		TabletInput[slot].type = 0xFF;
 		isb_flush();
 		dsb_sy_barrier();
 		if (evt.type == 3) {
@@ -119,8 +125,12 @@ void AuVirtioTabletHandler(int spiNum) {
 			AuDevWriteMice(&newmsg);
 			buttonScrollDown = buttonScrollUp = 0;
 		}
-		isb_flush();
+		/* recycle the buffer or the device runs out after
+		 * tabletQueueSz events and the mouse dies */
+		TabletQueue->available.ring[TabletQueue->available.index % tabletQueueSz] = slot;
+		dsb_sy_barrier();
 		TabletQueue->available.index++;
+		dsb_sy_barrier();
 	}
 }
 
@@ -255,7 +265,9 @@ void AuVirtioTabletInitialize(uint64_t device, int bus, int dev, int func) {
 	dsb_ish();
 
 	tabletIndex = 0;
-	TabletQueue->available.index = queueSz - 1;
+	TabletQueue->available.index = queueSz;
+	isb_flush();
+	dsb_ish();
 	isb_flush();
 	dsb_ish();
 

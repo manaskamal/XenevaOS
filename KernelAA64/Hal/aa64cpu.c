@@ -303,9 +303,9 @@ void AA64CPUPostInitialize(KERNEL_BOOT_INFO* info) {
 	suspendTimer();
 	GICInitialize();
 	AA64TimerSetup();
-
+	
 	//PS/2 Enable
-
+	
 	uint32_t id = read_midr();
 	AA64CPUImplementer(id);
 	AA64PCIeInitialize();

@@ -15,8 +15,17 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 cd "$REPO_ROOT"
 
+# Keep the generator usable both standalone and when sourced alongside the
+# Linux build helpers, which provide colored output variables.
+STY_RED="${STY_RED:-}"
+STY_RST="${STY_RST:-}"
+STY_CYAN="${STY_CYAN:-}"
+STY_YELLOW="${STY_YELLOW:-}"
+STY_GREEN="${STY_GREEN:-}"
+
 OUT="${BEAR_OUTPUT:-$REPO_ROOT/compile_commands.json}"
 rm -f "$OUT"
+mkdir -p /tmp/opencode
 
 if ! command -v bear >/dev/null 2>&1; then
     printf "${STY_RED}[ccdb] bear not found; install it (apt/brew/pacman -S bear) to regenerate compile_commands.json.${STY_RST}\n" >&2

@@ -14,7 +14,7 @@ fi
 ( cd ../../BootAA64 && make clean && make BLEED="${BLEED:-0}" llvm )
 
 # AArch64 kernel
-( cd ../../KernelAA64 && make clean && make BLEED="${BLEED:-0}" llvm )
+( cd ../../KernelAA64 && make clean && make BLEED="${BLEED:-0}" SOAK="${SOAK:-0}" llvm )
 
 if [ "${BUILD_USER_APPS:-0}" -eq 1 ]; then
     # Userspace C++ runtime + graphics library

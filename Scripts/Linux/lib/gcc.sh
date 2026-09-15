@@ -29,7 +29,7 @@ fi
 ( cd ../../BootAA64 && make clean && make all )
 
 # AArch64 kernel
-( cd ../../KernelAA64 && make clean && make all )
+( cd ../../KernelAA64 && make clean && make SOAK="${SOAK:-0}" all )
 
 if [ "${BUILD_USER_APPS:-0}" -eq 1 ]; then
     # Userspace C++ runtime + graphics library
