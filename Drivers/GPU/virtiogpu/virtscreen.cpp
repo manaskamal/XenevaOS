@@ -80,13 +80,12 @@ int virt_gpu_screen_init(VirtioCommonCfg* cfg, uint32_t width, uint32_t height) 
 void virt_gpu_alloc_fb(VirtioCommonCfg* cfg, int resource_id) {
 	size_t len = virt_display_height * virt_display_width * sizeof(uint32_t);
 	size_t fb_sz = (len + PAGE_SIZE - 1) / PAGE_SIZE;
-	uint64_t fb_phys = 0;
-	for (int i = 0; i < fb_sz; i++) {
-		uint64_t phys = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
-		AuMapPage(phys, GPU_FB_BUFFER + i * PAGE_SIZE, PTE_NORMAL_NON_CACHEABLE);
-		if (fb_phys == 0)
-			fb_phys = phys;
-	}
+	/* ATTACH_BACKING below reports one entry spanning the whole buffer, so
+	 * the backing pages must actually be contiguous, not just individually
+	 * allocated. --axiss */
+	uint64_t fb_phys = (uint64_t)AuPmmngrAllocPages((uint32_t)fb_sz, 1, 0, AURORA_PAGE_NORMAL);
+	for (int i = 0; i < fb_sz; i++)
+		AuMapPage(fb_phys + i * PAGE_SIZE, GPU_FB_BUFFER + i * PAGE_SIZE, PTE_NORMAL_NON_CACHEABLE);
 
 	virtio_gpu_resource_attach_backing attach;
 	attach.hdr.type = VIRTIO_GPU_CMD_RESOURCE_ATTACH_BACKING;
@@ -158,7 +157,7 @@ void virt_gpu_transfer_to_host2d(VirtioCommonCfg* cfg, int resource_id, int x, i
 void virt_gpu_flush(VirtioCommonCfg* cfg, int resource_id) {
 	virtio_gpu_resource_flush flush;
 	flush.hdr.type = VIRTIO_GPU_CMD_RESOURCE_FLUSH;
-	flush.resource_id = 1;
+	flush.resource_id = resource_id;
 	flush.rect.x = 0;
 	flush.rect.y = 0;
 	flush.rect.width = virt_display_width;
@@ -175,12 +174,12 @@ void virt_gpu_flush(VirtioCommonCfg* cfg, int resource_id) {
 void virt_gpu_flush_rect(VirtioCommonCfg* cfg, int resource_id, int x, int y, int w, int h) {
 	virtio_gpu_resource_flush flush;
 	flush.hdr.type = VIRTIO_GPU_CMD_RESOURCE_FLUSH;
-	flush.resource_id = 1;
+	flush.resource_id = resource_id;
 	flush.rect.x = x;
 	flush.rect.y = y;
 	flush.rect.width = w;
 	flush.rect.height = h;
-	
+
 	gpu_execute_command(cfg, &flush, sizeof(virtio_gpu_resource_flush));
 }
 

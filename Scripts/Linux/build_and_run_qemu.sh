@@ -256,6 +256,8 @@ if [ "$SKIP_BUILD" -eq 0 ]; then
         echo "[+] Building external drivers..."
         ( cd "$REPO_ROOT/Drivers/Net/virtionet" && make clean && make )
         cp -f "$REPO_ROOT/Drivers/Net/virtionet/virtnet.dll" "$REPO_ROOT/Resources/resources/"
+        ( cd "$REPO_ROOT/Drivers/GPU/virtiogpu" && make clean && make )
+        cp -f "$REPO_ROOT/Drivers/GPU/virtiogpu/virtgpu.dll" "$REPO_ROOT/Resources/resources/"
         echo "[+] External drivers built and deployed."
     fi
 
@@ -408,6 +410,12 @@ QEMU_ARGS=(
     -device ramfb
     -device virtio-keyboard-pci
     -device virtio-tablet-pci
+    # ramfb stays the boot/GOP display (listed first); virtio-gpu-pci is
+    # additional and only gets driven once our own virtio-gpu driver runs
+    # its SET_SCANOUT, same disable-legacy=on reasoning as virtio-blk above
+    # so it lands at the class/subclass our driver (and audrv.cnf) expect
+    # --axiss
+    -device virtio-gpu-pci,disable-legacy=on
     -device usb-ehci
     -device usb-kbd
     -serial stdio

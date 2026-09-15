@@ -560,17 +560,6 @@ void GICEnableSPIIRQ(uint32_t irq) {
 		GICD_ISENABLER(reg) = (1u << bit);
 		dsb_sy_barrier();
 		isb_flush();
-		{
-			uint32_t ctlr = gic_inl_((uint64_t*)GICD(__gic), GICD_CTLR);
-			uint32_t grp = GICD_IGROUPR(reg);
-			uint32_t en = *(volatile uint32_t*)(GICD(__gic) + 0x100u + reg * 4u);
-			uint8_t pri = *(volatile uint8_t*)(GICD(__gic) + GICD_IPRIORITYR(irq));
-			uint8_t tgt = *(volatile uint8_t*)(GICD(__gic) + 0x0800u + irq);
-			uint32_t cfgr = GICD_ICFGR(irq / 16u);
-			UARTDebugOut("[GIC]: SPI%d CTLR=%x GRP=%d EN=%d PRI=%x TGT=%x CFG=%x\n", irq, ctlr,
-						  (grp >> bit) & 1u, (en >> bit) & 1u, pri, tgt,
-						  (cfgr >> ((irq % 16u) * 2u)) & 3u);
-		}
 	}
 }
 
@@ -585,22 +574,15 @@ void GICSetTargetCPU(int spi) {
 	 * byte 3 and races with concurrent distributor updates. A single
 	 * byte store to CPU0 mask (0x01) is exact and readback-verifiable.
 	 * Must program while the SPI is disabled; the caller
-	 * (GICEnableSPIIRQ) disables first, but double-ensure here. */
+	 * (GICEnableSPIIRQ) disables first, but double-ensure here.
+	 * NOTE: on uniprocessor QEMU GICv2 this register is RAZ/WI by
+	 * design (internal target is hardwired to CPU0, reads 0) -- a 0
+	 * readback is NORMAL, not an error. Keep the write for SMP. --axiss */
 	uint32_t reg = (uint32_t)spi / 32u;
 	uint32_t bit = (uint32_t)spi % 32u;
 	GICD_ICENABLE(reg) = (1u << bit);
 	dsb_sy_barrier();
-	/* ITARGETSR is byte-accessible: one byte per INTID at 0x800+INTID.
-	 * NOTE: on uniprocessor QEMU GICv2 this register is RAZ/WI by
-	 * design (internal target is hardwired to CPU0, reads 0) -- a 0
-	 * readback is NORMAL, not an error. Keep the write for SMP. */
-	uint32_t idx = (uint32_t)spi / 4u;
-	uint32_t sh = ((uint32_t)spi % 4u) * 8u;
-	volatile uint32_t* itr = (volatile uint32_t*)(GICD(__gic) + 0x0800u + idx * 4u);
-	uint32_t v = *itr;
-	v &= ~(0xFFu << sh);
-	v |= (0x01u << sh);
-	*itr = v;
+	*(volatile uint8_t*)(GICD(__gic) + 0x0800u + (uint32_t)spi) = 0x01u;
 	dsb_sy_barrier();
 	isb_flush();
 }

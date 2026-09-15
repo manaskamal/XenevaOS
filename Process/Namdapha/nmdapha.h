@@ -94,6 +94,7 @@ typedef struct _NamdaphaButton_ {
 	bool hover;
 	bool hover_painted;
 	bool kill_focus;
+	uint64_t last_action_ms;
 	uint16_t ownerId;
 	uint32_t winHandle;
 	char* title;

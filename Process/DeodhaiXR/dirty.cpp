@@ -160,12 +160,18 @@ void DirtyScreenUpdate(ChCanvas* canvas) {
 	if (framebuffer_update)
 		ChCanvasScreenCommit();
 	if (gpu_update && gpu_enabled) {
-		ioctl.uint_1 = display_id;
-		ioctl.ushort_1 = 0;
-		ioctl.ushort_2 = 0;
-		ioctl.ulong_1 = canvas->screenWidth;
-		ioctl.ulong_2 = canvas->screenHeight;
-		_KeFileIoControl(_get_gpu_fd(), 0x202, &ioctl);
+		/* send only the rects that actually changed instead of the whole
+		 * screen -- the ring buffer above already clipped/merged them --axiss */
+		for (uint32_t i = 0; i < _dirty_count; i++) {
+			if (dirtyRect[i].w <= 0 || dirtyRect[i].h <= 0)
+				continue;
+			ioctl.uint_1 = display_id;
+			ioctl.ushort_1 = (uint16_t)dirtyRect[i].x;
+			ioctl.ushort_2 = (uint16_t)dirtyRect[i].y;
+			ioctl.ulong_1 = (uint64_t)dirtyRect[i].w;
+			ioctl.ulong_2 = (uint64_t)dirtyRect[i].h;
+			_KeFileIoControl(_get_gpu_fd(), 0x202, &ioctl);
+		}
 	}
 	_dirty_count = 0;
 }

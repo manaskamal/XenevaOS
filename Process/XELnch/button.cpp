@@ -115,8 +115,16 @@ void LaunchButtonMouseEvent(LaunchButton* wid, ChWindow* win, int x, int y, int 
 		if (wid->actionHandler)
 			wid->actionHandler(wid, win);
 	}
-	if (!pressed)
+	if (!pressed && wid->clicked) {
+		/* release while still hovering never hit the "!hover && !pressed"
+		 * reset branch above (hover stayed true), so the button kept
+		 * showing its pressed artwork until hover state next changed --
+		 * repaint back to the resting/hover look on release too. --axiss */
 		wid->clicked = false;
+		if (wid->drawLaunchButton)
+			wid->drawLaunchButton(wid, win);
+		ChWindowUpdate(win, wid->x, wid->y, wid->w, wid->h, false, true);
+	}
 
 	wid->last_mouse_x = x;
 	wid->last_mouse_y = y;

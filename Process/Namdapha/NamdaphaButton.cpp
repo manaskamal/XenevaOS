@@ -30,6 +30,7 @@
 #include "nmdapha.h"
 #include <sys/_kefile.h>
 #include <sys/mman.h>
+#include <sys/_ketime.h>
 
 #pragma pack(push, 1)
 typedef struct _bmp_ {
@@ -83,16 +84,40 @@ void NmButtonMouseEvent(NamdaphaButton* wid, ChWindow* win, int x, int y, int bu
 	/* rising edge only -- the old "clicked && same x,y" test re-fired the
 	 * Go-button hide toggle on every tablet sample at the same pixel, which
 	 * stalled Deodhai with UART + sleep(10) and made the desktop lag --axiss */
+	/* also cooldown-gate the action itself: DeodhaiWindowHide toggles (hide
+	 * if shown, show if hidden), so any double-fire of a press/release pair
+	 * -- from a bouncing input device, or a real double-click landing on
+	 * the same pixel -- opens and immediately re-closes the launcher, which
+	 * reads as "the menu keeps flickering/looping" even though each edge is
+	 * legitimate. 250ms is well above human click cadence but still feels
+	 * instant for one deliberate press. --axiss */
+	/* the paint + ChWindowUpdate must stay OUTSIDE the cooldown gate -- a
+	 * suppressed click still sets wid->clicked=true above, and skipping the
+	 * repaint left the button (and any icon sharing this handler) stuck
+	 * showing its pre-press frame, since nothing else marks that region
+	 * dirty again until another press. Cooldown gates the action only. --axiss */
+	uint64_t now_ms = _KeGetCurrentMS();
 	if (pressed && !wid->clicked) {
 		wid->clicked = true;
 		if (wid->drawNamdaphaButton)
 			wid->drawNamdaphaButton(wid, win);
 		ChWindowUpdate(win, wid->x, wid->y, wid->w, wid->h, 0, 1);
-		if (wid->actionHandler)
-			wid->actionHandler(wid, win);
+		if (now_ms - wid->last_action_ms >= 250) {
+			wid->last_action_ms = now_ms;
+			if (wid->actionHandler)
+				wid->actionHandler(wid, win);
+		}
 	}
-	if (!pressed)
+	if (!pressed && wid->clicked) {
+		/* release while still hovering never hit the "!hover && !pressed"
+		 * reset branch above (hover stayed true), so the button kept
+		 * showing its pressed artwork until hover state next changed --
+		 * repaint back to the resting/hover look on release too. --axiss */
 		wid->clicked = false;
+		if (wid->drawNamdaphaButton)
+			wid->drawNamdaphaButton(wid, win);
+		ChWindowUpdate(win, wid->x, wid->y, wid->w, wid->h, 0, 1);
+	}
 
 	wid->last_mouse_x = x;
 	wid->last_mouse_y = y;

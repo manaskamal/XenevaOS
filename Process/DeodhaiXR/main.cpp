@@ -217,14 +217,13 @@ void CursorStoreBack(ChCanvas* canv, Cursor* cur, unsigned x, unsigned y) {
 }
 
 void CursorDrawBack(ChCanvas* canv, Cursor* cur, unsigned x, unsigned y) {
-	/*for (int w = 0; w < 24; w++) {
-		for (int h = 0; h < 24; h++) {
-			ChDrawPixel(canv, x + w, y + h, cur->cursorBack[h * 24 + w]);
-		}
-	}*/
 	for (int row = 0; row < 24; row++) {
 		int cy = y + row;
-		if (cy < 0 || cy >= canv->canvasWidth)
+		/* was checking against canvasWidth -- on a screen wider than it is
+		 * tall (e.g. 1024x768) that let rows run past canvasHeight, writing
+		 * out of the canvas buffer when the cursor sits near the bottom
+		 * edge. Must clip against the axis it's actually walking. --axiss */
+		if (cy < 0 || cy >= canv->canvasHeight)
 			continue;
 
 		uint32_t* canvas_row = (uint32_t*)canv->buffer + cy * canv->canvasWidth + x;
@@ -234,9 +233,16 @@ void CursorDrawBack(ChCanvas* canv, Cursor* cur, unsigned x, unsigned y) {
 		if ((int)x + copy_w > (int)canv->canvasWidth)
 			copy_w = canv->canvasWidth - x;
 
+		/* this must be a plain restore, not a blend -- blending the saved
+		 * backdrop back in only fully overwrites the cursor when the saved
+		 * pixels happen to be opaque (alpha 255). Over a translucent menu
+		 * the saved alpha is <255, so the blend leaves a ghost of the
+		 * cursor showing through. CursorStoreBack saves with a plain copy,
+		 * so restoring must match it. Also respect copy_w here -- the old
+		 * blend call always touched 24 px even when clipped near the
+		 * screen edge. --axiss */
 		if (copy_w > 0)
-			__pixel_blend_neon(canvas_row, back_row, 24);
-		//_fastcpy(canvas_row, back_row, copy_w * sizeof(uint32_t));
+			_fastcpy(canvas_row, back_row, copy_w * sizeof(uint32_t));
 	}
 }
 

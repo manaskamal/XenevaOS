@@ -249,7 +249,7 @@ void irq_el1_handler(AA64Registers* regs) {
 	uint32_t iar = GICReadIAR();
 	uint32_t irq = iar & 0x3FF;
 	if (irq >= 1020) {
-		/* spurious floods serial and livelocks boot; count silently */
+		/* logging here floods serial and livelocks boot on a spurious storm --axiss */
 		return;
 	}
 	if (irq == 27) {

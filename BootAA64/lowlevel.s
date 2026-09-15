@@ -159,11 +159,14 @@ callKernel:
     //x1 -- stack
     //x2 -- stacksz
     //x3 -- entry
-    //add x1, x1, x2
-    //bic x1, x1, #15 //align it to 16-byte boundary
-    //mov sp, x1
+    /* xnldr.cpp maps a dedicated 1MB stack at `stack` before calling here,
+     * but this switch was never wired up -- the kernel ran on whatever
+     * stack UEFI left behind instead, which is why boot_self_test's large
+     * locals fault once something finally needs real stack depth --axiss */
+    add x1, x1, x2
+    bic x1, x1, #15 //align it to 16-byte boundary
+    mov sp, x1
 
-    //sub sp, sp, #0x28
     stp x29, x30, [sp, #-16]!
     mov x29, sp
 

@@ -30,6 +30,7 @@
 **/
 
 #include <aurora.h>
+#include <audrv.h>
 #include <aucon.h>
 #include <Drivers/uart.h>
 #include <pcie.h>
@@ -78,7 +79,13 @@ static int controlq_sz;
 static int cursorq_sz;
 static int gpu_resource_id;
 static int default_scr_rsrc_id;
-static bool _resp_ok;
+/* read inside a spin-wait loop and written only from the IRQ handler --
+ * without volatile the compiler has no reason to re-read it each iteration
+ * at -O2 and can hoist the load out of the loop entirely, turning the wait
+ * into a real infinite spin no matter what the interrupt does. Found this
+ * by watching the boot hang silently right after cursorq init with no
+ * "command timed out" print ever appearing. --axiss */
+static volatile bool _resp_ok;
 static uint16_t* notifyAddress;
 static VirtioCommonCfg* _cfg;
 AuVFSNode* fsnode;
@@ -290,17 +297,23 @@ void gpu_execute_command(VirtioCommonCfg* cfg, void* cmd, size_t len) {
 
 	gpu_notify_queue(cfg, 0);
 
-	int count = 10000;
-
-	//a small delay helps a lot
-	while (count > 0) {
-		switch (resp->type) {
-		case VIRTIO_GPU_RESP_OK_NODATA:
-			break;
-		}
-		count--;
+	/* was waiting on the _resp_ok flag the IRQ handler sets, but the
+	 * virtio-gpu SPI apparently never actually reaches the CPU on this
+	 * board/config (same commented-out GICSetTargetCPU() as every other
+	 * driver here, so it's not obviously that) -- every single command was
+	 * burning the full spin budget before giving up, at ~70ms/frame. The
+	 * device itself completes commands promptly (confirmed: resp->type
+	 * reliably reads back a real VIRTIO_GPU_RESP_OK_NODATA), so poll the
+	 * response buffer directly instead of depending on the interrupt --
+	 * invalidate + check each spin, same cache-coherency requirement as
+	 * the IRQ path had. --axiss */
+	uint32_t spin = 2000000;
+	dc_ivac((uint64_t)resp_phys);
+	while (resp->type == 0 && --spin) {
+		dc_ivac((uint64_t)resp_phys);
 	}
-
+	if (resp->type == 0)
+		UARTDebugOut("[virtio-gpu]: command timed out waiting for response, type=%x\r\n", resp->type);
 
 	memset(command_phys, 0, PAGE_SIZE);
 	_resp_ok = false;
@@ -348,12 +361,16 @@ void gpu_attach_back_cmd(VirtioCommonCfg* cfg, void* req, uint32_t len1, void* r
 
 	gpu_notify_queue(cfg, 0);
 
-	//a small delay helps a lot
-	while (1) {
-		if (_resp_ok)
-			break;
+	/* was waiting on the IRQ-set _resp_ok flag, same as gpu_execute_command --
+	 * poll the response buffer directly instead, see the comment there. --axiss */
+	uint32_t spin = 2000000;
+	dc_ivac((uint64_t)resp_phys);
+	while (resp->type == 0 && --spin) {
+		dc_ivac((uint64_t)resp_phys);
 	}
-	
+	if (resp->type == 0)
+		UARTDebugOut("[virtio-gpu]: attach backing command timed out waiting for response\r\n");
+
 	memset(command_phys, 0, PAGE_SIZE);
 	_resp_ok = false;
 }
@@ -376,6 +393,21 @@ int gpu_allocate_resource_id() {
 void gpu_virt_interrupt(int spinum) {
 	/** shoud read the status register **/
 	/** but skipping it for now **/
+	/* the device DMA-writes this response; without invalidating our cache
+	 * line first we keep reading back the zeroed buffer gpu_execute_command
+	 * memset before submitting, so every command "times out" even though
+	 * the IRQ fires -- same class of bug already fixed for virtio-tablet's
+	 * ring reads. Must use the plain dc_ivac() here, not
+	 * aa64_dc_ivac_range() -- the range helper calls AA64SleepUS(100),
+	 * which busy-waits via a _wfi() loop for the counter to advance. This
+	 * function runs in IRQ context (called from GICCallSPIHandler), and
+	 * calling a WFI-based delay from inside an interrupt handler deadlocks
+	 * the core waiting for a wake event that can't arrive at this priority
+	 * -- found by GDB-sampling the stuck PC and landing exactly on that
+	 * _wfi(). dc_ivac() itself only needed AU_EXPORT added in
+	 * aa64lowlevel.h to be callable from a driver DLL. --axiss */
+	dc_ivac((uint64_t)resp_phys);
+	dsb_sy_barrier();
 	virtio_gpu_ctrl_hdr* resp = (virtio_gpu_ctrl_hdr*)resp_phys;
 	switch (resp->type) {
 	case VIRTIO_GPU_RESP_OK_NODATA:
@@ -438,12 +470,15 @@ int virtio_gpu_iocontrol(AuVFSNode* file, int code, void* arg) {
 /*
 * AuDriverMain -- Main entry for virtio gpu driver
 */
-AU_EXTERN AU_EXPORT int AuDriverMain() {
+AU_EXTERN AU_EXPORT int AuDriverMain(AuDriver* drv) {
 	UARTDebugOut("[virtio-gpu]: hello from inside virtio gpu driver \n");
-	int bus, dev, func;
-	uint64_t device = AuPCIEScanClass(0x03, 0x80, &bus, &dev, &func);
-	if (device == 0xFFFFFFFF)
-		return 1;
+	/* the driver manager already matched us onto this device by
+	 * class/subclass (audrv.cnf) and did the PCI scan -- reuse its
+	 * result instead of scanning again --axiss */
+	int bus = drv->bus;
+	int dev = drv->dev;
+	int func = drv->func;
+	uint64_t device = drv->device;
 
 	uint64_t bar1 = AuPCIERead(device, PCI_BAR1, bus, dev, func);
 	if (bar1 == 0) {
