@@ -15,6 +15,8 @@ set -e
 #   --bleed                 Benchmark-oriented AArch64 LLVM build: rebuild all
 #                           userspace, remove deliberate startup waits and boot
 #                           self-tests, and omit non-AArch64/media initrd payloads.
+#   --soak                  Build the kernel with the scheduler soak test
+#                           (KernelAA64/Hal/sched_soak.c) started at boot.
 #   --direct-scanout        Rebuild userspace with the compositor drawing into
 #                           the GOP framebuffer when its pitch permits it.
 #   --force-legacy-build    Reuse an existing initrd2.img instead of rebuilding it.
@@ -51,6 +53,7 @@ FORCE_LEGACY_BUILD=0
 INSTALL_DEPS=0
 HEADLESS=0
 BLEED=0
+SOAK=0
 DIRECT_SCANOUT=0
 TERM=0
 TERM_CMD=""
@@ -60,7 +63,7 @@ ISO_OUTPUT=""
 
 print_help(){
     printf "${STY_CYAN}"
-    sed -n '3,38p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
+    sed -n '3,40p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
     printf "${STY_RST}\n"
 }
 
@@ -71,6 +74,7 @@ while [ $# -gt 0 ]; do
         --skip-build) SKIP_BUILD=1 ;;
         --force-user-apps) BUILD_USER_APPS=1 ;;
 		--bleed) BLEED=1 ;;
+		--soak) SOAK=1 ;;
 		--direct-scanout) DIRECT_SCANOUT=1 ;;
         --force-legacy-build) FORCE_LEGACY_BUILD=1 ;;
         --install-deps) INSTALL_DEPS=1 ;;
@@ -238,7 +242,7 @@ fi
 
 if [ "$SKIP_BUILD" -eq 0 ]; then
     echo "[+] Building bootloader + kernel (+ apps if requested) with $TOOLCHAIN..."
-	export BUILD_USER_APPS BLEED DIRECT_SCANOUT
+	export BUILD_USER_APPS BLEED SOAK DIRECT_SCANOUT
     pushd "$SCRIPT_DIR" >/dev/null
     if [ "$TOOLCHAIN" == llvm ]; then
         source ./lib/llvm.sh

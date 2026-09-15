@@ -286,6 +286,10 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 
 
 	AuSchedulerInitialize();
+	AuEDFSelfTestStart();
+#ifdef __XENEVA_SOAK__
+	AuSoakStart();
+#endif
 
 	AuProcess* proc = AuCreateProcessSlot(0, "exec");
 	int num_args = 1;
