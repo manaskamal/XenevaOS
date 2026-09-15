@@ -170,7 +170,7 @@ static int AuICMPv6Send(AuSocket* sock, msghdr* msg, int flags) {
 	name = (sockaddr_in6*)msg->msg_name;
 	nic = AuNetworkRoute6((const ip6_addr*)&name->sin6_addr);
 	if (!nic)
-		return -1;
+		return -114; /* ENETUNREACH */
 	netdev = (AuNetworkDevice*)nic->device;
 	if (!netdev)
 		return -1;
