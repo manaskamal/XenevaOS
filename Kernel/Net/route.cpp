@@ -28,6 +28,7 @@
 **/
 
 #include <Net/route.h>
+#include <Net/aunet.h>
 #include <list.h>
 #include <string.h>
 #include <Mm/kmalloc.h>
@@ -35,19 +36,25 @@
 #include <_null.h>
 
 list_t* _kernelRouteList;
+list_t* _kernelRouteList6;
 
-/* TODO: use different data structure for performance demands
- * in future, currently linked list is used
- */
+static int AuRoutePref(uint8_t flags, uint32_t netmask) {
+	if (flags & RTF_LOCAL)
+		return 300;
+	if (flags & RTF_CONNECTED)
+		return 200;
+	if (netmask == 0)
+		return 0;
+	return 100;
+}
 
 /*
  * AuRouteTableInitialise -- initialise the kernel route
- * table 
+ * table
  */
 void AuRouteTableInitialise() {
 	_kernelRouteList = initialize_list();
 }
-
 
 /*
  * AuRouteTableCreateEntry -- create a new route table
@@ -60,35 +67,49 @@ AuRouteEntry* AuRouteTableCreateEntry() {
 }
 
 extern void ip_ntoa(const uint32_t src);
+
 /*
- * AuRouteTableAdd -- add an entry to route
- * table 
- * @param entry -- Entry to add
+ * AuRouteTableAdd -- add an entry to route table
  */
 void AuRouteTableAdd(AuRouteEntry* entry) {
+	int i;
+
 	if (!entry)
 		return;
-	if (!entry->dest)
+	if (!entry->dest && entry->netmask)
 		return;
-	if (!entry->netmask)
-		return;
+	if (!(entry->flags & RTF_UP))
+		entry->flags |= RTF_UP;
+
+	for (i = 0; i < _kernelRouteList->pointer; i++) {
+		AuRouteEntry* old = (AuRouteEntry*)list_get_at(_kernelRouteList, i);
+		if (!old)
+			continue;
+		if (old->dest == entry->dest && old->netmask == entry->netmask) {
+			if (old->ifname && entry->ifname && strcmp(old->ifname, entry->ifname) == 0) {
+				old->ifaddress = entry->ifaddress;
+				old->gateway = entry->gateway;
+				old->flags = entry->flags;
+				if (entry->ifname)
+					kfree(entry->ifname);
+				kfree(entry);
+				return;
+			}
+		}
+	}
 	list_add(_kernelRouteList, entry);
 }
 
 /*
- * AuRouteTableDelete -- delete an entry from
- * route table
- * @param entry -- entry to delete
+ * AuRouteTableDelete -- delete an entry from route table
  */
 void AuRouteTableDelete(AuRouteEntry* entry) {
+	int index = -1;
+	int i;
+
 	if (!entry)
 		return;
-	if (!entry->dest)
-		return;
-	if (!entry->netmask)
-		return;
-	int index = -1;
-	for (int i = 0; i < _kernelRouteList->pointer; i++) {
+	for (i = 0; i < _kernelRouteList->pointer; i++) {
 		AuRouteEntry* _entry = (AuRouteEntry*)list_get_at(_kernelRouteList, i);
 		if (_entry->dest == entry->dest && _entry->netmask == entry->netmask) {
 			index = i;
@@ -102,34 +123,25 @@ void AuRouteTableDelete(AuRouteEntry* entry) {
 	}
 }
 
-/*
- * AuRouteTableGetNumEntry -- returns the number
- * route entry present in the system
- */
 int AuRouteTableGetNumEntry() {
 	return _kernelRouteList->pointer;
 }
 
-/*
- * AuRouteTablePopulate -- populates a given memory pointer with
- * route table entry indexed by entryIndex number
- * @param whereToPopulate -- memory pointer where to populate
- * with an entry
- * @param entryIndex -- entry index number
- */
 void AuRouteTablePopulate(AuRouteEntry* whereToPopulate, int entryIndex) {
+	AuRouteEntry* entry;
+
 	if (!whereToPopulate)
 		return;
 	if (entryIndex == -1)
 		return;
-
-	if (entryIndex > _kernelRouteList->pointer)
+	if (entryIndex >= _kernelRouteList->pointer)
 		return;
 
-	AuRouteEntry* entry = (AuRouteEntry*)list_get_at(_kernelRouteList, entryIndex);
+	entry = (AuRouteEntry*)list_get_at(_kernelRouteList, entryIndex);
 	if (!entry)
 		return;
-	strcpy(whereToPopulate->ifname, entry->ifname);
+	if (whereToPopulate->ifname && entry->ifname)
+		strcpy(whereToPopulate->ifname, entry->ifname);
 	whereToPopulate->dest = entry->dest;
 	whereToPopulate->flags = entry->flags;
 	whereToPopulate->gateway = entry->gateway;
@@ -137,19 +149,88 @@ void AuRouteTablePopulate(AuRouteEntry* whereToPopulate, int entryIndex) {
 	whereToPopulate->netmask = entry->netmask;
 }
 
-/*
- * AuRouteTableDoRouteLookup -- takes the decision on taking
- * the best route
- * @param address -- address to take for routing
- */
 AuRouteEntry* AuRouteTableDoRouteLookup(uint32_t address) {
 	AuRouteEntry* bestRoute = NULL;
-	for (int i = 0; i < _kernelRouteList->pointer; i++) {
+	int bestPref = -1;
+	int i;
+
+	if (!_kernelRouteList)
+		return NULL;
+	for (i = 0; i < _kernelRouteList->pointer; i++) {
 		AuRouteEntry* _entry = (AuRouteEntry*)list_get_at(_kernelRouteList, i);
-		if ((address & _entry->netmask) == (_entry->dest & _entry->netmask)) {
-			if (!bestRoute || _entry->netmask > bestRoute->netmask)
-				bestRoute = _entry;
+		int pref;
+
+		if (!_entry)
+			continue;
+		if (!(_entry->flags & RTF_UP))
+			continue;
+		if ((address & _entry->netmask) != (_entry->dest & _entry->netmask))
+			continue;
+		pref = AuRoutePref(_entry->flags, _entry->netmask);
+		if (!bestRoute ||
+			_entry->netmask > bestRoute->netmask ||
+			(_entry->netmask == bestRoute->netmask && pref > bestPref)) {
+			bestRoute = _entry;
+			bestPref = pref;
 		}
 	}
 	return bestRoute;
+}
+
+int AuRouteLookup4(uint32_t address, AuRouteResult* out) {
+	AuRouteEntry* rt;
+
+	if (!out)
+		return -1;
+	memset(out, 0, sizeof(AuRouteResult));
+	rt = AuRouteTableDoRouteLookup(address);
+	if (!rt)
+		return -1;
+	out->entry = rt;
+	out->flags = rt->flags;
+	out->nic = rt->ifname ? AuGetNetworkAdapter(rt->ifname) : NULL;
+	if (rt->flags & RTF_GATEWAY)
+		out->nexthop = rt->gateway;
+	else
+		out->nexthop = address;
+	return 0;
+}
+
+void AuRouteTable6Initialise() {
+	_kernelRouteList6 = initialize_list();
+}
+
+AuRouteEntry6* AuRouteTable6CreateEntry() {
+	AuRouteEntry6* entry = (AuRouteEntry6*)kmalloc(sizeof(AuRouteEntry6));
+	if (!entry)
+		return NULL;
+	memset(entry, 0, sizeof(AuRouteEntry6));
+	return entry;
+}
+
+void AuRouteTable6Add(AuRouteEntry6* entry) {
+	if (!entry)
+		return;
+	if (ip6_addr_is_zero(&entry->dest) && entry->prefixLen != 0)
+		return;
+	if (!(entry->flags & RTF_UP))
+		entry->flags |= RTF_UP;
+	list_add(_kernelRouteList6, entry);
+}
+
+void AuRouteTable6Delete(AuRouteEntry6* entry) {
+	(void)entry;
+}
+
+AuRouteEntry6* AuRouteTableDoRouteLookup6(const ip6_addr* address) {
+	(void)address;
+	return NULL;
+}
+
+int AuRouteLookup6(const ip6_addr* address, AuRouteResult6* out) {
+	(void)address;
+	if (!out)
+		return -1;
+	memset(out, 0, sizeof(AuRouteResult6));
+	return -1;
 }
