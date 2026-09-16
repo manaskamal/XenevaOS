@@ -1,6 +1,5 @@
 /**
- * Thin packet descriptor for local-delivery / loopback origin tracking.
- * Full iptable Phase-0 AuPacket (hooks, L2/L3 offsets, rt*) is out of scope.
+ * Phase-0 AuPacket for netfilter hooks and loopback origin tracking.
  */
 
 #ifndef __AU_PACKET_H__
@@ -15,12 +14,25 @@ enum {
 	AU_PKT_ORIGIN_STACK = 2
 };
 
+enum {
+	NF_ACCEPT = 0,
+	NF_DROP = 1,
+	NF_REJECT = 2,
+	NF_NAT_STUB = 3
+};
+
 typedef struct _au_packet_ {
-	void* data;       /* L3 start (IPv4Header* / IPv6Header*) for this pass */
+	void* data;           /* L3 start (IPv4Header* / IPv6Header*) */
 	uint16_t len;
-	uint8_t origin;   /* AU_PKT_ORIGIN_* */
+	uint16_t l3_off;
+	uint16_t l4_off;
+	uint8_t proto;
+	uint8_t origin;       /* AU_PKT_ORIGIN_* */
 	AuVFSNode* in_dev;
 	AuVFSNode* out_dev;
+	void* rt;             /* optional AuRouteResult* */
+	uint32_t mark;
+	int verdict;
 } AuPacket;
 
 /*
@@ -32,5 +44,9 @@ extern uint8_t AuPacketGetOrigin(void);
 extern int AuPacketLocalEnter(void);  /* returns 0 if depth would exceed cap */
 extern void AuPacketLocalLeave(void);
 extern int AuPacketLocalDepth(void);
+
+/* Fill a stack AuPacket from an IPv4 header (l4_off from IHL). */
+extern void AuPacketInitIpv4(AuPacket* pkt, void* ipv4, uint16_t len,
+	AuVFSNode* in_dev, AuVFSNode* out_dev);
 
 #endif
