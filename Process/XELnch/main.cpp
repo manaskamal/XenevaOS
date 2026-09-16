@@ -18,6 +18,12 @@
 #include "search.h"
 #include "pagebutton.h"
 #include "pwbutton.h"
+#ifdef __XENEVA_UNIKERNEL__
+int XELnchMain(int argc, char* arv[]);
+extern "C" void XELnchThread() {
+	XELnchMain(0, NULL);
+}
+#endif
 #define NANOSVG_IMPLEMENTATION
 #include <nanosvg.h>
 #define NANOSVGRAST_IMPLEMENTATION

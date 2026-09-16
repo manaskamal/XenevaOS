@@ -53,6 +53,7 @@
 #include "nanojpg.h"
 #include <arm_neon.h>
 #include "compose.h"
+#include "unikernel.h"
 #include "xr_present.h"
 #include <sys/_ketime.h>
 
@@ -1076,6 +1077,13 @@ int main(int argc, char* argv[]) {
 	 */
 	_KeProcessTokenAddSelf(PROCESS_TOKEN_DISPLAY);
 
+#ifdef __XENEVA_UNIKERNEL__
+	_KeCreateThread(XELnchThread, "xelnch");
+#ifndef __XENEVA_BLEED__
+	_KeProcessSleep(500);
+#endif
+	_KeCreateThread(NamdaphaThread, "nmdapha");
+#else
 	int proc = _KeCreateProcess(0, "xelnch");
 	_KeProcessLoadExec(proc, "/xelnch.exe", NULL, NULL);
 
@@ -1085,6 +1093,7 @@ int main(int argc, char* argv[]) {
 
 	proc = _KeCreateProcess(0, "nmdapha");
 	_KeProcessLoadExec(proc, "/nmdapha.exe", NULL, NULL);
+#endif
 
 #ifndef __XENEVA_BLEED__
 	/* Retained for ordinary-build behavior; bleed removes this historical

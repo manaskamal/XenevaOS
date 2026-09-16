@@ -8,6 +8,11 @@ ifeq ($(BLEED),1)
     BLEED_FLAGS = -D__XENEVA_BLEED__
 endif
 
+UNIKERNEL ?= 0
+ifeq ($(UNIKERNEL),1)
+    BLEED_FLAGS += -D__XENEVA_UNIKERNEL__
+endif
+
 TARGET = xelnch.elf
 CROSS_COMPILE ?= aarch64-linux-gnu-
 

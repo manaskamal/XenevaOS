@@ -40,6 +40,12 @@
 #include "nmdapha.h"
 #include "section.h"
 #include <widgets/window.h>
+#ifdef __XENEVA_UNIKERNEL__
+int NamdaphaMain(int argc, char* arv[]);
+extern "C" void NamdaphaThread() {
+	NamdaphaMain(0, NULL);
+}
+#endif
 
 typedef struct _nm_time_ {
 	int day;
