@@ -252,6 +252,12 @@ void CursorDrawBack(ChCanvas* canv, Cursor* cur, unsigned x, unsigned y) {
  */
 void DrawWallpaper(ChCanvas* canv, char* filename) {
 	int image = _KeOpenFile(filename, FILE_OPEN_READ_ONLY);
+	if (image < 0) {
+		/* Missing wallpaper (e.g. res-specific jpg not in initrd): keep the
+		 * back surface as-is instead of hanging in the decoder --axiss */
+		_KePrint("DrawWallpaper: missing %s, skipping\r\n", filename);
+		return;
+	}
 	XEFileStatus stat;
 	memset(&stat, 0, sizeof(XEFileStatus));
 	_KeFileStat(image, &stat);
@@ -264,9 +270,11 @@ void DrawWallpaper(ChCanvas* canv, char* filename) {
 	Jpeg::Decoder* decor =
 		new Jpeg::Decoder((uint8_t*)data1, ALIGN_UP(stat.size, 4096), malloc, free);
 	if (decor->GetResult() != Jpeg::Decoder::OK) {
-		_KePrint("Decoder error \n");
-		for (;;)
-			;
+		/* A bad optional wallpaper must not stop the compositor forever. --axiss */
+		_KePrint("DrawWallpaper: decoder error for %s\r\n", filename);
+		delete decor;
+		_KeMemUnmap(data_, stat.size);
+		_KeCloseFile(image);
 		return;
 	}
 	int w = decor->GetWidth();
@@ -275,22 +283,36 @@ void DrawWallpaper(ChCanvas* canv, char* filename) {
 	canv->buffer = DeoGetBackSurface();
 	uint8_t* data = decor->GetImage();
 
-	unsigned x = 0;
-	unsigned y = 0;
-	for (int i = 0; i < h; i++) {
-		for (int k = 0; k < w; k++) {
-			int j = k + i * w;
+	int dst_w = (int)canv->canvasWidth;
+	int dst_h = (int)canv->canvasHeight;
+	if (dst_w <= 0 || dst_h <= 0 || w <= 0 || h <= 0) {
+		canv->buffer = swapable_buff;
+		delete decor;
+		_KeMemUnmap(data_, stat.size);
+		_KeCloseFile(image);
+		return;
+	}
+	for (int y = 0; y < dst_h; y++) {
+		int sy = (int)(((int64_t)y * h) / dst_h);
+		if (sy >= h)
+			sy = h - 1;
+		for (int x = 0; x < dst_w; x++) {
+			int sx = (int)(((int64_t)x * w) / dst_w);
+			if (sx >= w)
+				sx = w - 1;
+			int j = sy * w + sx;
 			uint8_t r = data[j * 3];
 			uint8_t g = data[j * 3 + 1];
 			uint8_t b = data[j * 3 + 2];
-			uint32_t rgba = ((r << 16) | (g << 8) | (b)) & 0x00ffffff;
-			rgba = rgba | 0xff000000;
-			ChDrawPixel(canv, x + k, y + i, rgba);
-			j++;
+			uint32_t rgba = 0xff000000u | ((uint32_t)r << 16) | ((uint32_t)g << 8) | b;
+			ChDrawPixel(canv, x, y, rgba);
 		}
 	}
 
 	canv->buffer = swapable_buff;
+	delete decor;
+	_KeMemUnmap(data_, stat.size);
+	_KeCloseFile(image);
 }
 
 /**
@@ -506,6 +528,7 @@ _skip:
 
 	info->x = x;
 	info->y = y;
+	glass_invalidate(win);
 	_window_update_all_ = true;
 	_always_on_top_update = true;
 	_shadow_update = true;
@@ -925,24 +948,31 @@ int main(int argc, char* argv[]) {
 
 	_KePrint("Deodhai Initializaed back surface \r\n");
 	DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
-	if (screen_w == 1024 && screen_h == 768) {
-		_KePrint("Drawing wallpaper \r\n");
-		DrawWallpaper(canv, "/XE1_2.jpg");
-		DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
-	} else if (screen_w == 1920 && screen_h == 1080) {
-		DrawWallpaper(canv, "/mtnr2.jpg");
-		DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
-	} else if (screen_w == 480 && screen_h == 320) {
-		DrawWallpaper(canv, "/mntr1.jpg");
-		DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
-	} else if (screen_w == 800 && screen_h == 480) {
-		DrawWallpaper(canv, "/flora1.jpg");
-		DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
-	} else if (screen_w == 640 && screen_h == 480) {
-		DrawWallpaper(canv, "/snow.jpg");
+	{
+		char* wall = "/XE1_2.jpg";
+		if (screen_w == 1920 && screen_h == 1080)
+			wall = "/XEArch.jpg";
+		else if (screen_w == 480 && screen_h == 320)
+			wall = "/mntr1.jpg";
+		else if (screen_w == 800 && screen_h == 480)
+			wall = "/flora1.jpg";
+		else if (screen_w == 640 && screen_h == 480)
+			wall = "/snow.jpg";
+		/* Res-specific jpgs may not ship in initrd; fall back to the one
+		 * guaranteed wallpaper instead of drawing gray --axiss */
+		{
+			int probe = _KeOpenFile(wall, FILE_OPEN_READ_ONLY);
+			if (probe < 0)
+				wall = "/XE1_2.jpg";
+			else
+				_KeCloseFile(probe);
+		}
+		_KePrint("Drawing wallpaper %s for %d x %d\r\n", wall, screen_w, screen_h);
+		DrawWallpaper(canv, wall);
 		DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
 	}
 
+	DeoBakeScreenBlur((int)canv->canvasWidth, (int)canv->canvasHeight);
 	_KePrint("Wallpaper ready \r\n");
 
 	//	ChCanvasScreenUpdate(canv, 0, 0, canv->canvasWidth, canv->canvasHeight);
