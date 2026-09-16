@@ -98,6 +98,13 @@ XE_EXTERN {
 		int msg_flags;
 	} msghdr;
 
+	/* Route flags (match BaseHdr/Net/route.h) */
+#define RTF_UP        0x01
+#define RTF_HOST      0x02
+#define RTF_GATEWAY   0x04
+#define RTF_LOCAL     0x08
+#define RTF_CONNECTED 0x10
+
 	/* Simple Route table entry structure */
 	typedef struct _route_entry_ {
 		char* ifname;
@@ -112,6 +119,35 @@ XE_EXTERN {
 		int index;
 		void* route_entry;
 	} XERouteEntryInfo;
+
+	/* Netfilter Phase-0 (match BaseHdr/Net/netfilter.h) */
+#define NF_PRE_ROUTING  0
+#define NF_LOCAL_IN     1
+#define NF_FORWARD      2
+#define NF_LOCAL_OUT    3
+#define NF_POST_ROUTING 4
+#define NF_ACCEPT       0
+#define NF_DROP         1
+#define NF_REJECT       2
+
+	typedef struct _xe_nf_rule_ {
+		int hook;
+		char in_dev[16];
+		char out_dev[16];
+		uint8_t proto;
+		uint32_t src;
+		uint32_t src_mask;
+		uint32_t dst;
+		uint32_t dst_mask;
+		uint16_t sport;
+		uint16_t dport;
+		int target;
+	} XENfRule;
+
+	typedef struct _xe_nf_rule_info_ {
+		int index;
+		XENfRule* rule;
+	} XENfRuleInfo;
 
 	typedef uint32_t in_addr_t;
 	typedef uint16_t in_port_t;
