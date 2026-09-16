@@ -111,8 +111,10 @@ void XEShellSpawn(char* string) {
 		bool _first_string_skipped = false;
 		int argcount = 0;
 		int j = 0;
-		char** argv = (char**)malloc(10 * sizeof(char*));
-		memset(argv, 0, 10 * sizeof(char*));
+		/* iptables-style cmds need >9 trailing args; match Init's headroom */
+		const int max_args = 32;
+		char** argv = (char**)malloc(max_args * sizeof(char*));
+		memset(argv, 0, max_args * sizeof(char*));
 		
 		/* Validate input string length */
 		if (strlen(string) > 127) {
@@ -124,22 +126,18 @@ void XEShellSpawn(char* string) {
 		for (int i = 0; i < strlen(string) + 1; i++) {
 			if (string[i] == ' ' || string[i] == '\0') {
 				if (_first_string_skipped && arguments[0] != '\0') {
+					if (argcount >= max_args) {
+						printf("\n[xeshell]: Too many arguments (max %d)\r\n", max_args);
+						for (int k = 0; k < argcount; k++)
+							free(argv[k]);
+						free(argv);
+						return;
+					}
 					char* str = (char*)malloc(strlen(arguments) + 1);
 					memset(str, 0, strlen(arguments) + 1);
 					strcpy(str, arguments);
 					argv[argcount] = str;
 					argcount += 1;
-					
-					/* Check argument count limit */
-					if (argcount >= 9) {
-						printf("\n[xeshell]: Too many arguments (max 9)\r\n");
-						/* Free allocated memory */
-						for (int k = 0; k < argcount; k++) {
-							free(argv[k]);
-						}
-						free(argv);
-						return;
-					}
 				}
 				j = 0;
 				memset(arguments, 0, sizeof(arguments));

@@ -296,9 +296,9 @@ int main(int argc, char* argv[]) {
 	memset(eth_broadcast, 0xFF, 6);
 
 	XERouteEntry* rtentry = (XERouteEntry*)malloc(sizeof(XERouteEntry));
-	rtentry->ifname = (char*)malloc(strlen("e1000"));
+	memset(rtentry, 0, sizeof(XERouteEntry));
+	rtentry->ifname = (char*)malloc(16);
 	strcpy(rtentry->ifname, "virtio-net");
-	bool rt_entry_filled = false;
 	int timeout = 10000;
 	while (timeout--) {
 		int size = socket_receive(sock_fd, buf, 4096, 0);
@@ -361,12 +361,11 @@ int main(int argc, char* argv[]) {
 			printf("DHCP Packet received from -> %s \r\n", src_ip);
 			_KePrint("DHCP Packet received from -> %s \r\n", src_ip);
 			uint32_t yiaddr = dhcp->yiaddr;
+			uint32_t subnet = 0;
+			uint32_t gateway = 0;
 			char yiaddr_ip[16];
 			ip_ntoa(ntohl(yiaddr), yiaddr_ip);
 			_KeFileIoControl(e1000, NET_SET_IPV4_ADDRESS, &yiaddr);
-			rtentry->dest = dhcp->siaddr;
-			rtentry->ifaddress = yiaddr;
-			rt_entry_filled = true;
 			printf("Interface address -> %s  %x\r\n", yiaddr_ip, yiaddr);
 			/* check for gateway and subnet */
 			uint8_t* opt = dhcp->options;
@@ -375,26 +374,20 @@ int main(int argc, char* argv[]) {
 				uint8_t len = *opt++;
 				if (opt_type == 1) {
 					/* subnet mask */
-					uint32_t ip_data;
-					memcpy(&ip_data, opt, 4);
+					memcpy(&subnet, opt, 4);
 					char addr[16];
-					ip_ntoa(ntohl(ip_data), addr);
-					_KeFileIoControl(e1000, NET_SET_SUBNET_MASK, &ip_data);
-					printf("Subnet mask %s %x\n", addr, ip_data);
-					_KePrint("Subnet mask %s %x \n", addr, ip_data);
-					rtentry->netmask = ip_data;
-					rt_entry_filled = true;
+					ip_ntoa(ntohl(subnet), addr);
+					_KeFileIoControl(e1000, NET_SET_SUBNET_MASK, &subnet);
+					printf("Subnet mask %s %x\n", addr, subnet);
+					_KePrint("Subnet mask %s %x \n", addr, subnet);
 				} else if (opt_type == 3) {
-					/* gateway address */
-					uint32_t ip_data;
-					memcpy(&ip_data, opt, 4);
+					/* gateway address — kernel installs 0/0 via ioctl */
+					memcpy(&gateway, opt, 4);
 					char addr[16];
-					ip_ntoa(ntohl(ip_data), addr);
-					_KeFileIoControl(e1000, NET_SET_GATEWAY_ADDRESS, &ip_data);
-					printf("Gateway : %s %x\n", addr, ip_data);
-					_KePrint("Gateway : %s - %x \r\n", addr, ip_data);
-					rtentry->gateway = ip_data;
-					rt_entry_filled = true;
+					ip_ntoa(ntohl(gateway), addr);
+					_KeFileIoControl(e1000, NET_SET_GATEWAY_ADDRESS, &gateway);
+					printf("Gateway : %s %x\n", addr, gateway);
+					_KePrint("Gateway : %s - %x \r\n", addr, gateway);
 				} else if (opt_type == 6) {
 					/* DNS Server */
 					uint32_t ip_data;
@@ -411,15 +404,35 @@ int main(int argc, char* argv[]) {
 				opt += len;
 			}
 
-			if (rt_entry_filled) {
-				int ret = _KeFileIoControl(sock_fd, SOCK_ROUTE_TABLE_ADD, rtentry);
-				if (ret) {
-					printf("[NetManager]: Failed to add Route Entry \n");
-					_KePrint("[netmanagr]: failed to add route entry \r\n");
-				}
-				free(rtentry->ifname);
-				free(rtentry);
+			/*
+			 * Connected + default with RTF_* (Week 1). Kernel virtio ioctl
+			 * already seeds these; still install via SOCK_ROUTE_TABLE_ADD
+			 * so dumps work if the driver path did not run.
+			 */
+			if (subnet) {
+				rtentry->dest = yiaddr & subnet;
+				rtentry->netmask = subnet;
+				rtentry->ifaddress = yiaddr;
+				rtentry->gateway = 0;
+				rtentry->flags = RTF_UP | RTF_CONNECTED;
+				if (_KeFileIoControl(sock_fd, SOCK_ROUTE_TABLE_ADD, rtentry))
+					_KePrint("[netmngr]: connected route add failed\r\n");
 			}
+			if (gateway) {
+				rtentry->dest = 0;
+				rtentry->netmask = 0;
+				rtentry->ifaddress = yiaddr;
+				rtentry->gateway = gateway;
+				rtentry->flags = RTF_UP | RTF_GATEWAY;
+				if (_KeFileIoControl(sock_fd, SOCK_ROUTE_TABLE_ADD, rtentry))
+					_KePrint("[netmngr]: default route add failed\r\n");
+			}
+			{
+				int n = _KeFileIoControl(sock_fd, SOCK_ROUTE_TABLE_GETNUMENTRY, 0);
+				_KePrint("[netmngr]: route table entries = %d\r\n", n);
+			}
+			free(rtentry->ifname);
+			free(rtentry);
 
 			break;
 		}

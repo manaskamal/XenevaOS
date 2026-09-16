@@ -35,10 +35,12 @@
 #include <Net/ipv4.h>
 #include <Net/udp.h>
 #include <Net/aunet.h>
+#include <Net/route.h>
 #include <Net/ethernet.h>
 #include <Net/arp.h>
 #include <Net/udp.h>
 #include <Net/packet.h>
+#include <Net/netfilter.h>
 #include <_null.h>
 #include <aucon.h>
 #include <Mm/kmalloc.h>
@@ -73,10 +75,37 @@ void ip_ntoa(const uint32_t src) {
  * @param nic -- Pointer to NIC card
  */
 void IPv4HandlePacket(void* data, AuVFSNode* nic) {
-	char dest[16];
-	char src[16];
 	IPv4Header* pack = (IPv4Header*)data;
 	uint8_t protocol;
+	AuPacket pkt;
+	int local;
+
+	if (!pack || !nic)
+		return;
+
+	AuPacketInitIpv4(&pkt, pack, ntohs(pack->totalLength), nic, NULL);
+	/* Broadcast/multicast are delivered locally (DHCP before addr set). */
+	local = AuAddrIsLocal4(pack->destAddress) ||
+		pack->destAddress == 0xFFFFFFFFu ||
+		((pack->destAddress & MAKE_IP(240, 0, 0, 0)) == MAKE_IP(224, 0, 0, 0));
+
+	/* Wire RX: PREROUTING. Loopback reinject skips L2 PREROUTING. */
+	if (AuPacketGetOrigin() != AU_PKT_ORIGIN_LOCAL) {
+		if (AuNetfilterHook(NF_PRE_ROUTING, &pkt) == NF_DROP)
+			return;
+	}
+
+	if (local) {
+		pkt.in_dev = nic;
+		if (AuNetfilterHook(NF_LOCAL_IN, &pkt) == NF_DROP)
+			return;
+	} else {
+		/* Host stack: FORWARD exists but default policy DROPs. */
+		if (AuNetfilterHook(NF_FORWARD, &pkt) == NF_DROP)
+			return;
+		return;
+	}
+
 	memcpy(&protocol, &pack->protocol, 1);
 	switch (protocol) {
 	case 1: {
@@ -132,6 +161,7 @@ void IPV4SendPacket(IPv4Header* packet, AuVFSNode* nic) {
 	AuNetworkDevice* ndev;
 	AuVFSNode* deliver;
 	uint32_t ip_dest;
+	AuRouteResult rr;
 	AuARPCache* cache;
 	uint8_t broadcast_addr[6];
 
@@ -142,6 +172,22 @@ void IPV4SendPacket(IPv4Header* packet, AuVFSNode* nic) {
 		return;
 
 	ip_dest = packet->destAddress;
+
+	{
+		AuPacket pkt;
+		AuVFSNode* out = nic;
+
+		if (ndev->type == NETDEV_TYPE_LOOPBACK || AuAddrIsLocal4(ip_dest)) {
+			out = AuGetNetworkAdapter("lo");
+			if (!out)
+				out = nic;
+		}
+		AuPacketInitIpv4(&pkt, packet, ntohs(packet->totalLength), NULL, out);
+		if (AuNetfilterHook(NF_LOCAL_OUT, &pkt) == NF_DROP)
+			return;
+		if (AuNetfilterHook(NF_POST_ROUTING, &pkt) == NF_DROP)
+			return;
+	}
 
 	/* Loopback / local delivery: reinject at IP (never AuEthernetSend). */
 	if (ndev->type == NETDEV_TYPE_LOOPBACK || AuAddrIsLocal4(ip_dest)) {
@@ -155,23 +201,15 @@ void IPV4SendPacket(IPv4Header* packet, AuVFSNode* nic) {
 		return;
 	}
 
+	/* FIB next-hop (RFC 1812 §5.2.4): gateway routes ARP the gateway. */
+	if (AuRouteLookup4(ip_dest, &rr) == 0 && (rr.flags & RTF_GATEWAY) && rr.nexthop)
+		ip_dest = rr.nexthop;
+
 	if (ndev->type == NETDEV_TYPE_ETHERNET) {
-		cache = NULL;
-		if (!ndev->ipv4subnet ||
-			((ip_dest & ndev->ipv4subnet) != (ndev->ipv4addr & ndev->ipv4subnet))) {
-			ip_dest = ndev->ipv4gateway;
+		cache = AuARPGet(ip_dest);
+		if (!cache) {
+			AuARPRequestMAC(nic, ip_dest);
 			cache = AuARPGet(ip_dest);
-			if (!cache) {
-				/* Non-blocking: sleep-wait here added ~100ms to ping RTT */
-				AuARPRequestMAC(nic, ip_dest);
-				cache = AuARPGet(ip_dest);
-			}
-		} else {
-			cache = AuARPGet(ip_dest);
-			if (!cache) {
-				AuARPRequestMAC(nic, ip_dest);
-				cache = AuARPGet(ip_dest);
-			}
 		}
 		memset(broadcast_addr, 0xFF, 6);
 		AuEthernetSend(nic,

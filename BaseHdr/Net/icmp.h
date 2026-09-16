@@ -56,6 +56,12 @@ extern void ICMPInitialise();
  * AuICMPHandle -- ICMP handler
  */
 extern void AuICMPHandle(IPv4Header* ipv4, AuVFSNode* nic);
+
+/*
+ * AuICMPSendDestUnreachable -- RFC 792 type 3 (code as given).
+ * Includes original IP header + 8 bytes of payload.
+ */
+extern void AuICMPSendDestUnreachable(IPv4Header* orig, AuVFSNode* nic, uint8_t code);
 /*
 * CreateICMPSocket -- create a new Internet
 * Control Message Protocol (ICMP) protocol
