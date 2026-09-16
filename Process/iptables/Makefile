@@ -1,7 +1,7 @@
 # LLVM iptables.exe
 
 TOOLCHAIN ?= gcc
-TARGET = iptables.exe
+TARGET = iptab.exe
 INCLUDES = -I../../Libs/XEClib/includes -I../../Libs/XEClib/includes/c++ -I../../BaseHdr
 OBJDIR = obj
 CPP_OBJS = $(OBJDIR)/main.o
