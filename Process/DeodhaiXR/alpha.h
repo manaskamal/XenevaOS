@@ -33,6 +33,7 @@
 #define __ALPHA_H__
 
 #include <stdint.h>
+#include "window.h"
 
 extern void glass_precompute_blur(uint32_t* out_blur,
 								  uint32_t* tmp,
@@ -44,6 +45,12 @@ extern void glass_precompute_blur(uint32_t* out_blur,
 								  int rw,
 								  int rh,
 								  int radius);
+extern void glass_invalidate(Window* win);
+extern void glass_prepare_window(Window* win,
+								 WinSharedInfo* info,
+								 const uint32_t* back_surface,
+								 int canvas_w,
+								 int canvas_h);
 extern void __pixel_blend_neon(uint32_t* dst, const uint32_t* src, int width);
 
 extern void _blend_scanline_glass_neon(uint32_t* canvas_row,
@@ -62,7 +69,5 @@ extern void _shadow_compose_neon(uint32_t* canv,
 								 int shadow_h,
 								 int win_x,
 								 int win_y);
-
-extern void _apply_rounded_corner(uint32_t* backbuff, int radius, int winw, int winh);
 
 #endif

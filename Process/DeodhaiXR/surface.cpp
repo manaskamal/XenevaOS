@@ -33,8 +33,13 @@
 #include "_fastcpy.h"
 #include <color.h>
 #include "surface.h"
+#include "alpha.h"
 
 uint32_t* backSurface;
+static uint32_t* screenBlur;
+static uint32_t* screenBlurTmp;
+static int screenBlurW;
+static int screenBlurH;
 
 /*
  * DeodhaiBackSurfaceUpdate -- update the back surface
@@ -43,29 +48,30 @@ void DeodhaiBackSurfaceUpdate(ChCanvas* canv, int x, int y, int w, int h) {
 	uint32_t* lfb = (uint32_t*)canv->buffer;
 	uint32_t* wallp = (uint32_t*)backSurface;
 
-	int64_t x_ = x, y_ = y, w_ = w, h_ = h;
-
-	if (w > canv->canvasWidth)
-		w = canv->canvasWidth;
-
-	if (h > canv->canvasHeight)
-		h = canv->canvasHeight;
-
-	if (x > canv->canvasWidth)
-		return;
-
-	if (y > canv->canvasHeight)
-		return;
-
-	if (x < 0)
+	/* Damage rectangles can be merged while windows are toggled quickly. Clamp
+	 * the rectangle before taking any pointers, and use the clamped values for
+	 * both source and destination so restore never walks outside the canvas --axiss */
+	if (x < 0) {
+		w += x;
 		x = 0;
-	if (y < 0)
+	}
+	if (y < 0) {
+		h += y;
 		y = 0;
+	}
+	if (x >= (int)canv->canvasWidth || y >= (int)canv->canvasHeight)
+		return;
+	if (w > (int)canv->canvasWidth - x)
+		w = (int)canv->canvasWidth - x;
+	if (h > (int)canv->canvasHeight - y)
+		h = (int)canv->canvasHeight - y;
+	if (w <= 0 || h <= 0)
+		return;
 
 	for (int j = 0; j < h; j++) {
-		_fastcpy(canv->buffer + (y_ + j) * canv->canvasWidth + x_,
-				 wallp + (y_ + j) * canv->canvasWidth + x_,
-				 w_ * 4);
+		_fastcpy(canv->buffer + (y + j) * canv->canvasWidth + x,
+				 wallp + (y + j) * canv->canvasWidth + x,
+				 (size_t)w * 4);
 	}
 }
 
@@ -91,4 +97,28 @@ void DeoInitializeBackSurface(ChCanvas* canv) {
 
 uint32_t* DeoGetBackSurface() {
 	return backSurface;
+}
+
+void DeoBakeScreenBlur(int canvas_w, int canvas_h) {
+	if (!backSurface || canvas_w <= 0 || canvas_h <= 0)
+		return;
+	size_t bytes = (size_t)canvas_w * (size_t)canvas_h * 4;
+	if (!screenBlur || screenBlurW != canvas_w || screenBlurH != canvas_h) {
+		if (screenBlur)
+			_KeMemUnmap(screenBlur, (size_t)screenBlurW * (size_t)screenBlurH * 4);
+		if (screenBlurTmp)
+			_KeMemUnmap(screenBlurTmp, (size_t)screenBlurW * (size_t)screenBlurH * 4);
+		screenBlur = (uint32_t*)_KeMemMap(NULL, bytes, 0, 0, MEMMAP_NO_FILEDESC, 0);
+		screenBlurTmp = (uint32_t*)_KeMemMap(NULL, bytes, 0, 0, MEMMAP_NO_FILEDESC, 0);
+		screenBlurW = canvas_w;
+		screenBlurH = canvas_h;
+	}
+	if (!screenBlur || !screenBlurTmp)
+		return;
+	glass_precompute_blur(
+		screenBlur, screenBlurTmp, backSurface, canvas_w, canvas_h, 0, 0, canvas_w, canvas_h, 4);
+}
+
+uint32_t* DeoGetScreenBlur() {
+	return screenBlur;
 }
