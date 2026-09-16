@@ -65,11 +65,12 @@ void LaunchButtonPaint(LaunchButton* lb, ChWindow* win) {
 	limit.y = grid->y;
 	limit.w = grid->w;
 	limit.h = grid->h;
-	ButtonIconDraw(lb->buttonIcon,
-				   win->canv,
-				   lb->x + lb->w / 2 - lb->buttonIcon->iconWidth / 2,
-				   lb->y + lb->h / 2 - lb->buttonIcon->iconHeight / 2,
-				   &limit);
+	if (lb->buttonIcon && lb->buttonIcon->imageData)
+		ButtonIconDraw(lb->buttonIcon,
+					   win->canv,
+					   lb->x + lb->w / 2 - lb->buttonIcon->iconWidth / 2,
+					   lb->y + lb->h / 2 - lb->buttonIcon->iconHeight / 2,
+					   &limit);
 	ChFontSetSize(win->app->baseFont, 11);
 	int font_length = ChFontGetWidth(win->app->baseFont, lb->title);
 	int font_height = ChFontGetHeight(win->app->baseFont, lb->title);
@@ -200,8 +201,9 @@ ButtonIcon* CreateLaunchButtonIcon(char* iconfile, LaunchButton* button) {
 	memset(icon, 0, sizeof(ButtonIcon));
 	int fd = _KeOpenFile(iconfile, FILE_OPEN_READ_ONLY);
 	if (fd == -1) {
-		for (;;)
-			;
+		free(icon);
+		button->buttonIcon = 0;
+		return NULL;
 	}
 
 	_KePrint("Icon fd : %d \r\n", fd);
@@ -322,15 +324,23 @@ void ButtonIconDraw(ButtonIcon* info, ChCanvas* canv, int x, int y, ChRect* limi
 			uint32_t r = pixel[2];
 
 			if (bytes_per_pixel == 3) {
-				if (r == 255 && g == 255 && b == 255)
+				if ((r == 255 && g == 255 && b == 255) || (r == 0 && g == 0 && b == 0))
 					continue;
-				ChDrawPixel(canv, x + k, y + i, (r << 16) | (g << 8) | b);
+				/* 24-bit BMPs have no alpha. Glass compose treats sa==0 as
+				 * "show only the wallpaper blur", so an RGB-only write made
+				 * launcher icons vanish into the glass. --axiss */
+				ChDrawPixel(canv, x + k, y + i, 0xFF000000u | (r << 16) | (g << 8) | b);
 			} else {
 				uint32_t a = pixel[3];
-				if (a > 0) {
-					uint32_t rgb = ((a << 24) | (r << 16) | (g << 8) | b);
-					ChDrawPixel(canv, x + k, y + i, rgb);
-				}
+				/* The 32-bit assets store a drop shadow as near-black with
+				 * partial alpha. On a photo wallpaper it disappears; on the
+				 * flat 640x480 glass it reads as a black square behind every
+				 * icon. Skip those texels so the glass fill shows through. --axiss */
+				if (a == 0)
+					continue;
+				if (a < 255 && r < 32 && g < 32 && b < 32)
+					continue;
+				ChDrawPixel(canv, x + k, y + i, (a << 24) | (r << 16) | (g << 8) | b);
 			}
 		}
 	}

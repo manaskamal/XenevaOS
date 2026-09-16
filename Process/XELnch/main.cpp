@@ -144,7 +144,24 @@ void XenevaLauncherHandleMessage(PostEvent* e) {
 		memset(e, 0, sizeof(PostEvent));
 		break;
 	}
+	case DEODHAI_REPLY_FOCUS_CHANGED: {
+		/* Shown again: drop any leftover search filter so the app grid
+		 * is not still hiding every icon from a previous unmapped key. --axiss */
+		searchBar->textPos = 0;
+		searchBar->prevTextPos = 0;
+		searchBar->scrollOffset = 0;
+		searchBar->text[0] = '\0';
+		mainGrid->show_search = false;
+		AppGridSearchReset(mainGrid);
+		XELauncherPaint(win);
+		memset(e, 0, sizeof(PostEvent));
+		break;
+	}
 	case DEODHAI_REPLY_KEY_EVENT: {
+		if (win->info->hide) {
+			memset(e, 0, sizeof(PostEvent));
+			break;
+		}
 		if (!isControlKeyPressed(e->dword)) {
 			char c = ChitralekhaGetKeyPress(e->dword);
 			/** dont accept release keys **/
@@ -164,17 +181,19 @@ void XenevaLauncherHandleMessage(PostEvent* e) {
 					}
 					searchBar->textPos--;
 					searchBar->text[searchBar->textPos] = '\0';
-				} else {
+				} else if (c >= 32 && c < 127) {
 					if (ChitralekhaKeyGetCapslock())
 						c = toupper(c);
 					if (searchBar->textPos == 1024) {
-						/** kiman aru text input lobi kelaaa, break maar sett **/
 						memset(e, 0, sizeof(PostEvent));
 						break;
 					}
 					mainGrid->show_search = true;
 					searchBar->text[searchBar->textPos++] = c;
 					searchBar->text[searchBar->textPos] = '\0';
+				} else {
+					memset(e, 0, sizeof(PostEvent));
+					break;
 				}
 				if (searchBar->wid.ChPaintHandler) {
 					searchBar->wid.ChPaintHandler((ChWidget*)searchBar, win);
@@ -187,7 +206,8 @@ void XenevaLauncherHandleMessage(PostEvent* e) {
 								   1);
 				}
 				AppGridSearchReset(mainGrid);
-				_match_string(searchBar->text, mainGrid->lbbuttonlist);
+				if (mainGrid->show_search)
+					_match_string(searchBar->text, mainGrid->lbbuttonlist);
 				if (mainGrid->PaintAppGrid) {
 					mainGrid->PaintAppGrid(mainGrid, win);
 					ChWindowUpdate(win, mainGrid->x, mainGrid->y, mainGrid->w, mainGrid->h, 0, 1);

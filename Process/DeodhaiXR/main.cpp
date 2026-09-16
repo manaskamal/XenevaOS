@@ -743,6 +743,13 @@ void DeodhaiWindowHide(Window* win) {
 		WinSharedFlagStore(&info->updateEntireWindow, true);
 		WinSharedFlagStore(&info->dirty, true);
 		focusedWin = win;
+		PostEvent shown;
+		memset(&shown, 0, sizeof(PostEvent));
+		shown.type = DEODHAI_REPLY_FOCUS_CHANGED;
+		shown.dword = win->handle;
+		shown.to_id = win->ownerId;
+		shown.from_id = POSTBOX_ROOT_ID;
+		_KeFileIoControl(postbox_fd, POSTBOX_PUT_EVENT, &shown);
 	} else {
 		/* HIDE the window, if its not hidden */
 		info->hide = true;
