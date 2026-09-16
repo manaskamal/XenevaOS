@@ -1,14 +1,20 @@
 # XenevaOS XEClib Makefile (GCC / LLVM Build)
 
+DLLTARGET = XEClib.dll 
+IMPLIB = libXEClib.a 
+DEFFILE = XEClib.def 
 TARGET = libXEClib.a
 
 # Default toolchain is GCC
 TOOLCHAIN ?= gcc
 
 # Triggered when you run "make llvm"
-.PHONY: all clean llvm
+.PHONY: all clean llvm dll dll-internal
 llvm:
 	@$(MAKE) TOOLCHAIN=llvm all
+
+dll:
+	@$(MAKE) TOOLCHAIN=llvm dll-internal
 
 INCLUDES = -I./includes -I./includes/c++ -I../../BaseHdr
 
@@ -21,11 +27,14 @@ ifeq ($(TOOLCHAIN), llvm)
 	LLVM_TARGET = -target aarch64-unknown-windows
 
 	CXXFLAGS = -Wall -Wextra -ffreestanding -fno-stack-protector -fno-stack-check \
-	           -fno-strict-aliasing -O2 $(LLVM_TARGET) \
+	           -fno-strict-aliasing -fno-rtti -fno-exceptions -O2 $(LLVM_TARGET) \
 	           -DARCH_ARM64 -D__TARGET_BOARD_QEMU_VIRT__ -D_USE_DLMALLOC -D__STDC_LIMIT_MACROS \
 	           -Wno-error=incompatible-pointer-types -Wno-error=int-conversion \
 	           -Wno-implicit-function-declaration -Wno-c++11-narrowing \
 	           $(INCLUDES)
+
+dll-internal: $(DLLTARGET)
+
 else
 	# GCC configuration
 	CROSS_COMPILE ?= aarch64-linux-gnu-
@@ -57,6 +66,21 @@ S_OBJS = $(patsubst %.s,$(OBJDIR)/%.o,$(S_SRCS))
 OBJS = $(CPP_OBJS) $(S_OBJS)
 
 all: $(TARGET)
+
+$(DEFFILE): $(OBJS)
+	@echo "Generating export list..."
+	@( echo "EXPORTS"; \
+	for obj in $(OBJS); do \
+		llvm-nm --defined-only -g $$obj | awk '{print $$3}'; \
+	done; \
+	grep -vE '^(EXPORTS|LIBRARY)' _export_arm64.def ) | awk '!seen[$$0]++' > $@
+
+$(DLLTARGET): $(OBJS) $(DEFFILE)
+	@echo "Linking $(DLLTARGET)..."
+	$(CXX) $(CXXFLAGS) -fuse-ld=lld-link -nostdlib -shared -o $(DLLTARGET) $(OBJS) \
+	-Wl,/DEF:$(DEFFILE) -Wl,/IMPLIB:$(IMPLIB) -Wl,//NOENTRY -Wl,//NODEFAULTLIB \
+	-Wl,//BASE:0x0000000400000000 
+
 
 $(TARGET): $(OBJS)
 	@echo "Archiving $(TARGET)..."

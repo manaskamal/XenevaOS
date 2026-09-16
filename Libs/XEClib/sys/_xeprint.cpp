@@ -33,7 +33,7 @@
 #include <ctype.h>
 #include <_xeprint.h>
 
-int _ldigits(unsigned long long num, int base, int sign) {
+/*int _ldigits(unsigned long long num, int base, int sign) {
 	int digits = 1;
 	if (base < 2) {
 		return (digits = -1);
@@ -69,7 +69,7 @@ int _digits(unsigned num, int base, int sign) {
 	}
 
 	return digits;
-}
+}*/
 
 //int _XEPrint(char* output, int len, const char* format, va_list list) {
 //	int inCount = 0;

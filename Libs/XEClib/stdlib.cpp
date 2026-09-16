@@ -405,7 +405,7 @@ unsigned long strtoul(const char* nptr, char** endptr, int base) {
 //}
 
 int atexit(void (*func)(void)) {
-	func();
+	(void)func();
 	return 0;
 }
 
