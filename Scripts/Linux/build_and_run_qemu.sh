@@ -19,6 +19,18 @@ set -e
 #                           (KernelAA64/Hal/sched_soak.c) started at boot.
 #   --direct-scanout        Rebuild userspace with the compositor drawing into
 #                           the GOP framebuffer when its pitch permits it.
+#   --unikernel             One-process XR shell: DeodhaiXR links XELnch and
+#                           Namdapha as threads instead of LoadExec. Does not
+#                           merge the kernel. Requires a userspace rebuild.
+#   --openxr                DeodhaiXR emits OpenXR (QEMU SBS runtime). Pair with
+#                           Tools/xeneva-xr-view and WiVRn for Quest 2.
+#   -xr-demo, --xr-demo     Full XR demo: implies --openxr, runs QEMU headless
+#                           with -display dbus + VNC + monitor sockets and
+#                           supervises the viewer with hand tracking enabled.
+#                           Pick the resolution yourself in gvncviewer. Needs
+#                           WiVRn + Quest 2 for the HMD. Ctrl-C stops both.
+#   --egl-headless          QEMU -display egl-headless + dbus (DMA-BUF scanout).
+#                           Use Tools/xeneva-xr-view --desktop --egl to steal frames.
 #   --force-legacy-build    Reuse an existing initrd2.img instead of rebuilding it.
 #   --install-deps          Install required host packages for this distro.
 #   --initrd-size-mb=N      Override the auto-computed initrd2.img size.
@@ -55,6 +67,10 @@ HEADLESS=0
 BLEED=0
 SOAK=0
 DIRECT_SCANOUT=0
+UNIKERNEL=0
+OPENXR=0
+XR_DEMO=0
+EGL_HEADLESS=0
 TERM=0
 TERM_CMD=""
 INITRD_SIZE_MB=""
@@ -63,7 +79,7 @@ ISO_OUTPUT=""
 
 print_help(){
     printf "${STY_CYAN}"
-    sed -n '3,40p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
+    sed -n '3,49p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
     printf "${STY_RST}\n"
 }
 
@@ -76,6 +92,10 @@ while [ $# -gt 0 ]; do
 		--bleed) BLEED=1 ;;
 		--soak) SOAK=1 ;;
 		--direct-scanout) DIRECT_SCANOUT=1 ;;
+		--unikernel) UNIKERNEL=1 ;;
+		--openxr) OPENXR=1 ;;
+		-xr-demo|--xr-demo) OPENXR=1; XR_DEMO=1 ;;
+		--egl-headless) EGL_HEADLESS=1 ;;
         --force-legacy-build) FORCE_LEGACY_BUILD=1 ;;
         --install-deps) INSTALL_DEPS=1 ;;
         --headless) HEADLESS=1 ;;
@@ -84,7 +104,7 @@ while [ $# -gt 0 ]; do
             shift
             # collect remaining args until next flag or end
             TERM_CMD=""
-            while [ $# -gt 0 ] && [[ ! "$1" =~ ^-- ]]; do
+            while [ $# -gt 0 ] && [[ ! "$1" =~ ^- ]]; do
                 if [ -n "$TERM_CMD" ]; then
                     TERM_CMD="$TERM_CMD $1"
                 else
@@ -136,12 +156,54 @@ if [ "$DIRECT_SCANOUT" -eq 1 ]; then
 	BUILD_USER_APPS=1
 fi
 
+if [ "$UNIKERNEL" -eq 1 ]; then
+	if [ "$SKIP_BUILD" -eq 1 ]; then
+		printf "${STY_RED}[$0]: --unikernel cannot be combined with --skip-build.${STY_RST}\n"
+		exit 1
+	fi
+	if [ "$FORCE_LEGACY_BUILD" -eq 1 ]; then
+		printf "${STY_RED}[$0]: --unikernel cannot be combined with --force-legacy-build.${STY_RST}\n"
+		exit 1
+	fi
+	BUILD_USER_APPS=1
+fi
+
+if [ "$OPENXR" -eq 1 ]; then
+	if [ "$SKIP_BUILD" -eq 1 ]; then
+		printf "${STY_RED}[$0]: --openxr cannot be combined with --skip-build.${STY_RST}\n"
+		exit 1
+	fi
+	if [ "$FORCE_LEGACY_BUILD" -eq 1 ]; then
+		printf "${STY_RED}[$0]: --openxr cannot be combined with --force-legacy-build.${STY_RST}\n"
+		printf "${STY_YELLOW}[$0]: OpenXR requires a freshly packed, profile-matched initrd.${STY_RST}\n"
+		exit 1
+	fi
+	BUILD_USER_APPS=1
+fi
+
+if [ "$XR_DEMO" -eq 1 ] && { [ "$HEADLESS" -eq 1 ] || [ "$EGL_HEADLESS" -eq 1 ] ||
+	[ "$TERM" -eq 1 ] || [ "$ISO" -eq 1 ]; }; then
+	printf "${STY_RED}[$0]: -xr-demo/--xr-demo owns the display and cannot be combined with --headless, --egl-headless, --term, or --iso.${STY_RST}\n"
+	exit 1
+fi
+
+if [ "$HEADLESS" -eq 1 ] && [ "$EGL_HEADLESS" -eq 1 ]; then
+	printf "${STY_RED}[$0]: --headless and --egl-headless are mutually exclusive.${STY_RST}\n"
+	exit 1
+fi
+
 requested_userspace_profile="${TOOLCHAIN}-normal"
 if [ "$BLEED" -eq 1 ]; then
 	requested_userspace_profile="${TOOLCHAIN}-bleed"
 fi
 if [ "$DIRECT_SCANOUT" -eq 1 ]; then
 	requested_userspace_profile="${requested_userspace_profile}-direct-scanout"
+fi
+if [ "$UNIKERNEL" -eq 1 ]; then
+	requested_userspace_profile="${requested_userspace_profile}-unikernel"
+fi
+if [ "$OPENXR" -eq 1 ]; then
+	requested_userspace_profile="${requested_userspace_profile}-openxr"
 fi
 
 if [ -f "$USERSPACE_PROFILE_STAMP" ]; then
@@ -174,8 +236,8 @@ cd "$REPO_ROOT"
 
 if [ "$INSTALL_DEPS" -eq 1 ]; then
     source "$SCRIPT_DIR/lib/dist_determine.sh"
-    for function in ${print_os_group_id_functions[@]}; do
-        $function
+    for function in "${print_os_group_id_functions[@]}"; do
+        "$function"
     done
     pause
     sudo_session
@@ -193,6 +255,9 @@ if [ "$ISO" -eq 1 ]; then
 else
     REQUIRED_TOOLS+=(qemu-system-aarch64)
 fi
+if [ "$XR_DEMO" -eq 1 ]; then
+    REQUIRED_TOOLS+=(gdbus make)
+fi
 for tool in "${REQUIRED_TOOLS[@]}"; do
     command -v "$tool" >/dev/null 2>&1 || MISSING_TOOLS+=("$tool")
 done
@@ -205,6 +270,27 @@ if [ "${#MISSING_TOOLS[@]}" -gt 0 ]; then
     printf "${STY_RED}[$0]: Missing required tools: ${MISSING_TOOLS[*]}${STY_RST}\n"
     printf "${STY_YELLOW}[$0]: Run with --install-deps, or install them manually.${STY_RST}\n"
     exit 1
+fi
+
+XR_RT_JSON="${XENEVA_XR_RUNTIME_JSON:-/usr/share/openxr/1/openxr_wivrn.json}"
+if [ "$XR_DEMO" -eq 1 ]; then
+    if [ ! -f "$XR_RT_JSON" ]; then
+        printf "${STY_RED}[$0]: OpenXR runtime manifest not found: $XR_RT_JSON${STY_RST}\n"
+        printf "${STY_YELLOW}[$0]: Start/install WiVRn or set XENEVA_XR_RUNTIME_JSON.${STY_RST}\n"
+        exit 1
+    fi
+    if [ -z "${DBUS_SESSION_BUS_ADDRESS:-}" ]; then
+        printf "${STY_RED}[$0]: XR demo requires a graphical session D-Bus (DBUS_SESSION_BUS_ADDRESS is unset).${STY_RST}\n"
+        exit 1
+    fi
+    # org.qemu is a singleton on the session bus. Check before building or
+    # rewriting fat.img: a second invocation must not disturb the live guest
+    # and then mistake its D-Bus owner for the new QEMU becoming ready. --axiss
+    if gdbus introspect --session --dest org.qemu --object-path /org/qemu/Display1 \
+        >/dev/null 2>&1; then
+        printf "${STY_RED}[$0]: org.qemu is already owned on the session bus; stop the existing XR/QEMU run first.${STY_RST}\n"
+        exit 1
+    fi
 fi
 
 if [ "$SKIP_BUILD" -eq 0 ] && [ ! -d "$REPO_ROOT/gnu-efi" ]; then
@@ -242,7 +328,7 @@ fi
 
 if [ "$SKIP_BUILD" -eq 0 ]; then
     echo "[+] Building bootloader + kernel (+ apps if requested) with $TOOLCHAIN..."
-	export BUILD_USER_APPS BLEED SOAK DIRECT_SCANOUT
+	export BUILD_USER_APPS BLEED SOAK DIRECT_SCANOUT UNIKERNEL OPENXR
     pushd "$SCRIPT_DIR" >/dev/null
     if [ "$TOOLCHAIN" == llvm ]; then
         source ./lib/llvm.sh
@@ -421,6 +507,103 @@ QEMU_ARGS=(
     -serial stdio
 )
 
+if [ "$XR_DEMO" -eq 1 ]; then
+    # XR demo: headless dbus display (true guest framebuffer for the viewer)
+    # + monitor socket (driven by xeneva-xr-client). OPENXR=1 is implied. --axiss
+    echo "[+] Building host XR tools..."
+    make -C "$REPO_ROOT/Tools/xeneva-xr-view"
+    make -C "$REPO_ROOT/Tools/xeneva-xr-client"
+    XR_MON_SOCK="${XENEVA_XR_MONITOR_SOCKET:-/tmp/qemu-mon.sock}"
+    XR_LOG="${XENEVA_XR_QEMU_LOG:-/tmp/xeneva-xr-demo-qemu.log}"
+    XR_VIEW_LOG="${XENEVA_XR_VIEW_LOG:-/tmp/xeneva-xr-demo-view.log}"
+    rm -f "$XR_MON_SOCK"
+    # Two monitors: unix socket for tooling (xeneva-xr-client --exec) and a
+    # telnet HMP monitor for humans. QEMU supports multiple -monitor flags.
+    # VNC is the interactive display: keyboard/mouse into the guest while
+    # the headset streams the same framebuffer over dbus. --axiss
+    QEMU_ARGS+=(-display dbus -monitor "unix:$XR_MON_SOCK,server,nowait")
+    QEMU_ARGS+=(-monitor telnet:127.0.0.1:4444,server,nowait)
+    QEMU_ARGS+=(-vnc :0)
+    echo "[+] XR demo: QEMU -display dbus + monitor $XR_MON_SOCK (log $XR_LOG)"
+    qemu-system-aarch64 "${QEMU_ARGS[@]}" >"$XR_LOG" 2>&1 &
+    XR_QEMU_PID=$!
+    XR_VIEW_PID=""
+    xr_demo_cleanup() {
+        trap - EXIT INT TERM
+        if [ -n "$XR_VIEW_PID" ] && kill -0 "$XR_VIEW_PID" 2>/dev/null; then
+            kill "$XR_VIEW_PID" 2>/dev/null || true
+            wait "$XR_VIEW_PID" 2>/dev/null || true
+        fi
+        if kill -0 "$XR_QEMU_PID" 2>/dev/null; then
+            kill "$XR_QEMU_PID" 2>/dev/null || true
+            wait "$XR_QEMU_PID" 2>/dev/null || true
+        fi
+        rm -f "$XR_MON_SOCK"
+    }
+    xr_demo_signal() {
+        local exit_code="$1"
+        xr_demo_cleanup
+        exit "$exit_code"
+    }
+    trap xr_demo_cleanup EXIT
+    trap 'xr_demo_signal 130' INT
+    trap 'xr_demo_signal 143' TERM
+    echo "[+] QEMU pid $XR_QEMU_PID."
+    echo "[+] Pick a resolution in gvncviewer (localhost:0) with Up/Down + Enter;"
+    echo "    the guest then boots and the viewer picks up frames on its own."
+    echo "[+] (Headless alternative: Tools/xeneva-xr-client/xeneva-xr-client --exec \"sendkey ret\".)"
+    echo "[+] XR demo guest is booting. Starting the HMD viewer..."
+    # The viewer must register after QEMU owns its bus name; too early and
+    # RegisterListener fails while QEMU is still starting. --axiss
+    XR_DBUS_READY=0
+    for _ in $(seq 1 30); do
+        if gdbus introspect --session --dest org.qemu --object-path /org/qemu/Display1 \
+            >/dev/null 2>&1; then
+            XR_DBUS_READY=1
+            break
+        fi
+        if ! kill -0 "$XR_QEMU_PID" 2>/dev/null; then
+            printf "${STY_RED}[$0]: QEMU exited before its XR display became ready; see $XR_LOG.${STY_RST}\n"
+            exit 1
+        fi
+        sleep 2
+    done
+    if [ "$XR_DBUS_READY" -ne 1 ]; then
+        printf "${STY_RED}[$0]: timed out waiting for QEMU's XR D-Bus display; see $XR_LOG.${STY_RST}\n"
+        exit 1
+    fi
+    XR_RUNTIME_JSON="$XR_RT_JSON" \
+        "$REPO_ROOT/Tools/xeneva-xr-view/xeneva-xr-view" --egl --hands \
+        >"$XR_VIEW_LOG" 2>&1 &
+    XR_VIEW_PID=$!
+    echo "[+] Viewer pid $XR_VIEW_PID with hand tracking (log $XR_VIEW_LOG)."
+    # A child process cannot export into your shell, so take this with you. --axiss
+    printf 'export XR_RUNTIME_JSON="%s"\n' "$XR_RT_JSON" > /tmp/xeneva-xr-demo.env
+    echo "[+] Next:"
+    echo "    source /tmp/xeneva-xr-demo.env                              # per shell, for manual runs"
+    echo "    Tools/xeneva-xr-view/xeneva-xr-view --egl --hands           # HMD again, if needed"
+    echo "    gvncviewer localhost:0                                      # interact with Xeneva"
+    echo "    telnet 127.0.0.1 4444                                      # the real QEMU monitor"
+    echo "    Tools/xeneva-xr-client/xeneva-xr-client                     # monitor REPL (scriptable)"
+    echo "[+] XR demo is live. Press Ctrl-C to stop viewer and QEMU."
+    while kill -0 "$XR_QEMU_PID" 2>/dev/null && kill -0 "$XR_VIEW_PID" 2>/dev/null; do
+        sleep 1
+    done
+    child_status=0
+    if ! kill -0 "$XR_QEMU_PID" 2>/dev/null; then
+        wait "$XR_QEMU_PID" || child_status=$?
+        printf "${STY_RED}[$0]: QEMU exited with status $child_status; see $XR_LOG.${STY_RST}\n"
+    else
+        wait "$XR_VIEW_PID" || child_status=$?
+        if [ "$child_status" -ne 0 ]; then
+            printf "${STY_RED}[$0]: XR viewer exited with status $child_status; see $XR_VIEW_LOG.${STY_RST}\n"
+        else
+            echo "[+] XR viewer closed; stopping QEMU."
+        fi
+    fi
+    exit "$child_status"
+fi
+
 if [ "$HEADLESS" -eq 1 ]; then
     QEMU_ARGS+=(-display none -no-reboot)
     # Ordinary builds still block at the interactive resolution menu. Bleed
@@ -428,6 +611,18 @@ if [ "$HEADLESS" -eq 1 ]; then
     # an automated headless boot; the timeout bounds both cases for CI.
     timeout "${QEMU_TIMEOUT:-120}" qemu-system-aarch64 "${QEMU_ARGS[@]}"
 else
-    QEMU_ARGS+=(-display gtk,zoom-to-fit=on)
-    qemu-system-aarch64 "${QEMU_ARGS[@]}"
+    if [ "$EGL_HEADLESS" -eq 1 ]; then
+        # addr= is a bus QEMU *connects to*, not a socket it creates.
+        # Use the session bus (needs DBUS_SESSION_BUS_ADDRESS). --axiss
+        QEMU_ARGS+=(-display egl-headless)
+        QEMU_ARGS+=(-display dbus,gl=on)
+        echo "[+] QEMU egl-headless + dbus on the session bus (org.qemu)"
+        echo "[+] Steal frames: Tools/xeneva-xr-view/xeneva-xr-view --desktop --egl"
+        qemu-system-aarch64 "${QEMU_ARGS[@]}"
+    else
+        # Keep both ramfb (boot/GOP) and virtio-gpu visible. The compositor
+        # moves to the second display after boot, while ramfb goes black. --axiss
+        QEMU_ARGS+=(-display gtk,zoom-to-fit=on,show-tabs=on)
+        qemu-system-aarch64 "${QEMU_ARGS[@]}"
+    fi
 fi

@@ -19,7 +19,7 @@ fi
 if [ "${BUILD_USER_APPS:-0}" -eq 1 ]; then
     # Userspace C++ runtime + graphics library
     ( cd ../../Libs/XEClib && make clean && make BLEED="${BLEED:-0}" llvm )
-    ( cd ../../Libs/Chitralekha && make clean && make BLEED="${BLEED:-0}" llvm )
+    ( cd ../../Libs/Chitralekha && make clean && make BLEED="${BLEED:-0}" UNIKERNEL="${UNIKERNEL:-0}" llvm )
 
     # All AArch64 user-space applications
     APPS=(
@@ -28,7 +28,7 @@ if [ "${BUILD_USER_APPS:-0}" -eq 1 ]; then
         ping udpecho XEShell NETMngr
     )
     for app in "${APPS[@]}"; do
-        ( cd "../../Process/$app" && make clean && make BLEED="${BLEED:-0}" llvm )
+        ( cd "../../Process/$app" && make clean && make BLEED="${BLEED:-0}" UNIKERNEL="${UNIKERNEL:-0}" DIRECT_SCANOUT="${DIRECT_SCANOUT:-0}" OPENXR="${OPENXR:-0}" llvm )
     done
 
     # Deploy the freshly built application binaries into the resources tree so
