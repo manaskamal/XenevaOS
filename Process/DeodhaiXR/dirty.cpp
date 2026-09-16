@@ -28,6 +28,7 @@
 **/
 
 #include "dirty.h"
+#include "xr_present.h"
 #include <stdlib.h>
 #include <string.h>
 #include <_xeneva.h>
@@ -130,6 +131,37 @@ void DirtyScreenUpdate(ChCanvas* canvas) {
 	bool gpu_update = false;
 	bool framebuffer_update = false;
 
+	if (XrPresentEnabled()) {
+		/* xrEndFrame already wrote SBS into the scanout. Its transformed
+		 * damage rectangles are now in output coordinates. --axiss */
+		if (gpu_enabled) {
+			for (uint32_t i = 0; i < _dirty_count; i++) {
+				int left = dirtyRect[i].x;
+				int top = dirtyRect[i].y;
+				int right = left + dirtyRect[i].w;
+				int bottom = top + dirtyRect[i].h;
+				if (left < 0)
+					left = 0;
+				if (top < 0)
+					top = 0;
+				if (right > (int)canvas->canvasWidth)
+					right = (int)canvas->canvasWidth;
+				if (bottom > (int)canvas->canvasHeight)
+					bottom = (int)canvas->canvasHeight;
+				if (right <= left || bottom <= top)
+					continue;
+				ioctl.uint_1 = display_id;
+				ioctl.ushort_1 = (uint16_t)left;
+				ioctl.ushort_2 = (uint16_t)top;
+				ioctl.ulong_1 = (uint64_t)(right - left);
+				ioctl.ulong_2 = (uint64_t)(bottom - top);
+				_KeFileIoControl(_get_gpu_fd(), 0x202, &ioctl);
+			}
+		}
+		_dirty_count = 0;
+		return;
+	}
+
 	for (int i = 0; i < _dirty_count; i++) {
 		int64_t left = dirtyRect[i].x;
 		int64_t top = dirtyRect[i].y;
@@ -181,4 +213,11 @@ void DirtyScreenUpdate(ChCanvas* canvas) {
  */
 uint32_t GetDirtyRectCount() {
 	return _dirty_count;
+}
+
+bool GetDirtyRect(uint32_t index, Rect* rect) {
+	if (!rect || index >= _dirty_count)
+		return false;
+	*rect = dirtyRect[index];
+	return true;
 }

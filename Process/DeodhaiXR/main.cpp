@@ -53,6 +53,7 @@
 #include "nanojpg.h"
 #include <arm_neon.h>
 #include "compose.h"
+#include "xr_present.h"
 #include <sys/_ketime.h>
 
 static uint32_t screen_w;
@@ -325,8 +326,14 @@ ChFont* f2;
 ChRect rectb;
 int x_;
 int y_;
+/* Keep low-cost stage totals so the FPS overlay exposes where each frame goes. --axiss */
+static uint64_t profAccumCompose = 0;
+static uint64_t profAccumPresent = 0;
+static uint64_t profAccumTransfer = 0;
 
 void XRComposeFrame(ChCanvas* canvas) {
+	/* Split the frame into compose, present, and transfer stages for the overlay. --axiss */
+	uint64_t t0 = _KeGetCurrentMS();
 	CursorDrawBack(canvas, currentCursor, currentCursor->oldXPos, currentCursor->oldYPos);
 	AddDirtyClip(currentCursor->oldXPos, currentCursor->oldYPos, 24, 24);
 
@@ -378,8 +385,16 @@ void XRComposeFrame(ChCanvas* canvas) {
 	CursorDraw(canvas, currentCursor, currentCursor->xpos, currentCursor->ypos);
 
 	AddDirtyClip(currentCursor->xpos, currentCursor->ypos, 24, 24);
+	profAccumCompose += (_KeGetCurrentMS() - t0);
+#ifdef __XENEVA_OPENXR__
+	uint64_t t1 = _KeGetCurrentMS();
+	XrPresentFrame(canvas);
+	profAccumPresent += (_KeGetCurrentMS() - t1);
+#endif
 	/* finally present all updates to framebuffer */
+	uint64_t t2 = _KeGetCurrentMS();
 	DirtyScreenUpdate(canvas);
+	profAccumTransfer += (_KeGetCurrentMS() - t2);
 
 	if (_window_update_all_)
 		_window_update_all_ = false;
@@ -989,6 +1004,16 @@ int main(int argc, char* argv[]) {
 	}
 
 	if (_gpu_enabled) {
+		/* GPU backing is tightly packed at the mode width. GOP pitch can
+		 * differ; force the compositor row layout to the GPU resource. --axiss */
+		canv->pitch = (uint32_t)screen_w * 4;
+		canv->scanline = (uint16_t)screen_w;
+#ifdef __XENEVA_OPENXR__
+		/* Compose stays in RAM; OpenXR EndFrame SBS-blits into framebuff. --axiss */
+		DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
+#else
+		canv->buffer = canv->framebuff;
+		DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
 		XEFileIOControl ctl;
 		ctl.uint_1 = gpu_display_id;
 		ctl.ushort_1 = 0;
@@ -996,8 +1021,11 @@ int main(int argc, char* argv[]) {
 		ctl.ulong_1 = canv->canvasWidth;
 		ctl.ulong_2 = canv->canvasHeight;
 		_KeFileIoControl(gpu_fd, 0x202, &ctl);
-		canv->buffer = canv->framebuff;
+#endif
 	}
+#ifdef __XENEVA_OPENXR__
+	XrPresentInit(canv);
+#endif
 
 	//ChRect limit;
 	//limit.x = 0;
@@ -1206,7 +1234,6 @@ int main(int argc, char* argv[]) {
 
 			if (hideable_win)
 				DeodhaiWindowHide(hideable_win);
-			_KeProcessSleep(10);
 			memset(&event, 0, sizeof(PostEvent));
 		}
 
@@ -1321,17 +1348,25 @@ int main(int argc, char* argv[]) {
 			uint64_t nowMs = _KeGetCurrentMS();
 			uint64_t windowMs = nowMs - fpsWindowStart;
 			if (windowMs >= 1000) {
-				uint64_t fps = (fpsFrameCount * 1000) / (windowMs ? windowMs : 1);
-				uint64_t avgComposeMs = fpsFrameCount ? (fpsComposeMsAccum / fpsFrameCount) : 0;
-				_KePrint("[deodhaiXR]: fps=%d avg_compose_ms=%d frames=%d window_ms=%d frame_ms=%d\r\n",
-						 (int)fps,
-						 (int)avgComposeMs,
-						 (int)fpsFrameCount,
-						 (int)windowMs,
-						 (int)frameTime);
-				fpsFrameCount = 0;
-				fpsComposeMsAccum = 0;
-				fpsWindowStart = nowMs;
+			uint64_t fps = (fpsFrameCount * 1000) / (windowMs ? windowMs : 1);
+			uint64_t avgComposeMs = fpsFrameCount ? (fpsComposeMsAccum / fpsFrameCount) : 0;
+			uint64_t avgC = fpsFrameCount ? (profAccumCompose / fpsFrameCount) : 0;
+			uint64_t avgP = fpsFrameCount ? (profAccumPresent / fpsFrameCount) : 0;
+			uint64_t avgT = fpsFrameCount ? (profAccumTransfer / fpsFrameCount) : 0;
+			_KePrint("[deodhaiXR]: fps=%d avg_compose_ms=%d frames=%d window_ms=%d frame_ms=%d\r\n",
+					 (int)fps,
+					 (int)avgComposeMs,
+					 (int)fpsFrameCount,
+					 (int)windowMs,
+					 (int)frameTime);
+			_KePrint("[deodhaiXR]: stages compose=%d present=%d transfer=%d\r\n", (int)avgC,
+					 (int)avgP, (int)avgT);
+			fpsFrameCount = 0;
+			fpsComposeMsAccum = 0;
+			profAccumCompose = 0;
+			profAccumPresent = 0;
+			profAccumTransfer = 0;
+			fpsWindowStart = nowMs;
 			}
 		}
 

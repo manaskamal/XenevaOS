@@ -13,13 +13,21 @@ ifeq ($(DIRECT_SCANOUT),1)
     DIRECT_SCANOUT_FLAGS = -D__XENEVA_DIRECT_SCANOUT__
 endif
 
+OPENXR ?= 0
+ifeq ($(OPENXR),1)
+    OPENXR_FLAGS = -D__XENEVA_OPENXR__
+endif
+
 TARGET = deodxr.elf
 CROSS_COMPILE ?= aarch64-linux-gnu-
 
-INCLUDES = -I../../Libs/XEClib/includes -I../../Libs/XEClib/includes/c++ -I../../BaseHdr -I../../Libs/Chitralekha -I../../Ports/freetype2/include
+INCLUDES = -I../../Libs/XEClib/includes -I../../Libs/XEClib/includes/c++ -I../../BaseHdr -I../../Libs/Chitralekha -I../../Ports/freetype2/include -I../../Libs/OpenXR
 
 CPP_SRCS = alpha.cpp animation.cpp backdirty.cpp clip.cpp compose.cpp cursor.cpp \
            dirty.cpp main.cpp rect.cpp surface.cpp window.cpp
+ifeq ($(OPENXR),1)
+CPP_SRCS += xr_qemu.cpp xr_present.cpp
+endif
 S_SRCS = crt_arm64.s _fastcpy_arm64.s
 
 OBJDIR = obj
@@ -37,7 +45,7 @@ ifeq ($(TOOLCHAIN), llvm)
 
     CXXFLAGS = -Wall -Wextra -ffreestanding -fno-stack-protector -fno-stack-check -fno-strict-aliasing \
                -O2 -fno-exceptions -fno-rtti $(LLVM_TARGET) \
-	               -DARCH_ARM64 -D__TARGET_BOARD_QEMU_VIRT__ -D_USE_DLMALLOC -D__STDC_LIMIT_MACROS -DTHEME_DEFAULT $(BLEED_FLAGS) $(DIRECT_SCANOUT_FLAGS) \
+	               -DARCH_ARM64 -D__TARGET_BOARD_QEMU_VIRT__ -D_USE_DLMALLOC -D__STDC_LIMIT_MACROS -DTHEME_DEFAULT $(BLEED_FLAGS) $(DIRECT_SCANOUT_FLAGS) $(OPENXR_FLAGS) \
                -Wno-error=incompatible-pointer-types -Wno-error=int-conversion \
                -Wno-implicit-function-declaration -Wno-c++11-narrowing \
                $(INCLUDES)
@@ -52,7 +60,7 @@ else
 
     CXXFLAGS = -Wall -Wextra -ffreestanding -fno-stack-protector -fno-stack-check -fno-strict-aliasing \
                -O2 -fPIE -fno-exceptions -fno-rtti \
-	               -DARCH_ARM64 -D__TARGET_BOARD_QEMU_VIRT__ -D_USE_DLMALLOC -D__STDC_LIMIT_MACROS -DTHEME_DEFAULT $(BLEED_FLAGS) $(DIRECT_SCANOUT_FLAGS) \
+	               -DARCH_ARM64 -D__TARGET_BOARD_QEMU_VIRT__ -D_USE_DLMALLOC -D__STDC_LIMIT_MACROS -DTHEME_DEFAULT $(BLEED_FLAGS) $(DIRECT_SCANOUT_FLAGS) $(OPENXR_FLAGS) \
                $(INCLUDES)
 endif
 
