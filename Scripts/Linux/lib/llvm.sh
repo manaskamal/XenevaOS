@@ -25,7 +25,7 @@ if [ "${BUILD_USER_APPS:-0}" -eq 1 ]; then
     APPS=(
         Init DeodhaiXR Terminal Namdapha XELnch DeodhaiAudio
         Calender Calculator AudioPlayer Files Control
-        ping udpecho XEShell
+        ping udpecho XEShell route iptables
     )
     for app in "${APPS[@]}"; do
         ( cd "../../Process/$app" && make clean && make BLEED="${BLEED:-0}" llvm )
@@ -47,6 +47,12 @@ if [ "${BUILD_USER_APPS:-0}" -eq 1 ]; then
     cp -f ../../Process/ping/ping.exe             ../../Resources/resources/
     cp -f ../../Process/udpecho/udpecho.exe       ../../Resources/resources/
     cp -f ../../Process/XEShell/xesh.exe          ../../Resources/resources/
+    cp -f ../../Process/route/route.exe           ../../Resources/resources/
+    cp -f ../../Process/iptables/iptables.exe     ../../Resources/resources/
+    # NETMngr has no LLVM Makefile; keep prebuilt if present
+    if [ -f ../../Process/NETMngr/netmngr.exe ]; then
+        cp -f ../../Process/NETMngr/netmngr.exe ../../Resources/resources/
+    fi
 fi
 
 printf "${STY_GREEN}[llvm] AArch64 LLVM/Clang build complete.${STY_RST}\n"
