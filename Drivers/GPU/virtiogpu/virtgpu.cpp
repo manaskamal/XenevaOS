@@ -551,13 +551,35 @@ AU_EXTERN AU_EXPORT int AuDriverMain(AuDriver* drv) {
 
 	enable_irqs();
 
-	/** initialize the screen data and start scanout 0 **/
-	int resource_id = virt_gpu_screen_init(cfg, 1024, 768);
+	/** initialize the screen data and start scanout 0.
+	 * Size the GPU resource to the firmware GOP mode. A hardcoded
+	 * 1024x768 resource with a 1920-wide compositor stride is what
+	 * produced the repeating vertical wallpaper strips on every
+	 * mode except 1024x768. --axiss */
+	KERNEL_BOOT_INFO* binfo = AuGetBootInfoStruc();
+	uint32_t gpu_w = 1024;
+	uint32_t gpu_h = 768;
+	if (binfo && binfo->X_Resolution && binfo->Y_Resolution) {
+		gpu_w = binfo->X_Resolution;
+		gpu_h = binfo->Y_Resolution;
+	}
+	/* A manual loader menu entry (resolutions the firmware GOP never
+	 * offers, e.g. 1920x1080) travels separately from the real GOP
+	 * geometry so the early console stays valid. Prefer it, validated,
+	 * so the desktop scanout follows the chosen size. --axiss */
+	if (binfo && binfo->DesktopOverrideWidth >= 640 && binfo->DesktopOverrideWidth <= 4096 &&
+		binfo->DesktopOverrideHeight >= 480 && binfo->DesktopOverrideHeight <= 4096) {
+		gpu_w = binfo->DesktopOverrideWidth;
+		gpu_h = binfo->DesktopOverrideHeight;
+		UARTDebugOut("[virtio-gpu]: using desktop override %d x %d\r\n", gpu_w, gpu_h);
+	}
+	UARTDebugOut("[virtio-gpu]: creating scanout %d x %d\r\n", gpu_w, gpu_h);
+	int resource_id = virt_gpu_screen_init(cfg, gpu_w, gpu_h);
 	default_scr_rsrc_id = resource_id;
 	virt_gpu_alloc_fb(cfg, resource_id);
 	virt_gpu_set_scanout(cfg, resource_id, 0);
-	virt_gpu_fill_screen(1024, 768, 0xFF000000);
-	virt_gpu_transfer_to_host2d(cfg, resource_id, 0, 0, 1024, 768);
+	virt_gpu_fill_screen(gpu_w, gpu_h, 0xFF000000);
+	virt_gpu_transfer_to_host2d(cfg, resource_id, 0, 0, gpu_w, gpu_h);
 	virt_gpu_flush(cfg, resource_id);
 	mask_irqs();
 

@@ -57,6 +57,12 @@ typedef struct _aucon_ {
 	uint32_t size;
 	uint32_t pitch;
 	bool early_mode;
+	/* desktop_width/height -- size reported to the compositor for the
+	 * desktop scanout. Equals width/height unless the loader passed a
+	 * manual desktop override (resolutions the firmware GOP never
+	 * offers). Text drawing always uses width/height (real GOP). --axiss */
+	uint32_t desktop_width;
+	uint32_t desktop_height;
 }AuConsole;
 
 /*

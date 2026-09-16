@@ -127,13 +127,13 @@ int AuConsoleIoControl(AuVFSNode* file, int code, void* arg) {
 	case TIOSPGRP:
 		return 0;
 	case SCREEN_GETWIDTH: {
-		uint32_t width = aucon->width;
+		uint32_t width = aucon->desktop_width;
 		ioctl->uint_1 = width;
 		//memcpy(&ioctl->uint_1, &width, sizeof(uint32_t));
 		break;
 	}
 	case SCREEN_GETHEIGHT: {
-		uint32_t height = aucon->height;
+		uint32_t height = aucon->desktop_height;
 		ioctl->uint_1 = height;
 		break;
 	}
@@ -165,7 +165,11 @@ int AuConsoleIoControl(AuVFSNode* file, int code, void* arg) {
 		}
 		uint64_t vmaddr = (uint64_t)AuGetFreePage(1, NULL);
 		uint64_t fbaddr = (uint64_t)__framebuffer;
-		for (int i = 0; i < aucon->size / PAGE_SIZE; i++) {
+		/* 800x600 (and any size not a multiple of 4096) used to omit the
+		 * last partial page. Init splash then died on _fill_screen and the
+		 * guest stayed black. 1024x768 happened to be exact. --axiss */
+		size_t fb_pages = (aucon->size + PAGE_SIZE - 1) / PAGE_SIZE;
+		for (size_t i = 0; i < fb_pages; i++) {
 			AuMapPage((uint64_t)fbaddr + (i * PAGE_SIZE),
 					  vmaddr + (i * PAGE_SIZE),
 					  PTE_NORMAL_NON_CACHEABLE | PTE_AP_RW_USER);
@@ -348,6 +352,15 @@ void AuConsolePostInitialise(PKERNEL_BOOT_INFO info) {
 	aucon->buffer = (uint32_t*)0xFFFFD00000200000;
 	aucon->width = info->X_Resolution;
 	aucon->height = info->Y_Resolution;
+	/* Desktop size for the compositor: manual loader override if present,
+	 * else the GOP mode. Text output keeps using width/height above. --axiss */
+	aucon->desktop_width = info->X_Resolution;
+	aucon->desktop_height = info->Y_Resolution;
+	if (info->DesktopOverrideWidth >= 640 && info->DesktopOverrideWidth <= 4096 &&
+		info->DesktopOverrideHeight >= 480 && info->DesktopOverrideHeight <= 4096) {
+		aucon->desktop_width = info->DesktopOverrideWidth;
+		aucon->desktop_height = info->DesktopOverrideHeight;
+	}
 	aucon->bpp = 32;
 	aucon->scanline = info->pixels_per_line;
 	aucon->pitch = 4 * info->pixels_per_line;
@@ -786,23 +799,29 @@ void AuConsoleEarlyEnable(bool value) {
 /**
  * @brief AuConsoleGetScreenWidth -- return the screen
  * width
- * @return return screen width 
+ * @return return screen width
+ * The only caller is the tablet driver: report the desktop size the
+ * compositor draws at, not the firmware GOP console size, so absolute
+ * pointer input spans the whole desktop at any resolution.
+ * --axiss
  */
 uint32_t AuConsoleGetScreenWidth() {
 	if (!aucon)
 		return 0;
-	return aucon->width;
+	return aucon->desktop_width ? aucon->desktop_width : aucon->width;
 }
 
 /**
  * @brief AuConsoleGetScreenHeight -- return the screen
  * height
  * @return return screen height
+ * See AuConsoleGetScreenWidth: desktop size for pointer mapping.
+ * --axiss
  */
 uint32_t AuConsoleGetScreenHeight() {
 	if (!aucon)
 		return 0;
-	return aucon->height;
+	return aucon->desktop_height ? aucon->desktop_height : aucon->height;
 }
 
 void AuConsoleFlushFramebuffer() {
@@ -814,8 +833,11 @@ void AuConsoleSetConInfo(uint64_t phys, uint64_t virtual, size_t xres, size_t yr
 	aucon->buffer = (uint32_t*)virtual;
 	aucon->width = xres;
 	aucon->height = yres;
+	aucon->scanline = (uint16_t)xres;
+	aucon->pitch = (uint32_t)(xres * 4);
 	aucon->size = xres * yres * 4;
-	//bypass_autextout = true;
+	h_res = (uint32_t)xres;
+	v_res = (uint32_t)yres;
 }
 
 void AuConsoleBypassAuTextOut() {
