@@ -106,6 +106,13 @@ void AuICMPHandle(IPv4Header* ipv4, AuVFSNode* nic) {
 		SeTextOut("[AuNet]: NIC -> %s, ICMP type-%d code-%d \r\n", nic->filename, header->type, header->code);
 	}
 }
+
+void AuICMPSendDestUnreachable(IPv4Header* orig, AuVFSNode* nic, uint8_t code) {
+	(void)orig;
+	(void)nic;
+	(void)code;
+}
+
 /*
 * AuICMPReceive -- ICMP protocol receive interface
 * @param sock -- Pointer to socket

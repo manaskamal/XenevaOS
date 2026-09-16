@@ -32,6 +32,14 @@
 
 #include <stdint.h>
 #include <Net/ipv6.h>
+#include <Fs/vfs.h>
+
+/* Route flags (bitmask). */
+#define RTF_UP        0x01
+#define RTF_HOST      0x02
+#define RTF_GATEWAY   0x04
+#define RTF_LOCAL     0x08
+#define RTF_CONNECTED 0x10
 
 /* Simple Route table entry structure */
 typedef struct _route_entry_ {
@@ -57,6 +65,20 @@ typedef struct _route_entry_info_ {
 	void* route_entry;
 }AuRouteEntryInfo;
 
+/* Output of an IPv4 FIB lookup (RFC 1122 / 1812 next-hop). */
+typedef struct _au_route_result_ {
+	AuRouteEntry* entry;
+	AuVFSNode* nic;
+	uint32_t nexthop;
+	uint8_t flags;
+} AuRouteResult;
+
+typedef struct _au_route_result6_ {
+	AuRouteEntry6* entry;
+	AuVFSNode* nic;
+	ip6_addr nexthop;
+	uint8_t flags;
+} AuRouteResult6;
 
 /*
  * AuRouteTableInitialise -- initialise the kernel route
@@ -107,11 +129,18 @@ extern void AuRouteTablePopulate(AuRouteEntry* whereToPopulate, int entryIndex);
 extern AuRouteEntry* AuRouteTableDoRouteLookup(uint32_t address);
 
 /*
+ * AuRouteLookup4 -- fill AuRouteResult for dest (NULL entry on miss).
+ */
+extern int AuRouteLookup4(uint32_t address, AuRouteResult* out);
+
+/*
  * AuRouteTable6Initialise -- initialise IPv6 route table
  */
 extern void AuRouteTable6Initialise();
 
 extern AuRouteEntry6* AuRouteTable6CreateEntry();
 extern void AuRouteTable6Add(AuRouteEntry6* entry);
+extern void AuRouteTable6Delete(AuRouteEntry6* entry);
 extern AuRouteEntry6* AuRouteTableDoRouteLookup6(const ip6_addr* address);
+extern int AuRouteLookup6(const ip6_addr* address, AuRouteResult6* out);
 #endif

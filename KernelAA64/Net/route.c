@@ -1,6 +1,6 @@
 /**
 * @file route.c
-* 
+*
 * BSD 2-Clause License
 *
 * Copyright (c) 2022-2024, Manas Kamal Choudhury
@@ -30,6 +30,7 @@
 **/
 
 #include <Net/route.h>
+#include <Net/aunet.h>
 #include <list.h>
 #include <string.h>
 #include <Mm/kmalloc.h>
@@ -39,9 +40,33 @@
 list_t* _kernelRouteList;
 list_t* _kernelRouteList6;
 
-/** @TODO: use different data structure for performance demands
- * in future, currently linked list is used
- */
+static int AuRoutePref(uint8_t flags, uint32_t netmask) {
+	int pref;
+
+	if (flags & RTF_LOCAL)
+		pref = 300;
+	else if (flags & RTF_CONNECTED)
+		pref = 200;
+	else if (netmask == 0)
+		pref = 0; /* default */
+	else
+		pref = 100;
+	return pref;
+}
+
+static int AuRoutePref6(uint8_t flags, uint8_t prefixLen) {
+	int pref;
+
+	if (flags & RTF_LOCAL)
+		pref = 300;
+	else if (flags & RTF_CONNECTED)
+		pref = 200;
+	else if (prefixLen == 0)
+		pref = 0;
+	else
+		pref = 100;
+	return pref;
+}
 
 /**
   * @brief AuRouteTableInitialise -- initialise the kernel route
@@ -62,35 +87,53 @@ AuRouteEntry* AuRouteTableCreateEntry() {
 }
 
 extern void ip_ntoa(const uint32_t src);
+
 /**
- * @brief AuRouteTableAdd -- add an entry to route
- * table
- * @param entry -- Entry to add
+ * @brief AuRouteTableAdd -- add an entry to route table.
+ * Allows default route (dest==0 && netmask==0). Replaces an
+ * existing entry with the same dest/netmask/ifname.
  */
 void AuRouteTableAdd(AuRouteEntry* entry) {
+	int i;
+
 	if (!entry)
 		return;
-	if (!entry->dest)
+	/* Reject empty dest unless this is the default route. */
+	if (!entry->dest && entry->netmask)
 		return;
-	if (!entry->netmask)
-		return;
+	if (!(entry->flags & RTF_UP))
+		entry->flags |= RTF_UP;
+
+	for (i = 0; i < _kernelRouteList->pointer; i++) {
+		AuRouteEntry* old = (AuRouteEntry*)list_get_at(_kernelRouteList, i);
+		if (!old)
+			continue;
+		if (old->dest == entry->dest && old->netmask == entry->netmask) {
+			if (old->ifname && entry->ifname && strcmp(old->ifname, entry->ifname) == 0) {
+				old->ifaddress = entry->ifaddress;
+				old->gateway = entry->gateway;
+				old->flags = entry->flags;
+				if (entry->ifname)
+					kfree(entry->ifname);
+				kfree(entry);
+				return;
+			}
+		}
+	}
 	list_add(_kernelRouteList, entry);
 }
 
 /**
  * @brief AuRouteTableDelete -- delete an entry from
- * route table
- * @param entry -- entry to delete
+ * route table (including default 0/0).
  */
 void AuRouteTableDelete(AuRouteEntry* entry) {
+	int index = -1;
+	int i;
+
 	if (!entry)
 		return;
-	if (!entry->dest)
-		return;
-	if (!entry->netmask)
-		return;
-	int index = -1;
-	for (int i = 0; i < _kernelRouteList->pointer; i++) {
+	for (i = 0; i < _kernelRouteList->pointer; i++) {
 		AuRouteEntry* _entry = (AuRouteEntry*)list_get_at(_kernelRouteList, i);
 		if (_entry->dest == entry->dest && _entry->netmask == entry->netmask) {
 			index = i;
@@ -115,23 +158,22 @@ int AuRouteTableGetNumEntry() {
 /**
  * @brief AuRouteTablePopulate -- populates a given memory pointer with
  * route table entry indexed by entryIndex number
- * @param whereToPopulate -- memory pointer where to populate
- * with an entry
- * @param entryIndex -- entry index number
  */
 void AuRouteTablePopulate(AuRouteEntry* whereToPopulate, int entryIndex) {
+	AuRouteEntry* entry;
+
 	if (!whereToPopulate)
 		return;
 	if (entryIndex == -1)
 		return;
-
-	if (entryIndex > _kernelRouteList->pointer)
+	if (entryIndex >= _kernelRouteList->pointer)
 		return;
 
-	AuRouteEntry* entry = (AuRouteEntry*)list_get_at(_kernelRouteList, entryIndex);
+	entry = (AuRouteEntry*)list_get_at(_kernelRouteList, entryIndex);
 	if (!entry)
 		return;
-	strcpy(whereToPopulate->ifname, entry->ifname);
+	if (whereToPopulate->ifname && entry->ifname)
+		strcpy(whereToPopulate->ifname, entry->ifname);
 	whereToPopulate->dest = entry->dest;
 	whereToPopulate->flags = entry->flags;
 	whereToPopulate->gateway = entry->gateway;
@@ -140,20 +182,54 @@ void AuRouteTablePopulate(AuRouteEntry* whereToPopulate, int entryIndex) {
 }
 
 /**
- * @brief AuRouteTableDoRouteLookup -- takes the decision on taking
- * the best route
- * @param address -- address to take for routing
+ * @brief AuRouteTableDoRouteLookup -- longest-prefix match; skip !RTF_UP.
+ * Prefer LOCAL over CONNECTED over default when prefixes tie.
  */
 AuRouteEntry* AuRouteTableDoRouteLookup(uint32_t address) {
 	AuRouteEntry* bestRoute = NULL;
-	for (int i = 0; i < _kernelRouteList->pointer; i++) {
+	int bestPref = -1;
+	int i;
+
+	if (!_kernelRouteList)
+		return NULL;
+	for (i = 0; i < _kernelRouteList->pointer; i++) {
 		AuRouteEntry* _entry = (AuRouteEntry*)list_get_at(_kernelRouteList, i);
-		if ((address & _entry->netmask) == (_entry->dest & _entry->netmask)) {
-			if (!bestRoute || _entry->netmask > bestRoute->netmask)
-				bestRoute = _entry;
+		int pref;
+
+		if (!_entry)
+			continue;
+		if (!(_entry->flags & RTF_UP))
+			continue;
+		if ((address & _entry->netmask) != (_entry->dest & _entry->netmask))
+			continue;
+		pref = AuRoutePref(_entry->flags, _entry->netmask);
+		if (!bestRoute ||
+			_entry->netmask > bestRoute->netmask ||
+			(_entry->netmask == bestRoute->netmask && pref > bestPref)) {
+			bestRoute = _entry;
+			bestPref = pref;
 		}
 	}
 	return bestRoute;
+}
+
+int AuRouteLookup4(uint32_t address, AuRouteResult* out) {
+	AuRouteEntry* rt;
+
+	if (!out)
+		return -1;
+	memset(out, 0, sizeof(AuRouteResult));
+	rt = AuRouteTableDoRouteLookup(address);
+	if (!rt)
+		return -1;
+	out->entry = rt;
+	out->flags = rt->flags;
+	out->nic = rt->ifname ? AuGetNetworkAdapter(rt->ifname) : NULL;
+	if (rt->flags & RTF_GATEWAY)
+		out->nexthop = rt->gateway;
+	else
+		out->nexthop = address;
+	return 0;
 }
 
 void AuRouteTable6Initialise() {
@@ -169,27 +245,102 @@ AuRouteEntry6* AuRouteTable6CreateEntry() {
 }
 
 void AuRouteTable6Add(AuRouteEntry6* entry) {
+	int i;
+
 	if (!entry)
 		return;
-	if (ip6_addr_is_zero(&entry->dest) && entry->prefixLen == 0)
+	/* Allow ::/0 default; reject other empty dest with non-zero prefix. */
+	if (ip6_addr_is_zero(&entry->dest) && entry->prefixLen != 0)
 		return;
+	if (!(entry->flags & RTF_UP))
+		entry->flags |= RTF_UP;
+
+	for (i = 0; i < _kernelRouteList6->pointer; i++) {
+		AuRouteEntry6* old = (AuRouteEntry6*)list_get_at(_kernelRouteList6, i);
+		if (!old)
+			continue;
+		if (old->prefixLen == entry->prefixLen &&
+			ip6_addr_equal(&old->dest, &entry->dest) &&
+			old->ifname && entry->ifname &&
+			strcmp(old->ifname, entry->ifname) == 0) {
+			ip6_addr_copy(&old->ifaddress, &entry->ifaddress);
+			ip6_addr_copy(&old->gateway, &entry->gateway);
+			old->flags = entry->flags;
+			kfree(entry->ifname);
+			kfree(entry);
+			return;
+		}
+	}
 	list_add(_kernelRouteList6, entry);
+}
+
+void AuRouteTable6Delete(AuRouteEntry6* entry) {
+	int index = -1;
+	int i;
+
+	if (!entry || !_kernelRouteList6)
+		return;
+	for (i = 0; i < _kernelRouteList6->pointer; i++) {
+		AuRouteEntry6* e = (AuRouteEntry6*)list_get_at(_kernelRouteList6, i);
+		if (!e)
+			continue;
+		if (e->prefixLen == entry->prefixLen &&
+			ip6_addr_equal(&e->dest, &entry->dest)) {
+			index = i;
+			break;
+		}
+	}
+	if (index != -1) {
+		AuRouteEntry6* rem = (AuRouteEntry6*)list_remove(_kernelRouteList6, index);
+		if (rem->ifname)
+			kfree(rem->ifname);
+		kfree(rem);
+	}
 }
 
 AuRouteEntry6* AuRouteTableDoRouteLookup6(const ip6_addr* address) {
 	AuRouteEntry6* bestRoute = NULL;
+	int bestPref = -1;
 	int i;
 
 	if (!address || !_kernelRouteList6)
 		return NULL;
 	for (i = 0; i < _kernelRouteList6->pointer; i++) {
 		AuRouteEntry6* _entry = (AuRouteEntry6*)list_get_at(_kernelRouteList6, i);
+		int pref;
+
 		if (!_entry)
 			continue;
-		if (ip6_prefix_equal(address, &_entry->dest, _entry->prefixLen)) {
-			if (!bestRoute || _entry->prefixLen > bestRoute->prefixLen)
-				bestRoute = _entry;
+		if (!(_entry->flags & RTF_UP))
+			continue;
+		if (!ip6_prefix_equal(address, &_entry->dest, _entry->prefixLen))
+			continue;
+		pref = AuRoutePref6(_entry->flags, _entry->prefixLen);
+		if (!bestRoute ||
+			_entry->prefixLen > bestRoute->prefixLen ||
+			(_entry->prefixLen == bestRoute->prefixLen && pref > bestPref)) {
+			bestRoute = _entry;
+			bestPref = pref;
 		}
 	}
 	return bestRoute;
+}
+
+int AuRouteLookup6(const ip6_addr* address, AuRouteResult6* out) {
+	AuRouteEntry6* rt;
+
+	if (!out || !address)
+		return -1;
+	memset(out, 0, sizeof(AuRouteResult6));
+	rt = AuRouteTableDoRouteLookup6(address);
+	if (!rt)
+		return -1;
+	out->entry = rt;
+	out->flags = rt->flags;
+	out->nic = rt->ifname ? AuGetNetworkAdapter(rt->ifname) : NULL;
+	if (rt->flags & RTF_GATEWAY)
+		ip6_addr_copy(&out->nexthop, &rt->gateway);
+	else
+		ip6_addr_copy(&out->nexthop, address);
+	return 0;
 }

@@ -41,6 +41,7 @@
 #include <Drivers/uart.h>
 #include <aucon.h>
 #include <Net/route.h>
+#include <Net/netfilter.h>
 #include <Hal/AA64/sched.h>
 #include <Hal/AA64/profile.h>
 #include <process.h>
@@ -308,7 +309,28 @@ int SocketIOControl(AuVFSNode* file, int code, void* arg) {
 			break;
 		}
 	}
+	case SOCK_NF_APPEND: {
+		if (!arg)
+			return 1;
+		return AuNetfilterAppend((const AuNfRule*)arg) == 0 ? 0 : 1;
 	}
+	case SOCK_NF_DELETE: {
+		if (!arg)
+			return 1;
+		return AuNetfilterDelete(*(int*)arg) == 0 ? 0 : 1;
+	}
+	case SOCK_NF_FLUSH:
+		return AuNetfilterFlush();
+	case SOCK_NF_GETNUM:
+		return AuNetfilterGetNum();
+	case SOCK_NF_LIST: {
+		AuNfRuleInfo* info = (AuNfRuleInfo*)arg;
+		if (!info || !info->rule)
+			return 1;
+		return AuNetfilterGetEntry(info->index, info->rule) == 0 ? 0 : 1;
+	}
+	}
+	return 1;
 }
 /**
  * @brief AuCreateRawSocket -- creates a very basic raw socket

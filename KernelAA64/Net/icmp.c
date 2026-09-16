@@ -99,6 +99,57 @@ void AuICMPHandle(IPv4Header* ipv4, AuVFSNode* nic) {
 			AuSocketAdd(current_icmp_sock, ipv4, ntohs(ipv4->totalLength));
 	}
 }
+
+void AuICMPSendDestUnreachable(IPv4Header* orig, AuVFSNode* nic, uint8_t code) {
+	AuNetworkDevice* netdev;
+	size_t icmpLen;
+	size_t totalLen;
+	size_t copyLen;
+	IPv4Header* resp;
+	ICMPHeader* icmp;
+	uint8_t* payload;
+
+	if (!orig || !nic || !nic->device)
+		return;
+	if (orig->protocol == 1)
+		return;
+	netdev = (AuNetworkDevice*)nic->device;
+
+	copyLen = 20 + 8;
+	if (ntohs(orig->totalLength) < copyLen)
+		copyLen = ntohs(orig->totalLength);
+	icmpLen = 8 + copyLen; /* type/code/csum/unused + orig */
+	totalLen = sizeof(IPv4Header) + icmpLen;
+
+	resp = (IPv4Header*)kmalloc(totalLen);
+	if (!resp)
+		return;
+	memset(resp, 0, totalLen);
+	resp->versionHeaderLen = 0x45;
+	resp->typeOfService = 0;
+	resp->totalLength = htons((uint16_t)totalLen);
+	resp->identification = 0;
+	resp->flagsFragOffset = htons(0x4000);
+	resp->timeToLive = 64;
+	resp->protocol = 1;
+	resp->srcAddress = netdev->ipv4addr;
+	resp->destAddress = orig->srcAddress;
+	resp->headerChecksum = 0;
+	resp->headerChecksum = htons(IPv4CalculateChecksum(resp));
+
+	icmp = (ICMPHeader*)&resp->payload;
+	icmp->type = 3; /* Destination Unreachable */
+	icmp->code = code;
+	icmp->identifier = 0;
+	icmp->sequenceNum = 0;
+	payload = (uint8_t*)icmp + 8;
+	memcpy(payload, orig, copyLen);
+	icmp->checksum = 0;
+	icmp->checksum = htons(AuICMPChecksum(resp));
+
+	IPV4SendPacket(resp, nic);
+	kfree(resp);
+}
 /*
 * AuICMPReceive -- ICMP protocol receive interface
 * @param sock -- Pointer to socket
@@ -152,7 +203,7 @@ int AuICMPSend(AuSocket* sock, msghdr* msg, int flags) {
 	sockaddr_in* name = (sockaddr_in*)msg->msg_name;
 	AuVFSNode* nic = AuNetworkRoute(name->sin_addr.s_addr);
 	if (!nic)
-		return -1;
+		return -114; /* ENETUNREACH */
 	AuNetworkDevice* netdev = (AuNetworkDevice*)nic->device;
 	if (!netdev)
 		return -1;

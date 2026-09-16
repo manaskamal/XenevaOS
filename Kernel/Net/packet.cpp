@@ -1,6 +1,5 @@
 /**
- * @file packet.c
- * Phase-0 AuPacket helpers + loopback origin/depth.
+ * x86 stub: Phase-0 AuPacket origin helpers (ACCEPT-all netfilter elsewhere).
  */
 
 #include <Net/packet.h>

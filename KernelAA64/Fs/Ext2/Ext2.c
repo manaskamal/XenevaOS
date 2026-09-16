@@ -41,6 +41,69 @@
 #include <Fs/Ext2/ext2.h>
 #include <_null.h>
 
+int Ext2FreeBlock(Ext2Fs* fs, uint32_t block_num) {
+	if (!fs || block_num == 0) return -1;
+
+	uint32_t block_size = fs->block_size;
+	uint32_t sector_per_block = block_size / 512;
+	uint32_t first_data_block = (block_size == 1024) ? 1 : 0;
+	uint32_t adjusted_block = block_num - first_data_block;
+	uint32_t group = adjusted_block / fs->superblock->blocks_per_group;
+	uint32_t relative_block = adjusted_block % fs->superblock->blocks_per_group;
+	uint32_t byte_idx = relative_block / 8;
+	uint8_t bit_idx = relative_block % 8;
+	uint32_t bitmap_block = fs->block_desc[group].block_bitmap;
+	uint64_t bitmap_lba = (uint64_t)bitmap_block * sector_per_block;
+
+	uint8_t* bitmap_buf = (uint8_t*)P2V((uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
+	if (!bitmap_buf) return -1;
+
+	AuVDiskRead((AuVDisk*)fs->vdisk, bitmap_lba, sector_per_block, (uint64_t*)bitmap_buf);
+
+	bitmap_buf[byte_idx] &= ~(1 << bit_idx);
+
+	AuVDiskWrite((AuVDisk*)fs->vdisk, bitmap_lba, sector_per_block, (uint64_t*)bitmap_buf);
+	AuPmmngrReleasePage((void*)V2P((uint64_t)bitmap_buf));
+
+	fs->superblock->free_blocks_count++;
+	fs->block_desc[group].free_blocks_count++;
+
+	Ext2FlushSuperblock(fs);
+	Ext2FlushBgdt(fs);
+	return 0;
+}
+
+int Ext2FreeInode(Ext2Fs* fs, uint32_t inode_num) {
+	if (!fs || inode_num == 0) return -1;
+
+	uint32_t block_size = fs->block_size;
+	uint32_t sector_per_block = block_size / 512;
+	uint32_t group = (inode_num - 1) / fs->inodes_per_group;
+	uint32_t relative_inode = (inode_num - 1) % fs->inodes_per_group;
+	uint32_t byte_idx = relative_inode / 8;
+	uint8_t bit_idx = relative_inode % 8;
+	uint32_t bitmap_block = fs->block_desc[group].inode_bitmap;
+	uint64_t bitmap_lba = (uint64_t)bitmap_block * sector_per_block;
+
+	uint8_t* bitmap_buf = (uint8_t*)P2V((uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
+	if (!bitmap_buf) return -1;
+
+	AuVDiskRead((AuVDisk*)fs->vdisk, bitmap_lba, sector_per_block, (uint64_t*)bitmap_buf);
+
+	bitmap_buf[byte_idx] &= ~(1 << bit_idx);
+
+	AuVDiskWrite((AuVDisk*)fs->vdisk, bitmap_lba, sector_per_block, (uint64_t*)bitmap_buf);
+	AuPmmngrReleasePage((void*)V2P((uint64_t)bitmap_buf));
+
+	fs->superblock->free_inodes_count++;
+	fs->block_desc[group].free_inodes_count++;
+
+	Ext2FlushSuperblock(fs);
+	Ext2FlushBgdt(fs);
+	return 0;
+}
+
+
 /**
 * Ext2FindEntry -- scans the directory data block for matching name string
 * @param fs -- file system
