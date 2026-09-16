@@ -34,11 +34,8 @@
 #if defined(ARCH_ARM64)
 #include <arm_neon.h>
 #endif
-#include <math.h>
 #include "window.h"
 #include <stdlib.h>
-
-static const uint8_t alpha_shuffle[16] = {3, 3, 3, 3, 7, 7, 7, 7, 11, 11, 11, 11, 15, 15, 15, 15};
 
 void __pixel_blend_neon(uint32_t* dst, const uint32_t* src, int width) {
 #if defined(ARCH_ARM64)
@@ -501,69 +498,4 @@ void _shadow_compose_neon(uint32_t* canv,
 			dst[x] = (0xFFu << 24) | ((uint32_t)r << 16) | ((uint32_t)g << 8) | b;
 		}
 	}
-}
-
-#define CORNER_RADIUS 12
-
-static void _apply_rounded_corner(uint32_t* backbuff, int radius, int winw, int winh) {
-	int w = winw;
-	int h = winh;
-	uint8_t* mask = (uint8_t*)malloc(radius * radius);
-
-	for (int y = 0; y < radius; y++) {
-		for (int x = 0; x < radius; x++) {
-			float dx = (float)(radius - 1 - x);
-			float dy = (float)(radius - 1 - y);
-			float dist = sqrtf(dx * dx + dy * dy) - (float)(radius - 1);
-
-			float a = 1.0f - fmaxf(0.0f, fminf(1.0f, dist + 0.5f));
-			mask[y * radius + x] = (uint8_t)(a * 255.0f);
-		}
-	}
-
-	for (int y = 0; y < radius; y++) {
-		uint32_t* top_row = backbuff + y * w;
-		uint32_t* bot_row = backbuff + (h - 1 - y) * w;
-
-		for (int x = 0; x < radius; x++) {
-			uint8_t ma = mask[y * radius + x];
-
-			//top left
-			uint32_t* p = &top_row[x];
-			if (ma == 0)
-				*p = 0x00000000;
-			else if (ma == 255)
-				*p = (*p & 0x00FFFFFF) | 0xFF000000;
-			else
-				*p = (*p & 0x00FFFFFF) | ((uint32_t)ma << 24);
-
-			//top right
-			p = &top_row[w - 1 - x];
-			if (ma == 0)
-				*p = 0x00000000;
-			else if (ma == 255)
-				*p = (*p & 0x00FFFFFF) | 0xFF000000;
-			*p = (*p & 0x00FFFFFF) | ((uint32_t)ma << 24);
-
-			//bottom left
-			p = &bot_row[x];
-			if (ma == 0)
-				*p = 0x00000000;
-			else if (ma == 255)
-				*p = (*p & 0x00FFFFFF) | 0xFF000000;
-			else
-				*p = (*p & 0x00FFFFFF) | ((uint32_t)ma << 24);
-
-			//bottom right
-			p = &bot_row[w - 1 - x];
-			if (ma == 0)
-				*p = 0x00000000;
-			else if (ma == 255)
-				*p = (*p & 0x00ffffff) | 0xff000000;
-			else
-				*p = (*p & 0x00ffffff) | ((uint32_t)ma << 24);
-		}
-	}
-
-	free(mask);
 }
