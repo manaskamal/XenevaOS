@@ -229,7 +229,7 @@ AuDriver* AuGetDriverName(uint32_t vendor_id, uint32_t device_id, uint8_t* buffe
 	}
 
 	drivername[i] = 0;
-
+    AuTextOut("drivername : %s \r\n", drivername);
 	AuDriver* drv = AuCreateDriverInstance(drivername);
 	return drv;
 }
