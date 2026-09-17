@@ -48,7 +48,7 @@ if [ "${BUILD_USER_APPS:-0}" -eq 1 ]; then
     cp -f ../../Process/udpecho/udpecho.exe       ../../Resources/resources/
     cp -f ../../Process/XEShell/xesh.exe          ../../Resources/resources/
     cp -f ../../Process/route/route.exe           ../../Resources/resources/
-    cp -f ../../Process/iptables/iptables.exe     ../../Resources/resources/
+    cp -f ../../Process/iptables/iptab.exe        ../../Resources/resources/
     # NETMngr has no LLVM Makefile; keep prebuilt if present
     if [ -f ../../Process/NETMngr/netmngr.exe ]; then
         cp -f ../../Process/NETMngr/netmngr.exe ../../Resources/resources/
