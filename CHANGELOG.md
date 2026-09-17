@@ -8,7 +8,7 @@ The AArch64 LLVM/Clang work below is recorded alongside the previously documente
 
 - Added LLVM build support for the AArch64 user-space runtime, graphics library, and the supported applications used by the QEMU image workflow.
 - Added `--llvm` toolchain selection to `Scripts/Linux/build_and_run_qemu.sh`; LLVM is the script default.
-- Added the AArch64 LLVM `--bleed` benchmark build, which propagates `__XENEVA_BLEED__` through the boot stack and forces fresh user-space binaries.
+- Added the AArch64 LLVM `--bleed` streamlined build, a low-memory profile that boots today's desktop with trimmed compositor overhead and a smaller guest footprint.
 - Added `Scripts/Linux/gen_compile_commands.sh` to capture the AArch64 LLVM commands in `compile_commands.json` for clangd and other Clang tooling.
 
 ### Changed
@@ -19,9 +19,8 @@ The AArch64 LLVM/Clang work below is recorded alongside the previously documente
 - Kept the board selection independent of the compiler. `qemu_virt` remains the default, while `BOARD=rpi3` selects the Raspberry Pi 3 definitions.
 - On MSYS2, `BootAA64` and `KernelAA64` select LLVM automatically because the GNU AArch64 Linux cross-toolchain is not available as an MSYS2 package. The current first/default Make target also invokes LLVM on Linux; the GCC path remains available explicitly through `make TOOLCHAIN=gcc all`.
 - Added early Makefile checks for Clang and LLD with MSYS2-specific installation guidance and a clear error when `TOOLCHAIN=gcc` is requested in that environment.
-- In bleed builds, optimized the EFI bootloader, removed deliberate process-launch waits and unused compositor allocations, skipped boot-only PMM validation, and packed a 36 MiB AArch64-only initrd without startup audio, music, or x86_64 payloads.
-- Added a 256 MiB low-memory bleed profile: the bootloader selects 640×480 without an interactive menu, clients draw directly into shared window backbuffers, and the compositor avoids full-window glass blur surfaces.
-- Further trimmed bleed startup by not launching the network and audio daemons and by preloading only the Calibri, Forte, and Consolas fonts; ordinary builds retain their configured service-launch behavior and font list.
+- In bleed builds, kept glass composition, network, and audio services active while trimming compositor buffer pressure and boot overhead; the bootloader selects the default resolution without the interactive menu and QEMU's memory drops from 1 GiB to 384 MiB by default.
+- Added a shared-client-backbuffer path in Chitralekha with release/acquire publication and a bounded acknowledgement wait, so clients paint directly into the compositor-owned surface instead of privately copying every updated row.
 - Isolated bleed and normal user-space artifacts with automatic clean rebuilds on script-managed profile changes, rejected stale legacy initrds in bleed, added a bounded acknowledgement wait for direct-buffer presentation, and added a safe GOP-mode fallback.
 - Coalesced overlapping compositor damage, reduced framebuffer synchronization to one barrier per presentation, and added fast paths for fully opaque and fully transparent pixel groups in both normal and bleed images.
 - Added the independent `--direct-scanout` experiment, which composes into a tightly packed GOP framebuffer without a second compositor canvas and falls back safely when the framebuffer pitch is incompatible.
@@ -106,23 +105,23 @@ This section records the motivation, failure mode, implementation, tradeoffs, an
 - Direct scanout also rejects those reuse modes because the compositor itself must be rebuilt with `__XENEVA_DIRECT_SCANOUT__`.
 - Normal behavior is preserved when neither flag is selected. Bleed is not implemented as a log level and does not suppress general diagnostic output.
 
-**Lesson.** A benchmark configuration is part of an artifact's identity. Treating it only as a shell option, without invalidating previously compiled objects, makes measurements irreproducible.
+**Lesson.** A build profile is part of an artifact's identity. Treating it only as a shell option, without invalidating previously compiled objects, makes behavior differ in ways that are hard to attribute.
 
 #### Bleed boot and memory trimming
 
-Bleed removes work that is useful for development or the full user experience but is not required to reach a usable desktop:
+**What stays.** Glass windows, network and audio daemons, the full startup sequence, and all guest services. The desktop is visually and functionally identical to the ordinary image.
 
-- The EFI loader is compiled with `-O2`, chooses 640×480 automatically, and bypasses the interactive resolution menu. If 640×480 is absent, GOP safely retains the current firmware mode.
-- QEMU uses 256 MiB by default instead of 1 GiB. The override remains available through `XENEVA_QEMU_MEMORY`.
-- Init skips the splash screen, startup sound, an initial 100 ms pause, the network manager and its 500 ms staging delay, the 800 ms compositor staging delay, and the audio daemon. These services remain present in ordinary images.
+**What changed.**
+
+- The EFI loader selects the default resolution directly instead of blocking on the interactive resolution menu. If the default mode is absent, GOP retains the current firmware mode. Ordinary images keep the menu.
+- QEMU uses 384 MiB by default instead of 1 GiB for the bleed profile. The override remains available through `XENEVA_QEMU_MEMORY`.
 - DeodhaiXR removes its 100 ms input-device delay and the 500 ms gap between launching XELnch and Namdapha.
-- Two unexplained compositor allocations—6 MiB and 50,560 bytes—are omitted from bleed. They were allocated and zeroed but never consumed by the shown startup path.
+- Two compositor allocations — 6 MiB and 50,560 bytes — were allocated and zeroed but never consumed by the shown startup path. They are omitted from bleed.
 - The physical-memory manager still constructs and recounts the buddy allocator, but bleed omits the boot-only full validation walk and allocation/free self-test. Normal builds retain both checks.
 - The font manager parses the configured list but preloads only Calibri, Forte, and Consolas, then reports the actual loaded count. This keeps the desktop and bundled tools usable without pinning every configured font at boot.
-- Glass-window flags are removed in bleed because glass requires two additional full-window blur surfaces. Windows remain opaque rather than allocating those surfaces.
-- The bleed initrd omits x86_64 payloads, music, unused startup audio, and fonts that the profile does not preload. It remains 36 MiB because the current guest filesystem path expects a usable FAT32 image; smaller FAT16 images were not accepted by that path.
+- The bleed initrd omits x86_64 payloads, music, unused startup audio, and fonts the profile does not preload. It defaults to 48 MiB, which accommodates the AArch64 initrd plus userspace; the override remains available through `--initrd-size-mb`.
 
-These changes improve both startup latency and the minimum viable memory footprint, but they intentionally alter the feature set. They are therefore isolated behind `--bleed` instead of being applied silently to the ordinary image.
+These changes reduce startup latency and minimum memory footprint without altering the feature set. They are isolated behind `--bleed` instead of applied silently to the ordinary image.
 
 #### Shared client backbuffers and presentation ordering
 

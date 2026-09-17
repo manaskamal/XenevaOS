@@ -485,14 +485,9 @@ extern "C" EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemT
 	XEUARTPrint("Library initialized \r\n");
 	XEClearScreen();
 	XEBootInfo bootinfo;
-	/* The low-memory benchmark profile uses the smallest supported mode and
-	 * avoids blocking automated boots on the interactive resolution menu. */
-#ifdef __XENEVA_BLEED__
+	/* The streamlined profile boots straight into the default resolution
+	 * instead of blocking on the interactive EFI menu. */
 	int index = 0;
-#else
-	/* Get user graphics resolution choice*/
-	int index = XEGetScreenResolutionMode(SystemTable);
-#endif
 	/* Set the graphics resolution based on user selection */
 	UINTN Mode = XESetGraphicsMode(SystemTable, index);
 	XEGuiPrint("XenevaOS Loader 2.0 (XNLDR) ARM64\n");
