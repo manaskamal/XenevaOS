@@ -108,6 +108,16 @@ AU_EXTERN AU_EXPORT void AuTextOut_profiler(const char* text, ...);
 void AuConsoleEarlyEnable(bool value);
 
 /*
+* AuConsoleSetDisplayOwned -- hand the scanout to the compositor.
+* Once the display owner claims PROCESS_TOKEN_DISPLAY, framebuffer text
+* output is muted (UART logging is unaffected). The compositor draws into
+* the same physical framebuffer, so any further AuTextOut would scribble
+* over the live desktop. --term never claims the token, so its framebuffer
+* console keeps working.
+*/
+void AuConsoleSetDisplayOwned(void);
+
+/*
  * AuConsoleGetScreenWidth -- return the screen
  * width
  */

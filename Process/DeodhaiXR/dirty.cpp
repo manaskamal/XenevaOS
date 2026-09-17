@@ -125,44 +125,44 @@ void AddDirtyClip(int x, int y, int w, int h) {
  * to dirty rect boundary
  * @param canvas -- pointer to canvas
  */
+/* DirtyFlushBounding -- one synchronous transfer+flush for the whole frame.
+ * Each 0x202 is a full virtqueue round-trip, so N rects meant N round-trips
+ * and the guest watched its own screen assemble piece by piece. Merging to
+ * one bounding box trades (sometimes more) bytes for exactly one round-trip
+ * per frame -- on TCG the latency win dominates. --axiss */
+static void DirtyFlushBounding(int display_id, const Rect* rects, uint32_t count) {
+	int64_t left = rects[0].x;
+	int64_t top = rects[0].y;
+	int64_t right = left + rects[0].w;
+	int64_t bottom = top + rects[0].h;
+	for (uint32_t i = 1; i < count; i++) {
+		int64_t r = (int64_t)rects[i].x + rects[i].w;
+		int64_t b = (int64_t)rects[i].y + rects[i].h;
+		if (rects[i].x < left)
+			left = rects[i].x;
+		if (rects[i].y < top)
+			top = rects[i].y;
+		if (r > right)
+			right = r;
+		if (b > bottom)
+			bottom = b;
+	}
+	ioctl.uint_1 = display_id;
+	ioctl.ushort_1 = (uint16_t)left;
+	ioctl.ushort_2 = (uint16_t)top;
+	ioctl.ulong_1 = (uint64_t)(right - left);
+	ioctl.ulong_2 = (uint64_t)(bottom - top);
+	_KeFileIoControl(_get_gpu_fd(), 0x202, &ioctl);
+}
+
 void DirtyScreenUpdate(ChCanvas* canvas) {
 	int display_id = _get_gpu_display_id();
 	bool gpu_enabled = _is_gpu_enabled();
-	bool gpu_update = false;
-	bool framebuffer_update = false;
 
-	if (XrPresentEnabled()) {
-		/* xrEndFrame already wrote SBS into the scanout. Its transformed
-		 * damage rectangles are now in output coordinates. --axiss */
-		if (gpu_enabled) {
-			for (uint32_t i = 0; i < _dirty_count; i++) {
-				int left = dirtyRect[i].x;
-				int top = dirtyRect[i].y;
-				int right = left + dirtyRect[i].w;
-				int bottom = top + dirtyRect[i].h;
-				if (left < 0)
-					left = 0;
-				if (top < 0)
-					top = 0;
-				if (right > (int)canvas->canvasWidth)
-					right = (int)canvas->canvasWidth;
-				if (bottom > (int)canvas->canvasHeight)
-					bottom = (int)canvas->canvasHeight;
-				if (right <= left || bottom <= top)
-					continue;
-				ioctl.uint_1 = display_id;
-				ioctl.ushort_1 = (uint16_t)left;
-				ioctl.ushort_2 = (uint16_t)top;
-				ioctl.ulong_1 = (uint64_t)(right - left);
-				ioctl.ulong_2 = (uint64_t)(bottom - top);
-				_KeFileIoControl(_get_gpu_fd(), 0x202, &ioctl);
-			}
-		}
-		_dirty_count = 0;
-		return;
-	}
-
-	for (int i = 0; i < _dirty_count; i++) {
+	/* Clip everything to the canvas first, compacting valid rects down so
+	 * the present paths below only ever see drawable damage. */
+	uint32_t valid = 0;
+	for (uint32_t i = 0; i < _dirty_count; i++) {
 		int64_t left = dirtyRect[i].x;
 		int64_t top = dirtyRect[i].y;
 		int64_t right = left + dirtyRect[i].w;
@@ -171,41 +171,41 @@ void DirtyScreenUpdate(ChCanvas* canvas) {
 			left = 0;
 		if (top < 0)
 			top = 0;
-		if (right > canvas->canvasWidth)
+		if (right > (int64_t)canvas->canvasWidth)
 			right = canvas->canvasWidth;
-		if (bottom > canvas->canvasHeight)
+		if (bottom > (int64_t)canvas->canvasHeight)
 			bottom = canvas->canvasHeight;
 		if (right <= left || bottom <= top)
 			continue;
-		dirtyRect[i].x = (int)left;
-		dirtyRect[i].y = (int)top;
-		dirtyRect[i].w = (int)(right - left);
-		dirtyRect[i].h = (int)(bottom - top);
-
-		gpu_update = 1;
-		if (!gpu_enabled) {
-			ChCanvasScreenUpdate(
-				canvas, dirtyRect[i].x, dirtyRect[i].y, dirtyRect[i].w, dirtyRect[i].h);
-			framebuffer_update = true;
-		}
-	}
-	if (framebuffer_update)
-		ChCanvasScreenCommit();
-	if (gpu_update && gpu_enabled) {
-		/* send only the rects that actually changed instead of the whole
-		 * screen -- the ring buffer above already clipped/merged them --axiss */
-		for (uint32_t i = 0; i < _dirty_count; i++) {
-			if (dirtyRect[i].w <= 0 || dirtyRect[i].h <= 0)
-				continue;
-			ioctl.uint_1 = display_id;
-			ioctl.ushort_1 = (uint16_t)dirtyRect[i].x;
-			ioctl.ushort_2 = (uint16_t)dirtyRect[i].y;
-			ioctl.ulong_1 = (uint64_t)dirtyRect[i].w;
-			ioctl.ulong_2 = (uint64_t)dirtyRect[i].h;
-			_KeFileIoControl(_get_gpu_fd(), 0x202, &ioctl);
-		}
+		dirtyRect[valid].x = (int)left;
+		dirtyRect[valid].y = (int)top;
+		dirtyRect[valid].w = (int)(right - left);
+		dirtyRect[valid].h = (int)(bottom - top);
+		valid++;
 	}
 	_dirty_count = 0;
+	if (valid == 0)
+		return;
+
+	if (XrPresentEnabled()) {
+		/* xrEndFrame copied the full-resolution flat canvas into the scanout;
+		 * its damage rectangles remain in source/output coordinates. --axiss */
+		if (gpu_enabled)
+			DirtyFlushBounding(display_id, dirtyRect, valid);
+		return;
+	}
+
+	if (!gpu_enabled) {
+		/* Plain RAM copies are cheap; keep per-rect updates and the single
+		 * commit barrier at the presentation boundary. */
+		for (uint32_t i = 0; i < valid; i++)
+			ChCanvasScreenUpdate(
+				canvas, dirtyRect[i].x, dirtyRect[i].y, dirtyRect[i].w, dirtyRect[i].h);
+		ChCanvasScreenCommit();
+		return;
+	}
+
+	DirtyFlushBounding(display_id, dirtyRect, valid);
 }
 
 /*

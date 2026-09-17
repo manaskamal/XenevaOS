@@ -62,6 +62,7 @@ static uint32_t screen_h;
 static int postbox_fd;
 static int mouse_fd;
 static int kybrd_fd;
+static int input_ring_fd;
 static Cursor* arrow;
 static Cursor* currentCursor;
 static uint32_t winHandles;
@@ -769,6 +770,24 @@ broadcast:
 	}
 }
 
+static void DeodhaiHandleMouseInput(ChCanvas* canv, const AuInputMessage* input) {
+	if (!canv || !input || input->type != AU_INPUT_MOUSE)
+		return;
+
+	currentCursor->xpos = input->xpos;
+	currentCursor->ypos = input->ypos;
+	int button = input->button_state;
+	DeodhaiWindowCheckDraggable(currentCursor->xpos, currentCursor->ypos, button);
+	DeodhaiBroadcastMouse(currentCursor->xpos, currentCursor->ypos, button);
+
+	if (currentCursor->xpos <= 0) currentCursor->xpos = 0;
+	if (currentCursor->ypos <= 0) currentCursor->ypos = 0;
+	if (currentCursor->xpos + 24 >= canv->screenWidth) currentCursor->xpos = canv->screenWidth - 24;
+	if (currentCursor->ypos + 24 >= canv->screenHeight) currentCursor->ypos = canv->screenHeight - 24;
+	if (currentCursor->xpos >= canv->screenWidth) currentCursor->xpos = 0;
+	if (currentCursor->ypos >= canv->screenHeight) currentCursor->ypos = 0;
+}
+
 /**
  * @brief DeodhaiWindowHide -- hides a window
  * @param win -- Pointer to window to hide
@@ -1060,12 +1079,16 @@ int main(int argc, char* argv[]) {
 	CursorStoreBack(canv, currentCursor, 0, 0);
 	CursorDraw(canv, arrow, 0, 0);
 
-#ifndef __XENEVA_BLEED__
-	_KeProcessSleep(100);
-#endif
-
 	mouse_fd = _KeOpenFile("/dev/mice", FILE_OPEN_READ_ONLY);
 	kybrd_fd = _KeOpenFile("/dev/kybrd", FILE_OPEN_READ_ONLY);
+	input_ring_fd = _KeOpenFile("/dev/input-ring", FILE_OPEN_READ_ONLY);
+	/* Kernel permission denials print to the framebuffer only, so a failed
+	 * ring open is invisible on serial. Say it here instead. --axiss */
+	if (input_ring_fd >= 0)
+		_KePrint("[deodhaiXR]: input-ring live, fd=%d (mice=%d kybrd=%d)\r\n",
+				 input_ring_fd, mouse_fd, kybrd_fd);
+	else
+		_KePrint("[deodhaiXR]: input-ring open failed, falling back to mice/kybrd\r\n");
 	PostEvent event;
 	AuInputMessage mice_input;
 	AuInputMessage kybrd_input;
@@ -1079,29 +1102,13 @@ int main(int argc, char* argv[]) {
 
 #ifdef __XENEVA_UNIKERNEL__
 	_KeCreateThread(XELnchThread, "xelnch");
-#ifndef __XENEVA_BLEED__
-	_KeProcessSleep(500);
-#endif
 	_KeCreateThread(NamdaphaThread, "nmdapha");
 #else
 	int proc = _KeCreateProcess(0, "xelnch");
 	_KeProcessLoadExec(proc, "/xelnch.exe", NULL, NULL);
 
-#ifndef __XENEVA_BLEED__
-	_KeProcessSleep(500);
-#endif
-
 	proc = _KeCreateProcess(0, "nmdapha");
 	_KeProcessLoadExec(proc, "/nmdapha.exe", NULL, NULL);
-#endif
-
-#ifndef __XENEVA_BLEED__
-	/* Retained for ordinary-build behavior; bleed removes this historical
-	 * compositor reservation from the benchmark path. */
-	void* p1 = malloc(6 * 1024 * 1024);
-	memset(p1, 0, 6 * 1024 * 1024);
-	void* p2 = malloc(50560);
-	memset(p2, 0, 50560);
 #endif
 
 	uint64_t frameTime = 0;
@@ -1117,40 +1124,26 @@ int main(int argc, char* argv[]) {
 		 * which used to only get updated *after* the frame was already
 		 * composed, so every frame drew the pointer a full frame behind
 		 * the actual mouse position --axiss */
-		_KeReadFile(mouse_fd, &mice_input, sizeof(AuInputMessage));
-		_KeReadFile(kybrd_fd, &kybrd_input, sizeof(AuInputMessage));
+		if (input_ring_fd >= 0) {
+			/* Bound work per frame so an input flood cannot starve composition.
+			 * Dispatch every queued edge in order. --axiss */
+			const int input_events_per_frame = 128;
+			AuInputMessage queued;
+			for (int i = 0; i < input_events_per_frame &&
+				 _KeReadFile(input_ring_fd, &queued, sizeof(AuInputMessage)) > 0; i++) {
+				if (queued.type == AU_INPUT_MOUSE)
+					DeodhaiHandleMouseInput(canv, &queued);
+				else if (queued.type == AU_INPUT_KEYBOARD)
+					DeodhaiBroadcastKey(queued.code);
+			}
+		} else {
+			_KeReadFile(mouse_fd, &mice_input, sizeof(AuInputMessage));
+			_KeReadFile(kybrd_fd, &kybrd_input, sizeof(AuInputMessage));
+		}
 		_KeFileIoControl(postbox_fd, POSTBOX_GET_EVENT_ROOT, &event);
 
 		if (mice_input.type == AU_INPUT_MOUSE) {
-			int32_t cursor_x = mice_input.xpos;
-			int32_t cursor_y = mice_input.ypos;
-
-			currentCursor->xpos = cursor_x;
-			currentCursor->ypos = cursor_y;
-			int button = mice_input.button_state;
-
-			DeodhaiWindowCheckDraggable(currentCursor->xpos, currentCursor->ypos, button);
-
-			//if (_window_broadcast_mouse_)
-			DeodhaiBroadcastMouse(currentCursor->xpos, currentCursor->ypos, button);
-
-			if ((currentCursor->xpos) <= 0)
-				currentCursor->xpos = 0;
-
-			if ((currentCursor->ypos) <= 0)
-				currentCursor->ypos = 0;
-
-			if ((currentCursor->xpos + 24) >= canv->screenWidth)
-				currentCursor->xpos = canv->screenWidth - 24;
-
-			if ((currentCursor->ypos + 24) >= canv->screenHeight)
-				currentCursor->ypos = canv->screenHeight - 24;
-
-			if (currentCursor->xpos >= canv->screenWidth)
-				currentCursor->xpos = 0;
-
-			if (currentCursor->ypos >= canv->screenHeight)
-				currentCursor->ypos = 0;
+			DeodhaiHandleMouseInput(canv, &mice_input);
 			memset(&mice_input, 0, sizeof(AuInputMessage));
 		}
 
@@ -1368,6 +1361,14 @@ int main(int argc, char* argv[]) {
 					 (int)fpsFrameCount,
 					 (int)windowMs,
 					 (int)frameTime);
+			if (input_ring_fd >= 0) {
+				AuInputRingStats stats;
+				memset(&stats, 0, sizeof(stats));
+				if (_KeFileIoControl(input_ring_fd, INPUT_RING_IOCODE_GET_STATS, &stats) != 0)
+					_KePrint("[deodhaiXR]: input drops mouse=%d keyboard=%d pending_mouse=%d pending_keyboard=%d\r\n",
+							 (int)stats.mouse_dropped, (int)stats.keyboard_dropped,
+							 (int)stats.mouse_pending, (int)stats.keyboard_pending);
+			}
 			_KePrint("[deodhaiXR]: stages compose=%d present=%d transfer=%d\r\n", (int)avgC,
 					 (int)avgP, (int)avgT);
 			fpsFrameCount = 0;

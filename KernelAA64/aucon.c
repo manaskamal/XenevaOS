@@ -68,6 +68,10 @@ uint32_t resvmask;
 size_t h_res, v_res;
 BOOL early_;
 bool bypass_autextout;
+/* Set once the compositor owns the display. The compositor's canvas aliases
+ * this same framebuffer, so further text output here would scribble over the
+ * live desktop. UART output never routes through here and is unaffected. */
+static bool display_owned;
 
 void (*_print_func)(const char* text, ...);
 
@@ -460,6 +464,10 @@ void AuPutPixel(size_t x, size_t y, uint32_t col) {
  * @brief Put a character to console output 
  * @param c -- character to print
  */
+void AuConsoleSetDisplayOwned(void) {
+	display_owned = true;
+}
+
 void AuPutC(char c) {
 	if (early_) {
 		if (is_uart_initialized())
@@ -470,6 +478,10 @@ void AuPutC(char c) {
 		}
 		return;
 	}
+
+	/* Compositor owns the scanout; keep the pixels, drop the glyph. */
+	if (display_owned)
+		return;
 
 	if (console_x > v_res / 9) {
 		console_x = 0;
@@ -516,6 +528,10 @@ void AuPutS(char* str) {
 			_print_func(str);
 		return;
 	}
+
+	/* Compositor owns the scanout; keep the pixels, drop the glyph. */
+	if (display_owned)
+		return;
 
 	uint32_t* lfb = aucon->buffer;
 	while (*str) {
@@ -577,6 +593,10 @@ void AuPutS_Color(char* str, uint32_t color) {
 			_print_func(str);
 		return;
 	}
+
+	/* Compositor owns the scanout; keep the pixels, drop the glyph. */
+	if (display_owned)
+		return;
 
 	uint32_t* lfb = aucon->buffer;
 	while (*str) {

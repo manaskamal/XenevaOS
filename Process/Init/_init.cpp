@@ -183,6 +183,13 @@ void init_basic_gid_to_dev() {
 	if (fd != -1) {
 		_KeCredChangeID(fd, 0, GROUP_INPUT);
 	}
+	/* The input-ring carries the same mouse/keyboard events as mice/kybrd,
+	 * so it needs the same group or the compositor (uid 1000) is denied and
+	 * falls back to the legacy per-frame devices. --axiss */
+	fd = _KeOpenFile("/dev/input-ring", FILE_OPEN_READ_ONLY);
+	if (fd != -1) {
+		_KeCredChangeID(fd, 0, GROUP_INPUT);
+	}
 	fd = _KeOpenFile("/dev/sound", FILE_OPEN_READ_ONLY);
 	if (fd != -1) {
 		_KeCredChangeID(fd, 0, GROUP_AUDIO);
@@ -316,14 +323,14 @@ extern "C" void main(int argc, char* argv[]) {
 #endif
 	}
 
-#if !defined(__XENEVA_BLEED__) && !defined(__XENEVA_TERM__)
+#if !defined(__XENEVA_TERM__)
 	SplashScreenShow();
 #endif
 	_sound = -1;
 	init_basic_gid_to_dev();
 
 	/** play the startup sound, for better experience */
-#if !defined(__XENEVA_BLEED__) && !defined(__XENEVA_TERM__)
+#if !defined(__XENEVA_TERM__)
 	_play_startup_sound();
 #endif
 
@@ -342,9 +349,7 @@ extern "C" void main(int argc, char* argv[]) {
 	memset(init_msg_buff, 0, sizeof(InitRequestMsg) + 1);
 
 	/** TODO: add IPC system to track real system progress and animate the logo accordingly **/
-#ifndef __XENEVA_BLEED__
 	_KeProcessSleep(100);
-#endif
 
 	int proc = 0;
 
@@ -365,7 +370,6 @@ extern "C" void main(int argc, char* argv[]) {
 		_KePrint("[init]: failed to open /dev/console \r\n");
 	init_run_term_command(ggid_misc_world, con);
 #else
-#ifndef __XENEVA_BLEED__
 	proc = _KeCreateProcess(0, "netmngr");
 	int ret_nm = _KeProcessLoadExec(proc, "/netmngr.exe", 0, NULL);
 	if (ret_nm != -1) {
@@ -375,7 +379,6 @@ extern "C" void main(int argc, char* argv[]) {
 		_KeCredAddSGroup(proc, GROUP_NETWORK);
 		_KeProcessSleep(500);
 	}
-#endif
 
 	/** actually, design should be like that, each process after
 	 * finish its initialization, it should send a signal to 
@@ -393,8 +396,6 @@ extern "C" void main(int argc, char* argv[]) {
 	_KeCredSetCap(proc, 0);
 	_KeProcessLoadExec(proc, "/deodxr.exe", 0, NULL);
 
-
-#ifndef __XENEVA_BLEED__
 	_KeProcessSleep(800);
 
 	proc = _KeCreateProcess(0, "deoaud");
@@ -405,8 +406,7 @@ extern "C" void main(int argc, char* argv[]) {
 	_KeCredAddSGroup(proc, GROUP_AUDIO);
 	_KeCredAddSGroup(proc, ggid_misc_postbox);
 	_KeProcessLoadExec(proc, "/deoaud.exe", 0, NULL);
-#endif
-#endif
+#endif /* non-TERM: TERM builds run console-only, no window manager --axiss */
 
 #elif ARCH_X64
 	proc = _KeCreateProcess(0, "deodhai");
