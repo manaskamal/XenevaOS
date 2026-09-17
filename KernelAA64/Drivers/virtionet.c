@@ -337,6 +337,7 @@ static int AuVirtioNetIOCtl(AuVFSNode* file, int code, void* arg) {
 		return 0;
 	case AUNET_SET_GATEWAY_ADDRESS:
 		memcpy(&ndev->ipv4gateway, arg, sizeof(ndev->ipv4gateway));
+		AuNetAddDefaultRoute4(nic, "virtio-net");
 		return 0;
 	case AUNET_GET_SUBNET_MASK:
 		memcpy(arg, &ndev->ipv4subnet, sizeof(ndev->ipv4subnet));
@@ -360,6 +361,7 @@ static int AuVirtioNetIOCtl(AuVFSNode* file, int code, void* arg) {
 		return 0;
 	case AUNET_SET_IPV6_GATEWAY:
 		memcpy(&ndev->ipv6gateway, arg, sizeof(ndev->ipv6gateway));
+		AuNetAddDefaultRoute6(nic, "virtio-net");
 		return 0;
 	case AUNET_GET_IPV6_PREFIX:
 		memcpy(arg, &ndev->ipv6prefixLen, sizeof(ndev->ipv6prefixLen));

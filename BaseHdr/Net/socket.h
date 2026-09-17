@@ -57,6 +57,11 @@
 #define SOCK_ROUTE_TABLE_GETENTRY 0x123
 #define SOCK_ADD_DNS_SERVER 0x124
 #define SOCK_GET_DNS_SERVER 0x125
+#define SOCK_NF_APPEND 0x126
+#define SOCK_NF_DELETE 0x127
+#define SOCK_NF_LIST 0x128
+#define SOCK_NF_FLUSH 0x129
+#define SOCK_NF_GETNUM 0x12A
 
 
 typedef size_t socklen_t;

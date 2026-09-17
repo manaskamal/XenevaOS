@@ -35,9 +35,11 @@
 #include <Net/ipv6.h>
 #include <Net/udp.h>
 #include <Net/aunet.h>
+#include <Net/route.h>
 #include <Net/ethernet.h>
 #include <Net/ndp.h>
 #include <Net/packet.h>
+#include <Net/netfilter.h>
 #include <_null.h>
 #include <Mm/kmalloc.h>
 #include <Drivers/uart.h>
@@ -108,11 +110,37 @@ uint16_t IPv6PseudoChecksum(const ip6_addr* src, const ip6_addr* dst,
 
 void IPv6HandlePacket(void* data, AuVFSNode* nic) {
 	IPv6Header* pack = (IPv6Header*)data;
+	AuPacket pkt;
+	int local;
 
 	if (!pack || !nic)
 		return;
 	if (IPv6GetVersion(pack) != 6)
 		return;
+
+	memset(&pkt, 0, sizeof(pkt));
+	pkt.data = pack;
+	pkt.len = (uint16_t)(sizeof(IPv6Header) + ntohs(pack->payloadLen));
+	pkt.l3_off = 0;
+	pkt.l4_off = (uint16_t)sizeof(IPv6Header);
+	pkt.proto = pack->nextHeader;
+	pkt.origin = AuPacketGetOrigin();
+	pkt.in_dev = nic;
+	pkt.verdict = NF_ACCEPT;
+	local = AuAddrIsLocal6(&pack->destIP);
+
+	if (AuPacketGetOrigin() != AU_PKT_ORIGIN_LOCAL) {
+		if (AuNetfilterHook(NF_PRE_ROUTING, &pkt) == NF_DROP)
+			return;
+	}
+	if (local) {
+		if (AuNetfilterHook(NF_LOCAL_IN, &pkt) == NF_DROP)
+			return;
+	} else {
+		if (AuNetfilterHook(NF_FORWARD, &pkt) == NF_DROP)
+			return;
+		return;
+	}
 
 	switch (pack->nextHeader) {
 	case IPV6_NEXT_ICMPV6:
@@ -160,6 +188,28 @@ void IPV6SendPacket(IPv6Header* packet, AuVFSNode* nic) {
 	if (!ndev)
 		return;
 
+	{
+		AuPacket pkt;
+		AuVFSNode* out = nic;
+
+		if (ndev->type == NETDEV_TYPE_LOOPBACK || AuAddrIsLocal6(&packet->destIP)) {
+			out = AuGetNetworkAdapter("lo");
+			if (!out)
+				out = nic;
+		}
+		memset(&pkt, 0, sizeof(pkt));
+		pkt.data = packet;
+		pkt.len = (uint16_t)(sizeof(IPv6Header) + ntohs(packet->payloadLen));
+		pkt.l4_off = (uint16_t)sizeof(IPv6Header);
+		pkt.proto = packet->nextHeader;
+		pkt.out_dev = out;
+		pkt.verdict = NF_ACCEPT;
+		if (AuNetfilterHook(NF_LOCAL_OUT, &pkt) == NF_DROP)
+			return;
+		if (AuNetfilterHook(NF_POST_ROUTING, &pkt) == NF_DROP)
+			return;
+	}
+
 	/* Loopback / local delivery: reinject at IP (never AuEthernetSend). */
 	if (ndev->type == NETDEV_TYPE_LOOPBACK || AuAddrIsLocal6(&packet->destIP)) {
 		deliver = AuGetNetworkAdapter("lo");
@@ -175,13 +225,14 @@ void IPV6SendPacket(IPv6Header* packet, AuVFSNode* nic) {
 	ip6_addr_copy(&next_hop, &packet->destIP);
 
 	if (ndev->type == NETDEV_TYPE_ETHERNET) {
+		AuRouteResult6 rr6;
+
 		cache = NULL;
 		if (ip6_is_linklocal(&packet->destIP) || ip6_is_multicast(&packet->destIP)) {
 			/* on-link */
-		} else if (ndev->ipv6prefixLen == 0 ||
-			!ip6_prefix_equal(&packet->destIP, &ndev->ipv6addr, ndev->ipv6prefixLen)) {
-			if (!ip6_addr_is_zero(&ndev->ipv6gateway))
-				ip6_addr_copy(&next_hop, &ndev->ipv6gateway);
+		} else if (AuRouteLookup6(&packet->destIP, &rr6) == 0 &&
+			(rr6.flags & RTF_GATEWAY) && !ip6_addr_is_zero(&rr6.nexthop)) {
+			ip6_addr_copy(&next_hop, &rr6.nexthop);
 		}
 
 		if (ip6_is_multicast(&next_hop)) {

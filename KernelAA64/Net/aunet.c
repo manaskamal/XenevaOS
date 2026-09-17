@@ -39,6 +39,7 @@
 #include <Fs/Dev/devfs.h>
 #include <Net/socket.h>
 #include <Net/route.h>
+#include <Net/netfilter.h>
 #include <Net/udp.h>
 #include <Net/icmp.h>
 #include <Net/icmpv6.h>
@@ -128,7 +129,7 @@ static void AuNetSeedLoopbackRoutes(void) {
 			r4->netmask = MAKE_IP(255, 0, 0, 0);
 			r4->ifaddress = MAKE_IP(127, 0, 0, 1);
 			r4->gateway = 0;
-			r4->flags = 0;
+			r4->flags = RTF_UP | RTF_LOCAL;
 			AuRouteTableAdd(r4);
 		} else {
 			kfree(r4);
@@ -147,7 +148,7 @@ static void AuNetSeedLoopbackRoutes(void) {
 			memset(&r6->ifaddress, 0, sizeof(ip6_addr));
 			r6->ifaddress.s6_addr[15] = 1;
 			memset(&r6->gateway, 0, sizeof(ip6_addr));
-			r6->flags = 0;
+			r6->flags = RTF_UP | RTF_LOCAL | RTF_HOST;
 			AuRouteTable6Add(r6);
 		} else {
 			kfree(r6);
@@ -197,6 +198,8 @@ void AuInitialiseNet() {
 	AuSocketInstall();
 	AuRouteTableInitialise();
 	AuRouteTable6Initialise();
+	AuNetfilterInit();
+	AuNetfilterInstallXrPolicy();
 	/* ARP / NDP for Ethernet devices */
 	ARPProtocolInitialise();
 	NDProtocolInitialise();
@@ -331,7 +334,38 @@ void AuNetAddConnectedRoute4(AuVFSNode* nic, const char* ifname) {
 	entry->netmask = ndev->ipv4subnet;
 	entry->ifaddress = ndev->ipv4addr;
 	entry->gateway = 0;
-	entry->flags = 0;
+	entry->flags = RTF_UP | RTF_CONNECTED;
+	AuRouteTableAdd(entry);
+}
+
+void AuNetAddDefaultRoute4(AuVFSNode* nic, const char* ifname) {
+	AuNetworkDevice* ndev;
+	AuRouteEntry* entry;
+	char* name;
+	size_t nlen;
+
+	if (!nic || !nic->device || !ifname)
+		return;
+	ndev = (AuNetworkDevice*)nic->device;
+	if (!ndev->ipv4gateway)
+		return;
+
+	entry = AuRouteTableCreateEntry();
+	if (!entry)
+		return;
+	nlen = strlen(ifname) + 1;
+	name = (char*)kmalloc(nlen);
+	if (!name) {
+		kfree(entry);
+		return;
+	}
+	strcpy(name, ifname);
+	entry->ifname = name;
+	entry->dest = 0;
+	entry->netmask = 0;
+	entry->ifaddress = ndev->ipv4addr;
+	entry->gateway = ndev->ipv4gateway;
+	entry->flags = RTF_UP | RTF_GATEWAY;
 	AuRouteTableAdd(entry);
 }
 
@@ -376,40 +410,66 @@ void AuNetAddConnectedRoute6(AuVFSNode* nic, const char* ifname) {
 	}
 	entry->prefixLen = ndev->ipv6prefixLen;
 	memset(&entry->gateway, 0, sizeof(ip6_addr));
-	entry->flags = 0;
+	entry->flags = RTF_UP | RTF_CONNECTED;
 	AuRouteTable6Add(entry);
 }
 
-/** 
+void AuNetAddDefaultRoute6(AuVFSNode* nic, const char* ifname) {
+	AuNetworkDevice* ndev;
+	AuRouteEntry6* entry;
+	char* name;
+	size_t nlen;
+
+	if (!nic || !nic->device || !ifname)
+		return;
+	ndev = (AuNetworkDevice*)nic->device;
+	if (ip6_addr_is_zero(&ndev->ipv6gateway))
+		return;
+
+	entry = AuRouteTable6CreateEntry();
+	if (!entry)
+		return;
+	nlen = strlen(ifname) + 1;
+	name = (char*)kmalloc(nlen);
+	if (!name) {
+		kfree(entry);
+		return;
+	}
+	strcpy(name, ifname);
+	entry->ifname = name;
+	memset(&entry->dest, 0, sizeof(ip6_addr));
+	entry->prefixLen = 0;
+	ip6_addr_copy(&entry->ifaddress, &ndev->ipv6addr);
+	ip6_addr_copy(&entry->gateway, &ndev->ipv6gateway);
+	entry->flags = RTF_UP | RTF_GATEWAY;
+	AuRouteTable6Add(entry);
+}
+
+/**
  * @brief AuNetworkRoute -- select NIC for an IPv4 destination
  * @param address -- Address to consider (MAKE_IP/wire or host-order sockaddr)
  */
 AuVFSNode* AuNetworkRoute(uint32_t address) {
-	AuRouteEntry* rt;
+	AuRouteResult rr;
 
 	if (AuAddrIsLocal4(address))
 		return AuGetNetworkAdapter("lo");
 
-	rt = AuRouteTableDoRouteLookup(address);
-	if (rt)
-		return AuGetNetworkAdapter(rt->ifname);
-
-	/* Non-local FIB miss: last-resort default NIC (not for 127/8). */
-	return AuGetNetworkAdapter("virtio-net");
+	if (AuRouteLookup4(address, &rr) == 0 && rr.nic)
+		return rr.nic;
+	return NULL;
 }
 
 AuVFSNode* AuNetworkRoute6(const ip6_addr* address) {
-	AuRouteEntry6* rt;
+	AuRouteResult6 rr;
 
 	if (!address)
-		return AuGetNetworkAdapter("virtio-net");
+		return NULL;
 
 	if (AuAddrIsLocal6(address))
 		return AuGetNetworkAdapter("lo");
 
-	rt = AuRouteTableDoRouteLookup6(address);
-	if (rt)
-		return AuGetNetworkAdapter(rt->ifname);
-
-	return AuGetNetworkAdapter("virtio-net");
+	if (AuRouteLookup6(address, &rr) == 0 && rr.nic)
+		return rr.nic;
+	return NULL;
 }

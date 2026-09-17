@@ -656,7 +656,7 @@ int AuTCPConnect(AuSocket* sock, sockaddr* addr, socklen_t addrlen) {
 		pcb->is_ipv6 = 1;
 		nic = AuNetworkRoute6((const ip6_addr*)&sockdata6->sin6_addr);
 		if (!nic)
-			return -1;
+			return -114; /* ENETUNREACH */
 		ndev = (AuNetworkDevice*)nic->device;
 		if (!ndev)
 			return -1;
@@ -668,8 +668,8 @@ int AuTCPConnect(AuSocket* sock, sockaddr* addr, socklen_t addrlen) {
 		pcb->is_ipv6 = 0;
 		nic = AuNetworkRoute(sockdata->sin_addr.s_addr);
 		if (!nic) {
-			UARTDebugOut("[aurora]: TCP connect, no NIC\r\n");
-			return -1;
+			UARTDebugOut("[aurora]: TCP connect ENETUNREACH\r\n");
+			return -114; /* ENETUNREACH */
 		}
 		ndev = (AuNetworkDevice*)nic->device;
 		if (!ndev) {

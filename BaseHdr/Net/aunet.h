@@ -106,16 +106,15 @@ AU_EXTERN AU_EXPORT void AuAddNetAdapter(AuVFSNode* netfs,char* name);
 */
 AU_EXTERN AU_EXPORT AuVFSNode* AuGetNetworkAdapter(char* name);
 
-/* AuNetworkRoute -- For now, route table is
-* is not implemented, simply return the default
-* network card installed in Xeneva
-* @param address -- Address to consider
-*/
+/*
+ * AuNetworkRoute -- select NIC via FIB (RFC 1122 §3.3.1).
+ * Local/127/8 → lo. FIB hit → that NIC. Miss → NULL (ENETUNREACH).
+ */
 extern AuVFSNode* AuNetworkRoute(uint32_t address);
 
 /*
- * AuNetworkRoute6 -- select NIC for an IPv6 destination
- * @param address -- IPv6 destination
+ * AuNetworkRoute6 -- select NIC for an IPv6 destination.
+ * Miss → NULL (no silent virtio-net fallback).
  */
 extern AuVFSNode* AuNetworkRoute6(const ip6_addr* address);
 
@@ -123,8 +122,10 @@ extern AuVFSNode* AuNetworkRoute6(const ip6_addr* address);
 extern int AuAddrIsLocal4(uint32_t address);
 extern int AuAddrIsLocal6(const ip6_addr* address);
 
-/* Install connected route for a NIC after its address/mask is set. */
+/* Install connected / default routes after address/gateway ioctl. */
 extern void AuNetAddConnectedRoute4(AuVFSNode* nic, const char* ifname);
 extern void AuNetAddConnectedRoute6(AuVFSNode* nic, const char* ifname);
+extern void AuNetAddDefaultRoute4(AuVFSNode* nic, const char* ifname);
+extern void AuNetAddDefaultRoute6(AuVFSNode* nic, const char* ifname);
 
 #endif
