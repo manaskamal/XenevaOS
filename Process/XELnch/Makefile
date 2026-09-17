@@ -8,10 +8,13 @@ ifeq ($(BLEED),1)
     BLEED_FLAGS = -D__XENEVA_BLEED__
 endif
 
+# NOTE: never define __XENEVA_UNIKERNEL__ for the standalone build. It only
+# enables the XELnchThread wrapper, whose XELnchMain callee exists solely
+# inside deodxr.exe (DeodhaiXR compiles these same sources with -include
+# unikernel_syms.h, which renames main). Defining it here breaks the link
+# with undefined XELnchMain -- and adding the -include instead would break
+# it the other way (crt needs a real main). Unused here by design. --axiss
 UNIKERNEL ?= 0
-ifeq ($(UNIKERNEL),1)
-    BLEED_FLAGS += -D__XENEVA_UNIKERNEL__
-endif
 
 TARGET = xelnch.elf
 CROSS_COMPILE ?= aarch64-linux-gnu-
